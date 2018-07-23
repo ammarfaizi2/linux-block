@@ -3012,7 +3012,7 @@ devlink_param_value_get_from_info(const struct devlink_param *param,
 		break;
 	case DEVLINK_PARAM_TYPE_STRING:
 		if (nla_len(info->attrs[DEVLINK_ATTR_PARAM_VALUE_DATA]) >
-		    DEVLINK_PARAM_MAX_STRING_VALUE)
+		    __DEVLINK_PARAM_MAX_STRING_VALUE)
 			return -EINVAL;
 		strcpy(value->vstr,
 		       nla_data(info->attrs[DEVLINK_ATTR_PARAM_VALUE_DATA]));
@@ -4613,6 +4613,23 @@ void devlink_param_value_changed(struct devlink *devlink, u32 param_id)
 	devlink_param_notify(devlink, param_item, DEVLINK_CMD_PARAM_NEW);
 }
 EXPORT_SYMBOL_GPL(devlink_param_value_changed);
+
+/**
+ *	devlink_param_value_str_fill - Safely fill-up the string preventing
+ *				       from overflow of the preallocated buffer
+ *
+ *	@dst_val: destination devlink_param_value
+ *	@src: source buffer
+ */
+void devlink_param_value_str_fill(union devlink_param_value *dst_val,
+				  const char *src)
+{
+	size_t len;
+
+	len = strlcpy(dst_val->vstr, src, __DEVLINK_PARAM_MAX_STRING_VALUE);
+	WARN_ON(len >= __DEVLINK_PARAM_MAX_STRING_VALUE);
+}
+EXPORT_SYMBOL_GPL(devlink_param_value_str_fill);
 
 /**
  *	devlink_region_create - create a new address region
