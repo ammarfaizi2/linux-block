@@ -545,7 +545,8 @@ static int xennet_count_skb_slots(struct sk_buff *skb)
 }
 
 static u16 xennet_select_queue(struct net_device *dev, struct sk_buff *skb,
-			       void *accel_priv, select_queue_fallback_t fallback)
+			       struct net_device *sb_dev,
+			       select_queue_fallback_t fallback)
 {
 	unsigned int num_queues = dev->real_num_tx_queues;
 	u32 hash;
@@ -1604,7 +1605,7 @@ static int xennet_init_queue(struct netfront_queue *queue)
 	timer_setup(&queue->rx_refill_timer, rx_refill_timeout, 0);
 
 	snprintf(queue->name, sizeof(queue->name), "%s-q%u",
-		 queue->info->netdev->name, queue->id);
+		 queue->info->xbdev->nodename, queue->id);
 
 	/* Initialise tx_skbs as a free chain containing every entry. */
 	queue->tx_skb_freelist = 0;
@@ -1810,7 +1811,7 @@ static int talk_to_netback(struct xenbus_device *dev,
 	err = xen_net_read_mac(dev, info->netdev->dev_addr);
 	if (err) {
 		xenbus_dev_fatal(dev, err, "parsing %s/mac", dev->nodename);
-		goto out;
+		goto out_unlocked;
 	}
 
 	rtnl_lock();
@@ -1925,6 +1926,7 @@ abort_transaction_no_dev_fatal:
 	xennet_destroy_queues(info);
  out:
 	rtnl_unlock();
+out_unlocked:
 	device_unregister(&dev->dev);
 	return err;
 }
@@ -1950,10 +1952,6 @@ static int xennet_connect(struct net_device *dev)
 	/* talk_to_netback() sets the correct number of queues */
 	num_queues = dev->real_num_tx_queues;
 
-	rtnl_lock();
-	netdev_update_features(dev);
-	rtnl_unlock();
-
 	if (dev->reg_state == NETREG_UNINITIALIZED) {
 		err = register_netdev(dev);
 		if (err) {
@@ -1962,6 +1960,10 @@ static int xennet_connect(struct net_device *dev)
 			return err;
 		}
 	}
+
+	rtnl_lock();
+	netdev_update_features(dev);
+	rtnl_unlock();
 
 	/*
 	 * All public and private state should now be sane.  Get

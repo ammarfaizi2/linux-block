@@ -32,6 +32,7 @@
 
 #include <linux/mutex.h>
 #include <linux/mlx5/driver.h>
+#include <linux/mlx5/eswitch.h>
 
 #include "mlx5_core.h"
 #include "fs_core.h"
@@ -1464,7 +1465,9 @@ static bool check_conflicting_actions(u32 action1, u32 action2)
 			     MLX5_FLOW_CONTEXT_ACTION_DECAP |
 			     MLX5_FLOW_CONTEXT_ACTION_MOD_HDR  |
 			     MLX5_FLOW_CONTEXT_ACTION_VLAN_POP |
-			     MLX5_FLOW_CONTEXT_ACTION_VLAN_PUSH))
+			     MLX5_FLOW_CONTEXT_ACTION_VLAN_PUSH |
+			     MLX5_FLOW_CONTEXT_ACTION_VLAN_POP_2 |
+			     MLX5_FLOW_CONTEXT_ACTION_VLAN_PUSH_2))
 		return true;
 
 	return false;
@@ -1823,7 +1826,7 @@ search_again_locked:
 
 	g = alloc_auto_flow_group(ft, spec);
 	if (IS_ERR(g)) {
-		rule = (void *)g;
+		rule = ERR_CAST(g);
 		up_write_ref_node(&ft->node);
 		return rule;
 	}
@@ -2652,7 +2655,7 @@ int mlx5_init_fs(struct mlx5_core_dev *dev)
 			goto err;
 	}
 
-	if (MLX5_CAP_GEN(dev, eswitch_flow_table)) {
+	if (MLX5_ESWITCH_MANAGER(dev)) {
 		if (MLX5_CAP_ESW_FLOWTABLE_FDB(dev, ft_support)) {
 			err = init_fdb_root_ns(steering);
 			if (err)
