@@ -40,6 +40,8 @@
 #include <asm/code-patching.h>
 #include <asm/cpu_has_feature.h>
 #include <asm/asm-prototypes.h>
+#include <asm/kdump.h>
+#include <asm/feature-fixups.h>
 
 #define DBG(fmt...)
 

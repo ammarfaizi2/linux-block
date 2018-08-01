@@ -9,6 +9,8 @@
 #include <asm/processor.h>
 #include <asm/ppc_asm.h>
 #include <asm/export.h>
+#include <asm/asm-compat.h>
+#include <asm/feature-fixups.h>
 
 	.align	7
 _GLOBAL_TOC(memcpy)
