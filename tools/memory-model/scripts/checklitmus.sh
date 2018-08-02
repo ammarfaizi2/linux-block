@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: GPL-2.0+
 #
 # Run a herd test and check the result against a "Result:" comment within
 # the litmus test.  If the verification result does not match that specified
@@ -10,31 +11,15 @@
 # Usage:
 #	checklitmus.sh file.litmus
 #
-# The LINUX_HERD_OPTIONS environment variable may be used to specify
-# arguments to herd, which default to "-conf linux-kernel.cfg".  Thus,
-# one would normally run this in the directory containing the memory model,
-# specifying the pathname of the litmus test to check.
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, you can access it online at
-# http://www.gnu.org/licenses/gpl-2.0.html.
+# Run this in the directory containing the memory model, specifying the
+# pathname of the litmus test to check.
 #
 # Copyright IBM Corporation, 2018
 #
 # Author: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
 
 litmus=$1
-herdoptions=${LINUX_HERD_OPTIONS--conf linux-kernel.cfg}
+herdoptions=${LKMM_HERD_OPTIONS--conf linux-kernel.cfg}
 
 if test -f "$litmus" -a -r "$litmus"
 then
@@ -50,8 +35,8 @@ else
 	outcome=specified
 fi
 
-echo Herd options: $herdoptions > $litmus.out
-/usr/bin/time herd7 -o ~/tmp $herdoptions $litmus >> $litmus.out 2>&1
+echo Herd options: $herdoptions > $LKMM_DESTDIR/$litmus.out
+/usr/bin/time $LKMM_TIMEOUT_CMD herd7 $herdoptions $litmus >> $LKMM_DESTDIR/$litmus.out 2>&1
 grep "Herd options:" $litmus.out
 grep '^Observation' $litmus.out
 if grep -q '^Observation' $litmus.out
