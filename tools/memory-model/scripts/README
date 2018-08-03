@@ -48,12 +48,14 @@ newlitmushist.sh
 
 parseargs.sh
 
-	Parse command-line arguments.
+	Parse command-line arguments.  Not normally run manually,
+	provided instead for use by other scripts.
 
 runlitmushist.sh
 
 	Run the litmus tests whose absolute pathnames are provided one
-	name per line on standard input.
+	name per line on standard input.  Not normally run manually,
+	provided instead for use by other scripts.
 
 README
 
