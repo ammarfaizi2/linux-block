@@ -34,13 +34,6 @@
 
 #include "rcu_segcblist.h"
 
-/*
- * Dynticks per-CPU state.
- */
-struct rcu_dynticks {
-	atomic_t dynticks;	    /* Even value for idle, else odd. */
-};
-
 /* Communicate arguments to a workqueue handler. */
 struct rcu_exp_work {
 	smp_call_func_t rew_func;
@@ -194,11 +187,10 @@ struct rcu_data {
 	long		blimit;		/* Upper limit on a processed batch */
 
 	/* 3) dynticks interface. */
-	struct rcu_dynticks *dynticks;	/* Shared per-CPU dynticks state. */
 	int dynticks_snap;		/* Per-GP tracking for dynticks. */
 	long dynticks_nesting;      /* Track process nesting level. */
 	long dynticks_nmi_nesting;  /* Track irq/NMI nesting level. */
-	// atomic_t dynticks;	    /* Even value for idle, else odd. */
+	atomic_t dynticks;	    /* Even value for idle, else odd. */
 	bool rcu_need_heavy_qs;     /* GP old, need heavy quiescent state. */
 	bool rcu_urgent_qs;	    /* GP old need light quiescent state. */
 #ifdef CONFIG_RCU_FAST_NO_HZ
@@ -429,7 +421,7 @@ extern struct rcu_state rcu_bh_state;
 extern struct rcu_state rcu_preempt_state;
 #endif /* #ifdef CONFIG_PREEMPT_RCU */
 
-int rcu_dynticks_snap(struct rcu_dynticks *rdtp);
+int rcu_dynticks_snap(struct rcu_data *rdp);
 
 #ifdef CONFIG_RCU_BOOST
 DECLARE_PER_CPU(unsigned int, rcu_cpu_kthread_status);
