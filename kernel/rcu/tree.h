@@ -214,9 +214,6 @@ struct rcu_data {
 
 	/* 5) rcu_barrier(), OOM callbacks, and expediting. */
 	struct rcu_head barrier_head;
-#ifdef CONFIG_RCU_FAST_NO_HZ
-	struct rcu_head oom_head;
-#endif /* #ifdef CONFIG_RCU_FAST_NO_HZ */
 	int exp_dynticks_snap;		/* Double-check need for IPI. */
 
 	/* 6) Callback offloading. */
