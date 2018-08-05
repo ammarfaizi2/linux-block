@@ -150,14 +150,14 @@ static void cxgb4_process_flow_match(struct net_device *dev,
 		mask = skb_flow_dissector_target(cls->dissector,
 						 FLOW_DISSECTOR_KEY_PORTS,
 						 cls->mask);
-		fs->val.lport = cpu_to_be16(key->dst);
-		fs->mask.lport = cpu_to_be16(mask->dst);
-		fs->val.fport = cpu_to_be16(key->src);
-		fs->mask.fport = cpu_to_be16(mask->src);
+		fs->val.lport = be16_to_cpu(key->dst);
+		fs->mask.lport = be16_to_cpu(mask->dst);
+		fs->val.fport = be16_to_cpu(key->src);
+		fs->mask.fport = be16_to_cpu(mask->src);
 
 		/* also initialize nat_lport/fport to same values */
-		fs->nat_lport = cpu_to_be16(key->dst);
-		fs->nat_fport = cpu_to_be16(key->src);
+		fs->nat_lport = be16_to_cpu(key->dst);
+		fs->nat_fport = be16_to_cpu(key->src);
 	}
 
 	if (dissector_uses_key(cls->dissector, FLOW_DISSECTOR_KEY_IP)) {

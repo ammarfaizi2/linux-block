@@ -1436,8 +1436,7 @@ out_free:	dev_kfree_skb_any(skb);
 			if (iph->version == 4) {
 				iph->check = 0;
 				iph->tot_len = 0;
-				iph->check = (u16)(~ip_fast_csum((u8 *)iph,
-								 iph->ihl));
+				iph->check = ~ip_fast_csum((u8 *)iph, iph->ihl);
 			}
 			if (skb->ip_summed == CHECKSUM_PARTIAL)
 				cntrl = hwcsum(adap->params.chip, skb);
@@ -2735,14 +2734,14 @@ static noinline int t4_systim_to_hwstamp(struct adapter *adapter,
 		return RX_PTP_PKT_ERR;
 
 	data = skb->data + sizeof(*cpl);
-	skb_pull(skb, 2 * sizeof(u64) + sizeof(struct cpl_rx_mps_pkt));
+	skb_pull(skb, 2 * sizeof(__be64) + sizeof(struct cpl_rx_mps_pkt));
 	offset = ETH_HLEN + IPV4_HLEN(skb->data) + UDP_HLEN;
 	if (skb->len < offset + OFF_PTP_SEQUENCE_ID + sizeof(short))
 		return RX_PTP_PKT_ERR;
 
 	hwtstamps = skb_hwtstamps(skb);
 	memset(hwtstamps, 0, sizeof(*hwtstamps));
-	hwtstamps->hwtstamp = ns_to_ktime(be64_to_cpu(*((u64 *)data)));
+	hwtstamps->hwtstamp = ns_to_ktime(be64_to_cpu(*((__be64 *)data)));
 
 	return RX_PTP_PKT_SUC;
 }
