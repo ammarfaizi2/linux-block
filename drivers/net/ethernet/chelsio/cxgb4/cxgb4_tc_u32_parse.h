@@ -258,12 +258,12 @@ struct cxgb4_next_header {
  * IPv4 header.
  */
 static const struct cxgb4_next_header cxgb4_ipv4_jumps[] = {
-	{ .offset = 0, .offoff = 0, .shift = 6, .mask = 0xF,
-	  .match_off = 8, .match_val = 0x600, .match_mask = 0xFF00,
-	  .jump = cxgb4_tcp_fields },
-	{ .offset = 0, .offoff = 0, .shift = 6, .mask = 0xF,
-	  .match_off = 8, .match_val = 0x1100, .match_mask = 0xFF00,
-	  .jump = cxgb4_udp_fields },
+	{ .offset = 0, .offoff = 0, .shift = 6, .mask = htons(0xF00),
+	  .match_off = 8, .match_val = htonl(6 << 16),
+	  .match_mask = htonl(0xff<<16), .jump = cxgb4_tcp_fields },
+	{ .offset = 0, .offoff = 0, .shift = 6, .mask = htons(0xF00),
+	  .match_off = 8, .match_val = htonl(17 << 16),
+	  .match_mask = htonl(0xff<<16), .jump = cxgb4_udp_fields },
 	{ .jump = NULL }
 };
 
@@ -272,11 +272,11 @@ static const struct cxgb4_next_header cxgb4_ipv4_jumps[] = {
  */
 static const struct cxgb4_next_header cxgb4_ipv6_jumps[] = {
 	{ .offset = 0x28, .offoff = 0, .shift = 0, .mask = 0,
-	  .match_off = 4, .match_val = 0x60000, .match_mask = 0xFF0000,
-	  .jump = cxgb4_tcp_fields },
+	  .match_off = 4, .match_val = htonl(6 << 8),
+	  .match_mask = htonl(0xff << 8), .jump = cxgb4_tcp_fields },
 	{ .offset = 0x28, .offoff = 0, .shift = 0, .mask = 0,
-	  .match_off = 4, .match_val = 0x110000, .match_mask = 0xFF0000,
-	  .jump = cxgb4_udp_fields },
+	  .match_off = 4, .match_val = htonl(17 << 8),
+	  .match_mask = htonl(0xff << 8), .jump = cxgb4_udp_fields },
 	{ .jump = NULL }
 };
 
