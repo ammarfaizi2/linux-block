@@ -520,7 +520,7 @@ static int init_tp_parity(struct adapter *adap)
 		req = __skb_put_zero(skb, sizeof(*req));
 		req->wr.wr_hi = htonl(V_WR_OP(FW_WROPCODE_FORWARD));
 		OPCODE_TID(req) = htonl(MK_OPCODE_TID(CPL_RTE_WRITE_REQ, i));
-		req->l2t_idx = htonl(V_L2T_W_IDX(i));
+		req->l2t_idx = htons(V_L2T_W_IDX(i));
 		t3_mgmt_tx(adap, skb);
 		if (skb == adap->nofail_skb) {
 			await_mgmt_replies(adap, cnt, 16 + 2048 + i + 1);
