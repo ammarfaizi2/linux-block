@@ -47,7 +47,7 @@ static int fill_match_fields(struct adapter *adap,
 			     bool next_header)
 {
 	unsigned int i, j;
-	u32 val, mask;
+	__be32 val, mask;
 	int off, err;
 	bool found;
 
@@ -217,7 +217,7 @@ int cxgb4_config_knode(struct net_device *dev, struct tc_cls_u32_offload *cls)
 		const struct cxgb4_next_header *next;
 		bool found = false;
 		unsigned int i, j;
-		u32 val, mask;
+		__be32 val, mask;
 		int off;
 
 		if (t->table[link_uhtid - 1].link_handle) {
