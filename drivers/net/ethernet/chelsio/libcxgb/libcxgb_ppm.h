@@ -49,11 +49,11 @@
 #include <linux/bitmap.h>
 
 struct cxgbi_pagepod_hdr {
-	u32 vld_tid;
-	u32 pgsz_tag_clr;
-	u32 max_offset;
-	u32 page_offset;
-	u64 rsvd;
+	__be32 vld_tid;
+	__be32 pgsz_tag_clr;
+	__be32 max_offset;
+	__be32 page_offset;
+	__be64 rsvd;
 };
 
 #define PPOD_PAGES_MAX			4
