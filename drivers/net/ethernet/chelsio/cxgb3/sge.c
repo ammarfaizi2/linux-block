@@ -2109,7 +2109,7 @@ static void rx_eth(struct adapter *adap, struct sge_rspq *rq,
 		netif_rx(skb);
 }
 
-static inline int is_eth_tcp(u32 rss)
+static inline int is_eth_tcp(__be32 rss)
 {
 	return G_HASHTYPE(ntohl(rss)) == RSS_HASH_4_TUPLE;
 }
