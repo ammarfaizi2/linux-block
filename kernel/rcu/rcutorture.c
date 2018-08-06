@@ -1683,7 +1683,7 @@ static int rcu_torture_fwd_prog(void *args)
 	int sd4;
 	bool selfpropcb = false;
 	unsigned long stopat;
-	bool tested = false;
+	int tested = 0;
 	int tested_tries = 0;
 	static DEFINE_TORTURE_RANDOM(trs);
 
@@ -1712,11 +1712,11 @@ static int rcu_torture_fwd_prog(void *args)
 		}
 		tested_tries++;
 		if (!time_before(jiffies, stopat) && !torture_must_stop()) {
-			tested = true;
-			cver = cver == READ_ONCE(rcu_torture_current_version);
+			tested++;
+			cver = READ_ONCE(rcu_torture_current_version) - cver;
 			gps = rcutorture_seq_diff(cur_ops->get_gp_seq(), gps);
-			if (WARN_ON(cver && gps < 2))
-				pr_alert("%s: Duration %ld\n", __func__, dur);
+			WARN_ON(!cver && gps < 2);
+			pr_alert("%s: Duration %ld cver %ld gps %ld\n", __func__, dur, cver, gps);
 		}
 		/* Avoid slow periods, better to test when busy. */
 		stutter_wait("rcu_torture_fwd_prog");
@@ -1730,6 +1730,7 @@ static int rcu_torture_fwd_prog(void *args)
 	}
 	/* Short runs might not contain a valid forward-progress attempt. */
 	WARN_ON(!tested && tested_tries >= 5);
+	pr_alert("%s: tested %d tested_tries %d\n", __func__, tested, tested_tries);
 	torture_kthread_stopping("rcu_torture_fwd_prog");
 	return 0;
 }
