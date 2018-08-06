@@ -11,11 +11,25 @@
 #
 # Author: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
 
-LKMM_CPUS="`getconf _NPROCESSORS_ONLN`"; export LKMM_CPUS; LKMM_CPUS_def=$LKMM_CPUS
-LKMM_DESTDIR="."; export LKMM_DESTDIR; LKMM_DESTDIR_DEF=$LKMM_DESTDIR
-LKMM_HERD_OPTIONS="-conf linux-kernel.cfg"; export LKMM_HERD_OPTIONS; LKMM_HERD_OPTIONS_DEF=$LKMM_HERD_OPTIONS
-LKMM_PROCS="3"; export LKMM_PROCS; LKMM_PROCS_DEF=$LKMM_PROCS
-LKMM_TIMEOUT="1m"; export LKMM_TIMEOUT; LKMM_TIMEOUT_DEF=$LKMM_TIMEOUT
+T=/tmp/parseargs.sh.$$
+mkdir $T
+
+# Initialize one parameter: initparam name default
+initparam () {
+	echo if test -z '"$'$1'"' > $T/s
+	echo then >> $T/s
+	echo	$1='"'$2'"' >> $T/s
+	echo	export $1 >> $T/s
+	echo fi >> $T/s
+	echo $1_DEF='$'$1  >> $T/s
+	. $T/s
+}
+
+initparam LKMM_CPUS `getconf _NPROCESSORS_ONLN`
+initparam LKMM_DESTDIR "."
+initparam LKMM_HERD_OPTIONS "-conf linux-kernel.cfg"
+initparam LKMM_PROCS "3"
+initparam LKMM_TIMEOUT "1m"
 
 scriptname=$0
 
@@ -109,3 +123,4 @@ then
 else
 	LKMM_TIMEOUT_CMD="timeout $LKMM_TIMEOUT"; export LKMM_TIMEOUT_CMD
 fi
+rm -rf $T
