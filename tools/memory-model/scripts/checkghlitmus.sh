@@ -35,7 +35,7 @@ ret=0
 . $T/script
 if test "$ret" -ne 0
 then
-	echo " ^^^ VERIFICATION MISMATCHES" 1>&2
+	echo " !!! VERIFICATION MISMATCHES" 1>&2
 else
 	echo All litmus tests verified as was expected. 1>&2
 fi

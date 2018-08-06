@@ -4,7 +4,7 @@
 # Run a herd test and check the result against a "Result:" comment within
 # the litmus test.  If the verification result does not match that specified
 # in the litmus test, this script prints an error message prefixed with
-# "^^^" and exits with a non-zero status.  It also outputs verification
+# "!!!" and exits with a non-zero status.  It also outputs verification
 # results to a file whose name is that of the specified litmus test, but
 # with ".out" appended.
 #
@@ -44,8 +44,8 @@ then
 	:
 else
 	cat $litmus.out
-	echo ' ^^^ Verification error'
-	echo ' ^^^ Verification error' >> $litmus.out 2>&1
+	echo ' !!! Verification error' $litmus
+	echo ' !!! Verification error' >> $litmus.out 2>&1
 	exit 255
 fi
 if test "$outcome" = DEADLOCK
@@ -55,16 +55,16 @@ then
 	then
 		ret=0
 	else
-		echo " ^^^ Unexpected non-$outcome verification"
-		echo " ^^^ Unexpected non-$outcome verification" >> $litmus.out 2>&1
+		echo " !!! Unexpected non-$outcome verification" $litmus
+		echo " !!! Unexpected non-$outcome verification" >> $litmus.out 2>&1
 		ret=1
 	fi
 elif grep '^Observation' $litmus.out | grep -q $outcome || test "$outcome" = Maybe
 then
 	ret=0
 else
-	echo " ^^^ Unexpected non-$outcome verification"
-	echo " ^^^ Unexpected non-$outcome verification" >> $litmus.out 2>&1
+	echo " !!! Unexpected non-$outcome verification" $litmus
+	echo " !!! Unexpected non-$outcome verification" >> $litmus.out 2>&1
 	ret=1
 fi
 tail -2 $litmus.out | head -1
