@@ -127,8 +127,8 @@ EXC_REAL_BEGIN(system_reset, 0x100, 0x100)
 	 * MSR_RI is not enabled, because PACA_EXNMI and nmi stack is
 	 * being used, so a nested NMI exception would corrupt it.
 	 */
-	EXCEPTION_PROLOG_PSERIES_NORI(PACA_EXNMI, system_reset_common, EXC_STD,
-				 IDLETEST, 0x100)
+	EXCEPTION_PROLOG_NORI(PACA_EXNMI, system_reset_common, EXC_STD,
+			      IDLETEST, 0x100)
 
 EXC_REAL_END(system_reset, 0x100, 0x100)
 EXC_VIRT_NONE(0x4100, 0x100)
@@ -231,8 +231,8 @@ EXC_COMMON_BEGIN(system_reset_common)
 TRAMP_REAL_BEGIN(system_reset_fwnmi)
 	SET_SCRATCH0(r13)		/* save r13 */
 	/* See comment at system_reset exception */
-	EXCEPTION_PROLOG_PSERIES_NORI(PACA_EXNMI, system_reset_common,
-						EXC_STD, NOTEST, 0x100)
+	EXCEPTION_PROLOG_NORI(PACA_EXNMI, system_reset_common, EXC_STD,
+			      NOTEST, 0x100)
 #endif /* CONFIG_PPC_PSERIES */
 
 
@@ -338,7 +338,7 @@ machine_check_pSeries_0:
 	 * nested machine check corrupts it. machine_check_common enables
 	 * MSR_RI.
 	 */
-	EXCEPTION_PROLOG_PSERIES_1_NORI(machine_check_common, EXC_STD)
+	EXCEPTION_PROLOG_2_NORI(machine_check_common, EXC_STD)
 
 TRAMP_KVM_SKIP(PACA_EXMC, 0x200)
 
@@ -768,13 +768,9 @@ EXC_REAL_BEGIN(hardware_interrupt, 0x500, 0x100)
 	.globl hardware_interrupt_hv;
 hardware_interrupt_hv:
 	BEGIN_FTR_SECTION
-		_MASKABLE_EXCEPTION_PSERIES(0x500, hardware_interrupt_common,
-					    EXC_HV, SOFTEN_TEST_HV,
-					    IRQS_DISABLED)
+		MASKABLE_EXCEPTION_HV(0x500, hardware_interrupt_common, IRQS_DISABLED)
 	FTR_SECTION_ELSE
-		_MASKABLE_EXCEPTION_PSERIES(0x500, hardware_interrupt_common,
-					    EXC_STD, SOFTEN_TEST_PR,
-					    IRQS_DISABLED)
+		MASKABLE_EXCEPTION(0x500, hardware_interrupt_common, IRQS_DISABLED)
 	ALT_FTR_SECTION_END_IFSET(CPU_FTR_HVMODE | CPU_FTR_ARCH_206)
 EXC_REAL_END(hardware_interrupt, 0x500, 0x100)
 
@@ -782,13 +778,11 @@ EXC_VIRT_BEGIN(hardware_interrupt, 0x4500, 0x100)
 	.globl hardware_interrupt_relon_hv;
 hardware_interrupt_relon_hv:
 	BEGIN_FTR_SECTION
-		_MASKABLE_RELON_EXCEPTION_PSERIES(0x500, hardware_interrupt_common,
-						  EXC_HV, SOFTEN_TEST_HV,
-						  IRQS_DISABLED)
+		MASKABLE_RELON_EXCEPTION_HV(0x500, hardware_interrupt_common,
+					    IRQS_DISABLED)
 	FTR_SECTION_ELSE
-		_MASKABLE_RELON_EXCEPTION_PSERIES(0x500, hardware_interrupt_common,
-						  EXC_STD, SOFTEN_TEST_PR,
-						  IRQS_DISABLED)
+		__MASKABLE_RELON_EXCEPTION(0x500, hardware_interrupt_common,
+					   EXC_STD, SOFTEN_TEST_PR, IRQS_DISABLED)
 	ALT_FTR_SECTION_END_IFSET(CPU_FTR_HVMODE)
 EXC_VIRT_END(hardware_interrupt, 0x4500, 0x100)
 
@@ -1327,7 +1321,7 @@ EXC_REAL_BEGIN(denorm_exception_hv, 0x1500, 0x100)
 #endif
 
 	KVMTEST_HV(0x1500)
-	EXCEPTION_PROLOG_PSERIES_1(denorm_common, EXC_HV)
+	EXCEPTION_PROLOG_2(denorm_common, EXC_HV)
 EXC_REAL_END(denorm_exception_hv, 0x1500, 0x100)
 
 #ifdef CONFIG_PPC_DENORMALISATION
@@ -1447,7 +1441,7 @@ EXC_VIRT_NONE(0x5800, 0x100)
 	std	r12,PACA_EXGEN+EX_R12(r13);		\
 	GET_SCRATCH0(r10);				\
 	std	r10,PACA_EXGEN+EX_R13(r13);		\
-	EXCEPTION_PROLOG_PSERIES_1(soft_nmi_common, _H)
+	EXCEPTION_PROLOG_2(soft_nmi_common, _H)
 
 /*
  * Branch to soft_nmi_interrupt using the emergency stack. The emergency
@@ -1528,6 +1522,8 @@ TRAMP_REAL_BEGIN(stf_barrier_fallback)
 TRAMP_REAL_BEGIN(rfi_flush_fallback)
 	SET_SCRATCH0(r13);
 	GET_PACA(r13);
+	std	r1,PACA_EXRFI+EX_R12(r13)
+	ld	r1,PACAKSAVE(r13)
 	std	r9,PACA_EXRFI+EX_R9(r13)
 	std	r10,PACA_EXRFI+EX_R10(r13)
 	std	r11,PACA_EXRFI+EX_R11(r13)
@@ -1562,12 +1558,15 @@ TRAMP_REAL_BEGIN(rfi_flush_fallback)
 	ld	r9,PACA_EXRFI+EX_R9(r13)
 	ld	r10,PACA_EXRFI+EX_R10(r13)
 	ld	r11,PACA_EXRFI+EX_R11(r13)
+	ld	r1,PACA_EXRFI+EX_R12(r13)
 	GET_SCRATCH0(r13);
 	rfid
 
 TRAMP_REAL_BEGIN(hrfi_flush_fallback)
 	SET_SCRATCH0(r13);
 	GET_PACA(r13);
+	std	r1,PACA_EXRFI+EX_R12(r13)
+	ld	r1,PACAKSAVE(r13)
 	std	r9,PACA_EXRFI+EX_R9(r13)
 	std	r10,PACA_EXRFI+EX_R10(r13)
 	std	r11,PACA_EXRFI+EX_R11(r13)
@@ -1602,6 +1601,7 @@ TRAMP_REAL_BEGIN(hrfi_flush_fallback)
 	ld	r9,PACA_EXRFI+EX_R9(r13)
 	ld	r10,PACA_EXRFI+EX_R10(r13)
 	ld	r11,PACA_EXRFI+EX_R11(r13)
+	ld	r1,PACA_EXRFI+EX_R12(r13)
 	GET_SCRATCH0(r13);
 	hrfid
 
