@@ -27,7 +27,7 @@ fi
 # Create a list of C-language litmus tests with "Result:" commands and
 # no more than the specified number of processes.
 find litmus -name '*.litmus' -exec grep -l -m 1 "^C " {} \; > $T/list-C
-xargs < $T/list-C egrep -l '^ \* Result: (Never|Sometimes|Always)' > $T/list-C-result
+xargs < $T/list-C egrep -l '^ \* Result: (Never|Sometimes|Always|DEADLOCK)' > $T/list-C-result
 xargs < $T/list-C-result grep -L "^P${LKMM_PROCS}" > $T/list-C-result-short
 
 sed < $T/list-C-result-short -e 's,^.*$,if ! scripts/checklitmus.sh & ; then ret=1; fi,' > $T/script
