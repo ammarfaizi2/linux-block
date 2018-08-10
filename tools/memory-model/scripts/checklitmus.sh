@@ -50,7 +50,6 @@ else
 fi
 if test "$outcome" = DEADLOCK
 then
-	echo grep 3 and 4
 	if grep '^Observation' $litmus.out | grep -q 'Never 0 0$'
 	then
 		ret=0
