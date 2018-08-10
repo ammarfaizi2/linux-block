@@ -61,7 +61,7 @@ fi
 # Create a list of the C-language litmus tests with no more than the
 # specified number of processes (per the --procs argument).
 find litmus -name '*.litmus' -exec grep -l -m 1 "^C " {} \; > $T/list-C
-xargs < $T/list-C grep -L "^P${LKMM_PROCS}" > $T/list-C-short
+xargs < $T/list-C -r grep -L "^P${LKMM_PROCS}" > $T/list-C-short
 
 scripts/runlitmushist.sh < $T/list-C-short
 

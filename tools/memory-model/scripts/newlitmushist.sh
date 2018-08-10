@@ -39,12 +39,12 @@ fi
 # Create a list of the C-language litmus tests previously run.
 ( cd $LKMM_DESTDIR; find litmus -name '*.litmus.out' -print ) |
 	sed -e 's/\.out$//' |
-	xargs grep -L "^P${LKMM_PROCS}"> $T/list-C-already
+	xargs -r grep -L "^P${LKMM_PROCS}"> $T/list-C-already
 
 # Form full list of litmus tests with no more than the specified
 # number of processes (per the --procs argument).
 find litmus -name '*.litmus' -exec grep -l -m 1 "^C " {} \; > $T/list-C-all
-xargs < $T/list-C-all grep -L "^P${LKMM_PROCS}" > $T/list-C-short
+xargs < $T/list-C-all -r grep -L "^P${LKMM_PROCS}" > $T/list-C-short
 
 # Form list of new tests.  Note: This does not handle litmus-test deletion!
 sort $T/list-C-already $T/list-C-short | uniq -u > $T/list-C-new

@@ -38,8 +38,8 @@ find litmus -type d -print | ( cd $T/results; sed -e 's/^/mkdir -p /' | sh )
 # are excluded by this run's --procs argument.
 ( cd $LKMM_DESTDIR; find litmus -name '*.litmus.out' -print ) |
 	sed -e 's/\.out$//' |
-	xargs grep -L "^P${LKMM_PROCS}"> $T/list-C-already
-xargs < $T/list-C-already grep -L "^P${LKMM_PROCS}" > $T/list-C-short
+	xargs -r grep -L "^P${LKMM_PROCS}"> $T/list-C-already
+xargs < $T/list-C-already -r grep -L "^P${LKMM_PROCS}" > $T/list-C-short
 
 # Redirect output, run tests, then restore destination directory.
 destdir="$LKMM_DESTDIR"
