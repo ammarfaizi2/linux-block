@@ -949,8 +949,9 @@ static int hugetlbfs_show_options(struct seq_file *m, struct dentry *root)
 	return 0;
 }
 
-static int hugetlbfs_get_fsinfo(struct dentry *dentry, struct fsinfo_kparams *params)
+static int hugetlbfs_fsinfo(struct path *path, struct fsinfo_kparams *params)
 {
+	struct dentry *dentry = path->dentry;
 	struct hugetlbfs_sb_info *sbinfo = HUGETLBFS_SB(dentry->d_sb);
 	struct hugepage_subpool *spool = sbinfo->spool;
 	unsigned long hpage_size = huge_page_size(sbinfo->hstate);
@@ -1008,7 +1009,7 @@ static int hugetlbfs_get_fsinfo(struct dentry *dentry, struct fsinfo_kparams *pa
 			return -ENODATA;
 		}
 	default:
-		return generic_fsinfo(dentry, params);
+		return generic_fsinfo(path, params);
 	}
 }
 
@@ -1171,7 +1172,7 @@ static const struct super_operations hugetlbfs_ops = {
 	.statfs		= hugetlbfs_statfs,
 	.put_super	= hugetlbfs_put_super,
 	.show_options	= hugetlbfs_show_options,
-	.get_fsinfo	= hugetlbfs_get_fsinfo,
+	.fsinfo		= hugetlbfs_fsinfo,
 };
 
 /*

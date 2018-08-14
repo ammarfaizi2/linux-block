@@ -24,7 +24,7 @@ struct fsinfo_kparams {
 	size_t			buf_size;	/* Size of the buffer */
 };
 
-extern int generic_fsinfo(struct dentry *, struct fsinfo_kparams *);
+extern int generic_fsinfo(struct path *, struct fsinfo_kparams *);
 
 static inline void fsinfo_set_cap(struct fsinfo_capabilities *c,
 				  enum fsinfo_capability cap)

@@ -627,8 +627,9 @@ static int fsinfo_generic_param_enum(struct file_system_type *f,
 /*
  * Implement some queries generically from stuff in the superblock.
  */
-int generic_fsinfo(struct dentry *dentry, struct fsinfo_kparams *params)
+int generic_fsinfo(struct path *path, struct fsinfo_kparams *params)
 {
+	struct dentry *dentry = path->dentry;
 	struct file_system_type *f = dentry->d_sb->s_type;
 	
 #define _gen(X, Y) FSINFO_ATTR_##X: return fsinfo_generic_##Y(dentry, params->buffer)
@@ -659,10 +660,10 @@ EXPORT_SYMBOL(generic_fsinfo);
  * Retrieve the filesystem info.  We make some stuff up if the operation is not
  * supported.
  */
-int vfs_fsinfo(const struct path *path, struct fsinfo_kparams *params)
+int vfs_fsinfo(struct path *path, struct fsinfo_kparams *params)
 {
 	struct dentry *dentry = path->dentry;
-	int (*get_fsinfo)(struct dentry *, struct fsinfo_kparams *);
+	int (*fsinfo)(struct path *, struct fsinfo_kparams *);
 	int ret;
 
 	if (params->request == FSINFO_ATTR_FSINFO) {
@@ -673,18 +674,18 @@ int vfs_fsinfo(const struct path *path, struct fsinfo_kparams *params)
 		return sizeof(*info);
 	}
 
-	get_fsinfo = dentry->d_sb->s_op->get_fsinfo;
-	if (!get_fsinfo) {
+	fsinfo = dentry->d_sb->s_op->fsinfo;
+	if (!fsinfo) {
 		if (!dentry->d_sb->s_op->statfs)
 			return -EOPNOTSUPP;
-		get_fsinfo = generic_fsinfo;
+		fsinfo = generic_fsinfo;
 	}
 
 	ret = security_sb_statfs(dentry);
 	if (ret)
 		return ret;
 
-	ret = get_fsinfo(dentry, params);
+	ret = fsinfo(path, params);
 	if (ret < 0)
 		return ret;
 

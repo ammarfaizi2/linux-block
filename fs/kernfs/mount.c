@@ -56,9 +56,9 @@ static int kernfs_sop_show_path(struct seq_file *sf, struct dentry *dentry)
 	return 0;
 }
 
-static int kernfs_sop_get_fsinfo(struct dentry *dentry, struct fsinfo_kparams *params)
+static int kernfs_sop_fsinfo(struct path *path, struct fsinfo_kparams *params)
 {
-	struct kernfs_root *root = kernfs_root(kernfs_dentry_node(dentry));
+	struct kernfs_root *root = kernfs_root(kernfs_dentry_node(path->dentry));
 	struct kernfs_syscall_ops *scops = root->syscall_ops;
 	int ret;
 
@@ -67,7 +67,7 @@ static int kernfs_sop_get_fsinfo(struct dentry *dentry, struct fsinfo_kparams *p
 		if (ret != -EAGAIN)
 			return ret;
 	}
-	return generic_fsinfo(dentry, params);
+	return generic_fsinfo(path, params);
 }
 
 const struct super_operations kernfs_sops = {
@@ -78,7 +78,7 @@ const struct super_operations kernfs_sops = {
 	.reconfigure	= kernfs_sop_reconfigure,
 	.show_options	= kernfs_sop_show_options,
 	.show_path	= kernfs_sop_show_path,
-	.get_fsinfo	= kernfs_sop_get_fsinfo,
+	.fsinfo		= kernfs_sop_fsinfo,
 };
 
 /*

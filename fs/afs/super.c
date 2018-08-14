@@ -35,7 +35,7 @@ static void afs_kill_super(struct super_block *sb);
 static struct inode *afs_alloc_inode(struct super_block *sb);
 static void afs_destroy_inode(struct inode *inode);
 static int afs_statfs(struct dentry *dentry, struct kstatfs *buf);
-static int afs_get_fsinfo(struct dentry *dentry, struct fsinfo_kparams *params);
+static int afs_fsinfo(struct path *path, struct fsinfo_kparams *params);
 static int afs_show_devname(struct seq_file *m, struct dentry *root);
 static int afs_show_options(struct seq_file *m, struct dentry *root);
 static int afs_init_fs_context(struct fs_context *fc, struct dentry *reference);
@@ -55,7 +55,7 @@ int afs_net_id;
 
 static const struct super_operations afs_super_ops = {
 	.statfs		= afs_statfs,
-	.get_fsinfo	= afs_get_fsinfo,
+	.fsinfo		= afs_fsinfo,
 	.alloc_inode	= afs_alloc_inode,
 	.drop_inode	= afs_drop_inode,
 	.destroy_inode	= afs_destroy_inode,
@@ -778,12 +778,13 @@ static int afs_statfs(struct dentry *dentry, struct kstatfs *buf)
 /*
  * Get filesystem information.
  */
-static int afs_get_fsinfo(struct dentry *dentry, struct fsinfo_kparams *params)
+static int afs_fsinfo(struct path *path, struct fsinfo_kparams *params)
 {
 	struct fsinfo_timestamp_info *tsinfo;
 	struct fsinfo_server_address *addr;
 	struct fsinfo_capabilities *caps;
 	struct fsinfo_supports *sup;
+	struct dentry *dentry = path->dentry;
 	struct afs_server_list *slist;
 	struct afs_super_info *as = AFS_FS_S(dentry->d_sb);
 	struct afs_addr_list *alist;
@@ -923,7 +924,7 @@ static int afs_get_fsinfo(struct dentry *dentry, struct fsinfo_kparams *params)
 		}
 
 	default:
-		return generic_fsinfo(dentry, params);
+		return generic_fsinfo(path, params);
 	}
 
 string:
