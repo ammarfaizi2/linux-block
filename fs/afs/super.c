@@ -68,16 +68,16 @@ static struct kmem_cache *afs_inode_cachep;
 static atomic_t afs_count_active_inodes;
 
 enum afs_param {
+	Opt_source,
 	Opt_autocell,
 	Opt_dyn,
-	Opt_source,
 	nr__afs_params
 };
 
 static const struct fs_parameter_spec afs_param_specs[nr__afs_params] = {
+	[Opt_source]	= { fs_param_is_string },
 	[Opt_autocell]	= { fs_param_takes_no_value },
 	[Opt_dyn]	= { fs_param_takes_no_value },
-	[Opt_source]	= { fs_param_is_string },
 };
 
 static const struct constant_table afs_param_keys[] = {
@@ -900,14 +900,6 @@ static int afs_get_fsinfo(struct dentry *dentry, struct fsinfo_kparams *params)
 		if (params->Mth)
 			return -ENODATA;
 		switch (params->Nth) {
-		case Opt_autocell:
-			if (as->autocell)
-				str = "autocell";
-			goto string;
-		case Opt_dyn:
-			if (dyn_root)
-				str = "dyn";
-			goto string;
 		case Opt_source:
 			if (dyn_root)
 				return 0;
@@ -918,6 +910,14 @@ static int afs_get_fsinfo(struct dentry *dentry, struct fsinfo_kparams *params)
 				       volume->type == AFSVL_RWVOL ? "" :
 				       volume->type == AFSVL_ROVOL ? ".readonly" :
 				       ".backup");
+		case Opt_autocell:
+			if (as->autocell)
+				str = "autocell";
+			goto string;
+		case Opt_dyn:
+			if (dyn_root)
+				str = "dyn";
+			goto string;
 		default:
 			return -ENODATA;
 		}
