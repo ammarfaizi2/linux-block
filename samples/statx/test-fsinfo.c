@@ -26,6 +26,7 @@
 #include <linux/fsinfo.h>
 #include <linux/socket.h>
 #include <sys/stat.h>
+#include <arpa/inet.h>
 
 static bool debug = 0;
 
@@ -304,6 +305,24 @@ static void dump_attr_VOLUME_UUID(union reply *r, int size)
 static void dump_attr_SERVER_ADDRESS(union reply *r, int size)
 {
 	struct fsinfo_server_address *f = &r->srv_addr;
+	struct sockaddr_in6 *sin6;
+	struct sockaddr_in *sin;
+	char buf[1024];
+
+	switch (f->address.ss_family) {
+	case AF_INET:
+		sin = (struct sockaddr_in *)&f->address;
+		if (!inet_ntop(AF_INET, &sin->sin_addr, buf, sizeof(buf)))
+			break;
+		printf("IPv4: %s\n", buf);
+		return;
+	case AF_INET6:
+		sin6 = (struct sockaddr_in6 *)&f->address;
+		if (!inet_ntop(AF_INET6, &sin6->sin6_addr, buf, sizeof(buf)))
+			break;
+		printf("IPv6: %s\n", buf);
+		return;
+	}
 
 	printf("family=%u\n", f->address.ss_family);
 }
@@ -424,6 +443,17 @@ static int try_one(const char *file, struct fsinfo_params *params, bool raw)
 			ret = 4096;
 		dump_hex((unsigned int *)&r.buffer, 0, ret);
 		return 0;
+	}
+
+	switch (params->request) {
+	case FSINFO_ATTR_PARAM_DESCRIPTION:
+	case FSINFO_ATTR_PARAM_SPECIFICATION:
+	case FSINFO_ATTR_PARAM_NAME:
+	case FSINFO_ATTR_PARAM_ENUM:
+		return 0;
+	case FSINFO_ATTR_PARAMETER:
+		if (ret == 0)
+			return 0;
 	}
 
 	switch (about & 0xc000) {
