@@ -158,7 +158,7 @@ enum {                // TX_PKT_LSO ethernet types
 };
 
 union opcode_tid {
-	u32 opcode_tid;
+	__be32 opcode_tid;
 	u8 opcode;
 };
 
@@ -176,7 +176,7 @@ union opcode_tid {
 #define GET_TID(cmd) (G_TID(ntohl(OPCODE_TID(cmd))))
 
 struct tcp_options {
-	u16 mss;
+	__be16 mss;
 	u8 wsf;
 #if defined(__LITTLE_ENDIAN_BITFIELD)
 	u8 rsvd:4;
@@ -193,63 +193,63 @@ struct tcp_options {
 
 struct cpl_pass_open_req {
 	union opcode_tid ot;
-	u16 local_port;
-	u16 peer_port;
-	u32 local_ip;
-	u32 peer_ip;
-	u32 opt0h;
-	u32 opt0l;
-	u32 peer_netmask;
-	u32 opt1;
+	__be16 local_port;
+	__be16 peer_port;
+	__be32 local_ip;
+	__be32 peer_ip;
+	__be32 opt0h;
+	__be32 opt0l;
+	__be32 peer_netmask;
+	__be32 opt1;
 };
 
 struct cpl_pass_open_rpl {
 	union opcode_tid ot;
-	u16 local_port;
-	u16 peer_port;
-	u32 local_ip;
-	u32 peer_ip;
+	__be16 local_port;
+	__be16 peer_port;
+	__be32 local_ip;
+	__be32 peer_ip;
 	u8 resvd[7];
 	u8 status;
 };
 
 struct cpl_pass_establish {
 	union opcode_tid ot;
-	u16 local_port;
-	u16 peer_port;
-	u32 local_ip;
-	u32 peer_ip;
-	u32 tos_tid;
+	__be16 local_port;
+	__be16 peer_port;
+	__be32 local_ip;
+	__be32 peer_ip;
+	__be32 tos_tid;
 	u8  l2t_idx;
 	u8  rsvd[3];
-	u32 snd_isn;
-	u32 rcv_isn;
+	__be32 snd_isn;
+	__be32 rcv_isn;
 };
 
 struct cpl_pass_accept_req {
 	union opcode_tid ot;
-	u16 local_port;
-	u16 peer_port;
-	u32 local_ip;
-	u32 peer_ip;
-	u32 tos_tid;
+	__be16 local_port;
+	__be16 peer_port;
+	__be32 local_ip;
+	__be32 peer_ip;
+	__be32 tos_tid;
 	struct tcp_options tcp_options;
 	u8  dst_mac[6];
-	u16 vlan_tag;
+	__be16 vlan_tag;
 	u8  src_mac[6];
 	u8  rsvd[2];
-	u32 rcv_isn;
-	u32 unknown_tcp_options;
+	__be32 rcv_isn;
+	__be32 unknown_tcp_options;
 };
 
 struct cpl_pass_accept_rpl {
 	union opcode_tid ot;
-	u32 rsvd0;
-	u32 rsvd1;
-	u32 peer_ip;
-	u32 opt0h;
+	__be32 rsvd0;
+	__be32 rsvd1;
+	__be32 peer_ip;
+	__be32 opt0h;
 	union {
-		u32 opt0l;
+		__be32 opt0l;
 		struct {
 		    u8 rsvd[3];
 		    u8 status;
@@ -259,63 +259,63 @@ struct cpl_pass_accept_rpl {
 
 struct cpl_act_open_req {
 	union opcode_tid ot;
-	u16 local_port;
-	u16 peer_port;
-	u32 local_ip;
-	u32 peer_ip;
-	u32 opt0h;
-	u32 opt0l;
-	u32 iff_vlantag;
-	u32 rsvd;
+	__be16 local_port;
+	__be16 peer_port;
+	__be32 local_ip;
+	__be32 peer_ip;
+	__be32 opt0h;
+	__be32 opt0l;
+	__be32 iff_vlantag;
+	__be32 rsvd;
 };
 
 struct cpl_act_open_rpl {
 	union opcode_tid ot;
-	u16 local_port;
-	u16 peer_port;
-	u32 local_ip;
-	u32 peer_ip;
-	u32 new_tid;
+	__be16 local_port;
+	__be16 peer_port;
+	__be32 local_ip;
+	__be32 peer_ip;
+	__be32 new_tid;
 	u8  rsvd[3];
 	u8  status;
 };
 
 struct cpl_act_establish {
 	union opcode_tid ot;
-	u16 local_port;
-	u16 peer_port;
-	u32 local_ip;
-	u32 peer_ip;
-	u32 tos_tid;
-	u32 rsvd;
-	u32 snd_isn;
-	u32 rcv_isn;
+	__be16 local_port;
+	__be16 peer_port;
+	__be32 local_ip;
+	__be32 peer_ip;
+	__be32 tos_tid;
+	__be32 rsvd;
+	__be32 snd_isn;
+	__be32 rcv_isn;
 };
 
 struct cpl_get_tcb {
 	union opcode_tid ot;
-	u32 rsvd;
+	__be32 rsvd;
 };
 
 struct cpl_get_tcb_rpl {
 	union opcode_tid ot;
-	u16 len;
+	__be16 len;
 	u8 rsvd;
 	u8 status;
 };
 
 struct cpl_set_tcb {
 	union opcode_tid ot;
-	u16 len;
-	u16 rsvd;
+	__be16 len;
+	__be16 rsvd;
 };
 
 struct cpl_set_tcb_field {
 	union opcode_tid ot;
 	u8 rsvd[3];
 	u8 offset;
-	u32 mask;
-	u32 val;
+	__be32 mask;
+	__be32 val;
 };
 
 struct cpl_set_tcb_rpl {
@@ -326,40 +326,40 @@ struct cpl_set_tcb_rpl {
 
 struct cpl_pcmd {
 	union opcode_tid ot;
-	u16 dlen_in;
-	u16 dlen_out;
-	u32 pcmd_parm[2];
+	__be16 dlen_in;
+	__be16 dlen_out;
+	__be32 pcmd_parm[2];
 };
 
 struct cpl_pcmd_read {
 	union opcode_tid ot;
-	u32 rsvd1;
-	u16 rsvd2;
-	u32 addr;
-	u16 len;
+	__be32 rsvd1;
+	__be16 rsvd2;
+	__be32 addr;
+	__be16 len;
 };
 
 struct cpl_pcmd_read_rpl {
 	union opcode_tid ot;
-	u16 len;
+	__be16 len;
 };
 
 struct cpl_close_con_req {
 	union opcode_tid ot;
-	u32 rsvd;
+	__be32 rsvd;
 };
 
 struct cpl_close_con_rpl {
 	union opcode_tid ot;
 	u8 rsvd[3];
 	u8 status;
-	u32 snd_nxt;
-	u32 rcv_nxt;
+	__be32 snd_nxt;
+	__be32 rcv_nxt;
 };
 
 struct cpl_close_listserv_req {
 	union opcode_tid ot;
-	u32 rsvd;
+	__be32 rsvd;
 };
 
 struct cpl_close_listserv_rpl {
@@ -370,7 +370,7 @@ struct cpl_close_listserv_rpl {
 
 struct cpl_abort_req {
 	union opcode_tid ot;
-	u32 rsvd0;
+	__be32 rsvd0;
 	u8  rsvd1;
 	u8  cmd;
 	u8  rsvd2[6];
@@ -378,7 +378,7 @@ struct cpl_abort_req {
 
 struct cpl_abort_rpl {
 	union opcode_tid ot;
-	u32 rsvd0;
+	__be32 rsvd0;
 	u8  rsvd1;
 	u8  status;
 	u8  rsvd2[6];
@@ -386,43 +386,43 @@ struct cpl_abort_rpl {
 
 struct cpl_peer_close {
 	union opcode_tid ot;
-	u32 rsvd;
+	__be32 rsvd;
 };
 
 struct cpl_tx_data {
 	union opcode_tid ot;
-	u32 len;
-	u32 rsvd0;
-	u16 urg;
-	u16 flags;
+	__be32 len;
+	__be32 rsvd0;
+	__be16 urg;
+	__be16 flags;
 };
 
 struct cpl_tx_data_ack {
 	union opcode_tid ot;
-	u32 ack_seq;
+	__be32 ack_seq;
 };
 
 struct cpl_rx_data {
 	union opcode_tid ot;
-	u32 len;
-	u32 seq;
-	u16 urg;
+	__be32 len;
+	__be32 seq;
+	__be16 urg;
 	u8  rsvd;
 	u8  status;
 };
 
 struct cpl_rx_data_ack {
 	union opcode_tid ot;
-	u32 credit;
+	__be32 credit;
 };
 
 struct cpl_rx_data_ddp {
 	union opcode_tid ot;
-	u32 len;
-	u32 seq;
-	u32 nxt_seq;
-	u32 ulp_crc;
-	u16 ddp_status;
+	__be32 len;
+	__be32 seq;
+	__be32 nxt_seq;
+	__be32 ulp_crc;
+	__be16 ddp_status;
 	u8  rsvd;
 	u8  status;
 };
@@ -447,9 +447,9 @@ struct cpl_tx_pkt {
 	u8 ip_csum_dis:1;
 	u8 iff:4;
 #endif
-	u16 vlan;
-	u16 len_hi;
-	u16 len_lo;
+	__be16 vlan;
+	__be16 len_hi;
+	__be16 len_lo;
 };
 
 struct cpl_tx_pkt_lso {
@@ -467,7 +467,7 @@ struct cpl_tx_pkt_lso {
 	u8 ip_csum_dis:1;
 	u8 iff:4;
 #endif
-	u16 vlan;
+	__be16 vlan;
 	__be32 len;
 
 	u8 rsvd[5];
@@ -496,14 +496,14 @@ struct cpl_rx_pkt {
 	u8 csum_valid:1;
 	u8 iff:4;
 #endif
-	u16 csum;
-	u16 vlan;
-	u16 len;
+	__be16 csum;
+	__be16 vlan;
+	__be16 len;
 };
 
 struct cpl_l2t_write_req {
 	union opcode_tid ot;
-	u32 params;
+	__be32 params;
 	u8 rsvd1[2];
 	u8 dst_mac[6];
 };
@@ -522,7 +522,7 @@ struct cpl_l2t_read_req {
 
 struct cpl_l2t_read_rpl {
 	union opcode_tid ot;
-	u32 params;
+	__be32 params;
 	u8 rsvd1[2];
 	u8 dst_mac[6];
 };
@@ -539,10 +539,10 @@ struct cpl_smt_write_req {
 	u8 mtu_idx:3;
 	u8 rsvd1:1;
 #endif
-	u16 rsvd2;
-	u16 rsvd3;
+	__be16 rsvd2;
+	__be16 rsvd3;
 	u8  src_mac1[6];
-	u16 rsvd4;
+	__be16 rsvd4;
 	u8  src_mac0[6];
 };
 
@@ -562,7 +562,7 @@ struct cpl_smt_read_req {
 	u8 iff:4;
 	u8 rsvd1:4;
 #endif
-	u16 rsvd2;
+	__be16 rsvd2;
 };
 
 struct cpl_smt_read_rpl {
@@ -577,16 +577,16 @@ struct cpl_smt_read_rpl {
 	u8 mtu_idx:3;
 	u8 rsvd1:1;
 #endif
-	u16 rsvd2;
-	u16 rsvd3;
+	__be16 rsvd2;
+	__be16 rsvd3;
 	u8  src_mac1[6];
-	u16 rsvd4;
+	__be16 rsvd4;
 	u8  src_mac0[6];
 };
 
 struct cpl_rte_delete_req {
 	union opcode_tid ot;
-	u32 params;
+	__be32 params;
 };
 
 struct cpl_rte_delete_rpl {
@@ -597,9 +597,9 @@ struct cpl_rte_delete_rpl {
 
 struct cpl_rte_write_req {
 	union opcode_tid ot;
-	u32 params;
-	u32 netmask;
-	u32 faddr;
+	__be32 params;
+	__be32 netmask;
+	__be32 faddr;
 };
 
 struct cpl_rte_write_rpl {
@@ -610,7 +610,7 @@ struct cpl_rte_write_rpl {
 
 struct cpl_rte_read_req {
 	union opcode_tid ot;
-	u32 params;
+	__be32 params;
 };
 
 struct cpl_rte_read_rpl {
@@ -626,12 +626,12 @@ struct cpl_rte_read_rpl {
 	u8 rsvd1:7;
 #endif
 	u8 rsvd2[3];
-	u32 addr;
+	__be32 addr;
 };
 
 struct cpl_mss_change {
 	union opcode_tid ot;
-	u32 mss;
+	__be32 mss;
 };
 
 #endif /* _CXGB_CPL5_CMD_H_ */

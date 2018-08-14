@@ -1375,7 +1375,7 @@ static void sge_rx(struct sge *sge, struct freelQ *fl, unsigned int len)
 	dev = adapter->port[p->iff].dev;
 
 	skb->protocol = eth_type_trans(skb, dev);
-	if ((dev->features & NETIF_F_RXCSUM) && p->csum == 0xffff &&
+	if ((dev->features & NETIF_F_RXCSUM) && p->csum == htons(0xffff) &&
 	    skb->protocol == htons(ETH_P_IP) &&
 	    (skb->data[9] == IPPROTO_TCP || skb->data[9] == IPPROTO_UDP)) {
 		++st->rx_cso_good;
