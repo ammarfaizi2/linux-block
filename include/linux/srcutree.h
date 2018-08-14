@@ -109,7 +109,7 @@ struct srcu_struct {
 {									\
 	.sda = &pcpu_name,						\
 	.lock = __SPIN_LOCK_UNLOCKED(name.lock),			\
-	.srcu_gp_seq_needed = 0 - 1,					\
+	.srcu_gp_seq_needed = -1UL,					\
 	.srcu_boot_entry = LIST_HEAD_INIT(name.srcu_boot_entry),	\
 	__SRCU_DEP_MAP_INIT(name)					\
 }

@@ -437,7 +437,7 @@ do {									\
 #ifdef CONFIG_SRCU
 void srcu_init(void);
 #else /* #ifdef CONFIG_SRCU */
-static inline void void srcu_init(void) { }
+static inline void srcu_init(void) { }
 #endif /* #else #ifdef CONFIG_SRCU */
 
 #ifdef CONFIG_TINY_RCU
