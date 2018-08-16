@@ -3,6 +3,7 @@
 #define _SPARC_TERMIOS_H
 
 #include <uapi/asm/termios.h>
+#include <linux/uaccess.h>
 
 
 /*
@@ -64,84 +65,96 @@
 	err; \
 })
 
-#define user_termios_to_kernel_termios(k, u) \
-({ \
-	int err; \
-	err  = get_user((k)->c_iflag, &(u)->c_iflag); \
-	err |= get_user((k)->c_oflag, &(u)->c_oflag); \
-	err |= get_user((k)->c_cflag, &(u)->c_cflag); \
-	err |= get_user((k)->c_lflag, &(u)->c_lflag); \
-	err |= get_user((k)->c_line,  &(u)->c_line); \
-	err |= copy_from_user((k)->c_cc, (u)->c_cc, NCCS); \
-	if ((k)->c_lflag & ICANON) { \
-		err |= get_user((k)->c_cc[VEOF], &(u)->c_cc[VEOF]); \
-		err |= get_user((k)->c_cc[VEOL], &(u)->c_cc[VEOL]); \
-	} else { \
-		err |= get_user((k)->c_cc[VMIN],  &(u)->c_cc[_VMIN]); \
-		err |= get_user((k)->c_cc[VTIME], &(u)->c_cc[_VTIME]); \
-	} \
-	err |= get_user((k)->c_ispeed,  &(u)->c_ispeed); \
-	err |= get_user((k)->c_ospeed,  &(u)->c_ospeed); \
-	err; \
-})
+static inline int user_termios_to_kernel_termios(struct ktermios *k,
+						 struct termios2 __user *u)
+{
+	int err;
+	err  = get_user(k->c_iflag, &u->c_iflag);
+	err |= get_user(k->c_oflag, &u->c_oflag);
+	err |= get_user(k->c_cflag, &u->c_cflag);
+	err |= get_user(k->c_lflag, &u->c_lflag);
+	err |= get_user(k->c_line,  &u->c_line);
+	err |= copy_from_user(k->c_cc, u->c_cc, NCCS);
+	if (k->c_lflag & ICANON) {
+		err |= get_user(k->c_cc[VEOF], &u->c_cc[VEOF]);
+		err |= get_user(k->c_cc[VEOL], &u->c_cc[VEOL]);
+	} else {
+		err |= get_user(k->c_cc[VMIN],  &u->c_cc[_VMIN]);
+		err |= get_user(k->c_cc[VTIME], &u->c_cc[_VTIME]);
+	}
+	err |= get_user(k->c_ispeed,  &u->c_ispeed);
+	err |= get_user(k->c_ospeed,  &u->c_ospeed);
+	return err;
+}
 
-#define kernel_termios_to_user_termios(u, k) \
-({ \
-	int err; \
-	err  = put_user((k)->c_iflag, &(u)->c_iflag); \
-	err |= put_user((k)->c_oflag, &(u)->c_oflag); \
-	err |= put_user((k)->c_cflag, &(u)->c_cflag); \
-	err |= put_user((k)->c_lflag, &(u)->c_lflag); \
-	err |= put_user((k)->c_line, &(u)->c_line); \
-	err |= copy_to_user((u)->c_cc, (k)->c_cc, NCCS); \
-	if (!((k)->c_lflag & ICANON)) { \
-		err |= put_user((k)->c_cc[VMIN],  &(u)->c_cc[_VMIN]); \
-		err |= put_user((k)->c_cc[VTIME], &(u)->c_cc[_VTIME]); \
-	} else { \
-		err |= put_user((k)->c_cc[VEOF], &(u)->c_cc[VEOF]); \
-		err |= put_user((k)->c_cc[VEOL], &(u)->c_cc[VEOL]); \
-	} \
-	err |= put_user((k)->c_ispeed, &(u)->c_ispeed); \
-	err |= put_user((k)->c_ospeed, &(u)->c_ospeed); \
-	err; \
-})
+#define user_termios_to_kernel_termios user_termios_to_kernel_termios
 
-#define user_termios_to_kernel_termios_1(k, u) \
-({ \
-	int err; \
-	err  = get_user((k)->c_iflag, &(u)->c_iflag); \
-	err |= get_user((k)->c_oflag, &(u)->c_oflag); \
-	err |= get_user((k)->c_cflag, &(u)->c_cflag); \
-	err |= get_user((k)->c_lflag, &(u)->c_lflag); \
-	err |= get_user((k)->c_line,  &(u)->c_line); \
-	err |= copy_from_user((k)->c_cc, (u)->c_cc, NCCS); \
-	if ((k)->c_lflag & ICANON) { \
-		err |= get_user((k)->c_cc[VEOF], &(u)->c_cc[VEOF]); \
-		err |= get_user((k)->c_cc[VEOL], &(u)->c_cc[VEOL]); \
-	} else { \
-		err |= get_user((k)->c_cc[VMIN],  &(u)->c_cc[_VMIN]); \
-		err |= get_user((k)->c_cc[VTIME], &(u)->c_cc[_VTIME]); \
-	} \
-	err; \
-})
+static inline int kernel_termios_to_user_termios(struct termios2 __user *u,
+						 struct ktermios *k)
+{
+	int err;
+	err  = put_user(k->c_iflag, &u->c_iflag);
+	err |= put_user(k->c_oflag, &u->c_oflag);
+	err |= put_user(k->c_cflag, &u->c_cflag);
+	err |= put_user(k->c_lflag, &u->c_lflag);
+	err |= put_user(k->c_line, &u->c_line);
+	err |= copy_to_user(u->c_cc, k->c_cc, NCCS);
+	if (!(k->c_lflag & ICANON)) {
+		err |= put_user(k->c_cc[VMIN],  &u->c_cc[_VMIN]);
+		err |= put_user(k->c_cc[VTIME], &u->c_cc[_VTIME]);
+	} else {
+		err |= put_user(k->c_cc[VEOF], &u->c_cc[VEOF]);
+		err |= put_user(k->c_cc[VEOL], &u->c_cc[VEOL]);
+	}
+	err |= put_user(k->c_ispeed, &u->c_ispeed);
+	err |= put_user(k->c_ospeed, &u->c_ospeed);
+	return err;
+}
 
-#define kernel_termios_to_user_termios_1(u, k) \
-({ \
-	int err; \
-	err  = put_user((k)->c_iflag, &(u)->c_iflag); \
-	err |= put_user((k)->c_oflag, &(u)->c_oflag); \
-	err |= put_user((k)->c_cflag, &(u)->c_cflag); \
-	err |= put_user((k)->c_lflag, &(u)->c_lflag); \
-	err |= put_user((k)->c_line, &(u)->c_line); \
-	err |= copy_to_user((u)->c_cc, (k)->c_cc, NCCS); \
-	if (!((k)->c_lflag & ICANON)) { \
-		err |= put_user((k)->c_cc[VMIN],  &(u)->c_cc[_VMIN]); \
-		err |= put_user((k)->c_cc[VTIME], &(u)->c_cc[_VTIME]); \
-	} else { \
-		err |= put_user((k)->c_cc[VEOF], &(u)->c_cc[VEOF]); \
-		err |= put_user((k)->c_cc[VEOL], &(u)->c_cc[VEOL]); \
-	} \
-	err; \
-})
+#define kernel_termios_to_user_termios kernel_termios_to_user_termios
+
+static inline int user_termios_to_kernel_termios_1(struct ktermios *k,
+						 struct termios __user *u)
+{
+	int err;
+	err  = get_user(k->c_iflag, &u->c_iflag);
+	err |= get_user(k->c_oflag, &u->c_oflag);
+	err |= get_user(k->c_cflag, &u->c_cflag);
+	err |= get_user(k->c_lflag, &u->c_lflag);
+	err |= get_user(k->c_line,  &u->c_line);
+	err |= copy_from_user(k->c_cc, u->c_cc, NCCS);
+	if (k->c_lflag & ICANON) {
+		err |= get_user(k->c_cc[VEOF], &u->c_cc[VEOF]);
+		err |= get_user(k->c_cc[VEOL], &u->c_cc[VEOL]);
+	} else {
+		err |= get_user(k->c_cc[VMIN],  &u->c_cc[_VMIN]);
+		err |= get_user(k->c_cc[VTIME], &u->c_cc[_VTIME]);
+	}
+	return err;
+}
+
+#define user_termios_to_kernel_termios_1 user_termios_to_kernel_termios_1
+
+static inline int kernel_termios_to_user_termios_1(struct termios __user *u,
+						 struct ktermios *k)
+{
+	int err;
+	err  = put_user(k->c_iflag, &u->c_iflag);
+	err |= put_user(k->c_oflag, &u->c_oflag);
+	err |= put_user(k->c_cflag, &u->c_cflag);
+	err |= put_user(k->c_lflag, &u->c_lflag);
+	err |= put_user(k->c_line, &u->c_line);
+	err |= copy_to_user(u->c_cc, k->c_cc, NCCS);
+	if (!(k->c_lflag & ICANON)) {
+		err |= put_user(k->c_cc[VMIN],  &u->c_cc[_VMIN]);
+		err |= put_user(k->c_cc[VTIME], &u->c_cc[_VTIME]);
+	} else {
+		err |= put_user(k->c_cc[VEOF], &u->c_cc[VEOF]);
+		err |= put_user(k->c_cc[VEOL], &u->c_cc[VEOL]);
+	}
+	return err;
+}
+
+#define kernel_termios_to_user_termios_1 kernel_termios_to_user_termios_1
 
 #endif /* _SPARC_TERMIOS_H */

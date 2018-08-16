@@ -78,28 +78,4 @@ static inline int kernel_termios_to_user_termio(struct termio __user *termio,
 	return 0;
 }
 
-static inline int user_termios_to_kernel_termios(struct ktermios __user *k,
-	struct termios2 *u)
-{
-	return copy_from_user(k, u, sizeof(struct termios2)) ? -EFAULT : 0;
-}
-
-static inline int kernel_termios_to_user_termios(struct termios2 __user *u,
-	struct ktermios *k)
-{
-	return copy_to_user(u, k, sizeof(struct termios2)) ? -EFAULT : 0;
-}
-
-static inline int user_termios_to_kernel_termios_1(struct ktermios *k,
-	struct termios __user *u)
-{
-	return copy_from_user(k, u, sizeof(struct termios)) ? -EFAULT : 0;
-}
-
-static inline int kernel_termios_to_user_termios_1(struct termios __user *u,
-	struct ktermios *k)
-{
-	return copy_to_user(u, k, sizeof(struct termios)) ? -EFAULT : 0;
-}
-
 #endif /* _ASM_TERMIOS_H */
