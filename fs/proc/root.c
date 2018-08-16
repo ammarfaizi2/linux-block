@@ -315,6 +315,11 @@ int pid_ns_prepare_proc(struct pid_namespace *ns)
 	if (IS_ERR(fc))
 		return PTR_ERR(fc);
 
+	if (fc->user_ns != ns->user_ns) {
+		put_user_ns(fc->user_ns);
+		fc->user_ns = get_user_ns(ns->user_ns);
+	}
+
 	ctx = fc->fs_private;
 	if (ctx->pid_ns != ns) {
 		put_pid_ns(ctx->pid_ns);
