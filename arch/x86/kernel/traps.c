@@ -42,6 +42,7 @@
 #include <linux/edac.h>
 #endif
 
+#include <asm/traps_internal.h>
 #include <asm/stacktrace.h>
 #include <asm/processor.h>
 #include <asm/debugreg.h>
@@ -728,6 +729,21 @@ dotraplinkage void do_debug(struct pt_regs *regs, long error_code)
 	int user_icebp = 0;
 	unsigned long dr6;
 	int si_code;
+	ist_state_t prev_ist_state;
+
+	/*
+	 * On x86_64, we are likely to be running on the debug stack and,
+	 * without protection, a nested #DB will corrupt our stack.
+	 * Adjust the IDT so that nested #DB entries will be delivered
+	 * without using IST.
+	 *
+	 * This cannot protect against an NMI or MCE that happens before
+	 * we do this if that NMI or MCE's in turn results in #DB.  We
+	 * protect against that in the NMI and MCE code.
+	 */
+	pr_err("do_debug!!!\n");
+	prev_ist_state = debug_ist_save_disable();
+	pr_err("IST disabled -- prev was %d\n", prev_ist_state.ist);
 
 	ist_enter(regs);
 
@@ -787,12 +803,6 @@ dotraplinkage void do_debug(struct pt_regs *regs, long error_code)
 							SIGTRAP) == NOTIFY_STOP)
 		goto exit;
 
-	/*
-	 * Let others (NMI) know that the debug stack is in use
-	 * as we may switch to the interrupt stack.
-	 */
-	debug_stack_usage_inc();
-
 	/* It's safe to allow irq's after DR6 has been saved */
 	cond_local_irq_enable(regs);
 
@@ -800,7 +810,6 @@ dotraplinkage void do_debug(struct pt_regs *regs, long error_code)
 		handle_vm86_trap((struct kernel_vm86_regs *) regs, error_code,
 					X86_TRAP_DB);
 		cond_local_irq_disable(regs);
-		debug_stack_usage_dec();
 		goto exit;
 	}
 
@@ -819,10 +828,10 @@ dotraplinkage void do_debug(struct pt_regs *regs, long error_code)
 	if (tsk->thread.debugreg6 & (DR_STEP | DR_TRAP_BITS) || user_icebp)
 		send_sigtrap(tsk, regs, error_code, si_code);
 	cond_local_irq_disable(regs);
-	debug_stack_usage_dec();
 
 exit:
 	ist_exit(regs);
+	debug_ist_restore(prev_ist_state);
 }
 NOKPROBE_SYMBOL(do_debug);
 

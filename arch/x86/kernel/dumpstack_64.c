@@ -25,11 +25,6 @@ static char *exception_stack_names[N_EXCEPTION_STACKS] = {
 		[ MCE_STACK-1		]	= "#MC",
 };
 
-static unsigned long exception_stack_sizes[N_EXCEPTION_STACKS] = {
-	[0 ... N_EXCEPTION_STACKS - 1]		= EXCEPTION_STKSZ,
-	[DEBUG_STACK - 1]			= DEBUG_STKSZ
-};
-
 const char *stack_type_name(enum stack_type type)
 {
 	BUILD_BUG_ON(N_EXCEPTION_STACKS != 4);
@@ -62,7 +57,7 @@ static bool in_exception_stack(unsigned long *stack, struct stack_info *info)
 
 	for (k = 0; k < N_EXCEPTION_STACKS; k++) {
 		end   = (unsigned long *)raw_cpu_ptr(&orig_ist)->ist[k];
-		begin = end - (exception_stack_sizes[k] / sizeof(long));
+		begin = end - (EXCEPTION_STKSZ / sizeof(long));
 		regs  = (struct pt_regs *)end - 1;
 
 		if (stack <= begin || stack >= end)

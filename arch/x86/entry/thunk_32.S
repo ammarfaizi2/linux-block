@@ -30,8 +30,8 @@
 	.endm
 
 #ifdef CONFIG_TRACE_IRQFLAGS
-	THUNK trace_hardirqs_on_thunk,trace_hardirqs_on_caller,1
-	THUNK trace_hardirqs_off_thunk,trace_hardirqs_off_caller,1
+	THUNK trace_hardirqs_on_thunk,x86_trace_hardirqs_on_caller,1
+	THUNK trace_hardirqs_off_thunk,x86_trace_hardirqs_off_caller,1
 #endif
 
 #ifdef CONFIG_PREEMPT

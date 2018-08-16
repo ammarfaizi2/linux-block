@@ -43,6 +43,7 @@
 #include <linux/export.h>
 #include <linux/jump_label.h>
 
+#include <asm/traps_internal.h>
 #include <asm/intel-family.h>
 #include <asm/processor.h>
 #include <asm/traps.h>
@@ -1220,6 +1221,7 @@ void do_machine_check(struct pt_regs *regs, long error_code)
 	char *msg = "Unknown";
 	struct mce m, *final;
 	int worst = 0;
+	ist_state_t prev_ist_state;
 
 	/*
 	 * Establish sequential order between the CPUs entering the machine
@@ -1247,6 +1249,13 @@ void do_machine_check(struct pt_regs *regs, long error_code)
 
 	if (__mc_check_crashing_cpu(cpu))
 		return;
+
+	/*
+	 * If we interrupted a #DB entry outside do_debug()'s
+	 * debug_ist_save_disable() protection, a nested #DB
+	 * delivered using IST would corrupt the stack.
+	 */
+	prev_ist_state = debug_ist_save_disable();
 
 	ist_enter(regs);
 
@@ -1339,6 +1348,11 @@ void do_machine_check(struct pt_regs *regs, long error_code)
 
 	/* Fault was in user mode and we need to take some action */
 	if ((m.cs & 3) == 3) {
+		/*
+		 * We need to restore the percpu IST state before we might
+		 * schedule.
+		 */
+		debug_ist_restore(prev_ist_state);
 		ist_begin_non_atomic(regs);
 		local_irq_enable();
 
@@ -1346,6 +1360,10 @@ void do_machine_check(struct pt_regs *regs, long error_code)
 			force_sig(SIGBUS, current);
 		local_irq_disable();
 		ist_end_non_atomic();
+
+		/* Return without debug_ist_restore() */
+		ist_exit(regs);
+		return;
 	} else {
 		if (!fixup_exception(regs, X86_TRAP_MC))
 			mce_panic("Failed kernel mode recovery", &m, NULL);
@@ -1353,6 +1371,7 @@ void do_machine_check(struct pt_regs *regs, long error_code)
 
 out_ist:
 	ist_exit(regs);
+	debug_ist_restore(prev_ist_state);
 }
 EXPORT_SYMBOL_GPL(do_machine_check);
 

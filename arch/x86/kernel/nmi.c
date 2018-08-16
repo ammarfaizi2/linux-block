@@ -28,6 +28,7 @@
 #endif
 
 #include <linux/atomic.h>
+#include <asm/traps_internal.h>
 #include <asm/traps.h>
 #include <asm/mach_traps.h>
 #include <asm/nmi.h>
@@ -492,6 +493,8 @@ static DEFINE_PER_CPU(int, update_debug_stack);
 dotraplinkage notrace void
 do_nmi(struct pt_regs *regs, long error_code)
 {
+	ist_state_t prev_ist_state;
+
 	if (this_cpu_read(nmi_state) != NMI_NOT_RUNNING) {
 		this_cpu_write(nmi_state, NMI_LATCHED);
 		return;
@@ -500,18 +503,12 @@ do_nmi(struct pt_regs *regs, long error_code)
 	this_cpu_write(nmi_cr2, read_cr2());
 nmi_restart:
 
-#ifdef CONFIG_X86_64
 	/*
-	 * If we interrupted a breakpoint, it is possible that
-	 * the nmi handler will have breakpoints too. We need to
-	 * change the IDT such that breakpoints that happen here
-	 * continue to use the NMI stack.
+	 * If we interrupted a #DB entry outside do_debug()'s
+	 * debug_ist_save_disable() protection, a nested #DB
+	 * delivered using IST would corrupt the stack.
 	 */
-	if (unlikely(is_debug_stack(regs->sp))) {
-		debug_stack_set_zero();
-		this_cpu_write(update_debug_stack, 1);
-	}
-#endif
+	prev_ist_state = debug_ist_save_disable();
 
 	nmi_enter();
 
@@ -522,12 +519,7 @@ nmi_restart:
 
 	nmi_exit();
 
-#ifdef CONFIG_X86_64
-	if (unlikely(this_cpu_read(update_debug_stack))) {
-		debug_stack_reset();
-		this_cpu_write(update_debug_stack, 0);
-	}
-#endif
+	debug_ist_restore(prev_ist_state);
 
 	if (unlikely(this_cpu_read(nmi_cr2) != read_cr2()))
 		write_cr2(this_cpu_read(nmi_cr2));

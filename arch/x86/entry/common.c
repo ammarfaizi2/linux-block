@@ -46,6 +46,33 @@ __visible inline void enter_from_user_mode(void)
 static inline void enter_from_user_mode(void) {}
 #endif
 
+#ifdef CONFIG_TRACE_IRQFLAGS
+/*
+ * TRACE_IRQS_ON and such can be called directly from the entry asm in
+ * contexts where we are on the #DB stack but the #DB IST is still enabled.
+ * Rather than trying to specially handle every such case in the entry asm, we
+ * wrap all uses.  This should have minimal overhead, since toggling the IST
+ * state is very fast.
+ */
+__visible void x86_trace_hardirqs_on_caller(unsigned long ip)
+{
+	ist_state_t prev_ist_state;
+
+	prev_ist_state = debug_ist_save_disable();
+	trace_hardirqs_on_caller(ip);
+	debug_ist_restore(prev_ist_state);
+}
+
+__visible void x86_trace_hardirqs_off_caller(unsigned long ip)
+{
+	ist_state_t prev_ist_state;
+
+	prev_ist_state = debug_ist_save_disable();
+	trace_hardirqs_off_caller(ip);
+	debug_ist_restore(prev_ist_state);
+}
+#endif
+
 static void do_audit_syscall_entry(struct pt_regs *regs, u32 arch)
 {
 #ifdef CONFIG_X86_64

@@ -13,7 +13,7 @@ static DEFINE_PER_CPU_PAGE_ALIGNED(struct entry_stack_page, entry_stack_storage)
 
 #ifdef CONFIG_X86_64
 static DEFINE_PER_CPU_PAGE_ALIGNED(char, exception_stacks
-	[(N_EXCEPTION_STACKS - 1) * EXCEPTION_STKSZ + DEBUG_STKSZ]);
+	[N_EXCEPTION_STACKS * EXCEPTION_STKSZ]);
 #endif
 
 struct cpu_entry_area *get_cpu_entry_area(int cpu)
@@ -79,33 +79,6 @@ static void percpu_setup_debug_store(int cpu)
 
 #ifdef CONFIG_X86_64
 
-/*
- * NB: Yes, this is a mess.  The mess is going away, and that's the point
- * of the patchset that moved this particular mess here, but it can't
- * go away quite yet.  Sorry.
- */
-static DEFINE_PER_CPU(unsigned long, debug_stack_addr);
-DEFINE_PER_CPU(int, debug_stack_usage);
-
-int is_debug_stack(unsigned long addr)
-{
-	return __this_cpu_read(debug_stack_usage) ||
-		(addr <= __this_cpu_read(debug_stack_addr) &&
-		 addr > (__this_cpu_read(debug_stack_addr) - DEBUG_STKSZ));
-}
-NOKPROBE_SYMBOL(is_debug_stack);
-
-/*
- * Special IST stacks which the CPU switches to when it calls
- * an IST-marked descriptor entry. Up to 7 stacks (hardware
- * limit), all of them are 4K, except the debug stack which
- * is 8K.
- */
-static const unsigned int exception_stack_sizes[N_EXCEPTION_STACKS] = {
-	  [0 ... N_EXCEPTION_STACKS - 1]	= EXCEPTION_STKSZ,
-	  [DEBUG_STACK - 1]			= DEBUG_STKSZ
-};
-
 static void __init setup_ist(int cpu)
 {
 	struct orig_ist *oist = &per_cpu(orig_ist, cpu);
@@ -128,11 +101,8 @@ static void __init setup_ist(int cpu)
 	 * is initialized enough.
 	 */
 	for (v = 0; v < N_EXCEPTION_STACKS; v++) {
-		estacks += exception_stack_sizes[v];
-		oist->ist[v] = t->x86_tss.ist[v] =
-			(unsigned long)estacks;
-		if (v == DEBUG_STACK-1)
-			per_cpu(debug_stack_addr, cpu) = (unsigned long)estacks;
+		estacks += EXCEPTION_STKSZ;
+		oist->ist[v] = t->x86_tss.ist[v] = (unsigned long)estacks;
 	}
 }
 #endif

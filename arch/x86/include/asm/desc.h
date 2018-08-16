@@ -46,8 +46,6 @@ struct idt_page {
 
 DECLARE_PER_CPU_PAGE_ALIGNED(struct idt_page, idt_page);
 
-extern gate_desc debug_idt_table[];
-
 struct gdt_page {
 	struct desc_struct gdt[GDT_ENTRIES];
 } __attribute__((aligned(PAGE_SIZE)));
@@ -404,43 +402,10 @@ static inline void load_idt_ptr(const gate_desc *idt)
 	load_idt((const struct desc_ptr *)&descr);
 }
 
-#ifdef CONFIG_X86_64
-DECLARE_PER_CPU(u32, debug_idt_ctr);
-static inline bool is_debug_idt_enabled(void)
-{
-	if (this_cpu_read(debug_idt_ctr))
-		return true;
 
-	return false;
-}
-
-static inline void load_debug_idt(void)
-{
-	load_idt_ptr(debug_idt_table);
-}
-#else
-static inline bool is_debug_idt_enabled(void)
-{
-	return false;
-}
-
-static inline void load_debug_idt(void)
-{
-}
-#endif
-
-/*
- * The load_current_idt() must be called with interrupts disabled
- * to avoid races. That way the IDT will always be set back to the expected
- * descriptor. It's also called when a CPU is being initialized, and
- * that doesn't need to disable interrupts, as nothing should be
- * bothering the CPU then.
- */
 static inline void load_current_idt(void)
 {
-	/* NB: This is temporary.  debug_idt_table is going away. */
-	load_idt_ptr(is_debug_idt_enabled() ? debug_idt_table :
-		     (const void *)get_cpu_entry_area(smp_processor_id())->idt);
+	load_idt_ptr((const void *)get_cpu_entry_area(smp_processor_id())->idt);
 }
 
 extern void idt_setup_early_handler(void);

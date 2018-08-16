@@ -38,7 +38,7 @@ struct cpu_entry_area {
 	 * In the future, this should have a separate slot for each stack
 	 * with guard pages between them.
 	 */
-	char exception_stacks[(N_EXCEPTION_STACKS - 1) * EXCEPTION_STKSZ + DEBUG_STKSZ];
+	char exception_stacks[N_EXCEPTION_STACKS * EXCEPTION_STKSZ];
 #endif
 #ifdef CONFIG_CPU_SUP_INTEL
 	/*
