@@ -26,44 +26,28 @@
 #define INIT_C_CC "\003\034\177\025\004\000\000\000\021\023\032\031\022\025\027\026\001"
 
 /*
- * Translate a "termio" structure into a "termios". Ugh.
- */
-#define user_termio_to_kernel_termios(termios, termio) \
-({ \
-	unsigned short tmp; \
-	int err; \
-	err = get_user(tmp, &(termio)->c_iflag); \
-	(termios)->c_iflag = (0xffff0000 & ((termios)->c_iflag)) | tmp; \
-	err |= get_user(tmp, &(termio)->c_oflag); \
-	(termios)->c_oflag = (0xffff0000 & ((termios)->c_oflag)) | tmp; \
-	err |= get_user(tmp, &(termio)->c_cflag); \
-	(termios)->c_cflag = (0xffff0000 & ((termios)->c_cflag)) | tmp; \
-	err |= get_user(tmp, &(termio)->c_lflag); \
-	(termios)->c_lflag = (0xffff0000 & ((termios)->c_lflag)) | tmp; \
-	err |= copy_from_user((termios)->c_cc, (termio)->c_cc, NCC); \
-	err; \
-})
-
-/*
  * Translate a "termios" structure into a "termio". Ugh.
  *
  * Note the "fun" _VMIN overloading.
  */
-#define kernel_termios_to_user_termio(termio, termios) \
-({ \
-	int err; \
-	err  = put_user((termios)->c_iflag, &(termio)->c_iflag); \
-	err |= put_user((termios)->c_oflag, &(termio)->c_oflag); \
-	err |= put_user((termios)->c_cflag, &(termio)->c_cflag); \
-	err |= put_user((termios)->c_lflag, &(termio)->c_lflag); \
-	err |= put_user((termios)->c_line,  &(termio)->c_line); \
-	err |= copy_to_user((termio)->c_cc, (termios)->c_cc, NCC); \
-	if (!((termios)->c_lflag & ICANON)) { \
-		err |= put_user((termios)->c_cc[VMIN], &(termio)->c_cc[_VMIN]); \
-		err |= put_user((termios)->c_cc[VTIME], &(termio)->c_cc[_VTIME]); \
-	} \
-	err; \
-})
+static inline int kernel_termios_to_user_termio(struct termio __user *termio,
+						struct ktermios *termios)
+{
+	struct termio v;
+	memset(&v, 0, sizeof(struct termio));
+	v.c_iflag = termios->c_iflag;
+	v.c_oflag = termios->c_oflag;
+	v.c_cflag = termios->c_cflag;
+	v.c_lflag = termios->c_lflag;
+	v.c_line = termios->c_line;
+	memcpy(v.c_cc, termios->c_cc, NCC);
+	if (!(v.c_lflag & ICANON)) {
+		v.c_cc[_VMIN] = termios->c_cc[VMIN];
+		v.c_cc[_VTIME] = termios->c_cc[VTIME];
+	}
+	return copy_to_user(termio, &v, sizeof(struct termio));
+}
+#define kernel_termios_to_user_termio kernel_termios_to_user_termio
 
 static inline int user_termios_to_kernel_termios(struct ktermios *k,
 						 struct termios2 __user *u)
