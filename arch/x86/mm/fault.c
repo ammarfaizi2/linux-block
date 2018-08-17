@@ -630,7 +630,7 @@ static int is_f00f_bug(struct pt_regs *regs, unsigned long address)
 	 * Pentium F0 0F C7 C8 bug workaround:
 	 */
 	if (boot_cpu_has_bug(X86_BUG_F00F)) {
-		nr = (address - idt_descr.address) >> 3;
+		nr = (address - CPU_ENTRY_AREA_RO_IDT) >> 3;
 
 		if (nr == 6) {
 			do_invalid_op(regs, 0);

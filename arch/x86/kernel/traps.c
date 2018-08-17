@@ -964,7 +964,6 @@ void __init trap_init(void)
 	 * It will be reloaded in cpu_init() */
 	cea_set_pte(CPU_ENTRY_AREA_RO_IDT_VADDR, __pa_symbol(idt_table),
 		    PAGE_KERNEL_RO);
-	idt_descr.address = CPU_ENTRY_AREA_RO_IDT;
 
 	/*
 	 * Should be a barrier for any external CPU state:
