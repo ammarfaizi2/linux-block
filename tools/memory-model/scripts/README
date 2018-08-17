@@ -32,13 +32,21 @@ cmplitmushist.sh
 
 	Compare output from two different runs of the same litmus tests,
 	with the absolute pathnames of the tests to run provided one
-	name per line on standard input.
+	name per line on standard input.  Not normally run manually,
+	provided instead for use by other scripts.
 
 initlitmushist.sh
 
 	Run all litmus tests having no more than the specified number
 	of processes given a specified timeout, recording the results
 	in .litmus.out files.
+
+judgelitmus.sh
+
+	Given a .litmus file and its .litmus.out herd output, check the
+	.litmus.out file against the .litmus file's "Result:" comment to
+	judge whether the test ran correctly.  Not normally run manually,
+	provided instead for use by other scripts.
 
 newlitmushist.sh
 
