@@ -16,6 +16,7 @@
  * There is no direct allocation of a struct cpu_entry_area.
  */
 struct cpu_entry_area {
+	char idt[PAGE_SIZE];
 	char gdt[PAGE_SIZE];
 
 	/*
@@ -60,14 +61,6 @@ DECLARE_PER_CPU(struct cpu_entry_area *, cpu_entry_area);
 
 extern void setup_cpu_entry_areas(void);
 extern void cea_set_pte(void *cea_vaddr, phys_addr_t pa, pgprot_t flags);
-
-#define	CPU_ENTRY_AREA_RO_IDT		CPU_ENTRY_AREA_BASE
-#define CPU_ENTRY_AREA_PER_CPU		(CPU_ENTRY_AREA_RO_IDT + PAGE_SIZE)
-
-#define CPU_ENTRY_AREA_RO_IDT_VADDR	((void *)CPU_ENTRY_AREA_RO_IDT)
-
-#define CPU_ENTRY_AREA_MAP_SIZE			\
-	(CPU_ENTRY_AREA_PER_CPU + CPU_ENTRY_AREA_TOT_SIZE - CPU_ENTRY_AREA_BASE)
 
 extern struct cpu_entry_area *get_cpu_entry_area(int cpu);
 

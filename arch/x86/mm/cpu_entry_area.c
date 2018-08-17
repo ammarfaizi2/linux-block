@@ -17,7 +17,7 @@ static DEFINE_PER_CPU_PAGE_ALIGNED(char, exception_stacks
 
 struct cpu_entry_area *get_cpu_entry_area(int cpu)
 {
-	unsigned long va = CPU_ENTRY_AREA_PER_CPU + cpu * CPU_ENTRY_AREA_SIZE;
+	unsigned long va = CPU_ENTRY_AREA_BASE + cpu * CPU_ENTRY_AREA_SIZE;
 	BUILD_BUG_ON(sizeof(struct cpu_entry_area) % PAGE_SIZE != 0);
 
 	return (struct cpu_entry_area *) va;
@@ -99,6 +99,19 @@ static void __init setup_cpu_entry_area(int cpu)
 	pgprot_t tss_prot = PAGE_KERNEL;
 #endif
 
+	/*
+	 * Remap the IDT read-only in cpu_entry_area.  This serves a few
+	 * purposes: it hides the percpu IDT address from unprivileged
+	 * programs using SIDT on non-UMIP systems, and it's part of the
+	 * FOOF bug workaround.
+	 *
+	 * (Of course, it's not clear that any non-UMIP system exists that
+	 *  doesn't leak the percpu area addresses via some speculative
+	 *  execution vulnerability.)
+	 */
+	cea_set_pte(&get_cpu_entry_area(cpu)->idt,  __pa_symbol(idt_table),
+		    PAGE_KERNEL_RO);
+
 	cea_set_pte(&get_cpu_entry_area(cpu)->gdt, get_cpu_gdt_paddr(cpu),
 		    gdt_prot);
 
@@ -150,11 +163,11 @@ static __init void setup_cpu_entry_area_ptes(void)
 #ifdef CONFIG_X86_32
 	unsigned long start, end;
 
-	BUILD_BUG_ON(CPU_ENTRY_AREA_PAGES * PAGE_SIZE < CPU_ENTRY_AREA_MAP_SIZE);
+	BUILD_BUG_ON(CPU_ENTRY_AREA_PAGES * PAGE_SIZE < CPU_ENTRY_AREA_TOT_SIZE);
 	BUG_ON(CPU_ENTRY_AREA_BASE & ~PMD_MASK);
 
 	start = CPU_ENTRY_AREA_BASE;
-	end = start + CPU_ENTRY_AREA_MAP_SIZE;
+	end = start + CPU_ENTRY_AREA_TOT_SIZE;
 
 	/* Careful here: start + PMD_SIZE might wrap around */
 	for (; start < end && start >= CPU_ENTRY_AREA_BASE; start += PMD_SIZE)

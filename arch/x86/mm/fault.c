@@ -619,24 +619,34 @@ static int is_errata100(struct pt_regs *regs, unsigned long address)
 	return 0;
 }
 
-static int is_f00f_bug(struct pt_regs *regs, unsigned long address)
+static bool is_f00f_bug(struct pt_regs *regs, unsigned long address)
 {
 #ifdef CONFIG_X86_F00F_BUG
-	unsigned long nr;
+	unsigned long offset, nr;
+
+	if (!static_cpu_has_bug(X86_BUG_F00F))
+		return false;
 
 	/*
-	 * Pentium F0 0F C7 C8 bug workaround:
+	 * Pentium F0 0F C7 C8 bug workaround.  This is a bit complicated
+	 * because IRQs are on, so we don't know which CPU the fault came from,
+	 * which means that we need to check whether the fault was against
+	 * any CPU's IDT.
 	 */
-	if (boot_cpu_has_bug(X86_BUG_F00F)) {
-		nr = (address - CPU_ENTRY_AREA_RO_IDT) >> 3;
+	offset = address - CPU_ENTRY_AREA_BASE;
+	if (likely(offset >= CPU_ENTRY_AREA_TOT_SIZE))
+		return false;
 
-		if (nr == 6) {
-			do_invalid_op(regs, 0);
-			return 1;
-		}
+	offset %= CPU_ENTRY_AREA_SIZE;
+	nr = (offset - offsetof(struct cpu_entry_area, idt)) >> 3;
+
+	if (nr == 6) {
+		do_invalid_op(regs, 0);
+		return true;
 	}
 #endif
-	return 0;
+
+	return false;
 }
 
 static void

@@ -433,8 +433,9 @@ static inline void load_debug_idt(void)
  */
 static inline void load_current_idt(void)
 {
+	/* NB: This is temporary.  debug_idt_table is going away. */
 	load_idt_ptr(is_debug_idt_enabled() ? debug_idt_table :
-		     CPU_ENTRY_AREA_RO_IDT_VADDR);
+		     (const void *)get_cpu_entry_area(smp_processor_id())->idt);
 }
 
 extern void idt_setup_early_handler(void);
