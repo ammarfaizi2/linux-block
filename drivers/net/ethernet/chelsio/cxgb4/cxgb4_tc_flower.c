@@ -43,27 +43,6 @@
 
 #define STATS_CHECK_PERIOD (HZ / 2)
 
-static struct ch_tc_pedit_fields pedits[] = {
-	PEDIT_FIELDS(ETH_, DMAC_31_0, 4, dmac, 0),
-	PEDIT_FIELDS(ETH_, DMAC_47_32, 2, dmac, 4),
-	PEDIT_FIELDS(ETH_, SMAC_15_0, 2, smac, 0),
-	PEDIT_FIELDS(ETH_, SMAC_47_16, 4, smac, 2),
-	PEDIT_FIELDS(IP4_, SRC, 4, nat_fip, 0),
-	PEDIT_FIELDS(IP4_, DST, 4, nat_lip, 0),
-	PEDIT_FIELDS(IP6_, SRC_31_0, 4, nat_fip, 0),
-	PEDIT_FIELDS(IP6_, SRC_63_32, 4, nat_fip, 4),
-	PEDIT_FIELDS(IP6_, SRC_95_64, 4, nat_fip, 8),
-	PEDIT_FIELDS(IP6_, SRC_127_96, 4, nat_fip, 12),
-	PEDIT_FIELDS(IP6_, DST_31_0, 4, nat_lip, 0),
-	PEDIT_FIELDS(IP6_, DST_63_32, 4, nat_lip, 4),
-	PEDIT_FIELDS(IP6_, DST_95_64, 4, nat_lip, 8),
-	PEDIT_FIELDS(IP6_, DST_127_96, 4, nat_lip, 12),
-	PEDIT_FIELDS(TCP_, SPORT, 2, nat_fport, 0),
-	PEDIT_FIELDS(TCP_, DPORT, 2, nat_lport, 0),
-	PEDIT_FIELDS(UDP_, SPORT, 2, nat_fport, 0),
-	PEDIT_FIELDS(UDP_, DPORT, 2, nat_lport, 0),
-};
-
 static struct ch_tc_flower_entry *allocate_flower_entry(void)
 {
 	struct ch_tc_flower_entry *new = kzalloc(sizeof(*new), GFP_KERNEL);
@@ -306,81 +285,63 @@ static int cxgb4_validate_flow_match(struct net_device *dev,
 	return 0;
 }
 
-static void offload_pedit(struct ch_filter_specification *fs, u32 val, u32 mask,
-			  u8 field)
+static void process_pedit_field(struct ch_filter_specification *fs, __be32 val,
+				__be32 mask, u32 offset, u8 htype)
 {
-	u32 set_val = val & ~mask;
-	u32 offset = 0;
-	u8 size = 1;
-	int i;
-
-	for (i = 0; i < ARRAY_SIZE(pedits); i++) {
-		if (pedits[i].field == field) {
-			offset = pedits[i].offset;
-			size = pedits[i].size;
-			break;
-		}
-	}
-	memcpy((u8 *)fs + offset, &set_val, size);
-}
-
-static void process_pedit_field(struct ch_filter_specification *fs, u32 val,
-				u32 mask, u32 offset, u8 htype)
-{
+	val &= ~mask;
 	switch (htype) {
 	case TCA_PEDIT_KEY_EX_HDR_TYPE_ETH:
 		switch (offset) {
 		case PEDIT_ETH_DMAC_31_0:
 			fs->newdmac = 1;
-			offload_pedit(fs, val, mask, ETH_DMAC_31_0);
+			memcpy(fs->dmac, &val, 4);
 			break;
 		case PEDIT_ETH_DMAC_47_32_SMAC_15_0:
 			if (~mask & PEDIT_ETH_DMAC_MASK)
-				offload_pedit(fs, val, mask, ETH_DMAC_47_32);
+				memcpy(fs->dmac + 4, &val, 2);
 			else
-				offload_pedit(fs, val >> 16, mask >> 16,
-					      ETH_SMAC_15_0);
+				memcpy(fs->smac, (__be16 *)&val + 1, 2);
 			break;
 		case PEDIT_ETH_SMAC_47_16:
 			fs->newsmac = 1;
-			offload_pedit(fs, val, mask, ETH_SMAC_47_16);
+			memcpy(fs->smac + 2, &val, 4);
 		}
 		break;
 	case TCA_PEDIT_KEY_EX_HDR_TYPE_IP4:
 		switch (offset) {
 		case PEDIT_IP4_SRC:
-			offload_pedit(fs, val, mask, IP4_SRC);
+			memcpy(fs->nat_fip, &val, 4);
 			break;
 		case PEDIT_IP4_DST:
-			offload_pedit(fs, val, mask, IP4_DST);
+			memcpy(fs->nat_lip, &val, 4);
 		}
 		fs->nat_mode = NAT_MODE_ALL;
 		break;
 	case TCA_PEDIT_KEY_EX_HDR_TYPE_IP6:
 		switch (offset) {
 		case PEDIT_IP6_SRC_31_0:
-			offload_pedit(fs, val, mask, IP6_SRC_31_0);
+			memcpy(fs->nat_fip, &val, 4);
 			break;
 		case PEDIT_IP6_SRC_63_32:
-			offload_pedit(fs, val, mask, IP6_SRC_63_32);
+			memcpy(fs->nat_fip + 4, &val, 4);
 			break;
 		case PEDIT_IP6_SRC_95_64:
-			offload_pedit(fs, val, mask, IP6_SRC_95_64);
+			memcpy(fs->nat_fip + 8, &val, 4);
 			break;
 		case PEDIT_IP6_SRC_127_96:
-			offload_pedit(fs, val, mask, IP6_SRC_127_96);
+			memcpy(fs->nat_fip + 12, &val, 4);
 			break;
 		case PEDIT_IP6_DST_31_0:
-			offload_pedit(fs, val, mask, IP6_DST_31_0);
+			memcpy(fs->nat_lip, &val, 4);
 			break;
 		case PEDIT_IP6_DST_63_32:
-			offload_pedit(fs, val, mask, IP6_DST_63_32);
+			memcpy(fs->nat_lip + 4, &val, 4);
 			break;
 		case PEDIT_IP6_DST_95_64:
-			offload_pedit(fs, val, mask, IP6_DST_95_64);
+			memcpy(fs->nat_lip + 8, &val, 4);
 			break;
 		case PEDIT_IP6_DST_127_96:
-			offload_pedit(fs, val, mask, IP6_DST_127_96);
+			memcpy(fs->nat_lip + 12, &val, 4);
 		}
 		fs->nat_mode = NAT_MODE_ALL;
 		break;
@@ -388,12 +349,9 @@ static void process_pedit_field(struct ch_filter_specification *fs, u32 val,
 		switch (offset) {
 		case PEDIT_TCP_SPORT_DPORT:
 			if (~mask & PEDIT_TCP_UDP_SPORT_MASK)
-				offload_pedit(fs, cpu_to_be32(val) >> 16,
-					      cpu_to_be32(mask) >> 16,
-					      TCP_SPORT);
+				fs->nat_fport = be16_to_cpup((__be16 *)&val);
 			else
-				offload_pedit(fs, cpu_to_be32(val),
-					      cpu_to_be32(mask), TCP_DPORT);
+				fs->nat_lport = be16_to_cpup((__be16 *)&val + 1);
 		}
 		fs->nat_mode = NAT_MODE_ALL;
 		break;
@@ -401,12 +359,9 @@ static void process_pedit_field(struct ch_filter_specification *fs, u32 val,
 		switch (offset) {
 		case PEDIT_UDP_SPORT_DPORT:
 			if (~mask & PEDIT_TCP_UDP_SPORT_MASK)
-				offload_pedit(fs, cpu_to_be32(val) >> 16,
-					      cpu_to_be32(mask) >> 16,
-					      UDP_SPORT);
+				fs->nat_fport = be16_to_cpup((__be16 *)&val);
 			else
-				offload_pedit(fs, cpu_to_be32(val),
-					      cpu_to_be32(mask), UDP_DPORT);
+				fs->nat_lport = be16_to_cpup((__be16 *)&val + 1);
 		}
 		fs->nat_mode = NAT_MODE_ALL;
 	}
@@ -453,7 +408,8 @@ static void cxgb4_process_flow_actions(struct net_device *in,
 				break;
 			}
 		} else if (is_tcf_pedit(a)) {
-			u32 mask, val, offset;
+			__be32 mask, val;
+			u32 offset;
 			int nkeys, i;
 			u8 htype;
 
@@ -471,23 +427,18 @@ static void cxgb4_process_flow_actions(struct net_device *in,
 	}
 }
 
-static bool valid_l4_mask(u32 mask)
+static bool valid_l4_mask(__be32 mask)
 {
-	u16 hi, lo;
-
-	/* Either the upper 16-bits (SPORT) OR the lower
-	 * 16-bits (DPORT) can be set, but NOT BOTH.
+	/* Either the SPORT OR DPORT can be set, but NOT BOTH.
 	 */
-	hi = (mask >> 16) & 0xFFFF;
-	lo = mask & 0xFFFF;
-
-	return hi && lo ? false : true;
+	return !(mask && htonl(0xffff)) || !(mask & htonl(0xffff0000));
 }
 
 static bool valid_pedit_action(struct net_device *dev,
 			       const struct tc_action *a)
 {
-	u32 mask, offset;
+	__be32 mask;
+	u32 offset;
 	u8 cmd, htype;
 	int nkeys, i;
 
