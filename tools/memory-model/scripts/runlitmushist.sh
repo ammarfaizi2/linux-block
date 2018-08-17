@@ -28,7 +28,7 @@ else
 fi
 
 # Prefixes for per-CPU scripts
-for ((i=0;i<$LKMM_CPUS;i++))
+for ((i=0;i<$LKMM_JOBS;i++))
 do
 	echo dir="$LKMM_DESTDIR" > $T/$i.sh
 	echo T=$T >> $T/$i.sh
@@ -61,7 +61,7 @@ awk -v q="'" -v b='\\' '
 	print "echo `grep " q "^P[0-9]" b "+(" q " " $0 " | tail -1 | sed -e " q "s/^P" b "([0-9]" b "+" b ")(.*$/" b "1/" q "` " $0
 }' | bash |
 sort -k1n |
-awk -v ncpu=$LKMM_CPUS -v t=$T '
+awk -v ncpu=$LKMM_JOBS -v t=$T '
 {
 	print "runtest " $2 >> t "/" NR % ncpu ".sh";
 }
