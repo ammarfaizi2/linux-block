@@ -40,7 +40,12 @@ static inline void fill_ldt(struct desc_struct *desc, const struct user_desc *in
 	desc->l			= 0;
 }
 
-extern gate_desc idt_table[];
+struct idt_page {
+	gate_desc idt[IDT_ENTRIES];
+} __attribute__((aligned(PAGE_SIZE)));
+
+DECLARE_PER_CPU_PAGE_ALIGNED(struct idt_page, idt_page);
+
 extern gate_desc debug_idt_table[];
 
 struct gdt_page {

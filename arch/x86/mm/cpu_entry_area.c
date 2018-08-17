@@ -170,7 +170,8 @@ static void __init setup_cpu_entry_area(int cpu)
 	 *  doesn't leak the percpu area addresses via some speculative
 	 *  execution vulnerability.)
 	 */
-	cea_set_pte(&get_cpu_entry_area(cpu)->idt,  __pa_symbol(idt_table),
+	cea_set_pte(&get_cpu_entry_area(cpu)->idt,
+		    per_cpu_ptr_to_phys(per_cpu(idt_page, cpu).idt),
 		    PAGE_KERNEL_RO);
 
 	cea_set_pte(&get_cpu_entry_area(cpu)->gdt, get_cpu_gdt_paddr(cpu),

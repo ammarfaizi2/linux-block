@@ -16,6 +16,8 @@ struct idt_data {
 	const void	*addr;
 };
 
+static bool percpu_idts_setup;
+
 #define DPL0		0x0
 #define DPL3		0x3
 
@@ -172,8 +174,10 @@ static const __initconst struct idt_data dbg_idts[] = {
 };
 #endif
 
-/* Must be page-aligned because the real IDT is used in a fixmap. */
-gate_desc idt_table[IDT_ENTRIES] __page_aligned_bss;
+DEFINE_PER_CPU_PAGE_ALIGNED(struct idt_page, idt_page);
+
+/* The early boot IDT is just CPU 0's IDT. */
+#define boot_idt (per_cpu(idt_page.idt, 0))
 
 #ifdef CONFIG_X86_64
 /* No need to be aligned, but done to keep all IDTs defined the same way. */
@@ -202,7 +206,23 @@ idt_setup_from_table(gate_desc *idt, const struct idt_data *t, int size, bool sy
 
 	for (; size > 0; t++, size--) {
 		idt_init_desc(&desc, t);
-		write_idt_entry(idt, t->vector, &desc);
+
+		if (!idt) {
+			if (percpu_idts_setup) {
+				/* Write to the IDT for all CPUs. */
+				unsigned cpu;
+
+				for_each_possible_cpu(cpu)
+					write_idt_entry(per_cpu(idt_page, cpu).idt,
+							t->vector, &desc);
+			} else {
+				/* Just write the boot CPU's IDT. */
+				write_idt_entry(boot_idt, t->vector, &desc);
+			}
+		} else {
+			/* Ugly special case, going away soon. */
+			write_idt_entry(idt, t->vector, &desc);
+		}
 		if (sys)
 			set_bit(t->vector, system_vectors);
 	}
@@ -221,7 +241,7 @@ static void set_intr_gate(unsigned int n, const void *addr)
 	data.bits.type	= GATE_INTERRUPT;
 	data.bits.p	= 1;
 
-	idt_setup_from_table(idt_table, &data, 1, false);
+	idt_setup_from_table(NULL, &data, 1, false);
 }
 
 /**
@@ -233,9 +253,9 @@ static void set_intr_gate(unsigned int n, const void *addr)
  */
 void __init idt_setup_early_traps(void)
 {
-	idt_setup_from_table(idt_table, early_idts, ARRAY_SIZE(early_idts),
+	idt_setup_from_table(NULL, early_idts, ARRAY_SIZE(early_idts),
 			     true);
-	load_idt_ptr(idt_table);
+	load_idt_ptr(boot_idt);
 }
 
 /**
@@ -243,7 +263,16 @@ void __init idt_setup_early_traps(void)
  */
 void __init idt_setup_traps(void)
 {
-	idt_setup_from_table(idt_table, def_idts, ARRAY_SIZE(def_idts), true);
+	unsigned cpu;
+
+	idt_setup_from_table(NULL, def_idts, ARRAY_SIZE(def_idts), true);
+
+	WARN_ON_ONCE(percpu_idts_setup);
+	for_each_possible_cpu(cpu) {
+		memcpy(per_cpu(idt_page, cpu).idt, boot_idt, sizeof(*boot_idt));
+	}
+
+	percpu_idts_setup = true;
 }
 
 #ifdef CONFIG_X86_64
@@ -259,7 +288,7 @@ void __init idt_setup_traps(void)
  */
 void __init idt_setup_early_pf(void)
 {
-	idt_setup_from_table(idt_table, early_pf_idts,
+	idt_setup_from_table(NULL, early_pf_idts,
 			     ARRAY_SIZE(early_pf_idts), true);
 }
 
@@ -268,7 +297,7 @@ void __init idt_setup_early_pf(void)
  */
 void __init idt_setup_debugidt_traps(void)
 {
-	memcpy(&debug_idt_table, &idt_table, IDT_ENTRIES * 16);
+	memcpy(&debug_idt_table, boot_idt, IDT_ENTRIES * 16);
 
 	idt_setup_from_table(debug_idt_table, dbg_idts, ARRAY_SIZE(dbg_idts), false);
 }
@@ -282,7 +311,7 @@ void __init idt_setup_apic_and_irq_gates(void)
 	int i = FIRST_EXTERNAL_VECTOR;
 	void *entry;
 
-	idt_setup_from_table(idt_table, apic_idts, ARRAY_SIZE(apic_idts), true);
+	idt_setup_from_table(NULL, apic_idts, ARRAY_SIZE(apic_idts), true);
 
 	for_each_clear_bit_from(i, system_vectors, FIRST_SYSTEM_VECTOR) {
 		entry = irq_entries_start + 8 * (i - FIRST_EXTERNAL_VECTOR);
@@ -311,7 +340,7 @@ void __init idt_setup_early_handler(void)
 		set_intr_gate(i, early_ignore_irq);
 #endif
 
-	load_idt_ptr(idt_table);
+	load_idt_ptr(boot_idt);
 }
 
 /**
