@@ -35,12 +35,12 @@ scriptname=$0
 
 usagehelp () {
 	echo "Usage $scriptname [ arguments ]"
-	echo "      --cpus N (default to all of them)"
 	echo "      --destdir path (place for .litmus.out, default by .litmus)"
 	echo "      --herdopts -conf linux-kernel-cfg ..."
+	echo "      --jobs N (default one per CPU)"
 	echo "      --procs N (litmus tests with at most this many processes)"
 	echo "      --timeout N (herd7 timeout (e.g., 10s, 1m, 2hr, 1d, '')"
-	echo "Defaults: --cpus '$LKMM_CPUS_DEF' --destdir '$LKMM_DESTDIR_DEF' --herdopts '$LKMM_HERD_OPTIONS_DEF' --procs '$LKMM_PROCS_DEF' --timeout '$LKMM_TIMEOUT_DEF'"
+	echo "Defaults: --destdir '$LKMM_DESTDIR_DEF' --herdopts '$LKMM_HERD_OPTIONS_DEF' --jobs '$LKMM_CPUS_DEF' --procs '$LKMM_PROCS_DEF' --timeout '$LKMM_TIMEOUT_DEF'"
 	exit 1
 }
 
@@ -72,11 +72,6 @@ checkarg () {
 while test $# -gt 0
 do
 	case "$1" in
-	--cpus|--cpu)
-		checkarg --cpus "(number)" "$#" "$2" '^[0-9]\+$' '^--'
-		LKMM_CPUS="$2"
-		shift
-		;;
 	--destdir)
 		checkarg --destdir "(path to directory)" "$#" "$2" '.\+' '^--'
 		LKMM_DESTDIR="$2"
@@ -98,6 +93,11 @@ do
 	--herdopts|--herdopt)
 		checkarg --destdir "(herd options)" "$#" "$2" '.*' '^--'
 		LKMM_HERD_OPTIONS="$2"
+		shift
+		;;
+	--jobs|--job)
+		checkarg --jobs "(number)" "$#" "$2" '^[0-9]\+$' '^--'
+		LKMM_CPUS="$2"
 		shift
 		;;
 	--procs|--proc)
