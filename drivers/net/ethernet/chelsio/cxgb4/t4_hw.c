@@ -573,24 +573,13 @@ void t4_memory_update_win(struct adapter *adap, int win, u32 addr)
 void t4_memory_rw_residual(struct adapter *adap, u32 off, u32 addr, u8 *buf,
 			   int dir)
 {
-	union {
-		u32 word;
-		char byte[4];
-	} last;
-	unsigned char *bp;
-	int i;
-
 	if (dir == T4_MEMORY_READ) {
-		last.word = le32_to_cpu((__force __le32)
-					t4_read_reg(adap, addr));
-		for (bp = (unsigned char *)buf, i = off; i < 4; i++)
-			bp[i] = last.byte[i];
+		__le32 v = cpu_to_le32(t4_read_reg(adap, addr));
+		memcpy(buf, &v, off);
 	} else {
-		last.word = *buf;
-		for (i = off; i < 4; i++)
-			last.byte[i] = 0;
-		t4_write_reg(adap, addr,
-			     (__force u32)cpu_to_le32(last.word));
+		__le32 v = 0;
+		memcpy(&v, buf, off);
+		t4_write_reg(adap, addr, le32_to_cpu(v));
 	}
 }
 
