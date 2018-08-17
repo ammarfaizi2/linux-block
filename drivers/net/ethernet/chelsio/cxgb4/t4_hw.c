@@ -605,14 +605,14 @@ int t4_memory_rw(struct adapter *adap, int win, int mtype, u32 addr,
 {
 	u32 pos, offset, resid, memoffset;
 	u32 win_pf, mem_aperture, mem_base;
-	u32 *buf;
+	__le32 *buf;
 	int ret;
 
 	/* Argument sanity checks ...
 	 */
 	if (addr & 0x3 || (uintptr_t)hbuf & 0x3)
 		return -EINVAL;
-	buf = (u32 *)hbuf;
+	buf = (__le32 *)hbuf;
 
 	/* It's convenient to be able to handle lengths which aren't a
 	 * multiple of 32-bits because we often end up transferring files to
@@ -679,13 +679,13 @@ int t4_memory_rw(struct adapter *adap, int win, int mtype, u32 addr,
 	 */
 	while (len > 0) {
 		if (dir == T4_MEMORY_READ)
-			*buf++ = le32_to_cpu((__force __le32)t4_read_reg(adap,
+			*buf++ = cpu_to_le32(t4_read_reg(adap,
 						mem_base + offset));
 		else
 			t4_write_reg(adap, mem_base + offset,
-				     (__force u32)cpu_to_le32(*buf++));
-		offset += sizeof(__be32);
-		len -= sizeof(__be32);
+				     le32_to_cpu(*buf++));
+		offset += sizeof(__le32);
+		len -= sizeof(__le32);
 
 		/* If we've reached the end of our current window aperture,
 		 * move the PCI-E Memory Window on to the next.  Note that
