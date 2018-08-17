@@ -431,7 +431,7 @@ static bool valid_l4_mask(__be32 mask)
 {
 	/* Either the SPORT OR DPORT can be set, but NOT BOTH.
 	 */
-	return !(mask && htonl(0xffff)) || !(mask & htonl(0xffff0000));
+	return !(mask & htonl(0xffff)) || !(mask & htonl(0xffff0000));
 }
 
 static bool valid_pedit_action(struct net_device *dev,

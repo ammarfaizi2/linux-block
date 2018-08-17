@@ -2086,7 +2086,7 @@ static void rx_eth(struct adapter *adap, struct sge_rspq *rq,
 	skb->protocol = eth_type_trans(skb, adap->port[p->iff]);
 	pi = netdev_priv(skb->dev);
 	if ((skb->dev->features & NETIF_F_RXCSUM) && p->csum_valid &&
-	    p->csum == htons(0xffff) && !p->fragment) {
+	    p->csum == CSUM_MANGLED_0 && !p->fragment) {
 		qs->port_stats[SGE_PSTAT_RX_CSUM_GOOD]++;
 		skb->ip_summed = CHECKSUM_UNNECESSARY;
 	} else
@@ -2170,7 +2170,7 @@ static void lro_add_page(struct adapter *adap, struct sge_qset *qs,
 		cpl = qs->lro_va = sd->pg_chunk.va + 2;
 
 		if ((qs->netdev->features & NETIF_F_RXCSUM) &&
-		     cpl->csum_valid && cpl->csum == htons(0xffff)) {
+		     cpl->csum_valid && cpl->csum == CSUM_MANGLED_0) {
 			skb->ip_summed = CHECKSUM_UNNECESSARY;
 			qs->port_stats[SGE_PSTAT_RX_CSUM_GOOD]++;
 		} else

@@ -496,7 +496,7 @@ struct cpl_rx_pkt {
 	u8 csum_valid:1;
 	u8 iff:4;
 #endif
-	__be16 csum;
+	__sum16 csum;
 	__be16 vlan;
 	__be16 len;
 };

@@ -1655,8 +1655,7 @@ int t4vf_ethrx_handler(struct sge_rspq *rspq, const __be64 *rsp,
 			skb->ip_summed = CHECKSUM_UNNECESSARY;
 			rxq->stats.rx_cso++;
 		} else if (pkt->l2info & htonl(RXF_IP_F)) {
-			__sum16 c = (__force __sum16)pkt->csum;
-			skb->csum = csum_unfold(c);
+			skb->csum = csum_unfold(pkt->csum);
 			skb->ip_summed = CHECKSUM_COMPLETE;
 			rxq->stats.rx_cso++;
 		}

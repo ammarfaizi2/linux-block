@@ -2877,8 +2877,7 @@ int t4_ethrx_handler(struct sge_rspq *q, const __be64 *rsp,
 			skb->ip_summed = CHECKSUM_UNNECESSARY;
 			rxq->stats.rx_cso++;
 		} else if (pkt->l2info & htonl(RXF_IP_F)) {
-			__sum16 c = (__force __sum16)pkt->csum;
-			skb->csum = csum_unfold(c);
+			skb->csum = csum_unfold(pkt->csum);
 
 			if (tnl_hdr_len) {
 				skb->ip_summed = CHECKSUM_UNNECESSARY;
