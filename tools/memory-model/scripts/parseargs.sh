@@ -36,7 +36,7 @@ scriptname=$0
 usagehelp () {
 	echo "Usage $scriptname [ arguments ]"
 	echo "      --destdir path (place for .litmus.out, default by .litmus)"
-	echo "      --herdopts -conf linux-kernel-cfg ..."
+	echo "      --herdopts -conf linux-kernel.cfg ..."
 	echo "      --jobs N (default one per CPU)"
 	echo "      --procs N (litmus tests with at most this many processes)"
 	echo "      --timeout N (herd7 timeout (e.g., 10s, 1m, 2hr, 1d, '')"
