@@ -41,9 +41,18 @@ struct idt_data {
 #define SYSG(_vector, _addr)				\
 	G(_vector, _addr, DEFAULT_STACK, GATE_INTERRUPT, DPL3, __KERNEL_CS)
 
+#ifdef CONFIG_X86_64
+
 /* Interrupt gate with interrupt stack */
 #define ISTG(_vector, _addr, _ist)			\
 	G(_vector, _addr, _ist, GATE_INTERRUPT, DPL0, __KERNEL_CS)
+
+#else
+
+/* 32-bit doesn't use IST */
+#define ISTG(_vector, _addr, _ist) INTG(_vector, _addr)
+
+#endif
 
 /* Task gate */
 #define TSKG(_vector, _gdt)				\
@@ -69,7 +78,7 @@ static const __initconst struct idt_data early_idts[] = {
  */
 static const __initconst struct idt_data def_idts[] = {
 	INTG(X86_TRAP_DE,		divide_error),
-	INTG(X86_TRAP_NMI,		nmi),
+	ISTG(X86_TRAP_NMI,		nmi,		NMI_STACK),
 	INTG(X86_TRAP_BR,		bounds),
 	INTG(X86_TRAP_UD,		invalid_op),
 	INTG(X86_TRAP_NM,		device_not_available),
@@ -86,12 +95,13 @@ static const __initconst struct idt_data def_idts[] = {
 #ifdef CONFIG_X86_32
 	TSKG(X86_TRAP_DF,		GDT_ENTRY_DOUBLEFAULT_TSS),
 #else
-	INTG(X86_TRAP_DF,		double_fault),
+	ISTG(X86_TRAP_DF,		double_fault,	DOUBLEFAULT_STACK),
 #endif
-	INTG(X86_TRAP_DB,		debug),
+
+	ISTG(X86_TRAP_DB,		debug,		DEBUG_STACK),
 
 #ifdef CONFIG_X86_MCE
-	INTG(X86_TRAP_MC,		&machine_check),
+	ISTG(X86_TRAP_MC,		&machine_check,	MCE_STACK),
 #endif
 
 	SYSG(X86_TRAP_OF,		overflow),
@@ -169,19 +179,6 @@ gate_desc idt_table[IDT_ENTRIES] __page_aligned_bss;
 #ifdef CONFIG_X86_64
 /* No need to be aligned, but done to keep all IDTs defined the same way. */
 gate_desc debug_idt_table[IDT_ENTRIES] __page_aligned_bss;
-
-/*
- * The exceptions which use Interrupt stacks. They are setup after
- * cpu_init() when the TSS has been initialized.
- */
-static const __initconst struct idt_data ist_idts[] = {
-	ISTG(X86_TRAP_DB,	debug,		DEBUG_STACK),
-	ISTG(X86_TRAP_NMI,	nmi,		NMI_STACK),
-	ISTG(X86_TRAP_DF,	double_fault,	DOUBLEFAULT_STACK),
-#ifdef CONFIG_X86_MCE
-	ISTG(X86_TRAP_MC,	&machine_check,	MCE_STACK),
-#endif
-};
 
 #endif
 
@@ -265,14 +262,6 @@ void __init idt_setup_early_pf(void)
 {
 	idt_setup_from_table(idt_table, early_pf_idts,
 			     ARRAY_SIZE(early_pf_idts), true);
-}
-
-/**
- * idt_setup_ist_traps - Initialize the idt table with traps using IST
- */
-void __init idt_setup_ist_traps(void)
-{
-	idt_setup_from_table(idt_table, ist_idts, ARRAY_SIZE(ist_idts), true);
 }
 
 /**

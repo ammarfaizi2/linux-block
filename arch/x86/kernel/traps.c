@@ -970,8 +970,6 @@ void __init trap_init(void)
 	 */
 	cpu_init();
 
-	idt_setup_ist_traps();
-
 	x86_init.irqs.trap_init();
 
 	idt_setup_debugidt_traps();
