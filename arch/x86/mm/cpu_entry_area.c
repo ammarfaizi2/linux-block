@@ -3,9 +3,11 @@
 #include <linux/spinlock.h>
 #include <linux/percpu.h>
 #include <linux/kallsyms.h>
+#include <linux/kprobes.h>
 #include <linux/kcore.h>
 
 #include <asm/cpu_entry_area.h>
+#include <asm/debugreg.h>
 #include <asm/pgtable.h>
 #include <asm/fixmap.h>
 #include <asm/desc.h>
@@ -78,6 +80,66 @@ static void percpu_setup_debug_store(int cpu)
 #endif
 }
 
+#ifdef CONFIG_X86_64
+
+/*
+ * NB: Yes, this is a mess.  The mess is going away, and that's the point
+ * of the patchset that moved this particular mess here, but it can't
+ * go away quite yet.  Sorry.
+ */
+static DEFINE_PER_CPU(unsigned long, debug_stack_addr);
+DEFINE_PER_CPU(int, debug_stack_usage);
+
+int is_debug_stack(unsigned long addr)
+{
+	return __this_cpu_read(debug_stack_usage) ||
+		(addr <= __this_cpu_read(debug_stack_addr) &&
+		 addr > (__this_cpu_read(debug_stack_addr) - DEBUG_STKSZ));
+}
+NOKPROBE_SYMBOL(is_debug_stack);
+
+/*
+ * Special IST stacks which the CPU switches to when it calls
+ * an IST-marked descriptor entry. Up to 7 stacks (hardware
+ * limit), all of them are 4K, except the debug stack which
+ * is 8K.
+ */
+static const unsigned int exception_stack_sizes[N_EXCEPTION_STACKS] = {
+	  [0 ... N_EXCEPTION_STACKS - 1]	= EXCEPTION_STKSZ,
+	  [DEBUG_STACK - 1]			= DEBUG_STKSZ
+};
+
+static void __init setup_ist(int cpu)
+{
+	struct orig_ist *oist = &per_cpu(orig_ist, cpu);
+	struct tss_struct *t = &per_cpu(cpu_tss_rw, cpu);
+	unsigned long v;
+
+	char *estacks = get_cpu_entry_area(cpu)->exception_stacks;
+
+	BUILD_BUG_ON(sizeof(exception_stacks) % PAGE_SIZE != 0);
+	BUILD_BUG_ON(sizeof(exception_stacks) !=
+		     sizeof(((struct cpu_entry_area *)0)->exception_stacks));
+
+	cea_map_percpu_pages(estacks,
+			     &per_cpu(exception_stacks, cpu),
+			     sizeof(exception_stacks) / PAGE_SIZE, PAGE_KERNEL);
+
+	/*
+	 * Put the stack addresses in the TSS immediately to avoid window
+	 * in which any CPU could try to use an IST stack before the TSS
+	 * is initialized enough.
+	 */
+	for (v = 0; v < N_EXCEPTION_STACKS; v++) {
+		estacks += exception_stack_sizes[v];
+		oist->ist[v] = t->x86_tss.ist[v] =
+			(unsigned long)estacks;
+		if (v == DEBUG_STACK-1)
+			per_cpu(debug_stack_addr, cpu) = (unsigned long)estacks;
+	}
+}
+#endif
+
 /* Setup the fixmap mappings only once per-processor */
 static void __init setup_cpu_entry_area(int cpu)
 {
@@ -137,13 +199,9 @@ static void __init setup_cpu_entry_area(int cpu)
 #endif
 
 #ifdef CONFIG_X86_64
-	BUILD_BUG_ON(sizeof(exception_stacks) % PAGE_SIZE != 0);
-	BUILD_BUG_ON(sizeof(exception_stacks) !=
-		     sizeof(((struct cpu_entry_area *)0)->exception_stacks));
-	cea_map_percpu_pages(&get_cpu_entry_area(cpu)->exception_stacks,
-			     &per_cpu(exception_stacks, cpu),
-			     sizeof(exception_stacks) / PAGE_SIZE, PAGE_KERNEL);
+	setup_ist(cpu);
 #endif
+
 	percpu_setup_debug_store(cpu);
 }
 
