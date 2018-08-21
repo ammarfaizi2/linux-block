@@ -416,7 +416,7 @@ unformatted_string:
 	if ((unsigned long)p >= (unsigned long)__start_rodata &&
 	    (unsigned long)p <  (unsigned long)__end_rodata)
 		goto const_string;
-	if (within_module_core((unsigned long)p, log->owner))
+	if (log && within_module_core((unsigned long)p, log->owner))
 		goto const_string;
 	q = kstrdup(p, GFP_KERNEL);
 	goto copied_string;
