@@ -348,7 +348,7 @@ struct fs_context *vfs_dup_fs_context(struct fs_context *src_fc)
 	if (!src_fc->ops->dup)
 		return ERR_PTR(-EOPNOTSUPP);
 
-	fc = kmemdup(src_fc, sizeof(struct legacy_fs_context), GFP_KERNEL);
+	fc = kmemdup(src_fc, sizeof(struct fs_context), GFP_KERNEL);
 	if (!fc)
 		return ERR_PTR(-ENOMEM);
 
