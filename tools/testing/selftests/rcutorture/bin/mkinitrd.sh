@@ -45,16 +45,32 @@ do
 done
 __EOF___
 
-# Try using dracut to create initrd
-command -v dracut >/dev/null 2>&1 || { echo >&2 "Dracut not installed"; exit 1; }
-echo Creating $D/initrd using dracut.
+# First try using dracut to create initrd
+if command -v dracut >/dev/null 2>&1
+then
+	echo Creating $D/initrd using dracut.
+	dracut --force --no-hostonly --no-hostonly-cmdline --module "base" $T/initramfs.img
+	cd $D
+	mkdir initrd
+	cd initrd
+	zcat $T/initramfs.img | cpio -id
+	cp $T/init init
+	echo Done creating $D/initrd using dracut
+	exit 0
+fi
 
-# Filesystem creation
-dracut --force --no-hostonly --no-hostonly-cmdline --module "base" $T/initramfs.img
-cd $D
-mkdir initrd
-cd initrd
-zcat $T/initramfs.img | cpio -id
-cp $T/init init
-echo Done creating $D/initrd using dracut
-exit 0
+# No dracut, so try mkinitramfs
+if command -v mkinitramfs >/dev/null 2>&1
+then
+	echo Creating $D/initrd using mkinitramfs
+	mkinitramfs -c gzip -o $T/initramfs.img.gz
+	cd $D
+	mkdir initrd
+	cd initrd
+	zcat $T/initramfs.img | cpio -id
+	cp $T/init init
+	echo Done creating $D/initrd using mkinitramfs
+	exit 0
+fi
+echo >&2 "Neither dracut nor mkinitramfs installed!!!"
+exit 1
