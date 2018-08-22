@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Mellanox Technologies, Ltd.  All rights reserved.
+ * Copyright (c) 2018, Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
@@ -29,35 +29,35 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef __MLX5_VXLAN_H__
-#define __MLX5_VXLAN_H__
+#ifndef __MLX5_EN_XDP_H__
+#define __MLX5_EN_XDP_H__
 
-#include <linux/mlx5/driver.h>
 #include "en.h"
 
-struct mlx5e_vxlan {
-	atomic_t refcount;
-	u16 udp_port;
-};
+#define MLX5E_XDP_MAX_MTU ((int)(PAGE_SIZE - \
+				 MLX5_SKB_FRAG_SZ(XDP_PACKET_HEADROOM)))
+#define MLX5E_XDP_MIN_INLINE (ETH_HLEN + VLAN_HLEN)
+#define MLX5E_XDP_TX_DS_COUNT \
+	((sizeof(struct mlx5e_tx_wqe) / MLX5_SEND_WQE_DS) + 1 /* SG DS */)
 
-struct mlx5e_vxlan_work {
-	struct work_struct	work;
-	struct mlx5e_priv	*priv;
-	sa_family_t		sa_family;
-	u16			port;
-};
+bool mlx5e_xdp_handle(struct mlx5e_rq *rq, struct mlx5e_dma_info *di,
+		      void *va, u16 *rx_headroom, u32 *len);
+bool mlx5e_poll_xdpsq_cq(struct mlx5e_cq *cq);
+void mlx5e_free_xdpsq_descs(struct mlx5e_xdpsq *sq);
 
-static inline bool mlx5e_vxlan_allowed(struct mlx5_core_dev *mdev)
+bool mlx5e_xmit_xdp_frame(struct mlx5e_xdpsq *sq, struct mlx5e_xdp_info *xdpi);
+int mlx5e_xdp_xmit(struct net_device *dev, int n, struct xdp_frame **frames,
+		   u32 flags);
+
+static inline void mlx5e_xmit_xdp_doorbell(struct mlx5e_xdpsq *sq)
 {
-	return (MLX5_CAP_ETH(mdev, tunnel_stateless_vxlan) &&
-		mlx5_core_is_pf(mdev));
+	struct mlx5_wq_cyc *wq = &sq->wq;
+	struct mlx5e_tx_wqe *wqe;
+	u16 pi = mlx5_wq_cyc_ctr2ix(wq, sq->pc - 1); /* last pi */
+
+	wqe  = mlx5_wq_cyc_get_wqe(wq, pi);
+
+	mlx5e_notify_hw(wq, sq->pc, sq->uar_map, &wqe->ctrl);
 }
 
-void mlx5e_vxlan_init(struct mlx5e_priv *priv);
-void mlx5e_vxlan_cleanup(struct mlx5e_priv *priv);
-
-void mlx5e_vxlan_queue_work(struct mlx5e_priv *priv, sa_family_t sa_family,
-			    u16 port, int add);
-struct mlx5e_vxlan *mlx5e_vxlan_lookup_port(struct mlx5e_priv *priv, u16 port);
-
-#endif /* __MLX5_VXLAN_H__ */
+#endif

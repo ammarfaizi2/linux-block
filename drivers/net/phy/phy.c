@@ -471,8 +471,14 @@ static int phy_config_aneg(struct phy_device *phydev)
 {
 	if (phydev->drv->config_aneg)
 		return phydev->drv->config_aneg(phydev);
-	else
-		return genphy_config_aneg(phydev);
+
+	/* Clause 45 PHYs that don't implement Clause 22 registers are not
+	 * allowed to call genphy_config_aneg()
+	 */
+	if (phydev->is_c45 && !(phydev->c45_ids.devices_in_package & BIT(0)))
+		return -EOPNOTSUPP;
+
+	return genphy_config_aneg(phydev);
 }
 
 /**
@@ -519,7 +525,7 @@ static int phy_start_aneg_priv(struct phy_device *phydev, bool sync)
 	 * negotiation may already be done and aneg interrupt may not be
 	 * generated.
 	 */
-	if (phy_interrupt_is_valid(phydev) && (phydev->state == PHY_AN)) {
+	if (!phy_polling_mode(phydev) && phydev->state == PHY_AN) {
 		err = phy_aneg_done(phydev);
 		if (err > 0) {
 			trigger = true;
@@ -977,7 +983,7 @@ void phy_state_machine(struct work_struct *work)
 			needs_aneg = true;
 		break;
 	case PHY_NOLINK:
-		if (phydev->irq != PHY_POLL)
+		if (!phy_polling_mode(phydev))
 			break;
 
 		err = phy_read_status(phydev);
@@ -1018,7 +1024,7 @@ void phy_state_machine(struct work_struct *work)
 		/* Only register a CHANGE if we are polling and link changed
 		 * since latest checking.
 		 */
-		if (phydev->irq == PHY_POLL) {
+		if (phy_polling_mode(phydev)) {
 			old_link = phydev->link;
 			err = phy_read_status(phydev);
 			if (err)
@@ -1117,7 +1123,7 @@ void phy_state_machine(struct work_struct *work)
 	 * PHY, if PHY_IGNORE_INTERRUPT is set, then we will be moving
 	 * between states from phy_mac_interrupt()
 	 */
-	if (phydev->irq == PHY_POLL)
+	if (phy_polling_mode(phydev))
 		queue_delayed_work(system_power_efficient_wq, &phydev->state_queue,
 				   PHY_STATE_TIME * HZ);
 }

@@ -1250,8 +1250,10 @@ static void *fl_tmplt_create(struct net *net, struct tcf_chain *chain,
 		goto errout_tb;
 
 	tmplt = kzalloc(sizeof(*tmplt), GFP_KERNEL);
-	if (!tmplt)
+	if (!tmplt) {
+		err = -ENOMEM;
 		goto errout_tb;
+	}
 	tmplt->chain = chain;
 	err = fl_set_key(net, tb, &tmplt->dummy_key, &tmplt->mask, extack);
 	if (err)
@@ -1445,8 +1447,8 @@ static int fl_dump_key(struct sk_buff *skb, struct net *net,
 			     TCA_FLOWER_KEY_CVLAN_PRIO,
 			     &key->cvlan, &mask->cvlan) ||
 	    (mask->cvlan.vlan_tpid &&
-	     nla_put_u16(skb, TCA_FLOWER_KEY_VLAN_ETH_TYPE,
-			 key->cvlan.vlan_tpid)))
+	     nla_put_be16(skb, TCA_FLOWER_KEY_VLAN_ETH_TYPE,
+			  key->cvlan.vlan_tpid)))
 		goto nla_put_failure;
 
 	if (mask->basic.n_proto) {
