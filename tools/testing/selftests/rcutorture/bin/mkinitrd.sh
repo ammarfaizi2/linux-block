@@ -72,5 +72,28 @@ then
 	echo Done creating $D/initrd using mkinitramfs
 	exit 0
 fi
-echo >&2 "Neither dracut nor mkinitramfs installed!!!"
-exit 1
+
+# Neither dracut nor mkinitramfs, so create a C-language initrd/init
+# program and statically link it.  This results in a very small initrd,
+# but might be a bit less future-proof than dracut or mkinitramfs.
+echo "Neither dracut nor mkinitramfs installed, attempting C initrd"
+cd $D
+mkdir initrd
+cd initrd
+cat > init.c << '___EOF___'
+#include <unistd.h>
+
+int main(int argc, int argv[])
+{
+	for (;;)
+		sleep(1000*1000*1000); /* One gigasecond is ~30 years. */
+	return 0;
+}
+___EOF___
+gcc -static -Os -o init init.c
+strip init
+chmod +x initrd
+rm init.c
+echo "Done creating a statically linked C-language initrd"
+
+exit 0
