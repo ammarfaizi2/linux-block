@@ -107,7 +107,7 @@ int main(int argc, int argv[])
 
 	for (;;) {
 		sleep(1);
-		/* Need some userspace time, rely on VDSO. */
+		/* Need some userspace time. */
 		if (gettimeofday(&tvb, NULL))
 			continue;
 		do {
