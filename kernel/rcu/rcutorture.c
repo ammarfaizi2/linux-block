@@ -1714,6 +1714,7 @@ static int rcu_torture_fwd_prog(void *args)
 	unsigned long gps;
 	int idx;
 	long n_launders;
+	long n_launders_sa;
 	long n_max_cbs;
 	long n_max_gps;
 	struct rcu_fwd_cb *rfcp;
@@ -1774,6 +1775,7 @@ static int rcu_torture_fwd_prog(void *args)
 		cur_ops->sync(); /* Later readers see above write. */
 		stopat = jiffies + MAX_FWD_CB_JIFFIES;
 		n_launders = 0;
+		n_launders_sa = 0;
 		n_max_cbs = 0;
 		n_max_gps = 0;
 		cver = READ_ONCE(rcu_torture_current_version);
@@ -1789,6 +1791,7 @@ static int rcu_torture_fwd_prog(void *args)
 				    ++n_max_gps > MIN_FWD_CBS_LAUNDERED)
 					break;
 				n_launders++;
+				n_launders_sa++;
 			} else {
 				rfcp = kmalloc(sizeof(*rfcp), GFP_KERNEL);
 				if (WARN_ON_ONCE(!rfcp)) {
@@ -1796,6 +1799,7 @@ static int rcu_torture_fwd_prog(void *args)
 					continue;
 				}
 				n_max_cbs++;
+				n_launders_sa = 0;
 				rfcp->rfc_gps = 0;
 			}
 			cur_ops->call(&rfcp->rh, rcu_torture_fwd_cb_cr);
@@ -1816,9 +1820,10 @@ static int rcu_torture_fwd_prog(void *args)
 			n_max_gps <= MIN_FWD_CBS_LAUNDERED);
 		cver = READ_ONCE(rcu_torture_current_version) - cver;
 		gps = rcutorture_seq_diff(cur_ops->get_gp_seq(), gps);
-		pr_alert("%s Duration %lu barrier: %lu n_launders: %ld n_max_gps: %ld n_max_cbs: %ld cver %ld gps %ld\n",
+		pr_alert("%s Duration %lu barrier: %lu n_launders: %ld n_launders_sa: %ld n_max_gps: %ld n_max_cbs: %ld cver %ld gps %ld\n",
 			 __func__, stoppedat - stopat + HZ, jiffies - stoppedat,
-			 n_launders, n_max_gps, n_max_cbs, cver, gps);
+			 n_launders, n_launders_sa, n_max_gps, n_max_cbs,
+			 cver, gps);
 
 		/* Avoid slow periods, better to test when busy. */
 		stutter_wait("rcu_torture_fwd_prog");
