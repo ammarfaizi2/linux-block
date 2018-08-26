@@ -1713,14 +1713,16 @@ static int rcu_torture_fwd_prog(void *args)
 	struct fwd_cb_state fcs;
 	unsigned long gps;
 	int idx;
-	int sd;
-	int sd4;
-	bool selfpropcb = false;
-	unsigned long stopat;
+	long n_launders;
 	long n_max_cbs;
 	long n_max_gps;
 	struct rcu_fwd_cb *rfcp;
 	struct rcu_fwd_cb *rfcpn;
+	int sd;
+	int sd4;
+	bool selfpropcb = false;
+	unsigned long stopat;
+	unsigned long stoppedat;
 	int tested = 0;
 	int tested_tries = 0;
 	static DEFINE_TORTURE_RANDOM(trs);
@@ -1771,8 +1773,11 @@ static int rcu_torture_fwd_prog(void *args)
 		WRITE_ONCE(rcu_fwd_cb_nodelay, true);
 		cur_ops->sync(); /* Later readers see above write. */
 		stopat = jiffies + MAX_FWD_CB_JIFFIES;
+		n_launders = 0;
 		n_max_cbs = 0;
 		n_max_gps = 0;
+		cver = READ_ONCE(rcu_torture_current_version);
+		gps = cur_ops->get_gp_seq();
 		while (time_before(jiffies, stopat) && !torture_must_stop()) {
 			rfcp = READ_ONCE(rcu_fwd_cb_head);
 			rfcpn = NULL;
@@ -1783,6 +1788,7 @@ static int rcu_torture_fwd_prog(void *args)
 				if (rfcp->rfc_gps > MIN_FWD_CB_LAUNDERS &&
 				    ++n_max_gps > MIN_FWD_CBS_LAUNDERED)
 					break;
+				n_launders++;
 			} else {
 				rfcp = kmalloc(sizeof(*rfcp), GFP_KERNEL);
 				if (WARN_ON_ONCE(!rfcp)) {
@@ -1795,6 +1801,7 @@ static int rcu_torture_fwd_prog(void *args)
 			cur_ops->call(&rfcp->rh, rcu_torture_fwd_cb_cr);
 			cond_resched();
 		}
+		stoppedat = jiffies;
 		cur_ops->cb_barrier(); /* Wait for callbacks to be invoked. */
 		for (;;) {
 			rfcp = rcu_fwd_cb_head;
@@ -1807,9 +1814,11 @@ static int rcu_torture_fwd_prog(void *args)
 		WRITE_ONCE(rcu_fwd_cb_nodelay, false);
 		WARN_ON(!torture_must_stop() &&
 			n_max_gps <= MIN_FWD_CBS_LAUNDERED);
-		pr_alert("%s Duration %lu n_max_gps: %ld n_max_cbs: %ld\n",
-			 __func__, jiffies - stopat + HZ,
-			 n_max_gps, n_max_cbs);
+		cver = READ_ONCE(rcu_torture_current_version) - cver;
+		gps = rcutorture_seq_diff(cur_ops->get_gp_seq(), gps);
+		pr_alert("%s Duration %lu barrier: %lu n_launders: %ld n_max_gps: %ld n_max_cbs: %ld cver %ld gps %ld\n",
+			 __func__, stoppedat - stopat + HZ, jiffies - stoppedat,
+			 n_launders, n_max_gps, n_max_cbs, cver, gps);
 
 		/* Avoid slow periods, better to test when busy. */
 		stutter_wait("rcu_torture_fwd_prog");
