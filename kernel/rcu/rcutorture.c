@@ -1806,6 +1806,8 @@ static int rcu_torture_fwd_prog(void *args)
 			cond_resched();
 		}
 		stoppedat = jiffies;
+		cver = READ_ONCE(rcu_torture_current_version) - cver;
+		gps = rcutorture_seq_diff(cur_ops->get_gp_seq(), gps);
 		cur_ops->cb_barrier(); /* Wait for callbacks to be invoked. */
 		for (;;) {
 			rfcp = rcu_fwd_cb_head;
@@ -1818,8 +1820,6 @@ static int rcu_torture_fwd_prog(void *args)
 		WRITE_ONCE(rcu_fwd_cb_nodelay, false);
 		WARN_ON(!torture_must_stop() &&
 			n_max_gps <= MIN_FWD_CBS_LAUNDERED);
-		cver = READ_ONCE(rcu_torture_current_version) - cver;
-		gps = rcutorture_seq_diff(cur_ops->get_gp_seq(), gps);
 		pr_alert("%s Duration %lu barrier: %lu n_launders: %ld n_launders_sa: %ld n_max_gps: %ld n_max_cbs: %ld cver %ld gps %ld\n",
 			 __func__, stoppedat - stopat + HZ, jiffies - stoppedat,
 			 n_launders, n_launders_sa, n_max_gps, n_max_cbs,
