@@ -1686,8 +1686,8 @@ struct rcu_fwd_cb {
 static DEFINE_SPINLOCK(rcu_fwd_lock);
 static struct rcu_fwd_cb *rcu_fwd_cb_head;
 static struct rcu_fwd_cb **rcu_fwd_cb_tail = &rcu_fwd_cb_head;
-#define MAX_FWD_CB_JIFFIES	HZ	/* Maximum CB test duration. */
-#define MIN_FWD_CB_LAUNDERS	5	/* This many CB invocations to count. */
+#define MAX_FWD_CB_JIFFIES	(4 * HZ) /* Maximum CB test duration. */
+#define MIN_FWD_CB_LAUNDERS	3	/* This many CB invocations to count. */
 #define MIN_FWD_CBS_LAUNDERED	100	/* Number of counted CBs. */
 
 /* Callback function for continuous-flood RCU callbacks. */
@@ -1821,9 +1821,9 @@ static int rcu_torture_fwd_prog(void *args)
 		WARN_ON(!torture_must_stop() &&
 			n_max_gps <= MIN_FWD_CBS_LAUNDERED);
 		pr_alert("%s Duration %lu barrier: %lu n_launders: %ld n_launders_sa: %ld n_max_gps: %ld n_max_cbs: %ld cver %ld gps %ld\n",
-			 __func__, stoppedat - stopat + HZ, jiffies - stoppedat,
-			 n_launders, n_launders_sa, n_max_gps, n_max_cbs,
-			 cver, gps);
+			 __func__, stoppedat - stopat + MAX_FWD_CB_JIFFIES,
+			 jiffies - stoppedat, n_launders, n_launders_sa,
+			 n_max_gps, n_max_cbs, cver, gps);
 
 		/* Avoid slow periods, better to test when busy. */
 		stutter_wait("rcu_torture_fwd_prog");
