@@ -1786,10 +1786,10 @@ static int rcu_torture_fwd_prog(void *args)
 			if (rfcp)
 				rfcpn = READ_ONCE(rfcp->rfc_next);
 			if (rfcpn) {
-				rcu_fwd_cb_head = rfcpn;
-				if (rfcp->rfc_gps > MIN_FWD_CB_LAUNDERS &&
+				if (rfcp->rfc_gps >= MIN_FWD_CB_LAUNDERS &&
 				    ++n_max_gps > MIN_FWD_CBS_LAUNDERED)
 					break;
+				rcu_fwd_cb_head = rfcpn;
 				n_launders++;
 				n_launders_sa++;
 			} else {
