@@ -205,7 +205,6 @@ static void __of_attach_node(struct device_node *np)
 	const __be32 *phandle;
 	int sz;
 
-	np->name = __of_get_property(np, "name", NULL) ? : "<NULL>";
 	np->type = __of_get_property(np, "device_type", NULL) ? : "<NULL>";
 
 	phandle = __of_get_property(np, "phandle", &sz);

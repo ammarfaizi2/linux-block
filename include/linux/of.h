@@ -49,7 +49,6 @@ struct of_irq_controller;
 #endif
 
 struct device_node {
-	const char *name;
 	const char *type;
 	phandle phandle;
 	const char *full_name;
