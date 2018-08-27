@@ -1787,7 +1787,7 @@ static int rcu_torture_fwd_prog(void *args)
 				rfcpn = READ_ONCE(rfcp->rfc_next);
 			if (rfcpn) {
 				if (rfcp->rfc_gps >= MIN_FWD_CB_LAUNDERS &&
-				    ++n_max_gps > MIN_FWD_CBS_LAUNDERED)
+				    ++n_max_gps >= MIN_FWD_CBS_LAUNDERED)
 					break;
 				rcu_fwd_cb_head = rfcpn;
 				n_launders++;
