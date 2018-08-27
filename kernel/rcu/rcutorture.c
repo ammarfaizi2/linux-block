@@ -1686,7 +1686,7 @@ struct rcu_fwd_cb {
 static DEFINE_SPINLOCK(rcu_fwd_lock);
 static struct rcu_fwd_cb *rcu_fwd_cb_head;
 static struct rcu_fwd_cb **rcu_fwd_cb_tail = &rcu_fwd_cb_head;
-#define MAX_FWD_CB_JIFFIES	(4 * HZ) /* Maximum CB test duration. */
+#define MAX_FWD_CB_JIFFIES	(8 * HZ) /* Maximum CB test duration. */
 #define MIN_FWD_CB_LAUNDERS	3	/* This many CB invocations to count. */
 #define MIN_FWD_CBS_LAUNDERED	100	/* Number of counted CBs. */
 
