@@ -98,7 +98,6 @@ enum vio_dev_family {
  * @allocs_failed: number of DMA failures due to insufficient entitlement.
  */
 struct vio_dev {
-	const char *name;
 	const char *type;
 	uint32_t unit_address;
 	uint32_t resource_id;

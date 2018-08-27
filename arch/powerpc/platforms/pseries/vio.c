@@ -37,7 +37,6 @@
 #include <asm/hvcall.h>
 
 static struct vio_dev vio_bus_device  = { /* fake "parent" device */
-	.name = "vio",
 	.type = "",
 	.dev.init_name = "vio",
 	.dev.bus = &vio_bus_type,
@@ -1426,7 +1425,6 @@ struct vio_dev *vio_register_device_node(struct device_node *of_node)
 		viodev->irq = 0;
 	}
 
-	viodev->name = of_node->name;
 	viodev->dev.of_node = of_node_get(of_node);
 
 	set_dev_node(&viodev->dev, of_node_to_nid(of_node));
@@ -1545,7 +1543,7 @@ device_initcall(vio_device_init);
 static ssize_t name_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
-	return sprintf(buf, "%s\n", to_vio_dev(dev)->name);
+	return sprintf(buf, "%pOFn\n", dev->of_node);
 }
 static DEVICE_ATTR_RO(name);
 
