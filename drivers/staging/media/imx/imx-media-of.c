@@ -31,7 +31,7 @@ static int of_get_port_count(const struct device_node *np)
 		np = ports;
 
 	for_each_child_of_node(np, child)
-		if (of_node_cmp(child->name, "port") == 0)
+		if (of_node_name_eq(child, "port"))
 			num++;
 
 	of_node_put(ports);
@@ -252,7 +252,7 @@ int imx_media_create_csi_of_links(struct imx_media_dev *imxmd,
 		fwnode_property_read_u32(fwnode, "reg", &link.remote_port);
 		fwnode = fwnode_get_next_parent(fwnode);
 		if (is_of_node(fwnode) &&
-		    of_node_cmp(to_of_node(fwnode)->name, "ports") == 0)
+		    of_node_name_eq(to_of_node(fwnode), "ports"))
 			fwnode = fwnode_get_next_parent(fwnode);
 		link.remote_node = fwnode;
 
