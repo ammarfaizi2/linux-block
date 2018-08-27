@@ -738,7 +738,7 @@ static int pm8xxx_xoadc_parse_channel(struct device *dev,
 				      struct iio_chan_spec *iio_chan,
 				      struct pm8xxx_chan_info *ch)
 {
-	const char *name = np->name;
+	const char *name = np->full_name;
 	const struct xoadc_channel *hwchan;
 	u32 pre_scale_mux, amux_channel;
 	u32 rsv, dec;

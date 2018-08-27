@@ -165,7 +165,7 @@ int of_pci_parse_bus_range(struct device_node *node, struct resource *res)
 	if (error)
 		return error;
 
-	res->name = node->name;
+	res->name = node->full_name;
 	res->start = bus_range[0];
 	res->end = bus_range[1];
 	res->flags = IORESOURCE_BUS;

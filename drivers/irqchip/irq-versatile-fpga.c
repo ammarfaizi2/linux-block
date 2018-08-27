@@ -211,7 +211,7 @@ int __init fpga_irq_of_init(struct device_node *node,
 		parent_irq = -1;
 	}
 
-	fpga_irq_init(base, node->name, 0, parent_irq, valid_mask, node);
+	fpga_irq_init(base, node->full_name, 0, parent_irq, valid_mask, node);
 
 	writel(clear_mask, base + IRQ_ENABLE_CLEAR);
 	writel(clear_mask, base + FIQ_ENABLE_CLEAR);

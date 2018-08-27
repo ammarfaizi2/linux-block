@@ -1204,7 +1204,7 @@ static int mvebu_gpio_probe(struct platform_device *pdev)
 	}
 
 	err = irq_alloc_domain_generic_chips(
-	    mvchip->domain, ngpios, 2, np->name, handle_level_irq,
+	    mvchip->domain, ngpios, 2, np->full_name, handle_level_irq,
 	    IRQ_NOREQUEST | IRQ_NOPROBE | IRQ_LEVEL, 0, 0);
 	if (err) {
 		dev_err(&pdev->dev, "couldn't allocate irq chips %s (DT).\n",

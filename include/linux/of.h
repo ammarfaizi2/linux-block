@@ -938,10 +938,24 @@ static inline int of_cpu_node_to_id(struct device_node *np)
 #endif /* CONFIG_OF */
 
 /* Default string compare functions, Allow arch asm/prom.h to override */
-#if !defined(of_compat_cmp)
+#ifdef CONFIG_SPARC
+#define of_prop_cmp(s1, s2)		strcasecmp((s1), (s2))
+#endif
+#ifdef CONFIG_PPC
 #define of_compat_cmp(s1, s2, l)	strcasecmp((s1), (s2))
-#define of_prop_cmp(s1, s2)		strcmp((s1), (s2))
 #define of_node_cmp(s1, s2)		strcasecmp((s1), (s2))
+#define of_node_ncmp(s1, s2, l)		strncasecmp((s1), (s2), (l))
+#endif
+
+#if !defined(of_compat_cmp)
+#define of_compat_cmp(s1, s2, l)	strcmp((s1), (s2))
+#endif
+#if !defined(of_prop_cmp)
+#define of_prop_cmp(s1, s2)		strcmp((s1), (s2))
+#endif
+#if !defined(of_node_cmp)
+#define of_node_cmp(s1, s2)		strcmp((s1), (s2))
+#define of_node_ncmp(s1, s2, l)		strncmp((s1), (s2), (l))
 #endif
 
 #if defined(CONFIG_OF) && defined(CONFIG_NUMA)

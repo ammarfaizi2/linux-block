@@ -783,7 +783,7 @@ void iproc_pll_clk_setup(struct device_node *node,
 	iclk = &iclk_array[0];
 	iclk->pll = pll;
 
-	init.name = node->name;
+	init.name = node->full_name;
 	init.ops = &iproc_pll_ops;
 	init.flags = 0;
 	parent_name = of_clk_get_parent_name(node, 0);
@@ -809,7 +809,7 @@ void iproc_pll_clk_setup(struct device_node *node,
 		const char *clk_name;
 
 		memset(&init, 0, sizeof(init));
-		parent_name = node->name;
+		parent_name = node->full_name;
 
 		ret = of_property_read_string_index(node, "clock-output-names",
 						    i, &clk_name);

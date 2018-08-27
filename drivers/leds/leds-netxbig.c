@@ -511,7 +511,7 @@ static int netxbig_leds_get_of_pdata(struct device *dev,
 		if (!of_property_read_string(child, "label", &string))
 			led->name = string;
 		else
-			led->name = child->name;
+			led->name = child->full_name;
 
 		if (!of_property_read_string(child,
 					     "linux,default-trigger", &string))

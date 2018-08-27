@@ -384,7 +384,7 @@ static int __init hidma_mgmt_of_populate_channels(struct device_node *np)
 		memset(&pdevinfo, 0, sizeof(pdevinfo));
 		pdevinfo.fwnode = &child->fwnode;
 		pdevinfo.parent = pdev_parent ? &pdev_parent->dev : NULL;
-		pdevinfo.name = child->name;
+		pdevinfo.name = child->full_name;
 		pdevinfo.id = object_counter++;
 		pdevinfo.res = res;
 		pdevinfo.num_res = 3;

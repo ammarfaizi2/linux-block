@@ -768,7 +768,7 @@ struct gen_pool *of_gen_pool_get(struct device_node *np,
 
 		of_property_read_string(np_pool, "label", &name);
 		if (!name)
-			name = np_pool->name;
+			name = np_pool->full_name;
 	}
 	if (pdev)
 		pool = gen_pool_get(&pdev->dev, name);

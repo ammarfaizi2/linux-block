@@ -148,7 +148,7 @@ static int __init owl_timer_init(struct device_node *node)
 	owl_timer_set_enabled(owl_clksrc_base, true);
 
 	sched_clock_register(owl_timer_sched_read, 32, rate);
-	clocksource_mmio_init(owl_clksrc_base + OWL_Tx_VAL, node->name,
+	clocksource_mmio_init(owl_clksrc_base + OWL_Tx_VAL, node->full_name,
 			      rate, 200, 32, clocksource_mmio_readl_up);
 
 	owl_timer_reset(owl_clkevt_base);

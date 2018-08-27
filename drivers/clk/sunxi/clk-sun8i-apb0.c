@@ -23,7 +23,7 @@
 static struct clk *sun8i_a23_apb0_register(struct device_node *node,
 					   void __iomem *reg)
 {
-	const char *clk_name = node->name;
+	const char *clk_name = node->full_name;
 	const char *clk_parent;
 	struct clk *clk;
 	int ret;

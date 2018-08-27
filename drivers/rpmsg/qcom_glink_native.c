@@ -1579,7 +1579,7 @@ struct qcom_glink *qcom_glink_native_probe(struct device *dev,
 
 	ret = of_property_read_string(dev->of_node, "label", &glink->name);
 	if (ret < 0)
-		glink->name = dev->of_node->name;
+		glink->name = dev->of_node->full_name;
 
 	glink->mbox_client.dev = dev;
 	glink->mbox_client.knows_txdone = true;

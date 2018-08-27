@@ -148,7 +148,7 @@ static void __init of_at91sam9x5_clk_smd_setup(struct device_node *np)
 	struct clk_hw *hw;
 	unsigned int num_parents;
 	const char *parent_names[SMD_SOURCE_MAX];
-	const char *name = np->name;
+	const char *name = np->full_name;
 	struct regmap *regmap;
 
 	num_parents = of_clk_get_parent_count(np);

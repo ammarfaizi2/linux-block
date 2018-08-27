@@ -305,7 +305,7 @@ static void __init cpg_div6_clock_init(struct device_node *np)
 {
 	unsigned int num_parents;
 	const char **parent_names;
-	const char *clk_name = np->name;
+	const char *clk_name = np->full_name;
 	void __iomem *reg;
 	struct clk *clk;
 	unsigned int i;

@@ -300,7 +300,7 @@ static int ktd2692_parse_dt(struct ktd2692_context *led, struct device *dev,
 	}
 
 	led->fled_cdev.led_cdev.name =
-		of_get_property(child_node, "label", NULL) ? : child_node->name;
+		of_get_property(child_node, "label", NULL) ? : child_node->full_name;
 
 	ret = of_property_read_u32(child_node, "led-max-microamp",
 				   &cfg->movie_max_microamp);

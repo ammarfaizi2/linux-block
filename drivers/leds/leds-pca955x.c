@@ -406,7 +406,7 @@ pca955x_pdata_of_init(struct i2c_client *client, struct pca955x_chipdef *chip)
 			continue;
 
 		if (of_property_read_string(child, "label", &name))
-			name = child->name;
+			name = child->full_name;
 
 		snprintf(pdata->leds[reg].name, sizeof(pdata->leds[reg].name),
 			 "%s", name);

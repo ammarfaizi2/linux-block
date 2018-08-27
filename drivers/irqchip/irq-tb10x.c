@@ -143,7 +143,7 @@ static int __init of_tb10x_init_irq(struct device_node *ictl,
 	}
 
 	ret = irq_alloc_domain_generic_chips(domain, AB_IRQCTL_MAXIRQ,
-				2, ictl->name, handle_level_irq,
+				2, ictl->full_name, handle_level_irq,
 				IRQ_NOREQUEST, IRQ_NOPROBE,
 				IRQ_GC_INIT_MASK_CACHE);
 	if (ret) {

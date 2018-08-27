@@ -22,7 +22,7 @@ static void __init moxart_of_pll_clk_init(struct device_node *node)
 	struct clk_hw *hw;
 	struct clk *ref_clk;
 	unsigned int mul;
-	const char *name = node->name;
+	const char *name = node->full_name;
 	const char *parent_name;
 
 	of_property_read_string(node, "clock-output-names", &name);
@@ -62,7 +62,7 @@ static void __init moxart_of_apb_clk_init(struct device_node *node)
 	struct clk *pll_clk;
 	unsigned int div, val;
 	unsigned int div_idx[] = { 2, 3, 4, 6, 8};
-	const char *name = node->name;
+	const char *name = node->full_name;
 	const char *parent_name;
 
 	of_property_read_string(node, "clock-output-names", &name);

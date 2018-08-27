@@ -1082,12 +1082,9 @@ fail:
 
 static const char *knav_queue_find_name(struct device_node *node)
 {
-	const char *name;
+	const char *name = node->full_name;
 
-	if (of_property_read_string(node, "label", &name) < 0)
-		name = node->name;
-	if (!name)
-		name = "unknown";
+	of_property_read_string(node, "label", &name);
 	return name;
 }
 

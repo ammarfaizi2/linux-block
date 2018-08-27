@@ -122,7 +122,7 @@ static int pm8058_led_probe(struct platform_device *pdev)
 	}
 
 	/* Use label else node name */
-	led->cdev.name = of_get_property(np, "label", NULL) ? : np->name;
+	led->cdev.name = of_get_property(np, "label", NULL) ? : np->full_name;
 	led->cdev.default_trigger =
 		of_get_property(np, "linux,default-trigger", NULL);
 	led->cdev.brightness_set = pm8058_led_set;

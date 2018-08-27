@@ -105,7 +105,7 @@ static int sun9i_a80_mmc_config_clk_probe(struct platform_device *pdev)
 	struct device_node *np = pdev->dev.of_node;
 	struct sun9i_mmc_clk_data *data;
 	struct clk_onecell_data *clk_data;
-	const char *clk_name = np->name;
+	const char *clk_name = np->full_name;
 	const char *clk_parent;
 	struct resource *r;
 	int count, i, ret;

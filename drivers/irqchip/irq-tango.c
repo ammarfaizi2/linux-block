@@ -198,7 +198,7 @@ static int __init tangox_irq_init(void __iomem *base, struct resource *baseres,
 	if (!dom)
 		panic("%pOFn: failed to create irqdomain", node);
 
-	err = irq_alloc_domain_generic_chips(dom, 32, 2, node->name,
+	err = irq_alloc_domain_generic_chips(dom, 32, 2, node->full_name,
 					     handle_level_irq, 0, 0, 0);
 	if (err)
 		panic("%pOFn: failed to allocate irqchip", node);

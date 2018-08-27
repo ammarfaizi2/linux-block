@@ -426,7 +426,7 @@ static int spi_ppc4xx_of_probe(struct platform_device *op)
 
 			if (gpio_is_valid(gpio)) {
 				/* Real CS - set the initial state. */
-				ret = gpio_request(gpio, np->name);
+				ret = gpio_request(gpio, np->full_name);
 				if (ret < 0) {
 					dev_err(dev,
 						"can't request gpio #%d: %d\n",

@@ -141,7 +141,7 @@ static int led_pwm_create_of(struct device *dev, struct led_pwm_priv *priv)
 
 	for_each_child_of_node(dev->of_node, child) {
 		led.name = of_get_property(child, "label", NULL) ? :
-			   child->name;
+			   child->full_name;
 
 		led.default_trigger = of_get_property(child,
 						"linux,default-trigger", NULL);

@@ -789,7 +789,7 @@ static int isc_clk_register(struct isc_device *isc, unsigned int id)
 	struct device_node *np = isc->dev->of_node;
 	struct isc_clk *isc_clk;
 	struct clk_init_data init;
-	const char *clk_name = np->name;
+	const char *clk_name = np->full_name;
 	const char *parent_names[3];
 	int num_parents;
 

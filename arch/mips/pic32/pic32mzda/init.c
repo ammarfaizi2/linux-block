@@ -130,7 +130,6 @@ static int __init pic32_of_prepare_platform_data(struct of_dev_auxdata *lookup)
 	for (; lookup->compatible; lookup++) {
 		np = of_find_compatible_node(NULL, NULL, lookup->compatible);
 		if (np) {
-			lookup->name = (char *)np->name;
 			if (lookup->phys_addr)
 				continue;
 			if (!of_address_to_resource(np, 0, &res))

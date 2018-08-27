@@ -683,7 +683,7 @@ static struct mbox_chan *omap_mbox_of_xlate(struct mbox_controller *controller,
 		return ERR_PTR(-ENODEV);
 	}
 
-	mbox = omap_mbox_device_find(mdev, node->name);
+	mbox = omap_mbox_device_find(mdev, node->full_name);
 	of_node_put(node);
 	return mbox ? mbox->chan : ERR_PTR(-ENOENT);
 }
@@ -753,7 +753,7 @@ static int omap_mbox_probe(struct platform_device *pdev)
 		finfo->rx_irq = tmp[1];
 		finfo->rx_usr = tmp[2];
 
-		finfo->name = child->name;
+		finfo->name = child->full_name;
 
 		if (of_find_property(child, "ti,mbox-send-noirq", NULL))
 			finfo->send_no_irq = true;

@@ -206,7 +206,7 @@ static int of_get_max1586_platform_data(struct device *dev,
 
 	for (i = 0; i < matched; i++) {
 		sub->id = i;
-		sub->name = rmatch[i].of_node->name;
+		sub->name = rmatch[i].of_node->full_name;
 		sub->platform_data = rmatch[i].init_data;
 		sub++;
 	}

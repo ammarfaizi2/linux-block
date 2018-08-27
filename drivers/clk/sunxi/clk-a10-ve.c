@@ -97,7 +97,7 @@ static void __init sun4i_ve_clk_setup(struct device_node *node)
 	struct clk_gate *gate;
 	struct ve_reset_data *reset_data;
 	const char *parent;
-	const char *clk_name = node->name;
+	const char *clk_name = node->full_name;
 	void __iomem *reg;
 	int err;
 

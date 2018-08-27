@@ -856,7 +856,7 @@ static int __init fsl_hypervisor_init(void)
 		if (of_device_is_compatible(np, "fsl,hv-shutdown-doorbell")) {
 			/* The shutdown doorbell gets its own ISR */
 			ret = request_irq(irq, fsl_hv_shutdown_isr, 0,
-					  np->name, NULL);
+					  np->full_name, NULL);
 		} else if (of_device_is_compatible(np,
 			"fsl,hv-state-change-doorbell")) {
 			/*
@@ -876,9 +876,9 @@ static int __init fsl_hypervisor_init(void)
 			}
 			ret = request_threaded_irq(irq, fsl_hv_state_change_isr,
 						   fsl_hv_state_change_thread,
-						   0, np->name, dbisr);
+						   0, np->full_name, dbisr);
 		} else
-			ret = request_irq(irq, fsl_hv_isr, 0, np->name, dbisr);
+			ret = request_irq(irq, fsl_hv_isr, 0, np->full_name, dbisr);
 
 		if (ret < 0) {
 			pr_err("fsl-hv: could not request irq %u for node %pOF\n",

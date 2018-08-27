@@ -574,7 +574,7 @@ static void asc_set_termios(struct uart_port *port, struct ktermios *termios,
 								 "rts",
 								 &np->fwnode,
 								 GPIOD_OUT_LOW,
-								 np->name);
+								 np->full_name);
 			if (!IS_ERR(gpiod))
 				ascport->rts = gpiod;
 		}

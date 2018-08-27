@@ -161,7 +161,7 @@ EXPORT_SYMBOL_GPL(clk_hw_unregister_fixed_rate);
 static struct clk *_of_fixed_clk_setup(struct device_node *node)
 {
 	struct clk *clk;
-	const char *clk_name = node->name;
+	const char *clk_name = node->full_name;
 	u32 rate;
 	u32 accuracy = 0;
 	int ret;

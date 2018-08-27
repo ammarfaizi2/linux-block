@@ -191,7 +191,7 @@ static int __init asm9260_timer_init(struct device_node *np)
 	int ret;
 	unsigned long rate;
 
-	priv.base = of_io_request_and_map(np, 0, np->name);
+	priv.base = of_io_request_and_map(np, 0, np->full_name);
 	if (IS_ERR(priv.base)) {
 		pr_err("%pOFn: unable to map resource\n", np);
 		return PTR_ERR(priv.base);

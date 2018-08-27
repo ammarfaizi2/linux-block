@@ -937,7 +937,7 @@ static void soctherm_init_hw_throt_cdev(struct platform_device *pdev)
 		struct soctherm_throt_cfg *stc;
 		struct thermal_cooling_device *tcd;
 
-		name = np_stcc->name;
+		name = np_stcc->full_name;
 		stc = find_throttle_cfg_by_name(ts, name);
 		if (!stc) {
 			dev_err(dev,

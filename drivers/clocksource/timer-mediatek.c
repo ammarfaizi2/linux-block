@@ -307,7 +307,7 @@ static int __init mtk_gpt_init(struct device_node *node)
 	/* Configure clock source */
 	mtk_gpt_setup(&to, TIMER_CLK_SRC, GPT_CTRL_OP_FREERUN);
 	clocksource_mmio_init(timer_of_base(&to) + GPT_CNT_REG(TIMER_CLK_SRC),
-			      node->name, timer_of_rate(&to), 300, 32,
+			      node->full_name, timer_of_rate(&to), 300, 32,
 			      clocksource_mmio_readl_up);
 	gpt_sched_reg = timer_of_base(&to) + GPT_CNT_REG(TIMER_CLK_SRC);
 	sched_clock_register(mtk_gpt_read_sched_clock, 32, timer_of_rate(&to));

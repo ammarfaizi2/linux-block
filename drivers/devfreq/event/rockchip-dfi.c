@@ -228,7 +228,7 @@ static int rockchip_dfi_probe(struct platform_device *pdev)
 
 	desc->ops = &rockchip_dfi_ops;
 	desc->driver_data = data;
-	desc->name = np->name;
+	desc->name = np->full_name;
 	data->desc = desc;
 
 	data->edev = devm_devfreq_event_add_edev(&pdev->dev, desc);

@@ -100,7 +100,7 @@ static void __init xtfpga_clk_setup(struct device_node *np)
 
 	freq = __raw_readl(base);
 	iounmap(base);
-	clk = clk_register_fixed_rate(NULL, np->name, NULL, 0, freq);
+	clk = clk_register_fixed_rate(NULL, np->full_name, NULL, 0, freq);
 
 	if (IS_ERR(clk)) {
 		pr_err("%pOFn: clk registration failed\n", np);

@@ -871,7 +871,7 @@ static struct u300_clock const u300_clk_lookup[] __initconst = {
 static void __init of_u300_syscon_clk_init(struct device_node *np)
 {
 	struct clk_hw *hw = ERR_PTR(-EINVAL);
-	const char *clk_name = np->name;
+	const char *clk_name = np->full_name;
 	const char *parent_name;
 	void __iomem *res_reg;
 	void __iomem *en_reg;
@@ -1146,7 +1146,7 @@ mclk_clk_register(struct device *dev, const char *name,
 static void __init of_u300_syscon_mclk_init(struct device_node *np)
 {
 	struct clk_hw *hw;
-	const char *clk_name = np->name;
+	const char *clk_name = np->full_name;
 	const char *parent_name;
 
 	parent_name = of_clk_get_parent_name(np, 0);

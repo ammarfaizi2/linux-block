@@ -380,7 +380,7 @@ static void __init of_at91sam9x5_clk_usb_setup(struct device_node *np)
 	struct clk_hw *hw;
 	unsigned int num_parents;
 	const char *parent_names[USB_SOURCE_MAX];
-	const char *name = np->name;
+	const char *name = np->full_name;
 	struct regmap *regmap;
 
 	num_parents = of_clk_get_parent_count(np);
@@ -409,7 +409,7 @@ static void __init of_at91sam9n12_clk_usb_setup(struct device_node *np)
 {
 	struct clk_hw *hw;
 	const char *parent_name;
-	const char *name = np->name;
+	const char *name = np->full_name;
 	struct regmap *regmap;
 
 	parent_name = of_clk_get_parent_name(np, 0);
@@ -435,7 +435,7 @@ static void __init of_at91rm9200_clk_usb_setup(struct device_node *np)
 {
 	struct clk_hw *hw;
 	const char *parent_name;
-	const char *name = np->name;
+	const char *name = np->full_name;
 	u32 divisors[4] = {0, 0, 0, 0};
 	struct regmap *regmap;
 

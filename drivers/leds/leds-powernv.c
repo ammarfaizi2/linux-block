@@ -266,7 +266,7 @@ static int powernv_led_classdev(struct platform_device *pdev,
 			}
 
 			powernv_led->common = powernv_led_common;
-			powernv_led->loc_code = (char *)np->name;
+			powernv_led->loc_code = (char *)np->full_name;
 
 			rc = powernv_led_create(dev, powernv_led, cur);
 			if (rc) {

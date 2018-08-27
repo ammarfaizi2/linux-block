@@ -314,7 +314,7 @@ pca963x_dt_init(struct i2c_client *client, struct pca963x_chipdef *chip)
 		if ((res != 0) || (reg >= chip->n_leds))
 			continue;
 		led.name =
-			of_get_property(child, "label", NULL) ? : child->name;
+			of_get_property(child, "label", NULL) ? : child->full_name;
 		led.default_trigger =
 			of_get_property(child, "linux,default-trigger", NULL);
 		pca963x_leds[reg] = led;

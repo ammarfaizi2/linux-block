@@ -815,7 +815,7 @@ static int st_pctl_dt_node_to_map(struct pinctrl_dev *pctldev,
 	struct device_node *parent;
 	int map_num, i;
 
-	grp = st_pctl_find_group_by_name(info, np->name);
+	grp = st_pctl_find_group_by_name(info, np->full_name);
 	if (!grp) {
 		dev_err(info->dev, "unable to find group for node %pOFn\n",
 			np);
@@ -837,8 +837,8 @@ static int st_pctl_dt_node_to_map(struct pinctrl_dev *pctldev,
 	*map = new_map;
 	*num_maps = map_num;
 	new_map[0].type = PIN_MAP_TYPE_MUX_GROUP;
-	new_map[0].data.mux.function = parent->name;
-	new_map[0].data.mux.group = np->name;
+	new_map[0].data.mux.function = parent->full_name;
+	new_map[0].data.mux.group = np->full_name;
 	of_node_put(parent);
 
 	/* create config map per pin */
@@ -1190,7 +1190,7 @@ static int st_pctl_dt_parse_groups(struct device_node *np,
 	}
 
 	grp->npins = npins;
-	grp->name = np->name;
+	grp->name = np->full_name;
 	grp->pins = devm_kcalloc(info->dev, npins, sizeof(u32), GFP_KERNEL);
 	grp->pin_conf = devm_kcalloc(info->dev,
 					npins, sizeof(*conf), GFP_KERNEL);
@@ -1243,7 +1243,7 @@ static int st_pctl_parse_functions(struct device_node *np,
 	int ret, i;
 
 	func = &info->functions[index];
-	func->name = np->name;
+	func->name = np->full_name;
 	func->ngroups = of_get_child_count(np);
 	if (func->ngroups == 0) {
 		dev_err(info->dev, "No groups defined\n");
@@ -1256,7 +1256,7 @@ static int st_pctl_parse_functions(struct device_node *np,
 
 	i = 0;
 	for_each_child_of_node(np, child) {
-		func->groups[i] = child->name;
+		func->groups[i] = child->full_name;
 		grp = &info->groups[*grp_index];
 		*grp_index += 1;
 		ret = st_pctl_dt_parse_groups(child, grp, info, i++);

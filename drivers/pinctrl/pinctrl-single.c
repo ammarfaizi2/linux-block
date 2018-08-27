@@ -951,7 +951,7 @@ static int pcs_parse_pinconf(struct pcs_device *pcs, struct device_node *np,
 		pcs_add_conf4(pcs, np, prop4[i].name, prop4[i].param,
 			      &conf, &s);
 	m->type = PIN_MAP_TYPE_CONFIGS_GROUP;
-	m->data.configs.group_or_pin = np->name;
+	m->data.configs.group_or_pin = np->full_name;
 	m->data.configs.configs = settings;
 	m->data.configs.num_configs = nconfs;
 	return 0;
@@ -1035,24 +1035,24 @@ static int pcs_parse_one_pinctrl_entry(struct pcs_device *pcs,
 		pins[found++] = pin;
 	}
 
-	pgnames[0] = np->name;
+	pgnames[0] = np->full_name;
 	mutex_lock(&pcs->mutex);
-	fsel = pcs_add_function(pcs, &function, np->name, vals, found,
+	fsel = pcs_add_function(pcs, &function, np->full_name, vals, found,
 				pgnames, 1);
 	if (fsel < 0) {
 		res = fsel;
 		goto free_pins;
 	}
 
-	gsel = pinctrl_generic_add_group(pcs->pctl, np->name, pins, found, pcs);
+	gsel = pinctrl_generic_add_group(pcs->pctl, np->full_name, pins, found, pcs);
 	if (gsel < 0) {
 		res = gsel;
 		goto free_function;
 	}
 
 	(*map)->type = PIN_MAP_TYPE_MUX_GROUP;
-	(*map)->data.mux.group = np->name;
-	(*map)->data.mux.function = np->name;
+	(*map)->data.mux.group = np->full_name;
+	(*map)->data.mux.function = np->full_name;
 
 	if (PCS_HAS_PINCONF && function) {
 		res = pcs_parse_pinconf(pcs, np, function, map);
@@ -1177,24 +1177,24 @@ static int pcs_parse_bits_in_pinctrl_entry(struct pcs_device *pcs,
 		}
 	}
 
-	pgnames[0] = np->name;
+	pgnames[0] = np->full_name;
 	mutex_lock(&pcs->mutex);
-	fsel = pcs_add_function(pcs, &function, np->name, vals, found,
+	fsel = pcs_add_function(pcs, &function, np->full_name, vals, found,
 				pgnames, 1);
 	if (fsel < 0) {
 		res = fsel;
 		goto free_pins;
 	}
 
-	gsel = pinctrl_generic_add_group(pcs->pctl, np->name, pins, found, pcs);
+	gsel = pinctrl_generic_add_group(pcs->pctl, np->full_name, pins, found, pcs);
 	if (gsel < 0) {
 		res = gsel;
 		goto free_function;
 	}
 
 	(*map)->type = PIN_MAP_TYPE_MUX_GROUP;
-	(*map)->data.mux.group = np->name;
-	(*map)->data.mux.function = np->name;
+	(*map)->data.mux.group = np->full_name;
+	(*map)->data.mux.function = np->full_name;
 
 	if (PCS_HAS_PINCONF) {
 		dev_err(pcs->dev, "pinconf not supported\n");

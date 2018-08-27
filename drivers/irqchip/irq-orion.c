@@ -79,7 +79,7 @@ static int __init orion_irq_init(struct device_node *np,
 
 		of_address_to_resource(np, n, &r);
 
-		if (!request_mem_region(r.start, resource_size(&r), np->name))
+		if (!request_mem_region(r.start, resource_size(&r), np->full_name))
 			panic("%pOFn: unable to request mem region %d",
 			      np, n);
 
@@ -154,8 +154,9 @@ static int __init orion_bridge_irq_init(struct device_node *np,
 		return -ENOMEM;
 	}
 
-	ret = irq_alloc_domain_generic_chips(domain, nrirqs, 1, np->name,
-			     handle_edge_irq, clr, 0, IRQ_GC_INIT_MASK_CACHE);
+	ret = irq_alloc_domain_generic_chips(domain, nrirqs, 1, np->full_name,
+					     handle_edge_irq, clr, 0,
+					     IRQ_GC_INIT_MASK_CACHE);
 	if (ret) {
 		pr_err("%pOFn: unable to alloc irq domain gc\n", np);
 		return ret;
@@ -167,8 +168,8 @@ static int __init orion_bridge_irq_init(struct device_node *np,
 		return ret;
 	}
 
-	if (!request_mem_region(r.start, resource_size(&r), np->name)) {
-		pr_err("%s: unable to request mem region\n", np->name);
+	if (!request_mem_region(r.start, resource_size(&r), np->full_name)) {
+		pr_err("%pOFn: unable to request mem region\n", np);
 		return -ENOMEM;
 	}
 

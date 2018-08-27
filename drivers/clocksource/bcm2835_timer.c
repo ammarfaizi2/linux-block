@@ -102,8 +102,8 @@ static int __init bcm2835_timer_init(struct device_node *node)
 	system_clock = base + REG_COUNTER_LO;
 	sched_clock_register(bcm2835_sched_read, 32, freq);
 
-	clocksource_mmio_init(base + REG_COUNTER_LO, node->name,
-		freq, 300, 32, clocksource_mmio_readl_up);
+	clocksource_mmio_init(base + REG_COUNTER_LO, node->full_name,
+			      freq, 300, 32, clocksource_mmio_readl_up);
 
 	irq = irq_of_parse_and_map(node, DEFAULT_TIMER);
 	if (irq <= 0) {
@@ -121,12 +121,12 @@ static int __init bcm2835_timer_init(struct device_node *node)
 	timer->control = base + REG_CONTROL;
 	timer->compare = base + REG_COMPARE(DEFAULT_TIMER);
 	timer->match_mask = BIT(DEFAULT_TIMER);
-	timer->evt.name = node->name;
+	timer->evt.name = node->full_name;
 	timer->evt.rating = 300;
 	timer->evt.features = CLOCK_EVT_FEAT_ONESHOT;
 	timer->evt.set_next_event = bcm2835_time_set_next_event;
 	timer->evt.cpumask = cpumask_of(0);
-	timer->act.name = node->name;
+	timer->act.name = node->full_name;
 	timer->act.flags = IRQF_TIMER | IRQF_SHARED;
 	timer->act.dev_id = timer;
 	timer->act.handler = bcm2835_time_interrupt;

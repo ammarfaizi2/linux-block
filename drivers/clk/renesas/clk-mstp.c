@@ -340,7 +340,7 @@ void __init cpg_mstp_add_clk_domain(struct device_node *np)
 	if (!pd)
 		return;
 
-	pd->name = np->name;
+	pd->name = np->full_name;
 	pd->flags = GENPD_FLAG_PM_CLK | GENPD_FLAG_ACTIVE_WAKEUP;
 	pd->attach_dev = cpg_mstp_attach_dev;
 	pd->detach_dev = cpg_mstp_detach_dev;

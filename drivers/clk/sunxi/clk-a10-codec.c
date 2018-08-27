@@ -23,7 +23,7 @@
 static void __init sun4i_codec_clk_setup(struct device_node *node)
 {
 	struct clk *clk;
-	const char *clk_name = node->name, *parent_name;
+	const char *clk_name = node->full_name, *parent_name;
 	void __iomem *reg;
 
 	reg = of_io_request_and_map(node, 0, of_node_full_name(node));

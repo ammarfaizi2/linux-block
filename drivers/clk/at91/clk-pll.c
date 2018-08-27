@@ -460,7 +460,7 @@ of_at91_clk_pll_setup(struct device_node *np,
 	struct clk_hw *hw;
 	struct regmap *regmap;
 	const char *parent_name;
-	const char *name = np->name;
+	const char *name = np->full_name;
 	struct clk_pll_characteristics *characteristics;
 
 	if (of_property_read_u32(np, "reg", &id))

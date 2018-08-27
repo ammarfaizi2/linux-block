@@ -337,7 +337,7 @@ int of_regulator_match(struct device *dev, struct device_node *node,
 		name = of_get_property(child,
 					"regulator-compatible", NULL);
 		if (!name)
-			name = child->name;
+			name = child->full_name;
 		for (i = 0; i < num_matches; i++) {
 			struct of_regulator_match *match = &matches[i];
 			if (match->of_node)
@@ -393,7 +393,7 @@ struct regulator_init_data *regulator_of_get_init_data(struct device *dev,
 	for_each_available_child_of_node(search, child) {
 		name = of_get_property(child, "regulator-compatible", NULL);
 		if (!name)
-			name = child->name;
+			name = child->full_name;
 
 		if (strcmp(desc->of_match, name))
 			continue;

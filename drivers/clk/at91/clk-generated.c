@@ -355,7 +355,7 @@ static void __init of_sama5d2_clk_generated_setup(struct device_node *np)
 			continue;
 
 		if (of_property_read_string(np, "clock-output-names", &name))
-			name = gcknp->name;
+			name = gcknp->full_name;
 
 		of_at91_get_clk_range(gcknp, "atmel,clk-output-range",
 				      &range);

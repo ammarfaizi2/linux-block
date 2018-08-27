@@ -212,7 +212,7 @@ static void __init _of_pll_clk_init(struct device_node *node, bool pllctrl)
 		}
 	}
 
-	clk = clk_register_pll(NULL, node->name, parent_name, pll_data);
+	clk = clk_register_pll(NULL, node->full_name, parent_name, pll_data);
 	if (clk) {
 		of_clk_add_provider(node, of_clk_src_simple_get, clk);
 		return;
@@ -255,7 +255,7 @@ static void __init of_pll_div_clk_init(struct device_node *node)
 	void __iomem *reg;
 	u32 shift, mask;
 	struct clk *clk;
-	const char *clk_name = node->name;
+	const char *clk_name = node->full_name;
 
 	of_property_read_string(node, "clock-output-names", &clk_name);
 	reg = of_iomap(node, 0);
@@ -304,7 +304,7 @@ static void __init of_pll_mux_clk_init(struct device_node *node)
 	u32 shift, mask;
 	struct clk *clk;
 	const char *parents[2];
-	const char *clk_name = node->name;
+	const char *clk_name = node->full_name;
 
 	of_property_read_string(node, "clock-output-names", &clk_name);
 	reg = of_iomap(node, 0);

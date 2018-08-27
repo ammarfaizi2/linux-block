@@ -1015,7 +1015,7 @@ static int altr_edac_device_probe(struct platform_device *pdev)
 	struct resource *r;
 	int res = 0;
 	struct device_node *np = pdev->dev.of_node;
-	char *ecc_name = (char *)np->name;
+	char *ecc_name = (char *)np->full_name;
 	static int dev_instance;
 
 	if (!devres_open_group(&pdev->dev, NULL, GFP_KERNEL)) {
@@ -1262,7 +1262,7 @@ altr_init_a10_ecc_block(struct device_node *np, u32 irq_mask,
 	char *ecc_name;
 	struct device_node *np_eccmgr;
 
-	ecc_name = (char *)np->name;
+	ecc_name = (char *)np->full_name;
 
 	/* Get the ECC Manager - parent of the device EDACs */
 	np_eccmgr = of_get_parent(np);
@@ -1993,7 +1993,7 @@ static int altr_edac_a10_device_add(struct altr_arria10_edac *edac,
 {
 	struct edac_device_ctl_info *dci;
 	struct altr_edac_device_dev *altdev;
-	char *ecc_name = (char *)np->name;
+	char *ecc_name = (char *)np->full_name;
 	struct resource res;
 	int edac_idx;
 	int rc = 0;

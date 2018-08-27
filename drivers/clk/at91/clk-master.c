@@ -204,7 +204,7 @@ of_at91_clk_master_setup(struct device_node *np,
 	struct clk_hw *hw;
 	unsigned int num_parents;
 	const char *parent_names[MASTER_SOURCE_MAX];
-	const char *name = np->name;
+	const char *name = np->full_name;
 	struct clk_master_characteristics *characteristics;
 	struct regmap *regmap;
 

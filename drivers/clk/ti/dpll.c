@@ -186,7 +186,7 @@ static void __init _register_dpll(void *user,
 	dd->clk_bypass = __clk_get_hw(clk);
 
 	/* register the clock */
-	clk = ti_clk_register(NULL, &clk_hw->hw, node->name);
+	clk = ti_clk_register(NULL, &clk_hw->hw, node->full_name);
 
 	if (!IS_ERR(clk)) {
 		omap2_init_clk_hw_omap_clocks(&clk_hw->hw);
@@ -221,7 +221,7 @@ static void _register_dpll_x2(struct device_node *node,
 	struct clk *clk;
 	struct clk_init_data init = { NULL };
 	struct clk_hw_omap *clk_hw;
-	const char *name = node->name;
+	const char *name = node->full_name;
 	const char *parent_name;
 
 	parent_name = of_clk_get_parent_name(node, 0);
@@ -300,7 +300,7 @@ static void __init of_ti_dpll_setup(struct device_node *node,
 	clk_hw->ops = &clkhwops_omap3_dpll;
 	clk_hw->hw.init = init;
 
-	init->name = node->name;
+	init->name = node->full_name;
 	init->ops = ops;
 
 	init->num_parents = of_clk_get_parent_count(node);

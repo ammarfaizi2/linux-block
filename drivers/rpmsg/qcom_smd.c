@@ -1377,7 +1377,7 @@ static int qcom_smd_parse_edge(struct device *dev,
 
 	ret = of_property_read_string(node, "label", &edge->name);
 	if (ret < 0)
-		edge->name = node->name;
+		edge->name = node->full_name;
 
 	irq = irq_of_parse_and_map(node, 0);
 	if (irq < 0) {
@@ -1387,7 +1387,7 @@ static int qcom_smd_parse_edge(struct device *dev,
 
 	ret = devm_request_irq(dev, irq,
 			       qcom_smd_edge_intr, IRQF_TRIGGER_RISING,
-			       node->name, edge);
+			       edge->name, edge);
 	if (ret) {
 		dev_err(dev, "failed to request smd irq\n");
 		return ret;

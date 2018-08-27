@@ -33,7 +33,7 @@ static void __init sun8i_a23_mbus_setup(struct device_node *node)
 {
 	int num_parents = of_clk_get_parent_count(node);
 	const char **parents;
-	const char *clk_name = node->name;
+	const char *clk_name = node->full_name;
 	struct resource res;
 	struct clk_divider *div;
 	struct clk_gate *gate;

@@ -74,7 +74,7 @@ static void __init st_of_clkgen_mux_setup(struct device_node *np,
 		goto err_parents;
 	}
 
-	clk = clk_register_mux(NULL, np->name, parents, num_parents,
+	clk = clk_register_mux(NULL, np->full_name, parents, num_parents,
 				data->clk_flags | CLK_SET_RATE_PARENT,
 				reg + data->offset,
 				data->shift, data->width, data->mux_flags,

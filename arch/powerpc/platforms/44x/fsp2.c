@@ -215,7 +215,7 @@ static void node_irq_request(const char *compat, irq_handler_t errirq_handler)
 			return;
 		}
 
-		rc = request_irq(irq, errirq_handler, 0, np->name, np);
+		rc = request_irq(irq, errirq_handler, 0, np->full_name, np);
 		if (rc) {
 			pr_err("fsp_of_probe: request_irq failed: np=%pOF rc=%d",
 			      np, rc);

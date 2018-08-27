@@ -309,7 +309,7 @@ static int qpnp_tm_probe(struct platform_device *pdev)
 	}
 
 	ret = devm_request_threaded_irq(&pdev->dev, irq, NULL, qpnp_tm_isr,
-					IRQF_ONESHOT, node->name, chip);
+					IRQF_ONESHOT, node->full_name, chip);
 	if (ret < 0)
 		return ret;
 

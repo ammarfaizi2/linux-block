@@ -314,7 +314,7 @@ static int hsdk_pll_clk_probe(struct platform_device *pdev)
 	if (IS_ERR(pll_clk->regs))
 		return PTR_ERR(pll_clk->regs);
 
-	init.name = dev->of_node->name;
+	init.name = dev->of_node->full_name;
 	init.ops = &hsdk_pll_ops;
 	parent_name = of_clk_get_parent_name(dev->of_node, 0);
 	init.parent_names = &parent_name;
@@ -374,7 +374,7 @@ static void __init of_hsdk_pll_clk_setup(struct device_node *node)
 		goto err_unmap_comm_regs;
 	}
 
-	init.name = node->name;
+	init.name = node->full_name;
 	init.ops = &hsdk_pll_ops;
 	parent_name = of_clk_get_parent_name(node, 0);
 	init.parent_names = &parent_name;

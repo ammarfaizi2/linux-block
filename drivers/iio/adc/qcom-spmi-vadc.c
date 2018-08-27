@@ -660,7 +660,7 @@ static int vadc_get_dt_channel_data(struct device *dev,
 				    struct vadc_channel_prop *prop,
 				    struct device_node *node)
 {
-	const char *name = node->name;
+	const char *name = node->full_name;
 	u32 chan, value, varr[2];
 	int ret;
 

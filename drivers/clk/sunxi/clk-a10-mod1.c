@@ -32,7 +32,7 @@ static void __init sun4i_mod1_clk_setup(struct device_node *node)
 	struct clk_mux *mux;
 	struct clk_gate *gate;
 	const char *parents[4];
-	const char *clk_name = node->name;
+	const char *clk_name = node->full_name;
 	void __iomem *reg;
 	int i;
 

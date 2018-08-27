@@ -509,7 +509,7 @@ device_initcall(nomadik_src_clk_init_debugfs);
 static void __init of_nomadik_pll_setup(struct device_node *np)
 {
 	struct clk_hw *hw;
-	const char *clk_name = np->name;
+	const char *clk_name = np->full_name;
 	const char *parent_name;
 	u32 pll_id;
 
@@ -532,7 +532,7 @@ CLK_OF_DECLARE(nomadik_pll_clk,
 static void __init of_nomadik_hclk_setup(struct device_node *np)
 {
 	struct clk_hw *hw;
-	const char *clk_name = np->name;
+	const char *clk_name = np->full_name;
 	const char *parent_name;
 
 	if (!src_base)
@@ -556,7 +556,7 @@ CLK_OF_DECLARE(nomadik_hclk_clk,
 static void __init of_nomadik_src_clk_setup(struct device_node *np)
 {
 	struct clk_hw *hw;
-	const char *clk_name = np->name;
+	const char *clk_name = np->full_name;
 	const char *parent_name;
 	u32 clk_id;
 

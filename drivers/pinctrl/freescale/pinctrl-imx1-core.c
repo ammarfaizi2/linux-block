@@ -231,7 +231,7 @@ static int imx1_dt_node_to_map(struct pinctrl_dev *pctldev,
 	 * first find the group of this node and check if we need create
 	 * config maps for pins
 	 */
-	grp = imx1_pinctrl_find_group_by_name(info, np->name);
+	grp = imx1_pinctrl_find_group_by_name(info, np->full_name);
 	if (!grp) {
 		dev_err(info->dev, "unable to find group for node %pOFn\n",
 			np);
@@ -256,8 +256,8 @@ static int imx1_dt_node_to_map(struct pinctrl_dev *pctldev,
 		return -EINVAL;
 	}
 	new_map[0].type = PIN_MAP_TYPE_MUX_GROUP;
-	new_map[0].data.mux.function = parent->name;
-	new_map[0].data.mux.group = np->name;
+	new_map[0].data.mux.function = parent->full_name;
+	new_map[0].data.mux.group = np->full_name;
 	of_node_put(parent);
 
 	/* create config map */
@@ -469,7 +469,7 @@ static int imx1_pinctrl_parse_groups(struct device_node *np,
 	dev_dbg(info->dev, "group(%d): %pOFn\n", index, np);
 
 	/* Initialise group */
-	grp->name = np->name;
+	grp->name = np->full_name;
 
 	/*
 	 * the binding format is fsl,pins = <PIN MUX_ID CONFIG>
@@ -518,7 +518,7 @@ static int imx1_pinctrl_parse_functions(struct device_node *np,
 	func = &info->functions[index];
 
 	/* Initialise function */
-	func->name = np->name;
+	func->name = np->full_name;
 	func->num_groups = of_get_child_count(np);
 	if (func->num_groups == 0)
 		return -EINVAL;
@@ -530,7 +530,7 @@ static int imx1_pinctrl_parse_functions(struct device_node *np,
 		return -ENOMEM;
 
 	for_each_child_of_node(np, child) {
-		func->groups[i] = child->name;
+		func->groups[i] = child->full_name;
 		grp = &info->groups[grp_index++];
 		ret = imx1_pinctrl_parse_groups(child, grp, info, i++);
 		if (ret == -ENOMEM) {

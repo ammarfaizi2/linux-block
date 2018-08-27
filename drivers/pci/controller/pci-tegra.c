@@ -1960,7 +1960,7 @@ static int tegra_pcie_parse_dt(struct tegra_pcie *pcie)
 	err = of_pci_parse_bus_range(np, &pcie->busn);
 	if (err < 0) {
 		dev_err(dev, "failed to parse ranges property: %d\n", err);
-		pcie->busn.name = np->name;
+		pcie->busn.name = np->full_name;
 		pcie->busn.start = 0;
 		pcie->busn.end = 0xff;
 		pcie->busn.flags = IORESOURCE_BUS;

@@ -6049,7 +6049,7 @@ static int atlas7_gpio_probe(struct platform_device *pdev)
 	chip->base = -1;
 	/* Each chip can support 32 pins at one bank */
 	chip->ngpio = NGPIO_OF_BANK * nbank;
-	chip->label = kstrdup(np->name, GFP_KERNEL);
+	chip->label = kasprintf(GFP_KERNEL, "%pOFn", np);
 	chip->of_node = np;
 	chip->of_gpio_n_cells = 2;
 	chip->parent = &pdev->dev;

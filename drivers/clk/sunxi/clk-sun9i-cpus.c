@@ -181,7 +181,7 @@ static const struct clk_ops sun9i_a80_cpus_clk_ops = {
 
 static void sun9i_a80_cpus_setup(struct device_node *node)
 {
-	const char *clk_name = node->name;
+	const char *clk_name = node->full_name;
 	const char *parents[SUN9I_CPUS_MAX_PARENTS];
 	struct resource res;
 	struct sun9i_a80_cpus_clk *cpus;

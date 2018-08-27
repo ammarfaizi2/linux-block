@@ -162,7 +162,7 @@ static void __init of_at91sam9x5_clk_utmi_setup(struct device_node *np)
 {
 	struct clk_hw *hw;
 	const char *parent_name;
-	const char *name = np->name;
+	const char *name = np->full_name;
 	struct regmap *regmap_pmc, *regmap_sfr;
 
 	parent_name = of_clk_get_parent_name(np, 0);

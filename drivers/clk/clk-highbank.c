@@ -276,7 +276,7 @@ static __init struct clk *hb_clk_init(struct device_node *node, const struct clk
 {
 	u32 reg;
 	struct hb_clk *hb_clk;
-	const char *clk_name = node->name;
+	const char *clk_name = node->full_name;
 	const char *parent_name;
 	struct clk_init_data init;
 	struct device_node *srnp;

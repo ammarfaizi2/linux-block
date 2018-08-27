@@ -279,7 +279,7 @@ static void __init asm9260_acc_init(struct device_node *np)
 	clk_data->num = MAX_CLKS;
 	hws = clk_data->hws;
 
-	base = of_io_request_and_map(np, 0, np->name);
+	base = of_io_request_and_map(np, 0, NULL);
 	if (IS_ERR(base))
 		panic("%pOFn: unable to map resource", np);
 

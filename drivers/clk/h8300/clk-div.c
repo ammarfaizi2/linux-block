@@ -16,7 +16,7 @@ static void __init h8300_div_clk_setup(struct device_node *node)
 {
 	unsigned int num_parents;
 	struct clk_hw *hw;
-	const char *clk_name = node->name;
+	const char *clk_name = node->full_name;
 	const char *parent_name;
 	void __iomem *divcr = NULL;
 	int width;

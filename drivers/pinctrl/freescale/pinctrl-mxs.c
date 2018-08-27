@@ -62,11 +62,10 @@ static int mxs_dt_node_to_map(struct pinctrl_dev *pctldev,
 			      struct pinctrl_map **map, unsigned *num_maps)
 {
 	struct pinctrl_map *new_map;
-	char *group = NULL;
+	char *group = NULL, *func;
 	unsigned new_num = 1;
 	unsigned long config = 0;
 	unsigned long *pconfig;
-	int length = strlen(np->name) + SUFFIX_LEN;
 	bool purecfg = false;
 	u32 val, reg;
 	int ret, i = 0;
@@ -95,15 +94,15 @@ static int mxs_dt_node_to_map(struct pinctrl_dev *pctldev,
 
 	if (!purecfg) {
 		new_map[i].type = PIN_MAP_TYPE_MUX_GROUP;
-		new_map[i].data.mux.function = np->name;
+		func = kasprintf(GFP_KERNEL, "%pOFn", np);
+		new_map[i].data.mux.function = func;
 
 		/* Compose group name */
-		group = kzalloc(length, GFP_KERNEL);
+		group = kasprintf(GFP_KERNEL, "%pOFn.%d", np, reg);
 		if (!group) {
 			ret = -ENOMEM;
 			goto free;
 		}
-		snprintf(group, length, "%s.%d", np->name, reg);
 		new_map[i].data.mux.group = group;
 		i++;
 	}
@@ -116,7 +115,7 @@ static int mxs_dt_node_to_map(struct pinctrl_dev *pctldev,
 		}
 
 		new_map[i].type = PIN_MAP_TYPE_CONFIGS_GROUP;
-		new_map[i].data.configs.group_or_pin = purecfg ? np->name :
+		new_map[i].data.configs.group_or_pin = purecfg ? func :
 								 group;
 		new_map[i].data.configs.configs = pconfig;
 		new_map[i].data.configs.num_configs = 1;
@@ -353,16 +352,14 @@ static int mxs_pinctrl_parse_group(struct platform_device *pdev,
 	struct property *prop;
 	const char *propname = "fsl,pinmux-ids";
 	char *group;
-	int length = strlen(np->name) + SUFFIX_LEN;
 	u32 val, i;
 
-	group = devm_kzalloc(&pdev->dev, length, GFP_KERNEL);
+	if (of_property_read_u32(np, "reg", &val))
+		group = devm_kasprintf(&pdev->dev, GFP_KERNEL, group, "%pOFn", np);
+	else
+		group = devm_kasprintf(&pdev->dev, GFP_KERNEL, group, "%pOFn.%d", np, val);
 	if (!group)
 		return -ENOMEM;
-	if (of_property_read_u32(np, "reg", &val))
-		snprintf(group, length, "%s", np->name);
-	else
-		snprintf(group, length, "%s.%d", np->name, val);
 	g->name = group;
 
 	prop = of_find_property(np, propname, &length);
@@ -397,10 +394,10 @@ static int mxs_pinctrl_probe_dt(struct platform_device *pdev,
 {
 	struct mxs_pinctrl_soc_data *soc = d->soc;
 	struct device_node *np = pdev->dev.of_node;
-	struct device_node *child;
+	struct device_node *child, *child2;
 	struct mxs_function *f;
+	char name[32];
 	const char *gpio_compat = "fsl,mxs-gpio";
-	const char *fn, *fnull = "";
 	int i = 0, idxf = 0, idxg = 0;
 	int ret;
 	u32 val;
@@ -420,10 +417,10 @@ static int mxs_pinctrl_probe_dt(struct platform_device *pdev,
 		/* Skip pure pinconf node */
 		if (of_property_read_u32(child, "reg", &val))
 			continue;
-		if (strcmp(fn, child->name)) {
-			fn = child->name;
-			soc->nfunctions++;
-		}
+		if (val)
+			continue;
+
+		soc->nfunctions++;
 	}
 
 	soc->functions = devm_kcalloc(&pdev->dev,
@@ -447,67 +444,63 @@ static int mxs_pinctrl_probe_dt(struct platform_device *pdev,
 			continue;
 		if (of_property_read_u32(child, "reg", &val))
 			continue;
-		if (strcmp(fn, child->name)) {
-			struct device_node *child2;
+		if (val)
+			continue;
+			
+		snprintf(name, sizeof(name), "%pOFn", child);
 
-			/*
-			 * This reference is dropped by
-			 * of_get_next_child(np, * child)
-			 */
-			of_node_get(child);
-
-			/*
-			 * The logic parsing the functions from dt currently
-			 * doesn't handle if functions with the same name are
-			 * not grouped together. Only the first contiguous
-			 * cluster is usable for each function name. This is a
-			 * bug that is not trivial to fix, but at least warn
-			 * about it.
-			 */
-			for (child2 = of_get_next_child(np, child);
-			     child2 != NULL;
-			     child2 = of_get_next_child(np, child2)) {
-				if (!strcmp(child2->name, fn))
-					dev_warn(&pdev->dev,
-						 "function nodes must be grouped by name (failed for: %s)",
-						 fn);
-			}
-
+		for_each_child_of_node(np, child2) {
+			if (!of_node_name_eq(child2, name) || (child2 == child))
+				continue;
 			f = &soc->functions[idxf++];
-			f->name = fn = child->name;
-		}
+			f->name = devm_kstrdup(&pdev->dev, name, GFP_KERNEL);
+		}	
+
 		f->ngroups++;
 	}
 
 	/* Get groups for each function */
 	idxf = 0;
-	fn = fnull;
 	for_each_child_of_node(np, child) {
 		if (of_device_is_compatible(child, gpio_compat))
 			continue;
 		if (of_property_read_u32(child, "reg", &val)) {
 			ret = mxs_pinctrl_parse_group(pdev, child,
 						      idxg++, NULL);
-			if (ret)
+			if (ret) {
+				of_node_put(child);
 				return ret;
+			}
 			continue;
 		}
+		if (val)
+			continue;
+			
+		snprintf(name, sizeof(name), "%pOFn", child);
 
-		if (strcmp(fn, child->name)) {
-			f = &soc->functions[idxf++];
-			f->groups = devm_kcalloc(&pdev->dev,
-						 f->ngroups,
-						 sizeof(*f->groups),
-						 GFP_KERNEL);
-			if (!f->groups)
-				return -ENOMEM;
-			fn = child->name;
-			i = 0;
+		f = &soc->functions[idxf++];
+		f->groups = devm_kcalloc(&pdev->dev,
+					 f->ngroups,
+					 sizeof(*f->groups),
+					 GFP_KERNEL);
+		if (!f->groups) {
+			of_node_put(child);
+			return -ENOMEM;
 		}
-		ret = mxs_pinctrl_parse_group(pdev, child, idxg++,
-					      &f->groups[i++]);
-		if (ret)
-			return ret;
+		i = 0;
+
+		for_each_child_of_node(np, child2) {
+			if (!of_node_name_eq(child2, name) || (child2 == child))
+				continue;
+
+			ret = mxs_pinctrl_parse_group(pdev, child, idxg++,
+						      &f->groups[i++]);
+			if (ret) {
+				of_node_put(child2);
+				of_node_put(child);
+				return ret;
+			}
+		}
 	}
 
 	return 0;

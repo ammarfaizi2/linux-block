@@ -607,7 +607,7 @@ static struct clk *ak4642_of_parse_mcko(struct device *dev)
 {
 	struct device_node *np = dev->of_node;
 	struct clk *clk;
-	const char *clk_name = np->name;
+	const char *clk_name = np->full_name;
 	const char *parent_clk_name = NULL;
 	u32 rate;
 

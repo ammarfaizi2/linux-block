@@ -110,7 +110,7 @@ static void __init sun4i_a10_display_init(struct device_node *node,
 					  const struct sun4i_a10_display_clk_data *data)
 {
 	const char *parents[4];
-	const char *clk_name = node->name;
+	const char *clk_name = node->full_name;
 	struct reset_data *reset_data;
 	struct clk_divider *div = NULL;
 	struct clk_gate *gate;

@@ -125,8 +125,8 @@ static int __init ralink_systick_init(struct device_node *np)
 	if (!systick.membase)
 		return -ENXIO;
 
-	systick_irqaction.name = np->name;
-	systick.dev.name = np->name;
+	systick_irqaction.name = np->full_name;
+	systick.dev.name = np->full_name;
 	clockevents_calc_mult_shift(&systick.dev, SYSTICK_FREQ, 60);
 	systick.dev.max_delta_ns = clockevent_delta2ns(0x7fff, &systick.dev);
 	systick.dev.max_delta_ticks = 0x7fff;
@@ -138,7 +138,7 @@ static int __init ralink_systick_init(struct device_node *np)
 		return -EINVAL;
 	}
 
-	ret = clocksource_mmio_init(systick.membase + SYSTICK_COUNT, np->name,
+	ret = clocksource_mmio_init(systick.membase + SYSTICK_COUNT, np->full_name,
 				    SYSTICK_FREQ, 301, 16,
 				    clocksource_mmio_readl_up);
 	if (ret)

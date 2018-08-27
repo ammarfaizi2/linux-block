@@ -234,7 +234,7 @@ static int __init atcpit100_timer_init(struct device_node *node)
 		timer_of_rate(&to));
 
 	ret = clocksource_mmio_init(base + CH1_CNT,
-		node->name, timer_of_rate(&to), 300, 32,
+		node->full_name, timer_of_rate(&to), 300, 32,
 		clocksource_mmio_readl_down);
 
 	if (ret) {

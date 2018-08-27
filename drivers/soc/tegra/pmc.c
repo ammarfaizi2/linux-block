@@ -794,7 +794,7 @@ static void tegra_powergate_add(struct tegra_pmc *pmc, struct device_node *np)
 	if (!pg)
 		return;
 
-	id = tegra_powergate_lookup(pmc, np->name);
+	id = tegra_powergate_lookup(pmc, np->full_name);
 	if (id < 0) {
 		pr_err("powergate lookup failed for %pOFn: %d\n", np, id);
 		goto free_mem;
@@ -807,7 +807,7 @@ static void tegra_powergate_add(struct tegra_pmc *pmc, struct device_node *np)
 	clear_bit(id, pmc->powergates_available);
 
 	pg->id = id;
-	pg->genpd.name = np->name;
+	pg->genpd.name = np->full_name;
 	pg->genpd.power_off = tegra_genpd_power_off;
 	pg->genpd.power_on = tegra_genpd_power_on;
 	pg->pmc = pmc;

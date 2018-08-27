@@ -628,7 +628,7 @@ static void __init of_ti_divider_clk_setup(struct device_node *node)
 				    &clk_divider_flags, &width, &shift, &latch))
 		goto cleanup;
 
-	clk = _register_divider(NULL, node->name, parent_name, flags, &reg,
+	clk = _register_divider(NULL, node->full_name, parent_name, flags, &reg,
 				shift, width, latch, clk_divider_flags, table);
 
 	if (!IS_ERR(clk)) {

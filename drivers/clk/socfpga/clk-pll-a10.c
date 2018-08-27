@@ -80,7 +80,7 @@ static struct clk * __init __socfpga_pll_init(struct device_node *node,
 	u32 reg;
 	struct clk *clk;
 	struct socfpga_pll *pll_clk;
-	const char *clk_name = node->name;
+	const char *clk_name = node->full_name;
 	const char *parent_name[SOCFGPA_MAX_PARENTS];
 	struct clk_init_data init;
 	struct device_node *clkmgr_np;

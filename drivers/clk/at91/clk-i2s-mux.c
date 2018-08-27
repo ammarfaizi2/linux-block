@@ -103,7 +103,7 @@ static void __init of_sama5d2_clk_i2s_mux_setup(struct device_node *np)
 		if (ret != 2)
 			continue;
 
-		hw = at91_clk_i2s_mux_register(regmap_sfr, i2s_mux_np->name,
+		hw = at91_clk_i2s_mux_register(regmap_sfr, i2s_mux_np->full_name,
 					       parent_names, 2, bus_id);
 		if (IS_ERR(hw))
 			continue;

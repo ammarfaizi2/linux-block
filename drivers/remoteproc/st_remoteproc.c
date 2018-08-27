@@ -284,7 +284,7 @@ static int st_rproc_probe(struct platform_device *pdev)
 		return -ENODEV;
 	}
 
-	rproc = rproc_alloc(dev, np->name, &st_rproc_ops, NULL, sizeof(*ddata));
+	rproc = rproc_alloc(dev, np->full_name, &st_rproc_ops, NULL, sizeof(*ddata));
 	if (!rproc)
 		return -ENOMEM;
 

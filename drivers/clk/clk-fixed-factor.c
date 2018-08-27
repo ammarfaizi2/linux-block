@@ -151,7 +151,7 @@ static const struct of_device_id set_rate_parent_matches[] = {
 static struct clk *_of_fixed_factor_clk_setup(struct device_node *node)
 {
 	struct clk *clk;
-	const char *clk_name = node->name;
+	const char *clk_name = node->full_name;
 	const char *parent_name;
 	unsigned long flags = 0;
 	u32 div, mult;

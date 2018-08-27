@@ -266,7 +266,7 @@ static __init int nios2_clockevent_init(struct device_node *timer)
 	/* clear pending interrupt */
 	timer_writew(&nios2_ce.timer, 0, ALTERA_TIMER_STATUS_REG);
 
-	ret = request_irq(irq, timer_interrupt, IRQF_TIMER, timer->name,
+	ret = request_irq(irq, timer_interrupt, IRQF_TIMER, timer->full_name,
 			  &nios2_ce.ced);
 	if (ret) {
 		pr_crit("Unable to setup timer irq\n");

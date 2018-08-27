@@ -457,7 +457,7 @@ static int of_sama5d2_clk_audio_pll_setup(struct device_node *np,
 	if (IS_ERR(regmap))
 		return PTR_ERR(regmap);
 
-	init->name = np->name;
+	init->name = np->full_name;
 	of_clk_parent_fill(np, parent_names, 1);
 	init->parent_names = parent_names;
 	init->num_parents = 1;

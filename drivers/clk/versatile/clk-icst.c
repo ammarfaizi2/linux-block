@@ -497,7 +497,7 @@ static void __init of_syscon_icst_setup(struct device_node *np)
 	struct device_node *parent;
 	struct regmap *map;
 	struct clk_icst_desc icst_desc;
-	const char *name = np->name;
+	const char *name = np->full_name;
 	const char *parent_name;
 	struct clk *regclk;
 	enum icst_control_type ctype;

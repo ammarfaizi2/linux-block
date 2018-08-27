@@ -51,7 +51,7 @@ mt76_get_of_eeprom(struct mt76_dev *dev, int len)
 
 	part = of_get_property(np, "label", NULL);
 	if (!part)
-		part = np->name;
+		part = np->full_name;
 
 	mtd = get_mtd_device_nm(part);
 	if (IS_ERR(mtd))

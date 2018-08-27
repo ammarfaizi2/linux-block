@@ -85,7 +85,7 @@ static void __init of_at91sam9260_clk_slow_setup(struct device_node *np)
 	struct clk_hw *hw;
 	const char *parent_names[2];
 	unsigned int num_parents;
-	const char *name = np->name;
+	const char *name = np->full_name;
 	struct regmap *regmap;
 
 	num_parents = of_clk_get_parent_count(np);

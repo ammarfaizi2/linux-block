@@ -538,12 +538,12 @@ static int ti_iodelay_dt_node_to_map(struct pinctrl_dev *pctldev,
 	g->ncfg = i;
 	g->config = PIN_CONFIG_END;
 
-	error = pinctrl_generic_add_group(iod->pctl, np->name, pins, i, g);
+	error = pinctrl_generic_add_group(iod->pctl, np->full_name, pins, i, g);
 	if (error < 0)
 		goto free_data;
 
 	(*map)->type = PIN_MAP_TYPE_CONFIGS_GROUP;
-	(*map)->data.configs.group_or_pin = np->name;
+	(*map)->data.configs.group_or_pin = np->full_name;
 	(*map)->data.configs.configs = &g->config;
 	(*map)->data.configs.num_configs = 1;
 	*num_maps = 1;

@@ -82,7 +82,7 @@ static int init_state_node(struct cpuidle_state *idle_state,
 
 	err = of_property_read_string(state_node, "idle-state-name", &desc);
 	if (err)
-		desc = state_node->name;
+		desc = state_node->full_name;
 
 	idle_state->flags = 0;
 	if (of_property_read_bool(state_node, "local-timer-stop"))
@@ -92,7 +92,7 @@ static int init_state_node(struct cpuidle_state *idle_state,
 	 *	replace with kstrdup and pointer assignment when name
 	 *	and desc become string pointers
 	 */
-	strncpy(idle_state->name, state_node->name, CPUIDLE_NAME_LEN - 1);
+	strncpy(idle_state->name, state_node->full_name, CPUIDLE_NAME_LEN - 1);
 	strncpy(idle_state->desc, desc, CPUIDLE_DESC_LEN - 1);
 	return 0;
 }

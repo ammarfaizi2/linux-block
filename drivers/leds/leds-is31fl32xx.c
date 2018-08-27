@@ -343,7 +343,7 @@ static int is31fl32xx_parse_child_dt(const struct device *dev,
 	u32 reg;
 
 	if (of_property_read_string(child, "label", &cdev->name))
-		cdev->name = child->name;
+		cdev->name = child->full_name;
 
 	ret = of_property_read_u32(child, "reg", &reg);
 	if (ret || reg < 1 || reg > led_data->priv->cdef->channels) {

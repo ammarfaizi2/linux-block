@@ -261,7 +261,7 @@ of_at91_clk_prog_setup(struct device_node *np,
 			continue;
 
 		if (of_property_read_string(np, "clock-output-names", &name))
-			name = progclknp->name;
+			name = progclknp->full_name;
 
 		hw = at91_clk_register_programmable(regmap, name,
 						     parent_names, num_parents,

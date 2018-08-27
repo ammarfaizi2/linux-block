@@ -1049,7 +1049,7 @@ static int s3c24xx_nand_probe_dt(struct platform_device *pdev)
 	pdata->sets = sets;
 
 	for_each_available_child_of_node(np, child) {
-		sets->name = (char *)child->name;
+		sets->name = (char *)child->full_name;
 		sets->of_node = child;
 		sets->nr_chips = 1;
 

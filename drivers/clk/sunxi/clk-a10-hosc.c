@@ -28,7 +28,7 @@ static void __init sun4i_osc_clk_setup(struct device_node *node)
 	struct clk *clk;
 	struct clk_fixed_rate *fixed;
 	struct clk_gate *gate;
-	const char *clk_name = node->name;
+	const char *clk_name = node->full_name;
 	u32 rate;
 
 	if (of_property_read_u32(node, "clock-frequency", &rate))

@@ -157,7 +157,7 @@ of_at91sam9x5_clk_slow_osc_setup(struct device_node *np, void __iomem *sckcr)
 {
 	struct clk_hw *hw;
 	const char *parent_name;
-	const char *name = np->name;
+	const char *name = np->full_name;
 	u32 startup;
 	bool bypass;
 
@@ -273,7 +273,7 @@ of_at91sam9x5_clk_slow_rc_osc_setup(struct device_node *np, void __iomem *sckcr)
 	u32 frequency = 0;
 	u32 accuracy = 0;
 	u32 startup = 0;
-	const char *name = np->name;
+	const char *name = np->full_name;
 
 	of_property_read_string(np, "clock-output-names", &name);
 	of_property_read_u32(np, "clock-frequency", &frequency);
@@ -371,7 +371,7 @@ of_at91sam9x5_clk_slow_setup(struct device_node *np, void __iomem *sckcr)
 	struct clk_hw *hw;
 	const char *parent_names[2];
 	unsigned int num_parents;
-	const char *name = np->name;
+	const char *name = np->full_name;
 
 	num_parents = of_clk_get_parent_count(np);
 	if (num_parents == 0 || num_parents > 2)

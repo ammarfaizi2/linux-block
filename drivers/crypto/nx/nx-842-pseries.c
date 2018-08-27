@@ -849,7 +849,7 @@ static int nx842_OF_notifier(struct notifier_block *np, unsigned long action,
 
 	if (local_devdata &&
 			action == OF_RECONFIG_UPDATE_PROPERTY &&
-			!strcmp(upd->dn->name, node->name)) {
+			!strcmp(upd->dn->full_name, node->full_name)) {
 		rcu_read_unlock();
 		nx842_OF_upd(upd->prop);
 	} else

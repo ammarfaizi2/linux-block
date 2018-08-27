@@ -1139,7 +1139,7 @@ static unsigned int soc_info(unsigned int *rev_h, unsigned int *rev_l)
 	soc_string = of_get_property(np, "compatible", NULL);
 	if (!soc_string)
 		/* No compatible property, so try the name. */
-		soc_string = np->name;
+		soc_string = np->full_name;
 
 	/* Extract the SOC number from the "PowerPC," string */
 	if ((sscanf(soc_string, "PowerPC,%u", &soc) != 1) || !soc)

@@ -382,7 +382,7 @@ static int hisi_spi_nor_register(struct device_node *np,
 		return ret;
 
 	mtd = &nor->mtd;
-	mtd->name = np->name;
+	mtd->name = np->full_name;
 	ret = mtd_device_register(mtd, NULL, 0);
 	if (ret)
 		return ret;

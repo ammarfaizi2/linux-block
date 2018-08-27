@@ -725,7 +725,7 @@ static void __init clkgen_c32_pll_setup(struct device_node *np,
 	of_clk_detect_critical(np, 0, &pll_flags);
 
 	clk = clkgen_pll_register(parent_name, data, pll_base, pll_flags,
-				  np->name, data->lock);
+				  np->full_name, data->lock);
 	if (IS_ERR(clk))
 		return;
 

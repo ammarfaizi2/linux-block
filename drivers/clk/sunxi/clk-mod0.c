@@ -348,7 +348,7 @@ static void __init sunxi_mmc_setup(struct device_node *node,
 
 		if (of_property_read_string_index(node, "clock-output-names",
 						  i, &init.name))
-			init.name = node->name;
+			init.name = node->full_name;
 
 		clk_data->clks[i] = clk_register(NULL, &phase->hw);
 		if (IS_ERR(clk_data->clks[i])) {

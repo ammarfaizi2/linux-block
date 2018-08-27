@@ -28,7 +28,7 @@ static DEFINE_SPINLOCK(sun4i_a10_pll3_lock);
 
 static void __init sun4i_a10_pll3_setup(struct device_node *node)
 {
-	const char *clk_name = node->name, *parent;
+	const char *clk_name = node->full_name, *parent;
 	struct clk_multiplier *mult;
 	struct clk_gate *gate;
 	struct resource res;

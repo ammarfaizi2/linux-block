@@ -180,7 +180,7 @@ static int is31fl319x_parse_child_dt(const struct device *dev,
 	int ret;
 
 	if (of_property_read_string(child, "label", &cdev->name))
-		cdev->name = child->name;
+		cdev->name = child->full_name;
 
 	ret = of_property_read_string(child, "linux,default-trigger",
 				      &cdev->default_trigger);

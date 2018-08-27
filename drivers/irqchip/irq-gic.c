@@ -1393,7 +1393,7 @@ int gic_of_init_child(struct device *dev, struct gic_chip_data **gic, int irq)
 	if (!*gic)
 		return -ENOMEM;
 
-	gic_init_chip(*gic, dev, dev->of_node->name, false);
+	gic_init_chip(*gic, dev, dev->of_node->full_name, false);
 
 	ret = gic_of_setup(*gic, dev->of_node);
 	if (ret)

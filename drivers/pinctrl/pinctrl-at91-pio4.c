@@ -477,9 +477,9 @@ static int atmel_pctl_xlate_pinfunc(struct pinctrl_dev *pctldev,
 	atmel_pioctrl->pins[pin_id]->ioset = ATMEL_GET_PIN_IOSET(pinfunc);
 	/* Want the device name not the group one. */
 	if (np->parent == atmel_pioctrl->node)
-		atmel_pioctrl->pins[pin_id]->device = np->name;
+		atmel_pioctrl->pins[pin_id]->device = np->full_name;
 	else
-		atmel_pioctrl->pins[pin_id]->device = np->parent->name;
+		atmel_pioctrl->pins[pin_id]->device = np->parent->full_name;
 
 	return 0;
 }

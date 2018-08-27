@@ -485,7 +485,7 @@ static int tegra186_gpio_probe(struct platform_device *pdev)
 	gpio->gpio.of_gpio_n_cells = 2;
 	gpio->gpio.of_xlate = tegra186_gpio_of_xlate;
 
-	gpio->intc.name = pdev->dev.of_node->name;
+	gpio->intc.name = pdev->dev.of_node->full_name;
 	gpio->intc.irq_ack = tegra186_irq_ack;
 	gpio->intc.irq_mask = tegra186_irq_mask;
 	gpio->intc.irq_unmask = tegra186_irq_unmask;

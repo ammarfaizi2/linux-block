@@ -571,7 +571,7 @@ static int tb10x_dt_node_to_map(struct pinctrl_dev *pctl,
 		goto out;
 
 	ret = pinctrl_utils_add_map_mux(pctl, map, &reserved_maps,
-					num_maps, string, np_config->name);
+					num_maps, string, np_config->full_name);
 
 out:
 	return ret;
@@ -800,7 +800,7 @@ static int tb10x_pinctrl_probe(struct platform_device *pdev)
 
 		if (!of_property_read_string(child, "abilis,function",
 						&name)) {
-			state->pinfuncs[state->pinfuncnt].name = child->name;
+			state->pinfuncs[state->pinfuncnt].name = child->full_name;
 			state->pinfuncs[state->pinfuncnt].group = name;
 			state->pinfuncnt++;
 		}

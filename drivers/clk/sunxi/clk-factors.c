@@ -187,7 +187,7 @@ static struct clk *__sunxi_factors_register(struct device_node *node,
 	struct clk_mux *mux = NULL;
 	struct clk_hw *gate_hw = NULL;
 	struct clk_hw *mux_hw = NULL;
-	const char *clk_name = node->name;
+	const char *clk_name = node->full_name;
 	const char *parents[FACTORS_MAX_PARENTS];
 	int ret, i = 0;
 

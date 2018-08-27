@@ -174,7 +174,7 @@ at91_clk_register_main_osc(struct regmap *regmap,
 static void __init of_at91rm9200_clk_main_osc_setup(struct device_node *np)
 {
 	struct clk_hw *hw;
-	const char *name = np->name;
+	const char *name = np->full_name;
 	const char *parent_name;
 	struct regmap *regmap;
 	bool bypass;
@@ -318,7 +318,7 @@ static void __init of_at91sam9x5_clk_main_rc_osc_setup(struct device_node *np)
 	struct clk_hw *hw;
 	u32 frequency = 0;
 	u32 accuracy = 0;
-	const char *name = np->name;
+	const char *name = np->full_name;
 	struct regmap *regmap;
 
 	of_property_read_string(np, "clock-output-names", &name);
@@ -446,7 +446,7 @@ static void __init of_at91rm9200_clk_main_setup(struct device_node *np)
 {
 	struct clk_hw *hw;
 	const char *parent_name;
-	const char *name = np->name;
+	const char *name = np->full_name;
 	struct regmap *regmap;
 
 	parent_name = of_clk_get_parent_name(np, 0);
@@ -589,7 +589,7 @@ static void __init of_at91sam9x5_clk_main_setup(struct device_node *np)
 	struct clk_hw *hw;
 	const char *parent_names[2];
 	unsigned int num_parents;
-	const char *name = np->name;
+	const char *name = np->full_name;
 	struct regmap *regmap;
 
 	num_parents = of_clk_get_parent_count(np);

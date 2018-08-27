@@ -1052,7 +1052,7 @@ static int rza1_dt_node_to_map(struct pinctrl_dev *pctldev,
 		return ret;
 
 	/* Register pin group and function name to pinctrl_generic */
-	grpname	= np->name;
+	grpname	= np->full_name;
 	fngrps[0] = grpname;
 
 	mutex_lock(&rza1_pctl->mutex);
@@ -1082,8 +1082,8 @@ static int rza1_dt_node_to_map(struct pinctrl_dev *pctldev,
 	}
 
 	(*map)->type = PIN_MAP_TYPE_MUX_GROUP;
-	(*map)->data.mux.group = np->name;
-	(*map)->data.mux.function = np->name;
+	(*map)->data.mux.group = np->full_name;
+	(*map)->data.mux.function = np->full_name;
 	*num_maps = 1;
 	mutex_unlock(&rza1_pctl->mutex);
 

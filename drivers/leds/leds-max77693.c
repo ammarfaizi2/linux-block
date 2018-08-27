@@ -657,7 +657,7 @@ static int max77693_led_parse_dt(struct max77693_led_device *led,
 
 		cfg->label[fled_id] =
 			of_get_property(child_node, "label", NULL) ? :
-						child_node->name;
+						child_node->full_name;
 
 		ret = of_property_read_u32(child_node, "led-max-microamp",
 					&cfg->iout_torch_max[fled_id]);

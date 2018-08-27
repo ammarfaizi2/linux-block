@@ -218,7 +218,7 @@ static int __init sun5i_setup_clocksource(struct device_node *node,
 	writel(TIMER_CTL_ENABLE | TIMER_CTL_RELOAD,
 	       base + TIMER_CTL_REG(1));
 
-	cs->clksrc.name = node->name;
+	cs->clksrc.name = node->full_name;
 	cs->clksrc.rating = 340;
 	cs->clksrc.read = sun5i_clksrc_read;
 	cs->clksrc.mask = CLOCKSOURCE_MASK(32);
@@ -288,7 +288,7 @@ static int __init sun5i_setup_clockevent(struct device_node *node, void __iomem 
 		goto err_disable_clk;
 	}
 
-	ce->clkevt.name = node->name;
+	ce->clkevt.name = node->full_name;
 	ce->clkevt.features = CLOCK_EVT_FEAT_PERIODIC | CLOCK_EVT_FEAT_ONESHOT;
 	ce->clkevt.set_next_event = sun5i_clkevt_next_event;
 	ce->clkevt.set_state_shutdown = sun5i_clkevt_shutdown;

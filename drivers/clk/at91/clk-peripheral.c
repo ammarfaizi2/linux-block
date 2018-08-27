@@ -406,7 +406,7 @@ of_at91_clk_periph_setup(struct device_node *np, u8 type)
 			continue;
 
 		if (of_property_read_string(np, "clock-output-names", &name))
-			name = periphclknp->name;
+			name = periphclknp->full_name;
 
 		if (type == PERIPHERAL_AT91RM9200) {
 			hw = at91_clk_register_peripheral(regmap, name,

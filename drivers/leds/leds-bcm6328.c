@@ -298,7 +298,7 @@ static int bcm6328_led(struct device *dev, struct device_node *nc, u32 reg,
 	if (of_property_read_bool(nc, "active-low"))
 		led->active_low = true;
 
-	led->cdev.name = of_get_property(nc, "label", NULL) ? : nc->name;
+	led->cdev.name = of_get_property(nc, "label", NULL) ? : nc->full_name;
 	led->cdev.default_trigger = of_get_property(nc,
 						    "linux,default-trigger",
 						    NULL);

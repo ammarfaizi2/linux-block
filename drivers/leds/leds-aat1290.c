@@ -258,7 +258,7 @@ static int aat1290_led_parse_dt(struct aat1290_led *led,
 	}
 
 	led_cdev->name = of_get_property(child_node, "label", NULL) ? :
-						child_node->name;
+						child_node->full_name;
 
 	ret = of_property_read_u32(child_node, "led-max-microamp",
 				&cfg->max_mm_current);

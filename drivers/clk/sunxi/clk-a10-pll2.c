@@ -46,7 +46,7 @@ static DEFINE_SPINLOCK(sun4i_a10_pll2_lock);
 static void __init sun4i_pll2_setup(struct device_node *node,
 				    int post_div_offset)
 {
-	const char *clk_name = node->name, *parent;
+	const char *clk_name = node->full_name, *parent;
 	struct clk **clks, *base_clk, *prediv_clk;
 	struct clk_onecell_data *clk_data;
 	struct clk_multiplier *mult;

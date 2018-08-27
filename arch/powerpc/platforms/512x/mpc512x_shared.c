@@ -86,7 +86,7 @@ static void mpc512x_set_pixel_clock(unsigned int pixclock)
 	clk_diu = of_clk_get(np, 0);
 	if (IS_ERR(clk_diu)) {
 		/* backwards compat with device trees that lack clock specs */
-		clk_diu = clk_get_sys(np->name, "ipg");
+		clk_diu = clk_get_sys(np, "ipg");
 	}
 	of_node_put(np);
 	if (IS_ERR(clk_diu)) {

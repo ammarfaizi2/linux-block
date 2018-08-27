@@ -128,7 +128,7 @@ static int __init dw_apb_ictl_init(struct device_node *np,
 		goto err_unmap;
 	}
 
-	ret = irq_alloc_domain_generic_chips(domain, 32, 1, np->name,
+	ret = irq_alloc_domain_generic_chips(domain, 32, 1, np->full_name,
 					     handle_level_irq, clr, 0,
 					     IRQ_GC_INIT_MASK_CACHE);
 	if (ret) {

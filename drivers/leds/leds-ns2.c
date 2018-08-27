@@ -284,7 +284,7 @@ ns2_leds_get_of_pdata(struct device *dev, struct ns2_led_platform_data *pdata)
 			return ret;
 		led->slow = ret;
 		ret = of_property_read_string(child, "label", &string);
-		led->name = (ret == 0) ? string : child->name;
+		led->name = (ret == 0) ? string : child->full_name;
 		ret = of_property_read_string(child, "linux,default-trigger",
 					      &string);
 		if (ret == 0)

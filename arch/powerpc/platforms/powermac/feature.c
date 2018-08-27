@@ -1465,9 +1465,9 @@ static long g5_i2s_enable(struct device_node *node, long param, long value)
 
 	if (macio->type != macio_keylargo2 && macio->type != macio_shasta)
 		return -ENODEV;
-	if (strncmp(node->name, "i2s-", 4))
+	if (strncmp(node->full_name, "i2s-", 4))
 		return -ENODEV;
-	cell = node->name[4] - 'a';
+	cell = node->full_name[4] - 'a';
 	switch(cell) {
 	case 0:
 	case 1:

@@ -88,7 +88,7 @@ static void __init _of_ti_interface_clk_setup(struct device_node *node,
 		return;
 	}
 
-	clk = _register_interface(NULL, node->name, parent_name, &reg,
+	clk = _register_interface(NULL, node->full_name, parent_name, &reg,
 				  enable_bit, ops);
 
 	if (!IS_ERR(clk))

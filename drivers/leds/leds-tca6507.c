@@ -708,7 +708,7 @@ tca6507_led_dt_init(struct i2c_client *client)
 		int ret;
 
 		led.name =
-			of_get_property(child, "label", NULL) ? : child->name;
+			of_get_property(child, "label", NULL) ? : child->full_name;
 		led.default_trigger =
 			of_get_property(child, "linux,default-trigger", NULL);
 		led.flags = 0;

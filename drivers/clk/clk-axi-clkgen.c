@@ -444,7 +444,7 @@ static int axi_clkgen_probe(struct platform_device *pdev)
 			return -EINVAL;
 	}
 
-	clk_name = pdev->dev.of_node->name;
+	clk_name = pdev->dev.of_node->full_name;
 	of_property_read_string(pdev->dev.of_node, "clock-output-names",
 		&clk_name);
 

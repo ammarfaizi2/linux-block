@@ -178,7 +178,7 @@ static struct gpio_leds_priv *gpio_leds_create(struct platform_device *pdev)
 
 		ret = fwnode_property_read_string(child, "label", &led.name);
 		if (ret && IS_ENABLED(CONFIG_OF) && np)
-			led.name = np->name;
+			led.name = np->full_name;
 		if (!led.name) {
 			fwnode_handle_put(child);
 			return ERR_PTR(-EINVAL);

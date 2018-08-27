@@ -130,7 +130,7 @@ static int ltc3651_charger_probe(struct platform_device *pdev)
 	}
 
 	charger_desc = &ltc3651_charger->charger_desc;
-	charger_desc->name = pdev->dev.of_node->name;
+	charger_desc->name = pdev->name;
 	charger_desc->type = POWER_SUPPLY_TYPE_MAINS;
 	charger_desc->properties = ltc3651_charger_properties;
 	charger_desc->num_properties = ARRAY_SIZE(ltc3651_charger_properties);

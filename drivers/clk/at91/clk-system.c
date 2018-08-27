@@ -147,7 +147,7 @@ static void __init of_at91rm9200_clk_sys_setup(struct device_node *np)
 			continue;
 
 		if (of_property_read_string(np, "clock-output-names", &name))
-			name = sysclknp->name;
+			name = sysclknp->full_name;
 
 		parent_name = of_clk_get_parent_name(sysclknp, 0);
 

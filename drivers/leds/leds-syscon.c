@@ -99,7 +99,7 @@ static int syscon_led_probe(struct platform_device *pdev)
 	if (of_property_read_u32(np, "mask", &sled->mask))
 		return -EINVAL;
 	sled->cdev.name =
-		of_get_property(np, "label", NULL) ? : np->name;
+		of_get_property(np, "label", NULL) ? : np->full_name;
 	sled->cdev.default_trigger =
 		of_get_property(np, "linux,default-trigger", NULL);
 

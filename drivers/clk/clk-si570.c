@@ -441,7 +441,7 @@ static int si570_probe(struct i2c_client *client,
 
 	if (of_property_read_string(client->dev.of_node, "clock-output-names",
 			&init.name))
-		init.name = client->dev.of_node->name;
+		init.name = client->dev.of_node->full_name;
 
 	err = of_property_read_u32(client->dev.of_node, "factory-fout",
 			&factory_fout);

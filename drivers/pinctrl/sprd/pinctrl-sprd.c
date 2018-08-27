@@ -262,7 +262,7 @@ static int sprd_dt_node_to_map(struct pinctrl_dev *pctldev,
 	enum pinctrl_map_type type;
 	int ret;
 
-	grp = sprd_pinctrl_find_group_by_name(pctl, np->name);
+	grp = sprd_pinctrl_find_group_by_name(pctl, np->full_name);
 	if (!grp) {
 		dev_err(pctl->dev, "unable to find group for node %s\n",
 			of_node_full_name(np));
@@ -877,7 +877,7 @@ static int sprd_pinctrl_parse_groups(struct device_node *np,
 	if (ret < 0)
 		return ret;
 
-	grp->name = np->name;
+	grp->name = np->full_name;
 	grp->npins = ret;
 	grp->pins = devm_kcalloc(sprd_pctl->dev,
 				 grp->npins, sizeof(unsigned int),

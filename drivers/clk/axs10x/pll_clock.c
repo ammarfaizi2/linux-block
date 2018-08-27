@@ -291,7 +291,7 @@ static void __init of_axs10x_pll_clk_setup(struct device_node *node)
 		goto err_unmap_base;
 	}
 
-	init.name = node->name;
+	init.name = node->full_name;
 	init.ops = &axs10x_pll_ops;
 	parent_name = of_clk_get_parent_name(node, 0);
 	init.parent_names = &parent_name;

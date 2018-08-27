@@ -31,7 +31,7 @@ static const struct clk_div_table sun6i_a31_apb0_divs[] = {
 static int sun6i_a31_apb0_clk_probe(struct platform_device *pdev)
 {
 	struct device_node *np = pdev->dev.of_node;
-	const char *clk_name = np->name;
+	const char *clk_name = np->full_name;
 	const char *clk_parent;
 	struct resource *r;
 	void __iomem *reg;

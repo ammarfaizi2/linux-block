@@ -295,7 +295,7 @@ static int cap11xx_init_leds(struct device *dev,
 		u32 reg;
 
 		led->cdev.name =
-			of_get_property(child, "label", NULL) ? : child->name;
+			of_get_property(child, "label", NULL) ? : child->full_name;
 		led->cdev.default_trigger =
 			of_get_property(child, "linux,default-trigger", NULL);
 		led->cdev.flags = 0;

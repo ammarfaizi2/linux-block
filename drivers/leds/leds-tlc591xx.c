@@ -241,7 +241,7 @@ tlc591xx_probe(struct i2c_client *client,
 		}
 		priv->leds[reg].active = true;
 		priv->leds[reg].ldev.name =
-			of_get_property(child, "label", NULL) ? : child->name;
+			of_get_property(child, "label", NULL) ? : child->full_name;
 		priv->leds[reg].ldev.default_trigger =
 			of_get_property(child, "linux,default-trigger", NULL);
 	}

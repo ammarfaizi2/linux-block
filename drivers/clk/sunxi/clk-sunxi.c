@@ -660,7 +660,7 @@ static struct clk * __init sunxi_mux_clk_setup(struct device_node *node,
 					       unsigned long flags)
 {
 	struct clk *clk;
-	const char *clk_name = node->name;
+	const char *clk_name = node->full_name;
 	const char *parents[SUNXI_MAX_PARENTS];
 	void __iomem *reg;
 	int i;
@@ -784,7 +784,7 @@ static void __init sunxi_divider_clk_setup(struct device_node *node,
 					   const struct div_data *data)
 {
 	struct clk *clk;
-	const char *clk_name = node->name;
+	const char *clk_name = node->full_name;
 	const char *clk_parent;
 	void __iomem *reg;
 

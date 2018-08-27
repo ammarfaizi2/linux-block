@@ -40,7 +40,7 @@ static int sunxi_reset_init(struct device_node *np)
 		goto err_alloc;
 
 	size = resource_size(&res);
-	if (!request_mem_region(res.start, size, np->name)) {
+	if (!request_mem_region(res.start, size, np->full_name)) {
 		ret = -EBUSY;
 		goto err_alloc;
 	}

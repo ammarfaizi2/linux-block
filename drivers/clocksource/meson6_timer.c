@@ -150,7 +150,7 @@ static int __init meson6_timer_init(struct device_node *node)
 	writel(val, timer_base + TIMER_ISA_MUX);
 
 	sched_clock_register(meson6_timer_sched_read, 32, USEC_PER_SEC);
-	clocksource_mmio_init(timer_base + TIMER_ISA_VAL(CSD_ID), node->name,
+	clocksource_mmio_init(timer_base + TIMER_ISA_VAL(CSD_ID), node->full_name,
 			      1000 * 1000, 300, 32, clocksource_mmio_readl_up);
 
 	/* Timer A base 1us */

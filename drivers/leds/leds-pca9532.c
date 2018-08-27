@@ -490,7 +490,7 @@ pca9532_of_populate_pdata(struct device *dev, struct device_node *np)
 	for_each_child_of_node(np, child) {
 		if (of_property_read_string(child, "label",
 					    &pdata->leds[i].name))
-			pdata->leds[i].name = child->name;
+			pdata->leds[i].name = child->full_name;
 		of_property_read_u32(child, "type", &pdata->leds[i].type);
 		of_property_read_string(child, "linux,default-trigger",
 					&pdata->leds[i].default_trigger);

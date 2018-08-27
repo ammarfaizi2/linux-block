@@ -486,14 +486,14 @@ static void leon_load_profile_irq(int cpu, unsigned int limit)
 
 void __init leon_trans_init(struct device_node *dp)
 {
-	if (strcmp(dp->type, "cpu") == 0 && strcmp(dp->name, "<NULL>") == 0) {
+	if (strcmp(dp->type, "cpu") == 0 && strcmp(dp, "<NULL>") == 0) {
 		struct property *p;
 		p = of_find_property(dp, "mid", (void *)0);
 		if (p) {
 			int mid;
-			dp->name = prom_early_alloc(5 + 1);
+			dp = prom_early_alloc(5 + 1);
 			memcpy(&mid, p->value, p->length);
-			sprintf((char *)dp->name, "cpu%.2d", mid);
+			sprintf((char *)dp, "cpu%.2d", mid);
 		}
 	}
 }

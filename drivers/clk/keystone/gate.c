@@ -200,7 +200,7 @@ static struct clk *clk_register_psc(struct device *dev,
  */
 static void __init of_psc_clk_init(struct device_node *node, spinlock_t *lock)
 {
-	const char *clk_name = node->name;
+	const char *clk_name = node->full_name;
 	const char *parent_name;
 	struct clk_psc_data *data;
 	struct clk *clk;

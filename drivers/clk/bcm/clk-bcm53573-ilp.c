@@ -121,7 +121,7 @@ static void bcm53573_ilp_init(struct device_node *np)
 		goto err_free_ilp;
 	}
 
-	init.name = np->name;
+	init.name = np->full_name;
 	init.ops = &bcm53573_ilp_clk_ops;
 	init.parent_names = &parent_name;
 	init.num_parents = 1;

@@ -165,7 +165,6 @@ static int gpio_charger_probe(struct platform_device *pdev)
 		psy_cfg.supplied_to = pdata->supplied_to;
 		psy_cfg.num_supplicants = pdata->num_supplicants;
 	} else {
-		charger_desc->name = dev->of_node->name;
 		charger_desc->type = gpio_charger_get_type(dev);
 	}
 

@@ -96,7 +96,7 @@ static int clk_pwm_probe(struct platform_device *pdev)
 	if (ret < 0)
 		return ret;
 
-	clk_name = node->name;
+	clk_name = node->full_name;
 	of_property_read_string(node, "clock-output-names", &clk_name);
 
 	init.name = clk_name;

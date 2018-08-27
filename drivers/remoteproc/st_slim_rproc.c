@@ -239,8 +239,8 @@ struct st_slim_rproc *st_slim_rproc_alloc(struct platform_device *pdev,
 	if (!of_device_is_compatible(np, "st,slim-rproc"))
 		return ERR_PTR(-EINVAL);
 
-	rproc = rproc_alloc(dev, np->name, &slim_rproc_ops,
-			fw_name, sizeof(*slim_rproc));
+	rproc = rproc_alloc(dev, np->full_name, &slim_rproc_ops,
+			    fw_name, sizeof(*slim_rproc));
 	if (!rproc)
 		return ERR_PTR(-ENOMEM);
 

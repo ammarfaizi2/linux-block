@@ -191,7 +191,7 @@ static int __init sun4i_timer_init(struct device_node *node)
 				     timer_of_rate(&to));
 
 	ret = clocksource_mmio_init(timer_of_base(&to) + TIMER_CNTVAL_REG(1),
-				    node->name, timer_of_rate(&to), 350, 32,
+				    node->full_name, timer_of_rate(&to), 350, 32,
 				    clocksource_mmio_readl_down);
 	if (ret) {
 		pr_err("Failed to register clocksource\n");

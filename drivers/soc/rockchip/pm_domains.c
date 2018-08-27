@@ -491,7 +491,7 @@ static int rockchip_pm_add_one_domain(struct rockchip_pmu *pmu,
 		goto err_unprepare_clocks;
 	}
 
-	pd->genpd.name = node->name;
+	pd->genpd.name = node->full_name;
 	pd->genpd.power_off = rockchip_pd_power_off;
 	pd->genpd.power_on = rockchip_pd_power_on;
 	pd->genpd.attach_dev = rockchip_pd_attach_dev;

@@ -256,7 +256,7 @@ void __init iproc_armpll_setup(struct device_node *node)
 	if (WARN_ON(!pll->base))
 		goto err_free_pll;
 
-	init.name = node->name;
+	init.name = node->full_name;
 	init.ops = &iproc_arm_pll_ops;
 	init.flags = 0;
 	parent_name = of_clk_get_parent_name(node, 0);

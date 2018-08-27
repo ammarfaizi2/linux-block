@@ -62,7 +62,7 @@ static void __init sun7i_a20_gmac_clk_setup(struct device_node *node)
 	struct clk *clk;
 	struct clk_mux *mux;
 	struct clk_gate *gate;
-	const char *clk_name = node->name;
+	const char *clk_name = node->full_name;
 	const char *parents[SUN7I_A20_GMAC_PARENTS];
 	void __iomem *reg;
 

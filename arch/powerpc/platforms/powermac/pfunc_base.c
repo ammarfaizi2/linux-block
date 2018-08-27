@@ -29,7 +29,7 @@ static int macio_do_gpio_irq_enable(struct pmf_function *func)
 	unsigned int irq = irq_of_parse_and_map(func->node, 0);
 	if (!irq)
 		return -EINVAL;
-	return request_irq(irq, macio_gpio_irq, 0, func->node->name, func);
+	return request_irq(irq, macio_gpio_irq, 0, func->node->full_name, func);
 }
 
 static int macio_do_gpio_irq_disable(struct pmf_function *func)

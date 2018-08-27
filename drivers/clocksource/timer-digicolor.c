@@ -185,7 +185,7 @@ static int __init digicolor_timer_init(struct device_node *node)
 	writeb(CONTROL_ENABLE, dc_timer_dev.base + CONTROL(TIMER_B));
 
 	sched_clock_register(digicolor_timer_sched_read, 32, rate);
-	clocksource_mmio_init(dc_timer_dev.base + COUNT(TIMER_B), node->name,
+	clocksource_mmio_init(dc_timer_dev.base + COUNT(TIMER_B), node->full_name,
 			      rate, 340, 32, clocksource_mmio_readl_down);
 
 	ret = request_irq(irq, digicolor_timer_interrupt,

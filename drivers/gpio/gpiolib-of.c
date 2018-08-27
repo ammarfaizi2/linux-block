@@ -354,7 +354,7 @@ static struct gpio_desc *of_parse_own_gpio(struct device_node *np,
 	}
 
 	if (name && of_property_read_string(np, "line-name", name))
-		*name = np->name;
+		*name = np->full_name;
 
 	return desc;
 }

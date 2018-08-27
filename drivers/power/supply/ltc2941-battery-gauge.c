@@ -473,7 +473,7 @@ static int ltc294x_i2c_probe(struct i2c_client *client,
 	np = of_node_get(client->dev.of_node);
 
 	info->id = (enum ltc294x_id)of_device_get_match_data(&client->dev);
-	info->supply_desc.name = np->name;
+	info->supply_desc.name = np->full_name;
 
 	/* r_sense can be negative, when sense+ is connected to the battery
 	 * instead of the sense-. This results in reversed measurements. */

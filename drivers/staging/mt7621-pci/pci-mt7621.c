@@ -373,7 +373,7 @@ static int mt7621_pci_parse_request_of_pci_ranges(struct mt7621_pcie *pcie)
 	err = of_pci_parse_bus_range(node, &pcie->busn);
 	if (err < 0) {
 		dev_err(dev, "failed to parse bus ranges property: %d\n", err);
-		pcie->busn.name = node->name;
+		pcie->busn.name = node->full_name;
 		pcie->busn.start = 0;
 		pcie->busn.end = 0xff;
 		pcie->busn.flags = IORESOURCE_BUS;

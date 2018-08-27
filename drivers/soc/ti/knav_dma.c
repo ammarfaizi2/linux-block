@@ -393,7 +393,7 @@ static int of_channel_match_helper(struct device_node *np, const char *name,
 	if (!dma_node)
 		return -ENODEV;
 
-	*dma_instance = dma_node->name;
+	*dma_instance = dma_node->full_name;
 	index = of_property_match_string(np, "ti,navigator-dma-names", name);
 	if (index < 0) {
 		dev_err(kdev->dev, "No 'ti,navigator-dma-names' property\n");
@@ -701,7 +701,7 @@ static int dma_init(struct device_node *cloud, struct device_node *dma_node)
 	dma->max_rx_flow = max_rx_flow;
 	dma->max_tx_chan = min(max_tx_chan, max_tx_sched);
 	atomic_set(&dma->ref_count, 0);
-	strcpy(dma->name, node->name);
+	strcpy(dma->name, node->full_name);
 	spin_lock_init(&dma->lock);
 
 	for (i = 0; i < dma->max_tx_chan; i++) {

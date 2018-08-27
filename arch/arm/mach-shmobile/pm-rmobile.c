@@ -300,7 +300,7 @@ static int __init rmobile_add_pm_domains(void __iomem *base,
 			return -ENOMEM;
 		}
 
-		pd->genpd.name = np->name;
+		pd->genpd.name = np->full_name;
 		pd->base = base;
 		pd->bit_shift = idx;
 

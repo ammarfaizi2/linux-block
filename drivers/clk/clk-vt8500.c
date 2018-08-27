@@ -234,7 +234,7 @@ static __init void vtwm_device_clk_init(struct device_node *node)
 	u32 en_reg, div_reg;
 	struct clk_hw *hw;
 	struct clk_device *dev_clk;
-	const char *clk_name = node->name;
+	const char *clk_name = node->full_name;
 	const char *parent_name;
 	struct clk_init_data init;
 	int rc;
@@ -684,7 +684,7 @@ static __init void vtwm_pll_clk_init(struct device_node *node, int pll_type)
 	u32 reg;
 	struct clk_hw *hw;
 	struct clk_pll *pll_clk;
-	const char *clk_name = node->name;
+	const char *clk_name = node->full_name;
 	const char *parent_name;
 	struct clk_init_data init;
 	int rc;
