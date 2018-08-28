@@ -304,6 +304,7 @@ static void nvmem_cell_drop(struct nvmem_cell *cell)
 	mutex_lock(&nvmem_cells_mutex);
 	list_del(&cell->node);
 	mutex_unlock(&nvmem_cells_mutex);
+	kfree(cell->name);
 	kfree(cell);
 }
 
@@ -879,7 +880,7 @@ struct nvmem_cell *of_nvmem_cell_get(struct device_node *np,
 	cell->nvmem = nvmem;
 	cell->offset = be32_to_cpup(addr++);
 	cell->bytes = be32_to_cpup(addr);
-	cell->name = cell_np->name;
+	cell->name = kasprintf(GFP_KERNEL, "%pOFn", cell_np);
 
 	addr = of_get_property(cell_np, "bits", &len);
 	if (addr && len == (2 * sizeof(u32))) {
@@ -904,6 +905,7 @@ struct nvmem_cell *of_nvmem_cell_get(struct device_node *np,
 	return cell;
 
 err_sanity:
+	kfree(cell->name);
 	kfree(cell);
 
 err_mem:
