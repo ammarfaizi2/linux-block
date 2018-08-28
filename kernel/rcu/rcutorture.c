@@ -1639,7 +1639,7 @@ static void rcu_torture_fwd_cb_cr(struct rcu_head *rhp)
 	rfcpp = rcu_fwd_cb_tail;
 	rcu_fwd_cb_tail = &rfcp->rfc_next;
 	WRITE_ONCE(*rfcpp, rfcp);
-	WRITE_ONCE(n_launders_cb, READ_ONCE(n_launders_cb) + 1);
+	WRITE_ONCE(n_launders_cb, n_launders_cb + 1);
 	spin_unlock(&rcu_fwd_lock);
 }
 
