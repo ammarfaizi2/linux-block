@@ -1623,13 +1623,16 @@ static DEFINE_SPINLOCK(rcu_fwd_lock);
 static struct rcu_fwd_cb *rcu_fwd_cb_head;
 static struct rcu_fwd_cb **rcu_fwd_cb_tail = &rcu_fwd_cb_head;
 static long n_launders_cb;
+static unsigned long rcu_fwd_startat;
 #define MAX_FWD_CB_JIFFIES	(8 * HZ) /* Maximum CB test duration. */
 #define MIN_FWD_CB_LAUNDERS	3	/* This many CB invocations to count. */
 #define MIN_FWD_CBS_LAUNDERED	100	/* Number of counted CBs. */
+static long n_launders_hist[2 * MAX_FWD_CB_JIFFIES / HZ];
 
 /* Callback function for continuous-flood RCU callbacks. */
 static void rcu_torture_fwd_cb_cr(struct rcu_head *rhp)
 {
+	int i;
 	struct rcu_fwd_cb *rfcp = container_of(rhp, struct rcu_fwd_cb, rh);
 	struct rcu_fwd_cb **rfcpp;
 
@@ -1640,6 +1643,10 @@ static void rcu_torture_fwd_cb_cr(struct rcu_head *rhp)
 	rcu_fwd_cb_tail = &rfcp->rfc_next;
 	WRITE_ONCE(*rfcpp, rfcp);
 	WRITE_ONCE(n_launders_cb, n_launders_cb + 1);
+	i = ((jiffies - rcu_fwd_startat) / HZ);
+	if (i >= ARRAY_SIZE(n_launders_hist))
+		i = ARRAY_SIZE(n_launders_hist) - 1;
+	n_launders_hist[i]++;
 	spin_unlock(&rcu_fwd_lock);
 }
 
@@ -1650,7 +1657,9 @@ static int rcu_torture_fwd_prog(void *args)
 	unsigned long dur;
 	struct fwd_cb_state fcs;
 	unsigned long gps;
+	int i;
 	int idx;
+	int j;
 	long n_launders;
 	long n_launders_cb_snap;
 	long n_launders_sa;
@@ -1687,7 +1696,8 @@ static int rcu_torture_fwd_prog(void *args)
 		sd = cur_ops->stall_dur() + 1;
 		sd4 = (sd + fwd_progress_div - 1) / fwd_progress_div;
 		dur = sd4 + torture_random(&trs) % (sd - sd4);
-		stopat = jiffies + dur;
+		rcu_fwd_startat = jiffies;
+		stopat = rcu_fwd_startat + dur;
 		while (time_before(jiffies, stopat) && !torture_must_stop()) {
 			idx = cur_ops->readlock();
 			udelay(10);
@@ -1712,12 +1722,15 @@ static int rcu_torture_fwd_prog(void *args)
 		/* Loop continuously posting RCU callbacks. */
 		WRITE_ONCE(rcu_fwd_cb_nodelay, true);
 		cur_ops->sync(); /* Later readers see above write. */
-		stopat = jiffies + MAX_FWD_CB_JIFFIES;
+		rcu_fwd_startat = jiffies;
+		stopat = rcu_fwd_startat + MAX_FWD_CB_JIFFIES;
 		n_launders = 0;
 		n_launders_cb = 0;
 		n_launders_sa = 0;
 		n_max_cbs = 0;
 		n_max_gps = 0;
+		for (i = 0; i < ARRAY_SIZE(n_launders_hist); i++)
+			n_launders_hist[i] = 0;
 		cver = READ_ONCE(rcu_torture_current_version);
 		gps = cur_ops->get_gp_seq();
 		while (time_before(jiffies, stopat) && !torture_must_stop()) {
@@ -1759,13 +1772,23 @@ static int rcu_torture_fwd_prog(void *args)
 		}
 		rcu_fwd_cb_tail = &rcu_fwd_cb_head;
 		WRITE_ONCE(rcu_fwd_cb_nodelay, false);
-		WARN_ON(!torture_must_stop() &&
-			n_max_gps < MIN_FWD_CBS_LAUNDERED);
-		pr_alert("%s Duration %lu barrier: %lu n_launders_cb %ld n_launders: %ld n_launders_sa: %ld n_max_gps: %ld n_max_cbs: %ld cver %ld gps %ld\n",
-			 __func__, stoppedat - stopat + MAX_FWD_CB_JIFFIES,
-			 jiffies - stoppedat,
-			 n_launders_cb_snap, n_launders, n_launders_sa,
-			 n_max_gps, n_max_cbs, cver, gps);
+		if (!torture_must_stop()) {
+			WARN_ON(n_max_gps < MIN_FWD_CBS_LAUNDERED);
+			pr_alert("%s Duration %lu barrier: %lu pending %ld n_launders: %ld n_launders_sa: %ld n_max_gps: %ld n_max_cbs: %ld cver %ld gps %ld\n",
+				 __func__,
+				 stoppedat - rcu_fwd_startat,
+				 jiffies - stoppedat,
+				 n_launders + n_max_cbs - n_launders_cb_snap,
+				 n_launders, n_launders_sa,
+				 n_max_gps, n_max_cbs, cver, gps);
+			for (i = ARRAY_SIZE(n_launders_hist) - 1; i > 0; i--)
+				if (n_launders_hist[i] > 0)
+					break;
+			pr_alert("Callback-invocation histogram:");
+			for (j = 0; j <= i; j++)
+				pr_cont(" %ds: %ld", j + 1, n_launders_hist[j]);
+			pr_cont("\n");
+		}
 
 		/* Avoid slow periods, better to test when busy. */
 		stutter_wait("rcu_torture_fwd_prog");
