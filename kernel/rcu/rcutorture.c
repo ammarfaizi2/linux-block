@@ -1622,6 +1622,7 @@ struct rcu_fwd_cb {
 static DEFINE_SPINLOCK(rcu_fwd_lock);
 static struct rcu_fwd_cb *rcu_fwd_cb_head;
 static struct rcu_fwd_cb **rcu_fwd_cb_tail = &rcu_fwd_cb_head;
+static long n_launders_cb;
 #define MAX_FWD_CB_JIFFIES	(8 * HZ) /* Maximum CB test duration. */
 #define MIN_FWD_CB_LAUNDERS	3	/* This many CB invocations to count. */
 #define MIN_FWD_CBS_LAUNDERED	100	/* Number of counted CBs. */
@@ -1638,6 +1639,7 @@ static void rcu_torture_fwd_cb_cr(struct rcu_head *rhp)
 	rfcpp = rcu_fwd_cb_tail;
 	rcu_fwd_cb_tail = &rfcp->rfc_next;
 	WRITE_ONCE(*rfcpp, rfcp);
+	WRITE_ONCE(n_launders_cb, READ_ONCE(n_launders_cb) + 1);
 	spin_unlock(&rcu_fwd_lock);
 }
 
@@ -1650,6 +1652,7 @@ static int rcu_torture_fwd_prog(void *args)
 	unsigned long gps;
 	int idx;
 	long n_launders;
+	long n_launders_cb_snap;
 	long n_launders_sa;
 	long n_max_cbs;
 	long n_max_gps;
@@ -1711,6 +1714,7 @@ static int rcu_torture_fwd_prog(void *args)
 		cur_ops->sync(); /* Later readers see above write. */
 		stopat = jiffies + MAX_FWD_CB_JIFFIES;
 		n_launders = 0;
+		n_launders_cb = 0;
 		n_launders_sa = 0;
 		n_max_cbs = 0;
 		n_max_gps = 0;
@@ -1742,6 +1746,7 @@ static int rcu_torture_fwd_prog(void *args)
 			cond_resched();
 		}
 		stoppedat = jiffies;
+		n_launders_cb_snap = READ_ONCE(n_launders_cb);
 		cver = READ_ONCE(rcu_torture_current_version) - cver;
 		gps = rcutorture_seq_diff(cur_ops->get_gp_seq(), gps);
 		cur_ops->cb_barrier(); /* Wait for callbacks to be invoked. */
@@ -1756,9 +1761,10 @@ static int rcu_torture_fwd_prog(void *args)
 		WRITE_ONCE(rcu_fwd_cb_nodelay, false);
 		WARN_ON(!torture_must_stop() &&
 			n_max_gps < MIN_FWD_CBS_LAUNDERED);
-		pr_alert("%s Duration %lu barrier: %lu n_launders: %ld n_launders_sa: %ld n_max_gps: %ld n_max_cbs: %ld cver %ld gps %ld\n",
+		pr_alert("%s Duration %lu barrier: %lu n_launders_cb %ld n_launders: %ld n_launders_sa: %ld n_max_gps: %ld n_max_cbs: %ld cver %ld gps %ld\n",
 			 __func__, stoppedat - stopat + MAX_FWD_CB_JIFFIES,
-			 jiffies - stoppedat, n_launders, n_launders_sa,
+			 jiffies - stoppedat,
+			 n_launders_cb_snap, n_launders, n_launders_sa,
 			 n_max_gps, n_max_cbs, cver, gps);
 
 		/* Avoid slow periods, better to test when busy. */
