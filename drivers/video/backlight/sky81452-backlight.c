@@ -189,7 +189,7 @@ static struct sky81452_bl_platform_data *sky81452_bl_parse_dt(
 		return ERR_PTR(-ENOMEM);
 	}
 
-	of_property_read_string(np, "name", &pdata->name);
+	pdata->name = "backlight";
 	pdata->ignore_pwm = of_property_read_bool(np, "skyworks,ignore-pwm");
 	pdata->dpwm_mode = of_property_read_bool(np, "skyworks,dpwm-mode");
 	pdata->phase_shift = of_property_read_bool(np, "skyworks,phase-shift");

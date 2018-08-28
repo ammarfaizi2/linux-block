@@ -44,12 +44,10 @@ int nvidia_probe_of_connector(struct fb_info *info, int conn, u8 **out_edid)
 
 		for (dp = NULL;
 		     (dp = of_get_next_child(parent, dp)) != NULL;) {
-			pname = of_get_property(dp, "name", NULL);
-			if (!pname)
-				continue;
+			pname = strchrnul(dp->full_name, '@') - 1;
 			len = strlen(pname);
-			if ((pname[len-1] == 'A' && conn == 1) ||
-			    (pname[len-1] == 'B' && conn == 2)) {
+			if ((pname[0] == 'A' && conn == 1) ||
+			    (pname[0] == 'B' && conn == 2)) {
 				for (i = 0; propnames[i] != NULL; ++i) {
 					pedid = of_get_property(dp,
 							propnames[i], NULL);

@@ -479,9 +479,9 @@ nouveau_connector_of_detect(struct drm_connector *connector)
 		return NULL;
 
 	for_each_child_of_node(dn, cn) {
-		const char *name = of_get_property(cn, "name", NULL);
+		const char *name = strchrnul(cn->full_name, '@') - 1;
 		const void *edid = of_get_property(cn, "EDID", NULL);
-		int idx = name ? name[strlen(name) - 1] - 'A' : 0;
+		int idx = name[0] - 'A';
 
 		if (nv_encoder->dcb->i2c_index == idx && edid) {
 			nv_connector->edid =

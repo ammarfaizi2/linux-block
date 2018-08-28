@@ -129,19 +129,16 @@ static int radeon_probe_OF_head(struct radeonfb_info *rinfo, int head_no,
 
 	if (rinfo->has_CRTC2) {
 		const char *pname;
-		int len, second = 0;
+		int second = 0;
 
 		dp = dp->child;
 		do {
 			if (!dp)
 				return MT_NONE;
-			pname = of_get_property(dp, "name", NULL);
-			if (!pname)
-				return MT_NONE;
-			len = strlen(pname);
-			pr_debug("head: %s (letter: %c, head_no: %d)\n",
-			       pname, pname[len-1], head_no);
-			if (pname[len-1] == 'A' && head_no == 0) {
+			pname = strchrnul(dp->full_name, '@') - 1;
+			pr_debug("head: %pOFn (letter: %c, head_no: %d)\n",
+			       dp, pname[0], head_no);
+			if (pname[0] == 'A' && head_no == 0) {
 				int mt = radeon_parse_montype_prop(dp, out_EDID, 0);
 				/* Maybe check for LVDS_GEN_CNTL here ? I need to check out
 				 * what OF does when booting with lid closed
@@ -149,7 +146,7 @@ static int radeon_probe_OF_head(struct radeonfb_info *rinfo, int head_no,
 				if (mt == MT_DFP && rinfo->is_mobility)
 					mt = MT_LCD;
 				return mt;
-			} else if (pname[len-1] == 'B' && head_no == 1)
+			} else if (pname[0] == 'B' && head_no == 1)
 				return radeon_parse_montype_prop(dp, out_EDID, 1);
 			second = 1;
 			dp = dp->sibling;
