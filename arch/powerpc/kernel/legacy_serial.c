@@ -192,7 +192,7 @@ static int __init add_legacy_soc_port(struct device_node *np,
 	/* Add port, irq will be dealt with later. We passed a translated
 	 * IO port value. It will be fixed up later along with the irq
 	 */
-	if (tsi && !strcmp(tsi->type, "tsi-bridge"))
+	if (of_node_is_type(tsi, "tsi-bridge"))
 		return add_legacy_port(np, -1, UPIO_TSI, addr, addr,
 				       0, legacy_port_flags, 0);
 	else
@@ -416,7 +416,8 @@ void __init find_legacy_serial_ports(void)
 			of_node_put(parent);
 			continue;
 		}
-		if (!of_node_name_eq(np, "serial") && strcmp(np->type, "serial")) {
+		if (!of_node_name_eq(np, "serial") &&
+		    of_node_is_type(np, "serial")) {
 			of_node_put(parent);
 			continue;
 		}

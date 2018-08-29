@@ -175,7 +175,7 @@ setup_python(struct pci_controller *hose, struct device_node *dev)
 
 	/* Clear the magic go-slow bit */
 	reg = ioremap(r.start + 0xf6000, 0x40);
-	BUG_ON(!reg); 
+	BUG_ON(!reg);
 	val = in_be32(&reg[12]);
 	if (val & PRG_CL_RESET_VALID) {
 		out_be32(&reg[12], val & ~PRG_CL_RESET_VALID);
@@ -230,8 +230,8 @@ chrp_find_bridges(void)
 		else if (strncmp(machine, "Pegasos", 7) == 0)
 			is_pegasos = 1;
 	}
-	for (dev = root->child; dev != NULL; dev = dev->sibling) {
-		if (dev->type == NULL || strcmp(dev->type, "pci") != 0)
+	for_each_child_of_node(root, dev) {
+		if (!of_node_is_type(dev, "pci"))
 			continue;
 		++index;
 		/* The GG2 bridge on the LongTrail doesn't have an address */
