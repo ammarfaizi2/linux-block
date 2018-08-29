@@ -221,7 +221,7 @@ static int macio_resource_quirks(struct device_node *np, struct resource *res,
 
 	/* Some older IDE resources have bogus sizes */
 	if (of_node_name_eq(np, "IDE") || of_node_name_eq(np, "ATA") ||
-	    !strcmp(np->type, "ide") || !strcmp(np->type, "ata")) {
+	    of_node_is_type(np, "ide") || of_node_is_type(np, "ata")) {
 		if (index == 0 && (res->end - res->start) > 0xfff)
 			res->end = res->start + 0xfff;
 		if (index == 1 && (res->end - res->start) > 0xff)

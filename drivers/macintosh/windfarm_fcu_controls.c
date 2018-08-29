@@ -439,11 +439,11 @@ static void wf_fcu_lookup_fans(struct wf_fcu_priv *pv)
 		DBG(" control: %s, type: %s\n", np->name, np->type);
 
 		/* Detect control type */
-		if (!strcmp(np->type, "fan-rpm-control") ||
-		    !strcmp(np->type, "fan-rpm"))
+		if (of_node_is_type(np, "fan-rpm-control") ||
+		    of_node_is_type(np, "fan-rpm"))
 			type = FCU_FAN_RPM;
-		if (!strcmp(np->type, "fan-pwm-control") ||
-		    !strcmp(np->type, "fan-pwm"))
+		if (of_node_is_type(np, "fan-pwm-control") ||
+		    of_node_is_type(np, "fan-pwm"))
 			type = FCU_FAN_PWM;
 		/* Only care about fans for now */
 		if (type == -1)
