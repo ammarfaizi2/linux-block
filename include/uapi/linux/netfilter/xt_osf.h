@@ -21,8 +21,6 @@
 #define _XT_OSF_H
 
 #include <linux/types.h>
-#include <linux/ip.h>
-#include <linux/tcp.h>
 #include <linux/netfilter/nfnetlink_osf.h>
 
 #define XT_OSF_GENRE		NF_OSF_GENRE
@@ -46,6 +44,7 @@
 #define xt_osf_finger		nf_osf_finger
 #define xt_osf_nlmsg		nf_osf_nlmsg
 
+#define xt_osf_window_size_options	nf_osf_window_size_options
 #define xt_osf_attr_type	nf_osf_attr_type
 #define xt_osf_msg_types	nf_osf_msg_types
 

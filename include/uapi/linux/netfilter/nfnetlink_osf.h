@@ -2,6 +2,8 @@
 #define _NF_OSF_H
 
 #include <linux/types.h>
+#include <linux/ip.h>
+#include <linux/tcp.h>
 
 #define MAXGENRELEN	32
 
@@ -86,6 +88,18 @@ enum iana_options {
 
 	/* Others are not used in the current OSF */
 	OSFOPT_EMPTY = 255,
+};
+
+/* Initial window size option state machine: multiple of mss, mtu or
+ * plain numeric value. Can also be made as plain numeric value which
+ * is not a multiple of specified value.
+ */
+enum nf_osf_window_size_options {
+	OSF_WSS_PLAIN	= 0,
+	OSF_WSS_MSS,
+	OSF_WSS_MTU,
+	OSF_WSS_MODULO,
+	OSF_WSS_MAX,
 };
 
 enum nf_osf_attr_type {

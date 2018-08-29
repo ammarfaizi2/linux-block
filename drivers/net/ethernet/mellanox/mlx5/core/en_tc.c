@@ -1982,14 +1982,15 @@ static bool modify_header_match_supported(struct mlx5_flow_spec *spec,
 		goto out_ok;
 
 	modify_ip_header = false;
-	tcf_exts_to_list(exts, &actions);
-	list_for_each_entry(a, &actions, list) {
+	tcf_exts_for_each_action(i, a, exts) {
+		int k;
+
 		if (!is_tcf_pedit(a))
 			continue;
 
 		nkeys = tcf_pedit_nkeys(a);
-		for (i = 0; i < nkeys; i++) {
-			htype = tcf_pedit_htype(a, i);
+		for (k = 0; k < nkeys; k++) {
+			htype = tcf_pedit_htype(a, k);
 			if (htype == TCA_PEDIT_KEY_EX_HDR_TYPE_IP4 ||
 			    htype == TCA_PEDIT_KEY_EX_HDR_TYPE_IP6) {
 				modify_ip_header = true;
@@ -2034,15 +2035,15 @@ static bool actions_match_supported(struct mlx5e_priv *priv,
 static bool same_hw_devs(struct mlx5e_priv *priv, struct mlx5e_priv *peer_priv)
 {
 	struct mlx5_core_dev *fmdev, *pmdev;
-	u16 func_id, peer_id;
+	u64 fsystem_guid, psystem_guid;
 
 	fmdev = priv->mdev;
 	pmdev = peer_priv->mdev;
 
-	func_id = (u16)((fmdev->pdev->bus->number << 8) | PCI_SLOT(fmdev->pdev->devfn));
-	peer_id = (u16)((pmdev->pdev->bus->number << 8) | PCI_SLOT(pmdev->pdev->devfn));
+	mlx5_query_nic_vport_system_image_guid(fmdev, &fsystem_guid);
+	mlx5_query_nic_vport_system_image_guid(pmdev, &psystem_guid);
 
-	return (func_id == peer_id);
+	return (fsystem_guid == psystem_guid);
 }
 
 static int parse_tc_nic_actions(struct mlx5e_priv *priv, struct tcf_exts *exts,
@@ -2053,15 +2054,14 @@ static int parse_tc_nic_actions(struct mlx5e_priv *priv, struct tcf_exts *exts,
 	const struct tc_action *a;
 	LIST_HEAD(actions);
 	u32 action = 0;
-	int err;
+	int err, i;
 
 	if (!tcf_exts_has_actions(exts))
 		return -EINVAL;
 
 	attr->flow_tag = MLX5_FS_DEFAULT_FLOW_TAG;
 
-	tcf_exts_to_list(exts, &actions);
-	list_for_each_entry(a, &actions, list) {
+	tcf_exts_for_each_action(i, a, exts) {
 		if (is_tcf_gact_shot(a)) {
 			action |= MLX5_FLOW_CONTEXT_ACTION_DROP;
 			if (MLX5_CAP_FLOWTABLE(priv->mdev,
@@ -2666,7 +2666,7 @@ static int parse_tc_fdb_actions(struct mlx5e_priv *priv, struct tcf_exts *exts,
 	LIST_HEAD(actions);
 	bool encap = false;
 	u32 action = 0;
-	int err;
+	int err, i;
 
 	if (!tcf_exts_has_actions(exts))
 		return -EINVAL;
@@ -2674,8 +2674,7 @@ static int parse_tc_fdb_actions(struct mlx5e_priv *priv, struct tcf_exts *exts,
 	attr->in_rep = rpriv->rep;
 	attr->in_mdev = priv->mdev;
 
-	tcf_exts_to_list(exts, &actions);
-	list_for_each_entry(a, &actions, list) {
+	tcf_exts_for_each_action(i, a, exts) {
 		if (is_tcf_gact_shot(a)) {
 			action |= MLX5_FLOW_CONTEXT_ACTION_DROP |
 				  MLX5_FLOW_CONTEXT_ACTION_COUNT;

@@ -780,6 +780,8 @@ void tcf_block_put_ext(struct tcf_block *block, struct Qdisc *q,
 		block->refcnt--;
 		if (list_empty(&block->chain_list))
 			kfree(block);
+	} else {
+		block->refcnt--;
 	}
 }
 EXPORT_SYMBOL(tcf_block_put_ext);
@@ -2174,6 +2176,7 @@ static int tc_exts_setup_cb_egdev_call(struct tcf_exts *exts,
 		if (!dev)
 			continue;
 		ret = tc_setup_cb_egdev_call(dev, type, type_data, err_stop);
+		a->ops->put_dev(dev);
 		if (ret < 0)
 			return ret;
 		ok_count += ret;
