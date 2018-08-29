@@ -177,14 +177,14 @@ static void __init __build_path_component(struct device_node *dp, char *tmp_buf)
 	struct device_node *parent = dp->parent;
 
 	if (parent != NULL) {
-		if (!strcmp(parent->type, "pci") ||
-		    !strcmp(parent->type, "pciex"))
+		if (of_node_is_type(parent, "pci") ||
+		    of_node_is_type(parent, "pciex"))
 			return pci_path_component(dp, tmp_buf);
-		if (!strcmp(parent->type, "sbus"))
+		if (of_node_is_type(parent, "sbus"))
 			return sbus_path_component(dp, tmp_buf);
-		if (!strcmp(parent->type, "ebus"))
+		if (of_node_is_type(parent, "ebus"))
 			return ebus_path_component(dp, tmp_buf);
-		if (!strcmp(parent->type, "ambapp"))
+		if (of_node_is_type(parent, "ambapp"))
 			return ambapp_path_component(dp, tmp_buf);
 
 		/* "isa" is handled with platform naming */
