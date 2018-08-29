@@ -33,7 +33,7 @@ static void __init of_numa_parse_cpu_nodes(void)
 
 	for_each_child_of_node(cpus, np) {
 		/* Skip things that are not CPUs */
-		if (of_node_cmp(np->type, "cpu") != 0)
+		if (!of_node_is_type(np, "cpu"))
 			continue;
 
 		r = of_property_read_u32(np, "numa-node-id", &nid);

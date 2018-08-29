@@ -313,13 +313,6 @@ static bool populate_node(const void *blob,
 	}
 
 	populate_properties(blob, offset, mem, np, pathp, dryrun);
-	if (!dryrun) {
-		np->type = of_get_property(np, "device_type", NULL);
-
-		if (!np->type)
-			np->type = "<NULL>";
-	}
-
 	*pnp = np;
 	return true;
 }
