@@ -8,6 +8,23 @@
 
 struct kstatfs;
 
+/* messages between coda filesystem in kernel and Venus */
+struct upc_req {
+	struct list_head    uc_chain;
+	caddr_t	            uc_data;
+	u_short	            uc_flags;
+	u_short             uc_inSize;  /* Size is at most 5000 bytes */
+	u_short	            uc_outSize;
+	u_short	            uc_opcode;  /* copied from data to save lookup */
+	int		    uc_unique;
+	wait_queue_head_t   uc_sleep;   /* process' wait queue */
+};
+
+#define CODA_REQ_ASYNC  0x1
+#define CODA_REQ_READ   0x2
+#define CODA_REQ_WRITE  0x4
+#define CODA_REQ_ABORT  0x8
+
 /* communication pending/processing queues */
 struct venus_comm {
 	u_long		    vc_seq;
@@ -18,7 +35,6 @@ struct venus_comm {
 	struct super_block *vc_sb;
 	struct mutex	    vc_mutex;
 };
-
 
 static inline struct venus_comm *coda_vcp(struct super_block *sb)
 {
