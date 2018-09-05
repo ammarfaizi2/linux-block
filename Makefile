@@ -1186,6 +1186,7 @@ headers_install: __headers
 	  $(error Headers not exportable for the $(SRCARCH) architecture))
 	$(Q)$(MAKE) $(hdr-inst)=include/uapi dst=include
 	$(Q)$(MAKE) $(hdr-inst)=arch/$(SRCARCH)/include/uapi $(hdr-dst)
+	$(Q)$(CONFIG_SHELL) $(srctree)/scripts/headers-c++.sh check
 
 PHONY += headers_check_all
 headers_check_all: headers_install_all
