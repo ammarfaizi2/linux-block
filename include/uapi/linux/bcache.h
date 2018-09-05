@@ -23,7 +23,7 @@ static inline void SET_##name(type *k, __u64 v)			\
 struct bkey {
 	__u64	high;
 	__u64	low;
-	__u64	ptr[];
+	__u64	ptr[0];
 };
 
 #define KEY_FIELD(name, field, offset, size)				\
