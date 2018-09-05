@@ -266,7 +266,12 @@ typedef struct _drm_i810_copy_t {
 #define PR_MASK              (0x7<<18)
 
 typedef struct drm_i810_dma {
-	void *virtual;
+	union {
+#ifndef __cplusplus
+		void *virtual;
+#endif
+		void *_virtual;
+	};
 	int request_idx;
 	int request_size;
 	int granted;
