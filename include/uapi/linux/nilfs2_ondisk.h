@@ -29,6 +29,7 @@
 
 #include <linux/types.h>
 #include <linux/magic.h>
+#include <asm/byteorder.h>
 
 
 #define NILFS_INODE_BMAP_SIZE	7
@@ -533,20 +534,17 @@ enum {
 static inline void							\
 nilfs_checkpoint_set_##name(struct nilfs_checkpoint *cp)		\
 {									\
-	cp->cp_flags = cpu_to_le32(le32_to_cpu(cp->cp_flags) |		\
-				   (1UL << NILFS_CHECKPOINT_##flag));	\
+	cp->cp_flags |= __cpu_to_le32(1UL << NILFS_CHECKPOINT_##flag);	\
 }									\
 static inline void							\
 nilfs_checkpoint_clear_##name(struct nilfs_checkpoint *cp)		\
 {									\
-	cp->cp_flags = cpu_to_le32(le32_to_cpu(cp->cp_flags) &		\
-				   ~(1UL << NILFS_CHECKPOINT_##flag));	\
+	cp->cp_flags &= __cpu_to_le32(~(1UL << NILFS_CHECKPOINT_##flag)); \
 }									\
 static inline int							\
 nilfs_checkpoint_##name(const struct nilfs_checkpoint *cp)		\
 {									\
-	return !!(le32_to_cpu(cp->cp_flags) &				\
-		  (1UL << NILFS_CHECKPOINT_##flag));			\
+	return !!(cp->cp_flags & __cpu_to_le32(1UL << NILFS_CHECKPOINT_##flag)); \
 }
 
 NILFS_CHECKPOINT_FNS(SNAPSHOT, snapshot)
@@ -595,21 +593,17 @@ enum {
 static inline void							\
 nilfs_segment_usage_set_##name(struct nilfs_segment_usage *su)		\
 {									\
-	su->su_flags = cpu_to_le32(le32_to_cpu(su->su_flags) |		\
-				   (1UL << NILFS_SEGMENT_USAGE_##flag));\
+	su->su_flags |= __cpu_to_le32(1UL << NILFS_SEGMENT_USAGE_##flag); \
 }									\
 static inline void							\
 nilfs_segment_usage_clear_##name(struct nilfs_segment_usage *su)	\
 {									\
-	su->su_flags =							\
-		cpu_to_le32(le32_to_cpu(su->su_flags) &			\
-			    ~(1UL << NILFS_SEGMENT_USAGE_##flag));      \
+	su->su_flags &= __cpu_to_le32(~(1UL << NILFS_SEGMENT_USAGE_##flag)); \
 }									\
 static inline int							\
 nilfs_segment_usage_##name(const struct nilfs_segment_usage *su)	\
 {									\
-	return !!(le32_to_cpu(su->su_flags) &				\
-		  (1UL << NILFS_SEGMENT_USAGE_##flag));			\
+	return !!(su->su_flags & __cpu_to_le32(1UL << NILFS_SEGMENT_USAGE_##flag)); \
 }
 
 NILFS_SEGMENT_USAGE_FNS(ACTIVE, active)
@@ -619,15 +613,15 @@ NILFS_SEGMENT_USAGE_FNS(ERROR, error)
 static inline void
 nilfs_segment_usage_set_clean(struct nilfs_segment_usage *su)
 {
-	su->su_lastmod = cpu_to_le64(0);
-	su->su_nblocks = cpu_to_le32(0);
-	su->su_flags = cpu_to_le32(0);
+	su->su_lastmod = __cpu_to_le64(0);
+	su->su_nblocks = __cpu_to_le32(0);
+	su->su_flags = __cpu_to_le32(0);
 }
 
 static inline int
 nilfs_segment_usage_clean(const struct nilfs_segment_usage *su)
 {
-	return !le32_to_cpu(su->su_flags);
+	return !su->su_flags;
 }
 
 /**
