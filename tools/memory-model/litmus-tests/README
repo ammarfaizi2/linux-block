@@ -243,56 +243,11 @@ produce the name:
 
 Adding the ".litmus" suffix: SB+rfionceonce-poonceonces.litmus
 
+The descriptors that describe connections between consecutive accesses
+within the cycle through a given litmus test can be provided by the herd
+tool (Rfi, Po, Fre, and so on) or by the linux-kernel.bell file (Once,
+Release, Acquire, and so on).
 
-=======================
-LITMUS TEST DESCRIPTORS
-=======================
-
-These descriptors cover connections between consecutive accesses within
-the cycle through a given litmus test:
-
-Fre: From-read external.  The current process wrote a variable that
-	the previous process read.  Example: The SB (store buffering) test.
-Fri: From-read internal.  This process read a variable and then
-	immediately wrote to it.  Example: ???
-PodRR: Program-order different variable, read followed by read.
-	This process read a variable and again read a different variable.
-	Example: The read-side process in the MP (message-passing) test.
-PodRW: Program-order different variable, read followed by write.
-	This process read a variable and then wrote a different variable.
-	Example: The LB (load buffering) test.
-PodWR: Program-order different variable, write followed by read.
-	This process wrote a variable and then read a different variable.
-	Example: The SB (store buffering) test.
-PodWW: Program-order different variable, write followed by write.
-	This process wrote a variable and again wrote a different variable.
-	Example: The write-side process in the MP (message-passing) test.
-PosRR: Program-order same variable, read followed by read.
-	This process read a variable and again read that same variable.
-	Example: ???
-PosRW: Program-order same variable, read followed by write.
-	This process read a variable and then wrote that same variable.
-	Example: ???
-PosWR: Program-order same variable, write followed by read.
-	This process wrote a variable and then read that same variable.
-	Example: ???
-PosWW: Program-order same variable, write followed by write.
-	This process wrote a variable and again wrote that same variable.
-	Example: ???
-Rfe: Read-from external.  The current process read a variable written
-	by the previous process.  Example: The MP (message passing) test.
-Rfi: Read-from internal.  The current process wrote a variable and then
-	immediately read the value back from it.  For the purposes
-	of litmus-test code generation, Rfi acts identically to PosWR.
-	However, they differ for purposes of naming, and they also result
-	in different "exists" clauses.
-	Example:  ???
-Wse: Write same external.  The current process wrote to a variable that
-	was also written to by the previous process.  Example:  ???
-Wsi: Write same internal.  The current process wrote to a variable and
-	then immediately wrote to it again.  Example:  ???
-
-Please note that the above is a partial list.  To see the full list of
-descriptors, execute the following command:
+To see the full list of descriptors, execute the following command:
 
 	$ diyone7 -bell linux-kernel.bell -show edges
