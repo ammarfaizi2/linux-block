@@ -12,14 +12,7 @@
 
 #include <linux/types.h>
 #include <linux/netfilter/xt_DSCP.h>
-
-#define IPT_ECN_IP_MASK	(~XT_DSCP_MASK)
-
-#define IPT_ECN_OP_SET_IP	0x01	/* set ECN bits of IPv4 header */
-#define IPT_ECN_OP_SET_ECE	0x10	/* set ECE bit of TCP header */
-#define IPT_ECN_OP_SET_CWR	0x20	/* set CWR bit of TCP header */
-
-#define IPT_ECN_OP_MASK		0xce
+#include <linux/netfilter_ipv4/ipt_ecn.h>
 
 struct ipt_ECN_info {
 	__u8 operation;	/* bitset of operations */
