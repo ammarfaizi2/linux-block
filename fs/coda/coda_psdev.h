@@ -4,7 +4,7 @@
 
 #include <linux/backing-dev.h>
 #include <linux/mutex.h>
-#include <uapi/linux/coda_psdev.h>
+#include <linux/coda_psdev.h>
 
 struct kstatfs;
 
