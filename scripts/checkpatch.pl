@@ -6368,6 +6368,48 @@ sub process {
 			     "please use device_initcall() or more appropriate function instead of __initcall() (see include/linux/init.h)\n" . $herecurr);
 		}
 
+# check for old-style flavorful RCU primitives, suggest vanilla counterpart.
+		if ($line =~ /\bsynchronize_rcu_bh\(/) {
+			WARN("USE_VANILLA_RCU",
+			     "synchronize_rcu_bh() is obsolete, use synchronize_rcu() instead\n" . $herecurr);
+		}
+		if ($line =~ /\bsynchronize_rcu_bh_expedited\(/) {
+			WARN("USE_VANILLA_RCU",
+			     "synchronize_rcu_bh_expedited() is obsolete, use synchronize_rcu_expedited() instead\n" . $herecurr);
+		}
+		if ($line =~ /\bcall_rcu_bh\(/) {
+			WARN("USE_VANILLA_RCU",
+			     "call_rcu_bh() is obsolete, use call_rcu() instead\n" . $herecurr);
+		}
+		if ($line =~ /\brcu_barrier_bh\(/) {
+			WARN("USE_VANILLA_RCU",
+			     "rcu_barrier_bh() is obsolete, use rcu_barrier() instead\n" . $herecurr);
+		}
+		if ($line =~ /\bsynchronize_sched\(/) {
+			WARN("USE_VANILLA_RCU",
+			     "synchronize_sched() is obsolete, use synchronize_rcu() instead\n" . $herecurr);
+		}
+		if ($line =~ /\bsynchronize_sched_expedited\(/) {
+			WARN("USE_VANILLA_RCU",
+			     "synchronize_sched_expedited() is obsolete, use synchronize_rcu_expedited() instead\n" . $herecurr);
+		}
+		if ($line =~ /\bcall_rcu_sched\(/) {
+			WARN("USE_VANILLA_RCU",
+			     "call_rcu_sched() is obsolete, use call_rcu() instead\n" . $herecurr);
+		}
+		if ($line =~ /\brcu_barrier_sched\(/) {
+			WARN("USE_VANILLA_RCU",
+			     "rcu_barrier_sched() is obsolete, use rcu_barrier() instead\n" . $herecurr);
+		}
+		if ($line =~ /\bget_state_synchronize_sched\(/) {
+			WARN("USE_VANILLA_RCU",
+			     "get_state_synchronize_sched() is obsolete, use get_state_synchronize_rcu() instead\n" . $herecurr);
+		}
+		if ($line =~ /\bcond_synchronize_sched\(/) {
+			WARN("USE_VANILLA_RCU",
+			     "cond_synchronize_sched() is obsolete, use cond_synchronize_rcu() instead\n" . $herecurr);
+		}
+
 # check for various structs that are normally const (ops, kgdb, device_tree)
 # and avoid what seem like struct definitions 'struct foo {'
 		if ($line !~ /\bconst\b/ &&
