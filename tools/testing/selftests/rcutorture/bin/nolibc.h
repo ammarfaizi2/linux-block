@@ -225,7 +225,7 @@ struct stat {
  *   - rcx and r8..r11 may be clobbered, others are preserved.
  *   - the arguments are cast to long and assigned into the target registers
  *     which are then simply passed as registers to the asm code, so that we
- *     don't have to experience issues with register contraints.
+ *     don't have to experience issues with register constraints.
  *   - the syscall number is always specified last in order to allow to force
  *     some registers before (gcc refuses a %-register at the last position).
  */
@@ -234,7 +234,7 @@ struct stat {
 ({                                                                            \
 	long _ret;                                                            \
 	register long _num  asm("rax") = (num);                               \
-                                                                              \
+									      \
 	asm volatile (                                                        \
 		"syscall\n"                                                   \
 		: "=a" (_ret)                                                 \
@@ -249,7 +249,7 @@ struct stat {
 	long _ret;                                                            \
 	register long _num  asm("rax") = (num);                               \
 	register long _arg1 asm("rdi") = (long)(arg1);                        \
-                                                                              \
+									      \
 	asm volatile (                                                        \
 		"syscall\n"                                                   \
 		: "=a" (_ret)                                                 \
@@ -266,7 +266,7 @@ struct stat {
 	register long _num  asm("rax") = (num);                               \
 	register long _arg1 asm("rdi") = (long)(arg1);                        \
 	register long _arg2 asm("rsi") = (long)(arg2);                        \
-                                                                              \
+									      \
 	asm volatile (                                                        \
 		"syscall\n"                                                   \
 		: "=a" (_ret)                                                 \
@@ -284,7 +284,7 @@ struct stat {
 	register long _arg1 asm("rdi") = (long)(arg1);                        \
 	register long _arg2 asm("rsi") = (long)(arg2);                        \
 	register long _arg3 asm("rdx") = (long)(arg3);                        \
-                                                                              \
+									      \
 	asm volatile (                                                        \
 		"syscall\n"                                                   \
 		: "=a" (_ret)                                                 \
@@ -303,7 +303,7 @@ struct stat {
 	register long _arg2 asm("rsi") = (long)(arg2);                        \
 	register long _arg3 asm("rdx") = (long)(arg3);                        \
 	register long _arg4 asm("r10") = (long)(arg4);                        \
-                                                                              \
+									      \
 	asm volatile (                                                        \
 		"syscall\n"                                                   \
 		: "=a" (_ret), "=r"(_arg4)                                    \
@@ -323,7 +323,7 @@ struct stat {
 	register long _arg3 asm("rdx") = (long)(arg3);                        \
 	register long _arg4 asm("r10") = (long)(arg4);                        \
 	register long _arg5 asm("r8")  = (long)(arg5);                        \
-                                                                              \
+									      \
 	asm volatile (                                                        \
 		"syscall\n"                                                   \
 		: "=a" (_ret), "=r"(_arg4), "=r"(_arg5)                       \
@@ -344,7 +344,7 @@ struct stat {
 	register long _arg4 asm("r10") = (long)(arg4);                        \
 	register long _arg5 asm("r8")  = (long)(arg5);                        \
 	register long _arg6 asm("r9")  = (long)(arg6);                        \
-                                                                              \
+									      \
 	asm volatile (                                                        \
 		"syscall\n"                                                   \
 		: "=a" (_ret), "=r"(_arg4), "=r"(_arg5)                       \
@@ -421,7 +421,7 @@ struct sys_stat_struct {
  *   - syscall return comes in eax
  *   - the arguments are cast to long and assigned into the target registers
  *     which are then simply passed as registers to the asm code, so that we
- *     don't have to experience issues with register contraints.
+ *     don't have to experience issues with register constraints.
  *   - the syscall number is always specified last in order to allow to force
  *     some registers before (gcc refuses a %-register at the last position).
  *
@@ -433,7 +433,7 @@ struct sys_stat_struct {
 ({                                                                            \
 	long _ret;                                                            \
 	register long _num asm("eax") = (num);                                \
-                                                                              \
+									      \
 	asm volatile (                                                        \
 		"int $0x80\n"                                                 \
 		: "=a" (_ret)                                                 \
@@ -448,7 +448,7 @@ struct sys_stat_struct {
 	long _ret;                                                            \
 	register long _num asm("eax") = (num);                                \
 	register long _arg1 asm("ebx") = (long)(arg1);                        \
-                                                                              \
+									      \
 	asm volatile (                                                        \
 		"int $0x80\n"                                                 \
 		: "=a" (_ret)                                                 \
@@ -465,7 +465,7 @@ struct sys_stat_struct {
 	register long _num asm("eax") = (num);                                \
 	register long _arg1 asm("ebx") = (long)(arg1);                        \
 	register long _arg2 asm("ecx") = (long)(arg2);                        \
-                                                                              \
+									      \
 	asm volatile (                                                        \
 		"int $0x80\n"                                                 \
 		: "=a" (_ret)                                                 \
@@ -483,7 +483,7 @@ struct sys_stat_struct {
 	register long _arg1 asm("ebx") = (long)(arg1);                        \
 	register long _arg2 asm("ecx") = (long)(arg2);                        \
 	register long _arg3 asm("edx") = (long)(arg3);                        \
-                                                                              \
+									      \
 	asm volatile (                                                        \
 		"int $0x80\n"                                                 \
 		: "=a" (_ret)                                                 \
@@ -502,7 +502,7 @@ struct sys_stat_struct {
 	register long _arg2 asm("ecx") = (long)(arg2);                        \
 	register long _arg3 asm("edx") = (long)(arg3);                        \
 	register long _arg4 asm("esi") = (long)(arg4);                        \
-                                                                              \
+									      \
 	asm volatile (                                                        \
 		"int $0x80\n"                                                 \
 		: "=a" (_ret)                                                 \
@@ -522,7 +522,7 @@ struct sys_stat_struct {
 	register long _arg3 asm("edx") = (long)(arg3);                        \
 	register long _arg4 asm("esi") = (long)(arg4);                        \
 	register long _arg5 asm("edi") = (long)(arg5);                        \
-                                                                              \
+									      \
 	asm volatile (                                                        \
 		"int $0x80\n"                                                 \
 		: "=a" (_ret)                                                 \
@@ -601,7 +601,7 @@ struct sys_stat_struct {
  *   - only lr is clobbered.
  *   - the arguments are cast to long and assigned into the target registers
  *     which are then simply passed as registers to the asm code, so that we
- *     don't have to experience issues with register contraints.
+ *     don't have to experience issues with register constraints.
  *   - the syscall number is always specified last in order to allow to force
  *     some registers before (gcc refuses a %-register at the last position).
  *
@@ -613,7 +613,7 @@ struct sys_stat_struct {
 ({                                                                            \
 	register long _num asm("r7") = (num);                                 \
 	register long _arg1 asm("r0");                                        \
-                                                                              \
+									      \
 	asm volatile (                                                        \
 		"svc #0\n"                                                    \
 		: "=r"(_arg1)                                                 \
@@ -627,7 +627,7 @@ struct sys_stat_struct {
 ({                                                                            \
 	register long _num asm("r7") = (num);                                 \
 	register long _arg1 asm("r0") = (long)(arg1);                         \
-                                                                              \
+									      \
 	asm volatile (                                                        \
 		"svc #0\n"                                                    \
 		: "=r"(_arg1)                                                 \
@@ -643,7 +643,7 @@ struct sys_stat_struct {
 	register long _num asm("r7") = (num);                                 \
 	register long _arg1 asm("r0") = (long)(arg1);                         \
 	register long _arg2 asm("r1") = (long)(arg2);                         \
-                                                                              \
+									      \
 	asm volatile (                                                        \
 		"svc #0\n"                                                    \
 		: "=r"(_arg1)                                                 \
@@ -660,7 +660,7 @@ struct sys_stat_struct {
 	register long _arg1 asm("r0") = (long)(arg1);                         \
 	register long _arg2 asm("r1") = (long)(arg2);                         \
 	register long _arg3 asm("r2") = (long)(arg3);                         \
-                                                                              \
+									      \
 	asm volatile (                                                        \
 		"svc #0\n"                                                    \
 		: "=r"(_arg1)                                                 \
@@ -678,7 +678,7 @@ struct sys_stat_struct {
 	register long _arg2 asm("r1") = (long)(arg2);                         \
 	register long _arg3 asm("r2") = (long)(arg3);                         \
 	register long _arg4 asm("r3") = (long)(arg4);                         \
-                                                                              \
+									      \
 	asm volatile (                                                        \
 		"svc #0\n"                                                    \
 		: "=r"(_arg1)                                                 \
@@ -697,7 +697,7 @@ struct sys_stat_struct {
 	register long _arg3 asm("r2") = (long)(arg3);                         \
 	register long _arg4 asm("r3") = (long)(arg4);                         \
 	register long _arg5 asm("r4") = (long)(arg5);                         \
-                                                                              \
+									      \
 	asm volatile (                                                        \
 		"svc #0\n"                                                    \
 		: "=r" (_arg1)                                                \
@@ -792,7 +792,7 @@ struct sys_stat_struct {
  *   - syscall return comes in x0.
  *   - the arguments are cast to long and assigned into the target registers
  *     which are then simply passed as registers to the asm code, so that we
- *     don't have to experience issues with register contraints.
+ *     don't have to experience issues with register constraints.
  *
  * On aarch64, select() is not implemented so we have to use pselect6().
  */
@@ -802,7 +802,7 @@ struct sys_stat_struct {
 ({                                                                            \
 	register long _num  asm("x8") = (num);                                \
 	register long _arg1 asm("x0");                                        \
-                                                                              \
+									      \
 	asm volatile (                                                        \
 		"svc #0\n"                                                    \
 		: "=r"(_arg1)                                                 \
@@ -816,7 +816,7 @@ struct sys_stat_struct {
 ({                                                                            \
 	register long _num  asm("x8") = (num);                                \
 	register long _arg1 asm("x0") = (long)(arg1);                         \
-                                                                              \
+									      \
 	asm volatile (                                                        \
 		"svc #0\n"                                                    \
 		: "=r"(_arg1)                                                 \
@@ -832,7 +832,7 @@ struct sys_stat_struct {
 	register long _num  asm("x8") = (num);                                \
 	register long _arg1 asm("x0") = (long)(arg1);                         \
 	register long _arg2 asm("x1") = (long)(arg2);                         \
-                                                                              \
+									      \
 	asm volatile (                                                        \
 		"svc #0\n"                                                    \
 		: "=r"(_arg1)                                                 \
@@ -849,7 +849,7 @@ struct sys_stat_struct {
 	register long _arg1 asm("x0") = (long)(arg1);                         \
 	register long _arg2 asm("x1") = (long)(arg2);                         \
 	register long _arg3 asm("x2") = (long)(arg3);                         \
-                                                                              \
+									      \
 	asm volatile (                                                        \
 		"svc #0\n"                                                    \
 		: "=r"(_arg1)                                                 \
@@ -867,7 +867,7 @@ struct sys_stat_struct {
 	register long _arg2 asm("x1") = (long)(arg2);                         \
 	register long _arg3 asm("x2") = (long)(arg3);                         \
 	register long _arg4 asm("x3") = (long)(arg4);                         \
-                                                                              \
+									      \
 	asm volatile (                                                        \
 		"svc #0\n"                                                    \
 		: "=r"(_arg1)                                                 \
@@ -886,7 +886,7 @@ struct sys_stat_struct {
 	register long _arg3 asm("x2") = (long)(arg3);                         \
 	register long _arg4 asm("x3") = (long)(arg4);                         \
 	register long _arg5 asm("x4") = (long)(arg5);                         \
-                                                                              \
+									      \
 	asm volatile (                                                        \
 		"svc #0\n"                                                    \
 		: "=r" (_arg1)                                                \
@@ -906,7 +906,7 @@ struct sys_stat_struct {
 	register long _arg4 asm("x3") = (long)(arg4);                         \
 	register long _arg5 asm("x4") = (long)(arg5);                         \
 	register long _arg6 asm("x5") = (long)(arg6);                         \
-                                                                              \
+									      \
 	asm volatile (                                                        \
 		"svc #0\n"                                                    \
 		: "=r" (_arg1)                                                \
@@ -991,14 +991,14 @@ struct sys_stat_struct {
  *     if an error occured, in which case errno is in v0.
  *   - the arguments are cast to long and assigned into the target registers
  *     which are then simply passed as registers to the asm code, so that we
- *     don't have to experience issues with register contraints.
+ *     don't have to experience issues with register constraints.
  */
 
 #define my_syscall0(num)                                                      \
 ({                                                                            \
 	register long _num asm("v0") = (num);                                 \
 	register long _arg4 asm("a3");                                        \
-                                                                              \
+									      \
 	asm volatile (                                                        \
 		"addiu $sp, $sp, -32\n"                                       \
 		"syscall\n"                                                   \
@@ -1006,7 +1006,7 @@ struct sys_stat_struct {
 		: "=r"(_num), "=r"(_arg4)                                     \
 		: "r"(_num)                                                   \
 		: "memory", "cc", "at", "v1", "hi", "lo",                     \
-                  "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9"  \
+									      \
 	);                                                                    \
 	_arg4 ? -_num : _num;                                                 \
 })
@@ -1016,7 +1016,7 @@ struct sys_stat_struct {
 	register long _num asm("v0") = (num);                                 \
 	register long _arg1 asm("a0") = (long)(arg1);                         \
 	register long _arg4 asm("a3");                                        \
-                                                                              \
+									      \
 	asm volatile (                                                        \
 		"addiu $sp, $sp, -32\n"                                       \
 		"syscall\n"                                                   \
@@ -1025,7 +1025,7 @@ struct sys_stat_struct {
 		: "0"(_num),                                                  \
 		  "r"(_arg1)                                                  \
 		: "memory", "cc", "at", "v1", "hi", "lo",                     \
-                  "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9"  \
+									      \
 	);                                                                    \
 	_arg4 ? -_num : _num;                                                 \
 })
@@ -1036,7 +1036,7 @@ struct sys_stat_struct {
 	register long _arg1 asm("a0") = (long)(arg1);                         \
 	register long _arg2 asm("a1") = (long)(arg2);                         \
 	register long _arg4 asm("a3");                                        \
-                                                                              \
+									      \
 	asm volatile (                                                        \
 		"addiu $sp, $sp, -32\n"                                       \
 		"syscall\n"                                                   \
@@ -1045,7 +1045,7 @@ struct sys_stat_struct {
 		: "0"(_num),                                                  \
 		  "r"(_arg1), "r"(_arg2)                                      \
 		: "memory", "cc", "at", "v1", "hi", "lo",                     \
-                  "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9"  \
+									      \
 	);                                                                    \
 	_arg4 ? -_num : _num;                                                 \
 })
@@ -1057,7 +1057,7 @@ struct sys_stat_struct {
 	register long _arg2 asm("a1") = (long)(arg2);                         \
 	register long _arg3 asm("a2") = (long)(arg3);                         \
 	register long _arg4 asm("a3");                                        \
-                                                                              \
+									      \
 	asm volatile (                                                        \
 		"addiu $sp, $sp, -32\n"                                       \
 		"syscall\n"                                                   \
@@ -1066,7 +1066,7 @@ struct sys_stat_struct {
 		: "0"(_num),                                                  \
 		  "r"(_arg1), "r"(_arg2), "r"(_arg3)                          \
 		: "memory", "cc", "at", "v1", "hi", "lo",                     \
-                  "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9"  \
+									      \
 	);                                                                    \
 	_arg4 ? -_num : _num;                                                 \
 })
@@ -1078,7 +1078,7 @@ struct sys_stat_struct {
 	register long _arg2 asm("a1") = (long)(arg2);                         \
 	register long _arg3 asm("a2") = (long)(arg3);                         \
 	register long _arg4 asm("a3") = (long)(arg4);                         \
-                                                                              \
+									      \
 	asm volatile (                                                        \
 		"addiu $sp, $sp, -32\n"                                       \
 		"syscall\n"                                                   \
@@ -1087,7 +1087,7 @@ struct sys_stat_struct {
 		: "0"(_num),                                                  \
 		  "r"(_arg1), "r"(_arg2), "r"(_arg3), "r"(_arg4)              \
 		: "memory", "cc", "at", "v1", "hi", "lo",                     \
-                  "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9"  \
+									      \
 	);                                                                    \
 	_arg4 ? -_num : _num;                                                 \
 })
@@ -1099,8 +1099,8 @@ struct sys_stat_struct {
 	register long _arg2 asm("a1") = (long)(arg2);                         \
 	register long _arg3 asm("a2") = (long)(arg3);                         \
 	register long _arg4 asm("a3") = (long)(arg4);                         \
-	register long _arg5 = (long)(arg5);				\
-                                                                              \
+	register long _arg5 = (long)(arg5);				      \
+									      \
 	asm volatile (                                                        \
 		"addiu $sp, $sp, -32\n"                                       \
 		"sw %7, 16($sp)\n"                                            \
@@ -1110,7 +1110,7 @@ struct sys_stat_struct {
 		: "0"(_num),                                                  \
 		  "r"(_arg1), "r"(_arg2), "r"(_arg3), "r"(_arg4), "r"(_arg5)  \
 		: "memory", "cc", "at", "v1", "hi", "lo",                     \
-                  "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9"  \
+									      \
 	);                                                                    \
 	_arg4 ? -_num : _num;                                                 \
 })
@@ -1340,7 +1340,7 @@ long sys_mknod(const char *path, mode_t mode, dev_t dev)
 
 static __attribute__((unused))
 int sys_mount(const char *src, const char *tgt, const char *fst,
-                     unsigned long flags, const void *data)
+	      unsigned long flags, const void *data)
 {
 	return my_syscall5(__NR_mount, src, tgt, fst, flags, data);
 }
@@ -1762,8 +1762,8 @@ int mknod(const char *path, mode_t mode, dev_t dev)
 
 static __attribute__((unused))
 int mount(const char *src, const char *tgt,
-          const char *fst, unsigned long flags,
-          const void *data)
+	  const char *fst, unsigned long flags,
+	  const void *data)
 {
 	int ret = sys_mount(src, tgt, fst, flags, data);
 
