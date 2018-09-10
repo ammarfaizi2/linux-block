@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: GPL-2.0
+
+config DRM_PANFROST
+	tristate "Panfrost (DRM support for ARM Mali Midgard/Bifrost GPUs)"
+	depends on DRM
+	depends on ARCH_ROCKCHIP
+	depends on MMU
+	select DRM_SCHED
+	select IOMMU_SUPPORT
+	select IOMMU_IO_PGTABLE_LPAE
+	select DRM_GEM_SHMEM_HELPER
+	help
+	  DRM driver for ARM Mali Midgard (t6xx, t7xx, t8xx) and
+	  Bifrost (G3x, G5x, G7x) GPUs.
