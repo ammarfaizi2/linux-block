@@ -1173,7 +1173,7 @@ static int slip_ioctl(struct tty_struct *tty, unsigned int cmd,
 	/* VSV changes end */
 #endif
 	default:
-		return tty_mode_ioctl(tty, cmd, arg);
+		return tty_mode_ioctl(tty, cmd, (void __user *)arg);
 	}
 }
 

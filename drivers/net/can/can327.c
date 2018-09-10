@@ -1101,7 +1101,7 @@ static int can327_ldisc_ioctl(struct tty_struct *tty, unsigned int cmd,
 		return -EINVAL;
 
 	default:
-		return tty_mode_ioctl(tty, cmd, arg);
+		return tty_mode_ioctl(tty, cmd, (void __user *)arg);
 	}
 }
 

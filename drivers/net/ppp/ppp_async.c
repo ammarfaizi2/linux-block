@@ -321,7 +321,7 @@ ppp_asynctty_ioctl(struct tty_struct *tty, unsigned int cmd, unsigned long arg)
 
 	default:
 		/* Try the various mode ioctls */
-		err = tty_mode_ioctl(tty, cmd, arg);
+		err = tty_mode_ioctl(tty, cmd, (void __user *)arg);
 	}
 
 	ap_put(ap);

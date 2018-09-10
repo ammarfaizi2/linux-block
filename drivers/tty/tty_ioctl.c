@@ -760,10 +760,9 @@ static int tty_change_softcar(struct tty_struct *tty, int arg)
  *	consistent mode setting.
  */
 
-int tty_mode_ioctl(struct tty_struct *tty, unsigned int cmd, unsigned long arg)
+int tty_mode_ioctl(struct tty_struct *tty, unsigned int cmd, void __user *arg)
 {
 	struct tty_struct *real_tty;
-	void __user *p = (void __user *)arg;
 	int ret = 0;
 	struct ktermios kterm;
 
@@ -776,73 +775,72 @@ int tty_mode_ioctl(struct tty_struct *tty, unsigned int cmd, unsigned long arg)
 	switch (cmd) {
 #ifdef TIOCGETP
 	case TIOCGETP:
-		return get_sgttyb(real_tty, (struct sgttyb __user *) arg);
+		return get_sgttyb(real_tty, arg);
 	case TIOCSETP:
 	case TIOCSETN:
-		return set_sgttyb(real_tty, (struct sgttyb __user *) arg);
+		return set_sgttyb(real_tty, arg);
 #endif
 #ifdef TIOCGETC
 	case TIOCGETC:
-		return get_tchars(real_tty, p);
+		return get_tchars(real_tty, arg);
 	case TIOCSETC:
-		return set_tchars(real_tty, p);
+		return set_tchars(real_tty, arg);
 #endif
 #ifdef TIOCGLTC
 	case TIOCGLTC:
-		return get_ltchars(real_tty, p);
+		return get_ltchars(real_tty, arg);
 	case TIOCSLTC:
-		return set_ltchars(real_tty, p);
+		return set_ltchars(real_tty, arg);
 #endif
 	case TCSETSF:
-		return set_termios(real_tty, p,  TERMIOS_FLUSH | TERMIOS_WAIT | TERMIOS_OLD);
+		return set_termios(real_tty, arg,  TERMIOS_FLUSH | TERMIOS_WAIT | TERMIOS_OLD);
 	case TCSETSW:
-		return set_termios(real_tty, p, TERMIOS_WAIT | TERMIOS_OLD);
+		return set_termios(real_tty, arg, TERMIOS_WAIT | TERMIOS_OLD);
 	case TCSETS:
-		return set_termios(real_tty, p, TERMIOS_OLD);
+		return set_termios(real_tty, arg, TERMIOS_OLD);
 #ifndef TCGETS2
 	case TCGETS:
 		copy_termios(real_tty, &kterm);
-		if (kernel_termios_to_user_termios((struct termios __user *)arg, &kterm))
+		if (kernel_termios_to_user_termios(arg, &kterm))
 			ret = -EFAULT;
 		return ret;
 #else
 	case TCGETS:
 		copy_termios(real_tty, &kterm);
-		if (kernel_termios_to_user_termios_1((struct termios __user *)arg, &kterm))
+		if (kernel_termios_to_user_termios_1(arg, &kterm))
 			ret = -EFAULT;
 		return ret;
 	case TCGETS2:
 		copy_termios(real_tty, &kterm);
-		if (kernel_termios_to_user_termios((struct termios2 __user *)arg, &kterm))
+		if (kernel_termios_to_user_termios(arg, &kterm))
 			ret = -EFAULT;
 		return ret;
 	case TCSETSF2:
-		return set_termios(real_tty, p,  TERMIOS_FLUSH | TERMIOS_WAIT);
+		return set_termios(real_tty, arg,  TERMIOS_FLUSH | TERMIOS_WAIT);
 	case TCSETSW2:
-		return set_termios(real_tty, p, TERMIOS_WAIT);
+		return set_termios(real_tty, arg, TERMIOS_WAIT);
 	case TCSETS2:
-		return set_termios(real_tty, p, 0);
+		return set_termios(real_tty, arg, 0);
 #endif
 	case TCGETA:
-		return get_termio(real_tty, p);
+		return get_termio(real_tty, arg);
 	case TCSETAF:
-		return set_termios(real_tty, p, TERMIOS_FLUSH | TERMIOS_WAIT | TERMIOS_TERMIO);
+		return set_termios(real_tty, arg, TERMIOS_FLUSH | TERMIOS_WAIT | TERMIOS_TERMIO);
 	case TCSETAW:
-		return set_termios(real_tty, p, TERMIOS_WAIT | TERMIOS_TERMIO);
+		return set_termios(real_tty, arg, TERMIOS_WAIT | TERMIOS_TERMIO);
 	case TCSETA:
-		return set_termios(real_tty, p, TERMIOS_TERMIO);
+		return set_termios(real_tty, arg, TERMIOS_TERMIO);
 #ifndef TCGETS2
 	case TIOCGLCKTRMIOS:
 		copy_termios_locked(real_tty, &kterm);
-		if (kernel_termios_to_user_termios((struct termios __user *)arg, &kterm))
+		if (kernel_termios_to_user_termios(arg, &kterm))
 			ret = -EFAULT;
 		return ret;
 	case TIOCSLCKTRMIOS:
 		if (!capable(CAP_SYS_ADMIN))
 			return -EPERM;
 		copy_termios_locked(real_tty, &kterm);
-		if (user_termios_to_kernel_termios(&kterm,
-					       (struct termios __user *) arg))
+		if (user_termios_to_kernel_termios(&kterm, arg))
 			return -EFAULT;
 		down_write(&real_tty->termios_rwsem);
 		real_tty->termios_locked = kterm;
@@ -851,15 +849,14 @@ int tty_mode_ioctl(struct tty_struct *tty, unsigned int cmd, unsigned long arg)
 #else
 	case TIOCGLCKTRMIOS:
 		copy_termios_locked(real_tty, &kterm);
-		if (kernel_termios_to_user_termios_1((struct termios __user *)arg, &kterm))
+		if (kernel_termios_to_user_termios_1(arg, &kterm))
 			ret = -EFAULT;
 		return ret;
 	case TIOCSLCKTRMIOS:
 		if (!capable(CAP_SYS_ADMIN))
 			return -EPERM;
 		copy_termios_locked(real_tty, &kterm);
-		if (user_termios_to_kernel_termios_1(&kterm,
-					       (struct termios __user *) arg))
+		if (user_termios_to_kernel_termios_1(&kterm, arg))
 			return -EFAULT;
 		down_write(&real_tty->termios_rwsem);
 		real_tty->termios_locked = kterm;
@@ -879,9 +876,9 @@ int tty_mode_ioctl(struct tty_struct *tty, unsigned int cmd, unsigned long arg)
 						(int __user *)arg);
 		return ret;
 	case TIOCSSOFTCAR:
-		if (get_user(arg, (unsigned int __user *) arg))
+		if (get_user(ret, (int __user *) arg))
 			return -EFAULT;
-		return tty_change_softcar(real_tty, arg);
+		return tty_change_softcar(real_tty, ret);
 	default:
 		return -ENOIOCTLCMD;
 	}
@@ -977,7 +974,7 @@ int n_tty_ioctl_helper(struct tty_struct *tty, unsigned int cmd,
 		return __tty_perform_flush(tty, arg);
 	default:
 		/* Try the mode commands */
-		return tty_mode_ioctl(tty, cmd, arg);
+		return tty_mode_ioctl(tty, cmd, (void __user *)arg);
 	}
 }
 EXPORT_SYMBOL(n_tty_ioctl_helper);

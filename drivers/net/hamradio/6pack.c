@@ -735,7 +735,7 @@ static int sixpack_ioctl(struct tty_struct *tty, unsigned int cmd,
 			break;
 		}
 	default:
-		err = tty_mode_ioctl(tty, cmd, arg);
+		err = tty_mode_ioctl(tty, cmd, (void __user *)arg);
 	}
 
 	sp_put(sp);

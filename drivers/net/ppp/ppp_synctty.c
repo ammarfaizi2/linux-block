@@ -313,7 +313,7 @@ ppp_synctty_ioctl(struct tty_struct *tty, unsigned int cmd, unsigned long arg)
 		break;
 
 	default:
-		err = tty_mode_ioctl(tty, cmd, arg);
+		err = tty_mode_ioctl(tty, cmd, (void __user *)arg);
 		break;
 	}
 
