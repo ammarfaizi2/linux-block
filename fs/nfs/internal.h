@@ -415,8 +415,6 @@ extern int nfs_wait_atomic_killable(atomic_t *p, unsigned int mode);
 extern const struct super_operations nfs_sops;
 bool nfs_auth_info_match(const struct nfs_auth_info *, rpc_authflavor_t);
 int nfs_try_get_tree(struct fs_context *);
-int nfs_set_sb_security(struct super_block *, struct fs_context *);
-int nfs_clone_sb_security(struct super_block *, struct fs_context *);
 int nfs_get_tree_common(struct nfs_server *, struct fs_context *);
 void nfs_kill_super(struct super_block *);
 

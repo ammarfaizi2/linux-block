@@ -78,8 +78,6 @@ static int nfs4_get_remote_tree(struct fs_context *fc)
 	struct nfs_fs_context *ctx = nfs_fc2context(fc);
 	struct nfs_server *server;
 
-	ctx->set_security = nfs_set_sb_security;
-
 	/* Get a volume representation */
 	server = nfs4_create_server(fc);
 	if (IS_ERR(server))
@@ -270,8 +268,6 @@ static int nfs4_get_remote_referral_tree(struct fs_context *fc)
 	struct nfs_server *server;
 
 	dprintk("--> nfs4_get_remote_referral_tree()\n");
-
-	ctx->set_security = nfs_clone_sb_security;
 
 	if (!ctx->clone_data.cloned)
 		return -EINVAL;

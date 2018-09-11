@@ -185,35 +185,9 @@ static inline const char *kernel_load_data_id_str(enum kernel_load_data_id id)
 
 #ifdef CONFIG_SECURITY
 
-struct security_mnt_opts {
-	char **mnt_opts;
-	int *mnt_opts_flags;
-	int num_mnt_opts;
-};
-
 int call_lsm_notifier(enum lsm_event event, void *data);
 int register_lsm_notifier(struct notifier_block *nb);
 int unregister_lsm_notifier(struct notifier_block *nb);
-
-static inline void security_init_mnt_opts(struct security_mnt_opts *opts)
-{
-	opts->mnt_opts = NULL;
-	opts->mnt_opts_flags = NULL;
-	opts->num_mnt_opts = 0;
-}
-
-static inline void security_free_mnt_opts(struct security_mnt_opts *opts)
-{
-	int i;
-	if (opts->mnt_opts)
-		for (i = 0; i < opts->num_mnt_opts; i++)
-			kfree(opts->mnt_opts[i]);
-	kfree(opts->mnt_opts);
-	opts->mnt_opts = NULL;
-	kfree(opts->mnt_opts_flags);
-	opts->mnt_opts_flags = NULL;
-	opts->num_mnt_opts = 0;
-}
 
 /* prototypes */
 extern int security_init(void);
@@ -266,15 +240,6 @@ int security_sb_mount(const char *dev_name, const struct path *path,
 		      const char *type, unsigned long flags, void *data, size_t data_size);
 int security_sb_umount(struct vfsmount *mnt, int flags);
 int security_sb_pivotroot(const struct path *old_path, const struct path *new_path);
-int security_sb_set_mnt_opts(struct super_block *sb,
-				struct security_mnt_opts *opts,
-				unsigned long kern_flags,
-				unsigned long *set_kern_flags);
-int security_sb_clone_mnt_opts(const struct super_block *oldsb,
-				struct super_block *newsb,
-				unsigned long kern_flags,
-				unsigned long *set_kern_flags);
-int security_sb_parse_opts_str(char *options, struct security_mnt_opts *opts);
 int security_move_mount(const struct path *from_path, const struct path *to_path);
 int security_dentry_init_security(struct dentry *dentry, int mode,
 					const struct qstr *name, void **ctx,
@@ -413,8 +378,6 @@ int security_inode_notifysecctx(struct inode *inode, void *ctx, u32 ctxlen);
 int security_inode_setsecctx(struct dentry *dentry, void *ctx, u32 ctxlen);
 int security_inode_getsecctx(struct inode *inode, void **ctx, u32 *ctxlen);
 #else /* CONFIG_SECURITY */
-struct security_mnt_opts {
-};
 
 static inline int call_lsm_notifier(enum lsm_event event, void *data)
 {
@@ -429,14 +392,6 @@ static inline int register_lsm_notifier(struct notifier_block *nb)
 static inline  int unregister_lsm_notifier(struct notifier_block *nb)
 {
 	return 0;
-}
-
-static inline void security_init_mnt_opts(struct security_mnt_opts *opts)
-{
-}
-
-static inline void security_free_mnt_opts(struct security_mnt_opts *opts)
-{
 }
 
 /*
@@ -625,27 +580,6 @@ static inline int security_sb_umount(struct vfsmount *mnt, int flags)
 
 static inline int security_sb_pivotroot(const struct path *old_path,
 					const struct path *new_path)
-{
-	return 0;
-}
-
-static inline int security_sb_set_mnt_opts(struct super_block *sb,
-					   struct security_mnt_opts *opts,
-					   unsigned long kern_flags,
-					   unsigned long *set_kern_flags)
-{
-	return 0;
-}
-
-static inline int security_sb_clone_mnt_opts(const struct super_block *oldsb,
-					      struct super_block *newsb,
-					      unsigned long kern_flags,
-					      unsigned long *set_kern_flags)
-{
-	return 0;
-}
-
-static inline int security_sb_parse_opts_str(char *options, struct security_mnt_opts *opts)
 {
 	return 0;
 }

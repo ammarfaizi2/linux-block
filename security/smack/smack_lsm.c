@@ -54,21 +54,21 @@
 #define SMK_RECEIVING	1
 #define SMK_SENDING	2
 
+enum {
+	Opt_fsdefault = 0,
+	Opt_fsfloor = 1,
+	Opt_fshat = 2,
+	Opt_fsroot = 3,
+	Opt_fstransmute = 4,
+        nr__smack_params
+};
+
 #ifdef SMACK_IPV6_PORT_LABELING
 DEFINE_MUTEX(smack_ipv6_lock);
 static LIST_HEAD(smk_ipv6_port_list);
 #endif
 static struct kmem_cache *smack_inode_cache;
 int smack_enabled;
-
-static const match_table_t smk_mount_tokens = {
-	{Opt_fsdefault, SMK_FSDEFAULT "=%s"},
-	{Opt_fsfloor, SMK_FSFLOOR "=%s"},
-	{Opt_fshat, SMK_FSHAT "=%s"},
-	{Opt_fsroot, SMK_FSROOT "=%s"},
-	{Opt_fstransmute, SMK_FSTRANS "=%s"},
-	{Opt_error, NULL},
-};
 
 #ifdef CONFIG_SECURITY_SMACK_BRINGUP
 static char *smk_bu_mess[] = {
@@ -539,8 +539,7 @@ struct smack_fs_context {
 			char		*fsroot;
 			char		*fstransmute;
 		};
-		char			*ptrs[5];
-
+		char			*labels[nr__smack_params];
 	};
 	struct superblock_smack		*sbsp;
 	struct inode_smack		*isp;
@@ -557,8 +556,8 @@ static void smack_fs_context_free(struct fs_context *fc)
 	int i;
 
 	if (ctx) {
-		for (i = 0; i < ARRAY_SIZE(ctx->ptrs); i++)
-			kfree(ctx->ptrs[i]);
+		for (i = 0; i < ARRAY_SIZE(ctx->labels); i++)
+			kfree(ctx->labels[i]);
 		kfree(ctx->isp);
 		kfree(ctx->sbsp);
 		kfree(ctx);
@@ -643,10 +642,10 @@ static int smack_fs_context_dup(struct fs_context *fc,
 	if (!dst->sbsp)
 		goto nomem_free;
 
-	for (i = 0; i < ARRAY_SIZE(dst->ptrs); i++) {
-		if (src->ptrs[i]) {
-			dst->ptrs[i] = kstrdup(src->ptrs[i], GFP_KERNEL);
-			if (!dst->ptrs[i])
+	for (i = 0; i < ARRAY_SIZE(dst->labels); i++) {
+		if (src->labels[i]) {
+			dst->labels[i] = kstrdup(src->labels[i], GFP_KERNEL);
+			if (!dst->labels[i])
 				goto nomem_free;
 		}
 	}
@@ -668,11 +667,11 @@ static const struct fs_parameter_spec smack_param_specs[nr__smack_params] = {
 };
 
 static const char *const smack_param_keys[nr__smack_params] = {
-	[Opt_fsdefault]		= SMK_FSDEFAULT,
-	[Opt_fsfloor]		= SMK_FSFLOOR,
-	[Opt_fshat]		= SMK_FSHAT,
-	[Opt_fsroot]		= SMK_FSROOT,
-	[Opt_fstransmute]	= SMK_FSTRANS,
+	[Opt_fsdefault]		= "smackfsdef",
+	[Opt_fsfloor]		= "smackfsfloor",
+	[Opt_fshat]		= "smackfshat",
+	[Opt_fsroot]		= "smackfsroot",
+	[Opt_fstransmute]	= "smackfstransmute",
 };
 
 static const struct fs_parameter_description smack_fs_parameters = {
@@ -705,41 +704,12 @@ static int smack_fs_context_parse_param(struct fs_context *fc,
 	if (opt < 0)
 		return opt;
 
-	switch (opt) {
-	case Opt_fsdefault:
-		if (ctx->fsdefault)
-			goto error_dup;
-		ctx->fsdefault = param->string;
-		break;
-	case Opt_fsfloor:
-		if (ctx->fsfloor)
-			goto error_dup;
-		ctx->fsfloor = param->string;
-		break;
-	case Opt_fshat:
-		if (ctx->fshat)
-			goto error_dup;
-		ctx->fshat = param->string;
-		break;
-	case Opt_fsroot:
-		if (ctx->fsroot)
-			goto error_dup;
-		ctx->fsroot = param->string;
-		break;
-	case Opt_fstransmute:
-		if (ctx->fstransmute)
-			goto error_dup;
-		ctx->fstransmute = param->string;
-		break;
-	default:
-		return invalf(fc, "Smack:  unknown mount option\n");
-	}
+	if (ctx->labels[opt])
+		return invalf(fc, "Smack: duplicate mount option\n");
 
+	ctx->labels[opt] = param->string;
 	param->string = NULL;
 	return 0;
-
-error_dup:
-	return invalf(fc, "Smack: duplicate mount option\n");
 }
 
 /**
@@ -880,242 +850,6 @@ static void smack_sb_free_security(struct super_block *sb)
 {
 	kfree(sb->s_security);
 	sb->s_security = NULL;
-}
-
-/**
- * smack_parse_opts_str - parse Smack specific mount options
- * @options: mount options string
- * @opts: where to store converted mount opts
- *
- * Returns 0 on success or -ENOMEM on error.
- *
- * converts Smack specific mount options to generic security option format
- */
-static int smack_parse_opts_str(char *options,
-		struct security_mnt_opts *opts)
-{
-	char *p;
-	char *fsdefault = NULL;
-	char *fsfloor = NULL;
-	char *fshat = NULL;
-	char *fsroot = NULL;
-	char *fstransmute = NULL;
-	int rc = -ENOMEM;
-	int num_mnt_opts = 0;
-	int token;
-
-	opts->num_mnt_opts = 0;
-
-	if (!options)
-		return 0;
-
-	while ((p = strsep(&options, ",")) != NULL) {
-		substring_t args[MAX_OPT_ARGS];
-
-		if (!*p)
-			continue;
-
-		token = match_token(p, smk_mount_tokens, args);
-
-		switch (token) {
-		case Opt_fsdefault:
-			if (fsdefault)
-				goto out_opt_err;
-			fsdefault = match_strdup(&args[0]);
-			if (!fsdefault)
-				goto out_err;
-			break;
-		case Opt_fsfloor:
-			if (fsfloor)
-				goto out_opt_err;
-			fsfloor = match_strdup(&args[0]);
-			if (!fsfloor)
-				goto out_err;
-			break;
-		case Opt_fshat:
-			if (fshat)
-				goto out_opt_err;
-			fshat = match_strdup(&args[0]);
-			if (!fshat)
-				goto out_err;
-			break;
-		case Opt_fsroot:
-			if (fsroot)
-				goto out_opt_err;
-			fsroot = match_strdup(&args[0]);
-			if (!fsroot)
-				goto out_err;
-			break;
-		case Opt_fstransmute:
-			if (fstransmute)
-				goto out_opt_err;
-			fstransmute = match_strdup(&args[0]);
-			if (!fstransmute)
-				goto out_err;
-			break;
-		default:
-			rc = -EINVAL;
-			pr_warn("Smack:  unknown mount option\n");
-			goto out_err;
-		}
-	}
-
-	opts->mnt_opts = kcalloc(NUM_SMK_MNT_OPTS, sizeof(char *), GFP_KERNEL);
-	if (!opts->mnt_opts)
-		goto out_err;
-
-	opts->mnt_opts_flags = kcalloc(NUM_SMK_MNT_OPTS, sizeof(int),
-			GFP_KERNEL);
-	if (!opts->mnt_opts_flags)
-		goto out_err;
-
-	if (fsdefault) {
-		opts->mnt_opts[num_mnt_opts] = fsdefault;
-		opts->mnt_opts_flags[num_mnt_opts++] = FSDEFAULT_MNT;
-	}
-	if (fsfloor) {
-		opts->mnt_opts[num_mnt_opts] = fsfloor;
-		opts->mnt_opts_flags[num_mnt_opts++] = FSFLOOR_MNT;
-	}
-	if (fshat) {
-		opts->mnt_opts[num_mnt_opts] = fshat;
-		opts->mnt_opts_flags[num_mnt_opts++] = FSHAT_MNT;
-	}
-	if (fsroot) {
-		opts->mnt_opts[num_mnt_opts] = fsroot;
-		opts->mnt_opts_flags[num_mnt_opts++] = FSROOT_MNT;
-	}
-	if (fstransmute) {
-		opts->mnt_opts[num_mnt_opts] = fstransmute;
-		opts->mnt_opts_flags[num_mnt_opts++] = FSTRANS_MNT;
-	}
-
-	opts->num_mnt_opts = num_mnt_opts;
-	return 0;
-
-out_opt_err:
-	rc = -EINVAL;
-	pr_warn("Smack: duplicate mount options\n");
-
-out_err:
-	kfree(fsdefault);
-	kfree(fsfloor);
-	kfree(fshat);
-	kfree(fsroot);
-	kfree(fstransmute);
-	return rc;
-}
-
-/**
- * smack_set_mnt_opts - set Smack specific mount options
- * @sb: the file system superblock
- * @opts: Smack mount options
- * @kern_flags: mount option from kernel space or user space
- * @set_kern_flags: where to store converted mount opts
- *
- * Returns 0 on success, an error code on failure
- *
- * Allow filesystems with binary mount data to explicitly set Smack mount
- * labels.
- */
-static int smack_set_mnt_opts(struct super_block *sb,
-		struct security_mnt_opts *opts,
-		unsigned long kern_flags,
-		unsigned long *set_kern_flags)
-{
-	struct dentry *root = sb->s_root;
-	struct inode *inode = d_backing_inode(root);
-	struct superblock_smack *sp = sb->s_security;
-	struct inode_smack *isp;
-	struct smack_known *skp;
-	int i;
-	int num_opts = opts->num_mnt_opts;
-	int transmute = 0;
-
-	if (sp->smk_flags & SMK_SB_INITIALIZED)
-		return 0;
-
-	if (!smack_privileged(CAP_MAC_ADMIN)) {
-		/*
-		 * Unprivileged mounts don't get to specify Smack values.
-		 */
-		if (num_opts)
-			return -EPERM;
-		/*
-		 * Unprivileged mounts get root and default from the caller.
-		 */
-		skp = smk_of_current();
-		sp->smk_root = skp;
-		sp->smk_default = skp;
-		/*
-		 * For a handful of fs types with no user-controlled
-		 * backing store it's okay to trust security labels
-		 * in the filesystem. The rest are untrusted.
-		 */
-		if (sb->s_user_ns != &init_user_ns &&
-		    sb->s_magic != SYSFS_MAGIC && sb->s_magic != TMPFS_MAGIC &&
-		    sb->s_magic != RAMFS_MAGIC) {
-			transmute = 1;
-			sp->smk_flags |= SMK_SB_UNTRUSTED;
-		}
-	}
-
-	sp->smk_flags |= SMK_SB_INITIALIZED;
-
-	for (i = 0; i < num_opts; i++) {
-		switch (opts->mnt_opts_flags[i]) {
-		case FSDEFAULT_MNT:
-			skp = smk_import_entry(opts->mnt_opts[i], 0);
-			if (IS_ERR(skp))
-				return PTR_ERR(skp);
-			sp->smk_default = skp;
-			break;
-		case FSFLOOR_MNT:
-			skp = smk_import_entry(opts->mnt_opts[i], 0);
-			if (IS_ERR(skp))
-				return PTR_ERR(skp);
-			sp->smk_floor = skp;
-			break;
-		case FSHAT_MNT:
-			skp = smk_import_entry(opts->mnt_opts[i], 0);
-			if (IS_ERR(skp))
-				return PTR_ERR(skp);
-			sp->smk_hat = skp;
-			break;
-		case FSROOT_MNT:
-			skp = smk_import_entry(opts->mnt_opts[i], 0);
-			if (IS_ERR(skp))
-				return PTR_ERR(skp);
-			sp->smk_root = skp;
-			break;
-		case FSTRANS_MNT:
-			skp = smk_import_entry(opts->mnt_opts[i], 0);
-			if (IS_ERR(skp))
-				return PTR_ERR(skp);
-			sp->smk_root = skp;
-			transmute = 1;
-			break;
-		default:
-			break;
-		}
-	}
-
-	/*
-	 * Initialize the root inode.
-	 */
-	isp = inode->i_security;
-	if (isp == NULL) {
-		isp = new_inode_smack(sp->smk_root);
-		if (isp == NULL)
-			return -ENOMEM;
-		inode->i_security = isp;
-	} else
-		isp->smk_inode = sp->smk_root;
-
-	if (transmute)
-		isp->smk_flags |= SMK_INODE_TRANSMUTE;
-
-	return 0;
 }
 
 /**
@@ -4912,8 +4646,6 @@ static struct security_hook_list smack_hooks[] __lsm_ro_after_init = {
 	LSM_HOOK_INIT(sb_alloc_security, smack_sb_alloc_security),
 	LSM_HOOK_INIT(sb_free_security, smack_sb_free_security),
 	LSM_HOOK_INIT(sb_statfs, smack_sb_statfs),
-	LSM_HOOK_INIT(sb_set_mnt_opts, smack_set_mnt_opts),
-	LSM_HOOK_INIT(sb_parse_opts_str, smack_parse_opts_str),
 
 	LSM_HOOK_INIT(bprm_set_creds, smack_bprm_set_creds),
 

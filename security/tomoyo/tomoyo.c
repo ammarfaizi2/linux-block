@@ -421,7 +421,7 @@ static int tomoyo_sb_mount(const char *dev_name, const struct path *path,
 			   const char *type, unsigned long flags,
 			   void *data, size_t data_size)
 {
-	return tomoyo_mount_permission(dev_name, path, type, flags, data);
+	return tomoyo_mount_permission(dev_name, path, type, flags);
 }
 
 /**

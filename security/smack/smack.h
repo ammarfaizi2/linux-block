@@ -191,27 +191,6 @@ struct smack_known_list_elem {
 #define FSROOT_MNT	0x08
 #define FSTRANS_MNT	0x10
 
-#define NUM_SMK_MNT_OPTS	5
-
-enum {
-	Opt_error = -1,
-	Opt_fsdefault = 0,
-	Opt_fsfloor = 1,
-	Opt_fshat = 2,
-	Opt_fsroot = 3,
-	Opt_fstransmute = 4,
-        nr__smack_params
-};
-
-/*
- * Mount options
- */
-#define SMK_FSDEFAULT	"smackfsdef"
-#define SMK_FSFLOOR	"smackfsfloor"
-#define SMK_FSHAT	"smackfshat"
-#define SMK_FSROOT	"smackfsroot"
-#define SMK_FSTRANS	"smackfstransmute"
-
 #define SMACK_DELETE_OPTION	"-DELETE"
 #define SMACK_CIPSO_OPTION 	"-CIPSO"
 

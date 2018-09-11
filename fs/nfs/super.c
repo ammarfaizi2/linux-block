@@ -1169,52 +1169,6 @@ static void nfs_get_cache_cookie(struct super_block *sb,
 }
 #endif
 
-int nfs_set_sb_security(struct super_block *sb, struct fs_context *fc)
-{
-	int error;
-	unsigned long kflags = 0, kflags_out = 0;
-
-	if (NFS_SB(sb)->caps & NFS_CAP_SECURITY_LABEL)
-		kflags |= SECURITY_LSM_NATIVE_LABELS;
-
-	error = security_sb_set_mnt_opts(sb, fc->security, kflags, &kflags_out);
-	if (error)
-		goto err;
-
-	if (NFS_SB(sb)->caps & NFS_CAP_SECURITY_LABEL &&
-	    !(kflags_out & SECURITY_LSM_NATIVE_LABELS))
-		NFS_SB(sb)->caps &= ~NFS_CAP_SECURITY_LABEL;
-err:
-	return error;
-}
-EXPORT_SYMBOL_GPL(nfs_set_sb_security);
-
-int nfs_clone_sb_security(struct super_block *sb, struct fs_context *fc)
-{
-	struct nfs_fs_context *ctx = nfs_fc2context(fc);
-	int error;
-	unsigned long kflags = 0, kflags_out = 0;
-
-	/* clone any lsm security options from the parent to the new sb */
-	if (d_inode(fc->root)->i_op !=
-	    NFS_SB(sb)->nfs_client->rpc_ops->dir_inode_ops)
-		return -ESTALE;
-
-	if (NFS_SB(sb)->caps & NFS_CAP_SECURITY_LABEL)
-		kflags |= SECURITY_LSM_NATIVE_LABELS;
-
-	error = security_sb_clone_mnt_opts(ctx->clone_data.sb, sb, kflags,
-					   &kflags_out);
-	if (error)
-		return error;
-
-	if (NFS_SB(sb)->caps & NFS_CAP_SECURITY_LABEL &&
-	    !(kflags_out & SECURITY_LSM_NATIVE_LABELS))
-		NFS_SB(sb)->caps &= ~NFS_CAP_SECURITY_LABEL;
-	return 0;
-}
-EXPORT_SYMBOL_GPL(nfs_clone_sb_security);
-
 int nfs_get_tree_common(struct nfs_server *server, struct fs_context *fc)
 {
 	struct nfs_fs_context *ctx = nfs_fc2context(fc);
@@ -1276,9 +1230,8 @@ int nfs_get_tree_common(struct nfs_server *server, struct fs_context *fc)
 		goto error_splat_super;
 	}
 
-	error = ctx->set_security(s, fc);
-	if (error)
-		goto error_splat_root;
+	if (!(fc->lsm_flags & SECURITY_LSM_NATIVE_LABELS))
+		server->caps &= ~NFS_CAP_SECURITY_LABEL;
 
 	s->s_flags |= SB_ACTIVE;
 	error = 0;

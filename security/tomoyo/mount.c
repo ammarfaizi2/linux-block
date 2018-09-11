@@ -188,8 +188,7 @@ static int tomoyo_mount_acl(struct tomoyo_request_info *r,
  * Returns 0 on success, negative value otherwise.
  */
 int tomoyo_mount_permission(const char *dev_name, const struct path *path,
-			    const char *type, unsigned long flags,
-			    void *data_page)
+			    const char *type, unsigned long flags)
 {
 	struct tomoyo_request_info r;
 	int error;

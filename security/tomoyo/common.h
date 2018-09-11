@@ -975,8 +975,7 @@ int tomoyo_mount_permission_fc(struct fs_context *fc,
 			       const struct path *mountpoint,
 			       unsigned int mnt_flags);
 int tomoyo_mount_permission(const char *dev_name, const struct path *path,
-			    const char *type, unsigned long flags,
-			    void *data_page);
+			    const char *type, unsigned long flags);
 int tomoyo_open_control(const u8 type, struct file *file);
 int tomoyo_path2_perm(const u8 operation, const struct path *path1,
 		      const struct path *path2);

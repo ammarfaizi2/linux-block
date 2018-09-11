@@ -47,23 +47,22 @@
 
 /* Mask for just the mount related flags */
 #define SE_MNTMASK	0x0f
-/* Super block security struct flags for mount options */
-/* BE CAREFUL, these need to be the low order bits for selinux_get_mnt_opts */
+
+/*
+ * Super block security struct flags for mount options.  These must
+ * match the Opt_* enum values so that those can be bit-shifted to
+ * these.
+ */
 #define CONTEXT_MNT	0x01
 #define DEFCONTEXT_MNT	0x02
 #define FSCONTEXT_MNT	0x04
 #define ROOTCONTEXT_MNT	0x08
 #define SBLABEL_MNT	0x10
+
 /* Non-mount related flags */
 #define SE_SBINITIALIZED	0x0100
 #define SE_SBPROC		0x0200
 #define SE_SBGENFS		0x0400
-
-#define CONTEXT_STR	"context"
-#define FSCONTEXT_STR	"fscontext"
-#define ROOTCONTEXT_STR	"rootcontext"
-#define DEFCONTEXT_STR	"defcontext"
-#define SECLABEL_STR	"seclabel"
 
 struct netlbl_lsm_secattr;
 

@@ -1297,8 +1297,6 @@ static int nfs_get_ordinary_tree(struct fs_context *fc)
 {
 	struct nfs_fs_context *ctx = nfs_fc2context(fc);
 
-	ctx->set_security = nfs_set_sb_security;
-
 	return ctx->nfs_mod->rpc_ops->try_get_tree(fc);
 }
 
@@ -1312,8 +1310,6 @@ static int nfs_get_xdev_tree(struct fs_context *fc)
 	int ret;
 
 	dprintk("--> nfs_xdev_mount()\n");
-
-	ctx->set_security = nfs_clone_sb_security;
 
 	/* create a new volume representation */
 	server = ctx->nfs_mod->rpc_ops->clone_server(NFS_SB(ctx->clone_data.sb),
@@ -1367,7 +1363,7 @@ static int nfs_get_tree(struct fs_context *fc)
 }
 
 /*
- * Handle duplication of a configuration.  The caller copied *src into *sc, but
+ * Handle duplication of a configuration.  The caller copied *src into *fc, but
  * it can't deal with resource pointers in the filesystem context, so we have
  * to do that.  We need to clear pointers, copy data or get extra refs as
  * appropriate.
@@ -1512,6 +1508,13 @@ static int nfs_init_fs_context(struct fs_context *fc, struct dentry *reference)
 		ret = -EINVAL;
 		if (!reference)
 			goto error_fh;
+		ret = -ESTALE;
+		if (d_inode(reference)->i_op !=
+		    NFS_SB(reference->d_sb)->nfs_client->rpc_ops->dir_inode_ops)
+			goto error_fh;
+		if (NFS_SB(reference->d_sb)->caps & NFS_CAP_SECURITY_LABEL)
+			fc->lsm_flags |= SECURITY_LSM_NATIVE_LABELS;
+
 		/* Fall through */
 	case FS_CONTEXT_FOR_RECONFIGURE:
 		ret = nfs_mount_init_from_ref(fc, ctx, reference);

@@ -160,18 +160,6 @@
  *	current root (put_old).
  *	@new_path contains the path for the new root (new_root).
  *	Return 0 if permission is granted.
- * @sb_set_mnt_opts:
- *	Set the security relevant mount options used for a superblock
- *	@sb the superblock to set security mount options for
- *	@opts binary data structure containing all lsm mount data
- * @sb_clone_mnt_opts:
- *	Copy all security options from a given superblock to another
- *	@oldsb old superblock which contain information to clone
- *	@newsb new superblock which needs filled in
- * @sb_parse_opts_str:
- *	Parse a string of security data filling in the opts structure
- *	@options string containing all mount options known by the LSM
- *	@opts binary data structure usable by the LSM
  * @move_mount:
  *	Check permission before a mount is moved.
  *	@from_path indicates the mount that is going to be moved.
@@ -1510,15 +1498,6 @@ union security_list_options {
 			void *data, size_t data_size);
 	int (*sb_umount)(struct vfsmount *mnt, int flags);
 	int (*sb_pivotroot)(const struct path *old_path, const struct path *new_path);
-	int (*sb_set_mnt_opts)(struct super_block *sb,
-				struct security_mnt_opts *opts,
-				unsigned long kern_flags,
-				unsigned long *set_kern_flags);
-	int (*sb_clone_mnt_opts)(const struct super_block *oldsb,
-					struct super_block *newsb,
-					unsigned long kern_flags,
-					unsigned long *set_kern_flags);
-	int (*sb_parse_opts_str)(char *options, struct security_mnt_opts *opts);
 	int (*move_mount)(const struct path *from_path, const struct path *to_path);
 	int (*dentry_init_security)(struct dentry *dentry, int mode,
 					const struct qstr *name, void **ctx,
@@ -1854,9 +1833,6 @@ struct security_hook_heads {
 	struct hlist_head sb_mount;
 	struct hlist_head sb_umount;
 	struct hlist_head sb_pivotroot;
-	struct hlist_head sb_set_mnt_opts;
-	struct hlist_head sb_clone_mnt_opts;
-	struct hlist_head sb_parse_opts_str;
 	struct hlist_head move_mount;
 	struct hlist_head dentry_init_security;
 	struct hlist_head dentry_create_files_as;
