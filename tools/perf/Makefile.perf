@@ -337,9 +337,17 @@ export PERL_PATH
 
 LIB_FILE=$(OUTPUT)libperf.a
 
-PERFLIBS = $(LIB_FILE) $(LIBAPI) $(LIBTRACEEVENT) $(LIBSUBCMD)
+# XXX libbpf carries libapi as it needs str_error_r, that is in libapi
+# So, since we're doing a static build, we need to avoid linking libapi
+# when libbpf gets linked.
+# For the shared lib case, we'll make libbpf.so require libapi.so and
+# so perf will always link with libapi.so, even when linking with libbpf.so.
+#
+PERFLIBS = $(LIB_FILE) $(LIBTRACEEVENT) $(LIBSUBCMD)
 ifndef NO_LIBBPF
   PERFLIBS += $(LIBBPF)
+else
+  PERFLIBS += $(LIBAPI)
 endif
 
 # We choose to avoid "if .. else if .. else .. endif endif"

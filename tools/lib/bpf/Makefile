@@ -168,10 +168,32 @@ $(BPF_IN): force elfdep bpfdep
 	echo "Warning: Kernel ABI header at 'tools/include/uapi/linux/if_link.h' differs from latest version at 'include/uapi/linux/if_link.h'" >&2 )) || true
 	$(Q)$(MAKE) $(build)=libbpf
 
-$(OUTPUT)libbpf.so: $(BPF_IN)
+API_DIR = $(srctree)/tools/lib/api/
+
+ifneq ($(OUTPUT),)
+ifneq ($(subdir),)
+  API_PATH=$(OUTPUT)/../api/
+else
+  API_PATH=$(OUTPUT)
+endif
+else
+  API_PATH=$(API_DIR)
+endif
+
+API_IN := $(API_PATH)libapi-in.o
+LIBAPI = $(API_PATH)libapi.a
+
+$(API_IN): force
+	$(Q)$(MAKE) -C $(API_DIR) OUTPUT=$(OUTPUT) $(OUTPUT)libapi-in.o
+
+$(LIBAPI)-clean:
+	$(call QUIET_CLEAN, libapi)
+	$(Q)$(MAKE) -C $(API_DIR) OUTPUT=$(OUTPUT) clean >/dev/null
+
+$(OUTPUT)libbpf.so: $(BPF_IN) $(API_IN)
 	$(QUIET_LINK)$(CC) --shared $^ -o $@
 
-$(OUTPUT)libbpf.a: $(BPF_IN)
+$(OUTPUT)libbpf.a: $(BPF_IN) $(API_IN)
 	$(QUIET_LINK)$(RM) $@; $(AR) rcs $@ $^
 
 define do_install
@@ -199,7 +221,7 @@ config-clean:
 	$(call QUIET_CLEAN, config)
 	$(Q)$(MAKE) -C $(srctree)/tools/build/feature/ clean >/dev/null
 
-clean:
+clean: $(LIBAPI)-clean
 	$(call QUIET_CLEAN, libbpf) $(RM) *.o *~ $(TARGETS) *.a *.so .*.d .*.cmd \
 		$(RM) LIBBPF-CFLAGS
 	$(call QUIET_CLEAN, core-gen) $(RM) $(OUTPUT)FEATURE-DUMP.libbpf
