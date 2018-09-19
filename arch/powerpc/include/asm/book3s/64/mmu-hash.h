@@ -30,7 +30,7 @@
  * SLB
  */
 
-#define SLB_NUM_BOLTED		3
+#define SLB_NUM_BOLTED		2
 #define SLB_CACHE_ENTRIES	8
 #define SLB_MIN_SIZE		32
 
@@ -487,6 +487,8 @@ int htab_remove_mapping(unsigned long vstart, unsigned long vend,
 extern void pseries_add_gpage(u64 addr, u64 page_size, unsigned long number_of_pages);
 extern void demote_segment_4k(struct mm_struct *mm, unsigned long addr);
 
+extern void hash__setup_new_exec(void);
+
 #ifdef CONFIG_PPC_PSERIES
 void hpte_init_pseries(void);
 #else
@@ -495,11 +497,19 @@ static inline void hpte_init_pseries(void) { }
 
 extern void hpte_init_native(void);
 
+struct slb_entry {
+	u64	esid;
+	u64	vsid;
+};
+
 extern void slb_initialize(void);
+extern void core_flush_all_slbs(struct mm_struct *mm);
 extern void slb_flush_and_rebolt(void);
 void slb_flush_all_realmode(void);
 void __slb_restore_bolted_realmode(void);
 void slb_restore_bolted_realmode(void);
+void slb_save_contents(struct slb_entry *slb_ptr);
+void slb_dump_contents(struct slb_entry *slb_ptr);
 
 extern void slb_vmalloc_update(void);
 extern void slb_set_size(u16 size);

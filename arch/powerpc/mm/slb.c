@@ -14,6 +14,7 @@
  *      2 of the License, or (at your option) any later version.
  */
 
+#include <asm/asm-prototypes.h>
 #include <asm/pgtable.h>
 #include <asm/mmu.h>
 #include <asm/mmu_context.h>
@@ -30,11 +31,10 @@
 
 enum slb_index {
 	LINEAR_INDEX	= 0, /* Kernel linear map  (0xc000000000000000) */
-	VMALLOC_INDEX	= 1, /* Kernel virtual map (0xd000000000000000) */
-	KSTACK_INDEX	= 2, /* Kernel stack map */
+	KSTACK_INDEX	= 1, /* Kernel stack map */
 };
 
-extern void slb_allocate(unsigned long ea);
+static long slb_allocate_user(struct mm_struct *mm, unsigned long ea);
 
 #define slb_esid_mask(ssize)	\
 	(((ssize) == MMU_SEGSIZE_256M)? ESID_MASK: ESID_MASK_1T)
@@ -45,11 +45,17 @@ static inline unsigned long mk_esid_data(unsigned long ea, int ssize,
 	return (ea & slb_esid_mask(ssize)) | SLB_ESID_V | index;
 }
 
+static inline unsigned long __mk_vsid_data(unsigned long vsid, int ssize,
+					 unsigned long flags)
+{
+	return (vsid << slb_vsid_shift(ssize)) | flags |
+		((unsigned long) ssize << SLB_VSID_SSIZE_SHIFT);
+}
+
 static inline unsigned long mk_vsid_data(unsigned long ea, int ssize,
 					 unsigned long flags)
 {
-	return (get_kernel_vsid(ea, ssize) << slb_vsid_shift(ssize)) | flags |
-		((unsigned long) ssize << SLB_VSID_SSIZE_SHIFT);
+	return __mk_vsid_data(get_kernel_vsid(ea, ssize), ssize, flags);
 }
 
 static inline void slb_shadow_update(unsigned long ea, int ssize,
@@ -116,6 +122,9 @@ void slb_restore_bolted_realmode(void)
 {
 	__slb_restore_bolted_realmode();
 	get_paca()->slb_cache_ptr = 0;
+
+	get_paca()->slb_kern_bitmap = (1U << SLB_NUM_BOLTED) - 1;
+	get_paca()->slb_used_bitmap = get_paca()->slb_kern_bitmap;
 }
 
 /*
@@ -123,23 +132,26 @@ void slb_restore_bolted_realmode(void)
  */
 void slb_flush_all_realmode(void)
 {
-	/*
-	 * This flushes all SLB entries including 0, so it must be realmode.
-	 */
 	asm volatile("slbmte %0,%0; slbia" : : "r" (0));
 }
 
-static void __slb_flush_and_rebolt(void)
+void slb_flush_and_rebolt(void)
 {
 	/* If you change this make sure you change SLB_NUM_BOLTED
 	 * and PR KVM appropriately too. */
-	unsigned long linear_llp, vmalloc_llp, lflags, vflags;
+	unsigned long linear_llp, lflags;
 	unsigned long ksp_esid_data, ksp_vsid_data;
 
+	WARN_ON(!irqs_disabled());
+
+	/*
+	 * We can't take a PMU exception in the following code, so hard
+	 * disable interrupts.
+	 */
+	hard_irq_disable();
+
 	linear_llp = mmu_psize_defs[mmu_linear_psize].sllp;
-	vmalloc_llp = mmu_psize_defs[mmu_vmalloc_psize].sllp;
 	lflags = SLB_VSID_KERNEL | linear_llp;
-	vflags = SLB_VSID_KERNEL | vmalloc_llp;
 
 	ksp_esid_data = mk_esid_data(get_paca()->kstack, mmu_kernel_ssize, KSTACK_INDEX);
 	if ((ksp_esid_data & ~0xfffffffUL) <= PAGE_OFFSET) {
@@ -157,79 +169,207 @@ static void __slb_flush_and_rebolt(void)
 	 * the stack between the slbia and rebolting it. */
 	asm volatile("isync\n"
 		     "slbia\n"
-		     /* Slot 1 - first VMALLOC segment */
+		     /* Slot 1 - kernel stack */
 		     "slbmte	%0,%1\n"
-		     /* Slot 2 - kernel stack */
-		     "slbmte	%2,%3\n"
 		     "isync"
-		     :: "r"(mk_vsid_data(VMALLOC_START, mmu_kernel_ssize, vflags)),
-		        "r"(mk_esid_data(VMALLOC_START, mmu_kernel_ssize, VMALLOC_INDEX)),
-		        "r"(ksp_vsid_data),
+		     :: "r"(ksp_vsid_data),
 		        "r"(ksp_esid_data)
 		     : "memory");
+
+	get_paca()->slb_cache_ptr = 0;
+
+	get_paca()->slb_kern_bitmap = (1U << SLB_NUM_BOLTED) - 1;
+	get_paca()->slb_used_bitmap = get_paca()->slb_kern_bitmap;
 }
 
-void slb_flush_and_rebolt(void)
+void slb_save_contents(struct slb_entry *slb_ptr)
 {
+	int i;
+	unsigned long e, v;
 
-	WARN_ON(!irqs_disabled());
+	/* Save slb_cache_ptr value. */
+	get_paca()->slb_save_cache_ptr = get_paca()->slb_cache_ptr;
 
-	/*
-	 * We can't take a PMU exception in the following code, so hard
-	 * disable interrupts.
-	 */
-	hard_irq_disable();
+	if (!slb_ptr)
+		return;
 
-	__slb_flush_and_rebolt();
-	get_paca()->slb_cache_ptr = 0;
+	for (i = 0; i < mmu_slb_size; i++) {
+		asm volatile("slbmfee  %0,%1" : "=r" (e) : "r" (i));
+		asm volatile("slbmfev  %0,%1" : "=r" (v) : "r" (i));
+		slb_ptr->esid = e;
+		slb_ptr->vsid = v;
+		slb_ptr++;
+	}
+}
+
+void slb_dump_contents(struct slb_entry *slb_ptr)
+{
+	int i, n;
+	unsigned long e, v;
+	unsigned long llp;
+
+	if (!slb_ptr)
+		return;
+
+	pr_err("SLB contents of cpu 0x%x\n", smp_processor_id());
+	pr_err("Last SLB entry inserted at slot %u\n", get_paca()->stab_rr);
+
+	for (i = 0; i < mmu_slb_size; i++) {
+		e = slb_ptr->esid;
+		v = slb_ptr->vsid;
+		slb_ptr++;
+
+		if (!e && !v)
+			continue;
+
+		pr_err("%02d %016lx %016lx\n", i, e, v);
+
+		if (!(e & SLB_ESID_V)) {
+			pr_err("\n");
+			continue;
+		}
+		llp = v & SLB_VSID_LLP;
+		if (v & SLB_VSID_B_1T) {
+			pr_err("  1T  ESID=%9lx  VSID=%13lx LLP:%3lx\n",
+			       GET_ESID_1T(e),
+			       (v & ~SLB_VSID_B) >> SLB_VSID_SHIFT_1T, llp);
+		} else {
+			pr_err(" 256M ESID=%9lx  VSID=%13lx LLP:%3lx\n",
+			       GET_ESID(e),
+			       (v & ~SLB_VSID_B) >> SLB_VSID_SHIFT, llp);
+		}
+	}
+	pr_err("----------------------------------\n");
+
+	/* Dump slb cache entires as well. */
+	pr_err("SLB cache ptr value = %d\n", get_paca()->slb_save_cache_ptr);
+	pr_err("Valid SLB cache entries:\n");
+	n = min_t(int, get_paca()->slb_save_cache_ptr, SLB_CACHE_ENTRIES);
+	for (i = 0; i < n; i++)
+		pr_err("%02d EA[0-35]=%9x\n", i, get_paca()->slb_cache[i]);
+	pr_err("Rest of SLB cache entries:\n");
+	for (i = n; i < SLB_CACHE_ENTRIES; i++)
+		pr_err("%02d EA[0-35]=%9x\n", i, get_paca()->slb_cache[i]);
 }
 
 void slb_vmalloc_update(void)
 {
-	unsigned long vflags;
-
-	vflags = SLB_VSID_KERNEL | mmu_psize_defs[mmu_vmalloc_psize].sllp;
-	slb_shadow_update(VMALLOC_START, mmu_kernel_ssize, vflags, VMALLOC_INDEX);
 	slb_flush_and_rebolt();
 }
 
-/* Helper function to compare esids.  There are four cases to handle.
- * 1. The system is not 1T segment size capable.  Use the GET_ESID compare.
- * 2. The system is 1T capable, both addresses are < 1T, use the GET_ESID compare.
- * 3. The system is 1T capable, only one of the two addresses is > 1T.  This is not a match.
- * 4. The system is 1T capable, both addresses are > 1T, use the GET_ESID_1T macro to compare.
- */
-static inline int esids_match(unsigned long addr1, unsigned long addr2)
+static bool preload_hit(struct thread_info *ti, unsigned long esid)
 {
-	int esid_1t_count;
+	u8 i;
 
-	/* System is not 1T segment size capable. */
-	if (!mmu_has_feature(MMU_FTR_1T_SEGMENT))
-		return (GET_ESID(addr1) == GET_ESID(addr2));
+	for (i = 0; i < ti->slb_preload_nr; i++) {
+		u8 idx;
 
-	esid_1t_count = (((addr1 >> SID_SHIFT_1T) != 0) +
-				((addr2 >> SID_SHIFT_1T) != 0));
-
-	/* both addresses are < 1T */
-	if (esid_1t_count == 0)
-		return (GET_ESID(addr1) == GET_ESID(addr2));
-
-	/* One address < 1T, the other > 1T.  Not a match */
-	if (esid_1t_count == 1)
-		return 0;
-
-	/* Both addresses are > 1T. */
-	return (GET_ESID_1T(addr1) == GET_ESID_1T(addr2));
+		idx = (ti->slb_preload_tail + i) % SLB_PRELOAD_NR;
+		if (esid == ti->slb_preload_esid[idx])
+			return true;
+	}
+	return false;
 }
+
+static bool preload_add(struct thread_info *ti, unsigned long ea)
+{
+	unsigned long esid;
+	u8 idx;
+
+	if (mmu_has_feature(MMU_FTR_1T_SEGMENT)) {
+		/* EAs are stored >> 28 so 256MB segments don't need clearing */
+		if (ea & ESID_MASK_1T)
+			ea &= ESID_MASK_1T;
+	}
+
+	esid = ea >> SID_SHIFT;
+
+	if (preload_hit(ti, esid))
+		return false;
+
+	idx = (ti->slb_preload_tail + ti->slb_preload_nr) % SLB_PRELOAD_NR;
+	ti->slb_preload_esid[idx] = esid;
+	if (ti->slb_preload_nr == SLB_PRELOAD_NR)
+		ti->slb_preload_tail = (ti->slb_preload_tail + 1) % SLB_PRELOAD_NR;
+	else
+		ti->slb_preload_nr++;
+
+	return true;
+}
+
+static void preload_age(struct thread_info *ti)
+{
+	if (!ti->slb_preload_nr)
+		return;
+	ti->slb_preload_nr--;
+	ti->slb_preload_tail = (ti->slb_preload_tail + 1) % SLB_PRELOAD_NR;
+}
+
+void slb_setup_new_exec(void)
+{
+	struct thread_info *ti = current_thread_info();
+	struct mm_struct *mm = current->mm;
+	unsigned long exec = 0x10000000;
+
+	/*
+	 * We have no good place to clear the slb preload cache on exec,
+	 * flush_thread is about the earliest arch hook but that happens
+	 * after we switch to the mm and have aleady preloaded the SLBEs.
+	 *
+	 * For the most part that's probably okay to use entries from the
+	 * previous exec, they will age out if unused. It may turn out to
+	 * be an advantage to clear the cache before switching to it,
+	 * however.
+	 */
+
+	/*
+	 * preload some userspace segments into the SLB.
+	 * Almost all 32 and 64bit PowerPC executables are linked at
+	 * 0x10000000 so it makes sense to preload this segment.
+	 */
+	if (!is_kernel_addr(exec)) {
+		if (preload_add(ti, exec))
+			slb_allocate_user(mm, exec);
+	}
+
+	/* Libraries and mmaps. */
+	if (!is_kernel_addr(mm->mmap_base)) {
+		if (preload_add(ti, mm->mmap_base))
+			slb_allocate_user(mm, mm->mmap_base);
+	}
+}
+
+void preload_new_slb_context(unsigned long start, unsigned long sp)
+{
+	struct thread_info *ti = current_thread_info();
+	struct mm_struct *mm = current->mm;
+	unsigned long heap = mm->start_brk;
+
+	/* Userspace entry address. */
+	if (!is_kernel_addr(start)) {
+		if (preload_add(ti, start))
+			slb_allocate_user(mm, start);
+	}
+
+	/* Top of stack, grows down. */
+	if (!is_kernel_addr(sp)) {
+		if (preload_add(ti, sp))
+			slb_allocate_user(mm, sp);
+	}
+
+	/* Bottom of heap, grows up. */
+	if (heap && !is_kernel_addr(heap)) {
+		if (preload_add(ti, heap))
+			slb_allocate_user(mm, heap);
+	}
+}
+
 
 /* Flush all user entries from the segment table of the current processor. */
 void switch_slb(struct task_struct *tsk, struct mm_struct *mm)
 {
-	unsigned long offset;
-	unsigned long slbie_data = 0;
-	unsigned long pc = KSTK_EIP(tsk);
-	unsigned long stack = KSTK_ESP(tsk);
-	unsigned long exec_base;
+	struct thread_info *ti = task_thread_info(tsk);
+	u8 i;
 
 	/*
 	 * We need interrupts hard-disabled here, not just soft-disabled,
@@ -238,91 +378,110 @@ void switch_slb(struct task_struct *tsk, struct mm_struct *mm)
 	 * which would update the slb_cache/slb_cache_ptr fields in the PACA.
 	 */
 	hard_irq_disable();
-	offset = get_paca()->slb_cache_ptr;
-	if (!mmu_has_feature(MMU_FTR_NO_SLBIE_B) &&
-	    offset <= SLB_CACHE_ENTRIES) {
-		int i;
-		asm volatile("isync" : : : "memory");
-		for (i = 0; i < offset; i++) {
-			slbie_data = (unsigned long)get_paca()->slb_cache[i]
-				<< SID_SHIFT; /* EA */
-			slbie_data |= user_segment_size(slbie_data)
-				<< SLBIE_SSIZE_SHIFT;
-			slbie_data |= SLBIE_C; /* C set for user addresses */
-			asm volatile("slbie %0" : : "r" (slbie_data));
-		}
-		asm volatile("isync" : : : "memory");
+	if (cpu_has_feature(CPU_FTR_ARCH_300)) {
+		/*
+		 * SLBIA IH=3 invalidates all Class=1 SLBEs and their
+		 * associated lookaside structures, which matches what
+		 * switch_slb wants. So ARCH_300 does not use the slb
+		 * cache.
+		 */
+		asm volatile("isync ; " PPC_SLBIA(3)" ; isync");
 	} else {
-		__slb_flush_and_rebolt();
+		unsigned long offset = get_paca()->slb_cache_ptr;
+
+		if (!mmu_has_feature(MMU_FTR_NO_SLBIE_B) &&
+		    offset <= SLB_CACHE_ENTRIES) {
+			unsigned long slbie_data = 0;
+
+			asm volatile("isync" : : : "memory");
+			for (i = 0; i < offset; i++) {
+				/* EA */
+				slbie_data = (unsigned long)
+					get_paca()->slb_cache[i] << SID_SHIFT;
+				slbie_data |= user_segment_size(slbie_data)
+						<< SLBIE_SSIZE_SHIFT;
+				slbie_data |= SLBIE_C; /* user slbs have C=1 */
+				asm volatile("slbie %0" : : "r" (slbie_data));
+			}
+
+			/* Workaround POWER5 < DD2.1 issue */
+			if (!cpu_has_feature(CPU_FTR_ARCH_207S) && offset == 1)
+				asm volatile("slbie %0" : : "r" (slbie_data));
+
+			asm volatile("isync" : : : "memory");
+		} else {
+			struct slb_shadow *p = get_slb_shadow();
+			unsigned long ksp_esid_data =
+				be64_to_cpu(p->save_area[KSTACK_INDEX].esid);
+			unsigned long ksp_vsid_data =
+				be64_to_cpu(p->save_area[KSTACK_INDEX].vsid);
+
+			asm volatile("isync\n"
+				     PPC_SLBIA(1) "\n"
+				     "slbmte	%0,%1\n"
+				     "isync"
+				     :: "r"(ksp_vsid_data),
+					"r"(ksp_esid_data));
+
+			get_paca()->slb_kern_bitmap = (1U << SLB_NUM_BOLTED) - 1;
+		}
+
+		get_paca()->slb_cache_ptr = 0;
+	}
+	get_paca()->slb_used_bitmap = get_paca()->slb_kern_bitmap;
+
+	/*
+	 * We gradually age out SLBs after a number of context switches to
+	 * reduce reload overhead of unused entries (like we do with FP/VEC
+	 * reload). Each time we wrap 256 switches, take an entry out of the
+	 * SLB preload cache.
+	 */
+	tsk->thread.load_slb++;
+	if (!tsk->thread.load_slb) {
+		unsigned long pc = KSTK_EIP(tsk);
+
+		preload_age(ti);
+		preload_add(ti, pc);
 	}
 
-	/* Workaround POWER5 < DD2.1 issue */
-	if (offset == 1 || offset > SLB_CACHE_ENTRIES)
-		asm volatile("slbie %0" : : "r" (slbie_data));
+	for (i = 0; i < ti->slb_preload_nr; i++) {
+		unsigned long ea;
+		u8 idx;
 
-	get_paca()->slb_cache_ptr = 0;
-	copy_mm_to_paca(mm);
+		idx = (ti->slb_preload_tail + i) % SLB_PRELOAD_NR;
+		ea = (unsigned long)ti->slb_preload_esid[idx] << SID_SHIFT;
 
-	/*
-	 * preload some userspace segments into the SLB.
-	 * Almost all 32 and 64bit PowerPC executables are linked at
-	 * 0x10000000 so it makes sense to preload this segment.
-	 */
-	exec_base = 0x10000000;
-
-	if (is_kernel_addr(pc) || is_kernel_addr(stack) ||
-	    is_kernel_addr(exec_base))
-		return;
-
-	slb_allocate(pc);
-
-	if (!esids_match(pc, stack))
-		slb_allocate(stack);
-
-	if (!esids_match(pc, exec_base) &&
-	    !esids_match(stack, exec_base))
-		slb_allocate(exec_base);
+		slb_allocate_user(mm, ea);
+	}
 }
-
-static inline void patch_slb_encoding(unsigned int *insn_addr,
-				      unsigned int immed)
-{
-
-	/*
-	 * This function patches either an li or a cmpldi instruction with
-	 * a new immediate value. This relies on the fact that both li
-	 * (which is actually addi) and cmpldi both take a 16-bit immediate
-	 * value, and it is situated in the same location in the instruction,
-	 * ie. bits 16-31 (Big endian bit order) or the lower 16 bits.
-	 * The signedness of the immediate operand differs between the two
-	 * instructions however this code is only ever patching a small value,
-	 * much less than 1 << 15, so we can get away with it.
-	 * To patch the value we read the existing instruction, clear the
-	 * immediate value, and or in our new value, then write the instruction
-	 * back.
-	 */
-	unsigned int insn = (*insn_addr & 0xffff0000) | immed;
-	patch_instruction(insn_addr, insn);
-}
-
-extern u32 slb_miss_kernel_load_linear[];
-extern u32 slb_miss_kernel_load_io[];
-extern u32 slb_compare_rr_to_size[];
-extern u32 slb_miss_kernel_load_vmemmap[];
 
 void slb_set_size(u16 size)
 {
-	if (mmu_slb_size == size)
+	mmu_slb_size = size;
+}
+
+static void cpu_flush_slb(void *parm)
+{
+	struct mm_struct *mm = parm;
+	unsigned long flags;
+
+	if (mm != current->active_mm)
 		return;
 
-	mmu_slb_size = size;
-	patch_slb_encoding(slb_compare_rr_to_size, mmu_slb_size);
+	local_irq_save(flags);
+	slb_flush_and_rebolt();
+	local_irq_restore(flags);
+}
+
+void core_flush_all_slbs(struct mm_struct *mm)
+{
+	on_each_cpu(cpu_flush_slb, mm, 1);
 }
 
 void slb_initialize(void)
 {
 	unsigned long linear_llp, vmalloc_llp, io_llp;
-	unsigned long lflags, vflags;
+	unsigned long lflags;
 	static int slb_encoding_inited;
 #ifdef CONFIG_SPARSEMEM_VMEMMAP
 	unsigned long vmemmap_llp;
@@ -338,34 +497,24 @@ void slb_initialize(void)
 #endif
 	if (!slb_encoding_inited) {
 		slb_encoding_inited = 1;
-		patch_slb_encoding(slb_miss_kernel_load_linear,
-				   SLB_VSID_KERNEL | linear_llp);
-		patch_slb_encoding(slb_miss_kernel_load_io,
-				   SLB_VSID_KERNEL | io_llp);
-		patch_slb_encoding(slb_compare_rr_to_size,
-				   mmu_slb_size);
-
 		pr_devel("SLB: linear  LLP = %04lx\n", linear_llp);
 		pr_devel("SLB: io      LLP = %04lx\n", io_llp);
-
 #ifdef CONFIG_SPARSEMEM_VMEMMAP
-		patch_slb_encoding(slb_miss_kernel_load_vmemmap,
-				   SLB_VSID_KERNEL | vmemmap_llp);
 		pr_devel("SLB: vmemmap LLP = %04lx\n", vmemmap_llp);
 #endif
 	}
 
-	get_paca()->stab_rr = SLB_NUM_BOLTED;
+	get_paca()->stab_rr = SLB_NUM_BOLTED - 1;
+	get_paca()->slb_kern_bitmap = (1U << SLB_NUM_BOLTED) - 1;
+	get_paca()->slb_used_bitmap = get_paca()->slb_kern_bitmap;
 
 	lflags = SLB_VSID_KERNEL | linear_llp;
-	vflags = SLB_VSID_KERNEL | vmalloc_llp;
 
 	/* Invalidate the entire SLB (even entry 0) & all the ERATS */
 	asm volatile("isync":::"memory");
 	asm volatile("slbmte  %0,%0"::"r" (0) : "memory");
 	asm volatile("isync; slbia; isync":::"memory");
 	create_shadowed_slbe(PAGE_OFFSET, mmu_kernel_ssize, lflags, LINEAR_INDEX);
-	create_shadowed_slbe(VMALLOC_START, mmu_kernel_ssize, vflags, VMALLOC_INDEX);
 
 	/* For the boot cpu, we're running on the stack in init_thread_union,
 	 * which is in the first segment of the linear mapping, and also
@@ -381,48 +530,12 @@ void slb_initialize(void)
 	asm volatile("isync":::"memory");
 }
 
-static void insert_slb_entry(unsigned long vsid, unsigned long ea,
-			     int bpsize, int ssize)
+static void slb_cache_update(unsigned long esid_data)
 {
-	unsigned long flags, vsid_data, esid_data;
-	enum slb_index index;
 	int slb_cache_index;
 
-	/*
-	 * We are irq disabled, hence should be safe to access PACA.
-	 */
-	VM_WARN_ON(!irqs_disabled());
-
-	/*
-	 * We can't take a PMU exception in the following code, so hard
-	 * disable interrupts.
-	 */
-	hard_irq_disable();
-
-	index = get_paca()->stab_rr;
-
-	/*
-	 * simple round-robin replacement of slb starting at SLB_NUM_BOLTED.
-	 */
-	if (index < (mmu_slb_size - 1))
-		index++;
-	else
-		index = SLB_NUM_BOLTED;
-
-	get_paca()->stab_rr = index;
-
-	flags = SLB_VSID_USER | mmu_psize_defs[bpsize].sllp;
-	vsid_data = (vsid << slb_vsid_shift(ssize)) | flags |
-		    ((unsigned long) ssize << SLB_VSID_SSIZE_SHIFT);
-	esid_data = mk_esid_data(ea, ssize, index);
-
-	/*
-	 * No need for an isync before or after this slbmte. The exception
-	 * we enter with and the rfid we exit with are context synchronizing.
-	 * Also we only handle user segments here.
-	 */
-	asm volatile("slbmte %0, %1" : : "r" (vsid_data), "r" (esid_data)
-		     : "memory");
+	if (cpu_has_feature(CPU_FTR_ARCH_300))
+		return; /* ISAv3.0B and later does not use slb_cache */
 
 	/*
 	 * Now update slb cache entries
@@ -445,58 +558,196 @@ static void insert_slb_entry(unsigned long vsid, unsigned long ea,
 	}
 }
 
-static void handle_multi_context_slb_miss(int context_id, unsigned long ea)
+static enum slb_index alloc_slb_index(bool kernel)
 {
-	struct mm_struct *mm = current->mm;
-	unsigned long vsid;
-	int bpsize;
+	enum slb_index index;
 
 	/*
-	 * We are always above 1TB, hence use high user segment size.
+	 * The allocation bitmaps can become out of synch with the SLB
+	 * when the _switch code does slbie when bolting a new stack
+	 * segment and it must not be anywhere else in the SLB. This leaves
+	 * a kernel allocated entry that is unused in the SLB. With very
+	 * large systems or small segment sizes, the bitmaps could slowly
+	 * fill with these entries. They will eventually be cleared out
+	 * by the round robin allocator in that case, so it's probably not
+	 * worth accounting for.
 	 */
-	vsid = get_vsid(context_id, ea, mmu_highuser_ssize);
-	bpsize = get_slice_psize(mm, ea);
-	insert_slb_entry(vsid, ea, bpsize, mmu_highuser_ssize);
+
+	/*
+	 * SLBs beyond 32 entries are allocated with stab_rr only
+	 * POWER7/8/9 have 32 SLB entries, this could be expanded if a
+	 * future CPU has more.
+	 */
+	if (get_paca()->slb_used_bitmap != U32_MAX) {
+		index = ffz(get_paca()->slb_used_bitmap);
+		get_paca()->slb_used_bitmap |= 1U << index;
+		if (kernel)
+			get_paca()->slb_kern_bitmap |= 1U << index;
+	} else {
+		/* round-robin replacement of slb starting at SLB_NUM_BOLTED. */
+		index = get_paca()->stab_rr;
+		if (index < (mmu_slb_size - 1))
+			index++;
+		else
+			index = SLB_NUM_BOLTED;
+		get_paca()->stab_rr = index;
+		if (index < 32) {
+			if (kernel)
+				get_paca()->slb_kern_bitmap |= 1U << index;
+			else
+				get_paca()->slb_kern_bitmap &= ~(1U << index);
+		}
+	}
+	BUG_ON(index < SLB_NUM_BOLTED);
+
+	return index;
 }
 
-void slb_miss_large_addr(struct pt_regs *regs)
+static long slb_insert_entry(unsigned long ea, unsigned long context,
+				unsigned long flags, int ssize, bool kernel)
 {
-	enum ctx_state prev_state = exception_enter();
-	unsigned long ea = regs->dar;
-	int context;
+	unsigned long vsid;
+	unsigned long vsid_data, esid_data;
+	enum slb_index index;
 
-	if (REGION_ID(ea) != USER_REGION_ID)
-		goto slb_bad_addr;
+	vsid = get_vsid(context, ea, ssize);
+	if (!vsid)
+		return -EFAULT;
+
+	index = alloc_slb_index(kernel);
+
+	vsid_data = __mk_vsid_data(vsid, ssize, flags);
+	esid_data = mk_esid_data(ea, ssize, index);
 
 	/*
-	 * Are we beyound what the page table layout supports ?
+	 * No need for an isync before or after this slbmte. The exception
+	 * we enter with and the rfid we exit with are context synchronizing.
+	 * Also we only handle user segments here.
 	 */
-	if ((ea & ~REGION_MASK) >= H_PGTABLE_RANGE)
-		goto slb_bad_addr;
+	asm volatile("slbmte %0, %1" : : "r" (vsid_data), "r" (esid_data));
 
-	/* Lower address should have been handled by asm code */
-	if (ea < (1UL << MAX_EA_BITS_PER_CONTEXT))
-		goto slb_bad_addr;
+	if (!kernel)
+		slb_cache_update(esid_data);
+
+	return 0;
+}
+
+static long slb_allocate_kernel(unsigned long ea, unsigned long id)
+{
+	unsigned long context;
+	unsigned long flags;
+	int ssize;
+
+	if ((ea & ~REGION_MASK) >= (1ULL << MAX_EA_BITS_PER_CONTEXT))
+		return -EFAULT;
+
+	if (id == KERNEL_REGION_ID) {
+		flags = SLB_VSID_KERNEL | mmu_psize_defs[mmu_linear_psize].sllp;
+#ifdef CONFIG_SPARSEMEM_VMEMMAP
+	} else if (id == VMEMMAP_REGION_ID) {
+		flags = SLB_VSID_KERNEL | mmu_psize_defs[mmu_vmemmap_psize].sllp;
+#endif
+	} else if (id == VMALLOC_REGION_ID) {
+		if (ea < H_VMALLOC_END)
+			flags = get_paca()->vmalloc_sllp;
+		else
+			flags = SLB_VSID_KERNEL | mmu_psize_defs[mmu_io_psize].sllp;
+	} else {
+		return -EFAULT;
+	}
+
+	ssize = MMU_SEGSIZE_1T;
+	if (!mmu_has_feature(MMU_FTR_1T_SEGMENT))
+		ssize = MMU_SEGSIZE_256M;
+
+	context = id - KERNEL_REGION_CONTEXT_OFFSET;
+
+	return slb_insert_entry(ea, context, flags, ssize, true);
+}
+
+static long slb_allocate_user(struct mm_struct *mm, unsigned long ea)
+{
+	unsigned long context;
+	unsigned long flags;
+	int bpsize;
+	int ssize;
 
 	/*
 	 * consider this as bad access if we take a SLB miss
 	 * on an address above addr limit.
 	 */
-	if (ea >= current->mm->context.slb_addr_limit)
-		goto slb_bad_addr;
+	if (ea >= mm->context.slb_addr_limit)
+		return -EFAULT;
 
-	context = get_ea_context(&current->mm->context, ea);
+	context = get_ea_context(&mm->context, ea);
 	if (!context)
-		goto slb_bad_addr;
+		return -EFAULT;
 
-	handle_multi_context_slb_miss(context, ea);
-	exception_exit(prev_state);
-	return;
+	if (unlikely(ea >= H_PGTABLE_RANGE)) {
+		WARN_ON(1);
+		return -EFAULT;
+	}
 
-slb_bad_addr:
-	if (user_mode(regs))
-		_exception(SIGSEGV, regs, SEGV_BNDERR, ea);
-	else
-		bad_page_fault(regs, ea, SIGSEGV);
-	exception_exit(prev_state);
+	ssize = user_segment_size(ea);
+
+	bpsize = get_slice_psize(mm, ea);
+	flags = SLB_VSID_USER | mmu_psize_defs[bpsize].sllp;
+
+	return slb_insert_entry(ea, context, flags, ssize, false);
+}
+
+long do_slb_fault(struct pt_regs *regs, unsigned long ea)
+{
+	unsigned long id = REGION_ID(ea);
+
+	/* IRQs are not reconciled here, so can't check irqs_disabled */
+	VM_WARN_ON(mfmsr() & MSR_EE);
+
+	if (unlikely(!(regs->msr & MSR_RI)))
+		return -EINVAL;
+
+	/*
+	 * SLB kernel faults must be very careful not to touch anything
+	 * that is not bolted. E.g., PACA and global variables are okay,
+	 * mm->context stuff is not.
+	 *
+	 * SLB user faults can access all of kernel memory, but must be
+	 * careful not to touch things like IRQ state because it is not
+	 * "reconciled" here. The difficulty is that we must use
+	 * fast_exception_return to return from kernel SLB faults without
+	 * looking at possible non-bolted memory. We could test user vs
+	 * kernel faults in the interrupt handler asm and do a full fault,
+	 * reconcile, ret_from_except for user faults which would make them
+	 * first class kernel code. But for performance it's probably nicer
+	 * if they go via fast_exception_return too.
+	 */
+	if (id >= KERNEL_REGION_ID) {
+		return slb_allocate_kernel(ea, id);
+	} else {
+		struct mm_struct *mm = current->mm;
+		long err;
+
+		if (unlikely(!mm))
+			return -EFAULT;
+
+		err = slb_allocate_user(mm, ea);
+		if (!err)
+			preload_add(current_thread_info(), ea);
+
+		return err;
+	}
+}
+
+void do_bad_slb_fault(struct pt_regs *regs, unsigned long ea, long err)
+{
+	if (err == -EFAULT) {
+		if (user_mode(regs))
+			_exception(SIGSEGV, regs, SEGV_BNDERR, ea);
+		else
+			bad_page_fault(regs, ea, SIGSEGV);
+	} else if (err == -EINVAL) {
+		unrecoverable_exception(regs);
+	} else {
+		BUG();
+	}
 }

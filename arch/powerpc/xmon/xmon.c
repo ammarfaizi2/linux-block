@@ -2378,25 +2378,33 @@ static void dump_one_paca(int cpu)
 	DUMP(p, cpu_start, "%#-*x");
 	DUMP(p, kexec_state, "%#-*x");
 #ifdef CONFIG_PPC_BOOK3S_64
-	for (i = 0; i < SLB_NUM_BOLTED; i++) {
-		u64 esid, vsid;
+	if (!early_radix_enabled()) {
+		for (i = 0; i < SLB_NUM_BOLTED; i++) {
+			u64 esid, vsid;
 
-		if (!p->slb_shadow_ptr)
-			continue;
+			if (!p->slb_shadow_ptr)
+				continue;
 
-		esid = be64_to_cpu(p->slb_shadow_ptr->save_area[i].esid);
-		vsid = be64_to_cpu(p->slb_shadow_ptr->save_area[i].vsid);
+			esid = be64_to_cpu(p->slb_shadow_ptr->save_area[i].esid);
+			vsid = be64_to_cpu(p->slb_shadow_ptr->save_area[i].vsid);
 
-		if (esid || vsid) {
-			printf(" %-*s[%d] = 0x%016llx 0x%016llx\n",
-			       22, "slb_shadow", i, esid, vsid);
+			if (esid || vsid) {
+				printf(" %-*s[%d] = 0x%016llx 0x%016llx\n",
+				       22, "slb_shadow", i, esid, vsid);
+			}
+		}
+		DUMP(p, vmalloc_sllp, "%#-*x");
+		DUMP(p, stab_rr, "%#-*x");
+		DUMP(p, slb_used_bitmap, "%#-*x");
+		DUMP(p, slb_kern_bitmap, "%#-*x");
+
+		if (!early_cpu_has_feature(CPU_FTR_ARCH_300)) {
+			DUMP(p, slb_cache_ptr, "%#-*x");
+			for (i = 0; i < SLB_CACHE_ENTRIES; i++)
+				printf(" %-*s[%d] = 0x%016x\n",
+				       22, "slb_cache", i, p->slb_cache[i]);
 		}
 	}
-	DUMP(p, vmalloc_sllp, "%#-*x");
-	DUMP(p, slb_cache_ptr, "%#-*x");
-	for (i = 0; i < SLB_CACHE_ENTRIES; i++)
-		printf(" %-*s[%d] = 0x%016x\n",
-		       22, "slb_cache", i, p->slb_cache[i]);
 
 	DUMP(p, rfi_flush_fallback_area, "%-*px");
 #endif
@@ -2412,7 +2420,6 @@ static void dump_one_paca(int cpu)
 	DUMP(p, __current, "%-*px");
 	DUMP(p, kstack, "%#-*llx");
 	printf(" %-*s = 0x%016llx\n", 25, "kstack_base", p->kstack & ~(THREAD_SIZE - 1));
-	DUMP(p, stab_rr, "%#-*llx");
 	DUMP(p, saved_r1, "%#-*llx");
 	DUMP(p, trap_save, "%#-*x");
 	DUMP(p, irq_soft_mask, "%#-*x");
