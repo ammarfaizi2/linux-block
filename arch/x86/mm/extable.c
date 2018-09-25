@@ -121,8 +121,12 @@ EXPORT_SYMBOL_GPL(ex_handler_fprestore);
 static bool bogus_uaccess(struct pt_regs *regs, int trapnr,
 			  unsigned long fault_addr)
 {
-	/* This is the normal case: #PF with a fault address in userspace. */
-	if (trapnr == X86_TRAP_PF && fault_addr < TASK_SIZE_MAX)
+	/*
+	 * This is the normal case: #PF with a fault address in userspace
+	 * while in USER_DS mode.
+	 */
+	if (trapnr == X86_TRAP_PF && fault_addr < TASK_SIZE_MAX &&
+	    segment_eq(get_fs(), USER_DS))
 		return false;
 
 	/*
@@ -146,25 +150,30 @@ static bool bogus_uaccess(struct pt_regs *regs, int trapnr,
 	}
 
 	/*
-	 * This is a faulting memory access in kernel space, on a kernel
-	 * address, in a usercopy function. This can e.g. be caused by improper
-	 * use of helpers like __put_user and by improper attempts to access
-	 * userspace addresses in KERNEL_DS regions.
-	 * The one (semi-)legitimate exception are probe_kernel_{read,write}(),
+	 * This is a faulting memory access in kernel space or with KERNEL_DS,
+	 * on a kernel address, in a usercopy function. This can e.g. be
+	 * caused by improper use of helpers like __put_user and by improper
+	 * attempts to access userspace addresses in KERNEL_DS regions.  The
+	 * one (semi-)legitimate exception are probe_kernel_{read,write}(),
 	 * which can be invoked from places like kgdb, /dev/mem (for reading)
-	 * and privileged BPF code (for reading).
-	 * The probe_kernel_*() functions set the kernel_uaccess_faults_ok flag
-	 * to tell us that faulting on kernel addresses, and even noncanonical
-	 * addresses, in a userspace accessor does not necessarily imply a
-	 * kernel bug, root might just be doing weird stuff.
+	 * and privileged BPF code (for reading).  The probe_kernel_*()
+	 * functions set the kernel_uaccess_faults_ok flag to tell us that
+	 * faulting on kernel addresses, and even noncanonical addresses, in a
+	 * userspace accessor does not necessarily imply a kernel bug, root
+	 * might just be doing weird stuff.
 	 */
+
 	if (current->kernel_uaccess_faults_ok)
 		return false;
 
 	/* This is bad. Refuse the fixup so that we go into die(). */
 	if (trapnr == X86_TRAP_PF) {
-		pr_emerg("BUG: pagefault on kernel address 0x%lx in non-whitelisted uaccess\n",
-			 fault_addr);
+		if (!segment_eq(get_fs(), USER_DS)) {
+			pr_emerg("BUG: pagefault on KERNEL_DS access to address 0x%lx\n", fault_addr);
+		} else {
+			pr_emerg("BUG: pagefault on kernel address 0x%lx in non-whitelisted uaccess\n",
+				 fault_addr);
+		}
 	} else {
 		pr_emerg("BUG: GPF in non-whitelisted uaccess (non-canonical address?)\n");
 	}
