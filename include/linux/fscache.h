@@ -218,6 +218,9 @@ extern int __fscache_read_or_alloc_pages(struct fscache_cookie *,
 					 gfp_t);
 extern int __fscache_alloc_page(struct fscache_cookie *, struct page *, gfp_t);
 extern int __fscache_write_page(struct fscache_cookie *, struct page *, loff_t, gfp_t);
+extern int __fscache_write(struct fscache_cookie *, struct iov_iter *,
+			   loff_t, loff_t, gfp_t,
+			   void (*)(struct fscache_cookie *, struct iov_iter *));
 extern void __fscache_uncache_page(struct fscache_cookie *, struct page *);
 extern bool __fscache_check_page_write(struct fscache_cookie *, struct page *);
 extern void __fscache_wait_on_page_write(struct fscache_cookie *, struct page *);
@@ -653,6 +656,34 @@ void fscache_readpages_cancel(struct fscache_cookie *cookie,
 {
 	if (fscache_cookie_valid(cookie))
 		__fscache_readpages_cancel(cookie, pages);
+}
+
+/**
+ * fscache_write - Request storage of data in the cache
+ * @cookie: The cookie representing the cache object
+ * @iter: The data to store
+ * @pos: The position in the cached data
+ * @object_size: Updated size of object
+ * @gfp: The conditions under which memory allocation should be made
+ * @done: Called upon operation completion
+ *
+ * Request the data described by the iterator be written into the cache.  This
+ * request may be ignored if insufficient space exists in the cache, in which
+ * case -ENOBUFS will be returned.
+ *
+ * See Documentation/filesystems/caching/netfs-api.txt for a complete
+ * description.
+ */
+static inline
+int fscache_write(struct fscache_cookie *cookie, struct iov_iter *iter,
+		  loff_t pos, loff_t object_size, gfp_t gfp,
+		  void (*done)(struct fscache_cookie *cookie,
+			       struct iov_iter *iter))
+{
+	if (fscache_cookie_valid(cookie))
+		return __fscache_write(cookie, iter, pos, object_size, gfp, done);
+	else
+		return -ENOBUFS;
 }
 
 /**

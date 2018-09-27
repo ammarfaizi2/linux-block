@@ -37,8 +37,7 @@ static int afs_fill_page(struct afs_vnode *vnode, struct key *key,
 
 	_enter(",,%llu", (unsigned long long)pos);
 
-	req = kzalloc(sizeof(struct afs_read) + sizeof(struct page *),
-		      GFP_KERNEL);
+	req = kzalloc(sizeof(struct afs_read), GFP_KERNEL);
 	if (!req)
 		return -ENOMEM;
 
@@ -46,9 +45,8 @@ static int afs_fill_page(struct afs_vnode *vnode, struct key *key,
 	req->pos = pos;
 	req->len = len;
 	req->nr_pages = 1;
-	req->pages = req->array;
-	req->pages[0] = page;
-	get_page(page);
+	iov_iter_mapping(&req->iter, READ, vnode->vfs_inode.i_mapping,
+			 pos, len);
 
 	ret = afs_fetch_data(vnode, key, req);
 	afs_put_read(req);

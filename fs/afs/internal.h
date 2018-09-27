@@ -96,11 +96,16 @@ struct afs_call {
 	struct afs_cb_interest	*cbi;		/* Callback interest for server used */
 	void			*request;	/* request data (first part) */
 	struct address_space	*mapping;	/* Pages being written from */
+	struct iov_iter		iter;		/* Buffer iterator */
+	struct iov_iter		*_iter;		/* Iterator currently in use */
+	union {	/* Convenience for ->iter */
+		struct kvec	kvec[1];
+		struct bio_vec	bvec[1];
+	};
 	void			*buffer;	/* reply receive buffer */
 	void			*reply[4];	/* Where to put the reply */
 	pgoff_t			first;		/* first page in mapping to deal with */
 	pgoff_t			last;		/* last page in mapping to deal with */
-	size_t			offset;		/* offset into received data store */
 	atomic_t		usage;
 	enum afs_call_state	state;
 	spinlock_t		state_lock;
@@ -177,15 +182,15 @@ struct afs_read {
 	loff_t			pos;		/* Where to start reading */
 	loff_t			len;		/* How much we're asking for */
 	loff_t			actual_len;	/* How much we're actually getting */
-	loff_t			remain;		/* Amount remaining */
 	loff_t			file_size;	/* File size returned by server */
 	afs_dataversion_t	data_version;	/* Version number returned by server */
 	refcount_t		usage;
-	unsigned int		index;		/* Which page we're reading into */
 	unsigned int		nr_pages;
-	void (*page_done)(struct afs_call *, struct afs_read *);
-	struct page		**pages;
-	struct page		*array[];
+	unsigned int		done_pages;
+	bool			error;
+	unsigned int		call_debug_id;
+	void (*cleanup)(struct afs_read *);
+	struct iov_iter		iter;		/* Buffer */
 };
 
 /*
@@ -547,6 +552,15 @@ struct afs_vnode {
 	unsigned		cb_version;	/* callback version */
 	afs_callback_type_t	cb_type;	/* type of callback */
 };
+
+static inline struct fscache_cookie *afs_vnode_cache(struct afs_vnode *vnode)
+{
+#ifdef CONFIG_AFS_FSCACHE
+	return vnode->cache;
+#else
+	return NULL;
+#endif
+}
 
 /*
  * cached security record for one user's attempt to access a vnode
@@ -928,12 +942,34 @@ extern struct afs_call *afs_alloc_flat_call(struct afs_net *,
 extern void afs_flat_call_destructor(struct afs_call *);
 extern void afs_send_empty_reply(struct afs_call *);
 extern void afs_send_simple_reply(struct afs_call *, const void *, size_t);
-extern int afs_extract_data(struct afs_call *, void *, size_t, bool);
+extern int afs_extract_data(struct afs_call *, bool);
 extern int afs_protocol_error(struct afs_call *, int, enum afs_eproto_cause);
+
+static inline void afs_extract_begin(struct afs_call *call, void *buf, size_t size)
+{
+	call->kvec[0].iov_base = buf;
+	call->kvec[0].iov_len = size;
+	iov_iter_kvec(&call->iter, READ, call->kvec, 1, size);
+}
+
+static inline void afs_extract_to_tmp(struct afs_call *call)
+{
+	afs_extract_begin(call, &call->tmp, sizeof(call->tmp));
+}
+
+static inline void afs_extract_discard(struct afs_call *call, size_t size)
+{
+	iov_iter_discard(&call->iter, READ, size);
+}
+
+static inline void afs_extract_to_buf(struct afs_call *call, size_t size)
+{
+	afs_extract_begin(call, call->buffer, size);
+}
 
 static inline int afs_transfer_reply(struct afs_call *call)
 {
-	return afs_extract_data(call, call->buffer, call->reply_max, false);
+	return afs_extract_data(call, false);
 }
 
 static inline bool afs_check_call_state(struct afs_call *call,
