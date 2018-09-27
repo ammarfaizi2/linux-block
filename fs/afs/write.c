@@ -881,3 +881,11 @@ int afs_launder_page(struct page *page)
 #endif
 	return ret;
 }
+
+/*
+ * Direct file write operation for an AFS file.
+ */
+ssize_t afs_file_direct_write(struct kiocb *iocb, struct iov_iter *iter)
+{
+	return -EOPNOTSUPP;
+}

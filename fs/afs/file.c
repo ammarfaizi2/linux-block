@@ -28,6 +28,7 @@ static int afs_releasepage(struct page *page, gfp_t gfp_flags);
 
 static int afs_readpages(struct file *filp, struct address_space *mapping,
 			 struct list_head *pages, unsigned nr_pages);
+static ssize_t afs_direct_IO(struct kiocb *iocb, struct iov_iter *iter);
 
 const struct file_operations afs_file_operations = {
 	.open		= afs_open,
@@ -56,6 +57,7 @@ const struct address_space_operations afs_fs_aops = {
 	.launder_page	= afs_launder_page,
 	.releasepage	= afs_releasepage,
 	.invalidatepage	= afs_invalidatepage,
+	.direct_IO	= afs_direct_IO,
 	.write_begin	= afs_write_begin,
 	.write_end	= afs_write_end,
 	.writepage	= afs_writepage,
@@ -709,4 +711,63 @@ static int afs_file_mmap(struct file *file, struct vm_area_struct *vma)
 	if (ret == 0)
 		vma->vm_ops = &afs_vm_ops;
 	return ret;
+}
+
+/*
+ * Direct file read operation for an AFS file.
+ */
+static ssize_t afs_file_direct_read(struct kiocb *iocb, struct iov_iter *iter)
+{
+	struct file *file = iocb->ki_filp;
+	struct address_space *mapping = file->f_mapping;
+	struct afs_vnode *vnode = AFS_FS_I(mapping->host);
+	struct afs_read *req;
+	struct key *key = afs_file_key(file);
+	ssize_t ret;
+	size_t count = iov_iter_count(iter), transferred = 0;
+
+	if (!count)
+		return 0;
+	if (!is_sync_kiocb(iocb))
+		return -EOPNOTSUPP;
+
+	req = kzalloc(sizeof(struct afs_read), GFP_KERNEL);
+	if (!req)
+		return -ENOMEM;
+
+	refcount_set(&req->usage, 1);
+	req->pos = iocb->ki_pos;
+	req->len = count;
+	req->iter = *iter;
+
+	task_io_account_read(count);
+
+
+	// TODO afs_start_io_direct(inode);
+	ret = afs_fetch_data(vnode, key, req);
+	if (ret == 0)
+		transferred = req->actual_len;
+	*iter = req->iter;
+	afs_put_read(req);
+
+	// TODO afs_end_io_direct(inode);
+
+	BUG_ON(ret == -EIOCBQUEUED); // TODO
+
+	if (ret == 0)
+		ret = transferred;
+
+	return ret;
+}
+
+/*
+ * Do direct I/O.
+ */
+static ssize_t afs_direct_IO(struct kiocb *iocb, struct iov_iter *iter)
+{
+	VM_BUG_ON(iov_iter_count(iter) != PAGE_SIZE);
+
+	if (iov_iter_rw(iter) == READ)
+		return afs_file_direct_read(iocb, iter);
+	return afs_file_direct_write(iocb, iter);
 }
