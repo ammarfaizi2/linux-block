@@ -130,6 +130,12 @@ static struct vfsmount *afs_mntpt_do_automount(struct dentry *mntpt)
 			goto error_no_page;
 		}
 
+		if (PageError(page)) {
+			put_page(page);
+			ret = afs_bad(AFS_FS_I(d_inode(mntpt)), afs_file_error_mntpt);
+			goto error_no_page;
+		}
+
 		ret = -EIO;
 		if (PageError(page))
 			goto error;
