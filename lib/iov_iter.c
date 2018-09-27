@@ -75,18 +75,28 @@
 #define iterate_all_kinds(i, n, v, I, B, K) {			\
 	if (likely(n)) {					\
 		size_t skip = i->iov_offset;			\
-		if (unlikely(i->iter_type & ITER_BVEC)) {	\
+		switch (iov_iter_type(i)) {			\
+		case ITER_BVEC: {				\
 			struct bio_vec v;			\
 			struct bvec_iter __bi;			\
-			iterate_bvec(i, n, v, __bi, skip, (B))	\
-		} else if (unlikely(i->iter_type & ITER_KVEC)) { \
+			iterate_bvec(i, n, v, __bi, skip, (B));	\
+			break;					\
+		}						\
+		case ITER_KVEC: {				\
 			const struct kvec *kvec;		\
 			struct kvec v;				\
-			iterate_kvec(i, n, v, kvec, skip, (K))	\
-		} else {					\
+			iterate_kvec(i, n, v, kvec, skip, (K));	\
+			break;					\
+		}						\
+		case ITER_PIPE: {				\
+			break;					\
+		}						\
+		case ITER_IOVEC: {				\
 			const struct iovec *iov;		\
 			struct iovec v;				\
-			iterate_iovec(i, n, v, iov, skip, (I))	\
+			iterate_iovec(i, n, v, iov, skip, (I));	\
+			break;					\
+		}						\
 		}						\
 	}							\
 }
@@ -96,7 +106,8 @@
 		n = i->count;					\
 	if (i->count) {						\
 		size_t skip = i->iov_offset;			\
-		if (unlikely(i->iter_type & ITER_BVEC)) {		\
+		switch (iov_iter_type(i)) {			\
+		case ITER_BVEC: {				\
 			const struct bio_vec *bvec = i->bvec;	\
 			struct bio_vec v;			\
 			struct bvec_iter __bi;			\
@@ -104,7 +115,9 @@
 			i->bvec = __bvec_iter_bvec(i->bvec, __bi);	\
 			i->nr_segs -= i->bvec - bvec;		\
 			skip = __bi.bi_bvec_done;		\
-		} else if (unlikely(i->iter_type & ITER_KVEC)) {	\
+			break;					\
+		}						\
+		case ITER_KVEC: {				\
 			const struct kvec *kvec;		\
 			struct kvec v;				\
 			iterate_kvec(i, n, v, kvec, skip, (K))	\
@@ -114,7 +127,9 @@
 			}					\
 			i->nr_segs -= kvec - i->kvec;		\
 			i->kvec = kvec;				\
-		} else {					\
+			break;					\
+		}						\
+		case ITER_IOVEC: {				\
 			const struct iovec *iov;		\
 			struct iovec v;				\
 			iterate_iovec(i, n, v, iov, skip, (I))	\
@@ -124,6 +139,11 @@
 			}					\
 			i->nr_segs -= iov - i->iov;		\
 			i->iov = iov;				\
+			break;					\
+		}						\
+		case ITER_PIPE: {				\
+			break;					\
+		}						\
 		}						\
 		i->count -= n;					\
 		i->iov_offset = skip;				\
@@ -873,6 +893,7 @@ size_t copy_page_from_iter(struct page *page, size_t offset, size_t bytes,
 	case ITER_IOVEC:
 		return copy_page_from_iter_iovec(page, offset, bytes, i);
 	}
+
 	WARN_ON(1);
 	return 0;
 }
@@ -988,11 +1009,17 @@ static void pipe_advance(struct iov_iter *i, size_t size)
 
 void iov_iter_advance(struct iov_iter *i, size_t size)
 {
-	if (unlikely(iov_iter_is_pipe(i))) {
+	switch (iov_iter_type(i)) {
+	case ITER_PIPE:
 		pipe_advance(i, size);
 		return;
+	case ITER_IOVEC:
+	case ITER_KVEC:
+	case ITER_BVEC:
+		iterate_and_advance(i, size, v, 0, 0, 0);
+		return;
 	}
-	iterate_and_advance(i, size, v, 0, 0, 0)
+	BUG();
 }
 EXPORT_SYMBOL(iov_iter_advance);
 
@@ -1223,8 +1250,16 @@ ssize_t iov_iter_get_pages(struct iov_iter *i,
 	if (maxsize > i->count)
 		maxsize = i->count;
 
-	if (unlikely(iov_iter_is_pipe(i)))
+	switch (iov_iter_type(i)) {
+	case ITER_PIPE:
 		return pipe_get_pages(i, pages, maxsize, maxpages, start);
+	case ITER_KVEC:
+		return -EFAULT;
+	case ITER_IOVEC:
+	case ITER_BVEC:
+		break;
+	}
+
 	iterate_all_kinds(i, maxsize, v, ({
 		unsigned long addr = (unsigned long)v.iov_base;
 		size_t len = v.iov_len + (*start = addr & (PAGE_SIZE - 1));
@@ -1244,9 +1279,7 @@ ssize_t iov_iter_get_pages(struct iov_iter *i,
 		*start = v.bv_offset;
 		get_page(*pages = v.bv_page);
 		return v.bv_len;
-	}),({
-		return -EFAULT;
-	})
+	}), 0
 	)
 	return 0;
 }
@@ -1300,8 +1333,16 @@ ssize_t iov_iter_get_pages_alloc(struct iov_iter *i,
 	if (maxsize > i->count)
 		maxsize = i->count;
 
-	if (unlikely(iov_iter_is_pipe(i)))
+	switch (iov_iter_type(i)) {
+	case ITER_PIPE:
 		return pipe_get_pages_alloc(i, pages, maxsize, start);
+	case ITER_KVEC:
+		return -EFAULT;
+	case ITER_IOVEC:
+	case ITER_BVEC:
+		break;
+	}
+
 	iterate_all_kinds(i, maxsize, v, ({
 		unsigned long addr = (unsigned long)v.iov_base;
 		size_t len = v.iov_len + (*start = addr & (PAGE_SIZE - 1));
@@ -1328,9 +1369,7 @@ ssize_t iov_iter_get_pages_alloc(struct iov_iter *i,
 			return -ENOMEM;
 		get_page(*p = v.bv_page);
 		return v.bv_len;
-	}),({
-		return -EFAULT;
-	})
+	}), 0
 	)
 	return 0;
 }
