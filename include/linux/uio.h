@@ -14,6 +14,7 @@
 #include <uapi/linux/uio.h>
 
 struct page;
+struct address_space;
 struct pipe_inode_info;
 
 struct kvec {
@@ -26,6 +27,8 @@ enum iter_type {
 	ITER_KVEC,
 	ITER_BVEC,
 	ITER_PIPE,
+	ITER_DISCARD,
+	ITER_MAPPING,
 };
 
 struct iov_iter {
@@ -37,6 +40,7 @@ struct iov_iter {
 		const struct iovec *iov;
 		const struct kvec *kvec;
 		const struct bio_vec *bvec;
+		struct address_space *mapping;
 		struct pipe_inode_info *pipe;
 	};
 	union {
@@ -45,6 +49,7 @@ struct iov_iter {
 			int idx;
 			int start_idx;
 		};
+		void (*page_done)(const struct iov_iter *, const struct bio_vec *);
 	};
 };
 
@@ -211,6 +216,9 @@ void iov_iter_bvec(struct iov_iter *i, unsigned int direction, const struct bio_
 			unsigned long nr_segs, size_t count);
 void iov_iter_pipe(struct iov_iter *i, unsigned int direction, struct pipe_inode_info *pipe,
 			size_t count);
+void iov_iter_mapping(struct iov_iter *i, unsigned int direction, struct address_space *mapping,
+		      loff_t start, size_t count);
+void iov_iter_discard(struct iov_iter *i, unsigned int direction, size_t count);
 ssize_t iov_iter_get_pages(struct iov_iter *i, struct page **pages,
 			size_t maxsize, unsigned maxpages, size_t *start);
 ssize_t iov_iter_get_pages_alloc(struct iov_iter *i, struct page ***pages,
