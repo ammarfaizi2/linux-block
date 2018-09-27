@@ -195,11 +195,9 @@ static void afs_readpages_page_done(const struct iov_iter *iter,
 	struct afs_vnode *vnode = AFS_FS_I(page->mapping->host);
 	struct afs_read *req = container_of(iter, struct afs_read, iter);
 
-	SetPageUptodate(page);
-
 	if (0 && afs_vnode_cache(vnode))
 		SetPageFsCache(page);
-	unlock_page(page);
+	page_endio(page, false, 0);
 	put_page(page);
 	req->done_pages++;
 }
