@@ -172,6 +172,7 @@ static bool afs_dir_check_page(struct afs_vnode *dvnode, struct page *page,
 			       ntohs(dbuf->blocks[tmp].hdr.magic));
 			trace_afs_dir_check_failed(dvnode, off, i_size);
 			kunmap(page);
+			trace_afs_file_error(dvnode, -EIO, afs_file_error_dir_bad_magic);
 			goto error;
 		}
 
@@ -271,12 +272,15 @@ static struct afs_read *afs_read_dir(struct afs_vnode *dvnode, struct key *key)
 
 expand:
 	i_size = i_size_read(&dvnode->vfs_inode);
-	ret = -EIO;
-	if (i_size < 2048)
+	if (i_size < 2048) {
+		ret = afs_bad(dvnode, afs_file_error_dir_small);
 		goto error;
-	ret = -EFBIG;
-	if (i_size > 2048 * 1024)
+	}
+	if (i_size > 2048 * 1024) {
+		trace_afs_file_error(dvnode, -EFBIG, afs_file_error_dir_big);
+		ret = -EFBIG;
 		goto error;
+	}
 
 	nr_pages = (i_size + PAGE_SIZE - 1) / PAGE_SIZE;
 
@@ -381,7 +385,8 @@ error:
 /*
  * deal with one block in an AFS directory
  */
-static int afs_dir_iterate_block(struct dir_context *ctx,
+static int afs_dir_iterate_block(struct afs_vnode *dvnode,
+				 struct dir_context *ctx,
 				 union afs_xdr_dir_block *block,
 				 unsigned blkoff)
 {
@@ -431,7 +436,7 @@ static int afs_dir_iterate_block(struct dir_context *ctx,
 				       " (len %u/%zu)",
 				       blkoff / sizeof(union afs_xdr_dir_block),
 				       offset, next, tmp, nlen);
-				return -EIO;
+				return afs_bad(dvnode, afs_file_error_dir_over_end);
 			}
 			if (!(block->hdr.bitmap[next / 8] &
 			      (1 << (next % 8)))) {
@@ -439,7 +444,7 @@ static int afs_dir_iterate_block(struct dir_context *ctx,
 				       " %u unmarked extension (len %u/%zu)",
 				       blkoff / sizeof(union afs_xdr_dir_block),
 				       offset, next, tmp, nlen);
-				return -EIO;
+				return afs_bad(dvnode, afs_file_error_dir_unmarked_ext);
 			}
 
 			_debug("ENT[%zu.%u]: ext %u/%zu",
@@ -515,7 +520,7 @@ static int afs_dir_iterate(struct inode *dir, struct dir_context *ctx,
 			page = radix_tree_deref_slot(slot);
 		rcu_read_unlock();
 		if (!page) {
-			ret = -EIO;
+			ret = afs_bad(dvnode, afs_file_error_dir_missing_page);
 			break;
 		}
 		mark_page_accessed(page);
@@ -528,7 +533,7 @@ static int afs_dir_iterate(struct inode *dir, struct dir_context *ctx,
 		do {
 			dblock = &dbuf->blocks[(blkoff % PAGE_SIZE) /
 					       sizeof(union afs_xdr_dir_block)];
-			ret = afs_dir_iterate_block(ctx, dblock, blkoff);
+			ret = afs_dir_iterate_block(dvnode, ctx, dblock, blkoff);
 			if (ret != 1) {
 				kunmap(page);
 				goto out;
