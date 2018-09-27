@@ -1357,24 +1357,18 @@ static const struct afs_call_type yfs_RXYFSStoreData64 = {
 /*
  * Store a set of pages to a large file.
  */
-int yfs_fs_store_data(struct afs_fs_cursor *fc, struct address_space *mapping,
-		      pgoff_t first, pgoff_t last,
-		      unsigned offset, unsigned to)
+int yfs_fs_store_data(struct afs_fs_cursor *fc, struct iov_iter *iter, loff_t pos)
 {
 	struct afs_vnode *vnode = fc->vnode;
 	struct afs_call *call;
 	struct afs_net *net = afs_v2net(vnode);
-	loff_t size, pos, i_size;
+	loff_t size, i_size;
 	__be32 *bp;
 
 	_enter(",%x,{%llx:%llu},,",
 	       key_serial(fc->key), vnode->fid.vid, vnode->fid.vnode);
 
-	size = (loff_t)to - (loff_t)offset;
-	if (first != last)
-		size += (loff_t)(last - first) << PAGE_SHIFT;
-	pos = (loff_t)first << PAGE_SHIFT;
-	pos += offset;
+	size = iov_iter_count(iter);
 
 	i_size = i_size_read(&vnode->vfs_inode);
 	if (pos + size > i_size)
@@ -1396,13 +1390,10 @@ int yfs_fs_store_data(struct afs_fs_cursor *fc, struct address_space *mapping,
 		return -ENOMEM;
 
 	call->key = fc->key;
-	call->mapping = mapping;
+	call->write_iter = iter;
+	call->write_first = pos >> PAGE_SHIFT;
+	call->write_last = (pos + size - 1) >> PAGE_SHIFT;
 	call->reply[0] = vnode;
-	call->first = first;
-	call->last = last;
-	call->first_offset = offset;
-	call->last_to = to;
-	call->send_pages = true;
 	call->expected_version = vnode->status.data_version + 1;
 
 	/* marshall the parameters */

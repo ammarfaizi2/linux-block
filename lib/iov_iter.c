@@ -1156,7 +1156,8 @@ void iov_iter_advance(struct iov_iter *i, size_t size)
 	case ITER_MAPPING:
 		/* We really don't want to fetch pages if we can avoid it */
 		i->iov_offset += size;
-		/* Fall through */
+		i->count -= size;
+		return;
 	}
 	BUG();
 }
