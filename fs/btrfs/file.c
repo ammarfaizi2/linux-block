@@ -1596,9 +1596,10 @@ static noinline ssize_t btrfs_buffered_write(struct kiocb *iocb,
 	while (iov_iter_count(i) > 0) {
 		size_t offset = pos & (PAGE_SIZE - 1);
 		size_t sector_offset;
-		size_t write_bytes = min(iov_iter_count(i),
-					 nrptrs * (size_t)PAGE_SIZE -
-					 offset);
+		size_t write_bytes = min_t(size_t,
+					   iov_iter_count(i),
+					   nrptrs * (size_t)PAGE_SIZE -
+					   offset);
 		size_t num_pages = DIV_ROUND_UP(write_bytes + offset,
 						PAGE_SIZE);
 		size_t reserve_bytes;
