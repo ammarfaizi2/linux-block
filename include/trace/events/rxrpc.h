@@ -672,25 +672,28 @@ TRACE_EVENT(rxrpc_skb,
 	    );
 
 TRACE_EVENT(rxrpc_rx_packet,
-	    TP_PROTO(struct rxrpc_skb_priv *sp),
+	    TP_PROTO(struct rxrpc_skb_priv *sp, ktime_t elapse),
 
-	    TP_ARGS(sp),
+	    TP_ARGS(sp, elapse),
 
 	    TP_STRUCT__entry(
-		    __field_struct(struct rxrpc_host_header,	hdr		)
+		    __field(ktime_t,				elapse	)
+		    __field_struct(struct rxrpc_host_header,	hdr	)
 			     ),
 
 	    TP_fast_assign(
+		    __entry->elapse = elapse;
 		    memcpy(&__entry->hdr, &sp->hdr, sizeof(__entry->hdr));
 			   ),
 
-	    TP_printk("%08x:%08x:%08x:%04x %08x %08x %02x %02x %s",
+	    TP_printk("%08x:%08x:%08x:%04x %08x %08x %02x %02x %s %lld",
 		      __entry->hdr.epoch, __entry->hdr.cid,
 		      __entry->hdr.callNumber, __entry->hdr.serviceId,
 		      __entry->hdr.serial, __entry->hdr.seq,
 		      __entry->hdr.type, __entry->hdr.flags,
 		      __entry->hdr.type <= 15 ?
-		      __print_symbolic(__entry->hdr.type, rxrpc_pkts) : "?UNK")
+		      __print_symbolic(__entry->hdr.type, rxrpc_pkts) : "?UNK",
+		      __entry->elapse)
 	    );
 
 TRACE_EVENT(rxrpc_rx_done,

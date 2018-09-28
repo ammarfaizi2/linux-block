@@ -1171,6 +1171,7 @@ int rxrpc_input_packet(struct sock *udp_sk, struct sk_buff *skb)
 	struct rxrpc_peer *peer = NULL;
 	struct rxrpc_sock *rx = NULL;
 	unsigned int channel;
+	ktime_t now;
 	int skew = 0;
 
 	_enter("%p", udp_sk);
@@ -1200,9 +1201,10 @@ int rxrpc_input_packet(struct sock *udp_sk, struct sk_buff *skb)
 		}
 	}
 
+	now = ktime_get_real();
 	if (skb->tstamp == 0)
-		skb->tstamp = ktime_get_real();
-	trace_rxrpc_rx_packet(sp);
+		skb->tstamp = now;
+	trace_rxrpc_rx_packet(sp, now - skb->tstamp);
 
 	switch (sp->hdr.type) {
 	case RXRPC_PACKET_TYPE_VERSION:
