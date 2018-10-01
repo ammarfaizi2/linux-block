@@ -33,6 +33,13 @@ struct bpf_map_def SEC("maps") vip2tnl = {
 	.max_entries = MAX_IPTNL_ENTRIES,
 };
 
+struct bpf_map_def SEC("maps") flow2tnl = {
+	.type = BPF_MAP_TYPE_HASH,
+	.key_size = sizeof(__u32),
+	.value_size = sizeof(struct iptnl_info),
+	.max_entries = MAX_IPTNL_ENTRIES,
+};
+
 static __always_inline void count_tx(u32 protocol)
 {
 	u64 *rxcnt_count;
@@ -74,17 +81,16 @@ static __always_inline void set_ethhdr(struct ethhdr *new_eth,
 	new_eth->h_proto = h_proto;
 }
 
-static __always_inline int handle_ipv4(struct xdp_md *xdp)
+static __always_inline int handle_ipv4(struct xdp_md *xdp, struct iptnl_info *tnl)
 {
 	void *data_end = (void *)(long)xdp->data_end;
 	void *data = (void *)(long)xdp->data;
-	struct iptnl_info *tnl;
 	struct ethhdr *new_eth;
 	struct ethhdr *old_eth;
 	struct iphdr *iph = data + sizeof(struct ethhdr);
 	u16 *next_iph_u16;
 	u16 payload_len;
-	struct vip vip = {};
+	int offload = 1;
 	int dport;
 	u32 csum = 0;
 	int i;
@@ -92,23 +98,29 @@ static __always_inline int handle_ipv4(struct xdp_md *xdp)
 	if (iph + 1 > data_end)
 		return XDP_DROP;
 
-	dport = get_dport(iph + 1, data_end, iph->protocol);
-	if (dport == -1)
-		return XDP_DROP;
+	if (!tnl) { /* slow path: parse the packet */
+		struct vip vip = {};
 
-	vip.protocol = iph->protocol;
-	vip.family = AF_INET;
-	vip.daddr.v4 = iph->daddr;
-	vip.dport = dport;
+		offload = 0;
+		dport = get_dport(iph + 1, data_end, iph->protocol);
+		if (dport == -1)
+			return XDP_DROP;
+
+		vip.protocol = iph->protocol;
+		vip.family = AF_INET;
+		vip.daddr.v4 = iph->daddr;
+		vip.dport = dport;
+
+		tnl = bpf_map_lookup_elem(&vip2tnl, &vip);
+		/* It only does v4-in-v4 */
+		if (!tnl || tnl->family != AF_INET)
+			return XDP_PASS;
+	}
+
+	/* can offload */
 	payload_len = ntohs(iph->tot_len);
 
-	tnl = bpf_map_lookup_elem(&vip2tnl, &vip);
-	/* It only does v4-in-v4 */
-	if (!tnl || tnl->family != AF_INET)
-		return XDP_PASS;
-
 	/* The vip key is found.  Add an IP header and send it out */
-
 	if (bpf_xdp_adjust_head(xdp, 0 - (int)sizeof(struct iphdr)))
 		return XDP_DROP;
 
@@ -144,40 +156,45 @@ static __always_inline int handle_ipv4(struct xdp_md *xdp)
 
 	iph->check = ~((csum & 0xffff) + (csum >> 16));
 
-	count_tx(vip.protocol);
+	count_tx(offload);
 
 	return XDP_TX;
 }
 
-static __always_inline int handle_ipv6(struct xdp_md *xdp)
+static __always_inline int handle_ipv6(struct xdp_md *xdp, struct iptnl_info *tnl)
 {
 	void *data_end = (void *)(long)xdp->data_end;
 	void *data = (void *)(long)xdp->data;
-	struct iptnl_info *tnl;
 	struct ethhdr *new_eth;
 	struct ethhdr *old_eth;
 	struct ipv6hdr *ip6h = data + sizeof(struct ethhdr);
 	__u16 payload_len;
-	struct vip vip = {};
-	int dport;
+	int offload = 1;
 
 	if (ip6h + 1 > data_end)
 		return XDP_DROP;
 
-	dport = get_dport(ip6h + 1, data_end, ip6h->nexthdr);
-	if (dport == -1)
-		return XDP_DROP;
+	if (!tnl) {
+		struct vip vip = {};
+		int dport;
 
-	vip.protocol = ip6h->nexthdr;
-	vip.family = AF_INET6;
-	memcpy(vip.daddr.v6, ip6h->daddr.s6_addr32, sizeof(vip.daddr));
-	vip.dport = dport;
+		offload = 0;
+		dport = get_dport(ip6h + 1, data_end, ip6h->nexthdr);
+		if (dport == -1)
+			return XDP_DROP;
+
+		vip.protocol = ip6h->nexthdr;
+		vip.family = AF_INET6;
+		memcpy(vip.daddr.v6, ip6h->daddr.s6_addr32, sizeof(vip.daddr));
+		vip.dport = dport;
+
+		tnl = bpf_map_lookup_elem(&vip2tnl, &vip);
+		/* It only does v6-in-v6 */
+		if (!tnl || tnl->family != AF_INET6)
+			return XDP_PASS;
+	}
+
 	payload_len = ip6h->payload_len;
-
-	tnl = bpf_map_lookup_elem(&vip2tnl, &vip);
-	/* It only does v6-in-v6 */
-	if (!tnl || tnl->family != AF_INET6)
-		return XDP_PASS;
 
 	/* The vip key is found.  Add an IP header and send it out */
 
@@ -207,7 +224,7 @@ static __always_inline int handle_ipv6(struct xdp_md *xdp)
 	memcpy(ip6h->saddr.s6_addr32, tnl->saddr.v6, sizeof(tnl->saddr.v6));
 	memcpy(ip6h->daddr.s6_addr32, tnl->daddr.v6, sizeof(tnl->daddr.v6));
 
-	count_tx(vip.protocol);
+	count_tx(offload);
 
 	return XDP_TX;
 }
@@ -215,21 +232,29 @@ static __always_inline int handle_ipv6(struct xdp_md *xdp)
 SEC("xdp_tx_iptunnel")
 int _xdp_tx_iptunnel(struct xdp_md *xdp)
 {
+	struct xdp_md_mark *mark = (struct xdp_md_mark *)(long)xdp->data_meta;
 	void *data_end = (void *)(long)xdp->data_end;
 	void *data = (void *)(long)xdp->data;
+	struct iptnl_info *tnl = NULL;
 	struct ethhdr *eth = data;
-	__u16 h_proto;
+	__u16 family;
 
 	if (eth + 1 > data_end)
 		return XDP_DROP;
 
-	h_proto = eth->h_proto;
+	if (mark + 1 <= data)
+		tnl = bpf_map_lookup_elem(&flow2tnl, &mark->mark /* flow tag */);
 
-	if (h_proto == htons(ETH_P_IP))
-		return handle_ipv4(xdp);
-	else if (h_proto == htons(ETH_P_IPV6))
+	if (tnl)
+		family = tnl->family;
+	else /* Slow path */
+		family = eth->h_proto == htons(ETH_P_IP)  ? AF_INET :
+			 eth->h_proto == htons(ETH_P_IPV6) ? AF_INET6 : AF_UNSPEC;
 
-		return handle_ipv6(xdp);
+	if (family == AF_INET)
+		return handle_ipv4(xdp, tnl);
+	else if (family == AF_INET6)
+		return handle_ipv6(xdp, tnl);
 	else
 		return XDP_PASS;
 }

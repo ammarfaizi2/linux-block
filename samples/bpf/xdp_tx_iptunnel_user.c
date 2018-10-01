@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/resource.h>
+#include <net/if.h>
 #include <arpa/inet.h>
 #include <netinet/ether.h>
 #include <unistd.h>
@@ -24,6 +25,7 @@
 
 #define STATS_INTERVAL_S 2U
 
+static char ifname[IF_NAMESIZE];
 static int ifindex = -1;
 static __u32 xdp_flags = 0;
 
@@ -71,7 +73,7 @@ static void usage(const char *cmd)
 	       "in an IPv4/v6 header and XDP_TX it out.  The dst <VIP:PORT>\n"
 	       "is used to select packets to encapsulate\n\n");
 	printf("Usage: %s [...]\n", cmd);
-	printf("    -i <ifindex> Interface Index\n");
+	printf("    -i <ifindex|name> Interface Index or name\n");
 	printf("    -a <vip-service-address> IPv4 or IPv6\n");
 	printf("    -p <vip-service-port> A port range (e.g. 433-444) is also allowed\n");
 	printf("    -s <source-ip> Used in the IPTunnel header\n");
@@ -81,6 +83,7 @@ static void usage(const char *cmd)
 	printf("    -P <IP-Protocol> Default is TCP\n");
 	printf("    -S use skb-mode\n");
 	printf("    -N enforce native mode\n");
+	printf("    -F Allow Flow tag meta data\n");
 	printf("    -h Display this help\n");
 }
 
@@ -140,12 +143,14 @@ int main(int argc, char **argv)
 {
 	unsigned char opt_flags[256] = {};
 	unsigned int kill_after_s = 0;
-	const char *optstr = "i:a:p:s:d:m:T:P:SNh";
+	const char *optstr = "i:a:p:s:d:m:T:P:SNhF";
 	int min_port = 0, max_port = 0;
 	struct iptnl_info tnl = {};
 	struct rlimit r = {RLIM_INFINITY, RLIM_INFINITY};
 	struct vip vip = {};
 	char filename[256];
+	__u32 flow_mark = 1;
+	char *ipstr = NULL;
 	int opt;
 	int i;
 
@@ -162,10 +167,17 @@ int main(int argc, char **argv)
 
 		switch (opt) {
 		case 'i':
-			ifindex = atoi(optarg);
+			ifindex = if_nametoindex(optarg);
+			if (!ifindex) {
+				ifindex = atoi(optarg);
+				if (!ifindex)
+					return -1;
+			}
+			if_indextoname(ifindex, ifname);
 			break;
 		case 'a':
-			vip.family = parse_ipstr(optarg, vip.daddr.v6);
+			ipstr = optarg;
+			vip.family = parse_ipstr(ipstr, vip.daddr.v6);
 			if (vip.family == AF_UNSPEC)
 				return 1;
 			break;
@@ -211,6 +223,9 @@ int main(int argc, char **argv)
 		case 'N':
 			xdp_flags |= XDP_FLAGS_DRV_MODE;
 			break;
+		case 'F':
+			xdp_flags |= XDP_FLAGS_META_MARK;
+			break;
 		default:
 			usage(argv[0]);
 			return 1;
@@ -246,13 +261,35 @@ int main(int argc, char **argv)
 	signal(SIGINT, int_exit);
 	signal(SIGTERM, int_exit);
 
+	if (xdp_flags & XDP_FLAGS_META_MARK) {
+		printf("#XDP Meta data acceleration requested\n");
+		printf("#To activate HW flow mark, please run the following commands:\n");
+		printf("ethtool -K %s hw-tc-offload on\n", ifname);
+		printf("tc qdisc del dev %s ingress\n", ifname);
+		printf("tc qdisc add dev %s ingress\n", ifname);
+	}
+
 	while (min_port <= max_port) {
 		vip.dport = htons(min_port++);
 		if (bpf_map_update_elem(map_fd[1], &vip, &tnl, BPF_NOEXIST)) {
 			perror("bpf_map_update_elem(&vip2tnl)");
 			return 1;
 		}
+
+		if (!(xdp_flags & XDP_FLAGS_META_MARK))
+			continue;
+
+		/* Flow mark table */
+		if (bpf_map_update_elem(map_fd[2], &flow_mark, &tnl, BPF_NOEXIST)) {
+			perror("bpf_map_update_elem(&vip2tnl)");
+			return 1;
+		};
+		printf("tc filter add dev %s protocol %s parent ffff: flower skip_sw dst_ip %s ip_proto %s dst_port %d action skbedit mark %d\n",
+			ifname, tnl.family == AF_INET ? "ip" : "ipv6", ipstr, vip.protocol == 17 ? "udp" : "tcp", ntohs(vip.dport), flow_mark);
+		flow_mark++;
 	}
+	if (xdp_flags & XDP_FLAGS_META_MARK)
+		printf("\n");
 
 	if (bpf_set_link_xdp_fd(ifindex, prog_fd[0], xdp_flags) < 0) {
 		printf("link set xdp fd failed\n");
