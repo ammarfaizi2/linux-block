@@ -71,6 +71,12 @@ mlx5e_xdp_fill_data_meta(xdp_md_info_arr mdi,  void *data_meta, struct mlx5_cqe6
 
 		xdp_data_meta_set_vlan(mdi, data_meta, vlan);
 	}
+
+	if (xdp_data_meta_present(mdi, XDP_DATA_META_MARK))
+	{
+		u32 mark = be32_to_cpu(cqe->sop_drop_qpn) & MLX5E_TC_FLOW_ID_MASK;
+		xdp_data_meta_set_mark(mdi, data_meta, mark);
+	}
 }
 
 /* returns true if packet was consumed by xdp */

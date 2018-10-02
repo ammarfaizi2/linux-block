@@ -4307,7 +4307,7 @@ static u32 mlx5e_xdp_query(struct net_device *dev)
 }
 
 #define MLX5E_SUPPORTED_XDP_META_FLAGS  \
-             (XDP_FLAGS_META_HASH  | XDP_FLAGS_META_VLAN)
+             (XDP_FLAGS_META_HASH  | XDP_FLAGS_META_VLAN | XDP_FLAGS_META_MARK)
 
 static int mlx5e_xdp(struct net_device *dev, struct netdev_bpf *xdp)
 {

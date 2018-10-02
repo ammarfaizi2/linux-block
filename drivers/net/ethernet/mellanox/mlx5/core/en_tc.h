@@ -35,8 +35,6 @@
 
 #include <net/pkt_cls.h>
 
-#define MLX5E_TC_FLOW_ID_MASK 0x0000ffff
-
 #ifdef CONFIG_MLX5_ESWITCH
 
 enum {
