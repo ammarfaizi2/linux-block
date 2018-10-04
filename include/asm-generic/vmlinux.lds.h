@@ -257,6 +257,10 @@
 	__start___jump_table = .;					\
 	KEEP(*(__jump_table))                                           \
 	__stop___jump_table = .;					\
+	. = ALIGN(8);                                                   \
+	__start___dynfunc_table = .;					\
+	KEEP(*(__dynfunc_table))					\
+	__stop___dynfunc_table = .;					\
 	. = ALIGN(8);							\
 	__start___verbose = .;						\
 	KEEP(*(__verbose))                                              \
