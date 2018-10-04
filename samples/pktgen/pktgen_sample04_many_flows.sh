@@ -54,13 +54,25 @@ for ((thread = $F_THREAD; thread <= $L_THREAD; thread++)); do
 
     # Single destination
     pg_set $dev "dst_mac $DST_MAC"
-    pg_set $dev "dst $DEST_IP"
+    pg_set $dev "dst$IP6 $DEST_IP"
 
     # Randomize source IP-addresses
-    pg_set $dev "flag IPSRC_RND"
-    pg_set $dev "src_min 198.18.0.0"
-    pg_set $dev "src_max 198.19.255.255"
+    if [ -z "$IP6" ]
+    then
+        pg_set $dev "flag IPSRC_RND"
+        pg_set $dev "src_min 198.18.0.0"
+        pg_set $dev "src_max 198.19.255.255"
+    else
+        # Flow variation random source port between min and max
+        UDP_MIN=1000
+        UDP_MAX=5000
 
+        #IP6 src random is not supported by pktgen yet
+           # Setup random UDP port src range
+        pg_set $dev "flag UDPSRC_RND"
+        pg_set $dev "udp_src_min $UDP_MIN"
+        pg_set $dev "udp_src_max $UDP_MAX"
+    fi
     # Limit number of flows (max 65535)
     pg_set $dev "flows $FLOWS"
     #

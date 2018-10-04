@@ -48,11 +48,25 @@ for ((thread = $F_THREAD; thread <= $L_THREAD; thread++)); do
 
     # Single destination
     pg_set $dev "dst_mac $DST_MAC"
-    pg_set $dev "dst $DEST_IP"
+    pg_set $dev "dst$IP6 $DEST_IP"
 
-    # Setup source IP-addresses based on thread number
-    pg_set $dev "src_min 198.18.$((thread+1)).1"
-    pg_set $dev "src_max 198.18.$((thread+1)).1"
+     IP_PREFIX="198.18.1."
+
+    if [ ! -z "$IP6" ]
+    then
+                # Flow variation random source port between min and max
+        UDP_MIN=1000
+        UDP_MAX=5000
+
+        #IP6 src random is not supported by pktgen yet
+           # Setup random UDP port src range
+        pg_set $dev "flag UDPSRC_RND"
+        pg_set $dev "udp_src_min $UDP_MIN"
+        pg_set $dev "udp_src_max $UDP_MAX"
+    fi
+        # Setup source IP-addresses based on thread number
+    pg_set $dev "src_min ${IP_PREFIX}$((thread+1))"
+    pg_set $dev "src_max ${IP_PREFIX}$((thread+1))"
 
     # Setup burst, for easy testing -b 0 disable bursting
     # (internally in pktgen default and minimum burst=1)
