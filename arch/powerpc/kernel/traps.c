@@ -741,9 +741,7 @@ void machine_check_exception(struct pt_regs *regs)
 	if (!nested)
 		nmi_enter();
 
-	/* 64s accounts the mce in machine_check_early when in HVMODE */
-	if (!IS_ENABLED(CONFIG_PPC_BOOK3S_64) || !cpu_has_feature(CPU_FTR_HVMODE))
-		__this_cpu_inc(irq_stat.mce_exceptions);
+	__this_cpu_inc(irq_stat.mce_exceptions);
 
 	add_taint(TAINT_MACHINE_CHECK, LOCKDEP_NOW_UNRELIABLE);
 
@@ -1433,7 +1431,7 @@ void program_check_exception(struct pt_regs *regs)
 			goto bail;
 		} else {
 			printk(KERN_EMERG "Unexpected TM Bad Thing exception "
-			       "at %lx (msr 0x%x)\n", regs->nip, reason);
+			       "at %lx (msr 0x%lx)\n", regs->nip, regs->msr);
 			die("Unrecoverable exception", regs, SIGABRT);
 		}
 	}
@@ -1545,14 +1543,6 @@ void StackOverflow(struct pt_regs *regs)
 	debugger(regs);
 	show_regs(regs);
 	panic("kernel stack overflow");
-}
-
-void nonrecoverable_exception(struct pt_regs *regs)
-{
-	printk(KERN_ERR "Non-recoverable exception at PC=%lx MSR=%lx\n",
-	       regs->nip, regs->msr);
-	debugger(regs);
-	die("nonrecoverable exception", regs, SIGKILL);
 }
 
 void kernel_fp_unavailable_exception(struct pt_regs *regs)
@@ -2090,8 +2080,8 @@ void SPEFloatingPointRoundException(struct pt_regs *regs)
  */
 void unrecoverable_exception(struct pt_regs *regs)
 {
-	printk(KERN_EMERG "Unrecoverable exception %lx at %lx\n",
-	       regs->trap, regs->nip);
+	pr_emerg("Unrecoverable exception %lx at %lx (msr=%lx)\n",
+		 regs->trap, regs->nip, regs->msr);
 	die("Unrecoverable exception", regs, SIGABRT);
 }
 NOKPROBE_SYMBOL(unrecoverable_exception);

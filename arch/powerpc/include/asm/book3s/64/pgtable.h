@@ -741,6 +741,8 @@ static inline bool pte_user(pte_t pte)
  */
 #define __pte_to_swp_entry(pte)	((swp_entry_t) { pte_val((pte)) & ~_PAGE_PTE })
 #define __swp_entry_to_pte(x)	__pte((x).val | _PAGE_PTE)
+#define __pmd_to_swp_entry(pmd)	(__pte_to_swp_entry(pmd_pte(pmd)))
+#define __swp_entry_to_pmd(x)	(pte_pmd(__swp_entry_to_pte(x)))
 
 #ifdef CONFIG_MEM_SOFT_DIRTY
 #define _PAGE_SWP_SOFT_DIRTY   (1UL << (SWP_TYPE_BITS + _PAGE_BIT_SWAP_TYPE))
@@ -875,8 +877,16 @@ static inline int pmd_none(pmd_t pmd)
 
 static inline int pmd_present(pmd_t pmd)
 {
+	/*
+	 * A pmd is considerent present if _PAGE_PRESENT is set.
+	 * We also need to consider the pmd present which is marked
+	 * invalid during a split. Hence we look for _PAGE_INVALID
+	 * if we find _PAGE_PRESENT cleared.
+	 */
+	if (pmd_raw(pmd) & cpu_to_be64(_PAGE_PRESENT | _PAGE_INVALID))
+		return true;
 
-	return !pmd_none(pmd);
+	return false;
 }
 
 static inline int pmd_bad(pmd_t pmd)
@@ -903,7 +913,7 @@ static inline int pud_none(pud_t pud)
 
 static inline int pud_present(pud_t pud)
 {
-	return !pud_none(pud);
+	return (pud_raw(pud) & cpu_to_be64(_PAGE_PRESENT));
 }
 
 extern struct page *pud_page(pud_t pud);
@@ -950,7 +960,7 @@ static inline int pgd_none(pgd_t pgd)
 
 static inline int pgd_present(pgd_t pgd)
 {
-	return !pgd_none(pgd);
+	return (pgd_raw(pgd) & cpu_to_be64(_PAGE_PRESENT));
 }
 
 static inline pte_t pgd_pte(pgd_t pgd)
@@ -1082,6 +1092,12 @@ static inline pte_t *pmdp_ptep(pmd_t *pmd)
 #define pmd_soft_dirty(pmd)    pte_soft_dirty(pmd_pte(pmd))
 #define pmd_mksoft_dirty(pmd)  pte_pmd(pte_mksoft_dirty(pmd_pte(pmd)))
 #define pmd_clear_soft_dirty(pmd) pte_pmd(pte_clear_soft_dirty(pmd_pte(pmd)))
+
+#ifdef CONFIG_ARCH_ENABLE_THP_MIGRATION
+#define pmd_swp_mksoft_dirty(pmd)	pte_pmd(pte_swp_mksoft_dirty(pmd_pte(pmd)))
+#define pmd_swp_soft_dirty(pmd)		pte_swp_soft_dirty(pmd_pte(pmd))
+#define pmd_swp_clear_soft_dirty(pmd)	pte_pmd(pte_swp_clear_soft_dirty(pmd_pte(pmd)))
+#endif
 #endif /* CONFIG_HAVE_ARCH_SOFT_DIRTY */
 
 #ifdef CONFIG_NUMA_BALANCING
@@ -1127,6 +1143,10 @@ pmd_hugepage_update(struct mm_struct *mm, unsigned long addr, pmd_t *pmdp,
 	return hash__pmd_hugepage_update(mm, addr, pmdp, clr, set);
 }
 
+/*
+ * returns true for pmd migration entries, THP, devmap, hugetlb
+ * But compile time dependent on THP config
+ */
 static inline int pmd_large(pmd_t pmd)
 {
 	return !!(pmd_raw(pmd) & cpu_to_be64(_PAGE_PTE));
@@ -1161,8 +1181,22 @@ static inline void pmdp_set_wrprotect(struct mm_struct *mm, unsigned long addr,
 		pmd_hugepage_update(mm, addr, pmdp, 0, _PAGE_PRIVILEGED);
 }
 
+/*
+ * Only returns true for a THP. False for pmd migration entry.
+ * We also need to return true when we come across a pte that
+ * in between a thp split. While splitting THP, we mark the pmd
+ * invalid (pmdp_invalidate()) before we set it with pte page
+ * address. A pmd_trans_huge() check against a pmd entry during that time
+ * should return true.
+ * We should not call this on a hugetlb entry. We should check for HugeTLB
+ * entry using vma->vm_flags
+ * The page table walk rule is explained in Documentation/vm/transhuge.rst
+ */
 static inline int pmd_trans_huge(pmd_t pmd)
 {
+	if (!pmd_present(pmd))
+		return false;
+
 	if (radix_enabled())
 		return radix__pmd_trans_huge(pmd);
 	return hash__pmd_trans_huge(pmd);

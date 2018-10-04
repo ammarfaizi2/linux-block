@@ -171,7 +171,7 @@ system_call:			/* label this so stack traces look sane */
  * based on caller's run-mode / personality.
  */
 	ld	r11,SYS_CALL_TABLE@toc(2)
-	andi.	r10,r10,_TIF_32BIT
+	andis.	r10,r10,_TIF_32BIT@h
 	beq	15f
 	addi	r11,r11,8	/* use 32-bit syscall entries */
 	clrldi	r3,r3,32
@@ -624,6 +624,10 @@ _GLOBAL(_switch)
 
 	addi	r6,r4,-THREAD	/* Convert THREAD to 'current' */
 	std	r6,PACACURRENT(r13)	/* Set new 'current' */
+#if defined(CONFIG_STACKPROTECTOR)
+	ld	r6, TASK_CANARY(r6)
+	std	r6, PACA_CANARY(r13)
+#endif
 
 	ld	r8,KSP(r4)	/* new stack pointer */
 #ifdef CONFIG_PPC_BOOK3S_64
