@@ -140,7 +140,7 @@ static void debug_print_probes(struct tracepoint_func *funcs)
 
 static struct tracepoint_func *
 func_add(struct tracepoint_func **funcs, struct tracepoint_func *tp_func,
-	 int prio)
+	 int prio, int *tot_probes)
 {
 	struct tracepoint_func *old, *new;
 	int nr_probes = 0;
@@ -183,11 +183,12 @@ func_add(struct tracepoint_func **funcs, struct tracepoint_func *tp_func,
 	new[nr_probes + 1].func = NULL;
 	*funcs = new;
 	debug_print_probes(*funcs);
+	*tot_probes = nr_probes + 1;
 	return old;
 }
 
 static void *func_remove(struct tracepoint_func **funcs,
-		struct tracepoint_func *tp_func)
+		struct tracepoint_func *tp_func, int *left)
 {
 	int nr_probes = 0, nr_del = 0, i;
 	struct tracepoint_func *old, *new;
@@ -241,6 +242,7 @@ static int tracepoint_add_func(struct tracepoint *tp,
 			       struct tracepoint_func *func, int prio)
 {
 	struct tracepoint_func *old, *tp_funcs;
+	int probes = 0;
 	int ret;
 
 	if (tp->regfunc && !static_key_enabled(&tp->key)) {
@@ -251,7 +253,7 @@ static int tracepoint_add_func(struct tracepoint *tp,
 
 	tp_funcs = rcu_dereference_protected(tp->funcs,
 			lockdep_is_held(&tracepoints_mutex));
-	old = func_add(&tp_funcs, func, prio);
+	old = func_add(&tp_funcs, func, prio, &probes);
 	if (IS_ERR(old)) {
 		WARN_ON_ONCE(PTR_ERR(old) != -ENOMEM);
 		return PTR_ERR(old);
@@ -266,6 +268,15 @@ static int tracepoint_add_func(struct tracepoint *tp,
 	rcu_assign_pointer(tp->funcs, tp_funcs);
 	if (!static_key_enabled(&tp->key))
 		static_key_slow_inc(&tp->key);
+
+	if (probes == 1) {
+		printk("make direct call to %pS\n", tp_funcs->func);
+		__static_call_update(tp->static_call_key, tp_funcs->func);
+	} else {
+		printk("[%d] make call to iterator %pS\n", probes, tp->iterator);
+		__static_call_update(tp->static_call_key, tp->iterator);
+	}
+
 	release_probes(old);
 	return 0;
 }
@@ -280,10 +291,11 @@ static int tracepoint_remove_func(struct tracepoint *tp,
 		struct tracepoint_func *func)
 {
 	struct tracepoint_func *old, *tp_funcs;
+	int probes_left = 0;
 
 	tp_funcs = rcu_dereference_protected(tp->funcs,
 			lockdep_is_held(&tracepoints_mutex));
-	old = func_remove(&tp_funcs, func);
+	old = func_remove(&tp_funcs, func, &probes_left);
 	if (IS_ERR(old)) {
 		WARN_ON_ONCE(PTR_ERR(old) != -ENOMEM);
 		return PTR_ERR(old);
@@ -297,6 +309,15 @@ static int tracepoint_remove_func(struct tracepoint *tp,
 		if (static_key_enabled(&tp->key))
 			static_key_slow_dec(&tp->key);
 	}
+
+	if (probes_left == 1) {
+		printk("make direct call to %pS\n", tp_funcs->func);
+		__static_call_update(tp->static_call_key, tp_funcs->func);
+	} else {
+		printk("[%d] make call to iterator %pS\n", probes_left, tp->iterator);
+		__static_call_update(tp->static_call_key, tp->iterator);
+	}
+
 	rcu_assign_pointer(tp->funcs, tp_funcs);
 	release_probes(old);
 	return 0;
