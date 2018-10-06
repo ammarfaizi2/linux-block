@@ -120,6 +120,8 @@ static __always_inline int handle_ipv4(struct xdp_md *xdp, struct iptnl_info *tn
 	/* can offload */
 	payload_len = ntohs(iph->tot_len);
 
+	/* hack to disable meta data */
+	bpf_xdp_adjust_meta(xdp, 32);
 	/* The vip key is found.  Add an IP header and send it out */
 	if (bpf_xdp_adjust_head(xdp, 0 - (int)sizeof(struct iphdr)))
 		return XDP_DROP;
@@ -196,8 +198,9 @@ static __always_inline int handle_ipv6(struct xdp_md *xdp, struct iptnl_info *tn
 
 	payload_len = ip6h->payload_len;
 
+	/* hack to disable meta data */
+	bpf_xdp_adjust_meta(xdp, 32);
 	/* The vip key is found.  Add an IP header and send it out */
-
 	if (bpf_xdp_adjust_head(xdp, 0 - (int)sizeof(struct ipv6hdr)))
 		return XDP_DROP;
 
