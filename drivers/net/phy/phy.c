@@ -537,7 +537,7 @@ out_unlock:
 	mutex_unlock(&phydev->lock);
 
 	if (trigger)
-		phy_trigger_machine(phydev, sync);
+		phy_trigger_machine(phydev);
 
 	return err;
 }
@@ -635,6 +635,13 @@ int phy_speed_up(struct phy_device *phydev)
 }
 EXPORT_SYMBOL_GPL(phy_speed_up);
 
+static void phy_queue_state_machine(struct phy_device *phydev,
+				    unsigned int secs)
+{
+	mod_delayed_work(system_power_efficient_wq, &phydev->state_queue,
+			 secs * HZ);
+}
+
 /**
  * phy_start_machine - start PHY state machine tracking
  * @phydev: the phy_device struct
@@ -647,7 +654,7 @@ EXPORT_SYMBOL_GPL(phy_speed_up);
  */
 void phy_start_machine(struct phy_device *phydev)
 {
-	queue_delayed_work(system_power_efficient_wq, &phydev->state_queue, HZ);
+	phy_queue_state_machine(phydev, 1);
 }
 EXPORT_SYMBOL_GPL(phy_start_machine);
 
@@ -655,19 +662,14 @@ EXPORT_SYMBOL_GPL(phy_start_machine);
  * phy_trigger_machine - trigger the state machine to run
  *
  * @phydev: the phy_device struct
- * @sync: indicate whether we should wait for the workqueue cancelation
  *
  * Description: There has been a change in state which requires that the
  *   state machine runs.
  */
 
-void phy_trigger_machine(struct phy_device *phydev, bool sync)
+void phy_trigger_machine(struct phy_device *phydev)
 {
-	if (sync)
-		cancel_delayed_work_sync(&phydev->state_queue);
-	else
-		cancel_delayed_work(&phydev->state_queue);
-	queue_delayed_work(system_power_efficient_wq, &phydev->state_queue, 0);
+	phy_queue_state_machine(phydev, 0);
 }
 
 /**
@@ -703,7 +705,7 @@ static void phy_error(struct phy_device *phydev)
 	phydev->state = PHY_HALTED;
 	mutex_unlock(&phydev->lock);
 
-	phy_trigger_machine(phydev, false);
+	phy_trigger_machine(phydev);
 }
 
 /**
@@ -745,7 +747,7 @@ static irqreturn_t phy_change(struct phy_device *phydev)
 	mutex_unlock(&phydev->lock);
 
 	/* reschedule state queue work to run as soon as possible */
-	phy_trigger_machine(phydev, true);
+	phy_trigger_machine(phydev);
 
 	if (phy_interrupt_is_valid(phydev) && phy_clear_interrupt(phydev))
 		goto phy_err;
@@ -861,6 +863,8 @@ void phy_stop(struct phy_device *phydev)
 out_unlock:
 	mutex_unlock(&phydev->lock);
 
+	phy_state_machine(&phydev->state_queue.work);
+
 	/* Cannot call flush_scheduled_work() here as desired because
 	 * of rtnl_lock(), but PHY_HALTED shall guarantee phy_change()
 	 * will not reenable interrupts.
@@ -909,7 +913,7 @@ void phy_start(struct phy_device *phydev)
 	}
 	mutex_unlock(&phydev->lock);
 
-	phy_trigger_machine(phydev, true);
+	phy_trigger_machine(phydev);
 }
 EXPORT_SYMBOL(phy_start);
 
@@ -1121,11 +1125,14 @@ void phy_state_machine(struct work_struct *work)
 
 	/* Only re-schedule a PHY state machine change if we are polling the
 	 * PHY, if PHY_IGNORE_INTERRUPT is set, then we will be moving
-	 * between states from phy_mac_interrupt()
+	 * between states from phy_mac_interrupt().
+	 *
+	 * In state PHY_HALTED the PHY gets suspended, so rescheduling the
+	 * state machine would be pointless and possibly error prone when
+	 * called from phy_disconnect() synchronously.
 	 */
-	if (phy_polling_mode(phydev))
-		queue_delayed_work(system_power_efficient_wq, &phydev->state_queue,
-				   PHY_STATE_TIME * HZ);
+	if (phy_polling_mode(phydev) && old_state != PHY_HALTED)
+		phy_queue_state_machine(phydev, PHY_STATE_TIME);
 }
 
 /**

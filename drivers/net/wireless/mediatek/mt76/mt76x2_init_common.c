@@ -17,40 +17,7 @@
 
 #include "mt76x2.h"
 #include "mt76x2_eeprom.h"
-
-#define CCK_RATE(_idx, _rate) {					\
-	.bitrate = _rate,					\
-	.flags = IEEE80211_RATE_SHORT_PREAMBLE,			\
-	.hw_value = (MT_PHY_TYPE_CCK << 8) | _idx,		\
-	.hw_value_short = (MT_PHY_TYPE_CCK << 8) | (8 + _idx),	\
-}
-
-#define OFDM_RATE(_idx, _rate) {				\
-	.bitrate = _rate,					\
-	.hw_value = (MT_PHY_TYPE_OFDM << 8) | _idx,		\
-	.hw_value_short = (MT_PHY_TYPE_OFDM << 8) | _idx,	\
-}
-
-struct ieee80211_rate mt76x2_rates[] = {
-	CCK_RATE(0, 10),
-	CCK_RATE(1, 20),
-	CCK_RATE(2, 55),
-	CCK_RATE(3, 110),
-	OFDM_RATE(0, 60),
-	OFDM_RATE(1, 90),
-	OFDM_RATE(2, 120),
-	OFDM_RATE(3, 180),
-	OFDM_RATE(4, 240),
-	OFDM_RATE(5, 360),
-	OFDM_RATE(6, 480),
-	OFDM_RATE(7, 540),
-};
-EXPORT_SYMBOL_GPL(mt76x2_rates);
-
-struct mt76x2_reg_pair {
-	u32 reg;
-	u32 value;
-};
+#include "mt76x02_phy.h"
 
 static void
 mt76x2_set_wlan_state(struct mt76x2_dev *dev, bool enable)
@@ -72,6 +39,9 @@ void mt76x2_reset_wlan(struct mt76x2_dev *dev, bool enable)
 {
 	u32 val;
 
+	if (!enable)
+		goto out;
+
 	val = mt76_rr(dev, MT_WLAN_FUN_CTRL);
 
 	val &= ~MT_WLAN_FUN_CTRL_FRC_WL_ANT_SEL;
@@ -87,20 +57,10 @@ void mt76x2_reset_wlan(struct mt76x2_dev *dev, bool enable)
 	mt76_wr(dev, MT_WLAN_FUN_CTRL, val);
 	udelay(20);
 
+out:
 	mt76x2_set_wlan_state(dev, enable);
 }
 EXPORT_SYMBOL_GPL(mt76x2_reset_wlan);
-
-static void
-mt76x2_write_reg_pairs(struct mt76x2_dev *dev,
-		       const struct mt76x2_reg_pair *data, int len)
-{
-	while (len > 0) {
-		mt76_wr(dev, data->reg, data->value);
-		len--;
-		data++;
-	}
-}
 
 void mt76_write_mac_initvals(struct mt76x2_dev *dev)
 {
@@ -128,7 +88,7 @@ void mt76_write_mac_initvals(struct mt76x2_dev *dev)
 	 FIELD_PREP(MT_PROT_CFG_NAV, 1) |			\
 	 FIELD_PREP(MT_PROT_CFG_TXOP_ALLOW, 0x3f))
 
-	static const struct mt76x2_reg_pair vals[] = {
+	static const struct mt76_reg_pair vals[] = {
 		/* Copied from MediaTek reference source */
 		{ MT_PBF_SYS_CTRL,		0x00080c00 },
 		{ MT_PBF_CFG,			0x1efebcff },
@@ -184,7 +144,7 @@ void mt76_write_mac_initvals(struct mt76x2_dev *dev)
 		{ MT_PROT_AUTO_TX_CFG,		0x00830083 },
 		{ MT_HT_CTRL_CFG,		0x000001ff },
 	};
-	struct mt76x2_reg_pair prot_vals[] = {
+	struct mt76_reg_pair prot_vals[] = {
 		{ MT_CCK_PROT_CFG,		DEFAULT_PROT_CFG_CCK },
 		{ MT_OFDM_PROT_CFG,		DEFAULT_PROT_CFG_OFDM },
 		{ MT_MM20_PROT_CFG,		DEFAULT_PROT_CFG_20 },
@@ -193,8 +153,8 @@ void mt76_write_mac_initvals(struct mt76x2_dev *dev)
 		{ MT_GF40_PROT_CFG,		DEFAULT_PROT_CFG_40 },
 	};
 
-	mt76x2_write_reg_pairs(dev, vals, ARRAY_SIZE(vals));
-	mt76x2_write_reg_pairs(dev, prot_vals, ARRAY_SIZE(prot_vals));
+	mt76_wr_rp(dev, 0, vals, ARRAY_SIZE(vals));
+	mt76_wr_rp(dev, 0, prot_vals, ARRAY_SIZE(prot_vals));
 }
 EXPORT_SYMBOL_GPL(mt76_write_mac_initvals);
 
@@ -208,8 +168,8 @@ void mt76x2_init_device(struct mt76x2_dev *dev)
 	hw->max_rate_tries = 1;
 	hw->extra_tx_headroom = 2;
 
-	hw->sta_data_size = sizeof(struct mt76x2_sta);
-	hw->vif_data_size = sizeof(struct mt76x2_vif);
+	hw->sta_data_size = sizeof(struct mt76x02_sta);
+	hw->vif_data_size = sizeof(struct mt76x02_vif);
 
 	ieee80211_hw_set(hw, SUPPORTS_HT_CCK_RATES);
 	ieee80211_hw_set(hw, SUPPORTS_REORDERING_BUFFER);
@@ -217,9 +177,9 @@ void mt76x2_init_device(struct mt76x2_dev *dev)
 	dev->mt76.sband_2g.sband.ht_cap.cap |= IEEE80211_HT_CAP_LDPC_CODING;
 	dev->mt76.sband_5g.sband.ht_cap.cap |= IEEE80211_HT_CAP_LDPC_CODING;
 
-	dev->chainmask = 0x202;
-	dev->global_wcid.idx = 255;
-	dev->global_wcid.hw_key_idx = -1;
+	dev->mt76.chainmask = 0x202;
+	dev->mt76.global_wcid.idx = 255;
+	dev->mt76.global_wcid.hw_key_idx = -1;
 	dev->slottime = 9;
 
 	/* init antenna configuration */
@@ -248,7 +208,7 @@ void mt76x2_init_txpower(struct mt76x2_dev *dev,
 
 		mt76x2_get_rate_power(dev, &t, chan);
 
-		chan->max_power = mt76x2_get_max_rate_power(&t) +
+		chan->max_power = mt76x02_get_max_rate_power(&t) +
 				  target_power;
 		chan->max_power /= 2;
 

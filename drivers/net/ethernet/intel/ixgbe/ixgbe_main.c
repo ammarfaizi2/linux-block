@@ -159,7 +159,7 @@ MODULE_PARM_DESC(debug, "Debug level (0=none,...,16=all)");
 
 MODULE_AUTHOR("Intel Corporation, <linux.nics@intel.com>");
 MODULE_DESCRIPTION("Intel(R) 10 Gigabit PCI Express Network Driver");
-MODULE_LICENSE("GPL");
+MODULE_LICENSE("GPL v2");
 MODULE_VERSION(DRV_VERSION);
 
 static struct workqueue_struct *ixgbe_wq;
@@ -7775,6 +7775,33 @@ static void ixgbe_reset_subtask(struct ixgbe_adapter *adapter)
 }
 
 /**
+ * ixgbe_check_fw_error - Check firmware for errors
+ * @adapter: the adapter private structure
+ *
+ * Check firmware errors in register FWSM
+ */
+static bool ixgbe_check_fw_error(struct ixgbe_adapter *adapter)
+{
+	struct ixgbe_hw *hw = &adapter->hw;
+	u32 fwsm;
+
+	/* read fwsm.ext_err_ind register and log errors */
+	fwsm = IXGBE_READ_REG(hw, IXGBE_FWSM(hw));
+
+	if (fwsm & IXGBE_FWSM_EXT_ERR_IND_MASK ||
+	    !(fwsm & IXGBE_FWSM_FW_VAL_BIT))
+		e_dev_warn("Warning firmware error detected FWSM: 0x%08X\n",
+			   fwsm);
+
+	if (hw->mac.ops.fw_recovery_mode && hw->mac.ops.fw_recovery_mode(hw)) {
+		e_dev_err("Firmware recovery mode detected. Limiting functionality. Refer to the Intel(R) Ethernet Adapters and Devices User Guide for details on firmware recovery mode.\n");
+		return true;
+	}
+
+	return false;
+}
+
+/**
  * ixgbe_service_task - manages and runs subtasks
  * @work: pointer to work_struct containing our data
  **/
@@ -7787,6 +7814,15 @@ static void ixgbe_service_task(struct work_struct *work)
 		if (!test_bit(__IXGBE_DOWN, &adapter->state)) {
 			rtnl_lock();
 			ixgbe_down(adapter);
+			rtnl_unlock();
+		}
+		ixgbe_service_event_complete(adapter);
+		return;
+	}
+	if (ixgbe_check_fw_error(adapter)) {
+		if (!test_bit(__IXGBE_DOWN, &adapter->state)) {
+			rtnl_lock();
+			unregister_netdev(adapter->netdev);
 			rtnl_unlock();
 		}
 		ixgbe_service_event_complete(adapter);
@@ -8767,28 +8803,6 @@ static int ixgbe_del_sanmac_netdev(struct net_device *dev)
 	}
 	return err;
 }
-
-#ifdef CONFIG_NET_POLL_CONTROLLER
-/*
- * Polling 'interrupt' - used by things like netconsole to send skbs
- * without having to re-enable interrupts. It's not called while
- * the interrupt routine is executing.
- */
-static void ixgbe_netpoll(struct net_device *netdev)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(netdev);
-	int i;
-
-	/* if interface is down do nothing */
-	if (test_bit(__IXGBE_DOWN, &adapter->state))
-		return;
-
-	/* loop through and schedule all active queues */
-	for (i = 0; i < adapter->num_q_vectors; i++)
-		ixgbe_msix_clean_rings(0, adapter->q_vector[i]);
-}
-
-#endif
 
 static void ixgbe_get_ring_stats64(struct rtnl_link_stats64 *stats,
 				   struct ixgbe_ring *ring)
@@ -10251,9 +10265,6 @@ static const struct net_device_ops ixgbe_netdev_ops = {
 	.ndo_get_vf_config	= ixgbe_ndo_get_vf_config,
 	.ndo_get_stats64	= ixgbe_get_stats64,
 	.ndo_setup_tc		= __ixgbe_setup_tc,
-#ifdef CONFIG_NET_POLL_CONTROLLER
-	.ndo_poll_controller	= ixgbe_netpoll,
-#endif
 #ifdef IXGBE_FCOE
 	.ndo_select_queue	= ixgbe_select_queue,
 	.ndo_fcoe_ddp_setup = ixgbe_fcoe_ddp_get,
@@ -10715,6 +10726,11 @@ skip_sriov:
 		netdev->hw_features |= NETIF_F_LRO;
 	if (adapter->flags2 & IXGBE_FLAG2_RSC_ENABLED)
 		netdev->features |= NETIF_F_LRO;
+
+	if (ixgbe_check_fw_error(adapter)) {
+		err = -EIO;
+		goto err_sw_init;
+	}
 
 	/* make sure the EEPROM is good */
 	if (hw->eeprom.ops.validate_checksum(hw, NULL) < 0) {

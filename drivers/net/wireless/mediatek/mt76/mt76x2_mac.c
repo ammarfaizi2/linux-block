@@ -19,6 +19,7 @@
 #include "mt76x2_mcu.h"
 #include "mt76x2_eeprom.h"
 #include "mt76x2_trace.h"
+#include "mt76x02_util.h"
 
 void mt76x2_mac_set_bssid(struct mt76x2_dev *dev, u8 idx, const u8 *addr)
 {
@@ -30,7 +31,7 @@ void mt76x2_mac_set_bssid(struct mt76x2_dev *dev, u8 idx, const u8 *addr)
 
 void mt76x2_mac_poll_tx_status(struct mt76x2_dev *dev, bool irq)
 {
-	struct mt76x2_tx_status stat = {};
+	struct mt76x02_tx_status stat = {};
 	unsigned long flags;
 	u8 update = 1;
 	bool ret;
@@ -41,9 +42,9 @@ void mt76x2_mac_poll_tx_status(struct mt76x2_dev *dev, bool irq)
 	trace_mac_txstat_poll(dev);
 
 	while (!irq || !kfifo_is_full(&dev->txstatus_fifo)) {
-		spin_lock_irqsave(&dev->irq_lock, flags);
-		ret = mt76x2_mac_load_tx_status(dev, &stat);
-		spin_unlock_irqrestore(&dev->irq_lock, flags);
+		spin_lock_irqsave(&dev->mt76.mmio.irq_lock, flags);
+		ret = mt76x02_mac_load_tx_status(&dev->mt76, &stat);
+		spin_unlock_irqrestore(&dev->mt76.mmio.irq_lock, flags);
 
 		if (!ret)
 			break;
@@ -51,7 +52,7 @@ void mt76x2_mac_poll_tx_status(struct mt76x2_dev *dev, bool irq)
 		trace_mac_txstat_fetch(dev, &stat);
 
 		if (!irq) {
-			mt76x2_send_tx_status(dev, &stat, &update);
+			mt76x02_send_tx_status(&dev->mt76, &stat, &update);
 			continue;
 		}
 
@@ -64,7 +65,7 @@ mt76x2_mac_queue_txdone(struct mt76x2_dev *dev, struct sk_buff *skb,
 			void *txwi_ptr)
 {
 	struct mt76x2_tx_info *txi = mt76x2_skb_tx_info(skb);
-	struct mt76x2_txwi *txwi = txwi_ptr;
+	struct mt76x02_txwi *txwi = txwi_ptr;
 
 	mt76x2_mac_poll_tx_status(dev, false);
 
@@ -73,16 +74,16 @@ mt76x2_mac_queue_txdone(struct mt76x2_dev *dev, struct sk_buff *skb,
 	txi->wcid = txwi->wcid;
 	txi->pktid = txwi->pktid;
 	trace_mac_txdone_add(dev, txwi->wcid, txwi->pktid);
-	mt76x2_tx_complete(dev, skb);
+	mt76x02_tx_complete(&dev->mt76, skb);
 }
 
 void mt76x2_mac_process_tx_status_fifo(struct mt76x2_dev *dev)
 {
-	struct mt76x2_tx_status stat;
+	struct mt76x02_tx_status stat;
 	u8 update = 1;
 
 	while (kfifo_get(&dev->txstatus_fifo, &stat))
-		mt76x2_send_tx_status(dev, &stat, &update);
+		mt76x02_send_tx_status(&dev->mt76, &stat, &update);
 }
 
 void mt76x2_tx_complete_skb(struct mt76_dev *mdev, struct mt76_queue *q,
@@ -99,10 +100,10 @@ void mt76x2_tx_complete_skb(struct mt76_dev *mdev, struct mt76_queue *q,
 static int
 mt76_write_beacon(struct mt76x2_dev *dev, int offset, struct sk_buff *skb)
 {
-	int beacon_len = dev->beacon_offsets[1] - dev->beacon_offsets[0];
-	struct mt76x2_txwi txwi;
+	int beacon_len = mt76x02_beacon_offsets[1] - mt76x02_beacon_offsets[0];
+	struct mt76x02_txwi txwi;
 
-	if (WARN_ON_ONCE(beacon_len < skb->len + sizeof(struct mt76x2_txwi)))
+	if (WARN_ON_ONCE(beacon_len < skb->len + sizeof(struct mt76x02_txwi)))
 		return -ENOSPC;
 
 	mt76x2_mac_write_txwi(dev, &txwi, skb, NULL, NULL, skb->len);
@@ -117,8 +118,8 @@ mt76_write_beacon(struct mt76x2_dev *dev, int offset, struct sk_buff *skb)
 static int
 __mt76x2_mac_set_beacon(struct mt76x2_dev *dev, u8 bcn_idx, struct sk_buff *skb)
 {
-	int beacon_len = dev->beacon_offsets[1] - dev->beacon_offsets[0];
-	int beacon_addr = dev->beacon_offsets[bcn_idx];
+	int beacon_len = mt76x02_beacon_offsets[1] - mt76x02_beacon_offsets[0];
+	int beacon_addr = mt76x02_beacon_offsets[bcn_idx];
 	int ret = 0;
 	int i;
 
@@ -128,8 +129,7 @@ __mt76x2_mac_set_beacon(struct mt76x2_dev *dev, u8 bcn_idx, struct sk_buff *skb)
 	if (skb) {
 		ret = mt76_write_beacon(dev, beacon_addr, skb);
 		if (!ret)
-			dev->beacon_data_mask |= BIT(bcn_idx) &
-						 dev->beacon_mask;
+			dev->beacon_data_mask |= BIT(bcn_idx);
 	} else {
 		dev->beacon_data_mask &= ~BIT(bcn_idx);
 		for (i = 0; i < beacon_len; i += 4)
@@ -201,9 +201,9 @@ void mt76x2_mac_set_beacon_enable(struct mt76x2_dev *dev, u8 vif_idx, bool val)
 	mt76_rmw(dev, MT_BEACON_TIME_CFG, reg, reg * en);
 
 	if (en)
-		mt76x2_irq_enable(dev, MT_INT_PRE_TBTT | MT_INT_TBTT);
+		mt76x02_irq_enable(&dev->mt76, MT_INT_PRE_TBTT | MT_INT_TBTT);
 	else
-		mt76x2_irq_disable(dev, MT_INT_PRE_TBTT | MT_INT_TBTT);
+		mt76x02_irq_disable(&dev->mt76, MT_INT_PRE_TBTT | MT_INT_TBTT);
 }
 
 void mt76x2_update_channel(struct mt76_dev *mdev)
