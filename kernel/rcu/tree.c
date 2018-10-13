@@ -2679,7 +2679,7 @@ void rcu_fwd_progress_check(unsigned long j)
 	unsigned long cbs;
 	int cpu;
 	unsigned long max_cbs = 0;
-	int max_cpu;
+	int max_cpu = -1;
 	struct rcu_data *rdp;
 
 	if (rcu_gp_in_progress()) {
