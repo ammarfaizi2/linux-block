@@ -334,6 +334,7 @@
 #include <linux/syscalls.h>
 #include <linux/completion.h>
 #include <linux/uuid.h>
+#include <linux/debugfs.h>
 #include <crypto/chacha.h>
 
 #include <asm/processor.h>
@@ -1751,6 +1752,40 @@ int __init rand_initialize(void)
 	}
 	return 0;
 }
+
+static ssize_t initialized_read(struct file *file,
+	char __user *user_buf, size_t count, loff_t *ppos)
+{
+        return simple_read_from_buffer(user_buf, count, ppos,
+				       crng_ready() ? "1" : "0", 2);
+}
+
+static ssize_t initialized_write(struct file *file,
+	const char __user *user_buf, size_t count, loff_t *ppos)
+{
+	return -EINVAL;
+}
+
+static const struct file_operations initialized_fops = {
+	.read =		initialized_read,
+	.write =	initialized_write,
+	.llseek =	default_llseek,
+};
+
+static int __init rand_debugfs_initialize(void)
+{
+	struct dentry *dir;
+
+	dir = debugfs_create_dir("random", NULL);
+	if (!dir)
+		return 0;	/* just skip the rest */
+
+	debugfs_create_file("initialized", 0600, dir, NULL,
+			    &initialized_fops);
+
+	return 0;
+}
+subsys_initcall(rand_debugfs_initialize);
 
 #ifdef CONFIG_BLOCK
 void rand_initialize_disk(struct gendisk *disk)
