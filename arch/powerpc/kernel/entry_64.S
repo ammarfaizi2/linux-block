@@ -386,10 +386,9 @@ END_FTR_SECTION_IFSET(CPU_FTR_HAS_PPR)
 
 4:	/* Anything else left to do? */
 BEGIN_FTR_SECTION
-	lis	r3,INIT_PPR@highest	/* Set thread.ppr = 3 */
-	ld	r10,PACACURRENT(r13)
+	lis	r3,DEFAULT_PPR@highest	/* Set default PPR */
 	sldi	r3,r3,32	/* bits 11-13 are used for ppr */
-	std	r3,TASKTHREADPPR(r10)
+	std	r3,_PPR(r1)
 END_FTR_SECTION_IFSET(CPU_FTR_HAS_PPR)
 
 	andi.	r0,r9,(_TIF_SYSCALL_DOTRACE|_TIF_SINGLESTEP)
@@ -942,12 +941,6 @@ fast_exception_return:
 	andi.	r0,r3,MSR_RI
 	beq-	.Lunrecov_restore
 
-	/* Load PPR from thread struct before we clear MSR:RI */
-BEGIN_FTR_SECTION
-	ld	r2,PACACURRENT(r13)
-	ld	r2,TASKTHREADPPR(r2)
-END_FTR_SECTION_IFSET(CPU_FTR_HAS_PPR)
-
 	/*
 	 * Clear RI before restoring r13.  If we are returning to
 	 * userspace and we take an exception after restoring r13,
@@ -968,7 +961,9 @@ END_FTR_SECTION_IFSET(CPU_FTR_HAS_PPR)
 	andi.	r0,r3,MSR_PR
 	beq	1f
 BEGIN_FTR_SECTION
-	mtspr	SPRN_PPR,r2	/* Restore PPR */
+	/* Restore PPR */
+	ld	r2,_PPR(r1)
+	mtspr	SPRN_PPR,r2
 END_FTR_SECTION_IFSET(CPU_FTR_HAS_PPR)
 	ACCOUNT_CPU_USER_EXIT(r13, r2, r4)
 	REST_GPR(13, r1)
@@ -1124,7 +1119,7 @@ _ASM_NOKPROBE_SYMBOL(fast_exception_return);
 _GLOBAL(enter_rtas)
 	mflr	r0
 	std	r0,16(r1)
-        stdu	r1,-RTAS_FRAME_SIZE(r1)	/* Save SP and create stack space. */
+        stdu	r1,-SWITCH_FRAME_SIZE(r1) /* Save SP and create stack space. */
 
 	/* Because RTAS is running in 32b mode, it clobbers the high order half
 	 * of all registers that it saves.  We therefore save those registers
@@ -1256,7 +1251,7 @@ rtas_restore_regs:
 	ld	r8,_DSISR(r1)
 	mtdsisr	r8
 
-        addi	r1,r1,RTAS_FRAME_SIZE	/* Unstack our frame */
+        addi	r1,r1,SWITCH_FRAME_SIZE	/* Unstack our frame */
 	ld	r0,16(r1)		/* get return address */
 
 	mtlr    r0
@@ -1267,7 +1262,7 @@ rtas_restore_regs:
 _GLOBAL(enter_prom)
 	mflr	r0
 	std	r0,16(r1)
-        stdu	r1,-PROM_FRAME_SIZE(r1)	/* Save SP and create stack space */
+        stdu	r1,-SWITCH_FRAME_SIZE(r1) /* Save SP and create stack space */
 
 	/* Because PROM is running in 32b mode, it clobbers the high order half
 	 * of all registers that it saves.  We therefore save those registers
@@ -1324,8 +1319,8 @@ _GLOBAL(enter_prom)
 	REST_10GPRS(22, r1)
 	ld	r4,_CCR(r1)
 	mtcr	r4
-	
-        addi	r1,r1,PROM_FRAME_SIZE
+
+        addi	r1,r1,SWITCH_FRAME_SIZE
 	ld	r0,16(r1)
 	mtlr    r0
         blr

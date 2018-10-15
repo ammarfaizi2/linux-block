@@ -87,7 +87,7 @@
 #define OF_WORKAROUNDS	0
 #else
 #define OF_WORKAROUNDS	of_workarounds
-int of_workarounds;
+static int of_workarounds;
 #endif
 
 #define OF_WA_CLAIM	1	/* do phys/virt claim separately, then map */
@@ -922,7 +922,7 @@ struct ibm_arch_vec __cacheline_aligned ibm_architecture_vec = {
 
 /* Old method - ELF header with PT_NOTE sections only works on BE */
 #ifdef __BIG_ENDIAN__
-static struct fake_elf {
+static const struct fake_elf {
 	Elf32_Ehdr	elfhdr;
 	Elf32_Phdr	phdr[2];
 	struct chrpnote {
@@ -2205,7 +2205,7 @@ static void __init prom_check_displays(void)
 	ihandle ih;
 	int i;
 
-	static unsigned char default_colors[] = {
+	static const unsigned char default_colors[] = {
 		0x00, 0x00, 0x00,
 		0x00, 0x00, 0xaa,
 		0x00, 0xaa, 0x00,

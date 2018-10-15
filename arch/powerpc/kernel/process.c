@@ -43,6 +43,7 @@
 #include <linux/uaccess.h>
 #include <linux/elf-randomize.h>
 #include <linux/pkeys.h>
+#include <linux/seq_buf.h>
 
 #include <asm/pgtable.h>
 #include <asm/io.h>
@@ -65,6 +66,7 @@
 #include <asm/livepatch.h>
 #include <asm/cpu_has_feature.h>
 #include <asm/asm-prototypes.h>
+#include <asm/stacktrace.h>
 
 #include <linux/kprobes.h>
 #include <linux/kdebug.h>
@@ -1256,17 +1258,16 @@ struct task_struct *__switch_to(struct task_struct *prev,
 	return last;
 }
 
-static int instructions_to_print = 16;
+#define NR_INSN_TO_PRINT	16
 
 static void show_instructions(struct pt_regs *regs)
 {
 	int i;
-	unsigned long pc = regs->nip - (instructions_to_print * 3 / 4 *
-			sizeof(int));
+	unsigned long pc = regs->nip - (NR_INSN_TO_PRINT * 3 / 4 * sizeof(int));
 
 	printk("Instruction dump:");
 
-	for (i = 0; i < instructions_to_print; i++) {
+	for (i = 0; i < NR_INSN_TO_PRINT; i++) {
 		int instr;
 
 		if (!(i % 8))
@@ -1281,7 +1282,7 @@ static void show_instructions(struct pt_regs *regs)
 #endif
 
 		if (!__kernel_text_address(pc) ||
-		     probe_kernel_address((unsigned int __user *)pc, instr)) {
+		    probe_kernel_address((const void *)pc, instr)) {
 			pr_cont("XXXXXXXX ");
 		} else {
 			if (regs->nip == pc)
@@ -1299,43 +1300,43 @@ static void show_instructions(struct pt_regs *regs)
 void show_user_instructions(struct pt_regs *regs)
 {
 	unsigned long pc;
-	int i;
+	int n = NR_INSN_TO_PRINT;
+	struct seq_buf s;
+	char buf[96]; /* enough for 8 times 9 + 2 chars */
 
-	pc = regs->nip - (instructions_to_print * 3 / 4 * sizeof(int));
+	pc = regs->nip - (NR_INSN_TO_PRINT * 3 / 4 * sizeof(int));
 
 	/*
 	 * Make sure the NIP points at userspace, not kernel text/data or
 	 * elsewhere.
 	 */
-	if (!__access_ok(pc, instructions_to_print * sizeof(int), USER_DS)) {
+	if (!__access_ok(pc, NR_INSN_TO_PRINT * sizeof(int), USER_DS)) {
 		pr_info("%s[%d]: Bad NIP, not dumping instructions.\n",
 			current->comm, current->pid);
 		return;
 	}
 
-	pr_info("%s[%d]: code: ", current->comm, current->pid);
+	seq_buf_init(&s, buf, sizeof(buf));
 
-	for (i = 0; i < instructions_to_print; i++) {
-		int instr;
+	while (n) {
+		int i;
 
-		if (!(i % 8) && (i > 0)) {
-			pr_cont("\n");
-			pr_info("%s[%d]: code: ", current->comm, current->pid);
+		seq_buf_clear(&s);
+
+		for (i = 0; i < 8 && n; i++, n--, pc += sizeof(int)) {
+			int instr;
+
+			if (probe_kernel_address((const void *)pc, instr)) {
+				seq_buf_printf(&s, "XXXXXXXX ");
+				continue;
+			}
+			seq_buf_printf(&s, regs->nip == pc ? "<%08x> " : "%08x ", instr);
 		}
 
-		if (probe_kernel_address((unsigned int __user *)pc, instr)) {
-			pr_cont("XXXXXXXX ");
-		} else {
-			if (regs->nip == pc)
-				pr_cont("<%08x> ", instr);
-			else
-				pr_cont("%08x ", instr);
-		}
-
-		pc += sizeof(int);
+		if (!seq_buf_has_overflowed(&s))
+			pr_info("%s[%d]: code: %s\n", current->comm,
+				current->pid, s.buffer);
 	}
-
-	pr_cont("\n");
 }
 
 struct regbit {
@@ -1488,6 +1489,15 @@ void flush_thread(void)
 	set_debug_reg_defaults(&current->thread);
 #endif /* CONFIG_HAVE_HW_BREAKPOINT */
 }
+
+#ifdef CONFIG_PPC_BOOK3S_64
+void arch_setup_new_exec(void)
+{
+	if (radix_enabled())
+		return;
+	hash__setup_new_exec();
+}
+#endif
 
 int set_thread_uses_vas(void)
 {
@@ -1709,13 +1719,15 @@ int copy_thread(unsigned long clone_flags, unsigned long usp,
 		p->thread.dscr = mfspr(SPRN_DSCR);
 	}
 	if (cpu_has_feature(CPU_FTR_HAS_PPR))
-		p->thread.ppr = INIT_PPR;
+		childregs->ppr = DEFAULT_PPR;
 
 	p->thread.tidr = 0;
 #endif
 	kregs->nip = ppc_function_entry(f);
 	return 0;
 }
+
+void preload_new_slb_context(unsigned long start, unsigned long sp);
 
 /*
  * Set up a thread for executing a new program
@@ -1724,6 +1736,10 @@ void start_thread(struct pt_regs *regs, unsigned long start, unsigned long sp)
 {
 #ifdef CONFIG_PPC64
 	unsigned long load_addr = regs->gpr[2];	/* saved by ELF_PLAT_INIT */
+
+#ifdef CONFIG_PPC_BOOK3S_64
+	preload_new_slb_context(start, sp);
+#endif
 #endif
 
 	/*
@@ -1814,6 +1830,7 @@ void start_thread(struct pt_regs *regs, unsigned long start, unsigned long sp)
 #ifdef CONFIG_VSX
 	current->thread.used_vsr = 0;
 #endif
+	current->thread.load_slb = 0;
 	current->thread.load_fp = 0;
 	memset(&current->thread.fp_state, 0, sizeof(current->thread.fp_state));
 	current->thread.fp_save_area = NULL;

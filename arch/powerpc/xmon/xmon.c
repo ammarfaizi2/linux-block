@@ -2394,7 +2394,9 @@ static void dump_one_paca(int cpu)
 			}
 		}
 		DUMP(p, vmalloc_sllp, "%#-*x");
-		DUMP(p, stab_rr, "%#-*llx");
+		DUMP(p, stab_rr, "%#-*x");
+		DUMP(p, slb_used_bitmap, "%#-*x");
+		DUMP(p, slb_kern_bitmap, "%#-*x");
 
 		if (!early_cpu_has_feature(CPU_FTR_ARCH_300)) {
 			DUMP(p, slb_cache_ptr, "%#-*x");
@@ -2418,6 +2420,9 @@ static void dump_one_paca(int cpu)
 	DUMP(p, __current, "%-*px");
 	DUMP(p, kstack, "%#-*llx");
 	printf(" %-*s = 0x%016llx\n", 25, "kstack_base", p->kstack & ~(THREAD_SIZE - 1));
+#ifdef CONFIG_STACKPROTECTOR
+	DUMP(p, canary, "%#-*lx");
+#endif
 	DUMP(p, saved_r1, "%#-*llx");
 	DUMP(p, trap_save, "%#-*x");
 	DUMP(p, irq_soft_mask, "%#-*x");
@@ -2993,15 +2998,17 @@ static void show_task(struct task_struct *tsk)
 #ifdef CONFIG_PPC_BOOK3S_64
 void format_pte(void *ptep, unsigned long pte)
 {
+	pte_t entry = __pte(pte);
+
 	printf("ptep @ 0x%016lx = 0x%016lx\n", (unsigned long)ptep, pte);
 	printf("Maps physical address = 0x%016lx\n", pte & PTE_RPN_MASK);
 
 	printf("Flags = %s%s%s%s%s\n",
-	       (pte & _PAGE_ACCESSED) ? "Accessed " : "",
-	       (pte & _PAGE_DIRTY)    ? "Dirty " : "",
-	       (pte & _PAGE_READ)     ? "Read " : "",
-	       (pte & _PAGE_WRITE)    ? "Write " : "",
-	       (pte & _PAGE_EXEC)     ? "Exec " : "");
+	       pte_young(entry) ? "Accessed " : "",
+	       pte_dirty(entry) ? "Dirty " : "",
+	       pte_read(entry)  ? "Read " : "",
+	       pte_write(entry) ? "Write " : "",
+	       pte_exec(entry)  ? "Exec " : "");
 }
 
 static void show_pte(unsigned long addr)
