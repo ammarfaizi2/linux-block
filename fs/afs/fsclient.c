@@ -481,7 +481,6 @@ static int afs_deliver_fs_fetch_data(struct afs_call *call)
 	struct afs_vnode *vnode = call->reply[0];
 	struct afs_read *req = call->reply[2];
 	const __be32 *bp;
-	unsigned int size;
 	int ret;
 
 	_enter("{%u,%zu/%llu}",
@@ -490,8 +489,6 @@ static int afs_deliver_fs_fetch_data(struct afs_call *call)
 	switch (call->unmarshall) {
 	case 0:
 		req->actual_len = 0;
-		req->index = 0;
-		req->offset = req->pos & (PAGE_SIZE - 1);
 		call->unmarshall++;
 		if (call->operation_ID == FSFETCHDATA64) {
 			afs_extract_to_tmp64(call);
@@ -500,7 +497,10 @@ static int afs_deliver_fs_fetch_data(struct afs_call *call)
 			afs_extract_to_tmp(call);
 		}
 
-		/* Fall through - and extract the returned data length */
+		/* Fall through - and extract the returned data length into
+		 * ->actual_len.  This may indicate more or less data than was
+		 * requested will be returned.
+		 */
 	case 1:
 		_debug("extract data length");
 		ret = afs_extract_data(call, true);
@@ -509,45 +509,24 @@ static int afs_deliver_fs_fetch_data(struct afs_call *call)
 
 		req->actual_len = be64_to_cpu(call->tmp64);
 		_debug("DATA length: %llu", req->actual_len);
-		req->remain = min(req->len, req->actual_len);
-		if (req->remain == 0)
+
+		if (req->actual_len == 0)
 			goto no_more_data;
 
 		call->unmarshall++;
-
-	begin_page:
-		ASSERTCMP(req->index, <, req->nr_pages);
-		if (req->remain > PAGE_SIZE - req->offset)
-			size = PAGE_SIZE - req->offset;
-		else
-			size = req->remain;
-		call->bvec[0].bv_len = size;
-		call->bvec[0].bv_offset = req->offset;
-		call->bvec[0].bv_page = req->pages[req->index];
-		iov_iter_bvec(&call->iter, READ, call->bvec, 1, size);
-		ASSERTCMP(size, <=, PAGE_SIZE);
+		call->_iter = &req->iter;
+		iov_iter_truncate(&req->iter, min(req->actual_len, req->len));
 
 		/* Fall through - and extract the returned data */
 	case 2:
 		_debug("extract data %zu/%llu",
-		       iov_iter_count(&call->iter), req->remain);
+		       iov_iter_count(&call->iter), req->actual_len);
 
 		ret = afs_extract_data(call, true);
 		if (ret < 0)
 			return ret;
-		req->remain -= call->bvec[0].bv_len;
-		req->offset += call->bvec[0].bv_len;
-		ASSERTCMP(req->offset, <=, PAGE_SIZE);
-		if (req->offset == PAGE_SIZE) {
-			req->offset = 0;
-			if (req->page_done)
-				req->page_done(call, req);
-			req->index++;
-			if (req->remain > 0)
-				goto begin_page;
-		}
 
-		ASSERTCMP(req->remain, ==, 0);
+		call->_iter = &call->iter;
 		if (req->actual_len <= req->len)
 			goto no_more_data;
 
@@ -588,14 +567,8 @@ static int afs_deliver_fs_fetch_data(struct afs_call *call)
 		break;
 	}
 
-	for (; req->index < req->nr_pages; req->index++) {
-		if (req->offset < PAGE_SIZE)
-			zero_user_segment(req->pages[req->index],
-					  req->offset, PAGE_SIZE);
-		if (req->page_done)
-			req->page_done(call, req);
-		req->offset = 0;
-	}
+	if (req->read_successful)
+		req->read_successful(vnode, req);
 
 	_leave(" = 0 [done]");
 	return 0;
@@ -698,6 +671,7 @@ int afs_fs_fetch_data(struct afs_fs_cursor *fc, struct afs_read *req)
 	call->reply[2] = req;
 	call->expected_version = vnode->status.data_version;
 	call->want_reply_time = true;
+	req->call_debug_id = call->debug_id;
 
 	/* marshall the parameters */
 	bp = call->request;

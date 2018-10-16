@@ -35,6 +35,7 @@
 
 struct pagevec;
 struct afs_call;
+struct afs_vnode;
 
 /*
  * Partial file-locking emulation mode.  (The problem being that AFS3 only
@@ -214,16 +215,15 @@ struct afs_read {
 	loff_t			pos;		/* Where to start reading */
 	loff_t			len;		/* How much we're asking for */
 	loff_t			actual_len;	/* How much we're actually getting */
-	loff_t			remain;		/* Amount remaining */
 	loff_t			file_size;	/* File size returned by server */
 	afs_dataversion_t	data_version;	/* Version number returned by server */
 	refcount_t		usage;
-	unsigned int		index;		/* Which page we're reading into */
+	unsigned int		call_debug_id;
 	unsigned int		nr_pages;
-	unsigned int		offset;		/* offset into current page */
-	void (*page_done)(struct afs_call *, struct afs_read *);
-	struct page		**pages;
-	struct page		*array[];
+	int			error;
+	void (*read_successful)(struct afs_vnode *, struct afs_read *);
+	void (*cleanup)(struct afs_read *);
+	struct iov_iter		iter;		/* Buffer */
 };
 
 /*
@@ -923,7 +923,6 @@ extern void afs_put_wb_key(struct afs_wb_key *);
 extern int afs_open(struct inode *, struct file *);
 extern int afs_release(struct inode *, struct file *);
 extern int afs_fetch_data(struct afs_vnode *, struct key *, struct afs_read *);
-extern int afs_page_filler(void *, struct page *);
 extern void afs_put_read(struct afs_read *);
 
 /*
