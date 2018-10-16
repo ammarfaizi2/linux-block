@@ -26,6 +26,7 @@ enum iter_type {
 	ITER_KVEC,
 	ITER_BVEC,
 	ITER_PIPE,
+	ITER_DISCARD,
 };
 
 struct iov_iter {
@@ -71,6 +72,11 @@ static inline bool iov_iter_is_bvec(const struct iov_iter *i)
 static inline bool iov_iter_is_pipe(const struct iov_iter *i)
 {
 	return iov_iter_type(i) == ITER_PIPE;
+}
+
+static inline bool iov_iter_is_discard(const struct iov_iter *i)
+{
+	return iov_iter_type(i) == ITER_DISCARD;
 }
 
 static inline unsigned char iov_iter_rw(const struct iov_iter *i)
@@ -221,6 +227,7 @@ void iov_iter_bvec(struct iov_iter *i, unsigned int direction, const struct bio_
 			unsigned long nr_segs, size_t count);
 void iov_iter_pipe(struct iov_iter *i, unsigned int direction, struct pipe_inode_info *pipe,
 			size_t count);
+void iov_iter_discard(struct iov_iter *i, unsigned int direction, size_t count);
 ssize_t iov_iter_get_pages(struct iov_iter *i, struct page **pages,
 			size_t maxsize, unsigned maxpages, size_t *start);
 ssize_t iov_iter_get_pages_alloc(struct iov_iter *i, struct page ***pages,

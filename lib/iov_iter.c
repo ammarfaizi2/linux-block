@@ -91,6 +91,9 @@
 		case ITER_PIPE: {				\
 			break;					\
 		}						\
+		case ITER_DISCARD: {				\
+			break;					\
+		}						\
 		case ITER_IOVEC: {				\
 			const struct iovec *iov;		\
 			struct iovec v;				\
@@ -142,6 +145,10 @@
 			break;					\
 		}						\
 		case ITER_PIPE: {				\
+			break;					\
+		}						\
+		case ITER_DISCARD: {				\
+			skip += n;				\
 			break;					\
 		}						\
 		}						\
@@ -448,6 +455,7 @@ int iov_iter_fault_in_readable(struct iov_iter *i, size_t bytes)
 		break;
 	case ITER_KVEC:
 	case ITER_BVEC:
+	case ITER_DISCARD:
 		break;
 	}
 	return 0;
@@ -870,6 +878,8 @@ size_t copy_page_to_iter(struct page *page, size_t offset, size_t bytes,
 		return copy_page_to_iter_iovec(page, offset, bytes, i);
 	case ITER_PIPE:
 		return copy_page_to_iter_pipe(page, offset, bytes, i);
+	case ITER_DISCARD:
+		return bytes;
 	}
 	BUG();
 }
@@ -882,6 +892,7 @@ size_t copy_page_from_iter(struct page *page, size_t offset, size_t bytes,
 		return 0;
 	switch (iov_iter_type(i)) {
 	case ITER_PIPE:
+	case ITER_DISCARD:
 		break;
 	case ITER_BVEC:
 	case ITER_KVEC: {
@@ -945,7 +956,7 @@ size_t iov_iter_copy_from_user_atomic(struct page *page,
 		kunmap_atomic(kaddr);
 		return 0;
 	}
-	if (unlikely(iov_iter_is_pipe(i))) {
+	if (unlikely(iov_iter_is_pipe(i) || iov_iter_type(i) == ITER_DISCARD)) {
 		kunmap_atomic(kaddr);
 		WARN_ON(1);
 		return 0;
@@ -1018,6 +1029,9 @@ void iov_iter_advance(struct iov_iter *i, size_t size)
 	case ITER_BVEC:
 		iterate_and_advance(i, size, v, 0, 0, 0);
 		return;
+	case ITER_DISCARD:
+		i->count -= size;
+		return;
 	}
 	BUG();
 }
@@ -1060,6 +1074,9 @@ void iov_iter_revert(struct iov_iter *i, size_t unroll)
 	}
 	unroll -= i->iov_offset;
 	switch (iov_iter_type(i)) {
+	case ITER_DISCARD:
+		i->iov_offset = 0;
+		return;
 	case ITER_BVEC: {
 		const struct bio_vec *bvec = i->bvec;
 		while (1) {
@@ -1103,6 +1120,7 @@ size_t iov_iter_single_seg_count(const struct iov_iter *i)
 		return i->count;
 	switch (iov_iter_type(i)) {
 	case ITER_PIPE:
+	case ITER_DISCARD:
 		return i->count;	// it is a silly place, anyway
 	case ITER_BVEC:
 		return min(i->count, i->bvec->bv_len - i->iov_offset);
@@ -1158,6 +1176,25 @@ void iov_iter_pipe(struct iov_iter *i, unsigned int direction,
 }
 EXPORT_SYMBOL(iov_iter_pipe);
 
+/**
+ * iov_iter_discard - Initialise an I/O iterator that discards data
+ * @i: The iterator to initialise.
+ * @direction: The direction of the transfer.
+ * @count: The size of the I/O buffer in bytes.
+ *
+ * Set up an I/O iterator that just discards everything that's written to it.
+ * It's only available as a READ iterator.
+ */
+void iov_iter_discard(struct iov_iter *i, unsigned int direction, size_t count)
+{
+	BUG_ON(direction != READ);
+	i->iter_dir = READ;
+	i->iter_type = ITER_DISCARD;
+	i->count = count;
+	i->iov_offset = 0;
+}
+EXPORT_SYMBOL(iov_iter_discard);
+
 unsigned long iov_iter_alignment(const struct iov_iter *i)
 {
 	unsigned long res = 0;
@@ -1182,7 +1219,7 @@ unsigned long iov_iter_gap_alignment(const struct iov_iter *i)
 	unsigned long res = 0;
 	size_t size = i->count;
 
-	if (unlikely(iov_iter_is_pipe(i))) {
+	if (unlikely(iov_iter_is_pipe(i) || iov_iter_type(i) == ITER_DISCARD)) {
 		WARN_ON(1);
 		return ~0U;
 	}
@@ -1253,6 +1290,7 @@ ssize_t iov_iter_get_pages(struct iov_iter *i,
 	switch (iov_iter_type(i)) {
 	case ITER_PIPE:
 		return pipe_get_pages(i, pages, maxsize, maxpages, start);
+	case ITER_DISCARD:
 	case ITER_KVEC:
 		return -EFAULT;
 	case ITER_IOVEC:
@@ -1336,6 +1374,7 @@ ssize_t iov_iter_get_pages_alloc(struct iov_iter *i,
 	switch (iov_iter_type(i)) {
 	case ITER_PIPE:
 		return pipe_get_pages_alloc(i, pages, maxsize, start);
+	case ITER_DISCARD:
 	case ITER_KVEC:
 		return -EFAULT;
 	case ITER_IOVEC:
@@ -1382,7 +1421,7 @@ size_t csum_and_copy_from_iter(void *addr, size_t bytes, __wsum *csum,
 	__wsum sum, next;
 	size_t off = 0;
 	sum = *csum;
-	if (unlikely(iov_iter_is_pipe(i))) {
+	if (unlikely(iov_iter_is_pipe(i) || iov_iter_type(i) == ITER_DISCARD)) {
 		WARN_ON(1);
 		return 0;
 	}
@@ -1424,7 +1463,7 @@ bool csum_and_copy_from_iter_full(void *addr, size_t bytes, __wsum *csum,
 	__wsum sum, next;
 	size_t off = 0;
 	sum = *csum;
-	if (unlikely(iov_iter_is_pipe(i))) {
+	if (unlikely(iov_iter_is_pipe(i) || iov_iter_type(i) == ITER_DISCARD)) {
 		WARN_ON(1);
 		return false;
 	}
@@ -1469,7 +1508,7 @@ size_t csum_and_copy_to_iter(const void *addr, size_t bytes, __wsum *csum,
 	__wsum sum, next;
 	size_t off = 0;
 	sum = *csum;
-	if (unlikely(iov_iter_is_pipe(i))) {
+	if (unlikely(iov_iter_is_pipe(i) || iov_iter_type(i) == ITER_DISCARD)) {
 		WARN_ON(1);	/* for now */
 		return 0;
 	}
@@ -1512,7 +1551,8 @@ int iov_iter_npages(const struct iov_iter *i, int maxpages)
 	if (!size)
 		return 0;
 
-	if (unlikely(iov_iter_is_pipe(i))) {
+	switch (iov_iter_type(i)) {
+	case ITER_PIPE: {
 		struct pipe_inode_info *pipe = i->pipe;
 		size_t off;
 		int idx;
@@ -1525,24 +1565,30 @@ int iov_iter_npages(const struct iov_iter *i, int maxpages)
 		npages = ((pipe->curbuf - idx - 1) & (pipe->buffers - 1)) + 1;
 		if (npages >= maxpages)
 			return maxpages;
-	} else iterate_all_kinds(i, size, v, ({
-		unsigned long p = (unsigned long)v.iov_base;
-		npages += DIV_ROUND_UP(p + v.iov_len, PAGE_SIZE)
-			- p / PAGE_SIZE;
-		if (npages >= maxpages)
-			return maxpages;
-	0;}),({
-		npages++;
-		if (npages >= maxpages)
-			return maxpages;
-	}),({
-		unsigned long p = (unsigned long)v.iov_base;
-		npages += DIV_ROUND_UP(p + v.iov_len, PAGE_SIZE)
-			- p / PAGE_SIZE;
-		if (npages >= maxpages)
-			return maxpages;
-	})
-	)
+	}
+	case ITER_DISCARD:
+		return 0;
+
+	default:
+		iterate_all_kinds(i, size, v, ({
+			unsigned long p = (unsigned long)v.iov_base;
+			npages += DIV_ROUND_UP(p + v.iov_len, PAGE_SIZE)
+				- p / PAGE_SIZE;
+			if (npages >= maxpages)
+				return maxpages;
+		0;}),({
+			npages++;
+			if (npages >= maxpages)
+				return maxpages;
+		}),({
+			unsigned long p = (unsigned long)v.iov_base;
+			npages += DIV_ROUND_UP(p + v.iov_len, PAGE_SIZE)
+				- p / PAGE_SIZE;
+			if (npages >= maxpages)
+				return maxpages;
+		})
+		)
+	}
 	return npages;
 }
 EXPORT_SYMBOL(iov_iter_npages);
@@ -1563,6 +1609,8 @@ const void *dup_iter(struct iov_iter *new, struct iov_iter *old, gfp_t flags)
 		return new->iov = kmemdup(new->iov,
 				   new->nr_segs * sizeof(struct iovec),
 				   flags);
+	case ITER_DISCARD:
+		return NULL;
 	}
 
 	WARN_ON(1);
