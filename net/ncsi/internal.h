@@ -68,6 +68,10 @@ enum {
 	NCSI_MODE_MAX
 };
 
+/* OEM Vendor Manufacture ID */
+#define NCSI_OEM_MFR_MLX_ID             0x8119
+#define NCSI_OEM_MFR_BCM_ID             0x113d
+
 struct ncsi_channel_version {
 	u32 version;		/* Supported BCD encoded NCSI version */
 	u32 alpha2;		/* Supported BCD encoded NCSI version */
@@ -171,6 +175,8 @@ struct ncsi_package;
 #define NCSI_RESERVED_CHANNEL	0x1f
 #define NCSI_CHANNEL_INDEX(c)	((c) & ((1 << NCSI_PACKAGE_SHIFT) - 1))
 #define NCSI_TO_CHANNEL(p, c)	(((p) << NCSI_PACKAGE_SHIFT) | (c))
+#define NCSI_MAX_PACKAGE	8
+#define NCSI_MAX_CHANNEL	32
 
 struct ncsi_channel {
 	unsigned char               id;
@@ -216,11 +222,15 @@ struct ncsi_request {
 	bool                 used;    /* Request that has been assigned  */
 	unsigned int         flags;   /* NCSI request property           */
 #define NCSI_REQ_FLAG_EVENT_DRIVEN	1
+#define NCSI_REQ_FLAG_NETLINK_DRIVEN	2
 	struct ncsi_dev_priv *ndp;    /* Associated NCSI device          */
 	struct sk_buff       *cmd;    /* Associated NCSI command packet  */
 	struct sk_buff       *rsp;    /* Associated NCSI response packet */
 	struct timer_list    timer;   /* Timer on waiting for response   */
 	bool                 enabled; /* Time has been enabled or not    */
+	u32                  snd_seq;     /* netlink sending sequence number */
+	u32                  snd_portid;  /* netlink portid of sender        */
+	struct nlmsghdr      nlhdr;       /* netlink message header          */
 };
 
 enum {
@@ -305,6 +315,8 @@ struct ncsi_cmd_arg {
 		unsigned short words[8];
 		unsigned int   dwords[4];
 	};
+	unsigned char        *data;       /* NCSI OEM data                 */
+	struct genl_info     *info;       /* Netlink information           */
 };
 
 extern struct list_head ncsi_dev_list;

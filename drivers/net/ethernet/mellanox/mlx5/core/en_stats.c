@@ -53,6 +53,7 @@ static const struct counter_desc sw_stats_desc[] = {
 
 	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_lro_packets) },
 	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_lro_bytes) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_ecn_mark) },
 	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_removed_vlan_packets) },
 	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_csum_unnecessary) },
 	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_csum_none) },
@@ -92,6 +93,7 @@ static const struct counter_desc sw_stats_desc[] = {
 	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_cache_busy) },
 	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_cache_waive) },
 	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_congst_umr) },
+	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, rx_arfs_err) },
 	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, ch_events) },
 	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, ch_poll) },
 	{ MLX5E_DECLARE_STAT(struct mlx5e_sw_stats, ch_arm) },
@@ -131,7 +133,7 @@ void mlx5e_grp_sw_update_stats(struct mlx5e_priv *priv)
 
 	memset(s, 0, sizeof(*s));
 
-	for (i = 0; i < priv->profile->max_nch(priv->mdev); i++) {
+	for (i = 0; i < mlx5e_get_netdev_max_channels(priv->netdev); i++) {
 		struct mlx5e_channel_stats *channel_stats =
 			&priv->channel_stats[i];
 		struct mlx5e_xdpsq_stats *xdpsq_red_stats = &channel_stats->xdpsq;
@@ -144,6 +146,7 @@ void mlx5e_grp_sw_update_stats(struct mlx5e_priv *priv)
 		s->rx_bytes	+= rq_stats->bytes;
 		s->rx_lro_packets += rq_stats->lro_packets;
 		s->rx_lro_bytes	+= rq_stats->lro_bytes;
+		s->rx_ecn_mark	+= rq_stats->ecn_mark;
 		s->rx_removed_vlan_packets += rq_stats->removed_vlan_packets;
 		s->rx_csum_none	+= rq_stats->csum_none;
 		s->rx_csum_complete += rq_stats->csum_complete;
@@ -168,6 +171,7 @@ void mlx5e_grp_sw_update_stats(struct mlx5e_priv *priv)
 		s->rx_cache_busy  += rq_stats->cache_busy;
 		s->rx_cache_waive += rq_stats->cache_waive;
 		s->rx_congst_umr  += rq_stats->congst_umr;
+		s->rx_arfs_err    += rq_stats->arfs_err;
 		s->ch_events      += ch_stats->events;
 		s->ch_poll        += ch_stats->poll;
 		s->ch_arm         += ch_stats->arm;
@@ -1144,6 +1148,7 @@ static const struct counter_desc rq_stats_desc[] = {
 	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, xdp_redirect) },
 	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, lro_packets) },
 	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, lro_bytes) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, ecn_mark) },
 	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, removed_vlan_packets) },
 	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, wqe_err) },
 	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, mpwqe_filler_cqes) },
@@ -1158,6 +1163,7 @@ static const struct counter_desc rq_stats_desc[] = {
 	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, cache_busy) },
 	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, cache_waive) },
 	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, congst_umr) },
+	{ MLX5E_DECLARE_RX_STAT(struct mlx5e_rq_stats, arfs_err) },
 };
 
 static const struct counter_desc sq_stats_desc[] = {
@@ -1211,7 +1217,7 @@ static const struct counter_desc ch_stats_desc[] = {
 
 static int mlx5e_grp_channels_get_num_stats(struct mlx5e_priv *priv)
 {
-	int max_nch = priv->profile->max_nch(priv->mdev);
+	int max_nch = mlx5e_get_netdev_max_channels(priv->netdev);
 
 	return (NUM_RQ_STATS * max_nch) +
 	       (NUM_CH_STATS * max_nch) +
@@ -1223,7 +1229,7 @@ static int mlx5e_grp_channels_get_num_stats(struct mlx5e_priv *priv)
 static int mlx5e_grp_channels_fill_strings(struct mlx5e_priv *priv, u8 *data,
 					   int idx)
 {
-	int max_nch = priv->profile->max_nch(priv->mdev);
+	int max_nch = mlx5e_get_netdev_max_channels(priv->netdev);
 	int i, j, tc;
 
 	for (i = 0; i < max_nch; i++)
@@ -1258,7 +1264,7 @@ static int mlx5e_grp_channels_fill_strings(struct mlx5e_priv *priv, u8 *data,
 static int mlx5e_grp_channels_fill_stats(struct mlx5e_priv *priv, u64 *data,
 					 int idx)
 {
-	int max_nch = priv->profile->max_nch(priv->mdev);
+	int max_nch = mlx5e_get_netdev_max_channels(priv->netdev);
 	int i, j, tc;
 
 	for (i = 0; i < max_nch; i++)

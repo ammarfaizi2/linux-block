@@ -77,8 +77,6 @@ static const int multicast_filter_limit = 32;
 #define R8169_TX_RING_BYTES	(NUM_TX_DESC * sizeof(struct TxDesc))
 #define R8169_RX_RING_BYTES	(NUM_RX_DESC * sizeof(struct RxDesc))
 
-#define RTL8169_TX_TIMEOUT	(6*HZ)
-
 /* write/read MMIO register */
 #define RTL_W8(tp, reg, val8)	writeb((val8), tp->mmio_addr + (reg))
 #define RTL_W16(tp, reg, val16)	writew((val16), tp->mmio_addr + (reg))
@@ -1354,7 +1352,8 @@ static void rtl_irq_enable_all(struct rtl8169_private *tp)
 static void rtl8169_irq_mask_and_ack(struct rtl8169_private *tp)
 {
 	rtl_irq_disable(tp);
-	rtl_ack_events(tp, RTL_EVENT_NAPI | tp->event_slow);
+	rtl_ack_events(tp, 0xffff);
+	/* PCI commit */
 	RTL_R8(tp, ChipCmd);
 }
 
@@ -4048,23 +4047,11 @@ static void rtl8169_init_phy(struct net_device *dev, struct rtl8169_private *tp)
 	rtl_hw_phy_config(dev);
 
 	if (tp->mac_version <= RTL_GIGA_MAC_VER_06) {
-		netif_dbg(tp, drv, dev,
-			  "Set MAC Reg C+CR Offset 0x82h = 0x01h\n");
-		RTL_W8(tp, 0x82, 0x01);
-	}
-
-	pci_write_config_byte(tp->pci_dev, PCI_LATENCY_TIMER, 0x40);
-
-	if (tp->mac_version <= RTL_GIGA_MAC_VER_06)
+		pci_write_config_byte(tp->pci_dev, PCI_LATENCY_TIMER, 0x40);
 		pci_write_config_byte(tp->pci_dev, PCI_CACHE_LINE_SIZE, 0x08);
-
-	if (tp->mac_version == RTL_GIGA_MAC_VER_02) {
 		netif_dbg(tp, drv, dev,
 			  "Set MAC Reg C+CR Offset 0x82h = 0x01h\n");
 		RTL_W8(tp, 0x82, 0x01);
-		netif_dbg(tp, drv, dev,
-			  "Set PHY Reg 0x0bh = 0x00h\n");
-		rtl_writephy(tp, 0x0b, 0x0000); //w 0x0b 15 0 0
 	}
 
 	/* We may have called phy_speed_down before */
@@ -4566,27 +4553,19 @@ static void rtl_set_rx_tx_desc_registers(struct rtl8169_private *tp)
 
 static void rtl8169_set_magic_reg(struct rtl8169_private *tp, unsigned mac_version)
 {
-	static const struct rtl_cfg2_info {
-		u32 mac_version;
-		u32 clk;
-		u32 val;
-	} cfg2_info [] = {
-		{ RTL_GIGA_MAC_VER_05, PCI_Clock_33MHz, 0x000fff00 }, // 8110SCd
-		{ RTL_GIGA_MAC_VER_05, PCI_Clock_66MHz, 0x000fffff },
-		{ RTL_GIGA_MAC_VER_06, PCI_Clock_33MHz, 0x00ffff00 }, // 8110SCe
-		{ RTL_GIGA_MAC_VER_06, PCI_Clock_66MHz, 0x00ffffff }
-	};
-	const struct rtl_cfg2_info *p = cfg2_info;
-	unsigned int i;
-	u32 clk;
+	u32 val;
 
-	clk = RTL_R8(tp, Config2) & PCI_Clock_66MHz;
-	for (i = 0; i < ARRAY_SIZE(cfg2_info); i++, p++) {
-		if ((p->mac_version == mac_version) && (p->clk == clk)) {
-			RTL_W32(tp, 0x7c, p->val);
-			break;
-		}
-	}
+	if (tp->mac_version == RTL_GIGA_MAC_VER_05)
+		val = 0x000fff00;
+	else if (tp->mac_version == RTL_GIGA_MAC_VER_06)
+		val = 0x00ffff00;
+	else
+		return;
+
+	if (RTL_R8(tp, Config2) & PCI_Clock_66MHz)
+		val |= 0xff;
+
+	RTL_W32(tp, 0x7c, val);
 }
 
 static void rtl_set_rx_mode(struct net_device *dev)
@@ -6846,7 +6825,6 @@ static void rtl8169_net_suspend(struct net_device *dev)
 
 	phy_stop(dev->phydev);
 	netif_device_detach(dev);
-	netif_stop_queue(dev);
 
 	rtl_lock_work(tp);
 	napi_disable(&tp->napi);
@@ -7093,20 +7071,17 @@ static int rtl_alloc_irq(struct rtl8169_private *tp)
 {
 	unsigned int flags;
 
-	switch (tp->mac_version) {
-	case RTL_GIGA_MAC_VER_01 ... RTL_GIGA_MAC_VER_06:
+	if (tp->mac_version <= RTL_GIGA_MAC_VER_06) {
 		RTL_W8(tp, Cfg9346, Cfg9346_Unlock);
 		RTL_W8(tp, Config2, RTL_R8(tp, Config2) & ~MSIEnable);
 		RTL_W8(tp, Cfg9346, Cfg9346_Lock);
 		flags = PCI_IRQ_LEGACY;
-		break;
-	case RTL_GIGA_MAC_VER_39 ... RTL_GIGA_MAC_VER_40:
+	} else if (tp->mac_version == RTL_GIGA_MAC_VER_40) {
 		/* This version was reported to have issues with resume
 		 * from suspend when using MSI-X
 		 */
 		flags = PCI_IRQ_LEGACY | PCI_IRQ_MSI;
-		break;
-	default:
+	} else {
 		flags = PCI_IRQ_ALL_TYPES;
 	}
 
@@ -7368,11 +7343,9 @@ static int rtl_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
 
 	tp->cp_cmd = RTL_R16(tp, CPlusCmd);
 
-	if ((sizeof(dma_addr_t) > 4) &&
-	    (use_dac == 1 || (use_dac == -1 && pci_is_pcie(pdev) &&
-			      tp->mac_version >= RTL_GIGA_MAC_VER_18)) &&
-	    !pci_set_dma_mask(pdev, DMA_BIT_MASK(64)) &&
-	    !pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(64))) {
+	if (sizeof(dma_addr_t) > 4 && (use_dac == 1 || (use_dac == -1 &&
+	    tp->mac_version >= RTL_GIGA_MAC_VER_18)) &&
+	    !dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(64))) {
 
 		/* CPlusCmd Dual Access Cycle is only needed for non-PCIe */
 		if (!pci_is_pcie(pdev))
@@ -7388,13 +7361,11 @@ static int rtl_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
 
 	rtl_init_rxcfg(tp);
 
-	rtl_irq_disable(tp);
+	rtl8169_irq_mask_and_ack(tp);
 
 	rtl_hw_initialize(tp);
 
 	rtl_hw_reset(tp);
-
-	rtl_ack_events(tp, 0xffff);
 
 	pci_set_master(pdev);
 
@@ -7435,7 +7406,6 @@ static int rtl_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
 		dev->dev_addr[i] = RTL_R8(tp, MAC0 + i);
 
 	dev->ethtool_ops = &rtl8169_ethtool_ops;
-	dev->watchdog_timeo = RTL8169_TX_TIMEOUT;
 
 	netif_napi_add(dev, &tp->napi, rtl8169_poll, NAPI_POLL_WEIGHT);
 
