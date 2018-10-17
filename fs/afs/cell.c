@@ -403,6 +403,8 @@ static void afs_update_cell(struct afs_cell *cell)
 		clear_bit(AFS_CELL_FL_DNS_FAIL, &cell->flags);
 		clear_bit(AFS_CELL_FL_NOT_FOUND, &cell->flags);
 
+		trace_afs_vllist_changed(cell, vllist);
+
 		/* Exclusion on changing vl_addrs is achieved by a
 		 * non-reentrant work item.
 		 */

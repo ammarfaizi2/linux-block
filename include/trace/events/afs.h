@@ -794,6 +794,31 @@ TRACE_EVENT(afs_cm_no_server_u,
 		      __entry->call, __entry->op_id, &__entry->uuid)
 	    );
 
+TRACE_EVENT(afs_vllist_changed,
+	    TP_PROTO(struct afs_cell *cell,
+		     const struct afs_vlserver_list *vllist),
+
+	    TP_ARGS(cell, vllist),
+
+	    TP_STRUCT__entry(
+		    __array(char,				name, 16	)
+		    __field(unsigned char,			nr_servers	)
+		    __field(u8,					source		)
+		    __field(u8,					status		)
+			     ),
+
+	    TP_fast_assign(
+		    strlcpy(__entry->name, cell->name, 16);
+		    __entry->nr_servers = vllist->nr_servers;
+		    __entry->source = vllist->source;
+		    __entry->status = vllist->status;
+			   ),
+
+	    TP_printk("%s nr=%u s=%u,%u",
+		      __entry->name, __entry->nr_servers,
+		      __entry->source, __entry->status)
+	    );
+
 #endif /* _TRACE_AFS_H */
 
 /* This part must be outside protection */
