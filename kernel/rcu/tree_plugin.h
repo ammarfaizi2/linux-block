@@ -2595,7 +2595,7 @@ static bool init_nocb_callback_list(struct rcu_data *rdp)
  */
 void rcu_bind_current_to_nocb(void)
 {
-	if (cpumask_weight(rcu_nocb_mask))
+	if (cpumask_available(rcu_nocb_mask) && cpumask_weight(rcu_nocb_mask))
 		WARN_ON(sched_setaffinity(current->pid, rcu_nocb_mask));
 }
 EXPORT_SYMBOL_GPL(rcu_bind_current_to_nocb);
