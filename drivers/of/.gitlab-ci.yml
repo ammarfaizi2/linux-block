@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: GPL-2.0+
+
+image: registry.gitlab.com/robherring/docker-images/ubuntu-kernel-build
+
+variables:
+  ARCH: um
+
+job-unittest:
+  artifacts:
+    paths:
+      - "*.log"
+
+  script:
+    - echo -e "CONFIG_OF=y\nCONFIG_OF_UNITTEST=y\nCONFIG_OF_OVERLAY=y" > kernel/configs/extra.config
+    - make defconfig extra.config
+    - make -s -j $(nproc) vmlinux | tee build.log
+    - TMP=/tmp ./vmlinux > boot.log || true
+    - grep -E '\#\#\# dt-test \#\#\# end of unittest - [0-9]* passed, 0 failed' boot.log
