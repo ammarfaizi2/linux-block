@@ -15,8 +15,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/*
+ * Use AARCH32 interface for sys_sync_file_range() as it passes 64-bit arguments.
+ */
+#if defined(__ILP32__) || defined(__SYSCALL_COMPAT)
+#define __ARCH_WANT_SYNC_FILE_RANGE2
+#endif
+
+/*
+ * AARCH64/ILP32 is introduced after next syscalls were deprecated.
+ */
+#if !(defined(__ILP32__) || defined(__SYSCALL_COMPAT))
 #define __ARCH_WANT_RENAMEAT
-#define __ARCH_WANT_NEW_STAT
 #define __ARCH_WANT_SET_GET_RLIMIT
+#endif
+
+#define __ARCH_WANT_NEW_STAT
 
 #include <asm-generic/unistd.h>
