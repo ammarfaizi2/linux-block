@@ -651,9 +651,10 @@ static void rcu_read_unlock_special(struct task_struct *t)
 			raise_softirq_irqoff(RCU_SOFTIRQ);
 		} else {
 			/* Enabling BH or preempt does reschedule, so... */
-			raise_softirq_irqoff(RCU_SOFTIRQ);
-			local_irq_restore(flags);
+			set_tsk_need_resched(current);
+			set_preempt_need_resched();
 		}
+		local_irq_restore(flags);
 		return;
 	}
 	WRITE_ONCE(t->rcu_read_unlock_special.b.exp_hint, false);
