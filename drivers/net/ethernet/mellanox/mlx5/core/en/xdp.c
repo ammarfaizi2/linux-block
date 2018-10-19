@@ -268,6 +268,9 @@ int mlx5e_xdp_xmit(struct net_device *dev, int n, struct xdp_frame **frames,
 	if (unlikely(flags & ~XDP_XMIT_FLAGS_MASK))
 		return -EINVAL;
 
+	if (unlikely(READ_ONCE(priv->channels.xdp_disabled)))
+		return -ENETDOWN;
+
 	sq_num = smp_processor_id();
 
 	if (unlikely(sq_num >= priv->channels.num))

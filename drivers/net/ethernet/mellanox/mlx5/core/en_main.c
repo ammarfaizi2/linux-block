@@ -4241,8 +4241,17 @@ static int mlx5e_xdp_set(struct net_device *netdev, struct bpf_prog *prog)
 	/* no need for full reset when exchanging programs */
 	reset = (!priv->channels.params.xdp_prog || !prog);
 
-	if (was_opened && reset)
+	if (was_opened && reset) {
+		for (i = 0; i < priv->channels.num; i++)
+			clear_bit(MLX5E_SQ_STATE_ENABLED, &priv->channels.c[i]->xdpsq.state);
+		priv->channels.xdp_disabled = true;
+
+		synchronize_net();
+		//msleep(200);
+
 		mlx5e_close_locked(netdev);
+	}
+
 	if (was_opened && !reset) {
 		/* num_channels is invariant here, so we can take the
 		 * batched reference right upfront.
@@ -4264,8 +4273,10 @@ static int mlx5e_xdp_set(struct net_device *netdev, struct bpf_prog *prog)
 	if (reset) /* change RQ type according to priv->xdp_prog */
 		mlx5e_set_rq_type(priv->mdev, &priv->channels.params);
 
-	if (was_opened && reset)
+	if (was_opened && reset) {
 		mlx5e_open_locked(netdev);
+		priv->channels.xdp_disabled = false;
+	}
 
 	if (!test_bit(MLX5E_STATE_OPENED, &priv->state) || reset)
 		goto unlock;

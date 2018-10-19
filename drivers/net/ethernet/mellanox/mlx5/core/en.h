@@ -621,6 +621,7 @@ struct mlx5e_channels {
 	struct mlx5e_channel **c;
 	unsigned int           num;
 	struct mlx5e_params    params;
+	bool xdp_disabled;
 };
 
 struct mlx5e_channel_stats {
