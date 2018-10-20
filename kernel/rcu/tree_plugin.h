@@ -642,8 +642,7 @@ static void rcu_read_unlock_special(struct task_struct *t)
 
 	local_irq_save(flags);
 	irqs_were_disabled = irqs_disabled_flags(flags);
-	if ((preempt_bh_were_disabled || irqs_were_disabled) &&
-	    t->rcu_read_unlock_special.s) {
+	if (preempt_bh_were_disabled || irqs_were_disabled) {
 		WRITE_ONCE(t->rcu_read_unlock_special.b.exp_hint, false);
 		/* Need to defer quiescent state until everything is enabled. */
 		if (irqs_were_disabled) {
