@@ -125,12 +125,11 @@ void rcu_sync_enter(struct rcu_sync *rsp)
 		rsp->gp_state = GP_PENDING;
 	spin_unlock_irq(&rsp->rss_lock);
 
+	WARN_ON_ONCE(need_wait && need_sync);
 	if (need_sync) {
 		gp_ops[rsp->gp_type].sync();
 		rsp->gp_state = GP_PASSED;
 		wake_up_all(&rsp->gp_wait);
-		if (WARN_ON_ONCE(need_wait))
-			wait_event(rsp->gp_wait, rsp->gp_state == GP_PASSED);
 	} else if (need_wait) {
 		wait_event(rsp->gp_wait, rsp->gp_state == GP_PASSED);
 	} else {
