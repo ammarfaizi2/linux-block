@@ -31,6 +31,7 @@
  *
  */
 
+#include <linux/ip.h>
 #include <linux/bpf.h>
 #include <linux/bpf_trace.h>
 #include <linux/mlx4/cq.h>
