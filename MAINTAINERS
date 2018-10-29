@@ -535,7 +535,7 @@ F:	Documentation/hwmon/adt7475
 F:	drivers/hwmon/adt7475.c
 
 ADVANSYS SCSI DRIVER
-M:	Matthew Wilcox <matthew@wil.cx>
+M:	Matthew Wilcox <willy@infradead.org>
 M:	Hannes Reinecke <hare@suse.com>
 L:	linux-scsi@vger.kernel.org
 S:	Maintained
@@ -932,6 +932,7 @@ M:	Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 M:	Arve Hjønnevåg <arve@android.com>
 M:	Todd Kjos <tkjos@android.com>
 M:	Martijn Coenen <maco@android.com>
+M:	Joel Fernandes <joel@joelfernandes.org>
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/gregkh/staging.git
 L:	devel@driverdev.osuosl.org
 S:	Supported
@@ -4098,7 +4099,7 @@ D-LINK DIR-685 TOUCHKEYS DRIVER
 M:	Linus Walleij <linus.walleij@linaro.org>
 L:	linux-input@vger.kernel.org
 S:	Supported
-F:	drivers/input/dlink-dir685-touchkeys.c
+F:	drivers/input/keyboard/dlink-dir685-touchkeys.c
 
 DALLAS/MAXIM DS1685-FAMILY REAL TIME CLOCK
 M:	Joshua Kinard <kumba@gentoo.org>
@@ -4392,7 +4393,7 @@ S:	Maintained
 F:	drivers/i2c/busses/i2c-diolan-u2c.c
 
 FILESYSTEM DIRECT ACCESS (DAX)
-M:	Matthew Wilcox <mawilcox@microsoft.com>
+M:	Matthew Wilcox <willy@infradead.org>
 M:	Ross Zwisler <zwisler@kernel.org>
 M:	Jan Kara <jack@suse.cz>
 L:	linux-fsdevel@vger.kernel.org
@@ -4755,8 +4756,11 @@ F:	drivers/gpu/drm/tdfx/
 
 DRM DRIVER FOR USB DISPLAYLINK VIDEO ADAPTERS
 M:	Dave Airlie <airlied@redhat.com>
+R:	Sean Paul <sean@poorly.run>
+L:	dri-devel@lists.freedesktop.org
 S:	Odd Fixes
 F:	drivers/gpu/drm/udl/
+T:	git git://anongit.freedesktop.org/drm/drm-misc
 
 DRM DRIVER FOR VMWARE VIRTUAL GPU
 M:	"VMware Graphics" <linux-graphics-maintainer@vmware.com>
@@ -4786,8 +4790,8 @@ F:	include/uapi/drm/
 F:	include/linux/vga*
 
 DRM DRIVERS AND MISC GPU PATCHES
-M:	Gustavo Padovan <gustavo@padovan.org>
 M:	Maarten Lankhorst <maarten.lankhorst@linux.intel.com>
+M:	Maxime Ripard <maxime.ripard@bootlin.com>
 M:	Sean Paul <sean@poorly.run>
 W:	https://01.org/linuxgraphics/gfx-docs/maintainer-tools/drm-misc.html
 S:	Maintained
@@ -4856,6 +4860,7 @@ F:	drivers/gpu/drm/fsl-dcu/
 F:	Documentation/devicetree/bindings/display/fsl,dcu.txt
 F:	Documentation/devicetree/bindings/display/fsl,tcon.txt
 F:	Documentation/devicetree/bindings/display/panel/nec,nl4827hc19-05b.txt
+T:	git git://anongit.freedesktop.org/drm/drm-misc
 
 DRM DRIVERS FOR FREESCALE IMX
 M:	Philipp Zabel <p.zabel@pengutronix.de>
@@ -4905,9 +4910,10 @@ F:	Documentation/devicetree/bindings/display/tegra/nvidia,tegra20-host1x.txt
 
 DRM DRIVERS FOR RENESAS
 M:	Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+M:	Kieran Bingham <kieran.bingham+renesas@ideasonboard.com>
 L:	dri-devel@lists.freedesktop.org
 L:	linux-renesas-soc@vger.kernel.org
-T:	git git://linuxtv.org/pinchartl/fbdev
+T:	git git://linuxtv.org/pinchartl/media drm/du/next
 S:	Supported
 F:	drivers/gpu/drm/rcar-du/
 F:	drivers/gpu/drm/shmobile/
@@ -8696,7 +8702,7 @@ F:	drivers/message/fusion/
 F:	drivers/scsi/mpt3sas/
 
 LSILOGIC/SYMBIOS/NCR 53C8XX and 53C1010 PCI-SCSI drivers
-M:	Matthew Wilcox <matthew@wil.cx>
+M:	Matthew Wilcox <willy@infradead.org>
 L:	linux-scsi@vger.kernel.org
 S:	Maintained
 F:	drivers/scsi/sym53c8xx_2/
@@ -9567,7 +9573,7 @@ MEN Z069 WATCHDOG DRIVER
 M:	Johannes Thumshirn <jth@kernel.org>
 L:	linux-watchdog@vger.kernel.org
 S:	Maintained
-F:	drivers/watchdog/menz069_wdt.c
+F:	drivers/watchdog/menz69_wdt.c
 
 MESON AO CEC DRIVER FOR AMLOGIC SOCS
 M:	Neil Armstrong <narmstrong@baylibre.com>
@@ -10000,9 +10006,12 @@ F:	drivers/media/tuners/mxl5007t.*
 
 MXSFB DRM DRIVER
 M:	Marek Vasut <marex@denx.de>
+M:	Stefan Agner <stefan@agner.ch>
+L:	dri-devel@lists.freedesktop.org
 S:	Supported
 F:	drivers/gpu/drm/mxsfb/
 F:	Documentation/devicetree/bindings/display/mxsfb.txt
+T:	git git://anongit.freedesktop.org/drm/drm-misc
 
 MYLEX DAC960 PCI RAID Controller
 M:	Hannes Reinecke <hare@kernel.org>
@@ -13757,7 +13766,7 @@ F:	sound/soc/
 F:	include/sound/soc*
 
 SOUNDWIRE SUBSYSTEM
-M:	Vinod Koul <vinod.koul@intel.com>
+M:	Vinod Koul <vkoul@kernel.org>
 M:	Sanyog Kale <sanyog.r.kale@intel.com>
 R:	Pierre-Louis Bossart <pierre-louis.bossart@linux.intel.com>
 L:	alsa-devel@alsa-project.org (moderated for non-subscribers)
@@ -15443,6 +15452,12 @@ F:	Documentation/driver-api/usb/typec_bus.rst
 F:	drivers/usb/typec/altmodes/
 F:	include/linux/usb/typec_altmode.h
 
+USB TYPEC PORT CONTROLLER DRIVERS
+M:	Guenter Roeck <linux@roeck-us.net>
+L:	linux-usb@vger.kernel.org
+S:	Maintained
+F:	drivers/usb/typec/tcpm/
+
 USB UHCI DRIVER
 M:	Alan Stern <stern@rowland.harvard.edu>
 L:	linux-usb@vger.kernel.org
@@ -15517,13 +15532,27 @@ F:	arch/x86/um/
 F:	fs/hostfs/
 F:	fs/hppfs/
 
+USERSPACE COPYIN/COPYOUT (UIOVEC)
+M:	Alexander Viro <viro@zeniv.linux.org.uk>
+S:	Maintained
+F:	lib/iov_iter.c
+F:	include/linux/uio.h
+
+USERSPACE DMA BUFFER DRIVER
+M:	Gerd Hoffmann <kraxel@redhat.com>
+S:	Maintained
+L:	dri-devel@lists.freedesktop.org
+F:	drivers/dma-buf/udmabuf.c
+F:	include/uapi/linux/udmabuf.h
+T:	git git://anongit.freedesktop.org/drm/drm-misc
+
 USERSPACE I/O (UIO)
 M:	Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 S:	Maintained
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/gregkh/char-misc.git
 F:	Documentation/driver-api/uio-howto.rst
 F:	drivers/uio/
-F:	include/linux/uio*.h
+F:	include/linux/uio_driver.h
 
 UTIL-LINUX PACKAGE
 M:	Karel Zak <kzak@redhat.com>
@@ -16123,6 +16152,17 @@ L:	linux-kernel@vger.kernel.org
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/tip/tip.git x86/vdso
 S:	Maintained
 F:	arch/x86/entry/vdso/
+
+XARRAY
+M:	Matthew Wilcox <willy@infradead.org>
+L:	linux-fsdevel@vger.kernel.org
+S:	Supported
+F:	Documentation/core-api/xarray.rst
+F:	lib/idr.c
+F:	lib/xarray.c
+F:	include/linux/idr.h
+F:	include/linux/xarray.h
+F:	tools/testing/radix-tree
 
 XC2028/3028 TUNER DRIVER
 M:	Mauro Carvalho Chehab <mchehab@kernel.org>
