@@ -424,7 +424,7 @@ void __rcu_read_unlock(void)
 		--t->rcu_read_lock_nesting;
 	} else {
 		barrier();  /* critical section before exit code. */
-		t->rcu_read_lock_nesting = INT_MIN;
+		t->rcu_read_lock_nesting = -INT_MAX;
 		barrier();  /* assign before ->rcu_read_unlock_special load */
 		if (unlikely(READ_ONCE(t->rcu_read_unlock_special.s)))
 			rcu_read_unlock_special(t);
@@ -617,11 +617,11 @@ static void rcu_preempt_deferred_qs(struct task_struct *t)
 	if (!rcu_preempt_need_deferred_qs(t))
 		return;
 	if (couldrecurse)
-		t->rcu_read_lock_nesting -= INT_MIN;
+		t->rcu_read_lock_nesting -= INT_MAX;
 	local_irq_save(flags);
 	rcu_preempt_deferred_qs_irqrestore(t, flags);
 	if (couldrecurse)
-		t->rcu_read_lock_nesting += INT_MIN;
+		t->rcu_read_lock_nesting += INT_MAX;
 }
 
 /*
