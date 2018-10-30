@@ -49,9 +49,8 @@ struct extent_buffer *btrfs_find_create_tree_block(
 						struct btrfs_fs_info *fs_info,
 						u64 bytenr);
 void clean_tree_block(struct btrfs_fs_info *fs_info, struct extent_buffer *buf);
-int open_ctree(struct super_block *sb,
-	       struct btrfs_fs_devices *fs_devices,
-	       char *options);
+int open_ctree(struct fs_context *fc, struct super_block *sb,
+	       struct btrfs_fs_devices *fs_devices);
 void close_ctree(struct btrfs_fs_info *fs_info);
 int write_all_supers(struct btrfs_fs_info *fs_info, int max_mirrors);
 struct buffer_head *btrfs_read_dev_super(struct block_device *bdev);
