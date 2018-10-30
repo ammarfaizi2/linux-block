@@ -380,13 +380,13 @@ static noinline struct btrfs_fs_devices *find_fsid(u8 *fsid)
 }
 
 static int
-btrfs_get_bdev_and_sb(const char *device_path, fmode_t flags, void *holder,
+btrfs_get_bdev_and_sb(const char *device_path, fmode_t flags,
 		      int flush, struct block_device **bdev,
 		      struct buffer_head **bh)
 {
 	int ret;
 
-	*bdev = blkdev_get_by_path(device_path, flags, holder);
+	*bdev = blkdev_get_by_path(device_path, flags, &btrfs_fs_type);
 
 	if (IS_ERR(*bdev)) {
 		ret = PTR_ERR(*bdev);
@@ -678,8 +678,7 @@ static void btrfs_free_stale_devices(const char *path,
 }
 
 static int btrfs_open_one_device(struct btrfs_fs_devices *fs_devices,
-			struct btrfs_device *device, fmode_t flags,
-			void *holder)
+				 struct btrfs_device *device, fmode_t flags)
 {
 	struct request_queue *q;
 	struct block_device *bdev;
@@ -693,8 +692,7 @@ static int btrfs_open_one_device(struct btrfs_fs_devices *fs_devices,
 	if (!device->name)
 		return -EINVAL;
 
-	ret = btrfs_get_bdev_and_sb(device->name->str, flags, holder, 1,
-				    &bdev, &bh);
+	ret = btrfs_get_bdev_and_sb(device->name->str, flags, 1, &bdev, &bh);
 	if (ret)
 		return ret;
 
@@ -1094,8 +1092,7 @@ int btrfs_close_devices(struct btrfs_fs_devices *fs_devices)
 	return ret;
 }
 
-static int open_fs_devices(struct btrfs_fs_devices *fs_devices,
-				fmode_t flags, void *holder)
+static int open_fs_devices(struct btrfs_fs_devices *fs_devices, fmode_t flags)
 {
 	struct btrfs_device *device;
 	struct btrfs_device *latest_dev = NULL;
@@ -1105,7 +1102,7 @@ static int open_fs_devices(struct btrfs_fs_devices *fs_devices,
 
 	list_for_each_entry(device, &fs_devices->devices, dev_list) {
 		/* Just open everything we can; ignore failures here */
-		if (btrfs_open_one_device(fs_devices, device, flags, holder))
+		if (btrfs_open_one_device(fs_devices, device, flags))
 			continue;
 
 		if (!latest_dev ||
@@ -1137,8 +1134,7 @@ static int devid_cmp(void *priv, struct list_head *a, struct list_head *b)
 	return 0;
 }
 
-int btrfs_open_devices(struct btrfs_fs_devices *fs_devices,
-		       fmode_t flags, void *holder)
+int btrfs_open_devices(struct btrfs_fs_devices *fs_devices, fmode_t flags)
 {
 	int ret;
 
@@ -1150,7 +1146,7 @@ int btrfs_open_devices(struct btrfs_fs_devices *fs_devices,
 		ret = 0;
 	} else {
 		list_sort(NULL, &fs_devices->devices, devid_cmp);
-		ret = open_fs_devices(fs_devices, flags, holder);
+		ret = open_fs_devices(fs_devices, flags);
 	}
 	mutex_unlock(&fs_devices->device_list_mutex);
 
@@ -1213,8 +1209,7 @@ static int btrfs_read_disk_super(struct block_device *bdev, u64 bytenr,
  * and we are not allowed to call set_blocksize during the scan. The superblock
  * is read via pagecache
  */
-struct btrfs_device *btrfs_scan_one_device(const char *path, fmode_t flags,
-					   void *holder)
+struct btrfs_device *btrfs_scan_one_device(const char *path, fmode_t flags)
 {
 	struct btrfs_super_block *disk_super;
 	bool new_device_added = false;
@@ -1234,7 +1229,7 @@ struct btrfs_device *btrfs_scan_one_device(const char *path, fmode_t flags,
 	bytenr = btrfs_sb_offset(0);
 	flags |= FMODE_EXCL;
 
-	bdev = blkdev_get_by_path(path, flags, holder);
+	bdev = blkdev_get_by_path(path, flags, &btrfs_fs_type);
 	if (IS_ERR(bdev))
 		return ERR_CAST(bdev);
 
@@ -2125,8 +2120,7 @@ static struct btrfs_device *btrfs_find_device_by_path(
 	struct buffer_head *bh;
 	struct btrfs_device *device;
 
-	ret = btrfs_get_bdev_and_sb(device_path, FMODE_READ,
-				    fs_info->bdev_holder, 0, &bdev, &bh);
+	ret = btrfs_get_bdev_and_sb(device_path, FMODE_READ, 0, &bdev, &bh);
 	if (ret)
 		return ERR_PTR(ret);
 	disk_super = (struct btrfs_super_block *)bh->b_data;
@@ -2343,7 +2337,7 @@ int btrfs_init_new_device(struct btrfs_fs_info *fs_info, const char *device_path
 		return -EROFS;
 
 	bdev = blkdev_get_by_path(device_path, FMODE_WRITE | FMODE_EXCL,
-				  fs_info->bdev_holder);
+				  &btrfs_fs_type);
 	if (IS_ERR(bdev))
 		return PTR_ERR(bdev);
 
@@ -6592,7 +6586,7 @@ static struct btrfs_fs_devices *open_seed_devices(struct btrfs_fs_info *fs_info,
 	if (IS_ERR(fs_devices))
 		return fs_devices;
 
-	ret = open_fs_devices(fs_devices, FMODE_READ, fs_info->bdev_holder);
+	ret = open_fs_devices(fs_devices, FMODE_READ);
 	if (ret) {
 		free_fs_devices(fs_devices);
 		fs_devices = ERR_PTR(ret);
