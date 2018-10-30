@@ -31,6 +31,34 @@
 #include "extent_io.h"
 #include "extent_map.h"
 #include "async-thread.h"
+#include "compression.h"
+
+struct btrfs_fs_context {
+	/* Track the options that were specified */
+	unsigned long specified[256 / (sizeof(long) * 8)];
+
+	char				**devices;
+	char				*subvol_name;
+	u64				subvol_objectid;
+
+	unsigned int			nr_devices;
+	unsigned int			mount_opt;
+	unsigned int			mount_opt_mask;		/* Bits to be changed */
+	unsigned int			mount_opt_explicit;	/* Changes set by params */
+	enum btrfs_compression_type	compress_type;
+	unsigned int			compress_level;
+
+	u64				max_inline;
+	u32				metadata_ratio;
+	u32				thread_pool_size;
+	u32				commit_interval;
+#ifdef CONFIG_BTRFS_FS_CHECK_INTEGRITY
+	u32				check_integrity_print_mask;
+#endif
+
+	struct vfsmount			*root_mnt;
+	bool				root;
+};
 
 struct btrfs_trans_handle;
 struct btrfs_transaction;
@@ -1377,58 +1405,59 @@ static inline u32 BTRFS_MAX_XATTR_SIZE(const struct btrfs_fs_info *info)
  * Note: don't forget to add new options to btrfs_alloc_fs_info() and
  * btrfs_show_options().
  */
-#define BTRFS_MOUNT_DATASUM		(1 << 0)
-#define BTRFS_MOUNT_DATACOW		(1 << 1)
-#define BTRFS_MOUNT_BARRIER		(1 << 2)
-#define BTRFS_MOUNT_SSD			(1 << 3)
-#define BTRFS_MOUNT_DEGRADED		(1 << 4)
-#define BTRFS_MOUNT_COMPRESS		(1 << 5)
-#define BTRFS_MOUNT_TREELOG		(1 << 6)
-#define BTRFS_MOUNT_FLUSHONCOMMIT	(1 << 7)
-#define BTRFS_MOUNT_SSD_SPREAD		(1 << 8)
-#define BTRFS_MOUNT_NOSSD		(1 << 9)
-#define BTRFS_MOUNT_DISCARD		(1 << 10)
-#define BTRFS_MOUNT_FORCE_COMPRESS	(1 << 11)
-#define BTRFS_MOUNT_SPACE_CACHE		(1 << 12)
-#define BTRFS_MOUNT_CLEAR_CACHE		(1 << 13)
-#define BTRFS_MOUNT_USER_SUBVOL_RM_ALLOWED (1 << 14)
-#define BTRFS_MOUNT_ENOSPC_DEBUG	 (1 << 15)
-#define BTRFS_MOUNT_AUTO_DEFRAG		(1 << 16)
-#define BTRFS_MOUNT_INODE_MAP_CACHE	(1 << 17)
-#define BTRFS_MOUNT_USEBACKUPROOT	(1 << 18)
-#define BTRFS_MOUNT_SKIP_BALANCE	(1 << 19)
-#define BTRFS_MOUNT_CHECK_INTEGRITY	(1 << 20)
-#define BTRFS_MOUNT_CHECK_INTEGRITY_INCLUDING_EXTENT_DATA (1 << 21)
-#define BTRFS_MOUNT_PANIC_ON_FATAL_ERROR	(1 << 22)
-#define BTRFS_MOUNT_RESCAN_UUID_TREE	(1 << 23)
-#define BTRFS_MOUNT_FRAGMENT_DATA	(1 << 24)
-#define BTRFS_MOUNT_FRAGMENT_METADATA	(1 << 25)
-#define BTRFS_MOUNT_FREE_SPACE_TREE	(1 << 26)
-#define BTRFS_MOUNT_NOLOGREPLAY		(1 << 27)
-#define BTRFS_MOUNT_REF_VERIFY		(1 << 28)
+enum btrfs_opt {
+	BTRFS_MOUNT_DATASUM				= 0,
+	BTRFS_MOUNT_DATACOW				= 1,
+	BTRFS_MOUNT_BARRIER				= 2,
+	BTRFS_MOUNT_SSD					= 3,
+	BTRFS_MOUNT_DEGRADED				= 4,
+	BTRFS_MOUNT_COMPRESS				= 5,
+	BTRFS_MOUNT_TREELOG				= 6,
+	BTRFS_MOUNT_FLUSHONCOMMIT       		= 7,
+	BTRFS_MOUNT_SSD_SPREAD				= 8,
+	BTRFS_MOUNT_NOSSD				= 9,
+	BTRFS_MOUNT_DISCARD				= 10,
+	BTRFS_MOUNT_FORCE_COMPRESS      		= 11,
+	BTRFS_MOUNT_SPACE_CACHE				= 12,
+	BTRFS_MOUNT_CLEAR_CACHE				= 13,
+	BTRFS_MOUNT_USER_SUBVOL_RM_ALLOWED 		= 14,
+	BTRFS_MOUNT_ENOSPC_DEBUG	 		= 15,
+	BTRFS_MOUNT_AUTO_DEFRAG				= 16,
+	BTRFS_MOUNT_INODE_MAP_CACHE			= 17,
+	BTRFS_MOUNT_USEBACKUPROOT			= 18,
+	BTRFS_MOUNT_SKIP_BALANCE			= 19,
+	BTRFS_MOUNT_CHECK_INTEGRITY			= 20,
+	BTRFS_MOUNT_CHECK_INTEGRITY_INCLUDING_EXTENT_DATA = 21,
+	BTRFS_MOUNT_PANIC_ON_FATAL_ERROR		= 22,
+	BTRFS_MOUNT_RESCAN_UUID_TREE			= 23,
+	BTRFS_MOUNT_FRAGMENT_DATA			= 24,
+	BTRFS_MOUNT_FRAGMENT_METADATA			= 25,
+	BTRFS_MOUNT_FREE_SPACE_TREE			= 26,
+	BTRFS_MOUNT_NOLOGREPLAY				= 27,
+	BTRFS_MOUNT_REF_VERIFY				= 28,
+};
 
 #define BTRFS_DEFAULT_COMMIT_INTERVAL	(30)
 #define BTRFS_DEFAULT_MAX_INLINE	(2048)
 
-#define btrfs_clear_opt(o, opt)		((o) &= ~BTRFS_MOUNT_##opt)
-#define btrfs_set_opt(o, opt)		((o) |= BTRFS_MOUNT_##opt)
-#define btrfs_raw_test_opt(o, opt)	((o) & BTRFS_MOUNT_##opt)
-#define btrfs_test_opt(fs_info, opt)	((fs_info)->mount_opt & \
-					 BTRFS_MOUNT_##opt)
+#define btrfs_clear_opt(o, opt)		((o) &= ~(1 << BTRFS_MOUNT_##opt))
+#define btrfs_set_opt(o, opt)		((o) |= (1 << BTRFS_MOUNT_##opt))
+#define btrfs_raw_test_opt(o, opt)	((o) & (1 << BTRFS_MOUNT_##opt))
+#define btrfs_test_opt(fs_info, opt)	btrfs_raw_test_opt((fs_info)->mount_opt, opt)
 
 #define btrfs_set_and_info(fs_info, opt, fmt, args...)			\
-{									\
+do {									\
 	if (!btrfs_test_opt(fs_info, opt))				\
 		btrfs_info(fs_info, fmt, ##args);			\
 	btrfs_set_opt(fs_info->mount_opt, opt);				\
-}
+} while (0)
 
 #define btrfs_clear_and_info(fs_info, opt, fmt, args...)		\
-{									\
+do {									\
 	if (btrfs_test_opt(fs_info, opt))				\
 		btrfs_info(fs_info, fmt, ##args);			\
 	btrfs_clear_opt(fs_info->mount_opt, opt);			\
-}
+} while (0)
 
 #ifdef CONFIG_BTRFS_DEBUG
 static inline int
@@ -1470,20 +1499,20 @@ btrfs_should_fragment_free_space(struct btrfs_block_group_cache *block_group)
  */
 #define btrfs_set_pending_and_info(info, opt, fmt, args...)            \
 do {                                                                   \
-       if (!btrfs_raw_test_opt((info)->mount_opt, opt)) {              \
-               btrfs_info((info), fmt, ##args);                        \
-               btrfs_set_pending((info), SET_##opt);                   \
-               btrfs_clear_pending((info), CLEAR_##opt);               \
-       }                                                               \
+	if (!btrfs_test_opt((info), opt)) {			       \
+		btrfs_info((info), fmt, ##args);		       \
+		btrfs_set_pending((info), SET_##opt);		       \
+		btrfs_clear_pending((info), CLEAR_##opt);	       \
+	}							       \
 } while(0)
 
 #define btrfs_clear_pending_and_info(info, opt, fmt, args...)          \
 do {                                                                   \
-       if (btrfs_raw_test_opt((info)->mount_opt, opt)) {               \
-               btrfs_info((info), fmt, ##args);                        \
-               btrfs_set_pending((info), CLEAR_##opt);                 \
-               btrfs_clear_pending((info), SET_##opt);                 \
-       }                                                               \
+	if (btrfs_test_opt((info), opt)) {			       \
+		btrfs_info((info), fmt, ##args);		       \
+		btrfs_set_pending((info), CLEAR_##opt);		       \
+		btrfs_clear_pending((info), SET_##opt);		       \
+	}							       \
 } while(0)
 
 /*
@@ -3325,15 +3354,16 @@ int btrfs_sysfs_add_mounted(struct btrfs_fs_info *fs_info);
 void btrfs_sysfs_remove_mounted(struct btrfs_fs_info *fs_info);
 
 /* fs_params.c */
-int btrfs_parse_options(struct btrfs_fs_info *info, char *options,
-			unsigned long new_flags);
-int btrfs_parse_device_options(const char *options, fmode_t flags);
-int btrfs_parse_subvol_options(const char *options, char **subvol_name,
-			       u64 *subvol_objectid);
+extern const struct fs_parameter_description btrfs_fs_parameters;
+int btrfs_init_fs_context(struct fs_context *fc);
+void btrfs_apply_configuration(struct fs_context *fc, struct super_block *sb);
 int btrfs_show_options(struct seq_file *seq, struct dentry *dentry);
+int btrfs_validate(struct fs_context *fc);
 
 /* super.c */
-extern struct file_system_type btrfs_root_fs_type;
+extern struct file_system_type btrfs_fs_type;
+int btrfs_get_tree(struct fs_context *fc);
+int btrfs_reconfigure(struct fs_context *fc);
 int btrfs_sync_fs(struct super_block *sb, int wait);
 
 static inline __printf(2, 3) __cold
