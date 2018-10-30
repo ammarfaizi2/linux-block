@@ -1584,15 +1584,3 @@ out:
 	__free_workspace(0, ws_list, true);
 	return ret;
 }
-
-unsigned int btrfs_compress_str2level(const char *str)
-{
-	if (strncmp(str, "zlib", 4) != 0)
-		return 0;
-
-	/* Accepted form: zlib:1 up to zlib:9 and nothing left after the number */
-	if (str[4] == ':' && '1' <= str[5] && str[5] <= '9' && str[6] == 0)
-		return str[5] - '0';
-
-	return BTRFS_ZLIB_DEFAULT_LEVEL;
-}
