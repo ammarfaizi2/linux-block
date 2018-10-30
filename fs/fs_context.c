@@ -672,34 +672,13 @@ static int legacy_parse_monolithic(struct fs_context *fc, void *data, size_t dat
 	return 0;
 }
 
-/*
- * Use the legacy mount validation step to strip out and process security
- * config options.
- */
 static int legacy_validate(struct fs_context *fc)
 {
 	struct legacy_fs_context *ctx = fc->fs_private;
 
-	switch (ctx->param_type) {
-	case LEGACY_FS_UNSET_PARAMS:
+	if (ctx->param_type == LEGACY_FS_UNSET_PARAMS)
 		ctx->param_type = LEGACY_FS_NO_PARAMS;
-		/* Fall through */
-	case LEGACY_FS_NO_PARAMS:
-	case LEGACY_FS_MAGIC_PARAMS:
-		return 0;
-	default:
-		break;
-	}
-
-	if (fc->fs_type->fs_flags & FS_BINARY_MOUNTDATA)
-		return 0;
-
-	ctx->secdata = alloc_secdata();
-	if (!ctx->secdata)
-		return -ENOMEM;
-
-	return security_sb_copy_data(ctx->legacy_data, ctx->data_size,
-				     ctx->secdata);
+	return 0;
 }
 
 /*

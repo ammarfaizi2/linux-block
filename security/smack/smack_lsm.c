@@ -883,54 +883,6 @@ static void smack_sb_free_security(struct super_block *sb)
 }
 
 /**
- * smack_sb_copy_data - copy mount options data for processing
- * @orig: where to start
- * @orig_size: Size of orig buffer
- * @smackopts: mount options string
- *
- * Returns 0 on success or -ENOMEM on error.
- *
- * Copy the Smack specific mount options out of the mount
- * options list.
- */
-static int smack_sb_copy_data(char *orig, size_t orig_size, char *smackopts)
-{
-	char *cp, *commap, *otheropts, *dp;
-
-	otheropts = (char *)get_zeroed_page(GFP_KERNEL);
-	if (otheropts == NULL)
-		return -ENOMEM;
-
-	for (cp = orig, commap = orig; commap != NULL; cp = commap + 1) {
-		if (strstr(cp, SMK_FSDEFAULT) == cp)
-			dp = smackopts;
-		else if (strstr(cp, SMK_FSFLOOR) == cp)
-			dp = smackopts;
-		else if (strstr(cp, SMK_FSHAT) == cp)
-			dp = smackopts;
-		else if (strstr(cp, SMK_FSROOT) == cp)
-			dp = smackopts;
-		else if (strstr(cp, SMK_FSTRANS) == cp)
-			dp = smackopts;
-		else
-			dp = otheropts;
-
-		commap = strchr(cp, ',');
-		if (commap != NULL)
-			*commap = '\0';
-
-		if (*dp != '\0')
-			strcat(dp, ",");
-		strcat(dp, cp);
-	}
-
-	strcpy(orig, otheropts);
-	free_page((unsigned long)otheropts);
-
-	return 0;
-}
-
-/**
  * smack_parse_opts_str - parse Smack specific mount options
  * @options: mount options string
  * @opts: where to store converted mount opts
@@ -4959,7 +4911,6 @@ static struct security_hook_list smack_hooks[] __lsm_ro_after_init = {
 
 	LSM_HOOK_INIT(sb_alloc_security, smack_sb_alloc_security),
 	LSM_HOOK_INIT(sb_free_security, smack_sb_free_security),
-	LSM_HOOK_INIT(sb_copy_data, smack_sb_copy_data),
 	LSM_HOOK_INIT(sb_statfs, smack_sb_statfs),
 	LSM_HOOK_INIT(sb_set_mnt_opts, smack_set_mnt_opts),
 	LSM_HOOK_INIT(sb_parse_opts_str, smack_parse_opts_str),

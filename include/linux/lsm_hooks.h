@@ -149,17 +149,6 @@
  *	@data contains the filesystem-specific data.
  *	@data_size contains the size of the data.
  *	Return 0 if permission is granted.
- * @sb_copy_data:
- *	Allow mount option data to be copied prior to parsing by the filesystem,
- *	so that the security module can extract security-specific mount
- *	options cleanly (a filesystem may modify the data e.g. with strsep()).
- *	This also allows the original mount data to be stripped of security-
- *	specific options to avoid having to make filesystems aware of them.
- *	@type the type of filesystem being mounted.
- *	@orig the original mount data copied from userspace.
- *	@orig_data is the size of the original data
- *	@copy copied data which will be passed to the security module.
- *	Returns 0 if the copy was successful.
  * @sb_umount:
  *	Check permission before the @mnt file system is unmounted.
  *	@mnt contains the mounted file system.
@@ -1514,7 +1503,6 @@ union security_list_options {
 
 	int (*sb_alloc_security)(struct super_block *sb);
 	void (*sb_free_security)(struct super_block *sb);
-	int (*sb_copy_data)(char *orig, size_t orig_size, char *copy);
 	int (*sb_show_options)(struct seq_file *m, struct super_block *sb);
 	int (*sb_statfs)(struct dentry *dentry);
 	int (*sb_mount)(const char *dev_name, const struct path *path,
@@ -1861,7 +1849,6 @@ struct security_hook_heads {
 	struct hlist_head sb_mountpoint;
 	struct hlist_head sb_alloc_security;
 	struct hlist_head sb_free_security;
-	struct hlist_head sb_copy_data;
 	struct hlist_head sb_show_options;
 	struct hlist_head sb_statfs;
 	struct hlist_head sb_mount;

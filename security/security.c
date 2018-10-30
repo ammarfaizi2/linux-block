@@ -425,12 +425,6 @@ void security_sb_free(struct super_block *sb)
 	call_void_hook(sb_free_security, sb);
 }
 
-int security_sb_copy_data(char *orig, size_t data_size, char *copy)
-{
-	return call_int_hook(sb_copy_data, 0, orig, data_size, copy);
-}
-EXPORT_SYMBOL(security_sb_copy_data);
-
 int security_sb_show_options(struct seq_file *m, struct super_block *sb)
 {
 	return call_int_hook(sb_show_options, 0, m, sb);
