@@ -85,6 +85,7 @@ struct fs_context {
 	void			*security;	/* Linux S&M options */
 	unsigned int		sb_flags;	/* Proposed superblock flags (SB_*) */
 	unsigned int		sb_flags_mask;	/* Superblock flags that were changed */
+	unsigned int		lsm_flags;	/* Information flags from the fs to the LSM */
 	enum fs_context_purpose	purpose:8;
 	bool			sloppy:1;	/* T if unrecognised options are okay */
 	bool			silent:1;	/* T if "o silent" specified */
