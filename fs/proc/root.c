@@ -162,6 +162,8 @@ static int proc_get_tree(struct fs_context *fc)
 {
 	struct proc_fs_context *ctx = fc->fs_private;
 
+	put_user_ns(fc->user_ns);
+	fc->user_ns = get_user_ns(ctx->pid_ns->user_ns);
 	fc->s_fs_info = ctx->pid_ns;
 	return vfs_get_super(fc, vfs_get_keyed_super, proc_fill_super);
 }
