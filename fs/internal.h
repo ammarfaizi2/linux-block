@@ -60,6 +60,11 @@ extern int parse_monolithic_mount_data(struct fs_context *, void *);
 extern void fc_drop_locked(struct fs_context *);
 
 /*
+ * fs_open.c
+ */
+extern void vfs_clean_context(struct fs_context *fc);
+
+/*
  * namei.c
  */
 extern int filename_lookup(int dfd, struct filename *name, unsigned flags,
