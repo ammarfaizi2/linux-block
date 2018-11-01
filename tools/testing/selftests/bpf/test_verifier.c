@@ -3430,7 +3430,7 @@ static struct bpf_test tests[] = {
 			BPF_ST_MEM(BPF_DW, BPF_REG_1, offsetof(struct __sk_buff, mark), 0),
 			BPF_EXIT_INSN(),
 		},
-		.errstr = "BPF_ST stores into R1 inv is not allowed",
+		.errstr = "BPF_ST stores into R1 ctx is not allowed",
 		.result = REJECT,
 		.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	},
@@ -3442,7 +3442,7 @@ static struct bpf_test tests[] = {
 				     BPF_REG_0, offsetof(struct __sk_buff, mark), 0),
 			BPF_EXIT_INSN(),
 		},
-		.errstr = "BPF_XADD stores into R1 inv is not allowed",
+		.errstr = "BPF_XADD stores into R1 ctx is not allowed",
 		.result = REJECT,
 		.prog_type = BPF_PROG_TYPE_SCHED_CLS,
 	},
@@ -4863,6 +4863,179 @@ static struct bpf_test tests[] = {
 		.flags = F_NEEDS_EFFICIENT_UNALIGNED_ACCESS,
 	},
 	{
+		"direct packet read test#1 for CGROUP_SKB",
+		.insns = {
+			BPF_LDX_MEM(BPF_W, BPF_REG_2, BPF_REG_1,
+				    offsetof(struct __sk_buff, data)),
+			BPF_LDX_MEM(BPF_W, BPF_REG_3, BPF_REG_1,
+				    offsetof(struct __sk_buff, data_end)),
+			BPF_LDX_MEM(BPF_W, BPF_REG_4, BPF_REG_1,
+				    offsetof(struct __sk_buff, len)),
+			BPF_LDX_MEM(BPF_W, BPF_REG_5, BPF_REG_1,
+				    offsetof(struct __sk_buff, pkt_type)),
+			BPF_LDX_MEM(BPF_W, BPF_REG_6, BPF_REG_1,
+				    offsetof(struct __sk_buff, mark)),
+			BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_6,
+				    offsetof(struct __sk_buff, mark)),
+			BPF_LDX_MEM(BPF_W, BPF_REG_7, BPF_REG_1,
+				    offsetof(struct __sk_buff, queue_mapping)),
+			BPF_LDX_MEM(BPF_W, BPF_REG_8, BPF_REG_1,
+				    offsetof(struct __sk_buff, protocol)),
+			BPF_LDX_MEM(BPF_W, BPF_REG_9, BPF_REG_1,
+				    offsetof(struct __sk_buff, vlan_present)),
+			BPF_MOV64_REG(BPF_REG_0, BPF_REG_2),
+			BPF_ALU64_IMM(BPF_ADD, BPF_REG_0, 8),
+			BPF_JMP_REG(BPF_JGT, BPF_REG_0, BPF_REG_3, 1),
+			BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_2, 0),
+			BPF_MOV64_IMM(BPF_REG_0, 0),
+			BPF_EXIT_INSN(),
+		},
+		.result = ACCEPT,
+		.result_unpriv = REJECT,
+		.errstr_unpriv = "invalid bpf_context access off=76 size=4",
+		.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
+	},
+	{
+		"direct packet read test#2 for CGROUP_SKB",
+		.insns = {
+			BPF_LDX_MEM(BPF_W, BPF_REG_4, BPF_REG_1,
+				    offsetof(struct __sk_buff, vlan_tci)),
+			BPF_LDX_MEM(BPF_W, BPF_REG_5, BPF_REG_1,
+				    offsetof(struct __sk_buff, vlan_proto)),
+			BPF_LDX_MEM(BPF_W, BPF_REG_6, BPF_REG_1,
+				    offsetof(struct __sk_buff, priority)),
+			BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_6,
+				    offsetof(struct __sk_buff, priority)),
+			BPF_LDX_MEM(BPF_W, BPF_REG_7, BPF_REG_1,
+				    offsetof(struct __sk_buff,
+					     ingress_ifindex)),
+			BPF_LDX_MEM(BPF_W, BPF_REG_8, BPF_REG_1,
+				    offsetof(struct __sk_buff, tc_index)),
+			BPF_LDX_MEM(BPF_W, BPF_REG_9, BPF_REG_1,
+				    offsetof(struct __sk_buff, hash)),
+			BPF_MOV64_IMM(BPF_REG_0, 0),
+			BPF_EXIT_INSN(),
+		},
+		.result = ACCEPT,
+		.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
+	},
+	{
+		"direct packet read test#3 for CGROUP_SKB",
+		.insns = {
+			BPF_LDX_MEM(BPF_W, BPF_REG_4, BPF_REG_1,
+				    offsetof(struct __sk_buff, cb[0])),
+			BPF_LDX_MEM(BPF_W, BPF_REG_5, BPF_REG_1,
+				    offsetof(struct __sk_buff, cb[1])),
+			BPF_LDX_MEM(BPF_W, BPF_REG_6, BPF_REG_1,
+				    offsetof(struct __sk_buff, cb[2])),
+			BPF_LDX_MEM(BPF_W, BPF_REG_7, BPF_REG_1,
+				    offsetof(struct __sk_buff, cb[3])),
+			BPF_LDX_MEM(BPF_W, BPF_REG_8, BPF_REG_1,
+				    offsetof(struct __sk_buff, cb[4])),
+			BPF_LDX_MEM(BPF_W, BPF_REG_9, BPF_REG_1,
+				    offsetof(struct __sk_buff, napi_id)),
+			BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_4,
+				    offsetof(struct __sk_buff, cb[0])),
+			BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_5,
+				    offsetof(struct __sk_buff, cb[1])),
+			BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_6,
+				    offsetof(struct __sk_buff, cb[2])),
+			BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_7,
+				    offsetof(struct __sk_buff, cb[3])),
+			BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_8,
+				    offsetof(struct __sk_buff, cb[4])),
+			BPF_MOV64_IMM(BPF_REG_0, 0),
+			BPF_EXIT_INSN(),
+		},
+		.result = ACCEPT,
+		.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
+	},
+	{
+		"direct packet read test#4 for CGROUP_SKB",
+		.insns = {
+			BPF_LDX_MEM(BPF_W, BPF_REG_2, BPF_REG_1,
+				    offsetof(struct __sk_buff, family)),
+			BPF_LDX_MEM(BPF_W, BPF_REG_3, BPF_REG_1,
+				    offsetof(struct __sk_buff, remote_ip4)),
+			BPF_LDX_MEM(BPF_W, BPF_REG_4, BPF_REG_1,
+				    offsetof(struct __sk_buff, local_ip4)),
+			BPF_LDX_MEM(BPF_W, BPF_REG_5, BPF_REG_1,
+				    offsetof(struct __sk_buff, remote_ip6[0])),
+			BPF_LDX_MEM(BPF_W, BPF_REG_5, BPF_REG_1,
+				    offsetof(struct __sk_buff, remote_ip6[1])),
+			BPF_LDX_MEM(BPF_W, BPF_REG_5, BPF_REG_1,
+				    offsetof(struct __sk_buff, remote_ip6[2])),
+			BPF_LDX_MEM(BPF_W, BPF_REG_5, BPF_REG_1,
+				    offsetof(struct __sk_buff, remote_ip6[3])),
+			BPF_LDX_MEM(BPF_W, BPF_REG_6, BPF_REG_1,
+				    offsetof(struct __sk_buff, local_ip6[0])),
+			BPF_LDX_MEM(BPF_W, BPF_REG_6, BPF_REG_1,
+				    offsetof(struct __sk_buff, local_ip6[1])),
+			BPF_LDX_MEM(BPF_W, BPF_REG_6, BPF_REG_1,
+				    offsetof(struct __sk_buff, local_ip6[2])),
+			BPF_LDX_MEM(BPF_W, BPF_REG_6, BPF_REG_1,
+				    offsetof(struct __sk_buff, local_ip6[3])),
+			BPF_LDX_MEM(BPF_W, BPF_REG_7, BPF_REG_1,
+				    offsetof(struct __sk_buff, remote_port)),
+			BPF_LDX_MEM(BPF_W, BPF_REG_8, BPF_REG_1,
+				    offsetof(struct __sk_buff, local_port)),
+			BPF_MOV64_IMM(BPF_REG_0, 0),
+			BPF_EXIT_INSN(),
+		},
+		.result = ACCEPT,
+		.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
+	},
+	{
+		"invalid access of tc_classid for CGROUP_SKB",
+		.insns = {
+			BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
+				    offsetof(struct __sk_buff, tc_classid)),
+			BPF_MOV64_IMM(BPF_REG_0, 0),
+			BPF_EXIT_INSN(),
+		},
+		.result = REJECT,
+		.errstr = "invalid bpf_context access",
+		.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
+	},
+	{
+		"invalid access of data_meta for CGROUP_SKB",
+		.insns = {
+			BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
+				    offsetof(struct __sk_buff, data_meta)),
+			BPF_MOV64_IMM(BPF_REG_0, 0),
+			BPF_EXIT_INSN(),
+		},
+		.result = REJECT,
+		.errstr = "invalid bpf_context access",
+		.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
+	},
+	{
+		"invalid access of flow_keys for CGROUP_SKB",
+		.insns = {
+			BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_1,
+				    offsetof(struct __sk_buff, flow_keys)),
+			BPF_MOV64_IMM(BPF_REG_0, 0),
+			BPF_EXIT_INSN(),
+		},
+		.result = REJECT,
+		.errstr = "invalid bpf_context access",
+		.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
+	},
+	{
+		"invalid write access to napi_id for CGROUP_SKB",
+		.insns = {
+			BPF_LDX_MEM(BPF_W, BPF_REG_9, BPF_REG_1,
+				    offsetof(struct __sk_buff, napi_id)),
+			BPF_STX_MEM(BPF_W, BPF_REG_1, BPF_REG_9,
+				    offsetof(struct __sk_buff, napi_id)),
+			BPF_MOV64_IMM(BPF_REG_0, 0),
+			BPF_EXIT_INSN(),
+		},
+		.result = REJECT,
+		.errstr = "invalid bpf_context access",
+		.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
+	},
+	{
 		"valid cgroup storage access",
 		.insns = {
 			BPF_MOV64_IMM(BPF_REG_2, 0),
@@ -4975,6 +5148,7 @@ static struct bpf_test tests[] = {
 		.fixup_cgroup_storage = { 1 },
 		.result = REJECT,
 		.errstr = "get_local_storage() doesn't support non-zero flags",
+		.errstr_unpriv = "R2 leaks addr into helper function",
 		.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
 	},
 	{
@@ -5090,6 +5264,7 @@ static struct bpf_test tests[] = {
 		.fixup_percpu_cgroup_storage = { 1 },
 		.result = REJECT,
 		.errstr = "get_local_storage() doesn't support non-zero flags",
+		.errstr_unpriv = "R2 leaks addr into helper function",
 		.prog_type = BPF_PROG_TYPE_CGROUP_SKB,
 	},
 	{
@@ -5499,7 +5674,7 @@ static struct bpf_test tests[] = {
 		.errstr_unpriv = "R2 leaks addr into mem",
 		.result_unpriv = REJECT,
 		.result = REJECT,
-		.errstr = "BPF_XADD stores into R1 inv is not allowed",
+		.errstr = "BPF_XADD stores into R1 ctx is not allowed",
 	},
 	{
 		"leak pointer into ctx 2",
@@ -5514,7 +5689,7 @@ static struct bpf_test tests[] = {
 		.errstr_unpriv = "R10 leaks addr into mem",
 		.result_unpriv = REJECT,
 		.result = REJECT,
-		.errstr = "BPF_XADD stores into R1 inv is not allowed",
+		.errstr = "BPF_XADD stores into R1 ctx is not allowed",
 	},
 	{
 		"leak pointer into ctx 3",
@@ -12463,7 +12638,7 @@ static struct bpf_test tests[] = {
 			BPF_EXIT_INSN(),
 		},
 		.result = REJECT,
-		.errstr = "BPF_XADD stores into R2 ctx",
+		.errstr = "BPF_XADD stores into R2 pkt is not allowed",
 		.prog_type = BPF_PROG_TYPE_XDP,
 	},
 	{
@@ -13879,6 +14054,13 @@ static void get_unpriv_disabled()
 	fclose(fd);
 }
 
+static bool test_as_unpriv(struct bpf_test *test)
+{
+	return !test->prog_type ||
+	       test->prog_type == BPF_PROG_TYPE_SOCKET_FILTER ||
+	       test->prog_type == BPF_PROG_TYPE_CGROUP_SKB;
+}
+
 static int do_test(bool unpriv, unsigned int from, unsigned int to)
 {
 	int i, passes = 0, errors = 0, skips = 0;
@@ -13889,10 +14071,10 @@ static int do_test(bool unpriv, unsigned int from, unsigned int to)
 		/* Program types that are not supported by non-root we
 		 * skip right away.
 		 */
-		if (!test->prog_type && unpriv_disabled) {
+		if (test_as_unpriv(test) && unpriv_disabled) {
 			printf("#%d/u %s SKIP\n", i, test->descr);
 			skips++;
-		} else if (!test->prog_type) {
+		} else if (test_as_unpriv(test)) {
 			if (!unpriv)
 				set_admin(false);
 			printf("#%d/u %s ", i, test->descr);

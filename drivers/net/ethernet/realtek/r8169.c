@@ -631,7 +631,6 @@ struct rtl8169_tc_offsets {
 
 enum rtl_flag {
 	RTL_FLAG_TASK_ENABLED = 0,
-	RTL_FLAG_TASK_SLOW_PENDING,
 	RTL_FLAG_TASK_RESET_PENDING,
 	RTL_FLAG_MAX
 };
@@ -4162,10 +4161,15 @@ static void rtl_wol_suspend_quirk(struct rtl8169_private *tp)
 
 static bool rtl_wol_pll_power_down(struct rtl8169_private *tp)
 {
-	if (!netif_running(tp->dev) || !__rtl8169_get_wol(tp))
+	struct phy_device *phydev;
+
+	if (!__rtl8169_get_wol(tp))
 		return false;
 
-	phy_speed_down(tp->dev->phydev, false);
+	/* phydev may not be attached to netdevice */
+	phydev = mdiobus_get_phy(tp->mii_bus, 0);
+
+	phy_speed_down(phydev, false);
 	rtl_wol_suspend_quirk(tp);
 
 	return true;
@@ -5852,6 +5856,7 @@ static void rtl8169_tx_clear(struct rtl8169_private *tp)
 {
 	rtl8169_tx_clear_range(tp, tp->dirty_tx, NUM_TX_DESC);
 	tp->cur_tx = tp->dirty_tx = 0;
+	netdev_reset_queue(tp->dev);
 }
 
 static void rtl_reset_work(struct rtl8169_private *tp)
@@ -6154,6 +6159,8 @@ static netdev_tx_t rtl8169_start_xmit(struct sk_buff *skb,
 
 	txd->opts2 = cpu_to_le32(opts[1]);
 
+	netdev_sent_queue(dev, skb->len);
+
 	skb_tx_timestamp(skb);
 
 	/* Force memory writes to complete before releasing descriptor */
@@ -6252,7 +6259,7 @@ static void rtl8169_pcierr_interrupt(struct net_device *dev)
 
 static void rtl_tx(struct net_device *dev, struct rtl8169_private *tp)
 {
-	unsigned int dirty_tx, tx_left;
+	unsigned int dirty_tx, tx_left, bytes_compl = 0, pkts_compl = 0;
 
 	dirty_tx = tp->dirty_tx;
 	smp_rmb();
@@ -6276,10 +6283,8 @@ static void rtl_tx(struct net_device *dev, struct rtl8169_private *tp)
 		rtl8169_unmap_tx_skb(tp_to_dev(tp), tx_skb,
 				     tp->TxDescArray + entry);
 		if (status & LastFrag) {
-			u64_stats_update_begin(&tp->tx_stats.syncp);
-			tp->tx_stats.packets++;
-			tp->tx_stats.bytes += tx_skb->skb->len;
-			u64_stats_update_end(&tp->tx_stats.syncp);
+			pkts_compl++;
+			bytes_compl += tx_skb->skb->len;
 			dev_consume_skb_any(tx_skb->skb);
 			tx_skb->skb = NULL;
 		}
@@ -6288,6 +6293,13 @@ static void rtl_tx(struct net_device *dev, struct rtl8169_private *tp)
 	}
 
 	if (tp->dirty_tx != dirty_tx) {
+		netdev_completed_queue(dev, pkts_compl, bytes_compl);
+
+		u64_stats_update_begin(&tp->tx_stats.syncp);
+		tp->tx_stats.packets += pkts_compl;
+		tp->tx_stats.bytes += bytes_compl;
+		u64_stats_update_end(&tp->tx_stats.syncp);
+
 		tp->dirty_tx = dirty_tx;
 		/* Sync with rtl8169_start_xmit:
 		 * - publish dirty_tx ring index (write barrier)
@@ -6452,42 +6464,29 @@ static irqreturn_t rtl8169_interrupt(int irq, void *dev_instance)
 	if (status == 0xffff || !(status & (RTL_EVENT_NAPI | tp->event_slow)))
 		return IRQ_NONE;
 
-	rtl_irq_disable(tp);
-	napi_schedule_irqoff(&tp->napi);
-
-	return IRQ_HANDLED;
-}
-
-/*
- * Workqueue context.
- */
-static void rtl_slow_event_work(struct rtl8169_private *tp)
-{
-	struct net_device *dev = tp->dev;
-	u16 status;
-
-	status = rtl_get_events(tp) & tp->event_slow;
-	rtl_ack_events(tp, status);
-
-	if (unlikely(status & RxFIFOOver)) {
-		switch (tp->mac_version) {
-		/* Work around for rx fifo overflow */
-		case RTL_GIGA_MAC_VER_11:
-			netif_stop_queue(dev);
-			/* XXX - Hack alert. See rtl_task(). */
-			set_bit(RTL_FLAG_TASK_RESET_PENDING, tp->wk.flags);
-		default:
-			break;
-		}
+	if (unlikely(status & SYSErr)) {
+		rtl8169_pcierr_interrupt(tp->dev);
+		goto out;
 	}
 
-	if (unlikely(status & SYSErr))
-		rtl8169_pcierr_interrupt(dev);
-
 	if (status & LinkChg)
-		phy_mac_interrupt(dev->phydev);
+		phy_mac_interrupt(tp->dev->phydev);
 
-	rtl_irq_enable_all(tp);
+	if (unlikely(status & RxFIFOOver &&
+	    tp->mac_version == RTL_GIGA_MAC_VER_11)) {
+		netif_stop_queue(tp->dev);
+		/* XXX - Hack alert. See rtl_task(). */
+		set_bit(RTL_FLAG_TASK_RESET_PENDING, tp->wk.flags);
+	}
+
+	if (status & RTL_EVENT_NAPI) {
+		rtl_irq_disable(tp);
+		napi_schedule_irqoff(&tp->napi);
+	}
+out:
+	rtl_ack_events(tp, status);
+
+	return IRQ_HANDLED;
 }
 
 static void rtl_task(struct work_struct *work)
@@ -6496,8 +6495,6 @@ static void rtl_task(struct work_struct *work)
 		int bitnr;
 		void (*action)(struct rtl8169_private *);
 	} rtl_work[] = {
-		/* XXX - keep rtl_slow_event_work() as first element. */
-		{ RTL_FLAG_TASK_SLOW_PENDING,	rtl_slow_event_work },
 		{ RTL_FLAG_TASK_RESET_PENDING,	rtl_reset_work },
 	};
 	struct rtl8169_private *tp =
@@ -6527,27 +6524,16 @@ static int rtl8169_poll(struct napi_struct *napi, int budget)
 {
 	struct rtl8169_private *tp = container_of(napi, struct rtl8169_private, napi);
 	struct net_device *dev = tp->dev;
-	u16 enable_mask = RTL_EVENT_NAPI | tp->event_slow;
 	int work_done;
-	u16 status;
-
-	status = rtl_get_events(tp);
-	rtl_ack_events(tp, status & ~tp->event_slow);
 
 	work_done = rtl_rx(dev, tp, (u32) budget);
 
 	rtl_tx(dev, tp);
 
-	if (status & tp->event_slow) {
-		enable_mask &= ~tp->event_slow;
-
-		rtl_schedule_task(tp, RTL_FLAG_TASK_SLOW_PENDING);
-	}
-
 	if (work_done < budget) {
 		napi_complete_done(napi, work_done);
 
-		rtl_irq_enable(tp, enable_mask);
+		rtl_irq_enable_all(tp);
 		mmiowb();
 	}
 

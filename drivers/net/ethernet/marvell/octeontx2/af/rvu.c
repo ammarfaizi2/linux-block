@@ -80,7 +80,7 @@ int rvu_alloc_rsrc(struct rsrc_bmap *rsrc)
 	return id;
 }
 
-static int rvu_alloc_rsrc_contig(struct rsrc_bmap *rsrc, int nrsrc)
+int rvu_alloc_rsrc_contig(struct rsrc_bmap *rsrc, int nrsrc)
 {
 	int start;
 
@@ -105,7 +105,7 @@ static void rvu_free_rsrc_contig(struct rsrc_bmap *rsrc, int nrsrc, int start)
 	bitmap_clear(rsrc->bmap, start, nrsrc);
 }
 
-static bool rvu_rsrc_check_contig(struct rsrc_bmap *rsrc, int nrsrc)
+bool rvu_rsrc_check_contig(struct rsrc_bmap *rsrc, int nrsrc)
 {
 	int start;
 
@@ -180,6 +180,9 @@ int rvu_get_blkaddr(struct rvu *rvu, int blktype, u16 pcifunc)
 	bool is_pf;
 
 	switch (blktype) {
+	case BLKTYPE_NPC:
+		blkaddr = BLKADDR_NPC;
+		goto exit;
 	case BLKTYPE_NPA:
 		blkaddr = BLKADDR_NPA;
 		goto exit;
@@ -566,6 +569,7 @@ static void rvu_free_hw_resources(struct rvu *rvu)
 	u64 cfg;
 
 	rvu_npa_freemem(rvu);
+	rvu_npc_freemem(rvu);
 	rvu_nix_freemem(rvu);
 
 	/* Free block LF bitmaps */
@@ -771,6 +775,10 @@ init:
 		rvu_scan_block(rvu, block);
 	}
 
+	err = rvu_npc_init(rvu);
+	if (err)
+		return err;
+
 	err = rvu_npa_init(rvu);
 	if (err)
 		return err;
@@ -914,18 +922,9 @@ static int rvu_detach_rsrcs(struct rvu *rvu, struct rsrc_detach *detach,
 			    u16 pcifunc)
 {
 	struct rvu_hwinfo *hw = rvu->hw;
-	bool is_pf, detach_all = true;
+	bool detach_all = true;
 	struct rvu_block *block;
-	int devnum, blkid;
-
-	/* Check if this is for a RVU PF or VF */
-	if (pcifunc & RVU_PFVF_FUNC_MASK) {
-		is_pf = false;
-		devnum = rvu_get_hwvf(rvu, pcifunc);
-	} else {
-		is_pf = true;
-		devnum = rvu_get_pf(pcifunc);
-	}
+	int blkid;
 
 	spin_lock(&rvu->rsrc_lock);
 
@@ -1114,21 +1113,11 @@ static int rvu_mbox_handler_ATTACH_RESOURCES(struct rvu *rvu,
 					     struct msg_rsp *rsp)
 {
 	u16 pcifunc = attach->hdr.pcifunc;
-	int devnum, err;
-	bool is_pf;
+	int err;
 
 	/* If first request, detach all existing attached resources */
 	if (!attach->modify)
 		rvu_detach_rsrcs(rvu, NULL, pcifunc);
-
-	/* Check if this is for a RVU PF or VF */
-	if (pcifunc & RVU_PFVF_FUNC_MASK) {
-		is_pf = false;
-		devnum = rvu_get_hwvf(rvu, pcifunc);
-	} else {
-		is_pf = true;
-		devnum = rvu_get_pf(pcifunc);
-	}
 
 	spin_lock(&rvu->rsrc_lock);
 

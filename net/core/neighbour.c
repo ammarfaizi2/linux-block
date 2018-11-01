@@ -1167,8 +1167,7 @@ int neigh_update(struct neighbour *neigh, const u8 *lladdr, u8 new,
 		neigh->nud_state = new;
 		err = 0;
 		notify = old & NUD_VALID;
-		if (((old & (NUD_INCOMPLETE | NUD_PROBE)) ||
-		     (flags & NEIGH_UPDATE_F_ADMIN)) &&
+		if ((old & (NUD_INCOMPLETE | NUD_PROBE)) &&
 		    (new & NUD_FAILED)) {
 			neigh_invalidate(neigh);
 			notify = 1;
@@ -2365,7 +2364,7 @@ static bool neigh_master_filtered(struct net_device *dev, int master_idx)
 	if (!master_idx)
 		return false;
 
-	master = netdev_master_upper_dev_get(dev);
+	master = dev ? netdev_master_upper_dev_get(dev) : NULL;
 	if (!master || master->ifindex != master_idx)
 		return true;
 
@@ -2374,7 +2373,7 @@ static bool neigh_master_filtered(struct net_device *dev, int master_idx)
 
 static bool neigh_ifindex_filtered(struct net_device *dev, int filter_idx)
 {
-	if (filter_idx && dev->ifindex != filter_idx)
+	if (filter_idx && (!dev || dev->ifindex != filter_idx))
 		return true;
 
 	return false;

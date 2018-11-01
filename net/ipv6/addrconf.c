@@ -4821,6 +4821,7 @@ struct inet6_fill_args {
 	int event;
 	unsigned int flags;
 	int netnsid;
+	int ifindex;
 	enum addr_type_t type;
 };
 
@@ -4955,14 +4956,13 @@ static int inet6_fill_ifacaddr(struct sk_buff *skb, struct ifacaddr6 *ifaca,
 
 /* called with rcu_read_lock() */
 static int in6_dump_addrs(struct inet6_dev *idev, struct sk_buff *skb,
-			  struct netlink_callback *cb,
-			  int s_ip_idx, int *p_ip_idx,
+			  struct netlink_callback *cb, int s_ip_idx,
 			  struct inet6_fill_args *fillargs)
 {
 	struct ifmcaddr6 *ifmca;
 	struct ifacaddr6 *ifaca;
+	int ip_idx = 0;
 	int err = 1;
-	int ip_idx = *p_ip_idx;
 
 	read_lock_bh(&idev->lock);
 	switch (fillargs->type) {
@@ -4972,12 +4972,14 @@ static int in6_dump_addrs(struct inet6_dev *idev, struct sk_buff *skb,
 
 		/* unicast address incl. temp addr */
 		list_for_each_entry(ifa, &idev->addr_list, if_list) {
-			if (++ip_idx < s_ip_idx)
-				continue;
+			if (ip_idx < s_ip_idx)
+				goto next;
 			err = inet6_fill_ifaddr(skb, ifa, fillargs);
 			if (err < 0)
 				break;
 			nl_dump_check_consistent(cb, nlmsg_hdr(skb));
+next:
+			ip_idx++;
 		}
 		break;
 	}
@@ -5010,15 +5012,16 @@ static int in6_dump_addrs(struct inet6_dev *idev, struct sk_buff *skb,
 		break;
 	}
 	read_unlock_bh(&idev->lock);
-	*p_ip_idx = ip_idx;
+	cb->args[2] = ip_idx;
 	return err;
 }
 
 static int inet6_valid_dump_ifaddr_req(const struct nlmsghdr *nlh,
 				       struct inet6_fill_args *fillargs,
 				       struct net **tgt_net, struct sock *sk,
-				       struct netlink_ext_ack *extack)
+				       struct netlink_callback *cb)
 {
+	struct netlink_ext_ack *extack = cb->extack;
 	struct nlattr *tb[IFA_MAX+1];
 	struct ifaddrmsg *ifm;
 	int err, i;
@@ -5033,9 +5036,11 @@ static int inet6_valid_dump_ifaddr_req(const struct nlmsghdr *nlh,
 		NL_SET_ERR_MSG_MOD(extack, "Invalid values in header for address dump request");
 		return -EINVAL;
 	}
-	if (ifm->ifa_index) {
-		NL_SET_ERR_MSG_MOD(extack, "Filter by device index not supported for address dump");
-		return -EINVAL;
+
+	fillargs->ifindex = ifm->ifa_index;
+	if (fillargs->ifindex) {
+		cb->answer_flags |= NLM_F_DUMP_FILTERED;
+		fillargs->flags |= NLM_F_DUMP_FILTERED;
 	}
 
 	err = nlmsg_parse_strict(nlh, sizeof(*ifm), tb, IFA_MAX,
@@ -5053,6 +5058,7 @@ static int inet6_valid_dump_ifaddr_req(const struct nlmsghdr *nlh,
 			fillargs->netnsid = nla_get_s32(tb[i]);
 			net = rtnl_get_net_ns_capable(sk, fillargs->netnsid);
 			if (IS_ERR(net)) {
+				fillargs->netnsid = -1;
 				NL_SET_ERR_MSG_MOD(extack, "Invalid target network namespace id");
 				return PTR_ERR(net);
 			}
@@ -5079,24 +5085,37 @@ static int inet6_dump_addr(struct sk_buff *skb, struct netlink_callback *cb,
 	};
 	struct net *net = sock_net(skb->sk);
 	struct net *tgt_net = net;
+	int idx, s_idx, s_ip_idx;
 	int h, s_h;
-	int idx, ip_idx;
-	int s_idx, s_ip_idx;
 	struct net_device *dev;
 	struct inet6_dev *idev;
 	struct hlist_head *head;
+	int err = 0;
 
 	s_h = cb->args[0];
 	s_idx = idx = cb->args[1];
-	s_ip_idx = ip_idx = cb->args[2];
+	s_ip_idx = cb->args[2];
 
 	if (cb->strict_check) {
-		int err;
-
 		err = inet6_valid_dump_ifaddr_req(nlh, &fillargs, &tgt_net,
-						  skb->sk, cb->extack);
+						  skb->sk, cb);
 		if (err < 0)
-			return err;
+			goto put_tgt_net;
+
+		err = 0;
+		if (fillargs.ifindex) {
+			dev = __dev_get_by_index(tgt_net, fillargs.ifindex);
+			if (!dev) {
+				err = -ENODEV;
+				goto put_tgt_net;
+			}
+			idev = __in6_dev_get(dev);
+			if (idev) {
+				err = in6_dump_addrs(idev, skb, cb, s_ip_idx,
+						     &fillargs);
+			}
+			goto put_tgt_net;
+		}
 	}
 
 	rcu_read_lock();
@@ -5109,12 +5128,11 @@ static int inet6_dump_addr(struct sk_buff *skb, struct netlink_callback *cb,
 				goto cont;
 			if (h > s_h || idx > s_idx)
 				s_ip_idx = 0;
-			ip_idx = 0;
 			idev = __in6_dev_get(dev);
 			if (!idev)
 				goto cont;
 
-			if (in6_dump_addrs(idev, skb, cb, s_ip_idx, &ip_idx,
+			if (in6_dump_addrs(idev, skb, cb, s_ip_idx,
 					   &fillargs) < 0)
 				goto done;
 cont:
@@ -5125,11 +5143,11 @@ done:
 	rcu_read_unlock();
 	cb->args[0] = h;
 	cb->args[1] = idx;
-	cb->args[2] = ip_idx;
+put_tgt_net:
 	if (fillargs.netnsid >= 0)
 		put_net(tgt_net);
 
-	return skb->len;
+	return err < 0 ? err : skb->len;
 }
 
 static int inet6_dump_ifaddr(struct sk_buff *skb, struct netlink_callback *cb)
