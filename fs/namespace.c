@@ -988,33 +988,31 @@ struct vfsmount *fc_mount(struct fs_context *fc)
 }
 EXPORT_SYMBOL(fc_mount);
 
-struct vfsmount *
-vfs_kern_mount(struct file_system_type *type, int flags, const char *name, void *data)
+struct vfsmount *vfs_kern_mount(struct file_system_type *type,
+				int sb_flags, const char *devname,
+				void *data)
 {
-	struct vfsmount *mnt;
 	struct fs_context *fc;
+	struct vfsmount *mnt;
 	int ret = 0;
 
 	if (!type)
-		return ERR_PTR(-ENODEV);
+		return ERR_PTR(-EINVAL);
 
-	fc = vfs_new_fs_context(type, NULL, flags, flags,
+	fc = vfs_new_fs_context(type, NULL, sb_flags, sb_flags,
 				FS_CONTEXT_FOR_MOUNT);
 	if (IS_ERR(fc))
 		return ERR_CAST(fc);
 
-	if (name) {
-		fc->source = kstrdup(name, GFP_KERNEL);
-		if (!fc->source)
-			ret = -ENOMEM;
-	}
+	if (devname)
+		ret = vfs_parse_fs_string(fc, "source",
+					  devname, strlen(devname));
 	if (!ret)
 		ret = parse_monolithic_mount_data(fc, data);
 	if (!ret)
 		mnt = fc_mount(fc);
 	else
 		mnt = ERR_PTR(ret);
-
 	put_fs_context(fc);
 	return mnt;
 }
@@ -1513,7 +1511,6 @@ static void shrink_submounts(struct mount *mnt);
 static int do_umount_root(struct super_block *sb)
 {
 	int ret = 0;
-
 	down_write(&sb->s_umount);
 	if (!sb_rdonly(sb)) {
 		struct fs_context *fc;
@@ -2383,6 +2380,8 @@ static int do_remount(struct path *path, int ms_flags, int sb_flags,
 		return PTR_ERR(fc);
 
 	err = parse_monolithic_mount_data(fc, data);
+	if (!err && fc->ops->validate)
+		err = fc->ops->validate(fc);
 	if (!err)
 		err = security_sb_remount(sb, fc->security);
 	if (!err) {
@@ -2537,6 +2536,9 @@ static int do_new_mount_fc(struct fs_context *fc, struct path *mountpoint,
 	int error;
 
 	error = security_sb_kern_mount(sb);
+	if (!error)
+		error = security_sb_mountpoint(fc, mountpoint,
+				     mnt_flags & ~MNT_INTERNAL_FLAGS);
 	if (!error && mount_too_revealing(sb, &mnt_flags))
 		error = -EPERM;
 
@@ -2561,10 +2563,11 @@ static int do_new_mount_fc(struct fs_context *fc, struct path *mountpoint,
  * create a new mount for userspace and request it to be added into the
  * namespace's tree
  */
-static int do_new_mount(struct path *path, const char *fstype, int sb_flags,
-			int mnt_flags, const char *name, void *data)
+static int do_new_mount(struct path *mountpoint, const char *fstype,
+			int sb_flags, int mnt_flags, const char *name,
+			void *data)
 {
-	struct file_system_type *type;
+	struct file_system_type *fs_type;
 	struct fs_context *fc;
 	const char *subtype = NULL;
 	int err = 0;
@@ -2572,16 +2575,16 @@ static int do_new_mount(struct path *path, const char *fstype, int sb_flags,
 	if (!fstype)
 		return -EINVAL;
 
-	type = get_fs_type(fstype);
-	if (!type)
+	fs_type = get_fs_type(fstype);
+	if (!fs_type)
 		return -ENODEV;
 
-	if (type->fs_flags & FS_HAS_SUBTYPE) {
+	if (fs_type->fs_flags & FS_HAS_SUBTYPE) {
 		subtype = strchr(fstype, '.');
 		if (subtype) {
 			subtype++;
-			if (!*subtype) {
-				put_filesystem(type);
+			if (!subtype[0]) {
+				put_filesystem(fs_type);
 				return -EINVAL;
 			}
 		} else {
@@ -2589,28 +2592,23 @@ static int do_new_mount(struct path *path, const char *fstype, int sb_flags,
 		}
 	}
 
-	fc = vfs_new_fs_context(type, NULL, sb_flags, sb_flags,
+	fc = vfs_new_fs_context(fs_type, NULL, sb_flags, sb_flags,
 				FS_CONTEXT_FOR_MOUNT);
-	put_filesystem(type);
+	put_filesystem(fs_type);
 	if (IS_ERR(fc))
 		return PTR_ERR(fc);
 
-	if (subtype) {
-		fc->subtype = kstrdup(subtype, GFP_KERNEL);
-		if (!fc->subtype)
-			err = -ENOMEM;
-	}
-	if (!err && name) {
-		fc->source = kstrdup(name, GFP_KERNEL);
-		if (!fc->source)
-			err = -ENOMEM;
-	}
+	if (subtype)
+		err = vfs_parse_fs_string(fc, "subtype",
+					  subtype, strlen(subtype));
+	if (!err && name)
+		err = vfs_parse_fs_string(fc, "source", name, strlen(name));
 	if (!err)
 		err = parse_monolithic_mount_data(fc, data);
 	if (!err)
 		err = vfs_get_tree(fc);
 	if (!err)
-		err = do_new_mount_fc(fc, path, mnt_flags);
+		err = do_new_mount_fc(fc, mountpoint, mnt_flags);
 
 	put_fs_context(fc);
 	return err;
