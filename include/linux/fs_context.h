@@ -112,6 +112,9 @@ extern struct fs_context *fs_context_for_reconfigure(struct dentry *dentry,
 extern struct fs_context *fs_context_for_submount(struct file_system_type *fs_type,
 						struct dentry *reference);
 
+extern int vfs_parse_fs_param(struct fs_context *fc, struct fs_parameter *param);
+extern int vfs_parse_fs_string(struct fs_context *fc, const char *key,
+			       const char *value, size_t v_size);
 extern int generic_parse_monolithic(struct fs_context *fc, void *data);
 extern int vfs_get_tree(struct fs_context *fc);
 extern void put_fs_context(struct fs_context *fc);
