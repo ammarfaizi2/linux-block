@@ -568,6 +568,7 @@ static void smack_sb_free_security(struct super_block *sb)
 /**
  * smack_sb_copy_data - copy mount options data for processing
  * @orig: where to start
+ * @orig_size: Size of orig buffer
  * @smackopts: mount options string
  *
  * Returns 0 on success or -ENOMEM on error.
@@ -575,7 +576,7 @@ static void smack_sb_free_security(struct super_block *sb)
  * Copy the Smack specific mount options out of the mount
  * options list.
  */
-static int smack_sb_copy_data(char *orig, char *smackopts)
+static int smack_sb_copy_data(char *orig, size_t orig_size, char *smackopts)
 {
 	char *cp, *commap, *otheropts, *dp;
 
