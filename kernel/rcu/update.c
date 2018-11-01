@@ -360,6 +360,7 @@ void __wait_rcu_gp(bool checktiny, int n, call_rcu_func_t *crcu_array,
 			wait_for_completion(&rs_array[i].completion);
 		destroy_rcu_head_on_stack(&rs_array[i].head);
 	}
+	smp_mb(); /* Provide ordering in case of fly-by wakeup. */
 }
 EXPORT_SYMBOL_GPL(__wait_rcu_gp);
 
