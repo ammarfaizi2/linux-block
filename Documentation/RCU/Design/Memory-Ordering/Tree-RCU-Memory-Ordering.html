@@ -162,6 +162,36 @@ an <tt>atomic_add_return()</tt> of zero) to detect idle CPUs.
 <tr><td>&nbsp;</td></tr>
 </table>
 
+<p>The approach must be extended to handle one final case, that
+of waking a task blocked in <tt>synchronize_rcu()</tt>.
+This task might be affinitied to a CPU that is not yet aware that
+the grace period has ended, and thus might not yet be subject to
+the grace period's memory ordering.
+Therefore, there is an <tt>smp_mb()</tt> after the return from
+<tt>wait_for_completion()</tt> in the <tt>synchronize_rcu()</tt>
+code path.
+
+<table>
+<tr><th>&nbsp;</th></tr>
+<tr><th align="left">Quick Quiz:</th></tr>
+<tr><td>
+	What?  Where???
+	I don't see any <tt>smp_mb()</tt> after the return from
+	<tt>wait_for_completion()</tt>!!!
+</td></tr>
+<tr><th align="left">Answer:</th></tr>
+<tr><td bgcolor="#ffffff"><font color="ffffff">
+	That would be because I spotted the need for that
+	<tt>smp_mb()</tt> during the creation of this documentation,
+	and it is therefore unlikely to hit mainline before v4.14.
+	Kudos to Lance Roy, Will Deacon, Peter Zijlstra, and
+	Jonathan Cameron for asking questions that sensitized me
+	to the rather elaborate sequence of events that demonstrate
+	the need for this memory barrier.
+</font></td></tr>
+<tr><td>&nbsp;</td></tr>
+</table>
+
 <p>Tree RCU's grace--period memory-ordering guarantees rely most
 heavily on the <tt>rcu_node</tt> structure's <tt>-&gt;lock</tt>
 field, so much so that it is necessary to abbreviate this pattern
