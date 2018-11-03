@@ -248,7 +248,8 @@ struct dentry *nfs4_try_mount(int flags, const char *dev_name,
 
 	export_path = data->nfs_server.export_path;
 	data->nfs_server.export_path = "/";
-	root_mnt = nfs_do_root_mount(&nfs4_remote_fs_type, flags, mount_info, 0,
+	root_mnt = nfs_do_root_mount(&nfs4_remote_fs_type, flags, mount_info,
+				     sizeof(struct nfs_mount_info),
 				     data->nfs_server.hostname);
 	data->nfs_server.export_path = export_path;
 
@@ -310,7 +311,8 @@ static struct dentry *nfs4_referral_mount(struct file_system_type *fs_type,
 	data->mnt_path = "/";
 
 	root_mnt = nfs_do_root_mount(&nfs4_remote_referral_fs_type, flags,
-				     data, 0, data->hostname);
+				     data, sizeof(struct nfs_clone_mount),
+				     data->hostname);
 	data->mnt_path = export_path;
 
 	res = nfs_follow_remote_path(root_mnt, export_path);

@@ -214,6 +214,12 @@ int pid_ns_prepare_proc(struct pid_namespace *ns)
 {
 	struct vfsmount *mnt;
 
+	/*
+	 * This is a pathological case - proc_mount() wants not the
+	 * contents of data, but the address itself in this case.
+	 * This is an abuse of mount, and it will go away once we
+	 * have a better mechanism for passing that kind of data.
+	 */
 	mnt = kern_mount_data(&proc_fs_type, ns, 0);
 	if (IS_ERR(mnt))
 		return PTR_ERR(mnt);
