@@ -2517,10 +2517,9 @@ static int do_new_mount(struct path *mountpoint, const char *fstype,
 	if (!fstype)
 		return -EINVAL;
 
-	err = -ENODEV;
 	fs_type = get_fs_type(fstype);
 	if (!fs_type)
-		goto out;
+		return -ENODEV;
 
 	if (fs_type->fs_flags & FS_HAS_SUBTYPE) {
 		subtype = strchr(fstype, '.');
@@ -2538,10 +2537,8 @@ static int do_new_mount(struct path *mountpoint, const char *fstype,
 	fc = vfs_new_fs_context(fs_type, NULL, sb_flags, sb_flags,
 				FS_CONTEXT_FOR_USER_MOUNT);
 	put_filesystem(fs_type);
-	if (IS_ERR(fc)) {
-		err = PTR_ERR(fc);
-		goto out;
-	}
+	if (IS_ERR(fc))
+		return PTR_ERR(fc);
 
 	if (subtype) {
 		err = vfs_parse_fs_string(fc, "subtype",
@@ -2567,7 +2564,6 @@ static int do_new_mount(struct path *mountpoint, const char *fstype,
 	err = do_new_mount_fc(fc, mountpoint, mnt_flags);
 out_fc:
 	put_fs_context(fc);
-out:
 	return err;
 }
 

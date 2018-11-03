@@ -1540,6 +1540,93 @@ out:
 	return ERR_PTR(error);
 }
 
+/**
+ * vfs_get_tree - Get the mountable root
+ * @fc: The superblock configuration context.
+ *
+ * The filesystem is invoked to get or create a superblock which can then later
+ * be used for mounting.  The filesystem places a pointer to the root to be
+ * used for mounting in @fc->root.
+ */
+int vfs_get_tree(struct fs_context *fc)
+{
+	struct super_block *sb;
+	int ret;
+
+	if (fc->fs_type->fs_flags & FS_REQUIRES_DEV && !fc->source)
+		return -ENOENT;
+
+	if (fc->root)
+		return -EBUSY;
+
+	if (fc->ops->validate) {
+		ret = fc->ops->validate(fc);
+		if (ret < 0)
+			return ret;
+	}
+
+	ret = security_fs_context_validate(fc);
+	if (ret < 0)
+		return ret;
+
+	/* Get the mountable root in fc->root, with a ref on the root and a ref
+	 * on the superblock.
+	 */
+	ret = fc->ops->get_tree(fc);
+	if (ret < 0)
+		return ret;
+
+	if (!fc->root) {
+		pr_err("Filesystem %s get_tree() didn't set fc->root\n",
+		       fc->fs_type->name);
+		/* We don't know what the locking state of the superblock is -
+		 * if there is a superblock.
+		 */
+		BUG();
+	}
+
+	sb = fc->root->d_sb;
+	WARN_ON(!sb->s_bdi);
+
+	ret = security_sb_get_tree(fc);
+	if (ret < 0)
+		goto err_sb;
+
+	ret = -ENOMEM;
+	if (fc->subtype && !sb->s_subtype) {
+		sb->s_subtype = kstrdup(fc->subtype, GFP_KERNEL);
+		if (!sb->s_subtype)
+			goto err_sb;
+	}
+
+	/* Write barrier is for super_cache_count(). We place it before setting
+	 * SB_BORN as the data dependency between the two functions is the
+	 * superblock structure contents that we just set up, not the SB_BORN
+	 * flag.
+	 */
+	smp_wmb();
+	sb->s_flags |= SB_BORN;
+
+	/* Filesystems should never set s_maxbytes larger than MAX_LFS_FILESIZE
+	 * but s_maxbytes was an unsigned long long for many releases.  Throw
+	 * this warning for a little while to try and catch filesystems that
+	 * violate this rule.
+	 */
+	WARN(sb->s_maxbytes < 0,
+	     "%s set sb->s_maxbytes to negative value (%lld)\n",
+	     fc->fs_type->name, sb->s_maxbytes);
+
+	up_write(&sb->s_umount);
+	return 0;
+
+err_sb:
+	dput(fc->root);
+	fc->root = NULL;
+	deactivate_locked_super(sb);
+	return ret;
+}
+EXPORT_SYMBOL(vfs_get_tree);
+
 /*
  * Setup private BDI for given superblock. It gets automatically cleaned up
  * in generic_shutdown_super().
@@ -1819,90 +1906,3 @@ int thaw_super(struct super_block *sb)
 	return thaw_super_locked(sb);
 }
 EXPORT_SYMBOL(thaw_super);
-
-/**
- * vfs_get_tree - Get the mountable root
- * @fc: The superblock configuration context.
- *
- * The filesystem is invoked to get or create a superblock which can then later
- * be used for mounting.  The filesystem places a pointer to the root to be
- * used for mounting in @fc->root.
- */
-int vfs_get_tree(struct fs_context *fc)
-{
-	struct super_block *sb;
-	int ret;
-
-	if (fc->fs_type->fs_flags & FS_REQUIRES_DEV && !fc->source)
-		return -ENOENT;
-
-	if (fc->root)
-		return -EBUSY;
-
-	if (fc->ops->validate) {
-		ret = fc->ops->validate(fc);
-		if (ret < 0)
-			return ret;
-	}
-
-	ret = security_fs_context_validate(fc);
-	if (ret < 0)
-		return ret;
-
-	/* Get the mountable root in fc->root, with a ref on the root and a ref
-	 * on the superblock.
-	 */
-	ret = fc->ops->get_tree(fc);
-	if (ret < 0)
-		return ret;
-
-	if (!fc->root) {
-		pr_err("Filesystem %s get_tree() didn't set fc->root\n",
-		       fc->fs_type->name);
-		/* We don't know what the locking state of the superblock is -
-		 * if there is a superblock.
-		 */
-		BUG();
-	}
-
-	sb = fc->root->d_sb;
-	WARN_ON(!sb->s_bdi);
-
-	ret = security_sb_get_tree(fc);
-	if (ret < 0)
-		goto err_sb;
-
-	ret = -ENOMEM;
-	if (fc->subtype && !sb->s_subtype) {
-		sb->s_subtype = kstrdup(fc->subtype, GFP_KERNEL);
-		if (!sb->s_subtype)
-			goto err_sb;
-	}
-
-	/* Write barrier is for super_cache_count(). We place it before setting
-	 * SB_BORN as the data dependency between the two functions is the
-	 * superblock structure contents that we just set up, not the SB_BORN
-	 * flag.
-	 */
-	smp_wmb();
-	sb->s_flags |= SB_BORN;
-
-	/* Filesystems should never set s_maxbytes larger than MAX_LFS_FILESIZE
-	 * but s_maxbytes was an unsigned long long for many releases.  Throw
-	 * this warning for a little while to try and catch filesystems that
-	 * violate this rule.
-	 */
-	WARN(sb->s_maxbytes < 0,
-	     "%s set sb->s_maxbytes to negative value (%lld)\n",
-	     fc->fs_type->name, sb->s_maxbytes);
-
-	up_write(&sb->s_umount);
-	return 0;
-
-err_sb:
-	dput(fc->root);
-	fc->root = NULL;
-	deactivate_locked_super(sb);
-	return ret;
-}
-EXPORT_SYMBOL(vfs_get_tree);
