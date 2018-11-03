@@ -872,7 +872,7 @@ static struct dentry *exofs_mount(struct file_system_type *type,
 
 	if (!opts.dev_name)
 		opts.dev_name = dev_name;
-	return mount_nodev(type, flags, &opts, 0, exofs_fill_super);
+	return mount_nodev(type, flags, &opts, sizeof(opts), exofs_fill_super);
 }
 
 /*

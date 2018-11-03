@@ -1539,6 +1539,12 @@ int mq_init_ns(struct ipc_namespace *ns)
 	ns->mq_msg_default   = DFLT_MSG;
 	ns->mq_msgsize_default  = DFLT_MSGSIZE;
 
+	/*
+	 * This is a pathological case - mqueue_mount() wants not the
+	 * contents of data, but the address itself in this case.
+	 * This is an abuse of mount, and it will go away once we
+	 * have a better mechanism for passing that kind of data.
+	 */
 	ns->mq_mnt = kern_mount_data(&mqueue_fs_type, ns, 0);
 	if (IS_ERR(ns->mq_mnt)) {
 		int err = PTR_ERR(ns->mq_mnt);
