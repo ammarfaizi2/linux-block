@@ -2547,7 +2547,7 @@ static int do_new_mount(struct path *mountpoint, const char *fstype,
 		err = vfs_parse_fs_string(fc, "subtype",
 					  subtype, strlen(subtype));
 		if (err < 0)
-			goto out;
+			goto out_fc;
 	}
 
 	if (name) {
