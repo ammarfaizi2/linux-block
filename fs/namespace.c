@@ -941,11 +941,52 @@ static struct mount *skip_mnt_tree(struct mount *p)
 	return p;
 }
 
+/**
+ * vfs_create_mount - Create a mount for a configured superblock
+ * @fc: The configuration context with the superblock attached
+ * @mnt_flags: The mount flags to apply
+ *
+ * Create a mount to an already configured superblock.  If necessary, the
+ * caller should invoke vfs_get_tree() before calling this.
+ *
+ * Note that this does not attach the mount to anything.
+ */
+struct vfsmount *vfs_create_mount(struct fs_context *fc, unsigned int mnt_flags)
+{
+	struct mount *mnt;
+
+	if (!fc->root)
+		return ERR_PTR(-EINVAL);
+
+	mnt = alloc_vfsmnt(fc->source ?: "none");
+	if (!mnt)
+		return ERR_PTR(-ENOMEM);
+
+	if (fc->purpose == FS_CONTEXT_FOR_KERNEL_MOUNT)
+		/* It's a longterm mount, don't release mnt until we unmount
+		 * before file sys is unregistered
+		 */
+		mnt_flags |= MNT_INTERNAL;
+
+	atomic_inc(&fc->root->d_sb->s_active);
+	mnt->mnt.mnt_flags	= mnt_flags;
+	mnt->mnt.mnt_sb		= fc->root->d_sb;
+	mnt->mnt.mnt_root	= dget(fc->root);
+	mnt->mnt_mountpoint	= mnt->mnt.mnt_root;
+	mnt->mnt_parent		= mnt;
+
+	lock_mount_hash();
+	list_add_tail(&mnt->mnt_instance, &mnt->mnt.mnt_sb->s_mounts);
+	unlock_mount_hash();
+	return &mnt->mnt;
+}
+EXPORT_SYMBOL_GPL(vfs_create_mount);
+
 struct vfsmount *
 vfs_kern_mount(struct file_system_type *type, int flags, const char *name,
 	       void *data, size_t data_size)
 {
-	struct mount *mnt;
+	struct vfsmount *mnt;
 	struct fs_context *fc;
 	int ret;
 
@@ -963,36 +1004,15 @@ vfs_kern_mount(struct file_system_type *type, int flags, const char *name,
 		fc->source = name;
 
 	ret = legacy_parse_monolithic(fc, data, data_size);
-	if (ret < 0) {
-		put_fs_context(fc);
-		return ERR_PTR(ret);
-	}
+	if (!ret)
+		ret = vfs_get_tree(fc);
+	if (!ret)
+		mnt = vfs_create_mount(fc, 0);
+	else
+		mnt = ERR_PTR(ret);
 
-	ret = vfs_get_tree(fc);
-	if (ret < 0) {
-		put_fs_context(fc);
-		return ERR_PTR(ret);
-	}
-
-	mnt = alloc_vfsmnt(name);
-	if (!mnt) {
-		put_fs_context(fc);
-		return ERR_PTR(-ENOMEM);
-	}
-
-	if (flags & SB_KERNMOUNT)
-		mnt->mnt.mnt_flags = MNT_INTERNAL;
-
-	atomic_inc(&fc->root->d_sb->s_active);
-	mnt->mnt.mnt_root = dget(fc->root);
-	mnt->mnt.mnt_sb = fc->root->d_sb;
-	mnt->mnt_mountpoint = mnt->mnt.mnt_root;
-	mnt->mnt_parent = mnt;
-	lock_mount_hash();
-	list_add_tail(&mnt->mnt_instance, &fc->root->d_sb->s_mounts);
-	unlock_mount_hash();
 	put_fs_context(fc);
-	return &mnt->mnt;
+	return mnt;
 }
 EXPORT_SYMBOL_GPL(vfs_kern_mount);
 
