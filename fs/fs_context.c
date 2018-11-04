@@ -71,6 +71,15 @@ struct fs_context *vfs_new_fs_context(struct file_system_type *fs_type,
 		fc->user_ns = get_user_ns(fc->cred->user_ns);
 		fc->net_ns = get_net(current->nsproxy->net_ns);
 		break;
+	case FS_CONTEXT_FOR_RECONFIGURE:
+	case FS_CONTEXT_FOR_UMOUNT:
+	case FS_CONTEXT_FOR_EMERGENCY_RO:
+		/* We don't pin any namespaces as the superblock's
+		 * subscriptions cannot be changed at this point.
+		 */
+		atomic_inc(&reference->d_sb->s_active);
+		fc->root = dget(reference);
+		break;
 	}
 
 	ret = legacy_init_fs_context(fc, reference);
@@ -85,7 +94,6 @@ err_fc:
 }
 EXPORT_SYMBOL(vfs_new_fs_context);
 
-static void legacy_fs_context_free(struct fs_context *fc);
 /**
  * put_fs_context - Dispose of a superblock configuration context.
  * @fc: The context to dispose of.
@@ -119,7 +127,7 @@ EXPORT_SYMBOL(put_fs_context);
 /*
  * Free the config for a filesystem that doesn't support fs_context.
  */
-static void legacy_fs_context_free(struct fs_context *fc)
+void legacy_fs_context_free(struct fs_context *fc)
 {
 	struct legacy_fs_context *ctx = fc->fs_private;
 
@@ -203,13 +211,41 @@ int legacy_get_tree(struct fs_context *fc)
 }
 
 /*
+ * Handle remount.
+ */
+int legacy_reconfigure(struct fs_context *fc)
+{
+	struct legacy_fs_context *ctx = fc->fs_private;
+	struct super_block *sb = fc->root->d_sb;
+
+	if (!sb->s_op->remount_fs)
+		return 0;
+
+	return sb->s_op->remount_fs(sb, &fc->sb_flags,
+				    ctx ? ctx->legacy_data : NULL,
+				    ctx ? ctx->data_size : 0);
+}
+
+/*
  * Initialise a legacy context for a filesystem that doesn't support
  * fs_context.
  */
 int legacy_init_fs_context(struct fs_context *fc, struct dentry *dentry)
 {
-	fc->fs_private = kzalloc(sizeof(struct legacy_fs_context), GFP_KERNEL);
-	if (!fc->fs_private)
-		return -ENOMEM;
+	switch (fc->purpose) {
+	default:
+		fc->fs_private = kzalloc(sizeof(struct legacy_fs_context),
+					 GFP_KERNEL);
+		if (!fc->fs_private)
+			return -ENOMEM;
+		break;
+
+	case FS_CONTEXT_FOR_UMOUNT:
+	case FS_CONTEXT_FOR_EMERGENCY_RO:
+		if (!fc->root->d_sb->s_op->remount_fs)
+			return -EOPNOTSUPP;
+		break;
+	}
+
 	return 0;
 }
