@@ -1419,17 +1419,15 @@ static void shrink_submounts(struct mount *mnt);
 static int do_umount_root(struct super_block *sb)
 {
 	int ret = 0;
-	struct fs_context fc = {
-		.purpose	= FS_CONTEXT_FOR_UMOUNT,
-		.fs_type	= sb->s_type,
-		.root		= sb->s_root,
-		.sb_flags	= SB_RDONLY,
-		.sb_flags_mask	= SB_RDONLY,
-	};
-
 	down_write(&sb->s_umount);
 	if (!sb_rdonly(sb)) {
-		int ret;
+		struct fs_context fc = {
+			.purpose	= FS_CONTEXT_FOR_UMOUNT,
+			.fs_type	= sb->s_type,
+			.root		= sb->s_root,
+			.sb_flags	= SB_RDONLY,
+			.sb_flags_mask	= SB_RDONLY,
+		};
 
 		if (fc.fs_type->init_fs_context)
 			ret = fc.fs_type->init_fs_context(&fc, NULL);
