@@ -35,6 +35,7 @@
 #include <linux/fsnotify.h>
 #include <linux/lockdep.h>
 #include <linux/user_namespace.h>
+#include <linux/fs_context.h>
 #include <uapi/linux/mount.h>
 #include "internal.h"
 
@@ -1244,32 +1245,28 @@ struct dentry *mount_single(struct file_system_type *fs_type,
 }
 EXPORT_SYMBOL(mount_single);
 
-struct dentry *
-mount_fs(struct file_system_type *type, int flags, const char *name,
-	 void *data, size_t data_size)
+/**
+ * vfs_get_tree - Get the mountable root
+ * @fc: The superblock configuration context.
+ *
+ * The filesystem is invoked to get or create a superblock which can then later
+ * be used for mounting.  The filesystem places a pointer to the root to be
+ * used for mounting in @fc->root.
+ */
+int vfs_get_tree(struct fs_context *fc)
 {
-	struct dentry *root;
 	struct super_block *sb;
-	char *secdata = NULL;
-	int error = -ENOMEM;
+	int error;
 
-	if (data && !(type->fs_flags & FS_BINARY_MOUNTDATA)) {
-		secdata = alloc_secdata();
-		if (!secdata)
-			goto out;
+	error = legacy_validate(fc);
+	if (error < 0)
+		return error;
 
-		error = security_sb_copy_data(data, data_size, secdata);
-		if (error)
-			goto out_free_secdata;
-	}
+	error = legacy_get_tree(fc);
+	if (error < 0)
+		return error;
 
-	root = type->mount(type, flags, name, data, data_size);
-	if (IS_ERR(root)) {
-		error = PTR_ERR(root);
-		goto out_free_secdata;
-	}
-	sb = root->d_sb;
-	BUG_ON(!sb);
+	sb = fc->root->d_sb;
 	WARN_ON(!sb->s_bdi);
 
 	/*
@@ -1281,7 +1278,7 @@ mount_fs(struct file_system_type *type, int flags, const char *name,
 	smp_wmb();
 	sb->s_flags |= SB_BORN;
 
-	error = security_sb_kern_mount(sb, flags, secdata);
+	error = security_sb_kern_mount(sb, fc->sb_flags, fc->secdata);
 	if (error)
 		goto out_sb;
 
@@ -1292,18 +1289,15 @@ mount_fs(struct file_system_type *type, int flags, const char *name,
 	 * violate this rule.
 	 */
 	WARN((sb->s_maxbytes < 0), "%s set sb->s_maxbytes to "
-		"negative value (%lld)\n", type->name, sb->s_maxbytes);
+		"negative value (%lld)\n", fc->fs_type->name, sb->s_maxbytes);
 
 	up_write(&sb->s_umount);
-	free_secdata(secdata);
-	return root;
+	return 0;
 out_sb:
-	dput(root);
+	dput(fc->root);
+	fc->root = NULL;
 	deactivate_locked_super(sb);
-out_free_secdata:
-	free_secdata(secdata);
-out:
-	return ERR_PTR(error);
+	return error;
 }
 
 /*
