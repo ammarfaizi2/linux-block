@@ -1016,17 +1016,16 @@ cancel_readonly:
 
 static void do_emergency_remount_callback(struct super_block *sb)
 {
-	struct fs_context fc = {
-		.purpose	= FS_CONTEXT_FOR_EMERGENCY_RO,
-		.fs_type	= sb->s_type,
-		.root		= sb->s_root,
-		.sb_flags	= SB_RDONLY,
-		.sb_flags_mask	= SB_RDONLY,
-	};
-
 	down_write(&sb->s_umount);
 	if (sb->s_root && sb->s_bdev && (sb->s_flags & SB_BORN) &&
 	    !sb_rdonly(sb)) {
+		struct fs_context fc = {
+			.purpose	= FS_CONTEXT_FOR_EMERGENCY_RO,
+			.fs_type	= sb->s_type,
+			.root		= sb->s_root,
+			.sb_flags	= SB_RDONLY,
+			.sb_flags_mask	= SB_RDONLY,
+		};
 		int ret;
 
 		if (fc.fs_type->init_fs_context)
