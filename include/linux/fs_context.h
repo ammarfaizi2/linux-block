@@ -25,6 +25,9 @@ struct user_namespace;
 enum fs_context_purpose {
 	FS_CONTEXT_FOR_USER_MOUNT,	/* New superblock for user-specified mount */
 	FS_CONTEXT_FOR_KERNEL_MOUNT,	/* New superblock for kernel-internal mount */
+	FS_CONTEXT_FOR_RECONFIGURE,	/* Superblock reconfiguration (remount) */
+	FS_CONTEXT_FOR_UMOUNT,		/* Reconfiguration to R/O for unmount */
+	FS_CONTEXT_FOR_EMERGENCY_RO,	/* Emergency reconfiguration to R/O */
 };
 
 /*
