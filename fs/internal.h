@@ -17,6 +17,7 @@ struct linux_binprm;
 struct path;
 struct mount;
 struct shrink_control;
+struct fs_context;
 
 /*
  * block_dev.c
@@ -50,6 +51,14 @@ int __generic_write_end(struct inode *inode, loff_t pos, unsigned copied,
  * char_dev.c
  */
 extern void __init chrdev_init(void);
+
+/*
+ * fs_context.c
+ */
+extern int legacy_init_fs_context(struct fs_context *fc, struct dentry *dentry);
+extern int legacy_get_tree(struct fs_context *fc);
+extern int legacy_validate(struct fs_context *fc);
+extern int legacy_parse_monolithic(struct fs_context *fc, void *data, size_t data_size);
 
 /*
  * namei.c
@@ -101,8 +110,6 @@ extern struct file *alloc_empty_file_noaccount(int, const struct cred *);
  */
 extern int do_remount_sb(struct super_block *, int, void *, size_t, int);
 extern bool trylock_super(struct super_block *sb);
-extern struct dentry *mount_fs(struct file_system_type *,
-			       int, const char *, void *, size_t);
 extern struct super_block *user_get_super(dev_t);
 
 /*

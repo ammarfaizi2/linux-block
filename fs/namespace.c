@@ -27,6 +27,7 @@
 #include <linux/task_work.h>
 #include <linux/sched/task.h>
 #include <uapi/linux/mount.h>
+#include <linux/fs_context.h>
 
 #include "pnode.h"
 #include "internal.h"
@@ -945,32 +946,52 @@ vfs_kern_mount(struct file_system_type *type, int flags, const char *name,
 	       void *data, size_t data_size)
 {
 	struct mount *mnt;
-	struct dentry *root;
+	struct fs_context *fc;
+	int ret;
 
 	if (!type)
 		return ERR_PTR(-ENODEV);
 
+	fc = vfs_new_fs_context(type, NULL, flags, flags,
+				flags & SB_KERNMOUNT ?
+				FS_CONTEXT_FOR_KERNEL_MOUNT :
+				FS_CONTEXT_FOR_USER_MOUNT);
+	if (IS_ERR(fc))
+		return ERR_CAST(fc);
+
+	if (name)
+		fc->source = name;
+
+	ret = legacy_parse_monolithic(fc, data, data_size);
+	if (ret < 0) {
+		put_fs_context(fc);
+		return ERR_PTR(ret);
+	}
+
+	ret = vfs_get_tree(fc);
+	if (ret < 0) {
+		put_fs_context(fc);
+		return ERR_PTR(ret);
+	}
+
 	mnt = alloc_vfsmnt(name);
-	if (!mnt)
+	if (!mnt) {
+		put_fs_context(fc);
 		return ERR_PTR(-ENOMEM);
+	}
 
 	if (flags & SB_KERNMOUNT)
 		mnt->mnt.mnt_flags = MNT_INTERNAL;
 
-	root = mount_fs(type, flags, name, data, data_size);
-	if (IS_ERR(root)) {
-		mnt_free_id(mnt);
-		free_vfsmnt(mnt);
-		return ERR_CAST(root);
-	}
-
-	mnt->mnt.mnt_root = root;
-	mnt->mnt.mnt_sb = root->d_sb;
+	atomic_inc(&fc->root->d_sb->s_active);
+	mnt->mnt.mnt_root = dget(fc->root);
+	mnt->mnt.mnt_sb = fc->root->d_sb;
 	mnt->mnt_mountpoint = mnt->mnt.mnt_root;
 	mnt->mnt_parent = mnt;
 	lock_mount_hash();
-	list_add_tail(&mnt->mnt_instance, &root->d_sb->s_mounts);
+	list_add_tail(&mnt->mnt_instance, &fc->root->d_sb->s_mounts);
 	unlock_mount_hash();
+	put_fs_context(fc);
 	return &mnt->mnt;
 }
 EXPORT_SYMBOL_GPL(vfs_kern_mount);
