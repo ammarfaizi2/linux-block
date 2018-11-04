@@ -2446,29 +2446,6 @@ out:
 	return err;
 }
 
-static struct vfsmount *fs_set_subtype(struct vfsmount *mnt, const char *fstype)
-{
-	int err;
-	const char *subtype = strchr(fstype, '.');
-	if (subtype) {
-		subtype++;
-		err = -EINVAL;
-		if (!subtype[0])
-			goto err;
-	} else
-		subtype = "";
-
-	mnt->mnt_sb->s_subtype = kstrdup(subtype, GFP_KERNEL);
-	err = -ENOMEM;
-	if (!mnt->mnt_sb->s_subtype)
-		goto err;
-	return mnt;
-
- err:
-	mntput(mnt);
-	return ERR_PTR(err);
-}
-
 /*
  * add a mount into a namespace's mount tree
  */
@@ -2525,6 +2502,8 @@ static int do_new_mount(struct path *path, const char *fstype, int sb_flags,
 {
 	struct file_system_type *type;
 	struct vfsmount *mnt;
+	struct fs_context *fc;
+	const char *subtype = NULL;
 	int err;
 
 	if (!fstype)
@@ -2534,23 +2513,55 @@ static int do_new_mount(struct path *path, const char *fstype, int sb_flags,
 	if (!type)
 		return -ENODEV;
 
-	mnt = vfs_kern_mount(type, sb_flags, name, data, data_size);
-	if (!IS_ERR(mnt) && (type->fs_flags & FS_HAS_SUBTYPE) &&
-	    !mnt->mnt_sb->s_subtype)
-		mnt = fs_set_subtype(mnt, fstype);
+	if (type->fs_flags & FS_HAS_SUBTYPE) {
+		subtype = strchr(fstype, '.');
+		if (subtype) {
+			subtype++;
+			if (!*subtype) {
+				put_filesystem(type);
+				return -EINVAL;
+			}
+		} else {
+			subtype = "";
+		}
+	}
 
+	fc = vfs_new_fs_context(type, NULL, sb_flags, sb_flags,
+				FS_CONTEXT_FOR_USER_MOUNT);
 	put_filesystem(type);
-	if (IS_ERR(mnt))
-		return PTR_ERR(mnt);
+	if (IS_ERR(fc))
+		return PTR_ERR(fc);
+
+	if (subtype)
+		fc->subtype = subtype;
+	if (name)
+		fc->source = name;
+
+	err = legacy_parse_monolithic(fc, data, data_size);
+	if (err < 0)
+		goto out;
+
+	err = vfs_get_tree(fc);
+	if (err < 0)
+		goto out;
+
+	mnt = vfs_create_mount(fc, 0);
+	if (IS_ERR(mnt)) {
+		err = PTR_ERR(mnt);
+		goto out;
+	}
 
 	if (mount_too_revealing(mnt, &mnt_flags)) {
 		mntput(mnt);
-		return -EPERM;
+		err = -EPERM;
+		goto out;
 	}
 
 	err = do_add_mount(real_mount(mnt), path, mnt_flags);
 	if (err)
 		mntput(mnt);
+out:
+	put_fs_context(fc);
 	return err;
 }
 
