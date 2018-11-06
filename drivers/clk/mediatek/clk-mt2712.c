@@ -1441,26 +1441,8 @@ static const struct of_device_id of_match_clk_mt2712[] = {
 	}
 };
 
-static int clk_mt2712_probe(struct platform_device *pdev)
-{
-	int (*clk_probe)(struct platform_device *);
-	int r;
-
-	clk_probe = of_device_get_match_data(&pdev->dev);
-	if (!clk_probe)
-		return -EINVAL;
-
-	r = clk_probe(pdev);
-	if (r != 0)
-		dev_err(&pdev->dev,
-			"could not register clock provider: %s: %d\n",
-			pdev->name, r);
-
-	return r;
-}
-
 static struct platform_driver clk_mt2712_drv = {
-	.probe = clk_mt2712_probe,
+	.probe = platform_driver_probe_by_of_match_data,
 	.driver = {
 		.name = "clk-mt2712",
 		.owner = THIS_MODULE,
