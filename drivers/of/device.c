@@ -195,6 +195,37 @@ const void *of_device_get_match_data(const struct device *dev)
 }
 EXPORT_SYMBOL(of_device_get_match_data);
 
+/**
+ * platform_driver_probe_by_of_match_data - Probe a platform device using match data
+ * @pdev: platform device to probe
+ *
+ * For use by device drivers that multiplex their probe function through DT
+ * match data. Drivers can use this function to call their platform
+ * device probe directly without having to implement a wrapper function.
+ *
+ * static const struct of_device_id probe_funcs[] = {
+ *      { .compatible = "compat,foo", .data = foo_probe },
+ *      {}
+ * };
+ *
+ * struct platform_driver foo_driver = {
+ *      .probe = platform_driver_probe_by_of_match_data,
+ *      .driver = {
+ *            of_match_table = probe_funcs,
+ *      },
+ * };
+ *
+ */
+int platform_driver_probe_by_of_match_data(struct platform_device *pdev)
+{
+	int (*probe_func)(struct platform_device *pdev);
+
+	probe_func = of_device_get_match_data(&pdev->dev);
+
+	return probe_func(pdev);
+}
+EXPORT_SYMBOL_GPL(platform_driver_probe_by_of_match_data);
+
 static ssize_t of_device_get_modalias(struct device *dev, char *str, ssize_t len)
 {
 	const char *compat;
