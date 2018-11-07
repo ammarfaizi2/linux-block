@@ -3513,7 +3513,7 @@ static noinline int do_init_module(struct module *mod)
 	 * mappings which won't be cleaned up until do_free_init() runs.  Any
 	 * code such as mark_rodata_ro() which depends on those mappings to
 	 * be cleaned up needs to sync with the queued work - ie
-	 * rcu_barrier_sched()
+	 * rcu_barrier()
 	 */
 	call_rcu(&freeinit->rcu, do_free_init);
 	mutex_unlock(&module_mutex);
