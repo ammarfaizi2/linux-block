@@ -2057,7 +2057,7 @@ void br_multicast_dev_del(struct net_bridge *br)
 
 	if (mdb->old) {
 		spin_unlock_bh(&br->multicast_lock);
-		rcu_barrier_bh();
+		rcu_barrier();
 		spin_lock_bh(&br->multicast_lock);
 		WARN_ON(mdb->old);
 	}
