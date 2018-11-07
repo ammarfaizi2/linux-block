@@ -510,6 +510,7 @@ static int a5xx_ucode_init(struct msm_gpu *gpu)
 		a5xx_gpu->pm4_bo = adreno_fw_create_bo(gpu,
 			adreno_gpu->fw[ADRENO_FW_PM4], &a5xx_gpu->pm4_iova);
 
+
 		if (IS_ERR(a5xx_gpu->pm4_bo)) {
 			ret = PTR_ERR(a5xx_gpu->pm4_bo);
 			a5xx_gpu->pm4_bo = NULL;
@@ -517,6 +518,8 @@ static int a5xx_ucode_init(struct msm_gpu *gpu)
 				ret);
 			return ret;
 		}
+
+		msm_gem_object_set_name(a5xx_gpu->pm4_bo, "pm4fw");
 	}
 
 	if (!a5xx_gpu->pfp_bo) {
@@ -530,6 +533,8 @@ static int a5xx_ucode_init(struct msm_gpu *gpu)
 				ret);
 			return ret;
 		}
+
+		msm_gem_object_set_name(a5xx_gpu->pfp_bo, "pfpfw");
 	}
 
 	gpu_write64(gpu, REG_A5XX_CP_ME_INSTR_BASE_LO,
@@ -1214,10 +1219,10 @@ static int a5xx_crashdumper_init(struct msm_gpu *gpu,
 		SZ_1M, MSM_BO_UNCACHED, gpu->aspace,
 		&dumper->bo, &dumper->iova);
 
-	if (IS_ERR(dumper->ptr))
-		return PTR_ERR(dumper->ptr);
+	if (!IS_ERR(dumper->ptr))
+		msm_gem_object_set_name(dumper->bo, "crashdump");
 
-	return 0;
+	return PTR_ERR_OR_ZERO(dumper->ptr);
 }
 
 static int a5xx_crashdumper_run(struct msm_gpu *gpu,
