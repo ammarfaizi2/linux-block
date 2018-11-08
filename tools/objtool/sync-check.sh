@@ -10,6 +10,7 @@ arch/x86/include/asm/insn.h
 arch/x86/include/asm/inat.h
 arch/x86/include/asm/inat_types.h
 arch/x86/include/asm/orc_types.h
+include/linux/static_call_types.h
 '
 
 check()

@@ -10,6 +10,22 @@
 void static_call_bp_handler(void);
 void *bp_handler_dest;
 
+#ifdef CONFIG_HAVE_STATIC_CALL_OPTIMIZED
+
+void *bp_handler_continue;
+
+asm(".pushsection .text, \"ax\"						\n"
+    ".globl static_call_bp_handler					\n"
+    ".type static_call_bp_handler, @function				\n"
+    "static_call_bp_handler:						\n"
+    "ANNOTATE_RETPOLINE_SAFE						\n"
+    "call *bp_handler_dest						\n"
+    "ANNOTATE_RETPOLINE_SAFE						\n"
+    "jmp *bp_handler_continue						\n"
+    ".popsection							\n");
+
+#else /* !CONFIG_HAVE_STATIC_CALL_OPTIMIZED */
+
 asm(".pushsection .text, \"ax\"						\n"
     ".globl static_call_bp_handler					\n"
     ".type static_call_bp_handler, @function				\n"
@@ -17,6 +33,8 @@ asm(".pushsection .text, \"ax\"						\n"
     "ANNOTATE_RETPOLINE_SAFE						\n"
     "jmp *bp_handler_dest						\n"
     ".popsection							\n");
+
+#endif /* !CONFIG_HAVE_STATIC_CALL_OPTIMIZED */
 
 void arch_static_call_transform(unsigned long insn, void *dest)
 {
@@ -38,8 +56,11 @@ void arch_static_call_transform(unsigned long insn, void *dest)
 	opcodes[0] = insn_opcode;
 	memcpy(&opcodes[1], &dest_relative, CALL_INSN_SIZE - 1);
 
-	/* Set up the variable for the breakpoint handler: */
+	/* Set up the variables for the breakpoint handler: */
 	bp_handler_dest = dest;
+#ifdef CONFIG_HAVE_STATIC_CALL_OPTIMIZED
+	bp_handler_continue = (void *)(insn + CALL_INSN_SIZE);
+#endif
 
 	/* Patch the call site: */
 	text_poke_bp((void *)insn, opcodes, CALL_INSN_SIZE,
@@ -49,3 +70,15 @@ done:
 	mutex_unlock(&text_mutex);
 }
 EXPORT_SYMBOL_GPL(arch_static_call_transform);
+
+#ifdef CONFIG_HAVE_STATIC_CALL_OPTIMIZED
+void arch_static_call_poison_tramp(unsigned long insn)
+{
+	unsigned long tramp = insn + CALL_INSN_SIZE + *(s32 *)(insn + 1);
+	unsigned short opcode = INSN_UD2;
+
+	mutex_lock(&text_mutex);
+	text_poke((void *)tramp, &opcode, 2);
+	mutex_unlock(&text_mutex);
+}
+#endif
