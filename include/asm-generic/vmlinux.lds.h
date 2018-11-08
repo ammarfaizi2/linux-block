@@ -320,6 +320,7 @@
 	__start_ro_after_init = .;					\
 	*(.data..ro_after_init)						\
 	JUMP_TABLE_DATA							\
+	STATIC_CALL_SITES						\
 	__end_ro_after_init = .;
 #endif
 
@@ -723,6 +724,16 @@
 	}
 #else
 #define BUG_TABLE
+#endif
+
+#ifdef CONFIG_HAVE_STATIC_CALL_OPTIMIZED
+#define STATIC_CALL_SITES						\
+	. = ALIGN(8);							\
+	__start_static_call_sites = .;					\
+	KEEP(*(.static_call_sites))					\
+	__stop_static_call_sites = .;
+#else
+#define STATIC_CALL_SITES
 #endif
 
 #ifdef CONFIG_UNWINDER_ORC
