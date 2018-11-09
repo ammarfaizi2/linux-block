@@ -16,10 +16,7 @@
  */
 
 #include <linux/module.h>
-#include "mt76.h"
-#include "mt76x02_dma.h"
-#include "mt76x02_regs.h"
-#include "mt76x02_mac.h"
+#include "mt76x02.h"
 
 #define CCK_RATE(_idx, _rate) {					\
 	.bitrate = _rate,					\
@@ -51,21 +48,21 @@ struct ieee80211_rate mt76x02_rates[] = {
 EXPORT_SYMBOL_GPL(mt76x02_rates);
 
 void mt76x02_configure_filter(struct ieee80211_hw *hw,
-			     unsigned int changed_flags,
-			     unsigned int *total_flags, u64 multicast)
+			      unsigned int changed_flags,
+			      unsigned int *total_flags, u64 multicast)
 {
-	struct mt76_dev *dev = hw->priv;
+	struct mt76x02_dev *dev = hw->priv;
 	u32 flags = 0;
 
 #define MT76_FILTER(_flag, _hw) do { \
 		flags |= *total_flags & FIF_##_flag;			\
-		dev->rxfilter &= ~(_hw);				\
-		dev->rxfilter |= !(flags & FIF_##_flag) * (_hw);	\
+		dev->mt76.rxfilter &= ~(_hw);				\
+		dev->mt76.rxfilter |= !(flags & FIF_##_flag) * (_hw);	\
 	} while (0)
 
-	mutex_lock(&dev->mutex);
+	mutex_lock(&dev->mt76.mutex);
 
-	dev->rxfilter &= ~MT_RX_FILTR_CFG_OTHER_BSS;
+	dev->mt76.rxfilter &= ~MT_RX_FILTR_CFG_OTHER_BSS;
 
 	MT76_FILTER(FCSFAIL, MT_RX_FILTR_CFG_CRC_ERR);
 	MT76_FILTER(PLCPFAIL, MT_RX_FILTR_CFG_PHY_ERR);
@@ -78,25 +75,25 @@ void mt76x02_configure_filter(struct ieee80211_hw *hw,
 	MT76_FILTER(PSPOLL, MT_RX_FILTR_CFG_PSPOLL);
 
 	*total_flags = flags;
-	dev->bus->wr(dev, MT_RX_FILTR_CFG, dev->rxfilter);
+	mt76_wr(dev, MT_RX_FILTR_CFG, dev->mt76.rxfilter);
 
-	mutex_unlock(&dev->mutex);
+	mutex_unlock(&dev->mt76.mutex);
 }
 EXPORT_SYMBOL_GPL(mt76x02_configure_filter);
 
 int mt76x02_sta_add(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
-		   struct ieee80211_sta *sta)
+		    struct ieee80211_sta *sta)
 {
-	struct mt76_dev *dev = hw->priv;
-	struct mt76x02_sta *msta = (struct mt76x02_sta *) sta->drv_priv;
-	struct mt76x02_vif *mvif = (struct mt76x02_vif *) vif->drv_priv;
+	struct mt76x02_dev *dev = hw->priv;
+	struct mt76x02_sta *msta = (struct mt76x02_sta *)sta->drv_priv;
+	struct mt76x02_vif *mvif = (struct mt76x02_vif *)vif->drv_priv;
 	int ret = 0;
 	int idx = 0;
 	int i;
 
-	mutex_lock(&dev->mutex);
+	mutex_lock(&dev->mt76.mutex);
 
-	idx = mt76_wcid_alloc(dev->wcid_mask, ARRAY_SIZE(dev->wcid));
+	idx = mt76_wcid_alloc(dev->mt76.wcid_mask, ARRAY_SIZE(dev->mt76.wcid));
 	if (idx < 0) {
 		ret = -ENOSPC;
 		goto out;
@@ -116,40 +113,40 @@ int mt76x02_sta_add(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 
 	ewma_signal_init(&msta->rssi);
 
-	rcu_assign_pointer(dev->wcid[idx], &msta->wcid);
+	rcu_assign_pointer(dev->mt76.wcid[idx], &msta->wcid);
 
 out:
-	mutex_unlock(&dev->mutex);
+	mutex_unlock(&dev->mt76.mutex);
 
 	return ret;
 }
 EXPORT_SYMBOL_GPL(mt76x02_sta_add);
 
 int mt76x02_sta_remove(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
-		      struct ieee80211_sta *sta)
+		       struct ieee80211_sta *sta)
 {
-	struct mt76_dev *dev = hw->priv;
-	struct mt76x02_sta *msta = (struct mt76x02_sta *) sta->drv_priv;
+	struct mt76x02_dev *dev = hw->priv;
+	struct mt76x02_sta *msta = (struct mt76x02_sta *)sta->drv_priv;
 	int idx = msta->wcid.idx;
 	int i;
 
-	mutex_lock(&dev->mutex);
-	rcu_assign_pointer(dev->wcid[idx], NULL);
+	mutex_lock(&dev->mt76.mutex);
+	rcu_assign_pointer(dev->mt76.wcid[idx], NULL);
 	for (i = 0; i < ARRAY_SIZE(sta->txq); i++)
-		mt76_txq_remove(dev, sta->txq[i]);
+		mt76_txq_remove(&dev->mt76, sta->txq[i]);
 	mt76x02_mac_wcid_set_drop(dev, idx, true);
-	mt76_wcid_free(dev->wcid_mask, idx);
+	mt76_wcid_free(dev->mt76.wcid_mask, idx);
 	mt76x02_mac_wcid_setup(dev, idx, 0, NULL);
-	mutex_unlock(&dev->mutex);
+	mutex_unlock(&dev->mt76.mutex);
 
 	return 0;
 }
 EXPORT_SYMBOL_GPL(mt76x02_sta_remove);
 
-void mt76x02_vif_init(struct mt76_dev *dev, struct ieee80211_vif *vif,
-		     unsigned int idx)
+void mt76x02_vif_init(struct mt76x02_dev *dev, struct ieee80211_vif *vif,
+		      unsigned int idx)
 {
-	struct mt76x02_vif *mvif = (struct mt76x02_vif *) vif->drv_priv;
+	struct mt76x02_vif *mvif = (struct mt76x02_vif *)vif->drv_priv;
 
 	mvif->idx = idx;
 	mvif->group_wcid.idx = MT_VIF_WCID(idx);
@@ -161,11 +158,11 @@ EXPORT_SYMBOL_GPL(mt76x02_vif_init);
 int
 mt76x02_add_interface(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
 {
-	struct mt76_dev *dev = hw->priv;
+	struct mt76x02_dev *dev = hw->priv;
 	unsigned int idx = 0;
 
 	if (vif->addr[0] & BIT(1))
-		idx = 1 + (((dev->macaddr[0] ^ vif->addr[0]) >> 2) & 7);
+		idx = 1 + (((dev->mt76.macaddr[0] ^ vif->addr[0]) >> 2) & 7);
 
 	/*
 	 * Client mode typically only has one configurable BSSID register,
@@ -189,20 +186,20 @@ mt76x02_add_interface(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
 EXPORT_SYMBOL_GPL(mt76x02_add_interface);
 
 void mt76x02_remove_interface(struct ieee80211_hw *hw,
-			     struct ieee80211_vif *vif)
+			      struct ieee80211_vif *vif)
 {
-	struct mt76_dev *dev = hw->priv;
+	struct mt76x02_dev *dev = hw->priv;
 
-	mt76_txq_remove(dev, vif->txq);
+	mt76_txq_remove(&dev->mt76, vif->txq);
 }
 EXPORT_SYMBOL_GPL(mt76x02_remove_interface);
 
 int mt76x02_ampdu_action(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
-			struct ieee80211_ampdu_params *params)
+			 struct ieee80211_ampdu_params *params)
 {
 	enum ieee80211_ampdu_mlme_action action = params->action;
 	struct ieee80211_sta *sta = params->sta;
-	struct mt76_dev *dev = hw->priv;
+	struct mt76x02_dev *dev = hw->priv;
 	struct mt76x02_sta *msta = (struct mt76x02_sta *) sta->drv_priv;
 	struct ieee80211_txq *txq = sta->txq[params->tid];
 	u16 tid = params->tid;
@@ -216,12 +213,14 @@ int mt76x02_ampdu_action(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 
 	switch (action) {
 	case IEEE80211_AMPDU_RX_START:
-		mt76_rx_aggr_start(dev, &msta->wcid, tid, *ssn, params->buf_size);
-		__mt76_set(dev, MT_WCID_ADDR(msta->wcid.idx) + 4, BIT(16 + tid));
+		mt76_rx_aggr_start(&dev->mt76, &msta->wcid, tid,
+				   *ssn, params->buf_size);
+		mt76_set(dev, MT_WCID_ADDR(msta->wcid.idx) + 4, BIT(16 + tid));
 		break;
 	case IEEE80211_AMPDU_RX_STOP:
-		mt76_rx_aggr_stop(dev, &msta->wcid, tid);
-		__mt76_clear(dev, MT_WCID_ADDR(msta->wcid.idx) + 4, BIT(16 + tid));
+		mt76_rx_aggr_stop(&dev->mt76, &msta->wcid, tid);
+		mt76_clear(dev, MT_WCID_ADDR(msta->wcid.idx) + 4,
+			   BIT(16 + tid));
 		break;
 	case IEEE80211_AMPDU_TX_OPERATIONAL:
 		mtxq->aggr = true;
@@ -248,11 +247,11 @@ int mt76x02_ampdu_action(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 EXPORT_SYMBOL_GPL(mt76x02_ampdu_action);
 
 int mt76x02_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
-		   struct ieee80211_vif *vif, struct ieee80211_sta *sta,
-		   struct ieee80211_key_conf *key)
+		    struct ieee80211_vif *vif, struct ieee80211_sta *sta,
+		    struct ieee80211_key_conf *key)
 {
-	struct mt76_dev *dev = hw->priv;
-	struct mt76x02_vif *mvif = (struct mt76x02_vif *) vif->drv_priv;
+	struct mt76x02_dev *dev = hw->priv;
+	struct mt76x02_vif *mvif = (struct mt76x02_vif *)vif->drv_priv;
 	struct mt76x02_sta *msta;
 	struct mt76_wcid *wcid;
 	int idx = key->keyidx;
@@ -298,7 +297,7 @@ int mt76x02_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 
 		key = NULL;
 	}
-	mt76_wcid_key_setup(dev, wcid, key);
+	mt76_wcid_key_setup(&dev->mt76, wcid, key);
 
 	if (!msta) {
 		if (key || wcid->hw_key_idx == idx) {
@@ -315,13 +314,13 @@ int mt76x02_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 EXPORT_SYMBOL_GPL(mt76x02_set_key);
 
 int mt76x02_conf_tx(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
-		   u16 queue, const struct ieee80211_tx_queue_params *params)
+		    u16 queue, const struct ieee80211_tx_queue_params *params)
 {
-	struct mt76_dev *dev = hw->priv;
+	struct mt76x02_dev *dev = hw->priv;
 	u8 cw_min = 5, cw_max = 10, qid;
 	u32 val;
 
-	qid = dev->q_tx[queue].hw_idx;
+	qid = dev->mt76.q_tx[queue].hw_idx;
 
 	if (params->cw_min)
 		cw_min = fls(params->cw_min);
@@ -332,27 +331,27 @@ int mt76x02_conf_tx(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 	      FIELD_PREP(MT_EDCA_CFG_AIFSN, params->aifs) |
 	      FIELD_PREP(MT_EDCA_CFG_CWMIN, cw_min) |
 	      FIELD_PREP(MT_EDCA_CFG_CWMAX, cw_max);
-	__mt76_wr(dev, MT_EDCA_CFG_AC(qid), val);
+	mt76_wr(dev, MT_EDCA_CFG_AC(qid), val);
 
-	val = __mt76_rr(dev, MT_WMM_TXOP(qid));
+	val = mt76_rr(dev, MT_WMM_TXOP(qid));
 	val &= ~(MT_WMM_TXOP_MASK << MT_WMM_TXOP_SHIFT(qid));
 	val |= params->txop << MT_WMM_TXOP_SHIFT(qid);
-	__mt76_wr(dev, MT_WMM_TXOP(qid), val);
+	mt76_wr(dev, MT_WMM_TXOP(qid), val);
 
-	val = __mt76_rr(dev, MT_WMM_AIFSN);
+	val = mt76_rr(dev, MT_WMM_AIFSN);
 	val &= ~(MT_WMM_AIFSN_MASK << MT_WMM_AIFSN_SHIFT(qid));
 	val |= params->aifs << MT_WMM_AIFSN_SHIFT(qid);
-	__mt76_wr(dev, MT_WMM_AIFSN, val);
+	mt76_wr(dev, MT_WMM_AIFSN, val);
 
-	val = __mt76_rr(dev, MT_WMM_CWMIN);
+	val = mt76_rr(dev, MT_WMM_CWMIN);
 	val &= ~(MT_WMM_CWMIN_MASK << MT_WMM_CWMIN_SHIFT(qid));
 	val |= cw_min << MT_WMM_CWMIN_SHIFT(qid);
-	__mt76_wr(dev, MT_WMM_CWMIN, val);
+	mt76_wr(dev, MT_WMM_CWMIN, val);
 
-	val = __mt76_rr(dev, MT_WMM_CWMAX);
+	val = mt76_rr(dev, MT_WMM_CWMAX);
 	val &= ~(MT_WMM_CWMAX_MASK << MT_WMM_CWMAX_SHIFT(qid));
 	val |= cw_max << MT_WMM_CWMAX_SHIFT(qid);
-	__mt76_wr(dev, MT_WMM_CWMAX, val);
+	mt76_wr(dev, MT_WMM_CWMAX, val);
 
 	return 0;
 }
@@ -362,7 +361,7 @@ void mt76x02_sta_rate_tbl_update(struct ieee80211_hw *hw,
 				struct ieee80211_vif *vif,
 				struct ieee80211_sta *sta)
 {
-	struct mt76_dev *dev = hw->priv;
+	struct mt76x02_dev *dev = hw->priv;
 	struct mt76x02_sta *msta = (struct mt76x02_sta *) sta->drv_priv;
 	struct ieee80211_sta_rates *rates = rcu_dereference(sta->rates);
 	struct ieee80211_tx_rate rate = {};
@@ -373,9 +372,7 @@ void mt76x02_sta_rate_tbl_update(struct ieee80211_hw *hw,
 	rate.idx = rates->rate[0].idx;
 	rate.flags = rates->rate[0].flags;
 	mt76x02_mac_wcid_set_rate(dev, &msta->wcid, &rate);
-
-	if (dev->drv && dev->drv->get_max_txpwr_adj)
-		msta->wcid.max_txpwr_adj = dev->drv->get_max_txpwr_adj(dev, &rate);
+	msta->wcid.max_txpwr_adj = mt76x02_tx_get_max_txpwr_adj(dev, &rate);
 }
 EXPORT_SYMBOL_GPL(mt76x02_sta_rate_tbl_update);
 
@@ -408,52 +405,6 @@ void mt76x02_remove_hdr_pad(struct sk_buff *skb, int len)
 }
 EXPORT_SYMBOL_GPL(mt76x02_remove_hdr_pad);
 
-static void mt76x02_remove_dma_hdr(struct sk_buff *skb)
-{
-	int hdr_len;
-
-	skb_pull(skb, sizeof(struct mt76x02_txwi) + MT_DMA_HDR_LEN);
-	hdr_len = ieee80211_get_hdrlen_from_skb(skb);
-	if (hdr_len % 4)
-		mt76x02_remove_hdr_pad(skb, 2);
-}
-
-void mt76x02_tx_complete(struct mt76_dev *dev, struct sk_buff *skb)
-{
-	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
-
-	if (info->flags & IEEE80211_TX_CTL_AMPDU) {
-		ieee80211_free_txskb(dev->hw, skb);
-	} else {
-		ieee80211_tx_info_clear_status(info);
-		info->status.rates[0].idx = -1;
-		info->flags |= IEEE80211_TX_STAT_ACK;
-		ieee80211_tx_status(dev->hw, skb);
-	}
-}
-EXPORT_SYMBOL_GPL(mt76x02_tx_complete);
-
-void mt76x02_tx_complete_skb(struct mt76_dev *mdev, struct mt76_queue *q,
-			    struct mt76_queue_entry *e, bool flush)
-{
-	mt76x02_remove_dma_hdr(e->skb);
-	mt76x02_tx_complete(mdev, e->skb);
-}
-EXPORT_SYMBOL_GPL(mt76x02_tx_complete_skb);
-
-bool mt76x02_tx_status_data(struct mt76_dev *dev, u8 *update)
-{
-	struct mt76x02_tx_status stat;
-
-	if (!mt76x02_mac_load_tx_status(dev, &stat))
-		return false;
-
-	mt76x02_send_tx_status(dev, &stat, update);
-
-	return true;
-}
-EXPORT_SYMBOL_GPL(mt76x02_tx_status_data);
-
 const u16 mt76x02_beacon_offsets[16] = {
 	/* 1024 byte per beacon */
 	0xc000,
@@ -476,7 +427,7 @@ const u16 mt76x02_beacon_offsets[16] = {
 };
 EXPORT_SYMBOL_GPL(mt76x02_beacon_offsets);
 
-void mt76x02_set_beacon_offsets(struct mt76_dev *dev)
+void mt76x02_set_beacon_offsets(struct mt76x02_dev *dev)
 {
 	u16 val, base = MT_BEACON_BASE;
 	u32 regs[4] = {};
@@ -488,7 +439,7 @@ void mt76x02_set_beacon_offsets(struct mt76_dev *dev)
 	}
 
 	for (i = 0; i < 4; i++)
-		__mt76_wr(dev, MT_BCN_OFFSET(i), regs[i]);
+		mt76_wr(dev, MT_BCN_OFFSET(i), regs[i]);
 }
 EXPORT_SYMBOL_GPL(mt76x02_set_beacon_offsets);
 

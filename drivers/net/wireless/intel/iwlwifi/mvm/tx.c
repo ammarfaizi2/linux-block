@@ -79,14 +79,11 @@ iwl_mvm_bar_check_trigger(struct iwl_mvm *mvm, const u8 *addr,
 	struct iwl_fw_dbg_trigger_tlv *trig;
 	struct iwl_fw_dbg_trigger_ba *ba_trig;
 
-	if (!iwl_fw_dbg_trigger_enabled(mvm->fw, FW_DBG_TRIGGER_BA))
+	trig = iwl_fw_dbg_trigger_on(&mvm->fwrt, NULL, FW_DBG_TRIGGER_BA);
+	if (!trig)
 		return;
 
-	trig = iwl_fw_dbg_get_trigger(mvm->fw, FW_DBG_TRIGGER_BA);
 	ba_trig = (void *)trig->data;
-
-	if (!iwl_fw_dbg_trigger_check_stop(&mvm->fwrt, NULL, trig))
-		return;
 
 	if (!(le16_to_cpu(ba_trig->tx_bar) & BIT(tid)))
 		return;
@@ -1143,32 +1140,16 @@ static int iwl_mvm_tx_mpdu(struct iwl_mvm *mvm, struct sk_buff *skb,
 	WARN_ON_ONCE(info->flags & IEEE80211_TX_CTL_SEND_AFTER_DTIM);
 
 	/* Check if TXQ needs to be allocated or re-activated */
-	if (unlikely(txq_id == IWL_MVM_INVALID_QUEUE ||
-		     !mvmsta->tid_data[tid].is_tid_active)) {
-		/* If TXQ needs to be allocated... */
-		if (txq_id == IWL_MVM_INVALID_QUEUE) {
-			iwl_mvm_tx_add_stream(mvm, mvmsta, tid, skb);
+	if (unlikely(txq_id == IWL_MVM_INVALID_QUEUE)) {
+		iwl_mvm_tx_add_stream(mvm, mvmsta, tid, skb);
 
-			/*
-			 * The frame is now deferred, and the worker scheduled
-			 * will re-allocate it, so we can free it for now.
-			 */
-			iwl_trans_free_tx_cmd(mvm->trans, dev_cmd);
-			spin_unlock(&mvmsta->lock);
-			return 0;
-		}
-
-		/* queue should always be active in new TX path */
-		WARN_ON(iwl_mvm_has_new_tx_api(mvm));
-
-		/* If we are here - TXQ exists and needs to be re-activated */
-		spin_lock(&mvm->queue_info_lock);
-		mvm->queue_info[txq_id].status = IWL_MVM_QUEUE_READY;
-		mvmsta->tid_data[tid].is_tid_active = true;
-		spin_unlock(&mvm->queue_info_lock);
-
-		IWL_DEBUG_TX_QUEUES(mvm, "Re-activating queue %d for TX\n",
-				    txq_id);
+		/*
+		 * The frame is now deferred, and the worker scheduled
+		 * will re-allocate it, so we can free it for now.
+		 */
+		iwl_trans_free_tx_cmd(mvm->trans, dev_cmd);
+		spin_unlock(&mvmsta->lock);
+		return 0;
 	}
 
 	if (!iwl_mvm_has_new_tx_api(mvm)) {
@@ -1414,14 +1395,12 @@ static void iwl_mvm_tx_status_check_trigger(struct iwl_mvm *mvm,
 	struct iwl_fw_dbg_trigger_tx_status *status_trig;
 	int i;
 
-	if (!iwl_fw_dbg_trigger_enabled(mvm->fw, FW_DBG_TRIGGER_TX_STATUS))
+	trig = iwl_fw_dbg_trigger_on(&mvm->fwrt, NULL,
+				     FW_DBG_TRIGGER_TX_STATUS);
+	if (!trig)
 		return;
 
-	trig = iwl_fw_dbg_get_trigger(mvm->fw, FW_DBG_TRIGGER_TX_STATUS);
 	status_trig = (void *)trig->data;
-
-	if (!iwl_fw_dbg_trigger_check_stop(&mvm->fwrt, NULL, trig))
-		return;
 
 	for (i = 0; i < ARRAY_SIZE(status_trig->statuses); i++) {
 		/* don't collect on status 0 */

@@ -98,8 +98,7 @@ free_buf:
 }
 
 /* Build a linear skb based on a single-buffer frame descriptor */
-static struct sk_buff *build_linear_skb(struct dpaa2_eth_priv *priv,
-					struct dpaa2_eth_channel *ch,
+static struct sk_buff *build_linear_skb(struct dpaa2_eth_channel *ch,
 					const struct dpaa2_fd *fd,
 					void *fd_vaddr)
 {
@@ -233,7 +232,7 @@ static void dpaa2_eth_rx(struct dpaa2_eth_priv *priv,
 	percpu_extras = this_cpu_ptr(priv->percpu_extras);
 
 	if (fd_format == dpaa2_fd_single) {
-		skb = build_linear_skb(priv, ch, fd, vaddr);
+		skb = build_linear_skb(ch, fd, vaddr);
 	} else if (fd_format == dpaa2_fd_sg) {
 		skb = build_frag_skb(priv, ch, buf_data);
 		skb_free_frag(vaddr);
@@ -289,10 +288,11 @@ err_frame_format:
  *
  * Observance of NAPI budget is not our concern, leaving that to the caller.
  */
-static int consume_frames(struct dpaa2_eth_channel *ch)
+static int consume_frames(struct dpaa2_eth_channel *ch,
+			  enum dpaa2_eth_fq_type *type)
 {
 	struct dpaa2_eth_priv *priv = ch->priv;
-	struct dpaa2_eth_fq *fq;
+	struct dpaa2_eth_fq *fq = NULL;
 	struct dpaa2_dq *dq;
 	const struct dpaa2_fd *fd;
 	int cleaned = 0;
@@ -311,11 +311,22 @@ static int consume_frames(struct dpaa2_eth_channel *ch)
 
 		fd = dpaa2_dq_fd(dq);
 		fq = (struct dpaa2_eth_fq *)(uintptr_t)dpaa2_dq_fqd_ctx(dq);
-		fq->stats.frames++;
 
 		fq->consume(priv, ch, fd, &ch->napi, fq->flowid);
 		cleaned++;
 	} while (!is_last);
+
+	if (!cleaned)
+		return 0;
+
+	fq->stats.frames += cleaned;
+	ch->stats.frames += cleaned;
+
+	/* A dequeue operation only pulls frames from a single queue
+	 * into the store. Return the frame queue type as an out param.
+	 */
+	if (type)
+		*type = fq->type;
 
 	return cleaned;
 }
@@ -426,7 +437,7 @@ static int build_sg_fd(struct dpaa2_eth_priv *priv,
 	dpaa2_fd_set_format(fd, dpaa2_fd_sg);
 	dpaa2_fd_set_addr(fd, addr);
 	dpaa2_fd_set_len(fd, skb->len);
-	dpaa2_fd_set_ctrl(fd, FD_CTRL_PTA | FD_CTRL_PTV1);
+	dpaa2_fd_set_ctrl(fd, FD_CTRL_PTA);
 
 	if (priv->tx_tstamp && skb_shinfo(skb)->tx_flags & SKBTX_HW_TSTAMP)
 		enable_tx_tstamp(fd, sgt_buf);
@@ -479,7 +490,7 @@ static int build_single_fd(struct dpaa2_eth_priv *priv,
 	dpaa2_fd_set_offset(fd, (u16)(skb->data - buffer_start));
 	dpaa2_fd_set_len(fd, skb->len);
 	dpaa2_fd_set_format(fd, dpaa2_fd_single);
-	dpaa2_fd_set_ctrl(fd, FD_CTRL_PTA | FD_CTRL_PTV1);
+	dpaa2_fd_set_ctrl(fd, FD_CTRL_PTA);
 
 	if (priv->tx_tstamp && skb_shinfo(skb)->tx_flags & SKBTX_HW_TSTAMP)
 		enable_tx_tstamp(fd, buffer_start);
@@ -648,7 +659,7 @@ err_alloc_headroom:
 
 /* Tx confirmation frame processing routine */
 static void dpaa2_eth_tx_conf(struct dpaa2_eth_priv *priv,
-			      struct dpaa2_eth_channel *ch,
+			      struct dpaa2_eth_channel *ch __always_unused,
 			      const struct dpaa2_fd *fd,
 			      struct napi_struct *napi __always_unused,
 			      u16 queue_id __always_unused)
@@ -921,14 +932,16 @@ static int pull_channel(struct dpaa2_eth_channel *ch)
 static int dpaa2_eth_poll(struct napi_struct *napi, int budget)
 {
 	struct dpaa2_eth_channel *ch;
-	int cleaned = 0, store_cleaned;
 	struct dpaa2_eth_priv *priv;
+	int rx_cleaned = 0, txconf_cleaned = 0;
+	enum dpaa2_eth_fq_type type = 0;
+	int store_cleaned;
 	int err;
 
 	ch = container_of(napi, struct dpaa2_eth_channel, napi);
 	priv = ch->priv;
 
-	while (cleaned < budget) {
+	do {
 		err = pull_channel(ch);
 		if (unlikely(err))
 			break;
@@ -936,30 +949,32 @@ static int dpaa2_eth_poll(struct napi_struct *napi, int budget)
 		/* Refill pool if appropriate */
 		refill_pool(priv, ch, priv->bpid);
 
-		store_cleaned = consume_frames(ch);
-		cleaned += store_cleaned;
+		store_cleaned = consume_frames(ch, &type);
+		if (type == DPAA2_RX_FQ)
+			rx_cleaned += store_cleaned;
+		else
+			txconf_cleaned += store_cleaned;
 
-		/* If we have enough budget left for a full store,
-		 * try a new pull dequeue, otherwise we're done here
+		/* If we either consumed the whole NAPI budget with Rx frames
+		 * or we reached the Tx confirmations threshold, we're done.
 		 */
-		if (store_cleaned == 0 ||
-		    cleaned > budget - DPAA2_ETH_STORE_SIZE)
-			break;
-	}
+		if (rx_cleaned >= budget ||
+		    txconf_cleaned >= DPAA2_ETH_TXCONF_PER_NAPI)
+			return budget;
+	} while (store_cleaned);
 
-	if (cleaned < budget && napi_complete_done(napi, cleaned)) {
-		/* Re-enable data available notifications */
-		do {
-			err = dpaa2_io_service_rearm(ch->dpio, &ch->nctx);
-			cpu_relax();
-		} while (err == -EBUSY);
-		WARN_ONCE(err, "CDAN notifications rearm failed on core %d",
-			  ch->nctx.desired_cpu);
-	}
+	/* We didn't consume the entire budget, so finish napi and
+	 * re-enable data availability notifications
+	 */
+	napi_complete_done(napi, rx_cleaned);
+	do {
+		err = dpaa2_io_service_rearm(ch->dpio, &ch->nctx);
+		cpu_relax();
+	} while (err == -EBUSY);
+	WARN_ONCE(err, "CDAN notifications rearm failed on core %d",
+		  ch->nctx.desired_cpu);
 
-	ch->stats.frames += cleaned;
-
-	return cleaned;
+	return max(rx_cleaned, 1);
 }
 
 static void enable_ch_napi(struct dpaa2_eth_priv *priv)
@@ -986,7 +1001,7 @@ static void disable_ch_napi(struct dpaa2_eth_priv *priv)
 
 static int link_state_update(struct dpaa2_eth_priv *priv)
 {
-	struct dpni_link_state state;
+	struct dpni_link_state state = {0};
 	int err;
 
 	err = dpni_get_link_state(priv->mc_io, 0, priv->mc_token, &state);
@@ -1069,14 +1084,13 @@ enable_err:
 /* The DPIO store must be empty when we call this,
  * at the end of every NAPI cycle.
  */
-static u32 drain_channel(struct dpaa2_eth_priv *priv,
-			 struct dpaa2_eth_channel *ch)
+static u32 drain_channel(struct dpaa2_eth_channel *ch)
 {
 	u32 drained = 0, total = 0;
 
 	do {
 		pull_channel(ch);
-		drained = consume_frames(ch);
+		drained = consume_frames(ch, NULL);
 		total += drained;
 	} while (drained);
 
@@ -1091,7 +1105,7 @@ static u32 drain_ingress_frames(struct dpaa2_eth_priv *priv)
 
 	for (i = 0; i < priv->num_channels; i++) {
 		ch = priv->channel[i];
-		drained += drain_channel(priv, ch);
+		drained += drain_channel(ch);
 	}
 
 	return drained;
@@ -1100,7 +1114,7 @@ static u32 drain_ingress_frames(struct dpaa2_eth_priv *priv)
 static int dpaa2_eth_stop(struct net_device *net_dev)
 {
 	struct dpaa2_eth_priv *priv = netdev_priv(net_dev);
-	int dpni_enabled;
+	int dpni_enabled = 0;
 	int retries = 10;
 	u32 drained;
 
@@ -2156,8 +2170,8 @@ int dpaa2_eth_cls_fld_off(int prot, int field)
 /* Set Rx distribution (hash or flow classification) key
  * flags is a combination of RXH_ bits
  */
-int dpaa2_eth_set_dist_key(struct net_device *net_dev,
-			   enum dpaa2_eth_rx_dist type, u64 flags)
+static int dpaa2_eth_set_dist_key(struct net_device *net_dev,
+				  enum dpaa2_eth_rx_dist type, u64 flags)
 {
 	struct device *dev = net_dev->dev.parent;
 	struct dpaa2_eth_priv *priv = netdev_priv(net_dev);

@@ -482,16 +482,15 @@ static int phy_config_aneg(struct phy_device *phydev)
 }
 
 /**
- * phy_start_aneg_priv - start auto-negotiation for this PHY device
+ * phy_start_aneg - start auto-negotiation for this PHY device
  * @phydev: the phy_device struct
- * @sync: indicate whether we should wait for the workqueue cancelation
  *
  * Description: Sanitizes the settings (if we're not autonegotiating
  *   them), and then calls the driver's config_aneg function.
  *   If the PHYCONTROL Layer is operating, we change the state to
  *   reflect the beginning of Auto-negotiation or forcing.
  */
-static int phy_start_aneg_priv(struct phy_device *phydev, bool sync)
+int phy_start_aneg(struct phy_device *phydev)
 {
 	bool trigger = 0;
 	int err;
@@ -540,20 +539,6 @@ out_unlock:
 		phy_trigger_machine(phydev);
 
 	return err;
-}
-
-/**
- * phy_start_aneg - start auto-negotiation for this PHY device
- * @phydev: the phy_device struct
- *
- * Description: Sanitizes the settings (if we're not autonegotiating
- *   them), and then calls the driver's config_aneg function.
- *   If the PHYCONTROL Layer is operating, we change the state to
- *   reflect the beginning of Auto-negotiation or forcing.
- */
-int phy_start_aneg(struct phy_device *phydev)
-{
-	return phy_start_aneg_priv(phydev, true);
 }
 EXPORT_SYMBOL(phy_start_aneg);
 
@@ -654,7 +639,7 @@ static void phy_queue_state_machine(struct phy_device *phydev,
  */
 void phy_start_machine(struct phy_device *phydev)
 {
-	phy_queue_state_machine(phydev, 1);
+	phy_trigger_machine(phydev);
 }
 EXPORT_SYMBOL_GPL(phy_start_machine);
 
@@ -941,7 +926,6 @@ void phy_state_machine(struct work_struct *work)
 	bool needs_aneg = false, do_suspend = false;
 	enum phy_state old_state;
 	int err = 0;
-	int old_link;
 
 	mutex_lock(&phydev->lock);
 
@@ -1025,26 +1009,16 @@ void phy_state_machine(struct work_struct *work)
 		}
 		break;
 	case PHY_RUNNING:
-		/* Only register a CHANGE if we are polling and link changed
-		 * since latest checking.
-		 */
-		if (phy_polling_mode(phydev)) {
-			old_link = phydev->link;
-			err = phy_read_status(phydev);
-			if (err)
-				break;
+		if (!phy_polling_mode(phydev))
+			break;
 
-			if (old_link != phydev->link)
-				phydev->state = PHY_CHANGELINK;
-		}
-		/*
-		 * Failsafe: check that nobody set phydev->link=0 between two
-		 * poll cycles, otherwise we won't leave RUNNING state as long
-		 * as link remains down.
-		 */
-		if (!phydev->link && phydev->state == PHY_RUNNING) {
-			phydev->state = PHY_CHANGELINK;
-			phydev_err(phydev, "no link in PHY_RUNNING\n");
+		err = phy_read_status(phydev);
+		if (err)
+			break;
+
+		if (!phydev->link) {
+			phydev->state = PHY_NOLINK;
+			phy_link_down(phydev, true);
 		}
 		break;
 	case PHY_CHANGELINK:
@@ -1070,40 +1044,25 @@ void phy_state_machine(struct work_struct *work)
 	case PHY_RESUMING:
 		if (AUTONEG_ENABLE == phydev->autoneg) {
 			err = phy_aneg_done(phydev);
-			if (err < 0)
+			if (err < 0) {
 				break;
-
-			/* err > 0 if AN is done.
-			 * Otherwise, it's 0, and we're  still waiting for AN
-			 */
-			if (err > 0) {
-				err = phy_read_status(phydev);
-				if (err)
-					break;
-
-				if (phydev->link) {
-					phydev->state = PHY_RUNNING;
-					phy_link_up(phydev);
-				} else	{
-					phydev->state = PHY_NOLINK;
-					phy_link_down(phydev, false);
-				}
-			} else {
+			} else if (!err) {
 				phydev->state = PHY_AN;
 				phydev->link_timeout = PHY_AN_TIMEOUT;
-			}
-		} else {
-			err = phy_read_status(phydev);
-			if (err)
 				break;
-
-			if (phydev->link) {
-				phydev->state = PHY_RUNNING;
-				phy_link_up(phydev);
-			} else	{
-				phydev->state = PHY_NOLINK;
-				phy_link_down(phydev, false);
 			}
+		}
+
+		err = phy_read_status(phydev);
+		if (err)
+			break;
+
+		if (phydev->link) {
+			phydev->state = PHY_RUNNING;
+			phy_link_up(phydev);
+		} else	{
+			phydev->state = PHY_NOLINK;
+			phy_link_down(phydev, false);
 		}
 		break;
 	}
@@ -1111,7 +1070,7 @@ void phy_state_machine(struct work_struct *work)
 	mutex_unlock(&phydev->lock);
 
 	if (needs_aneg)
-		err = phy_start_aneg_priv(phydev, false);
+		err = phy_start_aneg(phydev);
 	else if (do_suspend)
 		phy_suspend(phydev);
 

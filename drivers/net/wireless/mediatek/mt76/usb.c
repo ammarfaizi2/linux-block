@@ -286,7 +286,7 @@ mt76u_fill_rx_sg(struct mt76_dev *dev, struct mt76u_buf *buf,
 		void *data;
 		int offset;
 
-		data = page_frag_alloc(&q->rx_page, q->buf_size, GFP_ATOMIC);
+		data = page_frag_alloc(&q->rx_page, len, GFP_ATOMIC);
 		if (!data)
 			break;
 
@@ -318,7 +318,7 @@ int mt76u_buf_alloc(struct mt76_dev *dev, struct mt76u_buf *buf,
 	if (!buf->urb)
 		return -ENOMEM;
 
-	buf->urb->sg = devm_kzalloc(dev->dev, nsgs * sizeof(*buf->urb->sg),
+	buf->urb->sg = devm_kcalloc(dev->dev, nsgs, sizeof(*buf->urb->sg),
 				    gfp);
 	if (!buf->urb->sg)
 		return -ENOMEM;
@@ -525,8 +525,8 @@ static int mt76u_alloc_rx(struct mt76_dev *dev)
 
 	spin_lock_init(&q->rx_page_lock);
 	spin_lock_init(&q->lock);
-	q->entry = devm_kzalloc(dev->dev,
-				MT_NUM_RX_ENTRIES * sizeof(*q->entry),
+	q->entry = devm_kcalloc(dev->dev,
+				MT_NUM_RX_ENTRIES, sizeof(*q->entry),
 				GFP_KERNEL);
 	if (!q->entry)
 		return -ENOMEM;
@@ -755,8 +755,8 @@ static int mt76u_alloc_tx(struct mt76_dev *dev)
 		INIT_LIST_HEAD(&q->swq);
 		q->hw_idx = mt76_ac_to_hwq(i);
 
-		q->entry = devm_kzalloc(dev->dev,
-					MT_NUM_TX_ENTRIES * sizeof(*q->entry),
+		q->entry = devm_kcalloc(dev->dev,
+					MT_NUM_TX_ENTRIES, sizeof(*q->entry),
 					GFP_KERNEL);
 		if (!q->entry)
 			return -ENOMEM;
@@ -862,6 +862,7 @@ int mt76u_init(struct mt76_dev *dev,
 		.copy = mt76u_copy,
 		.wr_rp = mt76u_wr_rp,
 		.rd_rp = mt76u_rd_rp,
+		.type = MT76_BUS_USB,
 	};
 	struct mt76_usb *usb = &dev->usb;
 
