@@ -139,47 +139,78 @@ extern void arch_static_call_poison_tramp(unsigned long insn);
 #elif defined(CONFIG_HAVE_STATIC_CALL_UNOPTIMIZED)
 /* Unoptimized implementation */
 
+struct static_call_key {
+	void *func;
+};
+
 #define DECLARE_STATIC_CALL(key, func)					\
-	extern typeof(func) STATIC_CALL_TRAMP(key)
+	extern typeof(func) STATIC_CALL_TRAMP(key);			\
+	extern struct static_call_key key
 
 #define DEFINE_STATIC_CALL(key, func)					\
 	DECLARE_STATIC_CALL(key, func);					\
+	struct static_call_key key = { *STATIC_CALL_TRAMP(key) };	\
 	ARCH_STATIC_CALL_TRAMP(key, func)
 
 #define static_call(key, args...) STATIC_CALL_TRAMP(key)(args)
 
-#define static_call_update(key, func)					\
+#define __static_call_update(key, _func)				\
 ({									\
-	BUILD_BUG_ON(!__same_type(func, STATIC_CALL_TRAMP(key)));	\
 	cpus_read_lock();						\
-	arch_static_call_transform((unsigned long)STATIC_CALL_TRAMP(key),\
-				   func);				\
+	arch_static_call_transform((unsigned long)(*(key)).func, _func); \
 	cpus_read_unlock();						\
 })
 
+#define static_call_update(key, func)					\
+({									\
+	BUILD_BUG_ON(!__same_type(func, STATIC_CALL_TRAMP(key)));	\
+	_static_call_update(&key, func);				\
+})
+
 #define EXPORT_STATIC_CALL(key)						\
+	EXPORT_SYMBOL(key);						\
 	EXPORT_SYMBOL(STATIC_CALL_TRAMP(key))
 
 #define EXPORT_STATIC_CALL_GPL(key)					\
+	EXPORT_SYMBOL_GPL(key);						\
 	EXPORT_SYMBOL_GPL(STATIC_CALL_TRAMP(key))
 
 
 #else /* Generic implementation */
 
+struct static_call_key {
+	void *func;
+};
+
 #define DECLARE_STATIC_CALL(key, func)					\
-	extern typeof(func) *key
+	extern typeof(func) STATIC_CALL_TRAMP(key);			\
+	extern struct static_call_key key
 
 #define DEFINE_STATIC_CALL(key, func)					\
-	typeof(func) *key = func
+	typeof(func) STATIC_CALL_TRAMP(key);				\
+	struct static_call_key key = { func }
 
-#define static_call(key, args...)					\
-	key(args)
+
+#define __static_call_update(key, _func)				\
+({									\
+	WRITE_ONCE((key)->func, _func);					\
+})
 
 #define static_call_update(key, func)					\
-	WRITE_ONCE(key, func)
+({									\
+	BUILD_BUG_ON(!__same_type(func, STATIC_CALL_TRAMP(key)));	\
+	__static_call_update(&key, func);				\
+})
 
-#define EXPORT_STATIC_CALL(key) EXPORT_SYMBOL(key)
-#define EXPORT_STATIC_CALL_GPL(key) EXPORT_SYMBOL_GPL(key)
+
+#define EXPORT_STATIC_CALL(key)						\
+	EXPORT_SYMBOL(key);
+
+#define EXPORT_STATIC_CALL_GPL(key)					\
+	EXPORT_SYMBOL_GPL(key);
+
+#define static_call(key, args...) \
+	((typeof(STATIC_CALL_TRAMP(key))*)((key).func))(args)
 
 #endif /* CONFIG_HAVE_STATIC_CALL_OPTIMIZED */
 
