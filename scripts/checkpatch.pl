@@ -573,6 +573,27 @@ foreach my $entry (@mode_permission_funcs) {
 }
 $mode_perms_search = "(?:${mode_perms_search})";
 
+our %deprecated_apis = (
+	"synchronize_rcu_bh"			=> "synchronize_rcu",
+	"synchronize_rcu_bh_expedited"		=> "synchronize_rcu_expedited",
+	"call_rcu_bh"				=> "call_rcu",
+	"rcu_barrier_bh"			=> "rcu_barrier",
+	"synchronize_sched"			=> "synchronize_rcu",
+	"synchronize_sched_expedited"		=> "synchronize_rcu_expedited",
+	"call_rcu_sched"			=> "call_rcu",
+	"rcu_barrier_sched"			=> "rcu_barrier",
+	"get_state_synchronize_sched"		=> "get_state_synchronize_rcu",
+	"cond_synchronize_sched"		=> "cond_synchronize_rcu",
+);
+
+#Create a search pattern for all these strings to speed up a loop below
+our $deprecated_apis_search = "";
+foreach my $entry (keys %deprecated_apis) {
+	$deprecated_apis_search .= '|' if ($deprecated_apis_search ne "");
+	$deprecated_apis_search .= $entry;
+}
+$deprecated_apis_search = "(?:${deprecated_apis_search})";
+
 our $mode_perms_world_writable = qr{
 	S_IWUGO		|
 	S_IWOTH		|
@@ -6374,46 +6395,12 @@ sub process {
 			     "Where possible, use lockdep_assert_held instead of assertions based on spin_is_locked\n" . $herecurr);
 		}
 
-# check for old-style flavorful RCU primitives, suggest vanilla counterpart.
-		if ($line =~ /\bsynchronize_rcu_bh\(/) {
-			WARN("USE_VANILLA_RCU",
-			     "synchronize_rcu_bh() is obsolete, use synchronize_rcu() instead\n" . $herecurr);
-		}
-		if ($line =~ /\bsynchronize_rcu_bh_expedited\(/) {
-			WARN("USE_VANILLA_RCU",
-			     "synchronize_rcu_bh_expedited() is obsolete, use synchronize_rcu_expedited() instead\n" . $herecurr);
-		}
-		if ($line =~ /\bcall_rcu_bh\(/) {
-			WARN("USE_VANILLA_RCU",
-			     "call_rcu_bh() is obsolete, use call_rcu() instead\n" . $herecurr);
-		}
-		if ($line =~ /\brcu_barrier_bh\(/) {
-			WARN("USE_VANILLA_RCU",
-			     "rcu_barrier_bh() is obsolete, use rcu_barrier() instead\n" . $herecurr);
-		}
-		if ($line =~ /\bsynchronize_sched\(/) {
-			WARN("USE_VANILLA_RCU",
-			     "synchronize_sched() is obsolete, use synchronize_rcu() instead\n" . $herecurr);
-		}
-		if ($line =~ /\bsynchronize_sched_expedited\(/) {
-			WARN("USE_VANILLA_RCU",
-			     "synchronize_sched_expedited() is obsolete, use synchronize_rcu_expedited() instead\n" . $herecurr);
-		}
-		if ($line =~ /\bcall_rcu_sched\(/) {
-			WARN("USE_VANILLA_RCU",
-			     "call_rcu_sched() is obsolete, use call_rcu() instead\n" . $herecurr);
-		}
-		if ($line =~ /\brcu_barrier_sched\(/) {
-			WARN("USE_VANILLA_RCU",
-			     "rcu_barrier_sched() is obsolete, use rcu_barrier() instead\n" . $herecurr);
-		}
-		if ($line =~ /\bget_state_synchronize_sched\(/) {
-			WARN("USE_VANILLA_RCU",
-			     "get_state_synchronize_sched() is obsolete, use get_state_synchronize_rcu() instead\n" . $herecurr);
-		}
-		if ($line =~ /\bcond_synchronize_sched\(/) {
-			WARN("USE_VANILLA_RCU",
-			     "cond_synchronize_sched() is obsolete, use cond_synchronize_rcu() instead\n" . $herecurr);
+# check for deprecated apis
+		if ($line =~ /\b($deprecated_apis_search)\b\s*\(/) {
+			my $deprecated_api = $1;
+			my $new_api = $deprecated_apis{$deprecated_api};
+			WARN("DEPRECATED_API",
+			     "Deprecated use of '$deprecated_api', prefer '$new_api' instead\n" . $herecurr);
 		}
 
 # check for various structs that are normally const (ops, kgdb, device_tree)
