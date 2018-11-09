@@ -1,11 +1,9 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * AMD64 class Memory Controller kernel module
  *
  * Copyright (c) 2009 SoftwareBitMaker.
  * Copyright (c) 2009-15 Advanced Micro Devices, Inc.
- *
- * This file may be distributed under the terms of the
- * GNU General Public License.
  */
 
 #include <linux/module.h>
