@@ -596,6 +596,7 @@ static int legacy_parse_monolithic(struct fs_context *fc, void *data, size_t dat
 static int legacy_validate(struct fs_context *fc)
 {
 	struct legacy_fs_context *ctx = fc->fs_private;
+	int err;
 
 	switch (ctx->param_type) {
 	case LEGACY_FS_UNSET_PARAMS:
@@ -615,8 +616,11 @@ static int legacy_validate(struct fs_context *fc)
 	if (!ctx->secdata)
 		return -ENOMEM;
 
-	return security_sb_copy_data(ctx->legacy_data, ctx->data_size,
+	err = security_sb_copy_data(ctx->legacy_data, ctx->data_size,
 				     ctx->secdata);
+	if (!err)
+		err = security_sb_parse_opts_str(ctx->secdata, fc->security);
+	return err;
 }
 
 /*
