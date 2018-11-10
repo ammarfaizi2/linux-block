@@ -12,7 +12,8 @@
 	    ".globl " STATIC_CALL_TRAMP_STR(key) "		\n"	\
 	    ".type " STATIC_CALL_TRAMP_STR(key) ", @function	\n"	\
 	    STATIC_CALL_TRAMP_STR(key) ":			\n"	\
-	    "jmp " #func "					\n"	\
+	    "call " #func "					\n"	\
+	    "retq \n"							\
 	    ".popsection					\n")
 
 #endif /* _ASM_STATIC_CALL_H */
