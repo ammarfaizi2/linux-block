@@ -1326,7 +1326,7 @@ int vfs_get_tree(struct fs_context *fc)
 	smp_wmb();
 	sb->s_flags |= SB_BORN;
 
-	error = security_sb_kern_mount(sb, fc->sb_flags, fc->secdata);
+	error = security_sb_kern_mount(sb, fc->sb_flags, &fc->lsm_opts);
 	if (error)
 		goto out_sb;
 

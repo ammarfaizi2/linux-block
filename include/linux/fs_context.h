@@ -14,6 +14,7 @@
 
 #include <linux/kernel.h>
 #include <linux/errno.h>
+#include <linux/security.h>
 
 struct cred;
 struct dentry;
@@ -49,7 +50,7 @@ struct fs_context {
 	const struct cred	*cred;		/* The mounter's credentials */
 	const char		*source;	/* The source name (eg. dev path) */
 	const char		*subtype;	/* The subtype to set on the superblock */
-	char			*secdata;
+	struct security_mnt_opts lsm_opts;	/* Linux S&M options */
 	unsigned int		sb_flags;	/* Proposed superblock flags (SB_*) */
 	unsigned int		sb_flags_mask;	/* Superblock flags that were changed */
 	enum fs_context_purpose	purpose:8;
