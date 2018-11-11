@@ -1477,7 +1477,8 @@ static void __init rcu_spawn_boost_kthreads(void)
 
 	for_each_possible_cpu(cpu)
 		per_cpu(rcu_cpu_has_work, cpu) = 0;
-	BUG_ON(smpboot_register_percpu_thread(&rcu_cpu_thread_spec));
+	if (WARN_ONCE(smpboot_register_percpu_thread(&rcu_cpu_thread_spec), "%s: Could not start rcuo kthread, OOM is now expected behavior\n", __func__))
+		return;
 	rcu_for_each_leaf_node(rnp)
 		(void)rcu_spawn_one_boost_kthread(rnp);
 }
@@ -2010,7 +2011,7 @@ static bool rcu_nocb_cpu_needs_barrier(int cpu)
 	 * (if a callback is in fact needed).  This is associated with an
 	 * atomic_inc() in the caller.
 	 */
-	ret = atomic_long_read(&rdp->nocb_q_count);
+	ret = rcu_get_n_cbs_nocb_cpu(rdp);
 
 #ifdef CONFIG_PROVE_RCU
 	rhp = READ_ONCE(rdp->nocb_head);
@@ -2065,7 +2066,7 @@ static void __call_rcu_nocb_enqueue(struct rcu_data *rdp,
 				    TPS("WakeNotPoll"));
 		return;
 	}
-	len = atomic_long_read(&rdp->nocb_q_count);
+	len = rcu_get_n_cbs_nocb_cpu(rdp);
 	if (old_rhpp == &rdp->nocb_head) {
 		if (!irqs_disabled_flags(flags)) {
 			/* ... if queue was empty ... */
@@ -2114,11 +2115,11 @@ static bool __call_rcu_nocb(struct rcu_data *rdp, struct rcu_head *rhp,
 		trace_rcu_kfree_callback(rcu_state.name, rhp,
 					 (unsigned long)rhp->func,
 					 -atomic_long_read(&rdp->nocb_q_count_lazy),
-					 -atomic_long_read(&rdp->nocb_q_count));
+					 -rcu_get_n_cbs_nocb_cpu(rdp));
 	else
 		trace_rcu_callback(rcu_state.name, rhp,
 				   -atomic_long_read(&rdp->nocb_q_count_lazy),
-				   -atomic_long_read(&rdp->nocb_q_count));
+				   -rcu_get_n_cbs_nocb_cpu(rdp));
 
 	/*
 	 * If called from an extended quiescent state with interrupts
@@ -2335,13 +2336,14 @@ static int rcu_nocb_kthread(void *arg)
 		tail = rdp->nocb_follower_tail;
 		rdp->nocb_follower_tail = &rdp->nocb_follower_head;
 		raw_spin_unlock_irqrestore(&rdp->nocb_lock, flags);
-		BUG_ON(!list);
+		if (WARN_ON_ONCE(!list))
+			continue;
 		trace_rcu_nocb_wake(rcu_state.name, rdp->cpu, TPS("WokeNonEmpty"));
 
 		/* Each pass through the following loop invokes a callback. */
 		trace_rcu_batch_start(rcu_state.name,
 				      atomic_long_read(&rdp->nocb_q_count_lazy),
-				      atomic_long_read(&rdp->nocb_q_count), -1);
+				      rcu_get_n_cbs_nocb_cpu(rdp), -1);
 		c = cl = 0;
 		while (list) {
 			next = list->next;
@@ -2508,7 +2510,8 @@ static void rcu_spawn_one_nocb_kthread(int cpu)
 	/* Spawn the kthread for this CPU. */
 	t = kthread_run(rcu_nocb_kthread, rdp_spawn,
 			"rcuo%c/%d", rcu_state.abbr, cpu);
-	BUG_ON(IS_ERR(t));
+	if (WARN_ONCE(IS_ERR(t), "%s: Could not start rcuo kthread, OOM is now expected behavior\n", __func__))
+		return;
 	WRITE_ONCE(rdp_spawn->nocb_kthread, t);
 }
 
@@ -2600,6 +2603,26 @@ static bool init_nocb_callback_list(struct rcu_data *rdp)
 	return true;
 }
 
+/*
+ * Bind the current task to the offloaded CPUs.  If there are no offloaded
+ * CPUs, leave the task unbound.  Splat if the bind attempt fails.
+ */
+void rcu_bind_current_to_nocb(void)
+{
+	if (cpumask_available(rcu_nocb_mask) && cpumask_weight(rcu_nocb_mask))
+		WARN_ON(sched_setaffinity(current->pid, rcu_nocb_mask));
+}
+EXPORT_SYMBOL_GPL(rcu_bind_current_to_nocb);
+
+/*
+ * Return the number of RCU callbacks still queued from the specified
+ * CPU, which must be a nocbs CPU.
+ */
+static unsigned long rcu_get_n_cbs_nocb_cpu(struct rcu_data *rdp)
+{
+	return atomic_long_read(&rdp->nocb_q_count);
+}
+
 #else /* #ifdef CONFIG_RCU_NOCB_CPU */
 
 static bool rcu_nocb_cpu_needs_barrier(int cpu)
@@ -2658,6 +2681,11 @@ static void __init rcu_spawn_nocb_kthreads(void)
 static bool init_nocb_callback_list(struct rcu_data *rdp)
 {
 	return false;
+}
+
+static unsigned long rcu_get_n_cbs_nocb_cpu(struct rcu_data *rdp)
+{
+	return 0;
 }
 
 #endif /* #else #ifdef CONFIG_RCU_NOCB_CPU */
