@@ -2374,9 +2374,6 @@ static int do_remount(struct path *path, int ms_flags, int sb_flags,
 	if (!can_change_locked_flags(mnt, mnt_flags))
 		return -EPERM;
 
-	err = security_sb_remount(sb, data);
-	if (err)
-		return err;
 	fc = vfs_new_fs_context(path->dentry->d_sb->s_type,
 				path->dentry, sb_flags, MS_RMT_MASK,
 				FS_CONTEXT_FOR_RECONFIGURE);
@@ -2390,6 +2387,10 @@ static int do_remount(struct path *path, int ms_flags, int sb_flags,
 
 	err = legacy_validate(fc);
 	if (err < 0)
+		goto out;
+
+	err = security_sb_remount(sb, fc->secdata);
+	if (err)
 		goto out;
 
 	down_write(&sb->s_umount);

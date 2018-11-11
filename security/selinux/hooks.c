@@ -2839,33 +2839,26 @@ out:
 	return rc;
 }
 
-static int selinux_sb_remount(struct super_block *sb, void *data)
+static int selinux_sb_remount(struct super_block *sb, void *secdata)
 {
 	int rc, i, *flags;
 	struct security_mnt_opts opts;
-	char *secdata, **mount_options;
+	char **mount_options;
 	struct superblock_security_struct *sbsec = sb->s_security;
 
 	if (!(sbsec->flags & SE_SBINITIALIZED))
 		return 0;
 
-	if (!data)
+	if (!secdata)
 		return 0;
 
 	if (sb->s_type->fs_flags & FS_BINARY_MOUNTDATA)
 		return 0;
 
 	security_init_mnt_opts(&opts);
-	secdata = alloc_secdata();
-	if (!secdata)
-		return -ENOMEM;
-	rc = selinux_sb_copy_data(data, secdata);
-	if (rc)
-		goto out_free_secdata;
-
 	rc = selinux_parse_opts_str(secdata, &opts);
 	if (rc)
-		goto out_free_secdata;
+		return rc;
 
 	mount_options = opts.mnt_opts;
 	flags = opts.mnt_opts_flags;
@@ -2914,8 +2907,6 @@ static int selinux_sb_remount(struct super_block *sb, void *data)
 	rc = 0;
 out_free_opts:
 	security_free_mnt_opts(&opts);
-out_free_secdata:
-	free_secdata(secdata);
 	return rc;
 out_bad_option:
 	pr_warn("SELinux: unable to change security options "
