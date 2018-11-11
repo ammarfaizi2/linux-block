@@ -2394,7 +2394,7 @@ static int do_remount(struct path *path, int ms_flags, int sb_flags,
 	if (err < 0)
 		goto out;
 
-	err = security_sb_remount(sb, fc->secdata);
+	err = security_sb_remount(sb, &fc->lsm_opts);
 	if (err)
 		goto out;
 

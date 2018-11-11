@@ -27,6 +27,7 @@
 
 struct legacy_fs_context {
 	char			*legacy_data;	/* Data page for legacy filesystems */
+	char			*secdata;
 	size_t			data_size;
 };
 
@@ -84,6 +85,7 @@ struct fs_context *vfs_new_fs_context(struct file_system_type *fs_type,
 	ret = legacy_init_fs_context(fc, reference);
 	if (ret < 0)
 		goto err_fc;
+	security_init_mnt_opts(&fc->lsm_opts);
 	fc->need_free = true;
 	return fc;
 
@@ -111,6 +113,7 @@ void put_fs_context(struct fs_context *fc)
 	if (fc->need_free)
 		legacy_fs_context_free(fc);
 
+	security_free_mnt_opts(&fc->lsm_opts);
 	if (fc->net_ns)
 		put_net(fc->net_ns);
 	put_user_ns(fc->user_ns);
@@ -131,7 +134,7 @@ void legacy_fs_context_free(struct fs_context *fc)
 	struct legacy_fs_context *ctx = fc->fs_private;
 
 	if (ctx) {
-		free_secdata(fc->secdata);
+		free_secdata(ctx->secdata);
 		kfree(ctx);
 	}
 }
@@ -153,17 +156,21 @@ int legacy_parse_monolithic(struct fs_context *fc, void *data)
 int legacy_validate(struct fs_context *fc)
 {
 	struct legacy_fs_context *ctx = fc->fs_private;
+	int err;
 
 	if (!ctx->legacy_data)
 		return 0;
 	if (fc->fs_type->fs_flags & FS_BINARY_MOUNTDATA)
 		return 0;
 
-	fc->secdata = alloc_secdata();
-	if (!fc->secdata)
+	ctx->secdata = alloc_secdata();
+	if (!ctx->secdata)
 		return -ENOMEM;
 
-	return security_sb_copy_data(ctx->legacy_data, fc->secdata);
+	err = security_sb_copy_data(ctx->legacy_data, ctx->secdata);
+	if (!err)
+		err = security_sb_parse_opts_str(ctx->secdata, &fc->lsm_opts);
+	return err;
 }
 
 /*
