@@ -29,10 +29,8 @@
 
 enum legacy_fs_param {
 	LEGACY_FS_UNSET_PARAMS,
-	LEGACY_FS_NO_PARAMS,
 	LEGACY_FS_MONOLITHIC_PARAMS,
 	LEGACY_FS_INDIVIDUAL_PARAMS,
-	LEGACY_FS_MAGIC_PARAMS,
 };
 
 struct legacy_fs_context {
@@ -434,17 +432,8 @@ static void legacy_fs_context_free(struct fs_context *fc)
 
 	if (ctx) {
 		free_secdata(ctx->secdata);
-		switch (ctx->param_type) {
-		case LEGACY_FS_UNSET_PARAMS:
-		case LEGACY_FS_NO_PARAMS:
-			break;
-		case LEGACY_FS_MAGIC_PARAMS:
-			break; /* ctx->data is a weird pointer */
-		default:
+		if (ctx->param_type == LEGACY_FS_INDIVIDUAL_PARAMS)
 			kfree(ctx->legacy_data);
-			break;
-		}
-
 		kfree(ctx);
 	}
 }
@@ -461,18 +450,13 @@ static int legacy_fs_context_dup(struct fs_context *fc, struct fs_context *src_f
 	if (!ctx)
 		return -ENOMEM;
 
-	switch (ctx->param_type) {
-	case LEGACY_FS_MONOLITHIC_PARAMS:
-	case LEGACY_FS_INDIVIDUAL_PARAMS:
+	if (ctx->param_type == LEGACY_FS_INDIVIDUAL_PARAMS) {
 		ctx->legacy_data = kmemdup(src_ctx->legacy_data,
 					   src_ctx->data_size, GFP_KERNEL);
 		if (!ctx->legacy_data) {
 			kfree(ctx);
 			return -ENOMEM;
 		}
-		/* Fall through */
-	default:
-		break;
 	}
 
 	fc->fs_private = ctx;
@@ -510,8 +494,7 @@ static int legacy_parse_param(struct fs_context *fc, struct fs_parameter *param)
 		return 0;
 	}
 
-	if (ctx->param_type != LEGACY_FS_UNSET_PARAMS &&
-	    ctx->param_type != LEGACY_FS_INDIVIDUAL_PARAMS)
+	if (ctx->param_type == LEGACY_FS_MONOLITHIC_PARAMS)
 		return invalf(fc, "VFS: Legacy: Can't mix monolithic and individual options");
 
 	switch (param->type) {
@@ -566,26 +549,9 @@ static int legacy_parse_monolithic(struct fs_context *fc, void *data, size_t dat
 		return -EINVAL;
 	}
 
-	if (!data) {
-		ctx->param_type = LEGACY_FS_NO_PARAMS;
-		return 0;
-	}
-
 	ctx->data_size = data_size;
-	if (data_size > 0) {
-		ctx->legacy_data = kmemdup(data, data_size, GFP_KERNEL);
-		if (!ctx->legacy_data)
-			return -ENOMEM;
-		ctx->param_type = LEGACY_FS_MONOLITHIC_PARAMS;
-	} else {
-		/* Some filesystems pass weird pointers through that we don't
-		 * want to copy.  They can indicate this by setting data_size
-		 * to 0.
-		 */
-		ctx->legacy_data = data;
-		ctx->param_type = LEGACY_FS_MAGIC_PARAMS;
-	}
-
+	ctx->legacy_data = data;
+	ctx->param_type = LEGACY_FS_MONOLITHIC_PARAMS;
 	return 0;
 }
 
@@ -598,16 +564,11 @@ static int legacy_validate(struct fs_context *fc)
 	struct legacy_fs_context *ctx = fc->fs_private;
 	int err;
 
-	switch (ctx->param_type) {
-	case LEGACY_FS_UNSET_PARAMS:
-		ctx->param_type = LEGACY_FS_NO_PARAMS;
-		/* Fall through */
-	case LEGACY_FS_NO_PARAMS:
-	case LEGACY_FS_MAGIC_PARAMS:
+	if (ctx->param_type == LEGACY_FS_UNSET_PARAMS)
+		ctx->param_type = LEGACY_FS_MONOLITHIC_PARAMS;
+
+	if (!ctx->legacy_data)
 		return 0;
-	default:
-		break;
-	}
 
 	if (fc->fs_type->fs_flags & FS_BINARY_MOUNTDATA)
 		return 0;
