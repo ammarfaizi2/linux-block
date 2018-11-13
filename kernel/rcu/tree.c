@@ -207,6 +207,19 @@ static int rcu_gp_in_progress(void)
 	return rcu_seq_state(rcu_seq_current(&rcu_state.gp_seq));
 }
 
+/*
+ * Return the number of callbacks queued on the specified CPU.
+ * Handles both the nocbs and normal cases.
+ */
+static long rcu_get_n_cbs_cpu(int cpu)
+{
+	struct rcu_data *rdp = per_cpu_ptr(&rcu_data, cpu);
+
+	if (rcu_segcblist_is_enabled(&rdp->cblist)) /* Online normal CPU? */
+		return rcu_segcblist_n_cbs(&rdp->cblist);
+	return rcu_get_n_cbs_nocb_cpu(rdp); /* Works for offline, too. */
+}
+
 void rcu_softirq_qs(void)
 {
 	rcu_qs();
@@ -1265,8 +1278,7 @@ static void print_other_cpu_stall(unsigned long gp_seq)
 
 	print_cpu_stall_info_end();
 	for_each_possible_cpu(cpu)
-		totqlen += rcu_segcblist_n_cbs(&per_cpu_ptr(&rcu_data,
-							    cpu)->cblist);
+		totqlen += rcu_get_n_cbs_cpu(cpu);
 	pr_cont("(detected by %d, t=%ld jiffies, g=%ld, q=%lu)\n",
 	       smp_processor_id(), (long)(jiffies - rcu_state.gp_start),
 	       (long)rcu_seq_current(&rcu_state.gp_seq), totqlen);
@@ -1326,8 +1338,7 @@ static void print_cpu_stall(void)
 	raw_spin_unlock_irqrestore_rcu_node(rdp->mynode, flags);
 	print_cpu_stall_info_end();
 	for_each_possible_cpu(cpu)
-		totqlen += rcu_segcblist_n_cbs(&per_cpu_ptr(&rcu_data,
-							    cpu)->cblist);
+		totqlen += rcu_get_n_cbs_cpu(cpu);
 	pr_cont(" (t=%lu jiffies g=%ld q=%lu)\n",
 		jiffies - rcu_state.gp_start,
 		(long)rcu_seq_current(&rcu_state.gp_seq), totqlen);
@@ -1989,7 +2000,8 @@ static void rcu_gp_cleanup(void)
 
 	WRITE_ONCE(rcu_state.gp_activity, jiffies);
 	raw_spin_lock_irq_rcu_node(rnp);
-	gp_duration = jiffies - rcu_state.gp_start;
+	rcu_state.gp_end = jiffies;
+	gp_duration = rcu_state.gp_end - rcu_state.gp_start;
 	if (gp_duration > rcu_state.gp_max)
 		rcu_state.gp_max = gp_duration;
 
@@ -2656,6 +2668,48 @@ rcu_check_gp_start_stall(struct rcu_node *rnp, struct rcu_data *rdp,
 		raw_spin_unlock_rcu_node(rnp_root);
 	raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
 }
+
+/*
+ * Do a forward-progress check for rcutorture.  This is normally invoked
+ * due to an OOM event.  The argument "j" gives the time period during
+ * which rcutorture would like progress to have been made.
+ */
+void rcu_fwd_progress_check(unsigned long j)
+{
+	unsigned long cbs;
+	int cpu;
+	unsigned long max_cbs = 0;
+	int max_cpu = -1;
+	struct rcu_data *rdp;
+
+	if (rcu_gp_in_progress()) {
+		pr_info("%s: GP age %lu jiffies\n",
+			__func__, jiffies - rcu_state.gp_start);
+		show_rcu_gp_kthreads();
+	} else {
+		pr_info("%s: Last GP end %lu jiffies ago\n",
+			__func__, jiffies - rcu_state.gp_end);
+		preempt_disable();
+		rdp = this_cpu_ptr(&rcu_data);
+		rcu_check_gp_start_stall(rdp->mynode, rdp, j);
+		preempt_enable();
+	}
+	for_each_possible_cpu(cpu) {
+		cbs = rcu_get_n_cbs_cpu(cpu);
+		if (!cbs)
+			continue;
+		if (max_cpu < 0)
+			pr_info("%s: callbacks", __func__);
+		pr_cont(" %d: %lu", cpu, cbs);
+		if (cbs <= max_cbs)
+			continue;
+		max_cbs = cbs;
+		max_cpu = cpu;
+	}
+	if (max_cpu >= 0)
+		pr_cont("\n");
+}
+EXPORT_SYMBOL_GPL(rcu_fwd_progress_check);
 
 /*
  * This does the RCU core processing work for the specified rcu_data

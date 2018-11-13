@@ -328,6 +328,8 @@ struct rcu_state {
 						/*  force_quiescent_state(). */
 	unsigned long gp_start;			/* Time at which GP started, */
 						/*  but in jiffies. */
+	unsigned long gp_end;			/* Time last GP ended, again */
+						/*  in jiffies. */
 	unsigned long gp_activity;		/* Time of last GP kthread */
 						/*  activity in jiffies. */
 	unsigned long gp_req_activity;		/* Time of last GP request */
@@ -455,6 +457,7 @@ static void __init rcu_spawn_nocb_kthreads(void);
 static void __init rcu_organize_nocb_kthreads(void);
 #endif /* #ifdef CONFIG_RCU_NOCB_CPU */
 static bool init_nocb_callback_list(struct rcu_data *rdp);
+static unsigned long rcu_get_n_cbs_nocb_cpu(struct rcu_data *rdp);
 static void rcu_bind_gp_kthread(void);
 static bool rcu_nohz_full_cpu(void);
 static void rcu_dynticks_task_enter(void);
