@@ -1642,8 +1642,11 @@ static blk_status_t scsi_mq_prep_fn(struct request *req)
 
 static void scsi_mq_done(struct scsi_cmnd *cmd)
 {
+	if (test_and_set_bit(__SCMD_COMPLETE, &cmd->flags))
+		return;
 	trace_scsi_dispatch_cmd_done(cmd);
-	blk_mq_complete_request(cmd->request);
+	if (unlikely(!blk_mq_complete_request(cmd->request)))
+		clear_bit(__SCMD_COMPLETE, &cmd->flags);
 }
 
 static void scsi_mq_put_budget(struct blk_mq_hw_ctx *hctx)
@@ -1708,6 +1711,7 @@ static blk_status_t scsi_queue_rq(struct blk_mq_hw_ctx *hctx,
 			goto out_dec_host_busy;
 		req->rq_flags |= RQF_DONTPREP;
 	} else {
+		cmd->flags &= ~SCMD_COMPLETE;
 		blk_mq_start_request(req);
 	}
 

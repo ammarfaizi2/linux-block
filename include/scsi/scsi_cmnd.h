@@ -58,6 +58,9 @@ struct scsi_pointer {
 #define SCMD_TAGGED		(1 << 0)
 #define SCMD_UNCHECKED_ISA_DMA	(1 << 1)
 #define SCMD_INITIALIZED	(1 << 2)
+
+#define __SCMD_COMPLETE		3
+#define SCMD_COMPLETE		(1 << __SCMD_COMPLETE)
 /* flags preserved across unprep / reprep */
 #define SCMD_PRESERVED_FLAGS	(SCMD_UNCHECKED_ISA_DMA | SCMD_INITIALIZED)
 
@@ -144,7 +147,7 @@ struct scsi_cmnd {
 					 * to be at an address < 16Mb). */
 
 	int result;		/* Status code from lower level driver */
-	int flags;		/* Command flags */
+	unsigned long flags;	/* Command flags */
 
 	unsigned char tag;	/* SCSI-II queued command tag */
 };
