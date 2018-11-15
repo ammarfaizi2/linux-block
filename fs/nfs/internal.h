@@ -89,7 +89,7 @@ struct nfs_client_initdata {
 /*
  * In-kernel mount arguments
  */
-struct nfs_parsed_mount_data {
+struct nfs_fs_context {
 	int			flags;
 	unsigned int		rsize, wsize;
 	unsigned int		timeo, retrans;
@@ -146,7 +146,7 @@ struct nfs_mount_request {
 struct nfs_mount_info {
 	void (*fill_super)(struct super_block *, struct nfs_mount_info *);
 	int (*set_security)(struct super_block *, struct dentry *, struct nfs_mount_info *);
-	struct nfs_parsed_mount_data *parsed;
+	struct nfs_fs_context *ctx;
 	struct nfs_clone_mount *cloned;
 	struct nfs_fh *mntfh;
 };
@@ -238,17 +238,17 @@ struct nfs_pageio_descriptor;
 /* mount.c */
 #define NFS_TEXT_DATA		1
 
-extern struct nfs_parsed_mount_data *nfs_alloc_parsed_mount_data(void);
-extern void nfs_free_parsed_mount_data(struct nfs_parsed_mount_data *data);
+extern struct nfs_fs_context *nfs_alloc_parsed_mount_data(void);
+extern void nfs_free_parsed_mount_data(struct nfs_fs_context *ctx);
 extern int nfs_parse_mount_options(char *raw, size_t raw_size,
-				   struct nfs_parsed_mount_data *mnt);
+				   struct nfs_fs_context *ctx);
 extern int nfs_validate_mount_data(struct file_system_type *fs_type,
 				   void *options,
-				   struct nfs_parsed_mount_data *args,
+				   struct nfs_fs_context *ctx,
 				   struct nfs_fh *mntfh,
 				   const char *dev_name);
 extern int nfs_validate_text_mount_data(void *options, size_t data_size,
-					struct nfs_parsed_mount_data *args,
+					struct nfs_fs_context *ctx,
 					const char *dev_name);
 
 /* pagelist.c */

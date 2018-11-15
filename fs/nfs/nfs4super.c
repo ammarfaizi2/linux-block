@@ -242,15 +242,15 @@ struct dentry *nfs4_try_mount(int flags, const char *dev_name,
 	char *export_path;
 	struct vfsmount *root_mnt;
 	struct dentry *res;
-	struct nfs_parsed_mount_data *data = mount_info->parsed;
+	struct nfs_fs_context *ctx = mount_info->ctx;
 
 	dfprintk(MOUNT, "--> nfs4_try_mount()\n");
 
-	export_path = data->nfs_server.export_path;
-	data->nfs_server.export_path = "/";
+	export_path = ctx->nfs_server.export_path;
+	ctx->nfs_server.export_path = "/";
 	root_mnt = nfs_do_root_mount(&nfs4_remote_fs_type, flags, mount_info, 0,
-				     data->nfs_server.hostname);
-	data->nfs_server.export_path = export_path;
+			ctx->nfs_server.hostname);
+	ctx->nfs_server.export_path = export_path;
 
 	res = nfs_follow_remote_path(root_mnt, export_path);
 
