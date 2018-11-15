@@ -3503,7 +3503,7 @@ static int write_dev_supers(struct btrfs_device *device,
 		 * to go down lazy.
 		 */
 		op_flags = REQ_SYNC | REQ_META | REQ_PRIO;
-		if (i == 0 && !btrfs_test_opt(device->fs_info, NOBARRIER))
+		if (i == 0 && btrfs_test_opt(device->fs_info, BARRIER))
 			op_flags |= REQ_FUA;
 		ret = btrfsic_submit_bh(REQ_OP_WRITE, op_flags, bh);
 		if (ret)
@@ -3724,7 +3724,7 @@ int write_all_supers(struct btrfs_fs_info *fs_info, int max_mirrors)
 	int total_errors = 0;
 	u64 flags;
 
-	do_barriers = !btrfs_test_opt(fs_info, NOBARRIER);
+	do_barriers = btrfs_test_opt(fs_info, BARRIER);
 
 	/*
 	 * max_mirrors == 0 indicates we're from commit_transaction,

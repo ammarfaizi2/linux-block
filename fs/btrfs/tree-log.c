@@ -5651,7 +5651,7 @@ static int btrfs_log_inode_parent(struct btrfs_trans_handle *trans,
 
 	sb = inode->vfs_inode.i_sb;
 
-	if (btrfs_test_opt(fs_info, NOTREELOG)) {
+	if (!btrfs_test_opt(fs_info, TREELOG)) {
 		ret = 1;
 		goto end_no_trans;
 	}
