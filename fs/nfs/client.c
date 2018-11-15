@@ -640,25 +640,25 @@ EXPORT_SYMBOL_GPL(nfs_init_client);
  * Create a version 2 or 3 client
  */
 static int nfs_init_server(struct nfs_server *server,
-			   const struct nfs_fs_context *cfg,
-			   struct nfs_subversion *nfs_mod)
+			   const struct fs_context *fc)
 {
+	const struct nfs_fs_context *ctx = nfs_fc2context(fc);
 	struct rpc_timeout timeparms;
 	struct nfs_client_initdata cl_init = {
-		.hostname = cfg->nfs_server.hostname,
-		.addr = (const struct sockaddr *)&cfg->nfs_server.address,
-		.addrlen = cfg->nfs_server.addrlen,
-		.nfs_mod = nfs_mod,
-		.proto = cfg->nfs_server.protocol,
-		.net = cfg->net,
+		.hostname = ctx->nfs_server.hostname,
+		.addr = (const struct sockaddr *)&ctx->nfs_server.address,
+		.addrlen = ctx->nfs_server.addrlen,
+		.nfs_mod = ctx->nfs_mod,
+		.proto = ctx->nfs_server.protocol,
+		.net = fc->net_ns,
 		.timeparms = &timeparms,
 	};
 	struct nfs_client *clp;
 	int error;
 
-	nfs_init_timeout_values(&timeparms, cfg->nfs_server.protocol,
-				cfg->timeo, cfg->retrans);
-	if (cfg->flags & NFS_MOUNT_NORESVPORT)
+	nfs_init_timeout_values(&timeparms, ctx->nfs_server.protocol,
+				ctx->timeo, ctx->retrans);
+	if (ctx->flags & NFS_MOUNT_NORESVPORT)
 		set_bit(NFS_CS_NORESVPORT, &cl_init.init_flags);
 
 	/* Allocate or find a client reference we can use */
@@ -669,46 +669,46 @@ static int nfs_init_server(struct nfs_server *server,
 	server->nfs_client = clp;
 
 	/* Initialise the client representation from the mount data */
-	server->flags = cfg->flags;
-	server->options = cfg->options;
+	server->flags = ctx->flags;
+	server->options = ctx->options;
 	server->caps |= NFS_CAP_HARDLINKS|NFS_CAP_SYMLINKS|NFS_CAP_FILEID|
 		NFS_CAP_MODE|NFS_CAP_NLINK|NFS_CAP_OWNER|NFS_CAP_OWNER_GROUP|
 		NFS_CAP_ATIME|NFS_CAP_CTIME|NFS_CAP_MTIME;
 
-	if (cfg->rsize)
-		server->rsize = nfs_block_size(cfg->rsize, NULL);
-	if (cfg->wsize)
-		server->wsize = nfs_block_size(cfg->wsize, NULL);
+	if (ctx->rsize)
+		server->rsize = nfs_block_size(ctx->rsize, NULL);
+	if (ctx->wsize)
+		server->wsize = nfs_block_size(ctx->wsize, NULL);
 
-	server->acregmin = cfg->acregmin * HZ;
-	server->acregmax = cfg->acregmax * HZ;
-	server->acdirmin = cfg->acdirmin * HZ;
-	server->acdirmax = cfg->acdirmax * HZ;
+	server->acregmin = ctx->acregmin * HZ;
+	server->acregmax = ctx->acregmax * HZ;
+	server->acdirmin = ctx->acdirmin * HZ;
+	server->acdirmax = ctx->acdirmax * HZ;
 
 	/* Start lockd here, before we might error out */
 	error = nfs_start_lockd(server);
 	if (error < 0)
 		goto error;
 
-	server->port = cfg->nfs_server.port;
-	server->auth_info = cfg->auth_info;
+	server->port = ctx->nfs_server.port;
+	server->auth_info = ctx->auth_info;
 
 	error = nfs_init_server_rpcclient(server, &timeparms,
-					  cfg->selected_flavor);
+					  ctx->selected_flavor);
 	if (error < 0)
 		goto error;
 
 	/* Preserve the values of mount_server-related mount options */
-	if (cfg->mount_server.addrlen) {
-		memcpy(&server->mountd_address, &cfg->mount_server.address,
-			cfg->mount_server.addrlen);
-		server->mountd_addrlen = cfg->mount_server.addrlen;
+	if (ctx->mount_server.addrlen) {
+		memcpy(&server->mountd_address, &ctx->mount_server.address,
+			ctx->mount_server.addrlen);
+		server->mountd_addrlen = ctx->mount_server.addrlen;
 	}
-	server->mountd_version = cfg->mount_server.version;
-	server->mountd_port = cfg->mount_server.port;
-	server->mountd_protocol = cfg->mount_server.protocol;
+	server->mountd_version = ctx->mount_server.version;
+	server->mountd_port = ctx->mount_server.port;
+	server->mountd_protocol = ctx->mount_server.protocol;
 
-	server->namelen  = cfg->namlen;
+	server->namelen  = ctx->namlen;
 	return 0;
 
 error:
@@ -929,10 +929,10 @@ EXPORT_SYMBOL_GPL(nfs_free_server);
  * Create a version 2 or 3 volume record
  * - keyed on server and FSID
  */
-struct nfs_server *nfs_create_server(struct nfs_mount_info *mount_info)
+struct nfs_server *nfs_create_server(struct fs_context *fc)
 {
+	struct nfs_fs_context *ctx = nfs_fc2context(fc);
 	struct nfs_server *server;
-	struct nfs_subversion *nfs_mod = mount_info->nfs_mod;
 	struct nfs_fattr *fattr;
 	int error;
 
@@ -946,18 +946,18 @@ struct nfs_server *nfs_create_server(struct nfs_mount_info *mount_info)
 		goto error;
 
 	/* Get a client representation */
-	error = nfs_init_server(server, mount_info->ctx, nfs_mod);
+	error = nfs_init_server(server, fc);
 	if (error < 0)
 		goto error;
 
 	/* Probe the root fh to retrieve its FSID */
-	error = nfs_probe_fsinfo(server, mount_info->mntfh, fattr);
+	error = nfs_probe_fsinfo(server, ctx->mntfh, fattr);
 	if (error < 0)
 		goto error;
 	if (server->nfs_client->rpc_ops->version == 3) {
 		if (server->namelen == 0 || server->namelen > NFS3_MAXNAMLEN)
 			server->namelen = NFS3_MAXNAMLEN;
-		if (!(mount_info->ctx->flags & NFS_MOUNT_NORDIRPLUS))
+		if (!(ctx->flags & NFS_MOUNT_NORDIRPLUS))
 			server->caps |= NFS_CAP_READDIRPLUS;
 	} else {
 		if (server->namelen == 0 || server->namelen > NFS2_MAXNAMLEN)
@@ -965,8 +965,8 @@ struct nfs_server *nfs_create_server(struct nfs_mount_info *mount_info)
 	}
 
 	if (!(fattr->valid & NFS_ATTR_FATTR)) {
-		error = nfs_mod->rpc_ops->getattr(server, mount_info->mntfh,
-				fattr, NULL, NULL);
+		error = ctx->nfs_mod->rpc_ops->getattr(server, ctx->mntfh,
+						       fattr, NULL, NULL);
 		if (error < 0) {
 			dprintk("nfs_create_server: getattr error = %d\n", -error);
 			goto error;

@@ -4,18 +4,19 @@
  */
 
 #include "nfs4_fs.h"
-#include <linux/mount.h>
+#include <linux/fs_context.h>
 #include <linux/security.h>
 #include <linux/crc32.h>
 #include <linux/sunrpc/addr.h>
 #include <linux/nfs_page.h>
 #include <linux/wait_bit.h>
 
-#define NFS_MS_MASK (SB_RDONLY|SB_NOSUID|SB_NODEV|SB_NOEXEC|SB_SYNCHRONOUS)
+#define NFS_SB_MASK (SB_RDONLY|SB_NOSUID|SB_NODEV|SB_NOEXEC|SB_SYNCHRONOUS)
 
 extern const struct export_operations nfs_export_ops;
 
 struct nfs_string;
+struct nfs_pageio_descriptor;
 
 /* Maximum number of readahead requests
  * FIXME: this should really be a sysctl so that users may tune it to suit
@@ -39,16 +40,6 @@ static inline int nfs_attr_use_mounted_on_fileid(struct nfs_fattr *fattr)
 		return 0;
 	return 1;
 }
-
-struct nfs_clone_mount {
-	const struct super_block *sb;
-	const struct dentry *dentry;
-	char *hostname;
-	char *mnt_path;
-	struct sockaddr *addr;
-	size_t addrlen;
-	rpc_authflavor_t authflavor;
-};
 
 /*
  * Note: RFC 1813 doesn't limit the number of auth flavors that
@@ -88,6 +79,10 @@ struct nfs_client_initdata {
  * In-kernel mount arguments
  */
 struct nfs_fs_context {
+	bool			internal;
+	bool			skip_reconfig_option_check;
+	bool			need_mount;
+	bool			sloppy;
 	unsigned int		flags;		/* NFS{,4}_MOUNT_* flags */
 	unsigned int		rsize, wsize;
 	unsigned int		timeo, retrans;
@@ -104,8 +99,6 @@ struct nfs_fs_context {
 	char			*fscache_uniq;
 	unsigned short		protofamily;
 	unsigned short		mountfamily;
-	bool			need_mount;
-	bool			sloppy;
 
 	struct {
 		union {
@@ -129,13 +122,30 @@ struct nfs_fs_context {
 		char			*export_path;
 		int			port;
 		unsigned short		protocol;
+		unsigned short		export_path_len;
 	} nfs_server;
 
-	void			*lsm_opts;
-	struct net		*net;
+	struct nfs_fh		*mntfh;
+	struct nfs_server	*server;
+	struct nfs_subversion	*nfs_mod;
 
-	char			buf[32];	/* Parse buffer */
+	/* Information for a cloned mount. */
+	struct nfs_clone_mount {
+		struct super_block	*sb;
+		struct dentry		*dentry;
+		struct nfs_fattr	*fattr;
+		unsigned int		inherited_bsize;
+	} clone_data;
 };
+
+#define nfs_errorf(fc, fmt, ...) errorf(fc, fmt, ## __VA_ARGS__)
+#define nfs_invalf(fc, fmt, ...) invalf(fc, fmt, ## __VA_ARGS__)
+#define nfs_warnf(fc, fmt, ...) warnf(fc, fmt, ## __VA_ARGS__)
+
+static inline struct nfs_fs_context *nfs_fc2context(const struct fs_context *fc)
+{
+	return fc->fs_private;
+}
 
 /* mount_clnt.c */
 struct nfs_mount_request {
@@ -150,15 +160,6 @@ struct nfs_mount_request {
 	unsigned int		*auth_flav_len;
 	rpc_authflavor_t	*auth_flavs;
 	struct net		*net;
-};
-
-struct nfs_mount_info {
-	unsigned int inherited_bsize;
-	struct nfs_fs_context *ctx;
-	struct nfs_clone_mount *cloned;
-	struct nfs_server *server;
-	struct nfs_fh *mntfh;
-	struct nfs_subversion *nfs_mod;
 };
 
 extern int nfs_mount(struct nfs_mount_request *info);
@@ -186,10 +187,9 @@ extern struct nfs_client *nfs4_find_client_ident(struct net *, int);
 extern struct nfs_client *
 nfs4_find_client_sessionid(struct net *, const struct sockaddr *,
 				struct nfs4_sessionid *, u32);
-extern struct nfs_server *nfs_create_server(struct nfs_mount_info *);
-extern struct nfs_server *nfs4_create_server(struct nfs_mount_info *);
-extern struct nfs_server *nfs4_create_referral_server(struct nfs_clone_mount *,
-						      struct nfs_fh *);
+extern struct nfs_server *nfs_create_server(struct fs_context *);
+extern struct nfs_server *nfs4_create_server(struct fs_context *);
+extern struct nfs_server *nfs4_create_referral_server(struct fs_context *);
 extern int nfs4_update_server(struct nfs_server *server, const char *hostname,
 					struct sockaddr *sap, size_t salen,
 					struct net *net);
@@ -240,22 +240,8 @@ static inline void nfs_fs_proc_exit(void)
 extern const struct svc_version nfs4_callback_version1;
 extern const struct svc_version nfs4_callback_version4;
 
-struct nfs_pageio_descriptor;
-
-/* mount.c */
-#define NFS_TEXT_DATA		1
-
-extern struct nfs_fs_context *nfs_alloc_parsed_mount_data(void);
-extern void nfs_free_parsed_mount_data(struct nfs_fs_context *ctx);
-extern int nfs_parse_mount_options(char *raw, struct nfs_fs_context *ctx);
-extern int nfs_validate_mount_data(struct file_system_type *fs_type,
-				   void *options,
-				   struct nfs_fs_context *ctx,
-				   struct nfs_fh *mntfh,
-				   const char *dev_name);
-extern int nfs_validate_text_mount_data(void *options,
-					struct nfs_fs_context *ctx,
-					const char *dev_name);
+/* fs_context.c */
+extern struct file_system_type nfs_fs_type;
 
 /* pagelist.c */
 extern int __init nfs_init_nfspagecache(void);
@@ -416,14 +402,9 @@ extern int nfs_wait_atomic_killable(atomic_t *p, unsigned int mode);
 
 /* super.c */
 extern const struct super_operations nfs_sops;
-extern struct file_system_type nfs_fs_type;
-extern struct file_system_type nfs_prepared_fs_type;
-#if IS_ENABLED(CONFIG_NFS_V4)
-extern struct file_system_type nfs4_referral_fs_type;
-#endif
 bool nfs_auth_info_match(const struct nfs_auth_info *, rpc_authflavor_t);
-struct dentry *nfs_try_mount(int, const char *, struct nfs_mount_info *);
-struct dentry *nfs_fs_mount(struct file_system_type *, int, const char *, void *);
+int nfs_try_get_tree(struct fs_context *);
+int nfs_get_tree_common(struct fs_context *);
 void nfs_kill_super(struct super_block *);
 
 extern struct rpc_stat nfs_rpcstat;
@@ -451,18 +432,13 @@ static inline bool nfs_file_io_is_buffered(struct nfs_inode *nfsi)
 extern char *nfs_path(char **p, struct dentry *dentry,
 		      char *buffer, ssize_t buflen, unsigned flags);
 extern struct vfsmount *nfs_d_automount(struct path *path);
-struct vfsmount *nfs_submount(struct nfs_server *, struct dentry *,
-			      struct nfs_fh *, struct nfs_fattr *);
-struct vfsmount *nfs_do_submount(struct dentry *, struct nfs_fh *,
-				 struct nfs_fattr *, rpc_authflavor_t);
+int nfs_submount(struct fs_context *, struct nfs_server *);
+int nfs_do_submount(struct fs_context *);
 
 /* getroot.c */
-extern struct dentry *nfs_get_root(struct super_block *, struct nfs_fh *,
-				   const char *);
+extern int nfs_get_root(struct super_block *s, struct fs_context *fc);
 #if IS_ENABLED(CONFIG_NFS_V4)
-extern struct dentry *nfs4_get_root(struct super_block *, struct nfs_fh *,
-				    const char *);
-
+extern int nfs4_get_root(struct super_block *s, struct fs_context *cfg);
 extern int nfs4_get_rootfh(struct nfs_server *server, struct nfs_fh *mntfh, bool);
 #endif
 
@@ -481,7 +457,7 @@ int  nfs_show_options(struct seq_file *, struct dentry *);
 int  nfs_show_devname(struct seq_file *, struct dentry *);
 int  nfs_show_path(struct seq_file *, struct dentry *);
 int  nfs_show_stats(struct seq_file *, struct dentry *);
-int nfs_remount(struct super_block *sb, int *flags, char *raw_data);
+int  nfs_reconfigure(struct fs_context *);
 
 /* write.c */
 extern void nfs_pageio_init_write(struct nfs_pageio_descriptor *pgio,
