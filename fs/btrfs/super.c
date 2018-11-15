@@ -661,6 +661,25 @@ out:
 }
 
 /*
+ * Allocate an fsinfo record and initialise the options to appropriate
+ * defaults.
+ */
+static struct btrfs_fs_info *btrfs_alloc_fs_info(void)
+{
+	struct btrfs_fs_info *fs_info;
+
+	fs_info = kvzalloc(sizeof(struct btrfs_fs_info), GFP_KERNEL);
+	if (fs_info) {
+		btrfs_set_opt(fs_info->mount_opt, DATASUM);
+		btrfs_set_opt(fs_info->mount_opt, DATACOW);
+		btrfs_set_opt(fs_info->mount_opt, BARRIER);
+		btrfs_set_opt(fs_info->mount_opt, TREELOG);
+	}
+
+	return fs_info;
+}
+
+/*
  * Find a superblock for the given device / mount point.
  *
  * Note: This is based on mount_bdev from fs/super.c with a few additions
@@ -693,7 +712,7 @@ static struct dentry *btrfs_mount_root(struct file_system_type *fs_type,
 	 * it for searching for existing supers, so this lets us do that and
 	 * then open_ctree will properly initialize everything later.
 	 */
-	fs_info = kvzalloc(sizeof(struct btrfs_fs_info), GFP_KERNEL);
+	fs_info = btrfs_alloc_fs_info();
 	if (!fs_info) {
 		error = -ENOMEM;
 		goto error_sec_opts;
