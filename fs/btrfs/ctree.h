@@ -3325,9 +3325,15 @@ void __cold btrfs_exit_sysfs(void);
 int btrfs_sysfs_add_mounted(struct btrfs_fs_info *fs_info);
 void btrfs_sysfs_remove_mounted(struct btrfs_fs_info *fs_info);
 
-/* super.c */
+/* fs_params.c */
 int btrfs_parse_options(struct btrfs_fs_info *info, char *options,
 			unsigned long new_flags);
+int btrfs_parse_device_options(const char *options, fmode_t flags, void *holder);
+int btrfs_parse_subvol_options(const char *options, char **subvol_name,
+			       u64 *subvol_objectid);
+int btrfs_show_options(struct seq_file *seq, struct dentry *dentry);
+
+/* super.c */
 int btrfs_sync_fs(struct super_block *sb, int wait);
 
 static inline __printf(2, 3) __cold
