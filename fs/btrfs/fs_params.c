@@ -189,22 +189,22 @@ int btrfs_parse_options(struct btrfs_fs_info *info, char *options,
 			 */
 			break;
 		case Opt_nodatasum:
-			btrfs_set_and_info(info, NODATASUM,
-					   "setting nodatasum");
+			btrfs_clear_and_info(info, DATASUM,
+					     "setting nodatasum");
 			break;
 		case Opt_datasum:
-			if (btrfs_test_opt(info, NODATASUM)) {
-				if (btrfs_test_opt(info, NODATACOW))
+			if (!btrfs_test_opt(info, DATASUM)) {
+				if (!btrfs_test_opt(info, DATACOW))
 					btrfs_info(info,
 						   "setting datasum, datacow enabled");
 				else
 					btrfs_info(info, "setting datasum");
 			}
-			btrfs_clear_opt(info->mount_opt, NODATACOW);
-			btrfs_clear_opt(info->mount_opt, NODATASUM);
+			btrfs_set_opt(info->mount_opt, DATACOW);
+			btrfs_set_opt(info->mount_opt, DATASUM);
 			break;
 		case Opt_nodatacow:
-			if (!btrfs_test_opt(info, NODATACOW)) {
+			if (btrfs_test_opt(info, DATACOW)) {
 				if (!btrfs_test_opt(info, COMPRESS) ||
 				    !btrfs_test_opt(info, FORCE_COMPRESS)) {
 					btrfs_info(info,
@@ -215,12 +215,12 @@ int btrfs_parse_options(struct btrfs_fs_info *info, char *options,
 			}
 			btrfs_clear_opt(info->mount_opt, COMPRESS);
 			btrfs_clear_opt(info->mount_opt, FORCE_COMPRESS);
-			btrfs_set_opt(info->mount_opt, NODATACOW);
-			btrfs_set_opt(info->mount_opt, NODATASUM);
+			btrfs_clear_opt(info->mount_opt, DATACOW);
+			btrfs_clear_opt(info->mount_opt, DATASUM);
 			break;
 		case Opt_datacow:
-			btrfs_clear_and_info(info, NODATACOW,
-					     "setting datacow");
+			btrfs_set_and_info(info, DATACOW,
+					   "setting datacow");
 			break;
 		case Opt_compress_force:
 		case Opt_compress_force_type:
@@ -250,23 +250,23 @@ int btrfs_parse_options(struct btrfs_fs_info *info, char *options,
 					info->compress_level =
 					  btrfs_compress_str2level(args[0].from);
 				btrfs_set_opt(info->mount_opt, COMPRESS);
-				btrfs_clear_opt(info->mount_opt, NODATACOW);
-				btrfs_clear_opt(info->mount_opt, NODATASUM);
+				btrfs_set_opt(info->mount_opt, DATACOW);
+				btrfs_set_opt(info->mount_opt, DATASUM);
 				no_compress = 0;
 			} else if (strncmp(args[0].from, "lzo", 3) == 0) {
 				compress_type = "lzo";
 				info->compress_type = BTRFS_COMPRESS_LZO;
 				btrfs_set_opt(info->mount_opt, COMPRESS);
-				btrfs_clear_opt(info->mount_opt, NODATACOW);
-				btrfs_clear_opt(info->mount_opt, NODATASUM);
+				btrfs_set_opt(info->mount_opt, DATACOW);
+				btrfs_set_opt(info->mount_opt, DATASUM);
 				btrfs_set_fs_incompat(info, COMPRESS_LZO);
 				no_compress = 0;
 			} else if (strcmp(args[0].from, "zstd") == 0) {
 				compress_type = "zstd";
 				info->compress_type = BTRFS_COMPRESS_ZSTD;
 				btrfs_set_opt(info->mount_opt, COMPRESS);
-				btrfs_clear_opt(info->mount_opt, NODATACOW);
-				btrfs_clear_opt(info->mount_opt, NODATASUM);
+				btrfs_set_opt(info->mount_opt, DATACOW);
+				btrfs_set_opt(info->mount_opt, DATASUM);
 				btrfs_set_fs_incompat(info, COMPRESS_ZSTD);
 				no_compress = 0;
 			} else if (strncmp(args[0].from, "no", 2) == 0) {
@@ -324,11 +324,11 @@ int btrfs_parse_options(struct btrfs_fs_info *info, char *options,
 					     "not using spread ssd allocation scheme");
 			break;
 		case Opt_barrier:
-			btrfs_clear_and_info(info, NOBARRIER,
+			btrfs_set_and_info(info, BARRIER,
 					     "turning on barriers");
 			break;
 		case Opt_nobarrier:
-			btrfs_set_and_info(info, NOBARRIER,
+			btrfs_clear_and_info(info, BARRIER,
 					   "turning off barriers");
 			break;
 		case Opt_thread_pool:
@@ -376,12 +376,12 @@ int btrfs_parse_options(struct btrfs_fs_info *info, char *options,
 			info->sb->s_flags &= ~SB_POSIXACL;
 			break;
 		case Opt_notreelog:
-			btrfs_set_and_info(info, NOTREELOG,
-					   "disabling tree log");
+			btrfs_clear_and_info(info, TREELOG,
+					     "disabling tree log");
 			break;
 		case Opt_treelog:
-			btrfs_clear_and_info(info, NOTREELOG,
-					     "enabling tree log");
+			btrfs_set_and_info(info, TREELOG,
+					   "enabling tree log");
 			break;
 		case Opt_norecovery:
 		case Opt_nologreplay:
@@ -721,11 +721,11 @@ int btrfs_show_options(struct seq_file *seq, struct dentry *dentry)
 
 	if (btrfs_test_opt(info, DEGRADED))
 		seq_puts(seq, ",degraded");
-	if (btrfs_test_opt(info, NODATASUM))
+	if (!btrfs_test_opt(info, DATASUM))
 		seq_puts(seq, ",nodatasum");
-	if (btrfs_test_opt(info, NODATACOW))
+	if (!btrfs_test_opt(info, DATACOW))
 		seq_puts(seq, ",nodatacow");
-	if (btrfs_test_opt(info, NOBARRIER))
+	if (!btrfs_test_opt(info, BARRIER))
 		seq_puts(seq, ",nobarrier");
 	if (info->max_inline != BTRFS_DEFAULT_MAX_INLINE)
 		seq_printf(seq, ",max_inline=%llu", info->max_inline);
@@ -747,7 +747,7 @@ int btrfs_show_options(struct seq_file *seq, struct dentry *dentry)
 		seq_puts(seq, ",ssd_spread");
 	else if (btrfs_test_opt(info, SSD))
 		seq_puts(seq, ",ssd");
-	if (btrfs_test_opt(info, NOTREELOG))
+	if (!btrfs_test_opt(info, TREELOG))
 		seq_puts(seq, ",notreelog");
 	if (btrfs_test_opt(info, NOLOGREPLAY))
 		seq_puts(seq, ",nologreplay");
