@@ -1376,20 +1376,21 @@ static inline u32 BTRFS_MAX_XATTR_SIZE(const struct btrfs_fs_info *info)
 /*
  * Flags for mount options.
  *
- * Note: don't forget to add new options to btrfs_show_options()
+ * Note: don't forget to add new options to btrfs_alloc_fs_info() and
+ * btrfs_show_options().
  */
-#define BTRFS_MOUNT_NODATASUM		(1 << 0)
-#define BTRFS_MOUNT_NODATACOW		(1 << 1)
-#define BTRFS_MOUNT_NOBARRIER		(1 << 2)
+#define BTRFS_MOUNT_DATASUM		(1 << 0)
+#define BTRFS_MOUNT_DATACOW		(1 << 1)
+#define BTRFS_MOUNT_BARRIER		(1 << 2)
 #define BTRFS_MOUNT_SSD			(1 << 3)
 #define BTRFS_MOUNT_DEGRADED		(1 << 4)
 #define BTRFS_MOUNT_COMPRESS		(1 << 5)
-#define BTRFS_MOUNT_NOTREELOG           (1 << 6)
-#define BTRFS_MOUNT_FLUSHONCOMMIT       (1 << 7)
+#define BTRFS_MOUNT_TREELOG		(1 << 6)
+#define BTRFS_MOUNT_FLUSHONCOMMIT	(1 << 7)
 #define BTRFS_MOUNT_SSD_SPREAD		(1 << 8)
 #define BTRFS_MOUNT_NOSSD		(1 << 9)
 #define BTRFS_MOUNT_DISCARD		(1 << 10)
-#define BTRFS_MOUNT_FORCE_COMPRESS      (1 << 11)
+#define BTRFS_MOUNT_FORCE_COMPRESS	(1 << 11)
 #define BTRFS_MOUNT_SPACE_CACHE		(1 << 12)
 #define BTRFS_MOUNT_CLEAR_CACHE		(1 << 13)
 #define BTRFS_MOUNT_USER_SUBVOL_RM_ALLOWED (1 << 14)
