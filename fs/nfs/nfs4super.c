@@ -3,6 +3,7 @@
  */
 #include <linux/init.h>
 #include <linux/module.h>
+#include <linux/mount.h>
 #include <linux/nfs4_mount.h>
 #include <linux/nfs_fs.h>
 #include "delegation.h"
@@ -17,36 +18,6 @@
 
 static int nfs4_write_inode(struct inode *inode, struct writeback_control *wbc);
 static void nfs4_evict_inode(struct inode *inode);
-static struct dentry *nfs4_remote_mount(struct file_system_type *fs_type,
-	int flags, const char *dev_name, void *raw_data, size_t data_size);
-static struct dentry *nfs4_referral_mount(struct file_system_type *fs_type,
-	int flags, const char *dev_name, void *raw_data, size_t data_size);
-static struct dentry *nfs4_remote_referral_mount(struct file_system_type *fs_type,
-	int flags, const char *dev_name, void *raw_data, size_t data_size);
-
-static struct file_system_type nfs4_remote_fs_type = {
-	.owner		= THIS_MODULE,
-	.name		= "nfs4",
-	.mount		= nfs4_remote_mount,
-	.kill_sb	= nfs_kill_super,
-	.fs_flags	= FS_RENAME_DOES_D_MOVE|FS_BINARY_MOUNTDATA,
-};
-
-static struct file_system_type nfs4_remote_referral_fs_type = {
-	.owner		= THIS_MODULE,
-	.name		= "nfs4",
-	.mount		= nfs4_remote_referral_mount,
-	.kill_sb	= nfs_kill_super,
-	.fs_flags	= FS_RENAME_DOES_D_MOVE|FS_BINARY_MOUNTDATA,
-};
-
-struct file_system_type nfs4_referral_fs_type = {
-	.owner		= THIS_MODULE,
-	.name		= "nfs4",
-	.mount		= nfs4_referral_mount,
-	.kill_sb	= nfs_kill_super,
-	.fs_flags	= FS_RENAME_DOES_D_MOVE|FS_BINARY_MOUNTDATA,
-};
 
 static const struct super_operations nfs4_sops = {
 	.alloc_inode	= nfs_alloc_inode,
@@ -60,16 +31,15 @@ static const struct super_operations nfs4_sops = {
 	.show_devname	= nfs_show_devname,
 	.show_path	= nfs_show_path,
 	.show_stats	= nfs_show_stats,
-	.remount_fs	= nfs_remount,
 };
 
 struct nfs_subversion nfs_v4 = {
-	.owner = THIS_MODULE,
-	.nfs_fs   = &nfs4_fs_type,
-	.rpc_vers = &nfs_version4,
-	.rpc_ops  = &nfs_v4_clientops,
-	.sops     = &nfs4_sops,
-	.xattr    = nfs4_xattr_handlers,
+	.owner		= THIS_MODULE,
+	.nfs_fs		= &nfs4_fs_type,
+	.rpc_vers	= &nfs_version4,
+	.rpc_ops	= &nfs_v4_clientops,
+	.sops		= &nfs4_sops,
+	.xattr		= nfs4_xattr_handlers,
 };
 
 static int nfs4_write_inode(struct inode *inode, struct writeback_control *wbc)
@@ -103,48 +73,78 @@ static void nfs4_evict_inode(struct inode *inode)
 /*
  * Get the superblock for the NFS4 root partition
  */
-static struct dentry *
-nfs4_remote_mount(struct file_system_type *fs_type, int flags,
-		  const char *dev_name, void *info, size_t data_size)
+static int nfs4_get_remote_tree(struct fs_context *fc)
 {
-	struct nfs_mount_info *mount_info = info;
+	struct nfs_fs_context *ctx = nfs_fc2context(fc);
 	struct nfs_server *server;
-	struct dentry *mntroot = ERR_PTR(-ENOMEM);
 
-	mount_info->set_security = nfs_set_sb_security;
+	ctx->set_security = nfs_set_sb_security;
 
 	/* Get a volume representation */
-	server = nfs4_create_server(mount_info, &nfs_v4);
-	if (IS_ERR(server)) {
-		mntroot = ERR_CAST(server);
-		goto out;
-	}
+	server = nfs4_create_server(fc);
+	if (IS_ERR(server))
+		return PTR_ERR(server);
 
-	mntroot = nfs_fs_mount_common(server, flags, dev_name, mount_info, &nfs_v4);
-
-out:
-	return mntroot;
+	return nfs_get_tree_common(server, fc);
 }
 
-static struct vfsmount *nfs_do_root_mount(struct file_system_type *fs_type,
-		int flags, void *data, size_t data_size, const char *hostname)
+/*
+ * Create a mount for the root of the server.  We copy the mount context we
+ * have for the parameters and set its hostname, path and type.
+ */
+static struct vfsmount *nfs_do_root_mount(struct fs_context *fc,
+					  const char *hostname,
+					  enum nfs_mount_type type)
 {
+	struct nfs_fs_context *root_ctx;
+	struct fs_context *root_fc;
 	struct vfsmount *root_mnt;
-	char *root_devname;
 	size_t len;
+	int ret;
+
+	struct fs_parameter param = {
+		.key	= "source",
+		.type	= fs_value_is_string,
+		.dirfd	= -1,
+	};
+
+	root_fc = vfs_dup_fs_context(fc, FS_CONTEXT_FOR_ROOT_MOUNT);
+	if (IS_ERR(root_fc))
+		return ERR_CAST(root_fc);
+	kfree(root_fc->source);
+	root_fc->source = NULL;
+
+	root_ctx = nfs_fc2context(root_fc);
+	root_ctx->mount_type = type;
+	root_ctx->nfs_server.export_path = (char *)nfs_slash;
 
 	len = strlen(hostname) + 5;
-	root_devname = kmalloc(len, GFP_KERNEL);
-	if (root_devname == NULL)
-		return ERR_PTR(-ENOMEM);
+	root_mnt = ERR_PTR(-ENOMEM);
+	param.string = kmalloc(len, GFP_KERNEL);
+	if (param.string == NULL)
+		goto out_fc;
+
 	/* Does hostname needs to be enclosed in brackets? */
 	if (strchr(hostname, ':'))
-		snprintf(root_devname, len, "[%s]:/", hostname);
+		param.size = snprintf(param.string, len, "[%s]:/", hostname);
 	else
-		snprintf(root_devname, len, "%s:/", hostname);
-	root_mnt = vfs_kern_mount(fs_type, flags, root_devname,
-				  data, data_size);
-	kfree(root_devname);
+		param.size = snprintf(param.string, len, "%s:/", hostname);
+	ret = vfs_parse_fs_param(root_fc, &param);
+	kfree(param.string);
+	if (ret < 0) {
+		root_mnt = ERR_PTR(ret);
+		goto out_fc;
+	}
+
+	ret = vfs_get_tree(root_fc);
+	if (ret < 0) {
+		root_mnt = ERR_PTR(ret);
+		goto out_fc;
+	}
+
+	root_mnt = vfs_create_mount(root_fc, 0);
+out_fc:
+	put_fs_context(root_fc);
 	return root_mnt;
 }
 
@@ -235,91 +235,103 @@ static struct dentry *nfs_follow_remote_path(struct vfsmount *root_mnt,
 	return dentry;
 }
 
-struct dentry *nfs4_try_mount(int flags, const char *dev_name,
-			      struct nfs_mount_info *mount_info,
-			      struct nfs_subversion *nfs_mod)
+int nfs4_try_get_tree(struct fs_context *fc)
 {
-	char *export_path;
+	struct nfs_fs_context *ctx = nfs_fc2context(fc);
 	struct vfsmount *root_mnt;
-	struct dentry *res;
-	struct nfs_fs_context *ctx = mount_info->ctx;
+	struct dentry *root;
 
-	dfprintk(MOUNT, "--> nfs4_try_mount()\n");
+	dfprintk(MOUNT, "--> nfs4_try_get_tree()\n");
 
-	export_path = ctx->nfs_server.export_path;
-	ctx->nfs_server.export_path = "/";
-	root_mnt = nfs_do_root_mount(&nfs4_remote_fs_type, flags, mount_info, 0,
-			ctx->nfs_server.hostname);
-	ctx->nfs_server.export_path = export_path;
+	/* We create a mount for the server's root, walk to the requested
+	 * location and then create another mount for that.
+	 */
+	root_mnt = nfs_do_root_mount(fc, ctx->nfs_server.hostname,
+				     NFS4_MOUNT_REMOTE);
+	if (IS_ERR(root_mnt))
+		return PTR_ERR(root_mnt);
 
-	res = nfs_follow_remote_path(root_mnt, export_path);
-
-	dfprintk(MOUNT, "<-- nfs4_try_mount() = %d%s\n",
-		 PTR_ERR_OR_ZERO(res),
-		 IS_ERR(res) ? " [error]" : "");
-	return res;
-}
-
-static struct dentry *
-nfs4_remote_referral_mount(struct file_system_type *fs_type, int flags,
-			   const char *dev_name,
-			   void *raw_data, size_t data_size)
-{
-	struct nfs_mount_info mount_info = {
-		.fill_super = nfs_fill_super,
-		.set_security = nfs_clone_sb_security,
-		.cloned = raw_data,
-	};
-	struct nfs_server *server;
-	struct dentry *mntroot = ERR_PTR(-ENOMEM);
-
-	dprintk("--> nfs4_referral_get_sb()\n");
-
-	mount_info.mntfh = nfs_alloc_fhandle();
-	if (mount_info.cloned == NULL || mount_info.mntfh == NULL)
-		goto out;
-
-	/* create a new volume representation */
-	server = nfs4_create_referral_server(mount_info.cloned, mount_info.mntfh);
-	if (IS_ERR(server)) {
-		mntroot = ERR_CAST(server);
-		goto out;
+	root = nfs_follow_remote_path(root_mnt, ctx->nfs_server.export_path);
+	if (IS_ERR(root)) {
+		nfs_errorf(fc, "NFS4: Couldn't follow remote path");
+		dfprintk(MOUNT, "<-- nfs4_try_mount() = %ld [error]\n",
+			 PTR_ERR(root));
+		return PTR_ERR(root);
 	}
 
-	mntroot = nfs_fs_mount_common(server, flags, dev_name, &mount_info, &nfs_v4);
-out:
-	nfs_free_fhandle(mount_info.mntfh);
-	return mntroot;
+	fc->root = root;
+	dfprintk(MOUNT, "<-- nfs4_try_get_tree() = 0\n");
+	return 0;
+}
+
+static int nfs4_get_remote_referral_tree(struct fs_context *fc)
+{
+	struct nfs_fs_context *ctx = nfs_fc2context(fc);
+	struct nfs_server *server;
+
+	dprintk("--> nfs4_get_remote_referral_tree()\n");
+
+	ctx->set_security = nfs_clone_sb_security;
+
+	if (!ctx->clone_data.cloned)
+		return -EINVAL;
+
+	/* create a new volume representation */
+	server = nfs4_create_referral_server(fc);
+	if (IS_ERR(server))
+		return PTR_ERR(server);
+
+	return nfs_get_tree_common(server, fc);
 }
 
 /*
  * Create an NFS4 server record on referral traversal
  */
-static struct dentry *nfs4_referral_mount(struct file_system_type *fs_type,
-					  int flags, const char *dev_name,
-					  void *raw_data, size_t data_size)
+static int nfs4_get_referral_tree(struct fs_context *fc)
 {
-	struct nfs_clone_mount *data = raw_data;
-	char *export_path;
+	struct nfs_fs_context *ctx = nfs_fc2context(fc);
 	struct vfsmount *root_mnt;
-	struct dentry *res;
+	struct dentry *root;
 
 	dprintk("--> nfs4_referral_mount()\n");
 
-	export_path = data->mnt_path;
-	data->mnt_path = "/";
+	root_mnt = nfs_do_root_mount(fc, ctx->nfs_server.hostname,
+				     NFS4_MOUNT_REMOTE_REFERRAL);
 
-	root_mnt = nfs_do_root_mount(&nfs4_remote_referral_fs_type, flags,
-				     data, 0, data->hostname);
-	data->mnt_path = export_path;
+	root = nfs_follow_remote_path(root_mnt, ctx->nfs_server.export_path);
+	if (IS_ERR(root)) {
+		nfs_errorf(fc, "NFS4: Couldn't follow remote path");
+		dfprintk(MOUNT, "<-- nfs4_referral_mount() = %ld [error]\n",
+			 PTR_ERR(root));
+		return PTR_ERR(root);
+	}
 
-	res = nfs_follow_remote_path(root_mnt, export_path);
-	dprintk("<-- nfs4_referral_mount() = %d%s\n",
-		PTR_ERR_OR_ZERO(res),
-		IS_ERR(res) ? " [error]" : "");
-	return res;
+	fc->root = root;
+	dfprintk(MOUNT, "<-- nfs4_get_referral_tree() = 0\n");
+	return 0;
 }
 
+/*
+ * Handle special NFS4 mount types.
+ */
+int nfs4_get_tree(struct fs_context *fc)
+{
+	struct nfs_fs_context *ctx = nfs_fc2context(fc);
+
+	switch (ctx->mount_type) {
+	case NFS4_MOUNT_REMOTE:
+		return nfs4_get_remote_tree(fc);
+
+	case NFS4_MOUNT_REFERRAL:
+		return nfs4_get_referral_tree(fc);
+
+	case NFS4_MOUNT_REMOTE_REFERRAL:
+		return nfs4_get_remote_referral_tree(fc);
+
+	default:
+		return 1;
+	}
+}
 
 static int __init init_nfs_v4(void)
 {
