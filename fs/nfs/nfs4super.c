@@ -217,17 +217,15 @@ struct dentry *nfs4_try_mount(int flags, const char *dev_name,
 			      struct nfs_mount_info *mount_info,
 			      struct nfs_subversion *nfs_mod)
 {
-	struct nfs_parsed_mount_data *data = mount_info->parsed;
+	struct nfs_fs_context *ctx = mount_info->ctx;
 	struct dentry *res;
 
 	mount_info->set_security = nfs_set_sb_security;
 
-	dfprintk(MOUNT, "--> nfs4_try_mount()\n");
-
 	res = do_nfs4_mount(nfs4_create_server(mount_info, &nfs_v4),
 			    flags, mount_info,
-			    data->nfs_server.hostname,
-			    data->nfs_server.export_path);
+			    ctx->nfs_server.hostname,
+			    ctx->nfs_server.export_path);
 
 	dfprintk(MOUNT, "<-- nfs4_try_mount() = %d%s\n",
 		 PTR_ERR_OR_ZERO(res),
