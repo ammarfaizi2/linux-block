@@ -18,6 +18,7 @@
 #include <linux/vfs.h>
 #include <linux/sunrpc/gss_api.h>
 #include "internal.h"
+#include "nfs.h"
 
 #define NFSDBG_FACILITY		NFSDBG_VFS
 
@@ -209,16 +210,6 @@ void nfs_release_automount_timer(void)
 		cancel_delayed_work(&nfs_automount_task);
 }
 
-/*
- * Clone a mountpoint of the appropriate type
- */
-static struct vfsmount *nfs_do_clone_mount(struct nfs_server *server,
-					   const char *devname,
-					   struct nfs_clone_mount *mountdata)
-{
-	return vfs_submount(mountdata->dentry, &nfs_xdev_fs_type, devname, mountdata);
-}
-
 /**
  * nfs_do_submount - set up mountpoint when crossing a filesystem boundary
  * @dentry - parent directory
@@ -230,27 +221,61 @@ static struct vfsmount *nfs_do_clone_mount(struct nfs_server *server,
 struct vfsmount *nfs_do_submount(struct dentry *dentry, struct nfs_fh *fh,
 				 struct nfs_fattr *fattr, rpc_authflavor_t authflavor)
 {
-	struct nfs_clone_mount mountdata = {
-		.sb = dentry->d_sb,
-		.dentry = dentry,
-		.fh = fh,
-		.fattr = fattr,
-		.authflavor = authflavor,
-	};
+	struct nfs_fs_context *ctx;
+	struct fs_context *fc;
 	struct vfsmount *mnt;
-	char *page = (char *) __get_free_page(GFP_USER);
-	char *devname;
+	char *buffer, *p;
+	int ret;
 
-	if (page == NULL)
-		return ERR_PTR(-ENOMEM);
+	/* Open a new filesystem context, transferring parameters from the
+	 * parent superblock, including the network namespace.
+	 */
+	fc = vfs_new_fs_context(&nfs_fs_type, dentry, 0, 0, FS_CONTEXT_FOR_SUBMOUNT);
+	if (IS_ERR(fc))
+		return ERR_CAST(fc);
+	ctx = nfs_fc2context(fc);
 
-	devname = nfs_devname(dentry, page, PAGE_SIZE);
-	if (IS_ERR(devname))
-		mnt = ERR_CAST(devname);
-	else
-		mnt = nfs_do_clone_mount(NFS_SB(dentry->d_sb), devname, &mountdata);
+	mnt = ERR_PTR(-ENOMEM);
+	buffer = kmalloc(4096, GFP_USER);
+	if (!buffer)
+		goto err_fc;
 
-	free_page((unsigned long)page);
+	ctx->mount_type		= NFS_MOUNT_CROSS_DEV;
+	ctx->selected_flavor	= authflavor;
+	ctx->clone_data.sb	= dentry->d_sb;
+	ctx->clone_data.dentry	= dentry;
+	ctx->clone_data.fattr	= fattr;
+	ctx->clone_data.cloned	= true;
+
+	nfs_copy_fh(ctx->mntfh, fh);
+
+	p = nfs_devname(dentry, buffer, 4096);
+	if (IS_ERR(p)) {
+		nfs_errorf(fc, "NFS: Couldn't determine submount pathname");
+		mnt = ERR_CAST(p);
+		goto err_buffer;
+	}
+
+	ret = vfs_parse_fs_string(fc, "source", p, buffer + 4096 - p);
+	if (ret < 0) {
+		mnt = ERR_PTR(ret);
+		goto err_buffer;
+	}
+
+	kfree(buffer);
+	ret = vfs_get_tree(fc);
+	if (ret < 0) {
+		mnt = ERR_PTR(ret);
+		goto err_fc;
+	}
+
+	mnt = vfs_create_mount(fc, 0);
+	goto err_fc;
+
+err_buffer:
+	kfree(buffer);
+err_fc:
+	put_fs_context(fc);
 	return mnt;
 }
 EXPORT_SYMBOL_GPL(nfs_do_submount);

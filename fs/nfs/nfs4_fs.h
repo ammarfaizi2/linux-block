@@ -264,7 +264,7 @@ extern const struct dentry_operations nfs4_dentry_operations;
 int nfs_atomic_open(struct inode *, struct dentry *, struct file *,
 		    unsigned, umode_t);
 
-/* super.c */
+/* fs_context.c */
 extern struct file_system_type nfs4_fs_type;
 
 /* nfs4namespace.c */
@@ -519,7 +519,6 @@ extern const nfs4_stateid invalid_stateid;
 /* nfs4super.c */
 struct nfs_mount_info;
 extern struct nfs_subversion nfs_v4;
-struct dentry *nfs4_try_mount(int, const char *, struct nfs_mount_info *, struct nfs_subversion *);
 extern bool nfs4_disable_idmapping;
 extern unsigned short max_session_slots;
 extern unsigned short max_session_cb_slots;
@@ -528,6 +527,9 @@ extern bool recover_lost_locks;
 
 #define NFS4_CLIENT_ID_UNIQ_LEN		(64)
 extern char nfs4_client_id_uniquifier[NFS4_CLIENT_ID_UNIQ_LEN];
+
+extern int nfs4_try_get_tree(struct fs_context *);
+extern int nfs4_get_tree(struct fs_context *);
 
 /* nfs4sysctl.c */
 #ifdef CONFIG_SYSCTL
