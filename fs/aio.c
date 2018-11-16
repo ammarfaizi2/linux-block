@@ -1310,6 +1310,8 @@ static struct block_device *aio_bdev_host(struct kiocb *req)
 
 	if (S_ISBLK(inode->i_mode))
 		return I_BDEV(inode);
+	else if (inode->i_sb && inode->i_sb->s_bdev)
+		return inode->i_sb->s_bdev;
 
 	return NULL;
 }

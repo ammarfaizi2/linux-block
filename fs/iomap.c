@@ -1555,6 +1555,7 @@ iomap_dio_zero(struct iomap_dio *dio, struct iomap *iomap, loff_t pos,
 	struct page *page = ZERO_PAGE(0);
 	int flags = REQ_SYNC | REQ_IDLE;
 	struct bio *bio;
+	blk_qc_t qc;
 
 	bio = bio_alloc(GFP_KERNEL, 1);
 	bio_set_dev(bio, iomap->bdev);
@@ -1570,7 +1571,9 @@ iomap_dio_zero(struct iomap_dio *dio, struct iomap *iomap, loff_t pos,
 	bio_set_op_attrs(bio, REQ_OP_WRITE, flags);
 
 	atomic_inc(&dio->ref);
-	return submit_bio(bio);
+	qc = submit_bio(bio);
+	WRITE_ONCE(dio->iocb->ki_blk_qc, qc);
+	return qc;
 }
 
 static loff_t
@@ -1680,7 +1683,7 @@ iomap_dio_bio_actor(struct inode *inode, loff_t pos, loff_t length,
 		atomic_inc(&dio->ref);
 
 		dio->submit.last_queue = bdev_get_queue(iomap->bdev);
-		dio->submit.cookie = submit_bio(bio);
+		dio->iocb->ki_blk_qc = dio->submit.cookie = submit_bio(bio);
 	} while (nr_pages);
 
 	if (need_zeroout) {

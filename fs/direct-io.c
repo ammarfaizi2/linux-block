@@ -477,8 +477,10 @@ static inline void dio_bio_submit(struct dio *dio, struct dio_submit *sdio)
 	if (sdio->submit_io) {
 		sdio->submit_io(bio, dio->inode, sdio->logical_offset_in_bio);
 		dio->bio_cookie = BLK_QC_T_NONE;
-	} else
+	} else {
 		dio->bio_cookie = submit_bio(bio);
+		WRITE_ONCE(dio->iocb->ki_blk_qc, dio->bio_cookie);
+	}
 
 	sdio->bio = NULL;
 	sdio->boundary = 0;
