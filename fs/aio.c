@@ -86,6 +86,11 @@ struct ctx_rq_wait {
 	atomic_t count;
 };
 
+enum {
+	CTX_TYPE_NORMAL = 0,
+	CTX_TYPE_POLLED,
+};
+
 struct kioctx {
 	struct percpu_ref	users;
 	atomic_t		dead;
@@ -95,6 +100,12 @@ struct kioctx {
 	unsigned long		user_id;
 
 	struct __percpu kioctx_cpu *cpu;
+
+	/*
+	 * CTX_TYPE_ bits set. Used to not mix and match polled and
+	 * normal IO.
+	 */
+	unsigned long		io_type;
 
 	/*
 	 * For percpu reqs_available, number of slots we move to/from global
@@ -136,6 +147,12 @@ struct kioctx {
 		 * We batch accesses to it with a percpu version.
 		 */
 		atomic_t	reqs_available;
+	} ____cacheline_aligned_in_smp;
+
+	struct {
+		spinlock_t poll_lock;
+		struct list_head poll_pending;
+		struct list_head poll_done;
 	} ____cacheline_aligned_in_smp;
 
 	struct {
@@ -191,6 +208,9 @@ struct aio_kiocb {
 
 	struct list_head	ki_list;	/* the aio core uses this
 						 * for cancellation */
+
+	struct list_head	ki_poll_list;
+
 	refcount_t		ki_refcnt;
 
 	/*
@@ -198,6 +218,12 @@ struct aio_kiocb {
 	 * this is the underlying eventfd context to deliver events to.
 	 */
 	struct eventfd_ctx	*ki_eventfd;
+
+	/*
+	 * For polled IO, stash completion info here
+	 */
+	long			ki_poll_res;
+	long			ki_poll_res2;
 };
 
 /*------ sysctl variables----*/
@@ -213,6 +239,8 @@ static struct vfsmount *aio_mnt;
 
 static const struct file_operations aio_ring_fops;
 static const struct address_space_operations aio_ctx_aops;
+
+static void aio_reap_polled_events(struct kioctx *);
 
 static struct file *aio_private_file(struct kioctx *ctx, loff_t nr_pages)
 {
@@ -732,6 +760,10 @@ static struct kioctx *ioctx_alloc(unsigned nr_events)
 
 	INIT_LIST_HEAD(&ctx->active_reqs);
 
+	spin_lock_init(&ctx->poll_lock);
+	INIT_LIST_HEAD(&ctx->poll_pending);
+	INIT_LIST_HEAD(&ctx->poll_done);
+
 	if (percpu_ref_init(&ctx->users, free_ioctx_users, 0, GFP_KERNEL))
 		goto err;
 
@@ -813,6 +845,8 @@ static int kill_ioctx(struct mm_struct *mm, struct kioctx *ctx,
 	WARN_ON(ctx != rcu_access_pointer(table->table[ctx->id]));
 	RCU_INIT_POINTER(table->table[ctx->id], NULL);
 	spin_unlock(&mm->ioctx_lock);
+
+	aio_reap_polled_events(ctx);
 
 	/* free_ioctx_reqs() will do the necessary RCU synchronization */
 	wake_up_all(&ctx->wait);
@@ -997,11 +1031,11 @@ static void user_refill_reqs_available(struct kioctx *ctx)
  *	Allocate a slot for an aio request.
  * Returns NULL if no requests are free.
  */
-static inline struct aio_kiocb *aio_get_req(struct kioctx *ctx)
+static inline struct aio_kiocb *aio_get_req(struct kioctx *ctx, bool needs_ring)
 {
 	struct aio_kiocb *req;
 
-	if (!get_reqs_available(ctx)) {
+	if (needs_ring && !get_reqs_available(ctx)) {
 		user_refill_reqs_available(ctx);
 		if (!get_reqs_available(ctx))
 			return NULL;
@@ -1013,11 +1047,13 @@ static inline struct aio_kiocb *aio_get_req(struct kioctx *ctx)
 
 	percpu_ref_get(&ctx->reqs);
 	INIT_LIST_HEAD(&req->ki_list);
+	INIT_LIST_HEAD(&req->ki_poll_list);
 	refcount_set(&req->ki_refcnt, 0);
 	req->ki_ctx = ctx;
 	return req;
 out_put:
-	put_reqs_available(ctx, 1);
+	if (needs_ring)
+		put_reqs_available(ctx, 1);
 	return NULL;
 }
 
@@ -1054,6 +1090,14 @@ static inline void iocb_put(struct aio_kiocb *iocb)
 	    refcount_dec_and_test(&iocb->ki_refcnt)) {
 		percpu_ref_put(&iocb->ki_ctx->reqs);
 		kmem_cache_free(kiocb_cachep, iocb);
+	}
+}
+
+static void iocb_put_many(struct kioctx *ctx, void  **iocbs, int nr)
+{
+	if (nr) {
+		kmem_cache_free_bulk(kiocb_cachep, nr, iocbs);
+		percpu_ref_put_many(&ctx->reqs, nr);
 	}
 }
 
@@ -1240,6 +1284,299 @@ static bool aio_read_events(struct kioctx *ctx, long min_nr, long nr,
 	return ret < 0 || *i >= min_nr;
 }
 
+struct aio_iopoll_data {
+	unsigned int blk_qc;
+	struct block_device *bdev;
+};
+
+static int aio_io_poll(struct aio_iopoll_data *pd, bool wait)
+{
+#ifdef CONFIG_BLOCK
+	/*
+	 * Should only happen if someone sets ->ki_blk_qc at random,
+	 * not being a blockdev target. We'll just ignore it, the IO
+	 * will complete normally without being polled.
+	 */
+	if (pd->bdev)
+		return blk_poll(bdev_get_queue(pd->bdev), pd->blk_qc, wait);
+#endif
+
+	return 0;
+}
+
+static struct block_device *aio_bdev_host(struct kiocb *req)
+{
+	struct inode *inode = req->ki_filp->f_mapping->host;
+
+	if (S_ISBLK(inode->i_mode))
+		return I_BDEV(inode);
+
+	return NULL;
+}
+
+#define AIO_POLL_STACK	8
+
+struct aio_poll_data {
+	struct io_event __user *evs;
+	int off;
+	long max;
+	void *iocbs[AIO_POLL_STACK];
+	int to_free;
+};
+
+/*
+ * Process the done_list of iocbs, copy to user space, and free them.
+ * Migh return with data->iocbs holding entries, in which case
+ * data->to_free is non-zero and the caller should free them.
+ */
+static long aio_poll_reap(struct kioctx *ctx, struct aio_poll_data *data)
+	__releases(&ctx->poll_lock)
+	__acquires(&ctx->poll_lock)
+{
+	struct aio_kiocb *iocb;
+	int ret, nr = 0;
+
+restart:
+	while (!list_empty(&ctx->poll_done)) {
+		struct io_event __user *uev;
+		struct io_event ev;
+
+		if (data->to_free == ARRAY_SIZE(data->iocbs)) {
+			iocb_put_many(ctx, data->iocbs, data->to_free);
+			data->to_free = 0;
+		}
+
+		iocb = list_first_entry(&ctx->poll_done, struct aio_kiocb,
+						ki_poll_list);
+		list_del(&iocb->ki_poll_list);
+
+		data->iocbs[data->to_free++] = iocb;
+		if (!data->evs) {
+			nr++;
+			continue;
+		}
+
+		ev.obj = (u64)(unsigned long)iocb->ki_user_iocb;
+		ev.data = iocb->ki_user_data;
+		ev.res = iocb->ki_poll_res;
+		ev.res2 = iocb->ki_poll_res2;
+
+		uev = data->evs + nr + data->off;
+		if (!__copy_to_user_inatomic(uev, &ev, sizeof(*uev))) {
+			nr++;
+			if (nr + data->off < data->max)
+				continue;
+			break;
+		}
+
+		/*
+		 * Unexpected slow path, drop lock and attempt copy. If this
+		 * also fails, we're done. If it worked, we got another event
+		 * and we restart the list check since we dropped the lock.
+		 */
+		spin_unlock_irq(&ctx->poll_lock);
+		ret = copy_to_user(uev, &ev, sizeof(*uev));
+		spin_lock_irq(&ctx->poll_lock);
+		if (!ret) {
+			nr++;
+			if (nr + data->off < data->max)
+				goto restart;
+
+			break;
+		}
+
+		if (!nr)
+			nr = -EFAULT;
+		break;
+	}
+
+	return nr;
+}
+
+/*
+ * Reap done events, if any
+ */
+static long aio_poll_find(struct kioctx *ctx, struct io_event __user *evs,
+			  int off, long max)
+{
+	struct aio_poll_data data = {
+		.evs		= evs,
+		.off		= off,
+		.max		= max,
+		.to_free	= 0
+	};
+	int ret;
+
+	if (list_empty_careful(&ctx->poll_done))
+		return 0;
+
+	spin_lock_irq(&ctx->poll_lock);
+	ret = aio_poll_reap(ctx, &data);
+	spin_unlock_irq(&ctx->poll_lock);
+
+	if (data.to_free)
+		iocb_put_many(ctx, data.iocbs, data.to_free);
+
+	return ret;
+}
+
+static void aio_poll_for_events(struct kioctx *ctx, struct aio_iopoll_data *pd,
+				unsigned int nr_pd, int off, long min, long max)
+{
+	int i, polled = 0;
+
+	/*
+	 * Poll for needed events with wait == true, anything
+	 * after that we just check if we have more, up to max.
+	 */
+	for (i = 0; i < nr_pd; i++) {
+		bool wait = polled + off >= min;
+
+		polled += aio_io_poll(&pd[i], wait);
+		if (polled + off >= max)
+			break;
+
+		/*
+		 * If we have entries waiting to be reaped, stop polling
+		 */
+		if (!list_empty_careful(&ctx->poll_done))
+			break;
+	}
+}
+
+static int __aio_check_polled(struct kioctx *ctx, struct io_event __user *event,
+			      int off, unsigned int *entries, long min, long max)
+{
+	struct aio_iopoll_data pd[AIO_POLL_STACK];
+	struct aio_kiocb *iocb;
+	unsigned int nr_pd;
+	int ret, pre = 0;
+
+	if (list_empty_careful(&ctx->poll_pending))
+		goto out;
+
+	spin_lock_irq(&ctx->poll_lock);
+
+	/*
+	 * Check if we already have done events that satisfy what we need
+	 */
+	while (!list_empty(&ctx->poll_done)) {
+		struct aio_poll_data data = {
+			.evs = event,
+			.off = off,
+			.max = max,
+			.to_free = 0
+		};
+
+		ret = aio_poll_reap(ctx, &data);
+		if (!ret)
+			break;
+		else if (ret < 0 || ret + off >= min) {
+			spin_unlock_irq(&ctx->poll_lock);
+
+			if (data.to_free)
+				iocb_put_many(ctx, data.iocbs, data.to_free);
+
+			return ret;
+		}
+
+		if (data.to_free)
+			iocb_put_many(ctx, data.iocbs, data.to_free);
+
+		pre = ret;
+		off += ret;
+	}
+
+	/*
+	 * Find up to 'max_nr' worth of events to poll for, including the
+	 * events we already successfully polled
+	 */
+	nr_pd = 0;
+	list_for_each_entry(iocb, &ctx->poll_pending, ki_poll_list) {
+		struct kiocb *kiocb = &iocb->rw;
+		blk_qc_t qc;
+
+		/*
+		 * Not submitted yet, don't poll for it
+		 */
+		qc = READ_ONCE(kiocb->ki_blk_qc);
+		if (qc == BLK_QC_T_NONE)
+			continue;
+
+		pd[nr_pd].blk_qc = qc;
+		pd[nr_pd].bdev = aio_bdev_host(kiocb);
+
+		++nr_pd;
+		if (nr_pd == ARRAY_SIZE(pd) || nr_pd + off >= max)
+			break;
+	}
+	spin_unlock_irq(&ctx->poll_lock);
+
+	if (nr_pd) {
+		*entries = nr_pd;
+		aio_poll_for_events(ctx, pd, nr_pd, off, min, max);
+	}
+
+out:
+	ret = aio_poll_find(ctx, event, off, max);
+	if (ret >= 0)
+		return pre + ret;
+	else if (pre)
+		return pre;
+
+	return ret;
+}
+
+/*
+ * We can't just wait for polled events to come to us, we have to actively
+ * find and complete them.
+ */
+static void aio_reap_polled_events(struct kioctx *ctx)
+{
+	unsigned int loop, found;
+
+	if (!test_bit(CTX_TYPE_POLLED, &ctx->io_type))
+		return;
+
+	spin_lock_irq(&ctx->poll_lock);
+	while (!list_empty(&ctx->poll_pending) || !list_empty(&ctx->poll_done)) {
+		loop = 0;
+		spin_unlock_irq(&ctx->poll_lock);
+		found = __aio_check_polled(ctx, NULL, 0, &loop, 1, UINT_MAX);
+		spin_lock_irq(&ctx->poll_lock);
+	}
+	spin_unlock_irq(&ctx->poll_lock);
+}
+
+static int aio_check_polled(struct kioctx *ctx, long min_nr, long nr,
+			    struct io_event __user *event)
+{
+	unsigned int found;
+	int this, ret = 0;
+
+	if (!access_ok(VERIFY_WRITE, event, nr * sizeof(*event)))
+		return -EFAULT;
+
+	do {
+		int tmin;
+
+		if (ret && need_resched())
+			break;
+
+		found = 0;
+		tmin = ret >= min_nr ? 0 : min_nr - ret;
+		this = __aio_check_polled(ctx, event, ret, &found, tmin, nr);
+		if (this < 0) {
+			if (!ret)
+				ret = this;
+			break;
+		}
+		ret += this;
+	} while (found && ret < min_nr);
+
+	return ret;
+}
+
 static long read_events(struct kioctx *ctx, long min_nr, long nr,
 			struct io_event __user *event,
 			ktime_t until)
@@ -1391,13 +1728,8 @@ static void aio_remove_iocb(struct aio_kiocb *iocb)
 	spin_unlock_irqrestore(&ctx->ctx_lock, flags);
 }
 
-static void aio_complete_rw(struct kiocb *kiocb, long res, long res2)
+static void kiocb_end_write(struct kiocb *kiocb)
 {
-	struct aio_kiocb *iocb = container_of(kiocb, struct aio_kiocb, rw);
-
-	if (!list_empty_careful(&iocb->ki_list))
-		aio_remove_iocb(iocb);
-
 	if (kiocb->ki_flags & IOCB_WRITE) {
 		struct inode *inode = file_inode(kiocb->ki_filp);
 
@@ -1409,21 +1741,66 @@ static void aio_complete_rw(struct kiocb *kiocb, long res, long res2)
 			__sb_writers_acquired(inode->i_sb, SB_FREEZE_WRITE);
 		file_end_write(kiocb->ki_filp);
 	}
+}
+
+static void aio_complete_rw(struct kiocb *kiocb, long res, long res2)
+{
+	struct aio_kiocb *iocb = container_of(kiocb, struct aio_kiocb, rw);
+
+	if (!list_empty_careful(&iocb->ki_list))
+		aio_remove_iocb(iocb);
+
+	kiocb_end_write(kiocb);
 
 	fput(kiocb->ki_filp);
 	aio_complete(iocb, res, res2);
 }
 
-static int aio_prep_rw(struct kiocb *req, struct iocb *iocb)
+static void aio_complete_rw_poll(struct kiocb *kiocb, long res, long res2)
 {
+	struct aio_kiocb *iocb = container_of(kiocb, struct aio_kiocb, rw);
+	struct kioctx *ctx = iocb->ki_ctx;
+	struct file *filp = kiocb->ki_filp;
+	unsigned long flags;
+
+	kiocb_end_write(kiocb);
+
+	iocb->ki_poll_res = res;
+	iocb->ki_poll_res2 = res2;
+
+	spin_lock_irqsave(&ctx->poll_lock, flags);
+	list_move_tail(&iocb->ki_poll_list, &ctx->poll_done);
+	spin_unlock_irqrestore(&ctx->poll_lock, flags);
+
+	fput(filp);
+}
+
+static int aio_prep_rw(struct aio_kiocb *kiocb, struct iocb *iocb)
+{
+	struct kiocb *req = &kiocb->rw;
 	int ret;
 
 	req->ki_filp = fget(iocb->aio_fildes);
 	if (unlikely(!req->ki_filp))
 		return -EBADF;
-	req->ki_complete = aio_complete_rw;
-	req->ki_pos = iocb->aio_offset;
+
 	req->ki_flags = iocb_flags(req->ki_filp);
+
+	if (iocb->aio_flags & IOCB_FLAG_HIPRI) {
+		struct kioctx *ctx = kiocb->ki_ctx;
+
+		req->ki_flags |= IOCB_HIPRI;
+		req->ki_blk_qc = BLK_QC_T_NONE;
+		req->ki_complete = aio_complete_rw_poll;
+
+		spin_lock_irq(&ctx->poll_lock);
+		list_add_tail(&kiocb->ki_poll_list, &ctx->poll_pending);
+		spin_unlock_irq(&ctx->poll_lock);
+	} else {
+		req->ki_complete = aio_complete_rw;
+	}
+
+	req->ki_pos = iocb->aio_offset;
 	if (iocb->aio_flags & IOCB_FLAG_RESFD)
 		req->ki_flags |= IOCB_EVENTFD;
 	req->ki_hint = ki_hint_validate(file_write_hint(req->ki_filp));
@@ -1489,15 +1866,16 @@ static inline void aio_rw_done(struct kiocb *req, ssize_t ret)
 	}
 }
 
-static ssize_t aio_read(struct kiocb *req, struct iocb *iocb, bool vectored,
-		bool compat)
+static ssize_t aio_read(struct aio_kiocb *kiocb, struct iocb *iocb,
+			bool vectored, bool compat)
 {
 	struct iovec inline_vecs[UIO_FASTIOV], *iovec = inline_vecs;
+	struct kiocb *req = &kiocb->rw;
 	struct iov_iter iter;
 	struct file *file;
 	ssize_t ret;
 
-	ret = aio_prep_rw(req, iocb);
+	ret = aio_prep_rw(kiocb, iocb);
 	if (ret)
 		return ret;
 	file = req->ki_filp;
@@ -1522,15 +1900,16 @@ out_fput:
 	return ret;
 }
 
-static ssize_t aio_write(struct kiocb *req, struct iocb *iocb, bool vectored,
-		bool compat)
+static ssize_t aio_write(struct aio_kiocb *kiocb, struct iocb *iocb,
+			 bool vectored, bool compat)
 {
 	struct iovec inline_vecs[UIO_FASTIOV], *iovec = inline_vecs;
+	struct kiocb *req = &kiocb->rw;
 	struct iov_iter iter;
 	struct file *file;
 	ssize_t ret;
 
-	ret = aio_prep_rw(req, iocb);
+	ret = aio_prep_rw(kiocb, iocb);
 	if (ret)
 		return ret;
 	file = req->ki_filp;
@@ -1774,11 +2153,30 @@ out:
 	return 0;
 }
 
+/*
+ * We can't mix and match polled and non-polled IO on the same ctx. If this
+ * ctx is already of the appropriate type, we're good. If not and none is
+ * set, mark us that type and return success. If a type is set and it
+ * differs from the new IO, return -EINVAL.
+ */
+static int aio_test_and_mark_type(struct kioctx *ctx, int ctx_type)
+{
+	if (test_bit(ctx_type, &ctx->io_type)) {
+		return 0;
+	} else if (!ctx->io_type) {
+		set_bit(ctx_type, &ctx->io_type);
+		return 0;
+	}
+
+	return -EINVAL;
+}
+
 static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
 			 bool compat)
 {
 	struct aio_kiocb *req;
 	struct iocb iocb;
+	int ctx_type;
 	ssize_t ret;
 
 	if (unlikely(copy_from_user(&iocb, user_iocb, sizeof(iocb))))
@@ -1800,7 +2198,15 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
 		return -EINVAL;
 	}
 
-	req = aio_get_req(ctx);
+	if (iocb.aio_flags & IOCB_FLAG_HIPRI)
+		ctx_type = CTX_TYPE_POLLED;
+	else
+		ctx_type = CTX_TYPE_NORMAL;
+
+	/*
+	 * Polled IO doesn't need ring reservations
+	 */
+	req = aio_get_req(ctx, ctx_type == CTX_TYPE_NORMAL);
 	if (unlikely(!req))
 		return -EAGAIN;
 
@@ -1830,24 +2236,45 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
 
 	switch (iocb.aio_lio_opcode) {
 	case IOCB_CMD_PREAD:
-		ret = aio_read(&req->rw, &iocb, false, compat);
+		ret = aio_test_and_mark_type(ctx, ctx_type);
+		if (ret)
+			break;
+		ret = aio_read(req, &iocb, false, compat);
 		break;
 	case IOCB_CMD_PWRITE:
-		ret = aio_write(&req->rw, &iocb, false, compat);
+		ret = aio_test_and_mark_type(ctx, ctx_type);
+		if (ret)
+			break;
+		ret = aio_write(req, &iocb, false, compat);
 		break;
 	case IOCB_CMD_PREADV:
-		ret = aio_read(&req->rw, &iocb, true, compat);
+		ret = aio_test_and_mark_type(ctx, ctx_type);
+		if (ret)
+			break;
+		ret = aio_read(req, &iocb, true, compat);
 		break;
 	case IOCB_CMD_PWRITEV:
-		ret = aio_write(&req->rw, &iocb, true, compat);
+		ret = aio_test_and_mark_type(ctx, ctx_type);
+		if (ret)
+			break;
+		ret = aio_write(req, &iocb, true, compat);
 		break;
 	case IOCB_CMD_FSYNC:
+		ret = aio_test_and_mark_type(ctx, false);
+		if (ret)
+			break;
 		ret = aio_fsync(&req->fsync, &iocb, false);
 		break;
 	case IOCB_CMD_FDSYNC:
+		ret = aio_test_and_mark_type(ctx, false);
+		if (ret)
+			break;
 		ret = aio_fsync(&req->fsync, &iocb, true);
 		break;
 	case IOCB_CMD_POLL:
+		ret = aio_test_and_mark_type(ctx, false);
+		if (ret)
+			break;
 		ret = aio_poll(req, &iocb);
 		break;
 	default:
@@ -1861,11 +2288,12 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
 	 * arranged for that to be done asynchronously.  Anything non-zero
 	 * means that we need to destroy req ourselves.
 	 */
-	if (ret)
-		goto out_put_req;
-	return 0;
+	if (!ret)
+		return 0;
+
 out_put_req:
-	put_reqs_available(ctx, 1);
+	if (ctx_type == CTX_TYPE_NORMAL)
+		put_reqs_available(ctx, 1);
 	percpu_ref_put(&ctx->reqs);
 	if (req->ki_eventfd)
 		eventfd_ctx_put(req->ki_eventfd);
@@ -2043,8 +2471,12 @@ static long do_io_getevents(aio_context_t ctx_id,
 	long ret = -EINVAL;
 
 	if (likely(ioctx)) {
-		if (likely(min_nr <= nr && min_nr >= 0))
-			ret = read_events(ioctx, min_nr, nr, events, until);
+		if (likely(min_nr <= nr && min_nr >= 0)) {
+			if (test_bit(CTX_TYPE_POLLED, &ioctx->io_type))
+				ret = aio_check_polled(ioctx, min_nr, nr, events);
+			else
+				ret = read_events(ioctx, min_nr, nr, events, until);
+		}
 		percpu_ref_put(&ioctx->users);
 	}
 
