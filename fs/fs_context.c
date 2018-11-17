@@ -131,12 +131,7 @@ EXPORT_SYMBOL(put_fs_context);
  */
 void legacy_fs_context_free(struct fs_context *fc)
 {
-	struct legacy_fs_context *ctx = fc->fs_private;
-
-	if (ctx) {
-		free_secdata(ctx->secdata);
-		kfree(ctx);
-	}
+	kfree(fc->fs_private);
 }
 
 /*
@@ -156,21 +151,13 @@ int legacy_parse_monolithic(struct fs_context *fc, void *data)
 int legacy_validate(struct fs_context *fc)
 {
 	struct legacy_fs_context *ctx = fc->fs_private;
-	int err;
 
 	if (!ctx->legacy_data)
 		return 0;
 	if (fc->fs_type->fs_flags & FS_BINARY_MOUNTDATA)
 		return 0;
 
-	ctx->secdata = alloc_secdata();
-	if (!ctx->secdata)
-		return -ENOMEM;
-
-	err = security_sb_copy_data(ctx->legacy_data, ctx->secdata);
-	if (!err)
-		err = security_sb_parse_opts_str(ctx->secdata, &fc->lsm_opts);
-	return err;
+	return security_sb_eat_lsm_opts(ctx->legacy_data, &fc->lsm_opts);
 }
 
 /*
