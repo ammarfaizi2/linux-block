@@ -35,6 +35,7 @@ struct audit_context;
 struct backing_dev_info;
 struct bio_list;
 struct blk_plug;
+struct aio_task_data;
 struct cfs_rq;
 struct fs_struct;
 struct futex_pi_state;
@@ -954,6 +955,8 @@ struct task_struct {
 	/* Stack plugging: */
 	struct blk_plug			*plug;
 #endif
+
+	struct aio_task_data		*aio_task_data;
 
 	/* VM state: */
 	struct reclaim_state		*reclaim_state;
