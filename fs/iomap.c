@@ -1456,8 +1456,16 @@ static void iomap_dio_submit_bio(struct iomap_dio *dio, struct iomap *iomap,
 {
 	atomic_inc(&dio->ref);
 
-	if (dio->iocb->ki_flags & IOCB_HIPRI)
+	if (dio->iocb->ki_flags & IOCB_HIPRI) {
 		bio->bi_opf |= REQ_HIPRI;
+		/*
+		 * For async polled IO, we can't wait for requests to
+		 * complete, as they may also be polled and require active
+		 * reaping.
+		 */
+		if (!dio->wait_for_completion)
+			bio->bi_opf |= REQ_NOWAIT;
+	}
 
 	dio->submit.last_queue = bdev_get_queue(iomap->bdev);
 	dio->submit.cookie = submit_bio(bio);
