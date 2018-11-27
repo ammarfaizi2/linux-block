@@ -1636,6 +1636,7 @@ struct rcu_launder_hist {
 };
 #define N_LAUNDERS_HIST (2 * MAX_FWD_CB_JIFFIES / (HZ / FWD_CBS_HIST_DIV))
 static struct rcu_launder_hist n_launders_hist[N_LAUNDERS_HIST];
+static unsigned long rcu_launder_gp_seq_start;
 
 static void rcu_torture_fwd_cb_hist(void)
 {
@@ -1649,12 +1650,12 @@ static void rcu_torture_fwd_cb_hist(void)
 			break;
 	pr_alert("%s: Callback-invocation histogram (duration %lu jiffies):",
 		 __func__, jiffies - rcu_fwd_startat);
-	gps_old = 0;
+	gps_old = rcu_launder_gp_seq_start;
 	for (j = 0; j <= i; j++) {
 		gps = n_launders_hist[j].launder_gp_seq;
 		pr_cont(" %ds/%d: %ld:%ld",
 			j + 1, FWD_CBS_HIST_DIV, n_launders_hist[j].n_launders,
-			j == 0	? 0 : rcutorture_seq_diff(gps, gps_old));
+			rcutorture_seq_diff(gps, gps_old));
 		gps_old = gps;
 	}
 	pr_cont("\n");
@@ -1802,6 +1803,7 @@ static void rcu_torture_fwd_prog_cr(void)
 		n_launders_hist[i].n_launders = 0;
 	cver = READ_ONCE(rcu_torture_current_version);
 	gps = cur_ops->get_gp_seq();
+	rcu_launder_gp_seq_start = gps;
 	while (time_before(jiffies, stopat) &&
 	       !READ_ONCE(rcu_fwd_emergency_stop) && !torture_must_stop()) {
 		rfcp = READ_ONCE(rcu_fwd_cb_head);
