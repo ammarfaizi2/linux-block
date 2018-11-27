@@ -877,7 +877,7 @@ static inline void rcu_head_init(struct rcu_head *rhp)
 /**
  * rcu_head_after_call_rcu - Has this rcu_head been passed to call_rcu()?
  * @rhp: The rcu_head structure to test.
- * @func: The function passed to call_rcu() along with @rhp.
+ * @f: The function passed to call_rcu() along with @rhp.
  *
  * Returns @true if the @rhp has been passed to call_rcu() with @func,
  * and @false otherwise.  Emits a warning in any other case, including
