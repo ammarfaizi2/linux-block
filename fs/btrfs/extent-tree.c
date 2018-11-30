@@ -9275,6 +9275,8 @@ int btrfs_drop_snapshot(struct btrfs_root *root,
 		goto out_free;
 	}
 
+	btrfs_run_delayed_items(trans);
+
 	if (block_rsv)
 		trans->block_rsv = block_rsv;
 
