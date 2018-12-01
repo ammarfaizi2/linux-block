@@ -233,6 +233,8 @@ struct rcu_data {
 	/* 6) RCU priority boosting. */
 	struct task_struct *rcu_cpu_kthread_task;
 					/* rcuc per-CPU kthread or NULL. */
+	unsigned int rcu_cpu_kthread_status;
+					/* Running status for rcuc. */
 
 	/* 7) Diagnostic data, including RCU CPU stall warnings. */
 	unsigned int softirq_snap;	/* Snapshot of softirq activity. */
