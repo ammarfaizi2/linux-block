@@ -405,7 +405,6 @@ static const char *tp_rcu_varname __used __tracepoint_string = rcu_name;
 int rcu_dynticks_snap(struct rcu_data *rdp);
 
 #ifdef CONFIG_RCU_BOOST
-DECLARE_PER_CPU(unsigned int, rcu_cpu_kthread_status);
 DECLARE_PER_CPU(int, rcu_cpu_kthread_cpu);
 DECLARE_PER_CPU(char, rcu_cpu_has_work);
 #endif /* #ifdef CONFIG_RCU_BOOST */
