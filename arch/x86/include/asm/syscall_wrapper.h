@@ -63,6 +63,16 @@
 	SYSCALL_ALIAS(__ia32_sys_##sname, __x64_sys_##sname);	\
 	asmlinkage long __x64_sys_##sname(void)
 
+/*
+ * NATIVE_SYSCALL_DEFINE0 is the same as SYSCALL_DEFINE0 except that
+ * it does not create the ia32 alias.
+ */
+#define NATIVE_SYSCALL_DEFINE0(sname)					\
+	SYSCALL_METADATA(_##sname, 0);				\
+	asmlinkage long __x64_sys_##sname(void);		\
+	ALLOW_ERROR_INJECTION(__x64_sys_##sname, ERRNO);	\
+	asmlinkage long __x64_sys_##sname(void)
+
 #define COND_SYSCALL(name)						\
 	cond_syscall(__x64_sys_##name);					\
 	cond_syscall(__ia32_sys_##name)
@@ -192,6 +202,24 @@
 		return __se_sys##name(SC_X86_64_REGS_TO_ARGS(x,__VA_ARGS__));\
 	}								\
 	__IA32_SYS_STUBx(x, name, __VA_ARGS__)				\
+	static long __se_sys##name(__MAP(x,__SC_LONG,__VA_ARGS__))	\
+	{								\
+		long ret = __do_sys##name(__MAP(x,__SC_CAST,__VA_ARGS__));\
+		__MAP(x,__SC_TEST,__VA_ARGS__);				\
+		__PROTECT(x, ret,__MAP(x,__SC_ARGS,__VA_ARGS__));	\
+		return ret;						\
+	}								\
+	static inline long __do_sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))
+
+#define __NATIVE_SYSCALL_DEFINEx(x, name, ...)				\
+	asmlinkage long __x64_sys##name(const struct pt_regs *regs);	\
+	ALLOW_ERROR_INJECTION(__x64_sys##name, ERRNO);			\
+	static long __se_sys##name(__MAP(x,__SC_LONG,__VA_ARGS__));	\
+	static inline long __do_sys##name(__MAP(x,__SC_DECL,__VA_ARGS__));\
+	asmlinkage long __x64_sys##name(const struct pt_regs *regs)	\
+	{								\
+		return __se_sys##name(SC_X86_64_REGS_TO_ARGS(x,__VA_ARGS__));\
+	}								\
 	static long __se_sys##name(__MAP(x,__SC_LONG,__VA_ARGS__))	\
 	{								\
 		long ret = __do_sys##name(__MAP(x,__SC_CAST,__VA_ARGS__));\
