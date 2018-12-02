@@ -69,7 +69,7 @@
 
 #define NFSDBG_FACILITY		NFSDBG_VFS
 
-static struct dentry *nfs_xdev_mount(struct file_system_type *fs_type,
+static struct dentry *nfs_prepared_mount(struct file_system_type *fs_type,
 		int flags, const char *dev_name, void *raw_data);
 
 struct file_system_type nfs_fs_type = {
@@ -82,10 +82,10 @@ struct file_system_type nfs_fs_type = {
 MODULE_ALIAS_FS("nfs");
 EXPORT_SYMBOL_GPL(nfs_fs_type);
 
-struct file_system_type nfs_xdev_fs_type = {
+struct file_system_type nfs_prepared_fs_type = {
 	.owner		= THIS_MODULE,
 	.name		= "nfs",
-	.mount		= nfs_xdev_mount,
+	.mount		= nfs_prepared_mount,
 	.kill_sb	= nfs_kill_super,
 	.fs_flags	= FS_RENAME_DOES_D_MOVE|FS_BINARY_MOUNTDATA,
 };
@@ -1430,11 +1430,12 @@ void nfs_kill_super(struct super_block *s)
 EXPORT_SYMBOL_GPL(nfs_kill_super);
 
 /*
- * Clone an NFS2/3/4 server record on xdev traversal (FSID-change)
+ * Internal use only: mount_info is already set up by caller.
+ * Used for mountpoint crossings and for nfs4 root.
  */
 static struct dentry *
-nfs_xdev_mount(struct file_system_type *fs_type, int flags,
-		const char *dev_name, void *raw_data)
+nfs_prepared_mount(struct file_system_type *fs_type, int flags,
+		   const char *dev_name, void *raw_data)
 {
 	return nfs_fs_mount_common(flags, dev_name, raw_data);
 }
