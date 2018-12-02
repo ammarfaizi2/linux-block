@@ -796,7 +796,7 @@ long do_arch_prctl_64(struct task_struct *task, int option, unsigned long arg2)
 	return ret;
 }
 
-SYSCALL_DEFINE2(arch_prctl, int, option, unsigned long, arg2)
+NATIVE_SYSCALL_DEFINE2(arch_prctl, int, option, unsigned long, arg2)
 {
 	long ret;
 
