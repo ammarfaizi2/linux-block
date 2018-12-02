@@ -231,7 +231,7 @@
 220  common	getdents64		sys_getdents64			sys_getdents64
 221  32		fcntl64			-				compat_sys_fcntl64
 222  common	readahead		sys_readahead			compat_sys_s390_readahead
-223  32		sendfile64		-				compat_sys_sendfile64
+223  32		sendfile64		-				sys_sendfile64
 224  common	setxattr		sys_setxattr			sys_setxattr
 225  common	lsetxattr		sys_lsetxattr			sys_lsetxattr
 226  common	fsetxattr		sys_fsetxattr			sys_fsetxattr
