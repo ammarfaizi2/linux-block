@@ -287,6 +287,10 @@ is:
    ``long``, ...)
  - a pointer to a struct containing a varying sized integral type.
 
+This first situation can alternatively be handled by using a single system
+call entry point that calls the ``in_compat_syscall()`` helper to check
+whether it is being called as a 32-bit system call on a 64-bit system.
+
 The second situation that requires a compatibility layer is if one of the
 system call's arguments has a type that is explicitly 64-bit even on a 32-bit
 architecture, for example ``loff_t`` or ``__u64``.  In this case, a value that
@@ -302,8 +306,11 @@ and is added with the ``COMPAT_SYSCALL_DEFINEn()`` macro, analogously to
 SYSCALL_DEFINEn.  This version of the implementation runs as part of a 64-bit
 kernel, but expects to receive 32-bit parameter values and does whatever is
 needed to deal with them.  (Typically, the ``compat_sys_`` version converts the
-values to 64-bit versions and either calls on to the ``sys_`` version, or both of
-them call a common inner implementation function.)
+values to 64-bit versions and either calls on to the ``sys_`` version, or both
+of them call a common inner implementation function.)  If a system call has a
+compatibility version defined with ``COMPAT_SYSCALL_DEFINEn()``, then the native
+version must be defined using a ``NATIVE_SYSCALL_DEFINEn()`` macro instead of
+``SYSCALL_DEFINEn()``.
 
 The compat entry point also needs a corresponding function prototype, in
 ``include/linux/compat.h``, marked as asmlinkage to match the way that system
@@ -351,6 +358,8 @@ To summarize, you need:
  - (if needed) 32-bit mapping struct in ``include/linux/compat.h``
  - instance of ``__SC_COMP`` not ``__SYSCALL`` in
    ``include/uapi/asm-generic/unistd.h``
+ - a native definition using ``NATIVE_SYSCALL_DEFINEn(xyzzy, ...)`` instead of
+   ``SYSCALL_DEFINEn(xyzzy, ...)``.
 
 
 Compatibility System Calls (x86)
