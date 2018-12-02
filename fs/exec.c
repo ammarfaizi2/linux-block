@@ -1953,7 +1953,7 @@ void set_dumpable(struct mm_struct *mm, int value)
 	set_mask_bits(&mm->flags, MMF_DUMPABLE_MASK, value);
 }
 
-SYSCALL_DEFINE3(execve,
+NATIVE_SYSCALL_DEFINE3(execve,
 		const char __user *, filename,
 		const char __user *const __user *, argv,
 		const char __user *const __user *, envp)
@@ -1961,7 +1961,7 @@ SYSCALL_DEFINE3(execve,
 	return do_execve(getname(filename), argv, envp);
 }
 
-SYSCALL_DEFINE5(execveat,
+NATIVE_SYSCALL_DEFINE5(execveat,
 		int, fd, const char __user *, filename,
 		const char __user *const __user *, argv,
 		const char __user *const __user *, envp,

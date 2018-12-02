@@ -253,7 +253,7 @@ static long do_handle_open(int mountdirfd, struct file_handle __user *ufh,
  * to the vfsmount pointed by the @mountdirfd. @flags
  * value is same as the open(2) flags.
  */
-SYSCALL_DEFINE3(open_by_handle_at, int, mountdirfd,
+NATIVE_SYSCALL_DEFINE3(open_by_handle_at, int, mountdirfd,
 		struct file_handle __user *, handle,
 		int, flags)
 {

@@ -309,7 +309,7 @@ static int do_signalfd4(int ufd, sigset_t *mask, int flags)
 	return ufd;
 }
 
-SYSCALL_DEFINE4(signalfd4, int, ufd, sigset_t __user *, user_mask,
+NATIVE_SYSCALL_DEFINE4(signalfd4, int, ufd, sigset_t __user *, user_mask,
 		size_t, sizemask, int, flags)
 {
 	sigset_t mask;
@@ -320,7 +320,7 @@ SYSCALL_DEFINE4(signalfd4, int, ufd, sigset_t __user *, user_mask,
 	return do_signalfd4(ufd, &mask, flags);
 }
 
-SYSCALL_DEFINE3(signalfd, int, ufd, sigset_t __user *, user_mask,
+NATIVE_SYSCALL_DEFINE3(signalfd, int, ufd, sigset_t __user *, user_mask,
 		size_t, sizemask)
 {
 	sigset_t mask;

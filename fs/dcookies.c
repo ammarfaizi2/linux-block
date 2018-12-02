@@ -204,7 +204,7 @@ out:
 	return err;
 }
 
-SYSCALL_DEFINE3(lookup_dcookie, u64, cookie64, char __user *, buf, size_t, len)
+NATIVE_SYSCALL_DEFINE3(lookup_dcookie, u64, cookie64, char __user *, buf, size_t, len)
 {
 	return do_lookup_dcookie(cookie64, buf, len);
 }

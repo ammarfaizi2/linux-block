@@ -2020,7 +2020,7 @@ out:
 	return err;
 }
 
-SYSCALL_DEFINE6(recvfrom, int, fd, void __user *, ubuf, size_t, size,
+NATIVE_SYSCALL_DEFINE6(recvfrom, int, fd, void __user *, ubuf, size_t, size,
 		unsigned int, flags, struct sockaddr __user *, addr,
 		int __user *, addr_len)
 {
@@ -2031,7 +2031,7 @@ SYSCALL_DEFINE6(recvfrom, int, fd, void __user *, ubuf, size_t, size,
  *	Receive a datagram from a socket.
  */
 
-SYSCALL_DEFINE4(recv, int, fd, void __user *, ubuf, size_t, size,
+NATIVE_SYSCALL_DEFINE4(recv, int, fd, void __user *, ubuf, size_t, size,
 		unsigned int, flags)
 {
 	return __sys_recvfrom(fd, ubuf, size, flags, NULL, NULL);
@@ -2094,7 +2094,7 @@ out_put:
 	return err;
 }
 
-SYSCALL_DEFINE5(setsockopt, int, fd, int, level, int, optname,
+NATIVE_SYSCALL_DEFINE5(setsockopt, int, fd, int, level, int, optname,
 		char __user *, optval, int, optlen)
 {
 	return __sys_setsockopt(fd, level, optname, optval, optlen);
@@ -2138,7 +2138,7 @@ out_put:
 	return err;
 }
 
-SYSCALL_DEFINE5(getsockopt, int, fd, int, level, int, optname,
+NATIVE_SYSCALL_DEFINE5(getsockopt, int, fd, int, level, int, optname,
 		char __user *, optval, int __user *, optlen)
 {
 	return __sys_getsockopt(fd, level, optname, optval, optlen);
@@ -2360,7 +2360,7 @@ out:
 	return err;
 }
 
-SYSCALL_DEFINE3(sendmsg, int, fd, struct user_msghdr __user *, msg, unsigned int, flags)
+NATIVE_SYSCALL_DEFINE3(sendmsg, int, fd, struct user_msghdr __user *, msg, unsigned int, flags)
 {
 	return __sys_sendmsg(fd, msg, flags, true);
 }
@@ -2436,7 +2436,7 @@ int __sys_sendmmsg(int fd, struct mmsghdr __user *mmsg, unsigned int vlen,
 	return err;
 }
 
-SYSCALL_DEFINE4(sendmmsg, int, fd, struct mmsghdr __user *, mmsg,
+NATIVE_SYSCALL_DEFINE4(sendmmsg, int, fd, struct mmsghdr __user *, mmsg,
 		unsigned int, vlen, unsigned int, flags)
 {
 	return __sys_sendmmsg(fd, mmsg, vlen, flags, true);
@@ -2541,7 +2541,7 @@ out:
 	return err;
 }
 
-SYSCALL_DEFINE3(recvmsg, int, fd, struct user_msghdr __user *, msg,
+NATIVE_SYSCALL_DEFINE3(recvmsg, int, fd, struct user_msghdr __user *, msg,
 		unsigned int, flags)
 {
 	return __sys_recvmsg(fd, msg, flags, true);
@@ -2693,7 +2693,7 @@ int __sys_recvmmsg(int fd, struct mmsghdr __user *mmsg,
 	return datagrams;
 }
 
-SYSCALL_DEFINE5(recvmmsg, int, fd, struct mmsghdr __user *, mmsg,
+NATIVE_SYSCALL_DEFINE5(recvmmsg, int, fd, struct mmsghdr __user *, mmsg,
 		unsigned int, vlen, unsigned int, flags,
 		struct __kernel_timespec __user *, timeout)
 {
@@ -2735,7 +2735,7 @@ static const unsigned char nargs[21] = {
  *  it is set by the callees.
  */
 
-SYSCALL_DEFINE2(socketcall, int, call, unsigned long __user *, args)
+NATIVE_SYSCALL_DEFINE2(socketcall, int, call, unsigned long __user *, args)
 {
 	unsigned long a[AUDITSC_ARGS];
 	unsigned long a0, a1;

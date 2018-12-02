@@ -1089,7 +1089,7 @@ fput_and_out:
 	return ret;
 }
 
-SYSCALL_DEFINE5(fanotify_mark, int, fanotify_fd, unsigned int, flags,
+NATIVE_SYSCALL_DEFINE5(fanotify_mark, int, fanotify_fd, unsigned int, flags,
 			      __u64, mask, int, dfd,
 			      const char  __user *, pathname)
 {

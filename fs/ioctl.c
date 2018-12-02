@@ -715,7 +715,7 @@ int ksys_ioctl(unsigned int fd, unsigned int cmd, unsigned long arg)
 	return error;
 }
 
-SYSCALL_DEFINE3(ioctl, unsigned int, fd, unsigned int, cmd, unsigned long, arg)
+NATIVE_SYSCALL_DEFINE3(ioctl, unsigned int, fd, unsigned int, cmd, unsigned long, arg)
 {
 	return ksys_ioctl(fd, cmd, arg);
 }

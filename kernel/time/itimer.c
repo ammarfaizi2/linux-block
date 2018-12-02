@@ -102,7 +102,7 @@ int do_getitimer(int which, struct itimerval *value)
 	return 0;
 }
 
-SYSCALL_DEFINE2(getitimer, int, which, struct itimerval __user *, value)
+NATIVE_SYSCALL_DEFINE2(getitimer, int, which, struct itimerval __user *, value)
 {
 	int error = -EFAULT;
 	struct itimerval get_buffer;
@@ -288,7 +288,7 @@ SYSCALL_DEFINE1(alarm, unsigned int, seconds)
 
 #endif
 
-SYSCALL_DEFINE3(setitimer, int, which, struct itimerval __user *, value,
+NATIVE_SYSCALL_DEFINE3(setitimer, int, which, struct itimerval __user *, value,
 		struct itimerval __user *, ovalue)
 {
 	struct itimerval set_buffer, get_buffer;

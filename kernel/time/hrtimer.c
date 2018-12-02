@@ -1751,7 +1751,7 @@ out:
 
 #if !defined(CONFIG_64BIT_TIME) || defined(CONFIG_64BIT)
 
-SYSCALL_DEFINE2(nanosleep, struct __kernel_timespec __user *, rqtp,
+NATIVE_SYSCALL_DEFINE2(nanosleep, struct __kernel_timespec __user *, rqtp,
 		struct __kernel_timespec __user *, rmtp)
 {
 	struct timespec64 tu;

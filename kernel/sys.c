@@ -953,7 +953,7 @@ static void do_sys_times(struct tms *tms)
 	tms->tms_cstime = nsec_to_clock_t(cstime);
 }
 
-SYSCALL_DEFINE1(times, struct tms __user *, tbuf)
+NATIVE_SYSCALL_DEFINE1(times, struct tms __user *, tbuf)
 {
 	if (tbuf) {
 		struct tms tmp;
@@ -1380,7 +1380,7 @@ SYSCALL_DEFINE2(setdomainname, char __user *, name, int, len)
 	return errno;
 }
 
-SYSCALL_DEFINE2(getrlimit, unsigned int, resource, struct rlimit __user *, rlim)
+NATIVE_SYSCALL_DEFINE2(getrlimit, unsigned int, resource, struct rlimit __user *, rlim)
 {
 	struct rlimit value;
 	int ret;
@@ -1445,7 +1445,7 @@ COMPAT_SYSCALL_DEFINE2(getrlimit, unsigned int, resource,
 /*
  *	Back compatibility for getrlimit. Needed for some apps.
  */
-SYSCALL_DEFINE2(old_getrlimit, unsigned int, resource,
+NATIVE_SYSCALL_DEFINE2(old_getrlimit, unsigned int, resource,
 		struct rlimit __user *, rlim)
 {
 	struct rlimit x;
@@ -1660,7 +1660,7 @@ SYSCALL_DEFINE4(prlimit64, pid_t, pid, unsigned int, resource,
 	return ret;
 }
 
-SYSCALL_DEFINE2(setrlimit, unsigned int, resource, struct rlimit __user *, rlim)
+NATIVE_SYSCALL_DEFINE2(setrlimit, unsigned int, resource, struct rlimit __user *, rlim)
 {
 	struct rlimit new_rlim;
 
@@ -1787,7 +1787,7 @@ out:
 	r->ru_maxrss = maxrss * (PAGE_SIZE / 1024); /* convert pages to KBs */
 }
 
-SYSCALL_DEFINE2(getrusage, int, who, struct rusage __user *, ru)
+NATIVE_SYSCALL_DEFINE2(getrusage, int, who, struct rusage __user *, ru)
 {
 	struct rusage r;
 
@@ -2578,7 +2578,7 @@ out:
 	return 0;
 }
 
-SYSCALL_DEFINE1(sysinfo, struct sysinfo __user *, info)
+NATIVE_SYSCALL_DEFINE1(sysinfo, struct sysinfo __user *, info)
 {
 	struct sysinfo val;
 

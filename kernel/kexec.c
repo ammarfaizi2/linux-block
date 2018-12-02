@@ -221,7 +221,7 @@ static inline int kexec_load_check(unsigned long nr_segments,
 	return 0;
 }
 
-SYSCALL_DEFINE4(kexec_load, unsigned long, entry, unsigned long, nr_segments,
+NATIVE_SYSCALL_DEFINE4(kexec_load, unsigned long, entry, unsigned long, nr_segments,
 		struct kexec_segment __user *, segments, unsigned long, flags)
 {
 	int result;

@@ -3328,7 +3328,7 @@ out_type:
 	return ret;
 }
 
-SYSCALL_DEFINE5(mount, char __user *, dev_name, char __user *, dir_name,
+NATIVE_SYSCALL_DEFINE5(mount, char __user *, dev_name, char __user *, dir_name,
 		char __user *, type, unsigned long, flags, void __user *, data)
 {
 	return ksys_mount(dev_name, dir_name, type, flags, data);

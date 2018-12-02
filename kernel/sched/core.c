@@ -5301,7 +5301,7 @@ static int get_user_cpu_mask(unsigned long __user *user_mask_ptr, unsigned len,
  *
  * Return: 0 on success. An error code otherwise.
  */
-SYSCALL_DEFINE3(sched_setaffinity, pid_t, pid, unsigned int, len,
+NATIVE_SYSCALL_DEFINE3(sched_setaffinity, pid_t, pid, unsigned int, len,
 		unsigned long __user *, user_mask_ptr)
 {
 	cpumask_var_t new_mask;
@@ -5353,7 +5353,7 @@ out_unlock:
  * Return: size of CPU mask copied to user_mask_ptr on success. An
  * error code otherwise.
  */
-SYSCALL_DEFINE3(sched_getaffinity, pid_t, pid, unsigned int, len,
+NATIVE_SYSCALL_DEFINE3(sched_getaffinity, pid_t, pid, unsigned int, len,
 		unsigned long __user *, user_mask_ptr)
 {
 	int ret;
@@ -5702,7 +5702,7 @@ out_unlock:
  * Return: On success, 0 and the timeslice is in @interval. Otherwise,
  * an error code.
  */
-SYSCALL_DEFINE2(sched_rr_get_interval, pid_t, pid,
+NATIVE_SYSCALL_DEFINE2(sched_rr_get_interval, pid_t, pid,
 		struct __kernel_timespec __user *, interval)
 {
 	struct timespec64 t;

@@ -3393,7 +3393,7 @@ out:
  * @head:	pointer to the list-head
  * @len:	length of the list-head, as userspace expects
  */
-SYSCALL_DEFINE2(set_robust_list, struct robust_list_head __user *, head,
+NATIVE_SYSCALL_DEFINE2(set_robust_list, struct robust_list_head __user *, head,
 		size_t, len)
 {
 	if (!futex_cmpxchg_enabled)
@@ -3415,7 +3415,7 @@ SYSCALL_DEFINE2(set_robust_list, struct robust_list_head __user *, head,
  * @head_ptr:	pointer to a list-head pointer, the kernel fills it in
  * @len_ptr:	pointer to a length field, the kernel fills in the header size
  */
-SYSCALL_DEFINE3(get_robust_list, int, pid,
+NATIVE_SYSCALL_DEFINE3(get_robust_list, int, pid,
 		struct robust_list_head __user * __user *, head_ptr,
 		size_t __user *, len_ptr)
 {
@@ -3672,7 +3672,7 @@ long do_futex(u32 __user *uaddr, int op, u32 val, ktime_t *timeout,
 }
 
 
-SYSCALL_DEFINE6(futex, u32 __user *, uaddr, int, op, u32, val,
+NATIVE_SYSCALL_DEFINE6(futex, u32 __user *, uaddr, int, op, u32, val,
 		struct __kernel_timespec __user *, utime, u32 __user *, uaddr2,
 		u32, val3)
 {

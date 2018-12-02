@@ -319,7 +319,7 @@ off_t ksys_lseek(unsigned int fd, off_t offset, unsigned int whence)
 	return retval;
 }
 
-SYSCALL_DEFINE3(lseek, unsigned int, fd, off_t, offset, unsigned int, whence)
+NATIVE_SYSCALL_DEFINE3(lseek, unsigned int, fd, off_t, offset, unsigned int, whence)
 {
 	return ksys_lseek(fd, offset, whence);
 }
@@ -1119,19 +1119,19 @@ static ssize_t do_pwritev(unsigned long fd, const struct iovec __user *vec,
 	return ret;
 }
 
-SYSCALL_DEFINE3(readv, unsigned long, fd, const struct iovec __user *, vec,
+NATIVE_SYSCALL_DEFINE3(readv, unsigned long, fd, const struct iovec __user *, vec,
 		unsigned long, vlen)
 {
 	return do_readv(fd, vec, vlen, 0);
 }
 
-SYSCALL_DEFINE3(writev, unsigned long, fd, const struct iovec __user *, vec,
+NATIVE_SYSCALL_DEFINE3(writev, unsigned long, fd, const struct iovec __user *, vec,
 		unsigned long, vlen)
 {
 	return do_writev(fd, vec, vlen, 0);
 }
 
-SYSCALL_DEFINE5(preadv, unsigned long, fd, const struct iovec __user *, vec,
+NATIVE_SYSCALL_DEFINE5(preadv, unsigned long, fd, const struct iovec __user *, vec,
 		unsigned long, vlen, unsigned long, pos_l, unsigned long, pos_h)
 {
 	loff_t pos = pos_from_hilo(pos_h, pos_l);
@@ -1139,7 +1139,7 @@ SYSCALL_DEFINE5(preadv, unsigned long, fd, const struct iovec __user *, vec,
 	return do_preadv(fd, vec, vlen, pos, 0);
 }
 
-SYSCALL_DEFINE6(preadv2, unsigned long, fd, const struct iovec __user *, vec,
+NATIVE_SYSCALL_DEFINE6(preadv2, unsigned long, fd, const struct iovec __user *, vec,
 		unsigned long, vlen, unsigned long, pos_l, unsigned long, pos_h,
 		rwf_t, flags)
 {
@@ -1151,7 +1151,7 @@ SYSCALL_DEFINE6(preadv2, unsigned long, fd, const struct iovec __user *, vec,
 	return do_preadv(fd, vec, vlen, pos, flags);
 }
 
-SYSCALL_DEFINE5(pwritev, unsigned long, fd, const struct iovec __user *, vec,
+NATIVE_SYSCALL_DEFINE5(pwritev, unsigned long, fd, const struct iovec __user *, vec,
 		unsigned long, vlen, unsigned long, pos_l, unsigned long, pos_h)
 {
 	loff_t pos = pos_from_hilo(pos_h, pos_l);
@@ -1159,7 +1159,7 @@ SYSCALL_DEFINE5(pwritev, unsigned long, fd, const struct iovec __user *, vec,
 	return do_pwritev(fd, vec, vlen, pos, 0);
 }
 
-SYSCALL_DEFINE6(pwritev2, unsigned long, fd, const struct iovec __user *, vec,
+NATIVE_SYSCALL_DEFINE6(pwritev2, unsigned long, fd, const struct iovec __user *, vec,
 		unsigned long, vlen, unsigned long, pos_l, unsigned long, pos_h,
 		rwf_t, flags)
 {
@@ -1489,7 +1489,7 @@ out:
 	return retval;
 }
 
-SYSCALL_DEFINE4(sendfile, int, out_fd, int, in_fd, off_t __user *, offset, size_t, count)
+NATIVE_SYSCALL_DEFINE4(sendfile, int, out_fd, int, in_fd, off_t __user *, offset, size_t, count)
 {
 	loff_t pos;
 	off_t off;

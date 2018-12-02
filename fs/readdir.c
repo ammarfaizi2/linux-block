@@ -121,7 +121,7 @@ efault:
 	return -EFAULT;
 }
 
-SYSCALL_DEFINE3(old_readdir, unsigned int, fd,
+NATIVE_SYSCALL_DEFINE3(old_readdir, unsigned int, fd,
 		struct old_linux_dirent __user *, dirent, unsigned int, count)
 {
 	int error;
@@ -209,7 +209,7 @@ efault:
 	return -EFAULT;
 }
 
-SYSCALL_DEFINE3(getdents, unsigned int, fd,
+NATIVE_SYSCALL_DEFINE3(getdents, unsigned int, fd,
 		struct linux_dirent __user *, dirent, unsigned int, count)
 {
 	struct fd f;

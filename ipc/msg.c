@@ -609,7 +609,7 @@ static long ksys_msgctl(int msqid, int cmd, struct msqid_ds __user *buf, int ver
 	}
 }
 
-SYSCALL_DEFINE3(msgctl, int, msqid, int, cmd, struct msqid_ds __user *, buf)
+NATIVE_SYSCALL_DEFINE3(msgctl, int, msqid, int, cmd, struct msqid_ds __user *, buf)
 {
 	return ksys_msgctl(msqid, cmd, buf, IPC_64);
 }
@@ -936,7 +936,7 @@ long ksys_msgsnd(int msqid, struct msgbuf __user *msgp, size_t msgsz,
 	return do_msgsnd(msqid, mtype, msgp->mtext, msgsz, msgflg);
 }
 
-SYSCALL_DEFINE4(msgsnd, int, msqid, struct msgbuf __user *, msgp, size_t, msgsz,
+NATIVE_SYSCALL_DEFINE4(msgsnd, int, msqid, struct msgbuf __user *, msgp, size_t, msgsz,
 		int, msgflg)
 {
 	return ksys_msgsnd(msqid, msgp, msgsz, msgflg);
@@ -1227,7 +1227,7 @@ long ksys_msgrcv(int msqid, struct msgbuf __user *msgp, size_t msgsz,
 	return do_msgrcv(msqid, msgp, msgsz, msgtyp, msgflg, do_msg_fill);
 }
 
-SYSCALL_DEFINE5(msgrcv, int, msqid, struct msgbuf __user *, msgp, size_t, msgsz,
+NATIVE_SYSCALL_DEFINE5(msgrcv, int, msqid, struct msgbuf __user *, msgp, size_t, msgsz,
 		long, msgtyp, int, msgflg)
 {
 	return ksys_msgrcv(msqid, msgp, msgsz, msgtyp, msgflg);

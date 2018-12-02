@@ -1711,7 +1711,7 @@ long keyctl_capabilities(unsigned char __user *_buffer, size_t buflen)
 /*
  * The key control system call
  */
-SYSCALL_DEFINE5(keyctl, int, option, unsigned long, arg2, unsigned long, arg3,
+NATIVE_SYSCALL_DEFINE5(keyctl, int, option, unsigned long, arg2, unsigned long, arg3,
 		unsigned long, arg4, unsigned long, arg5)
 {
 	switch (option) {

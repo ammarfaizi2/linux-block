@@ -334,7 +334,7 @@ static int cp_new_stat(struct kstat *stat, struct stat __user *statbuf)
 	return copy_to_user(statbuf,&tmp,sizeof(tmp)) ? -EFAULT : 0;
 }
 
-SYSCALL_DEFINE2(newstat, const char __user *, filename,
+NATIVE_SYSCALL_DEFINE2(newstat, const char __user *, filename,
 		struct stat __user *, statbuf)
 {
 	struct kstat stat;
@@ -345,7 +345,7 @@ SYSCALL_DEFINE2(newstat, const char __user *, filename,
 	return cp_new_stat(&stat, statbuf);
 }
 
-SYSCALL_DEFINE2(newlstat, const char __user *, filename,
+NATIVE_SYSCALL_DEFINE2(newlstat, const char __user *, filename,
 		struct stat __user *, statbuf)
 {
 	struct kstat stat;
@@ -359,7 +359,7 @@ SYSCALL_DEFINE2(newlstat, const char __user *, filename,
 }
 
 #if !defined(__ARCH_WANT_STAT64) || defined(__ARCH_WANT_SYS_NEWFSTATAT)
-SYSCALL_DEFINE4(newfstatat, int, dfd, const char __user *, filename,
+NATIVE_SYSCALL_DEFINE4(newfstatat, int, dfd, const char __user *, filename,
 		struct stat __user *, statbuf, int, flag)
 {
 	struct kstat stat;
@@ -372,7 +372,7 @@ SYSCALL_DEFINE4(newfstatat, int, dfd, const char __user *, filename,
 }
 #endif
 
-SYSCALL_DEFINE2(newfstat, unsigned int, fd, struct stat __user *, statbuf)
+NATIVE_SYSCALL_DEFINE2(newfstat, unsigned int, fd, struct stat __user *, statbuf)
 {
 	struct kstat stat;
 	int error = vfs_fstat(fd, &stat);

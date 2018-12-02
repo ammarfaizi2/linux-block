@@ -719,7 +719,7 @@ static int kern_select(int n, fd_set __user *inp, fd_set __user *outp,
 	return poll_select_finish(&end_time, tvp, PT_TIMEVAL, ret);
 }
 
-SYSCALL_DEFINE5(select, int, n, fd_set __user *, inp, fd_set __user *, outp,
+NATIVE_SYSCALL_DEFINE5(select, int, n, fd_set __user *, inp, fd_set __user *, outp,
 		fd_set __user *, exp, struct timeval __user *, tvp)
 {
 	return kern_select(n, inp, outp, exp, tvp);
@@ -766,7 +766,7 @@ static long do_pselect(int n, fd_set __user *inp, fd_set __user *outp,
  * which has a pointer to the sigset_t itself followed by a size_t containing
  * the sigset size.
  */
-SYSCALL_DEFINE6(pselect6, int, n, fd_set __user *, inp, fd_set __user *, outp,
+NATIVE_SYSCALL_DEFINE6(pselect6, int, n, fd_set __user *, inp, fd_set __user *, outp,
 		fd_set __user *, exp, struct __kernel_timespec __user *, tsp,
 		void __user *, sig)
 {
@@ -813,7 +813,7 @@ struct sel_arg_struct {
 	struct timeval __user *tvp;
 };
 
-SYSCALL_DEFINE1(old_select, struct sel_arg_struct __user *, arg)
+NATIVE_SYSCALL_DEFINE1(old_select, struct sel_arg_struct __user *, arg)
 {
 	struct sel_arg_struct a;
 
@@ -1078,7 +1078,7 @@ SYSCALL_DEFINE3(poll, struct pollfd __user *, ufds, unsigned int, nfds,
 	return ret;
 }
 
-SYSCALL_DEFINE5(ppoll, struct pollfd __user *, ufds, unsigned int, nfds,
+NATIVE_SYSCALL_DEFINE5(ppoll, struct pollfd __user *, ufds, unsigned int, nfds,
 		struct __kernel_timespec __user *, tsp, const sigset_t __user *, sigmask,
 		size_t, sigsetsize)
 {

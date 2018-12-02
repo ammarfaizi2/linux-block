@@ -1373,7 +1373,7 @@ static long kernel_mbind(unsigned long start, unsigned long len,
 	return do_mbind(start, len, mode, mode_flags, &nodes, flags);
 }
 
-SYSCALL_DEFINE6(mbind, unsigned long, start, unsigned long, len,
+NATIVE_SYSCALL_DEFINE6(mbind, unsigned long, start, unsigned long, len,
 		unsigned long, mode, const unsigned long __user *, nmask,
 		unsigned long, maxnode, unsigned int, flags)
 {
@@ -1400,7 +1400,7 @@ static long kernel_set_mempolicy(int mode, const unsigned long __user *nmask,
 	return do_set_mempolicy(mode, flags, &nodes);
 }
 
-SYSCALL_DEFINE3(set_mempolicy, int, mode, const unsigned long __user *, nmask,
+NATIVE_SYSCALL_DEFINE3(set_mempolicy, int, mode, const unsigned long __user *, nmask,
 		unsigned long, maxnode)
 {
 	return kernel_set_mempolicy(mode, nmask, maxnode);
@@ -1498,7 +1498,7 @@ out_put:
 
 }
 
-SYSCALL_DEFINE4(migrate_pages, pid_t, pid, unsigned long, maxnode,
+NATIVE_SYSCALL_DEFINE4(migrate_pages, pid_t, pid, unsigned long, maxnode,
 		const unsigned long __user *, old_nodes,
 		const unsigned long __user *, new_nodes)
 {
@@ -1534,7 +1534,7 @@ static int kernel_get_mempolicy(int __user *policy,
 	return err;
 }
 
-SYSCALL_DEFINE5(get_mempolicy, int __user *, policy,
+NATIVE_SYSCALL_DEFINE5(get_mempolicy, int __user *, policy,
 		unsigned long __user *, nmask, unsigned long, maxnode,
 		unsigned long, addr, unsigned long, flags)
 {

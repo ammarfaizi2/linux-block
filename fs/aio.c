@@ -1309,7 +1309,7 @@ static long read_events(struct kioctx *ctx, long min_nr, long nr,
  *	pointer is passed for ctxp.  Will fail with -ENOSYS if not
  *	implemented.
  */
-SYSCALL_DEFINE2(io_setup, unsigned, nr_events, aio_context_t __user *, ctxp)
+NATIVE_SYSCALL_DEFINE2(io_setup, unsigned, nr_events, aio_context_t __user *, ctxp)
 {
 	struct kioctx *ioctx = NULL;
 	unsigned long ctx;
@@ -1888,7 +1888,7 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
  *	are available to queue any iocbs.  Will return 0 if nr is 0.  Will
  *	fail with -ENOSYS if not implemented.
  */
-SYSCALL_DEFINE3(io_submit, aio_context_t, ctx_id, long, nr,
+NATIVE_SYSCALL_DEFINE3(io_submit, aio_context_t, ctx_id, long, nr,
 		struct iocb __user * __user *, iocbpp)
 {
 	struct kioctx *ctx;
@@ -2057,8 +2057,7 @@ static long do_io_getevents(aio_context_t ctx_id,
  *	timeout is relative.  Will fail with -ENOSYS if not implemented.
  */
 #if !defined(CONFIG_64BIT_TIME) || defined(CONFIG_64BIT)
-
-SYSCALL_DEFINE5(io_getevents, aio_context_t, ctx_id,
+NATIVE_SYSCALL_DEFINE5(io_getevents, aio_context_t, ctx_id,
 		long, min_nr,
 		long, nr,
 		struct io_event __user *, events,
@@ -2083,7 +2082,7 @@ struct __aio_sigset {
 	size_t		sigsetsize;
 };
 
-SYSCALL_DEFINE6(io_pgetevents,
+NATIVE_SYSCALL_DEFINE6(io_pgetevents,
 		aio_context_t, ctx_id,
 		long, min_nr,
 		long, nr,

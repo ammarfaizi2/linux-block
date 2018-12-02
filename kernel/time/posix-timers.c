@@ -548,7 +548,7 @@ out:
 	return error;
 }
 
-SYSCALL_DEFINE3(timer_create, const clockid_t, which_clock,
+NATIVE_SYSCALL_DEFINE3(timer_create, const clockid_t, which_clock,
 		struct sigevent __user *, timer_event_spec,
 		timer_t __user *, created_timer_id)
 {
@@ -715,7 +715,7 @@ static int do_timer_gettime(timer_t timer_id,  struct itimerspec64 *setting)
 }
 
 /* Get the time remaining on a POSIX.1b interval timer. */
-SYSCALL_DEFINE2(timer_gettime, timer_t, timer_id,
+NATIVE_SYSCALL_DEFINE2(timer_gettime, timer_t, timer_id,
 		struct __kernel_itimerspec __user *, setting)
 {
 	struct itimerspec64 cur_setting;
@@ -880,7 +880,7 @@ retry:
 }
 
 /* Set a POSIX.1b interval timer */
-SYSCALL_DEFINE4(timer_settime, timer_t, timer_id, int, flags,
+NATIVE_SYSCALL_DEFINE4(timer_settime, timer_t, timer_id, int, flags,
 		const struct __kernel_itimerspec __user *, new_setting,
 		struct __kernel_itimerspec __user *, old_setting)
 {
@@ -1007,7 +1007,7 @@ void exit_itimers(struct signal_struct *sig)
 	}
 }
 
-SYSCALL_DEFINE2(clock_settime, const clockid_t, which_clock,
+NATIVE_SYSCALL_DEFINE2(clock_settime, const clockid_t, which_clock,
 		const struct __kernel_timespec __user *, tp)
 {
 	const struct k_clock *kc = clockid_to_kclock(which_clock);
@@ -1022,7 +1022,7 @@ SYSCALL_DEFINE2(clock_settime, const clockid_t, which_clock,
 	return kc->clock_set(which_clock, &new_tp);
 }
 
-SYSCALL_DEFINE2(clock_gettime, const clockid_t, which_clock,
+NATIVE_SYSCALL_DEFINE2(clock_gettime, const clockid_t, which_clock,
 		struct __kernel_timespec __user *, tp)
 {
 	const struct k_clock *kc = clockid_to_kclock(which_clock);
@@ -1069,7 +1069,7 @@ SYSCALL_DEFINE2(clock_adjtime, const clockid_t, which_clock,
 	return err;
 }
 
-SYSCALL_DEFINE2(clock_getres, const clockid_t, which_clock,
+NATIVE_SYSCALL_DEFINE2(clock_getres, const clockid_t, which_clock,
 		struct __kernel_timespec __user *, tp)
 {
 	const struct k_clock *kc = clockid_to_kclock(which_clock);
@@ -1170,7 +1170,7 @@ static int common_nsleep(const clockid_t which_clock, int flags,
 				 which_clock);
 }
 
-SYSCALL_DEFINE4(clock_nanosleep, const clockid_t, which_clock, int, flags,
+NATIVE_SYSCALL_DEFINE4(clock_nanosleep, const clockid_t, which_clock, int, flags,
 		const struct __kernel_timespec __user *, rqtp,
 		struct __kernel_timespec __user *, rmtp)
 {

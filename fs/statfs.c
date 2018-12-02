@@ -187,7 +187,7 @@ static int do_statfs64(struct kstatfs *st, struct statfs64 __user *p)
 	return 0;
 }
 
-SYSCALL_DEFINE2(statfs, const char __user *, pathname, struct statfs __user *, buf)
+NATIVE_SYSCALL_DEFINE2(statfs, const char __user *, pathname, struct statfs __user *, buf)
 {
 	struct kstatfs st;
 	int error = user_statfs(pathname, &st);
@@ -196,7 +196,7 @@ SYSCALL_DEFINE2(statfs, const char __user *, pathname, struct statfs __user *, b
 	return error;
 }
 
-SYSCALL_DEFINE3(statfs64, const char __user *, pathname, size_t, sz, struct statfs64 __user *, buf)
+NATIVE_SYSCALL_DEFINE3(statfs64, const char __user *, pathname, size_t, sz, struct statfs64 __user *, buf)
 {
 	struct kstatfs st;
 	int error;
@@ -208,7 +208,7 @@ SYSCALL_DEFINE3(statfs64, const char __user *, pathname, size_t, sz, struct stat
 	return error;
 }
 
-SYSCALL_DEFINE2(fstatfs, unsigned int, fd, struct statfs __user *, buf)
+NATIVE_SYSCALL_DEFINE2(fstatfs, unsigned int, fd, struct statfs __user *, buf)
 {
 	struct kstatfs st;
 	int error = fd_statfs(fd, &st);
@@ -217,7 +217,7 @@ SYSCALL_DEFINE2(fstatfs, unsigned int, fd, struct statfs __user *, buf)
 	return error;
 }
 
-SYSCALL_DEFINE3(fstatfs64, unsigned int, fd, size_t, sz, struct statfs64 __user *, buf)
+NATIVE_SYSCALL_DEFINE3(fstatfs64, unsigned int, fd, size_t, sz, struct statfs64 __user *, buf)
 {
 	struct kstatfs st;
 	int error;
@@ -243,7 +243,7 @@ static int vfs_ustat(dev_t dev, struct kstatfs *sbuf)
 	return err;
 }
 
-SYSCALL_DEFINE2(ustat, unsigned, dev, struct ustat __user *, ubuf)
+NATIVE_SYSCALL_DEFINE2(ustat, unsigned, dev, struct ustat __user *, ubuf)
 {
 	struct ustat tmp;
 	struct kstatfs sbuf;

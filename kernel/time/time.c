@@ -59,7 +59,7 @@ EXPORT_SYMBOL(sys_tz);
  * why not move it into the appropriate arch directory (for those
  * architectures that need it).
  */
-SYSCALL_DEFINE1(time, time_t __user *, tloc)
+NATIVE_SYSCALL_DEFINE1(time, time_t __user *, tloc)
 {
 	time_t i = (time_t)ktime_get_real_seconds();
 
@@ -78,7 +78,7 @@ SYSCALL_DEFINE1(time, time_t __user *, tloc)
  * architectures that need it).
  */
 
-SYSCALL_DEFINE1(stime, time_t __user *, tptr)
+NATIVE_SYSCALL_DEFINE1(stime, time_t __user *, tptr)
 {
 	struct timespec64 tv;
 	int err;
@@ -137,7 +137,7 @@ SYSCALL_DEFINE1(stime32, old_time32_t __user *, tptr)
 #endif /* __ARCH_WANT_SYS_TIME32 */
 #endif
 
-SYSCALL_DEFINE2(gettimeofday, struct timeval __user *, tv,
+NATIVE_SYSCALL_DEFINE2(gettimeofday, struct timeval __user *, tv,
 		struct timezone __user *, tz)
 {
 	if (likely(tv != NULL)) {
@@ -196,7 +196,7 @@ int do_sys_settimeofday64(const struct timespec64 *tv, const struct timezone *tz
 	return 0;
 }
 
-SYSCALL_DEFINE2(settimeofday, struct timeval __user *, tv,
+NATIVE_SYSCALL_DEFINE2(settimeofday, struct timeval __user *, tv,
 		struct timezone __user *, tz)
 {
 	struct timespec64 new_ts;

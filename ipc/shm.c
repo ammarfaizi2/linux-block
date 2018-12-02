@@ -1191,7 +1191,7 @@ static long ksys_shmctl(int shmid, int cmd, struct shmid_ds __user *buf, int ver
 	}
 }
 
-SYSCALL_DEFINE3(shmctl, int, shmid, int, cmd, struct shmid_ds __user *, buf)
+NATIVE_SYSCALL_DEFINE3(shmctl, int, shmid, int, cmd, struct shmid_ds __user *, buf)
 {
 	return ksys_shmctl(shmid, cmd, buf, IPC_64);
 }
@@ -1588,7 +1588,7 @@ out:
 	return err;
 }
 
-SYSCALL_DEFINE3(shmat, int, shmid, char __user *, shmaddr, int, shmflg)
+NATIVE_SYSCALL_DEFINE3(shmat, int, shmid, char __user *, shmaddr, int, shmflg)
 {
 	unsigned long ret;
 	long err;

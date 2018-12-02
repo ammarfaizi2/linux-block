@@ -532,7 +532,7 @@ static int do_timerfd_gettime(int ufd, struct itimerspec64 *t)
 	return 0;
 }
 
-SYSCALL_DEFINE4(timerfd_settime, int, ufd, int, flags,
+NATIVE_SYSCALL_DEFINE4(timerfd_settime, int, ufd, int, flags,
 		const struct __kernel_itimerspec __user *, utmr,
 		struct __kernel_itimerspec __user *, otmr)
 {
@@ -550,7 +550,7 @@ SYSCALL_DEFINE4(timerfd_settime, int, ufd, int, flags,
 	return ret;
 }
 
-SYSCALL_DEFINE2(timerfd_gettime, int, ufd, struct __kernel_itimerspec __user *, otmr)
+NATIVE_SYSCALL_DEFINE2(timerfd_gettime, int, ufd, struct __kernel_itimerspec __user *, otmr)
 {
 	struct itimerspec64 kotmr;
 	int ret = do_timerfd_gettime(ufd, &kotmr);

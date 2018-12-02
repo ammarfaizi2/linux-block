@@ -56,7 +56,7 @@ SYS_NI(alarm);
  * is also included for convenience as at least systemd uses it.
  */
 
-SYSCALL_DEFINE2(clock_settime, const clockid_t, which_clock,
+NATIVE_SYSCALL_DEFINE2(clock_settime, const clockid_t, which_clock,
 		const struct __kernel_timespec __user *, tp)
 {
 	struct timespec64 new_tp;
@@ -87,7 +87,7 @@ int do_clock_gettime(clockid_t which_clock, struct timespec64 *tp)
 
 	return 0;
 }
-SYSCALL_DEFINE2(clock_gettime, const clockid_t, which_clock,
+NATIVE_SYSCALL_DEFINE2(clock_gettime, const clockid_t, which_clock,
 		struct __kernel_timespec __user *, tp)
 {
 	int ret;
@@ -102,7 +102,7 @@ SYSCALL_DEFINE2(clock_gettime, const clockid_t, which_clock,
 	return 0;
 }
 
-SYSCALL_DEFINE2(clock_getres, const clockid_t, which_clock, struct __kernel_timespec __user *, tp)
+NATIVE_SYSCALL_DEFINE2(clock_getres, const clockid_t, which_clock, struct __kernel_timespec __user *, tp)
 {
 	struct timespec64 rtn_tp = {
 		.tv_sec = 0,
@@ -121,7 +121,7 @@ SYSCALL_DEFINE2(clock_getres, const clockid_t, which_clock, struct __kernel_time
 	}
 }
 
-SYSCALL_DEFINE4(clock_nanosleep, const clockid_t, which_clock, int, flags,
+NATIVE_SYSCALL_DEFINE4(clock_nanosleep, const clockid_t, which_clock, int, flags,
 		const struct __kernel_timespec __user *, rqtp,
 		struct __kernel_timespec __user *, rmtp)
 {

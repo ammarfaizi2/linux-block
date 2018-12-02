@@ -136,7 +136,7 @@ out:
 	return error;
 }
 
-SYSCALL_DEFINE4(utimensat, int, dfd, const char __user *, filename,
+NATIVE_SYSCALL_DEFINE4(utimensat, int, dfd, const char __user *, filename,
 		struct __kernel_timespec __user *, utimes, int, flags)
 {
 	struct timespec64 tstimes[2];
@@ -191,19 +191,19 @@ static long do_futimesat(int dfd, const char __user *filename,
 }
 
 
-SYSCALL_DEFINE3(futimesat, int, dfd, const char __user *, filename,
+NATIVE_SYSCALL_DEFINE3(futimesat, int, dfd, const char __user *, filename,
 		struct timeval __user *, utimes)
 {
 	return do_futimesat(dfd, filename, utimes);
 }
 
-SYSCALL_DEFINE2(utimes, char __user *, filename,
+NATIVE_SYSCALL_DEFINE2(utimes, char __user *, filename,
 		struct timeval __user *, utimes)
 {
 	return do_futimesat(AT_FDCWD, filename, utimes);
 }
 
-SYSCALL_DEFINE2(utime, char __user *, filename, struct utimbuf __user *, times)
+NATIVE_SYSCALL_DEFINE2(utime, char __user *, filename, struct utimbuf __user *, times)
 {
 	struct timespec64 tv[2];
 

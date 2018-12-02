@@ -845,7 +845,7 @@ out_putname:
 	return fd;
 }
 
-SYSCALL_DEFINE4(mq_open, const char __user *, u_name, int, oflag, umode_t, mode,
+NATIVE_SYSCALL_DEFINE4(mq_open, const char __user *, u_name, int, oflag, umode_t, mode,
 		struct mq_attr __user *, u_attr)
 {
 	struct mq_attr attr;
@@ -1181,7 +1181,7 @@ out:
 	return ret;
 }
 
-SYSCALL_DEFINE5(mq_timedsend, mqd_t, mqdes, const char __user *, u_msg_ptr,
+NATIVE_SYSCALL_DEFINE5(mq_timedsend, mqd_t, mqdes, const char __user *, u_msg_ptr,
 		size_t, msg_len, unsigned int, msg_prio,
 		const struct __kernel_timespec __user *, u_abs_timeout)
 {
@@ -1195,7 +1195,7 @@ SYSCALL_DEFINE5(mq_timedsend, mqd_t, mqdes, const char __user *, u_msg_ptr,
 	return do_mq_timedsend(mqdes, u_msg_ptr, msg_len, msg_prio, p);
 }
 
-SYSCALL_DEFINE5(mq_timedreceive, mqd_t, mqdes, char __user *, u_msg_ptr,
+NATIVE_SYSCALL_DEFINE5(mq_timedreceive, mqd_t, mqdes, char __user *, u_msg_ptr,
 		size_t, msg_len, unsigned int __user *, u_msg_prio,
 		const struct __kernel_timespec __user *, u_abs_timeout)
 {
@@ -1340,7 +1340,7 @@ out:
 	return ret;
 }
 
-SYSCALL_DEFINE2(mq_notify, mqd_t, mqdes,
+NATIVE_SYSCALL_DEFINE2(mq_notify, mqd_t, mqdes,
 		const struct sigevent __user *, u_notification)
 {
 	struct sigevent n, *p = NULL;
@@ -1396,7 +1396,7 @@ static int do_mq_getsetattr(int mqdes, struct mq_attr *new, struct mq_attr *old)
 	return 0;
 }
 
-SYSCALL_DEFINE3(mq_getsetattr, mqd_t, mqdes,
+NATIVE_SYSCALL_DEFINE3(mq_getsetattr, mqd_t, mqdes,
 		const struct mq_attr __user *, u_mqstat,
 		struct mq_attr __user *, u_omqstat)
 {

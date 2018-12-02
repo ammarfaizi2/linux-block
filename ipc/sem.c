@@ -1684,7 +1684,7 @@ static long ksys_semctl(int semid, int semnum, int cmd, unsigned long arg, int v
 	}
 }
 
-SYSCALL_DEFINE4(semctl, int, semid, int, semnum, int, cmd, unsigned long, arg)
+NATIVE_SYSCALL_DEFINE4(semctl, int, semid, int, semnum, int, cmd, unsigned long, arg)
 {
 	return ksys_semctl(semid, semnum, cmd, arg, IPC_64);
 }
@@ -2227,7 +2227,7 @@ long ksys_semtimedop(int semid, struct sembuf __user *tsops,
 	return do_semtimedop(semid, tsops, nsops, NULL);
 }
 
-SYSCALL_DEFINE4(semtimedop, int, semid, struct sembuf __user *, tsops,
+NATIVE_SYSCALL_DEFINE4(semtimedop, int, semid, struct sembuf __user *, tsops,
 		unsigned int, nsops, const struct __kernel_timespec __user *, timeout)
 {
 	return ksys_semtimedop(semid, tsops, nsops, timeout);

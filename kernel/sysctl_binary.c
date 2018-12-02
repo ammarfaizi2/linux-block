@@ -1399,7 +1399,7 @@ static ssize_t do_sysctl(int __user *args_name, int nlen,
 	return binary_sysctl(name, nlen, oldval, oldlen, newval, newlen);
 }
 
-SYSCALL_DEFINE1(sysctl, struct __sysctl_args __user *, args)
+NATIVE_SYSCALL_DEFINE1(sysctl, struct __sysctl_args __user *, args)
 {
 	struct __sysctl_args tmp;
 	size_t oldlen = 0;

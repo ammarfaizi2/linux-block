@@ -291,14 +291,14 @@ free_iovecs:
 	return rc;
 }
 
-SYSCALL_DEFINE6(process_vm_readv, pid_t, pid, const struct iovec __user *, lvec,
+NATIVE_SYSCALL_DEFINE6(process_vm_readv, pid_t, pid, const struct iovec __user *, lvec,
 		unsigned long, liovcnt, const struct iovec __user *, rvec,
 		unsigned long, riovcnt,	unsigned long, flags)
 {
 	return process_vm_rw(pid, lvec, liovcnt, rvec, riovcnt, flags, 0);
 }
 
-SYSCALL_DEFINE6(process_vm_writev, pid_t, pid,
+NATIVE_SYSCALL_DEFINE6(process_vm_writev, pid_t, pid,
 		const struct iovec __user *, lvec,
 		unsigned long, liovcnt, const struct iovec __user *, rvec,
 		unsigned long, riovcnt,	unsigned long, flags)

@@ -1598,7 +1598,7 @@ static long kernel_waitid(int which, pid_t upid, struct waitid_info *infop,
 	return ret;
 }
 
-SYSCALL_DEFINE5(waitid, int, which, pid_t, upid, struct siginfo __user *,
+NATIVE_SYSCALL_DEFINE5(waitid, int, which, pid_t, upid, struct siginfo __user *,
 		infop, int, options, struct rusage __user *, ru)
 {
 	struct rusage r;
@@ -1674,7 +1674,7 @@ long kernel_wait4(pid_t upid, int __user *stat_addr, int options,
 	return ret;
 }
 
-SYSCALL_DEFINE4(wait4, pid_t, upid, int __user *, stat_addr,
+NATIVE_SYSCALL_DEFINE4(wait4, pid_t, upid, int __user *, stat_addr,
 		int, options, struct rusage __user *, ru)
 {
 	struct rusage r;

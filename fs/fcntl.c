@@ -445,7 +445,7 @@ static int check_fcntl_cmd(unsigned cmd)
 	return 0;
 }
 
-SYSCALL_DEFINE3(fcntl, unsigned int, fd, unsigned int, cmd, unsigned long, arg)
+NATIVE_SYSCALL_DEFINE3(fcntl, unsigned int, fd, unsigned int, cmd, unsigned long, arg)
 {	
 	struct fd f = fdget_raw(fd);
 	long err = -EBADF;
@@ -469,7 +469,7 @@ out:
 }
 
 #if BITS_PER_LONG == 32
-SYSCALL_DEFINE3(fcntl64, unsigned int, fd, unsigned int, cmd,
+NATIVE_SYSCALL_DEFINE3(fcntl64, unsigned int, fd, unsigned int, cmd,
 		unsigned long, arg)
 {	
 	void __user *argp = (void __user *)arg;

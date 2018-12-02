@@ -3001,7 +3001,7 @@ int set_compat_user_sigmask(const compat_sigset_t __user *umask,
  *  @oset: previous value of signal mask if non-null
  *  @sigsetsize: size of sigset_t type
  */
-SYSCALL_DEFINE4(rt_sigprocmask, int, how, sigset_t __user *, nset,
+NATIVE_SYSCALL_DEFINE4(rt_sigprocmask, int, how, sigset_t __user *, nset,
 		sigset_t __user *, oset, size_t, sigsetsize)
 {
 	sigset_t old_set, new_set;
@@ -3073,7 +3073,7 @@ static void do_sigpending(sigset_t *set)
  *  @uset: stores pending signals
  *  @sigsetsize: size of sigset_t type or larger
  */
-SYSCALL_DEFINE2(rt_sigpending, sigset_t __user *, uset, size_t, sigsetsize)
+NATIVE_SYSCALL_DEFINE2(rt_sigpending, sigset_t __user *, uset, size_t, sigsetsize)
 {
 	sigset_t set;
 
@@ -3481,7 +3481,7 @@ static int do_sigtimedwait(const sigset_t *which, kernel_siginfo_t *info,
  *  @uts: upper bound on process time suspension
  *  @sigsetsize: size of sigset_t type
  */
-SYSCALL_DEFINE4(rt_sigtimedwait, const sigset_t __user *, uthese,
+NATIVE_SYSCALL_DEFINE4(rt_sigtimedwait, const sigset_t __user *, uthese,
 		siginfo_t __user *, uinfo,
 		const struct __kernel_timespec __user *, uts,
 		size_t, sigsetsize)
@@ -3846,7 +3846,7 @@ static int do_rt_sigqueueinfo(pid_t pid, int sig, kernel_siginfo_t *info)
  *  @sig: signal to be sent
  *  @uinfo: signal info to be sent
  */
-SYSCALL_DEFINE3(rt_sigqueueinfo, pid_t, pid, int, sig,
+NATIVE_SYSCALL_DEFINE3(rt_sigqueueinfo, pid_t, pid, int, sig,
 		siginfo_t __user *, uinfo)
 {
 	kernel_siginfo_t info;
@@ -3886,7 +3886,7 @@ static int do_rt_tgsigqueueinfo(pid_t tgid, pid_t pid, int sig, kernel_siginfo_t
 	return do_send_specific(tgid, pid, sig, info);
 }
 
-SYSCALL_DEFINE4(rt_tgsigqueueinfo, pid_t, tgid, pid_t, pid, int, sig,
+NATIVE_SYSCALL_DEFINE4(rt_tgsigqueueinfo, pid_t, tgid, pid_t, pid, int, sig,
 		siginfo_t __user *, uinfo)
 {
 	kernel_siginfo_t info;
@@ -4025,7 +4025,7 @@ do_sigaltstack (const stack_t *ss, stack_t *oss, unsigned long sp,
 	return 0;
 }
 
-SYSCALL_DEFINE2(sigaltstack,const stack_t __user *,uss, stack_t __user *,uoss)
+NATIVE_SYSCALL_DEFINE2(sigaltstack,const stack_t __user *,uss, stack_t __user *,uoss)
 {
 	stack_t new, old;
 	int err;
@@ -4129,7 +4129,7 @@ int __compat_save_altstack(compat_stack_t __user *uss, unsigned long sp)
  *  sys_sigpending - examine pending signals
  *  @uset: where mask of pending signal is returned
  */
-SYSCALL_DEFINE1(sigpending, old_sigset_t __user *, uset)
+NATIVE_SYSCALL_DEFINE1(sigpending, old_sigset_t __user *, uset)
 {
 	sigset_t set;
 
@@ -4168,7 +4168,7 @@ COMPAT_SYSCALL_DEFINE1(sigpending, compat_old_sigset_t __user *, set32)
  * others support only sys_rt_sigprocmask.
  */
 
-SYSCALL_DEFINE3(sigprocmask, int, how, old_sigset_t __user *, nset,
+NATIVE_SYSCALL_DEFINE3(sigprocmask, int, how, old_sigset_t __user *, nset,
 		old_sigset_t __user *, oset)
 {
 	old_sigset_t old_set, new_set;
@@ -4216,7 +4216,7 @@ SYSCALL_DEFINE3(sigprocmask, int, how, old_sigset_t __user *, nset,
  *  @oact: used to save the previous sigaction
  *  @sigsetsize: size of sigset_t type
  */
-SYSCALL_DEFINE4(rt_sigaction, int, sig,
+NATIVE_SYSCALL_DEFINE4(rt_sigaction, int, sig,
 		const struct sigaction __user *, act,
 		struct sigaction __user *, oact,
 		size_t, sigsetsize)
@@ -4288,7 +4288,7 @@ COMPAT_SYSCALL_DEFINE4(rt_sigaction, int, sig,
 #endif /* !CONFIG_ODD_RT_SIGACTION */
 
 #ifdef CONFIG_OLD_SIGACTION
-SYSCALL_DEFINE3(sigaction, int, sig,
+NATIVE_SYSCALL_DEFINE3(sigaction, int, sig,
 		const struct old_sigaction __user *, act,
 	        struct old_sigaction __user *, oact)
 {
@@ -4439,7 +4439,7 @@ static int sigsuspend(sigset_t *set)
  *  @unewset: new signal mask value
  *  @sigsetsize: size of sigset_t type
  */
-SYSCALL_DEFINE2(rt_sigsuspend, sigset_t __user *, unewset, size_t, sigsetsize)
+NATIVE_SYSCALL_DEFINE2(rt_sigsuspend, sigset_t __user *, unewset, size_t, sigsetsize)
 {
 	sigset_t newset;
 

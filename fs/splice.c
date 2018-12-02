@@ -1350,7 +1350,7 @@ static long do_vmsplice(struct file *f, struct iov_iter *iter, unsigned int flag
 		return vmsplice_to_user(f, iter, flags);
 }
 
-SYSCALL_DEFINE4(vmsplice, int, fd, const struct iovec __user *, uiov,
+NATIVE_SYSCALL_DEFINE4(vmsplice, int, fd, const struct iovec __user *, uiov,
 		unsigned long, nr_segs, unsigned int, flags)
 {
 	struct iovec iovstack[UIO_FASTIOV];
