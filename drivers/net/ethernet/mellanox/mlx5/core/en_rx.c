@@ -732,6 +732,13 @@ static u8 get_ip_proto(struct sk_buff *skb, int network_depth, __be16 proto)
 					    ((struct ipv6hdr *)ip_p)->nexthdr;
 }
 
+static bool is_short_frame(struct sk_buff *skb, bool has_fcs)
+{
+	u32 frame_len = has_fcs ? skb->len - ETH_FCS_LEN : skb->len;
+
+	return frame_len <= ETH_ZLEN;
+}
+
 static inline void mlx5e_handle_csum(struct net_device *netdev,
 				     struct mlx5_cqe64 *cqe,
 				     struct mlx5e_rq *rq,
@@ -755,7 +762,20 @@ static inline void mlx5e_handle_csum(struct net_device *netdev,
 		goto csum_unnecessary;
 
 	if (likely(is_last_ethertype_ip(skb, &network_depth, &proto))) {
+		bool has_fcs = !!(netdev->features & NETIF_F_RXFCS);
+
 		if (unlikely(get_ip_proto(skb, network_depth, proto) == IPPROTO_SCTP))
+			goto csum_unnecessary;
+
+		/* CQE csum doesn't cover padding octets in short ethernet
+		 * frames. And the pad field is appended prior to calculating
+		 * and appending the FCS field.
+		 *
+		 * Detecting these padded frames requires to verify and parse
+		 * IP headers, so we simply force all those small frames to be
+		 * CHECKSUM_NONE even if they are not padded.
+		 */
+		if (unlikely(is_short_frame(skb, has_fcs)))
 			goto csum_unnecessary;
 
 		skb->ip_summed = CHECKSUM_COMPLETE;
@@ -768,7 +788,7 @@ static inline void mlx5e_handle_csum(struct net_device *netdev,
 			skb->csum = csum_partial(skb->data + ETH_HLEN,
 						 network_depth - ETH_HLEN,
 						 skb->csum);
-		if (unlikely(netdev->features & NETIF_F_RXFCS))
+		if (unlikely(has_fcs))
 			skb->csum = csum_block_add(skb->csum,
 						   (__force __wsum)mlx5e_get_fcs(skb),
 						   skb->len - ETH_FCS_LEN);
