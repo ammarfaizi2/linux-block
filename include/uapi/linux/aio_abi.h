@@ -111,6 +111,32 @@ struct iocb {
 #define IOCTX_FLAG_USERIOCB	(1 << 0)	/* iocbs are user mapped */
 #define IOCTX_FLAG_IOPOLL	(1 << 1)	/* io_context is polled */
 #define IOCTX_FLAG_FIXEDBUFS	(1 << 2)	/* IO buffers are fixed */
+#define IOCTX_FLAG_SCQRING	(1 << 3)	/* Use SQ/CQ rings */
+
+struct aio_iocb_ring {
+	union {
+		struct {
+			u32 head, tail;
+			u32 nr_events;
+		};
+		struct iocb pad_iocb;
+	};
+	struct iocb iocbs[0];
+};
+
+struct aio_io_event_ring {
+	union {
+		struct {
+			u32 head, tail;
+			u32 nr_events;
+		};
+		struct io_event pad_event;
+	};
+	struct io_event events[0];
+};
+
+#define IORING_FLAG_SUBMIT	(1 << 0)
+#define IORING_FLAG_GETEVENTS	(1 << 1)
 
 #undef IFBIG
 #undef IFLITTLE
