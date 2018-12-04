@@ -127,6 +127,9 @@ struct kioctx {
 	struct page		**ring_pages;
 	long			nr_pages;
 
+	struct page		**iocb_pages;
+	long			iocb_nr_pages;
+
 	struct rcu_work		free_rwork;	/* see free_ioctx() */
 
 	/*
@@ -221,6 +224,11 @@ static struct vfsmount *aio_mnt;
 
 static const struct file_operations aio_ring_fops;
 static const struct address_space_operations aio_ctx_aops;
+
+static const unsigned int iocb_page_shift =
+				ilog2(PAGE_SIZE / sizeof(struct iocb));
+
+static void aio_useriocb_free(struct kioctx *);
 
 static struct file *aio_private_file(struct kioctx *ctx, loff_t nr_pages)
 {
@@ -578,6 +586,7 @@ static void free_ioctx(struct work_struct *work)
 					  free_rwork);
 	pr_debug("freeing %p\n", ctx);
 
+	aio_useriocb_free(ctx);
 	aio_free_ring(ctx);
 	free_percpu(ctx->cpu);
 	percpu_ref_exit(&ctx->reqs);
@@ -1288,6 +1297,58 @@ static long read_events(struct kioctx *ctx, long min_nr, long nr,
 	return ret;
 }
 
+static struct iocb *aio_iocb_from_index(struct kioctx *ctx, int index)
+{
+	struct iocb *iocb;
+
+	iocb = page_address(ctx->iocb_pages[index >> iocb_page_shift]);
+	index &= ((1 << iocb_page_shift) - 1);
+	return iocb + index;
+}
+
+static void aio_useriocb_free(struct kioctx *ctx)
+{
+	int i;
+
+	if (!ctx->iocb_nr_pages)
+		return;
+
+	for (i = 0; i < ctx->iocb_nr_pages; i++)
+		put_page(ctx->iocb_pages[i]);
+
+	kfree(ctx->iocb_pages);
+	ctx->iocb_pages = NULL;
+	ctx->iocb_nr_pages = 0;
+}
+
+static int aio_useriocb_map(struct kioctx *ctx, struct iocb __user *iocbs)
+{
+	int nr_pages, ret;
+
+	if ((unsigned long) iocbs & ~PAGE_MASK)
+		return -EINVAL;
+
+	nr_pages = sizeof(struct iocb) * ctx->max_reqs;
+	nr_pages = (nr_pages + PAGE_SIZE - 1) >> PAGE_SHIFT;
+
+	ctx->iocb_pages = kzalloc(nr_pages * sizeof(struct page *), GFP_KERNEL);
+	if (!ctx->iocb_pages)
+		return -ENOMEM;
+
+	down_write(&current->mm->mmap_sem);
+	ret = get_user_pages((unsigned long) iocbs, nr_pages, 0,
+				ctx->iocb_pages, NULL);
+	up_write(&current->mm->mmap_sem);
+
+	if (ret < nr_pages) {
+		kfree(ctx->iocb_pages);
+		return -ENOMEM;
+	}
+
+	ctx->iocb_nr_pages = nr_pages;
+	return 0;
+}
+
 SYSCALL_DEFINE4(io_setup2, u32, nr_events, u32, flags, struct iocb __user *,
 		iocbs, aio_context_t __user *, ctxp)
 {
@@ -1295,7 +1356,7 @@ SYSCALL_DEFINE4(io_setup2, u32, nr_events, u32, flags, struct iocb __user *,
 	unsigned long ctx;
 	long ret;
 
-	if (flags)
+	if (flags & ~IOCTX_FLAG_USERIOCB)
 		return -EINVAL;
 
 	ret = get_user(ctx, ctxp);
@@ -1307,9 +1368,17 @@ SYSCALL_DEFINE4(io_setup2, u32, nr_events, u32, flags, struct iocb __user *,
 	if (IS_ERR(ioctx))
 		goto out;
 
+	if (flags & IOCTX_FLAG_USERIOCB) {
+		ret = aio_useriocb_map(ioctx, iocbs);
+		if (ret)
+			goto err;
+	}
+
 	ret = put_user(ioctx->user_id, ctxp);
-	if (ret)
+	if (ret) {
+err:
 		kill_ioctx(current->mm, ioctx, NULL);
+	}
 	percpu_ref_put(&ioctx->users);
 out:
 	return ret;
@@ -1859,10 +1928,13 @@ static int __io_submit_one(struct kioctx *ctx, const struct iocb *iocb,
 		}
 	}
 
-	ret = put_user(KIOCB_KEY, &user_iocb->aio_key);
-	if (unlikely(ret)) {
-		pr_debug("EFAULT: aio_key\n");
-		goto out_put_req;
+	/* Don't support cancel on user mapped iocbs */
+	if (!(ctx->flags & IOCTX_FLAG_USERIOCB)) {
+		ret = put_user(KIOCB_KEY, &user_iocb->aio_key);
+		if (unlikely(ret)) {
+			pr_debug("EFAULT: aio_key\n");
+			goto out_put_req;
+		}
 	}
 
 	req->ki_user_iocb = user_iocb;
@@ -1916,12 +1988,22 @@ out_put_reqs_available:
 static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
 			 bool compat)
 {
-	struct iocb iocb;
+	struct iocb iocb, *iocbp;
 
-	if (unlikely(copy_from_user(&iocb, user_iocb, sizeof(iocb))))
-		return -EFAULT;
+	if (ctx->flags & IOCTX_FLAG_USERIOCB) {
+		unsigned long iocb_index = (unsigned long) user_iocb;
 
-	return __io_submit_one(ctx, &iocb, user_iocb, compat);
+		if (iocb_index >= ctx->max_reqs)
+			return -EINVAL;
+
+		iocbp = aio_iocb_from_index(ctx, iocb_index);
+	} else {
+		if (unlikely(copy_from_user(&iocb, user_iocb, sizeof(iocb))))
+			return -EFAULT;
+		iocbp = &iocb;
+	}
+
+	return __io_submit_one(ctx, iocbp, user_iocb, compat);
 }
 
 /* sys_io_submit:
@@ -2065,6 +2147,9 @@ SYSCALL_DEFINE3(io_cancel, aio_context_t, ctx_id, struct iocb __user *, iocb,
 	if (unlikely(!ctx))
 		return -EINVAL;
 
+	if (ctx->flags & IOCTX_FLAG_USERIOCB)
+		goto err;
+
 	spin_lock_irq(&ctx->ctx_lock);
 	kiocb = lookup_kiocb(ctx, iocb);
 	if (kiocb) {
@@ -2081,9 +2166,8 @@ SYSCALL_DEFINE3(io_cancel, aio_context_t, ctx_id, struct iocb __user *, iocb,
 		 */
 		ret = -EINPROGRESS;
 	}
-
+err:
 	percpu_ref_put(&ctx->users);
-
 	return ret;
 }
 
