@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * IPMMU VMSA
+ * IOMMU API for Renesas VMSA-compatible IPMMU
+ * Author: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
  *
  * Copyright (C) 2014 Renesas Electronics Corporation
  */
@@ -11,10 +12,10 @@
 #include <linux/dma-mapping.h>
 #include <linux/err.h>
 #include <linux/export.h>
+#include <linux/init.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>
 #include <linux/iommu.h>
-#include <linux/module.h>
 #include <linux/of.h>
 #include <linux/of_device.h>
 #include <linux/of_iommu.h>
@@ -754,26 +755,57 @@ static int ipmmu_init_platform_device(struct device *dev,
 	return 0;
 }
 
-static bool ipmmu_slave_whitelist(struct device *dev)
-{
-	/* By default, do not allow use of IPMMU */
-	return false;
-}
-
 static const struct soc_device_attribute soc_rcar_gen3[] = {
+	{ .soc_id = "r8a774a1", },
 	{ .soc_id = "r8a7795", },
 	{ .soc_id = "r8a7796", },
 	{ .soc_id = "r8a77965", },
 	{ .soc_id = "r8a77970", },
+	{ .soc_id = "r8a77990", },
 	{ .soc_id = "r8a77995", },
 	{ /* sentinel */ }
 };
 
+static const struct soc_device_attribute soc_rcar_gen3_whitelist[] = {
+	{ .soc_id = "r8a7795", .revision = "ES3.*" },
+	{ .soc_id = "r8a77965", },
+	{ .soc_id = "r8a77990", },
+	{ .soc_id = "r8a77995", },
+	{ /* sentinel */ }
+};
+
+static const char * const rcar_gen3_slave_whitelist[] = {
+};
+
+static bool ipmmu_slave_whitelist(struct device *dev)
+{
+	unsigned int i;
+
+	/*
+	 * For R-Car Gen3 use a white list to opt-in slave devices.
+	 * For Other SoCs, this returns true anyway.
+	 */
+	if (!soc_device_match(soc_rcar_gen3))
+		return true;
+
+	/* Check whether this R-Car Gen3 can use the IPMMU correctly or not */
+	if (!soc_device_match(soc_rcar_gen3_whitelist))
+		return false;
+
+	/* Check whether this slave device can work with the IPMMU */
+	for (i = 0; i < ARRAY_SIZE(rcar_gen3_slave_whitelist); i++) {
+		if (!strcmp(dev_name(dev), rcar_gen3_slave_whitelist[i]))
+			return true;
+	}
+
+	/* Otherwise, do not allow use of IPMMU */
+	return false;
+}
+
 static int ipmmu_of_xlate(struct device *dev,
 			  struct of_phandle_args *spec)
 {
-	/* For R-Car Gen3 use a white list to opt-in slave devices */
-	if (soc_device_match(soc_rcar_gen3) && !ipmmu_slave_whitelist(dev))
+	if (!ipmmu_slave_whitelist(dev))
 		return -ENODEV;
 
 	iommu_fwspec_add_ids(dev, spec->args, 1);
@@ -941,6 +973,9 @@ static const struct of_device_id ipmmu_of_ids[] = {
 		.compatible = "renesas,ipmmu-vmsa",
 		.data = &ipmmu_features_default,
 	}, {
+		.compatible = "renesas,ipmmu-r8a774a1",
+		.data = &ipmmu_features_rcar_gen3,
+	}, {
 		.compatible = "renesas,ipmmu-r8a7795",
 		.data = &ipmmu_features_rcar_gen3,
 	}, {
@@ -953,14 +988,15 @@ static const struct of_device_id ipmmu_of_ids[] = {
 		.compatible = "renesas,ipmmu-r8a77970",
 		.data = &ipmmu_features_rcar_gen3,
 	}, {
+		.compatible = "renesas,ipmmu-r8a77990",
+		.data = &ipmmu_features_rcar_gen3,
+	}, {
 		.compatible = "renesas,ipmmu-r8a77995",
 		.data = &ipmmu_features_rcar_gen3,
 	}, {
 		/* Terminator */
 	},
 };
-
-MODULE_DEVICE_TABLE(of, ipmmu_of_ids);
 
 static int ipmmu_probe(struct platform_device *pdev)
 {
@@ -1132,15 +1168,4 @@ static int __init ipmmu_init(void)
 	setup_done = true;
 	return 0;
 }
-
-static void __exit ipmmu_exit(void)
-{
-	return platform_driver_unregister(&ipmmu_driver);
-}
-
 subsys_initcall(ipmmu_init);
-module_exit(ipmmu_exit);
-
-MODULE_DESCRIPTION("IOMMU API for Renesas VMSA-compatible IPMMU");
-MODULE_AUTHOR("Laurent Pinchart <laurent.pinchart@ideasonboard.com>");
-MODULE_LICENSE("GPL v2");
