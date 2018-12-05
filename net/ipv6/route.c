@@ -2232,8 +2232,7 @@ static void ip6_link_failure(struct sk_buff *skb)
 	if (rt) {
 		rcu_read_lock();
 		if (rt->rt6i_flags & RTF_CACHE) {
-			if (dst_hold_safe(&rt->dst))
-				rt6_remove_exception_rt(rt);
+			rt6_remove_exception_rt(rt);
 		} else {
 			struct fib6_info *from;
 			struct fib6_node *fn;
@@ -2360,10 +2359,13 @@ EXPORT_SYMBOL_GPL(ip6_update_pmtu);
 
 void ip6_sk_update_pmtu(struct sk_buff *skb, struct sock *sk, __be32 mtu)
 {
+	int oif = sk->sk_bound_dev_if;
 	struct dst_entry *dst;
 
-	ip6_update_pmtu(skb, sock_net(sk), mtu,
-			sk->sk_bound_dev_if, sk->sk_mark, sk->sk_uid);
+	if (!oif && skb->dev)
+		oif = l3mdev_master_ifindex(skb->dev);
+
+	ip6_update_pmtu(skb, sock_net(sk), mtu, oif, sk->sk_mark, sk->sk_uid);
 
 	dst = __sk_dst_get(sk);
 	if (!dst || !dst->obsolete ||
@@ -2975,7 +2977,8 @@ static struct fib6_info *ip6_route_info_create(struct fib6_config *cfg,
 	if (!rt)
 		goto out;
 
-	rt->fib6_metrics = ip_fib_metrics_init(net, cfg->fc_mx, cfg->fc_mx_len);
+	rt->fib6_metrics = ip_fib_metrics_init(net, cfg->fc_mx, cfg->fc_mx_len,
+					       extack);
 	if (IS_ERR(rt->fib6_metrics)) {
 		err = PTR_ERR(rt->fib6_metrics);
 		/* Do not leave garbage there. */
@@ -3214,8 +3217,8 @@ static int ip6_del_cached_rt(struct rt6_info *rt, struct fib6_config *cfg)
 	if (cfg->fc_flags & RTF_GATEWAY &&
 	    !ipv6_addr_equal(&cfg->fc_gateway, &rt->rt6i_gateway))
 		goto out;
-	if (dst_hold_safe(&rt->dst))
-		rc = rt6_remove_exception_rt(rt);
+
+	rc = rt6_remove_exception_rt(rt);
 out:
 	return rc;
 }
@@ -3708,7 +3711,7 @@ struct fib6_info *addrconf_f6i_alloc(struct net *net,
 	if (!f6i)
 		return ERR_PTR(-ENOMEM);
 
-	f6i->fib6_metrics = ip_fib_metrics_init(net, NULL, 0);
+	f6i->fib6_metrics = ip_fib_metrics_init(net, NULL, 0, NULL);
 	f6i->dst_nocount = true;
 	f6i->dst_host = true;
 	f6i->fib6_protocol = RTPROT_KERNEL;

@@ -8,6 +8,7 @@
 #include <linux/netdevice.h>
 #include <linux/rhashtable.h>
 #include <linux/bitops.h>
+#include <linux/if_bridge.h>
 #include <linux/if_vlan.h>
 #include <linux/list.h>
 #include <linux/dcbnl.h>
@@ -261,6 +262,26 @@ static inline bool mlxsw_sp_bridge_has_vxlan(struct net_device *br_dev)
 	return !!mlxsw_sp_bridge_vxlan_dev_find(br_dev);
 }
 
+static inline int
+mlxsw_sp_vxlan_mapped_vid(const struct net_device *vxlan_dev, u16 *p_vid)
+{
+	struct bridge_vlan_info vinfo;
+	u16 vid = 0;
+	int err;
+
+	err = br_vlan_get_pvid(vxlan_dev, &vid);
+	if (err || !vid)
+		goto out;
+
+	err = br_vlan_get_info(vxlan_dev, vid, &vinfo);
+	if (err || !(vinfo.flags & BRIDGE_VLAN_INFO_UNTAGGED))
+		vid = 0;
+
+out:
+	*p_vid = vid;
+	return err;
+}
+
 static inline bool
 mlxsw_sp_port_is_pause_en(const struct mlxsw_sp_port *mlxsw_sp_port)
 {
@@ -358,10 +379,9 @@ bool mlxsw_sp_bridge_device_is_offloaded(const struct mlxsw_sp *mlxsw_sp,
 					 const struct net_device *br_dev);
 int mlxsw_sp_bridge_vxlan_join(struct mlxsw_sp *mlxsw_sp,
 			       const struct net_device *br_dev,
-			       const struct net_device *vxlan_dev,
+			       const struct net_device *vxlan_dev, u16 vid,
 			       struct netlink_ext_ack *extack);
 void mlxsw_sp_bridge_vxlan_leave(struct mlxsw_sp *mlxsw_sp,
-				 const struct net_device *br_dev,
 				 const struct net_device *vxlan_dev);
 
 /* spectrum.c */
@@ -721,6 +741,10 @@ int mlxsw_sp_setup_tc_prio(struct mlxsw_sp_port *mlxsw_sp_port,
 			   struct tc_prio_qopt_offload *p);
 
 /* spectrum_fid.c */
+bool mlxsw_sp_fid_lag_vid_valid(const struct mlxsw_sp_fid *fid);
+struct mlxsw_sp_fid *mlxsw_sp_fid_lookup_by_index(struct mlxsw_sp *mlxsw_sp,
+						  u16 fid_index);
+int mlxsw_sp_fid_nve_ifindex(const struct mlxsw_sp_fid *fid, int *nve_ifindex);
 struct mlxsw_sp_fid *mlxsw_sp_fid_lookup_by_vni(struct mlxsw_sp *mlxsw_sp,
 						__be32 vni);
 int mlxsw_sp_fid_vni(const struct mlxsw_sp_fid *fid, __be32 *vni);
@@ -728,7 +752,7 @@ int mlxsw_sp_fid_nve_flood_index_set(struct mlxsw_sp_fid *fid,
 				     u32 nve_flood_index);
 void mlxsw_sp_fid_nve_flood_index_clear(struct mlxsw_sp_fid *fid);
 bool mlxsw_sp_fid_nve_flood_index_is_set(const struct mlxsw_sp_fid *fid);
-int mlxsw_sp_fid_vni_set(struct mlxsw_sp_fid *fid, __be32 vni);
+int mlxsw_sp_fid_vni_set(struct mlxsw_sp_fid *fid, __be32 vni, int nve_ifindex);
 void mlxsw_sp_fid_vni_clear(struct mlxsw_sp_fid *fid);
 bool mlxsw_sp_fid_vni_is_set(const struct mlxsw_sp_fid *fid);
 int mlxsw_sp_fid_flood_set(struct mlxsw_sp_fid *fid,
@@ -749,6 +773,8 @@ u16 mlxsw_sp_fid_8021q_vid(const struct mlxsw_sp_fid *fid);
 struct mlxsw_sp_fid *mlxsw_sp_fid_8021q_get(struct mlxsw_sp *mlxsw_sp, u16 vid);
 struct mlxsw_sp_fid *mlxsw_sp_fid_8021d_get(struct mlxsw_sp *mlxsw_sp,
 					    int br_ifindex);
+struct mlxsw_sp_fid *mlxsw_sp_fid_8021q_lookup(struct mlxsw_sp *mlxsw_sp,
+					       u16 vid);
 struct mlxsw_sp_fid *mlxsw_sp_fid_8021d_lookup(struct mlxsw_sp *mlxsw_sp,
 					       int br_ifindex);
 struct mlxsw_sp_fid *mlxsw_sp_fid_rfid_get(struct mlxsw_sp *mlxsw_sp,
@@ -810,6 +836,9 @@ struct mlxsw_sp_nve_params {
 extern const struct mlxsw_sp_nve_ops *mlxsw_sp1_nve_ops_arr[];
 extern const struct mlxsw_sp_nve_ops *mlxsw_sp2_nve_ops_arr[];
 
+int mlxsw_sp_nve_learned_ip_resolve(struct mlxsw_sp *mlxsw_sp, u32 uip,
+				    enum mlxsw_sp_l3proto proto,
+				    union mlxsw_sp_l3addr *addr);
 int mlxsw_sp_nve_flood_ip_add(struct mlxsw_sp *mlxsw_sp,
 			      struct mlxsw_sp_fid *fid,
 			      enum mlxsw_sp_l3proto proto,
