@@ -33,9 +33,10 @@ let mb = ([M] ; fencerel(Mb) ; [M]) |
 	([M] ; po? ; [LKW] ; fencerel(After-spinlock) ; [M]) |
 	([M] ; po ; [UL] ; (co | po) ; [LKW] ;
 		fencerel(After-unlock-lock) ; [M])
+let memb = [M] ; fencerel(Memb) ; [M]
 let gp = po ; [Sync-rcu | Sync-srcu] ; po?
 
-let strong-fence = mb | gp
+let strong-fence = mb | gp | memb
 
 (* Release Acquire *)
 let acq-po = [Acquire] ; po ; [M]
@@ -85,6 +86,13 @@ acyclic hb as happens-before
 (* Propagation: Each non-rf link needs a strong fence. *)
 let pb = prop ; strong-fence ; hb*
 acyclic pb as propagation
+
+(********************)
+(* sys_membarrier() *)
+(********************)
+
+let memb-step = ( prop ; po ; prop )? ; memb
+acyclic memb-step as memb-before
 
 (*******)
 (* RCU *)

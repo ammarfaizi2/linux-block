@@ -17,6 +17,7 @@ rcu_dereference(X) __load{once}(X)
 smp_store_mb(X,V) { __store{once}(X,V); __fence{mb}; }
 
 // Fences
+smp_memb() { __fence{memb}; }
 smp_mb() { __fence{mb}; }
 smp_rmb() { __fence{rmb}; }
 smp_wmb() { __fence{wmb}; }
