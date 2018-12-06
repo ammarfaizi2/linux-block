@@ -4282,10 +4282,14 @@ commit_trans:
 				/*
 				 * The cleaner kthread might still be doing iput
 				 * operations. Wait for it to finish so that
-				 * more space is released.
+				 * more space is released.  We don't need to
+				 * explicitly run the delayed iputs here because
+				 * the commit_transaction would have woken up
+				 * the cleaner.
 				 */
-				mutex_lock(&fs_info->cleaner_delayed_iput_mutex);
-				mutex_unlock(&fs_info->cleaner_delayed_iput_mutex);
+				ret = btrfs_wait_on_delayed_iputs(fs_info);
+				if (ret)
+					return ret;
 				goto again;
 			} else {
 				btrfs_end_transaction(trans);
@@ -4954,6 +4958,14 @@ static void flush_space(struct btrfs_fs_info *fs_info,
 			ret = 0;
 		break;
 	case COMMIT_TRANS:
+		/*
+		 * If we have pending delayed iputs then we could free up a
+		 * bunch of pinned space, so make sure we run the iputs before
+		 * we do our pinned bytes check below.
+		 */
+		btrfs_run_delayed_iputs(fs_info);
+		btrfs_wait_on_delayed_iputs(fs_info);
+
 		ret = may_commit_transaction(fs_info, space_info);
 		break;
 	default:
@@ -9275,9 +9287,20 @@ int btrfs_drop_snapshot(struct btrfs_root *root,
 		goto out_free;
 	}
 
+	btrfs_run_delayed_items(trans);
+
 	if (block_rsv)
 		trans->block_rsv = block_rsv;
 
+	/*
+	 * This will help us catch people modifying the fs tree while we're
+	 * dropping it.  It is unsafe to mess with the fs tree while it's being
+	 * dropped as we unlock the root node and parent nodes as we walk down
+	 * the tree, assuming nothing will change.  If something does change
+	 * then we'll have stale information and drop references to blocks we've
+	 * already dropped.
+	 */
+	set_bit(BTRFS_ROOT_DELETING, &root->state);
 	if (btrfs_disk_key_objectid(&root_item->drop_progress) == 0) {
 		level = btrfs_header_level(root->node);
 		path->nodes[level] = btrfs_lock_root_node(root);

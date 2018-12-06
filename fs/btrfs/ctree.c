@@ -1440,6 +1440,9 @@ noinline int btrfs_cow_block(struct btrfs_trans_handle *trans,
 	u64 search_start;
 	int ret;
 
+	if (test_bit(BTRFS_ROOT_DELETING, &root->state))
+		WARN(1, KERN_CRIT "cow'ing blocks on a fs root thats being dropped\n");
+
 	if (trans->transaction != fs_info->running_transaction)
 		WARN(1, KERN_CRIT "trans %llu running %llu\n",
 		       trans->transid,
