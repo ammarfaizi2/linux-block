@@ -26,7 +26,11 @@ dtbinst-dirs	:= $(subdir-y) $(subdir-m)
 quiet_cmd_dtb_install =	INSTALL $<
       cmd_dtb_install =	mkdir -p $(2); cp $< $(2)
 
+ifeq ($(CONFIG_ARCH_WANT_FLAT_DTB_INSTALL),y)
+install-dir = $(INSTALL_DTBS_PATH)
+else
 install-dir = $(patsubst $(dtbinst_root)%,$(INSTALL_DTBS_PATH)%,$(obj))
+endif
 
 $(dtbinst-files): %.dtb: $(obj)/%.dtb
 	$(call cmd,dtb_install,$(install-dir))
