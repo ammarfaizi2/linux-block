@@ -1,0 +1,171 @@
+#!/usr/bin/env python3
+
+import os
+import re
+from git import Git
+import glob
+
+vendor_map = {
+    'alphascale' : 'alphascale',
+    'alpine' : 'alpine',
+    'artpec' : 'axis',
+    'atlas' : 'sirf',
+    'prima' : 'sirf',
+    'axm' : 'lsi',
+    'cx9' : 'cnxt',
+    'ecx' : 'calxeda',
+    'highbank' : 'calxeda',
+    'efm' : 'efm32',
+    'ep7' : 'cirrus',
+    'mxs': 'mxs',
+    'imx23': 'mxs',
+    'imx28': 'mxs',
+    'imx': 'imx',
+    'ls': 'fsl',
+    'vf': 'fsl',
+    'qcom': 'qcom',
+    'am3' : 'ti',
+    'am4' : 'ti',
+    'am5' : 'ti',
+    'dra' : 'ti',
+    'keystone' : 'ti',
+    'omap' : 'ti',
+    'compulab' : 'ti',
+    'logicpd' : 'ti',
+    'elpida' : 'ti',
+    'motorola-cpcap' : 'ti',
+    'twl' : 'ti',
+    'da' : 'ti',
+    'dm' : 'ti',
+    'nspire' : 'nspire',
+    'armada' : 'marvell',
+    'dove' : 'marvell',
+    'kirkwood' : 'marvell',
+    'orion' : 'marvell',
+    'mvebu' : 'marvell',
+    'mmp2' : 'marvell',
+    'berlin' : 'berlin',
+    'pxa2' : 'pxa',
+    'pxa3' : 'pxa',
+    'pxa' : 'marvell',
+    'arm-' : 'arm',
+    'integ' : 'arm',
+    'mps' : 'arm',
+    've' : 'arm',
+    'aspeed' : 'aspeed',
+    'at91' : 'at91',
+    'sama' : 'at91',
+    'usb_' : 'at91',
+    'tny_' : 'at91',
+    'mpa1600' : 'at91',
+    'animeo_ip' : 'at91',
+    'aks-cdu' : 'at91',
+    'ethernut5' : 'at91',
+    'evk-pro3' : 'at91',
+    'pm9g45' : 'at91',
+    'ge86' : 'at91',
+    'bcm' : 'brcm',
+    'exynos' : 'exynos',
+    's3c' : 'samsung',
+    's5p' : 'samsung',
+    'gemini' : 'gemini',
+    'hi3' : 'hisilicon',
+    'hip' : 'hisilicon',
+    'hisi' : 'hisilicon',
+    'mt' : 'mediatek',
+    'meson' : 'meson',
+    'moxa' : 'moxa',
+    'nuvo' : 'nuvoton',
+    'lpc' : 'lpc',
+    'owl' : 'actions',
+    'ox8' : 'oxsemi',
+    'picox' : 'picoxcell',
+    'r7' : 'renesas',
+    'r8' : 'renesas',
+    'r9' : 'renesas',
+    'emev2' : 'renesas',
+    'sh73a' : 'renesas',
+    'gr-' : 'renesas',
+    'iwg' : 'renesas',
+    'rk' : 'rockchip',
+    'rv11' : 'rockchip',
+    'socfpga' : 'socfpga',
+    'stm' : 'stm32',
+    'sti' : 'sti',
+    'st-pin' : 'sti',
+    'ste' : 'st-ericsson',
+    'spear' : 'spear',
+    'sun' : 'allwinner',
+    'axp' : 'allwinner',
+    'tango' : 'sigma',
+    'tegra' : 'nvidia',
+    'uniph' : 'socionext',
+    'vt8500' : 'vt8500',
+    'wm8' : 'vt8500',
+    'xen' : 'xen',
+    'zx' : 'zte',
+    'zynq' : 'xilinx',
+}
+
+if __name__ == "__main__":
+    g = Git('.')
+
+    g.checkout("HEAD", "arch/arm/boot/dts/Makefile")
+    dts_make = open("arch/arm/boot/dts/Makefile", "r").read()
+
+    # make entries 1 line
+    make2 = re.sub(r'\\\n', '', dts_make)
+
+    for k,v in vendor_map.items():
+        print('Moving: ' + k + '* --> ' + v + '/')
+
+        for f in glob.iglob("arch/arm/boot/dts/" + k + "*.*"):
+            new_dir = "arch/arm/boot/dts/" + v + "/"
+            base = os.path.splitext(os.path.basename(f))[0]
+
+            os.makedirs(new_dir, exist_ok=True)
+            g.mv(f, new_dir)
+
+            # Remove the file from the makefile
+            dts_make = re.sub('.*' + base + r'\.dtb.*\\\n', '', dts_make)
+            dts_make = re.sub('.*' + base + r'\.dtb', '', dts_make)
+
+            # extract the matching makefile entry
+            reg = re.search(r'.*' + base + r'.*', make2)
+            if not reg:
+                continue
+
+            entry = reg.group(0)
+            make2 = re.sub(r'.*' + base + r'.*', '', make2)
+            if entry:
+                makefile = open(new_dir + 'Makefile', 'a+')
+                print(entry, file=makefile)
+                makefile.close()
+
+
+    for d in sorted(glob.iglob("arch/arm/boot/dts/*/")):
+        # Add license and sort entries of sub-dir makefile
+        vendor_make = '# SPDX-License-Identifier: GPL-2.0\n'
+        try:
+            make_lines = open(d + 'Makefile', 'r').readlines()
+        except:
+            print('No Makefile in ' + d)
+            continue
+
+        for l in sorted(make_lines):
+            vendor_make += l
+
+        vendor_make = re.sub(r'\t', r'\\\n\t', vendor_make)
+
+        f = open(d + 'Makefile', 'w')
+        f.write(vendor_make)
+        f.close()
+        g.add(d + 'Makefile')
+
+        dts_make += 'subdir-y += ' + d.split(os.path.sep)[-2] + '\n'
+
+    # Remove entries with no dtbs left
+    dts_make = re.sub(r'.*\+= \\\n\n', '', dts_make)
+
+    open("arch/arm/boot/dts/Makefile", "w").write(dts_make)
+    g.add("arch/arm/boot/dts/Makefile")
