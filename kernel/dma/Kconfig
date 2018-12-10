@@ -51,3 +51,12 @@ config SWIOTLB
 	bool
 	select DMA_DIRECT_OPS
 	select NEED_DMA_MAP_STATE
+
+config DMA_REMAP
+	depends on MMU
+	bool
+
+config DMA_DIRECT_REMAP
+	bool
+	depends on DMA_DIRECT_OPS
+	select DMA_REMAP
