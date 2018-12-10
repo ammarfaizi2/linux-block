@@ -1,0 +1,99 @@
+next/soc
+	patch
+		ARM: stm32: debug: add low-level debug support
+	socfpga/soc
+		git://git.kernel.org/pub/scm/linux/kernel/git/dinguyen/linux tags/socfpga_updates_for_v5.0
+	patch
+		ARM: mmp2: initialize clocks before the timer
+		ARM: mmp/mmp2: dt: enable the clock
+		ARM: mmp: add a pxa-usb-phy device
+		ARM: mmp: add an instance of pxa-usb-phy to ttc_dkb and aspenite
+	omap/soc
+		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v4.21/soc-signed
+	broadcom/soc
+		https://github.com/Broadcom/stblinux tags/arm-soc/for-4.21/soc
+
+next/dt
+	sprd/dt
+		https://github.com/lyrazhang/linux next-for-4.21
+	vexpress/dt
+		git://git.kernel.org/pub/scm/linux/kernel/git/sudeep.holla/linux tags/vexpress-updates-4.20
+	rockchip/dts32
+		git://git.kernel.org/pub/scm/linux/kernel/git/mmind/linux-rockchip tags/v4.21-rockchip-dts32-1
+	rockchip/dts64
+		git://git.kernel.org/pub/scm/linux/kernel/git/mmind/linux-rockchip tags/v4.21-rockchip-dts64-1
+	renesas/dt
+		https://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas tags/renesas-arm-dt-for-v4.21
+	renesas/dt64
+		https://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas tags/renesas-arm64-dt-for-v4.21
+	socfgpa/dts
+		git://git.kernel.org/pub/scm/linux/kernel/git/dinguyen/linux tags/socfpga_dts_updates_for_v5.0
+	patch
+		dt-bindings: mrvl,mmp-timer: add clock
+		ARM: dts: mmp2: fix the gpio interrupt cell number
+		ARM: dts: mmp2: give gpio node a name
+		ARM: dts: mmp2: add clock to the timer
+		ARM: dts: mmp2: add MMC controllers
+		ARM: dts: mmp2: fix TWSI2
+		ARM: dts: mmp2: add more TWSI controllers
+		ARM: dts: mmp2: add OTG PHY
+		ARM: dts: mmp2: add USB OTG host controller
+		ARM: dts: mmp2: Add SSP controllers
+	vexpress/drm-dt
+		git://git.kernel.org/pub/scm/linux/kernel/git/linusw/linux-integrator tags/vexpress-drm-arm-soc
+	omap/dt
+		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v4.21/dt-signed
+	amlogic/dt
+		https://git.kernel.org/pub/scm/linux/kernel/git/khilman/linux-amlogic tags/amlogic-dt
+	amlogic/dt64
+		https://git.kernel.org/pub/scm/linux/kernel/git/khilman/linux-amlogic tags/amlogic-dt64
+	patch
+		ARM: dts: realview-pbx: Fix duplicate regulator nodes
+		ARM: dts: aspeed: add missing memory unit-address
+	hisi/dt64
+		git://github.com/hisilicon/linux-hisi tags/hisi-arm64-dt-for-4.21
+	broadcom/dt
+		https://github.com/Broadcom/stblinux tags/arm-soc/for-4.21/devicetree
+	patch
+		ARM: mmp2: DT: be compatible with mrvl,mmp2
+	qcom/dt64
+		git://git.kernel.org/pub/scm/linux/kernel/git/agross/linux tags/qcom-arm64-for-4.21
+	qcom/dt
+		git://git.kernel.org/pub/scm/linux/kernel/git/agross/linux tags/qcom-dts-for-4.21
+
+next/drivers
+	rockchip/drivers
+		git://git.kernel.org/pub/scm/linux/kernel/git/mmind/linux-rockchip tags/v4.21-rockchip-drivers-1
+	amlogic/drivers
+		https://git.kernel.org/pub/scm/linux/kernel/git/khilman/linux-amlogic tags/amlogic-drivers
+	omap/drivers
+		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v4.21/driver-signed
+	broadcom/drivers
+		https://github.com/Broadcom/stblinux tags/arm-soc/for-4.21/drivers
+	qcom/drivers
+		git://git.kernel.org/pub/scm/linux/kernel/git/agross/linux tags/qcom-drivers-for-4.21
+
+next/defconfig
+	vexpress/defconfig
+		git://git.kernel.org/pub/scm/linux/kernel/git/linusw/linux-integrator tags/vexpress-defconfig-arm-soc
+	omap/defconfig
+		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v4.21/defconfig-signed
+	patch
+		ARM: multi_v7_defconfig: enable STM32 analog & timer drivers
+	qcom/defconfig
+		git://git.kernel.org/pub/scm/linux/kernel/git/agross/linux tags/qcom-arm64-defconfig-for-4.21
+
+next/late
+
+fixes
+	patch
+		MAINTAINERS: mediatek: Update SoC entry
+	<no branch> (ce68cc6fad893eb33b69ef7ec186233a51696236)
+		https://git.kernel.org/pub/scm/linux/kernel/git/matthias.bgg/linux tags/v4.19-next-fixes
+	patch
+		ARM: mmp/mmp2: fix cpu_is_mmp2() on mmp2-dt
+		MAINTAINERS: update entry for MMP platform
+		ARM: dts: realview: Fix some more duplicate regulator nodes
+	<no branch> (e25b6783c7b1bb79103d4617336879423f86b05e)
+		https://github.com/Broadcom/stblinux tags/arm-soc/for-4.20/devicetree-fixes
+
