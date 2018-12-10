@@ -399,7 +399,7 @@ static noinline int btrfs_copy_from_user(loff_t pos, size_t write_bytes,
 	size_t copied = 0;
 	size_t total_copied = 0;
 	int pg = 0;
-	int offset = pos & (PAGE_SIZE - 1);
+	int offset = offset_in_page(pos);
 
 	while (write_bytes > 0) {
 		size_t count = min_t(size_t,
@@ -1374,7 +1374,7 @@ again:
 	}
 out:
 	btrfs_free_path(path);
-	return 0;
+	return ret;
 }
 
 /*
@@ -1611,7 +1611,7 @@ static noinline ssize_t btrfs_buffered_write(struct kiocb *iocb,
 		return -ENOMEM;
 
 	while (iov_iter_count(i) > 0) {
-		size_t offset = pos & (PAGE_SIZE - 1);
+		size_t offset = offset_in_page(pos);
 		size_t sector_offset;
 		size_t write_bytes = min(iov_iter_count(i),
 					 nrptrs * (size_t)PAGE_SIZE -
@@ -2185,25 +2185,6 @@ int btrfs_sync_file(struct file *file, loff_t start, loff_t end, int datasync)
 	 */
 	up_write(&BTRFS_I(inode)->dio_sem);
 	inode_unlock(inode);
-
-	/*
-	 * If any of the ordered extents had an error, just return it to user
-	 * space, so that the application knows some writes didn't succeed and
-	 * can take proper action (retry for e.g.). Blindly committing the
-	 * transaction in this case, would fool userspace that everything was
-	 * successful. And we also want to make sure our log doesn't contain
-	 * file extent items pointing to extents that weren't fully written to -
-	 * just like in the non fast fsync path, where we check for the ordered
-	 * operation's error flag before writing to the log tree and return -EIO
-	 * if any of them had this flag set (btrfs_wait_ordered_range) -
-	 * therefore we need to check for errors in the ordered operations,
-	 * which are indicated by ctx.io_err.
-	 */
-	if (ctx.io_err) {
-		btrfs_end_transaction(trans);
-		ret = ctx.io_err;
-		goto out;
-	}
 
 	if (ret != BTRFS_NO_LOG_SYNC) {
 		if (!ret) {
