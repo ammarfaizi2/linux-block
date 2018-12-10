@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 #ifndef _ASM_POWERPC_BOOK3S_32_MMU_HASH_H_
 #define _ASM_POWERPC_BOOK3S_32_MMU_HASH_H_
+
 /*
  * 32-bit hash table MMU support
  */
@@ -8,6 +9,8 @@
 /*
  * BATs
  */
+
+#include <asm/page.h>
 
 /* Block size masks */
 #define BL_128K	0x000
@@ -34,14 +37,20 @@
 #define BAT_PHYS_ADDR(x) ((u32)((x & 0x00000000fffe0000ULL) | \
 				((x & 0x0000000e00000000ULL) >> 24) | \
 				((x & 0x0000000100000000ULL) >> 30)))
+#define PHYS_BAT_ADDR(x) (((u64)(x) & 0x00000000fffe0000ULL) | \
+			  (((u64)(x) << 24) & 0x0000000e00000000ULL) | \
+			  (((u64)(x) << 30) & 0x0000000100000000ULL))
 #else
 #define BAT_PHYS_ADDR(x) (x)
+#define PHYS_BAT_ADDR(x) ((x) & 0xfffe0000)
 #endif
 
 struct ppc_bat {
 	u32 batu;
 	u32 batl;
 };
+
+typedef pte_t *pgtable_t;
 #endif /* !__ASSEMBLY__ */
 
 /*
