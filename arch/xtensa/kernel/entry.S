@@ -1022,25 +1022,6 @@ ENDPROC(fast_alloca)
  *   excsave_1:	dispatch table
  */
 
-ENTRY(fast_syscall_kernel)
-
-	/* Skip syscall. */
-
-	rsr	a0, epc1
-	addi	a0, a0, 3
-	wsr	a0, epc1
-
-	l32i	a0, a2, PT_DEPC
-	bgeui	a0, VALID_DOUBLE_EXCEPTION_ADDRESS, fast_syscall_unrecoverable
-
-	rsr	a0, depc			# get syscall-nr
-	_beqz	a0, fast_syscall_spill_registers
-	_beqi	a0, __NR_xtensa, fast_syscall_xtensa
-
-	j	kernel_exception
-
-ENDPROC(fast_syscall_kernel)
-
 ENTRY(fast_syscall_user)
 
 	/* Skip syscall. */
@@ -1874,7 +1855,7 @@ ENTRY(system_call)
 	/* syscall = sys_call_table[syscall_nr] */
 
 	movi	a4, sys_call_table
-	movi	a5, __NR_syscall_count
+	movi	a5, __NR_syscalls
 	movi	a6, -ENOSYS
 	bgeu	a3, a5, 1f
 
