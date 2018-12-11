@@ -106,6 +106,8 @@ struct iocb {
 	__u32	aio_resfd;
 }; /* 64 bytes */
 
+#define IOCTX_FLAG_IOPOLL	(1 << 0)	/* io_context is polled */
+
 #undef IFBIG
 #undef IFLITTLE
 
