@@ -145,6 +145,7 @@ enum nvme_ctrl_state {
 };
 
 struct nvme_ctrl {
+	bool comp_seen;
 	enum nvme_ctrl_state state;
 	bool identified;
 	spinlock_t lock;
@@ -153,6 +154,7 @@ struct nvme_ctrl {
 	struct request_queue *connect_q;
 	struct device *dev;
 	int instance;
+	int numa_node;
 	struct blk_mq_tag_set *tagset;
 	struct blk_mq_tag_set *admin_tagset;
 	struct list_head namespaces;
@@ -179,6 +181,7 @@ struct nvme_ctrl {
 	u32 page_size;
 	u32 max_hw_sectors;
 	u32 max_segments;
+	u16 crdt[3];
 	u16 oncs;
 	u16 oacs;
 	u16 nssa;
@@ -193,6 +196,7 @@ struct nvme_ctrl {
 	u8 apsta;
 	u32 oaes;
 	u32 aen_result;
+	u32 ctratt;
 	unsigned int shutdown_timeout;
 	unsigned int kato;
 	bool subsystem;
@@ -364,15 +368,6 @@ static inline void nvme_fault_inject_fini(struct nvme_ns *ns) {}
 static inline void nvme_should_fail(struct request *req) {}
 #endif
 
-static inline bool nvme_ctrl_ready(struct nvme_ctrl *ctrl)
-{
-	u32 val = 0;
-
-	if (ctrl->ops->reg_read32(ctrl, NVME_REG_CSTS, &val))
-		return false;
-	return val & NVME_CSTS_RDY;
-}
-
 static inline int nvme_reset_subsystem(struct nvme_ctrl *ctrl)
 {
 	if (!ctrl->subsystem)
@@ -408,7 +403,7 @@ static inline void nvme_put_ctrl(struct nvme_ctrl *ctrl)
 }
 
 void nvme_complete_rq(struct request *req);
-void nvme_cancel_request(struct request *req, void *data, bool reserved);
+bool nvme_cancel_request(struct request *req, void *data, bool reserved);
 bool nvme_change_ctrl_state(struct nvme_ctrl *ctrl,
 		enum nvme_ctrl_state new_state);
 int nvme_disable_ctrl(struct nvme_ctrl *ctrl, u64 cap);
