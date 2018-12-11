@@ -1,4 +1,6 @@
 /*
+ * IOMMU API for MTK architected m4u v1 implementations
+ *
  * Copyright (c) 2015-2016 MediaTek Inc.
  * Author: Honghui Zhang <honghui.zhang@mediatek.com>
  *
@@ -35,7 +37,7 @@
 #include <linux/spinlock.h>
 #include <asm/barrier.h>
 #include <asm/dma-iommu.h>
-#include <linux/module.h>
+#include <linux/init.h>
 #include <dt-bindings/memory/mt2701-larb-port.h>
 #include <soc/mediatek/smi.h>
 #include "mtk_iommu.h"
@@ -362,7 +364,7 @@ static phys_addr_t mtk_iommu_iova_to_phys(struct iommu_domain *domain,
 	return pa;
 }
 
-static struct iommu_ops mtk_iommu_ops;
+static const struct iommu_ops mtk_iommu_ops;
 
 /*
  * MTK generation one iommu HW only support one iommu domain, and all the client
@@ -524,7 +526,7 @@ static int mtk_iommu_hw_init(const struct mtk_iommu_data *data)
 	return 0;
 }
 
-static struct iommu_ops mtk_iommu_ops = {
+static const struct iommu_ops mtk_iommu_ops = {
 	.domain_alloc	= mtk_iommu_domain_alloc,
 	.domain_free	= mtk_iommu_domain_free,
 	.attach_dev	= mtk_iommu_attach_device,
@@ -704,15 +706,4 @@ static int __init m4u_init(void)
 {
 	return platform_driver_register(&mtk_iommu_driver);
 }
-
-static void __exit m4u_exit(void)
-{
-	return platform_driver_unregister(&mtk_iommu_driver);
-}
-
 subsys_initcall(m4u_init);
-module_exit(m4u_exit);
-
-MODULE_DESCRIPTION("IOMMU API for MTK architected m4u v1 implementations");
-MODULE_AUTHOR("Honghui Zhang <honghui.zhang@mediatek.com>");
-MODULE_LICENSE("GPL v2");
