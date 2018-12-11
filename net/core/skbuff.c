@@ -1089,7 +1089,7 @@ void sock_zerocopy_put(struct ubuf_info *uarg)
 }
 EXPORT_SYMBOL_GPL(sock_zerocopy_put);
 
-void sock_zerocopy_put_abort(struct ubuf_info *uarg)
+void sock_zerocopy_put_abort(struct ubuf_info *uarg, bool have_uref)
 {
 	if (uarg) {
 		struct sock *sk = skb_from_uarg(uarg)->sk;
@@ -1097,13 +1097,20 @@ void sock_zerocopy_put_abort(struct ubuf_info *uarg)
 		atomic_dec(&sk->sk_zckey);
 		uarg->len--;
 
-		sock_zerocopy_put(uarg);
+		if (have_uref)
+			sock_zerocopy_put(uarg);
 	}
 }
 EXPORT_SYMBOL_GPL(sock_zerocopy_put_abort);
 
 extern int __zerocopy_sg_from_iter(struct sock *sk, struct sk_buff *skb,
 				   struct iov_iter *from, size_t length);
+
+int skb_zerocopy_iter_dgram(struct sk_buff *skb, struct msghdr *msg, int len)
+{
+	return __zerocopy_sg_from_iter(skb->sk, skb, &msg->msg_iter, len);
+}
+EXPORT_SYMBOL_GPL(skb_zerocopy_iter_dgram);
 
 int skb_zerocopy_iter_stream(struct sock *sk, struct sk_buff *skb,
 			     struct msghdr *msg, int len,
@@ -1131,7 +1138,7 @@ int skb_zerocopy_iter_stream(struct sock *sk, struct sk_buff *skb,
 		return err;
 	}
 
-	skb_zcopy_set(skb, uarg);
+	skb_zcopy_set(skb, uarg, NULL);
 	return skb->len - orig_len;
 }
 EXPORT_SYMBOL_GPL(skb_zerocopy_iter_stream);
@@ -1151,7 +1158,7 @@ static int skb_zerocopy_clone(struct sk_buff *nskb, struct sk_buff *orig,
 			if (skb_copy_ubufs(nskb, GFP_ATOMIC))
 				return -EIO;
 		}
-		skb_zcopy_set(nskb, skb_uarg(orig));
+		skb_zcopy_set(nskb, skb_uarg(orig), NULL);
 	}
 	return 0;
 }
@@ -1925,8 +1932,6 @@ void *__pskb_pull_tail(struct sk_buff *skb, int delta)
 		struct sk_buff *insp = NULL;
 
 		do {
-			BUG_ON(!list);
-
 			if (list->len <= eat) {
 				/* Eaten as whole. */
 				eat -= list->len;
@@ -2366,19 +2371,6 @@ error:
 }
 EXPORT_SYMBOL_GPL(skb_send_sock_locked);
 
-/* Send skb data on a socket. */
-int skb_send_sock(struct sock *sk, struct sk_buff *skb, int offset, int len)
-{
-	int ret = 0;
-
-	lock_sock(sk);
-	ret = skb_send_sock_locked(sk, skb, offset, len);
-	release_sock(sk);
-
-	return ret;
-}
-EXPORT_SYMBOL_GPL(skb_send_sock);
-
 /**
  *	skb_store_bits - store bits from kernel buffer to skb
  *	@skb: destination buffer
@@ -2644,6 +2636,65 @@ __wsum skb_copy_and_csum_bits(const struct sk_buff *skb, int offset,
 	return csum;
 }
 EXPORT_SYMBOL(skb_copy_and_csum_bits);
+
+__sum16 __skb_checksum_complete_head(struct sk_buff *skb, int len)
+{
+	__sum16 sum;
+
+	sum = csum_fold(skb_checksum(skb, 0, len, skb->csum));
+	/* See comments in __skb_checksum_complete(). */
+	if (likely(!sum)) {
+		if (unlikely(skb->ip_summed == CHECKSUM_COMPLETE) &&
+		    !skb->csum_complete_sw)
+			netdev_rx_csum_fault(skb->dev, skb);
+	}
+	if (!skb_shared(skb))
+		skb->csum_valid = !sum;
+	return sum;
+}
+EXPORT_SYMBOL(__skb_checksum_complete_head);
+
+/* This function assumes skb->csum already holds pseudo header's checksum,
+ * which has been changed from the hardware checksum, for example, by
+ * __skb_checksum_validate_complete(). And, the original skb->csum must
+ * have been validated unsuccessfully for CHECKSUM_COMPLETE case.
+ *
+ * It returns non-zero if the recomputed checksum is still invalid, otherwise
+ * zero. The new checksum is stored back into skb->csum unless the skb is
+ * shared.
+ */
+__sum16 __skb_checksum_complete(struct sk_buff *skb)
+{
+	__wsum csum;
+	__sum16 sum;
+
+	csum = skb_checksum(skb, 0, skb->len, 0);
+
+	sum = csum_fold(csum_add(skb->csum, csum));
+	/* This check is inverted, because we already knew the hardware
+	 * checksum is invalid before calling this function. So, if the
+	 * re-computed checksum is valid instead, then we have a mismatch
+	 * between the original skb->csum and skb_checksum(). This means either
+	 * the original hardware checksum is incorrect or we screw up skb->csum
+	 * when moving skb->data around.
+	 */
+	if (likely(!sum)) {
+		if (unlikely(skb->ip_summed == CHECKSUM_COMPLETE) &&
+		    !skb->csum_complete_sw)
+			netdev_rx_csum_fault(skb->dev, skb);
+	}
+
+	if (!skb_shared(skb)) {
+		/* Save full packet checksum */
+		skb->csum = csum;
+		skb->ip_summed = CHECKSUM_COMPLETE;
+		skb->csum_complete_sw = 1;
+		skb->csum_valid = !sum;
+	}
+
+	return sum;
+}
+EXPORT_SYMBOL(__skb_checksum_complete);
 
 static __wsum warn_crc32c_csum_update(const void *buff, int len, __wsum sum)
 {
@@ -2961,28 +3012,6 @@ void skb_append(struct sk_buff *old, struct sk_buff *newsk, struct sk_buff_head 
 	spin_unlock_irqrestore(&list->lock, flags);
 }
 EXPORT_SYMBOL(skb_append);
-
-/**
- *	skb_insert	-	insert a buffer
- *	@old: buffer to insert before
- *	@newsk: buffer to insert
- *	@list: list to use
- *
- *	Place a packet before a given packet in a list. The list locks are
- * 	taken and this function is atomic with respect to other list locked
- *	calls.
- *
- *	A buffer cannot be placed on two lists at the same time.
- */
-void skb_insert(struct sk_buff *old, struct sk_buff *newsk, struct sk_buff_head *list)
-{
-	unsigned long flags;
-
-	spin_lock_irqsave(&list->lock, flags);
-	__skb_insert(newsk, old->prev, old, list);
-	spin_unlock_irqrestore(&list->lock, flags);
-}
-EXPORT_SYMBOL(skb_insert);
 
 static inline void skb_split_inside_header(struct sk_buff *skb,
 					   struct sk_buff* skb1,
@@ -4856,7 +4885,7 @@ void skb_scrub_packet(struct sk_buff *skb, bool xnet)
 
 #ifdef CONFIG_NET_SWITCHDEV
 	skb->offload_fwd_mark = 0;
-	skb->offload_mr_fwd_mark = 0;
+	skb->offload_l3_fwd_mark = 0;
 #endif
 
 	if (!xnet)
@@ -5128,7 +5157,7 @@ int skb_vlan_pop(struct sk_buff *skb)
 	int err;
 
 	if (likely(skb_vlan_tag_present(skb))) {
-		skb->vlan_tci = 0;
+		__vlan_hwaccel_clear_tag(skb);
 	} else {
 		if (unlikely(!eth_type_vlan(skb->protocol)))
 			return 0;

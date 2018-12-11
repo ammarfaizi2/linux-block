@@ -90,7 +90,6 @@ enum hclge_opcode_type {
 	/* MAC command */
 	HCLGE_OPC_CONFIG_MAC_MODE	= 0x0301,
 	HCLGE_OPC_CONFIG_AN_MODE	= 0x0304,
-	HCLGE_OPC_QUERY_AN_RESULT	= 0x0306,
 	HCLGE_OPC_QUERY_LINK_STATUS	= 0x0307,
 	HCLGE_OPC_CONFIG_MAX_FRM_SIZE	= 0x0308,
 	HCLGE_OPC_CONFIG_SPEED_DUP	= 0x0309,
@@ -126,6 +125,7 @@ enum hclge_opcode_type {
 	HCLGE_OPC_TM_PRI_SCH_MODE_CFG   = 0x0813,
 	HCLGE_OPC_TM_QS_SCH_MODE_CFG    = 0x0814,
 	HCLGE_OPC_TM_BP_TO_QSET_MAPPING = 0x0815,
+	HCLGE_OPC_ETS_TC_WEIGHT		= 0x0843,
 
 	/* Packet buffer allocate commands */
 	HCLGE_OPC_TX_BUFF_ALLOC		= 0x0901,
@@ -152,6 +152,7 @@ enum hclge_opcode_type {
 
 	/* TSO command */
 	HCLGE_OPC_TSO_GENERIC_CONFIG	= 0x0C01,
+	HCLGE_OPC_GRO_GENERIC_CONFIG    = 0x0C10,
 
 	/* RSS commands */
 	HCLGE_OPC_RSS_GENERIC_CONFIG	= 0x0D01,
@@ -210,27 +211,33 @@ enum hclge_opcode_type {
 	/* Led command */
 	HCLGE_OPC_LED_STATUS_CFG	= 0xB000,
 
+	/* SFP command */
+	HCLGE_OPC_SFP_GET_SPEED		= 0x7104,
+
 	/* Error INT commands */
+	HCLGE_MAC_COMMON_INT_EN		= 0x030E,
 	HCLGE_TM_SCH_ECC_INT_EN		= 0x0829,
-	HCLGE_TM_SCH_ECC_ERR_RINT_CMD	= 0x082d,
-	HCLGE_TM_SCH_ECC_ERR_RINT_CE	= 0x082f,
-	HCLGE_TM_SCH_ECC_ERR_RINT_NFE	= 0x0830,
-	HCLGE_TM_SCH_ECC_ERR_RINT_FE	= 0x0831,
-	HCLGE_TM_SCH_MBIT_ECC_INFO_CMD	= 0x0833,
+	HCLGE_SSU_ECC_INT_CMD		= 0x0989,
+	HCLGE_SSU_COMMON_INT_CMD	= 0x098C,
+	HCLGE_PPU_MPF_ECC_INT_CMD	= 0x0B40,
+	HCLGE_PPU_MPF_OTHER_INT_CMD	= 0x0B41,
+	HCLGE_PPU_PF_OTHER_INT_CMD	= 0x0B42,
 	HCLGE_COMMON_ECC_INT_CFG	= 0x1505,
-	HCLGE_IGU_EGU_TNL_INT_QUERY	= 0x1802,
+	HCLGE_QUERY_RAS_INT_STS_BD_NUM	= 0x1510,
+	HCLGE_QUERY_CLEAR_MPF_RAS_INT	= 0x1511,
+	HCLGE_QUERY_CLEAR_PF_RAS_INT	= 0x1512,
+	HCLGE_QUERY_MSIX_INT_STS_BD_NUM	= 0x1513,
+	HCLGE_QUERY_CLEAR_ALL_MPF_MSIX_INT	= 0x1514,
+	HCLGE_QUERY_CLEAR_ALL_PF_MSIX_INT	= 0x1515,
+	HCLGE_CONFIG_ROCEE_RAS_INT_EN	= 0x1580,
+	HCLGE_QUERY_CLEAR_ROCEE_RAS_INT = 0x1581,
+	HCLGE_ROCEE_PF_RAS_INT_CMD	= 0x1584,
 	HCLGE_IGU_EGU_TNL_INT_EN	= 0x1803,
-	HCLGE_IGU_EGU_TNL_INT_CLR	= 0x1804,
-	HCLGE_IGU_COMMON_INT_QUERY	= 0x1805,
 	HCLGE_IGU_COMMON_INT_EN		= 0x1806,
-	HCLGE_IGU_COMMON_INT_CLR	= 0x1807,
 	HCLGE_TM_QCN_MEM_INT_CFG	= 0x1A14,
-	HCLGE_TM_QCN_MEM_INT_INFO_CMD	= 0x1A17,
 	HCLGE_PPP_CMD0_INT_CMD		= 0x2100,
 	HCLGE_PPP_CMD1_INT_CMD		= 0x2101,
-	HCLGE_NCSI_INT_QUERY		= 0x2400,
 	HCLGE_NCSI_INT_EN		= 0x2401,
-	HCLGE_NCSI_INT_CLR		= 0x2402,
 };
 
 #define HCLGE_TQP_REG_OFFSET		0x80000
@@ -542,20 +549,6 @@ struct hclge_config_mac_speed_dup_cmd {
 	u8 rsv[22];
 };
 
-#define HCLGE_QUERY_SPEED_S		3
-#define HCLGE_QUERY_AN_B		0
-#define HCLGE_QUERY_DUPLEX_B		2
-
-#define HCLGE_QUERY_SPEED_M		GENMASK(4, 0)
-#define HCLGE_QUERY_AN_M		BIT(HCLGE_QUERY_AN_B)
-#define HCLGE_QUERY_DUPLEX_M		BIT(HCLGE_QUERY_DUPLEX_B)
-
-struct hclge_query_an_speed_dup_cmd {
-	u8 an_syn_dup_speed;
-	u8 pause;
-	u8 rsv[23];
-};
-
 #define HCLGE_RING_ID_MASK		GENMASK(9, 0)
 #define HCLGE_TQP_ENABLE_B		0
 
@@ -570,6 +563,11 @@ struct hclge_query_an_speed_dup_cmd {
 struct hclge_config_auto_neg_cmd {
 	__le32  cfg_an_cmd_flag;
 	u8      rsv[20];
+};
+
+struct hclge_sfp_speed_cmd {
+	__le32	sfp_speed;
+	u32	rsv[5];
 };
 
 #define HCLGE_MAC_UPLINK_PORT		0x100
@@ -756,6 +754,12 @@ struct hclge_cfg_tso_status_cmd {
 	__le16 tso_mss_min;
 	__le16 tso_mss_max;
 	u8 rsv[20];
+};
+
+#define HCLGE_GRO_EN_B		0
+struct hclge_cfg_gro_status_cmd {
+	__le16 gro_en;
+	u8 rsv[22];
 };
 
 #define HCLGE_TSO_MSS_MIN	256

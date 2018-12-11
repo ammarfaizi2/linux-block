@@ -31,6 +31,8 @@
 #define BR_PORT_BITS	10
 #define BR_MAX_PORTS	(1<<BR_PORT_BITS)
 
+#define BR_MULTICAST_DEFAULT_HASH_MAX 4096
+
 #define BR_VERSION	"2.3"
 
 /* Control of forwarding link local multicast */
@@ -213,23 +215,14 @@ struct net_bridge_port_group {
 };
 
 struct net_bridge_mdb_entry {
-	struct hlist_node		hlist[2];
+	struct rhash_head		rhnode;
 	struct net_bridge		*br;
 	struct net_bridge_port_group __rcu *ports;
 	struct rcu_head			rcu;
 	struct timer_list		timer;
 	struct br_ip			addr;
 	bool				host_joined;
-};
-
-struct net_bridge_mdb_htable {
-	struct hlist_head		*mhash;
-	struct rcu_head			rcu;
-	struct net_bridge_mdb_htable	*old;
-	u32				size;
-	u32				max;
-	u32				secret;
-	u32				ver;
+	struct hlist_node		mdb_node;
 };
 
 struct net_bridge_port {
@@ -328,6 +321,7 @@ enum net_bridge_opts {
 	BROPT_NEIGH_SUPPRESS_ENABLED,
 	BROPT_MTU_SET_BY_USER,
 	BROPT_VLAN_STATS_PER_PORT,
+	BROPT_NO_LL_LEARN,
 };
 
 struct net_bridge {
@@ -380,7 +374,6 @@ struct net_bridge {
 
 #ifdef CONFIG_BRIDGE_IGMP_SNOOPING
 
-	u32				hash_elasticity;
 	u32				hash_max;
 
 	u32				multicast_last_member_count;
@@ -399,7 +392,9 @@ struct net_bridge {
 	unsigned long			multicast_query_response_interval;
 	unsigned long			multicast_startup_query_interval;
 
-	struct net_bridge_mdb_htable __rcu *mdb;
+	struct rhashtable		mdb_hash_tbl;
+
+	struct hlist_head		mdb_list;
 	struct hlist_head		router_list;
 
 	struct timer_list		multicast_router_timer;
@@ -507,6 +502,14 @@ static inline int br_opt_get(const struct net_bridge *br,
 	return test_bit(opt, &br->options);
 }
 
+int br_boolopt_toggle(struct net_bridge *br, enum br_boolopt_id opt, bool on,
+		      struct netlink_ext_ack *extack);
+int br_boolopt_get(const struct net_bridge *br, enum br_boolopt_id opt);
+int br_boolopt_multi_toggle(struct net_bridge *br,
+			    struct br_boolopt_multi *bm,
+			    struct netlink_ext_ack *extack);
+void br_boolopt_multi_get(const struct net_bridge *br,
+			  struct br_boolopt_multi *bm);
 void br_opt_toggle(struct net_bridge *br, enum net_bridge_opts opt, bool on);
 
 /* br_device.c */
@@ -650,7 +653,6 @@ int br_ioctl_deviceless_stub(struct net *net, unsigned int cmd,
 
 /* br_multicast.c */
 #ifdef CONFIG_BRIDGE_IGMP_SNOOPING
-extern unsigned int br_mdb_rehash_seq;
 int br_multicast_rcv(struct net_bridge *br, struct net_bridge_port *port,
 		     struct sk_buff *skb, u16 vid);
 struct net_bridge_mdb_entry *br_mdb_get(struct net_bridge *br,
@@ -675,17 +677,15 @@ int br_multicast_set_igmp_version(struct net_bridge *br, unsigned long val);
 int br_multicast_set_mld_version(struct net_bridge *br, unsigned long val);
 #endif
 struct net_bridge_mdb_entry *
-br_mdb_ip_get(struct net_bridge_mdb_htable *mdb, struct br_ip *dst);
+br_mdb_ip_get(struct net_bridge *br, struct br_ip *dst);
 struct net_bridge_mdb_entry *
-br_multicast_new_group(struct net_bridge *br, struct net_bridge_port *port,
-		       struct br_ip *group);
-void br_multicast_free_pg(struct rcu_head *head);
+br_multicast_new_group(struct net_bridge *br, struct br_ip *group);
 struct net_bridge_port_group *
 br_multicast_new_port_group(struct net_bridge_port *port, struct br_ip *group,
 			    struct net_bridge_port_group __rcu *next,
 			    unsigned char flags, const unsigned char *src);
-void br_mdb_init(void);
-void br_mdb_uninit(void);
+int br_mdb_hash_init(struct net_bridge *br);
+void br_mdb_hash_fini(struct net_bridge *br);
 void br_mdb_notify(struct net_device *dev, struct net_bridge_port *port,
 		   struct br_ip *group, int type, u8 flags);
 void br_rtr_notify(struct net_device *dev, struct net_bridge_port *port,
@@ -697,6 +697,8 @@ void br_multicast_uninit_stats(struct net_bridge *br);
 void br_multicast_get_stats(const struct net_bridge *br,
 			    const struct net_bridge_port *p,
 			    struct br_mcast_stats *dest);
+void br_mdb_init(void);
+void br_mdb_uninit(void);
 
 #define mlock_dereference(X, br) \
 	rcu_dereference_protected(X, lockdep_is_held(&br->multicast_lock))
@@ -822,6 +824,15 @@ static inline void br_mdb_uninit(void)
 {
 }
 
+static inline int br_mdb_hash_init(struct net_bridge *br)
+{
+	return 0;
+}
+
+static inline void br_mdb_hash_fini(struct net_bridge *br)
+{
+}
+
 static inline void br_multicast_count(struct net_bridge *br,
 				      const struct net_bridge_port *p,
 				      const struct sk_buff *skb,
@@ -912,7 +923,7 @@ static inline int br_vlan_get_tag(const struct sk_buff *skb, u16 *vid)
 	int err = 0;
 
 	if (skb_vlan_tag_present(skb)) {
-		*vid = skb_vlan_tag_get(skb) & VLAN_VID_MASK;
+		*vid = skb_vlan_tag_get_id(skb);
 	} else {
 		*vid = 0;
 		err = -EINVAL;

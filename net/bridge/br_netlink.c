@@ -1035,6 +1035,8 @@ static const struct nla_policy br_policy[IFLA_BR_MAX + 1] = {
 	[IFLA_BR_MCAST_IGMP_VERSION] = { .type = NLA_U8 },
 	[IFLA_BR_MCAST_MLD_VERSION] = { .type = NLA_U8 },
 	[IFLA_BR_VLAN_STATS_PER_PORT] = { .type = NLA_U8 },
+	[IFLA_BR_MULTI_BOOLOPT] = { .type = NLA_EXACT_LEN,
+				    .len = sizeof(struct br_boolopt_multi) },
 };
 
 static int br_changelink(struct net_device *brdev, struct nlattr *tb[],
@@ -1187,19 +1189,12 @@ static int br_changelink(struct net_device *brdev, struct nlattr *tb[],
 			return err;
 	}
 
-	if (data[IFLA_BR_MCAST_HASH_ELASTICITY]) {
-		u32 val = nla_get_u32(data[IFLA_BR_MCAST_HASH_ELASTICITY]);
+	if (data[IFLA_BR_MCAST_HASH_ELASTICITY])
+		br_warn(br, "the hash_elasticity option has been deprecated and is always %u\n",
+			RHT_ELASTICITY);
 
-		br->hash_elasticity = val;
-	}
-
-	if (data[IFLA_BR_MCAST_HASH_MAX]) {
-		u32 hash_max = nla_get_u32(data[IFLA_BR_MCAST_HASH_MAX]);
-
-		err = br_multicast_set_hash_max(br, hash_max);
-		if (err)
-			return err;
-	}
+	if (data[IFLA_BR_MCAST_HASH_MAX])
+		br->hash_max = nla_get_u32(data[IFLA_BR_MCAST_HASH_MAX]);
 
 	if (data[IFLA_BR_MCAST_LAST_MEMBER_CNT]) {
 		u32 val = nla_get_u32(data[IFLA_BR_MCAST_LAST_MEMBER_CNT]);
@@ -1296,6 +1291,15 @@ static int br_changelink(struct net_device *brdev, struct nlattr *tb[],
 	}
 #endif
 
+	if (data[IFLA_BR_MULTI_BOOLOPT]) {
+		struct br_boolopt_multi *bm;
+
+		bm = nla_data(data[IFLA_BR_MULTI_BOOLOPT]);
+		err = br_boolopt_multi_toggle(br, bm, extack);
+		if (err)
+			return err;
+	}
+
 	return 0;
 }
 
@@ -1374,6 +1378,7 @@ static size_t br_get_size(const struct net_device *brdev)
 	       nla_total_size(sizeof(u8)) +     /* IFLA_BR_NF_CALL_IP6TABLES */
 	       nla_total_size(sizeof(u8)) +     /* IFLA_BR_NF_CALL_ARPTABLES */
 #endif
+	       nla_total_size(sizeof(struct br_boolopt_multi)) + /* IFLA_BR_MULTI_BOOLOPT */
 	       0;
 }
 
@@ -1387,6 +1392,7 @@ static int br_fill_info(struct sk_buff *skb, const struct net_device *brdev)
 	u32 stp_enabled = br->stp_enabled;
 	u16 priority = (br->bridge_id.prio[0] << 8) | br->bridge_id.prio[1];
 	u8 vlan_enabled = br_vlan_enabled(br->dev);
+	struct br_boolopt_multi bm;
 	u64 clockval;
 
 	clockval = br_timer_value(&br->hello_timer);
@@ -1403,6 +1409,7 @@ static int br_fill_info(struct sk_buff *skb, const struct net_device *brdev)
 	if (nla_put_u64_64bit(skb, IFLA_BR_GC_TIMER, clockval, IFLA_BR_PAD))
 		return -EMSGSIZE;
 
+	br_boolopt_multi_get(br, &bm);
 	if (nla_put_u32(skb, IFLA_BR_FORWARD_DELAY, forward_delay) ||
 	    nla_put_u32(skb, IFLA_BR_HELLO_TIME, hello_time) ||
 	    nla_put_u32(skb, IFLA_BR_MAX_AGE, age_time) ||
@@ -1420,7 +1427,8 @@ static int br_fill_info(struct sk_buff *skb, const struct net_device *brdev)
 	    nla_put_u8(skb, IFLA_BR_TOPOLOGY_CHANGE, br->topology_change) ||
 	    nla_put_u8(skb, IFLA_BR_TOPOLOGY_CHANGE_DETECTED,
 		       br->topology_change_detected) ||
-	    nla_put(skb, IFLA_BR_GROUP_ADDR, ETH_ALEN, br->group_addr))
+	    nla_put(skb, IFLA_BR_GROUP_ADDR, ETH_ALEN, br->group_addr) ||
+	    nla_put(skb, IFLA_BR_MULTI_BOOLOPT, sizeof(bm), &bm))
 		return -EMSGSIZE;
 
 #ifdef CONFIG_BRIDGE_VLAN_FILTERING
@@ -1442,8 +1450,7 @@ static int br_fill_info(struct sk_buff *skb, const struct net_device *brdev)
 		       br_opt_get(br, BROPT_MULTICAST_QUERIER)) ||
 	    nla_put_u8(skb, IFLA_BR_MCAST_STATS_ENABLED,
 		       br_opt_get(br, BROPT_MULTICAST_STATS_ENABLED)) ||
-	    nla_put_u32(skb, IFLA_BR_MCAST_HASH_ELASTICITY,
-			br->hash_elasticity) ||
+	    nla_put_u32(skb, IFLA_BR_MCAST_HASH_ELASTICITY, RHT_ELASTICITY) ||
 	    nla_put_u32(skb, IFLA_BR_MCAST_HASH_MAX, br->hash_max) ||
 	    nla_put_u32(skb, IFLA_BR_MCAST_LAST_MEMBER_CNT,
 			br->multicast_last_member_count) ||
