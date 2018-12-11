@@ -4105,7 +4105,7 @@ int extent_readpages(struct address_space *mapping, struct list_head *pages,
 
 	while (!list_empty(pages)) {
 		for (nr = 0; nr < BTRFS_PAGES_BATCH && !list_empty(pages);) {
-			struct page *page = list_entry(pages->prev, struct page, lru);
+			struct page *page = lru_to_page(pages);
 
 			prefetchw(&page->flags);
 			list_del(&page->lru);
