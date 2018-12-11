@@ -60,7 +60,7 @@ static const struct uverbs_attr_spec mlx5_ib_flow_type[] = {
 
 #define MLX5_IB_CREATE_FLOW_MAX_FLOW_ACTIONS 2
 static int UVERBS_HANDLER(MLX5_IB_METHOD_CREATE_FLOW)(
-	struct ib_uverbs_file *file, struct uverbs_attr_bundle *attrs)
+	struct uverbs_attr_bundle *attrs)
 {
 	struct mlx5_flow_act flow_act = {.flow_tag = MLX5_FS_DEFAULT_FLOW_TAG};
 	struct mlx5_ib_flow_handler *flow_handler;
@@ -77,6 +77,7 @@ static int UVERBS_HANDLER(MLX5_IB_METHOD_CREATE_FLOW)(
 		uverbs_attr_get_uobject(attrs, MLX5_IB_ATTR_CREATE_FLOW_HANDLE);
 	struct mlx5_ib_dev *dev = to_mdev(uobj->context->device);
 	int len, ret, i;
+	u32 counter_id = 0;
 
 	if (!capable(CAP_NET_RAW))
 		return -EPERM;
@@ -128,6 +129,15 @@ static int UVERBS_HANDLER(MLX5_IB_METHOD_CREATE_FLOW)(
 		dest_type = MLX5_FLOW_DESTINATION_TYPE_PORT;
 	}
 
+	len = uverbs_attr_get_uobjs_arr(attrs,
+		MLX5_IB_ATTR_CREATE_FLOW_ARR_COUNTERS_DEVX, &arr_flow_actions);
+	if (len) {
+		devx_obj = arr_flow_actions[0]->object;
+
+		if (!mlx5_ib_devx_is_flow_counter(devx_obj, &counter_id))
+			return -EINVAL;
+		flow_act.action |= MLX5_FLOW_CONTEXT_ACTION_COUNT;
+	}
 	if (dev->rep)
 		return -ENOTSUPP;
 
@@ -164,6 +174,7 @@ static int UVERBS_HANDLER(MLX5_IB_METHOD_CREATE_FLOW)(
 	}
 
 	flow_handler = mlx5_ib_raw_fs_rule_add(dev, fs_matcher, &flow_act,
+					       counter_id,
 					       cmd_in, inlen,
 					       dest_id, dest_type);
 	if (IS_ERR(flow_handler)) {
@@ -194,7 +205,7 @@ static int flow_matcher_cleanup(struct ib_uobject *uobject,
 }
 
 static int UVERBS_HANDLER(MLX5_IB_METHOD_FLOW_MATCHER_CREATE)(
-	struct ib_uverbs_file *file, struct uverbs_attr_bundle *attrs)
+	struct uverbs_attr_bundle *attrs)
 {
 	struct ib_uobject *uobj = uverbs_attr_get_uobject(
 		attrs, MLX5_IB_ATTR_FLOW_MATCHER_CREATE_HANDLE);
@@ -313,7 +324,6 @@ static bool mlx5_ib_modify_header_supported(struct mlx5_ib_dev *dev)
 }
 
 static int UVERBS_HANDLER(MLX5_IB_METHOD_FLOW_ACTION_CREATE_MODIFY_HEADER)(
-	struct ib_uverbs_file *file,
 	struct uverbs_attr_bundle *attrs)
 {
 	struct ib_uobject *uobj = uverbs_attr_get_uobject(
@@ -435,7 +445,6 @@ static int mlx5_ib_flow_action_create_packet_reformat_ctx(
 }
 
 static int UVERBS_HANDLER(MLX5_IB_METHOD_FLOW_ACTION_CREATE_PACKET_REFORMAT)(
-	struct ib_uverbs_file *file,
 	struct uverbs_attr_bundle *attrs)
 {
 	struct ib_uobject *uobj = uverbs_attr_get_uobject(attrs,
@@ -526,7 +535,11 @@ DECLARE_UVERBS_NAMED_METHOD(
 			     UA_OPTIONAL),
 	UVERBS_ATTR_PTR_IN(MLX5_IB_ATTR_CREATE_FLOW_TAG,
 			   UVERBS_ATTR_TYPE(u32),
-			   UA_OPTIONAL));
+			   UA_OPTIONAL),
+	UVERBS_ATTR_IDRS_ARR(MLX5_IB_ATTR_CREATE_FLOW_ARR_COUNTERS_DEVX,
+			     MLX5_IB_OBJECT_DEVX_OBJ,
+			     UVERBS_ACCESS_READ, 1, 1,
+			     UA_OPTIONAL));
 
 DECLARE_UVERBS_NAMED_METHOD_DESTROY(
 	MLX5_IB_METHOD_DESTROY_FLOW,
@@ -610,16 +623,10 @@ DECLARE_UVERBS_NAMED_OBJECT(MLX5_IB_OBJECT_FLOW_MATCHER,
 			    &UVERBS_METHOD(MLX5_IB_METHOD_FLOW_MATCHER_CREATE),
 			    &UVERBS_METHOD(MLX5_IB_METHOD_FLOW_MATCHER_DESTROY));
 
-DECLARE_UVERBS_OBJECT_TREE(flow_objects,
-			   &UVERBS_OBJECT(MLX5_IB_OBJECT_FLOW_MATCHER));
-
-int mlx5_ib_get_flow_trees(const struct uverbs_object_tree_def **root)
-{
-	int i = 0;
-
-	root[i++] = &flow_objects;
-	root[i++] = &mlx5_ib_fs;
-	root[i++] = &mlx5_ib_flow_actions;
-
-	return i;
-}
+const struct uapi_definition mlx5_ib_flow_defs[] = {
+	UAPI_DEF_CHAIN_OBJ_TREE_NAMED(MLX5_IB_OBJECT_FLOW_MATCHER),
+	UAPI_DEF_CHAIN_OBJ_TREE(UVERBS_OBJECT_FLOW, &mlx5_ib_fs),
+	UAPI_DEF_CHAIN_OBJ_TREE(UVERBS_OBJECT_FLOW_ACTION,
+				&mlx5_ib_flow_actions),
+	{},
+};
