@@ -11,6 +11,7 @@
 #include <linux/leds.h>
 #include <linux/module.h>
 #include <linux/mutex.h>
+#include <linux/of.h>
 #include <linux/slab.h>
 #include <linux/timer.h>
 
@@ -331,6 +332,28 @@ static const struct attribute_group *pattern_trig_groups[] = {
 	NULL,
 };
 
+static void pattern_init(struct led_classdev *led_cdev)
+{
+	struct device_node *np = dev_of_node(led_cdev->dev);
+	const char *pattern;
+	int err;
+
+	if (!np)
+		return;
+
+	if (of_property_read_string(np, "linux,trigger-pattern", &pattern))
+		return;
+
+	if (!strlen(pattern))
+		return;
+
+	err = pattern_trig_store_patterns(led_cdev, pattern, strlen(pattern),
+					  false);
+	if (err)
+		dev_warn(led_cdev->dev,
+			 "Pattern initialization failed with error %d\n", err);
+}
+
 static int pattern_trig_activate(struct led_classdev *led_cdev)
 {
 	struct pattern_trig_data *data;
@@ -353,6 +376,15 @@ static int pattern_trig_activate(struct led_classdev *led_cdev)
 	led_set_trigger_data(led_cdev, data);
 	timer_setup(&data->timer, pattern_trig_timer_function, 0);
 	led_cdev->activated = true;
+
+	if (led_cdev->flags & LED_INIT_DEFAULT_TRIGGER) {
+		pattern_init(led_cdev);
+		/*
+		 * Mark as initialized even on pattern_init() error because
+		 * any consecutive call to it would produce the same error.
+		 */
+		led_cdev->flags &= ~LED_INIT_DEFAULT_TRIGGER;
+	}
 
 	return 0;
 }

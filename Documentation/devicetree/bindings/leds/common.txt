@@ -37,6 +37,13 @@ Optional properties for child nodes:
      "ide-disk" - LED indicates IDE disk activity (deprecated),
                   in new implementations use "disk-activity"
      "timer" - LED flashes at a fixed, configurable rate
+     "pattern" - LED alters the brightness for the specified duration with one
+                 software timer (see
+                 Documentation/ABI/testing/sysfs-class-led-trigger-pattern)
+
+- linux,trigger-pattern : Default pattern for "pattern" trigger (see
+                          Documentation/ABI/testing/sysfs-class-led-trigger-pattern
+                          for description of format)
 
 - led-max-microamp : Maximum LED supply current in microamperes. This property
                      can be made mandatory for the board configurations
