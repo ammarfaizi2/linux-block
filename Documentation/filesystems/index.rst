@@ -370,3 +370,14 @@ authentication of read-only files.
     :maxdepth: 2
 
     fsverity
+
+Pathname lookup
+===============
+
+Pathname lookup in Linux is a complex beast; the document linked below
+provides a comprehensive summary for those looking for the details.
+
+.. toctree::
+   :maxdepth: 2
+
+   path-lookup.rst
