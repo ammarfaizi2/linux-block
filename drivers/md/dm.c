@@ -1478,11 +1478,9 @@ static bool is_split_required_for_discard(struct dm_target *ti)
 }
 
 static int __send_changing_extent_only(struct clone_info *ci, struct dm_target *ti,
-				       get_num_bios_fn get_num_bios,
-				       is_split_required_fn is_split_required)
+				       unsigned num_bios, bool is_split_required)
 {
 	unsigned len;
-	unsigned num_bios;
 
 	/*
 	 * Even though the device advertised support for this type of
@@ -1490,11 +1488,10 @@ static int __send_changing_extent_only(struct clone_info *ci, struct dm_target *
 	 * reconfiguration might also have changed that since the
 	 * check was performed.
 	 */
-	num_bios = get_num_bios ? get_num_bios(ti) : 0;
 	if (!num_bios)
 		return -EOPNOTSUPP;
 
-	if (is_split_required && !is_split_required(ti))
+	if (!is_split_required)
 		len = min((sector_t)ci->sector_count, max_io_len_target_boundary(ci->sector, ti));
 	else
 		len = min((sector_t)ci->sector_count, max_io_len(ci->sector, ti));
@@ -1509,23 +1506,23 @@ static int __send_changing_extent_only(struct clone_info *ci, struct dm_target *
 
 static int __send_discard(struct clone_info *ci, struct dm_target *ti)
 {
-	return __send_changing_extent_only(ci, ti, get_num_discard_bios,
-					   is_split_required_for_discard);
+	return __send_changing_extent_only(ci, ti, get_num_discard_bios(ti),
+					   is_split_required_for_discard(ti));
 }
 
 static int __send_secure_erase(struct clone_info *ci, struct dm_target *ti)
 {
-	return __send_changing_extent_only(ci, ti, get_num_secure_erase_bios, NULL);
+	return __send_changing_extent_only(ci, ti, get_num_secure_erase_bios(ti), false);
 }
 
 static int __send_write_same(struct clone_info *ci, struct dm_target *ti)
 {
-	return __send_changing_extent_only(ci, ti, get_num_write_same_bios, NULL);
+	return __send_changing_extent_only(ci, ti, get_num_write_same_bios(ti), false);
 }
 
 static int __send_write_zeroes(struct clone_info *ci, struct dm_target *ti)
 {
-	return __send_changing_extent_only(ci, ti, get_num_write_zeroes_bios, NULL);
+	return __send_changing_extent_only(ci, ti, get_num_write_zeroes_bios(ti), false);
 }
 
 static bool __process_abnormal_io(struct clone_info *ci, struct dm_target *ti,
@@ -1597,6 +1594,8 @@ static blk_qc_t __split_and_process_bio(struct mapped_device *md,
 		bio_io_error(bio);
 		return ret;
 	}
+
+	blk_queue_split(md->queue, &bio);
 
 	init_clone_info(&ci, md, map, bio);
 
@@ -1688,10 +1687,7 @@ out:
 	return ret;
 }
 
-typedef blk_qc_t (process_bio_fn)(struct mapped_device *, struct dm_table *, struct bio *);
-
-static blk_qc_t __dm_make_request(struct request_queue *q, struct bio *bio,
-				  process_bio_fn process_bio)
+static blk_qc_t dm_make_request(struct request_queue *q, struct bio *bio)
 {
 	struct mapped_device *md = q->queuedata;
 	blk_qc_t ret = BLK_QC_T_NONE;
@@ -1711,24 +1707,13 @@ static blk_qc_t __dm_make_request(struct request_queue *q, struct bio *bio,
 		return ret;
 	}
 
-	ret = process_bio(md, map, bio);
+	if (dm_get_md_type(md) == DM_TYPE_NVME_BIO_BASED)
+		ret = __process_bio(md, map, bio);
+	else
+		ret = __split_and_process_bio(md, map, bio);
 
 	dm_put_live_table(md, srcu_idx);
 	return ret;
-}
-
-/*
- * The request function that remaps the bio to one target and
- * splits off any remainder.
- */
-static blk_qc_t dm_make_request(struct request_queue *q, struct bio *bio)
-{
-	return __dm_make_request(q, bio, __split_and_process_bio);
-}
-
-static blk_qc_t dm_make_request_nvme(struct request_queue *q, struct bio *bio)
-{
-	return __dm_make_request(q, bio, __process_bio);
 }
 
 static int dm_any_congested(void *congested_data, int bdi_bits)
@@ -2221,12 +2206,9 @@ int dm_setup_md_queue(struct mapped_device *md, struct dm_table *t)
 		break;
 	case DM_TYPE_BIO_BASED:
 	case DM_TYPE_DAX_BIO_BASED:
-		dm_init_normal_md_queue(md);
-		blk_queue_make_request(md->queue, dm_make_request);
-		break;
 	case DM_TYPE_NVME_BIO_BASED:
 		dm_init_normal_md_queue(md);
-		blk_queue_make_request(md->queue, dm_make_request_nvme);
+		blk_queue_make_request(md->queue, dm_make_request);
 		break;
 	case DM_TYPE_NONE:
 		WARN_ON_ONCE(true);
