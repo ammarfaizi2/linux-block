@@ -16,6 +16,7 @@ TARGETS += gpio
 TARGETS += ima
 TARGETS += intel_pstate
 TARGETS += ipc
+TARGETS += ir
 TARGETS += kcmp
 TARGETS += kvm
 TARGETS += lib
