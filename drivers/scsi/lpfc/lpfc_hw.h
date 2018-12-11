@@ -115,6 +115,7 @@ struct lpfc_sli_ct_request {
 		uint32_t PortID;
 		struct gid {
 			uint8_t PortType;	/* for GID_PT requests */
+#define GID_PT_N_PORT	1
 			uint8_t DomainScope;
 			uint8_t AreaScope;
 			uint8_t Fc4Type;	/* for GID_FT requests */
@@ -524,6 +525,7 @@ struct serv_parm {	/* Structure is in Big Endian format */
 		struct {
 			uint32_t vid;
 #define LPFC_VV_EMLX_ID	0x454d4c58	/* EMLX */
+#define LPFC_VV_BRCD_ID	0x42524344	/* BRCD */
 			uint32_t flags;
 #define LPFC_VV_SUPPRESS_RSP	1
 		} vv;

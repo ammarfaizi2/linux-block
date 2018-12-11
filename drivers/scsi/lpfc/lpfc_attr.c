@@ -883,6 +883,42 @@ lpfc_link_state_show(struct device *dev, struct device_attribute *attr,
 		}
 	}
 
+	if ((phba->sli_rev == LPFC_SLI_REV4) &&
+	    ((bf_get(lpfc_sli_intf_if_type,
+	     &phba->sli4_hba.sli_intf) ==
+	     LPFC_SLI_INTF_IF_TYPE_6))) {
+		struct lpfc_trunk_link link = phba->trunk_link;
+
+		if (bf_get(lpfc_conf_trunk_port0, &phba->sli4_hba))
+			len += snprintf(buf + len, PAGE_SIZE - len,
+				"Trunk port 0: Link %s %s\n",
+				(link.link0.state == LPFC_LINK_UP) ?
+				 "Up" : "Down. ",
+				trunk_errmsg[link.link0.fault]);
+
+		if (bf_get(lpfc_conf_trunk_port1, &phba->sli4_hba))
+			len += snprintf(buf + len, PAGE_SIZE - len,
+				"Trunk port 1: Link %s %s\n",
+				(link.link1.state == LPFC_LINK_UP) ?
+				 "Up" : "Down. ",
+				trunk_errmsg[link.link1.fault]);
+
+		if (bf_get(lpfc_conf_trunk_port2, &phba->sli4_hba))
+			len += snprintf(buf + len, PAGE_SIZE - len,
+				"Trunk port 2: Link %s %s\n",
+				(link.link2.state == LPFC_LINK_UP) ?
+				 "Up" : "Down. ",
+				trunk_errmsg[link.link2.fault]);
+
+		if (bf_get(lpfc_conf_trunk_port3, &phba->sli4_hba))
+			len += snprintf(buf + len, PAGE_SIZE - len,
+				"Trunk port 3: Link %s %s\n",
+				(link.link3.state == LPFC_LINK_UP) ?
+				 "Up" : "Down. ",
+				trunk_errmsg[link.link3.fault]);
+
+	}
+
 	return len;
 }
 
@@ -1430,6 +1466,66 @@ lpfc_nport_evt_cnt_show(struct device *dev, struct device_attribute *attr,
 	return snprintf(buf, PAGE_SIZE, "%d\n", phba->nport_event_cnt);
 }
 
+int
+lpfc_set_trunking(struct lpfc_hba *phba, char *buff_out)
+{
+	LPFC_MBOXQ_t *mbox = NULL;
+	unsigned long val = 0;
+	char *pval = 0;
+	int rc = 0;
+
+	if (!strncmp("enable", buff_out,
+				 strlen("enable"))) {
+		pval = buff_out + strlen("enable") + 1;
+		rc = kstrtoul(pval, 0, &val);
+		if (rc)
+			return rc; /* Invalid  number */
+	} else if (!strncmp("disable", buff_out,
+				 strlen("disable"))) {
+		val = 0;
+	} else {
+		return -EINVAL;  /* Invalid command */
+	}
+
+	switch (val) {
+	case 0:
+		val = 0x0; /* Disable */
+		break;
+	case 2:
+		val = 0x1; /* Enable two port trunk */
+		break;
+	case 4:
+		val = 0x2; /* Enable four port trunk */
+		break;
+	default:
+		return -EINVAL;
+	}
+
+	lpfc_printf_log(phba, KERN_ERR, LOG_MBOX,
+			"0070 Set trunk mode with val %ld ", val);
+
+	mbox = mempool_alloc(phba->mbox_mem_pool, GFP_KERNEL);
+	if (!mbox)
+		return -ENOMEM;
+
+	lpfc_sli4_config(phba, mbox, LPFC_MBOX_SUBSYSTEM_FCOE,
+			 LPFC_MBOX_OPCODE_FCOE_FC_SET_TRUNK_MODE,
+			 12, LPFC_SLI4_MBX_EMBED);
+
+	bf_set(lpfc_mbx_set_trunk_mode,
+	       &mbox->u.mqe.un.set_trunk_mode,
+	       val);
+	rc = lpfc_sli_issue_mbox(phba, mbox, MBX_POLL);
+	if (rc)
+		lpfc_printf_log(phba, KERN_ERR, LOG_MBOX,
+				"0071 Set trunk mode failed with status: %d",
+				rc);
+	if (rc != MBX_TIMEOUT)
+		mempool_free(mbox, phba->mbox_mem_pool);
+
+	return 0;
+}
+
 /**
  * lpfc_board_mode_show - Return the state of the board
  * @dev: class device that is converted into a Scsi_host.
@@ -1522,6 +1618,8 @@ lpfc_board_mode_store(struct device *dev, struct device_attribute *attr,
 		status = lpfc_sli4_pdev_reg_request(phba, LPFC_FW_RESET);
 	else if (strncmp(buf, "dv_reset", sizeof("dv_reset") - 1) == 0)
 		status = lpfc_sli4_pdev_reg_request(phba, LPFC_DV_RESET);
+	else if (strncmp(buf, "trunk", sizeof("trunk") - 1) == 0)
+		status = lpfc_set_trunking(phba, (char *)buf + sizeof("trunk"));
 	else
 		status = -EINVAL;
 
@@ -1590,7 +1688,7 @@ lpfc_get_hba_info(struct lpfc_hba *phba,
 	pmb = &pmboxq->u.mb;
 	pmb->mbxCommand = MBX_READ_CONFIG;
 	pmb->mbxOwner = OWN_HOST;
-	pmboxq->context1 = NULL;
+	pmboxq->ctx_buf = NULL;
 
 	if (phba->pport->fc_flag & FC_OFFLINE_MODE)
 		rc = MBX_NOT_FINISHED;
@@ -1622,6 +1720,9 @@ lpfc_get_hba_info(struct lpfc_hba *phba,
 		max_vpi = (bf_get(lpfc_mbx_rd_conf_vpi_count, rd_config) > 0) ?
 			(bf_get(lpfc_mbx_rd_conf_vpi_count, rd_config) - 1) : 0;
 
+		/* Limit the max we support */
+		if (max_vpi > LPFC_MAX_VPI)
+			max_vpi = LPFC_MAX_VPI;
 		if (mvpi)
 			*mvpi = max_vpi;
 		if (avpi)
@@ -1637,8 +1738,13 @@ lpfc_get_hba_info(struct lpfc_hba *phba,
 			*axri = pmb->un.varRdConfig.avail_xri;
 		if (mvpi)
 			*mvpi = pmb->un.varRdConfig.max_vpi;
-		if (avpi)
-			*avpi = pmb->un.varRdConfig.avail_vpi;
+		if (avpi) {
+			/* avail_vpi is only valid if link is up and ready */
+			if (phba->link_state == LPFC_HBA_READY)
+				*avpi = pmb->un.varRdConfig.avail_vpi;
+			else
+				*avpi = pmb->un.varRdConfig.max_vpi;
+		}
 	}
 
 	mempool_free(pmboxq, phba->mbox_mem_pool);
@@ -3831,8 +3937,9 @@ lpfc_topology_store(struct device *dev, struct device_attribute *attr,
 				val);
 			return -EINVAL;
 		}
-		if (phba->pcidev->device == PCI_DEVICE_ID_LANCER_G6_FC &&
-			val == 4) {
+		if ((phba->pcidev->device == PCI_DEVICE_ID_LANCER_G6_FC ||
+		     phba->pcidev->device == PCI_DEVICE_ID_LANCER_G7_FC) &&
+		    val == 4) {
 			lpfc_printf_vlog(vport, KERN_ERR, LOG_INIT,
 				"3114 Loop mode not supported\n");
 			return -EINVAL;
@@ -5070,6 +5177,18 @@ LPFC_ATTR_RW(fcp_io_sched, LPFC_FCP_SCHED_ROUND_ROBIN,
 	     "issuing commands [0] - Round Robin, [1] - Current CPU");
 
 /*
+ * lpfc_ns_query: Determine algrithmn for NameServer queries after RSCN
+ * range is [0,1]. Default value is 0.
+ * For [0], GID_FT is used for NameServer queries after RSCN (default)
+ * For [1], GID_PT is used for NameServer queries after RSCN
+ *
+ */
+LPFC_ATTR_RW(ns_query, LPFC_NS_QUERY_GID_FT,
+	     LPFC_NS_QUERY_GID_FT, LPFC_NS_QUERY_GID_PT,
+	     "Determine algorithm NameServer queries after RSCN "
+	     "[0] - GID_FT, [1] - GID_PT");
+
+/*
 # lpfc_fcp2_no_tgt_reset: Determine bus reset behavior
 # range is [0,1]. Default value is 0.
 # For [0], bus reset issues target reset to ALL devices
@@ -5514,6 +5633,7 @@ struct device_attribute *lpfc_hba_attrs[] = {
 	&dev_attr_lpfc_scan_down,
 	&dev_attr_lpfc_link_speed,
 	&dev_attr_lpfc_fcp_io_sched,
+	&dev_attr_lpfc_ns_query,
 	&dev_attr_lpfc_fcp2_no_tgt_reset,
 	&dev_attr_lpfc_cr_delay,
 	&dev_attr_lpfc_cr_count,
@@ -6006,6 +6126,9 @@ lpfc_get_host_speed(struct Scsi_Host *shost)
 		case LPFC_LINK_SPEED_64GHZ:
 			fc_host_speed(shost) = FC_PORTSPEED_64GBIT;
 			break;
+		case LPFC_LINK_SPEED_128GHZ:
+			fc_host_speed(shost) = FC_PORTSPEED_128GBIT;
+			break;
 		default:
 			fc_host_speed(shost) = FC_PORTSPEED_UNKNOWN;
 			break;
@@ -6105,7 +6228,7 @@ lpfc_get_stats(struct Scsi_Host *shost)
 	pmb = &pmboxq->u.mb;
 	pmb->mbxCommand = MBX_READ_STATUS;
 	pmb->mbxOwner = OWN_HOST;
-	pmboxq->context1 = NULL;
+	pmboxq->ctx_buf = NULL;
 	pmboxq->vport = vport;
 
 	if (vport->fc_flag & FC_OFFLINE_MODE)
@@ -6137,7 +6260,7 @@ lpfc_get_stats(struct Scsi_Host *shost)
 	memset(pmboxq, 0, sizeof (LPFC_MBOXQ_t));
 	pmb->mbxCommand = MBX_READ_LNK_STAT;
 	pmb->mbxOwner = OWN_HOST;
-	pmboxq->context1 = NULL;
+	pmboxq->ctx_buf = NULL;
 	pmboxq->vport = vport;
 
 	if (vport->fc_flag & FC_OFFLINE_MODE)
@@ -6217,7 +6340,7 @@ lpfc_reset_stats(struct Scsi_Host *shost)
 	pmb->mbxCommand = MBX_READ_STATUS;
 	pmb->mbxOwner = OWN_HOST;
 	pmb->un.varWords[0] = 0x1; /* reset request */
-	pmboxq->context1 = NULL;
+	pmboxq->ctx_buf = NULL;
 	pmboxq->vport = vport;
 
 	if ((vport->fc_flag & FC_OFFLINE_MODE) ||
@@ -6235,7 +6358,7 @@ lpfc_reset_stats(struct Scsi_Host *shost)
 	memset(pmboxq, 0, sizeof(LPFC_MBOXQ_t));
 	pmb->mbxCommand = MBX_READ_LNK_STAT;
 	pmb->mbxOwner = OWN_HOST;
-	pmboxq->context1 = NULL;
+	pmboxq->ctx_buf = NULL;
 	pmboxq->vport = vport;
 
 	if ((vport->fc_flag & FC_OFFLINE_MODE) ||
@@ -6564,6 +6687,7 @@ void
 lpfc_get_cfgparam(struct lpfc_hba *phba)
 {
 	lpfc_fcp_io_sched_init(phba, lpfc_fcp_io_sched);
+	lpfc_ns_query_init(phba, lpfc_ns_query);
 	lpfc_fcp2_no_tgt_reset_init(phba, lpfc_fcp2_no_tgt_reset);
 	lpfc_cr_delay_init(phba, lpfc_cr_delay);
 	lpfc_cr_count_init(phba, lpfc_cr_count);
