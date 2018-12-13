@@ -108,6 +108,7 @@ struct iocb {
 
 #define IOCTX_FLAG_IOPOLL	(1 << 0)	/* io_context is polled */
 #define IOCTX_FLAG_SCQRING	(1 << 1)	/* Use SQ/CQ rings */
+#define IOCTX_FLAG_FIXEDBUFS	(1 << 2)	/* IO buffers are fixed */
 
 struct aio_sq_ring {
 	union {
