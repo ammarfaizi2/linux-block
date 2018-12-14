@@ -111,6 +111,9 @@ struct iocb {
 #define IOCTX_FLAG_FIXEDBUFS	(1 << 2)	/* IO buffers are fixed */
 #define IOCTX_FLAG_SQTHREAD	(1 << 3)	/* Use SQ thread */
 #define IOCTX_FLAG_SQWQ		(1 << 4)	/* Use SQ workqueue */
+#define IOCTX_FLAG_SQPOLL	(1 << 5)	/* SQ thread polls */
+
+#define IORING_SQ_NEED_WAKEUP	(1 << 0)	/* needs io_ring_enter wakeup */
 
 struct aio_sq_ring {
 	union {
@@ -119,6 +122,7 @@ struct aio_sq_ring {
 			u32 tail;	/* app producer tail */
 			u32 nr_events;	/* max events in ring */
 			u16 sq_thread_cpu;
+			u16 kflags;	/* kernel info to app */
 			u64 iocbs;	/* setup pointer to app iocbs */
 		};
 		u32 pad[16];

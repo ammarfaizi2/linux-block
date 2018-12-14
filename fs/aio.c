@@ -127,6 +127,7 @@ struct aio_mapped_ubuf {
 
 struct aio_sq_offload {
 	struct task_struct *thread;	/* if using a thread */
+	bool thread_poll;
 	struct workqueue_struct *wq;	/* wq offload */
 	struct mm_struct *mm;
 	struct files_struct *files;
@@ -346,6 +347,7 @@ static void aio_scqring_unmap(struct kioctx *);
 static void aio_iopoll_reap_events(struct kioctx *);
 static const struct iocb *aio_iocb_from_index(struct kioctx *ctx, unsigned idx);
 static void aio_sqring_unmap_iocb(struct kioctx *ctx, unsigned iocb_index);
+static void aio_sq_wq_submit_work(struct work_struct *work);
 
 static struct file *aio_private_file(struct kioctx *ctx, loff_t nr_pages)
 {
@@ -1809,6 +1811,9 @@ static int aio_sq_thread_start(struct kioctx *ctx)
 	if (!aso->files)
 		goto err;
 
+	if (ctx->flags & IOCTX_FLAG_SQPOLL)
+		aso->thread_poll = true;
+
 	if (ctx->flags & IOCTX_FLAG_SQTHREAD) {
 		struct aio_sq_ring *ring;
 		char name[32];
@@ -1828,7 +1833,8 @@ static int aio_sq_thread_start(struct kioctx *ctx)
 			goto err;
 		}
 		wake_up_process(aso->thread);
-	} else if (ctx->flags & IOCTX_FLAG_SQWQ) {
+	}
+	if (ctx->flags & IOCTX_FLAG_SQWQ) {
 		struct aio_sq_ring *ring;
 		int concurrency;
 
@@ -1908,7 +1914,8 @@ static void aio_scqring_unmap(struct kioctx *ctx)
 		kthread_park(aso->thread);
 		kthread_stop(aso->thread);
 		aso->thread = NULL;
-	} else if (aso->wq) {
+	}
+	if (aso->wq) {
 		destroy_workqueue(aso->wq);
 		aso->wq = NULL;
 	}
@@ -2139,7 +2146,7 @@ SYSCALL_DEFINE5(io_setup2, u32, nr_events, u32, flags,
 
 	if (flags & ~(IOCTX_FLAG_IOPOLL | IOCTX_FLAG_SCQRING |
 		      IOCTX_FLAG_FIXEDBUFS | IOCTX_FLAG_SQTHREAD |
-		      IOCTX_FLAG_SQWQ))
+		      IOCTX_FLAG_SQWQ | IOCTX_FLAG_SQPOLL))
 		return -EINVAL;
 
 	ret = get_user(ctx, ctxp);
@@ -3233,28 +3240,69 @@ struct iocb_submit {
 	unsigned int index;
 };
 
+struct aio_io_work {
+	struct work_struct work;
+	struct kioctx *ctx;
+	struct iocb iocb;
+	unsigned iocb_index;
+};
+
+static int aio_queue_async_work(struct kioctx *ctx, struct iocb_submit *is)
+{
+	struct aio_io_work *work;
+
+	work = kmalloc(sizeof(*work), GFP_KERNEL);
+	if (work) {
+		memcpy(&work->iocb, is->iocb, sizeof(*is->iocb));
+		work->iocb_index = is->index;
+		INIT_WORK(&work->work, aio_sq_wq_submit_work);
+		work->ctx = ctx;
+		queue_work(ctx->sq_offload.wq, &work->work);
+		return 0;
+	}
+
+	return -ENOMEM;
+}
+
 static int aio_submit_iocbs(struct kioctx *ctx, struct iocb_submit *iocbs,
 			    unsigned int nr, struct mm_struct *cur_mm,
 			    bool mm_fault)
 {
 	struct aio_submit_state state, *statep = NULL;
 	int ret, i, submitted = 0;
+	bool force_nonblock;
 
 	if (nr > AIO_PLUG_THRESHOLD) {
 		aio_submit_state_start(&state, ctx, nr);
 		statep = &state;
 	}
 
+	/*
+	 * Having both a thread and a workqueue only makes sense for buffered
+	 * IO, where we can't submit in an async fashion. Use the NOWAIT
+	 * trick from the SQ thread, and punt to the workqueue if we can't
+	 * satisfy this iocb without blocking. This is only necessary
+	 * for buffered IO with sqthread polled submission.
+	 */
+	force_nonblock = (ctx->flags & IOCTX_FLAG_SQWQ) != 0;
+
 	for (i = 0; i < nr; i++) {
-		if (unlikely(mm_fault))
+		if (unlikely(mm_fault)) {
 			ret = -EFAULT;
-		else
+		} else {
 			ret = __io_submit_one(ctx, iocbs[i].iocb,
 						iocbs[i].index, statep, false,
-						!cur_mm, false);
-		if (!ret) {
-			submitted++;
-			continue;
+						!cur_mm, force_nonblock);
+			/* nogo, submit to workqueue */
+			if (force_nonblock &&
+			    (ret == -EAGAIN || ctx->sq_ring.submit_eagain)) {
+				ctx->sq_ring.submit_eagain = false;
+				ret = aio_queue_async_work(ctx, &iocbs[i]);
+			}
+			if (!ret) {
+				submitted++;
+				continue;
+			}
 		}
 
 		aio_fill_cq_error(ctx, iocbs[i].iocb, ret);
@@ -3267,7 +3315,10 @@ static int aio_submit_iocbs(struct kioctx *ctx, struct iocb_submit *iocbs,
 }
 
 /*
- * sq thread only supports O_DIRECT or FIXEDBUFS IO
+ * SQ thread is woken if the app asked for offloaded submission. This can
+ * be either O_DIRECT, in which case we do submissions directly, or it can
+ * be buffered IO, in which case we do them inline if we can do so without
+ * blocking. If we can't, then we punt to a workqueue.
  */
 static int aio_sq_thread(void *data)
 {
@@ -3278,6 +3329,8 @@ static int aio_sq_thread(void *data)
 	struct files_struct *old_files;
 	mm_segment_t old_fs;
 	DEFINE_WAIT(wait);
+	unsigned inflight;
+	unsigned long timeout;
 
 	old_files = current->files;
 	current->files = aso->files;
@@ -3285,15 +3338,54 @@ static int aio_sq_thread(void *data)
 	old_fs = get_fs();
 	set_fs(USER_DS);
 
+	timeout = inflight = 0;
 	while (!kthread_should_stop()) {
 		const struct iocb *iocb;
 		bool mm_fault = false;
 		unsigned iocb_index;
 		int i;
 
+		if (aso->thread_poll && inflight) {
+			unsigned int nr_events = 0;
+
+			/*
+			 * Buffered IO, just pretend everything completed.
+			 * We don't have to poll completions for that.
+			 */
+			if (ctx->flags & IOCTX_FLAG_IOPOLL)
+				__aio_iopoll_check(ctx, NULL, &nr_events, 0, -1U);
+			else
+				nr_events = inflight;
+
+			inflight -= nr_events;
+			if (!inflight)
+				timeout = jiffies + HZ;
+		}
+
 		iocb = aio_peek_sqring(ctx, &iocb_index);
 		if (!iocb) {
+			/*
+			 * If we're polling, let us spin for a second without
+			 * work before going to sleep.
+			 */
+			if (aso->thread_poll) {
+				if (inflight || !time_after(jiffies, timeout)) {
+					cpu_relax();
+					continue;
+				}
+			}
 			prepare_to_wait(&aso->wait, &wait, TASK_INTERRUPTIBLE);
+
+			/* Tell userspace we may need a wakeup call */
+			if (aso->thread_poll) {
+				struct aio_sq_ring *ring;
+
+				ring = aio_get_sqring(ctx);
+				ring->kflags |= IORING_SQ_NEED_WAKEUP;
+				smp_wmb();
+				aio_put_sqring(ctx, ring, true);
+			}
+
 			iocb = aio_peek_sqring(ctx, &iocb_index);
 			if (!iocb) {
 				/*
@@ -3315,6 +3407,14 @@ static int aio_sq_thread(void *data)
 				if (signal_pending(current))
 					flush_signals(current);
 				schedule();
+
+				if (aso->thread_poll) {
+					struct aio_sq_ring *ring;
+
+					ring = aio_get_sqring(ctx);
+					ring->kflags &= ~IORING_SQ_NEED_WAKEUP;
+					aio_put_sqring(ctx, ring, true);
+				}
 			}
 			finish_wait(&aso->wait, &wait);
 			if (!iocb)
@@ -3340,7 +3440,7 @@ static int aio_sq_thread(void *data)
 			aio_commit_sqring(ctx, iocb_index);
 		} while ((iocb = aio_peek_sqring(ctx, &iocb_index)) != NULL);
 
-		aio_submit_iocbs(ctx, iocbs, i, cur_mm, mm_fault);
+		inflight += aio_submit_iocbs(ctx, iocbs, i, cur_mm, mm_fault);
 	}
 	current->files = old_files;
 	set_fs(old_fs);
@@ -3350,13 +3450,6 @@ static int aio_sq_thread(void *data)
 	}
 	return 0;
 }
-
-struct aio_io_work {
-	struct work_struct work;
-	struct kioctx *ctx;
-	struct iocb iocb;
-	unsigned iocb_index;
-};
 
 static void aio_sq_wq_submit_work(struct work_struct *work)
 {
@@ -3427,7 +3520,6 @@ static bool aio_sq_try_inline(struct kioctx *ctx, const struct iocb *iocb,
 
 static int aio_sq_wq_submit(struct kioctx *ctx, unsigned int to_submit)
 {
-	struct aio_io_work *work;
 	const struct iocb *iocb;
 	unsigned iocb_index;
 	int ret, queued;
@@ -3436,18 +3528,17 @@ static int aio_sq_wq_submit(struct kioctx *ctx, unsigned int to_submit)
 	while ((iocb = aio_peek_sqring(ctx, &iocb_index)) != NULL) {
 		ret = aio_sq_try_inline(ctx, iocb, iocb_index);
 		if (!ret) {
-			work = kmalloc(sizeof(*work), GFP_KERNEL);
-			if (!work) {
-				ret = -ENOMEM;
+			struct iocb_submit is = {
+				.iocb = iocb,
+				.index = iocb_index
+			};
+
+			ret = aio_queue_async_work(ctx, &is);
+			if (ret)
 				break;
-			}
-			memcpy(&work->iocb, iocb, sizeof(*iocb));
-			aio_commit_sqring(ctx, iocb_index);
-			work->iocb_index = iocb_index;
-			INIT_WORK(&work->work, aio_sq_wq_submit_work);
-			work->ctx = ctx;
-			queue_work(ctx->sq_offload.wq, &work->work);
 		}
+
+		aio_commit_sqring(ctx, iocb_index);
 		queued++;
 		if (queued == to_submit)
 			break;
