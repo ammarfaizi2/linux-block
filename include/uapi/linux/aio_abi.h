@@ -65,6 +65,12 @@ struct io_event {
 };
 
 /*
+ * aio CQ ring commandeers the otherwise unused ev->res2 to provide
+ * metadata about the IO.
+ */
+#define IOEV_RES2_CACHEHIT	(1 << 0)	/* IO did not hit media */
+
+/*
  * we always use a 64bit off_t when communicating
  * with userland.  its up to libraries to do the
  * proper padding and aio_error abstraction

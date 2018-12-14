@@ -1400,6 +1400,7 @@ static void aio_complete(struct aio_kiocb *iocb, long res, long res2)
 	struct kioctx *ctx = iocb->ki_ctx;
 
 	if (ctx->flags & IOCTX_FLAG_SCQRING) {
+		int nowait = test_bit(KIOCB_F_FORCE_NONBLOCK, &iocb->ki_flags);
 		unsigned long flags;
 		struct io_event *ev;
 
@@ -1410,10 +1411,12 @@ static void aio_complete(struct aio_kiocb *iocb, long res, long res2)
 		 * see it and punt to workqueue. This is just for buffered
 		 * aio reads.
 		 */
-		if (res == -EAGAIN &&
-		    test_bit(KIOCB_F_FORCE_NONBLOCK, &iocb->ki_flags)) {
+		if (res == -EAGAIN && nowait) {
 			ctx->sq_ring.submit_eagain = true;
 		} else {
+			if (nowait)
+				res2 = IOEV_RES2_CACHEHIT;
+
 			/*
 			 * If we can't get a cq entry, userspace overflowed the
 			 * submission (by quite a lot). Flag it as an overflow
