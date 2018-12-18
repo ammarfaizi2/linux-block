@@ -2627,14 +2627,89 @@ struct clk *clk_get_parent(struct clk *clk)
 }
 EXPORT_SYMBOL_GPL(clk_get_parent);
 
-static struct clk_core *__clk_init_parent(struct clk_core *core)
+static struct clk_core *
+__clk_init_parent(struct clk_core *core, bool update_orphan)
 {
 	u8 index = 0;
+	struct clk_hw *parent_hw = NULL;
 
-	if (core->num_parents > 1 && core->ops->get_parent)
-		index = core->ops->get_parent(core->hw);
+	if (core->ops->get_parent_hw) {
+		parent_hw = core->ops->get_parent_hw(core->hw);
+	} else {
+		if (core->num_parents > 1 && core->ops->get_parent)
+			index = core->ops->get_parent(core->hw);
 
-	return clk_core_get_parent_by_index(core, index);
+		if (index >= core->num_parents) {
+			/*
+			 * Overwrite with NULL here because we can't
+			 * differentiate true errors in getting the index from
+			 * the case where the clk isn't found because it never
+			 * exists or isn't described as a possible parent.
+			 *
+			 * Note that we don't update the orphan status to true
+			 * in this case, because we can't really know for sure
+			 * if the clk is truly orphaned or not. To avoid this,
+			 * implement .get_parent_hw or use the direct pointer
+			 * mechanism of struct clk_parent_data::hw to point
+			 * to the parent clk directly.
+			 */
+			parent_hw = NULL;
+		} else {
+			parent_hw = clk_hw_get_parent_by_index(core->hw, index);
+		}
+	}
+
+	if (IS_ERR_OR_NULL(parent_hw)) {
+		/* Parent clk provider hasn't probed yet, orphan it */
+		if (PTR_ERR(parent_hw) == -EPROBE_DEFER) {
+			if (update_orphan)
+				core->orphan = true;
+
+			/* Orphans don't have a parent, so use NULL */
+			return NULL;
+		}
+
+		return ERR_CAST(parent_hw);
+	}
+
+	if (update_orphan)
+		core->orphan = parent_hw->core->orphan;
+	return parent_hw->core;
+}
+
+
+static struct clk_core *clk_init_parent(struct clk_core *core)
+{
+	struct clk_core *parent;
+
+	parent = core->parent = __clk_init_parent(core, true);
+	if (IS_ERR(parent))
+		return parent;
+
+	/*
+	 * Populate core->parent if parent has already been clk_core_init'd. If
+	 * parent has not yet been clk_core_init'd then place clk in the orphan
+	 * list.  If clk doesn't have any parents then place it in the root
+	 * clk list.
+	 *
+	 * Every time a new clk is clk_init'd then we walk the list of orphan
+	 * clocks and re-parent any that are children of the clock currently
+	 * being clk_init'd.
+	 */
+	if (parent) {
+		hlist_add_head(&core->child_node, &parent->children);
+	} else if (!core->num_parents) {
+		hlist_add_head(&core->child_node, &clk_root_list);
+	} else {
+		hlist_add_head(&core->child_node, &clk_orphan_list);
+	}
+
+	return parent;
+}
+
+static bool clk_has_parent_op(const struct clk_ops *ops)
+{
+	return ops->get_parent || ops->get_parent_hw;
 }
 
 static void clk_core_reparent(struct clk_core *core,
@@ -3612,7 +3687,14 @@ static void clk_core_reparent_orphans_nolock(void)
 	 * parent.
 	 */
 	hlist_for_each_entry_safe(orphan, tmp2, &clk_orphan_list, child_node) {
-		struct clk_core *parent = __clk_init_parent(orphan);
+		struct clk_core *parent = __clk_init_parent(orphan, true);
+
+		/*
+		 * Error parent should have been caught earlier and returned
+		 * as an error during clk registration.
+		 */
+		if (WARN_ON_ONCE(IS_ERR(parent)))
+			continue;
 
 		/*
 		 * We need to use __clk_set_parent_before() and _after() to
@@ -3689,14 +3771,14 @@ static int __clk_core_init(struct clk_core *core)
 		goto out;
 	}
 
-	if (core->ops->set_parent && !core->ops->get_parent) {
+	if (core->ops->set_parent && !clk_has_parent_op(core->ops)) {
 		pr_err("%s: %s must implement .get_parent & .set_parent\n",
 		       __func__, core->name);
 		ret = -EINVAL;
 		goto out;
 	}
 
-	if (core->num_parents > 1 && !core->ops->get_parent) {
+	if (core->num_parents > 1 && !clk_has_parent_op(core->ops)) {
 		pr_err("%s: %s must implement .get_parent as it has multi parents\n",
 		       __func__, core->name);
 		ret = -EINVAL;
@@ -3731,27 +3813,10 @@ static int __clk_core_init(struct clk_core *core)
 			goto out;
 	}
 
-	parent = core->parent = __clk_init_parent(core);
-
-	/*
-	 * Populate core->parent if parent has already been clk_core_init'd. If
-	 * parent has not yet been clk_core_init'd then place clk in the orphan
-	 * list.  If clk doesn't have any parents then place it in the root
-	 * clk list.
-	 *
-	 * Every time a new clk is clk_init'd then we walk the list of orphan
-	 * clocks and re-parent any that are children of the clock currently
-	 * being clk_init'd.
-	 */
-	if (parent) {
-		hlist_add_head(&core->child_node, &parent->children);
-		core->orphan = parent->orphan;
-	} else if (!core->num_parents) {
-		hlist_add_head(&core->child_node, &clk_root_list);
-		core->orphan = false;
-	} else {
-		hlist_add_head(&core->child_node, &clk_orphan_list);
-		core->orphan = true;
+	parent = clk_init_parent(core);
+	if (IS_ERR(parent)) {
+		ret = PTR_ERR(parent);
+		goto out;
 	}
 
 	/*
