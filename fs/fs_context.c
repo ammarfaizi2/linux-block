@@ -81,6 +81,14 @@ err_fc:
 }
 EXPORT_SYMBOL(vfs_new_fs_context);
 
+void fc_drop_locked(struct fs_context *fc)
+{
+	struct super_block *sb = fc->root->d_sb;
+	dput(fc->root);
+	fc->root = NULL;
+	deactivate_locked_super(sb);
+}
+
 static void legacy_fs_context_free(struct fs_context *fc);
 /**
  * put_fs_context - Dispose of a superblock configuration context.
