@@ -73,30 +73,36 @@ static inline void __jump_label_trans_check_disable(struct jump_entry *entry,
 		bug_at((void *)jump_entry_code(entry), line);
 }
 
+static void __jump_label_set_jump_code(struct jump_entry *entry,
+				       enum jump_label_type type,
+				       union jump_code_union *code,
+				       int init)
+{
+	const unsigned char *ideal_nop = ideal_nops[NOP_ATOMIC5];
+
+	code->jump = 0xe9;
+	code->offset = jump_entry_target(entry) -
+		     (jump_entry_code(entry) + JUMP_LABEL_NOP_SIZE);
+
+	if (type == JUMP_LABEL_JMP) {
+		__jump_label_trans_check_enable(entry, type, ideal_nop, init);
+	} else {
+		__jump_label_trans_check_disable(entry, type, code, init);
+		memcpy(code, ideal_nop, JUMP_LABEL_NOP_SIZE);
+	}
+}
 
 static void __ref __jump_label_transform(struct jump_entry *entry,
 					 enum jump_label_type type,
 					 void *(*poker)(void *, const void *, size_t),
 					 int init)
 {
-	union jump_code_union jmp;
-	const unsigned char *ideal_nop = ideal_nops[NOP_ATOMIC5];
-	const void *code;
-
-	jmp.jump = 0xe9;
-	jmp.offset = jump_entry_target(entry) -
-		     (jump_entry_code(entry) + JUMP_LABEL_NOP_SIZE);
+	union jump_code_union code;
 
 	if (early_boot_irqs_disabled)
 		poker = text_poke_early;
 
-	if (type == JUMP_LABEL_JMP) {
-		__jump_label_trans_check_enable(entry, type, ideal_nop, init);
-		code = &jmp.code;
-	} else {
-		__jump_label_trans_check_disable(entry, type, &jmp, init);
-		code = ideal_nop;
-	}
+	__jump_label_set_jump_code(entry, type, &code, init);
 
 	/*
 	 * Make text_poke_bp() a default fallback poker.
@@ -107,12 +113,12 @@ static void __ref __jump_label_transform(struct jump_entry *entry,
 	 *
 	 */
 	if (poker) {
-		(*poker)((void *)jump_entry_code(entry), code,
+		(*poker)((void *)jump_entry_code(entry), &code,
 			 JUMP_LABEL_NOP_SIZE);
 		return;
 	}
 
-	text_poke_bp((void *)jump_entry_code(entry), code, JUMP_LABEL_NOP_SIZE,
+	text_poke_bp((void *)jump_entry_code(entry), &code, JUMP_LABEL_NOP_SIZE,
 		     (void *)jump_entry_code(entry) + JUMP_LABEL_NOP_SIZE);
 }
 
