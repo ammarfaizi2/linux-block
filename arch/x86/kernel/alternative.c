@@ -768,6 +768,29 @@ int poke_int3_handler(struct pt_regs *regs)
 }
 NOKPROBE_SYMBOL(poke_int3_handler);
 
+static void text_poke_bp_set_handler(void *addr, void *handler,
+				     unsigned char int3)
+{
+	bp_int3_handler = handler;
+	bp_int3_addr = (u8 *)addr + sizeof(int3);
+	text_poke(addr, &int3, sizeof(int3));
+}
+
+static void patch_all_but_first_byte(void *addr, const void *opcode,
+				     size_t len, unsigned char int3)
+{
+	/* patch all but the first byte */
+	text_poke((char *)addr + sizeof(int3),
+		  (const char *) opcode + sizeof(int3),
+		  len - sizeof(int3));
+}
+
+static void patch_first_byte(void *addr, const void *opcode, unsigned char int3)
+{
+	/* patch the first byte */
+	text_poke(addr, opcode, sizeof(int3));
+}
+
 /**
  * text_poke_bp() -- update instructions on live kernel on SMP
  * @addr:	address to patch
@@ -792,27 +815,21 @@ void *text_poke_bp(void *addr, const void *opcode, size_t len, void *handler)
 {
 	unsigned char int3 = 0xcc;
 
-	bp_int3_handler = handler;
-	bp_int3_addr = (u8 *)addr + sizeof(int3);
-	bp_patching_in_progress = true;
-
 	lockdep_assert_held(&text_mutex);
 
+	bp_patching_in_progress = true;
 	/*
 	 * Corresponding read barrier in int3 notifier for making sure the
 	 * in_progress and handler are correctly ordered wrt. patching.
 	 */
 	smp_wmb();
 
-	text_poke(addr, &int3, sizeof(int3));
+	text_poke_bp_set_handler(addr, handler, int3);
 
 	on_each_cpu(do_sync_core, NULL, 1);
 
 	if (len - sizeof(int3) > 0) {
-		/* patch all but the first byte */
-		text_poke((char *)addr + sizeof(int3),
-			  (const char *) opcode + sizeof(int3),
-			  len - sizeof(int3));
+		patch_all_but_first_byte(addr, opcode, len, int3);
 		/*
 		 * According to Intel, this core syncing is very likely
 		 * not necessary and we'd be safe even without it. But
@@ -821,8 +838,7 @@ void *text_poke_bp(void *addr, const void *opcode, size_t len, void *handler)
 		on_each_cpu(do_sync_core, NULL, 1);
 	}
 
-	/* patch the first byte */
-	text_poke(addr, opcode, sizeof(int3));
+	patch_first_byte(addr, opcode, int3);
 
 	on_each_cpu(do_sync_core, NULL, 1);
 	/*
