@@ -407,6 +407,7 @@ bool jump_label_can_update_check(struct jump_entry *entry, bool init)
 	return 0;
 }
 
+#ifndef HAVE_JUMP_LABEL_BATCH
 static void __jump_label_update(struct static_key *key,
 				struct jump_entry *entry,
 				struct jump_entry *stop,
@@ -419,6 +420,34 @@ static void __jump_label_update(struct static_key *key,
 		}
 	}
 }
+#else
+static void __jump_label_update(struct static_key *key,
+				struct jump_entry *entry,
+				struct jump_entry *stop,
+				bool init)
+{
+	for_each_label_entry(key, entry, stop) {
+
+		if (!jump_label_can_update_check(entry, init))
+			continue;
+
+		if (arch_jump_label_transform_queue(entry,
+						    jump_label_type(entry)))
+			continue;
+
+		/*
+		 * Queue's overflow: Apply the current queue, and then
+		 * queue again. If it stills not possible to queue, BUG!
+		 */
+		arch_jump_label_transform_apply();
+		if (!arch_jump_label_transform_queue(entry,
+						     jump_label_type(entry))) {
+			BUG();
+		}
+	}
+	arch_jump_label_transform_apply();
+}
+#endif
 
 void __init jump_label_init(void)
 {
