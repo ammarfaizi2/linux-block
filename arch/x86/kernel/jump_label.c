@@ -35,16 +35,53 @@ static void bug_at(unsigned char *ip, int line)
 	BUG();
 }
 
+static inline void __jump_label_trans_check_enable(struct jump_entry *entry,
+						   enum jump_label_type type,
+						   const unsigned char *ideal_nop,
+						   int init)
+{
+	const unsigned char default_nop[] = { STATIC_KEY_INIT_NOP };
+	const void *expect;
+	int line;
+
+	if (init) {
+		expect = default_nop; line = __LINE__;
+	} else {
+		expect = ideal_nop; line = __LINE__;
+	}
+
+	if (memcmp((void *)jump_entry_code(entry), expect, JUMP_LABEL_NOP_SIZE))
+		bug_at((void *)jump_entry_code(entry), line);
+}
+
+static inline void __jump_label_trans_check_disable(struct jump_entry *entry,
+						    enum jump_label_type type,
+						    union jump_code_union *jmp,
+						    int init)
+{
+	const unsigned char default_nop[] = { STATIC_KEY_INIT_NOP };
+	const void *expect;
+	int line;
+
+	if (init) {
+		expect = default_nop; line = __LINE__;
+	} else {
+		expect = jmp->code; line = __LINE__;
+	}
+
+	if (memcmp((void *)jump_entry_code(entry), expect, JUMP_LABEL_NOP_SIZE))
+		bug_at((void *)jump_entry_code(entry), line);
+}
+
+
 static void __ref __jump_label_transform(struct jump_entry *entry,
 					 enum jump_label_type type,
 					 void *(*poker)(void *, const void *, size_t),
 					 int init)
 {
 	union jump_code_union jmp;
-	const unsigned char default_nop[] = { STATIC_KEY_INIT_NOP };
 	const unsigned char *ideal_nop = ideal_nops[NOP_ATOMIC5];
-	const void *expect, *code;
-	int line;
+	const void *code;
 
 	jmp.jump = 0xe9;
 	jmp.offset = jump_entry_target(entry) -
@@ -54,25 +91,12 @@ static void __ref __jump_label_transform(struct jump_entry *entry,
 		poker = text_poke_early;
 
 	if (type == JUMP_LABEL_JMP) {
-		if (init) {
-			expect = default_nop; line = __LINE__;
-		} else {
-			expect = ideal_nop; line = __LINE__;
-		}
-
+		__jump_label_trans_check_enable(entry, type, ideal_nop, init);
 		code = &jmp.code;
 	} else {
-		if (init) {
-			expect = default_nop; line = __LINE__;
-		} else {
-			expect = &jmp.code; line = __LINE__;
-		}
-
+		__jump_label_trans_check_disable(entry, type, &jmp, init);
 		code = ideal_nop;
 	}
-
-	if (memcmp((void *)jump_entry_code(entry), expect, JUMP_LABEL_NOP_SIZE))
-		bug_at((void *)jump_entry_code(entry), line);
 
 	/*
 	 * Make text_poke_bp() a default fallback poker.
