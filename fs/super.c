@@ -1294,7 +1294,7 @@ EXPORT_SYMBOL(mount_single);
 int vfs_get_tree(struct fs_context *fc)
 {
 	struct super_block *sb;
-	int error;
+	int ret;
 
 	if (fc->fs_type->fs_flags & FS_REQUIRES_DEV && !fc->source)
 		return -ENOENT;
@@ -1305,9 +1305,9 @@ int vfs_get_tree(struct fs_context *fc)
 	/* Get the mountable root in fc->root, with a ref on the root and a ref
 	 * on the superblock.
 	 */
-	error = fc->ops->get_tree(fc);
-	if (error < 0)
-		return error;
+	ret = fc->ops->get_tree(fc);
+	if (ret < 0)
+		return ret;
 
 	if (!fc->root) {
 		pr_err("Filesystem %s get_tree() didn't set fc->root\n",
@@ -1326,8 +1326,7 @@ int vfs_get_tree(struct fs_context *fc)
 		fc->subtype = NULL;
 	}
 
-	/*
-	 * Write barrier is for super_cache_count(). We place it before setting
+	/* Write barrier is for super_cache_count(). We place it before setting
 	 * SB_BORN as the data dependency between the two functions is the
 	 * superblock structure contents that we just set up, not the SB_BORN
 	 * flag.
@@ -1335,20 +1334,20 @@ int vfs_get_tree(struct fs_context *fc)
 	smp_wmb();
 	sb->s_flags |= SB_BORN;
 
-	error = security_sb_set_mnt_opts(sb, fc->security, 0, NULL);
-	if (unlikely(error)) {
+	ret = security_sb_set_mnt_opts(sb, fc->security, 0, NULL);
+	if (unlikely(ret)) {
 		fc_drop_locked(fc);
-		return error;
+		return ret;
 	}
 
-	/*
-	 * filesystems should never set s_maxbytes larger than MAX_LFS_FILESIZE
-	 * but s_maxbytes was an unsigned long long for many releases. Throw
+	/* Filesystems should never set s_maxbytes larger than MAX_LFS_FILESIZE
+	 * but s_maxbytes was an unsigned long long for many releases.  Throw
 	 * this warning for a little while to try and catch filesystems that
 	 * violate this rule.
 	 */
-	WARN((sb->s_maxbytes < 0), "%s set sb->s_maxbytes to "
-		"negative value (%lld)\n", fc->fs_type->name, sb->s_maxbytes);
+	WARN(sb->s_maxbytes < 0,
+	     "%s set sb->s_maxbytes to negative value (%lld)\n",
+	     fc->fs_type->name, sb->s_maxbytes);
 
 	return 0;
 }
