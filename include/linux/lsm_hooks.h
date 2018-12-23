@@ -79,6 +79,11 @@
  * Security hooks for mount using fs_context.
  *	[See also Documentation/filesystems/mounting.txt]
  *
+ * @fs_context_dup:
+ *	Allocate and attach a security structure to sc->security.  This pointer
+ *	is initialised to NULL by the caller.
+ *	@fc indicates the new filesystem context.
+ *	@src_fc indicates the original filesystem context.
  * @fs_context_parse_param:
  *	Userspace provided a parameter to configure a superblock.  The LSM may
  *	reject it with an error and may use it for itself, in which case it
@@ -1475,6 +1480,7 @@ union security_list_options {
 	void (*bprm_committing_creds)(struct linux_binprm *bprm);
 	void (*bprm_committed_creds)(struct linux_binprm *bprm);
 
+	int (*fs_context_dup)(struct fs_context *fc, struct fs_context *src_sc);
 	int (*fs_context_parse_param)(struct fs_context *fc, struct fs_parameter *param);
 	int (*sb_mountpoint)(struct fs_context *fc, struct path *mountpoint,
 			     unsigned int mnt_flags);
@@ -1820,6 +1826,7 @@ struct security_hook_heads {
 	struct hlist_head bprm_check_security;
 	struct hlist_head bprm_committing_creds;
 	struct hlist_head bprm_committed_creds;
+	struct hlist_head fs_context_dup;
 	struct hlist_head fs_context_parse_param;
 	struct hlist_head sb_mountpoint;
 	struct hlist_head sb_alloc_security;

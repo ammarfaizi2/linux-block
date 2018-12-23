@@ -522,6 +522,12 @@ static int apparmor_file_mprotect(struct vm_area_struct *vma,
 			   !(vma->vm_flags & VM_SHARED) ? MAP_PRIVATE : 0);
 }
 
+static int apparmor_fs_context_dup(struct fs_context *fc, struct fs_context *src_fc)
+{
+	fc->security = NULL;
+	return 0;
+}
+
 static int apparmor_set_mnt_opts(struct super_block *sb,
 				void *mnt_opts,
 				unsigned long kern_flags,
@@ -1251,6 +1257,7 @@ static struct security_hook_list apparmor_hooks[] __lsm_ro_after_init = {
 	LSM_HOOK_INIT(capget, apparmor_capget),
 	LSM_HOOK_INIT(capable, apparmor_capable),
 
+	LSM_HOOK_INIT(fs_context_dup, apparmor_fs_context_dup),
 	LSM_HOOK_INIT(sb_set_mnt_opts, apparmor_set_mnt_opts),
 	LSM_HOOK_INIT(sb_free_mnt_opts, apparmor_free_mnt_opts),
 	LSM_HOOK_INIT(fs_context_parse_param, apparmor_fs_context_parse_param),
