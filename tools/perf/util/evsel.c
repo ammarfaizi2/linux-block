@@ -1073,6 +1073,15 @@ void perf_evsel__config(struct perf_evsel *evsel, struct record_opts *opts,
 		attr->enable_on_exec = 0;
 	}
 
+	if (opts->script) {
+		if (track) {
+			attr->mmap_data = 1;
+		} else {
+			attr->disabled = 1;
+			attr->enable_on_exec = 0;
+		}
+	}
+
 	clockid = opts->clockid;
 	if (opts->use_clockid) {
 		attr->use_clockid = 1;

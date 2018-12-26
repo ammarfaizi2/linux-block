@@ -53,6 +53,9 @@
 #include <sys/mman.h>
 #include <sys/wait.h>
 #include <linux/time64.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <linux/un.h>
 
 struct switch_output {
 	bool		 enabled;
@@ -559,6 +562,148 @@ static int record__mmap(struct record *rec)
 	return record__mmap_evlist(rec, rec->evlist);
 }
 
+#define FD(e, x, y) (*(int *)xyarray__entry(e->fd, x, y))
+
+static struct {
+	int event;
+	int sock;
+} script;
+
+static int create_script_socket(char *dir, const char *file)
+{
+	struct sockaddr_un local;
+	int sock, len;
+
+	sock = socket(AF_UNIX, SOCK_STREAM, 0);
+	if (sock == -1) {
+		perror("socket");
+		return -1;
+	}
+
+	local.sun_family = AF_UNIX;
+	scnprintf(local.sun_path, 100, "%s/%s", dir, file);
+	unlink(local.sun_path);
+
+	len = strlen(local.sun_path) + sizeof(local.sun_family);
+	if (bind(sock, (struct sockaddr *)&local, len) == -1) {
+		perror("bind");
+		return -1;
+	}
+
+	if (listen(sock, 5) == -1) {
+		perror("listen");
+		return -1;
+	}
+
+	return sock;
+}
+
+
+/* size of control buffer to send/recv one file descriptor */
+#define CONTROLLEN  CMSG_LEN(sizeof(int))
+
+static struct cmsghdr   *cmptr = NULL;      /* malloc'ed first time */
+
+static int
+send_fd(int fd, int fd_to_send)
+{
+	struct iovec	iov[1];
+	struct msghdr	msg;
+	char		buf[2]; /* send_fd()/recv_fd() 2-byte protocol */
+
+	iov[0].iov_base = buf;
+	iov[0].iov_len  = 2;
+
+	msg.msg_iov     = iov;
+	msg.msg_iovlen  = 1;
+	msg.msg_name    = NULL;
+	msg.msg_namelen = 0;
+
+	if (fd_to_send < 0) {
+		msg.msg_control = NULL;
+		msg.msg_controllen = 0;
+		buf[1] = -fd_to_send;   /* nonzero status means error */
+		if (buf[1] == 0)
+			buf[1] = 1; /* -256, etc. would screw up protocol */
+	} else {
+		int *fd_ptr;
+
+		if (cmptr == NULL && (cmptr = malloc(CONTROLLEN)) == NULL)
+			return -1;
+		cmptr->cmsg_level  = SOL_SOCKET;
+		cmptr->cmsg_type   = SCM_RIGHTS;
+		cmptr->cmsg_len    = CONTROLLEN;
+		msg.msg_control    = cmptr;
+		msg.msg_controllen = CONTROLLEN;
+		fd_ptr	= (int *)CMSG_DATA(cmptr);     /* the fd to pass */
+		*fd_ptr	= fd_to_send;
+		buf[1] = 0;          /* zero status means OK */
+	}
+
+	buf[0] = 0;              /* null byte flag to recv_fd() */
+
+	if (sendmsg(fd, &msg, 0) != 2)
+		return -1;
+
+	return 0;
+}
+
+static int perf_evlist__accept_script(struct perf_evlist *evlist)
+{
+	struct perf_evsel *evsel = perf_evlist__first(evlist);
+	struct sockaddr_un remote;
+	socklen_t len = sizeof(remote);
+	int sock;
+
+	fprintf(stdout, "waiting for script\n");
+
+	sock = accept(script.sock, (struct sockaddr *)&remote, &len);
+	if (sock == -1)
+		return -1;
+
+	fprintf(stdout, "accept ok\n");
+
+	if (WARN_ON(evlist->nr_entries != 2))
+		return -EINVAL;
+
+	if (WARN_ON((xyarray__max_x(evsel->fd) != 1)) ||
+	    WARN_ON((xyarray__max_y(evsel->fd) != 1)))
+		return -EINVAL;
+
+	script.event = FD(evsel, 0, 0);
+	if (script.event == -1)
+		return -EINVAL;
+
+	send_fd(sock, script.event);
+	return 0;
+}
+
+static int perf_evlist__setup_script(void)
+{
+	char dir[PATH_MAX];
+
+	snprintf(dir, PATH_MAX, "/tmp/perf-record-XXXXXX");
+	if (!mkdtemp(dir))
+		return -1;
+
+	setenv("PERFSCRIPT_DIR", dir, 1);
+
+	if (verbose) {
+		char buf[5];
+
+		scnprintf(buf, 5, "%d", verbose);
+		setenv("PERFSCRIPT_VERBOSE", buf, 1);
+	}
+
+	script.sock = create_script_socket(dir, "socket");
+	if (script.sock == -1)
+		return -EINVAL;
+
+	pr_debug("script event fd %d, socket %d, dir %s\n",
+		 script.event, script.sock, dir);
+	return 0;
+}
+
 static int record__open(struct record *rec)
 {
 	char msg[BUFSIZ];
@@ -574,7 +719,7 @@ static int record__open(struct record *rec)
 	 * PERF_RECORD_MMAP while we wait for the initial delay to enable the
 	 * real events, the ones asked by the user.
 	 */
-	if (opts->initial_delay) {
+	if (opts->initial_delay || opts->script) {
 		if (perf_evlist__add_dummy(evlist))
 			return -ENOMEM;
 
@@ -584,6 +729,9 @@ static int record__open(struct record *rec)
 		pos->tracking = 1;
 		pos->attr.enable_on_exec = 1;
 	}
+
+	if (opts->script)
+		opts->group = true;
 
 	perf_evlist__config(evlist, opts, &callchain_param);
 
@@ -1135,6 +1283,10 @@ static int __cmd_record(struct record *rec, int argc, const char **argv)
 	if (rec->opts.use_clockid && rec->opts.clockid_res_ns)
 		session->header.env.clockid_res_ns = rec->opts.clockid_res_ns;
 
+	if (opts->script && perf_evlist__setup_script()) {
+		return -1;
+	}
+
 	if (forks) {
 		err = perf_evlist__prepare_workload(rec->evlist, &opts->target,
 						    argv, data->is_pipe,
@@ -1270,6 +1422,11 @@ static int __cmd_record(struct record *rec, int argc, const char **argv)
 		free(event);
 
 		perf_evlist__start_workload(rec->evlist);
+	}
+
+	if (rec->opts.script && perf_evlist__accept_script(rec->evlist)) {
+		pr_err("failed to accept script\n");
+		goto out_child;
 	}
 
 	if (opts->initial_delay) {
@@ -1941,6 +2098,7 @@ static struct option __record_options[] = {
 			  "signal"),
 	OPT_BOOLEAN(0, "dry-run", &dry_run,
 		    "Parse options then exit"),
+	OPT_BOOLEAN(0, "script", &record.opts.script, "Run the script mode"),
 #ifdef HAVE_AIO_SUPPORT
 	OPT_CALLBACK_OPTARG(0, "aio", &record.opts,
 		     &nr_cblocks_default, "n", "Use <n> control blocks in asynchronous trace writing mode (default: 1, max: 4)",
@@ -2092,6 +2250,14 @@ int cmd_record(int argc, const char **argv)
 	    __perf_evlist__add_default(rec->evlist, !record.opts.no_samples) < 0) {
 		pr_err("Not enough memory for event selector list\n");
 		goto out;
+	}
+
+	if (rec->opts.script) {
+		rec->opts.target.per_thread = true;
+		if (rec->evlist->nr_entries != 1) {
+			pr_err("Can't have more than 1 event in script mode\n");
+			goto out;
+		}
 	}
 
 	if (rec->opts.target.tid && !rec->opts.no_inherit_set)
