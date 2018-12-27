@@ -422,8 +422,46 @@ recv_fd(int fd)
 
 static int event_fd;
 
+static int store_stack(void)
+{
+	struct python_header header;
+	u32 n, n_stack;
+
+	/* PYTHON_DUMP__STACK */
+	n = sizeof(header) + sizeof(struct mmap_stack) + stack->cnt * sizeof(u64);
+	n = PERF_ALIGN(n, sizeof(u64));
+
+	header.type = PYTHON_DUMP__STACK;
+	header.id   = 0;
+	header.size = n;
+
+	if (sizeof(header) != write(fd_events, &header, sizeof(header))) {
+		perror("write failed");
+		return -1;
+	}
+
+	n_stack = n - sizeof(header);
+
+	if (n_stack != write(fd_events, (void *) stack, n_stack)) {
+		perror("write failed");
+		return -1;
+	}
+
+	return 0;
+}
+
+static int config_thread(void);
+
 static void sig_handler(int signum, siginfo_t *oh, void *uc)
 {
+	if (!stack && config_thread()) {
+		fprintf(stdout, "failed to configure stack\n");
+		return;
+	}
+
+	if (store_stack())
+		fprintf(stdout, "failed to store stack\n");
+
 	ioctl(event_fd, PERF_EVENT_IOC_REFRESH, 1);
 }
 
