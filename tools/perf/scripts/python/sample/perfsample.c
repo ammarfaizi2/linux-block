@@ -18,6 +18,19 @@
 #include "Python.h"
 #include <frameobject.h>
 
+#include <stdio.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <time.h>
+#include <linux/perf_event.h>
+#include <sys/ioctl.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <signal.h>
+#include <fcntl.h>
+
 static bool  print;
 static bool  printonly;
 static char *printfile;
@@ -338,14 +351,139 @@ error:
 	return 0;
 }
 
+#define SOCKET_PATH_MAX 100
+#define MAXLINE 100
+
+/* size of control buffer to send/recv one file descriptor */
+#define CONTROLLEN  CMSG_LEN(sizeof(int))
+
+static struct cmsghdr   *cmptr = NULL;      /* malloc'ed first time */
+
+int
+recv_fd(int fd)
+{
+	int newfd, nr, status;
+	char *ptr;
+	char buf[MAXLINE];
+	struct iovec iov[1];
+	struct msghdr msg;
+
+	status = -1;
+
+	for ( ; ; ) {
+		iov[0].iov_base = buf;
+		iov[0].iov_len  = sizeof(buf);
+
+		msg.msg_iov     = iov;
+		msg.msg_iovlen  = 1;
+		msg.msg_name    = NULL;
+		msg.msg_namelen = 0;
+
+		if (cmptr == NULL && (cmptr = malloc(CONTROLLEN)) == NULL)
+			return -1;
+
+		msg.msg_control    = cmptr;
+		msg.msg_controllen = CONTROLLEN;
+
+		if ((nr = recvmsg(fd, &msg, 0)) < 0) {
+			perror("recvmsg error");
+		} else if (nr == 0) {
+			perror("connection closed by server");
+			return -1;
+		}
+
+		/*
+		* See if this is the final data with null & status.  Null
+		* is next to last byte of buffer; status byte is last byte.
+		* Zero status means there is a file descriptor to receive.
+		*/
+		for (ptr = buf; ptr < &buf[nr]; ) {
+			if (*ptr++ == 0) {
+				if (ptr != &buf[nr-1])
+					fprintf(stderr, "message format error");
+
+				status = *ptr & 0xFF;  /* prevent sign extension */
+				if (status == 0) {
+					if (msg.msg_controllen != CONTROLLEN)
+						fprintf(stderr, "status = 0 but no fd");
+					newfd = *(int *)CMSG_DATA(cmptr);
+				} else {
+					newfd = -status;
+				}
+
+				nr -= 2;
+			}
+		}
+
+		if (status >= 0)    /* final data has arrived */
+			return newfd;  /* descriptor, or -status */
+	}
+}
+
+static int event_fd;
+
+static void sig_handler(int signum, siginfo_t *oh, void *uc)
+{
+	ioctl(event_fd, PERF_EVENT_IOC_REFRESH, 1);
+}
+
+static int setup_socket(void)
+{
+	struct sigaction sa;
+	struct sockaddr_un addr;
+	char path[SOCKET_PATH_MAX];
+	int sock, err;
+
+	snprintf(path, sizeof(path), "%s/socket", dir);
+
+	sock = socket(AF_UNIX, SOCK_STREAM, 0);
+	if (sock < 0) {
+		perror("socket error");
+		return -1;
+	}
+
+	memset(&addr, 0, sizeof(addr));
+	addr.sun_family = AF_UNIX;
+	strncpy(addr.sun_path, path, sizeof(addr.sun_path)-1);
+
+	err = connect(sock, (struct sockaddr*)&addr, sizeof(addr));
+	if (err) {
+		perror("connect error");
+		return -1;
+	}
+
+	event_fd = recv_fd(sock);
+
+	close(sock);
+
+	if (verbose)
+		fprintf(stdout, "got event fd %d\n", event_fd);
+
+	fcntl(event_fd, F_SETFL, O_RDWR|O_NONBLOCK|O_ASYNC);
+	fcntl(event_fd, F_SETSIG, SIGIO);
+	fcntl(event_fd, F_SETOWN, getpid());
+
+	/* setup SIGIO signal handler */
+	memset(&sa, 0, sizeof(struct sigaction));
+	sa.sa_sigaction = (void *) sig_handler;
+	sa.sa_flags = SA_SIGINFO;
+
+	if (sigaction(SIGIO, &sa, NULL) < 0) {
+		perror("failed setting up signal handler\n");
+		return -1;
+	}
+
+	return 0;
+}
+
 static int config_thread(void)
 {
 	int protection = PROT_READ | PROT_WRITE;
 	int visibility = MAP_SHARED;
-	char path[PATH_MAX];
+	char path[SOCKET_PATH_MAX];
 	int err = -1, fd = -1;
 
-	snprintf(path, PATH_MAX, "%s/datauser-%d", dir, gettid());
+	snprintf(path, SOCKET_PATH_MAX, "%s/datauser-%d", dir, gettid());
 
 	fd = open(path, O_RDWR|O_CREAT, 0644);
 	if (fd < 0) {
@@ -366,7 +504,7 @@ static int config_thread(void)
 
 	stack->cnt = 0;
 
-	snprintf(path, PATH_MAX, "%s/events-%d", dir, gettid());
+	snprintf(path, SOCKET_PATH_MAX, "%s/events-%d", dir, gettid());
 
 	fd_events = open(path, O_RDWR|O_CREAT, 0644);
 	if (fd_events < 0) {
@@ -380,6 +518,8 @@ static int config_thread(void)
 		fprintf(stdout, "perfsample stack : %p\n", stack);
 		fprintf(stdout, "perfsample dir   : %s\n", dir);
 	}
+
+	ioctl(event_fd, PERF_EVENT_IOC_REFRESH, 1);
 
 error:
 	if (err) {
@@ -466,6 +606,9 @@ initperfsample(void)
 		INITERROR;
 
 	if (config())
+		INITERROR;
+
+	if (setup_socket())
 		INITERROR;
 
 	fprintf(stderr, "perfsample initialized\n");
