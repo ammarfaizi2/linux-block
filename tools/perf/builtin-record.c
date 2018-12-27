@@ -701,6 +701,8 @@ static int perf_evlist__setup_script(void)
 
 	pr_debug("script event fd %d, socket %d, dir %s\n",
 		 script.event, script.sock, dir);
+
+	symbol_conf.record_script = strdup(dir);
 	return 0;
 }
 
@@ -975,7 +977,9 @@ static void record__init_features(struct record *rec)
 		perf_header__clear_feat(&session->header, HEADER_CLOCKID);
 
 	perf_header__clear_feat(&session->header, HEADER_STAT);
-	perf_header__clear_feat(&session->header, HEADER_PYTHON_STACK);
+
+	if (!(rec->opts.script))
+		perf_header__clear_feat(&session->header, HEADER_PYTHON_STACK);
 }
 
 static void
