@@ -158,6 +158,12 @@ struct branch_stack {
 	struct branch_entry	entries[0];
 };
 
+struct script_stack {
+	u64	 ip;
+	u64	 nr;
+	u64	*data;
+};
+
 enum {
 	PERF_IP_FLAG_BRANCH		= 1ULL << 0,
 	PERF_IP_FLAG_CALL		= 1ULL << 1,
@@ -214,6 +220,7 @@ struct perf_sample {
 	struct regs_dump  intr_regs;
 	struct stack_dump user_stack;
 	struct sample_read read;
+	struct script_stack script_stack;
 };
 
 #define PERF_MEM_DATA_SRC_NONE \

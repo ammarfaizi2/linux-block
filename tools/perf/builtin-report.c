@@ -42,6 +42,7 @@
 #include "util/units.h"
 #include "util/branch.h"
 #include "util/script-sample.h"
+#include "util/script-sample-api.h"
 
 #include <dlfcn.h>
 #include <errno.h>
@@ -227,6 +228,15 @@ static int process_feature_event(struct perf_session *session,
 	return 0;
 }
 
+static void load_script_stack(struct perf_sample *sample, struct dso *dso)
+{
+	struct python_stack *stack = (struct python_stack*) dso->script.data[dso->script.idx++];
+
+	sample->script_stack.ip   = *(stack->data + (stack->cnt - 1));
+	sample->script_stack.nr   = stack->cnt;
+	sample->script_stack.data = &stack->cnt;
+}
+
 static int script_resolve(struct machine *machine, struct addr_location *al,
 			  struct perf_sample *sample)
 {
@@ -235,6 +245,14 @@ static int script_resolve(struct machine *machine, struct addr_location *al,
 
 	if (thread == NULL)
 		return -1;
+
+	if (!thread->user_map)
+		return -1;
+
+	if (map__load(thread->user_map) < 0)
+		return -1;
+
+	load_script_stack(sample, thread->user_map->dso);
 
 	al->machine  = machine;
 	al->thread   = thread;

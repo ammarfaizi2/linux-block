@@ -191,6 +191,12 @@ struct dso {
 		u64		 eh_frame_hdr_offset;
 	} data;
 
+	struct {
+		unsigned char	**data;
+		unsigned int	  cnt;
+		unsigned int	  idx;
+	} script;
+
 	union { /* Tool specific area */
 		void	 *priv;
 		u64	 db_id;

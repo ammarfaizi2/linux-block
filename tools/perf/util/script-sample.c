@@ -51,6 +51,33 @@ static int python_line__load(struct python_line *line,
 	return ssym->lnotab ? 0 : -ENOMEM;
 }
 
+#if 0
+static void display_stack(struct python_stack *stack, int idx)
+{
+	fprintf(stderr, "KRAVA idx %d, cnt %lu, ip 0x%lx\n", idx, stack->cnt, *(stack->data + stack->cnt - 1));
+}
+#endif
+
+static int python_stack__update(void *ptr, struct dso *dso)
+{
+	unsigned char **data = dso->script.data;
+
+	if (dso->script.cnt == dso->script.idx) {
+		data = realloc(data, (dso->script.cnt + 1000) * sizeof(unsigned char*));
+		if (!data)
+			return -ENOMEM;
+
+		dso->script.data = data;
+		dso->script.cnt += 1000;
+	}
+
+	//display_stack(ptr, dso->script.idx);
+
+	data[dso->script.idx] = ptr;
+	dso->script.idx++;
+	return 0;
+}
+
 static int __dso__load_ssinfo(struct dso *dso)
 {
 	struct symbol *last_sym = NULL;
@@ -72,6 +99,9 @@ static int __dso__load_ssinfo(struct dso *dso)
 		case PYTHON_DUMP__LINE:
 			err = python_line__load(ptr, last_sym);
 			break;
+		case PYTHON_DUMP__STACK:
+			err = python_stack__update(ptr, dso);
+			break;
 		default:
 			pr_err("failed: unknown event %u\n", hdr->type);
 			err = -1;
@@ -81,6 +111,7 @@ static int __dso__load_ssinfo(struct dso *dso)
 		ptr += hdr->size;
 	}
 
+	dso->script.idx = 0;
 	return err < 0 ? err : cnt;
 }
 
