@@ -2693,6 +2693,11 @@ static void ipc_coverage_string(char *bf, int size, struct annotation *notes)
 		  ipc, coverage);
 }
 
+static int script_line__scnprintf(struct annotation_line *al, char *bf, size_t size)
+{
+	return scnprintf(bf, size, "%5d: %s", al->line_nr, al->line);
+}
+
 static void __annotation_line__write(struct annotation_line *al, struct annotation *notes,
 				     bool first_line, bool current_entry, bool change_color, int width,
 				     void *obj, unsigned int percent_type,
@@ -2848,7 +2853,10 @@ print_addr:
 		if (change_color)
 			obj__set_color(obj, color);
 
-		disasm_line__write(disasm_line(al), notes, obj, bf, sizeof(bf), obj__printf, obj__write_graph);
+		if (symbol_conf.has_script)
+			script_line__scnprintf(al, bf, sizeof(bf));
+		else
+			disasm_line__write(disasm_line(al), notes, obj, bf, sizeof(bf), obj__printf, obj__write_graph);
 
 		obj__printf(obj, "%-*s", width - pcnt_width - cycles_width - 3 - printed, bf);
 	}
