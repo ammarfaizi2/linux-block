@@ -1505,12 +1505,13 @@ The limits are only applied at the peer level in the hierarchy.  This means that
 in the diagram below, only groups A, B, and C will influence each other, and
 groups D and F will influence each other.  Group G will influence nobody.
 
-			[root]
-		/	   |		\
-		A	   B		C
-	       /  \        |
-	      D    F	   G
+::
 
+           [root]
+       /     |     \
+      A      B      C
+     /  \    |
+    D    F   G
 
 So the ideal way to configure this is to set io.latency in groups A, B, and C.
 Generally you do not want to set a value lower than the latency your device
