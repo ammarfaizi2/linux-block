@@ -1306,7 +1306,6 @@ F:	include/dt-bindings/clock/gxbb*
 F:	Documentation/devicetree/bindings/clock/amlogic*
 
 ARM/Amlogic Meson SoC support
-M:	Carlo Caione <carlo@caione.org>
 M:	Kevin Hilman <khilman@baylibre.com>
 L:	linux-arm-kernel@lists.infradead.org (moderated for non-subscribers)
 L:	linux-amlogic@lists.infradead.org
@@ -1317,6 +1316,7 @@ F:	arch/arm/boot/dts/meson*
 F:	arch/arm64/boot/dts/amlogic/
 F:	drivers/pinctrl/meson/
 F:	drivers/mmc/host/meson*
+F:	drivers/soc/amlogic/
 N:	meson
 
 ARM/Amlogic Meson SoC Sound Drivers
@@ -2225,6 +2225,7 @@ S:	Supported
 F:	Documentation/devicetree/bindings/arm/ti/k3.txt
 F:	arch/arm64/boot/dts/ti/Makefile
 F:	arch/arm64/boot/dts/ti/k3-*
+F:	include/dt-bindings/pinctrl/k3.h
 
 ARM/TEXAS INSTRUMENT KEYSTONE ARCHITECTURE
 M:	Santosh Shilimkar <ssantosh@kernel.org>
@@ -2268,6 +2269,7 @@ M:	Masahiro Yamada <yamada.masahiro@socionext.com>
 L:	linux-arm-kernel@lists.infradead.org (moderated for non-subscribers)
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/masahiroy/linux-uniphier.git
 S:	Maintained
+F:	Documentation/devicetree/bindings/arm/socionext/uniphier.txt
 F:	Documentation/devicetree/bindings/gpio/gpio-uniphier.txt
 F:	Documentation/devicetree/bindings/pinctrl/socionext,uniphier-pinctrl.txt
 F:	arch/arm/boot/dts/uniphier*
@@ -2277,6 +2279,7 @@ F:	arch/arm/mm/cache-uniphier.c
 F:	arch/arm64/boot/dts/socionext/uniphier*
 F:	drivers/bus/uniphier-system-bus.c
 F:	drivers/clk/uniphier/
+F:	drivers/dmaengine/uniphier-mdmac.c
 F:	drivers/gpio/gpio-uniphier.c
 F:	drivers/i2c/busses/i2c-uniphier*
 F:	drivers/irqchip/irq-uniphier-aidet.c
@@ -11917,18 +11920,12 @@ F:	Documentation/driver-api/pinctl.rst
 F:	drivers/pinctrl/
 F:	include/linux/pinctrl/
 
-PIN CONTROLLER - ATMEL AT91
-M:	Jean-Christophe Plagniol-Villard <plagnioj@jcrosoft.com>
-L:	linux-arm-kernel@lists.infradead.org (moderated for non-subscribers)
-S:	Maintained
-F:	drivers/pinctrl/pinctrl-at91.*
-
-PIN CONTROLLER - ATMEL AT91 PIO4
+PIN CONTROLLER - MICROCHIP AT91
 M:	Ludovic Desroches <ludovic.desroches@microchip.com>
 L:	linux-arm-kernel@lists.infradead.org (moderated for non-subscribers)
 L:	linux-gpio@vger.kernel.org
 S:	Supported
-F:	drivers/pinctrl/pinctrl-at91-pio4.*
+F:	drivers/pinctrl/pinctrl-at91*
 
 PIN CONTROLLER - FREESCALE
 M:	Dong Aisheng <aisheng.dong@nxp.com>
@@ -11964,11 +11961,11 @@ F:	Documentation/devicetree/bindings/pinctrl/qcom,*.txt
 F:	drivers/pinctrl/qcom/
 
 PIN CONTROLLER - RENESAS
-M:	Laurent Pinchart <laurent.pinchart@ideasonboard.com>
 M:	Geert Uytterhoeven <geert+renesas@glider.be>
 L:	linux-renesas-soc@vger.kernel.org
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/geert/renesas-drivers.git sh-pfc
 S:	Maintained
+F:	drivers/pinctrl/pinctrl-rz*
 F:	drivers/pinctrl/sh-pfc/
 
 PIN CONTROLLER - SAMSUNG
@@ -12581,6 +12578,13 @@ L:	iommu@lists.linux-foundation.org
 L:	linux-arm-msm@vger.kernel.org
 S:	Maintained
 F:	drivers/iommu/qcom_iommu.c
+
+QUALCOMM TSENS THERMAL DRIVER
+M:	Amit Kucheria <amit.kucheria@linaro.org>
+L:	linux-pm@vger.kernel.org
+L:	linux-arm-msm@vger.kernel.org
+S:	Maintained
+F:	drivers/thermal/qcom/
 
 QUALCOMM VENUS VIDEO ACCELERATOR DRIVER
 M:	Stanimir Varbanov <stanimir.varbanov@linaro.org>
@@ -14625,9 +14629,11 @@ SYNOPSYS DESIGNWARE DMAC DRIVER
 M:	Viresh Kumar <vireshk@kernel.org>
 R:	Andy Shevchenko <andriy.shevchenko@linux.intel.com>
 S:	Maintained
+F:	Documentation/devicetree/bindings/dma/snps-dma.txt
+F:	drivers/dma/dw/
+F:	include/dt-bindings/dma/dw-dmac.h
 F:	include/linux/dma/dw.h
 F:	include/linux/platform_data/dma-dw.h
-F:	drivers/dma/dw/
 
 SYNOPSYS DESIGNWARE ENTERPRISE ETHERNET DRIVER
 M:	Jose Abreu <Jose.Abreu@synopsys.com>
