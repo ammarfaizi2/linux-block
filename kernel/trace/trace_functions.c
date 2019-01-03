@@ -68,6 +68,12 @@ int ftrace_create_function_files(struct trace_array *tr,
 	if (ret)
 		return ret;
 
+	ret = allocate_fgraph_ops(tr);
+	if (ret) {
+		kfree(tr->ops);
+		return ret;
+	}
+
 	ftrace_create_filter_files(tr->ops, parent);
 
 	return 0;
@@ -78,6 +84,7 @@ void ftrace_destroy_function_files(struct trace_array *tr)
 	ftrace_destroy_filter_files(tr->ops);
 	kfree(tr->ops);
 	tr->ops = NULL;
+	free_fgraph_ops(tr);
 }
 
 static int function_trace_init(struct trace_array *tr)
