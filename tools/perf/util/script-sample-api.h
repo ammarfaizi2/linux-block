@@ -1,10 +1,7 @@
 #ifndef __SCRIPT_SAMPLE_API_H
 #define __SCRIPT_SAMPLE_API_H
 
-#include <stdint.h>
-
-typedef uint32_t u32;
-typedef uint64_t u64;
+#include <linux/types.h>
 
 struct python_header {
 	u32	size;
