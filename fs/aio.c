@@ -193,7 +193,11 @@ struct aio_kiocb {
 	struct kioctx		*ki_ctx;
 	kiocb_cancel_fn		*ki_cancel;
 
-	struct iocb __user	*ki_user_iocb;	/* user's aiocb */
+	union {
+		struct iocb __user	*ki_user_iocb;	/* user's aiocb */
+		unsigned long		ki_index;
+	};
+
 	__u64			ki_user_data;	/* user's data for completion */
 
 	struct list_head	ki_list;	/* the aio core uses this
@@ -1068,7 +1072,7 @@ static inline void iocb_put(struct aio_kiocb *iocb)
 static void aio_fill_event(struct io_event *ev, struct aio_kiocb *iocb,
 			   long res, long res2)
 {
-	ev->obj = (u64)(unsigned long)iocb->ki_user_iocb;
+	ev->obj = iocb->ki_index;
 	ev->data = iocb->ki_user_data;
 	ev->res = res;
 	ev->res2 = res2;
@@ -1799,7 +1803,7 @@ out:
 }
 
 static int __io_submit_one(struct kioctx *ctx, const struct iocb *iocb,
-			   struct iocb __user *user_iocb, bool compat)
+			   unsigned long ki_index, bool compat)
 {
 	struct aio_kiocb *req;
 	ssize_t ret;
@@ -1843,13 +1847,13 @@ static int __io_submit_one(struct kioctx *ctx, const struct iocb *iocb,
 		}
 	}
 
-	ret = put_user(KIOCB_KEY, &user_iocb->aio_key);
+	ret = put_user(KIOCB_KEY, &((struct iocb __user *) ki_index)->aio_key);
 	if (unlikely(ret)) {
 		pr_debug("EFAULT: aio_key\n");
 		goto out_put_req;
 	}
 
-	req->ki_user_iocb = user_iocb;
+	req->ki_user_iocb = (struct iocb __user *) ki_index;
 	req->ki_user_data = iocb->aio_data;
 
 	switch (iocb->aio_lio_opcode) {
@@ -1900,12 +1904,13 @@ out_put_reqs_available:
 static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
 			 bool compat)
 {
+	unsigned long ki_index = (unsigned long) user_iocb;
 	struct iocb iocb;
 
 	if (unlikely(copy_from_user(&iocb, user_iocb, sizeof(iocb))))
 		return -EFAULT;
 
-	return __io_submit_one(ctx, &iocb, user_iocb, compat);
+	return __io_submit_one(ctx, &iocb, ki_index, compat);
 }
 
 /* sys_io_submit:
