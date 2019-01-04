@@ -43,6 +43,8 @@
 #include <linux/percpu-refcount.h>
 #include <linux/mount.h>
 #include <linux/anon_inodes.h>
+#include <linux/sizes.h>
+#include <linux/nospec.h>
 
 #include <asm/kmap_types.h>
 #include <linux/uaccess.h>
@@ -131,6 +133,13 @@ struct aio_event_ring {
 	unsigned ring_mask;
 };
 
+struct aio_mapped_ubuf {
+	u64 ubuf;
+	size_t len;
+	struct bio_vec *bvec;
+	unsigned int nr_bvecs;
+};
+
 struct kioctx {
 	struct percpu_ref	users;
 	atomic_t		dead;
@@ -165,6 +174,9 @@ struct kioctx {
 
 	struct page		**ring_pages;
 	long			nr_pages;
+
+	/* if used, fixed mapped user buffers */
+	struct aio_mapped_ubuf	*user_bufs;
 
 	/* if used, completion and submission rings */
 	struct aio_iocb_ring	sq_ring;
@@ -319,9 +331,11 @@ static const struct file_operations aio_ring_fops;
 static const struct address_space_operations aio_ctx_aops;
 static const struct file_operations aio_scqring_fops;
 
-static int aio_uring_create(unsigned entries, struct aio_uring_params *p);
+static int aio_uring_create(unsigned entries, struct iovec __user *iovecs,
+				struct aio_uring_params *p);
 static struct kioctx *alloc_ioctx(unsigned int max_reqs, unsigned int flags);
 
+static void aio_iocb_buffer_unmap(struct kioctx *);
 static void aio_iopoll_reap_events(struct kioctx *);
 
 static struct file *aio_private_file(struct kioctx *ctx, loff_t nr_pages)
@@ -356,6 +370,126 @@ static struct dentry *aio_mount(struct file_system_type *fs_type,
 static bool aio_uses_scqring(struct kioctx *ctx)
 {
 	return (ctx->flags & IOCTX_FLAG_SCQRING) != 0;
+}
+
+static void aio_iocb_buffer_unmap(struct kioctx *ctx)
+{
+	int i, j;
+
+	if (!ctx->user_bufs)
+		return;
+
+	for (i = 0; i < ctx->max_reqs; i++) {
+		struct aio_mapped_ubuf *amu = &ctx->user_bufs[i];
+
+		for (j = 0; j < amu->nr_bvecs; j++)
+			put_page(amu->bvec[j].bv_page);
+
+		kfree(amu->bvec);
+		amu->nr_bvecs = 0;
+	}
+
+	kfree(ctx->user_bufs);
+	ctx->user_bufs = NULL;
+}
+
+static int aio_iocb_buffer_map(struct kioctx *ctx, struct iovec __user *iovecs)
+{
+	unsigned long total_pages, page_limit;
+	struct page **pages = NULL;
+	int i, j, got_pages = 0;
+	int ret = -EINVAL;
+
+	ctx->user_bufs = kcalloc(ctx->max_reqs, sizeof(struct aio_mapped_ubuf),
+					GFP_KERNEL);
+	if (!ctx->user_bufs)
+		return -ENOMEM;
+
+	/* Don't allow more pages than we can safely lock */
+	total_pages = 0;
+	page_limit = rlimit(RLIMIT_MEMLOCK) >> PAGE_SHIFT;
+
+	for (i = 0; i < ctx->max_reqs; i++) {
+		struct aio_mapped_ubuf *amu = &ctx->user_bufs[i];
+		unsigned long off, start, end, ubuf;
+		int pret, nr_pages;
+		struct iovec iov;
+		size_t size;
+
+		ret = -EFAULT;
+		if (copy_from_user(&iov, &iovecs[i], sizeof(iov)))
+			goto err;
+
+		/*
+		 * Don't impose further limits on the size and buffer
+		 * constraints here, we'll -EINVAL later when IO is
+		 * submitted if they are wrong.
+		 */
+		ret = -EFAULT;
+		if (!iov.iov_base)
+			goto err;
+
+		/* arbitrary limit, but we need something */
+		if (iov.iov_len > SZ_4M)
+			goto err;
+
+		ubuf = (unsigned long) iov.iov_base;
+		end = (ubuf + iov.iov_len + PAGE_SIZE - 1) >> PAGE_SHIFT;
+		start = ubuf >> PAGE_SHIFT;
+		nr_pages = end - start;
+
+		ret = -ENOMEM;
+		if (total_pages + nr_pages > page_limit)
+			goto err;
+
+		if (!pages || nr_pages > got_pages) {
+			kfree(pages);
+			pages = kmalloc(nr_pages * sizeof(struct page *),
+					GFP_KERNEL);
+			if (!pages)
+				goto err;
+			got_pages = nr_pages;
+		}
+
+		amu->bvec = kmalloc(nr_pages * sizeof(struct bio_vec),
+					GFP_KERNEL);
+		if (!amu->bvec)
+			goto err;
+
+		down_write(&current->mm->mmap_sem);
+		pret = get_user_pages(ubuf, nr_pages, 1, pages, NULL);
+		up_write(&current->mm->mmap_sem);
+
+		if (pret < nr_pages) {
+			if (pret < 0)
+				ret = pret;
+			goto err;
+		}
+
+		off = ubuf & ~PAGE_MASK;
+		size = iov.iov_len;
+		for (j = 0; j < nr_pages; j++) {
+			size_t vec_len;
+
+			vec_len = min_t(size_t, size, PAGE_SIZE - off);
+			amu->bvec[j].bv_page = pages[j];
+			amu->bvec[j].bv_len = vec_len;
+			amu->bvec[j].bv_offset = off;
+			off = 0;
+			size -= vec_len;
+		}
+		/* store original address for later verification */
+		amu->ubuf = ubuf;
+		amu->len = iov.iov_len;
+		amu->nr_bvecs = nr_pages;
+		total_pages += nr_pages;
+	}
+	kfree(pages);
+	return 0;
+err:
+	kfree(pages);
+	aio_iocb_buffer_unmap(ctx);
+	return ret;
 }
 
 static void aio_free_scq_urings(struct kioctx *ctx)
@@ -437,10 +571,18 @@ static void aio_fill_offsets(struct aio_uring_params *p)
 	p->cq_off.events = offsetof(struct aio_cq_ring, events);
 }
 
-static int aio_uring_create(unsigned entries, struct aio_uring_params *p)
+static int aio_uring_create(unsigned entries, struct iovec __user *iovecs,
+			    struct aio_uring_params *p)
 {
 	struct kioctx *ctx;
 	int ret;
+
+	/*
+	 * We don't use the iovecs without fixed buffers being asked for.
+	 * Error out if they don't match.
+	 */
+	if (!(p->flags & IOCTX_FLAG_FIXEDBUFS) && iovecs)
+		return -EINVAL;
 
 	/*
 	 * Use twice as many entries for the CQ ring. It's possible for the
@@ -461,10 +603,20 @@ static int aio_uring_create(unsigned entries, struct aio_uring_params *p)
 		return ret;
 	}
 
+	if (p->flags & IOCTX_FLAG_FIXEDBUFS) {
+		ret = aio_iocb_buffer_map(ctx, iovecs);
+		if (ret) {
+			aio_free_scq_urings(ctx);
+			kmem_cache_free(kioctx_cachep, ctx);
+			return ret;
+		}
+	}
+
 	ret = anon_inode_getfd("[io_uring]", &aio_scqring_fops, ctx,
 				O_RDWR | O_CLOEXEC);
 	if (ret < 0) {
 		aio_free_scq_urings(ctx);
+		aio_iocb_buffer_unmap(ctx);
 		kmem_cache_free(kioctx_cachep, ctx);
 		return ret;
 	}
@@ -493,12 +645,11 @@ SYSCALL_DEFINE3(io_uring_setup, u32, entries, struct iovec __user *, iovecs,
 			return -EINVAL;
 	}
 
-	if (p.flags & ~(IOCTX_FLAG_SCQRING | IOCTX_FLAG_IOPOLL))
-		return -EINVAL;
-	if (iovecs)
+	if (p.flags & ~(IOCTX_FLAG_SCQRING | IOCTX_FLAG_IOPOLL |
+			IOCTX_FLAG_FIXEDBUFS))
 		return -EINVAL;
 
-	ret = aio_uring_create(entries, &p);
+	ret = aio_uring_create(entries, iovecs, &p);
 	if (ret < 0)
 		return ret;
 
@@ -2059,23 +2210,58 @@ out_fput:
 	return ret;
 }
 
-static int aio_setup_rw(int rw, const struct iocb *iocb, struct iovec **iovec,
-		bool vectored, bool compat, struct iov_iter *iter)
+static int aio_setup_rw(int rw, struct aio_kiocb *kiocb,
+		const struct iocb *iocb, struct iovec **iovec, bool vectored,
+		bool compat, bool kaddr, struct iov_iter *iter)
 {
-	void __user *buf = (void __user *)(uintptr_t)iocb->aio_buf;
+	void __user *ubuf = (void __user *)(uintptr_t)iocb->aio_buf;
 	size_t len = iocb->aio_nbytes;
 
 	if (!vectored) {
-		ssize_t ret = import_single_range(rw, buf, len, *iovec, iter);
+		ssize_t ret;
+
+		if (!kaddr) {
+			ret = import_single_range(rw, ubuf, len, *iovec, iter);
+		} else {
+			struct kioctx *ctx = kiocb->ki_ctx;
+			struct aio_mapped_ubuf *amu;
+			size_t offset;
+			int index;
+
+			/* __io_submit_one() already validated the index */
+			index = array_index_nospec(kiocb->ki_index,
+							ctx->max_reqs);
+			amu = &ctx->user_bufs[index];
+			if (iocb->aio_buf < amu->ubuf ||
+			    iocb->aio_buf + len > amu->ubuf + amu->len) {
+				ret = -EFAULT;
+				goto err;
+			}
+
+			/*
+			 * May not be a start of buffer, set size appropriately
+			 * and advance us to the beginning.
+			 */
+			offset = iocb->aio_buf - amu->ubuf;
+			iov_iter_bvec(iter, rw, amu->bvec, amu->nr_bvecs,
+					offset + len);
+			if (offset)
+				iov_iter_advance(iter, offset);
+			ret = 0;
+
+		}
+err:
 		*iovec = NULL;
 		return ret;
 	}
+	if (kaddr)
+		return -EINVAL;
 #ifdef CONFIG_COMPAT
 	if (compat)
-		return compat_import_iovec(rw, buf, len, UIO_FASTIOV, iovec,
+		return compat_import_iovec(rw, ubuf, len, UIO_FASTIOV, iovec,
 				iter);
 #endif
-	return import_iovec(rw, buf, len, UIO_FASTIOV, iovec, iter);
+	return import_iovec(rw, ubuf, len, UIO_FASTIOV, iovec, iter);
 }
 
 static inline void aio_rw_done(struct kiocb *req, ssize_t ret)
@@ -2157,7 +2343,7 @@ static void aio_iopoll_iocb_issued(struct aio_submit_state *state,
 
 static ssize_t aio_read(struct aio_kiocb *kiocb, const struct iocb *iocb,
 			struct aio_submit_state *state, bool vectored,
-			bool compat)
+			bool compat, bool kaddr)
 {
 	struct iovec inline_vecs[UIO_FASTIOV], *iovec = inline_vecs;
 	struct kiocb *req = &kiocb->rw;
@@ -2177,9 +2363,11 @@ static ssize_t aio_read(struct aio_kiocb *kiocb, const struct iocb *iocb,
 	if (unlikely(!file->f_op->read_iter))
 		goto out_fput;
 
-	ret = aio_setup_rw(READ, iocb, &iovec, vectored, compat, &iter);
+	ret = aio_setup_rw(READ, kiocb, iocb, &iovec, vectored, compat, kaddr,
+				&iter);
 	if (ret)
 		goto out_fput;
+
 	ret = rw_verify_area(READ, file, &req->ki_pos, iov_iter_count(&iter));
 	if (!ret)
 		aio_rw_done(req, call_read_iter(file, req, &iter));
@@ -2192,7 +2380,7 @@ out_fput:
 
 static ssize_t aio_write(struct aio_kiocb *kiocb, const struct iocb *iocb,
 			 struct aio_submit_state *state, bool vectored,
-			 bool compat)
+			 bool compat, bool kaddr)
 {
 	struct iovec inline_vecs[UIO_FASTIOV], *iovec = inline_vecs;
 	struct kiocb *req = &kiocb->rw;
@@ -2212,7 +2400,8 @@ static ssize_t aio_write(struct aio_kiocb *kiocb, const struct iocb *iocb,
 	if (unlikely(!file->f_op->write_iter))
 		goto out_fput;
 
-	ret = aio_setup_rw(WRITE, iocb, &iovec, vectored, compat, &iter);
+	ret = aio_setup_rw(WRITE, kiocb, iocb, &iovec, vectored, compat, kaddr,
+				&iter);
 	if (ret)
 		goto out_fput;
 	ret = rw_verify_area(WRITE, file, &req->ki_pos, iov_iter_count(&iter));
@@ -2460,7 +2649,8 @@ out:
 
 static int __io_submit_one(struct kioctx *ctx, const struct iocb *iocb,
 			   unsigned long ki_index,
-			   struct aio_submit_state *state, bool compat)
+			   struct aio_submit_state *state, bool compat,
+			   bool kaddr)
 {
 	struct aio_kiocb *req;
 	ssize_t ret;
@@ -2525,16 +2715,16 @@ static int __io_submit_one(struct kioctx *ctx, const struct iocb *iocb,
 	ret = -EINVAL;
 	switch (iocb->aio_lio_opcode) {
 	case IOCB_CMD_PREAD:
-		ret = aio_read(req, iocb, state, false, compat);
+		ret = aio_read(req, iocb, state, false, compat, kaddr);
 		break;
 	case IOCB_CMD_PWRITE:
-		ret = aio_write(req, iocb, state, false, compat);
+		ret = aio_write(req, iocb, state, false, compat, kaddr);
 		break;
 	case IOCB_CMD_PREADV:
-		ret = aio_read(req, iocb, state, true, compat);
+		ret = aio_read(req, iocb, state, true, compat, kaddr);
 		break;
 	case IOCB_CMD_PWRITEV:
-		ret = aio_write(req, iocb, state, true, compat);
+		ret = aio_write(req, iocb, state, true, compat, kaddr);
 		break;
 	case IOCB_CMD_FSYNC:
 		if (ctx->flags & IOCTX_FLAG_IOPOLL)
@@ -2591,7 +2781,7 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
 	if (unlikely(copy_from_user(&iocb, user_iocb, sizeof(iocb))))
 		return -EFAULT;
 
-	return __io_submit_one(ctx, &iocb, ki_index, state, compat);
+	return __io_submit_one(ctx, &iocb, ki_index, state, compat, false);
 }
 
 #ifdef CONFIG_BLOCK
@@ -2672,6 +2862,7 @@ static const struct iocb *aio_peek_sqring(struct kioctx *ctx,
 
 static int aio_ring_submit(struct kioctx *ctx, unsigned int to_submit)
 {
+	bool kaddr = (ctx->flags & IOCTX_FLAG_FIXEDBUFS) != 0;
 	struct aio_submit_state state, *statep = NULL;
 	int i, ret = 0, submit = 0;
 
@@ -2688,7 +2879,8 @@ static int aio_ring_submit(struct kioctx *ctx, unsigned int to_submit)
 		if (!iocb)
 			break;
 
-		ret = __io_submit_one(ctx, iocb, iocb_index, statep, false);
+		ret = __io_submit_one(ctx, iocb, iocb_index, statep, false,
+					kaddr);
 		if (ret)
 			break;
 
@@ -2777,6 +2969,7 @@ static int aio_scqring_release(struct inode *inode, struct file *file)
 	file->private_data = NULL;
 	aio_iopoll_reap_events(ctx);
 	aio_free_scq_urings(ctx);
+	aio_iocb_buffer_unmap(ctx);
 	kmem_cache_free(kioctx_cachep, ctx);
 	return 0;
 }
