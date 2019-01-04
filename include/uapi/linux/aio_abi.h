@@ -111,6 +111,9 @@ struct iocb {
 #define IOCTX_FLAG_FIXEDBUFS	(1 << 2)	/* IO buffers are fixed */
 #define IOCTX_FLAG_SQTHREAD	(1 << 3)	/* Use SQ thread */
 #define IOCTX_FLAG_SQWQ		(1 << 4)	/* Use SQ workqueue */
+#define IOCTX_FLAG_SQPOLL	(1 << 5)	/* SQ thread polls */
+
+#define IORING_SQ_NEED_WAKEUP	(1 << 0)	/* needs io_ring_enter wakeup */
 
 /*
  * Magic offsets for the application to mmap the data it needs
