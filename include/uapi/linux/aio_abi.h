@@ -106,6 +106,53 @@ struct iocb {
 	__u32	aio_resfd;
 }; /* 64 bytes */
 
+#define IOCTX_FLAG_SCQRING	(1 << 0)	/* Use SQ/CQ rings */
+
+/*
+ * Magic offsets for the application to mmap the data it needs
+ */
+#define IORING_OFF_SQ_RING		0ULL
+#define IORING_OFF_CQ_RING		0x8000000ULL
+#define IORING_OFF_IOCB			0x10000000ULL
+
+/*
+ * Filled with the offset for mmap(2)
+ */
+struct aio_sqring_offsets {
+	u32 head;
+	u32 tail;
+	u32 ring_mask;
+	u32 ring_entries;
+	u32 flags;
+	u32 dropped;
+	u32 array;
+	u32 resv[3];
+};
+
+struct aio_cqring_offsets {
+	u32 head;
+	u32 tail;
+	u32 ring_mask;
+	u32 ring_entries;
+	u32 overflow;
+	u32 events;
+	u32 resv[4];
+};
+
+#define IORING_ENTER_GETEVENTS	(1 << 0)
+
+/*
+ * Passed in for io_uring_setup(2). Copied back with updated info on success
+ */
+struct aio_uring_params {
+	u32 sq_entries;
+	u32 cq_entries;
+	u32 flags;
+	u16 resv[10];
+	struct aio_sqring_offsets sq_off;
+	struct aio_cqring_offsets cq_off;
+};
+
 #undef IFBIG
 #undef IFLITTLE
 

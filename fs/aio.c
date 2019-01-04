@@ -42,6 +42,7 @@
 #include <linux/ramfs.h>
 #include <linux/percpu-refcount.h>
 #include <linux/mount.h>
+#include <linux/anon_inodes.h>
 
 #include <asm/kmap_types.h>
 #include <linux/uaccess.h>
@@ -93,6 +94,41 @@ struct ctx_rq_wait {
 	atomic_t count;
 };
 
+struct aio_uring {
+	u32 head ____cacheline_aligned_in_smp;
+	u32 tail ____cacheline_aligned_in_smp;
+};
+
+struct aio_sq_ring {
+	struct aio_uring r;
+	u32 ring_mask;
+	u32 ring_entries;
+	u32 dropped;
+	u32 flags;
+	u32 array[0];
+};
+
+struct aio_cq_ring {
+	struct aio_uring r;
+	u32 ring_mask;
+	u32 ring_entries;
+	u32 overflow;
+	struct io_event events[0];
+};
+
+struct aio_iocb_ring {
+	struct aio_sq_ring *ring;
+	unsigned entries;
+	unsigned ring_mask;
+	struct iocb *iocbs;
+};
+
+struct aio_event_ring {
+	struct aio_cq_ring *ring;
+	unsigned entries;
+	unsigned ring_mask;
+};
+
 struct kioctx {
 	struct percpu_ref	users;
 	atomic_t		dead;
@@ -128,6 +164,10 @@ struct kioctx {
 	struct page		**ring_pages;
 	long			nr_pages;
 
+	/* if used, completion and submission rings */
+	struct aio_iocb_ring	sq_ring;
+	struct aio_event_ring	cq_ring;
+
 	struct rcu_work		free_rwork;	/* see free_ioctx() */
 
 	/*
@@ -145,6 +185,10 @@ struct kioctx {
 		 * We batch accesses to it with a percpu version.
 		 */
 		atomic_t	reqs_available;
+	} ____cacheline_aligned_in_smp;
+
+	struct {
+		struct mutex uring_lock;
 	} ____cacheline_aligned_in_smp;
 
 	struct {
@@ -226,6 +270,10 @@ static struct vfsmount *aio_mnt;
 
 static const struct file_operations aio_ring_fops;
 static const struct address_space_operations aio_ctx_aops;
+static const struct file_operations aio_scqring_fops;
+
+static int aio_uring_create(unsigned entries, struct aio_uring_params *p);
+static struct kioctx *alloc_ioctx(unsigned int max_reqs, unsigned int flags);
 
 static struct file *aio_private_file(struct kioctx *ctx, loff_t nr_pages)
 {
@@ -254,6 +302,161 @@ static struct dentry *aio_mount(struct file_system_type *fs_type,
 	if (!IS_ERR(root))
 		root->d_sb->s_iflags |= SB_I_NOEXEC;
 	return root;
+}
+
+static bool aio_uses_scqring(struct kioctx *ctx)
+{
+	return (ctx->flags & IOCTX_FLAG_SCQRING) != 0;
+}
+
+static void aio_free_scq_urings(struct kioctx *ctx)
+{
+	if (ctx->sq_ring.ring) {
+		page_frag_free(ctx->sq_ring.ring);
+		ctx->sq_ring.ring = NULL;
+	}
+	if (ctx->sq_ring.iocbs) {
+		page_frag_free(ctx->sq_ring.iocbs);
+		ctx->sq_ring.iocbs = NULL;
+	}
+	if (ctx->cq_ring.ring) {
+		page_frag_free(ctx->cq_ring.ring);
+		ctx->cq_ring.ring = NULL;
+	}
+}
+
+static void *aio_mem_alloc(size_t size)
+{
+	gfp_t gfp_flags = GFP_KERNEL | __GFP_ZERO | __GFP_NOWARN | __GFP_COMP |
+				__GFP_NORETRY;
+
+	return (void *) __get_free_pages(gfp_flags, get_order(size));
+}
+
+static int aio_allocate_scq_urings(struct kioctx *ctx,
+				   struct aio_uring_params *p)
+{
+	struct aio_sq_ring *sq_ring;
+	struct aio_cq_ring *cq_ring;
+
+	sq_ring = aio_mem_alloc(struct_size(sq_ring, array, p->sq_entries));
+	if (!sq_ring)
+		return -ENOMEM;
+
+	ctx->sq_ring.ring = sq_ring;
+	sq_ring->ring_mask = p->sq_entries - 1;
+	sq_ring->ring_entries = p->sq_entries;
+	ctx->sq_ring.ring_mask = sq_ring->ring_mask;
+	ctx->sq_ring.entries = sq_ring->ring_entries;
+
+	ctx->sq_ring.iocbs = aio_mem_alloc(sizeof(struct iocb) * p->sq_entries);
+	if (!ctx->sq_ring.iocbs)
+		goto err;
+
+	cq_ring = aio_mem_alloc(struct_size(cq_ring, events, p->cq_entries));
+	if (!cq_ring)
+		goto err;
+
+	ctx->cq_ring.ring = cq_ring;
+	cq_ring->ring_mask = p->cq_entries - 1;
+	cq_ring->ring_entries = p->cq_entries;
+	ctx->cq_ring.ring_mask = cq_ring->ring_mask;
+	ctx->cq_ring.entries = cq_ring->ring_entries;
+	return 0;
+err:
+	aio_free_scq_urings(ctx);
+	return -ENOMEM;
+}
+
+static void aio_fill_offsets(struct aio_uring_params *p)
+{
+	memset(&p->sq_off, 0, sizeof(p->sq_off));
+	p->sq_off.head = offsetof(struct aio_sq_ring, r.head);
+	p->sq_off.tail = offsetof(struct aio_sq_ring, r.tail);
+	p->sq_off.ring_mask = offsetof(struct aio_sq_ring, ring_mask);
+	p->sq_off.ring_entries = offsetof(struct aio_sq_ring, ring_entries);
+	p->sq_off.flags = offsetof(struct aio_sq_ring, flags);
+	p->sq_off.dropped = offsetof(struct aio_sq_ring, dropped);
+	p->sq_off.array = offsetof(struct aio_sq_ring, array);
+
+	memset(&p->cq_off, 0, sizeof(p->cq_off));
+	p->cq_off.head = offsetof(struct aio_cq_ring, r.head);
+	p->cq_off.tail = offsetof(struct aio_cq_ring, r.tail);
+	p->cq_off.ring_mask = offsetof(struct aio_cq_ring, ring_mask);
+	p->cq_off.ring_entries = offsetof(struct aio_cq_ring, ring_entries);
+	p->cq_off.overflow = offsetof(struct aio_cq_ring, overflow);
+	p->cq_off.events = offsetof(struct aio_cq_ring, events);
+}
+
+static int aio_uring_create(unsigned entries, struct aio_uring_params *p)
+{
+	struct kioctx *ctx;
+	int ret;
+
+	/*
+	 * Use twice as many entries for the CQ ring. It's possible for the
+	 * application to drive a higher depth than the size of the SQ ring,
+	 * since the iocbs are only used at submission time. This allows for
+	 * some flexibility in overcommitting a bit.
+	 */
+	p->sq_entries = roundup_pow_of_two(entries);
+	p->cq_entries = 2 * p->sq_entries;
+
+	ctx = alloc_ioctx(p->sq_entries, p->flags);
+	if (IS_ERR(ctx))
+		return PTR_ERR(ctx);
+
+	ret = aio_allocate_scq_urings(ctx, p);
+	if (ret) {
+		kmem_cache_free(kioctx_cachep, ctx);
+		return ret;
+	}
+
+	ret = anon_inode_getfd("[io_uring]", &aio_scqring_fops, ctx,
+				O_RDWR | O_CLOEXEC);
+	if (ret < 0) {
+		aio_free_scq_urings(ctx);
+		kmem_cache_free(kioctx_cachep, ctx);
+		return ret;
+	}
+
+	aio_fill_offsets(p);
+	return ret;
+}
+
+/*
+ * sys_io_uring_setup:
+ *	Sets up an aio uring context, and returns the fd. Applications asks
+ *	for a ring size, we return the actual sq/cq ring sizes (amont other
+ *	things) in the params structure passed in.
+ */
+SYSCALL_DEFINE3(io_uring_setup, u32, entries, struct iovec __user *, iovecs,
+		struct aio_uring_params __user *, params)
+{
+	struct aio_uring_params p;
+	long ret;
+	int i;
+
+	if (copy_from_user(&p, params, sizeof(p)))
+		return -EFAULT;
+	for (i = 0; i < ARRAY_SIZE(p.resv); i++) {
+		if (p.resv[i])
+			return -EINVAL;
+	}
+
+	if (p.flags & ~IOCTX_FLAG_SCQRING)
+		return -EINVAL;
+	if (iovecs)
+		return -EINVAL;
+
+	ret = aio_uring_create(entries, &p);
+	if (ret < 0)
+		return ret;
+
+	if (copy_to_user(params, &p, sizeof(p)))
+		return -EFAULT;
+
+	return ret;
 }
 
 /* aio_setup
@@ -693,6 +896,28 @@ static void aio_nr_sub(unsigned nr)
 	spin_unlock(&aio_nr_lock);
 }
 
+static struct kioctx *alloc_ioctx(unsigned int max_reqs, unsigned int flags)
+{
+	struct kioctx *ctx;
+
+	ctx = kmem_cache_zalloc(kioctx_cachep, GFP_KERNEL);
+	if (!ctx)
+		return ERR_PTR(-ENOMEM);
+
+	ctx->flags = flags;
+	ctx->max_reqs = max_reqs;
+
+	spin_lock_init(&ctx->ctx_lock);
+	spin_lock_init(&ctx->completion_lock);
+	mutex_init(&ctx->ring_lock);
+	init_waitqueue_head(&ctx->wait);
+
+	INIT_LIST_HEAD(&ctx->active_reqs);
+	mutex_init(&ctx->uring_lock);
+
+	return ctx;
+}
+
 static struct kioctx *io_setup_flags(unsigned long ctxid,
 				     unsigned int nr_events, unsigned int flags)
 {
@@ -733,22 +958,13 @@ static struct kioctx *io_setup_flags(unsigned long ctxid,
 	if (!nr_events || (unsigned long)max_reqs > aio_max_nr)
 		return ERR_PTR(-EAGAIN);
 
-	ctx = kmem_cache_zalloc(kioctx_cachep, GFP_KERNEL);
+	ctx = alloc_ioctx(max_reqs, flags);
 	if (!ctx)
 		return ERR_PTR(-ENOMEM);
 
-	ctx->flags = flags;
-	ctx->max_reqs = max_reqs;
-
-	spin_lock_init(&ctx->ctx_lock);
-	spin_lock_init(&ctx->completion_lock);
-	mutex_init(&ctx->ring_lock);
 	/* Protect against page migration throughout kiotx setup by keeping
 	 * the ring_lock mutex held until setup is complete. */
 	mutex_lock(&ctx->ring_lock);
-	init_waitqueue_head(&ctx->wait);
-
-	INIT_LIST_HEAD(&ctx->active_reqs);
 
 	if (percpu_ref_init(&ctx->users, free_ioctx_users, 0, GFP_KERNEL))
 		goto err;
@@ -1085,6 +1301,45 @@ static void aio_fill_event(struct io_event *ev, struct aio_kiocb *iocb,
 	ev->res2 = res2;
 }
 
+static void aio_inc_cqring(struct kioctx *ctx)
+{
+	struct aio_cq_ring *ring = ctx->cq_ring.ring;
+
+	ring->r.tail++;
+	smp_wmb();
+}
+
+static struct io_event *aio_peek_cqring(struct kioctx *ctx)
+{
+	struct aio_cq_ring *ring = ctx->cq_ring.ring;
+	unsigned tail;
+
+	smp_rmb();
+	tail = READ_ONCE(ring->r.tail);
+	if (tail + 1 == READ_ONCE(ring->r.head))
+		return NULL;
+
+	tail &= ctx->cq_ring.ring_mask;
+	return &ring->events[tail];
+}
+
+static void aio_complete_iocb(struct kioctx *ctx, struct aio_kiocb *iocb)
+{
+	/*
+	 * Check if the user asked us to deliver the result through an
+	 * eventfd. The eventfd_signal() function is safe to be called
+	 * from IRQ context.
+	 */
+	if (iocb->ki_eventfd) {
+		eventfd_signal(iocb->ki_eventfd, 1);
+		eventfd_ctx_put(iocb->ki_eventfd);
+	}
+
+	if (waitqueue_active(&ctx->wait))
+		wake_up(&ctx->wait);
+	iocb_put(iocb);
+}
+
 /* aio_complete
  *	Called when the io request on the given iocb is complete.
  */
@@ -1140,28 +1395,7 @@ static void aio_complete(struct aio_kiocb *iocb, long res, long res2)
 	spin_unlock_irqrestore(&ctx->completion_lock, flags);
 
 	pr_debug("added to ring %p at [%u]\n", iocb, tail);
-
-	/*
-	 * Check if the user asked us to deliver the result through an
-	 * eventfd. The eventfd_signal() function is safe to be called
-	 * from IRQ context.
-	 */
-	if (iocb->ki_eventfd) {
-		eventfd_signal(iocb->ki_eventfd, 1);
-		eventfd_ctx_put(iocb->ki_eventfd);
-	}
-
-	/*
-	 * We have to order our ring_info tail store above and test
-	 * of the wait list below outside the wait lock.  This is
-	 * like in wake_up_bit() where clearing a bit has to be
-	 * ordered with the unlocked test.
-	 */
-	smp_mb();
-
-	if (waitqueue_active(&ctx->wait))
-		wake_up(&ctx->wait);
-	iocb_put(iocb);
+	aio_complete_iocb(ctx, iocb);
 }
 
 /* aio_read_events_ring
@@ -1390,6 +1624,54 @@ SYSCALL_DEFINE1(io_destroy, aio_context_t, ctx)
 	return -EINVAL;
 }
 
+static void kiocb_end_write(struct kiocb *kiocb)
+{
+	if (kiocb->ki_flags & IOCB_WRITE) {
+		struct inode *inode = file_inode(kiocb->ki_filp);
+
+		/*
+		 * Tell lockdep we inherited freeze protection from submission
+		 * thread.
+		 */
+		if (S_ISREG(inode->i_mode))
+			__sb_writers_acquired(inode->i_sb, SB_FREEZE_WRITE);
+		file_end_write(kiocb->ki_filp);
+	}
+}
+
+static void aio_complete_scqring(struct aio_kiocb *iocb, long res, long res2)
+{
+	struct kioctx *ctx = iocb->ki_ctx;
+	unsigned long flags;
+	struct io_event *ev;
+
+	/*
+	 * If we can't get a cq entry, userspace overflowed the
+	 * submission (by quite a lot). Increment the overflow count in
+	 * the ring.
+	 */
+	spin_lock_irqsave(&ctx->completion_lock, flags);
+	ev = aio_peek_cqring(ctx);
+	if (ev) {
+		aio_fill_event(ev, iocb, res, res2);
+		aio_inc_cqring(ctx);
+	} else
+		ctx->cq_ring.ring->overflow++;
+	spin_unlock_irqrestore(&ctx->completion_lock, flags);
+
+	aio_complete_iocb(ctx, iocb);
+}
+
+static void aio_complete_scqring_rw(struct kiocb *kiocb, long res, long res2)
+{
+	struct aio_kiocb *iocb = container_of(kiocb, struct aio_kiocb, rw);
+
+	kiocb_end_write(kiocb);
+
+	fput(kiocb->ki_filp);
+	aio_complete_scqring(iocb, res, res2);
+}
+
 static void aio_remove_iocb(struct aio_kiocb *iocb)
 {
 	struct kioctx *ctx = iocb->ki_ctx;
@@ -1407,17 +1689,7 @@ static void aio_complete_rw(struct kiocb *kiocb, long res, long res2)
 	if (!list_empty_careful(&iocb->ki_list))
 		aio_remove_iocb(iocb);
 
-	if (kiocb->ki_flags & IOCB_WRITE) {
-		struct inode *inode = file_inode(kiocb->ki_filp);
-
-		/*
-		 * Tell lockdep we inherited freeze protection from submission
-		 * thread.
-		 */
-		if (S_ISREG(inode->i_mode))
-			__sb_writers_acquired(inode->i_sb, SB_FREEZE_WRITE);
-		file_end_write(kiocb->ki_filp);
-	}
+	kiocb_end_write(kiocb);
 
 	fput(kiocb->ki_filp);
 	aio_complete(iocb, res, res2);
@@ -1431,7 +1703,10 @@ static int aio_prep_rw(struct aio_kiocb *kiocb, const struct iocb *iocb)
 	req->ki_filp = fget(iocb->aio_fildes);
 	if (unlikely(!req->ki_filp))
 		return -EBADF;
-	req->ki_complete = aio_complete_rw;
+	if (aio_uses_scqring(kiocb->ki_ctx))
+		req->ki_complete = aio_complete_scqring_rw;
+	else
+		req->ki_complete = aio_complete_rw;
 	req->ki_pos = iocb->aio_offset;
 	req->ki_flags = iocb_flags(req->ki_filp);
 	if (iocb->aio_flags & IOCB_FLAG_RESFD)
@@ -1588,11 +1863,16 @@ out_fput:
 static void aio_fsync_work(struct work_struct *work)
 {
 	struct fsync_iocb *req = container_of(work, struct fsync_iocb, work);
+	struct aio_kiocb *iocb = container_of(req, struct aio_kiocb, fsync);
 	int ret;
 
 	ret = vfs_fsync(req->file, req->datasync);
 	fput(req->file);
-	aio_complete(container_of(req, struct aio_kiocb, fsync), ret, 0);
+
+	if (aio_uses_scqring(iocb->ki_ctx))
+		aio_complete_scqring(iocb, ret, 0);
+	else
+		aio_complete(iocb, ret, 0);
 }
 
 static int aio_fsync(struct fsync_iocb *req, const struct iocb *iocb,
@@ -1620,7 +1900,11 @@ static inline void aio_poll_complete(struct aio_kiocb *iocb, __poll_t mask)
 {
 	struct file *file = iocb->poll.file;
 
-	aio_complete(iocb, mangle_poll(mask), 0);
+	if (aio_uses_scqring(iocb->ki_ctx))
+		aio_complete_scqring(iocb, mangle_poll(mask), 0);
+	else
+		aio_complete(iocb, mangle_poll(mask), 0);
+
 	fput(file);
 }
 
@@ -1818,7 +2102,7 @@ static int __io_submit_one(struct kioctx *ctx, const struct iocb *iocb,
 		return -EINVAL;
 	}
 
-	if (!get_reqs_available(ctx))
+	if (!aio_uses_scqring(ctx) && !get_reqs_available(ctx))
 		return -EAGAIN;
 
 	ret = -EAGAIN;
@@ -1841,13 +2125,22 @@ static int __io_submit_one(struct kioctx *ctx, const struct iocb *iocb,
 		}
 	}
 
-	ret = put_user(KIOCB_KEY, &((struct iocb __user *) ki_index)->aio_key);
-	if (unlikely(ret)) {
-		pr_debug("EFAULT: aio_key\n");
-		goto out_put_req;
+	if (aio_uses_scqring(ctx)) {
+		ret = -EINVAL;
+		if (ki_index >= ctx->max_reqs)
+			goto out_put_req;
+		req->ki_index = ki_index;
+	} else {
+		struct iocb __user *user_iocb = (struct iocb __user *) ki_index;
+
+		ret = put_user(KIOCB_KEY, &user_iocb->aio_key);
+		if (unlikely(ret)) {
+			pr_debug("EFAULT: aio_key\n");
+			goto out_put_req;
+		}
+		req->ki_user_iocb = user_iocb;
 	}
 
-	req->ki_user_iocb = (struct iocb __user *) ki_index;
 	req->ki_user_data = iocb->aio_data;
 
 	switch (iocb->aio_lio_opcode) {
@@ -1891,7 +2184,8 @@ out_put_req:
 		eventfd_ctx_put(req->ki_eventfd);
 	iocb_put(req);
 out_put_reqs_available:
-	put_reqs_available(ctx, 1);
+	if (!aio_uses_scqring(ctx))
+		put_reqs_available(ctx, 1);
 	return ret;
 }
 
@@ -1906,6 +2200,204 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
 
 	return __io_submit_one(ctx, &iocb, ki_index, compat);
 }
+
+static void aio_inc_sqring(struct kioctx *ctx)
+{
+	struct aio_sq_ring *ring = ctx->sq_ring.ring;
+
+	ring->r.head++;
+	smp_wmb();
+}
+
+static const struct iocb *aio_peek_sqring(struct kioctx *ctx,
+					  unsigned *iocb_index)
+{
+	struct aio_sq_ring *ring = ctx->sq_ring.ring;
+	unsigned head;
+
+	smp_rmb();
+	head = READ_ONCE(ring->r.head);
+	if (head == READ_ONCE(ring->r.tail))
+		return NULL;
+
+	head = ring->array[head & ctx->sq_ring.ring_mask];
+	if (head < ctx->sq_ring.entries) {
+		*iocb_index = head;
+		return &ctx->sq_ring.iocbs[head];
+	}
+
+	/* drop invalid entries */
+	ring->r.head++;
+	ring->dropped++;
+	smp_wmb();
+	return NULL;
+}
+
+static int aio_ring_submit(struct kioctx *ctx, unsigned int to_submit)
+{
+	int i, ret = 0, submit = 0;
+	struct blk_plug plug;
+
+	if (to_submit > AIO_PLUG_THRESHOLD)
+		blk_start_plug(&plug);
+
+	for (i = 0; i < to_submit; i++) {
+		const struct iocb *iocb;
+		unsigned iocb_index;
+
+		iocb = aio_peek_sqring(ctx, &iocb_index);
+		if (!iocb)
+			break;
+
+		ret = __io_submit_one(ctx, iocb, iocb_index, false);
+		if (ret)
+			break;
+
+		submit++;
+		aio_inc_sqring(ctx);
+	}
+
+	if (to_submit > AIO_PLUG_THRESHOLD)
+		blk_finish_plug(&plug);
+
+	return submit ? submit : ret;
+}
+
+/*
+ * Wait until events become available, if we don't already have some. The
+ * application must reap them itself, as they reside on the shared cq ring.
+ */
+static int aio_cqring_wait(struct kioctx *ctx, int min_events)
+{
+	struct aio_cq_ring *ring = ctx->cq_ring.ring;
+	DEFINE_WAIT(wait);
+	int ret;
+
+	smp_rmb();
+	if (ring->r.head != ring->r.tail)
+		return 0;
+	if (!min_events)
+		return 0;
+
+	do {
+		prepare_to_wait(&ctx->wait, &wait, TASK_INTERRUPTIBLE);
+
+		ret = 0;
+		smp_rmb();
+		if (ring->r.head != ring->r.tail)
+			break;
+
+		schedule();
+
+		ret = -EINVAL;
+		if (atomic_read(&ctx->dead))
+			break;
+		ret = -EINTR;
+		if (signal_pending(current))
+			break;
+	} while (1);
+
+	finish_wait(&ctx->wait, &wait);
+	return ring->r.head == ring->r.tail ? ret : 0;
+}
+
+static int __io_uring_enter(struct kioctx *ctx, unsigned to_submit,
+			    unsigned min_complete, unsigned flags)
+{
+	int ret = 0;
+
+	if (to_submit) {
+		ret = aio_ring_submit(ctx, to_submit);
+		if (ret < 0)
+			return ret;
+	}
+	if (flags & IORING_ENTER_GETEVENTS) {
+		int get_ret;
+
+		if (!ret && to_submit)
+			min_complete = 0;
+
+		get_ret = aio_cqring_wait(ctx, min_complete);
+		if (get_ret < 0 && !ret)
+			ret = get_ret;
+	}
+
+	return ret;
+}
+
+static int aio_scqring_release(struct inode *inode, struct file *file)
+{
+	struct kioctx *ctx = file->private_data;
+
+	file->private_data = NULL;
+	aio_free_scq_urings(ctx);
+	kmem_cache_free(kioctx_cachep, ctx);
+	return 0;
+}
+
+static int aio_scqring_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	loff_t offset = (loff_t) vma->vm_pgoff << PAGE_SHIFT;
+	unsigned long sz = vma->vm_end - vma->vm_start;
+	struct kioctx *ctx = file->private_data;
+	unsigned long pfn;
+	struct page *page;
+	void *ptr;
+
+	switch (offset) {
+	case IORING_OFF_SQ_RING:
+		ptr = ctx->sq_ring.ring;
+		break;
+	case IORING_OFF_IOCB:
+		ptr = ctx->sq_ring.iocbs;
+		break;
+	case IORING_OFF_CQ_RING:
+		ptr = ctx->cq_ring.ring;
+		break;
+	default:
+		return -EINVAL;
+	}
+
+	page = virt_to_head_page(ptr);
+	if (sz > (PAGE_SIZE << compound_order(page)))
+		return -EINVAL;
+
+	pfn = virt_to_phys(ptr) >> PAGE_SHIFT;
+	return remap_pfn_range(vma, vma->vm_start, pfn, sz, vma->vm_page_prot);
+}
+
+SYSCALL_DEFINE4(io_uring_enter, unsigned int, fd, u32, to_submit,
+		u32, min_complete, u32, flags)
+{
+	long ret = -EBADF;
+	struct fd f;
+
+	f = fdget(fd);
+	if (f.file) {
+		struct kioctx *ctx;
+
+		ret = -EOPNOTSUPP;
+		if (f.file->f_op != &aio_scqring_fops)
+			goto err;
+
+		ctx = f.file->private_data;
+		ret = -EBUSY;
+		if (!mutex_trylock(&ctx->uring_lock))
+			goto err;
+
+		ret = __io_uring_enter(ctx, to_submit, min_complete, flags);
+		mutex_unlock(&ctx->uring_lock);
+err:
+		fdput(f);
+	}
+
+	return ret;
+}
+
+static const struct file_operations aio_scqring_fops = {
+	.release	= aio_scqring_release,
+	.mmap		= aio_scqring_mmap,
+};
 
 /* sys_io_submit:
  *	Queue the nr iocbs pointed to by iocbpp for processing.  Returns
