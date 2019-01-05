@@ -2179,6 +2179,9 @@ static void aio_complete_scqring_rw(struct kiocb *kiocb, long res, long res2)
 		ctx->sq_ring.submit_eagain = true;
 		aio_complete_iocb(ctx, iocb);
 	} else {
+		if (nowait)
+			res2 = IOEV_RES2_CACHEHIT;
+
 		aio_complete_scqring(iocb, res, res2);
 	}
 }
