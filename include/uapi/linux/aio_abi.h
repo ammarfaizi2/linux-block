@@ -107,6 +107,7 @@ struct iocb {
 }; /* 64 bytes */
 
 #define IOCTX_FLAG_SCQRING	(1 << 0)	/* Use SQ/CQ rings */
+#define IOCTX_FLAG_IOPOLL	(1 << 1)	/* io_context is polled */
 
 /*
  * Magic offsets for the application to mmap the data it needs
