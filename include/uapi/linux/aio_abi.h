@@ -109,6 +109,8 @@ struct iocb {
 #define IOCTX_FLAG_SCQRING	(1 << 0)	/* Use SQ/CQ rings */
 #define IOCTX_FLAG_IOPOLL	(1 << 1)	/* io_context is polled */
 #define IOCTX_FLAG_FIXEDBUFS	(1 << 2)	/* IO buffers are fixed */
+#define IOCTX_FLAG_SQTHREAD	(1 << 3)	/* Use SQ thread */
+#define IOCTX_FLAG_SQWQ		(1 << 4)	/* Use SQ workqueue */
 
 /*
  * Magic offsets for the application to mmap the data it needs
@@ -150,7 +152,8 @@ struct aio_uring_params {
 	u32 sq_entries;
 	u32 cq_entries;
 	u32 flags;
-	u16 resv[10];
+	u16 sq_thread_cpu;
+	u16 resv[9];
 	struct aio_sqring_offsets sq_off;
 	struct aio_cqring_offsets cq_off;
 };

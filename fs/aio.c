@@ -25,6 +25,7 @@
 #include <linux/sched/signal.h>
 #include <linux/fs.h>
 #include <linux/file.h>
+#include <linux/fdtable.h>
 #include <linux/mm.h>
 #include <linux/mman.h>
 #include <linux/mmu_context.h>
@@ -45,6 +46,7 @@
 #include <linux/anon_inodes.h>
 #include <linux/sizes.h>
 #include <linux/nospec.h>
+#include <linux/sched/mm.h>
 
 #include <asm/kmap_types.h>
 #include <linux/uaccess.h>
@@ -124,6 +126,8 @@ struct aio_iocb_ring {
 	struct aio_sq_ring *ring;
 	unsigned entries;
 	unsigned ring_mask;
+	unsigned sq_thread_cpu;
+	bool submit_eagain;
 	struct iocb *iocbs;
 };
 
@@ -138,6 +142,14 @@ struct aio_mapped_ubuf {
 	size_t len;
 	struct bio_vec *bvec;
 	unsigned int nr_bvecs;
+};
+
+struct aio_sq_offload {
+	struct task_struct *thread;	/* if using a thread */
+	struct workqueue_struct *wq;	/* wq offload */
+	struct mm_struct *mm;
+	struct files_struct *files;
+	wait_queue_head_t wait;
 };
 
 struct kioctx {
@@ -181,6 +193,9 @@ struct kioctx {
 	/* if used, completion and submission rings */
 	struct aio_iocb_ring	sq_ring;
 	struct aio_event_ring	cq_ring;
+
+	/* sq ring submitter thread, if used */
+	struct aio_sq_offload	sq_offload;
 
 	struct rcu_work		free_rwork;	/* see free_ioctx() */
 
@@ -275,6 +290,7 @@ struct aio_kiocb {
 	unsigned long		ki_flags;
 #define KIOCB_F_IOPOLL_COMPLETED	0	/* polled IO has completed */
 #define KIOCB_F_IOPOLL_EAGAIN		1	/* submission got EAGAIN */
+#define KIOCB_F_FORCE_NONBLOCK		2	/* inline submission attempt */
 
 	refcount_t		ki_refcnt;
 
@@ -492,6 +508,82 @@ err:
 	return ret;
 }
 
+static int aio_sq_thread(void *);
+
+static int aio_sq_thread_start(struct kioctx *ctx)
+{
+	struct aio_sq_offload *aso = &ctx->sq_offload;
+	struct aio_iocb_ring *ring = &ctx->sq_ring;
+	int ret;
+
+	memset(aso, 0, sizeof(*aso));
+	init_waitqueue_head(&aso->wait);
+
+	if (!(ctx->flags & IOCTX_FLAG_FIXEDBUFS))
+		aso->mm = current->mm;
+
+	ret = -EBADF;
+	aso->files = get_files_struct(current);
+	if (!aso->files)
+		goto err;
+
+	if (ctx->flags & IOCTX_FLAG_SQTHREAD) {
+		char name[32];
+
+		snprintf(name, sizeof(name), "aio-sq-%lu/%d", ctx->user_id,
+					ring->sq_thread_cpu);
+		aso->thread = kthread_create_on_cpu(aio_sq_thread, ctx,
+							ring->sq_thread_cpu,
+							name);
+		if (IS_ERR(aso->thread)) {
+			ret = PTR_ERR(aso->thread);
+			aso->thread = NULL;
+			goto err;
+		}
+		wake_up_process(aso->thread);
+	} else if (ctx->flags & IOCTX_FLAG_SQWQ) {
+		int concurrency;
+
+		/* Do QD, or 2 * CPUS, whatever is smallest */
+		concurrency = min(ring->entries - 1, 2 * num_online_cpus());
+		aso->wq = alloc_workqueue("aio-sq-%lu",
+						WQ_UNBOUND | WQ_FREEZABLE,
+						concurrency, ctx->user_id);
+		if (!aso->wq) {
+			ret = -ENOMEM;
+			goto err;
+		}
+	}
+
+	return 0;
+err:
+	if (aso->files) {
+		put_files_struct(aso->files);
+		aso->files = NULL;
+	}
+	if (aso->mm)
+		aso->mm = NULL;
+	return ret;
+}
+
+static void aio_sq_thread_stop(struct kioctx *ctx)
+{
+	struct aio_sq_offload *aso = &ctx->sq_offload;
+
+	if (aso->thread) {
+		kthread_park(aso->thread);
+		kthread_stop(aso->thread);
+		aso->thread = NULL;
+	} else if (aso->wq) {
+		destroy_workqueue(aso->wq);
+		aso->wq = NULL;
+	}
+	if (aso->files) {
+		put_files_struct(aso->files);
+		aso->files = NULL;
+	}
+}
+
 static void aio_free_scq_urings(struct kioctx *ctx)
 {
 	if (ctx->sq_ring.ring) {
@@ -611,10 +703,21 @@ static int aio_uring_create(unsigned entries, struct iovec __user *iovecs,
 			return ret;
 		}
 	}
+	if (p->flags & (IOCTX_FLAG_SQTHREAD | IOCTX_FLAG_SQWQ)) {
+		ctx->sq_ring.sq_thread_cpu = p->sq_thread_cpu;
+
+		ret = aio_sq_thread_start(ctx);
+		if (ret) {
+			aio_free_scq_urings(ctx);
+			aio_iocb_buffer_unmap(ctx);
+			kmem_cache_free(kioctx_cachep, ctx);
+		}
+	}
 
 	ret = anon_inode_getfd("[io_uring]", &aio_scqring_fops, ctx,
 				O_RDWR | O_CLOEXEC);
 	if (ret < 0) {
+		aio_sq_thread_stop(ctx);
 		aio_free_scq_urings(ctx);
 		aio_iocb_buffer_unmap(ctx);
 		kmem_cache_free(kioctx_cachep, ctx);
@@ -646,7 +749,8 @@ SYSCALL_DEFINE3(io_uring_setup, u32, entries, struct iovec __user *, iovecs,
 	}
 
 	if (p.flags & ~(IOCTX_FLAG_SCQRING | IOCTX_FLAG_IOPOLL |
-			IOCTX_FLAG_FIXEDBUFS))
+			IOCTX_FLAG_FIXEDBUFS | IOCTX_FLAG_SQTHREAD |
+			IOCTX_FLAG_SQWQ))
 		return -EINVAL;
 
 	ret = aio_uring_create(entries, iovecs, &p);
@@ -2052,11 +2156,24 @@ static void aio_complete_scqring(struct aio_kiocb *iocb, long res, long res2)
 static void aio_complete_scqring_rw(struct kiocb *kiocb, long res, long res2)
 {
 	struct aio_kiocb *iocb = container_of(kiocb, struct aio_kiocb, rw);
+	bool nowait = test_bit(KIOCB_F_FORCE_NONBLOCK, &iocb->ki_flags) != 0;
+	struct kioctx *ctx = iocb->ki_ctx;
 
 	kiocb_end_write(kiocb);
-
 	fput(kiocb->ki_filp);
-	aio_complete_scqring(iocb, res, res2);
+
+	/*
+	 * Catch EAGAIN early if we've forced a nonblock attempt, as we don't
+	 * want to pass that back down to userspace through the CQ ring. Just
+	 * mark the ctx as such, so the caller will see it and punt to
+	 * workqueue. This is just for buffered aio reads.
+	 */
+	if (res == -EAGAIN && nowait) {
+		ctx->sq_ring.submit_eagain = true;
+		aio_complete_iocb(ctx, iocb);
+	} else {
+		aio_complete_scqring(iocb, res, res2);
+	}
 }
 
 static void aio_complete_scqring_iopoll(struct kiocb *kiocb, long res,
@@ -2144,7 +2261,7 @@ get_file:
 }
 
 static int aio_prep_rw(struct aio_kiocb *kiocb, const struct iocb *iocb,
-		       struct aio_submit_state *state)
+		       struct aio_submit_state *state, bool force_nonblock)
 {
 	struct kioctx *ctx = kiocb->ki_ctx;
 	struct kiocb *req = &kiocb->rw;
@@ -2177,6 +2294,10 @@ static int aio_prep_rw(struct aio_kiocb *kiocb, const struct iocb *iocb,
 	ret = kiocb_set_rw_flags(req, iocb->aio_rw_flags);
 	if (unlikely(ret))
 		goto out_fput;
+	if (force_nonblock) {
+		req->ki_flags |= IOCB_NOWAIT;
+		set_bit(KIOCB_F_FORCE_NONBLOCK, &kiocb->ki_flags);
+	}
 
 	if (ctx->flags & IOCTX_FLAG_IOPOLL) {
 		/* shares space in the union, and is rather pointless.. */
@@ -2343,7 +2464,7 @@ static void aio_iopoll_iocb_issued(struct aio_submit_state *state,
 
 static ssize_t aio_read(struct aio_kiocb *kiocb, const struct iocb *iocb,
 			struct aio_submit_state *state, bool vectored,
-			bool compat, bool kaddr)
+			bool compat, bool kaddr, bool force_nonblock)
 {
 	struct iovec inline_vecs[UIO_FASTIOV], *iovec = inline_vecs;
 	struct kiocb *req = &kiocb->rw;
@@ -2351,7 +2472,7 @@ static ssize_t aio_read(struct aio_kiocb *kiocb, const struct iocb *iocb,
 	struct file *file;
 	ssize_t ret;
 
-	ret = aio_prep_rw(kiocb, iocb, state);
+	ret = aio_prep_rw(kiocb, iocb, state, force_nonblock);
 	if (ret)
 		return ret;
 	file = req->ki_filp;
@@ -2388,7 +2509,7 @@ static ssize_t aio_write(struct aio_kiocb *kiocb, const struct iocb *iocb,
 	struct file *file;
 	ssize_t ret;
 
-	ret = aio_prep_rw(kiocb, iocb, state);
+	ret = aio_prep_rw(kiocb, iocb, state, false);
 	if (ret)
 		return ret;
 	file = req->ki_filp;
@@ -2650,7 +2771,7 @@ out:
 static int __io_submit_one(struct kioctx *ctx, const struct iocb *iocb,
 			   unsigned long ki_index,
 			   struct aio_submit_state *state, bool compat,
-			   bool kaddr)
+			   bool kaddr, bool force_nonblock)
 {
 	struct aio_kiocb *req;
 	ssize_t ret;
@@ -2715,13 +2836,15 @@ static int __io_submit_one(struct kioctx *ctx, const struct iocb *iocb,
 	ret = -EINVAL;
 	switch (iocb->aio_lio_opcode) {
 	case IOCB_CMD_PREAD:
-		ret = aio_read(req, iocb, state, false, compat, kaddr);
+		ret = aio_read(req, iocb, state, false, compat, kaddr,
+				force_nonblock);
 		break;
 	case IOCB_CMD_PWRITE:
 		ret = aio_write(req, iocb, state, false, compat, kaddr);
 		break;
 	case IOCB_CMD_PREADV:
-		ret = aio_read(req, iocb, state, true, compat, kaddr);
+		ret = aio_read(req, iocb, state, true, compat, kaddr,
+				force_nonblock);
 		break;
 	case IOCB_CMD_PWRITEV:
 		ret = aio_write(req, iocb, state, true, compat, kaddr);
@@ -2781,7 +2904,8 @@ static int io_submit_one(struct kioctx *ctx, struct iocb __user *user_iocb,
 	if (unlikely(copy_from_user(&iocb, user_iocb, sizeof(iocb))))
 		return -EFAULT;
 
-	return __io_submit_one(ctx, &iocb, ki_index, state, compat, false);
+	return __io_submit_one(ctx, &iocb, ki_index, state, compat, false,
+				false);
 }
 
 #ifdef CONFIG_BLOCK
@@ -2880,7 +3004,7 @@ static int aio_ring_submit(struct kioctx *ctx, unsigned int to_submit)
 			break;
 
 		ret = __io_submit_one(ctx, iocb, iocb_index, statep, false,
-					kaddr);
+					kaddr, false);
 		if (ret)
 			break;
 
@@ -2932,15 +3056,286 @@ static int aio_cqring_wait(struct kioctx *ctx, int min_events)
 	return ring->r.head == ring->r.tail ? ret : 0;
 }
 
+static void aio_fill_cq_error(struct kioctx *ctx, const struct iocb *iocb,
+			      long ret)
+{
+	struct io_event *ev;
+
+	/*
+	 * Only really need the lock for non-polled IO, but this is an error
+	 * so not worth checking. Just lock it so we know kernel access to
+	 * the CQ ring is serialized.
+	 */
+	spin_lock_irq(&ctx->completion_lock);
+	ev = aio_peek_cqring(ctx);
+	ev->obj = iocb->aio_data;
+	ev->data = 0;
+	ev->res = ret;
+	ev->res2 = 0;
+	aio_inc_cqring(ctx);
+	spin_unlock_irq(&ctx->completion_lock);
+
+	/*
+	 * for thread offload, app could already be sleeping in io_ring_enter()
+	 * before we get to flag the error. wake them up, if needed.
+	 */
+	if (ctx->flags & (IOCTX_FLAG_SQTHREAD | IOCTX_FLAG_SQWQ))
+		if (waitqueue_active(&ctx->wait))
+			wake_up(&ctx->wait);
+}
+
+struct iocb_submit {
+	const struct iocb *iocb;
+	unsigned int index;
+};
+
+static int aio_submit_iocbs(struct kioctx *ctx, struct iocb_submit *iocbs,
+			    unsigned int nr, struct mm_struct *cur_mm,
+			    bool mm_fault)
+{
+	struct aio_submit_state state, *statep = NULL;
+	int ret, i, submitted = 0;
+
+	if (nr > AIO_PLUG_THRESHOLD) {
+		aio_submit_state_start(&state, ctx, nr);
+		statep = &state;
+	}
+
+	for (i = 0; i < nr; i++) {
+		if (unlikely(mm_fault))
+			ret = -EFAULT;
+		else
+			ret = __io_submit_one(ctx, iocbs[i].iocb,
+						iocbs[i].index, statep, false,
+						!cur_mm, false);
+		if (!ret) {
+			submitted++;
+			continue;
+		}
+
+		aio_fill_cq_error(ctx, iocbs[i].iocb, ret);
+	}
+
+	if (statep)
+		aio_submit_state_end(&state);
+
+	return submitted;
+}
+
+/*
+ * sq thread only supports O_DIRECT or FIXEDBUFS IO
+ */
+static int aio_sq_thread(void *data)
+{
+	struct iocb_submit iocbs[AIO_IOPOLL_BATCH];
+	struct kioctx *ctx = data;
+	struct aio_sq_offload *aso = &ctx->sq_offload;
+	struct mm_struct *cur_mm = NULL;
+	struct files_struct *old_files;
+	mm_segment_t old_fs;
+	DEFINE_WAIT(wait);
+
+	old_files = current->files;
+	current->files = aso->files;
+
+	old_fs = get_fs();
+	set_fs(USER_DS);
+
+	while (!kthread_should_stop()) {
+		const struct iocb *iocb;
+		bool mm_fault = false;
+		unsigned iocb_index;
+		int i;
+
+		iocb = aio_peek_sqring(ctx, &iocb_index);
+		if (!iocb) {
+			/*
+			 * Drop cur_mm before scheduling, we can't hold it for
+			 * long periods (or over schedule()). Do this before
+			 * adding ourselves to the waitqueue, as the unuse/drop
+			 * may sleep.
+			 */
+			if (cur_mm) {
+				unuse_mm(cur_mm);
+				mmput(cur_mm);
+				cur_mm = NULL;
+			}
+
+			prepare_to_wait(&aso->wait, &wait, TASK_INTERRUPTIBLE);
+			iocb = aio_peek_sqring(ctx, &iocb_index);
+			if (!iocb) {
+				if (kthread_should_park())
+					kthread_parkme();
+				if (kthread_should_stop()) {
+					finish_wait(&aso->wait, &wait);
+					break;
+				}
+				if (signal_pending(current))
+					flush_signals(current);
+				schedule();
+			}
+			finish_wait(&aso->wait, &wait);
+			if (!iocb)
+				continue;
+		}
+
+		/* If ->mm is set, we're not doing FIXEDBUFS */
+		if (aso->mm && !cur_mm) {
+			mm_fault = !mmget_not_zero(aso->mm);
+			if (!mm_fault) {
+				use_mm(aso->mm);
+				cur_mm = aso->mm;
+			}
+		}
+
+		i = 0;
+		do {
+			if (i == ARRAY_SIZE(iocbs))
+				break;
+			iocbs[i].iocb = iocb;
+			iocbs[i].index = iocb_index;
+			++i;
+			aio_inc_sqring(ctx);
+		} while ((iocb = aio_peek_sqring(ctx, &iocb_index)) != NULL);
+
+		aio_submit_iocbs(ctx, iocbs, i, cur_mm, mm_fault);
+	}
+	current->files = old_files;
+	set_fs(old_fs);
+	if (cur_mm) {
+		unuse_mm(cur_mm);
+		mmput(cur_mm);
+	}
+	return 0;
+}
+
+struct aio_io_work {
+	struct work_struct work;
+	struct kioctx *ctx;
+	struct iocb iocb;
+	unsigned iocb_index;
+};
+
+static void aio_sq_wq_submit_work(struct work_struct *work)
+{
+	struct aio_io_work *aiw = container_of(work, struct aio_io_work, work);
+	struct kioctx *ctx = aiw->ctx;
+	struct aio_sq_offload *aso = &ctx->sq_offload;
+	mm_segment_t old_fs = get_fs();
+	struct files_struct *old_files;
+	int ret;
+
+	old_files = current->files;
+	current->files = aso->files;
+
+	if (aso->mm) {
+		if (!mmget_not_zero(aso->mm)) {
+			ret = -EFAULT;
+			goto err;
+		}
+		use_mm(aso->mm);
+	}
+
+	set_fs(USER_DS);
+
+	ret = __io_submit_one(ctx, &aiw->iocb, aiw->iocb_index, NULL, false,
+				!aso->mm, false);
+
+	set_fs(old_fs);
+	if (aso->mm) {
+		unuse_mm(aso->mm);
+		mmput(aso->mm);
+	}
+
+err:
+	if (ret)
+		aio_fill_cq_error(ctx, &aiw->iocb, ret);
+	current->files = old_files;
+	kfree(aiw);
+}
+
+/*
+ * If this is a read, try a cached inline read first. If the IO is in the
+ * page cache, we can satisfy it without blocking and without having to
+ * punt to a threaded execution. This is much faster, particularly for
+ * lower queue depth IO, and it's always a lot more efficient.
+ */
+static bool aio_sq_try_inline(struct kioctx *ctx, const struct iocb *iocb,
+			      unsigned index)
+{
+	struct aio_sq_offload *aso = &ctx->sq_offload;
+	int ret;
+
+	if (iocb->aio_lio_opcode != IOCB_CMD_PREAD &&
+	    iocb->aio_lio_opcode != IOCB_CMD_PREADV)
+		return false;
+
+	ret = __io_submit_one(ctx, iocb, index, NULL, false, !aso->mm, true);
+	if (ret == -EAGAIN || ctx->sq_ring.submit_eagain) {
+		ctx->sq_ring.submit_eagain = false;
+		return false;
+	}
+
+	/*
+	 * We're done - even if this was an error, return 0. The error will
+	 * be in the CQ ring for the application.
+	 */
+	return true;
+}
+
+static int aio_sq_wq_submit(struct kioctx *ctx, unsigned int to_submit)
+{
+	struct aio_io_work *work;
+	const struct iocb *iocb;
+	unsigned iocb_index;
+	int ret, queued;
+
+	ret = queued = 0;
+	while ((iocb = aio_peek_sqring(ctx, &iocb_index)) != NULL) {
+		ret = aio_sq_try_inline(ctx, iocb, iocb_index);
+		if (!ret) {
+			work = kmalloc(sizeof(*work), GFP_KERNEL);
+			if (!work) {
+				ret = -ENOMEM;
+				break;
+			}
+			memcpy(&work->iocb, iocb, sizeof(*iocb));
+			aio_inc_sqring(ctx);
+			work->iocb_index = iocb_index;
+			INIT_WORK(&work->work, aio_sq_wq_submit_work);
+			work->ctx = ctx;
+			queue_work(ctx->sq_offload.wq, &work->work);
+		}
+		queued++;
+		if (queued == to_submit)
+			break;
+	}
+
+	return queued ? queued : ret;
+}
+
 static int __io_uring_enter(struct kioctx *ctx, unsigned to_submit,
 			    unsigned min_complete, unsigned flags)
 {
 	int ret = 0;
 
 	if (to_submit) {
-		ret = aio_ring_submit(ctx, to_submit);
-		if (ret < 0)
-			return ret;
+		/*
+		 * Three options here:
+		 * 1) We have an sq thread, just wake it up to do submissions
+		 * 2) We have an sq wq, queue a work item for each iocb
+		 * 3) Submit directly
+		 */
+		if (ctx->flags & IOCTX_FLAG_SQTHREAD) {
+			wake_up(&ctx->sq_offload.wait);
+			ret = to_submit;
+		} else if (ctx->flags & IOCTX_FLAG_SQWQ) {
+			ret = aio_sq_wq_submit(ctx, to_submit);
+		} else {
+			ret = aio_ring_submit(ctx, to_submit);
+			if (ret < 0)
+				return ret;
+		}
 	}
 	if (flags & IORING_ENTER_GETEVENTS) {
 		unsigned nr_events = 0;
@@ -2967,6 +3362,7 @@ static int aio_scqring_release(struct inode *inode, struct file *file)
 	struct kioctx *ctx = file->private_data;
 
 	file->private_data = NULL;
+	aio_sq_thread_stop(ctx);
 	aio_iopoll_reap_events(ctx);
 	aio_free_scq_urings(ctx);
 	aio_iocb_buffer_unmap(ctx);
