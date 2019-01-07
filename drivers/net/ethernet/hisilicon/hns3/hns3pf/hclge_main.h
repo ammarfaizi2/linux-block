@@ -205,6 +205,7 @@ enum HCLGE_DEV_STATE {
 enum hclge_evt_cause {
 	HCLGE_VECTOR0_EVENT_RST,
 	HCLGE_VECTOR0_EVENT_MBX,
+	HCLGE_VECTOR0_EVENT_ERR,
 	HCLGE_VECTOR0_EVENT_OTHER,
 };
 
@@ -735,6 +736,9 @@ struct hclge_dev {
 	u32 flag;
 
 	u32 pkt_buf_size; /* Total pf buf size for tx/rx */
+	u32 tx_buf_size; /* Tx buffer size for each TC */
+	u32 dv_buf_size; /* Dv buffer size for each TC */
+
 	u32 mps; /* Max packet size */
 	/* vport_lock protect resource shared by vports */
 	struct mutex vport_lock;
@@ -873,4 +877,5 @@ int hclge_vport_start(struct hclge_vport *vport);
 void hclge_vport_stop(struct hclge_vport *vport);
 int hclge_set_vport_mtu(struct hclge_vport *vport, int new_mtu);
 int hclge_dbg_run_cmd(struct hnae3_handle *handle, char *cmd_buf);
+u16 hclge_covert_handle_qid_global(struct hnae3_handle *handle, u16 queue_id);
 #endif

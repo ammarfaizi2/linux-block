@@ -156,12 +156,12 @@ static unsigned long long (*bpf_skb_ancestor_cgroup_id)(void *ctx, int level) =
 	(void *) BPF_FUNC_skb_ancestor_cgroup_id;
 static struct bpf_sock *(*bpf_sk_lookup_tcp)(void *ctx,
 					     struct bpf_sock_tuple *tuple,
-					     int size, unsigned int netns_id,
+					     int size, unsigned long long netns_id,
 					     unsigned long long flags) =
 	(void *) BPF_FUNC_sk_lookup_tcp;
 static struct bpf_sock *(*bpf_sk_lookup_udp)(void *ctx,
 					     struct bpf_sock_tuple *tuple,
-					     int size, unsigned int netns_id,
+					     int size, unsigned long long netns_id,
 					     unsigned long long flags) =
 	(void *) BPF_FUNC_sk_lookup_udp;
 static int (*bpf_sk_release)(struct bpf_sock *sk) =
@@ -170,6 +170,8 @@ static int (*bpf_skb_vlan_push)(void *ctx, __be16 vlan_proto, __u16 vlan_tci) =
 	(void *) BPF_FUNC_skb_vlan_push;
 static int (*bpf_skb_vlan_pop)(void *ctx) =
 	(void *) BPF_FUNC_skb_vlan_pop;
+static int (*bpf_rc_pointer_rel)(void *ctx, int rel_x, int rel_y) =
+	(void *) BPF_FUNC_rc_pointer_rel;
 
 /* llvm builtin functions that eBPF C program may use to
  * emit BPF_LD_ABS and BPF_LD_IND instructions

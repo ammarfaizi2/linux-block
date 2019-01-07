@@ -256,6 +256,23 @@ static int hclgevf_get_queue_info(struct hclgevf_dev *hdev)
 	return 0;
 }
 
+static u16 hclgevf_get_qid_global(struct hnae3_handle *handle, u16 queue_id)
+{
+	struct hclgevf_dev *hdev = hclgevf_ae_get_hdev(handle);
+	u8 msg_data[2], resp_data[2];
+	u16 qid_in_pf = 0;
+	int ret;
+
+	memcpy(&msg_data[0], &queue_id, sizeof(queue_id));
+
+	ret = hclgevf_send_mbx_msg(hdev, HCLGE_MBX_GET_QID_IN_PF, 0, msg_data,
+				   2, true, resp_data, 2);
+	if (!ret)
+		qid_in_pf = *(u16 *)resp_data;
+
+	return qid_in_pf;
+}
+
 static int hclgevf_alloc_tqps(struct hclgevf_dev *hdev)
 {
 	struct hclgevf_tqp *tqp;
@@ -1325,6 +1342,9 @@ static int hclgevf_reset(struct hclgevf_dev *hdev)
 
 	rtnl_unlock();
 
+	hdev->last_reset_time = jiffies;
+	ae_dev->reset_type = HNAE3_NONE_RESET;
+
 	return ret;
 err_reset_lock:
 	rtnl_unlock();
@@ -1701,7 +1721,7 @@ static int hclgevf_configure(struct hclgevf_dev *hdev)
 static int hclgevf_alloc_hdev(struct hnae3_ae_dev *ae_dev)
 {
 	struct pci_dev *pdev = ae_dev->pdev;
-	struct hclgevf_dev *hdev = ae_dev->priv;
+	struct hclgevf_dev *hdev;
 
 	hdev = devm_kzalloc(&pdev->dev, sizeof(*hdev), GFP_KERNEL);
 	if (!hdev)
@@ -1820,6 +1840,19 @@ static int hclgevf_init_vlan_config(struct hclgevf_dev *hdev)
 				       false);
 }
 
+static void hclgevf_set_timer_task(struct hnae3_handle *handle, bool enable)
+{
+	struct hclgevf_dev *hdev = hclgevf_ae_get_hdev(handle);
+
+	if (enable) {
+		mod_timer(&hdev->service_timer, jiffies + HZ);
+	} else {
+		del_timer_sync(&hdev->service_timer);
+		cancel_work_sync(&hdev->service_task);
+		clear_bit(HCLGEVF_STATE_SERVICE_SCHED, &hdev->state);
+	}
+}
+
 static int hclgevf_ae_start(struct hnae3_handle *handle)
 {
 	struct hclgevf_dev *hdev = hclgevf_ae_get_hdev(handle);
@@ -1830,7 +1863,6 @@ static int hclgevf_ae_start(struct hnae3_handle *handle)
 	hclgevf_request_link_info(hdev);
 
 	clear_bit(HCLGEVF_STATE_DOWN, &hdev->state);
-	mod_timer(&hdev->service_timer, jiffies + HZ);
 
 	return 0;
 }
@@ -1838,14 +1870,15 @@ static int hclgevf_ae_start(struct hnae3_handle *handle)
 static void hclgevf_ae_stop(struct hnae3_handle *handle)
 {
 	struct hclgevf_dev *hdev = hclgevf_ae_get_hdev(handle);
+	int i;
 
 	set_bit(HCLGEVF_STATE_DOWN, &hdev->state);
 
+	for (i = 0; i < handle->kinfo.num_tqps; i++)
+		hclgevf_reset_tqp(handle, i);
+
 	/* reset tqp stats */
 	hclgevf_reset_tqp_stats(handle);
-	del_timer_sync(&hdev->service_timer);
-	cancel_work_sync(&hdev->service_task);
-	clear_bit(HCLGEVF_STATE_SERVICE_SCHED, &hdev->state);
 	hclgevf_update_link_status(hdev, 0);
 }
 
@@ -2384,9 +2417,9 @@ static void hclgevf_uninit_hdev(struct hclgevf_dev *hdev)
 	if (test_bit(HCLGEVF_STATE_IRQ_INITED, &hdev->state)) {
 		hclgevf_misc_irq_uninit(hdev);
 		hclgevf_uninit_msi(hdev);
-		hclgevf_pci_uninit(hdev);
 	}
 
+	hclgevf_pci_uninit(hdev);
 	hclgevf_cmd_uninit(hdev);
 }
 
@@ -2642,6 +2675,8 @@ static const struct hnae3_ae_ops hclgevf_ops = {
 	.ae_dev_reset_cnt = hclgevf_ae_dev_reset_cnt,
 	.set_gro_en = hclgevf_gro_en,
 	.set_mtu = hclgevf_set_mtu,
+	.get_global_queue_id = hclgevf_get_qid_global,
+	.set_timer_task = hclgevf_set_timer_task,
 };
 
 static struct hnae3_ae_algo ae_algovf = {

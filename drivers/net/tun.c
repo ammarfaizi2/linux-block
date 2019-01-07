@@ -201,7 +201,7 @@ struct tun_flow_entry {
 	u32 rxhash;
 	u32 rps_rxhash;
 	int queue_index;
-	unsigned long updated;
+	unsigned long updated ____cacheline_aligned_in_smp;
 };
 
 #define TUN_NUM_FLOW_ENTRIES 1024
@@ -529,18 +529,17 @@ static void tun_flow_update(struct tun_struct *tun, u32 rxhash,
 	unsigned long delay = tun->ageing_time;
 	u16 queue_index = tfile->queue_index;
 
-	if (!rxhash)
-		return;
-	else
-		head = &tun->flows[tun_hashfn(rxhash)];
+	head = &tun->flows[tun_hashfn(rxhash)];
 
 	rcu_read_lock();
 
 	e = tun_flow_find(head, rxhash);
 	if (likely(e)) {
 		/* TODO: keep queueing to old queue until it's empty? */
-		e->queue_index = queue_index;
-		e->updated = jiffies;
+		if (e->queue_index != queue_index)
+			e->queue_index = queue_index;
+		if (e->updated != jiffies)
+			e->updated = jiffies;
 		sock_rps_record_flow_hash(e->rps_rxhash);
 	} else {
 		spin_lock_bh(&tun->lock);
@@ -2314,9 +2313,9 @@ static void tun_setup(struct net_device *dev)
 static int tun_validate(struct nlattr *tb[], struct nlattr *data[],
 			struct netlink_ext_ack *extack)
 {
-	if (!data)
-		return 0;
-	return -EINVAL;
+	NL_SET_ERR_MSG(extack,
+		       "tun/tap creation via rtnetlink is not supported.");
+	return -EOPNOTSUPP;
 }
 
 static size_t tun_get_size(const struct net_device *dev)
@@ -2413,6 +2412,7 @@ static int tun_xdp_one(struct tun_struct *tun,
 		       struct xdp_buff *xdp, int *flush,
 		       struct tun_page *tpage)
 {
+	unsigned int datasize = xdp->data_end - xdp->data;
 	struct tun_xdp_hdr *hdr = xdp->data_hard_start;
 	struct virtio_net_hdr *gso = &hdr->gso;
 	struct tun_pcpu_stats *stats;
@@ -2495,12 +2495,14 @@ build:
 	skb_record_rx_queue(skb, tfile->queue_index);
 	netif_receive_skb(skb);
 
-	stats = get_cpu_ptr(tun->pcpu_stats);
+	/* No need for get_cpu_ptr() here since this function is
+	 * always called with bh disabled
+	 */
+	stats = this_cpu_ptr(tun->pcpu_stats);
 	u64_stats_update_begin(&stats->syncp);
 	stats->rx_packets++;
-	stats->rx_bytes += skb->len;
+	stats->rx_bytes += datasize;
 	u64_stats_update_end(&stats->syncp);
-	put_cpu_ptr(stats);
 
 	if (rxhash)
 		tun_flow_update(tun, rxhash, tfile);
@@ -3202,7 +3204,7 @@ static long __tun_chr_ioctl(struct file *file, unsigned int cmd,
 		tun_debug(KERN_DEBUG, tun, "set hw address: %pM\n",
 			  ifr.ifr_hwaddr.sa_data);
 
-		ret = dev_set_mac_address(tun->dev, &ifr.ifr_hwaddr);
+		ret = dev_set_mac_address(tun->dev, &ifr.ifr_hwaddr, NULL);
 		break;
 
 	case TUNGETSNDBUF:

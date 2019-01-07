@@ -53,14 +53,10 @@ struct sock_reuseport;
 #define BPF_REG_D	BPF_REG_8	/* data, callee-saved */
 #define BPF_REG_H	BPF_REG_9	/* hlen, callee-saved */
 
-/* Kernel hidden auxiliary/helper register for hardening step.
- * Only used by eBPF JITs. It's nothing more than a temporary
- * register that JITs use internally, only that here it's part
- * of eBPF instructions that have been rewritten for blinding
- * constants. See JIT pre-step in bpf_jit_blind_constants().
- */
+/* Kernel hidden auxiliary/helper register. */
 #define BPF_REG_AX		MAX_BPF_REG
-#define MAX_BPF_JIT_REG		(MAX_BPF_REG + 1)
+#define MAX_BPF_EXT_REG		(MAX_BPF_REG + 1)
+#define MAX_BPF_JIT_REG		MAX_BPF_EXT_REG
 
 /* unused opcode to mark special call to bpf_tail_call() helper */
 #define BPF_TAIL_CALL	0xf0
@@ -449,6 +445,13 @@ struct sock_reuseport;
 	offsetof(TYPE, MEMBER) ... offsetofend(TYPE, MEMBER) - 1
 #define bpf_ctx_range_till(TYPE, MEMBER1, MEMBER2)				\
 	offsetof(TYPE, MEMBER1) ... offsetofend(TYPE, MEMBER2) - 1
+#if BITS_PER_LONG == 64
+# define bpf_ctx_range_ptr(TYPE, MEMBER)					\
+	offsetof(TYPE, MEMBER) ... offsetofend(TYPE, MEMBER) - 1
+#else
+# define bpf_ctx_range_ptr(TYPE, MEMBER)					\
+	offsetof(TYPE, MEMBER) ... offsetof(TYPE, MEMBER) + 8 - 1
+#endif /* BITS_PER_LONG == 64 */
 
 #define bpf_target_off(TYPE, MEMBER, SIZE, PTR_SIZE)				\
 	({									\
@@ -718,6 +721,13 @@ void bpf_prog_free(struct bpf_prog *fp);
 
 bool bpf_opcode_in_insntable(u8 code);
 
+void bpf_prog_free_linfo(struct bpf_prog *prog);
+void bpf_prog_fill_jited_linfo(struct bpf_prog *prog,
+			       const u32 *insn_to_jit_off);
+int bpf_prog_alloc_jited_linfo(struct bpf_prog *prog);
+void bpf_prog_free_jited_linfo(struct bpf_prog *prog);
+void bpf_prog_free_unused_jited_linfo(struct bpf_prog *prog);
+
 struct bpf_prog *bpf_prog_alloc(unsigned int size, gfp_t gfp_extra_flags);
 struct bpf_prog *bpf_prog_realloc(struct bpf_prog *fp_old, unsigned int size,
 				  gfp_t gfp_extra_flags);
@@ -840,7 +850,7 @@ bpf_run_sk_reuseport(struct sock_reuseport *reuse, struct sock *sk,
 extern int bpf_jit_enable;
 extern int bpf_jit_harden;
 extern int bpf_jit_kallsyms;
-extern int bpf_jit_limit;
+extern long bpf_jit_limit;
 
 typedef void (*bpf_jit_fill_hole_t)(void *area, unsigned int size);
 

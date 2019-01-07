@@ -533,6 +533,7 @@ static void ip_copy_metadata(struct sk_buff *to, struct sk_buff *from)
 	to->tc_index = from->tc_index;
 #endif
 	nf_copy(to, from);
+	skb_ext_copy(to, from);
 #if IS_ENABLED(CONFIG_IP_VS)
 	to->ipvs_property = from->ipvs_property;
 #endif
@@ -1130,7 +1131,8 @@ alloc_new_skb:
 error_efault:
 	err = -EFAULT;
 error:
-	sock_zerocopy_put_abort(uarg, extra_uref);
+	if (uarg)
+		sock_zerocopy_put_abort(uarg, extra_uref);
 	cork->length -= length;
 	IP_INC_STATS(sock_net(sk), IPSTATS_MIB_OUTDISCARDS);
 	refcount_add(wmem_alloc_delta, &sk->sk_wmem_alloc);

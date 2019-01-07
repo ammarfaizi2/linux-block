@@ -1477,6 +1477,8 @@ static void __rtl8169_set_wol(struct rtl8169_private *tp, u32 wolopts)
 	}
 
 	RTL_W8(tp, Cfg9346, Cfg9346_Lock);
+
+	device_set_wakeup_enable(tp_to_dev(tp), wolopts);
 }
 
 static int rtl8169_set_wol(struct net_device *dev, struct ethtool_wolinfo *wol)
@@ -1497,8 +1499,6 @@ static int rtl8169_set_wol(struct net_device *dev, struct ethtool_wolinfo *wol)
 		__rtl8169_set_wol(tp, tp->saved_wolopts);
 
 	rtl_unlock_work(tp);
-
-	device_set_wakeup_enable(d, tp->saved_wolopts);
 
 	pm_runtime_put_noidle(d);
 
@@ -5801,7 +5801,7 @@ static void rtl_reset_work(struct rtl8169_private *tp)
 
 	napi_disable(&tp->napi);
 	netif_stop_queue(dev);
-	synchronize_sched();
+	synchronize_rcu();
 
 	rtl8169_hw_reset(tp);
 
@@ -6405,8 +6405,9 @@ static irqreturn_t rtl8169_interrupt(int irq, void *dev_instance)
 {
 	struct rtl8169_private *tp = dev_instance;
 	u16 status = rtl_get_events(tp);
+	u16 irq_mask = RTL_R16(tp, IntrMask);
 
-	if (status == 0xffff || !(status & tp->irq_mask))
+	if (status == 0xffff || !(status & irq_mask))
 		return IRQ_NONE;
 
 	if (unlikely(status & SYSErr)) {
@@ -6414,7 +6415,7 @@ static irqreturn_t rtl8169_interrupt(int irq, void *dev_instance)
 		goto out;
 	}
 
-	if (status & LinkChg)
+	if (status & LinkChg && tp->dev->phydev)
 		phy_mac_interrupt(tp->dev->phydev);
 
 	if (unlikely(status & RxFIFOOver &&
@@ -6552,7 +6553,7 @@ static void rtl8169_down(struct net_device *dev)
 	rtl8169_rx_missed(dev);
 
 	/* Give a racing hard_start_xmit a few cycles to complete. */
-	synchronize_sched();
+	synchronize_rcu();
 
 	rtl8169_tx_clear(tp);
 

@@ -5070,7 +5070,8 @@ __bpf_sk_lookup(struct sk_buff *skb, struct bpf_sock_tuple *tuple, u32 len,
 	int sdif;
 
 	family = len == sizeof(tuple->ipv4) ? AF_INET : AF_INET6;
-	if (unlikely(family == AF_UNSPEC || netns_id > U32_MAX || flags))
+	if (unlikely(family == AF_UNSPEC || flags ||
+		     !((s32)netns_id < 0 || netns_id <= S32_MAX)))
 		goto out;
 
 	if (family == AF_INET)
@@ -5078,15 +5079,15 @@ __bpf_sk_lookup(struct sk_buff *skb, struct bpf_sock_tuple *tuple, u32 len,
 	else
 		sdif = inet6_sdif(skb);
 
-	if (netns_id) {
+	if ((s32)netns_id < 0) {
+		net = caller_net;
+		sk = sk_lookup(net, tuple, ifindex, sdif, family, proto);
+	} else {
 		net = get_net_ns_by_id(caller_net, netns_id);
 		if (unlikely(!net))
 			goto out;
 		sk = sk_lookup(net, tuple, ifindex, sdif, family, proto);
 		put_net(net);
-	} else {
-		net = caller_net;
-		sk = sk_lookup(net, tuple, ifindex, sdif, family, proto);
 	}
 
 	if (sk)
@@ -5737,8 +5738,8 @@ static bool bpf_skb_is_valid_access(int off, int size, enum bpf_access_type type
 		if (size != size_default)
 			return false;
 		break;
-	case bpf_ctx_range(struct __sk_buff, flow_keys):
-		if (size != sizeof(struct bpf_flow_keys *))
+	case bpf_ctx_range_ptr(struct __sk_buff, flow_keys):
+		if (size != sizeof(__u64))
 			return false;
 		break;
 	case bpf_ctx_range(struct __sk_buff, tstamp):
@@ -5770,9 +5771,10 @@ static bool sk_filter_is_valid_access(int off, int size,
 	case bpf_ctx_range(struct __sk_buff, data):
 	case bpf_ctx_range(struct __sk_buff, data_meta):
 	case bpf_ctx_range(struct __sk_buff, data_end):
-	case bpf_ctx_range(struct __sk_buff, flow_keys):
+	case bpf_ctx_range_ptr(struct __sk_buff, flow_keys):
 	case bpf_ctx_range_till(struct __sk_buff, family, local_port):
 	case bpf_ctx_range(struct __sk_buff, tstamp):
+	case bpf_ctx_range(struct __sk_buff, wire_len):
 		return false;
 	}
 
@@ -5796,7 +5798,8 @@ static bool cg_skb_is_valid_access(int off, int size,
 	switch (off) {
 	case bpf_ctx_range(struct __sk_buff, tc_classid):
 	case bpf_ctx_range(struct __sk_buff, data_meta):
-	case bpf_ctx_range(struct __sk_buff, flow_keys):
+	case bpf_ctx_range_ptr(struct __sk_buff, flow_keys):
+	case bpf_ctx_range(struct __sk_buff, wire_len):
 		return false;
 	case bpf_ctx_range(struct __sk_buff, data):
 	case bpf_ctx_range(struct __sk_buff, data_end):
@@ -5841,8 +5844,9 @@ static bool lwt_is_valid_access(int off, int size,
 	case bpf_ctx_range(struct __sk_buff, tc_classid):
 	case bpf_ctx_range_till(struct __sk_buff, family, local_port):
 	case bpf_ctx_range(struct __sk_buff, data_meta):
-	case bpf_ctx_range(struct __sk_buff, flow_keys):
+	case bpf_ctx_range_ptr(struct __sk_buff, flow_keys):
 	case bpf_ctx_range(struct __sk_buff, tstamp):
+	case bpf_ctx_range(struct __sk_buff, wire_len):
 		return false;
 	}
 
@@ -6069,7 +6073,7 @@ static bool tc_cls_act_is_valid_access(int off, int size,
 	case bpf_ctx_range(struct __sk_buff, data_end):
 		info->reg_type = PTR_TO_PACKET_END;
 		break;
-	case bpf_ctx_range(struct __sk_buff, flow_keys):
+	case bpf_ctx_range_ptr(struct __sk_buff, flow_keys):
 	case bpf_ctx_range_till(struct __sk_buff, family, local_port):
 		return false;
 	}
@@ -6271,8 +6275,9 @@ static bool sk_skb_is_valid_access(int off, int size,
 	switch (off) {
 	case bpf_ctx_range(struct __sk_buff, tc_classid):
 	case bpf_ctx_range(struct __sk_buff, data_meta):
-	case bpf_ctx_range(struct __sk_buff, flow_keys):
+	case bpf_ctx_range_ptr(struct __sk_buff, flow_keys):
 	case bpf_ctx_range(struct __sk_buff, tstamp):
+	case bpf_ctx_range(struct __sk_buff, wire_len):
 		return false;
 	}
 
@@ -6308,6 +6313,9 @@ static bool sk_msg_is_valid_access(int off, int size,
 	if (type == BPF_WRITE)
 		return false;
 
+	if (off % size != 0)
+		return false;
+
 	switch (off) {
 	case offsetof(struct sk_msg_md, data):
 		info->reg_type = PTR_TO_PACKET;
@@ -6319,16 +6327,20 @@ static bool sk_msg_is_valid_access(int off, int size,
 		if (size != sizeof(__u64))
 			return false;
 		break;
-	default:
+	case bpf_ctx_range(struct sk_msg_md, family):
+	case bpf_ctx_range(struct sk_msg_md, remote_ip4):
+	case bpf_ctx_range(struct sk_msg_md, local_ip4):
+	case bpf_ctx_range_till(struct sk_msg_md, remote_ip6[0], remote_ip6[3]):
+	case bpf_ctx_range_till(struct sk_msg_md, local_ip6[0], local_ip6[3]):
+	case bpf_ctx_range(struct sk_msg_md, remote_port):
+	case bpf_ctx_range(struct sk_msg_md, local_port):
+	case bpf_ctx_range(struct sk_msg_md, size):
 		if (size != sizeof(__u32))
 			return false;
+		break;
+	default:
+		return false;
 	}
-
-	if (off < 0 || off >= sizeof(struct sk_msg_md))
-		return false;
-	if (off % size != 0)
-		return false;
-
 	return true;
 }
 
@@ -6353,13 +6365,14 @@ static bool flow_dissector_is_valid_access(int off, int size,
 	case bpf_ctx_range(struct __sk_buff, data_end):
 		info->reg_type = PTR_TO_PACKET_END;
 		break;
-	case bpf_ctx_range(struct __sk_buff, flow_keys):
+	case bpf_ctx_range_ptr(struct __sk_buff, flow_keys):
 		info->reg_type = PTR_TO_FLOW_KEYS;
 		break;
 	case bpf_ctx_range(struct __sk_buff, tc_classid):
 	case bpf_ctx_range(struct __sk_buff, data_meta):
 	case bpf_ctx_range_till(struct __sk_buff, family, local_port):
 	case bpf_ctx_range(struct __sk_buff, tstamp):
+	case bpf_ctx_range(struct __sk_buff, wire_len):
 		return false;
 	}
 
@@ -6685,6 +6698,17 @@ static u32 bpf_convert_ctx_access(enum bpf_access_type type,
 					      bpf_target_off(struct sk_buff,
 							     tstamp, 8,
 							     target_size));
+		break;
+
+	case offsetof(struct __sk_buff, wire_len):
+		BUILD_BUG_ON(FIELD_SIZEOF(struct qdisc_skb_cb, pkt_len) != 4);
+
+		off = si->off;
+		off -= offsetof(struct __sk_buff, wire_len);
+		off += offsetof(struct sk_buff, cb);
+		off += offsetof(struct qdisc_skb_cb, pkt_len);
+		*target_size = 4;
+		*insn++ = BPF_LDX_MEM(BPF_W, si->dst_reg, si->src_reg, off);
 	}
 
 	return insn - insn_buf;
@@ -7401,6 +7425,9 @@ static u32 sk_msg_convert_ctx_access(enum bpf_access_type type,
 	int off;
 #endif
 
+	/* convert ctx uses the fact sg element is first in struct */
+	BUILD_BUG_ON(offsetof(struct sk_msg, sg) != 0);
+
 	switch (si->off) {
 	case offsetof(struct sk_msg_md, data):
 		*insn++ = BPF_LDX_MEM(BPF_FIELD_SIZEOF(struct sk_msg, data),
@@ -7512,6 +7539,12 @@ static u32 sk_msg_convert_ctx_access(enum bpf_access_type type,
 				      offsetof(struct sk_msg, sk));
 		*insn++ = BPF_LDX_MEM(BPF_H, si->dst_reg, si->dst_reg,
 				      offsetof(struct sock_common, skc_num));
+		break;
+
+	case offsetof(struct sk_msg_md, size):
+		*insn++ = BPF_LDX_MEM(BPF_FIELD_SIZEOF(struct sk_msg_sg, size),
+				      si->dst_reg, si->src_reg,
+				      offsetof(struct sk_msg_sg, size));
 		break;
 	}
 

@@ -315,11 +315,8 @@ static int mdio_bus_phy_restore(struct device *dev)
 	if (ret < 0)
 		return ret;
 
-	/* The PHY needs to renegotiate. */
-	phydev->link = 0;
-	phydev->state = PHY_UP;
-
-	phy_start_machine(phydev);
+	if (phydev->attached_dev && phydev->adjust_link)
+		phy_start_machine(phydev);
 
 	return 0;
 }
@@ -1739,8 +1736,8 @@ int genphy_read_status(struct phy_device *phydev)
 				return -ENOLINK;
 			}
 
-			mii_stat1000_to_linkmode_lpa_t(phydev->lp_advertising,
-						       lpagb);
+			mii_stat1000_mod_linkmode_lpa_t(phydev->lp_advertising,
+							lpagb);
 			common_adv_gb = lpagb & adv << 2;
 		}
 
@@ -1748,7 +1745,7 @@ int genphy_read_status(struct phy_device *phydev)
 		if (lpa < 0)
 			return lpa;
 
-		mii_lpa_to_linkmode_lpa_t(phydev->lp_advertising, lpa);
+		mii_lpa_mod_linkmode_lpa_t(phydev->lp_advertising, lpa);
 
 		adv = phy_read(phydev, MII_ADVERTISE);
 		if (adv < 0)
@@ -2138,7 +2135,6 @@ static int phy_probe(struct device *dev)
 	struct phy_device *phydev = to_phy_device(dev);
 	struct device_driver *drv = phydev->mdio.dev.driver;
 	struct phy_driver *phydrv = to_phy_driver(drv);
-	u32 features;
 	int err = 0;
 
 	phydev->drv = phydrv;
@@ -2158,7 +2154,6 @@ static int phy_probe(struct device *dev)
 	 * a controller will attach, and may modify one
 	 * or both of these values
 	 */
-	ethtool_convert_link_mode_to_legacy_u32(&features, phydrv->features);
 	linkmode_copy(phydev->supported, phydrv->features);
 	of_set_phy_supported(phydev);
 	linkmode_copy(phydev->advertising, phydev->supported);
