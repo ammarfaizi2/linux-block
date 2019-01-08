@@ -725,7 +725,6 @@ static __always_inline void rcu_nmi_exit_common(bool irq)
 
 /**
  * rcu_nmi_exit - inform RCU of exit from NMI context
- * @irq: Is this call from rcu_irq_exit?
  *
  * If you add or remove a call to rcu_nmi_exit(), be sure to test
  * with CONFIG_RCU_EQS_DEBUG=y.
@@ -1139,7 +1138,7 @@ static int rcu_implicit_dynticks_qs(struct rcu_data *rdp)
 	}
 
 	/*
-	 * NO_HZ_FULL CPUs can run in-kernel without rcu_check_callbacks!
+	 * NO_HZ_FULL CPUs can run in-kernel without rcu_sched_clock_irq!
 	 * The above code handles this, but only for straight cond_resched().
 	 * And some in-kernel loops check need_resched() before calling
 	 * cond_resched(), which defeats the above code for CPUs that are
@@ -2532,14 +2531,14 @@ static void rcu_do_batch(struct rcu_data *rdp)
 }
 
 /*
- * Check to see if this CPU is in a non-context-switch quiescent state
- * (user mode or idle loop for rcu, non-softirq execution for rcu_bh).
- * Also schedule RCU core processing.
- *
- * This function must be called from hardirq context.  It is normally
- * invoked from the scheduling-clock interrupt.
+ * This function is invoked from each scheduling-clock interrupt,
+ * and checks to see if this CPU is in a non-context-switch quiescent
+ * state, for example, user mode or idle loop.  It also schedules RCU
+ * core processing.  If the current grace period has gone on too long,
+ * it will ask the scheduler to manufacture a context switch for the sole
+ * purpose of providing a providing the needed quiescent state.
  */
-void rcu_check_callbacks(int user)
+void rcu_sched_clock_irq(int user)
 {
 	trace_rcu_utilization(TPS("Start scheduler-tick"));
 	raw_cpu_inc(rcu_data.ticks_this_gp);
@@ -2552,7 +2551,7 @@ void rcu_check_callbacks(int user)
 		}
 		__this_cpu_write(rcu_data.rcu_urgent_qs, false);
 	}
-	rcu_flavor_check_callbacks(user);
+	rcu_flavor_sched_clock_irq(user);
 	if (rcu_pending())
 		invoke_rcu_core();
 
@@ -2742,12 +2741,8 @@ void rcu_fwd_progress_check(unsigned long j)
 }
 EXPORT_SYMBOL_GPL(rcu_fwd_progress_check);
 
-/*
- * This does the RCU core processing work for the specified rcu_data
- * structures.  This may be called only from the CPU to whom the rdp
- * belongs.
- */
-static __latent_entropy void rcu_process_callbacks(struct softirq_action *unused)
+/* Perform RCU core processing work for the current CPU.  */
+static __latent_entropy void rcu_core(struct softirq_action *unused)
 {
 	unsigned long flags;
 	struct rcu_data *rdp = raw_cpu_ptr(&rcu_data);
@@ -3408,8 +3403,6 @@ int rcutree_online_cpu(unsigned int cpu)
 	raw_spin_lock_irqsave_rcu_node(rnp, flags);
 	rnp->ffmask |= rdp->grpmask;
 	raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
-	if (IS_ENABLED(CONFIG_TREE_SRCU))
-		srcu_online_cpu(cpu);
 	if (rcu_scheduler_active == RCU_SCHEDULER_INACTIVE)
 		return 0; /* Too early in boot for scheduler work. */
 	sync_sched_exp_online_cleanup(cpu);
@@ -3434,8 +3427,6 @@ int rcutree_offline_cpu(unsigned int cpu)
 	raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
 
 	rcutree_affinity_setting(cpu, cpu);
-	if (IS_ENABLED(CONFIG_TREE_SRCU))
-		srcu_offline_cpu(cpu);
 	return 0;
 }
 
@@ -3856,7 +3847,7 @@ void __init rcu_init(void)
 	rcu_init_one();
 	if (dump_tree)
 		rcu_dump_rcu_node_tree();
-	open_softirq(RCU_SOFTIRQ, rcu_process_callbacks);
+	open_softirq(RCU_SOFTIRQ, rcu_core);
 
 	/*
 	 * We don't need protection against CPU-hotplug here because
