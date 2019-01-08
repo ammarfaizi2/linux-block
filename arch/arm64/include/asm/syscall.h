@@ -126,6 +126,9 @@ static inline int syscall_get_arch(void)
 	if (is_a32_compat_task())
 		return AUDIT_ARCH_ARM;
 
+	if (is_ilp32_compat_task())
+		return AUDIT_ARCH_AARCH64ILP32;
+
 	return AUDIT_ARCH_AARCH64;
 }
 
