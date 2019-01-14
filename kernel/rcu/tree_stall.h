@@ -118,28 +118,6 @@ static void zero_cpu_stall_ticks(struct rcu_data *rdp)
 	WRITE_ONCE(rdp->last_fqs_resched, jiffies);
 }
 
-/* Complain about starvation of grace-period kthread.  */
-static void rcu_check_gp_kthread_starvation(void)
-{
-	struct task_struct *gpk = rcu_state.gp_kthread;
-	unsigned long j;
-
-	j = jiffies - READ_ONCE(rcu_state.gp_activity);
-	if (j > 2 * HZ) {
-		pr_err("%s kthread starved for %ld jiffies! g%ld f%#x %s(%d) ->state=%#lx ->cpu=%d\n",
-		       rcu_state.name, j,
-		       (long)rcu_seq_current(&rcu_state.gp_seq),
-		       READ_ONCE(rcu_state.gp_flags),
-		       gp_state_getname(rcu_state.gp_state), rcu_state.gp_state,
-		       gpk ? gpk->state : ~0, gpk ? task_cpu(gpk) : -1);
-		if (gpk) {
-			pr_err("RCU grace-period kthread stack dump:\n");
-			sched_show_task(gpk);
-			wake_up_process(gpk);
-		}
-	}
-}
-
 /*
  * If too much time has passed in the current grace period, and if
  * so configured, go kick the relevant kthreads.
@@ -349,6 +327,28 @@ static void print_cpu_stall_info(int cpu)
 	       rdp->softirq_snap, kstat_softirqs_cpu(RCU_SOFTIRQ, cpu),
 	       READ_ONCE(rcu_state.n_force_qs) - rcu_state.n_force_qs_gpstart,
 	       fast_no_hz);
+}
+
+/* Complain about starvation of grace-period kthread.  */
+static void rcu_check_gp_kthread_starvation(void)
+{
+	struct task_struct *gpk = rcu_state.gp_kthread;
+	unsigned long j;
+
+	j = jiffies - READ_ONCE(rcu_state.gp_activity);
+	if (j > 2 * HZ) {
+		pr_err("%s kthread starved for %ld jiffies! g%ld f%#x %s(%d) ->state=%#lx ->cpu=%d\n",
+		       rcu_state.name, j,
+		       (long)rcu_seq_current(&rcu_state.gp_seq),
+		       READ_ONCE(rcu_state.gp_flags),
+		       gp_state_getname(rcu_state.gp_state), rcu_state.gp_state,
+		       gpk ? gpk->state : ~0, gpk ? task_cpu(gpk) : -1);
+		if (gpk) {
+			pr_err("RCU grace-period kthread stack dump:\n");
+			sched_show_task(gpk);
+			wake_up_process(gpk);
+		}
+	}
 }
 
 static void print_other_cpu_stall(unsigned long gp_seq)
