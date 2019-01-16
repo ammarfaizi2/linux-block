@@ -293,6 +293,31 @@ static unsigned long srcu_readers_unlock_idx(struct srcu_struct *ssp, int idx)
 	return sum;
 }
 
+#define SRCU_INTERVAL		1
+
+/*
+ * Return grace-period delay, zero if there are expedited grace
+ * periods pending, SRCU_INTERVAL otherwise.
+ */
+static unsigned long srcu_get_delay(struct srcu_struct *ssp)
+{
+	if (ULONG_CMP_LT(READ_ONCE(ssp->srcu_gp_seq),
+			 READ_ONCE(ssp->srcu_gp_seq_needed_exp)))
+		return 0;
+	return SRCU_INTERVAL;
+}
+
+/* Do a synchronize_rcu{,expedited}() if light readers, smp_mb() otherwise. */
+static void srcu_smp_mb(struct srcu_struct *ssp)
+{
+	if (!ssp->srcu_is_lr)
+		smp_mb();  /* For pairing info, see comment at callsites. */
+	else if (srcu_get_delay(ssp))
+		synchronize_rcu();
+	else
+		synchronize_rcu_expedited();
+}
+
 /*
  * Return true if the number of pre-existing readers is determined to
  * be zero.
@@ -314,10 +339,7 @@ static bool srcu_readers_active_idx_check(struct srcu_struct *ssp, int idx)
 	 * after the synchronize_srcu() from being executed before the
 	 * grace period ends.
 	 */
-	if (!ssp->srcu_is_lr)
-		smp_mb(); /* A */
-	else
-		synchronize_rcu(); /* A */
+	srcu_smp_mb(ssp); /* A */
 
 	/*
 	 * If the locks are the same as the unlocks, then there must have
@@ -366,20 +388,6 @@ static bool srcu_readers_active(struct srcu_struct *ssp)
 		sum -= READ_ONCE(cpuc->srcu_unlock_count[1]);
 	}
 	return sum;
-}
-
-#define SRCU_INTERVAL		1
-
-/*
- * Return grace-period delay, zero if there are expedited grace
- * periods pending, SRCU_INTERVAL otherwise.
- */
-static unsigned long srcu_get_delay(struct srcu_struct *ssp)
-{
-	if (ULONG_CMP_LT(READ_ONCE(ssp->srcu_gp_seq),
-			 READ_ONCE(ssp->srcu_gp_seq_needed_exp)))
-		return 0;
-	return SRCU_INTERVAL;
 }
 
 /* Helper for cleanup_srcu_struct() and cleanup_srcu_struct_quiesced(). */
@@ -759,10 +767,7 @@ static void srcu_flip(struct srcu_struct *ssp)
 	 * have seen that reader's increments (which is OK, because this
 	 * grace period need not wait on that reader).
 	 */
-	if (!ssp->srcu_is_lr)
-		smp_mb(); /* E */  /* Pairs with B and C. */
-	else
-		synchronize_rcu(); /* E */  /* Pairs with B and C. */
+	srcu_smp_mb(ssp); /* E */  /* Pairs with B and C. */
 
 	WRITE_ONCE(ssp->srcu_idx, ssp->srcu_idx + 1);
 
@@ -773,10 +778,7 @@ static void srcu_flip(struct srcu_struct *ssp)
 	 * and the one in srcu_readers_active_idx_check() provide the
 	 * guarantee for __srcu_read_lock().
 	 */
-	if (!ssp->srcu_is_lr)
-		smp_mb(); /* D */  /* Pairs with C. */
-	else
-		synchronize_rcu(); /* D */  /* Pairs with C. */
+	srcu_smp_mb(ssp); /* D */  /* Pairs with C. */
 }
 
 /*
