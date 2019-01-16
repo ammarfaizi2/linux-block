@@ -50,6 +50,7 @@ void srcu_drive_gp(struct work_struct *wp);
 	.srcu_work = __WORK_INITIALIZER(name.srcu_work, srcu_drive_gp),	\
 	__SRCU_DEP_MAP_INIT(name)					\
 }
+#define SRCU_STRUCT_INIT(name, __ignored) __SRCU_STRUCT_INIT(name, __ignored)
 
 /*
  * This odd _STATIC_ arrangement is needed for API compatibility with
@@ -59,6 +60,8 @@ void srcu_drive_gp(struct work_struct *wp);
 	struct srcu_struct name = __SRCU_STRUCT_INIT(name, name)
 #define DEFINE_STATIC_SRCU(name) \
 	static struct srcu_struct name = __SRCU_STRUCT_INIT(name, name)
+#define DEFINE_SRCU_LR(name) DEFINE_SRCU(name)
+#define DEFINE_STATIC_SRCU_LR(name) DEFINE_STATIC_SRCU(name)
 
 void synchronize_srcu(struct srcu_struct *ssp);
 

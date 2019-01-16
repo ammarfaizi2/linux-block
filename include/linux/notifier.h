@@ -107,7 +107,7 @@ extern void srcu_init_notifier_head(struct srcu_notifier_head *nh);
 	{							\
 		.mutex = __MUTEX_INITIALIZER(name.mutex),	\
 		.head = NULL,					\
-		.srcu = __SRCU_STRUCT_INIT(name.srcu, pcpu),	\
+		.srcu = SRCU_STRUCT_INIT(name.srcu, pcpu),	\
 	}
 
 #define ATOMIC_NOTIFIER_HEAD(name)				\

@@ -180,6 +180,8 @@ static void init_srcu_struct_nodes(struct srcu_struct *ssp, bool is_static)
  */
 static int init_srcu_struct_fields(struct srcu_struct *ssp, bool is_static)
 {
+	int cpu;
+
 	mutex_init(&ssp->srcu_cb_mutex);
 	mutex_init(&ssp->srcu_gp_mutex);
 	ssp->srcu_idx = 0;
@@ -188,8 +190,12 @@ static int init_srcu_struct_fields(struct srcu_struct *ssp, bool is_static)
 	mutex_init(&ssp->srcu_barrier_mutex);
 	atomic_set(&ssp->srcu_barrier_cpu_cnt, 0);
 	INIT_DELAYED_WORK(&ssp->work, process_srcu);
-	if (!is_static)
+	if (!is_static) {
 		ssp->sda = alloc_percpu(struct srcu_data);
+		ssp->srcu_is_lr = 0;
+	}
+	for_each_possible_cpu(cpu)
+		per_cpu_ptr(ssp->sda, cpu)->srcu_is_lr = ssp->srcu_is_lr;
 	init_srcu_struct_nodes(ssp, is_static);
 	ssp->srcu_gp_seq_needed_exp = 0;
 	ssp->srcu_last_gp_end = ktime_get_mono_fast_ns();
@@ -308,7 +314,10 @@ static bool srcu_readers_active_idx_check(struct srcu_struct *ssp, int idx)
 	 * after the synchronize_srcu() from being executed before the
 	 * grace period ends.
 	 */
-	smp_mb(); /* A */
+	if (!ssp->srcu_is_lr)
+		smp_mb(); /* A */
+	else
+		synchronize_rcu(); /* A */
 
 	/*
 	 * If the locks are the same as the unlocks, then there must have
@@ -423,7 +432,13 @@ int __srcu_read_lock(struct srcu_struct *ssp)
 
 	idx = READ_ONCE(ssp->srcu_idx) & 0x1;
 	this_cpu_inc(ssp->sda->srcu_lock_count[idx]);
-	smp_mb(); /* B */  /* Avoid leaking the critical section. */
+	if (!this_cpu_read(ssp->sda->srcu_is_lr)) {
+		smp_mb(); /* B */  /* Avoid leaking the critical section. */
+	} else {
+		barrier(); /* B */  /* Avoid leaking the critical section. */
+		RCU_LOCKDEP_WARN(!rcu_is_watching(),
+				 "srcu_read_lock() used illegally while idle");
+	}
 	return idx;
 }
 EXPORT_SYMBOL_GPL(__srcu_read_lock);
@@ -435,7 +450,13 @@ EXPORT_SYMBOL_GPL(__srcu_read_lock);
  */
 void __srcu_read_unlock(struct srcu_struct *ssp, int idx)
 {
-	smp_mb(); /* C */  /* Avoid leaking the critical section. */
+	if (!this_cpu_read(ssp->sda->srcu_is_lr)) {
+		smp_mb(); /* C */  /* Avoid leaking the critical section. */
+	} else {
+		barrier(); /* C */  /* Avoid leaking the critical section. */
+		RCU_LOCKDEP_WARN(!rcu_is_watching(),
+				 "srcu_read_lock() used illegally while idle");
+	}
 	this_cpu_inc(ssp->sda->srcu_unlock_count[idx]);
 }
 EXPORT_SYMBOL_GPL(__srcu_read_unlock);
@@ -738,7 +759,10 @@ static void srcu_flip(struct srcu_struct *ssp)
 	 * have seen that reader's increments (which is OK, because this
 	 * grace period need not wait on that reader).
 	 */
-	smp_mb(); /* E */  /* Pairs with B and C. */
+	if (!ssp->srcu_is_lr)
+		smp_mb(); /* E */  /* Pairs with B and C. */
+	else
+		synchronize_rcu(); /* E */  /* Pairs with B and C. */
 
 	WRITE_ONCE(ssp->srcu_idx, ssp->srcu_idx + 1);
 
@@ -749,7 +773,10 @@ static void srcu_flip(struct srcu_struct *ssp)
 	 * and the one in srcu_readers_active_idx_check() provide the
 	 * guarantee for __srcu_read_lock().
 	 */
-	smp_mb(); /* D */  /* Pairs with C. */
+	if (!ssp->srcu_is_lr)
+		smp_mb(); /* D */  /* Pairs with C. */
+	else
+		synchronize_rcu(); /* D */  /* Pairs with C. */
 }
 
 /*

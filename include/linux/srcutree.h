@@ -38,6 +38,7 @@ struct srcu_data {
 	/* Read-side state. */
 	unsigned long srcu_lock_count[2];	/* Locks per CPU. */
 	unsigned long srcu_unlock_count[2];	/* Unlocks per CPU. */
+	u8 srcu_is_lr;				/* Light-weight readers? */
 
 	/* Update-side state. */
 	spinlock_t __private lock ____cacheline_internodealigned_in_smp;
@@ -82,6 +83,7 @@ struct srcu_struct {
 	spinlock_t __private lock;		/* Protect counters */
 	struct mutex srcu_gp_mutex;		/* Serialize GP work. */
 	unsigned int srcu_idx;			/* Current rdr array element. */
+	u8 srcu_is_lr;				/* Light-weight readers? */
 	unsigned long srcu_gp_seq;		/* Grace-period seq #. */
 	unsigned long srcu_gp_seq_needed;	/* Latest gp_seq needed. */
 	unsigned long srcu_gp_seq_needed_exp;	/* Furthest future exp GP. */
@@ -105,14 +107,17 @@ struct srcu_struct {
 #define SRCU_STATE_SCAN1	1
 #define SRCU_STATE_SCAN2	2
 
-#define __SRCU_STRUCT_INIT(name, pcpu_name)				\
+#define __SRCU_STRUCT_INIT(name, pcpu_name, is_lr)			\
 {									\
 	.sda = &pcpu_name,						\
 	.lock = __SPIN_LOCK_UNLOCKED(name.lock),			\
+	.srcu_is_lr = (is_lr),						\
 	.srcu_gp_seq_needed = -1UL,					\
 	.work = __DELAYED_WORK_INITIALIZER(name.work, NULL, 0),		\
 	__SRCU_DEP_MAP_INIT(name)					\
 }
+
+#define SRCU_STRUCT_INIT(name, pcpu_name) __SRCU_STRUCT_INIT(name, pcpu_name, 0)
 
 /*
  * Define and initialize a srcu struct at build time.
@@ -133,11 +138,13 @@ struct srcu_struct {
  *
  * See include/linux/percpu-defs.h for the rules on per-CPU variables.
  */
-#define __DEFINE_SRCU(name, is_static)					\
-	static DEFINE_PER_CPU(struct srcu_data, name##_srcu_data);\
-	is_static struct srcu_struct name = __SRCU_STRUCT_INIT(name, name##_srcu_data)
-#define DEFINE_SRCU(name)		__DEFINE_SRCU(name, /* not static */)
-#define DEFINE_STATIC_SRCU(name)	__DEFINE_SRCU(name, static)
+#define __DEFINE_SRCU(name, is_lr, is_static)				\
+	static DEFINE_PER_CPU(struct srcu_data, name##_srcu_data);	\
+	is_static struct srcu_struct name = __SRCU_STRUCT_INIT(name, name##_srcu_data, is_lr)
+#define DEFINE_SRCU(name)		__DEFINE_SRCU(name, 0, /* not static */)
+#define DEFINE_STATIC_SRCU(name)	__DEFINE_SRCU(name, 0, static)
+#define DEFINE_SRCU_LR(name)		__DEFINE_SRCU(name, 1, /* not static */)
+#define DEFINE_STATIC_SRCU_LR(name)	__DEFINE_SRCU(name, 1, static)
 
 void synchronize_srcu_expedited(struct srcu_struct *ssp);
 void srcu_barrier(struct srcu_struct *ssp);
