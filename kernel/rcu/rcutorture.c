@@ -510,7 +510,7 @@ static struct rcu_torture_ops rcu_busted_ops = {
  * Definitions for srcu torture testing.
  */
 
-DEFINE_STATIC_SRCU(srcu_ctl);
+DEFINE_STATIC_SRCU_LR(srcu_ctl);
 static struct srcu_struct srcu_ctld;
 static struct srcu_struct *srcu_ctlp = &srcu_ctl;
 
