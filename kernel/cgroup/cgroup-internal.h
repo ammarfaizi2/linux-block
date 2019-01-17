@@ -40,6 +40,7 @@ extern char trace_cgroup_path[TRACE_CGROUP_PATH_LEN];
  */
 struct cgroup_fs_context {
 	struct cgroup_root	*root;
+	struct cgroup_namespace	*ns;
 	unsigned int	flags;			/* CGRP_ROOT_* flags */
 
 	/* cgroup1 bits */
@@ -210,8 +211,7 @@ void cgroup_free_root(struct cgroup_root *root);
 void init_cgroup_root(struct cgroup_fs_context *ctx);
 int cgroup_setup_root(struct cgroup_root *root, u16 ss_mask);
 int rebind_subsystems(struct cgroup_root *dst_root, u16 ss_mask);
-int cgroup_do_mount(struct fs_context *fc, unsigned long magic,
-			       struct cgroup_namespace *ns);
+int cgroup_do_get_tree(struct fs_context *fc);
 
 int cgroup_migrate_vet_dst(struct cgroup *dst_cgrp);
 void cgroup_migrate_finish(struct cgroup_mgctx *mgctx);
