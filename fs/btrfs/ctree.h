@@ -1065,8 +1065,6 @@ struct btrfs_fs_info {
 	u32 data_chunk_allocations;
 	u32 metadata_ratio;
 
-	void *bdev_holder;
-
 	/* private scrub information */
 	struct mutex scrub_lock;
 	atomic_t scrubs_running;
@@ -3329,12 +3327,13 @@ void btrfs_sysfs_remove_mounted(struct btrfs_fs_info *fs_info);
 /* fs_params.c */
 int btrfs_parse_options(struct btrfs_fs_info *info, char *options,
 			unsigned long new_flags);
-int btrfs_parse_device_options(const char *options, fmode_t flags, void *holder);
+int btrfs_parse_device_options(const char *options, fmode_t flags);
 int btrfs_parse_subvol_options(const char *options, char **subvol_name,
 			       u64 *subvol_objectid);
 int btrfs_show_options(struct seq_file *seq, struct dentry *dentry);
 
 /* super.c */
+extern struct file_system_type btrfs_root_fs_type;
 int btrfs_sync_fs(struct super_block *sb, int wait);
 
 static inline __printf(2, 3) __cold
