@@ -455,19 +455,18 @@ devpts_fill_super(struct super_block *s, void *data, int silent)
 	s->s_d_op = &simple_dentry_operations;
 	s->s_time_gran = 1;
 
-	error = -ENOMEM;
 	s->s_fs_info = new_pts_fs_info(s);
 	if (!s->s_fs_info)
-		goto fail;
+		return -ENOMEM;
 
 	error = parse_mount_options(data, PARSE_MOUNT, &DEVPTS_SB(s)->mount_opts);
 	if (error)
-		goto fail;
+		return error;
 
-	error = -ENOMEM;
 	inode = new_inode(s);
 	if (!inode)
-		goto fail;
+		return -ENOMEM;
+
 	inode->i_ino = 1;
 	inode->i_mtime = inode->i_atime = inode->i_ctime = current_time(inode);
 	inode->i_mode = S_IFDIR | S_IRUGO | S_IXUGO | S_IWUSR;
@@ -478,19 +477,10 @@ devpts_fill_super(struct super_block *s, void *data, int silent)
 	s->s_root = d_make_root(inode);
 	if (!s->s_root) {
 		pr_err("get root dentry failed\n");
-		goto fail;
+		return -ENOMEM;
 	}
 
-	error = mknod_ptmx(s);
-	if (error)
-		goto fail_dput;
-
-	return 0;
-fail_dput:
-	dput(s->s_root);
-	s->s_root = NULL;
-fail:
-	return error;
+	return mknod_ptmx(s);
 }
 
 /*
