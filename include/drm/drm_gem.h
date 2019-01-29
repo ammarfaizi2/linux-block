@@ -35,6 +35,7 @@
  */
 
 #include <linux/kref.h>
+#include <linux/reservation.h>
 
 #include <drm/drm_vma_manager.h>
 
@@ -262,6 +263,10 @@ struct drm_gem_object {
 	 */
 	struct dma_buf_attachment *import_attach;
 
+	/* normally (resv == &_resv) except for imported bo's */
+	struct reservation_object *resv;
+	struct reservation_object _resv;
+
 	/**
 	 * @funcs:
 	 *
@@ -363,6 +368,8 @@ void drm_gem_put_pages(struct drm_gem_object *obj, struct page **pages,
 		bool dirty, bool accessed);
 
 struct drm_gem_object *drm_gem_object_lookup(struct drm_file *filp, u32 handle);
+long drm_gem_reservation_object_wait(struct drm_file *filep, u32 handle,
+				    bool wait_all, unsigned long timeout);
 int drm_gem_dumb_map_offset(struct drm_file *file, struct drm_device *dev,
 			    u32 handle, u64 *offset);
 int drm_gem_dumb_destroy(struct drm_file *file,

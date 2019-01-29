@@ -209,15 +209,6 @@ Would be great to refactor this all into a set of small common helpers.
 
 Contact: Daniel Vetter
 
-Put a reservation_object into drm_gem_object
---------------------------------------------
-
-This would remove the need for the ->gem_prime_res_obj callback. It would also
-allow us to implement generic helpers for waiting for a bo, allowing for quite a
-bit of refactoring in the various wait ioctl implementations.
-
-Contact: Daniel Vetter
-
 idr_init_base()
 ---------------
 
