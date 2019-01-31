@@ -242,17 +242,11 @@ struct pseudo_fs_context {
 	unsigned long magic;
 };
 
-static int pseudo_fs_get_tree(struct fs_context *fc)
+static int pseudo_fs_fill_super(struct super_block *s, struct fs_context *fc)
 {
 	struct pseudo_fs_context *ctx = fc->fs_private;
-	struct super_block *s;
 	struct dentry *dentry;
 	struct inode *root;
-
-	s = sget_userns(fc->fs_type, NULL, set_anon_super, SB_KERNMOUNT|SB_NOUSER,
-			&init_user_ns, NULL);
-	if (IS_ERR(s))
-		return PTR_ERR(s);
 
 	s->s_maxbytes = MAX_LFS_FILESIZE;
 	s->s_blocksize = PAGE_SIZE;
@@ -263,7 +257,8 @@ static int pseudo_fs_get_tree(struct fs_context *fc)
 	s->s_time_gran = 1;
 	root = new_inode(s);
 	if (!root)
-		goto Enomem;
+		return -ENOMEM;
+
 	/*
 	 * since this is the first inode, make it number 1. New inodes created
 	 * after this must take care not to collide with it (by passing
@@ -275,18 +270,17 @@ static int pseudo_fs_get_tree(struct fs_context *fc)
 	dentry = __d_alloc(s, &ctx->d_name);
 	if (!dentry) {
 		iput(root);
-		goto Enomem;
+		return -ENOMEM;
 	}
 	d_instantiate(dentry, root);
 	s->s_root = dentry;
 	s->s_d_op = ctx->dops;
-	s->s_flags |= SB_ACTIVE;
-	fc->root = dget(s->s_root);
 	return 0;
+}
 
-Enomem:
-	deactivate_locked_super(s);
-	return -ENOMEM;
+static int pseudo_fs_get_tree(struct fs_context *fc)
+{
+	return vfs_get_super(fc, vfs_get_independent_super, pseudo_fs_fill_super);
 }
 
 static void pseudo_fs_free(struct fs_context *fc)
@@ -320,6 +314,9 @@ int vfs_init_pseudo_fs_context(struct fs_context *fc,
 	ctx->xattr = xattr;
 	ctx->dops = dops;
 	ctx->magic = magic;
+
+	fc->sb_flags = SB_KERNMOUNT | SB_NOUSER;
+	fc->global = true;
 	fc->fs_private = ctx;
 	fc->ops = &pseudo_fs_context_ops;
 	return 0;
