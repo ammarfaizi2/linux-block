@@ -81,6 +81,7 @@ static const struct fs_parameter_spec hugetlb_param_specs[] = {
 	fsparam_string("pagesize",	Opt_pagesize),
 	fsparam_string("size",		Opt_size),
 	fsparam_u32   ("uid",		Opt_uid),
+	{}
 };
 
 static const struct fs_parameter_description hugetlb_fs_parameters = {
