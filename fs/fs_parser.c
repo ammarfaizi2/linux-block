@@ -109,7 +109,6 @@ int fs_parse(struct fs_context *fc,
 			goto unknown_parameter;
 		if (!(p->flags & fs_param_neg_with_no))
 			goto unknown_parameter;
-		result->boolean = false;
 		result->negated = true;
 	}
 
