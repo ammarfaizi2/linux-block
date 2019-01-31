@@ -139,6 +139,13 @@ extern int generic_parse_monolithic(struct fs_context *fc, void *data);
 extern int vfs_get_tree(struct fs_context *fc);
 extern void put_fs_context(struct fs_context *fc);
 
+extern int vfs_init_pseudo_fs_context(struct fs_context *fc,
+				      const char *name,
+				      const struct super_operations *ops,
+				      const struct xattr_handler **xattr,
+				      const struct dentry_operations *dops,
+				      unsigned long magic);
+
 /*
  * sget() wrapper to be called from the ->get_tree() op.
  */
