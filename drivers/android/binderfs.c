@@ -17,6 +17,7 @@
 #include <linux/module.h>
 #include <linux/mutex.h>
 #include <linux/mount.h>
+#include <linux/fs_context.h>
 #include <linux/parser.h>
 #include <linux/radix-tree.h>
 #include <linux/sched.h>
@@ -376,14 +377,10 @@ static const struct inode_operations binderfs_dir_inode_operations = {
 	.unlink = binderfs_unlink,
 };
 
-static int binderfs_fill_super(struct super_block *sb, void *data, int silent)
+static int binderfs_fill_super(struct super_block *sb, struct fs_context *fc)
 {
-	struct binderfs_info *info;
-	int ret = -ENOMEM;
 	struct inode *inode = NULL;
-	struct ipc_namespace *ipc_ns = sb->s_fs_info;
-
-	get_ipc_ns(ipc_ns);
+	int ret = -ENOMEM;
 
 	sb->s_blocksize = PAGE_SIZE;
 	sb->s_blocksize_bits = PAGE_SHIFT;
@@ -405,23 +402,9 @@ static int binderfs_fill_super(struct super_block *sb, void *data, int silent)
 	sb->s_op = &binderfs_super_ops;
 	sb->s_time_gran = 1;
 
-	info = kzalloc(sizeof(struct binderfs_info), GFP_KERNEL);
-	if (!info)
-		goto err_without_dentry;
-
-	info->ipc_ns = ipc_ns;
-	info->root_gid = make_kgid(sb->s_user_ns, 0);
-	if (!gid_valid(info->root_gid))
-		info->root_gid = GLOBAL_ROOT_GID;
-	info->root_uid = make_kuid(sb->s_user_ns, 0);
-	if (!uid_valid(info->root_uid))
-		info->root_uid = GLOBAL_ROOT_UID;
-
-	sb->s_fs_info = info;
-
 	inode = new_inode(sb);
 	if (!inode)
-		goto err_without_dentry;
+		return -ENOMEM;
 
 	inode->i_ino = FIRST_INODE;
 	inode->i_fop = &simple_dir_operations;
@@ -443,57 +426,85 @@ static int binderfs_fill_super(struct super_block *sb, void *data, int silent)
 err_with_dentry:
 	dput(sb->s_root);
 	sb->s_root = NULL;
-
 err_without_dentry:
-	put_ipc_ns(ipc_ns);
-	iput(inode);
-	kfree(info);
-
 	return ret;
 }
 
-static int binderfs_test_super(struct super_block *sb, void *data)
+static int binderfs_test_super(struct super_block *sb, struct fs_context *fc)
 {
-	struct binderfs_info *info = sb->s_fs_info;
+	struct binderfs_info *info = sb->s_fs_info, *new = fc->s_fs_info;
 
 	if (info)
-		return info->ipc_ns == data;
+		return info->ipc_ns == new->ipc_ns;
 
 	return 0;
 }
 
-static int binderfs_set_super(struct super_block *sb, void *data)
-{
-	sb->s_fs_info = data;
-	return set_anon_super(sb, NULL);
-}
-
-static struct dentry *binderfs_mount(struct file_system_type *fs_type,
-				     int flags, const char *dev_name,
-				     void *data)
+static int binderfs_get_tree(struct fs_context *fc)
 {
 	struct super_block *sb;
-	struct ipc_namespace *ipc_ns = current->nsproxy->ipc_ns;
 
-	if (!ns_capable(ipc_ns->user_ns, CAP_SYS_ADMIN))
-		return ERR_PTR(-EPERM);
+	if (!ns_capable(fc->user_ns, CAP_SYS_ADMIN))
+		return -EPERM;
 
-	sb = sget_userns(fs_type, binderfs_test_super, binderfs_set_super,
-			 flags, ipc_ns->user_ns, ipc_ns);
+	sb = sget_fc(fc, binderfs_test_super, set_anon_super_fc);
 	if (IS_ERR(sb))
-		return ERR_CAST(sb);
+		return PTR_ERR(sb);
 
 	if (!sb->s_root) {
-		int ret = binderfs_fill_super(sb, data, flags & SB_SILENT ? 1 : 0);
+		int ret = binderfs_fill_super(sb, fc);
 		if (ret) {
 			deactivate_locked_super(sb);
-			return ERR_PTR(ret);
+			return ret;
 		}
 
 		sb->s_flags |= SB_ACTIVE;
 	}
 
-	return dget(sb->s_root);
+	fc->root = dget(sb->s_root);
+	return 0;
+}
+
+static void binderfs_free_fc(struct fs_context *fc)
+{
+	struct binderfs_info *info = fc->s_fs_info;
+
+	if (info) {
+		struct ipc_namespace *ipc_ns = fc->s_fs_info;
+		put_ipc_ns(ipc_ns);
+		kfree(info);
+	}
+}
+
+static const struct fs_context_operations binderfs_context_ops = {
+	.free		= binderfs_free_fc,
+	.get_tree	= binderfs_get_tree,
+};
+
+static int binderfs_init_fs_context(struct fs_context *fc)
+{
+	struct binderfs_info *info;
+	struct ipc_namespace *ipc_ns = current->nsproxy->ipc_ns;
+	struct user_namespace *user_ns = ipc_ns->user_ns;
+
+	info = kzalloc(sizeof(struct binderfs_info), GFP_KERNEL);
+	if (!info)
+		return -ENOMEM;
+
+	put_user_ns(fc->user_ns);
+	fc->user_ns = get_user_ns(user_ns);
+	info->ipc_ns = get_ipc_ns(ipc_ns);
+
+	info->root_gid = make_kgid(user_ns, 0);
+	if (!gid_valid(info->root_gid))
+		info->root_gid = GLOBAL_ROOT_GID;
+	info->root_uid = make_kuid(user_ns, 0);
+	if (!uid_valid(info->root_uid))
+		info->root_uid = GLOBAL_ROOT_UID;
+
+	fc->s_fs_info = info;
+	fc->ops = &binderfs_context_ops;
+	return 0;
 }
 
 static void binderfs_kill_super(struct super_block *sb)
@@ -509,7 +520,7 @@ static void binderfs_kill_super(struct super_block *sb)
 
 static struct file_system_type binder_fs_type = {
 	.name		= "binder",
-	.mount		= binderfs_mount,
+	.init_fs_context = binderfs_init_fs_context,
 	.kill_sb	= binderfs_kill_super,
 	.fs_flags	= FS_USERNS_MOUNT,
 };
