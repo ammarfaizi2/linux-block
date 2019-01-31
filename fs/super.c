@@ -566,23 +566,34 @@ share_extant_sb:
 EXPORT_SYMBOL(sget_fc);
 
 /**
- *	sget_userns -	find or create a superblock
- *	@type:	filesystem type superblock should belong to
- *	@test:	comparison callback
- *	@set:	setup callback
- *	@flags:	mount flags
- *	@user_ns: User namespace for the super_block
- *	@data:	argument to each of them
+ *	sget	-	find or create a superblock
+ *	@type:	  filesystem type superblock should belong to
+ *	@test:	  comparison callback
+ *	@set:	  setup callback
+ *	@flags:	  mount flags
+ *	@data:	  argument to each of them
  */
-struct super_block *sget_userns(struct file_system_type *type,
+struct super_block *sget(struct file_system_type *type,
 			int (*test)(struct super_block *,void *),
 			int (*set)(struct super_block *,void *),
-			int flags, struct user_namespace *user_ns,
+			int flags,
 			void *data)
 {
+	struct user_namespace *user_ns = current_user_ns();
 	struct super_block *s = NULL;
 	struct super_block *old;
 	int err;
+
+	/* We don't yet pass the user namespace of the parent
+	 * mount through to here so always use &init_user_ns
+	 * until that changes.
+	 */
+	if (flags & SB_SUBMOUNT)
+		user_ns = &init_user_ns;
+
+	/* Ensure the requestor has permissions over the target filesystem */
+	if (!(flags & (SB_KERNMOUNT|SB_SUBMOUNT)) && !ns_capable(user_ns, CAP_SYS_ADMIN))
+		return ERR_PTR(-EPERM);
 
 	if (!(flags & (SB_KERNMOUNT|SB_SUBMOUNT)) &&
 	    !(type->fs_flags & FS_USERNS_MOUNT) &&
@@ -627,38 +638,6 @@ retry:
 	get_filesystem(type);
 	register_shrinker_prepared(&s->s_shrink);
 	return s;
-}
-
-EXPORT_SYMBOL(sget_userns);
-
-/**
- *	sget	-	find or create a superblock
- *	@type:	  filesystem type superblock should belong to
- *	@test:	  comparison callback
- *	@set:	  setup callback
- *	@flags:	  mount flags
- *	@data:	  argument to each of them
- */
-struct super_block *sget(struct file_system_type *type,
-			int (*test)(struct super_block *,void *),
-			int (*set)(struct super_block *,void *),
-			int flags,
-			void *data)
-{
-	struct user_namespace *user_ns = current_user_ns();
-
-	/* We don't yet pass the user namespace of the parent
-	 * mount through to here so always use &init_user_ns
-	 * until that changes.
-	 */
-	if (flags & SB_SUBMOUNT)
-		user_ns = &init_user_ns;
-
-	/* Ensure the requestor has permissions over the target filesystem */
-	if (!(flags & (SB_KERNMOUNT|SB_SUBMOUNT)) && !ns_capable(user_ns, CAP_SYS_ADMIN))
-		return ERR_PTR(-EPERM);
-
-	return sget_userns(type, test, set, flags, user_ns, data);
 }
 
 EXPORT_SYMBOL(sget);
