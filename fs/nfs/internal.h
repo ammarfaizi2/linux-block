@@ -7,6 +7,7 @@
 #include <linux/mount.h>
 #include <linux/security.h>
 #include <linux/crc32.h>
+#include <linux/sunrpc/addr.h>
 #include <linux/nfs_page.h>
 #include <linux/wait_bit.h>
 
@@ -42,8 +43,6 @@ static inline int nfs_attr_use_mounted_on_fileid(struct nfs_fattr *fattr)
 struct nfs_clone_mount {
 	const struct super_block *sb;
 	const struct dentry *dentry;
-	struct nfs_fh *fh;
-	struct nfs_fattr *fattr;
 	char *hostname;
 	char *mnt_path;
 	struct sockaddr *addr;
@@ -88,12 +87,12 @@ struct nfs_client_initdata {
 /*
  * In-kernel mount arguments
  */
-struct nfs_parsed_mount_data {
-	int			flags;
+struct nfs_fs_context {
+	unsigned int		flags;		/* NFS{,4}_MOUNT_* flags */
 	unsigned int		rsize, wsize;
 	unsigned int		timeo, retrans;
-	unsigned int		acregmin, acregmax,
-				acdirmin, acdirmax;
+	unsigned int		acregmin, acregmax;
+	unsigned int		acdirmin, acdirmax;
 	unsigned int		namlen;
 	unsigned int		options;
 	unsigned int		bsize;
@@ -103,10 +102,16 @@ struct nfs_parsed_mount_data {
 	unsigned int		version;
 	unsigned int		minorversion;
 	char			*fscache_uniq;
+	unsigned short		protofamily;
+	unsigned short		mountfamily;
 	bool			need_mount;
+	bool			sloppy;
 
 	struct {
-		struct sockaddr_storage	address;
+		union {
+			struct sockaddr	address;
+			struct sockaddr_storage	_address;
+		};
 		size_t			addrlen;
 		char			*hostname;
 		u32			version;
@@ -115,7 +120,10 @@ struct nfs_parsed_mount_data {
 	} mount_server;
 
 	struct {
-		struct sockaddr_storage	address;
+		union {
+			struct sockaddr	address;
+			struct sockaddr_storage	_address;
+		};
 		size_t			addrlen;
 		char			*hostname;
 		char			*export_path;
@@ -125,6 +133,8 @@ struct nfs_parsed_mount_data {
 
 	void			*lsm_opts;
 	struct net		*net;
+
+	char			buf[32];	/* Parse buffer */
 };
 
 /* mount_clnt.c */
@@ -143,11 +153,12 @@ struct nfs_mount_request {
 };
 
 struct nfs_mount_info {
-	void (*fill_super)(struct super_block *, struct nfs_mount_info *);
-	int (*set_security)(struct super_block *, struct dentry *, struct nfs_mount_info *);
-	struct nfs_parsed_mount_data *parsed;
+	unsigned int inherited_bsize;
+	struct nfs_fs_context *ctx;
 	struct nfs_clone_mount *cloned;
+	struct nfs_server *server;
 	struct nfs_fh *mntfh;
+	struct nfs_subversion *nfs_mod;
 };
 
 extern int nfs_mount(struct nfs_mount_request *info);
@@ -175,11 +186,8 @@ extern struct nfs_client *nfs4_find_client_ident(struct net *, int);
 extern struct nfs_client *
 nfs4_find_client_sessionid(struct net *, const struct sockaddr *,
 				struct nfs4_sessionid *, u32);
-extern struct nfs_server *nfs_create_server(struct nfs_mount_info *,
-					struct nfs_subversion *);
-extern struct nfs_server *nfs4_create_server(
-					struct nfs_mount_info *,
-					struct nfs_subversion *);
+extern struct nfs_server *nfs_create_server(struct nfs_mount_info *);
+extern struct nfs_server *nfs4_create_server(struct nfs_mount_info *);
 extern struct nfs_server *nfs4_create_referral_server(struct nfs_clone_mount *,
 						      struct nfs_fh *);
 extern int nfs4_update_server(struct nfs_server *server, const char *hostname,
@@ -233,6 +241,22 @@ extern const struct svc_version nfs4_callback_version1;
 extern const struct svc_version nfs4_callback_version4;
 
 struct nfs_pageio_descriptor;
+
+/* mount.c */
+#define NFS_TEXT_DATA		1
+
+extern struct nfs_fs_context *nfs_alloc_parsed_mount_data(void);
+extern void nfs_free_parsed_mount_data(struct nfs_fs_context *ctx);
+extern int nfs_parse_mount_options(char *raw, struct nfs_fs_context *ctx);
+extern int nfs_validate_mount_data(struct file_system_type *fs_type,
+				   void *options,
+				   struct nfs_fs_context *ctx,
+				   struct nfs_fh *mntfh,
+				   const char *dev_name);
+extern int nfs_validate_text_mount_data(void *options,
+					struct nfs_fs_context *ctx,
+					const char *dev_name);
+
 /* pagelist.c */
 extern int __init nfs_init_nfspagecache(void);
 extern void nfs_destroy_nfspagecache(void);
@@ -393,22 +417,14 @@ extern int nfs_wait_atomic_killable(atomic_t *p, unsigned int mode);
 /* super.c */
 extern const struct super_operations nfs_sops;
 extern struct file_system_type nfs_fs_type;
-extern struct file_system_type nfs_xdev_fs_type;
+extern struct file_system_type nfs_prepared_fs_type;
 #if IS_ENABLED(CONFIG_NFS_V4)
 extern struct file_system_type nfs4_referral_fs_type;
 #endif
 bool nfs_auth_info_match(const struct nfs_auth_info *, rpc_authflavor_t);
-struct dentry *nfs_try_mount(int, const char *, struct nfs_mount_info *,
-			struct nfs_subversion *);
-int nfs_set_sb_security(struct super_block *, struct dentry *, struct nfs_mount_info *);
-int nfs_clone_sb_security(struct super_block *, struct dentry *, struct nfs_mount_info *);
-struct dentry *nfs_fs_mount_common(struct nfs_server *, int, const char *,
-				   struct nfs_mount_info *, struct nfs_subversion *);
+struct dentry *nfs_try_mount(int, const char *, struct nfs_mount_info *);
 struct dentry *nfs_fs_mount(struct file_system_type *, int, const char *, void *);
-struct dentry * nfs_xdev_mount_common(struct file_system_type *, int,
-		const char *, struct nfs_mount_info *);
 void nfs_kill_super(struct super_block *);
-void nfs_fill_super(struct super_block *, struct nfs_mount_info *);
 
 extern struct rpc_stat nfs_rpcstat;
 
@@ -774,4 +790,17 @@ static inline void nfs_context_set_write_error(struct nfs_open_context *ctx, int
 	ctx->error = error;
 	smp_wmb();
 	set_bit(NFS_CONTEXT_ERROR_WRITE, &ctx->flags);
+}
+
+/*
+ * Select between a default port value and a user-specified port value.
+ * If a zero value is set, then autobind will be used.
+ */
+static inline void nfs_set_port(struct sockaddr *sap, int *port,
+				const unsigned short default_port)
+{
+	if (*port == NFS_UNSPEC_PORT)
+		*port = default_port;
+
+	rpc_set_port(sap, *port);
 }
