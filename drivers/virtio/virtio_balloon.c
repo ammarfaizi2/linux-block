@@ -754,21 +754,22 @@ static int virtballoon_migratepage(struct balloon_dev_info *vb_dev_info,
 
 	return MIGRATEPAGE_SUCCESS;
 }
+#include <linux/fs_context.h>
 
-static struct dentry *balloon_mount(struct file_system_type *fs_type,
-		int flags, const char *dev_name, void *data)
+static const struct dentry_operations balloon_dops = {
+	.d_dname = simple_dname,
+};
+
+static int balloon_init_fs_context(struct fs_context *fc)
 {
-	static const struct dentry_operations ops = {
-		.d_dname = simple_dname,
-	};
-
-	return mount_pseudo(fs_type, "balloon-kvm:", NULL, &ops,
-				BALLOON_KVM_MAGIC);
+	return vfs_init_pseudo_fs_context(fc, "balloon-kvm:",
+					  NULL, NULL,
+					  &balloon_dops, BALLOON_KVM_MAGIC);
 }
 
 static struct file_system_type balloon_fs = {
 	.name           = "balloon-kvm",
-	.mount          = balloon_mount,
+	.init_fs_context = balloon_init_fs_context,
 	.kill_sb        = kill_anon_super,
 };
 
