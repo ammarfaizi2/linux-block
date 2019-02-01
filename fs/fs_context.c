@@ -170,18 +170,38 @@ int vfs_parse_fs_param(struct fs_context *fc, struct fs_parameter *param)
 }
 EXPORT_SYMBOL(vfs_parse_fs_param);
 
+/**
+ * do_set_container - Helper to set container
+ * @fc: The fs_context to adjust
+ *
+ * This is called to effect the change of namespaces associated with the
+ * container.  The reason that this isn't rolled into vfs_set_container() is
+ * that the filesystem may need to do some cleanup on the old namespaces (which
+ * are currently pinned by the container) before calling this.
+ *
+ * The user namespace is not changed as that is used for security checks.
+ */
+void do_set_container(struct fs_context *fc)
+{
+	put_net(fc->net_ns);
+	fc->net_ns = get_net(fc->container->ns->net_ns);
+}
+EXPORT_SYMBOL(do_set_container);
+
 /*
- * Specify a container in which a superblock will exist.
+ * Specify a container in which a superblock will exist.  This should be called
+ * before calling vfs_parse_fs_param.  If ->set_container() is supplied by the
+ * filesystem, it should call do_set_container().
  */
 void vfs_set_container(struct fs_context *fc, struct container *container)
 {
 	if (container) {
-		put_user_ns(fc->user_ns);
-		put_net(fc->net_ns);
-
+		put_container(fc->container);
 		fc->container = get_container(container);
-		fc->user_ns = get_user_ns(container->cred->user_ns);
-		fc->net_ns = get_net(container->ns->net_ns);
+		if (fc->ops->set_container)
+			fc->ops->set_container(fc);
+		else
+			do_set_container(fc);
 	}
 }
 

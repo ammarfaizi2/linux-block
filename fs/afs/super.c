@@ -569,6 +569,23 @@ error:
 	return ret;
 }
 
+static void afs_set_container(struct fs_context *fc)
+{
+	struct afs_fs_context *ctx = fc->fs_private;
+	struct afs_cell *cell;
+
+	afs_put_cell(ctx->net, ctx->cell);
+	do_set_container(fc);
+
+	/* Default to the workstation cell. */
+	rcu_read_lock();
+	cell = afs_lookup_cell_rcu(ctx->net, NULL, 0);
+	rcu_read_unlock();
+	if (IS_ERR(cell))
+		cell = NULL;
+	ctx->cell = cell;
+}
+
 static void afs_free_fc(struct fs_context *fc)
 {
 	struct afs_fs_context *ctx = fc->fs_private;
@@ -583,6 +600,7 @@ static void afs_free_fc(struct fs_context *fc)
 static const struct fs_context_operations afs_context_ops = {
 	.free		= afs_free_fc,
 	.parse_param	= afs_parse_param,
+	.set_container	= afs_set_container,
 	.get_tree	= afs_get_tree,
 };
 

@@ -164,6 +164,14 @@ static int proc_get_tree(struct fs_context *fc)
 	return vfs_get_super(fc, vfs_get_keyed_super, proc_fill_super);
 }
 
+static void proc_set_container(struct fs_context *fc)
+{
+	struct proc_fs_context *ctx = fc->fs_private;
+
+	put_pid_ns(ctx->pid_ns);
+	ctx->pid_ns = get_pid_ns(fc->container->pid_ns);
+}
+
 static void proc_fs_context_free(struct fs_context *fc)
 {
 	struct proc_fs_context *ctx = fc->fs_private;
@@ -176,6 +184,7 @@ static void proc_fs_context_free(struct fs_context *fc)
 static const struct fs_context_operations proc_fs_context_ops = {
 	.free		= proc_fs_context_free,
 	.parse_param	= proc_parse_param,
+	.set_container	= proc_set_container,
 	.get_tree	= proc_get_tree,
 	.reconfigure	= proc_reconfigure,
 };
