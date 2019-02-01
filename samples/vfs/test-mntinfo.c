@@ -21,10 +21,10 @@
 #include <errno.h>
 #include <time.h>
 #include <math.h>
-#include <fcntl.h>
 #include <sys/syscall.h>
 #include <linux/fsinfo.h>
 #include <linux/socket.h>
+#include <linux/fcntl.h>
 #include <sys/stat.h>
 #include <arpa/inet.h>
 
@@ -65,7 +65,6 @@ static const __u16 fsinfo_buffer_sizes[FSINFO_ATTR__NR] = {
 	FSINFO_STRUCT_N		(PARAM_SPECIFICATION,	param_specification),
 	FSINFO_STRUCT_N		(PARAM_ENUM,		param_enum),
 	FSINFO_OVERLARGE	(PARAMETERS,		-),
-	FSINFO_OVERLARGE	(LSM_PARAMETERS,	-),
 	FSINFO_STRUCT		(MOUNT_INFO,		mount_info),
 	FSINFO_STRING		(MOUNT_DEVNAME,		mount_devname),
 	FSINFO_STRUCT_N		(MOUNT_CHILD,		mount_child),
@@ -90,7 +89,6 @@ static const char *fsinfo_attr_names[FSINFO_ATTR__NR] = {
 	FSINFO_NAME		(PARAM_SPECIFICATION,	param_specification),
 	FSINFO_NAME		(PARAM_ENUM,		param_enum),
 	FSINFO_NAME		(PARAMETERS,		parameters),
-	FSINFO_NAME		(LSM_PARAMETERS,	lsm_parameters),
 	FSINFO_NAME		(MOUNT_INFO,		mount_info),
 	FSINFO_NAME		(MOUNT_DEVNAME,		mount_devname),
 	FSINFO_NAME		(MOUNT_CHILD,		mount_child),
@@ -365,34 +363,6 @@ static void dump_fsinfo(enum fsinfo_attribute attr, __u8 about,
 	dumper(r, size);
 }
 
-static void dump_params(__u8 about, union reply *r, int size)
-{
-	int len;
-	char *p = r->buffer, *e = p + size;
-	bool is_key = true;
-
-	while (p < e) {
-		len = 0;
-		while (p[0] & 0x80) {
-			len <<= 7;
-			len |= *p++ & 0x7f;
-		}
-
-		len <<= 7;
-		len |= *p++;
-		if (len > e - p)
-			break;
-		if (is_key || len)
-			printf("%s%*.*s", is_key ? "[PARM] " : "= ", len, len, p);
-		if (is_key)
-			putchar(' ');
-		else
-			putchar('\n');
-		p += len;
-		is_key = !is_key;
-	}
-}
-
 /*
  * Try one subinstance of an attribute.
  */
@@ -467,7 +437,6 @@ static int try_one(const char *file, struct fsinfo_params *params, bool raw)
 
 	switch (params->request) {
 	case FSINFO_ATTR_PARAMETERS:
-	case FSINFO_ATTR_LSM_PARAMETERS:
 		if (ret == 0)
 			return 0;
 	}
@@ -519,13 +488,6 @@ static int try_one(const char *file, struct fsinfo_params *params, bool raw)
 		printf("%s\n", r.buffer);
 		return 0;
 
-		/* Overlarge blob */
-	case 0xc000:
-		if (params->request == FSINFO_ATTR_PARAMETERS ||
-		    params->request == FSINFO_ATTR_LSM_PARAMETERS)
-			dump_params(about, &r, ret);
-		return 0;
-
 	default:
 		fprintf(stderr, "Fishy about %u %02x\n", params->request, about);
 		exit(1);
@@ -538,21 +500,15 @@ static int try_one(const char *file, struct fsinfo_params *params, bool raw)
 int main(int argc, char **argv)
 {
 	struct fsinfo_params params = {
-		.at_flags = AT_SYMLINK_NOFOLLOW,
+		.at_flags = AT_FSINFO_MOUNTID_PATH,
 	};
 	unsigned int attr;
 	int raw = 0, opt, Nth, Mth;
 
-	while ((opt = getopt(argc, argv, "adlr"))) {
+	while ((opt = getopt(argc, argv, "dr"))) {
 		switch (opt) {
-		case 'a':
-			params.at_flags |= AT_NO_AUTOMOUNT;
-			continue;
 		case 'd':
 			debug = true;
-			continue;
-		case 'l':
-			params.at_flags &= ~AT_SYMLINK_NOFOLLOW;
 			continue;
 		case 'r':
 			raw = 1;
@@ -565,7 +521,7 @@ int main(int argc, char **argv)
 	argv += optind;
 
 	if (argc != 1) {
-		printf("Format: test-fsinfo [-alr] <file>\n");
+		printf("Format: test-mntinfo [-dr] <mnt_id>\n");
 		exit(2);
 	}
 

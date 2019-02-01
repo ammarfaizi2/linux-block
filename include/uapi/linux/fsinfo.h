@@ -32,6 +32,10 @@ enum fsinfo_attribute {
 	FSINFO_ATTR_PARAM_ENUM		= 14,	/* Nth enum-to-val */
 	FSINFO_ATTR_PARAMETERS		= 15,	/* Mount parameters (large string) */
 	FSINFO_ATTR_LSM_PARAMETERS	= 16,	/* LSM Mount parameters (large string) */
+	FSINFO_ATTR_MOUNT_INFO		= 17,	/* Mount object information */
+	FSINFO_ATTR_MOUNT_DEVNAME	= 18,	/* Mount object device name (string) */
+	FSINFO_ATTR_MOUNT_CHILD		= 19,	/* ID of Nth submount */
+	FSINFO_ATTR_MOUNT_SUBMOUNT	= 20,	/* Relative path of Nth submount (string) */
 	FSINFO_ATTR__NR
 };
 
@@ -267,6 +271,29 @@ enum fsinfo_param_specification_type {
 struct fsinfo_param_enum {
 	__u32		opt;		/* ->opt of the relevant parameter specification */
 	char		name[252];	/* Name of the enum value */
+};
+
+/*
+ * Information struct for fsinfo(FSINFO_ATTR_MOUNT_INFO).
+ */
+struct fsinfo_mount_info {
+	__u64		f_sb_id;	/* Superblock ID */
+	__u32		mnt_id;		/* Mount identifier (use with AT_FSINFO_MOUNTID_PATH) */
+	__u32		parent_id;	/* Parent mount identifier */
+	__u32		group_id;	/* Mount group ID */
+	__u32		attr;		/* MOUNT_ATTR_* flags */
+	__u32		notify_counter;	/* Number of notifications generated. */
+	__u32		__reserved[1];
+};
+
+/*
+ * Information struct for fsinfo(FSINFO_ATTR_MOUNT_CHILD).
+ */
+struct fsinfo_mount_child {
+	__u32		mnt_id;		/* Mount identifier (use with AT_FSINFO_MOUNTID_PATH) */
+	__u32		notify_counter;	/* Number of notifications generated on parent. */
+	__u32		child_counter;	/* Number of notifications generated on child. */
+	__u32		__reserved[1];
 };
 
 #endif /* _UAPI_LINUX_FSINFO_H */
