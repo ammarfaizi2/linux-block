@@ -244,6 +244,10 @@ extern const struct svc_version nfs4_callback_version4;
 
 /* fs_context.c */
 extern struct file_system_type nfs_fs_type;
+#ifdef CONFIG_FSINFO
+extern int nfs_fsinfo_parameters(struct fsinfo_kparams *params, struct path *path,
+				 const struct nfs_server *server);
+#endif
 
 /* pagelist.c */
 extern int __init nfs_init_nfspagecache(void);
@@ -408,6 +412,7 @@ bool nfs_auth_info_match(const struct nfs_auth_info *, rpc_authflavor_t);
 int nfs_try_get_tree(struct fs_context *);
 int nfs_get_tree_common(struct fs_context *);
 void nfs_kill_super(struct super_block *);
+const char *nfs_pseudoflavour_to_name(rpc_authflavor_t);
 
 extern struct rpc_stat nfs_rpcstat;
 
@@ -455,6 +460,7 @@ extern void nfs_pageio_reset_read_mds(struct nfs_pageio_descriptor *pgio);
 /* super.c */
 void nfs_umount_begin(struct super_block *);
 int  nfs_statfs(struct dentry *, struct kstatfs *);
+int  nfs_fsinfo(struct path *, struct fsinfo_kparams *);
 int  nfs_show_options(struct seq_file *, struct dentry *);
 int  nfs_show_devname(struct seq_file *, struct dentry *);
 int  nfs_show_path(struct seq_file *, struct dentry *);

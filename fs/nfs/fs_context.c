@@ -17,6 +17,8 @@
 #include <linux/fs.h>
 #include <linux/fs_context.h>
 #include <linux/fs_parser.h>
+#include <linux/fsinfo.h>
+#include <linux/mount.h>
 #include <linux/nfs_fs.h>
 #include <linux/nfs_mount.h>
 #include <linux/nfs4_mount.h>
@@ -1407,3 +1409,164 @@ MODULE_ALIAS_FS("nfs4");
 MODULE_ALIAS("nfs4");
 EXPORT_SYMBOL_GPL(nfs4_fs_type);
 #endif /* CONFIG_NFS_V4 */
+
+#ifdef CONFIG_FSINFO
+/*
+ * Allow the filesystem parameters to be queried.
+ */
+int nfs_fsinfo_parameters(struct fsinfo_kparams *params, struct path *path,
+			  const struct nfs_server *server)
+{
+	const struct nfs_client *client = server->nfs_client;
+	const struct sockaddr *sap = (const struct sockaddr *)&server->mountd_address;
+	unsigned int version = client->rpc_ops->version;
+	unsigned int sf = server->flags;
+	const char *b;
+	char *e;
+	int i;
+
+	static const struct proc_nfs_info {
+		int flag;
+		const char *str;
+		const char *nostr;
+	} nfs_info[] = {
+		{ NFS_MOUNT_SOFT, "soft", "hard" },
+		{ NFS_MOUNT_POSIX, "posix", "" },
+		{ NFS_MOUNT_NOCTO, "nocto", "" },
+		{ NFS_MOUNT_NOAC, "noac", "" },
+		{ NFS_MOUNT_NONLM, "nolock", "" },
+		{ NFS_MOUNT_NOACL, "noacl", "" },
+		{ NFS_MOUNT_NORDIRPLUS, "nordirplus", "" },
+		{ NFS_MOUNT_UNSHARED, "nosharecache", "" },
+		{ NFS_MOUNT_NORESVPORT, "noresvport", "" },
+	};
+
+	rcu_read_lock();
+
+	b = params->scratch_buffer;
+	b = nfs_path(&e, path->mnt->mnt_root, params->scratch_buffer, params->buf_size, 0);
+	if (b < e)
+		fsinfo_note_param(params, "source", b);
+
+	if (version == 4)
+		fsinfo_note_paramf(params, "vers", "4.%u", client->cl_minorversion);
+	else
+		fsinfo_note_paramf(params, "vers", "%u", version);
+
+	fsinfo_note_paramf(params, "rsize", "%u", server->rsize);
+	fsinfo_note_paramf(params, "wsize", "%u", server->wsize);
+	if (server->bsize)
+		fsinfo_note_paramf(params, "bsize", "%u", server->bsize);
+	fsinfo_note_paramf(params, "namlen", "%u", server->namelen);
+
+	if (server->acregmin != NFS_DEF_ACREGMIN*HZ)
+		fsinfo_note_paramf(params, "acregmin", "%u", server->acregmin/HZ);
+	if (server->acregmax != NFS_DEF_ACREGMAX*HZ)
+		fsinfo_note_paramf(params, "acregmin", "%u", server->acregmax/HZ);
+	if (server->acdirmin != NFS_DEF_ACDIRMIN*HZ)
+		fsinfo_note_paramf(params, "acdirmin", "%u", server->acdirmin/HZ);
+	if (server->acdirmax != NFS_DEF_ACDIRMAX*HZ)
+		fsinfo_note_paramf(params, "acdirmin", "%u", server->acdirmax/HZ);
+
+	for (i = 0; i < ARRAY_SIZE(nfs_info); i++) {
+		if (sf & nfs_info[i].flag)
+			b = nfs_info[i].str;
+		else
+			b = nfs_info[i].nostr;
+		if (b[0])
+			fsinfo_note_param(params, b, NULL);
+	}
+
+	fsinfo_note_param(params, "proto",
+			  rpc_peeraddr2str(server->client, RPC_DISPLAY_NETID));
+	if (version != 4 || server->port != NFS_PORT)
+		fsinfo_note_paramf(params, "port", "%u", server->port);
+
+	fsinfo_note_paramf(params, "timeo", "%lu",
+			   10U * server->client->cl_timeout->to_initval / HZ);
+	fsinfo_note_paramf(params, "retrans", "%u",
+			  server->client->cl_timeout->to_retries);
+	fsinfo_note_param(params, "sec",
+			  nfs_pseudoflavour_to_name(server->client->cl_auth->au_flavor));
+
+	if (server->options & NFS_OPTION_FSCACHE)
+		fsinfo_note_param(params, "fsc", NULL);
+	if (server->options & NFS_OPTION_MIGRATION)
+		fsinfo_note_param(params, "migration", NULL);
+
+	if (server->flags & NFS_MOUNT_LOOKUP_CACHE_NONEG) {
+		if (server->flags & NFS_MOUNT_LOOKUP_CACHE_NONE)
+			fsinfo_note_param(params, "lookupcache", "none");
+		else
+			fsinfo_note_param(params, "lookupcache", "pos");
+	}
+
+	switch (server->flags & (NFS_MOUNT_LOCAL_FLOCK | NFS_MOUNT_LOCAL_FCNTL)) {
+	case 0:				b = "none";	break;
+	case NFS_MOUNT_LOCAL_FLOCK:	b = "flock";	break;
+	case NFS_MOUNT_LOCAL_FCNTL:	b = "posix";	break;
+	default:			b = "all";	break;
+	}
+	fsinfo_note_param(params, "local_lock", b);
+
+	if (version == 4)
+		fsinfo_note_param(params, "clientaddr", client->cl_ipaddr);
+
+	if (version != 4 && !(server->flags & NFS_MOUNT_LEGACY_INTERFACE)) {
+		switch (sap->sa_family) {
+		case AF_INET: {
+			struct sockaddr_in *sin = (struct sockaddr_in *)sap;
+			fsinfo_note_paramf(params, "mountaddr", "%pI4",
+					   &sin->sin_addr.s_addr);
+			break;
+		}
+		case AF_INET6: {
+			struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)sap;
+			fsinfo_note_paramf(params, "mountaddr", "%pI6c",
+					   &sin6->sin6_addr);
+			break;
+		}
+		}
+
+		if (server->mountd_port &&
+		    server->mountd_port != (unsigned short)NFS_UNSPEC_PORT)
+			fsinfo_note_paramf(params, "mountport", "%u", server->mountd_port);
+
+		switch (sap->sa_family) {
+		case AF_INET:
+			switch (server->mountd_protocol) {
+			case IPPROTO_UDP:
+				b = RPCBIND_NETID_UDP;
+				break;
+			case IPPROTO_TCP:
+				b = RPCBIND_NETID_TCP;
+				break;
+			}
+			break;
+		case AF_INET6:
+			switch (server->mountd_protocol) {
+			case IPPROTO_UDP:
+				b = RPCBIND_NETID_UDP6;
+				break;
+			case IPPROTO_TCP:
+				b = RPCBIND_NETID_TCP6;
+				break;
+			}
+			break;
+		}
+
+		if (b)
+			fsinfo_note_param(params, "mountproto", b);
+
+		if (server->mountd_version)
+			fsinfo_note_paramf(params, "mountvers", "%u",
+					   server->mountd_version);
+	}
+
+	fsinfo_note_param(params, "addr",
+			  rpc_peeraddr2str(server->nfs_client->cl_rpcclient, RPC_DISPLAY_ADDR));
+
+	rcu_read_unlock();
+	return params->usage;
+}
+#endif /* CONFIG_FSINFO */

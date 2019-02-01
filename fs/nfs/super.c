@@ -54,6 +54,7 @@
 #include <linux/parser.h>
 #include <linux/nsproxy.h>
 #include <linux/rcupdate.h>
+#include <linux/fsinfo.h>
 
 #include <linux/uaccess.h>
 
@@ -81,6 +82,9 @@ const struct super_operations nfs_sops = {
 	.show_devname	= nfs_show_devname,
 	.show_path	= nfs_show_path,
 	.show_stats	= nfs_show_stats,
+#ifdef CONFIG_FSINFO
+	.fsinfo		= nfs_fsinfo,
+#endif
 };
 EXPORT_SYMBOL_GPL(nfs_sops);
 
@@ -241,10 +245,81 @@ int nfs_statfs(struct dentry *dentry, struct kstatfs *buf)
 }
 EXPORT_SYMBOL_GPL(nfs_statfs);
 
+#ifdef CONFIG_FSINFO
+/*
+ * Get filesystem information.
+ */
+int nfs_fsinfo(struct path *path, struct fsinfo_kparams *params)
+{
+	struct fsinfo_server_address *addr;
+	struct fsinfo_capabilities *caps;
+	struct nfs_server *server = NFS_SB(path->dentry->d_sb);
+	struct nfs_client *client = server->nfs_client;
+	struct rpc_clnt *clnt;
+	struct rpc_xprt *xprt;
+	const char *str;
+	unsigned int version = client->rpc_ops->version;
+
+	switch (params->request) {
+	case FSINFO_ATTR_CAPABILITIES:
+		caps = params->buffer;
+		fsinfo_set_cap(caps, FSINFO_CAP_IS_NETWORK_FS);
+		fsinfo_set_cap(caps, FSINFO_CAP_AUTOMOUNTS);
+		fsinfo_set_cap(caps, FSINFO_CAP_ADV_LOCKS);
+		fsinfo_set_cap(caps, FSINFO_CAP_UIDS);
+		fsinfo_set_cap(caps, FSINFO_CAP_GIDS);
+		fsinfo_set_cap(caps, FSINFO_CAP_O_SYNC);
+		fsinfo_set_cap(caps, FSINFO_CAP_O_DIRECT);
+		fsinfo_set_cap(caps, FSINFO_CAP_SYMLINKS);
+		fsinfo_set_cap(caps, FSINFO_CAP_HARD_LINKS);
+		fsinfo_set_cap(caps, FSINFO_CAP_DEVICE_FILES);
+		fsinfo_set_cap(caps, FSINFO_CAP_UNIX_SPECIALS);
+		fsinfo_set_cap(caps, FSINFO_CAP_HAS_ATIME);
+		fsinfo_set_cap(caps, FSINFO_CAP_HAS_CTIME);
+		fsinfo_set_cap(caps, FSINFO_CAP_HAS_MTIME);
+		if (version == 4) {
+			fsinfo_set_cap(caps, FSINFO_CAP_LEASES);
+			fsinfo_set_cap(caps, FSINFO_CAP_IVER_ALL_CHANGE);
+		}
+		return sizeof(*caps);
+
+	case FSINFO_ATTR_SERVER_NAME:
+		if (params->Nth || params->Mth)
+			return -ENODATA;
+		str = client->cl_hostname;
+		goto string;
+
+	case FSINFO_ATTR_SERVER_ADDRESS:
+		if (params->Nth || params->Mth)
+			return -ENODATA;
+		addr = params->buffer;
+		clnt = client->cl_rpcclient;
+		rcu_read_lock();
+		xprt = rcu_dereference(clnt->cl_xprt);
+		memcpy(&addr->address, &xprt->addr, xprt->addrlen);
+		rcu_read_unlock();
+		return sizeof(*addr);
+
+	case FSINFO_ATTR_PARAMETERS:
+		return nfs_fsinfo_parameters(params, path, server);
+
+	default:
+		return generic_fsinfo(path, params);
+	}
+
+string:
+	if (!str)
+		return 0;
+	strcpy(params->buffer, str);
+	return strlen(params->buffer);
+}
+EXPORT_SYMBOL_GPL(nfs_fsinfo);
+#endif /* CONFIG_FSINFO */
+
 /*
  * Map the security flavour number to a name
  */
-static const char *nfs_pseudoflavour_to_name(rpc_authflavor_t flavour)
+const char *nfs_pseudoflavour_to_name(rpc_authflavor_t flavour)
 {
 	static const struct {
 		rpc_authflavor_t flavour;
