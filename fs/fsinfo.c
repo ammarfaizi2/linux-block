@@ -595,6 +595,9 @@ static const struct fsinfo_attr_info fsinfo_buffer_info[FSINFO_ATTR__NR] = {
 	FSINFO_STRING		(MOUNT_DEVNAME,		mount_devname),
 	FSINFO_STRUCT_N		(MOUNT_CHILD,		mount_child),
 	FSINFO_STRING_N		(MOUNT_SUBMOUNT,	mount_submount),
+	FSINFO_STRING_N		(SERVER_NAME,		server_name),
+	FSINFO_STRUCT_NM	(SERVER_ADDRESS,	server_address),
+	FSINFO_STRING		(CELL_NAME,		cell_name),
 };
 
 /**

@@ -36,6 +36,9 @@ enum fsinfo_attribute {
 	FSINFO_ATTR_MOUNT_DEVNAME	= 18,	/* Mount object device name (string) */
 	FSINFO_ATTR_MOUNT_CHILD		= 19,	/* ID of Nth submount */
 	FSINFO_ATTR_MOUNT_SUBMOUNT	= 20,	/* Relative path of Nth submount (string) */
+	FSINFO_ATTR_SERVER_NAME		= 21,	/* Name of the Nth server (string) */
+	FSINFO_ATTR_SERVER_ADDRESS	= 22,	/* Mth address of the Nth server */
+	FSINFO_ATTR_CELL_NAME		= 23,	/* Cell name (string) */
 	FSINFO_ATTR__NR
 };
 
@@ -294,6 +297,15 @@ struct fsinfo_mount_child {
 	__u32		notify_counter;	/* Number of notifications generated on parent. */
 	__u32		child_counter;	/* Number of notifications generated on child. */
 	__u32		__reserved[1];
+};
+
+/*
+ * Information struct for fsinfo(fsinfo_attr_server_addresses).
+ *
+ * Find the Mth address of the Nth server for a network mount.
+ */
+struct fsinfo_server_address {
+	struct __kernel_sockaddr_storage address;
 };
 
 #endif /* _UAPI_LINUX_FSINFO_H */
