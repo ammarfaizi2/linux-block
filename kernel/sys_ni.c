@@ -66,6 +66,9 @@ COND_SYSCALL_COMPAT(epoll_pwait);
 
 /* fs/fcntl.c */
 
+/* fs/fsinfo.c */
+COND_SYSCALL(fsinfo);
+
 /* fs/inotify_user.c */
 COND_SYSCALL(inotify_init1);
 COND_SYSCALL(inotify_add_watch);
