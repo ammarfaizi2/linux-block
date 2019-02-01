@@ -856,7 +856,7 @@ COMPAT_SYSCALL_DEFINE2(socketcall, int, call, u32 __user *, args)
 
 	switch (call) {
 	case SYS_SOCKET:
-		ret = __sys_socket(a0, a1, a[2]);
+		ret = __sys_socket(current->nsproxy->net_ns, a0, a1, a[2]);
 		break;
 	case SYS_BIND:
 		ret = __sys_bind(a0, compat_ptr(a1), a[2]);

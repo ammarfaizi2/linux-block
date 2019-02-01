@@ -409,3 +409,4 @@
 395	i386	sb_notify		sys_sb_notify			__ia32_sys_sb_notify
 396	i386	container_create	sys_container_create		__ia32_sys_container_create
 397	i386	fork_into_container	sys_fork_into_container		__ia32_sys_fork_into_container
+398	i386	container_socket	sys_container_socket		__ia32_sys_container_socket

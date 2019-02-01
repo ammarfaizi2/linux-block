@@ -10,6 +10,7 @@
 #include <linux/compiler.h>		/* __user			*/
 #include <uapi/linux/socket.h>
 
+struct net;
 struct pid;
 struct cred;
 
@@ -376,7 +377,7 @@ extern int __sys_sendto(int fd, void __user *buff, size_t len,
 			int addr_len);
 extern int __sys_accept4(int fd, struct sockaddr __user *upeer_sockaddr,
 			 int __user *upeer_addrlen, int flags);
-extern int __sys_socket(int family, int type, int protocol);
+extern int __sys_socket(struct net *net, int family, int type, int protocol);
 extern int __sys_bind(int fd, struct sockaddr __user *umyaddr, int addrlen);
 extern int __sys_connect(int fd, struct sockaddr __user *uservaddr,
 			 int addrlen);

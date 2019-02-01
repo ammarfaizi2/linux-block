@@ -80,6 +80,7 @@
 #include <linux/highmem.h>
 #include <linux/mount.h>
 #include <linux/fs_context.h>
+#include <linux/container.h>
 #include <linux/security.h>
 #include <linux/syscalls.h>
 #include <linux/compat.h>
@@ -1326,9 +1327,9 @@ int sock_create_kern(struct net *net, int family, int type, int protocol, struct
 }
 EXPORT_SYMBOL(sock_create_kern);
 
-int __sys_socket(int family, int type, int protocol)
+int __sys_socket(struct net *net, int family, int type, int protocol)
 {
-	int retval;
+	long retval;
 	struct socket *sock;
 	int flags;
 
@@ -1346,7 +1347,7 @@ int __sys_socket(int family, int type, int protocol)
 	if (SOCK_NONBLOCK != O_NONBLOCK && (flags & SOCK_NONBLOCK))
 		flags = (flags & ~SOCK_NONBLOCK) | O_NONBLOCK;
 
-	retval = sock_create(family, type, protocol, &sock);
+	retval = __sock_create(net, family, type, protocol, &sock, 0);
 	if (retval < 0)
 		return retval;
 
@@ -1355,8 +1356,31 @@ int __sys_socket(int family, int type, int protocol)
 
 SYSCALL_DEFINE3(socket, int, family, int, type, int, protocol)
 {
-	return __sys_socket(family, type, protocol);
+	return __sys_socket(current->nsproxy->net_ns, family, type, protocol);
 }
+
+/*
+ * Create a socket inside a container.
+ */
+#ifdef CONFIG_CONTAINERS
+SYSCALL_DEFINE4(container_socket,
+		int, containerfd, int, family, int, type, int, protocol)
+{
+	struct fd f = fdget(containerfd);
+	long ret;
+
+	if (!f.file)
+		return -EBADF;
+	ret = -EINVAL;
+	if (is_container_file(f.file)) {
+		struct container *c = f.file->private_data;
+
+		ret = __sys_socket(c->ns->net_ns, family, type, protocol);
+	}
+	fdput(f);
+	return ret;
+}
+#endif
 
 /*
  *	Create a pair of connected sockets.
@@ -2555,7 +2579,7 @@ SYSCALL_DEFINE2(socketcall, int, call, unsigned long __user *, args)
 
 	switch (call) {
 	case SYS_SOCKET:
-		err = __sys_socket(a0, a1, a[2]);
+		err = __sys_socket(current->nsproxy->net_ns, a0, a1, a[2]);
 		break;
 	case SYS_BIND:
 		err = __sys_bind(a0, (struct sockaddr __user *)a1, a[2]);

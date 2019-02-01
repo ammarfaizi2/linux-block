@@ -354,6 +354,7 @@
 343	common	sb_notify		__x64_sys_sb_notify
 344	common	container_create	__x64_sys_container_create
 345	common	fork_into_container	__x64_sys_fork_into_container
+346	common	container_socket	__x64_sys_container_socket
 
 #
 # x32-specific system call numbers start at 512 to avoid cache impact

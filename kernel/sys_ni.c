@@ -236,6 +236,7 @@ COND_SYSCALL(shmdt);
 /* net/socket.c */
 COND_SYSCALL(socket);
 COND_SYSCALL(socketpair);
+COND_SYSCALL(container_socket);
 COND_SYSCALL(bind);
 COND_SYSCALL(listen);
 COND_SYSCALL(accept);

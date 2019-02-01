@@ -947,6 +947,8 @@ asmlinkage long sys_container_create(const char __user *name, unsigned int flags
 				     unsigned long spare3, unsigned long spare4,
 				     unsigned long spare5);
 asmlinkage long sys_fork_into_container(int containerfd);
+asmlinkage long sys_container_socket(int containerfd,
+				     int domain, int type, int protocol);
 
 /*
  * Architecture-specific system calls
