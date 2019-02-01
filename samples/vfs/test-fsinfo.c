@@ -73,6 +73,7 @@ static const __u16 fsinfo_buffer_sizes[FSINFO_ATTR__NR] = {
 	FSINFO_STRING_N		(SERVER_NAME,		server_name),
 	FSINFO_STRUCT_NM	(SERVER_ADDRESS,	server_address),
 	FSINFO_STRING		(CELL_NAME,		cell_name),
+	FSINFO_STRUCT		(SB_NOTIFICATIONS,	sb_notifications),
 };
 
 #define FSINFO_NAME(X,Y) [FSINFO_ATTR_##X] = #Y
@@ -101,6 +102,7 @@ static const char *fsinfo_attr_names[FSINFO_ATTR__NR] = {
 	FSINFO_NAME		(SERVER_NAME,		server_name),
 	FSINFO_NAME		(SERVER_ADDRESS,	server_address),
 	FSINFO_NAME		(CELL_NAME,		cell_name),
+	FSINFO_NAME		(SB_NOTIFICATIONS,	sb_notifications),
 };
 
 union reply {
@@ -116,6 +118,7 @@ union reply {
 	struct fsinfo_mount_info mount_info;
 	struct fsinfo_mount_child mount_child;
 	struct fsinfo_server_address srv_addr;
+	struct fsinfo_sb_notifications sb_notifications;
 };
 
 static void dump_hex(unsigned int *data, int from, int to)
@@ -358,6 +361,15 @@ static void dump_attr_MOUNT_CHILD(union reply *r, int size)
 	printf("\t%8x %8x %8x\n", f->mnt_id, f->notify_counter, f->child_counter);
 }
 
+static void dump_attr_SB_NOTIFICATIONS(union reply *r, int size)
+{
+	struct fsinfo_sb_notifications *f = &r->sb_notifications;
+
+	printf("\n");
+	printf("\twatch_id: %llx\n", (unsigned long long)f->watch_id);
+	printf("\tnotifs  : %llx\n", (unsigned long long)f->notify_counter);
+}
+
 /*
  *
  */
@@ -376,6 +388,7 @@ static const dumper_t fsinfo_attr_dumper[FSINFO_ATTR__NR] = {
 	FSINFO_DUMPER(MOUNT_INFO),
 	FSINFO_DUMPER(MOUNT_CHILD),
 	FSINFO_DUMPER(SERVER_ADDRESS),
+	FSINFO_DUMPER(SB_NOTIFICATIONS),
 };
 
 static void dump_fsinfo(enum fsinfo_attribute attr, __u8 about,
