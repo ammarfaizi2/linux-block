@@ -6,7 +6,7 @@
  * Author: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
  */
 
-#include <linux/container.h>
+#include <linux/container_dev.h>
 
 #include "base.h"
 

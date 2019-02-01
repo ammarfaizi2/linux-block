@@ -23,7 +23,7 @@
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 #include <linux/acpi.h>
-#include <linux/container.h>
+#include <linux/container_dev.h>
 
 #include "internal.h"
 
