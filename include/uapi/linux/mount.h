@@ -97,6 +97,7 @@ enum fsconfig_command {
 	FSCONFIG_SET_FD		= 5,	/* Set parameter, supplying an object by fd */
 	FSCONFIG_CMD_CREATE	= 6,	/* Invoke superblock creation */
 	FSCONFIG_CMD_RECONFIGURE = 7,	/* Invoke superblock reconfiguration */
+	FSCONFIG_SET_CONTAINER	= 8,	/* Set a container, supplied by fd */
 };
 
 /*

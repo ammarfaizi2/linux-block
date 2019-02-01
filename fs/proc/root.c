@@ -18,6 +18,7 @@
 #include <linux/sched/stat.h>
 #include <linux/module.h>
 #include <linux/bitops.h>
+#include <linux/container.h>
 #include <linux/user_namespace.h>
 #include <linux/fs_context.h>
 #include <linux/mount.h>
@@ -186,8 +187,12 @@ static int proc_init_fs_context(struct fs_context *fc)
 	ctx = kzalloc(sizeof(struct proc_fs_context), GFP_KERNEL);
 	if (!ctx)
 		return -ENOMEM;
+	
+	if (fc->container)
+		ctx->pid_ns = get_pid_ns(fc->container->pid_ns);
+	else
+		ctx->pid_ns = get_pid_ns(task_active_pid_ns(current));
 
-	ctx->pid_ns = get_pid_ns(task_active_pid_ns(current));
 	fc->fs_private = ctx;
 	fc->ops = &proc_fs_context_ops;
 	return 0;
@@ -300,7 +305,7 @@ struct proc_dir_entry proc_root = {
 	.name		= "/proc",
 };
 
-int pid_ns_prepare_proc(struct pid_namespace *ns)
+int pid_ns_prepare_proc(struct pid_namespace *ns, struct container *container)
 {
 	struct proc_fs_context *ctx;
 	struct fs_context *fc;
@@ -315,6 +320,8 @@ int pid_ns_prepare_proc(struct pid_namespace *ns)
 		fc->user_ns = get_user_ns(ns->user_ns);
 	}
 
+	vfs_set_container(fc, container);
+	
 	ctx = fc->fs_private;
 	if (ctx->pid_ns != ns) {
 		put_pid_ns(ctx->pid_ns);

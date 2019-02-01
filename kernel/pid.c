@@ -156,7 +156,7 @@ void free_pid(struct pid *pid)
 	call_rcu(&pid->rcu, delayed_put_pid);
 }
 
-struct pid *alloc_pid(struct pid_namespace *ns)
+struct pid *alloc_pid(struct pid_namespace *ns, struct container *container)
 {
 	struct pid *pid;
 	enum pid_type type;
@@ -205,7 +205,7 @@ struct pid *alloc_pid(struct pid_namespace *ns)
 	}
 
 	if (unlikely(is_child_reaper(pid))) {
-		if (pid_ns_prepare_proc(ns))
+		if (pid_ns_prepare_proc(ns, container))
 			goto out_free;
 	}
 

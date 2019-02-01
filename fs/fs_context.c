@@ -20,6 +20,7 @@
 #include <linux/slab.h>
 #include <linux/magic.h>
 #include <linux/security.h>
+#include <linux/container.h>
 #include <linux/mnt_namespace.h>
 #include <linux/pid_namespace.h>
 #include <linux/user_namespace.h>
@@ -168,6 +169,21 @@ int vfs_parse_fs_param(struct fs_context *fc, struct fs_parameter *param)
 		      fc->fs_type->name, param->key);
 }
 EXPORT_SYMBOL(vfs_parse_fs_param);
+
+/*
+ * Specify a container in which a superblock will exist.
+ */
+void vfs_set_container(struct fs_context *fc, struct container *container)
+{
+	if (container) {
+		put_user_ns(fc->user_ns);
+		put_net(fc->net_ns);
+
+		fc->container = get_container(container);
+		fc->user_ns = get_user_ns(container->cred->user_ns);
+		fc->net_ns = get_net(container->ns->net_ns);
+	}
+}
 
 /**
  * vfs_parse_fs_string - Convenience function to just parse a string.
@@ -364,6 +380,8 @@ struct fs_context *vfs_dup_fs_context(struct fs_context *src_fc)
 	fc->source	= NULL;
 	fc->security	= NULL;
 	get_filesystem(fc->fs_type);
+	if (fc->container)
+		get_container(fc->container);
 	get_net(fc->net_ns);
 	get_user_ns(fc->user_ns);
 	get_cred(fc->cred);
@@ -510,6 +528,7 @@ void put_fs_context(struct fs_context *fc)
 	put_net(fc->net_ns);
 	put_user_ns(fc->user_ns);
 	put_cred(fc->cred);
+	put_container(fc->container);
 	kfree(fc->subtype);
 	put_fc_log(fc);
 	put_filesystem(fc->fs_type);

@@ -37,6 +37,7 @@ struct container {
 	struct path		root;		/* The root of the container's fs namespace */
 	struct task_struct	*init;		/* The 'init' task for this container */
 	struct container	*parent;	/* Parent of this container. */
+	struct pid_namespace	*pid_ns;	/* The process ID namespace for this container */
 	void			*security;	/* LSM data */
 	struct list_head	members;	/* Member processes, guarded with ->lock */
 	struct list_head	child_link;	/* Link in parent->children */

@@ -73,6 +73,8 @@ static inline struct pid *get_pid(struct pid *pid)
 	return pid;
 }
 
+struct container;
+
 extern void put_pid(struct pid *pid);
 extern struct task_struct *pid_task(struct pid *pid, enum pid_type);
 extern struct task_struct *get_pid_task(struct pid *pid, enum pid_type);
@@ -111,7 +113,8 @@ extern struct pid *find_get_pid(int nr);
 extern struct pid *find_ge_pid(int nr, struct pid_namespace *);
 int next_pidmap(struct pid_namespace *pid_ns, unsigned int last);
 
-extern struct pid *alloc_pid(struct pid_namespace *ns);
+extern struct pid *alloc_pid(struct pid_namespace *ns,
+			     struct container *container);
 extern void free_pid(struct pid *pid);
 extern void disable_pid_allocation(struct pid_namespace *ns);
 

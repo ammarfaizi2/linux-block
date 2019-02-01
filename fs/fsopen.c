@@ -17,10 +17,32 @@
 #include <linux/security.h>
 #include <linux/anon_inodes.h>
 #include <linux/namei.h>
+#include <linux/container.h>
 #include <linux/file.h>
 #include <uapi/linux/mount.h>
 #include "internal.h"
 #include "mount.h"
+
+/*
+ * Configure the destination container on a filesystem context.  This must be
+ * done before any other parameters are offered.  Containers are presented as
+ * fds attached to such objects given by the auxiliary parameter.
+ *
+ * For example:
+ *
+ *	fsconfig(fsfd, FSCONFIG_SET_CONTAINER, NULL, NULL, container_fd);
+ */
+static int fsconfig_set_container(struct fs_context *fc, struct fs_parameter *param)
+{
+	struct container *c;
+
+	if (!is_container_file(param->file))
+		return -EINVAL;
+
+	c = param->file->private_data;
+	vfs_set_container(fc, c);
+	return 0;
+}
 
 /*
  * Allow the user to read back any error, warning or informational messages.
@@ -111,10 +133,6 @@ static int fscontext_alloc_log(struct fs_context *fc)
 
 /*
  * Open a filesystem by name so that it can be configured for mounting.
- *
- * We are allowed to specify a container in which the filesystem will be
- * opened, thereby indicating which namespaces will be used (notably, which
- * network namespace will be used for network filesystems).
  */
 SYSCALL_DEFINE2(fsopen, const char __user *, _fs_name, unsigned int, flags)
 {
@@ -143,7 +161,7 @@ SYSCALL_DEFINE2(fsopen, const char __user *, _fs_name, unsigned int, flags)
 	if (IS_ERR(fc))
 		return PTR_ERR(fc);
 
-	fc->phase = FS_CONTEXT_CREATE_PARAMS;
+	fc->phase = FS_CONTEXT_CREATE_NS;
 
 	ret = fscontext_alloc_log(fc);
 	if (ret < 0)
@@ -228,7 +246,8 @@ static int vfs_fsconfig_locked(struct fs_context *fc, int cmd,
 		return ret;
 	switch (cmd) {
 	case FSCONFIG_CMD_CREATE:
-		if (fc->phase != FS_CONTEXT_CREATE_PARAMS)
+		if (fc->phase != FS_CONTEXT_CREATE_NS &&
+		    fc->phase != FS_CONTEXT_CREATE_PARAMS)
 			return -EBUSY;
 		fc->phase = FS_CONTEXT_CREATING;
 		ret = vfs_get_tree(fc);
@@ -259,9 +278,17 @@ static int vfs_fsconfig_locked(struct fs_context *fc, int cmd,
 			break;
 		vfs_clean_context(fc);
 		return 0;
+
+	case FSCONFIG_SET_CONTAINER:
+		if (fc->phase != FS_CONTEXT_CREATE_NS)
+			return -EBUSY;
+		return fsconfig_set_container(fc, param);
+
 	default:
-		if (fc->phase != FS_CONTEXT_CREATE_PARAMS &&
-		    fc->phase != FS_CONTEXT_RECONF_PARAMS)
+		if (fc->phase == FS_CONTEXT_CREATE_NS)
+			fc->phase = FS_CONTEXT_CREATE_PARAMS;
+		else if (fc->phase != FS_CONTEXT_CREATE_PARAMS &&
+			 fc->phase != FS_CONTEXT_RECONF_PARAMS)
 			return -EBUSY;
 
 		return vfs_parse_fs_param(fc, param);
@@ -353,6 +380,10 @@ SYSCALL_DEFINE5(fsconfig,
 		if (!_key || _value || aux < 0)
 			return -EINVAL;
 		break;
+	case FSCONFIG_SET_CONTAINER:
+		if (_key || _value || aux < 0)
+			return -EINVAL;
+		break;
 	case FSCONFIG_CMD_CREATE:
 	case FSCONFIG_CMD_RECONFIGURE:
 		if (_key || _value || aux)
@@ -438,6 +469,12 @@ SYSCALL_DEFINE5(fsconfig,
 		if (!param.file)
 			goto out_key;
 		break;
+	case FSCONFIG_SET_CONTAINER:
+		ret = -EBADF;
+		param.file = fget(aux);
+		if (!param.file)
+			goto out_key;
+		break;
 	default:
 		break;
 	}
@@ -463,6 +500,7 @@ SYSCALL_DEFINE5(fsconfig,
 			putname(param.name);
 		break;
 	case FSCONFIG_SET_FD:
+	case FSCONFIG_SET_CONTAINER:
 		if (param.file)
 			fput(param.file);
 		break;

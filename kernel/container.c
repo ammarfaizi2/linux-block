@@ -30,6 +30,7 @@ struct container init_container = {
 	.cred		= &init_cred,
 	.ns		= &init_nsproxy,
 	.init		= &init_task,
+	.pid_ns		= &init_pid_ns,
 	.members.next	= &init_task.container_link,
 	.members.prev	= &init_task.container_link,
 	.children	= LIST_HEAD_INIT(init_container.children),
@@ -51,6 +52,8 @@ void put_container(struct container *c)
 
 	while (c && refcount_dec_and_test(&c->usage)) {
 		BUG_ON(!list_empty(&c->members));
+		if (c->pid_ns)
+			put_pid_ns(c->pid_ns);
 		if (c->ns)
 			put_nsproxy(c->ns);
 		path_put(&c->root);
@@ -391,6 +394,7 @@ static struct container *create_container(const char __user *name, unsigned int 
 	}
 
 	c->ns = ns;
+	c->pid_ns = get_pid_ns(c->ns->pid_ns_for_children);
 	c->root = fs->root;
 	c->seq = fs->seq;
 	fs->root.mnt = NULL;
