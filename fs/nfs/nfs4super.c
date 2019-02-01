@@ -31,6 +31,9 @@ static const struct super_operations nfs4_sops = {
 	.show_devname	= nfs_show_devname,
 	.show_path	= nfs_show_path,
 	.show_stats	= nfs_show_stats,
+#ifdef CONFIG_FSINFO
+	.fsinfo		= nfs_fsinfo,
+#endif
 };
 
 struct nfs_subversion nfs_v4 = {
