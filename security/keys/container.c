@@ -225,3 +225,45 @@ found_match:
 	kleave(" = %d", ret);
 	return ret;
 }
+
+/*
+ * Query information about a request_key_auth key.
+ */
+long keyctl_query_request_key_auth(key_serial_t auth_id,
+				   struct keyctl_query_request_key_auth __user *_data)
+{
+	struct keyctl_query_request_key_auth data;
+	struct request_key_auth *rka;
+	struct key *session;
+	key_ref_t authkey_ref;
+
+	if (auth_id <= 0 || !_data)
+		return -EINVAL;
+
+	authkey_ref = lookup_user_key(auth_id, 0, KEY_NEED_SEARCH);
+	if (IS_ERR(authkey_ref))
+		return PTR_ERR(authkey_ref);
+	rka = get_request_key_auth(key_ref_to_ptr(authkey_ref));
+
+	memset(&data, 0, sizeof(data));
+	strlcpy(data.operation, rka->op, sizeof(data.operation));
+	data.fsuid = from_kuid(current_user_ns(), rka->cred->fsuid);
+	data.fsgid = from_kgid(current_user_ns(), rka->cred->fsgid);
+	data.target_key = rka->target_key->serial;
+	data.thread_keyring = key_serial(rka->cred->thread_keyring);
+	data.process_keyring = key_serial(rka->cred->thread_keyring);
+
+	rcu_read_lock();
+	session = rcu_dereference(rka->cred->session_keyring);
+	if (!session)
+		session = rka->cred->user->session_keyring;
+	data.session_keyring = key_serial(session);
+	rcu_read_unlock();
+
+	key_ref_put(authkey_ref);
+
+	if (copy_to_user(_data, &data, sizeof(data)))
+		return -EFAULT;
+
+	return 0;
+}

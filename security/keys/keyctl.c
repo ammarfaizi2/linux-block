@@ -1863,6 +1863,10 @@ SYSCALL_DEFINE5(keyctl, int, option, unsigned long, arg2, unsigned long, arg3,
 						  (const char __user *)arg3,
 						  (unsigned int)arg4,
 						  (key_serial_t)arg5);
+	case KEYCTL_QUERY_REQUEST_KEY_AUTH:
+		return keyctl_query_request_key_auth(
+			(key_serial_t)arg2,
+			(struct keyctl_query_request_key_auth __user *)arg3);
 #endif
 
 	default:

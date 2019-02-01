@@ -69,6 +69,7 @@
 #define KEYCTL_RESTRICT_KEYRING		29	/* Restrict keys allowed to link to a keyring */
 #define KEYCTL_WATCH_KEY		30	/* Watch a key or ring of keys for changes */
 #define KEYCTL_CONTAINER_INTERCEPT	31	/* Intercept upcalls inside a container */
+#define KEYCTL_QUERY_REQUEST_KEY_AUTH	32	/* Query a request_key_auth key */
 
 /* keyctl structures */
 struct keyctl_dh_params {
@@ -112,6 +113,17 @@ struct keyctl_pkey_params {
 		__u32		in2_len;	/* 2nd input data size (verify) */
 	};
 	__u32		__spare[7];
+};
+
+struct keyctl_query_request_key_auth {
+	char		operation[32];	/* Operation name, typically "create" */
+	uid_t		fsuid;		/* UID of requester */
+	gid_t		fsgid;		/* GID of requester */
+	__u32		target_key;	/* The key being instantiated */
+	__u32		thread_keyring;	/* The requester's thread keyring */
+	__u32		process_keyring; /* The requester's process keyring */
+	__u32		session_keyring; /* The requester's session keyring */
+	__u64		spare[1];
 };
 
 #endif /*  _LINUX_KEYCTL_H */

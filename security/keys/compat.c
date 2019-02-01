@@ -164,6 +164,8 @@ COMPAT_SYSCALL_DEFINE5(keyctl, u32, option,
 #ifdef CONFIG_CONTAINERS
 	case KEYCTL_CONTAINER_INTERCEPT:
 		return keyctl_container_intercept(arg2, compat_ptr(arg3), arg4, arg5);
+	case KEYCTL_QUERY_REQUEST_KEY_AUTH:
+		return keyctl_query_request_key_auth(arg2, compat_ptr(arg3));
 #endif
 
 	default:
