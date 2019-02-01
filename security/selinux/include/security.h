@@ -66,6 +66,7 @@
 #define SECLABEL_STR "seclabel"
 
 struct netlbl_lsm_secattr;
+struct fsinfo_kparams;
 
 extern int selinux_enabled;
 
@@ -254,6 +255,8 @@ int security_sid_to_context(struct selinux_state *state, u32 sid,
 
 int security_sid_to_context_force(struct selinux_state *state,
 				  u32 sid, char **scontext, u32 *scontext_len);
+
+void fsinfo_note_sid(struct fsinfo_kparams *params, const char *key, u32 sid);
 
 int security_context_to_sid(struct selinux_state *state,
 			    const char *scontext, u32 scontext_len,
