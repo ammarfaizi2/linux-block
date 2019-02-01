@@ -65,6 +65,7 @@ static const __u16 fsinfo_buffer_sizes[FSINFO_ATTR__NR] = {
 	FSINFO_STRUCT_N		(PARAM_SPECIFICATION,	param_specification),
 	FSINFO_STRUCT_N		(PARAM_ENUM,		param_enum),
 	FSINFO_OVERLARGE	(PARAMETERS,		-),
+	FSINFO_OVERLARGE	(LSM_PARAMETERS,	-),
 };
 
 #define FSINFO_NAME(X,Y) [FSINFO_ATTR_##X] = #Y
@@ -85,6 +86,7 @@ static const char *fsinfo_attr_names[FSINFO_ATTR__NR] = {
 	FSINFO_NAME		(PARAM_SPECIFICATION,	param_specification),
 	FSINFO_NAME		(PARAM_ENUM,		param_enum),
 	FSINFO_NAME		(PARAMETERS,		parameters),
+	FSINFO_NAME		(LSM_PARAMETERS,	lsm_parameters),
 };
 
 union reply {
@@ -432,6 +434,7 @@ static int try_one(const char *file, struct fsinfo_params *params, bool raw)
 
 	switch (params->request) {
 	case FSINFO_ATTR_PARAMETERS:
+	case FSINFO_ATTR_LSM_PARAMETERS:
 		if (ret == 0)
 			return 0;
 	}
@@ -485,7 +488,8 @@ static int try_one(const char *file, struct fsinfo_params *params, bool raw)
 
 		/* Overlarge blob */
 	case 0xc000:
-		if (params->request == FSINFO_ATTR_PARAMETERS)
+		if (params->request == FSINFO_ATTR_PARAMETERS ||
+		    params->request == FSINFO_ATTR_LSM_PARAMETERS)
 			dump_params(about, &r, ret);
 		return 0;
 
