@@ -161,6 +161,11 @@ COMPAT_SYSCALL_DEFINE5(keyctl, u32, option,
 	case KEYCTL_WATCH_KEY:
 		return keyctl_watch_key(arg2, arg3, arg4);
 
+#ifdef CONFIG_CONTAINERS
+	case KEYCTL_CONTAINER_INTERCEPT:
+		return keyctl_container_intercept(arg2, compat_ptr(arg3), arg4, arg5);
+#endif
+
 	default:
 		return -EOPNOTSUPP;
 	}

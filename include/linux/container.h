@@ -42,6 +42,7 @@ struct container {
 	struct list_head	members;	/* Member processes, guarded with ->lock */
 	struct list_head	child_link;	/* Link in parent->children */
 	struct list_head	children;	/* Child containers */
+	struct list_head	req_key_traps;	/* Traps for request-key upcalls */
 	wait_queue_head_t	waitq;		/* Someone waiting for init to exit waits here */
 	unsigned long		flags;
 #define CONTAINER_FLAG_INIT_STARTED	0	/* Init is started - certain ops now prohibited */
@@ -60,6 +61,7 @@ extern int copy_container(unsigned long flags, struct task_struct *tsk,
 			  struct container *container);
 extern void exit_container(struct task_struct *tsk);
 extern void put_container(struct container *c);
+extern long key_del_intercept(struct container *c, const char *type);
 
 static inline struct container *get_container(struct container *c)
 {

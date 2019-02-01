@@ -93,6 +93,7 @@ extern wait_queue_head_t request_key_conswq;
 extern void key_set_index_key(struct keyring_index_key *index_key);
 extern struct key_type *key_type_lookup(const char *type);
 extern void key_type_put(struct key_type *ktype);
+extern int key_get_type_from_user(char *, const char __user *, unsigned);
 
 extern int __key_link_begin(struct key *keyring,
 			    const struct keyring_index_key *index_key,
@@ -180,6 +181,11 @@ extern void key_gc_keytype(struct key_type *ktype);
 extern int key_task_permission(const key_ref_t key_ref,
 			       const struct cred *cred,
 			       key_perm_t perm);
+#ifdef CONFIG_CONTAINERS
+extern int queue_request_key(struct key *);
+#else
+static inline int queue_request_key(struct key *authkey) { return -EAGAIN; }
+#endif
 
 static inline void notify_key(struct key *key,
 			      enum key_notification_subtype subtype, u32 aux)
@@ -352,6 +358,10 @@ static inline long keyctl_watch_key(key_serial_t key_id, int watch_fd, int watch
 {
 	return -EOPNOTSUPP;
 }
+#endif
+
+#ifdef CONFIG_CONTAINERS
+extern long keyctl_container_intercept(int, const char __user *, unsigned int, key_serial_t);
 #endif
 
 /*

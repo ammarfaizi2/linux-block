@@ -35,6 +35,7 @@ struct container init_container = {
 	.members.next	= &init_task.container_link,
 	.members.prev	= &init_task.container_link,
 	.children	= LIST_HEAD_INIT(init_container.children),
+	.req_key_traps	= LIST_HEAD_INIT(init_container.req_key_traps),
 	.flags		= (1 << CONTAINER_FLAG_INIT_STARTED),
 	.lock		= __SPIN_LOCK_UNLOCKED(init_container.lock),
 	.seq		= SEQCNT_ZERO(init_fs.seq),
@@ -53,6 +54,8 @@ void put_container(struct container *c)
 
 	while (c && refcount_dec_and_test(&c->usage)) {
 		BUG_ON(!list_empty(&c->members));
+		if (!list_empty(&c->req_key_traps))
+			key_del_intercept(c, NULL);
 		if (c->pid_ns)
 			put_pid_ns(c->pid_ns);
 		if (c->ns)
@@ -286,6 +289,7 @@ static struct container *alloc_container(const char __user *name)
 
 	INIT_LIST_HEAD(&c->members);
 	INIT_LIST_HEAD(&c->children);
+	INIT_LIST_HEAD(&c->req_key_traps);
 	init_waitqueue_head(&c->waitq);
 	spin_lock_init(&c->lock);
 	refcount_set(&c->usage, 1);

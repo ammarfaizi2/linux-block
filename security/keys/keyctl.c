@@ -30,9 +30,9 @@
 
 #define KEY_MAX_DESC_SIZE 4096
 
-static int key_get_type_from_user(char *type,
-				  const char __user *_type,
-				  unsigned len)
+int key_get_type_from_user(char *type,
+			   const char __user *_type,
+			   unsigned len)
 {
 	int ret;
 
@@ -1856,6 +1856,14 @@ SYSCALL_DEFINE5(keyctl, int, option, unsigned long, arg2, unsigned long, arg3,
 
 	case KEYCTL_WATCH_KEY:
 		return keyctl_watch_key((key_serial_t)arg2, (int)arg3, (int)arg4);
+
+#ifdef CONFIG_CONTAINERS
+	case KEYCTL_CONTAINER_INTERCEPT:
+		return keyctl_container_intercept((int)arg2,
+						  (const char __user *)arg3,
+						  (unsigned int)arg4,
+						  (key_serial_t)arg5);
+#endif
 
 	default:
 		return -EOPNOTSUPP;

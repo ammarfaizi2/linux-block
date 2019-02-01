@@ -68,6 +68,7 @@
 #define KEYCTL_PKEY_VERIFY		28	/* Verify a public key signature */
 #define KEYCTL_RESTRICT_KEYRING		29	/* Restrict keys allowed to link to a keyring */
 #define KEYCTL_WATCH_KEY		30	/* Watch a key or ring of keys for changes */
+#define KEYCTL_CONTAINER_INTERCEPT	31	/* Intercept upcalls inside a container */
 
 /* keyctl structures */
 struct keyctl_dh_params {

@@ -123,6 +123,10 @@ static void free_request_key_auth(struct request_key_auth *rka)
 {
 	if (!rka)
 		return;
+
+	if (rka->target_key->state == KEY_IS_UNINSTANTIATED)
+		key_reject_and_link(rka->target_key, 0, -ENOKEY, NULL, NULL);
+
 	key_put(rka->target_key);
 	key_put(rka->dest_keyring);
 	if (rka->cred)
@@ -184,7 +188,7 @@ struct key *request_key_auth_new(struct key *target, const char *op,
 			goto error_free_rka;
 		}
 
-		irka = cred->request_key_auth->payload.data[0];
+		irka = get_request_key_auth(cred->request_key_auth);
 		rka->cred = get_cred(irka->cred);
 		rka->pid = irka->pid;
 

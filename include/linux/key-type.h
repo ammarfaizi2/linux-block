@@ -66,7 +66,7 @@ struct key_match_data {
  */
 struct key_type {
 	/* name of the type */
-	const char *name;
+	const char name[24];
 
 	/* default payload length for quota precalculation (optional)
 	 * - this can be used instead of calling key_payload_reserve(), that
