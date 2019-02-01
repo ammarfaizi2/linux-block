@@ -1864,3 +1864,15 @@ void security_bpf_prog_free(struct bpf_prog_aux *aux)
 	call_void_hook(bpf_prog_free_security, aux);
 }
 #endif /* CONFIG_BPF_SYSCALL */
+
+#ifdef CONFIG_CONTAINERS
+int security_container_alloc(struct container *container, unsigned int flags)
+{
+	return call_int_hook(container_alloc, 0, container, flags);
+}
+
+void security_container_free(struct container *container)
+{
+	call_void_hook(container_free, container);
+}
+#endif /* CONFIG_CONTAINERS */

@@ -1460,6 +1460,16 @@
  * @bpf_prog_free_security:
  *	Clean up the security information stored inside bpf prog.
  *
+ * Security hooks for containers:
+ *
+ * @container_alloc:
+ *	Permit creation of a new container and assign security data.
+ *	@container: The new container.
+ *
+ * @container_free:
+ *	Free security data attached to a container.
+ *	@container: The container.
+ *
  */
 union security_list_options {
 	int (*binder_set_context_mgr)(struct task_struct *mgr);
@@ -1825,6 +1835,12 @@ union security_list_options {
 	int (*bpf_prog_alloc_security)(struct bpf_prog_aux *aux);
 	void (*bpf_prog_free_security)(struct bpf_prog_aux *aux);
 #endif /* CONFIG_BPF_SYSCALL */
+
+	/* Container management security hooks */
+#ifdef CONFIG_CONTAINERS
+	int (*container_alloc)(struct container *container, unsigned int flags);
+	void (*container_free)(struct container *container);
+#endif
 };
 
 struct security_hook_heads {
@@ -2069,6 +2085,10 @@ struct security_hook_heads {
 	struct hlist_head bpf_prog_alloc_security;
 	struct hlist_head bpf_prog_free_security;
 #endif /* CONFIG_BPF_SYSCALL */
+#ifdef CONFIG_CONTAINERS
+	struct hlist_head container_alloc;
+	struct hlist_head container_free;
+#endif /* CONFIG_CONTAINERS */
 } __randomize_layout;
 
 /*

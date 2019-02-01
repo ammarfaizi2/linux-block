@@ -36,6 +36,7 @@ struct backing_dev_info;
 struct bio_list;
 struct blk_plug;
 struct cfs_rq;
+struct container;
 struct fs_struct;
 struct futex_pi_state;
 struct io_context;
@@ -870,6 +871,8 @@ struct task_struct {
 
 	/* Namespaces: */
 	struct nsproxy			*nsproxy;
+	struct container		*container;
+	struct list_head		container_link;
 
 	/* Signal handlers: */
 	struct signal_struct		*signal;

@@ -136,6 +136,9 @@ COND_SYSCALL(acct);
 COND_SYSCALL(capget);
 COND_SYSCALL(capset);
 
+/* kernel/container.c */
+COND_SYSCALL(container_create);
+
 /* kernel/exec_domain.c */
 
 /* kernel/exit.c */

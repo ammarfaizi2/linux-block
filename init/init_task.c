@@ -108,6 +108,9 @@ struct task_struct init_task
 	.signal		= &init_signals,
 	.sighand	= &init_sighand,
 	.nsproxy	= &init_nsproxy,
+	.container	= &init_container,
+	.container_link.next = &init_container.members,
+	.container_link.prev = &init_container.members,
 	.pending	= {
 		.list = LIST_HEAD_INIT(init_task.pending.list),
 		.signal = {{0}}

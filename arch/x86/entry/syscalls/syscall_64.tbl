@@ -352,6 +352,7 @@
 341	common	fsinfo			__x64_sys_fsinfo
 342	common	mount_notify		__x64_sys_mount_notify
 343	common	sb_notify		__x64_sys_sb_notify
+344	common	container_create	__x64_sys_container_create
 
 #
 # x32-specific system call numbers start at 512 to avoid cache impact

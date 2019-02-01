@@ -943,6 +943,9 @@ asmlinkage long sys_mount_notify(int dfd, const char __user *path,
 				 unsigned int at_flags, int watch_fd, int watch_id);
 asmlinkage long sys_sb_notify(int dfd, const char __user *path,
 			      unsigned int at_flags, int watch_fd, int watch_id);
+asmlinkage long sys_container_create(const char __user *name, unsigned int flags,
+				     unsigned long spare3, unsigned long spare4,
+				     unsigned long spare5);
 
 /*
  * Architecture-specific system calls

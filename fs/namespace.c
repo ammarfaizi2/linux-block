@@ -30,6 +30,7 @@
 #include <uapi/linux/mount.h>
 #include <linux/fs_context.h>
 #include <linux/fsinfo.h>
+#include <linux/container.h>
 
 #include "pnode.h"
 #include "internal.h"
@@ -3742,6 +3743,10 @@ static void __init init_mount_tree(void)
 
 	set_fs_pwd(current->fs, &root);
 	set_fs_root(current->fs, &root);
+#ifdef CONFIG_CONTAINERS
+	path_get(&root);
+	init_container.root = root;
+#endif
 }
 
 void __init mnt_init(void)

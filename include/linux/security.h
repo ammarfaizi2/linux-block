@@ -70,6 +70,7 @@ struct ctl_table;
 struct audit_krule;
 struct user_namespace;
 struct timezone;
+struct container;
 
 enum lsm_event {
 	LSM_POLICY_CHANGE,
@@ -1750,6 +1751,20 @@ static inline void security_audit_rule_free(void *lsmrule)
 
 #endif /* CONFIG_SECURITY */
 #endif /* CONFIG_AUDIT */
+
+#ifdef CONFIG_CONTAINERS
+#ifdef CONFIG_SECURITY
+int security_container_alloc(struct container *container, unsigned int flags);
+void security_container_free(struct container *container);
+#else
+static inline int security_container_alloc(struct container *container,
+					   unsigned int flags)
+{
+	return 0;
+}
+static inline void security_container_free(struct container *container) {}
+#endif
+#endif /* CONFIG_CONTAINERS */
 
 #ifdef CONFIG_SECURITYFS
 
