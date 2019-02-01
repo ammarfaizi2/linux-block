@@ -314,6 +314,43 @@ struct cred *prepare_exec_creds(void)
 }
 
 /*
+ * Handle forking a process into a container.
+ */
+static struct cred *copy_container_creds(struct container *dest_container)
+{
+	struct cred *new;
+
+	validate_process_creds();
+
+	new = kmem_cache_alloc(cred_jar, GFP_KERNEL);
+	if (!new)
+		return NULL;
+
+	kdebug("prepare_creds() alloc %p", new);
+
+	memcpy(new, dest_container->cred, sizeof(struct cred));
+
+	atomic_set(&new->usage, 1);
+	set_cred_subscribers(new, 0);
+	get_group_info(new->group_info);
+	get_uid(new->user);
+	get_user_ns(new->user_ns);
+
+#ifdef CONFIG_SECURITY
+	new->security = NULL;
+#endif
+
+	if (security_prepare_creds(new, dest_container->cred, GFP_KERNEL) < 0)
+		goto error;
+	validate_creds(new);
+	return new;
+
+error:
+	abort_creds(new);
+	return NULL;
+}
+
+/*
  * Copy credentials for the new process created by fork()
  *
  * We share if we can, but under some circumstances we have to generate a new
@@ -322,7 +359,8 @@ struct cred *prepare_exec_creds(void)
  * The new process gets the current process's subjective credentials as its
  * objective and subjective credentials
  */
-int copy_creds(struct task_struct *p, unsigned long clone_flags)
+int copy_creds(struct task_struct *p, unsigned long clone_flags,
+	       struct container *dest_container)
 {
 	struct cred *new;
 	int ret;
@@ -343,7 +381,10 @@ int copy_creds(struct task_struct *p, unsigned long clone_flags)
 		return 0;
 	}
 
-	new = prepare_creds();
+	if (dest_container)
+		new = copy_container_creds(dest_container);
+	else
+		new = prepare_creds();
 	if (!new)
 		return -ENOMEM;
 

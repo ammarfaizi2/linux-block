@@ -238,5 +238,5 @@ COMPAT_SYSCALL_DEFINE5(x86_clone, unsigned long, clone_flags,
 		       unsigned long, tls_val, int __user *, child_tidptr)
 {
 	return _do_fork(clone_flags, newsp, 0, parent_tidptr, child_tidptr,
-			tls_val);
+			tls_val, NULL);
 }

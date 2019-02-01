@@ -144,6 +144,7 @@ COND_SYSCALL(container_create);
 /* kernel/exit.c */
 
 /* kernel/fork.c */
+COND_SYSCALL(fork_into_container);
 
 /* kernel/futex.c */
 COND_SYSCALL(futex);

@@ -11,6 +11,7 @@ struct ipc_namespace;
 struct pid_namespace;
 struct cgroup_namespace;
 struct fs_struct;
+struct container;
 
 /*
  * A structure to contain pointers to all per-process
@@ -63,9 +64,13 @@ extern struct nsproxy init_nsproxy;
  *         * /
  *     task_unlock(task);
  *
+ *  4. Container namespaces are set at container creation and cannot be
+ *     changed.
+ *
  */
 
-int copy_namespaces(unsigned long flags, struct task_struct *tsk);
+int copy_namespaces(unsigned long flags, struct task_struct *tsk,
+		    struct container *dest_container);
 void exit_task_namespaces(struct task_struct *tsk);
 void switch_task_namespaces(struct task_struct *tsk, struct nsproxy *new);
 void free_nsproxy(struct nsproxy *ns);

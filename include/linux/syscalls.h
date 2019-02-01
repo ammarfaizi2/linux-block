@@ -946,6 +946,7 @@ asmlinkage long sys_sb_notify(int dfd, const char __user *path,
 asmlinkage long sys_container_create(const char __user *name, unsigned int flags,
 				     unsigned long spare3, unsigned long spare4,
 				     unsigned long spare5);
+asmlinkage long sys_fork_into_container(int containerfd);
 
 /*
  * Architecture-specific system calls

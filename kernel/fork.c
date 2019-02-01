@@ -1385,9 +1385,33 @@ fail_nomem:
 	return retval;
 }
 
-static int copy_fs(unsigned long clone_flags, struct task_struct *tsk)
+static int copy_fs(unsigned long clone_flags, struct task_struct *tsk,
+		   struct container *dest_container)
 {
 	struct fs_struct *fs = current->fs;
+
+#ifdef CONFIG_CONTAINERS
+	if (dest_container) {
+		fs = kmem_cache_alloc(fs_cachep, GFP_KERNEL);
+		if (!fs)
+			return -ENOMEM;
+
+		fs->users = 1;
+		fs->in_exec = 0;
+		spin_lock_init(&fs->lock);
+		seqcount_init(&fs->seq);
+		fs->umask = 0022;
+
+		spin_lock(&dest_container->lock);
+		fs->pwd = fs->root = dest_container->root;
+		path_get(&fs->root);
+		path_get(&fs->pwd);
+		spin_unlock(&dest_container->lock);
+		tsk->fs = fs;
+		return 0;
+	}
+#endif
+
 	if (clone_flags & CLONE_FS) {
 		/* tsk->fs is already what we want */
 		spin_lock(&fs->lock);
@@ -1679,7 +1703,8 @@ static __latent_entropy struct task_struct *copy_process(
 					struct pid *pid,
 					int trace,
 					unsigned long tls,
-					int node)
+					int node,
+					struct container *dest_container)
 {
 	int retval;
 	struct task_struct *p;
@@ -1783,7 +1808,7 @@ static __latent_entropy struct task_struct *copy_process(
 	}
 	current->flags &= ~PF_NPROC_EXCEEDED;
 
-	retval = copy_creds(p, clone_flags);
+	retval = copy_creds(p, clone_flags, dest_container);
 	if (retval < 0)
 		goto bad_fork_free;
 
@@ -1905,7 +1930,7 @@ static __latent_entropy struct task_struct *copy_process(
 	retval = copy_files(clone_flags, p);
 	if (retval)
 		goto bad_fork_cleanup_semundo;
-	retval = copy_fs(clone_flags, p);
+	retval = copy_fs(clone_flags, p, dest_container);
 	if (retval)
 		goto bad_fork_cleanup_files;
 	retval = copy_sighand(clone_flags, p);
@@ -1917,15 +1942,15 @@ static __latent_entropy struct task_struct *copy_process(
 	retval = copy_mm(clone_flags, p);
 	if (retval)
 		goto bad_fork_cleanup_signal;
-	retval = copy_namespaces(clone_flags, p);
+	retval = copy_container(clone_flags, p, dest_container);
 	if (retval)
 		goto bad_fork_cleanup_mm;
-	retval = copy_container(clone_flags, p, NULL);
-	if (retval)
-		goto bad_fork_cleanup_namespaces;
-	retval = copy_io(clone_flags, p);
+	retval = copy_namespaces(clone_flags, p, dest_container);
 	if (retval)
 		goto bad_fork_cleanup_container;
+	retval = copy_io(clone_flags, p);
+	if (retval)
+		goto bad_fork_cleanup_namespaces;
 	retval = copy_thread_tls(clone_flags, stack_start, stack_size, p, tls);
 	if (retval)
 		goto bad_fork_cleanup_io;
@@ -2124,10 +2149,10 @@ bad_fork_cleanup_thread:
 bad_fork_cleanup_io:
 	if (p->io_context)
 		exit_io_context(p);
-bad_fork_cleanup_container:
-	exit_container(p);
 bad_fork_cleanup_namespaces:
 	exit_task_namespaces(p);
+bad_fork_cleanup_container:
+	exit_container(p);
 bad_fork_cleanup_mm:
 	if (p->mm)
 		mmput(p->mm);
@@ -2183,7 +2208,7 @@ struct task_struct *fork_idle(int cpu)
 {
 	struct task_struct *task;
 	task = copy_process(CLONE_VM, 0, 0, NULL, &init_struct_pid, 0, 0,
-			    cpu_to_node(cpu));
+			    cpu_to_node(cpu), NULL);
 	if (!IS_ERR(task)) {
 		init_idle_pids(task);
 		init_idle(task, cpu);
@@ -2195,15 +2220,16 @@ struct task_struct *fork_idle(int cpu)
 /*
  *  Ok, this is the main fork-routine.
  *
- * It copies the process, and if successful kick-starts
- * it and waits for it to finish using the VM if required.
+ * It copies the process into the specified container, and if successful
+ * kick-starts it and waits for it to finish using the VM if required.
  */
 long _do_fork(unsigned long clone_flags,
 	      unsigned long stack_start,
 	      unsigned long stack_size,
 	      int __user *parent_tidptr,
 	      int __user *child_tidptr,
-	      unsigned long tls)
+	      unsigned long tls,
+	      struct container *dest_container)
 {
 	struct completion vfork;
 	struct pid *pid;
@@ -2229,8 +2255,32 @@ long _do_fork(unsigned long clone_flags,
 			trace = 0;
 	}
 
+	if (dest_container) {
+		/* A process spawned into a container doesn't share anything
+		 * with the parent other than namespaces.
+		 */
+		if (clone_flags & (CLONE_CHILD_CLEARTID |
+				   CLONE_CHILD_SETTID |
+				   CLONE_FILES |
+				   CLONE_FS |
+				   CLONE_IO |
+				   CLONE_PARENT |
+				   CLONE_PARENT_SETTID |
+				   CLONE_PTRACE |
+				   CLONE_SETTLS |
+				   CLONE_SIGHAND |
+				   CLONE_SYSVSEM |
+				   CLONE_THREAD))
+			return -EINVAL;
+
+		/* However, we do have to let kernel threads borrow a VM. */
+		if ((clone_flags & CLONE_VM) && current->mm)
+			return -EINVAL;
+	}
+	
 	p = copy_process(clone_flags, stack_start, stack_size,
-			 child_tidptr, NULL, trace, tls, NUMA_NO_NODE);
+			 child_tidptr, NULL, trace, tls, NUMA_NO_NODE,
+			 dest_container);
 	add_latent_entropy();
 
 	if (IS_ERR(p))
@@ -2279,7 +2329,7 @@ long do_fork(unsigned long clone_flags,
 	      int __user *child_tidptr)
 {
 	return _do_fork(clone_flags, stack_start, stack_size,
-			parent_tidptr, child_tidptr, 0);
+			parent_tidptr, child_tidptr, 0, NULL);
 }
 #endif
 
@@ -2289,14 +2339,14 @@ long do_fork(unsigned long clone_flags,
 pid_t kernel_thread(int (*fn)(void *), void *arg, unsigned long flags)
 {
 	return _do_fork(flags|CLONE_VM|CLONE_UNTRACED, (unsigned long)fn,
-		(unsigned long)arg, NULL, NULL, 0);
+			(unsigned long)arg, NULL, NULL, 0, NULL);
 }
 
 #ifdef __ARCH_WANT_SYS_FORK
 SYSCALL_DEFINE0(fork)
 {
 #ifdef CONFIG_MMU
-	return _do_fork(SIGCHLD, 0, 0, NULL, NULL, 0);
+	return _do_fork(SIGCHLD, 0, 0, NULL, NULL, 0, NULL);
 #else
 	/* can not support in nommu mode */
 	return -EINVAL;
@@ -2308,7 +2358,26 @@ SYSCALL_DEFINE0(fork)
 SYSCALL_DEFINE0(vfork)
 {
 	return _do_fork(CLONE_VFORK | CLONE_VM | SIGCHLD, 0,
-			0, NULL, NULL, 0);
+			0, NULL, NULL, 0, NULL);
+}
+#endif
+
+#ifdef CONFIG_CONTAINERS
+SYSCALL_DEFINE1(fork_into_container, int, containerfd)
+{
+	struct fd f = fdget(containerfd);
+	int ret;
+
+	if (!f.file)
+		return -EBADF;
+	ret = -EINVAL;
+	if (is_container_file(f.file)) {
+		struct container *dest_container = f.file->private_data;
+
+		ret = _do_fork(SIGCHLD, 0, 0, NULL, NULL, 0, dest_container);
+	}
+	fdput(f);
+	return ret;
 }
 #endif
 
@@ -2336,7 +2405,8 @@ SYSCALL_DEFINE5(clone, unsigned long, clone_flags, unsigned long, newsp,
 		 unsigned long, tls)
 #endif
 {
-	return _do_fork(clone_flags, newsp, 0, parent_tidptr, child_tidptr, tls);
+	return _do_fork(clone_flags, newsp, 0, parent_tidptr, child_tidptr, tls,
+			NULL);
 }
 #endif
 
