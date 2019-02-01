@@ -405,3 +405,4 @@
 391	i386	fsmount			sys_fsmount			__ia32_sys_fsmount
 392	i386	fspick			sys_fspick			__ia32_sys_fspick
 393	i386	fsinfo			sys_fsinfo			__ia32_sys_fsinfo
+394	i386	mount_notify		sys_mount_notify		__ia32_sys_mount_notify

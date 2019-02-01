@@ -350,6 +350,7 @@
 339	common	fsmount			__x64_sys_fsmount
 340	common	fspick			__x64_sys_fspick
 341	common	fsinfo			__x64_sys_fsinfo
+342	common	mount_notify		__x64_sys_mount_notify
 
 #
 # x32-specific system call numbers start at 512 to avoid cache impact

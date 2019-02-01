@@ -83,6 +83,9 @@ COND_SYSCALL(ioprio_get);
 /* fs/locks.c */
 COND_SYSCALL(flock);
 
+/* fs/mount_notify.c */
+COND_SYSCALL(mount_notify);
+
 /* fs/namei.c */
 
 /* fs/namespace.c */
