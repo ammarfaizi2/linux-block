@@ -103,6 +103,9 @@ COND_SYSCALL(quotactl);
 
 /* fs/read_write.c */
 
+/* fs/sb_notify.c */
+COND_SYSCALL(sb_notify);
+
 /* fs/sendfile.c */
 
 /* fs/select.c */

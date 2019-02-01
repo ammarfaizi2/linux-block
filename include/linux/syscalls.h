@@ -941,6 +941,8 @@ asmlinkage long sys_fsinfo(int dfd, const char __user *path,
 			   void __user *buffer, size_t buf_size);
 asmlinkage long sys_mount_notify(int dfd, const char __user *path,
 				 unsigned int at_flags, int watch_fd, int watch_id);
+asmlinkage long sys_sb_notify(int dfd, const char __user *path,
+			      unsigned int at_flags, int watch_fd, int watch_id);
 
 /*
  * Architecture-specific system calls
