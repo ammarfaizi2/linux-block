@@ -9,6 +9,7 @@
 #include <linux/mount.h>
 #include <linux/fs_context.h>
 #include <linux/fs_parser.h>
+#include <linux/fsinfo.h>
 #include "ctree.h"
 #include "volumes.h"
 #include "btrfs_inode.h"
@@ -920,3 +921,193 @@ int btrfs_show_options(struct seq_file *seq, struct dentry *dentry)
 	seq_dentry(seq, dentry, " \t\n\\");
 	return 0;
 }
+
+#ifdef CONFIG_FSINFO
+static const char *const btrfs_param_names[nr__btrfs_params] = {
+	[Opt_acl]			= "noacl",
+	[Opt_alloc_start]		= "", /* obsolete */
+	[Opt_barrier]			= "-nobarrier",
+	[Opt_check_integrity]		= "+check_int",
+	[Opt_check_integrity_including_extent_data] = "+check_int_data",
+	[Opt_clear_cache]		= "+clear_cache",
+	[Opt_compress]			= "compress",
+	[Opt_compress_force]		= "compress-force",
+	[Opt_datacow]			= "-nodatacow",
+	[Opt_datasum]			= "-nodatasum",
+	[Opt_autodefrag]		= "+autodefrag",
+	[Opt_degraded]			= "+degraded",
+	[Opt_discard]			= "+discard",
+	[Opt_enospc_debug]		= "+enospc_debug",
+	[Opt_flushoncommit]		= "+flushoncommit",
+	[Opt_fatal_errors]		= "+fatal_errors=panic",
+	[Opt_inode_cache]		= "+inode_cache",
+	[Opt_nologreplay]		= "+nologreplay",
+	[Opt_nossd]			= "+nossd",
+	[Opt_recovery]			= "", /* obsolete */
+	[Opt_ref_verify]		= "+ref_verify",
+	[Opt_rescan_uuid_tree]		= "+rescan_uuid_tree",
+	[Opt_skip_balance]		= "+skip_balance",
+	[Opt_ssd]			= "+ssd",
+	[Opt_ssd_spread]		= "+ssd_spread",
+	[Opt_treelog]			= "-notreelog",
+	[Opt_usebackuproot]		= "+usebackuproot",
+	[Opt_user_subvol_rm_allowed]	= "+user_subvol_rm_allowed",
+};
+
+static void btrfs_fsinfo_devices(struct dentry *dentry, struct fsinfo_kparams *params)
+{
+	struct btrfs_fs_info *fs_info = btrfs_sb(dentry->d_sb);
+	struct btrfs_fs_devices *cur_devices;
+	struct btrfs_device *dev, *first_dev = NULL;
+	struct list_head *head;
+
+	/* Lightweight locking of the devices. We should not need
+	 * device_list_mutex here as we only read the device data and the list
+	 * is protected by RCU.  Even if a device is deleted during the list
+	 * traversals, we'll get valid data, the freeing callback will wait at
+	 * least until until the rcu_read_unlock.
+	 */
+	cur_devices = fs_info->fs_devices;
+	while (cur_devices) {
+		head = &cur_devices->devices;
+		list_for_each_entry_rcu(dev, head, dev_list) {
+			if (test_bit(BTRFS_DEV_STATE_MISSING, &dev->dev_state) ||
+			    !dev->name)
+				continue;
+			if (!first_dev || dev->devid < first_dev->devid)
+				first_dev = dev;
+		}
+		cur_devices = cur_devices->seed;
+	}
+
+	if (first_dev)
+		fsinfo_note_param(params, "source", rcu_str_deref(first_dev->name));
+
+	cur_devices = fs_info->fs_devices;
+	while (cur_devices) {
+		head = &cur_devices->devices;
+		list_for_each_entry_rcu(dev, head, dev_list) {
+			if (test_bit(BTRFS_DEV_STATE_MISSING, &dev->dev_state) ||
+			    !dev->name)
+				continue;
+			if (dev != first_dev)
+				fsinfo_note_param(params, "device",
+						  rcu_str_deref(dev->name));
+		}
+		cur_devices = cur_devices->seed;
+	}
+}
+
+/*
+ * Retrieve btrfs parameters via fsinfo().
+ */
+int btrfs_fsinfo_parameters(struct path *path, struct fsinfo_kparams *params)
+{
+	struct dentry *dentry = path->dentry;
+	struct btrfs_fs_info *info = btrfs_sb(dentry->d_sb);
+
+	rcu_read_lock();
+	btrfs_fsinfo_devices(dentry, params);
+	rcu_read_unlock();
+
+	if (btrfs_test_opt(info, DEGRADED))
+		fsinfo_note_param(params, "degraded", NULL);
+	if (!btrfs_test_opt(info, DATASUM))
+		fsinfo_note_param(params, "nodatasum", NULL);
+	if (!btrfs_test_opt(info, DATACOW))
+		fsinfo_note_param(params, "nodatacow", NULL);
+	if (!btrfs_test_opt(info, BARRIER))
+		fsinfo_note_param(params, "nobarrier", NULL);
+	if (info->max_inline != BTRFS_DEFAULT_MAX_INLINE)
+		fsinfo_note_paramf(params, "max_inline", "%llu", info->max_inline);
+	if (info->thread_pool_size != min_t(unsigned long,
+					    num_online_cpus() + 2, 8))
+		fsinfo_note_paramf(params, "thread_pool", "%u", info->thread_pool_size);
+
+	if (btrfs_test_opt(info, COMPRESS)) {
+		const char *compress_type = btrfs_compress_type2str(info->compress_type);
+		const char *k;
+
+		if (btrfs_test_opt(info, FORCE_COMPRESS))
+			k = "compress-force";
+		else
+			k = "compress";
+		if (info->compress_level)
+			fsinfo_note_paramf(params, k, "%s:%u",
+					   compress_type, info->compress_level);
+		else
+			fsinfo_note_paramf(params, k, "%s", compress_type);
+	}
+
+	if (btrfs_test_opt(info, NOSSD))
+		fsinfo_note_param(params, "nossd", NULL);
+	if (btrfs_test_opt(info, SSD_SPREAD))
+		fsinfo_note_param(params, "ssd_spread", NULL);
+	else if (btrfs_test_opt(info, SSD))
+		fsinfo_note_param(params, "ssd", NULL);
+
+	if (!btrfs_test_opt(info, TREELOG))
+		fsinfo_note_param(params, "notreelog", NULL);
+	if (btrfs_test_opt(info, NOLOGREPLAY))
+		fsinfo_note_param(params, "nologreplay", NULL);
+	if (btrfs_test_opt(info, FLUSHONCOMMIT))
+		fsinfo_note_param(params, "flushoncommit", NULL);
+	if (btrfs_test_opt(info, DISCARD))
+		fsinfo_note_param(params, "discard", NULL);
+	if (!(info->sb->s_flags & SB_POSIXACL))
+		fsinfo_note_param(params, "noacl", NULL);
+
+	if (btrfs_test_opt(info, SPACE_CACHE))
+		fsinfo_note_param(params, "space_cache", NULL);
+	else if (btrfs_test_opt(info, FREE_SPACE_TREE))
+		fsinfo_note_param(params, "space_cache", "v2");
+	else
+		fsinfo_note_param(params, "nospace_cache", NULL);
+
+	if (btrfs_test_opt(info, RESCAN_UUID_TREE))
+		fsinfo_note_param(params, "rescan_uuid_tree", NULL);
+	if (btrfs_test_opt(info, CLEAR_CACHE))
+		fsinfo_note_param(params, "clear_cache", NULL);
+	if (btrfs_test_opt(info, USER_SUBVOL_RM_ALLOWED))
+		fsinfo_note_param(params, "user_subvol_rm_allowed", NULL);
+	if (btrfs_test_opt(info, ENOSPC_DEBUG))
+		fsinfo_note_param(params, "enospc_debug", NULL);
+	if (btrfs_test_opt(info, AUTO_DEFRAG))
+		fsinfo_note_param(params, "autodefrag", NULL);
+	if (btrfs_test_opt(info, INODE_MAP_CACHE))
+		fsinfo_note_param(params, "inode_cache", NULL);
+	if (btrfs_test_opt(info, SKIP_BALANCE))
+		fsinfo_note_param(params, "skip_balance", NULL);
+
+#ifdef CONFIG_BTRFS_FS_CHECK_INTEGRITY
+	if (btrfs_test_opt(info, CHECK_INTEGRITY_INCLUDING_EXTENT_DATA))
+		fsinfo_note_param(params, "check_int_data", NULL);
+	else if (btrfs_test_opt(info, CHECK_INTEGRITY))
+		fsinfo_note_param(params, "check_int", NULL);
+	if (info->check_integrity_print_mask)
+		fsinfo_note_paramf(params, "check_int_print_mask", "%d",
+				   info->check_integrity_print_mask);
+#endif
+
+	if (info->metadata_ratio)
+		fsinfo_note_paramf(params, "metadata_ratio", "%u", info->metadata_ratio);
+	if (btrfs_test_opt(info, PANIC_ON_FATAL_ERROR))
+		fsinfo_note_param(params, "fatal_errors", "panic");
+	if (info->commit_interval != BTRFS_DEFAULT_COMMIT_INTERVAL)
+		fsinfo_note_paramf(params, "commit", "%u", info->commit_interval);
+
+#ifdef CONFIG_BTRFS_DEBUG
+	if (btrfs_test_opt(info, FRAGMENT_DATA))
+		fsinfo_note_param(params, "fragment", "data");
+	if (btrfs_test_opt(info, FRAGMENT_METADATA))
+		fsinfo_note_param(params, "fragment", "metadata");
+#endif
+
+	if (btrfs_test_opt(info, REF_VERIFY))
+		fsinfo_note_param(params, "ref_verify", NULL);
+	fsinfo_note_paramf(params, "subvolid", "%llu",
+			   BTRFS_I(d_inode(dentry))->root->root_key.objectid);
+	fsinfo_note_param(params, "subvol", NULL);
+	return params->usage;
+}
+#endif /* CONFIG_FSINFO */

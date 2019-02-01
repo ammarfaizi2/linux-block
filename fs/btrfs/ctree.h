@@ -3359,6 +3359,9 @@ int btrfs_init_fs_context(struct fs_context *fc);
 void btrfs_apply_configuration(struct fs_context *fc, struct super_block *sb);
 int btrfs_show_options(struct seq_file *seq, struct dentry *dentry);
 int btrfs_validate(struct fs_context *fc);
+#ifdef CONFIG_FSINFO
+int btrfs_fsinfo_parameters(struct path *path, struct fsinfo_kparams *params);
+#endif
 
 /* super.c */
 extern struct file_system_type btrfs_fs_type;

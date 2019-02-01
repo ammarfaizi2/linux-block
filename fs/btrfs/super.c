@@ -19,6 +19,7 @@
 #include <linux/compat.h>
 #include <linux/fs_context.h>
 #include <linux/fs_parser.h>
+#include <linux/fsinfo.h>
 #include <linux/ctype.h>
 #include <linux/namei.h>
 #include <linux/miscdevice.h>
@@ -1359,6 +1360,21 @@ static int btrfs_statfs(struct dentry *dentry, struct kstatfs *buf)
 	return 0;
 }
 
+/*
+ * Get filesystem information.
+ */
+#ifdef CONFIG_FSINFO
+static int btrfs_fsinfo(struct path *path, struct fsinfo_kparams *params)
+{
+	switch (params->request) {
+	case FSINFO_ATTR_PARAMETERS:
+		return btrfs_fsinfo_parameters(path, params);
+	default:
+		return generic_fsinfo(path, params);
+	}
+}
+#endif
+
 static void btrfs_kill_super(struct super_block *sb)
 {
 	struct btrfs_fs_info *fs_info = btrfs_sb(sb);
@@ -1512,6 +1528,9 @@ static const struct super_operations btrfs_super_ops = {
 	.alloc_inode	= btrfs_alloc_inode,
 	.destroy_inode	= btrfs_destroy_inode,
 	.statfs		= btrfs_statfs,
+#ifdef CONFIG_FSINFO
+	.fsinfo		= btrfs_fsinfo,
+#endif
 	.freeze_fs	= btrfs_freeze,
 	.unfreeze_fs	= btrfs_unfreeze,
 };
