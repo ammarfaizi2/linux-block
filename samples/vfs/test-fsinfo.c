@@ -64,6 +64,7 @@ static const __u16 fsinfo_buffer_sizes[FSINFO_ATTR__NR] = {
 	FSINFO_STRUCT		(PARAM_DESCRIPTION,	param_description),
 	FSINFO_STRUCT_N		(PARAM_SPECIFICATION,	param_specification),
 	FSINFO_STRUCT_N		(PARAM_ENUM,		param_enum),
+	FSINFO_OVERLARGE	(PARAMETERS,		-),
 };
 
 #define FSINFO_NAME(X,Y) [FSINFO_ATTR_##X] = #Y
@@ -83,6 +84,7 @@ static const char *fsinfo_attr_names[FSINFO_ATTR__NR] = {
 	FSINFO_NAME		(PARAM_DESCRIPTION,	param_description),
 	FSINFO_NAME		(PARAM_SPECIFICATION,	param_specification),
 	FSINFO_NAME		(PARAM_ENUM,		param_enum),
+	FSINFO_NAME		(PARAMETERS,		parameters),
 };
 
 union reply {
@@ -328,6 +330,34 @@ static void dump_fsinfo(enum fsinfo_attribute attr, __u8 about,
 	dumper(r, size);
 }
 
+static void dump_params(__u8 about, union reply *r, int size)
+{
+	int len;
+	char *p = r->buffer, *e = p + size;
+	bool is_key = true;
+
+	while (p < e) {
+		len = 0;
+		while (p[0] & 0x80) {
+			len <<= 7;
+			len |= *p++ & 0x7f;
+		}
+
+		len <<= 7;
+		len |= *p++;
+		if (len > e - p)
+			break;
+		if (is_key || len)
+			printf("%s%*.*s", is_key ? "[PARM] " : "= ", len, len, p);
+		if (is_key)
+			putchar(' ');
+		else
+			putchar('\n');
+		p += len;
+		is_key = !is_key;
+	}
+}
+
 /*
  * Try one subinstance of an attribute.
  */
@@ -400,6 +430,12 @@ static int try_one(const char *file, struct fsinfo_params *params, bool raw)
 		return 0;
 	}
 
+	switch (params->request) {
+	case FSINFO_ATTR_PARAMETERS:
+		if (ret == 0)
+			return 0;
+	}
+
 	switch (about & 0xc000) {
 	case 0x0000:
 		printf("\e[33m%s\e[m: ",
@@ -449,6 +485,8 @@ static int try_one(const char *file, struct fsinfo_params *params, bool raw)
 
 		/* Overlarge blob */
 	case 0xc000:
+		if (params->request == FSINFO_ATTR_PARAMETERS)
+			dump_params(about, &r, ret);
 		return 0;
 
 	default:
