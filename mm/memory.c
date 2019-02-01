@@ -3251,6 +3251,7 @@ vm_fault_t alloc_set_pte(struct vm_fault *vmf, struct mem_cgroup *memcg,
 
 	return 0;
 }
+EXPORT_SYMBOL_GPL(alloc_set_pte);
 
 
 /**
