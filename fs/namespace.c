@@ -2627,12 +2627,10 @@ static int do_move_mount(struct path *old_path, struct path *new_path)
 	ns = old->mnt_ns;
 
 	err = -EINVAL;
-	/* The mountpoint must be in our namespace. */
-	if (!check_mnt(p))
-		goto out;
-
-	/* The thing moved should be either ours or completely unattached. */
-	if (attached && !check_mnt(old))
+	/* The new mount must be either unattached or in the same namespace as
+	 * the mountpoint.
+	 */
+	if (attached && old->mnt_ns != p->mnt_ns)
 		goto out;
 
 	if (!attached && !is_anon_ns(ns))
