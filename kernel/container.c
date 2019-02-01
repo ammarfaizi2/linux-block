@@ -21,6 +21,7 @@
 #include <linux/printk.h>
 #include <linux/security.h>
 #include <linux/proc_fs.h>
+#include <linux/mnt_namespace.h>
 #include "namespaces.h"
 
 struct container init_container = {
@@ -399,6 +400,11 @@ static struct container *create_container(const char __user *name, unsigned int 
 	c->seq = fs->seq;
 	fs->root.mnt = NULL;
 	fs->root.dentry = NULL;
+
+	if (flags & CONTAINER_NEW_EMPTY_FS_NS) {
+		put_mnt_ns(ns->mnt_ns);
+		ns->mnt_ns = NULL;
+	}
 
 	ret = security_container_alloc(c, flags);
 	if (ret < 0)

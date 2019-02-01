@@ -2374,7 +2374,11 @@ SYSCALL_DEFINE1(fork_into_container, int, containerfd)
 	if (is_container_file(f.file)) {
 		struct container *dest_container = f.file->private_data;
 
-		ret = _do_fork(SIGCHLD, 0, 0, NULL, NULL, 0, dest_container);
+		if (!dest_container->ns->mnt_ns)
+			ret = -ENOENT;
+		else
+			ret = _do_fork(SIGCHLD, 0, 0, NULL, NULL, 0,
+				       dest_container);
 	}
 	fdput(f);
 	return ret;

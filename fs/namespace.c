@@ -3514,6 +3514,63 @@ err_fsfd:
 }
 
 /*
+ * Create a mount namespace for a container and set the root mount in it.
+ */
+static int set_container_root(struct path *path, int fd)
+{
+	struct mnt_namespace *mnt_ns;
+	struct container *container;
+	struct mount *mnt;
+	struct fd f;
+	int ret;
+
+	f = fdget(fd);
+	if (!f.file)
+		return -EBADF;
+	ret = -EINVAL;
+	if (!is_container_file(f.file))
+		goto out_fd;
+
+	ret = -EBUSY;
+	container = f.file->private_data;
+	if (container->ns->mnt_ns)
+		goto out_fd;
+
+	mnt_ns = alloc_mnt_ns(container->cred->user_ns, false);
+	if (IS_ERR(mnt_ns)) {
+		ret = PTR_ERR(mnt_ns);
+		goto out_fd;
+	}
+
+	mnt = real_mount(path->mnt);
+	mnt_add_count(mnt, 1);
+	mnt->mnt_ns = mnt_ns;
+	mnt_ns->root = mnt;
+	mnt_ns->mounts++;
+	list_add(&mnt->mnt_list, &mnt_ns->list);
+
+	ret = -EBUSY;
+	spin_lock(&container->lock);
+	if (!container->ns->mnt_ns) {
+		container->ns->mnt_ns = mnt_ns;
+		write_seqcount_begin(&container->seq);
+		container->root.mnt = path->mnt;
+		container->root.dentry = path->dentry;
+		write_seqcount_end(&container->seq);
+		path_get(&container->root);
+		mnt_ns = NULL;
+		ret = 0;
+	}
+	spin_unlock(&container->lock);
+
+	if (ret < 0)
+		put_mnt_ns(mnt_ns);
+out_fd:
+	fdput(f);
+	return ret;
+}
+
+/*
  * Move a mount from one place to another.  In combination with
  * fsopen()/fsmount() this is used to install a new mount and in combination
  * with open_tree(OPEN_TREE_CLONE [| AT_RECURSIVE]) it can be used to copy
@@ -3528,6 +3585,7 @@ SYSCALL_DEFINE5(move_mount,
 {
 	struct path from_path, to_path;
 	unsigned int lflags;
+	char buf[2];
 	int ret = 0;
 
 	if (!may_mount())
@@ -3535,6 +3593,17 @@ SYSCALL_DEFINE5(move_mount,
 
 	if (flags & ~MOVE_MOUNT__MASK)
 		return -EINVAL;
+
+	if (flags & MOVE_MOUNT_T_CONTAINER_ROOT) {
+		if (flags & (MOVE_MOUNT_T_SYMLINKS |
+			     MOVE_MOUNT_T_AUTOMOUNTS |
+			     MOVE_MOUNT_T_EMPTY_PATH))
+			return -EINVAL;
+		if (strncpy_from_user(buf, to_pathname, 2) < 0)
+			return -EFAULT;
+		if (buf[0] != '/' || buf[1] != '\0')
+			return -EINVAL;
+	}
 
 	/* If someone gives a pathname, they aren't permitted to move
 	 * from an fd that requires unmount as we can't get at the flag
@@ -3549,20 +3618,24 @@ SYSCALL_DEFINE5(move_mount,
 	if (ret < 0)
 		return ret;
 
-	lflags = 0;
-	if (flags & MOVE_MOUNT_T_SYMLINKS)	lflags |= LOOKUP_FOLLOW;
-	if (flags & MOVE_MOUNT_T_AUTOMOUNTS)	lflags |= LOOKUP_AUTOMOUNT;
-	if (flags & MOVE_MOUNT_T_EMPTY_PATH)	lflags |= LOOKUP_EMPTY;
+	if (flags & MOVE_MOUNT_T_CONTAINER_ROOT) {
+		ret = set_container_root(&from_path, to_dfd);
+	} else {
+		lflags = 0;
+		if (flags & MOVE_MOUNT_T_SYMLINKS)	lflags |= LOOKUP_FOLLOW;
+		if (flags & MOVE_MOUNT_T_AUTOMOUNTS)	lflags |= LOOKUP_AUTOMOUNT;
+		if (flags & MOVE_MOUNT_T_EMPTY_PATH)	lflags |= LOOKUP_EMPTY;
 
-	ret = user_path_at(to_dfd, to_pathname, lflags, &to_path);
-	if (ret < 0)
-		goto out_from;
+		ret = user_path_at(to_dfd, to_pathname, lflags, &to_path);
+		if (ret < 0)
+			goto out_from;
 
-	ret = security_move_mount(&from_path, &to_path);
-	if (ret < 0)
-		goto out_to;
+		ret = security_move_mount(&from_path, &to_path);
+		if (ret < 0)
+			goto out_to;
 
-	ret = do_move_mount(&from_path, &to_path);
+		ret = do_move_mount(&from_path, &to_path);
+	}
 
 out_to:
 	path_put(&to_path);
