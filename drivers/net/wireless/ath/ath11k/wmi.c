@@ -4383,7 +4383,7 @@ void ath11k_mgmt_rx_event(struct ath11k_base *ab, struct sk_buff *skb)
 		/* However in case of PMF, FW delivers decrypted frames
 		 * with Protected Bit set. Don't clear that.
 		 */
-		} else if (!ieee80211_is_robust_mgmt_frame(hdr))  {
+		} else if (!ieee80211_is_robust_mgmt_frame(skb))  {
 			status->flag |= RX_FLAG_DECRYPTED;
 
 			status->flag |= RX_FLAG_IV_STRIPPED |
