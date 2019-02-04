@@ -655,7 +655,7 @@ static int ath11k_htt_tlv_ppdu_stats_parse(struct ath11k_base *ab,
 				    len, tag);
 			return -EINVAL;
 		}
-		memcpy((void *)&ppdu_info->ppdu_stats->common, ptr,
+		memcpy((void *)&ppdu_info->ppdu_stats.common, ptr,
 		       sizeof(struct htt_ppdu_stats_common));
 		break;
 	case HTT_PPDU_STATS_TAG_USR_RATE:
@@ -666,11 +666,11 @@ static int ath11k_htt_tlv_ppdu_stats_parse(struct ath11k_base *ab,
 		}
 
 		peer_id = ((struct htt_ppdu_stats_user_rate *)ptr)->sw_peer_id;
-		cur_user = ath11k_get_ppdu_user_index(ppdu_info->ppdu_stats,
+		cur_user = ath11k_get_ppdu_user_index(&ppdu_info->ppdu_stats,
 						      peer_id);
 		if (cur_user < 0)
 			return -EINVAL;
-		user_stats = &ppdu_info->ppdu_stats->user_stats[cur_user];
+		user_stats = &ppdu_info->ppdu_stats.user_stats[cur_user];
 		user_stats->peer_id = peer_id;
 		user_stats->is_valid_peer_id = true;
 		memcpy((void *)&user_stats->rate, ptr,
@@ -685,11 +685,11 @@ static int ath11k_htt_tlv_ppdu_stats_parse(struct ath11k_base *ab,
 		}
 
 		peer_id = ((struct htt_ppdu_stats_usr_cmpltn_cmn *)ptr)->sw_peer_id;
-		cur_user = ath11k_get_ppdu_user_index(ppdu_info->ppdu_stats,
+		cur_user = ath11k_get_ppdu_user_index(&ppdu_info->ppdu_stats,
 						      peer_id);
 		if (cur_user < 0)
 			return -EINVAL;
-		user_stats = &ppdu_info->ppdu_stats->user_stats[cur_user];
+		user_stats = &ppdu_info->ppdu_stats.user_stats[cur_user];
 		user_stats->peer_id = peer_id;
 		user_stats->is_valid_peer_id = true;
 		memcpy((void *)&user_stats->cmpltn_cmn, ptr,
@@ -706,11 +706,11 @@ static int ath11k_htt_tlv_ppdu_stats_parse(struct ath11k_base *ab,
 
 		peer_id =
 		((struct htt_ppdu_stats_usr_cmpltn_ack_ba_status *)ptr)->sw_peer_id;
-		cur_user = ath11k_get_ppdu_user_index(ppdu_info->ppdu_stats,
+		cur_user = ath11k_get_ppdu_user_index(&ppdu_info->ppdu_stats,
 						      peer_id);
 		if (cur_user < 0)
 			return -EINVAL;
-		user_stats = &ppdu_info->ppdu_stats->user_stats[cur_user];
+		user_stats = &ppdu_info->ppdu_stats.user_stats[cur_user];
 		user_stats->peer_id = peer_id;
 		user_stats->is_valid_peer_id = true;
 		memcpy((void *)&user_stats->ack_ba, ptr,
@@ -971,33 +971,26 @@ struct htt_ppdu_stats_info *ath11k_dp_htt_get_ppdu_desc(struct ath11k *ar,
 							u32 ppdu_id)
 {
 	struct htt_ppdu_stats_info *ppdu_info = NULL;
-	struct htt_ppdu_stats *ppdu_stats = NULL;
 
-	list_for_each_entry(ppdu_info, &ar->ppdu_stats_info, list) {
-		if (ppdu_info && ppdu_info->ppdu_id == ppdu_id)
-			return ppdu_info;
-	}
+	if (!list_empty(&ar->ppdu_stats_info)) {
+		list_for_each_entry(ppdu_info, &ar->ppdu_stats_info, list) {
+			if (ppdu_info && ppdu_info->ppdu_id == ppdu_id)
+				return ppdu_info;
+		}
 
-	if (ar->ppdu_stat_list_depth > HTT_PPDU_DESC_MAX_DEPTH) {
-		ppdu_info = list_first_entry(&ar->ppdu_stats_info,
-					     typeof(*ppdu_info), list);
-		ath11k_htt_update_ppdu_stats(ar, ppdu_info->ppdu_stats);
-		list_del(&ppdu_info->list);
-		ar->ppdu_stat_list_depth--;
-		kfree(ppdu_info->ppdu_stats);
-		kfree(ppdu_info);
+		if (ar->ppdu_stat_list_depth > HTT_PPDU_DESC_MAX_DEPTH) {
+			ppdu_info = list_first_entry(&ar->ppdu_stats_info,
+						     typeof(*ppdu_info), list);
+			list_del(&ppdu_info->list);
+			ar->ppdu_stat_list_depth--;
+			ath11k_htt_update_ppdu_stats(ar, &ppdu_info->ppdu_stats);
+			kfree(ppdu_info);
+		}
 	}
 
 	ppdu_info = kzalloc(sizeof(*ppdu_info), GFP_KERNEL);
 	if (!ppdu_info)
 		return NULL;
-
-	ppdu_stats = kzalloc(sizeof(*ppdu_stats), GFP_KERNEL);
-	if (!ppdu_stats) {
-		kfree(ppdu_info);
-		return NULL;
-	}
-	ppdu_info->ppdu_stats = ppdu_stats;
 
 	list_add_tail(&ppdu_info->list, &ar->ppdu_stats_info);
 	ar->ppdu_stat_list_depth++;

@@ -328,25 +328,25 @@ static void ath11k_dp_cache_peer_stats(struct ath11k *ar,
 	if (ts->try_cnt >= 1 &&
 	    ts->status == HAL_WBM_TQM_REL_REASON_FRAME_ACKED) {
 		if (ts->try_cnt == 1) {
-			peer_stats->retry_pkts = 1;
-			peer_stats->retry_bytes = msdu->len;
+			peer_stats->retry_pkts += 1;
+			peer_stats->retry_bytes += msdu->len;
 		} else {
-			peer_stats->retry_pkts = ts->try_cnt - 1;
-			peer_stats->retry_bytes = (ts->try_cnt - 1) * msdu->len;
+			peer_stats->retry_pkts += ts->try_cnt - 1;
+			peer_stats->retry_bytes += (ts->try_cnt - 1) * msdu->len;
 		}
 	}
 
 	if (ts->try_cnt >= 1 &&
 	    ts->status == HAL_WBM_TQM_REL_REASON_CMD_REMOVE_TX) {
 		if (ts->try_cnt == 1) {
-			peer_stats->retry_pkts = 1;
-			peer_stats->retry_bytes = msdu->len;
+			peer_stats->retry_pkts += 1;
+			peer_stats->retry_bytes += msdu->len;
 		} else {
-			peer_stats->retry_pkts = ts->try_cnt - 1;
-			peer_stats->retry_bytes = (ts->try_cnt - 1) * msdu->len;
+			peer_stats->retry_pkts += ts->try_cnt - 1;
+			peer_stats->retry_bytes += (ts->try_cnt - 1) * msdu->len;
 		}
-		peer_stats->failed_pkts = 1;
-		peer_stats->failed_bytes = msdu->len;
+		peer_stats->failed_pkts += 1;
+		peer_stats->failed_bytes += msdu->len;
 	}
 }
 
