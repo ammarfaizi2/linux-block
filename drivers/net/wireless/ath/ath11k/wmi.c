@@ -3491,17 +3491,6 @@ static bool ath11k_wmi_check_wep_reauth(struct ath11k_base *ab,
 	return false;
 }
 
-static bool ath11k_wmi_check_pmf(struct ieee80211_hdr *hdr)
-{
-	if (ieee80211_is_auth(hdr->frame_control) &&
-	    ieee80211_is_action(hdr->frame_control) &&
-	    ieee80211_is_deauth(hdr->frame_control) &&
-	    ieee80211_is_disassoc(hdr->frame_control))
-		return true;
-
-	return false;
-}
-
 int ath11k_pull_mgmt_rx_params_tlv(struct ath11k_base *ab,
 				   struct sk_buff *skb,
 				   struct mgmt_rx_event_params *hdr)
@@ -4394,7 +4383,7 @@ void ath11k_mgmt_rx_event(struct ath11k_base *ab, struct sk_buff *skb)
 		/* However in case of PMF, FW delivers decrypted frames
 		 * with Protected Bit set. Don't clear that.
 		 */
-		} else if (!ath11k_wmi_check_pmf(hdr)) {
+		} else if (!ieee80211_is_robust_mgmt_frame(hdr))  {
 			status->flag |= RX_FLAG_DECRYPTED;
 
 			status->flag |= RX_FLAG_IV_STRIPPED |
