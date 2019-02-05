@@ -12,6 +12,7 @@
 #include "hw.h"
 #include "dp_tx.h"
 #include "dp_rx.h"
+#include "testmode.h"
 
 #define CHAN2G(_channel, _freq, _flags) { \
 	.band                   = NL80211_BAND_2GHZ, \
@@ -4687,6 +4688,7 @@ static const struct ieee80211_ops ath11k_ops = {
 	.set_bitrate_mask		= ath11k_mac_op_set_bitrate_mask,
 	.get_survey			= ath11k_get_survey,
 	.flush				= ath11k_flush,
+	CFG80211_TESTMODE_CMD(ath11k_tm_cmd)
 #ifdef CONFIG_MAC80211_DEBUGFS
 	.sta_add_debugfs		= ath11k_sta_add_debugfs,
 #endif

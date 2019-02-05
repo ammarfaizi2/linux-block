@@ -18,3 +18,4 @@ ath11k-y += core.o \
 
 ath11k-$(CONFIG_ATH11K_DEBUGFS) += debug_htt_stats.o
 ath11k-$(CONFIG_MAC80211_DEBUGFS) += debugfs_sta.o
+ath11k-$(CONFIG_NL80211_TESTMODE) += testmode.o
