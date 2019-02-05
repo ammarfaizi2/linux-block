@@ -1,0 +1,277 @@
+// SPDX-License-Identifier: ISC
+/*
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ */
+
+#include "core.h"
+#include "debug.h"
+
+void
+ath11k_accumulate_per_peer_tx_stats(struct ath11k_sta *arsta,
+				    struct ath11k_per_peer_tx_stats *peer_stats,
+				    u8 legacy_rate_idx)
+{
+	struct rate_info *txrate = &arsta->txrate;
+	struct ath11k_htt_tx_stats *tx_stats;
+	int gi, mcs, bw, nss;
+
+	if (!arsta->tx_stats)
+		return;
+
+	tx_stats = arsta->tx_stats;
+	gi = (arsta->txrate.flags & RATE_INFO_FLAGS_SHORT_GI);
+	mcs = txrate->mcs;
+	bw = txrate->bw;
+	nss = txrate->nss - 1;
+
+#define STATS_OP_FMT(name) tx_stats->stats[ATH11K_STATS_TYPE_##name]
+
+	if (txrate->flags == RATE_INFO_FLAGS_VHT_MCS) {
+		STATS_OP_FMT(SUCC).vht[0][mcs] += peer_stats->succ_bytes;
+		STATS_OP_FMT(SUCC).vht[1][mcs] += peer_stats->succ_pkts;
+		STATS_OP_FMT(FAIL).vht[0][mcs] += peer_stats->failed_bytes;
+		STATS_OP_FMT(FAIL).vht[1][mcs] += peer_stats->failed_pkts;
+		STATS_OP_FMT(RETRY).vht[0][mcs] += peer_stats->retry_bytes;
+		STATS_OP_FMT(RETRY).vht[1][mcs] += peer_stats->retry_pkts;
+	} else if (txrate->flags == RATE_INFO_FLAGS_MCS) {
+		STATS_OP_FMT(SUCC).ht[0][mcs] += peer_stats->succ_bytes;
+		STATS_OP_FMT(SUCC).ht[1][mcs] += peer_stats->succ_pkts;
+		STATS_OP_FMT(FAIL).ht[0][mcs] += peer_stats->failed_bytes;
+		STATS_OP_FMT(FAIL).ht[1][mcs] += peer_stats->failed_pkts;
+		STATS_OP_FMT(RETRY).ht[0][mcs] += peer_stats->retry_bytes;
+		STATS_OP_FMT(RETRY).ht[1][mcs] += peer_stats->retry_pkts;
+	} else {
+		mcs = legacy_rate_idx;
+
+		STATS_OP_FMT(SUCC).legacy[0][mcs] += peer_stats->succ_bytes;
+		STATS_OP_FMT(SUCC).legacy[1][mcs] += peer_stats->succ_pkts;
+		STATS_OP_FMT(FAIL).legacy[0][mcs] += peer_stats->failed_bytes;
+		STATS_OP_FMT(FAIL).legacy[1][mcs] += peer_stats->failed_pkts;
+		STATS_OP_FMT(RETRY).legacy[0][mcs] += peer_stats->retry_bytes;
+		STATS_OP_FMT(RETRY).legacy[1][mcs] += peer_stats->retry_pkts;
+	}
+
+	if (peer_stats->is_ampdu) {
+		if (peer_stats->status != HTT_PPDU_STATS_USER_STATUS_INVALID &&
+		    peer_stats->status != HTT_PPDU_STATS_USER_STATUS_OK)
+			tx_stats->ba_fails += 1;
+
+		if (txrate->flags == RATE_INFO_FLAGS_MCS) {
+			STATS_OP_FMT(AMPDU).ht[0][mcs] +=
+			peer_stats->succ_bytes + peer_stats->retry_bytes;
+			STATS_OP_FMT(AMPDU).ht[1][mcs] +=
+			peer_stats->succ_pkts + peer_stats->retry_pkts;
+		} else {
+			STATS_OP_FMT(AMPDU).vht[0][mcs] +=
+			peer_stats->succ_bytes + peer_stats->retry_bytes;
+			STATS_OP_FMT(AMPDU).vht[1][mcs] +=
+			peer_stats->succ_pkts + peer_stats->retry_pkts;
+		}
+		STATS_OP_FMT(AMPDU).bw[0][bw] +=
+			peer_stats->succ_bytes + peer_stats->retry_bytes;
+		STATS_OP_FMT(AMPDU).nss[0][nss] +=
+			peer_stats->succ_bytes + peer_stats->retry_bytes;
+		STATS_OP_FMT(AMPDU).gi[0][gi] +=
+			peer_stats->succ_bytes + peer_stats->retry_bytes;
+		STATS_OP_FMT(AMPDU).bw[1][bw] +=
+			peer_stats->succ_pkts + peer_stats->retry_pkts;
+		STATS_OP_FMT(AMPDU).nss[1][nss] +=
+			peer_stats->succ_pkts + peer_stats->retry_pkts;
+		STATS_OP_FMT(AMPDU).gi[1][gi] +=
+			peer_stats->succ_pkts + peer_stats->retry_pkts;
+	} else {
+		if (peer_stats->status != HTT_PPDU_STATS_USER_STATUS_INVALID &&
+		    peer_stats->status != HTT_PPDU_STATS_USER_STATUS_OK)
+			tx_stats->ack_fails += 1;
+	}
+
+	STATS_OP_FMT(SUCC).bw[0][bw] += peer_stats->succ_bytes;
+	STATS_OP_FMT(SUCC).nss[0][nss] += peer_stats->succ_bytes;
+	STATS_OP_FMT(SUCC).gi[0][gi] += peer_stats->succ_bytes;
+
+	STATS_OP_FMT(SUCC).bw[1][bw] += peer_stats->succ_pkts;
+	STATS_OP_FMT(SUCC).nss[1][nss] += peer_stats->succ_pkts;
+	STATS_OP_FMT(SUCC).gi[1][gi] += peer_stats->succ_pkts;
+
+	STATS_OP_FMT(FAIL).bw[0][bw] += peer_stats->failed_bytes;
+	STATS_OP_FMT(FAIL).nss[0][nss] += peer_stats->failed_bytes;
+	STATS_OP_FMT(FAIL).gi[0][gi] += peer_stats->failed_bytes;
+
+	STATS_OP_FMT(FAIL).bw[1][bw] += peer_stats->failed_pkts;
+	STATS_OP_FMT(FAIL).nss[1][nss] += peer_stats->failed_pkts;
+	STATS_OP_FMT(FAIL).gi[1][gi] += peer_stats->failed_pkts;
+
+	STATS_OP_FMT(RETRY).bw[0][bw] += peer_stats->retry_bytes;
+	STATS_OP_FMT(RETRY).nss[0][nss] += peer_stats->retry_bytes;
+	STATS_OP_FMT(RETRY).gi[0][gi] += peer_stats->retry_bytes;
+
+	STATS_OP_FMT(RETRY).bw[1][bw] += peer_stats->retry_pkts;
+	STATS_OP_FMT(RETRY).nss[1][nss] += peer_stats->retry_pkts;
+	STATS_OP_FMT(RETRY).gi[1][gi] += peer_stats->retry_pkts;
+}
+
+void ath11k_update_per_peer_stats_from_txcompl(struct ath11k *ar,
+					       struct sk_buff *msdu,
+					       struct hal_tx_status *ts)
+{
+	struct ath11k_base *ab = ar->ab;
+	struct ath11k_per_peer_tx_stats *peer_stats = &ar->cached_stats;
+	struct ath11k_peer *peer;
+	struct ath11k_sta *arsta;
+	struct ieee80211_sta *sta;
+	u16 rate;
+	u8 rate_idx;
+	int ret;
+
+	rcu_read_lock();
+	spin_lock_bh(&ab->data_lock);
+	peer = ath11k_peer_find_by_id(ab, ts->peer_id);
+	if (!peer || !peer->sta) {
+		ath11k_warn(ab, "failed to find the peer\n");
+		spin_unlock_bh(&ab->data_lock);
+		rcu_read_unlock();
+		return;
+	}
+
+	sta = peer->sta;
+	arsta = (struct ath11k_sta *)sta->drv_priv;
+
+	memset(&arsta->txrate, 0, sizeof(arsta->txrate));
+
+	if (ts->pkt_type == HAL_TX_RATE_STATS_PKT_TYPE_11A ||
+	    ts->pkt_type == HAL_TX_RATE_STATS_PKT_TYPE_11B) {
+		ret = ath11k_mac_hw_ratecode_to_legacy_rate(ts->mcs,
+							    ts->pkt_type,
+							    &rate_idx,
+							    &rate);
+		if (ret < 0) {
+			spin_unlock_bh(&ab->data_lock);
+			rcu_read_unlock();
+			return;
+		}
+		arsta->txrate.legacy = rate;
+	} else if (ts->pkt_type == HAL_TX_RATE_STATS_PKT_TYPE_11N) {
+		arsta->txrate.mcs = ts->mcs + 8 * (arsta->last_txrate.nss - 1);
+		arsta->txrate.flags = RATE_INFO_FLAGS_MCS;
+		if (ts->sgi)
+			arsta->txrate.flags |= RATE_INFO_FLAGS_SHORT_GI;
+	} else if (ts->pkt_type == HAL_TX_RATE_STATS_PKT_TYPE_11AC) {
+		arsta->txrate.mcs = ts->mcs;
+		arsta->txrate.flags = RATE_INFO_FLAGS_VHT_MCS;
+		if (ts->sgi)
+			arsta->txrate.flags |= RATE_INFO_FLAGS_SHORT_GI;
+	} else {
+		/*TODO: update HE rates */
+	}
+
+	arsta->txrate.nss = arsta->last_txrate.nss;
+	arsta->txrate.bw = ts->bw - 2;
+
+	ath11k_accumulate_per_peer_tx_stats(arsta, peer_stats, rate_idx);
+	spin_unlock_bh(&ab->data_lock);
+	rcu_read_unlock();
+}
+
+static ssize_t ath11k_dbg_sta_dump_tx_stats(struct file *file,
+					    char __user *user_buf,
+					    size_t count, loff_t *ppos)
+{
+	struct ieee80211_sta *sta = file->private_data;
+	struct ath11k_sta *arsta = (struct ath11k_sta *)sta->drv_priv;
+	struct ath11k *ar = arsta->arvif->ar;
+	struct ath11k_htt_data_stats *stats;
+	const char *str_name[ATH11K_STATS_TYPE_MAX] = {"succ", "fail",
+						       "retry", "ampdu"};
+	const char *str[ATH11K_COUNTER_TYPE_MAX] = {"bytes", "packets"};
+	int len = 0, i, j, k, retval = 0;
+	const int size = 2 * 4096;
+	char *buf;
+
+	buf = kzalloc(size, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
+
+	mutex_lock(&ar->conf_mutex);
+
+	spin_lock_bh(&ar->data_lock);
+	for (k = 0; k < ATH11K_STATS_TYPE_MAX; k++) {
+		for (j = 0; j < ATH11K_COUNTER_TYPE_MAX; j++) {
+			stats = &arsta->tx_stats->stats[k];
+			len += scnprintf(buf + len, size - len, "%s_%s\n",
+					 str_name[k],
+					 str[j]);
+			len += scnprintf(buf + len, size - len,
+					 " VHT MCS %s\n",
+					 str[j]);
+			for (i = 0; i < ATH11K_VHT_MCS_NUM; i++)
+				len += scnprintf(buf + len, size - len,
+						 "  %llu ",
+						 stats->vht[j][i]);
+			len += scnprintf(buf + len, size - len, "\n");
+			len += scnprintf(buf + len, size - len, " HT MCS %s\n",
+					 str[j]);
+			for (i = 0; i < ATH11K_HT_MCS_NUM; i++)
+				len += scnprintf(buf + len, size - len,
+						 "  %llu ", stats->ht[j][i]);
+			len += scnprintf(buf + len, size - len, "\n");
+			len += scnprintf(buf + len, size - len,
+					" BW %s (20,40,80,160 MHz)\n", str[j]);
+			len += scnprintf(buf + len, size - len,
+					 "  %llu %llu %llu %llu\n",
+					 stats->bw[j][0], stats->bw[j][1],
+					 stats->bw[j][2], stats->bw[j][3]);
+			len += scnprintf(buf + len, size - len,
+					 " NSS %s (1x1,2x2,3x3,4x4)\n", str[j]);
+			len += scnprintf(buf + len, size - len,
+					 "  %llu %llu %llu %llu\n",
+					 stats->nss[j][0], stats->nss[j][1],
+					 stats->nss[j][2], stats->nss[j][3]);
+			len += scnprintf(buf + len, size - len,
+					 " GI %s (LGI,SGI)\n",
+					 str[j]);
+			len += scnprintf(buf + len, size - len, "  %llu %llu\n",
+					 stats->gi[j][0], stats->gi[j][1]);
+			len += scnprintf(buf + len, size - len,
+					 " legacy rate %s (1,2 ... Mbps)\n  ",
+					 str[j]);
+			for (i = 0; i < ATH11K_LEGACY_NUM; i++)
+				len += scnprintf(buf + len, size - len, "%llu ",
+						 stats->legacy[j][i]);
+			len += scnprintf(buf + len, size - len, "\n");
+		}
+	}
+
+	len += scnprintf(buf + len, size - len,
+			 "\nTX duration\n %llu usecs\n",
+			 arsta->tx_stats->tx_duration);
+	len += scnprintf(buf + len, size - len,
+			"BA fails\n %llu\n", arsta->tx_stats->ba_fails);
+	len += scnprintf(buf + len, size - len,
+			"ack fails\n %llu\n", arsta->tx_stats->ack_fails);
+	spin_unlock_bh(&ar->data_lock);
+
+	if (len > size)
+		len = size;
+	retval = simple_read_from_buffer(user_buf, count, ppos, buf, len);
+	kfree(buf);
+
+	mutex_unlock(&ar->conf_mutex);
+	return retval;
+}
+
+static const struct file_operations fops_tx_stats = {
+	.read = ath11k_dbg_sta_dump_tx_stats,
+	.open = simple_open,
+	.owner = THIS_MODULE,
+	.llseek = default_llseek,
+};
+
+void ath11k_sta_add_debugfs(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+			    struct ieee80211_sta *sta, struct dentry *dir)
+{
+	struct ath11k *ar = hw->priv;
+
+	if (ath11k_debug_is_extd_tx_stats_enabled(ar))
+		debugfs_create_file("tx_stats", 0400, dir, sta,
+				    &fops_tx_stats);
+}

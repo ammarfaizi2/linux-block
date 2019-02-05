@@ -1,0 +1,30 @@
+/* SPDX-License-Identifier: ISC */
+/*
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ */
+
+#ifndef ATH11K_DP_TX_H
+#define ATH11K_DP_TX_H
+
+#include "core.h"
+#include "hal_tx.h"
+
+struct dp_htt_wbm_tx_status {
+	u32 msdu_id;
+	bool acked;
+	int ack_rssi;
+};
+
+int ath11k_dp_htt_h2t_ver_req_msg(struct ath11k_base *ab);
+int ath11k_dp_tx(struct ath11k *ar, struct ath11k_vif *arvif,
+		 struct sk_buff *skb);
+void ath11k_dp_tx_completion_handler(struct ath11k_base *ab, int ring_id);
+int ath11k_dp_send_reo_cmd(struct ath11k_base *ab, struct dp_rx_tid *rx_tid,
+			   enum hal_reo_cmd_type type,
+			   struct ath11k_hal_reo_cmd *cmd,
+			   void (*func)(struct ath11k_dp *, void *,
+					enum hal_reo_cmd_status));
+
+int ath11k_dp_htt_h2t_ppdu_stats_req(struct ath11k *ar, u32 mask);
+int ath11k_dp_htt_h2t_ext_stats_req(struct ath11k *ar, u8 mask, u64 cookie);
+#endif
