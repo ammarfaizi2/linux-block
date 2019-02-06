@@ -3038,7 +3038,7 @@ sub process {
 				}
 
 				if ($comment !~ /^$/ &&
-				    $rawline !~ /^\+\Q$comment\E SPDX-License-Identifier: /) {
+				    $rawline !~ /^\+$comment SPDX-License-Identifier: /) {
 					 WARN("SPDX_LICENSE_TAG",
 					      "Missing or malformed SPDX-License-Identifier tag in line $checklicenseline\n" . $herecurr);
 				} elsif ($rawline =~ /(SPDX-License-Identifier: .*)/) {
