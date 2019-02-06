@@ -509,7 +509,7 @@ fail:
 	return ret;
 }
 
-static void ath11k_recalc_rtscts_prot(struct ath11k_vif *arvif)
+static int ath11k_recalc_rtscts_prot(struct ath11k_vif *arvif)
 {
 	struct ath11k *ar = arvif->ar;
 	u32 vdev_param, rts_cts = 0;
@@ -521,7 +521,7 @@ static void ath11k_recalc_rtscts_prot(struct ath11k_vif *arvif)
 
 	/* Enable RTS/CTS protection for sw retries (when legacy stations
 	 * are in BSS) or by default only for second rate series.
-	 * TODO Check if we need to enable CTS 2 Self in any case
+	 * TODO: Check if we need to enable CTS 2 Self in any case
 	 */
 	rts_cts = WMI_USE_RTS_CTS;
 
@@ -532,7 +532,7 @@ static void ath11k_recalc_rtscts_prot(struct ath11k_vif *arvif)
 
 	/* Need not send duplicate param value to firmware */
 	if (arvif->rtscts_prot_mode == rts_cts)
-		return;
+		return 0;
 
 	arvif->rtscts_prot_mode = rts_cts;
 
@@ -544,6 +544,8 @@ static void ath11k_recalc_rtscts_prot(struct ath11k_vif *arvif)
 	if (ret)
 		ath11k_warn(ar->ab, "failed to recalculate rts/cts prot for vdev %d: %d\n",
 			    arvif->vdev_id, ret);
+
+	return ret;
 }
 
 static int ath11k_mac_set_kickout(struct ath11k_vif *arvif)
@@ -842,7 +844,7 @@ static void ath11k_peer_assoc_h_basic(struct ath11k *ar,
 	arg->vdev_id = arvif->vdev_id;
 	arg->peer_associd = aid;
 	arg->auth_flag = true;
-	/* TODO STA WAR in ath10k for listen interval required? */
+	/* TODO: STA WAR in ath10k for listen interval required? */
 	arg->peer_listen_intval = ar->hw->conf.listen_interval;
 	arg->peer_nss = 1;
 	arg->peer_caps = vif->bss_conf.assoc_capability;
@@ -896,11 +898,11 @@ static void ath11k_peer_assoc_h_crypto(struct ath11k *ar,
 	}
 
 	if (sta->mfp) {
-		/* TODO Need to check if FW supports PMF? */
+		/* TODO: Need to check if FW supports PMF? */
 		arg->is_pmf_enabled = true;
 	}
 
-	/* TODO safe_mode_enabled (bypass 4-way handshake) flag req? */
+	/* TODO: safe_mode_enabled (bypass 4-way handshake) flag req? */
 }
 
 static void ath11k_peer_assoc_h_rates(struct ath11k *ar,
@@ -1155,7 +1157,7 @@ static void ath11k_peer_assoc_h_vht(struct ath11k *ar,
 
 	arg->vht_flag = true;
 
-	/* TODO similar flags required? */
+	/* TODO: similar flags required? */
 	arg->vht_capable = true;
 
 	if (def.chan->band == NL80211_BAND_2GHZ)
@@ -1200,13 +1202,13 @@ static void ath11k_peer_assoc_h_vht(struct ath11k *ar,
 	arg->tx_mcs_set = ath11k_peer_assoc_h_vht_limit(
 		__le16_to_cpu(vht_cap->vht_mcs.tx_mcs_map), vht_mcs_mask);
 
-	/* TODO  Check */
+	/* TODO:  Check */
 	arg->tx_max_mcs_nss = 0xFF;
 
 	ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "mac vht peer %pM max_mpdu %d flags 0x%x\n",
 		   sta->addr, arg->peer_max_mpdu, arg->peer_flags);
 
-	/* TODO rxnss_override */
+	/* TODO: rxnss_override */
 }
 
 static void ath11k_peer_assoc_h_he(struct ath11k *ar,
@@ -1214,7 +1216,7 @@ static void ath11k_peer_assoc_h_he(struct ath11k *ar,
 				   struct ieee80211_sta *sta,
 				   struct peer_assoc_params *arg)
 {
-	/* TODO */
+	/* TODO: Implementation */
 }
 
 static void ath11k_peer_assoc_h_smps(struct ieee80211_sta *sta,
@@ -1254,13 +1256,13 @@ static void ath11k_peer_assoc_h_qos(struct ath11k *ar,
 	switch (arvif->vdev_type) {
 	case WMI_VDEV_TYPE_AP:
 		if (sta->wme) {
-			/* TODO Check WME vs QoS */
+			/* TODO: Check WME vs QoS */
 			arg->is_wme_set = true;
 			arg->qos_flag = true;
 		}
 
 		if (sta->wme && sta->uapsd_queues) {
-			/* TODO Check WME vs QoS */
+			/* TODO: Check WME vs QoS */
 			arg->is_wme_set = true;
 			arg->apsd_flag = true;
 			arg->peer_rate_caps |= WMI_HOST_RC_UAPSD_FLAG;
@@ -1350,7 +1352,7 @@ static void ath11k_peer_assoc_h_phymode(struct ath11k *ar,
 		} else {
 			phymode = MODE_11B;
 		}
-		/* TODO HE */
+		/* TODO: HE */
 
 		break;
 	case NL80211_BAND_5GHZ:
@@ -1367,7 +1369,7 @@ static void ath11k_peer_assoc_h_phymode(struct ath11k *ar,
 		} else {
 			phymode = MODE_11A;
 		}
-		/* TODO HE Phymode */
+		/* TODO: HE Phymode */
 		break;
 	default:
 		break;
@@ -1403,7 +1405,7 @@ static void ath11k_peer_assoc_prepare(struct ath11k *ar,
 	ath11k_peer_assoc_h_phymode(ar, vif, sta, arg);
 	ath11k_peer_assoc_h_smps(sta, arg);
 
-	/* TODO amsdu_disable req? */
+	/* TODO: amsdu_disable req? */
 }
 
 static void ath11k_bss_assoc(struct ieee80211_hw *hw,
@@ -1496,7 +1498,7 @@ static void ath11k_bss_disassoc(struct ieee80211_hw *hw,
 
 	arvif->is_up = false;
 
-	/* TODO cancel connection_loss_work */
+	/* TODO: cancel connection_loss_work */
 }
 
 static void ath11k_bss_info_changed(struct ieee80211_hw *hw,
@@ -1696,7 +1698,7 @@ static int ath11k_scan_stop(struct ath11k *ar)
 
 	lockdep_assert_held(&ar->conf_mutex);
 
-	/* TODO Fill other STOP Params */
+	/* TODO: Fill other STOP Params */
 	arg.pdev_id = ar->pdev->pdev_id;
 
 	ret = ath11k_wmi_send_scan_stop_cmd(ar, &arg);
@@ -1924,7 +1926,7 @@ static int ath11k_install_key(struct ath11k_vif *arvif,
 	reinit_completion(&ar->install_key_done);
 
 	if (cmd == DISABLE_KEY) {
-		/* TODO Check if FW expects cipher value other than NONE for del */
+		/* TODO: Check if FW expects  value other than NONE for del */
 		/* arg.key_cipher = WMI_CIPHER_NONE; */
 		arg.key_len = 0;
 		arg.key_data = NULL;
@@ -1934,7 +1936,7 @@ static int ath11k_install_key(struct ath11k_vif *arvif,
 	switch (key->cipher) {
 	case WLAN_CIPHER_SUITE_CCMP:
 		arg.key_cipher = WMI_CIPHER_AES_CCM;
-		/* TODO Re-check if flag is valid */
+		/* TODO: Re-check if flag is valid */
 		key->flags |= IEEE80211_KEY_FLAG_GENERATE_IV_MGMT;
 		break;
 	case WLAN_CIPHER_SUITE_TKIP:
@@ -2190,7 +2192,7 @@ static int ath11k_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 			arvif->wep_keys[key->keyidx] = NULL;
 			ath11k_clear_vdev_key(arvif, key);
 		}
-		/* TODO mcast fix(ath10k) for fw applicable? */
+		/* TODO: mcast fix(ath10k) for fw applicable? */
 	}
 
 	ret = ath11k_install_key(arvif, key, cmd, peer_addr, flags);
@@ -2291,7 +2293,7 @@ ath11k_mac_bitrate_mask_num_vht_rates(struct ath11k *ar,
 	return num_rates;
 }
 
-static void
+static int
 ath11k_mac_set_peer_vht_fixed_rate(struct ath11k_vif *arvif,
 				   struct ieee80211_sta *sta,
 				   const struct cfg80211_bitrate_mask *mask,
@@ -2300,7 +2302,7 @@ ath11k_mac_set_peer_vht_fixed_rate(struct ath11k_vif *arvif,
 	struct ath11k *ar;
 	u8 vht_rate, nss;
 	u32 rate_code;
-	int err, i;
+	int ret, i;
 
 	lockdep_assert_held(&ar->conf_mutex);
 
@@ -2317,7 +2319,7 @@ ath11k_mac_set_peer_vht_fixed_rate(struct ath11k_vif *arvif,
 	if (!nss) {
 		ath11k_warn(ar->ab, "No single VHT Fixed rate found to set for %pM",
 			    sta->addr);
-		return;
+		return -EINVAL;
 	}
 
 	ath11k_dbg(ar->ab, ATH11K_DBG_MAC,
@@ -2326,14 +2328,16 @@ ath11k_mac_set_peer_vht_fixed_rate(struct ath11k_vif *arvif,
 
 	rate_code = ATH11K_HW_RATE_CODE(vht_rate, nss,
 					WMI_RATE_PREAMBLE_VHT);
-	err = ath11k_wmi_set_peer_param(ar, sta->addr,
+	ret = ath11k_wmi_set_peer_param(ar, sta->addr,
 					arvif->vdev_id,
 					WMI_PEER_PARAM_FIXED_RATE,
 					rate_code);
-	if (err)
+	if (ret)
 		ath11k_warn(ar->ab,
 			    "failed to update STA %pM Fixed Rate %d: %d\n",
-			     sta->addr, rate_code, err);
+			     sta->addr, rate_code, ret);
+
+	return ret;
 }
 
 static int ath11k_station_assoc(struct ath11k *ar,
@@ -2380,11 +2384,16 @@ static int ath11k_station_assoc(struct ath11k *ar,
 	 * Note that all other rates and NSS will be disabled for this peer.
 	 */
 	if (sta->vht_cap.vht_supported && num_vht_rates == 1)
-		ath11k_mac_set_peer_vht_fixed_rate(arvif, sta, mask, band);
+		ret = ath11k_mac_set_peer_vht_fixed_rate(arvif, sta, mask,
+							 band);
+		if (ret)
+			return ret;
 
 	if (!sta->wme) {
 		arvif->num_legacy_stations++;
-		ath11k_recalc_rtscts_prot(arvif);
+		ret = ath11k_recalc_rtscts_prot(arvif);
+		if (ret)
+			return ret;
 	}
 
 	/* Plumb cached keys only for static WEP */
@@ -2398,7 +2407,7 @@ static int ath11k_station_assoc(struct ath11k *ar,
 		}
 	}
 
-	/* TODO per-STA AP PS(UAPSD,MAX_SP) settings */
+	/* TODO: per-STA AP PS(UAPSD,MAX_SP) settings */
 
 	return 0;
 }
@@ -2414,7 +2423,9 @@ static int ath11k_station_disassoc(struct ath11k *ar,
 
 	if (!sta->wme) {
 		arvif->num_legacy_stations--;
-		ath11k_recalc_rtscts_prot(arvif);
+		ret = ath11k_recalc_rtscts_prot(arvif);
+		if (ret)
+			return ret;
 	}
 
 	ret = ath11k_clear_peer_keys(arvif, sta->addr);
@@ -2513,7 +2524,7 @@ static void ath11k_sta_rc_update_wk(struct work_struct *wk)
 		 * fixed rate. But even if any HT rates are configured in
 		 * the bitrate mask, device will not switch to those rates
 		 * when per-peer Fixed rate is set.
-		 * TODO Check RATEMASK_CMDID to support auto rates selection
+		 * TODO: Check RATEMASK_CMDID to support auto rates selection
 		 * across HT/VHT and for multiple VHT MCS support.
 		 */
 		if (sta->vht_cap.vht_supported && num_vht_rates == 1) {
@@ -2941,7 +2952,7 @@ static int ath11k_mac_set_txbf_conf(struct ath11k_vif *arvif)
 			value |= WMI_VDEV_PARAM_TXBF_MU_TX_BFER;
 	}
 
-	/* TODO SUBFEE not validated in HK, disable here until validated? */
+	/* TODO: SUBFEE not validated in HK, disable here until validated? */
 
 	if (vht_cap & IEEE80211_VHT_CAP_SU_BEAMFORMEE_CAPABLE) {
 		value |= WMI_VDEV_PARAM_TXBF_SU_TX_BFEE;
@@ -2980,7 +2991,7 @@ static void ath11k_set_vht_txbf_cap(struct ath11k *ar, u32 *vht_cap)
 	sound_dim >>= IEEE80211_VHT_CAP_SOUNDING_DIMENSIONS_SHIFT;
 	*vht_cap &= ~IEEE80211_VHT_CAP_SOUNDING_DIMENSIONS_MASK;
 
-	/* TODO Need to check invalid STS and Sound_dim values set by FW? */
+	/* TODO: Need to check invalid STS and Sound_dim values set by FW? */
 
 	/* Enable Sounding Dimension Field only if SU BF is enabled */
 	if (subfer) {
@@ -4511,7 +4522,7 @@ ath11k_mac_op_set_bitrate_mask(struct ieee80211_hw *hw,
 		 * the VHT rate as fixed rate for vht peers.
 		 * - Multiple VHT Rates : When Multiple VHT rates are given,this
 		 * can be set using RATEMASK CMD which uses FW rate-ctl alg.
-		 * TODO Setting multiple VHT MCS and replacing peer_assoc with
+		 * TODO: Setting multiple VHT MCS and replacing peer_assoc with
 		 * RATEMASK_CMDID can cover all use cases of setting rates
 		 * across multiple preambles and rates within same type.
 		 * But requires more validation of the command at this point.
@@ -4522,7 +4533,7 @@ ath11k_mac_op_set_bitrate_mask(struct ieee80211_hw *hw,
 
 		if (!ath11k_mac_vht_mcs_range_present(ar, band, mask) &&
 		    num_rates > 1) {
-			/* TODO Handle multiple VHT MCS values setting using
+			/* TODO: Handle multiple VHT MCS values setting using
 			 * RATEMASK CMD
 			 */
 			ath11k_warn(ar->ab,

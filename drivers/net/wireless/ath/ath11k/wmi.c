@@ -910,6 +910,7 @@ int ath11k_wmi_send_peer_delete_cmd(struct ath11k *ar,
 int  ath11k_send_green_ap_ps_enable_cmd(struct ath11k_pdev_wmi *wmi_handle,
 					u32 value, u8 mac_id)
 {
+	struct ath11k_base *ab = wmi_handle->wmi_sc->sc;
 	struct wmi_pdev_green_ap_ps_enable_cmd_param *cmd;
 	struct sk_buff *skb;
 	int ret, len;
@@ -931,7 +932,7 @@ int  ath11k_send_green_ap_ps_enable_cmd(struct ath11k_pdev_wmi *wmi_handle,
 				  WMI_PDEV_GREEN_AP_PS_ENABLE_CMDID);
 
 	if (ret) {
-		printk("Failed to send WMI_PDEV_GREEN_AP_PS_ENABLE_CMDID");
+		ath11k_warn(ab, "Failed to send WMI_PDEV_GREEN_AP_PS_ENABLE_CMDID");
 		dev_kfree_skb(skb);
 	}
 	return ret;
@@ -940,6 +941,7 @@ int  ath11k_send_green_ap_ps_enable_cmd(struct ath11k_pdev_wmi *wmi_handle,
 int  ath11k_send_gpio_config_cmd(struct ath11k_pdev_wmi *wmi_handle,
 				 struct gpio_config_params *param)
 {
+	struct ath11k_base *ab = wmi_handle->wmi_sc->sc;
 	struct wmi_gpio_config_cmd_param *cmd;
 	struct sk_buff *skb;
 	int ret, len;
@@ -968,7 +970,7 @@ int  ath11k_send_gpio_config_cmd(struct ath11k_pdev_wmi *wmi_handle,
 				  WMI_GPIO_CONFIG_CMDID);
 
 	if (ret) {
-		printk("Failed to send WMI_GPIO_CONFIG_CMDID");
+		ath11k_warn(ab, "Failed to send WMI_GPIO_CONFIG_CMDID");
 		dev_kfree_skb(skb);
 	}
 	return ret;
@@ -977,6 +979,7 @@ int  ath11k_send_gpio_config_cmd(struct ath11k_pdev_wmi *wmi_handle,
 int ath11k_send_gpio_output_cmd(struct ath11k_pdev_wmi *wmi_handle,
 				struct gpio_output_params *param)
 {
+	struct ath11k_base *ab = wmi_handle->wmi_sc->sc;
 	struct wmi_gpio_output_cmd_param *cmd;
 	struct sk_buff *skb;
 	int ret, len;
@@ -997,7 +1000,7 @@ int ath11k_send_gpio_output_cmd(struct ath11k_pdev_wmi *wmi_handle,
 				  WMI_GPIO_OUTPUT_CMDID);
 
 	if (ret) {
-		printk("Failed to send WMI_GPIO_OUTPUT_CMDID");
+		ath11k_warn(ab, "Failed to send WMI_GPIO_OUTPUT_CMDID");
 		dev_kfree_skb(skb);
 	}
 	return ret;
@@ -1006,6 +1009,7 @@ int ath11k_send_gpio_output_cmd(struct ath11k_pdev_wmi *wmi_handle,
 int ath11k_send_vdev_set_fwtest_param_cmd(struct ath11k_pdev_wmi *wmi_handle,
 					  struct set_fwtest_params *param)
 {
+	struct ath11k_base *ab = wmi_handle->wmi_sc->sc;
 	struct wmi_fwtest_set_param_cmd_param *cmd;
 	struct sk_buff *skb;
 	int ret, len;
@@ -1027,7 +1031,7 @@ int ath11k_send_vdev_set_fwtest_param_cmd(struct ath11k_pdev_wmi *wmi_handle,
 				  WMI_FWTEST_CMDID);
 
 	if (ret) {
-		printk("Failed to send WMI_FWTEST_CMDID");
+		ath11k_warn(ab, "Failed to send WMI_FWTEST_CMDID");
 		dev_kfree_skb(skb);
 	}
 	return ret;
@@ -1423,6 +1427,7 @@ int ath11k_wmi_set_sta_ps_param(struct ath11k *ar, u32 vdev_id,
 int ath11k_send_crash_inject_cmd(struct ath11k_pdev_wmi *wmi_handle,
 				 struct crash_inject *param)
 {
+	struct ath11k_base *ab = wmi_handle->wmi_sc->sc;
 	struct wmi_force_fw_hang_cmd *cmd;
 	struct sk_buff *skb;
 	int ret, len;
@@ -1444,7 +1449,7 @@ int ath11k_send_crash_inject_cmd(struct ath11k_pdev_wmi *wmi_handle,
 				  WMI_FORCE_FW_HANG_CMDID);
 
 	if (ret) {
-		printk("Failed to send WMI_FORCE_FW_HANG_CMDID");
+		ath11k_warn(ab, "Failed to send WMI_FORCE_FW_HANG_CMDID");
 		dev_kfree_skb(skb);
 	}
 	return ret;
@@ -2325,6 +2330,7 @@ int ath11k_wmi_send_scan_chan_list_cmd(struct ath11k *ar,
 int ath11k_send_set_sta_ps_mode_cmd(struct ath11k_pdev_wmi *wmi_handle,
 				    u32 vdev_id, u8 val)
 {
+	struct ath11k_base *ab = wmi_handle->wmi_sc->sc;
 	struct wmi_sta_powersave_mode_cmd *cmd;
 	struct sk_buff *skb;
 	int ret, len;
@@ -2349,7 +2355,7 @@ int ath11k_send_set_sta_ps_mode_cmd(struct ath11k_pdev_wmi *wmi_handle,
 				  WMI_STA_POWERSAVE_MODE_CMDID);
 
 	if (ret) {
-		printk("Failed to send WMI_STA_POWERSAVE_MODE_CMDID");
+		ath11k_warn(ab, "Failed to send WMI_STA_POWERSAVE_MODE_CMDID");
 		dev_kfree_skb(skb);
 	}
 	return ret;
@@ -2358,6 +2364,7 @@ int ath11k_send_set_sta_ps_mode_cmd(struct ath11k_pdev_wmi *wmi_handle,
 int ath11k_send_set_mimops_cmd(struct ath11k_pdev_wmi *wmi_handle,
 			       u8 vdev_id, int value)
 {
+	struct ath11k_base *ab = wmi_handle->wmi_sc->sc;
 	struct wmi_sta_smps_force_mode_cmd *cmd;
 	struct sk_buff *skb;
 	int ret, len;
@@ -2393,17 +2400,19 @@ int ath11k_send_set_mimops_cmd(struct ath11k_pdev_wmi *wmi_handle,
 		cmd->forced_mode =  (WMI_SMPS_FORCED_MODE_DYNAMIC);
 		break;
 	default:
-		printk("%s:INVALID Mimo PS CONFIG", __func__);
+		ath11k_warn(ab, "INVALID Mimo PS CONFIG %d", value);
 		return -EINVAL;
 	}
 
-	printk("Setting vdev %d value = %u", vdev_id, value);
+	ath11k_dbg(ab, ATH11K_DBG_WMI,
+		   "Setting SMPS Force Mode. vdev %d, mode %d\n",
+		   cmd->vdev_id, cmd->forced_mode);
 
 	ret = ath11k_wmi_cmd_send(wmi_handle, skb,
 				  WMI_STA_SMPS_FORCE_MODE_CMDID);
 
 	if (ret) {
-		printk("Failed to send WMI_STA_SMPS_FORCE_MODE_CMDID");
+		ath11k_warn(ab, "Failed to send WMI_STA_SMPS_FORCE_MODE_CMDID");
 		dev_kfree_skb(skb);
 	}
 	return ret;
@@ -2412,6 +2421,7 @@ int ath11k_send_set_mimops_cmd(struct ath11k_pdev_wmi *wmi_handle,
 int ath11k_send_set_smps_params_cmd(struct ath11k_pdev_wmi *wmi_handle,
 				    u8 vdev_id, int value)
 {
+	struct ath11k_base *ab = wmi_handle->wmi_sc->sc;
 	struct wmi_sta_smps_param_cmd *cmd;
 	struct sk_buff *skb;
 	int ret, len;
@@ -2431,14 +2441,15 @@ int ath11k_send_set_smps_params_cmd(struct ath11k_pdev_wmi *wmi_handle,
 	cmd->param = (value >> WMI_SMPS_PARAM_VALUE_SHIFT) &
 		     WMI_SMPS_MASK_UPPER_3BITS;
 
-	printk("Setting vdev %d value = %x param %x", vdev_id, cmd->value,
-	       cmd->param);
+	ath11k_dbg(ab, ATH11K_DBG_WMI,
+		   "Setting SMPS Param. vdev %d, param %d, value %d\n",
+		   cmd->vdev_id, cmd->param, cmd->value);
 
 	ret = ath11k_wmi_cmd_send(wmi_handle, skb,
 				  WMI_STA_SMPS_PARAM_CMDID);
 
 	if (ret) {
-		printk("Failed to send WMI_STA_SMPS_PARAM_CMDID");
+		ath11k_warn(ab, "Failed to send WMI_STA_SMPS_PARAM_CMDID");
 		dev_kfree_skb(skb);
 	}
 	return ret;
@@ -2516,6 +2527,7 @@ int ath11k_wmi_send_wmm_update_cmd_tlv(struct ath11k *ar, u32 vdev_id,
 int ath11k_send_bcn_buf_ll_cmd(struct ath11k_pdev_wmi *wmi_handle,
 			       struct wmi_bcn_send_from_host_cmd *param)
 {
+	struct ath11k_base *ab = wmi_handle->wmi_sc->sc;
 	struct wmi_bcn_send_from_host_cmd *cmd;
 	struct sk_buff *skb;
 	int ret, len;
@@ -2540,7 +2552,7 @@ int ath11k_send_bcn_buf_ll_cmd(struct ath11k_pdev_wmi *wmi_handle,
 	ret = ath11k_wmi_cmd_send(wmi_handle, skb,
 				  WMI_PDEV_SEND_BCN_CMDID);
 	if (ret) {
-		printk("Failed to send WMI_PDEV_SEND_BCN_CMDID");
+		ath11k_warn(ab, "Failed to send WMI_PDEV_SEND_BCN_CMDID");
 		dev_kfree_skb(skb);
 	}
 	return ret;
@@ -4118,7 +4130,7 @@ fallback:
 	 * this function to succeed as well. If it doesn't, CTRY needs to be
 	 * reverted at the fw and the old SCAN_CHAN_LIST cmd needs to be sent.
 	 */
-	/* TODO This is rare, but still should also be handled */
+	/* TODO: This is rare, but still should also be handled */
 	WARN_ON(1);
 mem_free:
 	if (reg_info) {
@@ -4961,8 +4973,8 @@ static int ath11k_connect_pdev_htc_service(struct ath11k_base *sc,
 
 	status = ath11k_htc_connect_service(&sc->htc, &conn_req, &conn_resp);
 	if (status) {
-		printk("failed to connect to WMI CONTROL service status: %d\n",
-		       status);
+		ath11k_warn(sc, "failed to connect to WMI CONTROL service status: %d\n",
+			    status);
 		return status;
 	}
 

@@ -1192,7 +1192,7 @@ static inline void htt_print_tx_hwq_stats_cmn_tlv(const u32 *tag_buf, u8 *data)
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
 
-	// TODO: HKDBG
+	/* TODO: HKDBG */
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_HWQ_STATS_CMN_TLV:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "mac_id = %u",
 			   htt_stats_buf->mac_id__hwq_id__word & 0xFF);

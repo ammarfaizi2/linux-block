@@ -33,6 +33,13 @@
 /* Map from pdev index to hw mac index */
 static const u8 hw_mac_id_map[MAX_RADIOS] = { 0, 2, 1, };
 
+enum ath11k_supported_bw {
+	ATH11K_BW_20	= 0,
+	ATH11K_BW_40	= 1,
+	ATH11K_BW_80	= 2,
+	ATH11K_BW_160	= 3,
+};
+
 enum wme_ac {
 	WME_AC_BE,
 	WME_AC_BK,

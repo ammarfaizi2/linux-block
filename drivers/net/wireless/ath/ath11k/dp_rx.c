@@ -763,16 +763,16 @@ static inline u8 ath11k_bw_to_mac80211_bw(u8 bw)
 	u8 ret = 0;
 
 	switch (bw) {
-	case 0:
+	case ATH11K_BW_20:
 		ret = RATE_INFO_BW_20;
 		break;
-	case 1:
+	case ATH11K_BW_40:
 		ret = RATE_INFO_BW_40;
 		break;
-	case 2:
+	case ATH11K_BW_80:
 		ret = RATE_INFO_BW_80;
 		break;
-	case 3:
+	case ATH11K_BW_160:
 		ret = RATE_INFO_BW_160;
 		break;
 	}
@@ -785,13 +785,13 @@ static inline u32 ath11k_bw_to_mac80211_bwflags(u8 bw)
 	u32 bwflags = 0;
 
 	switch (bw) {
-	case 1:
+	case ATH11K_BW_40:
 		bwflags = IEEE80211_TX_RC_40_MHZ_WIDTH;
 		break;
-	case 2:
+	case ATH11K_BW_80:
 		bwflags = IEEE80211_TX_RC_80_MHZ_WIDTH;
 		break;
-	case 3:
+	case ATH11K_BW_160:
 		bwflags = IEEE80211_TX_RC_160_MHZ_WIDTH;
 		break;
 	}

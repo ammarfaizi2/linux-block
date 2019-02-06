@@ -131,7 +131,7 @@ int ath11k_reg_update_chan_list(struct ath11k *ar)
 			if (channel->flags & IEEE80211_CHAN_DISABLED)
 				continue;
 
-			/* TODO Set to true/false based on some condition? */
+			/* TODO: Set to true/false based on some condition? */
 			ch->allow_ht = true;
 			ch->allow_vht = true;
 
@@ -147,7 +147,7 @@ int ath11k_reg_update_chan_list(struct ath11k *ar)
 			ch->maxregpower = channel->max_reg_power * 2;
 			ch->antennamax = channel->max_antenna_gain * 2;
 
-			/* TODO Use appropriate phymodes */
+			/* TODO: Use appropriate phymodes */
 			if (channel->band == NL80211_BAND_2GHZ)
 				ch->phy_mode = MODE_11G;
 			else
@@ -160,7 +160,7 @@ int ath11k_reg_update_chan_list(struct ath11k *ar)
 				   ch->antennamax, ch->phy_mode);
 
 			ch++;
-			/* TODO use quarrter/half rate, cfreq12, dfs_cfreq2
+			/* TODO: use quarrter/half rate, cfreq12, dfs_cfreq2
 			 * set_agile, reg_class_idx
 			 */
 		}
@@ -318,7 +318,7 @@ ath11k_reg_can_intersect(struct ieee80211_reg_rule *rule1,
 	     start_freq2 < end_freq1))
 		return true;
 
-	/* TODO Should we restrict intersection feasibility
+	/* TODO: Should we restrict intersection feasibility
 	 *  based on min bandwidth of the intersected region also,
 	 *  say the intersected rule should have a  min bandwidth
 	 * of 20MHz?
@@ -508,7 +508,7 @@ ath11k_reg_build_regd(struct ath11k_base *ab,
 						 reg_rule->reg_power,
 						 flags);
 
-		/* TODO : Fill DFS CAC Timeout (dfs_cac_ms) */
+		/* TODO: Fill DFS CAC Timeout (dfs_cac_ms) */
 
 		ath11k_dbg(ab, ATH11K_DBG_REG,
 			   "\t%d. (%d - %d @ %d) (%d, %d) (FLAGS %d) \n",
@@ -550,7 +550,7 @@ void ath11k_regd_update_work(struct work_struct *work)
 		 * and userspace. Hence as a fallback mechanism we can set
 		 * the prev or default country code to the firmware.
 		 */
-		/* TODO Implement Fallback Mechanism */
+		/* TODO: Implement Fallback Mechanism */
 	}
 }
 
