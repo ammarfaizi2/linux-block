@@ -373,3 +373,47 @@ error_ring:
 	key_ref_put(keyring_ref);
 	return ret;
 }
+
+/*
+ * Attach a keyring to a container as the container key, to be searched by
+ * request_key() after thread, process and session keyrings.  This is only
+ * permitted once per container.
+ */
+long keyctl_set_container_keyring(int containerfd, key_serial_t _keyring)
+{
+	struct container *c;
+	struct fd f;
+	key_ref_t keyring_ref = NULL;
+	long ret;
+
+	if (containerfd < 0 || _keyring <= 0)
+		return -EINVAL;
+
+	f = fdget(containerfd);
+	if (!f.file)
+		return -EBADF;
+	ret = -EINVAL;
+	if (!is_container_file(f.file))
+		goto out_fd;
+
+	c = f.file->private_data;
+
+	keyring_ref = lookup_user_key(_keyring, 0, KEY_NEED_SEARCH);
+	if (IS_ERR(keyring_ref)) {
+		ret = PTR_ERR(keyring_ref);
+		goto out_fd;
+	}
+
+	ret = -EBUSY;
+	spin_lock(&c->lock);
+	if (!c->keyring) {
+		c->keyring = key_get(key_ref_to_ptr(keyring_ref));
+		ret = 0;
+	}
+	spin_unlock(&c->lock);
+
+	key_ref_put(keyring_ref);
+out_fd:
+	fdput(f);
+	return ret;
+}

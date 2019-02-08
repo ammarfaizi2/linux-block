@@ -21,6 +21,7 @@
 #include <keyutils.h>
 
 #define KEYCTL_CONTAINER_INTERCEPT	31	/* Intercept upcalls inside a container */
+#define KEYCTL_SET_CONTAINER_KEYRING	35	/* Attach a keyring to a container */
 
 /* Hope -1 isn't a syscall */
 #ifndef __NR_fsopen
@@ -261,6 +262,19 @@ int main(int argc, char *argv[])
 	}
 	E(close(fsfd));
 	E(close(mfd));
+
+	/* Create a container keyring. */
+	printf("Container keyring...\n");
+	keyring = add_key("keyring", "_container", NULL, 0, KEY_SPEC_SESSION_KEYRING);
+	if (keyring == -1) {
+		perror("add_key/c");
+		exit(1);
+	}
+
+	if (keyctl(KEYCTL_SET_CONTAINER_KEYRING, cfd, keyring) < 0) {
+		perror("keyctl_set_container_keyring");
+		exit(1);
+	}
 
 	/* Create a keyring to catch upcalls. */
 	printf("Intercepting...\n");

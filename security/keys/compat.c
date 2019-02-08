@@ -168,6 +168,8 @@ COMPAT_SYSCALL_DEFINE5(keyctl, u32, option,
 		return keyctl_query_request_key_auth(arg2, compat_ptr(arg3));
 	case KEYCTL_FIND_LRU:
 		return keyctl_find_lru(arg2, compat_ptr(arg3));
+	case KEYCTL_SET_CONTAINER_KEYRING:
+		return keyctl_set_container_keyring(arg2, arg3);
 #endif
 
 	case KEYCTL_MOVE:

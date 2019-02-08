@@ -1919,6 +1919,8 @@ SYSCALL_DEFINE5(keyctl, int, option, unsigned long, arg2, unsigned long, arg3,
 	case KEYCTL_FIND_LRU:
 		return keyctl_find_lru((key_serial_t)arg2,
 				       (const char __user *)arg3);
+	case KEYCTL_SET_CONTAINER_KEYRING:
+		return keyctl_set_container_keyring((int)arg2, (key_serial_t)arg3);
 #endif
 
 	case KEYCTL_MOVE:

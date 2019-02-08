@@ -17,6 +17,7 @@
 #include <linux/err.h>
 #include <linux/mutex.h>
 #include <linux/security.h>
+#include <linux/container.h>
 #include <linux/user_namespace.h>
 #include <linux/uaccess.h>
 #include <keys/request_key_auth-type.h>
@@ -432,6 +433,28 @@ key_ref_t search_my_process_keyrings(struct keyring_search_context *ctx)
 			break;
 		}
 	}
+
+	/* Search any container keyring on the end. */
+#ifdef CONFIG_CONTAINERS
+	if (current->container->keyring) {
+		key_ref = keyring_search_aux(
+			make_key_ref(current->container->keyring, 1), ctx);
+		if (!IS_ERR(key_ref))
+			goto found;
+
+		switch (PTR_ERR(key_ref)) {
+		case -EAGAIN: /* no key */
+			if (ret)
+				break;
+		case -ENOKEY: /* negative key */
+			ret = key_ref;
+			break;
+		default:
+			err = key_ref;
+			break;
+		}
+	}
+#endif
 
 	/* no key - decide on the error we're going to go for */
 	key_ref = ret ? ret : err;

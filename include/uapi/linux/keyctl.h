@@ -72,6 +72,7 @@
 #define KEYCTL_QUERY_REQUEST_KEY_AUTH	32	/* Query a request_key_auth key */
 #define KEYCTL_MOVE			33	/* Move keys between keyrings */
 #define KEYCTL_FIND_LRU			34	/* Find the least-recently used key in a keyring */
+#define KEYCTL_SET_CONTAINER_KEYRING	35	/* Attach a keyring to a container */
 
 /* keyctl structures */
 struct keyctl_dh_params {

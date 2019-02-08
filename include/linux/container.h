@@ -33,6 +33,7 @@ struct container {
 	refcount_t		usage;
 	int			exit_code;	/* The exit code of 'init' */
 	const struct cred	*cred;		/* Creds for this container, including userns */
+	struct key		*keyring;	/* Externally managed container keyring */
 	struct nsproxy		*ns;		/* This container's namespaces */
 	struct path		root;		/* The root of the container's fs namespace */
 	struct task_struct	*init;		/* The 'init' task for this container */

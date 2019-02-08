@@ -71,6 +71,7 @@ void put_container(struct container *c)
 
 		if (c->cred)
 			put_cred(c->cred);
+		key_put(c->keyring);
 		security_container_free(c);
 		kfree(c);
 		c = parent;

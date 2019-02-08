@@ -366,6 +366,7 @@ extern long keyctl_container_intercept(int, const char __user *, unsigned int, k
 extern long keyctl_query_request_key_auth(key_serial_t,
 					  struct keyctl_query_request_key_auth __user *);
 extern long keyctl_find_lru(key_serial_t, const char __user *);
+extern long keyctl_set_container_keyring(int, key_serial_t);
 #endif
 
 /*
