@@ -136,7 +136,7 @@ static struct hlist_head *unix_sockets_unbound(void *addr)
 	return &unix_socket_table[UNIX_HASH_SIZE + hash];
 }
 
-#define UNIX_ABSTRACT(sk)	(unix_sk(sk)->addr->hash < UNIX_HASH_SIZE)
+#define UNIX_ABSTRACT(sk)	(!(unix_sk(sk)->addr->name->sun_path[0]))
 
 #ifdef CONFIG_SECURITY_NETWORK
 static void unix_get_secdata(struct scm_cookie *scm, struct sk_buff *skb)
