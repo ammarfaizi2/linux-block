@@ -172,12 +172,14 @@ static inline bool unix_secdata_eq(struct scm_cookie *scm, struct sk_buff *skb)
  *    each socket state is protected by separate spin lock.
  */
 
-static inline unsigned int unix_hash_fold(__wsum n)
+static inline unsigned int abstract_name_hash(struct sockaddr_un *sunname,
+					      int len, int type)
 {
-	unsigned int hash = (__force unsigned int)csum_fold(n);
+	__sum16 n = csum_fold(csum_partial(sunname, len, 0));
+	unsigned int hash = (__force unsigned int)n;
 
 	hash ^= hash>>8;
-	return hash&(UNIX_HASH_SIZE-1);
+	return (hash & (UNIX_HASH_SIZE-1)) ^ type;
 }
 
 #define unix_peer(sk) (unix_sk(sk)->peer)
@@ -245,7 +247,7 @@ static int unix_mkname(struct sockaddr_un *sunaddr, int len,
 		return len;
 	}
 
-	*hashp = unix_hash_fold(csum_partial(sunaddr, len, 0)) ^ type;
+	*hashp = abstract_name_hash(sunaddr, len, type);
 	return len;
 }
 
@@ -866,8 +868,7 @@ static int unix_autobind(struct socket *sock)
 
 retry:
 	addr->len = sprintf(addr->name->sun_path+1, "%05x", ordernum) + 1 + sizeof(short);
-	addr->hash = unix_hash_fold(csum_partial(addr->name, addr->len, 0));
-	addr->hash ^= sk->sk_type;
+	addr->hash = abstract_name_hash(addr->name, addr->len, sk->sk_type);
 
 	spin_lock(&unix_table_lock);
 	ordernum = (ordernum+1)&0xFFFFF;
