@@ -847,6 +847,7 @@ static int unix_autobind(struct socket *sock)
 	struct unix_sock *u = unix_sk(sk);
 	static u32 ordernum = 1;
 	struct unix_address *addr;
+	unsigned int hash;
 	int err;
 	unsigned int retries = 0;
 
@@ -868,12 +869,12 @@ static int unix_autobind(struct socket *sock)
 
 retry:
 	addr->len = sprintf(addr->name->sun_path+1, "%05x", ordernum) + 1 + sizeof(short);
-	addr->hash = abstract_name_hash(addr->name, addr->len, sk->sk_type);
+	hash = abstract_name_hash(addr->name, addr->len, sk->sk_type);
 
 	spin_lock(&unix_table_lock);
 	ordernum = (ordernum+1)&0xFFFFF;
 
-	if (__unix_find_socket_byname(net, addr->name, addr->len, addr->hash)) {
+	if (__unix_find_socket_byname(net, addr->name, addr->len, hash)) {
 		spin_unlock(&unix_table_lock);
 		/*
 		 * __unix_find_socket_byname() may take long time if many names
@@ -891,7 +892,7 @@ retry:
 
 	__unix_remove_socket(sk);
 	smp_store_release(&u->addr, addr);
-	__unix_insert_socket(&unix_socket_table[addr->hash], sk);
+	__unix_insert_socket(&unix_socket_table[hash], sk);
 	spin_unlock(&unix_table_lock);
 	err = 0;
 
@@ -1040,13 +1041,11 @@ static int unix_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
 	refcount_set(&addr->refcnt, 1);
 
 	if (sun_path[0]) {
-		addr->hash = UNIX_HASH_SIZE;
 		hash = d_backing_inode(path.dentry)->i_ino & (UNIX_HASH_SIZE - 1);
 		spin_lock(&unix_table_lock);
 		u->path = path;
 		list = &unix_socket_table[hash];
 	} else {
-		addr->hash = hash;
 		spin_lock(&unix_table_lock);
 		err = -EADDRINUSE;
 		if (__unix_find_socket_byname(net, sunaddr, addr_len, hash)) {
