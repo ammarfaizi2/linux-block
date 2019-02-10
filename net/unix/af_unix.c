@@ -223,7 +223,8 @@ static inline void unix_release_addr(struct unix_address *addr)
  *		- if started by zero, it is abstract name.
  */
 
-static int unix_mkname(struct sockaddr_un *sunaddr, int len, unsigned int *hashp)
+static int unix_mkname(struct sockaddr_un *sunaddr, int len,
+			unsigned int *hashp, int type)
 {
 	*hashp = 0;
 
@@ -244,7 +245,7 @@ static int unix_mkname(struct sockaddr_un *sunaddr, int len, unsigned int *hashp
 		return len;
 	}
 
-	*hashp = unix_hash_fold(csum_partial(sunaddr, len, 0));
+	*hashp = unix_hash_fold(csum_partial(sunaddr, len, 0)) ^ type;
 	return len;
 }
 
@@ -934,7 +935,7 @@ static struct sock *unix_find_other(struct net *net,
 		}
 	} else {
 		err = -ECONNREFUSED;
-		u = unix_find_socket_byname(net, sunname, len, hash ^ type);
+		u = unix_find_socket_byname(net, sunname, len, hash);
 		if (u) {
 			struct dentry *dentry;
 			dentry = unix_sk(u)->path.dentry;
@@ -1004,7 +1005,7 @@ static int unix_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
 		goto out;
 	}
 
-	err = unix_mkname(sunaddr, addr_len, &hash);
+	err = unix_mkname(sunaddr, addr_len, &hash, sk->sk_type);
 	if (err < 0)
 		goto out;
 	addr_len = err;
@@ -1035,7 +1036,6 @@ static int unix_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
 
 	memcpy(addr->name, sunaddr, addr_len);
 	addr->len = addr_len;
-	addr->hash = hash ^ sk->sk_type;
 	refcount_set(&addr->refcnt, 1);
 
 	if (sun_path[0]) {
@@ -1045,15 +1045,15 @@ static int unix_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
 		u->path = path;
 		list = &unix_socket_table[hash];
 	} else {
+		addr->hash = hash;
 		spin_lock(&unix_table_lock);
 		err = -EADDRINUSE;
-		if (__unix_find_socket_byname(net, sunaddr, addr_len,
-					      addr->hash)) {
+		if (__unix_find_socket_byname(net, sunaddr, addr_len, hash)) {
 			unix_release_addr(addr);
 			goto out_unlock;
 		}
 
-		list = &unix_socket_table[addr->hash];
+		list = &unix_socket_table[hash];
 	}
 
 	err = 0;
@@ -1112,7 +1112,7 @@ static int unix_dgram_connect(struct socket *sock, struct sockaddr *addr,
 		goto out;
 
 	if (addr->sa_family != AF_UNSPEC) {
-		err = unix_mkname(sunaddr, alen, &hash);
+		err = unix_mkname(sunaddr, alen, &hash, sock->type);
 		if (err < 0)
 			goto out;
 		alen = err;
@@ -1213,7 +1213,7 @@ static int unix_stream_connect(struct socket *sock, struct sockaddr *uaddr,
 	int err;
 	long timeo;
 
-	err = unix_mkname(sunaddr, addr_len, &hash);
+	err = unix_mkname(sunaddr, addr_len, &hash, sk->sk_type);
 	if (err < 0)
 		goto out;
 	addr_len = err;
@@ -1655,7 +1655,7 @@ static int unix_dgram_sendmsg(struct socket *sock, struct msghdr *msg,
 		goto out;
 
 	if (msg->msg_namelen) {
-		err = unix_mkname(sunaddr, msg->msg_namelen, &hash);
+		err = unix_mkname(sunaddr, msg->msg_namelen, &hash, sk->sk_type);
 		if (err < 0)
 			goto out;
 		namelen = err;
