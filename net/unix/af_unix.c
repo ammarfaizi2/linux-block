@@ -867,12 +867,12 @@ static int unix_autobind(struct socket *sock)
 retry:
 	addr->len = sprintf(addr->name->sun_path+1, "%05x", ordernum) + 1 + sizeof(short);
 	addr->hash = unix_hash_fold(csum_partial(addr->name, addr->len, 0));
+	addr->hash ^= sk->sk_type;
 
 	spin_lock(&unix_table_lock);
 	ordernum = (ordernum+1)&0xFFFFF;
 
-	if (__unix_find_socket_byname(net, addr->name, addr->len,
-					addr->hash ^ sock->type)) {
+	if (__unix_find_socket_byname(net, addr->name, addr->len, addr->hash)) {
 		spin_unlock(&unix_table_lock);
 		/*
 		 * __unix_find_socket_byname() may take long time if many names
@@ -887,7 +887,6 @@ retry:
 		}
 		goto retry;
 	}
-	addr->hash ^= sk->sk_type;
 
 	__unix_remove_socket(sk);
 	smp_store_release(&u->addr, addr);
@@ -1050,7 +1049,7 @@ static int unix_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
 		spin_lock(&unix_table_lock);
 		err = -EADDRINUSE;
 		if (__unix_find_socket_byname(net, sunaddr, addr_len,
-					      sk->sk_type ^ hash)) {
+					      addr->hash)) {
 			unix_release_addr(addr);
 			goto out_unlock;
 		}
