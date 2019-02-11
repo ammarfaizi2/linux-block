@@ -849,6 +849,7 @@ void ath11k_hal_reo_hw_setup(struct ath11k_base *ab,
 
 	val = ath11k_ahb_read32(ab, reo_base + HAL_REO1_GEN_ENABLE);
 
+	val &= ~HAL_REO1_GEN_ENABLE_FRAG_DST_RING;
 	val |= FIELD_PREP(HAL_REO1_GEN_ENABLE_FRAG_DST_RING,
 			  HAL_SRNG_RING_ID_REO2SW1) |
 	       FIELD_PREP(HAL_REO1_GEN_ENABLE_AGING_LIST_ENABLE, 1) |
