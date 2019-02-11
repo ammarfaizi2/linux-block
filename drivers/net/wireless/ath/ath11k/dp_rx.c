@@ -810,7 +810,6 @@ ath11k_update_per_peer_tx_stats(struct ath11k *ar,
 	struct htt_ppdu_stats_user_rate *user_rate;
 	struct ieee80211_chanctx_conf *conf = NULL;
 	struct ath11k_per_peer_tx_stats *peer_stats = &ar->peer_tx_stats;
-	enum  htt_ppdu_stats_usr_compln_status status;
 	int ret;
 	u8 flags, mcs, nss, bw, sgi, rate_idx = 0;
 	u32 succ_bytes = 0;
@@ -826,12 +825,9 @@ ath11k_update_per_peer_tx_stats(struct ath11k *ar,
 	if (usr_stats->tlv_flags & BIT(HTT_PPDU_STATS_TAG_USR_COMPLTN_COMMON))
 		succ_mpdus = usr_stats->cmpltn_cmn.mpdu_success;
 
-	status = HTT_PPDU_STATS_USER_STATUS_INVALID;
-	if (usr_stats->tlv_flags & BIT(HTT_PPDU_STATS_TAG_USR_COMPLTN_COMMON)) {
+	if (usr_stats->tlv_flags & BIT(HTT_PPDU_STATS_TAG_USR_COMPLTN_COMMON))
 		is_ampdu =
 			HTT_USR_CMPLTN_IS_AMPDU(usr_stats->cmpltn_cmn.flags);
-		status = usr_stats->cmpltn_cmn.status;
-	}
 
 	if (usr_stats->tlv_flags &
 	    BIT(HTT_PPDU_STATS_TAG_USR_COMPLTN_ACK_BA_STATUS)) {
@@ -917,13 +913,13 @@ ath11k_update_per_peer_tx_stats(struct ath11k *ar,
 	case WMI_RATE_PREAMBLE_VHT:
 		arsta->txrate.mcs = mcs;
 		ieee80211_rate_set_vht(&arsta->tx_info.status.rates[0], mcs, nss);
+		arsta->txrate.flags = RATE_INFO_FLAGS_VHT_MCS;
+		arsta->tx_info.status.rates[0].flags |= IEEE80211_TX_RC_VHT_MCS;
 		if (sgi) {
 			arsta->txrate.flags |= RATE_INFO_FLAGS_SHORT_GI;
 			arsta->tx_info.status.rates[0].flags |=
 						IEEE80211_TX_RC_SHORT_GI;
 		}
-		arsta->txrate.flags = RATE_INFO_FLAGS_VHT_MCS;
-		arsta->tx_info.status.rates[0].flags |= IEEE80211_TX_RC_VHT_MCS;
 		break;
 	}
 
@@ -944,7 +940,9 @@ ath11k_update_per_peer_tx_stats(struct ath11k *ar,
 	peer_stats->succ_pkts = succ_pkts;
 	peer_stats->succ_bytes = succ_bytes;
 	peer_stats->is_ampdu = is_ampdu;
-	peer_stats->status = status;
+	peer_stats->ba_fails =
+		HTT_USR_CMPLTN_LONG_RETRY(usr_stats->cmpltn_cmn.flags) +
+		HTT_USR_CMPLTN_SHORT_RETRY(usr_stats->cmpltn_cmn.flags);
 
 	if (ath11k_debug_is_extd_tx_stats_enabled(ar))
 		ath11k_accumulate_per_peer_tx_stats(arsta,

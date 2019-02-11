@@ -681,7 +681,6 @@ struct htt_tx_ppdu_stats_info {
 } __packed;
 
 enum  htt_ppdu_stats_usr_compln_status {
-	HTT_PPDU_STATS_USER_STATUS_INVALID = -1,
 	HTT_PPDU_STATS_USER_STATUS_OK,
 	HTT_PPDU_STATS_USER_STATUS_FILTERED,
 	HTT_PPDU_STATS_USER_STATUS_RESP_TIMEOUT,

@@ -334,10 +334,8 @@ static void ath11k_dp_cache_peer_stats(struct ath11k *ar,
 			peer_stats->retry_pkts += ts->try_cnt - 1;
 			peer_stats->retry_bytes += (ts->try_cnt - 1) * msdu->len;
 		}
-	}
-
-	if (ts->try_cnt >= 1 &&
-	    ts->status == HAL_WBM_TQM_REL_REASON_CMD_REMOVE_TX) {
+	} else if (ts->try_cnt >= 1 &&
+		   ts->status != HAL_WBM_TQM_REL_REASON_FRAME_ACKED) {
 		if (ts->try_cnt == 1) {
 			peer_stats->retry_pkts += 1;
 			peer_stats->retry_bytes += msdu->len;

@@ -229,7 +229,7 @@ struct ath11k_peer {
 #define ATH11K_BW_NUM           4
 #define ATH11K_NSS_NUM          4
 #define ATH11K_LEGACY_NUM       12
-#define ATH11K_GI_NUM           2
+#define ATH11K_GI_NUM           4
 #define ATH11K_HT_MCS_NUM       32
 
 enum ath11k_pkt_rx_err {
@@ -344,8 +344,8 @@ struct ath11k_per_peer_tx_stats {
 	u16 retry_pkts;
 	u16 failed_pkts;
 	u16 duration;
+	u8 ba_fails;
 	bool is_ampdu;
-	enum  htt_ppdu_stats_usr_compln_status status;
 };
 
 #define ATH1K_FLUSH_TIMEOUT (5 * HZ)

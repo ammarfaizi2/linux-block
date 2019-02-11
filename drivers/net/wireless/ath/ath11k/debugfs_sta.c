@@ -19,21 +19,21 @@ ath11k_accumulate_per_peer_tx_stats(struct ath11k_sta *arsta,
 		return;
 
 	tx_stats = arsta->tx_stats;
-	gi = (arsta->txrate.flags & RATE_INFO_FLAGS_SHORT_GI);
+	gi = FIELD_GET(RATE_INFO_FLAGS_SHORT_GI, arsta->txrate.flags);
 	mcs = txrate->mcs;
 	bw = txrate->bw;
 	nss = txrate->nss - 1;
 
 #define STATS_OP_FMT(name) tx_stats->stats[ATH11K_STATS_TYPE_##name]
 
-	if (txrate->flags == RATE_INFO_FLAGS_VHT_MCS) {
+	if (txrate->flags & RATE_INFO_FLAGS_VHT_MCS) {
 		STATS_OP_FMT(SUCC).vht[0][mcs] += peer_stats->succ_bytes;
 		STATS_OP_FMT(SUCC).vht[1][mcs] += peer_stats->succ_pkts;
 		STATS_OP_FMT(FAIL).vht[0][mcs] += peer_stats->failed_bytes;
 		STATS_OP_FMT(FAIL).vht[1][mcs] += peer_stats->failed_pkts;
 		STATS_OP_FMT(RETRY).vht[0][mcs] += peer_stats->retry_bytes;
 		STATS_OP_FMT(RETRY).vht[1][mcs] += peer_stats->retry_pkts;
-	} else if (txrate->flags == RATE_INFO_FLAGS_MCS) {
+	} else if (txrate->flags & RATE_INFO_FLAGS_MCS) {
 		STATS_OP_FMT(SUCC).ht[0][mcs] += peer_stats->succ_bytes;
 		STATS_OP_FMT(SUCC).ht[1][mcs] += peer_stats->succ_pkts;
 		STATS_OP_FMT(FAIL).ht[0][mcs] += peer_stats->failed_bytes;
@@ -52,11 +52,9 @@ ath11k_accumulate_per_peer_tx_stats(struct ath11k_sta *arsta,
 	}
 
 	if (peer_stats->is_ampdu) {
-		if (peer_stats->status != HTT_PPDU_STATS_USER_STATUS_INVALID &&
-		    peer_stats->status != HTT_PPDU_STATS_USER_STATUS_OK)
-			tx_stats->ba_fails += 1;
+		tx_stats->ba_fails += peer_stats->ba_fails;
 
-		if (txrate->flags == RATE_INFO_FLAGS_MCS) {
+		if (txrate->flags & RATE_INFO_FLAGS_MCS) {
 			STATS_OP_FMT(AMPDU).ht[0][mcs] +=
 			peer_stats->succ_bytes + peer_stats->retry_bytes;
 			STATS_OP_FMT(AMPDU).ht[1][mcs] +=
@@ -80,9 +78,7 @@ ath11k_accumulate_per_peer_tx_stats(struct ath11k_sta *arsta,
 		STATS_OP_FMT(AMPDU).gi[1][gi] +=
 			peer_stats->succ_pkts + peer_stats->retry_pkts;
 	} else {
-		if (peer_stats->status != HTT_PPDU_STATS_USER_STATUS_INVALID &&
-		    peer_stats->status != HTT_PPDU_STATS_USER_STATUS_OK)
-			tx_stats->ack_fails += 1;
+		tx_stats->ack_fails += peer_stats->ba_fails;
 	}
 
 	STATS_OP_FMT(SUCC).bw[0][bw] += peer_stats->succ_bytes;
@@ -151,11 +147,23 @@ void ath11k_update_per_peer_stats_from_txcompl(struct ath11k *ar,
 		}
 		arsta->txrate.legacy = rate;
 	} else if (ts->pkt_type == HAL_TX_RATE_STATS_PKT_TYPE_11N) {
+		if (ts->mcs > 7) {
+			ath11k_warn(ab, "Invalid HT mcs index %d\n", ts->mcs);
+			spin_unlock_bh(&ab->data_lock);
+			rcu_read_unlock();
+		}
+
 		arsta->txrate.mcs = ts->mcs + 8 * (arsta->last_txrate.nss - 1);
 		arsta->txrate.flags = RATE_INFO_FLAGS_MCS;
 		if (ts->sgi)
 			arsta->txrate.flags |= RATE_INFO_FLAGS_SHORT_GI;
 	} else if (ts->pkt_type == HAL_TX_RATE_STATS_PKT_TYPE_11AC) {
+		if (ts->mcs > 9) {
+			ath11k_warn(ab, "Invalid VHT mcs index %d\n", ts->mcs);
+			spin_unlock_bh(&ab->data_lock);
+			rcu_read_unlock();
+		}
+
 		arsta->txrate.mcs = ts->mcs;
 		arsta->txrate.flags = RATE_INFO_FLAGS_VHT_MCS;
 		if (ts->sgi)
@@ -165,7 +173,7 @@ void ath11k_update_per_peer_stats_from_txcompl(struct ath11k *ar,
 	}
 
 	arsta->txrate.nss = arsta->last_txrate.nss;
-	arsta->txrate.bw = ts->bw - 2;
+	arsta->txrate.bw = ts->bw;
 
 	ath11k_accumulate_per_peer_tx_stats(arsta, peer_stats, rate_idx);
 	spin_unlock_bh(&ab->data_lock);
@@ -227,10 +235,12 @@ static ssize_t ath11k_dbg_sta_dump_tx_stats(struct file *file,
 					 stats->nss[j][0], stats->nss[j][1],
 					 stats->nss[j][2], stats->nss[j][3]);
 			len += scnprintf(buf + len, size - len,
-					 " GI %s (LGI,SGI)\n",
+					 " GI %s (0.4us,0.8us,1.6us,3.2us)\n",
 					 str[j]);
-			len += scnprintf(buf + len, size - len, "  %llu %llu\n",
-					 stats->gi[j][0], stats->gi[j][1]);
+			len += scnprintf(buf + len, size - len,
+					 "  %llu %llu %llu %llu\n",
+					 stats->gi[j][0], stats->gi[j][1],
+					 stats->gi[j][2], stats->gi[j][3]);
 			len += scnprintf(buf + len, size - len,
 					 " legacy rate %s (1,2 ... Mbps)\n  ",
 					 str[j]);
