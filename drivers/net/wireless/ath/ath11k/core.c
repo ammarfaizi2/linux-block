@@ -592,8 +592,6 @@ static int ath11k_core_start(struct ath11k_base *sc,
 		goto err_hif_stop;
 	}
 
-	ath11k_ahb_ext_irq_enable(sc);
-
 	return 0;
 
 err_hif_stop:
@@ -651,6 +649,9 @@ int ath11k_core_init(struct ath11k_base *sc)
 		ath11k_err(sc, "failed to create pdev core: %d\n", ret);
 		return ret;
 	}
+
+	ath11k_ahb_ext_irq_enable(sc);
+
 	mutex_unlock(&sc->core_lock);
 
 	return 0;
