@@ -297,7 +297,7 @@ void ath11k_dp_rx_pdev_free(struct ath11k_base *ab, int pdev_idx);
 void ath11k_dp_reo_cmd_list_cleanup(struct ath11k_base *ab);
 void ath11k_dp_process_reo_status(struct ath11k_base *ab);
 int ath11k_dp_process_rxdma_err(struct ath11k_base *ab, int mac_id, int budget);
-int ath11k_dp_rx_process_wbm_err(struct ath11k_base *ab, int mac_id,
+int ath11k_dp_rx_process_wbm_err(struct ath11k_base *ab,
 				 struct napi_struct *napi, int budget);
 int ath11k_dp_process_rx_err(struct ath11k_base *ab, int mac_id,
 			     struct napi_struct *napi, int budget);

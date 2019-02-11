@@ -2254,23 +2254,25 @@ static void ath11k_dp_rx_wbm_err(struct ath11k *ar,
 	ath11k_dp_rx_deliver_msdu(ar, napi, msdu);
 }
 
-int ath11k_dp_rx_process_wbm_err(struct ath11k_base *ab, int mac_id,
+int ath11k_dp_rx_process_wbm_err(struct ath11k_base *ab,
 				 struct napi_struct *napi, int budget)
 {
-	struct ath11k *ar = ab->pdevs[mac_id].ar;
+	struct ath11k *ar;
 	struct ath11k_dp *dp = &ab->dp;
-	struct dp_rxdma_ring *rx_ring = &ar->dp.rx_refill_buf_ring;
+	struct dp_rxdma_ring *rx_ring;
 	struct hal_rx_wbm_rel_info err_info;
 	struct hal_srng *srng;
 	struct sk_buff *msdu;
-	struct sk_buff_head msdu_list;
+	struct sk_buff_head msdu_list[MAX_RADIOS];
 	struct ath11k_skb_rxcb *rxcb;
 	u32 *rx_desc;
-	int buf_id;
-	int num_buffs_reaped = 0;
-	int ret;
+	int buf_id, mac_id;
+	int num_buffs_reaped[MAX_RADIOS] = {0};
+	int total_num_buffs_reaped = 0;
+	int ret, i;
 
-	__skb_queue_head_init(&msdu_list);
+	for (i = 0; i < MAX_RADIOS; i++)
+		__skb_queue_head_init(&msdu_list[i]);
 
 	srng = &ab->hal.srng_list[dp->rx_rel_ring.ring_id];
 
@@ -2290,12 +2292,16 @@ int ath11k_dp_rx_process_wbm_err(struct ath11k_base *ab, int mac_id,
 		}
 
 		buf_id = FIELD_GET(DP_RXDMA_BUF_COOKIE_BUF_ID, err_info.cookie);
+		mac_id = FIELD_GET(DP_RXDMA_BUF_COOKIE_PDEV_ID, err_info.cookie);
+
+		ar = ab->pdevs[mac_id].ar;
+		rx_ring = &ar->dp.rx_refill_buf_ring;
 
 		spin_lock_bh(&rx_ring->idr_lock);
 		msdu = idr_find(&rx_ring->bufs_idr, buf_id);
 		if (!msdu) {
-			ath11k_warn(ab, "frame rx with invalid buf_id %d\n",
-				    buf_id);
+			ath11k_warn(ab, "frame rx with invalid buf_id %d pdev %d\n",
+				    buf_id, mac_id);
 			spin_unlock_bh(&rx_ring->idr_lock);
 			break;
 		}
@@ -2319,8 +2325,9 @@ int ath11k_dp_rx_process_wbm_err(struct ath11k_base *ab, int mac_id,
 		rxcb->is_first_msdu = err_info.first_msdu;
 		rxcb->is_last_msdu = err_info.last_msdu;
 		rxcb->rx_desc = msdu->data;
-		__skb_queue_tail(&msdu_list, msdu);
-		num_buffs_reaped++;
+		__skb_queue_tail(&msdu_list[mac_id], msdu);
+		num_buffs_reaped[mac_id]++;
+		total_num_buffs_reaped++;
 		budget--;
 	}
 
@@ -2328,25 +2335,32 @@ int ath11k_dp_rx_process_wbm_err(struct ath11k_base *ab, int mac_id,
 
 	spin_unlock_bh(&srng->lock);
 
-	if (!num_buffs_reaped)
+	if (!total_num_buffs_reaped)
 		goto done;
 
-	ath11k_dp_rxbufs_replenish(ab, mac_id, rx_ring, num_buffs_reaped,
-				   HAL_RX_BUF_RBM_SW3_BM, GFP_ATOMIC);
 
-	rcu_read_lock();
-	if (!rcu_dereference(ab->pdevs_active[mac_id])) {
-		__skb_queue_purge(&msdu_list);
-		goto rcu_unlock;
+	for (i = 0; i <  ab->num_radios; i++) {
+		if (!num_buffs_reaped[i])
+			continue;
+
+		ath11k_dp_rxbufs_replenish(ab, i, rx_ring, num_buffs_reaped[i],
+					   HAL_RX_BUF_RBM_SW3_BM, GFP_ATOMIC);
 	}
 
-	while ((msdu = __skb_dequeue(&msdu_list)) != NULL)
-		ath11k_dp_rx_wbm_err(ar, napi, msdu, &msdu_list);
+	rcu_read_lock();
+	for (i = 0; i <  ab->num_radios; i++) {
+		if (!rcu_dereference(ab->pdevs_active[i])) {
+			__skb_queue_purge(&msdu_list[i]);
+			continue;
+		}
 
-rcu_unlock:
+		ar = ab->pdevs[i].ar;
+		while ((msdu = __skb_dequeue(&msdu_list[i])) != NULL)
+			ath11k_dp_rx_wbm_err(ar, napi, msdu, &msdu_list[i]);
+	}
 	rcu_read_unlock();
 done:
-	return num_buffs_reaped;
+	return total_num_buffs_reaped;
 }
 
 int ath11k_dp_process_rxdma_err(struct ath11k_base *ab, int mac_id, int budget)

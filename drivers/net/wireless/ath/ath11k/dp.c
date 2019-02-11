@@ -621,16 +621,14 @@ int ath11k_dp_service_srng(struct ath11k_base *ab, u32 grp_id,
 	}
 
 	if (ath11k_rx_wbm_rel_ring_mask[grp_id]) {
-		for (i = 0; i <  ab->num_radios; i++) {
-			if (ath11k_rx_wbm_rel_ring_mask[grp_id] & BIT(i)) {
-				work_done = ath11k_dp_rx_process_wbm_err(ab, i,
-								  napi, budget);
-				budget -= work_done;
-				tot_work_done += work_done;
-			}
-			if (budget <= 0)
-				goto done;
-		}
+		work_done = ath11k_dp_rx_process_wbm_err(ab,
+							 napi,
+							 budget);
+		budget -= work_done;
+		tot_work_done += work_done;
+
+		if (budget <= 0)
+			goto done;
 	}
 
 	if (ath11k_rx_ring_mask[grp_id]) {
