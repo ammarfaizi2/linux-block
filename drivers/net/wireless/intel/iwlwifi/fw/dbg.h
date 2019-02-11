@@ -102,13 +102,18 @@ static inline void iwl_fw_free_dump_desc(struct iwl_fw_runtime *fwrt)
 	if (fwrt->dump.desc != &iwl_dump_desc_assert)
 		kfree(fwrt->dump.desc);
 	fwrt->dump.desc = NULL;
-	fwrt->dump.rt_status = 0;
+	fwrt->dump.lmac_err_id[0] = 0;
+	if (fwrt->smem_cfg.num_lmacs > 1)
+		fwrt->dump.lmac_err_id[1] = 0;
+	fwrt->dump.umac_err_id = 0;
 }
 
 void iwl_fw_error_dump(struct iwl_fw_runtime *fwrt);
 int iwl_fw_dbg_collect_desc(struct iwl_fw_runtime *fwrt,
 			    const struct iwl_fw_dump_desc *desc,
 			    bool monitor_only, unsigned int delay);
+int iwl_fw_dbg_error_collect(struct iwl_fw_runtime *fwrt,
+			     enum iwl_fw_dbg_trigger trig_type);
 int _iwl_fw_dbg_collect(struct iwl_fw_runtime *fwrt,
 			enum iwl_fw_dbg_trigger trig,
 			const char *str, size_t len,
@@ -266,19 +271,19 @@ _iwl_fw_dbg_trigger_simple_stop(struct iwl_fw_runtime *fwrt,
 					iwl_fw_dbg_get_trigger((fwrt)->fw,\
 							       (trig)))
 
-static int iwl_fw_dbg_start_stop_hcmd(struct iwl_fw_runtime *fwrt, bool start)
+static inline int
+iwl_fw_dbg_start_stop_hcmd(struct iwl_fw_runtime *fwrt, bool start)
 {
-	struct iwl_continuous_record_cmd cont_rec = {};
+	struct iwl_ldbg_config_cmd cmd = {
+		.type = start ? cpu_to_le32(START_DEBUG_RECORDING) :
+				cpu_to_le32(STOP_DEBUG_RECORDING),
+	};
 	struct iwl_host_cmd hcmd = {
 		.id = LDBG_CONFIG_CMD,
 		.flags = CMD_ASYNC,
-		.data[0] = &cont_rec,
-		.len[0] = sizeof(cont_rec),
+		.data[0] = &cmd,
+		.len[0] = sizeof(cmd),
 	};
-
-	cont_rec.record_mode.enable_recording = start ?
-		cpu_to_le16(START_DEBUG_RECORDING) :
-		cpu_to_le16(STOP_DEBUG_RECORDING);
 
 	return iwl_trans_send_cmd(fwrt->trans, &hcmd);
 }
@@ -378,6 +383,7 @@ static inline bool iwl_fw_dbg_is_paging_enabled(struct iwl_fw_runtime *fwrt)
 {
 	return iwl_fw_dbg_type_on(fwrt, IWL_FW_ERROR_DUMP_PAGING) &&
 		!fwrt->trans->cfg->gen2 &&
+		fwrt->cur_fw_img < IWL_UCODE_TYPE_MAX &&
 		fwrt->fw->img[fwrt->cur_fw_img].paging_mem_size &&
 		fwrt->fw_paging_db[0].fw_paging_block;
 }
@@ -430,10 +436,13 @@ static inline void iwl_fw_resume_timestamp(struct iwl_fw_runtime *fwrt) {}
 
 #endif /* CONFIG_IWLWIFI_DEBUGFS */
 
-void iwl_fw_assert_error_dump(struct iwl_fw_runtime *fwrt);
-void iwl_fw_alive_error_dump(struct iwl_fw_runtime *fwrt);
 void iwl_fw_dbg_collect_sync(struct iwl_fw_runtime *fwrt);
 void iwl_fw_dbg_apply_point(struct iwl_fw_runtime *fwrt,
 			    enum iwl_fw_ini_apply_point apply_point);
+
+void iwl_fwrt_stop_device(struct iwl_fw_runtime *fwrt);
+
+/* This bit is used to differentiate the legacy dump from the ini dump */
+#define INI_DUMP_BIT BIT(31)
 
 #endif  /* __iwl_fw_dbg_h__ */

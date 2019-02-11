@@ -43,7 +43,6 @@ static inline bool switchdev_trans_ph_commit(struct switchdev_trans *trans)
 
 enum switchdev_attr_id {
 	SWITCHDEV_ATTR_ID_UNDEFINED,
-	SWITCHDEV_ATTR_ID_PORT_PARENT_ID,
 	SWITCHDEV_ATTR_ID_PORT_STP_STATE,
 	SWITCHDEV_ATTR_ID_PORT_BRIDGE_FLAGS,
 	SWITCHDEV_ATTR_ID_PORT_BRIDGE_FLAGS_SUPPORT,
@@ -61,7 +60,6 @@ struct switchdev_attr {
 	void *complete_priv;
 	void (*complete)(struct net_device *dev, int err, void *priv);
 	union {
-		struct netdev_phys_item_id ppid;	/* PORT_PARENT_ID */
 		u8 stp_state;				/* PORT_STP_STATE */
 		unsigned long brport_flags;		/* PORT_BRIDGE_FLAGS */
 		unsigned long brport_flags_support;	/* PORT_BRIDGE_FLAGS_SUPPORT */
@@ -195,7 +193,8 @@ int switchdev_port_obj_del(struct net_device *dev,
 int register_switchdev_notifier(struct notifier_block *nb);
 int unregister_switchdev_notifier(struct notifier_block *nb);
 int call_switchdev_notifiers(unsigned long val, struct net_device *dev,
-			     struct switchdev_notifier_info *info);
+			     struct switchdev_notifier_info *info,
+			     struct netlink_ext_ack *extack);
 
 int register_switchdev_blocking_notifier(struct notifier_block *nb);
 int unregister_switchdev_blocking_notifier(struct notifier_block *nb);
@@ -206,9 +205,6 @@ int call_switchdev_blocking_notifiers(unsigned long val, struct net_device *dev,
 void switchdev_port_fwd_mark_set(struct net_device *dev,
 				 struct net_device *group_dev,
 				 bool joining);
-
-bool switchdev_port_same_parent_id(struct net_device *a,
-				   struct net_device *b);
 
 int switchdev_handle_port_obj_add(struct net_device *dev,
 			struct switchdev_notifier_port_obj_info *port_obj_info,
@@ -267,7 +263,8 @@ static inline int unregister_switchdev_notifier(struct notifier_block *nb)
 
 static inline int call_switchdev_notifiers(unsigned long val,
 					   struct net_device *dev,
-					   struct switchdev_notifier_info *info)
+					   struct switchdev_notifier_info *info,
+					   struct netlink_ext_ack *extack)
 {
 	return NOTIFY_DONE;
 }
@@ -291,12 +288,6 @@ call_switchdev_blocking_notifiers(unsigned long val,
 				  struct netlink_ext_ack *extack)
 {
 	return NOTIFY_DONE;
-}
-
-static inline bool switchdev_port_same_parent_id(struct net_device *a,
-						 struct net_device *b)
-{
-	return false;
 }
 
 static inline int

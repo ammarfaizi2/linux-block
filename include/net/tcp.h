@@ -406,8 +406,10 @@ int tcp_recvmsg(struct sock *sk, struct msghdr *msg, size_t len, int nonblock,
 		int flags, int *addr_len);
 int tcp_set_rcvlowat(struct sock *sk, int val);
 void tcp_data_ready(struct sock *sk);
+#ifdef CONFIG_MMU
 int tcp_mmap(struct file *file, struct socket *sock,
 	     struct vm_area_struct *vma);
+#endif
 void tcp_parse_options(const struct net *net, const struct sk_buff *skb,
 		       struct tcp_options_received *opt_rx,
 		       int estab, struct tcp_fastopen_cookie *foc);
@@ -1606,6 +1608,7 @@ struct tcp_fastopen_request {
 	struct msghdr			*data;  /* data in MSG_FASTOPEN */
 	size_t				size;
 	int				copied;	/* queued in tcp_connect() */
+	struct ubuf_info		*uarg;
 };
 void tcp_free_fastopen_req(struct tcp_sock *tp);
 void tcp_fastopen_destroy_cipher(struct sock *sk);

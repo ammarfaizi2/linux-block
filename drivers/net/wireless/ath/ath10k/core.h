@@ -922,6 +922,7 @@ enum ath10k_dev_type {
 struct ath10k_bus_params {
 	u32 chip_id;
 	enum ath10k_dev_type dev_type;
+	bool link_can_suspend;
 };
 
 struct ath10k {
@@ -1182,6 +1183,7 @@ struct ath10k {
 
 	u32 ampdu_reference;
 
+	const u8 *wmi_key_cipher;
 	void *ce_priv;
 
 	u32 sta_tid_stats_mask;
@@ -1190,6 +1192,7 @@ struct ath10k {
 	enum ath10k_radar_confirmation_state radar_conf_state;
 	struct ath10k_radar_found_info last_radar_info;
 	struct work_struct radar_confirmation_work;
+	struct ath10k_bus_params bus_param;
 
 	/* must be last */
 	u8 drv_priv[0] __aligned(sizeof(void *));

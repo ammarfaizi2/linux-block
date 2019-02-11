@@ -133,7 +133,7 @@ mlxsw_sp_acl_bf_key_encode(struct mlxsw_sp_acl_atcam_region *aregion,
 		memcpy(chunk + MLXSW_BLOOM_CHUNK_PAD_BYTES, &erp_region_id,
 		       sizeof(erp_region_id));
 		memcpy(chunk + MLXSW_BLOOM_CHUNK_KEY_OFFSET,
-		       &aentry->ht_key.enc_key[chunk_key_offsets[chunk_index]],
+		       &aentry->enc_key[chunk_key_offsets[chunk_index]],
 		       MLXSW_BLOOM_CHUNK_KEY_BYTES);
 		chunk += MLXSW_BLOOM_KEY_CHUNK_BYTES;
 	}
@@ -234,8 +234,8 @@ mlxsw_sp_acl_bf_init(struct mlxsw_sp *mlxsw_sp, unsigned int num_erp_banks)
 	 * is 2^ACL_MAX_BF_LOG
 	 */
 	bf_bank_size = 1 << MLXSW_CORE_RES_GET(mlxsw_sp->core, ACL_MAX_BF_LOG);
-	bf = kzalloc(sizeof(*bf) + bf_bank_size * num_erp_banks *
-		     sizeof(*bf->refcnt), GFP_KERNEL);
+	bf = kzalloc(struct_size(bf, refcnt, bf_bank_size * num_erp_banks),
+		     GFP_KERNEL);
 	if (!bf)
 		return ERR_PTR(-ENOMEM);
 

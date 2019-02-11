@@ -16,6 +16,7 @@
 #include "dpni-cmd.h"
 
 #include "dpaa2-eth-trace.h"
+#include "dpaa2-eth-debugfs.h"
 
 #define DPAA2_WRIOP_VERSION(x, y, z) ((x) << 10 | (y) << 5 | (z) << 0)
 
@@ -52,7 +53,8 @@
  */
 #define DPAA2_ETH_MAX_FRAMES_PER_QUEUE	(DPAA2_ETH_TAILDROP_THRESH / 64)
 #define DPAA2_ETH_NUM_BUFS		(DPAA2_ETH_MAX_FRAMES_PER_QUEUE + 256)
-#define DPAA2_ETH_REFILL_THRESH		DPAA2_ETH_MAX_FRAMES_PER_QUEUE
+#define DPAA2_ETH_REFILL_THRESH \
+	(DPAA2_ETH_NUM_BUFS - DPAA2_ETH_BUFS_PER_CMD)
 
 /* Maximum number of buffers that can be acquired/released through a single
  * QBMan command
@@ -62,9 +64,11 @@
 /* Hardware requires alignment for ingress/egress buffer addresses */
 #define DPAA2_ETH_TX_BUF_ALIGN		64
 
-#define DPAA2_ETH_RX_BUF_SIZE		2048
-#define DPAA2_ETH_SKB_SIZE \
-	(DPAA2_ETH_RX_BUF_SIZE + SKB_DATA_ALIGN(sizeof(struct skb_shared_info)))
+#define DPAA2_ETH_RX_BUF_RAW_SIZE	PAGE_SIZE
+#define DPAA2_ETH_RX_BUF_TAILROOM \
+	SKB_DATA_ALIGN(sizeof(struct skb_shared_info))
+#define DPAA2_ETH_RX_BUF_SIZE \
+	(DPAA2_ETH_RX_BUF_RAW_SIZE - DPAA2_ETH_RX_BUF_TAILROOM)
 
 /* Hardware annotation area in RX/TX buffers */
 #define DPAA2_ETH_RX_HWA_SIZE		64
@@ -273,6 +277,7 @@ struct dpaa2_eth_priv;
 struct dpaa2_eth_fq {
 	u32 fqid;
 	u32 tx_qdbin;
+	u32 tx_fqid;
 	u16 flowid;
 	int target_cpu;
 	u32 dq_frames;
@@ -325,6 +330,9 @@ struct dpaa2_eth_priv {
 
 	u8 num_fqs;
 	struct dpaa2_eth_fq fq[DPAA2_ETH_MAX_QUEUES];
+	int (*enqueue)(struct dpaa2_eth_priv *priv,
+		       struct dpaa2_eth_fq *fq,
+		       struct dpaa2_fd *fd, u8 prio);
 
 	u8 num_channels;
 	struct dpaa2_eth_channel *channel[DPAA2_ETH_MAX_DPCONS];
@@ -342,7 +350,6 @@ struct dpaa2_eth_priv {
 	bool rx_tstamp; /* Rx timestamping enabled */
 
 	u16 tx_qdid;
-	u16 rx_buf_align;
 	struct fsl_mc_io *mc_io;
 	/* Cores which have an affine DPIO/DPCON.
 	 * This is the cpu set on which Rx and Tx conf frames are processed
@@ -365,6 +372,9 @@ struct dpaa2_eth_priv {
 	struct dpaa2_eth_cls_rule *cls_rules;
 	u8 rx_cls_enabled;
 	struct bpf_prog *xdp_prog;
+#ifdef CONFIG_DEBUG_FS
+	struct dpaa2_debugfs dbg;
+#endif
 };
 
 #define DPAA2_RXH_SUPPORTED	(RXH_L2DA | RXH_VLAN | RXH_L3_PROTO \
@@ -405,19 +415,14 @@ static inline int dpaa2_eth_cmp_dpni_ver(struct dpaa2_eth_priv *priv,
 #define dpaa2_eth_fs_count(priv)        \
 	((priv)->dpni_attrs.fs_entries)
 
+/* We have exactly one {Rx, Tx conf} queue per channel */
+#define dpaa2_eth_queue_count(priv)     \
+	((priv)->num_channels)
+
 enum dpaa2_eth_rx_dist {
 	DPAA2_ETH_RX_DIST_HASH,
 	DPAA2_ETH_RX_DIST_CLS
 };
-
-/* Hardware only sees DPAA2_ETH_RX_BUF_SIZE, but the skb built around
- * the buffer also needs space for its shared info struct, and we need
- * to allocate enough to accommodate hardware alignment restrictions
- */
-static inline unsigned int dpaa2_eth_buf_raw_size(struct dpaa2_eth_priv *priv)
-{
-	return DPAA2_ETH_SKB_SIZE + priv->rx_buf_align;
-}
 
 static inline
 unsigned int dpaa2_eth_needed_headroom(struct dpaa2_eth_priv *priv,
@@ -443,14 +448,7 @@ unsigned int dpaa2_eth_needed_headroom(struct dpaa2_eth_priv *priv,
  */
 static inline unsigned int dpaa2_eth_rx_head_room(struct dpaa2_eth_priv *priv)
 {
-	return priv->tx_data_offset + DPAA2_ETH_TX_BUF_ALIGN -
-	       DPAA2_ETH_RX_HWA_SIZE;
-}
-
-/* We have exactly one {Rx, Tx conf} queue per channel */
-static int dpaa2_eth_queue_count(struct dpaa2_eth_priv *priv)
-{
-	return priv->num_channels;
+	return priv->tx_data_offset - DPAA2_ETH_RX_HWA_SIZE;
 }
 
 int dpaa2_eth_set_hash(struct net_device *net_dev, u64 flags);

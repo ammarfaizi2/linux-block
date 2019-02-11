@@ -3449,10 +3449,10 @@ alloc_ext_stats:
 			goto alloc_tx_ext_stats;
 
 		bp->hw_rx_port_stats_ext =
-			dma_zalloc_coherent(&pdev->dev,
-					    sizeof(struct rx_port_stats_ext),
-					    &bp->hw_rx_port_stats_ext_map,
-					    GFP_KERNEL);
+			dma_alloc_coherent(&pdev->dev,
+					   sizeof(struct rx_port_stats_ext),
+					   &bp->hw_rx_port_stats_ext_map,
+					   GFP_KERNEL);
 		if (!bp->hw_rx_port_stats_ext)
 			return 0;
 
@@ -3462,10 +3462,10 @@ alloc_tx_ext_stats:
 
 		if (bp->hwrm_spec_code >= 0x10902) {
 			bp->hw_tx_port_stats_ext =
-				dma_zalloc_coherent(&pdev->dev,
-					    sizeof(struct tx_port_stats_ext),
-					    &bp->hw_tx_port_stats_ext_map,
-					    GFP_KERNEL);
+				dma_alloc_coherent(&pdev->dev,
+						   sizeof(struct tx_port_stats_ext),
+						   &bp->hw_tx_port_stats_ext_map,
+						   GFP_KERNEL);
 		}
 		bp->flags |= BNXT_FLAG_PORT_STATS_EXT;
 	}
@@ -5601,7 +5601,8 @@ static int bnxt_hwrm_check_pf_rings(struct bnxt *bp, int tx_rings, int rx_rings,
 			 FUNC_CFG_REQ_FLAGS_STAT_CTX_ASSETS_TEST |
 			 FUNC_CFG_REQ_FLAGS_VNIC_ASSETS_TEST;
 		if (bp->flags & BNXT_FLAG_CHIP_P5)
-			flags |= FUNC_CFG_REQ_FLAGS_RSSCOS_CTX_ASSETS_TEST;
+			flags |= FUNC_CFG_REQ_FLAGS_RSSCOS_CTX_ASSETS_TEST |
+				 FUNC_CFG_REQ_FLAGS_NQ_ASSETS_TEST;
 		else
 			flags |= FUNC_CFG_REQ_FLAGS_RING_GRP_ASSETS_TEST;
 	}
@@ -6221,9 +6222,12 @@ static int bnxt_alloc_ctx_pg_tbls(struct bnxt *bp,
 			rmem->pg_tbl_map = ctx_pg->ctx_dma_arr[i];
 			rmem->depth = 1;
 			rmem->nr_pages = MAX_CTX_PAGES;
-			if (i == (nr_tbls - 1))
-				rmem->nr_pages = ctx_pg->nr_pages %
-						 MAX_CTX_PAGES;
+			if (i == (nr_tbls - 1)) {
+				int rem = ctx_pg->nr_pages % MAX_CTX_PAGES;
+
+				if (rem)
+					rmem->nr_pages = rem;
+			}
 			rc = bnxt_alloc_ctx_mem_blk(bp, pg_tbl);
 			if (rc)
 				break;
@@ -9977,8 +9981,11 @@ static int bnxt_get_phys_port_name(struct net_device *dev, char *buf,
 	return 0;
 }
 
-int bnxt_port_attr_get(struct bnxt *bp, struct switchdev_attr *attr)
+int bnxt_get_port_parent_id(struct net_device *dev,
+			    struct netdev_phys_item_id *ppid)
 {
+	struct bnxt *bp = netdev_priv(dev);
+
 	if (bp->eswitch_mode != DEVLINK_ESWITCH_MODE_SWITCHDEV)
 		return -EOPNOTSUPP;
 
@@ -9986,26 +9993,11 @@ int bnxt_port_attr_get(struct bnxt *bp, struct switchdev_attr *attr)
 	if (!BNXT_PF(bp))
 		return -EOPNOTSUPP;
 
-	switch (attr->id) {
-	case SWITCHDEV_ATTR_ID_PORT_PARENT_ID:
-		attr->u.ppid.id_len = sizeof(bp->switch_id);
-		memcpy(attr->u.ppid.id, bp->switch_id, attr->u.ppid.id_len);
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+	ppid->id_len = sizeof(bp->switch_id);
+	memcpy(ppid->id, bp->switch_id, ppid->id_len);
+
 	return 0;
 }
-
-static int bnxt_swdev_port_attr_get(struct net_device *dev,
-				    struct switchdev_attr *attr)
-{
-	return bnxt_port_attr_get(netdev_priv(dev), attr);
-}
-
-static const struct switchdev_ops bnxt_switchdev_ops = {
-	.switchdev_port_attr_get	= bnxt_swdev_port_attr_get
-};
 
 static const struct net_device_ops bnxt_netdev_ops = {
 	.ndo_open		= bnxt_open,
@@ -10038,6 +10030,7 @@ static const struct net_device_ops bnxt_netdev_ops = {
 	.ndo_bpf		= bnxt_xdp,
 	.ndo_bridge_getlink	= bnxt_bridge_getlink,
 	.ndo_bridge_setlink	= bnxt_bridge_setlink,
+	.ndo_get_port_parent_id	= bnxt_get_port_parent_id,
 	.ndo_get_phys_port_name = bnxt_get_phys_port_name
 };
 
@@ -10396,7 +10389,6 @@ static int bnxt_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
 	dev->netdev_ops = &bnxt_netdev_ops;
 	dev->watchdog_timeo = BNXT_TX_TIMEOUT;
 	dev->ethtool_ops = &bnxt_ethtool_ops;
-	SWITCHDEV_SET_OPS(dev, &bnxt_switchdev_ops);
 	pci_set_drvdata(pdev, dev);
 
 	rc = bnxt_alloc_hwrm_resources(bp);
