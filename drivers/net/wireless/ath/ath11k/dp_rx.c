@@ -2037,8 +2037,8 @@ int ath11k_dp_process_rx_err(struct ath11k_base *ab, int mac_id,
 			goto exit;
 		}
 
-		link_desc_va = (void *)(link_desc_banks[desc_bank].vaddr +
-			       (paddr - link_desc_banks[desc_bank].paddr));
+		link_desc_va = link_desc_banks[desc_bank].vaddr +
+			       (paddr - link_desc_banks[desc_bank].paddr);
 		ath11k_hal_rx_msdu_link_info_get(link_desc_va, &num_msdus, meta,
 						 &rbm);
 		if (rbm != HAL_RX_BUF_RBM_WBM_IDLE_DESC_LIST ||
@@ -2380,8 +2380,8 @@ int ath11k_dp_process_rxdma_err(struct ath11k_base *ab, int mac_id, int budget)
 	       (desc = ath11k_hal_srng_dst_get_next_entry(ab, srng))) {
 		ath11k_hal_rx_reo_ent_paddr_get(ab, desc, &paddr, &desc_bank);
 
-		link_desc_va = (void *)(link_desc_banks[desc_bank].vaddr +
-			       (paddr - link_desc_banks[desc_bank].paddr));
+		link_desc_va = link_desc_banks[desc_bank].vaddr +
+			       (paddr - link_desc_banks[desc_bank].paddr);
 		ath11k_hal_rx_msdu_link_info_get(link_desc_va, &num_msdus, meta,
 						 &rbm);
 

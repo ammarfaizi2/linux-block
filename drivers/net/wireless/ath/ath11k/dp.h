@@ -91,8 +91,8 @@ struct ath11k_pdev_dp {
 #define DP_LINK_DESC_BANKS_MAX 8
 
 struct dp_link_desc_bank {
-	u32 *vaddr_unaligned;
-	u32 *vaddr;
+	void *vaddr_unaligned;
+	void *vaddr;
 	dma_addr_t paddr_unaligned;
 	dma_addr_t paddr;
 	u32 size;
