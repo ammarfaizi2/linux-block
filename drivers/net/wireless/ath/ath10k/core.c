@@ -2631,6 +2631,9 @@ int ath10k_core_start(struct ath10k *ar, enum ath10k_firmware_mode mode,
 			     ar->wmi.svc_map))
 			val |= WMI_10_4_TX_DATA_ACK_RSSI;
 
+		if (test_bit(WMI_SERVICE_REPORT_AIRTIME, ar->wmi.svc_map))
+			val |= WMI_10_4_REPORT_AIRTIME;
+
 		status = ath10k_mac_ext_resource_config(ar, val);
 		if (status) {
 			ath10k_err(ar,
@@ -2994,9 +2997,8 @@ err:
 int ath10k_core_register(struct ath10k *ar,
 			 const struct ath10k_bus_params *bus_params)
 {
-	ar->bus_param.chip_id = bus_params->chip_id;
-	ar->bus_param.dev_type = bus_params->dev_type;
-	ar->bus_param.link_can_suspend = bus_params->link_can_suspend;
+	ar->bus_param = *bus_params;
+
 	queue_work(ar->workqueue, &ar->register_work);
 
 	return 0;
@@ -3116,9 +3118,7 @@ struct ath10k *ath10k_core_create(size_t priv_size, struct device *dev,
 
 	mutex_init(&ar->conf_mutex);
 	spin_lock_init(&ar->data_lock);
-	spin_lock_init(&ar->txqs_lock);
 
-	INIT_LIST_HEAD(&ar->txqs);
 	INIT_LIST_HEAD(&ar->peers);
 	init_waitqueue_head(&ar->peer_mapping_wq);
 	init_waitqueue_head(&ar->htt.empty_tx_wq);
