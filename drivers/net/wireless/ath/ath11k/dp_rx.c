@@ -2343,6 +2343,9 @@ int ath11k_dp_rx_process_wbm_err(struct ath11k_base *ab,
 		if (!num_buffs_reaped[i])
 			continue;
 
+		ar = ab->pdevs[i].ar;
+		rx_ring = &ar->dp.rx_refill_buf_ring;
+
 		ath11k_dp_rxbufs_replenish(ab, i, rx_ring, num_buffs_reaped[i],
 					   HAL_RX_BUF_RBM_SW3_BM, GFP_ATOMIC);
 	}
