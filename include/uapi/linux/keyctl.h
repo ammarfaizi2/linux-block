@@ -71,6 +71,7 @@
 #define KEYCTL_CONTAINER_INTERCEPT	31	/* Intercept upcalls inside a container */
 #define KEYCTL_QUERY_REQUEST_KEY_AUTH	32	/* Query a request_key_auth key */
 #define KEYCTL_MOVE			33	/* Move keys between keyrings */
+#define KEYCTL_FIND_LRU			34	/* Find the least-recently used key in a keyring */
 
 /* keyctl structures */
 struct keyctl_dh_params {

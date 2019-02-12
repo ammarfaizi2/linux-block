@@ -1916,6 +1916,9 @@ SYSCALL_DEFINE5(keyctl, int, option, unsigned long, arg2, unsigned long, arg3,
 		return keyctl_query_request_key_auth(
 			(key_serial_t)arg2,
 			(struct keyctl_query_request_key_auth __user *)arg3);
+	case KEYCTL_FIND_LRU:
+		return keyctl_find_lru((key_serial_t)arg2,
+				       (const char __user *)arg3);
 #endif
 
 	case KEYCTL_MOVE:

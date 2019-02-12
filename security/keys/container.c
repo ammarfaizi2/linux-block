@@ -267,3 +267,109 @@ long keyctl_query_request_key_auth(key_serial_t auth_id,
 
 	return 0;
 }
+
+struct key_lru_search_state {
+	struct key	*candidate;
+	time64_t	oldest;
+};
+
+/*
+ * Iterate over all the keys in the keyring looking for the one with the oldest
+ * timestamp.
+ */
+static bool cmp_lru(const struct key *key,
+			   const struct key_match_data *match_data)
+{
+	struct key_lru_search_state *state = (void *)match_data->raw_data;
+	time64_t t;
+
+	t = READ_ONCE(key->last_used_at);
+	if (state->oldest > t && !test_bit(KEY_FLAG_SEEN, &key->flags)) {
+		state->oldest = t;
+		state->candidate = (struct key *)key;
+	}
+
+	return false;
+}
+
+/*
+ * Find the oldest key in a keyring of a particular type.
+ */
+long keyctl_find_lru(key_serial_t _keyring, const char __user *type_name)
+{
+	struct key_lru_search_state state;
+	struct keyring_search_context ctx = {
+		.index_key.description	= NULL,
+		.cred			= current_cred(),
+		.match_data.cmp		= cmp_lru,
+		.match_data.raw_data	= &state,
+		.match_data.lookup_type	= KEYRING_SEARCH_LOOKUP_ITERATE,
+		.flags			= KEYRING_SEARCH_DO_STATE_CHECK,
+	};
+	struct key_type *ktype;
+	struct key *key;
+	key_ref_t keyring_ref, ref;
+	char type[32];
+	int ret, max_iter = 10;
+
+	if (!_keyring || !type_name)
+		return -EINVAL;
+
+	/* We want to allow special types, such as ".request_key_auth" */
+	ret = strncpy_from_user(type, type_name, sizeof(type));
+	if (ret < 0)
+		return ret;
+	if (ret == 0 || ret >= sizeof(type))
+		return -EINVAL;
+	type[ret] = '\0';
+
+	keyring_ref = lookup_user_key(_keyring, 0, KEY_NEED_SEARCH);
+	if (IS_ERR(keyring_ref))
+		return PTR_ERR(keyring_ref);
+
+	if (strcmp(type, key_type_request_key_auth.name) == 0) {
+		ktype = &key_type_request_key_auth;
+	} else {
+		ktype = key_type_lookup(type);
+		if (IS_ERR(ktype)) {
+			ret = PTR_ERR(ktype);
+			goto error_ring;
+		}
+	}
+
+	ctx.index_key.type = ktype;
+
+	do {
+		state.oldest = TIME64_MAX;
+		state.candidate = NULL;
+
+		rcu_read_lock();
+
+		/* Scan the keyring.  We expect this to end in -EAGAIN as we
+		 * can't generate a result until the entire scan is completed.
+		 */
+		ret = -EAGAIN;
+		ref = keyring_search_aux(keyring_ref, &ctx);
+
+		key = state.candidate;
+		if (key &&
+		    !test_and_set_bit(KEY_FLAG_SEEN, &key->flags) &&
+		    key_validate(key) == 0) {
+			ret = key->serial;
+			goto error_unlock;
+		}
+
+
+		rcu_read_unlock();
+	} while (--max_iter > 0);
+	goto error_type;
+
+error_unlock:
+	rcu_read_unlock();
+error_type:
+	if (ktype != &key_type_request_key_auth)
+		key_type_put(ktype);
+error_ring:
+	key_ref_put(keyring_ref);
+	return ret;
+}

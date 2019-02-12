@@ -365,6 +365,7 @@ static inline long keyctl_watch_key(key_serial_t key_id, int watch_fd, int watch
 extern long keyctl_container_intercept(int, const char __user *, unsigned int, key_serial_t);
 extern long keyctl_query_request_key_auth(key_serial_t,
 					  struct keyctl_query_request_key_auth __user *);
+extern long keyctl_find_lru(key_serial_t, const char __user *);
 #endif
 
 /*

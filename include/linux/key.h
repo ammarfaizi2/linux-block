@@ -219,6 +219,7 @@ struct key {
 #define KEY_FLAG_KEEP		8	/* set if key should not be removed */
 #define KEY_FLAG_UID_KEYRING	9	/* set if key is a user or user session keyring */
 #define KEY_FLAG_SET_WATCH_PROXY 10	/* Set if watch_proxy should be set on added keys */
+#define KEY_FLAG_SEEN		11	/* Set if returned by keyctl_find_oldest_key() */
 
 	/* the key type and key description string
 	 * - the desc is used to match a key against search criteria
