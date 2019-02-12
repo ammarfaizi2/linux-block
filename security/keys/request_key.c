@@ -17,6 +17,7 @@
 #include <linux/err.h>
 #include <linux/keyctl.h>
 #include <linux/slab.h>
+#include <net/net_namespace.h>
 #include "internal.h"
 #include <keys/request_key_auth-type.h>
 
@@ -497,16 +498,18 @@ error:
  * request_key_and_link - Request a key and cache it in a keyring.
  * @type: The type of key we want.
  * @description: The searchable description of the key.
+ * @domain_tag: The domain in which the key operates.
  * @callout_info: The data to pass to the instantiation upcall (or NULL).
  * @callout_len: The length of callout_info.
  * @aux: Auxiliary data for the upcall.
  * @dest_keyring: Where to cache the key.
  * @flags: Flags to key_alloc().
  *
- * A key matching the specified criteria is searched for in the process's
- * keyrings and returned with its usage count incremented if found.  Otherwise,
- * if callout_info is not NULL, a key will be allocated and some service
- * (probably in userspace) will be asked to instantiate it.
+ * A key matching the specified criteria (type, description, domain_tag) is
+ * searched for in the process's keyrings and returned with its usage count
+ * incremented if found.  Otherwise, if callout_info is not NULL, a key will be
+ * allocated and some service (probably in userspace) will be asked to
+ * instantiate it.
  *
  * If successfully found or created, the key will be linked to the destination
  * keyring if one is provided.
@@ -522,6 +525,7 @@ error:
  */
 struct key *request_key_and_link(struct key_type *type,
 				 const char *description,
+				 struct key_tag *domain_tag,
 				 const void *callout_info,
 				 size_t callout_len,
 				 void *aux,
@@ -638,7 +642,8 @@ struct key *request_key(struct key_type *type,
 
 	if (callout_info)
 		callout_len = strlen(callout_info);
-	key = request_key_and_link(type, description, callout_info, callout_len,
+	key = request_key_and_link(type, description, NULL,
+				   callout_info, callout_len,
 				   NULL, NULL, KEY_ALLOC_IN_QUOTA);
 	if (!IS_ERR(key)) {
 		ret = wait_for_key_construction(key, false);
@@ -674,7 +679,8 @@ struct key *request_key_with_auxdata(struct key_type *type,
 	struct key *key;
 	int ret;
 
-	key = request_key_and_link(type, description, callout_info, callout_len,
+	key = request_key_and_link(type, description, NULL,
+				   callout_info, callout_len,
 				   aux, NULL, KEY_ALLOC_IN_QUOTA);
 	if (!IS_ERR(key)) {
 		ret = wait_for_key_construction(key, false);
@@ -686,3 +692,43 @@ struct key *request_key_with_auxdata(struct key_type *type,
 	return key;
 }
 EXPORT_SYMBOL(request_key_with_auxdata);
+
+/**
+ * request_key_net - Request a key for a net namespace and wait for construction
+ * @type: Type of key.
+ * @description: The searchable description of the key.
+ * @net: The network namespace that is the key's domain of operation.
+ * @callout_info: The data to pass to the instantiation upcall (or NULL).
+ *
+ * As for request_key() except that it does not add the returned key to a
+ * keyring if found, new keys are always allocated in the user's quota, the
+ * callout_info must be a NUL-terminated string and no auxiliary data can be
+ * passed.  Only keys that operate the specified network namespace are used.
+ *
+ * Furthermore, it then works as wait_for_key_construction() to wait for the
+ * completion of keys undergoing construction with a non-interruptible wait.
+ */
+struct key *request_key_net(struct key_type *type,
+			    const char *description,
+			    struct net *net,
+			    const char *callout_info)
+{
+	struct key *key;
+	size_t callout_len = 0;
+	int ret;
+
+	if (callout_info)
+		callout_len = strlen(callout_info);
+	key = request_key_and_link(type, description, net->key_domain,
+				   callout_info, callout_len,
+				   NULL, NULL, KEY_ALLOC_IN_QUOTA);
+	if (!IS_ERR(key)) {
+		ret = wait_for_key_construction(key, false);
+		if (ret < 0) {
+			key_put(key);
+			return ERR_PTR(ret);
+		}
+	}
+	return key;
+}
+EXPORT_SYMBOL(request_key_net);

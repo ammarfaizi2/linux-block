@@ -36,6 +36,7 @@ typedef int32_t key_serial_t;
 typedef uint32_t key_perm_t;
 
 struct key;
+struct net;
 
 #ifdef CONFIG_KEYS
 
@@ -305,6 +306,11 @@ extern struct key *request_key_with_auxdata(struct key_type *type,
 					    const void *callout_info,
 					    size_t callout_len,
 					    void *aux);
+
+extern struct key *request_key_net(struct key_type *type,
+				   const char *description,
+				   struct net *net,
+				   const char *callout_info);
 
 extern int wait_for_key_construction(struct key *key, bool intr);
 
