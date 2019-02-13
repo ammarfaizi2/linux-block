@@ -1409,6 +1409,66 @@ int key_link(struct key *keyring, struct key *key)
 }
 EXPORT_SYMBOL(key_link);
 
+/*
+ * Begin the process of unlinking a key from a keyring.
+ */
+static int __key_unlink_begin(struct key *keyring, unsigned int lock_nesting,
+			      struct key *key, struct assoc_array_edit **_edit)
+	__acquires(&keyring->sem)
+{
+	struct assoc_array_edit *edit;
+	int ret;
+
+	if (keyring->type != &key_type_keyring)
+		return -ENOTDIR;
+
+	down_write_nested(&keyring->sem, lock_nesting);
+
+	edit = assoc_array_delete(&keyring->keys, &keyring_assoc_array_ops,
+				  &key->index_key);
+	if (IS_ERR(edit)) {
+		ret = PTR_ERR(edit);
+		goto error;
+	}
+
+	if (!edit) {
+		ret = -ENOENT;
+		goto error;
+	}
+
+	*_edit = edit;
+	return 0;
+
+error:
+	up_write(&keyring->sem);
+	return ret;
+}
+
+/*
+ * Apply an unlink change.
+ */
+static void __key_unlink(struct key *keyring, struct key *key,
+			      struct assoc_array_edit **_edit)
+{
+	assoc_array_apply_edit(*_edit);
+	*_edit = NULL;
+	notify_key(keyring, NOTIFY_KEY_UNLINKED, key_serial(key));
+	key_payload_reserve(keyring, keyring->datalen - KEYQUOTA_LINK_BYTES);
+}
+
+/*
+ * Finish unlinking a key from to a keyring.
+ */
+static void __key_unlink_end(struct key *keyring,
+			     struct key *key,
+			     struct assoc_array_edit *edit)
+	__releases(&keyring->sem)
+{
+	if (edit)
+		assoc_array_cancel_edit(edit);
+	up_write(&keyring->sem);
+}
+
 /**
  * key_unlink - Unlink the first link to a key from a keyring.
  * @keyring: The keyring to remove the link from.
@@ -1429,35 +1489,18 @@ EXPORT_SYMBOL(key_link);
 int key_unlink(struct key *keyring, struct key *key)
 {
 	struct assoc_array_edit *edit;
-	key_serial_t target = key_serial(key);
 	int ret;
 
 	key_check(keyring);
 	key_check(key);
 
-	if (keyring->type != &key_type_keyring)
-		return -ENOTDIR;
+	ret = __key_unlink_begin(keyring, 0, key, &edit);
+	if (ret < 0)
+		return ret;
 
-	down_write(&keyring->sem);
-
-	edit = assoc_array_delete(&keyring->keys, &keyring_assoc_array_ops,
-				  &key->index_key);
-	if (IS_ERR(edit)) {
-		ret = PTR_ERR(edit);
-		goto error;
-	}
-	ret = -ENOENT;
-	if (edit == NULL)
-		goto error;
-
-	assoc_array_apply_edit(edit);
-	notify_key(keyring, NOTIFY_KEY_UNLINKED, target);
-	key_payload_reserve(keyring, keyring->datalen - KEYQUOTA_LINK_BYTES);
-	ret = 0;
-
-error:
-	up_write(&keyring->sem);
-	return ret;
+	__key_unlink(keyring, key, &edit);
+	__key_unlink_end(keyring, key, edit);
+	return 0;
 }
 EXPORT_SYMBOL(key_unlink);
 
