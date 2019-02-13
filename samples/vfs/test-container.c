@@ -20,6 +20,8 @@
 #include <sys/stat.h>
 #include <keyutils.h>
 
+#define KEYCTL_CONTAINER_INTERCEPT	31	/* Intercept upcalls inside a container */
+
 /* Hope -1 isn't a syscall */
 #ifndef __NR_fsopen
 #define __NR_fsopen -1
@@ -187,6 +189,7 @@ void container_init(void)
  */
 int main(int argc, char *argv[])
 {
+	key_serial_t keyring;
 	pid_t pid;
 	int fsfd, mfd, cfd, ws;
 
@@ -258,6 +261,19 @@ int main(int argc, char *argv[])
 	}
 	E(close(fsfd));
 	E(close(mfd));
+
+	/* Create a keyring to catch upcalls. */
+	printf("Intercepting...\n");
+	keyring = add_key("keyring", "upcall", NULL, 0, KEY_SPEC_SESSION_KEYRING);
+	if (keyring == -1) {
+		perror("add_key/u");
+		exit(1);
+	}
+
+	if (keyctl(KEYCTL_CONTAINER_INTERCEPT, cfd, "user", 0, keyring) < 0) {
+		perror("keyctl_container_intercept");
+		exit(1);
+	}
 
 	/* Start the 'init' process. */
 	printf("Forking...\n");

@@ -5,7 +5,8 @@ hostprogs-$(CONFIG_SAMPLE_VFS) := \
 	test-fsmount \
 	test-mntinfo \
 	test-statx \
-	test-container
+	test-container \
+	test-upcall
 
 # Tell kbuild to always build the programs
 always := $(hostprogs-y)
@@ -18,5 +19,8 @@ HOSTLDLIBS_test-mntinfo += -lm
 HOSTCFLAGS_test-fs-query.o += -I$(objtree)/usr/include
 HOSTCFLAGS_test-fsmount.o += -I$(objtree)/usr/include
 HOSTCFLAGS_test-statx.o += -I$(objtree)/usr/include
+
 HOSTCFLAGS_test-container.o += -I$(objtree)/usr/include
 HOSTLDLIBS_test-container += -lkeyutils
+HOSTCFLAGS_test-upcall.o += -I$(objtree)/usr/include
+HOSTLDLIBS_test-upcall += -lkeyutils
