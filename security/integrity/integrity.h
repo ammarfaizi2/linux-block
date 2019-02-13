@@ -154,7 +154,7 @@ int integrity_digsig_verify(const unsigned int id, const char *sig, int siglen,
 int __init integrity_init_keyring(const unsigned int id);
 int __init integrity_load_x509(const unsigned int id, const char *path);
 int __init integrity_load_cert(const unsigned int id, const char *source,
-			       const void *data, size_t len, key_perm_t perm);
+			       const void *data, size_t len, struct key_acl *acl);
 #else
 
 static inline int integrity_digsig_verify(const unsigned int id,
@@ -172,7 +172,7 @@ static inline int integrity_init_keyring(const unsigned int id)
 static inline int __init integrity_load_cert(const unsigned int id,
 					     const char *source,
 					     const void *data, size_t len,
-					     key_perm_t perm)
+					     struct key_acl *acl)
 {
 	return 0;
 }
