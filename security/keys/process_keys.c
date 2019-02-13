@@ -466,7 +466,7 @@ key_ref_t search_my_process_keyrings(struct keyring_search_context *ctx)
 #ifdef CONFIG_CONTAINERS
 	if (current->container->keyring) {
 		key_ref = keyring_search_aux(
-			make_key_ref(current->container->keyring, 1), ctx);
+			make_key_ref(current->container->keyring, false), ctx);
 		if (!IS_ERR(key_ref))
 			goto found;
 

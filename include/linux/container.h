@@ -33,7 +33,11 @@ struct container {
 	refcount_t		usage;
 	int			exit_code;	/* The exit code of 'init' */
 	const struct cred	*cred;		/* Creds for this container, including userns */
+#ifdef CONFIG_KEYS
 	struct key		*keyring;	/* Externally managed container keyring */
+	struct key_tag		*tag;		/* Container ID for key ACL */
+	struct list_head	req_key_traps;	/* Traps for request-key upcalls */
+#endif
 	struct nsproxy		*ns;		/* This container's namespaces */
 	struct path		root;		/* The root of the container's fs namespace */
 	struct task_struct	*init;		/* The 'init' task for this container */
@@ -43,7 +47,6 @@ struct container {
 	struct list_head	members;	/* Member processes, guarded with ->lock */
 	struct list_head	child_link;	/* Link in parent->children */
 	struct list_head	children;	/* Child containers */
-	struct list_head	req_key_traps;	/* Traps for request-key upcalls */
 	wait_queue_head_t	waitq;		/* Someone waiting for init to exit waits here */
 	unsigned long		flags;
 #define CONTAINER_FLAG_INIT_STARTED	0	/* Init is started - certain ops now prohibited */
@@ -63,6 +66,7 @@ extern int copy_container(unsigned long flags, struct task_struct *tsk,
 extern void exit_container(struct task_struct *tsk);
 extern void put_container(struct container *c);
 extern long key_del_intercept(struct container *c, const char *type);
+extern struct container *fd_to_container(int fd);
 
 static inline struct container *get_container(struct container *c)
 {

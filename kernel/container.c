@@ -35,7 +35,9 @@ struct container init_container = {
 	.members.next	= &init_task.container_link,
 	.members.prev	= &init_task.container_link,
 	.children	= LIST_HEAD_INIT(init_container.children),
+#ifdef CONFIG_KEYS
 	.req_key_traps	= LIST_HEAD_INIT(init_container.req_key_traps),
+#endif
 	.flags		= (1 << CONTAINER_FLAG_INIT_STARTED),
 	.lock		= __SPIN_LOCK_UNLOCKED(init_container.lock),
 	.seq		= SEQCNT_ZERO(init_fs.seq),
@@ -54,8 +56,6 @@ void put_container(struct container *c)
 
 	while (c && refcount_dec_and_test(&c->usage)) {
 		BUG_ON(!list_empty(&c->members));
-		if (!list_empty(&c->req_key_traps))
-			key_del_intercept(c, NULL);
 		if (c->pid_ns)
 			put_pid_ns(c->pid_ns);
 		if (c->ns)
@@ -71,7 +71,15 @@ void put_container(struct container *c)
 
 		if (c->cred)
 			put_cred(c->cred);
+#ifdef CONFIG_KEYS
+		if (!list_empty(&c->req_key_traps))
+			key_del_intercept(c, NULL);
+		if (c->tag) {
+			c->tag->removed = true;
+			key_put_tag(c->tag);
+		}
 		key_put(c->keyring);
+#endif
 		security_container_free(c);
 		kfree(c);
 		c = parent;
@@ -209,6 +217,24 @@ const struct file_operations container_fops = {
 	.release	= container_release,
 };
 
+/**
+ * fd_to_container - Get the container attached to an fd.
+ */
+struct container *fd_to_container(int fd)
+{
+	struct container *c = ERR_PTR(-EINVAL);
+	struct fd f = fdget(fd);
+
+	if (!f.file)
+		return ERR_PTR(-EBADF);
+
+	if (is_container_file(f.file))
+		c = get_container(f.file->private_data);
+
+	fdput(f);
+	return c;
+}
+
 /*
  * Handle fork/clone.
  *
@@ -290,7 +316,9 @@ static struct container *alloc_container(const char __user *name)
 
 	INIT_LIST_HEAD(&c->members);
 	INIT_LIST_HEAD(&c->children);
+#ifdef CONFIG_KEYS
 	INIT_LIST_HEAD(&c->req_key_traps);
+#endif
 	init_waitqueue_head(&c->waitq);
 	spin_lock_init(&c->lock);
 	refcount_set(&c->usage, 1);
@@ -305,8 +333,15 @@ static struct container *alloc_container(const char __user *name)
 	ret = -EINVAL;
 	if (strchr(c->name, '/'))
 		goto err;
-
 	c->name[len] = 0;
+
+#ifdef CONFIG_KEYS
+	ret = -ENOMEM;
+	c->tag = kzalloc(sizeof(*c->tag), GFP_KERNEL);
+	if (!c->tag)
+		goto err;
+	refcount_set(&c->tag->usage, 1);
+#endif
 	return c;
 
 err:

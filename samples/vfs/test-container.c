@@ -22,6 +22,30 @@
 
 #define KEYCTL_CONTAINER_INTERCEPT	31	/* Intercept upcalls inside a container */
 #define KEYCTL_SET_CONTAINER_KEYRING	35	/* Attach a keyring to a container */
+#define KEYCTL_GRANT_PERMISSION		36	/* Grant a permit to a key */
+
+enum key_ace_subject_type {
+	KEY_ACE_SUBJ_STANDARD	= 0,	/* subject is one of key_ace_standard_subject */
+	KEY_ACE_SUBJ_CONTAINER	= 1,	/* subject is a container fd */
+};
+
+enum key_ace_standard_subject {
+	KEY_ACE_EVERYONE	= 0,	/* Everyone, including owner and group */
+	KEY_ACE_GROUP		= 1,	/* The key's group */
+	KEY_ACE_OWNER		= 2,	/* The owner of the key */
+	KEY_ACE_POSSESSOR	= 3,	/* Any process that possesses of the key */
+};
+
+#define KEY_ACE_VIEW		0x00000001 /* Can describe the key */
+#define KEY_ACE_READ		0x00000002 /* Can read the key content */
+#define KEY_ACE_WRITE		0x00000004 /* Can update/modify the key content */
+#define KEY_ACE_SEARCH		0x00000008 /* Can find the key by search */
+#define KEY_ACE_LINK		0x00000010 /* Can make a link to the key */
+#define KEY_ACE_SET_SECURITY	0x00000020 /* Can set owner, group, ACL */
+#define KEY_ACE_INVAL		0x00000040 /* Can invalidate the key */
+#define KEY_ACE_REVOKE		0x00000080 /* Can revoke the key */
+#define KEY_ACE_JOIN		0x00000100 /* Can join keyring */
+#define KEY_ACE_CLEAR		0x00000200 /* Can clear keyring */
 
 /* Hope -1 isn't a syscall */
 #ifndef __NR_fsopen
@@ -190,7 +214,7 @@ void container_init(void)
  */
 int main(int argc, char *argv[])
 {
-	key_serial_t keyring;
+	key_serial_t keyring, key;
 	pid_t pid;
 	int fsfd, mfd, cfd, ws;
 
@@ -271,8 +295,42 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
+	/* We need to grant the container permission to search for keys in the
+	 * container keyring.
+	 */
+	if (keyctl(KEYCTL_GRANT_PERMISSION, keyring, KEY_ACE_SUBJ_CONTAINER, cfd,
+		   KEY_ACE_SEARCH) < 0) {
+		perror("keyctl_grant/s");
+		exit(1);
+	}
+
+	if (keyctl(KEYCTL_GRANT_PERMISSION, keyring,
+		   KEY_ACE_SUBJ_STANDARD, KEY_ACE_OWNER, 0) < 0) {
+		perror("keyctl_grant/s");
+		exit(1);
+	}
+
 	if (keyctl(KEYCTL_SET_CONTAINER_KEYRING, cfd, keyring) < 0) {
 		perror("keyctl_set_container_keyring");
+		exit(1);
+	}
+
+	/* Create a key that can be accessed from within the container */
+	printf("Sample key...\n");
+	key = add_key("user", "foobar", "wibble", 6, keyring);
+	if (key == -1) {
+		perror("add_key/s");
+		exit(1);
+	}
+
+	if (keyctl(KEYCTL_GRANT_PERMISSION, key, KEY_ACE_SUBJ_CONTAINER, cfd,
+		   KEY_ACE_VIEW | KEY_ACE_SEARCH | KEY_ACE_READ | KEY_ACE_LINK) < 0) {
+		perror("keyctl_grant/s");
+		exit(1);
+	}
+
+	if (keyctl_link(key, keyring) < 0) {
+		perror("keyctl_link");
 		exit(1);
 	}
 

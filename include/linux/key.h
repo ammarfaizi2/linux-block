@@ -90,6 +90,9 @@ struct key_ace {
 		kuid_t		uid;
 		kgid_t		gid;
 		unsigned int	subject_id;
+#ifdef CONFIG_CONTAINERS
+		struct key_tag __rcu *container_tag;
+#endif
 	};
 };
 

@@ -13,6 +13,7 @@
 #include <linux/security.h>
 #include <linux/user_namespace.h>
 #include <linux/uaccess.h>
+#include <linux/container.h>
 #include "internal.h"
 
 struct key_acl default_key_acl = {
@@ -130,6 +131,15 @@ int key_task_permission(const key_ref_t key_ref, const struct cred *cred,
 				break;
 			}
 			break;
+#ifdef CONFIG_CONTAINERS
+		case KEY_ACE_SUBJ_CONTAINER: {
+			const struct key_tag *tag = rcu_dereference(ace->container_tag);
+
+			if (!tag->removed && current->container->tag == tag)
+				allow |= ace->perm;
+			break;
+		}
+#endif
 		}
 	}
 
@@ -185,8 +195,7 @@ EXPORT_SYMBOL(key_validate);
  */
 unsigned int key_acl_to_perm(const struct key_acl *acl)
 {
-	unsigned int perm = 0, tperm;
-	int i;
+	unsigned int perm = 0, tperm, i;
 
 	BUILD_BUG_ON(KEY_OTH_VIEW	!= KEY_ACE_VIEW		||
 		     KEY_OTH_READ	!= KEY_ACE_READ		||
@@ -238,12 +247,36 @@ unsigned int key_acl_to_perm(const struct key_acl *acl)
 }
 
 /*
+ * Clean up an ACL.
+ */
+static void key_free_acl(struct rcu_head *rcu)
+{
+	struct key_acl *acl = container_of(rcu, struct key_acl, rcu);
+#ifdef CONFIG_CONTAINERS
+	struct key_tag *tag;
+	unsigned int i;
+
+	for (i = 0; i < acl->nr_ace; i++) {
+		const struct key_ace *ace = &acl->aces[i];
+		switch (ace->type) {
+		case KEY_ACE_SUBJ_CONTAINER:
+			tag = rcu_access_pointer(ace->container_tag);
+			key_put_tag(ace->container_tag);
+			break;
+		}
+	}
+#endif
+
+	kfree(acl);
+}
+
+/*
  * Destroy a key's ACL.
  */
 void key_put_acl(struct key_acl *acl)
 {
 	if (acl && refcount_dec_and_test(&acl->usage))
-		kfree_rcu(acl, rcu);
+		call_rcu(&acl->rcu, key_free_acl);
 }
 
 /*
@@ -297,6 +330,10 @@ static struct key_acl *key_alloc_acl(const struct key_acl *old_acl, int nr, int 
 		if (i == skip)
 			continue;
 		acl->aces[j] = old_acl->aces[i];
+#ifdef CONFIG_CONTAINERS
+		if (acl->aces[j].type == KEY_ACE_SUBJ_CONTAINER)
+			refcount_inc(&acl->aces[j].container_tag->usage);
+#endif
 		j++;
 	}
 	return acl;
@@ -312,21 +349,39 @@ static long key_change_acl(struct key *key, struct key_ace *new_ace)
 
 	old = rcu_dereference_protected(key->acl, lockdep_is_held(&key->sem));
 
-	for (i = 0; i < old->nr_ace; i++)
-		if (old->aces[i].type == new_ace->type &&
-		    old->aces[i].subject_id == new_ace->subject_id)
-			goto found_match;
+	for (i = 0; i < old->nr_ace; i++) {
+		if (old->aces[i].type != new_ace->type)
+			continue;
+		switch (old->aces[i].type) {
+		case KEY_ACE_SUBJ_STANDARD:
+			if (old->aces[i].subject_id == new_ace->subject_id)
+				goto replace_ace;
+			break;
+#ifdef CONFIG_CONTAINERS
+		case KEY_ACE_SUBJ_CONTAINER:
+			if (old->aces[i].container_tag == new_ace->container_tag)
+				goto replace_ace;
+			break;
+#endif
+		default:
+			break;
+		}
+	}
 
 	if (new_ace->perm == 0)
-		return 0; /* No permissions to remove.  Add deny record? */
+		return 0; /* No permissions to cancel.  Add deny record? */
 
 	acl = key_alloc_acl(old, 1, -1);
 	if (IS_ERR(acl))
 		return PTR_ERR(acl);
 	acl->aces[i] = *new_ace;
+#ifdef CONFIG_CONTAINERS
+	if (acl->aces[i].type == KEY_ACE_SUBJ_CONTAINER)
+		refcount_inc(&acl->aces[i].container_tag->usage);
+#endif
 	goto change;
 
-found_match:
+replace_ace:
 	if (new_ace->perm == 0)
 		goto delete_ace;
 	if (new_ace->perm == old->aces[i].perm)
@@ -360,6 +415,7 @@ long keyctl_grant_permission(key_serial_t keyid,
 	key_ref_t key_ref;
 	long ret;
 
+	memset(&new_ace, 0, sizeof(new_ace));
 	new_ace.type = type;
 	new_ace.perm = perm;
 
@@ -369,6 +425,18 @@ long keyctl_grant_permission(key_serial_t keyid,
 			return -ENOENT;
 		new_ace.subject_id = subject;
 		break;
+
+#ifdef CONFIG_CONTAINERS
+	case KEY_ACE_SUBJ_CONTAINER: {
+		struct container *c = fd_to_container(subject);
+		if (IS_ERR(c))
+			return -EINVAL;
+		refcount_inc(&c->tag->usage);
+		new_ace.container_tag = c->tag;
+		put_container(c);
+		break;
+	}
+#endif
 
 	default:
 		return -ENOENT;
@@ -391,5 +459,9 @@ long keyctl_grant_permission(key_serial_t keyid,
 	up_write(&key->sem);
 	key_put(key);
 error:
+#ifdef CONFIG_CONTAINERS
+	if (new_ace.type == KEY_ACE_SUBJ_CONTAINER && new_ace.container_tag)
+		key_put_tag(new_ace.container_tag);
+#endif
 	return ret;
 }
