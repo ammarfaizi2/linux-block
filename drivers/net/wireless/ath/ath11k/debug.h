@@ -23,6 +23,8 @@ enum ath11k_debug_mask {
 	ATH11K_DBG_ANY		= 0xffffffff,
 };
 
+#define ATH11K_FW_STATS_BUF_SIZE (1024 * 1024)
+
 __printf(2, 3) void ath11k_info(struct ath11k_base *sc, const char *fmt, ...);
 __printf(2, 3) void ath11k_err(struct ath11k_base *sc, const char *fmt, ...);
 __printf(2, 3) void ath11k_warn(struct ath11k_base *sc, const char *fmt, ...);
@@ -61,6 +63,11 @@ void ath11k_debug_unregister(struct ath11k *ar);
 void ath11k_htt_stats_debugfs_init(struct ath11k *ar);
 void ath11k_dbg_htt_ext_stats_handler(struct ath11k_base *ab,
 				      struct sk_buff *skb);
+void ath11k_debug_fw_stats_process(struct ath11k_base *ab, u8 *evt_buf,
+				   u32 len);
+
+void ath11k_debug_fw_stats_init(struct ath11k *ar);
+
 static inline int ath11k_debug_is_extd_tx_stats_enabled(struct ath11k *ar)
 {
 	return ar->debug.extd_tx_stats;
@@ -92,11 +99,21 @@ static inline void ath11k_dbg_htt_ext_stats_handler(struct ath11k_base *ab,
 						    struct sk_buff *skb)
 {
 }
+
+static inline void ath11k_debug_fw_stats_process(struct ath11k_base *ab, u8 *evt_buf,
+						 u32 len)
+{
+}
+
+static inline void ath11k_debug_fw_stats_init(struct ath11k *ar)
+{
+}
+
 static inline int ath11k_debug_is_extd_tx_stats_enabled(struct ath11k *ar)
 {
 	return 0;
 }
-#endif
+#endif /* CONFIG_ATH11K_DEBUGFS */
 
 #ifdef CONFIG_MAC80211_DEBUGFS
 void ath11k_sta_add_debugfs(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
@@ -108,6 +125,8 @@ ath11k_accumulate_per_peer_tx_stats(struct ath11k_sta *arsta,
 void ath11k_update_per_peer_stats_from_txcompl(struct ath11k *ar,
 					       struct sk_buff *msdu,
 					       struct hal_tx_status *ts);
+void ath11k_sta_update_rx_duration(struct ath11k *ar,
+				   struct ath11k_fw_stats *stats);
 #else /* !CONFIG_MAC80211_DEBUGFS */
 static inline void
 ath11k_accumulate_per_peer_tx_stats(struct ath11k_sta *arsta,
@@ -120,6 +139,11 @@ static inline void
 ath11k_update_per_peer_stats_from_txcompl(struct ath11k *ar,
 					  struct sk_buff *msdu,
 					  struct hal_tx_status *ts)
+{
+}
+
+static inline void ath11k_sta_update_rx_duration(struct ath11k *ar,
+						 struct ath11k_fw_stats *stats)
 {
 }
 

@@ -11,6 +11,7 @@
 
 struct ath11k_base;
 struct ath11k;
+struct ath11k_fw_stats;
 
 #define PSOC_HOST_MAX_NUM_SS (8)
 
@@ -3674,15 +3675,20 @@ struct wmi_vdev_set_param_cmd {
 } __packed;
 
 enum wmi_stats_id {
-	WMI_REQUEST_PEER_STAT      = 0x01,
-	WMI_REQUEST_AP_STAT        = 0x02,
-	WMI_REQUEST_PDEV_STAT      = 0x04,
-	WMI_REQUEST_VDEV_STAT      = 0x08,
-	WMI_REQUEST_BCNFLT_STAT    = 0x10,
-	WMI_REQUEST_VDEV_RATE_STAT = 0x20,
-	WMI_REQUEST_INST_STAT      = 0x40,
-	WMI_REQUEST_MIB_STAT       = 0x80,
-	WMI_REQUEST_RSSI_PER_CHAIN_STAT = 0x100,
+	WMI_REQUEST_PEER_STAT			= BIT(0),
+	WMI_REQUEST_AP_STAT			= BIT(1),
+	WMI_REQUEST_PDEV_STAT			= BIT(2),
+	WMI_REQUEST_VDEV_STAT			= BIT(3),
+	WMI_REQUEST_BCNFLT_STAT			= BIT(4),
+	WMI_REQUEST_VDEV_RATE_STAT		= BIT(5),
+	WMI_REQUEST_INST_STAT			= BIT(6),
+	WMI_REQUEST_MIB_STAT			= BIT(7),
+	WMI_REQUEST_RSSI_PER_CHAIN_STAT		= BIT(8),
+	WMI_REQUEST_CONGESTION_STAT		= BIT(9),
+	WMI_REQUEST_PEER_EXTD_STAT		= BIT(10),
+	WMI_REQUEST_BCN_STAT			= BIT(11),
+	WMI_REQUEST_BCN_STAT_RESET		= BIT(12),
+	WMI_REQUEST_PEER_EXTD2_STAT		= BIT(13),
 };
 
 struct wmi_request_stats_cmd {
@@ -3962,15 +3968,9 @@ struct vdev_set_params {
 	u32 param_value;
 };
 
-struct wmi_host_inst_rssi_args {
-	u16 cfg_retry_count;
-	u16 retry_count;
-};
-
 struct stats_request_params {
 	u32 stats_id;
 	u32 vdev_id;
-	struct wmi_host_inst_rssi_args rssi_args;
 	u32 pdev_id;
 };
 
@@ -4249,6 +4249,198 @@ struct wmi_peer_assoc_conf_arg {
 	const u8 *macaddr;
 };
 
+/*
+ * PDEV statistics
+ */
+struct wmi_pdev_stats_base {
+	s32 chan_nf;
+	u32 tx_frame_count; /* Cycles spent transmitting frames */
+	u32 rx_frame_count; /* Cycles spent receiving frames */
+	u32 rx_clear_count; /* Total channel busy time, evidently */
+	u32 cycle_count; /* Total on-channel time */
+	u32 phy_err_count;
+	u32 chan_tx_pwr;
+} __packed;
+
+struct wmi_pdev_stats_extra {
+	u32 ack_rx_bad;
+	u32 rts_bad;
+	u32 rts_good;
+	u32 fcs_bad;
+	u32 no_beacons;
+	u32 mib_int_count;
+} __packed;
+
+struct wmi_pdev_stats_tx {
+	/* Num HTT cookies queued to dispatch list */
+	s32 comp_queued;
+
+	/* Num HTT cookies dispatched */
+	s32 comp_delivered;
+
+	/* Num MSDU queued to WAL */
+	s32 msdu_enqued;
+
+	/* Num MPDU queue to WAL */
+	s32 mpdu_enqued;
+
+	/* Num MSDUs dropped by WMM limit */
+	s32 wmm_drop;
+
+	/* Num Local frames queued */
+	s32 local_enqued;
+
+	/* Num Local frames done */
+	s32 local_freed;
+
+	/* Num queued to HW */
+	s32 hw_queued;
+
+	/* Num PPDU reaped from HW */
+	s32 hw_reaped;
+
+	/* Num underruns */
+	s32 underrun;
+
+	/* Num PPDUs cleaned up in TX abort */
+	s32 tx_abort;
+
+	/* Num MPDUs requed by SW */
+	s32 mpdus_requed;
+
+	/* excessive retries */
+	u32 tx_ko;
+
+	/* data hw rate code */
+	u32 data_rc;
+
+	/* Scheduler self triggers */
+	u32 self_triggers;
+
+	/* frames dropped due to excessive sw retries */
+	u32 sw_retry_failure;
+
+	/* illegal rate phy errors  */
+	u32 illgl_rate_phy_err;
+
+	/* wal pdev continuous xretry */
+	u32 pdev_cont_xretry;
+
+	/* wal pdev tx timeouts */
+	u32 pdev_tx_timeout;
+
+	/* wal pdev resets  */
+	u32 pdev_resets;
+
+	/* frames dropped due to non-availability of stateless TIDs */
+	u32 stateless_tid_alloc_failure;
+
+	/* PhY/BB underrun */
+	u32 phy_underrun;
+
+	/* MPDU is more than txop limit */
+	u32 txop_ovf;
+} __packed;
+
+struct wmi_pdev_stats_rx {
+	/* Cnts any change in ring routing mid-ppdu */
+	s32 mid_ppdu_route_change;
+
+	/* Total number of statuses processed */
+	s32 status_rcvd;
+
+	/* Extra frags on rings 0-3 */
+	s32 r0_frags;
+	s32 r1_frags;
+	s32 r2_frags;
+	s32 r3_frags;
+
+	/* MSDUs / MPDUs delivered to HTT */
+	s32 htt_msdus;
+	s32 htt_mpdus;
+
+	/* MSDUs / MPDUs delivered to local stack */
+	s32 loc_msdus;
+	s32 loc_mpdus;
+
+	/* AMSDUs that have more MSDUs than the status ring size */
+	s32 oversize_amsdu;
+
+	/* Number of PHY errors */
+	s32 phy_errs;
+
+	/* Number of PHY errors drops */
+	s32 phy_err_drop;
+
+	/* Number of mpdu errors - FCS, MIC, ENC etc. */
+	s32 mpdu_errs;
+} __packed;
+
+struct wmi_pdev_stats {
+	struct wmi_pdev_stats_base base;
+	struct wmi_pdev_stats_tx tx;
+	struct wmi_pdev_stats_rx rx;
+} __packed;
+
+#define WLAN_MAX_AC 4
+#define MAX_TX_RATE_VALUES 10
+#define MAX_TX_RATE_VALUES 10
+
+struct wmi_vdev_stats {
+	u32 vdev_id;
+	u32 beacon_snr;
+	u32 data_snr;
+	u32 num_tx_frames[WLAN_MAX_AC];
+	u32 num_rx_frames;
+	u32 num_tx_frames_retries[WLAN_MAX_AC];
+	u32 num_tx_frames_failures[WLAN_MAX_AC];
+	u32 num_rts_fail;
+	u32 num_rts_success;
+	u32 num_rx_err;
+	u32 num_rx_discard;
+	u32 num_tx_not_acked;
+	u32 tx_rate_history[MAX_TX_RATE_VALUES];
+	u32 beacon_rssi_history[MAX_TX_RATE_VALUES];
+} __packed;
+
+struct wmi_bcn_stats {
+	u32 vdev_id;
+	u32 tx_bcn_succ_cnt;
+	u32 tx_bcn_outage_cnt;
+} __packed;
+
+struct wmi_peer_stats {
+	struct wmi_mac_addr peer_macaddr;
+	u32 peer_rssi;
+	u32 peer_tx_rate;
+	u32 peer_rx_rate;
+} __packed;
+
+struct wmi_peer_extd_stats {
+	struct wmi_mac_addr peer_macaddr;
+	u32 rx_duration;
+	u32 peer_tx_bytes;
+	u32 peer_rx_bytes;
+	u32 last_tx_rate_code;
+	s32 last_tx_power;
+	u32 rx_mc_bc_cnt;
+	u32 reserved[3];
+} __packed;
+
+struct wmi_stats_event {
+	u32 stats_id;
+	u32 num_pdev_stats;
+	u32 num_vdev_stats;
+	u32 num_peer_stats;
+	u32 num_bcnflt_stats;
+	u32 num_chan_stats;
+	u32 num_mib_stats;
+	u32 pdev_id;
+	u32 num_bcn_stats;
+	u32 num_peer_extd_stats;
+	u32 num_peer_extd2_stats;
+} __packed;
+
 enum wlan_phymode {
 	WLAN_PHYMODE_AUTO             = 0,
 	WLAN_PHYMODE_11A              = 1,
@@ -4447,17 +4639,17 @@ enum wmi_sta_ps_param_uapsd {
 #define WMI_STA_UAPSD_MAX_INTERVAL_MSEC UINT_MAX
 
 struct wmi_sta_uapsd_auto_trig_param {
-	__le32 wmm_ac;
-	__le32 user_priority;
-	__le32 service_interval;
-	__le32 suspend_interval;
-	__le32 delay_interval;
+	u32 wmm_ac;
+	u32 user_priority;
+	u32 service_interval;
+	u32 suspend_interval;
+	u32 delay_interval;
 };
 
 struct wmi_sta_uapsd_auto_trig_cmd_fixed_param {
-	__le32 vdev_id;
+	u32 vdev_id;
 	struct wmi_mac_addr peer_macaddr;
-	__le32 num_ac;
+	u32 num_ac;
 };
 
 struct wmi_sta_uapsd_auto_trig_arg {
@@ -4848,7 +5040,7 @@ int ath11k_wmi_vdev_install_key(struct ath11k *ar,
 				struct wmi_vdev_install_key_arg *arg);
 int ath11k_wmi_pdev_bss_chan_info_request(struct ath11k *ar,
 					  enum wmi_bss_chan_info_req_type type);
-int ath11k_wmi_send_stats_request_cmd(struct ath11k *ar, u8 *macaddr,
+int ath11k_wmi_send_stats_request_cmd(struct ath11k *ar,
 				      struct stats_request_params *param);
 int ath11k_wmi_send_peer_flush_tids_cmd(struct ath11k *ar,
 					u8 peer_addr[ETH_ALEN],
@@ -4869,4 +5061,12 @@ ath11k_wmi_rx_reord_queue_remove(struct ath11k *ar,
 				 struct rx_reorder_queue_remove_params *param);
 int ath11k_wmi_send_pdev_set_regdomain(struct ath11k *ar,
 				       struct pdev_set_regdomain_params *param);
+int ath11k_wmi_pull_fw_stats(struct ath11k_base *ab, u8 *evt_buf, u32 len,
+			     struct ath11k_fw_stats *stats);
+size_t ath11k_wmi_fw_stats_num_peers(struct list_head *head);
+size_t ath11k_wmi_fw_stats_num_peers_extd(struct list_head *head);
+size_t ath11k_wmi_fw_stats_num_vdevs(struct list_head *head);
+void ath11k_wmi_fw_stats_fill(struct ath11k *ar,
+			      struct ath11k_fw_stats *fw_stats, u32 stats_id,
+			      char *buf);
 #endif

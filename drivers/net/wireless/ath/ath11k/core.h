@@ -313,6 +313,7 @@ struct ath11k_sta {
 	struct ieee80211_tx_info tx_info;
 	struct rate_info txrate;
 	struct rate_info last_txrate;
+	u64 rx_duration;
 	struct ath11k_htt_tx_stats *tx_stats;
 };
 
@@ -328,12 +329,26 @@ enum ath11k_state {
 /* Antenna noise floor */
 #define ATH11K_DEFAULT_NOISE_FLOOR -95
 
+struct ath11k_fw_stats {
+	struct dentry *debugfs_fwstats;
+	u32 pdev_id;
+	u32 stats_id;
+	struct list_head pdevs;
+	struct list_head vdevs;
+	struct list_head bcn;
+	struct list_head peers;
+	struct list_head peers_extd;
+};
+
 struct ath11k_debug {
 	struct dentry *debugfs_pdev;
 	u32 htt_stats_type;
 	/* protects shared stats req buffer */
 	spinlock_t stats_lock;
 	u32 extd_tx_stats;
+	struct ath11k_fw_stats fw_stats;
+	struct completion fw_stats_complete;
+	bool fw_stats_done;
 };
 
 struct ath11k_per_peer_tx_stats {
@@ -403,6 +418,7 @@ struct ath11k {
 	u8 cfg_rx_chainmask;
 	u8 num_rx_chains;
 	u8 num_tx_chains;
+	/* pdev_idx starts from 0 whereas pdev->pdev_id starts with 1 */
 	u8 pdev_idx;
 	u8 lmac_id;
 
@@ -560,6 +576,150 @@ struct ath11k_base {
 #ifdef CONFIG_ATH11K_DEBUGFS
 	struct dentry *debugfs_soc;
 #endif
+};
+
+struct ath11k_fw_stats_pdev {
+	struct list_head list;
+
+	/* PDEV stats */
+	s32 ch_noise_floor;
+	/* Cycles spent transmitting frames */
+	u32 tx_frame_count;
+	/* Cycles spent receiving frames */
+	u32 rx_frame_count;
+	/* Total channel busy time, evidently */
+	u32 rx_clear_count;
+	/* Total on-channel time */
+	u32 cycle_count;
+	u32 phy_err_count;
+	u32 chan_tx_power;
+	u32 ack_rx_bad;
+	u32 rts_bad;
+	u32 rts_good;
+	u32 fcs_bad;
+	u32 no_beacons;
+	u32 mib_int_count;
+
+	/* PDEV TX stats */
+	/* Num HTT cookies queued to dispatch list */
+	s32 comp_queued;
+	/* Num HTT cookies dispatched */
+	s32 comp_delivered;
+	/* Num MSDU queued to WAL */
+	s32 msdu_enqued;
+	/* Num MPDU queue to WAL */
+	s32 mpdu_enqued;
+	/* Num MSDUs dropped by WMM limit */
+	s32 wmm_drop;
+	/* Num Local frames queued */
+	s32 local_enqued;
+	/* Num Local frames done */
+	s32 local_freed;
+	/* Num queued to HW */
+	s32 hw_queued;
+	/* Num PPDU reaped from HW */
+	s32 hw_reaped;
+	/* Num underruns */
+	s32 underrun;
+	/* Num PPDUs cleaned up in TX abort */
+	s32 tx_abort;
+	/* Num MPDUs requed by SW */
+	s32 mpdus_requed;
+	/* excessive retries */
+	u32 tx_ko;
+	/* data hw rate code */
+	u32 data_rc;
+	/* Scheduler self triggers */
+	u32 self_triggers;
+	/* frames dropped due to excessive sw retries */
+	u32 sw_retry_failure;
+	/* illegal rate phy errors	*/
+	u32 illgl_rate_phy_err;
+	/* wal pdev continuous xretry */
+	u32 pdev_cont_xretry;
+	/* wal pdev tx timeouts */
+	u32 pdev_tx_timeout;
+	/* wal pdev resets */
+	u32 pdev_resets;
+	/* frames dropped due to non-availability of stateless TIDs */
+	u32 stateless_tid_alloc_failure;
+	/* PhY/BB underrun */
+	u32 phy_underrun;
+	/* MPDU is more than txop limit */
+	u32 txop_ovf;
+
+	/* PDEV RX stats */
+	/* Cnts any change in ring routing mid-ppdu */
+	s32 mid_ppdu_route_change;
+	/* Total number of statuses processed */
+	s32 status_rcvd;
+	/* Extra frags on rings 0-3 */
+	s32 r0_frags;
+	s32 r1_frags;
+	s32 r2_frags;
+	s32 r3_frags;
+	/* MSDUs / MPDUs delivered to HTT */
+	s32 htt_msdus;
+	s32 htt_mpdus;
+	/* MSDUs / MPDUs delivered to local stack */
+	s32 loc_msdus;
+	s32 loc_mpdus;
+	/* AMSDUs that have more MSDUs than the status ring size */
+	s32 oversize_amsdu;
+	/* Number of PHY errors */
+	s32 phy_errs;
+	/* Number of PHY errors drops */
+	s32 phy_err_drop;
+	/* Number of mpdu errors - FCS, MIC, ENC etc. */
+	s32 mpdu_errs;
+};
+
+struct ath11k_fw_stats_vdev {
+	struct list_head list;
+
+	u32 vdev_id;
+	u32 beacon_snr;
+	u32 data_snr;
+	u32 num_tx_frames[WLAN_MAX_AC];
+	u32 num_rx_frames;
+	u32 num_tx_frames_retries[WLAN_MAX_AC];
+	u32 num_tx_frames_failures[WLAN_MAX_AC];
+	u32 num_rts_fail;
+	u32 num_rts_success;
+	u32 num_rx_err;
+	u32 num_rx_discard;
+	u32 num_tx_not_acked;
+	u32 tx_rate_history[MAX_TX_RATE_VALUES];
+	u32 beacon_rssi_history[MAX_TX_RATE_VALUES];
+};
+
+struct ath11k_fw_stats_bcn {
+	struct list_head list;
+
+	u32 vdev_id;
+	u32 tx_bcn_succ_cnt;
+	u32 tx_bcn_outage_cnt;
+};
+
+struct ath11k_fw_stats_peer {
+	struct list_head list;
+
+	u8 peer_macaddr[ETH_ALEN];
+	u32 peer_rssi;
+	u32 peer_tx_rate;
+	u32 peer_rx_rate;
+};
+
+struct ath11k_fw_stats_peer_extd {
+	struct list_head list;
+
+	u8 peer_macaddr[ETH_ALEN];
+	u32 rx_duration;
+	u32 peer_tx_bytes;
+	u32 peer_rx_bytes;
+	u32 last_tx_rate_code;
+	s32 last_tx_power;
+	u32 rx_mc_bc_cnt;
 };
 
 void ath11k_peer_unmap_event(struct ath11k_base *ab, u16 peer_id);

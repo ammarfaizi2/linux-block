@@ -402,6 +402,9 @@ struct ath11k *ath11k_get_ar_by_pdev_id(struct ath11k_base *ab, u32 pdev_id)
 	if (!ab->mac_registered)
 		return NULL;
 
+	if (WARN_ON(pdev_id > ab->num_radios))
+		return NULL;
+
 	for (i = 0; i < ab->num_radios; i++) {
 		pdev = rcu_dereference(ab->pdevs_active[i]);
 

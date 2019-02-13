@@ -6,6 +6,25 @@
 #include "core.h"
 #include "debug.h"
 
+void ath11k_sta_update_rx_duration(struct ath11k *ar,
+				   struct ath11k_fw_stats *stats)
+{
+	struct ath11k_fw_stats_peer_extd *peer;
+	struct ieee80211_sta *sta;
+	struct ath11k_sta *arsta;
+
+	rcu_read_lock();
+	list_for_each_entry(peer, &stats->peers_extd, list) {
+		sta = ieee80211_find_sta_by_ifaddr(ar->hw, peer->peer_macaddr,
+						   NULL);
+		if (!sta)
+			continue;
+		arsta = (struct ath11k_sta *)sta->drv_priv;
+		arsta->rx_duration += (u64)peer->rx_duration;
+	}
+	rcu_read_unlock();
+}
+
 void
 ath11k_accumulate_per_peer_tx_stats(struct ath11k_sta *arsta,
 				    struct ath11k_per_peer_tx_stats *peer_stats,
