@@ -518,7 +518,7 @@ int key_instantiate_and_link(struct key *key,
 	}
 
 	if (keyring) {
-		ret = __key_link_begin(keyring, &key->index_key, &edit);
+		ret = __key_link_begin(keyring, 0, &key->index_key, &edit);
 		if (ret < 0)
 			goto error;
 
@@ -586,7 +586,7 @@ int key_reject_and_link(struct key *key,
 		if (keyring->restrict_link)
 			return -EPERM;
 
-		link_ret = __key_link_begin(keyring, &key->index_key, &edit);
+		link_ret = __key_link_begin(keyring, 0, &key->index_key, &edit);
 	}
 
 	mutex_lock(&key_construction_mutex);
@@ -866,7 +866,7 @@ key_ref_t key_create_or_update(key_ref_t keyring_ref,
 	index_key.desc_len = strlen(index_key.description);
 	key_set_index_key(&index_key);
 
-	ret = __key_link_begin(keyring, &index_key, &edit);
+	ret = __key_link_begin(keyring, 0, &index_key, &edit);
 	if (ret < 0) {
 		key_ref = ERR_PTR(ret);
 		goto error_free_prep;

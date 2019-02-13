@@ -95,7 +95,7 @@ extern struct key_type *key_type_lookup(const char *type);
 extern void key_type_put(struct key_type *ktype);
 extern int key_get_type_from_user(char *, const char __user *, unsigned);
 
-extern int __key_link_begin(struct key *keyring,
+extern int __key_link_begin(struct key *keyring, unsigned int lock_nesting,
 			    const struct keyring_index_key *index_key,
 			    struct assoc_array_edit **_edit);
 extern int __key_link_check_live_key(struct key *keyring, struct key *key);
