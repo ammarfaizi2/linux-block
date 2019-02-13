@@ -242,6 +242,7 @@ extern long keyctl_update_key(key_serial_t, const void __user *, size_t);
 extern long keyctl_revoke_key(key_serial_t);
 extern long keyctl_keyring_clear(key_serial_t);
 extern long keyctl_keyring_link(key_serial_t, key_serial_t);
+extern long keyctl_keyring_move(key_serial_t, key_serial_t, key_serial_t, unsigned int);
 extern long keyctl_keyring_unlink(key_serial_t, key_serial_t);
 extern long keyctl_describe_key(key_serial_t, char __user *, size_t);
 extern long keyctl_keyring_search(key_serial_t, const char __user *,

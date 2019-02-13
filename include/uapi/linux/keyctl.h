@@ -70,6 +70,7 @@
 #define KEYCTL_WATCH_KEY		30	/* Watch a key or ring of keys for changes */
 #define KEYCTL_CONTAINER_INTERCEPT	31	/* Intercept upcalls inside a container */
 #define KEYCTL_QUERY_REQUEST_KEY_AUTH	32	/* Query a request_key_auth key */
+#define KEYCTL_MOVE			33	/* Move keys between keyrings */
 
 /* keyctl structures */
 struct keyctl_dh_params {
@@ -125,5 +126,7 @@ struct keyctl_query_request_key_auth {
 	__u32		session_keyring; /* The requester's session keyring */
 	__u64		spare[1];
 };
+
+#define KEYCTL_MOVE_EXCL	0x00000001 /* Do not displace from the to-keyring */
 
 #endif /*  _LINUX_KEYCTL_H */
