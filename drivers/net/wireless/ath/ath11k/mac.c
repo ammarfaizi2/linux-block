@@ -3628,7 +3628,7 @@ static void ath11k_remove_interface(struct ieee80211_hw *hw,
 
 	ret = ath11k_wmi_vdev_delete(ar, arvif->vdev_id);
 	if (ret)
-		ath11k_warn(ab, "faled to delete WMI vdev %d: %d\n",
+		ath11k_warn(ab, "failed to delete WMI vdev %d: %d\n",
 			    arvif->vdev_id, ret);
 
 	ar->num_created_vdevs--;
@@ -4865,6 +4865,12 @@ static int ath11k_mac_register(struct ath11k *ar)
 	ret = ath11k_regd_update(ar, true);
 	if (ret) {
 		ath11k_err(ar->ab, "ath11k regd update failed: %d\n", ret);
+		goto err_free;
+	}
+
+	ret = ath11k_debug_register(ar);
+	if (ret) {
+		ath11k_err(ar->ab, "debugfs registration failed: %d\n", ret);
 		goto err_free;
 	}
 

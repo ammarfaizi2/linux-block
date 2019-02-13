@@ -56,14 +56,14 @@ static inline void ath11k_dbg_dump(struct ath11k_base *ab,
 #ifdef CONFIG_ATH11K_DEBUGFS
 int ath11k_debug_soc_create(struct ath11k_base *sc);
 void ath11k_debug_soc_destroy(struct ath11k_base *sc);
-int ath11k_debug_register(struct ath11k *ar, int pdev_id);
+int ath11k_debug_register(struct ath11k *ar);
 void ath11k_debug_unregister(struct ath11k *ar);
-void ath11k_htt_stats_debugfs_init(struct ath11k *ar, int pdev_id);
+void ath11k_htt_stats_debugfs_init(struct ath11k *ar);
 void ath11k_dbg_htt_ext_stats_handler(struct ath11k_base *ab,
 				      struct sk_buff *skb);
 static inline int ath11k_debug_is_extd_tx_stats_enabled(struct ath11k *ar)
 {
-	return ar->pdev->debug.extd_tx_stats;
+	return ar->debug.extd_tx_stats;
 }
 #else
 static inline int ath11k_debug_soc_create(struct ath11k_base *sc)
@@ -84,7 +84,7 @@ static inline void ath11k_debug_unregister(struct ath11k *ar)
 {
 }
 
-static inline void ath11k_htt_stats_debugfs_init(struct ath11k *ar, int pdev_id)
+static inline void ath11k_htt_stats_debugfs_init(struct ath11k *ar)
 {
 }
 

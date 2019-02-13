@@ -195,12 +195,12 @@ static ssize_t ath11k_write_enable_extd_tx_stats(struct file *file,
 		goto out;
 	}
 
-	if (filter == ar->pdev->debug.extd_tx_stats) {
+	if (filter == ar->debug.extd_tx_stats) {
 		ret = count;
 		goto out;
 	}
 
-	ar->pdev->debug.extd_tx_stats = filter;
+	ar->debug.extd_tx_stats = filter;
 	ret = count;
 
 out:
@@ -219,7 +219,7 @@ static ssize_t ath11k_read_enable_extd_tx_stats(struct file *file,
 
 	mutex_lock(&ar->conf_mutex);
 	len = scnprintf(buf, sizeof(buf) - len, "%08x\n",
-			ar->pdev->debug.extd_tx_stats);
+			ar->debug.extd_tx_stats);
 	mutex_unlock(&ar->conf_mutex);
 
 	return simple_read_from_buffer(ubuf, count, ppos, buf, len);
@@ -231,53 +231,53 @@ static const struct file_operations fops_extd_tx_stats = {
 	.open = simple_open
 };
 
-int ath11k_debug_soc_create(struct ath11k_base *sc)
+int ath11k_debug_soc_create(struct ath11k_base *ab)
 {
-	sc->debugfs_soc = debugfs_create_dir("ath11k", NULL);
+	ab->debugfs_soc = debugfs_create_dir("ath11k", NULL);
 
-	if (IS_ERR_OR_NULL(sc->debugfs_soc)) {
-		if (IS_ERR(sc->debugfs_soc))
-			return PTR_ERR(sc->debugfs_soc);
+	if (IS_ERR_OR_NULL(ab->debugfs_soc)) {
+		if (IS_ERR(ab->debugfs_soc))
+			return PTR_ERR(ab->debugfs_soc);
 		return -ENOMEM;
 	}
 
-	debugfs_create_file("simulate_fw_crash", 0600, sc->debugfs_soc, sc,
+	debugfs_create_file("simulate_fw_crash", 0600, ab->debugfs_soc, ab,
 			    &fops_simulate_fw_crash);
 
 	return 0;
 }
 
-void ath11k_debug_soc_destroy(struct ath11k_base *sc)
+void ath11k_debug_soc_destroy(struct ath11k_base *ab)
 {
-	debugfs_remove_recursive(sc->debugfs_soc);
-	sc->debugfs_soc = NULL;
+	debugfs_remove_recursive(ab->debugfs_soc);
+	ab->debugfs_soc = NULL;
 }
 
-int ath11k_debug_register(struct ath11k *ar, int pdev_id)
+int ath11k_debug_register(struct ath11k *ar)
 {
-	struct ath11k_base *sc = ar->ab;
+	struct ath11k_base *ab = ar->ab;
 	char pdev_name[5];
 	char buf[100] = {0};
 
-	snprintf(pdev_name, sizeof(pdev_name), "%s%d", "mac", pdev_id);
-	sc->pdevs[pdev_id].debug.debugfs_pdev =
-		debugfs_create_dir(pdev_name, sc->debugfs_soc);
+	snprintf(pdev_name, sizeof(pdev_name), "%s%d", "mac", ar->pdev_idx);
 
-	if (IS_ERR_OR_NULL(sc->pdevs[pdev_id].debug.debugfs_pdev)) {
-		if (IS_ERR(sc->pdevs[pdev_id].debug.debugfs_pdev))
-			return PTR_ERR(sc->pdevs[pdev_id].debug.debugfs_pdev);
+	ar->debug.debugfs_pdev = debugfs_create_dir(pdev_name, ab->debugfs_soc);
+
+	if (IS_ERR_OR_NULL(ar->debug.debugfs_pdev)) {
+		if (IS_ERR(ar->debug.debugfs_pdev))
+			return PTR_ERR(ar->debug.debugfs_pdev);
 
 		return -ENOMEM;
 	}
 
 	/* Create a symlink under ieee80211/phy* */
-	snprintf(buf, 100, "../../%pd2", sc->pdevs[pdev_id].debug.debugfs_pdev);
+	snprintf(buf, 100, "../../%pd2", ar->debug.debugfs_pdev);
 	debugfs_create_symlink("ath11k", ar->hw->wiphy->debugfsdir, buf);
 
-	ath11k_htt_stats_debugfs_init(ar, pdev_id);
+	ath11k_htt_stats_debugfs_init(ar);
 
 	debugfs_create_file("ext_tx_stats", 0644,
-			    sc->pdevs[pdev_id].debug.debugfs_pdev, ar,
+			    ar->debug.debugfs_pdev, ar,
 			    &fops_extd_tx_stats);
 	return 0;
 }

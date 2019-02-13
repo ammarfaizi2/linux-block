@@ -442,6 +442,9 @@ struct ath11k {
 	struct ath11k_per_peer_tx_stats cached_stats;
 	u32 last_ppdu_id;
 	u32 cached_ppdu_id;
+#ifdef CONFIG_ATH11K_DEBUGFS
+	struct ath11k_debug debug;
+#endif
 };
 
 struct ath11k_band_cap {
@@ -468,9 +471,6 @@ struct ath11k_pdev {
 	u32 pdev_id;
 	struct ath11k_pdev_cap cap;
 	u8 mac_addr[ETH_ALEN];
-#ifdef CONFIG_ATH11K_DEBUGFS
-	struct ath11k_debug debug;
-#endif
 };
 
 #ifdef CONFIG_IPQ_SUBSYSTEM_RESTART

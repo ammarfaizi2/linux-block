@@ -4622,13 +4622,13 @@ void ath11k_dbg_htt_ext_stats_handler(struct ath11k_base *ab,
 
 	pdev_id = stats_req->pdev_id;
 	ar = ab->pdevs[pdev_id].ar;
-	spin_lock_bh(&ab->pdevs[pdev_id].debug.stats_lock);
+	spin_lock_bh(&ar->debug.stats_lock);
 	if (stats_req->done) {
-		spin_unlock_bh(&ab->pdevs[pdev_id].debug.stats_lock);
+		spin_unlock_bh(&ar->debug.stats_lock);
 		return;
 	}
 	stats_req->done = true;
-	spin_unlock_bh(&ab->pdevs[pdev_id].debug.stats_lock);
+	spin_unlock_bh(&ar->debug.stats_lock);
 
 	data = data + 8;
 	len = FIELD_GET(HTT_T2H_EXT_STATS_CONF_TLV_LENGTH_M, *(u32 *)data);
@@ -4647,12 +4647,10 @@ static ssize_t ath11k_read_htt_stats_type(struct file *file,
 					  size_t count, loff_t *ppos)
 {
 	struct ath11k *ar = file->private_data;
-	struct ath11k_base *ab = ar->ab;
-	int pdev_id = ar->pdev->pdev_id;
 	char buf[32];
 	size_t len;
 
-	len = scnprintf(buf, sizeof(buf), "%u\n", ab->pdevs[pdev_id].debug.htt_stats_type);
+	len = scnprintf(buf, sizeof(buf), "%u\n", ar->debug.htt_stats_type);
 
 	return simple_read_from_buffer(user_buf, count, ppos, buf, len);
 }
@@ -4662,8 +4660,6 @@ static ssize_t ath11k_write_htt_stats_type(struct file *file,
 					   size_t count, loff_t *ppos)
 {
 	struct ath11k *ar = file->private_data;
-	struct ath11k_base *ab = ar->ab;
-	int pdev_id = ar->pdev->pdev_id;
 	unsigned long type;
 	int ret;
 
@@ -4674,7 +4670,7 @@ static ssize_t ath11k_write_htt_stats_type(struct file *file,
 	if (type >= HTT_DBG_NUM_EXT_STATS)
 		return -E2BIG;
 
-	ab->pdevs[pdev_id].debug.htt_stats_type = type;
+	ar->debug.htt_stats_type = type;
 
 	ret = count;
 
@@ -4690,7 +4686,7 @@ static ssize_t ath11k_read_htt_stats(struct file *file,
 	struct debug_htt_stats_req *stats_req;
 	char *buf = NULL;
 	u32 length = 0;
-	int ret, pdev_id;
+	int ret;
 	u64 cookie = 0;
 
 	stats_req = vmalloc(sizeof(*stats_req) +
@@ -4705,10 +4701,8 @@ static ssize_t ath11k_read_htt_stats(struct file *file,
 
 	cookie |= (u32)stats_req;
 	mutex_lock(&ar->conf_mutex);
-	pdev_id = stats_req->pdev_id;
-	ret = ath11k_dp_htt_h2t_ext_stats_req(ar,
-			ab->pdevs[pdev_id].debug.htt_stats_type,
-			cookie);
+	ret = ath11k_dp_htt_h2t_ext_stats_req(ar, ar->debug.htt_stats_type,
+					      cookie);
 	mutex_unlock(&ar->conf_mutex);
 	if (ret) {
 		ath11k_warn(ab, "failed to send htt stats request: %d\n", ret);
@@ -4716,15 +4710,15 @@ static ssize_t ath11k_read_htt_stats(struct file *file,
 	}
 
 	while (!wait_for_completion_timeout(&stats_req->cmpln, 3 * HZ)) {
-		spin_lock_bh(&ab->pdevs[pdev_id].debug.stats_lock);
+		spin_lock_bh(&ar->debug.stats_lock);
 		if (!stats_req->done) {
 			stats_req->done = true;
-			spin_unlock_bh(&ab->pdevs[pdev_id].debug.stats_lock);
+			spin_unlock_bh(&ar->debug.stats_lock);
 			ret = -ETIMEDOUT;
 			ath11k_warn(ab, "suspend timed out - pdev pause event never came\n");
 			break;
 		}
-		spin_unlock_bh(&ab->pdevs[pdev_id].debug.stats_lock);
+		spin_unlock_bh(&ar->debug.stats_lock);
 	}
 
 	buf = stats_req->buf;
@@ -4750,15 +4744,11 @@ static const struct file_operations fops_dump_htt_stats = {
 	.llseek = default_llseek,
 };
 
-void ath11k_htt_stats_debugfs_init(struct ath11k *ar, int pdev_id)
+void ath11k_htt_stats_debugfs_init(struct ath11k *ar)
 {
-	struct ath11k_base *ab = ar->ab;
-
-	spin_lock_init(&ab->pdevs[pdev_id].debug.stats_lock);
-	debugfs_create_file("htt_stats_type", 0600,
-			    ab->pdevs[pdev_id].debug.debugfs_pdev,
+	spin_lock_init(&ar->debug.stats_lock);
+	debugfs_create_file("htt_stats_type", 0600, ar->debug.debugfs_pdev,
 			    ar, &fops_dump_htt_stats);
-	debugfs_create_file("htt_stats", 0400,
-			    ab->pdevs[pdev_id].debug.debugfs_pdev,
+	debugfs_create_file("htt_stats", 0400, ar->debug.debugfs_pdev,
 			    ar, &fops_dump_htt_stats);
 }

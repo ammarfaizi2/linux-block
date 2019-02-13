@@ -707,12 +707,6 @@ int ath11k_dp_pdev_alloc(struct ath11k_base *ab)
 				    i);
 			goto err;
 		}
-
-		ret = ath11k_debug_register(ar, i);
-		if (ret) {
-			ath11k_warn(ab, "failed to initialize debugfs\n");
-			goto err;
-		}
 	}
 
 	return 0;
