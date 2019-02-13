@@ -377,6 +377,11 @@ extern long keyctl_find_lru(key_serial_t, const char __user *);
 extern long keyctl_set_container_keyring(int, key_serial_t);
 #endif
 
+extern long keyctl_grant_permission(key_serial_t keyid,
+				    enum key_ace_subject_type type,
+				    unsigned int subject,
+				    unsigned int perm);
+
 /*
  * Debugging key validation
  */

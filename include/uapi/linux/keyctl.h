@@ -136,6 +136,7 @@ enum key_ace_standard_subject {
 #define KEYCTL_MOVE			33	/* Move keys between keyrings */
 #define KEYCTL_FIND_LRU			34	/* Find the least-recently used key in a keyring */
 #define KEYCTL_SET_CONTAINER_KEYRING	35	/* Attach a keyring to a container */
+#define KEYCTL_GRANT_PERMISSION		36	/* Grant a permit to a key */
 
 /* keyctl structures */
 struct keyctl_dh_params {
