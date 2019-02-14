@@ -117,7 +117,7 @@ int ccu_mux_helper_determine_rate(struct ccu_common *common,
 		struct clk_hw *parent;
 
 		parent = clk_hw_get_parent_by_index(hw, i);
-		if (!parent)
+		if (IS_ERR_OR_NULL(parent))
 			continue;
 
 		parent_rate = ccu_mux_helper_apply_prediv(common, cm, i,
