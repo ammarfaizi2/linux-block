@@ -144,7 +144,7 @@ static int tcon_ch1_determine_rate(struct clk_hw *hw,
 		struct clk_hw *parent;
 
 		parent = clk_hw_get_parent_by_index(hw, i);
-		if (!parent)
+		if (IS_ERR_OR_NULL(parent))
 			continue;
 
 		parent_rate = clk_hw_get_rate(parent);

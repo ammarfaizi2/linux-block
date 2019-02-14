@@ -122,7 +122,7 @@ static int sun9i_a80_cpus_clk_determine_rate(struct clk_hw *clk,
 	num_parents = clk_hw_get_num_parents(clk);
 	for (i = 0; i < num_parents; i++) {
 		parent = clk_hw_get_parent_by_index(clk, i);
-		if (!parent)
+		if (IS_ERR_OR_NULL(parent))
 			continue;
 		if (clk_hw_get_flags(clk) & CLK_SET_RATE_PARENT)
 			parent_rate = clk_hw_round_rate(parent, rate);
