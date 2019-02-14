@@ -419,6 +419,8 @@ static int alchemy_clk_fgcs_detr(struct clk_hw *hw,
 		pc = clk_hw_get_parent_by_index(hw, j);
 		if (!pc)
 			break;
+		if (IS_ERR(pc))
+			continue;
 
 		/* if this parent is currently unused, remember it.
 		 * XXX: we would actually want clk_has_active_children()
