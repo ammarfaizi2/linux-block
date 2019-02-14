@@ -1051,7 +1051,7 @@ static int kona_peri_clk_determine_rate(struct clk_hw *hw,
 		unsigned long delta;
 		unsigned long other_rate;
 
-		BUG_ON(!parent);
+		BUG_ON(IS_ERR_OR_NULL(parent));
 		if (parent == current_parent)
 			continue;
 
