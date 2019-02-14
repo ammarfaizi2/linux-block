@@ -194,7 +194,7 @@ static int ac100_clkout_determine_rate(struct clk_hw *hw,
 		 * we get the parent rate, so we could use the RTC
 		 * without waiting for the codec to be supported.
 		 */
-		if (!parent)
+		if (IS_ERR_OR_NULL(parent))
 			continue;
 
 		prate = clk_hw_get_rate(parent);
