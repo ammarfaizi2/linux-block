@@ -301,8 +301,7 @@ void ath11k_hal_rx_msdu_link_info_get(void *link_desc, u32 *num_msdus,
 	struct hal_rx_msdu_details *msdu;
 	int i;
 
-	if (*num_msdus > HAL_NUM_RX_MSDUS_PER_LINK_DESC)
-		*num_msdus = HAL_NUM_RX_MSDUS_PER_LINK_DESC;
+	*num_msdus = HAL_NUM_RX_MSDUS_PER_LINK_DESC;
 
 	msdu = &link->msdu_link[0];
 	*rbm = FIELD_GET(BUFFER_ADDR_INFO1_RET_BUF_MGR,
@@ -338,7 +337,8 @@ int ath11k_hal_desc_reo_parse_err(struct ath11k_base *ab, u32 *rx_desc,
 
 	push_reason = FIELD_GET(HAL_REO_DEST_RING_INFO0_PUSH_REASON,
 				desc->info0);
-	if (push_reason != HAL_REO_DEST_RING_PUSH_REASON_ERR_DETECTED) {
+	if ((push_reason != HAL_REO_DEST_RING_PUSH_REASON_ERR_DETECTED)	&&
+	    (push_reason != HAL_REO_DEST_RING_PUSH_REASON_ROUTING_INSTRUCTION)) {
 		ath11k_warn(ab, "expected error push reason code, received %d\n",
 			    push_reason);
 		return -EINVAL;
