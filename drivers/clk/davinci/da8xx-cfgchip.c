@@ -309,7 +309,7 @@ static int __init da850_cfgchip_register_async3(struct device *dev,
 
 	/* pll1_sysclk2 is not affected by CPU scaling, so use it for async3 */
 	parent = clk_hw_get_parent_by_index(&mux->hw, 1);
-	if (parent)
+	if (!IS_ERR_OR_NULL(parent))
 		clk_set_parent(mux->hw.clk, parent->clk);
 	else
 		dev_warn(dev, "Failed to find async3 parent clock\n");
@@ -617,7 +617,7 @@ static int da8xx_cfgchip_register_usb_phy_clk(struct device *dev,
 	 * should use device tree, so hard-coding the value (1) here.
 	 */
 	parent = clk_hw_get_parent_by_index(&usb0->hw, 1);
-	if (parent)
+	if (!IS_ERR_OR_NULL(parent))
 		clk_set_parent(usb0->hw.clk, parent->clk);
 	else
 		dev_warn(dev, "Failed to find usb0 parent clock\n");
@@ -631,7 +631,7 @@ static int da8xx_cfgchip_register_usb_phy_clk(struct device *dev,
 	 * should use device tree, so hard-coding the value (0) here.
 	 */
 	parent = clk_hw_get_parent_by_index(&usb1->hw, 0);
-	if (parent)
+	if (!IS_ERR_OR_NULL(parent))
 		clk_set_parent(usb1->hw.clk, parent->clk);
 	else
 		dev_warn(dev, "Failed to find usb1 parent clock\n");
