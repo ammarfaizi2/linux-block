@@ -61,6 +61,7 @@ extern struct container init_container;
 #ifdef CONFIG_CONTAINERS
 extern const struct file_operations container_fops;
 
+extern struct container *find_container(const char *name);
 extern int copy_container(unsigned long flags, struct task_struct *tsk,
 			  struct container *container);
 extern void exit_container(struct task_struct *tsk);

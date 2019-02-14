@@ -21,6 +21,7 @@
 enum key_ace_subject_type {
 	KEY_ACE_SUBJ_STANDARD	= 0,	/* subject is one of key_ace_standard_subject */
 	KEY_ACE_SUBJ_CONTAINER	= 1,	/* subject is a container fd */
+	KEY_ACE_SUBJ_CONTAINER_NAME = 2, /* subject is a container name pointer */
 	nr__key_ace_subject_type
 };
 

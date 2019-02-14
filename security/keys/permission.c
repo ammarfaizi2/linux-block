@@ -407,7 +407,7 @@ change:
  */
 long keyctl_grant_permission(key_serial_t keyid,
 			     enum key_ace_subject_type type,
-			     unsigned int subject,
+			     unsigned long subject,
 			     unsigned int perm)
 {
 	struct key_ace new_ace;
@@ -431,6 +431,23 @@ long keyctl_grant_permission(key_serial_t keyid,
 		struct container *c = fd_to_container(subject);
 		if (IS_ERR(c))
 			return -EINVAL;
+		refcount_inc(&c->tag->usage);
+		new_ace.container_tag = c->tag;
+		put_container(c);
+		break;
+	}
+	case KEY_ACE_SUBJ_CONTAINER_NAME: {
+		struct container *c;
+		char *name;
+
+		name = strndup_user((const char __user *)subject, 23);
+		if (IS_ERR(name))
+			return PTR_ERR(name);
+		c = find_container(name);
+		kfree(name);
+		if (!c)
+			return -EINVAL;
+		new_ace.type = KEY_ACE_SUBJ_CONTAINER;
 		refcount_inc(&c->tag->usage);
 		new_ace.container_tag = c->tag;
 		put_container(c);

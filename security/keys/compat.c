@@ -175,6 +175,10 @@ COMPAT_SYSCALL_DEFINE5(keyctl, u32, option,
 	case KEYCTL_MOVE:
 		return keyctl_keyring_move(arg2, arg3, arg4, arg5);
 	case KEYCTL_GRANT_PERMISSION:
+		if (arg3 == KEY_ACE_SUBJ_CONTAINER_NAME)
+			return keyctl_grant_permission(arg2, arg3,
+						       (unsigned long)compat_ptr(arg4),
+						       arg5);
 		return keyctl_grant_permission(arg2, arg3, arg4, arg5);
 
 	default:

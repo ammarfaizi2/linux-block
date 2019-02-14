@@ -1964,7 +1964,7 @@ SYSCALL_DEFINE5(keyctl, int, option, unsigned long, arg2, unsigned long, arg3,
 	case KEYCTL_GRANT_PERMISSION:
 		return keyctl_grant_permission((key_serial_t)arg2,
 					       (enum key_ace_subject_type)arg3,
-					       (unsigned int)arg4,
+					       (unsigned long)arg4,
 					       (unsigned int)arg5);
 
 	default:

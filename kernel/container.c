@@ -235,6 +235,30 @@ struct container *fd_to_container(int fd)
 	return c;
 }
 
+/**
+ * find_container - Find a child container by name.
+ * @name: The name of the container to find.
+ *
+ * Find a child of the current container by name.
+ */
+struct container *find_container(const char *name)
+{
+	struct container *c = current->container, *p;
+
+	spin_lock(&c->lock);
+	list_for_each_entry(p, &c->children, child_link) {
+		if (strcmp(p->name, name) == 0) {
+			get_container(p);
+			goto found;
+		}
+	}
+
+	p = NULL;
+found:
+	spin_unlock(&c->lock);
+	return p;
+}
+
 /*
  * Handle fork/clone.
  *

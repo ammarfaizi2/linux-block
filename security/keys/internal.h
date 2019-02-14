@@ -379,7 +379,7 @@ extern long keyctl_set_container_keyring(int, key_serial_t);
 
 extern long keyctl_grant_permission(key_serial_t keyid,
 				    enum key_ace_subject_type type,
-				    unsigned int subject,
+				    unsigned long subject,
 				    unsigned int perm);
 
 /*
