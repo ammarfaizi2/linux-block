@@ -6,6 +6,7 @@ hostprogs-$(CONFIG_SAMPLE_VFS) := \
 	test-mntinfo \
 	test-statx \
 	test-container \
+	test-cont-grant \
 	test-upcall
 
 # Tell kbuild to always build the programs
@@ -22,5 +23,7 @@ HOSTCFLAGS_test-statx.o += -I$(objtree)/usr/include
 
 HOSTCFLAGS_test-container.o += -I$(objtree)/usr/include
 HOSTLDLIBS_test-container += -lkeyutils
+HOSTCFLAGS_test-cont-grant.o += -I$(objtree)/usr/include
+HOSTLDLIBS_test-cont-grant += -lkeyutils
 HOSTCFLAGS_test-upcall.o += -I$(objtree)/usr/include
 HOSTLDLIBS_test-upcall += -lkeyutils
