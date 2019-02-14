@@ -20,6 +20,7 @@
 #include <sys/stat.h>
 #include <keyutils.h>
 
+#define KEY_SPEC_CONTAINER_KEYRING	-9	/* - key ID for current->container's keyring */
 #define KEYCTL_CONTAINER_INTERCEPT	31	/* Intercept upcalls inside a container */
 #define KEYCTL_SET_CONTAINER_KEYRING	35	/* Attach a keyring to a container */
 #define KEYCTL_GRANT_PERMISSION		36	/* Grant a permit to a key */
@@ -160,6 +161,8 @@ static inline int fork_into_container(int containerfd)
 static __attribute__((noreturn))
 void container_init(void)
 {
+	key_serial_t ckey;
+
 	if (0) {
 		/* Do a bit of debugging on the container. */
 		struct dirent **dlist;
@@ -203,6 +206,12 @@ void container_init(void)
 		exit(1);
 	}
 
+	ckey = keyctl_get_keyring_ID(KEY_SPEC_CONTAINER_KEYRING, 0);
+	if (ckey == -1)
+		perror("keyctl_get_keyring_ID");
+	else
+		printf("Container keyring %d\n", ckey);
+	
 	setenv("PS1", "container>", 1);
 	execl("/bin/bash", "bash", NULL);
 	perror("execl");
@@ -300,6 +309,12 @@ int main(int argc, char *argv[])
 	 */
 	if (keyctl(KEYCTL_GRANT_PERMISSION, keyring, KEY_ACE_SUBJ_CONTAINER, cfd,
 		   KEY_ACE_SEARCH) < 0) {
+		perror("keyctl_grant/s");
+		exit(1);
+	}
+
+	if (keyctl(KEYCTL_GRANT_PERMISSION, keyring,
+		   KEY_ACE_SUBJ_STANDARD, KEY_ACE_OWNER, 0) < 0) {
 		perror("keyctl_grant/s");
 		exit(1);
 	}

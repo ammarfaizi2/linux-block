@@ -725,6 +725,13 @@ try_again:
 		key_ref = make_key_ref(key, 1);
 		break;
 
+	case KEY_SPEC_CONTAINER_KEYRING:
+		key = current->container->keyring;
+		if (!key)
+			goto error;
+		key_ref = make_key_ref(key, 0);
+		goto error;
+
 	default:
 		key_ref = ERR_PTR(-EINVAL);
 		if (id < 1)
