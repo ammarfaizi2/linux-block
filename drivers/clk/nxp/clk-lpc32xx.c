@@ -662,12 +662,12 @@ static long clk_usb_pll_round_rate(struct clk_hw *hw, unsigned long rate,
 
 	/* USB divider clock */
 	usb_div_hw = clk_hw_get_parent_by_index(hw, 0);
-	if (!usb_div_hw)
+	if (IS_ERR_OR_NULL(usb_div_hw))
 		return -EINVAL;
 
 	/* Main oscillator clock */
 	osc_hw = clk_hw_get_parent_by_index(usb_div_hw, 0);
-	if (!osc_hw)
+	if (IS_ERR_OR_NULL(osc_hw))
 		return -EINVAL;
 	o = clk_hw_get_rate(osc_hw);	/* must be in range 1..20 MHz */
 
