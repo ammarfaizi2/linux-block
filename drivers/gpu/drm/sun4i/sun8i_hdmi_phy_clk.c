@@ -29,7 +29,7 @@ static int sun8i_phy_clk_determine_rate(struct clk_hw *hw,
 
 	for (p = 0; p < clk_hw_get_num_parents(hw); p++) {
 		parent = clk_hw_get_parent_by_index(hw, p);
-		if (!parent)
+		if (IS_ERR_OR_NULL(parent))
 			continue;
 
 		for (i = 1; i <= 16; i++) {

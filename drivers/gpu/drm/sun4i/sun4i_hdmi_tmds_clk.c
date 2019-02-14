@@ -81,7 +81,7 @@ static int sun4i_tmds_determine_rate(struct clk_hw *hw,
 
 	for (p = 0; p < clk_hw_get_num_parents(hw); p++) {
 		parent = clk_hw_get_parent_by_index(hw, p);
-		if (!parent)
+		if (IS_ERR_OR_NULL(parent))
 			continue;
 
 		for (i = 1; i < 3; i++) {
