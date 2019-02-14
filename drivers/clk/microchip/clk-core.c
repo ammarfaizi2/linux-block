@@ -396,7 +396,7 @@ static int roclk_determine_rate(struct clk_hw *hw,
 	for (i = 0; i < clk_hw_get_num_parents(hw); i++) {
 		/* get parent */
 		parent_clk = clk_hw_get_parent_by_index(hw, i);
-		if (!parent_clk)
+		if (IS_ERR_OR_NULL(parent_clk))
 			continue;
 
 		/* skip if parent runs slower than target rate */
