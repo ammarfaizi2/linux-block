@@ -250,8 +250,9 @@ static void inc_inflight_move_tail(struct unix_sock *u)
 	 * of the list, so that it's checked even if it was already
 	 * passed over
 	 */
-	if (test_bit(UNIX_GC_MAYBE_CYCLE, &u->gc_flags))
-		list_move_tail(&u->link, &gc_candidates);
+	if (u->inflight == 1)
+		if (test_bit(UNIX_GC_MAYBE_CYCLE, &u->gc_flags))
+			list_move_tail(&u->link, &gc_candidates);
 }
 
 static bool gc_in_progress;
