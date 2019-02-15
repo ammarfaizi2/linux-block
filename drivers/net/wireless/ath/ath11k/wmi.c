@@ -41,7 +41,6 @@ struct wmi_tlv_svc_rdy_ext_parse {
 	bool hw_mode_done;
 	bool mac_phy_done;
 	bool ext_hal_reg_done;
-	bool pref_mode_found;
 };
 
 struct wmi_tlv_rdy_parse {
@@ -93,6 +92,20 @@ static const struct wmi_tlv_policy wmi_tlv_policies[] = {
 		= {.min_len = sizeof(struct wmi_service_available_event) },
 	[WMI_TAG_PEER_ASSOC_CONF_EVENT]
 		= { .min_len = sizeof(struct wmi_peer_assoc_conf_event) },
+};
+
+#define PRIMAP(_hw_mode_) \
+	[_hw_mode_] = _hw_mode_##_PRI
+
+static int ath11k_hw_mode_pri_map[] = {
+	PRIMAP(WMI_HOST_HW_MODE_SINGLE),
+	PRIMAP(WMI_HOST_HW_MODE_DBS),
+	PRIMAP(WMI_HOST_HW_MODE_SBS_PASSIVE),
+	PRIMAP(WMI_HOST_HW_MODE_SBS),
+	PRIMAP(WMI_HOST_HW_MODE_DBS_SBS),
+	PRIMAP(WMI_HOST_HW_MODE_DBS_OR_SBS),
+	/* keep last */
+	PRIMAP(WMI_HOST_HW_MODE_MAX),
 };
 
 static int
@@ -2981,6 +2994,7 @@ static int ath11k_wmi_tlv_hw_mode_caps(struct ath11k_base *soc,
 {
 	struct wmi_tlv_svc_rdy_ext_parse *svc_rdy_ext = data;
 	struct wmi_hw_mode_capabilities *hw_mode_caps;
+	enum wmi_host_hw_mode_config_type mode, pref;
 	u32 i;
 	int ret;
 
@@ -2998,16 +3012,17 @@ static int ath11k_wmi_tlv_hw_mode_caps(struct ath11k_base *soc,
 	i = 0;
 	while (i < svc_rdy_ext->n_hw_mode_caps) {
 		hw_mode_caps = &svc_rdy_ext->hw_mode_caps[i];
+		mode = hw_mode_caps->hw_mode_id;
+		pref = soc->wmi_sc.preferred_hw_mode;
 
-		if (hw_mode_caps->hw_mode_id == soc->wmi_sc.preferred_hw_mode) {
+		if (ath11k_hw_mode_pri_map[mode] < ath11k_hw_mode_pri_map[pref]) {
 			svc_rdy_ext->pref_hw_mode_caps = *hw_mode_caps;
-			svc_rdy_ext->pref_mode_found = true;
-			break;
+			soc->wmi_sc.preferred_hw_mode = mode;
 		}
 		i++;
 	}
 
-	if (!svc_rdy_ext->pref_mode_found)
+	if (soc->wmi_sc.preferred_hw_mode == WMI_HOST_HW_MODE_MAX)
 		return -EINVAL;
 
 	return 0;
@@ -5041,7 +5056,6 @@ int ath11k_wmi_pdev_attach(struct ath11k_base *sc,
 
 int ath11k_wmi_attach(struct ath11k_base *sc)
 {
-	struct device *dev = sc->dev;
 	int ret;
 
 	ret = ath11k_wmi_pdev_attach(sc, 0);
@@ -5049,12 +5063,7 @@ int ath11k_wmi_attach(struct ath11k_base *sc)
 		return ret;
 
 	sc->wmi_sc.sc = sc;
-	if (of_property_read_u32(dev->of_node, "qcom,hw-mode-id",
-				 &sc->wmi_sc.preferred_hw_mode)) {
-		sc->wmi_sc.preferred_hw_mode = WMI_HOST_HW_MODE_DBS;
-		ath11k_info(sc, "no hw-mode-id in dt, choosing default %d\n",
-			    sc->wmi_sc.preferred_hw_mode);
-	}
+	sc->wmi_sc.preferred_hw_mode = WMI_HOST_HW_MODE_MAX;
 
 	/* TODO: Init remaining wmi soc resources required */
 	init_completion(&sc->wmi_sc.service_ready);

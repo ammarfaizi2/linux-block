@@ -68,6 +68,8 @@ struct wmi_tlv {
  *                        to be communicated separately.
  * @WMI_HOST_HW_MODE_DBS_SBS: 3 PHYs, with 2 on the same band doing SBS
  *                           as in WMI_HW_MODE_SBS, and 3rd on the other band
+ * @WMI_HOST_HW_MODE_DBS_OR_SBS: Two PHY with one PHY capabale of both 2G and
+ *                        5G. It can support SBS (5G + 5G) OR DBS (5G + 2G).
  * @WMI_HOST_HW_MODE_MAX: Max hw_mode_id. Used to indicate invalid mode.
  */
 enum wmi_host_hw_mode_config_type {
@@ -76,7 +78,25 @@ enum wmi_host_hw_mode_config_type {
 	WMI_HOST_HW_MODE_SBS_PASSIVE  = 2,
 	WMI_HOST_HW_MODE_SBS          = 3,
 	WMI_HOST_HW_MODE_DBS_SBS      = 4,
-	WMI_HOST_HW_MODE_MAX,
+	WMI_HOST_HW_MODE_DBS_OR_SBS   = 5,
+
+	/* keep last */
+	WMI_HOST_HW_MODE_MAX
+};
+
+/* HW mode priority values used to detect the preferred HW mode
+ * on the available modes.
+ */
+enum wmi_host_hw_mode_priority {
+	WMI_HOST_HW_MODE_DBS_SBS_PRI,
+	WMI_HOST_HW_MODE_DBS_PRI,
+	WMI_HOST_HW_MODE_DBS_OR_SBS_PRI,
+	WMI_HOST_HW_MODE_SBS_PRI,
+	WMI_HOST_HW_MODE_SBS_PASSIVE_PRI,
+	WMI_HOST_HW_MODE_SINGLE_PRI,
+
+	/* keep last the lowest priority */
+	WMI_HOST_HW_MODE_MAX_PRI
 };
 
 enum {
@@ -4759,7 +4779,7 @@ struct ath11k_wmi_base {
 	u32 rx_decap_mode;
 	struct wmi_host_mem_chunk mem_chunks[WMI_MAX_MEM_REQS];
 
-	u32 preferred_hw_mode;
+	enum wmi_host_hw_mode_config_type preferred_hw_mode;
 	struct target_resource_config  wlan_resource_config;
 
 	struct ath11k_targ_cap *targ_cap;

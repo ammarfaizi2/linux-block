@@ -758,10 +758,14 @@ int ath11k_htc_init(struct ath11k_base *ab)
 		htc->wmi_ep_count = 1;
 		break;
 	case WMI_HOST_HW_MODE_DBS:
+	case WMI_HOST_HW_MODE_DBS_OR_SBS:
 		htc->wmi_ep_count = 2;
 		break;
+	case WMI_HOST_HW_MODE_DBS_SBS:
+		htc->wmi_ep_count = 3;
+		break;
 	default:
-		htc->wmi_ep_count = 2;
+		htc->wmi_ep_count = 3;
 		break;
 	}
 
