@@ -311,6 +311,19 @@ static int ath11k_pull_mac_phy_cap_service_ready_ext(
 		return -EINVAL;
 	}
 
+	/* tx/rx chainmask reported from fw depends on the actual hw chains used,
+	 * For example, for 4x4 capable macphys, first 4 chains can be used for first
+	 * mac and the remaing 4 chains can be used for the second mac or vice-versa.
+	 * In this case, tx/rx chainmask 0xf will be advertised for first mac and 0xf0
+	 * will be advertised for second mac or vice-versa. Compute the shift value for
+	 * for tx/rx chainmask which will be used to advertise supported ht/vht rates to
+	 * mac80211.
+	 */
+	pdev_cap->tx_chain_mask_shift =
+			find_first_bit((unsigned long *)&pdev_cap->tx_chain_mask, 32);
+	pdev_cap->rx_chain_mask_shift =
+			find_first_bit((unsigned long *)&pdev_cap->rx_chain_mask, 32);
+
 	cap_band = &pdev_cap->band[NL80211_BAND_2GHZ];
 	cap_band->max_bw_supported = mac_phy_caps->max_bw_supported_2g;
 	cap_band->ht_cap_info = mac_phy_caps->ht_cap_info_2g;

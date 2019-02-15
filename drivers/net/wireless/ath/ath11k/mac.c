@@ -2933,7 +2933,7 @@ exit:
 }
 
 static struct ieee80211_sta_ht_cap
-ath11k_create_ht_cap(struct ath11k *ar, u32 ar_ht_cap)
+ath11k_create_ht_cap(struct ath11k *ar, u32 ar_ht_cap, u32 rate_cap_rx_chainmask)
 {
 	int i;
 	struct ieee80211_sta_ht_cap ht_cap = {0};
@@ -2989,7 +2989,7 @@ ath11k_create_ht_cap(struct ath11k *ar, u32 ar_ht_cap)
 		ht_cap.cap |= IEEE80211_HT_CAP_MAX_AMSDU;
 
 	for (i = 0; i < ar->num_rx_chains; i++) {
-		if (ar->cfg_rx_chainmask & BIT(i))
+		if (rate_cap_rx_chainmask & BIT(i))
 			ht_cap.mcs.rx_mask[i] = 0xFF;
 	}
 
@@ -3090,7 +3090,8 @@ static void ath11k_set_vht_txbf_cap(struct ath11k *ar, u32 *vht_cap)
 }
 
 static struct ieee80211_sta_vht_cap
-ath11k_create_vht_cap(struct ath11k *ar)
+ath11k_create_vht_cap(struct ath11k *ar, u32 rate_cap_tx_chainmask,
+		      u32 rate_cap_rx_chainmask)
 {
 	struct ieee80211_sta_vht_cap vht_cap = {0};
 	u16 txmcs_map, rxmcs_map;
@@ -3104,18 +3105,18 @@ ath11k_create_vht_cap(struct ath11k *ar)
 	rxmcs_map = 0;
 	txmcs_map = 0;
 	for (i = 0; i < 8; i++) {
-		if (i < ar->num_tx_chains && ar->cfg_tx_chainmask & BIT(i))
+		if (i < ar->num_tx_chains && rate_cap_tx_chainmask & BIT(i))
 			txmcs_map |= IEEE80211_VHT_MCS_SUPPORT_0_9 << (i * 2);
 		else
 			txmcs_map |= IEEE80211_VHT_MCS_NOT_SUPPORTED << (i * 2);
 
-		if (i < ar->num_rx_chains && ar->cfg_rx_chainmask & BIT(i))
+		if (i < ar->num_rx_chains && rate_cap_rx_chainmask & BIT(i))
 			rxmcs_map |= IEEE80211_VHT_MCS_SUPPORT_0_9 << (i * 2);
 		else
 			rxmcs_map |= IEEE80211_VHT_MCS_NOT_SUPPORTED << (i * 2);
 	}
 
-	if (ar->cfg_tx_chainmask <= 1)
+	if (rate_cap_tx_chainmask <= 1)
 		vht_cap.cap &= ~IEEE80211_VHT_CAP_TXSTBC;
 
 	vht_cap.vht_mcs.rx_mcs_map = cpu_to_le16(rxmcs_map);
@@ -3129,14 +3130,20 @@ static void ath11k_mac_setup_ht_vht_cap(struct ath11k *ar,
 					u32 *ht_cap_info)
 {
 	struct ieee80211_supported_band *band;
+	u32 rate_cap_tx_chainmask;
+	u32 rate_cap_rx_chainmask;
 	u32 ht_cap;
+
+	rate_cap_tx_chainmask = ar->cfg_tx_chainmask >> cap->tx_chain_mask_shift;
+	rate_cap_rx_chainmask = ar->cfg_rx_chainmask >> cap->rx_chain_mask_shift;
 
 	if (cap->supported_bands & WMI_HOST_WLAN_2G_CAP) {
 		band = &ar->mac.sbands[NL80211_BAND_2GHZ];
 		ht_cap = cap->band[NL80211_BAND_2GHZ].ht_cap_info;
 		if (ht_cap_info)
 			*ht_cap_info = ht_cap;
-		band->ht_cap = ath11k_create_ht_cap(ar, ht_cap);
+		band->ht_cap = ath11k_create_ht_cap(ar, ht_cap,
+						    rate_cap_rx_chainmask);
 	}
 
 	if (cap->supported_bands & WMI_HOST_WLAN_5G_CAP) {
@@ -3144,9 +3151,19 @@ static void ath11k_mac_setup_ht_vht_cap(struct ath11k *ar,
 		ht_cap = cap->band[NL80211_BAND_5GHZ].ht_cap_info;
 		if (ht_cap_info)
 			*ht_cap_info = ht_cap;
-		band->ht_cap = ath11k_create_ht_cap(ar, ht_cap);
-		band->vht_cap = ath11k_create_vht_cap(ar);
+		band->ht_cap = ath11k_create_ht_cap(ar, ht_cap,
+						    rate_cap_rx_chainmask);
+		band->vht_cap = ath11k_create_vht_cap(ar, rate_cap_tx_chainmask,
+						      rate_cap_rx_chainmask);
 	}
+}
+
+static int ath11k_check_chain_mask(struct ath11k *ar, u32 ant, bool is_tx_ant)
+{
+	/* TODO: Check the request chainmask against the supported
+	 * chainmask table which is advertised in extented_service_ready event */
+
+	return 0;
 }
 
 static int __ath11k_set_antenna(struct ath11k *ar, u32 tx_ant, u32 rx_ant)
@@ -3154,6 +3171,12 @@ static int __ath11k_set_antenna(struct ath11k *ar, u32 tx_ant, u32 rx_ant)
 	int ret;
 
 	lockdep_assert_held(&ar->conf_mutex);
+
+	if (ath11k_check_chain_mask(ar, tx_ant, true))
+		return -EINVAL;
+
+	if (ath11k_check_chain_mask(ar, rx_ant, false))
+		return -EINVAL;
 
 	ar->cfg_tx_chainmask = tx_ant;
 	ar->cfg_rx_chainmask = rx_ant;
