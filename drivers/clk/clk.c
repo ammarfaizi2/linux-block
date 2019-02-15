@@ -440,10 +440,12 @@ clk_core_fill_parent_index(struct clk_core *core, u8 index)
 }
 
 static struct clk_core *clk_core_get_parent_by_index(struct clk_core *core,
-							 u8 index)
+						     int index)
 {
 	if (!core || !core->parents)
 		return NULL;
+	if (index < 0)
+		return ERR_PTR(index);
 	if (index >= core->num_parents)
 		return ERR_PTR(-EINVAL);
 
@@ -454,7 +456,7 @@ static struct clk_core *clk_core_get_parent_by_index(struct clk_core *core,
 }
 
 struct clk_hw *
-clk_hw_get_parent_by_index(const struct clk_hw *hw, unsigned int index)
+clk_hw_get_parent_by_index(const struct clk_hw *hw, int index)
 {
 	struct clk_core *parent;
 
