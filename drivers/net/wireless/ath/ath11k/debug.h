@@ -75,7 +75,7 @@ static inline void ath11k_debug_soc_destroy(struct ath11k_base *sc)
 {
 }
 
-static inline int ath11k_debug_register(struct ath11k *ar, int pdev_id)
+static inline int ath11k_debug_register(struct ath11k *ar)
 {
 	return 0;
 }
