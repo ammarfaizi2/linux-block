@@ -938,12 +938,7 @@ static struct sock *unix_find_other(struct net *net,
 	} else {
 		err = -ECONNREFUSED;
 		u = unix_find_socket_byname(net, sunname, len, hash);
-		if (u) {
-			struct dentry *dentry;
-			dentry = unix_sk(u)->path.dentry;
-			if (dentry)
-				touch_atime(&unix_sk(u)->path);
-		} else
+		if (!u)
 			goto fail;
 	}
 	return u;
