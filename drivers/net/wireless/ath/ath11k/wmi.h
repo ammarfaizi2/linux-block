@@ -4472,6 +4472,71 @@ enum wmi_sta_ps_param_pspoll_count {
 	 */
 };
 
+/* U-APSD configuration of peer station from (re)assoc request and TSPECs */
+enum wmi_ap_ps_param_uapsd {
+	WMI_AP_PS_UAPSD_AC0_DELIVERY_EN = (1 << 0),
+	WMI_AP_PS_UAPSD_AC0_TRIGGER_EN  = (1 << 1),
+	WMI_AP_PS_UAPSD_AC1_DELIVERY_EN = (1 << 2),
+	WMI_AP_PS_UAPSD_AC1_TRIGGER_EN  = (1 << 3),
+	WMI_AP_PS_UAPSD_AC2_DELIVERY_EN = (1 << 4),
+	WMI_AP_PS_UAPSD_AC2_TRIGGER_EN  = (1 << 5),
+	WMI_AP_PS_UAPSD_AC3_DELIVERY_EN = (1 << 6),
+	WMI_AP_PS_UAPSD_AC3_TRIGGER_EN  = (1 << 7),
+};
+
+/* U-APSD maximum service period of peer station */
+enum wmi_ap_ps_peer_param_max_sp {
+	WMI_AP_PS_PEER_PARAM_MAX_SP_UNLIMITED = 0,
+	WMI_AP_PS_PEER_PARAM_MAX_SP_2 = 1,
+	WMI_AP_PS_PEER_PARAM_MAX_SP_4 = 2,
+	WMI_AP_PS_PEER_PARAM_MAX_SP_6 = 3,
+	MAX_WMI_AP_PS_PEER_PARAM_MAX_SP,
+};
+
+enum wmi_ap_ps_peer_param {
+	/** Set uapsd configuration for a given peer.
+	 *
+	 * This include the delivery and trigger enabled state for each AC.
+	 * The host MLME needs to set this based on AP capability and stations
+	 * request Set in the association request  received from the station.
+	 *
+	 * Lower 8 bits of the value specify the UAPSD configuration.
+	 *
+	 * (see enum wmi_ap_ps_param_uapsd)
+	 * The default value is 0.
+	 */
+	WMI_AP_PS_PEER_PARAM_UAPSD = 0,
+
+	/**
+	 * Set the service period for a UAPSD capable station
+	 *
+	 * The service period from wme ie in the (re)assoc request frame.
+	 *
+	 * (see enum wmi_ap_ps_peer_param_max_sp)
+	 */
+	WMI_AP_PS_PEER_PARAM_MAX_SP = 1,
+
+	/** Time in seconds for aging out buffered frames
+	 * for STA in power save
+	 */
+	WMI_AP_PS_PEER_PARAM_AGEOUT_TIME = 2,
+
+	/** Specify frame types that are considered SIFS
+	 * RESP trigger frame
+	 */
+	WMI_AP_PS_PEER_PARAM_SIFS_RESP_FRMTYPE = 3,
+
+	/** Specifies the trigger state of TID.
+	 * Valid only for UAPSD frame type
+	 */
+	WMI_AP_PS_PEER_PARAM_SIFS_RESP_UAPSD = 4,
+
+	/* Specifies the WNM sleep state of a STA */
+	WMI_AP_PS_PEER_PARAM_WNM_SLEEP = 5,
+};
+
+#define DISABLE_SIFS_RESPONSE_TRIGGER 0
+
 #define WMI_MAX_KEY_INDEX   3
 #define WMI_MAX_KEY_LEN     32
 

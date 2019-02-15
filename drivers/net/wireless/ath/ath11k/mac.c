@@ -1280,6 +1280,73 @@ static void ath11k_peer_assoc_h_qos(struct ath11k *ar,
 		   sta->addr, arg->qos_flag);
 }
 
+static int ath11k_peer_assoc_qos_ap(struct ath11k *ar,
+				    struct ath11k_vif *arvif,
+				    struct ieee80211_sta *sta)
+{
+	struct ap_ps_params params;
+	u32 max_sp;
+	u32 uapsd;
+	int ret;
+
+	lockdep_assert_held(&ar->conf_mutex);
+
+	params.vdev_id = arvif->vdev_id;
+
+	ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "mac uapsd_queues 0x%x max_sp %d\n",
+		   sta->uapsd_queues, sta->max_sp);
+
+	uapsd = 0;
+	if (sta->uapsd_queues & IEEE80211_WMM_IE_STA_QOSINFO_AC_VO)
+		uapsd |= WMI_AP_PS_UAPSD_AC3_DELIVERY_EN |
+			 WMI_AP_PS_UAPSD_AC3_TRIGGER_EN;
+	if (sta->uapsd_queues & IEEE80211_WMM_IE_STA_QOSINFO_AC_VI)
+		uapsd |= WMI_AP_PS_UAPSD_AC2_DELIVERY_EN |
+			 WMI_AP_PS_UAPSD_AC2_TRIGGER_EN;
+	if (sta->uapsd_queues & IEEE80211_WMM_IE_STA_QOSINFO_AC_BK)
+		uapsd |= WMI_AP_PS_UAPSD_AC1_DELIVERY_EN |
+			 WMI_AP_PS_UAPSD_AC1_TRIGGER_EN;
+	if (sta->uapsd_queues & IEEE80211_WMM_IE_STA_QOSINFO_AC_BE)
+		uapsd |= WMI_AP_PS_UAPSD_AC0_DELIVERY_EN |
+			 WMI_AP_PS_UAPSD_AC0_TRIGGER_EN;
+
+	max_sp = 0;
+	if (sta->max_sp < MAX_WMI_AP_PS_PEER_PARAM_MAX_SP)
+		max_sp = sta->max_sp;
+
+	params.param = WMI_AP_PS_PEER_PARAM_UAPSD;
+	params.value = uapsd;
+	ret = ath11k_wmi_send_set_ap_ps_param_cmd(ar, sta->addr, &params);
+	if (ret)
+		goto err;
+
+	params.param = WMI_AP_PS_PEER_PARAM_MAX_SP;
+	params.value = max_sp;
+	ret = ath11k_wmi_send_set_ap_ps_param_cmd(ar, sta->addr, &params);
+	if (ret)
+		goto err;
+
+	/* TODO revisit during testing */
+	params.param = WMI_AP_PS_PEER_PARAM_SIFS_RESP_FRMTYPE;
+	params.value = DISABLE_SIFS_RESPONSE_TRIGGER;
+	ret = ath11k_wmi_send_set_ap_ps_param_cmd(ar, sta->addr, &params);
+	if (ret)
+		goto err;
+
+	params.param = WMI_AP_PS_PEER_PARAM_SIFS_RESP_UAPSD;
+	params.value = DISABLE_SIFS_RESPONSE_TRIGGER;
+	ret = ath11k_wmi_send_set_ap_ps_param_cmd(ar, sta->addr, &params);
+	if (ret)
+		goto err;
+
+	return 0;
+
+err:
+	ath11k_warn(ar->ab, "failed to set ap ps peer param %d for vdev %i: %d\n",
+		    params.param, arvif->vdev_id, ret);
+	return ret;
+}
+
 static bool ath11k_mac_sta_has_ofdm_only(struct ieee80211_sta *sta)
 {
 	return sta->supp_rates[NL80211_BAND_2GHZ] >>
@@ -2383,11 +2450,18 @@ static int ath11k_station_assoc(struct ath11k *ar,
 	 * fixed param.
 	 * Note that all other rates and NSS will be disabled for this peer.
 	 */
-	if (sta->vht_cap.vht_supported && num_vht_rates == 1)
+	if (sta->vht_cap.vht_supported && num_vht_rates == 1) {
 		ret = ath11k_mac_set_peer_vht_fixed_rate(arvif, sta, mask,
 							 band);
 		if (ret)
 			return ret;
+	}
+
+	/* Re-assoc is run only to update supported rates for given station. It
+	 * doesn't make much sense to reconfigure the peer completely.
+	 */
+	if (reassoc)
+		return 0;
 
 	if (!sta->wme) {
 		arvif->num_legacy_stations++;
@@ -2407,7 +2481,14 @@ static int ath11k_station_assoc(struct ath11k *ar,
 		}
 	}
 
-	/* TODO: per-STA AP PS(UAPSD,MAX_SP) settings */
+	if ((sta->wme && sta->uapsd_queues)) {
+		ret = ath11k_peer_assoc_qos_ap(ar, arvif, sta);
+		if (ret) {
+			ath11k_warn(ar->ab, "failed to set qos params for STA %pM for vdev %i: %d\n",
+				    sta->addr, arvif->vdev_id, ret);
+			return ret;
+		}
+	}
 
 	return 0;
 }
