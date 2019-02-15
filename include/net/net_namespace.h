@@ -44,6 +44,7 @@ struct net_generic;
 struct uevent_sock;
 struct netns_ipvs;
 struct bpf_prog;
+struct key_subject;
 
 
 #define NETDEV_HASHBITS    8
@@ -69,6 +70,9 @@ struct net {
 						 */
 	struct llist_node	cleanup_list;	/* namespaces on death row */
 
+#ifdef CONFIG_KEYS
+	struct key_tag		*key_domain;	/* Key domain of operation tag */
+#endif
 	struct user_namespace   *user_ns;	/* Owning user namespace */
 	struct ucounts		*ucounts;
 	spinlock_t		nsid_lock;

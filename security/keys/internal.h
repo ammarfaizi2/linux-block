@@ -90,7 +90,7 @@ extern spinlock_t key_serial_lock;
 extern struct mutex key_construction_mutex;
 extern wait_queue_head_t request_key_conswq;
 
-
+extern void key_set_index_key(struct keyring_index_key *index_key);
 extern struct key_type *key_type_lookup(const char *type);
 extern void key_type_put(struct key_type *ktype);
 
@@ -152,6 +152,7 @@ extern int install_session_keyring_to_cred(struct cred *, struct key *);
 
 extern struct key *request_key_and_link(struct key_type *type,
 					const char *description,
+					struct key_tag *domain_tag,
 					const void *callout_info,
 					size_t callout_len,
 					void *aux,
@@ -205,20 +206,9 @@ static inline int key_permission(const key_ref_t key_ref, unsigned perm)
 	return key_task_permission(key_ref, current_cred(), perm);
 }
 
-/*
- * Authorisation record for request_key().
- */
-struct request_key_auth {
-	struct key		*target_key;
-	struct key		*dest_keyring;
-	const struct cred	*cred;
-	void			*callout_info;
-	size_t			callout_len;
-	pid_t			pid;
-} __randomize_layout;
-
 extern struct key_type key_type_request_key_auth;
 extern struct key *request_key_auth_new(struct key *target,
+					const char *op,
 					const void *callout_info,
 					size_t callout_len,
 					struct key *dest_keyring);
@@ -233,7 +223,8 @@ static inline bool key_is_dead(const struct key *key, time64_t limit)
 	return
 		key->flags & ((1 << KEY_FLAG_DEAD) |
 			      (1 << KEY_FLAG_INVALIDATED)) ||
-		(key->expiry > 0 && key->expiry <= limit);
+		(key->expiry > 0 && key->expiry <= limit) ||
+		key->domain_tag->removed;
 }
 
 /*

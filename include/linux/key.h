@@ -36,6 +36,7 @@ typedef int32_t key_serial_t;
 typedef uint32_t key_perm_t;
 
 struct key;
+struct net;
 
 #ifdef CONFIG_KEYS
 
@@ -82,13 +83,34 @@ struct cred;
 
 struct key_type;
 struct key_owner;
+struct key_tag;
 struct keyring_list;
 struct keyring_name;
 
+struct key_tag {
+	struct rcu_head		rcu;
+	refcount_t		usage;
+	bool			removed;	/* T when subject removed */
+};
+
 struct keyring_index_key {
+	/* [!] If this structure is altered, the union in struct key must change too! */
+	unsigned long		hash;			/* Hash value */
+	union {
+		struct {
+#ifdef __LITTLE_ENDIAN /* Put desc_len at the LSB of x */
+			u8	desc_len;
+			char	desc[sizeof(long) - 1];	/* First few chars of description */
+#else
+			char	desc[sizeof(long) - 1];	/* First few chars of description */
+			u8	desc_len;
+#endif
+		};
+		unsigned long x;
+	};
 	struct key_type		*type;
+	struct key_tag		*domain_tag;	/* Domain of operation */
 	const char		*description;
-	size_t			desc_len;
 };
 
 union key_payload {
@@ -206,7 +228,10 @@ struct key {
 	union {
 		struct keyring_index_key index_key;
 		struct {
+			unsigned long	hash;
+			unsigned long	len_desc;
 			struct key_type	*type;		/* type of key */
+			struct key_tag	*domain_tag;	/* Domain of operation */
 			char		*description;
 		};
 	};
@@ -257,6 +282,8 @@ extern struct key *key_alloc(struct key_type *type,
 extern void key_revoke(struct key *key);
 extern void key_invalidate(struct key *key);
 extern void key_put(struct key *key);
+extern bool key_put_tag(struct key_tag *tag);
+extern void key_remove_domain(struct key_tag *domain_tag);
 
 static inline struct key *__key_get(struct key *key)
 {
@@ -284,16 +311,10 @@ extern struct key *request_key_with_auxdata(struct key_type *type,
 					    size_t callout_len,
 					    void *aux);
 
-extern struct key *request_key_async(struct key_type *type,
-				     const char *description,
-				     const void *callout_info,
-				     size_t callout_len);
-
-extern struct key *request_key_async_with_auxdata(struct key_type *type,
-						  const char *description,
-						  const void *callout_info,
-						  size_t callout_len,
-						  void *aux);
+extern struct key *request_key_net(struct key_type *type,
+				   const char *description,
+				   struct net *net,
+				   const char *callout_info);
 
 extern int wait_for_key_construction(struct key *key, bool intr);
 
@@ -352,6 +373,7 @@ extern void key_set_timeout(struct key *, unsigned);
 
 extern key_ref_t lookup_user_key(key_serial_t id, unsigned long flags,
 				 key_perm_t perm);
+extern void key_free_user_ns(struct user_namespace *);
 
 /*
  * The permissions required on a key that we're looking up.
@@ -425,6 +447,8 @@ extern void key_init(void);
 #define key_fsuid_changed(t)		do { } while(0)
 #define key_fsgid_changed(t)		do { } while(0)
 #define key_init()			do { } while(0)
+#define key_put_subject(s)		do { } while(0)
+#define key_free_user_ns(ns)		do { } while(0)
 
 #endif /* CONFIG_KEYS */
 #endif /* __KERNEL__ */

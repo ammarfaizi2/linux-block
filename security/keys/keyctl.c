@@ -25,6 +25,7 @@
 #include <linux/security.h>
 #include <linux/uio.h>
 #include <linux/uaccess.h>
+#include <keys/request_key_auth-type.h>
 #include "internal.h"
 
 #define KEY_MAX_DESC_SIZE 4096
@@ -209,7 +210,7 @@ SYSCALL_DEFINE4(request_key, const char __user *, _type,
 	}
 
 	/* do the search */
-	key = request_key_and_link(ktype, description, callout_info,
+	key = request_key_and_link(ktype, description, NULL, callout_info,
 				   callout_len, NULL, key_ref_to_ptr(dest_ref),
 				   KEY_ALLOC_IN_QUOTA);
 	if (IS_ERR(key)) {
