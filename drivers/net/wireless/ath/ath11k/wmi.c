@@ -271,22 +271,22 @@ static int ath11k_pull_mac_phy_cap_service_ready_ext(
 	if (!hw_caps || !wmi_hw_mode_caps || !soc_hal_reg_caps)
 		return -EINVAL;
 
-	for (hw_idx = 0; hw_idx < (hw_caps->num_hw_modes); hw_idx++) {
-		if (hw_mode_id == (wmi_hw_mode_caps[hw_idx].hw_mode_id))
+	for (hw_idx = 0; hw_idx < hw_caps->num_hw_modes; hw_idx++) {
+		if (hw_mode_id == wmi_hw_mode_caps[hw_idx].hw_mode_id)
 			break;
 
-		phy_map = (wmi_hw_mode_caps[hw_idx].phy_id_map);
+		phy_map = wmi_hw_mode_caps[hw_idx].phy_id_map;
 		while (phy_map) {
 			phy_map >>= 1;
 			phy_idx++;
 		}
 	}
 
-	if (hw_idx == (hw_caps->num_hw_modes))
+	if (hw_idx == hw_caps->num_hw_modes)
 		return -EINVAL;
 
 	phy_idx += phy_id;
-	if (phy_id >= (soc_hal_reg_caps->num_phy))
+	if (phy_id >= soc_hal_reg_caps->num_phy)
 		return -EINVAL;
 
 	mac_phy_caps = &wmi_mac_phy_caps[phy_idx];
@@ -346,22 +346,22 @@ static int ath11k_pull_reg_cap_svc_rdy_ext(
 	if (!reg_caps || !wmi_ext_reg_cap)
 		return -EINVAL;
 
-	if (phy_idx >= (reg_caps->num_phy))
+	if (phy_idx >= reg_caps->num_phy)
 		return -EINVAL;
 
 	ext_reg_cap = &wmi_ext_reg_cap[phy_idx];
 
-	param->phy_id = (ext_reg_cap->phy_id);
-	param->eeprom_reg_domain = (ext_reg_cap->eeprom_reg_domain);
+	param->phy_id = ext_reg_cap->phy_id;
+	param->eeprom_reg_domain = ext_reg_cap->eeprom_reg_domain;
 	param->eeprom_reg_domain_ext =
-			      (ext_reg_cap->eeprom_reg_domain_ext);
-	param->regcap1 = (ext_reg_cap->regcap1);
-	param->regcap2 = (ext_reg_cap->regcap2);
+			      ext_reg_cap->eeprom_reg_domain_ext;
+	param->regcap1 = ext_reg_cap->regcap1;
+	param->regcap2 = ext_reg_cap->regcap2;
 	/* check if param->wireless_mode is needed */
-	param->low_2ghz_chan = (ext_reg_cap->low_2ghz_chan);
-	param->high_2ghz_chan = (ext_reg_cap->high_2ghz_chan);
-	param->low_5ghz_chan = (ext_reg_cap->low_5ghz_chan);
-	param->high_5ghz_chan = (ext_reg_cap->high_5ghz_chan);
+	param->low_2ghz_chan = ext_reg_cap->low_2ghz_chan;
+	param->high_2ghz_chan = ext_reg_cap->high_2ghz_chan;
+	param->low_5ghz_chan = ext_reg_cap->low_5ghz_chan;
+	param->high_5ghz_chan = ext_reg_cap->high_5ghz_chan;
 
 	return 0;
 }
@@ -1727,40 +1727,40 @@ ath11k_wmi_copy_peer_flags(struct wmi_peer_assoc_complete_cmd *cmd,
 
 	if (param->is_wme_set) {
 		if (param->qos_flag)
-			cmd->peer_flags |= (WMI_PEER_QOS);
+			cmd->peer_flags |= WMI_PEER_QOS;
 		if (param->apsd_flag)
-			cmd->peer_flags |= (WMI_PEER_APSD);
+			cmd->peer_flags |= WMI_PEER_APSD;
 		if (param->ht_flag)
-			cmd->peer_flags |= (WMI_PEER_HT);
+			cmd->peer_flags |= WMI_PEER_HT;
 		if (param->bw_40)
-			cmd->peer_flags |= (WMI_PEER_40MHZ);
+			cmd->peer_flags |= WMI_PEER_40MHZ;
 		if (param->bw_80)
-			cmd->peer_flags |= (WMI_PEER_80MHZ);
+			cmd->peer_flags |= WMI_PEER_80MHZ;
 		if (param->bw_160)
-			cmd->peer_flags |= (WMI_PEER_160MHZ);
+			cmd->peer_flags |= WMI_PEER_160MHZ;
 
 		/* Typically if STBC is enabled for VHT it should be enabled
 		 * for HT as well
 		 **/
 		if (param->stbc_flag)
-			cmd->peer_flags |= (WMI_PEER_STBC);
+			cmd->peer_flags |= WMI_PEER_STBC;
 
 		/* Typically if LDPC is enabled for VHT it should be enabled
 		 * for HT as well
 		 **/
 		if (param->ldpc_flag)
-			cmd->peer_flags |= (WMI_PEER_LDPC);
+			cmd->peer_flags |= WMI_PEER_LDPC;
 
 		if (param->static_mimops_flag)
-			cmd->peer_flags |= (WMI_PEER_STATIC_MIMOPS);
+			cmd->peer_flags |= WMI_PEER_STATIC_MIMOPS;
 		if (param->dynamic_mimops_flag)
-			cmd->peer_flags |= (WMI_PEER_DYN_MIMOPS);
+			cmd->peer_flags |= WMI_PEER_DYN_MIMOPS;
 		if (param->spatial_mux_flag)
-			cmd->peer_flags |= (WMI_PEER_SPATIAL_MUX);
+			cmd->peer_flags |= WMI_PEER_SPATIAL_MUX;
 		if (param->vht_flag)
-			cmd->peer_flags |= (WMI_PEER_VHT);
+			cmd->peer_flags |= WMI_PEER_VHT;
 		if (param->he_flag)
-			cmd->peer_flags |= (WMI_PEER_HE);
+			cmd->peer_flags |= WMI_PEER_HE;
 	}
 
 	/* Suppress authorization for all AUTH modes that need 4-way handshake
@@ -1768,18 +1768,18 @@ ath11k_wmi_copy_peer_flags(struct wmi_peer_assoc_complete_cmd *cmd,
 	 * Authorization will be done for these modes on key installation.
 	 */
 	if (param->auth_flag)
-		cmd->peer_flags |= (WMI_PEER_AUTH);
+		cmd->peer_flags |= WMI_PEER_AUTH;
 	if (param->need_ptk_4_way)
-		cmd->peer_flags |= (WMI_PEER_NEED_PTK_4_WAY);
+		cmd->peer_flags |= WMI_PEER_NEED_PTK_4_WAY;
 	else
-		cmd->peer_flags &= ~((WMI_PEER_NEED_PTK_4_WAY));
+		cmd->peer_flags &= ~WMI_PEER_NEED_PTK_4_WAY;
 	if (param->need_gtk_2_way)
-		cmd->peer_flags |= (WMI_PEER_NEED_GTK_2_WAY);
+		cmd->peer_flags |= WMI_PEER_NEED_GTK_2_WAY;
 	/* safe mode bypass the 4-way handshake */
 	if (param->safe_mode_enabled)
 		cmd->peer_flags &=
-			~(((WMI_PEER_NEED_PTK_4_WAY |
-					WMI_PEER_NEED_GTK_2_WAY)));
+			~(WMI_PEER_NEED_PTK_4_WAY |
+					WMI_PEER_NEED_GTK_2_WAY);
 	/* Disable AMSDU for station transmit, if user configures it */
 	/* Disable AMSDU for AP transmit to 11n Stations, if user configures
 	 * it
@@ -1791,7 +1791,7 @@ ath11k_wmi_copy_peer_flags(struct wmi_peer_assoc_complete_cmd *cmd,
 	 * iwpriv
 	 **/
 	if (param->peer_ht_rates.num_rates == 0)
-		cmd->peer_flags &= ~((WMI_PEER_HT));
+		cmd->peer_flags &= ~WMI_PEER_HT;
 }
 
 int ath11k_wmi_send_peer_assoc_cmd(struct ath11k *ar,
@@ -1971,69 +1971,69 @@ ath11k_wmi_copy_scan_event_cntrl_flags(struct wmi_start_scan_cmd *cmd,
 {
 	/* Scan events subscription */
 	if (param->scan_ev_started)
-		cmd->notify_scan_events |=  (WMI_SCAN_EVENT_STARTED);
+		cmd->notify_scan_events |=  WMI_SCAN_EVENT_STARTED;
 	if (param->scan_ev_completed)
-		cmd->notify_scan_events |=  (WMI_SCAN_EVENT_COMPLETED);
+		cmd->notify_scan_events |=  WMI_SCAN_EVENT_COMPLETED;
 	if (param->scan_ev_bss_chan)
-		cmd->notify_scan_events |=  (WMI_SCAN_EVENT_BSS_CHANNEL);
+		cmd->notify_scan_events |=  WMI_SCAN_EVENT_BSS_CHANNEL;
 	if (param->scan_ev_foreign_chan)
-		cmd->notify_scan_events |=  (WMI_SCAN_EVENT_FOREIGN_CHAN);
+		cmd->notify_scan_events |=  WMI_SCAN_EVENT_FOREIGN_CHAN;
 	if (param->scan_ev_dequeued)
-		cmd->notify_scan_events |=  (WMI_SCAN_EVENT_DEQUEUED);
+		cmd->notify_scan_events |=  WMI_SCAN_EVENT_DEQUEUED;
 	if (param->scan_ev_preempted)
-		cmd->notify_scan_events |=  (WMI_SCAN_EVENT_PREEMPTED);
+		cmd->notify_scan_events |=  WMI_SCAN_EVENT_PREEMPTED;
 	if (param->scan_ev_start_failed)
-		cmd->notify_scan_events |=  (WMI_SCAN_EVENT_START_FAILED);
+		cmd->notify_scan_events |=  WMI_SCAN_EVENT_START_FAILED;
 	if (param->scan_ev_restarted)
-		cmd->notify_scan_events |=  (WMI_SCAN_EVENT_RESTARTED);
+		cmd->notify_scan_events |=  WMI_SCAN_EVENT_RESTARTED;
 	if (param->scan_ev_foreign_chn_exit)
-		cmd->notify_scan_events |=  (WMI_SCAN_EVENT_FOREIGN_CHAN_EXIT);
+		cmd->notify_scan_events |=  WMI_SCAN_EVENT_FOREIGN_CHAN_EXIT;
 	if (param->scan_ev_suspended)
-		cmd->notify_scan_events |=  (WMI_SCAN_EVENT_SUSPENDED);
+		cmd->notify_scan_events |=  WMI_SCAN_EVENT_SUSPENDED;
 	if (param->scan_ev_resumed)
-		cmd->notify_scan_events |=  (WMI_SCAN_EVENT_RESUMED);
+		cmd->notify_scan_events |=  WMI_SCAN_EVENT_RESUMED;
 
 	/** Set scan control flags */
 	cmd->scan_ctrl_flags = 0;
 	if (param->scan_f_passive)
-		cmd->scan_ctrl_flags |=  (WMI_SCAN_FLAG_PASSIVE);
+		cmd->scan_ctrl_flags |=  WMI_SCAN_FLAG_PASSIVE;
 	if (param->scan_f_strict_passive_pch)
-		cmd->scan_ctrl_flags |=  (WMI_SCAN_FLAG_STRICT_PASSIVE_ON_PCHN);
+		cmd->scan_ctrl_flags |=  WMI_SCAN_FLAG_STRICT_PASSIVE_ON_PCHN;
 	if (param->scan_f_promisc_mode)
-		cmd->scan_ctrl_flags |=  (WMI_SCAN_FILTER_PROMISCUOS);
+		cmd->scan_ctrl_flags |=  WMI_SCAN_FILTER_PROMISCUOS;
 	if (param->scan_f_capture_phy_err)
-		cmd->scan_ctrl_flags |=  (WMI_SCAN_CAPTURE_PHY_ERROR);
+		cmd->scan_ctrl_flags |=  WMI_SCAN_CAPTURE_PHY_ERROR;
 	if (param->scan_f_half_rate)
-		cmd->scan_ctrl_flags |=  (WMI_SCAN_FLAG_HALF_RATE_SUPPORT);
+		cmd->scan_ctrl_flags |=  WMI_SCAN_FLAG_HALF_RATE_SUPPORT;
 	if (param->scan_f_quarter_rate)
-		cmd->scan_ctrl_flags |=  (WMI_SCAN_FLAG_QUARTER_RATE_SUPPORT);
+		cmd->scan_ctrl_flags |=  WMI_SCAN_FLAG_QUARTER_RATE_SUPPORT;
 	if (param->scan_f_cck_rates)
-		cmd->scan_ctrl_flags |=  (WMI_SCAN_ADD_CCK_RATES);
+		cmd->scan_ctrl_flags |=  WMI_SCAN_ADD_CCK_RATES;
 	if (param->scan_f_ofdm_rates)
-		cmd->scan_ctrl_flags |=  (WMI_SCAN_ADD_OFDM_RATES);
+		cmd->scan_ctrl_flags |=  WMI_SCAN_ADD_OFDM_RATES;
 	if (param->scan_f_chan_stat_evnt)
-		cmd->scan_ctrl_flags |=  (WMI_SCAN_CHAN_STAT_EVENT);
+		cmd->scan_ctrl_flags |=  WMI_SCAN_CHAN_STAT_EVENT;
 	if (param->scan_f_filter_prb_req)
-		cmd->scan_ctrl_flags |=  (WMI_SCAN_FILTER_PROBE_REQ);
+		cmd->scan_ctrl_flags |=  WMI_SCAN_FILTER_PROBE_REQ;
 	if (param->scan_f_bcast_probe)
-		cmd->scan_ctrl_flags |=  (WMI_SCAN_ADD_BCAST_PROBE_REQ);
+		cmd->scan_ctrl_flags |=  WMI_SCAN_ADD_BCAST_PROBE_REQ;
 	if (param->scan_f_offchan_mgmt_tx)
-		cmd->scan_ctrl_flags |=  (WMI_SCAN_OFFCHAN_MGMT_TX);
+		cmd->scan_ctrl_flags |=  WMI_SCAN_OFFCHAN_MGMT_TX;
 	if (param->scan_f_offchan_data_tx)
-		cmd->scan_ctrl_flags |=  (WMI_SCAN_OFFCHAN_DATA_TX);
+		cmd->scan_ctrl_flags |=  WMI_SCAN_OFFCHAN_DATA_TX;
 	if (param->scan_f_force_active_dfs_chn)
-		cmd->scan_ctrl_flags |=  (WMI_SCAN_FLAG_FORCE_ACTIVE_ON_DFS);
+		cmd->scan_ctrl_flags |=  WMI_SCAN_FLAG_FORCE_ACTIVE_ON_DFS;
 	if (param->scan_f_add_tpc_ie_in_probe)
-		cmd->scan_ctrl_flags |=  (WMI_SCAN_ADD_TPC_IE_IN_PROBE_REQ);
+		cmd->scan_ctrl_flags |=  WMI_SCAN_ADD_TPC_IE_IN_PROBE_REQ;
 	if (param->scan_f_add_ds_ie_in_probe)
-		cmd->scan_ctrl_flags |=  (WMI_SCAN_ADD_DS_IE_IN_PROBE_REQ);
+		cmd->scan_ctrl_flags |=  WMI_SCAN_ADD_DS_IE_IN_PROBE_REQ;
 	if (param->scan_f_add_spoofed_mac_in_probe)
-		cmd->scan_ctrl_flags |=  (WMI_SCAN_ADD_SPOOF_MAC_IN_PROBE_REQ);
+		cmd->scan_ctrl_flags |=  WMI_SCAN_ADD_SPOOF_MAC_IN_PROBE_REQ;
 	if (param->scan_f_add_rand_seq_in_probe)
-		cmd->scan_ctrl_flags |=  (WMI_SCAN_RANDOM_SEQ_NO_IN_PROBE_REQ);
+		cmd->scan_ctrl_flags |=  WMI_SCAN_RANDOM_SEQ_NO_IN_PROBE_REQ;
 	if (param->scan_f_en_ie_whitelist_in_probe)
 		cmd->scan_ctrl_flags |=
-			 (WMI_SCAN_ENABLE_IE_WHTELIST_IN_PROBE_REQ);
+			 WMI_SCAN_ENABLE_IE_WHTELIST_IN_PROBE_REQ;
 
 	/* for adaptive scan mode using 3 bits (21 - 23 bits) */
 	WMI_SCAN_SET_DWELL_MODE(cmd->scan_ctrl_flags,
@@ -2111,7 +2111,7 @@ int ath11k_wmi_send_scan_start_cmd(struct ath11k *ar,
 
 	ptr += sizeof(*cmd);
 
-	len = ((params->num_chan * sizeof(u32)));
+	len = params->num_chan * sizeof(u32);
 
 	tlv = ptr;
 	tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_UINT32) |
@@ -2124,7 +2124,7 @@ int ath11k_wmi_send_scan_start_cmd(struct ath11k *ar,
 
 	ptr += len;
 
-	len = ((params->num_ssids * sizeof(*ssid)));
+	len = params->num_ssids * sizeof(*ssid);
 	tlv = ptr;
 	tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_FIXED_STRUCT) |
 		      FIELD_PREP(WMI_TLV_LEN, len);
@@ -2206,13 +2206,13 @@ int ath11k_wmi_send_scan_stop_cmd(struct ath11k *ar,
 	/* stop the scan with the corresponding scan_id */
 	if (param->req_type == WLAN_SCAN_CANCEL_PDEV_ALL) {
 		/* Cancelling all scans */
-		cmd->req_type =  (WMI_SCAN_STOP_ALL);
+		cmd->req_type =  WMI_SCAN_STOP_ALL;
 	} else if (param->req_type == WLAN_SCAN_CANCEL_VDEV_ALL) {
 		/* Cancelling VAP scans */
-		cmd->req_type =  (WMI_SCN_STOP_VAP_ALL);
+		cmd->req_type =  WMI_SCN_STOP_VAP_ALL;
 	} else if (param->req_type == WLAN_SCAN_CANCEL_SINGLE) {
 		/* Cancelling specific scan */
-		cmd->req_type =  (WMI_SCAN_STOP_ONE);
+		cmd->req_type =  WMI_SCAN_STOP_ONE;
 	} else {
 		ath11k_warn(ar->ab, "invalid scan cancel param %d",
 			    param->req_type);
@@ -2347,9 +2347,9 @@ int ath11k_send_set_sta_ps_mode_cmd(struct ath11k_pdev_wmi *wmi_handle,
 			  FIELD_PREP(WMI_TLV_LEN, len - TLV_HDR_SIZE);
 	cmd->vdev_id =  (vdev_id);
 	if (val)
-		cmd->sta_ps_mode =  (WMI_STA_PS_MODE_ENABLED);
+		cmd->sta_ps_mode =  WMI_STA_PS_MODE_ENABLED;
 	else
-		cmd->sta_ps_mode =  (WMI_STA_PS_MODE_DISABLED);
+		cmd->sta_ps_mode =  WMI_STA_PS_MODE_DISABLED;
 
 	ret = ath11k_wmi_cmd_send(wmi_handle, skb,
 				  WMI_STA_POWERSAVE_MODE_CMDID);
@@ -2388,13 +2388,13 @@ int ath11k_send_set_mimops_cmd(struct ath11k_pdev_wmi *wmi_handle,
 	 */
 	switch (value) {
 	case 0:
-		cmd->forced_mode =  (WMI_SMPS_FORCED_MODE_NONE);
+		cmd->forced_mode =  WMI_SMPS_FORCED_MODE_NONE;
 		break;
 	case 1:
-		cmd->forced_mode =  (WMI_SMPS_FORCED_MODE_DISABLED);
+		cmd->forced_mode =  WMI_SMPS_FORCED_MODE_DISABLED;
 		break;
 	case 2:
-		cmd->forced_mode =  (WMI_SMPS_FORCED_MODE_STATIC);
+		cmd->forced_mode =  WMI_SMPS_FORCED_MODE_STATIC;
 		break;
 	case 3:
 		cmd->forced_mode =  (WMI_SMPS_FORCED_MODE_DYNAMIC);
@@ -2893,8 +2893,8 @@ int ath11k_wmi_cmd_init(struct ath11k_base *sc)
 	config.num_peer_keys = TARGET_NUM_PEER_KEYS;
 	config.num_tids = TARGET_NUM_TIDS;
 	config.ast_skid_limit = TARGET_AST_SKID_LIMIT;
-	config.tx_chain_mask = ((1 << sc->target_caps.num_rf_chains) - 1);
-	config.rx_chain_mask = ((1 << sc->target_caps.num_rf_chains) - 1);
+	config.tx_chain_mask = (1 << sc->target_caps.num_rf_chains) - 1;
+	config.rx_chain_mask = (1 << sc->target_caps.num_rf_chains) - 1;
 	config.rx_timeout_pri[0] = TARGET_RX_TIMEOUT_LO_PRI;
 	config.rx_timeout_pri[1] = TARGET_RX_TIMEOUT_LO_PRI;
 	config.rx_timeout_pri[2] = TARGET_RX_TIMEOUT_LO_PRI;
@@ -3217,15 +3217,15 @@ int ath11k_pull_vdev_start_resp_tlv(struct ath11k_base *ab, u8 *evt_buf, u32 len
 
 	memset(vdev_rsp, 0, sizeof(*vdev_rsp));
 
-	vdev_rsp->vdev_id =  (ev->vdev_id);
-	vdev_rsp->requestor_id =  (ev->requestor_id);
-	vdev_rsp->resp_type =  (ev->resp_type);
-	vdev_rsp->status =  (ev->status);
-	vdev_rsp->chain_mask =  (ev->chain_mask);
-	vdev_rsp->smps_mode =  (ev->smps_mode);
-	vdev_rsp->mac_id =  (ev->mac_id);
-	vdev_rsp->cfgd_tx_streams =  (ev->cfgd_tx_streams);
-	vdev_rsp->cfgd_rx_streams =  (ev->cfgd_rx_streams);
+	vdev_rsp->vdev_id = ev->vdev_id;
+	vdev_rsp->requestor_id = ev->requestor_id;
+	vdev_rsp->resp_type = ev->resp_type;
+	vdev_rsp->status = ev->status;
+	vdev_rsp->chain_mask = ev->chain_mask;
+	vdev_rsp->smps_mode = ev->smps_mode;
+	vdev_rsp->mac_id = ev->mac_id;
+	vdev_rsp->cfgd_tx_streams = ev->cfgd_tx_streams;
+	vdev_rsp->cfgd_rx_streams = ev->cfgd_rx_streams;
 
 	kfree(tb);
 	return 0;
@@ -3295,8 +3295,8 @@ int ath11k_pull_reg_chan_list_update_ev(struct ath11k_base *ab,
 		return -EPROTO;
 	}
 
-	reg_info->num_2g_reg_rules =  (chan_list_event_hdr->num_2g_reg_rules);
-	reg_info->num_5g_reg_rules =  (chan_list_event_hdr->num_5g_reg_rules);
+	reg_info->num_2g_reg_rules = chan_list_event_hdr->num_2g_reg_rules;
+	reg_info->num_5g_reg_rules = chan_list_event_hdr->num_5g_reg_rules;
 
 	if (!(reg_info->num_2g_reg_rules + reg_info->num_5g_reg_rules)) {
 		ath11k_warn(ab, "No regulatory rules available in the event info\n");
@@ -3306,12 +3306,12 @@ int ath11k_pull_reg_chan_list_update_ev(struct ath11k_base *ab,
 
 	memcpy(reg_info->alpha2, &chan_list_event_hdr->alpha2,
 	       REG_ALPHA2_LEN);
-	reg_info->dfs_region =  (chan_list_event_hdr->dfs_region);
-	reg_info->phybitmap =  (chan_list_event_hdr->phybitmap);
-	reg_info->num_phy =  (chan_list_event_hdr->num_phy);
-	reg_info->phy_id =  (chan_list_event_hdr->phy_id);
-	reg_info->ctry_code =  (chan_list_event_hdr->country_id);
-	reg_info->reg_dmn_pair =  (chan_list_event_hdr->domain_code);
+	reg_info->dfs_region = chan_list_event_hdr->dfs_region;
+	reg_info->phybitmap = chan_list_event_hdr->phybitmap;
+	reg_info->num_phy = chan_list_event_hdr->num_phy;
+	reg_info->phy_id = chan_list_event_hdr->phy_id;
+	reg_info->ctry_code = chan_list_event_hdr->country_id;
+	reg_info->reg_dmn_pair = chan_list_event_hdr->domain_code;
 	if (chan_list_event_hdr->status_code == WMI_REG_SET_CC_STATUS_PASS)
 		reg_info->status_code = REG_SET_CC_STATUS_PASS;
 	else if (chan_list_event_hdr->status_code ==
@@ -3330,10 +3330,10 @@ int ath11k_pull_reg_chan_list_update_ev(struct ath11k_base *ab,
 		 WMI_REG_SET_CC_STATUS_FAIL)
 		reg_info->status_code = REG_SET_CC_STATUS_FAIL;
 
-	reg_info->min_bw_2g =  (chan_list_event_hdr->min_bw_2g);
-	reg_info->max_bw_2g =  (chan_list_event_hdr->max_bw_2g);
-	reg_info->min_bw_5g =  (chan_list_event_hdr->min_bw_5g);
-	reg_info->max_bw_5g =  (chan_list_event_hdr->max_bw_5g);
+	reg_info->min_bw_2g = chan_list_event_hdr->min_bw_2g;
+	reg_info->max_bw_2g = chan_list_event_hdr->max_bw_2g;
+	reg_info->min_bw_5g = chan_list_event_hdr->min_bw_5g;
+	reg_info->max_bw_5g = chan_list_event_hdr->max_bw_5g;
 
 	num_2g_reg_rules = reg_info->num_2g_reg_rules;
 	num_5g_reg_rules = reg_info->num_5g_reg_rules;
