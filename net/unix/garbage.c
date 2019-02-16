@@ -251,8 +251,7 @@ static void inc_inflight_move_tail(struct unix_sock *u)
 	 * passed over
 	 */
 	if (u->inflight == 1)
-		if (test_bit(UNIX_GC_MAYBE_CYCLE, &u->gc_flags))
-			list_move_tail(&u->link, &gc_candidates);
+		list_move_tail(&u->link, &gc_candidates);
 }
 
 static bool gc_in_progress;
@@ -311,7 +310,6 @@ void unix_gc(void)
 		if (total_refs == inflight_refs) {
 			list_move_tail(&u->link, &gc_candidates);
 			__set_bit(UNIX_GC_CANDIDATE, &u->gc_flags);
-			__set_bit(UNIX_GC_MAYBE_CYCLE, &u->gc_flags);
 		}
 	}
 
@@ -337,7 +335,6 @@ void unix_gc(void)
 
 		if (u->inflight > 0) {
 			list_move_tail(&u->link, &not_cycle_list);
-			__clear_bit(UNIX_GC_MAYBE_CYCLE, &u->gc_flags);
 			scan_children(&u->sk, inc_inflight_move_tail, NULL);
 		}
 	}
