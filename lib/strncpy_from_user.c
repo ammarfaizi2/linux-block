@@ -64,12 +64,29 @@ static inline long do_strncpy_from_user(char *dst, const char __user *src, long 
 
 		unsafe_get_user(c, (unsigned long __user *)(src+res), efault);
 
-		*(unsigned long *)(dst+res) = c;
 		if (has_zero(c, &data, &constants)) {
+			long zero_pos;
+
 			data = prep_zero_mask(c, data, &constants);
 			data = create_zero_mask(data);
-			return res + find_zero(data);
+			zero_pos = find_zero(data);
+
+			/*
+			 * Zero any bytes that we read past the end of the
+			 * input so they don't end up in kernel memory.  This
+			 * is for hardening -- omitting it is not a bug.
+			 */
+#ifdef __LITTLE_ENDIAN
+			c &= (~0UL) >> (8 * (sizeof(long) - zero_pos));
+#else
+			c &= (~0UL) << (8 * (sizeof(long) - zero_pos));
+#endif
+			*(unsigned long *)(dst+res) = c;
+
+			return res + zero_pos;
 		}
+
+		*(unsigned long *)(dst+res) = c;
 		res += sizeof(unsigned long);
 		max -= sizeof(unsigned long);
 	}
