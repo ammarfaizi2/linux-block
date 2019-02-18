@@ -10,12 +10,7 @@
 #include <asm/byteorder.h>
 #include <asm/word-at-a-time.h>
 
-#ifdef CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
-#define IS_UNALIGNED(src, dst)	0
-#else
-#define IS_UNALIGNED(src, dst)	\
-	(((long) dst | (long) src) & (sizeof(long) - 1))
-#endif
+#define IS_UNALIGNED(addr) (((long)(addr)) & (sizeof(long) - 1))
 
 /*
  * Do a strncpy, return length of string without final '\0'.
@@ -32,17 +27,42 @@ static inline long do_strncpy_from_user(char *dst, const char __user *src, long 
 	 * Truncate 'max' to the user-specified limit, so that
 	 * we only have one limit we need to check in the loop
 	 */
-	if (max > count)
+	if (likely(max > count))
 		max = count;
 
-	if (IS_UNALIGNED(src, dst))
+	/*
+	 * First handle any unaligned prefix of src.
+	 */
+	while (IS_UNALIGNED(src+res) && max) {
+		char c;
+
+		unsafe_get_user(c, src+res, efault);
+		dst[res] = c;
+		if (!c)
+			return res;
+		res++;
+		max--;
+	}
+
+	/*
+	 * Now we know that src + res is aligned.  If dst is unaligned and
+	 * we don't have efficient unaligned access, then keep going one
+	 * byte at a time.  (This could be optimized, but it would make
+	 * the code more complicated.
+	 */
+#ifndef CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
+	if (IS_UNALIGNED(dst + res))
 		goto byte_at_a_time;
+#endif
 
 	while (max >= sizeof(unsigned long)) {
+		/*
+		 * src + res is aligned, so the reads in this loop will
+		 * not cross a page boundary.
+		 */
 		unsigned long c, data;
 
-		/* Fall back to byte-at-a-time if we get a page fault */
-		unsafe_get_user(c, (unsigned long __user *)(src+res), byte_at_a_time);
+		unsafe_get_user(c, (unsigned long __user *)(src+res), efault);
 
 		*(unsigned long *)(dst+res) = c;
 		if (has_zero(c, &data, &constants)) {
@@ -54,7 +74,10 @@ static inline long do_strncpy_from_user(char *dst, const char __user *src, long 
 		max -= sizeof(unsigned long);
 	}
 
-byte_at_a_time:
+byte_at_a_time: __maybe_unused;
+	/*
+	 * Finish the job one byte at a time.
+	 */
 	while (max) {
 		char c;
 
