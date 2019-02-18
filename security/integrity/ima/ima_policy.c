@@ -559,6 +559,7 @@ static int __init ima_init_arch_policy(void)
 void __init ima_init_policy(void)
 {
 	int build_appraise_entries, arch_entries;
+	bool kernel_locked_down = __kernel_is_locked_down(NULL, false);
 
 	/* if !ima_policy, we load NO default rules */
 	if (ima_policy)
@@ -596,7 +597,7 @@ void __init ima_init_policy(void)
 	 * Insert the builtin "secure_boot" policy rules requiring file
 	 * signatures, prior to other appraise rules.
 	 */
-	if (ima_use_secure_boot)
+	if (ima_use_secure_boot || kernel_locked_down)
 		add_rules(secure_boot_rules, ARRAY_SIZE(secure_boot_rules),
 			  IMA_DEFAULT_POLICY);
 
