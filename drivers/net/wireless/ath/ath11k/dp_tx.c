@@ -523,13 +523,15 @@ int ath11k_dp_send_reo_cmd(struct ath11k_base *ab, struct dp_rx_tid *rx_tid,
 
 	cmd_ring = &ab->hal.srng_list[dp->reo_cmd_ring.ring_id];
 	cmd_num = ath11k_hal_reo_cmd_send(ab, cmd_ring, type, cmd);
-	if (cmd_num < 0)
-		return cmd_num;
+
+	/* reo cmd ring descriptors has cmd_num starting from 1 */
+	if (cmd_num <= 0)
+		return -EINVAL;
 
 	if (!cb)
 		return 0;
 
-	/* Can this be optimized so that we keep ther pending command list only
+	/* Can this be optimized so that we keep the pending command list only
 	 * for tid delete command to free up the resoruce on the command status
 	 * indication?
 	 */

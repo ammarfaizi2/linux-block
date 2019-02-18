@@ -272,8 +272,14 @@ static void ath11k_dp_rx_tid_del_func(struct ath11k_dp *dp, void *ctx,
 	struct dp_rx_tid *rx_tid = ctx;
 	struct dp_reo_cache_flush_elem *elem, *tmp;
 
-	if (status == HAL_REO_CMD_DRAIN)
+	if (status == HAL_REO_CMD_DRAIN) {
 		goto free_desc;
+	} else if (status != HAL_REO_CMD_SUCCESS) {
+		/* Shouldn't happen! Cleanup in case of other failure? */
+		ath11k_warn(ab, "failed to delete rx tid %d hw descriptor %d\n",
+			    rx_tid->tid, status);
+		return;
+	}
 
 	elem = kzalloc(sizeof(elem), GFP_ATOMIC);
 	if (!elem) {
@@ -292,7 +298,7 @@ static void ath11k_dp_rx_tid_del_func(struct ath11k_dp *dp, void *ctx,
 	spin_lock_bh(&dp->reo_cmd_lock);
 	list_for_each_entry_safe(elem, tmp, &dp->reo_cmd_cache_flush_list,
 				 list) {
-		if (time_after(elem->ts, jiffies +
+		if (time_after(jiffies, elem->ts +
 			       msecs_to_jiffies(DP_REO_DESC_FREE_TIMEOUT_MS))) {
 			list_del(&elem->list);
 			spin_unlock_bh(&dp->reo_cmd_lock);
@@ -321,6 +327,7 @@ static void ath11k_peer_rx_tid_delete(struct ath11k *ar,
 	if (!rx_tid->active)
 		return;
 
+	cmd.flag = HAL_REO_CMD_FLG_NEED_STATUS;
 	cmd.addr_lo = lower_32_bits(rx_tid->paddr);
 	cmd.addr_hi = upper_32_bits(rx_tid->paddr);
 	cmd.upd0 |= HAL_REO_CMD_UPD0_VLD;
