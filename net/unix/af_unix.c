@@ -616,9 +616,6 @@ static int unix_listen(struct socket *sock, int backlog)
 	struct unix_sock *u = unix_sk(sk);
 	struct pid *old_pid = NULL;
 
-	err = -EOPNOTSUPP;
-	if (sock->type != SOCK_STREAM && sock->type != SOCK_SEQPACKET)
-		goto out;	/* Only stream/seqpacket sockets accept */
 	err = -EINVAL;
 	if (!u->addr)
 		goto out;	/* No listens on an unbound socket */
@@ -1419,10 +1416,6 @@ static int unix_accept(struct socket *sock, struct socket *newsock, int flags,
 	struct sock *tsk;
 	struct sk_buff *skb;
 	int err;
-
-	err = -EOPNOTSUPP;
-	if (sock->type != SOCK_STREAM && sock->type != SOCK_SEQPACKET)
-		goto out;
 
 	err = -EINVAL;
 	if (sk->sk_state != TCP_LISTEN)
