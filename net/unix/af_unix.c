@@ -2694,9 +2694,6 @@ static __poll_t unix_dgram_poll(struct file *file, struct socket *sock,
 	if (sk->sk_type == SOCK_SEQPACKET) {
 		if (sk->sk_state == TCP_CLOSE)
 			mask |= EPOLLHUP;
-		/* connection hasn't started yet? */
-		if (sk->sk_state == TCP_SYN_SENT)
-			return mask;
 	}
 
 	/* No write status requested, avoid expensive OUT tests. */
