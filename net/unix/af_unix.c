@@ -1104,7 +1104,7 @@ static int unix_dgram_connect(struct socket *sock, struct sockaddr *addr,
 		goto out;
 
 	if (addr->sa_family != AF_UNSPEC) {
-		err = unix_mkname(sunaddr, alen, &hash, sock->type);
+		err = unix_mkname(sunaddr, alen, &hash, sk->sk_type);
 		if (err < 0)
 			goto out;
 		alen = err;
@@ -1114,7 +1114,7 @@ static int unix_dgram_connect(struct socket *sock, struct sockaddr *addr,
 			goto out;
 
 restart:
-		other = unix_find_other(net, sunaddr, alen, sock->type, hash, &err);
+		other = unix_find_other(net, sunaddr, alen, sk->sk_type, hash, &err);
 		if (!other)
 			goto out;
 
