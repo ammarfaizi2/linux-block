@@ -1,19 +1,8 @@
+/* SPDX-License-Identifier: ISC */
 /*
  * Copyright (c) 2005-2011 Atheros Communications Inc.
  * Copyright (c) 2011-2017 Qualcomm Atheros, Inc.
  * Copyright (c) 2018, The Linux Foundation. All rights reserved.
- *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #ifndef _CORE_H_
@@ -448,14 +437,14 @@ enum ath10k_amsdu_subfrm_num {
 };
 
 struct ath10k_sta_tid_stats {
-	unsigned long int rx_pkt_from_fw;
-	unsigned long int rx_pkt_unchained;
-	unsigned long int rx_pkt_drop_chained;
-	unsigned long int rx_pkt_drop_filter;
-	unsigned long int rx_pkt_err[ATH10K_PKT_RX_ERR_MAX];
-	unsigned long int rx_pkt_queued_for_mac;
-	unsigned long int rx_pkt_ampdu[ATH10K_AMPDU_SUBFRM_NUM_MAX];
-	unsigned long int rx_pkt_amsdu[ATH10K_AMSDU_SUBFRM_NUM_MAX];
+	unsigned long rx_pkt_from_fw;
+	unsigned long rx_pkt_unchained;
+	unsigned long rx_pkt_drop_chained;
+	unsigned long rx_pkt_drop_filter;
+	unsigned long rx_pkt_err[ATH10K_PKT_RX_ERR_MAX];
+	unsigned long rx_pkt_queued_for_mac;
+	unsigned long rx_pkt_ampdu[ATH10K_AMPDU_SUBFRM_NUM_MAX];
+	unsigned long rx_pkt_amsdu[ATH10K_AMSDU_SUBFRM_NUM_MAX];
 };
 
 enum ath10k_counter_type {

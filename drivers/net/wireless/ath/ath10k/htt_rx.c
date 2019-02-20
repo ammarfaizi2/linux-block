@@ -1,19 +1,8 @@
+// SPDX-License-Identifier: ISC
 /*
  * Copyright (c) 2005-2011 Atheros Communications Inc.
  * Copyright (c) 2011-2017 Qualcomm Atheros, Inc.
  * Copyright (c) 2018, The Linux Foundation. All rights reserved.
- *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include "core.h"
@@ -1905,7 +1894,7 @@ static void ath10k_htt_rx_h_enqueue(struct ath10k *ar,
 }
 
 static int ath10k_unchain_msdu(struct sk_buff_head *amsdu,
-			       unsigned long int *unchain_cnt)
+			       unsigned long *unchain_cnt)
 {
 	struct sk_buff *skb, *first;
 	int space;
@@ -1954,8 +1943,8 @@ static int ath10k_unchain_msdu(struct sk_buff_head *amsdu,
 
 static void ath10k_htt_rx_h_unchain(struct ath10k *ar,
 				    struct sk_buff_head *amsdu,
-				    unsigned long int *drop_cnt,
-				    unsigned long int *unchain_cnt)
+				    unsigned long *drop_cnt,
+				    unsigned long *unchain_cnt)
 {
 	struct sk_buff *first;
 	struct htt_rx_desc *rxd;
@@ -2005,7 +1994,7 @@ static bool ath10k_htt_rx_amsdu_allowed(struct ath10k *ar,
 static void ath10k_htt_rx_h_filter(struct ath10k *ar,
 				   struct sk_buff_head *amsdu,
 				   struct ieee80211_rx_status *rx_status,
-				   unsigned long int *drop_cnt)
+				   unsigned long *drop_cnt)
 {
 	if (skb_queue_empty(amsdu))
 		return;
@@ -2025,10 +2014,10 @@ static int ath10k_htt_rx_handle_amsdu(struct ath10k_htt *htt)
 	struct ieee80211_rx_status *rx_status = &htt->rx_status;
 	struct sk_buff_head amsdu;
 	int ret;
-	unsigned long int drop_cnt = 0;
-	unsigned long int unchain_cnt = 0;
-	unsigned long int drop_cnt_filter = 0;
-	unsigned long int msdus_to_queue, num_msdus;
+	unsigned long drop_cnt = 0;
+	unsigned long unchain_cnt = 0;
+	unsigned long drop_cnt_filter = 0;
+	unsigned long msdus_to_queue, num_msdus;
 	enum ath10k_pkt_rx_err err = ATH10K_PKT_RX_ERR_MAX;
 	u8 first_hdr[RX_HTT_HDR_STATUS_LEN];
 
