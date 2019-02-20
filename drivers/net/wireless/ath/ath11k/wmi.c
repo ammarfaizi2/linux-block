@@ -211,7 +211,7 @@ int ath11k_wmi_cmd_send_nowait(struct ath11k_pdev_wmi *wmi, struct sk_buff *skb,
 	cmd |= FIELD_PREP(WMI_CMD_HDR_CMD_ID, cmd_id);
 
 	cmd_hdr = (struct wmi_cmd_hdr *)skb->data;
-	cmd_hdr->cmd_id = (cmd);
+	cmd_hdr->cmd_id = cmd;
 
 	memset(skb_cb, 0, sizeof(*skb_cb));
 	ret = ath11k_htc_send(&sc->htc, wmi->eid, skb);
@@ -255,12 +255,11 @@ static int ath11k_pull_service_ready_ext(
 
 	/* Move this to host based bitmap */
 	param->default_conc_scan_config_bits =
-		 (ev->default_conc_scan_config_bits);
-	param->default_fw_config_bits =
-				(ev->default_fw_config_bits);
-	param->he_cap_info = (ev->he_cap_info);
-	param->mpdu_density = (ev->mpdu_density);
-	param->max_bssid_rx_filters = (ev->max_bssid_rx_filters);
+		 ev->default_conc_scan_config_bits;
+	param->default_fw_config_bits =	ev->default_fw_config_bits;
+	param->he_cap_info = ev->he_cap_info;
+	param->mpdu_density = ev->mpdu_density;
+	param->max_bssid_rx_filters = ev->max_bssid_rx_filters;
 	memcpy(&param->ppet, &ev->ppet, sizeof(param->ppet));
 
 	return 0;
@@ -452,7 +451,7 @@ static int ath11k_wmi_tlv_svc_rdy_parse(struct ath11k_base *ab, u16 tag, u16 len
 				    WMI_MAX_SERVICE);
 
 			memcpy(ab->service_bitmap, ptr,
-			       (WMI_SERVICE_BM_SIZE * sizeof(u32)));
+			       expect_len);
 
 			svc_ready->wmi_svc_bitmap_done = true;
 		}
@@ -985,7 +984,7 @@ int  ath11k_send_gpio_config_cmd(struct ath11k_pdev_wmi *wmi_handle,
 
 	cmd = (void *)skb->data;
 	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_GPIO_CONFIG_CMD) |
-		FIELD_PREP(WMI_TLV_LEN, len - TLV_HDR_SIZE);
+			  FIELD_PREP(WMI_TLV_LEN, len - TLV_HDR_SIZE);
 
 	cmd->gpio_num = param->gpio_num;
 	cmd->input = param->input;
@@ -1468,8 +1467,8 @@ int ath11k_send_crash_inject_cmd(struct ath11k_pdev_wmi *wmi_handle,
 	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_FORCE_FW_HANG_CMD) |
 			  FIELD_PREP(WMI_TLV_LEN, len - TLV_HDR_SIZE);
 
-	cmd->type = (param->type);
-	cmd->delay_time_ms = (param->delay_time_ms);
+	cmd->type = param->type;
+	cmd->delay_time_ms = param->delay_time_ms;
 
 	ret = ath11k_wmi_cmd_send(wmi_handle, skb,
 				  WMI_FORCE_FW_HANG_CMDID);
@@ -1803,9 +1802,8 @@ ath11k_wmi_copy_peer_flags(struct wmi_peer_assoc_complete_cmd *cmd,
 		cmd->peer_flags |= WMI_PEER_NEED_GTK_2_WAY;
 	/* safe mode bypass the 4-way handshake */
 	if (param->safe_mode_enabled)
-		cmd->peer_flags &=
-			~(WMI_PEER_NEED_PTK_4_WAY |
-					WMI_PEER_NEED_GTK_2_WAY);
+		cmd->peer_flags &= ~(WMI_PEER_NEED_PTK_4_WAY |
+				     WMI_PEER_NEED_GTK_2_WAY);
 	/* Disable AMSDU for station transmit, if user configures it */
 	/* Disable AMSDU for AP transmit to 11n Stations, if user configures
 	 * it
@@ -1982,11 +1980,11 @@ void ath11k_wmi_start_scan_init(struct ath11k *ar,
 	arg->idle_time = 0;
 	arg->max_scan_time = 20000;
 	arg->probe_delay = 5;
-	arg->notify_scan_events = WMI_SCAN_EVENT_STARTED
-		| WMI_SCAN_EVENT_COMPLETED
-		| WMI_SCAN_EVENT_BSS_CHANNEL
-		| WMI_SCAN_EVENT_FOREIGN_CHAN
-		| WMI_SCAN_EVENT_DEQUEUED;
+	arg->notify_scan_events = WMI_SCAN_EVENT_STARTED |
+				  WMI_SCAN_EVENT_COMPLETED |
+				  WMI_SCAN_EVENT_BSS_CHANNEL |
+				  WMI_SCAN_EVENT_FOREIGN_CHAN |
+				  WMI_SCAN_EVENT_DEQUEUED;
 	arg->scan_flags |= WMI_SCAN_CHAN_STAT_EVENT;
 	arg->num_bssid = 1;
 }
@@ -2146,7 +2144,7 @@ int ath11k_wmi_send_scan_start_cmd(struct ath11k *ar,
 	tmp_ptr = (u32 *)ptr;
 
 	for (i = 0; i < params->num_chan; ++i)
-		tmp_ptr[i] =  (params->chan_list[i]);
+		tmp_ptr[i] = params->chan_list[i];
 
 	ptr += len;
 
@@ -2160,7 +2158,7 @@ int ath11k_wmi_send_scan_start_cmd(struct ath11k *ar,
 	if (params->num_ssids) {
 		ssid = (struct wmi_ssid *)ptr;
 		for (i = 0; i < params->num_ssids; ++i) {
-			ssid->ssid_len =  (params->ssid[i].length);
+			ssid->ssid_len = params->ssid[i].length;
 			memcpy(ssid->ssid, params->ssid[i].ssid,
 			       params->ssid[i].length);
 			ssid++;
@@ -2168,7 +2166,7 @@ int ath11k_wmi_send_scan_start_cmd(struct ath11k *ar,
 	}
 
 	ptr += (params->num_ssids * sizeof(*ssid));
-	len = (params->num_bssid * sizeof(*bssid));
+	len = params->num_bssid * sizeof(*bssid);
 	tlv = ptr;
 	tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_FIXED_STRUCT) |
 		      FIELD_PREP(WMI_TLV_LEN, len);
@@ -2186,7 +2184,7 @@ int ath11k_wmi_send_scan_start_cmd(struct ath11k *ar,
 
 	ptr += params->num_bssid * sizeof(*bssid);
 
-	len = (extraie_len_with_pad);
+	len = extraie_len_with_pad;
 	tlv = ptr;
 	tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_BYTE) |
 		      FIELD_PREP(WMI_TLV_LEN, len);
@@ -2288,7 +2286,7 @@ int ath11k_wmi_send_scan_chan_list_cmd(struct ath11k *ar,
 
 	ptr = skb->data + sizeof(*cmd);
 
-	len = (sizeof(*chan_info) * chan_list->nallchans);
+	len = sizeof(*chan_info) * chan_list->nallchans;
 	tlv = ptr;
 	tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_STRUCT) |
 		      FIELD_PREP(WMI_TLV_LEN, len - TLV_HDR_SIZE);
@@ -2299,7 +2297,7 @@ int ath11k_wmi_send_scan_chan_list_cmd(struct ath11k *ar,
 	for (i = 0; i < chan_list->nallchans; ++i) {
 		chan_info = (struct wmi_channel *)ptr;
 		memset(chan_info, 0, sizeof(*chan_info));
-		len = (sizeof(*chan_info));
+		len = sizeof(*chan_info);
 		chan_info->tlv_header = FIELD_PREP(WMI_TLV_TAG,
 						   WMI_TAG_CHANNEL) |
 					FIELD_PREP(WMI_TLV_LEN,
@@ -2371,7 +2369,7 @@ int ath11k_send_set_sta_ps_mode_cmd(struct ath11k_pdev_wmi *wmi_handle,
 	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG,
 				     WMI_TAG_STA_POWERSAVE_MODE_CMD) |
 			  FIELD_PREP(WMI_TLV_LEN, len - TLV_HDR_SIZE);
-	cmd->vdev_id =  (vdev_id);
+	cmd->vdev_id =  vdev_id;
 	if (val)
 		cmd->sta_ps_mode =  WMI_STA_PS_MODE_ENABLED;
 	else
@@ -2782,7 +2780,7 @@ static int ath11k_init_cmd_send(struct ath11k_pdev_wmi *wmi,
 
 	if (param->hw_mode_id != WMI_HOST_HW_MODE_MAX)
 		hw_mode_len = sizeof(*hw_mode) + TLV_HDR_SIZE +
-			(param->num_band_to_mac * sizeof(*band_to_mac));
+			      (param->num_band_to_mac * sizeof(*band_to_mac));
 
 	len = sizeof(*cmd) + TLV_HDR_SIZE + sizeof(*cfg) + hw_mode_len +
 		(sizeof(*host_mem_chunks) * WMI_MAX_MEM_REQS);
@@ -2836,9 +2834,9 @@ static int ath11k_init_cmd_send(struct ath11k_pdev_wmi *wmi,
 	if (param->hw_mode_id != WMI_HOST_HW_MODE_MAX) {
 		hw_mode = (struct wmi_pdev_set_hw_mode_cmd_param *)ptr;
 		hw_mode->tlv_header = FIELD_PREP(WMI_TLV_TAG,
-				WMI_TAG_PDEV_SET_HW_MODE_CMD) |
-			FIELD_PREP(WMI_TLV_LEN,
-				   sizeof(*hw_mode) - TLV_HDR_SIZE);
+						 WMI_TAG_PDEV_SET_HW_MODE_CMD) |
+				      FIELD_PREP(WMI_TLV_LEN,
+						 sizeof(*hw_mode) - TLV_HDR_SIZE);
 
 		hw_mode->hw_mode_index = param->hw_mode_id;
 		hw_mode->num_band_to_mac = param->num_band_to_mac;
@@ -2851,17 +2849,16 @@ static int ath11k_init_cmd_send(struct ath11k_pdev_wmi *wmi,
 			      FIELD_PREP(WMI_TLV_LEN, len);
 
 		ptr += TLV_HDR_SIZE;
-		len = (sizeof(*band_to_mac));
+		len = sizeof(*band_to_mac);
 
 		for (idx = 0; idx < param->num_band_to_mac; idx++) {
 			band_to_mac = (void *)ptr;
 
 			band_to_mac->tlv_header = FIELD_PREP(WMI_TLV_TAG,
-					WMI_TAG_PDEV_BAND_TO_MAC) |
-				FIELD_PREP(WMI_TLV_LEN,
-						len - TLV_HDR_SIZE);
-			band_to_mac->pdev_id =
-				param->band_to_mac[idx].pdev_id;
+							     WMI_TAG_PDEV_BAND_TO_MAC) |
+						  FIELD_PREP(WMI_TLV_LEN,
+							     len - TLV_HDR_SIZE);
+			band_to_mac->pdev_id = param->band_to_mac[idx].pdev_id;
 			band_to_mac->start_freq =
 				param->band_to_mac[idx].start_freq;
 			band_to_mac->end_freq =
@@ -3086,9 +3083,7 @@ static int ath11k_wmi_tlv_ext_hal_reg_caps(struct ath11k_base *soc,
 				 svc_rdy_ext->ext_hal_reg_caps, i,
 				 &reg_cap);
 		if (ret) {
-			ath11k_warn(soc,
-				    "failed to extract reg cap %d\n",
-				    i);
+			ath11k_warn(soc, "failed to extract reg cap %d\n", i);
 			return ret;
 		}
 
@@ -4982,8 +4977,8 @@ static int ath11k_connect_pdev_htc_service(struct ath11k_base *sc,
 {
 	int status;
 	u32 svc_id[] = { ATH11K_HTC_SVC_ID_WMI_CONTROL,
-		ATH11K_HTC_SVC_ID_WMI_CONTROL_MAC1,
-		ATH11K_HTC_SVC_ID_WMI_CONTROL_MAC2};
+			 ATH11K_HTC_SVC_ID_WMI_CONTROL_MAC1,
+			 ATH11K_HTC_SVC_ID_WMI_CONTROL_MAC2 };
 
 	struct ath11k_htc_svc_conn_req conn_req;
 	struct ath11k_htc_svc_conn_resp conn_resp;
