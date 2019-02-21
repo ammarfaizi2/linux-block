@@ -94,6 +94,8 @@ static const struct wmi_tlv_policy wmi_tlv_policies[] = {
 		= { .min_len = sizeof(struct wmi_peer_assoc_conf_event) },
 	[WMI_TAG_STATS_EVENT]
 		= { .min_len = sizeof(struct wmi_stats_event) },
+	[WMI_TAG_PDEV_CTL_FAILSAFE_CHECK_EVENT]
+		= { .min_len = sizeof(struct wmi_pdev_ctl_failsafe_chk_event) },
 };
 
 #define PRIMAP(_hw_mode_) \
@@ -2336,7 +2338,7 @@ int ath11k_wmi_send_scan_chan_list_cmd(struct ath11k *ar,
 				    tchan_info->antennamax);
 
 		ath11k_dbg(ar->ab, ATH11K_DBG_WMI,
-			   "WMI chan scan list chan[%d] = %ui\n",
+			   "WMI chan scan list chan[%d] = %u\n",
 			   i, chan_info->mhz);
 
 		ptr += sizeof(*chan_info);
@@ -3930,6 +3932,7 @@ int ath11k_pull_chan_info_ev(struct ath11k_base *ab, u8 *evt_buf,
 	ch_info_ev->chan_tx_pwr_tp = ev->chan_tx_pwr_tp;
 	ch_info_ev->rx_frame_count = ev->rx_frame_count;
 	ch_info_ev->tx_frame_cnt = ev->tx_frame_cnt;
+	ch_info_ev->mac_clk_mhz = ev->mac_clk_mhz;
 	ch_info_ev->vdev_id = ev->vdev_id;
 
 	kfree(tb);
@@ -5356,6 +5359,8 @@ void ath11k_chan_info_event(struct ath11k_base *ab, u8 *evt_buf, u32 len)
 	struct ath11k *ar;
 	struct survey_info *survey;
 	int idx;
+	/* HW channel counters frequency value in hertz */
+	u32 cc_freq_hz = ab->cc_freq_hz;
 
 	if (ath11k_pull_chan_info_ev(ab, evt_buf, len, &ch_info_ev) != 0) {
 		ath11k_warn(ab, "failed to extract chan info event");
@@ -5363,10 +5368,16 @@ void ath11k_chan_info_event(struct ath11k_base *ab, u8 *evt_buf, u32 len)
 	}
 
 	ath11k_dbg(ab, ATH11K_DBG_WMI,
-		   "chan info vdev_id %d err_code %d freq %d cmd_flags %d noise_floor %d rx_clear_count %d cycle_count %d\n",
+		   "chan info vdev_id %d err_code %d freq %d cmd_flags %d noise_floor %d rx_clear_count %d cycle_count %d mac_clk_mhz %d\n",
 		   ch_info_ev.vdev_id, ch_info_ev.err_code, ch_info_ev.freq,
 		   ch_info_ev.cmd_flags, ch_info_ev.noise_floor,
-		   ch_info_ev.rx_clear_count, ch_info_ev.cycle_count);
+		   ch_info_ev.rx_clear_count, ch_info_ev.cycle_count,
+		   ch_info_ev.mac_clk_mhz);
+
+	if (ch_info_ev.cmd_flags == WMI_CHAN_INFO_END_RESP) {
+		ath11k_dbg(ab, ATH11K_DBG_WMI, "chan info report completed\n");
+		return;
+	}
 
 	rcu_read_lock();
 	ar = ath11k_get_ar_by_vdev_id(ab, ch_info_ev.vdev_id);
@@ -5395,30 +5406,21 @@ void ath11k_chan_info_event(struct ath11k_base *ab, u8 *evt_buf, u32 len)
 		goto exit;
 	}
 
-	if (ch_info_ev.cmd_flags & WMI_CHAN_INFO_FLAG_COMPLETE) {
-		if (ar->ch_info_can_report_survey) {
-			survey = &ar->survey[idx];
-			survey->noise = ch_info_ev.noise_floor;
-			survey->filled = SURVEY_INFO_NOISE_DBM;
+	/* If FW provides MAC clock frequency in Mhz, overriding the initialized
+	 * HW channel counters frequency value
+	 */
+	if (ch_info_ev.mac_clk_mhz)
+		cc_freq_hz = (ch_info_ev.mac_clk_mhz * 1000);
 
-			ath11k_mac_fill_survey_time(ar,
-						    survey,
-						    ch_info_ev.cycle_count,
-						    ch_info_ev.rx_clear_count,
-						    ar->survey_last_cycle_count,
-						    ar->survey_last_rx_clear_count);
-		}
-
-		ar->ch_info_can_report_survey = false;
-	} else {
-		ar->ch_info_can_report_survey = true;
+	if (ch_info_ev.cmd_flags == WMI_CHAN_INFO_START_RESP) {
+		survey = &ar->survey[idx];
+		memset(survey, 0, sizeof(*survey));
+		survey->noise = ch_info_ev.noise_floor;
+		survey->filled = SURVEY_INFO_NOISE_DBM | SURVEY_INFO_TIME |
+				 SURVEY_INFO_TIME_BUSY;
+		survey->time = div_u64(ch_info_ev.cycle_count, cc_freq_hz);
+		survey->time_busy = div_u64(ch_info_ev.rx_clear_count, cc_freq_hz);
 	}
-
-	if (!(ch_info_ev.cmd_flags & WMI_CHAN_INFO_FLAG_PRE_COMPLETE)) {
-		ar->survey_last_rx_clear_count = ch_info_ev.rx_clear_count;
-		ar->survey_last_cycle_count = ch_info_ev.cycle_count;
-	}
-
 exit:
 	spin_unlock_bh(&ar->data_lock);
 	rcu_read_unlock();
@@ -5430,8 +5432,7 @@ void ath11k_pdev_bss_chan_info_event(struct ath11k_base *ab, u8 *evt_buf,
 	struct wmi_pdev_bss_chan_info_event bss_ch_info_ev;
 	struct survey_info *survey;
 	struct ath11k *ar;
-	/* TODO: find appropriate channel counters value */
-	u32 cc_freq_hz = 150000;
+	u32 cc_freq_hz = ab->cc_freq_hz;
 	u64 busy, total, tx, rx, rx_bss;
 	int idx;
 
@@ -5605,6 +5606,44 @@ void ath11k_update_stats_event(struct ath11k_base *ab, u8 *evt_buf, u32 len)
 	ath11k_debug_fw_stats_process(ab, evt_buf, len);
 }
 
+/* PDEV_CTL_FAILSAFE_CHECK_EVENT is received from FW when the frequency scanned
+ * is not part of BDF CTL(Conformance test limits) table entries.
+ */
+void ath11k_pdev_ctl_failsafe_check_event(struct ath11k_base *ab, u8 *evt_buf,
+					  u32 len)
+{
+	const void **tb;
+	const struct wmi_pdev_ctl_failsafe_chk_event *ev;
+	int ret;
+
+	tb = ath11k_wmi_tlv_parse_alloc(ab, evt_buf, len, GFP_ATOMIC);
+	if (IS_ERR(tb)) {
+		ret = PTR_ERR(tb);
+		ath11k_warn(ab, "failed to parse tlv: %d\n", ret);
+		return;
+	}
+
+	ev = tb[WMI_TAG_PDEV_CTL_FAILSAFE_CHECK_EVENT];
+	if (!ev) {
+		ath11k_warn(ab, "failed to fetch pdev ctl failsafe check ev");
+		kfree(tb);
+		return;
+	}
+
+	ath11k_dbg(ab, ATH11K_DBG_WMI,
+		   "pdev ctl failsafe check ev status %d\n",
+		   ev->ctl_failsafe_status);
+
+	/* If ctl_failsafe_status is set to 1 FW will max out the Transmit power
+	 * to 10 dBm else the CTL power entry in the BDF would be picked up.
+	 */
+	if (ev->ctl_failsafe_status != 0)
+		ath11k_warn(ab, "pdev ctl failsafe failure status %d",
+			    ev->ctl_failsafe_status);
+
+	kfree(tb);
+}
+
 static void ath11k_wmi_tlv_op_rx(struct ath11k_base *ab, struct sk_buff *skb)
 {
 	struct wmi_cmd_hdr *cmd_hdr;
@@ -5680,6 +5719,9 @@ static void ath11k_wmi_tlv_op_rx(struct ath11k_base *ab, struct sk_buff *skb)
 		break;
 	case WMI_UPDATE_STATS_EVENTID:
 		ath11k_update_stats_event(ab, data, len);
+		break;
+	case WMI_PDEV_CTL_FAILSAFE_CHECK_EVENTID:
+		ath11k_pdev_ctl_failsafe_check_event(ab, data, len);
 		break;
 	/* add Unsupported events here */
 	case WMI_TBTTOFFSET_EXT_UPDATE_EVENTID:

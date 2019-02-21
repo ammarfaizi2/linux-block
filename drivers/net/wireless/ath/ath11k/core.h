@@ -513,6 +513,9 @@ struct ath11k_board_data {
 	size_t len;
 };
 
+/* IPQ8074 HW channel counters frequency value in hertz */
+#define IPQ8074_CC_FREQ_HERTZ 320000
+
 /* Master structure to hold the hw data which may be used in core module */
 struct ath11k_base {
 	enum ath11k_hw_rev hw_rev;
@@ -523,6 +526,8 @@ struct ath11k_base {
 	struct completion fw_ready;
 	struct rproc *tgt_rproc;
 	int num_radios;
+	/* HW channel counters frequency value in hertz common to all MACs */
+	u32 cc_freq_hz;
 
 	struct ath11k_htc htc;
 

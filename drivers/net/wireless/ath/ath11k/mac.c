@@ -4754,32 +4754,6 @@ exit:
 	return ret;
 }
 
-void ath11k_mac_fill_survey_time(struct ath11k *ar, struct survey_info *survey,
-				 u32 cc, u32 rcc, u32 cc_prev, u32 rcc_prev)
-{
-	u32 cc_fix = 0;
-	u32 rcc_fix = 0;
-
-	survey->filled |= SURVEY_INFO_TIME |
-			  SURVEY_INFO_TIME_BUSY;
-
-	/* TODO: Confirm if wraparound is needed */
-	if (cc < cc_prev || rcc < rcc_prev) {
-		if (cc < cc_prev)
-			cc_fix = 0x7fffffff;
-
-		if (rcc < rcc_prev)
-			rcc_fix = 0x7fffffff;
-	}
-
-	cc -= cc_prev - cc_fix;
-	rcc -= rcc_prev - rcc_fix;
-
-	/* TODO: Divide by channel counters value */
-	survey->time =  cc;
-	survey->time_busy = rcc;
-}
-
 static const struct ieee80211_ops ath11k_ops = {
 	.tx				= ath11k_mac_op_tx,
 	.start                          = ath11k_start,
@@ -5115,6 +5089,8 @@ int ath11k_mac_create(struct ath11k_base *ab)
 
 	}
 
+	/* Initialize channel counters frequency value in hertz */
+	ab->cc_freq_hz = IPQ8074_CC_FREQ_HERTZ;
 	ab->free_vdev_map = (1LL << (ab->num_radios * TARGET_NUM_VDEVS)) - 1;
 
 	ab->mac_registered = true;
