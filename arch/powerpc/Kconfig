@@ -119,9 +119,6 @@ config GENERIC_HWEIGHT
 	bool
 	default y
 
-config ARCH_HAS_DMA_SET_COHERENT_MASK
-        bool
-
 config PPC
 	bool
 	default y
@@ -130,7 +127,6 @@ config PPC
 	#
 	select ARCH_HAS_DEBUG_VIRTUAL
 	select ARCH_HAS_DEVMEM_IS_ALLOWED
-	select ARCH_HAS_DMA_SET_COHERENT_MASK
 	select ARCH_HAS_ELF_RANDOMIZE
 	select ARCH_HAS_FORTIFY_SOURCE
 	select ARCH_HAS_GCOV_PROFILE_ALL
@@ -250,9 +246,6 @@ config PPC_BARRIER_NOSPEC
     bool
     default y
     depends on PPC_BOOK3S_64 || PPC_FSL_BOOK3E
-
-config GENERIC_CSUM
-	def_bool n
 
 config EARLY_PRINTK
 	bool
@@ -693,7 +686,7 @@ config PPC_16K_PAGES
 
 config PPC_64K_PAGES
 	bool "64k page size"
-	depends on !PPC_FSL_BOOK3E && (44x || PPC_BOOK3S_64 || PPC_BOOK3E_64)
+	depends on 44x || PPC_BOOK3S_64
 	select HAVE_ARCH_SOFT_DIRTY if PPC_BOOK3S_64
 
 config PPC_256K_PAGES
@@ -887,6 +880,7 @@ config FSL_SOC
 
 config FSL_PCI
  	bool
+	select ARCH_HAS_DMA_SET_MASK
 	select PPC_INDIRECT_PCI
 	select PCI_QUIRKS
 

@@ -634,7 +634,7 @@ void probe_machine(void)
 	}
 	/* What can we do if we didn't find ? */
 	if (machine_id >= &__machine_desc_end) {
-		DBG("No suitable machine found !\n");
+		pr_err("No suitable machine description found !\n");
 		for (;;);
 	}
 
@@ -791,7 +791,6 @@ void arch_setup_pdev_archdata(struct platform_device *pdev)
 {
 	pdev->archdata.dma_mask = DMA_BIT_MASK(32);
 	pdev->dev.dma_mask = &pdev->archdata.dma_mask;
- 	set_dma_ops(&pdev->dev, &dma_nommu_ops);
 }
 
 static __init void print_system_info(void)

@@ -219,7 +219,8 @@ struct eeh_ops {
 };
 
 extern int eeh_subsystem_flags;
-extern int eeh_max_freezes;
+extern u32 eeh_max_freezes;
+extern bool eeh_debugfs_no_recover;
 extern struct eeh_ops *eeh_ops;
 extern raw_spinlock_t confirm_error_lock;
 
@@ -459,6 +460,9 @@ static inline void eeh_readsl(const volatile void __iomem *addr, void * buf,
 	if (EEH_POSSIBLE_ERROR((*(((u32*)buf)+nl-1)), u32))
 		eeh_check_failure(addr);
 }
+
+
+void eeh_cache_debugfs_init(void);
 
 #endif /* CONFIG_PPC64 */
 #endif /* __KERNEL__ */

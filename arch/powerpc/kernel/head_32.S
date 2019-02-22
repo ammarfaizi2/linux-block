@@ -352,9 +352,8 @@ i##n:								\
  * registers that might have bad values includes all the GPRs
  * and all the BATs.  We indicate that we are in RTAS by putting
  * a non-zero value, the address of the exception frame to use,
- * in SPRG2.  The machine check handler checks SPRG2 and uses its
- * value if it is non-zero.  If we ever needed to free up SPRG2,
- * we could use a field in the thread_info or thread_struct instead.
+ * in thread.rtas_sp.  The machine check handler checks thread.rtas_sp
+ * and uses its value if it is non-zero.
  * (Other exception handlers assume that r1 is a valid kernel stack
  * pointer when we take an exception from supervisor mode.)
  *	-- paulus.
@@ -365,16 +364,15 @@ i##n:								\
 	mtspr	SPRN_SPRG_SCRATCH1,r11
 	mfcr	r10
 #ifdef CONFIG_PPC_CHRP
-	mfspr	r11,SPRN_SPRG_RTAS
-	cmpwi	0,r11,0
-	bne	7f
+	mfspr	r11, SPRN_SPRG_THREAD
+	lwz	r11, RTAS_SP(r11)
+	cmpwi	cr1, r11, 0
+	bne	cr1, 7f
 #endif /* CONFIG_PPC_CHRP */
 	EXCEPTION_PROLOG_1
 7:	EXCEPTION_PROLOG_2
 	addi	r3,r1,STACK_FRAME_OVERHEAD
 #ifdef CONFIG_PPC_CHRP
-	mfspr	r4,SPRN_SPRG_RTAS
-	cmpwi	cr1,r4,0
 	bne	cr1,1f
 #endif
 	EXC_XFER_STD(0x200, machine_check_exception)
@@ -500,18 +498,22 @@ InstructionTLBMiss:
  */
 	/* Get PTE (linux-style) and check access */
 	mfspr	r3,SPRN_IMISS
+#if defined(CONFIG_MODULES) || defined(CONFIG_DEBUG_PAGEALLOC)
 	lis	r1,PAGE_OFFSET@h		/* check if kernel address */
 	cmplw	0,r1,r3
-	mfspr	r2,SPRN_SPRG_THREAD
-	li	r1,_PAGE_USER|_PAGE_PRESENT|_PAGE_EXEC /* low addresses tested as user */
-	lwz	r2,PGDIR(r2)
+#endif
+	mfspr	r2, SPRN_SPRG_PGDIR
+#ifdef CONFIG_SWAP
+	li	r1,_PAGE_PRESENT | _PAGE_ACCESSED | _PAGE_EXEC
+#else
+	li	r1,_PAGE_PRESENT | _PAGE_EXEC
+#endif
+#if defined(CONFIG_MODULES) || defined(CONFIG_DEBUG_PAGEALLOC)
 	bge-	112f
-	mfspr	r2,SPRN_SRR1		/* and MSR_PR bit from SRR1 */
-	rlwimi	r1,r2,32-12,29,29	/* shift MSR_PR to _PAGE_USER posn */
-	lis	r2,swapper_pg_dir@ha	/* if kernel address, use */
-	addi	r2,r2,swapper_pg_dir@l	/* kernel page table */
-112:	tophys(r2,r2)
-	rlwimi	r2,r3,12,20,29		/* insert top 10 bits of address */
+	lis	r2, (swapper_pg_dir - PAGE_OFFSET)@ha	/* if kernel address, use */
+	addi	r2, r2, (swapper_pg_dir - PAGE_OFFSET)@l	/* kernel page table */
+#endif
+112:	rlwimi	r2,r3,12,20,29		/* insert top 10 bits of address */
 	lwz	r2,0(r2)		/* get pmd entry */
 	rlwinm.	r2,r2,0,0,19		/* extract address of pte page */
 	beq-	InstructionAddressInvalid	/* return if no mapping */
@@ -519,20 +521,9 @@ InstructionTLBMiss:
 	lwz	r0,0(r2)		/* get linux-style pte */
 	andc.	r1,r1,r0		/* check access & ~permission */
 	bne-	InstructionAddressInvalid /* return if access not permitted */
-	ori	r0,r0,_PAGE_ACCESSED	/* set _PAGE_ACCESSED in pte */
-	/*
-	 * NOTE! We are assuming this is not an SMP system, otherwise
-	 * we would need to update the pte atomically with lwarx/stwcx.
-	 */
-	stw	r0,0(r2)		/* update PTE (accessed bit) */
 	/* Convert linux-style PTE to low word of PPC-style PTE */
-	rlwinm	r1,r0,32-10,31,31	/* _PAGE_RW -> PP lsb */
-	rlwinm	r2,r0,32-7,31,31	/* _PAGE_DIRTY -> PP lsb */
-	and	r1,r1,r2		/* writable if _RW and _DIRTY */
-	rlwimi	r0,r0,32-1,30,30	/* _PAGE_USER -> PP msb */
-	rlwimi	r0,r0,32-1,31,31	/* _PAGE_USER -> PP lsb */
-	ori	r1,r1,0xe04		/* clear out reserved bits */
-	andc	r1,r0,r1		/* PP = user? (rw&dirty? 2: 3): 0 */
+	ori	r1, r1, 0xe05		/* clear out reserved bits */
+	andc	r1, r0, r1		/* PP = user? 2 : 0 */
 BEGIN_FTR_SECTION
 	rlwinm	r1,r1,0,~_PAGE_COHERENT	/* clear M (coherence not required) */
 END_FTR_SECTION_IFCLR(CPU_FTR_NEED_COHERENT)
@@ -576,16 +567,16 @@ DataLoadTLBMiss:
 	mfspr	r3,SPRN_DMISS
 	lis	r1,PAGE_OFFSET@h		/* check if kernel address */
 	cmplw	0,r1,r3
-	mfspr	r2,SPRN_SPRG_THREAD
-	li	r1,_PAGE_USER|_PAGE_PRESENT /* low addresses tested as user */
-	lwz	r2,PGDIR(r2)
+	mfspr	r2, SPRN_SPRG_PGDIR
+#ifdef CONFIG_SWAP
+	li	r1, _PAGE_PRESENT | _PAGE_ACCESSED
+#else
+	li	r1, _PAGE_PRESENT
+#endif
 	bge-	112f
-	mfspr	r2,SPRN_SRR1		/* and MSR_PR bit from SRR1 */
-	rlwimi	r1,r2,32-12,29,29	/* shift MSR_PR to _PAGE_USER posn */
-	lis	r2,swapper_pg_dir@ha	/* if kernel address, use */
-	addi	r2,r2,swapper_pg_dir@l	/* kernel page table */
-112:	tophys(r2,r2)
-	rlwimi	r2,r3,12,20,29		/* insert top 10 bits of address */
+	lis	r2, (swapper_pg_dir - PAGE_OFFSET)@ha	/* if kernel address, use */
+	addi	r2, r2, (swapper_pg_dir - PAGE_OFFSET)@l	/* kernel page table */
+112:	rlwimi	r2,r3,12,20,29		/* insert top 10 bits of address */
 	lwz	r2,0(r2)		/* get pmd entry */
 	rlwinm.	r2,r2,0,0,19		/* extract address of pte page */
 	beq-	DataAddressInvalid	/* return if no mapping */
@@ -593,20 +584,15 @@ DataLoadTLBMiss:
 	lwz	r0,0(r2)		/* get linux-style pte */
 	andc.	r1,r1,r0		/* check access & ~permission */
 	bne-	DataAddressInvalid	/* return if access not permitted */
-	ori	r0,r0,_PAGE_ACCESSED	/* set _PAGE_ACCESSED in pte */
 	/*
 	 * NOTE! We are assuming this is not an SMP system, otherwise
 	 * we would need to update the pte atomically with lwarx/stwcx.
 	 */
-	stw	r0,0(r2)		/* update PTE (accessed bit) */
 	/* Convert linux-style PTE to low word of PPC-style PTE */
-	rlwinm	r1,r0,32-10,31,31	/* _PAGE_RW -> PP lsb */
-	rlwinm	r2,r0,32-7,31,31	/* _PAGE_DIRTY -> PP lsb */
-	and	r1,r1,r2		/* writable if _RW and _DIRTY */
-	rlwimi	r0,r0,32-1,30,30	/* _PAGE_USER -> PP msb */
+	rlwinm	r1, r0, 0, 31, 31	/* _PAGE_RW -> PP lsb */
 	rlwimi	r0,r0,32-1,31,31	/* _PAGE_USER -> PP lsb */
 	ori	r1,r1,0xe04		/* clear out reserved bits */
-	andc	r1,r0,r1		/* PP = user? (rw&dirty? 2: 3): 0 */
+	andc	r1,r0,r1		/* PP = user? rw? 2: 3: 0 */
 BEGIN_FTR_SECTION
 	rlwinm	r1,r1,0,~_PAGE_COHERENT	/* clear M (coherence not required) */
 END_FTR_SECTION_IFCLR(CPU_FTR_NEED_COHERENT)
@@ -660,16 +646,16 @@ DataStoreTLBMiss:
 	mfspr	r3,SPRN_DMISS
 	lis	r1,PAGE_OFFSET@h		/* check if kernel address */
 	cmplw	0,r1,r3
-	mfspr	r2,SPRN_SPRG_THREAD
-	li	r1,_PAGE_RW|_PAGE_USER|_PAGE_PRESENT /* access flags */
-	lwz	r2,PGDIR(r2)
+	mfspr	r2, SPRN_SPRG_PGDIR
+#ifdef CONFIG_SWAP
+	li	r1, _PAGE_RW | _PAGE_PRESENT | _PAGE_ACCESSED
+#else
+	li	r1, _PAGE_RW | _PAGE_PRESENT
+#endif
 	bge-	112f
-	mfspr	r2,SPRN_SRR1		/* and MSR_PR bit from SRR1 */
-	rlwimi	r1,r2,32-12,29,29	/* shift MSR_PR to _PAGE_USER posn */
-	lis	r2,swapper_pg_dir@ha	/* if kernel address, use */
-	addi	r2,r2,swapper_pg_dir@l	/* kernel page table */
-112:	tophys(r2,r2)
-	rlwimi	r2,r3,12,20,29		/* insert top 10 bits of address */
+	lis	r2, (swapper_pg_dir - PAGE_OFFSET)@ha	/* if kernel address, use */
+	addi	r2, r2, (swapper_pg_dir - PAGE_OFFSET)@l	/* kernel page table */
+112:	rlwimi	r2,r3,12,20,29		/* insert top 10 bits of address */
 	lwz	r2,0(r2)		/* get pmd entry */
 	rlwinm.	r2,r2,0,0,19		/* extract address of pte page */
 	beq-	DataAddressInvalid	/* return if no mapping */
@@ -677,14 +663,11 @@ DataStoreTLBMiss:
 	lwz	r0,0(r2)		/* get linux-style pte */
 	andc.	r1,r1,r0		/* check access & ~permission */
 	bne-	DataAddressInvalid	/* return if access not permitted */
-	ori	r0,r0,_PAGE_ACCESSED|_PAGE_DIRTY
 	/*
 	 * NOTE! We are assuming this is not an SMP system, otherwise
 	 * we would need to update the pte atomically with lwarx/stwcx.
 	 */
-	stw	r0,0(r2)		/* update PTE (accessed/dirty bits) */
 	/* Convert linux-style PTE to low word of PPC-style PTE */
-	rlwimi	r0,r0,32-1,30,30	/* _PAGE_USER -> PP msb */
 	li	r1,0xe05		/* clear out reserved bits & PP lsb */
 	andc	r1,r0,r1		/* PP = user? 2: 0 */
 BEGIN_FTR_SECTION
@@ -865,8 +848,10 @@ __secondary_start:
 	tophys(r4,r2)
 	addi	r4,r4,THREAD	/* phys address of our thread_struct */
 	mtspr	SPRN_SPRG_THREAD,r4
+#ifdef CONFIG_PPC_RTAS
 	li	r3,0
-	mtspr	SPRN_SPRG_RTAS,r3	/* 0 => not in RTAS */
+	stw	r3, RTAS_SP(r4)		/* 0 => not in RTAS */
+#endif
 
 	/* enable MMU and jump to start_secondary */
 	li	r4,MSR_KERNEL
@@ -950,8 +935,10 @@ start_here:
 	tophys(r4,r2)
 	addi	r4,r4,THREAD	/* init task's THREAD */
 	mtspr	SPRN_SPRG_THREAD,r4
+#ifdef CONFIG_PPC_RTAS
 	li	r3,0
-	mtspr	SPRN_SPRG_RTAS,r3	/* 0 => not in RTAS */
+	stw	r3, RTAS_SP(r4)		/* 0 => not in RTAS */
+#endif
 
 	/* stack */
 	lis	r1,init_thread_union@ha
@@ -1022,15 +1009,16 @@ _ENTRY(switch_mmu_context)
 	li	r0,NUM_USER_SEGMENTS
 	mtctr	r0
 
+	lwz	r4, MM_PGD(r4)
 #ifdef CONFIG_BDI_SWITCH
 	/* Context switch the PTE pointer for the Abatron BDI2000.
 	 * The PGDIR is passed as second argument.
 	 */
-	lwz	r4,MM_PGD(r4)
-	lis	r5, KERNELBASE@h
-	lwz	r5, 0xf0(r5)
-	stw	r4, 0x4(r5)
+	lis	r5, abatron_pteptrs@ha
+	stw	r4, abatron_pteptrs@l + 0x4(r5)
 #endif
+	tophys(r4, r4)
+	mtspr	SPRN_SPRG_PGDIR, r4
 	li	r4,0
 	isync
 3:
