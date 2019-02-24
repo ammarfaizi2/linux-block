@@ -146,3 +146,120 @@ long strncpy_from_user(char *dst, const char __user *src, long count)
 	return -EFAULT;
 }
 EXPORT_SYMBOL(strncpy_from_user);
+
+#ifdef CONFIG_UACCESS_SELFTEST
+
+#include <linux/vmalloc.h>
+
+/*
+ * The intent of this selftest is to verify some properties of
+ * strncpy_from_user():
+ *
+ *  - It returns the right value and copies the string faithfully.  This is
+ *    verified in the cases where the whole string including NULL-terminator
+ *    fits and where it doesn't.
+ *
+ * - It does not overrun the input buffer into the subsequent page.  Verified
+ *   by running the tests using a vmalloced page (which comes with a guard
+ *   page) and putting the buffers near the end.
+ *
+ * - It does not overrun the output buffer at all.  Verified by writing
+ *   a canary at the end and verifying that the canary isn't changed.
+ *
+ * These tests are run with various mis-alignments of the input and output
+ * buffers.
+ */
+static bool do_selftest(char *source_page, char *target_page,
+			size_t len, size_t count,
+			size_t source_offset, size_t target_offset)
+{
+	size_t i;
+	size_t ret, expected_ret = min(count, len);
+	char *source = source_page + source_offset;
+	char *target = target_page + target_offset;
+
+	if (WARN_ON(source_offset + len > PAGE_SIZE))
+		return false;
+	if (WARN_ON(target_offset + count > PAGE_SIZE))
+		return false;
+
+	memset(source_page, 0, PAGE_SIZE);
+	for (i = 0; i < len; i++)
+		source[i] = 'A' + i;
+
+	memset(target_page, 0xff, PAGE_SIZE);
+	ret = strncpy_from_user(target, source, count);
+	if (WARN_ON(ret != expected_ret)) {
+		pr_err("Tried to copy %lu bytes; got %lu; len was %lu\n",
+		       (unsigned long)count, (unsigned long)ret,
+		       (unsigned long)len);
+		return false;
+	}
+
+	/* Check that the string was copied correctly. */
+	if (WARN_ON(memcmp(source, target, expected_ret)))
+		return false;
+
+	/* Check that the NULL got copied if it fit. */
+	if (count > len && WARN_ON(target[len] != 0))
+		return false;
+
+	/* Check that the target buffer was not overrun. */
+	if (target_offset + count < PAGE_SIZE && WARN_ON(target[count] != (char)0xff))
+		return false;
+
+	return true;
+}
+
+static void strncpy_from_user_selftest(void)
+{
+	mm_segment_t old_fs = get_fs();
+	char *source_page = vmalloc(PAGE_SIZE);
+	char *target_page = vmalloc(PAGE_SIZE);
+
+	size_t len;
+
+	pr_info("selftest: testing strncpy_from_user\n");
+
+	if (!source_page || !target_page)
+		goto done;
+
+	set_fs(KERNEL_DS);
+
+	/* Check all lengths up to 31 bytes. */
+	for (len = 0; len <= 31; len++) {
+		/*
+		 * Check all offsets between 0 and 7 bytes from last non-null
+		 * source byte to end of page.
+		 */
+		size_t source_offset;
+
+		for (source_offset = PAGE_SIZE - len - 7;
+		     source_offset < PAGE_SIZE - len; source_offset++) {
+			/* Check all counts from len-7 to len+7. */
+			size_t count;
+
+			for (count = max_t(long, 0, (long)len - 7);
+				     count < len + 7; count++) {
+				size_t target_offset;
+
+				for (target_offset = PAGE_SIZE - count - 7;
+				     target_offset < PAGE_SIZE - count; target_offset++) {
+					if (!do_selftest(source_page, target_page,
+							 len, count, source_offset,
+							 target_offset))
+						goto done;
+				}
+			}
+		}
+	}
+
+	pr_info("selftest: strncpy_from_user test passed\n");
+
+done:
+	vfree(target_page);
+	vfree(source_page);
+	set_fs(old_fs);
+}
+late_initcall(strncpy_from_user_selftest);
+#endif
