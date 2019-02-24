@@ -745,6 +745,11 @@ config DEBUG_STACKOVERFLOW
 
 	  If in doubt, say "N".
 
+config UACCESS_SELFTEST
+	bool "User memory access selftest"
+	help
+	  This enables selftests of the userspace access code.
+
 source "lib/Kconfig.kasan"
 
 endmenu # "Memory Debugging"
