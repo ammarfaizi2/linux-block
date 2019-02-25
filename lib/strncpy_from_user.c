@@ -205,7 +205,7 @@ static bool do_selftest(char *source_page, char *target_page,
 		source[i] = 'A' + i;
 
 	memset(target_page, 0xff, PAGE_SIZE);
-	ret = strncpy_from_user(target, source, count);
+	ret = strncpy_from_user(target, (char __user __force *)source, count);
 	if (WARN_ON(ret != expected_ret)) {
 		pr_err("Tried to copy %lu bytes; got %lu; len was %lu\n",
 		       (unsigned long)count, (unsigned long)ret,
