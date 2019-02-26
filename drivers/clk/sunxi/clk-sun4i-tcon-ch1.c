@@ -68,7 +68,7 @@ static int tcon_ch1_is_enabled(struct clk_hw *hw)
 	return reg & (TCON_CH1_SCLK2_GATE_BIT | TCON_CH1_SCLK1_GATE_BIT);
 }
 
-static u8 tcon_ch1_get_parent(struct clk_hw *hw)
+static struct clk_hw *tcon_ch1_get_parent(struct clk_hw *hw)
 {
 	struct tcon_ch1_clk *tclk = hw_to_tclk(hw);
 	u32 reg;
@@ -76,7 +76,7 @@ static u8 tcon_ch1_get_parent(struct clk_hw *hw)
 	reg = readl(tclk->reg) >> TCON_CH1_SCLK2_MUX_SHIFT;
 	reg &= reg >> TCON_CH1_SCLK2_MUX_MASK;
 
-	return reg;
+	return clk_hw_get_parent_by_index(hw, reg);
 }
 
 static int tcon_ch1_set_parent(struct clk_hw *hw, u8 index)
@@ -213,7 +213,7 @@ static const struct clk_ops tcon_ch1_ops = {
 	.enable		= tcon_ch1_enable,
 	.is_enabled	= tcon_ch1_is_enabled,
 
-	.get_parent	= tcon_ch1_get_parent,
+	.get_parent_hw	= tcon_ch1_get_parent,
 	.set_parent	= tcon_ch1_set_parent,
 
 	.determine_rate	= tcon_ch1_determine_rate,
