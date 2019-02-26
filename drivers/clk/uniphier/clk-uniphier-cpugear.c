@@ -50,7 +50,7 @@ static int uniphier_clk_cpugear_set_parent(struct clk_hw *hw, u8 index)
 				0, 1);
 }
 
-static u8 uniphier_clk_cpugear_get_parent(struct clk_hw *hw)
+static struct clk_hw *uniphier_clk_cpugear_get_parent(struct clk_hw *hw)
 {
 	struct uniphier_clk_cpugear *gear = to_uniphier_clk_cpugear(hw);
 	int num_parents = clk_hw_get_num_parents(hw);
@@ -60,17 +60,18 @@ static u8 uniphier_clk_cpugear_get_parent(struct clk_hw *hw)
 	ret = regmap_read(gear->regmap,
 			  gear->regbase + UNIPHIER_CLK_CPUGEAR_STAT, &val);
 	if (ret)
-		return ret;
+		return clk_hw_get_parent_by_index(hw, ret);
 
 	val &= gear->mask;
 
-	return val < num_parents ? val : -EINVAL;
+	return clk_hw_get_parent_by_index(hw,
+					  val < num_parents ? val : -EINVAL);
 }
 
 static const struct clk_ops uniphier_clk_cpugear_ops = {
 	.determine_rate = __clk_mux_determine_rate,
 	.set_parent = uniphier_clk_cpugear_set_parent,
-	.get_parent = uniphier_clk_cpugear_get_parent,
+	.get_parent_hw = uniphier_clk_cpugear_get_parent,
 };
 
 struct clk_hw *uniphier_clk_register_cpugear(struct device *dev,

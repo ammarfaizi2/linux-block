@@ -28,7 +28,7 @@ static int uniphier_clk_mux_set_parent(struct clk_hw *hw, u8 index)
 				 mux->vals[index]);
 }
 
-static u8 uniphier_clk_mux_get_parent(struct clk_hw *hw)
+static struct clk_hw *uniphier_clk_mux_get_parent(struct clk_hw *hw)
 {
 	struct uniphier_clk_mux *mux = to_uniphier_clk_mux(hw);
 	unsigned int num_parents = clk_hw_get_num_parents(hw);
@@ -38,19 +38,19 @@ static u8 uniphier_clk_mux_get_parent(struct clk_hw *hw)
 
 	ret = regmap_read(mux->regmap, mux->reg, &val);
 	if (ret)
-		return ret;
+		return clk_hw_get_parent_by_index(hw, ret);
 
 	for (i = 0; i < num_parents; i++)
 		if ((mux->masks[i] & val) == mux->vals[i])
-			return i;
+			return clk_hw_get_parent_by_index(hw, i);
 
-	return -EINVAL;
+	return ERR_PTR(-EINVAL);
 }
 
 static const struct clk_ops uniphier_clk_mux_ops = {
 	.determine_rate = __clk_mux_determine_rate,
 	.set_parent = uniphier_clk_mux_set_parent,
-	.get_parent = uniphier_clk_mux_get_parent,
+	.get_parent_hw = uniphier_clk_mux_get_parent,
 };
 
 struct clk_hw *uniphier_clk_register_mux(struct device *dev,
