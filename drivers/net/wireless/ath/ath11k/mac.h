@@ -159,6 +159,9 @@ struct ath11k_generic_iter {
 #define IEEE80211_VHTCAP_LINK_ADAPT          0x0C000000
 #define IEEE80211_VHTCAP_RESERVED            0xF0000000
 
+#define IEEE80211_VHT_MCS_SUPPORT_0_11_MASK	GENMASK(23, 16)
+#define IEEE80211_DISABLE_VHT_MCS_SUPPORT_0_11	BIT(24)
+
 #define WMI_MAX_SPATIAL_STREAM               3
 
 int ath11k_mac_create(struct ath11k_base *ab);
