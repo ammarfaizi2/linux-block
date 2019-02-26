@@ -483,14 +483,14 @@ static int axi_clkgen_set_parent(struct clk_hw *clk_hw, u8 index)
 	return 0;
 }
 
-static u8 axi_clkgen_get_parent(struct clk_hw *clk_hw)
+static struct clk_hw *axi_clkgen_get_parent(struct clk_hw *clk_hw)
 {
 	struct axi_clkgen *axi_clkgen = clk_hw_to_axi_clkgen(clk_hw);
 	unsigned int parent;
 
 	axi_clkgen_read(axi_clkgen, AXI_CLKGEN_V2_REG_CLKSEL, &parent);
 
-	return parent;
+	return clk_hw_get_parent_by_index(clk_hw, parent);
 }
 
 static const struct clk_ops axi_clkgen_ops = {
@@ -500,7 +500,7 @@ static const struct clk_ops axi_clkgen_ops = {
 	.enable = axi_clkgen_enable,
 	.disable = axi_clkgen_disable,
 	.set_parent = axi_clkgen_set_parent,
-	.get_parent = axi_clkgen_get_parent,
+	.get_parent_hw = axi_clkgen_get_parent,
 };
 
 static int axi_clkgen_probe(struct platform_device *pdev)
