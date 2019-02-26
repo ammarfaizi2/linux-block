@@ -147,7 +147,7 @@ static int berlin2_div_set_parent(struct clk_hw *hw, u8 index)
 	return 0;
 }
 
-static u8 berlin2_div_get_parent(struct clk_hw *hw)
+static struct clk_hw *berlin2_div_get_parent(struct clk_hw *hw)
 {
 	struct berlin2_div *div = to_berlin2_div(hw);
 	struct berlin2_div_map *map = &div->map;
@@ -170,7 +170,7 @@ static u8 berlin2_div_get_parent(struct clk_hw *hw)
 	if (div->lock)
 		spin_unlock(div->lock);
 
-	return index;
+	return clk_hw_get_parent_by_index(hw, index);
 }
 
 static unsigned long berlin2_div_recalc_rate(struct clk_hw *hw,
@@ -221,7 +221,7 @@ static const struct clk_ops berlin2_div_gate_ops = {
 
 static const struct clk_ops berlin2_div_mux_ops = {
 	.set_parent	= berlin2_div_set_parent,
-	.get_parent	= berlin2_div_get_parent,
+	.get_parent_hw	= berlin2_div_get_parent,
 };
 
 struct clk_hw * __init
