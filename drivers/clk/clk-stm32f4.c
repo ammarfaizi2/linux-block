@@ -1024,9 +1024,9 @@ static const struct clk_ops cclk_gate_ops = {
 	.is_enabled	= cclk_gate_is_enabled,
 };
 
-static u8 cclk_mux_get_parent(struct clk_hw *hw)
+static struct clk_hw *cclk_mux_get_parent(struct clk_hw *hw)
 {
-	return clk_mux_ops.get_parent(hw);
+	return clk_hw_get_parent_by_index(hw, clk_mux_ops.get_parent(hw));
 }
 
 static int cclk_mux_set_parent(struct clk_hw *hw, u8 index)
@@ -1045,7 +1045,7 @@ static int cclk_mux_set_parent(struct clk_hw *hw, u8 index)
 }
 
 static const struct clk_ops cclk_mux_ops = {
-	.get_parent = cclk_mux_get_parent,
+	.get_parent_hw = cclk_mux_get_parent,
 	.set_parent = cclk_mux_set_parent,
 };
 

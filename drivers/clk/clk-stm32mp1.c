@@ -707,9 +707,9 @@ static const struct clk_ops mp1_mgate_clk_ops = {
 
 #define to_clk_mmux(_mux) container_of(_mux, struct stm32_clk_mmux, mux)
 
-static u8 clk_mmux_get_parent(struct clk_hw *hw)
+static struct clk_hw *clk_mmux_get_parent(struct clk_hw *hw)
 {
-	return clk_mux_ops.get_parent(hw);
+	return clk_hw_get_parent_by_index(hw, clk_mux_ops.get_parent(hw));
 }
 
 static int clk_mmux_set_parent(struct clk_hw *hw, u8 index)
@@ -733,7 +733,7 @@ static int clk_mmux_set_parent(struct clk_hw *hw, u8 index)
 }
 
 static const struct clk_ops clk_mmux_ops = {
-	.get_parent	= clk_mmux_get_parent,
+	.get_parent_hw	= clk_mmux_get_parent,
 	.set_parent	= clk_mmux_set_parent,
 	.determine_rate	= __clk_mux_determine_rate,
 };
