@@ -416,7 +416,7 @@ static void cs2000_disable(struct clk_hw *hw)
 	cs2000_clk_out_enable(priv, false);
 }
 
-static u8 cs2000_get_parent(struct clk_hw *hw)
+static struct clk_hw *cs2000_get_parent(struct clk_hw *hw)
 {
 	struct cs2000_priv *priv = hw_to_priv(hw);
 
@@ -424,11 +424,11 @@ static u8 cs2000_get_parent(struct clk_hw *hw)
 	 * In dynamic mode, output rates are derived from CLK_IN.
 	 * In static mode, CLK_IN is ignored, so we return REF_CLK instead.
 	 */
-	return priv->dynamic_mode ? CLK_IN : REF_CLK;
+	return clk_hw_get_parent_by_index(hw, priv->dynamic_mode ? CLK_IN : REF_CLK);
 }
 
 static const struct clk_ops cs2000_ops = {
-	.get_parent	= cs2000_get_parent,
+	.get_parent_hw	= cs2000_get_parent,
 	.recalc_rate	= cs2000_recalc_rate,
 	.round_rate	= cs2000_round_rate,
 	.set_rate	= cs2000_set_rate,
