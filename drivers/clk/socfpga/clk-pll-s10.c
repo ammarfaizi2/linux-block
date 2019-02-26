@@ -117,24 +117,24 @@ static unsigned long clk_boot_clk_recalc_rate(struct clk_hw *hwclk,
 }
 
 
-static u8 clk_pll_get_parent(struct clk_hw *hwclk)
+static struct clk_hw *clk_pll_get_parent(struct clk_hw *hwclk)
 {
 	struct socfpga_pll *socfpgaclk = to_socfpga_clk(hwclk);
 	u32 pll_src;
 
 	pll_src = readl(socfpgaclk->hw.reg);
-	return (pll_src >> CLK_MGR_PLL_CLK_SRC_SHIFT) &
-		CLK_MGR_PLL_CLK_SRC_MASK;
+	return clk_hw_get_parent_by_index(hwclk,
+				          (pll_src >> CLK_MGR_PLL_CLK_SRC_SHIFT) & CLK_MGR_PLL_CLK_SRC_MASK);
 }
 
-static u8 clk_boot_get_parent(struct clk_hw *hwclk)
+static struct clk_hw *clk_boot_get_parent(struct clk_hw *hwclk)
 {
 	struct socfpga_pll *socfpgaclk = to_socfpga_clk(hwclk);
 	u32 pll_src;
 
 	pll_src = readl(socfpgaclk->hw.reg);
-	return (pll_src >> SWCTRLBTCLKSEL_SHIFT) &
-		SWCTRLBTCLKSEL_MASK;
+	return clk_hw_get_parent_by_index(hwclk,
+				          (pll_src >> SWCTRLBTCLKSEL_SHIFT) & SWCTRLBTCLKSEL_MASK);
 }
 
 static int clk_pll_prepare(struct clk_hw *hwclk)
@@ -165,25 +165,25 @@ static int n5x_clk_pll_prepare(struct clk_hw *hwclk)
 
 static const struct clk_ops n5x_clk_pll_ops = {
 	.recalc_rate = n5x_clk_pll_recalc_rate,
-	.get_parent = clk_pll_get_parent,
+	.get_parent_hw = clk_pll_get_parent,
 	.prepare = n5x_clk_pll_prepare,
 };
 
 static const struct clk_ops agilex_clk_pll_ops = {
 	.recalc_rate = agilex_clk_pll_recalc_rate,
-	.get_parent = clk_pll_get_parent,
+	.get_parent_hw = clk_pll_get_parent,
 	.prepare = clk_pll_prepare,
 };
 
 static const struct clk_ops clk_pll_ops = {
 	.recalc_rate = clk_pll_recalc_rate,
-	.get_parent = clk_pll_get_parent,
+	.get_parent_hw = clk_pll_get_parent,
 	.prepare = clk_pll_prepare,
 };
 
 static const struct clk_ops clk_boot_ops = {
 	.recalc_rate = clk_boot_clk_recalc_rate,
-	.get_parent = clk_boot_get_parent,
+	.get_parent_hw = clk_boot_get_parent,
 	.prepare = clk_pll_prepare,
 };
 

@@ -36,7 +36,7 @@ static unsigned long clk_periclk_recalc_rate(struct clk_hw *hwclk,
 	return parent_rate / div;
 }
 
-static u8 clk_periclk_get_parent(struct clk_hw *hwclk)
+static struct clk_hw *clk_periclk_get_parent(struct clk_hw *hwclk)
 {
 	struct socfpga_periph_clk *socfpgaclk = to_socfpga_periph_clk(hwclk);
 	u32 clk_src;
@@ -46,15 +46,15 @@ static u8 clk_periclk_get_parent(struct clk_hw *hwclk)
 	if (streq(name, SOCFPGA_MPU_FREE_CLK) ||
 	    streq(name, SOCFPGA_NOC_FREE_CLK) ||
 	    streq(name, SOCFPGA_SDMMC_FREE_CLK))
-		return (clk_src >> CLK_MGR_FREE_SHIFT) &
-			CLK_MGR_FREE_MASK;
-	else
-		return 0;
+		return clk_hw_get_parent_by_index(hwclk,
+				(clk_src >> CLK_MGR_FREE_SHIFT) & CLK_MGR_FREE_MASK);
+
+	return clk_hw_get_parent_by_index(hwclk, 0);
 }
 
 static const struct clk_ops periclk_ops = {
 	.recalc_rate = clk_periclk_recalc_rate,
-	.get_parent = clk_periclk_get_parent,
+	.get_parent_hw = clk_periclk_get_parent,
 };
 
 static __init void __socfpga_periph_init(struct device_node *node,

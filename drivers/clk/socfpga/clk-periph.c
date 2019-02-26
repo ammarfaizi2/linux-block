@@ -34,17 +34,17 @@ static unsigned long clk_periclk_recalc_rate(struct clk_hw *hwclk,
 	return parent_rate / div;
 }
 
-static u8 clk_periclk_get_parent(struct clk_hw *hwclk)
+static struct clk_hw *clk_periclk_get_parent(struct clk_hw *hwclk)
 {
 	u32 clk_src;
 
 	clk_src = readl(clk_mgr_base_addr + CLKMGR_DBCTRL);
-	return clk_src & 0x1;
+	return clk_hw_get_parent_by_index(hwclk, clk_src & 0x1);
 }
 
 static const struct clk_ops periclk_ops = {
 	.recalc_rate = clk_periclk_recalc_rate,
-	.get_parent = clk_periclk_get_parent,
+	.get_parent_hw = clk_periclk_get_parent,
 };
 
 static __init void __socfpga_periph_init(struct device_node *node,
