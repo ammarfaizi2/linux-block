@@ -283,7 +283,7 @@ static int mmp_clk_mix_set_rate_and_parent(struct clk_hw *hw,
 	return _set_rate(mix, mux_val, div_val, 1, 1);
 }
 
-static u8 mmp_clk_mix_get_parent(struct clk_hw *hw)
+static struct clk_hw *mmp_clk_mix_get_parent(struct clk_hw *hw)
 {
 	struct mmp_clk_mix *mix = to_clk_mix(hw);
 	struct mmp_clk_mix_reg_info *ri = &mix->reg_info;
@@ -309,7 +309,7 @@ static u8 mmp_clk_mix_get_parent(struct clk_hw *hw)
 
 	mux_val = MMP_CLK_BITS_GET_VAL(mux_div, width, shift);
 
-	return _get_mux(mix, mux_val);
+	return clk_hw_get_parent_by_index(hw, _get_mux(mix, mux_val));
 }
 
 static unsigned long mmp_clk_mix_recalc_rate(struct clk_hw *hw,
@@ -431,7 +431,7 @@ const struct clk_ops mmp_clk_mix_ops = {
 	.set_rate_and_parent = mmp_clk_mix_set_rate_and_parent,
 	.set_rate = mmp_clk_set_rate,
 	.set_parent = mmp_clk_set_parent,
-	.get_parent = mmp_clk_mix_get_parent,
+	.get_parent_hw = mmp_clk_mix_get_parent,
 	.recalc_rate = mmp_clk_mix_recalc_rate,
 	.init = mmp_clk_mix_init,
 };
