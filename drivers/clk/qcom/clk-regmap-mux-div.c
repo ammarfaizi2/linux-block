@@ -160,7 +160,7 @@ static int __mux_div_set_rate_and_parent(struct clk_hw *hw, unsigned long rate,
 	return ret;
 }
 
-static u8 mux_div_get_parent(struct clk_hw *hw)
+static struct clk_hw *mux_div_get_parent(struct clk_hw *hw)
 {
 	struct clk_regmap_mux_div *md = to_clk_regmap_mux_div(hw);
 	const char *name = clk_hw_get_name(hw);
@@ -170,10 +170,10 @@ static u8 mux_div_get_parent(struct clk_hw *hw)
 
 	for (i = 0; i < clk_hw_get_num_parents(hw); i++)
 		if (src == md->parent_map[i])
-			return i;
+			return clk_hw_get_parent_by_index(hw, i);
 
 	pr_err("%s: Can't find parent with src %d\n", name, src);
-	return 0;
+	return clk_hw_get_parent_by_index(hw, 0);
 }
 
 static int mux_div_set_parent(struct clk_hw *hw, u8 index)
@@ -221,7 +221,7 @@ static unsigned long mux_div_recalc_rate(struct clk_hw *hw, unsigned long prate)
 }
 
 const struct clk_ops clk_regmap_mux_div_ops = {
-	.get_parent = mux_div_get_parent,
+	.get_parent_hw = mux_div_get_parent,
 	.set_parent = mux_div_set_parent,
 	.set_rate = mux_div_set_rate,
 	.set_rate_and_parent = mux_div_set_rate_and_parent,

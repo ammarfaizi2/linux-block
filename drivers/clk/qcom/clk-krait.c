@@ -76,7 +76,7 @@ static int krait_mux_set_parent(struct clk_hw *hw, u8 index)
 	return 0;
 }
 
-static u8 krait_mux_get_parent(struct clk_hw *hw)
+static struct clk_hw *krait_mux_get_parent(struct clk_hw *hw)
 {
 	struct krait_mux_clk *mux = to_krait_mux_clk(hw);
 	u32 sel;
@@ -86,12 +86,13 @@ static u8 krait_mux_get_parent(struct clk_hw *hw)
 	sel &= mux->mask;
 	mux->en_mask = sel;
 
-	return clk_mux_val_to_index(hw, mux->parent_map, 0, sel);
+	return clk_hw_get_parent_by_index(hw,
+					  clk_mux_val_to_index(hw, mux->parent_map, 0, sel));
 }
 
 const struct clk_ops krait_mux_clk_ops = {
 	.set_parent = krait_mux_set_parent,
-	.get_parent = krait_mux_get_parent,
+	.get_parent_hw = krait_mux_get_parent,
 	.determine_rate = __clk_mux_determine_rate_closest,
 };
 EXPORT_SYMBOL_GPL(krait_mux_clk_ops);

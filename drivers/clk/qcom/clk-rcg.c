@@ -34,7 +34,7 @@ static u32 src_to_ns(struct src_sel *s, u8 src, u32 ns)
 	return ns;
 }
 
-static u8 clk_rcg_get_parent(struct clk_hw *hw)
+static struct clk_hw *clk_rcg_get_parent(struct clk_hw *hw)
 {
 	struct clk_rcg *rcg = to_clk_rcg(hw);
 	int num_parents = clk_hw_get_num_parents(hw);
@@ -47,12 +47,12 @@ static u8 clk_rcg_get_parent(struct clk_hw *hw)
 	ns = ns_to_src(&rcg->s, ns);
 	for (i = 0; i < num_parents; i++)
 		if (ns == rcg->s.parent_map[i].cfg)
-			return i;
+			return clk_hw_get_parent_by_index(hw, i);
 
 err:
 	pr_debug("%s: Clock %s has invalid parent, using default.\n",
 		 __func__, clk_hw_get_name(hw));
-	return 0;
+	return clk_hw_get_parent_by_index(hw, 0);
 }
 
 static int reg_to_bank(struct clk_dyn_rcg *rcg, u32 bank)
@@ -61,7 +61,7 @@ static int reg_to_bank(struct clk_dyn_rcg *rcg, u32 bank)
 	return !!bank;
 }
 
-static u8 clk_dyn_rcg_get_parent(struct clk_hw *hw)
+static struct clk_hw *clk_dyn_rcg_get_parent(struct clk_hw *hw)
 {
 	struct clk_dyn_rcg *rcg = to_clk_dyn_rcg(hw);
 	int num_parents = clk_hw_get_num_parents(hw);
@@ -83,12 +83,12 @@ static u8 clk_dyn_rcg_get_parent(struct clk_hw *hw)
 
 	for (i = 0; i < num_parents; i++)
 		if (ns == s->parent_map[i].cfg)
-			return i;
+			return clk_hw_get_parent_by_index(hw, i);
 
 err:
 	pr_debug("%s: Clock %s has invalid parent, using default.\n",
 		 __func__, clk_hw_get_name(hw));
-	return 0;
+	return clk_hw_get_parent_by_index(hw, 0);
 }
 
 static int clk_rcg_set_parent(struct clk_hw *hw, u8 index)
@@ -821,7 +821,7 @@ static int clk_dyn_rcg_set_rate_and_parent(struct clk_hw *hw,
 const struct clk_ops clk_rcg_ops = {
 	.enable = clk_enable_regmap,
 	.disable = clk_disable_regmap,
-	.get_parent = clk_rcg_get_parent,
+	.get_parent_hw = clk_rcg_get_parent,
 	.set_parent = clk_rcg_set_parent,
 	.recalc_rate = clk_rcg_recalc_rate,
 	.determine_rate = clk_rcg_determine_rate,
@@ -832,7 +832,7 @@ EXPORT_SYMBOL_GPL(clk_rcg_ops);
 const struct clk_ops clk_rcg_floor_ops = {
 	.enable = clk_enable_regmap,
 	.disable = clk_disable_regmap,
-	.get_parent = clk_rcg_get_parent,
+	.get_parent_hw = clk_rcg_get_parent,
 	.set_parent = clk_rcg_set_parent,
 	.recalc_rate = clk_rcg_recalc_rate,
 	.determine_rate = clk_rcg_determine_rate,
@@ -843,7 +843,7 @@ EXPORT_SYMBOL_GPL(clk_rcg_floor_ops);
 const struct clk_ops clk_rcg_bypass_ops = {
 	.enable = clk_enable_regmap,
 	.disable = clk_disable_regmap,
-	.get_parent = clk_rcg_get_parent,
+	.get_parent_hw = clk_rcg_get_parent,
 	.set_parent = clk_rcg_set_parent,
 	.recalc_rate = clk_rcg_recalc_rate,
 	.determine_rate = clk_rcg_bypass_determine_rate,
@@ -854,7 +854,7 @@ EXPORT_SYMBOL_GPL(clk_rcg_bypass_ops);
 const struct clk_ops clk_rcg_bypass2_ops = {
 	.enable = clk_enable_regmap,
 	.disable = clk_disable_regmap,
-	.get_parent = clk_rcg_get_parent,
+	.get_parent_hw = clk_rcg_get_parent,
 	.set_parent = clk_rcg_set_parent,
 	.recalc_rate = clk_rcg_recalc_rate,
 	.determine_rate = clk_rcg_bypass2_determine_rate,
@@ -866,7 +866,7 @@ EXPORT_SYMBOL_GPL(clk_rcg_bypass2_ops);
 const struct clk_ops clk_rcg_pixel_ops = {
 	.enable = clk_enable_regmap,
 	.disable = clk_disable_regmap,
-	.get_parent = clk_rcg_get_parent,
+	.get_parent_hw = clk_rcg_get_parent,
 	.set_parent = clk_rcg_set_parent,
 	.recalc_rate = clk_rcg_recalc_rate,
 	.determine_rate = clk_rcg_pixel_determine_rate,
@@ -878,7 +878,7 @@ EXPORT_SYMBOL_GPL(clk_rcg_pixel_ops);
 const struct clk_ops clk_rcg_esc_ops = {
 	.enable = clk_enable_regmap,
 	.disable = clk_disable_regmap,
-	.get_parent = clk_rcg_get_parent,
+	.get_parent_hw = clk_rcg_get_parent,
 	.set_parent = clk_rcg_set_parent,
 	.recalc_rate = clk_rcg_recalc_rate,
 	.determine_rate = clk_rcg_esc_determine_rate,
@@ -890,7 +890,7 @@ EXPORT_SYMBOL_GPL(clk_rcg_esc_ops);
 const struct clk_ops clk_rcg_lcc_ops = {
 	.enable = clk_rcg_lcc_enable,
 	.disable = clk_rcg_lcc_disable,
-	.get_parent = clk_rcg_get_parent,
+	.get_parent_hw = clk_rcg_get_parent,
 	.set_parent = clk_rcg_set_parent,
 	.recalc_rate = clk_rcg_recalc_rate,
 	.determine_rate = clk_rcg_determine_rate,
@@ -902,7 +902,7 @@ const struct clk_ops clk_dyn_rcg_ops = {
 	.enable = clk_enable_regmap,
 	.is_enabled = clk_is_enabled_regmap,
 	.disable = clk_disable_regmap,
-	.get_parent = clk_dyn_rcg_get_parent,
+	.get_parent_hw = clk_dyn_rcg_get_parent,
 	.set_parent = clk_dyn_rcg_set_parent,
 	.recalc_rate = clk_dyn_rcg_recalc_rate,
 	.determine_rate = clk_dyn_rcg_determine_rate,

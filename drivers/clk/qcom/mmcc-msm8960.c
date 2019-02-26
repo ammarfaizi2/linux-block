@@ -599,28 +599,29 @@ err:
 	return ret;
 }
 
-static u8 pix_rdi_get_parent(struct clk_hw *hw)
+static struct clk_hw *pix_rdi_get_parent(struct clk_hw *hw)
 {
 	u32 val;
+	int idx = 0;
 	struct clk_pix_rdi *rdi = to_clk_pix_rdi(hw);
 
-
 	regmap_read(rdi->clkr.regmap, rdi->s2_reg, &val);
-	if (val & rdi->s2_mask)
-		return 2;
+	if (val & rdi->s2_mask) {
+		idx = 2;
+	} else {
+		regmap_read(rdi->clkr.regmap, rdi->s_reg, &val);
+		if (val & rdi->s_mask)
+			idx = 1;
+	}
 
-	regmap_read(rdi->clkr.regmap, rdi->s_reg, &val);
-	if (val & rdi->s_mask)
-		return 1;
-
-	return 0;
+	return clk_hw_get_parent_by_index(hw, idx);
 }
 
 static const struct clk_ops clk_ops_pix_rdi = {
 	.enable = clk_enable_regmap,
 	.disable = clk_disable_regmap,
 	.set_parent = pix_rdi_set_parent,
-	.get_parent = pix_rdi_get_parent,
+	.get_parent_hw = pix_rdi_get_parent,
 	.determine_rate = __clk_mux_determine_rate,
 };
 
