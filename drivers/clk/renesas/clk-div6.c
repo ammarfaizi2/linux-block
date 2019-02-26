@@ -162,25 +162,25 @@ static int cpg_div6_clock_set_rate(struct clk_hw *hw, unsigned long rate,
 	return 0;
 }
 
-static u8 cpg_div6_clock_get_parent(struct clk_hw *hw)
+static struct clk_hw *cpg_div6_clock_get_parent(struct clk_hw *hw)
 {
 	struct div6_clock *clock = to_div6_clock(hw);
 	unsigned int i;
 	u8 hw_index;
 
 	if (clock->src_mask == 0)
-		return 0;
+		return clk_hw_get_parent_by_index(hw, 0);
 
 	hw_index = (readl(clock->reg) & clock->src_mask) >>
 		   __ffs(clock->src_mask);
 	for (i = 0; i < clk_hw_get_num_parents(hw); i++) {
 		if (clock->parents[i] == hw_index)
-			return i;
+			return clk_hw_get_parent_by_index(hw, i);
 	}
 
 	pr_err("%s: %s DIV6 clock set to invalid parent %u\n",
 	       __func__, clk_hw_get_name(hw), hw_index);
-	return 0;
+	return clk_hw_get_parent_by_index(hw, 0);
 }
 
 static int cpg_div6_clock_set_parent(struct clk_hw *hw, u8 index)
@@ -200,7 +200,7 @@ static const struct clk_ops cpg_div6_clock_ops = {
 	.enable = cpg_div6_clock_enable,
 	.disable = cpg_div6_clock_disable,
 	.is_enabled = cpg_div6_clock_is_enabled,
-	.get_parent = cpg_div6_clock_get_parent,
+	.get_parent_hw = cpg_div6_clock_get_parent,
 	.set_parent = cpg_div6_clock_set_parent,
 	.recalc_rate = cpg_div6_clock_recalc_rate,
 	.determine_rate = cpg_div6_clock_determine_rate,

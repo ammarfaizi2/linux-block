@@ -756,11 +756,12 @@ struct r9a06g032_clk_bitsel {
 #define to_clk_bitselect(_hw) \
 		container_of(_hw, struct r9a06g032_clk_bitsel, hw)
 
-static u8 r9a06g032_clk_mux_get_parent(struct clk_hw *hw)
+static struct clk_hw *r9a06g032_clk_mux_get_parent(struct clk_hw *hw)
 {
 	struct r9a06g032_clk_bitsel *set = to_clk_bitselect(hw);
 
-	return clk_rdesc_get(set->clocks, set->selector);
+	return clk_hw_get_parent_by_index(hw,
+					  clk_rdesc_get(set->clocks, set->selector));
 }
 
 static int r9a06g032_clk_mux_set_parent(struct clk_hw *hw, u8 index)
@@ -774,7 +775,7 @@ static int r9a06g032_clk_mux_set_parent(struct clk_hw *hw, u8 index)
 }
 
 static const struct clk_ops clk_bitselect_ops = {
-	.get_parent = r9a06g032_clk_mux_get_parent,
+	.get_parent_hw = r9a06g032_clk_mux_get_parent,
 	.set_parent = r9a06g032_clk_mux_set_parent,
 };
 
