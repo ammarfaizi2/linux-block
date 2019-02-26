@@ -75,9 +75,7 @@ void ath11k_core_free_bdf(struct ath11k_base *sc, struct ath11k_board_data *bd)
 	if (!IS_ERR(bd->fw))
 		release_firmware(bd->fw);
 
-	bd->fw = NULL;
-	bd->data = NULL;
-	bd->len = 0;
+	memset(bd, 0, sizeof(*bd));
 }
 
 static int ath11k_core_parse_bd_ie_board(struct ath11k_base *sc,
