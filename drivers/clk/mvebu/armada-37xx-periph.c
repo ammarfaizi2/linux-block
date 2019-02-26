@@ -427,7 +427,7 @@ static unsigned int armada_3700_pm_dvfs_get_cpu_parent(struct regmap *base)
 	return (sel >> offset) & ARMADA_37XX_NB_TBG_SEL_MASK;
 }
 
-static u8 clk_pm_cpu_get_parent(struct clk_hw *hw)
+static struct clk_hw *clk_pm_cpu_get_parent(struct clk_hw *hw)
 {
 	struct clk_pm_cpu *pm_cpu = to_clk_pm_cpu(hw);
 	u32 val;
@@ -439,7 +439,7 @@ static u8 clk_pm_cpu_get_parent(struct clk_hw *hw)
 		val &= pm_cpu->mask_mux;
 	}
 
-	return val;
+	return clk_hw_get_parent_by_index(hw, val);
 }
 
 static unsigned long clk_pm_cpu_recalc_rate(struct clk_hw *hw,
@@ -600,7 +600,7 @@ static int clk_pm_cpu_set_rate(struct clk_hw *hw, unsigned long rate,
 }
 
 static const struct clk_ops clk_pm_cpu_ops = {
-	.get_parent = clk_pm_cpu_get_parent,
+	.get_parent_hw = clk_pm_cpu_get_parent,
 	.round_rate = clk_pm_cpu_round_rate,
 	.set_rate = clk_pm_cpu_set_rate,
 	.recalc_rate = clk_pm_cpu_recalc_rate,
