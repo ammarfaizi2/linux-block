@@ -11,7 +11,7 @@
 
 #include "clk.h"
 
-static u8 clk_periph_get_parent(struct clk_hw *hw)
+static struct clk_hw *clk_periph_get_parent(struct clk_hw *hw)
 {
 	struct tegra_clk_periph *periph = to_clk_periph(hw);
 	const struct clk_ops *mux_ops = periph->mux_ops;
@@ -19,7 +19,7 @@ static u8 clk_periph_get_parent(struct clk_hw *hw)
 
 	__clk_hw_set_clk(mux_hw, hw);
 
-	return mux_ops->get_parent(mux_hw);
+	return clk_hw_get_parent_by_index(hw, mux_ops->get_parent(mux_hw));
 }
 
 static int clk_periph_set_parent(struct clk_hw *hw, u8 index)
@@ -127,7 +127,7 @@ static void clk_periph_restore_context(struct clk_hw *hw)
 }
 
 const struct clk_ops tegra_clk_periph_ops = {
-	.get_parent = clk_periph_get_parent,
+	.get_parent_hw = clk_periph_get_parent,
 	.set_parent = clk_periph_set_parent,
 	.recalc_rate = clk_periph_recalc_rate,
 	.round_rate = clk_periph_round_rate,
@@ -140,7 +140,7 @@ const struct clk_ops tegra_clk_periph_ops = {
 };
 
 static const struct clk_ops tegra_clk_periph_nodiv_ops = {
-	.get_parent = clk_periph_get_parent,
+	.get_parent_hw = clk_periph_get_parent,
 	.set_parent = clk_periph_set_parent,
 	.is_enabled = clk_periph_is_enabled,
 	.enable = clk_periph_enable,
@@ -150,7 +150,7 @@ static const struct clk_ops tegra_clk_periph_nodiv_ops = {
 };
 
 static const struct clk_ops tegra_clk_periph_no_gate_ops = {
-	.get_parent = clk_periph_get_parent,
+	.get_parent_hw = clk_periph_get_parent,
 	.set_parent = clk_periph_set_parent,
 	.recalc_rate = clk_periph_recalc_rate,
 	.round_rate = clk_periph_round_rate,

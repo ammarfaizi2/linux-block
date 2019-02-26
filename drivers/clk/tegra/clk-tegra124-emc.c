@@ -160,7 +160,7 @@ static int emc_determine_rate(struct clk_hw *hw, struct clk_rate_request *req)
 	return 0;
 }
 
-static u8 emc_get_parent(struct clk_hw *hw)
+static u8 emc_get_parent_index(struct clk_hw *hw)
 {
 	struct tegra_clk_emc *tegra;
 	u32 val;
@@ -169,8 +169,14 @@ static u8 emc_get_parent(struct clk_hw *hw)
 
 	val = readl(tegra->clk_regs + CLK_SOURCE_EMC);
 
-	return (val >> CLK_SOURCE_EMC_EMC_2X_CLK_SRC_SHIFT)
-		& CLK_SOURCE_EMC_EMC_2X_CLK_SRC_MASK;
+	return (val >> CLK_SOURCE_EMC_EMC_2X_CLK_SRC_SHIFT) & CLK_SOURCE_EMC_EMC_2X_CLK_SRC_MASK;
+}
+
+static struct clk_hw *emc_get_parent(struct clk_hw *hw)
+{
+	u8 index = emc_get_parent_index(hw);
+
+	return clk_hw_get_parent_by_index(hw, index);
 }
 
 static struct tegra_emc *emc_ensure_emc_driver(struct tegra_clk_emc *tegra)
@@ -221,7 +227,7 @@ static int emc_set_timing(struct tegra_clk_emc *tegra,
 	pr_debug("going to rate %ld prate %ld p %s\n", timing->rate,
 		 timing->parent_rate, __clk_get_name(timing->parent));
 
-	if (emc_get_parent(&tegra->hw) == timing->parent_index &&
+	if (emc_get_parent_index(&tegra->hw) == timing->parent_index &&
 	    clk_get_rate(timing->parent) != timing->parent_rate) {
 		WARN_ONCE(1, "parent %s rate mismatch %lu %lu\n",
 			  __clk_get_name(timing->parent),
@@ -352,7 +358,7 @@ static int emc_set_rate(struct clk_hw *hw, unsigned long rate,
 		return -EINVAL;
 	}
 
-	if (emc_parent_clk_sources[emc_get_parent(hw)] ==
+	if (emc_parent_clk_sources[emc_get_parent_index(hw)] ==
 	    emc_parent_clk_sources[timing->parent_index] &&
 	    clk_get_rate(timing->parent) != timing->parent_rate) {
 		/*
@@ -480,7 +486,7 @@ static const struct clk_ops tegra_clk_emc_ops = {
 	.recalc_rate = emc_recalc_rate,
 	.determine_rate = emc_determine_rate,
 	.set_rate = emc_set_rate,
-	.get_parent = emc_get_parent,
+	.get_parent_hw = emc_get_parent,
 };
 
 struct clk *tegra124_clk_register_emc(void __iomem *base, struct device_node *np,
@@ -539,8 +545,7 @@ struct clk *tegra124_clk_register_emc(void __iomem *base, struct device_node *np
 	if (IS_ERR(clk))
 		return clk;
 
-	tegra->prev_parent = clk_hw_get_parent_by_index(
-		&tegra->hw, emc_get_parent(&tegra->hw))->clk;
+	tegra->prev_parent = clk_hw_get_clk(emc_get_parent(&tegra->hw), NULL);
 	tegra->changing_timing = false;
 
 	/* Allow debugging tools to see the EMC clock */

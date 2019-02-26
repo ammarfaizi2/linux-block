@@ -38,7 +38,7 @@ static const u8 mux_non_lj_idx[] = {
 	[0] = 0, [1] = 3, [2] = 7, [3] = 4, [4] = 6
 };
 
-static u8 clk_sdmmc_mux_get_parent(struct clk_hw *hw)
+static u8 __clk_sdmmc_mux_get_parent(struct clk_hw *hw)
 {
 	struct tegra_sdmmc_mux *sdmmc_mux = to_clk_sdmmc_mux(hw);
 	int num_parents, i;
@@ -54,14 +54,20 @@ static u8 clk_sdmmc_mux_get_parent(struct clk_hw *hw)
 	else
 		mux_idx = mux_lj_idx;
 
-	for (i = 0; i < num_parents; i++) {
+	for (i = 0; i < num_parents; i++)
 		if (mux_idx[i] == src)
 			return i;
-	}
 
 	WARN(1, "Unknown parent selector %d\n", src);
 
 	return 0;
+}
+
+static struct clk_hw *clk_sdmmc_mux_get_parent(struct clk_hw *hw)
+{
+	u8 idx  = __clk_sdmmc_mux_get_parent(hw);
+
+	return clk_hw_get_parent_by_index(hw, idx);
 }
 
 static int clk_sdmmc_mux_set_parent(struct clk_hw *hw, u8 index)
@@ -146,7 +152,7 @@ static int clk_sdmmc_mux_set_rate(struct clk_hw *hw, unsigned long rate,
 	if (sdmmc_mux->lock)
 		spin_lock_irqsave(sdmmc_mux->lock, flags);
 
-	src = clk_sdmmc_mux_get_parent(hw);
+	src = __clk_sdmmc_mux_get_parent(hw);
 	if (div)
 		src = mux_non_lj_idx[src];
 	else
@@ -219,7 +225,7 @@ static void clk_sdmmc_mux_restore_context(struct clk_hw *hw)
 }
 
 static const struct clk_ops tegra_clk_sdmmc_mux_ops = {
-	.get_parent = clk_sdmmc_mux_get_parent,
+	.get_parent_hw = clk_sdmmc_mux_get_parent,
 	.set_parent = clk_sdmmc_mux_set_parent,
 	.determine_rate = clk_sdmmc_mux_determine_rate,
 	.recalc_rate = clk_sdmmc_mux_recalc_rate,

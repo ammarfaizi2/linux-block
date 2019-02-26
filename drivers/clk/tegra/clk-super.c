@@ -31,7 +31,7 @@
 #define CCLK_SRC_PLLP_OUT0 4
 #define CCLK_SRC_PLLP_OUT4 5
 
-static u8 clk_super_get_parent(struct clk_hw *hw)
+static u8 __clk_super_get_parent(struct clk_hw *hw)
 {
 	struct tegra_clk_super_mux *mux = to_clk_super_mux(hw);
 	u32 val, state;
@@ -60,6 +60,13 @@ static u8 clk_super_get_parent(struct clk_hw *hw)
 	return source;
 }
 
+static struct clk_hw *clk_super_get_parent(struct clk_hw *hw)
+{
+	u8 index = __clk_super_get_parent(hw);
+
+	return clk_hw_get_parent_by_index(hw, index);
+}
+
 static int clk_super_set_parent(struct clk_hw *hw, u8 index)
 {
 	struct tegra_clk_super_mux *mux = to_clk_super_mux(hw);
@@ -86,7 +93,7 @@ static int clk_super_set_parent(struct clk_hw *hw, u8 index)
 	 */
 	if ((mux->flags & TEGRA_DIVIDER_2) && ((index == mux->div2_index) ||
 					       (index == mux->pllx_index))) {
-		parent_index = clk_super_get_parent(hw);
+		parent_index = __clk_super_get_parent(hw);
 		if ((parent_index == mux->div2_index) ||
 		    (parent_index == mux->pllx_index)) {
 			err = -EINVAL;
@@ -136,7 +143,7 @@ static void clk_super_mux_restore_context(struct clk_hw *hw)
 }
 
 static const struct clk_ops tegra_clk_super_mux_ops = {
-	.get_parent = clk_super_get_parent,
+	.get_parent_hw = clk_super_get_parent,
 	.set_parent = clk_super_set_parent,
 	.restore_context = clk_super_mux_restore_context,
 };
@@ -189,7 +196,7 @@ static void clk_super_restore_context(struct clk_hw *hw)
 }
 
 const struct clk_ops tegra_clk_super_ops = {
-	.get_parent = clk_super_get_parent,
+	.get_parent_hw = clk_super_get_parent,
 	.set_parent = clk_super_set_parent,
 	.set_rate = clk_super_set_rate,
 	.round_rate = clk_super_round_rate,
