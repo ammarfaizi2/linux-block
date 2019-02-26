@@ -860,25 +860,23 @@ static int mux_set_parent(struct clk_hw *hw, u8 idx)
 	return 0;
 }
 
-static u8 mux_get_parent(struct clk_hw *hw)
+static struct clk_hw *mux_get_parent(struct clk_hw *hw)
 {
 	struct mux_hwclock *hwc = to_mux_hwclock(hw);
 	u32 clksel;
-	s8 ret;
+	int ret;
 
 	clksel = (cg_in(hwc->cg, hwc->reg) & CLKSEL_MASK) >> CLKSEL_SHIFT;
 
 	ret = hwc->clksel_to_parent[clksel];
-	if (ret < 0) {
+	if (ret < 0)
 		pr_err("%s: mux at %p has bad clksel\n", __func__, hwc->reg);
-		return 0;
-	}
 
-	return ret;
+	return clk_hw_get_parent_by_index(hw, ret);
 }
 
 static const struct clk_ops cmux_ops = {
-	.get_parent = mux_get_parent,
+	.get_parent_hw = mux_get_parent,
 	.set_parent = mux_set_parent,
 };
 
@@ -887,7 +885,7 @@ static const struct clk_ops cmux_ops = {
  * sanitized for additional restrictions.
  */
 static const struct clk_ops hwaccel_ops = {
-	.get_parent = mux_get_parent,
+	.get_parent_hw = mux_get_parent,
 };
 
 static const struct clockgen_pll_div *get_pll_div(struct clockgen *cg,
