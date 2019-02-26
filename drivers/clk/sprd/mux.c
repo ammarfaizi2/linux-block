@@ -36,11 +36,12 @@ u8 sprd_mux_helper_get_parent(const struct sprd_clk_common *common,
 }
 EXPORT_SYMBOL_GPL(sprd_mux_helper_get_parent);
 
-static u8 sprd_mux_get_parent(struct clk_hw *hw)
+static struct clk_hw *sprd_mux_get_parent(struct clk_hw *hw)
 {
 	struct sprd_mux *cm = hw_to_sprd_mux(hw);
 
-	return sprd_mux_helper_get_parent(&cm->common, &cm->mux);
+	return clk_hw_get_parent_by_index(hw,
+					  sprd_mux_helper_get_parent(&cm->common, &cm->mux));
 }
 
 int sprd_mux_helper_set_parent(const struct sprd_clk_common *common,
@@ -69,7 +70,7 @@ static int sprd_mux_set_parent(struct clk_hw *hw, u8 index)
 }
 
 const struct clk_ops sprd_mux_ops = {
-	.get_parent = sprd_mux_get_parent,
+	.get_parent_hw = sprd_mux_get_parent,
 	.set_parent = sprd_mux_set_parent,
 	.determine_rate = __clk_mux_determine_rate,
 };

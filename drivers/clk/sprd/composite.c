@@ -35,11 +35,12 @@ static int sprd_comp_set_rate(struct clk_hw *hw, unsigned long rate,
 				       rate, parent_rate);
 }
 
-static u8 sprd_comp_get_parent(struct clk_hw *hw)
+static struct clk_hw *sprd_comp_get_parent(struct clk_hw *hw)
 {
 	struct sprd_comp *cc = hw_to_sprd_comp(hw);
 
-	return sprd_mux_helper_get_parent(&cc->common, &cc->mux);
+	return clk_hw_get_parent_by_index(hw,
+					  sprd_mux_helper_get_parent(&cc->common, &cc->mux));
 }
 
 static int sprd_comp_set_parent(struct clk_hw *hw, u8 index)
@@ -50,7 +51,7 @@ static int sprd_comp_set_parent(struct clk_hw *hw, u8 index)
 }
 
 const struct clk_ops sprd_comp_ops = {
-	.get_parent	= sprd_comp_get_parent,
+	.get_parent_hw	= sprd_comp_get_parent,
 	.set_parent	= sprd_comp_set_parent,
 
 	.round_rate	= sprd_comp_round_rate,
