@@ -32,11 +32,12 @@ static inline struct clk_fixup_mux *to_clk_fixup_mux(struct clk_hw *hw)
 	return container_of(mux, struct clk_fixup_mux, mux);
 }
 
-static u8 clk_fixup_mux_get_parent(struct clk_hw *hw)
+static struct clk_hw *clk_fixup_mux_get_parent(struct clk_hw *hw)
 {
 	struct clk_fixup_mux *fixup_mux = to_clk_fixup_mux(hw);
 
-	return fixup_mux->ops->get_parent(&fixup_mux->mux.hw);
+	return clk_hw_get_parent_by_index(hw,
+					  fixup_mux->ops->get_parent(&fixup_mux->mux.hw));
 }
 
 static int clk_fixup_mux_set_parent(struct clk_hw *hw, u8 index)
@@ -60,7 +61,7 @@ static int clk_fixup_mux_set_parent(struct clk_hw *hw, u8 index)
 }
 
 static const struct clk_ops clk_fixup_mux_ops = {
-	.get_parent = clk_fixup_mux_get_parent,
+	.get_parent_hw = clk_fixup_mux_get_parent,
 	.set_parent = clk_fixup_mux_set_parent,
 };
 

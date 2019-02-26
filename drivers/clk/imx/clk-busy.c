@@ -128,11 +128,12 @@ static inline struct clk_busy_mux *to_clk_busy_mux(struct clk_hw *hw)
 	return container_of(mux, struct clk_busy_mux, mux);
 }
 
-static u8 clk_busy_mux_get_parent(struct clk_hw *hw)
+static struct clk_hw *clk_busy_mux_get_parent(struct clk_hw *hw)
 {
 	struct clk_busy_mux *busy = to_clk_busy_mux(hw);
 
-	return busy->mux_ops->get_parent(&busy->mux.hw);
+	return clk_hw_get_parent_by_index(hw,
+					  busy->mux_ops->get_parent(&busy->mux.hw));
 }
 
 static int clk_busy_mux_set_parent(struct clk_hw *hw, u8 index)
@@ -148,7 +149,7 @@ static int clk_busy_mux_set_parent(struct clk_hw *hw, u8 index)
 }
 
 static const struct clk_ops clk_busy_mux_ops = {
-	.get_parent = clk_busy_mux_get_parent,
+	.get_parent_hw = clk_busy_mux_get_parent,
 	.set_parent = clk_busy_mux_set_parent,
 };
 
