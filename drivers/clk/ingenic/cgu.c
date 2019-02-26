@@ -305,7 +305,7 @@ static const struct clk_ops ingenic_pll_ops = {
  * Operations for all non-PLL clocks
  */
 
-static u8 ingenic_clk_get_parent(struct clk_hw *hw)
+static u8 ingenic_clk_get_parent_index(struct clk_hw *hw)
 {
 	struct ingenic_clk *ingenic_clk = to_ingenic_clk(hw);
 	const struct ingenic_cgu_clk_info *clk_info = to_clk_info(ingenic_clk);
@@ -329,6 +329,13 @@ static u8 ingenic_clk_get_parent(struct clk_hw *hw)
 	}
 
 	return idx;
+}
+
+static struct clk_hw *ingenic_clk_get_parent(struct clk_hw *hw)
+{
+	u8 idx = ingenic_clk_get_parent_index(hw);
+
+	return clk_hw_get_parent_by_index(hw, idx);
 }
 
 static int ingenic_clk_set_parent(struct clk_hw *hw, u8 idx)
@@ -389,7 +396,7 @@ ingenic_clk_recalc_rate(struct clk_hw *hw, unsigned long parent_rate)
 	u8 parent;
 
 	if (clk_info->type & CGU_CLK_DIV) {
-		parent = ingenic_clk_get_parent(hw);
+		parent = ingenic_clk_get_parent_index(hw);
 
 		if (!(clk_info->div.bypass_mask & BIT(parent))) {
 			div_reg = readl(cgu->base + clk_info->div.reg);
@@ -439,7 +446,7 @@ ingenic_clk_calc_div(struct clk_hw *hw,
 	unsigned int div, hw_div;
 	u8 parent;
 
-	parent = ingenic_clk_get_parent(hw);
+	parent = ingenic_clk_get_parent_index(hw);
 	if (clk_info->div.bypass_mask & BIT(parent))
 		return 1;
 
@@ -598,7 +605,7 @@ static int ingenic_clk_is_enabled(struct clk_hw *hw)
 }
 
 static const struct clk_ops ingenic_clk_ops = {
-	.get_parent = ingenic_clk_get_parent,
+	.get_parent_hw = ingenic_clk_get_parent,
 	.set_parent = ingenic_clk_set_parent,
 
 	.recalc_rate = ingenic_clk_recalc_rate,
