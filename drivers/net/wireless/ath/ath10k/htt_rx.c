@@ -2119,9 +2119,15 @@ static bool ath10k_htt_rx_proc_rx_ind_hl(struct ath10k_htt *htt,
 	hdr = (struct ieee80211_hdr *)skb->data;
 	rx_status = IEEE80211_SKB_RXCB(skb);
 	rx_status->chains |= BIT(0);
-	rx_status->signal = ATH10K_DEFAULT_NOISE_FLOOR +
-			    rx->ppdu.combined_rssi;
-	rx_status->flag &= ~RX_FLAG_NO_SIGNAL_VAL;
+	if (rx->ppdu.combined_rssi == 0) {
+		/* SDIO firmware does not provide signal */
+		rx_status->signal = 0;
+		rx_status->flag |= RX_FLAG_NO_SIGNAL_VAL;
+	} else {
+		rx_status->signal = ATH10K_DEFAULT_NOISE_FLOOR +
+			rx->ppdu.combined_rssi;
+		rx_status->flag &= ~RX_FLAG_NO_SIGNAL_VAL;
+	}
 
 	spin_lock_bh(&ar->data_lock);
 	ch = ar->scan_channel;
@@ -2210,7 +2216,7 @@ static void ath10k_htt_rx_tx_compl_ind(struct ath10k *ar,
 	__le16 msdu_id, *msdus;
 	bool rssi_enabled = false;
 	u8 msdu_count = 0, num_airtime_records, tid;
-	int i;
+	int i, htt_pad = 0;
 	struct htt_data_tx_compl_ppdu_dur *ppdu_info;
 	struct ath10k_peer *peer;
 	u16 ppdu_info_offset = 0, peer_id;
@@ -2239,9 +2245,11 @@ static void ath10k_htt_rx_tx_compl_ind(struct ath10k *ar,
 
 	msdu_count = resp->data_tx_completion.num_msdus;
 	msdus = resp->data_tx_completion.msdus;
+	rssi_enabled = ath10k_is_rssi_enable(&ar->hw_params, resp);
 
-	if (resp->data_tx_completion.flags2 & HTT_TX_CMPL_FLAG_DATA_RSSI)
-		rssi_enabled = true;
+	if (rssi_enabled)
+		htt_pad = ath10k_tx_data_rssi_get_pad_bytes(&ar->hw_params,
+							    resp);
 
 	for (i = 0; i < msdu_count; i++) {
 		msdu_id = msdus[i];
@@ -2253,10 +2261,10 @@ static void ath10k_htt_rx_tx_compl_ind(struct ath10k *ar,
 			 * last msdu id with 0xffff
 			 */
 			if (msdu_count & 0x01) {
-				msdu_id = msdus[msdu_count +  i + 1];
+				msdu_id = msdus[msdu_count +  i + 1 + htt_pad];
 				tx_done.ack_rssi = __le16_to_cpu(msdu_id);
 			} else {
-				msdu_id = msdus[msdu_count +  i];
+				msdu_id = msdus[msdu_count +  i + htt_pad];
 				tx_done.ack_rssi = __le16_to_cpu(msdu_id);
 			}
 		}

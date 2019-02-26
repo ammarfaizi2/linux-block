@@ -21,6 +21,7 @@ enum HCLGE_MBX_OPCODE {
 	HCLGE_MBX_SET_MACVLAN,		/* (VF -> PF) set unicast filter */
 	HCLGE_MBX_API_NEGOTIATE,	/* (VF -> PF) negotiate API version */
 	HCLGE_MBX_GET_QINFO,		/* (VF -> PF) get queue config */
+	HCLGE_MBX_GET_QDEPTH,		/* (VF -> PF) get queue depth */
 	HCLGE_MBX_GET_TCINFO,		/* (VF -> PF) get TC config */
 	HCLGE_MBX_GET_RETA,		/* (VF -> PF) get RETA */
 	HCLGE_MBX_GET_RSS_KEY,		/* (VF -> PF) get RSS key */
@@ -42,6 +43,8 @@ enum HCLGE_MBX_OPCODE {
 	HCLGE_MBX_GET_QID_IN_PF,	/* (VF -> PF) get queue id in pf */
 	HCLGE_MBX_LINK_STAT_MODE,	/* (PF -> VF) link mode has changed */
 	HCLGE_MBX_GET_LINK_MODE,	/* (VF -> PF) get the link mode of pf */
+
+	HCLGE_MBX_GET_VF_FLR_STATUS = 200, /* (M7 -> PF) get vf reset status */
 };
 
 /* below are per-VF mac-vlan subcodes */

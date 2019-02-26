@@ -785,6 +785,10 @@ int sock_setsockopt(struct socket *sock, int level, int optname,
 		 */
 		val = min_t(u32, val, sysctl_wmem_max);
 set_sndbuf:
+		/* Ensure val * 2 fits into an int, to prevent max_t()
+		 * from treating it as a negative value.
+		 */
+		val = min_t(int, val, INT_MAX / 2);
 		sk->sk_userlocks |= SOCK_SNDBUF_LOCK;
 		sk->sk_sndbuf = max_t(int, val * 2, SOCK_MIN_SNDBUF);
 		/* Wake up sending tasks if we upped the value. */
@@ -796,6 +800,12 @@ set_sndbuf:
 			ret = -EPERM;
 			break;
 		}
+
+		/* No negative values (to prevent underflow, as val will be
+		 * multiplied by 2).
+		 */
+		if (val < 0)
+			val = 0;
 		goto set_sndbuf;
 
 	case SO_RCVBUF:
@@ -806,6 +816,10 @@ set_sndbuf:
 		 */
 		val = min_t(u32, val, sysctl_rmem_max);
 set_rcvbuf:
+		/* Ensure val * 2 fits into an int, to prevent max_t()
+		 * from treating it as a negative value.
+		 */
+		val = min_t(int, val, INT_MAX / 2);
 		sk->sk_userlocks |= SOCK_RCVBUF_LOCK;
 		/*
 		 * We double it on the way in to account for
@@ -830,6 +844,12 @@ set_rcvbuf:
 			ret = -EPERM;
 			break;
 		}
+
+		/* No negative values (to prevent underflow, as val will be
+		 * multiplied by 2).
+		 */
+		if (val < 0)
+			val = 0;
 		goto set_rcvbuf;
 
 	case SO_KEEPALIVE:
@@ -1845,7 +1865,7 @@ struct sock *sk_clone_lock(const struct sock *sk, const gfp_t priority)
 		 */
 		sk_refcnt_debug_inc(newsk);
 		sk_set_socket(newsk, NULL);
-		newsk->sk_wq = NULL;
+		RCU_INIT_POINTER(newsk->sk_wq, NULL);
 
 		if (newsk->sk_prot->sockets_allocated)
 			sk_sockets_allocated_inc(newsk);
@@ -2475,7 +2495,7 @@ int __sk_mem_raise_allocated(struct sock *sk, int size, int amt, int kind)
 	}
 
 	if (sk_has_memory_pressure(sk)) {
-		int alloc;
+		u64 alloc;
 
 		if (!sk_under_memory_pressure(sk))
 			return 1;
@@ -2808,11 +2828,11 @@ void sock_init_data(struct socket *sock, struct sock *sk)
 
 	if (sock) {
 		sk->sk_type	=	sock->type;
-		sk->sk_wq	=	sock->wq;
+		RCU_INIT_POINTER(sk->sk_wq, sock->wq);
 		sock->sk	=	sk;
 		sk->sk_uid	=	SOCK_INODE(sock)->i_uid;
 	} else {
-		sk->sk_wq	=	NULL;
+		RCU_INIT_POINTER(sk->sk_wq, NULL);
 		sk->sk_uid	=	make_kuid(sock_net(sk)->user_ns, 0);
 	}
 

@@ -1018,8 +1018,7 @@ static int br_ip6_multicast_mld2_report(struct net_bridge *br,
 		if (!nsrcs)
 			return -EINVAL;
 
-		grec_len = sizeof(*grec) +
-			   sizeof(struct in6_addr) * ntohs(*nsrcs);
+		grec_len = struct_size(grec, grec_src, ntohs(*nsrcs));
 
 		if (!ipv6_mc_may_pull(skb, len + grec_len))
 			return -EINVAL;
@@ -1212,14 +1211,7 @@ static void br_multicast_query_received(struct net_bridge *br,
 		return;
 
 	br_multicast_update_query_timer(br, query, max_delay);
-
-	/* Based on RFC4541, section 2.1.1 IGMP Forwarding Rules,
-	 * the arrival port for IGMP Queries where the source address
-	 * is 0.0.0.0 should not be added to router port list.
-	 */
-	if ((saddr->proto == htons(ETH_P_IP) && saddr->u.ip4) ||
-	    saddr->proto == htons(ETH_P_IPV6))
-		br_multicast_mark_router(br, port);
+	br_multicast_mark_router(br, port);
 }
 
 static void br_ip4_multicast_query(struct net_bridge *br,
@@ -1616,12 +1608,7 @@ static int br_multicast_ipv4_rcv(struct net_bridge *br,
 			if (ip_hdr(skb)->protocol == IPPROTO_PIM)
 				br_multicast_pim(br, port, skb);
 		} else if (ipv4_is_all_snoopers(ip_hdr(skb)->daddr)) {
-			err = br_ip4_multicast_mrd_rcv(br, port, skb);
-
-			if (err < 0 && err != -ENOMSG) {
-				br_multicast_err_count(br, port, skb->protocol);
-				return err;
-			}
+			br_ip4_multicast_mrd_rcv(br, port, skb);
 		}
 
 		return 0;

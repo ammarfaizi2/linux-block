@@ -17,7 +17,12 @@
 #define PHY_ID_AQR105	0x03a1b4a2
 #define PHY_ID_AQR106	0x03a1b4d0
 #define PHY_ID_AQR107	0x03a1b4e0
+#define PHY_ID_AQCS109	0x03a1b5c2
 #define PHY_ID_AQR405	0x03a1b4b0
+
+#define MDIO_AN_VEND_PROV			0xc400
+#define MDIO_AN_VEND_PROV_1000BASET_FULL	BIT(15)
+#define MDIO_AN_VEND_PROV_1000BASET_HALF	BIT(14)
 
 #define MDIO_AN_TX_VEND_STATUS1			0xc800
 #define MDIO_AN_TX_VEND_STATUS1_10BASET		(0x0 << 1)
@@ -33,6 +38,10 @@
 
 #define MDIO_AN_TX_VEND_INT_MASK2		0xd401
 #define MDIO_AN_TX_VEND_INT_MASK2_LINK		BIT(0)
+
+#define MDIO_AN_RX_LP_STAT1			0xe820
+#define MDIO_AN_RX_LP_STAT1_1000BASET_FULL	BIT(15)
+#define MDIO_AN_RX_LP_STAT1_1000BASET_HALF	BIT(14)
 
 /* Vendor specific 1, MDIO_MMD_VEND1 */
 #define VEND1_GLOBAL_INT_STD_STATUS		0xfc00
@@ -63,10 +72,40 @@
 
 static int aqr_config_aneg(struct phy_device *phydev)
 {
-	linkmode_copy(phydev->supported, phy_10gbit_features);
-	linkmode_copy(phydev->advertising, phydev->supported);
+	bool changed = false;
+	u16 reg;
+	int ret;
 
-	return 0;
+	if (phydev->autoneg == AUTONEG_DISABLE)
+		return genphy_c45_pma_setup_forced(phydev);
+
+	ret = genphy_c45_an_config_aneg(phydev);
+	if (ret < 0)
+		return ret;
+	if (ret > 0)
+		changed = true;
+
+	/* Clause 45 has no standardized support for 1000BaseT, therefore
+	 * use vendor registers for this mode.
+	 */
+	reg = 0;
+	if (linkmode_test_bit(ETHTOOL_LINK_MODE_1000baseT_Full_BIT,
+			      phydev->advertising))
+		reg |= MDIO_AN_VEND_PROV_1000BASET_FULL;
+
+	if (linkmode_test_bit(ETHTOOL_LINK_MODE_1000baseT_Half_BIT,
+			      phydev->advertising))
+		reg |= MDIO_AN_VEND_PROV_1000BASET_HALF;
+
+	ret = phy_modify_mmd_changed(phydev, MDIO_MMD_AN, MDIO_AN_VEND_PROV,
+				     MDIO_AN_VEND_PROV_1000BASET_HALF |
+				     MDIO_AN_VEND_PROV_1000BASET_FULL, reg);
+	if (ret < 0)
+		return ret;
+	if (ret > 0)
+		changed = true;
+
+	return genphy_c45_check_and_restart_aneg(phydev, changed);
 }
 
 static int aqr_config_intr(struct phy_device *phydev)
@@ -119,44 +158,39 @@ static int aqr_ack_interrupt(struct phy_device *phydev)
 
 static int aqr_read_status(struct phy_device *phydev)
 {
-	int reg;
+	int val;
 
-	reg = phy_read_mmd(phydev, MDIO_MMD_AN, MDIO_STAT1);
-	reg = phy_read_mmd(phydev, MDIO_MMD_AN, MDIO_STAT1);
-	if (reg & MDIO_STAT1_LSTATUS)
-		phydev->link = 1;
-	else
-		phydev->link = 0;
+	if (phydev->autoneg == AUTONEG_ENABLE) {
+		val = phy_read_mmd(phydev, MDIO_MMD_AN, MDIO_AN_RX_LP_STAT1);
+		if (val < 0)
+			return val;
 
-	reg = phy_read_mmd(phydev, MDIO_MMD_AN, MDIO_AN_TX_VEND_STATUS1);
-	mdelay(10);
-	reg = phy_read_mmd(phydev, MDIO_MMD_AN, MDIO_AN_TX_VEND_STATUS1);
-
-	switch (reg & MDIO_AN_TX_VEND_STATUS1_RATE_MASK) {
-	case MDIO_AN_TX_VEND_STATUS1_2500BASET:
-		phydev->speed = SPEED_2500;
-		break;
-	case MDIO_AN_TX_VEND_STATUS1_1000BASET:
-		phydev->speed = SPEED_1000;
-		break;
-	case MDIO_AN_TX_VEND_STATUS1_100BASETX:
-		phydev->speed = SPEED_100;
-		break;
-	default:
-		phydev->speed = SPEED_10000;
-		break;
+		linkmode_mod_bit(ETHTOOL_LINK_MODE_1000baseT_Full_BIT,
+				 phydev->lp_advertising,
+				 val & MDIO_AN_RX_LP_STAT1_1000BASET_FULL);
+		linkmode_mod_bit(ETHTOOL_LINK_MODE_1000baseT_Half_BIT,
+				 phydev->lp_advertising,
+				 val & MDIO_AN_RX_LP_STAT1_1000BASET_HALF);
 	}
-	phydev->duplex = DUPLEX_FULL;
 
-	return 0;
+	return genphy_c45_read_status(phydev);
+}
+
+static int aqcs109_config_init(struct phy_device *phydev)
+{
+	/* AQCS109 belongs to a chip family partially supporting 10G and 5G.
+	 * PMA speed ability bits are the same for all members of the family,
+	 * AQCS109 however supports speeds up to 2.5G only.
+	 */
+	return phy_set_max_speed(phydev, SPEED_2500);
 }
 
 static struct phy_driver aqr_driver[] = {
 {
 	PHY_ID_MATCH_MODEL(PHY_ID_AQ1202),
 	.name		= "Aquantia AQ1202",
-	.features	= PHY_10GBIT_FULL_FEATURES,
 	.aneg_done	= genphy_c45_aneg_done,
+	.get_features	= genphy_c45_pma_read_abilities,
 	.config_aneg    = aqr_config_aneg,
 	.config_intr	= aqr_config_intr,
 	.ack_interrupt	= aqr_ack_interrupt,
@@ -165,8 +199,8 @@ static struct phy_driver aqr_driver[] = {
 {
 	PHY_ID_MATCH_MODEL(PHY_ID_AQ2104),
 	.name		= "Aquantia AQ2104",
-	.features	= PHY_10GBIT_FULL_FEATURES,
 	.aneg_done	= genphy_c45_aneg_done,
+	.get_features	= genphy_c45_pma_read_abilities,
 	.config_aneg    = aqr_config_aneg,
 	.config_intr	= aqr_config_intr,
 	.ack_interrupt	= aqr_ack_interrupt,
@@ -175,8 +209,8 @@ static struct phy_driver aqr_driver[] = {
 {
 	PHY_ID_MATCH_MODEL(PHY_ID_AQR105),
 	.name		= "Aquantia AQR105",
-	.features	= PHY_10GBIT_FULL_FEATURES,
 	.aneg_done	= genphy_c45_aneg_done,
+	.get_features	= genphy_c45_pma_read_abilities,
 	.config_aneg    = aqr_config_aneg,
 	.config_intr	= aqr_config_intr,
 	.ack_interrupt	= aqr_ack_interrupt,
@@ -185,8 +219,8 @@ static struct phy_driver aqr_driver[] = {
 {
 	PHY_ID_MATCH_MODEL(PHY_ID_AQR106),
 	.name		= "Aquantia AQR106",
-	.features	= PHY_10GBIT_FULL_FEATURES,
 	.aneg_done	= genphy_c45_aneg_done,
+	.get_features	= genphy_c45_pma_read_abilities,
 	.config_aneg    = aqr_config_aneg,
 	.config_intr	= aqr_config_intr,
 	.ack_interrupt	= aqr_ack_interrupt,
@@ -195,8 +229,19 @@ static struct phy_driver aqr_driver[] = {
 {
 	PHY_ID_MATCH_MODEL(PHY_ID_AQR107),
 	.name		= "Aquantia AQR107",
-	.features	= PHY_10GBIT_FULL_FEATURES,
 	.aneg_done	= genphy_c45_aneg_done,
+	.get_features	= genphy_c45_pma_read_abilities,
+	.config_aneg    = aqr_config_aneg,
+	.config_intr	= aqr_config_intr,
+	.ack_interrupt	= aqr_ack_interrupt,
+	.read_status	= aqr_read_status,
+},
+{
+	PHY_ID_MATCH_MODEL(PHY_ID_AQCS109),
+	.name		= "Aquantia AQCS109",
+	.aneg_done	= genphy_c45_aneg_done,
+	.get_features	= genphy_c45_pma_read_abilities,
+	.config_init	= aqcs109_config_init,
 	.config_aneg    = aqr_config_aneg,
 	.config_intr	= aqr_config_intr,
 	.ack_interrupt	= aqr_ack_interrupt,
@@ -205,8 +250,8 @@ static struct phy_driver aqr_driver[] = {
 {
 	PHY_ID_MATCH_MODEL(PHY_ID_AQR405),
 	.name		= "Aquantia AQR405",
-	.features	= PHY_10GBIT_FULL_FEATURES,
 	.aneg_done	= genphy_c45_aneg_done,
+	.get_features	= genphy_c45_pma_read_abilities,
 	.config_aneg    = aqr_config_aneg,
 	.config_intr	= aqr_config_intr,
 	.ack_interrupt	= aqr_ack_interrupt,
@@ -222,6 +267,7 @@ static struct mdio_device_id __maybe_unused aqr_tbl[] = {
 	{ PHY_ID_MATCH_MODEL(PHY_ID_AQR105) },
 	{ PHY_ID_MATCH_MODEL(PHY_ID_AQR106) },
 	{ PHY_ID_MATCH_MODEL(PHY_ID_AQR107) },
+	{ PHY_ID_MATCH_MODEL(PHY_ID_AQCS109) },
 	{ PHY_ID_MATCH_MODEL(PHY_ID_AQR405) },
 	{ }
 };

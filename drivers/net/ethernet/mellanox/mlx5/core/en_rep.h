@@ -37,6 +37,7 @@
 #include <linux/rhashtable.h>
 #include "eswitch.h"
 #include "en.h"
+#include "lib/port_tun.h"
 
 #ifdef CONFIG_MLX5_ESWITCH
 struct mlx5e_neigh_update_table {
@@ -71,6 +72,8 @@ struct mlx5_rep_uplink_priv {
 	 */
 	struct list_head	    tc_indr_block_priv_list;
 	struct notifier_block	    netdevice_nb;
+
+	struct mlx5_tun_entropy tun_entropy;
 };
 
 struct mlx5e_rep_priv {
@@ -148,6 +151,7 @@ struct mlx5e_encap_entry {
 	unsigned char h_dest[ETH_ALEN];	/* destination eth addr	*/
 
 	struct net_device *out_dev;
+	struct net_device *route_dev;
 	int tunnel_type;
 	int tunnel_hlen;
 	int reformat_type;

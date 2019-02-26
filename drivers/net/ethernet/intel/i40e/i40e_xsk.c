@@ -112,6 +112,11 @@ static int i40e_xsk_umem_enable(struct i40e_vsi *vsi, struct xdp_umem *umem,
 		err = i40e_queue_pair_enable(vsi, qid);
 		if (err)
 			return err;
+
+		/* Kick start the NAPI context so that receiving will start */
+		err = i40e_xsk_async_xmit(vsi->netdev, qid);
+		if (err)
+			return err;
 	}
 
 	return 0;
@@ -151,34 +156,6 @@ static int i40e_xsk_umem_disable(struct i40e_vsi *vsi, u16 qid)
 			return err;
 	}
 
-	return 0;
-}
-
-/**
- * i40e_xsk_umem_query - Queries a certain ring/qid for its UMEM
- * @vsi: Current VSI
- * @umem: UMEM associated to the ring, if any
- * @qid: Rx ring to associate UMEM to
- *
- * This function will store, if any, the UMEM associated to certain ring.
- *
- * Returns 0 on success, <0 on failure
- **/
-int i40e_xsk_umem_query(struct i40e_vsi *vsi, struct xdp_umem **umem,
-			u16 qid)
-{
-	struct net_device *netdev = vsi->netdev;
-	struct xdp_umem *queried_umem;
-
-	if (vsi->type != I40E_VSI_MAIN)
-		return -EINVAL;
-
-	queried_umem = xdp_get_umem_from_qid(netdev, qid);
-
-	if (!queried_umem)
-		return -EINVAL;
-
-	*umem = queried_umem;
 	return 0;
 }
 

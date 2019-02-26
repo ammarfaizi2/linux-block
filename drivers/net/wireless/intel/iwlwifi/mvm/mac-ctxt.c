@@ -811,9 +811,9 @@ static int iwl_mvm_mac_ctxt_cmd_p2p_device(struct iwl_mvm *mvm,
 	return iwl_mvm_mac_ctxt_send_cmd(mvm, &cmd);
 }
 
-static void iwl_mvm_mac_ctxt_set_tim(struct iwl_mvm *mvm,
-				     __le32 *tim_index, __le32 *tim_size,
-				     u8 *beacon, u32 frame_size)
+void iwl_mvm_mac_ctxt_set_tim(struct iwl_mvm *mvm,
+			      __le32 *tim_index, __le32 *tim_size,
+			      u8 *beacon, u32 frame_size)
 {
 	u32 tim_idx;
 	struct ieee80211_mgmt *mgmt = (struct ieee80211_mgmt *)beacon;
@@ -853,8 +853,8 @@ static u32 iwl_mvm_find_ie_offset(u8 *beacon, u8 eid, u32 frame_size)
 	return ie - beacon;
 }
 
-static u8 iwl_mvm_mac_ctxt_get_lowest_rate(struct ieee80211_tx_info *info,
-					   struct ieee80211_vif *vif)
+u8 iwl_mvm_mac_ctxt_get_lowest_rate(struct ieee80211_tx_info *info,
+				    struct ieee80211_vif *vif)
 {
 	u8 rate;
 
@@ -904,9 +904,9 @@ static void iwl_mvm_mac_ctxt_set_tx(struct iwl_mvm *mvm,
 
 }
 
-static int iwl_mvm_mac_ctxt_send_beacon_cmd(struct iwl_mvm *mvm,
-					    struct sk_buff *beacon,
-					    void *data, int len)
+int iwl_mvm_mac_ctxt_send_beacon_cmd(struct iwl_mvm *mvm,
+				     struct sk_buff *beacon,
+				     void *data, int len)
 {
 	struct iwl_host_cmd cmd = {
 		.id = BEACON_TEMPLATE_CMD,
@@ -1009,12 +1009,15 @@ static int iwl_mvm_mac_ctxt_send_beacon_v9(struct iwl_mvm *mvm,
 						sizeof(beacon_cmd));
 }
 
-static int iwl_mvm_mac_ctxt_send_beacon(struct iwl_mvm *mvm,
-					struct ieee80211_vif *vif,
-					struct sk_buff *beacon)
+int iwl_mvm_mac_ctxt_send_beacon(struct iwl_mvm *mvm,
+				 struct ieee80211_vif *vif,
+				 struct sk_buff *beacon)
 {
 	if (WARN_ON(!beacon))
 		return -EINVAL;
+
+	if (IWL_MVM_NON_TRANSMITTING_AP)
+		return 0;
 
 	if (!fw_has_capa(&mvm->fw->ucode_capa,
 			 IWL_UCODE_TLV_CAPA_CSA_AND_TBTT_OFFLOAD))
@@ -1040,6 +1043,11 @@ int iwl_mvm_mac_ctxt_beacon_changed(struct iwl_mvm *mvm,
 	beacon = ieee80211_beacon_get_template(mvm->hw, vif, NULL);
 	if (!beacon)
 		return -ENOMEM;
+
+#ifdef CONFIG_IWLWIFI_DEBUGFS
+	if (mvm->beacon_inject_active)
+		return -EBUSY;
+#endif
 
 	ret = iwl_mvm_mac_ctxt_send_beacon(mvm, vif, beacon);
 	dev_kfree_skb(beacon);

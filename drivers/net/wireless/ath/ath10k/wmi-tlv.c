@@ -673,6 +673,10 @@ ath10k_wmi_tlv_op_pull_mgmt_tx_compl_ev(struct ath10k *ar, struct sk_buff *skb,
 	arg->desc_id = ev->desc_id;
 	arg->status = ev->status;
 	arg->pdev_id = ev->pdev_id;
+	arg->ppdu_id = ev->ppdu_id;
+
+	if (test_bit(WMI_SERVICE_TX_DATA_ACK_RSSI, ar->wmi.svc_map))
+		arg->ack_rssi = ev->ack_rssi;
 
 	kfree(tb);
 	return 0;
@@ -682,8 +686,12 @@ struct wmi_tlv_tx_bundle_compl_parse {
 	const __le32 *num_reports;
 	const __le32 *desc_ids;
 	const __le32 *status;
+	const __le32 *ppdu_ids;
+	const __le32 *ack_rssi;
 	bool desc_ids_done;
 	bool status_done;
+	bool ppdu_ids_done;
+	bool ack_rssi_done;
 };
 
 static int
@@ -703,6 +711,12 @@ ath10k_wmi_tlv_mgmt_tx_bundle_compl_parse(struct ath10k *ar, u16 tag, u16 len,
 		} else if (!bundle_tx_compl->status_done) {
 			bundle_tx_compl->status_done = true;
 			bundle_tx_compl->status = ptr;
+		} else if (!bundle_tx_compl->ppdu_ids_done) {
+			bundle_tx_compl->ppdu_ids_done = true;
+			bundle_tx_compl->ppdu_ids = ptr;
+		} else if (!bundle_tx_compl->ack_rssi_done) {
+			bundle_tx_compl->ack_rssi_done = true;
+			bundle_tx_compl->ack_rssi = ptr;
 		}
 		break;
 	default:
@@ -733,6 +747,10 @@ static int ath10k_wmi_tlv_op_pull_mgmt_tx_bundle_compl_ev(
 	arg->num_reports = *bundle_tx_compl.num_reports;
 	arg->desc_ids = bundle_tx_compl.desc_ids;
 	arg->status = bundle_tx_compl.status;
+	arg->ppdu_ids = bundle_tx_compl.ppdu_ids;
+
+	if (test_bit(WMI_SERVICE_TX_DATA_ACK_RSSI, ar->wmi.svc_map))
+		arg->ack_rssi = bundle_tx_compl.ack_rssi;
 
 	return 0;
 }
@@ -1565,8 +1583,41 @@ ath10k_wmi_tlv_op_gen_pdev_set_param(struct ath10k *ar, u32 param_id,
 	cmd->param_id = __cpu_to_le32(param_id);
 	cmd->param_value = __cpu_to_le32(param_value);
 
-	ath10k_dbg(ar, ATH10K_DBG_WMI, "wmi tlv pdev set param\n");
+	ath10k_dbg(ar, ATH10K_DBG_WMI, "wmi tlv pdev set param %d value 0x%x\n",
+		   param_id, param_value);
 	return skb;
+}
+
+static void
+ath10k_wmi_tlv_put_host_mem_chunks(struct ath10k *ar, void *host_mem_chunks)
+{
+	struct host_memory_chunk *chunk;
+	struct wmi_tlv *tlv;
+	int i;
+	__le16 tlv_len, tlv_tag;
+
+	tlv_tag = __cpu_to_le16(WMI_TLV_TAG_STRUCT_WLAN_HOST_MEMORY_CHUNK);
+	tlv_len = __cpu_to_le16(sizeof(*chunk));
+	for (i = 0; i < ar->wmi.num_mem_chunks; i++) {
+		tlv = host_mem_chunks;
+		tlv->tag = tlv_tag;
+		tlv->len = tlv_len;
+		chunk = (void *)tlv->value;
+
+		chunk->ptr = __cpu_to_le32(ar->wmi.mem_chunks[i].paddr);
+		chunk->size = __cpu_to_le32(ar->wmi.mem_chunks[i].len);
+		chunk->req_id = __cpu_to_le32(ar->wmi.mem_chunks[i].req_id);
+
+		ath10k_dbg(ar, ATH10K_DBG_WMI,
+			   "wmi-tlv chunk %d len %d, addr 0x%llx, id 0x%x\n",
+			   i,
+			   ar->wmi.mem_chunks[i].len,
+			   (unsigned long long)ar->wmi.mem_chunks[i].paddr,
+			   ar->wmi.mem_chunks[i].req_id);
+
+		host_mem_chunks += sizeof(*tlv);
+		host_mem_chunks += sizeof(*chunk);
+	}
 }
 
 static struct sk_buff *ath10k_wmi_tlv_op_gen_init(struct ath10k *ar)
@@ -1575,11 +1626,12 @@ static struct sk_buff *ath10k_wmi_tlv_op_gen_init(struct ath10k *ar)
 	struct wmi_tlv *tlv;
 	struct wmi_tlv_init_cmd *cmd;
 	struct wmi_tlv_resource_config *cfg;
-	struct wmi_host_mem_chunks *chunks;
+	void *chunks;
 	size_t len, chunks_len;
 	void *ptr;
 
-	chunks_len = ar->wmi.num_mem_chunks * sizeof(struct host_memory_chunk);
+	chunks_len = ar->wmi.num_mem_chunks *
+		     (sizeof(struct host_memory_chunk) + sizeof(*tlv));
 	len = (sizeof(*tlv) + sizeof(*cmd)) +
 	      (sizeof(*tlv) + sizeof(*cfg)) +
 	      (sizeof(*tlv) + chunks_len);
@@ -1679,7 +1731,10 @@ static struct sk_buff *ath10k_wmi_tlv_op_gen_init(struct ath10k *ar)
 	cfg->num_ocb_schedules = __cpu_to_le32(0);
 	cfg->host_capab = __cpu_to_le32(WMI_TLV_FLAG_MGMT_BUNDLE_TX_COMPL);
 
-	ath10k_wmi_put_host_mem_chunks(ar, chunks);
+	if (test_bit(WMI_SERVICE_TX_DATA_ACK_RSSI, ar->wmi.svc_map))
+		cfg->host_capab |= __cpu_to_le32(WMI_RSRC_CFG_FLAG_TX_ACK_RSSI);
+
+	ath10k_wmi_tlv_put_host_mem_chunks(ar, chunks);
 
 	ath10k_dbg(ar, ATH10K_DBG_WMI, "wmi tlv init\n");
 	return skb;
@@ -2035,7 +2090,8 @@ ath10k_wmi_tlv_op_gen_vdev_set_param(struct ath10k *ar, u32 vdev_id,
 	cmd->param_id = __cpu_to_le32(param_id);
 	cmd->param_value = __cpu_to_le32(param_value);
 
-	ath10k_dbg(ar, ATH10K_DBG_WMI, "wmi tlv vdev set param\n");
+	ath10k_dbg(ar, ATH10K_DBG_WMI, "wmi tlv vdev %d set param %d value 0x%x\n",
+		   vdev_id, param_id, param_value);
 	return skb;
 }
 
@@ -2351,7 +2407,9 @@ ath10k_wmi_tlv_op_gen_peer_set_param(struct ath10k *ar, u32 vdev_id,
 	cmd->param_value = __cpu_to_le32(param_value);
 	ether_addr_copy(cmd->peer_macaddr.addr, peer_addr);
 
-	ath10k_dbg(ar, ATH10K_DBG_WMI, "wmi tlv peer set param\n");
+	ath10k_dbg(ar, ATH10K_DBG_WMI,
+		   "wmi tlv vdev %d peer %pM set param %d value 0x%x\n",
+		   vdev_id, peer_addr, param_id, param_value);
 	return skb;
 }
 
@@ -2745,7 +2803,9 @@ ath10k_wmi_tlv_op_gen_mgmt_tx_send(struct ath10k *ar, struct sk_buff *msdu,
 	arvif = (void *)cb->vif->drv_priv;
 	vdev_id = arvif->vdev_id;
 
-	if (WARN_ON_ONCE(!ieee80211_is_mgmt(hdr->frame_control)))
+	if (WARN_ON_ONCE(!ieee80211_is_mgmt(hdr->frame_control) &&
+			 (!(ieee80211_is_nullfunc(hdr->frame_control) ||
+			 ieee80211_is_qos_nullfunc(hdr->frame_control)))))
 		return ERR_PTR(-EINVAL);
 
 	len = sizeof(*cmd) + 2 * sizeof(*tlv);
@@ -2753,10 +2813,8 @@ ath10k_wmi_tlv_op_gen_mgmt_tx_send(struct ath10k *ar, struct sk_buff *msdu,
 	if ((ieee80211_is_action(hdr->frame_control) ||
 	     ieee80211_is_deauth(hdr->frame_control) ||
 	     ieee80211_is_disassoc(hdr->frame_control)) &&
-	     ieee80211_has_protected(hdr->frame_control)) {
-		len += IEEE80211_CCMP_MIC_LEN;
+	     ieee80211_has_protected(hdr->frame_control))
 		buf_len += IEEE80211_CCMP_MIC_LEN;
-	}
 
 	buf_len = min_t(u32, buf_len, WMI_TLV_MGMT_TX_FRAME_MAX_LEN);
 	buf_len = round_up(buf_len, 4);

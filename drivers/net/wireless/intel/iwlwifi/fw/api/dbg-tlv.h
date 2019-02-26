@@ -5,7 +5,7 @@
  *
  * GPL LICENSE SUMMARY
  *
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018 - 2019 Intel Corporation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of version 2 of the GNU General Public License as
@@ -25,7 +25,7 @@
  *
  * BSD LICENSE
  *
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018 - 2019 Intel Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -146,16 +146,17 @@ struct iwl_fw_ini_region_cfg_internal {
 
 /**
  * struct iwl_fw_ini_region_cfg_fifos - meta data of fifos region
- * @lmac1_id: bit map of lmac1 fifos to include in the region.
- * @lmac2_id: bit map of lmac2 fifos to include in the region.
+ * @fid1: fifo id 1 - bitmap of lmac tx/rx fifos to include in the region
+ * @fid2: fifo id 2 - bitmap of umac rx fifos to include in the region.
+ *	It is unused for tx.
  * @num_of_registers: number of prph registers in the region, each register is
  *	4 bytes size.
  * @header_only: none zero value indicates that this region does not include
  *	fifo data and includes only the given registers.
  */
 struct iwl_fw_ini_region_cfg_fifos {
-	__le32 lmac1_id;
-	__le32 lmac2_id;
+	__le32 fid1;
+	__le32 fid2;
 	__le32 num_of_registers;
 	__le32 header_only;
 } __packed; /* FW_DEBUG_TLV_REGION_FIFOS_S */
@@ -204,8 +205,13 @@ struct iwl_fw_ini_region_tlv {
  * struct iwl_fw_ini_trigger - (IWL_FW_INI_TLV_TYPE_DUMP_CFG)
  * Region sections define IDs and triggers that use those IDs TLV
  *
- * @trigger_id: enum &iwl_fw_ini_trigger_id
- * @ignore_default: override FW TLV with binary TLV
+ * @trigger_id: enum &iwl_fw_ini_tigger_id
+ * @override_trig: determines how apply trigger in case a trigger with the
+ *	same id is already in use. Using the first 2 bytes:
+ *	Byte 0: if 0, override trigger configuration, otherwise use the
+ *	existing configuration.
+ *	Byte 1: if 0, override trigger regions, otherwise append regions to
+ *	existing trigger.
  * @dump_delay: delay from trigger fire to dump, in usec
  * @occurrences: max amount of times to be fired
  * @ignore_consec: ignore consecutive triggers, in usec
@@ -217,7 +223,7 @@ struct iwl_fw_ini_region_tlv {
  */
 struct iwl_fw_ini_trigger {
 	__le32 trigger_id;
-	__le32 ignore_default;
+	__le32 override_trig;
 	__le32 dump_delay;
 	__le32 occurrences;
 	__le32 ignore_consec;

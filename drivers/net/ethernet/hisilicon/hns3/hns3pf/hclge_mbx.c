@@ -224,12 +224,24 @@ static int hclge_set_vf_uc_mac_addr(struct hclge_vport *vport,
 
 		hclge_rm_uc_addr_common(vport, old_addr);
 		status = hclge_add_uc_addr_common(vport, mac_addr);
-		if (status)
+		if (status) {
 			hclge_add_uc_addr_common(vport, old_addr);
+		} else {
+			hclge_rm_vport_mac_table(vport, mac_addr,
+						 false, HCLGE_MAC_ADDR_UC);
+			hclge_add_vport_mac_table(vport, mac_addr,
+						  HCLGE_MAC_ADDR_UC);
+		}
 	} else if (mbx_req->msg[1] == HCLGE_MBX_MAC_VLAN_UC_ADD) {
 		status = hclge_add_uc_addr_common(vport, mac_addr);
+		if (!status)
+			hclge_add_vport_mac_table(vport, mac_addr,
+						  HCLGE_MAC_ADDR_UC);
 	} else if (mbx_req->msg[1] == HCLGE_MBX_MAC_VLAN_UC_REMOVE) {
 		status = hclge_rm_uc_addr_common(vport, mac_addr);
+		if (!status)
+			hclge_rm_vport_mac_table(vport, mac_addr,
+						 false, HCLGE_MAC_ADDR_UC);
 	} else {
 		dev_err(&hdev->pdev->dev,
 			"failed to set unicast mac addr, unknown subcode %d\n",
@@ -255,8 +267,14 @@ static int hclge_set_vf_mc_mac_addr(struct hclge_vport *vport,
 
 	if (mbx_req->msg[1] == HCLGE_MBX_MAC_VLAN_MC_ADD) {
 		status = hclge_add_mc_addr_common(vport, mac_addr);
+		if (!status)
+			hclge_add_vport_mac_table(vport, mac_addr,
+						  HCLGE_MAC_ADDR_MC);
 	} else if (mbx_req->msg[1] == HCLGE_MBX_MAC_VLAN_MC_REMOVE) {
 		status = hclge_rm_mc_addr_common(vport, mac_addr);
+		if (!status)
+			hclge_rm_vport_mac_table(vport, mac_addr,
+						 false, HCLGE_MAC_ADDR_MC);
 	} else {
 		dev_err(&hdev->pdev->dev,
 			"failed to set mcast mac addr, unknown subcode %d\n",
@@ -287,6 +305,9 @@ static int hclge_set_vf_vlan_cfg(struct hclge_vport *vport,
 		memcpy(&proto, &mbx_req->msg[5], sizeof(proto));
 		status = hclge_set_vlan_filter(handle, cpu_to_be16(proto),
 					       vlan, is_kill);
+		if (!status)
+			is_kill ? hclge_rm_vport_vlan_table(vport, vlan, false)
+			: hclge_add_vport_vlan_table(vport, vlan);
 	} else if (mbx_req->msg[1] == HCLGE_MBX_VLAN_RX_OFF_CFG) {
 		struct hnae3_handle *handle = &vport->nic;
 		bool en = mbx_req->msg[2] ? true : false;
@@ -336,18 +357,32 @@ static int hclge_get_vf_queue_info(struct hclge_vport *vport,
 				   struct hclge_mbx_vf_to_pf_cmd *mbx_req,
 				   bool gen_resp)
 {
-#define HCLGE_TQPS_RSS_INFO_LEN		8
+#define HCLGE_TQPS_RSS_INFO_LEN		6
 	u8 resp_data[HCLGE_TQPS_RSS_INFO_LEN];
 	struct hclge_dev *hdev = vport->back;
 
 	/* get the queue related info */
 	memcpy(&resp_data[0], &vport->alloc_tqps, sizeof(u16));
 	memcpy(&resp_data[2], &vport->nic.kinfo.rss_size, sizeof(u16));
-	memcpy(&resp_data[4], &hdev->num_desc, sizeof(u16));
-	memcpy(&resp_data[6], &hdev->rx_buf_len, sizeof(u16));
+	memcpy(&resp_data[4], &hdev->rx_buf_len, sizeof(u16));
 
 	return hclge_gen_resp_to_vf(vport, mbx_req, 0, resp_data,
 				    HCLGE_TQPS_RSS_INFO_LEN);
+}
+
+static int hclge_get_vf_queue_depth(struct hclge_vport *vport,
+				    struct hclge_mbx_vf_to_pf_cmd *mbx_req,
+				    bool gen_resp)
+{
+#define HCLGE_TQPS_DEPTH_INFO_LEN	4
+	u8 resp_data[HCLGE_TQPS_DEPTH_INFO_LEN];
+	struct hclge_dev *hdev = vport->back;
+
+	/* get the queue depth info */
+	memcpy(&resp_data[0], &hdev->num_tx_desc, sizeof(u16));
+	memcpy(&resp_data[2], &hdev->num_rx_desc, sizeof(u16));
+	return hclge_gen_resp_to_vf(vport, mbx_req, 0, resp_data,
+				    HCLGE_TQPS_DEPTH_INFO_LEN);
 }
 
 static int hclge_get_link_info(struct hclge_vport *vport,
@@ -455,6 +490,24 @@ static int hclge_get_queue_id_in_pf(struct hclge_vport *vport,
 	return hclge_gen_resp_to_vf(vport, mbx_req, 0, resp_data, 2);
 }
 
+static int hclge_get_rss_key(struct hclge_vport *vport,
+			     struct hclge_mbx_vf_to_pf_cmd *mbx_req)
+{
+#define HCLGE_RSS_MBX_RESP_LEN	8
+	u8 resp_data[HCLGE_RSS_MBX_RESP_LEN];
+	struct hclge_dev *hdev = vport->back;
+	u8 index;
+
+	index = mbx_req->msg[2];
+
+	memcpy(&resp_data[0],
+	       &hdev->vport[0].rss_hash_key[index * HCLGE_RSS_MBX_RESP_LEN],
+	       HCLGE_RSS_MBX_RESP_LEN);
+
+	return hclge_gen_resp_to_vf(vport, mbx_req, 0, resp_data,
+				    HCLGE_RSS_MBX_RESP_LEN);
+}
+
 static bool hclge_cmd_crq_empty(struct hclge_hw *hw)
 {
 	u32 tail = hclge_read_dev(hw, HCLGE_NIC_CRQ_TAIL_REG);
@@ -546,6 +599,14 @@ void hclge_mbx_handler(struct hclge_dev *hdev)
 					"PF failed(%d) to get Q info for VF\n",
 					ret);
 			break;
+		case HCLGE_MBX_GET_QDEPTH:
+			ret = hclge_get_vf_queue_depth(vport, req, true);
+			if (ret)
+				dev_err(&hdev->pdev->dev,
+					"PF failed(%d) to get Q depth for VF\n",
+					ret);
+			break;
+
 		case HCLGE_MBX_GET_TCINFO:
 			ret = hclge_get_vf_tcinfo(vport, req, true);
 			if (ret)
@@ -582,8 +643,24 @@ void hclge_mbx_handler(struct hclge_dev *hdev)
 					"PF failed(%d) to get qid for VF\n",
 					ret);
 			break;
+		case HCLGE_MBX_GET_RSS_KEY:
+			ret = hclge_get_rss_key(vport, req);
+			if (ret)
+				dev_err(&hdev->pdev->dev,
+					"PF fail(%d) to get rss key for VF\n",
+					ret);
+			break;
 		case HCLGE_MBX_GET_LINK_MODE:
 			hclge_get_link_mode(vport, req);
+			break;
+		case HCLGE_MBX_GET_VF_FLR_STATUS:
+			mutex_lock(&hdev->vport_cfg_mutex);
+			hclge_rm_vport_all_mac_table(vport, true,
+						     HCLGE_MAC_ADDR_UC);
+			hclge_rm_vport_all_mac_table(vport, true,
+						     HCLGE_MAC_ADDR_MC);
+			hclge_rm_vport_all_vlan_table(vport, true);
+			mutex_unlock(&hdev->vport_cfg_mutex);
 			break;
 		default:
 			dev_err(&hdev->pdev->dev,

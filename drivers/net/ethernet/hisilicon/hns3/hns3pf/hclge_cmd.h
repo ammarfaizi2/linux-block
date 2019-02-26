@@ -693,7 +693,9 @@ struct hclge_mac_vlan_remove_cmd {
 struct hclge_vlan_filter_ctrl_cmd {
 	u8 vlan_type;
 	u8 vlan_fe;
-	u8 rsv[22];
+	u8 rsv1[2];
+	u8 vf_id;
+	u8 rsv2[19];
 };
 
 struct hclge_vlan_filter_pf_cfg_cmd {
@@ -975,6 +977,6 @@ enum hclge_cmd_status hclge_cmd_mdio_write(struct hclge_hw *hw,
 enum hclge_cmd_status hclge_cmd_mdio_read(struct hclge_hw *hw,
 					  struct hclge_desc *desc);
 
-void hclge_destroy_cmd_queue(struct hclge_hw *hw);
+void hclge_cmd_uninit(struct hclge_dev *hdev);
 int hclge_cmd_queue_init(struct hclge_dev *hdev);
 #endif
