@@ -68,7 +68,7 @@ static long rockchip_ddrclk_sip_round_rate(struct clk_hw *hw,
 	return res.a0;
 }
 
-static u8 rockchip_ddrclk_get_parent(struct clk_hw *hw)
+static struct clk_hw *rockchip_ddrclk_get_parent(struct clk_hw *hw)
 {
 	struct rockchip_ddrclk *ddrclk = to_rockchip_ddrclk_hw(hw);
 	u32 val;
@@ -77,14 +77,14 @@ static u8 rockchip_ddrclk_get_parent(struct clk_hw *hw)
 			ddrclk->mux_offset) >> ddrclk->mux_shift;
 	val &= GENMASK(ddrclk->mux_width - 1, 0);
 
-	return val;
+	return clk_hw_get_parent_by_index(hw, val);
 }
 
 static const struct clk_ops rockchip_ddrclk_sip_ops = {
 	.recalc_rate = rockchip_ddrclk_sip_recalc_rate,
 	.set_rate = rockchip_ddrclk_sip_set_rate,
 	.round_rate = rockchip_ddrclk_sip_round_rate,
-	.get_parent = rockchip_ddrclk_get_parent,
+	.get_parent_hw = rockchip_ddrclk_get_parent,
 };
 
 struct clk *rockchip_clk_register_ddrclk(const char *name, int flags,

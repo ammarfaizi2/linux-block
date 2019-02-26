@@ -18,7 +18,7 @@ struct rockchip_muxgrf_clock {
 
 #define to_muxgrf_clock(_hw) container_of(_hw, struct rockchip_muxgrf_clock, hw)
 
-static u8 rockchip_muxgrf_get_parent(struct clk_hw *hw)
+static struct clk_hw *rockchip_muxgrf_get_parent(struct clk_hw *hw)
 {
 	struct rockchip_muxgrf_clock *mux = to_muxgrf_clock(hw);
 	unsigned int mask = GENMASK(mux->width - 1, 0);
@@ -29,7 +29,7 @@ static u8 rockchip_muxgrf_get_parent(struct clk_hw *hw)
 	val >>= mux->shift;
 	val &= mask;
 
-	return val;
+	return clk_hw_get_parent_by_index(hw, val);
 }
 
 static int rockchip_muxgrf_set_parent(struct clk_hw *hw, u8 index)
@@ -48,7 +48,7 @@ static int rockchip_muxgrf_set_parent(struct clk_hw *hw, u8 index)
 }
 
 static const struct clk_ops rockchip_muxgrf_clk_ops = {
-	.get_parent = rockchip_muxgrf_get_parent,
+	.get_parent_hw = rockchip_muxgrf_get_parent,
 	.set_parent = rockchip_muxgrf_set_parent,
 	.determine_rate = __clk_mux_determine_rate,
 };
