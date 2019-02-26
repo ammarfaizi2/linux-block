@@ -114,11 +114,14 @@ static const struct clk_ops clk_sleeping_gpio_gate_ops = {
  * parent - parent is adjustable through clk_set_parent
  */
 
-static u8 clk_gpio_mux_get_parent(struct clk_hw *hw)
+static struct clk_hw *clk_gpio_mux_get_parent(struct clk_hw *hw)
 {
 	struct clk_gpio *clk = to_clk_gpio(hw);
+	int val;
 
-	return gpiod_get_value_cansleep(clk->gpiod);
+	val = gpiod_get_value_cansleep(clk->gpiod);
+
+	return clk_hw_get_parent_by_index(hw, val);
 }
 
 static int clk_gpio_mux_set_parent(struct clk_hw *hw, u8 index)
@@ -131,7 +134,7 @@ static int clk_gpio_mux_set_parent(struct clk_hw *hw, u8 index)
 }
 
 static const struct clk_ops clk_gpio_mux_ops = {
-	.get_parent = clk_gpio_mux_get_parent,
+	.get_parent_hw = clk_gpio_mux_get_parent,
 	.set_parent = clk_gpio_mux_set_parent,
 	.determine_rate = __clk_mux_determine_rate,
 };
