@@ -225,7 +225,7 @@ static const struct regmap_config vc5_regmap_config = {
 /*
  * VersaClock5 input multiplexer between XTAL and CLKIN divider
  */
-static unsigned char vc5_mux_get_parent(struct clk_hw *hw)
+static struct clk_hw *vc5_mux_get_parent(struct clk_hw *hw)
 {
 	struct vc5_driver_data *vc5 =
 		container_of(hw, struct vc5_driver_data, clk_mux);
@@ -235,19 +235,21 @@ static unsigned char vc5_mux_get_parent(struct clk_hw *hw)
 
 	ret = regmap_read(vc5->regmap, VC5_PRIM_SRC_SHDN, &src);
 	if (ret)
-		return 0;
+		return ERR_PTR(ret);
 
 	src &= mask;
 
-	if (src == VC5_PRIM_SRC_SHDN_EN_XTAL)
-		return 0;
+	if (src == VC5_PRIM_SRC_SHDN_EN_XTAL) {
+		ret = 0;
+	} else if (src == VC5_PRIM_SRC_SHDN_EN_CLKIN) {
+		ret = 1;
+	} else {
+		dev_warn(&vc5->client->dev,
+			 "Invalid clock input configuration (%02x)\n", src);
+		ret = -EINVAL;
+	}
 
-	if (src == VC5_PRIM_SRC_SHDN_EN_CLKIN)
-		return 1;
-
-	dev_warn(&vc5->client->dev,
-		 "Invalid clock input configuration (%02x)\n", src);
-	return 0;
+	return clk_hw_get_parent_by_index(hw, ret);
 }
 
 static int vc5_mux_set_parent(struct clk_hw *hw, u8 index)
@@ -282,7 +284,7 @@ static int vc5_mux_set_parent(struct clk_hw *hw, u8 index)
 
 static const struct clk_ops vc5_mux_ops = {
 	.set_parent	= vc5_mux_set_parent,
-	.get_parent	= vc5_mux_get_parent,
+	.get_parent_hw	= vc5_mux_get_parent,
 };
 
 static unsigned long vc5_dbl_recalc_rate(struct clk_hw *hw,
@@ -669,7 +671,7 @@ static void vc5_clk_out_unprepare(struct clk_hw *hw)
 			  VC5_CLK_OUTPUT_CFG1_EN_CLKBUF);
 }
 
-static unsigned char vc5_clk_out_get_parent(struct clk_hw *hw)
+static struct clk_hw *vc5_clk_out_get_parent(struct clk_hw *hw)
 {
 	struct vc5_out_data *hwdata = container_of(hw, struct vc5_out_data, hw);
 	struct vc5_driver_data *vc5 = hwdata->vc5;
@@ -690,17 +692,17 @@ static unsigned char vc5_clk_out_get_parent(struct clk_hw *hw)
 	src &= mask;
 
 	if (src == 0)	/* Input mux set to DISABLED */
-		return 0;
+		return ERR_PTR(-EINVAL);
 
 	if ((src & fodclkmask) == VC5_OUT_DIV_CONTROL_EN_FOD)
-		return 0;
+		return clk_hw_get_parent_by_index(hw, 0);
 
 	if (src == extclk)
-		return 1;
+		return clk_hw_get_parent_by_index(hw, 1);
 
 	dev_warn(&vc5->client->dev,
 		 "Invalid clock output configuration (%02x)\n", src);
-	return 0;
+	return ERR_PTR(-EINVAL);
 }
 
 static int vc5_clk_out_set_parent(struct clk_hw *hw, u8 index)
@@ -728,7 +730,7 @@ static const struct clk_ops vc5_clk_out_ops = {
 	.prepare	= vc5_clk_out_prepare,
 	.unprepare	= vc5_clk_out_unprepare,
 	.set_parent	= vc5_clk_out_set_parent,
-	.get_parent	= vc5_clk_out_get_parent,
+	.get_parent_hw	= vc5_clk_out_get_parent,
 };
 
 static struct clk_hw *vc5_of_clk_get(struct of_phandle_args *clkspec,
