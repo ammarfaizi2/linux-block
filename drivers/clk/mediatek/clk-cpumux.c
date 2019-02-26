@@ -28,7 +28,7 @@ static inline struct mtk_clk_cpumux *to_mtk_clk_cpumux(struct clk_hw *_hw)
 	return container_of(_hw, struct mtk_clk_cpumux, hw);
 }
 
-static u8 clk_cpumux_get_parent(struct clk_hw *hw)
+static struct clk_hw *clk_cpumux_get_parent(struct clk_hw *hw)
 {
 	struct mtk_clk_cpumux *mux = to_mtk_clk_cpumux(hw);
 	unsigned int val;
@@ -38,7 +38,7 @@ static u8 clk_cpumux_get_parent(struct clk_hw *hw)
 	val >>= mux->shift;
 	val &= mux->mask;
 
-	return val;
+	return clk_hw_get_parent_by_index(hw, val);
 }
 
 static int clk_cpumux_set_parent(struct clk_hw *hw, u8 index)
@@ -53,7 +53,7 @@ static int clk_cpumux_set_parent(struct clk_hw *hw, u8 index)
 }
 
 static const struct clk_ops clk_cpumux_ops = {
-	.get_parent = clk_cpumux_get_parent,
+	.get_parent_hw = clk_cpumux_get_parent,
 	.set_parent = clk_cpumux_set_parent,
 };
 
