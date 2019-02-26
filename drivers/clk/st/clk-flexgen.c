@@ -93,14 +93,14 @@ static int flexgen_is_enabled(struct clk_hw *hw)
 	return 1;
 }
 
-static u8 flexgen_get_parent(struct clk_hw *hw)
+static struct clk_hw *flexgen_get_parent(struct clk_hw *hw)
 {
 	struct flexgen *flexgen = to_flexgen(hw);
 	struct clk_hw *mux_hw = &flexgen->mux.hw;
 
 	__clk_hw_set_clk(mux_hw, hw);
 
-	return clk_mux_ops.get_parent(mux_hw);
+	return clk_hw_get_parent_by_index(hw, clk_mux_ops.get_parent(mux_hw));
 }
 
 static int flexgen_set_parent(struct clk_hw *hw, u8 index)
@@ -195,7 +195,7 @@ static const struct clk_ops flexgen_ops = {
 	.enable = flexgen_enable,
 	.disable = flexgen_disable,
 	.is_enabled = flexgen_is_enabled,
-	.get_parent = flexgen_get_parent,
+	.get_parent_hw = flexgen_get_parent,
 	.set_parent = flexgen_set_parent,
 	.round_rate = flexgen_round_rate,
 	.recalc_rate = flexgen_recalc_rate,
