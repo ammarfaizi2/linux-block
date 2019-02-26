@@ -72,17 +72,19 @@ static const struct clk_ops cken_rate_ops = {
 	.recalc_rate = cken_recalc_rate,
 };
 
-static u8 cken_get_parent(struct clk_hw *hw)
+static struct clk_hw *cken_get_parent(struct clk_hw *hw)
 {
 	struct pxa_clk *pclk = to_pxa_clk(hw);
+	int idx = 0;
 
-	if (!pclk->is_in_low_power)
-		return 0;
-	return pclk->is_in_low_power() ? 0 : 1;
+	if (pclk->is_in_low_power)
+		idx = pclk->is_in_low_power();
+
+	return clk_hw_get_parent_by_index(hw, idx);
 }
 
 static const struct clk_ops cken_mux_ops = {
-	.get_parent = cken_get_parent,
+	.get_parent_hw = cken_get_parent,
 	.set_parent = dummy_clk_set_parent,
 };
 
