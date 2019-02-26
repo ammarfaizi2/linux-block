@@ -24,14 +24,15 @@ struct clk_i2s_mux {
 
 #define to_clk_i2s_mux(hw) container_of(hw, struct clk_i2s_mux, hw)
 
-static u8 clk_i2s_mux_get_parent(struct clk_hw *hw)
+static struct clk_hw *clk_i2s_mux_get_parent(struct clk_hw *hw)
 {
 	struct clk_i2s_mux *mux = to_clk_i2s_mux(hw);
 	u32 val;
 
 	regmap_read(mux->regmap, AT91_SFR_I2SCLKSEL, &val);
+	val = (val & BIT(mux->bus_id)) >> mux->bus_id;
 
-	return (val & BIT(mux->bus_id)) >> mux->bus_id;
+	return clk_hw_get_parent_by_index(hw, val);
 }
 
 static int clk_i2s_mux_set_parent(struct clk_hw *hw, u8 index)
@@ -43,7 +44,7 @@ static int clk_i2s_mux_set_parent(struct clk_hw *hw, u8 index)
 }
 
 static const struct clk_ops clk_i2s_mux_ops = {
-	.get_parent = clk_i2s_mux_get_parent,
+	.get_parent_hw = clk_i2s_mux_get_parent,
 	.set_parent = clk_i2s_mux_set_parent,
 	.determine_rate = __clk_mux_determine_rate,
 };

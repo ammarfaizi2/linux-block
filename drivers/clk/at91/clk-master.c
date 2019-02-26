@@ -397,7 +397,7 @@ static unsigned long clk_master_pres_recalc_rate(struct clk_hw *hw,
 	return DIV_ROUND_CLOSEST_ULL(parent_rate, pres);
 }
 
-static u8 clk_master_pres_get_parent(struct clk_hw *hw)
+static struct clk_hw *clk_master_pres_get_parent(struct clk_hw *hw)
 {
 	struct clk_master *master = to_clk_master(hw);
 	unsigned long flags;
@@ -409,7 +409,7 @@ static u8 clk_master_pres_get_parent(struct clk_hw *hw)
 
 	mckr &= master->layout->mask;
 
-	return mckr & AT91_PMC_CSS;
+	return clk_hw_get_parent_by_index(hw, mckr & AT91_PMC_CSS);
 }
 
 static int clk_master_pres_save_context(struct clk_hw *hw)
@@ -464,7 +464,7 @@ static const struct clk_ops master_pres_ops = {
 	.prepare = clk_master_prepare,
 	.is_prepared = clk_master_is_prepared,
 	.recalc_rate = clk_master_pres_recalc_rate,
-	.get_parent = clk_master_pres_get_parent,
+	.get_parent_hw = clk_master_pres_get_parent,
 	.save_context = clk_master_pres_save_context,
 	.restore_context = clk_master_pres_restore_context,
 };

@@ -232,11 +232,11 @@ static int clk_generated_set_parent(struct clk_hw *hw, u8 index)
 	return 0;
 }
 
-static u8 clk_generated_get_parent(struct clk_hw *hw)
+static struct clk_hw *clk_generated_get_parent(struct clk_hw *hw)
 {
 	struct clk_generated *gck = to_clk_generated(hw);
 
-	return gck->parent_id;
+	return clk_hw_get_parent_by_index(hw, gck->parent_id);
 }
 
 /* No modification of hardware as we have the flag CLK_SET_RATE_GATE set */
@@ -284,7 +284,7 @@ static const struct clk_ops generated_ops = {
 	.is_enabled = clk_generated_is_enabled,
 	.recalc_rate = clk_generated_recalc_rate,
 	.determine_rate = clk_generated_determine_rate,
-	.get_parent = clk_generated_get_parent,
+	.get_parent_hw = clk_generated_get_parent,
 	.set_parent = clk_generated_set_parent,
 	.set_rate = clk_generated_set_rate,
 	.save_context = clk_generated_save_context,

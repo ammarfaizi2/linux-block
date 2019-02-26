@@ -21,18 +21,19 @@ struct clk_sam9260_slow {
 
 #define to_clk_sam9260_slow(hw) container_of(hw, struct clk_sam9260_slow, hw)
 
-static u8 clk_sam9260_slow_get_parent(struct clk_hw *hw)
+static struct clk_hw *clk_sam9260_slow_get_parent(struct clk_hw *hw)
 {
 	struct clk_sam9260_slow *slowck = to_clk_sam9260_slow(hw);
 	unsigned int status;
 
 	regmap_read(slowck->regmap, AT91_PMC_SR, &status);
+	status = status & AT91_PMC_OSCSEL ? 1 : 0;
 
-	return status & AT91_PMC_OSCSEL ? 1 : 0;
+	return clk_hw_get_parent_by_index(hw, status);
 }
 
 static const struct clk_ops sam9260_slow_ops = {
-	.get_parent = clk_sam9260_slow_get_parent,
+	.get_parent_hw = clk_sam9260_slow_get_parent,
 };
 
 struct clk_hw * __init
