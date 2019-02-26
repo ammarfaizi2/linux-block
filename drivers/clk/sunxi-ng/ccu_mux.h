@@ -127,8 +127,8 @@ int ccu_mux_helper_determine_rate(struct ccu_common *common,
 							 unsigned long,
 							 void *),
 				  void *data);
-u8 ccu_mux_helper_get_parent(struct ccu_common *common,
-			     struct ccu_mux_internal *cm);
+struct clk_hw *ccu_mux_helper_get_parent(struct ccu_common *common,
+					 struct ccu_mux_internal *cm);
 int ccu_mux_helper_set_parent(struct ccu_common *common,
 			      struct ccu_mux_internal *cm,
 			      u8 index);

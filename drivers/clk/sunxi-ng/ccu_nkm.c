@@ -180,7 +180,7 @@ static int ccu_nkm_set_rate(struct clk_hw *hw, unsigned long rate,
 	return 0;
 }
 
-static u8 ccu_nkm_get_parent(struct clk_hw *hw)
+static struct clk_hw *ccu_nkm_get_parent(struct clk_hw *hw)
 {
 	struct ccu_nkm *nkm = hw_to_ccu_nkm(hw);
 
@@ -199,7 +199,7 @@ const struct clk_ops ccu_nkm_ops = {
 	.enable		= ccu_nkm_enable,
 	.is_enabled	= ccu_nkm_is_enabled,
 
-	.get_parent	= ccu_nkm_get_parent,
+	.get_parent_hw	= ccu_nkm_get_parent,
 	.set_parent	= ccu_nkm_set_parent,
 
 	.determine_rate	= ccu_nkm_determine_rate,

@@ -115,7 +115,7 @@ static int ccu_div_set_rate(struct clk_hw *hw, unsigned long rate,
 	return 0;
 }
 
-static u8 ccu_div_get_parent(struct clk_hw *hw)
+static struct clk_hw *ccu_div_get_parent(struct clk_hw *hw)
 {
 	struct ccu_div *cd = hw_to_ccu_div(hw);
 
@@ -134,7 +134,7 @@ const struct clk_ops ccu_div_ops = {
 	.enable		= ccu_div_enable,
 	.is_enabled	= ccu_div_is_enabled,
 
-	.get_parent	= ccu_div_get_parent,
+	.get_parent_hw	= ccu_div_get_parent,
 	.set_parent	= ccu_div_set_parent,
 
 	.determine_rate	= ccu_div_determine_rate,

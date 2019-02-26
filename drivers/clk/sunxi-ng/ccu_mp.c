@@ -219,7 +219,7 @@ static int ccu_mp_set_rate(struct clk_hw *hw, unsigned long rate,
 	return 0;
 }
 
-static u8 ccu_mp_get_parent(struct clk_hw *hw)
+static struct clk_hw *ccu_mp_get_parent(struct clk_hw *hw)
 {
 	struct ccu_mp *cmp = hw_to_ccu_mp(hw);
 
@@ -238,7 +238,7 @@ const struct clk_ops ccu_mp_ops = {
 	.enable		= ccu_mp_enable,
 	.is_enabled	= ccu_mp_is_enabled,
 
-	.get_parent	= ccu_mp_get_parent,
+	.get_parent_hw	= ccu_mp_get_parent,
 	.set_parent	= ccu_mp_set_parent,
 
 	.determine_rate	= ccu_mp_determine_rate,
@@ -319,7 +319,7 @@ const struct clk_ops ccu_mp_mmc_ops = {
 	.enable		= ccu_mp_enable,
 	.is_enabled	= ccu_mp_is_enabled,
 
-	.get_parent	= ccu_mp_get_parent,
+	.get_parent_hw	= ccu_mp_get_parent,
 	.set_parent	= ccu_mp_set_parent,
 
 	.determine_rate	= ccu_mp_mmc_determine_rate,

@@ -157,8 +157,8 @@ out:
 }
 EXPORT_SYMBOL_NS_GPL(ccu_mux_helper_determine_rate, SUNXI_CCU);
 
-u8 ccu_mux_helper_get_parent(struct ccu_common *common,
-			     struct ccu_mux_internal *cm)
+static u8 ccu_mux_helper_get_parent_index(struct ccu_common *common,
+					  struct ccu_mux_internal *cm)
 {
 	u32 reg;
 	u8 parent;
@@ -173,10 +173,18 @@ u8 ccu_mux_helper_get_parent(struct ccu_common *common,
 
 		for (i = 0; i < num_parents; i++)
 			if (cm->table[i] == parent)
-				return i;
+				parent = i;
 	}
 
 	return parent;
+}
+
+struct clk_hw *ccu_mux_helper_get_parent(struct ccu_common *common,
+					 struct ccu_mux_internal *cm)
+{
+	u8 parent = ccu_mux_helper_get_parent_index(common, cm);
+
+	return clk_hw_get_parent_by_index(&common->hw, parent);
 }
 EXPORT_SYMBOL_NS_GPL(ccu_mux_helper_get_parent, SUNXI_CCU);
 
@@ -228,7 +236,7 @@ static int ccu_mux_is_enabled(struct clk_hw *hw)
 	return ccu_gate_helper_is_enabled(&cm->common, cm->enable);
 }
 
-static u8 ccu_mux_get_parent(struct clk_hw *hw)
+static struct clk_hw *ccu_mux_get_parent(struct clk_hw *hw)
 {
 	struct ccu_mux *cm = hw_to_ccu_mux(hw);
 
@@ -256,7 +264,7 @@ const struct clk_ops ccu_mux_ops = {
 	.enable		= ccu_mux_enable,
 	.is_enabled	= ccu_mux_is_enabled,
 
-	.get_parent	= ccu_mux_get_parent,
+	.get_parent_hw	= ccu_mux_get_parent,
 	.set_parent	= ccu_mux_set_parent,
 
 	.determine_rate	= __clk_mux_determine_rate,
@@ -277,8 +285,8 @@ static int ccu_mux_notifier_cb(struct notifier_block *nb,
 	int ret = 0;
 
 	if (event == PRE_RATE_CHANGE) {
-		mux->original_index = ccu_mux_helper_get_parent(mux->common,
-								mux->cm);
+		mux->original_index = ccu_mux_helper_get_parent_index(mux->common,
+								      mux->cm);
 		ret = ccu_mux_helper_set_parent(mux->common, mux->cm,
 						mux->bypass_index);
 	} else if (event == POST_RATE_CHANGE) {
