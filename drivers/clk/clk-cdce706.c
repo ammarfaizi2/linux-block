@@ -147,16 +147,16 @@ static int cdce706_clkin_set_parent(struct clk_hw *hw, u8 index)
 	return 0;
 }
 
-static u8 cdce706_clkin_get_parent(struct clk_hw *hw)
+static struct clk_hw *cdce706_clkin_get_parent(struct clk_hw *hw)
 {
 	struct cdce706_hw_data *hwd = to_hw_data(hw);
 
-	return hwd->parent;
+	return clk_hw_get_parent_by_index(hw, hwd->parent);
 }
 
 static const struct clk_ops cdce706_clkin_ops = {
 	.set_parent = cdce706_clkin_set_parent,
-	.get_parent = cdce706_clkin_get_parent,
+	.get_parent_hw = cdce706_clkin_get_parent,
 };
 
 static unsigned long cdce706_pll_recalc_rate(struct clk_hw *hw,
@@ -267,11 +267,11 @@ static int cdce706_divider_set_parent(struct clk_hw *hw, u8 index)
 				  index << CDCE706_DIVIDER_PLL_SHIFT(hwd->idx));
 }
 
-static u8 cdce706_divider_get_parent(struct clk_hw *hw)
+static struct clk_hw *cdce706_divider_get_parent(struct clk_hw *hw)
 {
 	struct cdce706_hw_data *hwd = to_hw_data(hw);
 
-	return hwd->parent;
+	return clk_hw_get_parent_by_index(hw, hwd->parent);
 }
 
 static unsigned long cdce706_divider_recalc_rate(struct clk_hw *hw,
@@ -372,7 +372,7 @@ static int cdce706_divider_set_rate(struct clk_hw *hw, unsigned long rate,
 
 static const struct clk_ops cdce706_divider_ops = {
 	.set_parent = cdce706_divider_set_parent,
-	.get_parent = cdce706_divider_get_parent,
+	.get_parent_hw = cdce706_divider_get_parent,
 	.recalc_rate = cdce706_divider_recalc_rate,
 	.round_rate = cdce706_divider_round_rate,
 	.set_rate = cdce706_divider_set_rate,
@@ -407,11 +407,11 @@ static int cdce706_clkout_set_parent(struct clk_hw *hw, u8 index)
 				  CDCE706_CLKOUT_ENABLE_MASK, index);
 }
 
-static u8 cdce706_clkout_get_parent(struct clk_hw *hw)
+static struct clk_hw *cdce706_clkout_get_parent(struct clk_hw *hw)
 {
 	struct cdce706_hw_data *hwd = to_hw_data(hw);
 
-	return hwd->parent;
+	return clk_hw_get_parent_by_index(hw, hwd->parent);
 }
 
 static unsigned long cdce706_clkout_recalc_rate(struct clk_hw *hw,
@@ -437,7 +437,7 @@ static const struct clk_ops cdce706_clkout_ops = {
 	.prepare = cdce706_clkout_prepare,
 	.unprepare = cdce706_clkout_unprepare,
 	.set_parent = cdce706_clkout_set_parent,
-	.get_parent = cdce706_clkout_get_parent,
+	.get_parent_hw = cdce706_clkout_get_parent,
 	.recalc_rate = cdce706_clkout_recalc_rate,
 	.round_rate = cdce706_clkout_round_rate,
 	.set_rate = cdce706_clkout_set_rate,
