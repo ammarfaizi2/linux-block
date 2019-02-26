@@ -466,9 +466,9 @@ static unsigned long ti_adpll_recalc_rate(struct clk_hw *hw,
 }
 
 /* PLL parent is always clkinp, bypass only affects the children */
-static u8 ti_adpll_get_parent(struct clk_hw *hw)
+static struct clk_hw *ti_adpll_get_parent(struct clk_hw *hw)
 {
-	return 0;
+	return clk_hw_get_parent_by_index(hw, 0);
 }
 
 static const struct clk_ops ti_adpll_ops = {
@@ -476,7 +476,7 @@ static const struct clk_ops ti_adpll_ops = {
 	.unprepare = ti_adpll_unprepare,
 	.is_prepared = ti_adpll_is_prepared,
 	.recalc_rate = ti_adpll_recalc_rate,
-	.get_parent = ti_adpll_get_parent,
+	.get_parent_hw = ti_adpll_get_parent,
 };
 
 static int ti_adpll_init_dco(struct ti_adpll_data *d)
@@ -559,12 +559,12 @@ static int ti_adpll_clkout_is_enabled(struct clk_hw *hw)
 }
 
 /* Setting PLL bypass puts clkout and clkoutx2 into bypass */
-static u8 ti_adpll_clkout_get_parent(struct clk_hw *hw)
+static struct clk_hw *ti_adpll_clkout_get_parent(struct clk_hw *hw)
 {
 	struct ti_adpll_clkout_data *co = to_clkout(hw);
 	struct ti_adpll_data *d = co->adpll;
 
-	return ti_adpll_clock_is_bypass(d);
+	return clk_hw_get_parent_by_index(hw, ti_adpll_clock_is_bypass(d));
 }
 
 static int ti_adpll_init_clkout(struct ti_adpll_data *d,
@@ -606,7 +606,7 @@ static int ti_adpll_init_clkout(struct ti_adpll_data *d,
 	init.parent_names = parent_names;
 	init.num_parents = 2;
 
-	ops->get_parent = ti_adpll_clkout_get_parent;
+	ops->get_parent_hw = ti_adpll_clkout_get_parent;
 	ops->determine_rate = __clk_mux_determine_rate;
 	if (gate_bit) {
 		co->gate.lock = &d->lock;

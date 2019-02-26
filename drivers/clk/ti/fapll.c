@@ -181,14 +181,13 @@ static unsigned long ti_fapll_recalc_rate(struct clk_hw *hw,
 	return rate;
 }
 
-static u8 ti_fapll_get_parent(struct clk_hw *hw)
+static struct clk_hw *ti_fapll_get_parent(struct clk_hw *hw)
 {
 	struct fapll_data *fd = to_fapll(hw);
 
 	if (ti_fapll_clock_is_bypass(fd))
-		return 1;
-
-	return 0;
+		return clk_hw_get_parent_by_index(hw, 1);return clk_hw_get_parent_by_index(hw,
+											   0);
 }
 
 static int ti_fapll_set_div_mult(unsigned long rate,
@@ -267,7 +266,7 @@ static const struct clk_ops ti_fapll_ops = {
 	.disable = ti_fapll_disable,
 	.is_enabled = ti_fapll_is_enabled,
 	.recalc_rate = ti_fapll_recalc_rate,
-	.get_parent = ti_fapll_get_parent,
+	.get_parent_hw = ti_fapll_get_parent,
 	.round_rate = ti_fapll_round_rate,
 	.set_rate = ti_fapll_set_rate,
 };

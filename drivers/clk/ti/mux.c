@@ -18,7 +18,7 @@
 #undef pr_fmt
 #define pr_fmt(fmt) "%s: " fmt, __func__
 
-static u8 ti_clk_mux_get_parent(struct clk_hw *hw)
+static struct clk_hw *ti_clk_mux_get_parent(struct clk_hw *hw)
 {
 	struct clk_omap_mux *mux = to_clk_omap_mux(hw);
 	int num_parents = clk_hw_get_num_parents(hw);
@@ -39,8 +39,8 @@ static u8 ti_clk_mux_get_parent(struct clk_hw *hw)
 
 		for (i = 0; i < num_parents; i++)
 			if (mux->table[i] == val)
-				return i;
-		return -EINVAL;
+				return clk_hw_get_parent_by_index(hw, i);
+		return ERR_PTR(-EINVAL);
 	}
 
 	if (val && (mux->flags & CLK_MUX_INDEX_BIT))
@@ -50,9 +50,9 @@ static u8 ti_clk_mux_get_parent(struct clk_hw *hw)
 		val--;
 
 	if (val >= num_parents)
-		return -EINVAL;
+		return ERR_PTR(-EINVAL);
 
-	return val;
+	return clk_hw_get_parent_by_index(hw, val);
 }
 
 static int ti_clk_mux_set_parent(struct clk_hw *hw, u8 index)
@@ -111,7 +111,7 @@ static void clk_mux_restore_context(struct clk_hw *hw)
 }
 
 const struct clk_ops ti_clk_mux_ops = {
-	.get_parent = ti_clk_mux_get_parent,
+	.get_parent_hw = ti_clk_mux_get_parent,
 	.set_parent = ti_clk_mux_set_parent,
 	.determine_rate = __clk_mux_determine_rate,
 	.save_context = clk_mux_save_context,
