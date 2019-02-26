@@ -173,7 +173,7 @@ static const char *wm831x_fll_parents[] = {
 	"clkin",
 };
 
-static u8 wm831x_fll_get_parent(struct clk_hw *hw)
+static struct clk_hw *wm831x_fll_get_parent(struct clk_hw *hw)
 {
 	struct wm831x_clk *clkdata = container_of(hw, struct wm831x_clk,
 						  fll_hw);
@@ -185,28 +185,28 @@ static u8 wm831x_fll_get_parent(struct clk_hw *hw)
 	if (ret < 0) {
 		dev_err(wm831x->dev, "Unable to read CLOCK_CONTROL_2: %d\n",
 			ret);
-		return 0;
+		return clk_hw_get_parent_by_index(hw, 0);
 	}
 
 	if (ret & WM831X_FLL_AUTO)
-		return 0;
+		return clk_hw_get_parent_by_index(hw, 0);
 
 	ret = wm831x_reg_read(wm831x, WM831X_FLL_CONTROL_5);
 	if (ret < 0) {
 		dev_err(wm831x->dev, "Unable to read FLL_CONTROL_5: %d\n",
 			ret);
-		return 0;
+		return clk_hw_get_parent_by_index(hw, 0);
 	}
 
 	switch (ret & WM831X_FLL_CLK_SRC_MASK) {
 	case 0:
-		return 0;
+		return clk_hw_get_parent_by_index(hw, 0);
 	case 1:
-		return 1;
+		return clk_hw_get_parent_by_index(hw, 1);
 	default:
 		dev_err(wm831x->dev, "Unsupported FLL clock source %d\n",
 			ret & WM831X_FLL_CLK_SRC_MASK);
-		return 0;
+		return clk_hw_get_parent_by_index(hw, 0);
 	}
 }
 
@@ -217,7 +217,7 @@ static const struct clk_ops wm831x_fll_ops = {
 	.round_rate = wm831x_fll_round_rate,
 	.recalc_rate = wm831x_fll_recalc_rate,
 	.set_rate = wm831x_fll_set_rate,
-	.get_parent = wm831x_fll_get_parent,
+	.get_parent_hw = wm831x_fll_get_parent,
 };
 
 static const struct clk_init_data wm831x_fll_init = {
@@ -294,24 +294,24 @@ static const char *wm831x_clkout_parents[] = {
 	"xtal",
 };
 
-static u8 wm831x_clkout_get_parent(struct clk_hw *hw)
+static struct clk_hw *wm831x_clkout_get_parent(struct clk_hw *hw)
 {
 	struct wm831x_clk *clkdata = container_of(hw, struct wm831x_clk,
 						  clkout_hw);
 	struct wm831x *wm831x = clkdata->wm831x;
-	int ret;
+	int idx;
 
-	ret = wm831x_reg_read(wm831x, WM831X_CLOCK_CONTROL_1);
-	if (ret < 0) {
+	idx = wm831x_reg_read(wm831x, WM831X_CLOCK_CONTROL_1);
+	if (idx < 0) {
 		dev_err(wm831x->dev, "Unable to read CLOCK_CONTROL_1: %d\n",
-			ret);
-		return 0;
+			idx);
+	} else if (idx & WM831X_CLKOUT_SRC) {
+		idx = 1;
+	} else {
+		idx = 0;
 	}
 
-	if (ret & WM831X_CLKOUT_SRC)
-		return 1;
-	else
-		return 0;
+	return clk_hw_get_parent_by_index(hw, idx);
 }
 
 static int wm831x_clkout_set_parent(struct clk_hw *hw, u8 parent)
@@ -329,7 +329,7 @@ static const struct clk_ops wm831x_clkout_ops = {
 	.is_prepared = wm831x_clkout_is_prepared,
 	.prepare = wm831x_clkout_prepare,
 	.unprepare = wm831x_clkout_unprepare,
-	.get_parent = wm831x_clkout_get_parent,
+	.get_parent_hw = wm831x_clkout_get_parent,
 	.set_parent = wm831x_clkout_set_parent,
 };
 
