@@ -995,7 +995,7 @@ static const struct clk_ops lpc32xx_clk_divider_ops = {
 	.set_rate = clk_divider_set_rate,
 };
 
-static u8 clk_mux_get_parent(struct clk_hw *hw)
+static struct clk_hw *clk_mux_get_parent(struct clk_hw *hw)
 {
 	struct lpc32xx_clk_mux *mux = to_lpc32xx_mux(hw);
 	u32 num_parents = clk_hw_get_num_parents(hw);
@@ -1010,14 +1010,13 @@ static u8 clk_mux_get_parent(struct clk_hw *hw)
 
 		for (i = 0; i < num_parents; i++)
 			if (mux->table[i] == val)
-				return i;
-		return -EINVAL;
+				return clk_hw_get_parent_by_index(hw, i);return clk_hw_get_parent_by_index(hw,
+													   -EINVAL);
 	}
 
 	if (val >= num_parents)
-		return -EINVAL;
-
-	return val;
+		return clk_hw_get_parent_by_index(hw, -EINVAL);return clk_hw_get_parent_by_index(hw,
+												 val);
 }
 
 static int clk_mux_set_parent(struct clk_hw *hw, u8 index)
@@ -1032,11 +1031,11 @@ static int clk_mux_set_parent(struct clk_hw *hw, u8 index)
 }
 
 static const struct clk_ops lpc32xx_clk_mux_ro_ops = {
-	.get_parent = clk_mux_get_parent,
+	.get_parent_hw = clk_mux_get_parent,
 };
 
 static const struct clk_ops lpc32xx_clk_mux_ops = {
-	.get_parent = clk_mux_get_parent,
+	.get_parent_hw = clk_mux_get_parent,
 	.set_parent = clk_mux_set_parent,
 	.determine_rate = __clk_mux_determine_rate,
 };
