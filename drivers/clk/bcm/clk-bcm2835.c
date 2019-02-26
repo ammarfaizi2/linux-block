@@ -1270,14 +1270,16 @@ static int bcm2835_clock_set_parent(struct clk_hw *hw, u8 index)
 	return 0;
 }
 
-static u8 bcm2835_clock_get_parent(struct clk_hw *hw)
+static struct clk_hw *bcm2835_clock_get_parent(struct clk_hw *hw)
 {
 	struct bcm2835_clock *clock = bcm2835_clock_from_hw(hw);
 	struct bcm2835_cprman *cprman = clock->cprman;
 	const struct bcm2835_clock_data *data = clock->data;
 	u32 src = cprman_read(cprman, data->ctl_reg);
 
-	return (src & CM_SRC_MASK) >> CM_SRC_SHIFT;
+	src = (src & CM_SRC_MASK) >> CM_SRC_SHIFT;
+
+	return clk_hw_get_parent_by_index(hw, src);
 }
 
 static const struct debugfs_reg32 bcm2835_debugfs_clock_reg32[] = {
@@ -1312,7 +1314,7 @@ static const struct clk_ops bcm2835_clock_clk_ops = {
 	.set_rate = bcm2835_clock_set_rate,
 	.determine_rate = bcm2835_clock_determine_rate,
 	.set_parent = bcm2835_clock_set_parent,
-	.get_parent = bcm2835_clock_get_parent,
+	.get_parent_hw = bcm2835_clock_get_parent,
 	.debug_init = bcm2835_clock_debug_init,
 };
 
@@ -1331,7 +1333,7 @@ static const struct clk_ops bcm2835_vpu_clock_clk_ops = {
 	.set_rate = bcm2835_clock_set_rate,
 	.determine_rate = bcm2835_clock_determine_rate,
 	.set_parent = bcm2835_clock_set_parent,
-	.get_parent = bcm2835_clock_get_parent,
+	.get_parent_hw = bcm2835_clock_get_parent,
 	.debug_init = bcm2835_clock_debug_init,
 };
 

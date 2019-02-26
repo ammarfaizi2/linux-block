@@ -1107,7 +1107,7 @@ static int kona_peri_clk_set_parent(struct clk_hw *hw, u8 index)
 	return ret;
 }
 
-static u8 kona_peri_clk_get_parent(struct clk_hw *hw)
+static struct clk_hw *kona_peri_clk_get_parent(struct clk_hw *hw)
 {
 	struct kona_clk *bcm_clk = to_kona_clk(hw);
 	struct peri_clk_data *data = bcm_clk->u.peri;
@@ -1116,7 +1116,7 @@ static u8 kona_peri_clk_get_parent(struct clk_hw *hw)
 	index = selector_read_index(bcm_clk->ccu, &data->sel);
 
 	/* Not all callers would handle an out-of-range value gracefully */
-	return index == BAD_CLK_INDEX ? 0 : index;
+	return clk_hw_get_parent_by_index(hw, index);
 }
 
 static int kona_peri_clk_set_rate(struct clk_hw *hw, unsigned long rate,
@@ -1178,7 +1178,7 @@ struct clk_ops kona_peri_clk_ops = {
 	.recalc_rate = kona_peri_clk_recalc_rate,
 	.determine_rate = kona_peri_clk_determine_rate,
 	.set_parent = kona_peri_clk_set_parent,
-	.get_parent = kona_peri_clk_get_parent,
+	.get_parent_hw = kona_peri_clk_get_parent,
 	.set_rate = kona_peri_clk_set_rate,
 };
 
