@@ -32,12 +32,13 @@ struct clk_sp810 {
 	struct clk_sp810_timerclken timerclken[4];
 };
 
-static u8 clk_sp810_timerclken_get_parent(struct clk_hw *hw)
+static struct clk_hw *clk_sp810_timerclken_get_parent(struct clk_hw *hw)
 {
 	struct clk_sp810_timerclken *timerclken = to_clk_sp810_timerclken(hw);
 	u32 val = readl(timerclken->sp810->base + SCCTRL);
 
-	return !!(val & (1 << SCCTRL_TIMERENnSEL_SHIFT(timerclken->channel)));
+	return clk_hw_get_parent_by_index(hw,
+					  !!(val & (1 << SCCTRL_TIMERENnSEL_SHIFT(timerclken->channel))));
 }
 
 static int clk_sp810_timerclken_set_parent(struct clk_hw *hw, u8 index)
@@ -63,7 +64,7 @@ static int clk_sp810_timerclken_set_parent(struct clk_hw *hw, u8 index)
 }
 
 static const struct clk_ops clk_sp810_timerclken_ops = {
-	.get_parent = clk_sp810_timerclken_get_parent,
+	.get_parent_hw = clk_sp810_timerclken_get_parent,
 	.set_parent = clk_sp810_timerclken_set_parent,
 };
 
