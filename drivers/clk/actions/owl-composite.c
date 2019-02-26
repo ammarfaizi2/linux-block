@@ -13,11 +13,14 @@
 
 #include "owl-composite.h"
 
-static u8 owl_comp_get_parent(struct clk_hw *hw)
+static struct clk_hw * owl_comp_get_parent(struct clk_hw *hw)
 {
 	struct owl_composite *comp = hw_to_owl_comp(hw);
+	int val;
 
-	return owl_mux_helper_get_parent(&comp->common, &comp->mux_hw);
+	val = owl_mux_helper_get_parent(&comp->common, &comp->mux_hw);
+
+	return clk_hw_get_parent_by_index(hw, val);
 }
 
 static int owl_comp_set_parent(struct clk_hw *hw, u8 index)
@@ -143,7 +146,7 @@ static int owl_comp_fix_fact_set_rate(struct clk_hw *hw, unsigned long rate,
 
 const struct clk_ops owl_comp_div_ops = {
 	/* mux_ops */
-	.get_parent	= owl_comp_get_parent,
+	.get_parent_hw = owl_comp_get_parent,
 	.set_parent	= owl_comp_set_parent,
 
 	/* gate_ops */
@@ -160,7 +163,7 @@ const struct clk_ops owl_comp_div_ops = {
 
 const struct clk_ops owl_comp_fact_ops = {
 	/* mux_ops */
-	.get_parent	= owl_comp_get_parent,
+	.get_parent_hw = owl_comp_get_parent,
 	.set_parent	= owl_comp_set_parent,
 
 	/* gate_ops */
@@ -189,7 +192,7 @@ const struct clk_ops owl_comp_fix_fact_ops = {
 
 const struct clk_ops owl_comp_pass_ops = {
 	/* mux_ops */
-	.get_parent	= owl_comp_get_parent,
+	.get_parent_hw = owl_comp_get_parent,
 	.set_parent	= owl_comp_set_parent,
 
 	/* gate_ops */

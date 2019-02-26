@@ -26,11 +26,14 @@ u8 owl_mux_helper_get_parent(const struct owl_clk_common *common,
 	return parent;
 }
 
-static u8 owl_mux_get_parent(struct clk_hw *hw)
+static struct clk_hw * owl_mux_get_parent(struct clk_hw *hw)
 {
 	struct owl_mux *mux = hw_to_owl_mux(hw);
+	int val;
 
-	return owl_mux_helper_get_parent(&mux->common, &mux->mux_hw);
+	val = owl_mux_helper_get_parent(&mux->common, &mux->mux_hw);
+
+	return clk_hw_get_parent_by_index(hw, val);
 }
 
 int owl_mux_helper_set_parent(const struct owl_clk_common *common,
@@ -54,7 +57,7 @@ static int owl_mux_set_parent(struct clk_hw *hw, u8 index)
 }
 
 const struct clk_ops owl_mux_ops = {
-	.get_parent = owl_mux_get_parent,
+	.get_parent_hw = owl_mux_get_parent,
 	.set_parent = owl_mux_set_parent,
 	.determine_rate = __clk_mux_determine_rate,
 };
