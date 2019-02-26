@@ -54,7 +54,7 @@ struct s3c24xx_clkout {
 
 #define to_s3c24xx_clkout(_hw) container_of(_hw, struct s3c24xx_clkout, hw)
 
-static u8 s3c24xx_clkout_get_parent(struct clk_hw *hw)
+static struct clk_hw *s3c24xx_clkout_get_parent(struct clk_hw *hw)
 {
 	struct s3c24xx_clkout *clkout = to_s3c24xx_clkout(hw);
 	int num_parents = clk_hw_get_num_parents(hw);
@@ -65,9 +65,8 @@ static u8 s3c24xx_clkout_get_parent(struct clk_hw *hw)
 	val &= clkout->mask;
 
 	if (val >= num_parents)
-		return -EINVAL;
-
-	return val;
+		return clk_hw_get_parent_by_index(hw, -EINVAL);return clk_hw_get_parent_by_index(hw,
+												 val);
 }
 
 static int s3c24xx_clkout_set_parent(struct clk_hw *hw, u8 index)
@@ -81,7 +80,7 @@ static int s3c24xx_clkout_set_parent(struct clk_hw *hw, u8 index)
 }
 
 static const struct clk_ops s3c24xx_clkout_ops = {
-	.get_parent = s3c24xx_clkout_get_parent,
+	.get_parent_hw = s3c24xx_clkout_get_parent,
 	.set_parent = s3c24xx_clkout_set_parent,
 	.determine_rate = __clk_mux_determine_rate,
 };
