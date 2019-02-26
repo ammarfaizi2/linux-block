@@ -133,7 +133,7 @@ const struct clk_ops clk_regmap_divider_ro_ops = {
 };
 EXPORT_SYMBOL_GPL(clk_regmap_divider_ro_ops);
 
-static u8 clk_regmap_mux_get_parent(struct clk_hw *hw)
+static struct clk_hw *clk_regmap_mux_get_parent(struct clk_hw *hw)
 {
 	struct clk_regmap *clk = to_clk_regmap(hw);
 	struct clk_regmap_mux_data *mux = clk_get_regmap_mux_data(clk);
@@ -142,11 +142,12 @@ static u8 clk_regmap_mux_get_parent(struct clk_hw *hw)
 
 	ret = regmap_read(clk->map, mux->offset, &val);
 	if (ret)
-		return ret;
+		return clk_hw_get_parent_by_index(hw, ret);
 
 	val >>= mux->shift;
 	val &= mux->mask;
-	return clk_mux_val_to_index(hw, mux->table, mux->flags, val);
+	return clk_hw_get_parent_by_index(hw,
+					  clk_mux_val_to_index(hw, mux->table, mux->flags, val));
 }
 
 static int clk_regmap_mux_set_parent(struct clk_hw *hw, u8 index)
@@ -170,14 +171,14 @@ static int clk_regmap_mux_determine_rate(struct clk_hw *hw,
 }
 
 const struct clk_ops clk_regmap_mux_ops = {
-	.get_parent = clk_regmap_mux_get_parent,
+	.get_parent_hw = clk_regmap_mux_get_parent,
 	.set_parent = clk_regmap_mux_set_parent,
 	.determine_rate = clk_regmap_mux_determine_rate,
 };
 EXPORT_SYMBOL_GPL(clk_regmap_mux_ops);
 
 const struct clk_ops clk_regmap_mux_ro_ops = {
-	.get_parent = clk_regmap_mux_get_parent,
+	.get_parent_hw = clk_regmap_mux_get_parent,
 };
 EXPORT_SYMBOL_GPL(clk_regmap_mux_ro_ops);
 
