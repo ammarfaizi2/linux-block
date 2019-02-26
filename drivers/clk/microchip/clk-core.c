@@ -274,7 +274,7 @@ static int roclk_init(struct clk_hw *hw)
 	return 0;
 }
 
-static u8 roclk_get_parent(struct clk_hw *hw)
+static struct clk_hw *roclk_get_parent(struct clk_hw *hw)
 {
 	struct pic32_ref_osc *refo = clkhw_to_refosc(hw);
 	u32 v, i;
@@ -282,13 +282,13 @@ static u8 roclk_get_parent(struct clk_hw *hw)
 	v = (readl(refo->ctrl_reg) >> REFO_SEL_SHIFT) & REFO_SEL_MASK;
 
 	if (!refo->parent_map)
-		return v;
+		return clk_hw_get_parent_by_index(hw, v);
 
 	for (i = 0; i < clk_hw_get_num_parents(hw); i++)
 		if (refo->parent_map[i] == v)
-			return i;
+			return clk_hw_get_parent_by_index(hw, i);
 
-	return -EINVAL;
+	return ERR_PTR(-EINVAL);
 }
 
 static unsigned long roclk_calc_rate(unsigned long parent_rate,
@@ -472,10 +472,10 @@ static int roclk_set_parent(struct clk_hw *hw, u8 index)
 	return 0;
 }
 
-static int roclk_set_rate_and_parent(struct clk_hw *hw,
-				     unsigned long rate,
-				     unsigned long parent_rate,
-				     u8 index)
+static int _roclk_set_rate_and_parent(struct clk_hw *hw,
+				      unsigned long rate,
+				      unsigned long parent_rate,
+				      u8 index)
 {
 	struct pic32_ref_osc *refo = clkhw_to_refosc(hw);
 	unsigned long flags;
@@ -501,10 +501,6 @@ static int roclk_set_rate_and_parent(struct clk_hw *hw,
 	v = readl(refo->ctrl_reg);
 
 	pic32_syskey_unlock();
-
-	/* apply parent, if required */
-	if (refo->parent_map)
-		index = refo->parent_map[index];
 
 	v &= ~(REFO_SEL_MASK << REFO_SEL_SHIFT);
 	v |= index << REFO_SEL_SHIFT;
@@ -534,24 +530,41 @@ static int roclk_set_rate_and_parent(struct clk_hw *hw,
 	return err;
 }
 
+static int roclk_set_rate_and_parent(struct clk_hw *hw,
+				     unsigned long rate,
+				     unsigned long parent_rate,
+				     u8 index)
+{
+	struct pic32_ref_osc *refo = clkhw_to_refosc(hw);
+
+	/* apply parent, if required */
+	if (refo->parent_map)
+		index = refo->parent_map[index];
+
+	return _roclk_set_rate_and_parent(hw, rate, parent_rate, index);
+}
+
 static int roclk_set_rate(struct clk_hw *hw, unsigned long rate,
 			  unsigned long parent_rate)
 {
-	u8 index = roclk_get_parent(hw);
+	struct clk_hw *parent = roclk_get_parent(hw);
+	struct pic32_ref_osc *refo = clkhw_to_refosc(hw);
+	u32 v;
 
-	return roclk_set_rate_and_parent(hw, rate, parent_rate, index);
+	v = (readl(refo->ctrl_reg) >> REFO_SEL_SHIFT) & REFO_SEL_MASK;
+
+	return _roclk_set_rate_and_parent(hw, rate, parent_rate, v);
 }
 
 const struct clk_ops pic32_roclk_ops = {
 	.enable			= roclk_enable,
 	.disable		= roclk_disable,
 	.is_enabled		= roclk_is_enabled,
-	.get_parent		= roclk_get_parent,
+	.get_parent_hw		= roclk_get_parent,
 	.set_parent		= roclk_set_parent,
 	.determine_rate		= roclk_determine_rate,
 	.recalc_rate		= roclk_recalc_rate,
 	.set_rate_and_parent	= roclk_set_rate_and_parent,
-	.set_rate		= roclk_set_rate,
 	.init			= roclk_init,
 };
 
@@ -816,7 +829,7 @@ static int sclk_set_rate(struct clk_hw *hw,
 	return err;
 }
 
-static u8 sclk_get_parent(struct clk_hw *hw)
+static struct clk_hw *sclk_get_parent(struct clk_hw *hw)
 {
 	struct pic32_sys_clk *sclk = clkhw_to_sys_clk(hw);
 	u32 i, v;
@@ -824,12 +837,13 @@ static u8 sclk_get_parent(struct clk_hw *hw)
 	v = (readl(sclk->mux_reg) >> OSC_CUR_SHIFT) & OSC_CUR_MASK;
 
 	if (!sclk->parent_map)
-		return v;
+		return clk_hw_get_parent_by_index(hw, v);
 
 	for (i = 0; i < clk_hw_get_num_parents(hw); i++)
 		if (sclk->parent_map[i] == v)
-			return i;
-	return -EINVAL;
+			return clk_hw_get_parent_by_index(hw, i);
+
+	return ERR_PTR(-EINVAL);
 }
 
 static int sclk_set_parent(struct clk_hw *hw, u8 index)
@@ -907,7 +921,7 @@ static int sclk_init(struct clk_hw *hw)
 
 /* sclk with post-divider */
 const struct clk_ops pic32_sclk_ops = {
-	.get_parent	= sclk_get_parent,
+	.get_parent_hw	= sclk_get_parent,
 	.set_parent	= sclk_set_parent,
 	.round_rate	= sclk_round_rate,
 	.set_rate	= sclk_set_rate,
@@ -918,7 +932,7 @@ const struct clk_ops pic32_sclk_ops = {
 
 /* sclk with no slew and no post-divider */
 const struct clk_ops pic32_sclk_no_div_ops = {
-	.get_parent	= sclk_get_parent,
+	.get_parent_hw	= sclk_get_parent,
 	.set_parent	= sclk_set_parent,
 	.init		= sclk_init,
 	.determine_rate = __clk_mux_determine_rate,
