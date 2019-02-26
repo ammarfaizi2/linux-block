@@ -112,14 +112,14 @@ static int plt_clk_set_parent(struct clk_hw *hw, u8 index)
 	return 0;
 }
 
-static u8 plt_clk_get_parent(struct clk_hw *hw)
+static struct clk_hw *plt_clk_get_parent(struct clk_hw *hw)
 {
 	struct clk_plt *clk = to_clk_plt(hw);
 	u32 value;
 
 	value = readl(clk->reg);
 
-	return plt_reg_to_parent(value);
+	return clk_hw_get_parent_by_index(hw, plt_reg_to_parent(value));
 }
 
 static int plt_clk_enable(struct clk_hw *hw)
@@ -152,7 +152,7 @@ static const struct clk_ops plt_clk_ops = {
 	.enable = plt_clk_enable,
 	.disable = plt_clk_disable,
 	.is_enabled = plt_clk_is_enabled,
-	.get_parent = plt_clk_get_parent,
+	.get_parent_hw = plt_clk_get_parent,
 	.set_parent = plt_clk_set_parent,
 	.determine_rate = __clk_mux_determine_rate,
 };
