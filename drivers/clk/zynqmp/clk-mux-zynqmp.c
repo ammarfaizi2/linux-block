@@ -40,7 +40,7 @@ struct zynqmp_clk_mux {
  *
  * Return: Parent index on success or number of parents in case of error
  */
-static u8 zynqmp_clk_mux_get_parent(struct clk_hw *hw)
+static struct clk_hw *zynqmp_clk_mux_get_parent(struct clk_hw *hw)
 {
 	struct zynqmp_clk_mux *mux = to_zynqmp_clk_mux(hw);
 	const char *clk_name = clk_hw_get_name(hw);
@@ -53,14 +53,10 @@ static u8 zynqmp_clk_mux_get_parent(struct clk_hw *hw)
 	if (ret) {
 		pr_debug("%s() getparent failed for clock: %s, ret = %d\n",
 			 __func__, clk_name, ret);
-		/*
-		 * clk_core_get_parent_by_index() takes num_parents as incorrect
-		 * index which is exactly what I want to return here
-		 */
-		return clk_hw_get_num_parents(hw);
+		return ERR_PTR(ret);
 	}
 
-	return val;
+	return clk_hw_get_parent_by_index(hw, val);
 }
 
 /**
@@ -87,13 +83,13 @@ static int zynqmp_clk_mux_set_parent(struct clk_hw *hw, u8 index)
 }
 
 static const struct clk_ops zynqmp_clk_mux_ops = {
-	.get_parent = zynqmp_clk_mux_get_parent,
+	.get_parent_hw = zynqmp_clk_mux_get_parent,
 	.set_parent = zynqmp_clk_mux_set_parent,
 	.determine_rate = __clk_mux_determine_rate,
 };
 
 static const struct clk_ops zynqmp_clk_mux_ro_ops = {
-	.get_parent = zynqmp_clk_mux_get_parent,
+	.get_parent_hw = zynqmp_clk_mux_get_parent,
 };
 
 static inline unsigned long zynqmp_clk_map_mux_ccf_flags(
