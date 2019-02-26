@@ -218,19 +218,19 @@ static int da8xx_cfgchip_mux_clk_set_parent(struct clk_hw *hw, u8 index)
 	return regmap_write_bits(clk->regmap, clk->reg, clk->mask, val);
 }
 
-static u8 da8xx_cfgchip_mux_clk_get_parent(struct clk_hw *hw)
+static struct clk_hw *da8xx_cfgchip_mux_clk_get_parent(struct clk_hw *hw)
 {
 	struct da8xx_cfgchip_mux_clk *clk = to_da8xx_cfgchip_mux_clk(hw);
 	unsigned int val;
 
 	regmap_read(clk->regmap, clk->reg, &val);
 
-	return (val & clk->mask) ? 1 : 0;
+	return clk_hw_get_parent_by_index(hw, (val & clk->mask) ? 1 : 0);
 }
 
 static const struct clk_ops da8xx_cfgchip_mux_clk_ops = {
 	.set_parent	= da8xx_cfgchip_mux_clk_set_parent,
-	.get_parent	= da8xx_cfgchip_mux_clk_get_parent,
+	.get_parent_hw	= da8xx_cfgchip_mux_clk_get_parent,
 };
 
 static struct da8xx_cfgchip_mux_clk * __init
@@ -476,14 +476,15 @@ static int da8xx_usb0_clk48_set_parent(struct clk_hw *hw, u8 index)
 				 index ? CFGCHIP2_USB2PHYCLKMUX : 0);
 }
 
-static u8 da8xx_usb0_clk48_get_parent(struct clk_hw *hw)
+static struct clk_hw *da8xx_usb0_clk48_get_parent(struct clk_hw *hw)
 {
 	struct da8xx_usb0_clk48 *usb0 = to_da8xx_usb0_clk48(hw);
 	unsigned int val;
 
 	regmap_read(usb0->regmap, CFGCHIP(2), &val);
 
-	return (val & CFGCHIP2_USB2PHYCLKMUX) ? 1 : 0;
+	return clk_hw_get_parent_by_index(hw,
+					  (val & CFGCHIP2_USB2PHYCLKMUX) ? 1 : 0);
 }
 
 static const struct clk_ops da8xx_usb0_clk48_ops = {
@@ -495,7 +496,7 @@ static const struct clk_ops da8xx_usb0_clk48_ops = {
 	.recalc_rate	= da8xx_usb0_clk48_recalc_rate,
 	.round_rate	= da8xx_usb0_clk48_round_rate,
 	.set_parent	= da8xx_usb0_clk48_set_parent,
-	.get_parent	= da8xx_usb0_clk48_get_parent,
+	.get_parent_hw	= da8xx_usb0_clk48_get_parent,
 };
 
 static struct da8xx_usb0_clk48 *
@@ -553,19 +554,20 @@ static int da8xx_usb1_clk48_set_parent(struct clk_hw *hw, u8 index)
 				 index ? CFGCHIP2_USB1PHYCLKMUX : 0);
 }
 
-static u8 da8xx_usb1_clk48_get_parent(struct clk_hw *hw)
+static struct clk_hw *da8xx_usb1_clk48_get_parent(struct clk_hw *hw)
 {
 	struct da8xx_usb1_clk48 *usb1 = to_da8xx_usb1_clk48(hw);
 	unsigned int val;
 
 	regmap_read(usb1->regmap, CFGCHIP(2), &val);
 
-	return (val & CFGCHIP2_USB1PHYCLKMUX) ? 1 : 0;
+	return clk_hw_get_parent_by_index(hw,
+					  (val & CFGCHIP2_USB1PHYCLKMUX) ? 1 : 0);
 }
 
 static const struct clk_ops da8xx_usb1_clk48_ops = {
 	.set_parent	= da8xx_usb1_clk48_set_parent,
-	.get_parent	= da8xx_usb1_clk48_get_parent,
+	.get_parent_hw	= da8xx_usb1_clk48_get_parent,
 };
 
 /**
