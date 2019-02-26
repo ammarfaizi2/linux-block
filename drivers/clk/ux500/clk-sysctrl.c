@@ -92,10 +92,10 @@ static int clk_sysctrl_set_parent(struct clk_hw *hw, u8 index)
 	return ret;
 }
 
-static u8 clk_sysctrl_get_parent(struct clk_hw *hw)
+static struct clk_hw *clk_sysctrl_get_parent(struct clk_hw *hw)
 {
 	struct clk_sysctrl *clk = to_clk_sysctrl(hw);
-	return clk->parent_index;
+	return clk_hw_get_parent_by_index(hw, clk->parent_index);
 }
 
 static const struct clk_ops clk_sysctrl_gate_ops = {
@@ -111,7 +111,7 @@ static const struct clk_ops clk_sysctrl_gate_fixed_rate_ops = {
 
 static const struct clk_ops clk_sysctrl_set_parent_ops = {
 	.set_parent = clk_sysctrl_set_parent,
-	.get_parent = clk_sysctrl_get_parent,
+	.get_parent_hw = clk_sysctrl_get_parent,
 };
 
 static struct clk *clk_reg_sysctrl(struct device *dev,
