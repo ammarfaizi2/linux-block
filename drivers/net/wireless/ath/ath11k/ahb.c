@@ -11,6 +11,7 @@
 #include "ahb.h"
 #include "debug.h"
 #include <linux/remoteproc.h>
+#include <soc/qcom/subsystem_notif.h>
 
 static const struct of_device_id ath11k_ahb_of_match[] = {
 	/* TODO: Should we change the compatible string to something similar
@@ -930,8 +931,37 @@ void ath11k_unregister_subsys(struct ath11k_base *sc)
 {
 	struct ath11k_subsys_info *subsys_info;
 
+	if (sc->notif_handler) {
+		subsys_notif_unregister_notifier(sc->notif_handler, &sc->nb);
+		memset(&sc->nb, 0, sizeof(struct notifier_block));
+		sc->notif_handler = NULL;
+	}
 	subsys_info = &sc->subsys_info;
 	subsys_info->subsys_desc.name = NULL;
+}
+
+static int ath11k_subsys_notifier_cb(struct notifier_block *nb,
+				     unsigned long code,
+				     void *handle)
+{
+	struct ath11k_base *sc = container_of(nb, struct ath11k_base, nb);
+
+	switch (code) {
+	case SUBSYS_BEFORE_SHUTDOWN:
+		sc->target_restarted = 1;
+		break;
+	case SUBSYS_AFTER_POWERUP:
+		sc->target_restarted = 0;
+		break;
+	case SUBSYS_BEFORE_POWERUP:
+		if (sc->target_restarted)
+			BUG();
+		break;
+	default:
+		return NOTIFY_OK;
+	}
+
+	return NOTIFY_OK;
 }
 
 int ath11k_register_subsys(struct ath11k_base *sc)
@@ -941,6 +971,10 @@ int ath11k_register_subsys(struct ath11k_base *sc)
 	subsys_info = &sc->subsys_info;
 	subsys_info->subsys_desc.name = ATH11K_TARGET_NAME;
 
+	sc->nb.notifier_call = ath11k_subsys_notifier_cb;
+	sc->notif_handler =
+		subsys_notif_register_notifier(subsys_info->subsys_desc.name,
+					       &sc->nb);
 	return 0;
 }
 #endif

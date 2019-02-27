@@ -558,6 +558,9 @@ struct ath11k_base {
 	u32 ext_service_bitmap[WMI_SERVICE_EXT_BM_SIZE];
 #ifdef CONFIG_IPQ_SUBSYSTEM_RESTART
 	struct ath11k_subsys_info subsys_info;
+	struct notifier_block nb;
+	void *notif_handler;
+	int target_restarted;
 #endif
 	bool pdevs_macaddr_valid;
 	int bd_api;
