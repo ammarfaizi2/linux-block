@@ -456,7 +456,15 @@ int ath11k_peer_rx_tid_setup(struct ath11k *ar, const u8 *peer_mac, int vdev_id,
 	rx_tid->tid = tid;
 
 	rx_tid->ba_win_sz = ba_win_sz;
-	hw_desc_sz = ath11k_hal_reo_qdesc_size(ba_win_sz, tid);
+
+	/* TODO: Optimize the memory allocation for qos tid based on the
+	 * the actual BA window size in REO tid update path.
+	 */
+	if (tid == HAL_DESC_REO_NON_QOS_TID)
+		hw_desc_sz = ath11k_hal_reo_qdesc_size(ba_win_sz, tid);
+	else
+		hw_desc_sz = ath11k_hal_reo_qdesc_size(DP_BA_WIN_SZ_MAX, tid);
+
 	vaddr = kzalloc(hw_desc_sz + HAL_LINK_DESC_ALIGN - 1, GFP_KERNEL);
 	if (!vaddr) {
 		spin_unlock_bh(&ab->data_lock);

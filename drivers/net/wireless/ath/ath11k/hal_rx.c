@@ -202,7 +202,6 @@ static int ath11k_hal_reo_cmd_update_rx_queue(u32 *reo_desc,
 	if (cmd->ba_window_size < 1)
 		cmd->ba_window_size = 1;
 
-	/* TODO: Check if this should be done only for QOS tid */
 	if (cmd->ba_window_size == 1)
 		cmd->ba_window_size++;
 

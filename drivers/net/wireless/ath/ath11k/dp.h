@@ -86,6 +86,8 @@ struct ath11k_pdev_dp {
 
 #define DP_RX_HASH_ENABLE	0 /* Disable hash based Rx steering */
 
+#define DP_BA_WIN_SZ_MAX	256
+
 /* Size to enforce scatter idle list mode */
 #define DP_LINK_DESC_ALLOC_SIZE_THRESH 0x200000
 #define DP_LINK_DESC_BANKS_MAX 8
