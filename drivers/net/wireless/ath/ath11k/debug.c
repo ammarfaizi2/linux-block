@@ -281,6 +281,7 @@ void ath11k_debug_fw_stats_process(struct ath11k_base *ab, u8 *evt_buf, u32 len)
 	}
 complete:
 	complete(&ar->debug.fw_stats_complete);
+	spin_unlock_bh(&ar->data_lock);
 
 free:
 	ath11k_fw_stats_pdevs_free(&stats.pdevs);
@@ -288,8 +289,6 @@ free:
 	ath11k_fw_stats_bcn_free(&stats.bcn);
 	ath11k_fw_stats_peers_free(&stats.peers);
 	ath11k_fw_stats_peers_extd_free(&stats.peers_extd);
-
-	spin_unlock_bh(&ar->data_lock);
 }
 
 static int ath11k_debug_fw_stats_request(struct ath11k *ar,
