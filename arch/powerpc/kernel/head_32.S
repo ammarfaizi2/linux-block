@@ -261,7 +261,7 @@ __secondary_hold_acknowledge:
 	tophys(r11,r1);			/* use tophys(r1) if kernel */ \
 	beq	1f;		\
 	mfspr	r11,SPRN_SPRG_THREAD;	\
-	lwz	r11,THREAD_INFO-THREAD(r11);	\
+	lwz	r11,TASK_STACK-THREAD(r11);	\
 	addi	r11,r11,THREAD_SIZE;	\
 	tophys(r11,r11);	\
 1:	subi	r11,r11,INT_FRAME_SIZE	/* alloc exc. frame */
@@ -831,12 +831,12 @@ __secondary_start:
 	bl	init_idle_6xx
 #endif /* CONFIG_PPC_BOOK3S_32 */
 
-	/* get current_thread_info and current */
-	lis	r1,secondary_ti@ha
-	tophys(r1,r1)
-	lwz	r1,secondary_ti@l(r1)
-	tophys(r2,r1)
-	lwz	r2,TI_TASK(r2)
+	/* get current's stack and current */
+	lis	r2,secondary_current@ha
+	tophys(r2,r2)
+	lwz	r2,secondary_current@l(r2)
+	tophys(r1,r2)
+	lwz	r1,TASK_STACK(r1)
 
 	/* stack */
 	addi	r1,r1,THREAD_SIZE-STACK_FRAME_OVERHEAD
@@ -1095,6 +1095,41 @@ BEGIN_MMU_FTR_SECTION
 	mtspr	SPRN_IBAT7L,r10
 END_MMU_FTR_SECTION_IFSET(MMU_FTR_USE_HIGH_BATS)
 	blr
+
+_ENTRY(update_bats)
+	lis	r4, 1f@h
+	ori	r4, r4, 1f@l
+	tophys(r4, r4)
+	mfmsr	r6
+	mflr	r7
+	li	r3, MSR_KERNEL & ~(MSR_IR | MSR_DR)
+	rlwinm	r0, r6, 0, ~MSR_RI
+	rlwinm	r0, r0, 0, ~MSR_EE
+	mtmsr	r0
+	mtspr	SPRN_SRR0, r4
+	mtspr	SPRN_SRR1, r3
+	SYNC
+	RFI
+1:	bl	clear_bats
+	lis	r3, BATS@ha
+	addi	r3, r3, BATS@l
+	tophys(r3, r3)
+	LOAD_BAT(0, r3, r4, r5)
+	LOAD_BAT(1, r3, r4, r5)
+	LOAD_BAT(2, r3, r4, r5)
+	LOAD_BAT(3, r3, r4, r5)
+BEGIN_MMU_FTR_SECTION
+	LOAD_BAT(4, r3, r4, r5)
+	LOAD_BAT(5, r3, r4, r5)
+	LOAD_BAT(6, r3, r4, r5)
+	LOAD_BAT(7, r3, r4, r5)
+END_MMU_FTR_SECTION_IFSET(MMU_FTR_USE_HIGH_BATS)
+	li	r3, MSR_KERNEL & ~(MSR_IR | MSR_DR | MSR_RI)
+	mtmsr	r3
+	mtspr	SPRN_SRR0, r7
+	mtspr	SPRN_SRR1, r6
+	SYNC
+	RFI
 
 flush_tlbs:
 	lis	r10, 0x40

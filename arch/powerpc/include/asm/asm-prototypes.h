@@ -23,8 +23,8 @@
 #include <uapi/asm/ucontext.h>
 
 /* SMP */
-extern struct thread_info *current_set[NR_CPUS];
-extern struct thread_info *secondary_ti;
+extern struct task_struct *current_set[NR_CPUS];
+extern struct task_struct *secondary_current;
 void start_secondary(void *unused);
 
 /* kexec */
@@ -37,19 +37,25 @@ void kexec_copy_flush(struct kimage *image);
 extern struct static_key hcall_tracepoint_key;
 void __trace_hcall_entry(unsigned long opcode, unsigned long *args);
 void __trace_hcall_exit(long opcode, long retval, unsigned long *retbuf);
-/* OPAL tracing */
-#ifdef CONFIG_JUMP_LABEL
-extern struct static_key opal_tracepoint_key;
-#endif
 
-void __trace_opal_entry(unsigned long opcode, unsigned long *args);
-void __trace_opal_exit(long opcode, unsigned long retval);
+/* OPAL */
+int64_t __opal_call(int64_t a0, int64_t a1, int64_t a2, int64_t a3,
+		    int64_t a4, int64_t a5, int64_t a6, int64_t a7,
+		    int64_t opcode, uint64_t msr);
 
 /* VMX copying */
 int enter_vmx_usercopy(void);
 int exit_vmx_usercopy(void);
 int enter_vmx_ops(void);
 void *exit_vmx_ops(void *dest);
+
+/* Exceptions */
+#ifdef CONFIG_PPC_POWERNV
+extern unsigned long real_trampolines_start;
+extern unsigned long real_trampolines_end;
+extern unsigned long virt_trampolines_start;
+extern unsigned long virt_trampolines_end;
+#endif
 
 /* Traps */
 long machine_check_early(struct pt_regs *regs);
