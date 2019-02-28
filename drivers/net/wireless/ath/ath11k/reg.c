@@ -559,3 +559,15 @@ void ath11k_reg_init(struct ath11k *ar)
 	ar->hw->wiphy->regulatory_flags = REGULATORY_WIPHY_SELF_MANAGED;
 	ar->hw->wiphy->reg_notifier = ath11k_reg_notifier;
 }
+
+void ath11k_reg_free(struct ath11k_base *ab)
+{
+	int i;
+
+	for (i = 0; i < MAX_RADIOS; i++) {
+		if (ab->default_regd[i])
+			kfree(ab->default_regd[i]);
+		if (ab->new_regd[i])
+			kfree(ab->new_regd[i]);
+	}
+}

@@ -754,6 +754,7 @@ void ath11k_core_free_bdf(struct ath11k_base *sc, struct ath11k_board_data *bd);
 
 /* ATH11K Regulatory API's */
 void ath11k_reg_init(struct ath11k *ar);
+void ath11k_reg_free(struct ath11k_base *ab);
 void ath11k_regd_update_work(struct work_struct *work);
 struct ieee80211_regdomain *
 ath11k_reg_build_regd(struct ath11k_base *ab,

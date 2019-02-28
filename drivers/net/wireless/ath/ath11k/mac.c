@@ -5035,9 +5035,6 @@ void ath11k_mac_destroy(struct ath11k_base *ab)
 		kfree(ar->mac.sbands[NL80211_BAND_2GHZ].channels);
 		kfree(ar->mac.sbands[NL80211_BAND_5GHZ].channels);
 
-		kfree(ab->default_regd[i]);
-		kfree(ab->new_regd[i]);
-
 		SET_IEEE80211_DEV(ar->hw, NULL);
 
 		ieee80211_free_hw(ar->hw);

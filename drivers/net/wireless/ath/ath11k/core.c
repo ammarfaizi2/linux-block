@@ -478,6 +478,7 @@ static void ath11k_core_soc_destroy(struct ath11k_base *sc)
 {
 	ath11k_debug_soc_destroy(sc);
 	ath11k_dp_free(sc);
+	ath11k_reg_free(sc);
 	ath11k_qmi_deinit_service(sc);
 }
 
