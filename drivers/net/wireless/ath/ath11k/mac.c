@@ -440,29 +440,9 @@ struct ath11k *ath11k_get_ar_vdev_stop_status(struct ath11k_base *ab,
 	return NULL;
 }
 
-int ath11k_pdev_caps_update(struct ath11k *ar)
+static void ath11k_pdev_caps_update(struct ath11k *ar)
 {
 	struct ath11k_base *ab = ar->ab;
-	u8 pdev_idx = ar->pdev_idx;
-	int status = 0;
-	struct ath11k_hal_reg_capabilities_ext rcap = ar->hal_reg_cap;
-
-	rcap.eeprom_reg_domain =
-		ab->hal_reg_cap[pdev_idx].eeprom_reg_domain;
-	rcap.eeprom_reg_domain_ext =
-		ab->hal_reg_cap[pdev_idx].eeprom_reg_domain_ext;
-	rcap.regcap1 = ab->hal_reg_cap[pdev_idx].regcap1;
-	rcap.regcap2 = ab->hal_reg_cap[pdev_idx].regcap2;
-	rcap.wireless_modes =
-		ab->hal_reg_cap[pdev_idx].wireless_modes;
-	rcap.low_5ghz_chan =
-		ab->hal_reg_cap[pdev_idx].low_5ghz_chan;
-	rcap.high_5ghz_chan =
-		ab->hal_reg_cap[pdev_idx].high_5ghz_chan;
-	rcap.low_2ghz_chan =
-		ab->hal_reg_cap[pdev_idx].low_2ghz_chan;
-	rcap.high_2ghz_chan =
-		ab->hal_reg_cap[pdev_idx].high_2ghz_chan;
 
 	ar->max_tx_power = ab->target_caps.hw_max_tx_power;
 
@@ -476,8 +456,6 @@ int ath11k_pdev_caps_update(struct ath11k *ar)
 	ar->txpower_limit_2g = ar->max_tx_power;
 	ar->txpower_limit_5g = ar->max_tx_power;
 	ar->txpower_scale = WMI_HOST_TP_SCALE_MAX;
-
-	return status;
 }
 
 static int ath11k_mac_txpower_recalc(struct ath11k *ar)
@@ -4841,15 +4819,34 @@ static const struct ieee80211_iface_combination ath11k_if_comb[] = {
 	},
 };
 
+static void ath11k_mac_update_ch_list(struct ath11k *ar,
+				      struct ieee80211_supported_band *band,
+				      u32 freq_low, u32 freq_high)
+{
+	int i;
+
+	if (!(freq_low && freq_high))
+		return;
+
+	for (i = 0; i < band->n_channels; i++) {
+		if (band->channels[i].center_freq < freq_low ||
+		    band->channels[i].center_freq > freq_high)
+			band->channels[i].flags |= IEEE80211_CHAN_DISABLED;
+	}
+}
+
 static int ath11k_mac_setup_channels_rates(struct ath11k *ar,
 					   u32 supported_bands)
 {
 	struct ieee80211_supported_band *band;
+	struct ath11k_hal_reg_capabilities_ext *reg_cap;
 	void *channels;
 
 	BUILD_BUG_ON((ARRAY_SIZE(ath11k_2ghz_channels) +
 		      ARRAY_SIZE(ath11k_5ghz_channels)) !=
 		     ATH11K_NUM_CHANS);
+
+	reg_cap = &ar->ab->hal_reg_cap[ar->pdev_idx];
 
 	if (supported_bands & WMI_HOST_WLAN_2G_CAP) {
 		channels = kmemdup(ath11k_2ghz_channels,
@@ -4864,6 +4861,9 @@ static int ath11k_mac_setup_channels_rates(struct ath11k *ar,
 		band->n_bitrates = ath11k_g_rates_size;
 		band->bitrates = ath11k_g_rates;
 		ar->hw->wiphy->bands[NL80211_BAND_2GHZ] = band;
+		ath11k_mac_update_ch_list(ar, band,
+					  reg_cap->low_2ghz_chan,
+					  reg_cap->high_2ghz_chan);
 	}
 
 	if (supported_bands & WMI_HOST_WLAN_5G_CAP) {
@@ -4881,6 +4881,9 @@ static int ath11k_mac_setup_channels_rates(struct ath11k *ar,
 		band->n_bitrates = ath11k_a_rates_size;
 		band->bitrates = ath11k_a_rates;
 		ar->hw->wiphy->bands[NL80211_BAND_5GHZ] = band;
+		ath11k_mac_update_ch_list(ar, band,
+					  reg_cap->low_5ghz_chan,
+					  reg_cap->high_5ghz_chan);
 	}
 
 	return 0;

@@ -380,7 +380,6 @@ struct ath11k {
 	u8 mac_addr[ETH_ALEN];
 	u32 ht_cap_info;
 	u32 vht_cap_info;
-	struct ath11k_hal_reg_capabilities_ext hal_reg_cap;
 	struct ath11k_he ar_he;
 	enum ath11k_state state;
 	struct {
