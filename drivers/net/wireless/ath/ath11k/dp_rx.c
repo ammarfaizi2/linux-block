@@ -1983,8 +1983,9 @@ static void ath11k_dp_rx_frag_h_mpdu(struct ath11k *ar,
 	}
 }
 
-static int ath11k_dp_rx_frag_buf(struct ath11k *ar, struct napi_struct *napi,
-				 int buf_id)
+static int
+ath11k_dp_process_rx_err_buf(struct ath11k *ar, struct napi_struct *napi,
+			     int buf_id, bool frag)
 {
 	struct ath11k_pdev_dp *dp = &ar->dp;
 	struct dp_rxdma_ring *rx_ring = &dp->rx_refill_buf_ring;
@@ -1998,7 +1999,8 @@ static int ath11k_dp_rx_frag_buf(struct ath11k *ar, struct napi_struct *napi,
 	spin_lock_bh(&rx_ring->idr_lock);
 	msdu = idr_find(&rx_ring->bufs_idr, buf_id);
 	if (!msdu) {
-		ath11k_warn(ar->ab, "fragment rx with invalid buf_id %d\n", buf_id);
+		ath11k_warn(ar->ab, "rx err buf with invalid buf_id %d\n",
+			    buf_id);
 		spin_unlock_bh(&rx_ring->idr_lock);
 		return -EINVAL;
 	}
@@ -2010,6 +2012,14 @@ static int ath11k_dp_rx_frag_buf(struct ath11k *ar, struct napi_struct *napi,
 	dma_unmap_single(ar->ab->dev, rxcb->paddr,
 			 msdu->len + skb_tailroom(msdu),
 			 DMA_FROM_DEVICE);
+
+	if (!frag) {
+		/* Process only rx fragments below, and drop
+		 * msdu's indicated due to error reasons.
+		 */
+		dev_kfree_skb_any(msdu);
+		return 0;
+	}
 
 	rcu_read_lock();
 	if (!rcu_dereference(ar->ab->pdevs_active[ar->pdev_idx])) {
@@ -2054,6 +2064,7 @@ int ath11k_dp_process_rx_err(struct ath11k_base *ab, struct napi_struct *napi,
 	struct ath11k *ar;
 	dma_addr_t paddr;
 	u32 *desc;
+	bool is_frag;
 
 	tot_n_bufs_reaped = 0;
 	quota = budget;
@@ -2092,12 +2103,11 @@ int ath11k_dp_process_rx_err(struct ath11k_base *ab, struct napi_struct *napi,
 		memset(&meta_info, 0, sizeof(meta_info));
 		ath11k_hal_rx_parse_dst_ring_desc(ab, desc, &meta_info);
 
+		is_frag = meta_info.mpdu_meta.frag;
+
 		/* Return the link desc back to wbm idle list */
 		ath11k_dp_rx_link_desc_return(ab, desc,
 					      HAL_WBM_REL_BM_ACT_PUT_IN_IDLE);
-
-		if (!meta_info.mpdu_meta.frag)
-			continue;
 
 		for (i = 0; i < num_msdus; i++) {
 			buf_id = FIELD_GET(DP_RXDMA_BUF_COOKIE_BUF_ID,
@@ -2108,7 +2118,8 @@ int ath11k_dp_process_rx_err(struct ath11k_base *ab, struct napi_struct *napi,
 
 			ar = ab->pdevs[mac_id].ar;
 
-			if (!ath11k_dp_rx_frag_buf(ar, napi, buf_id)) {
+			if (!ath11k_dp_process_rx_err_buf(ar, napi, buf_id,
+							  is_frag)) {
 				n_bufs_reaped[mac_id]++;
 				tot_n_bufs_reaped++;
 			}
