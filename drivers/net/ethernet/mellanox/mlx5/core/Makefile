@@ -39,7 +39,7 @@ mlx5_core-$(CONFIG_MLX5_ESWITCH)   += eswitch.o eswitch_offloads.o ecpf.o
 mlx5_core-$(CONFIG_MLX5_MPFS)      += lib/mpfs.o
 mlx5_core-$(CONFIG_VXLAN)          += lib/vxlan.o
 mlx5_core-$(CONFIG_PTP_1588_CLOCK) += lib/clock.o
-mlx5_core-$(CONFIG_PCI_HYPERV)     += lib/hv.o
+mlx5_core-$(CONFIG_PCI_HYPERV)     += lib/hv.o lib/hv_vhca.o
 
 #
 # Ipoib netdev
