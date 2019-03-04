@@ -183,6 +183,8 @@ void ath11k_scan_finish(struct ath11k *ar);
 struct ath11k_vif *ath11k_get_arvif(struct ath11k *ab, u32 vdev_id);
 struct ath11k *ath11k_get_ar_by_vdev_id(struct ath11k_base *ab, u32 vdev_id);
 struct ath11k *ath11k_get_ar_by_pdev_id(struct ath11k_base *ab, u32 pdev_id);
+struct ath11k *ath11k_get_ar_vdev_stop_status(struct ath11k_base *ab,
+					      u32 vdev_id);
 
 void ath11k_mgmt_over_wmi_tx_work(struct work_struct *work);
 void ath11k_mgmt_over_wmi_tx_purge(struct ath11k *ar);

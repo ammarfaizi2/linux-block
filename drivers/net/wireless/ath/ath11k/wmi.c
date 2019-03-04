@@ -5038,7 +5038,7 @@ void ath11k_vdev_stopped_event(struct ath11k_base *ab, u8 *evt_buf, u32 len)
 	}
 
 	rcu_read_lock();
-	ar = ath11k_get_ar_by_vdev_id(ab, vdev_id);
+	ar = ath11k_get_ar_vdev_stop_status(ab, vdev_id);
 	if (!ar) {
 		ath11k_warn(ab, "invalid vdev id in vdev stopped ev %d",
 			    vdev_id);
