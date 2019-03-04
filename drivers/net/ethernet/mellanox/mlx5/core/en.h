@@ -54,6 +54,7 @@
 #include "mlx5_core.h"
 #include "en_stats.h"
 #include "en/fs.h"
+#include "lib/hv_vhca.h"
 
 extern const struct net_device_ops mlx5e_netdev_ops;
 struct page_pool;
@@ -688,6 +689,15 @@ struct mlx5e_modify_sq_param {
 	int rl_index;
 };
 
+#if IS_ENABLED(CONFIG_PCI_HYPERV)
+struct mlx5e_hv_vhca_stats_agent {
+	struct mlx5_hv_vhca_agent *agent;
+	struct delayed_work        work;
+	u16                        delay;
+	void                      *buf;
+};
+#endif
+
 struct mlx5e_priv {
 	/* priv data path fields - start */
 	struct mlx5e_txqsq *txq2sq[MLX5E_MAX_NUM_CHANNELS * MLX5E_MAX_NUM_TC];
@@ -744,6 +754,9 @@ struct mlx5e_priv {
 	struct mlx5e_tls          *tls;
 #endif
 	struct devlink_health_reporter *tx_reporter;
+#if IS_ENABLED(CONFIG_PCI_HYPERV)
+	struct mlx5e_hv_vhca_stats_agent stats_agent;
+#endif
 };
 
 struct mlx5e_profile {
