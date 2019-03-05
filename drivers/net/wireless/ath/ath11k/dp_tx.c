@@ -97,6 +97,9 @@ int ath11k_dp_tx(struct ath11k *ar, struct ath11k_vif *arvif,
 			DP_TX_COMP_RING_SIZE, GFP_ATOMIC);
 	spin_unlock_bh(&tx_ring->tx_idr_lock);
 
+	if (ret < 0)
+		return -ENOSPC;
+
 	ti.desc_id = FIELD_PREP(DP_TX_DESC_ID_MAC_ID, ar->pdev_idx) |
 		     FIELD_PREP(DP_TX_DESC_ID_MSDU_ID, ret) |
 		     FIELD_PREP(DP_TX_DESC_ID_POOL_ID, pool_id);
@@ -165,7 +168,7 @@ int ath11k_dp_tx(struct ath11k *ar, struct ath11k_vif *arvif,
 
 	hal_tcl_desc = (void *)ath11k_hal_srng_src_get_next_entry(ab, tcl_ring);
 	if (!hal_tcl_desc) {
-		/* NOTE: It is highly unlikely we'll ibe running out of tcl_ring
+		/* NOTE: It is highly unlikely we'll be running out of tcl_ring
 		 * desc because the desc is directly enqueued onto hw queue.
 		 * So add tx packet throttling logic in future if required.
 		 */
@@ -325,8 +328,7 @@ static void ath11k_dp_cache_peer_stats(struct ath11k *ar,
 {
 	struct ath11k_per_peer_tx_stats *peer_stats = &ar->cached_stats;
 
-	if (ts->try_cnt >= 1 &&
-	    ts->status == HAL_WBM_TQM_REL_REASON_FRAME_ACKED) {
+	if (ts->try_cnt >= 1) {
 		if (ts->try_cnt == 1) {
 			peer_stats->retry_pkts += 1;
 			peer_stats->retry_bytes += msdu->len;
@@ -334,17 +336,11 @@ static void ath11k_dp_cache_peer_stats(struct ath11k *ar,
 			peer_stats->retry_pkts += ts->try_cnt - 1;
 			peer_stats->retry_bytes += (ts->try_cnt - 1) * msdu->len;
 		}
-	} else if (ts->try_cnt >= 1 &&
-		   ts->status != HAL_WBM_TQM_REL_REASON_FRAME_ACKED) {
-		if (ts->try_cnt == 1) {
-			peer_stats->retry_pkts += 1;
-			peer_stats->retry_bytes += msdu->len;
-		} else {
-			peer_stats->retry_pkts += ts->try_cnt - 1;
-			peer_stats->retry_bytes += (ts->try_cnt - 1) * msdu->len;
+
+		if (ts->status != HAL_WBM_TQM_REL_REASON_FRAME_ACKED) {
+			peer_stats->failed_pkts += 1;
+			peer_stats->failed_bytes += msdu->len;
 		}
-		peer_stats->failed_pkts += 1;
-		peer_stats->failed_bytes += msdu->len;
 	}
 }
 
@@ -436,7 +432,6 @@ void ath11k_dp_tx_completion_handler(struct ath11k_base *ab, int ring_id)
 	struct hal_wbm_release_ring tx_status;
 	struct hal_tx_status ts;
 	struct dp_tx_ring *tx_ring;
-	struct ath11k_skb_cb *skb_cb;
 	u32 *desc;
 	u32 msdu_id;
 	u8 pool_id;
@@ -448,8 +443,8 @@ void ath11k_dp_tx_completion_handler(struct ath11k_base *ab, int ring_id)
 	ath11k_hal_srng_access_begin(ab, status_ring);
 
 	spin_lock_bh(&dp->tx_status_lock);
-	while ((desc = ath11k_hal_srng_dst_get_next_entry(ab, status_ring)) &&
-	       !kfifo_is_full(&dp->tx_status_fifo)) {
+	while (!kfifo_is_full(&dp->tx_status_fifo) &&
+	       (desc = ath11k_hal_srng_dst_get_next_entry(ab, status_ring))) {
 		ath11k_hal_tx_status_desc_sync((void *)desc,
 					       (void *)&tx_status);
 		kfifo_put(&dp->tx_status_fifo, tx_status);
@@ -489,18 +484,18 @@ void ath11k_dp_tx_completion_handler(struct ath11k_base *ab, int ring_id)
 		msdu = idr_find(&tx_ring->txbuf_idr, msdu_id);
 		if (!msdu) {
 			ath11k_warn(ab, "tx completion for unknown msdu_id %d\n",
-				    ts.desc_id);
+				    msdu_id);
 			spin_unlock_bh(&tx_ring->tx_idr_lock);
 			continue;
 		}
 		idr_remove(&tx_ring->txbuf_idr, msdu_id);
-		skb_cb = ATH11K_SKB_CB(msdu);
 		tx_ring->num_tx_pending--;
 		spin_unlock_bh(&tx_ring->tx_idr_lock);
 
 		ar = ab->pdevs[mac_id].ar;
 
-		atomic_dec(&ar->dp.num_tx_pending);
+		if (atomic_dec_and_test(&ar->dp.num_tx_pending))
+			wake_up(&ar->dp.tx_empty_waitq);
 
 		/* TODO: Locking optimization so that tx_completion for an msdu
 		 * is not called with tx_status_lock acquired
@@ -747,7 +742,6 @@ int ath11k_dp_htt_h2t_ppdu_stats_req(struct ath11k *ar, u32 mask)
 	int len = sizeof(*cmd);
 	u8 pdev_mask;
 	int ret;
-
 
 	skb = ath11k_htc_alloc_skb(ab, len);
 	if (!skb)
