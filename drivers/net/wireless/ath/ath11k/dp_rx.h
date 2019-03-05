@@ -278,6 +278,19 @@ ath11k_dp_rx_h_msdu_end_last_msdu(u8 *desc)
 			   __le32_to_cpu(rxd->msdu_end.info2));
 }
 
+static inline void ath11k_dp_rx_desc_end_tlv_copy(u8 *first, u8 *last)
+{
+	struct hal_rx_desc *fdesc = (struct hal_rx_desc *)first;
+	struct hal_rx_desc *ldesc = (struct hal_rx_desc *)last;
+
+	memcpy((u8 *)&fdesc->msdu_end, (u8 *)&ldesc->msdu_end,
+	       sizeof(struct rx_msdu_end));
+	memcpy((u8 *)&fdesc->attention, (u8 *)&ldesc->attention,
+	       sizeof(struct rx_attention));
+	memcpy((u8 *)&fdesc->mpdu_end, (u8 *)&ldesc->mpdu_end,
+	       sizeof(struct rx_mpdu_end));
+}
+
 int ath11k_dp_rx_ampdu_start(struct ath11k *ar,
 			     struct ieee80211_ampdu_params *params);
 int ath11k_dp_rx_ampdu_stop(struct ath11k *ar,

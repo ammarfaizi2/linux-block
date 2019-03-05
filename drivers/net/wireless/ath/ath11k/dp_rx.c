@@ -1102,16 +1102,16 @@ void ath11k_dp_htt_htc_t2h_msg_handler(struct ath11k_base *ab,
 
 static int ath11k_dp_rx_msdu_coalesce(struct ath11k *ar,
 				      struct sk_buff_head *msdu_list,
-				      struct sk_buff *first, int msdu_len)
+				      struct sk_buff *first, struct sk_buff *last,
+				      u8 l3pad_bytes, int msdu_len)
 {
 	struct sk_buff *skb;
 	struct ath11k_skb_rxcb *rxcb = ATH11K_SKB_RXCB(first);
-	u8 l3pad_bytes = ath11k_dp_rx_h_msdu_end_l3pad(first->data);
 	int space_extra;
 	int rem_len;
 	int buf_len;
 
-	if (rxcb->is_first_msdu && rxcb->is_last_msdu) {
+	if (!rxcb->is_continuation) {
 		skb_put(first, HAL_RX_DESC_SIZE + l3pad_bytes + msdu_len);
 		skb_pull(first, HAL_RX_DESC_SIZE + l3pad_bytes);
 		return 0;
@@ -1121,8 +1121,8 @@ static int ath11k_dp_rx_msdu_coalesce(struct ath11k *ar,
 			 (HAL_RX_DESC_SIZE + l3pad_bytes))))
 		return 0;
 
-	rxcb->is_first_msdu = ath11k_dp_rx_h_msdu_end_first_msdu(first->data);
-	rxcb->is_last_msdu = ath11k_dp_rx_h_msdu_end_last_msdu(first->data);
+	rxcb->is_first_msdu = ath11k_dp_rx_h_msdu_end_first_msdu(last->data);
+	rxcb->is_last_msdu = ath11k_dp_rx_h_msdu_end_last_msdu(last->data);
 
 	/* MSDU spans over multiple buffers because the length of the MSDU
 	 * exceeds DP_RX_BUFFER_SIZE - HAL_RX_DESC_SIZE. So assume the data
@@ -1146,15 +1146,14 @@ static int ath11k_dp_rx_msdu_coalesce(struct ath11k *ar,
 		return -ENOMEM;
 	}
 
+	/* When an MSDU spread over multiple buffers attention, MSDU_END and
+	 * MPDU_END tlvs are valid only in the last buffer. Copy those tlvs.
+	 */
+	ath11k_dp_rx_desc_end_tlv_copy(first->data, last->data);
+
 	rem_len = msdu_len -
 		  (DP_RX_BUFFER_SIZE - HAL_RX_DESC_SIZE - l3pad_bytes);
 	while ((skb = __skb_dequeue(msdu_list)) != NULL && rem_len > 0) {
-		if (!ath11k_dp_rx_h_attn_msdu_done(skb->data)) {
-			ath11k_warn(ar->ab, "msdu_done bit in attention is not set\n");
-			dev_kfree_skb_any(skb);
-			return -EIO;
-		}
-
 		rxcb = ATH11K_SKB_RXCB(skb);
 		if (rxcb->is_continuation)
 			buf_len = DP_RX_BUFFER_SIZE - HAL_RX_DESC_SIZE;
@@ -1181,55 +1180,80 @@ static int ath11k_dp_rx_msdu_coalesce(struct ath11k *ar,
 	return 0;
 }
 
+static struct sk_buff *ath11k_dp_rx_get_msdu_last_buf(struct sk_buff_head *msdu_list,
+						      struct sk_buff *first)
+{
+	struct sk_buff *skb;
+	struct ath11k_skb_rxcb *rxcb = ATH11K_SKB_RXCB(first);
+
+	if (!rxcb->is_continuation)
+		return first;
+
+	skb_queue_walk(msdu_list, skb) {
+		rxcb = ATH11K_SKB_RXCB(skb);
+		if (!rxcb->is_continuation)
+			return skb;
+	}
+
+	return NULL;
+}
+
 static int ath11k_dp_rx_retrieve_amsdu(struct ath11k *ar,
 				       struct sk_buff_head *msdu_list,
 				       struct sk_buff_head *amsdu_list)
 {
 	struct sk_buff *msdu = skb_peek(msdu_list);
+	struct sk_buff *last_buf;
 	struct ath11k_skb_rxcb *rxcb;
 	struct ieee80211_hdr *hdr;
 	u16 msdu_len;
 	u8 l3_pad_bytes;
-	u8 *hdr_status, *desc;
+	u8 *hdr_status;
 	int ret;
 
 	if (!msdu)
 		return -ENOENT;
 
 	do {
-		desc = msdu->data;
-		if (!ath11k_dp_rx_h_attn_msdu_done(desc)) {
-			ath11k_warn(ar->ab, "msdu_done bit in attention is not set\n");
-			__skb_queue_purge(amsdu_list);
-			return -EIO;
+		__skb_unlink(msdu, msdu_list);
+		last_buf = ath11k_dp_rx_get_msdu_last_buf(msdu_list, msdu);
+		if (!last_buf) {
+			ath11k_warn(ar->ab,
+				    "No valid Rx buffer to access Atten/MSDU_END/MPDU_END tlvs\n");
+			ret = -EIO;
+			goto free_out;
 		}
 
-		hdr_status = ath11k_dp_rx_h_80211_hdr(desc);
+		if (!ath11k_dp_rx_h_attn_msdu_done(last_buf->data)) {
+			ath11k_warn(ar->ab, "msdu_done bit in attention is not set\n");
+			ret = -EIO;
+			goto free_out;
+		}
+
+		hdr_status = ath11k_dp_rx_h_80211_hdr(msdu->data);
 		hdr = (struct ieee80211_hdr *)hdr_status;
 
 		/* Process only data frames */
 		if (!ieee80211_is_data(hdr->frame_control)) {
-			__skb_queue_purge(amsdu_list);
-			return 0;
+			ret = 0;
+			goto free_out;
 		}
 
 		rxcb = ATH11K_SKB_RXCB(msdu);
 		rxcb->rx_desc = msdu->data;
 		msdu_len = ath11k_dp_rx_h_msdu_start_msdu_len(msdu->data);
-		__skb_unlink(msdu, msdu_list);
+		l3_pad_bytes = ath11k_dp_rx_h_msdu_end_l3pad(last_buf->data);
 
 		if (!rxcb->is_continuation) {
-			l3_pad_bytes = ath11k_dp_rx_h_msdu_end_l3pad(msdu->data);
 			skb_put(msdu, HAL_RX_DESC_SIZE + l3_pad_bytes + msdu_len);
 			skb_pull(msdu, HAL_RX_DESC_SIZE + l3_pad_bytes);
 		} else {
 			ret = ath11k_dp_rx_msdu_coalesce(ar, msdu_list,
-							 msdu, msdu_len);
+							 msdu, last_buf,
+							 l3_pad_bytes, msdu_len);
 			if (ret) {
 				ath11k_warn(ar->ab, "failed to coalesce msdu rx buffer%d\n", ret);
-				dev_kfree_skb_any(msdu);
-				__skb_queue_purge(amsdu_list);
-				return ret;
+				goto free_out;
 			}
 		}
 		__skb_queue_tail(amsdu_list, msdu);
@@ -1242,6 +1266,12 @@ static int ath11k_dp_rx_retrieve_amsdu(struct ath11k *ar,
 	} while ((msdu = skb_peek(msdu_list)) != NULL);
 
 	return 0;
+
+free_out:
+	dev_kfree_skb_any(msdu);
+	__skb_queue_purge(amsdu_list);
+
+	return ret;
 }
 
 static void ath11k_dp_rx_h_csum_offload(struct sk_buff *msdu)
