@@ -170,6 +170,7 @@ void ath11k_update_per_peer_stats_from_txcompl(struct ath11k *ar,
 			ath11k_warn(ab, "Invalid HT mcs index %d\n", ts->mcs);
 			spin_unlock_bh(&ab->data_lock);
 			rcu_read_unlock();
+			return;
 		}
 
 		arsta->txrate.mcs = ts->mcs + 8 * (arsta->last_txrate.nss - 1);
@@ -181,6 +182,7 @@ void ath11k_update_per_peer_stats_from_txcompl(struct ath11k *ar,
 			ath11k_warn(ab, "Invalid VHT mcs index %d\n", ts->mcs);
 			spin_unlock_bh(&ab->data_lock);
 			rcu_read_unlock();
+			return;
 		}
 
 		arsta->txrate.mcs = ts->mcs;

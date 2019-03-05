@@ -11,7 +11,9 @@
 #include "ahb.h"
 #include "debug.h"
 #include <linux/remoteproc.h>
+#ifdef CONFIG_IPQ_SUBSYSTEM_RESTART
 #include <soc/qcom/subsystem_notif.h>
+#endif
 
 static const struct of_device_id ath11k_ahb_of_match[] = {
 	/* TODO: Should we change the compatible string to something similar
