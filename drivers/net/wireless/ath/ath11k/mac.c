@@ -1222,7 +1222,10 @@ static void ath11k_peer_assoc_h_vht(struct ath11k *ar,
 	arg->tx_mcs_set = ath11k_peer_assoc_h_vht_limit(
 		__le16_to_cpu(vht_cap->vht_mcs.tx_mcs_map), vht_mcs_mask);
 
-	/* Explicitly disable the VHT MCS rate 10 and 11 */
+	/* In IPQ8074 platform, VHT mcs rate 10 and 11 is enabled by default.
+	 * VHT mcs rate 10 and 11 is not suppoerted in 11ac standard.
+	 * so explicitly disable the VHT MCS rate 10 and 11 in 11ac mode.
+	 */
 	arg->tx_mcs_set &= ~IEEE80211_VHT_MCS_SUPPORT_0_11_MASK;
 	arg->tx_mcs_set |= IEEE80211_DISABLE_VHT_MCS_SUPPORT_0_11;
 
