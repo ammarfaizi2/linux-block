@@ -1387,14 +1387,15 @@ static void ath11k_dp_rx_h_undecap_nwifi(struct ath11k *ar,
 
 	/* push original 802.11 header */
 	hdr = (struct ieee80211_hdr *)first_hdr;
+	hdr_len = ieee80211_hdrlen(hdr->frame_control);
 
 	if (!(status->flag & RX_FLAG_IV_STRIPPED)) {
 		memcpy(skb_push(msdu,
 				ath11k_dp_rx_crypto_param_len(ar, enctype)),
-		       hdr, ath11k_dp_rx_crypto_param_len(ar, enctype));
+		       (void *)hdr + hdr_len,
+		       ath11k_dp_rx_crypto_param_len(ar, enctype));
 	}
 
-	hdr_len = ieee80211_hdrlen(hdr->frame_control);
 	memcpy(skb_push(msdu, hdr_len), hdr, hdr_len);
 
 	/* original 802.11 header has a different DA and in
