@@ -56,6 +56,8 @@ bool btf_type_is_void(const struct btf_type *t);
 #ifdef CONFIG_BPF_SYSCALL
 const struct btf_type *btf_type_by_id(const struct btf *btf, u32 type_id);
 const char *btf_name_by_offset(const struct btf *btf, u32 offset);
+struct btf *btf_register(void *data, u32 data_size);
+void btf_unregister(struct btf *btf);
 #else
 static inline const struct btf_type *btf_type_by_id(const struct btf *btf,
 						    u32 type_id)
@@ -67,6 +69,12 @@ static inline const char *btf_name_by_offset(const struct btf *btf,
 {
 	return NULL;
 }
+
+static inline struct btf *btf_register(void *data, u32 data_size)
+{
+	return NULL;
+}
+static inline void btf_unregister(struct btf *btf) { }
 #endif
 
 #endif
