@@ -236,8 +236,10 @@ struct bpf_insn_aux_data {
 #define MAX_USED_MAPS 64 /* max number of maps accessed by one eBPF program */
 
 #define BPF_VERIFIER_TMP_LOG_SIZE	1024
+#define BFP_VERIFIER_LOG_KERNEL BIT(0) /* kernel mode, plot log using trace_printk */
 
 struct bpf_verifier_log {
+	u8 flags;
 	u32 level;
 	char kbuf[BPF_VERIFIER_TMP_LOG_SIZE];
 	char __user *ubuf;
@@ -245,8 +247,15 @@ struct bpf_verifier_log {
 	u32 len_total;
 };
 
+static inline bool bpf_verifier_log_kernel(const struct bpf_verifier_log *log)
+{
+	return log->flags & BFP_VERIFIER_LOG_KERNEL;
+}
+
 static inline bool bpf_verifier_log_full(const struct bpf_verifier_log *log)
 {
+	if (bpf_verifier_log_kernel(log))
+		return false;
 	return log->len_used >= log->len_total - 1;
 }
 
@@ -258,6 +267,8 @@ static inline bool bpf_verifier_log_full(const struct bpf_verifier_log *log)
 
 static inline bool bpf_verifier_log_needed(const struct bpf_verifier_log *log)
 {
+	if (bpf_verifier_log_kernel(log))
+		return true;
 	return log->level && log->ubuf && !bpf_verifier_log_full(log);
 }
 

@@ -243,6 +243,14 @@ void bpf_verifier_vlog(struct bpf_verifier_log *log, const char *fmt,
 	n = min(log->len_total - log->len_used - 1, n);
 	log->kbuf[n] = '\0';
 
+	if (bpf_verifier_log_kernel(log)) {
+		/* Always add a line break to avoid ftrace prefix mid line */
+		if (log->kbuf[n - 1] == '\n')
+			log->kbuf[n - 1] = '\0';
+		trace_printk("%s\n", log->kbuf);
+		return;
+	}
+
 	if (!copy_to_user(log->ubuf + log->len_used, log->kbuf, n + 1))
 		log->len_used += n;
 	else
