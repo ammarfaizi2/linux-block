@@ -21,9 +21,9 @@ mlx5_core-y :=	main.o cmd.o debugfs.o fw.o eq.o uar.o pagealloc.o \
 # Netdev basic
 #
 mlx5_core-$(CONFIG_MLX5_CORE_EN) += en_main.o en_common.o en_fs.o en_ethtool.o \
-		en_tx.o en_rx.o en_dim.o en_txrx.o en/xdp.o en_stats.o \
-		en_selftest.o en/port.o en/monitor_stats.o en/reporter_tx.o \
-		en/params.o
+		en_tx.o en_rx.o en_dim.o en_txrx.o en/xdp.o en/xdp_main.o \
+		en/params.o en/port.o en_stats.o en/monitor_stats.o \
+		en/reporter_tx.o en_selftest.o
 
 #
 # Netdev extra
