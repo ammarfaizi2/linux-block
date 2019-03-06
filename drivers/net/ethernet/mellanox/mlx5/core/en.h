@@ -541,6 +541,7 @@ typedef void (*mlx5e_fp_dealloc_wqe)(struct mlx5e_rq*, u16);
 enum mlx5e_rq_flag {
 	MLX5E_RQ_FLAG_XDP_XMIT,
 	MLX5E_RQ_FLAG_XDP_REDIRECT,
+	MLX5e_RQ_FLAG_XDP_MD,
 };
 
 struct mlx5e_rq_frag_info {
@@ -751,6 +752,8 @@ struct mlx5e_scratchpad {
 	cpumask_var_t cpumask;
 };
 
+struct btf;
+
 struct mlx5e_priv {
 	/* priv data path fields - start */
 	struct mlx5e_txqsq *txq2sq[MLX5E_MAX_NUM_CHANNELS * MLX5E_MAX_NUM_TC];
@@ -773,6 +776,10 @@ struct mlx5e_priv {
 	struct mlx5e_tir           direct_tir[MLX5E_MAX_NUM_CHANNELS];
 	struct mlx5e_tir           xsk_tir[MLX5E_MAX_NUM_CHANNELS];
 	struct mlx5e_rss_params    rss_params;
+	struct {
+		u8                 btf_enabled;
+		struct btf         *btf;
+	} xdp;
 	u32                        tx_rates[MLX5E_MAX_NUM_SQS];
 
 	struct mlx5e_flow_steering fs;

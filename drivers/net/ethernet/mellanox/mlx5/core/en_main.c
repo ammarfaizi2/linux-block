@@ -876,6 +876,9 @@ int mlx5e_open_rq(struct mlx5e_channel *c, struct mlx5e_params *params,
 	if (MLX5_CAP_ETH(c->mdev, cqe_checksum_full))
 		__set_bit(MLX5E_RQ_STATE_CSUM_FULL, &c->rq.state);
 
+	if (c->priv->xdp.btf_enabled)
+		__set_bit(MLX5e_RQ_FLAG_XDP_MD, c->rq.flags);
+
 	if (params->rx_dim_enabled)
 		__set_bit(MLX5E_RQ_STATE_AM, &c->rq.state);
 
@@ -4521,6 +4524,11 @@ static int mlx5e_xdp(struct net_device *dev, struct netdev_bpf *xdp)
 	case XDP_SETUP_XSK_UMEM:
 		return mlx5e_xsk_setup_umem(dev, xdp->xsk.umem,
 					    xdp->xsk.queue_id);
+	case XDP_SETUP_MD_BTF:
+		return mlx5e_xdp_set_btf_md(dev, xdp->btf_enable);
+	case XDP_QUERY_MD_BTF:
+		xdp->btf_id = mlx5e_xdp_query_btf(dev, &xdp->btf_enable);
+		return 0;
 	default:
 		return -EINVAL;
 	}
@@ -5302,6 +5310,7 @@ err_free_cpumask:
 
 void mlx5e_netdev_cleanup(struct net_device *netdev, struct mlx5e_priv *priv)
 {
+	mlx5e_xdp_cleanup(priv);
 	destroy_workqueue(priv->wq);
 	free_cpumask_var(priv->scratchpad.cpumask);
 }
