@@ -37,6 +37,12 @@
 #include "en.h"
 #include "en/txrx.h"
 
+/* BTF */
+int mlx5e_xdp_set_btf_md(struct net_device *dev, u8 enable);
+int mlx5e_xdp_query_btf(struct net_device *dev, u8 *enabled);
+void mlx5e_xdp_cleanup(struct mlx5e_priv *priv);
+
+/* Data path */
 #define MLX5E_XDP_MIN_INLINE (ETH_HLEN + VLAN_HLEN)
 #define MLX5E_XDP_TX_DS_COUNT (MLX5E_TX_WQE_EMPTY_DS_COUNT + 1 /* SG DS */)
 
