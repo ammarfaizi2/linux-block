@@ -876,6 +876,9 @@ enum bpf_netdev_command {
 	XDP_SETUP_PROG_HW,
 	XDP_QUERY_PROG,
 	XDP_QUERY_PROG_HW,
+	/* Setup/query XDP Meta Data BTF */
+	XDP_SETUP_MD_BTF,
+	XDP_QUERY_MD_BTF,
 	/* BPF program for offload callbacks, invoked at program load time. */
 	BPF_OFFLOAD_MAP_ALLOC,
 	BPF_OFFLOAD_MAP_FREE,
@@ -885,7 +888,9 @@ enum bpf_netdev_command {
 struct bpf_prog_offload_ops;
 struct netlink_ext_ack;
 struct xdp_umem;
+
 struct xdp_dev_bulk_queue;
+struct btf;
 
 struct netdev_bpf {
 	enum bpf_netdev_command command;
@@ -894,13 +899,17 @@ struct netdev_bpf {
 		struct {
 			u32 flags;
 			struct bpf_prog *prog;
-			struct netlink_ext_ack *extack;
 		};
 		/* XDP_QUERY_PROG, XDP_QUERY_PROG_HW */
 		struct {
 			u32 prog_id;
 			/* flags with which program was installed */
 			u32 prog_flags;
+		};
+		/* XDP_{SETUP/QUERY}_MD_BTF */
+		struct {
+			u8 btf_enable; /* only enable/disable for now */
+			u32 btf_id;
 		};
 		/* BPF_OFFLOAD_MAP_ALLOC, BPF_OFFLOAD_MAP_FREE */
 		struct {
@@ -912,6 +921,7 @@ struct netdev_bpf {
 			u16 queue_id;
 		} xsk;
 	};
+	struct netlink_ext_ack *extack;
 };
 
 /* Flags for ndo_xsk_wakeup. */
@@ -3810,6 +3820,9 @@ struct sk_buff *dev_hard_start_xmit(struct sk_buff *skb, struct net_device *dev,
 typedef int (*bpf_op_t)(struct net_device *dev, struct netdev_bpf *bpf);
 int dev_change_xdp_fd(struct net_device *dev, struct netlink_ext_ack *extack,
 		      int fd, int expected_fd, u32 flags);
+int dev_xdp_setup_md_btf(struct net_device *dev, struct netlink_ext_ack *extack,
+			 u8 enable);
+u32 dev_xdp_query_md_btf(struct net_device *dev, u8 *enabled);
 u32 __dev_xdp_query(struct net_device *dev, bpf_op_t xdp_op,
 		    enum bpf_netdev_command cmd);
 int xdp_umem_query(struct net_device *dev, u16 queue_id);
