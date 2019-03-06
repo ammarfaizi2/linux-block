@@ -25,6 +25,20 @@ enum dp_rx_decap_type {
 	DP_RX_DECAP_TYPE_8023,
 };
 
+struct ath11k_dp_amsdu_subframe_hdr {
+	u8 dst[ETH_ALEN];
+	u8 src[ETH_ALEN];
+	__be16 len;
+} __packed;
+
+struct ath11k_dp_rfc1042_hdr {
+	u8 llc_dsap;
+	u8 llc_ssap;
+	u8 llc_ctrl;
+	u8 snap_oui[3];
+	__be16 snap_type;
+} __packed;
+
 static inline u8 *
 ath11k_dp_rx_h_80211_hdr(u8 *desc)
 {

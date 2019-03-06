@@ -1467,6 +1467,81 @@ static void ath11k_dp_rx_h_undecap_raw(struct ath11k *ar, struct sk_buff *msdu,
 	}
 }
 
+static void *ath11k_dp_rx_h_find_rfc1042(struct ath11k *ar,
+					 struct sk_buff *msdu,
+					 enum hal_encrypt_type enctype)
+{
+	struct ath11k_skb_rxcb *rxcb = ATH11K_SKB_RXCB(msdu);
+	struct ieee80211_hdr *hdr;
+	size_t hdr_len, crypto_len;
+	void *rfc1042;
+	bool is_amsdu;
+
+	is_amsdu = !(rxcb->is_first_msdu && rxcb->is_last_msdu);
+	hdr = (struct ieee80211_hdr *)ath11k_dp_rx_h_80211_hdr(rxcb->rx_desc);
+	rfc1042 = hdr;
+
+	if (rxcb->is_first_msdu) {
+		hdr_len = ieee80211_hdrlen(hdr->frame_control);
+		crypto_len = ath11k_dp_rx_crypto_param_len(ar, enctype);
+
+		rfc1042 += hdr_len + crypto_len;
+	}
+
+	if (is_amsdu)
+		rfc1042 += sizeof(struct ath11k_dp_amsdu_subframe_hdr);
+
+	return rfc1042;
+}
+
+static void ath11k_dp_rx_h_undecap_eth(struct ath11k *ar,
+				       struct sk_buff *msdu,
+				       u8 *first_hdr,
+				       enum hal_encrypt_type enctype,
+				       struct ieee80211_rx_status *status)
+{
+	struct ieee80211_hdr *hdr;
+	struct ethhdr *eth;
+	size_t hdr_len;
+	u8 da[ETH_ALEN];
+	u8 sa[ETH_ALEN];
+	void *rfc1042;
+
+	rfc1042 = ath11k_dp_rx_h_find_rfc1042(ar, msdu, enctype);
+	if (WARN_ON_ONCE(!rfc1042))
+		return;
+
+	/* pull decapped header and copy SA & DA */
+	eth = (struct ethhdr *)msdu->data;
+	ether_addr_copy(da, eth->h_dest);
+	ether_addr_copy(sa, eth->h_source);
+	skb_pull(msdu, sizeof(struct ethhdr));
+
+	/* push rfc1042/llc/snap */
+	memcpy(skb_push(msdu, sizeof(struct ath11k_dp_rfc1042_hdr)), rfc1042,
+	       sizeof(struct ath11k_dp_rfc1042_hdr));
+
+	/* push original 802.11 header */
+	hdr = (struct ieee80211_hdr *)first_hdr;
+	hdr_len = ieee80211_hdrlen(hdr->frame_control);
+
+	if (!(status->flag & RX_FLAG_IV_STRIPPED)) {
+		memcpy(skb_push(msdu,
+				ath11k_dp_rx_crypto_param_len(ar, enctype)),
+		       (void *)hdr + hdr_len,
+		       ath11k_dp_rx_crypto_param_len(ar, enctype));
+	}
+
+	memcpy(skb_push(msdu, hdr_len), hdr, hdr_len);
+
+	/* original 802.11 header has a different DA and in
+	 * case of 4addr it may also have different SA
+	 */
+	hdr = (struct ieee80211_hdr *)msdu->data;
+	ether_addr_copy(ieee80211_get_DA(hdr), da);
+	ether_addr_copy(ieee80211_get_SA(hdr), sa);
+}
+
 static void ath11k_dp_rx_h_undecap(struct ath11k *ar, struct sk_buff *msdu,
 				   u8 *first_hdr, enum hal_encrypt_type enctype,
 				   struct ieee80211_rx_status *status,
@@ -1487,6 +1562,9 @@ static void ath11k_dp_rx_h_undecap(struct ath11k *ar, struct sk_buff *msdu,
 					   decrypted);
 		break;
 	case DP_RX_DECAP_TYPE_ETHERNET2_DIX:
+		ath11k_dp_rx_h_undecap_eth(ar, msdu, first_hdr,
+					   enctype, status);
+		break;
 	case DP_RX_DECAP_TYPE_8023:
 		/* TODO: Handle undecap for these formats */
 		break;
