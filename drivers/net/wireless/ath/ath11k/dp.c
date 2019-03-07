@@ -638,6 +638,19 @@ int ath11k_dp_service_srng(struct ath11k_base *ab, u32 grp_id,
 		}
 	}
 
+	if (rx_mon_status_ring_mask[grp_id]) {
+		for (i = 0; i <  ab->num_radios; i++) {
+			if (rx_mon_status_ring_mask[grp_id] & BIT(i)) {
+				work_done = ath11k_dp_rx_process_mon_status(ab, i, napi,
+									    budget);
+				budget -= work_done;
+				tot_work_done += work_done;
+			}
+			if (budget <= 0)
+				goto done;
+		}
+	}
+
 	for (i = 0; i < ab->num_radios; i++) {
 		if (ath11k_rxdma2host_ring_mask[grp_id] & BIT(i)) {
 			work_done = ath11k_dp_process_rxdma_err(ab, i, budget);

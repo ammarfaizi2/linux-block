@@ -473,6 +473,8 @@ enum hal_tlv_tag {
 #define HAL_TLV_HDR_TAG		GENMASK(9, 1)
 #define HAL_TLV_HDR_LEN		GENMASK(25, 10)
 
+#define HAL_TLV_ALIGN	4
+
 struct hal_tlv_hdr {
 	u32 tl;
 	u8 value[0];

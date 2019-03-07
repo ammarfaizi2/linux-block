@@ -871,3 +871,339 @@ void ath11k_hal_reo_hw_setup(struct ath11k_base *ab,
 			   FIELD_PREP(HAL_REO_DEST_RING_CTRL_HASH_RING_MAP,
 				      params->ring_hash_map8_15));
 }
+
+static enum hal_rx_mon_status
+ath11k_hal_rx_parse_mon_status_tlv(struct ath11k_base *ab,
+				   struct hal_rx_mon_ppdu_info *ppdu_info,
+				   u32 tlv_tag, u8 *tlv_data)
+{
+	u32 info0, info1;
+
+	switch (tlv_tag) {
+	case HAL_RX_PPDU_START: {
+		struct hal_rx_ppdu_start *ppdu_start =
+			(struct hal_rx_ppdu_start *)tlv_data;
+
+		ppdu_info->ppdu_id =
+			FIELD_GET(HAL_RX_PPDU_START_INFO0_PPDU_ID,
+				  __le32_to_cpu(ppdu_start->info0));
+		ppdu_info->chan_num = __le32_to_cpu(ppdu_start->chan_num);
+		ppdu_info->ppdu_ts = __le32_to_cpu(ppdu_start->ppdu_start_ts);
+		break;
+	}
+	case HAL_RX_PPDU_END_USER_STATS: {
+		struct hal_rx_ppdu_end_user_stats *eu_stats =
+			(struct hal_rx_ppdu_end_user_stats *)tlv_data;
+
+		info0 = __le32_to_cpu(eu_stats->info0);
+		info1 = __le32_to_cpu(eu_stats->info1);
+
+		ppdu_info->tid =
+			ffs(FIELD_GET(HAL_RX_PPDU_END_USER_STATS_INFO6_TID_BITMAP,
+				      __le32_to_cpu(eu_stats->info6))) - 1;
+		ppdu_info->tcp_msdu_count =
+			FIELD_GET(HAL_RX_PPDU_END_USER_STATS_INFO4_TCP_MSDU_CNT,
+				  __le32_to_cpu(eu_stats->info4));
+		ppdu_info->udp_msdu_count =
+			FIELD_GET(HAL_RX_PPDU_END_USER_STATS_INFO4_UDP_MSDU_CNT,
+				  __le32_to_cpu(eu_stats->info4));
+		ppdu_info->other_msdu_count =
+			FIELD_GET(HAL_RX_PPDU_END_USER_STATS_INFO5_OTHER_MSDU_CNT,
+				  __le32_to_cpu(eu_stats->info5));
+		ppdu_info->tcp_ack_msdu_count =
+			FIELD_GET(HAL_RX_PPDU_END_USER_STATS_INFO5_TCP_ACK_MSDU_CNT,
+				  __le32_to_cpu(eu_stats->info5));
+		ppdu_info->preamble_type =
+			FIELD_GET(HAL_RX_PPDU_END_USER_STATS_INFO1_PKT_TYPE, info1);
+		ppdu_info->num_mpdu_fcs_ok =
+			FIELD_GET(HAL_RX_PPDU_END_USER_STATS_INFO1_MPDU_CNT_FCS_OK,
+				  info1);
+		ppdu_info->num_mpdu_fcs_err =
+			FIELD_GET(HAL_RX_PPDU_END_USER_STATS_INFO0_MPDU_CNT_FCS_ERR,
+				  info0);
+		break;
+	}
+	case HAL_PHYRX_HT_SIG: {
+		struct hal_rx_ht_sig_info *ht_sig =
+			(struct hal_rx_ht_sig_info *)tlv_data;
+
+		info0 = __le32_to_cpu(ht_sig->info0);
+		info1 = __le32_to_cpu(ht_sig->info1);
+
+		ppdu_info->mcs = FIELD_GET(HAL_RX_HT_SIG_INFO_INFO0_MCS, info0);
+		ppdu_info->bw = FIELD_GET(HAL_RX_HT_SIG_INFO_INFO0_BW, info0);
+		ppdu_info->is_stbc = FIELD_GET(HAL_RX_HT_SIG_INFO_INFO1_STBC,
+					       info1);
+		ppdu_info->ldpc = (info1 &
+				   HAL_RX_HT_SIG_INFO_INFO1_FEC_CODING) ==
+					HAL_RX_SU_MU_CODING_LDPC;
+		ppdu_info->gi = info1 & HAL_RX_HT_SIG_INFO_INFO1_GI;
+
+		switch (ppdu_info->mcs) {
+		case 0 ... 7:
+			ppdu_info->nss = 1;
+			break;
+		case 8 ... 15:
+			ppdu_info->nss = 2;
+			break;
+		case 16 ... 23:
+			ppdu_info->nss = 3;
+			break;
+		case 24 ... 31:
+			ppdu_info->nss = 4;
+			break;
+		}
+
+		if (ppdu_info->nss > 1)
+			ppdu_info->mcs = ppdu_info->mcs % 8;
+
+		ppdu_info->reception_type = HAL_RX_RECEPTION_TYPE_SU;
+		break;
+	}
+	case HAL_PHYRX_L_SIG_B: {
+		struct hal_rx_lsig_b_info *lsigb =
+			(struct hal_rx_lsig_b_info *)tlv_data;
+
+		ppdu_info->rate = FIELD_GET(HAL_RX_LSIG_B_INFO_INFO0_RATE,
+					    __le32_to_cpu(lsigb->info0));
+		ppdu_info->reception_type = HAL_RX_RECEPTION_TYPE_SU;
+		break;
+	}
+	case HAL_PHYRX_L_SIG_A: {
+		struct hal_rx_lsig_a_info *lsiga =
+			(struct hal_rx_lsig_a_info *)tlv_data;
+
+		ppdu_info->rate = FIELD_GET(HAL_RX_LSIG_A_INFO_INFO0_RATE,
+					    __le32_to_cpu(lsiga->info0));
+		ppdu_info->reception_type = HAL_RX_RECEPTION_TYPE_SU;
+		break;
+	}
+	case HAL_PHYRX_VHT_SIG_A: {
+		struct hal_rx_vht_sig_a_info *vht_sig =
+			(struct hal_rx_vht_sig_a_info *)tlv_data;
+		u32 nsts;
+		u32 group_id;
+
+		info0 = __le32_to_cpu(vht_sig->info0);
+		info1 = __le32_to_cpu(vht_sig->info1);
+
+		ppdu_info->ldpc = (info1 &
+				   HAL_RX_VHT_SIG_A_INFO_INFO1_SU_MU_CODING) ==
+					HAL_RX_SU_MU_CODING_LDPC;
+		ppdu_info->mcs = FIELD_GET(HAL_RX_VHT_SIG_A_INFO_INFO1_MCS,
+					   info1);
+		ppdu_info->gi =
+			FIELD_GET(HAL_RX_VHT_SIG_A_INFO_INFO1_GI_SETTING,
+				  info1);
+		ppdu_info->is_stbc = info0 & HAL_RX_VHT_SIG_A_INFO_INFO0_STBC;
+		nsts = FIELD_GET(HAL_RX_VHT_SIG_A_INFO_INFO0_NSTS, info0);
+		if (ppdu_info->is_stbc && nsts > 0)
+			nsts = ((nsts + 1) >> 1) - 1;
+
+		ppdu_info->nss = (nsts & VHT_SIG_SU_NSS_MASK) + 1;
+		ppdu_info->bw = FIELD_GET(HAL_RX_VHT_SIG_A_INFO_INFO0_BW,
+					  info0);
+		ppdu_info->beamformed = info1 &
+					HAL_RX_VHT_SIG_A_INFO_INFO1_BEAMFORMED;
+		group_id = FIELD_GET(HAL_RX_VHT_SIG_A_INFO_INFO0_GROUP_ID,
+				     info0);
+		if (group_id == 0 || group_id == 63)
+			ppdu_info->reception_type = HAL_RX_RECEPTION_TYPE_SU;
+		else
+			ppdu_info->reception_type =
+				HAL_RX_RECEPTION_TYPE_MU_MIMO;
+		break;
+	}
+	case HAL_PHYRX_HE_SIG_A_SU: {
+		struct hal_rx_he_sig_a_su_info *he_sig_a =
+			(struct hal_rx_he_sig_a_su_info *)tlv_data;
+		u32 nsts, cp_ltf, dcm;
+
+		info0 = __le32_to_cpu(he_sig_a->info0);
+		info1 = __le32_to_cpu(he_sig_a->info1);
+
+		ppdu_info->mcs =
+			FIELD_GET(HAL_RX_HE_SIG_A_SU_INFO_INFO0_TRANSMIT_MCS,
+				  info0);
+		ppdu_info->bw =
+			FIELD_GET(HAL_RX_HE_SIG_A_SU_INFO_INFO0_TRANSMIT_BW,
+				  info0);
+		ppdu_info->ldpc = (info1 &
+				   HAL_RX_HE_SIG_A_SU_INFO_INFO1_CODING) ==
+					HAL_RX_SU_MU_CODING_LDPC;
+		ppdu_info->is_stbc = info1 &
+				     HAL_RX_HE_SIG_A_SU_INFO_INFO1_STBC;
+		ppdu_info->beamformed = info1 &
+					HAL_RX_HE_SIG_A_SU_INFO_INFO1_TXBF;
+		dcm = info0 & HAL_RX_HE_SIG_A_SU_INFO_INFO0_DCM;
+		cp_ltf = FIELD_GET(HAL_RX_HE_SIG_A_SU_INFO_INFO0_CP_LTF_SIZE,
+				   info0);
+		nsts = FIELD_GET(HAL_RX_HE_SIG_A_SU_INFO_INFO0_NSTS, info0);
+
+		switch (cp_ltf) {
+		case 0:
+		case 1:
+			ppdu_info->gi = HAL_RX_GI_0_8_US;
+			break;
+		case 2:
+			ppdu_info->gi = HAL_RX_GI_1_6_US;
+			break;
+		case 3:
+			if (dcm && ppdu_info->is_stbc)
+				ppdu_info->gi = HAL_RX_GI_0_8_US;
+			else
+				ppdu_info->gi = HAL_RX_GI_3_2_US;
+			break;
+		}
+
+		ppdu_info->nss = nsts + 1;
+		ppdu_info->reception_type = HAL_RX_RECEPTION_TYPE_SU;
+		break;
+	}
+	case HAL_PHYRX_HE_SIG_A_MU_DL: {
+		struct hal_rx_he_sig_a_mu_dl_info *he_sig_a_mu_dl =
+			(struct hal_rx_he_sig_a_mu_dl_info *)tlv_data;
+
+		u32 cp_ltf;
+
+		info0 = __le32_to_cpu(he_sig_a_mu_dl->info0);
+		info1 = __le32_to_cpu(he_sig_a_mu_dl->info1);
+
+		ppdu_info->bw =
+			FIELD_GET(HAL_RX_HE_SIG_A_MU_DL_INFO_INFO0_TRANSMIT_BW,
+				  info0);
+		cp_ltf = FIELD_GET(HAL_RX_HE_SIG_A_MU_DL_INFO_INFO0_CP_LTF_SIZE,
+				   info0);
+
+		switch (cp_ltf) {
+		case 0:
+		case 1:
+			ppdu_info->gi = HAL_RX_GI_0_8_US;
+			break;
+		case 2:
+			ppdu_info->gi = HAL_RX_GI_1_6_US;
+			break;
+		case 3:
+			ppdu_info->gi = HAL_RX_GI_3_2_US;
+			break;
+		}
+
+		ppdu_info->is_stbc = info1 &
+				     HAL_RX_HE_SIG_A_MU_DL_INFO_INFO1_STBC;
+		ppdu_info->reception_type = HAL_RX_RECEPTION_TYPE_MU_MIMO;
+		break;
+	}
+	case HAL_PHYRX_HE_SIG_B1_MU: {
+		/* TODO: Check if resource unit(RU) allocation stats
+		 * are required
+		 */
+		ppdu_info->reception_type = HAL_RX_RECEPTION_TYPE_MU_MIMO;
+		break;
+	}
+	case HAL_PHYRX_HE_SIG_B2_MU: {
+		struct hal_rx_he_sig_b2_mu_info *he_sig_b2_mu =
+			(struct hal_rx_he_sig_b2_mu_info *)tlv_data;
+
+		info0 = __le32_to_cpu(he_sig_b2_mu->info0);
+
+		ppdu_info->mcs =
+			FIELD_GET(HAL_RX_HE_SIG_B2_MU_INFO_INFO0_STA_MCS,
+				  info0);
+		ppdu_info->nss =
+			FIELD_GET(HAL_RX_HE_SIG_B2_MU_INFO_INFO0_STA_NSTS,
+				  info0) + 1;
+		ppdu_info->ldpc = (info0 &
+				   HAL_RX_HE_SIG_B2_MU_INFO_INFO0_STA_CODING) ==
+					HAL_RX_SU_MU_CODING_LDPC;
+		break;
+	}
+	case HAL_PHYRX_HE_SIG_B2_OFDMA: {
+		struct hal_rx_he_sig_b2_ofdma_info *he_sig_b2_ofdma =
+			(struct hal_rx_he_sig_b2_ofdma_info *)tlv_data;
+
+		info0 = __le32_to_cpu(he_sig_b2_ofdma->info0);
+
+		ppdu_info->mcs =
+			FIELD_GET(HAL_RX_HE_SIG_B2_OFDMA_INFO_INFO0_STA_MCS,
+				  info0);
+		ppdu_info->nss =
+			FIELD_GET(HAL_RX_HE_SIG_B2_OFDMA_INFO_INFO0_STA_NSTS,
+				  info0) + 1;
+		ppdu_info->beamformed =
+			info0 &
+			HAL_RX_HE_SIG_B2_OFDMA_INFO_INFO0_STA_TXBF;
+		ppdu_info->ldpc =
+			(info0 &
+			 HAL_RX_HE_SIG_B2_OFDMA_INFO_INFO0_STA_CODING) ==
+				HAL_RX_SU_MU_CODING_LDPC;
+		ppdu_info->reception_type = HAL_RX_RECEPTION_TYPE_MU_OFDMA;
+		break;
+	}
+	case HAL_PHYRX_RSSI_LEGACY: {
+		struct hal_rx_phyrx_rssi_legacy_info *rssi =
+			(struct hal_rx_phyrx_rssi_legacy_info *)tlv_data;
+
+		ppdu_info->rssi_comb =
+			FIELD_GET(HAL_RX_PHYRX_RSSI_LEGACY_INFO_INFO1_RSSI_COMB,
+				  __le32_to_cpu(rssi->info0));
+		break;
+	}
+	case HAL_RX_MPDU_START: {
+		struct hal_rx_mpdu_info *mpdu_info =
+			(struct hal_rx_mpdu_info *)tlv_data;
+		u16 peer_id;
+
+		peer_id = FIELD_GET(HAL_RX_MPDU_INFO_INFO0_PEERID,
+				    __le32_to_cpu(mpdu_info->info0));
+		if (peer_id)
+			ppdu_info->peer_id = peer_id;
+		break;
+	}
+	case HAL_DUMMY:
+		return HAL_RX_MON_STATUS_BUF_DONE;
+	case HAL_RX_PPDU_END_STATUS_DONE:
+	case 0:
+		return HAL_RX_MON_STATUS_PPDU_DONE;
+	default:
+		break;
+	}
+
+	return HAL_RX_MON_STATUS_PPDU_NOT_DONE;
+}
+
+enum hal_rx_mon_status
+ath11k_hal_rx_parse_mon_status(struct ath11k_base *ab,
+			       struct hal_rx_mon_ppdu_info *ppdu_info,
+			       u8 *data)
+{
+	struct hal_tlv_hdr *tlv;
+	enum hal_rx_mon_status hal_status = HAL_RX_MON_STATUS_BUF_DONE;
+	u16 tlv_tag;
+	u16 tlv_len;
+	u8 *ptr = data;
+
+	do {
+		tlv = (struct hal_tlv_hdr *)ptr;
+		tlv_tag = FIELD_GET(HAL_TLV_HDR_TAG, tlv->tl);
+		tlv_len = FIELD_GET(HAL_TLV_HDR_LEN, tlv->tl);
+		ptr += sizeof(*tlv);
+
+		/* The actual length of PPDU_END is the combined length of many PHY
+		 * TLVs that follow. Skip the TLV header and
+		 * rx_rxpcu_classification_overview that follows the header to get to
+		 * next TLV.
+		 */
+		if (tlv_tag == HAL_RX_PPDU_END)
+			tlv_len = sizeof(struct hal_rx_rxpcu_classification_overview);
+
+		hal_status = ath11k_hal_rx_parse_mon_status_tlv(ab, ppdu_info,
+								tlv_tag, ptr);
+		ptr += tlv_len;
+		ptr = PTR_ALIGN(ptr, HAL_TLV_ALIGN);
+
+		if ((ptr - data) >= DP_RX_BUFFER_SIZE)
+			break;
+	} while (hal_status == HAL_RX_MON_STATUS_PPDU_NOT_DONE);
+
+	return hal_status;
+}

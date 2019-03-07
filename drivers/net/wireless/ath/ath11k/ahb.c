@@ -362,11 +362,23 @@ static const char *irq_name[ATH11K_IRQ_NUM_MAX] = {
 #define ATH11K_HOST2RXDMA_RING_MASK_2 0x4
 #define ATH11K_HOST2RXDMA_RING_MASK_3 0x0
 
+#define ATH11K_RX_MON_STATUS_RING_MASK_0 0x1
+#define ATH11K_RX_MON_STATUS_RING_MASK_1 0x2
+#define ATH11K_RX_MON_STATUS_RING_MASK_2 0x4
+#define ATH11K_RX_MON_STATUS_RING_MASK_3 0x0
+
 const u8 ath11k_tx_ring_mask[ATH11K_EXT_IRQ_GRP_NUM_MAX] = {
 	ATH11K_TX_RING_MASK_0,
 	ATH11K_TX_RING_MASK_1,
 	ATH11K_TX_RING_MASK_2,
 	ATH11K_TX_RING_MASK_3,
+};
+
+const u8 rx_mon_status_ring_mask[ATH11K_EXT_IRQ_GRP_NUM_MAX] = {
+	0, 0, 0, 0,
+	ATH11K_RX_MON_STATUS_RING_MASK_0,
+	ATH11K_RX_MON_STATUS_RING_MASK_1,
+	ATH11K_RX_MON_STATUS_RING_MASK_2,
 };
 
 const u8 ath11k_rx_ring_mask[ATH11K_EXT_IRQ_GRP_NUM_MAX] = {
@@ -831,6 +843,15 @@ static int ath11k_ahb_ext_irq_config(struct ath11k_base *sc)
 					irq_grp->irqs[num_irq++] =
 						host2rxdma_host_buf_ring_mac1
 						- hw_mac_id_map[j];
+				}
+
+				if (rx_mon_status_ring_mask[i] & BIT(j)) {
+					irq_grp->irqs[num_irq++] =
+						ppdu_end_interrupts_mac1 -
+						hw_mac_id_map[j];
+					irq_grp->irqs[num_irq++] =
+						rxdma2host_monitor_status_ring_mac1 -
+						hw_mac_id_map[j];
 				}
 			}
 		}

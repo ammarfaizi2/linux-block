@@ -21,6 +21,7 @@
 #include "ce.h"
 #include "mac.h"
 #include "hw.h"
+#include "hal_rx.h"
 
 #define SM(_v, _f) (((_v) << _f##_LSB) & _f##_MASK)
 
@@ -96,6 +97,7 @@ extern const u8 ath11k_rx_err_ring_mask[ATH11K_EXT_IRQ_GRP_NUM_MAX];
 extern const u8 ath11k_rx_wbm_rel_ring_mask[ATH11K_EXT_IRQ_GRP_NUM_MAX];
 extern const u8 ath11k_rxdma2host_ring_mask[ATH11K_EXT_IRQ_GRP_NUM_MAX];
 extern const u8 ath11k_host2rxdma_ring_mask[ATH11K_EXT_IRQ_GRP_NUM_MAX];
+extern const u8 rx_mon_status_ring_mask[ATH11K_EXT_IRQ_GRP_NUM_MAX];
 
 struct ath11k_ext_irq_grp {
 	struct ath11k_base *sc;
@@ -212,6 +214,27 @@ struct ath11k_vif_iter {
 
 #define ATH11K_MAX_NUM_PEER_IDS (1 << 10)
 
+struct ath11k_rx_peer_stats {
+	u64 num_msdu;
+	u64 num_mpdu_fcs_ok;
+	u64 num_mpdu_fcs_err;
+	u64 tcp_msdu_count;
+	u64 udp_msdu_count;
+	u64 other_msdu_count;
+	u64 ampdu_msdu_count;
+	u64 non_ampdu_msdu_count;
+	u64 stbc_count;
+	u64 beamformed_count;
+	u64 mcs_count[HAL_RX_MAX_MCS + 1];
+	u64 nss_count[HAL_RX_MAX_NSS];
+	u64 bw_count[HAL_RX_BW_MAX];
+	u64 gi_count[HAL_RX_GI_MAX];
+	u64 coding_count[HAL_RX_SU_MU_CODING_MAX];
+	u64 tid_count[IEEE80211_NUM_TIDS + 1];
+	u64 pream_cnt[HAL_RX_PREAMBLE_MAX];
+	u64 reception_type[HAL_RX_RECEPTION_TYPE_MAX];
+};
+
 struct ath11k_peer {
 	struct list_head list;
 	struct ieee80211_sta *sta;
@@ -315,6 +338,7 @@ struct ath11k_sta {
 	struct rate_info last_txrate;
 	u64 rx_duration;
 	struct ath11k_htt_tx_stats *tx_stats;
+	struct ath11k_rx_peer_stats *rx_stats;
 };
 
 #define ATH11K_NUM_CHANS 41
