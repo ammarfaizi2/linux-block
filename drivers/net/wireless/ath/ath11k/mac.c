@@ -639,6 +639,12 @@ static int ath11k_peer_create(struct ath11k *ar, struct ath11k_vif *arvif,
 
 	lockdep_assert_held(&ar->conf_mutex);
 
+	if (ar->num_peers > (ar->max_num_peers - 1)) {
+		ath11k_warn(ar->ab,
+			    "failed to create peer due to insufficient peer entry resource in firmware\n");
+		return -ENOBUFS;
+	}
+
 	ret = ath11k_wmi_send_peer_create_cmd(ar, param);
 	if (ret) {
 		ath11k_warn(ar->ab,
@@ -667,6 +673,8 @@ static int ath11k_peer_create(struct ath11k *ar, struct ath11k_vif *arvif,
 	peer->sta = sta;
 	arvif->ast_hash = peer->ast_hash;
 
+	ar->num_peers++;
+
 	spin_unlock_bh(&ar->ab->data_lock);
 
 	return 0;
@@ -690,6 +698,8 @@ static int ath11k_peer_delete(struct ath11k *ar, u32 vdev_id, u8 *addr)
 	if (ret)
 		return ret;
 
+	ar->num_peers--;
+
 	return 0;
 }
 
@@ -710,7 +720,11 @@ static void ath11k_peer_cleanup(struct ath11k *ar, u32 vdev_id)
 
 		list_del(&peer->list);
 		kfree(peer);
+		ar->num_peers--;
 	}
+
+	WARN_ON(ar->num_peers);
+
 	spin_unlock_bh(&ab->data_lock);
 }
 
@@ -3438,6 +3452,7 @@ static int ath11k_start(struct ieee80211_hw *hw)
 
 	ar->num_started_vdevs = 0;
 	ar->num_created_vdevs = 0;
+	ar->num_peers = 0;
 
 	mutex_unlock(&ar->conf_mutex);
 
@@ -3511,13 +3526,14 @@ static int ath11k_add_interface(struct ieee80211_hw *hw,
 
 	mutex_lock(&ar->conf_mutex);
 
-	if (ar->num_peers >= TARGET_NUM_PEERS) {
+	if (vif->type == NL80211_IFTYPE_AP &&
+	    ar->num_peers > (ar->max_num_peers - 1)) {
 		ath11k_warn(ab, "failed to create vdev due to insufficient peer entry resource in firmware\n");
 		ret = -ENOBUFS;
 		goto err;
 	}
 
-	if (ar->num_created_vdevs++ > TARGET_NUM_VDEVS) {
+	if (ar->num_created_vdevs > (TARGET_NUM_VDEVS - 1)) {
 		ath11k_warn(ab, "failed to create vdev, reached max vdev limit %d\n",
 			    TARGET_NUM_VDEVS);
 		ret = -EBUSY;
@@ -3579,6 +3595,8 @@ static int ath11k_add_interface(struct ieee80211_hw *hw,
 			    arvif->vdev_id, ret);
 		goto err;
 	}
+
+	ar->num_created_vdevs++;
 
 	ab->free_vdev_map &= ~(1LL << arvif->vdev_id);
 	spin_lock_bh(&ar->data_lock);
@@ -3691,11 +3709,14 @@ static int ath11k_add_interface(struct ieee80211_hw *hw,
 	return 0;
 
 err_peer_del:
-	if (arvif->vdev_type == WMI_VDEV_TYPE_AP)
+	if (arvif->vdev_type == WMI_VDEV_TYPE_AP) {
+		ar->num_peers--;
 		ath11k_wmi_send_peer_delete_cmd(ar, vif->addr, arvif->vdev_id);
+	}
 
 err_vdev_del:
 	ath11k_wmi_vdev_delete(ar, arvif->vdev_id);
+	ar->num_created_vdevs--;
 	ab->free_vdev_map |= 1LL << arvif->vdev_id;
 	spin_lock_bh(&ar->data_lock);
 	list_del(&arvif->list);
@@ -3740,16 +3761,11 @@ static void ath11k_remove_interface(struct ieee80211_hw *hw,
 	spin_unlock_bh(&ar->data_lock);
 
 	if (arvif->vdev_type == WMI_VDEV_TYPE_AP) {
-		ath11k_dp_peer_cleanup(ar, arvif->vdev_id, vif->addr);
 		ret = ath11k_peer_delete(ar, arvif->vdev_id, vif->addr);
 		if (ret)
 			ath11k_warn(ab, "failed to submit AP self-peer removal on vdev %d: %d\n",
 				    arvif->vdev_id, ret);
 	}
-
-	spin_lock_bh(&ar->data_lock);
-	ar->num_peers--;
-	spin_unlock_bh(&ar->data_lock);
 
 	ret = ath11k_wmi_vdev_delete(ar, arvif->vdev_id);
 	if (ret)
@@ -4360,7 +4376,7 @@ static void ath11k_flush(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 
 	time_left = wait_event_timeout(ar->dp.tx_empty_waitq,
 				       (atomic_read(&ar->dp.num_tx_pending) == 0),
-				       ATH1K_FLUSH_TIMEOUT);
+				       ATH11K_FLUSH_TIMEOUT);
 	if (time_left == 0)
 		ath11k_warn(ar->ab, "failed to flush transmit queue %ld\n", time_left);
 }
@@ -4386,7 +4402,7 @@ ath11k_mac_has_single_legacy_rate(struct ath11k *ar,
 {
 	int num_rates = 0;
 
-	num_rates += hweight32(mask->control[band].legacy);
+	num_rates = hweight32(mask->control[band].legacy);
 
 	if (ath11k_mac_bitrate_mask_num_ht_rates(ar, band, mask))
 		return false;
@@ -4912,7 +4928,7 @@ static int ath11k_mac_register(struct ath11k *ar)
 	ret = ath11k_mac_setup_channels_rates(ar,
 					      cap->supported_bands);
 	if (ret)
-		return ret;
+		goto err_free;
 
 	ath11k_mac_setup_ht_vht_cap(ar, cap, &ht_cap);
 
@@ -4965,6 +4981,9 @@ static int ath11k_mac_register(struct ath11k *ar)
 	ar->hw->wiphy->flags |= WIPHY_FLAG_AP_UAPSD;
 	ar->hw->wiphy->features |= NL80211_FEATURE_AP_MODE_CHAN_WIDTH_CHANGE |
 				   NL80211_FEATURE_AP_SCAN;
+
+	ar->max_num_stations = TARGET_NUM_STATIONS;
+	ar->max_num_peers = TARGET_NUM_PEERS_PDEV;
 
 	ar->hw->wiphy->max_ap_assoc_sta = ar->max_num_stations;
 

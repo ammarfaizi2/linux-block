@@ -8,13 +8,28 @@
 
 /* Target configuration defines */
 
-#define TARGET_NUM_PEERS_PDEV0	512
-#define TARGET_NUM_PEERS_PDEV1	512
+/* Num VDEVS per radio */
 #define TARGET_NUM_VDEVS	(16 + 1)
-#define TARGET_NUM_PEERS	(TARGET_NUM_PEERS_PDEV0 + TARGET_NUM_PEERS_PDEV1)
+
+#define TARGET_NUM_PEERS_PDEV	(512 + TARGET_NUM_VDEVS)
+
+/* Num of peers for Single Radio mode */
+#define TARGET_NUM_PEERS_SINGLE		(TARGET_NUM_PEERS_PDEV)
+
+/* Num of peers for DBS */
+#define TARGET_NUM_PEERS_DBS		(2 * TARGET_NUM_PEERS_PDEV)
+
+/* Num of peers for DBS_SBS */
+#define TARGET_NUM_PEERS_DBS_SBS	(3 * TARGET_NUM_PEERS_PDEV)
+
+/* Max num of stations (per radio) */
+#define TARGET_NUM_STATIONS	512
+
+#define TARGET_NUM_PEERS(x)	TARGET_NUM_PEERS_##x
 #define TARGET_NUM_PEER_KEYS	2
-#define TARGET_NUM_TIDS		(2 * TARGET_NUM_PEERS + \
+#define TARGET_NUM_TIDS(x)	(2 * TARGET_NUM_PEERS(x) + \
 				 4 * TARGET_NUM_VDEVS + 8)
+
 #define TARGET_AST_SKID_LIMIT	16
 #define TARGET_NUM_OFFLD_PEERS	4
 #define TARGET_NUM_OFFLD_REORDER_BUFFS 4

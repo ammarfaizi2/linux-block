@@ -363,7 +363,7 @@ struct ath11k_per_peer_tx_stats {
 	bool is_ampdu;
 };
 
-#define ATH1K_FLUSH_TIMEOUT (5 * HZ)
+#define ATH11K_FLUSH_TIMEOUT (5 * HZ)
 
 struct ath11k_vdev_stop_status {
 	bool stop_in_progress;
@@ -436,6 +436,7 @@ struct ath11k {
 	struct completion vdev_setup_done;
 
 	int num_peers;
+	int max_num_peers;
 	u32 num_started_vdevs;
 	u32 num_created_vdevs;
 

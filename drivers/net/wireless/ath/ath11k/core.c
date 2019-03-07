@@ -660,10 +660,11 @@ int ath11k_core_init(struct ath11k_base *sc)
 
 void ath11k_core_deinit(struct ath11k_base *sc)
 {
-	ath11k_core_pdev_destroy(sc);
-
 	mutex_lock(&sc->core_lock);
+
+	ath11k_core_pdev_destroy(sc);
 	ath11k_core_stop(sc);
+
 	mutex_unlock(&sc->core_lock);
 
 	ath11k_ahb_power_down(sc);

@@ -2914,11 +2914,21 @@ int ath11k_wmi_cmd_init(struct ath11k_base *sc)
 	memset(&config, 0, sizeof(config));
 
 	config.num_vdevs = sc->num_radios * TARGET_NUM_VDEVS;
-	config.num_peers = TARGET_NUM_PEERS;
+
+	if (sc->num_radios == 2) {
+		config.num_peers = TARGET_NUM_PEERS(DBS);
+		config.num_tids = TARGET_NUM_TIDS(DBS);
+	} else if (sc->num_radios == 3) {
+		config.num_peers = TARGET_NUM_PEERS(DBS_SBS);
+		config.num_tids = TARGET_NUM_TIDS(DBS_SBS);
+	} else {
+		/* Control should not reach here */
+		config.num_peers = TARGET_NUM_PEERS(SINGLE);
+		config.num_tids = TARGET_NUM_TIDS(SINGLE);
+	}
 	config.num_offload_peers = TARGET_NUM_OFFLD_PEERS;
 	config.num_offload_reorder_buffs = TARGET_NUM_OFFLD_REORDER_BUFFS;
 	config.num_peer_keys = TARGET_NUM_PEER_KEYS;
-	config.num_tids = TARGET_NUM_TIDS;
 	config.ast_skid_limit = TARGET_AST_SKID_LIMIT;
 	config.tx_chain_mask = (1 << sc->target_caps.num_rf_chains) - 1;
 	config.rx_chain_mask = (1 << sc->target_caps.num_rf_chains) - 1;
