@@ -73,6 +73,7 @@ struct ath11k_pdev_dp {
 	struct dp_srng reo_dst_ring;
 	struct dp_rxdma_ring rx_refill_buf_ring;
 	struct dp_srng rxdma_err_dst_ring;
+	struct dp_rxdma_ring rx_mon_status_refill_ring;
 	struct ieee80211_rx_status rx_status;
 };
 
@@ -118,6 +119,7 @@ struct dp_link_desc_bank {
 #define DP_RXDMA_BUF_RING_SIZE		4096
 #define DP_RXDMA_REFILL_RING_SIZE	2048
 #define DP_RXDMA_ERR_DST_RING_SIZE	1024
+#define DP_RXDMA_MON_STATUS_RING_SIZE	1024
 
 #define DP_RX_BUFFER_SIZE	2048
 #define DP_RX_BUFFER_ALIGN_SIZE	128

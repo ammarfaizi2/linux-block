@@ -690,6 +690,8 @@ int ath11k_dp_pdev_alloc(struct ath11k_base *ab)
 		spin_lock_init(&dp->rx_refill_buf_ring.idr_lock);
 		atomic_set(&dp->num_tx_pending, 0);
 		init_waitqueue_head(&dp->tx_empty_waitq);
+		idr_init(&dp->rx_mon_status_refill_ring.bufs_idr);
+		spin_lock_init(&dp->rx_mon_status_refill_ring.idr_lock);
 	}
 
 	/* TODO:Per-pdev rx ring unlike tx ring which is mapped to different AC's */

@@ -343,4 +343,9 @@ int ath11k_dp_htt_rx_filter_setup(struct ath11k_base *ab, u32 ring_id,
 				  int mac_id, enum hal_ring_type ring_type,
 				  int rx_buf_size,
 				  struct htt_rx_ring_tlv_filter *tlv_filter);
+int ath11k_dp_rx_mon_status_bufs_replenish(struct ath11k_base *ab, int mac_id,
+					   struct dp_rxdma_ring *rx_ring,
+					   int req_entries,
+					   enum hal_rx_buf_return_buf_manager mgr,
+					   gfp_t gfp);
 #endif /* ATH11K_DP_RX_H */
