@@ -956,8 +956,7 @@ static int ath11k_subsys_notifier_cb(struct notifier_block *nb,
 		sc->target_restarted = 0;
 		break;
 	case SUBSYS_BEFORE_POWERUP:
-		if (sc->target_restarted)
-			BUG();
+		BUG_ON(sc->target_restarted);
 		break;
 	default:
 		return NOTIFY_OK;
