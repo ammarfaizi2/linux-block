@@ -80,7 +80,7 @@ struct page {
 		struct {	/* Page cache and anonymous pages */
 			/**
 			 * @lru: Pageout list, eg. active_list protected by
-			 * zone_lru_lock.  Sometimes used as a generic list
+			 * pgdat->lru_lock.  Sometimes used as a generic list
 			 * by the page owner.
 			 */
 			struct list_head lru;
@@ -94,6 +94,13 @@ struct page {
 			 * Indicates order in the buddy system if PageBuddy.
 			 */
 			unsigned long private;
+		};
+		struct {	/* page_pool used by netstack */
+			/**
+			 * @dma_addr: might require a 64-bit value even on
+			 * 32-bit architectures.
+			 */
+			dma_addr_t dma_addr;
 		};
 		struct {	/* slab, slob and slub */
 			union {
