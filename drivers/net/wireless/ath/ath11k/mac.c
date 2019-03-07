@@ -2686,6 +2686,15 @@ static int ath11k_sta_state(struct ieee80211_hw *hw,
 		arsta->arvif = arvif;
 		INIT_WORK(&arsta->update_wk, ath11k_sta_rc_update_wk);
 
+		if (ath11k_debug_is_extd_rx_stats_enabled(ar)) {
+			arsta->rx_stats = kzalloc(sizeof(*arsta->rx_stats),
+						  GFP_KERNEL);
+			if (!arsta->rx_stats) {
+				ret = -ENOMEM;
+				goto exit;
+			}
+		}
+
 		peer_param.vdev_id = arvif->vdev_id;
 		peer_param.peer_addr = sta->addr;
 		peer_param.peer_type = WMI_PEER_TYPE_DEFAULT;
@@ -2727,6 +2736,11 @@ static int ath11k_sta_state(struct ieee80211_hw *hw,
 
 		if (ath11k_debug_is_extd_tx_stats_enabled(ar))
 			kfree(arsta->tx_stats);
+
+		if (ath11k_debug_is_extd_rx_stats_enabled(ar)) {
+			kfree(arsta->rx_stats);
+			arsta->rx_stats = NULL;
+		}
 	} else if (old_state == IEEE80211_STA_AUTH &&
 		   new_state == IEEE80211_STA_ASSOC &&
 		   (vif->type == NL80211_IFTYPE_AP ||

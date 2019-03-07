@@ -6,6 +6,8 @@
 #include "core.h"
 #include "debug.h"
 #include "wmi.h"
+#include "hal_rx.h"
+#include "dp_rx.h"
 
 void ath11k_info(struct ath11k_base *sc, const char *fmt, ...)
 {
@@ -770,6 +772,90 @@ static const struct file_operations fops_extd_tx_stats = {
 	.open = simple_open
 };
 
+static ssize_t ath11k_write_extd_rx_stats(struct file *file,
+					  const char __user *ubuf,
+					  size_t count, loff_t *ppos)
+{
+	struct ath11k *ar = file->private_data;
+	struct htt_rx_ring_tlv_filter tlv_filter = {0};
+	u32 enable, rx_filter = 0, ring_id;
+	int ret;
+
+	if (kstrtouint_from_user(ubuf, count, 0, &enable))
+		return -EINVAL;
+
+	mutex_lock(&ar->conf_mutex);
+
+	if (ar->state != ATH11K_STATE_ON) {
+		ret = -ENETDOWN;
+		goto exit;
+	}
+
+	if (enable < 0 || enable > 1) {
+		ret = -EINVAL;
+		goto exit;
+	}
+
+	if (enable == ar->debug.extd_rx_stats) {
+		ret = count;
+		goto exit;
+	}
+
+	if (enable) {
+		rx_filter =  HTT_RX_FILTER_TLV_FLAGS_MPDU_START;
+		rx_filter |= HTT_RX_FILTER_TLV_FLAGS_PPDU_START;
+		rx_filter |= HTT_RX_FILTER_TLV_FLAGS_PPDU_END;
+		rx_filter |= HTT_RX_FILTER_TLV_FLAGS_PPDU_END_USER_STATS;
+		rx_filter |= HTT_RX_FILTER_TLV_FLAGS_PPDU_END_USER_STATS_EXT;
+		rx_filter |= HTT_RX_FILTER_TLV_FLAGS_PPDU_END_STATUS_DONE;
+
+		tlv_filter.rx_filter = rx_filter;
+		tlv_filter.pkt_filter_flags0 = HTT_RX_FP_MGMT_FILTER_FLAGS0;
+		tlv_filter.pkt_filter_flags1 = HTT_RX_FP_MGMT_FILTER_FLAGS1;
+		tlv_filter.pkt_filter_flags2 = HTT_RX_FP_CTRL_FILTER_FLASG2;
+		tlv_filter.pkt_filter_flags3 = HTT_RX_FP_CTRL_FILTER_FLASG3 |
+			HTT_RX_FP_DATA_FILTER_FLASG3;
+	}
+
+	ring_id = ar->dp.rx_mon_status_refill_ring.refill_buf_ring.ring_id;
+	ret = ath11k_dp_htt_rx_filter_setup(ar->ab, ring_id, ar->dp.mac_id,
+					    HAL_RXDMA_MONITOR_STATUS,
+					    DP_RX_BUFFER_SIZE, &tlv_filter);
+
+	if (ret) {
+		ath11k_warn(ar->ab, "failed to set rx filter for moniter status ring\n");
+		goto exit;
+	}
+
+	ar->debug.extd_rx_stats = enable;
+	ret = count;
+exit:
+	mutex_unlock(&ar->conf_mutex);
+	return ret;
+}
+
+static ssize_t ath11k_read_extd_rx_stats(struct file *file,
+					 char __user *ubuf,
+					 size_t count, loff_t *ppos)
+{
+	struct ath11k *ar = file->private_data;
+	char buf[32];
+	int len = 0;
+
+	mutex_lock(&ar->conf_mutex);
+	len = scnprintf(buf, sizeof(buf) - len, "%d\n",
+			ar->debug.extd_rx_stats);
+	mutex_unlock(&ar->conf_mutex);
+
+	return simple_read_from_buffer(ubuf, count, ppos, buf, len);
+}
+
+static const struct file_operations fops_extd_rx_stats = {
+	.read = ath11k_read_extd_rx_stats,
+	.write = ath11k_write_extd_rx_stats,
+	.open = simple_open,
+};
+
 int ath11k_debug_soc_create(struct ath11k_base *ab)
 {
 	ab->debugfs_soc = debugfs_create_dir("ath11k", NULL);
@@ -848,6 +934,9 @@ int ath11k_debug_register(struct ath11k *ar)
 	debugfs_create_file("ext_tx_stats", 0644,
 			    ar->debug.debugfs_pdev, ar,
 			    &fops_extd_tx_stats);
+	debugfs_create_file("ext_rx_stats", 0644,
+			    ar->debug.debugfs_pdev, ar,
+			    &fops_extd_rx_stats);
 	return 0;
 }
 

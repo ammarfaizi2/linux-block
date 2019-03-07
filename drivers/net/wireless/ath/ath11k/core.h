@@ -373,6 +373,7 @@ struct ath11k_debug {
 	struct ath11k_fw_stats fw_stats;
 	struct completion fw_stats_complete;
 	bool fw_stats_done;
+	u32 extd_rx_stats;
 };
 
 struct ath11k_per_peer_tx_stats {

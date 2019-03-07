@@ -72,6 +72,11 @@ static inline int ath11k_debug_is_extd_tx_stats_enabled(struct ath11k *ar)
 {
 	return ar->debug.extd_tx_stats;
 }
+
+static inline int ath11k_debug_is_extd_rx_stats_enabled(struct ath11k *ar)
+{
+	return ar->debug.extd_rx_stats;
+}
 #else
 static inline int ath11k_debug_soc_create(struct ath11k_base *sc)
 {
@@ -110,6 +115,11 @@ static inline void ath11k_debug_fw_stats_init(struct ath11k *ar)
 }
 
 static inline int ath11k_debug_is_extd_tx_stats_enabled(struct ath11k *ar)
+{
+	return 0;
+}
+
+static inline int ath11k_debug_is_extd_rx_stats_enabled(struct ath11k *ar)
 {
 	return 0;
 }

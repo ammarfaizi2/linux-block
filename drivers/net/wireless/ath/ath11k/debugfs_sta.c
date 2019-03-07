@@ -297,6 +297,91 @@ static const struct file_operations fops_tx_stats = {
 	.llseek = default_llseek,
 };
 
+static ssize_t ath11k_dbg_sta_dump_rx_stats(struct file *file,
+					    char __user *user_buf,
+					    size_t count, loff_t *ppos)
+{
+	struct ieee80211_sta *sta = file->private_data;
+	struct ath11k_sta *arsta = (struct ath11k_sta *)sta->drv_priv;
+	struct ath11k *ar = arsta->arvif->ar;
+	struct ath11k_rx_peer_stats *rx_stats = arsta->rx_stats;
+	int len = 0, i, retval = 0;
+	const int size = 4096;
+	char *buf;
+
+	if (!rx_stats)
+		return -ENOENT;
+
+	buf = kzalloc(size, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
+
+	mutex_lock(&ar->conf_mutex);
+	spin_lock_bh(&ar->ab->data_lock);
+
+	len += scnprintf(buf + len, size - len, "RX peer stats:\n");
+	len += scnprintf(buf + len, size - len, "Num of MSDUs: %llu\n",
+			 rx_stats->num_msdu);
+	len += scnprintf(buf + len, size - len, "Num of MSDUs with TCP L4: %llu\n",
+			 rx_stats->tcp_msdu_count);
+	len += scnprintf(buf + len, size - len, "Num of MSDUs with UDP L4: %llu\n",
+			 rx_stats->udp_msdu_count);
+	len += scnprintf(buf + len, size - len, "Num of MSDUs part of AMPDU: %llu\n",
+			 rx_stats->ampdu_msdu_count);
+	len += scnprintf(buf + len, size - len, "Num of MSDUs not part of AMPDU: %llu\n",
+			 rx_stats->non_ampdu_msdu_count);
+	len += scnprintf(buf + len, size - len, "Num of MSDUs using STBC: %llu\n",
+			 rx_stats->stbc_count);
+	len += scnprintf(buf + len, size - len, "Num of MSDUs beamformed: %llu\n",
+			 rx_stats->beamformed_count);
+	len += scnprintf(buf + len, size - len, "Num of MPDUs with FCS ok: %llu\n",
+			 rx_stats->num_mpdu_fcs_ok);
+	len += scnprintf(buf + len, size - len, "Num of MPDUs with FCS error: %llu\n",
+			 rx_stats->num_mpdu_fcs_err);
+	len += scnprintf(buf + len, size - len, "GI: 0.8us %llu 0.4us %llu 1.6us %llu 3.2us %llu\n",
+			 rx_stats->gi_count[0], rx_stats->gi_count[1],
+			 rx_stats->gi_count[2], rx_stats->gi_count[3]);
+	len += scnprintf(buf + len, size - len, "BW: 20Mhz %llu 40Mhz %llu 80Mhz %llu 160Mhz %llu\n",
+			 rx_stats->bw_count[0], rx_stats->bw_count[1],
+			 rx_stats->bw_count[2], rx_stats->bw_count[3]);
+	len += scnprintf(buf + len, size - len, "BCC %llu LDPC %llu\n",
+			 rx_stats->coding_count[0], rx_stats->coding_count[1]);
+	len += scnprintf(buf + len, size - len, "preamble: 11A %llu 11B %llu 11N %llu 11AC %llu 11AX %llu\n",
+			 rx_stats->pream_cnt[0], rx_stats->pream_cnt[1],
+			 rx_stats->pream_cnt[2], rx_stats->pream_cnt[3],
+			 rx_stats->pream_cnt[4]);
+	len += scnprintf(buf + len, size - len, "reception type: SU %llu MU_MIMO %llu MU_OFDMA %llu MU_OFDMA_MIMO %llu\n",
+			 rx_stats->reception_type[0], rx_stats->reception_type[1],
+			 rx_stats->reception_type[2], rx_stats->reception_type[3]);
+	len += scnprintf(buf + len, size - len, "TID(0-15) Legacy TID(16):");
+	for (i = 0; i <= IEEE80211_NUM_TIDS; i++)
+		len += scnprintf(buf + len, size - len, "%llu ", rx_stats->tid_count[i]);
+	len += scnprintf(buf + len, size - len, "\nMCS(0-11) Legacy MCS(12):");
+	for (i = 0; i < HAL_RX_MAX_MCS + 1; i++)
+		len += scnprintf(buf + len, size - len, "%llu ", rx_stats->mcs_count[i]);
+	len += scnprintf(buf + len, size - len, "\nNSS(1-8):");
+	for (i = 0; i < HAL_RX_MAX_NSS; i++)
+		len += scnprintf(buf + len, size - len, "%llu ", rx_stats->nss_count[i]);
+	len += scnprintf(buf + len, size - len, "\n");
+
+	spin_unlock_bh(&ar->ab->data_lock);
+
+	if (len > size)
+		len = size;
+	retval = simple_read_from_buffer(user_buf, count, ppos, buf, len);
+	kfree(buf);
+
+	mutex_unlock(&ar->conf_mutex);
+	return retval;
+}
+
+static const struct file_operations fops_rx_stats = {
+	.read = ath11k_dbg_sta_dump_rx_stats,
+	.open = simple_open,
+	.owner = THIS_MODULE,
+	.llseek = default_llseek,
+};
+
 void ath11k_sta_add_debugfs(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 			    struct ieee80211_sta *sta, struct dentry *dir)
 {
@@ -305,4 +390,7 @@ void ath11k_sta_add_debugfs(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 	if (ath11k_debug_is_extd_tx_stats_enabled(ar))
 		debugfs_create_file("tx_stats", 0400, dir, sta,
 				    &fops_tx_stats);
+	if (ath11k_debug_is_extd_rx_stats_enabled(ar))
+		debugfs_create_file("rx_stats", 0400, dir, sta,
+				    &fops_rx_stats);
 }
