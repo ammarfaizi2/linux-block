@@ -3414,7 +3414,7 @@ static int ath11k_start(struct ieee80211_hw *hw)
 		WARN_ON(1);
 		ret = -EINVAL;
 		goto err;
-	};
+	}
 
 	ret = ath11k_wmi_pdev_set_param(ar, WMI_PDEV_PARAM_PMF_QOS,
 					1, pdev->pdev_id);
