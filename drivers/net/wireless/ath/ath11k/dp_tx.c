@@ -765,6 +765,96 @@ int ath11k_dp_htt_h2t_ppdu_stats_req(struct ath11k *ar, u32 mask)
 	return 0;
 }
 
+int ath11k_dp_htt_rx_filter_setup(struct ath11k_base *ab, u32 ring_id,
+				  int mac_id, enum hal_ring_type ring_type,
+				  int rx_buf_size,
+				  struct htt_rx_ring_tlv_filter *tlv_filter)
+{
+	struct htt_rx_ring_selection_cfg_cmd *cmd;
+	struct hal_srng *srng = &ab->hal.srng_list[ring_id];
+	struct hal_srng_params params;
+	struct sk_buff *skb;
+	int len = sizeof(*cmd);
+	enum htt_srng_ring_type htt_ring_type;
+	enum htt_srng_ring_id htt_ring_id;
+	int ret;
+
+	skb = ath11k_htc_alloc_skb(ab, len);
+	if (!skb)
+		return -ENOMEM;
+
+	memset(&params, 0, sizeof(params));
+	ath11k_hal_srng_get_params(ab, srng, &params);
+
+	switch (ring_type) {
+	case HAL_RXDMA_BUF:
+		htt_ring_id = HTT_RXDMA_HOST_BUF_RING;
+		htt_ring_type = HTT_SW_TO_HW_RING;
+		break;
+	case HAL_RXDMA_DST:
+		htt_ring_id = HTT_RXDMA_NON_MONITOR_DEST_RING;
+		htt_ring_type = HTT_HW_TO_SW_RING;
+		break;
+	case HAL_RXDMA_MONITOR_BUF:
+		htt_ring_id = HTT_RXDMA_MONITOR_BUF_RING;
+		htt_ring_type = HTT_SW_TO_HW_RING;
+		break;
+	case HAL_RXDMA_MONITOR_STATUS:
+		htt_ring_id = HTT_RXDMA_MONITOR_STATUS_RING;
+		htt_ring_type = HTT_SW_TO_HW_RING;
+		break;
+	case HAL_RXDMA_MONITOR_DST:
+		htt_ring_id = HTT_RXDMA_MONITOR_DEST_RING;
+		htt_ring_type = HTT_HW_TO_SW_RING;
+		break;
+	case HAL_RXDMA_MONITOR_DESC:
+		htt_ring_id = HTT_RXDMA_MONITOR_DESC_RING;
+		htt_ring_type = HTT_SW_TO_HW_RING;
+		break;
+	default:
+		ath11k_warn(ab, "Unsupported ring type in DP :%d\n", ring_type);
+		ret = -EINVAL;
+		goto err_free;
+	}
+
+	skb_put(skb, len);
+	cmd = (struct htt_rx_ring_selection_cfg_cmd *)skb->data;
+	cmd->info0 = FIELD_PREP(HTT_RX_RING_SELECTION_CFG_CMD_INFO0_MSG_TYPE,
+				HTT_H2T_MSG_TYPE_RX_RING_SELECTION_CFG);
+	if (htt_ring_type == HTT_SW_TO_HW_RING ||
+	    htt_ring_type == HTT_HW_TO_SW_RING)
+		cmd->info0 |= FIELD_PREP(HTT_RX_RING_SELECTION_CFG_CMD_INFO0_PDEV_ID,
+					 DP_SW2HW_MACID(mac_id));
+	else
+		cmd->info0 |= FIELD_PREP(HTT_RX_RING_SELECTION_CFG_CMD_INFO0_PDEV_ID,
+					 mac_id);
+	cmd->info0 |= FIELD_PREP(HTT_RX_RING_SELECTION_CFG_CMD_INFO0_RING_ID,
+				 htt_ring_id);
+	cmd->info0 |= FIELD_PREP(HTT_RX_RING_SELECTION_CFG_CMD_INFO0_SS,
+				 !!(params.flags & HAL_SRNG_FLAGS_MSI_SWAP));
+	cmd->info0 |= FIELD_PREP(HTT_RX_RING_SELECTION_CFG_CMD_INFO0_PS,
+				 !!(params.flags & HAL_SRNG_FLAGS_DATA_TLV_SWAP));
+
+	cmd->info1 = FIELD_PREP(HTT_RX_RING_SELECTION_CFG_CMD_INFO1_BUF_SIZE,
+				rx_buf_size);
+	cmd->pkt_type_en_flags0 = __cpu_to_le32(tlv_filter->pkt_filter_flags0);
+	cmd->pkt_type_en_flags1 = __cpu_to_le32(tlv_filter->pkt_filter_flags1);
+	cmd->pkt_type_en_flags2 = __cpu_to_le32(tlv_filter->pkt_filter_flags2);
+	cmd->pkt_type_en_flags3 = __cpu_to_le32(tlv_filter->pkt_filter_flags3);
+	cmd->rx_filter_tlv = __cpu_to_le32(tlv_filter->rx_filter);
+
+	ret = ath11k_htc_send(&ab->htc, ab->dp.eid, skb);
+	if (ret)
+		goto err_free;
+
+	return 0;
+
+err_free:
+	dev_kfree_skb_any(skb);
+
+	return ret;
+}
+
 int ath11k_dp_htt_h2t_ext_stats_req(struct ath11k *ar, u8 mask, u64 cookie)
 {
 	struct ath11k_base *ab = ar->ab;

@@ -454,6 +454,304 @@ enum htt_ppdu_stats_tag_type {
 				   | BIT(HTT_PPDU_STATS_TAG_USR_COMPLTN_FLUSH) \
 				   | BIT(HTT_PPDU_STATS_TAG_USR_COMMON_ARRAY))
 
+/* HTT_H2T_MSG_TYPE_RX_RING_SELECTION_CFG Message
+ *
+ * details:
+ *    HTT_H2T_MSG_TYPE_RX_RING_SELECTION_CFG message is sent by host to
+ *    configure RXDMA rings.
+ *    The configuration is per ring based and includes both packet subtypes
+ *    and PPDU/MPDU TLVs.
+ *
+ *    The message would appear as follows:
+ *
+ *    |31       26|25|24|23            16|15             8|7             0|
+ *    |-----------------+----------------+----------------+---------------|
+ *    |   rsvd1   |PS|SS|     ring_id    |     pdev_id    |    msg_type   |
+ *    |-------------------------------------------------------------------|
+ *    |              rsvd2               |           ring_buffer_size     |
+ *    |-------------------------------------------------------------------|
+ *    |                        packet_type_enable_flags_0                 |
+ *    |-------------------------------------------------------------------|
+ *    |                        packet_type_enable_flags_1                 |
+ *    |-------------------------------------------------------------------|
+ *    |                        packet_type_enable_flags_2                 |
+ *    |-------------------------------------------------------------------|
+ *    |                        packet_type_enable_flags_3                 |
+ *    |-------------------------------------------------------------------|
+ *    |                         tlv_filter_in_flags                       |
+ *    |-------------------------------------------------------------------|
+ * Where:
+ *     PS = pkt_swap
+ *     SS = status_swap
+ * The message is interpreted as follows:
+ * dword0 - b'0:7   - msg_type: This will be set to
+ *                    HTT_H2T_MSG_TYPE_RX_RING_SELECTION_CFG
+ *          b'8:15  - pdev_id:
+ *                    0 (for rings at SOC/UMAC level),
+ *                    1/2/3 mac id (for rings at LMAC level)
+ *          b'16:23 - ring_id : Identify the ring to configure.
+ *                    More details can be got from enum htt_srng_ring_id
+ *          b'24    - status_swap: 1 is to swap status TLV
+ *          b'25    - pkt_swap:  1 is to swap packet TLV
+ *          b'26:31 - rsvd1:  reserved for future use
+ * dword1 - b'0:16  - ring_buffer_size: size of bufferes referenced by rx ring,
+ *                    in byte units.
+ *                    Valid only for HW_TO_SW_RING and SW_TO_HW_RING
+ *        - b'16:31 - rsvd2: Reserved for future use
+ * dword2 - b'0:31  - packet_type_enable_flags_0:
+ *                    Enable MGMT packet from 0b0000 to 0b1001
+ *                    bits from low to high: FP, MD, MO - 3 bits
+ *                        FP: Filter_Pass
+ *                        MD: Monitor_Direct
+ *                        MO: Monitor_Other
+ *                    10 mgmt subtypes * 3 bits -> 30 bits
+ *                    Refer to PKT_TYPE_ENABLE_FLAG0_xxx_MGMT_xxx defs
+ * dword3 - b'0:31  - packet_type_enable_flags_1:
+ *                    Enable MGMT packet from 0b1010 to 0b1111
+ *                    bits from low to high: FP, MD, MO - 3 bits
+ *                    Refer to PKT_TYPE_ENABLE_FLAG1_xxx_MGMT_xxx defs
+ * dword4 - b'0:31 -  packet_type_enable_flags_2:
+ *                    Enable CTRL packet from 0b0000 to 0b1001
+ *                    bits from low to high: FP, MD, MO - 3 bits
+ *                    Refer to PKT_TYPE_ENABLE_FLAG2_xxx_CTRL_xxx defs
+ * dword5 - b'0:31  - packet_type_enable_flags_3:
+ *                    Enable CTRL packet from 0b1010 to 0b1111,
+ *                    MCAST_DATA, UCAST_DATA, NULL_DATA
+ *                    bits from low to high: FP, MD, MO - 3 bits
+ *                    Refer to PKT_TYPE_ENABLE_FLAG3_xxx_CTRL_xxx defs
+ * dword6 - b'0:31 -  tlv_filter_in_flags:
+ *                    Filter in Attention/MPDU/PPDU/Header/User tlvs
+ *                    Refer to CFG_TLV_FILTER_IN_FLAG defs
+ */
+
+#define HTT_RX_RING_SELECTION_CFG_CMD_INFO0_MSG_TYPE	GENMASK(7, 0)
+#define HTT_RX_RING_SELECTION_CFG_CMD_INFO0_PDEV_ID	GENMASK(15, 8)
+#define HTT_RX_RING_SELECTION_CFG_CMD_INFO0_RING_ID	GENMASK(23, 16)
+#define HTT_RX_RING_SELECTION_CFG_CMD_INFO0_SS		BIT(24)
+#define HTT_RX_RING_SELECTION_CFG_CMD_INFO0_PS		BIT(25)
+
+#define HTT_RX_RING_SELECTION_CFG_CMD_INFO1_BUF_SIZE	GENMASK(15, 0)
+
+enum htt_rx_filter_tlv_flags {
+	HTT_RX_FILTER_TLV_FLAGS_MPDU_START		= BIT(0),
+	HTT_RX_FILTER_TLV_FLAGS_MSDU_START		= BIT(1),
+	HTT_RX_FILTER_TLV_FLAGS_RX_PACKET		= BIT(2),
+	HTT_RX_FILTER_TLV_FLAGS_MSDU_END		= BIT(3),
+	HTT_RX_FILTER_TLV_FLAGS_MPDU_END		= BIT(4),
+	HTT_RX_FILTER_TLV_FLAGS_PACKET_HEADER		= BIT(5),
+	HTT_RX_FILTER_TLV_FLAGS_PER_MSDU_HEADER		= BIT(6),
+	HTT_RX_FILTER_TLV_FLAGS_ATTENTION		= BIT(7),
+	HTT_RX_FILTER_TLV_FLAGS_PPDU_START		= BIT(8),
+	HTT_RX_FILTER_TLV_FLAGS_PPDU_END		= BIT(9),
+	HTT_RX_FILTER_TLV_FLAGS_PPDU_END_USER_STATS	= BIT(10),
+	HTT_RX_FILTER_TLV_FLAGS_PPDU_END_USER_STATS_EXT	= BIT(11),
+	HTT_RX_FILTER_TLV_FLAGS_PPDU_END_STATUS_DONE	= BIT(12),
+};
+
+enum htt_rx_mgmt_pkt_filter_tlv_flags0 {
+	HTT_RX_FP_MGMT_PKT_FILTER_TLV_FLAGS0_ASSOC_REQ		= BIT(0),
+	HTT_RX_MD_MGMT_PKT_FILTER_TLV_FLAGS0_ASSOC_REQ		= BIT(1),
+	HTT_RX_MO_MGMT_PKT_FILTER_TLV_FLAGS0_ASSOC_REQ		= BIT(2),
+	HTT_RX_FP_MGMT_PKT_FILTER_TLV_FLAGS0_ASSOC_RESP		= BIT(3),
+	HTT_RX_MD_MGMT_PKT_FILTER_TLV_FLAGS0_ASSOC_RESP		= BIT(4),
+	HTT_RX_MO_MGMT_PKT_FILTER_TLV_FLAGS0_ASSOC_RESP		= BIT(5),
+	HTT_RX_FP_MGMT_PKT_FILTER_TLV_FLAGS0_REASSOC_REQ	= BIT(6),
+	HTT_RX_MD_MGMT_PKT_FILTER_TLV_FLAGS0_REASSOC_REQ	= BIT(7),
+	HTT_RX_MO_MGMT_PKT_FILTER_TLV_FLAGS0_REASSOC_REQ	= BIT(8),
+	HTT_RX_FP_MGMT_PKT_FILTER_TLV_FLAGS0_REASSOC_RESP	= BIT(9),
+	HTT_RX_MD_MGMT_PKT_FILTER_TLV_FLAGS0_REASSOC_RESP	= BIT(10),
+	HTT_RX_MO_MGMT_PKT_FILTER_TLV_FLAGS0_REASSOC_RESP	= BIT(11),
+	HTT_RX_FP_MGMT_PKT_FILTER_TLV_FLAGS0_PROBE_REQ		= BIT(12),
+	HTT_RX_MD_MGMT_PKT_FILTER_TLV_FLAGS0_PROBE_REQ		= BIT(13),
+	HTT_RX_MO_MGMT_PKT_FILTER_TLV_FLAGS0_PROBE_REQ		= BIT(14),
+	HTT_RX_FP_MGMT_PKT_FILTER_TLV_FLAGS0_PROBE_RESP		= BIT(15),
+	HTT_RX_MD_MGMT_PKT_FILTER_TLV_FLAGS0_PROBE_RESP		= BIT(16),
+	HTT_RX_MO_MGMT_PKT_FILTER_TLV_FLAGS0_PROBE_RESP		= BIT(17),
+	HTT_RX_FP_MGMT_PKT_FILTER_TLV_FLAGS0_PROBE_TIMING_ADV	= BIT(18),
+	HTT_RX_MD_MGMT_PKT_FILTER_TLV_FLAGS0_PROBE_TIMING_ADV	= BIT(19),
+	HTT_RX_MO_MGMT_PKT_FILTER_TLV_FLAGS0_PROBE_TIMING_ADV	= BIT(20),
+	HTT_RX_FP_MGMT_PKT_FILTER_TLV_FLAGS0_BEACON		= BIT(24),
+	HTT_RX_MD_MGMT_PKT_FILTER_TLV_FLAGS0_BEACON		= BIT(25),
+	HTT_RX_MO_MGMT_PKT_FILTER_TLV_FLAGS0_BEACON		= BIT(26),
+	HTT_RX_FP_MGMT_PKT_FILTER_TLV_FLAGS0_ATIM		= BIT(27),
+	HTT_RX_MD_MGMT_PKT_FILTER_TLV_FLAGS0_ATIM		= BIT(28),
+	HTT_RX_MO_MGMT_PKT_FILTER_TLV_FLAGS0_ATIM		= BIT(29),
+};
+
+enum htt_rx_mgmt_pkt_filter_tlv_flags1 {
+	HTT_RX_FP_MGMT_PKT_FILTER_TLV_FLAGS1_DISASSOC		= BIT(0),
+	HTT_RX_MD_MGMT_PKT_FILTER_TLV_FLAGS1_DISASSOC		= BIT(1),
+	HTT_RX_MO_MGMT_PKT_FILTER_TLV_FLAGS1_DISASSOC		= BIT(2),
+	HTT_RX_FP_MGMT_PKT_FILTER_TLV_FLAGS1_AUTH		= BIT(3),
+	HTT_RX_MD_MGMT_PKT_FILTER_TLV_FLAGS1_AUTH		= BIT(4),
+	HTT_RX_MO_MGMT_PKT_FILTER_TLV_FLAGS1_AUTH		= BIT(5),
+	HTT_RX_FP_MGMT_PKT_FILTER_TLV_FLAGS1_DEAUTH		= BIT(6),
+	HTT_RX_MD_MGMT_PKT_FILTER_TLV_FLAGS1_DEAUTH		= BIT(7),
+	HTT_RX_MO_MGMT_PKT_FILTER_TLV_FLAGS1_DEAUTH		= BIT(8),
+	HTT_RX_FP_MGMT_PKT_FILTER_TLV_FLAGS1_ACTION		= BIT(9),
+	HTT_RX_MD_MGMT_PKT_FILTER_TLV_FLAGS1_ACTION		= BIT(10),
+	HTT_RX_MO_MGMT_PKT_FILTER_TLV_FLAGS1_ACTION		= BIT(11),
+	HTT_RX_FP_MGMT_PKT_FILTER_TLV_FLAGS1_ACTION_NOACK	= BIT(12),
+	HTT_RX_MD_MGMT_PKT_FILTER_TLV_FLAGS1_ACTION_NOACK	= BIT(13),
+	HTT_RX_MO_MGMT_PKT_FILTER_TLV_FLAGS1_ACTION_NOACK	= BIT(14),
+};
+
+enum htt_rx_ctrl_pkt_filter_tlv_flags2 {
+	HTT_RX_FP_CTRL_PKT_FILTER_TLV_FLAGS2_CTRL_WRAPPER	= BIT(21),
+	HTT_RX_MD_CTRL_PKT_FILTER_TLV_FLAGS2_CTRL_WRAPPER	= BIT(22),
+	HTT_RX_MO_CTRL_PKT_FILTER_TLV_FLAGS2_CTRL_WRAPPER	= BIT(23),
+	HTT_RX_FP_CTRL_PKT_FILTER_TLV_FLAGS2_BAR		= BIT(24),
+	HTT_RX_MD_CTRL_PKT_FILTER_TLV_FLAGS2_BAR		= BIT(25),
+	HTT_RX_MO_CTRL_PKT_FILTER_TLV_FLAGS2_BAR		= BIT(26),
+	HTT_RX_FP_CTRL_PKT_FILTER_TLV_FLAGS2_BA			= BIT(27),
+	HTT_RX_MD_CTRL_PKT_FILTER_TLV_FLAGS2_BA			= BIT(28),
+	HTT_RX_MO_CTRL_PKT_FILTER_TLV_FLAGS2_BA			= BIT(29),
+};
+
+enum htt_rx_ctrl_pkt_filter_tlv_flags3 {
+	HTT_RX_FP_CTRL_PKT_FILTER_TLV_FLAGS3_PSPOLL		= BIT(0),
+	HTT_RX_MD_CTRL_PKT_FILTER_TLV_FLAGS3_PSPOLL		= BIT(1),
+	HTT_RX_MO_CTRL_PKT_FILTER_TLV_FLAGS3_PSPOLL		= BIT(2),
+	HTT_RX_FP_CTRL_PKT_FILTER_TLV_FLAGS3_RTS		= BIT(3),
+	HTT_RX_MD_CTRL_PKT_FILTER_TLV_FLAGS3_RTS		= BIT(4),
+	HTT_RX_MO_CTRL_PKT_FILTER_TLV_FLAGS3_RTS		= BIT(5),
+	HTT_RX_FP_CTRL_PKT_FILTER_TLV_FLAGS3_CTS		= BIT(6),
+	HTT_RX_MD_CTRL_PKT_FILTER_TLV_FLAGS3_CTS		= BIT(7),
+	HTT_RX_MO_CTRL_PKT_FILTER_TLV_FLAGS3_CTS		= BIT(8),
+	HTT_RX_FP_CTRL_PKT_FILTER_TLV_FLAGS3_ACK		= BIT(9),
+	HTT_RX_MD_CTRL_PKT_FILTER_TLV_FLAGS3_ACK		= BIT(10),
+	HTT_RX_MO_CTRL_PKT_FILTER_TLV_FLAGS3_ACK		= BIT(11),
+	HTT_RX_FP_CTRL_PKT_FILTER_TLV_FLAGS3_CFEND		= BIT(12),
+	HTT_RX_MD_CTRL_PKT_FILTER_TLV_FLAGS3_CFEND		= BIT(13),
+	HTT_RX_MO_CTRL_PKT_FILTER_TLV_FLAGS3_CFEND		= BIT(14),
+	HTT_RX_FP_CTRL_PKT_FILTER_TLV_FLAGS3_CFEND_ACK		= BIT(15),
+	HTT_RX_MD_CTRL_PKT_FILTER_TLV_FLAGS3_CFEND_ACK		= BIT(16),
+	HTT_RX_MO_CTRL_PKT_FILTER_TLV_FLAGS3_CFEND_ACK		= BIT(17),
+};
+
+enum htt_rx_data_pkt_filter_tlv_flasg3 {
+	HTT_RX_FP_DATA_PKT_FILTER_TLV_FLASG3_MCAST	= BIT(18),
+	HTT_RX_MD_DATA_PKT_FILTER_TLV_FLASG3_MCAST	= BIT(19),
+	HTT_RX_M0_DATA_PKT_FILTER_TLV_FLASG3_MCAST	= BIT(20),
+	HTT_RX_FP_DATA_PKT_FILTER_TLV_FLASG3_UCAST	= BIT(21),
+	HTT_RX_MD_DATA_PKT_FILTER_TLV_FLASG3_UCAST	= BIT(22),
+	HTT_RX_M0_DATA_PKT_FILTER_TLV_FLASG3_UCAST	= BIT(23),
+	HTT_RX_FP_DATA_PKT_FILTER_TLV_FLASG3_NULL_DATA	= BIT(21),
+	HTT_RX_MD_DATA_PKT_FILTER_TLV_FLASG3_NULL_DATA	= BIT(22),
+	HTT_RX_M0_DATA_PKT_FILTER_TLV_FLASG3_NULL_DATA	= BIT(23),
+};
+
+#define HTT_RX_FP_MGMT_FILTER_FLAGS0 (HTT_RX_FP_MGMT_PKT_FILTER_TLV_FLAGS0_ASSOC_REQ \
+				     | HTT_RX_FP_MGMT_PKT_FILTER_TLV_FLAGS0_ASSOC_RESP \
+				     | HTT_RX_FP_MGMT_PKT_FILTER_TLV_FLAGS0_REASSOC_REQ \
+				     | HTT_RX_FP_MGMT_PKT_FILTER_TLV_FLAGS0_REASSOC_RESP \
+				     | HTT_RX_FP_MGMT_PKT_FILTER_TLV_FLAGS0_PROBE_REQ \
+				     | HTT_RX_FP_MGMT_PKT_FILTER_TLV_FLAGS0_PROBE_RESP \
+				     | HTT_RX_FP_MGMT_PKT_FILTER_TLV_FLAGS0_PROBE_TIMING_ADV \
+				     | HTT_RX_FP_MGMT_PKT_FILTER_TLV_FLAGS0_BEACON \
+				     | HTT_RX_FP_MGMT_PKT_FILTER_TLV_FLAGS0_ATIM)
+
+#define HTT_RX_MD_MGMT_FILTER_FLAGS0 (HTT_RX_MD_MGMT_PKT_FILTER_TLV_FLAGS0_ASSOC_REQ \
+				     | HTT_RX_MD_MGMT_PKT_FILTER_TLV_FLAGS0_ASSOC_RESP \
+				     | HTT_RX_MD_MGMT_PKT_FILTER_TLV_FLAGS0_REASSOC_REQ \
+				     | HTT_RX_MD_MGMT_PKT_FILTER_TLV_FLAGS0_REASSOC_RESP \
+				     | HTT_RX_MD_MGMT_PKT_FILTER_TLV_FLAGS0_PROBE_REQ \
+				     | HTT_RX_MD_MGMT_PKT_FILTER_TLV_FLAGS0_PROBE_RESP \
+				     | HTT_RX_MD_MGMT_PKT_FILTER_TLV_FLAGS0_PROBE_TIMING_ADV \
+				     | HTT_RX_MD_MGMT_PKT_FILTER_TLV_FLAGS0_BEACON \
+				     | HTT_RX_MD_MGMT_PKT_FILTER_TLV_FLAGS0_ATIM)
+
+#define HTT_RX_MO_MGMT_FILTER_FLAGS0 (HTT_RX_MO_MGMT_PKT_FILTER_TLV_FLAGS0_ASSOC_REQ \
+				     | HTT_RX_MO_MGMT_PKT_FILTER_TLV_FLAGS0_ASSOC_RESP \
+				     | HTT_RX_MO_MGMT_PKT_FILTER_TLV_FLAGS0_REASSOC_REQ \
+				     | HTT_RX_MO_MGMT_PKT_FILTER_TLV_FLAGS0_REASSOC_RESP \
+				     | HTT_RX_MO_MGMT_PKT_FILTER_TLV_FLAGS0_PROBE_REQ \
+				     | HTT_RX_MO_MGMT_PKT_FILTER_TLV_FLAGS0_PROBE_RESP \
+				     | HTT_RX_MO_MGMT_PKT_FILTER_TLV_FLAGS0_PROBE_TIMING_ADV \
+				     | HTT_RX_MO_MGMT_PKT_FILTER_TLV_FLAGS0_BEACON \
+				     | HTT_RX_MO_MGMT_PKT_FILTER_TLV_FLAGS0_ATIM)
+
+#define HTT_RX_FP_MGMT_FILTER_FLAGS1 (HTT_RX_FP_MGMT_PKT_FILTER_TLV_FLAGS1_DISASSOC \
+				     | HTT_RX_FP_MGMT_PKT_FILTER_TLV_FLAGS1_AUTH \
+				     | HTT_RX_FP_MGMT_PKT_FILTER_TLV_FLAGS1_DEAUTH \
+				     | HTT_RX_FP_MGMT_PKT_FILTER_TLV_FLAGS1_ACTION \
+				     | HTT_RX_FP_MGMT_PKT_FILTER_TLV_FLAGS1_ACTION_NOACK)
+
+#define HTT_RX_MD_MGMT_FILTER_FLAGS1 (HTT_RX_MD_MGMT_PKT_FILTER_TLV_FLAGS1_DISASSOC \
+				     | HTT_RX_MD_MGMT_PKT_FILTER_TLV_FLAGS1_AUTH \
+				     | HTT_RX_MD_MGMT_PKT_FILTER_TLV_FLAGS1_DEAUTH \
+				     | HTT_RX_MD_MGMT_PKT_FILTER_TLV_FLAGS1_ACTION \
+				     | HTT_RX_MD_MGMT_PKT_FILTER_TLV_FLAGS1_ACTION_NOACK)
+
+#define HTT_RX_MO_MGMT_FILTER_FLAGS1 (HTT_RX_MO_MGMT_PKT_FILTER_TLV_FLAGS1_DISASSOC \
+				     | HTT_RX_MO_MGMT_PKT_FILTER_TLV_FLAGS1_AUTH \
+				     | HTT_RX_MO_MGMT_PKT_FILTER_TLV_FLAGS1_DEAUTH \
+				     | HTT_RX_MO_MGMT_PKT_FILTER_TLV_FLAGS1_ACTION \
+				     | HTT_RX_MO_MGMT_PKT_FILTER_TLV_FLAGS1_ACTION_NOACK)
+
+#define HTT_RX_FP_CTRL_FILTER_FLASG2 (HTT_RX_FP_CTRL_PKT_FILTER_TLV_FLAGS2_CTRL_WRAPPER \
+				     | HTT_RX_FP_CTRL_PKT_FILTER_TLV_FLAGS2_BAR \
+				     | HTT_RX_FP_CTRL_PKT_FILTER_TLV_FLAGS2_BA)
+
+#define HTT_RX_MD_CTRL_FILTER_FLASG2 (HTT_RX_MD_CTRL_PKT_FILTER_TLV_FLAGS2_CTRL_WRAPPER \
+				     | HTT_RX_MD_CTRL_PKT_FILTER_TLV_FLAGS2_BAR \
+				     | HTT_RX_MD_CTRL_PKT_FILTER_TLV_FLAGS2_BA)
+
+#define HTT_RX_MO_CTRL_FILTER_FLASG2 (HTT_RX_MO_CTRL_PKT_FILTER_TLV_FLAGS2_CTRL_WRAPPER \
+				     | HTT_RX_MO_CTRL_PKT_FILTER_TLV_FLAGS2_BAR \
+				     | HTT_RX_MO_CTRL_PKT_FILTER_TLV_FLAGS2_BA)
+
+#define HTT_RX_FP_CTRL_FILTER_FLASG3 (HTT_RX_FP_CTRL_PKT_FILTER_TLV_FLAGS3_PSPOLL \
+				     | HTT_RX_FP_CTRL_PKT_FILTER_TLV_FLAGS3_RTS \
+				     | HTT_RX_FP_CTRL_PKT_FILTER_TLV_FLAGS3_CTS \
+				     | HTT_RX_FP_CTRL_PKT_FILTER_TLV_FLAGS3_ACK \
+				     | HTT_RX_FP_CTRL_PKT_FILTER_TLV_FLAGS3_CFEND \
+				     | HTT_RX_FP_CTRL_PKT_FILTER_TLV_FLAGS3_CFEND_ACK)
+
+#define HTT_RX_MD_CTRL_FILTER_FLASG3 (HTT_RX_MD_CTRL_PKT_FILTER_TLV_FLAGS3_PSPOLL \
+				     | HTT_RX_MD_CTRL_PKT_FILTER_TLV_FLAGS3_RTS \
+				     | HTT_RX_MD_CTRL_PKT_FILTER_TLV_FLAGS3_CTS \
+				     | HTT_RX_MD_CTRL_PKT_FILTER_TLV_FLAGS3_ACK \
+				     | HTT_RX_MD_CTRL_PKT_FILTER_TLV_FLAGS3_CFEND \
+				     | HTT_RX_MD_CTRL_PKT_FILTER_TLV_FLAGS3_CFEND_ACK)
+
+#define HTT_RX_MO_CTRL_FILTER_FLASG3 (HTT_RX_MO_CTRL_PKT_FILTER_TLV_FLAGS3_PSPOLL \
+				     | HTT_RX_MO_CTRL_PKT_FILTER_TLV_FLAGS3_RTS \
+				     | HTT_RX_MO_CTRL_PKT_FILTER_TLV_FLAGS3_CTS \
+				     | HTT_RX_MO_CTRL_PKT_FILTER_TLV_FLAGS3_ACK \
+				     | HTT_RX_MO_CTRL_PKT_FILTER_TLV_FLAGS3_CFEND \
+				     | HTT_RX_MO_CTRL_PKT_FILTER_TLV_FLAGS3_CFEND_ACK)
+
+#define HTT_RX_FP_DATA_FILTER_FLASG3 (HTT_RX_FP_DATA_PKT_FILTER_TLV_FLASG3_MCAST \
+				     | HTT_RX_FP_DATA_PKT_FILTER_TLV_FLASG3_UCAST \
+				     | HTT_RX_FP_DATA_PKT_FILTER_TLV_FLASG3_NULL_DATA)
+
+#define HTT_RX_MD_DATA_FILTER_FLASG3 (HTT_RX_MD_DATA_PKT_FILTER_TLV_FLASG3_MCAST \
+				     | HTT_RX_MD_DATA_PKT_FILTER_TLV_FLASG3_UCAST \
+				     | HTT_RX_MD_DATA_PKT_FILTER_TLV_FLASG3_NULL_DATA)
+
+#define HTT_RX_MO_DATA_FILTER_FLASG3 (HTT_RX_MO_DATA_PKT_FILTER_TLV_FLASG3_MCAST \
+				     | HTT_RX_MO_DATA_PKT_FILTER_TLV_FLASG3_UCAST \
+				     | HTT_RX_MO_DATA_PKT_FILTER_TLV_FLASG3_NULL_DATA)
+
+struct htt_rx_ring_selection_cfg_cmd {
+	u32 info0;
+	u32 info1;
+	u32 pkt_type_en_flags0;
+	u32 pkt_type_en_flags1;
+	u32 pkt_type_en_flags2;
+	u32 pkt_type_en_flags3;
+	u32 rx_filter_tlv;
+} __packed;
+
+struct htt_rx_ring_tlv_filter {
+	u32 rx_filter; /* see htt_rx_filter_tlv_flags */
+	u32 pkt_filter_flags0; /* MGMT */
+	u32 pkt_filter_flags1; /* MGMT */
+	u32 pkt_filter_flags2; /* CTRL */
+	u32 pkt_filter_flags3; /* DATA */
+};
+
 /* HTT message target->host */
 
 enum htt_t2h_msg_type {
