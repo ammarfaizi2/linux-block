@@ -2993,7 +2993,8 @@ void ath11k_dp_process_reo_status(struct ath11k_base *ab)
 								  &reo_status);
 			break;
 		default:
-			break;
+			ath11k_warn(ab, "Unknown reo status type %d\n", tag);
+			continue;
 		}
 
 		spin_lock_bh(&dp->reo_cmd_lock);

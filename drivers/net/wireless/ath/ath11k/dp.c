@@ -597,9 +597,6 @@ int ath11k_dp_service_srng(struct ath11k_base *ab, u32 grp_id,
 	int i = 0;
 	int tot_work_done = 0;
 
-	if (ath11k_reo_status_ring_mask[grp_id])
-		ath11k_dp_process_reo_status(ab);
-
 	while (ath11k_tx_ring_mask[grp_id] >> i) {
 		if (ath11k_tx_ring_mask[grp_id] & BIT(i))
 			ath11k_dp_tx_completion_handler(ab, i);
@@ -650,6 +647,9 @@ int ath11k_dp_service_srng(struct ath11k_base *ab, u32 grp_id,
 				goto done;
 		}
 	}
+
+	if (ath11k_reo_status_ring_mask[grp_id])
+		ath11k_dp_process_reo_status(ab);
 
 	for (i = 0; i < ab->num_radios; i++) {
 		if (ath11k_rxdma2host_ring_mask[grp_id] & BIT(i)) {
