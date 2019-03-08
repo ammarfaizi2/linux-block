@@ -664,6 +664,42 @@ void drm_gem_put_pages(struct drm_gem_object *obj, struct page **pages,
 EXPORT_SYMBOL(drm_gem_put_pages);
 
 /**
+ * drm_gem_objects_lookup - look up GEM objects from an array of handles
+ * @filp: DRM file private date
+ * @handle: pointer to array of userspace handle
+ * @count: size of handle array
+ * @objs: pointer to array of drm_gem_object pointers
+ *
+ * Returns:
+ *
+ * @objs filled in with GEM object pointers. -ENOENT is returned on a lookup
+ * failure. 0 is returned on success.
+ */
+int drm_gem_objects_lookup(struct drm_file *filp, u32 *handle, int count,
+			   struct drm_gem_object **objs)
+{
+	int i, ret = 0;
+	struct drm_gem_object *obj;
+
+	spin_lock(&filp->table_lock);
+
+	for (i = 0; i < count; i++) {
+		/* Check if we currently have a reference on the object */
+		obj = idr_find(&filp->object_idr, handle[i]);
+		if (!obj) {
+			ret = -ENOENT;
+			break;
+		}
+		drm_gem_object_get(obj);
+		objs[i] = obj;
+	}
+	spin_unlock(&filp->table_lock);
+
+	return ret;
+}
+EXPORT_SYMBOL(drm_gem_objects_lookup);
+
+/**
  * drm_gem_object_lookup - look up a GEM object from its handle
  * @filp: DRM file private date
  * @handle: userspace handle
@@ -678,15 +714,7 @@ drm_gem_object_lookup(struct drm_file *filp, u32 handle)
 {
 	struct drm_gem_object *obj;
 
-	spin_lock(&filp->table_lock);
-
-	/* Check if we currently have a reference on the object */
-	obj = idr_find(&filp->object_idr, handle);
-	if (obj)
-		drm_gem_object_get(obj);
-
-	spin_unlock(&filp->table_lock);
-
+	drm_gem_objects_lookup(filp, &handle, 1, &obj);
 	return obj;
 }
 EXPORT_SYMBOL(drm_gem_object_lookup);
