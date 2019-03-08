@@ -176,5 +176,5 @@ void ath11k_ce_rx_post_buf(struct ath11k_base *sc);
 int ath11k_ce_init_pipes(struct ath11k_base *sc);
 int ath11k_ce_alloc_pipes(struct ath11k_base *sc);
 void ath11k_ce_free_pipes(struct ath11k_base *sc);
-
+int ath11k_ce_get_attr_flags(int ce_id);
 #endif

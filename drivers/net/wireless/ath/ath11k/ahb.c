@@ -482,6 +482,9 @@ static void ath11k_ahb_kill_tasklets(struct ath11k_base *sc)
 	for (i = 0; i < CE_COUNT; i++) {
 		struct ath11k_ce_pipe *ce_pipe = &sc->ce.ce_pipe[i];
 
+		if (ath11k_ce_get_attr_flags(i) & CE_ATTR_DIS_INTR)
+			continue;
+
 		tasklet_kill(&ce_pipe->intr_tq);
 	}
 }
@@ -569,6 +572,9 @@ static void ath11k_ahb_sync_ce_irqs(struct ath11k_base *ab)
 	int irq_idx;
 
 	for (i = 0; i < CE_COUNT; i++) {
+		if (ath11k_ce_get_attr_flags(i) & CE_ATTR_DIS_INTR)
+			continue;
+
 		irq_idx = ATH11K_IRQ_CE0_OFFSET + i;
 		synchronize_irq(ab->irq_num[irq_idx]);
 	}
@@ -593,16 +599,22 @@ static void ath11k_ahb_ce_irqs_enable(struct ath11k_base *sc)
 {
 	int i;
 
-	for (i = 0; i < CE_COUNT; i++)
+	for (i = 0; i < CE_COUNT; i++) {
+		if (ath11k_ce_get_attr_flags(i) & CE_ATTR_DIS_INTR)
+			continue;
 		ath11k_ahb_ce_irq_enable(sc, i);
+	}
 }
 
 static void ath11k_ahb_ce_irqs_disable(struct ath11k_base *sc)
 {
 	int i;
 
-	for (i = 0; i < CE_COUNT; i++)
+	for (i = 0; i < CE_COUNT; i++) {
+		if (ath11k_ce_get_attr_flags(i) & CE_ATTR_DIS_INTR)
+			continue;
 		ath11k_ahb_ce_irq_disable(sc, i);
+	}
 }
 
 int ath11k_ahb_start(struct ath11k_base *sc)
@@ -737,6 +749,8 @@ static void ath11k_ahb_free_irq(struct ath11k_base *sc)
 	int i;
 
 	for (i = 0; i < CE_COUNT; i++) {
+		if (ath11k_ce_get_attr_flags(i) & CE_ATTR_DIS_INTR)
+			continue;
 		irq_idx = ATH11K_IRQ_CE0_OFFSET + i;
 		free_irq(sc->irq_num[irq_idx], &sc->ce.ce_pipe[i]);
 	}
@@ -885,6 +899,9 @@ static int ath11k_ahb_config_irq(struct ath11k_base *sc)
 	/* Configure CE irqs */
 	for (i = 0; i < CE_COUNT; i++) {
 		struct ath11k_ce_pipe *ce_pipe = &sc->ce.ce_pipe[i];
+
+		if (ath11k_ce_get_attr_flags(i) & CE_ATTR_DIS_INTR)
+			continue;
 
 		irq_idx = ATH11K_IRQ_CE0_OFFSET + i;
 

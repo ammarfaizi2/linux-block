@@ -760,3 +760,11 @@ void ath11k_ce_byte_swap(void *mem, u32 len)
 		}
 	}
 }
+
+int ath11k_ce_get_attr_flags(int ce_id)
+{
+	if (ce_id >= CE_COUNT)
+		return -EINVAL;
+
+	return host_ce_config_wlan[ce_id].flags;
+}
