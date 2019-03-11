@@ -4853,6 +4853,7 @@ int ath11k_reg_chan_list_event(struct ath11k_base *ab, u8 *evt_buf, u32 len)
 			rcu_read_unlock();
 			ath11k_warn(ab, "invalid phy_id in reg_chan_list event %d\n",
 				    reg_info->phy_id);
+			spin_unlock(&ab->data_lock);
 			goto fallback;
 		}
 

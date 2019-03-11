@@ -553,7 +553,7 @@ int ath11k_dp_htt_srng_setup(struct ath11k_base *ab, u32 ring_id,
 	struct hal_srng *srng = &ab->hal.srng_list[ring_id];
 	struct hal_srng_params params;
 	struct sk_buff *skb;
-	u32 ring_entry_sz;
+	int ring_entry_sz;
 	int len = sizeof(*cmd);
 	dma_addr_t hp_addr, tp_addr;
 	int lmac_ring_id_offset;
