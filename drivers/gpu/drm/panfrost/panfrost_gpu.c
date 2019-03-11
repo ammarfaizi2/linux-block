@@ -302,7 +302,7 @@ struct panfrost_model {
 
 static const struct panfrost_model gpu_models[] = {
 	/* T60x has an oddball version */
-	GPU_MODEL(t600, 0x6956, 0xffff,
+	GPU_MODEL_MIDGARD(t600, 0x600,
 		GPU_REV_EXT(t600, 0, 0, 1, _15dev0)),
 	GPU_MODEL_MIDGARD(t620, 0x620,
 		GPU_REV(t620, 0, 1), GPU_REV(t620, 1, 0)),
@@ -366,8 +366,14 @@ static void panfrost_gpu_init_features(struct panfrost_device *pfdev)
 	pfdev->features.stack_present |= (u64)gpu_read(pfdev, GPU_STACK_PRESENT_HI) << 32;
 
 	gpu_id = gpu_read(pfdev, GPU_ID);
-	pfdev->features.id = gpu_id >> 16;
 	pfdev->features.revision = gpu_id & 0xffff;
+	pfdev->features.id = gpu_id >> 16;
+
+	/* The T60x has an oddball ID value. Fix it up to the standard Midgard
+	 * format so we (and userspace) don't have to special case it.
+	 */
+	if (pfdev->features.id == 0x6956)
+		pfdev->features.id = 0x0600;
 
 	major = (pfdev->features.revision >> 12) & 0xf;
 	minor = (pfdev->features.revision >> 4) & 0xff;
