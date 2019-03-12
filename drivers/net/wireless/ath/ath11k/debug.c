@@ -856,6 +856,56 @@ static const struct file_operations fops_extd_rx_stats = {
 	.open = simple_open,
 };
 
+static ssize_t ath11k_debug_dump_soc_rx_stats(struct file *file,
+					      char __user *user_buf,
+					      size_t count, loff_t *ppos)
+{
+	struct ath11k_base *ab = file->private_data;
+	struct ath11k_soc_dp_rx_stats *soc_stats = &ab->soc_stats;
+	int len = 0, i, retval;
+	const int size = 4096;
+	char *buf;
+
+	buf = kzalloc(size, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
+
+	len += scnprintf(buf + len, size - len, "SOC Rx stats:\n");
+	len += scnprintf(buf + len, size - len, "err ring pkts: %u\n",
+			 soc_stats->err_ring_pkts);
+	len += scnprintf(buf + len, size - len, "Invalid RBM: %u\n",
+			 soc_stats->invalid_rbm);
+	len += scnprintf(buf + len, size - len, "RXDMA errors:");
+	for (i = 0; i < HAL_REO_ENTR_RING_RXDMA_ECODE_MAX; i++)
+		len += scnprintf(buf + len, size - len, "%u ",
+				 soc_stats->rxdma_error[i]);
+
+	len += scnprintf(buf + len, size - len, "\nREO errors:");
+	for (i = 0; i < HAL_REO_DEST_RING_ERROR_CODE_MAX; i++)
+		len += scnprintf(buf + len, size - len, "%u ",
+				 soc_stats->reo_error[i]);
+
+	len += scnprintf(buf + len, size - len, "\nHAL REO errors:");
+	for (i = 0; i < DP_REO_DST_RING_MAX; i++)
+		len += scnprintf(buf + len, size - len, "%u ",
+				 soc_stats->hal_reo_error[i]);
+	len += scnprintf(buf + len, size - len, "\n");
+
+	if (len > size)
+		len = size;
+	retval = simple_read_from_buffer(user_buf, count, ppos, buf, len);
+	kfree(buf);
+
+	return retval;
+}
+
+static const struct file_operations fops_soc_rx_stats = {
+	.read = ath11k_debug_dump_soc_rx_stats,
+	.open = simple_open,
+	.owner = THIS_MODULE,
+	.llseek = default_llseek,
+};
+
 int ath11k_debug_soc_create(struct ath11k_base *ab)
 {
 	ab->debugfs_soc = debugfs_create_dir("ath11k", NULL);
@@ -868,6 +918,9 @@ int ath11k_debug_soc_create(struct ath11k_base *ab)
 
 	debugfs_create_file("simulate_fw_crash", 0600, ab->debugfs_soc, ab,
 			    &fops_simulate_fw_crash);
+
+	debugfs_create_file("soc_rx_stats", 0600, ab->debugfs_soc, ab,
+			    &fops_soc_rx_stats);
 
 	return 0;
 }
