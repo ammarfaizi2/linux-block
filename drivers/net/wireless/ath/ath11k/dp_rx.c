@@ -447,8 +447,7 @@ unlock_exit:
 }
 
 int ath11k_peer_rx_tid_setup(struct ath11k *ar, const u8 *peer_mac, int vdev_id,
-			     u8 tid, u32 ba_win_sz, u16 ssn,
-			     enum hal_pn_type pn_type)
+			     u8 tid, u32 ba_win_sz, u16 ssn)
 {
 	struct ath11k_base *ab = ar->ab;
 	struct ath11k_peer *peer;
@@ -509,8 +508,7 @@ int ath11k_peer_rx_tid_setup(struct ath11k *ar, const u8 *peer_mac, int vdev_id,
 
 	addr_aligned = PTR_ALIGN(vaddr, HAL_LINK_DESC_ALIGN);
 
-	ath11k_hal_reo_qdesc_setup(addr_aligned, tid, ba_win_sz,
-				   ssn, pn_type);
+	ath11k_hal_reo_qdesc_setup(addr_aligned, tid, ba_win_sz, ssn);
 
 	paddr = dma_map_single(ab->dev, addr_aligned, hw_desc_sz,
 			       DMA_BIDIRECTIONAL);
@@ -554,7 +552,7 @@ int ath11k_dp_rx_ampdu_start(struct ath11k *ar,
 
 	ret = ath11k_peer_rx_tid_setup(ar, params->sta->addr, vdev_id,
 				       params->tid, params->buf_size,
-				       params->ssn, arsta->pn_type);
+				       params->ssn);
 	if (ret)
 		ath11k_warn(ab, "failed to setup rx tid %d\n", ret);
 
@@ -597,76 +595,6 @@ int ath11k_dp_rx_ampdu_stop(struct ath11k *ar,
 	if (ret)
 		ath11k_warn(ab, "failed to send wmi to delete rx tid %d\n",
 			    ret);
-
-	return ret;
-}
-
-int ath11k_dp_peer_rx_pn_replay_config(struct ath11k_vif *arvif,
-				       const u8 *peer_addr,
-				       enum set_key_cmd key_cmd,
-				       struct ieee80211_key_conf *key)
-{
-	struct ath11k *ar = arvif->ar;
-	struct ath11k_base *ab = ar->ab;
-	struct ath11k_hal_reo_cmd cmd = {0};
-	struct ath11k_peer *peer;
-	struct dp_rx_tid *rx_tid;
-	u8 tid;
-	int ret = 0;
-
-	/* NOTE: Enable PN/TSC replay check offload only for unicast frames.
-	 * We use mac80211 PN/TSC replay check functionality for bcast/mcast
-	 * for now.
-	 */
-	if (!(key->flags & IEEE80211_KEY_FLAG_PAIRWISE))
-		return 0;
-
-	cmd.flag |= HAL_REO_CMD_FLG_NEED_STATUS;
-	cmd.upd0 |= HAL_REO_CMD_UPD0_PN |
-		    HAL_REO_CMD_UPD0_PN_SIZE |
-		    HAL_REO_CMD_UPD0_SVLD;
-
-	switch (key->cipher) {
-	case WLAN_CIPHER_SUITE_TKIP:
-	case WLAN_CIPHER_SUITE_CCMP:
-	case WLAN_CIPHER_SUITE_CCMP_256:
-	case WLAN_CIPHER_SUITE_GCMP:
-	case WLAN_CIPHER_SUITE_GCMP_256:
-		if (key_cmd == SET_KEY) {
-			cmd.upd0 |= HAL_REO_CMD_UPD0_PN_CHECK;
-			cmd.pn_size = 48;
-		}
-		break;
-	default:
-		break;
-	}
-
-	spin_lock_bh(&ab->data_lock);
-
-	peer = ath11k_peer_find(ab, arvif->vdev_id, peer_addr);
-	if (!peer) {
-		ath11k_warn(ab, "failed to find the peer to configure pn replay detection\n");
-		spin_unlock_bh(&ab->data_lock);
-		return -ENOENT;
-	}
-
-	for (tid = 0; tid <= IEEE80211_NUM_TIDS; tid++) {
-		rx_tid = &peer->rx_tid[tid];
-		if (!rx_tid->active)
-			continue;
-		cmd.addr_lo = lower_32_bits(rx_tid->paddr);
-		cmd.addr_hi = upper_32_bits(rx_tid->paddr);
-		ret = ath11k_dp_send_reo_cmd(ab, rx_tid,
-					     HAL_REO_CMD_UPDATE_RX_QUEUE,
-					     &cmd, NULL);
-		if (ret) {
-			ath11k_warn(ab, "failed to configure rx tid %d queue for pn replay detection %d\n",
-				    tid, ret);
-			break;
-		}
-	}
-
-	spin_unlock_bh(&ar->ab->data_lock);
 
 	return ret;
 }
@@ -1617,7 +1545,7 @@ static void ath11k_dp_rx_h_mpdu(struct ath11k *ar,
 	struct sk_buff *last_msdu;
 	struct sk_buff *msdu;
 	struct ath11k_skb_rxcb *last_rxcb;
-	bool is_decrypted, fill_crypto_hdr;
+	bool is_decrypted;
 	u32 err_bitmap;
 	u8 *qos, *hdr_status;
 
@@ -1643,7 +1571,6 @@ static void ath11k_dp_rx_h_mpdu(struct ath11k *ar,
 	last_rxcb = ATH11K_SKB_RXCB(last_msdu);
 
 	err_bitmap = ath11k_dp_rx_h_attn_mpdu_err(last_rxcb->rx_desc);
-	fill_crypto_hdr = !ath11k_dp_rx_h_mpdu_end_pn_valid(last_rxcb->rx_desc);
 
 	/* Clear per-MPDU flags while leaving per-PPDU flags intact. */
 	rx_status->flag &= ~(RX_FLAG_FAILED_FCS_CRC |
@@ -1658,29 +1585,14 @@ static void ath11k_dp_rx_h_mpdu(struct ath11k *ar,
 	if (err_bitmap & DP_RX_MPDU_ERR_TKIP_MIC)
 		rx_status->flag |= RX_FLAG_MMIC_ERROR;
 
-	if (is_decrypted) {
-		rx_status->flag |= RX_FLAG_DECRYPTED | RX_FLAG_MMIC_STRIPPED;
-
-		if (fill_crypto_hdr)
-			rx_status->flag |= RX_FLAG_MIC_STRIPPED |
-					RX_FLAG_ICV_STRIPPED;
-		else
-			rx_status->flag |= RX_FLAG_IV_STRIPPED;
-	}
+	if (is_decrypted)
+		rx_status->flag |= RX_FLAG_DECRYPTED | RX_FLAG_MMIC_STRIPPED |
+				   RX_FLAG_MIC_STRIPPED | RX_FLAG_ICV_STRIPPED;
 
 	skb_queue_walk(amsdu_list, msdu) {
 		ath11k_dp_rx_h_csum_offload(msdu);
 		ath11k_dp_rx_h_undecap(ar, msdu, hdr_status,
 				       enctype, rx_status, is_decrypted);
-
-		if (!is_decrypted)
-			continue;
-
-		if (fill_crypto_hdr)
-			continue;
-
-		hdr = (void *)msdu->data;
-		hdr->frame_control &= ~__cpu_to_le16(IEEE80211_FCTL_PROTECTED);
 	}
 }
 

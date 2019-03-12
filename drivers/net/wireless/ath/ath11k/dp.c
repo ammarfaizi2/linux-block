@@ -55,16 +55,14 @@ int ath11k_dp_peer_setup(struct ath11k *ar, int vdev_id, const u8 *addr)
 	}
 
 	ret = ath11k_peer_rx_tid_setup(ar, addr, vdev_id,
-				       HAL_DESC_REO_NON_QOS_TID, 1, 0,
-				       HAL_PN_TYPE_NONE);
+				       HAL_DESC_REO_NON_QOS_TID, 1, 0);
 	if (ret) {
 		ath11k_warn(ab, "failed to setup rxd tid queue for non-qos tid %d\n",
 			    ret);
 		return ret;
 	}
 
-	ret = ath11k_peer_rx_tid_setup(ar, addr, vdev_id, 0, 1, 0,
-				       HAL_PN_TYPE_NONE);
+	ret = ath11k_peer_rx_tid_setup(ar, addr, vdev_id, 0, 1, 0);
 	if (ret) {
 		ath11k_warn(ab, "failed to setup rxd tid queue for tid 0 %d\n",
 			    ret);

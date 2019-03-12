@@ -2230,7 +2230,6 @@ static int ath11k_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 	struct ath11k *ar = hw->priv;
 	struct ath11k_vif *arvif = ath11k_vif_to_arvif(vif);
 	struct ath11k_peer *peer;
-	struct ath11k_sta *arsta;
 	const u8 *peer_addr;
 	bool is_wep = key->cipher == WLAN_CIPHER_SUITE_WEP40 ||
 		key->cipher == WLAN_CIPHER_SUITE_WEP104;
@@ -2295,16 +2294,6 @@ static int ath11k_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 		goto exit;
 	}
 
-	ret = ath11k_dp_peer_rx_pn_replay_config(arvif, peer_addr, cmd, key);
-	if (ret) {
-		/* No need to fail because we can still perform PN replay
-		 * detection check in mac80211.
-		 */
-		ath11k_dbg(ar->ab, ATH11K_DBG_MAC,
-			   "failed to enable PN replay detection offload support %d\n",
-			   ret);
-	}
-
 	spin_lock_bh(&ar->data_lock);
 	peer = ath11k_peer_find(ar->ab, arvif->vdev_id, peer_addr);
 	if (peer && cmd == SET_KEY)
@@ -2314,26 +2303,6 @@ static int ath11k_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 	else if (!peer)
 		/* impossible unless FW goes crazy */
 		ath11k_warn(ar->ab, "peer %pM disappeared!\n", peer_addr);
-
-	if (sta) {
-		arsta = (struct ath11k_sta *)sta->drv_priv;
-
-		switch (key->cipher) {
-		case WLAN_CIPHER_SUITE_TKIP:
-		case WLAN_CIPHER_SUITE_CCMP:
-		case WLAN_CIPHER_SUITE_CCMP_256:
-		case WLAN_CIPHER_SUITE_GCMP:
-		case WLAN_CIPHER_SUITE_GCMP_256:
-			if (cmd == SET_KEY)
-				arsta->pn_type = HAL_PN_TYPE_WPA;
-			else
-				arsta->pn_type = HAL_PN_TYPE_NONE;
-			break;
-		default:
-			arsta->pn_type = HAL_PN_TYPE_NONE;
-			break;
-		}
-	}
 	spin_unlock_bh(&ar->data_lock);
 
 exit:

@@ -330,7 +330,6 @@ struct ath11k_sta {
 	u32 bw;
 	u32 nss;
 	u32 smps;
-	enum hal_pn_type pn_type;
 
 	struct work_struct update_wk;
 	struct ieee80211_tx_info tx_info;
