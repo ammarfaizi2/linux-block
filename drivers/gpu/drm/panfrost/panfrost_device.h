@@ -81,6 +81,20 @@ static inline struct panfrost_device *to_panfrost_device(struct drm_device *ddev
 	return ddev->dev_private;
 }
 
+static inline int panfrost_model_cmp(struct panfrost_device *pfdev, s32 id)
+{
+	s32 match_id = pfdev->features.id;
+
+	if (match_id & 0xf000)
+		match_id &= 0xf00f;
+	return match_id - id;
+}
+
+static inline bool panfrost_model_eq(struct panfrost_device *pfdev, s32 id)
+{
+	return !panfrost_model_cmp(pfdev, id);
+}
+
 int panfrost_device_init(struct panfrost_device *pfdev);
 void panfrost_device_fini(struct panfrost_device *pfdev);
 

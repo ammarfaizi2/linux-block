@@ -281,17 +281,14 @@ struct panfrost_model {
 	} revs[MAX_HW_REVS];
 };
 
-#define GPU_MODEL(_name, _id, _mask, ...) \
+#define GPU_MODEL(_name, _id, ...) \
 {\
 	.name = __stringify(_name),				\
 	.id = _id,						\
-	.id_mask = _mask,					\
 	.features = hw_features_##_name,			\
-	.issues = hw_issues_##_name,			\
+	.issues = hw_issues_##_name,				\
 	.revs = { __VA_ARGS__ },				\
 }
-#define GPU_MODEL_MIDGARD(name, id, ...) GPU_MODEL(name, id, 0xfff, __VA_ARGS__)
-#define GPU_MODEL_BIFROST(name, id, ...) GPU_MODEL(name, id, 0xf00f, __VA_ARGS__)
 
 #define GPU_REV_EXT(name, _rev, _p, _s, stat) \
 {\
@@ -302,27 +299,27 @@ struct panfrost_model {
 
 static const struct panfrost_model gpu_models[] = {
 	/* T60x has an oddball version */
-	GPU_MODEL_MIDGARD(t600, 0x600,
+	GPU_MODEL(t600, 0x600,
 		GPU_REV_EXT(t600, 0, 0, 1, _15dev0)),
-	GPU_MODEL_MIDGARD(t620, 0x620,
+	GPU_MODEL(t620, 0x620,
 		GPU_REV(t620, 0, 1), GPU_REV(t620, 1, 0)),
-	GPU_MODEL_MIDGARD(t720, 0x720),
-	GPU_MODEL_MIDGARD(t760, 0x750,
+	GPU_MODEL(t720, 0x720),
+	GPU_MODEL(t760, 0x750,
 		GPU_REV(t760, 0, 0), GPU_REV(t760, 0, 1),
 		GPU_REV_EXT(t760, 0, 1, 0, _50rel0),
 		GPU_REV(t760, 0, 2), GPU_REV(t760, 0, 3)),
-	GPU_MODEL_MIDGARD(t820, 0x820),
-	GPU_MODEL_MIDGARD(t830, 0x830),
-	GPU_MODEL_MIDGARD(t860, 0x860),
-	GPU_MODEL_MIDGARD(t880, 0x880),
+	GPU_MODEL(t820, 0x820),
+	GPU_MODEL(t830, 0x830),
+	GPU_MODEL(t860, 0x860),
+	GPU_MODEL(t880, 0x880),
 
-	GPU_MODEL_BIFROST(g71, 0x6000,
+	GPU_MODEL(g71, 0x6000,
 		GPU_REV_EXT(g71, 0, 0, 1, _05dev0)),
-	GPU_MODEL_BIFROST(g72, 0x6001),
-	GPU_MODEL_BIFROST(g51, 0x7000),
-	GPU_MODEL_BIFROST(g76, 0x7001),
-	GPU_MODEL_BIFROST(g52, 0x7002),
-	GPU_MODEL_BIFROST(g31, 0x7003,
+	GPU_MODEL(g72, 0x6001),
+	GPU_MODEL(g51, 0x7000),
+	GPU_MODEL(g76, 0x7001),
+	GPU_MODEL(g52, 0x7002),
+	GPU_MODEL(g31, 0x7003,
 		GPU_REV(g31, 1, 0)),
 };
 
@@ -385,7 +382,7 @@ static void panfrost_gpu_init_features(struct panfrost_device *pfdev)
 	for (model = gpu_models; model->name; model++) {
 		int best = -1;
 
-		if ((gpu_id & model->id_mask) != model->id)
+		if (!panfrost_model_eq(pfdev, model->id))
 			continue;
 
 		name = model->name;
