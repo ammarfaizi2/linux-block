@@ -155,6 +155,10 @@ static struct dma_fence *panfrost_fence_create(struct panfrost_device *pfdev, in
 
 static int panfrost_job_get_slot(struct panfrost_job *job)
 {
+	/* JS0: fragment jobs.
+	 * JS1: vertex/tiler jobs
+	 * JS2: compute jobs
+	 */
 	if (job->requirements & PANFROST_JD_REQ_FS)
 		return 0;
 
