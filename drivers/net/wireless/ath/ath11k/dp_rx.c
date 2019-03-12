@@ -1867,6 +1867,7 @@ int ath11k_dp_process_rx(struct ath11k_base *ab, int mac_id,
 		    HAL_REO_DEST_RING_PUSH_REASON_ROUTING_INSTRUCTION) {
 			/* TODO: Check if the msdu can be sent up for processing */
 			dev_kfree_skb_any(msdu);
+			ab->soc_stats.hal_reo_error[dp->reo_dst_ring.ring_id]++;
 			continue;
 		}
 
@@ -2420,6 +2421,7 @@ int ath11k_dp_process_rx_err(struct ath11k_base *ab, struct napi_struct *napi,
 
 	while (budget &&
 	       (desc = ath11k_hal_srng_dst_get_next_entry(ab, srng))) {
+		ab->soc_stats.err_ring_pkts++;
 		ret = ath11k_hal_desc_reo_parse_err(ab, desc, &paddr,
 						    &desc_bank);
 		if (ret) {
@@ -2433,6 +2435,7 @@ int ath11k_dp_process_rx_err(struct ath11k_base *ab, struct napi_struct *napi,
 						 &rbm);
 		if (rbm != HAL_RX_BUF_RBM_WBM_IDLE_DESC_LIST &&
 		    rbm != HAL_RX_BUF_RBM_SW3_BM) {
+			ab->soc_stats.invalid_rbm++;
 			ath11k_warn(ab, "invalid return buffer manager %d\n", rbm);
 			ath11k_dp_rx_link_desc_return(ab, desc,
 						HAL_WBM_REL_BM_ACT_REL_MSDU);
@@ -2576,6 +2579,8 @@ static bool ath11k_dp_rx_h_reo_err(struct ath11k *ar, struct sk_buff *msdu,
 	struct ath11k_skb_rxcb *rxcb = ATH11K_SKB_RXCB(msdu);
 	bool drop = false;
 
+	ar->ab->soc_stats.reo_error[rxcb->err_code]++;
+
 	switch (rxcb->err_code) {
 	case HAL_REO_DEST_RING_ERROR_CODE_DESC_ADDR_ZERO:
 		if (ath11k_dp_rx_h_null_q_desc(ar, msdu, status, msdu_list))
@@ -2618,6 +2623,8 @@ static bool ath11k_dp_rx_h_rxdma_err(struct ath11k *ar,  struct sk_buff *msdu,
 {
 	struct ath11k_skb_rxcb *rxcb = ATH11K_SKB_RXCB(msdu);
 	bool drop = false;
+
+	ar->ab->soc_stats.rxdma_error[rxcb->err_code]++;
 
 	switch (rxcb->err_code) {
 	case HAL_REO_ENTR_RING_RXDMA_ECODE_TKIP_MIC_ERR:
@@ -2788,8 +2795,10 @@ int ath11k_dp_process_rxdma_err(struct ath11k_base *ab, int mac_id, int budget)
 	struct hal_srng *srng;
 	struct hal_rx_msdu_meta meta[HAL_NUM_RX_MSDUS_PER_LINK_DESC];
 	enum hal_rx_buf_return_buf_manager rbm;
+	enum hal_reo_entr_rxdma_ecode rxdma_err_code;
 	struct ath11k_skb_rxcb *rxcb;
 	struct sk_buff *skb;
+	struct hal_reo_entrance_ring *entr_ring;
 	void *desc;
 	int num_buf_freed = 0;
 	int quota = budget;
@@ -2809,6 +2818,12 @@ int ath11k_dp_process_rxdma_err(struct ath11k_base *ab, int mac_id, int budget)
 	while (quota-- &&
 	       (desc = ath11k_hal_srng_dst_get_next_entry(ab, srng))) {
 		ath11k_hal_rx_reo_ent_paddr_get(ab, desc, &paddr, &desc_bank);
+
+		entr_ring = (struct hal_reo_entrance_ring *)desc;
+		rxdma_err_code =
+			FIELD_GET(HAL_REO_ENTR_RING_INFO1_RXDMA_ERROR_CODE,
+				  entr_ring->info1);
+		ab->soc_stats.rxdma_error[rxdma_err_code]++;
 
 		link_desc_va = link_desc_banks[desc_bank].vaddr +
 			       (paddr - link_desc_banks[desc_bank].paddr);

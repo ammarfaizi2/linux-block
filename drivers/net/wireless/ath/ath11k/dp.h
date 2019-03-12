@@ -110,6 +110,7 @@ struct dp_link_desc_bank {
 #define DP_TX_COMP_RING_SIZE		8192
 #define DP_TCL_CMD_RING_SIZE		32
 #define DP_TCL_STATUS_RING_SIZE		32
+#define DP_REO_DST_RING_MAX		4
 #define DP_REO_DST_RING_SIZE		2048
 #define DP_REO_REINJECT_RING_SIZE	32
 #define DP_RX_RELEASE_RING_SIZE		1024

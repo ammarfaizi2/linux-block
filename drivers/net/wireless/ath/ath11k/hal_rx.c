@@ -333,9 +333,14 @@ int ath11k_hal_desc_reo_parse_err(struct ath11k_base *ab, u32 *rx_desc,
 {
 	struct hal_reo_dest_ring *desc = (struct hal_reo_dest_ring *)rx_desc;
 	enum hal_reo_dest_ring_push_reason push_reason;
+	enum hal_reo_dest_ring_error_code err_code;
 
 	push_reason = FIELD_GET(HAL_REO_DEST_RING_INFO0_PUSH_REASON,
 				desc->info0);
+	err_code = FIELD_GET(HAL_REO_DEST_RING_INFO0_ERROR_CODE,
+			     desc->info0);
+	ab->soc_stats.reo_error[err_code]++;
+
 	if ((push_reason != HAL_REO_DEST_RING_PUSH_REASON_ERR_DETECTED)	&&
 	    (push_reason != HAL_REO_DEST_RING_PUSH_REASON_ROUTING_INSTRUCTION)) {
 		ath11k_warn(ab, "expected error push reason code, received %d\n",
@@ -414,8 +419,10 @@ int ath11k_hal_wbm_desc_parse_err(struct ath11k_base *ab, void *desc,
 		return -EINVAL;
 
 	if (FIELD_GET(BUFFER_ADDR_INFO1_RET_BUF_MGR,
-		      wbm_desc->buf_addr_info.info1) != HAL_RX_BUF_RBM_SW3_BM)
+		      wbm_desc->buf_addr_info.info1) != HAL_RX_BUF_RBM_SW3_BM) {
+		ab->soc_stats.invalid_rbm++;
 		return -EINVAL;
+	}
 
 	rel_info->cookie = FIELD_GET(BUFFER_ADDR_INFO1_SW_COOKIE,
 				     wbm_desc->buf_addr_info.info1);

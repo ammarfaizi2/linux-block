@@ -546,6 +546,14 @@ struct ath11k_board_data {
 /* IPQ8074 HW channel counters frequency value in hertz */
 #define IPQ8074_CC_FREQ_HERTZ 320000
 
+struct ath11k_soc_dp_rx_stats {
+	u32 err_ring_pkts;
+	u32 invalid_rbm;
+	u32 rxdma_error[HAL_REO_ENTR_RING_RXDMA_ECODE_MAX];
+	u32 reo_error[HAL_REO_DEST_RING_ERROR_CODE_MAX];
+	u32 hal_reo_error[DP_REO_DST_RING_MAX];
+};
+
 /* Master structure to hold the hw data which may be used in core module */
 struct ath11k_base {
 	enum ath11k_hw_rev hw_rev;
@@ -614,6 +622,7 @@ struct ath11k_base {
 #ifdef CONFIG_ATH11K_DEBUGFS
 	struct dentry *debugfs_soc;
 #endif
+	struct ath11k_soc_dp_rx_stats soc_stats;
 };
 
 struct ath11k_fw_stats_pdev {
