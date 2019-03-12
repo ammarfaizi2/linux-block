@@ -390,7 +390,11 @@ static int panfrost_probe(struct platform_device *pdev)
 	pfdev->ddev = ddev;
 
 	spin_lock_init(&pfdev->mm_lock);
-	drm_mm_init(&pfdev->mm, 0, SZ_4G); // 4G enough for now. can be 48-bit
+
+	/* Skip bottom 32M to catch any NULL addresses.
+	 * 4G virtual space enough for now. can be 48-bit
+	 */
+	drm_mm_init(&pfdev->mm, SZ_32M, SZ_4G);
 
 	err = panfrost_device_init(pfdev);
 	if (err) {
