@@ -383,6 +383,8 @@ static void panfrost_gpu_init_features(struct panfrost_device *pfdev)
 	gpu_id = pfdev->features.id;
 
 	for (model = gpu_models; model->name; model++) {
+		int best = -1;
+
 		if ((gpu_id & model->id_mask) != model->id)
 			continue;
 
@@ -390,12 +392,15 @@ static void panfrost_gpu_init_features(struct panfrost_device *pfdev)
 		hw_feat = model->features;
 		hw_issues |= model->issues;
 		for (i = 0; i < MAX_HW_REVS; i++) {
-			if ((model->revs[i].revision != rev) &&
-			    (model->revs[i].revision != (rev & ~0xf)))
-				continue;
-			hw_issues |= model->revs[i].issues;
-			break;
+			if (model->revs[i].revision == rev) {
+				best = i;
+				break;
+			} else if (model->revs[i].revision == (rev & ~0xf))
+				best = i;
 		}
+
+		if (best >= 0)
+			hw_issues |= model->revs[best].issues;
 
 		break;
 	}
