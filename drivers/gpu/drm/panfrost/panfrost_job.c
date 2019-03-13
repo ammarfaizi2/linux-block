@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright 2019 Linaro, Ltd, Rob Herring <robh@kernel.org> */
 /* Copyright 2019 Collabora ltd. */
-/*
- * Register definitions based on mali_midg_regmap.h
- * (C) COPYRIGHT 2010-2018 ARM Limited. All rights reserved.
- */
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>
@@ -18,64 +14,10 @@
 #include "panfrost_features.h"
 #include "panfrost_issues.h"
 #include "panfrost_gem.h"
+#include "panfrost_regs.h"
 
-#define JOB_BASE 0x1000
-
-/* Job Control regs */
-#define JOB_INT_RAWSTAT		0x000
-#define JOB_INT_CLEAR		0x004
-#define JOB_INT_MASK		0x008
-#define JOB_INT_STAT		0x00c
-#define JOB_INT_JS_STATE	0x010
-#define JOB_INT_THROTTLE	0x014
-
-#define MK_JS_MASK(j)		(0x10001 << (j))
-#define JOB_INT_MASK_ERR(j)	BIT((j) + 16)
-#define JOB_INT_MASK_DONE(j)	BIT(j)
-
-#define JS_BASE			0x800
-#define JS_HEAD_LO(n)		(JS_BASE + ((n) * 0x80) + 0x00)
-#define JS_HEAD_HI(n)		(JS_BASE + ((n) * 0x80) + 0x04)
-#define JS_TAIL_LO(n)		(JS_BASE + ((n) * 0x80) + 0x08)
-#define JS_TAIL_HI(n)		(JS_BASE + ((n) * 0x80) + 0x0c)
-#define JS_AFFINITY_LO(n)	(JS_BASE + ((n) * 0x80) + 0x10)
-#define JS_AFFINITY_HI(n)	(JS_BASE + ((n) * 0x80) + 0x14)
-#define JS_CONFIG(n)		(JS_BASE + ((n) * 0x80) + 0x18)
-#define JS_XAFFINITY(n)		(JS_BASE + ((n) * 0x80) + 0x1c)
-#define JS_COMMAND(n)		(JS_BASE + ((n) * 0x80) + 0x20)
-#define JS_STATUS(n)		(JS_BASE + ((n) * 0x80) + 0x24)
-#define JS_HEAD_NEXT_LO(n)	(JS_BASE + ((n) * 0x80) + 0x40)
-#define JS_HEAD_NEXT_HI(n)	(JS_BASE + ((n) * 0x80) + 0x44)
-#define JS_AFFINITY_NEXT_LO(n)	(JS_BASE + ((n) * 0x80) + 0x50)
-#define JS_AFFINITY_NEXT_HI(n)	(JS_BASE + ((n) * 0x80) + 0x54)
-#define JS_CONFIG_NEXT(n)	(JS_BASE + ((n) * 0x80) + 0x58)
-#define JS_COMMAND_NEXT(n)	(JS_BASE + ((n) * 0x80) + 0x60)
-#define JS_FLUSH_ID_NEXT(n)	(JS_BASE + ((n) * 0x80) + 0x70)
-
-/* Possible values of JS_CONFIG and JS_CONFIG_NEXT registers */
-#define JS_CONFIG_START_FLUSH_NO_ACTION        (0u << 0)
-#define JS_CONFIG_START_FLUSH_CLEAN            (1u << 8)
-#define JS_CONFIG_START_FLUSH_CLEAN_INVALIDATE (3u << 8)
-#define JS_CONFIG_START_MMU                    (1u << 10)
-#define JS_CONFIG_JOB_CHAIN_FLAG               (1u << 11)
-#define JS_CONFIG_END_FLUSH_NO_ACTION          JS_CONFIG_START_FLUSH_NO_ACTION
-#define JS_CONFIG_END_FLUSH_CLEAN              (1u << 12)
-#define JS_CONFIG_END_FLUSH_CLEAN_INVALIDATE   (3u << 12)
-#define JS_CONFIG_ENABLE_FLUSH_REDUCTION       (1u << 14)
-#define JS_CONFIG_DISABLE_DESCRIPTOR_WR_BK     (1u << 15)
-#define JS_CONFIG_THREAD_PRI(n)                ((n) << 16)
-
-#define JS_COMMAND_NOP			0x00
-#define JS_COMMAND_START			0x01
-#define JS_COMMAND_SOFT_STOP   0x02	/* Gently stop processing a job chain */
-#define JS_COMMAND_HARD_STOP   0x03	/* Rudely stop processing a job chain */
-#define JS_COMMAND_SOFT_STOP_0 0x04	/* Execute SOFT_STOP if JOB_CHAIN_FLAG is 0 */
-#define JS_COMMAND_HARD_STOP_0 0x05	/* Execute HARD_STOP if JOB_CHAIN_FLAG is 0 */
-#define JS_COMMAND_SOFT_STOP_1 0x06	/* Execute SOFT_STOP if JOB_CHAIN_FLAG is 1 */
-#define JS_COMMAND_HARD_STOP_1 0x07	/* Execute HARD_STOP if JOB_CHAIN_FLAG is 1 */
-
-#define job_write(dev, reg, data) writel(data, dev->iomem + JOB_BASE + (reg))
-#define job_read(dev, reg) readl(dev->iomem + JOB_BASE + (reg))
+#define job_write(dev, reg, data) writel(data, dev->iomem + (reg))
+#define job_read(dev, reg) readl(dev->iomem + (reg))
 
 struct panfrost_queue_state {
 	struct drm_gpu_scheduler sched;

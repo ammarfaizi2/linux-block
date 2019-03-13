@@ -1,9 +1,5 @@
 // SPDX-License-Identifier:	GPL-2.0
 /* Copyright 2019 Linaro, Ltd, Rob Herring <robh@kernel.org> */
-/*
- * Register definitions based on mali_midg_regmap.h
- * (C) COPYRIGHT 2010-2018 ARM Limited. All rights reserved.
- */
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>
@@ -16,69 +12,10 @@
 #include "panfrost_mmu.h"
 #include "panfrost_gem.h"
 #include "panfrost_features.h"
+#include "panfrost_regs.h"
 
-#define MMU_BASE		0x2000
-
-/* MMU regs */
-#define MMU_INT_RAWSTAT		0x00
-#define MMU_INT_CLEAR		0x04
-#define MMU_INT_MASK		0x08
-#define MMU_INT_STAT		0x0c
-
-/* AS_COMMAND register commands */
-#define AS_COMMAND_NOP		0x00	/* NOP Operation */
-#define AS_COMMAND_UPDATE	0x01	/* Broadcasts the values in AS_TRANSTAB and ASn_MEMATTR to all MMUs */
-#define AS_COMMAND_LOCK		0x02	/* Issue a lock region command to all MMUs */
-#define AS_COMMAND_UNLOCK	0x03	/* Issue a flush region command to all MMUs */
-#define AS_COMMAND_FLUSH	0x04	/* Flush all L2 caches then issue a flush region command to all MMUs
-					   (deprecated - only for use with T60x) */
-#define AS_COMMAND_FLUSH_PT	0x04	/* Flush all L2 caches then issue a flush region command to all MMUs */
-#define AS_COMMAND_FLUSH_MEM	0x05	/* Wait for memory accesses to complete, flush all the L1s cache then
-					   flush all L2 caches then issue a flush region command to all MMUs */
-
-#define MMU_AS(as)		(0x400 + ((as) << 6))
-
-#define AS_TRANSTAB_LO(as)	(MMU_AS(as) + 0x00) /* (RW) Translation Table Base Address for address space n, low word */
-#define AS_TRANSTAB_HI(as)	(MMU_AS(as) + 0x04) /* (RW) Translation Table Base Address for address space n, high word */
-#define AS_MEMATTR_LO(as)	(MMU_AS(as) + 0x08) /* (RW) Memory attributes for address space n, low word. */
-#define AS_MEMATTR_HI(as)	(MMU_AS(as) + 0x0C) /* (RW) Memory attributes for address space n, high word. */
-#define AS_LOCKADDR_LO(as)	(MMU_AS(as) + 0x10) /* (RW) Lock region address for address space n, low word */
-#define AS_LOCKADDR_HI(as)	(MMU_AS(as) + 0x14) /* (RW) Lock region address for address space n, high word */
-#define AS_COMMAND(as)		(MMU_AS(as) + 0x18) /* (WO) MMU command register for address space n */
-#define AS_FAULTSTATUS(as)	(MMU_AS(as) + 0x1C) /* (RO) MMU fault status register for address space n */
-#define AS_FAULTADDRESS_LO(as)	(MMU_AS(as) + 0x20) /* (RO) Fault Address for address space n, low word */
-#define AS_FAULTADDRESS_HI(as)	(MMU_AS(as) + 0x24) /* (RO) Fault Address for address space n, high word */
-#define AS_STATUS(as)		(MMU_AS(as) + 0x28) /* (RO) Status flags for address space n */
-
-/* (RW) Translation table configuration for address space n, low word */
-#define AS_TRANSCFG_LO		0x30
-/* (RW) Translation table configuration for address space n, high word */
-#define AS_TRANSCFG_HI		0x34
-/* (RO) Secondary fault address for address space n, low word */
-#define AS_FAULTEXTRA_LO	0x38
-/* (RO) Secondary fault address for address space n, high word */
-#define AS_FAULTEXTRA_HI	0x3C
-
-/*
- * Begin LPAE MMU TRANSTAB register values
- */
-#define AS_TRANSTAB_LPAE_ADDR_SPACE_MASK	0xfffffffffffff000
-#define AS_TRANSTAB_LPAE_ADRMODE_IDENTITY	0x2
-#define AS_TRANSTAB_LPAE_ADRMODE_TABLE		0x3
-#define AS_TRANSTAB_LPAE_ADRMODE_MASK		0x3
-#define AS_TRANSTAB_LPAE_READ_INNER		BIT(2)
-#define AS_TRANSTAB_LPAE_SHARE_OUTER		BIT(4)
-
-#define AS_STATUS_AS_ACTIVE			0x01
-
-#define AS_FAULTSTATUS_ACCESS_TYPE_MASK		(0x3 << 8)
-#define AS_FAULTSTATUS_ACCESS_TYPE_ATOMIC	(0x0 << 8)
-#define AS_FAULTSTATUS_ACCESS_TYPE_EX		(0x1 << 8)
-#define AS_FAULTSTATUS_ACCESS_TYPE_READ		(0x2 << 8)
-#define AS_FAULTSTATUS_ACCESS_TYPE_WRITE	(0x3 << 8)
-
-#define mmu_write(dev, reg, data) writel(data, dev->iomem + MMU_BASE + reg)
-#define mmu_read(dev, reg) readl(dev->iomem + MMU_BASE + reg)
+#define mmu_write(dev, reg, data) writel(data, dev->iomem + reg)
+#define mmu_read(dev, reg) readl(dev->iomem + reg)
 
 struct panfrost_mmu {
 	struct io_pgtable_ops *pgtbl_ops;
@@ -92,7 +29,7 @@ static int wait_ready(struct panfrost_device *pfdev, u32 as_nr)
 
 	/* Wait for the MMU status to indicate there is no active command, in
 	 * case one is pending. Do not log remaining register accesses. */
-	ret = readl_relaxed_poll_timeout_atomic(pfdev->iomem + MMU_BASE + AS_STATUS(as_nr),
+	ret = readl_relaxed_poll_timeout_atomic(pfdev->iomem + AS_STATUS(as_nr),
 		val, !(val & AS_STATUS_AS_ACTIVE), 10, 1000);
 
 	if (ret)
