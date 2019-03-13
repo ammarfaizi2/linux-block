@@ -21,6 +21,9 @@
 #define CE_ATTR_FLAGS 0
 #endif
 
+/* Threshold to poll for tx completion in case of Interrupt disabled CE's */
+#define ATH11K_CE_USAGE_THRESHOLD 32
+
 void ath11k_ce_byte_swap(void *mem, u32 len);
 
 /*
@@ -177,4 +180,5 @@ int ath11k_ce_init_pipes(struct ath11k_base *sc);
 int ath11k_ce_alloc_pipes(struct ath11k_base *sc);
 void ath11k_ce_free_pipes(struct ath11k_base *sc);
 int ath11k_ce_get_attr_flags(int ce_id);
+void ath11k_ce_poll_send_completed(struct ath11k_base *ab, u8 pipe_id);
 #endif

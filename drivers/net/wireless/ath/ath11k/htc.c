@@ -361,6 +361,9 @@ void ath11k_htc_rx_completion_handler(struct ath11k_base *ab,
 		   eid, skb);
 	ep->ep_ops.ep_rx_complete(ab, skb);
 
+	/* poll tx completion for interrupt disabled CE's */
+	ath11k_ce_poll_send_completed(ab, ep->ul_pipe_id);
+
 	/* skb is now owned by the rx completion handler */
 	skb = NULL;
 out:

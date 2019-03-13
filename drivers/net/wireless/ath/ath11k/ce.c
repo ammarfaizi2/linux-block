@@ -488,16 +488,47 @@ void ath11k_ce_per_engine_service(struct ath11k_base *ab, u16 ce_id)
 
 }
 
+void ath11k_ce_poll_send_completed(struct ath11k_base *ab, u8 pipe_id)
+{
+	struct ath11k_ce_pipe *pipe = &ab->ce.ce_pipe[pipe_id];
+
+	if ((pipe->attr_flags & CE_ATTR_DIS_INTR) && pipe->send_cb)
+		pipe->send_cb(pipe);
+}
+
 int ath11k_ce_send(struct ath11k_base *ab, struct sk_buff *skb, u8 pipe_id,
 		   u16 transfer_id)
 {
 	struct ath11k_ce_pipe *pipe = &ab->ce.ce_pipe[pipe_id];
 	struct hal_srng *srng;
 	u32 *desc;
-	unsigned int write_index;
+	unsigned int write_index, sw_index;
 	unsigned int nentries_mask;
 	int ret = 0;
 	u8 byte_swap_data = 0;
+	int num_used;
+
+	/* Check if some entries could be regained by handling tx completion if
+	 * the CE has interrupts disabled and the used entries is more than the
+	 * defined usage threshold.
+	 */
+	if (pipe->attr_flags & CE_ATTR_DIS_INTR) {
+		spin_lock_bh(&ab->ce.ce_lock);
+		write_index = pipe->src_ring->write_index;
+
+		sw_index = pipe->src_ring->sw_index;
+
+		if (write_index >= sw_index)
+			num_used = write_index - sw_index;
+		else
+			num_used = pipe->src_ring->nentries - sw_index +
+				   write_index;
+
+		spin_unlock_bh(&ab->ce.ce_lock);
+
+		if (num_used > ATH11K_CE_USAGE_THRESHOLD)
+			ath11k_ce_poll_send_completed(ab, pipe->pipe_num);
+	}
 
 	spin_lock_bh(&ab->ce.ce_lock);
 
@@ -508,12 +539,13 @@ int ath11k_ce_send(struct ath11k_base *ab, struct sk_buff *skb, u8 pipe_id,
 
 	spin_lock_bh(&srng->lock);
 
+	ath11k_hal_srng_access_begin(ab, srng);
+
 	if (unlikely(ath11k_hal_srng_src_num_free(ab, srng, false) < 1)) {
+		ath11k_hal_srng_access_end(ab, srng);
 		ret = -ENOBUFS;
 		goto err_unlock;
 	}
-
-	ath11k_hal_srng_access_begin(ab, srng);
 
 	desc = ath11k_hal_srng_src_get_next_reaped(ab, srng);
 	if (!desc) {
@@ -578,7 +610,11 @@ void ath11k_ce_cleanup_pipes(struct ath11k_base *ab)
 	for (pipe_num = 0; pipe_num < CE_COUNT; pipe_num++) {
 		pipe = &ab->ce.ce_pipe[pipe_num];
 		ath11k_ce_rx_pipe_cleanup(pipe);
-		/* NOTE: Should we also clean up tx buffer? */
+
+		/* Cleanup any src CE's which have interrupts disabled */
+		ath11k_ce_poll_send_completed(ab, pipe_num);
+
+		/* NOTE: Should we also clean up tx buffer in all pipes? */
 	}
 }
 
