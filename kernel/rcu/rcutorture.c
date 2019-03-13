@@ -300,6 +300,7 @@ struct rcu_torture_ops {
 	int can_boost;
 	int extendables;
 	const char *name;
+	const char *altname;
 };
 
 static struct rcu_torture_ops *cur_ops;
@@ -496,9 +497,18 @@ static struct rcu_torture_ops rcu_busted_ops = {
  * Definitions for srcu torture testing.
  */
 
-DEFINE_STATIC_SRCU(srcu_ctl);
 static struct srcu_struct srcu_ctld;
-static struct srcu_struct *srcu_ctlp = &srcu_ctl;
+static struct srcu_struct *srcu_ctlp;
+
+#ifndef MODULE
+DEFINE_STATIC_SRCU(srcu_ctl);
+
+static void srcu_torture_init(void)
+{
+	rcu_sync_torture_init();
+	srcu_ctlp = &srcu_ctl;
+}
+#endif
 
 static int srcu_torture_read_lock(void) __acquires(srcu_ctlp)
 {
@@ -565,9 +575,10 @@ static void srcu_torture_synchronize_expedited(void)
 	synchronize_srcu_expedited(srcu_ctlp);
 }
 
+#ifndef MODULE
 static struct rcu_torture_ops srcu_ops = {
 	.ttype		= SRCU_FLAVOR,
-	.init		= rcu_sync_torture_init,
+	.init		= srcu_torture_init,
 	.readlock	= srcu_torture_read_lock,
 	.read_delay	= srcu_read_delay,
 	.readunlock	= srcu_torture_read_unlock,
@@ -581,25 +592,28 @@ static struct rcu_torture_ops srcu_ops = {
 	.irq_capable	= 1,
 	.name		= "srcu"
 };
+#define SRCU_OPS (&srcu_ops)
+#else /* #ifndef MODULE */
+#define SRCU_OPS NULL
+#endif
 
-static void srcu_torture_init(void)
+static void srcud_torture_init(void)
 {
 	rcu_sync_torture_init();
 	WARN_ON(init_srcu_struct(&srcu_ctld));
 	srcu_ctlp = &srcu_ctld;
 }
 
-static void srcu_torture_cleanup(void)
+static void srcud_torture_cleanup(void)
 {
 	cleanup_srcu_struct(&srcu_ctld);
-	srcu_ctlp = &srcu_ctl; /* In case of a later rcutorture run. */
 }
 
 /* As above, but dynamically allocated. */
 static struct rcu_torture_ops srcud_ops = {
 	.ttype		= SRCU_FLAVOR,
-	.init		= srcu_torture_init,
-	.cleanup	= srcu_torture_cleanup,
+	.init		= srcud_torture_init,
+	.cleanup	= srcud_torture_cleanup,
 	.readlock	= srcu_torture_read_lock,
 	.read_delay	= srcu_read_delay,
 	.readunlock	= srcu_torture_read_unlock,
@@ -611,14 +625,17 @@ static struct rcu_torture_ops srcud_ops = {
 	.cb_barrier	= srcu_torture_barrier,
 	.stats		= srcu_torture_stats,
 	.irq_capable	= 1,
-	.name		= "srcud"
+	.name		= "srcud",
+#ifndef MODULE
+	.altname	= "srcu" /* Avoid breaking kbuild test robot. */
+#endif
 };
 
 /* As above, but broken due to inappropriate reader extension. */
 static struct rcu_torture_ops busted_srcud_ops = {
 	.ttype		= SRCU_FLAVOR,
-	.init		= srcu_torture_init,
-	.cleanup	= srcu_torture_cleanup,
+	.init		= srcud_torture_init,
+	.cleanup	= srcud_torture_cleanup,
 	.readlock	= srcu_torture_read_lock,
 	.read_delay	= rcu_read_delay,
 	.readunlock	= srcu_torture_read_unlock,
@@ -2235,7 +2252,7 @@ rcu_torture_init(void)
 	int cpu;
 	int firsterr = 0;
 	static struct rcu_torture_ops *torture_ops[] = {
-		&rcu_ops, &rcu_busted_ops, &srcu_ops, &srcud_ops,
+		&rcu_ops, &rcu_busted_ops, SRCU_OPS, &srcud_ops,
 		&busted_srcud_ops, &tasks_ops,
 	};
 
@@ -2245,8 +2262,15 @@ rcu_torture_init(void)
 	/* Process args and tell the world that the torturer is on the job. */
 	for (i = 0; i < ARRAY_SIZE(torture_ops); i++) {
 		cur_ops = torture_ops[i];
+		if (!cur_ops)
+			continue;
 		if (strcmp(torture_type, cur_ops->name) == 0)
 			break;
+		if (cur_ops->altname &&
+		    strcmp(torture_type, cur_ops->altname) == 0) {
+			pr_alert("rcu-torture: substituting torture type: \"%s\" for \"%s\"\n", cur_ops->name, torture_type);
+			break;
+		}
 	}
 	if (i == ARRAY_SIZE(torture_ops)) {
 		pr_alert("rcu-torture: invalid torture type: \"%s\"\n",

@@ -105,6 +105,15 @@ struct srcu_struct {
  * Define and initialize a srcu struct at build time.
  * Do -not- call init_srcu_struct() nor cleanup_srcu_struct() on it.
  *
+ * Build-time srcu_struct definition is not allowed in modules because
+ * otherwise it is necessary to increase the size of the reserved region
+ * each time a DEFINE_SRCU() or DEFINE_STATIC_SRCU() are added to a
+ * kernel module.  Kernel modules should instead declare an srcu_struct
+ * and then invoke init_srcu_struct() from their module_init function and
+ * cleanup_srcu_struct() from their module_exit function.  Note that modules
+ * using call_srcu() will also need to invoke srcu_barrier() from their
+ * module_exit function.
+ *
  * Note that although DEFINE_STATIC_SRCU() hides the name from other
  * files, the per-CPU variable rules nevertheless require that the
  * chosen name be globally unique.  These rules also prohibit use of
@@ -120,11 +129,13 @@ struct srcu_struct {
  *
  * See include/linux/percpu-defs.h for the rules on per-CPU variables.
  */
-#define __DEFINE_SRCU(name, is_static)					\
-	static DEFINE_PER_CPU(struct srcu_data, name##_srcu_data);\
+#ifndef MODULE
+#  define __DEFINE_SRCU(name, is_static)				\
+	static DEFINE_PER_CPU(struct srcu_data, name##_srcu_data);	\
 	is_static struct srcu_struct name = __SRCU_STRUCT_INIT(name, name##_srcu_data)
-#define DEFINE_SRCU(name)		__DEFINE_SRCU(name, /* not static */)
-#define DEFINE_STATIC_SRCU(name)	__DEFINE_SRCU(name, static)
+#  define DEFINE_SRCU(name)		__DEFINE_SRCU(name, /* not static */)
+#  define DEFINE_STATIC_SRCU(name)	__DEFINE_SRCU(name, static)
+#endif
 
 void synchronize_srcu_expedited(struct srcu_struct *ssp);
 void srcu_barrier(struct srcu_struct *ssp);
