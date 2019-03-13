@@ -139,6 +139,7 @@ struct rcu_perf_ops {
 	void (*sync)(void);
 	void (*exp_sync)(void);
 	const char *name;
+	const char *altname;
 };
 
 static struct rcu_perf_ops *cur_ops;
@@ -186,8 +187,16 @@ static struct rcu_perf_ops rcu_ops = {
  * Definitions for srcu perf testing.
  */
 
+static struct srcu_struct *srcu_ctlp;
+
+#ifndef MODULE
 DEFINE_STATIC_SRCU(srcu_ctl_perf);
-static struct srcu_struct *srcu_ctlp = &srcu_ctl_perf;
+
+static void srcu_sync_perf_init(void)
+{
+	srcu_ctlp = &srcu_ctl_perf
+}
+#endif
 
 static int srcu_perf_read_lock(void) __acquires(srcu_ctlp)
 {
@@ -224,9 +233,10 @@ static void srcu_perf_synchronize_expedited(void)
 	synchronize_srcu_expedited(srcu_ctlp);
 }
 
+#ifndef MODULE
 static struct rcu_perf_ops srcu_ops = {
 	.ptype		= SRCU_FLAVOR,
-	.init		= rcu_sync_perf_init,
+	.init		= srcu_sync_perf_init,
 	.readlock	= srcu_perf_read_lock,
 	.readunlock	= srcu_perf_read_unlock,
 	.get_gp_seq	= srcu_perf_completed,
@@ -238,24 +248,28 @@ static struct rcu_perf_ops srcu_ops = {
 	.exp_sync	= srcu_perf_synchronize_expedited,
 	.name		= "srcu"
 };
+#define SRCU_OPS (&srcu_ops)
+#else /* #ifndef MODULE */
+#define SRCU_OPS NULL
+#endif /* #else #ifndef MODULE */
 
 static struct srcu_struct srcud;
 
-static void srcu_sync_perf_init(void)
+static void srcud_sync_perf_init(void)
 {
 	srcu_ctlp = &srcud;
 	init_srcu_struct(srcu_ctlp);
 }
 
-static void srcu_sync_perf_cleanup(void)
+static void srcud_sync_perf_cleanup(void)
 {
 	cleanup_srcu_struct(srcu_ctlp);
 }
 
 static struct rcu_perf_ops srcud_ops = {
 	.ptype		= SRCU_FLAVOR,
-	.init		= srcu_sync_perf_init,
-	.cleanup	= srcu_sync_perf_cleanup,
+	.init		= srcud_sync_perf_init,
+	.cleanup	= srcud_sync_perf_cleanup,
 	.readlock	= srcu_perf_read_lock,
 	.readunlock	= srcu_perf_read_unlock,
 	.get_gp_seq	= srcu_perf_completed,
@@ -265,7 +279,10 @@ static struct rcu_perf_ops srcud_ops = {
 	.gp_barrier	= srcu_rcu_barrier,
 	.sync		= srcu_perf_synchronize,
 	.exp_sync	= srcu_perf_synchronize_expedited,
-	.name		= "srcud"
+	.name		= "srcud",
+#ifndef MODULE
+	.altname	= "srcu" /* Avoid breaking kbuild test robot. */
+#endif
 };
 
 /*
@@ -594,7 +611,7 @@ rcu_perf_init(void)
 	long i;
 	int firsterr = 0;
 	static struct rcu_perf_ops *perf_ops[] = {
-		&rcu_ops, &srcu_ops, &srcud_ops, &tasks_ops,
+		&rcu_ops, SRCU_OPS, &srcud_ops, &tasks_ops,
 	};
 
 	if (!torture_init_begin(perf_type, verbose))
@@ -603,8 +620,15 @@ rcu_perf_init(void)
 	/* Process args and tell the world that the perf'er is on the job. */
 	for (i = 0; i < ARRAY_SIZE(perf_ops); i++) {
 		cur_ops = perf_ops[i];
+		if (!cur_ops)
+			continue;
 		if (strcmp(perf_type, cur_ops->name) == 0)
 			break;
+		if (cur_ops->altname &&
+		    strcmp(perf_type, cur_ops->altname) == 0) {
+			pr_alert("rcu-perf: substituting perf type: \"%s\" for \"%s\"\n", cur_ops->name, perf_type);
+			break;
+		}
 	}
 	if (i == ARRAY_SIZE(perf_ops)) {
 		pr_alert("rcu-perf: invalid perf type: \"%s\"\n", perf_type);
