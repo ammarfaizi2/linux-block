@@ -174,6 +174,16 @@ static void panfrost_job_hw_submit(struct panfrost_job *job, int js)
 	job_write(pfdev, JS_COMMAND_NEXT(js), JS_COMMAND_START);
 }
 
+static void panfrost_acquire_object_fences(struct drm_gem_object **bos,
+					   int bo_count,
+					   struct dma_fence **implicit_fences)
+{
+	int i;
+
+	for (i = 0; i < bo_count; i++)
+		implicit_fences[i] = reservation_object_get_excl_rcu(bos[i]->resv);
+}
+
 static void panfrost_attach_object_fences(struct drm_gem_object **bos,
 					  int bo_count,
 					  struct dma_fence *fence)
@@ -181,7 +191,6 @@ static void panfrost_attach_object_fences(struct drm_gem_object **bos,
 	int i;
 
 	for (i = 0; i < bo_count; i++)
-		/* XXX: Use shared fences for read-only objects. */
 		reservation_object_add_excl_fence(bos[i]->resv, fence);
 }
 
@@ -216,8 +225,11 @@ int panfrost_job_push(struct panfrost_job *job)
 
 	mutex_unlock(&pfdev->sched_lock);
 
+	panfrost_acquire_object_fences(job->bos, job->bo_count,
+				       job->implicit_fences);
+
 	panfrost_attach_object_fences(job->bos, job->bo_count,
-				 job->render_done_fence);
+				      job->render_done_fence);
 
 unlock:
 	drm_gem_unlock_reservations(job->bos, job->bo_count, &acquire_ctx);
@@ -234,6 +246,10 @@ static void panfrost_job_cleanup(struct kref *ref)
 	for (i = 0; i < job->in_fence_count; i++)
 		dma_fence_put(job->in_fences[i]);
 	kvfree(job->in_fences);
+
+	for (i = 0; i < job->bo_count; i++)
+		dma_fence_put(job->implicit_fences[i]);
+	kvfree(job->implicit_fences);
 
 	dma_fence_put(job->done_fence);
 	dma_fence_put(job->render_done_fence);
@@ -266,10 +282,20 @@ static struct dma_fence *panfrost_job_dependency(struct drm_sched_job *sched_job
 	struct dma_fence *fence;
 	unsigned int i;
 
+	/* Explicit fences */
 	for (i = 0; i < job->in_fence_count; i++) {
 		if (job->in_fences[i]) {
 			fence = job->in_fences[i];
 			job->in_fences[i] = NULL;
+			return fence;
+		}
+	}
+
+	/* Implicit fences, max. one per BO */
+	for (i = 0; i < job->bo_count; i++) {
+		if (job->implicit_fences[i]) {
+			fence = job->implicit_fences[i];
+			job->implicit_fences[i] = NULL;
 			return fence;
 		}
 	}

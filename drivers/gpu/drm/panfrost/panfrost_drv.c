@@ -99,6 +99,12 @@ panfrost_lookup_bos(struct drm_device *dev,
 	if (!job->bos)
 		return -ENOMEM;
 
+	job->implicit_fences = kvmalloc_array(job->bo_count,
+				  sizeof(struct dma_fence *),
+				  GFP_KERNEL | __GFP_ZERO);
+	if (!job->implicit_fences)
+		return -ENOMEM;
+
 	handles = kvmalloc_array(job->bo_count, sizeof(u32), GFP_KERNEL);
 	if (!handles) {
 		ret = -ENOMEM;

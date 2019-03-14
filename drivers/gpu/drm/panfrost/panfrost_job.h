@@ -23,16 +23,19 @@ struct panfrost_job {
 	struct dma_fence **in_fences;
 	u32 in_fence_count;
 
-	/* fence to be signaled by IRQ handler when the job is complete. */
+	/* Fence to be signaled by IRQ handler when the job is complete. */
 	struct dma_fence *done_fence;
 
 	__u64 jc;
 	__u32 requirements;
 	__u32 flush_id;
 
+	/* Exclusive fences we have taken from the BOs to wait for */
+	struct dma_fence **implicit_fences;
 	struct drm_gem_object **bos;
 	u32 bo_count;
 
+	/* Fence to be signaled by drm-sched once its done with the job */
 	struct dma_fence *render_done_fence;
 };
 
