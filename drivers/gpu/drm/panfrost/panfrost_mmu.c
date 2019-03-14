@@ -7,6 +7,7 @@
 #include <linux/io-pgtable.h>
 #include <linux/iommu.h>
 #include <linux/platform_device.h>
+#include <linux/sizes.h>
 
 #include "panfrost_device.h"
 #include "panfrost_mmu.h"
