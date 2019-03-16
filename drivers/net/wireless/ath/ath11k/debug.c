@@ -667,12 +667,21 @@ static ssize_t ath11k_write_simulate_fw_crash(struct file *file,
 					      size_t count, loff_t *ppos)
 {
 	struct ath11k_base *ab = file->private_data;
+	struct ath11k_pdev *pdev;
 	struct ath11k *ar = ab->pdevs[0].ar;
 	struct crash_inject param;
 	char buf[32] = {0};
 	ssize_t rc;
-	int ret;
+	int i, ret, radioup;
 
+	for (i = 0; i < ab->num_radios; i++) {
+		pdev = &ab->pdevs[i];
+		ar = pdev->ar;
+		if (ar && ar->state == ATH11K_STATE_ON) {
+			radioup = 1;
+			break;
+		}
+	}
 	/* filter partial writes and invalid commands */
 	if (*ppos != 0 || count >= sizeof(buf) || count == 0)
 		return -EINVAL;
@@ -685,7 +694,7 @@ static ssize_t ath11k_write_simulate_fw_crash(struct file *file,
 	if (buf[*ppos - 1] == '\n')
 		buf[*ppos - 1] = '\0';
 
-	if (ar->state != ATH11K_STATE_ON) {
+	if (radioup == 0) {
 		ret = -ENETDOWN;
 		goto exit;
 	}
