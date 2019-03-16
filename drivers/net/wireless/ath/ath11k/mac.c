@@ -5029,12 +5029,29 @@ void ath11k_mac_destroy(struct ath11k_base *ab)
 		ar = pdev->ar;
 		if (!ar)
 			continue;
+
+		ieee80211_free_hw(ar->hw);
+		pdev->ar = NULL;
+	}
+}
+
+void ath11k_mac_unregister(struct ath11k_base *ab)
+{
+	struct ath11k *ar;
+	struct ath11k_pdev *pdev;
+	int i;
+
+	for (i = 0; i < ab->num_radios; i++) {
+		pdev = &ab->pdevs[i];
+		ar = pdev->ar;
+		if (!ar)
+			continue;
 		cancel_work_sync(&ar->regd_update_work);
 
 		ieee80211_unregister_hw(ar->hw);
 
 		idr_for_each(&ar->txmgmt_idr,
-			     ath11k_mac_tx_mgmt_pending_free, ar);
+					 ath11k_mac_tx_mgmt_pending_free, ar);
 		idr_destroy(&ar->txmgmt_idr);
 
 		kfree(ar->mac.sbands[NL80211_BAND_2GHZ].channels);
@@ -5042,11 +5059,7 @@ void ath11k_mac_destroy(struct ath11k_base *ab)
 
 		SET_IEEE80211_DEV(ar->hw, NULL);
 
-		ieee80211_free_hw(ar->hw);
-
-		pdev->ar = NULL;
 	}
-
 	ab->mac_registered = false;
 }
 

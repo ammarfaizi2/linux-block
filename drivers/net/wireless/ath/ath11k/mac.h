@@ -166,6 +166,7 @@ struct ath11k_generic_iter {
 
 int ath11k_mac_create(struct ath11k_base *ab);
 void ath11k_mac_destroy(struct ath11k_base *ab);
+void ath11k_mac_unregister(struct ath11k_base *ab);
 int ath11k_mac_hw_ratecode_to_legacy_rate(u8 hw_rc,
 					    u8 preamble,
 					    u8 *rateidx,

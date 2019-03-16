@@ -507,8 +507,8 @@ err_mac_destroy:
 
 static void ath11k_core_pdev_destroy(struct ath11k_base *sc)
 {
+	ath11k_mac_unregister(sc);
 	ath11k_dp_pdev_free(sc);
-	ath11k_mac_destroy(sc);
 }
 
 static int ath11k_core_start(struct ath11k_base *sc,
@@ -666,6 +666,7 @@ void ath11k_core_deinit(struct ath11k_base *sc)
 	mutex_unlock(&sc->core_lock);
 
 	ath11k_ahb_power_down(sc);
+	ath11k_mac_destroy(sc);
 	ath11k_core_soc_destroy(sc);
 }
 
