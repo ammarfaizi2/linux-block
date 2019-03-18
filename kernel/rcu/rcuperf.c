@@ -194,7 +194,7 @@ DEFINE_STATIC_SRCU(srcu_ctl_perf);
 
 static void srcu_sync_perf_init(void)
 {
-	srcu_ctlp = &srcu_ctl_perf
+	srcu_ctlp = &srcu_ctl_perf;
 }
 #endif
 
