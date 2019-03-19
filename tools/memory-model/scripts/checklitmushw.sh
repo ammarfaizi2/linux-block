@@ -44,14 +44,7 @@ else
 	echo ' --- ' error: \"$litmus\" is not a readable file
 	exit 255
 fi
-exclude="^[[:space:]]*\("
-exclude="${exclude}spin_lock(\|spin_unlock(\|spin_trylock(\|spin_is_locked("
-exclude="${exclude}\|rcu_read_lock(\|rcu_read_unlock("
-exclude="${exclude}\|synchronize_rcu(\|synchronize_rcu_expedited("
-exclude="${exclude}\|srcu_read_lock(\|srcu_read_unlock("
-exclude="${exclude}\|synchronize_srcu(\|synchronize_srcu_expedited("
-exclude="${exclude}\)"
-if grep -q $exclude $litmus
+if ! scripts/simpletest.sh $litmus
 then
 	echo ' --- ' error: \"$litmus\" contains locking, RCU, or SRCU
 	exit 254
