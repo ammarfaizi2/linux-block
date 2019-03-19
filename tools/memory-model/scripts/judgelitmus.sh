@@ -1,10 +1,12 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-2.0+
 #
-# Given a .litmus test and the corresponding litmus output file, check
-# the .litmus.out file against the "Result:" comment to judge whether
-# the test ran correctly.  If the litmus-output-file is omitted, output
-# is assumed to be in file.litmus.out.
+# Given a .litmus test and the corresponding litmus output file, check the
+# .litmus.out file against the "Result:" comment to judge whether the test
+# ran correctly.  If the litmus-output-file is omitted, output is assumed
+# to be in file.litmus.out.  If this file is provided, this is assumed to
+# be a hardware test, which means that non-Sometimes verification results
+# will be noted, but forgiven.
 #
 # Usage:
 #	judgelitmus.sh file.litmus [ litmus-output-file ]
@@ -102,12 +104,19 @@ elif grep '^Observation' $LKMM_DESTDIR/$litmusout | grep -q $outcome || test "$o
 then
 	ret=0
 else
-	echo " !!! Unexpected non-$outcome verification" $litmus
-	if ! grep -q '!!!' $LKMM_DESTDIR/$litmusout
+	if test -n "$2" -a "$outcome" = Sometimes
 	then
-		echo " !!! Unexpected non-$outcome verification" >> $LKMM_DESTDIR/$litmusout 2>&1
+		flag="--- Forgiven"
+		ret=0
+	else
+		flag="!!! Unexpected"
+		ret=1
 	fi
-	ret=1
+	echo " $flag non-$outcome verification" $litmus
+	if ! grep -qe "$flag" $LKMM_DESTDIR/$litmusout
+	then
+		echo " $flag non-$outcome verification" >> $LKMM_DESTDIR/$litmusout 2>&1
+	fi
 fi
 tail -2 $LKMM_DESTDIR/$litmusout | head -1
 exit $ret
