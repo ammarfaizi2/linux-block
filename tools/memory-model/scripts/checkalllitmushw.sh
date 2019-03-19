@@ -1,0 +1,61 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0+
+#
+# Run herd7 tests on hardware translations of all .litmus files in the
+# litmus-tests directory and check each file's result against a "Result:"
+# comment within that litmus test.  If the verification result does not
+# match that specified in the litmus test, this script prints an error
+# message prefixed with "^^^".  It also outputs verification results to
+# a file whose name is that of the specified litmus test, but with ".out"
+# appended.  If the "Result:" comment specifies "Sometimes", a "Never"
+# or "Always" result is forgiven (aside from the "Never 0 0" indication
+# of deterministic deadlock).
+#
+# Litmus tests containing locking, RCU, or SRCU are cheerfully ignored.
+#
+# Usage:
+#	checkalllitmushw.sh
+#
+# Run this in the directory containing the memory model.
+#
+# This script makes no attempt to run the litmus tests concurrently.
+#
+# Copyright IBM Corporation, 2019
+#
+# Author: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+
+. scripts/parseargs.sh
+
+litmusdir=litmus-tests
+if test -d "$litmusdir" -a -r "$litmusdir" -a -x "$litmusdir"
+then
+	:
+else
+	echo ' --- ' error: $litmusdir is not an accessible directory
+	exit 255
+fi
+
+# Create any new directories that have appeared in the litmus-tests
+# directory since the last run.
+if test "$LKMM_DESTDIR" != "."
+then
+	find $litmusdir -type d -print |
+	( cd "$LKMM_DESTDIR"; sed -e 's/^/mkdir -p /' | sh )
+fi
+
+# Run the script on all the litmus tests in the specified directory
+ret=0
+for i in $litmusdir/*.litmus
+do
+	if scripts/simpletest.sh $i && ! scripts/checklitmushw.sh $i
+	then
+		ret=1
+	fi
+done
+if test "$ret" -ne 0
+then
+	echo " ^^^ VERIFICATION MISMATCHES" 1>&2
+else
+	echo All simple litmus tests verified as was expected. 1>&2
+fi
+exit $ret
