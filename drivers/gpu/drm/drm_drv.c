@@ -77,7 +77,7 @@ static bool drm_core_init_complete = false;
 
 static struct dentry *drm_debugfs_root;
 
-DEFINE_STATIC_SRCU(drm_unplug_srcu);
+static struct srcu_struct drm_unplug_srcu;
 
 /*
  * DRM Minors
@@ -958,12 +958,18 @@ static void drm_core_exit(void)
 	drm_sysfs_destroy();
 	idr_destroy(&drm_minors_idr);
 	drm_connector_ida_destroy();
+	cleanup_srcu_struct(&drm_unplug_srcu);
 }
 
 static int __init drm_core_init(void)
 {
 	int ret;
 
+	ret = init_srcu_struct(&drm_unplug_srcu);
+	if (ret) {
+		DRM_ERROR("Cannot create DRM class: %d\n", ret);
+		return ret; /* cannot cleanup after failed srcu_struct init. */
+	}
 	drm_connector_ida_init();
 	idr_init(&drm_minors_idr);
 
