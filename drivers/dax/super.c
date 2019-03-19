@@ -25,7 +25,7 @@
 #include "dax-private.h"
 
 static dev_t dax_devt;
-DEFINE_STATIC_SRCU(dax_srcu);
+static struct srcu_struct dax_srcu;
 static struct vfsmount *dax_mnt;
 static DEFINE_IDA(dax_minor_ida);
 static struct kmem_cache *dax_cache __read_mostly;
@@ -665,6 +665,10 @@ static int __init dax_core_init(void)
 {
 	int rc;
 
+	rc = init_srcu_struct(&dax_srcu);
+	if (rc)
+		goto err_srcu;
+
 	rc = dax_fs_init();
 	if (rc)
 		return rc;
@@ -678,10 +682,13 @@ static int __init dax_core_init(void)
 		goto err_bus;
 	return 0;
 
+
 err_bus:
 	unregister_chrdev_region(dax_devt, MINORMASK+1);
 err_chrdev:
 	dax_fs_exit();
+	cleanup_srcu_struct(&dax_srcu);
+err_srcu:
 	return 0;
 }
 
@@ -690,6 +697,7 @@ static void __exit dax_core_exit(void)
 	unregister_chrdev_region(dax_devt, MINORMASK+1);
 	ida_destroy(&dax_minor_ida);
 	dax_fs_exit();
+	cleanup_srcu_struct(&dax_srcu);
 }
 
 MODULE_AUTHOR("Intel Corporation");
