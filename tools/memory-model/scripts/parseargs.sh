@@ -98,7 +98,7 @@ do
 		shift
 		;;
 	--hw)
-		checkarg --hw "(.map file architecture name)" "$#" "$2" '^[A-Za-z0-9_-\+' '^--'
+		checkarg --hw "(.map file architecture name)" "$#" "$2" '^[A-Za-z0-9_-]\+' '^--'
 		LKMM_HW_MAP_FILE="$2"
 		shift
 		;;
