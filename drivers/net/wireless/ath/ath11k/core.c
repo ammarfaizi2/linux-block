@@ -427,7 +427,6 @@ static void ath11k_core_stop(struct ath11k_base *sc)
 {
 	ath11k_qmi_firmware_stop(sc);
 	ath11k_ahb_stop(sc);
-	ath11k_ahb_ext_irq_disable(sc);
 	ath11k_wmi_detach(sc);
 
 	/* De-Init of components as needed */
@@ -660,6 +659,7 @@ void ath11k_core_deinit(struct ath11k_base *sc)
 {
 	mutex_lock(&sc->core_lock);
 
+	ath11k_ahb_ext_irq_disable(sc);
 	ath11k_core_pdev_destroy(sc);
 	ath11k_core_stop(sc);
 
