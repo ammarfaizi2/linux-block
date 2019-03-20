@@ -3672,10 +3672,6 @@
 			the propagation of recent CPU-hotplug changes up
 			the rcu_node combining tree.
 
-	rcutree.nosoftirq=	[KNL]
-			If set, move all RCU_SOFTIRQ processing to per-CPU
-			rcuc kthreads.  Defaults to using RCU_SOFTIRQ.
-
 	rcutree.rcu_fanout_exact= [KNL]
 			Disable autobalancing of the rcu_node combining
 			tree.  This is used by rcutorture, and might
