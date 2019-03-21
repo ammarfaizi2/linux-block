@@ -98,7 +98,7 @@ struct rcu_state rcu_state = {
 /* Dump rcu_node combining tree at boot to verify correct setup. */
 static bool dump_tree;
 module_param(dump_tree, bool, 0444);
-/* Move RCU_SOFTIRQ to rcuc kthreads. */
+/* By default, use RCU_SOFTIRQ instead of rcuc kthreads. */
 static bool use_softirq = 1;
 module_param(use_softirq, bool, 0444);
 /* Control rcu_node-tree auto-balancing at boot time. */
