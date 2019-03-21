@@ -1178,6 +1178,15 @@ static int ath11k_dp_rx_retrieve_amsdu(struct ath11k *ar,
 	if (!msdu)
 		return -ENOENT;
 
+	hdr_status = ath11k_dp_rx_h_80211_hdr(msdu->data);
+	hdr = (struct ieee80211_hdr *)hdr_status;
+	/* Process only data frames */
+	if (!ieee80211_is_data(hdr->frame_control)) {
+		__skb_unlink(msdu, msdu_list);
+		dev_kfree_skb_any(msdu);
+		return -EINVAL;
+	}
+
 	do {
 		__skb_unlink(msdu, msdu_list);
 		last_buf = ath11k_dp_rx_get_msdu_last_buf(msdu_list, msdu);
@@ -1191,15 +1200,6 @@ static int ath11k_dp_rx_retrieve_amsdu(struct ath11k *ar,
 		if (!ath11k_dp_rx_h_attn_msdu_done(last_buf->data)) {
 			ath11k_warn(ar->ab, "msdu_done bit in attention is not set\n");
 			ret = -EIO;
-			goto free_out;
-		}
-
-		hdr_status = ath11k_dp_rx_h_80211_hdr(msdu->data);
-		hdr = (struct ieee80211_hdr *)hdr_status;
-
-		/* Process only data frames */
-		if (!ieee80211_is_data(hdr->frame_control)) {
-			ret = 0;
 			goto free_out;
 		}
 
