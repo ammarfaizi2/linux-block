@@ -4944,6 +4944,7 @@ static int ath11k_mac_register(struct ath11k *ar)
 		ieee80211_hw_set(ar->hw, AMPDU_AGGREGATION);
 		ieee80211_hw_set(ar->hw, TX_AMPDU_SETUP_IN_HW);
 		ieee80211_hw_set(ar->hw, SUPPORTS_REORDERING_BUFFER);
+		ieee80211_hw_set(ar->hw, SUPPORTS_AMSDU_IN_AMPDU);
 	}
 
 	ar->hw->wiphy->features |= NL80211_FEATURE_STATIC_SMPS;
