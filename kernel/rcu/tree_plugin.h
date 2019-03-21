@@ -609,7 +609,7 @@ static void rcu_read_unlock_special(struct task_struct *t)
 		/* Need to defer quiescent state until everything is enabled. */
 		if (irqs_were_disabled) {
 			/* Enabling irqs does not reschedule, so... */
-			if (!use_softirq)
+			if (use_softirq)
 				raise_softirq_irqoff(RCU_SOFTIRQ);
 			else
 				invoke_rcu_core();
