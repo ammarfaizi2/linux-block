@@ -10,7 +10,7 @@
 #include <asm/byteorder.h>
 #include <asm/word-at-a-time.h>
 
-#define IS_UNALIGNED(addr) (((long)(addr)) & (sizeof(long) - 1))
+#define IS_UNALIGNED(addr) (((long __force)(addr)) & (sizeof(long) - 1))
 
 /*
  * Do a strncpy, return length of string without final '\0'.
