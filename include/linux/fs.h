@@ -2222,9 +2222,6 @@ static inline struct dentry *mount_bdev(struct file_system_type *fs_type,
 	return ERR_PTR(-ENODEV);
 }
 #endif
-extern struct dentry *mount_single(struct file_system_type *fs_type,
-	int flags, void *data,
-	int (*fill_super)(struct super_block *, void *, int));
 extern struct dentry *mount_nodev(struct file_system_type *fs_type,
 	int flags, void *data,
 	int (*fill_super)(struct super_block *, void *, int));
