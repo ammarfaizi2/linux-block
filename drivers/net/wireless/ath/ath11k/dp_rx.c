@@ -1113,7 +1113,7 @@ static int ath11k_dp_rx_msdu_coalesce(struct ath11k *ar,
 	/* When an MSDU spread over multiple buffers attention, MSDU_END and
 	 * MPDU_END tlvs are valid only in the last buffer. Copy those tlvs.
 	 */
-	ath11k_dp_rx_desc_end_tlv_copy(first->data, last->data);
+	ath11k_dp_rx_desc_end_tlv_copy(rxcb->rx_desc, last->data);
 
 	rem_len = msdu_len -
 		  (DP_RX_BUFFER_SIZE - HAL_RX_DESC_SIZE - l3pad_bytes);
