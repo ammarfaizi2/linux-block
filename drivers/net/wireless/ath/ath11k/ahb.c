@@ -647,7 +647,8 @@ void ath11k_ahb_ext_irq_disable(struct ath11k_base *ab)
 
 void ath11k_ahb_stop(struct ath11k_base *sc)
 {
-	ath11k_ahb_ce_irqs_disable(sc);
+	if (!test_bit(ATH11K_FLAG_CRASH_FLUSH, &sc->dev_flags))
+		ath11k_ahb_ce_irqs_disable(sc);
 	ath11k_ahb_sync_ce_irqs(sc);
 	ath11k_ahb_kill_tasklets(sc);
 	del_timer_sync(&sc->rx_replenish_retry);
@@ -988,13 +989,14 @@ static int ath11k_subsys_notifier_cb(struct notifier_block *nb,
 
 	switch (code) {
 	case SUBSYS_BEFORE_SHUTDOWN:
+		set_bit(ATH11K_FLAG_CRASH_FLUSH, &sc->dev_flags);
+		set_bit(ATH11K_FLAG_RECOVERY, &sc->dev_flags);
 		sc->target_restarted = 1;
 		break;
 	case SUBSYS_AFTER_POWERUP:
 		sc->target_restarted = 0;
 		break;
 	case SUBSYS_BEFORE_POWERUP:
-		BUG_ON(sc->target_restarted);
 		break;
 	default:
 		return NOTIFY_OK;
@@ -1115,14 +1117,23 @@ static int ath11k_ahb_remove(struct platform_device *pdev)
 {
 	struct ath11k_base *sc = platform_get_drvdata(pdev);
 
-#ifdef CONFIG_IPQ_SUBSYSTEM_RESTART
-	ath11k_unregister_subsys(sc);
-#endif
+	reinit_completion(&sc->driver_recovery);
+
+	if (test_bit(ATH11K_FLAG_RECOVERY, &sc->dev_flags))
+		wait_for_completion_timeout(&sc->driver_recovery,
+					    ATH11K_AHB_RECOVERY_TIMEOUT);
+
+	set_bit(ATH11K_FLAG_UNREGISTERING, &sc->dev_flags);
+	cancel_work_sync(&sc->restart_work);
+
 	ath11k_core_deinit(sc);
 	ath11k_ahb_free_irq(sc);
 
 	ath11k_hal_srng_deinit(sc);
 	ath11k_ce_free_pipes(sc);
+#ifdef CONFIG_IPQ_SUBSYSTEM_RESTART
+	ath11k_unregister_subsys(sc);
+#endif
 	ath11k_core_free(sc);
 	platform_set_drvdata(pdev, NULL);
 

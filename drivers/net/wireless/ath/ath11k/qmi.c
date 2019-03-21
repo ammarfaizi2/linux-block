@@ -2354,6 +2354,8 @@ void ath11k_qmi_event_work(struct work_struct *work)
 		case ATH11K_QMI_EVENT_SERVER_EXIT:
 			qmi_handle_destroy(sc->qmi.handle);
 			sc->qmi.handle = NULL;
+			set_bit(ATH11K_FLAG_CRASH_FLUSH, &sc->dev_flags);
+			set_bit(ATH11K_FLAG_RECOVERY, &sc->dev_flags);
 			break;
 		case ATH11K_QMI_EVENT_REQUEST_MEM:
 			ath11k_qmi_alloc_target_mem_chunk(sc);
@@ -2370,6 +2372,9 @@ void ath11k_qmi_event_work(struct work_struct *work)
 		case ATH11K_QMI_EVENT_FW_READY:
 			sc->qmi.cal_done = 1;
 			complete(&sc->fw_ready);
+			if (test_bit(ATH11K_FLAG_REGISTERED, &sc->dev_flags) &&
+			    !test_bit(ATH11K_FLAG_UNREGISTERING, &sc->dev_flags))
+				queue_work(sc->workqueue, &sc->restart_work);
 			break;
 		case ATH11K_QMI_EVENT_COLD_BOOT_CAL_DONE:
 			break;

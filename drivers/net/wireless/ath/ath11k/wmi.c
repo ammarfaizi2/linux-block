@@ -240,6 +240,10 @@ int ath11k_wmi_cmd_send(struct ath11k_pdev_wmi *wmi, struct sk_buff *skb,
 
 	wait_event_timeout(wmi_sc->tx_credits_wq, ({
 		ret = ath11k_wmi_cmd_send_nowait(wmi, skb, cmd_id);
+
+		if (ret && test_bit(ATH11K_FLAG_CRASH_FLUSH, &wmi_sc->sc->dev_flags))
+			ret = -ESHUTDOWN;
+
 		(ret != -EAGAIN);
 	}), WMI_SEND_TIMEOUT_HZ);
 

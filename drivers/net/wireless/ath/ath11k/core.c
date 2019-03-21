@@ -425,7 +425,8 @@ exit:
 
 static void ath11k_core_stop(struct ath11k_base *sc)
 {
-	ath11k_qmi_firmware_stop(sc);
+	if (!test_bit(ATH11K_FLAG_CRASH_FLUSH, &sc->dev_flags))
+		ath11k_qmi_firmware_stop(sc);
 	ath11k_ahb_stop(sc);
 	ath11k_wmi_detach(sc);
 
@@ -602,6 +603,158 @@ err_firmware_stop:
 	return ret;
 }
 
+static int ath11k_core_reconfigure_on_crash(struct ath11k_base *sc)
+{
+	int ret;
+
+	ath11k_ahb_ext_irq_disable(sc);
+
+	ath11k_dp_pdev_free(sc);
+	ath11k_dp_free(sc);
+	ath11k_ahb_stop(sc);
+	ath11k_wmi_detach(sc);
+	ath11k_hal_srng_deinit(sc);
+	sc->free_vdev_map = (1LL << (sc->num_radios * TARGET_NUM_VDEVS)) - 1;
+
+	ret = ath11k_hal_srng_init(sc);
+	if (ret)
+		return ret;
+
+	ret = ath11k_ce_init_pipes(sc);
+	if (ret) {
+		ath11k_err(sc, "failed to initialize CE: %d on reboot\n", ret);
+		goto err_hal_srng_deinit;
+	}
+
+	clear_bit(ATH11K_FLAG_CRASH_FLUSH, &sc->dev_flags);
+
+	ret = ath11k_dp_alloc(sc);
+	if (ret) {
+		ath11k_err(sc, "failed to init DP: %d\n", ret);
+		goto err_hal_srng_deinit;
+	}
+
+	ret = ath11k_core_start(sc, ATH11K_FIRMWARE_MODE_NORMAL);
+	if (ret) {
+		ath11k_err(sc, "failed to start core from restart work\n");
+		goto err_dp_free;
+	}
+
+	ret = ath11k_dp_pdev_alloc(sc);
+	if (ret) {
+		ath11k_err(sc, "failed to attach DP pdev: %d\n", ret);
+		goto err_core_stop;
+	}
+
+	ath11k_ahb_ext_irq_enable(sc);
+
+	clear_bit(ATH11K_FLAG_RECOVERY, &sc->dev_flags);
+	return 0;
+
+err_core_stop:
+	ath11k_core_stop(sc);
+err_dp_free:
+	ath11k_dp_free(sc);
+err_hal_srng_deinit:
+	ath11k_hal_srng_deinit(sc);
+
+	return ret;
+}
+
+void ath11k_core_halt(struct ath11k *ar)
+{
+	struct ath11k_base *sc = ar->ab;
+
+	lockdep_assert_held(&ar->conf_mutex);
+
+	ar->num_created_vdevs = 0;
+
+	ath11k_scan_finish(ar);
+	ath11k_mac_peer_cleanup_all(ar);
+	cancel_delayed_work_sync(&ar->scan.timeout);
+	cancel_work_sync(&ar->regd_update_work);
+
+	rcu_assign_pointer(sc->pdevs_active[ar->pdev_idx], NULL);
+	synchronize_rcu();
+	INIT_LIST_HEAD(&ar->arvifs);
+	idr_init(&ar->txmgmt_idr);
+}
+
+static void ath11k_core_restart(struct work_struct *work)
+{
+	struct ath11k_base *sc = container_of(work, struct ath11k_base, restart_work);
+	struct ath11k *ar;
+	struct ath11k_pdev *pdev;
+	int i, ret = 0;
+
+	spin_lock_bh(&sc->data_lock);
+	sc->stats.fw_crash_counter++;
+	spin_unlock_bh(&sc->data_lock);
+
+	for (i = 0; i < sc->num_radios; i++) {
+		pdev = &sc->pdevs[i];
+		ar = pdev->ar;
+		if (!ar || ar->state == ATH11K_STATE_OFF)
+			continue;
+
+		ieee80211_stop_queues(ar->hw);
+		ath11k_drain_tx(ar);
+		complete(&ar->scan.started);
+		complete(&ar->scan.completed);
+		complete(&ar->peer_assoc_done);
+		complete(&ar->install_key_done);
+		complete(&ar->vdev_setup_done);
+		complete(&ar->bss_survey_done);
+
+		wake_up(&ar->dp.tx_empty_waitq);
+		idr_for_each(&ar->txmgmt_idr,
+			     ath11k_mac_tx_mgmt_pending_free, ar);
+		idr_destroy(&ar->txmgmt_idr);
+	}
+
+	wake_up(&sc->wmi_sc.tx_credits_wq);
+	wake_up(&sc->peer_mapping_wq);
+
+	mutex_lock(&sc->core_lock);
+	ret = ath11k_core_reconfigure_on_crash(sc);
+	if (ret) {
+		ath11k_err(sc, "failed to reconfigure driver on crash recovery\n");
+		return;
+	}
+	mutex_unlock(&sc->core_lock);
+
+	for (i = 0; i < sc->num_radios; i++) {
+		pdev = &sc->pdevs[i];
+		ar = pdev->ar;
+		if (!ar || ar->state == ATH11K_STATE_OFF)
+			continue;
+
+		mutex_lock(&ar->conf_mutex);
+
+		switch (ar->state) {
+		case ATH11K_STATE_ON:
+			ar->state = ATH11K_STATE_RESTARTING;
+			ath11k_core_halt(ar);
+			ieee80211_restart_hw(ar->hw);
+			break;
+		case ATH11K_STATE_OFF:
+			ath11k_warn(sc, "cannot restart radio %d "
+				    "that hasn't been started\n", i);
+			break;
+		case ATH11K_STATE_RESTARTING:
+			break;
+		case ATH11K_STATE_RESTARTED:
+			ar->state = ATH11K_STATE_WEDGED;
+		case ATH11K_STATE_WEDGED:
+			ath11k_warn(sc,
+				    "device is wedged, will not restart radio %d\n", i);
+			break;
+		}
+		mutex_unlock(&ar->conf_mutex);
+	}
+	complete(&sc->driver_recovery);
+}
+
 int ath11k_core_init(struct ath11k_base *sc)
 {
 	struct device *dev = sc->dev;
@@ -650,6 +803,7 @@ int ath11k_core_init(struct ath11k_base *sc)
 
 	ath11k_ahb_ext_irq_enable(sc);
 
+	set_bit(ATH11K_FLAG_REGISTERED, &sc->dev_flags);
 	mutex_unlock(&sc->core_lock);
 
 	return 0;
@@ -688,6 +842,11 @@ struct ath11k_base *ath11k_core_alloc(struct device *dev)
 		return NULL;
 
 	init_completion(&sc->fw_ready);
+	init_completion(&sc->driver_recovery);
+
+	sc->workqueue = create_singlethread_workqueue("ath11k_wq");
+	if (!sc->workqueue)
+		goto err_sc_free;
 
 	sc->qmi.wq = create_singlethread_workqueue("ath11k_qmi_wq");
 	if (!sc->qmi.wq)
@@ -707,6 +866,7 @@ struct ath11k_base *ath11k_core_alloc(struct device *dev)
 	init_waitqueue_head(&sc->peer_mapping_wq);
 	init_waitqueue_head(&sc->wmi_sc.tx_credits_wq);
 	INIT_WORK(&sc->qmi.msg_recv_work, ath11k_qmi_msg_recv_work);
+	INIT_WORK(&sc->restart_work, ath11k_core_restart);
 
 	timer_setup(&sc->rx_replenish_retry, ath11k_ce_rx_replenish_retry, 0);
 
@@ -717,6 +877,8 @@ struct ath11k_base *ath11k_core_alloc(struct device *dev)
 err_qmi_resp_wq:
 	destroy_workqueue(sc->qmi.wq);
 err_qmi_wq:
+	destroy_workqueue(sc->workqueue);
+err_sc_free:
 	kfree(sc);
 
 	return NULL;

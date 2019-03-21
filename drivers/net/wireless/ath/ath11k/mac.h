@@ -190,4 +190,6 @@ struct ath11k *ath11k_get_ar_vdev_stop_status(struct ath11k_base *ab,
 void ath11k_mgmt_over_wmi_tx_work(struct work_struct *work);
 void ath11k_mgmt_over_wmi_tx_purge(struct ath11k *ar);
 void ath11k_drain_tx(struct ath11k *ar);
+void ath11k_mac_peer_cleanup_all(struct ath11k *ar);
+int ath11k_mac_tx_mgmt_pending_free(int buf_id, void *skb, void *ctx);
 #endif

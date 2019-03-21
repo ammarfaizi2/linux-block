@@ -158,6 +158,9 @@ enum ath11k_dev_flags {
 	ATH11K_FLAG_RAW_MODE,
 	ATH11K_FLAG_HW_CRYPTO_DISABLED,
 	ATH11K_FLAG_BTCOEX,
+	ATH11K_FLAG_RECOVERY,
+	ATH11K_FLAG_UNREGISTERING,
+	ATH11K_FLAG_REGISTERED,
 };
 
 struct ath11k_vif {
@@ -346,6 +349,9 @@ struct ath11k_sta {
 enum ath11k_state {
 	ATH11K_STATE_OFF,
 	ATH11K_STATE_ON,
+	ATH11K_STATE_RESTARTING,
+	ATH11K_STATE_RESTARTED,
+	ATH11K_STATE_WEDGED,
 	/* Add other states as required */
 };
 
@@ -623,6 +629,15 @@ struct ath11k_base {
 	struct dentry *debugfs_soc;
 #endif
 	struct ath11k_soc_dp_rx_stats soc_stats;
+
+	unsigned long dev_flags;
+	struct completion driver_recovery;
+	struct workqueue_struct *workqueue;
+	struct work_struct restart_work;
+	struct {
+		/* protected by data_lock */
+		u32 fw_crash_counter;
+	} stats;
 };
 
 struct ath11k_fw_stats_pdev {
@@ -795,6 +810,7 @@ ath11k_reg_build_regd(struct ath11k_base *ab,
 		      struct cur_regulatory_info *reg_info, bool intersect);
 int ath11k_regd_update(struct ath11k *ar, bool init);
 int ath11k_reg_update_chan_list(struct ath11k *ar);
+void ath11k_core_halt(struct ath11k *ar);
 
 static inline const char *ath11k_scan_state_str(enum ath11k_scan_state state)
 {

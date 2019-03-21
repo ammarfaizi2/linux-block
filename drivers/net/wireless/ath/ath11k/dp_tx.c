@@ -84,6 +84,9 @@ int ath11k_dp_tx(struct ath11k *ar, struct ath11k_vif *arvif,
 	u8 hal_ring_id;
 	int ret;
 
+	if (test_bit(ATH11K_FLAG_CRASH_FLUSH, &ar->ab->dev_flags))
+		return -ESHUTDOWN;
+
 	if (!ieee80211_is_data(hdr->frame_control))
 		return -ENOTSUPP;
 

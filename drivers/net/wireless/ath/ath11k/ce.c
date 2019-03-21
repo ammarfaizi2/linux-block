@@ -530,6 +530,9 @@ int ath11k_ce_send(struct ath11k_base *ab, struct sk_buff *skb, u8 pipe_id,
 			ath11k_ce_poll_send_completed(ab, pipe->pipe_num);
 	}
 
+	if (test_bit(ATH11K_FLAG_CRASH_FLUSH, &ab->dev_flags))
+		return -ESHUTDOWN;
+
 	spin_lock_bh(&ab->ce.ce_lock);
 
 	write_index = pipe->src_ring->write_index;

@@ -611,7 +611,8 @@ static int ath11k_wait_for_peer_common(struct ath11k_base *ab, int vdev_id,
 				mapped = !!ath11k_peer_find(ab, vdev_id, addr);
 				spin_unlock_bh(&ab->data_lock);
 
-				mapped == expect_mapped;
+				(mapped == expect_mapped ||
+				 test_bit(ATH11K_FLAG_CRASH_FLUSH, &ab->dev_flags));
 				}), 3 * HZ);
 
 	if (ret <= 0)
@@ -701,6 +702,24 @@ static int ath11k_peer_delete(struct ath11k *ar, u32 vdev_id, u8 *addr)
 	ar->num_peers--;
 
 	return 0;
+}
+
+void ath11k_mac_peer_cleanup_all(struct ath11k *ar)
+{
+	struct ath11k_peer *peer, *tmp;
+	struct ath11k_base *ab = ar->ab;
+
+	lockdep_assert_held(&ar->conf_mutex);
+
+	spin_lock_bh(&ab->data_lock);
+	list_for_each_entry_safe(peer, tmp, &ab->peers, list) {
+		ath11k_peer_rx_tid_cleanup(ar, peer);
+		list_del(&peer->list);
+		kfree(peer);
+	}
+	spin_unlock_bh(&ab->data_lock);
+
+	ar->num_peers = 0;
 }
 
 static void ath11k_peer_cleanup(struct ath11k *ar, u32 vdev_id)
@@ -3191,7 +3210,8 @@ static int __ath11k_set_antenna(struct ath11k *ar, u32 tx_ant, u32 rx_ant)
 	ar->cfg_tx_chainmask = tx_ant;
 	ar->cfg_rx_chainmask = rx_ant;
 
-	if (ar->state != ATH11K_STATE_ON)
+	if (ar->state != ATH11K_STATE_ON &&
+	    ar->state != ATH11K_STATE_RESTARTED)
 		return 0;
 
 	ret = ath11k_wmi_pdev_set_param(ar, WMI_PDEV_PARAM_TX_CHAIN_MASK,
@@ -3216,7 +3236,7 @@ static int __ath11k_set_antenna(struct ath11k *ar, u32 tx_ant, u32 rx_ant)
 	return 0;
 }
 
-static int ath11k_mac_tx_mgmt_pending_free(int buf_id, void *skb, void *ctx)
+int ath11k_mac_tx_mgmt_pending_free(int buf_id, void *skb, void *ctx)
 {
 	struct ath11k *ar = ctx;
 	struct ath11k_base *ab = ar->ab;
@@ -3332,6 +3352,9 @@ static int ath11k_mac_mgmt_tx(struct ath11k *ar, struct sk_buff *skb)
 {
 	struct sk_buff_head *q = &ar->wmi_mgmt_tx_queue;
 
+	if (test_bit(ATH11K_FLAG_CRASH_FLUSH, &ar->ab->dev_flags))
+		return -ESHUTDOWN;
+
 	if (skb_queue_len(q) == ATH11K_TX_MGMT_NUM_PENDING_MAX) {
 		ath11k_warn(ar->ab, "mgmt tx queue is full\n");
 		return -ENOSPC;
@@ -3387,12 +3410,18 @@ static int ath11k_start(struct ieee80211_hw *hw)
 	struct ath11k_pdev *pdev = ar->pdev;
 	int ret;
 
+	ath11k_drain_tx(ar);
 	mutex_lock(&ar->conf_mutex);
 
 	switch (ar->state) {
 	case ATH11K_STATE_OFF:
 		ar->state = ATH11K_STATE_ON;
 		break;
+	case ATH11K_STATE_RESTARTING:
+		ar->state = ATH11K_STATE_RESTARTED;
+		break;
+	case ATH11K_STATE_RESTARTED:
+	case ATH11K_STATE_WEDGED:
 	case ATH11K_STATE_ON:
 		WARN_ON(1);
 		ret = -EINVAL;
@@ -3920,6 +3949,9 @@ static void ath11k_mac_op_remove_chanctx(struct ieee80211_hw *hw,
 static inline int ath11k_mac_vdev_setup_sync(struct ath11k *ar)
 {
 	lockdep_assert_held(&ar->conf_mutex);
+
+	if (test_bit(ATH11K_FLAG_CRASH_FLUSH, &ar->ab->dev_flags))
+		return -ESHUTDOWN;
 
 	if (!wait_for_completion_timeout(&ar->vdev_setup_done,
 					 ATH11K_VDEV_SETUP_TIMEOUT_HZ))
@@ -4686,6 +4718,27 @@ ath11k_mac_op_set_bitrate_mask(struct ieee80211_hw *hw,
 }
 
 static void
+ath11k_reconfig_complete(struct ieee80211_hw *hw,
+			 enum ieee80211_reconfig_type reconfig_type)
+{
+	struct ath11k *ar = hw->priv;
+
+	if (reconfig_type != IEEE80211_RECONFIG_TYPE_RESTART)
+		return;
+
+	mutex_lock(&ar->conf_mutex);
+
+	if (ar->state == ATH11K_STATE_RESTARTED) {
+		ath11k_warn(ar->ab, "pdev %d successfully recovered\n",
+			    ar->pdev->pdev_id);
+		ar->state = ATH11K_STATE_ON;
+		ieee80211_wake_queues(ar->hw);
+	}
+
+	mutex_unlock(&ar->conf_mutex);
+}
+
+static void
 ath11k_mac_update_bss_chan_survey(struct ath11k *ar,
 				  struct ieee80211_channel *channel)
 {
@@ -4768,6 +4821,7 @@ static const struct ieee80211_ops ath11k_ops = {
 	.tx				= ath11k_mac_op_tx,
 	.start                          = ath11k_start,
 	.stop                           = ath11k_stop,
+	.reconfig_complete              = ath11k_reconfig_complete,
 	.add_interface                  = ath11k_add_interface,
 	.remove_interface		= ath11k_remove_interface,
 	.config                         = ath11k_config,
