@@ -1855,7 +1855,7 @@ int ath11k_dp_process_rx(struct ath11k_base *ab, int mac_id,
 			ath11k_warn(ab, "frame rx with invalid buf_id %d\n",
 				    buf_id);
 			spin_unlock_bh(&rx_ring->idr_lock);
-			break;
+			continue;
 		}
 
 		idr_remove(&rx_ring->bufs_idr, buf_id);
@@ -1865,6 +1865,9 @@ int ath11k_dp_process_rx(struct ath11k_base *ab, int mac_id,
 		dma_unmap_single(ab->dev, rxcb->paddr,
 				 msdu->len + skb_tailroom(msdu),
 				 DMA_FROM_DEVICE);
+
+		num_buffs_reaped++;
+		budget--;
 
 		if (meta_info.push_reason !=
 		    HAL_REO_DEST_RING_PUSH_REASON_ROUTING_INSTRUCTION) {
@@ -1878,8 +1881,6 @@ int ath11k_dp_process_rx(struct ath11k_base *ab, int mac_id,
 		rxcb->is_last_msdu = meta_info.msdu_meta.last;
 		rxcb->is_continuation = meta_info.msdu_meta.continuation;
 		__skb_queue_tail(&msdu_list, msdu);
-		num_buffs_reaped++;
-		budget--;
 	}
 
 	ath11k_hal_srng_access_end(ab, srng);
@@ -2153,7 +2154,7 @@ int ath11k_dp_rx_process_mon_status(struct ath11k_base *ab, int mac_id,
 				ath11k_warn(ab, "rx monitor status with invalid buf_id %d\n",
 					    buf_id);
 				spin_unlock_bh(&rx_ring->idr_lock);
-				break;
+				continue;
 			}
 
 			idr_remove(&rx_ring->bufs_idr, buf_id);
@@ -2430,7 +2431,7 @@ int ath11k_dp_process_rx_err(struct ath11k_base *ab, struct napi_struct *napi,
 		if (ret) {
 			ath11k_warn(ab, "failed to parse error reo desc %d\n",
 				    ret);
-			goto exit;
+			continue;
 		}
 		link_desc_va = link_desc_banks[desc_bank].vaddr +
 			       (paddr - link_desc_banks[desc_bank].paddr);
@@ -2711,7 +2712,7 @@ int ath11k_dp_rx_process_wbm_err(struct ath11k_base *ab,
 		ret = ath11k_hal_wbm_desc_parse_err(ab, rx_desc, &err_info);
 		if (ret) {
 			ath11k_warn(ab, "failed to parse rx error in wbm_rel ring desc %d\n", ret);
-			break;
+			continue;
 		}
 
 		buf_id = FIELD_GET(DP_RXDMA_BUF_COOKIE_BUF_ID, err_info.cookie);
@@ -2726,7 +2727,7 @@ int ath11k_dp_rx_process_wbm_err(struct ath11k_base *ab,
 			ath11k_warn(ab, "frame rx with invalid buf_id %d pdev %d\n",
 				    buf_id, mac_id);
 			spin_unlock_bh(&rx_ring->idr_lock);
-			break;
+			continue;
 		}
 
 		idr_remove(&rx_ring->bufs_idr, buf_id);
@@ -2736,6 +2737,10 @@ int ath11k_dp_rx_process_wbm_err(struct ath11k_base *ab,
 		dma_unmap_single(ab->dev, rxcb->paddr,
 				 msdu->len + skb_tailroom(msdu),
 				 DMA_FROM_DEVICE);
+
+		num_buffs_reaped[mac_id]++;
+		total_num_buffs_reaped++;
+		budget--;
 
 		if (err_info.push_reason !=
 		    HAL_REO_DEST_RING_PUSH_REASON_ERR_DETECTED) {
@@ -2749,9 +2754,6 @@ int ath11k_dp_rx_process_wbm_err(struct ath11k_base *ab,
 		rxcb->is_last_msdu = err_info.last_msdu;
 		rxcb->rx_desc = msdu->data;
 		__skb_queue_tail(&msdu_list[mac_id], msdu);
-		num_buffs_reaped[mac_id]++;
-		total_num_buffs_reaped++;
-		budget--;
 	}
 
 	ath11k_hal_srng_access_end(ab, srng);
