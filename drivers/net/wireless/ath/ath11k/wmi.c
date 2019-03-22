@@ -3605,18 +3605,19 @@ static int wmi_process_mgmt_tx_comp(struct ath11k *ar, u32 desc_id,
 	struct sk_buff *msdu;
 	struct ieee80211_tx_info *info;
 	struct ath11k_skb_cb *skb_cb;
-	int ret;
 
-	spin_lock_bh(&ar->data_lock);
-
+	spin_lock_bh(&ar->txmgmt_idr_lock);
 	msdu = idr_find(&ar->txmgmt_idr, desc_id);
 
 	if (!msdu) {
 		ath11k_warn(ar->ab, "received mgmt tx compl for invalid msdu_id: %d\n",
 			    desc_id);
-		ret = -ENOENT;
-		goto out;
+		spin_unlock_bh(&ar->txmgmt_idr_lock);
+		return -ENOENT;
 	}
+
+	idr_remove(&ar->txmgmt_idr, desc_id);
+	spin_unlock_bh(&ar->txmgmt_idr_lock);
 
 	skb_cb = ATH11K_SKB_CB(msdu);
 	dma_unmap_single(ar->ab->dev, skb_cb->paddr, msdu->len, DMA_TO_DEVICE);
@@ -3627,12 +3628,7 @@ static int wmi_process_mgmt_tx_comp(struct ath11k *ar, u32 desc_id,
 
 	ieee80211_tx_status_irqsafe(ar->hw, msdu);
 
-	ret = 0;
-
-	idr_remove(&ar->txmgmt_idr, desc_id);
-out:
-	spin_unlock_bh(&ar->data_lock);
-	return ret;
+	return 0;
 }
 
 int ath11k_pull_mgmt_tx_compl_param_tlv(struct ath11k_base *ab,
