@@ -178,7 +178,7 @@ struct ath11k_vif {
 	struct ieee80211_vif *vif;
 
 	struct ieee80211_key_conf *wep_keys[WMI_MAX_KEY_INDEX + 1];
-	u8 def_wep_key_index;
+	s8 def_wep_key_index;
 
 	u16 tx_seq_no;
 	struct wmi_wmm_params_all_arg wmm_params;
