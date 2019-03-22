@@ -215,8 +215,6 @@ struct ath11k_vif_iter {
 	struct ath11k_vif *arvif;
 };
 
-#define ATH11K_MAX_NUM_PEER_IDS (1 << 10)
-
 struct ath11k_rx_peer_stats {
 	u64 num_msdu;
 	u64 num_mpdu_fcs_ok;

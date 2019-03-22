@@ -362,13 +362,6 @@ void ath11k_peer_unmap_event(struct ath11k_base *ab, u16 peer_id)
 {
 	struct ath11k_peer *peer;
 
-	if (peer_id >= ATH11K_MAX_NUM_PEER_IDS) {
-		ath11k_warn(ab,
-			    "received htt peer unmap event with idx out of bounds: %hu\n",
-			    peer_id);
-		return;
-	}
-
 	spin_lock_bh(&ab->data_lock);
 
 	peer = ath11k_peer_find_by_id(ab, peer_id);
@@ -393,13 +386,6 @@ void ath11k_peer_map_event(struct ath11k_base *ab, u8 vdev_id, u16 peer_id,
 			   u8 *mac_addr, u16 ast_hash)
 {
 	struct ath11k_peer *peer;
-
-	if (peer_id >= ATH11K_MAX_NUM_PEER_IDS) {
-		ath11k_warn(ab,
-			    "received htt peer map event with idx out of bounds: %hu\n",
-			    peer_id);
-		return;
-	}
 
 	spin_lock_bh(&ab->data_lock);
 	peer = ath11k_peer_find(ab, vdev_id, mac_addr);
