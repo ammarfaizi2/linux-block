@@ -189,8 +189,10 @@ void ath11k_debug_fw_stats_process(struct ath11k_base *ab, u8 *evt_buf, u32 len)
 		goto free;
 	}
 
+	rcu_read_lock();
 	ar = ath11k_get_ar_by_pdev_id(ab, stats.pdev_id);
 	if (!ar) {
+		rcu_read_unlock();
 		ath11k_warn(ab, "failed to get ar for pdev_id %d: %d\n",
 			    stats.pdev_id, ret);
 		goto free;
@@ -284,6 +286,7 @@ void ath11k_debug_fw_stats_process(struct ath11k_base *ab, u8 *evt_buf, u32 len)
 	}
 complete:
 	complete(&ar->debug.fw_stats_complete);
+	rcu_read_unlock();
 	spin_unlock_bh(&ar->data_lock);
 
 free:
