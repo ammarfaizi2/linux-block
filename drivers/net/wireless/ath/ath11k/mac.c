@@ -285,8 +285,8 @@ static u8 ath11k_parse_mpdudensity(u8 mpdudensity)
 	}
 }
 
-int ath11k_mac_vif_chan(struct ieee80211_vif *vif,
-			struct cfg80211_chan_def *def)
+static int ath11k_mac_vif_chan(struct ieee80211_vif *vif,
+			       struct cfg80211_chan_def *def)
 {
 	struct ieee80211_chanctx_conf *conf;
 
@@ -621,12 +621,14 @@ static int ath11k_wait_for_peer_common(struct ath11k_base *ab, int vdev_id,
 	return 0;
 }
 
-int ath11k_wait_for_peer_created(struct ath11k *ar, int vdev_id, const u8 *addr)
+static int
+ath11k_wait_for_peer_created(struct ath11k *ar, int vdev_id, const u8 *addr)
 {
 	return ath11k_wait_for_peer_common(ar->ab, vdev_id, addr, true);
 }
 
-int ath11k_wait_for_peer_deleted(struct ath11k *ar, int vdev_id, const u8 *addr)
+static int
+ath11k_wait_for_peer_deleted(struct ath11k *ar, int vdev_id, const u8 *addr)
 {
 	return ath11k_wait_for_peer_common(ar->ab, vdev_id, addr, false);
 }
@@ -2381,7 +2383,7 @@ ath11k_mac_set_peer_vht_fixed_rate(struct ath11k_vif *arvif,
 				   const struct cfg80211_bitrate_mask *mask,
 				   enum nl80211_band band)
 {
-	struct ath11k *ar;
+	struct ath11k *ar = arvif->ar;
 	u8 vht_rate, nss;
 	u32 rate_code;
 	int ret, i;
@@ -2389,7 +2391,6 @@ ath11k_mac_set_peer_vht_fixed_rate(struct ath11k_vif *arvif,
 	lockdep_assert_held(&ar->conf_mutex);
 
 	nss = 0;
-	ar = arvif->ar;
 
 	for (i = 0; i < ARRAY_SIZE(mask->control[band].vht_mcs); i++) {
 		if (hweight16(mask->control[band].vht_mcs[i]) == 1) {
