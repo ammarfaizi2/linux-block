@@ -35,13 +35,6 @@ ath11k_reg_notifier(struct wiphy *wiphy, struct regulatory_request *request)
 	struct ath11k *ar = hw->priv;
 	int ret;
 
-	if (ar->state != ATH11K_STATE_ON) {
-		ath11k_dbg(ar->ab, ATH11K_DBG_REG,
-			   "Regulatory Notification for %s not received in ON state\n",
-			   wiphy_name(wiphy));
-		return;
-	}
-
 	ath11k_dbg(ar->ab, ATH11K_DBG_REG,
 		   "Regulatory Notification received for %s n", wiphy_name(wiphy));
 
@@ -565,9 +558,7 @@ void ath11k_reg_free(struct ath11k_base *ab)
 	int i;
 
 	for (i = 0; i < MAX_RADIOS; i++) {
-		if (ab->default_regd[i])
-			kfree(ab->default_regd[i]);
-		if (ab->new_regd[i])
-			kfree(ab->new_regd[i]);
+		kfree(ab->default_regd[i]);
+		kfree(ab->new_regd[i]);
 	}
 }

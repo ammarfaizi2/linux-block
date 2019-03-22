@@ -4814,6 +4814,9 @@ int ath11k_reg_chan_list_event(struct ath11k_base *ab, u8 *evt_buf, u32 len)
 
 	pdev_idx = reg_info->phy_id;
 
+	if (pdev_idx >= ab->num_radios)
+		goto fallback;
+
 	/* Avoid multiple overwrites to default regd, during core
 	 * stop-start after mac registration.
 	 */
@@ -4840,27 +4843,17 @@ int ath11k_reg_chan_list_event(struct ath11k_base *ab, u8 *evt_buf, u32 len)
 
 	spin_lock(&ab->data_lock);
 	if (ab->mac_registered) {
-		/* Once mac is registered all CC events from fw is considered
-		 * to be received due to user requests currently.
+		/* Once mac is registered, ar is valid and all CC events from
+		 * fw is considered to be received due to user requests
+		 * currently.
 		 * Free previously built regd before assigning the newly
 		 * generated regd to ar. NULL pointer handling will be
 		 * taken care by kfree itself.
 		 */
-		/* pdev_id {1, 2, 3} corresponds to phy_id {0, 1, 2} */
-		rcu_read_lock();
-		ar = ath11k_get_ar_by_pdev_id(ab, reg_info->phy_id + 1);
-		if (!ar) {
-			rcu_read_unlock();
-			ath11k_warn(ab, "invalid phy_id in reg_chan_list event %d\n",
-				    reg_info->phy_id);
-			spin_unlock(&ab->data_lock);
-			goto fallback;
-		}
-
+		ar = ab->pdevs[pdev_idx].ar;
 		kfree(ab->new_regd[pdev_idx]);
 		ab->new_regd[pdev_idx] = regd;
 		ieee80211_queue_work(ar->hw, &ar->regd_update_work);
-		rcu_read_unlock();
 	} else {
 		/* Multiple events for the same *ar is not expected. But we
 		 * can still clear any previously stored default_regd if we
