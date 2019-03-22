@@ -1510,14 +1510,15 @@ static void ath11k_dp_rx_h_undecap_eth(struct ath11k *ar,
 }
 
 static void ath11k_dp_rx_h_undecap(struct ath11k *ar, struct sk_buff *msdu,
-				   u8 *first_hdr, enum hal_encrypt_type enctype,
+				   u8 *rx_desc, enum hal_encrypt_type enctype,
 				   struct ieee80211_rx_status *status,
 				   bool decrypted)
 {
-	struct ath11k_skb_rxcb *rxcb = ATH11K_SKB_RXCB(msdu);
+	u8 *first_hdr;
 	u8 decap;
 
-	decap = ath11k_dp_rx_h_mpdu_start_decap_type(rxcb->rx_desc);
+	first_hdr = ath11k_dp_rx_h_80211_hdr(rx_desc);
+	decap = ath11k_dp_rx_h_mpdu_start_decap_type(rx_desc);
 
 	switch (decap) {
 	case DP_RX_DECAP_TYPE_NATIVE_WIFI:
@@ -1550,13 +1551,12 @@ static void ath11k_dp_rx_h_mpdu(struct ath11k *ar,
 	struct ath11k_skb_rxcb *last_rxcb;
 	bool is_decrypted;
 	u32 err_bitmap;
-	u8 *qos, *hdr_status;
+	u8 *qos;
 
 	if (skb_queue_empty(amsdu_list))
 		return;
 
-	hdr_status = ath11k_dp_rx_h_80211_hdr(rx_desc);
-	hdr = (struct ieee80211_hdr *)hdr_status;
+	hdr = (struct ieee80211_hdr *)ath11k_dp_rx_h_80211_hdr(rx_desc);
 
 	/* Each A-MSDU subframe will use the original header as the base and be
 	 * reported as a separate MSDU so strip the A-MSDU bit from QoS Ctl.
@@ -1594,7 +1594,7 @@ static void ath11k_dp_rx_h_mpdu(struct ath11k *ar,
 
 	skb_queue_walk(amsdu_list, msdu) {
 		ath11k_dp_rx_h_csum_offload(msdu);
-		ath11k_dp_rx_h_undecap(ar, msdu, hdr_status,
+		ath11k_dp_rx_h_undecap(ar, msdu, rx_desc,
 				       enctype, rx_status, is_decrypted);
 	}
 }
@@ -2606,7 +2606,7 @@ static void ath11k_dp_rx_h_tkip_mic_err(struct ath11k *ar, struct sk_buff *msdu,
 {
 	u16 msdu_len;
 	u8 *desc = msdu->data;
-	u8 l3pad_bytes, *hdr_status;
+	u8 l3pad_bytes;
 
 	l3pad_bytes = ath11k_dp_rx_h_msdu_end_l3pad(desc);
 	msdu_len = ath11k_dp_rx_h_msdu_start_msdu_len(desc);
@@ -2615,10 +2615,9 @@ static void ath11k_dp_rx_h_tkip_mic_err(struct ath11k *ar, struct sk_buff *msdu,
 
 	ath11k_dp_rx_h_ppdu(ar, desc, status);
 
-	hdr_status = ath11k_dp_rx_h_80211_hdr(desc);
 	status->flag |= RX_FLAG_MMIC_ERROR;
 
-	ath11k_dp_rx_h_undecap(ar, msdu, hdr_status,
+	ath11k_dp_rx_h_undecap(ar, msdu, desc,
 			       HAL_ENCRYPT_TYPE_TKIP_MIC, status, false);
 }
 
