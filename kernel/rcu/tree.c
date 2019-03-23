@@ -2333,18 +2333,16 @@ static void invoke_rcu_core_kthread(void)
 }
 
 /*
- * Schedule RCU callback invocation.  If the running implementation of RCU
- * does not support RCU priority boosting, just do a direct call, otherwise
- * wake up the per-CPU kernel kthread.  Note that because we are running
- * on the current CPU with softirqs disabled, the rcu_cpu_kthread_task
- * cannot disappear out from under us.
+ * Do RCU callback invocation.  Not that if we are running !use_softirq,
+ * we are already in the rcuc kthread.  If callbacks are offloaded, then
+ * ->cblist is always empty, so we don't get here.  Therefore, we only
+ * ever need to check for the scheduler being operational (some callbacks
+ * do wakeups, so we do need the scheduler).
  */
 static void invoke_rcu_callbacks(struct rcu_data *rdp)
 {
 	if (unlikely(!READ_ONCE(rcu_scheduler_fully_active)))
 		return;
-	if (rcu_state.boost || !use_softirq)
-		invoke_rcu_core_kthread();
 	rcu_do_batch(rdp);
 }
 
