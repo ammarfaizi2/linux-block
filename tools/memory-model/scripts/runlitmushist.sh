@@ -15,6 +15,8 @@
 #
 # Author: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
 
+. scripts/hwfnseg.sh
+
 T=/tmp/runlitmushist.sh.$$
 trap 'rm -rf $T' 0
 mkdir $T
@@ -30,15 +32,12 @@ fi
 # Prefixes for per-CPU scripts
 for ((i=0;i<$LKMM_JOBS;i++))
 do
-	echo dir="$LKMM_DESTDIR" > $T/$i.sh
 	echo T=$T >> $T/$i.sh
-	echo herdoptions=\"$LKMM_HERD_OPTIONS\" >> $T/$i.sh
 	cat << '___EOF___' >> $T/$i.sh
 	runtest () {
-		echo ' ... ' /usr/bin/time $LKMM_TIMEOUT_CMD herd7 $herdoptions $1 '>' $dir/$1.out '2>&1'
-		if /usr/bin/time $LKMM_TIMEOUT_CMD herd7 $herdoptions $1 > $dir/$1.out 2>&1
+		if scripts/runlitmus.sh $1
 		then
-			if ! grep -q '^Observation ' $dir/$1.out
+			if ! grep -q '^Observation ' $dir/$1$2.out
 			then
 				echo ' !!! Herd failed, no Observation:' $1
 			fi
@@ -61,9 +60,12 @@ awk -v q="'" -v b='\\' '
 	print "echo `grep " q "^P[0-9]" b "+(" q " " $0 " | tail -1 | sed -e " q "s/^P" b "([0-9]" b "+" b ")(.*$/" b "1/" q "` " $0
 }' | bash |
 sort -k1n |
-awk -v ncpu=$LKMM_JOBS -v t=$T '
+awk -v dq='"' -v ncpu=$LKMM_JOBS -v t=$T '
 {
-	print "runtest " $2 >> t "/" NR % ncpu ".sh";
+	print "if test -z " dq "$hwfnseg" dq " || scripts/simpletest.sh " $2
+	print "then"
+	print "\truntest " $2 " dq "$hwfnseg" dq " >> t "/" NR % ncpu ".sh";
+	print "fi"
 }
 
 END {
