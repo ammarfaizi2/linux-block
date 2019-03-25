@@ -14,6 +14,9 @@
 #include <linux/fs.h>
 #include <linux/mount.h>
 
+extern int vfs_get_mtd_super(struct fs_context *fc,
+			     int (*fill_super)(struct super_block *sb,
+					       struct fs_context *fc));
 extern struct dentry *mount_mtd(struct file_system_type *fs_type, int flags,
 		      const char *dev_name, void *data,
 		      int (*fill_super)(struct super_block *, void *, int));
