@@ -3132,6 +3132,11 @@ ath11k_create_vht_cap(struct ath11k *ar, u32 rate_cap_tx_chainmask,
 
 	ath11k_set_vht_txbf_cap(ar, &vht_cap.cap);
 
+	/* TODO: Enable back VHT160 mode once association issues are fixed */
+	/* Disabling VHT160 and VHT80+80 modes */
+	vht_cap.cap &= ~IEEE80211_VHT_CAP_SUPP_CHAN_WIDTH_MASK;
+	vht_cap.cap &= ~IEEE80211_VHT_CAP_SHORT_GI_160;
+
 	rxmcs_map = 0;
 	txmcs_map = 0;
 	for (i = 0; i < 8; i++) {
