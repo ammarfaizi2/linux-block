@@ -382,6 +382,7 @@ const u8 rx_mon_status_ring_mask[ATH11K_EXT_IRQ_GRP_NUM_MAX] = {
 };
 
 const u8 ath11k_rx_ring_mask[ATH11K_EXT_IRQ_GRP_NUM_MAX] = {
+	0, 0, 0, 0, 0, 0, 0,
 	ATH11K_RX_RING_MASK_0,
 	ATH11K_RX_RING_MASK_1,
 	ATH11K_RX_RING_MASK_2,

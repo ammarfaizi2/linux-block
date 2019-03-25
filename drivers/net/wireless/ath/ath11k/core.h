@@ -87,7 +87,7 @@ enum ath11k_firmware_mode {
 };
 
 #define ATH11K_IRQ_NUM_MAX 52
-#define ATH11K_EXT_IRQ_GRP_NUM_MAX 7
+#define ATH11K_EXT_IRQ_GRP_NUM_MAX 11
 #define ATH11K_EXT_IRQ_NUM_MAX	16
 
 extern const u8 ath11k_reo_status_ring_mask[ATH11K_EXT_IRQ_GRP_NUM_MAX];
