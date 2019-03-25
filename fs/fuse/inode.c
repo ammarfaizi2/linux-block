@@ -65,6 +65,7 @@ static struct file_system_type fuseblk_fs_type;
 #endif
 
 struct fuse_fs_context {
+	const char	*subtype;
 	bool		is_bdev;
 	int fd;
 	unsigned rootmode;
@@ -450,6 +451,7 @@ static int fuse_statfs(struct dentry *dentry, struct kstatfs *buf)
 
 enum {
 	OPT_SOURCE,
+	OPT_SUBTYPE,
 	OPT_FD,
 	OPT_ROOTMODE,
 	OPT_USER_ID,
@@ -463,6 +465,7 @@ enum {
 
 static const struct fs_parameter_spec fuse_param_specs[] = {
 	fsparam_string	("source",		OPT_SOURCE),
+	fsparam_string	("subtype",		OPT_SUBTYPE),
 	fsparam_fd	("fd",			OPT_FD),
 	fsparam_u32oct	("rootmode",		OPT_ROOTMODE),
 	fsparam_u32	("user_id",		OPT_USER_ID),
@@ -491,10 +494,18 @@ static int fuse_parse_param(struct fs_context *fc, struct fs_parameter *param)
 
 	switch (opt) {
 	case OPT_SOURCE:
-		kfree(fc->source);
+		if (fc->source)
+			return invalf(fc, "fuse: Multiple sources specified");
 		fc->source = param->string;
 		param->string = NULL;
 		break;
+
+	case OPT_SUBTYPE:
+		if (ctx->subtype)
+			return invalf(fc, "fuse: Multiple subtypes specified");
+		ctx->subtype = param->string;
+		param->string = NULL;
+		return 0;
 
 	case OPT_FD:
 		ctx->fd = result.uint_32;
@@ -551,7 +562,10 @@ static void fuse_free_fc(struct fs_context *fc)
 {
 	struct fuse_fs_context *ctx = fc->fs_private;
 
-	kfree(ctx);
+	if (ctx) {
+		kfree(ctx->subtype);
+		kfree(ctx);
+	}
 }
 
 static int fuse_show_options(struct seq_file *m, struct dentry *root)
@@ -1096,6 +1110,9 @@ static int fuse_fill_super(struct super_block *sb, struct fs_context *fsc)
 		sb->s_blocksize = PAGE_SIZE;
 		sb->s_blocksize_bits = PAGE_SHIFT;
 	}
+
+	sb->s_subtype = ctx->subtype;
+	ctx->subtype = NULL;
 	sb->s_magic = FUSE_SUPER_MAGIC;
 	sb->s_op = &fuse_super_operations;
 	sb->s_xattr = fuse_xattr_handlers;
