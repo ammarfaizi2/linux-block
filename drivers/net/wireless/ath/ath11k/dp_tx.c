@@ -10,7 +10,7 @@
 
 /* NOTE: Any of the mapped ring id value must not exceed DP_TCL_NUM_RING_MAX */
 static const u8
-ath11k_txq_tcl_ring_map[ATH11K_HW_MAX_QUEUES] = { 0x0, 0x0, 0x1, 0x2 };
+ath11k_txq_tcl_ring_map[ATH11K_HW_MAX_QUEUES] = { 0x0, 0x1, 0x2, 0x2 };
 
 static enum hal_tcl_encap_type
 ath11k_dp_get_encap_type(struct ath11k_vif *arvif, struct sk_buff *skb)
