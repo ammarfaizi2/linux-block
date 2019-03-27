@@ -26,8 +26,10 @@
  *
  */
 
+#include <linux/anon_inodes.h>
 #include <linux/mm.h>
 #include <linux/export.h>
+#include <linux/fsnotify.h>
 #include <linux/slab.h>
 #include <linux/init.h>
 #include <linux/rculist.h>
@@ -39,7 +41,9 @@
 #include <linux/proc_ns.h>
 #include <linux/proc_fs.h>
 #include <linux/sched/task.h>
+#include <linux/seq_file.h>
 #include <linux/idr.h>
+#include <linux/wait.h>
 
 struct pid init_struct_pid = {
 	.count 		= ATOMIC_INIT(1),
@@ -449,6 +453,76 @@ EXPORT_SYMBOL_GPL(task_active_pid_ns);
 struct pid *find_ge_pid(int nr, struct pid_namespace *ns)
 {
 	return idr_get_next(&ns->idr, &nr);
+}
+
+static int pidfd_release(struct inode *inode, struct file *file)
+{
+	struct pid *pid = file->private_data;
+
+	if (pid) {
+		file->private_data = NULL;
+		put_pid(pid);
+	}
+
+	return 0;
+}
+
+#ifdef CONFIG_PROC_FS
+static void pidfd_show_fdinfo(struct seq_file *m, struct file *f)
+{
+	struct pid_namespace *ns = proc_pid_ns(file_inode(m->file));
+	struct pid *pid = f->private_data;
+#ifdef CONFIG_PID_NS
+	int i;
+#endif
+
+	seq_put_decimal_ull(m, "Pid:\t", pid_nr_ns(pid, ns));
+#ifdef CONFIG_PID_NS
+	seq_puts(m, "\nNSpid:");
+	for (i = ns->level; i <= pid->level; i++)
+		seq_put_decimal_ull(m, "\t", pid_nr_ns(pid, pid->numbers[i].ns));
+#endif
+	seq_putc(m, '\n');
+}
+#endif
+
+const struct file_operations pidfd_fops = {
+	.release = pidfd_release,
+#ifdef CONFIG_PROC_FS
+	.show_fdinfo = pidfd_show_fdinfo,
+#endif
+};
+
+static int pidfd_create_fd_cloexec(pid_t pid)
+{
+	int fd;
+	struct pid *p;
+
+	p = find_get_pid(pid);
+	if (!p)
+		return -ESRCH;
+
+	fd = anon_inode_getfd("pidfd", &pidfd_fops, p, O_RDWR | O_CLOEXEC);
+	if (fd < 0)
+		put_pid(p);
+
+	return fd;
+}
+
+/*
+ * pidfd_open - open a pidfd
+ * @pid:    pid for which to retrieve a pidfd
+ * @flags:  flags to pass
+ */
+SYSCALL_DEFINE2(pidfd_open, pid_t, pid, unsigned int, flags)
+{
+	if (flags)
+		return -EINVAL;
+
+	if (pid <= 0)
+		return -EINVAL;
+
+	return pidfd_create_fd_cloexec(pid);
 }
 
 void __init pid_idr_init(void)
