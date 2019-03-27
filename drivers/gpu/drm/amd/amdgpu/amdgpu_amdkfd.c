@@ -28,6 +28,8 @@
 #include <linux/module.h>
 #include <linux/dma-buf.h>
 
+extern struct srcu_struct kfd_processes_srcu;
+
 static const unsigned int compute_vmid_bitmap = 0xFF00;
 
 /* Total memory size in system memory and all GPU VRAM. Used to
@@ -40,6 +42,8 @@ int amdgpu_amdkfd_init(void)
 	struct sysinfo si;
 	int ret;
 
+	ret = init_srcu_struct(&kfd_processes_srcu);
+	WARN_ON(ret);
 	si_meminfo(&si);
 	amdgpu_amdkfd_total_mem_size = si.totalram - si.totalhigh;
 	amdgpu_amdkfd_total_mem_size *= si.mem_unit;
@@ -57,6 +61,7 @@ int amdgpu_amdkfd_init(void)
 void amdgpu_amdkfd_fini(void)
 {
 	kgd2kfd_exit();
+	cleanup_srcu_struct(&kfd_processes_srcu);
 }
 
 void amdgpu_amdkfd_device_probe(struct amdgpu_device *adev)
