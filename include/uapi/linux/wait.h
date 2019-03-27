@@ -18,5 +18,8 @@
 #define P_PID		1
 #define P_PGID		2
 
+/* Flags for pidfd_open */
+#define PIDFD_TO_PROCFD 1 /* retrieve file descriptor to /proc/<pid> for pidfd */
+#define PROCFD_TO_PIDFD 2 /* retrieve pidfd for /proc/<pid> */
 
 #endif /* _UAPI_LINUX_WAIT_H */

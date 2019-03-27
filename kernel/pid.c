@@ -26,8 +26,10 @@
  *
  */
 
+#include <linux/anon_inodes.h>
 #include <linux/mm.h>
 #include <linux/export.h>
+#include <linux/fsnotify.h>
 #include <linux/slab.h>
 #include <linux/init.h>
 #include <linux/rculist.h>
@@ -40,6 +42,7 @@
 #include <linux/proc_fs.h>
 #include <linux/sched/task.h>
 #include <linux/idr.h>
+#include <linux/wait.h>
 
 struct pid init_struct_pid = {
 	.count 		= ATOMIC_INIT(1),
@@ -449,6 +452,250 @@ EXPORT_SYMBOL_GPL(task_active_pid_ns);
 struct pid *find_ge_pid(int nr, struct pid_namespace *ns)
 {
 	return idr_get_next(&ns->idr, &nr);
+}
+
+static int pidfd_release(struct inode *inode, struct file *file)
+{
+	struct pid *pid = file->private_data;
+
+	if (pid) {
+		file->private_data = NULL;
+		put_pid(pid);
+	}
+
+	return 0;
+}
+
+const struct file_operations pidfd_fops = {
+	.release = pidfd_release,
+};
+
+static int pidfd_create_fd(struct pid *pid, unsigned int o_flags)
+{
+	int fd;
+
+	fd = anon_inode_getfd("pidfd", &pidfd_fops, get_pid(pid), O_RDWR | o_flags);
+	if (fd < 0)
+		put_pid(pid);
+
+	return fd;
+}
+
+#ifdef CONFIG_PROC_FS
+static struct pid_namespace *pidfd_get_proc_pid_ns(const struct file *file)
+{
+	struct inode *inode;
+	struct super_block *sb;
+
+	inode = file_inode(file);
+	sb = inode->i_sb;
+	if (sb->s_magic != PROC_SUPER_MAGIC)
+		return ERR_PTR(-EINVAL);
+
+	if (inode->i_ino != PROC_ROOT_INO)
+		return ERR_PTR(-EINVAL);
+
+	return get_pid_ns(inode->i_sb->s_fs_info);
+}
+
+static struct pid *pidfd_get_pid(const struct file *file)
+{
+	if (file->f_op != &pidfd_fops)
+		return ERR_PTR(-EINVAL);
+
+	return get_pid(file->private_data);
+}
+
+static struct file *pidfd_open_proc_pid(const struct file *procf, pid_t pid,
+					const struct pid *pidfd_pid)
+{
+	char name[11]; /* int to strlen + \0 */
+	struct file *file;
+	struct pid *proc_pid;
+
+	snprintf(name, sizeof(name), "%d", pid);
+	file = file_open_root(procf->f_path.dentry, procf->f_path.mnt, name,
+			      O_DIRECTORY | O_NOFOLLOW, 0);
+	if (IS_ERR(file))
+		return file;
+
+	proc_pid = tgid_pidfd_to_pid(file);
+	if (IS_ERR(proc_pid)) {
+		filp_close(file, NULL);
+		return ERR_CAST(proc_pid);
+	}
+
+	if (pidfd_pid != proc_pid) {
+		filp_close(file, NULL);
+		return ERR_PTR(-ESRCH);
+	}
+
+	return file;
+}
+
+static int pidfd_to_procfd(pid_t pid, int procfd, int pidfd)
+{
+	long fd;
+	pid_t ns_pid;
+	struct fd fdproc, fdpid;
+	struct file *file = NULL;
+	struct pid *pidfd_pid = NULL;
+	struct pid_namespace *proc_pid_ns = NULL;
+
+	fdproc = fdget(procfd);
+	if (!fdproc.file)
+		return -EBADF;
+
+	fdpid = fdget(pidfd);
+	if (!fdpid.file) {
+		fdput(fdpid);
+		return -EBADF;
+	}
+
+	proc_pid_ns = pidfd_get_proc_pid_ns(fdproc.file);
+	if (IS_ERR(proc_pid_ns)) {
+		fd = PTR_ERR(proc_pid_ns);
+		proc_pid_ns = NULL;
+		goto err;
+	}
+
+	pidfd_pid = pidfd_get_pid(fdpid.file);
+	if (IS_ERR(pidfd_pid)) {
+		fd = PTR_ERR(pidfd_pid);
+		pidfd_pid = NULL;
+		goto err;
+	}
+
+	ns_pid = pid_nr_ns(pidfd_pid, proc_pid_ns);
+	if (!ns_pid) {
+		fd = -ESRCH;
+		goto err;
+	}
+
+	file = pidfd_open_proc_pid(fdproc.file, ns_pid, pidfd_pid);
+	if (IS_ERR(file)) {
+		fd = PTR_ERR(file);
+		file = NULL;
+		goto err;
+	}
+
+	fd = get_unused_fd_flags(O_CLOEXEC);
+	if (fd < 0)
+		goto err;
+
+	fsnotify_open(file);
+	fd_install(fd, file);
+	file = NULL;
+
+err:
+	fdput(fdproc);
+	fdput(fdpid);
+	if (proc_pid_ns)
+		put_pid_ns(proc_pid_ns);
+	put_pid(pidfd_pid);
+	if (file)
+		filp_close(file, NULL);
+
+	return fd;
+}
+
+static int procfd_to_pidfd(int procfd)
+{
+	int fd;
+	struct fd fdproc;
+	struct pid *proc_pid;
+
+	fdproc = fdget(procfd);
+	if (!fdproc.file)
+		return -EBADF;
+
+	proc_pid = tgid_pidfd_to_pid(fdproc.file);
+	if (IS_ERR(proc_pid)) {
+		fdput(fdproc);
+		return PTR_ERR(proc_pid);
+	}
+
+	fd = pidfd_create_fd(proc_pid, O_CLOEXEC);
+	fdput(fdproc);
+	return fd;
+}
+#else
+static inline int pidfd_to_procfd(pid_t pid, int procfd, int pidfd)
+{
+	return -EOPNOTSUPP;
+}
+
+static inline int procfd_to_pidfd(int procfd)
+{
+	return -EOPNOTSUPP;
+}
+#endif /* CONFIG_PROC_FS */
+
+/*
+ * pidfd_open - open a pidfd
+ * @pid:    pid for which to retrieve a pidfd
+ * @procfd: procfd file descriptor
+ * @pidfd:  pidfd file descriptor
+ * @flags:  flags to pass
+ *
+ * Creates a new pidfd or translates between pidfds and procfds.
+ * If no flag is passed, pidfd_open() will return a new pidfd for @pid. If
+ * PROCFD_TO_PIDFD is in @flags then a pidfd for struct pid referenced by
+ * @procfd is created. If PIDFD_TO_PROCFD is passed then a file descriptor to
+ * the process /proc/<pid> directory relative to the procfs referenced by
+ * @procfd will be returned.
+ */
+SYSCALL_DEFINE4(pidfd_open, pid_t, pid, int, procfd, int, pidfd, unsigned int,
+		flags)
+{
+	long fd = -EINVAL;
+
+	if (flags & ~(PIDFD_TO_PROCFD | PROCFD_TO_PIDFD))
+		return -EINVAL;
+
+	if (!flags) {
+		struct pid *pidfd_pid;
+
+		if (pid <= 0)
+			return -EINVAL;
+
+		if (procfd != -1 || pidfd != -1)
+			return -EINVAL;
+
+		rcu_read_lock();
+		pidfd_pid = get_pid(find_pid_ns(pid, task_active_pid_ns(current)));
+		rcu_read_unlock();
+
+		fd = pidfd_create_fd(pidfd_pid, O_CLOEXEC);
+		put_pid(pidfd_pid);
+	} else if (flags & PIDFD_TO_PROCFD) {
+		if (flags & ~PIDFD_TO_PROCFD)
+			return -EINVAL;
+
+		if (pid != -1)
+			return -EINVAL;
+
+		if (procfd < 0 || pidfd < 0)
+			return -EINVAL;
+
+		fd = pidfd_to_procfd(pid, procfd, pidfd);
+	} else if (flags & PROCFD_TO_PIDFD) {
+		if (flags & ~PROCFD_TO_PIDFD)
+			return -EINVAL;
+
+		if (pid != -1)
+			return -EINVAL;
+
+		if (pidfd >= 0)
+			return -EINVAL;
+
+		if (procfd < 0)
+			return -EINVAL;
+
+		fd = procfd_to_pidfd(procfd);
+	}
+
+	return fd;
 }
 
 void __init pid_idr_init(void)
