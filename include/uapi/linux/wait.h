@@ -18,5 +18,7 @@
 #define P_PID		1
 #define P_PGID		2
 
+/* Get a file descriptor for /proc/<pid> of the corresponding pidfd */
+#define PIDFD_GET_PROCFD _IOR('p', 1, int)
 
 #endif /* _UAPI_LINUX_WAIT_H */
