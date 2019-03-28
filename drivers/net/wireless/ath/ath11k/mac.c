@@ -744,8 +744,6 @@ static void ath11k_peer_cleanup(struct ath11k *ar, u32 vdev_id)
 		ar->num_peers--;
 	}
 
-	WARN_ON(ar->num_peers);
-
 	spin_unlock_bh(&ab->data_lock);
 }
 
