@@ -4986,14 +4986,6 @@ void ath11k_bcn_tx_status_event(struct ath11k_base *ab, u8 *evt_buf, u32 len)
 		ath11k_warn(ab, "failed to extract bcn tx status");
 		return;
 	}
-
-	/* TODO: Pending ap_csa_work implementation
-	 *
-	arvif = ath11k_get_arvif(ar, vdev_id);
-	if (arvif && arvif->is_up && arvif->vif->csa_active)
-		ieee80211_queue_work(ar->hw, &arvif->ap_csa_work);
-	 *
-	 */
 }
 
 void ath11k_vdev_stopped_event(struct ath11k_base *ab, u8 *evt_buf, u32 len)
@@ -5609,6 +5601,70 @@ void ath11k_pdev_ctl_failsafe_check_event(struct ath11k_base *ab, u8 *evt_buf,
 	kfree(tb);
 }
 
+static void
+ath11k_wmi_process_csa_switch_count_event(struct ath11k_base *ab,
+					  const struct wmi_pdev_csa_switch_ev *ev,
+					  const u32 *vdev_ids)
+{
+	int i;
+	struct ath11k_vif *arvif;
+
+	/* Finish CSA once the switch count becomes NULL */
+	if (ev->current_switch_count)
+		return;
+
+	rcu_read_lock();
+	for (i = 0; i < ev->num_vdevs; i++) {
+		arvif = ath11k_get_arvif_by_vdev_id(ab, vdev_ids[i]);
+
+		if (!arvif) {
+			ath11k_warn(ab, "Recvd csa status for unknown vdev %d",
+				    vdev_ids[i]);
+			continue;
+		}
+
+		if (arvif->is_up && arvif->vif->csa_active)
+			ieee80211_csa_finish(arvif->vif);
+	}
+	rcu_read_unlock();
+}
+
+static void
+ath11k_wmi_pdev_csa_switch_count_status_event(struct ath11k_base *ab,
+					      u8 *evt_buf,
+					      u32 len)
+{
+	const void **tb;
+	const struct wmi_pdev_csa_switch_ev *ev;
+	const u32 *vdev_ids;
+	int ret;
+
+	tb = ath11k_wmi_tlv_parse_alloc(ab, evt_buf, len, GFP_ATOMIC);
+	if (IS_ERR(tb)) {
+		ret = PTR_ERR(tb);
+		ath11k_warn(ab, "failed to parse tlv: %d\n", ret);
+		return;
+	}
+
+	ev = tb[WMI_TAG_PDEV_CSA_SWITCH_COUNT_STATUS_EVENT];
+	vdev_ids = tb[WMI_TAG_ARRAY_UINT32];
+
+	if (!ev || !vdev_ids) {
+		ath11k_warn(ab, "failed to fetch pdev csa switch count ev");
+		kfree(tb);
+		return;
+	}
+
+	ath11k_dbg(ab, ATH11K_DBG_WMI,
+		   "pdev csa switch count %d for pdev %d, num_vdevs %d",
+		   ev->current_switch_count, ev->pdev_id,
+		   ev->num_vdevs);
+
+	ath11k_wmi_process_csa_switch_count_event(ab, ev, vdev_ids);
+
+	kfree(tb);
+}
+
 static void ath11k_wmi_tlv_op_rx(struct ath11k_base *ab, struct sk_buff *skb)
 {
 	struct wmi_cmd_hdr *cmd_hdr;
@@ -5687,6 +5743,9 @@ static void ath11k_wmi_tlv_op_rx(struct ath11k_base *ab, struct sk_buff *skb)
 		break;
 	case WMI_PDEV_CTL_FAILSAFE_CHECK_EVENTID:
 		ath11k_pdev_ctl_failsafe_check_event(ab, data, len);
+		break;
+	case WMI_PDEV_CSA_SWITCH_COUNT_STATUS_EVENTID:
+		ath11k_wmi_pdev_csa_switch_count_status_event(ab, data, len);
 		break;
 	/* add Unsupported events here */
 	case WMI_TBTTOFFSET_EXT_UPDATE_EVENTID:

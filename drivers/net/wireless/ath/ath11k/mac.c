@@ -373,6 +373,28 @@ struct ath11k_vif *ath11k_get_arvif(struct ath11k *ar, u32 vdev_id)
 	return arvif_iter.arvif;
 }
 
+struct ath11k_vif *ath11k_get_arvif_by_vdev_id(struct ath11k_base *ab,
+					       u32 vdev_id)
+{
+	int i;
+	struct ath11k_pdev *pdev;
+	struct ath11k_vif *arvif;
+
+	if (!ab->mac_registered)
+		return NULL;
+
+	for (i = 0; i < ab->num_radios; i++) {
+		pdev = rcu_dereference(ab->pdevs_active[i]);
+		if (pdev && pdev->ar) {
+			arvif = ath11k_get_arvif(pdev->ar, vdev_id);
+			if (arvif)
+				return arvif;
+		}
+	}
+
+	return NULL;
+}
+
 struct ath11k *ath11k_get_ar_by_vdev_id(struct ath11k_base *ab, u32 vdev_id)
 {
 	int i;
@@ -3392,8 +3414,6 @@ static int ath11k_add_interface(struct ieee80211_hw *hw,
 
 	INIT_LIST_HEAD(&arvif->list);
 
-	/* TODO: Pending ap_csa_work implementation */
-
 	/* Should we initialize any worker to handle connection loss indication
 	 * from firmware in sta mode?
 	 */
@@ -3585,8 +3605,6 @@ static void ath11k_remove_interface(struct ieee80211_hw *hw,
 	struct ath11k_base *ab = ar->ab;
 	int ret;
 	int i;
-
-	/* TODO: Pending ap_csa_work implementation */
 
 	mutex_lock(&ar->conf_mutex);
 
@@ -4843,6 +4861,7 @@ static int ath11k_mac_register(struct ath11k *ar)
 	ar->hw->max_listen_interval = ATH11K_MAX_HW_LISTEN_INTERVAL;
 
 	ar->hw->wiphy->flags |= WIPHY_FLAG_HAS_REMAIN_ON_CHANNEL;
+	ar->hw->wiphy->flags |= WIPHY_FLAG_HAS_CHANNEL_SWITCH;
 	ar->hw->wiphy->max_remain_on_channel_duration = 5000;
 
 	ar->hw->wiphy->flags |= WIPHY_FLAG_AP_UAPSD;

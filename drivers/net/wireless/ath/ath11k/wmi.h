@@ -4522,6 +4522,12 @@ struct wmi_pdev_ctl_failsafe_chk_event {
 	u32 ctl_failsafe_status;
 } __packed;
 
+struct wmi_pdev_csa_switch_ev {
+	u32 pdev_id;
+	u32 current_switch_count;
+	u32 num_vdevs;
+} __packed;
+
 enum wlan_phymode {
 	WLAN_PHYMODE_AUTO             = 0,
 	WLAN_PHYMODE_11A              = 1,
