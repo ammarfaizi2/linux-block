@@ -3510,40 +3510,6 @@ int ath11k_pull_vdev_stopped_param_tlv(struct ath11k_base *ab, u8 *evt_buf,
 	return 0;
 }
 
-/* If keys are configured, HW decrypts all frames
- * with protected bit set. Mark such frames as decrypted.
- */
-static bool ath11k_wmi_check_wep_reauth(struct ath11k_base *ab,
-					struct sk_buff *skb)
-{
-	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *)skb->data;
-	unsigned int hdrlen;
-	bool peer_key;
-	u8 *addr, keyidx;
-
-	if (!ieee80211_is_auth(hdr->frame_control))
-		return false;
-
-	hdrlen = ieee80211_hdrlen(hdr->frame_control);
-	if (skb->len < (hdrlen + IEEE80211_WEP_IV_LEN))
-		return false;
-
-	keyidx = skb->data[hdrlen + (IEEE80211_WEP_IV_LEN - 1)] >> WEP_KEYID_SHIFT;
-	addr = ieee80211_get_SA(hdr);
-
-	spin_lock_bh(&ab->data_lock);
-	peer_key = ath11k_mac_is_peer_wep_key_set(ab, addr, keyidx);
-	spin_unlock_bh(&ab->data_lock);
-
-	if (peer_key) {
-		ath11k_dbg(ab, ATH11K_DBG_MAC,
-			   "mac wep key present for peer %pM\n", addr);
-		return true;
-	}
-
-	return false;
-}
-
 int ath11k_pull_mgmt_rx_params_tlv(struct ath11k_base *ab,
 				   struct sk_buff *skb,
 				   struct mgmt_rx_event_params *hdr)
@@ -5133,15 +5099,10 @@ void ath11k_mgmt_rx_event(struct ath11k_base *ab, struct sk_buff *skb)
 	status->flag |= RX_FLAG_SKIP_MONITOR;
 
 	if (ieee80211_has_protected(hdr->frame_control)) {
-		/* FW delivers WEP Shared Auth frame with Protected Bit set and
-		 * encrypted payload.
-		 */
-		if (ath11k_wmi_check_wep_reauth(ab, skb)) {
-			status->flag |= RX_FLAG_DECRYPTED;
-		/* However in case of PMF, FW delivers decrypted frames
+		/* In case of PMF, FW delivers decrypted frames
 		 * with Protected Bit set. Don't clear that.
 		 */
-		} else if (!ieee80211_is_robust_mgmt_frame(skb))  {
+		if (!ieee80211_is_robust_mgmt_frame(skb))  {
 			status->flag |= RX_FLAG_DECRYPTED;
 
 			status->flag |= RX_FLAG_IV_STRIPPED |

@@ -28,8 +28,6 @@ struct ath11k_generic_iter {
 #define ATH11K_KEEPALIVE_MAX_IDLE 3895
 #define ATH11K_KEEPALIVE_MAX_UNRESPONSIVE 3900
 
-#define WEP_KEYID_SHIFT 6
-
 #define WMI_HOST_RC_DS_FLAG             0x01
 #define WMI_HOST_RC_CW40_FLAG           0x02
 #define WMI_HOST_RC_SGI_FLAG            0x04
@@ -173,8 +171,6 @@ int ath11k_mac_hw_ratecode_to_legacy_rate(u8 hw_rc,
 					    u16 *rate);
 u8 ath11k_mac_bitrate_to_idx(const struct ieee80211_supported_band *sband,
 			     u32 bitrate);
-bool ath11k_mac_is_peer_wep_key_set(struct ath11k_base *ab, const u8 *addr,
-				    u8 keyidx);
 u8 ath11k_mac_hw_rate_to_idx(const struct ieee80211_supported_band *sband,
 			     u8 hw_rate, bool cck);
 

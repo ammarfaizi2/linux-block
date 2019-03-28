@@ -1609,8 +1609,6 @@ static void ath11k_bss_disassoc(struct ieee80211_hw *hw,
 		ath11k_warn(ar->ab, "failed to down vdev %i: %d\n",
 			    arvif->vdev_id, ret);
 
-	arvif->def_wep_key_index = -1;
-
 	arvif->is_up = false;
 
 	/* TODO: cancel connection_loss_work */
@@ -2059,10 +2057,6 @@ static int ath11k_install_key(struct ath11k_vif *arvif,
 		arg.key_txmic_len = 8;
 		arg.key_rxmic_len = 8;
 		break;
-	case WLAN_CIPHER_SUITE_WEP40:
-	case WLAN_CIPHER_SUITE_WEP104:
-		arg.key_cipher = WMI_CIPHER_WEP;
-		break;
 	case WLAN_CIPHER_SUITE_CCMP_256:
 		arg.key_cipher = WMI_CIPHER_AES_CCM;
 		break;
@@ -2090,117 +2084,6 @@ install:
 		return -ETIMEDOUT;
 
 	return ar->install_key_status ? -EINVAL : 0;
-}
-
-bool ath11k_mac_is_peer_wep_key_set(struct ath11k_base *ab, const u8 *addr,
-				    u8 keyidx)
-{
-	struct ath11k_peer *peer;
-	int i;
-
-	lockdep_assert_held(&ab->data_lock);
-
-	peer = ath11k_peer_find_by_addr(ab, addr);
-	if (!peer)
-		return false;
-
-	for (i = 0; i < ARRAY_SIZE(peer->keys); i++) {
-		if (peer->keys[i] && peer->keys[i]->keyidx == keyidx)
-			return true;
-	}
-
-	return false;
-}
-
-static int ath11k_clear_vdev_key(struct ath11k_vif *arvif,
-				 struct ieee80211_key_conf *key)
-{
-	struct ath11k *ar = arvif->ar;
-	struct ath11k_peer *peer;
-	u8 addr[ETH_ALEN];
-	int first_errno = 0;
-	int ret;
-	int i;
-	u32 flags = 0;
-
-	lockdep_assert_held(&ar->conf_mutex);
-
-	for (;;) {
-		/* In ath11k_install_key, we can't hold data_lock longer,
-		 * so we try to remove the keys incrementally
-		 */
-		spin_lock_bh(&ar->data_lock);
-		i = 0;
-		list_for_each_entry(peer, &ar->ab->peers, list) {
-			for (i = 0; i < ARRAY_SIZE(peer->keys); i++) {
-				if (peer->keys[i] == key) {
-					ether_addr_copy(addr, peer->addr);
-					peer->keys[i] = NULL;
-					break;
-				}
-			}
-
-			if (i < ARRAY_SIZE(peer->keys))
-				break;
-		}
-		spin_unlock_bh(&ar->data_lock);
-
-		if (i == ARRAY_SIZE(peer->keys))
-			break;
-		/* key flags are not required to delete the key */
-		ret = ath11k_install_key(arvif, key, DISABLE_KEY, addr, flags);
-		if (ret < 0 && first_errno == 0)
-			first_errno = ret;
-
-		if (ret)
-			ath11k_warn(ar->ab, "failed to remove key for %pM: %d\n",
-				    addr, ret);
-	}
-
-	return first_errno;
-}
-
-static int ath11k_install_peer_wep_keys(struct ath11k_vif *arvif,
-					const u8 *addr)
-{
-	struct ath11k *ar = arvif->ar;
-	struct ath11k_peer *peer;
-	int ret;
-	int i;
-	u32 flags;
-
-	lockdep_assert_held(&ar->conf_mutex);
-
-	if (WARN_ON(arvif->vif->type != NL80211_IFTYPE_AP))
-		return -EINVAL;
-
-	spin_lock_bh(&ar->data_lock);
-	peer = ath11k_peer_find(ar->ab, arvif->vdev_id, addr);
-	spin_unlock_bh(&ar->data_lock);
-
-	if (!peer)
-		return -ENOENT;
-
-	for (i = 0; i < ARRAY_SIZE(arvif->wep_keys); i++) {
-		if (arvif->wep_keys[i] == NULL)
-			continue;
-
-		flags = WMI_KEY_PAIRWISE;
-
-		if (arvif->def_wep_key_index == i)
-			flags |= WMI_KEY_TX_USAGE;
-
-		ret = ath11k_install_key(arvif, arvif->wep_keys[i],
-					 SET_KEY, addr, flags);
-		if (ret < 0)
-			return ret;
-
-		spin_lock_bh(&ar->data_lock);
-		peer->keys[i] = arvif->wep_keys[i];
-		spin_unlock_bh(&ar->data_lock);
-	}
-
-	return 0;
 }
 
 static int ath11k_clear_peer_keys(struct ath11k_vif *arvif,
@@ -2233,7 +2116,7 @@ static int ath11k_clear_peer_keys(struct ath11k_vif *arvif,
 			first_errno = ret;
 
 		if (ret < 0)
-			ath11k_warn(ar->ab, "failed to remove peer wep key %d: %d\n",
+			ath11k_warn(ar->ab, "failed to remove peer key %d: %d\n",
 				    i, ret);
 
 		spin_lock_bh(&ar->data_lock);
@@ -2252,8 +2135,6 @@ static int ath11k_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 	struct ath11k_vif *arvif = ath11k_vif_to_arvif(vif);
 	struct ath11k_peer *peer;
 	const u8 *peer_addr;
-	bool is_wep = key->cipher == WLAN_CIPHER_SUITE_WEP40 ||
-		key->cipher == WLAN_CIPHER_SUITE_WEP104;
 	int ret = 0;
 	u32 flags = 0;
 
@@ -2297,18 +2178,6 @@ static int ath11k_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 	else
 		flags |= WMI_KEY_GROUP;
 
-	if (is_wep) {
-		if (cmd == SET_KEY) {
-			arvif->wep_keys[key->keyidx] = key;
-			if (arvif->def_wep_key_index == -1)
-				flags |= WMI_KEY_TX_USAGE;
-		} else {
-			arvif->wep_keys[key->keyidx] = NULL;
-			ath11k_clear_vdev_key(arvif, key);
-		}
-		/* TODO: mcast fix(ath10k) for fw applicable? */
-	}
-
 	ret = ath11k_install_key(arvif, key, cmd, peer_addr, flags);
 	if (ret) {
 		ath11k_warn(ar->ab, "ath11k_install_key failed (%d)\n", ret);
@@ -2329,38 +2198,6 @@ static int ath11k_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 exit:
 	mutex_unlock(&ar->conf_mutex);
 	return ret;
-}
-
-static void ath11k_set_default_unicast_key(struct ieee80211_hw *hw,
-					   struct ieee80211_vif *vif,
-					   int keyidx)
-{
-	struct ath11k *ar = hw->priv;
-	struct ath11k_vif *arvif = (void *)vif->drv_priv;
-	int ret;
-
-	mutex_lock(&arvif->ar->conf_mutex);
-
-	if (arvif->ar->state != ATH11K_STATE_ON)
-		goto unlock;
-
-	ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "mac vdev %d set keyidx %d\n",
-		   arvif->vdev_id, keyidx);
-
-	ret = ath11k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id,
-					    WMI_VDEV_PARAM_DEF_KEYID, keyidx);
-
-	if (ret) {
-		ath11k_warn(ar->ab, "failed to update wep key index for vdev %d: %d\n",
-			    arvif->vdev_id,
-			    ret);
-		goto unlock;
-	}
-
-	arvif->def_wep_key_index = keyidx;
-
-unlock:
-	mutex_unlock(&arvif->ar->conf_mutex);
 }
 
 static int
@@ -2486,17 +2323,6 @@ static int ath11k_station_assoc(struct ath11k *ar,
 			return ret;
 	}
 
-	/* Plumb cached keys only for static WEP */
-	if ((arvif->def_wep_key_index != -1) && !reassoc) {
-		ret = ath11k_install_peer_wep_keys(arvif, sta->addr);
-		if (ret) {
-			ath11k_warn(ar->ab,
-				    "failed to install peer wep keys for vdev %i: %d\n",
-				    arvif->vdev_id, ret);
-			return ret;
-		}
-	}
-
 	if ((sta->wme && sta->uapsd_queues)) {
 		ret = ath11k_peer_assoc_qos_ap(ar, arvif, sta);
 		if (ret) {
@@ -2527,7 +2353,7 @@ static int ath11k_station_disassoc(struct ath11k *ar,
 
 	ret = ath11k_clear_peer_keys(arvif, sta->addr);
 	if (ret) {
-		ath11k_warn(ar->ab, "failed to clear all peer wep keys for vdev %i: %d\n",
+		ath11k_warn(ar->ab, "failed to clear all peer keys for vdev %i: %d\n",
 			    arvif->vdev_id, ret);
 		return ret;
 	}
@@ -3623,13 +3449,6 @@ static int ath11k_add_interface(struct ieee80211_hw *hw,
 	spin_lock_bh(&ar->data_lock);
 	list_add(&arvif->list, &ar->arvifs);
 	spin_unlock_bh(&ar->data_lock);
-
-	arvif->def_wep_key_index = -1;
-	param_id = WMI_VDEV_PARAM_DEF_KEYID;
-	ret = ath11k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id,
-					    param_id, arvif->def_wep_key_index);
-	if (ret)
-		ath11k_warn(ar->ab, "Failed to set default keyid: %d\n", ret);
 
 	param_id = WMI_VDEV_PARAM_TX_ENCAP_TYPE;
 	param_value = ATH11K_HW_TXRX_NATIVE_WIFI;
@@ -4836,7 +4655,6 @@ static const struct ieee80211_ops ath11k_ops = {
 	.hw_scan                        = ath11k_hw_scan,
 	.cancel_hw_scan                 = ath11k_cancel_hw_scan,
 	.set_key                        = ath11k_set_key,
-	.set_default_unicast_key        = ath11k_set_default_unicast_key,
 	.sta_state                      = ath11k_sta_state,
 	.sta_rc_update			= ath11k_sta_rc_update,
 	.conf_tx                        = ath11k_conf_tx,
@@ -4956,8 +4774,6 @@ static int ath11k_mac_register(struct ath11k *ar)
 	struct ath11k_base *ab = ar->ab;
 	struct ath11k_pdev_cap *cap = &ar->pdev->cap;
 	static const u32 cipher_suites[] = {
-		WLAN_CIPHER_SUITE_WEP40,
-		WLAN_CIPHER_SUITE_WEP104,
 		WLAN_CIPHER_SUITE_TKIP,
 		WLAN_CIPHER_SUITE_CCMP,
 		WLAN_CIPHER_SUITE_AES_CMAC,
