@@ -3550,22 +3550,91 @@ static int copy_siginfo_from_user_any(kernel_siginfo_t *kinfo, siginfo_t *info)
 	return copy_siginfo_from_user(kinfo, info);
 }
 
+static int __do_send_specific(struct task_struct *p, int sig,
+			      struct kernel_siginfo *info)
+{
+	int error = -ESRCH;
+
+	error = check_kill_permission(sig, info, p);
+	/*
+	 * The null signal is a permissions and process existence probe.
+	 * No signal is actually delivered.
+	 */
+	if (!error && sig) {
+		error = do_send_sig_info(sig, info, p, PIDTYPE_PID);
+		/*
+		 * If lock_task_sighand() failed we pretend the task
+		 * dies after receiving the signal. The window is tiny,
+		 * and the signal is private anyway.
+		 */
+		if (unlikely(error == -ESRCH))
+			error = 0;
+	}
+
+	return error;
+}
+
+static int do_send_specific(pid_t tgid, pid_t pid, int sig,
+			    struct kernel_siginfo *info)
+{
+	struct task_struct *p;
+	int error = -ESRCH;
+
+	rcu_read_lock();
+	p = find_task_by_vpid(pid);
+	if (p && (tgid <= 0 || task_tgid_vnr(p) == tgid))
+		error = __do_send_specific(p, sig, info);
+	rcu_read_unlock();
+
+	return error;
+}
+
+static int pidfd_send_signal_specific(int sig, struct kernel_siginfo *info,
+				      struct pid *pid)
+{
+	struct task_struct *p;
+	int error = -ESRCH;
+
+	rcu_read_lock();
+	p = pid_task(pid, PIDTYPE_PID);
+	if (p)
+		error = __do_send_specific(p, sig, info);
+	rcu_read_unlock();
+
+	return error;
+}
+
 /**
- * sys_pidfd_send_signal - send a signal to a process through a task file
- *                          descriptor
+ * sys_pidfd_send_signal - send a signal to a process through a pidfd
+
  * @pidfd:  the file descriptor of the process
  * @sig:    signal to be sent
  * @info:   the signal info
- * @flags:  future flags to be passed
+ * @flags:  flags to be passed
  *
- * The syscall currently only signals via PIDTYPE_PID which covers
- * kill(<positive-pid>, <signal>. It does not signal threads or process
- * groups.
- * In order to extend the syscall to threads and process groups the @flags
- * argument should be used. In essence, the @flags argument will determine
- * what is signaled and not the file descriptor itself. Put in other words,
- * grouping is a property of the flags argument not a property of the file
- * descriptor.
+ * The syscall currently covers:
+ * - pidfd_send_signal(<pidfd>, <sig>, NULL, 0);
+ *   which is equivalent to
+ *   kill(<positive-pid>, <signal>)
+ *
+ * - pidfd_send_signal(<pidfd>, <sig>, <info>, 0);
+ *   which is equivalent to
+ *   rt_sigqueueinfo(<tgid>, <sig>, <uinfo>)
+ *
+ * - pidfd_send_signal(<pidfd>, <sig>, NULL, PIDFD_SIGNAL_THREAD);
+ *   which is equivalent to
+ *   tgkill(<tgid>, <tid>, <signal)
+ *
+ * - pidfd_send_signal(<pidfd>, <sig>, <info>, PIDFD_SIGNAL_THREAD);
+ *   which is equivalent to
+ *   rt_tgsigqueueinfo(<tgid>, <tid>, <sig>, <uinfo>)
+ *
+ * If @flags is set to PIDFD_SIGNAL_THREAD a specific thread will be
+ * signaled. To extend the syscall to process groups or session groups,
+ * please use PIDFD_SIGNAL_PGRP and PIDFD_SIGNAL_SESSION.
+ * In essence, @flags determines what is signaled and not the file
+ * descriptor itself. Put in other words, grouping is a property of
+ * @flags not a property of the @pidfd.
  *
  * Return: 0 on success, negative errno on failure
  */
@@ -3578,7 +3647,7 @@ SYSCALL_DEFINE4(pidfd_send_signal, int, pidfd, int, sig,
 	kernel_siginfo_t kinfo;
 
 	/* Enforce flags be set to 0 until we add an extension. */
-	if (flags)
+	if (flags & ~PIDFD_SIGNAL_THREAD)
 		return -EINVAL;
 
 	f = fdget_raw(pidfd);
@@ -3614,43 +3683,16 @@ SYSCALL_DEFINE4(pidfd_send_signal, int, pidfd, int, sig,
 		prepare_kill_siginfo(sig, &kinfo);
 	}
 
-	ret = kill_pid_info(sig, &kinfo, pid);
+	if (flags & PIDFD_SIGNAL_THREAD)
+		ret = pidfd_send_signal_specific(sig, &kinfo, pid);
+	else
+		ret = kill_pid_info(sig, &kinfo, pid);
 
 err:
 	fdput(f);
 	return ret;
 }
 #endif /* CONFIG_PROC_FS */
-
-static int
-do_send_specific(pid_t tgid, pid_t pid, int sig, struct kernel_siginfo *info)
-{
-	struct task_struct *p;
-	int error = -ESRCH;
-
-	rcu_read_lock();
-	p = find_task_by_vpid(pid);
-	if (p && (tgid <= 0 || task_tgid_vnr(p) == tgid)) {
-		error = check_kill_permission(sig, info, p);
-		/*
-		 * The null signal is a permissions and process existence
-		 * probe.  No signal is actually delivered.
-		 */
-		if (!error && sig) {
-			error = do_send_sig_info(sig, info, p, PIDTYPE_PID);
-			/*
-			 * If lock_task_sighand() failed we pretend the task
-			 * dies after receiving the signal. The window is tiny,
-			 * and the signal is private anyway.
-			 */
-			if (unlikely(error == -ESRCH))
-				error = 0;
-		}
-	}
-	rcu_read_unlock();
-
-	return error;
-}
 
 static int do_tkill(pid_t tgid, pid_t pid, int sig)
 {
