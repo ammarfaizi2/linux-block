@@ -186,10 +186,10 @@ chan_to_phymode(const struct cfg80211_chan_def *chandef)
 			phymode = MODE_11A;
 			break;
 		case NL80211_CHAN_WIDTH_20:
-			phymode = MODE_11NA_HT20;
+			phymode = MODE_11AC_VHT20;
 			break;
 		case NL80211_CHAN_WIDTH_40:
-			phymode = MODE_11NA_HT40;
+			phymode = MODE_11AC_VHT40;
 			break;
 		case NL80211_CHAN_WIDTH_80:
 			phymode = MODE_11AC_VHT80;
