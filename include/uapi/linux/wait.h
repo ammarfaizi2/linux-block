@@ -21,4 +21,7 @@
 /* Get a file descriptor for /proc/<pid> of the corresponding pidfd */
 #define PIDFD_GET_PROCFD _IOR('p', 1, int)
 
+/* Flags to pass to pidfd_send_signal */
+#define PIDFD_SIGNAL_THREAD 1U /* Send signal to specific thread */
+
 #endif /* _UAPI_LINUX_WAIT_H */
