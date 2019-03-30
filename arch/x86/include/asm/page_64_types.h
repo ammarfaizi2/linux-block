@@ -25,11 +25,14 @@
 #define IRQ_STACK_ORDER (2 + KASAN_STACK_ORDER)
 #define IRQ_STACK_SIZE (PAGE_SIZE << IRQ_STACK_ORDER)
 
-#define DOUBLEFAULT_STACK 1
-#define NMI_STACK 2
-#define DEBUG_STACK 3
-#define MCE_STACK 4
-#define N_EXCEPTION_STACKS 4  /* hw limit: 7 */
+/*
+ * The index for the tss.ist[] array. The hardware limit is 7 entries.
+ */
+#define	ISTACK_DF		0
+#define	ISTACK_NMI		1
+#define	ISTACK_DB		2
+#define	ISTACK_MCE		3
+#define	N_EXCEPTION_STACKS	4
 
 /*
  * Set __PAGE_OFFSET to the most negative possible address +
