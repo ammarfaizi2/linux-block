@@ -28,11 +28,10 @@
 /*
  * The index for the tss.ist[] array. The hardware limit is 7 entries.
  */
-#define	ISTACK_DF		0
-#define	ISTACK_NMI		1
-#define	ISTACK_DB		2
-#define	ISTACK_MCE		3
-#define	N_EXCEPTION_STACKS	4
+#define	IST_INDEX_DF		0
+#define	IST_INDEX_NMI		1
+#define	IST_INDEX_DB		2
+#define	IST_INDEX_MCE		3
 
 /*
  * Set __PAGE_OFFSET to the most negative possible address +

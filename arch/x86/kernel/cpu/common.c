@@ -1731,11 +1731,11 @@ void cpu_init(void)
 	 * set up and load the per-CPU TSS
 	 */
 	if (!t->x86_tss.ist[0]) {
-		t->x86_tss.ist[ISTACK_DF] = __this_cpu_ist_top_va(DF);
-		t->x86_tss.ist[ISTACK_NMI] = __this_cpu_ist_top_va(NMI);
-		t->x86_tss.ist[ISTACK_DB] = __this_cpu_ist_top_va(DB);
-		t->x86_tss.ist[ISTACK_MCE] = __this_cpu_ist_top_va(MCE);
-		per_cpu(debug_stack_addr, cpu) = t->x86_tss.ist[ISTACK_DB];
+		t->x86_tss.ist[IST_INDEX_DF] = __this_cpu_ist_top_va(DF);
+		t->x86_tss.ist[IST_INDEX_NMI] = __this_cpu_ist_top_va(NMI);
+		t->x86_tss.ist[IST_INDEX_DB] = __this_cpu_ist_top_va(DB);
+		t->x86_tss.ist[IST_INDEX_MCE] = __this_cpu_ist_top_va(MCE);
+		per_cpu(debug_stack_addr, cpu) = t->x86_tss.ist[IST_INDEX_DB];
 	}
 
 	t->x86_tss.io_bitmap_base = IO_BITMAP_OFFSET;
