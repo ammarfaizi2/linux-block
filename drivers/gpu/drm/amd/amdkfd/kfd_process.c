@@ -47,7 +47,7 @@ struct mm_struct;
 DEFINE_HASHTABLE(kfd_processes_table, KFD_PROCESS_TABLE_SIZE);
 static DEFINE_MUTEX(kfd_processes_mutex);
 
-DEFINE_SRCU(kfd_processes_srcu);
+struct srcu_struct kfd_processes_srcu;
 
 /* For process termination handling */
 static struct workqueue_struct *kfd_process_wq;
@@ -69,22 +69,25 @@ static void evict_process_worker(struct work_struct *work);
 static void restore_process_worker(struct work_struct *work);
 
 
-int kfd_process_create_wq(void)
+int kfd_process_init(void)
 {
+	int ret;
+
 	if (!kfd_process_wq)
 		kfd_process_wq = alloc_workqueue("kfd_process_wq", 0, 0);
 	if (!kfd_restore_wq)
 		kfd_restore_wq = alloc_ordered_workqueue("kfd_restore_wq", 0);
 
-	if (!kfd_process_wq || !kfd_restore_wq) {
-		kfd_process_destroy_wq();
+	if (!kfd_process_wq || !kfd_restore_wq)
 		return -ENOMEM;
-	}
 
-	return 0;
+	ret = init_srcu_struct(&kfd_processes_srcu);
+	WARN_ON(ret);
+
+	return ret;
 }
 
-void kfd_process_destroy_wq(void)
+void kfd_process_fini(void)
 {
 	if (kfd_process_wq) {
 		destroy_workqueue(kfd_process_wq);
@@ -94,6 +97,8 @@ void kfd_process_destroy_wq(void)
 		destroy_workqueue(kfd_restore_wq);
 		kfd_restore_wq = NULL;
 	}
+
+	cleanup_srcu_struct(&kfd_processes_srcu);
 }
 
 static void kfd_process_free_gpuvm(struct kgd_mem *mem,

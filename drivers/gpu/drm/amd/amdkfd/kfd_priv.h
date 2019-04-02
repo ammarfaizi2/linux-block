@@ -705,8 +705,8 @@ struct amdkfd_ioctl_desc {
 };
 bool kfd_dev_is_large_bar(struct kfd_dev *dev);
 
-int kfd_process_create_wq(void);
-void kfd_process_destroy_wq(void);
+int kfd_process_init(void);
+void kfd_process_fini(void);
 struct kfd_process *kfd_create_process(struct file *filep);
 struct kfd_process *kfd_get_process(const struct task_struct *);
 struct kfd_process *kfd_lookup_process_by_pasid(unsigned int pasid);
