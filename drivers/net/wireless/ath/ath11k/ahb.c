@@ -500,6 +500,7 @@ static void ath11k_ahb_ext_grp_disable(struct ath11k_ext_irq_grp *irq_grp)
 
 static void __ath11k_ahb_ext_irq_disable(struct ath11k_base *sc)
 {
+	struct sk_buff *skb;
 	int i;
 
 	for (i = 0; i < ATH11K_EXT_IRQ_GRP_NUM_MAX; i++) {
@@ -509,8 +510,10 @@ static void __ath11k_ahb_ext_irq_disable(struct ath11k_base *sc)
 
 		napi_synchronize(&irq_grp->napi);
 		napi_disable(&irq_grp->napi);
-	}
 
+		while ((skb = __skb_dequeue(&irq_grp->pending_q)))
+			dev_kfree_skb_any(skb);
+	}
 }
 
 static void ath11k_ahb_ext_grp_enable(struct ath11k_ext_irq_grp *irq_grp)
@@ -788,8 +791,7 @@ static int ath11k_ahb_ext_grp_napi_poll(struct napi_struct *napi, int budget)
 	struct ath11k_base *ab = irq_grp->sc;
 	int work_done;
 
-	work_done = ath11k_dp_service_srng(ab, irq_grp->grp_id, &irq_grp->napi,
-					   budget);
+	work_done = ath11k_dp_service_srng(ab, irq_grp, budget);
 	if (work_done < budget) {
 		napi_complete_done(napi, work_done);
 		ath11k_ahb_ext_grp_enable(irq_grp);
@@ -827,6 +829,7 @@ static int ath11k_ahb_ext_irq_config(struct ath11k_base *sc)
 		init_dummy_netdev(&irq_grp->napi_ndev);
 		netif_napi_add(&irq_grp->napi_ndev, &irq_grp->napi,
 			       ath11k_ahb_ext_grp_napi_poll, NAPI_POLL_WEIGHT);
+		__skb_queue_head_init(&irq_grp->pending_q);
 
 		for (j = 0; j < ATH11K_EXT_IRQ_NUM_MAX; j++) {
 			if (ath11k_tx_ring_mask[i] & BIT(j)) {

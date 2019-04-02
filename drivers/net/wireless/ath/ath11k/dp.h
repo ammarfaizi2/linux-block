@@ -13,6 +13,7 @@ struct ath11k_peer;
 struct ath11k_dp;
 struct ath11k_vif;
 struct hal_tcl_status_ring;
+struct ath11k_ext_irq_grp;
 
 struct dp_rx_tid {
 	u8 tid;
@@ -1264,8 +1265,9 @@ static inline void dp_peer_map_get_mac_addr(u32 addr_l32, u16 addr_h16,
 	memcpy(addr + 4, &addr_h16, ETH_ALEN - 4);
 }
 
-int ath11k_dp_service_srng(struct ath11k_base *sc, u32 grp_id,
-			   struct napi_struct *napi, int budget);
+int ath11k_dp_service_srng(struct ath11k_base *sc,
+			   struct ath11k_ext_irq_grp *irq_grp,
+			   int budget);
 int ath11k_dp_htt_connect(struct ath11k_dp *dp);
 void ath11k_dp_vdev_tx_attach(struct ath11k *ar, struct ath11k_vif *arvif);
 void ath11k_dp_free(struct ath11k_base *sc);

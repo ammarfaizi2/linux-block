@@ -1767,10 +1767,9 @@ static void ath11k_dp_rx_deliver_msdu(struct ath11k *ar, struct napi_struct *nap
 	ieee80211_rx_napi(ar->hw, NULL, msdu, napi);
 }
 
-static void ath11k_dp_rx_deliver_amsdu(struct ath11k *ar,
-				       struct sk_buff_head *amsdu_list,
-				       struct ieee80211_rx_status *rxs,
-				       struct napi_struct *napi)
+static void ath11k_dp_rx_pre_deliver_amsdu(struct ath11k *ar,
+					   struct sk_buff_head *amsdu_list,
+					   struct ieee80211_rx_status *rxs)
 {
 	struct sk_buff *msdu;
 	struct sk_buff *first_subframe;
@@ -1778,7 +1777,7 @@ static void ath11k_dp_rx_deliver_amsdu(struct ath11k *ar,
 
 	first_subframe = skb_peek(amsdu_list);
 
-	while ((msdu = __skb_dequeue(amsdu_list))) {
+	skb_queue_walk(amsdu_list, msdu) {
 		/* Setup per-MSDU flags */
 		if (skb_queue_empty(amsdu_list))
 			rxs->flag &= ~RX_FLAG_AMSDU_MORE;
@@ -1794,13 +1793,65 @@ static void ath11k_dp_rx_deliver_amsdu(struct ath11k *ar,
 
 		status = IEEE80211_SKB_RXCB(msdu);
 		*status = *rxs;
-
-		ath11k_dp_rx_deliver_msdu(ar, napi, msdu);
 	}
 }
 
+static u32 *ath11k_dp_rx_get_reo_desc(struct ath11k_base *ab,
+				      struct hal_srng *srng)
+{
+	u32 *rx_desc;
+
+	lockdep_assert_held(&srng->lock);
+
+	rx_desc = ath11k_hal_srng_dst_get_next_entry(ab, srng);
+
+	/* Hw might have updated the head pointer after we cached it.
+	 * In this case, even though there are entries in the ring we'll
+	 * get rx_desc NULL. Give the read another try with updated cached
+	 * head pointer so that we can reap complete MPDU in the current
+	 * rx processing.
+	 */
+	if (!rx_desc) {
+		ath11k_hal_srng_access_begin(ab, srng);
+		rx_desc = ath11k_hal_srng_dst_get_next_entry(ab, srng);
+		if (!rx_desc)
+			return NULL;
+		ath11k_hal_srng_access_end(ab, srng);
+	}
+
+	return rx_desc;
+}
+
+static void ath11k_dp_rx_process_pending_packets(struct ath11k_base *ab,
+						 struct napi_struct *napi,
+						 struct sk_buff_head *pending_q,
+						 int *quota)
+{
+	struct ath11k *ar;
+	struct sk_buff *msdu;
+	struct ath11k_skb_rxcb *rxcb;
+
+	if (skb_queue_empty(pending_q))
+		return;
+
+	rcu_read_lock();
+	while (*quota && (msdu = __skb_dequeue(pending_q))) {
+		rxcb = ATH11K_SKB_RXCB(msdu);
+		if (!rcu_dereference(ab->pdevs_active[rxcb->mac_id])) {
+			dev_kfree_skb_any(msdu);
+			continue;
+		}
+
+		ar = ab->pdevs[rxcb->mac_id].ar;
+		ath11k_dp_rx_deliver_msdu(ar, napi, msdu);
+		(*quota)--;
+	}
+	rcu_read_unlock();
+}
+
 int ath11k_dp_process_rx(struct ath11k_base *ab, int mac_id,
-			 struct napi_struct *napi, int budget)
+			 struct napi_struct *napi, struct sk_buff_head *pending_q,
+			 int budget)
 {
 	struct ath11k *ar = ab->pdevs[mac_id].ar;
 	struct ath11k_pdev_dp *dp = &ar->dp;
@@ -1815,7 +1866,11 @@ int ath11k_dp_process_rx(struct ath11k_base *ab, int mac_id,
 	u32 *rx_desc;
 	int buf_id;
 	int num_buffs_reaped = 0;
+	int quota = budget;
 	int ret;
+
+	/* Process any pending packets from the previous napi poll */
+	ath11k_dp_rx_process_pending_packets(ab, napi, pending_q, &quota);
 
 	__skb_queue_head_init(&msdu_list);
 
@@ -1825,22 +1880,7 @@ int ath11k_dp_process_rx(struct ath11k_base *ab, int mac_id,
 
 	ath11k_hal_srng_access_begin(ab, srng);
 
-	while (budget) {
-		rx_desc = ath11k_hal_srng_dst_get_next_entry(ab, srng);
-
-		/* Hw might have updated the head pointer after we cached it.
-		 * In this case, even though there are entries in the ring we'll
-		 * get rx_desc NULL. Give the read another try with updated cached
-		 * head pointer so that we can reap complete MPDU in the current
-		 * rx processing.
-		 */
-		if (!rx_desc) {
-			ath11k_hal_srng_access_begin(ab, srng);
-			rx_desc = ath11k_hal_srng_dst_get_next_entry(ab, srng);
-			if (!rx_desc)
-				break;
-			ath11k_hal_srng_access_end(ab, srng);
-		}
+	while ((rx_desc = ath11k_dp_rx_get_reo_desc(ab, srng))) {
 
 		memset(&meta_info, 0, sizeof(meta_info));
 		ath11k_hal_rx_parse_dst_ring_desc(ab, rx_desc, &meta_info);
@@ -1878,6 +1918,7 @@ int ath11k_dp_process_rx(struct ath11k_base *ab, int mac_id,
 		rxcb->is_first_msdu = meta_info.msdu_meta.first;
 		rxcb->is_last_msdu = meta_info.msdu_meta.last;
 		rxcb->is_continuation = meta_info.msdu_meta.continuation;
+		rxcb->mac_id = mac_id;
 		__skb_queue_tail(&msdu_list, msdu);
 	}
 
@@ -1919,13 +1960,19 @@ int ath11k_dp_process_rx(struct ath11k_base *ab, int mac_id,
 
 		ath11k_dp_rx_process_amsdu(ar, &amsdu_list, rx_status);
 
-		ath11k_dp_rx_deliver_amsdu(ar, &amsdu_list, rx_status, napi);
+		ath11k_dp_rx_pre_deliver_amsdu(ar, &amsdu_list, rx_status);
+		skb_queue_splice_tail(&amsdu_list, pending_q);
+	}
+
+	while (quota && (msdu = __skb_dequeue(pending_q))) {
+		ath11k_dp_rx_deliver_msdu(ar, napi, msdu);
+		quota--;
 	}
 
 rcu_unlock:
 	rcu_read_unlock();
 exit:
-	return num_buffs_reaped;
+	return budget - quota;
 }
 
 static void ath11k_dp_rx_update_peer_stats(struct ath11k_sta *arsta,

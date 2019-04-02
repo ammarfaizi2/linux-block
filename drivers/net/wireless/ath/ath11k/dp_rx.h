@@ -315,7 +315,8 @@ int ath11k_dp_rx_process_wbm_err(struct ath11k_base *ab,
 int ath11k_dp_process_rx_err(struct ath11k_base *ab, struct napi_struct *napi,
 			     int budget);
 int ath11k_dp_process_rx(struct ath11k_base *ab, int mac_id,
-			 struct napi_struct *napi, int budget);
+			 struct napi_struct *napi, struct sk_buff_head *pending_q,
+			 int budget);
 int ath11k_dp_rxbufs_replenish(struct ath11k_base *ab, int mac_id,
 			       struct dp_rxdma_ring *rx_ring,
 			       int req_entries,
