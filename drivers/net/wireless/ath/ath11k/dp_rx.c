@@ -2574,6 +2574,7 @@ static int ath11k_dp_rx_h_null_q_desc(struct ath11k *ar, struct sk_buff *msdu,
 	u16 msdu_len;
 	u8 *desc = msdu->data;
 	u8 l3pad_bytes;
+	struct ath11k_skb_rxcb *rxcb = ATH11K_SKB_RXCB(msdu);
 
 	if (!ath11k_dp_rx_h_attn_msdu_done(desc)) {
 		ath11k_warn(ar->ab,
@@ -2592,6 +2593,9 @@ static int ath11k_dp_rx_h_null_q_desc(struct ath11k *ar, struct sk_buff *msdu,
 	 */
 
 	__skb_queue_head_init(&amsdu_list);
+
+	rxcb->is_first_msdu = ath11k_dp_rx_h_msdu_end_first_msdu(desc);
+	rxcb->is_last_msdu = ath11k_dp_rx_h_msdu_end_last_msdu(desc);
 
 	l3pad_bytes = ath11k_dp_rx_h_msdu_end_l3pad(desc);
 	msdu_len = ath11k_dp_rx_h_msdu_start_msdu_len(desc);
@@ -2652,6 +2656,10 @@ static void ath11k_dp_rx_h_tkip_mic_err(struct ath11k *ar, struct sk_buff *msdu,
 	u16 msdu_len;
 	u8 *desc = msdu->data;
 	u8 l3pad_bytes;
+	struct ath11k_skb_rxcb *rxcb = ATH11K_SKB_RXCB(msdu);
+
+	rxcb->is_first_msdu = ath11k_dp_rx_h_msdu_end_first_msdu(desc);
+	rxcb->is_last_msdu = ath11k_dp_rx_h_msdu_end_last_msdu(desc);
 
 	l3pad_bytes = ath11k_dp_rx_h_msdu_end_l3pad(desc);
 	msdu_len = ath11k_dp_rx_h_msdu_start_msdu_len(desc);
@@ -2794,8 +2802,6 @@ int ath11k_dp_rx_process_wbm_err(struct ath11k_base *ab,
 
 		rxcb->err_rel_src = err_info.err_rel_src;
 		rxcb->err_code = err_info.err_code;
-		rxcb->is_first_msdu = err_info.first_msdu;
-		rxcb->is_last_msdu = err_info.last_msdu;
 		rxcb->rx_desc = msdu->data;
 		__skb_queue_tail(&msdu_list[mac_id], msdu);
 	}
