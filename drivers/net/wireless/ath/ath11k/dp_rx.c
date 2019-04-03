@@ -2558,10 +2558,11 @@ static void ath11k_dp_rx_null_q_desc_sg_drop(struct ath11k *ar,
 		rxcb = ATH11K_SKB_RXCB(skb);
 		if (rxcb->err_rel_src == HAL_WBM_REL_SRC_MODULE_REO &&
 		    rxcb->err_code == HAL_REO_DEST_RING_ERROR_CODE_DESC_ADDR_ZERO) {
-			if (n_buffs--)
+			if (!n_buffs)
 				break;
 			__skb_unlink(skb, msdu_list);
 			dev_kfree_skb_any(skb);
+			n_buffs--;
 		}
 	}
 }
@@ -2575,6 +2576,15 @@ static int ath11k_dp_rx_h_null_q_desc(struct ath11k *ar, struct sk_buff *msdu,
 	u8 *desc = msdu->data;
 	u8 l3pad_bytes;
 	struct ath11k_skb_rxcb *rxcb = ATH11K_SKB_RXCB(msdu);
+
+	msdu_len = ath11k_dp_rx_h_msdu_start_msdu_len(desc);
+
+	if ((msdu_len + HAL_RX_DESC_SIZE) > DP_RX_BUFFER_SIZE) {
+		/* First buffer will be freed by the caller, so deduct it's length */
+		msdu_len = msdu_len - (DP_RX_BUFFER_SIZE - HAL_RX_DESC_SIZE);
+		ath11k_dp_rx_null_q_desc_sg_drop(ar, msdu_len, msdu_list);
+		return -EINVAL;
+	}
 
 	if (!ath11k_dp_rx_h_attn_msdu_done(desc)) {
 		ath11k_warn(ar->ab,
@@ -2598,19 +2608,12 @@ static int ath11k_dp_rx_h_null_q_desc(struct ath11k *ar, struct sk_buff *msdu,
 	rxcb->is_last_msdu = ath11k_dp_rx_h_msdu_end_last_msdu(desc);
 
 	l3pad_bytes = ath11k_dp_rx_h_msdu_end_l3pad(desc);
-	msdu_len = ath11k_dp_rx_h_msdu_start_msdu_len(desc);
 
-	if ((msdu_len + l3pad_bytes + HAL_RX_DESC_SIZE) > DP_RX_BUFFER_SIZE) {
-		/* First buffer will be freed by the caller, so deduct it's length */
-		msdu_len = msdu_len -
-			   (DP_RX_BUFFER_SIZE - l3pad_bytes - HAL_RX_DESC_SIZE);
-		ath11k_dp_rx_null_q_desc_sg_drop(ar, msdu_len, msdu_list);
+	if ((HAL_RX_DESC_SIZE + l3pad_bytes + msdu_len) > DP_RX_BUFFER_SIZE)
 		return -EINVAL;
-	} else {
 
-		skb_put(msdu, HAL_RX_DESC_SIZE + l3pad_bytes + msdu_len);
-		skb_pull(msdu, HAL_RX_DESC_SIZE + l3pad_bytes);
-	}
+	skb_put(msdu, HAL_RX_DESC_SIZE + l3pad_bytes + msdu_len);
+	skb_pull(msdu, HAL_RX_DESC_SIZE + l3pad_bytes);
 
 	ath11k_dp_rx_h_ppdu(ar, desc, status);
 
