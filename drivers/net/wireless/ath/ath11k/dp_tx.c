@@ -331,14 +331,9 @@ static void ath11k_dp_cache_peer_stats(struct ath11k *ar,
 {
 	struct ath11k_per_peer_tx_stats *peer_stats = &ar->cached_stats;
 
-	if (ts->try_cnt >= 1) {
-		if (ts->try_cnt == 1) {
-			peer_stats->retry_pkts += 1;
-			peer_stats->retry_bytes += msdu->len;
-		} else {
-			peer_stats->retry_pkts += ts->try_cnt - 1;
-			peer_stats->retry_bytes += (ts->try_cnt - 1) * msdu->len;
-		}
+	if (ts->try_cnt > 1) {
+		peer_stats->retry_pkts += ts->try_cnt - 1;
+		peer_stats->retry_bytes += (ts->try_cnt - 1) * msdu->len;
 
 		if (ts->status != HAL_WBM_TQM_REL_REASON_FRAME_ACKED) {
 			peer_stats->failed_pkts += 1;
@@ -755,7 +750,7 @@ int ath11k_dp_htt_h2t_ppdu_stats_req(struct ath11k *ar, u32 mask)
 	cmd->msg = FIELD_PREP(HTT_PPDU_STATS_CFG_MSG_TYPE,
 			      HTT_H2T_MSG_TYPE_PPDU_STATS_CFG);
 
-	pdev_mask = DP_SW2HW_MACID(ar->pdev_idx);
+	pdev_mask = 1 << (ar->pdev_idx);
 	cmd->msg |= FIELD_PREP(HTT_PPDU_STATS_CFG_PDEV_ID, pdev_mask);
 	cmd->msg |= FIELD_PREP(HTT_PPDU_STATS_CFG_TLV_TYPE_BITMASK, mask);
 

@@ -792,7 +792,7 @@ ath11k_update_per_peer_tx_stats(struct ath11k *ar,
 	int ret;
 	u8 flags, mcs, nss, bw, sgi, rate_idx = 0;
 	u32 succ_bytes = 0;
-	u16 succ_mpdus = 0, rate = 0, succ_pkts = 0;
+	u16 rate = 0, succ_pkts = 0;
 	bool is_ampdu = false;
 
 	if (!usr_stats)
@@ -800,9 +800,6 @@ ath11k_update_per_peer_tx_stats(struct ath11k *ar,
 
 	if (!(usr_stats->tlv_flags & BIT(HTT_PPDU_STATS_TAG_USR_RATE)))
 		return;
-
-	if (usr_stats->tlv_flags & BIT(HTT_PPDU_STATS_TAG_USR_COMPLTN_COMMON))
-		succ_mpdus = usr_stats->cmpltn_cmn.mpdu_success;
 
 	if (usr_stats->tlv_flags & BIT(HTT_PPDU_STATS_TAG_USR_COMPLTN_COMMON))
 		is_ampdu =
@@ -861,6 +858,7 @@ ath11k_update_per_peer_tx_stats(struct ath11k *ar,
 	arsta = (struct ath11k_sta *)sta->drv_priv;
 
 	memset(&arsta->txrate, 0, sizeof(arsta->txrate));
+	memset(&arsta->tx_info.status, 0, sizeof(arsta->tx_info.status));
 
 	switch (flags) {
 	case WMI_RATE_PREAMBLE_OFDM:
@@ -908,7 +906,7 @@ ath11k_update_per_peer_tx_stats(struct ath11k *ar,
 
 	memcpy(&arsta->last_txrate, &arsta->txrate, sizeof(struct rate_info));
 
-	if (succ_mpdus) {
+	if (succ_pkts) {
 		arsta->tx_info.flags = IEEE80211_TX_STAT_ACK;
 		arsta->tx_info.status.rates[0].count = 1;
 		ieee80211_tx_rate_update(ar->hw, sta, &arsta->tx_info);
