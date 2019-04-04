@@ -441,16 +441,8 @@ static int ath11k_core_soc_create(struct ath11k_base *sc)
 		goto err_debugfs_reg;
 	}
 
-	ret = ath11k_dp_alloc(sc);
-	if (ret) {
-		ath11k_err(sc, "failed to init DP: %d\n", ret);
-		goto err_power_down;
-	}
-
 	return 0;
 
-err_power_down:
-	ath11k_ahb_power_down(sc);
 err_debugfs_reg:
 	ath11k_debug_soc_destroy(sc);
 err_qmi_deinit:
@@ -589,6 +581,46 @@ err_firmware_stop:
 	return ret;
 }
 
+int ath11k_qmi_firmware_indication(struct ath11k_base *ab)
+{
+	int ret;
+
+	ret = ath11k_ce_init_pipes(ab);
+	if (ret) {
+		ath11k_err(ab, "failed to initialize CE: %d\n", ret);
+		return ret;
+	}
+
+	ret = ath11k_dp_alloc(ab);
+	if (ret) {
+		ath11k_err(ab, "failed to init DP: %d\n", ret);
+		return ret;
+	}
+
+	mutex_lock(&ab->core_lock);
+	ret = ath11k_core_start(ab, ATH11K_FIRMWARE_MODE_NORMAL);
+	if (ret) {
+		ath11k_err(ab, "failed to start core: %d\n", ret);
+		goto err_dp_free;
+	}
+
+	ret = ath11k_core_pdev_create(ab);
+	if (ret) {
+		ath11k_err(ab, "failed to create pdev core: %d\n", ret);
+		goto err_core_stop;
+	}
+	ath11k_ahb_ext_irq_enable(ab);
+	mutex_unlock(&ab->core_lock);
+
+	return 0;
+
+err_core_stop:
+	ath11k_core_stop(ab);
+err_dp_free:
+	ath11k_dp_free(ab);
+	return ret;
+}
+
 static int ath11k_core_reconfigure_on_crash(struct ath11k_base *sc)
 {
 	int ret;
@@ -606,44 +638,18 @@ static int ath11k_core_reconfigure_on_crash(struct ath11k_base *sc)
 	if (ret)
 		return ret;
 
-	ret = ath11k_ce_init_pipes(sc);
-	if (ret) {
-		ath11k_err(sc, "failed to initialize CE: %d on reboot\n", ret);
-		goto err_hal_srng_deinit;
-	}
-
 	clear_bit(ATH11K_FLAG_CRASH_FLUSH, &sc->dev_flags);
 
-	ret = ath11k_dp_alloc(sc);
-	if (ret) {
-		ath11k_err(sc, "failed to init DP: %d\n", ret);
+	ret = ath11k_qmi_firmware_indication(sc);
+	if (ret)
 		goto err_hal_srng_deinit;
-	}
-
-	ret = ath11k_core_start(sc, ATH11K_FIRMWARE_MODE_NORMAL);
-	if (ret) {
-		ath11k_err(sc, "failed to start core from restart work\n");
-		goto err_dp_free;
-	}
-
-	ret = ath11k_dp_pdev_alloc(sc);
-	if (ret) {
-		ath11k_err(sc, "failed to attach DP pdev: %d\n", ret);
-		goto err_core_stop;
-	}
-
-	ath11k_ahb_ext_irq_enable(sc);
 
 	clear_bit(ATH11K_FLAG_RECOVERY, &sc->dev_flags);
+
 	return 0;
 
-err_core_stop:
-	ath11k_core_stop(sc);
-err_dp_free:
-	ath11k_dp_free(sc);
 err_hal_srng_deinit:
 	ath11k_hal_srng_deinit(sc);
-
 	return ret;
 }
 
@@ -748,8 +754,7 @@ int ath11k_core_init(struct ath11k_base *sc)
 	phandle rproc_phandle;
 	int ret;
 
-#ifndef CONFIG_IPQ_SUBSYSTEM_RESTART
-	if (of_property_read_u32(dev->of_node, "q6_rproc", &rproc_phandle)) {
+	if (of_property_read_u32(dev->of_node, "qcom,rproc", &rproc_phandle)) {
 		ath11k_err(sc, "failed to get q6_rproc handle\n");
 		return -ENOENT;
 	}
@@ -760,37 +765,14 @@ int ath11k_core_init(struct ath11k_base *sc)
 		return -EINVAL;
 	}
 	sc->tgt_rproc = prproc;
-#endif
-
 	sc->hw_params = ath11k_hw_params;
 
+	set_bit(ATH11K_FLAG_REGISTERED, &sc->dev_flags);
 	ret = ath11k_core_soc_create(sc);
 	if (ret) {
 		ath11k_err(sc, "failed to create soc core: %d\n", ret);
 		return ret;
 	}
-
-	mutex_lock(&sc->core_lock);
-	ret = ath11k_core_start(sc, ATH11K_FIRMWARE_MODE_NORMAL);
-	if (ret) {
-		mutex_unlock(&sc->core_lock);
-		ath11k_core_soc_destroy(sc);
-		ath11k_err(sc, "failed to init core: %d\n", ret);
-		return ret;
-	}
-
-	ret = ath11k_core_pdev_create(sc);
-	if (ret) {
-		mutex_unlock(&sc->core_lock);
-		ath11k_core_soc_destroy(sc);
-		ath11k_err(sc, "failed to create pdev core: %d\n", ret);
-		return ret;
-	}
-
-	ath11k_ahb_ext_irq_enable(sc);
-
-	set_bit(ATH11K_FLAG_REGISTERED, &sc->dev_flags);
-	mutex_unlock(&sc->core_lock);
 
 	return 0;
 }
@@ -812,10 +794,6 @@ void ath11k_core_deinit(struct ath11k_base *sc)
 
 void ath11k_core_free(struct ath11k_base *sc)
 {
-	flush_workqueue(sc->qmi.wq);
-	destroy_workqueue(sc->qmi.wq);
-	destroy_workqueue(sc->qmi.qmi_resp_wq);
-
 	kfree(sc);
 }
 
@@ -827,46 +805,26 @@ struct ath11k_base *ath11k_core_alloc(struct device *dev)
 	if (!sc)
 		return NULL;
 
-	init_completion(&sc->fw_ready);
 	init_completion(&sc->driver_recovery);
 
 	sc->workqueue = create_singlethread_workqueue("ath11k_wq");
 	if (!sc->workqueue)
 		goto err_sc_free;
 
-	sc->qmi.wq = create_singlethread_workqueue("ath11k_qmi_wq");
-	if (!sc->qmi.wq)
-		goto err_qmi_wq;
-
-	sc->qmi.qmi_resp_wq = create_singlethread_workqueue("ath11k_qmi_resp_wq");
-	if (!sc->qmi.wq)
-		goto err_qmi_resp_wq;
-
 	mutex_init(&sc->core_lock);
 	spin_lock_init(&sc->data_lock);
 
-	spin_lock_init(&sc->qmi.event_msg_lock);
-	INIT_WORK(&sc->qmi.event_work, ath11k_qmi_event_work);
-	INIT_LIST_HEAD(&sc->qmi.event_msg_list);
 	INIT_LIST_HEAD(&sc->peers);
 	init_waitqueue_head(&sc->peer_mapping_wq);
 	init_waitqueue_head(&sc->wmi_sc.tx_credits_wq);
-	INIT_WORK(&sc->qmi.msg_recv_work, ath11k_qmi_msg_recv_work);
 	INIT_WORK(&sc->restart_work, ath11k_core_restart);
-
 	timer_setup(&sc->rx_replenish_retry, ath11k_ce_rx_replenish_retry, 0);
-
 	sc->dev = dev;
 
 	return sc;
 
-err_qmi_resp_wq:
-	destroy_workqueue(sc->qmi.wq);
-err_qmi_wq:
-	destroy_workqueue(sc->workqueue);
 err_sc_free:
 	kfree(sc);
-
 	return NULL;
 }
 

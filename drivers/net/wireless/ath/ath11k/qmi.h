@@ -6,30 +6,23 @@
 #ifndef ATH11K_QMI_H
 #define ATH11K_QMI_H
 
-#include <linux/notifier.h>
-#ifdef CONFIG_IPQ_SUBSYSTEM_RESTART
-#include <linux/qmi_encdec.h>
-#include <soc/qcom/msm_qmi_interface.h>
-#else
+#include <linux/mutex.h>
 #include <linux/soc/qcom/qmi.h>
-#endif
 
 #define ATH11K_HOST_VERSION_STRING		"WIN"
-#define QMI_WLANFW_TIMEOUT_MS			10000
-#define MAX_BDF_FILE_NAME_SIZE			64
-#define DEFAULT_BDF_FILE_NAME			"bdwlan.bin"
-#define BDF_FILE_NAME_PREFIX			"bdwlan.b"
-#define DEFAULT_CAL_FILE_NAME			"caldata.bin"
-#define CAL_FILE_NAME_PREFIX			"caldata.b"
-#define BDF_MAX_SIZE				(256 * 1024)
-#define CALDATA_OFFSET 				(128 * 1024)
-#define Q6_BDF_ADDR				0x4FD40000
-#define QMI_WLANFW_MAX_BUILD_ID_LEN_V01		128
-#define QMI_WLFW_SERVICE_ID_V01			0x45
-#define QMI_WLFW_SERVICE_VERS_V01		0x01
-#define QMI_WLFW_SERVICE_INS_ID_V01		0x02
-#define QMI_WLANFW_MAX_TIMESTAMP_LEN_V01	32
-#define QMI_WLANFW_MAX_TIMESTAMP_LEN_V01	32
+#define ATH11K_QMI_WLANFW_TIMEOUT_MS		5000
+#define ATH11K_QMI_MAX_BDF_FILE_NAME_SIZE	64
+#define ATH11K_QMI_BDF_MAX_SIZE			(256 * 1024)
+#define ATH11K_QMI_CALDATA_OFFSET 		(128 * 1024)
+#define ATH11K_QMI_WLANFW_MAX_BUILD_ID_LEN_V01	128
+#define ATH11K_QMI_WLFW_SERVICE_ID_V01		0x45
+#define ATH11K_QMI_WLFW_SERVICE_VERS_V01	0x01
+#define ATH11K_QMI_WLFW_SERVICE_INS_ID_V01	0x02
+#define ATH11K_QMI_WLANFW_MAX_TIMESTAMP_LEN_V01 32
+#define ATH11K_QMI_RESP_LEN_MAX			8192
+#define ATH11K_QMI_WLANFW_MAX_NUM_MEM_SEG_V01	32
+#define ATH11K_QMI_CALDB_SIZE 			0x480000
+#define ATH11K_QMI_DEFAULT_CAL_FILE_NAME	"caldata.bin"
 
 #define QMI_WLFW_REQUEST_MEM_IND_V01		0x0035
 #define QMI_WLFW_FW_MEM_READY_IND_V01		0x0037
@@ -37,7 +30,6 @@
 #define QMI_WLFW_FW_READY_IND_V01		0x0038
 
 #define QMI_WLANFW_MAX_DATA_SIZE_V01		6144
-#define QMI_WLANFW_MAX_NUM_MEM_SEG_V01		32
 #define ATH11K_FIRMWARE_MODE_OFF		4
 #define Q6_CALDB_ADDR 0x50000000
 #define Q6_CALDB_SIZE 0x480000
@@ -67,6 +59,13 @@ enum ath11k_qmi_event_type {
 	ATH11K_QMI_EVENT_POWER_DOWN,
 	ATH11K_QMI_EVENT_MAX,
 };
+
+struct ath11k_qmi_driver_event {
+	struct list_head list;
+	enum ath11k_qmi_event_type type;
+	void *data;
+};
+
 
 struct ath11k_qmi_ce_cfg {
 	const u8 *tgt_ce;
@@ -98,23 +97,19 @@ struct target_info {
 	u32 board_id;
 	u32 soc_id;
 	u32 fw_version;
-	char fw_build_timestamp[QMI_WLANFW_MAX_TIMESTAMP_LEN_V01 + 1];
+	char fw_build_timestamp[ATH11K_QMI_WLANFW_MAX_TIMESTAMP_LEN_V01 + 1];
 };
 
 struct ath11k_qmi {
-	struct ath11k_base *sc;
-	struct notifier_block qmi_service_nb;
-	struct qmi_handle *handle;
-	struct workqueue_struct *wq;
-	struct workqueue_struct *qmi_resp_wq;
+	struct ath11k_base *ab;
+	struct qmi_handle handle;
+	struct sockaddr_qrtr sq;
 	struct work_struct event_work;
-	struct work_struct msg_recv_work;
-	unsigned long event_type;
-	unsigned long qmi_state;
-	struct list_head event_msg_list;
-	spinlock_t event_msg_lock; /* spinlock for QMI event msg work handle */
+	struct workqueue_struct *event_wq;
+	struct list_head event_list;
+	spinlock_t event_lock; /* spinlock for qmi event list */
 	struct ath11k_qmi_ce_cfg ce_cfg;
-	struct target_mem_chunk target_mem[QMI_WLANFW_MAX_NUM_MEM_SEG_V01];
+	struct target_mem_chunk target_mem[ATH11K_QMI_WLANFW_MAX_NUM_MEM_SEG_V01];
 	u32 mem_seg_count;
 	u32 target_mem_mode;
 	bool cal_done;
@@ -238,7 +233,7 @@ struct qmi_wlanfw_mem_seg_s_v01 {
 
 struct qmi_wlanfw_request_mem_ind_msg_v01 {
 	u32 mem_seg_len;
-	struct qmi_wlanfw_mem_seg_s_v01 mem_seg[QMI_WLANFW_MAX_NUM_MEM_SEG_V01];
+	struct qmi_wlanfw_mem_seg_s_v01 mem_seg[ATH11K_QMI_WLANFW_MAX_NUM_MEM_SEG_V01];
 };
 
 struct qmi_wlanfw_mem_seg_resp_s_v01 {
@@ -250,7 +245,7 @@ struct qmi_wlanfw_mem_seg_resp_s_v01 {
 
 struct qmi_wlanfw_respond_mem_req_msg_v01 {
 	u32 mem_seg_len;
-	struct qmi_wlanfw_mem_seg_resp_s_v01 mem_seg[QMI_WLANFW_MAX_NUM_MEM_SEG_V01];
+	struct qmi_wlanfw_mem_seg_resp_s_v01 mem_seg[ATH11K_QMI_WLANFW_MAX_NUM_MEM_SEG_V01];
 };
 
 struct qmi_wlanfw_respond_mem_resp_msg_v01 {
@@ -317,7 +312,7 @@ struct qmi_wlanfw_soc_info_s_v01 {
 
 struct qmi_wlanfw_fw_version_info_s_v01 {
 	u32 fw_version;
-	char fw_build_timestamp[QMI_WLANFW_MAX_TIMESTAMP_LEN_V01 + 1];
+	char fw_build_timestamp[ATH11K_QMI_WLANFW_MAX_TIMESTAMP_LEN_V01 + 1];
 };
 
 enum qmi_wlanfw_cal_temp_id_enum_v01 {
@@ -340,7 +335,7 @@ struct qmi_wlanfw_cap_resp_msg_v01 {
 	u8 fw_version_info_valid;
 	struct qmi_wlanfw_fw_version_info_s_v01 fw_version_info;
 	u8 fw_build_id_valid;
-	char fw_build_id[QMI_WLANFW_MAX_BUILD_ID_LEN_V01 + 1];
+	char fw_build_id[ATH11K_QMI_WLANFW_MAX_BUILD_ID_LEN_V01 + 1];
 	u8 num_macs_valid;
 	u8 num_macs;
 };
@@ -449,163 +444,4 @@ void ath11k_qmi_msg_recv_work(struct work_struct *work);
 void ath11k_qmi_deinit_service(struct ath11k_base *sc);
 int ath11k_qmi_init_service(struct ath11k_base *sc);
 
-#ifndef CONFIG_IPQ_SUBSYSTEM_RESTART
-#define elem_info qmi_elem_info
-#define is_array array_type
-#define get_qmi_response_type_v01_ei() NULL
-
-struct msg_desc {
-	uint16_t msg_id;
-	int max_msg_len;
-	struct elem_info *ei_array;
-};
-
-enum qmi_event_type {
-	QMI_RECV_MSG = 1,
-	QMI_SERVER_ARRIVE,
-	QMI_SERVER_EXIT,
-};
-
-static inline struct qmi_handle *qmi_handle_create(
-	void (*notify)(struct qmi_handle *handle,
-		       enum qmi_event_type event, void *notify_priv),
-	void *notify_priv)
-{
-	return NULL;
-}
-
-static inline int qmi_handle_destroy(struct qmi_handle *handle)
-{
-	return -ENODEV;
-}
-
-static inline int qmi_register_ind_cb(struct qmi_handle *handle,
-	void (*ind_cb)(struct qmi_handle *handle,
-		       unsigned int msg_id, void *msg,
-		       unsigned int msg_len, void *ind_cb_priv),
-	void *ind_cb_priv)
-{
-	return -ENODEV;
-}
-
-static inline int qmi_send_req_wait(struct qmi_handle *handle,
-				    struct msg_desc *req_desc,
-				    void *req, unsigned int req_len,
-				    struct msg_desc *resp_desc,
-				    void *resp, unsigned int resp_len,
-				    unsigned long timeout_ms)
-{
-	return -ENODEV;
-}
-
-static inline int qmi_send_req_nowait(struct qmi_handle *handle,
-				struct msg_desc *req_desc,
-				void *req, unsigned int req_len,
-				struct msg_desc *resp_desc,
-				void *resp, unsigned int resp_len,
-				void (*resp_cb)(struct qmi_handle *handle,
-						unsigned int msg_id, void *msg,
-						void *resp_cb_data),
-				void *resp_cb_data)
-{
-	return -ENODEV;
-}
-
-static inline int qmi_recv_msg(struct qmi_handle *handle)
-{
-	return -ENODEV;
-}
-
-static inline int qmi_connect_to_service(struct qmi_handle *handle,
-					 uint32_t service_id,
-					 uint32_t service_vers,
-					 uint32_t service_ins)
-{
-	return -ENODEV;
-}
-
-static inline int qmi_svc_event_notifier_register(uint32_t service_id,
-						  uint32_t service_vers,
-						  uint32_t service_ins,
-						  struct notifier_block *nb)
-{
-	return -ENODEV;
-}
-
-static inline int qmi_svc_event_notifier_unregister(uint32_t service_id,
-						    uint32_t service_vers,
-						    uint32_t service_ins,
-						    struct notifier_block *nb)
-{
-	return -ENODEV;
-}
-
-static inline int qmi_svc_register(struct qmi_handle *handle,
-				   void *ops_options)
-{
-	return -ENODEV;
-}
-
-static inline int qmi_send_resp(struct qmi_handle *handle,
-				void *conn_handle,
-				void *req_handle,
-				struct msg_desc *resp_desc,
-				void *resp,
-				unsigned int resp_len)
-{
-	return -ENODEV;
-}
-
-static inline int qmi_send_resp_from_cb(struct qmi_handle *handle,
-					void *conn_handle,
-					void *req_handle,
-					struct msg_desc *resp_desc,
-					void *resp,
-					unsigned int resp_len)
-{
-	return -ENODEV;
-}
-
-static inline int qmi_send_ind(struct qmi_handle *handle,
-			       void *conn_handle,
-			       struct msg_desc *ind_desc,
-			       void *ind,
-			       unsigned int ind_len)
-{
-	return -ENODEV;
-}
-
-static inline int qmi_send_ind_from_cb(struct qmi_handle *handle,
-				       void *conn_handle,
-				       struct msg_desc *ind_desc,
-				       void *ind,
-				       unsigned int ind_len)
-{
-	return -ENODEV;
-}
-
-static inline int qmi_svc_unregister(struct qmi_handle *handle)
-{
-	return -ENODEV;
-}
-
-static inline int qmi_kernel_encode(struct msg_desc *desc,
-				    void *out_buf, uint32_t out_buf_len,
-				    void *in_c_struct)
-{
-	return -EOPNOTSUPP;
-}
-
-static inline int qmi_kernel_decode(struct msg_desc *desc,
-				    void *out_c_struct,
-				    void *in_buf, uint32_t in_buf_len)
-{
-	return -EOPNOTSUPP;
-}
-
-static inline bool qmi_verify_max_msg_len(struct msg_desc *desc)
-{
-	return false;
-}
-#endif
 #endif

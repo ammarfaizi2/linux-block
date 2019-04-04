@@ -2,7 +2,9 @@ config ATH11K
         tristate "Qualcomm Technologies 802.11ax chipset support"
         depends on MAC80211 && HAS_DMA
 	depends on REMOTEPROC
+	depends on ARCH_QCOM || COMPILE_TEST
 	select ATH_COMMON
+	select QCOM_QMI_HELPERS
         help
           This module adds support for Qualcomm Technologies 802.11ax family of
 	  chipsets.

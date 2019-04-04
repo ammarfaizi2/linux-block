@@ -10,9 +10,6 @@
 #include <linux/interrupt.h>
 #include <linux/irq.h>
 #include <linux/bitfield.h>
-#ifdef CONFIG_IPQ_SUBSYSTEM_RESTART
-#include <soc/qcom/subsystem_restart.h>
-#endif
 #include "qmi.h"
 #include "htc.h"
 #include "wmi.h"
@@ -534,15 +531,6 @@ struct ath11k_pdev {
 	u8 mac_addr[ETH_ALEN];
 };
 
-#ifdef CONFIG_IPQ_SUBSYSTEM_RESTART
-struct ath11k_subsys_info {
-	struct subsys_device *subsys_device;
-	struct subsys_desc subsys_desc;
-	void *subsys_handle;
-	bool subsystem_put_in_progress;
-};
-#endif
-
 struct ath11k_board_data {
 	const struct firmware *fw;
 	const void *data;
@@ -605,12 +593,6 @@ struct ath11k_base {
 	struct ath11k_targ_cap target_caps;
 	u32 service_bitmap[WMI_SERVICE_BM_SIZE];
 	u32 ext_service_bitmap[WMI_SERVICE_EXT_BM_SIZE];
-#ifdef CONFIG_IPQ_SUBSYSTEM_RESTART
-	struct ath11k_subsys_info subsys_info;
-	struct notifier_block nb;
-	void *notif_handler;
-	int target_restarted;
-#endif
 	bool pdevs_macaddr_valid;
 	int bd_api;
 	struct ath11k_hw_params hw_params;
@@ -793,6 +775,7 @@ struct ath11k_peer *ath11k_peer_find_by_addr(struct ath11k_base *ab,
 					     const u8 *addr);
 struct ath11k_peer *ath11k_peer_find_by_id(struct ath11k_base *ab,
 						  int peer_id);
+int ath11k_qmi_firmware_indication(struct ath11k_base *ab);
 int ath11k_core_init(struct ath11k_base *ath11k);
 void ath11k_core_deinit(struct ath11k_base *ath11k);
 struct ath11k_base *ath11k_core_alloc(struct device *dev);

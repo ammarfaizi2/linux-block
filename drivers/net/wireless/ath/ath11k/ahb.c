@@ -11,9 +11,6 @@
 #include "ahb.h"
 #include "debug.h"
 #include <linux/remoteproc.h>
-#ifdef CONFIG_IPQ_SUBSYSTEM_RESTART
-#include <soc/qcom/subsystem_notif.h>
-#endif
 
 static const struct of_device_id ath11k_ahb_of_match[] = {
 	/* TODO: Should we change the compatible string to something similar
@@ -663,66 +660,17 @@ void ath11k_ahb_stop(struct ath11k_base *sc)
 int ath11k_ahb_power_up(struct ath11k_base *sc)
 {
 	int ret;
-#ifdef CONFIG_IPQ_SUBSYSTEM_RESTART
-	struct ath11k_subsys_info *subsys_info = &sc->subsys_info;
-#endif
 
-	reinit_completion(&sc->fw_ready);
-
-#ifdef CONFIG_IPQ_SUBSYSTEM_RESTART
-	subsys_info->subsys_handle = subsystem_get(subsys_info->subsys_desc.name);
-#else
 	ret = rproc_boot(sc->tgt_rproc);
-	if (ret) {
-		ath11k_err(sc, "failed to load firmware\n");
-		return ret;
-	}
-#endif
+	if (ret)
+		ath11k_err(sc, "failed to boot the remote processor Q6\n");
 
-	ret = wait_for_completion_timeout(&sc->fw_ready,
-					  ATH11K_FW_READY_TIMEOUT_HZ);
-	if (!ret) {
-		ath11k_err(sc, "firmware ready timeout error\n");
-#ifdef CONFIG_IPQ_SUBSYSTEM_RESTART
-		if (sc->subsys_info.subsys_handle) {
-			subsystem_put(sc->subsys_info.subsys_handle);
-			sc->subsys_info.subsys_handle = NULL;
-		}
-#else
-		rproc_shutdown(sc->tgt_rproc);
-#endif
-		return -ETIMEDOUT;
-	}
-
-	ret = ath11k_ce_init_pipes(sc);
-	if (ret) {
-		ath11k_err(sc, "failed to initialize CE: %d\n", ret);
-#ifdef CONFIG_IPQ_SUBSYSTEM_RESTART
-		if (sc->subsys_info.subsys_handle) {
-			subsystem_put(sc->subsys_info.subsys_handle);
-			sc->subsys_info.subsys_handle = NULL;
-		}
-#else
-		rproc_shutdown(sc->tgt_rproc);
-#endif
-		return ret;
-	}
-
-	return 0;
-
-	/* Init other components as appropriate */
+	return ret;
 }
 
 void ath11k_ahb_power_down(struct ath11k_base *sc)
 {
-#ifdef CONFIG_IPQ_SUBSYSTEM_RESTART
-	if (sc->subsys_info.subsys_handle) {
-		subsystem_put(sc->subsys_info.subsys_handle);
-		sc->subsys_info.subsys_handle = NULL;
-	}
-#else
 	rproc_shutdown(sc->tgt_rproc);
-#endif
 }
 
 static void ath11k_ahb_init_qmi_ce_config(struct ath11k_base *sc)
@@ -971,59 +919,6 @@ int ath11k_ahb_map_service_to_pipe(struct ath11k_base *sc, u16 service_id,
 	return 0;
 }
 
-#ifdef CONFIG_IPQ_SUBSYSTEM_RESTART
-void ath11k_unregister_subsys(struct ath11k_base *sc)
-{
-	struct ath11k_subsys_info *subsys_info;
-
-	if (sc->notif_handler) {
-		subsys_notif_unregister_notifier(sc->notif_handler, &sc->nb);
-		memset(&sc->nb, 0, sizeof(struct notifier_block));
-		sc->notif_handler = NULL;
-	}
-	subsys_info = &sc->subsys_info;
-	subsys_info->subsys_desc.name = NULL;
-}
-
-static int ath11k_subsys_notifier_cb(struct notifier_block *nb,
-				     unsigned long code,
-				     void *handle)
-{
-	struct ath11k_base *sc = container_of(nb, struct ath11k_base, nb);
-
-	switch (code) {
-	case SUBSYS_BEFORE_SHUTDOWN:
-		set_bit(ATH11K_FLAG_CRASH_FLUSH, &sc->dev_flags);
-		set_bit(ATH11K_FLAG_RECOVERY, &sc->dev_flags);
-		sc->target_restarted = 1;
-		break;
-	case SUBSYS_AFTER_POWERUP:
-		sc->target_restarted = 0;
-		break;
-	case SUBSYS_BEFORE_POWERUP:
-		break;
-	default:
-		return NOTIFY_OK;
-	}
-
-	return NOTIFY_OK;
-}
-
-int ath11k_register_subsys(struct ath11k_base *sc)
-{
-	struct ath11k_subsys_info *subsys_info;
-
-	subsys_info = &sc->subsys_info;
-	subsys_info->subsys_desc.name = ATH11K_TARGET_NAME;
-
-	sc->nb.notifier_call = ath11k_subsys_notifier_cb;
-	sc->notif_handler =
-		subsys_notif_register_notifier(subsys_info->subsys_desc.name,
-					       &sc->nb);
-	return 0;
-}
-#endif
-
 static int ath11k_ahb_probe(struct platform_device *pdev)
 {
 	struct ath11k_base *sc;
@@ -1092,10 +987,6 @@ static int ath11k_ahb_probe(struct platform_device *pdev)
 		goto err_ce_free;
 	}
 
-#ifdef CONFIG_IPQ_SUBSYSTEM_RESTART
-	ath11k_register_subsys(sc);
-#endif
-
 	ret = ath11k_core_init(sc);
 	if (ret) {
 		ath11k_err(sc, "failed to init core: %d\n", ret);
@@ -1135,9 +1026,6 @@ static int ath11k_ahb_remove(struct platform_device *pdev)
 
 	ath11k_hal_srng_deinit(sc);
 	ath11k_ce_free_pipes(sc);
-#ifdef CONFIG_IPQ_SUBSYSTEM_RESTART
-	ath11k_unregister_subsys(sc);
-#endif
 	ath11k_core_free(sc);
 	platform_set_drvdata(pdev, NULL);
 
