@@ -378,6 +378,8 @@ struct ath11k_debug {
 	u32 extd_rx_stats;
 	u32 pktlog_filter;
 	u32 pktlog_mode;
+	u32 pktlog_peer_valid;
+	u8 pktlog_peer_addr[ETH_ALEN];
 };
 
 struct ath11k_per_peer_tx_stats {

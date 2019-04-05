@@ -2303,6 +2303,11 @@ int ath11k_dp_rx_process_mon_status(struct ath11k_base *ab, int mac_id,
 
 		arsta = (struct ath11k_sta *)peer->sta->drv_priv;
 		ath11k_dp_rx_update_peer_stats(arsta, &ppdu_info);
+
+		if (ar->debug.pktlog_peer_valid &&
+		    ether_addr_equal(peer->addr, ar->debug.pktlog_peer_addr)) {
+			/* TODO update the pktlog tracing for one peer*/
+		}
 		spin_unlock_bh(&ab->data_lock);
 		rcu_read_unlock();
 

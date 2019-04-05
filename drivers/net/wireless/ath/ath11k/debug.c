@@ -992,10 +992,10 @@ static ssize_t ath11k_write_pktlog_filter(struct file *file,
 {
 	struct ath11k *ar = file->private_data;
 	struct htt_rx_ring_tlv_filter tlv_filter = {0};
-	u32 rx_filter = 0, ring_id, filter;
-	u8 buf[128] = {0}, mode;
+	u32 rx_filter = 0, ring_id, filter, peer_valid;
+	u8 buf[128] = {0}, mac_addr[ETH_ALEN] = {0}, mode;
 	char *token, *sptr;
-	int ret;
+	int ret, i;
 	ssize_t rc;
 
 	mutex_lock(&ar->conf_mutex);
@@ -1095,8 +1095,47 @@ static ssize_t ath11k_write_pktlog_filter(struct file *file,
 		goto out;
 	}
 
+	token = strsep(&sptr, " ");
+	if (!token) {
+		ret = -EINVAL;
+		goto out;
+	}
+
+	if (kstrtou32(token, 0, &peer_valid)) {
+		ret = -EINVAL;
+		goto out;
+	}
+
+	if (peer_valid) {
+		token = strsep(&sptr, " ");
+		if (token) {
+			for (i = 0; i < ETH_ALEN - 1; i++) {
+				token = strsep(&sptr, ":");
+				if (!token)
+					return -EINVAL;
+
+				if (kstrtou8(token, 16, &mac_addr[i]))
+					return -EINVAL;
+			}
+			memcpy(ar->debug.pktlog_peer_addr, mac_addr, ETH_ALEN);
+		}
+	}
+
+	/* Send peer based pktlog enable/disable */
+	ret = ath11k_wmi_pdev_peer_pktlog_filter(ar, mac_addr, peer_valid);
+	if (ret) {
+		ath11k_warn(ar->ab, "failed to set peer pktlog filter %pM: %d\n",
+			    mac_addr, ret);
+		goto out;
+	}
+
+	ath11k_dbg(ar->ab, ATH11K_DBG_WMI, "pktlog filter %d mode %s peer addr %pM\n",
+		   filter, ((mode == ATH11K_PKTLOG_MODE_FULL)?"full":"lite"),
+		   ar->debug.pktlog_peer_addr);
+
 	ar->debug.pktlog_filter = filter;
 	ar->debug.pktlog_mode = mode;
+	ar->debug.pktlog_peer_valid = peer_valid;
 	ret = count;
 
 out:
@@ -1114,9 +1153,10 @@ static ssize_t ath11k_read_pktlog_filter(struct file *file,
 	int len = 0;
 
 	mutex_lock(&ar->conf_mutex);
-	len = scnprintf(buf, sizeof(buf) - len, "%08x %08x\n",
+	len = scnprintf(buf, sizeof(buf) - len, "%08x %08x %08x\n",
 			ar->debug.pktlog_filter,
-			ar->debug.pktlog_mode);
+			ar->debug.pktlog_mode,
+			ar->debug.pktlog_peer_valid);
 	mutex_unlock(&ar->conf_mutex);
 
 	return simple_read_from_buffer(ubuf, count, ppos, buf, len);

@@ -238,6 +238,7 @@ enum wmi_tlv_cmd_id {
 	WMI_PDEV_SET_RX_FILTER_PROMISCUOUS_CMDID,
 	WMI_PDEV_DMA_RING_CFG_REQ_CMDID,
 	WMI_PDEV_HE_TB_ACTION_FRM_CMDID,
+	WMI_PDEV_PKTLOG_FILTER_CMDID,
 	WMI_VDEV_CREATE_CMDID = WMI_TLV_CMD(WMI_GRP_VDEV),
 	WMI_VDEV_DELETE_CMDID,
 	WMI_VDEV_START_REQUEST_CMDID,
@@ -1748,6 +1749,9 @@ enum wmi_tlv_tag {
 	WMI_TAG_NDP_CHANNEL_INFO,
 	WMI_TAG_NDP_CMD,
 	WMI_TAG_NDP_EVENT,
+	/* TODO add all the missing cmds */
+	WMI_TAG_PDEV_PEER_PKTLOG_FILTER_CMD = 0x301,
+	WMI_TAG_PDEV_PEER_PKTLOG_FILTER_INFO,
 	WMI_TAG_MAX
 };
 
@@ -4083,6 +4087,18 @@ struct wmi_init_country_cmd {
 	} cc_info;
 } __packed;
 
+struct wmi_pdev_pktlog_filter_info {
+	u32 tlv_header;
+	struct wmi_mac_addr peer_macaddr;
+} __packed;
+
+struct wmi_pdev_pktlog_filter_cmd {
+	u32 tlv_header;
+	u32 pdev_id;
+	u32 enable;
+	u32 filter_type;
+	u32 num_mac;
+} __packed;
 
 struct wmi_pktlog_enable_cmd {
 	u32 tlv_header;
@@ -5157,6 +5173,7 @@ ath11k_wmi_send_init_country_cmd(struct ath11k *ar,
 				 struct wmi_init_country_params init_cc_param);
 int ath11k_wmi_pdev_pktlog_enable(struct ath11k *ar, u32 pktlog_filter);
 int ath11k_wmi_pdev_pktlog_disable(struct ath11k *ar);
+int ath11k_wmi_pdev_peer_pktlog_filter(struct ath11k *ar, u8 *addr, u8 enable);
 int
 ath11k_wmi_rx_reord_queue_remove(struct ath11k *ar,
 				 struct rx_reorder_queue_remove_params *param);
