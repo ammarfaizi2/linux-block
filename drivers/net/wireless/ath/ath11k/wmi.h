@@ -4083,6 +4083,19 @@ struct wmi_init_country_cmd {
 	} cc_info;
 } __packed;
 
+
+struct wmi_pktlog_enable_cmd {
+	u32 tlv_header;
+	u32 pdev_id;
+	u32 evlist; /* WMI_PKTLOG_EVENT */
+	u32 enable;
+} __packed;
+
+struct wmi_pktlog_disable_cmd {
+	u32 tlv_header;
+	u32 pdev_id;
+} __packed;
+
 #define MAX_SUPPORTED_RATES 128
 
 #define WMI_PEER_AUTH           0x00000001
@@ -5142,6 +5155,8 @@ int ath11k_wmi_send_bcn_offload_control_cmd(struct ath11k *ar,
 int
 ath11k_wmi_send_init_country_cmd(struct ath11k *ar,
 				 struct wmi_init_country_params init_cc_param);
+int ath11k_wmi_pdev_pktlog_enable(struct ath11k *ar, u32 pktlog_filter);
+int ath11k_wmi_pdev_pktlog_disable(struct ath11k *ar);
 int
 ath11k_wmi_rx_reord_queue_remove(struct ath11k *ar,
 				 struct rx_reorder_queue_remove_params *param);

@@ -25,6 +25,21 @@ enum ath11k_debug_mask {
 
 #define ATH11K_FW_STATS_BUF_SIZE (1024 * 1024)
 
+enum ath11k_pktlog_filter {
+	ATH11K_PKTLOG_RX		= 0x000000001,
+	ATH11K_PKTLOG_TX		= 0x000000002,
+	ATH11K_PKTLOG_RCFIND		= 0x000000004,
+	ATH11K_PKTLOG_RCUPDATE		= 0x000000008,
+	ATH11K_PKTLOG_EVENT_SMART_ANT 	= 0x000000020,
+	ATH11K_PKTLOG_EVENT_SW		= 0x000000040,
+	ATH11K_PKTLOG_ANY		= 0x00000006f,
+};
+
+enum ath11k_wmi_pktlog_enable {
+    ATH11K_WMI_PKTLOG_ENABLE_AUTO  = 0,
+    ATH11K_WMI_PKTLOG_ENABLE_FORCE = 1,
+};
+
 __printf(2, 3) void ath11k_info(struct ath11k_base *sc, const char *fmt, ...);
 __printf(2, 3) void ath11k_err(struct ath11k_base *sc, const char *fmt, ...);
 __printf(2, 3) void ath11k_warn(struct ath11k_base *sc, const char *fmt, ...);

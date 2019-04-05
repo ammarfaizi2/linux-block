@@ -986,6 +986,75 @@ void ath11k_debug_fw_stats_init(struct ath11k *ar)
 	init_completion(&ar->debug.fw_stats_complete);
 }
 
+static ssize_t ath11k_write_pktlog_filter(struct file *file,
+					  const char __user *ubuf,
+					  size_t count, loff_t *ppos)
+{
+	struct ath11k *ar = file->private_data;
+	u32 filter;
+	int ret;
+
+	if (kstrtouint_from_user(ubuf, count, 0, &filter))
+		return -EINVAL;
+
+	mutex_lock(&ar->conf_mutex);
+
+	if (ar->state != ATH11K_STATE_ON) {
+		ret = -ENETDOWN;
+		goto out;
+	}
+
+	if (filter == ar->debug.pktlog_filter) {
+		ret = count;
+		goto out;
+	}
+
+	if (ar->debug.pktlog_filter) {
+		ret = ath11k_wmi_pdev_pktlog_enable(ar,
+					ar->debug.pktlog_filter);
+		if (ret)
+			/* not serious */
+			ath11k_warn(ar->ab,
+				    "failed to enable pktlog filter %x: %d\n",
+				    ar->debug.pktlog_filter, ret);
+	} else {
+		ret = ath11k_wmi_pdev_pktlog_disable(ar);
+		if (ret)
+			/* not serious */
+			ath11k_warn(ar->ab, "failed to disable pktlog: %d\n", ret);
+	}
+
+	ar->debug.pktlog_filter = filter;
+	ret = count;
+
+out:
+	mutex_unlock(&ar->conf_mutex);
+	return ret;
+}
+
+static ssize_t ath11k_read_pktlog_filter(struct file *file,
+						char __user *ubuf,
+						size_t count, loff_t *ppos)
+
+{
+	char buf[32] = {0};
+	struct ath11k *ar = file->private_data;
+	int len = 0;
+
+	mutex_lock(&ar->conf_mutex);
+	len = scnprintf(buf, sizeof(buf) - len, "%08x\n",
+			ar->debug.pktlog_filter);
+	mutex_unlock(&ar->conf_mutex);
+
+	return simple_read_from_buffer(ubuf, count, ppos, buf, len);
+}
+
+static const struct file_operations fops_pktlog_filter = {
+	.read = ath11k_read_pktlog_filter,
+	.write = ath11k_write_pktlog_filter,
+	.open = simple_open
+};
+
 int ath11k_debug_register(struct ath11k *ar)
 {
 	struct ath11k_base *ab = ar->ab;
@@ -1017,6 +1086,10 @@ int ath11k_debug_register(struct ath11k *ar)
 	debugfs_create_file("ext_rx_stats", 0644,
 			    ar->debug.debugfs_pdev, ar,
 			    &fops_extd_rx_stats);
+	debugfs_create_file("pktlog_filter", 0644,
+			    ar->debug.debugfs_pdev, ar,
+			    &fops_pktlog_filter);
+
 	return 0;
 }
 
