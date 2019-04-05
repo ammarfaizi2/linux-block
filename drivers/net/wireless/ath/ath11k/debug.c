@@ -991,16 +991,35 @@ static ssize_t ath11k_write_pktlog_filter(struct file *file,
 					  size_t count, loff_t *ppos)
 {
 	struct ath11k *ar = file->private_data;
-	u32 filter;
+	struct htt_rx_ring_tlv_filter tlv_filter = {0};
+	u32 rx_filter = 0, ring_id, filter;
+	u8 buf[128] = {0}, mode;
+	char *token, *sptr;
 	int ret;
-
-	if (kstrtouint_from_user(ubuf, count, 0, &filter))
-		return -EINVAL;
+	ssize_t rc;
 
 	mutex_lock(&ar->conf_mutex);
-
 	if (ar->state != ATH11K_STATE_ON) {
 		ret = -ENETDOWN;
+		goto out;
+	}
+
+	rc = simple_write_to_buffer(buf, sizeof(buf) - 1, ppos, ubuf, count);
+	if (rc < 0) {
+		ret = rc;
+		goto out;
+	}
+	buf[rc] = '\0';
+	sptr = buf;
+
+	token = strsep(&sptr, " ");
+	if (!token) {
+		ret = -EINVAL;
+		goto out;
+	}
+
+	if (kstrtou32(token, 0, &filter)) {
+		ret = -EINVAL;
 		goto out;
 	}
 
@@ -1009,22 +1028,75 @@ static ssize_t ath11k_write_pktlog_filter(struct file *file,
 		goto out;
 	}
 
-	if (ar->debug.pktlog_filter) {
-		ret = ath11k_wmi_pdev_pktlog_enable(ar,
-					ar->debug.pktlog_filter);
-		if (ret)
-			/* not serious */
+	if (filter) {
+		ret = ath11k_wmi_pdev_pktlog_enable(ar, filter);
+		if (ret) {
 			ath11k_warn(ar->ab,
 				    "failed to enable pktlog filter %x: %d\n",
 				    ar->debug.pktlog_filter, ret);
+			goto out;
+		}
 	} else {
 		ret = ath11k_wmi_pdev_pktlog_disable(ar);
-		if (ret)
-			/* not serious */
+		if (ret) {
 			ath11k_warn(ar->ab, "failed to disable pktlog: %d\n", ret);
+			goto out;
+		}
+	}
+
+	token = strsep(&sptr, " ");
+	if (!token) {
+		ret = -EINVAL;
+		goto out;
+	}
+
+	if (kstrtou8(token, 0, &mode)) {
+		ret = -EINVAL;
+		goto out;
+	}
+
+	if (mode == ATH11K_PKTLOG_MODE_FULL) {
+		rx_filter = HTT_RX_FILTER_TLV_FLAGS_PPDU_START |
+			    HTT_RX_FILTER_TLV_FLAGS_PPDU_END |
+			    HTT_RX_FILTER_TLV_FLAGS_PPDU_END_USER_STATS |
+			    HTT_RX_FILTER_TLV_FLAGS_PPDU_END_USER_STATS_EXT |
+			    HTT_RX_FILTER_TLV_FLAGS_PPDU_END_STATUS_DONE |
+			    HTT_RX_FILTER_TLV_FLAGS_MPDU_START |
+			    HTT_RX_FILTER_TLV_FLAGS_MSDU_START |
+			    HTT_RX_FILTER_TLV_FLAGS_MSDU_END |
+			    HTT_RX_FILTER_TLV_FLAGS_MPDU_END |
+			    HTT_RX_FILTER_TLV_FLAGS_PACKET_HEADER |
+			    HTT_RX_FILTER_TLV_FLAGS_ATTENTION;
+	} else if (mode == ATH11K_PKTLOG_MODE_LITE) {
+		rx_filter = HTT_RX_FILTER_TLV_FLAGS_PPDU_START |
+			    HTT_RX_FILTER_TLV_FLAGS_PPDU_END |
+			    HTT_RX_FILTER_TLV_FLAGS_PPDU_END_USER_STATS |
+			    HTT_RX_FILTER_TLV_FLAGS_PPDU_END_USER_STATS_EXT |
+			    HTT_RX_FILTER_TLV_FLAGS_PPDU_END_STATUS_DONE |
+			    HTT_RX_FILTER_TLV_FLAGS_MPDU_START;
+	}
+
+	tlv_filter.rx_filter = rx_filter;
+	if (rx_filter) {
+		tlv_filter.pkt_filter_flags0 = HTT_RX_FP_MGMT_FILTER_FLAGS0;
+		tlv_filter.pkt_filter_flags1 = HTT_RX_FP_MGMT_FILTER_FLAGS1;
+		tlv_filter.pkt_filter_flags2 = HTT_RX_FP_CTRL_FILTER_FLASG2;
+		tlv_filter.pkt_filter_flags3 = HTT_RX_FP_CTRL_FILTER_FLASG3 |
+					       HTT_RX_FP_DATA_FILTER_FLASG3;
+	}
+
+	ring_id = ar->dp.rx_mon_status_refill_ring.refill_buf_ring.ring_id;
+	ret = ath11k_dp_htt_rx_filter_setup(ar->ab, ring_id, ar->dp.mac_id,
+					    HAL_RXDMA_MONITOR_STATUS,
+					    DP_RX_BUFFER_SIZE, &tlv_filter);
+
+	if (ret) {
+		ath11k_warn(ar->ab, "failed to set rx filter for moniter status ring\n");
+		goto out;
 	}
 
 	ar->debug.pktlog_filter = filter;
+	ar->debug.pktlog_mode = mode;
 	ret = count;
 
 out:
@@ -1042,8 +1114,9 @@ static ssize_t ath11k_read_pktlog_filter(struct file *file,
 	int len = 0;
 
 	mutex_lock(&ar->conf_mutex);
-	len = scnprintf(buf, sizeof(buf) - len, "%08x\n",
-			ar->debug.pktlog_filter);
+	len = scnprintf(buf, sizeof(buf) - len, "%08x %08x\n",
+			ar->debug.pktlog_filter,
+			ar->debug.pktlog_mode);
 	mutex_unlock(&ar->conf_mutex);
 
 	return simple_read_from_buffer(ubuf, count, ppos, buf, len);

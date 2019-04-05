@@ -988,7 +988,9 @@ static int ath11k_htt_pull_ppdu_stats(struct ath11k_base *ab,
 	ppdu_id = *((u32 *)data + 1);
 	ar = ab->pdevs[pdev_id].ar;
 
-	/* TODO add pktlog tracing */
+	if (!ar->debug.pktlog_mode == ATH11K_PKTLOG_MODE_LITE) {
+		/* TODO update the pktlog tracing */
+	}
 
 	/* TLV info starts after 16bytes of header */
 	data = (u8 *)data + 16;
@@ -2272,6 +2274,10 @@ int ath11k_dp_rx_process_mon_status(struct ath11k_base *ab, int mac_id,
 	while ((skb = __skb_dequeue(&skb_list))) {
 		memset(&ppdu_info, 0, sizeof(ppdu_info));
 		ppdu_info.peer_id = HAL_INVALID_PEERID;
+
+		if (!ar->debug.pktlog_peer_valid) {
+			/* TODO update the pktlog tracing */
+		}
 
 		hal_status = ath11k_hal_rx_parse_mon_status(ab, &ppdu_info,
 							    (u8 *)skb->data);

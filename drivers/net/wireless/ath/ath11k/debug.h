@@ -40,6 +40,25 @@ enum ath11k_wmi_pktlog_enable {
     ATH11K_WMI_PKTLOG_ENABLE_FORCE = 1,
 };
 
+enum ath11k_pktlog_mode {
+	ATH11K_PKTLOG_MODE_LITE = 1,
+	ATH11K_PKTLOG_MODE_FULL = 2,
+};
+
+enum ath11k_pktlog_enum {
+	ATH11K_PKTLOG_TYPE_TX_CTRL      = 1,
+	ATH11K_PKTLOG_TYPE_TX_STAT      = 2,
+	ATH11K_PKTLOG_TYPE_TX_MSDU_ID   = 3,
+	ATH11K_PKTLOG_TYPE_RX_STAT      = 5,
+	ATH11K_PKTLOG_TYPE_RC_FIND      = 6,
+	ATH11K_PKTLOG_TYPE_RC_UPDATE    = 7,
+	ATH11K_PKTLOG_TYPE_TX_VIRT_ADDR = 8,
+	ATH11K_PKTLOG_TYPE_RX_CBF       = 10,
+	ATH11K_PKTLOG_TYPE_RX_STATBUF   = 22,
+	ATH11K_PKTLOG_TYPE_PPDU_STATS   = 23,
+	ATH11K_PKTLOG_TYPE_LITE_RX      = 24,
+};
+
 __printf(2, 3) void ath11k_info(struct ath11k_base *sc, const char *fmt, ...);
 __printf(2, 3) void ath11k_err(struct ath11k_base *sc, const char *fmt, ...);
 __printf(2, 3) void ath11k_warn(struct ath11k_base *sc, const char *fmt, ...);

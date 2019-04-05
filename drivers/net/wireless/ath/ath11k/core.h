@@ -377,6 +377,7 @@ struct ath11k_debug {
 	bool fw_stats_done;
 	u32 extd_rx_stats;
 	u32 pktlog_filter;
+	u32 pktlog_mode;
 };
 
 struct ath11k_per_peer_tx_stats {
