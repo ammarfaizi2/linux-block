@@ -986,8 +986,9 @@ static int ath11k_htt_pull_ppdu_stats(struct ath11k_base *ab,
 	pdev_id = FIELD_GET(HTT_T2H_PPDU_STATS_PDEV_ID_M, *(u32 *)data);
 	pdev_id = DP_HW2SW_MACID(pdev_id);
 	ppdu_id = *((u32 *)data + 1);
-
 	ar = ab->pdevs[pdev_id].ar;
+
+	/* TODO add pktlog tracing */
 
 	/* TLV info starts after 16bytes of header */
 	data = (u8 *)data + 16;
@@ -1008,6 +1009,22 @@ static int ath11k_htt_pull_ppdu_stats(struct ath11k_base *ab,
 	return 0;
 }
 
+static void ath11k_htt_pktlog(struct ath11k_base *ab,
+				     struct sk_buff *skb)
+{
+	u32 *data = (u32 *)skb->data;
+	struct ath11k *ar;
+	u8 pdev_id;
+	u32 len;
+
+	len = FIELD_GET(HTT_T2H_PPDU_STATS_PAYLOAD_SIZE_M, *data);
+	pdev_id = FIELD_GET(HTT_T2H_PPDU_STATS_PDEV_ID_M, *data);
+	pdev_id = DP_HW2SW_MACID(pdev_id);
+	ar = ab->pdevs[pdev_id].ar;
+	++data;
+
+	/* TODO add pktlog tracing */
+}
 
 void ath11k_dp_htt_htc_t2h_msg_handler(struct ath11k_base *ab,
 				       struct sk_buff *skb)
@@ -1054,6 +1071,10 @@ void ath11k_dp_htt_htc_t2h_msg_handler(struct ath11k_base *ab,
 		break;
 	case HTT_T2H_MSG_TYPE_EXT_STATS_CONF:
 		ath11k_dbg_htt_ext_stats_handler(ab, skb);
+		break;
+	case HTT_T2H_MSG_TYPE_PKTLOG:
+		ath11k_htt_pktlog(ab, skb);
+		break;
 	default:
 		ath11k_warn(ab, "htt event %d not handled\n", type);
 		break;

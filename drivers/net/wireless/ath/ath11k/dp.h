@@ -761,6 +761,7 @@ struct htt_rx_ring_tlv_filter {
 enum htt_t2h_msg_type {
 	HTT_T2H_MSG_TYPE_VERSION_CONF,
 	HTT_T2H_MSG_TYPE_RX_ADDBA	= 0x5,
+	HTT_T2H_MSG_TYPE_PKTLOG		= 0x8,
 	HTT_T2H_MSG_TYPE_SEC_IND	= 0xb,
 	HTT_T2H_MSG_TYPE_PEER_MAP	= 0x1e,
 	HTT_T2H_MSG_TYPE_PEER_UNMAP	= 0x1f,
