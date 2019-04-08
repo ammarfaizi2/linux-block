@@ -75,6 +75,12 @@ static void notrace walk_stackframe(struct task_struct *task,
 
 #else /* !CONFIG_FRAME_POINTER */
 
+static bool end_of_stack(void *addr)
+{
+	return !(((unsigned long)addr+sizeof(void*)-1) &
+		 (THREAD_SIZE-sizeof(void*)));
+}
+
 static void notrace walk_stackframe(struct task_struct *task,
 	struct pt_regs *regs, bool (*fn)(unsigned long, void *), void *arg)
 {
@@ -98,7 +104,7 @@ static void notrace walk_stackframe(struct task_struct *task,
 		return;
 
 	ksp = (unsigned long *)sp;
-	while (!kstack_end(ksp)) {
+	while (!end_of_stack(ksp)) {
 		if (__kernel_text_address(pc) && unlikely(fn(pc, arg)))
 			break;
 		pc = (*ksp++) - 0x4;
