@@ -83,6 +83,12 @@ print_ftrace_graph_addr(unsigned long addr, void *data,
 { }
 #endif
 
+static bool end_of_stack(void *addr)
+{
+	return !(((unsigned long)addr+sizeof(void*)-1) &
+		 (THREAD_SIZE-sizeof(void*)));
+}
+
 void
 stack_reader_dump(struct task_struct *task, struct pt_regs *regs,
 		  unsigned long *sp, const struct stacktrace_ops *ops,
@@ -94,7 +100,7 @@ stack_reader_dump(struct task_struct *task, struct pt_regs *regs,
 	context = (struct thread_info *)
 		((unsigned long)sp & (~(THREAD_SIZE - 1)));
 
-	while (!kstack_end(sp)) {
+	while (!end_of_stack(sp)) {
 		unsigned long addr = *sp++;
 
 		if (__kernel_text_address(addr)) {
