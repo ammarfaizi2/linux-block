@@ -492,29 +492,6 @@ void show_trace(struct task_struct *task, unsigned long *sp)
 #endif
 }
 
-static int kstack_depth_to_print = 24;
-
-void show_stack(struct task_struct *task, unsigned long *sp)
-{
-	int i = 0;
-	unsigned long *stack;
-
-	if (!sp)
-		sp = stack_pointer(task);
-	stack = sp;
-
-	pr_info("Stack:\n");
-
-	for (i = 0; i < kstack_depth_to_print; i++) {
-		if (kstack_end(sp))
-			break;
-		pr_cont(" %08lx", *sp++);
-		if (i % 8 == 7)
-			pr_cont("\n");
-	}
-	show_trace(task, stack);
-}
-
 DEFINE_SPINLOCK(die_lock);
 
 void die(const char * str, struct pt_regs * regs, long err)
@@ -528,7 +505,7 @@ void die(const char * str, struct pt_regs * regs, long err)
 		IS_ENABLED(CONFIG_PREEMPT) ? " PREEMPT" : "");
 	show_regs(regs);
 	if (!user_mode(regs))
-		show_stack(NULL, (unsigned long*)regs->areg[1]);
+		show_trace(NULL, (unsigned long*)regs->areg[1]);
 
 	add_taint(TAINT_DIE, LOCKDEP_NOW_UNRELIABLE);
 	spin_unlock_irq(&die_lock);
