@@ -1470,7 +1470,9 @@ static bool is_debug_pagealloc_cache(struct kmem_cache *cachep)
 static void store_stackinfo(struct kmem_cache *cachep, unsigned long *addr,
 			    unsigned long caller)
 {
+	struct stack_trace trace;
 	int size = cachep->object_size;
+	int i;
 
 	addr = (unsigned long *)&((char *)addr)[obj_offset(cachep)];
 
@@ -1481,21 +1483,17 @@ static void store_stackinfo(struct kmem_cache *cachep, unsigned long *addr,
 	*addr++ = caller;
 	*addr++ = smp_processor_id();
 	size -= 3 * sizeof(unsigned long);
-	{
-		unsigned long *sptr = &caller;
-		unsigned long svalue;
 
-		while (!kstack_end(sptr)) {
-			svalue = *sptr++;
-			if (kernel_text_address(svalue)) {
-				*addr++ = svalue;
-				size -= sizeof(unsigned long);
-				if (size <= sizeof(unsigned long))
-					break;
-			}
-		}
+	save_stack_trace(&trace);
+        if (trace.nr_entries != 0 &&
+            trace.entries[trace.nr_entries-1] == ULONG_MAX)
+                trace.nr_entries--;
 
+	for (i = 0; i < trace.nr_entries && size > sizeof(unsigned long); i++) {
+		*addr++ = trace.entries[i];
+		size -= sizeof(unsigned long);
 	}
+
 	*addr++ = 0x87654321;
 }
 
