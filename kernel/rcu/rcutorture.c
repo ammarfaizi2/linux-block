@@ -2373,7 +2373,8 @@ rcu_torture_init(void)
 	if (stutter < 0)
 		stutter = 0;
 	if (stutter) {
-		firsterr = torture_stutter_init(stutter * HZ);
+		firsterr = torture_stutter_init(stutter * HZ,
+						cur_ops->stall_dur());
 		if (firsterr)
 			goto unwind;
 	}
