@@ -1126,15 +1126,19 @@ struct sk_buff *mlx5e_build_linear_skb(struct mlx5e_rq *rq, void *va,
 	return skb;
 }
 
-static void mlx5e_fill_xdp_buff(struct mlx5e_rq *rq, void *va, u16 headroom,
-				u32 len, struct xdp_buff *xdp)
+static inline void mlx5e_fill_xdp_buff(struct mlx5e_rq *rq, void *va, u16 headroom,
+				u32 len, struct mlx5_cqe64 *cqe, struct xdp_buff *xdp)
 {
 	xdp->data_hard_start = va;
 	xdp->data = va + headroom;
-	xdp_set_data_meta_invalid(xdp);
 	xdp->data_end = xdp->data + len;
 	xdp->rxq = &rq->xdp_rxq;
 	xdp->frame_sz = rq->buff.frame0_sz;
+
+	if (test_bit(MLX5e_RQ_FLAG_XDP_MD, rq->flags))
+		mlx5e_xdp_set_data_meta(xdp, cqe);
+	else
+		xdp_set_data_meta_invalid(xdp);
 }
 
 static struct sk_buff *
@@ -1157,7 +1161,7 @@ mlx5e_skb_from_cqe_linear(struct mlx5e_rq *rq, struct mlx5_cqe64 *cqe,
 	net_prefetchw(va); /* xdp_frame data area */
 	net_prefetch(data);
 
-	mlx5e_fill_xdp_buff(rq, va, rx_headroom, cqe_bcnt, &xdp);
+	mlx5e_fill_xdp_buff(rq, va, rx_headroom, cqe_bcnt, cqe, &xdp);
 	if (mlx5e_xdp_handle(rq, di, &cqe_bcnt, &xdp))
 		return NULL; /* page/packet was consumed by XDP */
 
@@ -1471,7 +1475,7 @@ mlx5e_skb_from_cqe_mpwrq_linear(struct mlx5e_rq *rq, struct mlx5e_mpw_info *wi,
 	net_prefetchw(va); /* xdp_frame data area */
 	net_prefetch(data);
 
-	mlx5e_fill_xdp_buff(rq, va, rx_headroom, cqe_bcnt32, &xdp);
+	mlx5e_fill_xdp_buff(rq, va, rx_headroom, cqe_bcnt32, cqe, &xdp);
 	if (mlx5e_xdp_handle(rq, di, &cqe_bcnt32, &xdp)) {
 		if (__test_and_clear_bit(MLX5E_RQ_FLAG_XDP_XMIT, rq->flags))
 			__set_bit(page_idx, wi->xdp_xmit_bitmap); /* non-atomic */

@@ -31,19 +31,23 @@
 /* struct xdp_md_desc {
  *	u32 flow_mark;
  *	u32 hash32;
+ *	u16 vlan;
  * };
  */
-#define MLX5_MD_NUM_MMBRS 2
-static const char names_str[] = "\0xdp_md_desc\0flow_mark\0hash32\0";
+#define MLX5_MD_NUM_MMBRS 3
+static const char names_str[] = "\0u32\0u16\0xdp_md_desc\0flow_mark\0hash32\0vlan\0";
 
 /* Must match struct mlx5_md_desc */
 static const u32 mlx5_md_raw_types[] = {
 	/* #define u32 */
-	BTF_TYPE_INT_ENC(0, 0, 0, 32, 4),         /* type [1] */
-	/* struct md_desc { */                    /* type [2] */
-	BTF_STRUCT_ENC(1, MLX5_MD_NUM_MMBRS, MLX5_MD_NUM_MMBRS * 4),
-		BTF_MEMBER_ENC(13, 1, 0),    /* u32 flow_mark;    */
-		BTF_MEMBER_ENC(23, 1, 32),  /* u32 hash32;       */
+	BTF_TYPE_INT_ENC(1, 0, 0, 32, 4),         /* type [1] */
+	/* #define u16 */
+	BTF_TYPE_INT_ENC(5, 0, 0, 16, 2),         /* type [2] */
+	/* struct md_desc { */                    /* type [3] */
+	BTF_STRUCT_ENC(9, MLX5_MD_NUM_MMBRS, 4 + 4 + 2),
+		BTF_MEMBER_ENC(21, 1, 0),    /* u32 flow_mark;    */
+		BTF_MEMBER_ENC(31, 1, 32),  /* u32 hash32;       */
+		BTF_MEMBER_ENC(38, 2, 64),  /* u16 vlan;         */
 	/* } */
 };
 
@@ -79,7 +83,7 @@ static int mlx5e_xdp_register_btf(struct mlx5e_priv *priv)
 	memcpy(types_sec, mlx5_md_raw_types, type_sec_sz);
 	memcpy(str_sec, names_str, str_sec_sz);
 
-	priv->xdp.btf = btf_register(raw_btf, btf_size);
+	priv->xdp.btf = btf_register(priv->netdev->name, raw_btf, btf_size);
 	if (IS_ERR(priv->xdp.btf)) {
 		err = PTR_ERR(priv->xdp.btf);
 		priv->xdp.btf = NULL;
@@ -141,7 +145,7 @@ int mlx5e_xdp_query_btf(struct net_device *dev, u8 *enabled)
 		mlx5e_xdp_register_btf(priv);
 
 	*enabled = !!priv->xdp.btf_enabled;
-	md_btf_id = priv->xdp.btf ? btf_id(priv->xdp.btf) : 0;
+	md_btf_id = priv->xdp.btf ? btf_obj_id(priv->xdp.btf) : 0;
 
 	mutex_unlock(&priv->state_lock);
 	return md_btf_id;

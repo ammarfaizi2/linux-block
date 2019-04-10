@@ -38,8 +38,6 @@
 #include "eswitch.h"
 #include "en/tc_ct.h"
 
-#define MLX5E_TC_FLOW_ID_MASK 0x0000ffff
-
 #ifdef CONFIG_MLX5_ESWITCH
 
 #define NIC_FLOW_ATTR_SZ (sizeof(struct mlx5_flow_attr) +\
