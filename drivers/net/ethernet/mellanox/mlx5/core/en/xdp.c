@@ -83,7 +83,11 @@ bool mlx5e_xdp_handle(struct mlx5e_rq *rq, struct mlx5e_dma_info *di,
 		return false;
 
 	xdp.data = va + *rx_headroom;
-	xdp_set_data_meta_invalid(&xdp);
+	if (test_bit(MLX5e_RQ_FLAG_XDP_MD, rq->flags))
+		mlx5e_xdp_set_data_meta(&xdp, cqe);
+	else
+		xdp_set_data_meta_invalid(&xdp);
+
 	xdp.data_end = xdp.data + *len;
 	xdp.data_hard_start = va;
 	xdp.rxq = &rq->xdp_rxq;
