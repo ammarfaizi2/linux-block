@@ -1053,14 +1053,18 @@ struct sk_buff *mlx5e_build_linear_skb(struct mlx5e_rq *rq, void *va,
 }
 
 static void mlx5e_fill_xdp_buff(struct mlx5e_rq *rq, void *va, u16 headroom,
-				u32 len, struct xdp_buff *xdp)
+				u32 len, struct mlx5_cqe64 *cqe, struct xdp_buff *xdp)
 {
 	xdp->data_hard_start = va;
 	xdp->data = va + headroom;
-	xdp_set_data_meta_invalid(xdp);
 	xdp->data_end = xdp->data + len;
 	xdp->rxq = &rq->xdp_rxq;
 	xdp->frame_sz = rq->buff.frame0_sz;
+
+	if (test_bit(MLX5e_RQ_FLAG_XDP_MD, rq->flags))
+		mlx5e_xdp_set_data_meta(xdp, cqe);
+	else
+		xdp_set_data_meta_invalid(xdp);
 }
 
 struct sk_buff *
@@ -1085,7 +1089,7 @@ mlx5e_skb_from_cqe_linear(struct mlx5e_rq *rq, struct mlx5_cqe64 *cqe,
 	prefetch(data);
 
 	rcu_read_lock();
-	mlx5e_fill_xdp_buff(rq, va, rx_headroom, cqe_bcnt, &xdp);
+	mlx5e_fill_xdp_buff(rq, va, rx_headroom, cqe_bcnt, cqe, &xdp);
 	consumed = mlx5e_xdp_handle(rq, di, &cqe_bcnt, &xdp);
 	rcu_read_unlock();
 	if (consumed)
@@ -1389,7 +1393,7 @@ mlx5e_skb_from_cqe_mpwrq_linear(struct mlx5e_rq *rq, struct mlx5e_mpw_info *wi,
 	prefetch(data);
 
 	rcu_read_lock();
-	mlx5e_fill_xdp_buff(rq, va, rx_headroom, cqe_bcnt32, &xdp);
+	mlx5e_fill_xdp_buff(rq, va, rx_headroom, cqe_bcnt32, cqe, &xdp);
 	consumed = mlx5e_xdp_handle(rq, di, &cqe_bcnt32, &xdp);
 	rcu_read_unlock();
 	if (consumed) {

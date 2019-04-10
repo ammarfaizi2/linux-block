@@ -59,6 +59,8 @@
 extern const struct net_device_ops mlx5e_netdev_ops;
 struct page_pool;
 
+#define MLX5E_TC_FLOW_ID_MASK 0x0000ffff
+
 #define MLX5E_METADATA_ETHER_TYPE (0x8CE4)
 #define MLX5E_METADATA_ETHER_LEN 8
 

@@ -76,6 +76,23 @@ void mlx5e_xdp_rx_poll_complete(struct mlx5e_rq *rq);
 int mlx5e_xdp_xmit(struct net_device *dev, int n, struct xdp_frame **frames,
 		   u32 flags);
 
+/* Must match mlx5_md_raw_types */
+struct mlx5_md_desc {
+	u32 flow_mark;
+	u32 hash32;
+};
+
+static inline void
+mlx5e_xdp_set_data_meta(struct xdp_buff *xdp, struct mlx5_cqe64 *cqe)
+{
+	struct mlx5_md_desc *md = xdp->data - sizeof(struct mlx5_md_desc);
+
+	xdp->data_meta = md;
+
+	md->flow_mark = be32_to_cpu(cqe->sop_drop_qpn) & MLX5E_TC_FLOW_ID_MASK;
+	md->hash32    = be32_to_cpu(cqe->rss_hash_result);
+}
+
 static inline void mlx5e_xdp_tx_enable(struct mlx5e_priv *priv)
 {
 	set_bit(MLX5E_STATE_XDP_TX_ENABLED, &priv->state);
