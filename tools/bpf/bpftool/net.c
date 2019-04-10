@@ -55,7 +55,7 @@ struct bpf_attach_info {
 	__u32 flow_dissector_id;
 };
 
-static int dump_link_nlmsg(void *cookie, void *msg, struct nlattr **tb)
+int xdp_dump_link_nlmsg(void *cookie, void *msg, struct nlattr **tb)
 {
 	struct bpf_netdev_t *netinfo = cookie;
 	struct ifinfomsg *ifinfo = msg;
@@ -262,7 +262,7 @@ static int do_show(int argc, char **argv)
 		jsonw_start_array(json_wtr);
 	NET_START_OBJECT;
 	NET_START_ARRAY("xdp", "%s:\n");
-	ret = libbpf_nl_get_link(sock, nl_pid, dump_link_nlmsg, &dev_array);
+	ret = libbpf_nl_get_link(sock, nl_pid, xdp_dump_link_nlmsg, &dev_array);
 	NET_END_ARRAY("\n");
 
 	if (!ret) {
@@ -304,7 +304,7 @@ static int do_help(int argc, char **argv)
 	}
 
 	fprintf(stderr,
-		"Usage: %s %s { show | list } [dev <devname>]\n"
+		"Usage: %s %s { show | list | xdp } [dev <devname>]\n"
 		"       %s %s help\n"
 		"Note: Only xdp and tc attachments are supported now.\n"
 		"      For progs attached to cgroups, use \"bpftool cgroup\"\n"
@@ -319,6 +319,7 @@ static int do_help(int argc, char **argv)
 static const struct cmd cmds[] = {
 	{ "show",	do_show },
 	{ "list",	do_show },
+	{ "xdp",	do_xdp },
 	{ "help",	do_help },
 	{ 0 }
 };
