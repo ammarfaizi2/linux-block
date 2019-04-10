@@ -201,6 +201,7 @@ int do_event_pipe(int argc, char **argv);
 int do_cgroup(int argc, char **arg);
 int do_perf(int argc, char **arg);
 int do_net(int argc, char **arg);
+int do_xdp(int argc, char **arg);
 int do_tracelog(int argc, char **arg);
 int do_feature(int argc, char **argv);
 int do_btf(int argc, char **argv);
@@ -278,6 +279,7 @@ struct tcmsg;
 int do_xdp_dump(struct ifinfomsg *ifinfo, struct nlattr **tb);
 int do_filter_dump(struct tcmsg *ifinfo, struct nlattr **tb, const char *kind,
 		   const char *devname, int ifindex);
+int xdp_dump_link_nlmsg(void *cookie, void *msg, struct nlattr **tb);
 
 int print_all_levels(__maybe_unused enum libbpf_print_level level,
 		     const char *format, va_list args);
