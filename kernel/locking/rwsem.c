@@ -207,7 +207,6 @@ void __init_rwsem(struct rw_semaphore *sem, const char *name,
 	osq_lock_init(&sem->osq);
 #endif
 }
-
 EXPORT_SYMBOL(__init_rwsem);
 
 enum rwsem_waiter_type {
@@ -575,19 +574,17 @@ out_nolock:
 	return ERR_PTR(-EINTR);
 }
 
-__visible struct rw_semaphore * __sched
+static inline struct rw_semaphore * __sched
 rwsem_down_read_failed(struct rw_semaphore *sem)
 {
 	return __rwsem_down_read_failed_common(sem, TASK_UNINTERRUPTIBLE);
 }
-EXPORT_SYMBOL(rwsem_down_read_failed);
 
-__visible struct rw_semaphore * __sched
+static inline struct rw_semaphore * __sched
 rwsem_down_read_failed_killable(struct rw_semaphore *sem)
 {
 	return __rwsem_down_read_failed_common(sem, TASK_KILLABLE);
 }
-EXPORT_SYMBOL(rwsem_down_read_failed_killable);
 
 /*
  * Wait until we successfully acquire the write lock
@@ -694,26 +691,23 @@ out_nolock:
 	return ERR_PTR(-EINTR);
 }
 
-__visible struct rw_semaphore * __sched
+static inline struct rw_semaphore * __sched
 rwsem_down_write_failed(struct rw_semaphore *sem)
 {
 	return __rwsem_down_write_failed_common(sem, TASK_UNINTERRUPTIBLE);
 }
-EXPORT_SYMBOL(rwsem_down_write_failed);
 
-__visible struct rw_semaphore * __sched
+static inline struct rw_semaphore * __sched
 rwsem_down_write_failed_killable(struct rw_semaphore *sem)
 {
 	return __rwsem_down_write_failed_common(sem, TASK_KILLABLE);
 }
-EXPORT_SYMBOL(rwsem_down_write_failed_killable);
 
 /*
  * handle waking up a waiter on the semaphore
  * - up_read/up_write has decremented the active part of count if we come here
  */
-__visible
-struct rw_semaphore *rwsem_wake(struct rw_semaphore *sem)
+static struct rw_semaphore *rwsem_wake(struct rw_semaphore *sem)
 {
 	unsigned long flags;
 	DEFINE_WAKE_Q(wake_q);
@@ -728,15 +722,13 @@ struct rw_semaphore *rwsem_wake(struct rw_semaphore *sem)
 
 	return sem;
 }
-EXPORT_SYMBOL(rwsem_wake);
 
 /*
  * downgrade a write lock into a read lock
  * - caller incremented waiting part of count and discovered it still negative
  * - just wake up any readers at the front of the queue
  */
-__visible
-struct rw_semaphore *rwsem_downgrade_wake(struct rw_semaphore *sem)
+static struct rw_semaphore *rwsem_downgrade_wake(struct rw_semaphore *sem)
 {
 	unsigned long flags;
 	DEFINE_WAKE_Q(wake_q);
@@ -751,7 +743,6 @@ struct rw_semaphore *rwsem_downgrade_wake(struct rw_semaphore *sem)
 
 	return sem;
 }
-EXPORT_SYMBOL(rwsem_downgrade_wake);
 
 /*
  * lock for reading
@@ -895,7 +886,6 @@ void __sched down_read(struct rw_semaphore *sem)
 
 	LOCK_CONTENDED(sem, __down_read_trylock, __down_read);
 }
-
 EXPORT_SYMBOL(down_read);
 
 int __sched down_read_killable(struct rw_semaphore *sem)
@@ -910,7 +900,6 @@ int __sched down_read_killable(struct rw_semaphore *sem)
 
 	return 0;
 }
-
 EXPORT_SYMBOL(down_read_killable);
 
 /*
@@ -924,7 +913,6 @@ int down_read_trylock(struct rw_semaphore *sem)
 		rwsem_acquire_read(&sem->dep_map, 0, 1, _RET_IP_);
 	return ret;
 }
-
 EXPORT_SYMBOL(down_read_trylock);
 
 /*
@@ -934,10 +922,8 @@ void __sched down_write(struct rw_semaphore *sem)
 {
 	might_sleep();
 	rwsem_acquire(&sem->dep_map, 0, 0, _RET_IP_);
-
 	LOCK_CONTENDED(sem, __down_write_trylock, __down_write);
 }
-
 EXPORT_SYMBOL(down_write);
 
 /*
@@ -948,14 +934,14 @@ int __sched down_write_killable(struct rw_semaphore *sem)
 	might_sleep();
 	rwsem_acquire(&sem->dep_map, 0, 0, _RET_IP_);
 
-	if (LOCK_CONTENDED_RETURN(sem, __down_write_trylock, __down_write_killable)) {
+	if (LOCK_CONTENDED_RETURN(sem, __down_write_trylock,
+				  __down_write_killable)) {
 		rwsem_release(&sem->dep_map, 1, _RET_IP_);
 		return -EINTR;
 	}
 
 	return 0;
 }
-
 EXPORT_SYMBOL(down_write_killable);
 
 /*
@@ -970,7 +956,6 @@ int down_write_trylock(struct rw_semaphore *sem)
 
 	return ret;
 }
-
 EXPORT_SYMBOL(down_write_trylock);
 
 /*
@@ -979,10 +964,8 @@ EXPORT_SYMBOL(down_write_trylock);
 void up_read(struct rw_semaphore *sem)
 {
 	rwsem_release(&sem->dep_map, 1, _RET_IP_);
-
 	__up_read(sem);
 }
-
 EXPORT_SYMBOL(up_read);
 
 /*
@@ -991,10 +974,8 @@ EXPORT_SYMBOL(up_read);
 void up_write(struct rw_semaphore *sem)
 {
 	rwsem_release(&sem->dep_map, 1, _RET_IP_);
-
 	__up_write(sem);
 }
-
 EXPORT_SYMBOL(up_write);
 
 /*
@@ -1003,10 +984,8 @@ EXPORT_SYMBOL(up_write);
 void downgrade_write(struct rw_semaphore *sem)
 {
 	lock_downgrade(&sem->dep_map, _RET_IP_);
-
 	__downgrade_write(sem);
 }
-
 EXPORT_SYMBOL(downgrade_write);
 
 #ifdef CONFIG_DEBUG_LOCK_ALLOC
@@ -1015,40 +994,32 @@ void down_read_nested(struct rw_semaphore *sem, int subclass)
 {
 	might_sleep();
 	rwsem_acquire_read(&sem->dep_map, subclass, 0, _RET_IP_);
-
 	LOCK_CONTENDED(sem, __down_read_trylock, __down_read);
 }
-
 EXPORT_SYMBOL(down_read_nested);
 
 void _down_write_nest_lock(struct rw_semaphore *sem, struct lockdep_map *nest)
 {
 	might_sleep();
 	rwsem_acquire_nest(&sem->dep_map, 0, 0, nest, _RET_IP_);
-
 	LOCK_CONTENDED(sem, __down_write_trylock, __down_write);
 }
-
 EXPORT_SYMBOL(_down_write_nest_lock);
 
 void down_read_non_owner(struct rw_semaphore *sem)
 {
 	might_sleep();
-
 	__down_read(sem);
 	__rwsem_set_reader_owned(sem, NULL);
 }
-
 EXPORT_SYMBOL(down_read_non_owner);
 
 void down_write_nested(struct rw_semaphore *sem, int subclass)
 {
 	might_sleep();
 	rwsem_acquire(&sem->dep_map, subclass, 0, _RET_IP_);
-
 	LOCK_CONTENDED(sem, __down_write_trylock, __down_write);
 }
-
 EXPORT_SYMBOL(down_write_nested);
 
 int __sched down_write_killable_nested(struct rw_semaphore *sem, int subclass)
@@ -1056,14 +1027,14 @@ int __sched down_write_killable_nested(struct rw_semaphore *sem, int subclass)
 	might_sleep();
 	rwsem_acquire(&sem->dep_map, subclass, 0, _RET_IP_);
 
-	if (LOCK_CONTENDED_RETURN(sem, __down_write_trylock, __down_write_killable)) {
+	if (LOCK_CONTENDED_RETURN(sem, __down_write_trylock,
+				  __down_write_killable)) {
 		rwsem_release(&sem->dep_map, 1, _RET_IP_);
 		return -EINTR;
 	}
 
 	return 0;
 }
-
 EXPORT_SYMBOL(down_write_killable_nested);
 
 void up_read_non_owner(struct rw_semaphore *sem)
@@ -1072,7 +1043,6 @@ void up_read_non_owner(struct rw_semaphore *sem)
 				sem);
 	__up_read(sem);
 }
-
 EXPORT_SYMBOL(up_read_non_owner);
 
 #endif
