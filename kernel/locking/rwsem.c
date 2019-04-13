@@ -73,7 +73,41 @@
 #endif
 
 /*
- * On 64-bit architectures, the bit definitions of the count are:
+ * Enable the merging of owner into count for x86-64 only.
+ */
+#ifdef CONFIG_X86_64
+#define RWSEM_MERGE_OWNER_TO_COUNT
+#endif
+
+/*
+ * With separate count and owner, there are timing windows where the two
+ * values are inconsistent. That can cause problem when trying to figure
+ * out the exact state of the rwsem. That can be solved by combining
+ * the count and owner together in a single atomic value.
+ *
+ * On 64-bit architectures, the owner task structure pointer can be
+ * compressed and combined with reader count and other status flags.
+ * A simple compression method is to map the virtual address back to
+ * the physical address by subtracting PAGE_OFFSET. On 32-bit
+ * architectures, the long integer value just isn't big enough for
+ * combining owner and count. So they remain separate.
+ *
+ * For x86-64, the physical address can use up to 52 bits. That is 4PB
+ * of memory. That leaves 12 bits available for other use. The task
+ * structure pointer is also aligned to the L1 cache size. That means
+ * another 6 bits (64 bytes cacheline) will be available. Reserving
+ * 2 bits for status flags, we will have 16 bits for the reader count
+ * and read fail bit. That can supports up to (32k-1) active readers.
+ *
+ * On x86-64, the bit definitions of the count are:
+ *
+ * Bit   0    - waiters present bit
+ * Bit   1    - lock handoff bit
+ * Bits  2-47 - compressed task structure pointer
+ * Bits 48-62 - 15-bit reader counts
+ * Bit  63    - read fail bit
+ *
+ * On other 64-bit architectures, the bit definitions are:
  *
  * Bit  0    - writer locked bit
  * Bit  1    - waiters present bit
@@ -108,15 +142,30 @@
  * be the first one in the wait_list to be eligible for setting the handoff
  * bit. So concurrent setting/clearing of handoff bit is not possible.
  */
-#define RWSEM_WRITER_LOCKED	(1UL << 0)
-#define RWSEM_FLAG_WAITERS	(1UL << 1)
-#define RWSEM_FLAG_HANDOFF	(1UL << 2)
+#define RWSEM_FLAG_WAITERS	(1UL << 0)
+#define RWSEM_FLAG_HANDOFF	(1UL << 1)
 #define RWSEM_FLAG_READFAIL	(1UL << (BITS_PER_LONG - 1))
 
+
+#ifdef RWSEM_MERGE_OWNER_TO_COUNT
+
+#ifdef __PHYSICAL_MASK_SHIFT
+#define RWSEM_PA_MASK_SHIFT	__PHYSICAL_MASK_SHIFT
+#else
+#define RWSEM_PA_MASK_SHIFT	52
+#endif
+#define RWSEM_READER_SHIFT	(RWSEM_PA_MASK_SHIFT - L1_CACHE_SHIFT + 2)
+#define RWSEM_WRITER_MASK	((1UL << RWSEM_READER_SHIFT) - 4)
+#define RWSEM_WRITER_LOCKED	rwsem_owner_count(current)
+
+#else /* RWSEM_MERGE_OWNER_TO_COUNT */
 #define RWSEM_READER_SHIFT	8
+#define RWSEM_WRITER_MASK	(1UL << 7)
+#define RWSEM_WRITER_LOCKED	RWSEM_WRITER_MASK
+#endif /* RWSEM_MERGE_OWNER_TO_COUNT */
+
 #define RWSEM_READER_BIAS	(1UL << RWSEM_READER_SHIFT)
 #define RWSEM_READER_MASK	(~(RWSEM_READER_BIAS - 1))
-#define RWSEM_WRITER_MASK	RWSEM_WRITER_LOCKED
 #define RWSEM_LOCK_MASK		(RWSEM_WRITER_MASK|RWSEM_READER_MASK)
 #define RWSEM_READ_FAILED_MASK	(RWSEM_WRITER_MASK|RWSEM_FLAG_WAITERS|\
 				 RWSEM_FLAG_HANDOFF|RWSEM_FLAG_READFAIL)
@@ -130,12 +179,33 @@
 	((c) & (RWSEM_WRITER_MASK | RWSEM_FLAG_HANDOFF))
 
 /*
+ * Task structure pointer compression (64-bit only):
+ * (owner - PAGE_OFFSET) >> (L1_CACHE_SHIFT - 2)
+ */
+static inline unsigned long rwsem_owner_count(struct task_struct *owner)
+{
+	return ((unsigned long)owner - PAGE_OFFSET) >> (L1_CACHE_SHIFT - 2);
+}
+
+static inline unsigned long rwsem_count_owner(long count)
+{
+	unsigned long writer = (unsigned long)count & RWSEM_WRITER_MASK;
+
+	return writer ? (writer << (L1_CACHE_SHIFT - 2)) + PAGE_OFFSET : 0;
+}
+
+/*
  * All writes to owner are protected by WRITE_ONCE() to make sure that
  * store tearing can't happen as optimistic spinners may read and use
  * the owner value concurrently without lock. Read from owner, however,
  * may not need READ_ONCE() as long as the pointer value is only used
  * for comparison and isn't being dereferenced.
+ *
+ * On 32-bit architectures, the owner and count are separate. On 64-bit
+ * architectures, however, the writer task structure pointer is written
+ * to the count as well in addition to the owner field.
  */
+
 static inline void rwsem_set_owner(struct rw_semaphore *sem)
 {
 	WRITE_ONCE(sem->owner, current);
@@ -146,10 +216,26 @@ static inline void rwsem_clear_owner(struct rw_semaphore *sem)
 	WRITE_ONCE(sem->owner, NULL);
 }
 
+#ifdef RWSEM_MERGE_OWNER_TO_COUNT
+/*
+ * Get the owner value from count to have early access to the task structure.
+ * Owner from sem->count should includes the RWSEM_ANONYMOUSLY_OWNED bit
+ * from sem->owner.
+ */
+static inline struct task_struct *rwsem_get_owner(struct rw_semaphore *sem)
+{
+	unsigned long cowner = rwsem_count_owner(atomic_long_read(&sem->count));
+	unsigned long sowner = (unsigned long)READ_ONCE(sem->owner);
+
+	return (struct task_struct *) (cowner
+		? cowner | (sowner & RWSEM_ANONYMOUSLY_OWNED) : sowner);
+}
+#else /* !RWSEM_MERGE_OWNER_TO_COUNT */
 static inline struct task_struct *rwsem_get_owner(struct rw_semaphore *sem)
 {
 	return READ_ONCE(sem->owner);
 }
+#endif /* RWSEM_MERGE_OWNER_TO_COUNT */
 
 /*
  * The task_struct pointer of the last owning reader will be left in
@@ -261,11 +347,11 @@ static inline void rwsem_set_nonspinnable(struct rw_semaphore *sem)
 /*
  * Guide to the rw_semaphore's count field.
  *
- * When the RWSEM_WRITER_LOCKED bit in count is set, the lock is owned
- * by a writer.
+ * When any of the RWSEM_WRITER_MASK bits in count is set, the lock is
+ * owned by a writer.
  *
  * The lock is owned by readers when
- * (1) the RWSEM_WRITER_LOCKED isn't set in count,
+ * (1) none of the RWSEM_WRITER_MASK bits is set in count,
  * (2) some of the reader bits are set in count, and
  * (3) the owner field has RWSEM_READ_OWNED bit set.
  *
@@ -281,6 +367,11 @@ static inline void rwsem_set_nonspinnable(struct rw_semaphore *sem)
 void __init_rwsem(struct rw_semaphore *sem, const char *name,
 		  struct lock_class_key *key)
 {
+	/*
+	 * We should support at least (4k-1) concurrent readers
+	 */
+	BUILD_BUG_ON(sizeof(long) * 8 - RWSEM_READER_SHIFT < 12);
+
 #ifdef CONFIG_DEBUG_LOCK_ALLOC
 	/*
 	 * Make sure we are not reinitializing a held semaphore:
@@ -1211,6 +1302,9 @@ static inline void __down_write(struct rw_semaphore *sem)
 						 RWSEM_WRITER_LOCKED)))
 		rwsem_down_write_failed(sem);
 	rwsem_set_owner(sem);
+#ifdef RWSEM_MERGE_OWNER_TO_COUNT
+	DEBUG_RWSEMS_WARN_ON(sem->owner != rwsem_get_owner(sem), sem);
+#endif
 }
 
 static inline int __down_write_killable(struct rw_semaphore *sem)
@@ -1261,7 +1355,7 @@ static inline void __up_write(struct rw_semaphore *sem)
 
 	DEBUG_RWSEMS_WARN_ON(sem->owner != current, sem);
 	rwsem_clear_owner(sem);
-	tmp = atomic_long_fetch_add_release(-RWSEM_WRITER_LOCKED, &sem->count);
+	tmp = atomic_long_fetch_and_release(~RWSEM_WRITER_MASK, &sem->count);
 	if (unlikely(tmp & RWSEM_FLAG_WAITERS))
 		rwsem_wake(sem, tmp);
 }
