@@ -22,6 +22,7 @@
 #include <linux/sched/debug.h>
 #include <linux/sched/wake_q.h>
 #include <linux/sched/signal.h>
+#include <linux/sched/clock.h>
 #include <linux/export.h>
 #include <linux/rwsem.h>
 #include <linux/atomic.h>
@@ -35,18 +36,20 @@
  *  - RWSEM_READER_OWNED (bit 0): The rwsem is owned by readers
  *  - RWSEM_ANONYMOUSLY_OWNED (bit 1): The rwsem is anonymously owned,
  *    i.e. the owner(s) cannot be readily determined. It can be reader
- *    owned or the owning writer is indeterminate.
+ *    owned or the owning writer is indeterminate. Optimistic spinning
+ *    should be disabled if this flag is set.
  *
  * When a writer acquires a rwsem, it puts its task_struct pointer
- * into the owner field. It is cleared after an unlock.
+ * into the owner field or the count itself (64-bit only. It should
+ * be cleared after an unlock.
  *
  * When a reader acquires a rwsem, it will also puts its task_struct
- * pointer into the owner field with both the RWSEM_READER_OWNED and
- * RWSEM_ANONYMOUSLY_OWNED bits set. On unlock, the owner field will
- * largely be left untouched. So for a free or reader-owned rwsem,
- * the owner value may contain information about the last reader that
- * acquires the rwsem. The anonymous bit is set because that particular
- * reader may or may not still own the lock.
+ * pointer into the owner field with the RWSEM_READER_OWNED bit set.
+ * On unlock, the owner field will largely be left untouched. So
+ * for a free or reader-owned rwsem, the owner value may contain
+ * information about the last reader that acquires the rwsem. The
+ * anonymous bit may also be set to permanently disable optimistic
+ * spinning on a reader-own rwsem until a writer comes along.
  *
  * That information may be helpful in debugging cases where the system
  * seems to hang on a reader owned rwsem especially if only one reader
@@ -138,8 +141,7 @@ static inline void rwsem_clear_owner(struct rw_semaphore *sem)
 static inline void __rwsem_set_reader_owned(struct rw_semaphore *sem,
 					    struct task_struct *owner)
 {
-	unsigned long val = (unsigned long)owner | RWSEM_READER_OWNED
-						 | RWSEM_ANONYMOUSLY_OWNED;
+	unsigned long val = (unsigned long)owner | RWSEM_READER_OWNED;
 
 	WRITE_ONCE(sem->owner, (struct task_struct *)val);
 }
@@ -162,6 +164,14 @@ static inline bool is_rwsem_owner_spinnable(struct task_struct *owner)
 static inline bool is_rwsem_owner_reader(struct task_struct *owner)
 {
 	return (unsigned long)owner & RWSEM_READER_OWNED;
+}
+
+/*
+ * Return true if the rwsem is spinnable.
+ */
+static inline bool is_rwsem_spinnable(struct rw_semaphore *sem)
+{
+	return is_rwsem_owner_spinnable(READ_ONCE(sem->owner));
 }
 
 /*
@@ -192,6 +202,22 @@ static inline void rwsem_clear_reader_owned(struct rw_semaphore *sem)
 {
 }
 #endif
+
+/*
+ * Set the RWSEM_ANONYMOUSLY_OWNED flag if the RWSEM_READER_OWNED flag
+ * remains set. Otherwise, the operation will be aborted.
+ */
+static inline void rwsem_set_nonspinnable(struct rw_semaphore *sem)
+{
+	long owner = (long)READ_ONCE(sem->owner);
+
+	while (is_rwsem_owner_reader((struct task_struct *)owner)) {
+		if (!is_rwsem_owner_spinnable((struct task_struct *)owner))
+			break;
+		owner = cmpxchg((long *)&sem->owner, owner,
+				owner | RWSEM_ANONYMOUSLY_OWNED);
+	}
+}
 
 /*
  * Guide to the rw_semaphore's count field.
@@ -507,7 +533,7 @@ static inline bool rwsem_can_spin_on_owner(struct rw_semaphore *sem)
 	owner = READ_ONCE(sem->owner);
 	if (owner) {
 		ret = is_rwsem_owner_spinnable(owner) &&
-		      owner_on_cpu(owner);
+		     (is_rwsem_owner_reader(owner) || owner_on_cpu(owner));
 	}
 	rcu_read_unlock();
 	preempt_enable();
@@ -532,7 +558,7 @@ enum owner_state {
 	OWNER_READER		= 1 << 2,
 	OWNER_NONSPINNABLE	= 1 << 3,
 };
-#define OWNER_SPINNABLE		(OWNER_NULL | OWNER_WRITER)
+#define OWNER_SPINNABLE		(OWNER_NULL | OWNER_WRITER | OWNER_READER)
 
 static noinline enum owner_state rwsem_spin_on_owner(struct rw_semaphore *sem)
 {
@@ -543,7 +569,8 @@ static noinline enum owner_state rwsem_spin_on_owner(struct rw_semaphore *sem)
 		return OWNER_NONSPINNABLE;
 
 	rcu_read_lock();
-	while (owner && (READ_ONCE(sem->owner) == owner)) {
+	while (owner && !is_rwsem_owner_reader(owner)
+		     && (READ_ONCE(sem->owner) == owner)) {
 		/*
 		 * Ensure we emit the owner->on_cpu, dereference _after_
 		 * checking sem->owner still matches owner, if that fails,
@@ -582,11 +609,47 @@ static noinline enum owner_state rwsem_spin_on_owner(struct rw_semaphore *sem)
 	return !owner ? OWNER_NULL : OWNER_READER;
 }
 
+/*
+ * Calculate reader-owned rwsem spinning threshold for writer
+ *
+ * It is assumed that the more readers own the rwsem, the longer it will
+ * take for them to wind down and free the rwsem. So the formula to
+ * determine the actual spinning time limit is:
+ *
+ * 1) RWSEM_FLAG_WAITERS set
+ *    Spinning threshold = (10 + nr_readers/2)us
+ *
+ * 2) RWSEM_FLAG_WAITERS not set
+ *    Spinning threshold = 25us
+ *
+ * In the first case when RWSEM_FLAG_WAITERS is set, no new reader can
+ * become rwsem owner. It is assumed that the more readers own the rwsem,
+ * the longer it will take for them to wind down and free the rwsem. This
+ * is subjected to a maximum value of 25us.
+ *
+ * In the second case with RWSEM_FLAG_WAITERS off, new readers can join
+ * and become one of the owners. So assuming for the worst case and spin
+ * for at most 25us.
+ */
+static inline u64 rwsem_rspin_threshold(struct rw_semaphore *sem)
+{
+	long count = atomic_long_read(&sem->count);
+	int reader_cnt = atomic_long_read(&sem->count) >> RWSEM_READER_SHIFT;
+
+	if (reader_cnt > 30)
+		reader_cnt = 30;
+	return sched_clock() + ((count & RWSEM_FLAG_WAITERS)
+		? 10 * NSEC_PER_USEC + reader_cnt * NSEC_PER_USEC/2
+		: 25 * NSEC_PER_USEC);
+}
+
 static bool rwsem_optimistic_spin(struct rw_semaphore *sem, bool wlock)
 {
 	bool taken = false;
 	bool is_rt_task = rt_task(current);
 	int prev_owner_state = OWNER_NULL;
+	int loop = 0;
+	u64 rspin_threshold = 0;
 
 	preempt_disable();
 
@@ -598,8 +661,7 @@ static bool rwsem_optimistic_spin(struct rw_semaphore *sem, bool wlock)
 	 * Optimistically spin on the owner field and attempt to acquire the
 	 * lock whenever the owner changes. Spinning will be stopped when:
 	 *  1) the owning writer isn't running; or
-	 *  2) readers own the lock as we can't determine if they are
-	 *     actively running or not.
+	 *  2) readers own the lock and spinning count has reached 0.
 	 */
 	for (;;) {
 		enum owner_state owner_state = rwsem_spin_on_owner(sem);
@@ -615,6 +677,35 @@ static bool rwsem_optimistic_spin(struct rw_semaphore *sem, bool wlock)
 
 		if (taken)
 			break;
+
+		/*
+		 * Time-based reader-owned rwsem optimistic spinning
+		 */
+		if (wlock && (owner_state == OWNER_READER)) {
+			/*
+			 * Initialize rspin_threshold when the owner
+			 * state changes from non-reader to reader.
+			 */
+			if (prev_owner_state != OWNER_READER) {
+				if (!is_rwsem_spinnable(sem))
+					break;
+				rspin_threshold = rwsem_rspin_threshold(sem);
+				loop = 0;
+			}
+
+			/*
+			 * Check time threshold every 16 iterations to
+			 * avoid calling sched_clock() too frequently.
+			 * This will make the actual spinning time a
+			 * bit more than that specified in the threshold.
+			 */
+			else if (!(++loop & 0xf) &&
+				 (sched_clock() > rspin_threshold)) {
+				rwsem_set_nonspinnable(sem);
+				lockevent_inc(rwsem_opt_nospin);
+				break;
+			}
+		}
 
 		/*
 		 * An RT task cannot do optimistic spinning if it cannot
