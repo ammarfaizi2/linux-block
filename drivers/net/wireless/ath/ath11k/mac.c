@@ -2084,12 +2084,6 @@ static int ath11k_install_key(struct ath11k_vif *arvif,
 	case WLAN_CIPHER_SUITE_GCMP_256:
 		arg.key_cipher = WMI_CIPHER_AES_GCM;
 		break;
-	case WLAN_CIPHER_SUITE_BIP_GMAC_128:
-	case WLAN_CIPHER_SUITE_BIP_GMAC_256:
-		arg.key_cipher = WMI_CIPHER_AES_GMAC;
-	case WLAN_CIPHER_SUITE_AES_CMAC:
-	case WLAN_CIPHER_SUITE_BIP_CMAC_256:
-		arg.key_cipher = WMI_CIPHER_AES_CMAC;
 	default:
 		ath11k_warn(ar->ab, "cipher %d is not supported\n", key->cipher);
 		return -EOPNOTSUPP;
@@ -2157,6 +2151,13 @@ static int ath11k_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 	const u8 *peer_addr;
 	int ret = 0;
 	u32 flags = 0;
+
+	/* BIP needs to be done in software */
+	if (key->cipher == WLAN_CIPHER_SUITE_AES_CMAC ||
+	    key->cipher == WLAN_CIPHER_SUITE_BIP_GMAC_128 ||
+	    key->cipher == WLAN_CIPHER_SUITE_BIP_GMAC_256 ||
+	    key->cipher == WLAN_CIPHER_SUITE_BIP_CMAC_256)
+		return 1;
 
 	if (key->keyidx > WMI_MAX_KEY_INDEX)
 		return -ENOSPC;
