@@ -517,11 +517,19 @@ isdn_ppp_ioctl(int min, struct file *file, unsigned int cmd, unsigned long arg)
 		}
 		is->pppcfg = val;
 		break;
-	case PPPIOCGIDLE:	/* get idle time information */
+	case PPPIOCGIDLE32:	/* get idle time information */
 		if (lp) {
-			struct ppp_idle pidle;
+			struct ppp_idle32 pidle;
 			pidle.xmit_idle = pidle.recv_idle = lp->huptimer;
-			if ((r = set_arg(argp, &pidle, sizeof(struct ppp_idle))))
+			if ((r = set_arg(argp, &pidle, sizeof(struct ppp_idle32))))
+				return r;
+		}
+		break;
+	case PPPIOCGIDLE64:	/* get idle time information */
+		if (lp) {
+			struct ppp_idle64 pidle;
+			pidle.xmit_idle = pidle.recv_idle = lp->huptimer;
+			if ((r = set_arg(argp, &pidle, sizeof(struct ppp_idle64))))
 				return r;
 		}
 		break;
