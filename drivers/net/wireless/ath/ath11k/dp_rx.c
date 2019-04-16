@@ -1846,24 +1846,26 @@ static u32 *ath11k_dp_rx_get_reo_desc(struct ath11k_base *ab,
 static void ath11k_dp_rx_process_pending_packets(struct ath11k_base *ab,
 						 struct napi_struct *napi,
 						 struct sk_buff_head *pending_q,
-						 int *quota)
+						 int *quota, u8 mac_id)
 {
 	struct ath11k *ar;
 	struct sk_buff *msdu;
-	struct ath11k_skb_rxcb *rxcb;
+	struct ath11k_pdev *pdev;
 
 	if (skb_queue_empty(pending_q))
 		return;
 
+	ar = ab->pdevs[mac_id].ar;
+
 	rcu_read_lock();
+	pdev = rcu_dereference(ab->pdevs_active[mac_id]);
+
 	while (*quota && (msdu = __skb_dequeue(pending_q))) {
-		rxcb = ATH11K_SKB_RXCB(msdu);
-		if (!rcu_dereference(ab->pdevs_active[rxcb->mac_id])) {
+		if (!pdev) {
 			dev_kfree_skb_any(msdu);
 			continue;
 		}
 
-		ar = ab->pdevs[rxcb->mac_id].ar;
 		ath11k_dp_rx_deliver_msdu(ar, napi, msdu);
 		(*quota)--;
 	}
@@ -1890,8 +1892,13 @@ int ath11k_dp_process_rx(struct ath11k_base *ab, int mac_id,
 	int quota = budget;
 	int ret;
 
-	/* Process any pending packets from the previous napi poll */
-	ath11k_dp_rx_process_pending_packets(ab, napi, pending_q, &quota);
+	/* Process any pending packets from the previous napi poll.
+	 * Note: All msdu's in this pending_q corresponds to the same mac id
+	 * due to pdev based reo dest mapping and also since each irq group id
+	 * maps to specific reo dest ring.
+	 */
+	ath11k_dp_rx_process_pending_packets(ab, napi, pending_q, &quota,
+					     mac_id);
 
 	__skb_queue_head_init(&msdu_list);
 
