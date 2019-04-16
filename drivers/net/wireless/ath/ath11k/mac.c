@@ -1657,9 +1657,9 @@ static void ath11k_bss_info_changed(struct ieee80211_hw *hw,
 			ath11k_warn(ar->ab, "Failed to set beacon interval for VDEV: %d\n",
 				    arvif->vdev_id);
 		else
-			ath11k_info(ar->ab,
-				    "Beacon interval: %d set for VDEV: %d\n",
-				    arvif->beacon_interval, arvif->vdev_id);
+			ath11k_dbg(ar->ab, ATH11K_DBG_MAC,
+				   "Beacon interval: %d set for VDEV: %d\n",
+				   arvif->beacon_interval, arvif->vdev_id);
 	}
 
 	if (changed & BSS_CHANGED_BEACON) {
@@ -1671,9 +1671,9 @@ static void ath11k_bss_info_changed(struct ieee80211_hw *hw,
 			ath11k_warn(ar->ab, "Failed to set beacon mode for VDEV: %d\n",
 				    arvif->vdev_id);
 		else
-			ath11k_info(ar->ab,
-				    "Set staggered beacon mode for VDEV: %d\n",
-				    arvif->vdev_id);
+			ath11k_dbg(ar->ab, ATH11K_DBG_MAC,
+				   "Set staggered beacon mode for VDEV: %d\n",
+				   arvif->vdev_id);
 
 		ret = ath11k_mac_setup_bcn_tmpl(arvif);
 		if (ret)
@@ -1731,8 +1731,8 @@ static void ath11k_bss_info_changed(struct ieee80211_hw *hw,
 				ath11k_warn(ar->ab, "Failed to set CTS prot for VDEV: %d\n",
 					    arvif->vdev_id);
 			else
-				ath11k_info(ar->ab, "Set CTS prot: %d for VDEV: %d\n",
-					    cts_prot, arvif->vdev_id);
+				ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "Set CTS prot: %d for VDEV: %d\n",
+					   cts_prot, arvif->vdev_id);
 		} else {
 			ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "defer protection mode setup, vdev is not ready yet\n");
 		}
@@ -1754,9 +1754,9 @@ static void ath11k_bss_info_changed(struct ieee80211_hw *hw,
 			ath11k_warn(ar->ab, "Failed to set erp slot for VDEV: %d\n",
 				    arvif->vdev_id);
 		else
-			ath11k_info(ar->ab,
-				    "Set slottime: %d for VDEV: %d\n",
-				    slottime, arvif->vdev_id);
+			ath11k_dbg(ar->ab, ATH11K_DBG_MAC,
+				   "Set slottime: %d for VDEV: %d\n",
+				   slottime, arvif->vdev_id);
 	}
 
 	if (changed & BSS_CHANGED_ERP_PREAMBLE) {
@@ -1774,9 +1774,9 @@ static void ath11k_bss_info_changed(struct ieee80211_hw *hw,
 			ath11k_warn(ar->ab, "Failed to set preamble for VDEV: %d\n",
 				    arvif->vdev_id);
 		else
-			ath11k_info(ar->ab,
-				    "Set preamble: %d for VDEV: %d\n",
-				    preamble, arvif->vdev_id);
+			ath11k_dbg(ar->ab, ATH11K_DBG_MAC,
+				   "Set preamble: %d for VDEV: %d\n",
+				   preamble, arvif->vdev_id);
 	}
 
 	if (changed & BSS_CHANGED_ASSOC) {
