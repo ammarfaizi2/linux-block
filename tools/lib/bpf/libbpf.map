@@ -136,6 +136,7 @@ LIBBPF_0.0.2 {
 		bpf_object__find_map_fd_by_name;
 		bpf_get_link_xdp_id;
 		bpf_set_link_xdp_md_btf;
+		btf__walk_types;
 		btf__dedup;
 		btf__get_map_kv_tids;
 		btf__get_nr_types;
