@@ -1688,6 +1688,23 @@ static void ath11k_bss_info_changed(struct ieee80211_hw *hw,
 				    arvif->vdev_id, ret);
 	}
 
+	if (changed & (BSS_CHANGED_BEACON_INFO | BSS_CHANGED_BEACON)) {
+		arvif->dtim_period = info->dtim_period;
+
+		param_id = WMI_VDEV_PARAM_DTIM_PERIOD;
+		ret = ath11k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id,
+						    param_id,
+						    arvif->dtim_period);
+
+		if (ret)
+			ath11k_warn(ar->ab, "Failed to set dtim period for VDEV %d: %i\n",
+				    arvif->vdev_id, ret);
+		else
+			ath11k_dbg(ar->ab, ATH11K_DBG_MAC,
+				   "DTIM period: %d set for VDEV: %d\n",
+				   arvif->dtim_period, arvif->vdev_id);
+	}
+
 	if (changed & BSS_CHANGED_SSID &&
 	    vif->type == NL80211_IFTYPE_AP) {
 		arvif->u.ap.ssid_len = info->ssid_len;
