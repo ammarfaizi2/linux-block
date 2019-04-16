@@ -1900,6 +1900,12 @@ int ath11k_dp_process_rx(struct ath11k_base *ab, int mac_id,
 	ath11k_dp_rx_process_pending_packets(ab, napi, pending_q, &quota,
 					     mac_id);
 
+	/* If all quota is exhausted by processing the pending_q,
+	 * Wait for the next napi poll to reap the new info
+	 */
+	if (!quota)
+		goto exit;
+
 	__skb_queue_head_init(&msdu_list);
 
 	srng = &ab->hal.srng_list[dp->reo_dst_ring.ring_id];
@@ -1933,7 +1939,6 @@ int ath11k_dp_process_rx(struct ath11k_base *ab, int mac_id,
 				 DMA_FROM_DEVICE);
 
 		num_buffs_reaped++;
-		budget--;
 
 		if (meta_info.push_reason !=
 		    HAL_REO_DEST_RING_PUSH_REASON_ROUTING_INSTRUCTION) {
@@ -1948,6 +1953,19 @@ int ath11k_dp_process_rx(struct ath11k_base *ab, int mac_id,
 		rxcb->is_continuation = meta_info.msdu_meta.continuation;
 		rxcb->mac_id = mac_id;
 		__skb_queue_tail(&msdu_list, msdu);
+
+		/* Stop reaping from the ring once quota is exhausted
+		 * and we've received all msdu's in the the AMSDU. The
+		 * additional msdu's reaped in excess of quota here would
+		 * be pushed into the pending queue to be processed during
+		 * the next napi poll.
+		 * Note: More profiling can be done to see the impact on
+		 * pending_q and throughput during various traffic & density
+		 * and how use of budget instead of remaining quota affects it.
+		 */
+		if (num_buffs_reaped >= quota && rxcb->is_last_msdu &&
+		    !rxcb->is_continuation)
+			break;
 	}
 
 	ath11k_hal_srng_access_end(ab, srng);
