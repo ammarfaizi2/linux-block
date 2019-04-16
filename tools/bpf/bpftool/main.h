@@ -273,6 +273,13 @@ void btf_dump_linfo_plain(const struct btf *btf,
 void btf_dump_linfo_json(const struct btf *btf,
 			 const struct bpf_line_info *linfo, bool linum);
 
+/* btf_c_format - dump btf data in c style format
+ * @btf: btf to parse
+ *
+ * Returns 0 on success, non-0 otherwise.
+ */
+int btf_dump_c_format(struct btf *btf);
+
 struct nlattr;
 struct ifinfomsg;
 struct tcmsg;

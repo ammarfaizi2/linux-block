@@ -13,6 +13,8 @@
 #include <uapi/linux/btf.h>
 #include <bpf/libbpf.h>
 #include <bpf/bpf.h>
+#include <bpf/btf.h>
+#include "bpf/libbpf_internal.h"
 #include "bpf/nlattr.h"
 #include "main.h"
 #include "netlink_dumper.h"
@@ -133,6 +135,113 @@ static int do_set(int argc, char **argv)
 	return xdp_set_md_btf(dev_idx, set_arg);
 }
 
+struct xdp_btf_attr {
+	int ifindex;
+	__u8 enabled;
+	__u32 id;
+};
+
+static int xdp_btf_attr_link_nlmsg(void *cookie, void *msg, struct nlattr **tb)
+{
+	struct nlattr *xdp_tb[IFLA_XDP_MAX + 1];
+	struct xdp_btf_attr *attr = cookie;
+	struct ifinfomsg *ifinfo = msg;
+
+	if (attr->ifindex != ifinfo->ifi_index)
+		return 0;
+
+	if (!tb[IFLA_XDP])
+		return -1;
+
+	if (libbpf_nla_parse_nested(xdp_tb, IFLA_XDP_MAX, tb[IFLA_XDP], NULL) < 0)
+		return -1;
+
+	if (!xdp_tb[IFLA_XDP_MD_BTF_ID])
+		return 0;
+
+	attr->id = libbpf_nla_getattr_u32(xdp_tb[IFLA_XDP_MD_BTF_ID]);
+	attr->enabled = libbpf_nla_getattr_u8(xdp_tb[IFLA_XDP_MD_BTF_STATE]);
+	return 0;
+}
+
+static int xdp_netlink_get_btf_attr(struct xdp_btf_attr *attr)
+{
+	unsigned int nl_pid;
+	char err_buf[256];
+	int sock, ret;
+
+	sock = libbpf_netlink_open(&nl_pid);
+	if (sock < 0) {
+		fprintf(stderr, "failed to open netlink sock\n");
+		return -1;
+	}
+
+	ret = libbpf_nl_get_link(sock, nl_pid, xdp_btf_attr_link_nlmsg, attr);
+	if (ret) {
+		libbpf_strerror(ret, err_buf, sizeof(err_buf));
+		fprintf(stderr, "Error: %s\n", err_buf);
+	}
+
+	close(sock);
+	return ret;
+}
+
+static int dump_btf_usage(void)
+{
+	fprintf(stderr,
+		"Usage: %s net xdp md_btf cstyle dev <devname>\n"
+		"       %s net xdp md_btf help\n"
+		"       dump XDP meta data btf of a device in c style format\n",
+		bin_name, bin_name);
+
+	return -1;
+}
+
+static int do_md_btf(int argc, char **argv)
+{
+	struct xdp_btf_attr attr = {};
+	struct btf *btf = NULL;
+	char *dev_name;
+	int ret;
+
+	if (argc < 3)
+		return dump_btf_usage();
+
+	if (strcmp(argv[0], "cstyle") != 0)
+		return dump_btf_usage();
+
+	dev_name = argv[2];
+	if (strcmp(argv[1], "dev") != 0)
+		return dump_btf_usage();
+
+	attr.ifindex = if_nametoindex(dev_name);
+	if (attr.ifindex == 0) {
+		fprintf(stderr, "invalid dev name %s\n", dev_name);
+		return -1;
+	}
+	ret = xdp_netlink_get_btf_attr(&attr);
+	if (ret)
+		return ret;
+
+	fprintf(stdout, "//XDP BTF: %s(%d) id(%d) enabled(%d)\n\n",
+		argv[1], attr.ifindex, attr.id, attr.enabled);
+
+	ret = btf__get_from_id(attr.id, &btf);
+	if (ret || !btf) {
+		fprintf(stderr, "Failed to get btf from id err=%d, btf %p\n", ret, btf);
+		return -1;
+	}
+
+	fprintf(stdout, "#ifndef __XDP_MD_BTF_%s\n", dev_name);
+	fprintf(stdout, "#define __XDP_MD_BTF_%s\n\n", dev_name);
+
+	ret = btf_dump_c_format(btf);
+
+	fprintf(stdout, "\n#endif /* __XDP_MD_BTF_%s */\n\n", dev_name);
+	btf__free(btf);
+	return ret;
+}
+
 static int do_help(int argc, char **argv)
 {
 	if (json_output) {
@@ -141,7 +250,7 @@ static int do_help(int argc, char **argv)
 	}
 
 	fprintf(stderr,
-		"Usage: %s %s xdp { show | list | set } [dev <devname>]\n"
+		"Usage: %s %s xdp { show | list | set | md_btf} [dev <devname>]\n"
 		"       %s %s help\n",
 		bin_name, argv[-2], bin_name, argv[-2]);
 
@@ -152,6 +261,7 @@ static const struct cmd cmds[] = {
 	{ "show",        do_show },
 	{ "list",        do_show },
 	{ "set",         do_set  },
+	{ "md_btf",      do_md_btf },
 	{ "help",        do_help },
 	{ 0 }
 };
