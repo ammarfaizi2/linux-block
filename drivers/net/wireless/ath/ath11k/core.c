@@ -625,13 +625,16 @@ static int ath11k_core_reconfigure_on_crash(struct ath11k_base *sc)
 {
 	int ret;
 
+	mutex_lock(&sc->core_lock);
 	ath11k_ahb_ext_irq_disable(sc);
-
 	ath11k_dp_pdev_free(sc);
-	ath11k_dp_free(sc);
 	ath11k_ahb_stop(sc);
 	ath11k_wmi_detach(sc);
+	mutex_unlock(&sc->core_lock);
+
+	ath11k_dp_free(sc);
 	ath11k_hal_srng_deinit(sc);
+
 	sc->free_vdev_map = (1LL << (sc->num_radios * TARGET_NUM_VDEVS)) - 1;
 
 	ret = ath11k_hal_srng_init(sc);
@@ -707,13 +710,11 @@ static void ath11k_core_restart(struct work_struct *work)
 	wake_up(&sc->wmi_sc.tx_credits_wq);
 	wake_up(&sc->peer_mapping_wq);
 
-	mutex_lock(&sc->core_lock);
 	ret = ath11k_core_reconfigure_on_crash(sc);
 	if (ret) {
 		ath11k_err(sc, "failed to reconfigure driver on crash recovery\n");
 		return;
 	}
-	mutex_unlock(&sc->core_lock);
 
 	for (i = 0; i < sc->num_radios; i++) {
 		pdev = &sc->pdevs[i];
@@ -767,7 +768,6 @@ int ath11k_core_init(struct ath11k_base *sc)
 	sc->tgt_rproc = prproc;
 	sc->hw_params = ath11k_hw_params;
 
-	set_bit(ATH11K_FLAG_REGISTERED, &sc->dev_flags);
 	ret = ath11k_core_soc_create(sc);
 	if (ret) {
 		ath11k_err(sc, "failed to create soc core: %d\n", ret);

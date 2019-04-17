@@ -2351,6 +2351,9 @@ static void ath11k_qmi_driver_event_work(struct work_struct *work)
 		list_del(&event->list);
 		spin_unlock(&qmi->event_lock);
 
+		if (test_bit(ATH11K_FLAG_UNREGISTERING, &ab->dev_flags))
+			return;
+
 		switch (event->type) {
 		case ATH11K_QMI_EVENT_SERVER_ARRIVE:
 			ath11k_qmi_event_server_arrive(qmi);
@@ -2366,17 +2369,15 @@ static void ath11k_qmi_driver_event_work(struct work_struct *work)
 			ath11k_qmi_event_load_bdf(qmi);
 			break;
 		case ATH11K_QMI_EVENT_FW_READY:
-			if (test_bit(ATH11K_FLAG_REGISTERED, &ab->dev_flags) &&
-			    !test_bit(ATH11K_FLAG_UNREGISTERING, &ab->dev_flags) &&
-			    ab->qmi.cal_done) {
-				set_bit(ATH11K_FLAG_CRASH_FLUSH, &ab->dev_flags);
-				set_bit(ATH11K_FLAG_RECOVERY, &ab->dev_flags);
+			if (test_bit(ATH11K_FLAG_REGISTERED, &ab->dev_flags)) {
 				queue_work(ab->workqueue, &ab->restart_work);
+				break;
 			}
-			else {
-				ath11k_qmi_firmware_indication(ab);
-				ab->qmi.cal_done = 1;
-			}
+
+			ath11k_qmi_firmware_indication(ab);
+			ab->qmi.cal_done = 1;
+			set_bit(ATH11K_FLAG_REGISTERED, &ab->dev_flags);
+
 			break;
 		case ATH11K_QMI_EVENT_COLD_BOOT_CAL_DONE:
 			break;

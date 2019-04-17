@@ -7,7 +7,7 @@
 
 #include "core.h"
 
-#define ATH11K_AHB_RECOVERY_TIMEOUT (100000 * HZ)
+#define ATH11K_AHB_RECOVERY_TIMEOUT (3 * HZ)
 struct ath11k_base;
 
 u32 ath11k_ahb_read32(struct ath11k_base *ab, u32 address);
