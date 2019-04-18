@@ -188,6 +188,7 @@ HOSTCFLAGS_sampleip_user.o += -I$(srctree)/tools/lib/bpf/
 HOSTCFLAGS_task_fd_query_user.o += -I$(srctree)/tools/lib/bpf/
 HOSTCFLAGS_xdp_sample_pkts_user.o += -I$(srctree)/tools/lib/bpf/ $(EXTRA_CFLAGS)
 HOSTCFLAGS_xdp_redirect_cpu_user.o += -I$(srctree)/tools/lib/bpf/ $(EXTRA_CFLAGS)
+HOSTCFLAGS_xdp_tx_iptunnel_user.o += -I$(srctree)/tools/lib/bpf/ $(EXTRA_CFLAGS)
 
 KBUILD_HOSTLDLIBS		+= $(LIBBPF) -lelf
 HOSTLDLIBS_tracex4		+= -lrt
@@ -297,3 +298,4 @@ endif
 # Files that have #ifdef XDP_MD_BTF
 $(obj)/xdp_sample_pkts_kern.o: $(obj)/xdp_sample_pkts_user.o
 $(obj)/xdp_redirect_cpu_kern.o: $(obj)/xdp_redirect_cpu_user.o
+$(obj)/xdp_tx_iptunnel_kern.o: $(obj)/xdp_tx_iptunnel_user.o
