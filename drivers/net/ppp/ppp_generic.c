@@ -776,6 +776,51 @@ out:
 	return err;
 }
 
+#ifdef CONFIG_COMPAT
+static long ppp_compat_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	struct ppp_file *pf;
+	int err = -ENOIOCTLCMD;
+	void __user *argp = (void __user *)arg;
+
+	mutex_lock(&ppp_mutex);
+
+	pf = file->private_data;
+	if (pf && pf->kind == INTERFACE) {
+		struct ppp *ppp = PF_TO_PPP(pf);
+		switch (cmd) {
+#ifdef CONFIG_PPP_FILTER
+		case PPPIOCSPASS32:
+		case PPPIOCSACTIVE32:
+		{
+			struct bpf_prog *filter = compat_ppp_get_filter(argp);
+			struct bpf_prog **which;
+
+			if (IS_ERR(filter)) {
+				err = PTR_ERR(filter);
+				break;
+			}
+			if (cmd == PPPIOCSPASS32)
+				which = &ppp->pass_filter;
+			else
+				which = &ppp->active_filter;
+			ppp_lock(ppp);
+			if (*which)
+				bpf_prog_destroy(*which);
+			*which = filter;
+			ppp_unlock(ppp);
+			err = 0;
+			break;
+		}
+#endif /* CONFIG_PPP_FILTER */
+		}
+	}
+	mutex_unlock(&ppp_mutex);
+
+	return err;
+}
+#endif
+
 static int ppp_unattached_ioctl(struct net *net, struct ppp_file *pf,
 			struct file *file, unsigned int cmd, unsigned long arg)
 {
@@ -844,6 +889,7 @@ static const struct file_operations ppp_device_fops = {
 	.write		= ppp_write,
 	.poll		= ppp_poll,
 	.unlocked_ioctl	= ppp_ioctl,
+	.compat_ioctl	= IS_ENABLED(CONFIG_COMPAT) ? ppp_compat_ioctl : NULL,
 	.open		= ppp_open,
 	.release	= ppp_release,
 	.llseek		= noop_llseek,

@@ -1682,12 +1682,6 @@ isdn_ioctl(struct file *file, uint cmd, ulong arg)
 		return (isdn_ppp_ioctl(minor - ISDN_MINOR_PPP, file, cmd, arg));
 #endif
 	return -ENODEV;
-
-#undef name
-#undef bname
-#undef iocts
-#undef phone
-#undef cfg
 }
 
 static long
@@ -1701,6 +1695,26 @@ isdn_unlocked_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 
 	return ret;
 }
+
+#ifdef CONFIG_COMPAT
+static long
+isdn_compat_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+	uint minor = iminor(file_inode(file));
+	int ret = -ENOIOCTLCMD;
+
+#ifdef CONFIG_ISDN_PPP
+	if (minor > ISDN_MINOR_CTRLMAX && minor <= ISDN_MINOR_PPPMAX) {
+		mutex_lock(&isdn_mutex);
+		if (dev->drivers)
+			ret = compat_isdn_ppp_ioctl(minor - ISDN_MINOR_PPP,
+						    file, cmd, arg);
+		mutex_unlock(&isdn_mutex);
+	}
+#endif
+	return ret;
+}
+#endif
 
 /*
  * Open the device code.
@@ -1819,6 +1833,7 @@ static const struct file_operations isdn_fops =
 	.write		= isdn_write,
 	.poll		= isdn_poll,
 	.unlocked_ioctl	= isdn_unlocked_ioctl,
+	.compat_ioctl	= IS_ENABLED(CONFIG_COMPAT) ? isdn_compat_ioctl : NULL,
 	.open		= isdn_open,
 	.release	= isdn_close,
 };

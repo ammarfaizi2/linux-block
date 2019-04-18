@@ -628,6 +628,44 @@ isdn_ppp_ioctl(int min, struct file *file, unsigned int cmd, unsigned long arg)
 	return 0;
 }
 
+#ifdef CONFIG_COMPAT
+/*
+ * ippp device ioctl
+ */
+int
+compat_isdn_ppp_ioctl(int min, struct file *file, unsigned int cmd, unsigned long arg)
+{
+	struct ippp_struct *is = file->private_data;
+	void __user *argp = compat_ptr(arg);
+
+	if (!(is->state & IPPP_OPEN))
+		return -EINVAL;
+	switch (cmd) {
+#ifdef CONFIG_IPPP_FILTER
+	case PPPIOCSPASS32:
+	case PPPIOCSACTIVE32:
+	{
+		struct bpf_prog *filter = compat_ppp_get_filter(argp);
+		struct bpf_prog **which;
+
+		if (IS_ERR(filter))
+			return PTR_ERR(filter);
+		if (cmd == PPPIOCSPASS)
+			which = &is->pass_filter;
+		else
+			which = &is->active_filter;
+		if (*which)
+			bpf_prog_destroy(*which);
+		*which = filter;
+		return 0;
+	}
+#endif /* CONFIG_IPPP_FILTER */
+	default:
+		return -ENOIOCTLCMD;
+	}
+}
+#endif
+
 __poll_t
 isdn_ppp_poll(struct file *file, poll_table *wait)
 {
