@@ -557,31 +557,6 @@ static __poll_t ppp_poll(struct file *file, poll_table *wait)
 	return mask;
 }
 
-#ifdef CONFIG_PPP_FILTER
-static int get_filter(void __user *arg, struct sock_filter **p)
-{
-	struct sock_fprog uprog;
-	struct sock_filter *code = NULL;
-	int len;
-
-	if (copy_from_user(&uprog, arg, sizeof(uprog)))
-		return -EFAULT;
-
-	if (!uprog.len) {
-		*p = NULL;
-		return 0;
-	}
-
-	len = uprog.len * sizeof(struct sock_filter);
-	code = memdup_user(uprog.filter, len);
-	if (IS_ERR(code))
-		return PTR_ERR(code);
-
-	*p = code;
-	return uprog.len;
-}
-#endif /* CONFIG_PPP_FILTER */
-
 static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
 	struct ppp_file *pf;
@@ -757,55 +732,25 @@ static long ppp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 
 #ifdef CONFIG_PPP_FILTER
 	case PPPIOCSPASS:
-	{
-		struct sock_filter *code;
-
-		err = get_filter(argp, &code);
-		if (err >= 0) {
-			struct bpf_prog *pass_filter = NULL;
-			struct sock_fprog_kern fprog = {
-				.len = err,
-				.filter = code,
-			};
-
-			err = 0;
-			if (fprog.filter)
-				err = bpf_prog_create(&pass_filter, &fprog);
-			if (!err) {
-				ppp_lock(ppp);
-				if (ppp->pass_filter)
-					bpf_prog_destroy(ppp->pass_filter);
-				ppp->pass_filter = pass_filter;
-				ppp_unlock(ppp);
-			}
-			kfree(code);
-		}
-		break;
-	}
 	case PPPIOCSACTIVE:
 	{
-		struct sock_filter *code;
+		struct bpf_prog *filter = ppp_get_filter(argp);
+		struct bpf_prog **which;
 
-		err = get_filter(argp, &code);
-		if (err >= 0) {
-			struct bpf_prog *active_filter = NULL;
-			struct sock_fprog_kern fprog = {
-				.len = err,
-				.filter = code,
-			};
-
-			err = 0;
-			if (fprog.filter)
-				err = bpf_prog_create(&active_filter, &fprog);
-			if (!err) {
-				ppp_lock(ppp);
-				if (ppp->active_filter)
-					bpf_prog_destroy(ppp->active_filter);
-				ppp->active_filter = active_filter;
-				ppp_unlock(ppp);
-			}
-			kfree(code);
+		if (IS_ERR(filter)) {
+			err = PTR_ERR(filter);
+			break;
 		}
+		if (cmd == PPPIOCSPASS)
+			which = &ppp->pass_filter;
+		else
+			which = &ppp->active_filter;
+		ppp_lock(ppp);
+		if (*which)
+			bpf_prog_destroy(*which);
+		*which = filter;
+		ppp_unlock(ppp);
+		err = 0;
 		break;
 	}
 #endif /* CONFIG_PPP_FILTER */

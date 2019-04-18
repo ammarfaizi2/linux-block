@@ -34,3 +34,5 @@ obj-$(CONFIG_HWBM) += hwbm.o
 obj-$(CONFIG_NET_DEVLINK) += devlink.o
 obj-$(CONFIG_GRO_CELLS) += gro_cells.o
 obj-$(CONFIG_FAILOVER) += failover.o
+obj-$(CONFIG_PPP_FILTER) += ppp-filter.o
+obj-$(CONFIG_IPPP_FILTER) += ppp-filter.o

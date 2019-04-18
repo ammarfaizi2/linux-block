@@ -443,32 +443,6 @@ set_arg(void __user *b, void *val, int len)
 	return 0;
 }
 
-#ifdef CONFIG_IPPP_FILTER
-static int get_filter(void __user *arg, struct sock_filter **p)
-{
-	struct sock_fprog uprog;
-	struct sock_filter *code = NULL;
-	int len;
-
-	if (copy_from_user(&uprog, arg, sizeof(uprog)))
-		return -EFAULT;
-
-	if (!uprog.len) {
-		*p = NULL;
-		return 0;
-	}
-
-	/* uprog.len is unsigned short, so no overflow here */
-	len = uprog.len * sizeof(struct sock_filter);
-	code = memdup_user(uprog.filter, len);
-	if (IS_ERR(code))
-		return PTR_ERR(code);
-
-	*p = code;
-	return uprog.len;
-}
-#endif /* CONFIG_IPPP_FILTER */
-
 /*
  * ippp device ioctl
  */
@@ -631,52 +605,21 @@ isdn_ppp_ioctl(int min, struct file *file, unsigned int cmd, unsigned long arg)
 	}
 #ifdef CONFIG_IPPP_FILTER
 	case PPPIOCSPASS:
-	{
-		struct sock_fprog_kern fprog;
-		struct sock_filter *code;
-		int err, len = get_filter(argp, &code);
-
-		if (len < 0)
-			return len;
-
-		fprog.len = len;
-		fprog.filter = code;
-
-		if (is->pass_filter) {
-			bpf_prog_destroy(is->pass_filter);
-			is->pass_filter = NULL;
-		}
-		if (fprog.filter != NULL)
-			err = bpf_prog_create(&is->pass_filter, &fprog);
-		else
-			err = 0;
-		kfree(code);
-
-		return err;
-	}
 	case PPPIOCSACTIVE:
 	{
-		struct sock_fprog_kern fprog;
-		struct sock_filter *code;
-		int err, len = get_filter(argp, &code);
+		struct bpf_prog *filter = ppp_get_filter(argp);
+		struct bpf_prog **which;
 
-		if (len < 0)
-			return len;
-
-		fprog.len = len;
-		fprog.filter = code;
-
-		if (is->active_filter) {
-			bpf_prog_destroy(is->active_filter);
-			is->active_filter = NULL;
-		}
-		if (fprog.filter != NULL)
-			err = bpf_prog_create(&is->active_filter, &fprog);
+		if (IS_ERR(filter))
+			return PTR_ERR(filter);
+		if (cmd == PPPIOCSPASS)
+			which = &is->pass_filter;
 		else
-			err = 0;
-		kfree(code);
-
-		return err;
+			which = &is->active_filter;
+		if (*which)
+			bpf_prog_destroy(*which);
+		*which = filter;
+		break;
 	}
 #endif /* CONFIG_IPPP_FILTER */
 	default:
