@@ -74,35 +74,43 @@ static __always_inline void set_ethhdr(struct ethhdr *new_eth,
 	new_eth->h_proto = h_proto;
 }
 
-static __always_inline int handle_ipv4(struct xdp_md *xdp)
+static __always_inline struct iptnl_info *
+find_tnl_ipv4(struct xdp_md *xdp, __u8 *proto, __u16 *payload_len)
 {
-	void *data_end = (void *)(long)xdp->data_end;
-	void *data = (void *)(long)xdp->data;
-	struct iptnl_info *tnl;
-	struct ethhdr *new_eth;
-	struct ethhdr *old_eth;
-	struct iphdr *iph = data + sizeof(struct ethhdr);
-	u16 *next_iph_u16;
-	u16 payload_len;
+	void         *data_end = (void *)(long)xdp->data_end;
+	void         *data     = (void *)(long)xdp->data;
+	struct iphdr *iph      = data + sizeof(struct ethhdr);
 	struct vip vip = {};
 	int dport;
-	u32 csum = 0;
-	int i;
 
 	if (iph + 1 > data_end)
-		return XDP_DROP;
+		return NULL;
 
 	dport = get_dport(iph + 1, data_end, iph->protocol);
 	if (dport == -1)
-		return XDP_DROP;
+		return NULL;
 
 	vip.protocol = iph->protocol;
 	vip.family = AF_INET;
 	vip.daddr.v4 = iph->daddr;
 	vip.dport = dport;
-	payload_len = ntohs(iph->tot_len);
+	*payload_len = ntohs(iph->tot_len);
+	*proto = vip.protocol;
 
-	tnl = bpf_map_lookup_elem(&vip2tnl, &vip);
+	return bpf_map_lookup_elem(&vip2tnl, &vip);
+}
+
+static __always_inline int
+fwd_tnl_ipv4(struct xdp_md *xdp, struct iptnl_info *tnl, __u8 proto, __u16 payload_len)
+{
+	void  *data_end, *data;
+	struct ethhdr *new_eth;
+	struct ethhdr *old_eth;
+	struct iphdr *iph;
+	u16 *next_iph_u16;
+	u32 csum = 0;
+	int i;
+
 	/* It only does v4-in-v4 */
 	if (!tnl || tnl->family != AF_INET)
 		return XDP_PASS;
@@ -144,43 +152,60 @@ static __always_inline int handle_ipv4(struct xdp_md *xdp)
 
 	iph->check = ~((csum & 0xffff) + (csum >> 16));
 
-	count_tx(vip.protocol);
+	count_tx(proto);
 
 	return XDP_TX;
 }
 
-static __always_inline int handle_ipv6(struct xdp_md *xdp)
+static __always_inline int handle_ipv4(struct xdp_md *xdp)
 {
-	void *data_end = (void *)(long)xdp->data_end;
-	void *data = (void *)(long)xdp->data;
 	struct iptnl_info *tnl;
-	struct ethhdr *new_eth;
-	struct ethhdr *old_eth;
-	struct ipv6hdr *ip6h = data + sizeof(struct ethhdr);
 	__u16 payload_len;
+	__u8 proto;
+
+	tnl = find_tnl_ipv4(xdp, &proto, &payload_len);
+	return fwd_tnl_ipv4(xdp, tnl, proto, payload_len);
+}
+
+static __always_inline struct iptnl_info *
+find_tnl_ipv6(struct xdp_md *xdp, __u8 *proto, __u16 *payload_len)
+{
+	void           *data_end = (void *)(long)xdp->data_end;
+	void           *data     = (void *)(long)xdp->data;
+	struct ipv6hdr *ip6h     = data + sizeof(struct ethhdr);
 	struct vip vip = {};
 	int dport;
 
 	if (ip6h + 1 > data_end)
-		return XDP_DROP;
+		return NULL;
 
 	dport = get_dport(ip6h + 1, data_end, ip6h->nexthdr);
 	if (dport == -1)
-		return XDP_DROP;
+		return NULL;
 
 	vip.protocol = ip6h->nexthdr;
 	vip.family = AF_INET6;
 	memcpy(vip.daddr.v6, ip6h->daddr.s6_addr32, sizeof(vip.daddr));
 	vip.dport = dport;
-	payload_len = ip6h->payload_len;
+	*payload_len = ip6h->payload_len;
+	*proto = vip.protocol;
 
-	tnl = bpf_map_lookup_elem(&vip2tnl, &vip);
+	return bpf_map_lookup_elem(&vip2tnl, &vip);
+}
+
+static __always_inline int
+fwd_tnl_ipv6(struct xdp_md *xdp, struct iptnl_info *tnl, __u8 proto, __u16 payload_len)
+{
+	void  *data_end, *data;
+	struct ethhdr *new_eth;
+	struct ethhdr *old_eth;
+	struct ipv6hdr *ip6h;
+
 	/* It only does v6-in-v6 */
 	if (!tnl || tnl->family != AF_INET6)
 		return XDP_PASS;
 
 	/* The vip key is found.  Add an IP header and send it out */
-
 	if (bpf_xdp_adjust_head(xdp, 0 - (int)sizeof(struct ipv6hdr)))
 		return XDP_DROP;
 
@@ -207,9 +232,19 @@ static __always_inline int handle_ipv6(struct xdp_md *xdp)
 	memcpy(ip6h->saddr.s6_addr32, tnl->saddr.v6, sizeof(tnl->saddr.v6));
 	memcpy(ip6h->daddr.s6_addr32, tnl->daddr.v6, sizeof(tnl->daddr.v6));
 
-	count_tx(vip.protocol);
+	count_tx(proto);
 
 	return XDP_TX;
+}
+
+static __always_inline int handle_ipv6(struct xdp_md *xdp)
+{
+	struct iptnl_info *tnl;
+	__u16 payload_len;
+	__u8 proto;
+
+	tnl = find_tnl_ipv6(xdp, &proto, &payload_len);
+	return fwd_tnl_ipv6(xdp, tnl, proto, payload_len);
 }
 
 SEC("xdp_tx_iptunnel")
