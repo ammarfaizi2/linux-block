@@ -96,6 +96,31 @@ static int print_bpf_output(void *data, int size)
 	return LIBBPF_PERF_EVENT_CONT;
 }
 
+#ifdef XDP_MD_BTF
+/* xdp_md_btf.h file should be generated via:
+ * bpftool net xdp md_btf cstyle dev <ifname> > xdp_md_btf.h
+ */
+
+#include "xdp_md_btf.h"
+static int print_bpf_output_md(void *data, int size)
+{
+	int pktsize = size - sizeof(struct xdp_md_desc);
+	struct {
+		struct xdp_md_desc md;
+		__u8  pkt_data[SAMPLE_SIZE];
+	} __packed *e = data;
+	int i;
+
+	printf("Flwo mark: 0x%x, hash32: 0x%x, Ethernet hdr: ", e->md.flow_mark, e->md.hash32);
+	for (i = 0; i < 14 && i < pktsize; i++)
+		printf("%02x ", e->pkt_data[i]);
+	printf("\n");
+
+	return LIBBPF_PERF_EVENT_CONT;
+}
+
+#endif
+
 static void test_bpf_perf_event(int map_fd, int num)
 {
 	struct perf_event_attr attr = {
@@ -136,6 +161,7 @@ static void usage(const char *prog)
 
 int main(int argc, char **argv)
 {
+	perf_event_print_fn output_fn = print_bpf_output;
 	struct rlimit r = {RLIM_INFINITY, RLIM_INFINITY};
 	struct bpf_prog_load_attr prog_load_attr = {
 		.prog_type	= BPF_PROG_TYPE_XDP,
@@ -184,6 +210,28 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
+
+#ifdef XDP_MD_BTF
+	struct bpf_program *md_prog = NULL;
+	int md_prog_fd = -1;
+
+	md_prog = bpf_program__next(bpf_program__next(NULL, obj), obj);
+	if (md_prog) {
+		printf("Found xdp md prog\n");
+
+		md_prog_fd = bpf_program__fd(md_prog);
+		if (md_prog_fd < 0 || md_prog_fd == prog_fd) {
+			printf("bad md_prog_fd: %s\n", strerror(errno));
+			return 1;
+		}
+		/* Use the XDP meta data sample program */
+		prog_fd = md_prog_fd;
+		output_fn = print_bpf_output_md;
+	} else {
+		printf("XDP_MD_BTF is enabled but xdp md prog was not found\n");
+	}
+#endif
+
 	map = bpf_map__next(NULL, obj);
 	if (!map) {
 		printf("finding a map in obj file failed\n");
@@ -217,8 +265,7 @@ int main(int argc, char **argv)
 		if (perf_event_mmap_header(pmu_fds[i], &headers[i]) < 0)
 			return 1;
 
-	ret = perf_event_poller_multi(pmu_fds, headers, numcpus,
-				      print_bpf_output);
+	ret = perf_event_poller_multi(pmu_fds, headers, numcpus, output_fn);
 	kill(0, SIGINT);
 	return ret;
 }
