@@ -247,6 +247,11 @@ endif
 endif
 endif
 
+ifneq (,$(XDP_MD_BTF))
+	BPF_EXTRA_CFLAGS += -DXDP_MD_BTF
+	TPROGS_CFLAGS +=-DXDP_MD_BTF
+endif
+
 # Trick to allow make to be run from this directory
 all:
 	$(MAKE) -C ../../ M=$(CURDIR) BPF_SAMPLES_PATH=$(CURDIR)
@@ -270,7 +275,7 @@ FORCE:
 
 
 # Verify LLVM compiler tools are available and bpf target is supported by llc
-.PHONY: verify_cmds verify_target_bpf $(CLANG) $(LLC)
+.PHONY: verify_cmds verify_target_bpf verify_md_btf_header $(CLANG) $(LLC)
 
 verify_cmds: $(CLANG) $(LLC)
 	@for TOOL in $^ ; do \
@@ -289,7 +294,6 @@ verify_target_bpf: verify_cmds
 
 $(BPF_SAMPLES_PATH)/*.c: verify_target_bpf $(LIBBPF)
 $(src)/*.c: verify_target_bpf $(LIBBPF)
-
 $(obj)/tracex5_kern.o: $(obj)/syscall_nrs.h
 $(obj)/hbm_out_kern.o: $(src)/hbm.h $(src)/hbm_kern.h
 $(obj)/hbm.o: $(src)/hbm.h
@@ -315,3 +319,6 @@ $(obj)/%.o: $(src)/%.c
 ifeq ($(DWARF2BTF),y)
 	$(BTF_PAHOLE) -J $@
 endif
+
+# Files that have #ifdef XDP_MD_BTF
+$(obj)/xdp_sample_pkts_kern.o: $(obj)/xdp_sample_pkts_user.o

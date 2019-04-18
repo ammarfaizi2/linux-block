@@ -55,5 +55,39 @@ int xdp_sample_prog(struct xdp_md *ctx)
 	return XDP_PASS;
 }
 
+#ifdef XDP_MD_BTF
+/* xdp_md_btf.h is normally generated via bpftool */
+#include "xdp_md_btf.h"
+
+SEC("xdp_sample_md")
+int xdp_sample_md_prog(struct xdp_md *ctx)
+{
+	struct xdp_md_desc *md = (void *)(long)ctx->data_meta;
+	void *data_end = (void *)(long)ctx->data_end;
+	void *data = (void *)(long)ctx->data;
+	struct xdp_md_desc metadata = {};
+
+	if (data < data_end) {
+		u64 flags = BPF_F_CURRENT_CPU;
+		u16 sample_size;
+		int ret;
+
+		if (md + 1 <= data) /* copy metadata from driver */
+			metadata = *md;
+
+		sample_size = (u16)(data_end - data);
+		sample_size = min(sample_size, SAMPLE_SIZE);
+		flags |= (u64)sample_size << 32;
+
+		ret = bpf_perf_event_output(ctx, &my_map, flags,
+					    &metadata, sizeof(metadata));
+		if (ret)
+			bpf_printk("perf_event_output failed: %d\n", ret);
+	}
+
+	return XDP_PASS;
+}
+#endif
+
 char _license[] SEC("license") = "GPL";
 u32 _version SEC("version") = LINUX_VERSION_CODE;
