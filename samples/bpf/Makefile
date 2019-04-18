@@ -323,3 +323,4 @@ endif
 # Files that have #ifdef XDP_MD_BTF
 $(obj)/xdp_sample_pkts_kern.o: $(obj)/xdp_sample_pkts_user.o
 $(obj)/xdp_redirect_cpu_kern.o: $(obj)/xdp_redirect_cpu_user.o
+$(obj)/xdp_tx_iptunnel_kern.o: $(obj)/xdp_tx_iptunnel_user.o

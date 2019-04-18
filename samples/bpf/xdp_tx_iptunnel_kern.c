@@ -247,8 +247,7 @@ static __always_inline int handle_ipv6(struct xdp_md *xdp)
 	return fwd_tnl_ipv6(xdp, tnl, proto, payload_len);
 }
 
-SEC("xdp_tx_iptunnel")
-int _xdp_tx_iptunnel(struct xdp_md *xdp)
+static __always_inline int __xdp_tx_iptunnel(struct xdp_md *xdp)
 {
 	void *data_end = (void *)(long)xdp->data_end;
 	void *data = (void *)(long)xdp->data;
@@ -268,5 +267,75 @@ int _xdp_tx_iptunnel(struct xdp_md *xdp)
 	else
 		return XDP_PASS;
 }
+
+SEC("xdp_tx_iptunnel")
+int _xdp_tx_iptunnel(struct xdp_md *xdp)
+{
+	return __xdp_tx_iptunnel(xdp);
+}
+
+#ifdef XDP_MD_BTF
+#include "xdp_md_btf.h"
+
+struct bpf_map_def SEC("maps") flow2tnl = {
+	.type = BPF_MAP_TYPE_HASH,
+	.key_size = sizeof(__u32),
+	.value_size = sizeof(struct iptnl_info),
+	.max_entries = MAX_IPTNL_ENTRIES,
+};
+
+static __always_inline int
+fwd_tnl(struct xdp_md *xdp, struct iptnl_info *tnl)
+{
+	void *data_end = (void *)(long)xdp->data_end;
+	void *data = (void *)(long)xdp->data;
+
+	if (tnl->family == AF_INET) {
+		struct iphdr *iph = data + sizeof(struct ethhdr);
+
+		if (iph + 1 > data_end)
+			return XDP_PASS;
+
+		return fwd_tnl_ipv4(xdp, tnl, iph->protocol, ntohs(iph->tot_len));
+	}
+
+	if (tnl->family == AF_INET6) {
+		struct ipv6hdr *ip6h = data + sizeof(struct ethhdr);
+
+		if (ip6h + 1 > data_end)
+			return XDP_PASS;
+
+		return fwd_tnl_ipv6(xdp, tnl, ip6h->nexthdr, ip6h->payload_len);
+	}
+
+	return XDP_DROP;
+}
+
+SEC("xdp_tx_iptunnel_md_flow_mark")
+int _xdp_tx_iptunnel_md_flow_mark(struct xdp_md *xdp)
+{
+	struct xdp_md_desc *md = (void *)(long)xdp->data_meta;
+	void *data_end = (void *)(long)xdp->data_end;
+	void *data = (void *)(long)xdp->data;
+	struct ethhdr *eth = data;
+	__u16 h_proto;
+
+	if (eth + 1 > data_end)
+		return XDP_DROP;
+
+	if (md + 1 <= data) {
+		struct iptnl_info *tnl = bpf_map_lookup_elem(&flow2tnl, &md->flow_mark);
+
+		/* Remove md to avoid memcpy on bpf_xdp_adjust_head */
+		bpf_xdp_adjust_meta(xdp, sizeof(*md));
+		if (tnl)
+			return fwd_tnl(xdp, tnl);
+	}
+
+	/* Fallback to slow path */
+	count_tx(0);
+	return __xdp_tx_iptunnel(xdp);
+}
+#endif
 
 char _license[] SEC("license") = "GPL";

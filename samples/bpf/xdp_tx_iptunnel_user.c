@@ -11,11 +11,13 @@
 #include <string.h>
 #include <net/if.h>
 #include <sys/resource.h>
+#include <net/if.h>
 #include <arpa/inet.h>
 #include <netinet/ether.h>
 #include <unistd.h>
 #include <time.h>
 #include <bpf/libbpf.h>
+#include <net/if.h>
 #include <bpf/bpf.h>
 #include "bpf_util.h"
 #include "xdp_tx_iptunnel_common.h"
@@ -23,9 +25,12 @@
 #define STATS_INTERVAL_S 2U
 
 static int ifindex = -1;
+static char ifname[IF_NAMESIZE];
 static __u32 xdp_flags = XDP_FLAGS_UPDATE_IF_NOEXIST;
 static int rxcnt_map_fd;
 static __u32 prog_id;
+static int min_port;
+static int max_port;
 
 static void int_exit(int sig)
 {
@@ -150,21 +155,62 @@ static int parse_ports(const char *port_str, int *min_port, int *max_port)
 	return 0;
 }
 
+#ifdef XDP_MD_BTF
+static void flow_marks_prepare(struct bpf_object *obj, struct iptnl_info *tnl,
+			       struct vip *vip, char *ipstr)
+{
+	int mport = min_port;
+	__u32 flow_mark = 1;
+	int flow_map_fd;
+
+	flow_map_fd = bpf_object__find_map_fd_by_name(obj, "flow2tnl");
+	if (flow_map_fd < 0) {
+		printf("bpf_object__find_map_fd_by_name(\"flow2tnl\") failed (%d)\n", flow_map_fd);
+		return;
+	}
+
+	printf("#XDP Meta data acceleration requested\n");
+	printf("#To activate HW flow mark, please run the following commands:\n");
+	printf("ethtool -K %s hw-tc-offload on\n", ifname);
+	printf("tc qdisc del dev %s ingress\n", ifname);
+	printf("tc qdisc add dev %s ingress\n", ifname);
+
+	while (mport <= max_port) {
+		vip->dport = htons(mport++);
+		/* Flow mark table */
+		if (bpf_map_update_elem(flow_map_fd, &flow_mark, tnl, BPF_NOEXIST)) {
+			perror("bpf_map_update_elem(&vip2tnl)");
+			return;
+		};
+		printf("tc filter add dev %s protocol %s parent ffff: flower skip_sw dst_ip %s"
+		       " ip_proto %s dst_port %d action skbedit mark %d\n",
+		       ifname, tnl->family == AF_INET ? "ip" : "ipv6", ipstr,
+		       vip->protocol == 17 ? "udp" : "tcp", ntohs(vip->dport),
+		       flow_mark++);
+	}
+}
+#else
+static void flow_marks_prepare(struct bpf_object *obj, struct iptnl_info *tnl,
+			       struct vip *vip, char *ipstr)
+{ }
+#endif
+
 int main(int argc, char **argv)
 {
 	struct bpf_prog_load_attr prog_load_attr = {
 		.prog_type	= BPF_PROG_TYPE_XDP,
 	};
 	struct rlimit r = {RLIM_INFINITY, RLIM_INFINITY};
-	int min_port = 0, max_port = 0, vip2tnl_map_fd;
 	const char *optstr = "i:a:p:s:d:m:T:P:FSNh";
 	unsigned char opt_flags[256] = {};
 	struct bpf_prog_info info = {};
 	__u32 info_len = sizeof(info);
 	unsigned int kill_after_s = 0;
 	struct iptnl_info tnl = {};
+	int mport, vip2tnl_map_fd;
 	struct bpf_object *obj;
 	struct vip vip = {};
+	char *ipstr = NULL;
 	char filename[256];
 	int opt, prog_fd;
 	int i, err;
@@ -183,11 +229,14 @@ int main(int argc, char **argv)
 		switch (opt) {
 		case 'i':
 			ifindex = if_nametoindex(optarg);
+			ifindex = ifindex ? : atoi(optarg);
 			if (!ifindex)
-				ifindex = atoi(optarg);
+				return -1;
+			if_indextoname(ifindex, ifname);
 			break;
 		case 'a':
-			vip.family = parse_ipstr(optarg, vip.daddr.v6);
+			ipstr = optarg;
+			vip.family = parse_ipstr(ipstr, vip.daddr.v6);
 			if (vip.family == AF_UNSPEC)
 				return 1;
 			break;
@@ -285,14 +334,36 @@ int main(int argc, char **argv)
 	signal(SIGINT, int_exit);
 	signal(SIGTERM, int_exit);
 
-	while (min_port <= max_port) {
-		vip.dport = htons(min_port++);
+	mport = min_port;
+	while (mport <= max_port) {
+		vip.dport = htons(mport++);
 		if (bpf_map_update_elem(vip2tnl_map_fd, &vip, &tnl,
 					BPF_NOEXIST)) {
 			perror("bpf_map_update_elem(&vip2tnl)");
 			return 1;
 		}
 	}
+
+	flow_marks_prepare(obj, &tnl, &vip, ipstr);
+#ifdef XDP_MD_BTF
+	struct bpf_program *md_prog = NULL;
+	int md_prog_fd = -1;
+
+	md_prog = bpf_program__next(bpf_program__next(NULL, obj), obj);
+	if (md_prog) {
+		printf("Found xdp md prog\n");
+
+		md_prog_fd = bpf_program__fd(md_prog);
+		if (md_prog_fd < 0 || md_prog_fd == prog_fd) {
+			printf("bad md_prog_fd: %s\n", strerror(errno));
+			return 1;
+		}
+		/* Use the XDP meta data sample program */
+		prog_fd = md_prog_fd;
+	} else {
+		printf("XDP_MD_BTF is enabled but xdp md prog was not found\n");
+	}
+#endif
 
 	if (bpf_set_link_xdp_fd(ifindex, prog_fd, xdp_flags) < 0) {
 		printf("link set xdp fd failed\n");
