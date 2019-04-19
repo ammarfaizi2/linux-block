@@ -2597,6 +2597,7 @@ static int ath11k_sta_state(struct ieee80211_hw *hw,
 	} else if (old_state == IEEE80211_STA_AUTH &&
 		   new_state == IEEE80211_STA_ASSOC &&
 		   (vif->type == NL80211_IFTYPE_AP ||
+		    vif->type == NL80211_IFTYPE_MESH_POINT ||
 		    vif->type == NL80211_IFTYPE_ADHOC)) {
 		ret = ath11k_station_assoc(ar, vif, sta, false);
 		if (ret)
@@ -2609,6 +2610,7 @@ static int ath11k_sta_state(struct ieee80211_hw *hw,
 	} else if (old_state == IEEE80211_STA_ASSOC &&
 		   new_state == IEEE80211_STA_AUTH &&
 		   (vif->type == NL80211_IFTYPE_AP ||
+		    vif->type == NL80211_IFTYPE_MESH_POINT ||
 		    vif->type == NL80211_IFTYPE_ADHOC)) {
 		ret = ath11k_station_disassoc(ar, vif, sta);
 		if (ret)
@@ -3454,6 +3456,9 @@ static int ath11k_add_interface(struct ieee80211_hw *hw,
 	case NL80211_IFTYPE_STATION:
 		arvif->vdev_type = WMI_VDEV_TYPE_STA;
 		break;
+	case NL80211_IFTYPE_MESH_POINT:
+		arvif->vdev_subtype = WMI_VDEV_SUBTYPE_MESH_11S;
+		/* fall through */
 	case NL80211_IFTYPE_AP:
 		arvif->vdev_type = WMI_VDEV_TYPE_AP;
 		break;
@@ -4720,6 +4725,9 @@ static const struct ieee80211_iface_limit ath11k_if_limits[] = {
 	{
 		.max    = 16,
 		.types  = BIT(NL80211_IFTYPE_AP)
+#ifdef CONFIG_MAC80211_MESH
+			| BIT(NL80211_IFTYPE_MESH_POINT)
+#endif
 	},
 };
 
@@ -4838,7 +4846,8 @@ static int ath11k_mac_register(struct ath11k *ar)
 	ar->hw->wiphy->available_antennas_tx = cap->tx_chain_mask;
 
 	ar->hw->wiphy->interface_modes = BIT(NL80211_IFTYPE_STATION) |
-					 BIT(NL80211_IFTYPE_AP);
+					 BIT(NL80211_IFTYPE_AP) |
+					 BIT(NL80211_IFTYPE_MESH_POINT);
 
 	ieee80211_hw_set(ar->hw, SIGNAL_DBM);
 	ieee80211_hw_set(ar->hw, SUPPORTS_PS);
