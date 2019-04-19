@@ -1,0 +1,2 @@
+rcutorture.torture_type=trivial
+rcutorture.onoff_interval=0
