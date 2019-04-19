@@ -1888,7 +1888,41 @@ There are some more advanced barrier functions:
 	atomic_dec(&obj->ref_count);
 
      This makes sure that the death mark on the object is perceived to be set
-     *before* the reference counter is decremented.
+     *before* the reference counter is decremented.  However, please note
+     that smp_mb__before_atomic()'s ordering guarantee does not necessarily
+     extend beyond the atomic operation.  For example:
+
+	obj->dead = 1;
+	smp_mb__before_atomic();
+	atomic_dec(&obj->ref_count);
+	r1 = x;
+
+     Here the store to obj->dead is not guaranteed to be ordered with
+     the load from x.  This reordering can happen on x86 as follows:
+     (1) The compiler can reorder the load from x to precede the
+     atomic_dec(), (2) Because x86 smp_mb__before_atomic() is only a
+     compiler barrier, the CPU can reorder the preceding store to
+     obj->dead with the later load from x.
+
+     This could be avoided by using READ_ONCE(), which would prevent the
+     compiler from reordering due to both atomic_dec() and READ_ONCE()
+     being volatile accesses, and is usually preferable for loads from
+     shared variables.  However, weakly ordered CPUs would still be free
+     to reorder the atomic_dec() with the load from x, so a portable
+     and more readable option is to also use smp_mb__after_atomic()
+     as follows:
+
+	WRITE_ONCE(obj->dead, 1);
+	smp_mb__before_atomic();
+	atomic_dec(&obj->ref_count);
+	smp_mb__after_atomic();
+	r1 = READ_ONCE(x);
+
+     In addition, the example without the smp_mb__after_atomic() does
+     not necessarily order the atomic_dec() with the load from x.
+     In contrast, the example with both smp_mb__before_atomic() and
+     smp_mb__after_atomic() orders all three accesses against each other,
+     and also makes the intent quite clear.
 
      See Documentation/atomic_{t,bitops}.txt for more information.
 
