@@ -2568,6 +2568,17 @@ static int ath11k_sta_state(struct ieee80211_hw *hw,
 				goto exit;
 		}
 
+		if (ieee80211_vif_is_mesh(vif)) {
+			ret = ath11k_wmi_set_peer_param(ar, sta->addr,
+							arvif->vdev_id,
+							WMI_PEER_USE_4ADDR, 1);
+			if (ret) {
+				ath11k_warn(ar->ab, "failed to STA %pM 4addr capability: %d\n",
+					    sta->addr, ret);
+				goto exit;
+			}
+		}
+
 		ret = ath11k_dp_peer_setup(ar, arvif->vdev_id, sta->addr);
 		if (ret) {
 			ath11k_warn(ar->ab, "failed to setup dp for peer %pM on vdev %i (%d)\n",

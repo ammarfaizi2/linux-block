@@ -131,7 +131,10 @@ int ath11k_dp_tx(struct ath11k *ar, struct ath11k_vif *arvif,
 			     FIELD_PREP(HAL_TCL_DATA_CMD_INFO1_TCP6_CKSUM_EN, 1);
 	}
 
+	if (ieee80211_vif_is_mesh(arvif->vif))
+		ti.flags1 |= FIELD_PREP(HAL_TCL_DATA_CMD_INFO2_MESH_ENABLE, 1);
 	ti.flags1 |= FIELD_PREP(HAL_TCL_DATA_CMD_INFO2_TID_OVERWRITE, 1);
+
 	ti.tid = ath11k_dp_get_tid(skb);
 
 	switch (ti.encap_type) {
