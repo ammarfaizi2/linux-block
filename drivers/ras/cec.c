@@ -353,7 +353,7 @@ unlock:
 	return ret;
 }
 
-static int u64_get(void *data, u64 *val)
+static int pfn_get(void *data, u64 *val)
 {
 	*val = *(u64 *)data;
 
@@ -364,10 +364,12 @@ static int pfn_set(void *data, u64 val)
 {
 	*(u64 *)data = val;
 
-	return cec_add_elem(val);
+	cec_add_elem(val);
+
+	return 0;
 }
 
-DEFINE_DEBUGFS_ATTRIBUTE(pfn_ops, u64_get, pfn_set, "0x%llx\n");
+DEFINE_DEBUGFS_ATTRIBUTE(pfn_ops, pfn_get, pfn_set, "0x%llx\n");
 
 static int decay_interval_set(void *data, u64 val)
 {
@@ -384,7 +386,7 @@ static int decay_interval_set(void *data, u64 val)
 	cec_mod_work(decay_interval);
 	return 0;
 }
-DEFINE_DEBUGFS_ATTRIBUTE(decay_interval_ops, u64_get, decay_interval_set, "%lld\n");
+DEFINE_DEBUGFS_ATTRIBUTE(decay_interval_ops, pfn_get, decay_interval_set, "%lld\n");
 
 static int count_threshold_set(void *data, u64 val)
 {
@@ -397,7 +399,7 @@ static int count_threshold_set(void *data, u64 val)
 
 	return 0;
 }
-DEFINE_DEBUGFS_ATTRIBUTE(count_threshold_ops, u64_get, count_threshold_set, "%lld\n");
+DEFINE_DEBUGFS_ATTRIBUTE(count_threshold_ops, pfn_get, count_threshold_set, "%lld\n");
 
 static int array_dump(struct seq_file *m, void *v)
 {
