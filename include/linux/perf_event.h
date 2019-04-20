@@ -464,7 +464,7 @@ enum perf_addr_filter_action_t {
 /**
  * struct perf_addr_filter - address range filter definition
  * @entry:	event's filter list linkage
- * @inode:	object file's inode for file-based filters
+ * @path:	object file's path for file-based filters
  * @offset:	filter range offset
  * @size:	filter range size (size==0 means single address trigger)
  * @action:	filter/start/stop
@@ -888,6 +888,9 @@ extern void perf_sched_cb_dec(struct pmu *pmu);
 extern void perf_sched_cb_inc(struct pmu *pmu);
 extern int perf_event_task_disable(void);
 extern int perf_event_task_enable(void);
+
+extern void perf_pmu_resched(struct pmu *pmu);
+
 extern int perf_event_refresh(struct perf_event *event, int refresh);
 extern void perf_event_update_userpage(struct perf_event *event);
 extern int perf_event_release_kernel(struct perf_event *event);
