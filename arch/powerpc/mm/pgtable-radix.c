@@ -29,6 +29,7 @@
 #include <asm/powernv.h>
 #include <asm/sections.h>
 #include <asm/trace.h>
+#include <asm/uaccess.h>
 
 #include <trace/events/thp.h>
 
@@ -134,6 +135,10 @@ static int __map_kernel_page(unsigned long ea, unsigned long pa,
 	 * Make sure task size is correct as per the max adddr
 	 */
 	BUILD_BUG_ON(TASK_SIZE_USER64 > RADIX_PGTABLE_RANGE);
+
+#ifdef CONFIG_PPC_64K_PAGES
+	BUILD_BUG_ON(RADIX_KERN_MAP_SIZE != (1UL << MAX_EA_BITS_PER_CONTEXT));
+#endif
 
 	if (unlikely(!slab_is_available()))
 		return early_map_kernel_page(ea, pa, flags, map_page_size,
@@ -334,6 +339,12 @@ void __init radix_init_pgtable(void)
 		 * page tables will be allocated within the range. No
 		 * need or a node (which we don't have yet).
 		 */
+
+		if ((reg->base + reg->size) >= RADIX_VMALLOC_START) {
+			pr_warn("Outisde the supported range\n");
+			continue;
+		}
+
 		WARN_ON(create_physical_mapping(reg->base,
 						reg->base + reg->size,
 						-1));
@@ -531,8 +542,15 @@ static void radix_init_amor(void)
 	mtspr(SPRN_AMOR, (3ul << 62));
 }
 
-static void radix_init_iamr(void)
+#ifdef CONFIG_PPC_KUEP
+void setup_kuep(bool disabled)
 {
+	if (disabled || !early_radix_enabled())
+		return;
+
+	if (smp_processor_id() == boot_cpuid)
+		pr_info("Activating Kernel Userspace Execution Prevention\n");
+
 	/*
 	 * Radix always uses key0 of the IAMR to determine if an access is
 	 * allowed. We set bit 0 (IBM bit 1) of key0, to prevent instruction
@@ -540,6 +558,25 @@ static void radix_init_iamr(void)
 	 */
 	mtspr(SPRN_IAMR, (1ul << 62));
 }
+#endif
+
+#ifdef CONFIG_PPC_KUAP
+void setup_kuap(bool disabled)
+{
+	if (disabled || !early_radix_enabled())
+		return;
+
+	if (smp_processor_id() == boot_cpuid) {
+		pr_info("Activating Kernel Userspace Access Prevention\n");
+		cur_cpu_spec->mmu_features |= MMU_FTR_RADIX_KUAP;
+	}
+
+	/* Make sure userspace can't change the AMR */
+	mtspr(SPRN_UAMOR, 0);
+	mtspr(SPRN_AMR, AMR_KUAP_BLOCKED);
+	isync();
+}
+#endif
 
 void __init radix__early_init_mmu(void)
 {
@@ -574,11 +611,11 @@ void __init radix__early_init_mmu(void)
 	__pgd_val_bits = RADIX_PGD_VAL_BITS;
 
 	__kernel_virt_start = RADIX_KERN_VIRT_START;
-	__kernel_virt_size = RADIX_KERN_VIRT_SIZE;
 	__vmalloc_start = RADIX_VMALLOC_START;
 	__vmalloc_end = RADIX_VMALLOC_END;
 	__kernel_io_start = RADIX_KERN_IO_START;
-	vmemmap = (struct page *)RADIX_VMEMMAP_BASE;
+	__kernel_io_end = RADIX_KERN_IO_END;
+	vmemmap = (struct page *)RADIX_VMEMMAP_START;
 	ioremap_bot = IOREMAP_BASE;
 
 #ifdef CONFIG_PCI
@@ -601,7 +638,6 @@ void __init radix__early_init_mmu(void)
 
 	memblock_set_current_limit(MEMBLOCK_ALLOC_ANYWHERE);
 
-	radix_init_iamr();
 	radix_init_pgtable();
 	/* Switch to the guard PID before turning on MMU */
 	radix__switch_mmu_context(NULL, &init_mm);
@@ -623,7 +659,6 @@ void radix__early_init_mmu_secondary(void)
 		      __pa(partition_tb) | (PATB_SIZE_SHIFT - 12));
 		radix_init_amor();
 	}
-	radix_init_iamr();
 
 	radix__switch_mmu_context(NULL, &init_mm);
 	if (cpu_has_feature(CPU_FTR_HVMODE))
@@ -866,6 +901,11 @@ static void __meminit remove_pagetable(unsigned long start, unsigned long end)
 
 int __meminit radix__create_section_mapping(unsigned long start, unsigned long end, int nid)
 {
+	if (end >= RADIX_VMALLOC_START) {
+		pr_warn("Outisde the supported range\n");
+		return -1;
+	}
+
 	return create_physical_mapping(start, end, nid);
 }
 
@@ -892,6 +932,11 @@ int __meminit radix__vmemmap_create_mapping(unsigned long start,
 	unsigned long flags = _PAGE_PRESENT | _PAGE_ACCESSED | _PAGE_KERNEL_RW;
 	int nid = early_pfn_to_nid(phys >> PAGE_SHIFT);
 	int ret;
+
+	if ((start + page_size) >= RADIX_VMEMMAP_END) {
+		pr_warn("Outisde the supported range\n");
+		return -1;
+	}
 
 	ret = __map_kernel_page_nid(start, phys, __pgprot(flags), page_size, nid);
 	BUG_ON(ret);

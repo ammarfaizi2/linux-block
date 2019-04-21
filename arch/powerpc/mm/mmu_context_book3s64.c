@@ -63,6 +63,13 @@ static int hash__init_new_context(struct mm_struct *mm)
 	if (index < 0)
 		return index;
 
+	mm->context.hash_context = kmalloc(sizeof(struct hash_mm_context),
+					   GFP_KERNEL);
+	if (!mm->context.hash_context) {
+		ida_free(&mmu_context_ida, index);
+		return -ENOMEM;
+	}
+
 	/*
 	 * The old code would re-promote on fork, we don't do that when using
 	 * slices as it could cause problem promoting slices that have been
@@ -77,10 +84,26 @@ static int hash__init_new_context(struct mm_struct *mm)
 	 * We should not be calling init_new_context() on init_mm. Hence a
 	 * check against 0 is OK.
 	 */
-	if (mm->context.id == 0)
+	if (mm->context.id == 0) {
+		memset(mm->context.hash_context, 0, sizeof(struct hash_mm_context));
 		slice_init_new_context_exec(mm);
+	} else {
+		/* This is fork. Copy hash_context details from current->mm */
+		memcpy(mm->context.hash_context, current->mm->context.hash_context, sizeof(struct hash_mm_context));
+#ifdef CONFIG_PPC_SUBPAGE_PROT
+		/* inherit subpage prot detalis if we have one. */
+		if (current->mm->context.hash_context->spt) {
+			mm->context.hash_context->spt = kmalloc(sizeof(struct subpage_prot_table),
+								GFP_KERNEL);
+			if (!mm->context.hash_context->spt) {
+				ida_free(&mmu_context_ida, index);
+				kfree(mm->context.hash_context);
+				return -ENOMEM;
+			}
+		}
+#endif
 
-	subpage_prot_init_new_context(mm);
+	}
 
 	pkey_mm_init(mm);
 	return index;
@@ -118,6 +141,7 @@ static int radix__init_new_context(struct mm_struct *mm)
 	asm volatile("ptesync;isync" : : : "memory");
 
 	mm->context.npu_context = NULL;
+	mm->context.hash_context = NULL;
 
 	return index;
 }
@@ -162,6 +186,7 @@ static void destroy_contexts(mm_context_t *ctx)
 		if (context_id)
 			ida_free(&mmu_context_ida, context_id);
 	}
+	kfree(ctx->hash_context);
 }
 
 static void pmd_frag_destroy(void *pmd_frag)

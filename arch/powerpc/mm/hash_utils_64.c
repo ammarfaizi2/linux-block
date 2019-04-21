@@ -755,12 +755,12 @@ static unsigned long __init htab_get_table_size(void)
 }
 
 #ifdef CONFIG_MEMORY_HOTPLUG
-void resize_hpt_for_hotplug(unsigned long new_mem_size)
+int resize_hpt_for_hotplug(unsigned long new_mem_size)
 {
 	unsigned target_hpt_shift;
 
 	if (!mmu_hash_ops.resize_hpt)
-		return;
+		return 0;
 
 	target_hpt_shift = htab_shift_for_mem_size(new_mem_size);
 
@@ -772,23 +772,25 @@ void resize_hpt_for_hotplug(unsigned long new_mem_size)
 	 * reduce unless the target shift is at least 2 below the
 	 * current shift
 	 */
-	if ((target_hpt_shift > ppc64_pft_size)
-	    || (target_hpt_shift < (ppc64_pft_size - 1))) {
-		int rc;
+	if (target_hpt_shift > ppc64_pft_size ||
+	    target_hpt_shift < ppc64_pft_size - 1)
+		return mmu_hash_ops.resize_hpt(target_hpt_shift);
 
-		rc = mmu_hash_ops.resize_hpt(target_hpt_shift);
-		if (rc && (rc != -ENODEV))
-			printk(KERN_WARNING
-			       "Unable to resize hash page table to target order %d: %d\n",
-			       target_hpt_shift, rc);
-	}
+	return 0;
 }
 
 int hash__create_section_mapping(unsigned long start, unsigned long end, int nid)
 {
-	int rc = htab_bolt_mapping(start, end, __pa(start),
-				   pgprot_val(PAGE_KERNEL), mmu_linear_psize,
-				   mmu_kernel_ssize);
+	int rc;
+
+	if (end >= H_VMALLOC_START) {
+		pr_warn("Outisde the supported range\n");
+		return -1;
+	}
+
+	rc = htab_bolt_mapping(start, end, __pa(start),
+			       pgprot_val(PAGE_KERNEL), mmu_linear_psize,
+			       mmu_kernel_ssize);
 
 	if (rc < 0) {
 		int rc2 = htab_remove_mapping(start, end, mmu_linear_psize,
@@ -929,6 +931,11 @@ static void __init htab_initialize(void)
 		DBG("creating mapping for region: %lx..%lx (prot: %lx)\n",
 		    base, size, prot);
 
+		if ((base + size) >= H_VMALLOC_START) {
+			pr_warn("Outisde the supported range\n");
+			continue;
+		}
+
 		BUG_ON(htab_bolt_mapping(base, base + size, __pa(base),
 				prot, mmu_linear_psize, mmu_kernel_ssize));
 	}
@@ -968,6 +975,7 @@ void __init hash__early_init_devtree(void)
 	htab_scan_page_sizes();
 }
 
+struct hash_mm_context init_hash_mm_context;
 void __init hash__early_init_mmu(void)
 {
 #ifndef CONFIG_PPC_64K_PAGES
@@ -1013,11 +1021,11 @@ void __init hash__early_init_mmu(void)
 	__pgd_val_bits = HASH_PGD_VAL_BITS;
 
 	__kernel_virt_start = H_KERN_VIRT_START;
-	__kernel_virt_size = H_KERN_VIRT_SIZE;
 	__vmalloc_start = H_VMALLOC_START;
 	__vmalloc_end = H_VMALLOC_END;
 	__kernel_io_start = H_KERN_IO_START;
-	vmemmap = (struct page *)H_VMEMMAP_BASE;
+	__kernel_io_end = H_KERN_IO_END;
+	vmemmap = (struct page *)H_VMEMMAP_START;
 	ioremap_bot = IOREMAP_BASE;
 
 #ifdef CONFIG_PCI
@@ -1040,6 +1048,9 @@ void __init hash__early_init_mmu(void)
 	 * currently where the page size encoding is obtained.
 	 */
 	htab_initialize();
+
+	init_mm.context.hash_context = &init_hash_mm_context;
+	init_mm.context.hash_context->slb_addr_limit = DEFAULT_MAP_WINDOW_USER64;
 
 	pr_info("Initializing hash mmu with SLB\n");
 	/* Initialize SLB management */
@@ -1147,9 +1158,12 @@ void demote_segment_4k(struct mm_struct *mm, unsigned long addr)
  */
 static int subpage_protection(struct mm_struct *mm, unsigned long ea)
 {
-	struct subpage_prot_table *spt = &mm->context.spt;
+	struct subpage_prot_table *spt = mm_ctx_subpage_prot(&mm->context);
 	u32 spp = 0;
 	u32 **sbpm, *sbpp;
+
+	if (!spt)
+		return 0;
 
 	if (ea >= spt->maxaddr)
 		return 0;
@@ -1238,7 +1252,7 @@ int hash_page_mm(struct mm_struct *mm, unsigned long ea,
 	trace_hash_fault(ea, access, trap);
 
 	/* Get region & vsid */
- 	switch (REGION_ID(ea)) {
+	switch (get_region_id(ea)) {
 	case USER_REGION_ID:
 		user_region = 1;
 		if (! mm) {
@@ -1252,10 +1266,13 @@ int hash_page_mm(struct mm_struct *mm, unsigned long ea,
 		break;
 	case VMALLOC_REGION_ID:
 		vsid = get_kernel_vsid(ea, mmu_kernel_ssize);
-		if (ea < VMALLOC_END)
-			psize = mmu_vmalloc_psize;
-		else
-			psize = mmu_io_psize;
+		psize = mmu_vmalloc_psize;
+		ssize = mmu_kernel_ssize;
+		break;
+
+	case IO_REGION_ID:
+		vsid = get_kernel_vsid(ea, mmu_kernel_ssize);
+		psize = mmu_io_psize;
 		ssize = mmu_kernel_ssize;
 		break;
 	default:
@@ -1421,7 +1438,8 @@ int hash_page(unsigned long ea, unsigned long access, unsigned long trap,
 	unsigned long flags = 0;
 	struct mm_struct *mm = current->mm;
 
-	if (REGION_ID(ea) == VMALLOC_REGION_ID)
+	if ((get_region_id(ea) == VMALLOC_REGION_ID) ||
+	    (get_region_id(ea) == IO_REGION_ID))
 		mm = &init_mm;
 
 	if (dsisr & DSISR_NOHPTE)
@@ -1437,8 +1455,9 @@ int __hash_page(unsigned long ea, unsigned long msr, unsigned long trap,
 	unsigned long access = _PAGE_PRESENT | _PAGE_READ;
 	unsigned long flags = 0;
 	struct mm_struct *mm = current->mm;
+	unsigned int region_id = get_region_id(ea);
 
-	if (REGION_ID(ea) == VMALLOC_REGION_ID)
+	if ((region_id == VMALLOC_REGION_ID) || (region_id == IO_REGION_ID))
 		mm = &init_mm;
 
 	if (dsisr & DSISR_NOHPTE)
@@ -1455,7 +1474,7 @@ int __hash_page(unsigned long ea, unsigned long msr, unsigned long trap,
 	 * 2) user space access kernel space.
 	 */
 	access |= _PAGE_PRIVILEGED;
-	if ((msr & MSR_PR) || (REGION_ID(ea) == USER_REGION_ID))
+	if ((msr & MSR_PR) || (region_id == USER_REGION_ID))
 		access &= ~_PAGE_PRIVILEGED;
 
 	if (trap == 0x400)
@@ -1470,7 +1489,7 @@ static bool should_hash_preload(struct mm_struct *mm, unsigned long ea)
 	int psize = get_slice_psize(mm, ea);
 
 	/* We only prefault standard pages for now */
-	if (unlikely(psize != mm->context.user_psize))
+	if (unlikely(psize != mm_ctx_user_psize(&mm->context)))
 		return false;
 
 	/*
@@ -1499,7 +1518,7 @@ void hash_preload(struct mm_struct *mm, unsigned long ea,
 	int rc, ssize, update_flags = 0;
 	unsigned long access = _PAGE_PRESENT | _PAGE_READ | (is_exec ? _PAGE_EXEC : 0);
 
-	BUG_ON(REGION_ID(ea) != USER_REGION_ID);
+	BUG_ON(get_region_id(ea) != USER_REGION_ID);
 
 	if (!should_hash_preload(mm, ea))
 		return;
@@ -1549,7 +1568,7 @@ void hash_preload(struct mm_struct *mm, unsigned long ea,
 
 	/* Hash it in */
 #ifdef CONFIG_PPC_64K_PAGES
-	if (mm->context.user_psize == MMU_PAGE_64K)
+	if (mm_ctx_user_psize(&mm->context) == MMU_PAGE_64K)
 		rc = __hash_page_64K(ea, access, vsid, ptep, trap,
 				     update_flags, ssize);
 	else
@@ -1562,8 +1581,8 @@ void hash_preload(struct mm_struct *mm, unsigned long ea,
 	 */
 	if (rc == -1)
 		hash_failure_debug(ea, access, vsid, trap, ssize,
-				   mm->context.user_psize,
-				   mm->context.user_psize,
+				   mm_ctx_user_psize(&mm->context),
+				   mm_ctx_user_psize(&mm->context),
 				   pte_val(*ptep));
 out_exit:
 	local_irq_restore(flags);
