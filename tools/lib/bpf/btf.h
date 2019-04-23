@@ -21,6 +21,8 @@ struct btf;
 struct btf_ext;
 struct btf_type;
 
+struct bpf_object;
+
 /*
  * The .BTF.ext ELF section layout defined as
  *   struct btf_ext_header
@@ -57,6 +59,7 @@ struct btf_ext_header {
 
 LIBBPF_API void btf__free(struct btf *btf);
 LIBBPF_API struct btf *btf__new(__u8 *data, __u32 size);
+LIBBPF_API int btf__finalize_data(struct bpf_object *obj, struct btf *btf);
 LIBBPF_API int btf__load(struct btf *btf);
 LIBBPF_API __s32 btf__find_by_name(const struct btf *btf,
 				   const char *type_name);
@@ -76,7 +79,7 @@ LIBBPF_API int btf__get_map_kv_tids(const struct btf *btf, const char *map_name,
 
 LIBBPF_API struct btf_ext *btf_ext__new(__u8 *data, __u32 size);
 LIBBPF_API void btf_ext__free(struct btf_ext *btf_ext);
-LIBBPF_API const void *btf_ext__get_raw_data(const struct btf_ext* btf_ext,
+LIBBPF_API const void *btf_ext__get_raw_data(const struct btf_ext *btf_ext,
 					     __u32 *size);
 LIBBPF_API int btf_ext__reloc_func_info(const struct btf *btf,
 					const struct btf_ext *btf_ext,
@@ -90,6 +93,7 @@ LIBBPF_API __u32 btf_ext__func_info_rec_size(const struct btf_ext *btf_ext);
 LIBBPF_API __u32 btf_ext__line_info_rec_size(const struct btf_ext *btf_ext);
 
 struct btf_dedup_opts {
+	unsigned int dedup_table_size;
 	bool dont_resolve_fwds;
 };
 

@@ -2467,7 +2467,7 @@ out:
 		if (txq->count >= txq->tx_stop_threshold)
 			netif_tx_stop_queue(nq);
 
-		if (!skb->xmit_more || netif_xmit_stopped(nq) ||
+		if (!netdev_xmit_more() || netif_xmit_stopped(nq) ||
 		    txq->pending + frags > MVNETA_TXQ_DEC_SENT_MASK)
 			mvneta_txq_pend_desc_add(pp, txq, frags);
 		else
@@ -3149,11 +3149,26 @@ static int mvneta_setup_txqs(struct mvneta_port *pp)
 	return 0;
 }
 
+static int mvneta_comphy_init(struct mvneta_port *pp)
+{
+	int ret;
+
+	if (!pp->comphy)
+		return 0;
+
+	ret = phy_set_mode_ext(pp->comphy, PHY_MODE_ETHERNET,
+			       pp->phy_interface);
+	if (ret)
+		return ret;
+
+	return phy_power_on(pp->comphy);
+}
+
 static void mvneta_start_dev(struct mvneta_port *pp)
 {
 	int cpu;
 
-	WARN_ON(phy_power_on(pp->comphy));
+	WARN_ON(mvneta_comphy_init(pp));
 
 	mvneta_max_rx_size_set(pp, pp->pkt_size);
 	mvneta_txq_max_tx_size_set(pp, pp->pkt_size);
@@ -3370,6 +3385,7 @@ static void mvneta_validate(struct net_device *ndev, unsigned long *supported,
 		phylink_set(mask, 1000baseX_Full);
 	}
 	if (pp->comphy || state->interface == PHY_INTERFACE_MODE_2500BASEX) {
+		phylink_set(mask, 2500baseT_Full);
 		phylink_set(mask, 2500baseX_Full);
 	}
 
@@ -3525,12 +3541,15 @@ static void mvneta_mac_config(struct net_device *ndev, unsigned int mode,
 	if (state->speed == SPEED_2500)
 		new_ctrl4 |= MVNETA_GMAC4_SHORT_PREAMBLE_ENABLE;
 
-	if (pp->comphy &&
+	if (pp->comphy && pp->phy_interface != state->interface &&
 	    (state->interface == PHY_INTERFACE_MODE_SGMII ||
 	     state->interface == PHY_INTERFACE_MODE_1000BASEX ||
-	     state->interface == PHY_INTERFACE_MODE_2500BASEX))
-		WARN_ON(phy_set_mode_ext(pp->comphy, PHY_MODE_ETHERNET,
-					 state->interface));
+	     state->interface == PHY_INTERFACE_MODE_2500BASEX)) {
+		pp->phy_interface = state->interface;
+
+		WARN_ON(phy_power_off(pp->comphy));
+		WARN_ON(mvneta_comphy_init(pp));
+	}
 
 	if (new_ctrl0 != gmac_ctrl0)
 		mvreg_write(pp, MVNETA_GMAC_CTRL_0, new_ctrl0);

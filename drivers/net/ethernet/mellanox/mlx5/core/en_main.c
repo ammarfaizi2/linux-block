@@ -34,6 +34,7 @@
 #include <net/pkt_cls.h>
 #include <linux/mlx5/fs.h>
 #include <net/vxlan.h>
+#include <net/geneve.h>
 #include <linux/bpf.h>
 #include <linux/if_bridge.h>
 #include <net/page_pool.h>
@@ -43,6 +44,7 @@
 #include "en_rep.h"
 #include "en_accel/ipsec.h"
 #include "en_accel/ipsec_rxtx.h"
+#include "en_accel/en_accel.h"
 #include "en_accel/tls.h"
 #include "accel/ipsec.h"
 #include "accel/tls.h"
@@ -202,7 +204,6 @@ static u16 mlx5e_get_rq_headroom(struct mlx5_core_dev *mdev,
 void mlx5e_init_rq_type_params(struct mlx5_core_dev *mdev,
 			       struct mlx5e_params *params)
 {
-	params->lro_wqe_sz = MLX5E_PARAMS_DEFAULT_LRO_WQE_SZ;
 	params->log_rq_mtu_frames = is_kdump_kernel() ?
 		MLX5E_PARAMS_MINIMUM_LOG_RQ_SIZE :
 		MLX5E_PARAMS_DEFAULT_LOG_RQ_SIZE;
@@ -951,7 +952,11 @@ static int mlx5e_open_rq(struct mlx5e_channel *c,
 	if (params->rx_dim_enabled)
 		__set_bit(MLX5E_RQ_STATE_AM, &c->rq.state);
 
-	if (MLX5E_GET_PFLAG(params, MLX5E_PFLAG_RX_NO_CSUM_COMPLETE))
+	/* We disable csum_complete when XDP is enabled since
+	 * XDP programs might manipulate packets which will render
+	 * skb->checksum incorrect.
+	 */
+	if (MLX5E_GET_PFLAG(params, MLX5E_PFLAG_RX_NO_CSUM_COMPLETE) || c->xdp)
 		__set_bit(MLX5E_RQ_STATE_NO_CSUM_COMPLETE, &c->rq.state);
 
 	return 0;
@@ -2173,10 +2178,13 @@ static void mlx5e_build_sq_param(struct mlx5e_priv *priv,
 {
 	void *sqc = param->sqc;
 	void *wq = MLX5_ADDR_OF(sqc, sqc, wq);
+	bool allow_swp;
 
+	allow_swp = mlx5_geneve_tx_allowed(priv->mdev) ||
+		    !!MLX5_IPSEC_DEV(priv->mdev);
 	mlx5e_build_sq_param_common(priv, param);
 	MLX5_SET(wq, wq, log_wq_sz, params->log_sq_size);
-	MLX5_SET(sqc, sqc, allow_swp, !!MLX5_IPSEC_DEV(priv->mdev));
+	MLX5_SET(sqc, sqc, allow_swp, allow_swp);
 }
 
 static void mlx5e_build_common_cq_param(struct mlx5e_priv *priv,
@@ -2301,6 +2309,10 @@ int mlx5e_open_channels(struct mlx5e_priv *priv,
 		if (err)
 			goto err_close_channels;
 	}
+
+	if (!IS_ERR_OR_NULL(priv->tx_reporter))
+		devlink_health_reporter_state_update(priv->tx_reporter,
+						     DEVLINK_HEALTH_REPORTER_STATE_HEALTHY);
 
 	kvfree(cparam);
 	return 0;
@@ -2628,7 +2640,7 @@ static void mlx5e_build_tir_ctx_lro(struct mlx5e_params *params, void *tirc)
 		 MLX5_TIRC_LRO_ENABLE_MASK_IPV4_LRO |
 		 MLX5_TIRC_LRO_ENABLE_MASK_IPV6_LRO);
 	MLX5_SET(tirc, tirc, lro_max_ip_payload_size,
-		 (params->lro_wqe_sz - ROUGH_MAX_L2_L3_HDR_SZ) >> 8);
+		 (MLX5E_PARAMS_DEFAULT_LRO_WQE_SZ - ROUGH_MAX_L2_L3_HDR_SZ) >> 8);
 	MLX5_SET(tirc, tirc, lro_timeout_period_usecs, params->lro_timeout);
 }
 
@@ -2803,6 +2815,21 @@ int mlx5e_set_dev_port_mtu(struct mlx5e_priv *priv)
 	return 0;
 }
 
+void mlx5e_set_netdev_mtu_boundaries(struct mlx5e_priv *priv)
+{
+	struct mlx5e_params *params = &priv->channels.params;
+	struct net_device *netdev   = priv->netdev;
+	struct mlx5_core_dev *mdev  = priv->mdev;
+	u16 max_mtu;
+
+	/* MTU range: 68 - hw-specific max */
+	netdev->min_mtu = ETH_MIN_MTU;
+
+	mlx5_query_port_max_mtu(mdev, &max_mtu, 1);
+	netdev->max_mtu = min_t(unsigned int, MLX5E_HW2SW_MTU(params, max_mtu),
+				ETH_MAX_MTU);
+}
+
 static void mlx5e_netdev_set_tcs(struct net_device *netdev)
 {
 	struct mlx5e_priv *priv = netdev_priv(netdev);
@@ -2931,6 +2958,14 @@ int mlx5e_safe_switch_channels(struct mlx5e_priv *priv,
 
 	mlx5e_switch_priv_channels(priv, new_chs, hw_modify);
 	return 0;
+}
+
+int mlx5e_safe_reopen_channels(struct mlx5e_priv *priv)
+{
+	struct mlx5e_channels new_channels = {};
+
+	new_channels.params = priv->channels.params;
+	return mlx5e_safe_switch_channels(priv, &new_channels, NULL);
 }
 
 void mlx5e_timestamp_init(struct mlx5e_priv *priv)
@@ -4099,6 +4134,12 @@ static netdev_features_t mlx5e_tunnel_features_check(struct mlx5e_priv *priv,
 		/* Verify if UDP port is being offloaded by HW */
 		if (mlx5_vxlan_lookup_port(priv->mdev->vxlan, port))
 			return features;
+
+#if IS_ENABLED(CONFIG_GENEVE)
+		/* Support Geneve offload for default UDP port */
+		if (port == GENEVE_UDP_PORT && mlx5_geneve_tx_allowed(priv->mdev))
+			return features;
+#endif
 	}
 
 out:
@@ -4157,11 +4198,10 @@ static void mlx5e_tx_timeout_work(struct work_struct *work)
 	if (!report_failed)
 		goto unlock;
 
-	mlx5e_close_locked(priv->netdev);
-	err = mlx5e_open_locked(priv->netdev);
+	err = mlx5e_safe_reopen_channels(priv);
 	if (err)
 		netdev_err(priv->netdev,
-			   "mlx5e_open_locked failed recovering from a tx_timeout, err(%d).\n",
+			   "mlx5e_safe_reopen_channels failed recovering from a tx_timeout, err(%d).\n",
 			   err);
 
 unlock:
@@ -4549,7 +4589,7 @@ void mlx5e_build_rss_params(struct mlx5e_rss_params *rss_params,
 {
 	enum mlx5e_traffic_types tt;
 
-	rss_params->hfunc = ETH_RSS_HASH_XOR;
+	rss_params->hfunc = ETH_RSS_HASH_TOP;
 	netdev_rss_key_fill(rss_params->toeplitz_hash_key,
 			    sizeof(rss_params->toeplitz_hash_key));
 	mlx5e_build_default_indir_rqt(rss_params->indirection_rqt,
@@ -4670,7 +4710,8 @@ static void mlx5e_build_nic_netdev(struct net_device *netdev)
 	netdev->hw_features      |= NETIF_F_HW_VLAN_CTAG_FILTER;
 	netdev->hw_features      |= NETIF_F_HW_VLAN_STAG_TX;
 
-	if (mlx5_vxlan_allowed(mdev->vxlan) || MLX5_CAP_ETH(mdev, tunnel_stateless_gre)) {
+	if (mlx5_vxlan_allowed(mdev->vxlan) || mlx5_geneve_tx_allowed(mdev) ||
+	    MLX5_CAP_ETH(mdev, tunnel_stateless_gre)) {
 		netdev->hw_enc_features |= NETIF_F_IP_CSUM;
 		netdev->hw_enc_features |= NETIF_F_IPV6_CSUM;
 		netdev->hw_enc_features |= NETIF_F_TSO;
@@ -4678,7 +4719,7 @@ static void mlx5e_build_nic_netdev(struct net_device *netdev)
 		netdev->hw_enc_features |= NETIF_F_GSO_PARTIAL;
 	}
 
-	if (mlx5_vxlan_allowed(mdev->vxlan)) {
+	if (mlx5_vxlan_allowed(mdev->vxlan) || mlx5_geneve_tx_allowed(mdev)) {
 		netdev->hw_features     |= NETIF_F_GSO_UDP_TUNNEL |
 					   NETIF_F_GSO_UDP_TUNNEL_CSUM;
 		netdev->hw_enc_features |= NETIF_F_GSO_UDP_TUNNEL |
@@ -4897,7 +4938,6 @@ static void mlx5e_nic_enable(struct mlx5e_priv *priv)
 {
 	struct net_device *netdev = priv->netdev;
 	struct mlx5_core_dev *mdev = priv->mdev;
-	u16 max_mtu;
 
 	mlx5e_init_l2_addr(priv);
 
@@ -4905,10 +4945,7 @@ static void mlx5e_nic_enable(struct mlx5e_priv *priv)
 	if (!netif_running(netdev))
 		mlx5_set_port_admin_status(mdev, MLX5_PORT_DOWN);
 
-	/* MTU range: 68 - hw-specific max */
-	netdev->min_mtu = ETH_MIN_MTU;
-	mlx5_query_port_max_mtu(priv->mdev, &max_mtu, 1);
-	netdev->max_mtu = MLX5E_HW2SW_MTU(&priv->channels.params, max_mtu);
+	mlx5e_set_netdev_mtu_boundaries(priv);
 	mlx5e_set_dev_port_mtu(priv);
 
 	mlx5_lag_add(mdev, netdev);

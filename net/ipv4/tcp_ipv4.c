@@ -973,7 +973,7 @@ static void tcp_v4_reqsk_destructor(struct request_sock *req)
  * We need to maintain these in the sk structure.
  */
 
-struct static_key tcp_md5_needed __read_mostly;
+DEFINE_STATIC_KEY_FALSE(tcp_md5_needed);
 EXPORT_SYMBOL(tcp_md5_needed);
 
 /* Find the Key structure for an address.  */
@@ -1734,15 +1734,8 @@ EXPORT_SYMBOL(tcp_add_backlog);
 int tcp_filter(struct sock *sk, struct sk_buff *skb)
 {
 	struct tcphdr *th = (struct tcphdr *)skb->data;
-	unsigned int eaten = skb->len;
-	int err;
 
-	err = sk_filter_trim_cap(sk, skb, th->doff * 4);
-	if (!err) {
-		eaten -= skb->len;
-		TCP_SKB_CB(skb)->end_seq -= eaten;
-	}
-	return err;
+	return sk_filter_trim_cap(sk, skb, th->doff * 4);
 }
 EXPORT_SYMBOL(tcp_filter);
 
@@ -1781,6 +1774,7 @@ static void tcp_v4_fill_cb(struct sk_buff *skb, const struct iphdr *iph,
 int tcp_v4_rcv(struct sk_buff *skb)
 {
 	struct net *net = dev_net(skb->dev);
+	struct sk_buff *skb_to_free;
 	int sdif = inet_sdif(skb);
 	const struct iphdr *iph;
 	const struct tcphdr *th;
@@ -1912,11 +1906,17 @@ process:
 	tcp_segs_in(tcp_sk(sk), skb);
 	ret = 0;
 	if (!sock_owned_by_user(sk)) {
+		skb_to_free = sk->sk_rx_skb_cache;
+		sk->sk_rx_skb_cache = NULL;
 		ret = tcp_v4_do_rcv(sk, skb);
-	} else if (tcp_add_backlog(sk, skb)) {
-		goto discard_and_relse;
+	} else {
+		if (tcp_add_backlog(sk, skb))
+			goto discard_and_relse;
+		skb_to_free = NULL;
 	}
 	bh_unlock_sock(sk);
+	if (skb_to_free)
+		__kfree_skb(skb_to_free);
 
 put_and_return:
 	if (refcounted)
@@ -2585,7 +2585,8 @@ static void __net_exit tcp_sk_exit(struct net *net)
 {
 	int cpu;
 
-	module_put(net->ipv4.tcp_congestion_control->owner);
+	if (net->ipv4.tcp_congestion_control)
+		module_put(net->ipv4.tcp_congestion_control->owner);
 
 	for_each_possible_cpu(cpu)
 		inet_ctl_sock_destroy(*per_cpu_ptr(net->ipv4.tcp_sk, cpu));

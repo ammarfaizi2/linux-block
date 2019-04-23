@@ -865,6 +865,18 @@ struct sk_buff *sk_stream_alloc_skb(struct sock *sk, int size, gfp_t gfp,
 {
 	struct sk_buff *skb;
 
+	if (likely(!size)) {
+		skb = sk->sk_tx_skb_cache;
+		if (skb && !skb_cloned(skb)) {
+			skb->truesize -= skb->data_len;
+			sk->sk_tx_skb_cache = NULL;
+			pskb_trim(skb, 0);
+			INIT_LIST_HEAD(&skb->tcp_tsorted_anchor);
+			skb_shinfo(skb)->tx_flags = 0;
+			memset(TCP_SKB_CB(skb), 0, sizeof(struct tcp_skb_cb));
+			return skb;
+		}
+	}
 	/* The TCP header must be at least 32-bit aligned.  */
 	size = ALIGN(size, 4);
 
@@ -942,6 +954,10 @@ ssize_t do_tcp_sendpages(struct sock *sk, struct page *page, int offset,
 	int err;
 	ssize_t copied;
 	long timeo = sock_sndtimeo(sk, flags & MSG_DONTWAIT);
+
+	if (IS_ENABLED(CONFIG_DEBUG_VM) &&
+	    WARN_ONCE(PageSlab(page), "page must not be a Slab one"))
+		return -EINVAL;
 
 	/* Wait for a connection to finish. One exception is TCP Fast Open
 	 * (passive side) where data is allowed to be sent before a connection
@@ -1094,30 +1110,6 @@ int tcp_sendpage(struct sock *sk, struct page *page, int offset,
 }
 EXPORT_SYMBOL(tcp_sendpage);
 
-/* Do not bother using a page frag for very small frames.
- * But use this heuristic only for the first skb in write queue.
- *
- * Having no payload in skb->head allows better SACK shifting
- * in tcp_shift_skb_data(), reducing sack/rack overhead, because
- * write queue has less skbs.
- * Each skb can hold up to MAX_SKB_FRAGS * 32Kbytes, or ~0.5 MB.
- * This also speeds up tso_fragment(), since it wont fallback
- * to tcp_fragment().
- */
-static int linear_payload_sz(bool first_skb)
-{
-	if (first_skb)
-		return SKB_WITH_OVERHEAD(2048 - MAX_TCP_HEADER);
-	return 0;
-}
-
-static int select_size(bool first_skb, bool zc)
-{
-	if (zc)
-		return 0;
-	return linear_payload_sz(first_skb);
-}
-
 void tcp_free_fastopen_req(struct tcp_sock *tp)
 {
 	if (tp->fastopen_req) {
@@ -1268,7 +1260,6 @@ restart:
 
 		if (copy <= 0 || !tcp_skb_can_collapse_to(skb)) {
 			bool first_skb;
-			int linear;
 
 new_segment:
 			if (!sk_stream_memory_free(sk))
@@ -1279,8 +1270,7 @@ new_segment:
 				goto restart;
 			}
 			first_skb = tcp_rtx_and_write_queues_empty(sk);
-			linear = select_size(first_skb, zc);
-			skb = sk_stream_alloc_skb(sk, linear, sk->sk_allocation,
+			skb = sk_stream_alloc_skb(sk, 0, sk->sk_allocation,
 						  first_skb);
 			if (!skb)
 				goto wait_for_memory;
@@ -1412,7 +1402,8 @@ do_fault:
 		/* It is the one place in all of TCP, except connection
 		 * reset, where we can be unlinking the send_head.
 		 */
-		tcp_check_send_head(sk, skb);
+		if (tcp_write_queue_empty(sk))
+			tcp_chrono_stop(sk, TCP_CHRONO_BUSY);
 		sk_wmem_free_skb(sk, skb);
 	}
 
@@ -1932,6 +1923,11 @@ static int tcp_inq_hint(struct sock *sk)
 		inq = tp->rcv_nxt - tp->copied_seq;
 		release_sock(sk);
 	}
+	/* After receiving a FIN, tell the user-space to continue reading
+	 * by returning a non-zero inq.
+	 */
+	if (inq == 0 && sock_flag(sk, SOCK_DONE))
+		inq = 1;
 	return inq;
 }
 
@@ -2542,6 +2538,11 @@ void tcp_write_queue_purge(struct sock *sk)
 		sk_wmem_free_skb(sk, skb);
 	}
 	tcp_rtx_queue_purge(sk);
+	skb = sk->sk_tx_skb_cache;
+	if (skb) {
+		__kfree_skb(skb);
+		sk->sk_tx_skb_cache = NULL;
+	}
 	INIT_LIST_HEAD(&tcp_sk(sk)->tsorted_sent_queue);
 	sk_mem_reclaim(sk);
 	tcp_clear_all_retrans_hints(tcp_sk(sk));
@@ -2577,6 +2578,10 @@ int tcp_disconnect(struct sock *sk, int flags)
 
 	tcp_clear_xmit_timers(sk);
 	__skb_queue_purge(&sk->sk_receive_queue);
+	if (sk->sk_rx_skb_cache) {
+		__kfree_skb(sk->sk_rx_skb_cache);
+		sk->sk_rx_skb_cache = NULL;
+	}
 	tp->copied_seq = tp->rcv_nxt;
 	tp->urg_data = 0;
 	tcp_write_queue_purge(sk);
@@ -3698,7 +3703,7 @@ bool tcp_alloc_md5sig_pool(void)
 		if (!tcp_md5sig_pool_populated) {
 			__tcp_alloc_md5sig_pool();
 			if (tcp_md5sig_pool_populated)
-				static_key_slow_inc(&tcp_md5_needed);
+				static_branch_inc(&tcp_md5_needed);
 		}
 
 		mutex_unlock(&tcp_md5sig_mutex);

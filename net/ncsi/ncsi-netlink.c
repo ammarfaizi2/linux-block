@@ -251,6 +251,10 @@ static int ncsi_pkg_info_all_nl(struct sk_buff *skb,
 	}
 
 	attr = nla_nest_start(skb, NCSI_ATTR_PACKAGE_LIST);
+	if (!attr) {
+		rc = -EMSGSIZE;
+		goto err;
+	}
 	rc = ncsi_write_package_info(skb, ndp, package->id);
 	if (rc) {
 		nla_nest_cancel(skb, attr);
@@ -719,38 +723,32 @@ static int ncsi_set_channel_mask_nl(struct sk_buff *msg,
 static const struct genl_ops ncsi_ops[] = {
 	{
 		.cmd = NCSI_CMD_PKG_INFO,
-		.policy = ncsi_genl_policy,
 		.doit = ncsi_pkg_info_nl,
 		.dumpit = ncsi_pkg_info_all_nl,
 		.flags = 0,
 	},
 	{
 		.cmd = NCSI_CMD_SET_INTERFACE,
-		.policy = ncsi_genl_policy,
 		.doit = ncsi_set_interface_nl,
 		.flags = GENL_ADMIN_PERM,
 	},
 	{
 		.cmd = NCSI_CMD_CLEAR_INTERFACE,
-		.policy = ncsi_genl_policy,
 		.doit = ncsi_clear_interface_nl,
 		.flags = GENL_ADMIN_PERM,
 	},
 	{
 		.cmd = NCSI_CMD_SEND_CMD,
-		.policy = ncsi_genl_policy,
 		.doit = ncsi_send_cmd_nl,
 		.flags = GENL_ADMIN_PERM,
 	},
 	{
 		.cmd = NCSI_CMD_SET_PACKAGE_MASK,
-		.policy = ncsi_genl_policy,
 		.doit = ncsi_set_package_mask_nl,
 		.flags = GENL_ADMIN_PERM,
 	},
 	{
 		.cmd = NCSI_CMD_SET_CHANNEL_MASK,
-		.policy = ncsi_genl_policy,
 		.doit = ncsi_set_channel_mask_nl,
 		.flags = GENL_ADMIN_PERM,
 	},
@@ -760,6 +758,7 @@ static struct genl_family ncsi_genl_family __ro_after_init = {
 	.name = "NCSI",
 	.version = 0,
 	.maxattr = NCSI_ATTR_MAX,
+	.policy = ncsi_genl_policy,
 	.module = THIS_MODULE,
 	.ops = ncsi_ops,
 	.n_ops = ARRAY_SIZE(ncsi_ops),

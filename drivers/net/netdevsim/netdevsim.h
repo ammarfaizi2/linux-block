@@ -39,12 +39,22 @@ struct netdevsim_shared_dev {
 
 	struct bpf_offload_dev *bpf_dev;
 
+	bool bpf_bind_accept;
+	u32 bpf_bind_verifier_delay;
+
 	struct dentry *ddir_bpf_bound_progs;
 	u32 prog_id_gen;
 
 	struct list_head bpf_bound_progs;
 	struct list_head bpf_bound_maps;
 };
+
+struct netdevsim;
+
+struct netdevsim_shared_dev *nsim_sdev_get(struct netdevsim *joinns);
+void nsim_sdev_put(struct netdevsim_shared_dev *sdev);
+int nsim_sdev_init(void);
+void nsim_sdev_exit(void);
 
 #define NSIM_IPSEC_MAX_SA_COUNT		33
 #define NSIM_IPSEC_VALID		BIT(31)
@@ -88,18 +98,13 @@ struct netdevsim {
 	struct xdp_attachment_info xdp;
 	struct xdp_attachment_info xdp_hw;
 
-	bool bpf_bind_accept;
-	u32 bpf_bind_verifier_delay;
-
 	bool bpf_tc_accept;
 	bool bpf_tc_non_bound_accept;
 	bool bpf_xdpdrv_accept;
 	bool bpf_xdpoffload_accept;
 
 	bool bpf_map_accept;
-#if IS_ENABLED(CONFIG_NET_DEVLINK)
 	struct devlink *devlink;
-#endif
 	struct nsim_ipsec ipsec;
 };
 
@@ -138,7 +143,6 @@ nsim_bpf_setup_tc_block_cb(enum tc_setup_type type, void *type_data,
 }
 #endif
 
-#if IS_ENABLED(CONFIG_NET_DEVLINK)
 enum nsim_resource_id {
 	NSIM_RESOURCE_NONE,   /* DEVLINK_RESOURCE_ID_PARENT_TOP */
 	NSIM_RESOURCE_IPV4,
@@ -160,25 +164,6 @@ void nsim_fib_exit(void);
 u64 nsim_fib_get_val(struct net *net, enum nsim_resource_id res_id, bool max);
 int nsim_fib_set_max(struct net *net, enum nsim_resource_id res_id, u64 val,
 		     struct netlink_ext_ack *extack);
-#else
-static inline int nsim_devlink_setup(struct netdevsim *ns)
-{
-	return 0;
-}
-
-static inline void nsim_devlink_teardown(struct netdevsim *ns)
-{
-}
-
-static inline int nsim_devlink_init(void)
-{
-	return 0;
-}
-
-static inline void nsim_devlink_exit(void)
-{
-}
-#endif
 
 #if IS_ENABLED(CONFIG_XFRM_OFFLOAD)
 void nsim_ipsec_init(struct netdevsim *ns);

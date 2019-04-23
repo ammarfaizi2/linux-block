@@ -754,9 +754,9 @@ static ssize_t store_rps_map(struct netdev_rx_queue *queue,
 	rcu_assign_pointer(queue->rps_map, map);
 
 	if (map)
-		static_key_slow_inc(&rps_needed);
+		static_branch_inc(&rps_needed);
 	if (old_map)
-		static_key_slow_dec(&rps_needed);
+		static_branch_dec(&rps_needed);
 
 	mutex_unlock(&rps_map_mutex);
 
@@ -928,6 +928,8 @@ static int rx_queue_add_kobject(struct net_device *dev, int index)
 	if (error)
 		return error;
 
+	dev_hold(queue->dev);
+
 	if (dev->sysfs_rx_queue_group) {
 		error = sysfs_create_group(kobj, dev->sysfs_rx_queue_group);
 		if (error) {
@@ -937,7 +939,6 @@ static int rx_queue_add_kobject(struct net_device *dev, int index)
 	}
 
 	kobject_uevent(kobj, KOBJ_ADD);
-	dev_hold(queue->dev);
 
 	return error;
 }
@@ -1336,8 +1337,7 @@ static ssize_t xps_rxqs_show(struct netdev_queue *queue, char *buf)
 		if (tc < 0)
 			return -EINVAL;
 	}
-	mask = kcalloc(BITS_TO_LONGS(dev->num_rx_queues), sizeof(long),
-		       GFP_KERNEL);
+	mask = bitmap_zalloc(dev->num_rx_queues, GFP_KERNEL);
 	if (!mask)
 		return -ENOMEM;
 
@@ -1366,7 +1366,7 @@ out_no_maps:
 	rcu_read_unlock();
 
 	len = bitmap_print_to_pagebuf(false, buf, mask, dev->num_rx_queues);
-	kfree(mask);
+	bitmap_free(mask);
 
 	return len < PAGE_SIZE ? len : -EINVAL;
 }
@@ -1382,8 +1382,7 @@ static ssize_t xps_rxqs_store(struct netdev_queue *queue, const char *buf,
 	if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
 		return -EPERM;
 
-	mask = kcalloc(BITS_TO_LONGS(dev->num_rx_queues), sizeof(long),
-		       GFP_KERNEL);
+	mask = bitmap_zalloc(dev->num_rx_queues, GFP_KERNEL);
 	if (!mask)
 		return -ENOMEM;
 
@@ -1391,7 +1390,7 @@ static ssize_t xps_rxqs_store(struct netdev_queue *queue, const char *buf,
 
 	err = bitmap_parse(buf, len, mask, dev->num_rx_queues);
 	if (err) {
-		kfree(mask);
+		bitmap_free(mask);
 		return err;
 	}
 
@@ -1399,7 +1398,7 @@ static ssize_t xps_rxqs_store(struct netdev_queue *queue, const char *buf,
 	err = __netif_set_xps_queue(dev, mask, index, true);
 	cpus_read_unlock();
 
-	kfree(mask);
+	bitmap_free(mask);
 	return err ? : len;
 }
 
@@ -1466,6 +1465,8 @@ static int netdev_queue_add_kobject(struct net_device *dev, int index)
 	if (error)
 		return error;
 
+	dev_hold(queue->dev);
+
 #ifdef CONFIG_BQL
 	error = sysfs_create_group(kobj, &dql_group);
 	if (error) {
@@ -1475,7 +1476,6 @@ static int netdev_queue_add_kobject(struct net_device *dev, int index)
 #endif
 
 	kobject_uevent(kobj, KOBJ_ADD);
-	dev_hold(queue->dev);
 
 	return 0;
 }
@@ -1541,6 +1541,9 @@ static int register_queue_kobjects(struct net_device *dev)
 error:
 	netdev_queue_update_kobjects(dev, txq, 0);
 	net_rx_queue_update_kobjects(dev, rxq, 0);
+#ifdef CONFIG_SYSFS
+	kset_unregister(dev->queues_kset);
+#endif
 	return error;
 }
 

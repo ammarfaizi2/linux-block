@@ -152,6 +152,12 @@ u32 hw_atl_itr_res_irq_get(struct aq_hw_s *aq_hw);
 /* set reset interrupt */
 void hw_atl_itr_res_irq_set(struct aq_hw_s *aq_hw, u32 res_irq);
 
+/* set RSC interrupt */
+void hw_atl_itr_rsc_en_set(struct aq_hw_s *aq_hw, u32 enable);
+
+/* set RSC delay */
+void hw_atl_itr_rsc_delay_set(struct aq_hw_s *aq_hw, u32 delay);
+
 /* rdm */
 
 /* set cpu id */
@@ -605,6 +611,10 @@ void hw_atl_thm_lso_tcp_flag_of_middle_pkt_set(struct aq_hw_s *aq_hw,
 
 /* tpb */
 
+/* set TX Traffic Class Mode */
+void hw_atl_rpb_tps_tx_tc_mode_set(struct aq_hw_s *aq_hw,
+				   u32 tx_traf_class_mode);
+
 /* set tx buffer enable */
 void hw_atl_tpb_tx_buff_en_set(struct aq_hw_s *aq_hw, u32 tx_buff_en);
 
@@ -751,5 +761,17 @@ void hw_atl_rpfl3l4_ipv6_src_addr_set(struct aq_hw_s *aq_hw, u8 location,
 /* set ipv6 filter destination address */
 void hw_atl_rpfl3l4_ipv6_dest_addr_set(struct aq_hw_s *aq_hw, u8 location,
 				       u32 *ipv6_dest);
+
+/* get global microprocessor ram semaphore */
+u32 hw_atl_sem_ram_get(struct aq_hw_s *self);
+
+/* get global microprocessor scratch pad register */
+u32 hw_atl_scrpad_get(struct aq_hw_s *aq_hw, u32 scratch_scp);
+
+/* get global microprocessor scratch pad 12 register */
+u32 hw_atl_scrpad12_get(struct aq_hw_s *self);
+
+/* get global microprocessor scratch pad 25 register */
+u32 hw_atl_scrpad25_get(struct aq_hw_s *self);
 
 #endif /* HW_ATL_LLH_H */

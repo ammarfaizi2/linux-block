@@ -38,13 +38,11 @@
  * Helpers
  **********/
 
-#define team_port_exists(dev) (dev->priv_flags & IFF_TEAM_PORT)
-
 static struct team_port *team_port_get_rtnl(const struct net_device *dev)
 {
 	struct team_port *port = rtnl_dereference(dev->rx_handler_data);
 
-	return team_port_exists(dev) ? port : NULL;
+	return netif_is_team_port(dev) ? port : NULL;
 }
 
 /*
@@ -1143,7 +1141,7 @@ static int team_port_add(struct team *team, struct net_device *port_dev,
 		return -EINVAL;
 	}
 
-	if (team_port_exists(port_dev)) {
+	if (netif_is_team_port(port_dev)) {
 		NL_SET_ERR_MSG(extack, "Device is already a port of a team device");
 		netdev_err(dev, "Device %s is already a port "
 				"of a team device\n", portname);
@@ -1246,6 +1244,23 @@ static int team_port_add(struct team *team, struct net_device *port_dev,
 		goto err_option_port_add;
 	}
 
+	/* set promiscuity level to new slave */
+	if (dev->flags & IFF_PROMISC) {
+		err = dev_set_promiscuity(port_dev, 1);
+		if (err)
+			goto err_set_slave_promisc;
+	}
+
+	/* set allmulti level to new slave */
+	if (dev->flags & IFF_ALLMULTI) {
+		err = dev_set_allmulti(port_dev, 1);
+		if (err) {
+			if (dev->flags & IFF_PROMISC)
+				dev_set_promiscuity(port_dev, -1);
+			goto err_set_slave_promisc;
+		}
+	}
+
 	netif_addr_lock_bh(dev);
 	dev_uc_sync_multiple(port_dev, dev);
 	dev_mc_sync_multiple(port_dev, dev);
@@ -1261,6 +1276,9 @@ static int team_port_add(struct team *team, struct net_device *port_dev,
 	netdev_info(dev, "Port device %s added\n", portname);
 
 	return 0;
+
+err_set_slave_promisc:
+	__team_option_inst_del_port(team, port);
 
 err_option_port_add:
 	team_upper_dev_unlink(team, port);
@@ -1307,6 +1325,12 @@ static int team_port_del(struct team *team, struct net_device *port_dev)
 
 	team_port_disable(team, port);
 	list_del_rcu(&port->list);
+
+	if (dev->flags & IFF_PROMISC)
+		dev_set_promiscuity(port_dev, -1);
+	if (dev->flags & IFF_ALLMULTI)
+		dev_set_allmulti(port_dev, -1);
+
 	team_upper_dev_unlink(team, port);
 	netdev_rx_handler_unregister(port_dev);
 	team_port_disable_netpoll(port);
@@ -1691,8 +1715,7 @@ static netdev_tx_t team_xmit(struct sk_buff *skb, struct net_device *dev)
 }
 
 static u16 team_select_queue(struct net_device *dev, struct sk_buff *skb,
-			     struct net_device *sb_dev,
-			     select_queue_fallback_t fallback)
+			     struct net_device *sb_dev)
 {
 	/*
 	 * This helper function exists to help dev_pick_tx get the correct
@@ -2726,24 +2749,20 @@ static const struct genl_ops team_nl_ops[] = {
 	{
 		.cmd = TEAM_CMD_NOOP,
 		.doit = team_nl_cmd_noop,
-		.policy = team_nl_policy,
 	},
 	{
 		.cmd = TEAM_CMD_OPTIONS_SET,
 		.doit = team_nl_cmd_options_set,
-		.policy = team_nl_policy,
 		.flags = GENL_ADMIN_PERM,
 	},
 	{
 		.cmd = TEAM_CMD_OPTIONS_GET,
 		.doit = team_nl_cmd_options_get,
-		.policy = team_nl_policy,
 		.flags = GENL_ADMIN_PERM,
 	},
 	{
 		.cmd = TEAM_CMD_PORT_LIST_GET,
 		.doit = team_nl_cmd_port_list_get,
-		.policy = team_nl_policy,
 		.flags = GENL_ADMIN_PERM,
 	},
 };
@@ -2756,6 +2775,7 @@ static struct genl_family team_nl_family __ro_after_init = {
 	.name		= TEAM_GENL_NAME,
 	.version	= TEAM_GENL_VERSION,
 	.maxattr	= TEAM_ATTR_MAX,
+	.policy = team_nl_policy,
 	.netnsok	= true,
 	.module		= THIS_MODULE,
 	.ops		= team_nl_ops,

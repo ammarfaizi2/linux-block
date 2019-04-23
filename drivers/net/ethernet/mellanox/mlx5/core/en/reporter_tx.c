@@ -179,19 +179,24 @@ int mlx5e_tx_reporter_timeout(struct mlx5e_txqsq *sq)
 /* state lock cannot be grabbed within this function.
  * It can cause a dead lock or a read-after-free.
  */
-int mlx5e_tx_reporter_recover_from_ctx(struct mlx5e_tx_err_ctx *err_ctx)
+static int mlx5e_tx_reporter_recover_from_ctx(struct mlx5e_tx_err_ctx *err_ctx)
 {
 	return err_ctx->recover(err_ctx->sq);
 }
 
 static int mlx5e_tx_reporter_recover_all(struct mlx5e_priv *priv)
 {
-	int err;
+	int err = 0;
 
 	rtnl_lock();
 	mutex_lock(&priv->state_lock);
-	mlx5e_close_locked(priv->netdev);
-	err = mlx5e_open_locked(priv->netdev);
+
+	if (!test_bit(MLX5E_STATE_OPENED, &priv->state))
+		goto out;
+
+	err = mlx5e_safe_reopen_channels(priv);
+
+out:
 	mutex_unlock(&priv->state_lock);
 	rtnl_unlock();
 

@@ -122,7 +122,7 @@ static int dsa_slave_close(struct net_device *dev)
 
 	phylink_stop(dp->pl);
 
-	dsa_port_disable(dp, dev->phydev);
+	dsa_port_disable(dp);
 
 	dev_mc_unsync(master, dev);
 	dev_uc_unsync(master, dev);
@@ -378,6 +378,13 @@ static int dsa_slave_get_port_parent_id(struct net_device *dev,
 	struct dsa_port *dp = dsa_slave_to_port(dev);
 	struct dsa_switch *ds = dp->ds;
 	struct dsa_switch_tree *dst = ds->dst;
+
+	/* For non-legacy ports, devlink is used and it takes
+	 * care of the name generation. This ndo implementation
+	 * should be removed with legacy support.
+	 */
+	if (dp->ds->devlink)
+		return -EOPNOTSUPP;
 
 	ppid->id_len = sizeof(dst->index);
 	memcpy(&ppid->id, &dst->index, ppid->id_len);
@@ -736,6 +743,13 @@ static int dsa_slave_get_phys_port_name(struct net_device *dev,
 {
 	struct dsa_port *dp = dsa_slave_to_port(dev);
 
+	/* For non-legacy ports, devlink is used and it takes
+	 * care of the name generation. This ndo implementation
+	 * should be removed with legacy support.
+	 */
+	if (dp->ds->devlink)
+		return -EOPNOTSUPP;
+
 	if (snprintf(name, len, "p%d", dp->index) >= len)
 		return -EINVAL;
 
@@ -993,6 +1007,7 @@ static int dsa_slave_vlan_rx_add_vid(struct net_device *dev, __be16 proto,
 		/* This API only allows programming tagged, non-PVID VIDs */
 		.flags = 0,
 	};
+	struct switchdev_trans trans;
 	struct bridge_vlan_info info;
 	int ret;
 
@@ -1009,11 +1024,13 @@ static int dsa_slave_vlan_rx_add_vid(struct net_device *dev, __be16 proto,
 			return -EBUSY;
 	}
 
-	ret = dsa_port_vlan_add(dp, &vlan, NULL);
+	trans.ph_prepare = true;
+	ret = dsa_port_vlan_add(dp, &vlan, &trans);
 	if (ret == -EOPNOTSUPP)
-		ret = 0;
+		return 0;
 
-	return ret;
+	trans.ph_prepare = false;
+	return dsa_port_vlan_add(dp, &vlan, &trans);
 }
 
 static int dsa_slave_vlan_rx_kill_vid(struct net_device *dev, __be16 proto,
@@ -1093,6 +1110,13 @@ int dsa_legacy_fdb_del(struct ndmsg *ndm, struct nlattr *tb[],
 	return dsa_port_fdb_del(dp, addr, vid);
 }
 
+static struct devlink_port *dsa_slave_get_devlink_port(struct net_device *dev)
+{
+	struct dsa_port *dp = dsa_slave_to_port(dev);
+
+	return dp->ds->devlink ? &dp->devlink_port : NULL;
+}
+
 static const struct net_device_ops dsa_slave_netdev_ops = {
 	.ndo_open	 	= dsa_slave_open,
 	.ndo_stop		= dsa_slave_close,
@@ -1116,10 +1140,7 @@ static const struct net_device_ops dsa_slave_netdev_ops = {
 	.ndo_get_port_parent_id	= dsa_slave_get_port_parent_id,
 	.ndo_vlan_rx_add_vid	= dsa_slave_vlan_rx_add_vid,
 	.ndo_vlan_rx_kill_vid	= dsa_slave_vlan_rx_kill_vid,
-};
-
-static const struct switchdev_ops dsa_slave_switchdev_ops = {
-	.switchdev_port_attr_set	= dsa_slave_port_attr_set,
+	.ndo_get_devlink_port	= dsa_slave_get_devlink_port,
 };
 
 static struct device_type dsa_type = {
@@ -1284,9 +1305,9 @@ static int dsa_slave_phy_setup(struct net_device *slave_dev)
 		phy_flags = ds->ops->get_phy_flags(ds, dp->index);
 
 	ret = phylink_of_phy_connect(dp->pl, port_dn, phy_flags);
-	if (ret == -ENODEV) {
-		/* We could not connect to a designated PHY or SFP, so use the
-		 * switch internal MDIO bus instead
+	if (ret == -ENODEV && ds->slave_mii_bus) {
+		/* We could not connect to a designated PHY or SFP, so try to
+		 * use the switch internal MDIO bus instead
 		 */
 		ret = dsa_slave_phy_connect(slave_dev, dp->index);
 		if (ret) {
@@ -1298,7 +1319,7 @@ static int dsa_slave_phy_setup(struct net_device *slave_dev)
 		}
 	}
 
-	return 0;
+	return ret;
 }
 
 static struct lock_class_key dsa_slave_netdev_xmit_lock_key;
@@ -1379,10 +1400,12 @@ int dsa_slave_create(struct dsa_port *port)
 				NETIF_F_HW_VLAN_CTAG_FILTER;
 	slave_dev->hw_features |= NETIF_F_HW_TC;
 	slave_dev->ethtool_ops = &dsa_slave_ethtool_ops;
-	eth_hw_addr_inherit(slave_dev, master);
+	if (port->mac && is_valid_ether_addr(port->mac))
+		ether_addr_copy(slave_dev->dev_addr, port->mac);
+	else
+		eth_hw_addr_inherit(slave_dev, master);
 	slave_dev->priv_flags |= IFF_NO_QUEUE;
 	slave_dev->netdev_ops = &dsa_slave_netdev_ops;
-	slave_dev->switchdev_ops = &dsa_slave_switchdev_ops;
 	slave_dev->min_mtu = 0;
 	slave_dev->max_mtu = ETH_MAX_MTU;
 	SET_NETDEV_DEVTYPE(slave_dev, &dsa_type);
@@ -1524,6 +1547,19 @@ static int dsa_slave_netdevice_event(struct notifier_block *nb,
 	return NOTIFY_DONE;
 }
 
+static int
+dsa_slave_switchdev_port_attr_set_event(struct net_device *netdev,
+		struct switchdev_notifier_port_attr_info *port_attr_info)
+{
+	int err;
+
+	err = dsa_slave_port_attr_set(netdev, port_attr_info->attr,
+				      port_attr_info->trans);
+
+	port_attr_info->handled = true;
+	return notifier_from_errno(err);
+}
+
 struct dsa_switchdev_event_work {
 	struct work_struct work;
 	struct switchdev_notifier_fdb_info fdb_info;
@@ -1602,6 +1638,9 @@ static int dsa_slave_switchdev_event(struct notifier_block *unused,
 	if (!dsa_slave_dev_check(dev))
 		return NOTIFY_DONE;
 
+	if (event == SWITCHDEV_PORT_ATTR_SET)
+		return dsa_slave_switchdev_port_attr_set_event(dev, ptr);
+
 	switchdev_work = kzalloc(sizeof(*switchdev_work), GFP_ATOMIC);
 	if (!switchdev_work)
 		return NOTIFY_BAD;
@@ -1664,6 +1703,8 @@ static int dsa_slave_switchdev_blocking_event(struct notifier_block *unused,
 	case SWITCHDEV_PORT_OBJ_ADD: /* fall through */
 	case SWITCHDEV_PORT_OBJ_DEL:
 		return dsa_slave_switchdev_port_obj_event(event, dev, ptr);
+	case SWITCHDEV_PORT_ATTR_SET:
+		return dsa_slave_switchdev_port_attr_set_event(dev, ptr);
 	}
 
 	return NOTIFY_DONE;

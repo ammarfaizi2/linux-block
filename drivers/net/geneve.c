@@ -14,6 +14,7 @@
 #include <linux/module.h>
 #include <linux/etherdevice.h>
 #include <linux/hash.h>
+#include <net/ipv6_stubs.h>
 #include <net/dst_metadata.h>
 #include <net/gro_cells.h>
 #include <net/rtnetlink.h>
@@ -21,8 +22,6 @@
 #include <net/protocol.h>
 
 #define GENEVE_NETDEV_VER	"0.6"
-
-#define GENEVE_UDP_PORT		6081
 
 #define GENEVE_N_VID		(1u << 24)
 #define GENEVE_VID_MASK		(GENEVE_N_VID - 1)
@@ -692,15 +691,20 @@ out:
 static int geneve_open(struct net_device *dev)
 {
 	struct geneve_dev *geneve = netdev_priv(dev);
-	bool ipv6 = !!(geneve->info.mode & IP_TUNNEL_INFO_IPV6);
 	bool metadata = geneve->collect_md;
+	bool ipv4, ipv6;
 	int ret = 0;
 
+	ipv6 = geneve->info.mode & IP_TUNNEL_INFO_IPV6 || metadata;
+	ipv4 = !ipv6 || metadata;
 #if IS_ENABLED(CONFIG_IPV6)
-	if (ipv6 || metadata)
+	if (ipv6) {
 		ret = geneve_sock_add(geneve, true);
+		if (ret < 0 && ret != -EAFNOSUPPORT)
+			ipv4 = false;
+	}
 #endif
-	if (!ret && (!ipv6 || metadata))
+	if (ipv4)
 		ret = geneve_sock_add(geneve, false);
 	if (ret < 0)
 		geneve_sock_release(geneve);

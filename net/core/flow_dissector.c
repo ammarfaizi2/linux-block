@@ -707,6 +707,7 @@ bool __skb_flow_bpf_dissect(struct bpf_prog *prog,
 	/* Pass parameters to the BPF program */
 	memset(flow_keys, 0, sizeof(*flow_keys));
 	cb->qdisc_cb.flow_keys = flow_keys;
+	flow_keys->n_proto = skb->protocol;
 	flow_keys->nhoff = skb_network_offset(skb);
 	flow_keys->thoff = flow_keys->nhoff;
 
@@ -716,7 +717,8 @@ bool __skb_flow_bpf_dissect(struct bpf_prog *prog,
 	/* Restore state */
 	memcpy(cb, &cb_saved, sizeof(cb_saved));
 
-	flow_keys->nhoff = clamp_t(u16, flow_keys->nhoff, 0, skb->len);
+	flow_keys->nhoff = clamp_t(u16, flow_keys->nhoff,
+				   skb_network_offset(skb), skb->len);
 	flow_keys->thoff = clamp_t(u16, flow_keys->thoff,
 				   flow_keys->nhoff, skb->len);
 
@@ -732,6 +734,8 @@ bool __skb_flow_bpf_dissect(struct bpf_prog *prog,
  * @proto: protocol for which to get the flow, if @data is NULL use skb->protocol
  * @nhoff: network header offset, if @data is NULL use skb_network_offset(skb)
  * @hlen: packet header length, if @data is NULL use skb_headlen(skb)
+ * @flags: flags that control the dissection process, e.g.
+ *         FLOW_DISSECTOR_F_STOP_AT_L3.
  *
  * The function will try to retrieve individual keys into target specified
  * by flow_dissector from either the skbuff or a raw buffer specified by the

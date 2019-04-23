@@ -238,18 +238,23 @@ static void tcf_proto_put(struct tcf_proto *tp, bool rtnl_held,
 		tcf_proto_destroy(tp, rtnl_held, extack);
 }
 
-static int walker_noop(struct tcf_proto *tp, void *d, struct tcf_walker *arg)
+static int walker_check_empty(struct tcf_proto *tp, void *fh,
+			      struct tcf_walker *arg)
 {
-	return -1;
+	if (fh) {
+		arg->nonempty = true;
+		return -1;
+	}
+	return 0;
 }
 
 static bool tcf_proto_is_empty(struct tcf_proto *tp, bool rtnl_held)
 {
-	struct tcf_walker walker = { .fn = walker_noop, };
+	struct tcf_walker walker = { .fn = walker_check_empty, };
 
 	if (tp->ops->walk) {
 		tp->ops->walk(tp, &walker, rtnl_held);
-		return !walker.stop;
+		return !walker.nonempty;
 	}
 	return true;
 }
@@ -362,7 +367,7 @@ static void tcf_chain_destroy(struct tcf_chain *chain, bool free_block)
 	struct tcf_block *block = chain->block;
 
 	mutex_destroy(&chain->filter_chain_lock);
-	kfree(chain);
+	kfree_rcu(chain, rcu);
 	if (free_block)
 		tcf_block_destroy(block);
 }
@@ -465,10 +470,9 @@ static void __tcf_chain_put(struct tcf_chain *chain, bool by_act,
 {
 	struct tcf_block *block = chain->block;
 	const struct tcf_proto_ops *tmplt_ops;
-	bool is_last, free_block = false;
+	bool free_block = false;
 	unsigned int refcnt;
 	void *tmplt_priv;
-	u32 chain_index;
 
 	mutex_lock(&block->lock);
 	if (explicitly_created) {
@@ -487,22 +491,20 @@ static void __tcf_chain_put(struct tcf_chain *chain, bool by_act,
 	 * save these to temporary variables.
 	 */
 	refcnt = --chain->refcnt;
-	is_last = refcnt - chain->action_refcnt == 0;
 	tmplt_ops = chain->tmplt_ops;
 	tmplt_priv = chain->tmplt_priv;
-	chain_index = chain->index;
-
-	if (refcnt == 0)
-		free_block = tcf_chain_detach(chain);
-	mutex_unlock(&block->lock);
 
 	/* The last dropped non-action reference will trigger notification. */
-	if (is_last && !by_act) {
-		tc_chain_notify_delete(tmplt_ops, tmplt_priv, chain_index,
+	if (refcnt - chain->action_refcnt == 0 && !by_act) {
+		tc_chain_notify_delete(tmplt_ops, tmplt_priv, chain->index,
 				       block, NULL, 0, 0, false);
 		/* Last reference to chain, no need to lock. */
 		chain->flushing = false;
 	}
+
+	if (refcnt == 0)
+		free_block = tcf_chain_detach(chain);
+	mutex_unlock(&block->lock);
 
 	if (refcnt == 0) {
 		tc_chain_tmplt_del(tmplt_ops, tmplt_priv);
@@ -1891,6 +1893,7 @@ static int tfilter_notify(struct net *net, struct sk_buff *oskb,
 {
 	struct sk_buff *skb;
 	u32 portid = oskb ? NETLINK_CB(oskb).portid : 0;
+	int err = 0;
 
 	skb = alloc_skb(NLMSG_GOODSIZE, GFP_KERNEL);
 	if (!skb)
@@ -1904,10 +1907,14 @@ static int tfilter_notify(struct net *net, struct sk_buff *oskb,
 	}
 
 	if (unicast)
-		return netlink_unicast(net->rtnl, skb, portid, MSG_DONTWAIT);
+		err = netlink_unicast(net->rtnl, skb, portid, MSG_DONTWAIT);
+	else
+		err = rtnetlink_send(skb, net, portid, RTNLGRP_TC,
+				     n->nlmsg_flags & NLM_F_ECHO);
 
-	return rtnetlink_send(skb, net, portid, RTNLGRP_TC,
-			      n->nlmsg_flags & NLM_F_ECHO);
+	if (err > 0)
+		err = 0;
+	return err;
 }
 
 static int tfilter_del_notify(struct net *net, struct sk_buff *oskb,
@@ -1939,12 +1946,15 @@ static int tfilter_del_notify(struct net *net, struct sk_buff *oskb,
 	}
 
 	if (unicast)
-		return netlink_unicast(net->rtnl, skb, portid, MSG_DONTWAIT);
-
-	err = rtnetlink_send(skb, net, portid, RTNLGRP_TC,
-			     n->nlmsg_flags & NLM_F_ECHO);
+		err = netlink_unicast(net->rtnl, skb, portid, MSG_DONTWAIT);
+	else
+		err = rtnetlink_send(skb, net, portid, RTNLGRP_TC,
+				     n->nlmsg_flags & NLM_F_ECHO);
 	if (err < 0)
 		NL_SET_ERR_MSG(extack, "Failed to send filter delete notification");
+
+	if (err > 0)
+		err = 0;
 	return err;
 }
 
@@ -2686,6 +2696,7 @@ static int tc_chain_notify(struct tcf_chain *chain, struct sk_buff *oskb,
 	struct tcf_block *block = chain->block;
 	struct net *net = block->net;
 	struct sk_buff *skb;
+	int err = 0;
 
 	skb = alloc_skb(NLMSG_GOODSIZE, GFP_KERNEL);
 	if (!skb)
@@ -2699,9 +2710,14 @@ static int tc_chain_notify(struct tcf_chain *chain, struct sk_buff *oskb,
 	}
 
 	if (unicast)
-		return netlink_unicast(net->rtnl, skb, portid, MSG_DONTWAIT);
+		err = netlink_unicast(net->rtnl, skb, portid, MSG_DONTWAIT);
+	else
+		err = rtnetlink_send(skb, net, portid, RTNLGRP_TC,
+				     flags & NLM_F_ECHO);
 
-	return rtnetlink_send(skb, net, portid, RTNLGRP_TC, flags & NLM_F_ECHO);
+	if (err > 0)
+		err = 0;
+	return err;
 }
 
 static int tc_chain_notify_delete(const struct tcf_proto_ops *tmplt_ops,
@@ -2907,12 +2923,12 @@ errout_block_locked:
 /* called with RTNL */
 static int tc_dump_chain(struct sk_buff *skb, struct netlink_callback *cb)
 {
-	struct tcf_chain *chain, *chain_prev;
 	struct net *net = sock_net(skb->sk);
 	struct nlattr *tca[TCA_MAX + 1];
 	struct Qdisc *q = NULL;
 	struct tcf_block *block;
 	struct tcmsg *tcm = nlmsg_data(cb->nlh);
+	struct tcf_chain *chain;
 	long index_start;
 	long index;
 	u32 parent;
@@ -2975,11 +2991,8 @@ static int tc_dump_chain(struct sk_buff *skb, struct netlink_callback *cb)
 	index_start = cb->args[0];
 	index = 0;
 
-	for (chain = __tcf_get_next_chain(block, NULL);
-	     chain;
-	     chain_prev = chain,
-		     chain = __tcf_get_next_chain(block, chain),
-		     tcf_chain_put(chain_prev)) {
+	mutex_lock(&block->lock);
+	list_for_each_entry(chain, &block->chain_list, list) {
 		if ((tca[TCA_CHAIN] &&
 		     nla_get_u32(tca[TCA_CHAIN]) != chain->index))
 			continue;
@@ -2987,17 +3000,18 @@ static int tc_dump_chain(struct sk_buff *skb, struct netlink_callback *cb)
 			index++;
 			continue;
 		}
+		if (tcf_chain_held_by_acts_only(chain))
+			continue;
 		err = tc_chain_fill_node(chain->tmplt_ops, chain->tmplt_priv,
 					 chain->index, net, skb, block,
 					 NETLINK_CB(cb->skb).portid,
 					 cb->nlh->nlmsg_seq, NLM_F_MULTI,
 					 RTM_NEWCHAIN);
-		if (err <= 0) {
-			tcf_chain_put(chain);
+		if (err <= 0)
 			break;
-		}
 		index++;
 	}
+	mutex_unlock(&block->lock);
 
 	if (tcm->tcm_ifindex == TCM_IFINDEX_MAGIC_BLOCK)
 		tcf_block_refcnt_put(block, true);
@@ -3215,7 +3229,6 @@ int tc_setup_flow_action(struct flow_action *flow_action,
 			entry->tunnel = tcf_tunnel_info(act);
 		} else if (is_tcf_tunnel_release(act)) {
 			entry->id = FLOW_ACTION_TUNNEL_DECAP;
-			entry->tunnel = tcf_tunnel_info(act);
 		} else if (is_tcf_pedit(act)) {
 			for (k = 0; k < tcf_pedit_nkeys(act); k++) {
 				switch (tcf_pedit_cmd(act, k)) {

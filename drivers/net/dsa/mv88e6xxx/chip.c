@@ -549,9 +549,9 @@ int mv88e6xxx_update(struct mv88e6xxx_chip *chip, int addr, int reg, u16 update)
 	return mv88e6xxx_write(chip, addr, reg, val);
 }
 
-static int mv88e6xxx_port_setup_mac(struct mv88e6xxx_chip *chip, int port,
-				    int link, int speed, int duplex, int pause,
-				    phy_interface_t mode)
+int mv88e6xxx_port_setup_mac(struct mv88e6xxx_chip *chip, int port, int link,
+			     int speed, int duplex, int pause,
+			     phy_interface_t mode)
 {
 	int err;
 
@@ -568,6 +568,9 @@ static int mv88e6xxx_port_setup_mac(struct mv88e6xxx_chip *chip, int port,
 		if (err && err != -EOPNOTSUPP)
 			goto restore_link;
 	}
+
+	if (speed == SPEED_MAX && chip->info->ops->port_max_speed_mode)
+		mode = chip->info->ops->port_max_speed_mode(port);
 
 	if (chip->info->ops->port_set_pause) {
 		err = chip->info->ops->port_set_pause(chip, port, pause);
@@ -652,6 +655,20 @@ static void mv88e6185_phylink_validate(struct mv88e6xxx_chip *chip, int port,
 	/* FIXME: if the port is in 1000Base-X mode, then it only supports
 	 * 1000M FD speeds.  In this case, CMODE will indicate 5.
 	 */
+	phylink_set(mask, 1000baseT_Full);
+	phylink_set(mask, 1000baseX_Full);
+
+	mv88e6065_phylink_validate(chip, port, mask, state);
+}
+
+static void mv88e6341_phylink_validate(struct mv88e6xxx_chip *chip, int port,
+				       unsigned long *mask,
+				       struct phylink_link_state *state)
+{
+	if (port >= 5)
+		phylink_set(mask, 2500baseX_Full);
+
+	/* No ethtool bits for 200Mbps */
 	phylink_set(mask, 1000baseT_Full);
 	phylink_set(mask, 1000baseX_Full);
 
@@ -908,7 +925,7 @@ static uint64_t _mv88e6xxx_get_ethtool_stat(struct mv88e6xxx_chip *chip,
 	default:
 		return U64_MAX;
 	}
-	value = (((u64)high) << 16) | low;
+	value = (((u64)high) << 32) | low;
 	return value;
 }
 
@@ -2388,8 +2405,7 @@ static int mv88e6xxx_port_enable(struct dsa_switch *ds, int port,
 	return err;
 }
 
-static void mv88e6xxx_port_disable(struct dsa_switch *ds, int port,
-				   struct phy_device *phydev)
+static void mv88e6xxx_port_disable(struct dsa_switch *ds, int port)
 {
 	struct mv88e6xxx_chip *chip = ds->priv;
 
@@ -3054,6 +3070,7 @@ static const struct mv88e6xxx_ops mv88e6141_ops = {
 	.port_set_duplex = mv88e6xxx_port_set_duplex,
 	.port_set_rgmii_delay = mv88e6390_port_set_rgmii_delay,
 	.port_set_speed = mv88e6341_port_set_speed,
+	.port_max_speed_mode = mv88e6341_port_max_speed_mode,
 	.port_tag_remap = mv88e6095_port_tag_remap,
 	.port_set_frame_mode = mv88e6351_port_set_frame_mode,
 	.port_set_egress_floods = mv88e6352_port_set_egress_floods,
@@ -3080,7 +3097,7 @@ static const struct mv88e6xxx_ops mv88e6141_ops = {
 	.vtu_loadpurge = mv88e6352_g1_vtu_loadpurge,
 	.serdes_power = mv88e6341_serdes_power,
 	.gpio_ops = &mv88e6352_gpio_ops,
-	.phylink_validate = mv88e6390_phylink_validate,
+	.phylink_validate = mv88e6341_phylink_validate,
 };
 
 static const struct mv88e6xxx_ops mv88e6161_ops = {
@@ -3105,7 +3122,7 @@ static const struct mv88e6xxx_ops mv88e6161_ops = {
 	.port_disable_pri_override = mv88e6xxx_port_disable_pri_override,
 	.port_link_state = mv88e6352_port_link_state,
 	.port_get_cmode = mv88e6185_port_get_cmode,
-	.stats_snapshot = mv88e6320_g1_stats_snapshot,
+	.stats_snapshot = mv88e6xxx_g1_stats_snapshot,
 	.stats_set_histogram = mv88e6095_g1_stats_set_histogram,
 	.stats_get_sset_count = mv88e6095_stats_get_sset_count,
 	.stats_get_strings = mv88e6095_stats_get_strings,
@@ -3372,6 +3389,7 @@ static const struct mv88e6xxx_ops mv88e6190_ops = {
 	.port_set_duplex = mv88e6xxx_port_set_duplex,
 	.port_set_rgmii_delay = mv88e6390_port_set_rgmii_delay,
 	.port_set_speed = mv88e6390_port_set_speed,
+	.port_max_speed_mode = mv88e6390_port_max_speed_mode,
 	.port_tag_remap = mv88e6390_port_tag_remap,
 	.port_set_frame_mode = mv88e6351_port_set_frame_mode,
 	.port_set_egress_floods = mv88e6352_port_set_egress_floods,
@@ -3416,6 +3434,7 @@ static const struct mv88e6xxx_ops mv88e6190x_ops = {
 	.port_set_duplex = mv88e6xxx_port_set_duplex,
 	.port_set_rgmii_delay = mv88e6390_port_set_rgmii_delay,
 	.port_set_speed = mv88e6390x_port_set_speed,
+	.port_max_speed_mode = mv88e6390x_port_max_speed_mode,
 	.port_tag_remap = mv88e6390_port_tag_remap,
 	.port_set_frame_mode = mv88e6351_port_set_frame_mode,
 	.port_set_egress_floods = mv88e6352_port_set_egress_floods,
@@ -3460,6 +3479,7 @@ static const struct mv88e6xxx_ops mv88e6191_ops = {
 	.port_set_duplex = mv88e6xxx_port_set_duplex,
 	.port_set_rgmii_delay = mv88e6390_port_set_rgmii_delay,
 	.port_set_speed = mv88e6390_port_set_speed,
+	.port_max_speed_mode = mv88e6390_port_max_speed_mode,
 	.port_tag_remap = mv88e6390_port_tag_remap,
 	.port_set_frame_mode = mv88e6351_port_set_frame_mode,
 	.port_set_egress_floods = mv88e6352_port_set_egress_floods,
@@ -3553,6 +3573,7 @@ static const struct mv88e6xxx_ops mv88e6290_ops = {
 	.port_set_duplex = mv88e6xxx_port_set_duplex,
 	.port_set_rgmii_delay = mv88e6390_port_set_rgmii_delay,
 	.port_set_speed = mv88e6390_port_set_speed,
+	.port_max_speed_mode = mv88e6390_port_max_speed_mode,
 	.port_tag_remap = mv88e6390_port_tag_remap,
 	.port_set_frame_mode = mv88e6351_port_set_frame_mode,
 	.port_set_egress_floods = mv88e6352_port_set_egress_floods,
@@ -3684,6 +3705,7 @@ static const struct mv88e6xxx_ops mv88e6341_ops = {
 	.port_set_duplex = mv88e6xxx_port_set_duplex,
 	.port_set_rgmii_delay = mv88e6390_port_set_rgmii_delay,
 	.port_set_speed = mv88e6341_port_set_speed,
+	.port_max_speed_mode = mv88e6341_port_max_speed_mode,
 	.port_tag_remap = mv88e6095_port_tag_remap,
 	.port_set_frame_mode = mv88e6351_port_set_frame_mode,
 	.port_set_egress_floods = mv88e6352_port_set_egress_floods,
@@ -3712,7 +3734,7 @@ static const struct mv88e6xxx_ops mv88e6341_ops = {
 	.gpio_ops = &mv88e6352_gpio_ops,
 	.avb_ops = &mv88e6390_avb_ops,
 	.ptp_ops = &mv88e6352_ptp_ops,
-	.phylink_validate = mv88e6390_phylink_validate,
+	.phylink_validate = mv88e6341_phylink_validate,
 };
 
 static const struct mv88e6xxx_ops mv88e6350_ops = {
@@ -3859,6 +3881,7 @@ static const struct mv88e6xxx_ops mv88e6390_ops = {
 	.port_set_duplex = mv88e6xxx_port_set_duplex,
 	.port_set_rgmii_delay = mv88e6390_port_set_rgmii_delay,
 	.port_set_speed = mv88e6390_port_set_speed,
+	.port_max_speed_mode = mv88e6390_port_max_speed_mode,
 	.port_tag_remap = mv88e6390_port_tag_remap,
 	.port_set_frame_mode = mv88e6351_port_set_frame_mode,
 	.port_set_egress_floods = mv88e6352_port_set_egress_floods,
@@ -3907,6 +3930,7 @@ static const struct mv88e6xxx_ops mv88e6390x_ops = {
 	.port_set_duplex = mv88e6xxx_port_set_duplex,
 	.port_set_rgmii_delay = mv88e6390_port_set_rgmii_delay,
 	.port_set_speed = mv88e6390x_port_set_speed,
+	.port_max_speed_mode = mv88e6390x_port_max_speed_mode,
 	.port_tag_remap = mv88e6390_port_tag_remap,
 	.port_set_frame_mode = mv88e6351_port_set_frame_mode,
 	.port_set_egress_floods = mv88e6352_port_set_egress_floods,
@@ -4234,7 +4258,7 @@ static const struct mv88e6xxx_info mv88e6xxx_table[] = {
 		.name = "Marvell 88E6190",
 		.num_databases = 4096,
 		.num_ports = 11,	/* 10 + Z80 */
-		.num_internal_phys = 11,
+		.num_internal_phys = 9,
 		.num_gpio = 16,
 		.max_vid = 8191,
 		.port_base_addr = 0x0,
@@ -4257,7 +4281,7 @@ static const struct mv88e6xxx_info mv88e6xxx_table[] = {
 		.name = "Marvell 88E6190X",
 		.num_databases = 4096,
 		.num_ports = 11,	/* 10 + Z80 */
-		.num_internal_phys = 11,
+		.num_internal_phys = 9,
 		.num_gpio = 16,
 		.max_vid = 8191,
 		.port_base_addr = 0x0,
@@ -4280,7 +4304,7 @@ static const struct mv88e6xxx_info mv88e6xxx_table[] = {
 		.name = "Marvell 88E6191",
 		.num_databases = 4096,
 		.num_ports = 11,	/* 10 + Z80 */
-		.num_internal_phys = 11,
+		.num_internal_phys = 9,
 		.max_vid = 8191,
 		.port_base_addr = 0x0,
 		.phy_base_addr = 0x0,
@@ -4327,7 +4351,7 @@ static const struct mv88e6xxx_info mv88e6xxx_table[] = {
 		.name = "Marvell 88E6290",
 		.num_databases = 4096,
 		.num_ports = 11,	/* 10 + Z80 */
-		.num_internal_phys = 11,
+		.num_internal_phys = 9,
 		.num_gpio = 16,
 		.max_vid = 8191,
 		.port_base_addr = 0x0,
@@ -4489,7 +4513,7 @@ static const struct mv88e6xxx_info mv88e6xxx_table[] = {
 		.name = "Marvell 88E6390",
 		.num_databases = 4096,
 		.num_ports = 11,	/* 10 + Z80 */
-		.num_internal_phys = 11,
+		.num_internal_phys = 9,
 		.num_gpio = 16,
 		.max_vid = 8191,
 		.port_base_addr = 0x0,
@@ -4512,7 +4536,7 @@ static const struct mv88e6xxx_info mv88e6xxx_table[] = {
 		.name = "Marvell 88E6390X",
 		.num_databases = 4096,
 		.num_ports = 11,	/* 10 + Z80 */
-		.num_internal_phys = 11,
+		.num_internal_phys = 9,
 		.num_gpio = 16,
 		.max_vid = 8191,
 		.port_base_addr = 0x0,

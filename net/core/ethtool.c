@@ -136,6 +136,7 @@ static const char
 phy_tunable_strings[__ETHTOOL_PHY_TUNABLE_COUNT][ETH_GSTRING_LEN] = {
 	[ETHTOOL_ID_UNSPEC]     = "Unspec",
 	[ETHTOOL_PHY_DOWNSHIFT]	= "phy-downshift",
+	[ETHTOOL_PHY_FAST_LINK_DOWN] = "phy-fast-link-down",
 };
 
 static int ethtool_get_features(struct net_device *dev, void __user *useraddr)
@@ -805,11 +806,9 @@ static noinline_for_stack int ethtool_get_drvinfo(struct net_device *dev,
 	if (ops->get_eeprom_len)
 		info.eedump_len = ops->get_eeprom_len(dev);
 
-	rtnl_unlock();
 	if (!info.fw_version[0])
 		devlink_compat_running_version(dev, info.fw_version,
 					       sizeof(info.fw_version));
-	rtnl_lock();
 
 	if (copy_to_user(useraddr, &info, sizeof(info)))
 		return -EFAULT;
@@ -1719,7 +1718,7 @@ static noinline_for_stack int ethtool_set_channels(struct net_device *dev,
 
 static int ethtool_get_pauseparam(struct net_device *dev, void __user *useraddr)
 {
-	struct ethtool_pauseparam pauseparam = { ETHTOOL_GPAUSEPARAM };
+	struct ethtool_pauseparam pauseparam = { .cmd = ETHTOOL_GPAUSEPARAM };
 
 	if (!dev->ethtool_ops->get_pauseparam)
 		return -EOPNOTSUPP;
@@ -1799,11 +1798,16 @@ static int ethtool_get_strings(struct net_device *dev, void __user *useraddr)
 	WARN_ON_ONCE(!ret);
 
 	gstrings.len = ret;
-	data = vzalloc(array_size(gstrings.len, ETH_GSTRING_LEN));
-	if (gstrings.len && !data)
-		return -ENOMEM;
 
-	__ethtool_get_strings(dev, gstrings.string_set, data);
+	if (gstrings.len) {
+		data = vzalloc(array_size(gstrings.len, ETH_GSTRING_LEN));
+		if (!data)
+			return -ENOMEM;
+
+		__ethtool_get_strings(dev, gstrings.string_set, data);
+	} else {
+		data = NULL;
+	}
 
 	ret = -EFAULT;
 	if (copy_to_user(useraddr, &gstrings, sizeof(gstrings)))
@@ -1899,11 +1903,15 @@ static int ethtool_get_stats(struct net_device *dev, void __user *useraddr)
 		return -EFAULT;
 
 	stats.n_stats = n_stats;
-	data = vzalloc(array_size(n_stats, sizeof(u64)));
-	if (n_stats && !data)
-		return -ENOMEM;
 
-	ops->get_ethtool_stats(dev, &stats, data);
+	if (n_stats) {
+		data = vzalloc(array_size(n_stats, sizeof(u64)));
+		if (!data)
+			return -ENOMEM;
+		ops->get_ethtool_stats(dev, &stats, data);
+	} else {
+		data = NULL;
+	}
 
 	ret = -EFAULT;
 	if (copy_to_user(useraddr, &stats, sizeof(stats)))
@@ -1943,16 +1951,21 @@ static int ethtool_get_phy_stats(struct net_device *dev, void __user *useraddr)
 		return -EFAULT;
 
 	stats.n_stats = n_stats;
-	data = vzalloc(array_size(n_stats, sizeof(u64)));
-	if (n_stats && !data)
-		return -ENOMEM;
 
-	if (dev->phydev && !ops->get_ethtool_phy_stats) {
-		ret = phy_ethtool_get_stats(dev->phydev, &stats, data);
-		if (ret < 0)
-			return ret;
+	if (n_stats) {
+		data = vzalloc(array_size(n_stats, sizeof(u64)));
+		if (!data)
+			return -ENOMEM;
+
+		if (dev->phydev && !ops->get_ethtool_phy_stats) {
+			ret = phy_ethtool_get_stats(dev->phydev, &stats, data);
+			if (ret < 0)
+				goto out;
+		} else {
+			ops->get_ethtool_phy_stats(dev, &stats, data);
+		}
 	} else {
-		ops->get_ethtool_phy_stats(dev, &stats, data);
+		data = NULL;
 	}
 
 	ret = -EFAULT;
@@ -2040,15 +2053,8 @@ static noinline_for_stack int ethtool_flash_device(struct net_device *dev,
 		return -EFAULT;
 	efl.data[ETHTOOL_FLASH_MAX_FILENAME - 1] = 0;
 
-	if (!dev->ethtool_ops->flash_device) {
-		int ret;
-
-		rtnl_unlock();
-		ret = devlink_compat_flash_update(dev, efl.data);
-		rtnl_lock();
-
-		return ret;
-	}
+	if (!dev->ethtool_ops->flash_device)
+		return devlink_compat_flash_update(dev, efl.data);
 
 	return dev->ethtool_ops->flash_device(dev, &efl);
 }
@@ -2328,9 +2334,10 @@ static int ethtool_set_tunable(struct net_device *dev, void __user *useraddr)
 	return ret;
 }
 
-static int ethtool_get_per_queue_coalesce(struct net_device *dev,
-					  void __user *useraddr,
-					  struct ethtool_per_queue_op *per_queue_opt)
+static noinline_for_stack int
+ethtool_get_per_queue_coalesce(struct net_device *dev,
+			       void __user *useraddr,
+			       struct ethtool_per_queue_op *per_queue_opt)
 {
 	u32 bit;
 	int ret;
@@ -2358,9 +2365,10 @@ static int ethtool_get_per_queue_coalesce(struct net_device *dev,
 	return 0;
 }
 
-static int ethtool_set_per_queue_coalesce(struct net_device *dev,
-					  void __user *useraddr,
-					  struct ethtool_per_queue_op *per_queue_opt)
+static noinline_for_stack int
+ethtool_set_per_queue_coalesce(struct net_device *dev,
+			       void __user *useraddr,
+			       struct ethtool_per_queue_op *per_queue_opt)
 {
 	u32 bit;
 	int i, ret = 0;
@@ -2414,7 +2422,7 @@ roll_back:
 	return ret;
 }
 
-static int ethtool_set_per_queue(struct net_device *dev,
+static int noinline_for_stack ethtool_set_per_queue(struct net_device *dev,
 				 void __user *useraddr, u32 sub_cmd)
 {
 	struct ethtool_per_queue_op per_queue_opt;
@@ -2439,6 +2447,7 @@ static int ethtool_phy_tunable_valid(const struct ethtool_tunable *tuna)
 {
 	switch (tuna->id) {
 	case ETHTOOL_PHY_DOWNSHIFT:
+	case ETHTOOL_PHY_FAST_LINK_DOWN:
 		if (tuna->len != sizeof(u8) ||
 		    tuna->type_id != ETHTOOL_TUNABLE_U8)
 			return -EINVAL;
@@ -2512,7 +2521,7 @@ static int set_phy_tunable(struct net_device *dev, void __user *useraddr)
 
 static int ethtool_get_fecparam(struct net_device *dev, void __user *useraddr)
 {
-	struct ethtool_fecparam fecparam = { ETHTOOL_GFECPARAM };
+	struct ethtool_fecparam fecparam = { .cmd = ETHTOOL_GFECPARAM };
 	int rc;
 
 	if (!dev->ethtool_ops->get_fecparam)

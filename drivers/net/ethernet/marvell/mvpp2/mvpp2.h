@@ -101,6 +101,7 @@
 #define MVPP2_CLS_FLOW_TBL1_REG			0x1828
 #define     MVPP2_CLS_FLOW_TBL1_N_FIELDS_MASK	0x7
 #define     MVPP2_CLS_FLOW_TBL1_N_FIELDS(x)	(x)
+#define     MVPP2_CLS_FLOW_TBL1_LU_TYPE(lu)	(((lu) & 0x3f) << 3)
 #define     MVPP2_CLS_FLOW_TBL1_PRIO_MASK	0x3f
 #define     MVPP2_CLS_FLOW_TBL1_PRIO(x)		((x) << 9)
 #define     MVPP2_CLS_FLOW_TBL1_SEQ_MASK	0x7
@@ -123,7 +124,10 @@
 #define MVPP22_CLS_C2_TCAM_DATA2		0x1b18
 #define MVPP22_CLS_C2_TCAM_DATA3		0x1b1c
 #define MVPP22_CLS_C2_TCAM_DATA4		0x1b20
+#define     MVPP22_CLS_C2_LU_TYPE(lu)		((lu) & 0x3f)
 #define     MVPP22_CLS_C2_PORT_ID(port)		((port) << 8)
+#define MVPP22_CLS_C2_TCAM_INV			0x1b24
+#define     MVPP22_CLS_C2_TCAM_INV_BIT		BIT(31)
 #define MVPP22_CLS_C2_HIT_CTR			0x1b50
 #define MVPP22_CLS_C2_ACT			0x1b60
 #define     MVPP22_CLS_C2_ACT_RSS_EN(act)	(((act) & 0x3) << 19)
@@ -389,7 +393,7 @@
 #define     MVPP2_GMAC_IN_BAND_AUTONEG		BIT(2)
 #define     MVPP2_GMAC_IN_BAND_AUTONEG_BYPASS	BIT(3)
 #define     MVPP2_GMAC_IN_BAND_RESTART_AN	BIT(4)
-#define     MVPP2_GMAC_CONFIG_MII_SPEED	BIT(5)
+#define     MVPP2_GMAC_CONFIG_MII_SPEED		BIT(5)
 #define     MVPP2_GMAC_CONFIG_GMII_SPEED	BIT(6)
 #define     MVPP2_GMAC_AN_SPEED_EN		BIT(7)
 #define     MVPP2_GMAC_FC_ADV_EN		BIT(9)
@@ -430,6 +434,8 @@
 #define MVPP22_XLG_CTRL0_REG			0x100
 #define     MVPP22_XLG_CTRL0_PORT_EN		BIT(0)
 #define     MVPP22_XLG_CTRL0_MAC_RESET_DIS	BIT(1)
+#define     MVPP22_XLG_CTRL0_FORCE_LINK_DOWN	BIT(2)
+#define     MVPP22_XLG_CTRL0_FORCE_LINK_PASS	BIT(3)
 #define     MVPP22_XLG_CTRL0_RX_FLOW_CTRL_EN	BIT(7)
 #define     MVPP22_XLG_CTRL0_TX_FLOW_CTRL_EN	BIT(8)
 #define     MVPP22_XLG_CTRL0_MIB_CNT_DIS	BIT(14)
@@ -481,6 +487,7 @@
 /* XPCS registers. PPv2.2 only */
 #define MVPP22_XPCS_BASE(port)			(0x7400 + (port) * 0x1000)
 #define MVPP22_XPCS_CFG0			0x0
+#define     MVPP22_XPCS_CFG0_RESET_DIS		BIT(0)
 #define     MVPP22_XPCS_CFG0_PCS_MODE(n)	((n) << 3)
 #define     MVPP22_XPCS_CFG0_ACTIVE_LANE(n)	((n) << 5)
 
@@ -549,8 +556,8 @@
 #define MVPP2_MAX_TSO_SEGS		300
 #define MVPP2_MAX_SKB_DESCS		(MVPP2_MAX_TSO_SEGS * 2 + MAX_SKB_FRAGS)
 
-/* Dfault number of RXQs in use */
-#define MVPP2_DEFAULT_RXQ		1
+/* Max number of RXQs per port */
+#define MVPP2_PORT_MAX_RXQ		32
 
 /* Max number of Rx descriptors */
 #define MVPP2_MAX_RXD_MAX		1024
@@ -606,6 +613,8 @@
 #define MVPP2_BIT_TO_BYTE(bit)		((bit) / 8)
 #define MVPP2_BIT_TO_WORD(bit)		((bit) / 32)
 #define MVPP2_BIT_IN_WORD(bit)		((bit) % 32)
+
+#define MVPP2_N_PRS_FLOWS		52
 
 /* RSS constants */
 #define MVPP22_RSS_TABLE_ENTRIES	32
@@ -707,6 +716,7 @@ enum mvpp2_prs_l3_cast {
 #define MVPP2_DESC_DMA_MASK	DMA_BIT_MASK(40)
 
 /* Definitions */
+struct mvpp2_dbgfs_entries;
 
 /* Shared Packet Processor resources */
 struct mvpp2 {
@@ -768,6 +778,9 @@ struct mvpp2 {
 
 	/* Debugfs root entry */
 	struct dentry *dbgfs_dir;
+
+	/* Debugfs entries private data */
+	struct mvpp2_dbgfs_entries *dbgfs_entries;
 };
 
 struct mvpp2_pcpu_stats {
@@ -803,7 +816,7 @@ struct mvpp2_port {
 	u8 id;
 
 	/* Index of the port from the "group of ports" complex point
-	 * of view
+	 * of view. This is specific to PPv2.2.
 	 */
 	int gop_id;
 

@@ -138,6 +138,7 @@ static inline bool kvm_apic_map_get_logical_dest(struct kvm_apic_map *map,
 		if (offset <= max_apic_id) {
 			u8 cluster_size = min(max_apic_id - offset + 1, 16U);
 
+			offset = array_index_nospec(offset, map->max_apic_id + 1);
 			*cluster = &map->phys_map[offset];
 			*mask = dest_id & (0xffff >> (16 - cluster_size));
 		} else {
@@ -181,7 +182,8 @@ static void recalculate_apic_map(struct kvm *kvm)
 			max_id = max(max_id, kvm_x2apic_id(vcpu->arch.apic));
 
 	new = kvzalloc(sizeof(struct kvm_apic_map) +
-	                   sizeof(struct kvm_lapic *) * ((u64)max_id + 1), GFP_KERNEL);
+	                   sizeof(struct kvm_lapic *) * ((u64)max_id + 1),
+			   GFP_KERNEL_ACCOUNT);
 
 	if (!new)
 		goto out;
@@ -900,7 +902,8 @@ static inline bool kvm_apic_map_get_dest_lapic(struct kvm *kvm,
 		if (irq->dest_id > map->max_apic_id) {
 			*bitmap = 0;
 		} else {
-			*dst = &map->phys_map[irq->dest_id];
+			u32 dest_id = array_index_nospec(irq->dest_id, map->max_apic_id + 1);
+			*dst = &map->phys_map[dest_id];
 			*bitmap = 1;
 		}
 		return true;
@@ -2259,13 +2262,13 @@ int kvm_create_lapic(struct kvm_vcpu *vcpu)
 	ASSERT(vcpu != NULL);
 	apic_debug("apic_init %d\n", vcpu->vcpu_id);
 
-	apic = kzalloc(sizeof(*apic), GFP_KERNEL);
+	apic = kzalloc(sizeof(*apic), GFP_KERNEL_ACCOUNT);
 	if (!apic)
 		goto nomem;
 
 	vcpu->arch.apic = apic;
 
-	apic->regs = (void *)get_zeroed_page(GFP_KERNEL);
+	apic->regs = (void *)get_zeroed_page(GFP_KERNEL_ACCOUNT);
 	if (!apic->regs) {
 		printk(KERN_ERR "malloc apic regs error for vcpu %x\n",
 		       vcpu->vcpu_id);

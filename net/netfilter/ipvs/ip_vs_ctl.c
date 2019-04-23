@@ -831,6 +831,10 @@ __ip_vs_update_dest(struct ip_vs_service *svc, struct ip_vs_dest *dest,
 	conn_flags = udest->conn_flags & IP_VS_CONN_F_DEST_MASK;
 	conn_flags |= IP_VS_CONN_F_INACTIVE;
 
+	/* set the tunnel info */
+	dest->tun_type = udest->tun_type;
+	dest->tun_port = udest->tun_port;
+
 	/* set the IP_VS_CONN_F_NOOUTPUT flag if not masquerading/NAT */
 	if ((conn_flags & IP_VS_CONN_F_FWD_MASK) != IP_VS_CONN_F_MASQ) {
 		conn_flags |= IP_VS_CONN_F_NOOUTPUT;
@@ -987,6 +991,13 @@ ip_vs_add_dest(struct ip_vs_service *svc, struct ip_vs_dest_user_kern *udest)
 		return -ERANGE;
 	}
 
+	if (udest->tun_type == IP_VS_CONN_F_TUNNEL_TYPE_GUE) {
+		if (udest->tun_port == 0) {
+			pr_err("%s(): tunnel port is zero\n", __func__);
+			return -EINVAL;
+		}
+	}
+
 	ip_vs_addr_copy(udest->af, &daddr, &udest->addr);
 
 	/* We use function that requires RCU lock */
@@ -1049,6 +1060,13 @@ ip_vs_edit_dest(struct ip_vs_service *svc, struct ip_vs_dest_user_kern *udest)
 		pr_err("%s(): lower threshold is higher than upper threshold\n",
 			__func__);
 		return -ERANGE;
+	}
+
+	if (udest->tun_type == IP_VS_CONN_F_TUNNEL_TYPE_GUE) {
+		if (udest->tun_port == 0) {
+			pr_err("%s(): tunnel port is zero\n", __func__);
+			return -EINVAL;
+		}
 	}
 
 	ip_vs_addr_copy(udest->af, &daddr, &udest->addr);
@@ -2333,6 +2351,7 @@ static void ip_vs_copy_udest_compat(struct ip_vs_dest_user_kern *udest,
 	udest->u_threshold	= udest_compat->u_threshold;
 	udest->l_threshold	= udest_compat->l_threshold;
 	udest->af		= AF_INET;
+	udest->tun_type		= IP_VS_CONN_F_TUNNEL_TYPE_IPIP;
 }
 
 static int
@@ -2890,6 +2909,8 @@ static const struct nla_policy ip_vs_dest_policy[IPVS_DEST_ATTR_MAX + 1] = {
 	[IPVS_DEST_ATTR_PERSIST_CONNS]	= { .type = NLA_U32 },
 	[IPVS_DEST_ATTR_STATS]		= { .type = NLA_NESTED },
 	[IPVS_DEST_ATTR_ADDR_FAMILY]	= { .type = NLA_U16 },
+	[IPVS_DEST_ATTR_TUN_TYPE]	= { .type = NLA_U8 },
+	[IPVS_DEST_ATTR_TUN_PORT]	= { .type = NLA_U16 },
 };
 
 static int ip_vs_genl_fill_stats(struct sk_buff *skb, int container_type,
@@ -3086,7 +3107,7 @@ static bool ip_vs_is_af_valid(int af)
 
 static int ip_vs_genl_parse_service(struct netns_ipvs *ipvs,
 				    struct ip_vs_service_user_kern *usvc,
-				    struct nlattr *nla, int full_entry,
+				    struct nlattr *nla, bool full_entry,
 				    struct ip_vs_service **ret_svc)
 {
 	struct nlattr *attrs[IPVS_SVC_ATTR_MAX + 1];
@@ -3173,7 +3194,7 @@ static struct ip_vs_service *ip_vs_genl_find_service(struct netns_ipvs *ipvs,
 	struct ip_vs_service *svc;
 	int ret;
 
-	ret = ip_vs_genl_parse_service(ipvs, &usvc, nla, 0, &svc);
+	ret = ip_vs_genl_parse_service(ipvs, &usvc, nla, false, &svc);
 	return ret ? ERR_PTR(ret) : svc;
 }
 
@@ -3193,6 +3214,10 @@ static int ip_vs_genl_fill_dest(struct sk_buff *skb, struct ip_vs_dest *dest)
 			 IP_VS_CONN_F_FWD_MASK)) ||
 	    nla_put_u32(skb, IPVS_DEST_ATTR_WEIGHT,
 			atomic_read(&dest->weight)) ||
+	    nla_put_u8(skb, IPVS_DEST_ATTR_TUN_TYPE,
+		       dest->tun_type) ||
+	    nla_put_be16(skb, IPVS_DEST_ATTR_TUN_PORT,
+			 dest->tun_port) ||
 	    nla_put_u32(skb, IPVS_DEST_ATTR_U_THRESH, dest->u_threshold) ||
 	    nla_put_u32(skb, IPVS_DEST_ATTR_L_THRESH, dest->l_threshold) ||
 	    nla_put_u32(skb, IPVS_DEST_ATTR_ACTIVE_CONNS,
@@ -3283,7 +3308,7 @@ out_err:
 }
 
 static int ip_vs_genl_parse_dest(struct ip_vs_dest_user_kern *udest,
-				 struct nlattr *nla, int full_entry)
+				 struct nlattr *nla, bool full_entry)
 {
 	struct nlattr *attrs[IPVS_DEST_ATTR_MAX + 1];
 	struct nlattr *nla_addr, *nla_port;
@@ -3315,12 +3340,14 @@ static int ip_vs_genl_parse_dest(struct ip_vs_dest_user_kern *udest,
 	/* If a full entry was requested, check for the additional fields */
 	if (full_entry) {
 		struct nlattr *nla_fwd, *nla_weight, *nla_u_thresh,
-			      *nla_l_thresh;
+			      *nla_l_thresh, *nla_tun_type, *nla_tun_port;
 
 		nla_fwd		= attrs[IPVS_DEST_ATTR_FWD_METHOD];
 		nla_weight	= attrs[IPVS_DEST_ATTR_WEIGHT];
 		nla_u_thresh	= attrs[IPVS_DEST_ATTR_U_THRESH];
 		nla_l_thresh	= attrs[IPVS_DEST_ATTR_L_THRESH];
+		nla_tun_type	= attrs[IPVS_DEST_ATTR_TUN_TYPE];
+		nla_tun_port	= attrs[IPVS_DEST_ATTR_TUN_PORT];
 
 		if (!(nla_fwd && nla_weight && nla_u_thresh && nla_l_thresh))
 			return -EINVAL;
@@ -3330,6 +3357,12 @@ static int ip_vs_genl_parse_dest(struct ip_vs_dest_user_kern *udest,
 		udest->weight = nla_get_u32(nla_weight);
 		udest->u_threshold = nla_get_u32(nla_u_thresh);
 		udest->l_threshold = nla_get_u32(nla_l_thresh);
+
+		if (nla_tun_type)
+			udest->tun_type = nla_get_u8(nla_tun_type);
+
+		if (nla_tun_port)
+			udest->tun_port = nla_get_be16(nla_tun_port);
 	}
 
 	return 0;
@@ -3545,11 +3578,11 @@ out:
 
 static int ip_vs_genl_set_cmd(struct sk_buff *skb, struct genl_info *info)
 {
+	bool need_full_svc = false, need_full_dest = false;
 	struct ip_vs_service *svc = NULL;
 	struct ip_vs_service_user_kern usvc;
 	struct ip_vs_dest_user_kern udest;
 	int ret = 0, cmd;
-	int need_full_svc = 0, need_full_dest = 0;
 	struct net *net = sock_net(skb->sk);
 	struct netns_ipvs *ipvs = net_ipvs(net);
 
@@ -3573,7 +3606,7 @@ static int ip_vs_genl_set_cmd(struct sk_buff *skb, struct genl_info *info)
 	 * received a valid one. We need a full service specification when
 	 * adding / editing a service. Only identifying members otherwise. */
 	if (cmd == IPVS_CMD_NEW_SERVICE || cmd == IPVS_CMD_SET_SERVICE)
-		need_full_svc = 1;
+		need_full_svc = true;
 
 	ret = ip_vs_genl_parse_service(ipvs, &usvc,
 				       info->attrs[IPVS_CMD_ATTR_SERVICE],
@@ -3593,7 +3626,7 @@ static int ip_vs_genl_set_cmd(struct sk_buff *skb, struct genl_info *info)
 	if (cmd == IPVS_CMD_NEW_DEST || cmd == IPVS_CMD_SET_DEST ||
 	    cmd == IPVS_CMD_DEL_DEST) {
 		if (cmd != IPVS_CMD_DEL_DEST)
-			need_full_dest = 1;
+			need_full_dest = true;
 
 		ret = ip_vs_genl_parse_dest(&udest,
 					    info->attrs[IPVS_CMD_ATTR_DEST],
@@ -3775,19 +3808,16 @@ static const struct genl_ops ip_vs_genl_ops[] = {
 	{
 		.cmd	= IPVS_CMD_NEW_SERVICE,
 		.flags	= GENL_ADMIN_PERM,
-		.policy	= ip_vs_cmd_policy,
 		.doit	= ip_vs_genl_set_cmd,
 	},
 	{
 		.cmd	= IPVS_CMD_SET_SERVICE,
 		.flags	= GENL_ADMIN_PERM,
-		.policy	= ip_vs_cmd_policy,
 		.doit	= ip_vs_genl_set_cmd,
 	},
 	{
 		.cmd	= IPVS_CMD_DEL_SERVICE,
 		.flags	= GENL_ADMIN_PERM,
-		.policy	= ip_vs_cmd_policy,
 		.doit	= ip_vs_genl_set_cmd,
 	},
 	{
@@ -3795,42 +3825,35 @@ static const struct genl_ops ip_vs_genl_ops[] = {
 		.flags	= GENL_ADMIN_PERM,
 		.doit	= ip_vs_genl_get_cmd,
 		.dumpit	= ip_vs_genl_dump_services,
-		.policy	= ip_vs_cmd_policy,
 	},
 	{
 		.cmd	= IPVS_CMD_NEW_DEST,
 		.flags	= GENL_ADMIN_PERM,
-		.policy	= ip_vs_cmd_policy,
 		.doit	= ip_vs_genl_set_cmd,
 	},
 	{
 		.cmd	= IPVS_CMD_SET_DEST,
 		.flags	= GENL_ADMIN_PERM,
-		.policy	= ip_vs_cmd_policy,
 		.doit	= ip_vs_genl_set_cmd,
 	},
 	{
 		.cmd	= IPVS_CMD_DEL_DEST,
 		.flags	= GENL_ADMIN_PERM,
-		.policy	= ip_vs_cmd_policy,
 		.doit	= ip_vs_genl_set_cmd,
 	},
 	{
 		.cmd	= IPVS_CMD_GET_DEST,
 		.flags	= GENL_ADMIN_PERM,
-		.policy	= ip_vs_cmd_policy,
 		.dumpit	= ip_vs_genl_dump_dests,
 	},
 	{
 		.cmd	= IPVS_CMD_NEW_DAEMON,
 		.flags	= GENL_ADMIN_PERM,
-		.policy	= ip_vs_cmd_policy,
 		.doit	= ip_vs_genl_set_daemon,
 	},
 	{
 		.cmd	= IPVS_CMD_DEL_DAEMON,
 		.flags	= GENL_ADMIN_PERM,
-		.policy	= ip_vs_cmd_policy,
 		.doit	= ip_vs_genl_set_daemon,
 	},
 	{
@@ -3841,7 +3864,6 @@ static const struct genl_ops ip_vs_genl_ops[] = {
 	{
 		.cmd	= IPVS_CMD_SET_CONFIG,
 		.flags	= GENL_ADMIN_PERM,
-		.policy	= ip_vs_cmd_policy,
 		.doit	= ip_vs_genl_set_cmd,
 	},
 	{
@@ -3857,7 +3879,6 @@ static const struct genl_ops ip_vs_genl_ops[] = {
 	{
 		.cmd	= IPVS_CMD_ZERO,
 		.flags	= GENL_ADMIN_PERM,
-		.policy	= ip_vs_cmd_policy,
 		.doit	= ip_vs_genl_set_cmd,
 	},
 	{
@@ -3872,6 +3893,7 @@ static struct genl_family ip_vs_genl_family __ro_after_init = {
 	.name		= IPVS_GENL_NAME,
 	.version	= IPVS_GENL_VERSION,
 	.maxattr	= IPVS_CMD_ATTR_MAX,
+	.policy = ip_vs_cmd_policy,
 	.netnsok        = true,         /* Make ipvsadm to work on netns */
 	.module		= THIS_MODULE,
 	.ops		= ip_vs_genl_ops,

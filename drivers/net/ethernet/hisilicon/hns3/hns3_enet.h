@@ -193,7 +193,6 @@ enum hns3_nic_state {
 #define HNS3_VECTOR_INITED			1
 
 #define HNS3_MAX_BD_SIZE			65535
-#define HNS3_MAX_BD_SIZE_OFFSET		16
 #define HNS3_MAX_BD_PER_FRAG			8
 #define HNS3_MAX_BD_PER_PKT			MAX_SKB_FRAGS
 
@@ -578,18 +577,13 @@ union l4_hdr_info {
 	unsigned char *hdr;
 };
 
-/* the distance between [begin, end) in a ring buffer
- * note: there is a unuse slot between the begin and the end
- */
-static inline int ring_dist(struct hns3_enet_ring *ring, int begin, int end)
-{
-	return (end - begin + ring->desc_num) % ring->desc_num;
-}
-
 static inline int ring_space(struct hns3_enet_ring *ring)
 {
-	return ring->desc_num -
-		ring_dist(ring, ring->next_to_clean, ring->next_to_use) - 1;
+	int begin = ring->next_to_clean;
+	int end = ring->next_to_use;
+
+	return ((end >= begin) ? (ring->desc_num - end + begin) :
+			(begin - end)) - 1;
 }
 
 static inline int is_ring_empty(struct hns3_enet_ring *ring)

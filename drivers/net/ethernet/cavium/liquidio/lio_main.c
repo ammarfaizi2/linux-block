@@ -1192,6 +1192,11 @@ static void send_rx_ctrl_cmd(struct lio *lio, int start_stop)
 	sc = (struct octeon_soft_command *)
 		octeon_alloc_soft_command(oct, OCTNET_CMD_SIZE,
 					  16, 0);
+	if (!sc) {
+		netif_info(lio, rx_err, lio->netdev,
+			   "Failed to allocate octeon_soft_command\n");
+		return;
+	}
 
 	ncmd = (union octnet_cmd *)sc->virtdptr;
 
@@ -2517,7 +2522,7 @@ static netdev_tx_t liquidio_xmit(struct sk_buff *skb, struct net_device *netdev)
 		irh->vlan = skb_vlan_tag_get(skb) & 0xfff;
 	}
 
-	xmit_more = skb->xmit_more;
+	xmit_more = netdev_xmit_more();
 
 	if (unlikely(cmdsetup.s.timestamp))
 		status = send_nic_timestamp_pkt(oct, &ndata, finfo, xmit_more);

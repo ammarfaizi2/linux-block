@@ -22,6 +22,9 @@ int nfp_nsp_write_flash(struct nfp_nsp *state, const struct firmware *fw);
 int nfp_nsp_mac_reinit(struct nfp_nsp *state);
 int nfp_nsp_load_stored_fw(struct nfp_nsp *state);
 int nfp_nsp_hwinfo_lookup(struct nfp_nsp *state, void *buf, unsigned int size);
+int nfp_nsp_read_module_eeprom(struct nfp_nsp *state, int eth_index,
+			       unsigned int offset, void *data,
+			       unsigned int len, unsigned int *read_len);
 
 static inline bool nfp_nsp_has_mac_reinit(struct nfp_nsp *state)
 {
@@ -43,12 +46,18 @@ static inline bool nfp_nsp_has_versions(struct nfp_nsp *state)
 	return nfp_nsp_get_abi_ver_minor(state) > 27;
 }
 
+static inline bool nfp_nsp_has_read_module_eeprom(struct nfp_nsp *state)
+{
+	return nfp_nsp_get_abi_ver_minor(state) > 28;
+}
+
 enum nfp_eth_interface {
 	NFP_INTERFACE_NONE	= 0,
 	NFP_INTERFACE_SFP	= 1,
 	NFP_INTERFACE_SFPP	= 10,
 	NFP_INTERFACE_SFP28	= 28,
 	NFP_INTERFACE_QSFP	= 40,
+	NFP_INTERFACE_RJ45	= 45,
 	NFP_INTERFACE_CXP	= 100,
 	NFP_INTERFACE_QSFP28	= 112,
 };

@@ -442,7 +442,7 @@ static unsigned int speed_to_fw_caps(int speed)
  *	Link Mode Mask.
  */
 static void fw_caps_to_lmm(enum fw_port_type port_type,
-			   unsigned int fw_caps,
+			   fw_port_cap32_t fw_caps,
 			   unsigned long *link_mode_mask)
 {
 	#define SET_LMM(__lmm_name) \
@@ -632,7 +632,10 @@ static int get_link_ksettings(struct net_device *dev,
 
 	fw_caps_to_lmm(pi->port_type, pi->link_cfg.pcaps,
 		       link_ksettings->link_modes.supported);
-	fw_caps_to_lmm(pi->port_type, pi->link_cfg.acaps,
+	fw_caps_to_lmm(pi->port_type,
+		       t4_link_acaps(pi->adapter,
+				     pi->lport,
+				     &pi->link_cfg),
 		       link_ksettings->link_modes.advertising);
 	fw_caps_to_lmm(pi->port_type, pi->link_cfg.lpacaps,
 		       link_ksettings->link_modes.lp_advertising);
@@ -641,22 +644,6 @@ static int get_link_ksettings(struct net_device *dev,
 		       ? pi->link_cfg.speed
 		       : SPEED_UNKNOWN);
 	base->duplex = DUPLEX_FULL;
-
-	if (pi->link_cfg.fc & PAUSE_RX) {
-		if (pi->link_cfg.fc & PAUSE_TX) {
-			ethtool_link_ksettings_add_link_mode(link_ksettings,
-							     advertising,
-							     Pause);
-		} else {
-			ethtool_link_ksettings_add_link_mode(link_ksettings,
-							     advertising,
-							     Asym_Pause);
-		}
-	} else if (pi->link_cfg.fc & PAUSE_TX) {
-		ethtool_link_ksettings_add_link_mode(link_ksettings,
-						     advertising,
-						     Asym_Pause);
-	}
 
 	base->autoneg = pi->link_cfg.autoneg;
 	if (pi->link_cfg.pcaps & FW_PORT_CAP32_ANEG)
@@ -875,7 +862,7 @@ static int set_sge_param(struct net_device *dev, struct ethtool_ringparam *e)
 	    e->rx_pending < MIN_FL_ENTRIES || e->tx_pending < MIN_TXQ_ENTRIES)
 		return -EINVAL;
 
-	if (adapter->flags & FULL_INIT_DONE)
+	if (adapter->flags & CXGB4_FULL_INIT_DONE)
 		return -EBUSY;
 
 	for (i = 0; i < pi->nqsets; ++i) {
@@ -940,7 +927,7 @@ static int get_dbqtimer_tick(struct net_device *dev)
 	struct port_info *pi = netdev_priv(dev);
 	struct adapter *adap = pi->adapter;
 
-	if (!(adap->flags & SGE_DBQ_TIMER))
+	if (!(adap->flags & CXGB4_SGE_DBQ_TIMER))
 		return 0;
 
 	return adap->sge.dbqtimer_tick;
@@ -957,7 +944,7 @@ static int get_dbqtimer(struct net_device *dev)
 
 	txq = &adap->sge.ethtxq[pi->first_qset];
 
-	if (!(adap->flags & SGE_DBQ_TIMER))
+	if (!(adap->flags & CXGB4_SGE_DBQ_TIMER))
 		return 0;
 
 	/* all of the TX Queues use the same Timer Index */
@@ -979,7 +966,7 @@ static int set_dbqtimer_tick(struct net_device *dev, int usecs)
 	u32 param, val;
 	int ret;
 
-	if (!(adap->flags & SGE_DBQ_TIMER))
+	if (!(adap->flags & CXGB4_SGE_DBQ_TIMER))
 		return 0;
 
 	/* return early if it's the same Timer Tick we're already using */
@@ -1015,7 +1002,7 @@ static int set_dbqtimer(struct net_device *dev, int usecs)
 	u32 param, val;
 	int ret;
 
-	if (!(adap->flags & SGE_DBQ_TIMER))
+	if (!(adap->flags & CXGB4_SGE_DBQ_TIMER))
 		return 0;
 
 	/* Find the SGE Doorbell Timer Value that's closest to the requested
@@ -1042,7 +1029,7 @@ static int set_dbqtimer(struct net_device *dev, int usecs)
 		return 0;
 
 	for (qix = 0; qix < pi->nqsets; qix++, txq++) {
-		if (adap->flags & FULL_INIT_DONE) {
+		if (adap->flags & CXGB4_FULL_INIT_DONE) {
 			param =
 			 (FW_PARAMS_MNEM_V(FW_PARAMS_MNEM_DMAQ) |
 			  FW_PARAMS_PARAM_X_V(FW_PARAMS_PARAM_DMAQ_EQ_TIMERIX) |
@@ -1263,7 +1250,7 @@ static int set_flash(struct net_device *netdev, struct ethtool_flash *ef)
 	 * firmware image otherwise we'll try to do the entire job from the
 	 * host ... and we always "force" the operation in this path.
 	 */
-	if (adap->flags & FULL_INIT_DONE)
+	if (adap->flags & CXGB4_FULL_INIT_DONE)
 		mbox = adap->mbox;
 
 	ret = t4_fw_upgrade(adap, mbox, fw->data, fw->size, 1);
@@ -1342,7 +1329,7 @@ static int set_rss_table(struct net_device *dev, const u32 *p, const u8 *key,
 		return 0;
 
 	/* Interface must be brought up atleast once */
-	if (pi->adapter->flags & FULL_INIT_DONE) {
+	if (pi->adapter->flags & CXGB4_FULL_INIT_DONE) {
 		for (i = 0; i < pi->rss_size; i++)
 			pi->rss[i] = p[i];
 

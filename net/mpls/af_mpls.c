@@ -22,7 +22,7 @@
 #if IS_ENABLED(CONFIG_IPV6)
 #include <net/ipv6.h>
 #endif
-#include <net/addrconf.h>
+#include <net/ipv6_stubs.h>
 #include <net/nexthop.h>
 #include "internal.h"
 
@@ -1874,6 +1874,9 @@ static int rtm_to_route_config(struct sk_buff *skb,
 				goto errout;
 			break;
 		}
+		case RTA_GATEWAY:
+			NL_SET_ERR_MSG(extack, "MPLS does not support RTA_GATEWAY attribute");
+			goto errout;
 		case RTA_VIA:
 		{
 			if (nla_get_via(nla, &cfg->rc_via_alen,

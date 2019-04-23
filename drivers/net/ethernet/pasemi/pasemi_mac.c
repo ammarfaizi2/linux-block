@@ -1355,7 +1355,7 @@ static void pasemi_mac_queue_csdesc(const struct sk_buff *skb,
 	const int nh_off = skb_network_offset(skb);
 	const int nh_len = skb_network_header_len(skb);
 	const int nfrags = skb_shinfo(skb)->nr_frags;
-	int cs_size, i, fill, hdr, cpyhdr, evt;
+	int cs_size, i, fill, hdr, evt;
 	dma_addr_t csdma;
 
 	fund = XCT_FUN_ST | XCT_FUN_RR_8BRES |
@@ -1396,7 +1396,6 @@ static void pasemi_mac_queue_csdesc(const struct sk_buff *skb,
 		fill++;
 
 	/* Copy the result into the TCP packet */
-	cpyhdr = fill;
 	CS_DESC(csring, fill++) = XCT_FUN_O | XCT_FUN_FUN(csring->fun) |
 				  XCT_FUN_LLEN(2) | XCT_FUN_SE;
 	CS_DESC(csring, fill++) = XCT_PTR_LEN(2) | XCT_PTR_ADDR(cs_dest) | XCT_PTR_T;
@@ -1716,6 +1715,7 @@ pasemi_mac_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 		err = -ENODEV;
 		goto out;
 	}
+	dma_set_mask(&mac->dma_pdev->dev, DMA_BIT_MASK(64));
 
 	mac->iob_pdev = pci_get_device(PCI_VENDOR_ID_PASEMI, 0xa001, NULL);
 	if (!mac->iob_pdev) {
@@ -1838,7 +1838,7 @@ static void __exit pasemi_mac_cleanup_module(void)
 	pci_unregister_driver(&pasemi_mac_driver);
 }
 
-int pasemi_mac_init_module(void)
+static int pasemi_mac_init_module(void)
 {
 	int err;
 

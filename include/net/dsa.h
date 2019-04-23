@@ -38,6 +38,7 @@ enum dsa_tag_protocol {
 	DSA_TAG_PROTO_EDSA,
 	DSA_TAG_PROTO_GSWIP,
 	DSA_TAG_PROTO_KSZ9477,
+	DSA_TAG_PROTO_KSZ9893,
 	DSA_TAG_PROTO_LAN9303,
 	DSA_TAG_PROTO_MTK,
 	DSA_TAG_PROTO_QCA,
@@ -139,6 +140,7 @@ struct dsa_port {
 	unsigned int		index;
 	const char		*name;
 	const struct dsa_port	*cpu_dp;
+	const char		*mac;
 	struct device_node	*dn;
 	unsigned int		ageing_time;
 	u8			stp_state;
@@ -364,8 +366,7 @@ struct dsa_switch_ops {
 	 */
 	int	(*port_enable)(struct dsa_switch *ds, int port,
 			       struct phy_device *phy);
-	void	(*port_disable)(struct dsa_switch *ds, int port,
-				struct phy_device *phy);
+	void	(*port_disable)(struct dsa_switch *ds, int port);
 
 	/*
 	 * Port's MAC EEE settings

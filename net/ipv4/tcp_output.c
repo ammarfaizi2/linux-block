@@ -52,12 +52,8 @@ void tcp_mstamp_refresh(struct tcp_sock *tp)
 {
 	u64 val = tcp_clock_ns();
 
-	if (val > tp->tcp_clock_cache)
-		tp->tcp_clock_cache = val;
-
-	val = div_u64(val, NSEC_PER_USEC);
-	if (val > tp->tcp_mstamp)
-		tp->tcp_mstamp = val;
+	tp->tcp_clock_cache = val;
+	tp->tcp_mstamp = div_u64(val, NSEC_PER_USEC);
 }
 
 static bool tcp_write_xmit(struct sock *sk, unsigned int mss_now, int nonagle,
@@ -597,7 +593,7 @@ static unsigned int tcp_syn_options(struct sock *sk, struct sk_buff *skb,
 
 	*md5 = NULL;
 #ifdef CONFIG_TCP_MD5SIG
-	if (static_key_false(&tcp_md5_needed) &&
+	if (static_branch_unlikely(&tcp_md5_needed) &&
 	    rcu_access_pointer(tp->md5sig_info)) {
 		*md5 = tp->af_specific->md5_lookup(sk, sk);
 		if (*md5) {
@@ -734,7 +730,7 @@ static unsigned int tcp_established_options(struct sock *sk, struct sk_buff *skb
 
 	*md5 = NULL;
 #ifdef CONFIG_TCP_MD5SIG
-	if (static_key_false(&tcp_md5_needed) &&
+	if (static_branch_unlikely(&tcp_md5_needed) &&
 	    rcu_access_pointer(tp->md5sig_info)) {
 		*md5 = tp->af_specific->md5_lookup(sk, sk);
 		if (*md5) {
@@ -1846,17 +1842,17 @@ static bool tcp_snd_wnd_test(const struct tcp_sock *tp,
  * know that all the data is in scatter-gather pages, and that the
  * packet has never been sent out before (and thus is not cloned).
  */
-static int tso_fragment(struct sock *sk, enum tcp_queue tcp_queue,
-			struct sk_buff *skb, unsigned int len,
+static int tso_fragment(struct sock *sk, struct sk_buff *skb, unsigned int len,
 			unsigned int mss_now, gfp_t gfp)
 {
-	struct sk_buff *buff;
 	int nlen = skb->len - len;
+	struct sk_buff *buff;
 	u8 flags;
 
 	/* All of a TSO frame must be composed of paged data.  */
 	if (skb->len != skb->data_len)
-		return tcp_fragment(sk, tcp_queue, skb, len, mss_now, gfp);
+		return tcp_fragment(sk, TCP_FRAG_IN_WRITE_QUEUE,
+				    skb, len, mss_now, gfp);
 
 	buff = sk_stream_alloc_skb(sk, 0, gfp, true);
 	if (unlikely(!buff))
@@ -1892,7 +1888,7 @@ static int tso_fragment(struct sock *sk, enum tcp_queue tcp_queue,
 
 	/* Link BUFF into the send queue. */
 	__skb_header_release(buff);
-	tcp_insert_write_queue_after(skb, buff, sk, tcp_queue);
+	tcp_insert_write_queue_after(skb, buff, sk, TCP_FRAG_IN_WRITE_QUEUE);
 
 	return 0;
 }
@@ -2391,8 +2387,7 @@ static bool tcp_write_xmit(struct sock *sk, unsigned int mss_now, int nonagle,
 						    nonagle);
 
 		if (skb->len > limit &&
-		    unlikely(tso_fragment(sk, TCP_FRAG_IN_WRITE_QUEUE,
-					  skb, limit, mss_now, gfp)))
+		    unlikely(tso_fragment(sk, skb, limit, mss_now, gfp)))
 			break;
 
 		if (tcp_small_queue_check(sk, skb, 0))
@@ -3093,7 +3088,6 @@ void tcp_send_fin(struct sock *sk)
 		tskb = skb_rb_last(&sk->tcp_rtx_queue);
 
 	if (tskb) {
-coalesce:
 		TCP_SKB_CB(tskb)->tcp_flags |= TCPHDR_FIN;
 		TCP_SKB_CB(tskb)->end_seq++;
 		tp->write_seq++;
@@ -3109,11 +3103,9 @@ coalesce:
 		}
 	} else {
 		skb = alloc_skb_fclone(MAX_TCP_HEADER, sk->sk_allocation);
-		if (unlikely(!skb)) {
-			if (tskb)
-				goto coalesce;
+		if (unlikely(!skb))
 			return;
-		}
+
 		INIT_LIST_HEAD(&skb->tcp_tsorted_anchor);
 		skb_reserve(skb, MAX_TCP_HEADER);
 		sk_forced_mem_schedule(sk, skb->truesize);

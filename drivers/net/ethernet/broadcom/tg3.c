@@ -4283,7 +4283,7 @@ static void tg3_power_down(struct tg3 *tp)
 	pci_set_power_state(tp->pdev, PCI_D3hot);
 }
 
-static void tg3_aux_stat_to_speed_duplex(struct tg3 *tp, u32 val, u16 *speed, u8 *duplex)
+static void tg3_aux_stat_to_speed_duplex(struct tg3 *tp, u32 val, u32 *speed, u8 *duplex)
 {
 	switch (val & MII_TG3_AUX_STAT_SPDMASK) {
 	case MII_TG3_AUX_STAT_10HALF:
@@ -4787,7 +4787,7 @@ static int tg3_setup_copper_phy(struct tg3 *tp, bool force_reset)
 	bool current_link_up;
 	u32 bmsr, val;
 	u32 lcl_adv, rmt_adv;
-	u16 current_speed;
+	u32 current_speed;
 	u8 current_duplex;
 	int i, err;
 
@@ -5719,7 +5719,7 @@ out:
 static int tg3_setup_fiber_phy(struct tg3 *tp, bool force_reset)
 {
 	u32 orig_pause_cfg;
-	u16 orig_active_speed;
+	u32 orig_active_speed;
 	u8 orig_active_duplex;
 	u32 mac_status;
 	bool current_link_up;
@@ -5823,7 +5823,7 @@ static int tg3_setup_fiber_mii_phy(struct tg3 *tp, bool force_reset)
 {
 	int err = 0;
 	u32 bmsr, bmcr;
-	u16 current_speed = SPEED_UNKNOWN;
+	u32 current_speed = SPEED_UNKNOWN;
 	u8 current_duplex = DUPLEX_UNKNOWN;
 	bool current_link_up = false;
 	u32 local_adv, remote_adv, sgsr;
@@ -8156,7 +8156,7 @@ static netdev_tx_t tg3_start_xmit(struct sk_buff *skb, struct net_device *dev)
 			netif_tx_wake_queue(txq);
 	}
 
-	if (!skb->xmit_more || netif_xmit_stopped(txq)) {
+	if (!netdev_xmit_more() || netif_xmit_stopped(txq)) {
 		/* Packets are ready, update Tx producer idx on card. */
 		tw32_tx_mbox(tnapi->prodmbox, entry);
 		mmiowb();
@@ -12762,9 +12762,6 @@ static int tg3_set_phys_id(struct net_device *dev,
 			    enum ethtool_phys_id_state state)
 {
 	struct tg3 *tp = netdev_priv(dev);
-
-	if (!netif_running(tp->dev))
-		return -EAGAIN;
 
 	switch (state) {
 	case ETHTOOL_ID_ACTIVE:

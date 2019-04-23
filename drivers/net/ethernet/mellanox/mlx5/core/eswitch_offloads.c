@@ -1287,13 +1287,13 @@ void esw_offloads_cleanup_reps(struct mlx5_eswitch *esw)
 
 int esw_offloads_init_reps(struct mlx5_eswitch *esw)
 {
-	int total_vfs = MLX5_TOTAL_VPORTS(esw->dev);
+	int total_vports = MLX5_TOTAL_VPORTS(esw->dev);
 	struct mlx5_core_dev *dev = esw->dev;
 	struct mlx5_eswitch_rep *rep;
 	u8 hw_id[ETH_ALEN], rep_type;
 	int vport;
 
-	esw->offloads.vport_reps = kcalloc(total_vfs,
+	esw->offloads.vport_reps = kcalloc(total_vports,
 					   sizeof(struct mlx5_eswitch_rep),
 					   GFP_KERNEL);
 	if (!esw->offloads.vport_reps)
@@ -1523,8 +1523,6 @@ static int mlx5_esw_offloads_pair(struct mlx5_eswitch *esw,
 	return 0;
 }
 
-void mlx5e_tc_clean_fdb_peer_flows(struct mlx5_eswitch *esw);
-
 static void mlx5_esw_offloads_unpair(struct mlx5_eswitch *esw)
 {
 	mlx5e_tc_clean_fdb_peer_flows(esw);
@@ -1611,6 +1609,7 @@ static int esw_offloads_steering_init(struct mlx5_eswitch *esw, int nvports)
 {
 	int err;
 
+	memset(&esw->fdb_table.offloads, 0, sizeof(struct offloads_fdb));
 	mutex_init(&esw->fdb_table.offloads.fdb_prio_lock);
 
 	err = esw_create_offloads_fdb_tables(esw, nvports);
@@ -1698,8 +1697,6 @@ int esw_offloads_init(struct mlx5_eswitch *esw, int vf_nvports,
 		      int total_nvports)
 {
 	int err;
-
-	mutex_init(&esw->fdb_table.offloads.fdb_prio_lock);
 
 	err = esw_offloads_steering_init(esw, total_nvports);
 	if (err)

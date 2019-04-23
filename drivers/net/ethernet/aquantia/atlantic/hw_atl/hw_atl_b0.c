@@ -173,6 +173,7 @@ static int hw_atl_b0_hw_rss_hash_set(struct aq_hw_s *self,
 	int err = 0;
 	unsigned int i = 0U;
 	unsigned int addr = 0U;
+	u32 val;
 
 	for (i = 10, addr = 0U; i--; ++addr) {
 		u32 key_data = cfg->is_rss ?
@@ -180,8 +181,9 @@ static int hw_atl_b0_hw_rss_hash_set(struct aq_hw_s *self,
 		hw_atl_rpf_rss_key_wr_data_set(self, key_data);
 		hw_atl_rpf_rss_key_addr_set(self, addr);
 		hw_atl_rpf_rss_key_wr_en_set(self, 1U);
-		AQ_HW_WAIT_FOR(hw_atl_rpf_rss_key_wr_en_get(self) == 0,
-			       1000U, 10U);
+		err = readx_poll_timeout_atomic(hw_atl_rpf_rss_key_wr_en_get,
+						self, val, val == 0,
+						1000U, 10000U);
 		if (err < 0)
 			goto err_exit;
 	}
@@ -199,8 +201,9 @@ static int hw_atl_b0_hw_rss_set(struct aq_hw_s *self,
 	u32 i = 0U;
 	u32 num_rss_queues = max(1U, self->aq_nic_cfg->num_rss_queues);
 	int err = 0;
-	u16 bitary[(HW_ATL_B0_RSS_REDIRECTION_MAX *
-					HW_ATL_B0_RSS_REDIRECTION_BITS / 16U)];
+	u16 bitary[1 + (HW_ATL_B0_RSS_REDIRECTION_MAX *
+		   HW_ATL_B0_RSS_REDIRECTION_BITS / 16U)];
+	u32 val;
 
 	memset(bitary, 0, sizeof(bitary));
 
@@ -214,8 +217,9 @@ static int hw_atl_b0_hw_rss_set(struct aq_hw_s *self,
 		hw_atl_rpf_rss_redir_tbl_wr_data_set(self, bitary[i]);
 		hw_atl_rpf_rss_redir_tbl_addr_set(self, i);
 		hw_atl_rpf_rss_redir_wr_en_set(self, 1U);
-		AQ_HW_WAIT_FOR(hw_atl_rpf_rss_redir_wr_en_get(self) == 0,
-			       1000U, 10U);
+		err = readx_poll_timeout_atomic(hw_atl_rpf_rss_redir_wr_en_get,
+						self, val, val == 0,
+						1000U, 10000U);
 		if (err < 0)
 			goto err_exit;
 	}
@@ -255,7 +259,13 @@ static int hw_atl_b0_hw_offload_set(struct aq_hw_s *self,
 
 		hw_atl_rpo_lro_time_base_divider_set(self, 0x61AU);
 		hw_atl_rpo_lro_inactive_interval_set(self, 0);
-		hw_atl_rpo_lro_max_coalescing_interval_set(self, 2);
+		/* the LRO timebase divider is 5 uS (0x61a),
+		 * which is multiplied by 50(0x32)
+		 * to get a maximum coalescing interval of 250 uS,
+		 * which is the default value
+		 */
+		hw_atl_rpo_lro_max_coalescing_interval_set(self, 50);
+
 
 		hw_atl_rpo_lro_qsessions_lim_set(self, 1U);
 
@@ -269,12 +279,19 @@ static int hw_atl_b0_hw_offload_set(struct aq_hw_s *self,
 
 		hw_atl_rpo_lro_en_set(self,
 				      aq_nic_cfg->is_lro ? 0xFFFFFFFFU : 0U);
+		hw_atl_itr_rsc_en_set(self,
+				      aq_nic_cfg->is_lro ? 0xFFFFFFFFU : 0U);
+
+		hw_atl_itr_rsc_delay_set(self, 1U);
 	}
 	return aq_hw_err_from_flags(self);
 }
 
 static int hw_atl_b0_hw_init_tx_path(struct aq_hw_s *self)
 {
+	/* Tx TC/Queue number config */
+	hw_atl_rpb_tps_tx_tc_mode_set(self, 1U);
+
 	hw_atl_thm_lso_tcp_flag_of_first_pkt_set(self, 0x0FF6U);
 	hw_atl_thm_lso_tcp_flag_of_middle_pkt_set(self, 0x0FF6U);
 	hw_atl_thm_lso_tcp_flag_of_last_pkt_set(self, 0x0F7FU);
@@ -647,8 +664,6 @@ err_exit:
 static int hw_atl_b0_hw_ring_rx_receive(struct aq_hw_s *self,
 					struct aq_ring_s *ring)
 {
-	struct device *ndev = aq_nic_get_dev(ring->aq_nic);
-
 	for (; ring->hw_head != ring->sw_tail;
 		ring->hw_head = aq_ring_next_dx(ring, ring->hw_head)) {
 		struct aq_ring_buff_s *buff = NULL;
@@ -689,8 +704,6 @@ static int hw_atl_b0_hw_ring_rx_receive(struct aq_hw_s *self,
 			buff->is_ip_cso = 0U;
 			buff->is_cso_err = 0U;
 		}
-
-		dma_unmap_page(ndev, buff->pa, buff->len, DMA_FROM_DEVICE);
 
 		if ((rx_stat & BIT(0)) || rxd_wb->type & 0x1000U) {
 			/* MAC error or DMA error */

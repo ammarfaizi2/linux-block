@@ -2274,8 +2274,7 @@ static const struct ethtool_ops bcm_sysport_ethtool_ops = {
 };
 
 static u16 bcm_sysport_select_queue(struct net_device *dev, struct sk_buff *skb,
-				    struct net_device *sb_dev,
-				    select_queue_fallback_t fallback)
+				    struct net_device *sb_dev)
 {
 	struct bcm_sysport_priv *priv = netdev_priv(dev);
 	u16 queue = skb_get_queue_mapping(skb);
@@ -2283,7 +2282,7 @@ static u16 bcm_sysport_select_queue(struct net_device *dev, struct sk_buff *skb,
 	unsigned int q, port;
 
 	if (!netdev_uses_dsa(dev))
-		return fallback(dev, skb, NULL);
+		return netdev_pick_tx(dev, skb, NULL);
 
 	/* DSA tagging layer will have configured the correct queue */
 	q = BRCM_TAG_GET_QUEUE(queue);
@@ -2291,7 +2290,7 @@ static u16 bcm_sysport_select_queue(struct net_device *dev, struct sk_buff *skb,
 	tx_ring = priv->ring_map[q + port * priv->per_port_num_tx_queues];
 
 	if (unlikely(!tx_ring))
-		return fallback(dev, skb, NULL);
+		return netdev_pick_tx(dev, skb, NULL);
 
 	return tx_ring->index;
 }
@@ -2599,11 +2598,11 @@ static int bcm_sysport_probe(struct platform_device *pdev)
 
 	priv->rev = topctrl_readl(priv, REV_CNTL) & REV_MASK;
 	dev_info(&pdev->dev,
-		 "Broadcom SYSTEMPORT%s" REV_FMT
-		 " at 0x%p (irqs: %d, %d, TXQs: %d, RXQs: %d)\n",
+		 "Broadcom SYSTEMPORT%s " REV_FMT
+		 " (irqs: %d, %d, TXQs: %d, RXQs: %d)\n",
 		 priv->is_lite ? " Lite" : "",
 		 (priv->rev >> 8) & 0xff, priv->rev & 0xff,
-		 priv->base, priv->irq0, priv->irq1, txq, rxq);
+		 priv->irq0, priv->irq1, txq, rxq);
 
 	return 0;
 

@@ -51,7 +51,10 @@ TEST_PROGS := test_kmod.sh \
 	test_skb_cgroup_id.sh \
 	test_flow_dissector.sh \
 	test_xdp_vlan.sh \
-	test_lwt_ip_encap.sh
+	test_lwt_ip_encap.sh \
+	test_tcp_check_syncookie.sh \
+	test_tc_tunnel.sh \
+	test_tc_edt.sh
 
 TEST_PROGS_EXTENDED := with_addr.sh \
 	with_tunnels.sh \
@@ -60,7 +63,7 @@ TEST_PROGS_EXTENDED := with_addr.sh \
 
 # Compile but not part of 'make run_tests'
 TEST_GEN_PROGS_EXTENDED = test_libbpf_open test_sock_addr test_skb_cgroup_id_user \
-	flow_dissector_load test_flow_dissector
+	flow_dissector_load test_flow_dissector test_tcp_check_syncookie_user
 
 include ../lib.mk
 
@@ -69,7 +72,7 @@ TEST_CUSTOM_PROGS = $(OUTPUT)/urandom_read
 all: $(TEST_CUSTOM_PROGS)
 
 $(OUTPUT)/urandom_read: $(OUTPUT)/%: %.c
-	$(CC) -o $@ -static $< -Wl,--build-id
+	$(CC) -o $@ $< -Wl,--build-id
 
 BPFOBJ := $(OUTPUT)/libbpf.a
 
@@ -153,6 +156,9 @@ endif
 endif
 endif
 
+TEST_PROGS_CFLAGS := -I. -I$(OUTPUT)
+TEST_VERIFIER_CFLAGS := -I. -I$(OUTPUT) -Iverifier
+
 ifneq ($(SUBREG_CODEGEN),)
 ALU32_BUILD_DIR = $(OUTPUT)/alu32
 TEST_CUSTOM_PROGS += $(ALU32_BUILD_DIR)/test_progs_32
@@ -162,10 +168,16 @@ $(ALU32_BUILD_DIR):
 $(ALU32_BUILD_DIR)/urandom_read: $(OUTPUT)/urandom_read
 	cp $< $@
 
-$(ALU32_BUILD_DIR)/test_progs_32: test_progs.c $(ALU32_BUILD_DIR) \
+$(ALU32_BUILD_DIR)/test_progs_32: test_progs.c $(OUTPUT)/libbpf.a\
+						$(ALU32_BUILD_DIR) \
 						$(ALU32_BUILD_DIR)/urandom_read
-	$(CC) $(CFLAGS) -o $(ALU32_BUILD_DIR)/test_progs_32 $< \
-		trace_helpers.c $(OUTPUT)/libbpf.a $(LDLIBS)
+	$(CC) $(TEST_PROGS_CFLAGS) $(CFLAGS) \
+		-o $(ALU32_BUILD_DIR)/test_progs_32 \
+		test_progs.c trace_helpers.c prog_tests/*.c \
+		$(OUTPUT)/libbpf.a $(LDLIBS)
+
+$(ALU32_BUILD_DIR)/test_progs_32: $(PROG_TESTS_H)
+$(ALU32_BUILD_DIR)/test_progs_32: prog_tests/*.c
 
 $(ALU32_BUILD_DIR)/%.o: progs/%.c $(ALU32_BUILD_DIR) \
 					$(ALU32_BUILD_DIR)/test_progs_32
@@ -196,13 +208,40 @@ ifeq ($(DWARF2BTF),y)
 	$(BTF_PAHOLE) -J $@
 endif
 
+PROG_TESTS_H := $(OUTPUT)/prog_tests/tests.h
+test_progs.c: $(PROG_TESTS_H)
+$(OUTPUT)/test_progs: CFLAGS += $(TEST_PROGS_CFLAGS)
+$(OUTPUT)/test_progs: prog_tests/*.c
+
+PROG_TESTS_DIR = $(OUTPUT)/prog_tests
+$(PROG_TESTS_DIR):
+	mkdir -p $@
+
+PROG_TESTS_FILES := $(wildcard prog_tests/*.c)
+$(PROG_TESTS_H): $(PROG_TESTS_DIR) $(PROG_TESTS_FILES)
+	$(shell ( cd prog_tests/; \
+		  echo '/* Generated header, do not edit */'; \
+		  echo '#ifdef DECLARE'; \
+		  ls *.c 2> /dev/null | \
+			sed -e 's@\([^\.]*\)\.c@extern void test_\1(void);@'; \
+		  echo '#endif'; \
+		  echo '#ifdef CALL'; \
+		  ls *.c 2> /dev/null | \
+			sed -e 's@\([^\.]*\)\.c@test_\1();@'; \
+		  echo '#endif' \
+		 ) > $(PROG_TESTS_H))
+
 VERIFIER_TESTS_H := $(OUTPUT)/verifier/tests.h
-$(OUTPUT)/test_verifier: $(VERIFIER_TESTS_H)
-$(OUTPUT)/test_verifier: CFLAGS += -I$(OUTPUT)
+test_verifier.c: $(VERIFIER_TESTS_H)
+$(OUTPUT)/test_verifier: CFLAGS += $(TEST_VERIFIER_CFLAGS)
+
+VERIFIER_TESTS_DIR = $(OUTPUT)/verifier
+$(VERIFIER_TESTS_DIR):
+	mkdir -p $@
 
 VERIFIER_TEST_FILES := $(wildcard verifier/*.c)
-$(OUTPUT)/verifier/tests.h: $(VERIFIER_TEST_FILES)
-	$(shell ( cd verifier/
+$(OUTPUT)/verifier/tests.h: $(VERIFIER_TESTS_DIR) $(VERIFIER_TEST_FILES)
+	$(shell ( cd verifier/; \
 		  echo '/* Generated header, do not edit */'; \
 		  echo '#ifdef FILL_ARRAY'; \
 		  ls *.c 2> /dev/null | \
@@ -211,4 +250,4 @@ $(OUTPUT)/verifier/tests.h: $(VERIFIER_TEST_FILES)
 		 ) > $(VERIFIER_TESTS_H))
 
 EXTRA_CLEAN := $(TEST_CUSTOM_PROGS) $(ALU32_BUILD_DIR) \
-	$(VERIFIER_TESTS_H)
+	$(VERIFIER_TESTS_H) $(PROG_TESTS_H)

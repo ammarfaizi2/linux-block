@@ -241,7 +241,6 @@ struct mlx5e_params {
 	struct net_dim_cq_moder rx_cq_moderation;
 	struct net_dim_cq_moder tx_cq_moderation;
 	bool lro_en;
-	u32 lro_wqe_sz;
 	u8  tx_min_inline_mode;
 	bool vlan_strip_disable;
 	bool scatter_fcs_en;
@@ -769,11 +768,10 @@ struct mlx5e_profile {
 void mlx5e_build_ptys2ethtool_map(void);
 
 u16 mlx5e_select_queue(struct net_device *dev, struct sk_buff *skb,
-		       struct net_device *sb_dev,
-		       select_queue_fallback_t fallback);
+		       struct net_device *sb_dev);
 netdev_tx_t mlx5e_xmit(struct sk_buff *skb, struct net_device *dev);
 netdev_tx_t mlx5e_sq_xmit(struct mlx5e_txqsq *sq, struct sk_buff *skb,
-			  struct mlx5e_tx_wqe *wqe, u16 pi);
+			  struct mlx5e_tx_wqe *wqe, u16 pi, bool xmit_more);
 
 void mlx5e_completion_event(struct mlx5_core_cq *mcq);
 void mlx5e_cq_error_event(struct mlx5_core_cq *mcq, enum mlx5_event event);
@@ -858,6 +856,7 @@ void mlx5e_close_channels(struct mlx5e_channels *chs);
  * switching channels
  */
 typedef int (*mlx5e_fp_hw_modify)(struct mlx5e_priv *priv);
+int mlx5e_safe_reopen_channels(struct mlx5e_priv *priv);
 int mlx5e_safe_switch_channels(struct mlx5e_priv *priv,
 			       struct mlx5e_channels *new_chs,
 			       mlx5e_fp_hw_modify hw_modify);
@@ -883,6 +882,53 @@ static inline bool mlx5e_tunnel_inner_ft_supported(struct mlx5_core_dev *mdev)
 {
 	return (MLX5_CAP_ETH(mdev, tunnel_stateless_gre) &&
 		MLX5_CAP_FLOWTABLE_NIC_RX(mdev, ft_field_support.inner_ip_version));
+}
+
+static inline bool mlx5_tx_swp_supported(struct mlx5_core_dev *mdev)
+{
+	return MLX5_CAP_ETH(mdev, swp) &&
+		MLX5_CAP_ETH(mdev, swp_csum) && MLX5_CAP_ETH(mdev, swp_lso);
+}
+
+struct mlx5e_swp_spec {
+	__be16 l3_proto;
+	u8 l4_proto;
+	u8 is_tun;
+	__be16 tun_l3_proto;
+	u8 tun_l4_proto;
+};
+
+static inline void
+mlx5e_set_eseg_swp(struct sk_buff *skb, struct mlx5_wqe_eth_seg *eseg,
+		   struct mlx5e_swp_spec *swp_spec)
+{
+	/* SWP offsets are in 2-bytes words */
+	eseg->swp_outer_l3_offset = skb_network_offset(skb) / 2;
+	if (swp_spec->l3_proto == htons(ETH_P_IPV6))
+		eseg->swp_flags |= MLX5_ETH_WQE_SWP_OUTER_L3_IPV6;
+	if (swp_spec->l4_proto) {
+		eseg->swp_outer_l4_offset = skb_transport_offset(skb) / 2;
+		if (swp_spec->l4_proto == IPPROTO_UDP)
+			eseg->swp_flags |= MLX5_ETH_WQE_SWP_OUTER_L4_UDP;
+	}
+
+	if (swp_spec->is_tun) {
+		eseg->swp_inner_l3_offset = skb_inner_network_offset(skb) / 2;
+		if (swp_spec->tun_l3_proto == htons(ETH_P_IPV6))
+			eseg->swp_flags |= MLX5_ETH_WQE_SWP_INNER_L3_IPV6;
+	} else { /* typically for ipsec when xfrm mode != XFRM_MODE_TUNNEL */
+		eseg->swp_inner_l3_offset = skb_network_offset(skb) / 2;
+		if (swp_spec->l3_proto == htons(ETH_P_IPV6))
+			eseg->swp_flags |= MLX5_ETH_WQE_SWP_INNER_L3_IPV6;
+	}
+	switch (swp_spec->tun_l4_proto) {
+	case IPPROTO_UDP:
+		eseg->swp_flags |= MLX5_ETH_WQE_SWP_INNER_L4_UDP;
+		/* fall through */
+	case IPPROTO_TCP:
+		eseg->swp_inner_l4_offset = skb_inner_transport_offset(skb) / 2;
+		break;
+	}
 }
 
 static inline void mlx5e_sq_fetch_wqe(struct mlx5e_txqsq *sq,
@@ -929,7 +975,7 @@ void mlx5e_notify_hw(struct mlx5_wq_cyc *wq, u16 pc,
 	 */
 	wmb();
 
-	mlx5_write64((__be32 *)ctrl, uar_map, NULL);
+	mlx5_write64((__be32 *)ctrl, uar_map);
 }
 
 static inline void mlx5e_cq_arm(struct mlx5e_cq *cq)
@@ -1041,6 +1087,7 @@ mlx5e_create_netdev(struct mlx5_core_dev *mdev, const struct mlx5e_profile *prof
 int mlx5e_attach_netdev(struct mlx5e_priv *priv);
 void mlx5e_detach_netdev(struct mlx5e_priv *priv);
 void mlx5e_destroy_netdev(struct mlx5e_priv *priv);
+void mlx5e_set_netdev_mtu_boundaries(struct mlx5e_priv *priv);
 void mlx5e_build_nic_params(struct mlx5_core_dev *mdev,
 			    struct mlx5e_rss_params *rss_params,
 			    struct mlx5e_params *params,

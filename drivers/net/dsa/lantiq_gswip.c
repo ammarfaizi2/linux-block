@@ -480,8 +480,7 @@ static int gswip_port_enable(struct dsa_switch *ds, int port,
 	return 0;
 }
 
-static void gswip_port_disable(struct dsa_switch *ds, int port,
-			       struct phy_device *phy)
+static void gswip_port_disable(struct dsa_switch *ds, int port)
 {
 	struct gswip_priv *priv = ds->priv;
 
@@ -549,7 +548,7 @@ static int gswip_setup(struct dsa_switch *ds)
 
 	/* disable port fetch/store dma on all ports */
 	for (i = 0; i < priv->hw_info->max_ports; i++)
-		gswip_port_disable(ds, i, NULL);
+		gswip_port_disable(ds, i);
 
 	/* enable Switch */
 	gswip_mdio_mask(priv, 0, GSWIP_MDIO_GLOB_ENABLE, GSWIP_MDIO_GLOB);
@@ -1164,6 +1163,12 @@ static struct platform_driver gswip_driver = {
 
 module_platform_driver(gswip_driver);
 
+MODULE_FIRMWARE("lantiq/xrx300_phy11g_a21.bin");
+MODULE_FIRMWARE("lantiq/xrx300_phy22f_a21.bin");
+MODULE_FIRMWARE("lantiq/xrx200_phy11g_a14.bin");
+MODULE_FIRMWARE("lantiq/xrx200_phy11g_a22.bin");
+MODULE_FIRMWARE("lantiq/xrx200_phy22f_a14.bin");
+MODULE_FIRMWARE("lantiq/xrx200_phy22f_a22.bin");
 MODULE_AUTHOR("Hauke Mehrtens <hauke@hauke-m.de>");
 MODULE_DESCRIPTION("Lantiq / Intel GSWIP driver");
 MODULE_LICENSE("GPL v2");

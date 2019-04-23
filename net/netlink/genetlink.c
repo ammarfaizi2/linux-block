@@ -366,7 +366,7 @@ int genl_register_family(struct genl_family *family)
 			       start, end + 1, GFP_KERNEL);
 	if (family->id < 0) {
 		err = family->id;
-		goto errout_locked;
+		goto errout_free;
 	}
 
 	err = genl_validate_assign_mc_groups(family);
@@ -385,6 +385,7 @@ int genl_register_family(struct genl_family *family)
 
 errout_remove:
 	idr_remove(&genl_fam_idr, family->id);
+errout_free:
 	kfree(family->attrbuf);
 errout_locked:
 	genl_unlock_all();
@@ -577,7 +578,7 @@ static int genl_family_rcv_msg(const struct genl_family *family,
 
 	if (attrbuf) {
 		err = nlmsg_parse(nlh, hdrlen, attrbuf, family->maxattr,
-				  ops->policy, extack);
+				  family->policy, extack);
 		if (err < 0)
 			goto out;
 	}
@@ -677,7 +678,7 @@ static int ctrl_fill_info(const struct genl_family *family, u32 portid, u32 seq,
 				op_flags |= GENL_CMD_CAP_DUMP;
 			if (ops->doit)
 				op_flags |= GENL_CMD_CAP_DO;
-			if (ops->policy)
+			if (family->policy)
 				op_flags |= GENL_CMD_CAP_HASPOL;
 
 			nest = nla_nest_start(skb, i + 1);
@@ -939,7 +940,6 @@ static const struct genl_ops genl_ctrl_ops[] = {
 		.cmd		= CTRL_CMD_GETFAMILY,
 		.doit		= ctrl_getfamily,
 		.dumpit		= ctrl_dumpfamily,
-		.policy		= ctrl_policy,
 	},
 };
 
@@ -957,6 +957,7 @@ static struct genl_family genl_ctrl __ro_after_init = {
 	.name = "nlctrl",
 	.version = 0x2,
 	.maxattr = CTRL_ATTR_MAX,
+	.policy = ctrl_policy,
 	.netnsok = true,
 };
 

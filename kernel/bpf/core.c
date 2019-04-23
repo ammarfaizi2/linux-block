@@ -78,7 +78,7 @@ void *bpf_internal_load_pointer_neg_helper(const struct sk_buff *skb, int k, uns
 	return NULL;
 }
 
-struct bpf_prog *bpf_prog_alloc(unsigned int size, gfp_t gfp_extra_flags)
+struct bpf_prog *bpf_prog_alloc_no_stats(unsigned int size, gfp_t gfp_extra_flags)
 {
 	gfp_t gfp_flags = GFP_KERNEL | __GFP_ZERO | gfp_extra_flags;
 	struct bpf_prog_aux *aux;
@@ -103,6 +103,32 @@ struct bpf_prog *bpf_prog_alloc(unsigned int size, gfp_t gfp_extra_flags)
 	INIT_LIST_HEAD_RCU(&fp->aux->ksym_lnode);
 
 	return fp;
+}
+
+struct bpf_prog *bpf_prog_alloc(unsigned int size, gfp_t gfp_extra_flags)
+{
+	gfp_t gfp_flags = GFP_KERNEL | __GFP_ZERO | gfp_extra_flags;
+	struct bpf_prog *prog;
+	int cpu;
+
+	prog = bpf_prog_alloc_no_stats(size, gfp_extra_flags);
+	if (!prog)
+		return NULL;
+
+	prog->aux->stats = alloc_percpu_gfp(struct bpf_prog_stats, gfp_flags);
+	if (!prog->aux->stats) {
+		kfree(prog->aux);
+		vfree(prog);
+		return NULL;
+	}
+
+	for_each_possible_cpu(cpu) {
+		struct bpf_prog_stats *pstats;
+
+		pstats = per_cpu_ptr(prog->aux->stats, cpu);
+		u64_stats_init(&pstats->syncp);
+	}
+	return prog;
 }
 EXPORT_SYMBOL_GPL(bpf_prog_alloc);
 
@@ -231,7 +257,10 @@ struct bpf_prog *bpf_prog_realloc(struct bpf_prog *fp_old, unsigned int size,
 
 void __bpf_prog_free(struct bpf_prog *fp)
 {
-	kfree(fp->aux);
+	if (fp->aux) {
+		free_percpu(fp->aux->stats);
+		kfree(fp->aux);
+	}
 	vfree(fp);
 }
 
@@ -263,7 +292,8 @@ int bpf_prog_calc_tag(struct bpf_prog *fp)
 		dst[i] = fp->insnsi[i];
 		if (!was_ld_map &&
 		    dst[i].code == (BPF_LD | BPF_IMM | BPF_DW) &&
-		    dst[i].src_reg == BPF_PSEUDO_MAP_FD) {
+		    (dst[i].src_reg == BPF_PSEUDO_MAP_FD ||
+		     dst[i].src_reg == BPF_PSEUDO_MAP_VALUE)) {
 			was_ld_map = true;
 			dst[i].imm = 0;
 		} else if (was_ld_map &&
@@ -409,6 +439,7 @@ struct bpf_prog *bpf_patch_insn_single(struct bpf_prog *prog, u32 off,
 	u32 insn_adj_cnt, insn_rest, insn_delta = len - 1;
 	const u32 cnt_max = S16_MAX;
 	struct bpf_prog *prog_adj;
+	int err;
 
 	/* Since our patchlet doesn't expand the image, we're done. */
 	if (insn_delta == 0) {
@@ -424,8 +455,8 @@ struct bpf_prog *bpf_patch_insn_single(struct bpf_prog *prog, u32 off,
 	 * we afterwards may not fail anymore.
 	 */
 	if (insn_adj_cnt > cnt_max &&
-	    bpf_adj_branches(prog, off, off + 1, off + len, true))
-		return NULL;
+	    (err = bpf_adj_branches(prog, off, off + 1, off + len, true)))
+		return ERR_PTR(err);
 
 	/* Several new instructions need to be inserted. Make room
 	 * for them. Likely, there's no need for a new allocation as
@@ -434,7 +465,7 @@ struct bpf_prog *bpf_patch_insn_single(struct bpf_prog *prog, u32 off,
 	prog_adj = bpf_prog_realloc(prog, bpf_prog_size(insn_adj_cnt),
 				    GFP_USER);
 	if (!prog_adj)
-		return NULL;
+		return ERR_PTR(-ENOMEM);
 
 	prog_adj->len = insn_adj_cnt;
 
@@ -510,7 +541,7 @@ bpf_get_prog_addr_region(const struct bpf_prog *prog,
 	*symbol_end   = addr + hdr->pages * PAGE_SIZE;
 }
 
-static void bpf_get_prog_name(const struct bpf_prog *prog, char *sym)
+void bpf_get_prog_name(const struct bpf_prog *prog, char *sym)
 {
 	const char *end = sym + KSYM_NAME_LEN;
 	const struct btf_type *type;
@@ -1067,13 +1098,13 @@ struct bpf_prog *bpf_jit_blind_constants(struct bpf_prog *prog)
 			continue;
 
 		tmp = bpf_patch_insn_single(clone, i, insn_buff, rewritten);
-		if (!tmp) {
+		if (IS_ERR(tmp)) {
 			/* Patching may have repointed aux->prog during
 			 * realloc from the original one, so we need to
 			 * fix it up here on error.
 			 */
 			bpf_jit_prog_release_other(prog, clone);
-			return ERR_PTR(-ENOMEM);
+			return tmp;
 		}
 
 		clone = tmp;
@@ -2068,6 +2099,10 @@ int __weak skb_copy_bits(const struct sk_buff *skb, int offset, void *to,
 {
 	return -EFAULT;
 }
+
+DEFINE_STATIC_KEY_FALSE(bpf_stats_enabled_key);
+EXPORT_SYMBOL(bpf_stats_enabled_key);
+int sysctl_bpf_stats_enabled __read_mostly;
 
 /* All definitions of tracepoints related to BPF. */
 #define CREATE_TRACE_POINTS

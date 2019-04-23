@@ -133,6 +133,7 @@ enum {
 	MLX5_REG_MTRC_CONF	 = 0x9041,
 	MLX5_REG_MTRC_STDB	 = 0x9042,
 	MLX5_REG_MTRC_CTRL	 = 0x9043,
+	MLX5_REG_MPEIN		 = 0x9050,
 	MLX5_REG_MPCNT		 = 0x9051,
 	MLX5_REG_MTPPS		 = 0x9053,
 	MLX5_REG_MTPPSE		 = 0x9054,
@@ -195,6 +196,7 @@ struct mlx5_rsc_debug {
 
 enum mlx5_dev_event {
 	MLX5_DEV_EVENT_SYS_ERROR = 128, /* 0 - 127 are FW events */
+	MLX5_DEV_EVENT_PORT_AFFINITY = 129,
 };
 
 enum mlx5_port_status {
@@ -364,6 +366,7 @@ struct mlx5_core_sig_ctx {
 enum {
 	MLX5_MKEY_MR = 1,
 	MLX5_MKEY_MW,
+	MLX5_MKEY_INDIRECT_DEVX,
 };
 
 struct mlx5_core_mkey {
@@ -592,6 +595,8 @@ enum mlx5_pagefault_type_flags {
 };
 
 struct mlx5_td {
+	/* protects tirs list changes while tirs refresh */
+	struct mutex     list_lock;
 	struct list_head tirs_list;
 	u32              tdn;
 };
@@ -658,6 +663,7 @@ struct mlx5_core_dev {
 	u64			sys_image_guid;
 	phys_addr_t		iseg_base;
 	struct mlx5_init_seg __iomem *iseg;
+	phys_addr_t             bar_addr;
 	enum mlx5_device_state	state;
 	/* sync interface state */
 	struct mutex		intf_state_mutex;
@@ -883,6 +889,7 @@ void mlx5_cmd_mbox_status(void *out, u8 *status, u32 *syndrome);
 int mlx5_core_get_caps(struct mlx5_core_dev *dev, enum mlx5_cap_type cap_type);
 int mlx5_cmd_alloc_uar(struct mlx5_core_dev *dev, u32 *uarn);
 int mlx5_cmd_free_uar(struct mlx5_core_dev *dev, u32 uarn);
+void mlx5_health_flush(struct mlx5_core_dev *dev);
 void mlx5_health_cleanup(struct mlx5_core_dev *dev);
 int mlx5_health_init(struct mlx5_core_dev *dev);
 void mlx5_start_health_poll(struct mlx5_core_dev *dev);
@@ -959,10 +966,6 @@ int mlx5_query_odp_caps(struct mlx5_core_dev *dev,
 			struct mlx5_odp_caps *odp_caps);
 int mlx5_core_query_ib_ppcnt(struct mlx5_core_dev *dev,
 			     u8 port_num, void *out, size_t sz);
-#ifdef CONFIG_INFINIBAND_ON_DEMAND_PAGING
-int mlx5_core_page_fault_resume(struct mlx5_core_dev *dev, u32 token,
-				u32 wq_num, u8 type, int error);
-#endif
 
 int mlx5_init_rl_table(struct mlx5_core_dev *dev);
 void mlx5_cleanup_rl_table(struct mlx5_core_dev *dev);
@@ -1041,6 +1044,7 @@ int mlx5_cmd_create_vport_lag(struct mlx5_core_dev *dev);
 int mlx5_cmd_destroy_vport_lag(struct mlx5_core_dev *dev);
 bool mlx5_lag_is_roce(struct mlx5_core_dev *dev);
 bool mlx5_lag_is_sriov(struct mlx5_core_dev *dev);
+bool mlx5_lag_is_multipath(struct mlx5_core_dev *dev);
 bool mlx5_lag_is_active(struct mlx5_core_dev *dev);
 struct net_device *mlx5_lag_get_roce_netdev(struct mlx5_core_dev *dev);
 int mlx5_lag_query_cong_counters(struct mlx5_core_dev *dev,

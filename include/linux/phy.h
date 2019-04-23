@@ -345,6 +345,7 @@ struct phy_c45_device_ids {
  * is_c45:  Set to true if this phy uses clause 45 addressing.
  * is_internal: Set to true if this phy is internal to a MAC.
  * is_pseudo_fixed_link: Set to true if this phy is an Ethernet switch, etc.
+ * is_gigabit_capable: Set to true if PHY supports 1000Mbps
  * has_fixups: Set to true if this phy has fixups/quirks.
  * suspended: Set to true if this phy has been suspended successfully.
  * sysfs_links: Internal boolean tracking sysfs symbolic links setup/removal.
@@ -382,6 +383,7 @@ struct phy_device {
 	unsigned is_c45:1;
 	unsigned is_internal:1;
 	unsigned is_pseudo_fixed_link:1;
+	unsigned is_gigabit_capable:1;
 	unsigned has_fixups:1;
 	unsigned suspended:1;
 	unsigned sysfs_links:1;
@@ -390,6 +392,7 @@ struct phy_device {
 	unsigned autoneg:1;
 	/* The most recently read link state */
 	unsigned link:1;
+	unsigned autoneg_complete:1;
 
 	/* Interrupts are enabled */
 	unsigned interrupts:1;
@@ -1075,6 +1078,7 @@ void phy_attached_info(struct phy_device *phydev);
 
 /* Clause 22 PHY */
 int genphy_config_init(struct phy_device *phydev);
+int genphy_read_abilities(struct phy_device *phydev);
 int genphy_setup_forced(struct phy_device *phydev);
 int genphy_restart_aneg(struct phy_device *phydev);
 int genphy_config_eee_advert(struct phy_device *phydev);
@@ -1119,11 +1123,6 @@ int genphy_c45_read_status(struct phy_device *phydev);
 
 /* The gen10g_* functions are the old Clause 45 stub */
 int gen10g_config_aneg(struct phy_device *phydev);
-int gen10g_read_status(struct phy_device *phydev);
-int gen10g_no_soft_reset(struct phy_device *phydev);
-int gen10g_config_init(struct phy_device *phydev);
-int gen10g_suspend(struct phy_device *phydev);
-int gen10g_resume(struct phy_device *phydev);
 
 static inline int phy_read_status(struct phy_device *phydev)
 {

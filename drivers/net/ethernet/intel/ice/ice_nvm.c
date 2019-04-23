@@ -5,7 +5,7 @@
 
 /**
  * ice_aq_read_nvm
- * @hw: pointer to the hw struct
+ * @hw: pointer to the HW struct
  * @module_typeid: module pointer location in words from the NVM beginning
  * @offset: byte offset from the module beginning
  * @length: length of the section to be read (in bytes from the offset)
@@ -152,9 +152,10 @@ ice_read_sr_buf_aq(struct ice_hw *hw, u16 offset, u16 *words, u16 *data)
 		 */
 		off_w = offset % ICE_SR_SECTOR_SIZE_IN_WORDS;
 		read_size = off_w ?
-			min(*words,
-			    (u16)(ICE_SR_SECTOR_SIZE_IN_WORDS - off_w)) :
-			min((*words - words_read), ICE_SR_SECTOR_SIZE_IN_WORDS);
+			min_t(u16, *words,
+			      (ICE_SR_SECTOR_SIZE_IN_WORDS - off_w)) :
+			min_t(u16, (*words - words_read),
+			      ICE_SR_SECTOR_SIZE_IN_WORDS);
 
 		/* Check if this is last command, if so set proper flag */
 		if ((words_read + read_size) >= *words)
@@ -234,7 +235,7 @@ ice_read_sr_word(struct ice_hw *hw, u16 offset, u16 *data)
 
 /**
  * ice_init_nvm - initializes NVM setting
- * @hw: pointer to the hw struct
+ * @hw: pointer to the HW struct
  *
  * This function reads and populates NVM settings such as Shadow RAM size,
  * max_timeout, and blank_nvm_mode
@@ -247,7 +248,7 @@ enum ice_status ice_init_nvm(struct ice_hw *hw)
 	u32 fla, gens_stat;
 	u8 sr_size;
 
-	/* The SR size is stored regardless of the nvm programming mode
+	/* The SR size is stored regardless of the NVM programming mode
 	 * as the blank mode may be used in the factory line.
 	 */
 	gens_stat = rd32(hw, GLNVM_GENS);

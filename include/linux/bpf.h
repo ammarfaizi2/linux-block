@@ -16,6 +16,7 @@
 #include <linux/rbtree_latch.h>
 #include <linux/numa.h>
 #include <linux/wait.h>
+#include <linux/u64_stats_sync.h>
 
 struct bpf_verifier_env;
 struct perf_event;
@@ -56,6 +57,12 @@ struct bpf_map_ops {
 			     const struct btf *btf,
 			     const struct btf_type *key_type,
 			     const struct btf_type *value_type);
+
+	/* Direct value access helpers. */
+	int (*map_direct_value_addr)(const struct bpf_map *map,
+				     u64 *imm, u32 off);
+	int (*map_direct_value_meta)(const struct bpf_map *map,
+				     u64 imm, u32 *off);
 };
 
 struct bpf_map {
@@ -80,7 +87,8 @@ struct bpf_map {
 	struct btf *btf;
 	u32 pages;
 	bool unpriv_array;
-	/* 51 bytes hole */
+	bool frozen; /* write-once */
+	/* 48 bytes hole */
 
 	/* The 3rd and 4th cacheline with misc members to avoid false sharing
 	 * particularly with refcounting.
@@ -192,7 +200,6 @@ enum bpf_arg_type {
 
 	ARG_PTR_TO_CTX,		/* pointer to context */
 	ARG_ANYTHING,		/* any (initialized) argument is ok */
-	ARG_PTR_TO_SOCKET,	/* pointer to bpf_sock */
 	ARG_PTR_TO_SPIN_LOCK,	/* pointer to bpf_spin_lock */
 	ARG_PTR_TO_SOCK_COMMON,	/* pointer to sock_common */
 };
@@ -205,6 +212,7 @@ enum bpf_return_type {
 	RET_PTR_TO_MAP_VALUE_OR_NULL,	/* returns a pointer to map elem value or NULL */
 	RET_PTR_TO_SOCKET_OR_NULL,	/* returns a pointer to a socket or NULL */
 	RET_PTR_TO_TCP_SOCK_OR_NULL,	/* returns a pointer to a tcp_sock or NULL */
+	RET_PTR_TO_SOCK_COMMON_OR_NULL,	/* returns a pointer to a sock_common or NULL */
 };
 
 /* eBPF function prototype used by verifier to allow BPF_CALLs from eBPF programs
@@ -340,6 +348,12 @@ enum bpf_cgroup_storage_type {
 
 #define MAX_BPF_CGROUP_STORAGE_TYPE __BPF_CGROUP_STORAGE_MAX
 
+struct bpf_prog_stats {
+	u64 cnt;
+	u64 nsecs;
+	struct u64_stats_sync syncp;
+};
+
 struct bpf_prog_aux {
 	atomic_t refcnt;
 	u32 used_map_cnt;
@@ -389,6 +403,7 @@ struct bpf_prog_aux {
 	 * main prog always has linfo_idx == 0
 	 */
 	u32 linfo_idx;
+	struct bpf_prog_stats __percpu *stats;
 	union {
 		struct work_struct work;
 		struct rcu_head	rcu;
@@ -413,7 +428,37 @@ struct bpf_array {
 	};
 };
 
+#define BPF_COMPLEXITY_LIMIT_INSNS      1000000 /* yes. 1M insns */
 #define MAX_TAIL_CALL_CNT 32
+
+#define BPF_F_ACCESS_MASK	(BPF_F_RDONLY |		\
+				 BPF_F_RDONLY_PROG |	\
+				 BPF_F_WRONLY |		\
+				 BPF_F_WRONLY_PROG)
+
+#define BPF_MAP_CAN_READ	BIT(0)
+#define BPF_MAP_CAN_WRITE	BIT(1)
+
+static inline u32 bpf_map_flags_to_cap(struct bpf_map *map)
+{
+	u32 access_flags = map->map_flags & (BPF_F_RDONLY_PROG | BPF_F_WRONLY_PROG);
+
+	/* Combination of BPF_F_RDONLY_PROG | BPF_F_WRONLY_PROG is
+	 * not possible.
+	 */
+	if (access_flags & BPF_F_RDONLY_PROG)
+		return BPF_MAP_CAN_READ;
+	else if (access_flags & BPF_F_WRONLY_PROG)
+		return BPF_MAP_CAN_WRITE;
+	else
+		return BPF_MAP_CAN_READ | BPF_MAP_CAN_WRITE;
+}
+
+static inline bool bpf_map_flags_access_ok(u32 access_flags)
+{
+	return (access_flags & (BPF_F_RDONLY_PROG | BPF_F_WRONLY_PROG)) !=
+	       (BPF_F_RDONLY_PROG | BPF_F_WRONLY_PROG);
+}
 
 struct bpf_event_entry {
 	struct perf_event *event;
@@ -437,14 +482,6 @@ typedef u32 (*bpf_convert_ctx_access_t)(enum bpf_access_type type,
 
 u64 bpf_event_output(struct bpf_map *map, u64 flags, void *meta, u64 meta_size,
 		     void *ctx, u64 ctx_size, bpf_ctx_copy_t ctx_copy);
-
-int bpf_prog_test_run_xdp(struct bpf_prog *prog, const union bpf_attr *kattr,
-			  union bpf_attr __user *uattr);
-int bpf_prog_test_run_skb(struct bpf_prog *prog, const union bpf_attr *kattr,
-			  union bpf_attr __user *uattr);
-int bpf_prog_test_run_flow_dissector(struct bpf_prog *prog,
-				     const union bpf_attr *kattr,
-				     union bpf_attr __user *uattr);
 
 /* an array of programs to be executed under rcu_lock.
  *
@@ -559,6 +596,7 @@ void bpf_map_area_free(void *base);
 void bpf_map_init_from_attr(struct bpf_map *map, union bpf_attr *attr);
 
 extern int sysctl_unprivileged_bpf_disabled;
+extern int sysctl_bpf_stats_enabled;
 
 int bpf_map_new_fd(struct bpf_map *map, int flags);
 int bpf_prog_new_fd(struct bpf_prog *prog);
@@ -635,6 +673,13 @@ static inline int bpf_map_attr_numa_node(const union bpf_attr *attr)
 struct bpf_prog *bpf_prog_get_type_path(const char *name, enum bpf_prog_type type);
 int array_map_alloc_check(union bpf_attr *attr);
 
+int bpf_prog_test_run_xdp(struct bpf_prog *prog, const union bpf_attr *kattr,
+			  union bpf_attr __user *uattr);
+int bpf_prog_test_run_skb(struct bpf_prog *prog, const union bpf_attr *kattr,
+			  union bpf_attr __user *uattr);
+int bpf_prog_test_run_flow_dissector(struct bpf_prog *prog,
+				     const union bpf_attr *kattr,
+				     union bpf_attr __user *uattr);
 #else /* !CONFIG_BPF_SYSCALL */
 static inline struct bpf_prog *bpf_prog_get(u32 ufd)
 {
@@ -745,6 +790,27 @@ static inline struct bpf_prog *bpf_prog_get_type_path(const char *name,
 				enum bpf_prog_type type)
 {
 	return ERR_PTR(-EOPNOTSUPP);
+}
+
+static inline int bpf_prog_test_run_xdp(struct bpf_prog *prog,
+					const union bpf_attr *kattr,
+					union bpf_attr __user *uattr)
+{
+	return -ENOTSUPP;
+}
+
+static inline int bpf_prog_test_run_skb(struct bpf_prog *prog,
+					const union bpf_attr *kattr,
+					union bpf_attr __user *uattr)
+{
+	return -ENOTSUPP;
+}
+
+static inline int bpf_prog_test_run_flow_dissector(struct bpf_prog *prog,
+						   const union bpf_attr *kattr,
+						   union bpf_attr __user *uattr)
+{
+	return -ENOTSUPP;
 }
 #endif /* CONFIG_BPF_SYSCALL */
 

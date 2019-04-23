@@ -237,6 +237,8 @@ int mt76x02_sta_add(struct mt76_dev *mdev, struct ieee80211_vif *vif,
 	struct mt76x02_vif *mvif = (struct mt76x02_vif *)vif->drv_priv;
 	int idx = 0;
 
+	memset(msta, 0, sizeof(*msta));
+
 	idx = mt76_wcid_alloc(dev->mt76.wcid_mask, ARRAY_SIZE(dev->mt76.wcid));
 	if (idx < 0)
 		return -ENOSPC;
@@ -274,6 +276,8 @@ mt76x02_vif_init(struct mt76x02_dev *dev, struct ieee80211_vif *vif,
 	struct mt76x02_vif *mvif = (struct mt76x02_vif *)vif->drv_priv;
 	struct mt76_txq *mtxq;
 
+	memset(mvif, 0, sizeof(*mvif));
+
 	mvif->idx = idx;
 	mvif->group_wcid.idx = MT_VIF_WCID(idx);
 	mvif->group_wcid.hw_key_idx = -1;
@@ -288,6 +292,12 @@ mt76x02_add_interface(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
 {
 	struct mt76x02_dev *dev = hw->priv;
 	unsigned int idx = 0;
+
+	/* Allow to change address in HW if we create first interface. */
+	if (!dev->vif_mask &&
+	    (((vif->addr[0] ^ dev->mt76.macaddr[0]) & ~GENMASK(4, 1)) ||
+	     memcmp(vif->addr + 1, dev->mt76.macaddr + 1, ETH_ALEN - 1)))
+		mt76x02_mac_setaddr(dev, vif->addr);
 
 	if (vif->addr[0] & BIT(1))
 		idx = 1 + (((dev->mt76.macaddr[0] ^ vif->addr[0]) >> 2) & 7);
@@ -310,10 +320,6 @@ mt76x02_add_interface(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
 
 	if (dev->vif_mask & BIT(idx))
 		return -EBUSY;
-
-	/* Allow to change address in HW if we create first interface. */
-	if (!dev->vif_mask && !ether_addr_equal(dev->mt76.macaddr, vif->addr))
-                mt76x02_mac_setaddr(dev, vif->addr);
 
 	dev->vif_mask |= BIT(idx);
 
@@ -679,9 +685,9 @@ void mt76x02_init_beacon_config(struct mt76x02_dev *dev)
 	}
 
 	mt76_clear(dev, MT_BEACON_TIME_CFG, (MT_BEACON_TIME_CFG_TIMER_EN |
-					     MT_BEACON_TIME_CFG_SYNC_MODE |
 					     MT_BEACON_TIME_CFG_TBTT_EN |
 					     MT_BEACON_TIME_CFG_BEACON_TX));
+	mt76_set(dev, MT_BEACON_TIME_CFG, MT_BEACON_TIME_CFG_SYNC_MODE);
 	mt76_wr(dev, MT_BCN_BYPASS_MASK, 0xffff);
 
 	for (i = 0; i < 8; i++)
@@ -704,9 +710,6 @@ void mt76x02_bss_info_changed(struct ieee80211_hw *hw,
 	if (changed & BSS_CHANGED_BSSID)
 		mt76x02_mac_set_bssid(dev, mvif->idx, info->bssid);
 
-	if (changed & BSS_CHANGED_BEACON_ENABLED)
-		mt76x02_mac_set_beacon_enable(dev, vif, info->enable_beacon);
-
 	if (changed & BSS_CHANGED_HT || changed & BSS_CHANGED_ERP_CTS_PROT)
 		mt76x02_mac_set_tx_protection(dev, info->use_cts_prot,
 					      info->ht_operation_mode);
@@ -716,8 +719,10 @@ void mt76x02_bss_info_changed(struct ieee80211_hw *hw,
 			       MT_BEACON_TIME_CFG_INTVAL,
 			       info->beacon_int << 4);
 		dev->beacon_int = info->beacon_int;
-		dev->tbtt_count = 0;
 	}
+
+	if (changed & BSS_CHANGED_BEACON_ENABLED)
+		mt76x02_mac_set_beacon_enable(dev, vif, info->enable_beacon);
 
 	if (changed & BSS_CHANGED_ERP_PREAMBLE)
 		mt76x02_mac_set_short_preamble(dev, info->use_short_preamble);

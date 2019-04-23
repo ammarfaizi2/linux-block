@@ -245,6 +245,27 @@ static int hclgevf_get_tc_info(struct hclgevf_dev *hdev)
 	return 0;
 }
 
+static int hclgevf_get_port_base_vlan_filter_state(struct hclgevf_dev *hdev)
+{
+	struct hnae3_handle *nic = &hdev->nic;
+	u8 resp_msg;
+	int ret;
+
+	ret = hclgevf_send_mbx_msg(hdev, HCLGE_MBX_SET_VLAN,
+				   HCLGE_MBX_GET_PORT_BASE_VLAN_STATE,
+				   NULL, 0, true, &resp_msg, sizeof(u8));
+	if (ret) {
+		dev_err(&hdev->pdev->dev,
+			"VF request to get port based vlan state failed %d",
+			ret);
+		return ret;
+	}
+
+	nic->port_base_vlan_state = resp_msg;
+
+	return 0;
+}
+
 static int hclgevf_get_queue_info(struct hclgevf_dev *hdev)
 {
 #define HCLGEVF_TQPS_RSS_INFO_LEN	6
@@ -305,6 +326,25 @@ static u16 hclgevf_get_qid_global(struct hnae3_handle *handle, u16 queue_id)
 		qid_in_pf = *(u16 *)resp_data;
 
 	return qid_in_pf;
+}
+
+static int hclgevf_get_pf_media_type(struct hclgevf_dev *hdev)
+{
+	u8 resp_msg;
+	int ret;
+
+	ret = hclgevf_send_mbx_msg(hdev, HCLGE_MBX_GET_MEDIA_TYPE, 0, NULL, 0,
+				   true, &resp_msg, sizeof(resp_msg));
+	if (ret) {
+		dev_err(&hdev->pdev->dev,
+			"VF request to get the pf port media type failed %d",
+			ret);
+		return ret;
+	}
+
+	hdev->hw.mac.media_type = resp_msg;
+
+	return 0;
 }
 
 static int hclgevf_alloc_tqps(struct hclgevf_dev *hdev)
@@ -404,7 +444,7 @@ void hclgevf_update_link_status(struct hclgevf_dev *hdev, int link_state)
 	}
 }
 
-void hclgevf_update_link_mode(struct hclgevf_dev *hdev)
+static void hclgevf_update_link_mode(struct hclgevf_dev *hdev)
 {
 #define HCLGEVF_ADVERTISING 0
 #define HCLGEVF_SUPPORTED   1
@@ -1455,6 +1495,8 @@ err_reset:
 	 */
 	hclgevf_cmd_init(hdev);
 	dev_err(&hdev->pdev->dev, "failed to reset VF\n");
+	if (hclgevf_is_reset_pending(hdev))
+		hclgevf_reset_task_schedule(hdev);
 
 	return ret;
 }
@@ -1564,8 +1606,7 @@ static void hclgevf_get_misc_vector(struct hclgevf_dev *hdev)
 
 void hclgevf_reset_task_schedule(struct hclgevf_dev *hdev)
 {
-	if (!test_bit(HCLGEVF_STATE_RST_SERVICE_SCHED, &hdev->state) &&
-	    !test_bit(HCLGEVF_STATE_RST_HANDLING, &hdev->state)) {
+	if (!test_bit(HCLGEVF_STATE_RST_SERVICE_SCHED, &hdev->state)) {
 		set_bit(HCLGEVF_STATE_RST_SERVICE_SCHED, &hdev->state);
 		schedule_work(&hdev->rst_service_task);
 	}
@@ -1814,6 +1855,11 @@ static int hclgevf_configure(struct hclgevf_dev *hdev)
 {
 	int ret;
 
+	/* get current port based vlan state from PF */
+	ret = hclgevf_get_port_base_vlan_filter_state(hdev);
+	if (ret)
+		return ret;
+
 	/* get queue configuration from PF */
 	ret = hclgevf_get_queue_info(hdev);
 	if (ret)
@@ -1821,6 +1867,10 @@ static int hclgevf_configure(struct hclgevf_dev *hdev)
 
 	/* get queue depth info from PF */
 	ret = hclgevf_get_queue_depth(hdev);
+	if (ret)
+		return ret;
+
+	ret = hclgevf_get_pf_media_type(hdev);
 	if (ret)
 		return ret;
 
@@ -2007,9 +2057,15 @@ static int hclgevf_set_alive(struct hnae3_handle *handle, bool alive)
 static int hclgevf_client_start(struct hnae3_handle *handle)
 {
 	struct hclgevf_dev *hdev = hclgevf_ae_get_hdev(handle);
+	int ret;
+
+	ret = hclgevf_set_alive(handle, true);
+	if (ret)
+		return ret;
 
 	mod_timer(&hdev->keep_alive_timer, jiffies + 2 * HZ);
-	return hclgevf_set_alive(handle, true);
+
+	return 0;
 }
 
 static void hclgevf_client_stop(struct hnae3_handle *handle)
@@ -2051,6 +2107,10 @@ static void hclgevf_state_uninit(struct hclgevf_dev *hdev)
 {
 	set_bit(HCLGEVF_STATE_DOWN, &hdev->state);
 
+	if (hdev->keep_alive_timer.function)
+		del_timer_sync(&hdev->keep_alive_timer);
+	if (hdev->keep_alive_task.func)
+		cancel_work_sync(&hdev->keep_alive_task);
 	if (hdev->service_timer.function)
 		del_timer_sync(&hdev->service_timer);
 	if (hdev->service_task.func)
@@ -2754,6 +2814,31 @@ static void hclgevf_get_regs(struct hnae3_handle *handle, u32 *version,
 		for (i = 0; i < separator_num; i++)
 			*reg++ = SEPARATOR_VALUE;
 	}
+}
+
+void hclgevf_update_port_base_vlan_info(struct hclgevf_dev *hdev, u16 state,
+					u8 *port_base_vlan_info, u8 data_size)
+{
+	struct hnae3_handle *nic = &hdev->nic;
+
+	rtnl_lock();
+	hclgevf_notify_client(hdev, HNAE3_DOWN_CLIENT);
+	rtnl_unlock();
+
+	/* send msg to PF and wait update port based vlan info */
+	hclgevf_send_mbx_msg(hdev, HCLGE_MBX_SET_VLAN,
+			     HCLGE_MBX_PORT_BASE_VLAN_CFG,
+			     port_base_vlan_info, data_size,
+			     false, NULL, 0);
+
+	if (state == HNAE3_PORT_BASE_VLAN_DISABLE)
+		nic->port_base_vlan_state = HNAE3_PORT_BASE_VLAN_DISABLE;
+	else
+		nic->port_base_vlan_state = HNAE3_PORT_BASE_VLAN_ENABLE;
+
+	rtnl_lock();
+	hclgevf_notify_client(hdev, HNAE3_UP_CLIENT);
+	rtnl_unlock();
 }
 
 static const struct hnae3_ae_ops hclgevf_ops = {

@@ -60,6 +60,17 @@
 #define TLS_AAD_SPACE_SIZE		13
 #define TLS_DEVICE_NAME_MAX		32
 
+#define MAX_IV_SIZE			16
+
+/* For AES-CCM, the full 16-bytes of IV is made of '4' fields of given sizes.
+ *
+ * IV[16] = b0[1] || implicit nonce[4] || explicit nonce[8] || length[3]
+ *
+ * The field 'length' is encoded in field 'b0' as '(length width - 1)'.
+ * Hence b0 contains (3 - 1) = 2.
+ */
+#define TLS_AES_CCM_IV_B0_BYTE		2
+
 /*
  * This structure defines the routines for Inline TLS driver.
  * The following routines are optional and filled with a
@@ -123,8 +134,7 @@ struct tls_rec {
 	struct scatterlist sg_content_type;
 
 	char aad_space[TLS_AAD_SPACE_SIZE];
-	u8 iv_data[TLS_CIPHER_AES_GCM_128_IV_SIZE +
-		   TLS_CIPHER_AES_GCM_128_SALT_SIZE];
+	u8 iv_data[MAX_IV_SIZE];
 	struct aead_request aead_req;
 	u8 aead_req_ctx[];
 };
@@ -199,10 +209,6 @@ struct tls_offload_context_tx {
 	(ALIGN(sizeof(struct tls_offload_context_tx), sizeof(void *)) +        \
 	 TLS_DRIVER_STATE_SIZE)
 
-enum {
-	TLS_PENDING_CLOSED_RECORD
-};
-
 struct cipher_context {
 	char *iv;
 	char *rec_seq;
@@ -223,6 +229,7 @@ struct tls_prot_info {
 	u16 tag_size;
 	u16 overhead_size;
 	u16 iv_size;
+	u16 salt_size;
 	u16 rec_seq_size;
 	u16 aad_size;
 	u16 tail_size;
@@ -311,6 +318,7 @@ int tls_device_sendmsg(struct sock *sk, struct msghdr *msg, size_t size);
 int tls_device_sendpage(struct sock *sk, struct page *page,
 			int offset, size_t size, int flags);
 void tls_device_sk_destruct(struct sock *sk);
+void tls_device_free_resources_tx(struct sock *sk);
 void tls_device_init(void);
 void tls_device_cleanup(void);
 int tls_tx_records(struct sock *sk, int flags);
@@ -334,18 +342,16 @@ int tls_push_sg(struct sock *sk, struct tls_context *ctx,
 		int flags);
 int tls_push_partial_record(struct sock *sk, struct tls_context *ctx,
 			    int flags);
-
-int tls_push_pending_closed_record(struct sock *sk, struct tls_context *ctx,
-				   int flags, long *timeo);
+bool tls_free_partial_record(struct sock *sk, struct tls_context *ctx);
 
 static inline struct tls_msg *tls_msg(struct sk_buff *skb)
 {
 	return (struct tls_msg *)strp_msg(skb);
 }
 
-static inline bool tls_is_pending_closed_record(struct tls_context *ctx)
+static inline bool tls_is_partially_sent_record(struct tls_context *ctx)
 {
-	return test_bit(TLS_PENDING_CLOSED_RECORD, &ctx->flags);
+	return !!ctx->partially_sent_record;
 }
 
 static inline int tls_complete_pending_work(struct sock *sk,
@@ -357,15 +363,10 @@ static inline int tls_complete_pending_work(struct sock *sk,
 	if (unlikely(sk->sk_write_pending))
 		rc = wait_on_pending_writer(sk, timeo);
 
-	if (!rc && tls_is_pending_closed_record(ctx))
-		rc = tls_push_pending_closed_record(sk, ctx, flags, timeo);
+	if (!rc && tls_is_partially_sent_record(ctx))
+		rc = tls_push_partial_record(sk, ctx, flags);
 
 	return rc;
-}
-
-static inline bool tls_is_partially_sent_record(struct tls_context *ctx)
-{
-	return !!ctx->partially_sent_record;
 }
 
 static inline bool tls_is_pending_open_record(struct tls_context *tls_ctx)
@@ -391,7 +392,7 @@ tls_validate_xmit_skb(struct sock *sk, struct net_device *dev,
 static inline bool tls_is_sk_tx_device_offloaded(struct sock *sk)
 {
 #ifdef CONFIG_SOCK_VALIDATE_XMIT
-	return sk_fullsock(sk) &
+	return sk_fullsock(sk) &&
 	       (smp_load_acquire(&sk->sk_validate_xmit_skb) ==
 	       &tls_validate_xmit_skb);
 #else
@@ -530,6 +531,9 @@ static inline bool tls_sw_has_ctx_tx(const struct sock *sk)
 		return false;
 	return !!tls_sw_ctx_tx(ctx);
 }
+
+void tls_sw_write_space(struct sock *sk, struct tls_context *ctx);
+void tls_device_write_space(struct sock *sk, struct tls_context *ctx);
 
 static inline struct tls_offload_context_rx *
 tls_offload_ctx_rx(const struct tls_context *tls_ctx)

@@ -355,7 +355,6 @@ static const struct rhashtable_params ip6mr_rht_params = {
 	.key_offset = offsetof(struct mfc6_cache, cmparg),
 	.key_len = sizeof(struct mfc6_cache_cmp_arg),
 	.nelem_hint = 3,
-	.locks_mul = 1,
 	.obj_cmpfn = ip6mr_hash_cmp,
 	.automatic_shrinking = true,
 };
@@ -1988,10 +1987,10 @@ int ip6mr_compat_ioctl(struct sock *sk, unsigned int cmd, void __user *arg)
 
 static inline int ip6mr_forward2_finish(struct net *net, struct sock *sk, struct sk_buff *skb)
 {
-	__IP6_INC_STATS(net, ip6_dst_idev(skb_dst(skb)),
-			IPSTATS_MIB_OUTFORWDATAGRAMS);
-	__IP6_ADD_STATS(net, ip6_dst_idev(skb_dst(skb)),
-			IPSTATS_MIB_OUTOCTETS, skb->len);
+	IP6_INC_STATS(net, ip6_dst_idev(skb_dst(skb)),
+		      IPSTATS_MIB_OUTFORWDATAGRAMS);
+	IP6_ADD_STATS(net, ip6_dst_idev(skb_dst(skb)),
+		      IPSTATS_MIB_OUTOCTETS, skb->len);
 	return dst_output(net, sk, skb);
 }
 

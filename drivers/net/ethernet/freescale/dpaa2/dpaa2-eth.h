@@ -89,12 +89,33 @@
  */
 #define DPAA2_ETH_SWA_SIZE		64
 
+/* We store different information in the software annotation area of a Tx frame
+ * based on what type of frame it is
+ */
+enum dpaa2_eth_swa_type {
+	DPAA2_ETH_SWA_SINGLE,
+	DPAA2_ETH_SWA_SG,
+	DPAA2_ETH_SWA_XDP,
+};
+
 /* Must keep this struct smaller than DPAA2_ETH_SWA_SIZE */
 struct dpaa2_eth_swa {
-	struct sk_buff *skb;
-	struct scatterlist *scl;
-	int num_sg;
-	int sgt_size;
+	enum dpaa2_eth_swa_type type;
+	union {
+		struct {
+			struct sk_buff *skb;
+		} single;
+		struct {
+			struct sk_buff *skb;
+			struct scatterlist *scl;
+			int num_sg;
+			int sgt_size;
+		} sg;
+		struct {
+			int dma_size;
+			struct xdp_frame *xdpf;
+		} xdp;
+	};
 };
 
 /* Annotation valid bits in FD FRC */
@@ -257,6 +278,7 @@ struct dpaa2_eth_ch_stats {
 	__u64 xdp_drop;
 	__u64 xdp_tx;
 	__u64 xdp_tx_err;
+	__u64 xdp_redirect;
 };
 
 /* Maximum number of queues associated with a DPNI */
@@ -296,6 +318,7 @@ struct dpaa2_eth_ch_xdp {
 	struct bpf_prog *prog;
 	u64 drop_bufs[DPAA2_ETH_BUFS_PER_CMD];
 	int drop_cnt;
+	unsigned int res;
 };
 
 struct dpaa2_eth_channel {
@@ -310,6 +333,8 @@ struct dpaa2_eth_channel {
 	int buf_count;
 	struct dpaa2_eth_ch_stats stats;
 	struct dpaa2_eth_ch_xdp xdp;
+	struct xdp_rxq_info xdp_rxq;
+	struct list_head *rx_list;
 };
 
 struct dpaa2_eth_dist_fields {
@@ -317,6 +342,7 @@ struct dpaa2_eth_dist_fields {
 	enum net_prot cls_prot;
 	int cls_field;
 	int size;
+	u64 id;
 };
 
 struct dpaa2_eth_cls_rule {
@@ -369,6 +395,7 @@ struct dpaa2_eth_priv {
 
 	/* enabled ethtool hashing bits */
 	u64 rx_hash_fields;
+	u64 rx_cls_fields;
 	struct dpaa2_eth_cls_rule *cls_rules;
 	u8 rx_cls_enabled;
 	struct bpf_prog *xdp_prog;
@@ -412,6 +439,12 @@ static inline int dpaa2_eth_cmp_dpni_ver(struct dpaa2_eth_priv *priv,
 	(dpaa2_eth_cmp_dpni_ver((priv), DPNI_RX_DIST_KEY_VER_MAJOR,	\
 				DPNI_RX_DIST_KEY_VER_MINOR) < 0)
 
+#define dpaa2_eth_fs_enabled(priv)	\
+	(!((priv)->dpni_attrs.options & DPNI_OPT_NO_FS))
+
+#define dpaa2_eth_fs_mask_enabled(priv)	\
+	((priv)->dpni_attrs.options & DPNI_OPT_HAS_KEY_MASKING)
+
 #define dpaa2_eth_fs_count(priv)        \
 	((priv)->dpni_attrs.fs_entries)
 
@@ -424,11 +457,29 @@ enum dpaa2_eth_rx_dist {
 	DPAA2_ETH_RX_DIST_CLS
 };
 
+/* Unique IDs for the supported Rx classification header fields */
+#define DPAA2_ETH_DIST_ETHDST		BIT(0)
+#define DPAA2_ETH_DIST_ETHSRC		BIT(1)
+#define DPAA2_ETH_DIST_ETHTYPE		BIT(2)
+#define DPAA2_ETH_DIST_VLAN		BIT(3)
+#define DPAA2_ETH_DIST_IPSRC		BIT(4)
+#define DPAA2_ETH_DIST_IPDST		BIT(5)
+#define DPAA2_ETH_DIST_IPPROTO		BIT(6)
+#define DPAA2_ETH_DIST_L4SRC		BIT(7)
+#define DPAA2_ETH_DIST_L4DST		BIT(8)
+#define DPAA2_ETH_DIST_ALL		(~0U)
+
 static inline
 unsigned int dpaa2_eth_needed_headroom(struct dpaa2_eth_priv *priv,
 				       struct sk_buff *skb)
 {
 	unsigned int headroom = DPAA2_ETH_SWA_SIZE;
+
+	/* If we don't have an skb (e.g. XDP buffer), we only need space for
+	 * the software annotation area
+	 */
+	if (!skb)
+		return headroom;
 
 	/* For non-linear skbs we have no headroom requirement, as we build a
 	 * SG frame with a newly allocated SGT buffer
@@ -452,7 +503,9 @@ static inline unsigned int dpaa2_eth_rx_head_room(struct dpaa2_eth_priv *priv)
 }
 
 int dpaa2_eth_set_hash(struct net_device *net_dev, u64 flags);
-int dpaa2_eth_cls_key_size(void);
+int dpaa2_eth_set_cls(struct net_device *net_dev, u64 key);
+int dpaa2_eth_cls_key_size(u64 key);
 int dpaa2_eth_cls_fld_off(int prot, int field);
+void dpaa2_eth_cls_trim_rule(void *key_mem, u64 fields);
 
 #endif	/* __DPAA2_H */

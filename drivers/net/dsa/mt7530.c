@@ -646,7 +646,7 @@ static void mt7530_adjust_link(struct dsa_switch *ds, int port,
 		case SPEED_100:
 			mcr |= PMCR_FORCE_SPEED_100;
 			break;
-		};
+		}
 
 		if (phydev->link)
 			mcr |= PMCR_FORCE_LNK;
@@ -729,8 +729,7 @@ mt7530_port_enable(struct dsa_switch *ds, int port,
 }
 
 static void
-mt7530_port_disable(struct dsa_switch *ds, int port,
-		    struct phy_device *phy)
+mt7530_port_disable(struct dsa_switch *ds, int port)
 {
 	struct mt7530_priv *priv = ds->priv;
 
@@ -1301,7 +1300,7 @@ mt7530_setup(struct dsa_switch *ds)
 		if (dsa_is_cpu_port(ds, i))
 			mt7530_cpu_port_enable(priv, i);
 		else
-			mt7530_port_disable(ds, i, NULL);
+			mt7530_port_disable(ds, i);
 	}
 
 	/* Flush the FDB table */

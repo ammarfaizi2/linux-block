@@ -164,24 +164,29 @@ void mlxsw_core_lag_mapping_clear(struct mlxsw_core *mlxsw_core,
 				  u16 lag_id, u8 local_port);
 
 void *mlxsw_core_port_driver_priv(struct mlxsw_core_port *mlxsw_core_port);
-int mlxsw_core_port_init(struct mlxsw_core *mlxsw_core, u8 local_port);
+int mlxsw_core_port_init(struct mlxsw_core *mlxsw_core, u8 local_port,
+			 u32 port_number, bool split,
+			 u32 split_port_subnumber,
+			 const unsigned char *switch_id,
+			 unsigned char switch_id_len);
 void mlxsw_core_port_fini(struct mlxsw_core *mlxsw_core, u8 local_port);
 void mlxsw_core_port_eth_set(struct mlxsw_core *mlxsw_core, u8 local_port,
-			     void *port_driver_priv, struct net_device *dev,
-			     u32 port_number, bool split,
-			     u32 split_port_subnumber);
+			     void *port_driver_priv, struct net_device *dev);
 void mlxsw_core_port_ib_set(struct mlxsw_core *mlxsw_core, u8 local_port,
 			    void *port_driver_priv);
 void mlxsw_core_port_clear(struct mlxsw_core *mlxsw_core, u8 local_port,
 			   void *port_driver_priv);
 enum devlink_port_type mlxsw_core_port_type_get(struct mlxsw_core *mlxsw_core,
 						u8 local_port);
-int mlxsw_core_port_get_phys_port_name(struct mlxsw_core *mlxsw_core,
-				       u8 local_port, char *name, size_t len);
+struct devlink_port *
+mlxsw_core_port_devlink_port_get(struct mlxsw_core *mlxsw_core,
+				 u8 local_port);
 
 int mlxsw_core_schedule_dw(struct delayed_work *dwork, unsigned long delay);
 bool mlxsw_core_schedule_work(struct work_struct *work);
 void mlxsw_core_flush_owq(void);
+int mlxsw_core_resources_query(struct mlxsw_core *mlxsw_core, char *mbox,
+			       struct mlxsw_res *res);
 
 #define MLXSW_CONFIG_PROFILE_SWID_COUNT 8
 

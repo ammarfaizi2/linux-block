@@ -396,12 +396,13 @@ config NETFILTER_NETLINK_GLUE_CT
 	  the enqueued via NFNETLINK.
 
 config NF_NAT
-	tristate
-
-config NF_NAT_NEEDED
-	bool
-	depends on NF_NAT
-	default y
+	tristate "Network Address Translation support"
+	depends on NF_CONNTRACK
+	default m if NETFILTER_ADVANCED=n
+	help
+	  The NAT option allows masquerading, port forwarding and other
+	  forms of full Network Address Port Translation. This can be
+	  controlled by iptables, ip6tables or nft.
 
 config NF_NAT_AMANDA
 	tristate
@@ -429,6 +430,9 @@ config NF_NAT_TFTP
 	default NF_NAT && NF_CONNTRACK_TFTP
 
 config NF_NAT_REDIRECT
+	bool
+
+config NF_NAT_MASQUERADE
 	bool
 
 config NETFILTER_SYNPROXY
@@ -523,6 +527,7 @@ config NFT_LIMIT
 config NFT_MASQ
 	depends on NF_CONNTRACK
 	depends on NF_NAT
+	select NF_NAT_MASQUERADE
 	tristate "Netfilter nf_tables masquerade support"
 	help
 	  This option adds the "masquerade" expression that you can use
@@ -532,6 +537,7 @@ config NFT_REDIR
 	depends on NF_CONNTRACK
 	depends on NF_NAT
 	tristate "Netfilter nf_tables redirect support"
+	select NF_NAT_REDIRECT
 	help
 	  This options adds the "redirect" expression that you can use
 	  to perform NAT in the redirect flavour.
@@ -539,6 +545,7 @@ config NFT_REDIR
 config NFT_NAT
 	depends on NF_CONNTRACK
 	select NF_NAT
+	depends on NF_TABLES_IPV4 || NF_TABLES_IPV6
 	tristate "Netfilter nf_tables nat module"
 	help
 	  This option adds the "nat" expression that you can use to perform
@@ -990,11 +997,26 @@ config NETFILTER_XT_TARGET_REDIRECT
 
 	To compile it as a module, choose M here. If unsure, say N.
 
+config NETFILTER_XT_TARGET_MASQUERADE
+	tristate "MASQUERADE target support"
+	depends on NF_NAT
+	default m if NETFILTER_ADVANCED=n
+	select NF_NAT_MASQUERADE
+	help
+	  Masquerading is a special case of NAT: all outgoing connections are
+	  changed to seem to come from a particular interface's address, and
+	  if the interface goes down, those connections are lost.  This is
+	  only useful for dialup accounts with dynamic IP address (ie. your IP
+	  address will be different on next dialup).
+
+	  To compile it as a module, choose M here.  If unsure, say N.
+
 config NETFILTER_XT_TARGET_TEE
 	tristate '"TEE" - packet cloning to alternate destination'
 	depends on NETFILTER_ADVANCED
 	depends on IPV6 || IPV6=n
 	depends on !NF_CONNTRACK || NF_CONNTRACK
+	depends on IP6_NF_IPTABLES || !IP6_NF_IPTABLES
 	select NF_DUP_IPV4
 	select NF_DUP_IPV6 if IP6_NF_IPTABLES
 	---help---

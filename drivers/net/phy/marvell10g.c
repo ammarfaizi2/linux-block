@@ -48,6 +48,8 @@ enum {
 	MV_AN_STAT1000		= 0x8001, /* 1000base-T status register */
 
 	/* Vendor2 MMD registers */
+	MV_V2_PORT_CTRL		= 0xf001,
+	MV_V2_PORT_CTRL_PWRDOWN = 0x0800,
 	MV_V2_TEMP_CTRL		= 0xf08a,
 	MV_V2_TEMP_CTRL_MASK	= 0xc000,
 	MV_V2_TEMP_CTRL_SAMPLE	= 0x0000,
@@ -226,11 +228,19 @@ static int mv3310_probe(struct phy_device *phydev)
 
 static int mv3310_suspend(struct phy_device *phydev)
 {
-	return 0;
+	return phy_set_bits_mmd(phydev, MDIO_MMD_VEND2, MV_V2_PORT_CTRL,
+				MV_V2_PORT_CTRL_PWRDOWN);
 }
 
 static int mv3310_resume(struct phy_device *phydev)
 {
+	int ret;
+
+	ret = phy_clear_bits_mmd(phydev, MDIO_MMD_VEND2, MV_V2_PORT_CTRL,
+				 MV_V2_PORT_CTRL_PWRDOWN);
+	if (ret)
+		return ret;
+
 	return mv3310_hwmon_config(phydev, true);
 }
 
@@ -267,16 +277,6 @@ static int mv3310_config_init(struct phy_device *phydev)
 static int mv3310_get_features(struct phy_device *phydev)
 {
 	int ret, val;
-
-	if (phydev->c45_ids.devices_in_package & MDIO_DEVS_AN) {
-		val = phy_read_mmd(phydev, MDIO_MMD_AN, MDIO_STAT1);
-		if (val < 0)
-			return val;
-
-		if (val & MDIO_AN_STAT1_ABLE)
-			linkmode_set_bit(ETHTOOL_LINK_MODE_Autoneg_BIT,
-					 phydev->supported);
-	}
 
 	ret = genphy_c45_pma_read_abilities(phydev);
 	if (ret)
@@ -469,7 +469,7 @@ static struct phy_driver mv3310_drivers[] = {
 		.phy_id_mask	= MARVELL_PHY_ID_MASK,
 		.name		= "mv88x3310",
 		.get_features	= mv3310_get_features,
-		.soft_reset	= gen10g_no_soft_reset,
+		.soft_reset	= genphy_no_soft_reset,
 		.config_init	= mv3310_config_init,
 		.probe		= mv3310_probe,
 		.suspend	= mv3310_suspend,
@@ -482,9 +482,10 @@ static struct phy_driver mv3310_drivers[] = {
 		.phy_id		= MARVELL_PHY_ID_88E2110,
 		.phy_id_mask	= MARVELL_PHY_ID_MASK,
 		.name		= "mv88x2110",
-		.features	= PHY_10GBIT_FEATURES,
 		.probe		= mv3310_probe,
-		.soft_reset	= gen10g_no_soft_reset,
+		.suspend	= mv3310_suspend,
+		.resume		= mv3310_resume,
+		.soft_reset	= genphy_no_soft_reset,
 		.config_init	= mv3310_config_init,
 		.config_aneg	= mv3310_config_aneg,
 		.aneg_done	= mv3310_aneg_done,

@@ -998,6 +998,19 @@ static void notify_and_destroy(struct net *net, struct sk_buff *skb,
 		qdisc_put(old);
 }
 
+static void qdisc_clear_nolock(struct Qdisc *sch)
+{
+	sch->flags &= ~TCQ_F_NOLOCK;
+	if (!(sch->flags & TCQ_F_CPUSTATS))
+		return;
+
+	free_percpu(sch->cpu_bstats);
+	free_percpu(sch->cpu_qstats);
+	sch->cpu_bstats = NULL;
+	sch->cpu_qstats = NULL;
+	sch->flags &= ~TCQ_F_CPUSTATS;
+}
+
 /* Graft qdisc "new" to class "classid" of qdisc "parent" or
  * to device "dev".
  *
@@ -1076,7 +1089,7 @@ skip:
 		/* Only support running class lockless if parent is lockless */
 		if (new && (new->flags & TCQ_F_NOLOCK) &&
 		    parent && !(parent->flags & TCQ_F_NOLOCK))
-			new->flags &= ~TCQ_F_NOLOCK;
+			qdisc_clear_nolock(new);
 
 		if (!cops || !cops->graft)
 			return -EOPNOTSUPP;
@@ -1824,6 +1837,7 @@ static int tclass_notify(struct net *net, struct sk_buff *oskb,
 {
 	struct sk_buff *skb;
 	u32 portid = oskb ? NETLINK_CB(oskb).portid : 0;
+	int err = 0;
 
 	skb = alloc_skb(NLMSG_GOODSIZE, GFP_KERNEL);
 	if (!skb)
@@ -1834,8 +1848,11 @@ static int tclass_notify(struct net *net, struct sk_buff *oskb,
 		return -EINVAL;
 	}
 
-	return rtnetlink_send(skb, net, portid, RTNLGRP_TC,
-			      n->nlmsg_flags & NLM_F_ECHO);
+	err = rtnetlink_send(skb, net, portid, RTNLGRP_TC,
+			     n->nlmsg_flags & NLM_F_ECHO);
+	if (err > 0)
+		err = 0;
+	return err;
 }
 
 static int tclass_del_notify(struct net *net,
@@ -1866,8 +1883,11 @@ static int tclass_del_notify(struct net *net,
 		return err;
 	}
 
-	return rtnetlink_send(skb, net, portid, RTNLGRP_TC,
-			      n->nlmsg_flags & NLM_F_ECHO);
+	err = rtnetlink_send(skb, net, portid, RTNLGRP_TC,
+			     n->nlmsg_flags & NLM_F_ECHO);
+	if (err > 0)
+		err = 0;
+	return err;
 }
 
 #ifdef CONFIG_NET_CLS

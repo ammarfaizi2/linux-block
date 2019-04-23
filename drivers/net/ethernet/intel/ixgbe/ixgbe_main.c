@@ -27,6 +27,7 @@
 #include <linux/bpf.h>
 #include <linux/bpf_trace.h>
 #include <linux/atomic.h>
+#include <linux/numa.h>
 #include <scsi/fc/fc_fcoe.h>
 #include <net/udp_tunnel.h>
 #include <net/pkt_cls.h>
@@ -6418,7 +6419,7 @@ int ixgbe_setup_tx_resources(struct ixgbe_ring *tx_ring)
 {
 	struct device *dev = tx_ring->dev;
 	int orig_node = dev_to_node(dev);
-	int ring_node = -1;
+	int ring_node = NUMA_NO_NODE;
 	int size;
 
 	size = sizeof(struct ixgbe_tx_buffer) * tx_ring->count;
@@ -6512,7 +6513,7 @@ int ixgbe_setup_rx_resources(struct ixgbe_adapter *adapter,
 {
 	struct device *dev = rx_ring->dev;
 	int orig_node = dev_to_node(dev);
-	int ring_node = -1;
+	int ring_node = NUMA_NO_NODE;
 	int size;
 
 	size = sizeof(struct ixgbe_rx_buffer) * rx_ring->count;
@@ -8296,7 +8297,7 @@ static int ixgbe_tx_map(struct ixgbe_ring *tx_ring,
 
 	ixgbe_maybe_stop_tx(tx_ring, DESC_NEEDED);
 
-	if (netif_xmit_stopped(txring_txq(tx_ring)) || !skb->xmit_more) {
+	if (netif_xmit_stopped(txring_txq(tx_ring)) || !netdev_xmit_more()) {
 		writel(i, tx_ring->tail);
 
 		/* we need this if more than one processor can write to our tail
@@ -8482,8 +8483,7 @@ static void ixgbe_atr(struct ixgbe_ring *ring,
 
 #ifdef IXGBE_FCOE
 static u16 ixgbe_select_queue(struct net_device *dev, struct sk_buff *skb,
-			      struct net_device *sb_dev,
-			      select_queue_fallback_t fallback)
+			      struct net_device *sb_dev)
 {
 	struct ixgbe_adapter *adapter;
 	struct ixgbe_ring_feature *f;
@@ -8513,7 +8513,7 @@ static u16 ixgbe_select_queue(struct net_device *dev, struct sk_buff *skb,
 			break;
 		/* fall through */
 	default:
-		return fallback(dev, skb, sb_dev);
+		return netdev_pick_tx(dev, skb, sb_dev);
 	}
 
 	f = &adapter->ring_feature[RING_F_FCOE];
@@ -9795,7 +9795,7 @@ static int ixgbe_set_features(struct net_device *netdev,
 			    NETIF_F_HW_VLAN_CTAG_FILTER))
 		ixgbe_set_rx_mode(netdev);
 
-	return 0;
+	return 1;
 }
 
 /**

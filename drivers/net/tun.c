@@ -606,8 +606,7 @@ static u16 tun_ebpf_select_queue(struct tun_struct *tun, struct sk_buff *skb)
 }
 
 static u16 tun_select_queue(struct net_device *dev, struct sk_buff *skb,
-			    struct net_device *sb_dev,
-			    select_queue_fallback_t fallback)
+			    struct net_device *sb_dev)
 {
 	struct tun_struct *tun = netdev_priv(dev);
 	u16 ret;
@@ -1043,7 +1042,7 @@ static int tun_net_close(struct net_device *dev)
 static void tun_automq_xmit(struct tun_struct *tun, struct sk_buff *skb)
 {
 #ifdef CONFIG_RPS
-	if (tun->numqueues == 1 && static_key_false(&rps_needed)) {
+	if (tun->numqueues == 1 && static_branch_unlikely(&rps_needed)) {
 		/* Select queue was not called for the skbuff, so we extract the
 		 * RPS hash and save it into the flow_table here.
 		 */
@@ -1763,9 +1762,6 @@ static ssize_t tun_get_user(struct tun_struct *tun, struct tun_file *tfile,
 	int skb_xdp = 1;
 	bool frags = tun_napi_frags_enabled(tfile);
 
-	if (!(tun->dev->flags & IFF_UP))
-		return -EIO;
-
 	if (!(tun->flags & IFF_NO_PI)) {
 		if (len < sizeof(pi))
 			return -EINVAL;
@@ -1867,6 +1863,8 @@ static ssize_t tun_get_user(struct tun_struct *tun, struct tun_file *tfile,
 			err = skb_copy_datagram_from_iter(skb, 0, from, len);
 
 		if (err) {
+			err = -EFAULT;
+drop:
 			this_cpu_inc(tun->pcpu_stats->rx_dropped);
 			kfree_skb(skb);
 			if (frags) {
@@ -1874,7 +1872,7 @@ static ssize_t tun_get_user(struct tun_struct *tun, struct tun_file *tfile,
 				mutex_unlock(&tfile->napi_mutex);
 			}
 
-			return -EFAULT;
+			return err;
 		}
 	}
 
@@ -1958,6 +1956,13 @@ static ssize_t tun_get_user(struct tun_struct *tun, struct tun_file *tfile,
 	    !tfile->detached)
 		rxhash = __skb_get_hash_symmetric(skb);
 
+	rcu_read_lock();
+	if (unlikely(!(tun->dev->flags & IFF_UP))) {
+		err = -EIO;
+		rcu_read_unlock();
+		goto drop;
+	}
+
 	if (frags) {
 		/* Exercise flow dissector code path. */
 		u32 headlen = eth_get_headlen(skb->data, skb_headlen(skb));
@@ -1965,6 +1970,7 @@ static ssize_t tun_get_user(struct tun_struct *tun, struct tun_file *tfile,
 		if (unlikely(headlen > skb_headlen(skb))) {
 			this_cpu_inc(tun->pcpu_stats->rx_dropped);
 			napi_free_frags(&tfile->napi);
+			rcu_read_unlock();
 			mutex_unlock(&tfile->napi_mutex);
 			WARN_ON(1);
 			return -ENOMEM;
@@ -1992,6 +1998,7 @@ static ssize_t tun_get_user(struct tun_struct *tun, struct tun_file *tfile,
 	} else {
 		netif_rx_ni(skb);
 	}
+	rcu_read_unlock();
 
 	stats = get_cpu_ptr(tun->pcpu_stats);
 	u64_stats_update_begin(&stats->syncp);
@@ -2167,9 +2174,9 @@ static void *tun_ring_recv(struct tun_file *tfile, int noblock, int *err)
 	}
 
 	add_wait_queue(&tfile->wq.wait, &wait);
-	current->state = TASK_INTERRUPTIBLE;
 
 	while (1) {
+		set_current_state(TASK_INTERRUPTIBLE);
 		ptr = ptr_ring_consume(&tfile->tx_ring);
 		if (ptr)
 			break;
@@ -2185,7 +2192,7 @@ static void *tun_ring_recv(struct tun_file *tfile, int noblock, int *err)
 		schedule();
 	}
 
-	current->state = TASK_RUNNING;
+	__set_current_state(TASK_RUNNING);
 	remove_wait_queue(&tfile->wq.wait, &wait);
 
 out:
@@ -2865,8 +2872,7 @@ err_free_dev:
 	return err;
 }
 
-static void tun_get_iff(struct net *net, struct tun_struct *tun,
-		       struct ifreq *ifr)
+static void tun_get_iff(struct tun_struct *tun, struct ifreq *ifr)
 {
 	tun_debug(KERN_INFO, tun, "tun_get_iff\n");
 
@@ -3095,10 +3101,11 @@ static long __tun_chr_ioctl(struct file *file, unsigned int cmd,
 
 	tun_debug(KERN_INFO, tun, "tun_chr_ioctl cmd %u\n", cmd);
 
+	net = dev_net(tun->dev);
 	ret = 0;
 	switch (cmd) {
 	case TUNGETIFF:
-		tun_get_iff(current->nsproxy->net_ns, tun, &ifr);
+		tun_get_iff(tun, &ifr);
 
 		if (tfile->detached)
 			ifr.ifr_flags |= IFF_DETACH_QUEUE;
@@ -3320,6 +3327,13 @@ static long __tun_chr_ioctl(struct file *file, unsigned int cmd,
 		ret = tun_net_change_carrier(tun->dev, (bool)carrier);
 		break;
 
+	case TUNGETDEVNETNS:
+		ret = -EPERM;
+		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
+			goto unlock;
+		ret = open_related_ns(&net->ns, get_net_ns);
+		break;
+
 	default:
 		ret = -EINVAL;
 		break;
@@ -3449,7 +3463,7 @@ static void tun_chr_show_fdinfo(struct seq_file *m, struct file *file)
 	rtnl_lock();
 	tun = tun_get(tfile);
 	if (tun)
-		tun_get_iff(current->nsproxy->net_ns, tun, &ifr);
+		tun_get_iff(tun, &ifr);
 	rtnl_unlock();
 
 	if (tun)

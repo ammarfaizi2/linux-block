@@ -606,18 +606,18 @@ struct dentry;
 struct work_struct;
 
 enum {                                 /* adapter flags */
-	FULL_INIT_DONE     = (1 << 0),
-	DEV_ENABLED        = (1 << 1),
-	USING_MSI          = (1 << 2),
-	USING_MSIX         = (1 << 3),
-	FW_OK              = (1 << 4),
-	RSS_TNLALLLOOKUP   = (1 << 5),
-	USING_SOFT_PARAMS  = (1 << 6),
-	MASTER_PF          = (1 << 7),
-	FW_OFLD_CONN       = (1 << 9),
-	ROOT_NO_RELAXED_ORDERING = (1 << 10),
-	SHUTTING_DOWN	   = (1 << 11),
-	SGE_DBQ_TIMER      = (1 << 12),
+	CXGB4_FULL_INIT_DONE		= (1 << 0),
+	CXGB4_DEV_ENABLED		= (1 << 1),
+	CXGB4_USING_MSI			= (1 << 2),
+	CXGB4_USING_MSIX		= (1 << 3),
+	CXGB4_FW_OK			= (1 << 4),
+	CXGB4_RSS_TNLALLLOOKUP		= (1 << 5),
+	CXGB4_USING_SOFT_PARAMS		= (1 << 6),
+	CXGB4_MASTER_PF			= (1 << 7),
+	CXGB4_FW_OFLD_CONN		= (1 << 9),
+	CXGB4_ROOT_NO_RELAXED_ORDERING	= (1 << 10),
+	CXGB4_SHUTTING_DOWN		= (1 << 11),
+	CXGB4_SGE_DBQ_TIMER		= (1 << 12),
 };
 
 enum {
@@ -885,6 +885,7 @@ struct vf_info {
 	unsigned int tx_rate;
 	bool pf_set_mac;
 	u16 vlan;
+	int link_state;
 };
 
 enum {
@@ -1574,9 +1575,11 @@ int t4_slow_intr_handler(struct adapter *adapter);
 
 int t4_wait_dev_ready(void __iomem *regs);
 
+fw_port_cap32_t t4_link_acaps(struct adapter *adapter, unsigned int port,
+			      struct link_config *lc);
 int t4_link_l1cfg_core(struct adapter *adap, unsigned int mbox,
 		       unsigned int port, struct link_config *lc,
-		       bool sleep_ok, int timeout);
+		       u8 sleep_ok, int timeout);
 
 static inline int t4_link_l1cfg(struct adapter *adapter, unsigned int mbox,
 				unsigned int port, struct link_config *lc)

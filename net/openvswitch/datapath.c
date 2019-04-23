@@ -448,6 +448,10 @@ static int queue_userspace_packet(struct datapath *dp, struct sk_buff *skb,
 
 	upcall = genlmsg_put(user_skb, 0, 0, &dp_packet_genl_family,
 			     0, upcall_info->cmd);
+	if (!upcall) {
+		err = -EINVAL;
+		goto out;
+	}
 	upcall->dp_ifindex = dp_ifindex;
 
 	err = ovs_nla_put_key(key, key, OVS_PACKET_ATTR_KEY, false, user_skb);
@@ -460,6 +464,10 @@ static int queue_userspace_packet(struct datapath *dp, struct sk_buff *skb,
 
 	if (upcall_info->egress_tun_info) {
 		nla = nla_nest_start(user_skb, OVS_PACKET_ATTR_EGRESS_TUN_KEY);
+		if (!nla) {
+			err = -EMSGSIZE;
+			goto out;
+		}
 		err = ovs_nla_put_tunnel_info(user_skb,
 					      upcall_info->egress_tun_info);
 		BUG_ON(err);
@@ -468,6 +476,10 @@ static int queue_userspace_packet(struct datapath *dp, struct sk_buff *skb,
 
 	if (upcall_info->actions_len) {
 		nla = nla_nest_start(user_skb, OVS_PACKET_ATTR_ACTIONS);
+		if (!nla) {
+			err = -EMSGSIZE;
+			goto out;
+		}
 		err = ovs_nla_put_actions(upcall_info->actions,
 					  upcall_info->actions_len,
 					  user_skb);
@@ -627,7 +639,6 @@ static const struct nla_policy packet_policy[OVS_PACKET_ATTR_MAX + 1] = {
 static const struct genl_ops dp_packet_genl_ops[] = {
 	{ .cmd = OVS_PACKET_CMD_EXECUTE,
 	  .flags = GENL_UNS_ADMIN_PERM, /* Requires CAP_NET_ADMIN privilege. */
-	  .policy = packet_policy,
 	  .doit = ovs_packet_cmd_execute
 	}
 };
@@ -637,6 +648,7 @@ static struct genl_family dp_packet_genl_family __ro_after_init = {
 	.name = OVS_PACKET_FAMILY,
 	.version = OVS_PACKET_VERSION,
 	.maxattr = OVS_PACKET_ATTR_MAX,
+	.policy = packet_policy,
 	.netnsok = true,
 	.parallel_ops = true,
 	.ops = dp_packet_genl_ops,
@@ -1412,23 +1424,19 @@ static const struct nla_policy flow_policy[OVS_FLOW_ATTR_MAX + 1] = {
 static const struct genl_ops dp_flow_genl_ops[] = {
 	{ .cmd = OVS_FLOW_CMD_NEW,
 	  .flags = GENL_UNS_ADMIN_PERM, /* Requires CAP_NET_ADMIN privilege. */
-	  .policy = flow_policy,
 	  .doit = ovs_flow_cmd_new
 	},
 	{ .cmd = OVS_FLOW_CMD_DEL,
 	  .flags = GENL_UNS_ADMIN_PERM, /* Requires CAP_NET_ADMIN privilege. */
-	  .policy = flow_policy,
 	  .doit = ovs_flow_cmd_del
 	},
 	{ .cmd = OVS_FLOW_CMD_GET,
 	  .flags = 0,		    /* OK for unprivileged users. */
-	  .policy = flow_policy,
 	  .doit = ovs_flow_cmd_get,
 	  .dumpit = ovs_flow_cmd_dump
 	},
 	{ .cmd = OVS_FLOW_CMD_SET,
 	  .flags = GENL_UNS_ADMIN_PERM, /* Requires CAP_NET_ADMIN privilege. */
-	  .policy = flow_policy,
 	  .doit = ovs_flow_cmd_set,
 	},
 };
@@ -1438,6 +1446,7 @@ static struct genl_family dp_flow_genl_family __ro_after_init = {
 	.name = OVS_FLOW_FAMILY,
 	.version = OVS_FLOW_VERSION,
 	.maxattr = OVS_FLOW_ATTR_MAX,
+	.policy = flow_policy,
 	.netnsok = true,
 	.parallel_ops = true,
 	.ops = dp_flow_genl_ops,
@@ -1805,23 +1814,19 @@ static const struct nla_policy datapath_policy[OVS_DP_ATTR_MAX + 1] = {
 static const struct genl_ops dp_datapath_genl_ops[] = {
 	{ .cmd = OVS_DP_CMD_NEW,
 	  .flags = GENL_UNS_ADMIN_PERM, /* Requires CAP_NET_ADMIN privilege. */
-	  .policy = datapath_policy,
 	  .doit = ovs_dp_cmd_new
 	},
 	{ .cmd = OVS_DP_CMD_DEL,
 	  .flags = GENL_UNS_ADMIN_PERM, /* Requires CAP_NET_ADMIN privilege. */
-	  .policy = datapath_policy,
 	  .doit = ovs_dp_cmd_del
 	},
 	{ .cmd = OVS_DP_CMD_GET,
 	  .flags = 0,		    /* OK for unprivileged users. */
-	  .policy = datapath_policy,
 	  .doit = ovs_dp_cmd_get,
 	  .dumpit = ovs_dp_cmd_dump
 	},
 	{ .cmd = OVS_DP_CMD_SET,
 	  .flags = GENL_UNS_ADMIN_PERM, /* Requires CAP_NET_ADMIN privilege. */
-	  .policy = datapath_policy,
 	  .doit = ovs_dp_cmd_set,
 	},
 };
@@ -1831,6 +1836,7 @@ static struct genl_family dp_datapath_genl_family __ro_after_init = {
 	.name = OVS_DATAPATH_FAMILY,
 	.version = OVS_DATAPATH_VERSION,
 	.maxattr = OVS_DP_ATTR_MAX,
+	.policy = datapath_policy,
 	.netnsok = true,
 	.parallel_ops = true,
 	.ops = dp_datapath_genl_ops,
@@ -2248,23 +2254,19 @@ static const struct nla_policy vport_policy[OVS_VPORT_ATTR_MAX + 1] = {
 static const struct genl_ops dp_vport_genl_ops[] = {
 	{ .cmd = OVS_VPORT_CMD_NEW,
 	  .flags = GENL_UNS_ADMIN_PERM, /* Requires CAP_NET_ADMIN privilege. */
-	  .policy = vport_policy,
 	  .doit = ovs_vport_cmd_new
 	},
 	{ .cmd = OVS_VPORT_CMD_DEL,
 	  .flags = GENL_UNS_ADMIN_PERM, /* Requires CAP_NET_ADMIN privilege. */
-	  .policy = vport_policy,
 	  .doit = ovs_vport_cmd_del
 	},
 	{ .cmd = OVS_VPORT_CMD_GET,
 	  .flags = 0,		    /* OK for unprivileged users. */
-	  .policy = vport_policy,
 	  .doit = ovs_vport_cmd_get,
 	  .dumpit = ovs_vport_cmd_dump
 	},
 	{ .cmd = OVS_VPORT_CMD_SET,
 	  .flags = GENL_UNS_ADMIN_PERM, /* Requires CAP_NET_ADMIN privilege. */
-	  .policy = vport_policy,
 	  .doit = ovs_vport_cmd_set,
 	},
 };
@@ -2274,6 +2276,7 @@ struct genl_family dp_vport_genl_family __ro_after_init = {
 	.name = OVS_VPORT_FAMILY,
 	.version = OVS_VPORT_VERSION,
 	.maxattr = OVS_VPORT_ATTR_MAX,
+	.policy = vport_policy,
 	.netnsok = true,
 	.parallel_ops = true,
 	.ops = dp_vport_genl_ops,

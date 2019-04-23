@@ -146,7 +146,6 @@ retry:
 	}
 
 	ctx->in_tcp_sendpages = false;
-	ctx->sk_write_space(sk);
 
 	return 0;
 }
@@ -209,23 +208,29 @@ int tls_push_partial_record(struct sock *sk, struct tls_context *ctx,
 	return tls_push_sg(sk, ctx, sg, offset, flags);
 }
 
-int tls_push_pending_closed_record(struct sock *sk,
-				   struct tls_context *tls_ctx,
-				   int flags, long *timeo)
+bool tls_free_partial_record(struct sock *sk, struct tls_context *ctx)
 {
-	struct tls_sw_context_tx *ctx = tls_sw_ctx_tx(tls_ctx);
+	struct scatterlist *sg;
 
-	if (tls_is_partially_sent_record(tls_ctx) ||
-	    !list_empty(&ctx->tx_list))
-		return tls_tx_records(sk, flags);
-	else
-		return tls_ctx->push_pending_record(sk, flags);
+	sg = ctx->partially_sent_record;
+	if (!sg)
+		return false;
+
+	while (1) {
+		put_page(sg_page(sg));
+		sk_mem_uncharge(sk, sg->length);
+
+		if (sg_is_last(sg))
+			break;
+		sg++;
+	}
+	ctx->partially_sent_record = NULL;
+	return true;
 }
 
 static void tls_write_space(struct sock *sk)
 {
 	struct tls_context *ctx = tls_get_ctx(sk);
-	struct tls_sw_context_tx *tx_ctx = tls_sw_ctx_tx(ctx);
 
 	/* If in_tcp_sendpages call lower protocol write space handler
 	 * to ensure we wake up any waiting operations there. For example
@@ -236,12 +241,12 @@ static void tls_write_space(struct sock *sk)
 		return;
 	}
 
-	/* Schedule the transmission if tx list is ready */
-	if (is_tx_ready(tx_ctx) && !sk->sk_write_pending) {
-		/* Schedule the transmission */
-		if (!test_and_set_bit(BIT_TX_SCHEDULED, &tx_ctx->tx_bitmask))
-			schedule_delayed_work(&tx_ctx->tx_work.work, 0);
-	}
+#ifdef CONFIG_TLS_DEVICE
+	if (ctx->tx_conf == TLS_HW)
+		tls_device_write_space(sk, ctx);
+	else
+#endif
+		tls_sw_write_space(sk, ctx);
 
 	ctx->sk_write_space(sk);
 }
@@ -282,6 +287,10 @@ static void tls_sk_proto_close(struct sock *sk, long timeout)
 		kfree(ctx->tx.rec_seq);
 		kfree(ctx->tx.iv);
 		tls_sw_free_resources_tx(sk);
+#ifdef CONFIG_TLS_DEVICE
+	} else if (ctx->tx_conf == TLS_HW) {
+		tls_device_free_resources_tx(sk);
+#endif
 	}
 
 	if (ctx->rx_conf == TLS_SW) {
@@ -484,24 +493,29 @@ static int do_tls_setsockopt_conf(struct sock *sk, char __user *optval,
 
 	switch (crypto_info->cipher_type) {
 	case TLS_CIPHER_AES_GCM_128:
+		optsize = sizeof(struct tls12_crypto_info_aes_gcm_128);
+		break;
 	case TLS_CIPHER_AES_GCM_256: {
-		optsize = crypto_info->cipher_type == TLS_CIPHER_AES_GCM_128 ?
-			sizeof(struct tls12_crypto_info_aes_gcm_128) :
-			sizeof(struct tls12_crypto_info_aes_gcm_256);
-		if (optlen != optsize) {
-			rc = -EINVAL;
-			goto err_crypto_info;
-		}
-		rc = copy_from_user(crypto_info + 1, optval + sizeof(*crypto_info),
-				    optlen - sizeof(*crypto_info));
-		if (rc) {
-			rc = -EFAULT;
-			goto err_crypto_info;
-		}
+		optsize = sizeof(struct tls12_crypto_info_aes_gcm_256);
 		break;
 	}
+	case TLS_CIPHER_AES_CCM_128:
+		optsize = sizeof(struct tls12_crypto_info_aes_ccm_128);
+		break;
 	default:
 		rc = -EINVAL;
+		goto err_crypto_info;
+	}
+
+	if (optlen != optsize) {
+		rc = -EINVAL;
+		goto err_crypto_info;
+	}
+
+	rc = copy_from_user(crypto_info + 1, optval + sizeof(*crypto_info),
+			    optlen - sizeof(*crypto_info));
+	if (rc) {
+		rc = -EFAULT;
 		goto err_crypto_info;
 	}
 

@@ -380,7 +380,7 @@ int ksz_enable_port(struct dsa_switch *ds, int port, struct phy_device *phy)
 }
 EXPORT_SYMBOL_GPL(ksz_enable_port);
 
-void ksz_disable_port(struct dsa_switch *ds, int port, struct phy_device *phy)
+void ksz_disable_port(struct dsa_switch *ds, int port)
 {
 	struct ksz_device *dev = ds->priv;
 
@@ -453,7 +453,9 @@ int ksz_switch_register(struct ksz_device *dev,
 	if (ret)
 		return ret;
 
-	dev->interface = PHY_INTERFACE_MODE_MII;
+	/* Host port interface will be self detected, or specifically set in
+	 * device tree.
+	 */
 	if (dev->dev->of_node) {
 		ret = of_get_phy_mode(dev->dev->of_node);
 		if (ret >= 0)

@@ -102,7 +102,7 @@ static size_t br_get_link_af_size_filtered(const struct net_device *dev,
 	size_t vinfo_sz = 0;
 
 	rcu_read_lock();
-	if (br_port_exists(dev)) {
+	if (netif_is_bridge_port(dev)) {
 		p = br_port_get_rcu(dev);
 		vg = nbp_vlan_group_rcu(p);
 	} else if (dev->priv_flags & IFF_EBRIDGE) {
@@ -1441,7 +1441,7 @@ static int br_fill_info(struct sk_buff *skb, const struct net_device *brdev)
 	    nla_put_u8(skb, IFLA_BR_VLAN_STATS_ENABLED,
 		       br_opt_get(br, BROPT_VLAN_STATS_ENABLED)) ||
 	    nla_put_u8(skb, IFLA_BR_VLAN_STATS_PER_PORT,
-		       br_opt_get(br, IFLA_BR_VLAN_STATS_PER_PORT)))
+		       br_opt_get(br, BROPT_VLAN_STATS_PER_PORT)))
 		return -EMSGSIZE;
 #endif
 #ifdef CONFIG_BRIDGE_IGMP_SNOOPING

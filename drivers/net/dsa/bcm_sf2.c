@@ -221,8 +221,7 @@ static int bcm_sf2_port_setup(struct dsa_switch *ds, int port,
 	return b53_enable_port(ds, port, phy);
 }
 
-static void bcm_sf2_port_disable(struct dsa_switch *ds, int port,
-				 struct phy_device *phy)
+static void bcm_sf2_port_disable(struct dsa_switch *ds, int port)
 {
 	struct bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
 	u32 reg;
@@ -241,7 +240,7 @@ static void bcm_sf2_port_disable(struct dsa_switch *ds, int port,
 	if (priv->int_phy_mask & 1 << port && priv->hw_params.num_gphy == 1)
 		bcm_sf2_gphy_enable_set(ds, false);
 
-	b53_disable_port(ds, port, phy);
+	b53_disable_port(ds, port);
 
 	/* Power down the port memory */
 	reg = core_readl(priv, CORE_MEM_PSM_VDD_CTRL);
@@ -692,7 +691,7 @@ static int bcm_sf2_sw_suspend(struct dsa_switch *ds)
 	 */
 	for (port = 0; port < ds->num_ports; port++) {
 		if (dsa_is_user_port(ds, port) || dsa_is_cpu_port(ds, port))
-			bcm_sf2_port_disable(ds, port, NULL);
+			bcm_sf2_port_disable(ds, port);
 	}
 
 	return 0;
@@ -788,7 +787,7 @@ static int bcm_sf2_sw_setup(struct dsa_switch *ds)
 		else if (dsa_is_cpu_port(ds, port))
 			bcm_sf2_imp_setup(ds, port);
 		else
-			bcm_sf2_port_disable(ds, port, NULL);
+			bcm_sf2_port_disable(ds, port);
 	}
 
 	b53_configure_vlan(ds);
@@ -1189,10 +1188,11 @@ static int bcm_sf2_sw_probe(struct platform_device *pdev)
 	if (ret)
 		goto out_mdio;
 
-	pr_info("Starfighter 2 top: %x.%02x, core: %x.%02x base: 0x%p, IRQs: %d, %d\n",
-		priv->hw_params.top_rev >> 8, priv->hw_params.top_rev & 0xff,
-		priv->hw_params.core_rev >> 8, priv->hw_params.core_rev & 0xff,
-		priv->core, priv->irq0, priv->irq1);
+	dev_info(&pdev->dev,
+		 "Starfighter 2 top: %x.%02x, core: %x.%02x, IRQs: %d, %d\n",
+		 priv->hw_params.top_rev >> 8, priv->hw_params.top_rev & 0xff,
+		 priv->hw_params.core_rev >> 8, priv->hw_params.core_rev & 0xff,
+		 priv->irq0, priv->irq1);
 
 	return 0;
 

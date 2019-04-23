@@ -77,7 +77,7 @@ mt76x2_fixup_xtal(struct mt76x02_dev *dev)
 	}
 }
 
-static int mt76x2_mac_reset(struct mt76x02_dev *dev, bool hard)
+int mt76x2_mac_reset(struct mt76x02_dev *dev, bool hard)
 {
 	const u8 *macaddr = dev->mt76.macaddr;
 	u32 val;
@@ -171,13 +171,6 @@ int mt76x2_mac_start(struct mt76x02_dev *dev)
 	mt76x02_mac_start(dev);
 
 	return 0;
-}
-
-void mt76x2_mac_resume(struct mt76x02_dev *dev)
-{
-	mt76_wr(dev, MT_MAC_SYS_CTRL,
-		MT_MAC_SYS_CTRL_ENABLE_TX |
-		MT_MAC_SYS_CTRL_ENABLE_RX);
 }
 
 static void

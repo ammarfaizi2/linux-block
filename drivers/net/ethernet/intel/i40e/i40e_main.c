@@ -2107,11 +2107,22 @@ void i40e_aqc_add_filters(struct i40e_vsi *vsi, const char *vsi_name,
 	fcnt = i40e_update_filter_state(num_add, list, add_head);
 
 	if (fcnt != num_add) {
-		set_bit(__I40E_VSI_OVERFLOW_PROMISC, vsi->state);
-		dev_warn(&vsi->back->pdev->dev,
-			 "Error %s adding RX filters on %s, promiscuous mode forced on\n",
-			 i40e_aq_str(hw, aq_err),
-			 vsi_name);
+		if (vsi->type == I40E_VSI_MAIN) {
+			set_bit(__I40E_VSI_OVERFLOW_PROMISC, vsi->state);
+			dev_warn(&vsi->back->pdev->dev,
+				 "Error %s adding RX filters on %s, promiscuous mode forced on\n",
+				 i40e_aq_str(hw, aq_err), vsi_name);
+		} else if (vsi->type == I40E_VSI_SRIOV ||
+			   vsi->type == I40E_VSI_VMDQ1 ||
+			   vsi->type == I40E_VSI_VMDQ2) {
+			dev_warn(&vsi->back->pdev->dev,
+				 "Error %s adding RX filters on %s, please set promiscuous on manually for %s\n",
+				 i40e_aq_str(hw, aq_err), vsi_name, vsi_name);
+		} else {
+			dev_warn(&vsi->back->pdev->dev,
+				 "Error %s adding RX filters on %s, incorrect VSI type: %i.\n",
+				 i40e_aq_str(hw, aq_err), vsi_name, vsi->type);
+		}
 	}
 }
 
@@ -2654,6 +2665,10 @@ void i40e_vlan_stripping_enable(struct i40e_vsi *vsi)
 	struct i40e_vsi_context ctxt;
 	i40e_status ret;
 
+	/* Don't modify stripping options if a port VLAN is active */
+	if (vsi->info.pvid)
+		return;
+
 	if ((vsi->info.valid_sections &
 	     cpu_to_le16(I40E_AQ_VSI_PROP_VLAN_VALID)) &&
 	    ((vsi->info.port_vlan_flags & I40E_AQ_VSI_PVLAN_MODE_MASK) == 0))
@@ -2683,6 +2698,10 @@ void i40e_vlan_stripping_disable(struct i40e_vsi *vsi)
 {
 	struct i40e_vsi_context ctxt;
 	i40e_status ret;
+
+	/* Don't modify stripping options if a port VLAN is active */
+	if (vsi->info.pvid)
+		return;
 
 	if ((vsi->info.valid_sections &
 	     cpu_to_le16(I40E_AQ_VSI_PROP_VLAN_VALID)) &&
@@ -3061,6 +3080,26 @@ static void i40e_config_xps_tx_ring(struct i40e_ring *ring)
 	cpu = cpumask_local_spread(ring->q_vector->v_idx, -1);
 	netif_set_xps_queue(ring->netdev, get_cpu_mask(cpu),
 			    ring->queue_index);
+}
+
+/**
+ * i40e_xsk_umem - Retrieve the AF_XDP ZC if XDP and ZC is enabled
+ * @ring: The Tx or Rx ring
+ *
+ * Returns the UMEM or NULL.
+ **/
+static struct xdp_umem *i40e_xsk_umem(struct i40e_ring *ring)
+{
+	bool xdp_on = i40e_enabled_xdp_vsi(ring->vsi);
+	int qid = ring->queue_index;
+
+	if (ring_is_xdp(ring))
+		qid -= ring->vsi->alloc_queue_pairs;
+
+	if (!xdp_on || !test_bit(qid, ring->vsi->af_xdp_zc_qps))
+		return NULL;
+
+	return xdp_get_umem_from_qid(ring->vsi->netdev, qid);
 }
 
 /**
@@ -6383,7 +6422,7 @@ static int i40e_init_pf_dcb(struct i40e_pf *pf)
 		goto out;
 
 	/* Get the initial DCB configuration */
-	err = i40e_init_dcb(hw);
+	err = i40e_init_dcb(hw, true);
 	if (!err) {
 		/* Device/Function is not DCBX capable */
 		if ((!hw->func_caps.dcb) ||
@@ -6826,10 +6865,12 @@ static int i40e_setup_tc(struct net_device *netdev, void *type_data)
 	struct i40e_pf *pf = vsi->back;
 	u8 enabled_tc = 0, num_tc, hw;
 	bool need_reset = false;
+	int old_queue_pairs;
 	int ret = -EINVAL;
 	u16 mode;
 	int i;
 
+	old_queue_pairs = vsi->num_queue_pairs;
 	num_tc = mqprio_qopt->qopt.num_tc;
 	hw = mqprio_qopt->qopt.hw;
 	mode = mqprio_qopt->mode;
@@ -6930,6 +6971,7 @@ config_tc:
 		}
 		ret = i40e_configure_queue_channels(vsi);
 		if (ret) {
+			vsi->num_queue_pairs = old_queue_pairs;
 			netdev_info(netdev,
 				    "Failed configuring queue channels\n");
 			need_reset = true;
@@ -9270,6 +9312,11 @@ static void i40e_prep_for_reset(struct i40e_pf *pf, bool lock_acquired)
 			dev_warn(&pf->pdev->dev,
 				 "shutdown_lan_hmc failed: %d\n", ret);
 	}
+
+	/* Save the current PTP time so that we can restore the time after the
+	 * reset completes.
+	 */
+	i40e_ptp_save_hw_time(pf);
 }
 
 /**
@@ -10064,6 +10111,12 @@ static int i40e_vsi_mem_alloc(struct i40e_pf *pf, enum i40e_vsi_type type)
 	hash_init(vsi->mac_filter_hash);
 	vsi->irqs_ready = false;
 
+	if (type == I40E_VSI_MAIN) {
+		vsi->af_xdp_zc_qps = bitmap_zalloc(pf->num_lan_qps, GFP_KERNEL);
+		if (!vsi->af_xdp_zc_qps)
+			goto err_rings;
+	}
+
 	ret = i40e_set_num_rings_in_vsi(vsi);
 	if (ret)
 		goto err_rings;
@@ -10082,6 +10135,7 @@ static int i40e_vsi_mem_alloc(struct i40e_pf *pf, enum i40e_vsi_type type)
 	goto unlock_pf;
 
 err_rings:
+	bitmap_free(vsi->af_xdp_zc_qps);
 	pf->next_vsi = i - 1;
 	kfree(vsi);
 unlock_pf:
@@ -10162,6 +10216,7 @@ static int i40e_vsi_clear(struct i40e_vsi *vsi)
 	i40e_put_lump(pf->qp_pile, vsi->base_queue, vsi->idx);
 	i40e_put_lump(pf->irq_pile, vsi->base_vector, vsi->idx);
 
+	bitmap_free(vsi->af_xdp_zc_qps);
 	i40e_vsi_free_arrays(vsi, true);
 	i40e_clear_rss_config_user(vsi);
 
@@ -13956,6 +14011,7 @@ static int i40e_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 
 	INIT_LIST_HEAD(&pf->l3_flex_pit_list);
 	INIT_LIST_HEAD(&pf->l4_flex_pit_list);
+	INIT_LIST_HEAD(&pf->ddp_old_prof);
 
 	/* set up the locks for the AQ, do this only once in probe
 	 * and destroy them only once in remove
@@ -14014,7 +14070,11 @@ static int i40e_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	if (err) {
 		if (err == I40E_ERR_FIRMWARE_API_VERSION)
 			dev_info(&pdev->dev,
-				 "The driver for the device stopped because the NVM image is newer than expected. You must install the most recent version of the network driver.\n");
+				 "The driver for the device stopped because the NVM image v%u.%u is newer than expected v%u.%u. You must install the most recent version of the network driver.\n",
+				 hw->aq.api_maj_ver,
+				 hw->aq.api_min_ver,
+				 I40E_FW_API_VERSION_MAJOR,
+				 I40E_FW_MINOR_VERSION(hw));
 		else
 			dev_info(&pdev->dev,
 				 "The driver for the device stopped because the device firmware failed to init. Try updating your NVM image.\n");
@@ -14032,10 +14092,18 @@ static int i40e_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	if (hw->aq.api_maj_ver == I40E_FW_API_VERSION_MAJOR &&
 	    hw->aq.api_min_ver > I40E_FW_MINOR_VERSION(hw))
 		dev_info(&pdev->dev,
-			 "The driver for the device detected a newer version of the NVM image than expected. Please install the most recent version of the network driver.\n");
+			 "The driver for the device detected a newer version of the NVM image v%u.%u than expected v%u.%u. Please install the most recent version of the network driver.\n",
+			 hw->aq.api_maj_ver,
+			 hw->aq.api_min_ver,
+			 I40E_FW_API_VERSION_MAJOR,
+			 I40E_FW_MINOR_VERSION(hw));
 	else if (hw->aq.api_maj_ver == 1 && hw->aq.api_min_ver < 4)
 		dev_info(&pdev->dev,
-			 "The driver for the device detected an older version of the NVM image than expected. Please update the NVM image.\n");
+			 "The driver for the device detected an older version of the NVM image v%u.%u than expected v%u.%u. Please update the NVM image.\n",
+			 hw->aq.api_maj_ver,
+			 hw->aq.api_min_ver,
+			 I40E_FW_API_VERSION_MAJOR,
+			 I40E_FW_MINOR_VERSION(hw));
 
 	i40e_verify_eeprom(pf);
 

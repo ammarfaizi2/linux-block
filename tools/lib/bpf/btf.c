@@ -24,6 +24,8 @@
 		((k) == BTF_KIND_CONST) || \
 		((k) == BTF_KIND_RESTRICT))
 
+#define IS_VAR(k) ((k) == BTF_KIND_VAR)
+
 static struct btf_type btf_void;
 
 struct btf {
@@ -212,6 +214,10 @@ static int btf_type_size(struct btf_type *t)
 		return base_size + vlen * sizeof(struct btf_member);
 	case BTF_KIND_FUNC_PROTO:
 		return base_size + vlen * sizeof(struct btf_param);
+	case BTF_KIND_VAR:
+		return base_size + sizeof(struct btf_var);
+	case BTF_KIND_DATASEC:
+		return base_size + vlen * sizeof(struct btf_var_secinfo);
 	default:
 		pr_debug("Unsupported BTF_KIND:%u\n", BTF_INFO_KIND(t->info));
 		return -EINVAL;
@@ -283,6 +289,7 @@ __s64 btf__resolve_size(const struct btf *btf, __u32 type_id)
 		case BTF_KIND_STRUCT:
 		case BTF_KIND_UNION:
 		case BTF_KIND_ENUM:
+		case BTF_KIND_DATASEC:
 			size = t->size;
 			goto done;
 		case BTF_KIND_PTR:
@@ -292,6 +299,7 @@ __s64 btf__resolve_size(const struct btf *btf, __u32 type_id)
 		case BTF_KIND_VOLATILE:
 		case BTF_KIND_CONST:
 		case BTF_KIND_RESTRICT:
+		case BTF_KIND_VAR:
 			type_id = t->type;
 			break;
 		case BTF_KIND_ARRAY:
@@ -326,7 +334,8 @@ int btf__resolve_type(const struct btf *btf, __u32 type_id)
 	t = btf__type_by_id(btf, type_id);
 	while (depth < MAX_RESOLVE_DEPTH &&
 	       !btf_type_is_void_or_null(t) &&
-	       IS_MODIFIER(BTF_INFO_KIND(t->info))) {
+	       (IS_MODIFIER(BTF_INFO_KIND(t->info)) ||
+		IS_VAR(BTF_INFO_KIND(t->info)))) {
 		type_id = t->type;
 		t = btf__type_by_id(btf, type_id);
 		depth++;
@@ -406,6 +415,92 @@ done:
 	}
 
 	return btf;
+}
+
+static int compare_vsi_off(const void *_a, const void *_b)
+{
+	const struct btf_var_secinfo *a = _a;
+	const struct btf_var_secinfo *b = _b;
+
+	return a->offset - b->offset;
+}
+
+static int btf_fixup_datasec(struct bpf_object *obj, struct btf *btf,
+			     struct btf_type *t)
+{
+	__u32 size = 0, off = 0, i, vars = BTF_INFO_VLEN(t->info);
+	const char *name = btf__name_by_offset(btf, t->name_off);
+	const struct btf_type *t_var;
+	struct btf_var_secinfo *vsi;
+	struct btf_var *var;
+	int ret;
+
+	if (!name) {
+		pr_debug("No name found in string section for DATASEC kind.\n");
+		return -ENOENT;
+	}
+
+	ret = bpf_object__section_size(obj, name, &size);
+	if (ret || !size || (t->size && t->size != size)) {
+		pr_debug("Invalid size for section %s: %u bytes\n", name, size);
+		return -ENOENT;
+	}
+
+	t->size = size;
+
+	for (i = 0, vsi = (struct btf_var_secinfo *)(t + 1);
+	     i < vars; i++, vsi++) {
+		t_var = btf__type_by_id(btf, vsi->type);
+		var = (struct btf_var *)(t_var + 1);
+
+		if (BTF_INFO_KIND(t_var->info) != BTF_KIND_VAR) {
+			pr_debug("Non-VAR type seen in section %s\n", name);
+			return -EINVAL;
+		}
+
+		if (var->linkage == BTF_VAR_STATIC)
+			continue;
+
+		name = btf__name_by_offset(btf, t_var->name_off);
+		if (!name) {
+			pr_debug("No name found in string section for VAR kind\n");
+			return -ENOENT;
+		}
+
+		ret = bpf_object__variable_offset(obj, name, &off);
+		if (ret) {
+			pr_debug("No offset found in symbol table for VAR %s\n", name);
+			return -ENOENT;
+		}
+
+		vsi->offset = off;
+	}
+
+	qsort(t + 1, vars, sizeof(*vsi), compare_vsi_off);
+	return 0;
+}
+
+int btf__finalize_data(struct bpf_object *obj, struct btf *btf)
+{
+	int err = 0;
+	__u32 i;
+
+	for (i = 1; i <= btf->nr_types; i++) {
+		struct btf_type *t = btf->types[i];
+
+		/* Loader needs to fix up some of the things compiler
+		 * couldn't get its hands on while emitting BTF. This
+		 * is section size and global variable offset. We use
+		 * the info from the ELF itself for this purpose.
+		 */
+		if (BTF_INFO_KIND(t->info) == BTF_KIND_DATASEC) {
+			err = btf_fixup_datasec(obj, btf, t);
+			if (err)
+				break;
+		}
+	}
+
+	return err;
 }
 
 int btf__load(struct btf *btf)
@@ -1070,8 +1165,8 @@ done:
 	return err;
 }
 
-#define BTF_DEDUP_TABLE_SIZE_LOG 14
-#define BTF_DEDUP_TABLE_MOD ((1 << BTF_DEDUP_TABLE_SIZE_LOG) - 1)
+#define BTF_DEDUP_TABLE_DEFAULT_SIZE (1 << 14)
+#define BTF_DEDUP_TABLE_MAX_SIZE_LOG 31
 #define BTF_UNPROCESSED_ID ((__u32)-1)
 #define BTF_IN_PROGRESS_ID ((__u32)-2)
 
@@ -1128,18 +1223,21 @@ static inline __u32 hash_combine(__u32 h, __u32 value)
 #undef GOLDEN_RATIO_PRIME
 }
 
-#define for_each_hash_node(table, hash, node) \
-	for (node = table[hash & BTF_DEDUP_TABLE_MOD]; node; node = node->next)
+#define for_each_dedup_cand(d, hash, node) \
+	for (node = d->dedup_table[hash & (d->opts.dedup_table_size - 1)]; \
+	     node;							   \
+	     node = node->next)
 
 static int btf_dedup_table_add(struct btf_dedup *d, __u32 hash, __u32 type_id)
 {
 	struct btf_dedup_node *node = malloc(sizeof(struct btf_dedup_node));
+	int bucket = hash & (d->opts.dedup_table_size - 1);
 
 	if (!node)
 		return -ENOMEM;
 	node->type_id = type_id;
-	node->next = d->dedup_table[hash & BTF_DEDUP_TABLE_MOD];
-	d->dedup_table[hash & BTF_DEDUP_TABLE_MOD] = node;
+	node->next = d->dedup_table[bucket];
+	d->dedup_table[bucket] = node;
 	return 0;
 }
 
@@ -1177,7 +1275,7 @@ static void btf_dedup_table_free(struct btf_dedup *d)
 	if (!d->dedup_table)
 		return;
 
-	for (i = 0; i < (1 << BTF_DEDUP_TABLE_SIZE_LOG); i++) {
+	for (i = 0; i < d->opts.dedup_table_size; i++) {
 		while (d->dedup_table[i]) {
 			tmp = d->dedup_table[i];
 			d->dedup_table[i] = tmp->next;
@@ -1212,19 +1310,37 @@ static void btf_dedup_free(struct btf_dedup *d)
 	free(d);
 }
 
+/* Find closest power of two >= to size, capped at 2^max_size_log */
+static __u32 roundup_pow2_max(__u32 size, int max_size_log)
+{
+	int i;
+
+	for (i = 0; i < max_size_log  && (1U << i) < size;  i++)
+		;
+	return 1U << i;
+}
+
+
 static struct btf_dedup *btf_dedup_new(struct btf *btf, struct btf_ext *btf_ext,
 				       const struct btf_dedup_opts *opts)
 {
 	struct btf_dedup *d = calloc(1, sizeof(struct btf_dedup));
 	int i, err = 0;
+	__u32 sz;
 
 	if (!d)
 		return ERR_PTR(-ENOMEM);
 
+	d->opts.dont_resolve_fwds = opts && opts->dont_resolve_fwds;
+	sz = opts && opts->dedup_table_size ? opts->dedup_table_size
+					    : BTF_DEDUP_TABLE_DEFAULT_SIZE;
+	sz = roundup_pow2_max(sz, BTF_DEDUP_TABLE_MAX_SIZE_LOG);
+	d->opts.dedup_table_size = sz;
+
 	d->btf = btf;
 	d->btf_ext = btf_ext;
 
-	d->dedup_table = calloc(1 << BTF_DEDUP_TABLE_SIZE_LOG,
+	d->dedup_table = calloc(d->opts.dedup_table_size,
 				sizeof(struct btf_dedup_node *));
 	if (!d->dedup_table) {
 		err = -ENOMEM;
@@ -1248,8 +1364,6 @@ static struct btf_dedup *btf_dedup_new(struct btf *btf, struct btf_ext *btf_ext,
 	}
 	for (i = 0; i <= btf->nr_types; i++)
 		d->hypot_map[i] = BTF_UNPROCESSED_ID;
-
-	d->opts.dont_resolve_fwds = opts && opts->dont_resolve_fwds;
 
 done:
 	if (err) {
@@ -1583,16 +1697,12 @@ static bool btf_equal_int(struct btf_type *t1, struct btf_type *t2)
 /* Calculate type signature hash of ENUM. */
 static __u32 btf_hash_enum(struct btf_type *t)
 {
-	struct btf_enum *member = (struct btf_enum *)(t + 1);
-	__u32 vlen = BTF_INFO_VLEN(t->info);
-	__u32 h = btf_hash_common(t);
-	int i;
+	__u32 h;
 
-	for (i = 0; i < vlen; i++) {
-		h = hash_combine(h, member->name_off);
-		h = hash_combine(h, member->val);
-		member++;
-	}
+	/* don't hash vlen and enum members to support enum fwd resolving */
+	h = hash_combine(0, t->name_off);
+	h = hash_combine(h, t->info & ~0xffff);
+	h = hash_combine(h, t->size);
 	return h;
 }
 
@@ -1616,6 +1726,22 @@ static bool btf_equal_enum(struct btf_type *t1, struct btf_type *t2)
 		m2++;
 	}
 	return true;
+}
+
+static inline bool btf_is_enum_fwd(struct btf_type *t)
+{
+	return BTF_INFO_KIND(t->info) == BTF_KIND_ENUM &&
+	       BTF_INFO_VLEN(t->info) == 0;
+}
+
+static bool btf_compat_enum(struct btf_type *t1, struct btf_type *t2)
+{
+	if (!btf_is_enum_fwd(t1) && !btf_is_enum_fwd(t2))
+		return btf_equal_enum(t1, t2);
+	/* ignore vlen when comparing */
+	return t1->name_off == t2->name_off &&
+	       (t1->info & ~0xffff) == (t2->info & ~0xffff) &&
+	       t1->size == t2->size;
 }
 
 /*
@@ -1644,7 +1770,7 @@ static __u32 btf_hash_struct(struct btf_type *t)
  * IDs. This check is performed during type graph equivalence check and
  * referenced types equivalence is checked separately.
  */
-static bool btf_equal_struct(struct btf_type *t1, struct btf_type *t2)
+static bool btf_shallow_equal_struct(struct btf_type *t1, struct btf_type *t2)
 {
 	struct btf_member *m1, *m2;
 	__u16 vlen;
@@ -1824,7 +1950,7 @@ static int btf_dedup_prim_type(struct btf_dedup *d, __u32 type_id)
 
 	case BTF_KIND_INT:
 		h = btf_hash_int(t);
-		for_each_hash_node(d->dedup_table, h, cand_node) {
+		for_each_dedup_cand(d, h, cand_node) {
 			cand = d->btf->types[cand_node->type_id];
 			if (btf_equal_int(t, cand)) {
 				new_id = cand_node->type_id;
@@ -1835,18 +1961,29 @@ static int btf_dedup_prim_type(struct btf_dedup *d, __u32 type_id)
 
 	case BTF_KIND_ENUM:
 		h = btf_hash_enum(t);
-		for_each_hash_node(d->dedup_table, h, cand_node) {
+		for_each_dedup_cand(d, h, cand_node) {
 			cand = d->btf->types[cand_node->type_id];
 			if (btf_equal_enum(t, cand)) {
 				new_id = cand_node->type_id;
 				break;
+			}
+			if (d->opts.dont_resolve_fwds)
+				continue;
+			if (btf_compat_enum(t, cand)) {
+				if (btf_is_enum_fwd(t)) {
+					/* resolve fwd to full enum */
+					new_id = cand_node->type_id;
+					break;
+				}
+				/* resolve canonical enum fwd to full enum */
+				d->map[cand_node->type_id] = type_id;
 			}
 		}
 		break;
 
 	case BTF_KIND_FWD:
 		h = btf_hash_common(t);
-		for_each_hash_node(d->dedup_table, h, cand_node) {
+		for_each_dedup_cand(d, h, cand_node) {
 			cand = d->btf->types[cand_node->type_id];
 			if (btf_equal_common(t, cand)) {
 				new_id = cand_node->type_id;
@@ -2065,7 +2202,7 @@ static int btf_dedup_is_equiv(struct btf_dedup *d, __u32 cand_id,
 		return fwd_kind == real_kind;
 	}
 
-	if (cand_type->info != canon_type->info)
+	if (cand_kind != canon_kind)
 		return 0;
 
 	switch (cand_kind) {
@@ -2073,7 +2210,10 @@ static int btf_dedup_is_equiv(struct btf_dedup *d, __u32 cand_id,
 		return btf_equal_int(cand_type, canon_type);
 
 	case BTF_KIND_ENUM:
-		return btf_equal_enum(cand_type, canon_type);
+		if (d->opts.dont_resolve_fwds)
+			return btf_equal_enum(cand_type, canon_type);
+		else
+			return btf_compat_enum(cand_type, canon_type);
 
 	case BTF_KIND_FWD:
 		return btf_equal_common(cand_type, canon_type);
@@ -2084,6 +2224,8 @@ static int btf_dedup_is_equiv(struct btf_dedup *d, __u32 cand_id,
 	case BTF_KIND_PTR:
 	case BTF_KIND_TYPEDEF:
 	case BTF_KIND_FUNC:
+		if (cand_type->info != canon_type->info)
+			return 0;
 		return btf_dedup_is_equiv(d, cand_type->type, canon_type->type);
 
 	case BTF_KIND_ARRAY: {
@@ -2105,7 +2247,7 @@ static int btf_dedup_is_equiv(struct btf_dedup *d, __u32 cand_id,
 		struct btf_member *cand_m, *canon_m;
 		__u16 vlen;
 
-		if (!btf_equal_struct(cand_type, canon_type))
+		if (!btf_shallow_equal_struct(cand_type, canon_type))
 			return 0;
 		vlen = BTF_INFO_VLEN(cand_type->info);
 		cand_m = (struct btf_member *)(cand_type + 1);
@@ -2246,7 +2388,7 @@ static void btf_dedup_merge_hypot_map(struct btf_dedup *d)
 static int btf_dedup_struct_type(struct btf_dedup *d, __u32 type_id)
 {
 	struct btf_dedup_node *cand_node;
-	struct btf_type *t;
+	struct btf_type *cand_type, *t;
 	/* if we don't find equivalent type, then we are canonical */
 	__u32 new_id = type_id;
 	__u16 kind;
@@ -2263,8 +2405,22 @@ static int btf_dedup_struct_type(struct btf_dedup *d, __u32 type_id)
 		return 0;
 
 	h = btf_hash_struct(t);
-	for_each_hash_node(d->dedup_table, h, cand_node) {
+	for_each_dedup_cand(d, h, cand_node) {
 		int eq;
+
+		/*
+		 * Even though btf_dedup_is_equiv() checks for
+		 * btf_shallow_equal_struct() internally when checking two
+		 * structs (unions) for equivalence, we need to guard here
+		 * from picking matching FWD type as a dedup candidate.
+		 * This can happen due to hash collision. In such case just
+		 * relying on btf_dedup_is_equiv() would lead to potentially
+		 * creating a loop (FWD -> STRUCT and STRUCT -> FWD), because
+		 * FWD and compatible STRUCT/UNION are considered equivalent.
+		 */
+		cand_type = d->btf->types[cand_node->type_id];
+		if (!btf_shallow_equal_struct(t, cand_type))
+			continue;
 
 		btf_dedup_clear_hypot_map(d);
 		eq = btf_dedup_is_equiv(d, type_id, cand_node->type_id);
@@ -2326,7 +2482,8 @@ static int btf_dedup_ref_type(struct btf_dedup *d, __u32 type_id)
 	struct btf_type *t, *cand;
 	/* if we don't find equivalent type, then we are representative type */
 	__u32 new_id = type_id;
-	__u32 h, ref_type_id;
+	int ref_type_id;
+	__u32 h;
 
 	if (d->map[type_id] == BTF_IN_PROGRESS_ID)
 		return -ELOOP;
@@ -2349,7 +2506,7 @@ static int btf_dedup_ref_type(struct btf_dedup *d, __u32 type_id)
 		t->type = ref_type_id;
 
 		h = btf_hash_common(t);
-		for_each_hash_node(d->dedup_table, h, cand_node) {
+		for_each_dedup_cand(d, h, cand_node) {
 			cand = d->btf->types[cand_node->type_id];
 			if (btf_equal_common(t, cand)) {
 				new_id = cand_node->type_id;
@@ -2372,7 +2529,7 @@ static int btf_dedup_ref_type(struct btf_dedup *d, __u32 type_id)
 		info->index_type = ref_type_id;
 
 		h = btf_hash_array(t);
-		for_each_hash_node(d->dedup_table, h, cand_node) {
+		for_each_dedup_cand(d, h, cand_node) {
 			cand = d->btf->types[cand_node->type_id];
 			if (btf_equal_array(t, cand)) {
 				new_id = cand_node->type_id;
@@ -2403,7 +2560,7 @@ static int btf_dedup_ref_type(struct btf_dedup *d, __u32 type_id)
 		}
 
 		h = btf_hash_fnproto(t);
-		for_each_hash_node(d->dedup_table, h, cand_node) {
+		for_each_dedup_cand(d, h, cand_node) {
 			cand = d->btf->types[cand_node->type_id];
 			if (btf_equal_fnproto(t, cand)) {
 				new_id = cand_node->type_id;

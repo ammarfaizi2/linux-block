@@ -304,6 +304,7 @@ static __net_init int setup_net(struct net *net, struct user_namespace *user_ns)
 
 	refcount_set(&net->count, 1);
 	refcount_set(&net->passive, 1);
+	get_random_bytes(&net->hash_mix, sizeof(u32));
 	net->dev_base_seq = 1;
 	net->user_ns = user_ns;
 	idr_init(&net->netns_ids);
@@ -838,7 +839,7 @@ static int rtnl_net_getid(struct sk_buff *skb, struct nlmsghdr *nlh,
 		peer = get_net_ns_by_fd(nla_get_u32(tb[NETNSA_FD]));
 		nla = tb[NETNSA_FD];
 	} else if (tb[NETNSA_NSID]) {
-		peer = get_net_ns_by_id(net, nla_get_u32(tb[NETNSA_NSID]));
+		peer = get_net_ns_by_id(net, nla_get_s32(tb[NETNSA_NSID]));
 		if (!peer)
 			peer = ERR_PTR(-ENOENT);
 		nla = tb[NETNSA_NSID];

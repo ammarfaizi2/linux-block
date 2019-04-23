@@ -13,12 +13,16 @@
 #include <linux/list.h>
 #include <linux/errno.h>
 #include <linux/skbuff.h>
+#include <linux/math64.h>
 #include <linux/module.h>
 #include <linux/spinlock.h>
 #include <net/netlink.h>
 #include <net/pkt_sched.h>
 #include <net/pkt_cls.h>
 #include <net/sch_generic.h>
+
+static LIST_HEAD(taprio_list);
+static DEFINE_SPINLOCK(taprio_list_lock);
 
 #define TAPRIO_ALL_GATES_OPEN -1
 
@@ -42,9 +46,9 @@ struct taprio_sched {
 	struct Qdisc *root;
 	s64 base_time;
 	int clockid;
-	int picos_per_byte; /* Using picoseconds because for 10Gbps+
-			     * speeds it's sub-nanoseconds per byte
-			     */
+	atomic64_t picos_per_byte; /* Using picoseconds because for 10Gbps+
+				    * speeds it's sub-nanoseconds per byte
+				    */
 	size_t num_entries;
 
 	/* Protects the update side of the RCU protected current_entry */
@@ -53,6 +57,7 @@ struct taprio_sched {
 	struct list_head entries;
 	ktime_t (*get_time)(void);
 	struct hrtimer advance_timer;
+	struct list_head taprio_list;
 };
 
 static int taprio_enqueue(struct sk_buff *skb, struct Qdisc *sch,
@@ -117,7 +122,14 @@ static struct sk_buff *taprio_peek(struct Qdisc *sch)
 
 static inline int length_to_duration(struct taprio_sched *q, int len)
 {
-	return (len * q->picos_per_byte) / 1000;
+	return div_u64(len * atomic64_read(&q->picos_per_byte), 1000);
+}
+
+static void taprio_set_budget(struct taprio_sched *q, struct sched_entry *entry)
+{
+	atomic_set(&entry->budget,
+		   div64_u64((u64)entry->interval * 1000,
+			     atomic64_read(&q->picos_per_byte)));
 }
 
 static struct sk_buff *taprio_dequeue(struct Qdisc *sch)
@@ -128,6 +140,11 @@ static struct sk_buff *taprio_dequeue(struct Qdisc *sch)
 	struct sk_buff *skb;
 	u32 gate_mask;
 	int i;
+
+	if (atomic64_read(&q->picos_per_byte) == -1) {
+		WARN_ONCE(1, "taprio: dequeue() called with unknown picos per byte.");
+		return NULL;
+	}
 
 	rcu_read_lock();
 	entry = rcu_dereference(q->current_entry);
@@ -232,8 +249,7 @@ static enum hrtimer_restart advance_sched(struct hrtimer *timer)
 	close_time = ktime_add_ns(entry->close_time, next->interval);
 
 	next->close_time = close_time;
-	atomic_set(&next->budget,
-		   (next->interval * 1000) / q->picos_per_byte);
+	taprio_set_budget(q, next);
 
 first_run:
 	rcu_assign_pointer(q->current_entry, next);
@@ -566,13 +582,58 @@ static void taprio_start_sched(struct Qdisc *sch, ktime_t start)
 				 list);
 
 	first->close_time = ktime_add_ns(start, first->interval);
-	atomic_set(&first->budget,
-		   (first->interval * 1000) / q->picos_per_byte);
+	taprio_set_budget(q, first);
 	rcu_assign_pointer(q->current_entry, NULL);
 
 	spin_unlock_irqrestore(&q->current_entry_lock, flags);
 
 	hrtimer_start(&q->advance_timer, start, HRTIMER_MODE_ABS);
+}
+
+static void taprio_set_picos_per_byte(struct net_device *dev,
+				      struct taprio_sched *q)
+{
+	struct ethtool_link_ksettings ecmd;
+	int picos_per_byte = -1;
+
+	if (!__ethtool_get_link_ksettings(dev, &ecmd) &&
+	    ecmd.base.speed != SPEED_UNKNOWN)
+		picos_per_byte = div64_s64(NSEC_PER_SEC * 1000LL * 8,
+					   ecmd.base.speed * 1000 * 1000);
+
+	atomic64_set(&q->picos_per_byte, picos_per_byte);
+	netdev_dbg(dev, "taprio: set %s's picos_per_byte to: %lld, linkspeed: %d\n",
+		   dev->name, (long long)atomic64_read(&q->picos_per_byte),
+		   ecmd.base.speed);
+}
+
+static int taprio_dev_notifier(struct notifier_block *nb, unsigned long event,
+			       void *ptr)
+{
+	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
+	struct net_device *qdev;
+	struct taprio_sched *q;
+	bool found = false;
+
+	ASSERT_RTNL();
+
+	if (event != NETDEV_UP && event != NETDEV_CHANGE)
+		return NOTIFY_DONE;
+
+	spin_lock(&taprio_list_lock);
+	list_for_each_entry(q, &taprio_list, taprio_list) {
+		qdev = qdisc_dev(q->root);
+		if (qdev == dev) {
+			found = true;
+			break;
+		}
+	}
+	spin_unlock(&taprio_list_lock);
+
+	if (found)
+		taprio_set_picos_per_byte(dev, q);
+
+	return NOTIFY_DONE;
 }
 
 static int taprio_change(struct Qdisc *sch, struct nlattr *opt,
@@ -582,9 +643,7 @@ static int taprio_change(struct Qdisc *sch, struct nlattr *opt,
 	struct taprio_sched *q = qdisc_priv(sch);
 	struct net_device *dev = qdisc_dev(sch);
 	struct tc_mqprio_qopt *mqprio = NULL;
-	struct ethtool_link_ksettings ecmd;
 	int i, err, size;
-	s64 link_speed;
 	ktime_t start;
 
 	err = nla_parse_nested(tb, TCA_TAPRIO_ATTR_MAX, opt,
@@ -657,14 +716,7 @@ static int taprio_change(struct Qdisc *sch, struct nlattr *opt,
 					       mqprio->prio_tc_map[i]);
 	}
 
-	if (!__ethtool_get_link_ksettings(dev, &ecmd))
-		link_speed = ecmd.base.speed;
-	else
-		link_speed = SPEED_1000;
-
-	q->picos_per_byte = div64_s64(NSEC_PER_SEC * 1000LL * 8,
-				      link_speed * 1000 * 1000);
-
+	taprio_set_picos_per_byte(dev, q);
 	start = taprio_get_start_time(sch);
 	if (!start)
 		return 0;
@@ -680,6 +732,10 @@ static void taprio_destroy(struct Qdisc *sch)
 	struct net_device *dev = qdisc_dev(sch);
 	struct sched_entry *entry, *n;
 	unsigned int i;
+
+	spin_lock(&taprio_list_lock);
+	list_del(&q->taprio_list);
+	spin_unlock(&taprio_list_lock);
 
 	hrtimer_cancel(&q->advance_timer);
 
@@ -734,6 +790,10 @@ static int taprio_init(struct Qdisc *sch, struct nlattr *opt,
 
 	if (!opt)
 		return -EINVAL;
+
+	spin_lock(&taprio_list_lock);
+	list_add(&q->taprio_list, &taprio_list);
+	spin_unlock(&taprio_list_lock);
 
 	return taprio_change(sch, opt, extack);
 }
@@ -895,7 +955,7 @@ static int taprio_dump_class_stats(struct Qdisc *sch, unsigned long cl,
 
 	sch = dev_queue->qdisc_sleeping;
 	if (gnet_stats_copy_basic(&sch->running, d, NULL, &sch->bstats) < 0 ||
-	    gnet_stats_copy_queue(d, NULL, &sch->qstats, sch->q.qlen) < 0)
+	    qdisc_qstats_copy(d, sch) < 0)
 		return -1;
 	return 0;
 }
@@ -947,14 +1007,24 @@ static struct Qdisc_ops taprio_qdisc_ops __read_mostly = {
 	.owner		= THIS_MODULE,
 };
 
+static struct notifier_block taprio_device_notifier = {
+	.notifier_call = taprio_dev_notifier,
+};
+
 static int __init taprio_module_init(void)
 {
+	int err = register_netdevice_notifier(&taprio_device_notifier);
+
+	if (err)
+		return err;
+
 	return register_qdisc(&taprio_qdisc_ops);
 }
 
 static void __exit taprio_module_exit(void)
 {
 	unregister_qdisc(&taprio_qdisc_ops);
+	unregister_netdevice_notifier(&taprio_device_notifier);
 }
 
 module_init(taprio_module_init);

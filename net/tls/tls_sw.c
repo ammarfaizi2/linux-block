@@ -42,8 +42,6 @@
 #include <net/strparser.h>
 #include <net/tls.h>
 
-#define MAX_IV_SIZE	TLS_CIPHER_AES_GCM_128_IV_SIZE
-
 static int __skb_nsg(struct sk_buff *skb, int offset, int len,
                      unsigned int recursion_level)
 {
@@ -225,7 +223,7 @@ static int tls_do_decryption(struct sock *sk,
 		/* Using skb->sk to push sk through to crypto async callback
 		 * handler. This allows propagating errors up to the socket
 		 * if needed. It _must_ be cleared in the async handler
-		 * before kfree_skb is called. We _know_ skb->sk is NULL
+		 * before consume_skb is called. We _know_ skb->sk is NULL
 		 * because it is a clone from strparser.
 		 */
 		skb->sk = sk;
@@ -479,11 +477,18 @@ static int tls_do_encryption(struct sock *sk,
 	struct tls_rec *rec = ctx->open_rec;
 	struct sk_msg *msg_en = &rec->msg_encrypted;
 	struct scatterlist *sge = sk_msg_elem(msg_en, start);
-	int rc;
+	int rc, iv_offset = 0;
 
-	memcpy(rec->iv_data, tls_ctx->tx.iv, sizeof(rec->iv_data));
-	xor_iv_with_seq(prot->version, rec->iv_data,
-			tls_ctx->tx.rec_seq);
+	/* For CCM based ciphers, first byte of IV is a constant */
+	if (prot->cipher_type == TLS_CIPHER_AES_CCM_128) {
+		rec->iv_data[0] = TLS_AES_CCM_IV_B0_BYTE;
+		iv_offset = 1;
+	}
+
+	memcpy(&rec->iv_data[iv_offset], tls_ctx->tx.iv,
+	       prot->iv_size + prot->salt_size);
+
+	xor_iv_with_seq(prot->version, rec->iv_data, tls_ctx->tx.rec_seq);
 
 	sge->offset += prot->prepend_size;
 	sge->length -= prot->prepend_size;
@@ -1344,6 +1349,7 @@ static int decrypt_internal(struct sock *sk, struct sk_buff *skb,
 	struct scatterlist *sgout = NULL;
 	const int data_len = rxm->full_len - prot->overhead_size +
 			     prot->tail_size;
+	int iv_offset = 0;
 
 	if (*zc && (out_iov || out_sg)) {
 		if (out_iov)
@@ -1386,18 +1392,25 @@ static int decrypt_internal(struct sock *sk, struct sk_buff *skb,
 	aad = (u8 *)(sgout + n_sgout);
 	iv = aad + prot->aad_size;
 
+	/* For CCM based ciphers, first byte of nonce+iv is always '2' */
+	if (prot->cipher_type == TLS_CIPHER_AES_CCM_128) {
+		iv[0] = 2;
+		iv_offset = 1;
+	}
+
 	/* Prepare IV */
 	err = skb_copy_bits(skb, rxm->offset + TLS_HEADER_SIZE,
-			    iv + TLS_CIPHER_AES_GCM_128_SALT_SIZE,
+			    iv + iv_offset + prot->salt_size,
 			    prot->iv_size);
 	if (err < 0) {
 		kfree(mem);
 		return err;
 	}
 	if (prot->version == TLS_1_3_VERSION)
-		memcpy(iv, tls_ctx->rx.iv, crypto_aead_ivsize(ctx->aead_recv));
+		memcpy(iv + iv_offset, tls_ctx->rx.iv,
+		       crypto_aead_ivsize(ctx->aead_recv));
 	else
-		memcpy(iv, tls_ctx->rx.iv, TLS_CIPHER_AES_GCM_128_SALT_SIZE);
+		memcpy(iv + iv_offset, tls_ctx->rx.iv, prot->salt_size);
 
 	xor_iv_with_seq(prot->version, iv, tls_ctx->rx.rec_seq);
 
@@ -1467,23 +1480,28 @@ static int decrypt_skb_update(struct sock *sk, struct sk_buff *skb,
 	struct strp_msg *rxm = strp_msg(skb);
 	int err = 0;
 
-#ifdef CONFIG_TLS_DEVICE
-	err = tls_device_decrypted(sk, skb);
-	if (err < 0)
-		return err;
-#endif
 	if (!ctx->decrypted) {
-		err = decrypt_internal(sk, skb, dest, NULL, chunk, zc, async);
-		if (err < 0) {
-			if (err == -EINPROGRESS)
-				tls_advance_record_sn(sk, &tls_ctx->rx,
-						      version);
-
+#ifdef CONFIG_TLS_DEVICE
+		err = tls_device_decrypted(sk, skb);
+		if (err < 0)
 			return err;
+#endif
+		/* Still not decrypted after tls_device */
+		if (!ctx->decrypted) {
+			err = decrypt_internal(sk, skb, dest, NULL, chunk, zc,
+					       async);
+			if (err < 0) {
+				if (err == -EINPROGRESS)
+					tls_advance_record_sn(sk, &tls_ctx->rx,
+							      version);
+
+				return err;
+			}
+		} else {
+			*zc = false;
 		}
 
 		rxm->full_len -= padding_length(ctx, tls_ctx, skb);
-
 		rxm->offset += prot->prepend_size;
 		rxm->full_len -= prot->overhead_size;
 		tls_advance_record_sn(sk, &tls_ctx->rx, version);
@@ -1519,7 +1537,7 @@ static bool tls_sw_advance_skb(struct sock *sk, struct sk_buff *skb,
 			rxm->full_len -= len;
 			return false;
 		}
-		kfree_skb(skb);
+		consume_skb(skb);
 	}
 
 	/* Finished with message */
@@ -1628,7 +1646,7 @@ static int process_rx_list(struct tls_sw_context_rx *ctx,
 
 		if (!is_peek) {
 			skb_unlink(skb, &ctx->rx_list);
-			kfree_skb(skb);
+			consume_skb(skb);
 		}
 
 		skb = next_skb;
@@ -1693,7 +1711,8 @@ int tls_sw_recvmsg(struct sock *sk,
 		bool zc = false;
 		int to_decrypt;
 		int chunk = 0;
-		bool async;
+		bool async_capable;
+		bool async = false;
 
 		skb = tls_wait_data(sk, psock, flags, timeo, &err);
 		if (!skb) {
@@ -1727,21 +1746,23 @@ int tls_sw_recvmsg(struct sock *sk,
 
 		/* Do not use async mode if record is non-data */
 		if (ctx->control == TLS_RECORD_TYPE_DATA)
-			async = ctx->async_capable;
+			async_capable = ctx->async_capable;
 		else
-			async = false;
+			async_capable = false;
 
 		err = decrypt_skb_update(sk, skb, &msg->msg_iter,
-					 &chunk, &zc, async);
+					 &chunk, &zc, async_capable);
 		if (err < 0 && err != -EINPROGRESS) {
 			tls_err_abort(sk, EBADMSG);
 			goto recv_end;
 		}
 
-		if (err == -EINPROGRESS)
+		if (err == -EINPROGRESS) {
+			async = true;
 			num_async++;
-		else if (prot->version == TLS_1_3_VERSION)
+		} else if (prot->version == TLS_1_3_VERSION) {
 			tlm->control = ctx->control;
+		}
 
 		/* If the type of records being processed is not known yet,
 		 * set it to record type just dequeued. If it is already known,
@@ -2044,20 +2065,7 @@ void tls_sw_free_resources_tx(struct sock *sk)
 	/* Free up un-sent records in tx_list. First, free
 	 * the partially sent record if any at head of tx_list.
 	 */
-	if (tls_ctx->partially_sent_record) {
-		struct scatterlist *sg = tls_ctx->partially_sent_record;
-
-		while (1) {
-			put_page(sg_page(sg));
-			sk_mem_uncharge(sk, sg->length);
-
-			if (sg_is_last(sg))
-				break;
-			sg++;
-		}
-
-		tls_ctx->partially_sent_record = NULL;
-
+	if (tls_free_partial_record(sk, tls_ctx)) {
 		rec = list_first_entry(&ctx->tx_list,
 				       struct tls_rec, list);
 		list_del(&rec->list);
@@ -2126,6 +2134,19 @@ static void tx_work_handler(struct work_struct *work)
 	release_sock(sk);
 }
 
+void tls_sw_write_space(struct sock *sk, struct tls_context *ctx)
+{
+	struct tls_sw_context_tx *tx_ctx = tls_sw_ctx_tx(ctx);
+
+	/* Schedule the transmission if tx list is ready */
+	if (is_tx_ready(tx_ctx) && !sk->sk_write_pending) {
+		/* Schedule the transmission */
+		if (!test_and_set_bit(BIT_TX_SCHEDULED,
+				      &tx_ctx->tx_bitmask))
+			schedule_delayed_work(&tx_ctx->tx_work.work, 0);
+	}
+}
+
 int tls_set_sw_offload(struct sock *sk, struct tls_context *ctx, int tx)
 {
 	struct tls_context *tls_ctx = tls_get_ctx(sk);
@@ -2133,14 +2154,15 @@ int tls_set_sw_offload(struct sock *sk, struct tls_context *ctx, int tx)
 	struct tls_crypto_info *crypto_info;
 	struct tls12_crypto_info_aes_gcm_128 *gcm_128_info;
 	struct tls12_crypto_info_aes_gcm_256 *gcm_256_info;
+	struct tls12_crypto_info_aes_ccm_128 *ccm_128_info;
 	struct tls_sw_context_tx *sw_ctx_tx = NULL;
 	struct tls_sw_context_rx *sw_ctx_rx = NULL;
 	struct cipher_context *cctx;
 	struct crypto_aead **aead;
 	struct strp_callbacks cb;
-	u16 nonce_size, tag_size, iv_size, rec_seq_size;
+	u16 nonce_size, tag_size, iv_size, rec_seq_size, salt_size;
 	struct crypto_tfm *tfm;
-	char *iv, *rec_seq, *key, *salt;
+	char *iv, *rec_seq, *key, *salt, *cipher_name;
 	size_t keysize;
 	int rc = 0;
 
@@ -2205,6 +2227,8 @@ int tls_set_sw_offload(struct sock *sk, struct tls_context *ctx, int tx)
 		keysize = TLS_CIPHER_AES_GCM_128_KEY_SIZE;
 		key = gcm_128_info->key;
 		salt = gcm_128_info->salt;
+		salt_size = TLS_CIPHER_AES_GCM_128_SALT_SIZE;
+		cipher_name = "gcm(aes)";
 		break;
 	}
 	case TLS_CIPHER_AES_GCM_256: {
@@ -2220,6 +2244,25 @@ int tls_set_sw_offload(struct sock *sk, struct tls_context *ctx, int tx)
 		keysize = TLS_CIPHER_AES_GCM_256_KEY_SIZE;
 		key = gcm_256_info->key;
 		salt = gcm_256_info->salt;
+		salt_size = TLS_CIPHER_AES_GCM_256_SALT_SIZE;
+		cipher_name = "gcm(aes)";
+		break;
+	}
+	case TLS_CIPHER_AES_CCM_128: {
+		nonce_size = TLS_CIPHER_AES_CCM_128_IV_SIZE;
+		tag_size = TLS_CIPHER_AES_CCM_128_TAG_SIZE;
+		iv_size = TLS_CIPHER_AES_CCM_128_IV_SIZE;
+		iv = ((struct tls12_crypto_info_aes_ccm_128 *)crypto_info)->iv;
+		rec_seq_size = TLS_CIPHER_AES_CCM_128_REC_SEQ_SIZE;
+		rec_seq =
+		((struct tls12_crypto_info_aes_ccm_128 *)crypto_info)->rec_seq;
+		ccm_128_info =
+		(struct tls12_crypto_info_aes_ccm_128 *)crypto_info;
+		keysize = TLS_CIPHER_AES_CCM_128_KEY_SIZE;
+		key = ccm_128_info->key;
+		salt = ccm_128_info->salt;
+		salt_size = TLS_CIPHER_AES_CCM_128_SALT_SIZE;
+		cipher_name = "ccm(aes)";
 		break;
 	}
 	default:
@@ -2249,16 +2292,16 @@ int tls_set_sw_offload(struct sock *sk, struct tls_context *ctx, int tx)
 	prot->overhead_size = prot->prepend_size +
 			      prot->tag_size + prot->tail_size;
 	prot->iv_size = iv_size;
-	cctx->iv = kmalloc(iv_size + TLS_CIPHER_AES_GCM_128_SALT_SIZE,
-			   GFP_KERNEL);
+	prot->salt_size = salt_size;
+	cctx->iv = kmalloc(iv_size + salt_size, GFP_KERNEL);
 	if (!cctx->iv) {
 		rc = -ENOMEM;
 		goto free_priv;
 	}
 	/* Note: 128 & 256 bit salt are the same size */
-	memcpy(cctx->iv, salt, TLS_CIPHER_AES_GCM_128_SALT_SIZE);
-	memcpy(cctx->iv + TLS_CIPHER_AES_GCM_128_SALT_SIZE, iv, iv_size);
 	prot->rec_seq_size = rec_seq_size;
+	memcpy(cctx->iv, salt, salt_size);
+	memcpy(cctx->iv + salt_size, iv, iv_size);
 	cctx->rec_seq = kmemdup(rec_seq, rec_seq_size, GFP_KERNEL);
 	if (!cctx->rec_seq) {
 		rc = -ENOMEM;
@@ -2266,7 +2309,7 @@ int tls_set_sw_offload(struct sock *sk, struct tls_context *ctx, int tx)
 	}
 
 	if (!*aead) {
-		*aead = crypto_alloc_aead("gcm(aes)", 0, 0);
+		*aead = crypto_alloc_aead(cipher_name, 0, 0);
 		if (IS_ERR(*aead)) {
 			rc = PTR_ERR(*aead);
 			*aead = NULL;

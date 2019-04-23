@@ -120,6 +120,7 @@ static int ibmvnic_reset_init(struct ibmvnic_adapter *);
 static void release_crq_queue(struct ibmvnic_adapter *);
 static int __ibmvnic_set_mac(struct net_device *netdev, struct sockaddr *p);
 static int init_crq_queue(struct ibmvnic_adapter *adapter);
+static int send_query_phys_parms(struct ibmvnic_adapter *adapter);
 
 struct ibmvnic_stat {
 	char name[ETH_GSTRING_LEN];
@@ -1885,6 +1886,7 @@ static int do_hard_reset(struct ibmvnic_adapter *adapter,
 	 */
 	adapter->state = VNIC_PROBED;
 
+	reinit_completion(&adapter->init_done);
 	rc = init_crq_queue(adapter);
 	if (rc) {
 		netdev_err(adapter->netdev,
@@ -1967,13 +1969,11 @@ static void __ibmvnic_reset(struct work_struct *work)
 {
 	struct ibmvnic_rwi *rwi;
 	struct ibmvnic_adapter *adapter;
-	struct net_device *netdev;
 	bool we_lock_rtnl = false;
 	u32 reset_state;
 	int rc = 0;
 
 	adapter = container_of(work, struct ibmvnic_adapter, ibmvnic_reset);
-	netdev = adapter->netdev;
 
 	/* netif_set_real_num_xx_queues needs to take rtnl lock here
 	 * unless wait_for_reset is set, in which case the rtnl lock
@@ -2278,22 +2278,19 @@ static const struct net_device_ops ibmvnic_netdev_ops = {
 static int ibmvnic_get_link_ksettings(struct net_device *netdev,
 				      struct ethtool_link_ksettings *cmd)
 {
-	u32 supported, advertising;
+	struct ibmvnic_adapter *adapter = netdev_priv(netdev);
+	int rc;
 
-	supported = (SUPPORTED_1000baseT_Full | SUPPORTED_Autoneg |
-			  SUPPORTED_FIBRE);
-	advertising = (ADVERTISED_1000baseT_Full | ADVERTISED_Autoneg |
-			    ADVERTISED_FIBRE);
-	cmd->base.speed = SPEED_1000;
-	cmd->base.duplex = DUPLEX_FULL;
+	rc = send_query_phys_parms(adapter);
+	if (rc) {
+		adapter->speed = SPEED_UNKNOWN;
+		adapter->duplex = DUPLEX_UNKNOWN;
+	}
+	cmd->base.speed = adapter->speed;
+	cmd->base.duplex = adapter->duplex;
 	cmd->base.port = PORT_FIBRE;
 	cmd->base.phy_address = 0;
 	cmd->base.autoneg = AUTONEG_ENABLE;
-
-	ethtool_convert_legacy_u32_to_link_mode(cmd->link_modes.supported,
-						supported);
-	ethtool_convert_legacy_u32_to_link_mode(cmd->link_modes.advertising,
-						advertising);
 
 	return 0;
 }
@@ -3761,6 +3758,7 @@ static void handle_query_ip_offload_rsp(struct ibmvnic_adapter *adapter)
 {
 	struct device *dev = &adapter->vdev->dev;
 	struct ibmvnic_query_ip_offload_buffer *buf = &adapter->ip_offload_buf;
+	netdev_features_t old_hw_features = 0;
 	union ibmvnic_crq crq;
 	int i;
 
@@ -3836,24 +3834,41 @@ static void handle_query_ip_offload_rsp(struct ibmvnic_adapter *adapter)
 	adapter->ip_offload_ctrl.large_rx_ipv4 = 0;
 	adapter->ip_offload_ctrl.large_rx_ipv6 = 0;
 
-	adapter->netdev->features = NETIF_F_SG | NETIF_F_GSO;
+	if (adapter->state != VNIC_PROBING) {
+		old_hw_features = adapter->netdev->hw_features;
+		adapter->netdev->hw_features = 0;
+	}
+
+	adapter->netdev->hw_features = NETIF_F_SG | NETIF_F_GSO | NETIF_F_GRO;
 
 	if (buf->tcp_ipv4_chksum || buf->udp_ipv4_chksum)
-		adapter->netdev->features |= NETIF_F_IP_CSUM;
+		adapter->netdev->hw_features |= NETIF_F_IP_CSUM;
 
 	if (buf->tcp_ipv6_chksum || buf->udp_ipv6_chksum)
-		adapter->netdev->features |= NETIF_F_IPV6_CSUM;
+		adapter->netdev->hw_features |= NETIF_F_IPV6_CSUM;
 
 	if ((adapter->netdev->features &
 	    (NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM)))
-		adapter->netdev->features |= NETIF_F_RXCSUM;
+		adapter->netdev->hw_features |= NETIF_F_RXCSUM;
 
 	if (buf->large_tx_ipv4)
-		adapter->netdev->features |= NETIF_F_TSO;
+		adapter->netdev->hw_features |= NETIF_F_TSO;
 	if (buf->large_tx_ipv6)
-		adapter->netdev->features |= NETIF_F_TSO6;
+		adapter->netdev->hw_features |= NETIF_F_TSO6;
 
-	adapter->netdev->hw_features |= adapter->netdev->features;
+	if (adapter->state == VNIC_PROBING) {
+		adapter->netdev->features |= adapter->netdev->hw_features;
+	} else if (old_hw_features != adapter->netdev->hw_features) {
+		netdev_features_t tmp = 0;
+
+		/* disable features no longer supported */
+		adapter->netdev->features &= adapter->netdev->hw_features;
+		/* turn on features now supported if previously enabled */
+		tmp = (old_hw_features ^ adapter->netdev->hw_features) &
+			adapter->netdev->hw_features;
+		adapter->netdev->features |=
+				tmp & adapter->netdev->wanted_features;
+	}
 
 	memset(&crq, 0, sizeof(crq));
 	crq.control_ip_offload.first = IBMVNIC_CRQ_CMD;
@@ -4278,6 +4293,73 @@ out:
 	}
 }
 
+static int send_query_phys_parms(struct ibmvnic_adapter *adapter)
+{
+	union ibmvnic_crq crq;
+	int rc;
+
+	memset(&crq, 0, sizeof(crq));
+	crq.query_phys_parms.first = IBMVNIC_CRQ_CMD;
+	crq.query_phys_parms.cmd = QUERY_PHYS_PARMS;
+	init_completion(&adapter->fw_done);
+	rc = ibmvnic_send_crq(adapter, &crq);
+	if (rc)
+		return rc;
+	wait_for_completion(&adapter->fw_done);
+	return adapter->fw_done_rc ? -EIO : 0;
+}
+
+static int handle_query_phys_parms_rsp(union ibmvnic_crq *crq,
+				       struct ibmvnic_adapter *adapter)
+{
+	struct net_device *netdev = adapter->netdev;
+	int rc;
+
+	rc = crq->query_phys_parms_rsp.rc.code;
+	if (rc) {
+		netdev_err(netdev, "Error %d in QUERY_PHYS_PARMS\n", rc);
+		return rc;
+	}
+	switch (cpu_to_be32(crq->query_phys_parms_rsp.speed)) {
+	case IBMVNIC_10MBPS:
+		adapter->speed = SPEED_10;
+		break;
+	case IBMVNIC_100MBPS:
+		adapter->speed = SPEED_100;
+		break;
+	case IBMVNIC_1GBPS:
+		adapter->speed = SPEED_1000;
+		break;
+	case IBMVNIC_10GBP:
+		adapter->speed = SPEED_10000;
+		break;
+	case IBMVNIC_25GBPS:
+		adapter->speed = SPEED_25000;
+		break;
+	case IBMVNIC_40GBPS:
+		adapter->speed = SPEED_40000;
+		break;
+	case IBMVNIC_50GBPS:
+		adapter->speed = SPEED_50000;
+		break;
+	case IBMVNIC_100GBPS:
+		adapter->speed = SPEED_100000;
+		break;
+	default:
+		netdev_warn(netdev, "Unknown speed 0x%08x\n",
+			    cpu_to_be32(crq->query_phys_parms_rsp.speed));
+		adapter->speed = SPEED_UNKNOWN;
+	}
+	if (crq->query_phys_parms_rsp.flags1 & IBMVNIC_FULL_DUPLEX)
+		adapter->duplex = DUPLEX_FULL;
+	else if (crq->query_phys_parms_rsp.flags1 & IBMVNIC_HALF_DUPLEX)
+		adapter->duplex = DUPLEX_HALF;
+	else
+		adapter->duplex = DUPLEX_UNKNOWN;
+
+	return rc;
+}
+
 static void ibmvnic_handle_crq(union ibmvnic_crq *crq,
 			       struct ibmvnic_adapter *adapter)
 {
@@ -4425,6 +4507,10 @@ static void ibmvnic_handle_crq(union ibmvnic_crq *crq,
 		break;
 	case GET_VPD_RSP:
 		handle_vpd_rsp(crq, adapter);
+		break;
+	case QUERY_PHYS_PARMS_RSP:
+		adapter->fw_done_rc = handle_query_phys_parms_rsp(crq, adapter);
+		complete(&adapter->fw_done);
 		break;
 	default:
 		netdev_err(netdev, "Got an invalid cmd type 0x%02x\n",
@@ -4625,7 +4711,7 @@ static int ibmvnic_reset_init(struct ibmvnic_adapter *adapter)
 	old_num_rx_queues = adapter->req_rx_queues;
 	old_num_tx_queues = adapter->req_tx_queues;
 
-	init_completion(&adapter->init_done);
+	reinit_completion(&adapter->init_done);
 	adapter->init_done_rc = 0;
 	ibmvnic_send_crq_init(adapter);
 	if (!wait_for_completion_timeout(&adapter->init_done, timeout)) {
@@ -4680,7 +4766,6 @@ static int ibmvnic_init(struct ibmvnic_adapter *adapter)
 
 	adapter->from_passive_init = false;
 
-	init_completion(&adapter->init_done);
 	adapter->init_done_rc = 0;
 	ibmvnic_send_crq_init(adapter);
 	if (!wait_for_completion_timeout(&adapter->init_done, timeout)) {
@@ -4759,6 +4844,7 @@ static int ibmvnic_probe(struct vio_dev *dev, const struct vio_device_id *id)
 	INIT_WORK(&adapter->ibmvnic_reset, __ibmvnic_reset);
 	INIT_LIST_HEAD(&adapter->rwi_list);
 	spin_lock_init(&adapter->rwi_lock);
+	init_completion(&adapter->init_done);
 	adapter->resetting = false;
 
 	adapter->mac_change_pending = false;

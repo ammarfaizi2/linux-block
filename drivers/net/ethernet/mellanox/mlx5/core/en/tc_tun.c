@@ -39,6 +39,10 @@ static int get_route_and_out_devs(struct mlx5e_priv *priv,
 			return -EOPNOTSUPP;
 	}
 
+	if (!(mlx5e_eswitch_rep(*out_dev) &&
+	      mlx5e_is_uplink_rep(netdev_priv(*out_dev))))
+		return -EOPNOTSUPP;
+
 	return 0;
 }
 
@@ -54,12 +58,24 @@ static int mlx5e_route_lookup_ipv4(struct mlx5e_priv *priv,
 	struct neighbour *n = NULL;
 
 #if IS_ENABLED(CONFIG_INET)
+	struct mlx5_core_dev *mdev = priv->mdev;
+	struct net_device *uplink_dev;
 	int ret;
+
+	if (mlx5_lag_is_multipath(mdev)) {
+		struct mlx5_eswitch *esw = mdev->priv.eswitch;
+
+		uplink_dev = mlx5_eswitch_uplink_get_proto_dev(esw, REP_ETH);
+		fl4->flowi4_oif = uplink_dev->ifindex;
+	}
 
 	rt = ip_route_output_key(dev_net(mirred_dev), fl4);
 	ret = PTR_ERR_OR_ZERO(rt);
 	if (ret)
 		return ret;
+
+	if (mlx5_lag_is_multipath(mdev) && rt->rt_gw_family != AF_INET)
+		return -ENETUNREACH;
 #else
 	return -EOPNOTSUPP;
 #endif
@@ -84,7 +100,7 @@ static const char *mlx5e_netdev_kind(struct net_device *dev)
 	if (dev->rtnl_link_ops)
 		return dev->rtnl_link_ops->kind;
 	else
-		return "";
+		return "unknown";
 }
 
 static int mlx5e_route_lookup_ipv6(struct mlx5e_priv *priv,
@@ -295,7 +311,9 @@ int mlx5e_tc_tun_create_header_ipv4(struct mlx5e_priv *priv,
 
 	if (!(nud_state & NUD_VALID)) {
 		neigh_event_send(n, NULL);
-		err = -EAGAIN;
+		/* the encap entry will be made valid on neigh update event
+		 * and not used before that.
+		 */
 		goto out;
 	}
 
@@ -408,7 +426,9 @@ int mlx5e_tc_tun_create_header_ipv6(struct mlx5e_priv *priv,
 
 	if (!(nud_state & NUD_VALID)) {
 		neigh_event_send(n, NULL);
-		err = -EAGAIN;
+		/* the encap entry will be made valid on neigh update event
+		 * and not used before that.
+		 */
 		goto out;
 	}
 
@@ -620,8 +640,10 @@ int mlx5e_tc_tun_parse(struct net_device *filter_dev,
 						headers_c, headers_v);
 	} else {
 		netdev_warn(priv->netdev,
-			    "decapsulation offload is not supported for %s net device (%d)\n",
-			    mlx5e_netdev_kind(filter_dev), tunnel_type);
+			    "decapsulation offload is not supported for %s (kind: \"%s\")\n",
+			    netdev_name(filter_dev),
+			    mlx5e_netdev_kind(filter_dev));
+
 		return -EOPNOTSUPP;
 	}
 	return err;

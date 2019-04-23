@@ -44,7 +44,7 @@ enum ice_sw_lkup_type {
 	ICE_SW_LKUP_LAST
 };
 
-/* type of filter src id */
+/* type of filter src ID */
 enum ice_src_id {
 	ICE_SRC_ID_UNKNOWN = 0,
 	ICE_SRC_ID_VSI,
@@ -95,8 +95,8 @@ struct ice_fltr_info {
 
 	/* Depending on filter action */
 	union {
-		/* queue id in case of ICE_FWD_TO_Q and starting
-		 * queue id in case of ICE_FWD_TO_QGRP.
+		/* queue ID in case of ICE_FWD_TO_Q and starting
+		 * queue ID in case of ICE_FWD_TO_QGRP.
 		 */
 		u16 q_id:11;
 		u16 hw_vsi_id:10;
@@ -143,7 +143,7 @@ struct ice_sw_recipe {
 	DECLARE_BITMAP(r_bitmap, ICE_MAX_NUM_RECIPES);
 };
 
-/* Bookkeeping structure to hold bitmap of VSIs corresponding to VSI list id */
+/* Bookkeeping structure to hold bitmap of VSIs corresponding to VSI list ID */
 struct ice_vsi_list_map_info {
 	struct list_head list_entry;
 	DECLARE_BITMAP(vsi_map, ICE_MAX_VSI);
@@ -165,7 +165,7 @@ struct ice_fltr_list_entry {
  * used for VLAN membership.
  */
 struct ice_fltr_mgmt_list_entry {
-	/* back pointer to VSI list id to VSI list mapping */
+	/* back pointer to VSI list ID to VSI list mapping */
 	struct ice_vsi_list_map_info *vsi_list_info;
 	u16 vsi_count;
 #define ICE_INVAL_LG_ACT_INDEX 0xffff
@@ -176,6 +176,17 @@ struct ice_fltr_mgmt_list_entry {
 	struct ice_fltr_info fltr_info;
 #define ICE_INVAL_COUNTER_ID 0xff
 	u8 counter_index;
+};
+
+enum ice_promisc_flags {
+	ICE_PROMISC_UCAST_RX = 0x1,
+	ICE_PROMISC_UCAST_TX = 0x2,
+	ICE_PROMISC_MCAST_RX = 0x4,
+	ICE_PROMISC_MCAST_TX = 0x8,
+	ICE_PROMISC_BCAST_RX = 0x10,
+	ICE_PROMISC_BCAST_TX = 0x20,
+	ICE_PROMISC_VLAN_RX = 0x40,
+	ICE_PROMISC_VLAN_TX = 0x80,
 };
 
 /* VSI related commands */
@@ -199,10 +210,22 @@ enum ice_status ice_update_sw_rule_bridge_mode(struct ice_hw *hw);
 enum ice_status ice_add_mac(struct ice_hw *hw, struct list_head *m_lst);
 enum ice_status ice_remove_mac(struct ice_hw *hw, struct list_head *m_lst);
 void ice_remove_vsi_fltr(struct ice_hw *hw, u16 vsi_handle);
-enum ice_status ice_add_vlan(struct ice_hw *hw, struct list_head *m_list);
+enum ice_status
+ice_add_vlan(struct ice_hw *hw, struct list_head *m_list);
 enum ice_status ice_remove_vlan(struct ice_hw *hw, struct list_head *v_list);
+
+/* Promisc/defport setup for VSIs */
 enum ice_status
 ice_cfg_dflt_vsi(struct ice_hw *hw, u16 vsi_handle, bool set, u8 direction);
+enum ice_status
+ice_set_vsi_promisc(struct ice_hw *hw, u16 vsi_handle, u8 promisc_mask,
+		    u16 vid);
+enum ice_status
+ice_clear_vsi_promisc(struct ice_hw *hw, u16 vsi_handle, u8 promisc_mask,
+		      u16 vid);
+enum ice_status
+ice_set_vlan_vsi_promisc(struct ice_hw *hw, u16 vsi_handle, u8 promisc_mask,
+			 bool rm_vlan_promisc);
 
 enum ice_status ice_init_def_sw_recp(struct ice_hw *hw);
 u16 ice_get_hw_vsi_num(struct ice_hw *hw, u16 vsi_handle);

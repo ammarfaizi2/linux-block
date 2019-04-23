@@ -504,6 +504,12 @@ normal_tx:
 	}
 
 	length >>= 9;
+	if (unlikely(length >= ARRAY_SIZE(bnxt_lhint_arr))) {
+		dev_warn_ratelimited(&pdev->dev, "Dropped oversize %d bytes TX packet.\n",
+				     skb->len);
+		i = 0;
+		goto tx_dma_error;
+	}
 	flags |= bnxt_lhint_arr[length];
 	txbd->tx_bd_len_flags_type = cpu_to_le32(flags);
 
@@ -545,7 +551,7 @@ normal_tx:
 	prod = NEXT_TX(prod);
 	txr->tx_prod = prod;
 
-	if (!skb->xmit_more || netif_xmit_stopped(txq))
+	if (!netdev_xmit_more() || netif_xmit_stopped(txq))
 		bnxt_db_write(bp, &txr->tx_db, prod);
 
 tx_done:
@@ -553,7 +559,7 @@ tx_done:
 	mmiowb();
 
 	if (unlikely(bnxt_tx_avail(bp, txr) <= MAX_SKB_FRAGS + 1)) {
-		if (skb->xmit_more && !tx_buf->is_push)
+		if (netdev_xmit_more() && !tx_buf->is_push)
 			bnxt_db_write(bp, &txr->tx_db, prod);
 
 		netif_tx_stop_queue(txq);
@@ -1127,6 +1133,8 @@ static void bnxt_tpa_start(struct bnxt *bp, struct bnxt_rx_ring_info *rxr,
 	tpa_info = &rxr->rx_tpa[agg_id];
 
 	if (unlikely(cons != rxr->rx_next_cons)) {
+		netdev_warn(bp->dev, "TPA cons %x != expected cons %x\n",
+			    cons, rxr->rx_next_cons);
 		bnxt_sched_reset(bp, rxr);
 		return;
 	}
@@ -1579,15 +1587,17 @@ static int bnxt_rx_pkt(struct bnxt *bp, struct bnxt_cp_ring_info *cpr,
 	}
 
 	cons = rxcmp->rx_cmp_opaque;
-	rx_buf = &rxr->rx_buf_ring[cons];
-	data = rx_buf->data;
-	data_ptr = rx_buf->data_ptr;
 	if (unlikely(cons != rxr->rx_next_cons)) {
 		int rc1 = bnxt_discard_rx(bp, cpr, raw_cons, rxcmp);
 
+		netdev_warn(bp->dev, "RX cons %x != expected cons %x\n",
+			    cons, rxr->rx_next_cons);
 		bnxt_sched_reset(bp, rxr);
 		return rc1;
 	}
+	rx_buf = &rxr->rx_buf_ring[cons];
+	data = rx_buf->data;
+	data_ptr = rx_buf->data_ptr;
 	prefetch(data_ptr);
 
 	misc = le32_to_cpu(rxcmp->rx_cmp_misc_v1);
@@ -1604,11 +1614,17 @@ static int bnxt_rx_pkt(struct bnxt *bp, struct bnxt_cp_ring_info *cpr,
 
 	rx_buf->data = NULL;
 	if (rxcmp1->rx_cmp_cfa_code_errors_v2 & RX_CMP_L2_ERRORS) {
+		u32 rx_err = le32_to_cpu(rxcmp1->rx_cmp_cfa_code_errors_v2);
+
 		bnxt_reuse_rx_data(rxr, cons, data);
 		if (agg_bufs)
 			bnxt_reuse_rx_agg_bufs(cpr, cp_cons, agg_bufs);
 
 		rc = -EIO;
+		if (rx_err & RX_CMPL_ERRORS_BUFFER_ERROR_MASK) {
+			netdev_warn(bp->dev, "RX buffer error %x\n", rx_err);
+			bnxt_sched_reset(bp, rxr);
+		}
 		goto next_rx;
 	}
 
@@ -10042,23 +10058,6 @@ static int bnxt_bridge_setlink(struct net_device *dev, struct nlmsghdr *nlh,
 	return rc;
 }
 
-static int bnxt_get_phys_port_name(struct net_device *dev, char *buf,
-				   size_t len)
-{
-	struct bnxt *bp = netdev_priv(dev);
-	int rc;
-
-	/* The PF and it's VF-reps only support the switchdev framework */
-	if (!BNXT_PF(bp))
-		return -EOPNOTSUPP;
-
-	rc = snprintf(buf, len, "p%d", bp->pf.port_id);
-
-	if (rc >= len)
-		return -EOPNOTSUPP;
-	return 0;
-}
-
 int bnxt_get_port_parent_id(struct net_device *dev,
 			    struct netdev_phys_item_id *ppid)
 {
@@ -10075,6 +10074,13 @@ int bnxt_get_port_parent_id(struct net_device *dev,
 	memcpy(ppid->id, bp->switch_id, ppid->id_len);
 
 	return 0;
+}
+
+static struct devlink_port *bnxt_get_devlink_port(struct net_device *dev)
+{
+	struct bnxt *bp = netdev_priv(dev);
+
+	return &bp->dl_port;
 }
 
 static const struct net_device_ops bnxt_netdev_ops = {
@@ -10108,8 +10114,7 @@ static const struct net_device_ops bnxt_netdev_ops = {
 	.ndo_bpf		= bnxt_xdp,
 	.ndo_bridge_getlink	= bnxt_bridge_getlink,
 	.ndo_bridge_setlink	= bnxt_bridge_setlink,
-	.ndo_get_port_parent_id	= bnxt_get_port_parent_id,
-	.ndo_get_phys_port_name = bnxt_get_phys_port_name
+	.ndo_get_devlink_port	= bnxt_get_devlink_port,
 };
 
 static void bnxt_remove_one(struct pci_dev *pdev)
@@ -10433,6 +10438,26 @@ static int bnxt_init_mac_addr(struct bnxt *bp)
 	return rc;
 }
 
+static int bnxt_pcie_dsn_get(struct bnxt *bp, u8 dsn[])
+{
+	struct pci_dev *pdev = bp->pdev;
+	int pos = pci_find_ext_capability(pdev, PCI_EXT_CAP_ID_DSN);
+	u32 dw;
+
+	if (!pos) {
+		netdev_info(bp->dev, "Unable do read adapter's DSN");
+		return -EOPNOTSUPP;
+	}
+
+	/* DSN (two dw) is at an offset of 4 from the cap pos */
+	pos += 4;
+	pci_read_config_dword(pdev, pos, &dw);
+	put_unaligned_le32(dw, &dsn[0]);
+	pci_read_config_dword(pdev, pos + 4, &dw);
+	put_unaligned_le32(dw, &dsn[4]);
+	return 0;
+}
+
 static int bnxt_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
 {
 	static int version_printed;
@@ -10572,6 +10597,11 @@ static int bnxt_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
 		rc = -EADDRNOTAVAIL;
 		goto init_err_pci_clean;
 	}
+
+	/* Read the adapter's DSN to use as the eswitch switch_id */
+	rc = bnxt_pcie_dsn_get(bp, bp->switch_id);
+	if (rc)
+		goto init_err_pci_clean;
 
 	bnxt_hwrm_func_qcfg(bp);
 	bnxt_hwrm_vnic_qcaps(bp);

@@ -2175,8 +2175,9 @@ static int copy_tx_sa_stats(struct sk_buff *skb,
 	return 0;
 }
 
-static int copy_rx_sa_stats(struct sk_buff *skb,
-			    struct macsec_rx_sa_stats __percpu *pstats)
+static noinline_for_stack int
+copy_rx_sa_stats(struct sk_buff *skb,
+		 struct macsec_rx_sa_stats __percpu *pstats)
 {
 	struct macsec_rx_sa_stats sum = {0, };
 	int cpu;
@@ -2201,8 +2202,8 @@ static int copy_rx_sa_stats(struct sk_buff *skb,
 	return 0;
 }
 
-static int copy_rx_sc_stats(struct sk_buff *skb,
-			    struct pcpu_rx_sc_stats __percpu *pstats)
+static noinline_for_stack int
+copy_rx_sc_stats(struct sk_buff *skb, struct pcpu_rx_sc_stats __percpu *pstats)
 {
 	struct macsec_rx_sc_stats sum = {0, };
 	int cpu;
@@ -2265,8 +2266,8 @@ static int copy_rx_sc_stats(struct sk_buff *skb,
 	return 0;
 }
 
-static int copy_tx_sc_stats(struct sk_buff *skb,
-			    struct pcpu_tx_sc_stats __percpu *pstats)
+static noinline_for_stack int
+copy_tx_sc_stats(struct sk_buff *skb, struct pcpu_tx_sc_stats __percpu *pstats)
 {
 	struct macsec_tx_sc_stats sum = {0, };
 	int cpu;
@@ -2305,8 +2306,8 @@ static int copy_tx_sc_stats(struct sk_buff *skb,
 	return 0;
 }
 
-static int copy_secy_stats(struct sk_buff *skb,
-			   struct pcpu_secy_stats __percpu *pstats)
+static noinline_for_stack int
+copy_secy_stats(struct sk_buff *skb, struct pcpu_secy_stats __percpu *pstats)
 {
 	struct macsec_dev_stats sum = {0, };
 	int cpu;
@@ -2410,8 +2411,9 @@ cancel:
 	return 1;
 }
 
-static int dump_secy(struct macsec_secy *secy, struct net_device *dev,
-		     struct sk_buff *skb, struct netlink_callback *cb)
+static noinline_for_stack int
+dump_secy(struct macsec_secy *secy, struct net_device *dev,
+	  struct sk_buff *skb, struct netlink_callback *cb)
 {
 	struct macsec_rx_sc *rx_sc;
 	struct macsec_tx_sc *tx_sc = &secy->tx_sc;
@@ -2637,60 +2639,50 @@ static const struct genl_ops macsec_genl_ops[] = {
 	{
 		.cmd = MACSEC_CMD_GET_TXSC,
 		.dumpit = macsec_dump_txsc,
-		.policy = macsec_genl_policy,
 	},
 	{
 		.cmd = MACSEC_CMD_ADD_RXSC,
 		.doit = macsec_add_rxsc,
-		.policy = macsec_genl_policy,
 		.flags = GENL_ADMIN_PERM,
 	},
 	{
 		.cmd = MACSEC_CMD_DEL_RXSC,
 		.doit = macsec_del_rxsc,
-		.policy = macsec_genl_policy,
 		.flags = GENL_ADMIN_PERM,
 	},
 	{
 		.cmd = MACSEC_CMD_UPD_RXSC,
 		.doit = macsec_upd_rxsc,
-		.policy = macsec_genl_policy,
 		.flags = GENL_ADMIN_PERM,
 	},
 	{
 		.cmd = MACSEC_CMD_ADD_TXSA,
 		.doit = macsec_add_txsa,
-		.policy = macsec_genl_policy,
 		.flags = GENL_ADMIN_PERM,
 	},
 	{
 		.cmd = MACSEC_CMD_DEL_TXSA,
 		.doit = macsec_del_txsa,
-		.policy = macsec_genl_policy,
 		.flags = GENL_ADMIN_PERM,
 	},
 	{
 		.cmd = MACSEC_CMD_UPD_TXSA,
 		.doit = macsec_upd_txsa,
-		.policy = macsec_genl_policy,
 		.flags = GENL_ADMIN_PERM,
 	},
 	{
 		.cmd = MACSEC_CMD_ADD_RXSA,
 		.doit = macsec_add_rxsa,
-		.policy = macsec_genl_policy,
 		.flags = GENL_ADMIN_PERM,
 	},
 	{
 		.cmd = MACSEC_CMD_DEL_RXSA,
 		.doit = macsec_del_rxsa,
-		.policy = macsec_genl_policy,
 		.flags = GENL_ADMIN_PERM,
 	},
 	{
 		.cmd = MACSEC_CMD_UPD_RXSA,
 		.doit = macsec_upd_rxsa,
-		.policy = macsec_genl_policy,
 		.flags = GENL_ADMIN_PERM,
 	},
 };
@@ -2700,6 +2692,7 @@ static struct genl_family macsec_fam __ro_after_init = {
 	.hdrsize	= 0,
 	.version	= MACSEC_GENL_VERSION,
 	.maxattr	= MACSEC_ATTR_MAX,
+	.policy = macsec_genl_policy,
 	.netnsok	= true,
 	.module		= THIS_MODULE,
 	.ops		= macsec_genl_ops,
