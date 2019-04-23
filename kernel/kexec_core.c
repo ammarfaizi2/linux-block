@@ -116,7 +116,7 @@ EXPORT_SYMBOL_GPL(kexec_crash_loaded);
  * page of memory is necessary, but some architectures require more.
  * Because this memory must be identity mapped in the transition from
  * virtual to physical addresses it must live in the range
- * 0 - TASK_SIZE, as only the user space mappings are arbitrarily
+ * 0 - TASK_SIZE_MAX, as only the user space mappings are arbitrarily
  * modifiable.
  *
  * The assembly stub in the control code buffer is passed a linked list
