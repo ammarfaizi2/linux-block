@@ -126,15 +126,15 @@ static int rseq_get_rseq_cs(struct task_struct *t, struct rseq_cs *rseq_cs)
 		memset(rseq_cs, 0, sizeof(*rseq_cs));
 		return 0;
 	}
-	if (ptr >= TASK_SIZE)
+	if (ptr >= TASK_SIZE_MAX)
 		return -EINVAL;
 	urseq_cs = (struct rseq_cs __user *)(unsigned long)ptr;
 	if (copy_from_user(rseq_cs, urseq_cs, sizeof(*rseq_cs)))
 		return -EFAULT;
 
-	if (rseq_cs->start_ip >= TASK_SIZE ||
-	    rseq_cs->start_ip + rseq_cs->post_commit_offset >= TASK_SIZE ||
-	    rseq_cs->abort_ip >= TASK_SIZE ||
+	if (rseq_cs->start_ip >= TASK_SIZE_MAX ||
+	    rseq_cs->start_ip + rseq_cs->post_commit_offset >= TASK_SIZE_MAX ||
+	    rseq_cs->abort_ip >= TASK_SIZE_MAX ||
 	    rseq_cs->version > 0)
 		return -EINVAL;
 	/* Check for overflow. */
