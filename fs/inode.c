@@ -479,7 +479,7 @@ void __insert_inode_hash(struct inode *inode, unsigned long hashval)
 
 	read_seqlock_excl(&inode_hash_lock);
 	spin_lock(&inode->i_lock);
-	hlist_add_head(&inode->i_hash, b);
+	hlist_add_head_rcu(&inode->i_hash, b);
 	spin_unlock(&inode->i_lock);
 	read_sequnlock_excl(&inode_hash_lock);
 }
@@ -495,7 +495,7 @@ void __remove_inode_hash(struct inode *inode)
 {
 	read_seqlock_excl(&inode_hash_lock);
 	spin_lock(&inode->i_lock);
-	hlist_del_init(&inode->i_hash);
+	hlist_del_init_rcu(&inode->i_hash);
 	spin_unlock(&inode->i_lock);
 	read_sequnlock_excl(&inode_hash_lock);
 }
@@ -507,6 +507,11 @@ EXPORT_SYMBOL(__remove_inode_hash);
  * @hashval: New hash value (usually inode number) to get
  * @reset: Callback used to relabel the inode
  * @data: Opaque data pointer to pass to @reset
+ *
+ * Reinsert the inode into the hash, potentially moving it between queues - but
+ * we have to be aware that someone might be trawling either list under the RCU
+ * readlock whilst we do so; to deal with this, we bump the seq counter in the
+ * hashtable lock.
  */
 void rehash_inode(struct inode *inode, unsigned long hashval,
 		  void (*reset)(struct inode *inode, unsigned long hashval, void *data),
@@ -516,9 +521,11 @@ void rehash_inode(struct inode *inode, unsigned long hashval,
 
 	write_seqlock(&inode_hash_lock);
 	spin_lock(&inode->i_lock);
-	hlist_del_init(&inode->i_hash);
+
+	hlist_del_init_rcu(&inode->i_hash);
 	reset(inode, hashval, data);
-	hlist_add_head(&inode->i_hash, b);
+	hlist_add_head_rcu(&inode->i_hash, b);
+
 	spin_unlock(&inode->i_lock);
 	write_sequnlock(&inode_hash_lock);
 }
@@ -806,8 +813,31 @@ long prune_icache_sb(struct super_block *sb, struct shrink_control *sc)
 }
 
 static void __wait_on_freeing_inode(struct inode *inode);
+
 /*
- * Called with the inode lock held.
+ * Find an inode.  Can be called with either the RCU read lock or the
+ * inode cache lock held.  No check is made as to the validity of the
+ * inode found.
+ */
+static struct inode *__find_inode_rcu(struct super_block *sb,
+				      struct hlist_head *head,
+				      int (*test)(struct inode *, void *),
+				      void *data)
+{
+	struct inode *inode;
+
+	hlist_for_each_entry_rcu(inode, head, i_hash) {
+		if (inode->i_sb == sb &&
+		    test(inode, data))
+			return inode;
+	}
+
+	return NULL;
+}
+
+/*
+ * Called with the inode hash lock held.  Waits until dying inodes are freed,
+ * dropping the inode hash lock temporarily to do so.
  */
 static struct inode *find_inode(struct super_block *sb,
 				struct hlist_head *head,
@@ -817,11 +847,8 @@ static struct inode *find_inode(struct super_block *sb,
 	struct inode *inode = NULL;
 
 repeat:
-	hlist_for_each_entry(inode, head, i_hash) {
-		if (inode->i_sb != sb)
-			continue;
-		if (!test(inode, data))
-			continue;
+	inode = __find_inode_rcu(sb, head, test, data);
+	if (inode) {
 		spin_lock(&inode->i_lock);
 		if (inode->i_state & (I_FREEING|I_WILL_FREE)) {
 			__wait_on_freeing_inode(inode);
@@ -839,6 +866,26 @@ repeat:
 }
 
 /*
+ * Find an inode by inode number.  Can be called with either the RCU
+ * read lock or the inode cache lock held.  No check is made as to the
+ * validity of the inode found.
+ */
+static struct inode *__find_inode_by_ino_rcu(struct super_block *sb,
+					     struct hlist_head *head,
+					     unsigned long ino)
+{
+	struct inode *inode;
+
+	hlist_for_each_entry_rcu(inode, head, i_hash) {
+		if (inode->i_ino == ino &&
+		    inode->i_sb == sb)
+			return inode;
+	}
+
+	return NULL;
+}
+
+/*
  * find_inode_fast is the fast path version of find_inode, see the comment at
  * iget_locked for details.
  */
@@ -848,11 +895,8 @@ static struct inode *find_inode_fast(struct super_block *sb,
 	struct inode *inode = NULL;
 
 repeat:
-	hlist_for_each_entry(inode, head, i_hash) {
-		if (inode->i_ino != ino)
-			continue;
-		if (inode->i_sb != sb)
-			continue;
+	inode = __find_inode_by_ino_rcu(sb, head, ino);
+	if (inode) {
 		spin_lock(&inode->i_lock);
 		if (inode->i_state & (I_FREEING|I_WILL_FREE)) {
 			__wait_on_freeing_inode(inode);
@@ -1105,7 +1149,7 @@ again:
 	 */
 	spin_lock(&inode->i_lock);
 	inode->i_state |= I_NEW;
-	hlist_add_head(&inode->i_hash, head);
+	hlist_add_head_rcu(&inode->i_hash, head);
 	spin_unlock(&inode->i_lock);
 	if (!creating)
 		inode_sb_list_add(inode);
@@ -1243,15 +1287,9 @@ static int test_inode_iunique(struct super_block *sb, unsigned long ino)
 	struct inode *inode;
 
 	read_seqlock_excl(&inode_hash_lock);
-	hlist_for_each_entry(inode, b, i_hash) {
-		if (inode->i_ino == ino && inode->i_sb == sb) {
-			read_sequnlock_excl(&inode_hash_lock);
-			return 0;
-		}
-	}
+	inode = __find_inode_by_ino_rcu(sb, b, ino);
 	read_sequnlock_excl(&inode_hash_lock);
-
-	return 1;
+	return inode ? 0 : 1;
 }
 
 /**
@@ -1323,6 +1361,7 @@ EXPORT_SYMBOL(igrab);
  *
  * Note: I_NEW is not waited upon so you have to be very careful what you do
  * with the returned inode.  You probably should be using ilookup5() instead.
+ * It may still sleep waiting for I_FREE and I_WILL_FREE, however.
  *
  * Note2: @test is called with the inode_hash_lock held, so can't sleep.
  */
@@ -1454,6 +1493,104 @@ out:
 }
 EXPORT_SYMBOL(find_inode_nowait);
 
+/**
+ * find_inode_rcu - find an inode in the inode cache
+ * @sb:		Super block of file system to search
+ * @hashval:	Key to hash
+ * @test:	Function to test match on an inode
+ * @data:	Data for test function
+ *
+ * Search for the inode specified by @hashval and @data in the inode cache,
+ * where the helper function @test will return 0 if the inode does not match
+ * and 1 if it does.  The @test function must be responsible for taking the
+ * i_lock spin_lock and checking i_state for an inode being freed or being
+ * initialized.
+ *
+ * If successful, this will return the inode for which the @test function
+ * returned 1 and NULL otherwise.
+ *
+ * The @test function is not permitted to take a ref on any inode presented
+ * unless the caller is holding the inode hashtable lock.  It is also not
+ * permitted to sleep, since it may be called with the RCU read lock held.
+ *
+ * The caller must hold either the RCU read lock or the inode hashtable lock.
+ */
+struct inode *find_inode_rcu(struct super_block *sb, unsigned long hashval,
+			     int (*test)(struct inode *, void *), void *data)
+{
+	struct hlist_head *head = inode_hashtable + hash(sb, hashval);
+	struct inode *inode;
+	unsigned int seq = 0;
+
+	RCU_LOCKDEP_WARN(!rcu_read_lock_held(),
+			 "suspicious find_inode_rcu() usage");
+
+	do {
+		read_seqbegin_or_lock(&inode_hash_lock, &seq);
+
+		hlist_for_each_entry_rcu(inode, head, i_hash) {
+			if (inode->i_sb == sb &&
+			    !(READ_ONCE(inode->i_state) & (I_FREEING | I_WILL_FREE)) &&
+			    test(inode, data))
+				goto done;
+		}
+	} while (need_seqretry(&inode_hash_lock, seq));
+
+	inode = NULL;
+done:
+	done_seqretry(&inode_hash_lock, seq);
+	return inode;
+}
+EXPORT_SYMBOL(find_inode_rcu);
+
+/**
+ * find_inode_by_ino_rcu - Find an inode in the inode cache
+ * @sb:		Super block of file system to search
+ * @ino:	The inode number to match
+ *
+ * Search for the inode specified by @hashval and @data in the inode cache,
+ * where the helper function @test will return 0 if the inode does not match
+ * and 1 if it does.  The @test function must be responsible for taking the
+ * i_lock spin_lock and checking i_state for an inode being freed or being
+ * initialized.
+ *
+ * If successful, this will return the inode for which the @test function
+ * returned 1 and NULL otherwise.
+ *
+ * The @test function is not permitted to take a ref on any inode presented
+ * unless the caller is holding the inode hashtable lock.  It is also not
+ * permitted to sleep, since it may be called with the RCU read lock held.
+ *
+ * The caller must hold either the RCU read lock or the inode hashtable lock.
+ */
+struct inode *find_inode_by_ino_rcu(struct super_block *sb,
+				    unsigned long ino)
+{
+	struct hlist_head *head = inode_hashtable + hash(sb, ino);
+	struct inode *inode;
+	unsigned int seq = 0;
+
+	RCU_LOCKDEP_WARN(!rcu_read_lock_held(),
+			 "suspicious find_inode_by_ino_rcu() usage");
+
+	do {
+		read_seqbegin_or_lock(&inode_hash_lock, &seq);
+
+		hlist_for_each_entry_rcu(inode, head, i_hash) {
+			if (inode->i_ino == ino &&
+			    inode->i_sb == sb &&
+			    !(READ_ONCE(inode->i_state) & (I_FREEING | I_WILL_FREE)))
+				goto done;
+		}
+	} while (need_seqretry(&inode_hash_lock, seq));
+
+	inode = NULL;
+done:
+	done_seqretry(&inode_hash_lock, seq);
+	return inode;
+}
+EXPORT_SYMBOL(find_inode_by_ino_rcu);
+
 int insert_inode_locked(struct inode *inode)
 {
 	struct super_block *sb = inode->i_sb;
@@ -1478,7 +1615,7 @@ int insert_inode_locked(struct inode *inode)
 		if (likely(!old)) {
 			spin_lock(&inode->i_lock);
 			inode->i_state |= I_NEW | I_CREATING;
-			hlist_add_head(&inode->i_hash, head);
+			hlist_add_head_rcu(&inode->i_hash, head);
 			spin_unlock(&inode->i_lock);
 			read_sequnlock_excl(&inode_hash_lock);
 			return 0;
@@ -1538,6 +1675,7 @@ static void iput_final(struct inode *inode)
 {
 	struct super_block *sb = inode->i_sb;
 	const struct super_operations *op = inode->i_sb->s_op;
+	unsigned long state;
 	int drop;
 
 	WARN_ON(inode->i_state & I_NEW);
@@ -1553,16 +1691,20 @@ static void iput_final(struct inode *inode)
 		return;
 	}
 
+	state = READ_ONCE(inode->i_state);
 	if (!drop) {
-		inode->i_state |= I_WILL_FREE;
+		WRITE_ONCE(inode->i_state, state | I_WILL_FREE);
 		spin_unlock(&inode->i_lock);
+
 		write_inode_now(inode, 1);
+
 		spin_lock(&inode->i_lock);
-		WARN_ON(inode->i_state & I_NEW);
-		inode->i_state &= ~I_WILL_FREE;
+		state = READ_ONCE(inode->i_state);
+		WARN_ON(state & I_NEW);
+		state &= ~I_WILL_FREE;
 	}
 
-	inode->i_state |= I_FREEING;
+	WRITE_ONCE(inode->i_state, state | I_FREEING);
 	if (!list_empty(&inode->i_lru))
 		inode_lru_list_del(inode);
 	spin_unlock(&inode->i_lock);
