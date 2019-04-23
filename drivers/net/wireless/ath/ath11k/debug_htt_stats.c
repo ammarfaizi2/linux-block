@@ -3,6 +3,7 @@
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  */
 
+#include <linux/vmalloc.h>
 #include "core.h"
 #include "dp_tx.h"
 #include "dp_rx.h"
@@ -18,11 +19,16 @@
 
 #define HTT_TLV_HDR_LEN HTT_T2H_EXT_STATS_CONF_TLV_HDR_SIZE
 
-enum debug_htt_stats_req_state {
-	DEBUG_HTT_STATS_REQ_DONE,
-	DEBUG_HTT_STATS_REQ_INIT,
-	DEBUG_HTT_STATS_REQ_FILL,
-};
+#define ARRAY_TO_STRING(out, arr, len)							\
+	do {										\
+		int index = 0; u8 i;							\
+		for (i = 0; i < len; i++) {						\
+			index += snprintf(out + index, HTT_MAX_STRING_LEN - index,	\
+					  " %u:%u,", i, arr[i]);			\
+			if (index < 0 || index >= HTT_MAX_STRING_LEN)			\
+				break;							\
+		}									\
+	} while (0)
 
 struct debug_htt_stats_req {
 	bool done;
@@ -32,7 +38,9 @@ struct debug_htt_stats_req {
 	u8 buf[0];
 };
 
-static inline void htt_print_stats_string_tlv(const u32 *tag_buf, u8 *user_data)
+static inline void htt_print_stats_string_tlv(const u32 *tag_buf,
+					      u16 tag_len,
+					      u8 *user_data)
 {
 	struct htt_stats_string_tlv *htt_stats_buf =
 			(struct htt_stats_string_tlv *)tag_buf;
@@ -44,7 +52,8 @@ static inline void htt_print_stats_string_tlv(const u32 *tag_buf, u8 *user_data)
 	u8  i;
 	u16 index = 0;
 	char data[HTT_MAX_STRING_LEN] = {0};
-	u32 tag_len = FIELD_GET(HTT_TLV_LEN, *tag_buf);
+
+	tag_len = tag_len >> 2;
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_STATS_STRING_TLV:");
 
@@ -52,6 +61,8 @@ static inline void htt_print_stats_string_tlv(const u32 *tag_buf, u8 *user_data)
 		index += snprintf(&data[index],
 				HTT_MAX_STRING_LEN - index,
 				"%.*s", 4, (char *)&(htt_stats_buf->data[i]));
+		if (index < 0 || index >= HTT_MAX_STRING_LEN)
+			break;
 	}
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "data = %s\n", data);
@@ -184,7 +195,9 @@ static inline void htt_print_tx_pdev_stats_cmn_tlv(const u32 *tag_buf, u8 *data)
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_pdev_stats_urrn_tlv_v(const u32 *tag_buf, u8 *data)
+static inline void htt_print_tx_pdev_stats_urrn_tlv_v(const u32 *tag_buf,
+						      u16 tag_len,
+						      u8 *data)
 {
 	struct htt_tx_pdev_stats_urrn_tlv_v *htt_stats_buf =
 			(struct htt_tx_pdev_stats_urrn_tlv_v *)tag_buf;
@@ -193,19 +206,12 @@ static inline void htt_print_tx_pdev_stats_urrn_tlv_v(const u32 *tag_buf, u8 *da
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	u8  i;
-	u16 index = 0;
 	char urrn_stats[HTT_MAX_STRING_LEN] = {0};
-	u32 tag_len = FIELD_GET(HTT_TLV_LEN, *tag_buf);
+	u16 num_elems = min_t(u16, (tag_len >> 2), HTT_TX_PDEV_MAX_URRN_STATS);
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_PDEV_STATS_URRN_TLV_V:");
 
-	for (i = 0; i < tag_len; i++) {
-		index += snprintf(&urrn_stats[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->urrn_stats[i]);
-	}
-
+	ARRAY_TO_STRING(urrn_stats, htt_stats_buf->urrn_stats, num_elems);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "urrn_stats = %s\n", urrn_stats);
 
 	if (len >= buf_len)
@@ -216,7 +222,9 @@ static inline void htt_print_tx_pdev_stats_urrn_tlv_v(const u32 *tag_buf, u8 *da
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_pdev_stats_flush_tlv_v(const u32 *tag_buf, u8 *data)
+static inline void htt_print_tx_pdev_stats_flush_tlv_v(const u32 *tag_buf,
+						       u16 tag_len,
+						       u8 *data)
 {
 	struct htt_tx_pdev_stats_flush_tlv_v *htt_stats_buf =
 			(struct htt_tx_pdev_stats_flush_tlv_v *)tag_buf;
@@ -225,19 +233,12 @@ static inline void htt_print_tx_pdev_stats_flush_tlv_v(const u32 *tag_buf, u8 *d
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	u8  i;
-	u16 index = 0;
 	char flush_errs[HTT_MAX_STRING_LEN] = {0};
-	u32 tag_len = FIELD_GET(HTT_TLV_LEN, *tag_buf);
+	u16 num_elems = min_t(u16, (tag_len >> 2), HTT_TX_PDEV_MAX_FLUSH_REASON_STATS);
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_PDEV_STATS_FLUSH_TLV_V:");
 
-	for (i = 0; i < tag_len; i++) {
-		index += snprintf(&flush_errs[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->flush_errs[i]);
-	}
-
+	ARRAY_TO_STRING(flush_errs, htt_stats_buf->flush_errs, num_elems);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "flush_errs = %s\n", flush_errs);
 
 	if (len >= buf_len)
@@ -248,7 +249,9 @@ static inline void htt_print_tx_pdev_stats_flush_tlv_v(const u32 *tag_buf, u8 *d
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_pdev_stats_sifs_tlv_v(const u32 *tag_buf, u8 *data)
+static inline void htt_print_tx_pdev_stats_sifs_tlv_v(const u32 *tag_buf,
+						      u16 tag_len,
+						      u8 *data)
 {
 	struct htt_tx_pdev_stats_sifs_tlv_v *htt_stats_buf =
 			(struct htt_tx_pdev_stats_sifs_tlv_v *)tag_buf;
@@ -257,19 +260,12 @@ static inline void htt_print_tx_pdev_stats_sifs_tlv_v(const u32 *tag_buf, u8 *da
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	u8 i;
-	u16 index = 0;
 	char sifs_status[HTT_MAX_STRING_LEN] = {0};
-	u32 tag_len = FIELD_GET(HTT_TLV_LEN, *tag_buf);
+	u16 num_elems = min_t(u16, (tag_len >> 2), HTT_TX_PDEV_MAX_SIFS_BURST_STATS);
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_PDEV_STATS_SIFS_TLV_V:");
 
-	for (i = 0; i < tag_len; i++) {
-		index += snprintf(&sifs_status[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->sifs_status[i]);
-	}
-
+	ARRAY_TO_STRING(sifs_status, htt_stats_buf->sifs_status, num_elems);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "sifs_status = %s\n",
 			   sifs_status);
 
@@ -281,7 +277,9 @@ static inline void htt_print_tx_pdev_stats_sifs_tlv_v(const u32 *tag_buf, u8 *da
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_pdev_stats_phy_err_tlv_v(const u32 *tag_buf, u8 *data)
+static inline void htt_print_tx_pdev_stats_phy_err_tlv_v(const u32 *tag_buf,
+							 u16 tag_len,
+							 u8 *data)
 {
 	struct htt_tx_pdev_stats_phy_err_tlv_v *htt_stats_buf =
 			(struct htt_tx_pdev_stats_phy_err_tlv_v *)tag_buf;
@@ -290,19 +288,12 @@ static inline void htt_print_tx_pdev_stats_phy_err_tlv_v(const u32 *tag_buf, u8 
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	u8 i;
-	u16 index = 0;
 	char phy_errs[HTT_MAX_STRING_LEN] = {0};
-	u32 tag_len = FIELD_GET(HTT_TLV_LEN, *tag_buf);
+	u16 num_elems = min_t(u16, (tag_len >> 2), HTT_TX_PDEV_MAX_PHY_ERR_STATS);
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_PDEV_STATS_PHY_ERR_TLV_V:");
 
-	for (i = 0; i < tag_len; i++) {
-		index += snprintf(&phy_errs[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->phy_errs[i]);
-	}
-
+	ARRAY_TO_STRING(phy_errs, htt_stats_buf->phy_errs, num_elems);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "phy_errs = %s\n", phy_errs);
 
 	if (len >= buf_len)
@@ -314,6 +305,7 @@ static inline void htt_print_tx_pdev_stats_phy_err_tlv_v(const u32 *tag_buf, u8 
 }
 
 static inline void htt_print_tx_pdev_stats_sifs_hist_tlv_v(const u32 *tag_buf,
+							   u16 tag_len,
 							   u8 *data)
 {
 	struct htt_tx_pdev_stats_sifs_hist_tlv_v *htt_stats_buf =
@@ -323,20 +315,12 @@ static inline void htt_print_tx_pdev_stats_sifs_hist_tlv_v(const u32 *tag_buf,
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	u8 i;
-	u16 index = 0;
 	char sifs_hist_status[HTT_MAX_STRING_LEN] = {0};
-	u32 tag_len = FIELD_GET(HTT_TLV_LEN, *tag_buf);
+	u16 num_elems = min_t(u16, (tag_len >> 2), HTT_TX_PDEV_MAX_SIFS_BURST_HIST_STATS);
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_PDEV_STATS_SIFS_HIST_TLV_V:");
 
-	for (i = 0; i < tag_len; i++) {
-		index += snprintf(&sifs_hist_status[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i + 1,
-				  htt_stats_buf->sifs_hist_status[i]);
-	}
-
+	ARRAY_TO_STRING(sifs_hist_status, htt_stats_buf->sifs_hist_status, num_elems);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "sifs_hist_status = %s\n",
 			   sifs_hist_status);
 
@@ -385,7 +369,9 @@ static inline void htt_print_tx_pdev_stats_tx_ppdu_stats_tlv_v(const u32 *tag_bu
 }
 
 static inline void
-htt_print_tx_pdev_stats_tried_mpdu_cnt_hist_tlv_v(const u32 *tag_buf, u8 *data)
+htt_print_tx_pdev_stats_tried_mpdu_cnt_hist_tlv_v(const u32 *tag_buf,
+						  u16 tag_len,
+						  u8 *data)
 {
 	struct htt_tx_pdev_stats_tried_mpdu_cnt_hist_tlv_v *htt_stats_buf =
 		(struct htt_tx_pdev_stats_tried_mpdu_cnt_hist_tlv_v *)tag_buf;
@@ -394,23 +380,18 @@ htt_print_tx_pdev_stats_tried_mpdu_cnt_hist_tlv_v(const u32 *tag_buf, u8 *data)
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	u8 i;
-	u16 index = 0;
 	char tried_mpdu_cnt_hist[HTT_MAX_STRING_LEN] = {0};
-	u32  num_elements = ((FIELD_GET(HTT_TLV_LEN, *tag_buf) -
-			    sizeof(htt_stats_buf->hist_bin_size)) >> 2);
+	u32  num_elements = ((tag_len - sizeof(htt_stats_buf->hist_bin_size)) >> 2);
 	u32  required_buffer_size = HTT_MAX_PRINT_CHAR_PER_ELEM * num_elements;
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_PDEV_STATS_TRIED_MPDU_CNT_HIST_TLV_V:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "TRIED_MPDU_CNT_HIST_BIN_SIZE : %u",
 			   htt_stats_buf->hist_bin_size);
+
 	if (required_buffer_size < HTT_MAX_STRING_LEN) {
-		for (i = 0; i < num_elements; i++) {
-			index += snprintf(&tried_mpdu_cnt_hist[index],
-					  HTT_MAX_STRING_LEN - index,
-					  " %u:%u,", i,
-					  htt_stats_buf->tried_mpdu_cnt_hist[i]);
-		}
+		ARRAY_TO_STRING(tried_mpdu_cnt_hist,
+				htt_stats_buf->tried_mpdu_cnt_hist,
+				num_elements);
 		len += HTT_DBG_OUT(buf + len, buf_len - len, "tried_mpdu_cnt_hist = %s\n",
 				   tried_mpdu_cnt_hist);
 	} else {
@@ -722,18 +703,13 @@ static inline void htt_print_counter_tlv(const u32 *tag_buf, u8 *data)
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	u8 i;
-	u16 index                            = 0;
 	char counter_name[HTT_MAX_STRING_LEN] = {0};
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_COUNTER_TLV:");
 
-	for (i = 0; i < HTT_MAX_COUNTER_NAME; i++) {
-		index += snprintf(&counter_name[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->counter_name[i]);
-	}
-
+	ARRAY_TO_STRING(counter_name,
+			htt_stats_buf->counter_name,
+			HTT_MAX_COUNTER_NAME);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "counter_name = %s ", counter_name);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "count = %u\n",
 			   htt_stats_buf->count);
@@ -844,13 +820,12 @@ static inline void htt_print_tx_peer_rate_stats_tlv(const u32 *tag_buf, u8 *data
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	u8 i, j;
-	u16 index = 0;
 	char str_buf[HTT_MAX_STRING_LEN] = {0};
 	char *tx_gi[HTT_TX_PEER_STATS_NUM_GI_COUNTERS] = {0};
+	u8 j;
 
-	for (i = 0; i < HTT_TX_PEER_STATS_NUM_GI_COUNTERS; i++)
-		tx_gi[i] = kmalloc(HTT_MAX_STRING_LEN, GFP_ATOMIC);
+	for (j = 0; j < HTT_TX_PEER_STATS_NUM_GI_COUNTERS; j++)
+		tx_gi[j] = kmalloc(HTT_MAX_STRING_LEN, GFP_ATOMIC);
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_PEER_RATE_STATS_TLV:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "tx_ldpc = %u",
@@ -860,96 +835,59 @@ static inline void htt_print_tx_peer_rate_stats_tlv(const u32 *tag_buf, u8 *data
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "ack_rssi = %u",
 			   htt_stats_buf->ack_rssi);
 
-	index = 0;
 	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS; i++) {
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->tx_mcs[i]);
-	}
-
+	ARRAY_TO_STRING(str_buf, htt_stats_buf->tx_mcs,
+			HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "tx_mcs = %s ", str_buf);
 
-	index = 0;
 	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS; i++)
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->tx_su_mcs[i]);
-
+	ARRAY_TO_STRING(str_buf, htt_stats_buf->tx_su_mcs,
+			HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "tx_su_mcs = %s ", str_buf);
-	index = 0;
+
 	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS; i++)
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->tx_mu_mcs[i]);
-
+	ARRAY_TO_STRING(str_buf, htt_stats_buf->tx_mu_mcs,
+			HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "tx_mu_mcs = %s ", str_buf);
-	index = 0;
+
 	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS; i++)
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->tx_nss[i]);
-
+	ARRAY_TO_STRING(str_buf,
+			htt_stats_buf->tx_nss,
+			HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "tx_nss = %s ", str_buf);
-	index = 0;
+
 	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_TX_PDEV_STATS_NUM_BW_COUNTERS; i++)
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->tx_bw[i]);
-
+	ARRAY_TO_STRING(str_buf,
+			htt_stats_buf->tx_bw,
+			HTT_TX_PDEV_STATS_NUM_BW_COUNTERS);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "tx_bw = %s ", str_buf);
+
 	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS; i++)
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->tx_stbc[i]);
-
+	ARRAY_TO_STRING(str_buf, htt_stats_buf->tx_stbc,
+			HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "tx_stbc = %s ", str_buf);
-	index = 0;
+
 	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_TX_PDEV_STATS_NUM_PREAMBLE_TYPES; i++)
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->tx_pream[i]);
-
+	ARRAY_TO_STRING(str_buf, htt_stats_buf->tx_pream,
+			HTT_TX_PDEV_STATS_NUM_PREAMBLE_TYPES);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "tx_pream = %s ", str_buf);
 
 	for (j = 0; j < HTT_TX_PEER_STATS_NUM_GI_COUNTERS; j++) {
-		index = 0;
-
-		for (i = 0; i < HTT_TX_PEER_STATS_NUM_MCS_COUNTERS; i++)
-			index += snprintf(&tx_gi[j][index],
-					  HTT_MAX_STRING_LEN - index,
-					  " %u:%u,", i,
-					  htt_stats_buf->tx_gi[j][i]);
-
+		ARRAY_TO_STRING(tx_gi[j],
+				htt_stats_buf->tx_gi[j],
+				HTT_TX_PEER_STATS_NUM_MCS_COUNTERS);
 		len += HTT_DBG_OUT(buf + len, buf_len - len, "tx_gi[%u] = %s ",
-				   j, tx_gi[j]);
+				j, tx_gi[j]);
 	}
 
-	index = 0;
 	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_TX_PDEV_STATS_NUM_DCM_COUNTERS; i++)
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->tx_dcm[i]);
-
+	ARRAY_TO_STRING(str_buf,
+			htt_stats_buf->tx_dcm,
+			HTT_TX_PDEV_STATS_NUM_DCM_COUNTERS);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "tx_dcm = %s\n", str_buf);
 
-	for (i = 0; i < HTT_TX_PEER_STATS_NUM_GI_COUNTERS; i++)
-		kfree(tx_gi[i]);
+	for (j = 0; j < HTT_TX_PEER_STATS_NUM_GI_COUNTERS; j++)
+		kfree(tx_gi[j]);
 
 	if (len >= buf_len)
 		buf[buf_len - 1] = 0;
@@ -968,17 +906,16 @@ static inline void htt_print_rx_peer_rate_stats_tlv(const u32 *tag_buf, u8 *data
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	u8 i, j;
-	u16 index;
+	u8 j;
 	char *rssi_chain[HTT_RX_PEER_STATS_NUM_SPATIAL_STREAMS];
 	char *rx_gi[HTT_RX_PEER_STATS_NUM_GI_COUNTERS];
 	char str_buf[HTT_MAX_STRING_LEN] = {0};
 
-	for (i = 0; i < HTT_RX_PEER_STATS_NUM_SPATIAL_STREAMS; i++)
-		rssi_chain[i] = kmalloc(HTT_MAX_STRING_LEN, GFP_ATOMIC);
+	for (j = 0; j < HTT_RX_PEER_STATS_NUM_SPATIAL_STREAMS; j++)
+		rssi_chain[j] = kmalloc(HTT_MAX_STRING_LEN, GFP_ATOMIC);
 
-	for (i = 0; i < HTT_RX_PEER_STATS_NUM_GI_COUNTERS; i++)
-		rx_gi[i] = kmalloc(HTT_MAX_STRING_LEN, GFP_ATOMIC);
+	for (j = 0; j < HTT_RX_PEER_STATS_NUM_GI_COUNTERS; j++)
+		rx_gi[j] = kmalloc(HTT_MAX_STRING_LEN, GFP_ATOMIC);
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_RX_PEER_RATE_STATS_TLV:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "nsts = %u",
@@ -994,99 +931,55 @@ static inline void htt_print_rx_peer_rate_stats_tlv(const u32 *tag_buf, u8 *data
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "rssi_comb = %u",
 			   htt_stats_buf->rssi_comb);
 
-	index = 0;
 	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_RX_PDEV_STATS_NUM_MCS_COUNTERS; i++)
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->rx_mcs[i]);
-
+	ARRAY_TO_STRING(str_buf, htt_stats_buf->rx_mcs,
+			HTT_RX_PDEV_STATS_NUM_MCS_COUNTERS);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "rx_mcs = %s ", str_buf);
 
-	index = 0;
 	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS; i++)
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->rx_nss[i]);
-
+	ARRAY_TO_STRING(str_buf, htt_stats_buf->rx_nss,
+			HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "rx_nss = %s ", str_buf);
 
-	index = 0;
 	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_RX_PDEV_STATS_NUM_DCM_COUNTERS; i++)
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->rx_dcm[i]);
-
+	ARRAY_TO_STRING(str_buf, htt_stats_buf->rx_dcm,
+			HTT_RX_PDEV_STATS_NUM_DCM_COUNTERS);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "rx_dcm = %s ", str_buf);
 
-	index = 0;
 	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_RX_PDEV_STATS_NUM_MCS_COUNTERS; i++)
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->rx_stbc[i]);
-
+	ARRAY_TO_STRING(str_buf, htt_stats_buf->rx_stbc,
+			HTT_RX_PDEV_STATS_NUM_MCS_COUNTERS);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "rx_stbc = %s ", str_buf);
 
-	index = 0;
 	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_RX_PDEV_STATS_NUM_BW_COUNTERS; i++)
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->rx_bw[i]);
-
+	ARRAY_TO_STRING(str_buf, htt_stats_buf->rx_bw,
+			HTT_RX_PDEV_STATS_NUM_BW_COUNTERS);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "rx_bw = %s ", str_buf);
 
 	for (j = 0; j < HTT_RX_PEER_STATS_NUM_SPATIAL_STREAMS; j++) {
-		memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-		index = 0;
-
-		for (i = 0; i < HTT_RX_PEER_STATS_NUM_BW_COUNTERS; i++)
-			index += snprintf(&rssi_chain[j][index],
-					  HTT_MAX_STRING_LEN - index,
-					  " %u:%u,", i,
-					  htt_stats_buf->rssi_chain[j][i]);
-
+		ARRAY_TO_STRING(rssi_chain[j], htt_stats_buf->rssi_chain[j],
+				HTT_RX_PEER_STATS_NUM_BW_COUNTERS);
 		len += HTT_DBG_OUT(buf + len, buf_len - len, "rssi_chain[%u] = %s ",
 				   j, rssi_chain[j]);
 	}
 
 	for (j = 0; j < HTT_RX_PEER_STATS_NUM_GI_COUNTERS; j++) {
-		index = 0;
-
-		for (i = 0; i < HTT_RX_PDEV_STATS_NUM_MCS_COUNTERS; i++)
-			index += snprintf(&rx_gi[j][index],
-					  HTT_MAX_STRING_LEN - index,
-					  " %u:%u,", i,
-					  htt_stats_buf->rx_gi[j][i]);
-
+		ARRAY_TO_STRING(rx_gi[j], htt_stats_buf->rx_gi[j],
+				HTT_RX_PDEV_STATS_NUM_MCS_COUNTERS);
 		len += HTT_DBG_OUT(buf + len, buf_len - len, "rx_gi[%u] = %s ",
-				   j, rx_gi[j]);
+				j, rx_gi[j]);
 	}
 
-	index = 0;
 	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_RX_PDEV_STATS_NUM_PREAMBLE_TYPES; i++) {
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->rx_pream[i]);
-	}
-
+	ARRAY_TO_STRING(str_buf, htt_stats_buf->rx_pream,
+			HTT_RX_PDEV_STATS_NUM_PREAMBLE_TYPES);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "rx_pream = %s\n", str_buf);
 
-	for (i = 0; i < HTT_RX_PEER_STATS_NUM_SPATIAL_STREAMS; i++)
-		kfree(rssi_chain[i]);
+	for (j = 0; j < HTT_RX_PEER_STATS_NUM_SPATIAL_STREAMS; j++)
+		kfree(rssi_chain[j]);
 
-	for (i = 0; i < HTT_RX_PEER_STATS_NUM_GI_COUNTERS; i++)
-		kfree(rx_gi[i]);
+	for (j = 0; j < HTT_RX_PEER_STATS_NUM_GI_COUNTERS; j++)
+		kfree(rx_gi[j]);
 
 	if (len >= buf_len)
 		buf[buf_len - 1] = 0;
@@ -1248,6 +1141,7 @@ static inline void htt_print_tx_hwq_stats_cmn_tlv(const u32 *tag_buf, u8 *data)
 }
 
 static inline void htt_print_tx_hwq_difs_latency_stats_tlv_v(const u32 *tag_buf,
+							     u16 tag_len,
 							     u8 *data)
 {
 	struct htt_tx_hwq_difs_latency_stats_tlv_v *htt_stats_buf =
@@ -1257,24 +1151,17 @@ static inline void htt_print_tx_hwq_difs_latency_stats_tlv_v(const u32 *tag_buf,
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	u8 i;
-	u16 index = 0;
+	u16 data_len = min_t(u16, (tag_len >> 2), HTT_TX_HWQ_MAX_DIFS_LATENCY_BINS);
 	char difs_latency_hist[HTT_MAX_STRING_LEN] = {0};
-	u32 tag_len = FIELD_GET(HTT_TLV_LEN, *tag_buf);
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_HWQ_DIFS_LATENCY_STATS_TLV_V:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "hist_intvl = %u",
 			htt_stats_buf->hist_intvl);
 
-	for (i = 0; i < tag_len; i++) {
-		index += snprintf(&difs_latency_hist[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i,
-				  htt_stats_buf->difs_latency_hist[i]);
-	}
-
+	ARRAY_TO_STRING(difs_latency_hist, htt_stats_buf->difs_latency_hist,
+			data_len);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "difs_latency_hist = %s\n",
-			   difs_latency_hist);
+			difs_latency_hist);
 
 	if (len >= buf_len)
 		buf[buf_len - 1] = 0;
@@ -1285,6 +1172,7 @@ static inline void htt_print_tx_hwq_difs_latency_stats_tlv_v(const u32 *tag_buf,
 }
 
 static inline void htt_print_tx_hwq_cmd_result_stats_tlv_v(const u32 *tag_buf,
+							   u16 tag_len,
 							   u8 *data)
 {
 	struct htt_tx_hwq_cmd_result_stats_tlv_v *htt_stats_buf =
@@ -1294,18 +1182,14 @@ static inline void htt_print_tx_hwq_cmd_result_stats_tlv_v(const u32 *tag_buf,
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	u8 i;
-	u16 index = 0;
+	u16 data_len;
 	char cmd_result[HTT_MAX_STRING_LEN] = {0};
-	u32 tag_len = FIELD_GET(HTT_TLV_LEN, *tag_buf);
+
+	data_len = min_t(u16, (tag_len >> 2), HTT_TX_HWQ_MAX_CMD_RESULT_STATS);
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_HWQ_CMD_RESULT_STATS_TLV_V:");
 
-	for (i = 0; i < tag_len; i++) {
-		index += snprintf(&cmd_result[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->cmd_result[i]);
-	}
+	ARRAY_TO_STRING(cmd_result, htt_stats_buf->cmd_result, data_len);
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "cmd_result = %s\n", cmd_result);
 
@@ -1318,6 +1202,7 @@ static inline void htt_print_tx_hwq_cmd_result_stats_tlv_v(const u32 *tag_buf,
 }
 
 static inline void htt_print_tx_hwq_cmd_stall_stats_tlv_v(const u32 *tag_buf,
+							  u16 tag_len,
 							  u8 *data)
 {
 	struct htt_tx_hwq_cmd_stall_stats_tlv_v *htt_stats_buf =
@@ -1327,20 +1212,14 @@ static inline void htt_print_tx_hwq_cmd_stall_stats_tlv_v(const u32 *tag_buf,
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	u8 i;
-	u16 index = 0;
+	u16 num_elems;
 	char cmd_stall_status[HTT_MAX_STRING_LEN] = {0};
-	u32 tag_len = FIELD_GET(HTT_TLV_LEN, *tag_buf);
+
+	num_elems = min_t(u16, (tag_len >> 2), HTT_TX_HWQ_MAX_CMD_STALL_STATS);
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_HWQ_CMD_STALL_STATS_TLV_V:");
 
-	for (i = 0; i < tag_len; i++) {
-		index += snprintf(&cmd_stall_status[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i,
-				  htt_stats_buf->cmd_stall_status[i]);
-	}
-
+	ARRAY_TO_STRING(cmd_stall_status, htt_stats_buf->cmd_stall_status, num_elems);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "cmd_stall_status = %s\n",
 			   cmd_stall_status);
 
@@ -1352,7 +1231,9 @@ static inline void htt_print_tx_hwq_cmd_stall_stats_tlv_v(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_hwq_fes_result_stats_tlv_v(const u32 *tag_buf, u8 *data)
+static inline void htt_print_tx_hwq_fes_result_stats_tlv_v(const u32 *tag_buf,
+							   u16 tag_len,
+							   u8 *data)
 {
 	struct htt_tx_hwq_fes_result_stats_tlv_v *htt_stats_buf =
 			(struct htt_tx_hwq_fes_result_stats_tlv_v *)tag_buf;
@@ -1361,19 +1242,14 @@ static inline void htt_print_tx_hwq_fes_result_stats_tlv_v(const u32 *tag_buf, u
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	u8 i;
-	u16 index                          = 0;
+	u16 num_elems;
 	char fes_result[HTT_MAX_STRING_LEN] = {0};
-	u32 tag_len                        = FIELD_GET(HTT_TLV_LEN, *tag_buf);
+
+	num_elems = min_t(u16, (tag_len >> 2), HTT_TX_HWQ_MAX_FES_RESULT_STATS);
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_HWQ_FES_RESULT_STATS_TLV_V:");
 
-	for (i = 0; i < tag_len; i++) {
-		index += snprintf(&fes_result[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->fes_result[i]);
-	}
-
+	ARRAY_TO_STRING(fes_result, htt_stats_buf->fes_result, num_elems);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "fes_result = %s\n", fes_result);
 
 	if (len >= buf_len)
@@ -1385,6 +1261,7 @@ static inline void htt_print_tx_hwq_fes_result_stats_tlv_v(const u32 *tag_buf, u
 }
 
 static inline void htt_print_tx_hwq_tried_mpdu_cnt_hist_tlv_v(const u32 *tag_buf,
+							      u16 tag_len,
 							      u8 *data)
 {
 	struct htt_tx_hwq_tried_mpdu_cnt_hist_tlv_v *htt_stats_buf =
@@ -1394,10 +1271,8 @@ static inline void htt_print_tx_hwq_tried_mpdu_cnt_hist_tlv_v(const u32 *tag_buf
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	u8 i;
-	u16 index = 0;
 	char tried_mpdu_cnt_hist[HTT_MAX_STRING_LEN] = {0};
-	u32  num_elements = ((FIELD_GET(HTT_TLV_LEN, *tag_buf) -
+	u32  num_elements = ((tag_len -
 			    sizeof(htt_stats_buf->hist_bin_size)) >> 2);
 	u32  required_buffer_size = HTT_MAX_PRINT_CHAR_PER_ELEM * num_elements;
 
@@ -1406,13 +1281,9 @@ static inline void htt_print_tx_hwq_tried_mpdu_cnt_hist_tlv_v(const u32 *tag_buf
 			   htt_stats_buf->hist_bin_size);
 
 	if (required_buffer_size < HTT_MAX_STRING_LEN) {
-		for (i = 0; i < num_elements; i++) {
-			index += snprintf(&tried_mpdu_cnt_hist[index],
-					  HTT_MAX_STRING_LEN - index,
-					  " %u:%u,",
-					  i,
-					  htt_stats_buf->tried_mpdu_cnt_hist[i]);
-		}
+		ARRAY_TO_STRING(tried_mpdu_cnt_hist,
+				htt_stats_buf->tried_mpdu_cnt_hist,
+				num_elements);
 		len += HTT_DBG_OUT(buf + len, buf_len - len,
 				   "tried_mpdu_cnt_hist = %s\n",
 				   tried_mpdu_cnt_hist);
@@ -1429,6 +1300,7 @@ static inline void htt_print_tx_hwq_tried_mpdu_cnt_hist_tlv_v(const u32 *tag_buf
 }
 
 static inline void htt_print_tx_hwq_txop_used_cnt_hist_tlv_v(const u32 *tag_buf,
+							     u16 tag_len,
 							     u8 *data)
 {
 	struct htt_tx_hwq_txop_used_cnt_hist_tlv_v *htt_stats_buf =
@@ -1438,21 +1310,16 @@ static inline void htt_print_tx_hwq_txop_used_cnt_hist_tlv_v(const u32 *tag_buf,
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	u8 i;
-	u16 index = 0;
 	char txop_used_cnt_hist[HTT_MAX_STRING_LEN] = {0};
-	u32 num_elements = FIELD_GET(HTT_TLV_LEN, *tag_buf);
+	u32 num_elements = tag_len >> 2;
 	u32  required_buffer_size = HTT_MAX_PRINT_CHAR_PER_ELEM * num_elements;
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_HWQ_TXOP_USED_CNT_HIST_TLV_V:");
 
 	if (required_buffer_size < HTT_MAX_STRING_LEN) {
-		for (i = 0; i < num_elements; i++) {
-			index += snprintf(&txop_used_cnt_hist[index],
-					  HTT_MAX_STRING_LEN - index,
-					  " %u:%u,", i,
-					  htt_stats_buf->txop_used_cnt_hist[i]);
-		}
+		ARRAY_TO_STRING(txop_used_cnt_hist,
+				htt_stats_buf->txop_used_cnt_hist,
+				num_elements);
 		len += HTT_DBG_OUT(buf + len, buf_len - len, "txop_used_cnt_hist = %s\n",
 				   txop_used_cnt_hist);
 	} else {
@@ -1932,7 +1799,9 @@ static inline void htt_print_tx_pdev_mu_mimo_mpdu_stats_tlv(const u32 *tag_buf, 
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_sched_txq_cmd_posted_tlv_v(const u32 *tag_buf, u8 *data)
+static inline void htt_print_sched_txq_cmd_posted_tlv_v(const u32 *tag_buf,
+							u16 tag_len,
+							u8 *data)
 {
 	struct htt_sched_txq_cmd_posted_tlv_v *htt_stats_buf =
 			(struct htt_sched_txq_cmd_posted_tlv_v *)tag_buf;
@@ -1941,20 +1810,13 @@ static inline void htt_print_sched_txq_cmd_posted_tlv_v(const u32 *tag_buf, u8 *
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	u8 i;
-	u16 index = 0;
 	char sched_cmd_posted[HTT_MAX_STRING_LEN] = {0};
-	u32 tag_len = FIELD_GET(HTT_TLV_LEN, *tag_buf);
+	u16 num_elements = min_t(u16, (tag_len >> 2), HTT_TX_PDEV_SCHED_TX_MODE_MAX);
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_SCHED_TXQ_CMD_POSTED_TLV_V:");
 
-	for (i = 0; i < tag_len; i++) {
-		index += snprintf(&sched_cmd_posted[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i,
-				  htt_stats_buf->sched_cmd_posted[i]);
-	}
-
+	ARRAY_TO_STRING(sched_cmd_posted, htt_stats_buf->sched_cmd_posted,
+			num_elements);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "sched_cmd_posted = %s\n",
 			   sched_cmd_posted);
 
@@ -1966,7 +1828,9 @@ static inline void htt_print_sched_txq_cmd_posted_tlv_v(const u32 *tag_buf, u8 *
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_sched_txq_cmd_reaped_tlv_v(const u32 *tag_buf, u8 *data)
+static inline void htt_print_sched_txq_cmd_reaped_tlv_v(const u32 *tag_buf,
+							u16 tag_len,
+							u8 *data)
 {
 	struct htt_sched_txq_cmd_reaped_tlv_v *htt_stats_buf =
 			(struct htt_sched_txq_cmd_reaped_tlv_v *)tag_buf;
@@ -1975,20 +1839,13 @@ static inline void htt_print_sched_txq_cmd_reaped_tlv_v(const u32 *tag_buf, u8 *
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	u8 i;
-	u16 index = 0;
 	char sched_cmd_reaped[HTT_MAX_STRING_LEN] = {0};
-	u32 tag_len = FIELD_GET(HTT_TLV_LEN, *tag_buf);
+	u16 num_elements = min_t(u16, (tag_len >> 2), HTT_TX_PDEV_SCHED_TX_MODE_MAX);
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_SCHED_TXQ_CMD_REAPED_TLV_V:");
 
-	for (i = 0; i < tag_len; i++) {
-		index += snprintf(&sched_cmd_reaped[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i,
-				  htt_stats_buf->sched_cmd_reaped[i]);
-	}
-
+	ARRAY_TO_STRING(sched_cmd_reaped, htt_stats_buf->sched_cmd_reaped,
+			num_elements);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "sched_cmd_reaped = %s\n",
 			   sched_cmd_reaped);
 
@@ -2001,6 +1858,7 @@ static inline void htt_print_sched_txq_cmd_reaped_tlv_v(const u32 *tag_buf, u8 *
 }
 
 static inline void htt_print_sched_txq_sched_order_su_tlv_v(const u32 *tag_buf,
+							    u16 tag_len,
 							    u8 *data)
 {
 	struct htt_sched_txq_sched_order_su_tlv_v *htt_stats_buf =
@@ -2010,27 +1868,15 @@ static inline void htt_print_sched_txq_sched_order_su_tlv_v(const u32 *tag_buf,
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	u8 i;
-	u16 index = 0;
 	char sched_order_su[HTT_MAX_STRING_LEN] = {0};
 	/* each entry is u32, i.e. 4 bytes */
-	u32 sched_order_su_num_entries = FIELD_GET(HTT_TLV_LEN, *tag_buf);
+	u32 sched_order_su_num_entries =
+		min_t(u32, (tag_len >> 2), HTT_TX_PDEV_NUM_SCHED_ORDER_LOG);
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_SCHED_TXQ_SCHED_ORDER_SU_TLV_V:");
 
-	for (i = 0; i < sched_order_su_num_entries ; i++) {
-		index += snprintf(&sched_order_su[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i,
-				  htt_stats_buf->sched_order_su[i]);
-
-		/* Only process the next array element if there's enough space within
-		 * the print buffer to hold the entire array element printout.
-		 */
-		if (index >= (HTT_MAX_STRING_LEN - HTT_MAX_PRINT_CHAR_PER_ELEM))
-			break;
-	}
-
+	ARRAY_TO_STRING(sched_order_su, htt_stats_buf->sched_order_su,
+			sched_order_su_num_entries);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "sched_order_su = %s\n",
 			   sched_order_su);
 
@@ -2043,6 +1889,7 @@ static inline void htt_print_sched_txq_sched_order_su_tlv_v(const u32 *tag_buf,
 }
 
 static inline void htt_print_sched_txq_sched_ineligibility_tlv_v(const u32 *tag_buf,
+								 u16 tag_len,
 								 u8 *data)
 {
 	struct htt_sched_txq_sched_ineligibility_tlv_v *htt_stats_buf =
@@ -2052,28 +1899,14 @@ static inline void htt_print_sched_txq_sched_ineligibility_tlv_v(const u32 *tag_
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	u8 i;
-	u16 index = 0;
 	char sched_ineligibility[HTT_MAX_STRING_LEN] = {0};
 	/* each entry is u32, i.e. 4 bytes */
-	u32 sched_ineligibility_num_entries = FIELD_GET(HTT_TLV_LEN, *tag_buf);
+	u32 sched_ineligibility_num_entries = tag_len >> 2;
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_SCHED_TXQ_SCHED_INELIGIBILITY_V:");
 
-	for (i = 0; i < sched_ineligibility_num_entries &&
-	     index < HTT_MAX_STRING_LEN; i++) {
-		index += snprintf(&sched_ineligibility[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i,
-				  htt_stats_buf->sched_ineligibility[i]);
-
-		/* Only process the next array element if there's enough space within
-		 * the print buffer to hold the entire array element printout.
-		 */
-		if (index >= (HTT_MAX_STRING_LEN - HTT_MAX_PRINT_CHAR_PER_ELEM))
-			break;
-	}
-
+	ARRAY_TO_STRING(sched_ineligibility, htt_stats_buf->sched_ineligibility,
+			sched_ineligibility_num_entries);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "sched_ineligibility = %s\n",
 			   sched_ineligibility);
 
@@ -2175,7 +2008,9 @@ static inline void htt_print_stats_tx_sched_cmn_tlv(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_tqm_gen_mpdu_stats_tlv_v(const u32 *tag_buf, u8 *data)
+static inline void htt_print_tx_tqm_gen_mpdu_stats_tlv_v(const u32 *tag_buf,
+							 u16 tag_len,
+							 u8 *data)
 {
 	struct debug_htt_stats_req *stats_req =
 			(struct debug_htt_stats_req *)data;
@@ -2184,20 +2019,13 @@ static inline void htt_print_tx_tqm_gen_mpdu_stats_tlv_v(const u32 *tag_buf, u8 
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
 	struct htt_tx_tqm_gen_mpdu_stats_tlv_v *htt_stats_buf =
 		(struct htt_tx_tqm_gen_mpdu_stats_tlv_v *)tag_buf;
-	u8 i;
-	u16 index = 0;
 	char gen_mpdu_end_reason[HTT_MAX_STRING_LEN] = {0};
-	u32 tag_len = FIELD_GET(HTT_TLV_LEN, *tag_buf);
+	u16 num_elements = min_t(u16, (tag_len >> 2), HTT_TX_TQM_MAX_LIST_MPDU_END_REASON);
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_TQM_GEN_MPDU_STATS_TLV_V:");
 
-	for (i = 0; i < tag_len; i++) {
-		index += snprintf(&gen_mpdu_end_reason[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i,
-				  htt_stats_buf->gen_mpdu_end_reason[i]);
-	}
-
+	ARRAY_TO_STRING(gen_mpdu_end_reason, htt_stats_buf->gen_mpdu_end_reason,
+			num_elements);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "gen_mpdu_end_reason = %s\n",
 			   gen_mpdu_end_reason);
 
@@ -2209,7 +2037,9 @@ static inline void htt_print_tx_tqm_gen_mpdu_stats_tlv_v(const u32 *tag_buf, u8 
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_tqm_list_mpdu_stats_tlv_v(const u32 *tag_buf, u8 *data)
+static inline void htt_print_tx_tqm_list_mpdu_stats_tlv_v(const u32 *tag_buf,
+							  u16 tag_len,
+							  u8 *data)
 {
 	struct debug_htt_stats_req *stats_req =
 			(struct debug_htt_stats_req *)data;
@@ -2218,20 +2048,13 @@ static inline void htt_print_tx_tqm_list_mpdu_stats_tlv_v(const u32 *tag_buf, u8
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
 	struct htt_tx_tqm_list_mpdu_stats_tlv_v *htt_stats_buf =
 		(struct htt_tx_tqm_list_mpdu_stats_tlv_v *)tag_buf;
-	u8 i;
-	u16 index = 0;
 	char list_mpdu_end_reason[HTT_MAX_STRING_LEN] = {0};
-	u32 tag_len = FIELD_GET(HTT_TLV_LEN, *tag_buf);
+	u16 num_elems = min_t(u16, (tag_len >> 2), HTT_TX_TQM_MAX_LIST_MPDU_END_REASON);
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_TQM_LIST_MPDU_STATS_TLV_V:");
 
-	for (i = 0; i < tag_len; i++) {
-		index += snprintf(&list_mpdu_end_reason[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i,
-				  htt_stats_buf->list_mpdu_end_reason[i]);
-	}
-
+	ARRAY_TO_STRING(list_mpdu_end_reason, htt_stats_buf->list_mpdu_end_reason,
+			num_elems);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "list_mpdu_end_reason = %s\n",
 			   list_mpdu_end_reason);
 	if (len >= buf_len)
@@ -2243,6 +2066,7 @@ static inline void htt_print_tx_tqm_list_mpdu_stats_tlv_v(const u32 *tag_buf, u8
 }
 
 static inline void htt_print_tx_tqm_list_mpdu_cnt_tlv_v(const u32 *tag_buf,
+							u16 tag_len,
 							u8 *data)
 {
 	struct debug_htt_stats_req *stats_req =
@@ -2252,20 +2076,14 @@ static inline void htt_print_tx_tqm_list_mpdu_cnt_tlv_v(const u32 *tag_buf,
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
 	struct htt_tx_tqm_list_mpdu_cnt_tlv_v *htt_stats_buf =
 		(struct htt_tx_tqm_list_mpdu_cnt_tlv_v *)tag_buf;
-	u8 i;
-	u16 index = 0;
 	char list_mpdu_cnt_hist[HTT_MAX_STRING_LEN] = {0};
-	u32 tag_len = FIELD_GET(HTT_TLV_LEN, *tag_buf);
+	u16 num_elems = min_t(u16, (tag_len >> 2),
+			      HTT_TX_TQM_MAX_LIST_MPDU_CNT_HISTOGRAM_BINS);
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_TQM_LIST_MPDU_CNT_TLV_V:");
 
-	for (i = 0; i < tag_len; i++) {
-		index += snprintf(&list_mpdu_cnt_hist[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i,
-				  htt_stats_buf->list_mpdu_cnt_hist[i]);
-	}
-
+	ARRAY_TO_STRING(list_mpdu_cnt_hist, htt_stats_buf->list_mpdu_cnt_hist,
+			num_elems);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "list_mpdu_cnt_hist = %s\n",
 			   list_mpdu_cnt_hist);
 
@@ -2749,7 +2567,9 @@ static inline void htt_print_tx_de_compl_stats_tlv(const u32 *tag_buf, u8 *data)
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_de_fw2wbm_ring_full_hist_tlv(const u32 *tag_buf, u8 *data)
+static inline void htt_print_tx_de_fw2wbm_ring_full_hist_tlv(const u32 *tag_buf,
+							     u16 tag_len,
+							     u8 *data)
 {
 	struct debug_htt_stats_req *stats_req =
 			(struct debug_htt_stats_req *)data;
@@ -2758,20 +2578,16 @@ static inline void htt_print_tx_de_fw2wbm_ring_full_hist_tlv(const u32 *tag_buf,
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
 	struct htt_tx_de_fw2wbm_ring_full_hist_tlv *htt_stats_buf =
 		(struct htt_tx_de_fw2wbm_ring_full_hist_tlv *)tag_buf;
-	u8 i;
-	u16 index                                  = 0;
 	char fw2wbm_ring_full_hist[HTT_MAX_STRING_LEN] = {0};
-	u32  num_elements = FIELD_GET(HTT_TLV_LEN, *tag_buf);
+	u16  num_elements = tag_len >> 2;
 	u32  required_buffer_size = HTT_MAX_PRINT_CHAR_PER_ELEM * num_elements;
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_DE_FW2WBM_RING_FULL_HIST_TLV");
+
 	if (required_buffer_size < HTT_MAX_STRING_LEN) {
-		for (i = 0; i < num_elements; i++) {
-			index += snprintf(&fw2wbm_ring_full_hist[index],
-					  HTT_MAX_STRING_LEN - index,
-					  " %u:%u,", i,
-					  htt_stats_buf->fw2wbm_ring_full_hist[i]);
-		}
+		ARRAY_TO_STRING(fw2wbm_ring_full_hist,
+				htt_stats_buf->fw2wbm_ring_full_hist,
+				num_elements);
 		len += HTT_DBG_OUT(buf + len, buf_len - len, "fw2wbm_ring_full_hist = %s\n",
 				   fw2wbm_ring_full_hist);
 	} else {
@@ -2829,8 +2645,6 @@ static inline void htt_print_ring_if_stats_tlv(const u32 *tag_buf, u8 *data)
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
 	struct htt_ring_if_stats_tlv *htt_stats_buf =
 		(struct htt_ring_if_stats_tlv *)tag_buf;
-	u8 i;
-	u16 index = 0;
 	char low_wm_hit_count[HTT_MAX_STRING_LEN] = {0};
 	char high_wm_hit_count[HTT_MAX_STRING_LEN] = {0};
 
@@ -2868,25 +2682,13 @@ static inline void htt_print_ring_if_stats_tlv(const u32 *tag_buf, u8 *data)
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "cons_blockwait_count = %u",
 			   htt_stats_buf->cons_blockwait_count);
 
-	for (i = 0; i < HTT_STATS_LOW_WM_BINS; i++) {
-		index += snprintf(&low_wm_hit_count[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i,
-				  htt_stats_buf->low_wm_hit_count[i]);
-	}
-
+	ARRAY_TO_STRING(low_wm_hit_count, htt_stats_buf->low_wm_hit_count,
+			HTT_STATS_LOW_WM_BINS);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "low_wm_hit_count = %s ",
 			   low_wm_hit_count);
 
-	index = 0;
-
-	for (i = 0; i < HTT_STATS_HIGH_WM_BINS; i++) {
-		index += snprintf(&high_wm_hit_count[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i,
-				  htt_stats_buf->high_wm_hit_count[i]);
-	}
-
+	ARRAY_TO_STRING(high_wm_hit_count, htt_stats_buf->high_wm_hit_count,
+			HTT_STATS_HIGH_WM_BINS);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "high_wm_hit_count = %s\n",
 			   high_wm_hit_count);
 
@@ -2922,7 +2724,9 @@ static inline void htt_print_ring_if_cmn_tlv(const u32 *tag_buf, u8 *data)
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_sfm_client_user_tlv_v(const u32 *tag_buf, u8 *data)
+static inline void htt_print_sfm_client_user_tlv_v(const u32 *tag_buf,
+						   u16 tag_len,
+						   u8 *data)
 {
 	struct debug_htt_stats_req *stats_req =
 			(struct debug_htt_stats_req *)data;
@@ -2931,21 +2735,16 @@ static inline void htt_print_sfm_client_user_tlv_v(const u32 *tag_buf, u8 *data)
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
 	struct htt_sfm_client_user_tlv_v *htt_stats_buf =
 		(struct htt_sfm_client_user_tlv_v *)tag_buf;
-	u8 i;
-	u16 index = 0;
 	char dwords_used_by_user_n[HTT_MAX_STRING_LEN] = {0};
-	u32 tag_len = FIELD_GET(HTT_TLV_LEN, *tag_buf);
+	u16 num_elems = tag_len >> 2;
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_SFM_CLIENT_USER_TLV_V:");
 
-	for (i = 0; i < tag_len; i++)
-		index += snprintf(&dwords_used_by_user_n[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i,
-				  htt_stats_buf->dwords_used_by_user_n[i]);
-
+	ARRAY_TO_STRING(dwords_used_by_user_n,
+			htt_stats_buf->dwords_used_by_user_n,
+			num_elems);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "dwords_used_by_user_n = %s\n",
-			dwords_used_by_user_n);
+			   dwords_used_by_user_n);
 
 	if (len >= buf_len)
 		buf[buf_len - 1] = 0;
@@ -3105,13 +2904,12 @@ static inline void htt_print_tx_pdev_rate_stats_tlv(const u32 *tag_buf, u8 *data
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
 	struct htt_tx_pdev_rate_stats_tlv *htt_stats_buf =
 		(struct htt_tx_pdev_rate_stats_tlv *)tag_buf;
-	u8 i, j;
-	u16 index = 0;
+	u8 j;
 	char str_buf[HTT_MAX_STRING_LEN] = {0};
 	char *tx_gi[HTT_TX_PEER_STATS_NUM_GI_COUNTERS];
 
-	for (i = 0; i < HTT_TX_PEER_STATS_NUM_GI_COUNTERS; i++)
-		tx_gi[i] = kmalloc(HTT_MAX_STRING_LEN, GFP_ATOMIC);
+	for (j = 0; j < HTT_TX_PEER_STATS_NUM_GI_COUNTERS; j++)
+		tx_gi[j] = kmalloc(HTT_MAX_STRING_LEN, GFP_ATOMIC);
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_PDEV_RATE_STATS_TLV:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "mac_id = %u",
@@ -3131,14 +2929,6 @@ static inline void htt_print_tx_pdev_rate_stats_tlv(const u32 *tag_buf, u8 *data
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "ack_rssi = %u",
 			   htt_stats_buf->ack_rssi);
 
-	index = 0;
-	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS; i++)
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->tx_mcs[i]);
-
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "Legacy CCK Rates: 1 Mbps: %u, 2 Mbps: %u, 5.5 Mbps: %u, 11 Mbps: %u",
 			   htt_stats_buf->tx_legacy_cck_rate[0],
 			   htt_stats_buf->tx_legacy_cck_rate[1],
@@ -3156,144 +2946,74 @@ static inline void htt_print_tx_pdev_rate_stats_tlv(const u32 *tag_buf, u8 *data
 			   htt_stats_buf->tx_legacy_ofdm_rate[6],
 			   htt_stats_buf->tx_legacy_ofdm_rate[7]);
 
-	index = 0;
 	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS; i++)
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->tx_mcs[i]);
-
+	ARRAY_TO_STRING(str_buf, htt_stats_buf->tx_mcs,
+			HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "tx_mcs = %s ", str_buf);
 
-	index = 0;
 	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS; i++)
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->ac_mu_mimo_tx_mcs[i]);
-
+	ARRAY_TO_STRING(str_buf, htt_stats_buf->ac_mu_mimo_tx_mcs,
+			HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "ac_mu_mimo_tx_mcs = %s ", str_buf);
 
-	index = 0;
 	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS; i++)
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->ax_mu_mimo_tx_mcs[i]);
-
+	ARRAY_TO_STRING(str_buf, htt_stats_buf->ax_mu_mimo_tx_mcs,
+			HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "ax_mu_mimo_tx_mcs = %s ", str_buf);
 
-	index = 0;
 	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS; i++)
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->ofdma_tx_mcs[i]);
-
+	ARRAY_TO_STRING(str_buf, htt_stats_buf->ofdma_tx_mcs,
+			HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "ofdma_tx_mcs = %s ", str_buf);
 
-	index = 0;
 	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS; i++)
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->tx_nss[i]);
-
+	ARRAY_TO_STRING(str_buf, htt_stats_buf->tx_nss,
+			HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "tx_nss = %s ", str_buf);
 
-	index = 0;
 	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS; i++)
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->ac_mu_mimo_tx_nss[i]);
-
+	ARRAY_TO_STRING(str_buf, htt_stats_buf->ac_mu_mimo_tx_nss,
+			HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "ac_mu_mimo_tx_nss = %s ", str_buf);
 
-	index = 0;
 	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS; i++)
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->ax_mu_mimo_tx_nss[i]);
-
+	ARRAY_TO_STRING(str_buf, htt_stats_buf->ax_mu_mimo_tx_nss,
+			HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "ax_mu_mimo_tx_nss = %s ", str_buf);
 
-	index = 0;
 	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS; i++)
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->ofdma_tx_nss[i]);
-
+	ARRAY_TO_STRING(str_buf, htt_stats_buf->ofdma_tx_nss,
+			HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "ofdma_tx_nss = %s ", str_buf);
 
-	index = 0;
 	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_TX_PDEV_STATS_NUM_BW_COUNTERS; i++)
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->tx_bw[i]);
-
+	ARRAY_TO_STRING(str_buf, htt_stats_buf->tx_bw,
+			HTT_TX_PDEV_STATS_NUM_BW_COUNTERS);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "tx_bw = %s ", str_buf);
 
-	index = 0;
 	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_TX_PDEV_STATS_NUM_BW_COUNTERS; i++)
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->ac_mu_mimo_tx_bw[i]);
-
+	ARRAY_TO_STRING(str_buf, htt_stats_buf->ac_mu_mimo_tx_bw,
+			HTT_TX_PDEV_STATS_NUM_BW_COUNTERS);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "ac_mu_mimo_tx_bw = %s ", str_buf);
 
-	index = 0;
 	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_TX_PDEV_STATS_NUM_BW_COUNTERS; i++)
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->ax_mu_mimo_tx_bw[i]);
-
+	ARRAY_TO_STRING(str_buf, htt_stats_buf->ax_mu_mimo_tx_bw,
+			HTT_TX_PDEV_STATS_NUM_BW_COUNTERS);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "ax_mu_mimo_tx_bw = %s ", str_buf);
 
-	index = 0;
 	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_TX_PDEV_STATS_NUM_BW_COUNTERS; i++)
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->ofdma_tx_bw[i]);
-
+	ARRAY_TO_STRING(str_buf, htt_stats_buf->ofdma_tx_bw,
+			HTT_TX_PDEV_STATS_NUM_BW_COUNTERS);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "ofdma_tx_bw = %s ", str_buf);
 
-	index = 0;
 	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS; i++)
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->tx_stbc[i]);
-
+	ARRAY_TO_STRING(str_buf, htt_stats_buf->tx_stbc,
+			HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "tx_stbc = %s ", str_buf);
 
-	index = 0;
 	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_TX_PDEV_STATS_NUM_PREAMBLE_TYPES; i++)
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->tx_pream[i]);
-
+	ARRAY_TO_STRING(str_buf, htt_stats_buf->tx_pream,
+			HTT_TX_PDEV_STATS_NUM_PREAMBLE_TYPES);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "tx_pream = %s ", str_buf);
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HE LTF: 1x: %u, 2x: %u, 4x: %u",
@@ -3303,72 +3023,43 @@ static inline void htt_print_tx_pdev_rate_stats_tlv(const u32 *tag_buf, u8 *data
 
 	/* SU GI Stats */
 	for (j = 0; j < HTT_TX_PDEV_STATS_NUM_GI_COUNTERS; j++) {
-		index = 0;
-
-		for (i = 0; i < HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS; i++)
-			index += snprintf(&tx_gi[j][index],
-					  HTT_MAX_STRING_LEN - index,
-					  " %u:%u,", i,
-					  htt_stats_buf->tx_gi[j][i]);
-
+		ARRAY_TO_STRING(tx_gi[j], htt_stats_buf->tx_gi[j],
+				HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS);
 		len += HTT_DBG_OUT(buf + len, buf_len - len, "tx_gi[%u] = %s ",
 				   j, tx_gi[j]);
 	}
 
 	/* AC MU-MIMO GI Stats */
 	for (j = 0; j < HTT_TX_PDEV_STATS_NUM_GI_COUNTERS; j++) {
-		index = 0;
-
-		for (i = 0; i < HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS; i++)
-			index += snprintf(&tx_gi[j][index],
-					  HTT_MAX_STRING_LEN - index,
-					  " %u:%u,", i,
-					  htt_stats_buf->ac_mu_mimo_tx_gi[j][i]);
-
+		ARRAY_TO_STRING(tx_gi[j], htt_stats_buf->ac_mu_mimo_tx_gi[j],
+				HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS);
 		len += HTT_DBG_OUT(buf + len, buf_len - len, "ac_mu_mimo_tx_gi[%u] = %s ",
 				   j, tx_gi[j]);
 	}
 
 	/* AX MU-MIMO GI Stats */
 	for (j = 0; j < HTT_TX_PDEV_STATS_NUM_GI_COUNTERS; j++) {
-		index = 0;
-
-		for (i = 0; i < HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS; i++)
-			index += snprintf(&tx_gi[j][index],
-					  HTT_MAX_STRING_LEN - index,
-					  " %u:%u,", i,
-					  htt_stats_buf->ax_mu_mimo_tx_gi[j][i]);
-
+		ARRAY_TO_STRING(tx_gi[j], htt_stats_buf->ax_mu_mimo_tx_gi[j],
+				HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS);
 		len += HTT_DBG_OUT(buf + len, buf_len - len, "ax_mu_mimo_tx_gi[%u] = %s ",
 				   j, tx_gi[j]);
 	}
 
 	/* DL OFDMA GI Stats */
 	for (j = 0; j < HTT_TX_PDEV_STATS_NUM_GI_COUNTERS; j++) {
-		index = 0;
-
-		for (i = 0; i < HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS; i++)
-			index += snprintf(&tx_gi[j][index],
-					  HTT_MAX_STRING_LEN - index,
-					  " %u:%u,", i,
-					  htt_stats_buf->ofdma_tx_gi[j][i]);
-
+		ARRAY_TO_STRING(tx_gi[j], htt_stats_buf->ofdma_tx_gi[j],
+				HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS);
 		len += HTT_DBG_OUT(buf + len, buf_len - len, "ofdma_tx_gi[%u] = %s ",
 				   j, tx_gi[j]);
 	}
 
-	index = 0;
 	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_TX_PDEV_STATS_NUM_DCM_COUNTERS; i++)
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->tx_dcm[i]);
-
+	ARRAY_TO_STRING(str_buf, htt_stats_buf->tx_dcm,
+			HTT_TX_PDEV_STATS_NUM_DCM_COUNTERS);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "tx_dcm = %s\n", str_buf);
 
-	for (i = 0; i < HTT_TX_PEER_STATS_NUM_GI_COUNTERS; i++)
-		kfree(tx_gi[i]);
+	for (j = 0; j < HTT_TX_PEER_STATS_NUM_GI_COUNTERS; j++)
+		kfree(tx_gi[j]);
 
 	if (len >= buf_len)
 		buf[buf_len - 1] = 0;
@@ -3387,17 +3078,16 @@ static inline void htt_print_rx_pdev_rate_stats_tlv(const u32 *tag_buf, u8 *data
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
 	struct htt_rx_pdev_rate_stats_tlv *htt_stats_buf =
 		(struct htt_rx_pdev_rate_stats_tlv *)tag_buf;
-	u8 i, j;
-	u16 index = 0;
+	u8 j;
 	char *rssi_chain[HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS];
 	char *rx_gi[HTT_RX_PDEV_STATS_NUM_GI_COUNTERS];
 	char str_buf[HTT_MAX_STRING_LEN] = {0};
 
-	for (i = 0; i < HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS; i++)
-		rssi_chain[i] = kmalloc(HTT_MAX_STRING_LEN, GFP_ATOMIC);
+	for (j = 0; j < HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS; j++)
+		rssi_chain[j] = kmalloc(HTT_MAX_STRING_LEN, GFP_ATOMIC);
 
-	for (i = 0; i < HTT_RX_PDEV_STATS_NUM_GI_COUNTERS; i++)
-		rx_gi[i] = kmalloc(HTT_MAX_STRING_LEN, GFP_ATOMIC);
+	for (j = 0; j < HTT_RX_PDEV_STATS_NUM_GI_COUNTERS; j++)
+		rx_gi[j] = kmalloc(HTT_MAX_STRING_LEN, GFP_ATOMIC);
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_RX_PDEV_RATE_STATS_TLV:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "mac_id = %u",
@@ -3418,95 +3108,54 @@ static inline void htt_print_rx_pdev_rate_stats_tlv(const u32 *tag_buf, u8 *data
 			   htt_stats_buf->rssi_in_dbm);
 
 	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_RX_PDEV_STATS_NUM_MCS_COUNTERS; i++)
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->rx_mcs[i]);
-
+	ARRAY_TO_STRING(str_buf, htt_stats_buf->rx_mcs,
+			HTT_RX_PDEV_STATS_NUM_MCS_COUNTERS);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "rx_mcs = %s ", str_buf);
 
-	index = 0;
 	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS; i++)
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->rx_nss[i]);
-
+	ARRAY_TO_STRING(str_buf, htt_stats_buf->rx_nss,
+			HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "rx_nss = %s ", str_buf);
 
-	index = 0;
 	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_RX_PDEV_STATS_NUM_DCM_COUNTERS; i++)
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->rx_dcm[i]);
-
+	ARRAY_TO_STRING(str_buf, htt_stats_buf->rx_dcm,
+			HTT_RX_PDEV_STATS_NUM_DCM_COUNTERS);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "rx_dcm = %s ", str_buf);
 
-	index = 0;
 	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_RX_PDEV_STATS_NUM_MCS_COUNTERS; i++)
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->rx_stbc[i]);
-
+	ARRAY_TO_STRING(str_buf, htt_stats_buf->rx_stbc,
+			HTT_RX_PDEV_STATS_NUM_MCS_COUNTERS);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "rx_stbc = %s ", str_buf);
 
-	index = 0;
 	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_RX_PDEV_STATS_NUM_BW_COUNTERS; i++)
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->rx_bw[i]);
-
+	ARRAY_TO_STRING(str_buf, htt_stats_buf->rx_bw,
+			HTT_RX_PDEV_STATS_NUM_BW_COUNTERS);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "rx_bw = %s ", str_buf);
 
 	for (j = 0; j < HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS; j++) {
-		index = 0;
-
-		for (i = 0; i < HTT_RX_PDEV_STATS_NUM_BW_COUNTERS; i++)
-			index += snprintf(&rssi_chain[j][index],
-					  HTT_MAX_STRING_LEN - index,
-					  " %u:%u,", i,
-					  htt_stats_buf->rssi_chain[j][i]);
-
+		ARRAY_TO_STRING(rssi_chain[j], htt_stats_buf->rssi_chain[j],
+				HTT_RX_PDEV_STATS_NUM_BW_COUNTERS);
 		len += HTT_DBG_OUT(buf + len, buf_len - len, "rssi_chain[%u] = %s ",
 				   j, rssi_chain[j]);
 	}
 
 	for (j = 0; j < HTT_RX_PDEV_STATS_NUM_GI_COUNTERS; j++) {
-		index = 0;
-
-		for (i = 0; i < HTT_RX_PDEV_STATS_NUM_MCS_COUNTERS; i++)
-			index += snprintf(&rx_gi[j][index],
-					  HTT_MAX_STRING_LEN - index,
-					  " %u:%u,", i,
-					  htt_stats_buf->rx_gi[j][i]);
-
+		ARRAY_TO_STRING(rx_gi[j], htt_stats_buf->rx_gi[j],
+				HTT_RX_PDEV_STATS_NUM_MCS_COUNTERS);
 		len += HTT_DBG_OUT(buf + len, buf_len - len, "rx_gi[%u] = %s ",
 				   j, rx_gi[j]);
 	}
 
-	index = 0;
 	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_RX_PDEV_STATS_NUM_PREAMBLE_TYPES; i++)
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->rx_pream[i]);
-
+	ARRAY_TO_STRING(str_buf, htt_stats_buf->rx_pream,
+			HTT_RX_PDEV_STATS_NUM_PREAMBLE_TYPES);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "rx_pream = %s", str_buf);
 
-	for (i = 0; i < HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS; i++)
-		kfree(rssi_chain[i]);
+	for (j = 0; j < HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS; j++)
+		kfree(rssi_chain[j]);
 
-	for (i = 0; i < HTT_RX_PDEV_STATS_NUM_GI_COUNTERS; i++)
-		kfree(rx_gi[i]);
+	for (j = 0; j < HTT_RX_PDEV_STATS_NUM_GI_COUNTERS; j++)
+		kfree(rx_gi[j]);
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "rx_11ax_su_ext = %u",
 			   htt_stats_buf->rx_11ax_su_ext);
@@ -3519,25 +3168,15 @@ static inline void htt_print_rx_pdev_rate_stats_tlv(const u32 *tag_buf, u8 *data
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "txbf = %u",
 			   htt_stats_buf->txbf);
 
-	index = 0;
 	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_RX_PDEV_STATS_NUM_LEGACY_CCK_STATS; i++)
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->rx_legacy_cck_rate[i]);
-
+	ARRAY_TO_STRING(str_buf, htt_stats_buf->rx_legacy_cck_rate,
+			HTT_RX_PDEV_STATS_NUM_LEGACY_CCK_STATS);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "rx_legacy_cck_rate = %s ",
 			   str_buf);
 
-	index = 0;
 	memset(str_buf, 0x0, HTT_MAX_STRING_LEN);
-
-	for (i = 0; i < HTT_RX_PDEV_STATS_NUM_LEGACY_OFDM_STATS; i++)
-		index += snprintf(&str_buf[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->rx_legacy_ofdm_rate[i]);
-
+	ARRAY_TO_STRING(str_buf, htt_stats_buf->rx_legacy_ofdm_rate,
+			HTT_RX_PDEV_STATS_NUM_LEGACY_OFDM_STATS);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "rx_legacy_ofdm_rate = %s ",
 			   str_buf);
 
@@ -3597,6 +3236,7 @@ static inline void htt_print_rx_soc_fw_stats_tlv(const u32 *tag_buf, u8 *data)
 }
 
 static inline void htt_print_rx_soc_fw_refill_ring_empty_tlv_v(const u32 *tag_buf,
+							       u16 tag_len,
 							       u8 *data)
 {
 	struct debug_htt_stats_req *stats_req =
@@ -3606,19 +3246,14 @@ static inline void htt_print_rx_soc_fw_refill_ring_empty_tlv_v(const u32 *tag_bu
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
 	struct htt_rx_soc_fw_refill_ring_empty_tlv_v *htt_stats_buf =
 			(struct htt_rx_soc_fw_refill_ring_empty_tlv_v *)tag_buf;
-	u8 i;
-	u16 index = 0;
 	char refill_ring_empty_cnt[HTT_MAX_STRING_LEN] = {0};
-	u32 tag_len = FIELD_GET(HTT_TLV_LEN, *tag_buf);
+	u16 num_elems = min_t(u16, (tag_len >> 2), HTT_RX_STATS_REFILL_MAX_RING);
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_RX_SOC_FW_REFILL_RING_EMPTY_TLV_V:");
 
-	for (i = 0; i < tag_len; i++)
-		index += snprintf(&refill_ring_empty_cnt[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i,
-				  htt_stats_buf->refill_ring_empty_cnt[i]);
-
+	ARRAY_TO_STRING(refill_ring_empty_cnt,
+			htt_stats_buf->refill_ring_empty_cnt,
+			num_elems);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "refill_ring_empty_cnt = %s\n",
 			   refill_ring_empty_cnt);
 
@@ -3630,8 +3265,10 @@ static inline void htt_print_rx_soc_fw_refill_ring_empty_tlv_v(const u32 *tag_bu
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_rx_soc_fw_refill_ring_num_rxdma_err_tlv_v(const u32 *tag_buf,
-								       u8 *data)
+static inline void
+htt_print_rx_soc_fw_refill_ring_num_rxdma_err_tlv_v(const u32 *tag_buf,
+						    u16 tag_len,
+						    u8 *data)
 {
 	struct debug_htt_stats_req *stats_req =
 			(struct debug_htt_stats_req *)data;
@@ -3640,20 +3277,14 @@ static inline void htt_print_rx_soc_fw_refill_ring_num_rxdma_err_tlv_v(const u32
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
 	struct htt_rx_soc_fw_refill_ring_num_rxdma_err_tlv_v *htt_stats_buf =
 			(struct htt_rx_soc_fw_refill_ring_num_rxdma_err_tlv_v *)tag_buf;
-	u8 i;
-	u16 index = 0;
 	char rxdma_err_cnt[HTT_MAX_STRING_LEN] = {0};
-	u32 tag_len = FIELD_GET(HTT_TLV_LEN, *tag_buf);
+	u16 num_elems = min_t(u16, (tag_len >> 2), HTT_RX_RXDMA_MAX_ERR_CODE);
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_RX_SOC_FW_REFILL_RING_NUM_RXDMA_ERR_TLV_V:");
 
-	for (i = 0; i < tag_len; i++) {
-		index += snprintf(&rxdma_err_cnt[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i,
-				  htt_stats_buf->rxdma_err[i]);
-	}
-
+	ARRAY_TO_STRING(rxdma_err_cnt,
+			htt_stats_buf->rxdma_err,
+			num_elems);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "rxdma_err = %s\n",
 			   rxdma_err_cnt);
 
@@ -3666,6 +3297,7 @@ static inline void htt_print_rx_soc_fw_refill_ring_num_rxdma_err_tlv_v(const u32
 }
 
 static inline void htt_print_rx_soc_fw_refill_ring_num_reo_err_tlv_v(const u32 *tag_buf,
+								     u16 tag_len,
 								     u8 *data)
 {
 	struct debug_htt_stats_req *stats_req =
@@ -3675,20 +3307,14 @@ static inline void htt_print_rx_soc_fw_refill_ring_num_reo_err_tlv_v(const u32 *
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
 	struct htt_rx_soc_fw_refill_ring_num_reo_err_tlv_v *htt_stats_buf =
 			(struct htt_rx_soc_fw_refill_ring_num_reo_err_tlv_v *)tag_buf;
-	u8 i;
-	u16 index = 0;
 	char reo_err_cnt[HTT_MAX_STRING_LEN] = {0};
-	u32 tag_len = FIELD_GET(HTT_TLV_LEN, *tag_buf);
+	u16 num_elems = min_t(u16, (tag_len >> 2), HTT_RX_REO_MAX_ERR_CODE);
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_RX_SOC_FW_REFILL_RING_NUM_REO_ERR_TLV_V:");
 
-	for (i = 0; i < tag_len; i++) {
-		index += snprintf(&reo_err_cnt[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i,
-				  htt_stats_buf->reo_err[i]);
-	}
-
+	ARRAY_TO_STRING(reo_err_cnt,
+			htt_stats_buf->reo_err,
+			num_elems);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "reo_err = %s\n",
 			   reo_err_cnt);
 
@@ -3742,6 +3368,7 @@ static inline void htt_print_rx_reo_debug_stats_tlv_v(const u32 *tag_buf,
 }
 
 static inline void htt_print_rx_soc_fw_refill_ring_num_refill_tlv_v(const u32 *tag_buf,
+								    u16 tag_len,
 								    u8 *data)
 {
 	struct debug_htt_stats_req *stats_req =
@@ -3751,20 +3378,14 @@ static inline void htt_print_rx_soc_fw_refill_ring_num_refill_tlv_v(const u32 *t
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
 	struct htt_rx_soc_fw_refill_ring_num_refill_tlv_v *htt_stats_buf =
 			(struct htt_rx_soc_fw_refill_ring_num_refill_tlv_v *)tag_buf;
-	u8 i;
-	u16 index = 0;
 	char refill_ring_num_refill[HTT_MAX_STRING_LEN] = {0};
-	u32 tag_len = FIELD_GET(HTT_TLV_LEN, *tag_buf);
+	u16 num_elems = min_t(u16, (tag_len >> 2), HTT_RX_STATS_REFILL_MAX_RING);
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_RX_SOC_FW_REFILL_RING_NUM_REFILL_TLV_V:");
 
-	for (i = 0; i < tag_len; i++) {
-		index += snprintf(&refill_ring_num_refill[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i,
-				  htt_stats_buf->refill_ring_num_refill[i]);
-	}
-
+	ARRAY_TO_STRING(refill_ring_num_refill,
+			htt_stats_buf->refill_ring_num_refill,
+			num_elems);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "refill_ring_num_refill = %s\n",
 			   refill_ring_num_refill);
 
@@ -3786,8 +3407,6 @@ static inline void htt_print_rx_pdev_fw_stats_tlv(const u32 *tag_buf,
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
 	struct htt_rx_pdev_fw_stats_tlv *htt_stats_buf =
 		(struct htt_rx_pdev_fw_stats_tlv *)tag_buf;
-	u8 i;
-	u16 index = 0;
 	char fw_ring_mgmt_subtype[HTT_MAX_STRING_LEN] = {0};
 	char fw_ring_ctrl_subtype[HTT_MAX_STRING_LEN] = {0};
 
@@ -3811,25 +3430,16 @@ static inline void htt_print_rx_pdev_fw_stats_tlv(const u32 *tag_buf,
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "fw_ring_mpdu_ind = %u",
 			   htt_stats_buf->fw_ring_mpdu_ind);
 
-	for (i = 0; i < HTT_STATS_SUBTYPE_MAX; i++) {
-		index += snprintf(&fw_ring_mgmt_subtype[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i,
-				  htt_stats_buf->fw_ring_mgmt_subtype[i]);
-	}
-
+	ARRAY_TO_STRING(fw_ring_mgmt_subtype,
+			htt_stats_buf->fw_ring_mgmt_subtype,
+			HTT_STATS_SUBTYPE_MAX);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "fw_ring_mgmt_subtype = %s ",
 			   fw_ring_mgmt_subtype);
 
-	index = 0;
 
-	for (i = 0; i < HTT_STATS_SUBTYPE_MAX; i++) {
-		index += snprintf(&fw_ring_ctrl_subtype[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i,
-				  htt_stats_buf->fw_ring_ctrl_subtype[i]);
-	}
-
+	ARRAY_TO_STRING(fw_ring_ctrl_subtype,
+			htt_stats_buf->fw_ring_ctrl_subtype,
+			HTT_STATS_SUBTYPE_MAX);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "fw_ring_ctrl_subtype = %s ",
 			   fw_ring_ctrl_subtype);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "fw_ring_mcast_data_msdu = %u",
@@ -3921,19 +3531,13 @@ static inline void htt_print_rx_pdev_fw_ring_mpdu_err_tlv_v(const u32 *tag_buf,
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
 	struct htt_rx_pdev_fw_ring_mpdu_err_tlv_v *htt_stats_buf =
 		(struct htt_rx_pdev_fw_ring_mpdu_err_tlv_v *)tag_buf;
-	u8 i;
-	u16 index                                = 0;
 	char fw_ring_mpdu_err[HTT_MAX_STRING_LEN] = {0};
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_RX_PDEV_FW_RING_MPDU_ERR_TLV_V:");
 
-	for (i = 0; i < HTT_RX_STATS_RXDMA_MAX_ERR; i++) {
-		index += snprintf(&fw_ring_mpdu_err[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i,
-				  htt_stats_buf->fw_ring_mpdu_err[i]);
-	}
-
+	ARRAY_TO_STRING(fw_ring_mpdu_err,
+			htt_stats_buf->fw_ring_mpdu_err,
+			HTT_RX_STATS_RXDMA_MAX_ERR);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "fw_ring_mpdu_err = %s\n",
 			   fw_ring_mpdu_err);
 
@@ -3946,6 +3550,7 @@ static inline void htt_print_rx_pdev_fw_ring_mpdu_err_tlv_v(const u32 *tag_buf,
 }
 
 static inline void htt_print_rx_pdev_fw_mpdu_drop_tlv_v(const u32 *tag_buf,
+							u16 tag_len,
 							u8 *data)
 {
 	struct debug_htt_stats_req *stats_req =
@@ -3955,19 +3560,14 @@ static inline void htt_print_rx_pdev_fw_mpdu_drop_tlv_v(const u32 *tag_buf,
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
 	struct htt_rx_pdev_fw_mpdu_drop_tlv_v *htt_stats_buf =
 		(struct htt_rx_pdev_fw_mpdu_drop_tlv_v *)tag_buf;
-	u8 i;
-	u16 index                            = 0;
 	char fw_mpdu_drop[HTT_MAX_STRING_LEN] = {0};
-	u32 tag_len                          = FIELD_GET(HTT_TLV_LEN, *tag_buf);
+	u16 num_elems = min_t(u16, (tag_len >> 2), HTT_RX_STATS_FW_DROP_REASON_MAX);
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_RX_PDEV_FW_MPDU_DROP_TLV_V:");
 
-	for (i = 0; i < tag_len; i++) {
-		index += snprintf(&fw_mpdu_drop[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->fw_mpdu_drop[i]);
-	}
-
+	ARRAY_TO_STRING(fw_mpdu_drop,
+			htt_stats_buf->fw_mpdu_drop,
+			num_elems);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "fw_mpdu_drop = %s\n", fw_mpdu_drop);
 
 	if (len >= buf_len)
@@ -3988,8 +3588,6 @@ static inline void htt_print_rx_pdev_fw_stats_phy_err_tlv(const u32 *tag_buf,
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
 	struct htt_rx_pdev_fw_stats_phy_err_tlv *htt_stats_buf =
 		(struct htt_rx_pdev_fw_stats_phy_err_tlv *)tag_buf;
-	u8 i;
-	u16 index                        = 0;
 	char phy_errs[HTT_MAX_STRING_LEN] = {0};
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_RX_PDEV_FW_STATS_PHY_ERR_TLV:");
@@ -3998,12 +3596,9 @@ static inline void htt_print_rx_pdev_fw_stats_phy_err_tlv(const u32 *tag_buf,
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "tota_phy_err_nct = %u",
 			   htt_stats_buf->total_phy_err_cnt);
 
-	for (i = 0; i < HTT_STATS_PHY_ERR_MAX; i++) {
-		index += snprintf(&phy_errs[index],
-				  HTT_MAX_STRING_LEN - index,
-				  " %u:%u,", i, htt_stats_buf->phy_err[i]);
-	}
-
+	ARRAY_TO_STRING(phy_errs,
+			htt_stats_buf->phy_err,
+			HTT_STATS_PHY_ERR_MAX);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "phy_errs = %s\n", phy_errs);
 
 	if (len >= buf_len)
@@ -4259,19 +3854,19 @@ static int ath11k_dbg_htt_ext_stats_parse(struct ath11k_base *ab,
 		htt_print_tx_pdev_stats_cmn_tlv(tag_buf, user_data);
 		break;
 	case HTT_STATS_TX_PDEV_UNDERRUN_TAG:
-		htt_print_tx_pdev_stats_urrn_tlv_v(tag_buf, user_data);
+		htt_print_tx_pdev_stats_urrn_tlv_v(tag_buf, len, user_data);
 		break;
 	case HTT_STATS_TX_PDEV_SIFS_TAG:
-		htt_print_tx_pdev_stats_sifs_tlv_v(tag_buf, user_data);
+		htt_print_tx_pdev_stats_sifs_tlv_v(tag_buf, len, user_data);
 		break;
 	case HTT_STATS_TX_PDEV_FLUSH_TAG:
-		htt_print_tx_pdev_stats_flush_tlv_v(tag_buf, user_data);
+		htt_print_tx_pdev_stats_flush_tlv_v(tag_buf, len, user_data);
 		break;
 	case HTT_STATS_TX_PDEV_PHY_ERR_TAG:
-		htt_print_tx_pdev_stats_phy_err_tlv_v(tag_buf, user_data);
+		htt_print_tx_pdev_stats_phy_err_tlv_v(tag_buf, len, user_data);
 		break;
 	case HTT_STATS_TX_PDEV_SIFS_HIST_TAG:
-		htt_print_tx_pdev_stats_sifs_hist_tlv_v(tag_buf, user_data);
+		htt_print_tx_pdev_stats_sifs_hist_tlv_v(tag_buf, len, user_data);
 		break;
 
 	case HTT_STATS_TX_PDEV_TX_PPDU_STATS_TAG:
@@ -4279,12 +3874,12 @@ static int ath11k_dbg_htt_ext_stats_parse(struct ath11k_base *ab,
 		break;
 
 	case HTT_STATS_TX_PDEV_TRIED_MPDU_CNT_HIST_TAG:
-		htt_print_tx_pdev_stats_tried_mpdu_cnt_hist_tlv_v(tag_buf,
+		htt_print_tx_pdev_stats_tried_mpdu_cnt_hist_tlv_v(tag_buf, len,
 								  user_data);
 		break;
 
 	case HTT_STATS_STRING_TAG:
-		htt_print_stats_string_tlv(tag_buf, user_data);
+		htt_print_stats_string_tlv(tag_buf, len, user_data);
 		break;
 
 	case HTT_STATS_TX_HWQ_CMN_TAG:
@@ -4292,38 +3887,38 @@ static int ath11k_dbg_htt_ext_stats_parse(struct ath11k_base *ab,
 		break;
 
 	case HTT_STATS_TX_HWQ_DIFS_LATENCY_TAG:
-		htt_print_tx_hwq_difs_latency_stats_tlv_v(tag_buf, user_data);
+		htt_print_tx_hwq_difs_latency_stats_tlv_v(tag_buf, len, user_data);
 		break;
 
 	case HTT_STATS_TX_HWQ_CMD_RESULT_TAG:
-		htt_print_tx_hwq_cmd_result_stats_tlv_v(tag_buf, user_data);
+		htt_print_tx_hwq_cmd_result_stats_tlv_v(tag_buf, len, user_data);
 		break;
 
 	case HTT_STATS_TX_HWQ_CMD_STALL_TAG:
-		htt_print_tx_hwq_cmd_stall_stats_tlv_v(tag_buf, user_data);
+		htt_print_tx_hwq_cmd_stall_stats_tlv_v(tag_buf, len, user_data);
 		break;
 
 	case HTT_STATS_TX_HWQ_FES_STATUS_TAG:
-		htt_print_tx_hwq_fes_result_stats_tlv_v(tag_buf, user_data);
+		htt_print_tx_hwq_fes_result_stats_tlv_v(tag_buf, len, user_data);
 		break;
 
 	case HTT_STATS_TX_HWQ_TRIED_MPDU_CNT_HIST_TAG:
-		htt_print_tx_hwq_tried_mpdu_cnt_hist_tlv_v(tag_buf, user_data);
+		htt_print_tx_hwq_tried_mpdu_cnt_hist_tlv_v(tag_buf, len, user_data);
 		break;
 
 	case HTT_STATS_TX_HWQ_TXOP_USED_CNT_HIST_TAG:
-		htt_print_tx_hwq_txop_used_cnt_hist_tlv_v(tag_buf, user_data);
+		htt_print_tx_hwq_txop_used_cnt_hist_tlv_v(tag_buf, len, user_data);
 		break;
 	case HTT_STATS_TX_TQM_GEN_MPDU_TAG:
-		htt_print_tx_tqm_gen_mpdu_stats_tlv_v(tag_buf, user_data);
+		htt_print_tx_tqm_gen_mpdu_stats_tlv_v(tag_buf, len, user_data);
 		break;
 
 	case HTT_STATS_TX_TQM_LIST_MPDU_TAG:
-		htt_print_tx_tqm_list_mpdu_stats_tlv_v(tag_buf, user_data);
+		htt_print_tx_tqm_list_mpdu_stats_tlv_v(tag_buf, len, user_data);
 		break;
 
 	case HTT_STATS_TX_TQM_LIST_MPDU_CNT_TAG:
-		htt_print_tx_tqm_list_mpdu_cnt_tlv_v(tag_buf, user_data);
+		htt_print_tx_tqm_list_mpdu_cnt_tlv_v(tag_buf, len, user_data);
 		break;
 
 	case HTT_STATS_TX_TQM_CMN_TAG:
@@ -4363,7 +3958,7 @@ static int ath11k_dbg_htt_ext_stats_parse(struct ath11k_base *ab,
 		break;
 
 	case HTT_STATS_TX_DE_FW2WBM_RING_FULL_HIST_TAG:
-		htt_print_tx_de_fw2wbm_ring_full_hist_tlv(tag_buf, user_data);
+		htt_print_tx_de_fw2wbm_ring_full_hist_tlv(tag_buf, len, user_data);
 		break;
 
 	case HTT_STATS_TX_DE_CMN_TAG:
@@ -4395,7 +3990,7 @@ static int ath11k_dbg_htt_ext_stats_parse(struct ath11k_base *ab,
 		break;
 
 	case HTT_STATS_RX_PDEV_FW_MPDU_DROP_TAG:
-		htt_print_rx_pdev_fw_mpdu_drop_tlv_v(tag_buf, user_data);
+		htt_print_rx_pdev_fw_mpdu_drop_tlv_v(tag_buf, len, user_data);
 		break;
 
 	case HTT_STATS_RX_SOC_FW_STATS_TAG:
@@ -4403,21 +3998,21 @@ static int ath11k_dbg_htt_ext_stats_parse(struct ath11k_base *ab,
 		break;
 
 	case HTT_STATS_RX_SOC_FW_REFILL_RING_EMPTY_TAG:
-		htt_print_rx_soc_fw_refill_ring_empty_tlv_v(tag_buf, user_data);
+		htt_print_rx_soc_fw_refill_ring_empty_tlv_v(tag_buf, len, user_data);
 		break;
 
 	case HTT_STATS_RX_SOC_FW_REFILL_RING_NUM_REFILL_TAG:
 		htt_print_rx_soc_fw_refill_ring_num_refill_tlv_v(
-				tag_buf, user_data);
+				tag_buf, len, user_data);
 		break;
 	case HTT_STATS_RX_REFILL_RXDMA_ERR_TAG:
 		htt_print_rx_soc_fw_refill_ring_num_rxdma_err_tlv_v(
-				tag_buf, user_data);
+				tag_buf, len, user_data);
 		break;
 
 	case HTT_STATS_RX_REFILL_REO_ERR_TAG:
 		htt_print_rx_soc_fw_refill_ring_num_reo_err_tlv_v(
-				tag_buf, user_data);
+				tag_buf, len, user_data);
 		break;
 
 	case HTT_STATS_RX_REO_RESOURCE_STATS_TAG:
@@ -4448,7 +4043,7 @@ static int ath11k_dbg_htt_ext_stats_parse(struct ath11k_base *ab,
 		break;
 
 	case HTT_STATS_SCHED_TXQ_CMD_POSTED_TAG:
-		htt_print_sched_txq_cmd_posted_tlv_v(tag_buf, user_data);
+		htt_print_sched_txq_cmd_posted_tlv_v(tag_buf, len, user_data);
 		break;
 
 	case HTT_STATS_RING_IF_CMN_TAG:
@@ -4456,7 +4051,7 @@ static int ath11k_dbg_htt_ext_stats_parse(struct ath11k_base *ab,
 		break;
 
 	case HTT_STATS_SFM_CLIENT_USER_TAG:
-		htt_print_sfm_client_user_tlv_v(tag_buf, user_data);
+		htt_print_sfm_client_user_tlv_v(tag_buf, len, user_data);
 		break;
 
 	case HTT_STATS_SFM_CLIENT_TAG:
@@ -4468,7 +4063,7 @@ static int ath11k_dbg_htt_ext_stats_parse(struct ath11k_base *ab,
 		break;
 
 	case HTT_STATS_SCHED_TXQ_CMD_REAPED_TAG:
-		htt_print_sched_txq_cmd_reaped_tlv_v(tag_buf, user_data);
+		htt_print_sched_txq_cmd_reaped_tlv_v(tag_buf, len, user_data);
 		break;
 
 	case HTT_STATS_SRING_CMN_TAG:
@@ -4586,11 +4181,11 @@ static int ath11k_dbg_htt_ext_stats_parse(struct ath11k_base *ab,
 		break;
 
 	case HTT_STATS_SCHED_TXQ_SCHED_ORDER_SU_TAG:
-		htt_print_sched_txq_sched_order_su_tlv_v(tag_buf, user_data);
+		htt_print_sched_txq_sched_order_su_tlv_v(tag_buf, len, user_data);
 		break;
 
 	case HTT_STATS_SCHED_TXQ_SCHED_INELIGIBILITY_TAG:
-		htt_print_sched_txq_sched_ineligibility_tlv_v(tag_buf, user_data);
+		htt_print_sched_txq_sched_ineligibility_tlv_v(tag_buf, len, user_data);
 		break;
 
 	case HTT_STATS_PDEV_OBSS_PD_TAG:
@@ -4608,27 +4203,27 @@ void ath11k_dbg_htt_ext_stats_handler(struct ath11k_base *ab,
 {
 	u8 *data = (u8 *)skb->data;
 	u32 len;
-	u32 cookie_lsb;
+	u64 cookie;
 	struct debug_htt_stats_req *stats_req;
 	struct ath11k *ar;
 	int ret;
 	u8 pdev_id;
 
 	data = data + 4;
-	cookie_lsb = *(u32 *)data;
-	stats_req = (struct debug_htt_stats_req *)cookie_lsb;
+	cookie = *(u64 *)data;
+	stats_req = (struct debug_htt_stats_req *)(uintptr_t)cookie;
 	if (!stats_req)
 		return;
 
-	pdev_id = stats_req->pdev_id;
+	pdev_id = DP_HW2SW_MACID(stats_req->pdev_id);
 	ar = ab->pdevs[pdev_id].ar;
-	spin_lock_bh(&ar->debug.stats_lock);
+	spin_lock_bh(&ar->debug.htt_stats.lock);
 	if (stats_req->done) {
-		spin_unlock_bh(&ar->debug.stats_lock);
+		spin_unlock_bh(&ar->debug.htt_stats.lock);
 		return;
 	}
 	stats_req->done = true;
-	spin_unlock_bh(&ar->debug.stats_lock);
+	spin_unlock_bh(&ar->debug.htt_stats.lock);
 
 	data = data + 8;
 	len = FIELD_GET(HTT_T2H_EXT_STATS_CONF_TLV_LENGTH_M, *(u32 *)data);
@@ -4643,14 +4238,14 @@ void ath11k_dbg_htt_ext_stats_handler(struct ath11k_base *ab,
 }
 
 static ssize_t ath11k_read_htt_stats_type(struct file *file,
-					  char __user *user_buf,
-					  size_t count, loff_t *ppos)
+					 char __user *user_buf,
+					 size_t count, loff_t *ppos)
 {
 	struct ath11k *ar = file->private_data;
 	char buf[32];
 	size_t len;
 
-	len = scnprintf(buf, sizeof(buf), "%u\n", ar->debug.htt_stats_type);
+	len = scnprintf(buf, sizeof(buf), "%u\n", ar->debug.htt_stats.type);
 
 	return simple_read_from_buffer(user_buf, count, ppos, buf, len);
 }
@@ -4660,76 +4255,96 @@ static ssize_t ath11k_write_htt_stats_type(struct file *file,
 					   size_t count, loff_t *ppos)
 {
 	struct ath11k *ar = file->private_data;
-	unsigned long type;
+	u8 type;
 	int ret;
 
-	ret = kstrtoul_from_user(user_buf, count, 0, &type);
+	ret = kstrtou8_from_user(user_buf, count, 0, &type);
 	if (ret)
 		return ret;
 
 	if (type >= HTT_DBG_NUM_EXT_STATS)
 		return -E2BIG;
 
-	ar->debug.htt_stats_type = type;
+	if (type == HTT_DBG_EXT_STATS_RESET)
+		return -EPERM;
+
+	ar->debug.htt_stats.type = type;
 
 	ret = count;
 
 	return ret;
 }
 
-static ssize_t ath11k_read_htt_stats(struct file *file,
-				     char __user *user_buf,
-				     size_t count, loff_t *ppos)
+static int ath11k_open_htt_stats(struct inode *inode, struct file *file)
 {
-	struct ath11k *ar = file->private_data;
-	struct ath11k_base *ab = ar->ab;
+	struct ath11k *ar = inode->i_private;
 	struct debug_htt_stats_req *stats_req;
-	char *buf = NULL;
-	u32 length = 0;
-	int ret;
+	u8 type = ar->debug.htt_stats.type;
 	u64 cookie = 0;
+	int ret, pdev_id = ar->pdev->pdev_id;
 
-	stats_req = vmalloc(sizeof(*stats_req) +
-			    ATH11K_HTT_STATS_BUF_SIZE);
+	if (type == HTT_DBG_EXT_STATS_RESET)
+		return -EPERM;
+
+	stats_req = vmalloc(sizeof(*stats_req) + ATH11K_HTT_STATS_BUF_SIZE);
 	if (!stats_req)
 		return -ENOMEM;
 
 	init_completion(&stats_req->cmpln);
 
 	stats_req->done = false;
-	stats_req->pdev_id = ar->pdev->pdev_id;
+	stats_req->pdev_id = pdev_id;
 
-	cookie |= (u32)stats_req;
+	cookie = (u64)(uintptr_t)stats_req;
+
 	mutex_lock(&ar->conf_mutex);
-	ret = ath11k_dp_htt_h2t_ext_stats_req(ar, ar->debug.htt_stats_type,
-					      cookie);
-	mutex_unlock(&ar->conf_mutex);
+	ret = ath11k_dp_htt_h2t_ext_stats_req(ar, type, cookie);
 	if (ret) {
-		ath11k_warn(ab, "failed to send htt stats request: %d\n", ret);
+		ath11k_warn(ar->ab, "failed to send htt stats request: %d\n", ret);
+		mutex_unlock(&ar->conf_mutex);
 		goto out;
 	}
+	mutex_unlock(&ar->conf_mutex);
 
 	while (!wait_for_completion_timeout(&stats_req->cmpln, 3 * HZ)) {
-		spin_lock_bh(&ar->debug.stats_lock);
+		spin_lock_bh(&ar->debug.htt_stats.lock);
 		if (!stats_req->done) {
 			stats_req->done = true;
-			spin_unlock_bh(&ar->debug.stats_lock);
+			spin_unlock_bh(&ar->debug.htt_stats.lock);
+			ath11k_warn(ar->ab, "stats request timed out\n");
 			ret = -ETIMEDOUT;
-			ath11k_warn(ab, "suspend timed out - pdev pause event never came\n");
-			break;
+			goto out;
 		}
-		spin_unlock_bh(&ar->debug.stats_lock);
+		spin_unlock_bh(&ar->debug.htt_stats.lock);
 	}
+
+	file->private_data = stats_req;
+	return 0;
+out:
+	vfree(stats_req);
+	return ret;
+}
+
+static int ath11k_release_htt_stats(struct inode *inode, struct file *file)
+{
+	vfree(file->private_data);
+	return 0;
+}
+
+static ssize_t ath11k_read_htt_stats(struct file *file,
+				     char __user *user_buf,
+				     size_t count, loff_t *ppos)
+{
+	struct debug_htt_stats_req *stats_req = file->private_data;
+	char *buf;
+	u32 length = 0;
 
 	buf = stats_req->buf;
 	length = min_t(u32, stats_req->buf_len, ATH11K_HTT_STATS_BUF_SIZE);
-out:
-	count = simple_read_from_buffer(user_buf, count, ppos, buf, length);
-	vfree(stats_req);
-	return count;
+	return simple_read_from_buffer(user_buf, count, ppos, buf, length);
 }
 
-static const struct file_operations fops_dump_htt_stats_type = {
+static const struct file_operations fops_htt_stats_type = {
 	.read = ath11k_read_htt_stats_type,
 	.write = ath11k_write_htt_stats_type,
 	.open = simple_open,
@@ -4738,17 +4353,18 @@ static const struct file_operations fops_dump_htt_stats_type = {
 };
 
 static const struct file_operations fops_dump_htt_stats = {
+	.open = ath11k_open_htt_stats,
+	.release = ath11k_release_htt_stats,
 	.read = ath11k_read_htt_stats,
-	.open = simple_open,
 	.owner = THIS_MODULE,
 	.llseek = default_llseek,
 };
 
 void ath11k_htt_stats_debugfs_init(struct ath11k *ar)
 {
-	spin_lock_init(&ar->debug.stats_lock);
+	spin_lock_init(&ar->debug.htt_stats.lock);
 	debugfs_create_file("htt_stats_type", 0600, ar->debug.debugfs_pdev,
-			    ar, &fops_dump_htt_stats);
+			    ar, &fops_htt_stats_type);
 	debugfs_create_file("htt_stats", 0400, ar->debug.debugfs_pdev,
 			    ar, &fops_dump_htt_stats);
 }

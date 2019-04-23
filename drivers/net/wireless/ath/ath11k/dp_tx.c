@@ -859,7 +859,7 @@ err_free:
 	return ret;
 }
 
-int ath11k_dp_htt_h2t_ext_stats_req(struct ath11k *ar, u8 mask, u64 cookie)
+int ath11k_dp_htt_h2t_ext_stats_req(struct ath11k *ar, u8 type, u64 cookie)
 {
 	struct ath11k_base *ab = ar->ab;
 	struct ath11k_dp *dp = &ab->dp;
@@ -878,9 +878,9 @@ int ath11k_dp_htt_h2t_ext_stats_req(struct ath11k *ar, u8 mask, u64 cookie)
 	memset(cmd, 0, sizeof(*cmd));
 	cmd->hdr.msg_type = HTT_H2T_MSG_TYPE_EXT_STATS_CFG;
 
-	cmd->hdr.pdev_mask = 1 << DP_SW2HW_MACID(ar->pdev->pdev_id);
+	cmd->hdr.pdev_mask = 1 << ar->pdev->pdev_id;
 
-	cmd->hdr.stats_type = mask;
+	cmd->hdr.stats_type = type;
 	cmd->cookie_lsb = lower_32_bits(cookie);
 	cmd->cookie_msb = upper_32_bits(cookie);
 

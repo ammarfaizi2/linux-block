@@ -1156,6 +1156,7 @@ struct htt_ext_stats_cfg_cmd {
 	u32 cfg_param1;
 	u32 cfg_param2;
 	u32 cfg_param3;
+	u32 reserved;
 	u32 cookie_lsb;
 	u32 cookie_msb;
 } __packed;

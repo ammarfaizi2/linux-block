@@ -6,14 +6,7 @@
 #ifndef DEBUG_HTT_STATS_H
 #define DEBUG_HTT_STATS_H
 
-/*
- * htt_dbg_ext_stats_type -
- * The base structure for each of the stats_type is only for reference
- * Host should use this information to know the type of TLVs to expect
- * for a particular stats type.
- *
- *    Max supported stats :- 256.
- */
+/* htt_dbg_ext_stats_type */
 enum htt_dbg_ext_stats_type {
 	HTT_DBG_EXT_STATS_RESET                      =  0,
 	HTT_DBG_EXT_STATS_PDEV_TX                    =  1,
@@ -40,7 +33,7 @@ enum htt_dbg_ext_stats_type {
 	HTT_DBG_EXT_STATS_TX_SOUNDING_INFO           =  22,
 
 	/* keep this last */
-	HTT_DBG_NUM_EXT_STATS                        =  256,
+	HTT_DBG_NUM_EXT_STATS,
 };
 
 enum htt_tlv_tag_t {
@@ -165,13 +158,11 @@ enum htt_tx_pdev_underrun_enum {
 /* Bytes stored in little endian order */
 /* Length should be multiple of DWORD */
 struct htt_stats_string_tlv {
-	struct htt_tlv tlv_hdr;
 	u32 data[0]; /* Can be variable length */
 } __packed;
 
 /* == TX PDEV STATS == */
 struct htt_tx_pdev_stats_cmn_tlv {
-	struct htt_tlv tlv_hdr;
 	u32 mac_id__word;
 	u32 hw_queued;
 	u32 hw_reaped;
@@ -227,36 +218,30 @@ struct htt_tx_pdev_stats_cmn_tlv {
 
 /* NOTE: Variable length TLV, use length spec to infer array size */
 struct htt_tx_pdev_stats_urrn_tlv_v {
-	struct htt_tlv tlv_hdr;
 	u32 urrn_stats[0]; /* HTT_TX_PDEV_MAX_URRN_STATS */
 };
 
 /* NOTE: Variable length TLV, use length spec to infer array size */
 struct htt_tx_pdev_stats_flush_tlv_v {
-	struct htt_tlv tlv_hdr;
 	u32 flush_errs[0]; /* HTT_TX_PDEV_MAX_FLUSH_REASON_STATS */
 };
 
 /* NOTE: Variable length TLV, use length spec to infer array size */
 struct htt_tx_pdev_stats_sifs_tlv_v {
-	struct htt_tlv tlv_hdr;
 	u32 sifs_status[0]; /* HTT_TX_PDEV_MAX_SIFS_BURST_STATS */
 };
 
 /* NOTE: Variable length TLV, use length spec to infer array size */
 struct htt_tx_pdev_stats_phy_err_tlv_v {
-	struct htt_tlv tlv_hdr;
 	u32  phy_errs[0]; /* HTT_TX_PDEV_MAX_PHY_ERR_STATS */
 };
 
 /* NOTE: Variable length TLV, use length spec to infer array size */
 struct htt_tx_pdev_stats_sifs_hist_tlv_v {
-	struct htt_tlv tlv_hdr;
 	u32 sifs_hist_status[0]; /* HTT_TX_PDEV_SIFS_BURST_HIST_STATS */
 };
 
 struct htt_tx_pdev_stats_tx_ppdu_stats_tlv_v {
-	struct htt_tlv tlv_hdr;
 	u32 num_data_ppdus_legacy_su;
 	u32 num_data_ppdus_ac_su;
 	u32 num_data_ppdus_ax_su;
@@ -275,10 +260,8 @@ struct htt_tx_pdev_stats_tx_ppdu_stats_tlv_v {
  *  following macros
  *  #define WAL_MAX_TRIED_MPDU_CNT_HISTOGRAM 9
  *  #define WAL_TRIED_MPDU_CNT_HISTOGRAM_INTERVAL 30
- *
  */
 struct htt_tx_pdev_stats_tried_mpdu_cnt_hist_tlv_v {
-	struct htt_tlv tlv_hdr;
 	u32 hist_bin_size;
 	u32 tried_mpdu_cnt_hist[0]; /* HTT_TX_PDEV_TRIED_MPDU_CNT_HIST */
 };
@@ -288,7 +271,6 @@ struct htt_tx_pdev_stats_tried_mpdu_cnt_hist_tlv_v {
 /* =============== PDEV ERROR STATS ============== */
 #define HTT_STATS_MAX_HW_INTR_NAME_LEN 8
 struct htt_hw_stats_intr_misc_tlv {
-	struct htt_tlv tlv_hdr;
 	/* Stored as little endian */
 	u8 hw_intr_name[HTT_STATS_MAX_HW_INTR_NAME_LEN];
 	u32 mask;
@@ -297,14 +279,12 @@ struct htt_hw_stats_intr_misc_tlv {
 
 #define HTT_STATS_MAX_HW_MODULE_NAME_LEN 8
 struct htt_hw_stats_wd_timeout_tlv {
-	struct htt_tlv tlv_hdr;
 	/* Stored as little endian */
 	u8 hw_module_name[HTT_STATS_MAX_HW_MODULE_NAME_LEN];
 	u32 count;
 };
 
 struct htt_hw_stats_pdev_errs_tlv {
-	struct htt_tlv tlv_hdr;
 	u32    mac_id__word; /* BIT [ 7 :  0] : mac_id */
 	u32    tx_abort;
 	u32    tx_abort_fail_count;
@@ -319,7 +299,6 @@ struct htt_hw_stats_pdev_errs_tlv {
 };
 
 struct htt_hw_stats_whal_tx_tlv {
-	struct htt_tlv tlv_hdr;
 	u32 mac_id__word;
 	u32 last_unpause_ppdu_id;
 	u32 hwsch_unpause_wait_tqm_write;
@@ -336,7 +315,6 @@ struct htt_hw_stats_whal_tx_tlv {
 
 /* ============ PEER STATS ============ */
 struct htt_msdu_flow_stats_tlv {
-	struct htt_tlv tlv_hdr;
 	u32 last_update_timestamp;
 	u32 last_add_timestamp;
 	u32 last_remove_timestamp;
@@ -354,7 +332,6 @@ struct htt_msdu_flow_stats_tlv {
 
 /* Tidq stats */
 struct htt_tx_tid_stats_tlv {
-	struct htt_tlv tlv_hdr;
 	/* Stored as little endian */
 	u8     tid_name[MAX_HTT_TID_NAME];
 	u32 sw_peer_id__tid_num;
@@ -375,7 +352,6 @@ struct htt_tx_tid_stats_tlv {
 
 /* Tidq stats */
 struct htt_tx_tid_stats_v1_tlv {
-	struct htt_tlv tlv_hdr;
 	/* Stored as little endian */
 	u8 tid_name[MAX_HTT_TID_NAME];
 	u32 sw_peer_id__tid_num;
@@ -397,7 +373,6 @@ struct htt_tx_tid_stats_v1_tlv {
 };
 
 struct htt_rx_tid_stats_tlv {
-	struct htt_tlv tlv_hdr;
 	u32 sw_peer_id__tid_num;
 	u8 tid_name[MAX_HTT_TID_NAME];
 	u32 dup_in_reorder;
@@ -409,13 +384,11 @@ struct htt_rx_tid_stats_tlv {
 
 #define HTT_MAX_COUNTER_NAME 8
 struct htt_counter_tlv {
-	struct htt_tlv tlv_hdr;
 	u8 counter_name[HTT_MAX_COUNTER_NAME];
 	u32 count;
 };
 
 struct htt_peer_stats_cmn_tlv {
-	struct htt_tlv tlv_hdr;
 	u32 ppdu_cnt;
 	u32 mpdu_cnt;
 	u32 msdu_cnt;
@@ -438,7 +411,6 @@ struct htt_peer_stats_cmn_tlv {
 };
 
 struct htt_peer_details_tlv {
-	struct htt_tlv tlv_hdr;
 	u32 peer_type;
 	u32 sw_peer_id;
 	u32 vdev_pdev_ast_idx;
@@ -467,8 +439,6 @@ enum htt_stats_param_type {
 #define HTT_TX_PEER_STATS_NUM_PREAMBLE_TYPES       HTT_STATS_PREAM_COUNT
 
 struct htt_tx_peer_rate_stats_tlv {
-	struct htt_tlv tlv_hdr;
-
 	u32 tx_ldpc;
 	u32 rts_cnt;
 	u32 ack_rssi;
@@ -501,7 +471,6 @@ struct htt_tx_peer_rate_stats_tlv {
 #define HTT_RX_PEER_STATS_NUM_PREAMBLE_TYPES       HTT_STATS_PREAM_COUNT
 
 struct htt_rx_peer_rate_stats_tlv {
-	struct htt_tlv tlv_hdr;
 	u32 nsts;
 
 	/* Number of rx ldpc packets */
@@ -550,14 +519,12 @@ enum htt_peer_stats_tlv_enum {
 /* =========== MUMIMO HWQ stats =========== */
 /* MU MIMO stats per hwQ */
 struct htt_tx_hwq_mu_mimo_sch_stats_tlv {
-	struct htt_tlv tlv_hdr;
 	u32 mu_mimo_sch_posted;
 	u32 mu_mimo_sch_failed;
 	u32 mu_mimo_ppdu_posted;
 };
 
 struct htt_tx_hwq_mu_mimo_mpdu_stats_tlv {
-	struct htt_tlv tlv_hdr;
 	u32 mu_mimo_mpdus_queued_usr;
 	u32 mu_mimo_mpdus_tried_usr;
 	u32 mu_mimo_mpdus_failed_usr;
@@ -568,13 +535,11 @@ struct htt_tx_hwq_mu_mimo_mpdu_stats_tlv {
 };
 
 struct htt_tx_hwq_mu_mimo_cmn_stats_tlv {
-	struct htt_tlv tlv_hdr;
 	u32 mac_id__hwq_id__word;
 };
 
 /* == TX HWQ STATS == */
 struct htt_tx_hwq_stats_cmn_tlv {
-	struct htt_tlv tlv_hdr;
 	u32 mac_id__hwq_id__word;
 
 	/* PPDU level stats */
@@ -607,7 +572,6 @@ struct htt_tx_hwq_stats_cmn_tlv {
 
 /* NOTE: Variable length TLV, use length spec to infer array size */
 struct htt_tx_hwq_difs_latency_stats_tlv_v {
-	struct htt_tlv tlv_hdr;
 	u32 hist_intvl;
 	/* histogram of ppdu post to hwsch - > cmd status received */
 	u32 difs_latency_hist[0]; /* HTT_TX_HWQ_MAX_DIFS_LATENCY_BINS */
@@ -615,21 +579,18 @@ struct htt_tx_hwq_difs_latency_stats_tlv_v {
 
 /* NOTE: Variable length TLV, use length spec to infer array size */
 struct htt_tx_hwq_cmd_result_stats_tlv_v {
-	struct htt_tlv tlv_hdr;
 	/* Histogram of sched cmd result */
 	u32 cmd_result[0]; /* HTT_TX_HWQ_MAX_CMD_RESULT_STATS */
 };
 
 /* NOTE: Variable length TLV, use length spec to infer array size */
 struct htt_tx_hwq_cmd_stall_stats_tlv_v {
-	struct htt_tlv tlv_hdr;
 	/* Histogram of various pause conitions */
 	u32 cmd_stall_status[0]; /* HTT_TX_HWQ_MAX_CMD_STALL_STATS */
 };
 
 /* NOTE: Variable length TLV, use length spec to infer array size */
 struct htt_tx_hwq_fes_result_stats_tlv_v {
-	struct htt_tlv tlv_hdr;
 	/* Histogram of number of user fes result */
 	u32 fes_result[0]; /* HTT_TX_HWQ_MAX_FES_RESULT_STATS */
 };
@@ -647,7 +608,6 @@ struct htt_tx_hwq_fes_result_stats_tlv_v {
  *  #define WAL_TRIED_MPDU_CNT_HISTOGRAM_INTERVAL 30
  */
 struct htt_tx_hwq_tried_mpdu_cnt_hist_tlv_v {
-	struct htt_tlv tlv_hdr;
 	u32 hist_bin_size;
 	/* Histogram of number of mpdus on tried mpdu */
 	u32 tried_mpdu_cnt_hist[0]; /* HTT_TX_HWQ_TRIED_MPDU_CNT_HIST */
@@ -664,14 +624,12 @@ struct htt_tx_hwq_tried_mpdu_cnt_hist_tlv_v {
  * #define WAL_TXOP_USED_HISTOGRAM_INTERVAL 1000 ( 1 ms )
  */
 struct htt_tx_hwq_txop_used_cnt_hist_tlv_v {
-	struct htt_tlv tlv_hdr;
 	/* Histogram of txop used cnt */
 	u32 txop_used_cnt_hist[0]; /* HTT_TX_HWQ_TXOP_USED_CNT_HIST */
 };
 
 /* == TX SELFGEN STATS == */
 struct htt_tx_selfgen_cmn_stats_tlv {
-	struct htt_tlv tlv_hdr;
 	u32 mac_id__word;
 	u32 su_bar;
 	u32 rts;
@@ -687,7 +645,6 @@ struct htt_tx_selfgen_cmn_stats_tlv {
 };
 
 struct htt_tx_selfgen_ac_stats_tlv {
-	struct htt_tlv tlv_hdr;
 	/* 11AC */
 	u32 ac_su_ndpa;
 	u32 ac_su_ndp;
@@ -699,7 +656,6 @@ struct htt_tx_selfgen_ac_stats_tlv {
 };
 
 struct htt_tx_selfgen_ax_stats_tlv {
-	struct htt_tlv tlv_hdr;
 	/* 11AX */
 	u32 ax_su_ndpa;
 	u32 ax_su_ndp;
@@ -719,7 +675,6 @@ struct htt_tx_selfgen_ax_stats_tlv {
 };
 
 struct htt_tx_selfgen_ac_err_stats_tlv {
-	struct htt_tlv tlv_hdr;
 	/* 11AC error stats */
 	u32 ac_su_ndp_err;
 	u32 ac_su_ndpa_err;
@@ -731,7 +686,6 @@ struct htt_tx_selfgen_ac_err_stats_tlv {
 };
 
 struct htt_tx_selfgen_ax_err_stats_tlv {
-	struct htt_tlv tlv_hdr;
 	/* 11AX error stats */
 	u32 ax_su_ndp_err;
 	u32 ax_su_ndpa_err;
@@ -756,7 +710,6 @@ struct htt_tx_selfgen_ax_err_stats_tlv {
 #define HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS    74
 
 struct htt_tx_pdev_mu_mimo_sch_stats_tlv {
-	struct htt_tlv tlv_hdr;
 	/* mu-mimo sw sched cmd stats */
 	u32 mu_mimo_sch_posted;
 	u32 mu_mimo_sch_failed;
@@ -774,7 +727,6 @@ struct htt_tx_pdev_mu_mimo_sch_stats_tlv {
 };
 
 struct htt_tx_pdev_mu_mimo_mpdu_stats_tlv {
-	struct htt_tlv tlv_hdr;
 	u32 mu_mimo_mpdus_queued_usr;
 	u32 mu_mimo_mpdus_tried_usr;
 	u32 mu_mimo_mpdus_failed_usr;
@@ -805,7 +757,6 @@ struct htt_tx_pdev_mu_mimo_mpdu_stats_tlv {
 #define HTT_STATS_TX_SCHED_MODE_MU_OFDMA_AX 3
 
 struct htt_tx_pdev_mpdu_stats_tlv {
-	struct htt_tlv tlv_hdr;
 	/* mpdu level stats */
 	u32 mpdus_queued_usr;
 	u32 mpdus_tried_usr;
@@ -821,19 +772,16 @@ struct htt_tx_pdev_mpdu_stats_tlv {
 /* == TX SCHED STATS == */
 /* NOTE: Variable length TLV, use length spec to infer array size */
 struct htt_sched_txq_cmd_posted_tlv_v {
-	struct htt_tlv tlv_hdr;
 	u32 sched_cmd_posted[0]; /* HTT_TX_PDEV_SCHED_TX_MODE_MAX */
 };
 
 /* NOTE: Variable length TLV, use length spec to infer array size */
 struct htt_sched_txq_cmd_reaped_tlv_v {
-	struct htt_tlv tlv_hdr;
 	u32 sched_cmd_reaped[0]; /* HTT_TX_PDEV_SCHED_TX_MODE_MAX */
 };
 
 /* NOTE: Variable length TLV, use length spec to infer array size */
 struct htt_sched_txq_sched_order_su_tlv_v {
-	struct htt_tlv tlv_hdr;
 	u32 sched_order_su[0]; /* HTT_TX_PDEV_NUM_SCHED_ORDER_LOG */
 };
 
@@ -861,14 +809,11 @@ enum htt_sched_txq_sched_ineligibility_tlv_enum {
 
 /* NOTE: Variable length TLV, use length spec to infer array size */
 struct htt_sched_txq_sched_ineligibility_tlv_v {
-	struct htt_tlv tlv_hdr;
 	/* indexed by htt_sched_txq_sched_ineligibility_tlv_enum */
 	u32 sched_ineligibility[0];
 };
 
 struct htt_tx_pdev_stats_sched_per_txq_tlv {
-	struct htt_tlv tlv_hdr;
-
 	u32 mac_id__txq_id__word;
 	u32 sched_policy;
 	u32 last_sched_cmd_posted_timestamp;
@@ -893,7 +838,6 @@ struct htt_tx_pdev_stats_sched_per_txq_tlv {
 };
 
 struct htt_stats_tx_sched_cmn_tlv {
-	struct htt_tlv tlv_hdr;
 	/* BIT [ 7 :  0]   :- mac_id
 	 * BIT [31 :  8]   :- reserved
 	 */
@@ -909,25 +853,21 @@ struct htt_stats_tx_sched_cmn_tlv {
 
 /* NOTE: Variable length TLV, use length spec to infer array size */
 struct htt_tx_tqm_gen_mpdu_stats_tlv_v {
-	struct htt_tlv tlv_hdr;
 	u32 gen_mpdu_end_reason[0]; /* HTT_TX_TQM_MAX_GEN_MPDU_END_REASON */
 };
 
 /* NOTE: Variable length TLV, use length spec to infer array size */
 struct htt_tx_tqm_list_mpdu_stats_tlv_v {
-	struct htt_tlv tlv_hdr;
 	u32 list_mpdu_end_reason[0]; /* HTT_TX_TQM_MAX_LIST_MPDU_END_REASON */
 };
 
 /* NOTE: Variable length TLV, use length spec to infer array size */
 struct htt_tx_tqm_list_mpdu_cnt_tlv_v {
-	struct htt_tlv tlv_hdr;
 	u32 list_mpdu_cnt_hist[0];
 			/* HTT_TX_TQM_MAX_LIST_MPDU_CNT_HISTOGRAM_BINS */
 };
 
 struct htt_tx_tqm_pdev_stats_tlv_v {
-	struct htt_tlv tlv_hdr;
 	u32 msdu_count;
 	u32 mpdu_count;
 	u32 remove_msdu;
@@ -974,7 +914,6 @@ struct htt_tx_tqm_pdev_stats_tlv_v {
 };
 
 struct htt_tx_tqm_cmn_stats_tlv {
-	struct htt_tlv tlv_hdr;
 	u32 mac_id__word;
 	u32 max_cmdq_id;
 	u32 list_mpdu_cnt_hist_intvl;
@@ -988,7 +927,6 @@ struct htt_tx_tqm_cmn_stats_tlv {
 };
 
 struct htt_tx_tqm_error_stats_tlv {
-	struct htt_tlv tlv_hdr;
 	/* Error stats */
 	u32 q_empty_failure;
 	u32 q_not_empty_failure;
@@ -997,7 +935,6 @@ struct htt_tx_tqm_error_stats_tlv {
 
 /* == TQM CMDQ stats == */
 struct htt_tx_tqm_cmdq_status_tlv {
-	struct htt_tlv tlv_hdr;
 	u32 mac_id__cmdq_id__word;
 	u32 sync_cmd;
 	u32 write_cmd;
@@ -1015,7 +952,6 @@ struct htt_tx_tqm_cmdq_status_tlv {
 /* == TX-DE STATS == */
 /* Structures for tx de stats */
 struct htt_tx_de_eapol_packets_stats_tlv {
-	struct htt_tlv tlv_hdr;
 	u32 m1_packets;
 	u32 m2_packets;
 	u32 m3_packets;
@@ -1025,7 +961,6 @@ struct htt_tx_de_eapol_packets_stats_tlv {
 };
 
 struct htt_tx_de_classify_failed_stats_tlv {
-	struct htt_tlv tlv_hdr;
 	u32 ap_bss_peer_not_found;
 	u32 ap_bcast_mcast_no_peer;
 	u32 sta_delete_in_progress;
@@ -1042,7 +977,6 @@ struct htt_tx_de_classify_failed_stats_tlv {
 };
 
 struct htt_tx_de_classify_stats_tlv {
-	struct htt_tlv tlv_hdr;
 	u32 arp_packets;
 	u32 igmp_packets;
 	u32 dhcp_packets;
@@ -1084,7 +1018,6 @@ struct htt_tx_de_classify_stats_tlv {
 };
 
 struct htt_tx_de_classify_status_stats_tlv {
-	struct htt_tlv tlv_hdr;
 	u32 eok;
 	u32 classify_done;
 	u32 lookup_failed;
@@ -1096,21 +1029,18 @@ struct htt_tx_de_classify_status_stats_tlv {
 };
 
 struct htt_tx_de_enqueue_packets_stats_tlv {
-	struct htt_tlv tlv_hdr;
 	u32 enqueued_pkts;
 	u32 to_tqm;
 	u32 to_tqm_bypass;
 };
 
 struct htt_tx_de_enqueue_discard_stats_tlv {
-	struct htt_tlv tlv_hdr;
 	u32 discarded_pkts;
 	u32 local_frames;
 	u32 is_ext_msdu;
 };
 
 struct htt_tx_de_compl_stats_tlv {
-	struct htt_tlv tlv_hdr;
 	u32 tcl_dummy_frame;
 	u32 tqm_dummy_frame;
 	u32 tqm_notify_frame;
@@ -1130,12 +1060,10 @@ struct htt_tx_de_compl_stats_tlv {
  *                               ENTRIES_PER_BIN_COUNT)
  */
 struct htt_tx_de_fw2wbm_ring_full_hist_tlv {
-	struct htt_tlv tlv_hdr;
-	u32 fw2wbm_ring_full_hist[1];
+	u32 fw2wbm_ring_full_hist[0];
 };
 
 struct htt_tx_de_cmn_stats_tlv {
-	struct htt_tlv tlv_hdr;
 	u32   mac_id__word;
 
 	/* Global Stats */
@@ -1168,7 +1096,6 @@ struct htt_ring_if_stats_tlv {
 };
 
 struct htt_ring_if_cmn_tlv {
-	struct htt_tlv tlv_hdr;
 	u32 mac_id__word;
 	u32 num_records;
 };
@@ -1176,13 +1103,11 @@ struct htt_ring_if_cmn_tlv {
 /* == SFM STATS == */
 /* NOTE: Variable length TLV, use length spec to infer array size */
 struct htt_sfm_client_user_tlv_v {
-	struct htt_tlv   tlv_hdr;
 	/* Number of DWORDS used per user and per client */
-	u32 dwords_used_by_user_n[1];
+	u32 dwords_used_by_user_n[0];
 };
 
 struct htt_sfm_client_tlv {
-	struct htt_tlv tlv_hdr;
 	/* Client ID */
 	u32 client_id;
 	/* Minimum number of buffers */
@@ -1200,7 +1125,6 @@ struct htt_sfm_client_tlv {
 };
 
 struct htt_sfm_cmn_tlv {
-	struct htt_tlv tlv_hdr;
 	u32 mac_id__word;
 	/* Indicates the total number of 128 byte buffers
 	 * in the CMEM that are available for buffer sharing
@@ -1218,8 +1142,6 @@ struct htt_sfm_cmn_tlv {
 
 /* == SRNG STATS == */
 struct htt_sring_stats_tlv {
-	struct htt_tlv   tlv_hdr;
-
 	u32 mac_id__ring_id__arena__ep;
 	u32 base_addr_lsb; /* DWORD aligned base memory address of the ring */
 	u32 base_addr_msb;
@@ -1233,8 +1155,7 @@ struct htt_sring_stats_tlv {
 };
 
 struct htt_sring_cmn_tlv {
-	struct htt_tlv   tlv_hdr;
-	u32        num_records;
+	u32 num_records;
 };
 
 /* == PDEV TX RATE CTRL STATS == */
@@ -1253,7 +1174,6 @@ struct htt_sring_cmn_tlv {
 	 HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS)
 
 struct htt_tx_pdev_rate_stats_tlv {
-	struct htt_tlv tlv_hdr;
 	u32 mac_id__word;
 	u32 tx_ldpc;
 	u32 rts_cnt;
@@ -1339,7 +1259,6 @@ struct htt_tx_pdev_rate_stats_tlv {
 #define HTT_RX_PDEV_STATS_NUM_PREAMBLE_TYPES       HTT_STATS_PREAM_COUNT
 
 struct htt_rx_pdev_rate_stats_tlv {
-	struct htt_tlv tlv_hdr;
 	u32 mac_id__word;
 	u32 nsts;
 
@@ -1380,7 +1299,6 @@ struct htt_rx_pdev_rate_stats_tlv {
 
 /* == RX PDEV/SOC STATS == */
 struct htt_rx_soc_fw_stats_tlv {
-	struct htt_tlv tlv_hdr;
 	u32 fw_reo_ring_data_msdu;
 	u32 fw_to_host_data_msdu_bcmc;
 	u32 fw_to_host_data_msdu_uc;
@@ -1399,13 +1317,11 @@ struct htt_rx_soc_fw_stats_tlv {
 
 /* NOTE: Variable length TLV, use length spec to infer array size */
 struct htt_rx_soc_fw_refill_ring_empty_tlv_v {
-	struct htt_tlv tlv_hdr;
 	u32 refill_ring_empty_cnt[0]; /* HTT_RX_STATS_REFILL_MAX_RING */
 };
 
 /* NOTE: Variable length TLV, use length spec to infer array size */
 struct htt_rx_soc_fw_refill_ring_num_refill_tlv_v {
-	struct htt_tlv tlv_hdr;
 	u32 refill_ring_num_refill[0]; /* HTT_RX_STATS_REFILL_MAX_RING */
 };
 
@@ -1438,7 +1354,6 @@ enum htt_rx_rxdma_error_code_enum {
 
 /* NOTE: Variable length TLV, use length spec to infer array size */
 struct htt_rx_soc_fw_refill_ring_num_rxdma_err_tlv_v {
-	struct htt_tlv tlv_hdr;
 	u32 rxdma_err[0]; /* HTT_RX_RXDMA_MAX_ERR_CODE */
 };
 
@@ -1471,7 +1386,6 @@ enum htt_rx_reo_error_code_enum {
 
 /* NOTE: Variable length TLV, use length spec to infer array size */
 struct htt_rx_soc_fw_refill_ring_num_reo_err_tlv_v {
-	struct htt_tlv tlv_hdr;
 	u32 reo_err[0]; /* HTT_RX_REO_MAX_ERR_CODE */
 };
 
@@ -1479,7 +1393,6 @@ struct htt_rx_soc_fw_refill_ring_num_reo_err_tlv_v {
 #define HTT_STATS_SUBTYPE_MAX     16
 
 struct htt_rx_pdev_fw_stats_tlv {
-	struct htt_tlv tlv_hdr;
 	u32 mac_id__word;
 	u32 ppdu_recvd;
 	u32 mpdu_cnt_fcs_ok;
@@ -1534,7 +1447,6 @@ struct htt_rx_pdev_fw_stats_tlv {
 #define HTT_STATS_PHY_ERR_MAX 43
 
 struct htt_rx_pdev_fw_stats_phy_err_tlv {
-	struct htt_tlv tlv_hdr;
 	u32 mac_id__word;
 	u32 total_phy_err_cnt;
 	/* Counts of different types of phy errs
@@ -1590,14 +1502,12 @@ struct htt_rx_pdev_fw_stats_phy_err_tlv {
 
 /* NOTE: Variable length TLV, use length spec to infer array size */
 struct htt_rx_pdev_fw_ring_mpdu_err_tlv_v {
-	struct htt_tlv tlv_hdr;
 	/* Num error MPDU for each RxDMA error type  */
 	u32 fw_ring_mpdu_err[0]; /* HTT_RX_STATS_RXDMA_MAX_ERR */
 };
 
 /* NOTE: Variable length TLV, use length spec to infer array size */
 struct htt_rx_pdev_fw_mpdu_drop_tlv_v {
-	struct htt_tlv tlv_hdr;
 	/* Num MPDU dropped  */
 	u32 fw_mpdu_drop[0]; /* HTT_RX_STATS_FW_DROP_REASON_MAX */
 };
@@ -1612,8 +1522,6 @@ struct htt_rx_pdev_fw_mpdu_drop_tlv_v {
 #define HTT_PDEV_CCA_STATS_CCA_OBBS_USEC_INFO_PRESENT         (0x80)
 
 struct htt_pdev_stats_cca_counters_tlv {
-	struct htt_tlv tlv_hdr;
-
 	/* Below values are obtained from the HW Cycles counter registers */
 	u32 tx_frame_usec;
 	u32 rx_frame_usec;
@@ -1626,7 +1534,6 @@ struct htt_pdev_stats_cca_counters_tlv {
 };
 
 struct htt_pdev_cca_stats_hist_v1_tlv {
-	struct htt_tlv tlv_hdr;
 	u32    chan_num;
 	/* num of CCA records (Num of htt_pdev_stats_cca_counters_tlv)*/
 	u32    num_records;
@@ -1643,7 +1550,6 @@ struct htt_pdev_cca_stats_hist_v1_tlv {
 };
 
 struct htt_pdev_stats_twt_session_tlv {
-	struct htt_tlv   tlv_hdr;
 	u32 vdev_id;
 	struct htt_mac_addr peer_mac;
 	u32 flow_id_flags;
@@ -1658,7 +1564,6 @@ struct htt_pdev_stats_twt_session_tlv {
 };
 
 struct htt_pdev_stats_twt_sessions_tlv {
-	struct htt_tlv tlv_hdr;
 	u32 pdev_id;
 	u32 num_sessions;
 	struct htt_pdev_stats_twt_session_tlv twt_session[0];
@@ -1684,7 +1589,6 @@ enum htt_rx_reo_resource_sample_id_enum {
 };
 
 struct htt_rx_reo_resource_stats_tlv_v {
-	struct htt_tlv tlv_hdr;
 	/* Variable based on the Number of records. HTT_RX_REO_RESOURCE_STATS_MAX */
 	u32 sample_id;
 	u32 total_max;
@@ -1715,7 +1619,6 @@ enum htt_stats_sounding_tx_mode {
 };
 
 struct htt_tx_sounding_stats_tlv {
-	struct htt_tlv tlv_hdr;
 	u32 tx_sounding_mode; /* HTT_TX_XX_SOUNDING_MODE */
 	/* Counts number of soundings for all steering modes in each bw */
 	u32 cbf_20[HTT_TXBF_MAX_NUM_OF_MODES];
@@ -1735,7 +1638,6 @@ struct htt_tx_sounding_stats_tlv {
 };
 
 struct htt_pdev_obss_pd_stats_tlv {
-	struct htt_tlv   tlv_hdr;
 
 	u32        num_obss_tx_ppdu_success;
 	u32        num_obss_tx_ppdu_failure;

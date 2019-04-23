@@ -26,5 +26,6 @@ int ath11k_dp_send_reo_cmd(struct ath11k_base *ab, struct dp_rx_tid *rx_tid,
 					enum hal_reo_cmd_status));
 
 int ath11k_dp_htt_h2t_ppdu_stats_req(struct ath11k *ar, u32 mask);
-int ath11k_dp_htt_h2t_ext_stats_req(struct ath11k *ar, u8 mask, u64 cookie);
+int ath11k_dp_htt_h2t_ext_stats_req(struct ath11k *ar, u8 type,
+				    u64 cookie);
 #endif

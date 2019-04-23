@@ -366,11 +366,15 @@ struct ath11k_fw_stats {
 	struct list_head peers_extd;
 };
 
+struct ath11k_dbg_htt_stats {
+	u8 type;
+	/* protects shared stats req buffer */
+	spinlock_t lock;
+};
+
 struct ath11k_debug {
 	struct dentry *debugfs_pdev;
-	u32 htt_stats_type;
-	/* protects shared stats req buffer */
-	spinlock_t stats_lock;
+	struct ath11k_dbg_htt_stats htt_stats;
 	u32 extd_tx_stats;
 	struct ath11k_fw_stats fw_stats;
 	struct completion fw_stats_complete;
