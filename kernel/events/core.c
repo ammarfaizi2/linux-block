@@ -5894,16 +5894,16 @@ static void perf_sample_regs_intr(struct perf_regs *regs_intr,
  *
  * It'd be better to take stack vma map and limit this more
  * precisly, but there's no way to get it safely under interrupt,
- * so using TASK_SIZE as limit.
+ * so using TASK_SIZE_MAX as limit.
  */
 static u64 perf_ustack_task_size(struct pt_regs *regs)
 {
 	unsigned long addr = perf_user_stack_pointer(regs);
 
-	if (!addr || addr >= TASK_SIZE)
+	if (!addr || addr >= TASK_SIZE_MAX)
 		return 0;
 
-	return TASK_SIZE - addr;
+	return TASK_SIZE_MAX - addr;
 }
 
 static u16
@@ -5918,8 +5918,8 @@ perf_sample_ustack_size(u16 stack_size, u16 header_size,
 
 	/*
 	 * Check if we fit in with the requested stack size into the:
-	 * - TASK_SIZE
-	 *   If we don't, we limit the size to the TASK_SIZE.
+	 * - TASK_SIZE_MAX
+	 *   If we don't, we limit the size to the TASK_SIZE_MAX.
 	 *
 	 * - remaining sample size
 	 *   If we don't, we customize the stack size to
