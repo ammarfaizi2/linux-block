@@ -107,6 +107,15 @@ struct inode *coda_cnode_make(struct CodaFid *fid, struct super_block *sb)
 }
 
 
+static void coda_reset_inode(struct inode *inode, unsigned long hash, void *data)
+{
+	struct CodaFid *fid = (struct CodaFid *)data;
+	struct coda_inode_info *cii = ITOC(inode);
+
+	cii->c_fid = *fid;
+	inode->i_ino = hash;
+}
+
 /* Although we treat Coda file identifiers as immutable, there is one
  * special case for files created during a disconnection where they may
  * not be globally unique. When an identifier collision is detected we
@@ -123,12 +132,7 @@ void coda_replace_fid(struct inode *inode, struct CodaFid *oldfid,
 	
 	BUG_ON(!coda_fideq(&cii->c_fid, oldfid));
 
-	/* replace fid and rehash inode */
-	/* XXX we probably need to hold some lock here! */
-	remove_inode_hash(inode);
-	cii->c_fid = *newfid;
-	inode->i_ino = hash;
-	__insert_inode_hash(inode, hash);
+	rehash_inode(inode, hash, coda_reset_inode, newfid);
 }
 
 /* convert a fid to an inode. */

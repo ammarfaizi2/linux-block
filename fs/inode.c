@@ -501,6 +501,29 @@ void __remove_inode_hash(struct inode *inode)
 }
 EXPORT_SYMBOL(__remove_inode_hash);
 
+/**
+ * rehash_inode - Relabel and rehash an inode
+ * @inode: Inode to rehash
+ * @hashval: New hash value (usually inode number) to get
+ * @reset: Callback used to relabel the inode
+ * @data: Opaque data pointer to pass to @reset
+ */
+void rehash_inode(struct inode *inode, unsigned long hashval,
+		  void (*reset)(struct inode *inode, unsigned long hashval, void *data),
+		  void *data)
+{
+	struct hlist_head *b = inode_hashtable + hash(inode->i_sb, hashval);
+
+	spin_lock(&inode_hash_lock);
+	spin_lock(&inode->i_lock);
+	hlist_del_init(&inode->i_hash);
+	reset(inode, hashval, data);
+	hlist_add_head(&inode->i_hash, b);
+	spin_unlock(&inode->i_lock);
+	spin_unlock(&inode_hash_lock);
+}
+EXPORT_SYMBOL(rehash_inode);
+
 void clear_inode(struct inode *inode)
 {
 	/*

@@ -3019,6 +3019,9 @@ static inline void remove_inode_hash(struct inode *inode)
 		__remove_inode_hash(inode);
 }
 
+extern void rehash_inode(struct inode *, unsigned long,
+			 void (*reset)(struct inode *, unsigned long, void *), void *);
+
 extern void inode_sb_list_add(struct inode *inode);
 
 #ifdef CONFIG_BLOCK
