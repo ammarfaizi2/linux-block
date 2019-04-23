@@ -35,6 +35,29 @@ struct user_struct;
 struct writeback_control;
 struct bdi_writeback;
 
+#ifndef current_syscall_task_size
+/**
+ * current_syscall_task_size() - The address limit for the running syscall
+ *
+ * Various system calls need to generate addresses that point to user memory.
+ * The callers of those syscalls consider certain addresses to be reasonable
+ * and larger addresses to be nonsensical.  Most notably, 32-bit syscalls
+ * generally cannot return addresses above 2^32-1 because such addresses would
+ * be truncated.
+ *
+ * Syscall implementations can use current_syscall_task_size() to determine
+ * the maximum allowable address.
+ *
+ * This should be rarely used.  If a syscall merely wants to access memory at
+ * a user-specified address, get_user(), access_ok(), etc. will do the right
+ * thing.
+ *
+ * Return: The maximum valid user address in the context of the current
+ *         syscall plus one.
+ */
+#define current_syscall_task_size() TASK_SIZE
+#endif
+
 void init_mm_internals(void);
 
 #ifndef CONFIG_NEED_MULTIPLE_NODES	/* Don't use mapnrs, do it properly */
