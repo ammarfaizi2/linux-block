@@ -68,7 +68,7 @@ static int __init test_user_copy_init(void)
 	user_addr = vm_mmap(NULL, 0, PAGE_SIZE * 2,
 			    PROT_READ | PROT_WRITE | PROT_EXEC,
 			    MAP_ANONYMOUS | MAP_PRIVATE, 0);
-	if (user_addr >= (unsigned long)(TASK_SIZE)) {
+	if (IS_ERR_VALUE(user_addr)) {
 		pr_warn("Failed to allocate user memory\n");
 		kfree(kmem);
 		return -ENOMEM;
