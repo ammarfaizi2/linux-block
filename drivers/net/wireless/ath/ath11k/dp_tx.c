@@ -859,7 +859,9 @@ err_free:
 	return ret;
 }
 
-int ath11k_dp_htt_h2t_ext_stats_req(struct ath11k *ar, u8 type, u64 cookie)
+int ath11k_dp_htt_h2t_ext_stats_req(struct ath11k *ar, u8 type,
+				    struct htt_ext_stats_cfg_params *cfg_params,
+				    u64 cookie)
 {
 	struct ath11k_base *ab = ar->ab;
 	struct ath11k_dp *dp = &ab->dp;
@@ -881,6 +883,10 @@ int ath11k_dp_htt_h2t_ext_stats_req(struct ath11k *ar, u8 type, u64 cookie)
 	cmd->hdr.pdev_mask = 1 << ar->pdev->pdev_id;
 
 	cmd->hdr.stats_type = type;
+	cmd->cfg_param0 = cfg_params->cfg0;
+	cmd->cfg_param1 = cfg_params->cfg1;
+	cmd->cfg_param2 = cfg_params->cfg2;
+	cmd->cfg_param3 = cfg_params->cfg3;
 	cmd->cookie_lsb = lower_32_bits(cookie);
 	cmd->cookie_msb = upper_32_bits(cookie);
 

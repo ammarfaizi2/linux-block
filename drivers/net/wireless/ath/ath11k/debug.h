@@ -23,6 +23,48 @@ enum ath11k_debug_mask {
 	ATH11K_DBG_ANY		= 0xffffffff,
 };
 
+/* htt_dbg_ext_stats_type */
+enum ath11k_dbg_htt_ext_stats_type {
+	ATH11K_DBG_HTT_EXT_STATS_RESET                      =  0,
+	ATH11K_DBG_HTT_EXT_STATS_PDEV_TX                    =  1,
+	ATH11K_DBG_HTT_EXT_STATS_PDEV_RX                    =  2,
+	ATH11K_DBG_HTT_EXT_STATS_PDEV_TX_HWQ                =  3,
+	ATH11K_DBG_HTT_EXT_STATS_PDEV_TX_SCHED              =  4,
+	ATH11K_DBG_HTT_EXT_STATS_PDEV_ERROR                 =  5,
+	ATH11K_DBG_HTT_EXT_STATS_PDEV_TQM                   =  6,
+	ATH11K_DBG_HTT_EXT_STATS_TQM_CMDQ                   =  7,
+	ATH11K_DBG_HTT_EXT_STATS_TX_DE_INFO                 =  8,
+	ATH11K_DBG_HTT_EXT_STATS_PDEV_TX_RATE               =  9,
+	ATH11K_DBG_HTT_EXT_STATS_PDEV_RX_RATE               =  10,
+	ATH11K_DBG_HTT_EXT_STATS_PEER_INFO                  =  11,
+	ATH11K_DBG_HTT_EXT_STATS_TX_SELFGEN_INFO            =  12,
+	ATH11K_DBG_HTT_EXT_STATS_TX_MU_HWQ                  =  13,
+	ATH11K_DBG_HTT_EXT_STATS_RING_IF_INFO               =  14,
+	ATH11K_DBG_HTT_EXT_STATS_SRNG_INFO                  =  15,
+	ATH11K_DBG_HTT_EXT_STATS_SFM_INFO                   =  16,
+	ATH11K_DBG_HTT_EXT_STATS_PDEV_TX_MU                 =  17,
+	ATH11K_DBG_HTT_EXT_STATS_ACTIVE_PEERS_LIST          =  18,
+	ATH11K_DBG_HTT_EXT_STATS_PDEV_CCA_STATS             =  19,
+	ATH11K_DBG_HTT_EXT_STATS_TWT_SESSIONS               =  20,
+	ATH11K_DBG_HTT_EXT_STATS_REO_RESOURCE_STATS         =  21,
+	ATH11K_DBG_HTT_EXT_STATS_TX_SOUNDING_INFO           =  22,
+
+	/* keep this last */
+	ATH11K_DBG_HTT_NUM_EXT_STATS,
+};
+
+struct debug_htt_stats_req {
+	bool done;
+	u8 pdev_id;
+	u8 type;
+	u8 peer_addr[ETH_ALEN];
+	struct completion cmpln;
+	u32 buf_len;
+	u8 buf[0];
+};
+
+#define ATH11K_HTT_STATS_BUF_SIZE (1024 * 512)
+
 #define ATH11K_FW_STATS_BUF_SIZE (1024 * 1024)
 
 enum ath11k_pktlog_filter {
@@ -101,6 +143,8 @@ void ath11k_debug_fw_stats_process(struct ath11k_base *ab, u8 *evt_buf,
 				   u32 len);
 
 void ath11k_debug_fw_stats_init(struct ath11k *ar);
+int ath11k_dbg_htt_stats_req(struct ath11k *ar,
+			     struct debug_htt_stats_req *stats_req);
 
 static inline int ath11k_debug_is_extd_tx_stats_enabled(struct ath11k *ar)
 {
@@ -154,6 +198,12 @@ static inline int ath11k_debug_is_extd_tx_stats_enabled(struct ath11k *ar)
 }
 
 static inline int ath11k_debug_is_extd_rx_stats_enabled(struct ath11k *ar)
+{
+	return 0;
+}
+
+static inline int ath11k_dbg_htt_stats_req(struct ath11k *ar,
+					   struct debug_htt_stats_req *stats_req)
 {
 	return 0;
 }

@@ -382,6 +382,60 @@ static const struct file_operations fops_rx_stats = {
 	.llseek = default_llseek,
 };
 
+static int
+ath11k_dbg_sta_open_htt_peer_stats(struct inode *inode, struct file *file)
+{
+	struct ieee80211_sta *sta = inode->i_private;
+	struct ath11k_sta *arsta = (struct ath11k_sta *)sta->drv_priv;
+	struct ath11k *ar = arsta->arvif->ar;
+	struct debug_htt_stats_req *stats_req;
+	int ret;
+
+	stats_req = vzalloc(sizeof(*stats_req) + ATH11K_HTT_STATS_BUF_SIZE);
+	if (!stats_req)
+		return -ENOMEM;
+
+	stats_req->type = ATH11K_DBG_HTT_EXT_STATS_PEER_INFO;
+	memcpy(stats_req->peer_addr, sta->addr, ETH_ALEN);
+	ret = ath11k_dbg_htt_stats_req(ar, stats_req);
+	if (ret < 0)
+		goto out;
+
+	file->private_data = stats_req;
+	return 0;
+out:
+	vfree(stats_req);
+	return ret;
+}
+
+static int
+ath11k_dbg_sta_release_htt_peer_stats(struct inode *inode, struct file *file)
+{
+	vfree(file->private_data);
+	return 0;
+}
+
+static ssize_t ath11k_dbg_sta_read_htt_peer_stats(struct file *file,
+						  char __user *user_buf,
+						  size_t count, loff_t *ppos)
+{
+	struct debug_htt_stats_req *stats_req = file->private_data;
+	char *buf;
+	u32 length = 0;
+
+	buf = stats_req->buf;
+	length = min_t(u32, stats_req->buf_len, ATH11K_HTT_STATS_BUF_SIZE);
+	return simple_read_from_buffer(user_buf, count, ppos, buf, length);
+}
+
+static const struct file_operations fops_htt_peer_stats = {
+	.open = ath11k_dbg_sta_open_htt_peer_stats,
+	.release = ath11k_dbg_sta_release_htt_peer_stats,
+	.read = ath11k_dbg_sta_read_htt_peer_stats,
+	.owner = THIS_MODULE,
+	.llseek = default_llseek,
+};
+
 void ath11k_sta_add_debugfs(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 			    struct ieee80211_sta *sta, struct dentry *dir)
 {
@@ -393,4 +447,6 @@ void ath11k_sta_add_debugfs(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 	if (ath11k_debug_is_extd_rx_stats_enabled(ar))
 		debugfs_create_file("rx_stats", 0400, dir, sta,
 				    &fops_rx_stats);
+	debugfs_create_file("htt_peer_stats", 0400, dir, sta,
+			    &fops_htt_peer_stats);
 }

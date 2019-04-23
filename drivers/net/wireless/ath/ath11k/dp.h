@@ -1161,6 +1161,46 @@ struct htt_ext_stats_cfg_cmd {
 	u32 cookie_msb;
 } __packed;
 
+/* htt stats config default params */
+#define HTT_STAT_DEFAULT_RESET_START_OFFSET 0
+#define HTT_STAT_DEFAULT_CFG0_ALL_HWQS 0xffffffff
+#define HTT_STAT_DEFAULT_CFG0_ALL_TXQS 0xffffffff
+#define HTT_STAT_DEFAULT_CFG0_ALL_CMDQS 0xffff
+#define HTT_STAT_DEFAULT_CFG0_ALL_RINGS 0xffff
+#define HTT_STAT_DEFAULT_CFG0_ACTIVE_PEERS 0xff
+#define HTT_STAT_DEFAULT_CFG0_CCA_CUMULATIVE 0x10
+#define HTT_STAT_DEFAULT_CFG0_ACTIVE_VDEVS 0xff
+
+/* HTT_DBG_EXT_STATS_PEER_INFO
+ * PARAMS:
+ * @config_param0:
+ *  [Bit0] - [0] for sw_peer_id, [1] for mac_addr based request
+ *  [Bit15 : Bit 1] htt_peer_stats_req_mode_t
+ *  [Bit31 : Bit16] sw_peer_id
+ * @config_param1:
+ *  peer_stats_req_type_mask:32 (enum htt_peer_stats_tlv_enum)
+ *   0 bit htt_peer_stats_cmn_tlv
+ *   1 bit htt_peer_details_tlv
+ *   2 bit htt_tx_peer_rate_stats_tlv
+ *   3 bit htt_rx_peer_rate_stats_tlv
+ *   4 bit htt_tx_tid_stats_tlv/htt_tx_tid_stats_v1_tlv
+ *   5 bit htt_rx_tid_stats_tlv
+ *   6 bit htt_msdu_flow_stats_tlv
+ * @config_param2: [Bit31 : Bit0] mac_addr31to0
+ * @config_param3: [Bit15 : Bit0] mac_addr47to32
+ *                [Bit31 : Bit16] reserved
+ */
+#define HTT_STAT_PEER_INFO_MAC_ADDR BIT(0)
+#define HTT_STAT_DEFAULT_PEER_REQ_TYPE 0x7f
+
+/* Used to set different configs to the specified stats type.*/
+struct htt_ext_stats_cfg_params {
+	u32 cfg0;
+	u32 cfg1;
+	u32 cfg2;
+	u32 cfg3;
+};
+
 /**
  * @brief target -> host extended statistics upload
  *

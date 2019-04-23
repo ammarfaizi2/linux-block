@@ -12,7 +12,6 @@
 
 #define HTT_DBG_OUT(buf, len, fmt, ...) \
 			scnprintf(buf, len, fmt "\n", ##__VA_ARGS__)
-#define ATH11K_HTT_STATS_BUF_SIZE (1024 * 512)
 
 #define HTT_MAX_STRING_LEN 256
 #define HTT_MAX_PRINT_CHAR_PER_ELEM 15
@@ -29,14 +28,6 @@
 				break;							\
 		}									\
 	} while (0)
-
-struct debug_htt_stats_req {
-	bool done;
-	u8 pdev_id;
-	struct completion cmpln;
-	u32 buf_len;
-	u8 buf[0];
-};
 
 static inline void htt_print_stats_string_tlv(const u32 *tag_buf,
 					      u16 tag_len,
@@ -4262,10 +4253,11 @@ static ssize_t ath11k_write_htt_stats_type(struct file *file,
 	if (ret)
 		return ret;
 
-	if (type >= HTT_DBG_NUM_EXT_STATS)
+	if (type >= ATH11K_DBG_HTT_NUM_EXT_STATS)
 		return -E2BIG;
 
-	if (type == HTT_DBG_EXT_STATS_RESET)
+	if (type == ATH11K_DBG_HTT_EXT_STATS_RESET ||
+	    type == ATH11K_DBG_HTT_EXT_STATS_PEER_INFO)
 		return -EPERM;
 
 	ar->debug.htt_stats.type = type;
@@ -4275,20 +4267,63 @@ static ssize_t ath11k_write_htt_stats_type(struct file *file,
 	return ret;
 }
 
-static int ath11k_open_htt_stats(struct inode *inode, struct file *file)
+static int ath11k_prep_htt_stats_cfg_params(struct ath11k *ar, u8 type,
+					    const u8 *mac_addr,
+					    struct htt_ext_stats_cfg_params *cfg_params)
 {
-	struct ath11k *ar = inode->i_private;
-	struct debug_htt_stats_req *stats_req;
-	u8 type = ar->debug.htt_stats.type;
+	if (!cfg_params)
+		return -EINVAL;
+
+	switch (type) {
+	case ATH11K_DBG_HTT_EXT_STATS_PDEV_TX_HWQ:
+	case ATH11K_DBG_HTT_EXT_STATS_TX_MU_HWQ:
+		cfg_params->cfg0 = HTT_STAT_DEFAULT_CFG0_ALL_HWQS;
+		break;
+	case ATH11K_DBG_HTT_EXT_STATS_PDEV_TX_SCHED:
+		cfg_params->cfg0 = HTT_STAT_DEFAULT_CFG0_ALL_TXQS;
+		break;
+	case ATH11K_DBG_HTT_EXT_STATS_TQM_CMDQ:
+		cfg_params->cfg0 = HTT_STAT_DEFAULT_CFG0_ALL_CMDQS;
+		break;
+	case ATH11K_DBG_HTT_EXT_STATS_PEER_INFO:
+		cfg_params->cfg0 = HTT_STAT_PEER_INFO_MAC_ADDR;
+		cfg_params->cfg0 |= FIELD_PREP(GENMASK(15, 1),
+					HTT_PEER_STATS_REQ_MODE_FLUSH_TQM);
+		cfg_params->cfg1 = HTT_STAT_DEFAULT_PEER_REQ_TYPE;
+		cfg_params->cfg2 |= FIELD_PREP(GENMASK(7, 0), mac_addr[0]);
+		cfg_params->cfg2 |= FIELD_PREP(GENMASK(15, 8), mac_addr[1]);
+		cfg_params->cfg2 |= FIELD_PREP(GENMASK(23, 16), mac_addr[2]);
+		cfg_params->cfg2 |= FIELD_PREP(GENMASK(31, 24), mac_addr[3]);
+		cfg_params->cfg3 |= FIELD_PREP(GENMASK(7, 0), mac_addr[4]);
+		cfg_params->cfg3 |= FIELD_PREP(GENMASK(15, 8), mac_addr[5]);
+		break;
+	case ATH11K_DBG_HTT_EXT_STATS_RING_IF_INFO:
+	case ATH11K_DBG_HTT_EXT_STATS_SRNG_INFO:
+		cfg_params->cfg0 = HTT_STAT_DEFAULT_CFG0_ALL_RINGS;
+		break;
+	case ATH11K_DBG_HTT_EXT_STATS_ACTIVE_PEERS_LIST:
+		cfg_params->cfg0 = HTT_STAT_DEFAULT_CFG0_ACTIVE_PEERS;
+		break;
+	case ATH11K_DBG_HTT_EXT_STATS_PDEV_CCA_STATS:
+		cfg_params->cfg0 = HTT_STAT_DEFAULT_CFG0_CCA_CUMULATIVE;
+		break;
+	case ATH11K_DBG_HTT_EXT_STATS_TX_SOUNDING_INFO:
+		cfg_params->cfg0 = HTT_STAT_DEFAULT_CFG0_ACTIVE_VDEVS;
+		break;
+	default:
+		break;
+	}
+
+	return 0;
+}
+
+int ath11k_dbg_htt_stats_req(struct ath11k *ar,
+			     struct debug_htt_stats_req *stats_req)
+{
+	u8 type = stats_req->type;
 	u64 cookie = 0;
 	int ret, pdev_id = ar->pdev->pdev_id;
-
-	if (type == HTT_DBG_EXT_STATS_RESET)
-		return -EPERM;
-
-	stats_req = vmalloc(sizeof(*stats_req) + ATH11K_HTT_STATS_BUF_SIZE);
-	if (!stats_req)
-		return -ENOMEM;
+	struct htt_ext_stats_cfg_params cfg_params = { 0 };
 
 	init_completion(&stats_req->cmpln);
 
@@ -4297,12 +4332,19 @@ static int ath11k_open_htt_stats(struct inode *inode, struct file *file)
 
 	cookie = (u64)(uintptr_t)stats_req;
 
+	ret = ath11k_prep_htt_stats_cfg_params(ar, type, stats_req->peer_addr,
+					       &cfg_params);
+	if (ret) {
+		ath11k_warn(ar->ab, "failed to set htt stats cfg params: %d\n", ret);
+		return ret;
+	}
+
 	mutex_lock(&ar->conf_mutex);
-	ret = ath11k_dp_htt_h2t_ext_stats_req(ar, type, cookie);
+	ret = ath11k_dp_htt_h2t_ext_stats_req(ar, type, &cfg_params, cookie);
 	if (ret) {
 		ath11k_warn(ar->ab, "failed to send htt stats request: %d\n", ret);
 		mutex_unlock(&ar->conf_mutex);
-		goto out;
+		return ret;
 	}
 	mutex_unlock(&ar->conf_mutex);
 
@@ -4312,11 +4354,32 @@ static int ath11k_open_htt_stats(struct inode *inode, struct file *file)
 			stats_req->done = true;
 			spin_unlock_bh(&ar->debug.htt_stats.lock);
 			ath11k_warn(ar->ab, "stats request timed out\n");
-			ret = -ETIMEDOUT;
-			goto out;
+			return -ETIMEDOUT;
 		}
 		spin_unlock_bh(&ar->debug.htt_stats.lock);
 	}
+
+	return 0;
+}
+
+static int ath11k_open_htt_stats(struct inode *inode, struct file *file)
+{
+	struct ath11k *ar = inode->i_private;
+	struct debug_htt_stats_req *stats_req;
+	u8 type = ar->debug.htt_stats.type;
+	int ret;
+
+	if (type == ATH11K_DBG_HTT_EXT_STATS_RESET)
+		return -EPERM;
+
+	stats_req = vzalloc(sizeof(*stats_req) + ATH11K_HTT_STATS_BUF_SIZE);
+	if (!stats_req)
+		return -ENOMEM;
+
+	stats_req->type = type;
+	ret = ath11k_dbg_htt_stats_req(ar, stats_req);
+	if (ret < 0)
+		goto out;
 
 	file->private_data = stats_req;
 	return 0;

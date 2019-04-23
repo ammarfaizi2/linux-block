@@ -6,36 +6,6 @@
 #ifndef DEBUG_HTT_STATS_H
 #define DEBUG_HTT_STATS_H
 
-/* htt_dbg_ext_stats_type */
-enum htt_dbg_ext_stats_type {
-	HTT_DBG_EXT_STATS_RESET                      =  0,
-	HTT_DBG_EXT_STATS_PDEV_TX                    =  1,
-	HTT_DBG_EXT_STATS_PDEV_RX                    =  2,
-	HTT_DBG_EXT_STATS_PDEV_TX_HWQ                =  3,
-	HTT_DBG_EXT_STATS_PDEV_TX_SCHED              =  4,
-	HTT_DBG_EXT_STATS_PDEV_ERROR                 =  5,
-	HTT_DBG_EXT_STATS_PDEV_TQM                   =  6,
-	HTT_DBG_EXT_STATS_TQM_CMDQ                   =  7,
-	HTT_DBG_EXT_STATS_TX_DE_INFO                 =  8,
-	HTT_DBG_EXT_STATS_PDEV_TX_RATE               =  9,
-	HTT_DBG_EXT_STATS_PDEV_RX_RATE               =  10,
-	HTT_DBG_EXT_STATS_PEER_INFO                  =  11,
-	HTT_DBG_EXT_STATS_TX_SELFGEN_INFO            =  12,
-	HTT_DBG_EXT_STATS_TX_MU_HWQ                  =  13,
-	HTT_DBG_EXT_STATS_RING_IF_INFO               =  14,
-	HTT_DBG_EXT_STATS_SRNG_INFO                  =  15,
-	HTT_DBG_EXT_STATS_SFM_INFO                   =  16,
-	HTT_DBG_EXT_STATS_PDEV_TX_MU                 =  17,
-	HTT_DBG_EXT_STATS_ACTIVE_PEERS_LIST          =  18,
-	HTT_DBG_EXT_STATS_PDEV_CCA_STATS             =  19,
-	HTT_DBG_EXT_STATS_TWT_SESSIONS               =  20,
-	HTT_DBG_EXT_STATS_REO_RESOURCE_STATS         =  21,
-	HTT_DBG_EXT_STATS_TX_SOUNDING_INFO           =  22,
-
-	/* keep this last */
-	HTT_DBG_NUM_EXT_STATS,
-};
-
 enum htt_tlv_tag_t {
 	HTT_STATS_TX_PDEV_CMN_TAG                           = 0,
 	HTT_STATS_TX_PDEV_UNDERRUN_TAG                      = 1,
