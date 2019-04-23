@@ -6330,7 +6330,14 @@ static u64 perf_virt_to_phys(u64 virt)
 	if (!virt)
 		return 0;
 
-	if (virt >= TASK_SIZE) {
+	/*
+	 * XXX: This code, and even the function signature is utter nonsense
+	 * on enlightened architectures like s390x, where a virtual address
+	 * can simultaneously be a valid user address *and* a valid kernel
+	 * address.
+	 */
+	
+	if (virt >= TASK_SIZE_MAX) {
 		/* If it's vmalloc()d memory, leave phys_addr as 0 */
 		if (virt_addr_valid((void *)(uintptr_t)virt) &&
 		    !(virt >= VMALLOC_START && virt < VMALLOC_END))
