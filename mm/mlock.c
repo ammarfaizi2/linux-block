@@ -815,7 +815,7 @@ SYSCALL_DEFINE1(mlockall, int, flags)
 		ret = apply_mlockall_flags(flags);
 	up_write(&current->mm->mmap_sem);
 	if (!ret && (flags & MCL_CURRENT))
-		mm_populate(0, TASK_SIZE);
+		mm_populate(0, TASK_SIZE_MAX);
 
 	return ret;
 }
