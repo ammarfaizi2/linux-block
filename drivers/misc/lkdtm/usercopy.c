@@ -69,7 +69,7 @@ static noinline void do_usercopy_stack(bool to_user, bool bad_frame)
 	user_addr = vm_mmap(NULL, 0, PAGE_SIZE,
 			    PROT_READ | PROT_WRITE | PROT_EXEC,
 			    MAP_ANONYMOUS | MAP_PRIVATE, 0);
-	if (user_addr >= TASK_SIZE) {
+	if (IS_ERR_VALUE(user_addr)) {
 		pr_warn("Failed to allocate user memory\n");
 		return;
 	}
@@ -137,7 +137,7 @@ static void do_usercopy_heap_size(bool to_user)
 	user_addr = vm_mmap(NULL, 0, PAGE_SIZE,
 			    PROT_READ | PROT_WRITE | PROT_EXEC,
 			    MAP_ANONYMOUS | MAP_PRIVATE, 0);
-	if (user_addr >= TASK_SIZE) {
+	if (IS_ERR_VALUE(user_addr)) {
 		pr_warn("Failed to allocate user memory\n");
 		goto free_kernel;
 	}
@@ -211,7 +211,7 @@ static void do_usercopy_heap_whitelist(bool to_user)
 	user_alloc = vm_mmap(NULL, 0, PAGE_SIZE,
 			    PROT_READ | PROT_WRITE | PROT_EXEC,
 			    MAP_ANONYMOUS | MAP_PRIVATE, 0);
-	if (user_alloc >= TASK_SIZE) {
+	if (IS_ERR_VALUE(user_alloc)) {
 		pr_warn("Failed to allocate user memory\n");
 		goto free_alloc;
 	}
