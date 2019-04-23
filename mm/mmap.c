@@ -2068,7 +2068,7 @@ found_highest:
 
 
 #ifndef arch_get_mmap_end
-#define arch_get_mmap_end(addr)	(TASK_SIZE)
+#define arch_get_mmap_end(addr)	current_syscall_task_size()
 #endif
 
 #ifndef arch_get_mmap_base
@@ -2190,7 +2190,7 @@ get_unmapped_area(struct file *file, unsigned long addr, unsigned long len,
 		return error;
 
 	/* Careful about overflows.. */
-	if (len > TASK_SIZE)
+	if (len > current_syscall_task_size())
 		return -ENOMEM;
 
 	get_area = current->mm->get_unmapped_area;
@@ -2211,7 +2211,7 @@ get_unmapped_area(struct file *file, unsigned long addr, unsigned long len,
 	if (IS_ERR_VALUE(addr))
 		return addr;
 
-	if (addr > TASK_SIZE - len)
+	if (addr > current_syscall_task_size() - len)
 		return -ENOMEM;
 	if (offset_in_page(addr))
 		return -EINVAL;
