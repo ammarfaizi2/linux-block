@@ -2728,7 +2728,7 @@ int __do_munmap(struct mm_struct *mm, unsigned long start, size_t len,
 	unsigned long end;
 	struct vm_area_struct *vma, *prev, *last;
 
-	if ((offset_in_page(start)) || start > TASK_SIZE_MAX ||
+	if ((offset_in_page(start)) || start >= TASK_SIZE_MAX ||
 	    len > TASK_SIZE_MAX - start)
 		return -EINVAL;
 
