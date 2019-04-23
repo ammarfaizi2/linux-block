@@ -368,6 +368,7 @@ struct ath11k_fw_stats {
 
 struct ath11k_dbg_htt_stats {
 	u8 type;
+	u8 reset;
 	/* protects shared stats req buffer */
 	spinlock_t lock;
 };

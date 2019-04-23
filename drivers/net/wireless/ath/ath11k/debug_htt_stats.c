@@ -4407,6 +4407,57 @@ static ssize_t ath11k_read_htt_stats(struct file *file,
 	return simple_read_from_buffer(user_buf, count, ppos, buf, length);
 }
 
+static ssize_t ath11k_read_htt_stats_reset(struct file *file,
+					   char __user *user_buf,
+					   size_t count, loff_t *ppos)
+{
+	struct ath11k *ar = file->private_data;
+	char buf[32];
+	size_t len;
+
+	len = scnprintf(buf, sizeof(buf), "%u\n", ar->debug.htt_stats.reset);
+
+	return simple_read_from_buffer(user_buf, count, ppos, buf, len);
+}
+
+static ssize_t ath11k_write_htt_stats_reset(struct file *file,
+					    const char __user *user_buf,
+					    size_t count, loff_t *ppos)
+{
+	struct ath11k *ar = file->private_data;
+	u8 type;
+	struct htt_ext_stats_cfg_params cfg_params = { 0 };
+	int ret;
+
+	ret = kstrtou8_from_user(user_buf, count, 0, &type);
+	if (ret)
+		return ret;
+
+	if (type >= ATH11K_DBG_HTT_NUM_EXT_STATS ||
+	    type == ATH11K_DBG_HTT_EXT_STATS_RESET)
+		return -E2BIG;
+
+	mutex_lock(&ar->conf_mutex);
+	cfg_params.cfg0 = HTT_STAT_DEFAULT_RESET_START_OFFSET;
+	cfg_params.cfg1 = 1 << (cfg_params.cfg0 + type);
+	ret = ath11k_dp_htt_h2t_ext_stats_req(ar,
+					      ATH11K_DBG_HTT_EXT_STATS_RESET,
+					      &cfg_params,
+					      0ULL);
+	if (ret) {
+		ath11k_warn(ar->ab, "failed to send htt stats request: %d\n", ret);
+		mutex_unlock(&ar->conf_mutex);
+		return ret;
+	}
+
+	ar->debug.htt_stats.reset = type;
+	mutex_unlock(&ar->conf_mutex);
+
+	ret = count;
+
+	return ret;
+}
+
 static const struct file_operations fops_htt_stats_type = {
 	.read = ath11k_read_htt_stats_type,
 	.write = ath11k_write_htt_stats_type,
@@ -4423,6 +4474,14 @@ static const struct file_operations fops_dump_htt_stats = {
 	.llseek = default_llseek,
 };
 
+static const struct file_operations fops_htt_stats_reset = {
+	.read = ath11k_read_htt_stats_reset,
+	.write = ath11k_write_htt_stats_reset,
+	.open = simple_open,
+	.owner = THIS_MODULE,
+	.llseek = default_llseek,
+};
+
 void ath11k_htt_stats_debugfs_init(struct ath11k *ar)
 {
 	spin_lock_init(&ar->debug.htt_stats.lock);
@@ -4430,4 +4489,6 @@ void ath11k_htt_stats_debugfs_init(struct ath11k *ar)
 			    ar, &fops_htt_stats_type);
 	debugfs_create_file("htt_stats", 0400, ar->debug.debugfs_pdev,
 			    ar, &fops_dump_htt_stats);
+	debugfs_create_file("htt_stats_reset", 0600, ar->debug.debugfs_pdev,
+			    ar, &fops_htt_stats_reset);
 }
