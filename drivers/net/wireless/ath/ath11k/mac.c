@@ -3910,23 +3910,25 @@ static int ath11k_mac_vdev_stop(struct ath11k_vif *arvif)
 
 	reinit_completion(&ar->vdev_setup_done);
 
+	spin_lock_bh(&ar->data_lock);
+
+	ar->vdev_stop_status.stop_in_progress = true;
+	ar->vdev_stop_status.vdev_id = arvif->vdev_id;
+
+	spin_unlock_bh(&ar->data_lock);
+
 	ret = ath11k_wmi_vdev_stop(ar, arvif->vdev_id);
 	if (ret) {
 		ath11k_warn(ar->ab, "failed to stop WMI vdev %i: %d\n",
 			    arvif->vdev_id, ret);
-		return ret;
+		goto err;
 	}
-
-	spin_lock_bh(&ar->data_lock);
-	ar->vdev_stop_status.stop_in_progress = true;
-	ar->vdev_stop_status.vdev_id = arvif->vdev_id;
-	spin_unlock_bh(&ar->data_lock);
 
 	ret = ath11k_mac_vdev_setup_sync(ar);
 	if (ret) {
 		ath11k_warn(ar->ab, "failed to synchronize setup for vdev %i: %d\n",
 			    arvif->vdev_id, ret);
-		return ret;
+		goto err;
 	}
 
 	WARN_ON(ar->num_started_vdevs == 0);
@@ -3936,6 +3938,12 @@ static int ath11k_mac_vdev_stop(struct ath11k_vif *arvif)
 	/* TODO: Recalc radar */
 
 	return 0;
+err:
+	spin_lock_bh(&ar->data_lock);
+	ar->vdev_stop_status.stop_in_progress = false;
+	spin_unlock_bh(&ar->data_lock);
+
+	return ret;
 }
 
 static int ath11k_mac_vdev_start(struct ath11k_vif *arvif,
