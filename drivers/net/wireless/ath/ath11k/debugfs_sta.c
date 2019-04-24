@@ -436,6 +436,84 @@ static const struct file_operations fops_htt_peer_stats = {
 	.llseek = default_llseek,
 };
 
+static ssize_t ath11k_dbg_sta_write_peer_pktlog(struct file *file,
+						const char __user *ubuf,
+						size_t count, loff_t *ppos)
+{
+	struct ieee80211_sta *sta = file->private_data;
+	struct ath11k_sta *arsta = (struct ath11k_sta *)sta->drv_priv;
+	struct ath11k *ar = arsta->arvif->ar;
+	u8 buf[32] = {0};
+	int ret, enable;
+	ssize_t rc;
+
+	mutex_lock(&ar->conf_mutex);
+
+	if (ar->state != ATH11K_STATE_ON) {
+		ret = -ENETDOWN;
+		goto out;
+	}
+
+	rc = simple_write_to_buffer(buf, sizeof(buf) - 1, ppos, ubuf, count);
+	if (rc < 0) {
+		ret = rc;
+		goto out;
+	}
+	buf[rc] = '\0';
+
+	ret = sscanf(buf, "%d", &enable);
+	if (ret != 1) {
+		ret = -EINVAL;
+		goto out;
+	}
+
+	ar->debug.pktlog_peer_valid = enable;
+	memcpy(ar->debug.pktlog_peer_addr, sta->addr, ETH_ALEN);
+
+	/* Send peer based pktlog enable/disable */
+	ret = ath11k_wmi_pdev_peer_pktlog_filter(ar, sta->addr, enable);
+	if (ret) {
+		ath11k_warn(ar->ab, "failed to set peer pktlog filter %pM: %d\n",
+			    sta->addr, ret);
+		goto out;
+	}
+
+	ath11k_dbg(ar->ab, ATH11K_DBG_WMI, "peer pktlog filter set to %d\n",
+		   enable);
+	ret = count;
+
+out:
+	mutex_unlock(&ar->conf_mutex);
+	return ret;
+}
+
+static ssize_t ath11k_dbg_sta_read_peer_pktlog(struct file *file,
+					       char __user *ubuf,
+					       size_t count, loff_t *ppos)
+{
+	struct ieee80211_sta *sta = file->private_data;
+	struct ath11k_sta *arsta = (struct ath11k_sta *)sta->drv_priv;
+	struct ath11k *ar = arsta->arvif->ar;
+	char buf[32] = {0};
+	int len;
+
+	mutex_lock(&ar->conf_mutex);
+	len = scnprintf(buf, sizeof(buf), "%08x %pM\n",
+			ar->debug.pktlog_peer_valid,
+			ar->debug.pktlog_peer_addr);
+	mutex_unlock(&ar->conf_mutex);
+
+	return simple_read_from_buffer(ubuf, count, ppos, buf, len);
+}
+
+static const struct file_operations fops_peer_pktlog = {
+	.write = ath11k_dbg_sta_write_peer_pktlog,
+	.read = ath11k_dbg_sta_read_peer_pktlog,
+	.open = simple_open,
+	.owner = THIS_MODULE,
+	.llseek = default_llseek,
+};
+
 void ath11k_sta_add_debugfs(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 			    struct ieee80211_sta *sta, struct dentry *dir)
 {
@@ -447,6 +525,10 @@ void ath11k_sta_add_debugfs(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 	if (ath11k_debug_is_extd_rx_stats_enabled(ar))
 		debugfs_create_file("rx_stats", 0400, dir, sta,
 				    &fops_rx_stats);
+
 	debugfs_create_file("htt_peer_stats", 0400, dir, sta,
 			    &fops_htt_peer_stats);
+
+	debugfs_create_file("peer_pktlog", 0644, dir, sta,
+			    &fops_peer_pktlog);
 }

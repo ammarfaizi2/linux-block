@@ -992,10 +992,9 @@ static ssize_t ath11k_write_pktlog_filter(struct file *file,
 {
 	struct ath11k *ar = file->private_data;
 	struct htt_rx_ring_tlv_filter tlv_filter = {0};
-	u32 rx_filter = 0, ring_id, filter, peer_valid;
-	u8 buf[128] = {0}, mac_addr[ETH_ALEN] = {0}, mode;
-	char *token, *sptr;
-	int ret, i;
+	u32 rx_filter = 0, ring_id, filter, mode;
+	u8 buf[128] = {0};
+	int ret;
 	ssize_t rc;
 
 	mutex_lock(&ar->conf_mutex);
@@ -1010,21 +1009,10 @@ static ssize_t ath11k_write_pktlog_filter(struct file *file,
 		goto out;
 	}
 	buf[rc] = '\0';
-	sptr = buf;
 
-	token = strsep(&sptr, " ");
-	if (!token) {
+	ret = sscanf(buf, "0x%x %u", &filter, &mode);
+	if (ret != 2) {
 		ret = -EINVAL;
-		goto out;
-	}
-
-	if (kstrtou32(token, 0, &filter)) {
-		ret = -EINVAL;
-		goto out;
-	}
-
-	if (filter == ar->debug.pktlog_filter) {
-		ret = count;
 		goto out;
 	}
 
@@ -1044,36 +1032,23 @@ static ssize_t ath11k_write_pktlog_filter(struct file *file,
 		}
 	}
 
-	token = strsep(&sptr, " ");
-	if (!token) {
-		ret = -EINVAL;
-		goto out;
-	}
-
-	if (kstrtou8(token, 0, &mode)) {
-		ret = -EINVAL;
-		goto out;
-	}
+#define HTT_RX_FILTER_TLV_LITE_MODE \
+			(HTT_RX_FILTER_TLV_FLAGS_PPDU_START | \
+			HTT_RX_FILTER_TLV_FLAGS_PPDU_END | \
+			HTT_RX_FILTER_TLV_FLAGS_PPDU_END_USER_STATS | \
+			HTT_RX_FILTER_TLV_FLAGS_PPDU_END_USER_STATS_EXT | \
+			HTT_RX_FILTER_TLV_FLAGS_PPDU_END_STATUS_DONE | \
+			HTT_RX_FILTER_TLV_FLAGS_MPDU_START)
 
 	if (mode == ATH11K_PKTLOG_MODE_FULL) {
-		rx_filter = HTT_RX_FILTER_TLV_FLAGS_PPDU_START |
-			    HTT_RX_FILTER_TLV_FLAGS_PPDU_END |
-			    HTT_RX_FILTER_TLV_FLAGS_PPDU_END_USER_STATS |
-			    HTT_RX_FILTER_TLV_FLAGS_PPDU_END_USER_STATS_EXT |
-			    HTT_RX_FILTER_TLV_FLAGS_PPDU_END_STATUS_DONE |
-			    HTT_RX_FILTER_TLV_FLAGS_MPDU_START |
+		rx_filter = HTT_RX_FILTER_TLV_LITE_MODE |
 			    HTT_RX_FILTER_TLV_FLAGS_MSDU_START |
 			    HTT_RX_FILTER_TLV_FLAGS_MSDU_END |
 			    HTT_RX_FILTER_TLV_FLAGS_MPDU_END |
 			    HTT_RX_FILTER_TLV_FLAGS_PACKET_HEADER |
 			    HTT_RX_FILTER_TLV_FLAGS_ATTENTION;
 	} else if (mode == ATH11K_PKTLOG_MODE_LITE) {
-		rx_filter = HTT_RX_FILTER_TLV_FLAGS_PPDU_START |
-			    HTT_RX_FILTER_TLV_FLAGS_PPDU_END |
-			    HTT_RX_FILTER_TLV_FLAGS_PPDU_END_USER_STATS |
-			    HTT_RX_FILTER_TLV_FLAGS_PPDU_END_USER_STATS_EXT |
-			    HTT_RX_FILTER_TLV_FLAGS_PPDU_END_STATUS_DONE |
-			    HTT_RX_FILTER_TLV_FLAGS_MPDU_START;
+		rx_filter = HTT_RX_FILTER_TLV_LITE_MODE;
 	}
 
 	tlv_filter.rx_filter = rx_filter;
@@ -1089,53 +1064,16 @@ static ssize_t ath11k_write_pktlog_filter(struct file *file,
 	ret = ath11k_dp_htt_rx_filter_setup(ar->ab, ring_id, ar->dp.mac_id,
 					    HAL_RXDMA_MONITOR_STATUS,
 					    DP_RX_BUFFER_SIZE, &tlv_filter);
-
 	if (ret) {
 		ath11k_warn(ar->ab, "failed to set rx filter for moniter status ring\n");
 		goto out;
 	}
 
-	token = strsep(&sptr, " ");
-	if (!token) {
-		ret = -EINVAL;
-		goto out;
-	}
-
-	if (kstrtou32(token, 0, &peer_valid)) {
-		ret = -EINVAL;
-		goto out;
-	}
-
-	if (peer_valid) {
-		token = strsep(&sptr, " ");
-		if (token) {
-			for (i = 0; i < ETH_ALEN - 1; i++) {
-				token = strsep(&sptr, ":");
-				if (!token)
-					return -EINVAL;
-
-				if (kstrtou8(token, 16, &mac_addr[i]))
-					return -EINVAL;
-			}
-			memcpy(ar->debug.pktlog_peer_addr, mac_addr, ETH_ALEN);
-		}
-	}
-
-	/* Send peer based pktlog enable/disable */
-	ret = ath11k_wmi_pdev_peer_pktlog_filter(ar, mac_addr, peer_valid);
-	if (ret) {
-		ath11k_warn(ar->ab, "failed to set peer pktlog filter %pM: %d\n",
-			    mac_addr, ret);
-		goto out;
-	}
-
-	ath11k_dbg(ar->ab, ATH11K_DBG_WMI, "pktlog filter %d mode %s peer addr %pM\n",
-		   filter, ((mode == ATH11K_PKTLOG_MODE_FULL)?"full":"lite"),
-		   ar->debug.pktlog_peer_addr);
+	ath11k_dbg(ar->ab, ATH11K_DBG_WMI, "pktlog filter %d mode %s\n",
+		   filter, ((mode == ATH11K_PKTLOG_MODE_FULL)?"full":"lite"));
 
 	ar->debug.pktlog_filter = filter;
 	ar->debug.pktlog_mode = mode;
-	ar->debug.pktlog_peer_valid = peer_valid;
 	ret = count;
 
 out:
@@ -1153,10 +1091,9 @@ static ssize_t ath11k_read_pktlog_filter(struct file *file,
 	int len = 0;
 
 	mutex_lock(&ar->conf_mutex);
-	len = scnprintf(buf, sizeof(buf) - len, "%08x %08x %08x\n",
+	len = scnprintf(buf, sizeof(buf) - len, "%08x %08x\n",
 			ar->debug.pktlog_filter,
-			ar->debug.pktlog_mode,
-			ar->debug.pktlog_peer_valid);
+			ar->debug.pktlog_mode);
 	mutex_unlock(&ar->conf_mutex);
 
 	return simple_read_from_buffer(ubuf, count, ppos, buf, len);

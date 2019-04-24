@@ -988,7 +988,7 @@ static int ath11k_htt_pull_ppdu_stats(struct ath11k_base *ab,
 	ppdu_id = *((u32 *)data + 1);
 	ar = ab->pdevs[pdev_id].ar;
 
-	if (!ar->debug.pktlog_mode == ATH11K_PKTLOG_MODE_LITE) {
+	if (ar->debug.pktlog_mode == ATH11K_PKTLOG_MODE_LITE) {
 		/* TODO update the pktlog tracing */
 	}
 
