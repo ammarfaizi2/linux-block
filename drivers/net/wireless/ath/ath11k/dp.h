@@ -65,6 +65,11 @@ struct dp_tx_ring {
 	u32 num_tx_pending;
 	/* Protects txbuf_idr and num_pending */
 	spinlock_t tx_idr_lock;
+	DECLARE_KFIFO_PTR(tx_status_fifo, struct hal_wbm_release_ring);
+	/* lock to protect tx_status_fifo because tx_status_fifo can be
+	 * accessed concurrently.
+	 */
+	spinlock_t tx_status_lock;
 };
 
 struct ath11k_pdev_dp {
@@ -158,11 +163,6 @@ struct ath11k_dp {
 	struct list_head reo_cmd_cache_flush_list;
 	/* protects access to reo_cmd_list and reo_cmd_cache_flush_list */
 	spinlock_t reo_cmd_lock;
-	DECLARE_KFIFO_PTR(tx_status_fifo, struct hal_wbm_release_ring);
-	/* lock to protect tx_status_fifo because tx_status_fifo can be
-	 * accessed concurrently.
-	 */
-	spinlock_t tx_status_lock;
 };
 
 /* HTT definitions */

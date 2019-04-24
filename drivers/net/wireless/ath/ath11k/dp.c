@@ -820,9 +820,11 @@ void ath11k_dp_free(struct ath11k_base *sc)
 			     ath11k_dp_tx_pending_cleanup, sc);
 		idr_destroy(&dp->tx_ring[i].txbuf_idr);
 		spin_unlock_bh(&dp->tx_ring[i].tx_idr_lock);
-	}
 
-	kfifo_free(&dp->tx_status_fifo);
+		spin_lock_bh(&dp->tx_ring[i].tx_status_lock);
+		kfifo_free(&dp->tx_ring[i].tx_status_fifo);
+		spin_unlock_bh(&dp->tx_ring[i].tx_status_lock);
+	}
 
 	/* Deinit any SOC level resource */
 }
@@ -850,19 +852,19 @@ int ath11k_dp_alloc(struct ath11k_base *sc)
 	if (ret)
 		goto fail_link_desc_cleanup;
 
+	size = roundup_pow_of_two(DP_TX_COMP_RING_SIZE);
+
 	for (i = 0; i < DP_TCL_NUM_RING_MAX; i++) {
 		idr_init(&dp->tx_ring[i].txbuf_idr);
 		spin_lock_init(&dp->tx_ring[i].tx_idr_lock);
 		dp->tx_ring[i].tcl_data_ring_id = i;
+
+		spin_lock_init(&dp->tx_ring[i].tx_status_lock);
+		ret = kfifo_alloc(&dp->tx_ring[i].tx_status_fifo, size,
+				  GFP_KERNEL);
+		if (ret)
+			goto fail_cmn_srng_cleanup;
 	}
-
-	size = roundup_pow_of_two(DP_TX_COMP_RING_SIZE);
-
-	spin_lock_init(&dp->tx_status_lock);
-	ret = kfifo_alloc(&dp->tx_status_fifo, size,
-			  GFP_KERNEL);
-	if (ret)
-		goto fail_cmn_srng_cleanup;
 
 	for (i = 0; i < HAL_DSCP_TID_MAP_TBL_NUM_ENTRIES_MAX; i++)
 		ath11k_hal_tx_set_dscp_tid_map(sc, i);

@@ -435,7 +435,7 @@ void ath11k_dp_tx_completion_handler(struct ath11k_base *ab, int ring_id)
 	struct sk_buff *msdu;
 	struct hal_wbm_release_ring tx_status;
 	struct hal_tx_status ts;
-	struct dp_tx_ring *tx_ring;
+	struct dp_tx_ring *tx_ring = &dp->tx_ring[ring_id];
 	u32 *desc;
 	u32 msdu_id;
 	u8 pool_id;
@@ -446,27 +446,27 @@ void ath11k_dp_tx_completion_handler(struct ath11k_base *ab, int ring_id)
 
 	ath11k_hal_srng_access_begin(ab, status_ring);
 
-	spin_lock_bh(&dp->tx_status_lock);
-	while (!kfifo_is_full(&dp->tx_status_fifo) &&
+	spin_lock_bh(&tx_ring->tx_status_lock);
+	while (!kfifo_is_full(&tx_ring->tx_status_fifo) &&
 	       (desc = ath11k_hal_srng_dst_get_next_entry(ab, status_ring))) {
 		ath11k_hal_tx_status_desc_sync((void *)desc,
 					       (void *)&tx_status);
-		kfifo_put(&dp->tx_status_fifo, tx_status);
+		kfifo_put(&tx_ring->tx_status_fifo, tx_status);
 	}
 
 	if ((ath11k_hal_srng_dst_peek(ab, status_ring) != NULL) &&
-	    kfifo_is_full(&dp->tx_status_fifo)) {
+	    kfifo_is_full(&tx_ring->tx_status_fifo)) {
 		/* TODO: Process pending tx_status messages when kfifo_is_full() */
 		ath11k_warn(ab, "Unable to process some of the tx_status ring desc because status_fifo is full \n");
 	}
 
-	spin_unlock_bh(&dp->tx_status_lock);
+	spin_unlock_bh(&tx_ring->tx_status_lock);
 
 	ath11k_hal_srng_access_end(ab, status_ring);
 	spin_unlock_bh(&status_ring->lock);
 
-	spin_lock_bh(&dp->tx_status_lock);
-	while (kfifo_get(&dp->tx_status_fifo, &tx_status)) {
+	spin_lock_bh(&tx_ring->tx_status_lock);
+	while (kfifo_get(&tx_ring->tx_status_fifo, &tx_status)) {
 		memset(&ts, 0, sizeof(ts));
 		ath11k_hal_tx_status_parse(ab, &tx_status, &ts);
 
@@ -474,7 +474,6 @@ void ath11k_dp_tx_completion_handler(struct ath11k_base *ab, int ring_id)
 		pool_id = FIELD_GET(DP_TX_DESC_ID_POOL_ID, ts.desc_id);
 		msdu_id = FIELD_GET(DP_TX_DESC_ID_MSDU_ID, ts.desc_id);
 		tcl_id = ath11k_txq_tcl_ring_map[pool_id];
-		tx_ring = &dp->tx_ring[tcl_id];
 
 		if (ts.buf_rel_source == HAL_WBM_REL_SRC_MODULE_FW) {
 			ath11k_dp_process_htt_tx_complete(ab,
@@ -506,7 +505,7 @@ void ath11k_dp_tx_completion_handler(struct ath11k_base *ab, int ring_id)
 		 */
 		ath11k_dp_tx_complete_msdu(ar, msdu, &ts);
 	}
-	spin_unlock_bh(&dp->tx_status_lock);
+	spin_unlock_bh(&tx_ring->tx_status_lock);
 }
 
 int ath11k_dp_send_reo_cmd(struct ath11k_base *ab, struct dp_rx_tid *rx_tid,
