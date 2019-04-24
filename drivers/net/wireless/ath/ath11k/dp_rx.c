@@ -1643,23 +1643,23 @@ static void ath11k_dp_rx_h_rate(struct ath11k *ar, void *rx_desc,
 								is_cck);
 		break;
 	case RX_MSDU_START_PKT_TYPE_11N:
+		rx_status->encoding = RX_ENC_HT;
 		if (rate_mcs > 7) {
 			ath11k_warn(ar->ab, "Received with invalid mcs in HT mode %d\n", rate_mcs);
 			break;
 		}
 		rx_status->rate_idx = rate_mcs + (8 * (nss - 1));
-		rx_status->encoding = RX_ENC_HT;
 		if (sgi)
 			rx_status->enc_flags |= RX_ENC_FLAG_SHORT_GI;
 		rx_status->bw = ath11k_bw_to_mac80211_bw(bw);
 		break;
 	case RX_MSDU_START_PKT_TYPE_11AC:
+		rx_status->encoding = RX_ENC_VHT;
 		rx_status->rate_idx = rate_mcs;
 		if (rate_mcs > 9) {
 			ath11k_warn(ar->ab, "Received with invalid mcs in VHT mode %d\n", rate_mcs);
 			break;
 		}
-		rx_status->encoding = RX_ENC_VHT;
 		rx_status->nss = nss;
 		if (sgi)
 			rx_status->enc_flags |= RX_ENC_FLAG_SHORT_GI;
