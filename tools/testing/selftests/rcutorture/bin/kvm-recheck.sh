@@ -30,6 +30,11 @@ do
 		TORTURE_SUITE="`cat $i/../TORTURE_SUITE`"
 		rm -f $i/console.log.*.diags
 		kvm-recheck-${TORTURE_SUITE}.sh $i
+		if test "`cat $i/qemu-retval`" -ne 0
+		then
+			echo QEMU error, output:
+			cat $i/qemu-output
+		fi
 		if test -f "$i/console.log"
 		then
 			configcheck.sh $i/.config $i/ConfigFragment
