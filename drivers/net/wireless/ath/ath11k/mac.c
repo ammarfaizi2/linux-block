@@ -4935,6 +4935,9 @@ static int ath11k_mac_register(struct ath11k *ar)
 
 	ath11k_reg_init(ar);
 
+	/* advertise HW checksum offload capabilities */
+	ar->hw->netdev_features = NETIF_F_HW_CSUM;
+
 	ret = ieee80211_register_hw(ar->hw);
 	if (ret) {
 		ath11k_err(ar->ab, "ieee80211 registration failed: %d\n", ret);

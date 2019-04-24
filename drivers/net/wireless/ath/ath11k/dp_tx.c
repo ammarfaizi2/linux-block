@@ -142,6 +142,10 @@ int ath11k_dp_tx(struct ath11k *ar, struct ath11k_vif *arvif,
 		ath11k_dp_encap_nwifi(skb);
 		break;
 	case HAL_TCL_ENCAP_TYPE_RAW:
+		/*  TODO: for CHECKSUM_PARTIAL case in raw mode, HW checksum offload
+		 *	  is not applicable, hence manual checksum calculation using
+		 *	  skb_checksum_help() is needed
+		 */
 	case HAL_TCL_ENCAP_TYPE_ETHERNET:
 	case HAL_TCL_ENCAP_TYPE_802_3:
 		/* TODO: Take care of other encap modes as well */
