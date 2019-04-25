@@ -280,7 +280,7 @@ void fini_debug_store_on_cpu(int cpu)
 	wrmsr_on_cpu(cpu, MSR_IA32_DS_AREA, 0, 0);
 }
 
-static DEFINE_PER_CPU(void *, insn_buffer);
+static DEFINE_PER_CPU(void *, insn_buff);
 
 static void ds_update_cea(void *cea, void *addr, size_t size, pgprot_t prot)
 {
@@ -337,7 +337,7 @@ static int alloc_pebs_buffer(int cpu)
 	struct debug_store *ds = hwev->ds;
 	size_t bsiz = x86_pmu.pebs_buffer_size;
 	int max, node = cpu_to_node(cpu);
-	void *buffer, *ibuffer, *cea;
+	void *buffer, *insn_buff, *cea;
 
 	if (!x86_pmu.pebs)
 		return 0;
@@ -351,12 +351,12 @@ static int alloc_pebs_buffer(int cpu)
 	 * buffer then.
 	 */
 	if (x86_pmu.intel_cap.pebs_format < 2) {
-		ibuffer = kzalloc_node(PEBS_FIXUP_SIZE, GFP_KERNEL, node);
-		if (!ibuffer) {
+		insn_buff = kzalloc_node(PEBS_FIXUP_SIZE, GFP_KERNEL, node);
+		if (!insn_buff) {
 			dsfree_pages(buffer, bsiz);
 			return -ENOMEM;
 		}
-		per_cpu(insn_buffer, cpu) = ibuffer;
+		per_cpu(insn_buff, cpu) = insn_buff;
 	}
 	hwev->ds_pebs_vaddr = buffer;
 	/* Update the cpu entry area mapping */
@@ -377,8 +377,8 @@ static void release_pebs_buffer(int cpu)
 	if (!x86_pmu.pebs)
 		return;
 
-	kfree(per_cpu(insn_buffer, cpu));
-	per_cpu(insn_buffer, cpu) = NULL;
+	kfree(per_cpu(insn_buff, cpu));
+	per_cpu(insn_buff, cpu) = NULL;
 
 	/* Clear the fixmap */
 	cea = &get_cpu_entry_area(cpu)->cpu_debug_buffers.pebs_buffer;
@@ -1077,7 +1077,7 @@ static int intel_pmu_pebs_fixup_ip(struct pt_regs *regs)
 	size = ip - to;
 	if (!kernel_ip(ip)) {
 		int bytes;
-		u8 *buf = this_cpu_read(insn_buffer);
+		u8 *buf = this_cpu_read(insn_buff);
 
 		/* 'size' must fit our buffer, see above */
 		bytes = copy_from_user_nmi(buf, (void __user *)to, size);
