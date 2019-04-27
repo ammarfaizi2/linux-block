@@ -22,6 +22,7 @@
 #include <asm/tlbflush.h>
 #include <asm/io.h>
 #include <asm/fixmap.h>
+#include <linux/bsearch.h>
 
 int __read_mostly alternatives_patched;
 
@@ -275,7 +276,7 @@ static inline bool is_jmp(const u8 opcode)
 }
 
 static void __init_or_module
-recompute_jump(struct alt_instr *a, u8 *orig_insn, u8 *repl_insn, u8 *insnbuf)
+recompute_jump(struct alt_instr *a, u8 *orig_insn, u8 *repl_insn, u8 *insn_buff)
 {
 	u8 *next_rip, *tgt_rip;
 	s32 n_dspl, o_dspl;
@@ -284,7 +285,7 @@ recompute_jump(struct alt_instr *a, u8 *orig_insn, u8 *repl_insn, u8 *insnbuf)
 	if (a->replacementlen != 5)
 		return;
 
-	o_dspl = *(s32 *)(insnbuf + 1);
+	o_dspl = *(s32 *)(insn_buff + 1);
 
 	/* next_rip of the replacement JMP */
 	next_rip = repl_insn + a->replacementlen;
@@ -310,9 +311,9 @@ recompute_jump(struct alt_instr *a, u8 *orig_insn, u8 *repl_insn, u8 *insnbuf)
 two_byte_jmp:
 	n_dspl -= 2;
 
-	insnbuf[0] = 0xeb;
-	insnbuf[1] = (s8)n_dspl;
-	add_nops(insnbuf + 2, 3);
+	insn_buff[0] = 0xeb;
+	insn_buff[1] = (s8)n_dspl;
+	add_nops(insn_buff + 2, 3);
 
 	repl_len = 2;
 	goto done;
@@ -320,8 +321,8 @@ two_byte_jmp:
 five_byte_jmp:
 	n_dspl -= 5;
 
-	insnbuf[0] = 0xe9;
-	*(s32 *)&insnbuf[1] = n_dspl;
+	insn_buff[0] = 0xe9;
+	*(s32 *)&insn_buff[1] = n_dspl;
 
 	repl_len = 5;
 
@@ -368,7 +369,7 @@ void __init_or_module noinline apply_alternatives(struct alt_instr *start,
 {
 	struct alt_instr *a;
 	u8 *instr, *replacement;
-	u8 insnbuf[MAX_PATCH_LEN];
+	u8 insn_buff[MAX_PATCH_LEN];
 
 	DPRINTK("alt table %px, -> %px", start, end);
 	/*
@@ -381,11 +382,11 @@ void __init_or_module noinline apply_alternatives(struct alt_instr *start,
 	 * order.
 	 */
 	for (a = start; a < end; a++) {
-		int insnbuf_sz = 0;
+		int insn_buff_sz = 0;
 
 		instr = (u8 *)&a->instr_offset + a->instr_offset;
 		replacement = (u8 *)&a->repl_offset + a->repl_offset;
-		BUG_ON(a->instrlen > sizeof(insnbuf));
+		BUG_ON(a->instrlen > sizeof(insn_buff));
 		BUG_ON(a->cpuid >= (NCAPINTS + NBUGINTS) * 32);
 		if (!boot_cpu_has(a->cpuid)) {
 			if (a->padlen > 1)
@@ -403,8 +404,8 @@ void __init_or_module noinline apply_alternatives(struct alt_instr *start,
 		DUMP_BYTES(instr, a->instrlen, "%px: old_insn: ", instr);
 		DUMP_BYTES(replacement, a->replacementlen, "%px: rpl_insn: ", replacement);
 
-		memcpy(insnbuf, replacement, a->replacementlen);
-		insnbuf_sz = a->replacementlen;
+		memcpy(insn_buff, replacement, a->replacementlen);
+		insn_buff_sz = a->replacementlen;
 
 		/*
 		 * 0xe8 is a relative jump; fix the offset.
@@ -412,24 +413,24 @@ void __init_or_module noinline apply_alternatives(struct alt_instr *start,
 		 * Instruction length is checked before the opcode to avoid
 		 * accessing uninitialized bytes for zero-length replacements.
 		 */
-		if (a->replacementlen == 5 && *insnbuf == 0xe8) {
-			*(s32 *)(insnbuf + 1) += replacement - instr;
+		if (a->replacementlen == 5 && *insn_buff == 0xe8) {
+			*(s32 *)(insn_buff + 1) += replacement - instr;
 			DPRINTK("Fix CALL offset: 0x%x, CALL 0x%lx",
-				*(s32 *)(insnbuf + 1),
-				(unsigned long)instr + *(s32 *)(insnbuf + 1) + 5);
+				*(s32 *)(insn_buff + 1),
+				(unsigned long)instr + *(s32 *)(insn_buff + 1) + 5);
 		}
 
 		if (a->replacementlen && is_jmp(replacement[0]))
-			recompute_jump(a, instr, replacement, insnbuf);
+			recompute_jump(a, instr, replacement, insn_buff);
 
 		if (a->instrlen > a->replacementlen) {
-			add_nops(insnbuf + a->replacementlen,
+			add_nops(insn_buff + a->replacementlen,
 				 a->instrlen - a->replacementlen);
-			insnbuf_sz += a->instrlen - a->replacementlen;
+			insn_buff_sz += a->instrlen - a->replacementlen;
 		}
-		DUMP_BYTES(insnbuf, insnbuf_sz, "%px: final_insn: ", instr);
+		DUMP_BYTES(insn_buff, insn_buff_sz, "%px: final_insn: ", instr);
 
-		text_poke_early(instr, insnbuf, insnbuf_sz);
+		text_poke_early(instr, insn_buff, insn_buff_sz);
 	}
 }
 
@@ -591,22 +592,21 @@ void __init_or_module apply_paravirt(struct paravirt_patch_site *start,
 				     struct paravirt_patch_site *end)
 {
 	struct paravirt_patch_site *p;
-	char insnbuf[MAX_PATCH_LEN];
+	char insn_buff[MAX_PATCH_LEN];
 
 	for (p = start; p < end; p++) {
 		unsigned int used;
 
 		BUG_ON(p->len > MAX_PATCH_LEN);
 		/* prep the buffer with the original instructions */
-		memcpy(insnbuf, p->instr, p->len);
-		used = pv_ops.init.patch(p->instrtype, insnbuf,
-					 (unsigned long)p->instr, p->len);
+		memcpy(insn_buff, p->instr, p->len);
+		used = pv_ops.init.patch(p->type, insn_buff, (unsigned long)p->instr, p->len);
 
 		BUG_ON(used > p->len);
 
 		/* Pad the rest with nops */
-		add_nops(insnbuf + used, p->len - used);
-		text_poke_early(p->instr, insnbuf, p->len);
+		add_nops(insn_buff + used, p->len - used);
+		text_poke_early(p->instr, insn_buff, p->len);
 	}
 }
 extern struct paravirt_patch_site __start_parainstructions[],
@@ -739,10 +739,32 @@ static void do_sync_core(void *info)
 }
 
 static bool bp_patching_in_progress;
+/*
+ * Single poke.
+ */
 static void *bp_int3_handler, *bp_int3_addr;
+/*
+ * Batching poke.
+ */
+static struct text_to_poke *bp_int3_tpv;
+static unsigned int bp_int3_tpv_nr;
+
+static int text_bp_batch_bsearch(const void *key, const void *elt)
+{
+	struct text_to_poke *tp = (struct text_to_poke *) elt;
+
+	if (key < tp->addr)
+		return -1;
+	if (key > tp->addr)
+		return 1;
+	return 0;
+}
 
 int poke_int3_handler(struct pt_regs *regs)
 {
+	void *ip;
+	struct text_to_poke *tp;
+
 	/*
 	 * Having observed our INT3 instruction, we now must observe
 	 * bp_patching_in_progress.
@@ -758,15 +780,58 @@ int poke_int3_handler(struct pt_regs *regs)
 	if (likely(!bp_patching_in_progress))
 		return 0;
 
-	if (user_mode(regs) || regs->ip != (unsigned long)bp_int3_addr)
+	if (user_mode(regs))
 		return 0;
 
-	/* set up the specified breakpoint handler */
-	regs->ip = (unsigned long) bp_int3_handler;
+	/*
+	 * Single poke first.
+	 */
+	if (bp_int3_addr) {
+		if (regs->ip == (unsigned long) bp_int3_addr) {
+			regs->ip = (unsigned long) bp_int3_handler;
+			return 1;
+		}
+		return 0;
+	}
 
-	return 1;
+	/*
+	 * Batch mode.
+	 */
+	if (bp_int3_tpv_nr) {
+		ip = (void *) regs->ip - sizeof(unsigned char);
+		tp = bsearch(ip, bp_int3_tpv, bp_int3_tpv_nr,
+			     sizeof(struct text_to_poke),
+			     text_bp_batch_bsearch);
+		if (tp) {
+			/* set up the specified breakpoint handler */
+			regs->ip = (unsigned long) tp->handler;
+			return 1;
+		}
+	}
+	return 0;
 }
 NOKPROBE_SYMBOL(poke_int3_handler);
+
+static void text_poke_bp_set_handler(void *addr, void *handler,
+				     unsigned char int3)
+{
+	text_poke(addr, &int3, sizeof(int3));
+}
+
+static void patch_all_but_first_byte(void *addr, const void *opcode,
+				     size_t len, unsigned char int3)
+{
+	/* patch all but the first byte */
+	text_poke((char *)addr + sizeof(int3),
+		  (const char *) opcode + sizeof(int3),
+		  len - sizeof(int3));
+}
+
+static void patch_first_byte(void *addr, const void *opcode, unsigned char int3)
+{
+	/* patch the first byte */
+	text_poke(addr, opcode, sizeof(int3));
+}
 
 /**
  * text_poke_bp() -- update instructions on live kernel on SMP
@@ -792,27 +857,24 @@ void *text_poke_bp(void *addr, const void *opcode, size_t len, void *handler)
 {
 	unsigned char int3 = 0xcc;
 
-	bp_int3_handler = handler;
-	bp_int3_addr = (u8 *)addr + sizeof(int3);
-	bp_patching_in_progress = true;
-
 	lockdep_assert_held(&text_mutex);
 
+	bp_int3_handler = handler;
+	bp_int3_addr = (u8 *)addr + sizeof(int3);
+
+	bp_patching_in_progress = true;
 	/*
 	 * Corresponding read barrier in int3 notifier for making sure the
 	 * in_progress and handler are correctly ordered wrt. patching.
 	 */
 	smp_wmb();
 
-	text_poke(addr, &int3, sizeof(int3));
+	text_poke_bp_set_handler(addr, handler, int3);
 
 	on_each_cpu(do_sync_core, NULL, 1);
 
 	if (len - sizeof(int3) > 0) {
-		/* patch all but the first byte */
-		text_poke((char *)addr + sizeof(int3),
-			  (const char *) opcode + sizeof(int3),
-			  len - sizeof(int3));
+		patch_all_but_first_byte(addr, opcode, len, int3);
 		/*
 		 * According to Intel, this core syncing is very likely
 		 * not necessary and we'd be safe even without it. But
@@ -821,8 +883,7 @@ void *text_poke_bp(void *addr, const void *opcode, size_t len, void *handler)
 		on_each_cpu(do_sync_core, NULL, 1);
 	}
 
-	/* patch the first byte */
-	text_poke(addr, opcode, sizeof(int3));
+	patch_first_byte(addr, opcode, int3);
 
 	on_each_cpu(do_sync_core, NULL, 1);
 	/*
@@ -831,6 +892,56 @@ void *text_poke_bp(void *addr, const void *opcode, size_t len, void *handler)
 	 */
 	bp_patching_in_progress = false;
 
+	bp_int3_handler = bp_int3_addr = 0;
 	return addr;
 }
 
+void text_poke_bp_batch(struct text_to_poke *tp, unsigned int nr_entries)
+{
+	unsigned int i;
+	unsigned char int3 = 0xcc;
+	int patched_all_but_first = 0;
+
+	bp_int3_tpv = tp;
+	bp_int3_tpv_nr = nr_entries;
+	bp_patching_in_progress = true;
+	/*
+	 * Corresponding read barrier in int3 notifier for making sure the
+	 * in_progress and handler are correctly ordered wrt. patching.
+	 */
+	smp_wmb();
+
+	for (i = 0; i < nr_entries; i++)
+		text_poke_bp_set_handler(tp[i].addr, tp[i].handler, int3);
+
+	on_each_cpu(do_sync_core, NULL, 1);
+
+	for (i = 0; i < nr_entries; i++) {
+		if (tp[i].len - sizeof(int3) > 0) {
+			patch_all_but_first_byte(tp[i].addr, tp[i].opcode,
+						 tp[i].len, int3);
+			patched_all_but_first++;
+		}
+	}
+
+	if (patched_all_but_first) {
+		/*
+		 * According to Intel, this core syncing is very likely
+		 * not necessary and we'd be safe even without it. But
+		 * better safe than sorry (plus there's not only Intel).
+		 */
+		on_each_cpu(do_sync_core, NULL, 1);
+	}
+
+	for (i = 0; i < nr_entries; i++)
+		patch_first_byte(tp[i].addr, tp[i].opcode, int3);
+
+	on_each_cpu(do_sync_core, NULL, 1);
+	/*
+	 * sync_core() implies an smp_mb() and orders this store against
+	 * the writing of the new instruction.
+	 */
+	bp_int3_tpv_nr = 0;
+	bp_int3_tpv = NULL;
+	bp_patching_in_progress = false;
+}
