@@ -1726,6 +1726,11 @@ static int pidfd_create(struct pid *pid)
 	return fd;
 }
 
+static inline bool is_legacy_clone(const struct clone3_args *args)
+{
+	return args->version == U32_MAX;
+}
+
 /*
  * This creates a new process as a copy of the old one,
  * but does not actually start it yet.
@@ -1735,19 +1740,20 @@ static int pidfd_create(struct pid *pid)
  * flags). The actual kick-off is left to the caller.
  */
 static __latent_entropy struct task_struct *copy_process(
-					unsigned long clone_flags,
-					unsigned long stack_start,
-					unsigned long stack_size,
-					int __user *parent_tidptr,
-					int __user *child_tidptr,
+					u64 clone_flags,
 					struct pid *pid,
 					int trace,
-					unsigned long tls,
-					int node)
+					int node,
+					struct clone3_args *args)
 {
 	int pidfd = -1, retval;
 	struct task_struct *p;
 	struct multiprocess_signals delayed;
+	int __user *child_tidptr = u64_to_user_ptr(args->child_tidptr);
+	int __user *parent_tidptr = NULL;
+	unsigned long tls = args->tls;
+	unsigned long stack_start = args->stack;
+	unsigned long stack_size = args->stack_size;
 
 	/*
 	 * Don't allow sharing the root directory with processes in a different
@@ -1800,7 +1806,8 @@ static __latent_entropy struct task_struct *copy_process(
 
 		/*
 		 * - CLONE_PARENT_SETTID is useless for pidfds and also
-		 *   parent_tidptr is used to return pidfds.
+		 *   parent_tidptr is used to return pidfds for clone
+		 *   versions prior to clone3.
 		 * - CLONE_DETACHED is blocked so that we can potentially
 		 *   reuse it later for CLONE_PIDFD.
 		 * - CLONE_THREAD is blocked until someone really needs it.
@@ -1809,15 +1816,18 @@ static __latent_entropy struct task_struct *copy_process(
 		    (CLONE_DETACHED | CLONE_PARENT_SETTID | CLONE_THREAD))
 			return ERR_PTR(-EINVAL);
 
-		/*
-		 * Verify that parent_tidptr is sane so we can potentially
-		 * reuse it later.
-		 */
-		if (get_user(reserved, parent_tidptr))
-			return ERR_PTR(-EFAULT);
+		if (is_legacy_clone(args)) {
+			/*
+			 * Verify that parent_tidptr is sane so we can
+			 * potentially reuse it later.
+			 */
+			parent_tidptr = u64_to_user_ptr(args->parent_tidptr);
+			if (get_user(reserved, parent_tidptr))
+				return ERR_PTR(-EFAULT);
 
-		if (reserved != 0)
-			return ERR_PTR(-EINVAL);
+			if (reserved != 0)
+				return ERR_PTR(-EINVAL);
+		}
 	}
 
 	/*
@@ -2037,9 +2047,14 @@ static __latent_entropy struct task_struct *copy_process(
 			goto bad_fork_free_pid;
 
 		pidfd = retval;
-		retval = put_user(pidfd, parent_tidptr);
-		if (retval)
-			goto bad_fork_put_pidfd;
+		if (is_legacy_clone(args)) {
+			/* store pidfd in parent_tidptr for legacy clone */
+			retval = put_user(pidfd, parent_tidptr);
+			if (retval)
+				goto bad_fork_put_pidfd;
+		} else {
+			args->pidfd = pidfd;
+		}
 	}
 
 #ifdef CONFIG_BLOCK
@@ -2286,8 +2301,11 @@ static inline void init_idle_pids(struct task_struct *idle)
 struct task_struct *fork_idle(int cpu)
 {
 	struct task_struct *task;
-	task = copy_process(CLONE_VM, 0, 0, NULL, NULL, &init_struct_pid, 0, 0,
-			    cpu_to_node(cpu));
+	struct clone3_args args = {
+		.version = U32_MAX,
+	};
+	task = copy_process(CLONE_VM, &init_struct_pid, 0,
+			    cpu_to_node(cpu), &args);
 	if (!IS_ERR(task)) {
 		init_idle_pids(task);
 		init_idle(task, cpu);
@@ -2307,18 +2325,14 @@ struct mm_struct *copy_init_mm(void)
  * It copies the process, and if successful kick-starts
  * it and waits for it to finish using the VM if required.
  */
-long _do_fork(unsigned long clone_flags,
-	      unsigned long stack_start,
-	      unsigned long stack_size,
-	      int __user *parent_tidptr,
-	      int __user *child_tidptr,
-	      unsigned long tls)
+long _do_fork(u64 clone_flags, struct clone3_args *args)
 {
 	struct completion vfork;
 	struct pid *pid;
 	struct task_struct *p;
 	int trace = 0;
 	long nr;
+	int __user *parent_tidptr = u64_to_user_ptr(args->parent_tidptr);
 
 	/*
 	 * Determine whether and which event to report to ptracer.  When
@@ -2338,8 +2352,7 @@ long _do_fork(unsigned long clone_flags,
 			trace = 0;
 	}
 
-	p = copy_process(clone_flags, stack_start, stack_size, parent_tidptr,
-			 child_tidptr, NULL, trace, tls, NUMA_NO_NODE);
+	p = copy_process(clone_flags, NULL, trace, NUMA_NO_NODE, args);
 	add_latent_entropy();
 
 	if (IS_ERR(p))
@@ -2387,8 +2400,14 @@ long do_fork(unsigned long clone_flags,
 	      int __user *parent_tidptr,
 	      int __user *child_tidptr)
 {
-	return _do_fork(clone_flags, stack_start, stack_size,
-			parent_tidptr, child_tidptr, 0);
+	struct clone3_args args = {
+		.version = U32_MAX,
+		.stack = stack_start,
+		.stack_size = stack_size,
+		.parent_tidptr = (uintptr_t)parent_tidptr,
+		.child_tidptr = (uintptr_t)child_tidptr
+	};
+	return _do_fork(clone_flags, &args);
 }
 #endif
 
@@ -2397,15 +2416,22 @@ long do_fork(unsigned long clone_flags,
  */
 pid_t kernel_thread(int (*fn)(void *), void *arg, unsigned long flags)
 {
-	return _do_fork(flags|CLONE_VM|CLONE_UNTRACED, (unsigned long)fn,
-		(unsigned long)arg, NULL, NULL, 0);
+	struct clone3_args args = {
+		.version = U32_MAX,
+		.stack = (unsigned long)fn,
+		.stack_size = (unsigned long)arg,
+	};
+	return _do_fork(flags|CLONE_VM|CLONE_UNTRACED, &args);
 }
 
 #ifdef __ARCH_WANT_SYS_FORK
 SYSCALL_DEFINE0(fork)
 {
 #ifdef CONFIG_MMU
-	return _do_fork(SIGCHLD, 0, 0, NULL, NULL, 0);
+	struct clone3_args args = {
+		.version = U32_MAX,
+	};
+	return _do_fork(SIGCHLD, &args);
 #else
 	/* can not support in nommu mode */
 	return -EINVAL;
@@ -2416,8 +2442,10 @@ SYSCALL_DEFINE0(fork)
 #ifdef __ARCH_WANT_SYS_VFORK
 SYSCALL_DEFINE0(vfork)
 {
-	return _do_fork(CLONE_VFORK | CLONE_VM | SIGCHLD, 0,
-			0, NULL, NULL, 0);
+	struct clone3_args args = {
+		.version = U32_MAX,
+	};
+	return _do_fork(CLONE_VFORK | CLONE_VM | SIGCHLD, &args);
 }
 #endif
 
@@ -2445,7 +2473,65 @@ SYSCALL_DEFINE5(clone, unsigned long, clone_flags, unsigned long, newsp,
 		 unsigned long, tls)
 #endif
 {
-	return _do_fork(clone_flags, newsp, 0, parent_tidptr, child_tidptr, tls);
+	struct clone3_args args = {
+		.version = U32_MAX,
+		.stack = newsp,
+		.parent_tidptr = (uintptr_t)parent_tidptr,
+		.tls = tls,
+		.child_tidptr = (uintptr_t)child_tidptr
+	};
+	return _do_fork(clone_flags, &args);
+}
+
+SYSCALL_DEFINE6(clone3, struct clone3_args __user*, uargs,
+			unsigned int, flags1,
+			unsigned int, flags2,
+			unsigned int, flags3,
+			unsigned int, flags4,
+			unsigned int, flags5)
+{
+	struct clone3_args args = {0};
+	u64 flags = flags1;
+	int err = 0;
+	int result;
+
+	if (flags2 || flags3 || flags4 || flags5)
+		return -EINVAL;
+
+	/*
+	 * flags1 is full so we only need to verify that CLONE_DETACHED
+	 * is not passed since we can't use it.
+	 */
+	if (flags & CLONE_DETACHED)
+		return -EINVAL;
+
+	err = get_user(args.version, &uargs->version);
+	if (err)
+		return -EINVAL;
+
+	if (args.version != 0)
+		return -EINVAL;
+
+	if (!err)
+		err = get_user(args.stack, &uargs->stack);
+#if defined(CONFIG_CLONE_BACKWARDS3)
+	if (!err)
+		err = get_user(args.stack_size, &uargs->stack_size);
+#endif
+	if (!err && (flags & (CLONE_CHILD_CLEARTID | CLONE_CHILD_SETTID)))
+		err = get_user(args.child_tidptr, &uargs->child_tidptr);
+	if (!err && (flags & CLONE_SETTLS))
+		err = get_user(args.tls, &uargs->tls);
+	if (err)
+		return -EFAULT;
+
+	result = _do_fork(flags, &args);
+
+	if (flags & CLONE_PIDFD)
+		if (put_user(uargs->pidfd, &args.pidfd))
+			return -EFAULT;
+
+	return result;
 }
 #endif
 

@@ -70,6 +70,7 @@ struct sigaltstack;
 struct rseq;
 union bpf_attr;
 struct io_uring_params;
+struct clone3_args;
 
 #include <linux/types.h>
 #include <linux/aio_abi.h>
@@ -852,6 +853,10 @@ asmlinkage long sys_clone(unsigned long, unsigned long, int __user *,
 	       int __user *, unsigned long);
 #endif
 #endif
+asmlinkage long sys_clone3(struct clone3_args __user *uargs,
+			   unsigned int flags1, unsigned int flags2,
+			   unsigned int flags3, unsigned int flags4,
+			   unsigned int flags5);
 asmlinkage long sys_execve(const char __user *filename,
 		const char __user *const __user *argv,
 		const char __user *const __user *envp);
