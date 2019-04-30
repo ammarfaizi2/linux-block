@@ -1493,6 +1493,11 @@ static int __mcheck_cpu_mce_banks_init(void)
 	for (i = 0; i < n_banks; i++) {
 		struct mce_bank *b = &mce_banks[i];
 
+		/*
+		 * Init them all, __mcheck_cpu_apply_quirks() is going to apply
+		 * the required vendor quirks before
+		 * __mcheck_cpu_init_clear_banks() does the final bank setup.
+		 */
 		b->ctl = -1ULL;
 		b->init = 1;
 	}
@@ -1562,6 +1567,7 @@ static void __mcheck_cpu_init_generic(void)
 static void __mcheck_cpu_init_clear_banks(void)
 {
 	struct mce_bank *mce_banks = this_cpu_read(mce_banks_array);
+	u64 msrval;
 	int i;
 
 	for (i = 0; i < this_cpu_read(mce_num_banks); i++) {
@@ -1569,7 +1575,13 @@ static void __mcheck_cpu_init_clear_banks(void)
 
 		if (!b->init)
 			continue;
+
+		/* Check if any bits are implemented in h/w */
 		wrmsrl(msr_ops.ctl(i), b->ctl);
+		rdmsrl(msr_ops.ctl(i), msrval);
+
+		b->init = !!msrval;
+
 		wrmsrl(msr_ops.status(i), 0);
 	}
 }
@@ -2095,6 +2107,9 @@ static ssize_t show_bank(struct device *s, struct device_attribute *attr,
 
 	b = &per_cpu(mce_banks_array, s->id)[bank];
 
+	if (!b->init)
+		return -ENODEV;
+
 	return sprintf(buf, "%llx\n", b->ctl);
 }
 
@@ -2112,6 +2127,9 @@ static ssize_t set_bank(struct device *s, struct device_attribute *attr,
 		return -EINVAL;
 
 	b = &per_cpu(mce_banks_array, s->id)[bank];
+
+	if (!b->init)
+		return -ENODEV;
 
 	b->ctl = new;
 	mce_restart();
