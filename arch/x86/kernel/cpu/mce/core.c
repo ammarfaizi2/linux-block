@@ -64,16 +64,21 @@ static DEFINE_MUTEX(mce_sysfs_mutex);
 
 DEFINE_PER_CPU(unsigned, mce_exception_count);
 
-#define ATTR_LEN               16
-/* One object for each MCE bank, shared by all CPUs */
 struct mce_bank {
 	u64			ctl;			/* subevents to enable */
 	bool			init;			/* initialise bank? */
+};
+static DEFINE_PER_CPU_READ_MOSTLY(struct mce_bank *, mce_banks_array);
+
+#define ATTR_LEN               16
+/* One object for each MCE bank, shared by all CPUs */
+struct mce_bank_dev {
 	struct device_attribute	attr;			/* device attribute */
 	char			attrname[ATTR_LEN];	/* attribute name */
+	u8			bank;			/* bank number */
 };
+static struct mce_bank_dev mce_bank_devs[MAX_NR_BANKS];
 
-static struct mce_bank *mce_banks __read_mostly;
 struct mce_vendor_flags mce_flags __read_mostly;
 
 struct mca_config mca_cfg __read_mostly = {
@@ -683,6 +688,7 @@ DEFINE_PER_CPU(unsigned, mce_poll_count);
  */
 bool machine_check_poll(enum mcp_flags flags, mce_banks_t *b)
 {
+	struct mce_bank *mce_banks = this_cpu_read(mce_banks_array);
 	bool error_seen = false;
 	struct mce m;
 	int i;
@@ -1130,6 +1136,7 @@ static void __mc_scan_banks(struct mce *m, struct mce *final,
 			    unsigned long *toclear, unsigned long *valid_banks,
 			    int no_way_out, int *worst)
 {
+	struct mce_bank *mce_banks = this_cpu_read(mce_banks_array);
 	struct mca_config *cfg = &mca_cfg;
 	int severity, i;
 
@@ -1473,6 +1480,7 @@ EXPORT_SYMBOL_GPL(mce_notify_irq);
 
 static int __mcheck_cpu_mce_banks_init(void)
 {
+	struct mce_bank *mce_banks;
 	int i;
 
 	mce_banks = kcalloc(MAX_NR_BANKS, sizeof(struct mce_bank), GFP_KERNEL);
@@ -1485,6 +1493,8 @@ static int __mcheck_cpu_mce_banks_init(void)
 		b->ctl = -1ULL;
 		b->init = 1;
 	}
+
+	per_cpu(mce_banks_array, smp_processor_id()) = mce_banks;
 	return 0;
 }
 
@@ -1504,7 +1514,7 @@ static int __mcheck_cpu_cap_init(void)
 
 	mca_cfg.banks = max(mca_cfg.banks, b);
 
-	if (!mce_banks) {
+	if (!this_cpu_read(mce_banks_array)) {
 		int err = __mcheck_cpu_mce_banks_init();
 		if (err)
 			return err;
@@ -1544,6 +1554,7 @@ static void __mcheck_cpu_init_generic(void)
 
 static void __mcheck_cpu_init_clear_banks(void)
 {
+	struct mce_bank *mce_banks = this_cpu_read(mce_banks_array);
 	int i;
 
 	for (i = 0; i < mca_cfg.banks; i++) {
@@ -1587,6 +1598,7 @@ static void quirk_sandybridge_ifu(int bank, struct mce *m, struct pt_regs *regs)
 /* Add per CPU specific workarounds here */
 static int __mcheck_cpu_apply_quirks(struct cpuinfo_x86 *c)
 {
+	struct mce_bank *mce_banks = this_cpu_read(mce_banks_array);
 	struct mca_config *cfg = &mca_cfg;
 
 	if (c->x86_vendor == X86_VENDOR_UNKNOWN) {
@@ -1957,6 +1969,7 @@ int __init mcheck_init(void)
  */
 static void mce_disable_error_reporting(void)
 {
+	struct mce_bank *mce_banks = this_cpu_read(mce_banks_array);
 	int i;
 
 	for (i = 0; i < mca_cfg.banks; i++) {
@@ -2059,26 +2072,41 @@ static struct bus_type mce_subsys = {
 
 DEFINE_PER_CPU(struct device *, mce_device);
 
-static inline struct mce_bank *attr_to_bank(struct device_attribute *attr)
+static inline struct mce_bank_dev *attr_to_bank(struct device_attribute *attr)
 {
-	return container_of(attr, struct mce_bank, attr);
+	return container_of(attr, struct mce_bank_dev, attr);
 }
 
 static ssize_t show_bank(struct device *s, struct device_attribute *attr,
 			 char *buf)
 {
-	return sprintf(buf, "%llx\n", attr_to_bank(attr)->ctl);
+	u8 bank = attr_to_bank(attr)->bank;
+	struct mce_bank *b;
+
+	if (bank >= mca_cfg.banks)
+		return -EINVAL;
+
+	b = &per_cpu(mce_banks_array, s->id)[bank];
+
+	return sprintf(buf, "%llx\n", b->ctl);
 }
 
 static ssize_t set_bank(struct device *s, struct device_attribute *attr,
 			const char *buf, size_t size)
 {
+	u8 bank = attr_to_bank(attr)->bank;
+	struct mce_bank *b;
 	u64 new;
 
 	if (kstrtou64(buf, 0, &new) < 0)
 		return -EINVAL;
 
-	attr_to_bank(attr)->ctl = new;
+	if (bank >= mca_cfg.banks)
+		return -EINVAL;
+
+	b = &per_cpu(mce_banks_array, s->id)[bank];
+
+	b->ctl = new;
 	mce_restart();
 
 	return size;
@@ -2193,7 +2221,7 @@ static void mce_device_release(struct device *dev)
 	kfree(dev);
 }
 
-/* Per cpu device init. All of the cpus still share the same ctrl bank: */
+/* Per CPU device init. All of the CPUs still share the same bank device: */
 static int mce_device_create(unsigned int cpu)
 {
 	struct device *dev;
@@ -2226,7 +2254,7 @@ static int mce_device_create(unsigned int cpu)
 			goto error;
 	}
 	for (j = 0; j < mca_cfg.banks; j++) {
-		err = device_create_file(dev, &mce_banks[j].attr);
+		err = device_create_file(dev, &mce_bank_devs[j].attr);
 		if (err)
 			goto error2;
 	}
@@ -2236,7 +2264,7 @@ static int mce_device_create(unsigned int cpu)
 	return 0;
 error2:
 	while (--j >= 0)
-		device_remove_file(dev, &mce_banks[j].attr);
+		device_remove_file(dev, &mce_bank_devs[j].attr);
 error:
 	while (--i >= 0)
 		device_remove_file(dev, mce_device_attrs[i]);
@@ -2258,7 +2286,7 @@ static void mce_device_remove(unsigned int cpu)
 		device_remove_file(dev, mce_device_attrs[i]);
 
 	for (i = 0; i < mca_cfg.banks; i++)
-		device_remove_file(dev, &mce_banks[i].attr);
+		device_remove_file(dev, &mce_bank_devs[i].attr);
 
 	device_unregister(dev);
 	cpumask_clear_cpu(cpu, mce_device_initialized);
@@ -2279,6 +2307,7 @@ static void mce_disable_cpu(void)
 
 static void mce_reenable_cpu(void)
 {
+	struct mce_bank *mce_banks = this_cpu_read(mce_banks_array);
 	int i;
 
 	if (!mce_available(raw_cpu_ptr(&cpu_info)))
@@ -2336,9 +2365,11 @@ static __init void mce_init_banks(void)
 {
 	int i;
 
-	for (i = 0; i < mca_cfg.banks; i++) {
-		struct mce_bank *b = &mce_banks[i];
+	for (i = 0; i < MAX_NR_BANKS; i++) {
+		struct mce_bank_dev *b = &mce_bank_devs[i];
 		struct device_attribute *a = &b->attr;
+
+		b->bank = i;
 
 		sysfs_attr_init(&a->attr);
 		a->attr.name	= b->attrname;
