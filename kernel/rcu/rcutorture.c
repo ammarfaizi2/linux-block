@@ -678,12 +678,24 @@ static struct rcu_torture_ops tasks_ops = {
 static void synchronize_rcu_trivial(void)
 {
 	int cpu;
+	int destcpu;
+	static int dont_trace;
 
 	for_each_online_cpu(cpu) {
-		while (raw_smp_processor_id() != cpu)
-			rcutorture_sched_setaffinity(current->pid,
-						     cpumask_of(cpu));
-		WARN_ON_ONCE(raw_smp_processor_id() != cpu);
+		if (!READ_ONCE(dont_trace))
+			tracing_on();
+		rcutorture_sched_setaffinity(current->pid, cpumask_of(cpu));
+		destcpu = raw_smp_processor_id();
+		if (destcpu == cpu) {
+			tracing_off();
+		} else {
+			trace_printk("On unexpected CPU %d, expected %d!!!\n", destcpu, cpu);
+			trace_printk("Online CPUs: %*pbl\n", cpumask_pr_args(cpu_online_mask));
+			tracing_stop();
+			WRITE_ONCE(dont_trace, 1);
+			WARN_ON_ONCE(1);
+			rcu_ftrace_dump(DUMP_ALL);
+		}
 	}
 }
 
