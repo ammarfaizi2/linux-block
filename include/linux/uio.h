@@ -23,11 +23,11 @@ struct kvec {
 };
 
 enum iter_type {
-	ITER_IOVEC = 4,
-	ITER_KVEC = 8,
-	ITER_BVEC = 16,
-	ITER_PIPE = 32,
-	ITER_DISCARD = 64,
+	ITER_IOVEC,
+	ITER_KVEC,
+	ITER_BVEC,
+	ITER_PIPE,
+	ITER_DISCARD,
 };
 
 struct iov_iter {
