@@ -73,7 +73,40 @@
 	}						\
 }
 
-#define iterate_all_kinds(i, n, v, I, B, K) {			\
+#define iterate_mapping(i, n, __v, skip, STEP) {		\
+	struct page *page;					\
+	size_t wanted = n, seg, offset;				\
+	loff_t start = i->mapping_start + skip;			\
+	pgoff_t index = start >> PAGE_SHIFT;			\
+								\
+	XA_STATE(xas, &i->mapping->i_pages, index);		\
+								\
+	rcu_read_lock();						\
+	for (page = xas_load(&xas); page; page = xas_next(&xas)) {	\
+		if (xas_retry(&xas, page))				\
+			continue;					\
+		if (xa_is_value(page))					\
+			break;						\
+		if (PageCompound(page))					\
+			break;						\
+		if (page_to_pgoff(page) != xas.xa_index)		\
+			break;						\
+		__v.bv_page = page;					\
+		offset = (i->mapping_start + skip) & ~PAGE_MASK;	\
+		seg = PAGE_SIZE - offset;			\
+		__v.bv_offset = offset;				\
+		__v.bv_len = min(n, seg);			\
+		(void)(STEP);					\
+		n -= __v.bv_len;				\
+		skip += __v.bv_len;				\
+		if (n == 0)					\
+			break;					\
+	}							\
+	rcu_read_unlock();					\
+	n = wanted - n;						\
+}
+
+#define iterate_all_kinds(i, n, v, I, B, K, M) {		\
 	if (likely(n)) {					\
 		size_t skip = i->iov_offset;			\
 		switch (iov_iter_type(i)) {			\
@@ -93,6 +126,11 @@
 		case ITER_PIPE: {				\
 			break;					\
 		}						\
+		case ITER_MAPPING: {				\
+			struct bio_vec v;			\
+			iterate_mapping(i, n, v, skip, (M));	\
+			break;					\
+		}						\
 		case ITER_IOVEC: {				\
 			const struct iovec *iov;		\
 			struct iovec v;				\
@@ -103,7 +141,7 @@
 	}							\
 }
 
-#define iterate_and_advance(i, n, v, I, B, K) {			\
+#define iterate_and_advance(i, n, v, I, B, K, M) {		\
 	if (unlikely(i->count < n))				\
 		n = i->count;					\
 	if (i->count) {						\
@@ -134,6 +172,11 @@
 		case ITER_DISCARD:				\
 			skip += n;				\
 			break;					\
+		case ITER_MAPPING: {				\
+			struct bio_vec v;			\
+			iterate_mapping(i, n, v, skip, (M))	\
+			break;					\
+		}						\
 		case ITER_IOVEC: {				\
 			const struct iovec *iov;		\
 			struct iovec v;				\
@@ -454,6 +497,7 @@ int iov_iter_fault_in_readable(struct iov_iter *i, size_t bytes)
 	case ITER_KVEC:
 	case ITER_BVEC:
 	case ITER_DISCARD:
+	case ITER_MAPPING:
 		break;
 	}
 	return 0;
@@ -640,7 +684,9 @@ size_t _copy_to_iter(const void *addr, size_t bytes, struct iov_iter *i)
 		copyout(v.iov_base, (from += v.iov_len) - v.iov_len, v.iov_len),
 		memcpy_to_page(v.bv_page, v.bv_offset,
 			       (from += v.bv_len) - v.bv_len, v.bv_len),
-		memcpy(v.iov_base, (from += v.iov_len) - v.iov_len, v.iov_len)
+		memcpy(v.iov_base, (from += v.iov_len) - v.iov_len, v.iov_len),
+		memcpy_to_page(v.bv_page, v.bv_offset,
+			       (from += v.bv_len) - v.bv_len, v.bv_len)
 	)
 
 	return bytes;
@@ -755,6 +801,15 @@ size_t _copy_to_iter_mcsafe(const void *addr, size_t bytes, struct iov_iter *i)
 			bytes = curr_addr - s_addr - rem;
 			return bytes;
 		}
+		}),
+		({
+		rem = memcpy_mcsafe_to_page(v.bv_page, v.bv_offset,
+                               (from += v.bv_len) - v.bv_len, v.bv_len);
+		if (rem) {
+			curr_addr = (unsigned long) from;
+			bytes = curr_addr - s_addr - rem;
+			return bytes;
+		}
 		})
 	)
 
@@ -776,7 +831,9 @@ size_t _copy_from_iter(void *addr, size_t bytes, struct iov_iter *i)
 		copyin((to += v.iov_len) - v.iov_len, v.iov_base, v.iov_len),
 		memcpy_from_page((to += v.bv_len) - v.bv_len, v.bv_page,
 				 v.bv_offset, v.bv_len),
-		memcpy((to += v.iov_len) - v.iov_len, v.iov_base, v.iov_len)
+		memcpy((to += v.iov_len) - v.iov_len, v.iov_base, v.iov_len),
+		memcpy_from_page((to += v.bv_len) - v.bv_len, v.bv_page,
+				 v.bv_offset, v.bv_len)
 	)
 
 	return bytes;
@@ -802,7 +859,9 @@ bool _copy_from_iter_full(void *addr, size_t bytes, struct iov_iter *i)
 		0;}),
 		memcpy_from_page((to += v.bv_len) - v.bv_len, v.bv_page,
 				 v.bv_offset, v.bv_len),
-		memcpy((to += v.iov_len) - v.iov_len, v.iov_base, v.iov_len)
+		memcpy((to += v.iov_len) - v.iov_len, v.iov_base, v.iov_len),
+		memcpy_from_page((to += v.bv_len) - v.bv_len, v.bv_page,
+				 v.bv_offset, v.bv_len)
 	)
 
 	iov_iter_advance(i, bytes);
@@ -822,7 +881,9 @@ size_t _copy_from_iter_nocache(void *addr, size_t bytes, struct iov_iter *i)
 					 v.iov_base, v.iov_len),
 		memcpy_from_page((to += v.bv_len) - v.bv_len, v.bv_page,
 				 v.bv_offset, v.bv_len),
-		memcpy((to += v.iov_len) - v.iov_len, v.iov_base, v.iov_len)
+		memcpy((to += v.iov_len) - v.iov_len, v.iov_base, v.iov_len),
+		memcpy_from_page((to += v.bv_len) - v.bv_len, v.bv_page,
+				 v.bv_offset, v.bv_len)
 	)
 
 	return bytes;
@@ -857,7 +918,9 @@ size_t _copy_from_iter_flushcache(void *addr, size_t bytes, struct iov_iter *i)
 		memcpy_page_flushcache((to += v.bv_len) - v.bv_len, v.bv_page,
 				 v.bv_offset, v.bv_len),
 		memcpy_flushcache((to += v.iov_len) - v.iov_len, v.iov_base,
-			v.iov_len)
+			v.iov_len),
+		memcpy_page_flushcache((to += v.bv_len) - v.bv_len, v.bv_page,
+				 v.bv_offset, v.bv_len)
 	)
 
 	return bytes;
@@ -881,7 +944,9 @@ bool _copy_from_iter_full_nocache(void *addr, size_t bytes, struct iov_iter *i)
 		0;}),
 		memcpy_from_page((to += v.bv_len) - v.bv_len, v.bv_page,
 				 v.bv_offset, v.bv_len),
-		memcpy((to += v.iov_len) - v.iov_len, v.iov_base, v.iov_len)
+		memcpy((to += v.iov_len) - v.iov_len, v.iov_base, v.iov_len),
+		memcpy_from_page((to += v.bv_len) - v.bv_len, v.bv_page,
+				 v.bv_offset, v.bv_len)
 	)
 
 	iov_iter_advance(i, bytes);
@@ -919,6 +984,7 @@ size_t copy_page_to_iter(struct page *page, size_t offset, size_t bytes,
 	if (unlikely(!page_copy_sane(page, offset, bytes)))
 		return 0;
 	switch (iov_iter_type(i)) {
+	case ITER_MAPPING:
 	case ITER_BVEC:
 	case ITER_KVEC: {
 		void *kaddr = kmap_atomic(page);
@@ -946,6 +1012,7 @@ size_t copy_page_from_iter(struct page *page, size_t offset, size_t bytes,
 	case ITER_PIPE:
 	case ITER_DISCARD:
 		break;
+	case ITER_MAPPING:
 	case ITER_BVEC:
 	case ITER_KVEC: {
 		void *kaddr = kmap_atomic(page);
@@ -992,7 +1059,8 @@ size_t iov_iter_zero(size_t bytes, struct iov_iter *i)
 	iterate_and_advance(i, bytes, v,
 		clear_user(v.iov_base, v.iov_len),
 		memzero_page(v.bv_page, v.bv_offset, v.bv_len),
-		memset(v.iov_base, 0, v.iov_len)
+		memset(v.iov_base, 0, v.iov_len),
+		memzero_page(v.bv_page, v.bv_offset, v.bv_len)
 	)
 
 	return bytes;
@@ -1016,7 +1084,9 @@ size_t iov_iter_copy_from_user_atomic(struct page *page,
 		copyin((p += v.iov_len) - v.iov_len, v.iov_base, v.iov_len),
 		memcpy_from_page((p += v.bv_len) - v.bv_len, v.bv_page,
 				 v.bv_offset, v.bv_len),
-		memcpy((p += v.iov_len) - v.iov_len, v.iov_base, v.iov_len)
+		memcpy((p += v.iov_len) - v.iov_len, v.iov_base, v.iov_len),
+		memcpy_from_page((p += v.bv_len) - v.bv_len, v.bv_page,
+				 v.bv_offset, v.bv_len)
 	)
 	kunmap_atomic(kaddr);
 	return bytes;
@@ -1081,8 +1151,12 @@ void iov_iter_advance(struct iov_iter *i, size_t size)
 	case ITER_IOVEC:
 	case ITER_KVEC:
 	case ITER_BVEC:
-		iterate_and_advance(i, size, v, 0, 0, 0);
+		iterate_and_advance(i, size, v, 0, 0, 0, 0);
 		return;
+	case ITER_MAPPING:
+		/* We really don't want to fetch pages if we can avoid it */
+		i->iov_offset += size;
+		/* Fall through */
 	}
 	BUG();
 }
@@ -1131,6 +1205,11 @@ void iov_iter_revert(struct iov_iter *i, size_t unroll)
 	}
 	unroll -= i->iov_offset;
 	switch (iov_iter_type(i)) {
+	case ITER_MAPPING:
+		BUG(); /* We should never go beyond the start of the specified
+			* range since we might then be straying into pages that
+			* aren't pinned.
+			*/
 	case ITER_BVEC: {
 		const struct bio_vec *bvec = i->bvec;
 		while (1) {
@@ -1175,6 +1254,7 @@ size_t iov_iter_single_seg_count(const struct iov_iter *i)
 	switch (iov_iter_type(i)) {
 	case ITER_PIPE:
 	case ITER_DISCARD:
+	case ITER_MAPPING:
 		return i->count;	// it is a silly place, anyway
 	case ITER_BVEC:
 		return min(i->count, i->bvec->bv_len - i->iov_offset);
@@ -1231,6 +1311,33 @@ void iov_iter_pipe(struct iov_iter *i, unsigned int direction,
 EXPORT_SYMBOL(iov_iter_pipe);
 
 /**
+ * iov_iter_mapping - Initialise an I/O iterator to use the pages in a mapping
+ * @i: The iterator to initialise.
+ * @direction: The direction of the transfer.
+ * @mapping: The mapping to access.
+ * @start: The start file position.
+ * @count: The size of the I/O buffer in bytes.
+ *
+ * Set up an I/O iterator to either draw data out of the pages attached to an
+ * inode or to inject data into those pages.  The pages *must* be prevented
+ * from evaporation, either by taking a ref on them or locking them by the
+ * caller.
+ */
+void iov_iter_mapping(struct iov_iter *i, unsigned int direction,
+		      struct address_space *mapping,
+		      loff_t start, size_t count)
+{
+	BUG_ON(direction & ~1);
+	i->iter_dir = direction;
+	i->iter_type = ITER_MAPPING;
+	i->mapping = mapping;
+	i->mapping_start = start;
+	i->count = count;
+	i->iov_offset = 0;
+}
+EXPORT_SYMBOL(iov_iter_mapping);
+
+/**
  * iov_iter_discard - Initialise an I/O iterator that discards data
  * @i: The iterator to initialise.
  * @direction: The direction of the transfer.
@@ -1262,7 +1369,8 @@ unsigned long iov_iter_alignment(const struct iov_iter *i)
 	iterate_all_kinds(i, size, v,
 		(res |= (unsigned long)v.iov_base | v.iov_len, 0),
 		res |= v.bv_offset | v.bv_len,
-		res |= (unsigned long)v.iov_base | v.iov_len
+		res |= (unsigned long)v.iov_base | v.iov_len,
+		res |= v.bv_offset | v.bv_len
 	)
 	return res;
 }
@@ -1284,7 +1392,9 @@ unsigned long iov_iter_gap_alignment(const struct iov_iter *i)
 		(res |= (!res ? 0 : (unsigned long)v.bv_offset) |
 			(size != v.bv_len ? size : 0)),
 		(res |= (!res ? 0 : (unsigned long)v.iov_base) |
-			(size != v.iov_len ? size : 0))
+			(size != v.iov_len ? size : 0)),
+		(res |= (!res ? 0 : (unsigned long)v.bv_offset) |
+			(size != v.bv_len ? size : 0))
 		);
 	return res;
 }
@@ -1334,6 +1444,45 @@ static ssize_t pipe_get_pages(struct iov_iter *i,
 	return __pipe_get_pages(i, min(maxsize, capacity), pages, idx, start);
 }
 
+static ssize_t iter_mapping_get_pages(struct iov_iter *i,
+				      struct page **pages, size_t maxsize,
+				      unsigned maxpages, size_t *_start_offset)
+{
+	unsigned nr, offset;
+	pgoff_t index, count;
+	size_t size = maxsize;
+	loff_t pos;
+
+	if (!size || !maxpages)
+		return 0;
+
+	pos = i->mapping_start + i->iov_offset;
+	index = pos >> PAGE_SHIFT;
+	offset = pos & ~PAGE_MASK;
+	*_start_offset = offset;
+
+	count = 1;
+	if (size > PAGE_SIZE - offset) {
+		size -= PAGE_SIZE - offset;
+		count += size >> PAGE_SHIFT;
+		size &= ~PAGE_MASK;
+		if (size)
+			count++;
+	}
+
+	if (count > maxpages)
+		count = maxpages;
+
+	nr = find_get_pages_contig(i->mapping, index, count, pages);
+	if (nr == count)
+		return maxsize;
+	if (nr == 0)
+		return 0;
+	if (nr == 1)
+		return PAGE_SIZE - offset;
+	return (PAGE_SIZE - offset) + count * PAGE_SIZE;
+}
+
 ssize_t iov_iter_get_pages(struct iov_iter *i,
 		   struct page **pages, size_t maxsize, unsigned maxpages,
 		   size_t *start)
@@ -1344,6 +1493,8 @@ ssize_t iov_iter_get_pages(struct iov_iter *i,
 	switch (iov_iter_type(i)) {
 	case ITER_PIPE:
 		return pipe_get_pages(i, pages, maxsize, maxpages, start);
+	case ITER_MAPPING:
+		return iter_mapping_get_pages(i, pages, maxsize, maxpages, start);
 	case ITER_DISCARD:
 	case ITER_KVEC:
 		return -EFAULT;
@@ -1371,7 +1522,7 @@ ssize_t iov_iter_get_pages(struct iov_iter *i,
 		*start = v.bv_offset;
 		get_page(*pages = v.bv_page);
 		return v.bv_len;
-	}), 0
+	}), 0, 0
 	)
 	return 0;
 }
@@ -1416,6 +1567,50 @@ static ssize_t pipe_get_pages_alloc(struct iov_iter *i,
 	return n;
 }
 
+static ssize_t iter_mapping_get_pages_alloc(struct iov_iter *i,
+					    struct page ***pages, size_t maxsize,
+					    size_t *_start_offset)
+{
+	struct page **p;
+	unsigned nr, offset;
+	pgoff_t index, count;
+	size_t size = maxsize;
+	loff_t pos;
+
+	if (!size)
+		return 0;
+
+	pos = i->mapping_start + i->iov_offset;
+	index = pos >> PAGE_SHIFT;
+	offset = pos & ~PAGE_MASK;
+	*_start_offset = offset;
+
+	count = 1;
+	if (size > PAGE_SIZE - offset) {
+		size -= PAGE_SIZE - offset;
+		count += size >> PAGE_SHIFT;
+		size &= ~PAGE_MASK;
+		if (size)
+			count++;
+	}
+
+	p = get_pages_array(count);
+	if (!p)
+		return -ENOMEM;
+	*pages = p;
+
+	nr = find_get_pages_contig(i->mapping, index, count, p);
+	if (nr == count)
+		return maxsize;
+	if (nr == 0) {
+		kvfree(p);
+		return 0;
+	}
+	if (nr == 1)
+		return PAGE_SIZE - offset;
+	return (PAGE_SIZE - offset) + count * PAGE_SIZE;
+}
+
 ssize_t iov_iter_get_pages_alloc(struct iov_iter *i,
 		   struct page ***pages, size_t maxsize,
 		   size_t *start)
@@ -1428,6 +1623,8 @@ ssize_t iov_iter_get_pages_alloc(struct iov_iter *i,
 	switch (iov_iter_type(i)) {
 	case ITER_PIPE:
 		return pipe_get_pages_alloc(i, pages, maxsize, start);
+	case ITER_MAPPING:
+		return iter_mapping_get_pages_alloc(i, pages, maxsize, start);
 	case ITER_DISCARD:
 	case ITER_KVEC:
 		return -EFAULT;
@@ -1462,7 +1659,7 @@ ssize_t iov_iter_get_pages_alloc(struct iov_iter *i,
 			return -ENOMEM;
 		get_page(*p = v.bv_page);
 		return v.bv_len;
-	}), 0
+	}), 0, 0
 	)
 	return 0;
 }
@@ -1501,6 +1698,14 @@ size_t csum_and_copy_from_iter(void *addr, size_t bytes, __wsum *csum,
 				      v.iov_base, v.iov_len,
 				      sum, off);
 		off += v.iov_len;
+	}), ({
+		char *p = kmap_atomic(v.bv_page);
+		next = csum_partial_copy_nocheck(p + v.bv_offset,
+						 (to += v.bv_len) - v.bv_len,
+						 v.bv_len, 0);
+		kunmap_atomic(p);
+		sum = csum_block_add(sum, next, off);
+		off += v.bv_len;
 	})
 	)
 	*csum = sum;
@@ -1543,6 +1748,14 @@ bool csum_and_copy_from_iter_full(void *addr, size_t bytes, __wsum *csum,
 				      v.iov_base, v.iov_len,
 				      sum, off);
 		off += v.iov_len;
+	}), ({
+		char *p = kmap_atomic(v.bv_page);
+		next = csum_partial_copy_nocheck(p + v.bv_offset,
+						 (to += v.bv_len) - v.bv_len,
+						 v.bv_len, 0);
+		kunmap_atomic(p);
+		sum = csum_block_add(sum, next, off);
+		off += v.bv_len;
 	})
 	)
 	*csum = sum;
@@ -1589,6 +1802,14 @@ size_t csum_and_copy_to_iter(const void *addr, size_t bytes, void *csump,
 				     (from += v.iov_len) - v.iov_len,
 				     v.iov_len, sum, off);
 		off += v.iov_len;
+	}), ({
+		char *p = kmap_atomic(v.bv_page);
+		next = csum_partial_copy_nocheck((from += v.bv_len) - v.bv_len,
+						 p + v.bv_offset,
+						 v.bv_len, 0);
+		kunmap_atomic(p);
+		sum = csum_block_add(sum, next, off);
+		off += v.bv_len;
 	})
 	)
 	*csum = sum;
@@ -1622,10 +1843,11 @@ int iov_iter_npages(const struct iov_iter *i, int maxpages)
 
 	if (!size)
 		return 0;
-	if (unlikely(iov_iter_is_discard(i)))
+	switch (iov_iter_type(i)) {
+	case ITER_DISCARD:
 		return 0;
 
-	if (unlikely(iov_iter_is_pipe(i))) {
+	case ITER_PIPE: {
 		struct pipe_inode_info *pipe = i->pipe;
 		size_t off;
 		int idx;
@@ -1638,24 +1860,47 @@ int iov_iter_npages(const struct iov_iter *i, int maxpages)
 		npages = ((pipe->curbuf - idx - 1) & (pipe->buffers - 1)) + 1;
 		if (npages >= maxpages)
 			return maxpages;
-	} else iterate_all_kinds(i, size, v, ({
-		unsigned long p = (unsigned long)v.iov_base;
-		npages += DIV_ROUND_UP(p + v.iov_len, PAGE_SIZE)
-			- p / PAGE_SIZE;
+	}
+
+	case ITER_MAPPING: {
+		unsigned offset;
+
+		offset = (i->mapping_start + i->iov_offset) & ~PAGE_MASK;
+
+		npages = 1;
+		if (size > PAGE_SIZE - offset) {
+			size -= PAGE_SIZE - offset;
+			npages += size >> PAGE_SHIFT;
+			size &= ~PAGE_MASK;
+			if (size)
+				npages++;
+		}
 		if (npages >= maxpages)
 			return maxpages;
-	0;}),({
-		npages++;
-		if (npages >= maxpages)
-			return maxpages;
-	}),({
-		unsigned long p = (unsigned long)v.iov_base;
-		npages += DIV_ROUND_UP(p + v.iov_len, PAGE_SIZE)
-			- p / PAGE_SIZE;
-		if (npages >= maxpages)
-			return maxpages;
-	})
-	)
+		break;
+	}
+
+	default:
+		iterate_all_kinds(i, size, v, ({
+			unsigned long p = (unsigned long)v.iov_base;
+			npages += DIV_ROUND_UP(p + v.iov_len, PAGE_SIZE)
+				- p / PAGE_SIZE;
+			if (npages >= maxpages)
+				return maxpages;
+		0;}),({
+			npages++;
+			if (npages >= maxpages)
+				return maxpages;
+		}),({
+			unsigned long p = (unsigned long)v.iov_base;
+			npages += DIV_ROUND_UP(p + v.iov_len, PAGE_SIZE)
+				- p / PAGE_SIZE;
+			if (npages >= maxpages)
+				return maxpages;
+		}),
+		0
+		)
+	}
 	return npages;
 }
 EXPORT_SYMBOL(iov_iter_npages);
@@ -1667,6 +1912,7 @@ const void *dup_iter(struct iov_iter *new, struct iov_iter *old, gfp_t flags)
 	case ITER_PIPE:
 		break;
 	case ITER_DISCARD:
+	case ITER_MAPPING:
 		return NULL;
 	case ITER_BVEC:
 		return new->bvec = kmemdup(new->bvec,
@@ -1781,7 +2027,12 @@ int iov_iter_for_each_range(struct iov_iter *i, size_t bytes,
 		kunmap(v.bv_page);
 		err;}), ({
 		w = v;
-		err = f(&w, context);})
+		err = f(&w, context);}), ({
+		w.iov_base = kmap(v.bv_page) + v.bv_offset;
+		w.iov_len = v.bv_len;
+		err = f(&w, context);
+		kunmap(v.bv_page);
+		err;})
 	)
 	return err;
 }
