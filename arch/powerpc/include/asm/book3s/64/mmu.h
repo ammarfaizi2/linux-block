@@ -25,14 +25,6 @@ struct mmu_psize_def {
 	};
 };
 extern struct mmu_psize_def mmu_psize_defs[MMU_PAGE_COUNT];
-
-/*
- * For BOOK3s 64 with 4k and 64K linux page size
- * we want to use pointers, because the page table
- * actually store pfn
- */
-typedef pte_t *pgtable_t;
-
 #endif /* __ASSEMBLY__ */
 
 /*
@@ -179,29 +171,22 @@ static inline void mm_ctx_set_slb_addr_limit(mm_context_t *ctx, unsigned long li
 	ctx->hash_context->slb_addr_limit = limit;
 }
 
+static inline struct slice_mask *slice_mask_for_size(mm_context_t *ctx, int psize)
+{
 #ifdef CONFIG_PPC_64K_PAGES
-static inline struct slice_mask *mm_ctx_slice_mask_64k(mm_context_t *ctx)
-{
-	return &ctx->hash_context->mask_64k;
-}
+	if (psize == MMU_PAGE_64K)
+		return &ctx->hash_context->mask_64k;
 #endif
+#ifdef CONFIG_HUGETLB_PAGE
+	if (psize == MMU_PAGE_16M)
+		return &ctx->hash_context->mask_16m;
+	if (psize == MMU_PAGE_16G)
+		return &ctx->hash_context->mask_16g;
+#endif
+	BUG_ON(psize != MMU_PAGE_4K);
 
-static inline struct slice_mask *mm_ctx_slice_mask_4k(mm_context_t *ctx)
-{
 	return &ctx->hash_context->mask_4k;
 }
-
-#ifdef CONFIG_HUGETLB_PAGE
-static inline struct slice_mask *mm_ctx_slice_mask_16m(mm_context_t *ctx)
-{
-	return &ctx->hash_context->mask_16m;
-}
-
-static inline struct slice_mask *mm_ctx_slice_mask_16g(mm_context_t *ctx)
-{
-	return &ctx->hash_context->mask_16g;
-}
-#endif
 
 #ifdef CONFIG_PPC_SUBPAGE_PROT
 static inline struct subpage_prot_table *mm_ctx_subpage_prot(mm_context_t *ctx)

@@ -52,7 +52,7 @@
 #include <asm/firmware.h>
 #include <asm/dma.h>
 
-#include "mmu_decl.h"
+#include <mm/mmu_decl.h>
 
 
 #ifdef CONFIG_PPC_BOOK3S_64
@@ -97,7 +97,6 @@ EXPORT_SYMBOL(__vmalloc_end);
 unsigned long __kernel_io_start;
 EXPORT_SYMBOL(__kernel_io_start);
 unsigned long __kernel_io_end;
-EXPORT_SYMBOL(__kernel_io_end);
 struct page *vmemmap;
 EXPORT_SYMBOL(vmemmap);
 unsigned long __pte_frag_nr;
@@ -122,7 +121,7 @@ void __iomem *__ioremap_at(phys_addr_t pa, void *ea, unsigned long size, pgprot_
 		return NULL;
 
 	if ((ea + size) >= (void *)IOREMAP_END) {
-		pr_warn("Outisde the supported range\n");
+		pr_warn("Outside the supported range\n");
 		return NULL;
 	}
 
@@ -333,6 +332,9 @@ void mark_rodata_ro(void)
 		radix__mark_rodata_ro();
 	else
 		hash__mark_rodata_ro();
+
+	// mark_initmem_nx() should have already run by now
+	ptdump_check_wx();
 }
 
 void mark_initmem_nx(void)

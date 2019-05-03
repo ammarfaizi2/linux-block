@@ -37,15 +37,9 @@
 #include <asm/feature-fixups.h>
 #include <asm/barrier.h>
 #include <asm/kup.h>
+#include <asm/bug.h>
 
-/*
- * MSR_KERNEL is > 0x10000 on 4xx/Book-E since it include MSR_CE.
- */
-#if MSR_KERNEL >= 0x10000
-#define LOAD_MSR_KERNEL(r, x)	lis r,(x)@h; ori r,r,(x)@l
-#else
-#define LOAD_MSR_KERNEL(r, x)	li r,(x)
-#endif
+#include "head_32.h"
 
 /*
  * Align to 4k in order to ensure that all functions modyfing srr0/srr1
@@ -213,26 +207,43 @@ transfer_to_handler_cont:
 	mtspr	SPRN_NRI, r0
 #endif
 #ifdef CONFIG_TRACE_IRQFLAGS
+	/*
+	 * When tracing IRQ state (lockdep) we enable the MMU before we call
+	 * the IRQ tracing functions as they might access vmalloc space or
+	 * perform IOs for console output.
+	 *
+	 * To speed up the syscall path where interrupts stay on, let's check
+	 * first if we are changing the MSR value at all.
+	 */
+	tophys(r12, r1)
+	lwz	r12,_MSR(r12)
+	andi.	r12,r12,MSR_EE
+	bne	1f
+
+	/* MSR isn't changing, just transition directly */
+#endif
+	mtspr	SPRN_SRR0,r11
+	mtspr	SPRN_SRR1,r10
+	mtlr	r9
+	SYNC
+	RFI				/* jump to handler, enable MMU */
+
+#ifdef CONFIG_TRACE_IRQFLAGS
+1:	/* MSR is changing, re-enable MMU so we can notify lockdep. We need to
+	 * keep interrupts disabled at this point otherwise we might risk
+	 * taking an interrupt before we tell lockdep they are enabled.
+	 */
 	lis	r12,reenable_mmu@h
 	ori	r12,r12,reenable_mmu@l
+	LOAD_MSR_KERNEL(r0, MSR_KERNEL)
 	mtspr	SPRN_SRR0,r12
-	mtspr	SPRN_SRR1,r10
+	mtspr	SPRN_SRR1,r0
 	SYNC
 	RFI
-reenable_mmu:				/* re-enable mmu so we can */
-	mfmsr	r10
-	lwz	r12,_MSR(r1)
-	xor	r10,r10,r12
-	andi.	r10,r10,MSR_EE		/* Did EE change? */
-	beq	1f
 
+reenable_mmu:
 	/*
-	 * The trace_hardirqs_off will use CALLER_ADDR0 and CALLER_ADDR1.
-	 * If from user mode there is only one stack frame on the stack, and
-	 * accessing CALLER_ADDR1 will cause oops. So we need create a dummy
-	 * stack frame to make trace_hardirqs_off happy.
-	 *
-	 * This is handy because we also need to save a bunch of GPRs,
+	 * We save a bunch of GPRs,
 	 * r3 can be different from GPR3(r1) at this point, r9 and r11
 	 * contains the old MSR and handler address respectively,
 	 * r4 & r5 can contain page fault arguments that need to be passed
@@ -240,14 +251,19 @@ reenable_mmu:				/* re-enable mmu so we can */
 	 * they aren't useful past this point (aren't syscall arguments),
 	 * the rest is restored from the exception frame.
 	 */
+
 	stwu	r1,-32(r1)
 	stw	r9,8(r1)
 	stw	r11,12(r1)
 	stw	r3,16(r1)
 	stw	r4,20(r1)
 	stw	r5,24(r1)
-	bl	trace_hardirqs_off
-	lwz	r5,24(r1)
+
+	/* If we are disabling interrupts (normal case), simply log it with
+	 * lockdep
+	 */
+1:	bl	trace_hardirqs_off
+2:	lwz	r5,24(r1)
 	lwz	r4,20(r1)
 	lwz	r3,16(r1)
 	lwz	r11,12(r1)
@@ -257,15 +273,9 @@ reenable_mmu:				/* re-enable mmu so we can */
 	lwz	r6,GPR6(r1)
 	lwz	r7,GPR7(r1)
 	lwz	r8,GPR8(r1)
-1:	mtctr	r11
+	mtctr	r11
 	mtlr	r9
 	bctr				/* jump to handler */
-#else /* CONFIG_TRACE_IRQFLAGS */
-	mtspr	SPRN_SRR0,r11
-	mtspr	SPRN_SRR1,r10
-	mtlr	r9
-	SYNC
-	RFI				/* jump to handler, enable MMU */
 #endif /* CONFIG_TRACE_IRQFLAGS */
 
 #if defined (CONFIG_PPC_BOOK3S_32) || defined(CONFIG_E500)
@@ -308,6 +318,33 @@ stack_ovf:
 	SYNC
 	RFI
 
+#ifdef CONFIG_TRACE_IRQFLAGS
+trace_syscall_entry_irq_off:
+	/*
+	 * Syscall shouldn't happen while interrupts are disabled,
+	 * so let's do a warning here.
+	 */
+0:	trap
+	EMIT_BUG_ENTRY 0b,__FILE__,__LINE__, BUGFLAG_WARNING
+	bl	trace_hardirqs_on
+
+	/* Now enable for real */
+	LOAD_MSR_KERNEL(r10, MSR_KERNEL | MSR_EE)
+	mtmsr	r10
+
+	REST_GPR(0, r1)
+	REST_4GPRS(3, r1)
+	REST_2GPRS(7, r1)
+	b	DoSyscall
+#endif /* CONFIG_TRACE_IRQFLAGS */
+
+	.globl	transfer_to_syscall
+transfer_to_syscall:
+#ifdef CONFIG_TRACE_IRQFLAGS
+	andi.	r12,r9,MSR_EE
+	beq-	trace_syscall_entry_irq_off
+#endif /* CONFIG_TRACE_IRQFLAGS */
+
 /*
  * Handle a system call.
  */
@@ -319,33 +356,14 @@ _GLOBAL(DoSyscall)
 	stw	r3,ORIG_GPR3(r1)
 	li	r12,0
 	stw	r12,RESULT(r1)
-	lwz	r11,_CCR(r1)	/* Clear SO bit in CR */
-	rlwinm	r11,r11,0,4,2
-	stw	r11,_CCR(r1)
 #ifdef CONFIG_TRACE_IRQFLAGS
-	/* Return from syscalls can (and generally will) hard enable
-	 * interrupts. You aren't supposed to call a syscall with
-	 * interrupts disabled in the first place. However, to ensure
-	 * that we get it right vs. lockdep if it happens, we force
-	 * that hard enable here with appropriate tracing if we see
-	 * that we have been called with interrupts off
-	 */
+	/* Make sure interrupts are enabled */
 	mfmsr	r11
 	andi.	r12,r11,MSR_EE
-	bne+	1f
-	/* We came in with interrupts disabled, we enable them now */
-	bl	trace_hardirqs_on
-	mfmsr	r11
-	lwz	r0,GPR0(r1)
-	lwz	r3,GPR3(r1)
-	lwz	r4,GPR4(r1)
-	ori	r11,r11,MSR_EE
-	lwz	r5,GPR5(r1)
-	lwz	r6,GPR6(r1)
-	lwz	r7,GPR7(r1)
-	lwz	r8,GPR8(r1)
-	mtmsr	r11
-1:
+	/* We came in with interrupts disabled, we WARN and mark them enabled
+	 * for lockdep now */
+0:	tweqi	r12, 0
+	EMIT_BUG_ENTRY 0b,__FILE__,__LINE__, BUGFLAG_WARNING
 #endif /* CONFIG_TRACE_IRQFLAGS */
 	lwz	r11,TI_FLAGS(r2)
 	andi.	r11,r11,_TIF_SYSCALL_DOTRACE
@@ -399,8 +417,7 @@ syscall_exit_cont:
 	lwz	r8,_MSR(r1)
 #ifdef CONFIG_TRACE_IRQFLAGS
 	/* If we are going to return from the syscall with interrupts
-	 * off, we trace that here. It shouldn't happen though but we
-	 * want to catch the bugger if it does right ?
+	 * off, we trace that here. It shouldn't normally happen.
 	 */
 	andi.	r10,r8,MSR_EE
 	bne+	1f
@@ -889,10 +906,7 @@ resume_kernel:
 	 */
 	bl	trace_hardirqs_off
 #endif
-1:	bl	preempt_schedule_irq
-	lwz	r3,TI_FLAGS(r2)
-	andi.	r0,r3,_TIF_NEED_RESCHED
-	bne-	1b
+	bl	preempt_schedule_irq
 #ifdef CONFIG_TRACE_IRQFLAGS
 	/* And now, to properly rebalance the above, we tell lockdep they
 	 * are being turned back on, which will happen when we return
@@ -925,28 +939,14 @@ END_MMU_FTR_SECTION_IFSET(MMU_FTR_TYPE_47x)
 	 * off in this assembly code while peeking at TI_FLAGS() and such. However
 	 * we need to inform it if the exception turned interrupts off, and we
 	 * are about to trun them back on.
-	 *
-	 * The problem here sadly is that we don't know whether the exceptions was
-	 * one that turned interrupts off or not. So we always tell lockdep about
-	 * turning them on here when we go back to wherever we came from with EE
-	 * on, even if that may meen some redudant calls being tracked. Maybe later
-	 * we could encode what the exception did somewhere or test the exception
-	 * type in the pt_regs but that sounds overkill
 	 */
 	andi.	r10,r9,MSR_EE
 	beq	1f
-	/*
-	 * Since the ftrace irqsoff latency trace checks CALLER_ADDR1,
-	 * which is the stack frame here, we need to force a stack frame
-	 * in case we came from user space.
-	 */
 	stwu	r1,-32(r1)
 	mflr	r0
 	stw	r0,4(r1)
-	stwu	r1,-32(r1)
 	bl	trace_hardirqs_on
-	lwz	r1,0(r1)
-	lwz	r1,0(r1)
+	addi	r1, r1, 32
 	lwz	r9,_MSR(r1)
 1:
 #endif /* CONFIG_TRACE_IRQFLAGS */
@@ -1209,6 +1209,7 @@ load_dbcr0:
 
 	.section .bss
 	.align	4
+	.global global_dbcr0
 global_dbcr0:
 	.space	8*NR_CPUS
 	.previous
@@ -1219,9 +1220,10 @@ do_work:			/* r10 contains MSR_KERNEL here */
 	beq	do_user_signal
 
 do_resched:			/* r10 contains MSR_KERNEL here */
-	/* Note: We don't need to inform lockdep that we are enabling
-	 * interrupts here. As far as it knows, they are already enabled
-	 */
+#ifdef CONFIG_TRACE_IRQFLAGS
+	bl	trace_hardirqs_on
+	mfmsr	r10
+#endif
 	ori	r10,r10,MSR_EE
 	SYNC
 	MTMSRD(r10)		/* hard-enable interrupts */
