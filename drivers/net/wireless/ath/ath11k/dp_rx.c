@@ -988,7 +988,7 @@ static int ath11k_htt_pull_ppdu_stats(struct ath11k_base *ab,
 	ppdu_id = *((u32 *)data + 1);
 	ar = ab->pdevs[pdev_id].ar;
 
-	if (ar->debug.pktlog_mode == ATH11K_PKTLOG_MODE_LITE) {
+	if (ath11k_debug_is_pktlog_lite_mode_enabled(ar)) {
 		/* TODO update the pktlog tracing */
 	}
 
@@ -2300,7 +2300,7 @@ int ath11k_dp_rx_process_mon_status(struct ath11k_base *ab, int mac_id,
 		memset(&ppdu_info, 0, sizeof(ppdu_info));
 		ppdu_info.peer_id = HAL_INVALID_PEERID;
 
-		if (!ar->debug.pktlog_peer_valid) {
+		if (ath11k_debug_is_pktlog_rx_stats_enabled(ar)) {
 			/* TODO update the pktlog tracing */
 		}
 
@@ -2329,8 +2329,7 @@ int ath11k_dp_rx_process_mon_status(struct ath11k_base *ab, int mac_id,
 		arsta = (struct ath11k_sta *)peer->sta->drv_priv;
 		ath11k_dp_rx_update_peer_stats(arsta, &ppdu_info);
 
-		if (ar->debug.pktlog_peer_valid &&
-		    ether_addr_equal(peer->addr, ar->debug.pktlog_peer_addr)) {
+		if (ath11k_debug_is_pktlog_peer_vaild(ar, peer->addr)) {
 			/* TODO update the pktlog tracing for one peer*/
 		}
 		spin_unlock_bh(&ab->data_lock);
