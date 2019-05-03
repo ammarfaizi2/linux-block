@@ -30,6 +30,7 @@ enum ath10k_bus {
 #define QCA9984_1_0_DEVICE_ID	(0x0046)
 #define QCA9377_1_0_DEVICE_ID   (0x0042)
 #define QCA9887_1_0_DEVICE_ID   (0x0050)
+#define SPARKLAN_WPEQ_160N_DEVICE_ID	(0x9378)
 
 /* QCA988X 1.0 definitions (unsupported) */
 #define QCA988X_HW_1_0_CHIP_ID_REV	0x0
