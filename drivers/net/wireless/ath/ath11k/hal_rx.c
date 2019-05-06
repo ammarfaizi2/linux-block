@@ -1193,3 +1193,31 @@ ath11k_hal_rx_parse_mon_status(struct ath11k_base *ab,
 
 	return hal_status;
 }
+
+void ath11k_hal_rx_reo_ent_buf_paddr_get(void *rx_desc, dma_addr_t *paddr,
+					 u32 *sw_cookie, void **pp_buf_addr,
+					 u32  *msdu_cnt)
+{
+	struct hal_reo_entrance_ring *reo_ent_ring =
+		(struct hal_reo_entrance_ring *)rx_desc;
+	struct buffer_addr *buf_addr_info;
+	struct rx_mpdu_desc *rx_mpdu_desc_info_details;
+
+	rx_mpdu_desc_info_details =
+			(struct rx_mpdu_desc *)&reo_ent_ring->rx_mpdu_info;
+
+	*msdu_cnt = FIELD_GET(RX_MPDU_DESC_INFO0_MSDU_COUNT,
+			      rx_mpdu_desc_info_details->info0);
+
+	buf_addr_info = (struct buffer_addr *)&reo_ent_ring->buf_addr_info;
+
+	*paddr = (((u64)FIELD_GET(BUFFER_ADDR_INFO1_ADDR,
+				  buf_addr_info->info1)) << 32) |
+			FIELD_GET(BUFFER_ADDR_INFO0_ADDR,
+				  buf_addr_info->info0);
+
+	*sw_cookie = FIELD_GET(BUFFER_ADDR_INFO1_SW_COOKIE,
+			       buf_addr_info->info1);
+
+	*pp_buf_addr = (void *)buf_addr_info;
+}

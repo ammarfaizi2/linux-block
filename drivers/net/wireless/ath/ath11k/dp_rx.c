@@ -3383,6 +3383,190 @@ static inline void ath11k_dp_mon_get_buf_len(struct hal_rx_msdu_desc_info *info,
 	}
 }
 
+static u32
+ath11k_dp_rx_mon_mpdu_pop(struct ath11k *ar,
+			  void *ring_entry, struct sk_buff **head_msdu,
+			  struct sk_buff **tail_msdu, u32 *npackets,
+			  u32 *ppdu_id)
+{
+	struct ath11k_pdev_dp *dp = &ar->dp;
+	struct ath11k_mon_data *pmon = (struct ath11k_mon_data *)&dp->mon_data;
+	struct dp_rxdma_ring *rx_ring = &dp->rxdma_mon_buf_ring;
+	struct sk_buff *msdu, *last;
+	struct hal_rx_msdu_list msdu_list;
+	void *p_buf_addr_info, *p_last_buf_addr_info;
+	void *rx_desc;
+	void *rx_msdu_link_desc;
+	dma_addr_t paddr;
+	u16 num_msdus = 0;
+	u32 rx_buf_size, rx_pkt_offset, sw_cookie;
+	u32 rx_bufs_used = 0, i = 0;
+	u32 msdu_ppdu_id = 0, msdu_cnt = 0;
+	u32 total_len = 0, frag_len = 0;
+	u8 *data = NULL;
+	bool is_frag, is_first_msdu;
+	bool drop_mpdu = false;
+	struct ath11k_skb_rxcb *rxcb;
+	struct hal_reo_entrance_ring *ent_desc =
+			(struct hal_reo_entrance_ring *)ring_entry;
+	int buf_id;
+
+	msdu = 0;
+	last = NULL;
+
+	ath11k_hal_rx_reo_ent_buf_paddr_get(ring_entry, &paddr,
+					    &sw_cookie, &p_last_buf_addr_info,
+					    &msdu_cnt);
+
+	if (FIELD_GET(HAL_REO_ENTR_RING_INFO1_RXDMA_PUSH_REASON,
+		      ent_desc->info1) ==
+		      HAL_REO_DEST_RING_PUSH_REASON_ERR_DETECTED) {
+		u8 rxdma_err =
+			FIELD_GET(HAL_REO_ENTR_RING_INFO1_RXDMA_ERROR_CODE,
+				  ent_desc->info1);
+		if (rxdma_err == HAL_REO_ENTR_RING_RXDMA_ECODE_FLUSH_REQUEST_ERR ||
+		    rxdma_err == HAL_REO_ENTR_RING_RXDMA_ECODE_MPDU_LEN_ERR ||
+		    rxdma_err == HAL_REO_ENTR_RING_RXDMA_ECODE_OVERFLOW_ERR) {
+			drop_mpdu = true;
+			pmon->rx_mon_stats.dest_mpdu_drop++;
+		}
+	}
+
+	is_frag = false;
+	is_first_msdu = true;
+
+	do {
+		if (pmon->mon_last_linkdesc_paddr == paddr) {
+			pmon->rx_mon_stats.dup_mon_linkdesc_cnt++;
+			return rx_bufs_used;
+		}
+
+		rx_msdu_link_desc =
+			(void *)pmon->link_desc_banks[sw_cookie].vaddr +
+			(paddr - pmon->link_desc_banks[sw_cookie].paddr);
+
+		ath11k_hal_rx_msdu_list_get(ar, rx_msdu_link_desc, &msdu_list,
+					    &num_msdus);
+
+		for (i = 0; i < num_msdus; i++) {
+			u32 l2_hdr_offset;
+
+			if (pmon->mon_last_buf_cookie == msdu_list.sw_cookie[i]) {
+				ath11k_dbg(ar->ab, ATH11K_DBG_DATA,
+					   "i %d last_cookie %d is same\n",
+					   i, pmon->mon_last_buf_cookie);
+				drop_mpdu = true;
+				pmon->rx_mon_stats.dup_mon_buf_cnt++;
+				continue;
+			}
+			buf_id = FIELD_GET(DP_RXDMA_BUF_COOKIE_BUF_ID,
+					   msdu_list.sw_cookie[i]);
+
+			spin_lock_bh(&rx_ring->idr_lock);
+			msdu = idr_find(&rx_ring->bufs_idr, buf_id);
+			spin_unlock_bh(&rx_ring->idr_lock);
+			if (!msdu) {
+				ath11k_dbg(ar->ab, ATH11K_DBG_DATA,
+					   "msdu_pop: invalid buf_id %d\n", buf_id);
+				break;
+			}
+			rxcb = ATH11K_SKB_RXCB(msdu);
+			if (!rxcb->unmapped) {
+				dma_unmap_single(ar->ab->dev, rxcb->paddr,
+						 msdu->len +
+						 skb_tailroom(msdu),
+						 DMA_FROM_DEVICE);
+				rxcb->unmapped = 1;
+			}
+			if (drop_mpdu) {
+				ath11k_dbg(ar->ab, ATH11K_DBG_DATA,
+					   "i %d drop msdu %p *ppdu_id %x\n",
+					   i, msdu, *ppdu_id);
+				dev_kfree_skb_any(msdu);
+				msdu = NULL;
+				goto next_msdu;
+			}
+			data = msdu->data;
+			rx_desc = msdu->data;
+
+			rx_pkt_offset = sizeof(struct hal_rx_desc);
+			l2_hdr_offset =
+				ath11k_dp_rx_h_msdu_end_l3pad(msdu->data);
+
+			if (is_first_msdu) {
+				if (!ath11k_dp_rxdesc_mpdu_valid(rx_desc)) {
+					drop_mpdu = true;
+					dev_kfree_skb_any(msdu);
+					msdu = NULL;
+					pmon->mon_last_linkdesc_paddr = paddr;
+					goto next_msdu;
+				}
+
+				msdu_ppdu_id =
+					ath11k_dp_rxdesc_get_ppduid(rx_desc);
+
+				if (ath11k_dp_rx_mon_comp_ppduid(msdu_ppdu_id,
+								 ppdu_id,
+								 &rx_bufs_used))
+					return rx_bufs_used;
+				pmon->mon_last_linkdesc_paddr = paddr;
+				is_first_msdu = false;
+			}
+			ath11k_dp_mon_get_buf_len(&msdu_list.msdu_info[i],
+						  &is_frag, &total_len,
+						  &frag_len, &msdu_cnt);
+			rx_buf_size = rx_pkt_offset + l2_hdr_offset + frag_len;
+
+			ath11k_dp_pkt_set_pktlen(msdu, rx_buf_size);
+
+			if (!(*head_msdu))
+				*head_msdu = msdu;
+			else if (last)
+				last->next = msdu;
+
+			last = msdu;
+next_msdu:
+			pmon->mon_last_buf_cookie = msdu_list.sw_cookie[i];
+			rx_bufs_used++;
+			spin_lock_bh(&rx_ring->idr_lock);
+			idr_remove(&rx_ring->bufs_idr, buf_id);
+			spin_unlock_bh(&rx_ring->idr_lock);
+		}
+
+		ath11k_dp_rx_mon_next_link_desc_get(rx_msdu_link_desc, &paddr,
+						    &sw_cookie,
+						    &p_buf_addr_info);
+
+		if (ath11k_dp_rx_monitor_link_desc_return(ar,
+							  p_last_buf_addr_info,
+							  dp->mac_id))
+			ath11k_dbg(ar->ab, ATH11K_DBG_DATA,
+				   "dp_rx_monitor_link_desc_return failed");
+
+		p_last_buf_addr_info = p_buf_addr_info;
+
+	} while (paddr && msdu_cnt);
+
+	if (last)
+		last->next = NULL;
+
+	*tail_msdu = msdu;
+
+	if (msdu_cnt == 0)
+		*npackets = 1;
+
+	return rx_bufs_used;
+}
+
+static inline void ath11k_dp_rx_msdus_set_payload(struct sk_buff *msdu)
+{
+	u32 rx_pkt_offset, l2_hdr_offset;
+
+	rx_pkt_offset = sizeof(struct hal_rx_desc);
+	l2_hdr_offset = ath11k_dp_rx_h_msdu_end_l3pad(msdu->data);
+	skb_pull(msdu, rx_pkt_offset + l2_hdr_offset);
+}
+
 int ath11k_dp_rx_pdev_mon_status_attach(struct ath11k *ar)
 {
 	struct ath11k_pdev_dp *dp = &ar->dp;

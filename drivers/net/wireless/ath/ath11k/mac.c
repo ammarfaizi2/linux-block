@@ -769,6 +769,21 @@ static void ath11k_peer_cleanup(struct ath11k *ar, u32 vdev_id)
 	spin_unlock_bh(&ab->data_lock);
 }
 
+static int ath11k_monitor_vdev_up(struct ath11k *ar, int vdev_id)
+{
+	int ret = 0;
+
+	ret = ath11k_wmi_vdev_up(ar, vdev_id, 0, ar->mac_addr);
+	if (ret) {
+		ath11k_warn(ar->ab, "failed to put up monitor vdev %i: %d\n",
+			    vdev_id, ret);
+		return ret;
+	}
+
+	ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "mac monitor vdev %i started\n",
+		   vdev_id);
+	return 0;
+}
 static int ath11k_config(struct ieee80211_hw *hw, u32 changed)
 {
 	struct ath11k *ar = hw->priv;
@@ -3473,6 +3488,9 @@ static int ath11k_add_interface(struct ieee80211_hw *hw,
 	case NL80211_IFTYPE_AP:
 		arvif->vdev_type = WMI_VDEV_TYPE_AP;
 		break;
+	case NL80211_IFTYPE_MONITOR:
+		arvif->vdev_type = WMI_VDEV_TYPE_MONITOR;
+		break;
 	default:
 		WARN_ON(1);
 		break;
@@ -3678,6 +3696,7 @@ static void ath11k_remove_interface(struct ieee80211_hw *hw,
 
 	/* Recalc txpower for remaining vdev */
 	ath11k_mac_txpower_recalc(ar);
+	clear_bit(ATH11K_FLAG_MONITOR_ENABLED, &ar->monitor_flags);
 
 	/* TODO: recal traffic pause state based on the available vdevs */
 
@@ -3700,6 +3719,8 @@ static void ath11k_configure_filter(struct ieee80211_hw *hw,
 				    u64 multicast)
 {
 	struct ath11k *ar = hw->priv;
+	bool reset_flag = false;
+	int ret = 0;
 
 	mutex_lock(&ar->conf_mutex);
 
@@ -3707,8 +3728,19 @@ static void ath11k_configure_filter(struct ieee80211_hw *hw,
 	*total_flags &= SUPPORTED_FILTERS;
 	ar->filter_flags = *total_flags;
 
-	/* TODO: Send filter configuration to target as appropriate */
+	/* For monitor mode */
+	reset_flag = !(ar->filter_flags & FIF_BCN_PRBRESP_PROMISC);
 
+	ret = ath11k_dp_htt_monitor_mode_ring_config(ar, reset_flag);
+	if (!ret) {
+		if (!reset_flag)
+			set_bit(ATH11K_FLAG_MONITOR_ENABLED, &ar->monitor_flags);
+		else
+			clear_bit(ATH11K_FLAG_MONITOR_ENABLED, &ar->monitor_flags);
+	} else {
+		ath11k_warn(ar->ab,
+			    "fail to set monitor filter: %d\n", ret);
+	}
 	mutex_unlock(&ar->conf_mutex);
 }
 
@@ -4163,6 +4195,11 @@ ath11k_mac_op_assign_vif_chanctx(struct ieee80211_hw *hw,
 			    arvif->vdev_id, vif->addr,
 			    ctx->def.chan->center_freq, ret);
 		goto err;
+	}
+	if (arvif->vdev_type == WMI_VDEV_TYPE_MONITOR) {
+		ret = ath11k_monitor_vdev_up(ar, arvif->vdev_id);
+		if (ret)
+			goto err;
 	}
 
 	arvif->is_started = true;
@@ -5116,6 +5153,7 @@ int ath11k_mac_create(struct ath11k_base *ab)
 
 		INIT_WORK(&ar->wmi_mgmt_tx_work, ath11k_mgmt_over_wmi_tx_work);
 		skb_queue_head_init(&ar->wmi_mgmt_tx_queue);
+		clear_bit(ATH11K_FLAG_MONITOR_ENABLED, &ar->monitor_flags);
 
 		ret = ath11k_mac_register(ar);
 		if (ret) {

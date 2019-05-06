@@ -706,7 +706,7 @@ u32 *ath11k_hal_srng_dst_peek(struct ath11k_base *ab, struct hal_srng *srng)
 	lockdep_assert_held(&srng->lock);
 
 	if (srng->u.dst_ring.tp != srng->u.dst_ring.cached_hp)
-		return ((void *)srng->ring_base_vaddr + srng->u.dst_ring.tp);
+		return (srng->ring_base_vaddr + srng->u.dst_ring.tp);
 
 	return NULL;
 }
