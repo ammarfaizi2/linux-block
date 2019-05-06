@@ -3294,3 +3294,156 @@ static inline int ath11k_dp_pkt_set_pktlen(struct sk_buff *skb, u32 len)
 	}
 	return 0;
 }
+
+static inline void
+ath11k_hal_rx_msdu_list_get(struct ath11k *ar,
+			    void *msdu_link_desc,
+			    struct hal_rx_msdu_list *msdu_list,
+			    u16 *num_msdus)
+{
+	struct hal_rx_msdu_details *msdu_details = NULL;
+	struct rx_msdu_desc *msdu_desc_info = NULL;
+	struct hal_rx_msdu_link *msdu_link = NULL;
+	int i;
+	u32 last = FIELD_PREP(RX_MSDU_DESC_INFO0_LAST_MSDU_IN_MPDU, 1);
+	u32 first = FIELD_PREP(RX_MSDU_DESC_INFO0_FIRST_MSDU_IN_MPDU, 1);
+	u8  tmp  = 0;
+
+	msdu_link = (struct hal_rx_msdu_link *)msdu_link_desc;
+	msdu_details = &msdu_link->msdu_link[0];
+
+	for (i = 0; i < HAL_RX_NUM_MSDU_DESC; i++) {
+		if (FIELD_GET(BUFFER_ADDR_INFO0_ADDR,
+			      msdu_details[i].buf_addr_info.info0) == 0) {
+			msdu_desc_info = &msdu_details[i - 1].rx_msdu_info;
+			msdu_desc_info->info0 |= last;
+			;
+			break;
+		}
+		msdu_desc_info = &msdu_details[i].rx_msdu_info;
+
+		if (!i)
+			msdu_desc_info->info0 |= first;
+		else if (i == (HAL_RX_NUM_MSDU_DESC - 1))
+			msdu_desc_info->info0 |= last;
+		msdu_list->msdu_info[i].msdu_flags = msdu_desc_info->info0;
+		msdu_list->msdu_info[i].msdu_len =
+			 HAL_RX_MSDU_PKT_LENGTH_GET(msdu_desc_info->info0);
+		msdu_list->sw_cookie[i] =
+			FIELD_GET(BUFFER_ADDR_INFO1_SW_COOKIE,
+				  msdu_details[i].buf_addr_info.info1);
+		tmp = FIELD_GET(BUFFER_ADDR_INFO1_RET_BUF_MGR,
+				msdu_details[i].buf_addr_info.info1);
+		msdu_list->rbm[i] = tmp;
+	}
+	*num_msdus = i;
+}
+
+static inline u32 ath11k_dp_rx_mon_comp_ppduid(u32 msdu_ppdu_id, u32 *ppdu_id,
+					       u32 *rx_bufs_used)
+{
+	u32 ret = 0;
+
+	if ((*ppdu_id < msdu_ppdu_id) &&
+	    ((msdu_ppdu_id - *ppdu_id) < DP_NOT_PPDU_ID_WRAP_AROUND)) {
+		*ppdu_id = msdu_ppdu_id;
+		ret = msdu_ppdu_id;
+	} else if ((*ppdu_id > msdu_ppdu_id) &&
+		((*ppdu_id - msdu_ppdu_id) > DP_NOT_PPDU_ID_WRAP_AROUND)) {
+		/* mon_dst is behind than mon_status
+		 * skip dst_ring and free it
+		 */
+		*rx_bufs_used += 1;
+		*ppdu_id = msdu_ppdu_id;
+		ret = msdu_ppdu_id;
+	}
+	return ret;
+}
+
+static inline void ath11k_dp_mon_get_buf_len(struct hal_rx_msdu_desc_info *info,
+					     bool *is_frag, u32 *total_len,
+					     u32 *frag_len, u32 *msdu_cnt)
+{
+	if (info->msdu_flags & RX_MSDU_DESC_INFO0_MSDU_CONTINUATION) {
+		if (!*is_frag) {
+			*total_len = info->msdu_len;
+			*is_frag = true;
+		}
+		ath11k_dp_mon_set_frag_len(total_len,
+					   frag_len);
+	} else {
+		if (*is_frag) {
+			ath11k_dp_mon_set_frag_len(total_len,
+						   frag_len);
+		} else {
+			*frag_len = info->msdu_len;
+		}
+		*is_frag = false;
+		*msdu_cnt -= 1;
+	}
+}
+
+int ath11k_dp_rx_pdev_mon_status_attach(struct ath11k *ar)
+{
+	struct ath11k_pdev_dp *dp = &ar->dp;
+	struct ath11k_mon_data *pmon = (struct ath11k_mon_data *)&dp->mon_data;
+
+	skb_queue_head_init(&pmon->rx_status_q);
+
+	pmon->mon_ppdu_status = DP_PPDU_STATUS_START;
+
+	memset(&pmon->rx_mon_stats, 0,
+	       sizeof(pmon->rx_mon_stats));
+	return 0;
+}
+
+int ath11k_dp_rx_pdev_mon_attach(struct ath11k *ar)
+{
+	struct ath11k_pdev_dp *dp = &ar->dp;
+	struct ath11k_mon_data *pmon = &dp->mon_data;
+	struct hal_srng *mon_desc_srng = NULL;
+	struct dp_srng *dp_srng;
+	int ret = 0;
+	u32 n_link_desc = 0;
+
+	ret = ath11k_dp_rx_pdev_mon_status_attach(ar);
+	if (ret) {
+		ath11k_warn(ar->ab, "pdev_mon_status_attach() failed");
+		return ret;
+	}
+
+	dp_srng = &dp->rxdma_mon_desc_ring;
+	n_link_desc = dp_srng->size /
+		ath11k_hal_srng_get_entrysize(HAL_RXDMA_MONITOR_DESC);
+	mon_desc_srng =
+		&ar->ab->hal.srng_list[dp->rxdma_mon_desc_ring.ring_id];
+
+	ret = ath11k_dp_link_desc_setup(ar->ab, pmon->link_desc_banks,
+					HAL_RXDMA_MONITOR_DESC, mon_desc_srng,
+					n_link_desc);
+	if (ret) {
+		ath11k_warn(ar->ab, "mon_link_desc_pool_setup() failed");
+		return ret;
+	}
+	pmon->mon_last_linkdesc_paddr = 0;
+	pmon->mon_last_buf_cookie = DP_RX_DESC_COOKIE_MAX + 1;
+	spin_lock_init(&pmon->mon_lock);
+	return 0;
+}
+
+int ath11k_dp_mon_link_free(struct ath11k *ar)
+{
+	struct ath11k_pdev_dp *dp = &ar->dp;
+	struct ath11k_mon_data *pmon = &dp->mon_data;
+
+	ath11k_dp_link_desc_cleanup(ar->ab, pmon->link_desc_banks,
+				    HAL_RXDMA_MONITOR_DESC,
+				    &dp->rxdma_mon_desc_ring);
+	return 0;
+}
+
+int ath11k_dp_rx_pdev_mon_detach(struct ath11k *ar)
+{
+	ath11k_dp_mon_link_free(ar);
+	return 0;
+}

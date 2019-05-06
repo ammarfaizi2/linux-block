@@ -648,6 +648,21 @@ int ath11k_dp_service_srng(struct ath11k_base *ab,
 		}
 	}
 
+	if (rx_mon_status_ring_mask[grp_id]) {
+		for (i = 0; i <  ab->num_radios; i++) {
+			if (rx_mon_status_ring_mask[grp_id] & BIT(i)) {
+				work_done =
+				ath11k_dp_rx_process_mon_rings(ab,
+							       i, napi,
+							       budget);
+				budget -= work_done;
+				tot_work_done += work_done;
+			}
+			if (budget <= 0)
+				goto done;
+		}
+	}
+
 	if (ath11k_reo_status_ring_mask[grp_id])
 		ath11k_dp_process_reo_status(ab);
 
@@ -685,6 +700,7 @@ void ath11k_dp_pdev_free(struct ath11k_base *ab)
 		ar = ab->pdevs[i].ar;
 		ath11k_dp_rx_pdev_free(ab, i);
 		ath11k_debug_unregister(ar);
+		ath11k_dp_rx_pdev_mon_detach(ar);
 	}
 }
 
@@ -715,6 +731,12 @@ int ath11k_dp_pdev_alloc(struct ath11k_base *ab)
 		ret = ath11k_dp_rx_pdev_alloc(ab, i);
 		if (ret) {
 			ath11k_warn(ab, "failed to allocate pdev rx for pdev_id :%d\n",
+				    i);
+			goto err;
+		}
+		ret = ath11k_dp_rx_pdev_mon_attach(ar);
+		if (ret) {
+			ath11k_warn(ab, "failed to initialize mon pdev %d\n",
 				    i);
 			goto err;
 		}
