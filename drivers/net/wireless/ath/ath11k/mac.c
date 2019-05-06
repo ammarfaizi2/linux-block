@@ -4833,6 +4833,43 @@ static int ath11k_mac_setup_channels_rates(struct ath11k *ar,
 	return 0;
 }
 
+const static u8 ath11k_if_types_ext_capa[] = {
+	[0] = WLAN_EXT_CAPA1_EXT_CHANNEL_SWITCHING,
+	[7] = WLAN_EXT_CAPA8_OPMODE_NOTIF,
+};
+
+const static u8 ath11k_if_types_ext_capa_sta[] = {
+	[0] = WLAN_EXT_CAPA1_EXT_CHANNEL_SWITCHING,
+	[7] = WLAN_EXT_CAPA8_OPMODE_NOTIF,
+	[9] = WLAN_EXT_CAPA10_TWT_REQUESTER_SUPPORT,
+};
+
+const static u8 ath11k_if_types_ext_capa_ap[] = {
+	[0] = WLAN_EXT_CAPA1_EXT_CHANNEL_SWITCHING,
+	[7] = WLAN_EXT_CAPA8_OPMODE_NOTIF,
+	[9] = WLAN_EXT_CAPA10_TWT_RESPONDER_SUPPORT,
+};
+
+const static struct wiphy_iftype_ext_capab ath11k_iftypes_ext_capa[] = {
+	{
+		.extended_capabilities = ath11k_if_types_ext_capa,
+		.extended_capabilities_mask = ath11k_if_types_ext_capa,
+		.extended_capabilities_len = sizeof(ath11k_if_types_ext_capa),
+	}, {
+		.iftype = NL80211_IFTYPE_STATION,
+		.extended_capabilities = ath11k_if_types_ext_capa_sta,
+		.extended_capabilities_mask = ath11k_if_types_ext_capa_sta,
+		.extended_capabilities_len =
+				sizeof(ath11k_if_types_ext_capa_sta),
+	}, {
+		.iftype = NL80211_IFTYPE_AP,
+		.extended_capabilities = ath11k_if_types_ext_capa_ap,
+		.extended_capabilities_mask = ath11k_if_types_ext_capa_ap,
+		.extended_capabilities_len =
+				sizeof(ath11k_if_types_ext_capa_ap),
+	},
+};
+
 static int ath11k_mac_register(struct ath11k *ar)
 {
 	struct ath11k_base *ab = ar->ab;
@@ -4935,6 +4972,10 @@ static int ath11k_mac_register(struct ath11k *ar)
 
 	ar->hw->wiphy->cipher_suites = cipher_suites;
 	ar->hw->wiphy->n_cipher_suites = ARRAY_SIZE(cipher_suites);
+
+	ar->hw->wiphy->iftype_ext_capab = ath11k_iftypes_ext_capa;
+	ar->hw->wiphy->num_iftype_ext_capab =
+		ARRAY_SIZE(ath11k_iftypes_ext_capa);
 
 	ath11k_reg_init(ar);
 
