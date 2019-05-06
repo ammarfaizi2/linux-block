@@ -7,6 +7,7 @@
 #define _ATH11K_DEBUG_H_
 
 #include "hal_tx.h"
+#include "trace.h"
 
 enum ath11k_debug_mask {
 	ATH11K_DBG_AHB		= 0x00000001,

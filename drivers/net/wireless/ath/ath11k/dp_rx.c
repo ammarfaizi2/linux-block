@@ -1042,7 +1042,7 @@ static int ath11k_htt_pull_ppdu_stats(struct ath11k_base *ab,
 	ar = ab->pdevs[pdev_id].ar;
 
 	if (ath11k_debug_is_pktlog_lite_mode_enabled(ar)) {
-		/* TODO update the pktlog tracing */
+		trace_ath11k_htt_ppdu_stats(ar, skb->data, len);
 	}
 
 	/* TLV info starts after 16bytes of header */
@@ -1067,10 +1067,9 @@ static int ath11k_htt_pull_ppdu_stats(struct ath11k_base *ab,
 static void ath11k_htt_pktlog(struct ath11k_base *ab,
 				     struct sk_buff *skb)
 {
-	u32 *data = (u32 *)skb->data;
+	u32 *data = (u32 *)skb->data, len;
 	struct ath11k *ar;
 	u8 pdev_id;
-	u32 len;
 
 	len = FIELD_GET(HTT_T2H_PPDU_STATS_PAYLOAD_SIZE_M, *data);
 	pdev_id = FIELD_GET(HTT_T2H_PPDU_STATS_PDEV_ID_M, *data);
@@ -1078,7 +1077,7 @@ static void ath11k_htt_pktlog(struct ath11k_base *ab,
 	ar = ab->pdevs[pdev_id].ar;
 	++data;
 
-	/* TODO add pktlog tracing */
+	trace_ath11k_htt_pktlog(ar, data, len);
 }
 
 void ath11k_dp_htt_htc_t2h_msg_handler(struct ath11k_base *ab,
@@ -2368,7 +2367,7 @@ int ath11k_dp_rx_process_mon_status(struct ath11k_base *ab, int mac_id,
 		ppdu_info.peer_id = HAL_INVALID_PEERID;
 
 		if (ath11k_debug_is_pktlog_rx_stats_enabled(ar)) {
-			/* TODO update the pktlog tracing */
+			trace_ath11k_htt_rxdesc(ar, skb->data, DP_RX_BUFFER_SIZE);
 		}
 
 		hal_status = ath11k_hal_rx_parse_mon_status(ab, &ppdu_info,
@@ -2397,7 +2396,7 @@ int ath11k_dp_rx_process_mon_status(struct ath11k_base *ab, int mac_id,
 		ath11k_dp_rx_update_peer_stats(arsta, &ppdu_info);
 
 		if (ath11k_debug_is_pktlog_peer_vaild(ar, peer->addr)) {
-			/* TODO update the pktlog tracing for one peer*/
+			trace_ath11k_htt_rxdesc(ar, skb->data, DP_RX_BUFFER_SIZE);
 		}
 		spin_unlock_bh(&ab->data_lock);
 		rcu_read_unlock();

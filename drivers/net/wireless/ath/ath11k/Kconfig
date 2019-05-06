@@ -26,3 +26,9 @@ config ATH11K_DEBUGFS
 	  Enable ath11k debugfs support
 
 	  If unsure, say Y to make it easier to debug problems.
+
+config ATH11K_TRACING
+	bool "ath11k tracing support"
+	depends on ATH11K && EVENT_TRACING
+	---help---
+	  Select this to ath11k use tracing infrastructure.
