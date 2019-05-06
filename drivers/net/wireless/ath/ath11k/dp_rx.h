@@ -296,6 +296,54 @@ static inline void ath11k_dp_rx_desc_end_tlv_copy(u8 *first, u8 *last)
 	       sizeof(struct rx_mpdu_end));
 }
 
+static inline u32 ath11k_dp_rxdesc_get_mpdulen_err(void *hw_desc_addr)
+{
+	struct hal_rx_desc *rx_desc = (struct hal_rx_desc *)hw_desc_addr;
+	struct rx_attention *rx_attn;
+
+	rx_attn = &rx_desc->attention;
+
+	return FIELD_GET(RX_ATTENTION_INFO1_MPDU_LEN_ERR, rx_attn->info1);
+}
+
+static inline u32 ath11k_dp_rxdesc_get_decap_format(void *hw_desc_addr)
+{
+	struct hal_rx_desc *rx_desc = (struct hal_rx_desc *)hw_desc_addr;
+	struct rx_msdu_start *rx_msdu_start;
+
+	rx_msdu_start = &rx_desc->msdu_start;
+
+	return FIELD_GET(RX_MSDU_START_INFO2_DECAP_FORMAT,
+			rx_msdu_start->info2);
+}
+
+static inline u8 *ath11k_dp_rxdesc_get_80211hdr(void *hw_desc_addr)
+{
+	struct hal_rx_desc *rx_desc = (struct hal_rx_desc *)hw_desc_addr;
+	u8 *rx_pkt_hdr;
+
+	rx_pkt_hdr = &rx_desc->msdu_payload[0];
+
+	return rx_pkt_hdr;
+}
+
+static inline bool ath11k_dp_rxdesc_mpdu_valid(void *hw_desc_addr)
+{
+	struct hal_rx_desc *rx_desc = (struct hal_rx_desc *)hw_desc_addr;
+	u32 tlv_tag;
+
+	tlv_tag = FIELD_GET(HAL_TLV_HDR_TAG, rx_desc->mpdu_start_tag);
+
+	return tlv_tag == HAL_RX_MPDU_START ? true : false;
+}
+
+static inline u32 ath11k_dp_rxdesc_get_ppduid(void *hw_desc_addr)
+{
+	struct hal_rx_desc *rx_desc = (struct hal_rx_desc *)hw_desc_addr;
+
+	return rx_desc->mpdu_start.phy_ppdu_id;
+}
+
 int ath11k_dp_rx_ampdu_start(struct ath11k *ar,
 			     struct ieee80211_ampdu_params *params);
 int ath11k_dp_rx_ampdu_stop(struct ath11k *ar,
@@ -330,11 +378,16 @@ int ath11k_dp_htt_rx_filter_setup(struct ath11k_base *ab, u32 ring_id,
 				  int mac_id, enum hal_ring_type ring_type,
 				  int rx_buf_size,
 				  struct htt_rx_ring_tlv_filter *tlv_filter);
+int ath11k_dp_rx_process_mon_rings(struct ath11k_base *ab, int mac_id,
+				   struct napi_struct *napi, int budget);
 int ath11k_dp_rx_process_mon_status(struct ath11k_base *ab, int mac_id,
 				    struct napi_struct *napi, int budget);
 int ath11k_dp_rx_mon_status_bufs_replenish(struct ath11k_base *ab, int mac_id,
-					   struct dp_rxdma_ring *rx_ring,
-					   int req_entries,
-					   enum hal_rx_buf_return_buf_manager mgr,
-					   gfp_t gfp);
+					struct dp_rxdma_ring *rx_ring,
+					int req_entries,
+					enum hal_rx_buf_return_buf_manager mgr,
+					gfp_t gfp);
+int ath11k_dp_rx_pdev_mon_detach(struct ath11k *ar);
+int ath11k_dp_rx_pdev_mon_attach(struct ath11k *ar);
+
 #endif /* ATH11K_DP_RX_H */
