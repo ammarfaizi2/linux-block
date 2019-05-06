@@ -70,6 +70,7 @@ struct ath11k_skb_rxcb {
 	u8 err_rel_src;
 	u8 err_code;
 	u8 mac_id;
+	u8 unmapped;
 };
 
 enum ath11k_hw_rev {
@@ -163,6 +164,10 @@ enum ath11k_dev_flags {
 	ATH11K_FLAG_RECOVERY,
 	ATH11K_FLAG_UNREGISTERING,
 	ATH11K_FLAG_REGISTERED,
+};
+
+enum ath11k_monitor_flags {
+	ATH11K_FLAG_MONITOR_ENABLED,
 };
 
 struct ath11k_vif {
@@ -433,8 +438,8 @@ struct ath11k {
 	struct {
 		struct ieee80211_supported_band sbands[NUM_NL80211_BANDS];
 	} mac;
-	unsigned long dev_flags;
 	unsigned int filter_flags;
+	unsigned long monitor_flags;
 	u32 min_tx_power;
 	u32 max_tx_power;
 	u32 txpower_limit_2g;
@@ -443,7 +448,6 @@ struct ath11k {
 	u32 power_scale;
 	u32 chan_tx_pwr;
 	u32 max_num_stations;
-	bool monitor_enabled;
 	bool monitor_present;
 	struct mutex conf_mutex;
 	spinlock_t data_lock;

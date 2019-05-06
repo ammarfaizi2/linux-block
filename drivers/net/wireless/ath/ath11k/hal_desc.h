@@ -577,6 +577,9 @@ enum hal_rx_msdu_desc_reo_dest_ind {
 #define RX_MSDU_DESC_INFO0_DA_MCBC		BIT(26)
 #define RX_MSDU_DESC_INFO0_DA_IDX_TIMEOUT	BIT(27)
 
+#define HAL_RX_MSDU_PKT_LENGTH_GET(val)		\
+	(FIELD_GET(RX_MSDU_DESC_INFO0_MSDU_LENGTH, (val)))
+
 struct rx_msdu_desc {
 	u32 info0;
 	u32 rsvd0;

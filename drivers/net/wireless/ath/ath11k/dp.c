@@ -405,10 +405,10 @@ err:
 	return ret;
 }
 
-static void ath11k_dp_link_desc_bank_free(struct ath11k_base *ab)
+static void
+ath11k_dp_link_desc_bank_free(struct ath11k_base *ab,
+			      struct dp_link_desc_bank *link_desc_banks)
 {
-	struct ath11k_dp *dp = &ab->dp;
-	struct dp_link_desc_bank *link_desc_banks = dp->link_desc_banks;
 	int i;
 
 	for (i = 0; i < DP_LINK_DESC_BANKS_MAX; i++) {
@@ -427,6 +427,7 @@ static int ath11k_dp_link_desc_bank_alloc(struct ath11k_base *ab,
 					  int n_link_desc_bank,
 					  int last_bank_sz)
 {
+	struct ath11k_dp *dp = &ab->dp;
 	int i;
 	int ret = 0;
 	int desc_sz = DP_LINK_DESC_ALLOC_SIZE_THRESH;
@@ -455,34 +456,29 @@ static int ath11k_dp_link_desc_bank_alloc(struct ath11k_base *ab,
 	return 0;
 
 err:
-	ath11k_dp_link_desc_bank_free(ab);
+	ath11k_dp_link_desc_bank_free(ab, dp->link_desc_banks);
 
 	return ret;
 }
 
-static void ath11k_dp_link_desc_cleanup(struct ath11k_base *ab)
+void ath11k_dp_link_desc_cleanup(struct ath11k_base *ab,
+				 struct dp_link_desc_bank *desc_bank,
+				 u32 ring_type, struct dp_srng *ring)
 {
-	struct ath11k_dp *dp = &ab->dp;
+	ath11k_dp_link_desc_bank_free(ab, desc_bank);
 
-	ath11k_dp_srng_cleanup(ab, &dp->wbm_idle_ring);
-
-	ath11k_dp_link_desc_bank_free(ab);
-
-	ath11k_dp_scatter_idle_link_desc_cleanup(ab);
+	if (ring_type != HAL_RXDMA_MONITOR_DESC) {
+		ath11k_dp_srng_cleanup(ab, ring);
+		ath11k_dp_scatter_idle_link_desc_cleanup(ab);
+	}
 }
 
-static int ath11k_dp_link_desc_setup(struct ath11k_base *ab)
+static int ath11k_wbm_idle_ring_setup(struct ath11k_base *ab, u32 *n_link_desc)
 {
 	struct ath11k_dp *dp = &ab->dp;
-	struct hal_srng *srng;
-	struct dp_link_desc_bank *link_desc_banks = dp->link_desc_banks;
-	u32 n_mpdu_link_desc, n_mpdu_queue_desc, n_tx_msdu_link_desc;
-	u32 n_rx_msdu_link_desc, n_link_desc, tot_mem_sz;
-	u32 n_link_desc_bank, last_bank_sz;
-	u32 entry_sz, align_bytes, n_entries;
-	dma_addr_t paddr;
-	u32 *desc;
-	int i, ret;
+	u32 n_mpdu_link_desc, n_mpdu_queue_desc;
+	u32 n_tx_msdu_link_desc, n_rx_msdu_link_desc;
+	int ret = 0;
 
 	n_mpdu_link_desc = (DP_NUM_TIDS_MAX * DP_AVG_MPDUS_PER_TID_MAX) /
 			   HAL_NUM_MPDUS_PER_LINK_DESC;
@@ -498,8 +494,29 @@ static int ath11k_dp_link_desc_setup(struct ath11k_base *ab)
 			       DP_AVG_MSDUS_PER_MPDU) /
 			      HAL_NUM_RX_MSDUS_PER_LINK_DESC;
 
-	n_link_desc = n_mpdu_link_desc + n_mpdu_queue_desc +
+	*n_link_desc = n_mpdu_link_desc + n_mpdu_queue_desc +
 		      n_tx_msdu_link_desc + n_rx_msdu_link_desc;
+
+	ret = ath11k_dp_srng_setup(ab, &dp->wbm_idle_ring,
+				   HAL_WBM_IDLE_LINK, 0, 0, *n_link_desc);
+	if (ret) {
+		ath11k_warn(ab, "failed to setup wbm_idle_ring: %d\n", ret);
+		return ret;
+	}
+	return ret;
+}
+
+int ath11k_dp_link_desc_setup(struct ath11k_base *ab,
+			      struct dp_link_desc_bank *link_desc_banks,
+			      u32 ring_type, struct hal_srng *srng,
+			      u32 n_link_desc)
+{
+	u32 tot_mem_sz;
+	u32 n_link_desc_bank, last_bank_sz;
+	u32 entry_sz, align_bytes, n_entries;
+	u32 paddr;
+	u32 *desc;
+	int i, ret;
 
 	if (n_link_desc & (n_link_desc - 1))
 		n_link_desc = 1 << fls(n_link_desc);
@@ -531,11 +548,12 @@ static int ath11k_dp_link_desc_setup(struct ath11k_base *ab)
 		return ret;
 
 	/* Setup link desc idle list for HW internal usage */
-	entry_sz = ath11k_hal_srng_get_entrysize(HAL_WBM_IDLE_LINK);
+	entry_sz = ath11k_hal_srng_get_entrysize(ring_type);
 	tot_mem_sz = entry_sz * n_link_desc;
 
 	/* Setup scatter desc list when the total memory requirement is more */
-	if (tot_mem_sz > DP_LINK_DESC_ALLOC_SIZE_THRESH) {
+	if (tot_mem_sz > DP_LINK_DESC_ALLOC_SIZE_THRESH &&
+	    ring_type != HAL_RXDMA_MONITOR_DESC) {
 		ret = ath11k_dp_scatter_idle_link_desc_setup(ab, tot_mem_sz,
 							     n_link_desc_bank,
 							     n_link_desc,
@@ -548,13 +566,6 @@ static int ath11k_dp_link_desc_setup(struct ath11k_base *ab)
 
 		return 0;
 	}
-
-	ret = ath11k_dp_srng_setup(ab, &dp->wbm_idle_ring,
-				   HAL_WBM_IDLE_LINK, 0, 0, n_link_desc);
-	if (ret)
-		goto fail_desc_bank_free;
-
-	srng = &ab->hal.srng_list[dp->wbm_idle_ring.ring_id];
 
 	spin_lock_bh(&srng->lock);
 
@@ -583,7 +594,7 @@ static int ath11k_dp_link_desc_setup(struct ath11k_base *ab)
 	return 0;
 
 fail_desc_bank_free:
-	ath11k_dp_link_desc_bank_free(ab);
+	ath11k_dp_link_desc_bank_free(ab, link_desc_banks);
 
 	return ret;
 }
@@ -629,19 +640,6 @@ int ath11k_dp_service_srng(struct ath11k_base *ab,
 				work_done = ath11k_dp_process_rx(ab, i, napi,
 								 &irq_grp->pending_q,
 								 budget);
-				budget -= work_done;
-				tot_work_done += work_done;
-			}
-			if (budget <= 0)
-				goto done;
-		}
-	}
-
-	if (rx_mon_status_ring_mask[grp_id]) {
-		for (i = 0; i <  ab->num_radios; i++) {
-			if (rx_mon_status_ring_mask[grp_id] & BIT(i)) {
-				work_done = ath11k_dp_rx_process_mon_status(ab, i, napi,
-									    budget);
 				budget -= work_done;
 				tot_work_done += work_done;
 			}
@@ -707,6 +705,8 @@ int ath11k_dp_pdev_alloc(struct ath11k_base *ab)
 		init_waitqueue_head(&dp->tx_empty_waitq);
 		idr_init(&dp->rx_mon_status_refill_ring.bufs_idr);
 		spin_lock_init(&dp->rx_mon_status_refill_ring.idr_lock);
+		idr_init(&dp->rxdma_mon_buf_ring.bufs_idr);
+		spin_lock_init(&dp->rxdma_mon_buf_ring.idr_lock);
 	}
 
 	/* TODO:Per-pdev rx ring unlike tx ring which is mapped to different AC's */
@@ -808,7 +808,8 @@ void ath11k_dp_free(struct ath11k_base *sc)
 	struct ath11k_dp *dp = &sc->dp;
 	int i;
 
-	ath11k_dp_link_desc_cleanup(sc);
+	ath11k_dp_link_desc_cleanup(sc, dp->link_desc_banks,
+				    HAL_WBM_IDLE_LINK, &dp->wbm_idle_ring);
 
 	ath11k_dp_srng_common_cleanup(sc);
 
@@ -832,7 +833,9 @@ void ath11k_dp_free(struct ath11k_base *sc)
 int ath11k_dp_alloc(struct ath11k_base *sc)
 {
 	struct ath11k_dp *dp = &sc->dp;
-	size_t size;
+	struct hal_srng *srng = NULL;
+	size_t size = 0;
+	u32 n_link_desc = 0;
 	int ret;
 	int i;
 
@@ -842,7 +845,16 @@ int ath11k_dp_alloc(struct ath11k_base *sc)
 	INIT_LIST_HEAD(&dp->reo_cmd_cache_flush_list);
 	spin_lock_init(&dp->reo_cmd_lock);
 
-	ret = ath11k_dp_link_desc_setup(sc);
+	ret = ath11k_wbm_idle_ring_setup(sc, &n_link_desc);
+	if (ret) {
+		ath11k_warn(sc, "failed to setup wbm_idle_ring: %d\n", ret);
+		return ret;
+	}
+
+	srng = &sc->hal.srng_list[dp->wbm_idle_ring.ring_id];
+
+	ret = ath11k_dp_link_desc_setup(sc, dp->link_desc_banks,
+					HAL_WBM_IDLE_LINK, srng, n_link_desc);
 	if (ret) {
 		ath11k_warn(sc, "failed to setup link desc: %d\n", ret);
 		return ret;
@@ -877,7 +889,8 @@ fail_cmn_srng_cleanup:
 	ath11k_dp_srng_common_cleanup(sc);
 
 fail_link_desc_cleanup:
-	ath11k_dp_link_desc_cleanup(sc);
+	ath11k_dp_link_desc_cleanup(sc, dp->link_desc_banks,
+				    HAL_WBM_IDLE_LINK, &dp->wbm_idle_ring);
 
 	return ret;
 }

@@ -29,4 +29,5 @@ int ath11k_dp_htt_h2t_ppdu_stats_req(struct ath11k *ar, u32 mask);
 int ath11k_dp_htt_h2t_ext_stats_req(struct ath11k *ar, u8 type,
 				    struct htt_ext_stats_cfg_params *cfg_params,
 				    u64 cookie);
+int ath11k_dp_htt_monitor_mode_ring_config(struct ath11k *ar, bool reset);
 #endif

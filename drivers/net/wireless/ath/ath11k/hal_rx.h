@@ -93,6 +93,7 @@ enum hal_rx_reception_type {
 #define HAL_TLV_STATUS_PPDU_DONE                1
 #define HAL_TLV_STATUS_BUF_DONE                 2
 #define HAL_TLV_STATUS_PPDU_NON_STD_DONE        3
+#define HAL_RX_FCS_LEN                          4
 
 enum hal_rx_mon_status {
 	HAL_RX_MON_STATUS_PPDU_NOT_DONE,
@@ -278,6 +279,18 @@ struct hal_rx_rxpcu_classification_overview {
 	u32 rsvd0;
 } __packed;
 
+struct hal_rx_msdu_desc_info {
+	u32 msdu_flags;
+	u16 msdu_len; /* 14 bits for length */
+};
+
+#define HAL_RX_NUM_MSDU_DESC 6
+struct hal_rx_msdu_list {
+	struct hal_rx_msdu_desc_info msdu_info[HAL_RX_NUM_MSDU_DESC];
+	u32 sw_cookie[HAL_RX_NUM_MSDU_DESC];
+	u8 rbm[HAL_RX_NUM_MSDU_DESC];
+};
+
 void ath11k_hal_reo_status_queue_stats(struct ath11k_base *ab, u32 *reo_desc,
 				       struct hal_reo_status *status);
 void ath11k_hal_reo_flush_queue_status(struct ath11k_base *ab, u32 *reo_desc,
@@ -316,6 +329,10 @@ int ath11k_hal_wbm_desc_parse_err(struct ath11k_base *ab, void *desc,
 				  struct hal_rx_wbm_rel_info *rel_info);
 void ath11k_hal_rx_reo_ent_paddr_get(struct ath11k_base *ab, void *desc,
 				     dma_addr_t *paddr, u32 *desc_bank);
+void ath11k_hal_rx_reo_ent_buf_paddr_get(void *rx_desc,
+					 dma_addr_t *paddr, u32 *sw_cookie,
+					 void **pp_buf_addr_info,
+					 u32 *msdu_cnt);
 enum hal_rx_mon_status
 ath11k_hal_rx_parse_mon_status(struct ath11k_base *ab,
 			       struct hal_rx_mon_ppdu_info *ppdu_info,
