@@ -2509,9 +2509,7 @@ static void ath10k_htt_rx_proc_rx_ind_ll(struct ath10k_htt *htt,
 	mpdu_ranges = htt_rx_ind_get_mpdu_ranges(rx);
 
 	ath10k_dbg_dump(ar, ATH10K_DBG_HTT_DUMP, NULL, "htt rx ind: ",
-			rx, sizeof(*rx) +
-			(sizeof(struct htt_rx_indication_mpdu_range) *
-				num_mpdu_ranges));
+			rx, struct_size(rx, mpdu_ranges, num_mpdu_ranges));
 
 	for (i = 0; i < num_mpdu_ranges; i++)
 		mpdu_count += mpdu_ranges[i].mpdu_count;
@@ -3256,14 +3254,14 @@ ath10k_accumulate_per_peer_tx_stats(struct ath10k *ar,
 
 #define STATS_OP_FMT(name) tx_stats->stats[ATH10K_STATS_TYPE_##name]
 
-	if (txrate->flags == RATE_INFO_FLAGS_VHT_MCS) {
+	if (txrate->flags & RATE_INFO_FLAGS_VHT_MCS) {
 		STATS_OP_FMT(SUCC).vht[0][mcs] += pstats->succ_bytes;
 		STATS_OP_FMT(SUCC).vht[1][mcs] += pstats->succ_pkts;
 		STATS_OP_FMT(FAIL).vht[0][mcs] += pstats->failed_bytes;
 		STATS_OP_FMT(FAIL).vht[1][mcs] += pstats->failed_pkts;
 		STATS_OP_FMT(RETRY).vht[0][mcs] += pstats->retry_bytes;
 		STATS_OP_FMT(RETRY).vht[1][mcs] += pstats->retry_pkts;
-	} else if (txrate->flags == RATE_INFO_FLAGS_MCS) {
+	} else if (txrate->flags & RATE_INFO_FLAGS_MCS) {
 		STATS_OP_FMT(SUCC).ht[0][ht_idx] += pstats->succ_bytes;
 		STATS_OP_FMT(SUCC).ht[1][ht_idx] += pstats->succ_pkts;
 		STATS_OP_FMT(FAIL).ht[0][ht_idx] += pstats->failed_bytes;
@@ -3284,7 +3282,7 @@ ath10k_accumulate_per_peer_tx_stats(struct ath10k *ar,
 	if (ATH10K_HW_AMPDU(pstats->flags)) {
 		tx_stats->ba_fails += ATH10K_HW_BA_FAIL(pstats->flags);
 
-		if (txrate->flags == RATE_INFO_FLAGS_MCS) {
+		if (txrate->flags & RATE_INFO_FLAGS_MCS) {
 			STATS_OP_FMT(AMPDU).ht[0][ht_idx] +=
 				pstats->succ_bytes + pstats->retry_bytes;
 			STATS_OP_FMT(AMPDU).ht[1][ht_idx] +=

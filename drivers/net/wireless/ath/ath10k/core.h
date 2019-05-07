@@ -196,7 +196,7 @@ struct ath10k_fw_extd_stats_peer {
 	struct list_head list;
 
 	u8 peer_macaddr[ETH_ALEN];
-	u32 rx_duration;
+	u64 rx_duration;
 };
 
 struct ath10k_fw_stats_vdev {
@@ -622,6 +622,7 @@ struct ath10k_debug {
 	bool fw_stats_done;
 
 	unsigned long htt_stats_mask;
+	unsigned long reset_htt_stats;
 	struct delayed_work htt_stats_dwork;
 	struct ath10k_dfs_stats dfs_stats;
 	struct ath_dfs_pool_stats dfs_pool_stats;
