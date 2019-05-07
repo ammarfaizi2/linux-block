@@ -1181,7 +1181,6 @@ ath11k_peer_assoc_h_vht_limit(u16 tx_mcs_set,
 		case 5: /* fall through */
 		case 6: /* fall through */
 		default:
-			/* see ath10k_mac_can_set_bitrate_mask() */
 			WARN_ON(1);
 			/* fall through */
 		case -1:
