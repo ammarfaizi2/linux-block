@@ -32,6 +32,9 @@
 #include <linux/ipv6.h>
 #include <net/ip6_checksum.h>
 
+#define CREATE_TRACE_POINTS
+#include <trace/events/net_rtl8169.h>
+
 #define MODULENAME "r8169"
 
 #define FIRMWARE_8168D_1	"rtl_nic/rtl8168d-1.fw"
@@ -5997,6 +6000,28 @@ static bool rtl_tx_slots_avail(struct rtl8169_private *tp,
 	return slots_avail > nr_frags;
 }
 
+static void dhowells_trace_xmit(struct rtl8169_private *tp)
+{
+	unsigned int dirty_tx, cursor, n = 0;
+
+	dirty_tx = tp->dirty_tx;
+	smp_rmb();
+
+	for (cursor = dirty_tx; cursor != tp->cur_tx; cursor++) {
+		unsigned int entry = cursor % NUM_TX_DESC;
+		u32 status;
+
+		status = le32_to_cpu(tp->TxDescArray[entry].opts1);
+		if (status & DescOwn)
+			break;
+		n++;
+		if (n >= 32)
+			break;
+	}
+
+	trace_net_rtl8169_tx(tp->dev, dirty_tx, tp->cur_tx, n);
+}
+
 static netdev_tx_t rtl8169_start_xmit(struct sk_buff *skb,
 				      struct net_device *dev)
 {
@@ -6058,6 +6083,7 @@ static netdev_tx_t rtl8169_start_xmit(struct sk_buff *skb,
 
 	/* Force all memory writes to complete before notifying device */
 	wmb();
+	dhowells_trace_xmit(tp);
 
 	tp->cur_tx += frags + 1;
 
@@ -6197,6 +6223,8 @@ static void rtl_tx(struct net_device *dev, struct rtl8169_private *tp,
 		if (tp->cur_tx != dirty_tx)
 			RTL_W8(tp, TxPoll, NPQ);
 	}
+
+	trace_net_rtl8169_napi_tx(dev, tx_left);
 }
 
 static inline int rtl8169_fragmented_frame(u32 status)
@@ -6327,6 +6355,7 @@ release_descriptor:
 	count = cur_rx - tp->cur_rx;
 	tp->cur_rx = cur_rx;
 
+	trace_net_rtl8169_napi_rx(dev, count, budget);
 	return count;
 }
 
@@ -6337,6 +6366,9 @@ static irqreturn_t rtl8169_interrupt(int irq, void *dev_instance)
 
 	if (!tp->irq_enabled || status == 0xffff || !(status & tp->irq_mask))
 		return IRQ_NONE;
+
+	if (status && status != 0xffff)
+		trace_net_rtl8169_interrupt(tp->napi.dev, status);
 
 	if (unlikely(status & SYSErr)) {
 		rtl8169_pcierr_interrupt(tp->dev);
@@ -6399,6 +6431,7 @@ static int rtl8169_poll(struct napi_struct *napi, int budget)
 	int work_done;
 
 	work_done = rtl_rx(dev, tp, (u32) budget);
+	trace_net_rtl8169_poll(dev, work_done);
 
 	rtl_tx(dev, tp, budget);
 
