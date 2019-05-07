@@ -1352,8 +1352,10 @@ static void ath11k_peer_assoc_h_qos(struct ath11k *ar,
 		}
 		break;
 	case WMI_VDEV_TYPE_STA:
-		if (sta->wme)
+		if (sta->wme) {
+			arg->is_wme_set = true;
 			arg->qos_flag = true;
+		}
 		break;
 	default:
 		break;
