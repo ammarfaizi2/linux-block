@@ -93,6 +93,7 @@ struct target_info {
 	u32 soc_id;
 	u32 fw_version;
 	char fw_build_timestamp[ATH11K_QMI_WLANFW_MAX_TIMESTAMP_LEN_V01 + 1];
+	char fw_build_id[ATH11K_QMI_WLANFW_MAX_BUILD_ID_LEN_V01 + 1];
 };
 
 struct ath11k_qmi {
