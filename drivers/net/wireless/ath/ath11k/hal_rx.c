@@ -928,9 +928,7 @@ ath11k_hal_rx_parse_mon_status_tlv(struct ath11k_base *ab,
 		ppdu_info->bw = FIELD_GET(HAL_RX_HT_SIG_INFO_INFO0_BW, info0);
 		ppdu_info->is_stbc = FIELD_GET(HAL_RX_HT_SIG_INFO_INFO1_STBC,
 					       info1);
-		ppdu_info->ldpc = (info1 &
-				   HAL_RX_HT_SIG_INFO_INFO1_FEC_CODING) ==
-					HAL_RX_SU_MU_CODING_LDPC;
+		ppdu_info->ldpc = FIELD_GET(HAL_RX_HT_SIG_INFO_INFO1_FEC_CODING, info1);
 		ppdu_info->gi = info1 & HAL_RX_HT_SIG_INFO_INFO1_GI;
 
 		switch (ppdu_info->mcs) {
@@ -981,9 +979,8 @@ ath11k_hal_rx_parse_mon_status_tlv(struct ath11k_base *ab,
 		info0 = __le32_to_cpu(vht_sig->info0);
 		info1 = __le32_to_cpu(vht_sig->info1);
 
-		ppdu_info->ldpc = (info1 &
-				   HAL_RX_VHT_SIG_A_INFO_INFO1_SU_MU_CODING) ==
-					HAL_RX_SU_MU_CODING_LDPC;
+		ppdu_info->ldpc = FIELD_GET(HAL_RX_VHT_SIG_A_INFO_INFO1_SU_MU_CODING,
+					    info0);
 		ppdu_info->mcs = FIELD_GET(HAL_RX_VHT_SIG_A_INFO_INFO1_MCS,
 					   info1);
 		ppdu_info->gi =
@@ -1022,9 +1019,7 @@ ath11k_hal_rx_parse_mon_status_tlv(struct ath11k_base *ab,
 		ppdu_info->bw =
 			FIELD_GET(HAL_RX_HE_SIG_A_SU_INFO_INFO0_TRANSMIT_BW,
 				  info0);
-		ppdu_info->ldpc = (info1 &
-				   HAL_RX_HE_SIG_A_SU_INFO_INFO1_CODING) ==
-					HAL_RX_SU_MU_CODING_LDPC;
+		ppdu_info->ldpc = FIELD_GET(HAL_RX_HE_SIG_A_SU_INFO_INFO1_CODING, info0);
 		ppdu_info->is_stbc = info1 &
 				     HAL_RX_HE_SIG_A_SU_INFO_INFO1_STBC;
 		ppdu_info->beamformed = info1 &
@@ -1106,9 +1101,8 @@ ath11k_hal_rx_parse_mon_status_tlv(struct ath11k_base *ab,
 		ppdu_info->nss =
 			FIELD_GET(HAL_RX_HE_SIG_B2_MU_INFO_INFO0_STA_NSTS,
 				  info0) + 1;
-		ppdu_info->ldpc = (info0 &
-				   HAL_RX_HE_SIG_B2_MU_INFO_INFO0_STA_CODING) ==
-					HAL_RX_SU_MU_CODING_LDPC;
+		ppdu_info->ldpc = FIELD_GET(HAL_RX_HE_SIG_B2_MU_INFO_INFO0_STA_CODING,
+					    info0);
 		break;
 	}
 	case HAL_PHYRX_HE_SIG_B2_OFDMA: {
@@ -1126,10 +1120,8 @@ ath11k_hal_rx_parse_mon_status_tlv(struct ath11k_base *ab,
 		ppdu_info->beamformed =
 			info0 &
 			HAL_RX_HE_SIG_B2_OFDMA_INFO_INFO0_STA_TXBF;
-		ppdu_info->ldpc =
-			(info0 &
-			 HAL_RX_HE_SIG_B2_OFDMA_INFO_INFO0_STA_CODING) ==
-				HAL_RX_SU_MU_CODING_LDPC;
+		ppdu_info->ldpc = FIELD_GET(HAL_RX_HE_SIG_B2_OFDMA_INFO_INFO0_STA_CODING,
+					    info0);
 		ppdu_info->reception_type = HAL_RX_RECEPTION_TYPE_MU_OFDMA;
 		break;
 	}
