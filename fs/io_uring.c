@@ -1005,7 +1005,7 @@ static int io_import_fixed(struct io_ring_ctx *ctx, int rw,
 		iov_iter_advance(iter, offset);
 
 	/* don't drop a reference to these pages */
-	iter->type |= ITER_BVEC_FLAG_NO_REF;
+	iter->iter_flag |= ITER_BVEC_FLAG_NO_REF;
 	return 0;
 }
 

@@ -76,15 +76,15 @@
 #define iterate_all_kinds(i, n, v, I, B, K) {			\
 	if (likely(n)) {					\
 		size_t skip = i->iov_offset;			\
-		if (unlikely(i->type & ITER_BVEC)) {		\
+		if (unlikely(i->iter_type & ITER_BVEC)) {	\
 			struct bio_vec v;			\
 			struct bvec_iter __bi;			\
 			iterate_bvec(i, n, v, __bi, skip, (B))	\
-		} else if (unlikely(i->type & ITER_KVEC)) {	\
+		} else if (unlikely(i->iter_type & ITER_KVEC)) { \
 			const struct kvec *kvec;		\
 			struct kvec v;				\
 			iterate_kvec(i, n, v, kvec, skip, (K))	\
-		} else if (unlikely(i->type & ITER_DISCARD)) {	\
+		} else if (unlikely(i->iter_type & ITER_DISCARD)) {	\
 		} else {					\
 			const struct iovec *iov;		\
 			struct iovec v;				\
@@ -98,7 +98,7 @@
 		n = i->count;					\
 	if (i->count) {						\
 		size_t skip = i->iov_offset;			\
-		if (unlikely(i->type & ITER_BVEC)) {		\
+		if (unlikely(i->iter_type & ITER_BVEC)) {		\
 			const struct bio_vec *bvec = i->bvec;	\
 			struct bio_vec v;			\
 			struct bvec_iter __bi;			\
@@ -106,7 +106,7 @@
 			i->bvec = __bvec_iter_bvec(i->bvec, __bi);	\
 			i->nr_segs -= i->bvec - bvec;		\
 			skip = __bi.bi_bvec_done;		\
-		} else if (unlikely(i->type & ITER_KVEC)) {	\
+		} else if (unlikely(i->iter_type & ITER_KVEC)) {	\
 			const struct kvec *kvec;		\
 			struct kvec v;				\
 			iterate_kvec(i, n, v, kvec, skip, (K))	\
@@ -116,7 +116,7 @@
 			}					\
 			i->nr_segs -= kvec - i->kvec;		\
 			i->kvec = kvec;				\
-		} else if (unlikely(i->type & ITER_DISCARD)) {	\
+		} else if (unlikely(i->iter_type & ITER_DISCARD)) {	\
 			skip += n;				\
 		} else {					\
 			const struct iovec *iov;		\
@@ -421,12 +421,19 @@ int iov_iter_fault_in_readable(struct iov_iter *i, size_t bytes)
 	int err;
 	struct iovec v;
 
-	if (!(i->type & (ITER_BVEC|ITER_KVEC))) {
+	switch (iov_iter_type(i)) {
+	case ITER_IOVEC:
+	case ITER_PIPE:
 		iterate_iovec(i, bytes, v, iov, skip, ({
 			err = fault_in_pages_readable(v.iov_base, v.iov_len);
 			if (unlikely(err))
 			return err;
 		0;}))
+		break;
+	case ITER_KVEC:
+	case ITER_BVEC:
+	case ITER_DISCARD:
+		break;
 	}
 	return 0;
 }
@@ -441,10 +448,12 @@ void iov_iter_init(struct iov_iter *i, unsigned int direction,
 
 	/* It will get better.  Eventually... */
 	if (uaccess_kernel()) {
-		i->type = ITER_KVEC | direction;
+		i->iter_type = ITER_KVEC;
+		i->iter_dir = direction;
 		i->kvec = (struct kvec *)iov;
 	} else {
-		i->type = ITER_IOVEC | direction;
+		i->iter_type = ITER_IOVEC;
+		i->iter_dir = direction;
 		i->iov = iov;
 	}
 	i->nr_segs = nr_segs;
@@ -888,17 +897,22 @@ size_t copy_page_to_iter(struct page *page, size_t offset, size_t bytes,
 {
 	if (unlikely(!page_copy_sane(page, offset, bytes)))
 		return 0;
-	if (i->type & (ITER_BVEC|ITER_KVEC)) {
+	switch (iov_iter_type(i)) {
+	case ITER_BVEC:
+	case ITER_KVEC: {
 		void *kaddr = kmap_atomic(page);
 		size_t wanted = copy_to_iter(kaddr + offset, bytes, i);
 		kunmap_atomic(kaddr);
 		return wanted;
-	} else if (unlikely(iov_iter_is_discard(i)))
+	}
+	case ITER_DISCARD:
 		return bytes;
-	else if (likely(!iov_iter_is_pipe(i)))
+	case ITER_IOVEC:
 		return copy_page_to_iter_iovec(page, offset, bytes, i);
-	else
+	case ITER_PIPE:
 		return copy_page_to_iter_pipe(page, offset, bytes, i);
+	}
+	BUG();
 }
 EXPORT_SYMBOL(copy_page_to_iter);
 
@@ -907,17 +921,22 @@ size_t copy_page_from_iter(struct page *page, size_t offset, size_t bytes,
 {
 	if (unlikely(!page_copy_sane(page, offset, bytes)))
 		return 0;
-	if (unlikely(iov_iter_is_pipe(i) || iov_iter_is_discard(i))) {
-		WARN_ON(1);
-		return 0;
-	}
-	if (i->type & (ITER_BVEC|ITER_KVEC)) {
+	switch (iov_iter_type(i)) {
+	case ITER_PIPE:
+	case ITER_DISCARD:
+		break;
+	case ITER_BVEC:
+	case ITER_KVEC: {
 		void *kaddr = kmap_atomic(page);
 		size_t wanted = _copy_from_iter(kaddr + offset, bytes, i);
 		kunmap_atomic(kaddr);
 		return wanted;
-	} else
+	}
+	case ITER_IOVEC:
 		return copy_page_from_iter_iovec(page, offset, bytes, i);
+	}
+	WARN_ON(1);
+	return 0;
 }
 EXPORT_SYMBOL(copy_page_from_iter);
 
@@ -1050,7 +1069,8 @@ void iov_iter_revert(struct iov_iter *i, size_t unroll)
 	if (WARN_ON(unroll > MAX_RW_COUNT))
 		return;
 	i->count += unroll;
-	if (unlikely(iov_iter_is_pipe(i))) {
+	switch (iov_iter_type(i)) {
+	case ITER_PIPE: {
 		struct pipe_inode_info *pipe = i->pipe;
 		int idx = i->idx;
 		size_t off = i->iov_offset;
@@ -1074,14 +1094,18 @@ void iov_iter_revert(struct iov_iter *i, size_t unroll)
 		pipe_truncate(i);
 		return;
 	}
-	if (unlikely(iov_iter_is_discard(i)))
+	case ITER_DISCARD:
 		return;
+	default:
+		break;
+	}
 	if (unroll <= i->iov_offset) {
 		i->iov_offset -= unroll;
 		return;
 	}
 	unroll -= i->iov_offset;
-	if (iov_iter_is_bvec(i)) {
+	switch (iov_iter_type(i)) {
+	case ITER_BVEC: {
 		const struct bio_vec *bvec = i->bvec;
 		while (1) {
 			size_t n = (--bvec)->bv_len;
@@ -1093,7 +1117,10 @@ void iov_iter_revert(struct iov_iter *i, size_t unroll)
 			}
 			unroll -= n;
 		}
-	} else { /* same logics for iovec and kvec */
+	}
+	case ITER_IOVEC:
+	case ITER_KVEC: {
+		/* same logics for iovec and kvec */
 		const struct iovec *iov = i->iov;
 		while (1) {
 			size_t n = (--iov)->iov_len;
@@ -1106,6 +1133,9 @@ void iov_iter_revert(struct iov_iter *i, size_t unroll)
 			unroll -= n;
 		}
 	}
+	default:
+		BUG();
+	}
 }
 EXPORT_SYMBOL(iov_iter_revert);
 
@@ -1114,16 +1144,19 @@ EXPORT_SYMBOL(iov_iter_revert);
  */
 size_t iov_iter_single_seg_count(const struct iov_iter *i)
 {
-	if (unlikely(iov_iter_is_pipe(i)))
-		return i->count;	// it is a silly place, anyway
 	if (i->nr_segs == 1)
 		return i->count;
-	if (unlikely(iov_iter_is_discard(i)))
-		return i->count;
-	else if (iov_iter_is_bvec(i))
+	switch (iov_iter_type(i)) {
+	case ITER_PIPE:
+	case ITER_DISCARD:
+		return i->count;	// it is a silly place, anyway
+	case ITER_BVEC:
 		return min(i->count, i->bvec->bv_len - i->iov_offset);
-	else
+	case ITER_KVEC:
+	case ITER_IOVEC:
 		return min(i->count, i->iov->iov_len - i->iov_offset);
+	}
+	BUG();
 }
 EXPORT_SYMBOL(iov_iter_single_seg_count);
 
@@ -1132,7 +1165,8 @@ void iov_iter_kvec(struct iov_iter *i, unsigned int direction,
 			size_t count)
 {
 	WARN_ON(direction & ~(READ | WRITE));
-	i->type = ITER_KVEC | (direction & (READ | WRITE));
+	i->iter_dir = direction & (READ | WRITE);
+	i->iter_type = ITER_KVEC;
 	i->kvec = kvec;
 	i->nr_segs = nr_segs;
 	i->iov_offset = 0;
@@ -1145,7 +1179,8 @@ void iov_iter_bvec(struct iov_iter *i, unsigned int direction,
 			size_t count)
 {
 	WARN_ON(direction & ~(READ | WRITE));
-	i->type = ITER_BVEC | (direction & (READ | WRITE));
+	i->iter_dir = direction & (READ | WRITE);
+	i->iter_type = ITER_BVEC;
 	i->bvec = bvec;
 	i->nr_segs = nr_segs;
 	i->iov_offset = 0;
@@ -1159,7 +1194,8 @@ void iov_iter_pipe(struct iov_iter *i, unsigned int direction,
 {
 	BUG_ON(direction != READ);
 	WARN_ON(pipe->nrbufs == pipe->buffers);
-	i->type = ITER_PIPE | READ;
+	i->iter_dir = READ;
+	i->iter_type = ITER_PIPE;
 	i->pipe = pipe;
 	i->idx = (pipe->curbuf + pipe->nrbufs) & (pipe->buffers - 1);
 	i->iov_offset = 0;
@@ -1180,7 +1216,8 @@ EXPORT_SYMBOL(iov_iter_pipe);
 void iov_iter_discard(struct iov_iter *i, unsigned int direction, size_t count)
 {
 	BUG_ON(direction != READ);
-	i->type = ITER_DISCARD | READ;
+	i->iter_dir = READ;
+	i->iter_type = ITER_DISCARD;
 	i->count = count;
 	i->iov_offset = 0;
 }
@@ -1592,21 +1629,26 @@ EXPORT_SYMBOL(iov_iter_npages);
 const void *dup_iter(struct iov_iter *new, struct iov_iter *old, gfp_t flags)
 {
 	*new = *old;
-	if (unlikely(iov_iter_is_pipe(new))) {
+	switch (iov_iter_type(new)) {
+	case ITER_PIPE:
 		WARN_ON(1);
-		return NULL;
-	}
-	if (unlikely(iov_iter_is_discard(new)))
-		return NULL;
-	if (iov_iter_is_bvec(new))
+		break;
+	case ITER_DISCARD:
+		break;
+	case ITER_BVEC:
 		return new->bvec = kmemdup(new->bvec,
 				    new->nr_segs * sizeof(struct bio_vec),
 				    flags);
-	else
+	case ITER_IOVEC:
+	case ITER_KVEC:
 		/* iovec and kvec have identical layout */
 		return new->iov = kmemdup(new->iov,
 				   new->nr_segs * sizeof(struct iovec),
 				   flags);
+	}
+
+	WARN_ON(1);
+	return NULL;
 }
 EXPORT_SYMBOL(dup_iter);
 

@@ -269,7 +269,7 @@ static inline void loop_iov_iter_bvec(struct iov_iter *i,
 		unsigned long nr_segs, size_t count)
 {
 	iov_iter_bvec(i, direction, bvec, nr_segs, count);
-	i->type |= ITER_BVEC_FLAG_NO_REF;
+	i->iter_flag |= ITER_BVEC_FLAG_NO_REF;
 }
 
 static int lo_write_bvec(struct file *file, struct bio_vec *bvec, loff_t *ppos)

@@ -23,10 +23,6 @@ struct kvec {
 };
 
 enum iter_type {
-	/* set if ITER_BVEC doesn't hold a bv_page ref */
-	ITER_BVEC_FLAG_NO_REF = 2,
-
-	/* iter types */
 	ITER_IOVEC = 4,
 	ITER_KVEC = 8,
 	ITER_BVEC = 16,
@@ -35,12 +31,10 @@ enum iter_type {
 };
 
 struct iov_iter {
-	/*
-	 * Bit 0 is the read/write bit, set if we're writing.
-	 * Bit 1 is the BVEC_FLAG_NO_REF bit, set if type is a bvec and
-	 * the caller isn't expecting to drop a page reference when done.
-	 */
-	unsigned int type;
+	enum iter_type iter_type:8;
+	u8 iter_dir;
+	u8 iter_flag;
+#define ITER_BVEC_FLAG_NO_REF 0x01 /* set if ITER_BVEC doesn't hold a bv_page ref */
 	size_t iov_offset;
 	size_t count;
 	union {
@@ -60,7 +54,7 @@ struct iov_iter {
 
 static inline enum iter_type iov_iter_type(const struct iov_iter *i)
 {
-	return i->type & ~(READ | WRITE | ITER_BVEC_FLAG_NO_REF);
+	return i->iter_type;
 }
 
 static inline bool iter_is_iovec(const struct iov_iter *i)
@@ -90,12 +84,12 @@ static inline bool iov_iter_is_discard(const struct iov_iter *i)
 
 static inline unsigned char iov_iter_rw(const struct iov_iter *i)
 {
-	return i->type & (READ | WRITE);
+	return i->iter_dir;
 }
 
 static inline bool iov_iter_bvec_no_ref(const struct iov_iter *i)
 {
-	return (i->type & ITER_BVEC_FLAG_NO_REF) != 0;
+	return (i->iter_flag & ITER_BVEC_FLAG_NO_REF) != 0;
 }
 
 /*
