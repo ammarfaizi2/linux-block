@@ -1798,7 +1798,7 @@ out:
 static int
 ath11k_qmi_prepare_bdf_download(struct ath11k_base *ab, int type,
 				struct qmi_wlanfw_bdf_download_req_msg_v01 *req,
-				void *bdf_addr)
+				void __iomem *bdf_addr)
 {
 	struct device *dev = ab->dev;
 	char filename[ATH11K_QMI_MAX_BDF_FILE_NAME_SIZE];
@@ -1816,7 +1816,7 @@ ath11k_qmi_prepare_bdf_download(struct ath11k_base *ab, int type,
 		}
 
 		fw_size = min_t(u32, ab->hw_params.fw.board_size, bd.len);
-		memcpy(bdf_addr, bd.data, fw_size);
+		memcpy_toio(bdf_addr, bd.data, fw_size);
 		ath11k_core_free_bdf(ab, &bd);
 		break;
 	case ATH11K_QMI_FILE_TYPE_CALDATA:
@@ -1831,7 +1831,8 @@ ath11k_qmi_prepare_bdf_download(struct ath11k_base *ab, int type,
 		fw_size = min_t(u32, ab->hw_params.fw.board_size,
 				fw_entry->size);
 
-		memcpy(bdf_addr + ATH11K_QMI_CALDATA_OFFSET, fw_entry->data, fw_size);
+		memcpy_toio(bdf_addr + ATH11K_QMI_CALDATA_OFFSET,
+			    fw_entry->data, fw_size);
 		ath11k_info(ab, "qmi downloading BDF: %s, size: %zu\n",
 			    filename, fw_entry->size);
 
