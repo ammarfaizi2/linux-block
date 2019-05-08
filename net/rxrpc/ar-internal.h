@@ -602,9 +602,9 @@ struct rxrpc_call {
 	 * In the Tx phase, packets are annotated with which buffers have been
 	 * acked.
 	 */
-#define RXRPC_RXTX_BUFF_SIZE	64
+#define RXRPC_RXTX_BUFF_SIZE	128
 #define RXRPC_RXTX_BUFF_MASK	(RXRPC_RXTX_BUFF_SIZE - 1)
-#define RXRPC_INIT_RX_WINDOW_SIZE 63
+#define RXRPC_INIT_RX_WINDOW_SIZE 127
 	struct sk_buff		**rxtx_buffer;
 	u8			*rxtx_annotations;
 #define RXRPC_TX_ANNO_ACK	0

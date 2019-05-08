@@ -175,7 +175,7 @@ static void rxrpc_end_rx_phase(struct rxrpc_call *call, rxrpc_serial_t serial)
 /*
  * Discard a packet we've used up and advance the Rx window by one.
  */
-static void rxrpc_rotate_rx_window(struct rxrpc_call *call)
+static void rxrpc_rotate_rx_window(struct rxrpc_call *call, unsigned nr_rot)
 {
 	struct rxrpc_skb_priv *sp;
 	struct sk_buff *skb;
@@ -219,7 +219,8 @@ static void rxrpc_rotate_rx_window(struct rxrpc_call *call)
 			rxrpc_propose_ACK(call, RXRPC_ACK_DELAY, 0, serial,
 					  true, true,
 					  rxrpc_propose_ack_rotate_rx);
-		if (call->ackr_reason && call->ackr_reason != RXRPC_ACK_DELAY)
+		if ((call->ackr_reason && call->ackr_reason != RXRPC_ACK_DELAY) ||
+		    (nr_rot & 3) == 3)
 			rxrpc_send_ack_packet(call, false, NULL);
 	}
 }
@@ -310,7 +311,7 @@ static int rxrpc_recvmsg_data(struct socket *sock, struct rxrpc_call *call,
 	rxrpc_seq_t hard_ack, top, seq;
 	size_t remain;
 	bool last;
-	unsigned int rx_pkt_offset, rx_pkt_len;
+	unsigned int rx_pkt_offset, rx_pkt_len, nr_rot = 0;
 	int ix, copy, ret = -EAGAIN, ret2;
 
 	if (test_and_clear_bit(RXRPC_CALL_RX_UNDERRUN, &call->flags) &&
@@ -394,8 +395,10 @@ static int rxrpc_recvmsg_data(struct socket *sock, struct rxrpc_call *call,
 
 		/* The whole packet has been transferred. */
 		last = sp->hdr.flags & RXRPC_LAST_PACKET;
-		if (!(flags & MSG_PEEK))
-			rxrpc_rotate_rx_window(call);
+		if (!(flags & MSG_PEEK)) {
+			rxrpc_rotate_rx_window(call, nr_rot);
+			nr_rot++;
+		}
 		rx_pkt_offset = 0;
 		rx_pkt_len = 0;
 
@@ -406,6 +409,7 @@ static int rxrpc_recvmsg_data(struct socket *sock, struct rxrpc_call *call,
 		}
 
 		seq++;
+		cond_resched();
 	}
 
 out:
