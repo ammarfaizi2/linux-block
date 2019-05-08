@@ -88,12 +88,12 @@ const struct file_operations fscontext_fops = {
 /*
  * Attach a filesystem context to a file and an fd.
  */
-static int fscontext_create_fd(struct fs_context *fc, unsigned int o_flags)
+static int fscontext_create_fd(struct fs_context *fc)
 {
 	int fd;
 
 	fd = anon_inode_getfd("fscontext", &fscontext_fops, fc,
-			      O_RDWR | o_flags);
+			      O_RDWR | O_CLOEXEC);
 	if (fd < 0)
 		put_fs_context(fc);
 	return fd;
@@ -126,7 +126,7 @@ SYSCALL_DEFINE2(fsopen, const char __user *, _fs_name, unsigned int, flags)
 	if (!ns_capable(current->nsproxy->mnt_ns->user_ns, CAP_SYS_ADMIN))
 		return -EPERM;
 
-	if (flags & ~FSOPEN_CLOEXEC)
+	if (flags)
 		return -EINVAL;
 
 	fs_name = strndup_user(_fs_name, PAGE_SIZE);
@@ -149,7 +149,7 @@ SYSCALL_DEFINE2(fsopen, const char __user *, _fs_name, unsigned int, flags)
 	if (ret < 0)
 		goto err_fc;
 
-	return fscontext_create_fd(fc, flags & FSOPEN_CLOEXEC ? O_CLOEXEC : 0);
+	return fscontext_create_fd(fc);
 
 err_fc:
 	put_fs_context(fc);
@@ -169,8 +169,7 @@ SYSCALL_DEFINE3(fspick, int, dfd, const char __user *, path, unsigned int, flags
 	if (!ns_capable(current->nsproxy->mnt_ns->user_ns, CAP_SYS_ADMIN))
 		return -EPERM;
 
-	if ((flags & ~(FSPICK_CLOEXEC |
-		       FSPICK_SYMLINK_NOFOLLOW |
+	if ((flags & ~(FSPICK_SYMLINK_NOFOLLOW |
 		       FSPICK_NO_AUTOMOUNT |
 		       FSPICK_EMPTY_PATH)) != 0)
 		return -EINVAL;
@@ -203,7 +202,7 @@ SYSCALL_DEFINE3(fspick, int, dfd, const char __user *, path, unsigned int, flags
 		goto err_fc;
 
 	path_put(&target);
-	return fscontext_create_fd(fc, flags & FSPICK_CLOEXEC ? O_CLOEXEC : 0);
+	return fscontext_create_fd(fc);
 
 err_fc:
 	put_fs_context(fc);

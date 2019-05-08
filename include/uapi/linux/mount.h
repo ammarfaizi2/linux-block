@@ -59,7 +59,6 @@
  * open_tree() flags.
  */
 #define OPEN_TREE_CLONE		1		/* Clone the target tree and attach the clone */
-#define OPEN_TREE_CLOEXEC	O_CLOEXEC	/* Close the file on execve() */
 
 /*
  * move_mount() flags.
@@ -73,17 +72,11 @@
 #define MOVE_MOUNT__MASK		0x00000077
 
 /*
- * fsopen() flags.
- */
-#define FSOPEN_CLOEXEC		0x00000001
-
-/*
  * fspick() flags.
  */
-#define FSPICK_CLOEXEC		0x00000001
-#define FSPICK_SYMLINK_NOFOLLOW	0x00000002
-#define FSPICK_NO_AUTOMOUNT	0x00000004
-#define FSPICK_EMPTY_PATH	0x00000008
+#define FSPICK_SYMLINK_NOFOLLOW	0x00000001
+#define FSPICK_NO_AUTOMOUNT	0x00000002
+#define FSPICK_EMPTY_PATH	0x00000004
 
 /*
  * The type of fsconfig() call made.
@@ -98,11 +91,6 @@ enum fsconfig_command {
 	FSCONFIG_CMD_CREATE	= 6,	/* Invoke superblock creation */
 	FSCONFIG_CMD_RECONFIGURE = 7,	/* Invoke superblock reconfiguration */
 };
-
-/*
- * fsmount() flags.
- */
-#define FSMOUNT_CLOEXEC		0x00000001
 
 /*
  * Mount attributes.

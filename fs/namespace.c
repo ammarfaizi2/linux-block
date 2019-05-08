@@ -2369,11 +2369,8 @@ SYSCALL_DEFINE3(open_tree, int, dfd, const char *, filename, unsigned, flags)
 	int error;
 	int fd;
 
-	BUILD_BUG_ON(OPEN_TREE_CLOEXEC != O_CLOEXEC);
-
 	if (flags & ~(AT_EMPTY_PATH | AT_NO_AUTOMOUNT | AT_RECURSIVE |
-		      AT_SYMLINK_NOFOLLOW | OPEN_TREE_CLONE |
-		      OPEN_TREE_CLOEXEC))
+		      AT_SYMLINK_NOFOLLOW | OPEN_TREE_CLONE))
 		return -EINVAL;
 
 	if ((flags & (AT_RECURSIVE | OPEN_TREE_CLONE)) == AT_RECURSIVE)
@@ -2389,7 +2386,7 @@ SYSCALL_DEFINE3(open_tree, int, dfd, const char *, filename, unsigned, flags)
 	if (detached && !may_mount())
 		return -EPERM;
 
-	fd = get_unused_fd_flags(flags & O_CLOEXEC);
+	fd = get_unused_fd_flags(O_CLOEXEC);
 	if (fd < 0)
 		return fd;
 
@@ -3352,7 +3349,7 @@ SYSCALL_DEFINE3(fsmount, int, fs_fd, unsigned int, flags,
 	if (!may_mount())
 		return -EPERM;
 
-	if ((flags & ~(FSMOUNT_CLOEXEC)) != 0)
+	if (flags)
 		return -EINVAL;
 
 	if (attr_flags & ~(MOUNT_ATTR_RDONLY |
@@ -3457,7 +3454,7 @@ SYSCALL_DEFINE3(fsmount, int, fs_fd, unsigned int, flags,
 	}
 	file->f_mode |= FMODE_NEED_UNMOUNT;
 
-	ret = get_unused_fd_flags((flags & FSMOUNT_CLOEXEC) ? O_CLOEXEC : 0);
+	ret = get_unused_fd_flags(O_CLOEXEC);
 	if (ret >= 0)
 		fd_install(ret, file);
 	else
