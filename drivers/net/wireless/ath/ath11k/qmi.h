@@ -13,15 +13,15 @@
 #define ATH11K_QMI_WLANFW_TIMEOUT_MS		5000
 #define ATH11K_QMI_MAX_BDF_FILE_NAME_SIZE	64
 #define ATH11K_QMI_BDF_MAX_SIZE			(256 * 1024)
-#define ATH11K_QMI_CALDATA_OFFSET 		(128 * 1024)
+#define ATH11K_QMI_CALDATA_OFFSET		(128 * 1024)
 #define ATH11K_QMI_WLANFW_MAX_BUILD_ID_LEN_V01	128
 #define ATH11K_QMI_WLFW_SERVICE_ID_V01		0x45
 #define ATH11K_QMI_WLFW_SERVICE_VERS_V01	0x01
 #define ATH11K_QMI_WLFW_SERVICE_INS_ID_V01	0x02
-#define ATH11K_QMI_WLANFW_MAX_TIMESTAMP_LEN_V01 32
+#define ATH11K_QMI_WLANFW_MAX_TIMESTAMP_LEN_V01	32
 #define ATH11K_QMI_RESP_LEN_MAX			8192
 #define ATH11K_QMI_WLANFW_MAX_NUM_MEM_SEG_V01	32
-#define ATH11K_QMI_CALDB_SIZE 			0x480000
+#define ATH11K_QMI_CALDB_SIZE			0x480000
 #define ATH11K_QMI_DEFAULT_CAL_FILE_NAME	"caldata.bin"
 
 #define QMI_WLFW_REQUEST_MEM_IND_V01		0x0035
@@ -31,15 +31,12 @@
 
 #define QMI_WLANFW_MAX_DATA_SIZE_V01		6144
 #define ATH11K_FIRMWARE_MODE_OFF		4
-#define Q6_CALDB_ADDR 0x50000000
-#define Q6_CALDB_SIZE 0x480000
 
 struct ath11k_base;
-enum ath11k_firmware_mode;
 
 enum ath11k_qmi_file_type {
 	ATH11K_QMI_FILE_TYPE_BDF_GOLDEN,
-	ATH11K_QMI_FILE_TYPE_CALDATA,	
+	ATH11K_QMI_FILE_TYPE_CALDATA,
 	ATH11K_QMI_MAX_FILE_TYPE,
 };
 
@@ -66,7 +63,6 @@ struct ath11k_qmi_driver_event {
 	void *data;
 };
 
-
 struct ath11k_qmi_ce_cfg {
 	const u8 *tgt_ce;
 	int tgt_ce_len;
@@ -88,7 +84,6 @@ struct target_mem_chunk {
 	u32 type;
 	dma_addr_t paddr;
 	u32 vaddr;
-	bool is_valid;
 };
 
 struct target_info {
@@ -112,7 +107,7 @@ struct ath11k_qmi {
 	struct target_mem_chunk target_mem[ATH11K_QMI_WLANFW_MAX_NUM_MEM_SEG_V01];
 	u32 mem_seg_count;
 	u32 target_mem_mode;
-	bool cal_done;
+	u8 cal_done;
 	struct target_info target;
 };
 
@@ -120,11 +115,11 @@ struct ath11k_qmi {
 #define QMI_WLANFW_HOST_CAP_REQ_V01			0x0034
 #define QMI_WLANFW_HOST_CAP_RESP_MSG_V01_MAX_LEN	7
 #define QMI_WLFW_HOST_CAP_RESP_V01			0x0034
-#define QMI_WLFW_MAX_NUM_GPIO_V01 			32
+#define QMI_WLFW_MAX_NUM_GPIO_V01			32
 #define QMI_IPQ8074_FW_MEM_MODE				0xFF
-#define HOST_DDR_REGION_TYPE            0x1
-#define BDF_MEM_REGION_TYPE             0x2
-#define CALDB_MEM_REGION_TYPE           0x4
+#define HOST_DDR_REGION_TYPE				0x1
+#define BDF_MEM_REGION_TYPE				0x2
+#define CALDB_MEM_REGION_TYPE				0x4
 
 struct qmi_wlanfw_host_cap_req_msg_v01 {
 	u8 num_clients_valid;
@@ -208,27 +203,27 @@ struct qmi_wlanfw_ind_register_resp_msg_v01 {
 #define QMI_WLANFW_MAX_NUM_MEM_CFG_V01			2
 
 struct qmi_wlanfw_mem_cfg_s_v01 {
-        u64 offset;
-        u32 size;
-        u8 secure_flag;
+	u64 offset;
+	u32 size;
+	u8 secure_flag;
 };
 
 enum qmi_wlanfw_mem_type_enum_v01 {
-        WLANFW_MEM_TYPE_ENUM_MIN_VAL_V01 = INT_MIN,
-        QMI_WLANFW_MEM_TYPE_MSA_V01 = 0,
-        QMI_WLANFW_MEM_TYPE_DDR_V01 = 1,
-        QMI_WLANFW_MEM_BDF_V01 = 2,
-        QMI_WLANFW_MEM_M3_V01 = 3,
-        QMI_WLANFW_MEM_CAL_V01 = 4,
-        QMI_WLANFW_MEM_DPD_V01 = 5,
-        WLANFW_MEM_TYPE_ENUM_MAX_VAL_V01 = INT_MAX,
+	WLANFW_MEM_TYPE_ENUM_MIN_VAL_V01 = INT_MIN,
+	QMI_WLANFW_MEM_TYPE_MSA_V01 = 0,
+	QMI_WLANFW_MEM_TYPE_DDR_V01 = 1,
+	QMI_WLANFW_MEM_BDF_V01 = 2,
+	QMI_WLANFW_MEM_M3_V01 = 3,
+	QMI_WLANFW_MEM_CAL_V01 = 4,
+	QMI_WLANFW_MEM_DPD_V01 = 5,
+	WLANFW_MEM_TYPE_ENUM_MAX_VAL_V01 = INT_MAX,
 };
 
 struct qmi_wlanfw_mem_seg_s_v01 {
-        u32 size;
-        enum qmi_wlanfw_mem_type_enum_v01 type;
-        u32 mem_cfg_len;
-        struct qmi_wlanfw_mem_cfg_s_v01 mem_cfg[QMI_WLANFW_MAX_NUM_MEM_CFG_V01];
+	u32 size;
+	enum qmi_wlanfw_mem_type_enum_v01 type;
+	u32 mem_cfg_len;
+	struct qmi_wlanfw_mem_cfg_s_v01 mem_cfg[QMI_WLANFW_MAX_NUM_MEM_CFG_V01];
 };
 
 struct qmi_wlanfw_request_mem_ind_msg_v01 {

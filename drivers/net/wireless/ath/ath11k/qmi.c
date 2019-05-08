@@ -312,7 +312,7 @@ static struct qmi_elem_info qmi_wlanfw_ind_register_req_msg_v01_ei[] = {
 		.array_type	= NO_ARRAY,
 		.tlv_type	= 0x11,
 		.offset		= offsetof(struct qmi_wlanfw_ind_register_req_msg_v01,
-				  	   initiate_cal_download_enable),
+					   initiate_cal_download_enable),
 	},
 	{
 		.data_type	= QMI_OPT_FLAG,
@@ -569,7 +569,6 @@ static struct qmi_elem_info qmi_wlanfw_mem_cfg_s_v01_ei[] = {
 		.tlv_type	= QMI_COMMON_TLV_TYPE,
 	},
 };
-
 
 static struct qmi_elem_info qmi_wlanfw_mem_seg_s_v01_ei[] = {
 	{
@@ -1643,12 +1642,6 @@ static int ath11k_qmi_respond_fw_mem_request(struct ath11k_base *ab)
 		goto out;
 
 	for (i = 0; i < req->mem_seg_len ; i++) {
-		if (!ab->qmi.target_mem[i].paddr || !ab->qmi.target_mem[i].size) {
-			ath11k_warn(ab, "qmi invalid mem request for target\n");
-			ret = -EINVAL;
-			goto out;
-		}
-
 		req->mem_seg[i].addr = ab->qmi.target_mem[i].paddr;
 		req->mem_seg[i].size = ab->qmi.target_mem[i].size;
 		req->mem_seg[i].type = ab->qmi.target_mem[i].type;
@@ -1688,8 +1681,8 @@ static int ath11k_qmi_alloc_target_mem_chunk(struct ath11k_base *ab)
 	int i, idx, mode = ab->qmi.target_mem_mode;
 
 	if (of_property_read_u32_array(dev->of_node, "qcom,bdf-addr",
-				   &bdf_location[0],
-				   ARRAY_SIZE(bdf_location))) {
+				       &bdf_location[0],
+				       ARRAY_SIZE(bdf_location))) {
 		ath11k_warn(ab, "qmi no bdf_addr in device_tree\n");
 		return -EINVAL;
 	}
@@ -1708,17 +1701,16 @@ static int ath11k_qmi_alloc_target_mem_chunk(struct ath11k_base *ab)
 				ath11k_warn(ab, "qmi mem size is low to load caldata\n");
 				return -EINVAL;
 			}
-			ab->qmi.target_mem[idx].paddr =
-					bdf_location[mode] + ATH11K_QMI_CALDATA_OFFSET;
-			ab->qmi.target_mem[idx].vaddr =
-					bdf_location[mode] + ATH11K_QMI_CALDATA_OFFSET;
+			/* TODO ath11k does not support cold boot calibration */
+			ab->qmi.target_mem[idx].paddr = 0;
+			ab->qmi.target_mem[idx].vaddr = 0;
 			ab->qmi.target_mem[idx].size = ab->qmi.target_mem[i].size;
 			ab->qmi.target_mem[idx].type = ab->qmi.target_mem[i].type;
 			idx++;
 			break;
 		default:
 			ath11k_warn(ab, "qmi ignore invalid mem req type %d\n",
-			       ab->qmi.target_mem[i].type);
+				    ab->qmi.target_mem[i].type);
 			break;
 		}
 	}
@@ -1791,7 +1783,6 @@ out:
 	return ret;
 }
 
-
 static int
 ath11k_qmi_prepare_bdf_download(struct ath11k_base *ab, int type,
 				struct qmi_wlanfw_bdf_download_req_msg_v01 *req,
@@ -1818,7 +1809,7 @@ ath11k_qmi_prepare_bdf_download(struct ath11k_base *ab, int type,
 		break;
 	case ATH11K_QMI_FILE_TYPE_CALDATA:
 		snprintf(filename, sizeof(filename),
-			 "%s/%s",ab->hw_params.fw.dir, ATH11K_QMI_DEFAULT_CAL_FILE_NAME);
+			 "%s/%s", ab->hw_params.fw.dir, ATH11K_QMI_DEFAULT_CAL_FILE_NAME);
 		ret = request_firmware(&fw_entry, filename, dev);
 		if (ret) {
 			ath11k_warn(ab, "qmi failed to load CAL: %s\n", filename);
@@ -1835,7 +1826,7 @@ ath11k_qmi_prepare_bdf_download(struct ath11k_base *ab, int type,
 		release_firmware(fw_entry);
 		break;
 	default:
-		ret =-EINVAL;
+		ret = -EINVAL;
 		goto out;
 	}
 
@@ -1863,7 +1854,7 @@ static int ath11k_qmi_load_bdf(struct ath11k_base *ab)
 	if (of_property_read_u32_array(dev->of_node, "qcom,bdf-addr", &location[0],
 				       ARRAY_SIZE(location))) {
 		ath11k_err(ab, "qmi bdf_addr is not in device_tree\n");
-		ret =-EINVAL;
+		ret = -EINVAL;
 		goto out;
 	}
 
@@ -1914,7 +1905,7 @@ static int ath11k_qmi_load_bdf(struct ath11k_base *ab)
 
 		if (resp.resp.result != QMI_RESULT_SUCCESS_V01) {
 			ath11k_warn(ab, "qmi BDF download failed, result: %d, err: %d\n",
-				   resp.resp.result, resp.resp.error);
+				    resp.resp.result, resp.resp.error);
 			ret = resp.resp.result;
 			goto out_qmi_bdf;
 		}
@@ -2266,7 +2257,6 @@ static void ath11k_qmi_msg_fw_ready_cb(struct qmi_handle *qmi_hdl,
 	ath11k_qmi_driver_event_post(qmi, ATH11K_QMI_EVENT_FW_READY, NULL);
 }
 
-
 static void ath11k_qmi_msg_cold_boot_cal_done_cb(struct qmi_handle *qmi,
 						 struct sockaddr_qrtr *sq,
 						 struct qmi_txn *txn,
@@ -2435,8 +2425,8 @@ int ath11k_qmi_init_service(struct ath11k_base *ab)
 	INIT_WORK(&ab->qmi.event_work, ath11k_qmi_driver_event_work);
 
 	ret = qmi_add_lookup(&ab->qmi.handle, ATH11K_QMI_WLFW_SERVICE_ID_V01,
-			ATH11K_QMI_WLFW_SERVICE_VERS_V01,
-			ATH11K_QMI_WLFW_SERVICE_INS_ID_V01);
+			     ATH11K_QMI_WLFW_SERVICE_VERS_V01,
+			     ATH11K_QMI_WLFW_SERVICE_INS_ID_V01);
 	if (ret < 0) {
 		ath11k_warn(ab, "failed to add qmi lookup\n");
 		return ret;
