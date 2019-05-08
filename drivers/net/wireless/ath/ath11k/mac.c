@@ -4301,10 +4301,17 @@ static int ath11k_set_rts_threshold(struct ieee80211_hw *hw, u32 value)
 
 static int ath11k_set_frag_threshold(struct ieee80211_hw *hw, u32 value)
 {
-	struct ath11k *ar = hw->priv;
-	int param_id = WMI_VDEV_PARAM_FRAGMENTATION_THRESHOLD;
-
-	return ath11k_set_vdev_param_to_all_vifs(ar, param_id, value);
+	/* Even though there's a WMI vdev param for fragmentation threshold no
+	 * known firmware actually implements it. Moreover it is not possible to
+	 * rely frame fragmentation to mac80211 because firmware clears the
+	 * "more fragments" bit in frame control making it impossible for remote
+	 * devices to reassemble frames.
+	 *
+	 * Hence implement a dummy callback just to say fragmentation isn't
+	 * supported. This effectively prevents mac80211 from doing frame
+	 * fragmentation in software.
+	 */
+	return -EOPNOTSUPP;
 }
 
 static void ath11k_flush(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
