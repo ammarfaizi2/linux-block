@@ -4770,6 +4770,7 @@ long sched_setaffinity(pid_t pid, const struct cpumask *in_mask)
 
 	cpuset_cpus_allowed(p, cpus_allowed);
 	cpumask_and(new_mask, in_mask, cpus_allowed);
+	trace_printk("%s: new_mask %*pbl\n", __func__, cpumask_pr_args(new_mask));
 
 	/*
 	 * Since bandwidth control happens on root_domain basis,
@@ -4790,9 +4791,11 @@ long sched_setaffinity(pid_t pid, const struct cpumask *in_mask)
 #endif
 again:
 	retval = __set_cpus_allowed_ptr(p, new_mask, true);
+	trace_printk("%s: new_mask %*pbl\n", __func__, cpumask_pr_args(new_mask));
 
 	if (!retval) {
 		cpuset_cpus_allowed(p, cpus_allowed);
+		trace_printk("%s: new_mask %*pbl\n", __func__, cpumask_pr_args(new_mask));
 		if (!cpumask_subset(new_mask, cpus_allowed)) {
 			/*
 			 * We must have raced with a concurrent cpuset
@@ -4800,6 +4803,7 @@ again:
 			 * cpuset's cpus_allowed
 			 */
 			cpumask_copy(new_mask, cpus_allowed);
+			trace_printk("%s: new_mask %*pbl\n", __func__, cpumask_pr_args(new_mask));
 			goto again;
 		}
 	}
