@@ -612,7 +612,6 @@ int ath11k_dp_htt_srng_setup(struct ath11k_base *ab, u32 ring_id,
 	u32 ring_entry_sz;
 	int len = sizeof(*cmd);
 	dma_addr_t hp_addr, tp_addr;
-	int lmac_ring_id_offset;
 	enum htt_srng_ring_type htt_ring_type;
 	enum htt_srng_ring_id htt_ring_id;
 	int ret = 0;
