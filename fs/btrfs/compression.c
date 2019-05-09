@@ -251,7 +251,7 @@ static void end_compressed_bio_write(struct bio *bio)
 	cb->compressed_pages[0]->mapping = cb->inode->i_mapping;
 	btrfs_writepage_endio_finish_ordered(cb->compressed_pages[0],
 			cb->start, cb->start + cb->len - 1,
-			bio->bi_status ? BLK_STS_OK : BLK_STS_NOTSUPP);
+			bio->bi_status == BLK_STS_OK);
 	cb->compressed_pages[0]->mapping = NULL;
 
 	end_compressed_writeback(inode, cb);
@@ -1009,6 +1009,7 @@ int btrfs_compress_pages(unsigned int type_level, struct address_space *mapping,
 	struct list_head *workspace;
 	int ret;
 
+	level = btrfs_compress_op[type]->set_level(level);
 	workspace = get_workspace(type, level);
 	ret = btrfs_compress_op[type]->compress_pages(workspace, mapping,
 						      start, pages,
