@@ -680,6 +680,9 @@ static void synchronize_rcu_trivial(void)
 	int cpu;
 	int destcpu;
 	static int dont_trace;
+	static cpumask_t my_cpumask;
+	static DEFINE_SPINLOCK(my_cpumask_lock);
+	int ret;
 
 	for_each_online_cpu(cpu) {
 		if (!READ_ONCE(dont_trace))
@@ -690,7 +693,11 @@ static void synchronize_rcu_trivial(void)
 			tracing_off();
 		} else {
 			trace_printk("On unexpected CPU %d, expected %d!!!\n", destcpu, cpu);
-			trace_printk("Online CPUs: %*pbl\n", cpumask_pr_args(cpu_online_mask));
+			trace_printk("Online CPUs: %*pbl  Active CPUs: %*pbl\n", cpumask_pr_args(cpu_online_mask), cpumask_pr_args(cpu_active_mask));
+			spin_lock(&my_cpumask_lock);
+			ret = sched_getaffinity(current->pid, &my_cpumask);
+			trace_printk("ret = %d, ->cpus_allowed %*pbl\n", ret, cpumask_pr_args(&my_cpumask));
+			spin_unlock(&my_cpumask_lock);
 			tracing_stop();
 			WRITE_ONCE(dont_trace, 1);
 			WARN_ON_ONCE(1);
