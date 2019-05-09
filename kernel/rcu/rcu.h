@@ -485,10 +485,6 @@ void do_trace_rcu_torture_read(const char *rcutorturename,
 #endif
 #endif
 
-#if IS_ENABLED(CONFIG_RCU_TORTURE_TEST) || IS_MODULE(CONFIG_RCU_TORTURE_TEST)
-long rcutorture_sched_setaffinity(pid_t pid, const struct cpumask *in_mask);
-#endif
-
 #ifdef CONFIG_TINY_SRCU
 
 static inline void srcutorture_get_gp_data(enum rcutorture_type test_type,
@@ -537,5 +533,7 @@ void rcu_bind_current_to_nocb(void);
 static inline bool rcu_is_nocb_cpu(int cpu) { return false; }
 static inline void rcu_bind_current_to_nocb(void) { }
 #endif
+
+long rcutorture_sched_setaffinity(pid_t pid, const struct cpumask *in_mask);
 
 #endif /* __LINUX_RCU_H */

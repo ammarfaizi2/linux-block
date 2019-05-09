@@ -423,7 +423,6 @@ EXPORT_SYMBOL_GPL(do_trace_rcu_torture_read);
 	do { } while (0)
 #endif
 
-#if IS_ENABLED(CONFIG_RCU_TORTURE_TEST) || IS_MODULE(CONFIG_RCU_TORTURE_TEST)
 /* Get rcutorture access to sched_setaffinity(). */
 long rcutorture_sched_setaffinity(pid_t pid, const struct cpumask *in_mask)
 {
@@ -434,7 +433,6 @@ long rcutorture_sched_setaffinity(pid_t pid, const struct cpumask *in_mask)
 	return ret;
 }
 EXPORT_SYMBOL_GPL(rcutorture_sched_setaffinity);
-#endif
 
 #ifdef CONFIG_RCU_STALL_COMMON
 int rcu_cpu_stall_suppress __read_mostly; /* 1 = suppress stall warnings. */
