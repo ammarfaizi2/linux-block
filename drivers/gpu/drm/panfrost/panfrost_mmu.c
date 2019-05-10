@@ -1,5 +1,6 @@
 // SPDX-License-Identifier:	GPL-2.0
 /* Copyright 2019 Linaro, Ltd, Rob Herring <robh@kernel.org> */
+/* Copyright (C) 2020 Arm Ltd. */
 #include <linux/atomic.h>
 #include <linux/bitfield.h>
 #include <linux/delay.h>
@@ -112,8 +113,16 @@ static void panfrost_mmu_enable(struct panfrost_device *pfdev, struct panfrost_m
 {
 	int as_nr = mmu->as;
 	struct io_pgtable_cfg *cfg = &mmu->pgtbl_cfg;
-	u64 transtab = cfg->arm_mali_lpae_cfg.transtab;
-	u64 memattr = cfg->arm_mali_lpae_cfg.memattr;
+	u64 transtab;
+	u64 memattr;
+
+	if (panfrost_has_hw_feature(pfdev, HW_FEATURE_AARCH64_MMU)) {
+		transtab = cfg->arm_lpae_s1_cfg.ttbr;
+		memattr = cfg->arm_lpae_s1_cfg.mair;
+	} else {
+		transtab = cfg->arm_mali_lpae_cfg.transtab;
+		memattr = cfg->arm_mali_lpae_cfg.memattr;
+	}
 
 	mmu_hw_do_operation_locked(pfdev, as_nr, 0, ~0UL, AS_COMMAND_FLUSH_MEM);
 
@@ -125,6 +134,14 @@ static void panfrost_mmu_enable(struct panfrost_device *pfdev, struct panfrost_m
 	 */
 	mmu_write(pfdev, AS_MEMATTR_LO(as_nr), memattr & 0xffffffffUL);
 	mmu_write(pfdev, AS_MEMATTR_HI(as_nr), memattr >> 32);
+
+	if (panfrost_has_hw_feature(pfdev, HW_FEATURE_AARCH64_MMU)) {
+		/* TODO: handle system coherency */
+		mmu_write(pfdev, AS_TRANSCFG_LO(as_nr),
+			AS_TRANSCFG_PTW_MEMATTR_WRITE_BACK |
+			AS_TRANSCFG_ADRMODE_AARCH64_4K);
+		mmu_write(pfdev, AS_TRANSCFG_HI(as_nr), 0);
+	}
 
 	write_cmd(pfdev, as_nr, AS_COMMAND_UPDATE);
 }
@@ -138,6 +155,11 @@ static void panfrost_mmu_disable(struct panfrost_device *pfdev, u32 as_nr)
 
 	mmu_write(pfdev, AS_MEMATTR_LO(as_nr), 0);
 	mmu_write(pfdev, AS_MEMATTR_HI(as_nr), 0);
+
+	if (panfrost_has_hw_feature(pfdev, HW_FEATURE_AARCH64_MMU)) {
+		mmu_write(pfdev, AS_TRANSCFG_LO(as_nr), 0);
+		mmu_write(pfdev, AS_TRANSCFG_HI(as_nr), 0);
+	}
 
 	write_cmd(pfdev, as_nr, AS_COMMAND_UPDATE);
 }
@@ -361,6 +383,7 @@ static const struct iommu_flush_ops mmu_tlb_ops = {
 
 int panfrost_mmu_pgtable_alloc(struct panfrost_file_priv *priv)
 {
+	enum io_pgtable_fmt pgt_fmt = ARM_MALI_LPAE;
 	struct panfrost_mmu *mmu = &priv->mmu;
 	struct panfrost_device *pfdev = priv->pfdev;
 
@@ -375,7 +398,10 @@ int panfrost_mmu_pgtable_alloc(struct panfrost_file_priv *priv)
 		.iommu_dev	= pfdev->dev,
 	};
 
-	mmu->pgtbl_ops = alloc_io_pgtable_ops(ARM_MALI_LPAE, &mmu->pgtbl_cfg,
+	if (panfrost_has_hw_feature(pfdev, HW_FEATURE_AARCH64_MMU))
+		pgt_fmt = ARM_64_LPAE_S1;
+
+	mmu->pgtbl_ops = alloc_io_pgtable_ops(pgt_fmt, &mmu->pgtbl_cfg,
 					      priv);
 	if (!mmu->pgtbl_ops)
 		return -EINVAL;
