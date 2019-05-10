@@ -1072,6 +1072,15 @@ static void ath11k_htt_pktlog(struct ath11k_base *ab,
 	u8 pdev_id;
 
 	len = FIELD_GET(HTT_T2H_PPDU_STATS_PAYLOAD_SIZE_M, *data);
+
+	if (len > ATH11K_HTT_PKTLOG_MAX_SIZE)
+	{
+		ath11k_warn(ab, "htt pktlog buffer size %d, expected < %d\n",
+			    len,
+			    ATH11K_HTT_PKTLOG_MAX_SIZE);
+		return;
+	}
+
 	pdev_id = FIELD_GET(HTT_T2H_PPDU_STATS_PDEV_ID_M, *data);
 	pdev_id = DP_HW2SW_MACID(pdev_id);
 	ar = ab->pdevs[pdev_id].ar;

@@ -68,6 +68,8 @@ struct debug_htt_stats_req {
 
 #define ATH11K_FW_STATS_BUF_SIZE (1024 * 1024)
 
+#define ATH11K_HTT_PKTLOG_MAX_SIZE 2048
+
 enum ath11k_pktlog_filter {
 	ATH11K_PKTLOG_RX		= 0x000000001,
 	ATH11K_PKTLOG_TX		= 0x000000002,
