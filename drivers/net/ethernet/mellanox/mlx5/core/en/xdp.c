@@ -127,7 +127,6 @@ static void mlx5e_xdp_mpwqe_session_start(struct mlx5e_xdpsq *sq)
 	struct mlx5e_xdp_mpwqe *session = &sq->mpwqe;
 	struct mlx5e_xdpsq_stats *stats = sq->stats;
 	struct mlx5_wq_cyc *wq = &sq->wq;
-	u8  wqebbs;
 	u16 pi;
 
 	mlx5e_xdpsq_fetch_wqe(sq, &session->wqe);
@@ -135,7 +134,6 @@ static void mlx5e_xdp_mpwqe_session_start(struct mlx5e_xdpsq *sq)
 	prefetchw(session->wqe->data);
 	session->ds_count  = MLX5E_XDP_TX_EMPTY_DS_COUNT;
 	session->pkt_count = 0;
-	session->complete  = 0;
 
 	pi = mlx5_wq_cyc_ctr2ix(wq, sq->pc);
 
@@ -149,11 +147,6 @@ static void mlx5e_xdp_mpwqe_session_start(struct mlx5e_xdpsq *sq)
 #else
 #define MLX5E_XDP_MPW_MAX_WQEBBS (MLX5_SEND_WQE_MAX_WQEBBS - 2)
 #endif
-
-	wqebbs = min_t(u16, mlx5_wq_cyc_get_contig_wqebbs(wq, pi),
-		       MLX5E_XDP_MPW_MAX_WQEBBS);
-
-	session->max_ds_count = MLX5_SEND_WQEBB_NUM_DS * wqebbs;
 
 	mlx5e_xdp_update_inline_state(sq);
 
@@ -183,6 +176,30 @@ static void mlx5e_xdp_mpwqe_complete(struct mlx5e_xdpsq *sq)
 	session->wqe = NULL; /* Close session */
 }
 
+static inline void mlx5e_fill_xdpsq_frag_edge(struct mlx5e_xdpsq *sq,
+					      struct mlx5_wq_cyc *wq,
+					      u16 pi, u16 nnops)
+{
+	struct mlx5e_xdp_wqe_info *edge_wi, *wi = &sq->db.wqe_info[pi];
+
+	edge_wi = wi + nnops;
+	/* fill sq frag edge with nops to avoid wqe wrapping two pages */
+	for (; wi < edge_wi; wi++) {
+		wi->num_wqebbs = 1;
+		wi->num_pkts   = 0;
+		mlx5e_post_nop(wq, sq->sqn, &sq->pc);
+	}
+
+	sq->stats->nops += nnops;
+}
+
+static inline bool
+mlx5e_xdp_no_room_for_inline_pkt(struct mlx5e_xdp_mpwqe *session)
+{
+	return session->inline_on &&
+	       session->ds_count + MLX5E_XDP_INLINE_WQE_MAX_DS_CNT > MLX5E_XDP_MPW_MAX_NUM_DS;
+}
+
 static bool mlx5e_xmit_xdp_frame_mpwqe(struct mlx5e_xdpsq *sq,
 				       struct mlx5e_xdp_info *xdpi)
 {
@@ -197,21 +214,29 @@ static bool mlx5e_xmit_xdp_frame_mpwqe(struct mlx5e_xdpsq *sq,
 	}
 
 	if (unlikely(!session->wqe)) {
-		if (unlikely(!mlx5e_wqc_has_room_for(&sq->wq, sq->cc, sq->pc,
-						     MLX5_SEND_WQE_MAX_WQEBBS))) {
+		struct mlx5_wq_cyc *wq = &sq->wq;
+		u16 pi, contig_wqebbs;
+
+		if (unlikely(!mlx5e_wqc_has_room_for(wq, sq->cc, sq->pc,
+						     MLX5E_XDPSQ_STOP_ROOM))) {
 			/* SQ is full, ring doorbell */
 			mlx5e_xmit_xdp_doorbell(sq);
 			stats->full++;
 			return false;
 		}
+		pi = mlx5_wq_cyc_ctr2ix(wq, sq->pc);
+		contig_wqebbs = mlx5_wq_cyc_get_contig_wqebbs(wq, pi);
+
+		if (unlikely(contig_wqebbs < MLX5_SEND_WQE_MAX_WQEBBS))
+			mlx5e_fill_xdpsq_frag_edge(sq, wq, pi, contig_wqebbs);
 
 		mlx5e_xdp_mpwqe_session_start(sq);
 	}
 
 	mlx5e_xdp_mpwqe_add_dseg(sq, xdpi, stats);
 
-	if (unlikely(session->complete ||
-		     session->ds_count == session->max_ds_count))
+	if (unlikely(mlx5e_xdp_no_room_for_inline_pkt(session) ||
+		     session->ds_count == MLX5E_XDP_MPW_MAX_NUM_DS))
 		mlx5e_xdp_mpwqe_complete(sq);
 
 	mlx5e_xdpi_fifo_push(&sq->db.xdpi_fifo, xdpi);

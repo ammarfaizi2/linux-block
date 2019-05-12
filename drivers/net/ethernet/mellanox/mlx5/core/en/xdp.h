@@ -39,6 +39,15 @@
 	(sizeof(struct mlx5e_tx_wqe) / MLX5_SEND_WQE_DS)
 #define MLX5E_XDP_TX_DS_COUNT (MLX5E_XDP_TX_EMPTY_DS_COUNT + 1 /* SG DS */)
 
+#define MLX5E_XDPSQ_STOP_ROOM \
+	(2 * MLX5_SEND_WQE_MAX_WQEBBS - 1)
+
+#define MLX5E_XDP_INLINE_WQE_SZ_THRSD (256 - sizeof(struct mlx5_wqe_inline_seg))
+#define MLX5E_XDP_INLINE_WQE_MAX_DS_CNT \
+	DIV_ROUND_UP(MLX5E_XDP_INLINE_WQE_SZ_THRSD, MLX5_SEND_WQE_DS)
+#define MLX5E_XDP_MPW_MAX_NUM_DS \
+	(MLX5E_XDP_MPW_MAX_WQEBBS * MLX5_SEND_WQEBB_NUM_DS)
+
 int mlx5e_xdp_max_mtu(struct mlx5e_params *params);
 bool mlx5e_xdp_handle(struct mlx5e_rq *rq, struct mlx5e_dma_info *di,
 		      void *va, u16 *rx_headroom, u32 *len);
@@ -109,19 +118,11 @@ mlx5e_xdp_mpwqe_add_dseg(struct mlx5e_xdpsq *sq, struct mlx5e_xdp_info *xdpi,
 
 	session->pkt_count++;
 
-#define MLX5E_XDP_INLINE_WQE_SZ_THRSD (256 - sizeof(struct mlx5_wqe_inline_seg))
-
 	if (session->inline_on && dma_len <= MLX5E_XDP_INLINE_WQE_SZ_THRSD) {
 		struct mlx5_wqe_inline_seg *inline_dseg =
 			(struct mlx5_wqe_inline_seg *)dseg;
 		u16 ds_len = sizeof(*inline_dseg) + dma_len;
 		u16 ds_cnt = DIV_ROUND_UP(ds_len, MLX5_SEND_WQE_DS);
-
-		if (unlikely(session->ds_count + ds_cnt > session->max_ds_count)) {
-			/* Not enough space for inline wqe, send with memory pointer */
-			session->complete = true;
-			goto no_inline;
-		}
 
 		inline_dseg->byte_count = cpu_to_be32(dma_len | MLX5_INLINE_SEG);
 		memcpy(inline_dseg->data, xdpf->data, dma_len);
@@ -131,7 +132,6 @@ mlx5e_xdp_mpwqe_add_dseg(struct mlx5e_xdpsq *sq, struct mlx5e_xdp_info *xdpi,
 		return;
 	}
 
-no_inline:
 	dseg->addr       = cpu_to_be64(dma_addr);
 	dseg->byte_count = cpu_to_be32(dma_len);
 	dseg->lkey       = sq->mkey_be;
