@@ -19,6 +19,7 @@
 #include <net/net_namespace.h>
 #include <linux/ipc_namespace.h>
 #include <linux/time_namespace.h>
+#include <linux/proc_fs.h>
 #include <linux/proc_ns.h>
 #include <linux/file.h>
 #include <linux/syscalls.h>
@@ -257,21 +258,133 @@ void exit_task_namespaces(struct task_struct *p)
 	switch_task_namespaces(p, NULL);
 }
 
-SYSCALL_DEFINE2(setns, int, fd, int, nstype)
+static int check_setns_flags(unsigned long flags)
+{
+	if (flags & ~(CLONE_NEWNS | CLONE_NEWUTS | CLONE_NEWIPC | CLONE_NEWNET |
+		      CLONE_NEWUSER | CLONE_NEWPID | CLONE_NEWCGROUP))
+		return -EINVAL;
+
+	return 0;
+}
+
+static inline bool wants_ns(int flags, int ns)
+{
+	return !flags || (flags & ns) > 0;
+}
+
+static inline int __ns_install(struct nsproxy *nsproxy, struct ns_common *ns)
+{
+	return ns->ops->install(nsproxy, ns);
+}
+
+/*
+ * Ordering is equivalent to the standard ordering used everywhere
+ * else during unshare and process creation.
+ */
+static int ns_install(struct nsproxy *nsproxy, struct pid *pid, int flags)
+{
+	int ret = 0;
+	struct task_struct *tsk;
+	struct nsproxy *nsp;
+
+	tsk = get_pid_task(pid, PIDTYPE_PID);
+	if (!tsk)
+		return -ESRCH;
+
+	get_nsproxy(tsk->nsproxy);
+	nsp = tsk->nsproxy;
+
+#ifdef CONFIG_USER_NS
+	if (wants_ns(flags, CLONE_NEWUSER)) {
+		struct user_namespace *user_ns;
+
+		user_ns = get_user_ns(__task_cred(tsk)->user_ns);
+		ret = __ns_install(nsproxy, &user_ns->ns);
+		put_user_ns(user_ns);
+	}
+#else
+	if (flags & CLONE_NEWUSER)
+		ret = -EINVAL;
+#endif
+
+	if (!ret && wants_ns(flags, CLONE_NEWNS))
+		ret = __ns_install(nsproxy, mnt_ns_to_common(nsp->mnt_ns));
+
+#ifdef CONFIG_UTS_NS
+	if (!ret && wants_ns(flags, CLONE_NEWUTS))
+		ret = __ns_install(nsproxy, &nsp->uts_ns->ns);
+#else
+	if (flags & CLONE_NEWUTS)
+		ret = -EINVAL;
+#endif
+
+#ifdef CONFIG_IPC_NS
+	if (!ret && wants_ns(flags, CLONE_NEWIPC))
+		ret = __ns_install(nsproxy, &nsp->ipc_ns->ns);
+#else
+	if (flags & CLONE_NEWIPC)
+		ret = -EINVAL;
+#endif
+
+#ifdef CONFIG_PID_NS
+	if (!ret && wants_ns(flags, CLONE_NEWPID)) {
+		struct pid_namespace *pidns;
+
+		pidns = task_active_pid_ns(tsk);
+		if (pidns) {
+			get_pid_ns(pidns);
+			ret = __ns_install(nsproxy, &pidns->ns);
+			put_pid_ns(pidns);
+		}
+	}
+#else
+	if (flags & CLONE_NEWPID)
+		ret = EINVAL;
+#endif
+
+#ifdef CONFIG_CGROUPS
+	if (!ret && wants_ns(flags, CLONE_NEWCGROUP))
+		ret = __ns_install(nsproxy, &nsp->cgroup_ns->ns);
+#else
+	if (flags & CLONE_NEWCGROUP)
+		ret = EINVAL;
+#endif
+
+#ifdef CONFIG_NET_NS
+	if (!ret && wants_ns(flags, CLONE_NEWNET))
+		ret = __ns_install(nsproxy, &nsp->net_ns->ns);
+#else
+	if (flags & CLONE_NEWNET)
+		ret = -EINVAL;
+#endif
+
+	put_task_struct(tsk);
+	put_nsproxy(nsp);
+
+	return ret;
+}
+
+SYSCALL_DEFINE2(setns, int, fd, int, flags)
 {
 	struct task_struct *tsk = current;
 	struct nsproxy *new_nsproxy;
 	struct file *file;
-	struct ns_common *ns;
+	struct ns_common *ns = NULL;
 	int err;
 
-	file = proc_ns_fget(fd);
-	if (IS_ERR(file))
-		return PTR_ERR(file);
+	file = fget(fd);
+	if (!file)
+		return -EBADF;
 
 	err = -EINVAL;
-	ns = get_proc_ns(file_inode(file));
-	if (nstype && (ns->ops->type != nstype))
+	if (proc_ns_file(file)) {
+		ns = get_proc_ns(file_inode(file));
+		if (!flags || (ns->ops->type == flags))
+			err = 0;
+	} else if (pidfd_pid(file)) {
+		err = check_setns_flags(flags);
+	}
+	if (err)
 		goto out;
 
 	new_nsproxy = create_new_namespaces(0, tsk, current_user_ns(), tsk->fs);
@@ -280,7 +393,10 @@ SYSCALL_DEFINE2(setns, int, fd, int, nstype)
 		goto out;
 	}
 
-	err = ns->ops->install(new_nsproxy, ns);
+	if (proc_ns_file(file))
+		err = ns->ops->install(new_nsproxy, ns);
+	else
+		err = ns_install(new_nsproxy, file->private_data, flags);
 	if (err) {
 		free_nsproxy(new_nsproxy);
 		goto out;
