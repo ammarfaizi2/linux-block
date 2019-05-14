@@ -3132,6 +3132,7 @@ struct wmi_vdev_start_req_arg {
 	bool pmf_enabled;
 	u32 he_ops;
 	u32 cac_duration_ms;
+	u32 regdomain;
 	u32 pref_rx_streams;
 	u32 pref_tx_streams;
 	u32 num_noa_descriptors;

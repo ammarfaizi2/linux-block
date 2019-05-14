@@ -3352,6 +3352,13 @@ static int ath11k_start(struct ieee80211_hw *hw)
 		goto err;
 	}
 
+	ret = ath11k_wmi_send_dfs_phyerr_offload_enable_cmd(ar, pdev->pdev_id);
+	if (ret) {
+		ath11k_err(ab, "failed to offload radar detection: %d\n",
+			   ret);
+		goto err;
+	}
+
 	ret = ath11k_dp_htt_h2t_ppdu_stats_req(ar, HTT_PPDU_STATS_TAG_DEFAULT);
 	if (ret) {
 		ath11k_err(ab, "failed to req ppdu stats: %d\n", ret);
@@ -3389,6 +3396,7 @@ static void ath11k_stop(struct ieee80211_hw *hw)
 	ath11k_drain_tx(ar);
 
 	mutex_lock(&ar->conf_mutex);
+	clear_bit(ATH11K_CAC_RUNNING, &ar->dev_flags);
 	ar->state = ATH11K_STATE_OFF;
 	mutex_unlock(&ar->conf_mutex);
 
@@ -3823,8 +3831,6 @@ static int ath11k_mac_op_add_chanctx(struct ieee80211_hw *hw,
 	ar->rx_channel = ctx->def.chan;
 	spin_unlock_bh(&ar->data_lock);
 
-	/* TODO: CAC */
-
 	mutex_unlock(&ar->conf_mutex);
 
 	return 0;
@@ -3848,8 +3854,6 @@ static void ath11k_mac_op_remove_chanctx(struct ieee80211_hw *hw,
 	 */
 	ar->rx_channel = NULL;
 	spin_unlock_bh(&ar->data_lock);
-
-	/* TODO: CAC */
 
 	mutex_unlock(&ar->conf_mutex);
 }
@@ -3908,8 +3912,24 @@ ath11k_mac_vdev_start_restart(struct ath11k_vif *arvif,
 		arg.channel.chan_radar =
 			!!(chandef->chan->flags & IEEE80211_CHAN_RADAR);
 
+		arg.channel.passive = arg.channel.chan_radar;
+
+		spin_lock_bh(&ab->data_lock);
+
+		/* Use the new reg info if available */
+		if (ar->ab->new_regd[ar->pdev_idx])
+			arg.regdomain =
+				ar->ab->new_regd[ar->pdev_idx]->dfs_region;
+		else
+			arg.regdomain =
+				ar->ab->default_regd[ar->pdev_idx]->dfs_region;
+
+		spin_unlock_bh(&ab->data_lock);
+
 		/* TODO: Notify if secondary 80Mhz also needs radar detection */
 	}
+
+	arg.channel.passive |= !!(chandef->chan->flags & IEEE80211_CHAN_NO_IR);
 
 	ath11k_dbg(ab, ATH11K_DBG_MAC,
 		   "mac vdev %d start center_freq %d phymode %s\n",
@@ -3932,7 +3952,21 @@ ath11k_mac_vdev_start_restart(struct ath11k_vif *arvif,
 
 	ar->num_started_vdevs++;
 
-	/* TODO: Recalc radar */
+	/* Enable CAC Flag in the driver by checking the channel DFS cac time,
+	 * i.e dfs_cac_ms value which will be valid only for radar channels
+	 * and state as NL80211_DFS_USABLE which indicates CAC needs to be
+	 * done before channel usage. This flags is used to drop rx packets.
+	 * during CAC.
+	 */
+	/* TODO Set the flag for other interface types as required */
+	if (arvif->vdev_type == WMI_VDEV_TYPE_AP &&
+	    chandef->chan->dfs_cac_ms &&
+	    chandef->chan->dfs_state == NL80211_DFS_USABLE) {
+		set_bit(ATH11K_CAC_RUNNING, &ar->dev_flags);
+		ath11k_dbg(ab, ATH11K_DBG_MAC,
+			   "CAC Started in chan_freq %d for vdev %d\n",
+			   arg.channel.freq, arg.vdev_id);
+	}
 
 	return 0;
 }
@@ -3971,7 +4005,11 @@ static int ath11k_mac_vdev_stop(struct ath11k_vif *arvif)
 
 	ar->num_started_vdevs--;
 
-	/* TODO: Recalc radar */
+	if (test_bit(ATH11K_CAC_RUNNING, &ar->dev_flags)) {
+		clear_bit(ATH11K_CAC_RUNNING, &ar->dev_flags);
+		ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "CAC Stopped for vdev %d\n",
+			   arvif->vdev_id);
+	}
 
 	return 0;
 err:
@@ -4805,6 +4843,10 @@ static const struct ieee80211_iface_combination ath11k_if_comb[] = {
 		.max_interfaces = 16,
 		.num_different_channels = 1,
 		.beacon_int_infra_match = true,
+		.radar_detect_widths =	BIT(NL80211_CHAN_WIDTH_20_NOHT) |
+					BIT(NL80211_CHAN_WIDTH_20) |
+					BIT(NL80211_CHAN_WIDTH_40) |
+					BIT(NL80211_CHAN_WIDTH_80),
 	},
 };
 

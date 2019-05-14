@@ -1788,10 +1788,6 @@ static void ath11k_dp_rx_process_amsdu(struct ath11k *ar,
 	if (first_mpdu)
 		ath11k_dp_rx_h_ppdu(ar, rx_desc, rx_status);
 
-	/* TODO: Check if we need to drop frames in certain cases something
-	 * like while in the middle of CAC.
-	 */
-
 	ath11k_dp_rx_h_mpdu(ar, amsdu_list, rx_desc, rx_status);
 }
 
@@ -2044,6 +2040,11 @@ int ath11k_dp_process_rx(struct ath11k_base *ab, int mac_id,
 
 	rcu_read_lock();
 	if (!rcu_dereference(ab->pdevs_active[mac_id])) {
+		__skb_queue_purge(&msdu_list);
+		goto rcu_unlock;
+	}
+
+	if (test_bit(ATH11K_CAC_RUNNING, &ar->dev_flags)) {
 		__skb_queue_purge(&msdu_list);
 		goto rcu_unlock;
 	}
@@ -2545,6 +2546,11 @@ ath11k_dp_process_rx_err_buf(struct ath11k *ar, struct napi_struct *napi,
 		goto exit;
 	}
 
+	if (test_bit(ATH11K_CAC_RUNNING, &ar->dev_flags)) {
+		dev_kfree_skb_any(msdu);
+		goto exit;
+	}
+
 	rx_desc = msdu->data;
 	msdu_len = ath11k_dp_rx_h_msdu_start_msdu_len(rx_desc);
 	skb_put(msdu, HAL_RX_DESC_SIZE + msdu_len);
@@ -2965,6 +2971,12 @@ int ath11k_dp_rx_process_wbm_err(struct ath11k_base *ab,
 		}
 
 		ar = ab->pdevs[i].ar;
+
+		if (test_bit(ATH11K_CAC_RUNNING, &ar->dev_flags)) {
+			__skb_queue_purge(&msdu_list[i]);
+			continue;
+		}
+
 		while ((msdu = __skb_dequeue(&msdu_list[i])) != NULL)
 			ath11k_dp_rx_wbm_err(ar, napi, msdu, &msdu_list[i]);
 	}

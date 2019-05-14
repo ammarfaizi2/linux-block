@@ -438,6 +438,7 @@ struct ath11k {
 	struct {
 		struct ieee80211_supported_band sbands[NUM_NL80211_BANDS];
 	} mac;
+	unsigned long dev_flags;
 	unsigned int filter_flags;
 	unsigned long monitor_flags;
 	u32 min_tx_power;

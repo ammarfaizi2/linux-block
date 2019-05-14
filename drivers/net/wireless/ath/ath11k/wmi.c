@@ -788,6 +788,7 @@ int ath11k_wmi_vdev_start(struct ath11k *ar, struct wmi_vdev_start_req_arg *arg,
 	cmd->preferred_rx_streams = arg->pref_rx_streams;
 	cmd->preferred_tx_streams = arg->pref_tx_streams;
 	cmd->cac_duration_ms = arg->cac_duration_ms;
+	cmd->regdomain = arg->regdomain;
 	cmd->he_ops = arg->he_ops;
 
 	if (!restart) {
@@ -5151,10 +5152,9 @@ void ath11k_mgmt_rx_event(struct ath11k_base *ab, struct sk_buff *skb)
 		goto exit;
 	}
 
-	/* TODO: Check CAC running state */
-
-	if (rx_ev.status & (WMI_RX_STATUS_ERR_DECRYPT |
-	    WMI_RX_STATUS_ERR_KEY_CACHE_MISS | WMI_RX_STATUS_ERR_CRC)) {
+	if ((test_bit(ATH11K_CAC_RUNNING, &ar->dev_flags)) ||
+	    (rx_ev.status & (WMI_RX_STATUS_ERR_DECRYPT |
+	    WMI_RX_STATUS_ERR_KEY_CACHE_MISS | WMI_RX_STATUS_ERR_CRC))) {
 		dev_kfree_skb(skb);
 		goto exit;
 	}
