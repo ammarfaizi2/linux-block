@@ -2151,10 +2151,9 @@ static void ath11k_dp_rx_update_peer_stats(struct ath11k_sta *arsta,
 	rx_stats->num_mpdu_fcs_err += ppdu_info->num_mpdu_fcs_err;
 }
 
-struct sk_buff *
-ath11k_dp_rx_alloc_mon_status_buf(struct ath11k_base *ab,
-				  struct dp_rxdma_ring *rx_ring,
-				  int *buf_id, gfp_t gfp)
+static struct sk_buff *ath11k_dp_rx_alloc_mon_status_buf(struct ath11k_base *ab,
+							 struct dp_rxdma_ring *rx_ring,
+							 int *buf_id, gfp_t gfp)
 {
 	struct sk_buff *skb;
 	dma_addr_t paddr;
@@ -2262,8 +2261,8 @@ fail_desc_get:
 	return req_entries - num_remain;
 }
 
-int ath11k_dp_rx_reap_mon_status_ring(struct ath11k_base *ab, int mac_id,
-				      int *budget, struct sk_buff_head *skb_list)
+static int ath11k_dp_rx_reap_mon_status_ring(struct ath11k_base *ab, int mac_id,
+					     int *budget, struct sk_buff_head *skb_list)
 {
 	struct ath11k *ar = ab->pdevs[mac_id].ar;
 	struct ath11k_pdev_dp *dp = &ar->dp;
@@ -3692,10 +3691,10 @@ err_merge_fail:
 	return NULL;
 }
 
-int ath11k_dp_rx_mon_deliver(struct ath11k *ar, u32 mac_id,
-			     struct sk_buff *head_msdu,
-			     struct sk_buff *tail_msdu,
-			     struct napi_struct *napi)
+static int ath11k_dp_rx_mon_deliver(struct ath11k *ar, u32 mac_id,
+				    struct sk_buff *head_msdu,
+				    struct sk_buff *tail_msdu,
+				    struct napi_struct *napi)
 {
 	struct ath11k_pdev_dp *dp = &ar->dp;
 	struct sk_buff *mon_skb, *skb_next, *header;
@@ -3743,8 +3742,8 @@ mon_deliver_fail:
 	return -EINVAL;
 }
 
-void ath11k_dp_rx_mon_dest_process(struct ath11k *ar, u32 quota,
-				   struct napi_struct *napi)
+static void ath11k_dp_rx_mon_dest_process(struct ath11k *ar, u32 quota,
+					  struct napi_struct *napi)
 {
 	struct ath11k_pdev_dp *dp = &ar->dp;
 	struct ath11k_mon_data *pmon = (struct ath11k_mon_data *)&dp->mon_data;
@@ -3849,8 +3848,8 @@ static inline void ath11k_dp_rx_mon_status_process_tlv(struct ath11k *ar,
 	}
 }
 
-int ath11k_dp_mon_process_rx(struct ath11k_base *ab, int mac_id,
-			     struct napi_struct *napi, int budget)
+static int ath11k_dp_mon_process_rx(struct ath11k_base *ab, int mac_id,
+				    struct napi_struct *napi, int budget)
 {
 	struct ath11k *ar = ab->pdevs[mac_id].ar;
 	struct ath11k_pdev_dp *dp = &ar->dp;
@@ -3878,7 +3877,7 @@ int ath11k_dp_rx_process_mon_rings(struct ath11k_base *ab, int mac_id,
 	return ret;
 }
 
-int ath11k_dp_rx_pdev_mon_status_attach(struct ath11k *ar)
+static int ath11k_dp_rx_pdev_mon_status_attach(struct ath11k *ar)
 {
 	struct ath11k_pdev_dp *dp = &ar->dp;
 	struct ath11k_mon_data *pmon = (struct ath11k_mon_data *)&dp->mon_data;
@@ -3926,7 +3925,7 @@ int ath11k_dp_rx_pdev_mon_attach(struct ath11k *ar)
 	return 0;
 }
 
-int ath11k_dp_mon_link_free(struct ath11k *ar)
+static int ath11k_dp_mon_link_free(struct ath11k *ar)
 {
 	struct ath11k_pdev_dp *dp = &ar->dp;
 	struct ath11k_mon_data *pmon = &dp->mon_data;

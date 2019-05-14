@@ -30,4 +30,10 @@ int ath11k_dp_htt_h2t_ext_stats_req(struct ath11k *ar, u8 type,
 				    struct htt_ext_stats_cfg_params *cfg_params,
 				    u64 cookie);
 int ath11k_dp_htt_monitor_mode_ring_config(struct ath11k *ar, bool reset);
+
+int ath11k_dp_htt_rx_filter_setup(struct ath11k_base *ab, u32 ring_id,
+				  int mac_id, enum hal_ring_type ring_type,
+				  int rx_buf_size,
+				  struct htt_rx_ring_tlv_filter *tlv_filter);
+
 #endif

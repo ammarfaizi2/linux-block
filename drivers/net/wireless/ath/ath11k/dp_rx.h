@@ -374,10 +374,6 @@ int ath11k_dp_htt_tlv_iter(struct ath11k_base *ab, const void *ptr, size_t len,
 			   int (*iter)(struct ath11k_base *ar, u16 tag, u16 len,
 				       const void *ptr, void *data),
 			   void *data);
-int ath11k_dp_htt_rx_filter_setup(struct ath11k_base *ab, u32 ring_id,
-				  int mac_id, enum hal_ring_type ring_type,
-				  int rx_buf_size,
-				  struct htt_rx_ring_tlv_filter *tlv_filter);
 int ath11k_dp_rx_process_mon_rings(struct ath11k_base *ab, int mac_id,
 				   struct napi_struct *napi, int budget);
 int ath11k_dp_rx_process_mon_status(struct ath11k_base *ab, int mac_id,

@@ -8,7 +8,7 @@
 #include "debug.h"
 #include "wmi.h"
 #include "hal_rx.h"
-#include "dp_rx.h"
+#include "dp_tx.h"
 
 void ath11k_info(struct ath11k_base *sc, const char *fmt, ...)
 {
