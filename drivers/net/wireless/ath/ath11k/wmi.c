@@ -5770,6 +5770,59 @@ ath11k_wmi_pdev_csa_switch_count_status_event(struct ath11k_base *ab,
 	kfree(tb);
 }
 
+static void
+ath11k_wmi_pdev_dfs_radar_detected_event(struct ath11k_base *ab,
+					 u8 *evt_buf,
+					 u32 len)
+{
+	const void **tb;
+	const struct wmi_pdev_radar_ev *ev;
+	struct ath11k *ar;
+	int ret;
+
+	tb = ath11k_wmi_tlv_parse_alloc(ab, evt_buf, len, GFP_ATOMIC);
+	if (IS_ERR(tb)) {
+		ret = PTR_ERR(tb);
+		ath11k_warn(ab, "failed to parse tlv: %d\n", ret);
+		return;
+	}
+
+	ev = tb[WMI_TAG_PDEV_DFS_RADAR_DETECTION_EVENT];
+
+	if (!ev) {
+		ath11k_warn(ab, "failed to fetch pdev dfs radar detected ev");
+		kfree(tb);
+		return;
+	}
+
+	ath11k_dbg(ab, ATH11K_DBG_WMI,
+		   "pdev dfs radar detected on pdev %d, detection mode %d, chan freq %d, chan_width %d, detector id %d, seg id %d, timestamp %d, chirp %d, freq offset %d, sidx %d",
+		   ev->pdev_id, ev->detection_mode, ev->chan_freq, ev->chan_width,
+		   ev->detector_id, ev->segment_id, ev->timestamp, ev->is_chirp,
+		   ev->freq_offset, ev->sidx);
+
+	ar = ath11k_get_ar_by_pdev_id(ab, ev->pdev_id);
+
+	if (!ar) {
+		ath11k_warn(ab, "radar detected in invalid pdev %d\n",
+			    ev->pdev_id);
+		goto exit;
+	}
+
+	if (ar->rx_channel && ar->rx_channel->center_freq != (ev->chan_freq
+	    - ev->freq_offset)) {
+		ath11k_warn(ab, "Radar detected in non-operating channel");
+		goto exit;
+	}
+
+	ath11k_dbg(ar->ab, ATH11K_DBG_REG, "Radar Detected in pdev %d\n",
+		   ev->pdev_id);
+
+	ieee80211_radar_detected(ar->hw);
+
+exit:
+	kfree(tb);
+}
 static void ath11k_wmi_tlv_op_rx(struct ath11k_base *ab, struct sk_buff *skb)
 {
 	struct wmi_cmd_hdr *cmd_hdr;
@@ -5857,6 +5910,9 @@ static void ath11k_wmi_tlv_op_rx(struct ath11k_base *ab, struct sk_buff *skb)
 	case WMI_VDEV_DELETE_RESP_EVENTID:
 		ath11k_dbg(ab, ATH11K_DBG_WMI,
 			   "ignoring unsupported event 0x%x\n", id);
+		break;
+	case WMI_PDEV_DFS_RADAR_DETECTION_EVENTID:
+		ath11k_wmi_pdev_dfs_radar_detected_event(ab, data, len);
 		break;
 	/* TODO: Add remaining events */
 	default:

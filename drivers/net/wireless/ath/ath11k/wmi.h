@@ -4555,6 +4555,19 @@ struct wmi_pdev_csa_switch_ev {
 	u32 num_vdevs;
 } __packed;
 
+struct wmi_pdev_radar_ev {
+	u32 pdev_id;
+	u32 detection_mode;
+	u32 chan_freq;
+	u32 chan_width;
+	u32 detector_id;
+	u32 segment_id;
+	u32 timestamp;
+	u32 is_chirp;
+	s32 freq_offset;
+	s32 sidx;
+} __packed;
+
 enum wlan_phymode {
 	WLAN_PHYMODE_AUTO             = 0,
 	WLAN_PHYMODE_11A              = 1,
