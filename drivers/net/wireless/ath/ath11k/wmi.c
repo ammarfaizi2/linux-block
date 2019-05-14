@@ -4806,7 +4806,7 @@ static void ath11k_bcn_tx_status_event(struct ath11k_base *ab, u8 *evt_buf, u32 
 static void ath11k_vdev_stopped_event(struct ath11k_base *ab, u8 *evt_buf, u32 len)
 {
 	struct ath11k *ar;
-	u32 vdev_id;
+	u32 vdev_id = 0;
 
 	if (ath11k_pull_vdev_stopped_param_tlv(ab, evt_buf, len,
 					       &vdev_id) != 0) {
@@ -4832,7 +4832,7 @@ static void ath11k_vdev_stopped_event(struct ath11k_base *ab, u8 *evt_buf, u32 l
 
 static void ath11k_mgmt_rx_event(struct ath11k_base *ab, struct sk_buff *skb)
 {
-	struct mgmt_rx_event_params rx_ev;
+	struct mgmt_rx_event_params rx_ev = {0};
 	struct ath11k *ar;
 	struct ieee80211_rx_status *status = IEEE80211_SKB_RXCB(skb);
 	struct ieee80211_hdr *hdr;
@@ -4940,7 +4940,7 @@ exit:
 
 static void ath11k_mgmt_tx_compl_event(struct ath11k_base *ab, struct sk_buff *skb)
 {
-	struct wmi_mgmt_tx_compl_event tx_compl_param;
+	struct wmi_mgmt_tx_compl_event tx_compl_param = {0};
 	struct ath11k *ar;
 
 	if (ath11k_pull_mgmt_tx_compl_param_tlv(ab, skb->data, skb->len,
@@ -4972,7 +4972,7 @@ exit:
 static void ath11k_scan_event(struct ath11k_base *ab, u8 *evt_buf, u32 len)
 {
 	struct ath11k *ar;
-	struct wmi_scan_event scan_ev;
+	struct wmi_scan_event scan_ev = {0};
 
 	if (ath11k_pull_scan_ev(ab, evt_buf, len,
 				&scan_ev) != 0) {
@@ -5079,7 +5079,7 @@ exit:
 
 static void ath11k_roam_event(struct ath11k_base *ab, u8 *evt_buf, u32 len)
 {
-	struct wmi_roam_event roam_ev;
+	struct wmi_roam_event roam_ev = {};
 	struct ath11k *ar;
 
 	if (ath11k_pull_roam_ev(ab, evt_buf, len, &roam_ev) != 0) {
@@ -5125,7 +5125,7 @@ static void ath11k_roam_event(struct ath11k_base *ab, u8 *evt_buf, u32 len)
 
 static void ath11k_chan_info_event(struct ath11k_base *ab, u8 *evt_buf, u32 len)
 {
-	struct wmi_chan_info_event ch_info_ev;
+	struct wmi_chan_info_event ch_info_ev = {0};
 	struct ath11k *ar;
 	struct survey_info *survey;
 	int idx;
@@ -5199,7 +5199,7 @@ exit:
 static void ath11k_pdev_bss_chan_info_event(struct ath11k_base *ab, u8 *evt_buf,
 				     u32 len)
 {
-	struct wmi_pdev_bss_chan_info_event bss_ch_info_ev;
+	struct wmi_pdev_bss_chan_info_event bss_ch_info_ev = {};
 	struct survey_info *survey;
 	struct ath11k *ar;
 	u32 cc_freq_hz = ab->cc_freq_hz;
@@ -5273,7 +5273,7 @@ exit:
 static void ath11k_vdev_install_key_compl_event(struct ath11k_base *ab, u8 *evt_buf,
 						u32 len)
 {
-	struct wmi_vdev_install_key_complete_arg install_key_compl;
+	struct wmi_vdev_install_key_complete_arg install_key_compl = {0};
 	struct ath11k *ar;
 
 	if (ath11k_pull_vdev_install_key_compl_ev(ab, evt_buf, len,
@@ -5347,7 +5347,7 @@ static void ath11k_service_available_event(struct ath11k_base *ab, u8 *evt_buf,
 
 static void ath11k_peer_assoc_conf_event(struct ath11k_base *ab, u8 *evt_buf, u32 len)
 {
-	struct wmi_peer_assoc_conf_arg peer_assoc_conf;
+	struct wmi_peer_assoc_conf_arg peer_assoc_conf = {0};
 	struct ath11k *ar;
 
 	if (ath11k_pull_peer_assoc_conf_ev(ab, evt_buf, len,
