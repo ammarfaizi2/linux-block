@@ -515,6 +515,7 @@ struct ath11k {
 #ifdef CONFIG_ATH11K_DEBUGFS
 	struct ath11k_debug debug;
 #endif
+	bool dfs_block_radar_events;
 };
 
 struct ath11k_band_cap {

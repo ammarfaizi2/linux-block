@@ -4111,6 +4111,32 @@ struct wmi_pktlog_disable_cmd {
 	u32 pdev_id;
 } __packed;
 
+#define DFS_PHYERR_UNIT_TEST_CMD 0
+#define DFS_UNIT_TEST_MODULE	0x2b
+#define DFS_UNIT_TEST_TOKEN	0xAA
+
+enum dfs_test_args_idx {
+	DFS_TEST_CMDID = 0,
+	DFS_TEST_PDEV_ID,
+	DFS_TEST_RADAR_PARAM,
+	DFS_MAX_TEST_ARGS,
+};
+
+struct wmi_dfs_unit_test_arg {
+	u32 cmd_id;
+	u32 pdev_id;
+	u32 radar_param;
+};
+
+struct wmi_unit_test_cmd {
+	u32 tlv_header;
+	u32 vdev_id;
+	u32 module_id;
+	u32 num_args;
+	u32 diag_token;
+	/* Followed by test args*/
+} __packed;
+
 #define MAX_SUPPORTED_RATES 128
 
 #define WMI_PEER_AUTH           0x00000001
@@ -4197,6 +4223,7 @@ enum wmi_vdev_start_resp_status_code {
 	WMI_VDEV_START_RESPONSE_DFS_VIOLATION = 3,
 };
 
+;
 enum cc_setting_code {
 	REG_SET_CC_STATUS_PASS = 0,
 	REG_CURRENT_ALPHA2_NOT_FOUND = 1,
@@ -5202,4 +5229,5 @@ size_t ath11k_wmi_fw_stats_num_vdevs(struct list_head *head);
 void ath11k_wmi_fw_stats_fill(struct ath11k *ar,
 			      struct ath11k_fw_stats *fw_stats, u32 stats_id,
 			      char *buf);
+int ath11k_wmi_simulate_radar(struct ath11k *ar);
 #endif

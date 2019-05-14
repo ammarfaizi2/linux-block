@@ -1099,9 +1099,28 @@ static ssize_t ath11k_read_pktlog_filter(struct file *file,
 	return simple_read_from_buffer(ubuf, count, ppos, buf, len);
 }
 
+static ssize_t ath11k_write_simulate_radar(struct file *file,
+					   const char __user *user_buf,
+					   size_t count, loff_t *ppos)
+{
+	struct ath11k *ar = file->private_data;
+	int ret;
+
+	ret = ath11k_wmi_simulate_radar(ar);
+	if (ret)
+		return ret;
+
+	return count;
+}
+
 static const struct file_operations fops_pktlog_filter = {
 	.read = ath11k_read_pktlog_filter,
 	.write = ath11k_write_pktlog_filter,
+	.open = simple_open
+};
+
+static const struct file_operations fops_simulate_radar = {
+	.write = ath11k_write_simulate_radar,
 	.open = simple_open
 };
 
@@ -1139,6 +1158,15 @@ int ath11k_debug_register(struct ath11k *ar)
 	debugfs_create_file("pktlog_filter", 0644,
 			    ar->debug.debugfs_pdev, ar,
 			    &fops_pktlog_filter);
+
+	if (ar->hw->wiphy->bands[NL80211_BAND_5GHZ]) {
+		debugfs_create_file("dfs_simulate_radar", 0200,
+				    ar->debug.debugfs_pdev, ar,
+				    &fops_simulate_radar);
+		debugfs_create_bool("dfs_block_radar_events", 0200,
+				    ar->debug.debugfs_pdev,
+				    &ar->dfs_block_radar_events);
+	}
 
 	return 0;
 }

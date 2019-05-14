@@ -5815,10 +5815,13 @@ ath11k_wmi_pdev_dfs_radar_detected_event(struct ath11k_base *ab,
 		goto exit;
 	}
 
-	ath11k_dbg(ar->ab, ATH11K_DBG_REG, "Radar Detected in pdev %d\n",
+	ath11k_dbg(ar->ab, ATH11K_DBG_REG, "DFS Radar Detected in pdev %d\n",
 		   ev->pdev_id);
 
-	ieee80211_radar_detected(ar->hw);
+	if (ar->dfs_block_radar_events)
+		ath11k_info(ab, "DFS Radar detected, but ignored as requested\n");
+	else
+		ieee80211_radar_detected(ar->hw);
 
 exit:
 	kfree(tb);
@@ -5958,6 +5961,103 @@ static int ath11k_connect_pdev_htc_service(struct ath11k_base *sc,
 	sc->wmi_sc.max_msg_len[pdev_idx] = conn_resp.max_msg_len;
 
 	return 0;
+}
+
+static int
+ath11k_wmi_send_unit_test_cmd(struct ath11k *ar,
+			      struct wmi_unit_test_cmd ut_cmd,
+			      u32 *test_args)
+{
+	struct ath11k_pdev_wmi *wmi = ar->wmi;
+	struct wmi_unit_test_cmd *cmd;
+	struct sk_buff *skb;
+	struct wmi_tlv *tlv;
+	void *ptr;
+	u32 *ut_cmd_args;
+	int buf_len, arg_len;
+	int ret;
+	int i;
+
+	arg_len = (sizeof(u32) * ut_cmd.num_args);
+	buf_len = sizeof(ut_cmd) + arg_len + TLV_HDR_SIZE;
+
+	skb = ath11k_wmi_alloc_skb(wmi->wmi_sc, buf_len);
+	if (!skb)
+		return -ENOMEM;
+
+	cmd = (struct wmi_unit_test_cmd *)skb->data;
+	cmd->tlv_header =
+		FIELD_PREP(WMI_TLV_TAG,
+			   WMI_TAG_UNIT_TEST_CMD) |
+		FIELD_PREP(WMI_TLV_LEN, sizeof(ut_cmd) - TLV_HDR_SIZE);
+
+	cmd->vdev_id = ut_cmd.vdev_id;
+	cmd->module_id = ut_cmd.module_id;
+	cmd->num_args = ut_cmd.num_args;
+	cmd->diag_token = ut_cmd.diag_token;
+
+	ptr = skb->data + sizeof(ut_cmd);
+
+	tlv = ptr;
+	tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_UINT32) |
+		      FIELD_PREP(WMI_TLV_LEN, arg_len);
+
+	ptr += TLV_HDR_SIZE;
+
+	ut_cmd_args = ptr;
+	for (i = 0; i < ut_cmd.num_args; i++)
+		ut_cmd_args[i] = test_args[i];
+
+	ret = ath11k_wmi_cmd_send(wmi, skb,
+				  WMI_UNIT_TEST_CMDID);
+
+	if (ret) {
+		ath11k_warn(ar->ab,
+			    "failed to send WMI_UNIT_TEST CMD :%d\n",
+			    ret);
+		dev_kfree_skb(skb);
+	}
+	ath11k_dbg(ar->ab, ATH11K_DBG_WMI,
+		   "WMI unit test : module %d vdev %d n_args %d token %d\n",
+		   cmd->module_id, cmd->vdev_id, cmd->num_args,
+		   cmd->diag_token);
+
+	return ret;
+}
+
+int ath11k_wmi_simulate_radar(struct ath11k *ar)
+{
+	struct ath11k_vif *arvif;
+	u32 dfs_args[DFS_MAX_TEST_ARGS];
+	struct wmi_unit_test_cmd wmi_ut;
+	bool arvif_found = false;
+
+	list_for_each_entry(arvif, &ar->arvifs, list) {
+		if (arvif->is_started && arvif->vdev_type == WMI_VDEV_TYPE_AP) {
+			arvif_found = true;
+			break;
+		}
+	}
+
+	if (!arvif_found)
+		return -EINVAL;
+
+	dfs_args[DFS_TEST_CMDID] = 0;
+	dfs_args[DFS_TEST_PDEV_ID] = ar->pdev->pdev_id;
+	/* Currently we could pass segment_id(b0 - b1), chirp(b2)
+	 * freq offset (b3 - b10) to unit test. For simulation
+	 * purpose this can be set to 0 which is valid.
+	 */
+	dfs_args[DFS_TEST_RADAR_PARAM] = 0;
+
+	wmi_ut.vdev_id = arvif->vdev_id;
+	wmi_ut.module_id = DFS_UNIT_TEST_MODULE;
+	wmi_ut.num_args = DFS_MAX_TEST_ARGS;
+	wmi_ut.diag_token = DFS_UNIT_TEST_TOKEN;
+
+	ath11k_dbg(ar->ab, ATH11K_DBG_REG, "Triggering Radar Simulation\n");
+
+	return ath11k_wmi_send_unit_test_cmd(ar, wmi_ut, dfs_args);
 }
 
 int ath11k_wmi_connect(struct ath11k_base *sc)
