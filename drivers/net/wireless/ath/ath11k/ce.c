@@ -420,9 +420,9 @@ ath11k_ce_alloc_ring(struct ath11k_base *sc, int nentries, int desc_sz)
 	 * coherent DMA are unsupported
 	 */
 	ce_ring->base_addr_owner_space_unaligned =
-		dma_zalloc_coherent(sc->dev,
-				    nentries * desc_sz + CE_DESC_RING_ALIGN,
-				    &base_addr, GFP_KERNEL);
+		dma_alloc_coherent(sc->dev,
+				   nentries * desc_sz + CE_DESC_RING_ALIGN,
+				   &base_addr, GFP_KERNEL);
 	if (!ce_ring->base_addr_owner_space_unaligned) {
 		kfree(ce_ring);
 		return ERR_PTR(-ENOMEM);
