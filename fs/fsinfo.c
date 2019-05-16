@@ -283,6 +283,25 @@ found:
 	return sizeof(*p);
 }
 
+static void fsinfo_insert_sb_flag_parameters(struct path *path,
+					     struct fsinfo_kparams *params)
+{
+	int s_flags = READ_ONCE(path->dentry->d_sb->s_flags);
+
+	if (s_flags & SB_DIRSYNC)
+		fsinfo_note_param(params, "dirsync", NULL);
+	if (s_flags & SB_LAZYTIME)
+		fsinfo_note_param(params, "lazytime", NULL);
+	if (s_flags & SB_MANDLOCK)
+		fsinfo_note_param(params, "mand", NULL);
+	if (s_flags & SB_POSIXACL)
+		fsinfo_note_param(params, "posixacl", NULL);
+	if (s_flags & SB_RDONLY)
+		fsinfo_note_param(params, "ro", NULL);
+	if (s_flags & SB_SYNCHRONOUS)
+		fsinfo_note_param(params, "sync", NULL);
+}
+
 /*
  * Implement some queries generically from stuff in the superblock.
  */
@@ -345,8 +364,17 @@ static int vfs_fsinfo(struct path *path, struct fsinfo_kparams *params)
 		return fsinfo(path, params);
 
 	while (!signal_pending(current)) {
+		if (params->request == FSINFO_ATTR_PARAMETERS) {
+			if (down_read_killable(&dentry->d_sb->s_umount) < 0)
+				return -ERESTARTSYS;
+			fsinfo_insert_sb_flag_parameters(path, params);
+		}
+
 		params->usage = 0;
 		ret = fsinfo(path, params);
+		if (params->request == FSINFO_ATTR_PARAMETERS)
+			up_read(&dentry->d_sb->s_umount);
+
 		if (ret <= (int)params->buf_size)
 			return ret; /* Error or it fitted */
 		kvfree(params->buffer);
@@ -504,6 +532,7 @@ static const struct fsinfo_attr_info fsinfo_buffer_info[FSINFO_ATTR__NR] = {
 	FSINFO_STRUCT		(PARAM_DESCRIPTION,	param_description),
 	FSINFO_STRUCT_N		(PARAM_SPECIFICATION,	param_specification),
 	FSINFO_STRUCT_N		(PARAM_ENUM,		param_enum),
+	FSINFO_OPAQUE		(PARAMETERS,		-),
 };
 
 /**
@@ -644,3 +673,88 @@ error_scratch:
 error:
 	return ret;
 }
+
+/*
+ * Store a parameter into the user's parameter buffer.  The key is prefixed by
+ * a single byte length (1-127) and the value by one (0-0x7f) or two bytes
+ * (0x80-0x3fff) or three bytes (0x4000-0x1fffff).
+ *
+ * Note that we must always make the size determination, even if the buffer is
+ * already full, so that we can tell the caller how much buffer we actually
+ * need.
+ */
+static void __fsinfo_note_param(struct fsinfo_kparams *params, const char *key,
+				const char *val, unsigned int vlen)
+{
+	char *p;
+	unsigned int usage;
+	int klen, total, vmeta;
+	u8 x;
+
+	klen = strlen(key);
+	BUG_ON(klen < 1 || klen > 127);
+	BUG_ON(vlen > (1 << 21) - 1);
+	BUG_ON(vlen > 0 && !val);
+
+	vmeta = (vlen <= 127) ? 1 : (vlen <= 127 * 127) ? 2 : 3;
+
+	total = 1 + klen + vmeta + vlen;
+
+	usage = params->usage;
+	params->usage = usage + total;
+	if (!params->buffer || params->usage > params->buf_size)
+		return;
+
+	p = params->buffer + usage;
+	*p++ = klen;
+	p = memcpy(p, key, klen);
+	p += klen;
+
+	/* The more significant groups of 7 bits in the size are included in
+	 * most->least order with 0x80 OR'd in.  The least significant 7 bits
+	 * are last with the top bit clear.
+	 */
+	x = vlen >> 14;
+	if (x & 0x7f)
+		*p++ = 0x80 | x;
+
+	x = vlen >> 7;
+	if (x & 0x7f)
+		*p++ = 0x80 | x;
+
+	*p++ = vlen & 0x7f;
+	memcpy(p, val, vlen);
+}
+
+/**
+ * fsinfo_note_param - Store a parameter for FSINFO_ATTR_PARAMETERS
+ * @params: The parameter buffer
+ * @key: The parameter's key
+ * @val: The parameter's value (or NULL)
+ */
+void fsinfo_note_param(struct fsinfo_kparams *params, const char *key,
+		       const char *val)
+{
+	__fsinfo_note_param(params, key, val, val ? strlen(val) : 0);
+}
+EXPORT_SYMBOL(fsinfo_note_param);
+
+/**
+ * fsinfo_note_paramf - Store a formatted parameter for FSINFO_ATTR_PARAMETERS
+ * @params: The parameter buffer
+ * @key: The parameter's key
+ * @val_fmt: Format string for the parameter's value
+ */
+void fsinfo_note_paramf(struct fsinfo_kparams *params, const char *key,
+			const char *val_fmt, ...)
+{
+	va_list va;
+	int n;
+
+	va_start(va, val_fmt);
+	n = vsnprintf(params->scratch_buffer, 4096, val_fmt, va);
+	va_end(va);
+
+	__fsinfo_note_param(params, key, params->scratch_buffer, n);
+}
+EXPORT_SYMBOL(fsinfo_note_paramf);
