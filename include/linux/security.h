@@ -57,6 +57,7 @@ struct mm_struct;
 struct fs_context;
 struct fs_parameter;
 enum fs_value_type;
+struct fsinfo_kparams;
 
 /* Default (no) options for the capable function */
 #define CAP_OPT_NONE 0x0
@@ -237,6 +238,9 @@ int security_sb_remount(struct super_block *sb, void *mnt_opts);
 int security_sb_kern_mount(struct super_block *sb);
 int security_sb_show_options(struct seq_file *m, struct super_block *sb);
 int security_sb_statfs(struct dentry *dentry);
+#ifdef CONFIG_FSINFO
+int security_sb_fsinfo(struct path *path, struct fsinfo_kparams *params);
+#endif
 int security_sb_mount(const char *dev_name, const struct path *path,
 		      const char *type, unsigned long flags, void *data);
 int security_sb_umount(struct vfsmount *mnt, int flags);
@@ -574,6 +578,13 @@ static inline int security_sb_statfs(struct dentry *dentry)
 {
 	return 0;
 }
+
+#ifdef CONFIG_FSINFO
+static inline int security_sb_fsinfo(struct path *path, struct fsinfo_kparams *params)
+{
+	return 0;
+}
+#endif
 
 static inline int security_sb_mount(const char *dev_name, const struct path *path,
 				    const char *type, unsigned long flags,
