@@ -484,6 +484,57 @@ static int vfs_fsinfo_fd(unsigned int fd, struct fsinfo_kparams *params)
 }
 
 /*
+ * Look up the root of a mount object.  This allows access to mount objects
+ * (and their attached superblocks) that can't be retrieved by path because
+ * they're entirely covered.
+ *
+ * We only permit access to a mount that has a direct path between either the
+ * dentry pointed to by dfd or to our chroot (if dfd is AT_FDCWD).
+ */
+static int vfs_fsinfo_mount(int dfd, const char __user *filename,
+			    struct fsinfo_kparams *params)
+{
+	struct path path;
+	struct fd f = {};
+	char *name;
+	long mnt_id;
+	int ret;
+
+	if ((params->at_flags & ~AT_FSINFO_MOUNTID_PATH) ||
+	    !filename)
+		return -EINVAL;
+
+	name = strndup_user(filename, 32);
+	if (IS_ERR(name))
+		return PTR_ERR(name);
+	ret = kstrtoul(name, 0, &mnt_id);
+	if (ret < 0)
+		goto out_name;
+	if (mnt_id > INT_MAX)
+		goto out_name;
+
+	if (dfd != AT_FDCWD) {
+		ret = -EBADF;
+		f = fdget_raw(dfd);
+		if (!f.file)
+			goto out_name;
+	}
+
+	ret = lookup_mount_object(f.file ? &f.file->f_path : NULL,
+				  mnt_id, &path);
+	if (ret < 0)
+		goto out_fd;
+
+	ret = vfs_fsinfo(&path, params);
+	path_put(&path);
+out_fd:
+	fdput(f);
+out_name:
+	kfree(name);
+	return ret;
+}
+
+/*
  * Return buffer information by requestable attribute.
  *
  * STRUCT indicates a fixed-size structure with only one instance.
@@ -648,7 +699,9 @@ SYSCALL_DEFINE5(fsinfo,
 	if (!params.buffer)
 		goto error_scratch;
 
-	if (filename)
+	if (params.at_flags & AT_FSINFO_MOUNTID_PATH)
+		ret = vfs_fsinfo_mount(dfd, filename, &params);
+	else if (filename)
 		ret = vfs_fsinfo_path(dfd, filename, &params);
 	else
 		ret = vfs_fsinfo_fd(dfd, &params);

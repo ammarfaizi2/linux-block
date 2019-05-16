@@ -91,6 +91,8 @@
 #define AT_STATX_FORCE_SYNC	0x2000	/* - Force the attributes to be sync'd with the server */
 #define AT_STATX_DONT_SYNC	0x4000	/* - Don't sync attributes with the server */
 
+#define AT_FSINFO_MOUNTID_PATH	0x2000	/* The path is a mount object ID, not an actual path */
+
 #define AT_RECURSIVE		0x8000	/* Apply to the entire subtree */
 
 
