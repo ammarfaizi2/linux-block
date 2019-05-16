@@ -50,6 +50,7 @@
 #include <linux/audit.h>
 #include <linux/mutex.h>
 #include <linux/vmalloc.h>
+#include <linux/fsinfo.h>
 #include <net/netlabel.h>
 
 #include "flask.h"
@@ -1373,6 +1374,54 @@ int security_sid_to_context_inval(struct selinux_state *state, u32 sid,
 	return security_sid_to_context_core(state, sid, scontext,
 					    scontext_len, 1, 1);
 }
+
+#ifdef CONFIG_FSINFO
+void fsinfo_note_sid(struct fsinfo_kparams *params, const char *key, u32 sid)
+{
+	struct selinux_state *state = &selinux_state;
+	struct policydb *policydb;
+	struct context *context;
+	const char *val = "<<<INVALID>>>";
+	char *p;
+	int n;
+
+	if (!state->initialized) {
+		if (sid <= SECINITSID_NUM) {
+			val = initial_sid_to_string[sid];
+			goto out;
+		}
+
+		pr_err("SELinux: %s:  called before initial "
+		       "load_policy on unknown SID %d\n", __func__, sid);
+		goto out;
+	}
+
+	read_lock(&state->ss->policy_rwlock);
+
+	policydb = &state->ss->policydb;
+	context = sidtab_search(state->ss->sidtab, sid);
+	if (!context) {
+		pr_err("SELinux: %s:  unrecognized SID %d\n", __func__, sid);
+	} else {
+		/* Copy the user name, role name and type name into the scratch
+		 * buffer and then tack on the MLS.
+		 */
+		val = p = params->scratch_buffer;
+		n = sprintf(p, "%s:%s:%s",
+			    sym_name(policydb, SYM_USERS, context->user - 1),
+			    sym_name(policydb, SYM_ROLES, context->role - 1),
+			    sym_name(policydb, SYM_TYPES, context->type - 1));
+
+		p += n;
+		mls_sid_to_context(policydb, context, &p);
+		*p = 0;
+	}
+
+	read_unlock(&state->ss->policy_rwlock);
+out:
+	fsinfo_note_param(params, key, val);
+}
+#endif
 
 /*
  * Caveat:  Mutates scontext.
