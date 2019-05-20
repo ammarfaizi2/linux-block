@@ -1881,9 +1881,6 @@ struct dentry *nfs_try_mount(int flags, const char *dev_name,
 	else
 		server = nfs_mod->rpc_ops->create_server(mount_info, nfs_mod);
 
-	if (IS_ERR(server))
-		return ERR_CAST(server);
-
 	return nfs_fs_mount_common(server, flags, dev_name, mount_info, nfs_mod);
 }
 EXPORT_SYMBOL_GPL(nfs_try_mount);
@@ -2618,6 +2615,9 @@ struct dentry *nfs_fs_mount_common(struct nfs_server *server,
 	};
 	int error;
 
+	if (IS_ERR(server))
+		return ERR_CAST(server);
+
 	if (server->flags & NFS_MOUNT_UNSHARED)
 		compare_super = NULL;
 
@@ -2766,10 +2766,7 @@ nfs_xdev_mount(struct file_system_type *fs_type, int flags,
 	/* create a new volume representation */
 	server = nfs_mod->rpc_ops->clone_server(NFS_SB(data->sb), data->fh, data->fattr, data->authflavor);
 
-	if (IS_ERR(server))
-		mntroot = ERR_CAST(server);
-	else
-		mntroot = nfs_fs_mount_common(server, flags,
+	mntroot = nfs_fs_mount_common(server, flags,
 				dev_name, &mount_info, nfs_mod);
 
 	dprintk("<-- nfs_xdev_mount() = %ld\n",
