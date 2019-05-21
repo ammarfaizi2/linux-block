@@ -89,6 +89,7 @@
 #include <linux/mount.h>
 #include <linux/seq_file.h>
 #include <linux/iversion.h>
+#include <linux/fsinfo.h>
 
 #include "ufs_fs.h"
 #include "ufs.h"
@@ -1401,6 +1402,59 @@ static int ufs_show_options(struct seq_file *seq, struct dentry *root)
 	return 0;
 }
 
+#ifdef CONFIG_FSINFO
+static int ufs_fsinfo_print_token(struct fsinfo_kparams *params, const char *token)
+{
+	char *new, *key, *value;
+
+	new = kstrdup(token, GFP_KERNEL);
+	if (!new)
+		return -ENOMEM;
+
+	key = new;
+	value = strchr(new, '=');
+	if (value)
+		*value++ = '\0';
+
+	fsinfo_note_param(params, key, value);
+
+	kfree(new);
+	return 0;
+}
+
+/*
+ * Get filesystem information.
+ */
+static int ufs_fsinfo(struct path *path, struct fsinfo_kparams *params)
+{
+	struct ufs_sb_info *sbi = UFS_SB(path->dentry->d_sb);
+	unsigned mval = sbi->s_mount_opt & UFS_MOUNT_UFSTYPE;
+	const struct match_token *tp = tokens;
+	int ret;
+
+	switch (params->request) {
+	case FSINFO_ATTR_PARAMETERS:
+		while (tp->token != Opt_onerror_panic && tp->token != mval)
+			++tp;
+		BUG_ON(tp->token == Opt_onerror_panic);
+		ret = ufs_fsinfo_print_token(params, tp->pattern);
+		if (ret)
+			return ret;
+		mval = sbi->s_mount_opt & UFS_MOUNT_ONERROR;
+		while (tp->token != Opt_err && tp->token != mval)
+			++tp;
+		BUG_ON(tp->token == Opt_err);
+		ret = ufs_fsinfo_print_token(params, tp->pattern);
+		if (ret)
+			return ret;
+		return params->usage;
+
+	default:
+		return generic_fsinfo(path, params);
+	}
+}
+#endif /* CONFIG_FSINFO */
+
 static int ufs_statfs(struct dentry *dentry, struct kstatfs *buf)
 {
 	struct super_block *sb = dentry->d_sb;
@@ -1496,6 +1550,9 @@ static const struct super_operations ufs_super_ops = {
 	.statfs		= ufs_statfs,
 	.remount_fs	= ufs_remount,
 	.show_options   = ufs_show_options,
+#ifdef CONFIG_FSINFO
+	.fsinfo		= ufs_fsinfo,
+#endif
 };
 
 static struct dentry *ufs_mount(struct file_system_type *fs_type,
