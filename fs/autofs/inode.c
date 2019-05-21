@@ -11,6 +11,7 @@
 #include <linux/pagemap.h>
 #include <linux/fs_context.h>
 #include <linux/fs_parser.h>
+#include <linux/fsinfo.h>
 
 #include "autofs_i.h"
 
@@ -101,6 +102,65 @@ static int autofs_show_options(struct seq_file *m, struct dentry *root)
 	return 0;
 }
 
+#ifdef CONFIG_FSINFO
+/*
+ * Get filesystem information.
+ */
+static int autofs_fsinfo(struct path *path, struct fsinfo_kparams *params)
+{
+	struct autofs_sb_info *sbi = autofs_sbi(path->dentry->d_sb);
+	struct inode *inode = d_inode(path->dentry->d_sb->s_root);
+	struct fsinfo_capabilities *caps;
+
+	switch (params->request) {
+	case FSINFO_ATTR_CAPABILITIES:
+		caps = params->buffer;
+		fsinfo_set_cap(caps, FSINFO_CAP_IS_AUTOMOUNTER_FS);
+		fsinfo_set_cap(caps, FSINFO_CAP_AUTOMOUNTS);
+		fsinfo_set_cap(caps, FSINFO_CAP_NOT_PERSISTENT);
+		return sizeof(*caps);
+
+	case FSINFO_ATTR_PARAMETERS:
+		fsinfo_note_paramf(params, "fd", "%d", sbi->pipefd);
+		if (!uid_eq(inode->i_uid, GLOBAL_ROOT_UID))
+			fsinfo_note_paramf(params, "uid", "%u",
+				from_kuid_munged(&init_user_ns, inode->i_uid));
+		if (!gid_eq(inode->i_gid, GLOBAL_ROOT_GID))
+			fsinfo_note_paramf(params, "gid", "%u",
+				from_kgid_munged(&init_user_ns, inode->i_gid));
+		fsinfo_note_paramf(params, "pgrp", "%d",
+				   pid_vnr(sbi->oz_pgrp));
+		fsinfo_note_paramf(params, "timeout", "%lu",
+				   sbi->exp_timeout/HZ);
+		fsinfo_note_paramf(params, "minproto", "%d",
+				   sbi->min_proto);
+		fsinfo_note_paramf(params, "maxproto", "%d",
+				   sbi->max_proto);
+		if (autofs_type_offset(sbi->type))
+			fsinfo_note_param(params, "offset", NULL);
+		else if (autofs_type_direct(sbi->type))
+			fsinfo_note_param(params, "direct", NULL);
+		else
+			fsinfo_note_param(params, "indirect", NULL);
+		if (sbi->flags & AUTOFS_SBI_STRICTEXPIRE)
+			fsinfo_note_param(params, "strictexpire", NULL);
+		if (sbi->flags & AUTOFS_SBI_IGNORE)
+			fsinfo_note_param(params, "ignore", NULL);
+#ifdef CONFIG_CHECKPOINT_RESTORE
+		if (sbi->pipe)
+			fsinfo_note_paramf(params, "pipe_ino",
+					  "%ld", file_inode(sbi->pipe)->i_ino);
+		else
+			fsinfo_note_param(params, "pipe_ino", "-1");
+#endif
+		return params->usage;
+
+	default:
+		return generic_fsinfo(path, params);
+	}
+}
+#endif /* CONFIG_FSINFO */
+
 static void autofs_evict_inode(struct inode *inode)
 {
 	clear_inode(inode);
@@ -111,6 +171,9 @@ static const struct super_operations autofs_sops = {
 	.statfs		= simple_statfs,
 	.show_options	= autofs_show_options,
 	.evict_inode	= autofs_evict_inode,
+#ifdef CONFIG_FSINFO
+	.fsinfo		= autofs_fsinfo,
+#endif
 };
 
 struct autofs_fs_context {
