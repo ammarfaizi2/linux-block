@@ -28,6 +28,7 @@
 #include <linux/devpts_fs.h>
 #include <linux/fsnotify.h>
 #include <linux/seq_file.h>
+#include <linux/fsinfo.h>
 
 #define DEVPTS_DEFAULT_MODE 0600
 /*
@@ -401,9 +402,50 @@ static int devpts_show_options(struct seq_file *seq, struct dentry *root)
 	return 0;
 }
 
+#ifdef CONFIG_FSINFO
+/*
+ * Get filesystem information.
+ */
+static int devpts_fsinfo(struct path *path, struct fsinfo_kparams *params)
+{
+	struct pts_fs_info *fsi = DEVPTS_SB(path->dentry->d_sb);
+	struct pts_mount_opts *opts = &fsi->mount_opts;
+	struct fsinfo_capabilities *caps;
+
+	switch (params->request) {
+	case FSINFO_ATTR_CAPABILITIES:
+		caps = params->buffer;
+		fsinfo_set_cap(caps, FSINFO_CAP_IS_KERNEL_FS);
+		fsinfo_set_cap(caps, FSINFO_CAP_NOT_PERSISTENT);
+		fsinfo_set_cap(caps, FSINFO_CAP_UIDS);
+		fsinfo_set_cap(caps, FSINFO_CAP_GIDS);
+		return sizeof(*caps);
+
+	case FSINFO_ATTR_PARAMETERS:
+		if (opts->setuid)
+			fsinfo_note_paramf(params, "uid", "%u",
+				from_kuid_munged(&init_user_ns, opts->uid));
+		if (opts->setgid)
+			fsinfo_note_paramf(params, "gid", "%u",
+				from_kgid_munged(&init_user_ns, opts->gid));
+		fsinfo_note_paramf(params, "mode", "%03o", opts->mode);
+		fsinfo_note_paramf(params, "ptmxmode", "%03o", opts->ptmxmode);
+		if (opts->max < NR_UNIX98_PTY_MAX)
+			fsinfo_note_paramf(params, "max", "%d", opts->max);
+		return params->usage;
+
+	default:
+		return generic_fsinfo(path, params);
+	}
+}
+#endif /* CONFIG_FSINFO */
+
 static const struct super_operations devpts_sops = {
 	.statfs		= simple_statfs,
 	.show_options	= devpts_show_options,
+#ifdef CONFIG_FSINFO
+	.fsinfo		= devpts_fsinfo,
+#endif
 };
 
 static int devpts_fill_super(struct super_block *s, struct fs_context *fc)
