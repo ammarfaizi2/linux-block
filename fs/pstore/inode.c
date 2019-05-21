@@ -36,6 +36,7 @@
 #include <linux/slab.h>
 #include <linux/spinlock.h>
 #include <linux/uaccess.h>
+#include <linux/fsinfo.h>
 
 #include "internal.h"
 
@@ -281,6 +282,34 @@ static int pstore_show_options(struct seq_file *m, struct dentry *root)
 	return 0;
 }
 
+#ifdef CONFIG_FSINFO
+/*
+ * Get filesystem information.
+ */
+static int pstore_fsinfo(struct path *path, struct fsinfo_kparams *params)
+{
+	struct fsinfo_capabilities *caps;
+
+	switch (params->request) {
+	case FSINFO_ATTR_CAPABILITIES:
+		caps = params->buffer;
+		fsinfo_set_cap(caps, FSINFO_CAP_IS_FLASH_FS);
+		fsinfo_set_cap(caps, FSINFO_CAP_HAS_CTIME);
+		fsinfo_set_cap(caps, FSINFO_CAP_HAS_MTIME);
+		return sizeof(*caps);
+
+	case FSINFO_ATTR_PARAMETERS:
+		fsinfo_note_sb_params(params, path->dentry->d_sb->s_flags);
+		if (kmsg_bytes != PSTORE_DEFAULT_KMSG_BYTES)
+			fsinfo_note_paramf(params, "kmsg_bytes", "%lu", kmsg_bytes);
+		return params->usage;
+
+	default:
+		return generic_fsinfo(path, params);
+	}
+}
+#endif /* CONFIG_FSINFO */
+
 static int pstore_reconfigure(struct fs_context *fc)
 {
 	sync_filesystem(fc->root->d_sb);
@@ -293,6 +322,9 @@ static const struct super_operations pstore_ops = {
 	.drop_inode	= generic_delete_inode,
 	.evict_inode	= pstore_evict_inode,
 	.show_options	= pstore_show_options,
+#ifdef CONFIG_FSINFO
+	.fsinfo		= pstore_fsinfo,
+#endif
 };
 
 static struct super_block *pstore_sb;
