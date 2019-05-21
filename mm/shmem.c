@@ -39,6 +39,7 @@
 #include <linux/frontswap.h>
 #include <linux/fs_context.h>
 #include <linux/fs_parser.h>
+#include <linux/fsinfo.h>
 
 #include <asm/tlbflush.h> /* for arch/microblaze update_mmu_cache() */
 
@@ -1403,6 +1404,20 @@ static void shmem_show_mpol(struct seq_file *seq, struct mempolicy *mpol)
 	seq_printf(seq, ",mpol=%s", buffer);
 }
 
+#ifdef CONFIG_FSINFO
+static void shmem_fsinfo_mpol(struct fsinfo_kparams *params, struct mempolicy *mpol)
+{
+	char buffer[64];
+
+	if (!mpol || mpol->mode == MPOL_DEFAULT)
+		return;		/* show nothing */
+
+	mpol_to_str(buffer, sizeof(buffer), mpol);
+
+	fsinfo_note_paramf(params, "mpol", "%s", buffer);
+}
+#endif
+
 static struct mempolicy *shmem_get_sbmpol(struct shmem_sb_info *sbinfo)
 {
 	struct mempolicy *mpol = NULL;
@@ -1418,6 +1433,11 @@ static struct mempolicy *shmem_get_sbmpol(struct shmem_sb_info *sbinfo)
 static inline void shmem_show_mpol(struct seq_file *seq, struct mempolicy *mpol)
 {
 }
+#ifdef CONFIG_FSINFO
+static void shmem_fsinfo_mpol(struct fsinfo_kparams *params, struct mempolicy *mpol)
+{
+}
+#endif
 static inline struct mempolicy *shmem_get_sbmpol(struct shmem_sb_info *sbinfo)
 {
 	return NULL;
@@ -3478,7 +3498,9 @@ static int shmem_parse_param(struct fs_context *fc, struct fs_parameter *param)
 	struct shmem_fs_context *ctx = fc->fs_private;
 	struct fs_parse_result result;
 	unsigned long long size;
+#ifdef CONFIG_NUMA
 	struct mempolicy *mpol;
+#endif
 	char *rest;
 	int opt;
 
@@ -3623,6 +3645,52 @@ static int shmem_show_options(struct seq_file *seq, struct dentry *root)
 	return 0;
 }
 
+#ifdef CONFIG_FSINFO
+static int shmem_fsinfo(struct path *path, struct fsinfo_kparams *params)
+{
+	struct shmem_sb_info *sbinfo = SHMEM_SB(path->dentry->d_sb);
+	struct fsinfo_capabilities *caps;
+
+	switch (params->request) {
+	case FSINFO_ATTR_CAPABILITIES:
+		caps = params->buffer;
+		fsinfo_set_unix_caps(caps);
+		fsinfo_set_cap(caps, FSINFO_CAP_IS_MEMORY_FS);
+		fsinfo_set_cap(caps, FSINFO_CAP_NOT_PERSISTENT);
+#ifdef CONFIG_TMPFS_XATTR
+		fsinfo_set_cap(caps, FSINFO_CAP_XATTRS);
+#endif
+		return sizeof(*caps);
+
+	case FSINFO_ATTR_PARAMETERS:
+		if (sbinfo->max_blocks != shmem_default_max_blocks())
+			fsinfo_note_paramf(params, "size", "%luk",
+				sbinfo->max_blocks << (PAGE_SHIFT - 10));
+		if (sbinfo->max_inodes != shmem_default_max_inodes())
+			fsinfo_note_paramf(params, "nr_inodes",
+					  "%lu", sbinfo->max_inodes);
+		if (sbinfo->mode != (0777 | S_ISVTX))
+			fsinfo_note_paramf(params, "mode",
+					  "%03ho", sbinfo->mode);
+		if (!uid_eq(sbinfo->uid, GLOBAL_ROOT_UID))
+			fsinfo_note_paramf(params, "uid", "%u",
+				from_kuid_munged(&init_user_ns, sbinfo->uid));
+		if (!gid_eq(sbinfo->gid, GLOBAL_ROOT_GID))
+			fsinfo_note_paramf(params, "gid", "%u",
+				from_kgid_munged(&init_user_ns, sbinfo->gid));
+#ifdef CONFIG_TRANSPARENT_HUGE_PAGECACHE
+		/* Rightly or wrongly, show huge mount option unmasked by shmem_huge */
+		if (sbinfo->huge)
+			fsinfo_note_paramf(params, "huge", "%s",
+					shmem_format_huge(sbinfo->huge));
+#endif
+		shmem_fsinfo_mpol(params, sbinfo->mpol);
+		return params->usage;
+	default:
+		return generic_fsinfo(path, params);
+	}
+}
+#endif /* CONFIG_FSINFO */
 #endif /* CONFIG_TMPFS */
 
 static void shmem_put_super(struct super_block *sb)
@@ -3854,6 +3922,9 @@ static const struct super_operations shmem_ops = {
 #ifdef CONFIG_TMPFS
 	.statfs		= shmem_statfs,
 	.show_options	= shmem_show_options,
+#ifdef CONFIG_FSINFO
+	.fsinfo		= shmem_fsinfo,
+#endif
 #endif
 	.evict_inode	= shmem_evict_inode,
 	.drop_inode	= generic_delete_inode,
