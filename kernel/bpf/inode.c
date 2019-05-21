@@ -23,6 +23,7 @@
 #include <linux/filter.h>
 #include <linux/bpf.h>
 #include <linux/bpf_trace.h>
+#include <linux/fsinfo.h>
 
 enum bpf_type {
 	BPF_TYPE_UNSPEC	= 0,
@@ -567,6 +568,26 @@ static int bpf_show_options(struct seq_file *m, struct dentry *root)
 	return 0;
 }
 
+#ifdef CONFIG_FSINFO
+/*
+ * Get filesystem information.
+ */
+static int bpf_fsinfo(struct path *path, struct fsinfo_kparams *params)
+{
+	umode_t mode = d_inode(path->dentry)->i_mode & S_IALLUGO & ~S_ISVTX;
+
+	switch (params->request) {
+	case FSINFO_ATTR_PARAMETERS:
+		if (mode != S_IRWXUGO)
+			fsinfo_note_paramf(params, "mode", "%o", mode);
+		return params->usage;
+
+	default:
+		return generic_fsinfo(path, params);
+	}
+}
+#endif /* CONFIG_FSINFO */
+
 static void bpf_free_inode(struct inode *inode)
 {
 	enum bpf_type type;
@@ -583,6 +604,9 @@ static const struct super_operations bpf_super_ops = {
 	.drop_inode	= generic_delete_inode,
 	.show_options	= bpf_show_options,
 	.free_inode	= bpf_free_inode,
+#ifdef CONFIG_FSINFO
+	.fsinfo		= bpf_fsinfo,
+#endif
 };
 
 enum {
