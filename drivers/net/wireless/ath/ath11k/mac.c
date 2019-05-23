@@ -4786,6 +4786,33 @@ exit:
 	return ret;
 }
 
+static void ath11k_sta_statistics(struct ieee80211_hw *hw,
+				  struct ieee80211_vif *vif,
+				  struct ieee80211_sta *sta,
+				  struct station_info *sinfo)
+{
+	struct ath11k_sta *arsta = (struct ath11k_sta *)sta->drv_priv;
+
+	sinfo->rx_duration = arsta->rx_duration;
+	sinfo->filled |= BIT_ULL(NL80211_STA_INFO_RX_DURATION);
+
+	if (!arsta->txrate.legacy && !arsta->txrate.nss)
+		return;
+
+	if (arsta->txrate.legacy) {
+		sinfo->txrate.legacy = arsta->txrate.legacy;
+	} else {
+		sinfo->txrate.mcs = arsta->txrate.mcs;
+		sinfo->txrate.nss = arsta->txrate.nss;
+		sinfo->txrate.bw = arsta->txrate.bw;
+		sinfo->txrate.he_gi = arsta->txrate.he_gi;
+		sinfo->txrate.he_dcm = arsta->txrate.he_dcm;
+		sinfo->txrate.he_ru_alloc = arsta->txrate.he_ru_alloc;
+	}
+	sinfo->txrate.flags = arsta->txrate.flags;
+	sinfo->filled |= BIT_ULL(NL80211_STA_INFO_TX_BITRATE);
+}
+
 static const struct ieee80211_ops ath11k_ops = {
 	.tx				= ath11k_mac_op_tx,
 	.start                          = ath11k_start,
@@ -4816,6 +4843,7 @@ static const struct ieee80211_ops ath11k_ops = {
 	.set_bitrate_mask		= ath11k_mac_op_set_bitrate_mask,
 	.get_survey			= ath11k_get_survey,
 	.flush				= ath11k_flush,
+	.sta_statistics			= ath11k_sta_statistics,
 	CFG80211_TESTMODE_CMD(ath11k_tm_cmd)
 #ifdef CONFIG_MAC80211_DEBUGFS
 	.sta_add_debugfs		= ath11k_sta_add_debugfs,
