@@ -131,6 +131,17 @@ struct mlx5_eswitch_rep *mlx5_ib_vport_rep(struct mlx5_eswitch *esw, int vport)
 	return mlx5_eswitch_vport_rep(esw, vport);
 }
 
+u32 mlx5_ib_eswitch_vport_match_metadata_enabled(struct mlx5_eswitch *esw)
+{
+	return mlx5_eswitch_vport_match_metadata_enabled(esw);
+}
+
+u32 mlx5_ib_eswitch_get_vport_metadata_for_match(struct mlx5_eswitch *esw,
+						 u16 vport)
+{
+	return mlx5_eswitch_get_vport_metadata_for_match(esw, vport);
+}
+
 struct mlx5_flow_handle *create_flow_rule_vport_sq(struct mlx5_ib_dev *dev,
 						   struct mlx5_ib_sq *sq,
 						   u16 port)
