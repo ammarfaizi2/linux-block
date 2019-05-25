@@ -2,6 +2,8 @@
 #ifndef _UAPI_LINUX_SCHED_H
 #define _UAPI_LINUX_SCHED_H
 
+#include <linux/types.h>
+
 /*
  * cloning flags:
  */
@@ -30,6 +32,18 @@
 #define CLONE_NEWPID		0x20000000	/* New pid namespace */
 #define CLONE_NEWNET		0x40000000	/* New network namespace */
 #define CLONE_IO		0x80000000	/* Clone io context */
+
+/*
+ * Arguments for the clone6 syscall
+ */
+struct clone6_args {
+	__s32 pidfd;
+	__aligned_u64 parent_tidptr;
+	__aligned_u64 child_tidptr;
+	__aligned_u64 stack;
+	__aligned_u64 stack_size;
+	__aligned_u64 tls;
+};
 
 /*
  * Scheduling policies

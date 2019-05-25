@@ -237,6 +237,11 @@ COMPAT_SYSCALL_DEFINE5(x86_clone, unsigned long, clone_flags,
 		       unsigned long, newsp, int __user *, parent_tidptr,
 		       unsigned long, tls_val, int __user *, child_tidptr)
 {
-	return _do_fork(clone_flags, newsp, 0, parent_tidptr, child_tidptr,
-			tls_val);
+	struct clone6_args args = {
+		.stack = newsp,
+		.parent_tidptr = (uintptr_t)parent_tidptr,
+		.tls = tls_val,
+		.child_tidptr = (uintptr_t)child_tidptr
+	};
+	return _do_fork(clone_flags, &args);
 }
