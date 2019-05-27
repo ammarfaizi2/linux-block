@@ -2081,7 +2081,7 @@ static int ath11k_qmi_wlanfw_wlan_cfg_send(struct ath11k_base *ab)
 	ret = qmi_send_request(&ab->qmi.handle, NULL, &txn,
 			       QMI_WLANFW_WLAN_CFG_REQ_V01,
 			       QMI_WLANFW_WLAN_CFG_REQ_MSG_V01_MAX_LEN,
-			       qmi_wlanfw_wlan_cfg_req_msg_v01_ei, &req);
+			       qmi_wlanfw_wlan_cfg_req_msg_v01_ei, req);
 	if (ret < 0) {
 		ath11k_warn(ab, "qmi failed to send wlan config request, err = %d\n",
 			    ret);
