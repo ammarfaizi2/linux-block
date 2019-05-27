@@ -3,7 +3,7 @@
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  */
 
-#include "core.h"
+#include "dp_rx.h"
 #include "debug.h"
 
 static const struct ce_attr host_ce_config_wlan[] = {
@@ -21,6 +21,7 @@ static const struct ce_attr host_ce_config_wlan[] = {
 		.src_nentries = 0,
 		.src_sz_max = 2048,
 		.dest_nentries = 512,
+		.recv_cb = ath11k_htc_rx_completion_handler,
 	},
 
 	/* CE2: target->host WMI */
@@ -29,6 +30,7 @@ static const struct ce_attr host_ce_config_wlan[] = {
 		.src_nentries = 0,
 		.src_sz_max = 2048,
 		.dest_nentries = 512,
+		.recv_cb = ath11k_htc_rx_completion_handler,
 	},
 
 	/* CE3: host->target WMI (mac0) */
@@ -53,6 +55,7 @@ static const struct ce_attr host_ce_config_wlan[] = {
 		.src_nentries = 0,
 		.src_sz_max = 2048,
 		.dest_nentries = 512,
+		.recv_cb = ath11k_dp_htt_htc_t2h_msg_handler,
 	},
 
 	/* CE6: target autonomous hif_memcpy */
@@ -93,6 +96,7 @@ static const struct ce_attr host_ce_config_wlan[] = {
 		.src_nentries = 0,
 		.src_sz_max = 2048,
 		.dest_nentries = 512,
+		.recv_cb = ath11k_htc_rx_completion_handler,
 	},
 
 	/* CE11: Not used */
@@ -283,8 +287,11 @@ static void ath11k_ce_recv_process_cb(struct ath11k_ce_pipe *pipe)
 		__skb_queue_tail(&list, skb);
 	}
 
-	while ((skb = __skb_dequeue(&list)))
-		ath11k_htc_rx_completion_handler(ab, skb);
+	while ((skb = __skb_dequeue(&list))) {
+		ath11k_dbg(ab, ATH11K_DBG_AHB, "rx ce pipe %d len %d\n",
+			   pipe->pipe_num, skb->len);
+		pipe->recv_cb(ab, skb);
+	}
 
 	ret = ath11k_ce_rx_post_pipe(pipe);
 	if (ret && ret != -ENOSPC) {
@@ -459,7 +466,7 @@ static int ath11k_ce_alloc_pipe(struct ath11k_base *sc, int ce_id)
 	}
 
 	if (attr->dest_nentries) {
-		pipe->recv_cb = ath11k_ce_recv_process_cb;
+		pipe->recv_cb = attr->recv_cb;
 		nentries = roundup_pow_of_two(attr->dest_nentries);
 		desc_sz = ath11k_hal_ce_get_desc_size(HAL_CE_DESC_DST);
 		pipe->dest_ring = ath11k_ce_alloc_ring(sc, nentries, desc_sz);
@@ -484,7 +491,7 @@ void ath11k_ce_per_engine_service(struct ath11k_base *ab, u16 ce_id)
 		pipe->send_cb(pipe);
 
 	if (pipe->recv_cb)
-		pipe->recv_cb(pipe);
+		ath11k_ce_recv_process_cb(pipe);
 
 }
 

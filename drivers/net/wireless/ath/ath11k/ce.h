@@ -94,6 +94,8 @@ struct ce_attr {
 
 	/* #entries in destination ring - Must be a power of 2 */
 	unsigned int dest_nentries;
+
+	void (*recv_cb)(struct ath11k_base *, struct sk_buff *);
 };
 
 #define CE_DESC_RING_ALIGN 8
@@ -148,7 +150,7 @@ struct ath11k_ce_pipe {
 	unsigned int rx_buf_needed;
 
 	void (*send_cb)(struct ath11k_ce_pipe *);
-	void (*recv_cb)(struct ath11k_ce_pipe *);
+	void (*recv_cb)(struct ath11k_base *, struct sk_buff *);
 
 	struct tasklet_struct intr_tq;
 	struct ath11k_ce_ring *src_ring;
