@@ -286,7 +286,7 @@ void ath11k_hal_rx_buf_addr_info_get(void *desc, dma_addr_t *paddr,
 	struct buffer_addr *binfo = (struct buffer_addr *)desc;
 
 	*paddr =
-		(((u64)FIELD_GET(BUFFER_ADDR_INFO1_ADDR, binfo->info0)) << 32) |
+		(((u64)FIELD_GET(BUFFER_ADDR_INFO1_ADDR, binfo->info1)) << 32) |
 		FIELD_GET(BUFFER_ADDR_INFO0_ADDR, binfo->info0);
 	*cookie = FIELD_GET(BUFFER_ADDR_INFO1_SW_COOKIE, binfo->info1);
 	*rbm = FIELD_GET(BUFFER_ADDR_INFO1_RET_BUF_MGR, binfo->info1);
