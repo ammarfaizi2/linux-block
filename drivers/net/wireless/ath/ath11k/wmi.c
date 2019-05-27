@@ -5517,12 +5517,6 @@ ath11k_wmi_pdev_dfs_radar_detected_event(struct ath11k_base *ab,
 		goto exit;
 	}
 
-	if (ar->rx_channel && ar->rx_channel->center_freq != (ev->chan_freq
-	    - ev->freq_offset)) {
-		ath11k_warn(ab, "Radar detected in non-operating channel");
-		goto exit;
-	}
-
 	ath11k_dbg(ar->ab, ATH11K_DBG_REG, "DFS Radar Detected in pdev %d\n",
 		   ev->pdev_id);
 
@@ -5534,6 +5528,7 @@ ath11k_wmi_pdev_dfs_radar_detected_event(struct ath11k_base *ab,
 exit:
 	kfree(tb);
 }
+
 static void ath11k_wmi_tlv_op_rx(struct ath11k_base *ab, struct sk_buff *skb)
 {
 	struct wmi_cmd_hdr *cmd_hdr;
