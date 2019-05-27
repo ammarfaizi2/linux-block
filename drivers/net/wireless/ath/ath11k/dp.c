@@ -94,8 +94,6 @@ int ath11k_dp_srng_setup(struct ath11k_base *ab, struct dp_srng *ring,
 	int max_entries = ath11k_hal_srng_get_max_entries(type);
 	int ret;
 
-	entry_sz = ath11k_hal_srng_get_entrysize(type);
-
 	if (max_entries < 0 || entry_sz < 0)
 		return -EINVAL;
 
