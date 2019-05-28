@@ -180,7 +180,7 @@ static int ath11k_wmi_tlv_parse(struct ath11k_base *ar, const void **tb,
 				   (void *)tb);
 }
 
-const void **
+static const void **
 ath11k_wmi_tlv_parse_alloc(struct ath11k_base *ab, const void *ptr,
 			   size_t len, gfp_t gfp)
 {
