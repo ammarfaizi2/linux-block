@@ -3459,6 +3459,14 @@ static int ath11k_start(struct ieee80211_hw *hw)
 		goto err;
 	}
 
+	ret = ath11k_wmi_pdev_set_param(ar, WMI_PDEV_PARAM_MESH_MCAST_ENABLE,
+					1, pdev->pdev_id);
+
+	if (ret) {
+		ath11k_err(ar->ab, "failed to enable MESH MCAST ENABLE: (%d\n", ret);
+		goto err;
+	}
+
 	__ath11k_set_antenna(ar, ar->cfg_tx_chainmask, ar->cfg_rx_chainmask);
 
 	/* TODO: Do we need to enable ANI? */
