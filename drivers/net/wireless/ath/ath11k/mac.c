@@ -1559,6 +1559,33 @@ static void ath11k_peer_assoc_prepare(struct ath11k *ar,
 	/* TODO: amsdu_disable req? */
 }
 
+static const u32 ath11k_smps_map[] = {
+	[WLAN_HT_CAP_SM_PS_STATIC] = WMI_PEER_SMPS_STATIC,
+	[WLAN_HT_CAP_SM_PS_DYNAMIC] = WMI_PEER_SMPS_DYNAMIC,
+	[WLAN_HT_CAP_SM_PS_INVALID] = WMI_PEER_SMPS_PS_NONE,
+	[WLAN_HT_CAP_SM_PS_DISABLED] = WMI_PEER_SMPS_PS_NONE,
+};
+
+static int ath11k_setup_peer_smps(struct ath11k *ar, struct ath11k_vif *arvif,
+				  const u8 *addr,
+				  const struct ieee80211_sta_ht_cap *ht_cap)
+{
+	int smps;
+
+	if (!ht_cap->ht_supported)
+		return 0;
+
+	smps = ht_cap->cap & IEEE80211_HT_CAP_SM_PS;
+	smps >>= IEEE80211_HT_CAP_SM_PS_SHIFT;
+
+	if (smps >= ARRAY_SIZE(ath11k_smps_map))
+		return -EINVAL;
+
+	return ath11k_wmi_set_peer_param(ar, addr, arvif->vdev_id,
+					 WMI_PEER_MIMO_PS_STATE,
+					 ath11k_smps_map[smps]);
+}
+
 static void ath11k_bss_assoc(struct ieee80211_hw *hw,
 			     struct ieee80211_vif *vif,
 			     struct ieee80211_bss_conf *bss_conf)
@@ -1598,6 +1625,14 @@ static void ath11k_bss_assoc(struct ieee80211_hw *hw,
 	if (!wait_for_completion_timeout(&ar->peer_assoc_done, 1 * HZ)) {
 		ath11k_warn(ar->ab, "failed to get peer assoc conf event for %pM vdev %i\n",
 			    bss_conf->bssid, arvif->vdev_id);
+		return;
+	}
+
+	ret = ath11k_setup_peer_smps(ar, arvif, bss_conf->bssid,
+				     &ap_sta->ht_cap);
+	if (ret) {
+		ath11k_warn(ar->ab, "failed to setup peer SMPS for vdev %d: %d\n",
+			    arvif->vdev_id, ret);
 		return;
 	}
 
@@ -2369,6 +2404,14 @@ static int ath11k_station_assoc(struct ath11k *ar,
 	 */
 	if (reassoc)
 		return 0;
+
+	ret = ath11k_setup_peer_smps(ar, arvif, sta->addr,
+				     &sta->ht_cap);
+	if (ret) {
+		ath11k_warn(ar->ab, "failed to setup peer SMPS for vdev %d: %d\n",
+			    arvif->vdev_id, ret);
+		return ret;
+	}
 
 	if (!sta->wme) {
 		arvif->num_legacy_stations++;
