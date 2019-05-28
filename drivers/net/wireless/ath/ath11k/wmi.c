@@ -4905,16 +4905,19 @@ static void ath11k_mgmt_rx_event(struct ath11k_base *ab, struct sk_buff *skb)
 	status->flag |= RX_FLAG_SKIP_MONITOR;
 
 	/* In case of PMF, FW delivers decrypted frames with Protected Bit set.
-	 * Don't clear that. FW also delivers broadcast management frames
+	 * Don't clear that. Also, FW delivers broadcast management frames
 	 * (ex: group privacy action frames in mesh) as encrypted payload.
 	 */
-	if (!ieee80211_is_robust_mgmt_frame(skb))  {
+	if (ieee80211_has_protected(hdr->frame_control) &&
+	    !is_multicast_ether_addr(ieee80211_get_DA(hdr))) {
 		status->flag |= RX_FLAG_DECRYPTED;
 
-		status->flag |= RX_FLAG_IV_STRIPPED |
-			RX_FLAG_MMIC_STRIPPED;
-		hdr->frame_control = __cpu_to_le16(fc &
-				~IEEE80211_FCTL_PROTECTED);
+		if (!ieee80211_is_robust_mgmt_frame(skb)) {
+			status->flag |= RX_FLAG_IV_STRIPPED |
+					RX_FLAG_MMIC_STRIPPED;
+			hdr->frame_control = __cpu_to_le16(fc &
+					     ~IEEE80211_FCTL_PROTECTED);
+		}
 	}
 
 	/* TODO: Pending handle beacon implementation
