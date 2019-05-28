@@ -3265,6 +3265,7 @@ static int ath11k_mac_mgmt_tx_wmi(struct ath11k *ar, struct ath11k_vif *arvif,
 				  struct sk_buff *skb)
 {
 	struct ath11k_base *ab = ar->ab;
+	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *)skb->data;
 	dma_addr_t paddr;
 	int buf_id;
 	int ret;
@@ -3275,6 +3276,13 @@ static int ath11k_mac_mgmt_tx_wmi(struct ath11k *ar, struct ath11k_vif *arvif,
 	spin_unlock_bh(&ar->txmgmt_idr_lock);
 	if (buf_id < 0)
 		return -ENOSPC;
+
+	if ((ieee80211_is_action(hdr->frame_control) ||
+	     ieee80211_is_deauth(hdr->frame_control) ||
+	     ieee80211_is_disassoc(hdr->frame_control)) &&
+	     ieee80211_has_protected(hdr->frame_control)) {
+		skb_put(skb, IEEE80211_CCMP_MIC_LEN);
+	}
 
 	paddr = dma_map_single(ab->dev, skb->data, skb->len, DMA_TO_DEVICE);
 	if (dma_mapping_error(ab->dev, paddr)) {
