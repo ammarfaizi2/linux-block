@@ -28,14 +28,17 @@ static const struct ieee80211_regdomain ath11k_world_regd = {
 
 static bool ath11k_regdom_changes(struct ath11k *ar, char *alpha2)
 {
+	const struct ieee80211_regdomain *regd;
+
+	regd = rcu_dereference_rtnl(ar->hw->wiphy->regd);
 	/* This can happen during wiphy registration where the previous
 	 * user request is received before we update the regd received
 	 * from firmware.
 	 */
-	if (!ar->hw->wiphy->regd)
+	if (!regd)
 		return true;
 
-	return !!(memcmp(ar->hw->wiphy->regd->alpha2, alpha2, 2));
+	return !!(memcmp(regd->alpha2, alpha2, 2));
 }
 
 static void
