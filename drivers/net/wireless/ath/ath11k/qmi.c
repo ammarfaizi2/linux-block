@@ -1803,9 +1803,11 @@ ath11k_qmi_prepare_bdf_download(struct ath11k_base *ab, int type,
 	struct device *dev = ab->dev;
 	char filename[ATH11K_QMI_MAX_BDF_FILE_NAME_SIZE];
 	const struct firmware *fw_entry;
-	struct ath11k_board_data bd = { 0 };
+	struct ath11k_board_data bd;
 	u32 fw_size;
 	int ret = 0;
+
+	memset(&bd, 0, sizeof(bd));
 
 	switch (type) {
 	case ATH11K_QMI_FILE_TYPE_BDF_GOLDEN:

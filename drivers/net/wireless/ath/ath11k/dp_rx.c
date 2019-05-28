@@ -3411,7 +3411,7 @@ ath11k_dp_rx_mon_mpdu_pop(struct ath11k *ar,
 	struct ath11k_pdev_dp *dp = &ar->dp;
 	struct ath11k_mon_data *pmon = (struct ath11k_mon_data *)&dp->mon_data;
 	struct dp_rxdma_ring *rx_ring = &dp->rxdma_mon_buf_ring;
-	struct sk_buff *msdu, *last;
+	struct sk_buff *msdu = NULL, *last = NULL;
 	struct hal_rx_msdu_list msdu_list;
 	void *p_buf_addr_info, *p_last_buf_addr_info;
 	void *rx_desc;
@@ -3429,9 +3429,6 @@ ath11k_dp_rx_mon_mpdu_pop(struct ath11k *ar,
 	struct hal_reo_entrance_ring *ent_desc =
 			(struct hal_reo_entrance_ring *)ring_entry;
 	int buf_id;
-
-	msdu = 0;
-	last = NULL;
 
 	ath11k_hal_rx_reo_ent_buf_paddr_get(ring_entry, &paddr,
 					    &sw_cookie, &p_last_buf_addr_info,
