@@ -270,9 +270,9 @@ struct hal_rx_phyrx_rssi_legacy_info {
 
 #define HAL_RX_MPDU_INFO_INFO0_PEERID	GENMASK(31, 16)
 struct hal_rx_mpdu_info {
-	u32 rsvd0;
-	u32 info0;
-	u32 rsvd1[21];
+	__le32 rsvd0;
+	__le32 info0;
+	__le32 rsvd1[21];
 } __packed;
 
 struct hal_rx_rxpcu_classification_overview {

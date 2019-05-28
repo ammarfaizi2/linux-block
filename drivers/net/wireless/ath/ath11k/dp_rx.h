@@ -303,7 +303,8 @@ static inline u32 ath11k_dp_rxdesc_get_mpdulen_err(void *hw_desc_addr)
 
 	rx_attn = &rx_desc->attention;
 
-	return FIELD_GET(RX_ATTENTION_INFO1_MPDU_LEN_ERR, rx_attn->info1);
+	return FIELD_GET(RX_ATTENTION_INFO1_MPDU_LEN_ERR,
+			 __le32_to_cpu(rx_attn->info1));
 }
 
 static inline u32 ath11k_dp_rxdesc_get_decap_format(void *hw_desc_addr)
@@ -314,7 +315,7 @@ static inline u32 ath11k_dp_rxdesc_get_decap_format(void *hw_desc_addr)
 	rx_msdu_start = &rx_desc->msdu_start;
 
 	return FIELD_GET(RX_MSDU_START_INFO2_DECAP_FORMAT,
-			rx_msdu_start->info2);
+			__le32_to_cpu(rx_msdu_start->info2));
 }
 
 static inline u8 *ath11k_dp_rxdesc_get_80211hdr(void *hw_desc_addr)
@@ -332,7 +333,8 @@ static inline bool ath11k_dp_rxdesc_mpdu_valid(void *hw_desc_addr)
 	struct hal_rx_desc *rx_desc = (struct hal_rx_desc *)hw_desc_addr;
 	u32 tlv_tag;
 
-	tlv_tag = FIELD_GET(HAL_TLV_HDR_TAG, rx_desc->mpdu_start_tag);
+	tlv_tag = FIELD_GET(HAL_TLV_HDR_TAG,
+			    __le32_to_cpu(rx_desc->mpdu_start_tag));
 
 	return tlv_tag == HAL_RX_MPDU_START ? true : false;
 }
@@ -341,7 +343,7 @@ static inline u32 ath11k_dp_rxdesc_get_ppduid(void *hw_desc_addr)
 {
 	struct hal_rx_desc *rx_desc = (struct hal_rx_desc *)hw_desc_addr;
 
-	return rx_desc->mpdu_start.phy_ppdu_id;
+	return __le16_to_cpu(rx_desc->mpdu_start.phy_ppdu_id);
 }
 
 int ath11k_dp_rx_ampdu_start(struct ath11k *ar,
