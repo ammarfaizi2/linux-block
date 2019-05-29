@@ -1906,11 +1906,24 @@ out:
 	return err;
 }
 
+static int esw_check_vport_match_metadata_supported(struct mlx5_eswitch *esw)
+{
+	return (MLX5_CAP_ESW_FLOWTABLE(esw->dev, fdb_to_vport_reg_c_id) &
+		MLX5_FDB_TO_VPORT_REG_C_0) &&
+	       MLX5_CAP_ESW_FLOWTABLE(esw->dev, flow_source) &&
+	       MLX5_CAP_ESW(esw->dev, esw_uplink_ingress_acl) &&
+	       !mlx5_core_is_ecpf_esw_manager(esw->dev) &&
+	       !mlx5_ecpf_vport_exists(esw->dev);
+}
+
 static int esw_create_offloads_acl_tables(struct mlx5_eswitch *esw)
 {
 	struct mlx5_vport *vport;
 	int i, j;
 	int err;
+
+	if (esw_check_vport_match_metadata_supported(esw))
+		esw->flags |= MLX5_ESWITCH_VPORT_MATCH_METADATA;
 
 	mlx5_esw_for_all_vports(esw, i, vport) {
 		err = esw_vport_ingress_common_config(esw, vport);
