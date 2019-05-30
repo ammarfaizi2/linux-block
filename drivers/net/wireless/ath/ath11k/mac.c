@@ -1893,7 +1893,7 @@ void ath11k_scan_finish(struct ath11k *ar)
 static int ath11k_scan_stop(struct ath11k *ar)
 {
 	struct scan_cancel_param arg = {
-		.req_type = WMI_SCAN_STOP_ONE,
+		.req_type = WLAN_SCAN_CANCEL_SINGLE,
 		.scan_id = ATH11K_SCAN_ID,
 	};
 	int ret;

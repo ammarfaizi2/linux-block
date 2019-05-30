@@ -4972,6 +4972,30 @@ exit:
 	rcu_read_unlock();
 }
 
+static struct ath11k *ath11k_get_ar_on_scan_abort(struct ath11k_base *ab,
+						  u32 vdev_id)
+{
+	int i;
+	struct ath11k_pdev *pdev;
+	struct ath11k *ar;
+
+	for (i = 0; i < ab->num_radios; i++) {
+		pdev = rcu_dereference(ab->pdevs_active[i]);
+		if (pdev && pdev->ar) {
+			ar = pdev->ar;
+
+			spin_lock_bh(&ar->data_lock);
+			if (ar->scan.state == ATH11K_SCAN_ABORTING &&
+			    ar->scan.vdev_id == vdev_id) {
+				spin_unlock_bh(&ar->data_lock);
+				return ar;
+			}
+			spin_unlock_bh(&ar->data_lock);
+		}
+	}
+	return NULL;
+}
+
 static void ath11k_scan_event(struct ath11k_base *ab, u8 *evt_buf, u32 len)
 {
 	struct ath11k *ar;
@@ -4984,7 +5008,19 @@ static void ath11k_scan_event(struct ath11k_base *ab, u8 *evt_buf, u32 len)
 	}
 
 	rcu_read_lock();
-	ar = ath11k_get_ar_by_vdev_id(ab, scan_ev.vdev_id);
+
+	/* In case the scan was cancelled, ex. during interface teardown,
+	 * the interface will not be found in active interfaces.
+	 * Rather, in such scenarios, iterate over the active pdev's to
+	 * search 'ar' if the corresponding 'ar' scan is ABORTING and the
+	 * aborting scan's vdev id matches this event info.
+	 */
+	if (scan_ev.event_type == WMI_SCAN_EVENT_COMPLETED &&
+	    scan_ev.reason == WMI_SCAN_REASON_CANCELLED)
+		ar = ath11k_get_ar_on_scan_abort(ab, scan_ev.vdev_id);
+	else
+		ar = ath11k_get_ar_by_vdev_id(ab, scan_ev.vdev_id);
+
 	if (!ar) {
 		ath11k_warn(ab, "Received scan event for unknown vdev");
 		rcu_read_unlock();
