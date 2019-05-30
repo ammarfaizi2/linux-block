@@ -3050,14 +3050,44 @@ void scheduler_tick(void)
 
 struct tick_work {
 	int			cpu;
+	int			state;
 	struct delayed_work	work;
 };
+// Values for ->state, see diagram below.
+#define TICK_SCHED_REMOTE_OFFLINE	0
+#define TICK_SCHED_REMOTE_RUNNING	1
+#define TICK_SCHED_REMOTE_OFFLINING	2
+
+// State diagram for ->state:
+//
+//
+//      +----->OFFLINE--------------------------+
+//      |                                       |
+//      |                                       |
+//      |                                       | sched_tick_start()
+//      | sched_tick_remote()                   |
+//      |                                       |
+//      |                                       V
+//      |                        +---------->RUNNING
+//      |                        |              |
+//      |                        |              |
+//      |                        |              |
+//      |     sched_tick_start() |              | sched_tick_stop()
+//      |                        |              |
+//      |                        |              |
+//      |                        |              |
+//      +--------------------OFFLINING<---------+
+//
+//
+// Other transitions get WARN_ON_ONCE(), except that sched_tick_remote()
+// and sched_tick_start() are happy to leave the state in RUNNING.
 
 static struct tick_work __percpu *tick_work_cpu;
 
 static void sched_tick_remote(struct work_struct *work)
 {
 	struct delayed_work *dwork = to_delayed_work(work);
+	int os;
 	struct tick_work *twork = container_of(dwork, struct tick_work, work);
 	int cpu = twork->cpu;
 	struct rq *rq = cpu_rq(cpu);
@@ -3077,7 +3107,7 @@ static void sched_tick_remote(struct work_struct *work)
 
 	rq_lock_irq(rq, &rf);
 	curr = rq->curr;
-	if (is_idle_task(curr))
+	if (is_idle_task(curr) || cpu_is_offline(cpu))
 		goto out_unlock;
 
 	update_rq_clock(rq);
@@ -3097,13 +3127,22 @@ out_requeue:
 	/*
 	 * Run the remote tick once per second (1Hz). This arbitrary
 	 * frequency is large enough to avoid overload but short enough
-	 * to keep scheduler internal stats reasonably up to date.
+	 * to keep scheduler internal stats reasonably up to date.  But
+	 * first update state to reflect hotplug activity if required.
 	 */
-	queue_delayed_work(system_unbound_wq, dwork, HZ);
+	do {
+		os = READ_ONCE(twork->state);
+		WARN_ON_ONCE(os == TICK_SCHED_REMOTE_OFFLINE);
+		if (os == TICK_SCHED_REMOTE_RUNNING)
+			break;
+	} while (cmpxchg(&twork->state, os, TICK_SCHED_REMOTE_OFFLINE) != os);
+	if (os == TICK_SCHED_REMOTE_RUNNING)
+		queue_delayed_work(system_unbound_wq, dwork, HZ);
 }
 
 static void sched_tick_start(int cpu)
 {
+	int os;
 	struct tick_work *twork;
 
 	if (housekeeping_cpu(cpu, HK_FLAG_TICK))
@@ -3112,14 +3151,23 @@ static void sched_tick_start(int cpu)
 	WARN_ON_ONCE(!tick_work_cpu);
 
 	twork = per_cpu_ptr(tick_work_cpu, cpu);
-	twork->cpu = cpu;
-	INIT_DELAYED_WORK(&twork->work, sched_tick_remote);
-	queue_delayed_work(system_unbound_wq, &twork->work, HZ);
+	do {
+		os = READ_ONCE(twork->state);
+		if (WARN_ON_ONCE(os == TICK_SCHED_REMOTE_RUNNING))
+			break;
+		// Either idle or offline for a short period
+	} while (cmpxchg(&twork->state, os, TICK_SCHED_REMOTE_RUNNING) != os);
+	if (os == TICK_SCHED_REMOTE_OFFLINE) {
+		twork->cpu = cpu;
+		INIT_DELAYED_WORK(&twork->work, sched_tick_remote);
+		queue_delayed_work(system_unbound_wq, &twork->work, HZ);
+	}
 }
 
 #ifdef CONFIG_HOTPLUG_CPU
 static void sched_tick_stop(int cpu)
 {
+	int os;
 	struct tick_work *twork;
 
 	if (housekeeping_cpu(cpu, HK_FLAG_TICK))
@@ -3128,7 +3176,13 @@ static void sched_tick_stop(int cpu)
 	WARN_ON_ONCE(!tick_work_cpu);
 
 	twork = per_cpu_ptr(tick_work_cpu, cpu);
-	cancel_delayed_work_sync(&twork->work);
+	// There cannot be competing actions, but don't rely on stop_machine.
+	do {
+		os = READ_ONCE(twork->state);
+		WARN_ON_ONCE(os != TICK_SCHED_REMOTE_RUNNING);
+		// Either idle or offline for a short period
+	} while (cmpxchg(&twork->state, os, TICK_SCHED_REMOTE_OFFLINING) != os);
+	// Don't cancel, as this would mess up the state machine.
 }
 #endif /* CONFIG_HOTPLUG_CPU */
 
