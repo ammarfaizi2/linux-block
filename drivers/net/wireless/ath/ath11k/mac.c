@@ -3532,6 +3532,69 @@ ath11k_mac_setup_vdev_create_params(struct ath11k_vif *arvif,
 	}
 }
 
+static u32
+ath11k_mac_prepare_he_mode(struct ath11k_pdev *pdev, u32 viftype)
+{
+	struct ath11k_pdev_cap *pdev_cap = &pdev->cap;
+	struct ath11k_band_cap *cap_band = NULL;
+	u32 *hecap_phy_ptr = NULL;
+	u32 hemode = 0;
+
+	if (pdev->cap.supported_bands & WMI_HOST_WLAN_2G_CAP)
+		cap_band = &pdev_cap->band[NL80211_BAND_2GHZ];
+	else
+		cap_band = &pdev_cap->band[NL80211_BAND_5GHZ];
+
+	hecap_phy_ptr = &cap_band->he_cap_phy_info[0];
+
+	hemode = FIELD_PREP(HE_MODE_SU_TX_BFEE, HE_SU_BFEE_ENABLE) |
+		FIELD_PREP(HE_MODE_SU_TX_BFER, HECAP_PHY_SUBFMR_GET(hecap_phy_ptr)) |
+		FIELD_PREP(HE_MODE_UL_MUMIMO, HECAP_PHY_ULMUMIMO_GET(hecap_phy_ptr));
+
+	/* TODO WDS and other modes */
+	if (viftype == NL80211_IFTYPE_AP) {
+		hemode |= FIELD_PREP(HE_MODE_MU_TX_BFER,
+			   HECAP_PHY_MUBFMR_GET(hecap_phy_ptr)) |
+			FIELD_PREP(HE_MODE_DL_OFDMA, HE_DL_MUOFDMA_ENABLE) |
+			FIELD_PREP(HE_MODE_UL_OFDMA, HE_UL_MUOFDMA_ENABLE);
+	} else {
+		hemode |= FIELD_PREP(HE_MODE_MU_TX_BFEE, HE_MU_BFEE_ENABLE);
+	}
+
+	return hemode;
+}
+
+static int ath11k_set_he_mu_sounding_mode(struct ath11k *ar,
+					  struct ath11k_vif *arvif)
+{
+	u32 param_id, param_value;
+	struct ath11k_base *ab = ar->ab;
+	int ret = 0;
+
+	param_id = WMI_VDEV_PARAM_SET_HEMU_MODE;
+	param_value = ath11k_mac_prepare_he_mode(ar->pdev, arvif->vif->type);
+	ret = ath11k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id,
+					    param_id, param_value);
+	if (ret) {
+		ath11k_warn(ab, "failed to set vdev %d HE MU mode: %d param_value %x\n",
+			    arvif->vdev_id, ret, param_value);
+		return ret;
+	}
+	param_id = WMI_VDEV_PARAM_SET_HE_SOUNDING_MODE;
+	param_value =
+		FIELD_PREP(HE_VHT_SOUNDING_MODE, HE_VHT_SOUNDING_MODE_ENABLE) |
+		FIELD_PREP(HE_TRIG_NONTRIG_SOUNDING_MODE,
+			   HE_TRIG_NONTRIG_SOUNDING_MODE_ENABLE);
+	ret = ath11k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id,
+					    param_id, param_value);
+	if (ret) {
+		ath11k_warn(ab, "failed to set vdev %d HE MU mode: %d\n",
+			    arvif->vdev_id, ret);
+		return ret;
+	}
+	return ret;
+}
+
 static int ath11k_add_interface(struct ieee80211_hw *hw,
 				struct ieee80211_vif *vif)
 {
@@ -3982,6 +4045,7 @@ ath11k_mac_vdev_start_restart(struct ath11k_vif *arvif,
 	struct ath11k *ar = arvif->ar;
 	struct ath11k_base *ab = ar->ab;
 	struct wmi_vdev_start_req_arg arg = {};
+	int he_support = arvif->vif->bss_conf.he_support;
 	int ret = 0;
 
 	lockdep_assert_held(&ar->conf_mutex);
@@ -4029,6 +4093,14 @@ ath11k_mac_vdev_start_restart(struct ath11k_vif *arvif,
 		spin_unlock_bh(&ab->data_lock);
 
 		/* TODO: Notify if secondary 80Mhz also needs radar detection */
+		if (he_support) {
+			ret = ath11k_set_he_mu_sounding_mode(ar, arvif);
+			if (ret) {
+				ath11k_warn(ar->ab, "failed to set he mode vdev %i\n",
+					    arg.vdev_id);
+				return ret;
+			}
+		}
 	}
 
 	arg.channel.passive |= !!(chandef->chan->flags & IEEE80211_CHAN_NO_IR);
