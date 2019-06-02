@@ -31,6 +31,7 @@
 #include <linux/relay.h>
 #include <linux/slab.h>
 #include <linux/percpu-rwsem.h>
+#include <linux/delay.h>
 
 #include <trace/events/power.h>
 #define CREATE_TRACE_POINTS
@@ -931,6 +932,7 @@ void cpuhp_report_idle_dead(void)
 	BUG_ON(st->state != CPUHP_AP_OFFLINE);
 	rcu_report_dead(smp_processor_id());
 	st->state = CPUHP_AP_IDLE_DEAD;
+	udelay(1000);
 	/*
 	 * We cannot call complete after rcu_report_dead() so we delegate it
 	 * to an online cpu.
