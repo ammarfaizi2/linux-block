@@ -812,34 +812,6 @@ static int ath11k_mac_setup_bcn_tmpl(struct ath11k_vif *arvif)
 	return ret;
 }
 
-static int ath11k_mac_setup_prb_tmpl(struct ath11k_vif *arvif)
-{
-	struct ath11k *ar = arvif->ar;
-	struct ieee80211_hw *hw = ar->hw;
-	struct ieee80211_vif *vif = arvif->vif;
-	struct sk_buff *prb;
-	int ret;
-
-	/* Interface validation is part of the below function, need not
-	 * check here.
-	 */
-	prb = ieee80211_proberesp_get(hw, vif);
-	if (!prb) {
-		ath11k_warn(ar->ab, "failed to get probe resp template from mac80211\n");
-		return -EPERM;
-	}
-
-	ret = ath11k_wmi_prb_tmpl(ar, arvif->vdev_id, prb);
-	kfree_skb(prb);
-
-	if (ret) {
-		ath11k_warn(ar->ab, "failed to submit probe resp template command: %d\n",
-			    ret);
-	}
-
-	return ret;
-}
-
 static void ath11k_control_beaconing(struct ath11k_vif *arvif,
 				     struct ieee80211_bss_conf *info)
 {
@@ -1815,13 +1787,6 @@ static void ath11k_bss_info_changed(struct ieee80211_hw *hw,
 		if (ret)
 			ath11k_warn(ar->ab, "failed to update bcn template: %d\n",
 				    ret);
-	}
-
-	if (changed & BSS_CHANGED_AP_PROBE_RESP) {
-		ret = ath11k_mac_setup_prb_tmpl(arvif);
-		if (ret)
-			ath11k_warn(ar->ab, "failed to setup probe resp template on vdev %i: %d\n",
-				    arvif->vdev_id, ret);
 	}
 
 	if (changed & (BSS_CHANGED_BEACON_INFO | BSS_CHANGED_BEACON)) {
@@ -4517,11 +4482,6 @@ ath11k_mac_update_vif_chan(struct ath11k *ar,
 		ret = ath11k_mac_setup_bcn_tmpl(arvif);
 		if (ret)
 			ath11k_warn(ab, "failed to update bcn tmpl during csa: %d\n",
-				    ret);
-
-		ret = ath11k_mac_setup_prb_tmpl(arvif);
-		if (ret)
-			ath11k_warn(ar->ab, "failed to update prb tmpl: %d\n",
 				    ret);
 
 		ret = ath11k_mac_vdev_restart(arvif, &vifs[i].new_ctx->def);

@@ -1519,64 +1519,6 @@ int ath11k_wmi_bcn_tmpl(struct ath11k *ar, u32 vdev_id,
 	return ret;
 }
 
-int ath11k_wmi_prb_tmpl(struct ath11k *ar, u32 vdev_id,
-			struct sk_buff *prb)
-{
-	struct ath11k_pdev_wmi *wmi = ar->wmi;
-	struct wmi_prb_tmpl_cmd *cmd;
-	struct wmi_bcn_prb_info *bcn_prb_info;
-	struct wmi_tlv *tlv;
-	struct sk_buff *skb;
-	void *ptr;
-	int len, ret;
-	size_t aligned_len = roundup(prb->len, 4);
-
-	len = sizeof(*cmd) + sizeof(*bcn_prb_info) + TLV_HDR_SIZE + aligned_len;
-	if (len > WMI_BEACON_TX_BUFFER_SIZE) {
-		ath11k_warn(ar->ab, "Can't send wmi cmd\n");
-		return -EINVAL;
-	}
-
-	skb = ath11k_wmi_alloc_skb(wmi->wmi_sc, len);
-	if (!skb)
-		return -ENOMEM;
-
-	cmd = (struct wmi_prb_tmpl_cmd *)skb->data;
-	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_PRB_TMPL_CMD) |
-			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
-	cmd->vdev_id = vdev_id;
-	cmd->buf_len = prb->len;
-
-	ptr = (void *)skb->data + sizeof(*cmd);
-	len = sizeof(*bcn_prb_info);
-
-	bcn_prb_info = (struct wmi_bcn_prb_info *)ptr;
-	bcn_prb_info->tlv_header = FIELD_PREP(WMI_TLV_TAG,
-					      WMI_TAG_BCN_PRB_INFO) |
-				   FIELD_PREP(WMI_TLV_LEN, len - TLV_HDR_SIZE);
-	bcn_prb_info->caps = 0;
-	bcn_prb_info->erp = 0;
-
-	ptr += sizeof(*bcn_prb_info);
-
-	tlv = (struct wmi_tlv *)ptr;
-	tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_BYTE) |
-		      FIELD_PREP(WMI_TLV_LEN, aligned_len);
-
-	memcpy(tlv->value, prb->data, prb->len);
-
-	ath11k_dbg(ar->ab, ATH11K_DBG_WMI,
-		   "WMI prb tmpl vdev id %d len %d\n", vdev_id, prb->len);
-
-	ret = ath11k_wmi_cmd_send(wmi, skb, WMI_PRB_TMPL_CMDID);
-	if (ret) {
-		ath11k_warn(ar->ab, "failed to send WMI_PRB_TMPL_CMDID\n");
-		dev_kfree_skb(skb);
-	}
-
-	return ret;
-}
-
 int ath11k_wmi_vdev_install_key(struct ath11k *ar,
 				struct wmi_vdev_install_key_arg *arg)
 {

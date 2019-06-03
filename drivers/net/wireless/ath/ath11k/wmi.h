@@ -3844,12 +3844,6 @@ struct wmi_bcn_tmpl_cmd {
 	u32 esp_ie_offset;
 } __packed;
 
-struct wmi_prb_tmpl_cmd {
-	u32 tlv_header;
-	u32 vdev_id;
-	u32 buf_len;
-} __packed;
-
 struct wmi_key_seq_counter {
 	u32 key_seq_counter_l;
 	u32 key_seq_counter_h;
@@ -5198,8 +5192,6 @@ int ath11k_wmi_mgmt_send(struct ath11k *ar, u32 vdev_id, u32 buf_id,
 int ath11k_wmi_bcn_tmpl(struct ath11k *ar, u32 vdev_id,
 			struct ieee80211_mutable_offsets *offs,
 			struct sk_buff *bcn);
-int ath11k_wmi_prb_tmpl(struct ath11k *ar, u32 vdev_id,
-			struct sk_buff *prb);
 int ath11k_wmi_vdev_down(struct ath11k *ar, u8 vdev_id);
 int ath11k_wmi_vdev_up(struct ath11k *ar, u32 vdev_id, u32 aid,
 		       const u8 *bssid);
