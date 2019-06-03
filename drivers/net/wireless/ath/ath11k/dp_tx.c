@@ -834,11 +834,11 @@ int ath11k_dp_htt_rx_filter_setup(struct ath11k_base *ab, u32 ring_id,
 
 	cmd->info1 = FIELD_PREP(HTT_RX_RING_SELECTION_CFG_CMD_INFO1_BUF_SIZE,
 				rx_buf_size);
-	cmd->pkt_type_en_flags0 = __cpu_to_le32(tlv_filter->pkt_filter_flags0);
-	cmd->pkt_type_en_flags1 = __cpu_to_le32(tlv_filter->pkt_filter_flags1);
-	cmd->pkt_type_en_flags2 = __cpu_to_le32(tlv_filter->pkt_filter_flags2);
-	cmd->pkt_type_en_flags3 = __cpu_to_le32(tlv_filter->pkt_filter_flags3);
-	cmd->rx_filter_tlv = __cpu_to_le32(tlv_filter->rx_filter);
+	cmd->pkt_type_en_flags0 = tlv_filter->pkt_filter_flags0;
+	cmd->pkt_type_en_flags1 = tlv_filter->pkt_filter_flags1;
+	cmd->pkt_type_en_flags2 = tlv_filter->pkt_filter_flags2;
+	cmd->pkt_type_en_flags3 = tlv_filter->pkt_filter_flags3;
+	cmd->rx_filter_tlv = tlv_filter->rx_filter;
 
 	ret = ath11k_htc_send(&ab->htc, ab->dp.eid, skb);
 	if (ret)
