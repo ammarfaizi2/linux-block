@@ -46,6 +46,10 @@ enum wme_ac {
 	WME_NUM_AC
 };
 
+#define ATH11K_HT_MCS_MAX	7
+#define ATH11K_VHT_MCS_MAX	9
+#define ATH11K_HE_MCS_MAX	11
+
 static inline enum wme_ac ath11k_tid_to_ac(u32 tid)
 {
 	return (((tid == 0) || (tid == 3)) ? WME_AC_BE :

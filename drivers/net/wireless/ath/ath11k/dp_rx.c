@@ -1705,7 +1705,7 @@ static void ath11k_dp_rx_h_rate(struct ath11k *ar, void *rx_desc,
 		break;
 	case RX_MSDU_START_PKT_TYPE_11N:
 		rx_status->encoding = RX_ENC_HT;
-		if (rate_mcs > 7) {
+		if (rate_mcs > ATH11K_HT_MCS_MAX) {
 			ath11k_warn(ar->ab, "Received with invalid mcs in HT mode %d\n", rate_mcs);
 			break;
 		}
@@ -1717,7 +1717,7 @@ static void ath11k_dp_rx_h_rate(struct ath11k *ar, void *rx_desc,
 	case RX_MSDU_START_PKT_TYPE_11AC:
 		rx_status->encoding = RX_ENC_VHT;
 		rx_status->rate_idx = rate_mcs;
-		if (rate_mcs > 9) {
+		if (rate_mcs > ATH11K_VHT_MCS_MAX) {
 			ath11k_warn(ar->ab, "Received with invalid mcs in VHT mode %d\n", rate_mcs);
 			break;
 		}
