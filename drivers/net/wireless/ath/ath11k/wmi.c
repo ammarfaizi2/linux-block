@@ -4652,6 +4652,7 @@ static int ath11k_reg_chan_list_event(struct ath11k_base *ab, u8 *evt_buf, u32 l
 		/* This regd would be applied during mac registration */
 		ab->default_regd[pdev_idx] = regd;
 	}
+	ab->dfs_region = reg_info->dfs_region;
 	spin_unlock(&ab->data_lock);
 
 	goto mem_free;
@@ -4755,6 +4756,8 @@ static inline const char *ath11k_wmi_vdev_resp_print(u32 vdev_resp_status)
 		return "not supported";
 	case WMI_VDEV_START_RESPONSE_DFS_VIOLATION:
 		return "dfs violation";
+	case WMI_VDEV_START_RESPONSE_INVALID_REGDOMAIN:
+		return "invalid regdomain";
 	default:
 		return "unknown";
 	}

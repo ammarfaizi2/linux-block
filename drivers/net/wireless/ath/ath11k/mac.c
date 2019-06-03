@@ -4306,15 +4306,7 @@ ath11k_mac_vdev_start_restart(struct ath11k_vif *arvif,
 		arg.channel.passive = arg.channel.chan_radar;
 
 		spin_lock_bh(&ab->data_lock);
-
-		/* Use the new reg info if available */
-		if (ar->ab->new_regd[ar->pdev_idx])
-			arg.regdomain =
-				ar->ab->new_regd[ar->pdev_idx]->dfs_region;
-		else
-			arg.regdomain =
-				ar->ab->default_regd[ar->pdev_idx]->dfs_region;
-
+		arg.regdomain = ar->ab->dfs_region;
 		spin_unlock_bh(&ab->data_lock);
 
 		/* TODO: Notify if secondary 80Mhz also needs radar detection */
