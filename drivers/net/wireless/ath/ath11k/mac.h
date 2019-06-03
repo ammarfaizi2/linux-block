@@ -162,6 +162,8 @@ struct ath11k_generic_iter {
 
 #define WMI_MAX_SPATIAL_STREAM               3
 
+#define ATH11K_CHAN_WIDTH_NUM			8
+
 int ath11k_mac_create(struct ath11k_base *ab);
 void ath11k_mac_destroy(struct ath11k_base *ab);
 void ath11k_mac_unregister(struct ath11k_base *ab);

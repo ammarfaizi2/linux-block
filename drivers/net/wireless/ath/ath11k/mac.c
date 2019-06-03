@@ -105,6 +105,52 @@ static struct ieee80211_rate ath11k_legacy_rates[] = {
 	{ .bitrate = 540, .hw_value = ATH11K_HW_RATE_OFDM_54M },
 };
 
+static const int
+ath11k_phymodes[NUM_NL80211_BANDS][2][ATH11K_CHAN_WIDTH_NUM] = {
+	[NL80211_BAND_2GHZ] = {
+		{
+			[NL80211_CHAN_WIDTH_5] = MODE_UNKNOWN,
+			[NL80211_CHAN_WIDTH_10] = MODE_UNKNOWN,
+			[NL80211_CHAN_WIDTH_20_NOHT] = MODE_11G,
+			[NL80211_CHAN_WIDTH_20] = MODE_11NG_HT20,
+			[NL80211_CHAN_WIDTH_40] = MODE_11NG_HT40,
+			[NL80211_CHAN_WIDTH_80] = MODE_UNKNOWN,
+			[NL80211_CHAN_WIDTH_80P80] = MODE_UNKNOWN,
+			[NL80211_CHAN_WIDTH_160] = MODE_UNKNOWN,
+		}, {
+			[NL80211_CHAN_WIDTH_5] = MODE_UNKNOWN,
+			[NL80211_CHAN_WIDTH_10] = MODE_UNKNOWN,
+			[NL80211_CHAN_WIDTH_20_NOHT] = MODE_11G,
+			[NL80211_CHAN_WIDTH_20] = MODE_11AX_HE20_2G,
+			[NL80211_CHAN_WIDTH_40] = MODE_11AX_HE40_2G,
+			[NL80211_CHAN_WIDTH_80] = MODE_11AX_HE80_2G,
+			[NL80211_CHAN_WIDTH_80P80] = MODE_UNKNOWN,
+			[NL80211_CHAN_WIDTH_160] = MODE_UNKNOWN,
+		},
+	},
+	[NL80211_BAND_5GHZ] = {
+		{
+			[NL80211_CHAN_WIDTH_5] = MODE_UNKNOWN,
+			[NL80211_CHAN_WIDTH_10] = MODE_UNKNOWN,
+			[NL80211_CHAN_WIDTH_20_NOHT] = MODE_11A,
+			[NL80211_CHAN_WIDTH_20] = MODE_11AC_VHT20,
+			[NL80211_CHAN_WIDTH_40] = MODE_11AC_VHT40,
+			[NL80211_CHAN_WIDTH_80] = MODE_11AC_VHT80,
+			[NL80211_CHAN_WIDTH_160] = MODE_11AC_VHT160,
+			[NL80211_CHAN_WIDTH_80P80] = MODE_11AC_VHT80_80,
+		}, {
+			[NL80211_CHAN_WIDTH_5] = MODE_UNKNOWN,
+			[NL80211_CHAN_WIDTH_10] = MODE_UNKNOWN,
+			[NL80211_CHAN_WIDTH_20_NOHT] = MODE_11A,
+			[NL80211_CHAN_WIDTH_20] = MODE_11AX_HE20,
+			[NL80211_CHAN_WIDTH_40] = MODE_11AX_HE40,
+			[NL80211_CHAN_WIDTH_80] = MODE_11AX_HE80,
+			[NL80211_CHAN_WIDTH_160] = MODE_11AX_HE160,
+			[NL80211_CHAN_WIDTH_80P80] = MODE_11AX_HE80_80,
+		},
+	},
+};
+
 #define ATH11K_MAC_FIRST_OFDM_RATE_IDX 4
 #define ath11k_g_rates ath11k_legacy_rates
 #define ath11k_g_rates_size (ARRAY_SIZE(ath11k_legacy_rates))
@@ -149,69 +195,6 @@ static int get_num_chains(u32 mask)
 	}
 
 	return num_chains;
-}
-
-static inline enum wmi_phy_mode
-chan_to_phymode(const struct cfg80211_chan_def *chandef)
-{
-	enum wmi_phy_mode phymode = MODE_UNKNOWN;
-
-	switch (chandef->chan->band) {
-	case NL80211_BAND_2GHZ:
-		switch (chandef->width) {
-		case NL80211_CHAN_WIDTH_20_NOHT:
-			if (chandef->chan->flags & IEEE80211_CHAN_NO_OFDM)
-				phymode = MODE_11B;
-			else
-				phymode = MODE_11G;
-			break;
-		case NL80211_CHAN_WIDTH_20:
-			phymode = MODE_11NG_HT20;
-			break;
-		case NL80211_CHAN_WIDTH_40:
-			phymode = MODE_11NG_HT40;
-			break;
-		case NL80211_CHAN_WIDTH_5:
-		case NL80211_CHAN_WIDTH_10:
-		case NL80211_CHAN_WIDTH_80:
-		case NL80211_CHAN_WIDTH_80P80:
-		case NL80211_CHAN_WIDTH_160:
-			phymode = MODE_UNKNOWN;
-			break;
-		}
-		break;
-	case NL80211_BAND_5GHZ:
-		switch (chandef->width) {
-		case NL80211_CHAN_WIDTH_20_NOHT:
-			phymode = MODE_11A;
-			break;
-		case NL80211_CHAN_WIDTH_20:
-			phymode = MODE_11AC_VHT20;
-			break;
-		case NL80211_CHAN_WIDTH_40:
-			phymode = MODE_11AC_VHT40;
-			break;
-		case NL80211_CHAN_WIDTH_80:
-			phymode = MODE_11AC_VHT80;
-			break;
-		case NL80211_CHAN_WIDTH_160:
-			phymode = MODE_11AC_VHT160;
-			break;
-		case NL80211_CHAN_WIDTH_80P80:
-			phymode = MODE_11AC_VHT80_80;
-			break;
-		case NL80211_CHAN_WIDTH_5:
-		case NL80211_CHAN_WIDTH_10:
-			phymode = MODE_UNKNOWN;
-			break;
-		}
-		break;
-	default:
-		break;
-	}
-
-	WARN_ON(phymode == MODE_UNKNOWN);
-	return phymode;
 }
 
 u8 ath11k_mac_bitrate_to_idx(const struct ieee80211_supported_band *sband,
@@ -4059,7 +4042,12 @@ ath11k_mac_vdev_start_restart(struct ath11k_vif *arvif,
 	arg.channel.freq = chandef->chan->center_freq;
 	arg.channel.band_center_freq1 = chandef->center_freq1;
 	arg.channel.band_center_freq2 = chandef->center_freq2;
-	arg.channel.mode = chan_to_phymode(chandef);
+	arg.channel.mode =
+		ath11k_phymodes[chandef->chan->band][he_support][chandef->width];
+	if (arg.channel.mode == MODE_11G &&
+	    chandef->chan->flags & IEEE80211_CHAN_NO_OFDM)
+		arg.channel.mode = MODE_11B;
+	WARN_ON(arg.channel.mode == MODE_UNKNOWN);
 
 	arg.channel.min_power = 0;
 	arg.channel.max_power = chandef->chan->max_power * 2;
