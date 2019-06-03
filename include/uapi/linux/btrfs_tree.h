@@ -300,8 +300,10 @@
 #define BTRFS_CSUM_SIZE 32
 
 /* csum types */
-#define BTRFS_CSUM_TYPE_CRC32	0
-
+enum {
+	BTRFS_CSUM_TYPE_CRC32	= 0,
+	BTRFS_CSUM_TYPE_SHA256	= 1,
+};
 /*
  * flags definitions for directory entry item type
  *
