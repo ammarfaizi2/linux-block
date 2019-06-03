@@ -325,6 +325,7 @@ static int ath11k_pull_mac_phy_cap_service_ready_ext(
 	} else if (mac_phy_caps->supported_bands & WMI_HOST_WLAN_5G_CAP) {
 		pdev_cap->vht_cap = mac_phy_caps->vht_cap_info_5g;
 		pdev_cap->vht_mcs = mac_phy_caps->vht_supp_mcs_5g;
+		pdev_cap->he_mcs = mac_phy_caps->he_supp_mcs_5g;
 		pdev_cap->tx_chain_mask = mac_phy_caps->tx_chain_mask_5g;
 		pdev_cap->rx_chain_mask = mac_phy_caps->rx_chain_mask_5g;
 	} else {
@@ -347,7 +348,8 @@ static int ath11k_pull_mac_phy_cap_service_ready_ext(
 	cap_band = &pdev_cap->band[NL80211_BAND_2GHZ];
 	cap_band->max_bw_supported = mac_phy_caps->max_bw_supported_2g;
 	cap_band->ht_cap_info = mac_phy_caps->ht_cap_info_2g;
-	cap_band->he_cap_info = mac_phy_caps->he_cap_info_2g;
+	cap_band->he_cap_info[0] = mac_phy_caps->he_cap_info_2g;
+	cap_band->he_cap_info[1] = mac_phy_caps->he_cap_info_2g_ext;
 	cap_band->he_mcs = mac_phy_caps->he_supp_mcs_2g;
 	memcpy(cap_band->he_cap_phy_info, &mac_phy_caps->he_cap_phy_info_2g,
 	       sizeof(u32) * PSOC_HOST_MAX_PHY_SIZE);
@@ -357,7 +359,8 @@ static int ath11k_pull_mac_phy_cap_service_ready_ext(
 	cap_band = &pdev_cap->band[NL80211_BAND_5GHZ];
 	cap_band->max_bw_supported = mac_phy_caps->max_bw_supported_5g;
 	cap_band->ht_cap_info = mac_phy_caps->ht_cap_info_5g;
-	cap_band->he_cap_info = mac_phy_caps->he_cap_info_5g;
+	cap_band->he_cap_info[0] = mac_phy_caps->he_cap_info_5g;
+	cap_band->he_cap_info[1] = mac_phy_caps->he_cap_info_5g_ext;
 	cap_band->he_mcs = mac_phy_caps->he_supp_mcs_5g;
 	memcpy(cap_band->he_cap_phy_info, &mac_phy_caps->he_cap_phy_info_5g,
 	       sizeof(u32) * PSOC_HOST_MAX_PHY_SIZE);

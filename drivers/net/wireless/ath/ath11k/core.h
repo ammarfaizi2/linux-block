@@ -524,7 +524,7 @@ struct ath11k {
 struct ath11k_band_cap {
 	u32 max_bw_supported;
 	u32 ht_cap_info;
-	u32 he_cap_info;
+	u32 he_cap_info[2];
 	u32 he_mcs;
 	u32 he_cap_phy_info[PSOC_HOST_MAX_PHY_SIZE];
 	struct ath11k_ppe_threshold he_ppet;
@@ -535,6 +535,7 @@ struct ath11k_pdev_cap {
 	u32 ampdu_density;
 	u32 vht_cap;
 	u32 vht_mcs;
+	u32 he_mcs;
 	u32 tx_chain_mask;
 	u32 rx_chain_mask;
 	u32 tx_chain_mask_shift;
