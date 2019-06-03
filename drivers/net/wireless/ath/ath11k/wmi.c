@@ -741,6 +741,8 @@ static void ath11k_wmi_put_wmi_channel(struct wmi_channel *chan,
 		chan->info |= WMI_CHAN_INFO_ALLOW_HT;
 	if (arg->channel.allow_vht)
 		chan->info |= WMI_CHAN_INFO_ALLOW_VHT;
+	if (arg->channel.allow_he)
+		chan->info |= WMI_CHAN_INFO_ALLOW_HE;
 	if (arg->channel.ht40plus)
 		chan->info |= WMI_CHAN_INFO_HT40_PLUS;
 	if (arg->channel.chan_radar)
@@ -2193,7 +2195,9 @@ int ath11k_wmi_send_scan_chan_list_cmd(struct ath11k *ar,
 
 		if (tchan_info->is_chan_passive)
 			chan_info->info |= WMI_CHAN_INFO_PASSIVE;
-		if (tchan_info->allow_vht)
+		if (tchan_info->allow_he)
+			chan_info->info |= WMI_CHAN_INFO_ALLOW_HE;
+		else if (tchan_info->allow_vht)
 			chan_info->info |= WMI_CHAN_INFO_ALLOW_VHT;
 		else if (tchan_info->allow_ht)
 			chan_info->info |= WMI_CHAN_INFO_ALLOW_HT;
