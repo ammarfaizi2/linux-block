@@ -4924,6 +4924,23 @@ static void ath11k_mac_set_bitrate_mask_iter(void *data,
 	ieee80211_queue_work(ar->hw, &arsta->update_wk);
 }
 
+static void ath11k_mac_disable_peer_fixed_rate(void *data,
+					       struct ieee80211_sta *sta)
+{
+	struct ath11k_vif *arvif = data;
+	struct ath11k *ar = arvif->ar;
+	int ret;
+
+	ret = ath11k_wmi_set_peer_param(ar, sta->addr,
+					arvif->vdev_id,
+					WMI_PEER_PARAM_FIXED_RATE,
+					WMI_FIXED_RATE_NONE);
+	if (ret)
+		ath11k_warn(ar->ab,
+			    "failed to disable peer fixed rate for STA %pM ret %d\n",
+			    sta->addr, ret);
+}
+
 static int
 ath11k_mac_op_set_bitrate_mask(struct ieee80211_hw *hw,
 			       struct ieee80211_vif *vif,
@@ -4971,6 +4988,9 @@ ath11k_mac_op_set_bitrate_mask(struct ieee80211_hw *hw,
 				    arvif->vdev_id, ret);
 			return ret;
 		}
+		ieee80211_iterate_stations_atomic(ar->hw,
+						  ath11k_mac_disable_peer_fixed_rate,
+						  arvif);
 	} else if (ath11k_mac_bitrate_mask_get_single_nss(ar, band, mask,
 							  &single_nss)) {
 		rate = WMI_FIXED_RATE_NONE;
