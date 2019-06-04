@@ -2385,7 +2385,7 @@ ath11k_mac_set_peer_vht_fixed_rate(struct ath11k_vif *arvif,
 		   "Setting Fixed VHT Rate for peer %pM. Device will not switch to any other selected rates",
 		   sta->addr);
 
-	rate_code = ATH11K_HW_RATE_CODE(vht_rate, nss,
+	rate_code = ATH11K_HW_RATE_CODE(vht_rate, nss - 1,
 					WMI_RATE_PREAMBLE_VHT);
 	ret = ath11k_wmi_set_peer_param(ar, sta->addr,
 					arvif->vdev_id,
