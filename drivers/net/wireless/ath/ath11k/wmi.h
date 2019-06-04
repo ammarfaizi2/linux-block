@@ -4976,7 +4976,7 @@ enum wmi_ap_ps_peer_param {
 #define WMI_CIPHER_AES_GMAC 0xa
 
 /* Value to disable fixed rate setting */
-#define WMI_FIXED_RATE_NONE	(0xff)
+#define WMI_FIXED_RATE_NONE	(0xffff)
 
 #define ATH11K_RC_VERSION_OFFSET	28
 #define ATH11K_RC_PREAMBLE_OFFSET	8

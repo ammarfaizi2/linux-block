@@ -4805,7 +4805,7 @@ static int
 ath11k_mac_get_single_legacy_rate(struct ath11k *ar,
 				  enum nl80211_band band,
 				  const struct cfg80211_bitrate_mask *mask,
-				  u8 *rate, u8 *nss)
+				  u32 *rate, u8 *nss)
 {
 	int rate_idx;
 	u16 bitrate;
@@ -4835,7 +4835,7 @@ ath11k_mac_get_single_legacy_rate(struct ath11k *ar,
 }
 
 static int ath11k_mac_set_fixed_rate_params(struct ath11k_vif *arvif,
-					    u8 rate, u8 nss, u8 sgi, u8 ldpc)
+					    u32 rate, u8 nss, u8 sgi, u8 ldpc)
 {
 	struct ath11k *ar = arvif->ar;
 	u32 vdev_param;
@@ -4952,7 +4952,7 @@ ath11k_mac_op_set_bitrate_mask(struct ieee80211_hw *hw,
 	enum nl80211_band band;
 	const u8 *ht_mcs_mask;
 	const u16 *vht_mcs_mask;
-	u8 rate;
+	u32 rate;
 	u8 nss;
 	u8 sgi;
 	u8 ldpc;
