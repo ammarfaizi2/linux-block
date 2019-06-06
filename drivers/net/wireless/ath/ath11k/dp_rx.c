@@ -1000,10 +1000,13 @@ struct htt_ppdu_stats_info *ath11k_dp_htt_get_ppdu_desc(struct ath11k *ar,
 {
 	struct htt_ppdu_stats_info *ppdu_info = NULL;
 
+	spin_lock_bh(&ar->data_lock);
 	if (!list_empty(&ar->ppdu_stats_info)) {
 		list_for_each_entry(ppdu_info, &ar->ppdu_stats_info, list) {
-			if (ppdu_info && ppdu_info->ppdu_id == ppdu_id)
+			if (ppdu_info && ppdu_info->ppdu_id == ppdu_id) {
+				spin_unlock_bh(&ar->data_lock);
 				return ppdu_info;
+			}
 		}
 
 		if (ar->ppdu_stat_list_depth > HTT_PPDU_DESC_MAX_DEPTH) {
@@ -1015,13 +1018,16 @@ struct htt_ppdu_stats_info *ath11k_dp_htt_get_ppdu_desc(struct ath11k *ar,
 			kfree(ppdu_info);
 		}
 	}
+	spin_unlock_bh(&ar->data_lock);
 
 	ppdu_info = kzalloc(sizeof(*ppdu_info), GFP_KERNEL);
 	if (!ppdu_info)
 		return NULL;
 
+	spin_lock_bh(&ar->data_lock);
 	list_add_tail(&ppdu_info->list, &ar->ppdu_stats_info);
 	ar->ppdu_stat_list_depth++;
+	spin_unlock_bh(&ar->data_lock);
 
 	return ppdu_info;
 }
@@ -1039,7 +1045,13 @@ static int ath11k_htt_pull_ppdu_stats(struct ath11k_base *ab,
 	pdev_id = FIELD_GET(HTT_T2H_PPDU_STATS_PDEV_ID_M, *(u32 *)data);
 	pdev_id = DP_HW2SW_MACID(pdev_id);
 	ppdu_id = *((u32 *)data + 1);
-	ar = ab->pdevs[pdev_id].ar;
+
+	rcu_read_lock();
+	ar = ath11k_get_ar_by_pdev_id(ab, pdev_id);
+	if (!ar) {
+		ret = -EINVAL;
+		goto exit;
+	}
 
 	if (ath11k_debug_is_pktlog_lite_mode_enabled(ar)) {
 		trace_ath11k_htt_ppdu_stats(ar, skb->data, len);
@@ -1049,8 +1061,10 @@ static int ath11k_htt_pull_ppdu_stats(struct ath11k_base *ab,
 	data = (u8 *)data + 16;
 
 	ppdu_info = ath11k_dp_htt_get_ppdu_desc(ar, ppdu_id);
-	if (!ppdu_info)
-		return 0;
+	if (!ppdu_info) {
+		ret = -EINVAL;
+		goto exit;
+	}
 
 	ppdu_info->ppdu_id = ppdu_id;
 	ret = ath11k_dp_htt_tlv_iter(ab, data, len,
@@ -1058,10 +1072,13 @@ static int ath11k_htt_pull_ppdu_stats(struct ath11k_base *ab,
 				     (void *)ppdu_info);
 	if (ret) {
 		ath11k_warn(ab, "Failed to parse tlv %d\n", ret);
-		return ret;
+		goto exit;
 	}
 
-	return 0;
+exit:
+	rcu_read_unlock();
+
+	return ret;
 }
 
 static void ath11k_htt_pktlog(struct ath11k_base *ab,

@@ -3621,8 +3621,6 @@ static int ath11k_start(struct ieee80211_hw *hw)
 		goto err;
 	}
 
-	INIT_LIST_HEAD(&ar->ppdu_stats_info);
-
 	ret = ath11k_wmi_pdev_set_param(ar, WMI_PDEV_PARAM_ARP_AC_OVERRIDE,
 					0, pdev->pdev_id);
 	if (ret) {
@@ -3679,6 +3677,7 @@ err:
 static void ath11k_stop(struct ieee80211_hw *hw)
 {
 	struct ath11k *ar = hw->priv;
+	struct htt_ppdu_stats_info *ppdu_stats, *tmp;
 
 	ath11k_drain_tx(ar);
 
@@ -3689,6 +3688,13 @@ static void ath11k_stop(struct ieee80211_hw *hw)
 
 	cancel_delayed_work_sync(&ar->scan.timeout);
 	cancel_work_sync(&ar->regd_update_work);
+
+	spin_lock_bh(&ar->data_lock);
+	list_for_each_entry_safe(ppdu_stats, tmp, &ar->ppdu_stats_info, list) {
+		list_del(&ppdu_stats->list);
+		kfree(ppdu_stats);
+	}
+	spin_unlock_bh(&ar->data_lock);
 
 	rcu_assign_pointer(ar->ab->pdevs_active[ar->pdev_idx], NULL);
 
@@ -5593,6 +5599,7 @@ int ath11k_mac_create(struct ath11k_base *ab)
 		pdev->ar = ar;
 		spin_lock_init(&ar->data_lock);
 		INIT_LIST_HEAD(&ar->arvifs);
+		INIT_LIST_HEAD(&ar->ppdu_stats_info);
 		mutex_init(&ar->conf_mutex);
 		init_completion(&ar->vdev_setup_done);
 		init_completion(&ar->peer_assoc_done);
