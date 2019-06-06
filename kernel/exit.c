@@ -1555,12 +1555,14 @@ end:
 static long kernel_waitid(int which, pid_t upid, struct waitid_info *infop,
 			  int options, struct rusage *ru)
 {
+	struct fd f;
 	struct wait_opts wo;
 	struct pid *pid = NULL;
 	enum pid_type type;
 	long ret;
+	bool is_pidfd = (options & WPIDFD);
 
-	if (options & ~(WNOHANG|WNOWAIT|WEXITED|WSTOPPED|WCONTINUED|
+	if (options & ~(WNOHANG|WNOWAIT|WEXITED|WSTOPPED|WCONTINUED|WPIDFD|
 			__WNOTHREAD|__WCLONE|__WALL))
 		return -EINVAL;
 	if (!(options & (WEXITED|WSTOPPED|WCONTINUED)))
@@ -1569,23 +1571,38 @@ static long kernel_waitid(int which, pid_t upid, struct waitid_info *infop,
 	switch (which) {
 	case P_ALL:
 		type = PIDTYPE_MAX;
+		if (is_pidfd)
+			return -EINVAL;
 		break;
 	case P_PID:
 		type = PIDTYPE_PID;
-		if (upid <= 0)
+		if (upid < 0 || (upid == 0 && !is_pidfd))
 			return -EINVAL;
 		break;
 	case P_PGID:
 		type = PIDTYPE_PGID;
-		if (upid <= 0)
+		if (upid <= 0 || is_pidfd)
 			return -EINVAL;
 		break;
 	default:
 		return -EINVAL;
 	}
 
-	if (type < PIDTYPE_MAX)
+	if (is_pidfd) {
+		f = fdget(upid);
+		if (!f.file)
+			return -EBADF;
+
+		pid = pidfd_pid(f.file);
+		if (IS_ERR(pid)) {
+			ret = PTR_ERR(pid);
+			goto out_fdput;
+		}
+
+		pid = get_pid(pid);
+	} else if (type < PIDTYPE_MAX) {
 		pid = find_get_pid(upid);
+	}
 
 	wo.wo_type	= type;
 	wo.wo_pid	= pid;
@@ -1595,6 +1612,11 @@ static long kernel_waitid(int which, pid_t upid, struct waitid_info *infop,
 	ret = do_wait(&wo);
 
 	put_pid(pid);
+
+out_fdput:
+	if (is_pidfd)
+		fdput(f);
+
 	return ret;
 }
 
@@ -1634,13 +1656,18 @@ Efault:
 long kernel_wait4(pid_t upid, int __user *stat_addr, int options,
 		  struct rusage *ru)
 {
+	struct fd f;
 	struct wait_opts wo;
 	struct pid *pid = NULL;
 	enum pid_type type;
 	long ret;
+	bool is_pidfd = (options & WPIDFD);
 
-	if (options & ~(WNOHANG|WUNTRACED|WCONTINUED|
+	if (options & ~(WNOHANG|WUNTRACED|WCONTINUED|WPIDFD|
 			__WNOTHREAD|__WCLONE|__WALL))
+		return -EINVAL;
+
+	if (is_pidfd && (upid < 0))
 		return -EINVAL;
 
 	/* -INT_MIN is not defined */
@@ -1657,7 +1684,21 @@ long kernel_wait4(pid_t upid, int __user *stat_addr, int options,
 		pid = get_task_pid(current, PIDTYPE_PGID);
 	} else /* upid > 0 */ {
 		type = PIDTYPE_PID;
-		pid = find_get_pid(upid);
+		if (is_pidfd) {
+			f = fdget(upid);
+			if (!f.file)
+				return -EBADF;
+
+			pid = pidfd_pid(f.file);
+			if (IS_ERR(pid)) {
+				ret = PTR_ERR(pid);
+				goto out_fdput;
+			}
+
+			pid = get_pid(pid);
+		} else {
+			pid = find_get_pid(upid);
+		}
 	}
 
 	wo.wo_type	= type;
@@ -1670,6 +1711,10 @@ long kernel_wait4(pid_t upid, int __user *stat_addr, int options,
 	put_pid(pid);
 	if (ret > 0 && stat_addr && put_user(wo.wo_stat, stat_addr))
 		ret = -EFAULT;
+
+out_fdput:
+	if (is_pidfd)
+		fdput(f);
 
 	return ret;
 }
