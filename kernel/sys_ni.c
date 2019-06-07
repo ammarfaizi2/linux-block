@@ -54,6 +54,7 @@ COND_SYSCALL(io_uring_register);
 COND_SYSCALL(fsinfo);
 COND_SYSCALL(watch_mount);
 COND_SYSCALL(watch_sb);
+COND_SYSCALL(watch_devices);
 
 /* fs/xattr.c */
 

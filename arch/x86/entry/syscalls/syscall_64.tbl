@@ -358,6 +358,7 @@
 434	common	fsinfo			__x64_sys_fsinfo
 435	common	watch_mount		__x64_sys_watch_mount
 436	common	watch_sb		__x64_sys_watch_sb
+437	common	watch_devices		__x64_sys_watch_devices
 
 #
 # x32-specific system call numbers start at 512 to avoid cache impact

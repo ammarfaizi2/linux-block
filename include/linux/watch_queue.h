@@ -12,10 +12,12 @@
 
 #include <uapi/linux/watch_queue.h>
 #include <linux/kref.h>
+#include <linux/rcupdate.h>
 
 #ifdef CONFIG_WATCH_QUEUE
 
 struct watch_queue;
+struct cred;
 
 /*
  * Representation of a watch on an object.
@@ -53,6 +55,7 @@ extern void put_watch_queue(struct watch_queue *);
 extern void init_watch(struct watch *, struct watch_queue *);
 extern int add_watch_to_object(struct watch *, struct watch_list *);
 extern int remove_watch_from_object(struct watch_list *, struct watch_queue *, u64, bool);
+extern void post_device_notification(struct watch_notification *, u64);
 
 static inline void init_watch_list(struct watch_list *wlist,
 				   void (*release_watch)(struct watch *))

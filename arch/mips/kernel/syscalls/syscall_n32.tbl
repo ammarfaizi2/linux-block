@@ -375,3 +375,4 @@
 434	n32	fsinfo				sys_fsinfo
 435	n32	watch_mount			sys_watch_mount
 436	n32	watch_sb			sys_watch_sb
+437	n32	watch_devices			sys_watch_devices

@@ -11,7 +11,7 @@ receive notifications from the kernel.  This can be used in conjunction with::
 
   * Superblock event notifications
 
-  * Block layer event notifications
+  * General device event notifications
 
 
 The notifications buffers can be enabled by:
@@ -290,6 +290,25 @@ The ``id`` is the ID of the source object (such as the serial number on a key).
 Only watches that have the same ID set in them will see this notification.
 
 
+Global Device Watch List
+========================
+
+There is a global watch list that hardware generated events, such as device
+connection, disconnection, failure and error can be posted upon.  It must be
+enabled using::
+
+	CONFIG_DEVICE_NOTIFICATIONS
+
+Watchpoints are set in userspace using the device_notify(2) system call.
+Within the kernel events are posted upon it using::
+
+	void post_device_notification(struct watch_notification *n, u64 id);
+
+where ``n`` is the formatted notification record to post.  ``id`` is an
+identifier that can be used to direct to specific watches, but it should be 0
+for general use on this queue.
+
+
 Watch Sources
 =============
 
@@ -314,12 +333,6 @@ Any particular buffer can be fed from multiple sources.  Sources include:
     the changes of keyring contents or the attributes of keys.
 
     See Documentation/security/keys/core.rst for more information.
-
-  * WATCH_TYPE_BLOCK_NOTIFY
-
-    Notifications of this type indicate block layer events, such as I/O errors
-    or temporary link loss.  Watchpoints of this type are set on a global
-    queue.
 
 
 Event Filtering
