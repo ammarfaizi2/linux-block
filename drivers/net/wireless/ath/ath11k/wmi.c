@@ -1630,6 +1630,10 @@ ath11k_wmi_copy_peer_flags(struct wmi_peer_assoc_complete_cmd *cmd,
 	if (param->safe_mode_enabled)
 		cmd->peer_flags &= ~(WMI_PEER_NEED_PTK_4_WAY |
 				     WMI_PEER_NEED_GTK_2_WAY);
+
+	if (param->is_pmf_enabled)
+		cmd->peer_flags |= WMI_PEER_PMF;
+
 	/* Disable AMSDU for station transmit, if user configures it */
 	/* Disable AMSDU for AP transmit to 11n Stations, if user configures
 	 * it
