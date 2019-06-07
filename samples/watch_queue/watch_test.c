@@ -30,6 +30,12 @@
 #ifndef __NR_watch_devices
 #define __NR_watch_devices -1
 #endif
+#ifndef __NR_watch_mount
+#define __NR_watch_mount -1
+#endif
+#ifndef __NR_watch_sb
+#define __NR_watch_sb -1
+#endif
 
 #define BUF_SIZE 4
 
@@ -59,6 +65,47 @@ static void saw_key_change(struct watch_notification *n)
 
 	printf("KEY %08x change=%u[%s] aux=%u\n",
 	       k->key_id, n->subtype, key_subtypes[n->subtype], k->aux);
+}
+
+static const char *mount_subtypes[256] = {
+	[NOTIFY_MOUNT_NEW_MOUNT]	= "new_mount",
+	[NOTIFY_MOUNT_UNMOUNT]		= "unmount",
+	[NOTIFY_MOUNT_EXPIRY]		= "expiry",
+	[NOTIFY_MOUNT_READONLY]		= "readonly",
+	[NOTIFY_MOUNT_SETATTR]		= "setattr",
+	[NOTIFY_MOUNT_MOVE_FROM]	= "move_from",
+	[NOTIFY_MOUNT_MOVE_TO]		= "move_to",
+};
+
+static void saw_mount_change(struct watch_notification *n)
+{
+	struct mount_notification *m = (struct mount_notification *)n;
+	unsigned int len = (n->info & WATCH_INFO_LENGTH) >> WATCH_INFO_LENGTH__SHIFT;
+
+	if (len != sizeof(struct mount_notification) / WATCH_LENGTH_GRANULARITY)
+		return;
+
+	printf("MOUNT %08x change=%u[%s] aux=%u\n",
+	       m->triggered_on, n->subtype, mount_subtypes[n->subtype], m->changed_mount);
+}
+
+static const char *super_subtypes[256] = {
+	[NOTIFY_SUPERBLOCK_READONLY]	= "readonly",
+	[NOTIFY_SUPERBLOCK_ERROR]	= "error",
+	[NOTIFY_SUPERBLOCK_EDQUOT]	= "edquot",
+	[NOTIFY_SUPERBLOCK_NETWORK]	= "network",
+};
+
+static void saw_super_change(struct watch_notification *n)
+{
+	struct superblock_notification *s = (struct superblock_notification *)n;
+	unsigned int len = (n->info & WATCH_INFO_LENGTH) >> WATCH_INFO_LENGTH__SHIFT;
+
+	if (len < sizeof(struct superblock_notification) / WATCH_LENGTH_GRANULARITY)
+		return;
+
+	printf("SUPER %08llx change=%u[%s]\n",
+	       s->sb_id, n->subtype, super_subtypes[n->subtype]);
 }
 
 static const char *block_subtypes[256] = {
@@ -159,6 +206,12 @@ static int consumer(int fd, struct watch_queue_buffer *buf)
 			case WATCH_TYPE_USB_NOTIFY:
 				saw_usb_event(n);
 				break;
+			case WATCH_TYPE_MOUNT_NOTIFY:
+				saw_mount_change(n);
+				break;
+			case WATCH_TYPE_SB_NOTIFY:
+				saw_super_change(n);
+				break;
 			}
 
 			tail += (n->info & WATCH_INFO_LENGTH) >> WATCH_INFO_LENGTH__SHIFT;
@@ -185,6 +238,19 @@ static struct watch_notification_filter filter = {
 		[2]	= {
 			.type			= WATCH_TYPE_USB_NOTIFY,
 			.subtype_filter[0]	= UINT_MAX,
+		},
+		[3] = {
+			.type			= WATCH_TYPE_MOUNT_NOTIFY,
+			// Reject move-from notifications
+			.subtype_filter[0]	= UINT_MAX & ~(1 << NOTIFY_MOUNT_MOVE_FROM),
+		},
+		[4]	= {
+			.type			= WATCH_TYPE_SB_NOTIFY,
+			// Only accept notification of changes to R/O state
+			.subtype_filter[0]	= (1 << NOTIFY_SUPERBLOCK_READONLY),
+			// Only accept notifications of change-to-R/O
+			.info_mask		= WATCH_INFO_FLAG_0,
+			.info_filter		= WATCH_INFO_FLAG_0,
 		},
 	},
 };
@@ -226,6 +292,16 @@ int main(int argc, char **argv)
 
 	if (syscall(__NR_watch_devices, fd, 0x04, 0) == -1) {
 		perror("watch_devices");
+		exit(1);
+	}
+
+	if (syscall(__NR_watch_mount, AT_FDCWD, "/", 0, fd, 0x02) == -1) {
+		perror("watch_mount");
+		exit(1);
+	}
+
+	if (syscall(__NR_watch_sb, AT_FDCWD, "/mnt", 0, fd, 0x03) == -1) {
+		perror("watch_sb");
 		exit(1);
 	}
 
