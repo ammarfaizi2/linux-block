@@ -11,7 +11,9 @@ receive notifications from the kernel.  This can be used in conjunction with::
 
   * Superblock event notifications
 
-  * General device event notifications
+  * General device event notifications, including::
+
+    * Block layer event notifications
 
 
 The notifications buffers can be enabled by:
@@ -333,6 +335,12 @@ Any particular buffer can be fed from multiple sources.  Sources include:
     the changes of keyring contents or the attributes of keys.
 
     See Documentation/security/keys/core.rst for more information.
+
+  * WATCH_TYPE_BLOCK_NOTIFY
+
+    Notifications of this type indicate block layer events, such as I/O errors
+    or temporary link loss.  Watchpoints of this type are set on the global
+    device watch list.
 
 
 Event Filtering
