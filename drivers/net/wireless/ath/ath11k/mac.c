@@ -5576,7 +5576,7 @@ int ath11k_mac_create(struct ath11k_base *ab)
 		ar->ab = ab;
 		ar->pdev = pdev;
 		ar->pdev_idx = i;
-		ar->lmac_id = hw_mac_id_map[i];
+		ar->lmac_id = ath11k_core_get_hw_mac_id(ab, i);
 
 		ar->wmi = &ab->wmi_sc.wmi[i];
 		/* FIXME wmi[0] is already initialized during attach,

@@ -24,8 +24,7 @@
 
 #define ATH11K_TX_MGMT_NUM_PENDING_MAX	512
 
-/* Map from pdev index to hw mac index */
-static const u8 hw_mac_id_map[MAX_RADIOS] = { 0, 2, 1, };
+#define ATH11K_INVALID_HW_MAC_ID	0xFF
 
 enum ath11k_supported_bw {
 	ATH11K_BW_20	= 0,
@@ -828,6 +827,7 @@ ath11k_reg_build_regd(struct ath11k_base *ab,
 int ath11k_regd_update(struct ath11k *ar, bool init);
 int ath11k_reg_update_chan_list(struct ath11k *ar);
 void ath11k_core_halt(struct ath11k *ar);
+u8 ath11k_core_get_hw_mac_id(struct ath11k_base *ab, int pdev_idx);
 
 static inline const char *ath11k_scan_state_str(enum ath11k_scan_state state)
 {

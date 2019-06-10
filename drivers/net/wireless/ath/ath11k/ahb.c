@@ -803,22 +803,22 @@ static int ath11k_ahb_ext_irq_config(struct ath11k_base *sc)
 				if (ath11k_rxdma2host_ring_mask[i] & BIT(j)) {
 					irq_grp->irqs[num_irq++] =
 						rxdma2host_destination_ring_mac1
-						- hw_mac_id_map[j];
+						- ath11k_core_get_hw_mac_id(sc, j);
 				}
 
 				if (ath11k_host2rxdma_ring_mask[i] & BIT(j)) {
 					irq_grp->irqs[num_irq++] =
 						host2rxdma_host_buf_ring_mac1
-						- hw_mac_id_map[j];
+						- ath11k_core_get_hw_mac_id(sc, j);
 				}
 
 				if (rx_mon_status_ring_mask[i] & BIT(j)) {
 					irq_grp->irqs[num_irq++] =
 						ppdu_end_interrupts_mac1 -
-						hw_mac_id_map[j];
+						ath11k_core_get_hw_mac_id(sc, j);
 					irq_grp->irqs[num_irq++] =
 						rxdma2host_monitor_status_ring_mac1 -
-						hw_mac_id_map[j];
+						ath11k_core_get_hw_mac_id(sc, j);
 				}
 			}
 		}
