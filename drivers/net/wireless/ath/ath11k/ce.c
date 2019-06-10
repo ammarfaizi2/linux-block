@@ -180,7 +180,7 @@ static int ath11k_ce_rx_post_pipe(struct ath11k_ce_pipe *pipe)
 			goto exit;
 		}
 
-		WARN_ONCE((unsigned long)skb->data & 3, "unaligned skb");
+		WARN_ON_ONCE(!IS_ALIGNED((unsigned long)skb->data, 4));
 
 		paddr = dma_map_single(sc->dev, skb->data,
 				       skb->len + skb_tailroom(skb),
