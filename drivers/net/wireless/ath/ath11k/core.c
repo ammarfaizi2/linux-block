@@ -582,7 +582,7 @@ err_firmware_stop:
 	return ret;
 }
 
-int ath11k_qmi_firmware_indication(struct ath11k_base *ab)
+int ath11k_core_qmi_firmware_ready(struct ath11k_base *ab)
 {
 	int ret;
 
@@ -644,7 +644,7 @@ static int ath11k_core_reconfigure_on_crash(struct ath11k_base *sc)
 
 	clear_bit(ATH11K_FLAG_CRASH_FLUSH, &sc->dev_flags);
 
-	ret = ath11k_qmi_firmware_indication(sc);
+	ret = ath11k_core_qmi_firmware_ready(sc);
 	if (ret)
 		goto err_hal_srng_deinit;
 
