@@ -945,12 +945,6 @@ static int ath11k_ahb_probe(struct platform_device *pdev)
 		return PTR_ERR(mem);
 	}
 
-	ret = dma_set_mask(&pdev->dev, DMA_BIT_MASK(32));
-	if (ret) {
-		dev_err(&pdev->dev, "failed to set 32-bit dma mask\n");
-		return ret;
-	}
-
 	ret = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32));
 	if (ret) {
 		dev_err(&pdev->dev, "failed to set 32-bit consistent dma\n");
