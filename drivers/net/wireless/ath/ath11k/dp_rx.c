@@ -3651,7 +3651,7 @@ ath11k_dp_rx_mon_merg_msdus(struct ath11k *ar,
 		prev_buf->next = NULL;
 
 		skb_trim(prev_buf, prev_buf->len - HAL_RX_FCS_LEN);
-	}	else if (decap_format == DP_RX_DECAP_TYPE_NATIVE_WIFI) {
+	} else if (decap_format == DP_RX_DECAP_TYPE_NATIVE_WIFI) {
 		__le16 qos_field;
 		u8 qos_pkt = 0;
 
