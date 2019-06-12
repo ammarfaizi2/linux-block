@@ -1255,6 +1255,7 @@ static void ath11k_peer_assoc_h_he(struct ath11k *ar,
 				   struct peer_assoc_params *arg)
 {
 	const struct ieee80211_sta_he_cap *he_cap = &sta->he_cap;
+	u16 v;
 
 	if (!he_cap->has_he)
 		return;
@@ -1303,24 +1304,29 @@ static void ath11k_peer_assoc_h_he(struct ath11k *ar,
 	case IEEE80211_STA_RX_BW_160:
 		if (he_cap->he_cap_elem.phy_cap_info[0] &
 		    IEEE80211_HE_PHY_CAP0_CHANNEL_WIDTH_SET_80PLUS80_MHZ_IN_5G) {
-			arg->peer_he_rx_mcs_set[WMI_HECAP_TXRX_MCS_NSS_IDX_80_80] =
-				he_cap->he_mcs_nss_supp.rx_mcs_80p80;
-			arg->peer_he_tx_mcs_set[WMI_HECAP_TXRX_MCS_NSS_IDX_80_80] =
-				he_cap->he_mcs_nss_supp.tx_mcs_80p80;
+			v = le16_to_cpu(he_cap->he_mcs_nss_supp.rx_mcs_80p80);
+			arg->peer_he_rx_mcs_set[WMI_HECAP_TXRX_MCS_NSS_IDX_80_80] = v;
+
+			v = le16_to_cpu(he_cap->he_mcs_nss_supp.tx_mcs_80p80);
+			arg->peer_he_tx_mcs_set[WMI_HECAP_TXRX_MCS_NSS_IDX_80_80] = v;
+
 			arg->peer_he_mcs_count++;
 		}
-		arg->peer_he_rx_mcs_set[WMI_HECAP_TXRX_MCS_NSS_IDX_160] =
-			he_cap->he_mcs_nss_supp.rx_mcs_160;
-		arg->peer_he_tx_mcs_set[WMI_HECAP_TXRX_MCS_NSS_IDX_160] =
-			he_cap->he_mcs_nss_supp.tx_mcs_160;
+
+		v = le16_to_cpu(he_cap->he_mcs_nss_supp.rx_mcs_160);
+		arg->peer_he_rx_mcs_set[WMI_HECAP_TXRX_MCS_NSS_IDX_160] = v;
+
+		v = le16_to_cpu(he_cap->he_mcs_nss_supp.tx_mcs_160);
+		arg->peer_he_tx_mcs_set[WMI_HECAP_TXRX_MCS_NSS_IDX_160] = v;
+
 		arg->peer_he_mcs_count++;
 		/* drop through */
 
 	default:
-		arg->peer_he_rx_mcs_set[WMI_HECAP_TXRX_MCS_NSS_IDX_80] =
-			he_cap->he_mcs_nss_supp.rx_mcs_80;
-		arg->peer_he_tx_mcs_set[WMI_HECAP_TXRX_MCS_NSS_IDX_80] =
-			he_cap->he_mcs_nss_supp.tx_mcs_80;
+		v = le16_to_cpu(he_cap->he_mcs_nss_supp.rx_mcs_80);
+		arg->peer_he_rx_mcs_set[WMI_HECAP_TXRX_MCS_NSS_IDX_80] = v;
+		v = le16_to_cpu(he_cap->he_mcs_nss_supp.tx_mcs_80);
+		arg->peer_he_tx_mcs_set[WMI_HECAP_TXRX_MCS_NSS_IDX_80] = v;
 		arg->peer_he_mcs_count++;
 		break;
 	}
