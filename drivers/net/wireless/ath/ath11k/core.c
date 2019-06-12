@@ -74,7 +74,7 @@ static const struct firmware *ath11k_fetch_fw_file(struct ath11k_base *sc,
 		dir = ".";
 
 	snprintf(filename, sizeof(filename), "%s/%s", dir, file);
-	ret = request_firmware_direct(&fw, filename, sc->dev);
+	ret = firmware_request_nowarn(&fw, filename, sc->dev);
 	ath11k_dbg(sc, ATH11K_DBG_BOOT, "boot fw request '%s': %d\n",
 		   filename, ret);
 
