@@ -1470,8 +1470,6 @@ static void ath11k_dp_rx_h_undecap_nwifi(struct ath11k *ar,
 	ether_addr_copy(ieee80211_get_SA(hdr), sa);
 }
 
-#define MICHAEL_MIC_LEN 8
-
 static void ath11k_dp_rx_h_undecap_raw(struct ath11k *ar, struct sk_buff *msdu,
 				       enum hal_encrypt_type enctype,
 				       struct ieee80211_rx_status *status,
@@ -1518,7 +1516,7 @@ static void ath11k_dp_rx_h_undecap_raw(struct ath11k *ar, struct sk_buff *msdu,
 	if ((status->flag & RX_FLAG_MMIC_STRIPPED) &&
 	    !ieee80211_has_morefrags(hdr->frame_control) &&
 	    enctype == HAL_ENCRYPT_TYPE_TKIP_MIC)
-		skb_trim(msdu, msdu->len - MICHAEL_MIC_LEN);
+		skb_trim(msdu, msdu->len - IEEE80211_CCMP_MIC_LEN);
 
 	/* Head */
 	if (status->flag & RX_FLAG_IV_STRIPPED) {
