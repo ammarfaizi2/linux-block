@@ -4148,6 +4148,11 @@ struct wmi_pdev_pktlog_filter_cmd {
 	u32 num_mac;
 } __packed;
 
+enum ath11k_wmi_pktlog_enable {
+	ATH11K_WMI_PKTLOG_ENABLE_AUTO  = 0,
+	ATH11K_WMI_PKTLOG_ENABLE_FORCE = 1,
+};
+
 struct wmi_pktlog_enable_cmd {
 	u32 tlv_header;
 	u32 pdev_id;

@@ -80,11 +80,6 @@ enum ath11k_pktlog_filter {
 	ATH11K_PKTLOG_ANY		= 0x00000006f,
 };
 
-enum ath11k_wmi_pktlog_enable {
-    ATH11K_WMI_PKTLOG_ENABLE_AUTO  = 0,
-    ATH11K_WMI_PKTLOG_ENABLE_FORCE = 1,
-};
-
 enum ath11k_pktlog_mode {
 	ATH11K_PKTLOG_MODE_LITE = 1,
 	ATH11K_PKTLOG_MODE_FULL = 2,

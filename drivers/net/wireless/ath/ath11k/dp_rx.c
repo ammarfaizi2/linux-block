@@ -1084,11 +1084,12 @@ exit:
 static void ath11k_htt_pktlog(struct ath11k_base *ab,
 				     struct sk_buff *skb)
 {
-	u32 *data = (u32 *)skb->data, len;
+	struct htt_pktlog_msg *data = (struct htt_pktlog_msg *)skb->data;
 	struct ath11k *ar;
+	u32 len;
 	u8 pdev_id;
 
-	len = FIELD_GET(HTT_T2H_PPDU_STATS_PAYLOAD_SIZE_M, *data);
+	len = FIELD_GET(HTT_T2H_PPDU_STATS_PAYLOAD_SIZE_M, data->hdr);
 
 	if (len > ATH11K_HTT_PKTLOG_MAX_SIZE)
 	{
@@ -1098,12 +1099,11 @@ static void ath11k_htt_pktlog(struct ath11k_base *ab,
 		return;
 	}
 
-	pdev_id = FIELD_GET(HTT_T2H_PPDU_STATS_PDEV_ID_M, *data);
+	pdev_id = FIELD_GET(HTT_T2H_PPDU_STATS_PDEV_ID_M, data->hdr);
 	pdev_id = DP_HW2SW_MACID(pdev_id);
 	ar = ab->pdevs[pdev_id].ar;
-	++data;
 
-	trace_ath11k_htt_pktlog(ar, data, len);
+	trace_ath11k_htt_pktlog(ar, data->payload, len);
 }
 
 void ath11k_dp_htt_htc_t2h_msg_handler(struct ath11k_base *ab,
