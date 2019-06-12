@@ -329,9 +329,9 @@ static void ath11k_dp_reo_cache_flush(struct ath11k_base *ab,
 		tot_desc_sz -= desc_sz;
 		cmd.addr_lo = lower_32_bits(rx_tid->paddr + tot_desc_sz);
 		cmd.addr_hi = upper_32_bits(rx_tid->paddr);
-		ret = ath11k_dp_send_reo_cmd(ab, rx_tid,
-					     HAL_REO_CMD_FLUSH_CACHE, &cmd,
-					     NULL);
+		ret = ath11k_dp_tx_send_reo_cmd(ab, rx_tid,
+						HAL_REO_CMD_FLUSH_CACHE, &cmd,
+						NULL);
 		if (ret)
 			ath11k_warn(ab,
 				    "failed to send HAL_REO_CMD_FLUSH_CACHE, tid %d (%d)\n",
@@ -342,9 +342,9 @@ static void ath11k_dp_reo_cache_flush(struct ath11k_base *ab,
 	cmd.addr_lo = lower_32_bits(rx_tid->paddr);
 	cmd.addr_hi = upper_32_bits(rx_tid->paddr);
 	cmd.flag |= HAL_REO_CMD_FLG_NEED_STATUS;
-	ret = ath11k_dp_send_reo_cmd(ab, rx_tid,
-				     HAL_REO_CMD_FLUSH_CACHE,
-				     &cmd, ath11k_dp_reo_cmd_free);
+	ret = ath11k_dp_tx_send_reo_cmd(ab, rx_tid,
+					HAL_REO_CMD_FLUSH_CACHE,
+					&cmd, ath11k_dp_reo_cmd_free);
 	if (ret) {
 		ath11k_err(ab, "failed to send HAL_REO_CMD_FLUSH_CACHE cmd, tid %d (%d)\n",
 			   rx_tid->tid, ret);
@@ -420,9 +420,9 @@ static void ath11k_peer_rx_tid_delete(struct ath11k *ar,
 	cmd.addr_lo = lower_32_bits(rx_tid->paddr);
 	cmd.addr_hi = upper_32_bits(rx_tid->paddr);
 	cmd.upd0 |= HAL_REO_CMD_UPD0_VLD;
-	ret = ath11k_dp_send_reo_cmd(ar->ab, rx_tid,
-				     HAL_REO_CMD_UPDATE_RX_QUEUE, &cmd,
-				     ath11k_dp_rx_tid_del_func);
+	ret = ath11k_dp_tx_send_reo_cmd(ar->ab, rx_tid,
+					HAL_REO_CMD_UPDATE_RX_QUEUE, &cmd,
+					ath11k_dp_rx_tid_del_func);
 	if (ret) {
 		ath11k_err(ar->ab, "failed to send HAL_REO_CMD_UPDATE_RX_QUEUE cmd, tid %d (%d)\n",
 			   tid, ret);
@@ -458,8 +458,9 @@ static int ath11k_peer_rx_tid_reo_update(struct ath11k *ar,
 	cmd.ba_window_size = ba_win_sz;
 	cmd.upd2 = FIELD_PREP(HAL_REO_CMD_UPD2_SSN, ssn);
 
-	ret = ath11k_dp_send_reo_cmd(ar->ab, rx_tid,
-				     HAL_REO_CMD_UPDATE_RX_QUEUE, &cmd, NULL);
+	ret = ath11k_dp_tx_send_reo_cmd(ar->ab, rx_tid,
+					HAL_REO_CMD_UPDATE_RX_QUEUE, &cmd,
+					NULL);
 	if (ret) {
 		ath11k_warn(ar->ab, "failed to update rx tid queue, tid %d (%d)\n",
 			    rx_tid->tid, ret);
@@ -3199,7 +3200,7 @@ int ath11k_dp_rx_pdev_alloc(struct ath11k_base *ab, int mac_id)
 	}
 
 	ring_id = dp->rx_refill_buf_ring.refill_buf_ring.ring_id;
-	ret = ath11k_dp_htt_srng_setup(ab, ring_id, mac_id, HAL_RXDMA_BUF);
+	ret = ath11k_dp_tx_htt_srng_setup(ab, ring_id, mac_id, HAL_RXDMA_BUF);
 	if (ret) {
 		ath11k_warn(ab, "failed to configure rx_refill_buf_ring %d\n",
 			    ret);
@@ -3207,7 +3208,7 @@ int ath11k_dp_rx_pdev_alloc(struct ath11k_base *ab, int mac_id)
 	}
 
 	ring_id = dp->rxdma_err_dst_ring.ring_id;
-	ret = ath11k_dp_htt_srng_setup(ab, ring_id, mac_id, HAL_RXDMA_DST);
+	ret = ath11k_dp_tx_htt_srng_setup(ab, ring_id, mac_id, HAL_RXDMA_DST);
 	if (ret) {
 		ath11k_warn(ab, "failed to configure rxdma_err_dest_ring %d\n",
 			    ret);
@@ -3215,32 +3216,32 @@ int ath11k_dp_rx_pdev_alloc(struct ath11k_base *ab, int mac_id)
 	}
 
 	ring_id = dp->rxdma_mon_buf_ring.refill_buf_ring.ring_id;
-	ret = ath11k_dp_htt_srng_setup(ab, ring_id,
-				       mac_id, HAL_RXDMA_MONITOR_BUF);
+	ret = ath11k_dp_tx_htt_srng_setup(ab, ring_id,
+					  mac_id, HAL_RXDMA_MONITOR_BUF);
 	if (ret) {
 		ath11k_warn(ab, "failed to configure rxdma_mon_buf_ring %d\n",
 			    ret);
 		return ret;
 	}
-	ret = ath11k_dp_htt_srng_setup(ab,
-				       dp->rxdma_mon_dst_ring.ring_id,
-				       mac_id, HAL_RXDMA_MONITOR_DST);
+	ret = ath11k_dp_tx_htt_srng_setup(ab,
+					  dp->rxdma_mon_dst_ring.ring_id,
+					  mac_id, HAL_RXDMA_MONITOR_DST);
 	if (ret) {
 		ath11k_warn(ab, "failed to configure rxdma_mon_dst_ring %d\n",
 			    ret);
 		return ret;
 	}
-	ret = ath11k_dp_htt_srng_setup(ab,
-				       dp->rxdma_mon_desc_ring.ring_id,
-				       mac_id, HAL_RXDMA_MONITOR_DESC);
+	ret = ath11k_dp_tx_htt_srng_setup(ab,
+					  dp->rxdma_mon_desc_ring.ring_id,
+					  mac_id, HAL_RXDMA_MONITOR_DESC);
 	if (ret) {
 		ath11k_warn(ab, "failed to configure rxdma_mon_dst_ring %d\n",
 			    ret);
 		return ret;
 	}
 	ring_id = dp->rx_mon_status_refill_ring.refill_buf_ring.ring_id;
-	ret = ath11k_dp_htt_srng_setup(ab, ring_id, mac_id,
-				       HAL_RXDMA_MONITOR_STATUS);
+	ret = ath11k_dp_tx_htt_srng_setup(ab, ring_id, mac_id,
+					  HAL_RXDMA_MONITOR_STATUS);
 	if (ret) {
 		ath11k_warn(ab,
 			    "failed to configure mon_status_refill_ring %d\n",

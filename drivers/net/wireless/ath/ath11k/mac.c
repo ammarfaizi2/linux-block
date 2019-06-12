@@ -3642,7 +3642,8 @@ static int ath11k_start(struct ieee80211_hw *hw)
 		goto err;
 	}
 
-	ret = ath11k_dp_htt_h2t_ppdu_stats_req(ar, HTT_PPDU_STATS_TAG_DEFAULT);
+	ret = ath11k_dp_tx_htt_h2t_ppdu_stats_req(ar,
+						  HTT_PPDU_STATS_TAG_DEFAULT);
 	if (ret) {
 		ath11k_err(ab, "failed to req ppdu stats: %d\n", ret);
 		goto err;
@@ -4102,7 +4103,7 @@ static void ath11k_configure_filter(struct ieee80211_hw *hw,
 	/* For monitor mode */
 	reset_flag = !(ar->filter_flags & FIF_BCN_PRBRESP_PROMISC);
 
-	ret = ath11k_dp_htt_monitor_mode_ring_config(ar, reset_flag);
+	ret = ath11k_dp_tx_htt_monitor_mode_ring_config(ar, reset_flag);
 	if (!ret) {
 		if (!reset_flag)
 			set_bit(ATH11K_FLAG_MONITOR_ENABLED, &ar->monitor_flags);

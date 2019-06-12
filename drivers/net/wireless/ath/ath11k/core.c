@@ -579,7 +579,7 @@ static int ath11k_core_start(struct ath11k_base *sc,
 		goto err_hif_stop;
 	}
 
-	ret = ath11k_dp_htt_h2t_ver_req_msg(sc);
+	ret = ath11k_dp_tx_htt_h2t_ver_req_msg(sc);
 	if (ret) {
 		ath11k_err(sc, "failed to send htt version request message: %d\n",
 			   ret);

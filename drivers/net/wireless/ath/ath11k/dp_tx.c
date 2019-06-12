@@ -13,13 +13,13 @@ static const u8
 ath11k_txq_tcl_ring_map[ATH11K_HW_MAX_QUEUES] = { 0x0, 0x1, 0x2, 0x2 };
 
 static enum hal_tcl_encap_type
-ath11k_dp_get_encap_type(struct ath11k_vif *arvif, struct sk_buff *skb)
+ath11k_dp_tx_get_encap_type(struct ath11k_vif *arvif, struct sk_buff *skb)
 {
 	/* TODO: Determine encap type based on vif_type and configuration */
 	return HAL_TCL_ENCAP_TYPE_NATIVE_WIFI;
 }
 
-static void ath11k_dp_encap_nwifi(struct sk_buff *skb)
+static void ath11k_dp_tx_encap_nwifi(struct sk_buff *skb)
 {
 	struct ieee80211_hdr *hdr = (void *)skb->data;
 	u8 *qos_ctl;
@@ -36,7 +36,7 @@ static void ath11k_dp_encap_nwifi(struct sk_buff *skb)
 	hdr->frame_control &= ~__cpu_to_le16(IEEE80211_STYPE_QOS_DATA);
 }
 
-static u8 ath11k_dp_get_tid(struct sk_buff *skb)
+static u8 ath11k_dp_tx_get_tid(struct sk_buff *skb)
 {
 	struct ieee80211_hdr *hdr = (void *)skb->data;
 
@@ -46,7 +46,7 @@ static u8 ath11k_dp_get_tid(struct sk_buff *skb)
 		return skb->priority & IEEE80211_QOS_CTL_TID_MASK;
 }
 
-static enum hal_encrypt_type ath11k_dp_get_encrypt_type(u32 cipher)
+static enum hal_encrypt_type ath11k_dp_tx_get_encrypt_type(u32 cipher)
 {
 	switch (cipher) {
 	case WLAN_CIPHER_SUITE_WEP40:
@@ -107,12 +107,12 @@ int ath11k_dp_tx(struct ath11k *ar, struct ath11k_vif *arvif,
 	ti.desc_id = FIELD_PREP(DP_TX_DESC_ID_MAC_ID, ar->pdev_idx) |
 		     FIELD_PREP(DP_TX_DESC_ID_MSDU_ID, ret) |
 		     FIELD_PREP(DP_TX_DESC_ID_POOL_ID, pool_id);
-	ti.encap_type = ath11k_dp_get_encap_type(arvif, skb);
+	ti.encap_type = ath11k_dp_tx_get_encap_type(arvif, skb);
 	ti.meta_data_flags = arvif->tcl_metadata;
 
 	if (info->control.hw_key) {
 		ti.encrypt_type =
-			ath11k_dp_get_encrypt_type(info->control.hw_key->cipher);
+		ath11k_dp_tx_get_encrypt_type(info->control.hw_key->cipher);
 	} else {
 		ti.encrypt_type = HAL_ENCRYPT_TYPE_OPEN;
 	}
@@ -136,11 +136,11 @@ int ath11k_dp_tx(struct ath11k *ar, struct ath11k_vif *arvif,
 		ti.flags1 |= FIELD_PREP(HAL_TCL_DATA_CMD_INFO2_MESH_ENABLE, 1);
 	ti.flags1 |= FIELD_PREP(HAL_TCL_DATA_CMD_INFO2_TID_OVERWRITE, 1);
 
-	ti.tid = ath11k_dp_get_tid(skb);
+	ti.tid = ath11k_dp_tx_get_tid(skb);
 
 	switch (ti.encap_type) {
 	case HAL_TCL_ENCAP_TYPE_NATIVE_WIFI:
-		ath11k_dp_encap_nwifi(skb);
+		ath11k_dp_tx_encap_nwifi(skb);
 		break;
 	case HAL_TCL_ENCAP_TYPE_RAW:
 		/*  TODO: for CHECKSUM_PARTIAL case in raw mode, HW checksum offload
@@ -215,9 +215,9 @@ fail_remove_idr:
 	return ret;
 }
 
-static void ath11k_dp_free_txbuf(struct ath11k_base *ab, u8 mac_id,
-				 int msdu_id,
-				 struct dp_tx_ring *tx_ring)
+static void ath11k_dp_tx_free_txbuf(struct ath11k_base *ab, u8 mac_id,
+				    int msdu_id,
+				    struct dp_tx_ring *tx_ring)
 {
 	struct ath11k *ar;
 	struct sk_buff *msdu;
@@ -246,9 +246,10 @@ static void ath11k_dp_free_txbuf(struct ath11k_base *ab, u8 mac_id,
 		wake_up(&ar->dp.tx_empty_waitq);
 }
 
-static void ath11k_dp_htt_tx_complete_buf(struct ath11k_base *ab,
-					  struct dp_tx_ring *tx_ring,
-					  struct ath11k_dp_htt_wbm_tx_status *ts)
+static void
+ath11k_dp_tx_htt_tx_complete_buf(struct ath11k_base *ab,
+				 struct dp_tx_ring *tx_ring,
+				 struct ath11k_dp_htt_wbm_tx_status *ts)
 {
 	struct sk_buff *msdu;
 	struct ieee80211_tx_info *info;
@@ -295,9 +296,9 @@ static void ath11k_dp_htt_tx_complete_buf(struct ath11k_base *ab,
 }
 
 static void
-ath11k_dp_process_htt_tx_complete(struct ath11k_base *ab,
-				  void *desc, u8 mac_id,
-				  u32 msdu_id, struct dp_tx_ring *tx_ring)
+ath11k_dp_tx_process_htt_tx_complete(struct ath11k_base *ab,
+				     void *desc, u8 mac_id,
+				     u32 msdu_id, struct dp_tx_ring *tx_ring)
 {
 	struct htt_tx_wbm_completion *status_desc;
 	struct ath11k_dp_htt_wbm_tx_status ts = {0};
@@ -316,11 +317,11 @@ ath11k_dp_process_htt_tx_complete(struct ath11k_base *ab,
 		ts.msdu_id = msdu_id;
 		ts.ack_rssi = FIELD_GET(HTT_TX_WBM_COMP_INFO1_ACK_RSSI,
 					status_desc->info1);
-		ath11k_dp_htt_tx_complete_buf(ab, tx_ring, &ts);
+		ath11k_dp_tx_htt_tx_complete_buf(ab, tx_ring, &ts);
 		break;
 	case HAL_WBM_REL_HTT_TX_COMP_STATUS_REINJ:
 	case HAL_WBM_REL_HTT_TX_COMP_STATUS_INSPECT:
-		ath11k_dp_free_txbuf(ab, mac_id, msdu_id, tx_ring);
+		ath11k_dp_tx_free_txbuf(ab, mac_id, msdu_id, tx_ring);
 		break;
 	case HAL_WBM_REL_HTT_TX_COMP_STATUS_MEC_NOTIFY:
 		/* This event is to be handled only when the driver decides to
@@ -333,9 +334,9 @@ ath11k_dp_process_htt_tx_complete(struct ath11k_base *ab,
 	}
 }
 
-static void ath11k_dp_cache_peer_stats(struct ath11k *ar,
-				       struct sk_buff *msdu,
-				       struct hal_tx_status *ts)
+static void ath11k_dp_tx_cache_peer_stats(struct ath11k *ar,
+					  struct sk_buff *msdu,
+					  struct hal_tx_status *ts)
 {
 	struct ath11k_per_peer_tx_stats *peer_stats = &ar->cached_stats;
 
@@ -417,7 +418,7 @@ static void ath11k_dp_tx_complete_msdu(struct ath11k *ar,
 			ar->last_ppdu_id = ts->ppdu_id;
 		}
 
-		ath11k_dp_cache_peer_stats(ar, msdu, ts);
+		ath11k_dp_tx_cache_peer_stats(ar, msdu, ts);
 	}
 
 	/* NOTE: Tx rate status reporting. Tx completion status does not have
@@ -481,10 +482,10 @@ void ath11k_dp_tx_completion_handler(struct ath11k_base *ab, int ring_id)
 		tcl_id = ath11k_txq_tcl_ring_map[pool_id];
 
 		if (ts.buf_rel_source == HAL_WBM_REL_SRC_MODULE_FW) {
-			ath11k_dp_process_htt_tx_complete(ab,
-							  (void *)&tx_status,
-							  mac_id,
-							  msdu_id, tx_ring);
+			ath11k_dp_tx_process_htt_tx_complete(ab,
+							     (void *)&tx_status,
+							     mac_id, msdu_id,
+							     tx_ring);
 			continue;
 		}
 
@@ -513,11 +514,11 @@ void ath11k_dp_tx_completion_handler(struct ath11k_base *ab, int ring_id)
 	spin_unlock_bh(&tx_ring->tx_status_lock);
 }
 
-int ath11k_dp_send_reo_cmd(struct ath11k_base *ab, struct dp_rx_tid *rx_tid,
-			   enum hal_reo_cmd_type type,
-			   struct ath11k_hal_reo_cmd *cmd,
-			   void (*cb)(struct ath11k_dp *, void *,
-				      enum hal_reo_cmd_status))
+int ath11k_dp_tx_send_reo_cmd(struct ath11k_base *ab, struct dp_rx_tid *rx_tid,
+			      enum hal_reo_cmd_type type,
+			      struct ath11k_hal_reo_cmd *cmd,
+			      void (*cb)(struct ath11k_dp *, void *,
+					 enum hal_reo_cmd_status))
 {
 	struct ath11k_dp *dp = &ab->dp;
 	struct dp_reo_cmd *dp_cmd;
@@ -555,11 +556,11 @@ int ath11k_dp_send_reo_cmd(struct ath11k_base *ab, struct dp_rx_tid *rx_tid,
 }
 
 static int
-ath11k_dp_get_ring_id_type(struct ath11k_base *ab,
-			   int mac_id, u32 ring_id,
-			   enum hal_ring_type ring_type,
-			   enum htt_srng_ring_type *htt_ring_type,
-			   enum htt_srng_ring_id *htt_ring_id)
+ath11k_dp_tx_get_ring_id_type(struct ath11k_base *ab,
+			      int mac_id, u32 ring_id,
+			      enum hal_ring_type ring_type,
+			      enum htt_srng_ring_type *htt_ring_type,
+			      enum htt_srng_ring_id *htt_ring_id)
 {
 	int lmac_ring_id_offset = 0;
 	int ret = 0;
@@ -603,8 +604,8 @@ ath11k_dp_get_ring_id_type(struct ath11k_base *ab,
 	return ret;
 }
 
-int ath11k_dp_htt_srng_setup(struct ath11k_base *ab, u32 ring_id,
-			     int mac_id, enum hal_ring_type ring_type)
+int ath11k_dp_tx_htt_srng_setup(struct ath11k_base *ab, u32 ring_id,
+				int mac_id, enum hal_ring_type ring_type)
 {
 	struct htt_srng_setup_cmd *cmd;
 	struct hal_srng *srng = &ab->hal.srng_list[ring_id];
@@ -627,9 +628,9 @@ int ath11k_dp_htt_srng_setup(struct ath11k_base *ab, u32 ring_id,
 	hp_addr = ath11k_hal_srng_get_hp_addr(ab, srng);
 	tp_addr = ath11k_hal_srng_get_tp_addr(ab, srng);
 
-	if (ath11k_dp_get_ring_id_type(ab, mac_id, ring_id,
-				       ring_type, &htt_ring_type,
-				       &htt_ring_id))
+	if (ath11k_dp_tx_get_ring_id_type(ab, mac_id, ring_id,
+					  ring_type, &htt_ring_type,
+					  &htt_ring_id))
 		goto err_free;
 
 	skb_put(skb, len);
@@ -713,7 +714,7 @@ err_free:
 
 #define HTT_TARGET_VERSION_TIMEOUT_HZ (3 * HZ)
 
-int ath11k_dp_htt_h2t_ver_req_msg(struct ath11k_base *ab)
+int ath11k_dp_tx_htt_h2t_ver_req_msg(struct ath11k_base *ab)
 {
 	struct ath11k_dp *dp = &ab->dp;
 	struct sk_buff *skb;
@@ -754,7 +755,7 @@ int ath11k_dp_htt_h2t_ver_req_msg(struct ath11k_base *ab)
 	return 0;
 }
 
-int ath11k_dp_htt_h2t_ppdu_stats_req(struct ath11k *ar, u32 mask)
+int ath11k_dp_tx_htt_h2t_ppdu_stats_req(struct ath11k *ar, u32 mask)
 {
 	struct ath11k_base *ab = ar->ab;
 	struct ath11k_dp *dp = &ab->dp;
@@ -786,10 +787,10 @@ int ath11k_dp_htt_h2t_ppdu_stats_req(struct ath11k *ar, u32 mask)
 	return 0;
 }
 
-int ath11k_dp_htt_rx_filter_setup(struct ath11k_base *ab, u32 ring_id,
-				  int mac_id, enum hal_ring_type ring_type,
-				  int rx_buf_size,
-				  struct htt_rx_ring_tlv_filter *tlv_filter)
+int ath11k_dp_tx_htt_rx_filter_setup(struct ath11k_base *ab, u32 ring_id,
+				     int mac_id, enum hal_ring_type ring_type,
+				     int rx_buf_size,
+				     struct htt_rx_ring_tlv_filter *tlv_filter)
 {
 	struct htt_rx_ring_selection_cfg_cmd *cmd;
 	struct hal_srng *srng = &ab->hal.srng_list[ring_id];
@@ -807,9 +808,9 @@ int ath11k_dp_htt_rx_filter_setup(struct ath11k_base *ab, u32 ring_id,
 	memset(&params, 0, sizeof(params));
 	ath11k_hal_srng_get_params(ab, srng, &params);
 
-	if (ath11k_dp_get_ring_id_type(ab, mac_id, ring_id,
-				       ring_type, &htt_ring_type,
-				       &htt_ring_id))
+	if (ath11k_dp_tx_get_ring_id_type(ab, mac_id, ring_id,
+					  ring_type, &htt_ring_type,
+					  &htt_ring_id))
 		goto err_free;
 
 	skb_put(skb, len);
@@ -852,9 +853,10 @@ err_free:
 	return ret;
 }
 
-int ath11k_dp_htt_h2t_ext_stats_req(struct ath11k *ar, u8 type,
-				    struct htt_ext_stats_cfg_params *cfg_params,
-				    u64 cookie)
+int
+ath11k_dp_tx_htt_h2t_ext_stats_req(struct ath11k *ar, u8 type,
+				   struct htt_ext_stats_cfg_params *cfg_params,
+				   u64 cookie)
 {
 	struct ath11k_base *ab = ar->ab;
 	struct ath11k_dp *dp = &ab->dp;
@@ -894,7 +896,7 @@ int ath11k_dp_htt_h2t_ext_stats_req(struct ath11k *ar, u8 type,
 	return 0;
 }
 
-int ath11k_dp_htt_monitor_mode_ring_config(struct ath11k *ar, bool reset)
+int ath11k_dp_tx_htt_monitor_mode_ring_config(struct ath11k *ar, bool reset)
 {
 	struct ath11k_pdev_dp *dp = &ar->dp;
 	struct htt_rx_ring_tlv_filter tlv_filter = {0};
@@ -920,10 +922,10 @@ int ath11k_dp_htt_monitor_mode_ring_config(struct ath11k *ar, bool reset)
 					HTT_RX_MON_MO_DATA_FILTER_FLASG3;
 	}
 
-	ret = ath11k_dp_htt_rx_filter_setup(ar->ab, ring_id, dp->mac_id,
-					    HAL_RXDMA_MONITOR_BUF,
-					    DP_RXDMA_REFILL_RING_SIZE,
-					    &tlv_filter);
+	ret = ath11k_dp_tx_htt_rx_filter_setup(ar->ab, ring_id, dp->mac_id,
+					       HAL_RXDMA_MONITOR_BUF,
+					       DP_RXDMA_REFILL_RING_SIZE,
+					       &tlv_filter);
 	if (ret)
 		return ret;
 
@@ -932,9 +934,9 @@ int ath11k_dp_htt_monitor_mode_ring_config(struct ath11k *ar, bool reset)
 		tlv_filter.rx_filter =
 				HTT_RX_MON_FILTER_TLV_FLAGS_MON_STATUS_RING;
 
-	ret = ath11k_dp_htt_rx_filter_setup(ar->ab, ring_id, dp->mac_id,
-					    HAL_RXDMA_MONITOR_STATUS,
-					    DP_RXDMA_REFILL_RING_SIZE,
-					    &tlv_filter);
+	ret = ath11k_dp_tx_htt_rx_filter_setup(ar->ab, ring_id, dp->mac_id,
+					       HAL_RXDMA_MONITOR_STATUS,
+					       DP_RXDMA_REFILL_RING_SIZE,
+					       &tlv_filter);
 	return ret;
 }

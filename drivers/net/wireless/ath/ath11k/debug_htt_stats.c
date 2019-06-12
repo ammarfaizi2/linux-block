@@ -4340,7 +4340,7 @@ int ath11k_dbg_htt_stats_req(struct ath11k *ar,
 	}
 
 	mutex_lock(&ar->conf_mutex);
-	ret = ath11k_dp_htt_h2t_ext_stats_req(ar, type, &cfg_params, cookie);
+	ret = ath11k_dp_tx_htt_h2t_ext_stats_req(ar, type, &cfg_params, cookie);
 	if (ret) {
 		ath11k_warn(ar->ab, "failed to send htt stats request: %d\n", ret);
 		mutex_unlock(&ar->conf_mutex);
@@ -4440,10 +4440,10 @@ static ssize_t ath11k_write_htt_stats_reset(struct file *file,
 	mutex_lock(&ar->conf_mutex);
 	cfg_params.cfg0 = HTT_STAT_DEFAULT_RESET_START_OFFSET;
 	cfg_params.cfg1 = 1 << (cfg_params.cfg0 + type);
-	ret = ath11k_dp_htt_h2t_ext_stats_req(ar,
-					      ATH11K_DBG_HTT_EXT_STATS_RESET,
-					      &cfg_params,
-					      0ULL);
+	ret = ath11k_dp_tx_htt_h2t_ext_stats_req(ar,
+						 ATH11K_DBG_HTT_EXT_STATS_RESET,
+						 &cfg_params,
+						 0ULL);
 	if (ret) {
 		ath11k_warn(ar->ab, "failed to send htt stats request: %d\n", ret);
 		mutex_unlock(&ar->conf_mutex);
