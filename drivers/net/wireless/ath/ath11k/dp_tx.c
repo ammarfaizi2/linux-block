@@ -359,7 +359,7 @@ static void ath11k_dp_tx_complete_msdu(struct ath11k *ar,
 	struct ieee80211_tx_info *info;
 	struct ath11k_skb_cb *skb_cb;
 
-	if (WARN_ON(ts->buf_rel_source != HAL_WBM_REL_SRC_MODULE_TQM)) {
+	if (WARN_ON_ONCE(ts->buf_rel_source != HAL_WBM_REL_SRC_MODULE_TQM)) {
 		/* Must not happen */
 		return;
 	}
