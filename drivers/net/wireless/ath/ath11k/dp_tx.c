@@ -248,7 +248,7 @@ static void ath11k_dp_free_txbuf(struct ath11k_base *ab, u8 mac_id,
 
 static void ath11k_dp_htt_tx_complete_buf(struct ath11k_base *ab,
 					  struct dp_tx_ring *tx_ring,
-					  struct dp_htt_wbm_tx_status *ts)
+					  struct ath11k_dp_htt_wbm_tx_status *ts)
 {
 	struct sk_buff *msdu;
 	struct ieee80211_tx_info *info;
@@ -300,7 +300,7 @@ ath11k_dp_process_htt_tx_complete(struct ath11k_base *ab,
 				  u32 msdu_id, struct dp_tx_ring *tx_ring)
 {
 	struct htt_tx_wbm_completion *status_desc;
-	struct dp_htt_wbm_tx_status ts = {0};
+	struct ath11k_dp_htt_wbm_tx_status ts = {0};
 	enum hal_wbm_htt_tx_comp_status wbm_status;
 
 	status_desc = desc + HTT_TX_WBM_COMP_STATUS_OFFSET;

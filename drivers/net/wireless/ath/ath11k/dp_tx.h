@@ -9,7 +9,7 @@
 #include "core.h"
 #include "hal_tx.h"
 
-struct dp_htt_wbm_tx_status {
+struct ath11k_dp_htt_wbm_tx_status {
 	u32 msdu_id;
 	bool acked;
 	int ack_rssi;
