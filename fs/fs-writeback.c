@@ -723,7 +723,7 @@ void wbc_account_io(struct writeback_control *wbc, struct page *page,
 	 * behind a slow cgroup.  Ultimately, we want pageout() to kick off
 	 * regular writeback instead of writing things out itself.
 	 */
-	if (!wbc->wb)
+	if (!wbc->wb || wbc->no_wbc_acct)
 		return;
 
 	id = mem_cgroup_css_from_page(page)->id;
