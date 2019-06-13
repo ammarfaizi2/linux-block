@@ -9,6 +9,7 @@
 #include "wmi.h"
 #include "hal_rx.h"
 #include "dp_tx.h"
+#include "debug_htt_stats.h"
 
 void ath11k_info(struct ath11k_base *sc, const char *fmt, ...)
 {
@@ -1145,7 +1146,7 @@ int ath11k_debug_register(struct ath11k *ar)
 	snprintf(buf, 100, "../../%pd2", ar->debug.debugfs_pdev);
 	debugfs_create_symlink("ath11k", ar->hw->wiphy->debugfsdir, buf);
 
-	ath11k_htt_stats_debugfs_init(ar);
+	ath11k_debug_htt_stats_init(ar);
 
 	ath11k_debug_fw_stats_init(ar);
 

@@ -134,7 +134,6 @@ int ath11k_debug_soc_create(struct ath11k_base *sc);
 void ath11k_debug_soc_destroy(struct ath11k_base *sc);
 int ath11k_debug_register(struct ath11k *ar);
 void ath11k_debug_unregister(struct ath11k *ar);
-void ath11k_htt_stats_debugfs_init(struct ath11k *ar);
 void ath11k_dbg_htt_ext_stats_handler(struct ath11k_base *ab,
 				      struct sk_buff *skb);
 void ath11k_debug_fw_stats_process(struct ath11k_base *ab, u8 *evt_buf,
@@ -185,10 +184,6 @@ static inline int ath11k_debug_register(struct ath11k *ar)
 }
 
 static inline void ath11k_debug_unregister(struct ath11k *ar)
-{
-}
-
-static inline void ath11k_htt_stats_debugfs_init(struct ath11k *ar)
 {
 }
 

@@ -4482,7 +4482,7 @@ static const struct file_operations fops_htt_stats_reset = {
 	.llseek = default_llseek,
 };
 
-void ath11k_htt_stats_debugfs_init(struct ath11k *ar)
+void ath11k_debug_htt_stats_init(struct ath11k *ar)
 {
 	spin_lock_init(&ar->debug.htt_stats.lock);
 	debugfs_create_file("htt_stats_type", 0600, ar->debug.debugfs_pdev,

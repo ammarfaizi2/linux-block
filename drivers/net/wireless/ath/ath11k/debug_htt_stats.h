@@ -1612,4 +1612,6 @@ struct htt_pdev_obss_pd_stats_tlv {
 	u32        num_obss_tx_ppdu_success;
 	u32        num_obss_tx_ppdu_failure;
 };
+
+void ath11k_debug_htt_stats_init(struct ath11k *ar);
 #endif
