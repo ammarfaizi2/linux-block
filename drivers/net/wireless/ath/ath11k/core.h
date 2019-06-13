@@ -19,6 +19,7 @@
 #include "mac.h"
 #include "hw.h"
 #include "hal_rx.h"
+#include "reg.h"
 
 #define SM(_v, _f) (((_v) << _f##_LSB) & _f##_MASK)
 
@@ -300,16 +301,6 @@ enum ath11k_stats_type {
 	ATH11K_STATS_TYPE_RETRY,
 	ATH11K_STATS_TYPE_AMPDU,
 	ATH11K_STATS_TYPE_MAX,
-};
-
-enum ath11k_dfs_region {
-	ATH11K_DFS_REG_UNSET,
-	ATH11K_DFS_REG_FCC,
-	ATH11K_DFS_REG_ETSI,
-	ATH11K_DFS_REG_MKK,
-	ATH11K_DFS_REG_CN,
-	ATH11K_DFS_REG_KR,
-	ATH11K_DFS_REG_UNDEF,
 };
 
 struct ath11k_htt_data_stats {
@@ -817,15 +808,6 @@ int ath11k_core_fetch_bdf(struct ath11k_base *ath11k,
 			  struct ath11k_board_data *bd);
 void ath11k_core_free_bdf(struct ath11k_base *sc, struct ath11k_board_data *bd);
 
-/* ATH11K Regulatory API's */
-void ath11k_reg_init(struct ath11k *ar);
-void ath11k_reg_free(struct ath11k_base *ab);
-void ath11k_regd_update_work(struct work_struct *work);
-struct ieee80211_regdomain *
-ath11k_reg_build_regd(struct ath11k_base *ab,
-		      struct cur_regulatory_info *reg_info, bool intersect);
-int ath11k_regd_update(struct ath11k *ar, bool init);
-int ath11k_reg_update_chan_list(struct ath11k *ar);
 void ath11k_core_halt(struct ath11k *ar);
 u8 ath11k_core_get_hw_mac_id(struct ath11k_base *ab, int pdev_idx);
 
