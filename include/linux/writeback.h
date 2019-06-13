@@ -93,6 +93,16 @@ static inline int wbc_to_write_flags(struct writeback_control *wbc)
 	return 0;
 }
 
+static inline struct cgroup_subsys_state *
+wbc_blkcg_css(struct writeback_control *wbc)
+{
+#ifdef CONFIG_CGROUP_WRITEBACK
+	if (wbc->wb)
+		return wbc->wb->blkcg_css;
+#endif
+	return blkcg_root_css;
+}
+
 /*
  * A wb_domain represents a domain that wb's (bdi_writeback's) belong to
  * and are measured against each other in.  There always is one global
