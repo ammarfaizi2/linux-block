@@ -4288,16 +4288,6 @@ enum cc_setting_code {
 	REG_SET_CC_STATUS_FAIL = 5,
 };
 
-enum dfs_reg {
-	DFS_UNINIT_REG = 0,
-	DFS_FCC_REG = 1,
-	DFS_ETSI_REG = 2,
-	DFS_MKK_REG = 3,
-	DFS_CN_REG = 4,
-	DFS_KR_REG = 5,
-	DFS_UNDEF_REG
-};
-
 /* Regaulatory Rule Flags Passed by FW */
 #define REGULATORY_CHAN_DISABLED     BIT(0)
 #define REGULATORY_CHAN_NO_IR        BIT(1)
@@ -4336,7 +4326,7 @@ struct cur_regulatory_info {
 	u16 reg_dmn_pair;
 	u16 ctry_code;
 	u8 alpha2[REG_ALPHA2_LEN + 1];
-	enum dfs_reg dfs_region;
+	u32 dfs_region;
 	u32 phybitmap;
 	u32 min_bw_2g;
 	u32 max_bw_2g;

@@ -263,16 +263,16 @@ err:
 }
 
 static enum nl80211_dfs_regions
-ath11k_map_fw_dfs_region(enum dfs_reg dfs_region)
+ath11k_map_fw_dfs_region(enum ath11k_dfs_region dfs_region)
 {
 	switch (dfs_region) {
-	case DFS_FCC_REG:
-	case DFS_CN_REG:
+	case ATH11K_DFS_REG_FCC:
+	case ATH11K_DFS_REG_CN:
 		return NL80211_DFS_FCC;
-	case DFS_ETSI_REG:
-	case DFS_KR_REG:
+	case ATH11K_DFS_REG_ETSI:
+	case ATH11K_DFS_REG_KR:
 		return NL80211_DFS_ETSI;
-	case DFS_MKK_REG:
+	case ATH11K_DFS_REG_MKK:
 		return NL80211_DFS_JP;
 	default:
 		return NL80211_DFS_UNSET;
@@ -568,7 +568,7 @@ ath11k_reg_build_regd(struct ath11k_base *ab,
 		goto ret;
 
 	/* Add max additional rules to accommodate weather radar band */
-	if (reg_info->dfs_region == DFS_ETSI_REG)
+	if (reg_info->dfs_region == ATH11K_DFS_REG_ETSI)
 		num_rules += 2;
 
 	tmp_regd =  kzalloc(sizeof(*tmp_regd) +
@@ -631,7 +631,7 @@ ath11k_reg_build_regd(struct ath11k_base *ab,
 		 * need to update that for other rules.
 		 */
 		if (flags & NL80211_RRF_DFS &&
-		    reg_info->dfs_region == DFS_ETSI_REG &&
+		    reg_info->dfs_region == ATH11K_DFS_REG_ETSI &&
 		    (reg_rule->end_freq > ETSI_WEATHER_RADAR_BAND_LOW &&
 		    reg_rule->start_freq < ETSI_WEATHER_RADAR_BAND_HIGH)){
 			ath11k_reg_update_weather_radar_band(ab, tmp_regd,
