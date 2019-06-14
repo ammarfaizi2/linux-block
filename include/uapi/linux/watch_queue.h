@@ -3,6 +3,10 @@
 #define _UAPI_LINUX_WATCH_QUEUE_H
 
 #include <linux/types.h>
+#include <linux/ioctl.h>
+
+#define IOC_WATCH_QUEUE_SET_SIZE	_IO('W', 0x60)	/* Set the size in pages */
+#define IOC_WATCH_QUEUE_SET_FILTER	_IO('W', 0x61)	/* Set the filter */
 
 enum watch_notification_type {
 	WATCH_TYPE_META		= 0,	/* Special record */
@@ -31,10 +35,15 @@ struct watch_notification {
 #define WATCH_INFO_LENGTH	0x0000003f	/* Length of record / sizeof(watch_notification) */
 #define WATCH_INFO_LENGTH__SHIFT 0
 #define WATCH_INFO_TYPE_INFO	0xffff0000	/* Type-specific info */
+#define WATCH_INFO_TYPE_INFO__SHIFT 16
 #define WATCH_INFO_FLAG_0	0x00010000
 #define WATCH_INFO_FLAG_1	0x00020000
 #define WATCH_INFO_FLAG_2	0x00040000
 #define WATCH_INFO_FLAG_3	0x00080000
+#define WATCH_INFO_FLAG_4	0x00100000
+#define WATCH_INFO_FLAG_5	0x00200000
+#define WATCH_INFO_FLAG_6	0x00400000
+#define WATCH_INFO_FLAG_7	0x00800000
 #define WATCH_INFO_ID		0x0000ff00	/* ID of watchpoint, if type-appropriate */
 #define WATCH_INFO_ID__SHIFT	8
 } __attribute__((aligned(WATCH_LENGTH_GRANULARITY)));
@@ -62,5 +71,22 @@ struct watch_queue_buffer {
  * (eg. parisc) have no kernel<->user atomic bit ops.
  */
 #define WATCH_INFO_NOTIFICATIONS_LOST WATCH_INFO_FLAG_0
+
+/*
+ * Notification filtering rules (IOC_WATCH_QUEUE_SET_FILTER).
+ */
+struct watch_notification_type_filter {
+	__u32	type;			/* Type to apply filter to */
+	__u32	info_filter;		/* Filter on watch_notification::info */
+	__u32	info_mask;		/* Mask of relevant bits in info_filter */
+	__u32	subtype_filter[8];	/* Bitmask of subtypes to filter on */
+};
+
+struct watch_notification_filter {
+	__u32	nr_filters;		/* Number of filters */
+	__u32	__reserved;		/* Must be 0 */
+	struct watch_notification_type_filter filters[];
+};
+
 
 #endif /* _UAPI_LINUX_WATCH_QUEUE_H */
