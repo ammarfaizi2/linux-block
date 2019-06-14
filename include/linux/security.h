@@ -59,6 +59,7 @@ struct fs_parameter;
 enum fs_value_type;
 struct fsinfo_kparams;
 struct watch;
+struct watch_notification;
 
 /* Default (no) options for the capable function */
 #define CAP_OPT_NONE 0x0
@@ -402,6 +403,9 @@ int security_watch_mount(struct watch *watch, struct path *path);
 int security_watch_sb(struct watch *watch, struct super_block *sb);
 int security_watch_key(struct watch *watch, struct key *key);
 int security_watch_devices(struct watch *watch);
+int security_post_notification(const struct cred *q_cred,
+			       const struct cred *cred,
+			       struct watch_notification *n);
 #endif /* CONFIG_WATCH_QUEUE */
 #else /* CONFIG_SECURITY */
 
@@ -1236,6 +1240,12 @@ static inline int security_watch_key(struct watch *watch, struct key *key)
 	return 0;
 }
 static inline int security_watch_devices(struct watch *watch)
+{
+	return 0;
+}
+static inline int security_post_notification(const struct cred *q_cred,
+					     const struct cred *cred,
+					     struct watch_notification *n)
 {
 	return 0;
 }
