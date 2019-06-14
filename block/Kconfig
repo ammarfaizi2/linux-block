@@ -132,6 +132,15 @@ config BLK_CGROUP_IOLATENCY
 
 	Note, this is an experimental interface and could be changed someday.
 
+config BLK_CGROUP_IOWEIGHT
+	bool "Enable support for weight based cgroup IO protection"
+	depends on BLK_CGROUP=y
+	---help---
+	Enabling this option enables the .weight interface for IO throttling.
+	The IO controller will attempt to maintain a IO distribution between
+	different groups based on their percentage of share of the overall
+	weight distribution.
+
 config BLK_WBT_MQ
 	bool "Multiqueue writeback throttling"
 	default y
