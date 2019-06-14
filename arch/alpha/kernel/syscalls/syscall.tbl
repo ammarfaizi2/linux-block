@@ -474,3 +474,4 @@
 542	common	fsmount				sys_fsmount
 543	common	fspick				sys_fspick
 544	common	fsinfo				sys_fsinfo
+545	common	watch_mount			sys_watch_mount

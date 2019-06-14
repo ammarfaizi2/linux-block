@@ -349,3 +349,4 @@
 432	n64	fsmount				sys_fsmount
 433	n64	fspick				sys_fspick
 434	n64	fsinfo				sys_fsinfo
+435	n64	watch_mount			sys_watch_mount

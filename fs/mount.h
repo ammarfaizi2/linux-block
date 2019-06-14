@@ -4,6 +4,7 @@
 #include <linux/poll.h>
 #include <linux/ns_common.h>
 #include <linux/fs_pin.h>
+#include <linux/watch_queue.h>
 
 struct mnt_namespace {
 	atomic_t		count;
@@ -67,9 +68,13 @@ struct mount {
 	int mnt_id;			/* mount identifier */
 	int mnt_group_id;		/* peer group identifier */
 	int mnt_expiry_mark;		/* true if marked for expiry */
+	int mnt_nr_watchers;		/* The number of subtree watches tracking this */
 	struct hlist_head mnt_pins;
 	struct fs_pin mnt_umount;
 	struct dentry *mnt_ex_mountpoint;
+#ifdef CONFIG_MOUNT_NOTIFICATIONS
+	struct watch_list *mnt_watchers; /* Watches on dentries within this mount */
+#endif
 	atomic_t mnt_notify_counter;	/* Number of notifications generated */
 } __randomize_layout;
 
@@ -153,18 +158,8 @@ static inline bool is_anon_ns(struct mnt_namespace *ns)
 	return ns->seq == 0;
 }
 
-/*
- * Type of mount topology change notification.
- */
-enum mount_notification_subtype {
-	NOTIFY_MOUNT_NEW_MOUNT	= 0, /* New mount added */
-	NOTIFY_MOUNT_UNMOUNT	= 1, /* Mount removed manually */
-	NOTIFY_MOUNT_EXPIRY	= 2, /* Automount expired */
-	NOTIFY_MOUNT_READONLY	= 3, /* Mount R/O state changed */
-	NOTIFY_MOUNT_SETATTR	= 4, /* Mount attributes changed */
-	NOTIFY_MOUNT_MOVE_FROM	= 5, /* Mount moved from here */
-	NOTIFY_MOUNT_MOVE_TO	= 6, /* Mount moved to here (compare op_id) */
-};
+extern void post_mount_notification(struct mount *changed,
+				    struct mount_notification *notify);
 
 static inline void notify_mount(struct mount *changed,
 				struct mount *aux,
@@ -172,4 +167,18 @@ static inline void notify_mount(struct mount *changed,
 				u32 info_flags)
 {
 	atomic_inc(&changed->mnt_notify_counter);
+
+#ifdef CONFIG_MOUNT_NOTIFICATIONS
+	{
+		struct mount_notification n = {
+			.watch.type	= WATCH_TYPE_MOUNT_NOTIFY,
+			.watch.subtype	= subtype,
+			.watch.info	= info_flags | watch_sizeof(n),
+			.triggered_on	= changed->mnt_id,
+			.changed_mount	= aux ? aux->mnt_id : 0,
+		};
+
+		post_mount_notification(changed, &n);
+	}
+#endif
 }
