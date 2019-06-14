@@ -440,3 +440,4 @@
 433	i386	fspick			sys_fspick			__ia32_sys_fspick
 434	i386	fsinfo			sys_fsinfo			__ia32_sys_fsinfo
 435	i386	watch_mount		sys_watch_mount			__ia32_sys_watch_mount
+436	i386	watch_sb		sys_watch_sb			__ia32_sys_watch_sb

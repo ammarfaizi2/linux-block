@@ -423,3 +423,4 @@
 433	o32	fspick				sys_fspick
 434	o32	fsinfo				sys_fsinfo
 435	o32	watch_mount			sys_watch_mount
+436	o32	watch_sb			sys_watch_sb
