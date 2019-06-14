@@ -1535,6 +1535,7 @@ struct super_block {
 #ifdef CONFIG_SB_NOTIFICATIONS
 	struct watch_list	*s_watchers;
 #endif
+	atomic_t		s_notify_counter;
 } __randomize_layout;
 
 /* Helper functions so that in most cases filesystems will

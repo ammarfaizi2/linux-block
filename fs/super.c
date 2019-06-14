@@ -1823,6 +1823,7 @@ EXPORT_SYMBOL(thaw_super);
  */
 void post_sb_notification(struct super_block *s, struct superblock_notification *n)
 {
+	atomic_inc(&s->s_notify_counter);
 	post_watch_notification(s->s_watchers, &n->watch, current_cred(),
 				s->s_unique_id);
 }
