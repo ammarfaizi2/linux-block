@@ -204,4 +204,7 @@ config BLK_MQ_RDMA
 config BLK_PM
 	def_bool BLOCK && PM
 
+config BLK_BPF_IO_COST
+	def_bool BLK_CGROUP_IOWEIGHT && BPF_SYSCALL
+
 source "block/Kconfig.iosched"

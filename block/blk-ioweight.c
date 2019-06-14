@@ -43,6 +43,10 @@
  * parameters can be configured from userspace via
  * /sys/block/DEV/queue/io_cost_model.
  *
+ * For experimentations and refinements, the IO model can also be replaced
+ * by a IO_COST bpf program.  Take a look at progs/iocost_linear_prog.c and
+ * iocost_ctrl.c under tools/testing/selftests/bpf for details on how-to.
+ *
  * 2. Control Strategy
  *
  * The device virtual time (vtime) is used as the primary control metric.
@@ -176,6 +180,7 @@
 #include <linux/parser.h>
 #include <linux/sched/signal.h>
 #include <linux/blk-cgroup.h>
+#include <linux/filter.h>
 #include "blk-rq-qos.h"
 #include "blk-stat.h"
 #include "blk-wbt.h"
@@ -387,6 +392,10 @@ struct iow {
 	bool				enabled;
 
 	struct iow_params		params;
+#ifdef CONFIG_BPF_SYSCALL
+	/* if non-NULL, bpf cost model is being used */
+	struct bpf_prog __rcu		*cost_prog;
+#endif
 	u32				period_us;
 	u32				margin_us;
 	u64				vrate_min;
@@ -1565,6 +1574,45 @@ skip_surplus_transfers:
 	spin_unlock_irq(&iow->lock);
 }
 
+#ifdef CONFIG_BLK_BPF_IO_COST
+static bool calc_vtime_cost_bpf(struct bio *bio, struct iow_gq *iowg,
+				bool is_merge, u64 *costp)
+{
+	struct iow *iow = iowg->iow;
+	struct bpf_prog *prog;
+	bool ret = false;
+
+	if (!iow->cost_prog)
+		return ret;
+
+	rcu_read_lock();
+	prog = rcu_dereference(iow->cost_prog);
+	if (prog) {
+		struct bpf_io_cost ctx = {
+			.cost = 0,
+			.opf = bio->bi_opf,
+			.nr_sectors = bio_sectors(bio),
+			.sector = bio->bi_iter.bi_sector,
+			.last_sector = iowg->cursor,
+			.is_merge = is_merge,
+		};
+
+		BPF_PROG_RUN(prog, &ctx);
+		*costp = ctx.cost;
+		ret = true;
+	}
+	rcu_read_unlock();
+
+	return ret;
+}
+#else
+static bool calc_vtime_cost_bpf(struct bio *bio, struct iow_gq *iowg,
+				bool is_merge, u64 *costp)
+{
+	return false;
+}
+#endif
+
 static void calc_vtime_cost_builtin(struct bio *bio, struct iow_gq *iowg,
 				    bool is_merge, u64 *costp)
 {
@@ -1609,6 +1657,9 @@ out:
 static u64 calc_vtime_cost(struct bio *bio, struct iow_gq *iowg, bool is_merge)
 {
 	u64 cost;
+
+	if (calc_vtime_cost_bpf(bio, iowg, is_merge, &cost))
+		return cost;
 
 	calc_vtime_cost_builtin(bio, iowg, is_merge, &cost);
 	return cost;
@@ -2214,14 +2265,17 @@ static u64 iow_cost_model_prfill(struct seq_file *sf,
 	if (!dname)
 		return 0;
 
-	seq_printf(sf, "%s ctrl=%s model=linear "
-		   "rbps=%llu rseqiops=%llu rrandiops=%llu "
-		   "wbps=%llu wseqiops=%llu wrandiops=%llu\n",
-		   dname, iow->user_cost_model ? "user" : "auto",
-		   u[I_LCOEF_RBPS],
-		   u[I_LCOEF_RSEQIOPS], u[I_LCOEF_RRANDIOPS],
-		   u[I_LCOEF_WBPS],
-		   u[I_LCOEF_WSEQIOPS], u[I_LCOEF_WRANDIOPS]);
+	if (iow->cost_prog)
+		seq_printf(sf, "%s ctrl=bpf\n", dname);
+	else
+		seq_printf(sf, "%s ctrl=%s model=linear "
+			   "rbps=%llu rseqiops=%llu rrandiops=%llu "
+			   "wbps=%llu wseqiops=%llu wrandiops=%llu\n",
+			   dname, iow->user_cost_model ? "user" : "auto",
+			   u[I_LCOEF_RBPS],
+			   u[I_LCOEF_RSEQIOPS], u[I_LCOEF_RRANDIOPS],
+			   u[I_LCOEF_WBPS],
+			   u[I_LCOEF_WSEQIOPS], u[I_LCOEF_WRANDIOPS]);
 	return 0;
 }
 
@@ -2362,6 +2416,84 @@ static struct blkcg_policy blkcg_policy_iow = {
 	.pd_init_fn	= iow_pd_init,
 	.pd_free_fn	= iow_pd_free,
 };
+
+#ifdef CONFIG_BLK_BPF_IO_COST
+static bool io_cost_is_valid_access(int off, int size,
+				    enum bpf_access_type type,
+				    const struct bpf_prog *prog,
+				    struct bpf_insn_access_aux *info)
+{
+	if (off < 0 || off >= sizeof(struct bpf_io_cost) || off % size)
+		return false;
+
+	if (off != offsetof(struct bpf_io_cost, cost) && type != BPF_READ)
+		return false;
+
+	switch (off) {
+	case bpf_ctx_range(struct bpf_io_cost, opf):
+		bpf_ctx_record_field_size(info, sizeof(__u32));
+		return bpf_ctx_narrow_access_ok(off, size, sizeof(__u32));
+	case offsetof(struct bpf_io_cost, nr_sectors):
+		return size == sizeof(__u32);
+	case offsetof(struct bpf_io_cost, cost):
+	case offsetof(struct bpf_io_cost, sector):
+	case offsetof(struct bpf_io_cost, last_sector):
+		return size == sizeof(__u64);
+	case offsetof(struct bpf_io_cost, is_merge):
+		return size == sizeof(__u8);
+	}
+
+	return false;
+}
+
+const struct bpf_prog_ops io_cost_prog_ops = {
+};
+
+const struct bpf_verifier_ops io_cost_verifier_ops = {
+	.is_valid_access	= io_cost_is_valid_access,
+};
+
+int blk_bpf_io_cost_ioctl(struct block_device *bdev, unsigned cmd,
+			  char __user *arg)
+{
+	int prog_fd = (int)(long)arg;
+	struct bpf_prog *prog = NULL;
+	struct request_queue *q;
+	struct iow *iow;
+	int ret = 0;
+
+	q = bdev_get_queue(bdev);
+	if (!q)
+		return -ENXIO;
+	iow = q_to_iow(q);
+
+	if (prog_fd >= 0) {
+		prog = bpf_prog_get_type(prog_fd, BPF_PROG_TYPE_IO_COST);
+		if (IS_ERR(prog))
+			return PTR_ERR(prog);
+
+		spin_lock_irq(&iow->lock);
+		if (!iow->cost_prog) {
+			rcu_assign_pointer(iow->cost_prog, prog);
+			prog = NULL;
+		} else {
+			ret = -EEXIST;
+		}
+		spin_unlock_irq(&iow->lock);
+	} else {
+		spin_lock_irq(&iow->lock);
+		if (iow->cost_prog) {
+			prog = iow->cost_prog;
+			rcu_assign_pointer(iow->cost_prog, NULL);
+		}
+		spin_unlock_irq(&iow->lock);
+	}
+
+	if (prog)
+		bpf_prog_put(prog);
+	return ret;
+}
+#endif /* CONFIG_BLK_BPF_IO_COST */
 
 static int __init iow_init(void)
 {

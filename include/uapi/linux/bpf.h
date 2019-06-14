@@ -170,6 +170,7 @@ enum bpf_prog_type {
 	BPF_PROG_TYPE_FLOW_DISSECTOR,
 	BPF_PROG_TYPE_CGROUP_SYSCTL,
 	BPF_PROG_TYPE_RAW_TRACEPOINT_WRITABLE,
+	BPF_PROG_TYPE_IO_COST,
 };
 
 enum bpf_attach_type {
@@ -3470,6 +3471,16 @@ struct bpf_flow_keys {
 			__u32	ipv6_dst[4];	/* in6_addr; network order */
 		};
 	};
+};
+
+struct bpf_io_cost {
+	__u64	cost;				/* output */
+
+	__u32	opf;
+	__u32	nr_sectors;
+	__u64	sector;
+	__u64	last_sector;
+	__u8	is_merge;
 };
 
 struct bpf_func_info {

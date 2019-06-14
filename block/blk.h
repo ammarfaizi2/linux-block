@@ -317,6 +317,14 @@ static inline void blk_queue_bounce(struct request_queue *q, struct bio **bio)
 }
 #endif /* CONFIG_BOUNCE */
 
+#ifdef CONFIG_BLK_BPF_IO_COST
+int blk_bpf_io_cost_ioctl(struct block_device *bdev, unsigned cmd,
+			  char __user *arg);
+#else
+static inline int blk_bpf_io_cost_ioctl(struct block_device *bdev, unsigned cmd,
+					char __user *arg) { return -ENOTTY; }
+#endif
+
 #ifdef CONFIG_BLK_CGROUP_IOLATENCY
 extern int blk_iolatency_init(struct request_queue *q);
 #else
