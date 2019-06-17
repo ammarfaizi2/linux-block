@@ -1703,7 +1703,9 @@ int ath11k_wmi_send_peer_assoc_cmd(struct ath11k *ar,
 	cmd->peer_phymode = param->peer_phymode;
 
 	/* Update 11ax capabilities */
-	cmd->peer_he_cap_info = param->peer_he_cap_macinfo;
+	cmd->peer_he_cap_info = param->peer_he_cap_macinfo[0];
+	cmd->peer_he_cap_info_ext = param->peer_he_cap_macinfo[1];
+	cmd->peer_he_cap_info_internal = param->peer_he_cap_macinfo_internal;
 	cmd->peer_he_ops = param->peer_he_ops;
 	memcpy(&cmd->peer_he_cap_phy, &param->peer_he_cap_phyinfo,
 	       sizeof(param->peer_he_cap_phyinfo));

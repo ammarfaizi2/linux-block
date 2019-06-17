@@ -1268,6 +1268,7 @@ static void ath11k_peer_assoc_h_he(struct ath11k *ar,
 	       sizeof(arg->peer_he_cap_phyinfo));
 	memcpy(&arg->peer_he_ops, &vif->bss_conf.he_operation,
 	       sizeof(arg->peer_he_ops));
+	arg->peer_he_cap_macinfo_internal = 0x0;
 
 	if (he_cap->he_cap_elem.phy_cap_info[6] &
 	    IEEE80211_HE_PHY_CAP6_PPE_THRESHOLD_PRESENT) {

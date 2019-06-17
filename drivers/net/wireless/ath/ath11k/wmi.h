@@ -3946,7 +3946,8 @@ struct peer_assoc_params {
 	u8 peer_mac[ETH_ALEN];
 
 	bool he_flag;
-	u32 peer_he_cap_macinfo;
+	u32 peer_he_cap_macinfo[2];
+	u32 peer_he_cap_macinfo_internal;
 	u32 peer_he_ops;
 	u32 peer_he_cap_phyinfo[WMI_HOST_MAX_HECAP_PHY_SIZE];
 	u32 peer_he_mcs_count;
@@ -3980,6 +3981,8 @@ struct  wmi_peer_assoc_complete_cmd {
 	u32 peer_he_ops;
 	u32 peer_he_cap_phy[WMI_MAX_HECAP_PHY_SIZE];
 	u32 peer_he_mcs;
+	u32 peer_he_cap_info_ext;
+	u32 peer_he_cap_info_internal;
 } __packed;
 
 struct wmi_stop_scan_cmd {
