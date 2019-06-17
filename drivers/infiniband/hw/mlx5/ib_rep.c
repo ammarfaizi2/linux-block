@@ -14,9 +14,10 @@ mlx5_ib_set_vport_rep(struct mlx5_core_dev *dev, struct mlx5_eswitch_rep *rep)
 	int vport_index;
 
 	ibdev = mlx5_ib_get_uplink_ibdev(dev->priv.eswitch);
-	vport_index = ibdev->free_port++;
+	vport_index = rep->vport_index;
 
 	ibdev->port[vport_index].rep = rep;
+	rep->rep_data[REP_IB].priv = ibdev;
 	write_lock(&ibdev->port[vport_index].roce.netdev_lock);
 	ibdev->port[vport_index].roce.netdev =
 		mlx5_ib_get_rep_netdev(dev->priv.eswitch, rep->vport);
@@ -50,7 +51,7 @@ mlx5_ib_vport_rep_load(struct mlx5_core_dev *dev, struct mlx5_eswitch_rep *rep)
 	}
 
 	ibdev->is_rep = true;
-	vport_index = ibdev->free_port++;
+	vport_index = rep->vport_index;
 	ibdev->port[vport_index].rep = rep;
 	ibdev->port[vport_index].roce.netdev =
 		mlx5_ib_get_rep_netdev(dev->priv.eswitch, rep->vport);
@@ -68,15 +69,18 @@ mlx5_ib_vport_rep_load(struct mlx5_core_dev *dev, struct mlx5_eswitch_rep *rep)
 static void
 mlx5_ib_vport_rep_unload(struct mlx5_eswitch_rep *rep)
 {
-	struct mlx5_ib_dev *dev;
+	struct mlx5_ib_dev *dev = mlx5_ib_rep_to_dev(rep);
+	struct mlx5_ib_port *port;
 
-	if (!rep->rep_data[REP_IB].priv ||
-	    rep->vport != MLX5_VPORT_UPLINK)
-		return;
-
-	dev = mlx5_ib_rep_to_dev(rep);
-	__mlx5_ib_remove(dev, dev->profile, MLX5_IB_STAGE_MAX);
+	port = &dev->port[rep->vport_index];
+	write_lock(&port->roce.netdev_lock);
+	port->roce.netdev = NULL;
+	write_unlock(&port->roce.netdev_lock);
 	rep->rep_data[REP_IB].priv = NULL;
+	port->rep = NULL;
+
+	if (rep->vport == MLX5_VPORT_UPLINK)
+		__mlx5_ib_remove(dev, dev->profile, MLX5_IB_STAGE_MAX);
 }
 
 static void *mlx5_ib_vport_get_proto_dev(struct mlx5_eswitch_rep *rep)
@@ -130,6 +134,17 @@ struct mlx5_eswitch_rep *mlx5_ib_vport_rep(struct mlx5_eswitch *esw,
 					   u16 vport_num)
 {
 	return mlx5_eswitch_vport_rep(esw, vport_num);
+}
+
+u32 mlx5_ib_eswitch_vport_match_metadata_enabled(struct mlx5_eswitch *esw)
+{
+	return mlx5_eswitch_vport_match_metadata_enabled(esw);
+}
+
+u32 mlx5_ib_eswitch_get_vport_metadata_for_match(struct mlx5_eswitch *esw,
+						 u16 vport)
+{
+	return mlx5_eswitch_get_vport_metadata_for_match(esw, vport);
 }
 
 struct mlx5_flow_handle *create_flow_rule_vport_sq(struct mlx5_ib_dev *dev,

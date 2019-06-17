@@ -7,6 +7,7 @@
 #define _MLX5_ESWITCH_
 
 #include <linux/mlx5/driver.h>
+#include <net/devlink.h>
 
 #define MLX5_ESWITCH_MANAGER(mdev) MLX5_CAP_GEN(mdev, eswitch_manager)
 
@@ -45,6 +46,8 @@ struct mlx5_eswitch_rep {
 	u16		       vport;
 	u8		       hw_id[ETH_ALEN];
 	u16		       vlan;
+	/* Only IB rep is using vport_index */
+	u16		       vport_index;
 	u32		       vlan_refcount;
 };
 
@@ -62,4 +65,19 @@ u8 mlx5_eswitch_mode(struct mlx5_eswitch *esw);
 struct mlx5_flow_handle *
 mlx5_eswitch_add_send_to_vport_rule(struct mlx5_eswitch *esw,
 				    u16 vport_num, u32 sqn);
+
+u32 mlx5_eswitch_vport_match_metadata_enabled(struct mlx5_eswitch *esw);
+u32 mlx5_eswitch_get_vport_metadata_for_match(struct mlx5_eswitch *esw, u16 vport);
+
+#ifdef CONFIG_MLX5_ESWITCH
+enum devlink_eswitch_encap_mode
+mlx5_eswitch_get_encap_mode(const struct mlx5_core_dev *dev);
+#else  /* CONFIG_MLX5_ESWITCH */
+static inline enum devlink_eswitch_encap_mode
+mlx5_eswitch_get_encap_mode(const struct mlx5_core_dev *dev)
+{
+	return DEVLINK_ESWITCH_ENCAP_MODE_NONE;
+}
+#endif /* CONFIG_MLX5_ESWITCH */
+
 #endif
