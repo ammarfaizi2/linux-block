@@ -1321,7 +1321,7 @@ static void ath11k_peer_assoc_h_he(struct ath11k *ar,
 		arg->peer_he_tx_mcs_set[WMI_HECAP_TXRX_MCS_NSS_IDX_160] = v;
 
 		arg->peer_he_mcs_count++;
-		/* drop through */
+		/* fall through */
 
 	default:
 		v = le16_to_cpu(he_cap->he_mcs_nss_supp.rx_mcs_80);

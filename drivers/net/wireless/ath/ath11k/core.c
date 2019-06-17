@@ -755,6 +755,7 @@ static void ath11k_core_restart(struct work_struct *work)
 			break;
 		case ATH11K_STATE_RESTARTED:
 			ar->state = ATH11K_STATE_WEDGED;
+			/* fall through */
 		case ATH11K_STATE_WEDGED:
 			ath11k_warn(sc,
 				    "device is wedged, will not restart radio %d\n", i);
