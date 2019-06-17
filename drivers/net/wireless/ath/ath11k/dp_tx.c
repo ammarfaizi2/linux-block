@@ -444,8 +444,6 @@ void ath11k_dp_tx_completion_handler(struct ath11k_base *ab, int ring_id)
 	struct dp_tx_ring *tx_ring = &dp->tx_ring[ring_id];
 	u32 *desc;
 	u32 msdu_id;
-	u8 pool_id;
-	u8 tcl_id;
 	u8 mac_id;
 
 	spin_lock_bh(&status_ring->lock);
@@ -477,9 +475,7 @@ void ath11k_dp_tx_completion_handler(struct ath11k_base *ab, int ring_id)
 		ath11k_hal_tx_status_parse(ab, &tx_status, &ts);
 
 		mac_id = FIELD_GET(DP_TX_DESC_ID_MAC_ID, ts.desc_id);
-		pool_id = FIELD_GET(DP_TX_DESC_ID_POOL_ID, ts.desc_id);
 		msdu_id = FIELD_GET(DP_TX_DESC_ID_MSDU_ID, ts.desc_id);
-		tcl_id = ath11k_txq_tcl_ring_map[pool_id];
 
 		if (ts.buf_rel_source == HAL_WBM_REL_SRC_MODULE_FW) {
 			ath11k_dp_tx_process_htt_tx_complete(ab,

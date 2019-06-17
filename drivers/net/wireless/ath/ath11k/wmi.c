@@ -4419,7 +4419,6 @@ void ath11k_wmi_fw_stats_fill(struct ath11k *ar,
 	const struct ath11k_fw_stats_bcn *bcn;
 	size_t num_peers;
 	size_t num_peers_extd;
-	size_t num_vdevs;
 	size_t num_bcn;
 
 	spin_lock_bh(&ar->data_lock);
@@ -4438,8 +4437,6 @@ void ath11k_wmi_fw_stats_fill(struct ath11k *ar,
 	}
 
 	if (stats_id == WMI_REQUEST_VDEV_STAT) {
-		num_vdevs = ath11k_wmi_fw_stats_num_vdevs(&fw_stats->vdevs);
-
 		len += scnprintf(buf + len, buf_len - len, "\n");
 		len += scnprintf(buf + len, buf_len - len, "%30s\n",
 				 "ath11k VDEV stats");

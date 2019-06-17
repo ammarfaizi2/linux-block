@@ -3685,7 +3685,6 @@ ath11k_dp_rx_mon_mpdu_pop(struct ath11k *ar,
 	u32 rx_bufs_used = 0, i = 0;
 	u32 msdu_ppdu_id = 0, msdu_cnt = 0;
 	u32 total_len = 0, frag_len = 0;
-	u8 *data = NULL;
 	bool is_frag, is_first_msdu;
 	bool drop_mpdu = false;
 	struct ath11k_skb_rxcb *rxcb;
@@ -3765,7 +3764,7 @@ ath11k_dp_rx_mon_mpdu_pop(struct ath11k *ar,
 				msdu = NULL;
 				goto next_msdu;
 			}
-			data = msdu->data;
+
 			rx_desc = msdu->data;
 
 			rx_pkt_offset = sizeof(struct hal_rx_desc);
@@ -4080,7 +4079,6 @@ static void ath11k_dp_rx_mon_status_process_tlv(struct ath11k *ar,
 	struct hal_rx_mon_ppdu_info *ppdu_info;
 	struct sk_buff *status_skb;
 	u8 *rx_tlv;
-	u8 *rx_tlv_start;
 	u32 tlv_status = HAL_TLV_STATUS_BUF_DONE;
 	struct ath11k_pdev_mon_stats *rx_mon_stats;
 
@@ -4094,7 +4092,6 @@ static void ath11k_dp_rx_mon_status_process_tlv(struct ath11k *ar,
 		status_skb = skb_dequeue(&pmon->rx_status_q);
 
 		rx_tlv = status_skb->data;
-		rx_tlv_start = rx_tlv;
 
 		tlv_status = ath11k_hal_rx_parse_mon_status(ar->ab, ppdu_info,
 							    rx_tlv);

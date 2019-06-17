@@ -200,12 +200,7 @@ static int ath11k_htc_process_trailer(struct ath11k_htc *htc,
 	struct ath11k_base *ab = htc->ab;
 	int status = 0;
 	struct ath11k_htc_record *record;
-	u8 *orig_buffer;
-	int orig_length;
 	size_t len;
-
-	orig_buffer = buffer;
-	orig_length = length;
 
 	while (length > 0) {
 		record = (struct ath11k_htc_record *)buffer;
@@ -742,7 +737,6 @@ int ath11k_htc_start(struct ath11k_htc *htc)
 
 int ath11k_htc_init(struct ath11k_base *ab)
 {
-	struct ath11k_htc_ep *ep = NULL;
 	struct ath11k_htc *htc = &ab->htc;
 	struct ath11k_htc_svc_conn_req conn_req;
 	struct ath11k_htc_svc_conn_resp conn_resp;
@@ -753,8 +747,6 @@ int ath11k_htc_init(struct ath11k_base *ab)
 	ath11k_htc_reset_endpoint_states(htc);
 
 	htc->ab = ab;
-
-	ep = &htc->endpoint[ATH11K_HTC_EP_0];
 
 	switch (ab->wmi_sc.preferred_hw_mode) {
 	case WMI_HOST_HW_MODE_SINGLE:
