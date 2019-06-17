@@ -1,4 +1,16 @@
 arm/soc
+	netx/remove
+		git://git.kernel.org/pub/scm/linux/kernel/git/linusw/linux-integrator tags/armsoc-drop-netx-v5.3
+	integrator/versatile
+		git://git.kernel.org/pub/scm/linux/kernel/git/linusw/linux-integrator tags/versatile-v5.3-armsoc
+	rockchip/soc32
+		git://git.kernel.org/pub/scm/linux/kernel/git/mmind/linux-rockchip tags/v5.3-rockchip-soc32-1
+	broadcom/soc
+		https://github.com/Broadcom/stblinux tags/arm-soc/for-5.3/soc
+	broadcom/soc64
+		https://github.com/Broadcom/stblinux tags/arm-soc/for-5.3/soc-arm64
+	omap/soc
+		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v5.3/soc-signed
 
 arm/dt
 
@@ -41,4 +53,6 @@ arm/fixes
 		git://git.kernel.org/pub/scm/linux/kernel/git/nsekhar/linux-davinci tags/davinci-fixes-for-v5.2
 	<no branch> (8a0098c05a272c9a68f6885e09755755b612459c)
 		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v5.2/fixes-rc4
+	patch
+		MAINTAINERS: Change QCOM repo location
 
