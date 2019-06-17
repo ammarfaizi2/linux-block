@@ -1,0 +1,44 @@
+arm/soc
+
+arm/dt
+
+arm/drivers
+	fsl/soc
+		git://git.kernel.org/pub/scm/linux/kernel/git/leo/linux tags/soc-fsl-next-v5.3
+	drivers/tee
+		https://git.linaro.org/people/jens.wiklander/linux-tee tags/tee-maint-for-5.3
+	patch
+		memory: move jedec_ddr_data.c from lib/ to drivers/memory/
+		memory: move jedec_ddr.h from include/memory to drivers/memory/
+		firmware/psci: psci_checker: Park kthreads before stopping them
+	brcm/drivers
+		https://github.com/Broadcom/stblinux tags/arm-soc/for-5.3/drivers
+	omap/ti-sysc
+		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v5.3/ti-sysc-signed
+	drivers/scmi
+		git://git.kernel.org/pub/scm/linux/kernel/git/sudeep.holla/linux tags/scmi-updates-5.3
+
+arm/defconfig
+
+arm/late
+
+arm/fixes
+	<no branch> (6b23af0783a54efb348f0bd781b7850636023dbb)
+		https://github.com/Broadcom/stblinux tags/arm-soc/for-5.2/drivers-fixes
+	<no branch> (b2279bcffa72304de8ff591cb60446322570c0b5)
+		https://github.com/Broadcom/stblinux tags/arm-soc/for-5.2/maintainers
+	<no branch> (b25af2ff7c07bd19af74e3f64ff82e2880d13d81)
+		git://git.kernel.org/pub/scm/linux/kernel/git/shawnguo/linux tags/imx-fixes-5.2
+	<no branch> (4ee23cd76c0ce8622976b3da0e2bc89e6d94f6d4)
+		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v5.2/fixes-rc2
+	<no branch> (e8bd76dccd792b371a934336c3e7d8c389755d9f)
+		https://github.com/Broadcom/stblinux tags/arm-soc/for-5.2/devicetree-fixes
+	<no branch> (a6b112b04355b87a2baee448165bd00889ac523f)
+		git://git.kernel.org/pub/scm/linux/kernel/git/kristo/linux tags/am654-fixes-for-v5.2
+	<no branch> (cc538ca4308372e81b824be08561c466b1d73b72)
+		git://git.infradead.org/linux-mvebu tags/mvebu-fixes-5.2-1
+	<no branch> (68f2515bb31a664ba3e2bc1eb78dd9f529b10067)
+		git://git.kernel.org/pub/scm/linux/kernel/git/nsekhar/linux-davinci tags/davinci-fixes-for-v5.2
+	<no branch> (8a0098c05a272c9a68f6885e09755755b612459c)
+		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v5.2/fixes-rc4
+
