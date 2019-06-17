@@ -1294,7 +1294,6 @@ static int ath11k_htt_pull_ppdu_stats(struct ath11k_base *ab,
 
 	len = FIELD_GET(HTT_T2H_PPDU_STATS_PAYLOAD_SIZE_M, *(u32 *)data);
 	pdev_id = FIELD_GET(HTT_T2H_PPDU_STATS_PDEV_ID_M, *(u32 *)data);
-	pdev_id = DP_HW2SW_MACID(pdev_id);
 	ppdu_id = *((u32 *)data + 1);
 
 	rcu_read_lock();
