@@ -5334,24 +5334,24 @@ static int ath11k_mac_setup_channels_rates(struct ath11k *ar,
 	return 0;
 }
 
-const static u8 ath11k_if_types_ext_capa[] = {
+static const u8 ath11k_if_types_ext_capa[] = {
 	[0] = WLAN_EXT_CAPA1_EXT_CHANNEL_SWITCHING,
 	[7] = WLAN_EXT_CAPA8_OPMODE_NOTIF,
 };
 
-const static u8 ath11k_if_types_ext_capa_sta[] = {
+static const u8 ath11k_if_types_ext_capa_sta[] = {
 	[0] = WLAN_EXT_CAPA1_EXT_CHANNEL_SWITCHING,
 	[7] = WLAN_EXT_CAPA8_OPMODE_NOTIF,
 	[9] = WLAN_EXT_CAPA10_TWT_REQUESTER_SUPPORT,
 };
 
-const static u8 ath11k_if_types_ext_capa_ap[] = {
+static const u8 ath11k_if_types_ext_capa_ap[] = {
 	[0] = WLAN_EXT_CAPA1_EXT_CHANNEL_SWITCHING,
 	[7] = WLAN_EXT_CAPA8_OPMODE_NOTIF,
 	[9] = WLAN_EXT_CAPA10_TWT_RESPONDER_SUPPORT,
 };
 
-const static struct wiphy_iftype_ext_capab ath11k_iftypes_ext_capa[] = {
+static const struct wiphy_iftype_ext_capab ath11k_iftypes_ext_capa[] = {
 	{
 		.extended_capabilities = ath11k_if_types_ext_capa,
 		.extended_capabilities_mask = ath11k_if_types_ext_capa,
