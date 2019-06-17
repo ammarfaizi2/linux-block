@@ -52,7 +52,7 @@ static inline void htt_print_stats_string_tlv(const u32 *tag_buf,
 		index += snprintf(&data[index],
 				HTT_MAX_STRING_LEN - index,
 				"%.*s", 4, (char *)&(htt_stats_buf->data[i]));
-		if (index < 0 || index >= HTT_MAX_STRING_LEN)
+		if (index >= HTT_MAX_STRING_LEN)
 			break;
 	}
 

@@ -2385,29 +2385,25 @@ static void ath11k_dp_rx_update_peer_stats(struct ath11k_sta *arsta,
 	if (ppdu_info->nss > 0 && ppdu_info->nss <= HAL_RX_MAX_NSS)
 		rx_stats->nss_count[ppdu_info->nss - 1] += num_msdu;
 
-	if (ppdu_info->mcs >= 0 && ppdu_info->mcs <= HAL_RX_MAX_MCS)
+	if (ppdu_info->mcs <= HAL_RX_MAX_MCS)
 		rx_stats->mcs_count[ppdu_info->mcs] += num_msdu;
 
-	if (ppdu_info->gi >= HAL_RX_GI_0_8_US &&
-	    ppdu_info->gi < HAL_RX_GI_MAX)
+	if (ppdu_info->gi < HAL_RX_GI_MAX)
 		rx_stats->gi_count[ppdu_info->gi] += num_msdu;
 
-	if (ppdu_info->bw >= HAL_RX_BW_20MHZ && ppdu_info->bw < HAL_RX_BW_MAX)
+	if (ppdu_info->bw < HAL_RX_BW_MAX)
 		rx_stats->bw_count[ppdu_info->bw] += num_msdu;
 
-	if (ppdu_info->ldpc >= HAL_RX_SU_MU_CODING_BCC &&
-	    ppdu_info->ldpc < HAL_RX_SU_MU_CODING_MAX)
+	if (ppdu_info->ldpc < HAL_RX_SU_MU_CODING_MAX)
 		rx_stats->coding_count[ppdu_info->ldpc] += num_msdu;
 
-	if (ppdu_info->tid >= 0 && ppdu_info->tid <= IEEE80211_NUM_TIDS)
+	if (ppdu_info->tid <= IEEE80211_NUM_TIDS)
 		rx_stats->tid_count[ppdu_info->tid] += num_msdu;
 
-	if (ppdu_info->preamble_type >= HAL_RX_PREAMBLE_11A &&
-	    ppdu_info->preamble_type < HAL_RX_PREAMBLE_MAX)
+	if (ppdu_info->preamble_type < HAL_RX_PREAMBLE_MAX)
 		rx_stats->pream_cnt[ppdu_info->preamble_type] += num_msdu;
 
-	if (ppdu_info->reception_type >= HAL_RX_RECEPTION_TYPE_SU &&
-	    ppdu_info->reception_type < HAL_RX_RECEPTION_TYPE_MAX)
+	if (ppdu_info->reception_type < HAL_RX_RECEPTION_TYPE_MAX)
 		rx_stats->reception_type[ppdu_info->reception_type] += num_msdu;
 
 	if (ppdu_info->is_stbc)

@@ -54,10 +54,10 @@ static int ath11k_hal_reo_cmd_flush_cache(struct ath11k_hal *hal, u32 *reo_desc,
 	u8 avail_slot = ffz(hal->avail_blk_resource);
 
 	if (cmd->flag & HAL_REO_CMD_FLG_FLUSH_BLOCK_LATER) {
-		if (avail_slot >= 0 && avail_slot < HAL_MAX_AVAIL_BLK_RES)
-			hal->current_blk_index = avail_slot;
-		else
+		if (avail_slot >= HAL_MAX_AVAIL_BLK_RES)
 			return -ENOSPC;
+
+		hal->current_blk_index = avail_slot;
 	}
 
 	tlv->tl = FIELD_PREP(HAL_TLV_HDR_TAG, HAL_REO_FLUSH_CACHE) |
