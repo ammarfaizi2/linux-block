@@ -650,9 +650,11 @@ int ath11k_dp_tx_htt_srng_setup(struct ath11k_base *ab, u32 ring_id,
 	cmd->ring_base_addr_hi = (u64)params.ring_base_paddr >>
 				 HAL_ADDR_MSB_REG_SHIFT;
 
-	ring_entry_sz = ath11k_hal_srng_get_entrysize(ring_type);
-	if (ring_entry_sz < 0)
+	ret = ath11k_hal_srng_get_entrysize(ring_type);
+	if (ret < 0)
 		return -EINVAL;
+
+	ring_entry_sz = ret;
 
 	ring_entry_sz >>= 2;
 	cmd->info1 = FIELD_PREP(HTT_SRNG_SETUP_CMD_INFO1_RING_ENTRY_SIZE,

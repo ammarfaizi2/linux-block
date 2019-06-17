@@ -805,7 +805,7 @@ static ssize_t ath11k_write_extd_rx_stats(struct file *file,
 		goto exit;
 	}
 
-	if (enable < 0 || enable > 1) {
+	if (enable > 1) {
 		ret = -EINVAL;
 		goto exit;
 	}
