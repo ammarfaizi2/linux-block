@@ -862,10 +862,28 @@ static __poll_t ep_scan_ready_list(struct eventpoll *ep,
 	return res;
 }
 
-static void epi_rcu_free(struct rcu_head *head)
+static void epi_rcu_free_cb(struct rcu_head *head)
 {
 	struct epitem *epi = container_of(head, struct epitem, rcu);
 	kmem_cache_free(epi_cache, epi);
+}
+
+static void uepi_rcu_free_cb(struct rcu_head *head)
+{
+	struct epitem *epi = container_of(head, struct epitem, rcu);
+	kmem_cache_free(uepi_cache, uep_item_from_epi(epi));
+}
+
+static void epi_rcu_free(struct eventpoll *ep, struct epitem *epi)
+{
+	/*
+	 * Check if `ep` is polled by user here, in this function, not
+	 * in the callback, in order not to control lifetime of the 'ep'.
+	 */
+	if (ep_polled_by_user(ep))
+		call_rcu(&epi->rcu, uepi_rcu_free_cb);
+	else
+		call_rcu(&epi->rcu, epi_rcu_free_cb);
 }
 
 static inline int ep_get_bit(struct eventpoll *ep)
@@ -1026,10 +1044,14 @@ static int ep_remove(struct eventpoll *ep, struct epitem *epi)
 
 	rb_erase_cached(&epi->rbn, &ep->rbr);
 
-	write_lock_irq(&ep->lock);
-	if (ep_is_linked(epi))
-		list_del_init(&epi->rdllink);
-	write_unlock_irq(&ep->lock);
+	if (ep_polled_by_user(ep)) {
+		ep_remove_user_item(epi);
+	} else {
+		write_lock_irq(&ep->lock);
+		if (ep_is_linked(epi))
+			list_del_init(&epi->rdllink);
+		write_unlock_irq(&ep->lock);
+	}
 
 	wakeup_source_unregister(ep_wakeup_source(epi));
 	/*
@@ -1039,7 +1061,7 @@ static int ep_remove(struct eventpoll *ep, struct epitem *epi)
 	 * ep->mtx. The rcu read side, reverse_path_check_proc(), does not make
 	 * use of the rbn field.
 	 */
-	call_rcu(&epi->rcu, epi_rcu_free);
+	epi_rcu_free(ep, epi);
 
 	atomic_long_dec(&ep->user->epoll_watches);
 
