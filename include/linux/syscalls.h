@@ -359,6 +359,7 @@ asmlinkage long sys_eventfd2(unsigned int count, int flags);
 
 /* fs/eventpoll.c */
 asmlinkage long sys_epoll_create1(int flags);
+asmlinkage long sys_epoll_create2(int flags, size_t size, int watch_fd);
 asmlinkage long sys_epoll_ctl(int epfd, int op, int fd,
 				struct epoll_event __user *event);
 asmlinkage long sys_epoll_pwait(int epfd, struct epoll_event __user *events,

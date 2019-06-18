@@ -352,3 +352,4 @@
 435	n64	watch_mount			sys_watch_mount
 436	n64	watch_sb			sys_watch_sb
 437	n64	watch_devices			sys_watch_devices
+438	n64	epoll_create2			sys_epoll_create2

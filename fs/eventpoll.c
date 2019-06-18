@@ -2627,7 +2627,7 @@ static void clear_tfile_check_list(void)
 /*
  * Open an eventpoll file descriptor.
  */
-static int do_epoll_create(int flags, size_t size, int watch_fd)
+static long do_epoll_create(int flags, size_t size, int watch_fd)
 {
 	int error, fd;
 	struct eventpoll *ep = NULL;
@@ -2671,6 +2671,11 @@ out_free_fd:
 out_free_ep:
 	ep_free(ep);
 	return error;
+}
+
+SYSCALL_DEFINE3(epoll_create2, int, flags, size_t, size, int, watch_fd)
+{
+	return do_epoll_create(flags, size, watch_fd);
 }
 
 SYSCALL_DEFINE1(epoll_create1, int, flags)

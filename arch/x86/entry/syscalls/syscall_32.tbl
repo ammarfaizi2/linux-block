@@ -442,3 +442,4 @@
 435	i386	watch_mount		sys_watch_mount			__ia32_sys_watch_mount
 436	i386	watch_sb		sys_watch_sb			__ia32_sys_watch_sb
 437	i386	watch_devices		sys_watch_devices		__ia32_sys_watch_devices
+438	i386	epoll_create2		sys_epoll_create2		__ia32_sys_epoll_create2

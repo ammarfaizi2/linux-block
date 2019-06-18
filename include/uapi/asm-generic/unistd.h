@@ -852,9 +852,11 @@ __SYSCALL(__NR_watch_mount, sys_watch_mount)
 __SYSCALL(__NR_watch_sb, sys_watch_sb)
 #define __NR_watch_devices 437
 __SYSCALL(__NR_watch_devices, sys_watch_devices)
+#define __NR_epoll_create2 438
+__SYSCALL(__NR_epoll_create2, sys_epoll_create2)
 
 #undef __NR_syscalls
-#define __NR_syscalls 438
+#define __NR_syscalls 439
 
 /*
  * 32 bit systems traditionally used different

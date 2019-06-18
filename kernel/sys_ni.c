@@ -55,6 +55,7 @@ COND_SYSCALL(fsinfo);
 COND_SYSCALL(watch_mount);
 COND_SYSCALL(watch_sb);
 COND_SYSCALL(watch_devices);
+COND_SYSCALL(epoll_create2);
 
 /* fs/xattr.c */
 
