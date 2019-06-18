@@ -21,7 +21,8 @@
 #include <linux/watch_queue.h>
 
 /* Flags for epoll_create1.  */
-#define EPOLL_CLOEXEC O_CLOEXEC
+#define EPOLL_CLOEXEC  O_CLOEXEC
+#define EPOLL_USERPOLL 1
 
 /* Valid opcodes to issue to sys_epoll_ctl() */
 #define EPOLL_CTL_ADD 1
@@ -41,6 +42,9 @@
 #define EPOLLWRBAND	(__force __poll_t)0x00000200
 #define EPOLLMSG	(__force __poll_t)0x00000400
 #define EPOLLRDHUP	(__force __poll_t)0x00002000
+
+/* User item marked as removed for EPOLL_USERPOLL */
+#define EPOLLREMOVED	((__force __poll_t)(1U << 27))
 
 /* Set exclusive wakeup mode for the target file descriptor */
 #define EPOLLEXCLUSIVE	((__force __poll_t)(1U << 28))
