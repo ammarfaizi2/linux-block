@@ -1384,6 +1384,7 @@ config HAVE_FUTEX_CMPXCHG
 config EPOLL
 	bool "Enable eventpoll support" if EXPERT
 	default y
+	select WATCH_QUEUE
 	help
 	  Disabling this option will cause the kernel to be built without
 	  support for epoll family of system calls.

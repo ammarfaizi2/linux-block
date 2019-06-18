@@ -18,6 +18,7 @@
 /* For O_CLOEXEC */
 #include <linux/fcntl.h>
 #include <linux/types.h>
+#include <linux/watch_queue.h>
 
 /* Flags for epoll_create1.  */
 #define EPOLL_CLOEXEC O_CLOEXEC
@@ -105,6 +106,17 @@ struct epoll_uheader {
 	/* Table of descriptors.  The notifications index into this. */
 	struct epoll_uitem items[]
 		__attribute__((__aligned__(EPOLL_USERPOLL_HEADER_SIZE)));
+};
+
+/*
+ * Notification record in the watch queue ring.
+ *
+ * n->watch.type => WATCH_TYPE_EPOLL_NOTIFY
+ * n->watch.subtype => 0
+ * n->watch.info & WATCH_INFO_TYPE_INFO => index into items[]
+ */
+struct epoll_notification {
+	struct watch_notification watch;
 };
 
 #endif /* _UAPI_LINUX_EVENTPOLL_H */

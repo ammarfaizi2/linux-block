@@ -15,7 +15,8 @@ enum watch_notification_type {
 	WATCH_TYPE_KEY_NOTIFY	= 3,	/* Key/keyring change notification */
 	WATCH_TYPE_BLOCK_NOTIFY	= 4,	/* Block layer notifications */
 	WATCH_TYPE_USB_NOTIFY	= 5,	/* USB subsystem notifications */
-#define WATCH_TYPE___NR 6
+	WATCH_TYPE_EPOLL_NOTIFY	= 6,	/* EPOLL notifications */
+#define WATCH_TYPE___NR 7
 };
 
 enum watch_meta_notification_subtype {
