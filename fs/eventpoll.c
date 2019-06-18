@@ -43,6 +43,7 @@
 #include <linux/seq_file.h>
 #include <linux/compat.h>
 #include <linux/rculist.h>
+#include <linux/watch_queue.h>
 #include <net/busy_poll.h>
 
 /*
@@ -237,6 +238,9 @@ struct eventpoll {
 
 	/* User header with array of items */
 	struct epoll_uheader *user_header;
+
+	/* Source of watch events */
+	struct watch_list watchers;
 
 	/* Actual length of user header, always aligned on page */
 	unsigned int header_length;
@@ -951,6 +955,7 @@ static void ep_free(struct eventpoll *ep)
 	mutex_unlock(&epmutex);
 	mutex_destroy(&ep->mtx);
 	wakeup_source_unregister(ep->ws);
+	remove_watch_from_object(&ep->watchers, NULL, 0, true);
 	vfree(ep->user_header);
 	vfree(ep->items_bm);
 	ep_unaccount_mem(ep, ep->user);
@@ -1107,7 +1112,34 @@ void eventpoll_release_file(struct file *file)
 	mutex_unlock(&epmutex);
 }
 
-static int ep_alloc(struct eventpoll **pep, int flags, size_t max_items)
+static int ep_watch(struct eventpoll *ep, int watch_fd)
+{
+	struct watch_queue *wqueue;
+	struct watch *watch;
+	int error;
+
+	wqueue = get_watch_queue(watch_fd);
+	if (IS_ERR(wqueue))
+		return PTR_ERR(wqueue);
+
+	error = -ENOMEM;
+	watch = kzalloc(sizeof(*watch), GFP_KERNEL);
+	if (!watch)
+		goto out_wq;
+
+	init_watch(watch, wqueue);
+	error = add_watch_to_object(watch, &ep->watchers);
+	if (!error)
+		watch = NULL;
+
+	kfree(watch);
+out_wq:
+	put_watch_queue(wqueue);
+	return error;
+}
+
+static int ep_alloc(struct eventpoll **pep, int flags, size_t max_items,
+		    int watch_fd)
 {
 	int error;
 	struct user_struct *user;
@@ -1118,6 +1150,8 @@ static int ep_alloc(struct eventpoll **pep, int flags, size_t max_items)
 	ep = kzalloc(sizeof(*ep), GFP_KERNEL);
 	if (unlikely(!ep))
 		goto free_uid;
+
+	init_watch_list(&ep->watchers, NULL);
 
 	if (flags & EPOLL_USERPOLL) {
 		BUILD_BUG_ON(sizeof(*ep->user_header) !=
@@ -1139,6 +1173,10 @@ static int ep_alloc(struct eventpoll **pep, int flags, size_t max_items)
 		ep->user_header = vmalloc_user(ep->header_length);
 		ep->items_bm = vzalloc(ep->items_bm_length);
 		if (!ep->user_header || !ep->items_bm)
+			goto unaccount_mem;
+
+		error = ep_watch(ep, watch_fd);
+		if (error)
 			goto unaccount_mem;
 
 		*ep->user_header = (typeof(*ep->user_header)) {
@@ -2172,7 +2210,7 @@ static void clear_tfile_check_list(void)
 /*
  * Open an eventpoll file descriptor.
  */
-static int do_epoll_create(int flags, size_t size)
+static int do_epoll_create(int flags, size_t size, int watch_fd)
 {
 	int error, fd;
 	struct eventpoll *ep = NULL;
@@ -2183,10 +2221,13 @@ static int do_epoll_create(int flags, size_t size)
 
 	if (flags & ~(EPOLL_CLOEXEC | EPOLL_USERPOLL))
 		return -EINVAL;
+	if ((flags & EPOLL_USERPOLL) && watch_fd < 0)
+		return -EBADFD;
+
 	/*
 	 * Create the internal data structure ("struct eventpoll").
 	 */
-	error = ep_alloc(&ep, flags, size);
+	error = ep_alloc(&ep, flags, size, watch_fd);
 	if (error < 0)
 		return error;
 	/*
@@ -2217,7 +2258,7 @@ out_free_ep:
 
 SYSCALL_DEFINE1(epoll_create1, int, flags)
 {
-	return do_epoll_create(flags, 0);
+	return do_epoll_create(flags, 0, -1);
 }
 
 SYSCALL_DEFINE1(epoll_create, int, size)
@@ -2225,7 +2266,7 @@ SYSCALL_DEFINE1(epoll_create, int, size)
 	if (size <= 0)
 		return -EINVAL;
 
-	return do_epoll_create(0, 0);
+	return do_epoll_create(0, 0, -1);
 }
 
 /*
