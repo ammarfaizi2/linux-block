@@ -106,17 +106,17 @@ __printf(2, 3) void ath11k_warn(struct ath11k_base *sc, const char *fmt, ...);
 extern unsigned int ath11k_debug_mask;
 
 #ifdef CONFIG_ATH11K_DEBUG
-__printf(3, 4) void ath11k_dbg(struct ath11k_base *ab,
-			       enum ath11k_debug_mask mask,
-			       const char *fmt, ...);
+__printf(3, 4) void __ath11k_dbg(struct ath11k_base *ab,
+				 enum ath11k_debug_mask mask,
+				 const char *fmt, ...);
 void ath11k_dbg_dump(struct ath11k_base *ab,
 		     enum ath11k_debug_mask mask,
 		     const char *msg, const char *prefix,
 		     const void *buf, size_t len);
 #else /* CONFIG_ATH11K_DEBUG */
-static inline int ath11k_dbg(struct ath11k_base *ab,
-			     enum ath11k_debug_mask dbg_mask,
-			     const char *fmt, ...)
+static inline int __ath11k_dbg(struct ath11k_base *ab,
+			       enum ath11k_debug_mask dbg_mask,
+			       const char *fmt, ...)
 {
 	return 0;
 }
@@ -264,5 +264,11 @@ static inline void ath11k_sta_update_rx_duration(struct ath11k *ar,
 }
 
 #endif /* CONFIG_MAC80211_DEBUGFS*/
+
+#define ath11k_dbg(ar, dbg_mask, fmt, ...)			\
+do {								\
+	if (ath11k_debug_mask & dbg_mask)			\
+		__ath11k_dbg(ar, dbg_mask, fmt, ##__VA_ARGS__);	\
+} while (0)
 
 #endif /* _ATH11K_DEBUG_H_ */

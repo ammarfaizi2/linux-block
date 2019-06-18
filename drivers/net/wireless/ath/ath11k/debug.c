@@ -54,8 +54,8 @@ void ath11k_warn(struct ath11k_base *sc, const char *fmt, ...)
 }
 
 #ifdef CONFIG_ATH11K_DEBUG
-void ath11k_dbg(struct ath11k_base *ab, enum ath11k_debug_mask mask,
-		const char *fmt, ...)
+void __ath11k_dbg(struct ath11k_base *ab, enum ath11k_debug_mask mask,
+		  const char *fmt, ...)
 {
 	struct va_format vaf;
 	va_list args;
@@ -84,7 +84,7 @@ void ath11k_dbg_dump(struct ath11k_base *ab,
 
 	if (ath11k_debug_mask & mask) {
 		if (msg)
-			ath11k_dbg(ab, mask, "%s\n", msg);
+			__ath11k_dbg(ab, mask, "%s\n", msg);
 
 		for (ptr = buf; (ptr - buf) < len; ptr += 16) {
 			linebuflen = 0;
