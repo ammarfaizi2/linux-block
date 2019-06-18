@@ -1005,8 +1005,16 @@ struct htt_resp_msg {
  *    Value: payload_size in bytes
  */
 
-#define HTT_T2H_PPDU_STATS_PAYLOAD_SIZE_M GENMASK(31, 16)
-#define HTT_T2H_PPDU_STATS_PDEV_ID_M GENMASK(11, 10)
+#define HTT_T2H_PPDU_STATS_INFO_PDEV_ID GENMASK(11, 10)
+#define HTT_T2H_PPDU_STATS_INFO_PAYLOAD_SIZE GENMASK(31, 16)
+
+struct ath11k_htt_ppdu_stats_msg {
+	u32 info;
+	u32 ppdu_id;
+	u32 timestamp;
+	u32 rsvd;
+	u8 data[0];
+} __packed;
 
 struct htt_tlv {
 	u32 header;

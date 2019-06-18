@@ -1234,16 +1234,17 @@ struct htt_ppdu_stats_info *ath11k_dp_htt_get_ppdu_desc(struct ath11k *ar,
 static int ath11k_htt_pull_ppdu_stats(struct ath11k_base *ab,
 				      struct sk_buff *skb)
 {
-	u8 *data = (u8 *)skb->data;
+	struct ath11k_htt_ppdu_stats_msg *msg;
 	struct htt_ppdu_stats_info *ppdu_info;
 	struct ath11k *ar;
 	int ret;
 	u8 pdev_id;
 	u32 ppdu_id, len;
 
-	len = FIELD_GET(HTT_T2H_PPDU_STATS_PAYLOAD_SIZE_M, *(u32 *)data);
-	pdev_id = FIELD_GET(HTT_T2H_PPDU_STATS_PDEV_ID_M, *(u32 *)data);
-	ppdu_id = *((u32 *)data + 1);
+	msg = (struct ath11k_htt_ppdu_stats_msg *)skb->data;
+	len = FIELD_GET(HTT_T2H_PPDU_STATS_INFO_PAYLOAD_SIZE, msg->info);
+	pdev_id = FIELD_GET(HTT_T2H_PPDU_STATS_INFO_PDEV_ID, msg->info);
+	ppdu_id = msg->ppdu_id;
 
 	rcu_read_lock();
 	ar = ath11k_get_ar_by_pdev_id(ab, pdev_id);
@@ -1256,9 +1257,6 @@ static int ath11k_htt_pull_ppdu_stats(struct ath11k_base *ab,
 		trace_ath11k_htt_ppdu_stats(ar, skb->data, len);
 	}
 
-	/* TLV info starts after 16bytes of header */
-	data = (u8 *)data + 16;
-
 	ppdu_info = ath11k_dp_htt_get_ppdu_desc(ar, ppdu_id);
 	if (!ppdu_info) {
 		ret = -EINVAL;
@@ -1266,7 +1264,7 @@ static int ath11k_htt_pull_ppdu_stats(struct ath11k_base *ab,
 	}
 
 	ppdu_info->ppdu_id = ppdu_id;
-	ret = ath11k_dp_htt_tlv_iter(ab, data, len,
+	ret = ath11k_dp_htt_tlv_iter(ab, msg->data, len,
 				     ath11k_htt_tlv_ppdu_stats_parse,
 				     (void *)ppdu_info);
 	if (ret) {
@@ -1287,7 +1285,7 @@ static void ath11k_htt_pktlog(struct ath11k_base *ab, struct sk_buff *skb)
 	u32 len;
 	u8 pdev_id;
 
-	len = FIELD_GET(HTT_T2H_PPDU_STATS_PAYLOAD_SIZE_M, data->hdr);
+	len = FIELD_GET(HTT_T2H_PPDU_STATS_INFO_PAYLOAD_SIZE, data->hdr);
 
 	if (len > ATH11K_HTT_PKTLOG_MAX_SIZE)
 	{
@@ -1297,7 +1295,7 @@ static void ath11k_htt_pktlog(struct ath11k_base *ab, struct sk_buff *skb)
 		return;
 	}
 
-	pdev_id = FIELD_GET(HTT_T2H_PPDU_STATS_PDEV_ID_M, data->hdr);
+	pdev_id = FIELD_GET(HTT_T2H_PPDU_STATS_INFO_PDEV_ID, data->hdr);
 	pdev_id = DP_HW2SW_MACID(pdev_id);
 	ar = ab->pdevs[pdev_id].ar;
 
