@@ -4202,11 +4202,13 @@ void ath11k_dbg_htt_ext_stats_handler(struct ath11k_base *ab,
 
 	msg = (struct ath11k_htt_extd_stats_msg *)skb->data;
 	cookie = msg->cookie;
-	stats_req = (struct debug_htt_stats_req *)(uintptr_t)cookie;
-	if (!stats_req)
-		return;
 
-	pdev_id = stats_req->pdev_id;
+	if (FIELD_GET(HTT_STATS_COOKIE_MSB, cookie) != HTT_STATS_MAGIC_VALUE) {
+		ath11k_warn(ab, "received invalid htt ext stats event\n");
+		return;
+	}
+
+	pdev_id = FIELD_GET(HTT_STATS_COOKIE_LSB, cookie);
 	rcu_read_lock();
 	ar = ath11k_get_ar_by_pdev_id(ab, pdev_id);
 	rcu_read_unlock();
@@ -4214,6 +4216,10 @@ void ath11k_dbg_htt_ext_stats_handler(struct ath11k_base *ab,
 		ath11k_warn(ab, "failed to get ar for pdev_id %d\n", pdev_id);
 		return;
 	}
+
+	stats_req = ar->debug.htt_stats.stats_req;
+	if (!stats_req)
+		return;
 
 	spin_lock_bh(&ar->debug.htt_stats.lock);
 	if (stats_req->done) {
@@ -4322,9 +4328,9 @@ static int ath11k_prep_htt_stats_cfg_params(struct ath11k *ar, u8 type,
 	return 0;
 }
 
-int ath11k_dbg_htt_stats_req(struct ath11k *ar,
-			     struct debug_htt_stats_req *stats_req)
+int ath11k_dbg_htt_stats_req(struct ath11k *ar)
 {
+	struct debug_htt_stats_req *stats_req = ar->debug.htt_stats.stats_req;
 	u8 type = stats_req->type;
 	u64 cookie = 0;
 	int ret, pdev_id = ar->pdev->pdev_id;
@@ -4335,7 +4341,8 @@ int ath11k_dbg_htt_stats_req(struct ath11k *ar,
 	stats_req->done = false;
 	stats_req->pdev_id = pdev_id;
 
-	cookie = (u64)(uintptr_t)stats_req;
+	cookie = FIELD_PREP(HTT_STATS_COOKIE_MSB, HTT_STATS_MAGIC_VALUE) |
+		 FIELD_PREP(HTT_STATS_COOKIE_LSB, pdev_id);
 
 	ret = ath11k_prep_htt_stats_cfg_params(ar, type, stats_req->peer_addr,
 					       &cfg_params);
@@ -4344,14 +4351,12 @@ int ath11k_dbg_htt_stats_req(struct ath11k *ar,
 		return ret;
 	}
 
-	mutex_lock(&ar->conf_mutex);
 	ret = ath11k_dp_tx_htt_h2t_ext_stats_req(ar, type, &cfg_params, cookie);
 	if (ret) {
 		ath11k_warn(ar->ab, "failed to send htt stats request: %d\n", ret);
 		mutex_unlock(&ar->conf_mutex);
 		return ret;
 	}
-	mutex_unlock(&ar->conf_mutex);
 
 	while (!wait_for_completion_timeout(&stats_req->cmpln, 3 * HZ)) {
 		spin_lock_bh(&ar->debug.htt_stats.lock);
@@ -4381,8 +4386,11 @@ static int ath11k_open_htt_stats(struct inode *inode, struct file *file)
 	if (!stats_req)
 		return -ENOMEM;
 
+	mutex_lock(&ar->conf_mutex);
+	ar->debug.htt_stats.stats_req = stats_req;
 	stats_req->type = type;
-	ret = ath11k_dbg_htt_stats_req(ar, stats_req);
+	ret = ath11k_dbg_htt_stats_req(ar);
+	mutex_unlock(&ar->conf_mutex);
 	if (ret < 0)
 		goto out;
 

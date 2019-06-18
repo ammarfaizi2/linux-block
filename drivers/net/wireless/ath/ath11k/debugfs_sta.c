@@ -417,9 +417,12 @@ ath11k_dbg_sta_open_htt_peer_stats(struct inode *inode, struct file *file)
 	if (!stats_req)
 		return -ENOMEM;
 
+	mutex_lock(&ar->conf_mutex);
+	ar->debug.htt_stats.stats_req = stats_req;
 	stats_req->type = ATH11K_DBG_HTT_EXT_STATS_PEER_INFO;
 	memcpy(stats_req->peer_addr, sta->addr, ETH_ALEN);
-	ret = ath11k_dbg_htt_stats_req(ar, stats_req);
+	ret = ath11k_dbg_htt_stats_req(ar);
+	mutex_unlock(&ar->conf_mutex);
 	if (ret < 0)
 		goto out;
 

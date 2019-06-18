@@ -140,8 +140,7 @@ void ath11k_debug_fw_stats_process(struct ath11k_base *ab, u8 *evt_buf,
 				   u32 len);
 
 void ath11k_debug_fw_stats_init(struct ath11k *ar);
-int ath11k_dbg_htt_stats_req(struct ath11k *ar,
-			     struct debug_htt_stats_req *stats_req);
+int ath11k_dbg_htt_stats_req(struct ath11k *ar);
 
 static inline bool ath11k_debug_is_pktlog_lite_mode_enabled(struct ath11k *ar)
 {
@@ -211,8 +210,7 @@ static inline int ath11k_debug_is_extd_rx_stats_enabled(struct ath11k *ar)
 	return 0;
 }
 
-static inline int ath11k_dbg_htt_stats_req(struct ath11k *ar,
-					   struct debug_htt_stats_req *stats_req)
+static inline int ath11k_dbg_htt_stats_req(struct ath11k *ar)
 {
 	return 0;
 }

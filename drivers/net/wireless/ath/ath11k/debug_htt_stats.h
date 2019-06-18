@@ -6,6 +6,10 @@
 #ifndef DEBUG_HTT_STATS_H
 #define DEBUG_HTT_STATS_H
 
+#define HTT_STATS_COOKIE_LSB    GENMASK_ULL(31, 0)
+#define HTT_STATS_COOKIE_MSB    GENMASK_ULL(63, 32)
+#define HTT_STATS_MAGIC_VALUE   0xF0F0F0F0
+
 enum htt_tlv_tag_t {
 	HTT_STATS_TX_PDEV_CMN_TAG                           = 0,
 	HTT_STATS_TX_PDEV_UNDERRUN_TAG                      = 1,
