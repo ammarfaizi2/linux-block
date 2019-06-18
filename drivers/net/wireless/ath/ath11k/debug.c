@@ -829,6 +829,8 @@ static ssize_t ath11k_write_extd_rx_stats(struct file *file,
 		tlv_filter.pkt_filter_flags2 = HTT_RX_FP_CTRL_FILTER_FLASG2;
 		tlv_filter.pkt_filter_flags3 = HTT_RX_FP_CTRL_FILTER_FLASG3 |
 			HTT_RX_FP_DATA_FILTER_FLASG3;
+	} else {
+		tlv_filter = ath11k_mac_mon_status_filter_default;
 	}
 
 	ring_id = ar->dp.rx_mon_status_refill_ring.refill_buf_ring.ring_id;

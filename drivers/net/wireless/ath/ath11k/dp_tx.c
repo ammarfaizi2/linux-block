@@ -931,6 +931,8 @@ int ath11k_dp_tx_htt_monitor_mode_ring_config(struct ath11k *ar, bool reset)
 	if (!reset)
 		tlv_filter.rx_filter =
 				HTT_RX_MON_FILTER_TLV_FLAGS_MON_STATUS_RING;
+	else
+		tlv_filter = ath11k_mac_mon_status_filter_default;
 
 	ret = ath11k_dp_tx_htt_rx_filter_setup(ar->ab, ring_id, dp->mac_id,
 					       HAL_RXDMA_MONITOR_STATUS,

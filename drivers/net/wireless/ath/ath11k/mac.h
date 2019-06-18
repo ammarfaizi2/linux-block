@@ -164,6 +164,8 @@ struct ath11k_generic_iter {
 
 #define ATH11K_CHAN_WIDTH_NUM			8
 
+extern const struct htt_rx_ring_tlv_filter ath11k_mac_mon_status_filter_default;
+
 int ath11k_mac_create(struct ath11k_base *ab);
 void ath11k_mac_destroy(struct ath11k_base *ab);
 void ath11k_mac_unregister(struct ath11k_base *ab);

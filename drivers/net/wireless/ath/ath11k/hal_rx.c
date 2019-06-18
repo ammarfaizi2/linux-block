@@ -1129,6 +1129,10 @@ ath11k_hal_rx_parse_mon_status_tlv(struct ath11k_base *ab,
 		struct hal_rx_phyrx_rssi_legacy_info *rssi =
 			(struct hal_rx_phyrx_rssi_legacy_info *)tlv_data;
 
+		/* TODO: Please note that the combined rssi will not be accurate
+		 * in MU case. Rssi in MU needs to be retrieved from
+		 * PHYRX_OTHER_RECEIVE_INFO TLV.
+		 */
 		ppdu_info->rssi_comb =
 			FIELD_GET(HAL_RX_PHYRX_RSSI_LEGACY_INFO_INFO1_RSSI_COMB,
 				  __le32_to_cpu(rssi->info0));

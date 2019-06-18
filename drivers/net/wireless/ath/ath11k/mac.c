@@ -151,6 +151,15 @@ ath11k_phymodes[NUM_NL80211_BANDS][2][ATH11K_CHAN_WIDTH_NUM] = {
 	},
 };
 
+const struct htt_rx_ring_tlv_filter ath11k_mac_mon_status_filter_default = {
+	.rx_filter = HTT_RX_FILTER_TLV_FLAGS_MPDU_START |
+		     HTT_RX_FILTER_TLV_FLAGS_PPDU_END |
+		     HTT_RX_FILTER_TLV_FLAGS_PPDU_END_STATUS_DONE,
+	.pkt_filter_flags0 = HTT_RX_FP_MGMT_FILTER_FLAGS0,
+	.pkt_filter_flags1 = HTT_RX_FP_MGMT_FILTER_FLAGS1,
+	.pkt_filter_flags3 = HTT_RX_FP_DATA_FILTER_FLASG3
+};
+
 #define ATH11K_MAC_FIRST_OFDM_RATE_IDX 4
 #define ath11k_g_rates ath11k_legacy_rates
 #define ath11k_g_rates_size (ARRAY_SIZE(ath11k_legacy_rates))
@@ -2693,13 +2702,10 @@ static int ath11k_sta_state(struct ieee80211_hw *hw,
 			goto exit;
 		}
 
-		if (ath11k_debug_is_extd_rx_stats_enabled(ar)) {
-			arsta->rx_stats = kzalloc(sizeof(*arsta->rx_stats),
-						  GFP_KERNEL);
-			if (!arsta->rx_stats) {
-				ret = -ENOMEM;
-				goto exit;
-			}
+		arsta->rx_stats = kzalloc(sizeof(*arsta->rx_stats), GFP_KERNEL);
+		if (!arsta->rx_stats) {
+			ret = -ENOMEM;
+			goto exit;
 		}
 
 		peer_param.vdev_id = arvif->vdev_id;
@@ -2759,10 +2765,8 @@ static int ath11k_sta_state(struct ieee80211_hw *hw,
 		if (ath11k_debug_is_extd_tx_stats_enabled(ar))
 			kfree(arsta->tx_stats);
 
-		if (ath11k_debug_is_extd_rx_stats_enabled(ar)) {
-			kfree(arsta->rx_stats);
-			arsta->rx_stats = NULL;
-		}
+		kfree(arsta->rx_stats);
+		arsta->rx_stats = NULL;
 	} else if (old_state == IEEE80211_STA_AUTH &&
 		   new_state == IEEE80211_STA_ASSOC &&
 		   (vif->type == NL80211_IFTYPE_AP ||
@@ -3588,6 +3592,21 @@ void ath11k_drain_tx(struct ath11k *ar)
 	ath11k_mgmt_over_wmi_tx_purge(ar);
 }
 
+static int ath11k_mac_config_mon_status_default(struct ath11k *ar, bool enable)
+{
+	struct htt_rx_ring_tlv_filter tlv_filter = {0};
+	u32 ring_id;
+
+	if (enable)
+		tlv_filter = ath11k_mac_mon_status_filter_default;
+
+	ring_id = ar->dp.rx_mon_status_refill_ring.refill_buf_ring.ring_id;
+
+	return ath11k_dp_tx_htt_rx_filter_setup(ar->ab, ring_id, ar->dp.mac_id,
+						HAL_RXDMA_MONITOR_STATUS,
+						DP_RX_BUFFER_SIZE, &tlv_filter);
+}
+
 static int ath11k_start(struct ieee80211_hw *hw)
 {
 	struct ath11k *ar = hw->priv;
@@ -3668,6 +3687,16 @@ static int ath11k_start(struct ieee80211_hw *hw)
 	ar->num_created_vdevs = 0;
 	ar->num_peers = 0;
 
+	/* Configure monitor status ring with default rx_filter to get rx status
+	 * such as rssi, rx_duration.
+	 */
+	ret = ath11k_mac_config_mon_status_default(ar, true);
+	if (ret) {
+		ath11k_err(ab, "failed to configure monitor status ring with default rx_filter: (%d)\n",
+			   ret);
+		goto err;
+	}
+
 	mutex_unlock(&ar->conf_mutex);
 
 	rcu_assign_pointer(ab->pdevs_active[ar->pdev_idx],
@@ -3686,10 +3715,16 @@ static void ath11k_stop(struct ieee80211_hw *hw)
 {
 	struct ath11k *ar = hw->priv;
 	struct htt_ppdu_stats_info *ppdu_stats, *tmp;
+	int ret;
 
 	ath11k_drain_tx(ar);
 
 	mutex_lock(&ar->conf_mutex);
+	ret = ath11k_mac_config_mon_status_default(ar, false);
+	if (ret)
+		ath11k_err(ar->ab, "failed to clear rx_filter for monitor status ring: (%d)\n",
+			   ret);
+
 	clear_bit(ATH11K_CAC_RUNNING, &ar->dev_flags);
 	ar->state = ATH11K_STATE_OFF;
 	mutex_unlock(&ar->conf_mutex);
@@ -5196,6 +5231,9 @@ static void ath11k_sta_statistics(struct ieee80211_hw *hw,
 	}
 	sinfo->txrate.flags = arsta->txrate.flags;
 	sinfo->filled |= BIT_ULL(NL80211_STA_INFO_TX_BITRATE);
+
+	/* TODO: Use real NF instead of default one. */
+	sinfo->signal = arsta->rx_stats->rssi_comb + ATH11K_DEFAULT_NOISE_FLOOR;
 }
 
 static const struct ieee80211_ops ath11k_ops = {

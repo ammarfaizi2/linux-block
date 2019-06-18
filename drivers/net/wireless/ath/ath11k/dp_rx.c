@@ -142,14 +142,6 @@ static u8 ath11k_dp_rx_h_msdu_start_rx_bw(u8 *desc)
 			 __le32_to_cpu(rxd->msdu_start.info3));
 }
 
-static u8 ath11k_dp_rx_h_msdu_start_rssi(u8 *desc)
-{
-	struct hal_rx_desc *rxd = (struct hal_rx_desc *)desc;
-
-	return FIELD_GET(RX_MSDU_START_INFO3_USER_RSSI,
-			 __le32_to_cpu(rxd->msdu_start.info3));
-}
-
 static u32 ath11k_dp_rx_h_msdu_start_freq(u8 *desc)
 {
 	struct hal_rx_desc *rxd = (struct hal_rx_desc *)desc;
@@ -2018,11 +2010,6 @@ static void ath11k_dp_rx_h_ppdu(struct ath11k *ar, void *rx_desc,
 
 	rx_status->flag |= RX_FLAG_NO_SIGNAL_VAL;
 
-	/* TODO: Use real NF instead of default one */
-	rx_status->signal = ath11k_dp_rx_h_msdu_start_rssi(rx_desc) +
-			    ATH11K_DEFAULT_NOISE_FLOOR;
-	rx_status->flag &= ~RX_FLAG_NO_SIGNAL_VAL;
-
 	channel_num = ath11k_dp_rx_h_msdu_start_freq(rx_desc);
 
 	if (channel_num >= 1 && channel_num <= 14) {
@@ -2419,6 +2406,8 @@ static void ath11k_dp_rx_update_peer_stats(struct ath11k_sta *arsta,
 
 	rx_stats->num_mpdu_fcs_ok += ppdu_info->num_mpdu_fcs_ok;
 	rx_stats->num_mpdu_fcs_err += ppdu_info->num_mpdu_fcs_err;
+
+	rx_stats->rssi_comb = ppdu_info->rssi_comb;
 }
 
 static struct sk_buff *ath11k_dp_rx_alloc_mon_status_buf(struct ath11k_base *ab,
@@ -2741,9 +2730,7 @@ static void ath11k_dp_rx_frag_h_mpdu(struct ath11k *ar,
 	rx_status->encoding = RX_ENC_LEGACY;
 	rx_status->bw = RATE_INFO_BW_20;
 
-	/* TODO: Use real NF instead of default one */
-	rx_status->signal = ath11k_dp_rx_h_msdu_start_rssi(rx_desc) +
-			    ATH11K_DEFAULT_NOISE_FLOOR;
+	rx_status->flag |= RX_FLAG_NO_SIGNAL_VAL;
 
 	rx_channel = ath11k_dp_rx_h_msdu_start_freq(rx_desc);
 
