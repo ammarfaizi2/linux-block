@@ -1487,8 +1487,8 @@ static inline void dp_peer_map_get_mac_addr(u32 addr_l32, u16 addr_h16,
 					    u8 *addr)
 {
 #ifdef __BIG_ENDIAN
-	addr_l32 = swap32(addr_l32);
-	addr_h16 = swap16(addr_h16);
+	addr_l32 = swab32(addr_l32);
+	addr_h16 = swab16(addr_h16);
 #endif
 	memcpy(addr, &addr_l32, 4);
 	memcpy(addr + 4, &addr_h16, ETH_ALEN - 4);
