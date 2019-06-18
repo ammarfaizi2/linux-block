@@ -170,6 +170,7 @@ static bool post_one_notification(struct watch_queue *wqueue,
 				  const struct cred *cred)
 {
 	struct watch_queue_buffer *buf = wqueue->buffer;
+	unsigned long flags;
 	bool done = false;
 
 	if (!buf)
@@ -178,11 +179,11 @@ static bool post_one_notification(struct watch_queue *wqueue,
 	if (security_post_notification(wqueue->cred, cred, n) < 0)
 		return false;
 
-	spin_lock_bh(&wqueue->lock); /* Protect head pointer */
+	spin_lock_irqsave(&wqueue->lock, flags); /* Protect head pointer */
 
 	if (!wqueue->defunct)
 		done = write_one_notification(wqueue, n);
-	spin_unlock_bh(&wqueue->lock);
+	spin_unlock_irqrestore(&wqueue->lock, flags);
 	return done;
 }
 
@@ -673,10 +674,10 @@ int add_watch_to_object(struct watch *watch, struct watch_list *wlist)
 
 	rcu_assign_pointer(watch->watch_list, wlist);
 
-	spin_lock_bh(&wqueue->lock);
+	spin_lock_irq(&wqueue->lock);
 	kref_get(&wqueue->usage);
 	hlist_add_head(&watch->queue_node, &wqueue->watches);
-	spin_unlock_bh(&wqueue->lock);
+	spin_unlock_irq(&wqueue->lock);
 
 	hlist_add_head(&watch->list_node, &wlist->watchers);
 	return 0;
@@ -733,14 +734,14 @@ found:
 	if (wqueue) {
 		post_one_notification(wqueue, &n, wq ? wq->cred : NULL);
 
-		spin_lock_bh(&wqueue->lock);
+		spin_lock_irq(&wqueue->lock);
 
 		if (!hlist_unhashed(&watch->queue_node)) {
 			hlist_del_init_rcu(&watch->queue_node);
 			put_watch(watch);
 		}
 
-		spin_unlock_bh(&wqueue->lock);
+		spin_unlock_irq(&wqueue->lock);
 	}
 
 	if (wlist->release_watch) {
@@ -773,7 +774,7 @@ static void watch_queue_clear(struct watch_queue *wqueue)
 	bool release;
 
 	rcu_read_lock();
-	spin_lock_bh(&wqueue->lock);
+	spin_lock_irq(&wqueue->lock);
 
 	/* Prevent new additions and prevent notifications from happening */
 	wqueue->defunct = true;
@@ -782,7 +783,7 @@ static void watch_queue_clear(struct watch_queue *wqueue)
 		watch = hlist_entry(wqueue->watches.first, struct watch, queue_node);
 		hlist_del_init_rcu(&watch->queue_node);
 		/* We now own a ref on the watch. */
-		spin_unlock_bh(&wqueue->lock);
+		spin_unlock_irq(&wqueue->lock);
 
 		/* We can't do the next bit under the queue lock as we need to
 		 * get the list lock - which would cause a deadlock if someone
@@ -820,10 +821,10 @@ static void watch_queue_clear(struct watch_queue *wqueue)
 		}
 
 		put_watch(watch);
-		spin_lock_bh(&wqueue->lock);
+		spin_lock_irq(&wqueue->lock);
 	}
 
-	spin_unlock_bh(&wqueue->lock);
+	spin_unlock_irq(&wqueue->lock);
 	rcu_read_unlock();
 }
 
