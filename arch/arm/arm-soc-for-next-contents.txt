@@ -55,4 +55,8 @@ arm/fixes
 		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v5.2/fixes-rc4
 	patch
 		MAINTAINERS: Change QCOM repo location
+		firmware: trusted_foundations: add ARMv7 dependency
+		ARM: ixp4xx: don't select SERIAL_OF_PLATFORM
+		ARM: ixp4xx: mark ixp4xx_irq_setup as __init
+		ARM: ixp4xx: include irqs.h where needed
 
