@@ -2135,6 +2135,7 @@ error_create_wakeup_source:
 static int ep_modify(struct eventpoll *ep, struct epitem *epi,
 		     const struct epoll_event *event)
 {
+	__poll_t revents;
 	int pwake = 0;
 	poll_table pt;
 
@@ -2146,10 +2147,24 @@ static int ep_modify(struct eventpoll *ep, struct epitem *epi,
 	 * Set the new event interest mask before calling f_op->poll();
 	 * otherwise we might miss an event that happens between the
 	 * f_op->poll() call and the new event set registering.
+	 *
+	 * Use xchg() here because we can race with ep_clear_public_event_bits()
+	 * for the case when events are polled from userspace.  Internally
+	 * ep_clear_public_event_bits() uses cmpxchg(), thus on some archs
+	 * we can't mix normal writes and cmpxchg().
 	 */
-	epi->event.events = event->events; /* need barrier below */
+	xchg(&epi->event.events, event->events);
 	epi->event.data = event->data; /* protected by mtx */
-	if (epi->event.events & EPOLLWAKEUP) {
+
+	/* Update user item, barrier is below */
+	if (ep_polled_by_user(ep)) {
+		struct uepitem *uepi = uep_item_from_epi(epi);
+		struct epoll_uitem *uitem;
+
+		uitem = &ep->user_header->items[uepi->bit];
+		WRITE_ONCE(uitem->events, event->events);
+		WRITE_ONCE(uitem->data, event->data);
+	} else if (epi->event.events & EPOLLWAKEUP) {
 		if (!ep_has_wakeup_source(epi))
 			ep_create_wakeup_source(epi);
 	} else if (ep_has_wakeup_source(epi)) {
@@ -2182,12 +2197,19 @@ static int ep_modify(struct eventpoll *ep, struct epitem *epi,
 	 * If the item is "hot" and it is not registered inside the ready
 	 * list, push it inside.
 	 */
-	if (ep_item_poll(epi, &pt, 1)) {
+	revents = ep_item_poll(epi, &pt, 1);
+	if (revents) {
+		bool added = false;
+
 		write_lock_irq(&ep->lock);
-		if (!ep_is_linked(epi)) {
+		if (ep_polled_by_user(ep))
+			added = ep_add_event_to_uring(epi, revents);
+		else if (!ep_is_linked(epi)) {
 			list_add_tail(&epi->rdllink, &ep->rdllist);
 			ep_pm_stay_awake(epi);
-
+			added = true;
+		}
+		if (added) {
 			/* Notify waiting tasks that events are available */
 			if (waitqueue_active(&ep->wq))
 				wake_up(&ep->wq);
