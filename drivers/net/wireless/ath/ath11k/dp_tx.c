@@ -110,12 +110,11 @@ int ath11k_dp_tx(struct ath11k *ar, struct ath11k_vif *arvif,
 	ti.encap_type = ath11k_dp_tx_get_encap_type(arvif, skb);
 	ti.meta_data_flags = arvif->tcl_metadata;
 
-	if (info->control.hw_key) {
+	if (info->control.hw_key)
 		ti.encrypt_type =
 		ath11k_dp_tx_get_encrypt_type(info->control.hw_key->cipher);
-	} else {
+	else
 		ti.encrypt_type = HAL_ENCRYPT_TYPE_OPEN;
-	}
 
 	ti.addr_search_flags = arvif->hal_addr_search_flags;
 	ti.search_type = arvif->search_type;

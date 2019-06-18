@@ -44,8 +44,8 @@ static struct sk_buff *ath11k_htc_build_tx_ctrl_skb(void *ab)
 	if (!skb)
 		return NULL;
 
-	skb_reserve(skb, 20);
-	WARN_ONCE((unsigned long)skb->data & 3, "unaligned skb");
+	skb_reserve(skb, sizeof(struct ath11k_htc_hdr));
+	WARN_ON_ONCE(!IS_ALIGNED((unsigned long)skb->data, 4));
 
 	skb_cb = ATH11K_SKB_CB(skb);
 	memset(skb_cb, 0, sizeof(*skb_cb));
