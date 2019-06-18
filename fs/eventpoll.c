@@ -116,9 +116,6 @@
  * That is around 1.3mb of allocated memory for one epfd.  What is more
  * important is ->index_length, which should be ^2, so do not increase
  * max items number to avoid size doubling of user index.
- *
- * Before increasing the value see add_event_to_uring() and especially
- * cnt_to_advance() functions and change them accordingly.
  */
 #define EP_USERPOLL_MAX_ITEMS_NR 65536
 
@@ -201,6 +198,9 @@ struct uepitem {
 
 	/* Work for offloading event callback */
 	struct work_struct work;
+
+	/* Bit in user bitmap for user polling */
+	unsigned int bit;
 };
 
 /*
@@ -266,12 +266,6 @@ struct eventpoll {
 
 	/* Length of both items bitmaps, always aligned on page */
 	unsigned int items_bm_length;
-
-	/*
-	 * Counter to support atomic and lockless ->tail updates.
-	 * See add_event_to_uring() for details of counter layout.
-	 */
-	atomic64_t shadow_cnt;
 
 	/* used to optimize loop detection check */
 	int visited;
@@ -874,6 +868,125 @@ static void epi_rcu_free(struct rcu_head *head)
 	kmem_cache_free(epi_cache, epi);
 }
 
+#define set_unless_zero_atomically(ptr, flags)			\
+({								\
+	typeof(ptr) _ptr = (ptr);				\
+	typeof(flags) _flags = (flags);				\
+	typeof(*_ptr) _old, _val = READ_ONCE(*_ptr);		\
+								\
+	for (;;) {						\
+		if (!_val)					\
+			break;					\
+		_old = cmpxchg(_ptr, _val, _flags);		\
+		if (_old == _val)				\
+			break;					\
+		_val = _old;					\
+	}							\
+	_val;							\
+})
+
+static inline void ep_remove_user_item(struct epitem *epi)
+{
+	struct uepitem *uepi = uep_item_from_epi(epi);
+	struct eventpoll *ep = epi->ep;
+	struct epoll_uitem *uitem;
+
+	lockdep_assert_held(&ep->mtx);
+
+	/* Event should not have any attached queues */
+	WARN_ON(!list_empty(&epi->pwqlist));
+
+	uitem = &ep->user_header->items[uepi->bit];
+
+	/*
+	 * User item can be in two states: signaled (read_events is set
+	 * and userspace has not yet consumed this event) and not signaled
+	 * (no events yet fired or already consumed by userspace).
+	 * We reset ready_events to EPOLLREMOVED only if ready_events is
+	 * in signaled state (we expect that userspace will come soon and
+	 * fetch this event).  In case of not signaled leave read_events
+	 * as 0.
+	 *
+	 * Why it is important to mark read_events as EPOLLREMOVED in case
+	 * of already signaled state?  ep_insert() op can be immediately
+	 * called after ep_remove(), thus the same bit can be reused and
+	 * then new event comes, which corresponds to the same entry inside
+	 * user items array.  For this particular case ep_add_event_to_uring()
+	 * does not allocate a new index entry, but simply masks EPOLLREMOVED,
+	 * and userspace uses old index entry, but meanwhile old user item
+	 * has been removed, new item has been added and event updated.
+	 */
+	set_unless_zero_atomically(&uitem->ready_events, EPOLLREMOVED);
+	clear_bit(uepi->bit, ep->items_bm);
+}
+
+#define or_with_mask_atomically(ptr, flags, mask)		\
+({								\
+	typeof(ptr) _ptr = (ptr);				\
+	typeof(flags) _flags = (flags);				\
+	typeof(flags) _mask = (mask);				\
+	typeof(*_ptr) _old, _new, _val = READ_ONCE(*_ptr);	\
+								\
+	for (;;) {						\
+		_new = (_val & ~_mask) | _flags;		\
+		_old = cmpxchg(_ptr, _val, _new);		\
+		if (_old == _val)				\
+			break;					\
+		_val = _old;					\
+	}							\
+	_val;							\
+})
+
+/*
+ * Post a notification through the watching /dev/watch_queue.
+ */
+static inline void notify_epoll(struct eventpoll *ep, unsigned int slot)
+{
+	struct epoll_notification n = {
+		.watch.type	= WATCH_TYPE_EPOLL_NOTIFY,
+		.watch.subtype	= 0,
+		.watch.info	= watch_sizeof(n) | slot << WATCH_INFO_TYPE_INFO__SHIFT,
+	};
+
+	post_watch_notification(&ep->watchers, &n.watch, current_cred(), 0);
+}
+
+static inline bool ep_add_event_to_uring(struct epitem *epi, __poll_t pollflags)
+{
+	struct uepitem *uepi = uep_item_from_epi(epi);
+	struct eventpoll *ep = epi->ep;
+	struct epoll_uitem *uitem;
+	bool added = false;
+
+	if (WARN_ON(!pollflags))
+		return false;
+
+	uitem = &ep->user_header->items[uepi->bit];
+	/*
+	 * Can be represented as:
+	 *
+	 *    was_ready = uitem->ready_events;
+	 *    uitem->ready_events &= ~EPOLLREMOVED;
+	 *    uitem->ready_events |= pollflags;
+	 *    if (!was_ready) {
+	 *         // notify_epoll()
+	 *    }
+	 *
+	 * See the big comment inside ep_remove_user_item(), why it is
+	 * important to mask EPOLLREMOVED.
+	 */
+	if (!or_with_mask_atomically(&uitem->ready_events,
+				     pollflags, EPOLLREMOVED)) {
+		/*
+		 * Item was not ready before, thus we have to post a new event.
+		 */
+		notify_epoll(ep, uepi->bit);
+		added = true;
+	}
+
+	return added;
+}
+
 /*
  * Removes a "struct epitem" from the eventpoll RB tree and deallocates
  * all the associated resources. Must be called with "mtx" held.
@@ -1225,7 +1338,6 @@ static int ep_alloc(struct eventpoll **pep, int flags, size_t max_items,
 		};
 	}
 
-	atomic64_set(&ep->shadow_cnt, 0);
 	mutex_init(&ep->mtx);
 	rwlock_init(&ep->lock);
 	init_waitqueue_head(&ep->wq);
