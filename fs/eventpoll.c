@@ -1436,6 +1436,29 @@ struct file *get_epoll_tfile_raw_ptr(struct file *file, int tfd,
 #endif /* CONFIG_CHECKPOINT_RESTORE */
 
 /**
+ * Atomically clear public event bits and return %true if the old value has
+ * public event bits set.
+ */
+static inline bool ep_clear_public_event_bits(struct epitem *epi)
+{
+	__poll_t old, flags;
+
+	/*
+	 * Here we race with ourselves and with ep_modify(), which can
+	 * change the event bits.  In order not to override events updated
+	 * by ep_modify() we have to do cmpxchg.
+	 */
+
+	old = READ_ONCE(epi->event.events);
+	do {
+		flags = old;
+	} while ((old = cmpxchg(&epi->event.events, flags,
+				flags & EP_PRIVATE_BITS)) != flags);
+
+	return flags & ~EP_PRIVATE_BITS;
+}
+
+/**
  * Adds a new entry to the tail of the list in a lockless way, i.e.
  * multiple CPUs are allowed to call this function concurrently.
  *
@@ -1554,6 +1577,20 @@ static int ep_poll_callback(struct epitem *epi, __poll_t pollflags)
 	if (pollflags && !(pollflags & epi->event.events))
 		goto out_unlock;
 
+	if (ep_polled_by_user(ep)) {
+		/*
+		 * For polled descriptor from user we have to disable events on
+		 * callback path in case of one-shot.
+		 */
+		if ((epi->event.events & EPOLLONESHOT) &&
+		    !ep_clear_public_event_bits(epi))
+			/* Race is lost, another callback has cleared events */
+			goto out_unlock;
+
+		ep_add_event_to_uring(epi, pollflags);
+		goto wakeup;
+	}
+
 	/*
 	 * If we are transferring events to userspace, we can hold no locks
 	 * (because we're accessing user memory, and because of linux f_op->poll()
@@ -1573,6 +1610,7 @@ static int ep_poll_callback(struct epitem *epi, __poll_t pollflags)
 		ep_pm_stay_awake_rcu(epi);
 	}
 
+wakeup:
 	/*
 	 * Wake up ( if active ) both the eventpoll wait list and the ->poll()
 	 * wait list.
