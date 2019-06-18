@@ -422,6 +422,11 @@ static inline unsigned int ep_to_items_bm_length(unsigned int nr)
 	return PAGE_ALIGN(ALIGN(nr, 8) >> 3);
 }
 
+static inline bool ep_polled_by_user(struct eventpoll *ep)
+{
+	return !!ep->user_header;
+}
+
 /**
  * ep_events_available - Checks if ready events might be available.
  *
@@ -517,13 +522,17 @@ static inline void ep_set_busy_poll_napi_id(struct epitem *epi)
 #endif /* CONFIG_NET_RX_BUSY_POLL */
 
 #ifdef CONFIG_PM_SLEEP
-static inline void ep_take_care_of_epollwakeup(struct epoll_event *epev)
+static inline void ep_take_care_of_epollwakeup(struct eventpoll *ep,
+					       struct epoll_event *epev)
 {
-	if ((epev->events & EPOLLWAKEUP) && !capable(CAP_BLOCK_SUSPEND))
-		epev->events &= ~EPOLLWAKEUP;
+	if (epev->events & EPOLLWAKEUP) {
+		if (!capable(CAP_BLOCK_SUSPEND) || ep_polled_by_user(ep))
+			epev->events &= ~EPOLLWAKEUP;
+	}
 }
 #else
-static inline void ep_take_care_of_epollwakeup(struct epoll_event *epev)
+static inline void ep_take_care_of_epollwakeup(struct eventpoll *ep,
+					       struct epoll_event *epev)
 {
 	epev->events &= ~EPOLLWAKEUP;
 }
@@ -2305,10 +2314,6 @@ SYSCALL_DEFINE4(epoll_ctl, int, epfd, int, op, int, fd,
 	if (!file_can_poll(tf.file))
 		goto error_tgt_fput;
 
-	/* Check if EPOLLWAKEUP is allowed */
-	if (ep_op_has_event(op))
-		ep_take_care_of_epollwakeup(&epds);
-
 	/*
 	 * We have to check that the file structure underneath the file descriptor
 	 * the user passed to us _is_ an eventpoll file. And also we do not permit
@@ -2319,9 +2324,17 @@ SYSCALL_DEFINE4(epoll_ctl, int, epfd, int, op, int, fd,
 		goto error_tgt_fput;
 
 	/*
+	 * At this point it is safe to assume that the "private_data" contains
+	 * our own data structure.
+	 */
+	ep = f.file->private_data;
+
+	/*
 	 * epoll adds to the wakeup queue at EPOLL_CTL_ADD time only,
 	 * so EPOLLEXCLUSIVE is not allowed for a EPOLL_CTL_MOD operation.
-	 * Also, we do not currently supported nested exclusive wakeups.
+	 * Also, we do not currently supported nested exclusive wakeups
+	 * and EPOLLEXCLUSIVE is not supported for epoll which is polled
+	 * from userspace.
 	 */
 	if (ep_op_has_event(op) && (epds.events & EPOLLEXCLUSIVE)) {
 		if (op == EPOLL_CTL_MOD)
@@ -2329,13 +2342,18 @@ SYSCALL_DEFINE4(epoll_ctl, int, epfd, int, op, int, fd,
 		if (op == EPOLL_CTL_ADD && (is_file_epoll(tf.file) ||
 				(epds.events & ~EPOLLEXCLUSIVE_OK_BITS)))
 			goto error_tgt_fput;
+		if (ep_polled_by_user(ep))
+			goto error_tgt_fput;
 	}
 
-	/*
-	 * At this point it is safe to assume that the "private_data" contains
-	 * our own data structure.
-	 */
-	ep = f.file->private_data;
+	if (ep_op_has_event(op)) {
+		if (ep_polled_by_user(ep) && !(epds.events & EPOLLET))
+			/* Polled by user has only edge triggered behaviour */
+			goto error_tgt_fput;
+
+		/* Check if EPOLLWAKEUP is allowed */
+		ep_take_care_of_epollwakeup(ep, &epds);
+	}
 
 	/*
 	 * When we insert an epoll file descriptor, inside another epoll file
@@ -2437,14 +2455,6 @@ static int do_epoll_wait(int epfd, struct epoll_event __user *events,
 	struct fd f;
 	struct eventpoll *ep;
 
-	/* The maximum number of event must be greater than zero */
-	if (maxevents <= 0 || maxevents > EP_MAX_EVENTS)
-		return -EINVAL;
-
-	/* Verify that the area passed by the user is writeable */
-	if (!access_ok(events, maxevents * sizeof(struct epoll_event)))
-		return -EFAULT;
-
 	/* Get the "struct file *" for the eventpoll file */
 	f = fdget(epfd);
 	if (!f.file)
@@ -2463,6 +2473,20 @@ static int do_epoll_wait(int epfd, struct epoll_event __user *events,
 	 * our own data structure.
 	 */
 	ep = f.file->private_data;
+	if (!ep_polled_by_user(ep)) {
+		/* The maximum number of event must be greater than zero */
+		if (maxevents <= 0 || maxevents > EP_MAX_EVENTS)
+			goto error_fput;
+
+		/* Verify that the area passed by the user is writeable */
+		error = -EFAULT;
+		if (!access_ok(events, maxevents * sizeof(struct epoll_event)))
+			goto error_fput;
+	} else {
+		/* Use ring instead */
+		if (maxevents != 0 || events != NULL)
+			goto error_fput;
+	}
 
 	/* Time to fish for events ... */
 	error = ep_poll(ep, events, maxevents, timeout);
