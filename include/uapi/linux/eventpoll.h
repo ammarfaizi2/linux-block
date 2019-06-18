@@ -16,7 +16,9 @@
 #define _UAPI_LINUX_EVENTPOLL_H
 
 /* For O_CLOEXEC */
+#ifndef O_CLOEXEC
 #include <linux/fcntl.h>
+#endif
 #include <linux/types.h>
 #include <linux/watch_queue.h>
 
