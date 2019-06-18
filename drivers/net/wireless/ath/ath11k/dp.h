@@ -1463,20 +1463,15 @@ struct htt_ext_stats_cfg_params {
  *       4 bytes.
  */
 
-#define HTT_T2H_EXT_STATS_COOKIE_SIZE         8
+#define HTT_T2H_EXT_STATS_INFO1_LENGTH   GENMASK(31, 16)
 
-#define HTT_T2H_EXT_STATS_CONF_HDR_SIZE       4
+struct ath11k_htt_extd_stats_msg {
+	u32 info0;
+	u64 cookie;
+	u32 info1;
+	u8 data[0];
+} __packed;
 
-#define HTT_T2H_EXT_STATS_CONF_TLV_HDR_SIZE   4
-
-#define HTT_T2H_EXT_STATS_CONF_TLV_TYPE_M     0x000000ff
-#define HTT_T2H_EXT_STATS_CONF_TLV_TYPE_S     0
-#define HTT_T2H_EXT_STATS_CONF_TLV_STATUS_M   0x00000700
-#define HTT_T2H_EXT_STATS_CONF_TLV_STATUS_S   8
-#define HTT_T2H_EXT_STATS_CONF_TLV_DONE_M     0x00000800
-#define HTT_T2H_EXT_STATS_CONF_TLV_DONE_S     11
-#define HTT_T2H_EXT_STATS_CONF_TLV_LENGTH_M   GENMASK(31, 16)
-#define HTT_T2H_EXT_STATS_CONF_TLV_LENGTH_S   16
 
 struct htt_mac_addr {
 	u32 mac_addr_l32;

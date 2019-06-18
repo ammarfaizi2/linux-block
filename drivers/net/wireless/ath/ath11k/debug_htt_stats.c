@@ -16,7 +16,7 @@
 #define HTT_MAX_STRING_LEN 256
 #define HTT_MAX_PRINT_CHAR_PER_ELEM 15
 
-#define HTT_TLV_HDR_LEN HTT_T2H_EXT_STATS_CONF_TLV_HDR_SIZE
+#define HTT_TLV_HDR_LEN 4
 
 #define ARRAY_TO_STRING(out, arr, len)							\
 	do {										\
@@ -4192,22 +4192,29 @@ static int ath11k_dbg_htt_ext_stats_parse(struct ath11k_base *ab,
 void ath11k_dbg_htt_ext_stats_handler(struct ath11k_base *ab,
 				      struct sk_buff *skb)
 {
-	u8 *data = (u8 *)skb->data;
-	u32 len;
-	u64 cookie;
+	struct ath11k_htt_extd_stats_msg *msg;
 	struct debug_htt_stats_req *stats_req;
 	struct ath11k *ar;
+	u32 len;
+	u64 cookie;
 	int ret;
 	u8 pdev_id;
 
-	data = data + 4;
-	cookie = *(u64 *)data;
+	msg = (struct ath11k_htt_extd_stats_msg *)skb->data;
+	cookie = msg->cookie;
 	stats_req = (struct debug_htt_stats_req *)(uintptr_t)cookie;
 	if (!stats_req)
 		return;
 
-	pdev_id = DP_HW2SW_MACID(stats_req->pdev_id);
-	ar = ab->pdevs[pdev_id].ar;
+	pdev_id = stats_req->pdev_id;
+	rcu_read_lock();
+	ar = ath11k_get_ar_by_pdev_id(ab, pdev_id);
+	rcu_read_unlock();
+	if (!ar) {
+		ath11k_warn(ab, "failed to get ar for pdev_id %d\n", pdev_id);
+		return;
+	}
+
 	spin_lock_bh(&ar->debug.htt_stats.lock);
 	if (stats_req->done) {
 		spin_unlock_bh(&ar->debug.htt_stats.lock);
@@ -4216,10 +4223,8 @@ void ath11k_dbg_htt_ext_stats_handler(struct ath11k_base *ab,
 	stats_req->done = true;
 	spin_unlock_bh(&ar->debug.htt_stats.lock);
 
-	data = data + 8;
-	len = FIELD_GET(HTT_T2H_EXT_STATS_CONF_TLV_LENGTH_M, *(u32 *)data);
-	data = data + 4;
-	ret = ath11k_dp_htt_tlv_iter(ab, data, len,
+	len = FIELD_GET(HTT_T2H_EXT_STATS_INFO1_LENGTH, msg->info1);
+	ret = ath11k_dp_htt_tlv_iter(ab, msg->data, len,
 				     ath11k_dbg_htt_ext_stats_parse,
 				     (void *)stats_req);
 	if (ret)
