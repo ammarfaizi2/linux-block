@@ -5084,6 +5084,10 @@ ath11k_mac_op_set_bitrate_mask(struct ieee80211_hw *hw,
 			return -EINVAL;
 		}
 
+		ieee80211_iterate_stations_atomic(ar->hw,
+						  ath11k_mac_disable_peer_fixed_rate,
+						  arvif);
+
 		mutex_lock(&ar->conf_mutex);
 
 		arvif->bitrate_mask = *mask;
