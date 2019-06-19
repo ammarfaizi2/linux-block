@@ -13,6 +13,27 @@ arm/soc
 		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v5.3/soc-signed
 
 arm/dt
+	integrator/dts
+		git://git.kernel.org/pub/scm/linux/kernel/git/linusw/linux-integrator tags/integrator-dts-v5.3-arm-soc
+	patch
+		arm64: dts: sprd: Add Spreadtrum SD host controller support
+		arm64: qcom: qcs404: Add reset-cells to GCC node
+	rockchip/dts32
+		git://git.kernel.org/pub/scm/linux/kernel/git/mmind/linux-rockchip tags/v5.3-rockchip-dts32-1
+	rockchip/dts64
+		git://git.kernel.org/pub/scm/linux/kernel/git/mmind/linux-rockchip tags/v5.3-rockchip-dts64-1
+	broadcom/dt64
+		https://github.com/Broadcom/stblinux tags/arm-soc/for-5.3/devicetree-arm64
+	omap/dt
+		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v5.3/dt-signed
+	omap/ti-sysc-dt
+		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v5.3/ti-sysc-dt-signed
+	vexpress/juno
+		git://git.kernel.org/pub/scm/linux/kernel/git/sudeep.holla/linux tags/juno-updates-5.3
+	vexpress/updates
+		git://git.kernel.org/pub/scm/linux/kernel/git/sudeep.holla/linux tags/vexpress-updates-5.3
+	samsung/dt
+		https://git.kernel.org/pub/scm/linux/kernel/git/krzk/linux tags/samsung-dt-5.3
 
 arm/drivers
 	fsl/soc
@@ -35,28 +56,4 @@ arm/defconfig
 arm/late
 
 arm/fixes
-	<no branch> (6b23af0783a54efb348f0bd781b7850636023dbb)
-		https://github.com/Broadcom/stblinux tags/arm-soc/for-5.2/drivers-fixes
-	<no branch> (b2279bcffa72304de8ff591cb60446322570c0b5)
-		https://github.com/Broadcom/stblinux tags/arm-soc/for-5.2/maintainers
-	<no branch> (b25af2ff7c07bd19af74e3f64ff82e2880d13d81)
-		git://git.kernel.org/pub/scm/linux/kernel/git/shawnguo/linux tags/imx-fixes-5.2
-	<no branch> (4ee23cd76c0ce8622976b3da0e2bc89e6d94f6d4)
-		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v5.2/fixes-rc2
-	<no branch> (e8bd76dccd792b371a934336c3e7d8c389755d9f)
-		https://github.com/Broadcom/stblinux tags/arm-soc/for-5.2/devicetree-fixes
-	<no branch> (a6b112b04355b87a2baee448165bd00889ac523f)
-		git://git.kernel.org/pub/scm/linux/kernel/git/kristo/linux tags/am654-fixes-for-v5.2
-	<no branch> (cc538ca4308372e81b824be08561c466b1d73b72)
-		git://git.infradead.org/linux-mvebu tags/mvebu-fixes-5.2-1
-	<no branch> (68f2515bb31a664ba3e2bc1eb78dd9f529b10067)
-		git://git.kernel.org/pub/scm/linux/kernel/git/nsekhar/linux-davinci tags/davinci-fixes-for-v5.2
-	<no branch> (8a0098c05a272c9a68f6885e09755755b612459c)
-		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v5.2/fixes-rc4
-	patch
-		MAINTAINERS: Change QCOM repo location
-		firmware: trusted_foundations: add ARMv7 dependency
-		ARM: ixp4xx: don't select SERIAL_OF_PLATFORM
-		ARM: ixp4xx: mark ixp4xx_irq_setup as __init
-		ARM: ixp4xx: include irqs.h where needed
 
