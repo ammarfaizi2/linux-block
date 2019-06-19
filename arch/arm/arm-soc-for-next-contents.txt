@@ -52,6 +52,16 @@ arm/drivers
 		git://git.kernel.org/pub/scm/linux/kernel/git/sudeep.holla/linux tags/scmi-updates-5.3
 
 arm/defconfig
+	patch
+		ARM: config: Remove left-over BACKLIGHT_LCD_SUPPORT
+		arm64: configs: Remove useless UEVENT_HELPER_PATH
+		ARM: configs: Remove useless UEVENT_HELPER_PATH
+		ARM: multi_v7_defconfig: add Panfrost driver
+		arm64: defconfig: add Panfrost driver
+		arm64: defconfig: enable Lima driver
+		ARM: multi_v7_defconfig: enable Lima driver
+		arm64 defconfig: enable MPT3 SAS and BNX2X drivers
+		arm64 defconfig: enable Mellanox cards
 
 arm/late
 
