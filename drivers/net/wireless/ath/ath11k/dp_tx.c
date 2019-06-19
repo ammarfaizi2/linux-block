@@ -383,7 +383,7 @@ static void ath11k_dp_tx_complete_msdu(struct ath11k *ar,
 	memset(&info->status, 0, sizeof(info->status));
 
 	/* skip tx rate update from ieee80211_status*/
-	 info->status.rates[0].idx = -1;
+	info->status.rates[0].idx = -1;
 
 	if (ts->status == HAL_WBM_TQM_REL_REASON_FRAME_ACKED &&
 	    !(info->flags & IEEE80211_TX_CTL_NO_ACK)) {
