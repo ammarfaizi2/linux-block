@@ -11,6 +11,9 @@ arm/soc
 		https://github.com/Broadcom/stblinux tags/arm-soc/for-5.3/soc-arm64
 	omap/soc
 		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v5.3/soc-signed
+	patch
+		ARM: use arch_extension directive instead of arch argument
+		ARM: OMAP2: drop explicit assembler architecture
 
 arm/dt
 	integrator/dts
