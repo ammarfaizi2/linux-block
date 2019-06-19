@@ -78,4 +78,6 @@ arm/fixes
 		git://git.kernel.org/pub/scm/linux/kernel/git/linusw/linux-nomadik tags/gemini-dts-v5.2
 	patch
 		ARM: omap2: remove incorrect __init annotation
+	<no branch> (64f35709d5735ddbf8ab52d60ab3d62550b544d7)
+		https://github.com/Broadcom/stblinux tags/arm-soc/for-5.3/maintainers
 
