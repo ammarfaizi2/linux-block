@@ -66,4 +66,10 @@ arm/defconfig
 arm/late
 
 arm/fixes
+	<no branch> (a019ab40679715ea680cc8561a02888be70bc4e9)
+		git://git.kernel.org/pub/scm/linux/kernel/git/shawnguo/linux tags/imx-fixes-5.2-2
+	<no branch> (36558020128b1a48b7bddd5792ee70e3f64b04b0)
+		git://git.kernel.org/pub/scm/linux/kernel/git/linusw/linux-nomadik tags/gemini-dts-v5.2
+	patch
+		ARM: omap2: remove incorrect __init annotation
 
