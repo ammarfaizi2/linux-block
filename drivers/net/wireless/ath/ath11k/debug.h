@@ -126,7 +126,6 @@ static inline void ath11k_dbg_dump(struct ath11k_base *ab,
 				   const char *msg, const char *prefix,
 				   const void *buf, size_t len)
 {
-	return;
 }
 #endif /* CONFIG_ATH11K_DEBUG */
 

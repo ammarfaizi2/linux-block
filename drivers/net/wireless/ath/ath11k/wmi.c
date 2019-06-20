@@ -4689,7 +4689,6 @@ static void ath11k_peer_delete_resp_event(struct ath11k_base *ab, u8 *evt_buf, u
 	/* TODO: Do we need to validate whether ath11k_peer_find() return NULL
 	 *	 Why this is needed when there is HTT event for peer delete
 	 */
-	return;
 }
 
 static inline const char *ath11k_wmi_vdev_resp_print(u32 vdev_resp_status)
