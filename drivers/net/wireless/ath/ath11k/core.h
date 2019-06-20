@@ -66,7 +66,7 @@ struct ath11k_skb_rxcb {
 	bool is_first_msdu;
 	bool is_last_msdu;
 	bool is_continuation;
-	void *rx_desc;
+	struct hal_rx_desc *rx_desc;
 	u8 err_rel_src;
 	u8 err_code;
 	u8 mac_id;
