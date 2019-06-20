@@ -753,7 +753,8 @@ void ath11k_hal_reo_qdesc_setup(void *vaddr, int tid, u32 ba_window_size,
 	memset(qdesc, 0, sizeof(*qdesc));
 
 	ath11k_hal_reo_set_desc_hdr(&qdesc->desc_hdr, HAL_DESC_REO_OWNED,
-				    HAL_DESC_REO_QUEUE_DESC, 0xDDBEEF);
+				    HAL_DESC_REO_QUEUE_DESC,
+				    REO_QUEUE_DESC_MAGIC_DEBUG_PATTERN_0);
 
 	qdesc->rx_queue_num = FIELD_PREP(HAL_RX_REO_QUEUE_RX_QUEUE_NUMBER, tid);
 
@@ -800,13 +801,16 @@ void ath11k_hal_reo_qdesc_setup(void *vaddr, int tid, u32 ba_window_size,
 	 */
 	memset(ext_desc, 0, 3 * sizeof(*ext_desc));
 	ath11k_hal_reo_set_desc_hdr(&ext_desc->desc_hdr, HAL_DESC_REO_OWNED,
-				    HAL_DESC_REO_QUEUE_EXT_DESC, 0xADBEEF);
+				    HAL_DESC_REO_QUEUE_EXT_DESC,
+				    REO_QUEUE_DESC_MAGIC_DEBUG_PATTERN_1);
 	ext_desc++;
 	ath11k_hal_reo_set_desc_hdr(&ext_desc->desc_hdr, HAL_DESC_REO_OWNED,
-				    HAL_DESC_REO_QUEUE_EXT_DESC, 0xBDBEEF);
+				    HAL_DESC_REO_QUEUE_EXT_DESC,
+				    REO_QUEUE_DESC_MAGIC_DEBUG_PATTERN_2);
 	ext_desc++;
 	ath11k_hal_reo_set_desc_hdr(&ext_desc->desc_hdr, HAL_DESC_REO_OWNED,
-				    HAL_DESC_REO_QUEUE_EXT_DESC, 0xCDBEEF);
+				    HAL_DESC_REO_QUEUE_EXT_DESC,
+				    REO_QUEUE_DESC_MAGIC_DEBUG_PATTERN_3);
 }
 
 void ath11k_hal_reo_init_cmd_ring(struct ath11k_base *ab,
