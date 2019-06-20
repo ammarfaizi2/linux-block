@@ -530,7 +530,6 @@ int ath11k_wmi_mgmt_send(struct ath11k *ar, u32 vdev_id, u32 buf_id,
 	if (!skb)
 		return -ENOMEM;
 
-
 	cmd = (struct wmi_mgmt_send_cmd *)skb->data;
 	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_MGMT_TX_SEND_CMD) |
 			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
@@ -2110,7 +2109,6 @@ int ath11k_wmi_send_scan_chan_list_cmd(struct ath11k *ar,
 	cmd = (struct wmi_scan_chan_list_cmd *)skb->data;
 	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_SCAN_CHAN_LIST_CMD) |
 			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
-
 
 	ath11k_dbg(ar->ab, ATH11K_DBG_WMI,
 		   "WMI no.of chan = %d len = %d\n", chan_list->nallchans, len);

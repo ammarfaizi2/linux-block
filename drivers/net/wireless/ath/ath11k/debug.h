@@ -120,12 +120,13 @@ static inline int __ath11k_dbg(struct ath11k_base *ab,
 {
 	return 0;
 }
+
 static inline void ath11k_dbg_dump(struct ath11k_base *ab,
 		     enum ath11k_debug_mask mask,
 		     const char *msg, const char *prefix,
 		     const void *buf, size_t len)
 {
-
+	return;
 }
 #endif /* CONFIG_ATH11K_DEBUG */
 

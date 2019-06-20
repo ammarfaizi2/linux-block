@@ -491,7 +491,6 @@ void ath11k_ce_per_engine_service(struct ath11k_base *ab, u16 ce_id)
 
 	if (pipe->recv_cb)
 		ath11k_ce_recv_process_cb(pipe);
-
 }
 
 void ath11k_ce_poll_send_completed(struct ath11k_base *ab, u8 pipe_id)

@@ -648,6 +648,7 @@ static int ath11k_monitor_vdev_up(struct ath11k *ar, int vdev_id)
 		   vdev_id);
 	return 0;
 }
+
 static int ath11k_config(struct ieee80211_hw *hw, u32 changed)
 {
 	struct ath11k *ar = hw->priv;
@@ -1710,6 +1711,7 @@ static void ath11k_bss_info_changed(struct ieee80211_hw *hw,
 
 	if (changed & BSS_CHANGED_ERP_CTS_PROT) {
 		u32 cts_prot;
+
 		cts_prot = !!(info->use_cts_prot);
 		param_id = WMI_VDEV_PARAM_PROTECTION_MODE;
 
@@ -2504,7 +2506,6 @@ static void ath11k_sta_rc_update_wk(struct work_struct *wk)
 			if (!wait_for_completion_timeout(&ar->peer_assoc_done, 1 * HZ))
 				ath11k_warn(ar->ab, "failed to get peer assoc conf event for %pM vdev %i\n",
 					    sta->addr, arvif->vdev_id);
-
 		}
 	}
 
@@ -5468,7 +5469,6 @@ void ath11k_mac_unregister(struct ath11k_base *ab)
 		kfree(ar->mac.sbands[NL80211_BAND_5GHZ].channels);
 
 		SET_IEEE80211_DEV(ar->hw, NULL);
-
 	}
 	ab->mac_registered = false;
 }
@@ -5546,7 +5546,6 @@ int ath11k_mac_create(struct ath11k_base *ab)
 
 		idr_init(&ar->txmgmt_idr);
 		spin_lock_init(&ar->txmgmt_idr_lock);
-
 	}
 
 	/* Initialize channel counters frequency value in hertz */

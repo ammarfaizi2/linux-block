@@ -5058,7 +5058,6 @@ enum ath11k_hw_txrx_mode {
 	ATH11K_HW_TXRX_ETHERNET = 2,
 };
 
-
 struct wmi_wmm_params {
 	u32 tlv_header;
 	u32 cwmin;
@@ -5131,8 +5130,7 @@ struct target_resource_config {
 	u32 tt_support;
 	u32 atf_config;
 	u32 iphdr_pad_config;
-	u32
-	    qwrap_config:16,
+	u32 qwrap_config:16,
 	    alloc_frag_desc_for_data_pkt:16;
 	u32 num_tdls_vdevs;
 	u32 num_tdls_conn_table_entries;

@@ -1612,7 +1612,6 @@ struct htt_tx_sounding_stats_tlv {
 };
 
 struct htt_pdev_obss_pd_stats_tlv {
-
 	u32        num_obss_tx_ppdu_success;
 	u32        num_obss_tx_ppdu_failure;
 };

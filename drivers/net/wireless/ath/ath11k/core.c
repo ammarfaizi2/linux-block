@@ -321,7 +321,6 @@ int ath11k_core_fetch_bdf(struct ath11k_base *sc, struct ath11k_board_data *bd)
 success:
 	ath11k_dbg(sc, ATH11K_DBG_BOOT, "using board api %d\n", sc->bd_api);
 	return 0;
-
 }
 
 static void ath11k_core_stop(struct ath11k_base *sc)

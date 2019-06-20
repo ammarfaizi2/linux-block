@@ -153,7 +153,6 @@ enum ath11k_scan_state {
 	ATH11K_SCAN_ABORTING,
 };
 
-
 enum ath11k_dev_flags {
 	ATH11K_CAC_RUNNING,
 	ATH11K_FLAG_CORE_REGISTERED,

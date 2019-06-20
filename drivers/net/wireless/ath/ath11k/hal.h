@@ -248,7 +248,6 @@ struct ath11k_base;
 
 #define HAL_ADDR_MSB_REG_SHIFT				32
 
-
 /* WBM ring bit field mask and shift */
 #define HAL_WBM_LINK_DESC_IDLE_LIST_MODE		BIT(1)
 #define HAL_WBM_SCATTER_BUFFER_SIZE			GENMASK(10, 2)

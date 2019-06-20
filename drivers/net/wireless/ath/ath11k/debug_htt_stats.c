@@ -3427,7 +3427,6 @@ static inline void htt_print_rx_pdev_fw_stats_tlv(const u32 *tag_buf,
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "fw_ring_mgmt_subtype = %s ",
 			   fw_ring_mgmt_subtype);
 
-
 	ARRAY_TO_STRING(fw_ring_ctrl_subtype,
 			htt_stats_buf->fw_ring_ctrl_subtype,
 			HTT_STATS_SUBTYPE_MAX);

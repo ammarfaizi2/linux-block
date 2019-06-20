@@ -2196,7 +2196,6 @@ int ath11k_dp_process_rx(struct ath11k_base *ab, int mac_id,
 	ath11k_hal_srng_access_begin(ab, srng);
 
 	while ((rx_desc = ath11k_dp_rx_get_reo_desc(ab, srng))) {
-
 		memset(&meta_info, 0, sizeof(meta_info));
 		ath11k_hal_rx_parse_dst_ring_desc(ab, rx_desc, &meta_info);
 
@@ -3169,7 +3168,6 @@ int ath11k_dp_rx_process_wbm_err(struct ath11k_base *ab,
 
 	if (!total_num_buffs_reaped)
 		goto done;
-
 
 	for (i = 0; i <  ab->num_radios; i++) {
 		if (!num_buffs_reaped[i])
