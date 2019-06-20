@@ -3106,7 +3106,8 @@ static void ath11k_mac_setup_ht_vht_cap(struct ath11k *ar,
 static int ath11k_check_chain_mask(struct ath11k *ar, u32 ant, bool is_tx_ant)
 {
 	/* TODO: Check the request chainmask against the supported
-	 * chainmask table which is advertised in extented_service_ready event */
+	 * chainmask table which is advertised in extented_service_ready event
+	 */
 
 	return 0;
 }

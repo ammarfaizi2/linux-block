@@ -1378,46 +1378,45 @@ struct hal_ce_srng_dest_desc {
 	u32 buffer_addr_info; /* %HAL_CE_DEST_DESC_ADDR_INFO_ */
 } __packed;
 
-/*
-* hal_ce_srng_dest_desc
-*
-* dst_buffer_low
-*		LSB 32 bits of the 40 Bit Pointer to the Destination
-*		buffer
-*
-* dst_buffer_high
-*		MSB 8 bits of the 40 Bit Pointer to the Destination
-*		buffer
-*
-* ce_res_4
-*		Reserved
-*
-* ring_id
-*		The buffer pointer ring ID.
-*		0 refers to the IDLE ring
-*		1 - N refers to other rings
-*		Helps with debugging when dumping ring contents.
-*
-* looping_count
-*		A count value that indicates the number of times the
-*		producer of entries into the Ring has looped around the
-*		ring.
-*
-*		At initialization time, this value is set to 0. On the
-*		first loop, this value is set to 1. After the max value is
-*		reached allowed by the number of bits for this field, the
-*		count value continues with 0 again.
-*
-*		In case SW is the consumer of the ring entries, it can
-*		use this field to figure out up to where the producer of
-*		entries has created new entries. This eliminates the need to
-*		check where the head pointer' of the ring is located once
-*		the SW starts processing an interrupt indicating that new
-*		entries have been put into this ring...
-*
-*		Also note that SW if it wants only needs to look at the
-*		LSB bit of this count value.
-*/
+/* hal_ce_srng_dest_desc
+ *
+ * dst_buffer_low
+ *		LSB 32 bits of the 40 Bit Pointer to the Destination
+ *		buffer
+ *
+ * dst_buffer_high
+ *		MSB 8 bits of the 40 Bit Pointer to the Destination
+ *		buffer
+ *
+ * ce_res_4
+ *		Reserved
+ *
+ * ring_id
+ *		The buffer pointer ring ID.
+ *		0 refers to the IDLE ring
+ *		1 - N refers to other rings
+ *		Helps with debugging when dumping ring contents.
+ *
+ * looping_count
+ *		A count value that indicates the number of times the
+ *		producer of entries into the Ring has looped around the
+ *		ring.
+ *
+ *		At initialization time, this value is set to 0. On the
+ *		first loop, this value is set to 1. After the max value is
+ *		reached allowed by the number of bits for this field, the
+ *		count value continues with 0 again.
+ *
+ *		In case SW is the consumer of the ring entries, it can
+ *		use this field to figure out up to where the producer of
+ *		entries has created new entries. This eliminates the need to
+ *		check where the head pointer' of the ring is located once
+ *		the SW starts processing an interrupt indicating that new
+ *		entries have been put into this ring...
+ *
+ *		Also note that SW if it wants only needs to look at the
+ *		LSB bit of this count value.
+ */
 
 #define HAL_CE_DST_STATUS_DESC_FLAGS_HASH_EN		BIT(8)
 #define HAL_CE_DST_STATUS_DESC_FLAGS_BYTE_SWAP		BIT(9)
@@ -1436,71 +1435,70 @@ struct hal_ce_srng_dst_status_desc {
 	u32 meta_info; /* HAL_CE_DST_STATUS_DESC_META_INFO_ */
 } __packed;
 
-/*
-* hal_ce_srng_dst_status_desc
-*
-* ce_res_5
-*		Reserved
-*
-* toeplitz_en
-*
-* src_swap
-*		Source memory buffer swapped
-*
-* dest_swap
-*		Destination  memory buffer swapped
-*
-* gather
-*		Gather of multiple copy engine source descriptors to one
-*		destination enabled
-*
-* ce_res_6
-*		Reserved
-*
-* length
-*		Sum of all the Lengths of the source descriptor in the
-*		gather chain
-*
-* toeplitz_hash_0
-*		32 LS bits of 64 bit Toeplitz LFSR hash result
-*
-* toeplitz_hash_1
-*		32 MS bits of 64 bit Toeplitz LFSR hash result
-*
-* fw_metadata
-*		Meta data used by FW
-*		In case of gather field in first source ring entry of
-*		the gather copy cycle in taken into account.
-*
-* ce_res_7
-*		Reserved
-*
-* ring_id
-*		The buffer pointer ring ID.
-*		0 refers to the IDLE ring
-*		1 - N refers to other rings
-*		Helps with debugging when dumping ring contents.
-*
-* looping_count
-*		A count value that indicates the number of times the
-*		producer of entries into the Ring has looped around the
-*		ring.
-*
-*		At initialization time, this value is set to 0. On the
-*		first loop, this value is set to 1. After the max value is
-*		reached allowed by the number of bits for this field, the
-*		count value continues with 0 again.
-*
-*		In case SW is the consumer of the ring entries, it can
-*		use this field to figure out up to where the producer of
-*		entries has created new entries. This eliminates the need to
-*		check where the head pointer' of the ring is located once
-*		the SW starts processing an interrupt indicating that new
-*		entries have been put into this ring...
-*
-*		Also note that SW if it wants only needs to look at the
-*			LSB bit of this count value.
-*/
+/* hal_ce_srng_dst_status_desc
+ *
+ * ce_res_5
+ *		Reserved
+ *
+ * toeplitz_en
+ *
+ * src_swap
+ *		Source memory buffer swapped
+ *
+ * dest_swap
+ *		Destination  memory buffer swapped
+ *
+ * gather
+ *		Gather of multiple copy engine source descriptors to one
+ *		destination enabled
+ *
+ * ce_res_6
+ *		Reserved
+ *
+ * length
+ *		Sum of all the Lengths of the source descriptor in the
+ *		gather chain
+ *
+ * toeplitz_hash_0
+ *		32 LS bits of 64 bit Toeplitz LFSR hash result
+ *
+ * toeplitz_hash_1
+ *		32 MS bits of 64 bit Toeplitz LFSR hash result
+ *
+ * fw_metadata
+ *		Meta data used by FW
+ *		In case of gather field in first source ring entry of
+ *		the gather copy cycle in taken into account.
+ *
+ * ce_res_7
+ *		Reserved
+ *
+ * ring_id
+ *		The buffer pointer ring ID.
+ *		0 refers to the IDLE ring
+ *		1 - N refers to other rings
+ *		Helps with debugging when dumping ring contents.
+ *
+ * looping_count
+ *		A count value that indicates the number of times the
+ *		producer of entries into the Ring has looped around the
+ *		ring.
+ *
+ *		At initialization time, this value is set to 0. On the
+ *		first loop, this value is set to 1. After the max value is
+ *		reached allowed by the number of bits for this field, the
+ *		count value continues with 0 again.
+ *
+ *		In case SW is the consumer of the ring entries, it can
+ *		use this field to figure out up to where the producer of
+ *		entries has created new entries. This eliminates the need to
+ *		check where the head pointer' of the ring is located once
+ *		the SW starts processing an interrupt indicating that new
+ *		entries have been put into this ring...
+ *
+ *		Also note that SW if it wants only needs to look at the
+ *			LSB bit of this count value.
+ */
 
 #define HAL_TX_RATE_STATS_INFO0_VALID		BIT(0)
 #define HAL_TX_RATE_STATS_INFO0_BW		GENMASK(2, 1)
