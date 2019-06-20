@@ -9,6 +9,9 @@
 int mlx5_core_alloc_pd(struct mlx5_core_dev *dev, u32 *pdn);
 int mlx5_core_dealloc_pd(struct mlx5_core_dev *dev, u32 pdn);
 
+int mlx5_create_mkey(struct mlx5_core_dev *dev, u32 *in, int inlen, u32 *mkey);
+int mlx5_destroy_mkey(struct mlx5_core_dev *dev, u32 mkey);
+
 void mlx5_init_reserved_gids(struct mlx5_core_dev *dev);
 void mlx5_cleanup_reserved_gids(struct mlx5_core_dev *dev);
 int  mlx5_core_reserve_gids(struct mlx5_core_dev *dev, unsigned int count);

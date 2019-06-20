@@ -59,7 +59,7 @@ struct mlx5dr_icm_dm {
 
 struct mlx5dr_icm_mr {
 	struct mlx5dr_icm_pool *pool;
-	struct mlx5_core_mkey mkey;
+	u32 mkey;
 	struct mlx5dr_icm_dm dm;
 	size_t used_length;
 	size_t length;
@@ -69,9 +69,8 @@ struct mlx5dr_icm_mr {
 
 static int dr_icm_create_dm_mkey(struct mlx5_core_dev *mdev,
 				 u32 pd, u64 length, u64 start_addr, int mode,
-				 struct mlx5_core_mkey *mkey)
+				 u32 *mkey)
 {
-	u32 inlen = MLX5_ST_SZ_BYTES(create_mkey_in);
 	u32 in[MLX5_ST_SZ_DW(create_mkey_in)] = {};
 	void *mkc;
 
@@ -91,7 +90,7 @@ static int dr_icm_create_dm_mkey(struct mlx5_core_dev *mdev,
 	MLX5_SET(mkc, mkc, qpn, 0xffffff);
 	MLX5_SET64(mkc, mkc, start_addr, start_addr);
 
-	return mlx5_core_create_mkey(mdev, mkey, in, inlen);
+	return mlx5_create_mkey(mdev, in, sizeof(in), mkey);
 }
 
 static struct mlx5dr_icm_mr *
@@ -160,7 +159,7 @@ static void dr_icm_pool_mr_destroy(struct mlx5dr_icm_mr *icm_mr)
 	struct mlx5dr_icm_dm *dm = &icm_mr->dm;
 
 	list_del(&icm_mr->mr_list);
-	mlx5_core_destroy_mkey(mdev, &icm_mr->mkey);
+	mlx5_destroy_mkey(mdev, icm_mr->mkey);
 	mlx5_dm_sw_icm_dealloc(mdev, dm->type, dm->length, 0,
 			       dm->addr, dm->obj_id);
 	kvfree(icm_mr);
@@ -244,7 +243,7 @@ static int dr_icm_chunks_create(struct mlx5dr_icm_bucket *bucket)
 		}
 
 		chunk->bucket = bucket;
-		chunk->rkey = icm_mr->mkey.key;
+		chunk->rkey = icm_mr->mkey;
 		/* mr start addr is zero based */
 		chunk->mr_addr = icm_mr->used_length;
 		chunk->icm_addr = (uintptr_t)icm_mr->icm_start_addr + icm_mr->used_length;

@@ -690,7 +690,7 @@ struct mlx5e_rq {
 	u8                     wq_type;
 	u32                    rqn;
 	struct mlx5_core_dev  *mdev;
-	struct mlx5_core_mkey  umr_mkey;
+	u32                    umr_mkey;
 
 	/* XDP read-mostly */
 	struct xdp_rxq_info    xdp_rxq;

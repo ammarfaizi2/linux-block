@@ -115,7 +115,7 @@ static int mlx5_fpga_conn_post_recv(struct mlx5_fpga_conn *conn,
 	ix = conn->qp.rq.pc & (conn->qp.rq.size - 1);
 	data = mlx5_wq_cyc_get_wqe(&conn->qp.wq.rq, ix);
 	data->byte_count = cpu_to_be32(buf->sg[0].size);
-	data->lkey = cpu_to_be32(conn->fdev->conn_res.mkey.key);
+	data->lkey = cpu_to_be32(conn->fdev->conn_res.mkey);
 	data->addr = cpu_to_be64(buf->sg[0].dma_addr);
 
 	conn->qp.rq.pc++;
@@ -155,7 +155,7 @@ static void mlx5_fpga_conn_post_send(struct mlx5_fpga_conn *conn,
 		if (!buf->sg[sgi].data)
 			break;
 		data->byte_count = cpu_to_be32(buf->sg[sgi].size);
-		data->lkey = cpu_to_be32(conn->fdev->conn_res.mkey.key);
+		data->lkey = cpu_to_be32(conn->fdev->conn_res.mkey);
 		data->addr = cpu_to_be64(buf->sg[sgi].dma_addr);
 		data++;
 		size++;
@@ -220,17 +220,11 @@ static int mlx5_fpga_conn_post_recv_buf(struct mlx5_fpga_conn *conn)
 	return err;
 }
 
-static int mlx5_fpga_conn_create_mkey(struct mlx5_core_dev *mdev, u32 pdn,
-				      struct mlx5_core_mkey *mkey)
+static int
+mlx5_fpga_conn_create_mkey(struct mlx5_core_dev *mdev, u32 pdn, u32 *mkey)
 {
-	int inlen = MLX5_ST_SZ_BYTES(create_mkey_in);
+	u32 in[MLX5_ST_SZ_DW(create_mkey_in)] = {};
 	void *mkc;
-	u32 *in;
-	int err;
-
-	in = kvzalloc(inlen, GFP_KERNEL);
-	if (!in)
-		return -ENOMEM;
 
 	mkc = MLX5_ADDR_OF(create_mkey_in, in, memory_key_mkey_entry);
 	MLX5_SET(mkc, mkc, access_mode_1_0, MLX5_MKC_ACCESS_MODE_PA);
@@ -241,10 +235,7 @@ static int mlx5_fpga_conn_create_mkey(struct mlx5_core_dev *mdev, u32 pdn,
 	MLX5_SET(mkc, mkc, length64, 1);
 	MLX5_SET(mkc, mkc, qpn, 0xffffff);
 
-	err = mlx5_core_create_mkey(mdev, mkey, in, inlen);
-
-	kvfree(in);
-	return err;
+	return mlx5_create_mkey(mdev, in, sizeof(in), mkey);
 }
 
 static void mlx5_fpga_conn_rq_cqe(struct mlx5_fpga_conn *conn,
@@ -1024,7 +1015,7 @@ int mlx5_fpga_conn_device_init(struct mlx5_fpga_device *fdev)
 		mlx5_fpga_err(fdev, "create mkey failed, %d\n", err);
 		goto err_dealloc_pd;
 	}
-	mlx5_fpga_dbg(fdev, "Created mkey 0x%x\n", fdev->conn_res.mkey.key);
+	mlx5_fpga_dbg(fdev, "Created mkey 0x%x\n", fdev->conn_res.mkey);
 
 	return 0;
 
@@ -1040,7 +1031,7 @@ out:
 
 void mlx5_fpga_conn_device_cleanup(struct mlx5_fpga_device *fdev)
 {
-	mlx5_core_destroy_mkey(fdev->mdev, &fdev->conn_res.mkey);
+	mlx5_destroy_mkey(fdev->mdev, fdev->conn_res.mkey);
 	mlx5_core_dealloc_pd(fdev->mdev, fdev->conn_res.pdn);
 	mlx5_put_uars_page(fdev->mdev, fdev->conn_res.uar);
 	mlx5_nic_vport_disable_roce(fdev->mdev);

@@ -39,6 +39,8 @@
 #include <linux/if_bridge.h>
 #include <net/page_pool.h>
 #include <net/xdp_sock.h>
+
+#include "lib/mlx5.h"
 #include "eswitch.h"
 #include "en.h"
 #include "en/txrx.h"
@@ -266,16 +268,10 @@ static int mlx5e_rq_alloc_mpwqe_info(struct mlx5e_rq *rq,
 
 static int mlx5e_create_umr_mkey(struct mlx5_core_dev *mdev,
 				 u64 npages, u8 page_shift,
-				 struct mlx5_core_mkey *umr_mkey)
+				 u32 *mkey)
 {
-	int inlen = MLX5_ST_SZ_BYTES(create_mkey_in);
+	u32 in[MLX5_ST_SZ_DW(create_mkey_in)] = {};
 	void *mkc;
-	u32 *in;
-	int err;
-
-	in = kvzalloc(inlen, GFP_KERNEL);
-	if (!in)
-		return -ENOMEM;
 
 	mkc = MLX5_ADDR_OF(create_mkey_in, in, memory_key_mkey_entry);
 
@@ -292,10 +288,7 @@ static int mlx5e_create_umr_mkey(struct mlx5_core_dev *mdev,
 		 MLX5_MTT_OCTW(npages));
 	MLX5_SET(mkc, mkc, log_page_size, page_shift);
 
-	err = mlx5_core_create_mkey(mdev, umr_mkey, in, inlen);
-
-	kvfree(in);
-	return err;
+	return mlx5_create_mkey(mdev, in, sizeof(in), mkey);
 }
 
 static int mlx5e_create_rq_umr_mkey(struct mlx5_core_dev *mdev, struct mlx5e_rq *rq)
@@ -475,7 +468,7 @@ static int mlx5e_alloc_rq(struct mlx5e_channel *c,
 		err = mlx5e_create_rq_umr_mkey(mdev, rq);
 		if (err)
 			goto err_rq_wq_destroy;
-		rq->mkey_be = cpu_to_be32(rq->umr_mkey.key);
+		rq->mkey_be = cpu_to_be32(rq->umr_mkey);
 
 		err = mlx5e_rq_alloc_mpwqe_info(rq, c);
 		if (err)
@@ -621,7 +614,7 @@ err_free:
 	switch (rq->wq_type) {
 	case MLX5_WQ_TYPE_LINKED_LIST_STRIDING_RQ:
 		kvfree(rq->mpwqe.info);
-		mlx5_core_destroy_mkey(mdev, &rq->umr_mkey);
+		mlx5_destroy_mkey(mdev, rq->umr_mkey);
 		break;
 	default: /* MLX5_WQ_TYPE_CYCLIC */
 		kvfree(rq->wqe.frags);
@@ -648,7 +641,7 @@ static void mlx5e_free_rq(struct mlx5e_rq *rq)
 	switch (rq->wq_type) {
 	case MLX5_WQ_TYPE_LINKED_LIST_STRIDING_RQ:
 		kvfree(rq->mpwqe.info);
-		mlx5_core_destroy_mkey(rq->mdev, &rq->umr_mkey);
+		mlx5_destroy_mkey(rq->mdev, rq->umr_mkey);
 		break;
 	default: /* MLX5_WQ_TYPE_CYCLIC */
 		kvfree(rq->wqe.frags);
@@ -1960,7 +1953,7 @@ static int mlx5e_open_channel(struct mlx5e_priv *priv, int ix,
 	c->cpu      = cpu;
 	c->pdev     = priv->mdev->device;
 	c->netdev   = priv->netdev;
-	c->mkey_be  = cpu_to_be32(priv->mdev->mlx5e_res.mkey.key);
+	c->mkey_be  = cpu_to_be32(priv->mdev->mlx5e_res.mkey);
 	c->num_tc   = params->num_tc;
 	c->xdp      = !!params->xdp_prog;
 	c->stats    = &priv->channel_stats[ix].ch;
