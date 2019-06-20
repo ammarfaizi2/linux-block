@@ -383,6 +383,9 @@ static void probe_kernel_image_config(void)
 		/* bpftilter module with "user mode helper" */
 		"CONFIG_BPFILTER_UMH",
 
+		/* Block */
+		"CONFIG_BLK_IO_COST",
+
 		/* test_bpf module for BPF tests */
 		"CONFIG_TEST_BPF",
 	};
