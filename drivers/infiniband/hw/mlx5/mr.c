@@ -47,6 +47,61 @@ enum {
 
 #define MLX5_UMR_ALIGN 2048
 
+static void
+create_mkey_callback(int status, struct mlx5_async_work *context);
+
+static int
+mlx5_ib_create_mkey(struct mlx5_ib_dev *dev, struct mlx5_core_mkey *mkey,
+		    u32 *in, int inlen)
+{
+	struct xarray *mkeys = &dev->mkey_table;
+	int err;
+
+	err = mlx5_core_create_mkey(dev->mdev, mkey, in, inlen);
+	if (err)
+		return err;
+
+	err = xa_err(xa_store_irq(mkeys, mlx5_base_mkey(mkey->key), mkey,
+				  GFP_KERNEL));
+	if (err) {
+		mlx5_ib_warn(dev, "failed xarray insert of mkey 0x%x, %d\n",
+			     mlx5_base_mkey(mkey->key), err);
+		mlx5_core_destroy_mkey(dev->mdev, mkey);
+	}
+	return err;
+}
+
+static int
+mlx5_ib_create_mkey_cb(struct mlx5_ib_dev *dev,
+		       struct mlx5_core_mkey *mkey,
+		       struct mlx5_async_ctx *async_ctx,
+		       u32 *in, int inlen, u32 *out, int outlen,
+		       struct mlx5_async_work *context)
+{
+	return mlx5_core_create_mkey_cb(dev->mdev, mkey, async_ctx,
+					in, inlen, out, outlen,
+					create_mkey_callback, context);
+}
+
+static int
+mlx5_ib_destroy_mkey(struct mlx5_ib_dev *dev, struct mlx5_core_mkey *mkey)
+{
+	struct xarray *mkeys = &dev->mkey_table;
+	struct mlx5_core_mkey *deleted_mkey;
+	unsigned long flags;
+
+	xa_lock_irqsave(mkeys, flags);
+	deleted_mkey = __xa_erase(mkeys, mlx5_base_mkey(mkey->key));
+	xa_unlock_irqrestore(mkeys, flags);
+	if (!deleted_mkey) {
+		mlx5_ib_dbg(dev, "failed xarray delete of mkey 0x%x\n",
+			    mlx5_base_mkey(mkey->key));
+		return -ENOENT;
+	}
+
+	return mlx5_core_destroy_mkey(dev->mdev, mkey);
+}
+
 static void clean_mr(struct mlx5_ib_dev *dev, struct mlx5_ib_mr *mr);
 static void dereg_mr(struct mlx5_ib_dev *dev, struct mlx5_ib_mr *mr);
 static int mr_cache_max_order(struct mlx5_ib_dev *dev);
@@ -59,7 +114,7 @@ static bool umr_can_use_indirect_mkey(struct mlx5_ib_dev *dev)
 
 static int destroy_mkey(struct mlx5_ib_dev *dev, struct mlx5_ib_mr *mr)
 {
-	int err = mlx5_core_destroy_mkey(dev->mdev, &mr->mmkey);
+	int err = mlx5_ib_destroy_mkey(dev, &mr->mmkey);
 
 	if (IS_ENABLED(CONFIG_INFINIBAND_ON_DEMAND_PAGING))
 		/* Wait until all page fault handlers using the mr complete. */
@@ -110,7 +165,8 @@ static void update_odp_mr(struct mlx5_ib_mr *mr)
 	}
 }
 
-static void reg_mr_callback(int status, struct mlx5_async_work *context)
+static void
+create_mkey_callback(int status, struct mlx5_async_work *context)
 {
 	struct mlx5_ib_mr *mr =
 		container_of(context, struct mlx5_ib_mr, cb_work);
@@ -118,8 +174,8 @@ static void reg_mr_callback(int status, struct mlx5_async_work *context)
 	struct mlx5_mr_cache *cache = &dev->cache;
 	int c = order2idx(dev, mr->order);
 	struct mlx5_cache_ent *ent = &cache->ent[c];
+	struct xarray *mkeys = &dev->mkey_table;
 	unsigned long flags;
-	struct xarray *mkeys = &dev->mdev->priv.mkey_table;
 	int err;
 
 	spin_lock_irqsave(&ent->lock, flags);
@@ -199,10 +255,10 @@ static int add_keys(struct mlx5_ib_dev *dev, int c, int num)
 		spin_lock_irq(&ent->lock);
 		ent->pending++;
 		spin_unlock_irq(&ent->lock);
-		err = mlx5_core_create_mkey_cb(dev->mdev, &mr->mmkey,
-					       &dev->async_ctx, in, inlen,
-					       mr->out, sizeof(mr->out),
-					       reg_mr_callback, &mr->cb_work);
+		err = mlx5_ib_create_mkey_cb(dev, &mr->mmkey,
+					     &dev->async_ctx, in, inlen,
+					     mr->out, sizeof(mr->out),
+					     &mr->cb_work);
 		if (err) {
 			spin_lock_irq(&ent->lock);
 			ent->pending--;
@@ -237,7 +293,7 @@ static void remove_keys(struct mlx5_ib_dev *dev, int c, int num)
 		ent->cur--;
 		ent->size--;
 		spin_unlock_irq(&ent->lock);
-		mlx5_core_destroy_mkey(dev->mdev, &mr->mmkey);
+		mlx5_ib_destroy_mkey(dev, &mr->mmkey);
 	}
 
 	if (IS_ENABLED(CONFIG_INFINIBAND_ON_DEMAND_PAGING))
@@ -574,7 +630,7 @@ static void clean_keys(struct mlx5_ib_dev *dev, int c)
 		ent->cur--;
 		ent->size--;
 		spin_unlock_irq(&ent->lock);
-		mlx5_core_destroy_mkey(dev->mdev, &mr->mmkey);
+		mlx5_ib_destroy_mkey(dev, &mr->mmkey);
 	}
 
 #ifdef CONFIG_INFINIBAND_ON_DEMAND_PAGING
@@ -705,7 +761,6 @@ struct ib_mr *mlx5_ib_get_dma_mr(struct ib_pd *pd, int acc)
 {
 	struct mlx5_ib_dev *dev = to_mdev(pd->device);
 	int inlen = MLX5_ST_SZ_BYTES(create_mkey_in);
-	struct mlx5_core_dev *mdev = dev->mdev;
 	struct mlx5_ib_mr *mr;
 	void *mkc;
 	u32 *in;
@@ -735,7 +790,7 @@ struct ib_mr *mlx5_ib_get_dma_mr(struct ib_pd *pd, int acc)
 	MLX5_SET(mkc, mkc, qpn, 0xffffff);
 	MLX5_SET64(mkc, mkc, start_addr, 0);
 
-	err = mlx5_core_create_mkey(mdev, &mr->mmkey, in, inlen);
+	err = mlx5_ib_create_mkey(dev, &mr->mmkey, in, inlen);
 	if (err)
 		goto err_in;
 
@@ -1131,7 +1186,7 @@ static struct mlx5_ib_mr *reg_create(struct ib_mr *ibmr, struct ib_pd *pd,
 			 get_octo_len(virt_addr, length, page_shift));
 	}
 
-	err = mlx5_core_create_mkey(dev->mdev, &mr->mmkey, in, inlen);
+	err = mlx5_ib_create_mkey(dev, &mr->mmkey, in, inlen);
 	if (err) {
 		mlx5_ib_warn(dev, "create mkey failed\n");
 		goto err_2;
@@ -1171,7 +1226,6 @@ static struct ib_mr *mlx5_ib_get_dm_mr(struct ib_pd *pd, u64 start_addr,
 {
 	struct mlx5_ib_dev *dev = to_mdev(pd->device);
 	int inlen = MLX5_ST_SZ_BYTES(create_mkey_in);
-	struct mlx5_core_dev *mdev = dev->mdev;
 	struct mlx5_ib_mr *mr;
 	void *mkc;
 	u32 *in;
@@ -1202,7 +1256,7 @@ static struct ib_mr *mlx5_ib_get_dm_mr(struct ib_pd *pd, u64 start_addr,
 	MLX5_SET(mkc, mkc, qpn, 0xffffff);
 	MLX5_SET64(mkc, mkc, start_addr, start_addr);
 
-	err = mlx5_core_create_mkey(mdev, &mr->mmkey, in, inlen);
+	err = mlx5_ib_create_mkey(dev, &mr->mmkey, in, inlen);
 	if (err)
 		goto err_in;
 
@@ -1694,7 +1748,7 @@ static int _mlx5_alloc_mkey_descs(struct ib_pd *pd, struct mlx5_ib_mr *mr,
 
 	mlx5_set_umr_free_mkey(pd, in, ndescs, access_mode, page_shift);
 
-	err = mlx5_core_create_mkey(dev->mdev, &mr->mmkey, in, inlen);
+	err = mlx5_ib_create_mkey(dev, &mr->mmkey, in, inlen);
 	if (err)
 		goto err_free_descs;
 
@@ -1879,6 +1933,7 @@ static struct ib_mr *__mlx5_ib_alloc_mr(struct ib_pd *pd,
 		err = -EINVAL;
 	}
 
+	err = mlx5_ib_create_mkey(dev, &mr->mmkey, in, inlen);
 	if (err)
 		goto err_free_in;
 
@@ -1954,7 +2009,7 @@ struct ib_mw *mlx5_ib_alloc_mw(struct ib_pd *pd, enum ib_mw_type type,
 	MLX5_SET(mkc, mkc, en_rinval, !!((type == IB_MW_TYPE_2)));
 	MLX5_SET(mkc, mkc, qpn, 0xffffff);
 
-	err = mlx5_core_create_mkey(dev->mdev, &mw->mmkey, in, inlen);
+	err = mlx5_ib_create_mkey(dev, &mw->mmkey, in, inlen);
 	if (err)
 		goto free;
 
@@ -1967,7 +2022,7 @@ struct ib_mw *mlx5_ib_alloc_mw(struct ib_pd *pd, enum ib_mw_type type,
 	if (resp.response_length) {
 		err = ib_copy_to_udata(udata, &resp, resp.response_length);
 		if (err) {
-			mlx5_core_destroy_mkey(dev->mdev, &mw->mmkey);
+			mlx5_ib_destroy_mkey(dev, &mw->mmkey);
 			goto free;
 		}
 	}
@@ -1986,8 +2041,7 @@ int mlx5_ib_dealloc_mw(struct ib_mw *mw)
 	struct mlx5_ib_mw *mmw = to_mmw(mw);
 	int err;
 
-	err =  mlx5_core_destroy_mkey((to_mdev(mw->device))->mdev,
-				      &mmw->mmkey);
+	err =  mlx5_ib_destroy_mkey(to_mdev(mw->device), &mmw->mmkey);
 	if (!err)
 		kfree(mmw);
 	return err;

@@ -1265,7 +1265,7 @@ static int devx_handle_mkey_indirect(struct devx_obj *obj,
 	mkey->pd = MLX5_GET(mkc, mkc, pd);
 	devx_mr->ndescs = MLX5_GET(mkc, mkc, translations_octword_size);
 
-	return xa_err(xa_store(&dev->mdev->priv.mkey_table,
+	return xa_err(xa_store(&dev->mkey_table,
 			       mlx5_base_mkey(mkey->key), mkey, GFP_KERNEL));
 }
 
@@ -1317,7 +1317,7 @@ static void devx_free_indirect_mkey(struct rcu_head *rcu)
  */
 static void devx_cleanup_mkey(struct devx_obj *obj)
 {
-	xa_erase(&obj->ib_dev->mdev->priv.mkey_table,
+	xa_erase(&obj->ib_dev->mkey_table,
 		 mlx5_base_mkey(obj->devx_mr.mmkey.key));
 }
 

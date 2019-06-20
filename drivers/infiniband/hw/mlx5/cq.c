@@ -522,8 +522,8 @@ repoll:
 	case MLX5_CQE_SIG_ERR:
 		sig_err_cqe = (struct mlx5_sig_err_cqe *)cqe64;
 
-		xa_lock(&dev->mdev->priv.mkey_table);
-		mmkey = xa_load(&dev->mdev->priv.mkey_table,
+		xa_lock(&dev->mkey_table);
+		mmkey = xa_load(&dev->mkey_table,
 				mlx5_base_mkey(be32_to_cpu(sig_err_cqe->mkey)));
 		mr = to_mibmr(mmkey);
 		get_sig_err_item(sig_err_cqe, &mr->sig->err_item);
@@ -537,7 +537,7 @@ repoll:
 			     mr->sig->err_item.expected,
 			     mr->sig->err_item.actual);
 
-		xa_unlock(&dev->mdev->priv.mkey_table);
+		xa_unlock(&dev->mkey_table);
 		goto repoll;
 	}
 
