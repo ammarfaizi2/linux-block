@@ -5294,7 +5294,7 @@ static void ath11k_vdev_install_key_compl_event(struct ath11k_base *ab, u8 *evt_
 	if (install_key_compl.status !=
 		WMI_VDEV_INSTALL_KEY_COMPL_STATUS_SUCCESS) {
 		ath11k_warn(ab, "install key failed for %pM status %d\n",
-			    install_key_compl.macaddr,install_key_compl.status);
+			    install_key_compl.macaddr, install_key_compl.status);
 		ar->install_key_status = install_key_compl.status;
 	}
 
@@ -5535,7 +5535,7 @@ static void ath11k_wmi_tlv_op_rx(struct ath11k_base *ab, struct sk_buff *skb)
 	if (skb_pull(skb, sizeof(struct wmi_cmd_hdr)) == NULL)
 		goto out;
 
-	data = (u8 *) skb->data;
+	data = (u8 *)skb->data;
 	len = skb->len;
 
 	switch (id) {

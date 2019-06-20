@@ -1073,7 +1073,7 @@ static ssize_t ath11k_write_pktlog_filter(struct file *file,
 	}
 
 	ath11k_dbg(ar->ab, ATH11K_DBG_WMI, "pktlog filter %d mode %s\n",
-		   filter, ((mode == ATH11K_PKTLOG_MODE_FULL)?"full":"lite"));
+		   filter, ((mode == ATH11K_PKTLOG_MODE_FULL) ? "full" : "lite"));
 
 	ar->debug.pktlog_filter = filter;
 	ar->debug.pktlog_mode = mode;

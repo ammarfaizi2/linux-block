@@ -962,7 +962,7 @@ int ath11k_dp_htt_tlv_iter(struct ath11k_base *ab, const void *ptr, size_t len,
 	u16 tlv_tag, tlv_len;
 	int ret = -EINVAL;
 
-	while(len > 0) {
+	while (len > 0) {
 		if (len < sizeof(*tlv)) {
 			ath11k_err(ab, "htt tlv parse failure at byte %zd (%zu bytes left, %zu expected)\n",
 				   ptr - begin, len, sizeof(*tlv));

@@ -183,7 +183,7 @@ int ath11k_mac_hw_ratecode_to_legacy_rate(u8 hw_rc,
 	}
 
 	while (i < max_rates_idx) {
-		if(hw_rc == ath11k_legacy_rates[i].hw_value) {
+		if (hw_rc == ath11k_legacy_rates[i].hw_value) {
 			*rateidx = i;
 			*rate = ath11k_legacy_rates[i].bitrate;
 			return 0;

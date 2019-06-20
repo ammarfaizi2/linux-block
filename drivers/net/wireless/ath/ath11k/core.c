@@ -248,7 +248,7 @@ static int ath11k_core_fetch_board_data_api_n(struct ath11k_base *sc,
 			if (ret == -ENOENT)
 				/* no match found, continue */
 				break;
-			else if(ret)
+			else if (ret)
 				/* there was an error, bail out */
 				goto err;
 			/* either found or error, so stop searching */

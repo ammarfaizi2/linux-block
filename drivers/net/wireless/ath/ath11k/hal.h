@@ -437,9 +437,9 @@ enum hal_reo_cmd_type {
 enum hal_reo_cmd_status {
 	HAL_REO_CMD_SUCCESS		= 0,
 	HAL_REO_CMD_BLOCKED		= 1,
-        HAL_REO_CMD_FAILED		= 2,
-        HAL_REO_CMD_RESOURCE_BLOCKED	= 3,
-        HAL_REO_CMD_DRAIN		= 0xff,
+	HAL_REO_CMD_FAILED		= 2,
+	HAL_REO_CMD_RESOURCE_BLOCKED	= 3,
+	HAL_REO_CMD_DRAIN		= 0xff,
 };
 
 struct hal_wbm_idle_scatter_list {

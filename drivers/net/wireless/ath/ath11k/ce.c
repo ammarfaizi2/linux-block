@@ -371,7 +371,7 @@ static int ath11k_ce_init_ring(struct ath11k_base *sc,
 
 	switch (type) {
 	case HAL_CE_SRC:
-		if(!(CE_ATTR_DIS_INTR & host_ce_config_wlan[ce_id].flags))
+		if (!(CE_ATTR_DIS_INTR & host_ce_config_wlan[ce_id].flags))
 			params.intr_batch_cntr_thres_entries = 1;
 		break;
 	case HAL_CE_DST:
