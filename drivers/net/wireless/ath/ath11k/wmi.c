@@ -2501,7 +2501,7 @@ ath11k_wmi_copy_resource_config(struct wmi_resource_config *wmi_cfg,
 	wmi_cfg->scan_max_pending_req = tg_cfg->scan_max_pending_req;
 	wmi_cfg->bmiss_offload_max_vdev = tg_cfg->bmiss_offload_max_vdev;
 	wmi_cfg->roam_offload_max_vdev = tg_cfg->roam_offload_max_vdev;
-	wmi_cfg->roam_offload_max_ap_profiles = 
+	wmi_cfg->roam_offload_max_ap_profiles =
 		tg_cfg->roam_offload_max_ap_profiles;
 	wmi_cfg->num_mcast_groups = tg_cfg->num_mcast_groups;
 	wmi_cfg->num_mcast_table_elems = tg_cfg->num_mcast_table_elems;
@@ -2510,25 +2510,25 @@ ath11k_wmi_copy_resource_config(struct wmi_resource_config *wmi_cfg,
 	wmi_cfg->num_wds_entries = tg_cfg->num_wds_entries;
 	wmi_cfg->dma_burst_size = tg_cfg->dma_burst_size;
 	wmi_cfg->mac_aggr_delim = tg_cfg->mac_aggr_delim;
-	wmi_cfg->rx_skip_defrag_timeout_dup_detection_check = 
+	wmi_cfg->rx_skip_defrag_timeout_dup_detection_check =
 		tg_cfg->rx_skip_defrag_timeout_dup_detection_check;
 	wmi_cfg->vow_config = tg_cfg->vow_config;
 	wmi_cfg->gtk_offload_max_vdev = tg_cfg->gtk_offload_max_vdev;
 	wmi_cfg->num_msdu_desc = tg_cfg->num_msdu_desc;
 	wmi_cfg->max_frag_entries = tg_cfg->max_frag_entries;
 	wmi_cfg->num_tdls_vdevs = tg_cfg->num_tdls_vdevs;
-	wmi_cfg->num_tdls_conn_table_entries = 
+	wmi_cfg->num_tdls_conn_table_entries =
 		tg_cfg->num_tdls_conn_table_entries;
-	wmi_cfg->beacon_tx_offload_max_vdev = 
+	wmi_cfg->beacon_tx_offload_max_vdev =
 		tg_cfg->beacon_tx_offload_max_vdev;
-	wmi_cfg->num_multicast_filter_entries = 
+	wmi_cfg->num_multicast_filter_entries =
 		tg_cfg->num_multicast_filter_entries;
 	wmi_cfg->num_wow_filters = tg_cfg->num_wow_filters;
 	wmi_cfg->num_keep_alive_pattern = tg_cfg->num_keep_alive_pattern;
 	wmi_cfg->keep_alive_pattern_size = tg_cfg->keep_alive_pattern_size;
-	wmi_cfg->max_tdls_concurrent_sleep_sta = 
+	wmi_cfg->max_tdls_concurrent_sleep_sta =
 		tg_cfg->max_tdls_concurrent_sleep_sta;
-	wmi_cfg->max_tdls_concurrent_buffer_sta = 
+	wmi_cfg->max_tdls_concurrent_buffer_sta =
 		tg_cfg->max_tdls_concurrent_buffer_sta;
 	wmi_cfg->wmi_send_separate = tg_cfg->wmi_send_separate;
 	wmi_cfg->num_ocb_vdevs = tg_cfg->num_ocb_vdevs;
@@ -2722,7 +2722,7 @@ int ath11k_wmi_cmd_init(struct ath11k_base *sc)
 	config.tx_dbg_log_size = TARGET_TX_DBG_LOG_SIZE;
 	config.num_wds_entries = TARGET_NUM_WDS_ENTRIES;
 	config.dma_burst_size = TARGET_DMA_BURST_SIZE;
-	config.rx_skip_defrag_timeout_dup_detection_check = 
+	config.rx_skip_defrag_timeout_dup_detection_check =
 		TARGET_RX_SKIP_DEFRAG_TIMEOUT_DUP_DETECTION_CHECK;
 	config.vow_config = TARGET_VOW_CONFIG;
 	config.gtk_offload_max_vdev = TARGET_GTK_OFFLOAD_MAX_VDEV;

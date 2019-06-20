@@ -460,7 +460,7 @@ void ath11k_dp_tx_completion_handler(struct ath11k_base *ab, int ring_id)
 	if ((ath11k_hal_srng_dst_peek(ab, status_ring) != NULL) &&
 	    kfifo_is_full(&tx_ring->tx_status_fifo)) {
 		/* TODO: Process pending tx_status messages when kfifo_is_full() */
-		ath11k_warn(ab, "Unable to process some of the tx_status ring desc because status_fifo is full \n");
+		ath11k_warn(ab, "Unable to process some of the tx_status ring desc because status_fifo is full\n");
 	}
 
 	spin_unlock_bh(&tx_ring->tx_status_lock);
