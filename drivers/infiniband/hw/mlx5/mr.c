@@ -47,6 +47,50 @@ enum {
 
 #define MLX5_UMR_ALIGN 2048
 
+static u32 mlx5_get_psv(u32 *out, int psv_index)
+{
+	switch (psv_index) {
+	case 1: return MLX5_GET(create_psv_out, out, psv1_index);
+	case 2: return MLX5_GET(create_psv_out, out, psv2_index);
+	case 3: return MLX5_GET(create_psv_out, out, psv3_index);
+	default: return MLX5_GET(create_psv_out, out, psv0_index);
+	}
+}
+
+static int mlx5_ib_create_psv(struct mlx5_ib_dev *dev, u32 pdn,
+			      int npsvs, u32 *sig_index)
+{
+	u32 out[MLX5_ST_SZ_DW(create_psv_out)] = {};
+	u32 in[MLX5_ST_SZ_DW(create_psv_in)] = {};
+	int i, err;
+
+	if (npsvs > MLX5_MAX_PSVS)
+		return -EINVAL;
+
+	MLX5_SET(create_psv_in, in, opcode, MLX5_CMD_OP_CREATE_PSV);
+	MLX5_SET(create_psv_in, in, pd, pdn);
+	MLX5_SET(create_psv_in, in, num_psv, npsvs);
+
+	err = mlx5_cmd_exec(dev->mdev, in, sizeof(in), out, sizeof(out));
+	if (err)
+		return err;
+
+	for (i = 0; i < npsvs; i++)
+		sig_index[i] = mlx5_get_psv(out, i);
+
+	return err;
+}
+
+static int mlx5_ib_destroy_psv(struct mlx5_ib_dev *dev, int psv_num)
+{
+	u32 out[MLX5_ST_SZ_DW(destroy_psv_out)] = {};
+	u32 in[MLX5_ST_SZ_DW(destroy_psv_in)] = {};
+
+	MLX5_SET(destroy_psv_in, in, opcode, MLX5_CMD_OP_DESTROY_PSV);
+	MLX5_SET(destroy_psv_in, in, psvn, psv_num);
+	return mlx5_cmd_exec(dev->mdev, in, sizeof(in), out, sizeof(out));
+}
+
 static void
 create_mkey_callback(int status, struct mlx5_async_work *context);
 
@@ -1675,12 +1719,10 @@ static void clean_mr(struct mlx5_ib_dev *dev, struct mlx5_ib_mr *mr)
 	int allocated_from_cache = mr->allocated_from_cache;
 
 	if (mr->sig) {
-		if (mlx5_core_destroy_psv(dev->mdev,
-					  mr->sig->psv_memory.psv_idx))
+		if (mlx5_ib_destroy_psv(dev, mr->sig->psv_memory.psv_idx))
 			mlx5_ib_warn(dev, "failed to destroy mem psv %d\n",
 				     mr->sig->psv_memory.psv_idx);
-		if (mlx5_core_destroy_psv(dev->mdev,
-					  mr->sig->psv_wire.psv_idx))
+		if (mlx5_ib_destroy_psv(dev, mr->sig->psv_wire.psv_idx))
 			mlx5_ib_warn(dev, "failed to destroy wire psv %d\n",
 				     mr->sig->psv_wire.psv_idx);
 		kfree(mr->sig);
@@ -1883,7 +1925,7 @@ static int mlx5_alloc_integrity_descs(struct ib_pd *pd, struct mlx5_ib_mr *mr,
 		return -ENOMEM;
 
 	/* create mem & wire PSVs */
-	err = mlx5_core_create_psv(dev->mdev, to_mpd(pd)->pdn, 2, psv_index);
+	err = mlx5_ib_create_psv(dev, to_mpd(pd)->pdn, 2, psv_index);
 	if (err)
 		goto err_free_sig;
 
@@ -1928,10 +1970,10 @@ err_free_klm_mr:
 	dereg_mr(to_mdev(mr->klm_mr->ibmr.device), mr->klm_mr);
 	mr->klm_mr = NULL;
 err_destroy_psv:
-	if (mlx5_core_destroy_psv(dev->mdev, mr->sig->psv_memory.psv_idx))
+	if (mlx5_ib_destroy_psv(dev, mr->sig->psv_memory.psv_idx))
 		mlx5_ib_warn(dev, "failed to destroy mem psv %d\n",
 			     mr->sig->psv_memory.psv_idx);
-	if (mlx5_core_destroy_psv(dev->mdev, mr->sig->psv_wire.psv_idx))
+	if (mlx5_ib_destroy_psv(dev, mr->sig->psv_wire.psv_idx))
 		mlx5_ib_warn(dev, "failed to destroy wire psv %d\n",
 			     mr->sig->psv_wire.psv_idx);
 err_free_sig:
