@@ -269,7 +269,7 @@ out:
 void ath11k_hal_rx_buf_addr_info_set(void *desc, dma_addr_t paddr,
 				     u32 cookie, u8 manager)
 {
-	struct buffer_addr *binfo = (struct buffer_addr *)desc;
+	struct ath11k_buffer_addr *binfo = (struct ath11k_buffer_addr *)desc;
 	u32 paddr_lo, paddr_hi;
 
 	paddr_lo = lower_32_bits(paddr);
@@ -283,7 +283,7 @@ void ath11k_hal_rx_buf_addr_info_set(void *desc, dma_addr_t paddr,
 void ath11k_hal_rx_buf_addr_info_get(void *desc, dma_addr_t *paddr,
 				     u32 *cookie, u8 *rbm)
 {
-	struct buffer_addr *binfo = (struct buffer_addr *)desc;
+	struct ath11k_buffer_addr *binfo = (struct ath11k_buffer_addr *)desc;
 
 	*paddr =
 		(((u64)FIELD_GET(BUFFER_ADDR_INFO1_ADDR, binfo->info1)) << 32) |
@@ -453,7 +453,7 @@ int ath11k_hal_wbm_desc_parse_err(struct ath11k_base *ab, void *desc,
 void ath11k_hal_rx_reo_ent_paddr_get(struct ath11k_base *ab, void *desc,
 				     dma_addr_t *paddr, u32 *desc_bank)
 {
-	struct buffer_addr *buff_addr = desc;
+	struct ath11k_buffer_addr *buff_addr = desc;
 
 	*paddr = ((u64)(FIELD_GET(BUFFER_ADDR_INFO1_ADDR, buff_addr->info1)) << 32) |
 		  FIELD_GET(BUFFER_ADDR_INFO0_ADDR, buff_addr->info0);
@@ -1204,7 +1204,7 @@ void ath11k_hal_rx_reo_ent_buf_paddr_get(void *rx_desc, dma_addr_t *paddr,
 {
 	struct hal_reo_entrance_ring *reo_ent_ring =
 		(struct hal_reo_entrance_ring *)rx_desc;
-	struct buffer_addr *buf_addr_info;
+	struct ath11k_buffer_addr *buf_addr_info;
 	struct rx_mpdu_desc *rx_mpdu_desc_info_details;
 
 	rx_mpdu_desc_info_details =
@@ -1213,7 +1213,7 @@ void ath11k_hal_rx_reo_ent_buf_paddr_get(void *rx_desc, dma_addr_t *paddr,
 	*msdu_cnt = FIELD_GET(RX_MPDU_DESC_INFO0_MSDU_COUNT,
 			      rx_mpdu_desc_info_details->info0);
 
-	buf_addr_info = (struct buffer_addr *)&reo_ent_ring->buf_addr_info;
+	buf_addr_info = (struct ath11k_buffer_addr *)&reo_ent_ring->buf_addr_info;
 
 	*paddr = (((u64)FIELD_GET(BUFFER_ADDR_INFO1_ADDR,
 				  buf_addr_info->info1)) << 32) |

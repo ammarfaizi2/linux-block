@@ -691,7 +691,7 @@ u32 ath11k_hal_ce_dst_status_get_length(void *buf)
 
 void ath11k_hal_set_link_desc_addr(void *buf, u32 cookie, dma_addr_t paddr)
 {
-	struct buffer_addr *desc = (struct buffer_addr *)buf;
+	struct ath11k_buffer_addr *desc = (struct ath11k_buffer_addr *)buf;
 
 	desc->info0 = FIELD_PREP(BUFFER_ADDR_INFO0_ADDR,
 				 (paddr & HAL_ADDR_LSB_REG_MASK));
@@ -903,7 +903,7 @@ void ath11k_hal_setup_link_idle_list(struct ath11k_base *ab,
 				     u32 nsbufs, u32 tot_link_desc,
 				     u32 end_offset)
 {
-	struct buffer_addr *link_addr;
+	struct ath11k_buffer_addr *link_addr;
 	int i;
 	u32 reg_scatter_buf_sz = HAL_WBM_IDLE_SCATTER_BUF_SIZE / 64;
 

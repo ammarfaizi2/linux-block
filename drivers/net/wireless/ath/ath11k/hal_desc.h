@@ -11,12 +11,12 @@
 #define BUFFER_ADDR_INFO1_RET_BUF_MGR  GENMASK(10, 8)
 #define BUFFER_ADDR_INFO1_SW_COOKIE    GENMASK(31, 11)
 
-struct buffer_addr {
+struct ath11k_buffer_addr {
 	u32 info0;
 	u32 info1;
 } __packed;
 
-/* buffer_addr
+/* ath11k_buffer_addr
  *
  * info0
  *		Address (lower 32 bits) of the msdu buffer or msdu extension
@@ -684,7 +684,7 @@ enum hal_reo_dest_ring_error_code {
 #define HAL_REO_DEST_RING_INFO2_LOOPING_COUNT		GENMASK(31, 28)
 
 struct hal_reo_dest_ring {
-	struct buffer_addr buf_addr_info;
+	struct ath11k_buffer_addr buf_addr_info;
 	struct rx_mpdu_desc rx_mpdu_info;
 	struct rx_msdu_desc rx_msdu_info;
 	u32 queue_addr_lo;
@@ -787,7 +787,7 @@ enum hal_reo_entr_rxdma_ecode {
 #define HAL_REO_ENTR_RING_INFO1_RXDMA_ERROR_CODE	GENMASK(6, 2)
 
 struct hal_reo_entrance_ring {
-	struct buffer_addr buf_addr_info;
+	struct ath11k_buffer_addr buf_addr_info;
 	struct rx_mpdu_desc rx_mpdu_info;
 	u32 queue_addr_lo;
 	u32 info0; /* %HAL_REO_ENTR_RING_INFO0_ */
@@ -999,7 +999,7 @@ enum hal_wbm_htt_tx_comp_status {
 };
 
 struct hal_tcl_data_cmd {
-	struct buffer_addr buf_addr_info;
+	struct ath11k_buffer_addr buf_addr_info;
 	u32 info0;
 	u32 info1;
 	u32 info2;
@@ -1540,7 +1540,7 @@ struct hal_tx_rate_stats {
 } __packed;
 
 struct hal_wbm_link_desc {
-	struct buffer_addr buf_addr_info;
+	struct ath11k_buffer_addr buf_addr_info;
 } __packed;
 
 /* hal_wbm_link_desc
@@ -1643,7 +1643,7 @@ enum hal_wbm_rel_bm_act {
 #define HAL_WBM_REL_HTT_TX_COMP_INFO0_EXP_FRAME		BIT(17)
 
 struct hal_wbm_release_ring {
-	struct buffer_addr buf_addr_info;
+	struct ath11k_buffer_addr buf_addr_info;
 	u32 info0;
 	u32 info1;
 	u32 info2;
@@ -1833,7 +1833,7 @@ enum hal_wbm_tqm_rel_reason {
 };
 
 struct hal_wbm_buffer_ring {
-	struct buffer_addr buf_addr_info;
+	struct ath11k_buffer_addr buf_addr_info;
 };
 
 enum hal_desc_owner {
@@ -1874,11 +1874,11 @@ struct hal_desc_header {
 } __packed;
 
 struct hal_rx_mpdu_link_ptr {
-	struct buffer_addr addr_info;
+	struct ath11k_buffer_addr addr_info;
 } __packed;
 
 struct hal_rx_msdu_details {
-	struct buffer_addr buf_addr_info;
+	struct ath11k_buffer_addr buf_addr_info;
 	struct rx_msdu_desc rx_msdu_info;
 } __packed;
 
@@ -1887,7 +1887,7 @@ struct hal_rx_msdu_details {
 
 struct hal_rx_msdu_link {
 	struct hal_desc_header desc_hdr;
-	struct buffer_addr buf_addr_info;
+	struct ath11k_buffer_addr buf_addr_info;
 	u32 info0;
 	u32 pn[4];
 	struct hal_rx_msdu_details msdu_link[6];

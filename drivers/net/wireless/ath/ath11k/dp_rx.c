@@ -3475,10 +3475,10 @@ int ath11k_dp_rx_monitor_link_desc_return(struct ath11k *ar,
 	src_srng_desc = ath11k_hal_srng_src_get_next_entry(ar->ab, hal_srng);
 
 	if (src_srng_desc) {
-		struct buffer_addr *src_desc =
-				(struct buffer_addr *)src_srng_desc;
+		struct ath11k_buffer_addr *src_desc =
+				(struct ath11k_buffer_addr *)src_srng_desc;
 
-		*src_desc = *((struct buffer_addr *)p_last_buf_addr_info);
+		*src_desc = *((struct ath11k_buffer_addr *)p_last_buf_addr_info);
 	} else {
 		ath11k_dbg(ar->ab, ATH11K_DBG_DATA,
 			   "Monitor Link Desc Ring %d Full", mac_id);
@@ -3496,10 +3496,10 @@ void ath11k_dp_rx_mon_next_link_desc_get(void *rx_msdu_link_desc,
 {
 	struct hal_rx_msdu_link *msdu_link =
 			(struct hal_rx_msdu_link *)rx_msdu_link_desc;
-	struct buffer_addr *buf_addr_info;
+	struct ath11k_buffer_addr *buf_addr_info;
 	u8 rbm = 0;
 
-	buf_addr_info = (struct buffer_addr *)&msdu_link->buf_addr_info;
+	buf_addr_info = (struct ath11k_buffer_addr *)&msdu_link->buf_addr_info;
 
 	ath11k_hal_rx_buf_addr_info_get(buf_addr_info, paddr, sw_cookie, &rbm);
 

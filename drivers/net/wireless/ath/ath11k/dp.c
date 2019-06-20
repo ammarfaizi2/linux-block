@@ -374,7 +374,7 @@ static int ath11k_dp_scatter_idle_link_desc_setup(struct ath11k_base *ab,
 		paddr = link_desc_banks[i].paddr;
 		while (n_entries) {
 			ath11k_hal_set_link_desc_addr(
-					(struct buffer_addr *)scatter_buf, i,
+					(struct ath11k_buffer_addr *)scatter_buf, i,
 					paddr);
 			n_entries--;
 			paddr += HAL_LINK_DESC_SIZE;
@@ -578,7 +578,7 @@ int ath11k_dp_link_desc_setup(struct ath11k_base *ab,
 		while (n_entries &&
 		       (desc = ath11k_hal_srng_src_get_next_entry(ab, srng))) {
 			ath11k_hal_set_link_desc_addr(
-					(struct buffer_addr *)desc, i,
+					(struct ath11k_buffer_addr *)desc, i,
 					paddr);
 			n_entries--;
 			paddr += HAL_LINK_DESC_SIZE;
