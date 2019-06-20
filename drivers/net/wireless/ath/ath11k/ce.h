@@ -139,7 +139,7 @@ struct ath11k_ce_ring {
 	u32 hal_ring_id;
 
 	/* keep last */
-	void *per_transfer_context[0];
+	struct sk_buff *per_transfer_context[0];
 };
 
 struct ath11k_ce_pipe {

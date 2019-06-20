@@ -212,7 +212,7 @@ exit:
 }
 
 static int ath11k_ce_completed_recv_next(struct ath11k_ce_pipe *pipe,
-					 void **context, int *nbytes)
+					 struct sk_buff **context, int *nbytes)
 {
 	struct ath11k_base *ab = pipe->sc;
 	struct hal_srng *srng;
@@ -270,8 +270,7 @@ static void ath11k_ce_recv_process_cb(struct ath11k_ce_pipe *pipe)
 	int ret;
 
 	__skb_queue_head_init(&list);
-	while (ath11k_ce_completed_recv_next(pipe, (void **)&skb,
-					     &nbytes) == 0) {
+	while (ath11k_ce_completed_recv_next(pipe, &skb, &nbytes) == 0) {
 		max_nbytes = skb->len + skb_tailroom(skb);
 		dma_unmap_single(ab->dev, ATH11K_SKB_RXCB(skb)->paddr,
 				 max_nbytes, DMA_FROM_DEVICE);
@@ -303,7 +302,7 @@ static void ath11k_ce_recv_process_cb(struct ath11k_ce_pipe *pipe)
 }
 
 static int ath11k_ce_completed_send_next(struct ath11k_ce_pipe *pipe,
-					 void **transfer_contextp)
+					 struct sk_buff **transfer_contextp)
 {
 	struct ath11k_base *ab = pipe->sc;
 	struct hal_srng *srng;
@@ -349,7 +348,7 @@ static void ath11k_ce_send_done_cb(struct ath11k_ce_pipe *pipe)
 	struct ath11k_base *ab = pipe->sc;
 	struct sk_buff *skb;
 
-	while (ath11k_ce_completed_send_next(pipe, (void **)&skb) == 0) {
+	while (ath11k_ce_completed_send_next(pipe, &skb) == 0) {
 		if (!skb)
 			continue;
 
