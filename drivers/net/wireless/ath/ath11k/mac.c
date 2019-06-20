@@ -5031,9 +5031,8 @@ ath11k_mac_update_bss_chan_survey(struct ath11k *ar,
 	}
 
 	ret = wait_for_completion_timeout(&ar->bss_survey_done, 3 * HZ);
-	if (ret == 0) {
+	if (ret == 0)
 		ath11k_warn(ar->ab, "bss channel survey timed out\n");
-	}
 }
 
 static int ath11k_get_survey(struct ieee80211_hw *hw, int idx,

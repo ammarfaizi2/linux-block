@@ -190,9 +190,8 @@ static int ath11k_core_fetch_board_data_api_n(struct ath11k_base *sc,
 		bd->fw = ath11k_fetch_fw_file(sc,
 					      sc->hw_params.fw.dir,
 					      filename);
-	if (IS_ERR(bd->fw)) {
+	if (IS_ERR(bd->fw))
 		return PTR_ERR(bd->fw);
-	}
 
 	data = bd->fw->data;
 	len = bd->fw->size;
