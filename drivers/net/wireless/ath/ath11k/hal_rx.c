@@ -20,10 +20,9 @@ static void ath11k_hal_reo_set_desc_hdr(struct hal_desc_header *hdr,
 	hdr->info0 |= FIELD_PREP(HAL_DESC_HDR_INFO0_DBG_RESERVED, magic);
 }
 
-static int ath11k_hal_reo_cmd_queue_stats(u32 *reo_desc,
+static int ath11k_hal_reo_cmd_queue_stats(struct hal_tlv_hdr *tlv,
 					  struct ath11k_hal_reo_cmd *cmd)
 {
-	struct hal_tlv_hdr *tlv = (struct hal_tlv_hdr *)reo_desc;
 	struct hal_reo_get_queue_stats *desc;
 
 	tlv->tl = FIELD_PREP(HAL_TLV_HDR_TAG, HAL_REO_GET_QUEUE_STATS) |
@@ -46,10 +45,9 @@ static int ath11k_hal_reo_cmd_queue_stats(u32 *reo_desc,
 	return FIELD_GET(HAL_REO_CMD_HDR_INFO0_CMD_NUMBER, desc->cmd.info0);
 }
 
-static int ath11k_hal_reo_cmd_flush_cache(struct ath11k_hal *hal, u32 *reo_desc,
+static int ath11k_hal_reo_cmd_flush_cache(struct ath11k_hal *hal, struct hal_tlv_hdr *tlv,
 					  struct ath11k_hal_reo_cmd *cmd)
 {
-	struct hal_tlv_hdr *tlv = (struct hal_tlv_hdr *)reo_desc;
 	struct hal_reo_flush_cache *desc;
 	u8 avail_slot = ffz(hal->avail_blk_resource);
 
@@ -94,10 +92,9 @@ static int ath11k_hal_reo_cmd_flush_cache(struct ath11k_hal *hal, u32 *reo_desc,
 	return FIELD_GET(HAL_REO_CMD_HDR_INFO0_CMD_NUMBER, desc->cmd.info0);
 }
 
-static int ath11k_hal_reo_cmd_update_rx_queue(u32 *reo_desc,
+static int ath11k_hal_reo_cmd_update_rx_queue(struct hal_tlv_hdr *tlv,
 					      struct ath11k_hal_reo_cmd *cmd)
 {
-	struct hal_tlv_hdr *tlv = (struct hal_tlv_hdr *)reo_desc;
 	struct hal_reo_update_rx_queue *desc;
 
 	tlv->tl = FIELD_PREP(HAL_TLV_HDR_TAG, HAL_REO_UPDATE_RX_REO_QUEUE) |
@@ -225,13 +222,13 @@ int ath11k_hal_reo_cmd_send(struct ath11k_base *ab, struct hal_srng *srng,
 			    enum hal_reo_cmd_type type,
 			    struct ath11k_hal_reo_cmd *cmd)
 {
-	u32 *reo_desc;
+	struct hal_tlv_hdr *reo_desc;
 	int ret;
 
 	spin_lock_bh(&srng->lock);
 
 	ath11k_hal_srng_access_begin(ab, srng);
-	reo_desc = ath11k_hal_srng_src_get_next_entry(ab, srng);
+	reo_desc = (struct hal_tlv_hdr *)ath11k_hal_srng_src_get_next_entry(ab, srng);
 	if (!reo_desc) {
 		ret = -ENOBUFS;
 		goto out;
