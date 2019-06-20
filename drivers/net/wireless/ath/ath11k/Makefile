@@ -14,7 +14,8 @@ ath11k-y += core.o \
 	    dp_tx.o \
 	    dp_rx.o \
 	    debug.o \
-	    ce.o
+	    ce.o \
+	    peer.o
 
 ath11k-$(CONFIG_ATH11K_DEBUGFS) += debug_htt_stats.o
 ath11k-$(CONFIG_MAC80211_DEBUGFS) += debugfs_sta.o

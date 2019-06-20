@@ -241,19 +241,6 @@ struct ath11k_rx_peer_stats {
 	u32 rssi_comb;
 };
 
-struct ath11k_peer {
-	struct list_head list;
-	struct ieee80211_sta *sta;
-	int vdev_id;
-	u8 addr[ETH_ALEN];
-	int peer_id;
-	u16 ast_hash;
-
-	/* protected by ab->data_lock */
-	struct ieee80211_key_conf *keys[WMI_MAX_KEY_INDEX + 1];
-	struct dp_rx_tid rx_tid[IEEE80211_NUM_TIDS + 1];
-};
-
 #define ATH11K_HE_MCS_NUM       12
 #define ATH11K_VHT_MCS_NUM      10
 #define ATH11K_BW_NUM           4
@@ -792,15 +779,6 @@ struct ath11k_fw_stats_peer_extd {
 	u32 rx_mc_bc_cnt;
 };
 
-void ath11k_peer_unmap_event(struct ath11k_base *ab, u16 peer_id);
-void ath11k_peer_map_event(struct ath11k_base *ab, u8 vdev_id, u16 peer_id,
-			   u8 *mac_addr, u16 ast_hash);
-struct ath11k_peer *ath11k_peer_find(struct ath11k_base *ab, int vdev_id,
-				     const u8 *addr);
-struct ath11k_peer *ath11k_peer_find_by_addr(struct ath11k_base *ab,
-					     const u8 *addr);
-struct ath11k_peer *ath11k_peer_find_by_id(struct ath11k_base *ab,
-						  int peer_id);
 int ath11k_core_qmi_firmware_ready(struct ath11k_base *ab);
 int ath11k_core_init(struct ath11k_base *ath11k);
 void ath11k_core_deinit(struct ath11k_base *ath11k);

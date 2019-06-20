@@ -10,6 +10,7 @@
 #include "hal_rx.h"
 #include "dp_tx.h"
 #include "debug_htt_stats.h"
+#include "peer.h"
 
 void ath11k_info(struct ath11k_base *sc, const char *fmt, ...)
 {

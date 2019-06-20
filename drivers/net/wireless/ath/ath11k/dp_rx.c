@@ -11,6 +11,7 @@
 #include "dp_rx.h"
 #include "hal_rx.h"
 #include "dp_tx.h"
+#include "peer.h"
 
 static u8 *ath11k_dp_rx_h_80211_hdr(u8 *desc)
 {

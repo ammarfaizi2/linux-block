@@ -9,6 +9,7 @@
 #include "hal_tx.h"
 #include "debug.h"
 #include "dp_rx.h"
+#include "peer.h"
 
 static void ath11k_dp_htt_htc_tx_complete(struct ath11k_base *sc,
 					  struct sk_buff *skb)

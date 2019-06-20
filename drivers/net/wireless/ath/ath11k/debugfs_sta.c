@@ -6,6 +6,7 @@
 #include <linux/vmalloc.h>
 
 #include "core.h"
+#include "peer.h"
 #include "debug.h"
 
 void ath11k_sta_update_rx_duration(struct ath11k *ar,

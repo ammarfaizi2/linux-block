@@ -17,6 +17,7 @@
 #include "debug.h"
 #include "mac.h"
 #include "hw.h"
+#include "peer.h"
 
 struct wmi_tlv_policy {
 	size_t min_len;
