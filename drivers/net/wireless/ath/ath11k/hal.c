@@ -1032,11 +1032,9 @@ int ath11k_hal_srng_setup(struct ath11k_base *sc, enum hal_ring_type type,
 	       (srng->entry_size * srng->num_entries) << 2);
 
 	/* TODO: Add comments on these swap configurations */
-#ifdef __BIG_ENDIAN
-	srng->flags |= HAL_SRNG_FLAGS_MSI_SWAP |
-		       HAL_SRNG_FLAGS_DATA_TLV_SWAP |
-		       HAL_SRNG_FLAGS_RING_PTR_SWAP;
-#endif
+	if (IS_ENABLED(CONFIG_CPU_BIG_ENDIAN))
+		srng->flags |= HAL_SRNG_FLAGS_MSI_SWAP | HAL_SRNG_FLAGS_DATA_TLV_SWAP |
+			       HAL_SRNG_FLAGS_RING_PTR_SWAP;
 
 	reg_base = srng->hwreg_base[HAL_SRNG_REG_GRP_R2];
 
