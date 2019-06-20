@@ -1781,8 +1781,7 @@ static int ath11k_qmi_request_target_cap(struct ath11k_base *ab)
 		strlcpy(ab->qmi.target.fw_build_id, resp.fw_build_id,
 			sizeof(ab->qmi.target.fw_build_id));
 
-	ath11k_info(ab, "qmi target: chip_id: 0x%x, chip_family: 0x%x,"
-			"board_id: 0x%x, soc_id: 0x%x\n",
+	ath11k_info(ab, "qmi target: chip_id: 0x%x, chip_family: 0x%x, board_id: 0x%x, soc_id: 0x%x\n",
 		    ab->qmi.target.chip_id, ab->qmi.target.chip_family,
 		    ab->qmi.target.board_id, ab->qmi.target.soc_id);
 

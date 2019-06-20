@@ -644,8 +644,9 @@ static void ath11k_core_restart(struct work_struct *work)
 			ieee80211_restart_hw(ar->hw);
 			break;
 		case ATH11K_STATE_OFF:
-			ath11k_warn(sc, "cannot restart radio %d "
-				    "that hasn't been started\n", i);
+			ath11k_warn(sc,
+				    "cannot restart radio %d that hasn't been started\n",
+				    i);
 			break;
 		case ATH11K_STATE_RESTARTING:
 			break;
