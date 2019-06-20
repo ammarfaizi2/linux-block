@@ -153,7 +153,7 @@ static inline bool ath11k_debug_is_pktlog_rx_stats_enabled(struct ath11k *ar)
 	return (!ar->debug.pktlog_peer_valid && ar->debug.pktlog_mode);
 }
 
-static inline bool ath11k_debug_is_pktlog_peer_vaild(struct ath11k *ar, u8 *addr)
+static inline bool ath11k_debug_is_pktlog_peer_valid(struct ath11k *ar, u8 *addr)
 {
 	return (ar->debug.pktlog_peer_valid && ar->debug.pktlog_mode &&
 		ether_addr_equal(addr, ar->debug.pktlog_peer_addr));
@@ -226,7 +226,7 @@ static inline bool ath11k_debug_is_pktlog_rx_stats_enabled(struct ath11k *ar)
 	return false;
 }
 
-static inline bool ath11k_debug_is_pktlog_peer_vaild(struct ath11k *ar, u8 *addr)
+static inline bool ath11k_debug_is_pktlog_peer_valid(struct ath11k *ar, u8 *addr)
 {
 	return false;
 }

@@ -2327,8 +2327,8 @@ static inline void htt_print_tx_de_classify_failed_stats_tlv(const u32 *tag_buf,
 			   htt_stats_buf->sta_delete_in_progress);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "ibss_no_bss_peer = %u",
 			   htt_stats_buf->ibss_no_bss_peer);
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "invaild_vdev_type = %u",
-			   htt_stats_buf->invaild_vdev_type);
+	len += HTT_DBG_OUT(buf + len, buf_len - len, "invalid_vdev_type = %u",
+			   htt_stats_buf->invalid_vdev_type);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "invalid_ast_peer_entry = %u",
 			   htt_stats_buf->invalid_ast_peer_entry);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "peer_entry_invalid = %u",

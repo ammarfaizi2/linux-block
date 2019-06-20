@@ -804,7 +804,7 @@ void ath11k_dp_vdev_tx_attach(struct ath11k *ar, struct ath11k_vif *arvif)
 			       FIELD_PREP(HTT_TCL_META_DATA_PDEV_ID,
 					  ar->pdev->pdev_id);
 
-	/* set HTT extention valid bit to 0 by default */
+	/* set HTT extension valid bit to 0 by default */
 	arvif->tcl_metadata &= ~HTT_TCL_META_DATA_VALID_HTT;
 
 	ath11k_dp_update_vdev_search(arvif);

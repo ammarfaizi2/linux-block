@@ -939,7 +939,7 @@ struct htt_tx_de_classify_failed_stats_tlv {
 	u32 ap_bcast_mcast_no_peer;
 	u32 sta_delete_in_progress;
 	u32 ibss_no_bss_peer;
-	u32 invaild_vdev_type;
+	u32 invalid_vdev_type;
 	u32 invalid_ast_peer_entry;
 	u32 peer_entry_invalid;
 	u32 ethertype_not_ip;

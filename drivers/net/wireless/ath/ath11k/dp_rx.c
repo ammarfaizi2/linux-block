@@ -727,7 +727,7 @@ int ath11k_peer_rx_tid_setup(struct ath11k *ar, const u8 *peer_mac, int vdev_id,
 						    ba_win_sz, ssn);
 		spin_unlock_bh(&ab->data_lock);
 		if (ret) {
-			ath11k_warn(ab, "failed to udpate reo for rx tid %d\n", tid);
+			ath11k_warn(ab, "failed to update reo for rx tid %d\n", tid);
 			return ret;
 		}
 
@@ -1073,7 +1073,7 @@ ath11k_update_per_peer_tx_stats(struct ath11k *ar,
 
         /* Note: If host configured fixed rates and in some other special
 	 * cases, the broadcast/management frames are sent in different rates.
-	 * Firmare rate's control to be skipped for this?
+	 * Firmware rate's control to be skipped for this?
          */
 
 	if (flags == WMI_RATE_PREAMBLE_VHT && mcs > 9) {
@@ -2625,7 +2625,7 @@ int ath11k_dp_rx_process_mon_status(struct ath11k_base *ab, int mac_id,
 		arsta = (struct ath11k_sta *)peer->sta->drv_priv;
 		ath11k_dp_rx_update_peer_stats(arsta, &ppdu_info);
 
-		if (ath11k_debug_is_pktlog_peer_vaild(ar, peer->addr)) {
+		if (ath11k_debug_is_pktlog_peer_valid(ar, peer->addr)) {
 			trace_ath11k_htt_rxdesc(ar, skb->data, DP_RX_BUFFER_SIZE);
 		}
 		spin_unlock_bh(&ab->data_lock);

@@ -377,7 +377,7 @@ static int ath11k_core_pdev_create(struct ath11k_base *sc)
 
 	ret = ath11k_mac_create(sc);
 	if (ret) {
-		ath11k_err(sc, "falied to create new hw device with mac80211 :%d\n",
+		ath11k_err(sc, "failed to create new hw device with mac80211 :%d\n",
 			   ret);
 		return ret;
 	}
