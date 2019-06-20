@@ -51,7 +51,7 @@ static void
 create_mkey_callback(int status, struct mlx5_async_work *context);
 
 static void
-assign_mkey_variant(struct mlx5_ib_dev *dev, struct mlx5_core_mkey *mkey,
+assign_mkey_variant(struct mlx5_ib_dev *dev, struct mlx5_ib_mkey *mkey,
 		    u32 *in)
 {
 	u8 key = atomic_inc_return(&dev->mkey_var);
@@ -64,7 +64,7 @@ assign_mkey_variant(struct mlx5_ib_dev *dev, struct mlx5_core_mkey *mkey,
 
 static int
 mlx5_ib_create_mkey_cb(struct mlx5_ib_dev *dev,
-		       struct mlx5_core_mkey *mkey,
+		       struct mlx5_ib_mkey *mkey,
 		       struct mlx5_async_ctx *async_ctx,
 		       u32 *in, int inlen, u32 *out, int outlen,
 		       struct mlx5_async_work *context)
@@ -97,7 +97,8 @@ mlx5_ib_create_mkey_cb(struct mlx5_ib_dev *dev,
 	return err;
 }
 
-static int mlx5_ib_destroy_mkey_cmd(struct mlx5_ib_dev *dev, struct mlx5_core_mkey *mkey)
+static int mlx5_ib_destroy_mkey_cmd(struct mlx5_ib_dev *dev,
+				    struct mlx5_ib_mkey *mkey)
 {
 	u32 out[MLX5_ST_SZ_DW(destroy_mkey_out)] = {};
 	u32 in[MLX5_ST_SZ_DW(destroy_mkey_in)] = {};
@@ -108,7 +109,7 @@ static int mlx5_ib_destroy_mkey_cmd(struct mlx5_ib_dev *dev, struct mlx5_core_mk
 }
 
 static int
-mlx5_ib_create_mkey(struct mlx5_ib_dev *dev, struct mlx5_core_mkey *mkey,
+mlx5_ib_create_mkey(struct mlx5_ib_dev *dev, struct mlx5_ib_mkey *mkey,
 		    u32 *in, int inlen)
 {
 	struct xarray *mkeys = &dev->mkey_table;
@@ -130,10 +131,10 @@ mlx5_ib_create_mkey(struct mlx5_ib_dev *dev, struct mlx5_core_mkey *mkey,
 }
 
 static int
-mlx5_ib_destroy_mkey(struct mlx5_ib_dev *dev, struct mlx5_core_mkey *mkey)
+mlx5_ib_destroy_mkey(struct mlx5_ib_dev *dev, struct mlx5_ib_mkey *mkey)
 {
 	struct xarray *mkeys = &dev->mkey_table;
-	struct mlx5_core_mkey *deleted_mkey;
+	struct mlx5_ib_mkey *deleted_mkey;
 	unsigned long flags;
 
 	xa_lock_irqsave(mkeys, flags);
