@@ -338,8 +338,8 @@ int ath11k_hal_desc_reo_parse_err(struct ath11k_base *ab, u32 *rx_desc,
 			     desc->info0);
 	ab->soc_stats.reo_error[err_code]++;
 
-	if ((push_reason != HAL_REO_DEST_RING_PUSH_REASON_ERR_DETECTED)	&&
-	    (push_reason != HAL_REO_DEST_RING_PUSH_REASON_ROUTING_INSTRUCTION)) {
+	if (push_reason != HAL_REO_DEST_RING_PUSH_REASON_ERR_DETECTED &&
+	    push_reason != HAL_REO_DEST_RING_PUSH_REASON_ROUTING_INSTRUCTION) {
 		ath11k_warn(ab, "expected error push reason code, received %d\n",
 			    push_reason);
 		return -EINVAL;
