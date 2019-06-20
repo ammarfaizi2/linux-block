@@ -167,10 +167,8 @@ const struct htt_rx_ring_tlv_filter ath11k_mac_mon_status_filter_default = {
 #define ath11k_a_rates (ath11k_legacy_rates + 4)
 #define ath11k_a_rates_size (ARRAY_SIZE(ath11k_legacy_rates) - 4)
 
-int ath11k_mac_hw_ratecode_to_legacy_rate(u8 hw_rc,
-					    u8 preamble,
-					    u8 *rateidx,
-					    u16 *rate)
+int ath11k_mac_hw_ratecode_to_legacy_rate(u8 hw_rc, u8 preamble, u8 *rateidx,
+					  u16 *rate)
 {
 	/* As default, it is OFDM rates */
 	int i = ATH11K_MAC_FIRST_OFDM_RATE_IDX;
@@ -3231,16 +3229,16 @@ static void ath11k_mac_setup_he_cap(struct ath11k *ar,
 
 	if (cap->supported_bands & WMI_HOST_WLAN_2G_CAP) {
 		count = ath11k_mac_copy_he_cap(ar, cap,
-				ar->mac.iftype[NL80211_BAND_2GHZ],
-				NL80211_BAND_2GHZ);
+					       ar->mac.iftype[NL80211_BAND_2GHZ],
+					       NL80211_BAND_2GHZ);
 		band = &ar->mac.sbands[NL80211_BAND_2GHZ];
 		band->iftype_data = ar->mac.iftype[NL80211_BAND_2GHZ];
 	}
 
 	if (cap->supported_bands & WMI_HOST_WLAN_5G_CAP) {
 		count = ath11k_mac_copy_he_cap(ar, cap,
-				ar->mac.iftype[NL80211_BAND_5GHZ],
-				NL80211_BAND_5GHZ);
+					       ar->mac.iftype[NL80211_BAND_5GHZ],
+					       NL80211_BAND_5GHZ);
 		band = &ar->mac.sbands[NL80211_BAND_5GHZ];
 		band->iftype_data = ar->mac.iftype[NL80211_BAND_5GHZ];
 	}
@@ -4432,9 +4430,9 @@ ath11k_mac_update_active_vif_chan(struct ath11k *ar,
 	lockdep_assert_held(&ar->conf_mutex);
 
 	ieee80211_iterate_active_interfaces_atomic(ar->hw,
-					IEEE80211_IFACE_ITER_NORMAL,
-					ath11k_mac_change_chanctx_cnt_iter,
-					&arg);
+						   IEEE80211_IFACE_ITER_NORMAL,
+						   ath11k_mac_change_chanctx_cnt_iter,
+						   &arg);
 	if (arg.n_vifs == 0)
 		return;
 
@@ -4443,9 +4441,9 @@ ath11k_mac_update_active_vif_chan(struct ath11k *ar,
 		return;
 
 	ieee80211_iterate_active_interfaces_atomic(ar->hw,
-					IEEE80211_IFACE_ITER_NORMAL,
-					ath11k_mac_change_chanctx_fill_iter,
-					&arg);
+						   IEEE80211_IFACE_ITER_NORMAL,
+						   ath11k_mac_change_chanctx_fill_iter,
+						   &arg);
 
 	ath11k_mac_update_vif_chan(ar, arg.vifs, arg.n_vifs);
 
@@ -5461,8 +5459,7 @@ void ath11k_mac_unregister(struct ath11k_base *ab)
 
 		ieee80211_unregister_hw(ar->hw);
 
-		idr_for_each(&ar->txmgmt_idr,
-					 ath11k_mac_tx_mgmt_pending_free, ar);
+		idr_for_each(&ar->txmgmt_idr, ath11k_mac_tx_mgmt_pending_free, ar);
 		idr_destroy(&ar->txmgmt_idr);
 
 		kfree(ar->mac.sbands[NL80211_BAND_2GHZ].channels);

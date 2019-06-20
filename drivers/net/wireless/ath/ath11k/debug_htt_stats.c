@@ -4239,8 +4239,8 @@ void ath11k_dbg_htt_ext_stats_handler(struct ath11k_base *ab,
 }
 
 static ssize_t ath11k_read_htt_stats_type(struct file *file,
-					 char __user *user_buf,
-					 size_t count, loff_t *ppos)
+					  char __user *user_buf,
+					  size_t count, loff_t *ppos)
 {
 	struct ath11k *ar = file->private_data;
 	char buf[32];

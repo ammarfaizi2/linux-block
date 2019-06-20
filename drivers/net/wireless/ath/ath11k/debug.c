@@ -1085,8 +1085,8 @@ out:
 }
 
 static ssize_t ath11k_read_pktlog_filter(struct file *file,
-						char __user *ubuf,
-						size_t count, loff_t *ppos)
+					 char __user *ubuf,
+					 size_t count, loff_t *ppos)
 
 {
 	char buf[32] = {0};

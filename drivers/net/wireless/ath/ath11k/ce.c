@@ -737,10 +737,10 @@ void ath11k_ce_free_pipes(struct ath11k_base *sc)
 		if (pipe->dest_ring) {
 			desc_sz = ath11k_hal_ce_get_desc_size(HAL_CE_DESC_DST);
 			dma_free_coherent(sc->dev,
-					 pipe->dest_ring->nentries * desc_sz +
-					 CE_DESC_RING_ALIGN,
-					 pipe->dest_ring->base_addr_owner_space,
-					 pipe->dest_ring->base_addr_ce_space);
+					  pipe->dest_ring->nentries * desc_sz +
+					  CE_DESC_RING_ALIGN,
+					  pipe->dest_ring->base_addr_owner_space,
+					  pipe->dest_ring->base_addr_ce_space);
 			kfree(pipe->dest_ring);
 			pipe->dest_ring = NULL;
 		}
@@ -749,10 +749,10 @@ void ath11k_ce_free_pipes(struct ath11k_base *sc)
 			desc_sz =
 			  ath11k_hal_ce_get_desc_size(HAL_CE_DESC_DST_STATUS);
 			dma_free_coherent(sc->dev,
-				pipe->status_ring->nentries * desc_sz +
-				CE_DESC_RING_ALIGN,
-				pipe->status_ring->base_addr_owner_space,
-				pipe->status_ring->base_addr_ce_space);
+					  pipe->status_ring->nentries * desc_sz +
+					  CE_DESC_RING_ALIGN,
+					  pipe->status_ring->base_addr_owner_space,
+					  pipe->status_ring->base_addr_ce_space);
 			kfree(pipe->status_ring);
 			pipe->status_ring = NULL;
 		}

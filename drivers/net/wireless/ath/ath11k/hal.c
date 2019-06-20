@@ -886,14 +886,14 @@ void ath11k_hal_srng_access_end(struct ath11k_base *ab, struct hal_srng *srng)
 	} else {
 		if (srng->ring_dir == HAL_SRNG_DIR_SRC) {
 			ath11k_ahb_write32(ab,
-				(unsigned long)srng->u.src_ring.hp_addr -
-				(unsigned long)ab->mem,
-				srng->u.src_ring.hp);
+					   (unsigned long)srng->u.src_ring.hp_addr -
+					   (unsigned long)ab->mem,
+					   srng->u.src_ring.hp);
 		} else {
 			ath11k_ahb_write32(ab,
-				(unsigned long)srng->u.dst_ring.tp_addr -
-				(unsigned long)ab->mem,
-				srng->u.dst_ring.tp);
+					   (unsigned long)srng->u.dst_ring.tp_addr -
+					   (unsigned long)ab->mem,
+					   srng->u.dst_ring.tp);
 		}
 	}
 }
@@ -923,15 +923,13 @@ void ath11k_hal_setup_link_idle_list(struct ath11k_base *ab,
 	}
 
 	ath11k_ahb_write32(ab,
-		HAL_SEQ_WCSS_UMAC_WBM_REG +
-		HAL_WBM_R0_IDLE_LIST_CONTROL_ADDR,
-		FIELD_PREP(HAL_WBM_SCATTER_BUFFER_SIZE, reg_scatter_buf_sz) |
-		FIELD_PREP(HAL_WBM_LINK_DESC_IDLE_LIST_MODE, 0x1));
+			   HAL_SEQ_WCSS_UMAC_WBM_REG + HAL_WBM_R0_IDLE_LIST_CONTROL_ADDR,
+			   FIELD_PREP(HAL_WBM_SCATTER_BUFFER_SIZE, reg_scatter_buf_sz) |
+			   FIELD_PREP(HAL_WBM_LINK_DESC_IDLE_LIST_MODE, 0x1));
 	ath11k_ahb_write32(ab,
-		HAL_SEQ_WCSS_UMAC_WBM_REG +
-		HAL_WBM_R0_IDLE_LIST_SIZE_ADDR,
-		FIELD_PREP(HAL_WBM_SCATTER_RING_SIZE_OF_IDLE_LINK_DESC_LIST,
-			   reg_scatter_buf_sz * nsbufs));
+			   HAL_SEQ_WCSS_UMAC_WBM_REG + HAL_WBM_R0_IDLE_LIST_SIZE_ADDR,
+			   FIELD_PREP(HAL_WBM_SCATTER_RING_SIZE_OF_IDLE_LINK_DESC_LIST,
+				      reg_scatter_buf_sz * nsbufs));
 	ath11k_ahb_write32(ab,
 			   HAL_SEQ_WCSS_UMAC_WBM_REG +
 			   HAL_WBM_SCATTERED_RING_BASE_LSB,

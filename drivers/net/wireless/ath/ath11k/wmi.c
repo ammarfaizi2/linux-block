@@ -2447,8 +2447,9 @@ int ath11k_wmi_pdev_pktlog_disable(struct ath11k *ar)
 	return ret;
 }
 
-static inline void ath11k_fill_band_to_mac_param(struct ath11k_base  *soc,
-				struct wmi_host_pdev_band_to_mac *band_to_mac)
+static inline void
+ath11k_fill_band_to_mac_param(struct ath11k_base  *soc,
+			      struct wmi_host_pdev_band_to_mac *band_to_mac)
 {
 	u8 i;
 	struct ath11k_hal_reg_capabilities_ext *hal_reg_cap;
@@ -5189,8 +5190,8 @@ exit:
 	rcu_read_unlock();
 }
 
-static void ath11k_pdev_bss_chan_info_event(struct ath11k_base *ab, u8 *evt_buf,
-				     u32 len)
+static void
+ath11k_pdev_bss_chan_info_event(struct ath11k_base *ab, u8 *evt_buf, u32 len)
 {
 	struct wmi_pdev_bss_chan_info_event bss_ch_info_ev = {};
 	struct survey_info *survey;

@@ -74,10 +74,10 @@ int ath11k_dp_rx_process_mon_rings(struct ath11k_base *ab, int mac_id,
 int ath11k_dp_rx_process_mon_status(struct ath11k_base *ab, int mac_id,
 				    struct napi_struct *napi, int budget);
 int ath11k_dp_rx_mon_status_bufs_replenish(struct ath11k_base *ab, int mac_id,
-					struct dp_rxdma_ring *rx_ring,
-					int req_entries,
-					enum hal_rx_buf_return_buf_manager mgr,
-					gfp_t gfp);
+					   struct dp_rxdma_ring *rx_ring,
+					   int req_entries,
+					   enum hal_rx_buf_return_buf_manager mgr,
+					   gfp_t gfp);
 int ath11k_dp_rx_pdev_mon_detach(struct ath11k *ar);
 int ath11k_dp_rx_pdev_mon_attach(struct ath11k *ar);
 

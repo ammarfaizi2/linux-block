@@ -60,8 +60,8 @@ static int ath11k_core_create_board_name(struct ath11k_base *sc, char *name,
 }
 
 static const struct firmware *ath11k_fetch_fw_file(struct ath11k_base *sc,
-							const char *dir,
-							const char *file)
+						   const char *dir,
+						   const char *file)
 {
 	char filename[100];
 	const struct firmware *fw;
@@ -148,8 +148,7 @@ static int ath11k_core_parse_bd_ie_board(struct ath11k_base *sc,
 				break;
 
 			ath11k_dbg(sc, ATH11K_DBG_BOOT,
-					"boot found board data for '%s'",
-					boardname);
+				   "boot found board data for '%s'", boardname);
 
 			bd->data = board_ie_data;
 			bd->len = board_ie_len;

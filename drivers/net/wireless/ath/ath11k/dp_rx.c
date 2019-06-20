@@ -2840,7 +2840,7 @@ int ath11k_dp_process_rx_err(struct ath11k_base *ab, struct napi_struct *napi,
 			ab->soc_stats.invalid_rbm++;
 			ath11k_warn(ab, "invalid return buffer manager %d\n", rbm);
 			ath11k_dp_rx_link_desc_return(ab, desc,
-						HAL_WBM_REL_BM_ACT_REL_MSDU);
+						      HAL_WBM_REL_BM_ACT_REL_MSDU);
 			continue;
 		}
 
