@@ -63,14 +63,59 @@ assign_mkey_variant(struct mlx5_ib_dev *dev, struct mlx5_core_mkey *mkey,
 }
 
 static int
+mlx5_ib_create_mkey_cb(struct mlx5_ib_dev *dev,
+		       struct mlx5_core_mkey *mkey,
+		       struct mlx5_async_ctx *async_ctx,
+		       u32 *in, int inlen, u32 *out, int outlen,
+		       struct mlx5_async_work *context)
+{
+	u32 lout[MLX5_ST_SZ_DW(create_mkey_out)] = {};
+	u32 mkey_index;
+	void *mkc;
+	int err;
+
+	MLX5_SET(create_mkey_in, in, opcode, MLX5_CMD_OP_CREATE_MKEY);
+	assign_mkey_variant(dev, mkey, in);
+
+	if (async_ctx)
+		return mlx5_cmd_exec_cb(async_ctx, in, inlen, out, outlen,
+					create_mkey_callback, context);
+
+	err = mlx5_cmd_exec(dev->mdev, in, inlen, lout, sizeof(lout));
+	if (err)
+		return err;
+
+	mkc = MLX5_ADDR_OF(create_mkey_in, in, memory_key_mkey_entry);
+	mkey->iova = MLX5_GET64(mkc, mkc, start_addr);
+	mkey->size = MLX5_GET64(mkc, mkc, len);
+	mkey->pd = MLX5_GET(mkc, mkc, pd);
+
+	mkey_index = MLX5_GET(create_mkey_out, lout, mkey_index);
+	mkey->key |= mlx5_idx_to_mkey(mkey_index);
+
+	mlx5_ib_dbg(dev, "out 0x%x, mkey 0x%x\n", mkey_index, mkey->key);
+	return err;
+}
+
+static int mlx5_ib_destroy_mkey_cmd(struct mlx5_ib_dev *dev, struct mlx5_core_mkey *mkey)
+{
+	u32 out[MLX5_ST_SZ_DW(destroy_mkey_out)] = {};
+	u32 in[MLX5_ST_SZ_DW(destroy_mkey_in)] = {};
+
+	MLX5_SET(destroy_mkey_in, in, opcode, MLX5_CMD_OP_DESTROY_MKEY);
+	MLX5_SET(destroy_mkey_in, in, mkey_index, mlx5_mkey_to_idx(mkey->key));
+	return mlx5_cmd_exec(dev->mdev, in, sizeof(in), out, sizeof(out));
+}
+
+static int
 mlx5_ib_create_mkey(struct mlx5_ib_dev *dev, struct mlx5_core_mkey *mkey,
 		    u32 *in, int inlen)
 {
 	struct xarray *mkeys = &dev->mkey_table;
 	int err;
 
-	assign_mkey_variant(dev, mkey, in);
-	err = mlx5_core_create_mkey(dev->mdev, mkey, in, inlen);
+	err = mlx5_ib_create_mkey_cb(dev, mkey, NULL, in, inlen,
+				     NULL, 0, NULL);
 	if (err)
 		return err;
 
@@ -79,22 +124,9 @@ mlx5_ib_create_mkey(struct mlx5_ib_dev *dev, struct mlx5_core_mkey *mkey,
 	if (err) {
 		mlx5_ib_warn(dev, "failed xarray insert of mkey 0x%x, %d\n",
 			     mlx5_base_mkey(mkey->key), err);
-		mlx5_core_destroy_mkey(dev->mdev, mkey);
+		mlx5_ib_destroy_mkey_cmd(dev, mkey);
 	}
 	return err;
-}
-
-static int
-mlx5_ib_create_mkey_cb(struct mlx5_ib_dev *dev,
-		       struct mlx5_core_mkey *mkey,
-		       struct mlx5_async_ctx *async_ctx,
-		       u32 *in, int inlen, u32 *out, int outlen,
-		       struct mlx5_async_work *context)
-{
-	assign_mkey_variant(dev, mkey, in);
-	return mlx5_core_create_mkey_cb(dev->mdev, mkey, async_ctx,
-					in, inlen, out, outlen,
-					create_mkey_callback, context);
 }
 
 static int
@@ -113,7 +145,7 @@ mlx5_ib_destroy_mkey(struct mlx5_ib_dev *dev, struct mlx5_core_mkey *mkey)
 		return -ENOENT;
 	}
 
-	return mlx5_core_destroy_mkey(dev->mdev, mkey);
+	return mlx5_ib_destroy_mkey_cmd(dev, mkey);
 }
 
 static void clean_mr(struct mlx5_ib_dev *dev, struct mlx5_ib_mr *mr);

@@ -724,6 +724,17 @@ static int get_indirect_num_descs(struct mlx5_core_mkey *mmkey)
 	return devx_mr->ndescs;
 }
 
+static int
+mlx5_ib_query_mkey(struct mlx5_core_dev *dev, struct mlx5_core_mkey *mkey,
+		   u32 *out, int outlen)
+{
+	u32 in[MLX5_ST_SZ_DW(query_mkey_in)] = {};
+
+	MLX5_SET(query_mkey_in, in, opcode, MLX5_CMD_OP_QUERY_MKEY);
+	MLX5_SET(query_mkey_in, in, mkey_index, mlx5_mkey_to_idx(mkey->key));
+	return mlx5_cmd_exec(dev, in, sizeof(in), out, outlen);
+}
+
 /*
  * Handle a single data segment in a page-fault WQE or RDMA region.
  *
@@ -833,7 +844,7 @@ next_mr:
 		pklm = (struct mlx5_klm *)MLX5_ADDR_OF(query_mkey_out, out,
 						       bsf0_klm0_pas_mtt0_1);
 
-		ret = mlx5_core_query_mkey(dev->mdev, mmkey, out, outlen);
+		ret = mlx5_ib_query_mkey(dev->mdev, mmkey, out, outlen);
 		if (ret)
 			goto srcu_unlock;
 
