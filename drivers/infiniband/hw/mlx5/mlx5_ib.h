@@ -963,7 +963,12 @@ struct mlx5_ib_dev {
 	/* sync used page count stats
 	 */
 	struct mlx5_ib_resources	devr;
+
 	struct xarray			mkey_table;
+	/* protect mkey key part */
+	spinlock_t			mkey_lock;
+	u8				mkey_key;
+
 	struct mlx5_mr_cache		cache;
 	struct timer_list		delay_timer;
 	/* Prevents soft lock on massive reg MRs */

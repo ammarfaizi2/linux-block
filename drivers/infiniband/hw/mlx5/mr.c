@@ -50,6 +50,22 @@ enum {
 static void
 create_mkey_callback(int status, struct mlx5_async_work *context);
 
+static void
+assign_mkey_variant(struct mlx5_ib_dev *dev, struct mlx5_core_mkey *mkey,
+		    u32 *in)
+{
+	void *mkc;
+	u8 key;
+
+	spin_lock_irq(&dev->mkey_lock);
+	key = dev->mkey_key++;
+	spin_unlock_irq(&dev->mkey_lock);
+
+	mkc = MLX5_ADDR_OF(create_mkey_in, in, memory_key_mkey_entry);
+	MLX5_SET(mkc, mkc, mkey_7_0, key);
+	mkey->key = key;
+}
+
 static int
 mlx5_ib_create_mkey(struct mlx5_ib_dev *dev, struct mlx5_core_mkey *mkey,
 		    u32 *in, int inlen)
@@ -57,6 +73,7 @@ mlx5_ib_create_mkey(struct mlx5_ib_dev *dev, struct mlx5_core_mkey *mkey,
 	struct xarray *mkeys = &dev->mkey_table;
 	int err;
 
+	assign_mkey_variant(dev, mkey, in);
 	err = mlx5_core_create_mkey(dev->mdev, mkey, in, inlen);
 	if (err)
 		return err;
@@ -78,6 +95,7 @@ mlx5_ib_create_mkey_cb(struct mlx5_ib_dev *dev,
 		       u32 *in, int inlen, u32 *out, int outlen,
 		       struct mlx5_async_work *context)
 {
+	assign_mkey_variant(dev, mkey, in);
 	return mlx5_core_create_mkey_cb(dev->mdev, mkey, async_ctx,
 					in, inlen, out, outlen,
 					create_mkey_callback, context);
