@@ -87,6 +87,9 @@ static const struct fsinfo_attr_info fsinfo_buffer_info[FSINFO_ATTR__NR] = {
 	FSINFO_STRING		(MOUNT_DEVNAME,		mount_devname),
 	FSINFO_STRUCT_ARRAY	(MOUNT_CHILDREN,	mount_child),
 	FSINFO_STRING_N		(MOUNT_SUBMOUNT,	mount_submount),
+	FSINFO_STRING_N		(SERVER_NAME,		server_name),
+	FSINFO_STRUCT_NM	(SERVER_ADDRESS,	server_address),
+	FSINFO_STRING		(CELL_NAME,		cell_name),
 };
 
 #define FSINFO_NAME(X,Y) [FSINFO_ATTR_##X] = #Y
@@ -112,6 +115,9 @@ static const char *fsinfo_attr_names[FSINFO_ATTR__NR] = {
 	FSINFO_NAME		(MOUNT_DEVNAME,		mount_devname),
 	FSINFO_NAME		(MOUNT_CHILDREN,	mount_children),
 	FSINFO_NAME		(MOUNT_SUBMOUNT,	mount_submount),
+	FSINFO_NAME		(SERVER_NAME,		server_name),
+	FSINFO_NAME		(SERVER_ADDRESS,	server_address),
+	FSINFO_NAME		(CELL_NAME,		cell_name),
 };
 
 union reply {
@@ -126,6 +132,7 @@ union reply {
 	struct fsinfo_volume_uuid uuid;
 	struct fsinfo_mount_info mount_info;
 	struct fsinfo_mount_child mount_children[1];
+	struct fsinfo_server_address srv_addr;
 };
 
 static void dump_hex(unsigned int *data, int from, int to)
@@ -329,6 +336,31 @@ static void dump_attr_VOLUME_UUID(union reply *r, int size)
 	       f->uuid[14], f->uuid[15]);
 }
 
+static void dump_attr_SERVER_ADDRESS(union reply *r, int size)
+{
+	struct fsinfo_server_address *f = &r->srv_addr;
+	struct sockaddr_in6 *sin6;
+	struct sockaddr_in *sin;
+	char buf[1024];
+
+	switch (f->address.ss_family) {
+	case AF_INET:
+		sin = (struct sockaddr_in *)&f->address;
+		if (!inet_ntop(AF_INET, &sin->sin_addr, buf, sizeof(buf)))
+			break;
+		printf("IPv4: %s\n", buf);
+		return;
+	case AF_INET6:
+		sin6 = (struct sockaddr_in6 *)&f->address;
+		if (!inet_ntop(AF_INET6, &sin6->sin6_addr, buf, sizeof(buf)))
+			break;
+		printf("IPv6: %s\n", buf);
+		return;
+	}
+
+	printf("family=%u\n", f->address.ss_family);
+}
+
 static void dump_attr_MOUNT_INFO(union reply *r, int size)
 {
 	struct fsinfo_mount_info *f = &r->mount_info;
@@ -369,6 +401,7 @@ static const dumper_t fsinfo_attr_dumper[FSINFO_ATTR__NR] = {
 	FSINFO_DUMPER(VOLUME_UUID),
 	FSINFO_DUMPER(MOUNT_INFO),
 	FSINFO_DUMPER(MOUNT_CHILDREN),
+	FSINFO_DUMPER(SERVER_ADDRESS),
 };
 
 static void dump_fsinfo(enum fsinfo_attribute attr,
