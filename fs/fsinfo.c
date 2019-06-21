@@ -14,6 +14,7 @@
 #include <linux/uaccess.h>
 #include <linux/fsinfo.h>
 #include <linux/fs_context.h>
+#include <linux/fs_parser.h>
 #include <uapi/linux/mount.h>
 #include "internal.h"
 
@@ -228,12 +229,87 @@ static int fsinfo_generic_name_encoding(struct path *path, char *buf)
 	return sizeof(encoding) - 1;
 }
 
+static int fsinfo_generic_param_description(struct file_system_type *f,
+					    struct fsinfo_kparams *params)
+{
+	const struct fs_parameter_description *desc = f->parameters;
+	const struct fs_parameter_spec *s;
+	const struct fs_parameter_enum *e;
+	struct fsinfo_param_description *p = params->buffer;
+
+	if (desc && desc->specs) {
+		for (s = desc->specs; s->name; s++) {}
+		p->nr_params = s - desc->specs;
+		if (desc->enums) {
+			for (e = desc->enums; e->name[0]; e++) {}
+			p->nr_enum_names = e - desc->enums;
+		}
+	}
+
+	return sizeof(*p);
+}
+
+static int fsinfo_generic_param_specification(struct file_system_type *f,
+					      struct fsinfo_kparams *params)
+{
+	const struct fs_parameter_description *desc = f->parameters;
+	const struct fs_parameter_spec *s;
+	struct fsinfo_param_specification *p = params->buffer;
+	unsigned int nth = params->Nth;
+
+	if (!desc || !desc->specs)
+		return -ENODATA;
+
+	for (s = desc->specs; s->name; s++) {
+		if (nth == 0)
+			goto found;
+		nth--;
+	}
+
+	return -ENODATA;
+
+found:
+	p->type = s->type;
+	p->flags = s->flags;
+	p->opt = s->opt;
+	strlcpy(p->name, s->name, sizeof(p->name));
+	return sizeof(*p);
+}
+
+static int fsinfo_generic_param_enum(struct file_system_type *f,
+				     struct fsinfo_kparams *params)
+{
+	const struct fs_parameter_description *desc = f->parameters;
+	const struct fs_parameter_enum *e;
+	struct fsinfo_param_enum *p = params->buffer;
+	unsigned int nth = params->Nth;
+
+	if (!desc || !desc->enums)
+		return -ENODATA;
+
+	for (e = desc->enums; e->name; e++) {
+		if (nth == 0)
+			goto found;
+		nth--;
+	}
+
+	return -ENODATA;
+
+found:
+	p->opt = e->opt;
+	strlcpy(p->name, e->name, sizeof(p->name));
+	return sizeof(*p);
+}
+
 /*
  * Implement some queries generically from stuff in the superblock.
  */
 int generic_fsinfo(struct path *path, struct fsinfo_kparams *params)
 {
+	struct file_system_type *fs = path->dentry->d_sb->s_type;
+
 #define _gen(X, Y) FSINFO_ATTR_##X: return fsinfo_generic_##Y(path, params->buffer)
+#define _genf(X, Y) FSINFO_ATTR_##X: return fsinfo_generic_##Y(fs, params)
 
 	switch (params->request) {
 	case _gen(STATFS,		statfs);
@@ -245,6 +321,9 @@ int generic_fsinfo(struct path *path, struct fsinfo_kparams *params)
 	case _gen(VOLUME_UUID,		volume_uuid);
 	case _gen(VOLUME_ID,		volume_id);
 	case _gen(NAME_ENCODING,	name_encoding);
+	case _genf(PARAM_DESCRIPTION,	param_description);
+	case _genf(PARAM_SPECIFICATION,	param_specification);
+	case _genf(PARAM_ENUM,		param_enum);
 	default:
 		return -EOPNOTSUPP;
 	}
@@ -349,10 +428,11 @@ static int vfs_fsinfo_fd(unsigned int fd, struct fsinfo_kparams *params)
 }
 
 /*
- * Allow access to an fs_context object as created by fsopen() or fspick().
+ * Allow an fs_context object as created by fsopen() or fspick() to be queried.
  */
 static int vfs_fsinfo_fscontext(int fd, struct fsinfo_kparams *params)
 {
+	struct file_system_type *fs;
 	struct fs_context *fc;
 	struct fd f = fdget(fd);
 	int ret;
@@ -363,9 +443,23 @@ static int vfs_fsinfo_fscontext(int fd, struct fsinfo_kparams *params)
 	ret = -EINVAL;
 	if (f.file->f_op != &fscontext_fops)
 		goto out_f;
+	fc = f.file->private_data;
+	fs = fc->fs_type;
+
 	ret = -EOPNOTSUPP;
 	if (fc->ops == &legacy_fs_context_ops)
 		goto out_f;
+
+	/* Filesystem parameter query is static information and doesn't need a
+	 * lock to read it, nor even a dentry or superblock.
+	 */
+	switch (params->request) {
+	case _genf(PARAM_DESCRIPTION,	param_description);
+	case _genf(PARAM_SPECIFICATION,	param_specification);
+	case _genf(PARAM_ENUM,		param_enum);
+	default:
+		break;
+	}
 
 	ret = mutex_lock_interruptible(&fc->uapi_mutex);
 	if (ret == 0) {
@@ -439,6 +533,9 @@ static const struct fsinfo_attr_info fsinfo_buffer_info[FSINFO_ATTR__NR] = {
 	FSINFO_STRING		(VOLUME_NAME),
 	FSINFO_STRING		(NAME_ENCODING),
 	FSINFO_STRING		(NAME_CODEPAGE),
+	FSINFO_STRUCT		(PARAM_DESCRIPTION,	param_description),
+	FSINFO_STRUCT_N		(PARAM_SPECIFICATION,	param_specification),
+	FSINFO_STRUCT_N		(PARAM_ENUM,		param_enum),
 };
 
 /**
