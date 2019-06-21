@@ -2596,8 +2596,10 @@ static int ath11k_sta_state(struct ieee80211_hw *hw,
 		if (ath11k_debug_is_extd_tx_stats_enabled(ar)) {
 			arsta->tx_stats = kzalloc(sizeof(*arsta->tx_stats),
 						  GFP_KERNEL);
-			if (!arsta->tx_stats)
+			if (!arsta->tx_stats) {
+				ret = -ENOMEM;
 				goto exit;
+			}
 		}
 
 		if (ieee80211_vif_is_mesh(vif)) {
@@ -2633,8 +2635,8 @@ static int ath11k_sta_state(struct ieee80211_hw *hw,
 
 		ath11k_mac_dec_num_stations(arvif, sta);
 
-		if (ath11k_debug_is_extd_tx_stats_enabled(ar))
-			kfree(arsta->tx_stats);
+		kfree(arsta->tx_stats);
+		arsta->tx_stats = NULL;
 
 		kfree(arsta->rx_stats);
 		arsta->rx_stats = NULL;
