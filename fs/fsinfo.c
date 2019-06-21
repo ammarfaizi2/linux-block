@@ -353,6 +353,10 @@ int generic_fsinfo(struct path *path, struct fsinfo_kparams *params)
 	case _genf(PARAM_SPECIFICATION,	param_specification);
 	case _genf(PARAM_ENUM,		param_enum);
 	case _genp(PARAMETERS,		parameters);
+	case _genp(MOUNT_INFO,		mount_info);
+	case _genp(MOUNT_DEVNAME,	mount_devname);
+	case _genp(MOUNT_CHILDREN,	mount_children);
+	case _genp(MOUNT_SUBMOUNT,	mount_submount);
 	default:
 		return -EOPNOTSUPP;
 	}
@@ -634,6 +638,10 @@ static const struct fsinfo_attr_info fsinfo_buffer_info[FSINFO_ATTR__NR] = {
 	FSINFO_STRUCT_N		(PARAM_ENUM,		param_enum),
 	FSINFO_OPAQUE		(PARAMETERS),
 	FSINFO_OPAQUE		(LSM_PARAMETERS),
+	FSINFO_STRUCT		(MOUNT_INFO,		mount_info),
+	FSINFO_STRING		(MOUNT_DEVNAME),
+	FSINFO_STRUCT_ARRAY	(MOUNT_CHILDREN,	mount_child),
+	FSINFO_STRING_N		(MOUNT_SUBMOUNT),
 };
 
 /**

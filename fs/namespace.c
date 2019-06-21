@@ -30,6 +30,7 @@
 #include <uapi/linux/mount.h>
 #include <linux/fs_context.h>
 #include <linux/shmem_fs.h>
+#include <linux/fsinfo.h>
 
 #include "pnode.h"
 #include "internal.h"
@@ -4110,3 +4111,179 @@ out_unlock_mh:
 	unlock_mount_hash();
 	goto out_unlock;
 }
+
+#ifdef CONFIG_FSINFO
+int fsinfo_generic_mount_info(struct path *path, struct fsinfo_kparams *params)
+{
+	struct fsinfo_mount_info *p = params->buffer;
+	struct super_block *sb;
+	struct mount *m;
+	struct path root;
+	unsigned int flags;
+
+	if (!path->mnt)
+		return -ENODATA;
+
+	m = real_mount(path->mnt);
+	sb = m->mnt.mnt_sb;
+
+	p->f_sb_id		= sb->s_unique_id;
+	p->mnt_id		= m->mnt_id;
+	p->parent_id		= m->mnt_parent->mnt_id;
+	p->notify_counter	= atomic_read(&m->mnt_notify_counter);
+
+	get_fs_root(current->fs, &root);
+	if (path->mnt == root.mnt) {
+		p->parent_id = p->mnt_id;
+	} else {
+		rcu_read_lock();
+		if (!are_paths_connected(&root, path))
+			p->parent_id = p->mnt_id;
+		rcu_read_unlock();
+	}
+	if (IS_MNT_SHARED(m))
+		p->group_id = m->mnt_group_id;
+	if (IS_MNT_SLAVE(m)) {
+		int master = m->mnt_master->mnt_group_id;
+		int dom = get_dominating_id(m, &root);
+		p->master_id = master;
+		if (dom && dom != master)
+			p->from_id = dom;
+	}
+	path_put(&root);
+
+	flags = READ_ONCE(m->mnt.mnt_flags);
+	if (flags & MNT_READONLY)
+		p->attr |= MOUNT_ATTR_RDONLY;
+	if (flags & MNT_NOSUID)
+		p->attr |= MOUNT_ATTR_NOSUID;
+	if (flags & MNT_NODEV)
+		p->attr |= MOUNT_ATTR_NODEV;
+	if (flags & MNT_NOEXEC)
+		p->attr |= MOUNT_ATTR_NOEXEC;
+	if (flags & MNT_NODIRATIME)
+		p->attr |= MOUNT_ATTR_NODIRATIME;
+
+	if (flags & MNT_NOATIME)
+		p->attr |= MOUNT_ATTR_NOATIME;
+	else if (flags & MNT_RELATIME)
+		p->attr |= MOUNT_ATTR_RELATIME;
+	else
+		p->attr |= MOUNT_ATTR_STRICTATIME;
+	return sizeof(*p);
+}
+
+int fsinfo_generic_mount_devname(struct path *path, struct fsinfo_kparams *params)
+{
+	struct mount *m;
+	size_t len;
+
+	if (!path->mnt)
+		return -ENODATA;
+
+	m = real_mount(path->mnt);
+	len = strlen(m->mnt_devname);
+	memcpy(params->buffer, m->mnt_devname, len);
+	return len;
+}
+
+/*
+ * Store a mount record into the fsinfo buffer.
+ */
+static void store_mount_fsinfo(struct fsinfo_kparams *params,
+			       struct fsinfo_mount_child *child)
+{
+	unsigned int usage = params->usage;
+	unsigned int total = sizeof(*child);
+
+	if (params->usage >= INT_MAX)
+		return;
+	params->usage = usage + total;
+	if (params->buffer && params->usage <= params->buf_size)
+		memcpy(params->buffer + usage, child, total);
+}
+
+/*
+ * Return information about the submounts relative to path.
+ */
+int fsinfo_generic_mount_children(struct path *path, struct fsinfo_kparams *params)
+{
+	struct fsinfo_mount_child record;
+	struct mount *m, *child;
+
+	if (!path->mnt)
+		return -ENODATA;
+
+	m = real_mount(path->mnt);
+
+	rcu_read_lock();
+	list_for_each_entry_rcu(child, &m->mnt_mounts, mnt_child) {
+		if (child->mnt_parent != m)
+			continue;
+		record.mnt_id = child->mnt_id;
+		record.notify_counter = atomic_read(&child->mnt_notify_counter);
+		store_mount_fsinfo(params, &record);
+	}
+	rcu_read_unlock();
+
+	/* End the list with a copy of the parameter mount's details so that
+	 * userspace can quickly check for changes.
+	 */
+	record.mnt_id = m->mnt_id;
+	record.notify_counter = atomic_read(&m->mnt_notify_counter);
+	store_mount_fsinfo(params, &record);
+	return params->usage;
+}
+
+/*
+ * Return the path of the Nth submount relative to path.  This is derived from
+ * d_path(), but the root determination is more complicated.
+ */
+int fsinfo_generic_mount_submount(struct path *path, struct fsinfo_kparams *params)
+{
+	struct mountpoint *mp;
+	struct mount *m, *child;
+	struct path mountpoint, root;
+	unsigned int n = params->Nth;
+	size_t len;
+	void *p;
+
+	if (!path->mnt)
+		return -ENODATA;
+
+	rcu_read_lock();
+
+	m = real_mount(path->mnt);
+	list_for_each_entry_rcu(child, &m->mnt_mounts, mnt_child) {
+		mp = READ_ONCE(child->mnt_mp);
+		if (child->mnt_parent != m || !mp)
+			continue;
+		if (n-- == 0)
+			goto found;
+	}
+	rcu_read_unlock();
+	return -ENODATA;
+
+found:
+	mountpoint.mnt = path->mnt;
+	mountpoint.dentry = READ_ONCE(mp->m_dentry);
+
+	get_fs_root_rcu(current->fs, &root);
+	if (root.mnt != path->mnt) {
+		root.mnt = path->mnt;
+		root.dentry = path->mnt->mnt_root;
+	}
+
+	p = __d_path(&mountpoint, &root, params->buffer, params->buf_size);
+	rcu_read_unlock();
+
+	if (IS_ERR(p))
+		return PTR_ERR(p);
+	if (!p)
+		return -EPERM;
+
+	len = (params->buffer + params->buf_size) - p;
+	memmove(params->buffer, p, len);
+	return len;
+}
+#endif /* CONFIG_FSINFO */

@@ -48,6 +48,11 @@ extern int __block_write_begin_int(struct page *page, loff_t pos, unsigned len,
 extern void __init chrdev_init(void);
 
 /*
+ * d_path.c
+ */
+extern void get_fs_root_rcu(struct fs_struct *fs, struct path *root);
+
+/*
  * fs_context.c
  */
 extern const struct fs_context_operations legacy_fs_context_ops;
@@ -92,6 +97,10 @@ extern void __mnt_drop_write_file(struct file *);
 
 extern void dissolve_on_fput(struct vfsmount *);
 extern int lookup_mount_object(struct path *, int, struct path *);
+extern int fsinfo_generic_mount_info(struct path *, struct fsinfo_kparams *);
+extern int fsinfo_generic_mount_devname(struct path *, struct fsinfo_kparams *);
+extern int fsinfo_generic_mount_children(struct path *, struct fsinfo_kparams *);
+extern int fsinfo_generic_mount_submount(struct path *, struct fsinfo_kparams *);
 
 /*
  * fs_struct.c
