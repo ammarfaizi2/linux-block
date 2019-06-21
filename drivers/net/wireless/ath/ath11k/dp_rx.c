@@ -1520,7 +1520,8 @@ static int ath11k_dp_rx_retrieve_amsdu(struct ath11k *ar,
 							 msdu, last_buf,
 							 l3_pad_bytes, msdu_len);
 			if (ret) {
-				ath11k_warn(ar->ab, "failed to coalesce msdu rx buffer%d\n", ret);
+				ath11k_warn(ar->ab,
+					    "failed to coalesce msdu rx buffer%d\n", ret);
 				goto free_out;
 			}
 		}
@@ -1924,7 +1925,9 @@ static void ath11k_dp_rx_h_rate(struct ath11k *ar, struct hal_rx_desc *rx_desc,
 	case RX_MSDU_START_PKT_TYPE_11N:
 		rx_status->encoding = RX_ENC_HT;
 		if (rate_mcs > ATH11K_HT_MCS_MAX) {
-			ath11k_warn(ar->ab, "Received with invalid mcs in HT mode %d\n", rate_mcs);
+			ath11k_warn(ar->ab,
+				    "Received with invalid mcs in HT mode %d\n",
+				     rate_mcs);
 			break;
 		}
 		rx_status->rate_idx = rate_mcs + (8 * (nss - 1));
@@ -1936,7 +1939,9 @@ static void ath11k_dp_rx_h_rate(struct ath11k *ar, struct hal_rx_desc *rx_desc,
 		rx_status->encoding = RX_ENC_VHT;
 		rx_status->rate_idx = rate_mcs;
 		if (rate_mcs > ATH11K_VHT_MCS_MAX) {
-			ath11k_warn(ar->ab, "Received with invalid mcs in VHT mode %d\n", rate_mcs);
+			ath11k_warn(ar->ab,
+				    "Received with invalid mcs in VHT mode %d\n",
+				     rate_mcs);
 			break;
 		}
 		rx_status->nss = nss;
@@ -3117,7 +3122,9 @@ int ath11k_dp_rx_process_wbm_err(struct ath11k_base *ab,
 
 		ret = ath11k_hal_wbm_desc_parse_err(ab, rx_desc, &err_info);
 		if (ret) {
-			ath11k_warn(ab, "failed to parse rx error in wbm_rel ring desc %d\n", ret);
+			ath11k_warn(ab,
+				    "failed to parse rx error in wbm_rel ring desc %d\n",
+				    ret);
 			continue;
 		}
 
@@ -3251,7 +3258,8 @@ int ath11k_dp_process_rxdma_err(struct ath11k_base *ab, int mac_id, int budget)
 			spin_lock_bh(&rx_ring->idr_lock);
 			skb = idr_find(&rx_ring->bufs_idr, buf_id);
 			if (!skb) {
-				ath11k_warn(ab, "rxdma error with invalid buf_id %d\n", buf_id);
+				ath11k_warn(ab, "rxdma error with invalid buf_id %d\n",
+					    buf_id);
 				spin_unlock_bh(&rx_ring->idr_lock);
 				continue;
 			}

@@ -309,7 +309,8 @@ static inline void htt_print_tx_pdev_stats_sifs_hist_tlv_v(const u32 *tag_buf,
 	char sifs_hist_status[HTT_MAX_STRING_LEN] = {0};
 	u16 num_elems = min_t(u16, (tag_len >> 2), HTT_TX_PDEV_MAX_SIFS_BURST_HIST_STATS);
 
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_PDEV_STATS_SIFS_HIST_TLV_V:");
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "HTT_TX_PDEV_STATS_SIFS_HIST_TLV_V:");
 
 	ARRAY_TO_STRING(sifs_hist_status, htt_stats_buf->sifs_hist_status, num_elems);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "sifs_hist_status = %s\n",
@@ -334,7 +335,8 @@ static inline void htt_print_tx_pdev_stats_tx_ppdu_stats_tlv_v(const u32 *tag_bu
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
 
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_PDEV_STATS_TX_PPDU_STATS_TLV_V:");
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "HTT_TX_PDEV_STATS_TX_PPDU_STATS_TLV_V:");
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "num_data_ppdus_legacy_su = %u",
 			   htt_stats_buf->num_data_ppdus_legacy_su);
@@ -375,7 +377,8 @@ htt_print_tx_pdev_stats_tried_mpdu_cnt_hist_tlv_v(const u32 *tag_buf,
 	u32  num_elements = ((tag_len - sizeof(htt_stats_buf->hist_bin_size)) >> 2);
 	u32  required_buffer_size = HTT_MAX_PRINT_CHAR_PER_ELEM * num_elements;
 
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_PDEV_STATS_TRIED_MPDU_CNT_HIST_TLV_V:");
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "HTT_TX_PDEV_STATS_TRIED_MPDU_CNT_HIST_TLV_V:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "TRIED_MPDU_CNT_HIST_BIN_SIZE : %u",
 			   htt_stats_buf->hist_bin_size);
 
@@ -386,7 +389,8 @@ htt_print_tx_pdev_stats_tried_mpdu_cnt_hist_tlv_v(const u32 *tag_buf,
 		len += HTT_DBG_OUT(buf + len, buf_len - len, "tried_mpdu_cnt_hist = %s\n",
 				   tried_mpdu_cnt_hist);
 	} else {
-		len += HTT_DBG_OUT(buf + len, buf_len - len, "INSUFFICIENT PRINT BUFFER\n");
+		len += HTT_DBG_OUT(buf + len, buf_len - len,
+				   "INSUFFICIENT PRINT BUFFER\n");
 	}
 
 	if (len >= buf_len)
@@ -782,7 +786,8 @@ static inline void htt_print_peer_details_tlv(const u32 *tag_buf, u8 *data)
 			   (htt_stats_buf->vdev_pdev_ast_idx & 0xFF00) >> 8);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "ast_idx = %u",
 			   (htt_stats_buf->vdev_pdev_ast_idx & 0xFFFF0000) >> 16);
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "mac_addr = %02x:%02x:%02x:%02x:%02x:%02x",
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "mac_addr = %02x:%02x:%02x:%02x:%02x:%02x",
 			   htt_stats_buf->mac_addr.mac_addr_l32 & 0xFF,
 			   (htt_stats_buf->mac_addr.mac_addr_l32 & 0xFF00) >> 8,
 			   (htt_stats_buf->mac_addr.mac_addr_l32 & 0xFF0000) >> 16,
@@ -1017,7 +1022,8 @@ static inline void htt_print_tx_hwq_mu_mimo_mpdu_stats_tlv(const u32 *tag_buf,
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
 
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_HWQ_MU_MIMO_MPDU_STATS_TLV:");
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "HTT_TX_HWQ_MU_MIMO_MPDU_STATS_TLV:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "mu_mimo_mpdus_queued_usr = %u",
 			   htt_stats_buf->mu_mimo_mpdus_queued_usr);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "mu_mimo_mpdus_tried_usr = %u",
@@ -1145,7 +1151,8 @@ static inline void htt_print_tx_hwq_difs_latency_stats_tlv_v(const u32 *tag_buf,
 	u16 data_len = min_t(u16, (tag_len >> 2), HTT_TX_HWQ_MAX_DIFS_LATENCY_BINS);
 	char difs_latency_hist[HTT_MAX_STRING_LEN] = {0};
 
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_HWQ_DIFS_LATENCY_STATS_TLV_V:");
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "HTT_TX_HWQ_DIFS_LATENCY_STATS_TLV_V:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "hist_intvl = %u",
 			htt_stats_buf->hist_intvl);
 
@@ -1178,7 +1185,8 @@ static inline void htt_print_tx_hwq_cmd_result_stats_tlv_v(const u32 *tag_buf,
 
 	data_len = min_t(u16, (tag_len >> 2), HTT_TX_HWQ_MAX_CMD_RESULT_STATS);
 
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_HWQ_CMD_RESULT_STATS_TLV_V:");
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "HTT_TX_HWQ_CMD_RESULT_STATS_TLV_V:");
 
 	ARRAY_TO_STRING(cmd_result, htt_stats_buf->cmd_result, data_len);
 
@@ -1238,7 +1246,8 @@ static inline void htt_print_tx_hwq_fes_result_stats_tlv_v(const u32 *tag_buf,
 
 	num_elems = min_t(u16, (tag_len >> 2), HTT_TX_HWQ_MAX_FES_RESULT_STATS);
 
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_HWQ_FES_RESULT_STATS_TLV_V:");
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "HTT_TX_HWQ_FES_RESULT_STATS_TLV_V:");
 
 	ARRAY_TO_STRING(fes_result, htt_stats_buf->fes_result, num_elems);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "fes_result = %s\n", fes_result);
@@ -1267,7 +1276,8 @@ static inline void htt_print_tx_hwq_tried_mpdu_cnt_hist_tlv_v(const u32 *tag_buf
 			    sizeof(htt_stats_buf->hist_bin_size)) >> 2);
 	u32  required_buffer_size = HTT_MAX_PRINT_CHAR_PER_ELEM * num_elements;
 
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_HWQ_TRIED_MPDU_CNT_HIST_TLV_V:");
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "HTT_TX_HWQ_TRIED_MPDU_CNT_HIST_TLV_V:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "TRIED_MPDU_CNT_HIST_BIN_SIZE : %u",
 			   htt_stats_buf->hist_bin_size);
 
@@ -1279,7 +1289,8 @@ static inline void htt_print_tx_hwq_tried_mpdu_cnt_hist_tlv_v(const u32 *tag_buf
 				   "tried_mpdu_cnt_hist = %s\n",
 				   tried_mpdu_cnt_hist);
 	} else {
-		len += HTT_DBG_OUT(buf + len, buf_len - len, "INSUFFICIENT PRINT BUFFER ");
+		len += HTT_DBG_OUT(buf + len, buf_len - len,
+				   "INSUFFICIENT PRINT BUFFER ");
 	}
 
 	if (len >= buf_len)
@@ -1305,7 +1316,8 @@ static inline void htt_print_tx_hwq_txop_used_cnt_hist_tlv_v(const u32 *tag_buf,
 	u32 num_elements = tag_len >> 2;
 	u32  required_buffer_size = HTT_MAX_PRINT_CHAR_PER_ELEM * num_elements;
 
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_HWQ_TXOP_USED_CNT_HIST_TLV_V:");
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "HTT_TX_HWQ_TXOP_USED_CNT_HIST_TLV_V:");
 
 	if (required_buffer_size < HTT_MAX_STRING_LEN) {
 		ARRAY_TO_STRING(txop_used_cnt_hist,
@@ -1314,7 +1326,8 @@ static inline void htt_print_tx_hwq_txop_used_cnt_hist_tlv_v(const u32 *tag_buf,
 		len += HTT_DBG_OUT(buf + len, buf_len - len, "txop_used_cnt_hist = %s\n",
 				   txop_used_cnt_hist);
 	} else {
-		len += HTT_DBG_OUT(buf + len, buf_len - len, "INSUFFICIENT PRINT BUFFER ");
+		len += HTT_DBG_OUT(buf + len, buf_len - len,
+				   "INSUFFICIENT PRINT BUFFER ");
 	}
 	if (len >= buf_len)
 		buf[buf_len - 1] = 0;
@@ -1340,26 +1353,31 @@ static inline void htt_print_tx_sounding_stats_tlv(const u32 *tag_buf, u8 *data)
 	u32 *cbf_160 = htt_stats_buf->cbf_160;
 
 	if (htt_stats_buf->tx_sounding_mode == HTT_TX_AC_SOUNDING_MODE) {
-		len += HTT_DBG_OUT(buf + len, buf_len - len, "\nHTT_TX_AC_SOUNDING_STATS_TLV:\n");
-		len += HTT_DBG_OUT(buf + len, buf_len - len, "ac_cbf_20 = IBF : %u, SU_SIFS : %u, SU_RBO : %u, MU_SIFS : %u, MU_RBO : %u ",
+		len += HTT_DBG_OUT(buf + len, buf_len - len,
+				   "\nHTT_TX_AC_SOUNDING_STATS_TLV:\n");
+		len += HTT_DBG_OUT(buf + len, buf_len - len,
+				   "ac_cbf_20 = IBF : %u, SU_SIFS : %u, SU_RBO : %u, MU_SIFS : %u, MU_RBO : %u ",
 				   cbf_20[HTT_IMPLICIT_TXBF_STEER_STATS],
 				   cbf_20[HTT_EXPLICIT_TXBF_SU_SIFS_STEER_STATS],
 				   cbf_20[HTT_EXPLICIT_TXBF_SU_RBO_STEER_STATS],
 				   cbf_20[HTT_EXPLICIT_TXBF_MU_SIFS_STEER_STATS],
 				   cbf_20[HTT_EXPLICIT_TXBF_MU_RBO_STEER_STATS]);
-		len += HTT_DBG_OUT(buf + len, buf_len - len, "ac_cbf_40 = IBF : %u, SU_SIFS : %u, SU_RBO : %u, MU_SIFS : %u, MU_RBO : %u",
+		len += HTT_DBG_OUT(buf + len, buf_len - len,
+				   "ac_cbf_40 = IBF : %u, SU_SIFS : %u, SU_RBO : %u, MU_SIFS : %u, MU_RBO : %u",
 				   cbf_40[HTT_IMPLICIT_TXBF_STEER_STATS],
 				   cbf_40[HTT_EXPLICIT_TXBF_SU_SIFS_STEER_STATS],
 				   cbf_40[HTT_EXPLICIT_TXBF_SU_RBO_STEER_STATS],
 				   cbf_40[HTT_EXPLICIT_TXBF_MU_SIFS_STEER_STATS],
 				   cbf_40[HTT_EXPLICIT_TXBF_MU_RBO_STEER_STATS]);
-		len += HTT_DBG_OUT(buf + len, buf_len - len, "ac_cbf_80 = IBF : %u, SU_SIFS : %u, SU_RBO : %u, MU_SIFS : %u, MU_RBO : %u",
+		len += HTT_DBG_OUT(buf + len, buf_len - len,
+				   "ac_cbf_80 = IBF : %u, SU_SIFS : %u, SU_RBO : %u, MU_SIFS : %u, MU_RBO : %u",
 				   cbf_80[HTT_IMPLICIT_TXBF_STEER_STATS],
 				   cbf_80[HTT_EXPLICIT_TXBF_SU_SIFS_STEER_STATS],
 				   cbf_80[HTT_EXPLICIT_TXBF_SU_RBO_STEER_STATS],
 				   cbf_80[HTT_EXPLICIT_TXBF_MU_SIFS_STEER_STATS],
 				   cbf_80[HTT_EXPLICIT_TXBF_MU_RBO_STEER_STATS]);
-		len += HTT_DBG_OUT(buf + len, buf_len - len, "ac_cbf_160 = IBF : %u, SU_SIFS : %u, SU_RBO : %u, MU_SIFS : %u, MU_RBO : %u",
+		len += HTT_DBG_OUT(buf + len, buf_len - len,
+				   "ac_cbf_160 = IBF : %u, SU_SIFS : %u, SU_RBO : %u, MU_SIFS : %u, MU_RBO : %u",
 				   cbf_160[HTT_IMPLICIT_TXBF_STEER_STATS],
 				   cbf_160[HTT_EXPLICIT_TXBF_SU_SIFS_STEER_STATS],
 				   cbf_160[HTT_EXPLICIT_TXBF_SU_RBO_STEER_STATS],
@@ -1376,7 +1394,8 @@ static inline void htt_print_tx_sounding_stats_tlv(const u32 *tag_buf, u8 *data)
 					   htt_stats_buf->sounding[3]);
 		}
 	} else if (htt_stats_buf->tx_sounding_mode == HTT_TX_AX_SOUNDING_MODE) {
-		len += HTT_DBG_OUT(buf + len, buf_len - len, "\nHTT_TX_AX_SOUNDING_STATS_TLV:\n");
+		len += HTT_DBG_OUT(buf + len, buf_len - len,
+				   "\nHTT_TX_AX_SOUNDING_STATS_TLV:\n");
 		len += HTT_DBG_OUT(buf + len, buf_len - len,
 				   "ax_cbf_20 = IBF : %u, SU_SIFS : %u, SU_RBO : %u, MU_SIFS : %u, MU_RBO : %u ",
 				   cbf_20[HTT_IMPLICIT_TXBF_STEER_STATS],
@@ -1649,7 +1668,8 @@ static inline void htt_print_tx_pdev_mu_mimo_sch_stats_tlv(const u32 *tag_buf,
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
 	u8 i;
 
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_PDEV_MU_MIMO_SCH_STATS_TLV:");
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "HTT_TX_PDEV_MU_MIMO_SCH_STATS_TLV:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "mu_mimo_sch_posted = %u",
 			   htt_stats_buf->mu_mimo_sch_posted);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "mu_mimo_sch_failed = %u",
@@ -1660,19 +1680,22 @@ static inline void htt_print_tx_pdev_mu_mimo_sch_stats_tlv(const u32 *tag_buf,
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "11ac MU_MIMO SCH STATS:");
 
 	for (i = 0; i < HTT_TX_PDEV_STATS_NUM_AC_MUMIMO_USER_STATS; i++)
-		len += HTT_DBG_OUT(buf + len, buf_len - len, "ac_mu_mimo_sch_nusers_%u = %u",
+		len += HTT_DBG_OUT(buf + len, buf_len - len,
+				   "ac_mu_mimo_sch_nusers_%u = %u",
 				   i, htt_stats_buf->ac_mu_mimo_sch_nusers[i]);
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "\n11ax MU_MIMO SCH STATS:");
 
 	for (i = 0; i < HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS; i++)
-		len += HTT_DBG_OUT(buf + len, buf_len - len, "ax_mu_mimo_sch_nusers_%u = %u",
+		len += HTT_DBG_OUT(buf + len, buf_len - len,
+				   "ax_mu_mimo_sch_nusers_%u = %u",
 				   i, htt_stats_buf->ax_mu_mimo_sch_nusers[i]);
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "\n11ax OFDMA SCH STATS:");
 
 	for (i = 0; i < HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS; i++)
-		len += HTT_DBG_OUT(buf + len, buf_len - len, "ax_ofdma_sch_nusers_%u = %u",
+		len += HTT_DBG_OUT(buf + len, buf_len - len,
+				   "ax_ofdma_sch_nusers_%u = %u",
 				   i, htt_stats_buf->ax_ofdma_sch_nusers[i]);
 
 	if (len >= buf_len)
@@ -1695,29 +1718,37 @@ static inline void htt_print_tx_pdev_mu_mimo_mpdu_stats_tlv(const u32 *tag_buf, 
 
 	if (htt_stats_buf->tx_sched_mode == HTT_STATS_TX_SCHED_MODE_MU_MIMO_AC) {
 		if (!htt_stats_buf->user_index)
-			len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_PDEV_MU_MIMO_AC_MPDU_STATS:\n");
+			len += HTT_DBG_OUT(buf + len, buf_len - len,
+					   "HTT_TX_PDEV_MU_MIMO_AC_MPDU_STATS:\n");
 
 		if (htt_stats_buf->user_index <
 		    HTT_TX_PDEV_STATS_NUM_AC_MUMIMO_USER_STATS) {
-			len += HTT_DBG_OUT(buf + len, buf_len - len, "ac_mu_mimo_mpdus_queued_usr_%u = %u",
+			len += HTT_DBG_OUT(buf + len, buf_len - len,
+					   "ac_mu_mimo_mpdus_queued_usr_%u = %u",
 					   htt_stats_buf->user_index,
 					   htt_stats_buf->mpdus_queued_usr);
-			len += HTT_DBG_OUT(buf + len, buf_len - len, "ac_mu_mimo_mpdus_tried_usr_%u = %u",
+			len += HTT_DBG_OUT(buf + len, buf_len - len,
+					   "ac_mu_mimo_mpdus_tried_usr_%u = %u",
 					   htt_stats_buf->user_index,
 					   htt_stats_buf->mpdus_tried_usr);
-			len += HTT_DBG_OUT(buf + len, buf_len - len, "ac_mu_mimo_mpdus_failed_usr_%u = %u",
+			len += HTT_DBG_OUT(buf + len, buf_len - len,
+					   "ac_mu_mimo_mpdus_failed_usr_%u = %u",
 					   htt_stats_buf->user_index,
 					   htt_stats_buf->mpdus_failed_usr);
-			len += HTT_DBG_OUT(buf + len, buf_len - len, "ac_mu_mimo_mpdus_requeued_usr_%u = %u",
+			len += HTT_DBG_OUT(buf + len, buf_len - len,
+					   "ac_mu_mimo_mpdus_requeued_usr_%u = %u",
 					   htt_stats_buf->user_index,
 					   htt_stats_buf->mpdus_requeued_usr);
-			len += HTT_DBG_OUT(buf + len, buf_len - len, "ac_mu_mimo_err_no_ba_usr_%u = %u",
+			len += HTT_DBG_OUT(buf + len, buf_len - len,
+					   "ac_mu_mimo_err_no_ba_usr_%u = %u",
 					   htt_stats_buf->user_index,
 					   htt_stats_buf->err_no_ba_usr);
-			len += HTT_DBG_OUT(buf + len, buf_len - len, "ac_mu_mimo_mpdu_underrun_usr_%u = %u",
+			len += HTT_DBG_OUT(buf + len, buf_len - len,
+					   "ac_mu_mimo_mpdu_underrun_usr_%u = %u",
 					   htt_stats_buf->user_index,
 					   htt_stats_buf->mpdu_underrun_usr);
-			len += HTT_DBG_OUT(buf + len, buf_len - len, "ac_mu_mimo_ampdu_underrun_usr_%u = %u\n",
+			len += HTT_DBG_OUT(buf + len, buf_len - len,
+					   "ac_mu_mimo_ampdu_underrun_usr_%u = %u\n",
 					   htt_stats_buf->user_index,
 					   htt_stats_buf->ampdu_underrun_usr);
 		}
@@ -1725,29 +1756,37 @@ static inline void htt_print_tx_pdev_mu_mimo_mpdu_stats_tlv(const u32 *tag_buf, 
 
 	if (htt_stats_buf->tx_sched_mode == HTT_STATS_TX_SCHED_MODE_MU_MIMO_AX) {
 		if (!htt_stats_buf->user_index)
-			len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_PDEV_MU_MIMO_AX_MPDU_STATS:\n");
+			len += HTT_DBG_OUT(buf + len, buf_len - len,
+					   "HTT_TX_PDEV_MU_MIMO_AX_MPDU_STATS:\n");
 
 		if (htt_stats_buf->user_index <
 		    HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS) {
-			len += HTT_DBG_OUT(buf + len, buf_len - len, "ax_mu_mimo_mpdus_queued_usr_%u = %u",
+			len += HTT_DBG_OUT(buf + len, buf_len - len,
+					   "ax_mu_mimo_mpdus_queued_usr_%u = %u",
 					   htt_stats_buf->user_index,
 					   htt_stats_buf->mpdus_queued_usr);
-			len += HTT_DBG_OUT(buf + len, buf_len - len, "ax_mu_mimo_mpdus_tried_usr_%u = %u",
+			len += HTT_DBG_OUT(buf + len, buf_len - len,
+					   "ax_mu_mimo_mpdus_tried_usr_%u = %u",
 					   htt_stats_buf->user_index,
 					   htt_stats_buf->mpdus_tried_usr);
-			len += HTT_DBG_OUT(buf + len, buf_len - len, "ax_mu_mimo_mpdus_failed_usr_%u = %u",
+			len += HTT_DBG_OUT(buf + len, buf_len - len,
+					   "ax_mu_mimo_mpdus_failed_usr_%u = %u",
 					   htt_stats_buf->user_index,
 					   htt_stats_buf->mpdus_failed_usr);
-			len += HTT_DBG_OUT(buf + len, buf_len - len, "ax_mu_mimo_mpdus_requeued_usr_%u = %u",
+			len += HTT_DBG_OUT(buf + len, buf_len - len,
+					   "ax_mu_mimo_mpdus_requeued_usr_%u = %u",
 					   htt_stats_buf->user_index,
 					   htt_stats_buf->mpdus_requeued_usr);
-			len += HTT_DBG_OUT(buf + len, buf_len - len, "ax_mu_mimo_err_no_ba_usr_%u = %u",
+			len += HTT_DBG_OUT(buf + len, buf_len - len,
+					   "ax_mu_mimo_err_no_ba_usr_%u = %u",
 					   htt_stats_buf->user_index,
 					   htt_stats_buf->err_no_ba_usr);
-			len += HTT_DBG_OUT(buf + len, buf_len - len, "ax_mu_mimo_mpdu_underrun_usr_%u = %u",
+			len += HTT_DBG_OUT(buf + len, buf_len - len,
+					   "ax_mu_mimo_mpdu_underrun_usr_%u = %u",
 					   htt_stats_buf->user_index,
 					   htt_stats_buf->mpdu_underrun_usr);
-			len += HTT_DBG_OUT(buf + len, buf_len - len, "ax_mu_mimo_ampdu_underrun_usr_%u = %u\n",
+			len += HTT_DBG_OUT(buf + len, buf_len - len,
+					   "ax_mu_mimo_ampdu_underrun_usr_%u = %u\n",
 					   htt_stats_buf->user_index,
 					   htt_stats_buf->ampdu_underrun_usr);
 		}
@@ -1755,28 +1794,36 @@ static inline void htt_print_tx_pdev_mu_mimo_mpdu_stats_tlv(const u32 *tag_buf, 
 
 	if (htt_stats_buf->tx_sched_mode == HTT_STATS_TX_SCHED_MODE_MU_OFDMA_AX) {
 		if (!htt_stats_buf->user_index)
-			len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_PDEV_AX_MU_OFDMA_MPDU_STATS:\n");
+			len += HTT_DBG_OUT(buf + len, buf_len - len,
+					   "HTT_TX_PDEV_AX_MU_OFDMA_MPDU_STATS:\n");
 
 		if (htt_stats_buf->user_index < HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS) {
-			len += HTT_DBG_OUT(buf + len, buf_len - len, "ax_mu_ofdma_mpdus_queued_usr_%u = %u",
+			len += HTT_DBG_OUT(buf + len, buf_len - len,
+					   "ax_mu_ofdma_mpdus_queued_usr_%u = %u",
 					   htt_stats_buf->user_index,
 					   htt_stats_buf->mpdus_queued_usr);
-			len += HTT_DBG_OUT(buf + len, buf_len - len, "ax_mu_ofdma_mpdus_tried_usr_%u = %u",
+			len += HTT_DBG_OUT(buf + len, buf_len - len,
+					   "ax_mu_ofdma_mpdus_tried_usr_%u = %u",
 					   htt_stats_buf->user_index,
 					   htt_stats_buf->mpdus_tried_usr);
-			len += HTT_DBG_OUT(buf + len, buf_len - len, "ax_mu_ofdma_mpdus_failed_usr_%u = %u",
+			len += HTT_DBG_OUT(buf + len, buf_len - len,
+					   "ax_mu_ofdma_mpdus_failed_usr_%u = %u",
 					   htt_stats_buf->user_index,
 					   htt_stats_buf->mpdus_failed_usr);
-			len += HTT_DBG_OUT(buf + len, buf_len - len, "ax_mu_ofdma_mpdus_requeued_usr_%u = %u",
+			len += HTT_DBG_OUT(buf + len, buf_len - len,
+					   "ax_mu_ofdma_mpdus_requeued_usr_%u = %u",
 					   htt_stats_buf->user_index,
 					   htt_stats_buf->mpdus_requeued_usr);
-			len += HTT_DBG_OUT(buf + len, buf_len - len, "ax_mu_ofdma_err_no_ba_usr_%u = %u",
+			len += HTT_DBG_OUT(buf + len, buf_len - len,
+					   "ax_mu_ofdma_err_no_ba_usr_%u = %u",
 					   htt_stats_buf->user_index,
 					   htt_stats_buf->err_no_ba_usr);
-			len += HTT_DBG_OUT(buf + len, buf_len - len, "ax_mu_ofdma_mpdu_underrun_usr_%u = %u",
+			len += HTT_DBG_OUT(buf + len, buf_len - len,
+					   "ax_mu_ofdma_mpdu_underrun_usr_%u = %u",
 					   htt_stats_buf->user_index,
 					   htt_stats_buf->mpdu_underrun_usr);
-			len += HTT_DBG_OUT(buf + len, buf_len - len, "ax_mu_ofdma_ampdu_underrun_usr_%u = %u\n",
+			len += HTT_DBG_OUT(buf + len, buf_len - len,
+					   "ax_mu_ofdma_ampdu_underrun_usr_%u = %u\n",
 					   htt_stats_buf->user_index,
 					   htt_stats_buf->ampdu_underrun_usr);
 		}
@@ -1864,7 +1911,8 @@ static inline void htt_print_sched_txq_sched_order_su_tlv_v(const u32 *tag_buf,
 	u32 sched_order_su_num_entries =
 		min_t(u32, (tag_len >> 2), HTT_TX_PDEV_NUM_SCHED_ORDER_LOG);
 
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_SCHED_TXQ_SCHED_ORDER_SU_TLV_V:");
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "HTT_SCHED_TXQ_SCHED_ORDER_SU_TLV_V:");
 
 	ARRAY_TO_STRING(sched_order_su, htt_stats_buf->sched_order_su,
 			sched_order_su_num_entries);
@@ -1894,7 +1942,8 @@ static inline void htt_print_sched_txq_sched_ineligibility_tlv_v(const u32 *tag_
 	/* each entry is u32, i.e. 4 bytes */
 	u32 sched_ineligibility_num_entries = tag_len >> 2;
 
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_SCHED_TXQ_SCHED_INELIGIBILITY_V:");
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "HTT_SCHED_TXQ_SCHED_INELIGIBILITY_V:");
 
 	ARRAY_TO_STRING(sched_ineligibility, htt_stats_buf->sched_ineligibility,
 			sched_ineligibility_num_entries);
@@ -1920,16 +1969,19 @@ static inline void htt_print_tx_pdev_stats_sched_per_txq_tlv(const u32 *tag_buf,
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
 
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_PDEV_STATS_SCHED_PER_TXQ_TLV:");
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "HTT_TX_PDEV_STATS_SCHED_PER_TXQ_TLV:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "mac_id = %u",
 			   htt_stats_buf->mac_id__txq_id__word & 0xFF);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "txq_id = %u",
 			   (htt_stats_buf->mac_id__txq_id__word & 0xFF00) >> 8);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "sched_policy = %u",
 			   htt_stats_buf->sched_policy);
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "last_sched_cmd_posted_timestamp = %u",
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "last_sched_cmd_posted_timestamp = %u",
 			   htt_stats_buf->last_sched_cmd_posted_timestamp);
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "last_sched_cmd_compl_timestamp = %u",
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "last_sched_cmd_compl_timestamp = %u",
 			   htt_stats_buf->last_sched_cmd_compl_timestamp);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "sched_2_tac_lwm_count = %u",
 			   htt_stats_buf->sched_2_tac_lwm_count);
@@ -2011,7 +2063,8 @@ static inline void htt_print_tx_tqm_gen_mpdu_stats_tlv_v(const u32 *tag_buf,
 	struct htt_tx_tqm_gen_mpdu_stats_tlv_v *htt_stats_buf =
 		(struct htt_tx_tqm_gen_mpdu_stats_tlv_v *)tag_buf;
 	char gen_mpdu_end_reason[HTT_MAX_STRING_LEN] = {0};
-	u16 num_elements = min_t(u16, (tag_len >> 2), HTT_TX_TQM_MAX_LIST_MPDU_END_REASON);
+	u16 num_elements = min_t(u16, (tag_len >> 2),
+				 HTT_TX_TQM_MAX_LIST_MPDU_END_REASON);
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_TQM_GEN_MPDU_STATS_TLV_V:");
 
@@ -2042,7 +2095,8 @@ static inline void htt_print_tx_tqm_list_mpdu_stats_tlv_v(const u32 *tag_buf,
 	char list_mpdu_end_reason[HTT_MAX_STRING_LEN] = {0};
 	u16 num_elems = min_t(u16, (tag_len >> 2), HTT_TX_TQM_MAX_LIST_MPDU_END_REASON);
 
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_TQM_LIST_MPDU_STATS_TLV_V:");
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "HTT_TX_TQM_LIST_MPDU_STATS_TLV_V:");
 
 	ARRAY_TO_STRING(list_mpdu_end_reason, htt_stats_buf->list_mpdu_end_reason,
 			num_elems);
@@ -2286,7 +2340,8 @@ static inline void htt_print_tx_de_eapol_packets_stats_tlv(const u32 *tag_buf, u
 	struct htt_tx_de_eapol_packets_stats_tlv *htt_stats_buf =
 		(struct htt_tx_de_eapol_packets_stats_tlv *)tag_buf;
 
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_DE_EAPOL_PACKETS_STATS_TLV:");
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "HTT_TX_DE_EAPOL_PACKETS_STATS_TLV:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "m1_packets = %u",
 			   htt_stats_buf->m1_packets);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "m2_packets = %u",
@@ -2318,7 +2373,8 @@ static inline void htt_print_tx_de_classify_failed_stats_tlv(const u32 *tag_buf,
 	struct htt_tx_de_classify_failed_stats_tlv *htt_stats_buf =
 		(struct htt_tx_de_classify_failed_stats_tlv *)tag_buf;
 
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_DE_CLASSIFY_FAILED_STATS_TLV:");
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "HTT_TX_DE_CLASSIFY_FAILED_STATS_TLV:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "ap_bss_peer_not_found = %u",
 			   htt_stats_buf->ap_bss_peer_not_found);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "ap_bcast_mcast_no_peer = %u",
@@ -2450,7 +2506,8 @@ static inline void htt_print_tx_de_classify_status_stats_tlv(const u32 *tag_buf,
 	struct htt_tx_de_classify_status_stats_tlv *htt_stats_buf =
 		(struct htt_tx_de_classify_status_stats_tlv *)tag_buf;
 
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_DE_CLASSIFY_STATUS_STATS_TLV:");
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "HTT_TX_DE_CLASSIFY_STATUS_STATS_TLV:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "eok = %u",
 			   htt_stats_buf->eok);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "classify_done = %u",
@@ -2486,7 +2543,8 @@ static inline void htt_print_tx_de_enqueue_packets_stats_tlv(const u32 *tag_buf,
 	struct htt_tx_de_enqueue_packets_stats_tlv *htt_stats_buf =
 		(struct htt_tx_de_enqueue_packets_stats_tlv *)tag_buf;
 
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_DE_ENQUEUE_PACKETS_STATS_TLV:");
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "HTT_TX_DE_ENQUEUE_PACKETS_STATS_TLV:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "enqueued_pkts = %u",
 			htt_stats_buf->enqueued_pkts);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "to_tqm = %u",
@@ -2512,7 +2570,8 @@ static inline void htt_print_tx_de_enqueue_discard_stats_tlv(const u32 *tag_buf,
 	struct htt_tx_de_enqueue_discard_stats_tlv *htt_stats_buf =
 		(struct htt_tx_de_enqueue_discard_stats_tlv *)tag_buf;
 
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_DE_ENQUEUE_DISCARD_STATS_TLV:");
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "HTT_TX_DE_ENQUEUE_DISCARD_STATS_TLV:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "discarded_pkts = %u",
 			   htt_stats_buf->discarded_pkts);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "local_frames = %u",
@@ -2573,16 +2632,19 @@ static inline void htt_print_tx_de_fw2wbm_ring_full_hist_tlv(const u32 *tag_buf,
 	u16  num_elements = tag_len >> 2;
 	u32  required_buffer_size = HTT_MAX_PRINT_CHAR_PER_ELEM * num_elements;
 
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_DE_FW2WBM_RING_FULL_HIST_TLV");
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "HTT_TX_DE_FW2WBM_RING_FULL_HIST_TLV");
 
 	if (required_buffer_size < HTT_MAX_STRING_LEN) {
 		ARRAY_TO_STRING(fw2wbm_ring_full_hist,
 				htt_stats_buf->fw2wbm_ring_full_hist,
 				num_elements);
-		len += HTT_DBG_OUT(buf + len, buf_len - len, "fw2wbm_ring_full_hist = %s\n",
+		len += HTT_DBG_OUT(buf + len, buf_len - len,
+				   "fw2wbm_ring_full_hist = %s\n",
 				   fw2wbm_ring_full_hist);
 	} else {
-		len += HTT_DBG_OUT(buf + len, buf_len - len, "INSUFFICIENT PRINT BUFFER ");
+		len += HTT_DBG_OUT(buf + len, buf_len - len,
+				   "INSUFFICIENT PRINT BUFFER ");
 	}
 
 	if (len >= buf_len)
@@ -2920,13 +2982,15 @@ static inline void htt_print_tx_pdev_rate_stats_tlv(const u32 *tag_buf, u8 *data
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "ack_rssi = %u",
 			   htt_stats_buf->ack_rssi);
 
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "Legacy CCK Rates: 1 Mbps: %u, 2 Mbps: %u, 5.5 Mbps: %u, 11 Mbps: %u",
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "Legacy CCK Rates: 1 Mbps: %u, 2 Mbps: %u, 5.5 Mbps: %u, 11 Mbps: %u",
 			   htt_stats_buf->tx_legacy_cck_rate[0],
 			   htt_stats_buf->tx_legacy_cck_rate[1],
 			   htt_stats_buf->tx_legacy_cck_rate[2],
 			   htt_stats_buf->tx_legacy_cck_rate[3]);
 
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "Legacy OFDM Rates: 6 Mbps: %u, 9 Mbps: %u, 12 Mbps: %u, 18 Mbps: %u\n"
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "Legacy OFDM Rates: 6 Mbps: %u, 9 Mbps: %u, 12 Mbps: %u, 18 Mbps: %u\n"
 			   "                   24 Mbps: %u, 36 Mbps: %u, 48 Mbps: %u, 54 Mbps: %u",
 			   htt_stats_buf->tx_legacy_ofdm_rate[0],
 			   htt_stats_buf->tx_legacy_ofdm_rate[1],
@@ -3024,7 +3088,8 @@ static inline void htt_print_tx_pdev_rate_stats_tlv(const u32 *tag_buf, u8 *data
 	for (j = 0; j < HTT_TX_PDEV_STATS_NUM_GI_COUNTERS; j++) {
 		ARRAY_TO_STRING(tx_gi[j], htt_stats_buf->ac_mu_mimo_tx_gi[j],
 				HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS);
-		len += HTT_DBG_OUT(buf + len, buf_len - len, "ac_mu_mimo_tx_gi[%u] = %s ",
+		len += HTT_DBG_OUT(buf + len, buf_len - len,
+				   "ac_mu_mimo_tx_gi[%u] = %s ",
 				   j, tx_gi[j]);
 	}
 
@@ -3032,7 +3097,8 @@ static inline void htt_print_tx_pdev_rate_stats_tlv(const u32 *tag_buf, u8 *data
 	for (j = 0; j < HTT_TX_PDEV_STATS_NUM_GI_COUNTERS; j++) {
 		ARRAY_TO_STRING(tx_gi[j], htt_stats_buf->ax_mu_mimo_tx_gi[j],
 				HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS);
-		len += HTT_DBG_OUT(buf + len, buf_len - len, "ax_mu_mimo_tx_gi[%u] = %s ",
+		len += HTT_DBG_OUT(buf + len, buf_len - len,
+				   "ax_mu_mimo_tx_gi[%u] = %s ",
 				   j, tx_gi[j]);
 	}
 
@@ -3201,13 +3267,17 @@ static inline void htt_print_rx_soc_fw_stats_tlv(const u32 *tag_buf, u8 *data)
 			   htt_stats_buf->fw_to_host_data_msdu_bcmc);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "fw_to_host_data_msdu_uc = %u",
 			   htt_stats_buf->fw_to_host_data_msdu_uc);
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "ofld_remote_data_buf_recycle_cnt = %u",
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "ofld_remote_data_buf_recycle_cnt = %u",
 			   htt_stats_buf->ofld_remote_data_buf_recycle_cnt);
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "ofld_remote_free_buf_indication_cnt = %u",
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "ofld_remote_free_buf_indication_cnt = %u",
 			   htt_stats_buf->ofld_remote_free_buf_indication_cnt);
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "ofld_buf_to_host_data_msdu_uc = %u",
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "ofld_buf_to_host_data_msdu_uc = %u",
 			   htt_stats_buf->ofld_buf_to_host_data_msdu_uc);
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "reo_fw_ring_to_host_data_msdu_uc = %u",
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "reo_fw_ring_to_host_data_msdu_uc = %u",
 			   htt_stats_buf->reo_fw_ring_to_host_data_msdu_uc);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "wbm_sw_ring_reap = %u",
 			   htt_stats_buf->wbm_sw_ring_reap);
@@ -3215,7 +3285,8 @@ static inline void htt_print_rx_soc_fw_stats_tlv(const u32 *tag_buf, u8 *data)
 			   htt_stats_buf->wbm_forward_to_host_cnt);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "wbm_target_recycle_cnt = %u",
 			   htt_stats_buf->wbm_target_recycle_cnt);
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "target_refill_ring_recycle_cnt = %u",
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "target_refill_ring_recycle_cnt = %u",
 			   htt_stats_buf->target_refill_ring_recycle_cnt);
 
 	if (len >= buf_len)
@@ -3240,7 +3311,8 @@ static inline void htt_print_rx_soc_fw_refill_ring_empty_tlv_v(const u32 *tag_bu
 	char refill_ring_empty_cnt[HTT_MAX_STRING_LEN] = {0};
 	u16 num_elems = min_t(u16, (tag_len >> 2), HTT_RX_STATS_REFILL_MAX_RING);
 
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_RX_SOC_FW_REFILL_RING_EMPTY_TLV_V:");
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "HTT_RX_SOC_FW_REFILL_RING_EMPTY_TLV_V:");
 
 	ARRAY_TO_STRING(refill_ring_empty_cnt,
 			htt_stats_buf->refill_ring_empty_cnt,
@@ -3271,7 +3343,8 @@ htt_print_rx_soc_fw_refill_ring_num_rxdma_err_tlv_v(const u32 *tag_buf,
 	char rxdma_err_cnt[HTT_MAX_STRING_LEN] = {0};
 	u16 num_elems = min_t(u16, (tag_len >> 2), HTT_RX_RXDMA_MAX_ERR_CODE);
 
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_RX_SOC_FW_REFILL_RING_NUM_RXDMA_ERR_TLV_V:");
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "HTT_RX_SOC_FW_REFILL_RING_NUM_RXDMA_ERR_TLV_V:");
 
 	ARRAY_TO_STRING(rxdma_err_cnt,
 			htt_stats_buf->rxdma_err,
@@ -3301,7 +3374,8 @@ static inline void htt_print_rx_soc_fw_refill_ring_num_reo_err_tlv_v(const u32 *
 	char reo_err_cnt[HTT_MAX_STRING_LEN] = {0};
 	u16 num_elems = min_t(u16, (tag_len >> 2), HTT_RX_REO_MAX_ERR_CODE);
 
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_RX_SOC_FW_REFILL_RING_NUM_REO_ERR_TLV_V:");
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "HTT_RX_SOC_FW_REFILL_RING_NUM_REO_ERR_TLV_V:");
 
 	ARRAY_TO_STRING(reo_err_cnt,
 			htt_stats_buf->reo_err,
@@ -3372,7 +3446,8 @@ static inline void htt_print_rx_soc_fw_refill_ring_num_refill_tlv_v(const u32 *t
 	char refill_ring_num_refill[HTT_MAX_STRING_LEN] = {0};
 	u16 num_elems = min_t(u16, (tag_len >> 2), HTT_RX_STATS_REFILL_MAX_RING);
 
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_RX_SOC_FW_REFILL_RING_NUM_REFILL_TLV_V:");
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "HTT_RX_SOC_FW_REFILL_RING_NUM_REFILL_TLV_V:");
 
 	ARRAY_TO_STRING(refill_ring_num_refill,
 			htt_stats_buf->refill_ring_num_refill,
@@ -3444,11 +3519,13 @@ static inline void htt_print_rx_pdev_fw_stats_tlv(const u32 *tag_buf,
 			   htt_stats_buf->fw_ring_mpdu_drop);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "ofld_local_data_ind_cnt = %u",
 			   htt_stats_buf->ofld_local_data_ind_cnt);
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "ofld_local_data_buf_recycle_cnt = %u",
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "ofld_local_data_buf_recycle_cnt = %u",
 			   htt_stats_buf->ofld_local_data_buf_recycle_cnt);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "drx_local_data_ind_cnt = %u",
 			   htt_stats_buf->drx_local_data_ind_cnt);
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "drx_local_data_buf_recycle_cnt = %u",
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "drx_local_data_buf_recycle_cnt = %u",
 			   htt_stats_buf->drx_local_data_buf_recycle_cnt);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "local_nondata_ind_cnt = %u",
 			   htt_stats_buf->local_nondata_ind_cnt);
@@ -3474,7 +3551,8 @@ static inline void htt_print_rx_pdev_fw_stats_tlv(const u32 *tag_buf,
 			   htt_stats_buf->mon_pkt_buf_ring_refill_cnt);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "mon_pkt_buf_ring_empty_cnt = %u",
 			   htt_stats_buf->mon_pkt_buf_ring_empty_cnt);
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "mon_status_buf_ring_refill_cnt = %u",
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "mon_status_buf_ring_refill_cnt = %u",
 			   htt_stats_buf->mon_status_buf_ring_refill_cnt);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "mon_status_buf_ring_empty_cnt = %u",
 			   htt_stats_buf->mon_status_buf_ring_empty_cnt);
@@ -3523,7 +3601,8 @@ static inline void htt_print_rx_pdev_fw_ring_mpdu_err_tlv_v(const u32 *tag_buf,
 		(struct htt_rx_pdev_fw_ring_mpdu_err_tlv_v *)tag_buf;
 	char fw_ring_mpdu_err[HTT_MAX_STRING_LEN] = {0};
 
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_RX_PDEV_FW_RING_MPDU_ERR_TLV_V:");
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "HTT_RX_PDEV_FW_RING_MPDU_ERR_TLV_V:");
 
 	ARRAY_TO_STRING(fw_ring_mpdu_err,
 			htt_stats_buf->fw_ring_mpdu_err,
@@ -3620,7 +3699,8 @@ static inline void htt_print_pdev_cca_stats_hist_tlv(const u32 *tag_buf,
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "collection_interval = %u\n",
 			   htt_stats_buf->collection_interval);
 
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_PDEV_STATS_CCA_COUNTERS_TLV:(in usec)");
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "HTT_PDEV_STATS_CCA_COUNTERS_TLV:(in usec)");
 	len += HTT_DBG_OUT(buf + len, buf_len - len,
 			   "|  tx_frame|   rx_frame|   rx_clear| my_rx_frame|        cnt| med_rx_idle| med_tx_idle_global|   cca_obss|");
 
@@ -3642,7 +3722,8 @@ static inline void htt_print_pdev_stats_cca_counters_tlv(const u32 *tag_buf, u8 
 	struct htt_pdev_stats_cca_counters_tlv *htt_stats_buf =
 			(struct htt_pdev_stats_cca_counters_tlv *)tag_buf;
 
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "|%10u| %10u| %10u| %11u| %10u| %11u| %18u| %10u|",
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "|%10u| %10u| %10u| %11u| %10u| %11u| %18u| %10u|",
 			   htt_stats_buf->tx_frame_usec,
 			   htt_stats_buf->rx_frame_usec,
 			   htt_stats_buf->rx_clear_usec,
@@ -3680,7 +3761,8 @@ static inline void htt_print_hw_stats_whal_tx_tlv(const u32 *tag_buf,
 			   htt_stats_buf->hwsch_unpause_wait_tqm_write);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "hwsch_dummy_tlv_skipped = %u",
 			   htt_stats_buf->hwsch_dummy_tlv_skipped);
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "hwsch_misaligned_offset_received = %u",
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "hwsch_misaligned_offset_received = %u",
 			   htt_stats_buf->hwsch_misaligned_offset_received);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "hwsch_reset_count = %u",
 			   htt_stats_buf->hwsch_reset_count);
@@ -3744,7 +3826,8 @@ static inline void htt_print_pdev_stats_twt_session_tlv(const u32 *tag_buf,
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_PDEV_STATS_TWT_SESSION_TLV:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "vdev_id = %u",
 			   htt_stats_buf->vdev_id);
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "peer_mac = %02x:%02x:%02x:%02x:%02x:%02x",
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "peer_mac = %02x:%02x:%02x:%02x:%02x:%02x",
 			   htt_stats_buf->peer_mac.mac_addr_l32 & 0xFF,
 			   (htt_stats_buf->peer_mac.mac_addr_l32 & 0xFF00) >> 8,
 			   (htt_stats_buf->peer_mac.mac_addr_l32 & 0xFF0000) >> 16,
@@ -3805,12 +3888,15 @@ static inline void htt_htt_stats_debug_dump(const u32 *tag_buf,
 
 	tlv_len  = FIELD_GET(HTT_TLV_LEN, *tag_buf) + HTT_TLV_HDR_LEN;
 	word_len = (tlv_len % 4) == 0 ? (tlv_len / 4) : ((tlv_len / 4) + 1);
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "============================================");
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "HKDBG TLV DUMP: (tag_len=%u bytes, words=%u)",
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "============================================");
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "HKDBG TLV DUMP: (tag_len=%u bytes, words=%u)",
 			   tlv_len, word_len);
 
 	for (i = 0; i + 3 < word_len; i += 4) {
-		len += HTT_DBG_OUT(buf + len, buf_len - len, "0x%08x 0x%08x 0x%08x 0x%08x",
+		len += HTT_DBG_OUT(buf + len, buf_len - len,
+				   "0x%08x 0x%08x 0x%08x 0x%08x",
 				   tag_buf[i], tag_buf[i + 1],
 				   tag_buf[i + 2], tag_buf[i + 3]);
 	}
@@ -3825,7 +3911,8 @@ static inline void htt_htt_stats_debug_dump(const u32 *tag_buf,
 		len += HTT_DBG_OUT(buf + len, buf_len - len, "0x%08x ",
 				tag_buf[i]);
 	}
-	len += HTT_DBG_OUT(buf + len, buf_len - len, "============================================");
+	len += HTT_DBG_OUT(buf + len, buf_len - len,
+			   "============================================");
 
 	if (len >= buf_len)
 		buf[buf_len - 1] = 0;

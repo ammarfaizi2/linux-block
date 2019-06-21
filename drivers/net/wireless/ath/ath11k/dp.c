@@ -435,9 +435,10 @@ static int ath11k_dp_link_desc_bank_alloc(struct ath11k_base *ab,
 		if (i == (n_link_desc_bank - 1) && last_bank_sz)
 			desc_sz = last_bank_sz;
 
-		desc_bank[i].vaddr_unaligned = dma_alloc_coherent(ab->dev, desc_sz,
-								  &desc_bank[i].paddr_unaligned,
-								  GFP_KERNEL);
+		desc_bank[i].vaddr_unaligned =
+					dma_alloc_coherent(ab->dev, desc_sz,
+							   &desc_bank[i].paddr_unaligned,
+							   GFP_KERNEL);
 		if (!desc_bank[i].vaddr_unaligned) {
 			ret = -ENOMEM;
 			goto err;

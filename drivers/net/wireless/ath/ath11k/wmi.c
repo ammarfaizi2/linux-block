@@ -2930,9 +2930,10 @@ static int ath11k_wmi_tlv_svc_rdy_ext_parse(struct ath11k_base *ab,
 
 	switch (tag) {
 	case WMI_TAG_SERVICE_READY_EXT_EVENT:
-		ret = ath11k_pull_service_ready_ext(wmi_handle,
-						    (struct wmi_service_ready_ext_event *)ptr,
-						    &svc_rdy_ext->param);
+		ret =
+		 ath11k_pull_service_ready_ext(wmi_handle,
+					       (struct wmi_service_ready_ext_event *)ptr,
+					       &svc_rdy_ext->param);
 		if (ret) {
 			ath11k_warn(ab, "unable to extract ext params\n");
 			return ret;
@@ -2961,7 +2962,8 @@ static int ath11k_wmi_tlv_svc_rdy_ext_parse(struct ath11k_base *ab,
 			svc_rdy_ext->hw_mode_done = true;
 		} else if (!svc_rdy_ext->mac_phy_done) {
 			svc_rdy_ext->n_mac_phy_caps = 0;
-			svc_rdy_ext->mac_phy_caps = (struct wmi_mac_phy_capabilities *)ptr;
+			svc_rdy_ext->mac_phy_caps =
+					(struct wmi_mac_phy_capabilities *)ptr;
 			ret = ath11k_wmi_tlv_iter(ab, ptr, len,
 						  ath11k_wmi_tlv_mac_phy_caps_parse,
 						  svc_rdy_ext);
@@ -3685,9 +3687,10 @@ static int ath11k_pull_chan_info_ev(struct ath11k_base *ab, u8 *evt_buf,
 	return 0;
 }
 
-static int ath11k_pull_pdev_bss_chan_info_ev(struct ath11k_base *ab, u8 *evt_buf,
-					     u32 len,
-					     struct wmi_pdev_bss_chan_info_event *bss_ch_info_ev)
+static int
+ath11k_pull_pdev_bss_chan_info_ev(struct ath11k_base *ab, u8 *evt_buf,
+				  u32 len,
+				  struct wmi_pdev_bss_chan_info_event *bss_ch_info_ev)
 {
 	const void **tb;
 	const struct wmi_pdev_bss_chan_info_event *ev;
@@ -4476,7 +4479,8 @@ void ath11k_wmi_fw_stats_fill(struct ath11k *ar,
 	}
 
 	if (stats_id & WMI_REQUEST_PEER_EXTD_STAT) {
-		num_peers_extd = ath11k_wmi_fw_stats_num_peers_extd(&fw_stats->peers_extd);
+		num_peers_extd =
+			ath11k_wmi_fw_stats_num_peers_extd(&fw_stats->peers_extd);
 		len += scnprintf(buf + len, buf_len - len, "\n");
 		len += scnprintf(buf + len, buf_len - len, "%30s (%zu)\n",
 				 "ath11k PEER extd stats", num_peers_extd);

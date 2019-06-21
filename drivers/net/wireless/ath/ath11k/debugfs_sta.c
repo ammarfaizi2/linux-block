@@ -361,19 +361,23 @@ static ssize_t ath11k_dbg_sta_dump_rx_stats(struct file *file,
 			 rx_stats->num_mpdu_fcs_ok);
 	len += scnprintf(buf + len, size - len, "Num of MPDUs with FCS error: %llu\n",
 			 rx_stats->num_mpdu_fcs_err);
-	len += scnprintf(buf + len, size - len, "GI: 0.8us %llu 0.4us %llu 1.6us %llu 3.2us %llu\n",
+	len += scnprintf(buf + len, size - len,
+			 "GI: 0.8us %llu 0.4us %llu 1.6us %llu 3.2us %llu\n",
 			 rx_stats->gi_count[0], rx_stats->gi_count[1],
 			 rx_stats->gi_count[2], rx_stats->gi_count[3]);
-	len += scnprintf(buf + len, size - len, "BW: 20Mhz %llu 40Mhz %llu 80Mhz %llu 160Mhz %llu\n",
+	len += scnprintf(buf + len, size - len,
+			 "BW: 20Mhz %llu 40Mhz %llu 80Mhz %llu 160Mhz %llu\n",
 			 rx_stats->bw_count[0], rx_stats->bw_count[1],
 			 rx_stats->bw_count[2], rx_stats->bw_count[3]);
 	len += scnprintf(buf + len, size - len, "BCC %llu LDPC %llu\n",
 			 rx_stats->coding_count[0], rx_stats->coding_count[1]);
-	len += scnprintf(buf + len, size - len, "preamble: 11A %llu 11B %llu 11N %llu 11AC %llu 11AX %llu\n",
+	len += scnprintf(buf + len, size - len,
+			 "preamble: 11A %llu 11B %llu 11N %llu 11AC %llu 11AX %llu\n",
 			 rx_stats->pream_cnt[0], rx_stats->pream_cnt[1],
 			 rx_stats->pream_cnt[2], rx_stats->pream_cnt[3],
 			 rx_stats->pream_cnt[4]);
-	len += scnprintf(buf + len, size - len, "reception type: SU %llu MU_MIMO %llu MU_OFDMA %llu MU_OFDMA_MIMO %llu\n",
+	len += scnprintf(buf + len, size - len,
+			 "reception type: SU %llu MU_MIMO %llu MU_OFDMA %llu MU_OFDMA_MIMO %llu\n",
 			 rx_stats->reception_type[0], rx_stats->reception_type[1],
 			 rx_stats->reception_type[2], rx_stats->reception_type[3]);
 	len += scnprintf(buf + len, size - len, "TID(0-15) Legacy TID(16):");
