@@ -55,6 +55,7 @@
 #include <linux/nsproxy.h>
 #include <linux/file.h>
 #include <linux/fs_parser.h>
+#include <linux/fsinfo.h>
 #include <linux/sched/cputime.h>
 #include <linux/psi.h>
 #include <net/sock.h>
@@ -1874,6 +1875,21 @@ static int cgroup_show_options(struct seq_file *seq, struct kernfs_root *kf_root
 		seq_puts(seq, ",memory_localevents");
 	return 0;
 }
+
+#ifdef CONFIG_FSINFO
+static int cgroup_fsinfo(struct kernfs_root *kf_root, struct fsinfo_kparams *params)
+{
+	switch (params->request) {
+	case FSINFO_ATTR_PARAMETERS:
+		if (cgrp_dfl_root.flags & CGRP_ROOT_NS_DELEGATE)
+			fsinfo_note_param(params, "nsdelegate", NULL);
+		return params->usage;
+
+	default:
+		return -EAGAIN; /* Tell kernfs to call generic_fsinfo() */
+	}
+}
+#endif /* CONFIG_FSINFO */
 
 static int cgroup_reconfigure(struct fs_context *fc)
 {
@@ -5601,6 +5617,9 @@ int cgroup_rmdir(struct kernfs_node *kn)
 
 static struct kernfs_syscall_ops cgroup_kf_syscall_ops = {
 	.show_options		= cgroup_show_options,
+#ifdef CONFIG_FSINFO
+	.fsinfo			= cgroup_fsinfo,
+#endif
 	.mkdir			= cgroup_mkdir,
 	.rmdir			= cgroup_rmdir,
 	.show_path		= cgroup_show_path,

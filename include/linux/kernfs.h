@@ -26,6 +26,7 @@ struct super_block;
 struct file_system_type;
 struct poll_table_struct;
 struct fs_context;
+struct fsinfo_kparams;
 
 struct kernfs_fs_context;
 struct kernfs_open_node;
@@ -170,6 +171,9 @@ struct kernfs_node {
  */
 struct kernfs_syscall_ops {
 	int (*show_options)(struct seq_file *sf, struct kernfs_root *root);
+#ifdef CONFIG_FSINFO
+	int (*fsinfo)(struct kernfs_root *root, struct fsinfo_kparams *params);
+#endif
 
 	int (*mkdir)(struct kernfs_node *parent, const char *name,
 		     umode_t mode);

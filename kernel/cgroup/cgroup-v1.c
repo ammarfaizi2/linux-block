@@ -15,6 +15,7 @@
 #include <linux/pid_namespace.h>
 #include <linux/cgroupstats.h>
 #include <linux/fs_parser.h>
+#include <linux/fsinfo.h>
 
 #include <trace/events/cgroup.h>
 
@@ -922,6 +923,46 @@ const struct fs_parameter_description cgroup1_fs_parameters = {
 	.specs		= cgroup1_param_specs,
 };
 
+#ifdef CONFIG_FSINFO
+static int cgroup1_fsinfo(struct kernfs_root *kf_root, struct fsinfo_kparams *params)
+{
+	struct cgroup_root *root = cgroup_root_from_kf(kf_root);
+	struct cgroup_subsys *ss;
+	int ssid;
+
+	switch (params->request) {
+	case FSINFO_ATTR_PARAMETERS:
+		if (root->name[0])
+			fsinfo_note_param(params, "name", root->name);
+
+		if (test_bit(CGRP_CPUSET_CLONE_CHILDREN, &root->cgrp.flags))
+			fsinfo_note_param(params, "clone_children", NULL);
+		if (root->flags & CGRP_ROOT_CPUSET_V2_MODE)
+			fsinfo_note_param(params, "noprefix", NULL);
+		if (root->flags & CGRP_ROOT_NOPREFIX)
+			fsinfo_note_param(params, "noprefix", NULL);
+		if (root->flags & CGRP_ROOT_XATTR)
+			fsinfo_note_param(params, "xattr", NULL);
+
+		spin_lock(&release_agent_path_lock);
+		if (root->release_agent_path[0])
+			fsinfo_note_param(params, "release_agent",
+					  root->release_agent_path);
+		spin_unlock(&release_agent_path_lock);
+
+
+		for_each_subsys(ss, ssid) {
+			if (root->subsys_mask & (1 << ssid))
+				fsinfo_note_param(params, ss->legacy_name, NULL);
+		}
+		return params->usage;
+
+	default:
+		return -EAGAIN; /* Tell kernfs to call generic_fsinfo() */
+	}
+}
+#endif /* CONFIG_FSINFO */
+
 int cgroup1_parse_param(struct fs_context *fc, struct fs_parameter *param)
 {
 	struct cgroup_fs_context *ctx = cgroup_fc2context(fc);
@@ -1115,6 +1156,9 @@ int cgroup1_reconfigure(struct fs_context *fc)
 struct kernfs_syscall_ops cgroup1_kf_syscall_ops = {
 	.rename			= cgroup1_rename,
 	.show_options		= cgroup1_show_options,
+#ifdef CONFIG_FSINFO
+	.fsinfo			= cgroup1_fsinfo,
+#endif
 	.mkdir			= cgroup_mkdir,
 	.rmdir			= cgroup_rmdir,
 	.show_path		= cgroup_show_path,
