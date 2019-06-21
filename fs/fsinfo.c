@@ -524,6 +524,57 @@ out_f:
 }
 
 /*
+ * Look up the root of a mount object.  This allows access to mount objects
+ * (and their attached superblocks) that can't be retrieved by path because
+ * they're entirely covered.
+ *
+ * We only permit access to a mount that has a direct path between either the
+ * dentry pointed to by dfd or to our chroot (if dfd is AT_FDCWD).
+ */
+static int vfs_fsinfo_mount(int dfd, const char __user *filename,
+			    struct fsinfo_kparams *params)
+{
+	struct path path;
+	struct fd f = {};
+	char *name;
+	long mnt_id;
+	int ret;
+
+	if ((params->at_flags & ~AT_FSINFO_MOUNTID_PATH) ||
+	    !filename)
+		return -EINVAL;
+
+	name = strndup_user(filename, 32);
+	if (IS_ERR(name))
+		return PTR_ERR(name);
+	ret = kstrtoul(name, 0, &mnt_id);
+	if (ret < 0)
+		goto out_name;
+	if (mnt_id > INT_MAX)
+		goto out_name;
+
+	if (dfd != AT_FDCWD) {
+		ret = -EBADF;
+		f = fdget_raw(dfd);
+		if (!f.file)
+			goto out_name;
+	}
+
+	ret = lookup_mount_object(f.file ? &f.file->f_path : NULL,
+				  mnt_id, &path);
+	if (ret < 0)
+		goto out_fd;
+
+	ret = vfs_fsinfo(&path, params);
+	path_put(&path);
+out_fd:
+	fdput(f);
+out_name:
+	kfree(name);
+	return ret;
+}
+
+/*
  * Return buffer information by requestable attribute.
  *
  * STRUCT	- a fixed-size structure with only one instance.
@@ -636,6 +687,9 @@ SYSCALL_DEFINE5(fsinfo,
 
 		if ((kparams.at_flags & AT_FSINFO_FROM_FSOPEN) && pathname)
 			return -EINVAL;
+		if ((kparams.at_flags & (AT_FSINFO_FROM_FSOPEN | AT_FSINFO_MOUNTID_PATH)) ==
+		    (AT_FSINFO_FROM_FSOPEN | AT_FSINFO_MOUNTID_PATH))
+			return -EINVAL;
 	} else {
 		kparams.request = FSINFO_ATTR_STATFS;
 	}
@@ -694,6 +748,8 @@ SYSCALL_DEFINE5(fsinfo,
 
 	if (kparams.at_flags & AT_FSINFO_FROM_FSOPEN)
 		ret = vfs_fsinfo_fscontext(dfd, &kparams);
+	else if (kparams.at_flags & AT_FSINFO_MOUNTID_PATH)
+		ret = vfs_fsinfo_mount(dfd, pathname, &kparams);
 	else if (pathname)
 		ret = vfs_fsinfo_path(dfd, pathname, &kparams);
 	else

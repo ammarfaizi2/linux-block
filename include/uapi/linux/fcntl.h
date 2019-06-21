@@ -92,6 +92,7 @@
 #define AT_STATX_DONT_SYNC	0x4000	/* - Don't sync attributes with the server */
 
 #define AT_FSINFO_FROM_FSOPEN	0x2000	/* Examine the fs_context attached to dfd by fsopen() */
+#define AT_FSINFO_MOUNTID_PATH	0x4000	/* The path is a mount object ID, not an actual path */
 
 #define AT_RECURSIVE		0x8000	/* Apply to the entire subtree */
 
