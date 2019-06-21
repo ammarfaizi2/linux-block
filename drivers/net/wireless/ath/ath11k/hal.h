@@ -444,7 +444,7 @@ enum hal_reo_cmd_status {
 
 struct hal_wbm_idle_scatter_list {
 	dma_addr_t paddr;
-	u32 *vaddr;
+	struct hal_wbm_link_desc *vaddr;
 };
 
 struct hal_srng_params {
@@ -874,7 +874,8 @@ dma_addr_t ath11k_hal_srng_get_tp_addr(struct ath11k_base *ab,
 				       struct hal_srng *srng);
 dma_addr_t ath11k_hal_srng_get_hp_addr(struct ath11k_base *ab,
 				       struct hal_srng *srng);
-void ath11k_hal_set_link_desc_addr(void *buf, u32 cookie, dma_addr_t paddr);
+void ath11k_hal_set_link_desc_addr(struct hal_wbm_link_desc *desc, u32 cookie,
+				   dma_addr_t paddr);
 u32 ath11k_hal_ce_get_desc_size(enum hal_ce_desc type);
 void ath11k_hal_ce_src_set_desc(void *buf, dma_addr_t paddr, u32 len, u32 id,
 				u8 byte_swap_data);

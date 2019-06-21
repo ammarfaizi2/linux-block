@@ -689,16 +689,15 @@ u32 ath11k_hal_ce_dst_status_get_length(void *buf)
 	return len;
 }
 
-void ath11k_hal_set_link_desc_addr(void *buf, u32 cookie, dma_addr_t paddr)
+void ath11k_hal_set_link_desc_addr(struct hal_wbm_link_desc *desc, u32 cookie,
+				   dma_addr_t paddr)
 {
-	struct ath11k_buffer_addr *desc = (struct ath11k_buffer_addr *)buf;
-
-	desc->info0 = FIELD_PREP(BUFFER_ADDR_INFO0_ADDR,
-				 (paddr & HAL_ADDR_LSB_REG_MASK));
-	desc->info1 = FIELD_PREP(BUFFER_ADDR_INFO1_ADDR,
-				 ((u64)paddr >> HAL_ADDR_MSB_REG_SHIFT)) |
-		      FIELD_PREP(BUFFER_ADDR_INFO1_RET_BUF_MGR, 1) |
-		      FIELD_PREP(BUFFER_ADDR_INFO1_SW_COOKIE, cookie);
+	desc->buf_addr_info.info0 = FIELD_PREP(BUFFER_ADDR_INFO0_ADDR,
+					       (paddr & HAL_ADDR_LSB_REG_MASK));
+	desc->buf_addr_info.info1 = FIELD_PREP(BUFFER_ADDR_INFO1_ADDR,
+					       ((u64)paddr >> HAL_ADDR_MSB_REG_SHIFT)) |
+				    FIELD_PREP(BUFFER_ADDR_INFO1_RET_BUF_MGR, 1) |
+				    FIELD_PREP(BUFFER_ADDR_INFO1_SW_COOKIE, cookie);
 }
 
 u32 *ath11k_hal_srng_dst_peek(struct ath11k_base *ab, struct hal_srng *srng)

@@ -338,12 +338,13 @@ static int ath11k_dp_scatter_idle_link_desc_setup(struct ath11k_base *ab,
 	struct hal_wbm_idle_scatter_list *slist = dp->scatter_list;
 	u32 n_entries_per_buf;
 	int num_scatter_buf, scatter_idx;
-	u32 *scatter_buf;
+	struct hal_wbm_link_desc *scatter_buf;
 	int align_bytes, n_entries;
 	dma_addr_t paddr;
 	int rem_entries;
 	int i;
 	int ret = 0;
+	u32 end_offset;
 
 	n_entries_per_buf = HAL_WBM_IDLE_SCATTER_BUF_SIZE /
 			    ath11k_hal_srng_get_entrysize(HAL_WBM_IDLE_LINK);
@@ -373,15 +374,12 @@ static int ath11k_dp_scatter_idle_link_desc_setup(struct ath11k_base *ab,
 			     HAL_LINK_DESC_SIZE;
 		paddr = link_desc_banks[i].paddr;
 		while (n_entries) {
-			ath11k_hal_set_link_desc_addr(
-					(struct ath11k_buffer_addr *)scatter_buf, i,
-					paddr);
+			ath11k_hal_set_link_desc_addr(scatter_buf, i, paddr);
 			n_entries--;
 			paddr += HAL_LINK_DESC_SIZE;
 			if (rem_entries) {
 				rem_entries--;
-				scatter_buf = (u32 *)((u8 *)scatter_buf +
-						      HAL_LINK_DESC_SIZE);
+				scatter_buf++;
 				continue;
 			}
 
@@ -391,10 +389,10 @@ static int ath11k_dp_scatter_idle_link_desc_setup(struct ath11k_base *ab,
 		}
 	}
 
+	end_offset = (scatter_buf - slist[scatter_idx].vaddr) *
+		     sizeof(struct hal_wbm_link_desc);
 	ath11k_hal_setup_link_idle_list(ab, slist, num_scatter_buf,
-					n_link_desc,
-					(u8 *)scatter_buf -
-					(u8 *)slist[scatter_idx].vaddr);
+					n_link_desc, end_offset);
 
 	return 0;
 
@@ -578,9 +576,8 @@ int ath11k_dp_link_desc_setup(struct ath11k_base *ab,
 		paddr = link_desc_banks[i].paddr;
 		while (n_entries &&
 		       (desc = ath11k_hal_srng_src_get_next_entry(ab, srng))) {
-			ath11k_hal_set_link_desc_addr(
-					(struct ath11k_buffer_addr *)desc, i,
-					paddr);
+			ath11k_hal_set_link_desc_addr((struct hal_wbm_link_desc *)desc,
+						      i, paddr);
 			n_entries--;
 			paddr += HAL_LINK_DESC_SIZE;
 		}
