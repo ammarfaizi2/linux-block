@@ -368,7 +368,8 @@ static int vfs_fsinfo(struct path *path, struct fsinfo_kparams *params)
 	int (*fsinfo)(struct path *, struct fsinfo_kparams *);
 	int ret;
 
-	if (params->request == FSINFO_ATTR_FSINFO) {
+	switch (params->request) {
+	case FSINFO_ATTR_FSINFO: {
 		struct fsinfo_fsinfo *info = params->buffer;
 
 		info->max_attr	= FSINFO_ATTR__NR;
@@ -376,11 +377,18 @@ static int vfs_fsinfo(struct path *path, struct fsinfo_kparams *params)
 		return sizeof(*info);
 	}
 
-	fsinfo = dentry->d_sb->s_op->fsinfo;
-	if (!fsinfo) {
-		if (!dentry->d_sb->s_op->statfs)
-			return -EOPNOTSUPP;
-		fsinfo = generic_fsinfo;
+	case FSINFO_ATTR_LSM_PARAMETERS:
+		fsinfo = security_sb_fsinfo;
+		break;
+
+	default:
+		fsinfo = dentry->d_sb->s_op->fsinfo;
+		if (!fsinfo) {
+			if (!dentry->d_sb->s_op->statfs)
+				return -EOPNOTSUPP;
+			fsinfo = generic_fsinfo;
+		}
+		break;
 	}
 
 	ret = security_sb_statfs(dentry);
@@ -573,6 +581,7 @@ static const struct fsinfo_attr_info fsinfo_buffer_info[FSINFO_ATTR__NR] = {
 	FSINFO_STRUCT_N		(PARAM_SPECIFICATION,	param_specification),
 	FSINFO_STRUCT_N		(PARAM_ENUM,		param_enum),
 	FSINFO_OPAQUE		(PARAMETERS),
+	FSINFO_OPAQUE		(LSM_PARAMETERS),
 };
 
 /**
