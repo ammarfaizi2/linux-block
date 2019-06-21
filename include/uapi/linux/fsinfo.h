@@ -30,6 +30,7 @@ enum fsinfo_attribute {
 	FSINFO_ATTR_PARAM_DESCRIPTION	= 12,	/* General fs parameter description */
 	FSINFO_ATTR_PARAM_SPECIFICATION	= 13,	/* Nth parameter specification */
 	FSINFO_ATTR_PARAM_ENUM		= 14,	/* Nth enum-to-val */
+	FSINFO_ATTR_PARAMETERS		= 15,	/* Mount parameters (large string) */
 	FSINFO_ATTR__NR
 };
 

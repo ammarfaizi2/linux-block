@@ -28,6 +28,10 @@ struct fsinfo_kparams {
 };
 
 extern int generic_fsinfo(struct path *, struct fsinfo_kparams *);
+extern void fsinfo_note_sb_params(struct fsinfo_kparams *, unsigned int);
+extern void fsinfo_note_param(struct fsinfo_kparams *, const char *, const char *);
+extern void fsinfo_note_paramf(struct fsinfo_kparams *, const char *, const char *, ...)
+	__printf(3, 4);
 
 static inline void fsinfo_set_cap(struct fsinfo_capabilities *c,
 				  enum fsinfo_capability cap)
