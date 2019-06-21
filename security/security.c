@@ -21,6 +21,7 @@
 #include <linux/ima.h>
 #include <linux/evm.h>
 #include <linux/fsnotify.h>
+#include <linux/fsinfo.h>
 #include <linux/mman.h>
 #include <linux/mount.h>
 #include <linux/personality.h>
@@ -819,6 +820,17 @@ int security_sb_statfs(struct dentry *dentry)
 {
 	return call_int_hook(sb_statfs, 0, dentry);
 }
+
+#ifdef CONFIG_FSINFO
+int security_sb_fsinfo(struct path *path, struct fsinfo_kparams *params)
+{
+	int ret = -ENODATA;
+
+	if (params->request == FSINFO_ATTR_LSM_PARAMETERS)
+		ret = 0; /* This is cumulative amongst all LSMs */
+	return call_int_hook(sb_fsinfo, ret, path, params);
+}
+#endif
 
 int security_sb_mount(const char *dev_name, const struct path *path,
                        const char *type, unsigned long flags, void *data)

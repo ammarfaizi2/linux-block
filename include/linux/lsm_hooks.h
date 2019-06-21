@@ -108,6 +108,13 @@
  *	mountpoint.
  *	@dentry is a handle on the superblock for the filesystem.
  *	Return 0 if permission is granted.
+ * @sb_fsinfo:
+ *	Query LSM information for a filesystem.
+ *	@path is a handle on the superblock for the filesystem.
+ *	@params is the fsinfo parameter and buffer block.
+ *	 - Currently, params->request can only be FSINFO_ATTR_LSM_PARAMETERS.
+ *	Return the length of the data in the buffer (and can return -ENODATA to
+ *      indicate no value under certain circumstances).
  * @sb_mount:
  *	Check permission before an object specified by @dev_name is mounted on
  *	the mount point named by @nd.  For an ordinary mount, @dev_name
@@ -1492,6 +1499,9 @@ union security_list_options {
 	int (*sb_kern_mount)(struct super_block *sb);
 	int (*sb_show_options)(struct seq_file *m, struct super_block *sb);
 	int (*sb_statfs)(struct dentry *dentry);
+#ifdef CONFIG_FSINFO
+	int (*sb_fsinfo)(struct path *path, struct fsinfo_kparams *params);
+#endif
 	int (*sb_mount)(const char *dev_name, const struct path *path,
 			const char *type, unsigned long flags, void *data);
 	int (*sb_umount)(struct vfsmount *mnt, int flags);
@@ -1838,6 +1848,9 @@ struct security_hook_heads {
 	struct hlist_head sb_kern_mount;
 	struct hlist_head sb_show_options;
 	struct hlist_head sb_statfs;
+#ifdef CONFIG_FSINFO
+	struct hlist_head sb_fsinfo;
+#endif
 	struct hlist_head sb_mount;
 	struct hlist_head sb_umount;
 	struct hlist_head sb_pivotroot;
