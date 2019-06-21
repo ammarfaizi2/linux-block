@@ -28,6 +28,7 @@
 #include <linux/hugetlb.h>
 #include <linux/pagevec.h>
 #include <linux/fs_parser.h>
+#include <linux/fsinfo.h>
 #include <linux/mman.h>
 #include <linux/slab.h>
 #include <linux/dnotify.h>
@@ -958,6 +959,59 @@ static int hugetlbfs_show_options(struct seq_file *m, struct dentry *root)
 	return 0;
 }
 
+#ifdef CONFIG_FSINFO
+static int hugetlbfs_fsinfo(struct path *path, struct fsinfo_kparams *params)
+{
+	struct dentry *dentry = path->dentry;
+	struct hugetlbfs_sb_info *sbinfo = HUGETLBFS_SB(dentry->d_sb);
+	struct hugepage_subpool *spool = sbinfo->spool;
+	unsigned long hpage_size = huge_page_size(sbinfo->hstate);
+	unsigned hpage_shift = huge_page_shift(sbinfo->hstate);
+	char mod;
+
+	switch (params->request) {
+	case FSINFO_ATTR_PARAMETERS:
+		fsinfo_note_sb_params(params, dentry->d_sb->s_flags);
+		if (!uid_eq(sbinfo->uid, GLOBAL_ROOT_UID))
+			fsinfo_note_paramf(params, "uid", "%u",
+					   from_kuid_munged(&init_user_ns,
+							    sbinfo->uid));
+
+		if (!gid_eq(sbinfo->gid, GLOBAL_ROOT_GID))
+			fsinfo_note_paramf(params, "gid", "%u",
+					   from_kgid_munged(&init_user_ns,
+							    sbinfo->gid));
+
+		if (spool && spool->max_hpages != -1)
+			fsinfo_note_paramf(params, "size", "%llu",
+					   (unsigned long long)spool->max_hpages << hpage_shift);
+
+		if (spool && spool->min_hpages != -1)
+			fsinfo_note_paramf(params, "min_size", "%llu",
+					   (unsigned long long)spool->min_hpages << hpage_shift);
+
+		hpage_size /= 1024;
+		mod = 'K';
+		if (hpage_size >= 1024) {
+			hpage_size /= 1024;
+			mod = 'M';
+		}
+		fsinfo_note_paramf(params, "pagesize", "%lu%c", hpage_size, mod);
+
+		if (sbinfo->mode != 0755)
+			fsinfo_note_paramf(params, "mode", "%o", sbinfo->mode);
+
+		if (sbinfo->max_inodes != -1)
+			fsinfo_note_paramf(params, "nr_inodes", "%lu",
+					   sbinfo->max_inodes);
+		return params->usage;
+
+	default:
+		return generic_fsinfo(path, params);
+	}
+}
+#endif /* CONFIG_FSINFO */
+
 static int hugetlbfs_statfs(struct dentry *dentry, struct kstatfs *buf)
 {
 	struct hugetlbfs_sb_info *sbinfo = HUGETLBFS_SB(dentry->d_sb);
@@ -1116,6 +1170,9 @@ static const struct super_operations hugetlbfs_ops = {
 	.statfs		= hugetlbfs_statfs,
 	.put_super	= hugetlbfs_put_super,
 	.show_options	= hugetlbfs_show_options,
+#ifdef CONFIG_FSINFO
+	.fsinfo		= hugetlbfs_fsinfo,
+#endif
 };
 
 /*
