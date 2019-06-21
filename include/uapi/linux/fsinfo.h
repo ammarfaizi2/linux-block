@@ -32,6 +32,9 @@ enum fsinfo_attribute {
 	FSINFO_ATTR_PARAM_ENUM		= 14,	/* Nth enum-to-val */
 	FSINFO_ATTR_PARAMETERS		= 15,	/* Mount parameters (large string) */
 	FSINFO_ATTR_LSM_PARAMETERS	= 16,	/* LSM Mount parameters (large string) */
+	FSINFO_ATTR_SERVER_NAME		= 17,	/* Name of the Nth server (string) */
+	FSINFO_ATTR_SERVER_ADDRESS	= 18,	/* Mth address of the Nth server */
+	FSINFO_ATTR_AFS_CELL_NAME	= 19,	/* AFS cell name (string) */
 	FSINFO_ATTR__NR
 };
 
@@ -274,6 +277,15 @@ enum fsinfo_param_specification_type {
 struct fsinfo_param_enum {
 	__u32		opt;		/* ->opt of the relevant parameter specification */
 	char		name[252];	/* Name of the enum value */
+};
+
+/*
+ * Information struct for fsinfo(fsinfo_attr_server_addresses).
+ *
+ * Find the Mth address of the Nth server for a network mount.
+ */
+struct fsinfo_server_address {
+	struct __kernel_sockaddr_storage address;
 };
 
 #endif /* _UAPI_LINUX_FSINFO_H */

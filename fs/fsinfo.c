@@ -582,6 +582,9 @@ static const struct fsinfo_attr_info fsinfo_buffer_info[FSINFO_ATTR__NR] = {
 	FSINFO_STRUCT_N		(PARAM_ENUM,		param_enum),
 	FSINFO_OPAQUE		(PARAMETERS),
 	FSINFO_OPAQUE		(LSM_PARAMETERS),
+	FSINFO_STRING_N		(SERVER_NAME),
+	FSINFO_STRUCT_NM	(SERVER_ADDRESS,	server_address),
+	FSINFO_STRING		(AFS_CELL_NAME),
 };
 
 /**

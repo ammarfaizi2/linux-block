@@ -83,6 +83,9 @@ static const struct fsinfo_attr_info fsinfo_buffer_info[FSINFO_ATTR__NR] = {
 	FSINFO_STRUCT_N		(PARAM_ENUM,		param_enum),
 	FSINFO_OVERLARGE	(PARAMETERS,		-),
 	FSINFO_OVERLARGE	(LSM_PARAMETERS,	-),
+	FSINFO_STRING_N		(SERVER_NAME,		server_name),
+	FSINFO_STRUCT_NM	(SERVER_ADDRESS,	server_address),
+	FSINFO_STRING		(AFS_CELL_NAME,		-),
 };
 
 #define FSINFO_NAME(X,Y) [FSINFO_ATTR_##X] = #Y
@@ -104,6 +107,9 @@ static const char *fsinfo_attr_names[FSINFO_ATTR__NR] = {
 	FSINFO_NAME		(PARAM_ENUM,		param_enum),
 	FSINFO_NAME		(PARAMETERS,		parameters),
 	FSINFO_NAME		(LSM_PARAMETERS,	lsm_parameters),
+	FSINFO_NAME		(SERVER_NAME,		server_name),
+	FSINFO_NAME		(SERVER_ADDRESS,	server_address),
+	FSINFO_NAME		(AFS_CELL_NAME,		afs_cell_name),
 };
 
 union reply {
@@ -116,6 +122,7 @@ union reply {
 	struct fsinfo_capabilities caps;
 	struct fsinfo_timestamp_info timestamps;
 	struct fsinfo_volume_uuid uuid;
+	struct fsinfo_server_address srv_addr;
 };
 
 static void dump_hex(unsigned int *data, int from, int to)
@@ -318,6 +325,31 @@ static void dump_attr_VOLUME_UUID(union reply *r, int size)
 	       f->uuid[14], f->uuid[15]);
 }
 
+static void dump_attr_SERVER_ADDRESS(union reply *r, int size)
+{
+	struct fsinfo_server_address *f = &r->srv_addr;
+	struct sockaddr_in6 *sin6;
+	struct sockaddr_in *sin;
+	char buf[1024];
+
+	switch (f->address.ss_family) {
+	case AF_INET:
+		sin = (struct sockaddr_in *)&f->address;
+		if (!inet_ntop(AF_INET, &sin->sin_addr, buf, sizeof(buf)))
+			break;
+		printf("IPv4: %s\n", buf);
+		return;
+	case AF_INET6:
+		sin6 = (struct sockaddr_in6 *)&f->address;
+		if (!inet_ntop(AF_INET6, &sin6->sin6_addr, buf, sizeof(buf)))
+			break;
+		printf("IPv6: %s\n", buf);
+		return;
+	}
+
+	printf("family=%u\n", f->address.ss_family);
+}
+
 /*
  *
  */
@@ -333,6 +365,7 @@ static const dumper_t fsinfo_attr_dumper[FSINFO_ATTR__NR] = {
 	FSINFO_DUMPER(CAPABILITIES),
 	FSINFO_DUMPER(TIMESTAMP_INFO),
 	FSINFO_DUMPER(VOLUME_UUID),
+	FSINFO_DUMPER(SERVER_ADDRESS),
 };
 
 static void dump_fsinfo(enum fsinfo_attribute attr,
