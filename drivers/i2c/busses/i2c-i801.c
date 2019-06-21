@@ -64,12 +64,13 @@
  * Cedar Fork (PCH)		0x18df	32	hard	yes	yes	yes
  * Ice Lake-LP (PCH)		0x34a3	32	hard	yes	yes	yes
  * Comet Lake (PCH)		0x02a3	32	hard	yes	yes	yes
+ * Elkhart Lake (PCH)		0x4b23	32	hard	yes	yes	yes
  *
  * Features supported by this driver:
  * Software PEC				no
  * Hardware PEC				yes
  * Block buffer				yes
- * Block process call transaction	no
+ * Block process call transaction	yes
  * I2C block read transaction		yes (doesn't use the block buffer)
  * Slave mode				no
  * SMBus Host Notify			yes
@@ -92,6 +93,7 @@
 #include <linux/io.h>
 #include <linux/dmi.h>
 #include <linux/slab.h>
+#include <linux/string.h>
 #include <linux/wait.h>
 #include <linux/err.h>
 #include <linux/platform_device.h>
@@ -169,6 +171,7 @@
 #define I801_PROC_CALL		0x10	/* unimplemented */
 #define I801_BLOCK_DATA		0x14
 #define I801_I2C_BLOCK_DATA	0x18	/* ICH5 and later */
+#define I801_BLOCK_PROC_CALL	0x1C
 
 /* I801 Host Control register bits */
 #define SMBHSTCNT_INTREN	BIT(0)
@@ -234,6 +237,7 @@
 #define PCI_DEVICE_ID_INTEL_KABYLAKE_PCH_H_SMBUS	0xa2a3
 #define PCI_DEVICE_ID_INTEL_CANNONLAKE_H_SMBUS		0xa323
 #define PCI_DEVICE_ID_INTEL_COMETLAKE_SMBUS		0x02a3
+#define PCI_DEVICE_ID_INTEL_ELKHART_LAKE_SMBUS		0x4b23
 
 struct i801_mux_config {
 	char *gpio_chip;
@@ -509,10 +513,23 @@ static int i801_transaction(struct i801_priv *priv, int xact)
 
 static int i801_block_transaction_by_block(struct i801_priv *priv,
 					   union i2c_smbus_data *data,
-					   char read_write, int hwpec)
+					   char read_write, int command,
+					   int hwpec)
 {
 	int i, len;
 	int status;
+	int xact = hwpec ? SMBHSTCNT_PEC_EN : 0;
+
+	switch (command) {
+	case I2C_SMBUS_BLOCK_PROC_CALL:
+		xact |= I801_BLOCK_PROC_CALL;
+		break;
+	case I2C_SMBUS_BLOCK_DATA:
+		xact |= I801_BLOCK_DATA;
+		break;
+	default:
+		return -EOPNOTSUPP;
+	}
 
 	inb_p(SMBHSTCNT(priv)); /* reset the data buffer index */
 
@@ -524,12 +541,12 @@ static int i801_block_transaction_by_block(struct i801_priv *priv,
 			outb_p(data->block[i+1], SMBBLKDAT(priv));
 	}
 
-	status = i801_transaction(priv, I801_BLOCK_DATA |
-				  (hwpec ? SMBHSTCNT_PEC_EN : 0));
+	status = i801_transaction(priv, xact);
 	if (status)
 		return status;
 
-	if (read_write == I2C_SMBUS_READ) {
+	if (read_write == I2C_SMBUS_READ ||
+	    command == I2C_SMBUS_BLOCK_PROC_CALL) {
 		len = inb_p(SMBHSTDAT0(priv));
 		if (len < 1 || len > I2C_SMBUS_BLOCK_MAX)
 			return -EPROTO;
@@ -667,6 +684,9 @@ static int i801_block_transaction_byte_by_byte(struct i801_priv *priv,
 	int result;
 	const struct i2c_adapter *adap = &priv->adapter;
 
+	if (command == I2C_SMBUS_BLOCK_PROC_CALL)
+		return -EOPNOTSUPP;
+
 	result = i801_check_pre(priv);
 	if (result < 0)
 		return result;
@@ -798,7 +818,8 @@ static int i801_block_transaction(struct i801_priv *priv,
 	 && command != I2C_SMBUS_I2C_BLOCK_DATA
 	 && i801_set_block_buffer_mode(priv) == 0)
 		result = i801_block_transaction_by_block(priv, data,
-							 read_write, hwpec);
+							 read_write,
+							 command, hwpec);
 	else
 		result = i801_block_transaction_byte_by_byte(priv, data,
 							     read_write,
@@ -890,6 +911,15 @@ static s32 i801_access(struct i2c_adapter *adap, u16 addr,
 			outb_p(command, SMBHSTCMD(priv));
 		block = 1;
 		break;
+	case I2C_SMBUS_BLOCK_PROC_CALL:
+		/*
+		 * Bit 0 of the slave address register always indicate a write
+		 * command.
+		 */
+		outb_p((addr & 0x7f) << 1, SMBHSTADD(priv));
+		outb_p(command, SMBHSTCMD(priv));
+		block = 1;
+		break;
 	default:
 		dev_err(&priv->pci_dev->dev, "Unsupported transaction %d\n",
 			size);
@@ -950,6 +980,8 @@ static u32 i801_func(struct i2c_adapter *adapter)
 	       I2C_FUNC_SMBUS_BYTE_DATA | I2C_FUNC_SMBUS_WORD_DATA |
 	       I2C_FUNC_SMBUS_BLOCK_DATA | I2C_FUNC_SMBUS_WRITE_I2C_BLOCK |
 	       ((priv->features & FEATURE_SMBUS_PEC) ? I2C_FUNC_SMBUS_PEC : 0) |
+	       ((priv->features & FEATURE_BLOCK_PROC) ?
+		I2C_FUNC_SMBUS_BLOCK_PROC_CALL : 0) |
 	       ((priv->features & FEATURE_I2C_BLOCK_READ) ?
 		I2C_FUNC_SMBUS_READ_I2C_BLOCK : 0) |
 	       ((priv->features & FEATURE_HOST_NOTIFY) ?
@@ -1033,6 +1065,7 @@ static const struct pci_device_id i801_ids[] = {
 	{ PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_CANNONLAKE_LP_SMBUS) },
 	{ PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICELAKE_LP_SMBUS) },
 	{ PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_COMETLAKE_SMBUS) },
+	{ PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ELKHART_LAKE_SMBUS) },
 	{ 0, }
 };
 
@@ -1164,14 +1197,12 @@ static acpi_status check_acpi_smo88xx_device(acpi_handle obj_handle,
 	if (!hid)
 		return AE_OK;
 
-	for (i = 0; i < ARRAY_SIZE(acpi_smo8800_ids); ++i) {
-		if (strcmp(hid, acpi_smo8800_ids[i]) == 0) {
-			*((bool *)return_value) = true;
-			return AE_CTRL_TERMINATE;
-		}
-	}
+	i = match_string(acpi_smo8800_ids, ARRAY_SIZE(acpi_smo8800_ids), hid);
+	if (i < 0)
+		return AE_OK;
 
-	return AE_OK;
+	*((bool *)return_value) = true;
+	return AE_CTRL_TERMINATE;
 }
 
 static bool is_dell_system_with_lis3lv02d(void)
@@ -1647,6 +1678,8 @@ static int i801_probe(struct pci_dev *dev, const struct pci_device_id *id)
 	case PCI_DEVICE_ID_INTEL_KABYLAKE_PCH_H_SMBUS:
 	case PCI_DEVICE_ID_INTEL_ICELAKE_LP_SMBUS:
 	case PCI_DEVICE_ID_INTEL_COMETLAKE_SMBUS:
+	case PCI_DEVICE_ID_INTEL_ELKHART_LAKE_SMBUS:
+		priv->features |= FEATURE_BLOCK_PROC;
 		priv->features |= FEATURE_I2C_BLOCK_READ;
 		priv->features |= FEATURE_IRQ;
 		priv->features |= FEATURE_SMBUS_PEC;
@@ -1666,6 +1699,7 @@ static int i801_probe(struct pci_dev *dev, const struct pci_device_id *id)
 		priv->features |= FEATURE_IDF;
 		/* fall through */
 	default:
+		priv->features |= FEATURE_BLOCK_PROC;
 		priv->features |= FEATURE_I2C_BLOCK_READ;
 		priv->features |= FEATURE_IRQ;
 		/* fall through */
