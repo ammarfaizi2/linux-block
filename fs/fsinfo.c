@@ -13,6 +13,7 @@
 #include <linux/security.h>
 #include <linux/uaccess.h>
 #include <linux/fsinfo.h>
+#include <linux/fs_context.h>
 #include <uapi/linux/mount.h>
 #include "internal.h"
 
@@ -348,6 +349,42 @@ static int vfs_fsinfo_fd(unsigned int fd, struct fsinfo_kparams *params)
 }
 
 /*
+ * Allow access to an fs_context object as created by fsopen() or fspick().
+ */
+static int vfs_fsinfo_fscontext(int fd, struct fsinfo_kparams *params)
+{
+	struct fs_context *fc;
+	struct fd f = fdget(fd);
+	int ret;
+
+	if (!f.file)
+		return -EBADF;
+
+	ret = -EINVAL;
+	if (f.file->f_op != &fscontext_fops)
+		goto out_f;
+	ret = -EOPNOTSUPP;
+	if (fc->ops == &legacy_fs_context_ops)
+		goto out_f;
+
+	ret = mutex_lock_interruptible(&fc->uapi_mutex);
+	if (ret == 0) {
+		ret = -EBADFD;
+		if (fc->root) {
+			struct path path = { .dentry = fc->root };
+
+			ret = vfs_fsinfo(&path, params);
+		}
+
+		mutex_unlock(&fc->uapi_mutex);
+	}
+
+out_f:
+	fdput(f);
+	return ret;
+}
+
+/*
  * Return buffer information by requestable attribute.
  *
  * STRUCT	- a fixed-size structure with only one instance.
@@ -452,6 +489,9 @@ SYSCALL_DEFINE5(fsinfo,
 		kparams.request = user_params.request;
 		kparams.Nth = user_params.Nth;
 		kparams.Mth = user_params.Mth;
+
+		if ((kparams.at_flags & AT_FSINFO_FROM_FSOPEN) && pathname)
+			return -EINVAL;
 	} else {
 		kparams.request = FSINFO_ATTR_STATFS;
 	}
@@ -508,7 +548,9 @@ SYSCALL_DEFINE5(fsinfo,
 	if (!kparams.buffer)
 		goto error_scratch;
 
-	if (pathname)
+	if (kparams.at_flags & AT_FSINFO_FROM_FSOPEN)
+		ret = vfs_fsinfo_fscontext(dfd, &kparams);
+	else if (pathname)
 		ret = vfs_fsinfo_path(dfd, pathname, &kparams);
 	else
 		ret = vfs_fsinfo_fd(dfd, &kparams);
