@@ -21,10 +21,10 @@
 #include <errno.h>
 #include <time.h>
 #include <math.h>
-#include <fcntl.h>
 #include <sys/syscall.h>
 #include <linux/fsinfo.h>
 #include <linux/socket.h>
+#include <linux/fcntl.h>
 #include <sys/stat.h>
 #include <arpa/inet.h>
 
@@ -83,6 +83,10 @@ static const struct fsinfo_attr_info fsinfo_buffer_info[FSINFO_ATTR__NR] = {
 	FSINFO_STRUCT_N		(PARAM_ENUM,		param_enum),
 	FSINFO_OVERLARGE	(PARAMETERS,		-),
 	FSINFO_OVERLARGE	(LSM_PARAMETERS,	-),
+	FSINFO_STRUCT		(MOUNT_INFO,		mount_info),
+	FSINFO_STRING		(MOUNT_DEVNAME,		mount_devname),
+	FSINFO_STRUCT_ARRAY	(MOUNT_CHILDREN,	mount_child),
+	FSINFO_STRING_N		(MOUNT_SUBMOUNT,	mount_submount),
 };
 
 #define FSINFO_NAME(X,Y) [FSINFO_ATTR_##X] = #Y
@@ -104,6 +108,10 @@ static const char *fsinfo_attr_names[FSINFO_ATTR__NR] = {
 	FSINFO_NAME		(PARAM_ENUM,		param_enum),
 	FSINFO_NAME		(PARAMETERS,		parameters),
 	FSINFO_NAME		(LSM_PARAMETERS,	lsm_parameters),
+	FSINFO_NAME		(MOUNT_INFO,		mount_info),
+	FSINFO_NAME		(MOUNT_DEVNAME,		mount_devname),
+	FSINFO_NAME		(MOUNT_CHILDREN,	mount_children),
+	FSINFO_NAME		(MOUNT_SUBMOUNT,	mount_submount),
 };
 
 union reply {
@@ -116,6 +124,8 @@ union reply {
 	struct fsinfo_capabilities caps;
 	struct fsinfo_timestamp_info timestamps;
 	struct fsinfo_volume_uuid uuid;
+	struct fsinfo_mount_info mount_info;
+	struct fsinfo_mount_child mount_children[1];
 };
 
 static void dump_hex(unsigned int *data, int from, int to)
@@ -319,6 +329,29 @@ static void dump_attr_VOLUME_UUID(union reply *r, int size)
 	       f->uuid[14], f->uuid[15]);
 }
 
+static void dump_attr_MOUNT_INFO(union reply *r, int size)
+{
+	struct fsinfo_mount_info *f = &r->mount_info;
+
+	printf("\n");
+	printf("\tsb_id   : %llx\n", (unsigned long long)f->f_sb_id);
+	printf("\tmnt_id  : %x\n", f->mnt_id);
+	printf("\tparent  : %x\n", f->parent_id);
+	printf("\tgroup   : %x\n", f->group_id);
+	printf("\tattr    : %x\n", f->attr);
+	printf("\tnotifs  : %x\n", f->notify_counter);
+}
+
+static void dump_attr_MOUNT_CHILDREN(union reply *r, int size)
+{
+	struct fsinfo_mount_child *f = r->mount_children;
+	int i = 0;
+
+	printf("\n");
+	for (; size >= sizeof(*f); size -= sizeof(*f), f++)
+		printf("\t[%u] %8x %8x\n", i++, f->mnt_id, f->notify_counter);
+}
+
 /*
  *
  */
@@ -334,6 +367,8 @@ static const dumper_t fsinfo_attr_dumper[FSINFO_ATTR__NR] = {
 	FSINFO_DUMPER(CAPABILITIES),
 	FSINFO_DUMPER(TIMESTAMP_INFO),
 	FSINFO_DUMPER(VOLUME_UUID),
+	FSINFO_DUMPER(MOUNT_INFO),
+	FSINFO_DUMPER(MOUNT_CHILDREN),
 };
 
 static void dump_fsinfo(enum fsinfo_attribute attr,
@@ -536,16 +571,21 @@ int main(int argc, char **argv)
 	unsigned int attr;
 	int raw = 0, opt, Nth, Mth;
 
-	while ((opt = getopt(argc, argv, "adlr"))) {
+	while ((opt = getopt(argc, argv, "Madlr"))) {
 		switch (opt) {
+		case 'M':
+			params.at_flags = AT_FSINFO_MOUNTID_PATH;
+			continue;
 		case 'a':
 			params.at_flags |= AT_NO_AUTOMOUNT;
+			params.at_flags &= ~AT_FSINFO_MOUNTID_PATH;
 			continue;
 		case 'd':
 			debug = true;
 			continue;
 		case 'l':
 			params.at_flags &= ~AT_SYMLINK_NOFOLLOW;
+			params.at_flags &= ~AT_FSINFO_MOUNTID_PATH;
 			continue;
 		case 'r':
 			raw = 1;
@@ -558,7 +598,8 @@ int main(int argc, char **argv)
 	argv += optind;
 
 	if (argc != 1) {
-		printf("Format: test-fsinfo [-alr] <file>\n");
+		printf("Format: test-fsinfo [-adlr] <file>\n");
+		printf("Format: test-fsinfo [-dr] -M <mnt_id>\n");
 		exit(2);
 	}
 
