@@ -91,6 +91,7 @@
 #include <linux/bpf.h>
 #include <linux/kernfs.h>
 #include <linux/stringhash.h>	/* for hashlen_string() */
+#include <linux/fsinfo.h>
 #include <uapi/linux/mount.h>
 
 #include "avc.h"
@@ -2734,6 +2735,43 @@ static int selinux_sb_statfs(struct dentry *dentry)
 	ad.u.dentry = dentry->d_sb->s_root;
 	return superblock_has_perm(cred, dentry->d_sb, FILESYSTEM__GETATTR, &ad);
 }
+
+#ifdef CONFIG_FSINFO
+/*
+ * Retrieve the SELinux filesystem information, including mount parameters.
+ */
+static int selinux_sb_fsinfo(struct path *path, struct fsinfo_kparams *params)
+{
+	struct superblock_security_struct *sbsec = path->dentry->d_sb->s_security;
+
+	switch (params->request) {
+	case FSINFO_ATTR_LSM_PARAMETERS:
+		if (!(sbsec->flags & SE_SBINITIALIZED) ||
+		    !selinux_state.initialized)
+			return params->usage;
+
+		if (sbsec->flags & FSCONTEXT_MNT)
+			fsinfo_note_sid(params, FSCONTEXT_STR, sbsec->sid);
+		if (sbsec->flags & CONTEXT_MNT)
+			fsinfo_note_sid(params, CONTEXT_STR, sbsec->mntpoint_sid);
+		if (sbsec->flags & DEFCONTEXT_MNT)
+			fsinfo_note_sid(params, DEFCONTEXT_STR, sbsec->def_sid);
+		if (sbsec->flags & ROOTCONTEXT_MNT) {
+			struct dentry *root = sbsec->sb->s_root;
+			struct inode_security_struct *isec = backing_inode_security(root);
+			fsinfo_note_sid(params, ROOTCONTEXT_STR, isec->sid);
+		}
+		if (sbsec->flags & SBLABEL_MNT)
+			fsinfo_note_param(params, SECLABEL_STR, NULL);
+
+		return params->usage;
+
+	default:
+		return -ENODATA;
+	}
+	return 0;
+}
+#endif
 
 static int selinux_mount(const char *dev_name,
 			 const struct path *path,
@@ -6761,6 +6799,9 @@ static struct security_hook_list selinux_hooks[] __lsm_ro_after_init = {
 	LSM_HOOK_INIT(sb_kern_mount, selinux_sb_kern_mount),
 	LSM_HOOK_INIT(sb_show_options, selinux_sb_show_options),
 	LSM_HOOK_INIT(sb_statfs, selinux_sb_statfs),
+#ifdef CONFIG_FSINFO
+	LSM_HOOK_INIT(sb_fsinfo, selinux_sb_fsinfo),
+#endif
 	LSM_HOOK_INIT(sb_mount, selinux_mount),
 	LSM_HOOK_INIT(sb_umount, selinux_umount),
 	LSM_HOOK_INIT(sb_set_mnt_opts, selinux_set_mnt_opts),
