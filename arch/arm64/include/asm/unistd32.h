@@ -884,7 +884,7 @@ __SYSCALL(__NR_fsopen, sys_fsopen)
 __SYSCALL(__NR_fsconfig, sys_fsconfig)
 #define __NR_fsmount 432
 __SYSCALL(__NR_fsmount, sys_fsmount)
-#define __NR_fspick 433
+#define __NR_fspick 434
 __SYSCALL(__NR_fspick, sys_fspick)
 
 /*
