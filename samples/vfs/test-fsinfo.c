@@ -178,6 +178,7 @@ static void dump_attr_IDS(union reply *r, int size)
 	printf("\tdev   : %02x:%02x\n", f->f_dev_major, f->f_dev_minor);
 	printf("\tfs    : type=%x name=%s\n", f->f_fstype, f->f_fs_name);
 	printf("\tfsid  : %llx\n", (unsigned long long)f->f_fsid);
+	printf("\tsbid  : %llx\n", (unsigned long long)f->f_sb_id);
 }
 
 static void dump_attr_LIMITS(union reply *r, int size)
