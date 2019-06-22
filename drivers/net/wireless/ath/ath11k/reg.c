@@ -339,9 +339,6 @@ static void ath11k_reg_intersect_rules(struct ieee80211_reg_rule *rule1,
 				       struct ieee80211_reg_rule *rule2,
 				       struct ieee80211_reg_rule *new_rule)
 {
-	#define MAX(a, b) max_t(u32, a, b)
-	#define MIN(a, b) min_t(u32, a, b)
-
 	u32 start_freq1, end_freq1;
 	u32 start_freq2, end_freq2;
 	u32 freq_diff, max_bw;
@@ -352,30 +349,29 @@ static void ath11k_reg_intersect_rules(struct ieee80211_reg_rule *rule1,
 	end_freq1 = rule1->freq_range.end_freq_khz;
 	end_freq2 = rule2->freq_range.end_freq_khz;
 
-	new_rule->freq_range.start_freq_khz = MAX(start_freq1, start_freq2);
-	new_rule->freq_range.end_freq_khz = MIN(end_freq1, end_freq2);
+	new_rule->freq_range.start_freq_khz = max_t(u32, start_freq1,
+						    start_freq2);
+	new_rule->freq_range.end_freq_khz = min_t(u32, end_freq1, end_freq2);
 
 	freq_diff = new_rule->freq_range.end_freq_khz -
 			new_rule->freq_range.start_freq_khz;
-	max_bw = MIN(rule1->freq_range.max_bandwidth_khz,
-		     rule2->freq_range.max_bandwidth_khz);
-	new_rule->freq_range.max_bandwidth_khz = MIN(max_bw, freq_diff);
+	max_bw = min_t(u32, rule1->freq_range.max_bandwidth_khz,
+		       rule2->freq_range.max_bandwidth_khz);
+	new_rule->freq_range.max_bandwidth_khz = min_t(u32, max_bw, freq_diff);
 
 	new_rule->power_rule.max_antenna_gain =
-		MIN(rule1->power_rule.max_antenna_gain,
-		    rule2->power_rule.max_antenna_gain);
+		min_t(u32, rule1->power_rule.max_antenna_gain,
+		      rule2->power_rule.max_antenna_gain);
 
-	new_rule->power_rule.max_eirp = MIN(rule1->power_rule.max_eirp,
-					    rule2->power_rule.max_eirp);
+	new_rule->power_rule.max_eirp = min_t(u32, rule1->power_rule.max_eirp,
+					      rule2->power_rule.max_eirp);
 
 	/* Use the flags of both the rules */
 	new_rule->flags = rule1->flags | rule2->flags;
 
 	/* To be safe, lts use the max cac timeout of both rules */
-	new_rule->dfs_cac_ms = MAX(rule1->dfs_cac_ms, rule2->dfs_cac_ms);
-
-	#undef MAX
-	#undef MIN
+	new_rule->dfs_cac_ms = max_t(u32, rule1->dfs_cac_ms,
+				     rule2->dfs_cac_ms);
 }
 
 static struct ieee80211_regdomain *
