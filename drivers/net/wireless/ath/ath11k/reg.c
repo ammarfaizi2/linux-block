@@ -50,7 +50,7 @@ ath11k_reg_notifier(struct wiphy *wiphy, struct regulatory_request *request)
 	int ret;
 
 	ath11k_dbg(ar->ab, ATH11K_DBG_REG,
-		   "Regulatory Notification received for %s n", wiphy_name(wiphy));
+		   "Regulatory Notification received for %s\n", wiphy_name(wiphy));
 
 	/* Currently supporting only General User Hints. Cell base user
 	 * hints to be handled later.
