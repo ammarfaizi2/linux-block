@@ -468,6 +468,19 @@ ath11k_reg_adjust_bw(u16 start_freq, u16 end_freq, u16 max_bw)
 }
 
 static void
+ath11k_reg_update_rule(struct ieee80211_reg_rule *reg_rule, u32 start_freq,
+		       u32 end_freq, u32 bw, u32 ant_gain, u32 reg_pwr,
+		       u32 reg_flags)
+{
+	reg_rule->freq_range.start_freq_khz = MHZ_TO_KHZ(start_freq);
+	reg_rule->freq_range.end_freq_khz = MHZ_TO_KHZ(end_freq);
+	reg_rule->freq_range.max_bandwidth_khz = MHZ_TO_KHZ(bw);
+	reg_rule->power_rule.max_antenna_gain = DBI_TO_MBI(ant_gain);
+	reg_rule->power_rule.max_eirp = DBM_TO_MBM(reg_pwr);
+	reg_rule->flags = reg_flags;
+}
+
+static void
 ath11k_reg_update_weather_radar_band(struct ath11k_base *ab,
 				     struct ieee80211_regdomain *regd,
 				     struct cur_reg_rule *reg_rule,
@@ -482,13 +495,10 @@ ath11k_reg_update_weather_radar_band(struct ath11k_base *ab,
 	bw = ath11k_reg_adjust_bw(reg_rule->start_freq,
 				  ETSI_WEATHER_RADAR_BAND_LOW, max_bw);
 
-	regd->reg_rules[i] = (struct ieee80211_reg_rule)
-				REG_RULE(reg_rule->start_freq,
-					 ETSI_WEATHER_RADAR_BAND_LOW,
-					 bw,
-					 reg_rule->ant_gain,
-					 reg_rule->reg_power,
-					 flags);
+	ath11k_reg_update_rule(regd->reg_rules + i, reg_rule->start_freq,
+			       ETSI_WEATHER_RADAR_BAND_LOW, bw,
+			       reg_rule->ant_gain, reg_rule->reg_power,
+			       flags);
 
 	ath11k_dbg(ab, ATH11K_DBG_REG,
 		   "\t%d. (%d - %d @ %d) (%d, %d) (%d ms) (FLAGS %d)\n",
@@ -505,13 +515,12 @@ ath11k_reg_update_weather_radar_band(struct ath11k_base *ab,
 	bw = ath11k_reg_adjust_bw(ETSI_WEATHER_RADAR_BAND_LOW, end_freq,
 				  max_bw);
 
-	regd->reg_rules[++i] = (struct ieee80211_reg_rule)
-					REG_RULE(ETSI_WEATHER_RADAR_BAND_LOW,
-						 end_freq,
-						 bw,
-						 reg_rule->ant_gain,
-						 reg_rule->reg_power,
-						 flags);
+	i++;
+
+	ath11k_reg_update_rule(regd->reg_rules + i,
+			       ETSI_WEATHER_RADAR_BAND_LOW, end_freq, bw,
+			       reg_rule->ant_gain, reg_rule->reg_power,
+			       flags);
 
 	regd->reg_rules[i].dfs_cac_ms = ETSI_WEATHER_RADAR_BAND_CAC_TIMEOUT;
 
@@ -531,14 +540,12 @@ ath11k_reg_update_weather_radar_band(struct ath11k_base *ab,
 	bw = ath11k_reg_adjust_bw(ETSI_WEATHER_RADAR_BAND_HIGH,
 				  reg_rule->end_freq, max_bw);
 
-	regd->reg_rules[++i] =
-			(struct ieee80211_reg_rule)
-				REG_RULE(ETSI_WEATHER_RADAR_BAND_HIGH,
-					 reg_rule->end_freq,
-					 bw,
-					 reg_rule->ant_gain,
-					 reg_rule->reg_power,
-					 flags);
+	i++;
+
+	ath11k_reg_update_rule(regd->reg_rules + i, ETSI_WEATHER_RADAR_BAND_HIGH,
+			       reg_rule->end_freq, bw,
+			       reg_rule->ant_gain, reg_rule->reg_power,
+			       flags);
 
 	ath11k_dbg(ab, ATH11K_DBG_REG,
 		   "\t%d. (%d - %d @ %d) (%d, %d) (%d ms) (FLAGS %d)\n",
@@ -616,14 +623,11 @@ ath11k_reg_build_regd(struct ath11k_base *ab,
 
 		flags |= ath11k_map_fw_reg_flags(reg_rule->flags);
 
-		tmp_regd->reg_rules[i] =
-				(struct ieee80211_reg_rule)
-					REG_RULE(reg_rule->start_freq,
-						 reg_rule->end_freq,
-						 max_bw,
-						 reg_rule->ant_gain,
-						 reg_rule->reg_power,
-						 flags);
+		ath11k_reg_update_rule(tmp_regd->reg_rules + i,
+				       reg_rule->start_freq,
+				       reg_rule->end_freq, max_bw,
+				       reg_rule->ant_gain, reg_rule->reg_power,
+				       flags);
 
 		/* Update dfs cac timeout if the dfs domain is ETSI and the
 		 * new rule covers weather radar band.
