@@ -38,7 +38,7 @@ static bool ath11k_regdom_changes(struct ath11k *ar, char *alpha2)
 	if (!regd)
 		return true;
 
-	return !!(memcmp(regd->alpha2, alpha2, 2));
+	return memcmp(regd->alpha2, alpha2, 2) != 0;
 }
 
 static void
