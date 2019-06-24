@@ -2365,7 +2365,7 @@ static int ath11k_station_assoc(struct ath11k *ar,
 			return ret;
 	}
 
-	if ((sta->wme && sta->uapsd_queues)) {
+	if (sta->wme && sta->uapsd_queues) {
 		ret = ath11k_peer_assoc_qos_ap(ar, arvif, sta);
 		if (ret) {
 			ath11k_warn(ar->ab, "failed to set qos params for STA %pM for vdev %i: %d\n",
