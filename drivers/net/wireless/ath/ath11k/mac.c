@@ -167,6 +167,8 @@ const struct htt_rx_ring_tlv_filter ath11k_mac_mon_status_filter_default = {
 #define ath11k_a_rates (ath11k_legacy_rates + 4)
 #define ath11k_a_rates_size (ARRAY_SIZE(ath11k_legacy_rates) - 4)
 
+#define ATH11K_MAC_SCAN_TIMEOUT_MSECS 200 /* in msecs */
+
 static const u32 ath11k_smps_map[] = {
 	[WLAN_HT_CAP_SM_PS_STATIC] = WMI_PEER_SMPS_STATIC,
 	[WLAN_HT_CAP_SM_PS_DYNAMIC] = WMI_PEER_SMPS_DYNAMIC,
@@ -2027,7 +2029,7 @@ static int ath11k_mac_op_hw_scan(struct ieee80211_hw *hw,
 	/* Add a 200ms margin to account for event/command processing */
 	ieee80211_queue_delayed_work(ar->hw, &ar->scan.timeout,
 				     msecs_to_jiffies(arg.max_scan_time +
-						      200));
+						      ATH11K_MAC_SCAN_TIMEOUT_MSECS));
 
 exit:
 	if (req->ie_len)
