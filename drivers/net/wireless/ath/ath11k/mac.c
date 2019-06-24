@@ -3382,7 +3382,7 @@ err_free_idr:
 	return ret;
 }
 
-void ath11k_mgmt_over_wmi_tx_purge(struct ath11k *ar)
+static void ath11k_mgmt_over_wmi_tx_purge(struct ath11k *ar)
 {
 	struct sk_buff *skb;
 
@@ -3390,7 +3390,7 @@ void ath11k_mgmt_over_wmi_tx_purge(struct ath11k *ar)
 		ieee80211_free_txskb(ar->hw, skb);
 }
 
-void ath11k_mgmt_over_wmi_tx_work(struct work_struct *work)
+static void ath11k_mgmt_over_wmi_tx_work(struct work_struct *work)
 {
 	struct ath11k *ar = container_of(work, struct ath11k, wmi_mgmt_tx_work);
 	struct ieee80211_tx_info *info;
