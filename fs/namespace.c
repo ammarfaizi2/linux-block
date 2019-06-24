@@ -183,6 +183,10 @@ unsigned int mnt_get_count(struct mount *mnt)
 static void drop_mountpoint(struct fs_pin *p)
 {
 	struct mount *m = container_of(p, struct mount, mnt_umount);
+#ifdef CONFIG_MOUNT_NOTIFICATIONS
+	if (m->mnt_watchers)
+		remove_watch_list(m->mnt_watchers);
+#endif
 	dput(m->mnt_ex_mountpoint);
 	pin_remove(p);
 	mntput(&m->mnt);
@@ -515,7 +519,8 @@ static int mnt_make_readonly(struct mount *mnt)
 	mnt->mnt.mnt_flags &= ~MNT_WRITE_HOLD;
 	unlock_mount_hash();
 	if (ret == 0)
-		notify_mount(mnt, NULL, NOTIFY_MOUNT_READONLY, 0x10000);
+		notify_mount(mnt, NULL, NOTIFY_MOUNT_READONLY,
+			     NOTIFY_MOUNT_IS_NOW_RO);
 	return ret;
 }
 
@@ -2114,8 +2119,10 @@ static int attach_recursive_mnt(struct mount *source_mnt,
 		}
 		mnt_set_mountpoint(dest_mnt, dest_mp, source_mnt);
 		notify_mount(dest_mnt, source_mnt, NOTIFY_MOUNT_NEW_MOUNT,
-			     source_mnt->mnt.mnt_sb->s_flags & SB_SUBMOUNT ?
-			     0x10000 : 0);
+			     (source_mnt->mnt.mnt_sb->s_flags & SB_RDONLY ?
+			      NOTIFY_MOUNT_IS_NOW_RO : 0) |
+			     (source_mnt->mnt.mnt_sb->s_flags & SB_SUBMOUNT ?
+			      NOTIFY_MOUNT_IS_SUBMOUNT : 0));
 		commit_tree(source_mnt);
 	}
 
@@ -2492,7 +2499,8 @@ static void set_mount_attributes(struct mount *mnt, unsigned int mnt_flags)
 	mnt->mnt.mnt_flags = mnt_flags;
 	touch_mnt_namespace(mnt->mnt_ns);
 	unlock_mount_hash();
-	notify_mount(mnt, NULL, NOTIFY_MOUNT_SETATTR, 0);
+	notify_mount(mnt, NULL, NOTIFY_MOUNT_SETATTR,
+		     (mnt_flags & SB_RDONLY ? NOTIFY_MOUNT_IS_NOW_RO : 0));
 }
 
 /*
