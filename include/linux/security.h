@@ -401,6 +401,8 @@ int security_inode_getsecctx(struct inode *inode, void **ctx, u32 *ctxlen);
 #ifdef CONFIG_WATCH_QUEUE
 int security_watch_key(struct watch *watch, struct key *key);
 int security_watch_devices(struct watch *watch);
+int security_watch_mount(struct watch *watch, struct path *path);
+int security_watch_sb(struct watch *watch, struct super_block *sb);
 int security_post_notification(const struct cred *w_cred,
 			       const struct cred *cred,
 			       struct watch_notification *n);
@@ -1230,6 +1232,14 @@ static inline int security_watch_key(struct watch *watch, struct key *key)
 	return 0;
 }
 static inline int security_watch_devices(struct watch *watch)
+{
+	return 0;
+}
+static inline int security_watch_mount(struct watch *watch, struct path *path)
+{
+	return 0;
+}
+static inline int security_watch_sb(struct watch *watch, struct super_block *sb)
 {
 	return 0;
 }

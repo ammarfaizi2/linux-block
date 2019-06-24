@@ -1433,6 +1433,18 @@
  *	from devices (as a global set).
  *	@watch: The watch object
  *
+ * @watch_mount:
+ *	Check to see if a process is allowed to watch for mount topology change
+ *	notifications on a mount subtree.
+ *	@watch: The watch object
+ *	@path: The root of the subtree to watch.
+ *
+ * @watch_sb:
+ *	Check to see if a process is allowed to watch for event notifications
+ *	from a superblock.
+ *	@watch: The watch object
+ *	@sb: The superblock to watch.
+ *
  * @post_notification:
  *	Check to see if a watch notification can be posted to a particular
  *	queue.
@@ -1721,6 +1733,8 @@ union security_list_options {
 #ifdef CONFIG_WATCH_QUEUE
 	int (*watch_key)(struct watch *watch, struct key *key);
 	int (*watch_devices)(struct watch *watch);
+	int (*watch_mount)(struct watch *watch, struct path *path);
+	int (*watch_sb)(struct watch *watch, struct super_block *sb);
 	int (*post_notification)(const struct cred *w_cred,
 				 const struct cred *cred,
 				 struct watch_notification *n);
@@ -2007,6 +2021,8 @@ struct security_hook_heads {
 #ifdef CONFIG_WATCH_QUEUE
 	struct hlist_head watch_key;
 	struct hlist_head watch_devices;
+	struct hlist_head watch_mount;
+	struct hlist_head watch_sb;
 	struct hlist_head post_notification;
 #endif /* CONFIG_WATCH_QUEUE */
 #ifdef CONFIG_SECURITY_NETWORK
