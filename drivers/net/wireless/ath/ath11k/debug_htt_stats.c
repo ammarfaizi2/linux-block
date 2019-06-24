@@ -4296,7 +4296,7 @@ void ath11k_dbg_htt_ext_stats_handler(struct ath11k_base *ab,
 
 	pdev_id = FIELD_GET(HTT_STATS_COOKIE_LSB, cookie);
 	rcu_read_lock();
-	ar = ath11k_get_ar_by_pdev_id(ab, pdev_id);
+	ar = ath11k_mac_get_ar_by_pdev_id(ab, pdev_id);
 	rcu_read_unlock();
 	if (!ar) {
 		ath11k_warn(ab, "failed to get ar for pdev_id %d\n", pdev_id);

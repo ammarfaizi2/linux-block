@@ -3432,7 +3432,7 @@ static void ath11k_wmi_event_scan_start_failed(struct ath11k *ar)
 		break;
 	case ATH11K_SCAN_STARTING:
 		complete(&ar->scan.started);
-		__ath11k_scan_finish(ar);
+		__ath11k_mac_scan_finish(ar);
 		break;
 	}
 }
@@ -3458,7 +3458,7 @@ static void ath11k_wmi_event_scan_completed(struct ath11k *ar)
 		break;
 	case ATH11K_SCAN_RUNNING:
 	case ATH11K_SCAN_ABORTING:
-		__ath11k_scan_finish(ar);
+		__ath11k_mac_scan_finish(ar);
 		break;
 	}
 }
@@ -4263,7 +4263,7 @@ ath11k_wmi_fw_vdev_stats_fill(struct ath11k *ar,
 {
 	u32 len = *length;
 	u32 buf_len = ATH11K_FW_STATS_BUF_SIZE;
-	struct ath11k_vif *arvif = ath11k_get_arvif(ar, vdev->vdev_id);
+	struct ath11k_vif *arvif = ath11k_mac_get_arvif(ar, vdev->vdev_id);
 	u8 *vif_macaddr;
 	int i;
 
@@ -4383,7 +4383,7 @@ ath11k_wmi_fw_bcn_stats_fill(struct ath11k *ar,
 {
 	u32 len = *length;
 	u32 buf_len = ATH11K_FW_STATS_BUF_SIZE;
-	struct ath11k_vif *arvif = ath11k_get_arvif(ar, bcn->vdev_id);
+	struct ath11k_vif *arvif = ath11k_mac_get_arvif(ar, bcn->vdev_id);
 	u8 *vdev_macaddr;
 
 	if (arvif) {
@@ -4724,7 +4724,7 @@ static void ath11k_vdev_start_resp_event(struct ath11k_base *ab, u8 *evt_buf, u3
 	}
 
 	rcu_read_lock();
-	ar = ath11k_get_ar_by_vdev_id(ab, vdev_start_resp.vdev_id);
+	ar = ath11k_mac_get_ar_by_vdev_id(ab, vdev_start_resp.vdev_id);
 	if (!ar) {
 		ath11k_warn(ab, "invalid vdev id in vdev start resp ev %d",
 			    vdev_start_resp.vdev_id);
@@ -4773,7 +4773,7 @@ static void ath11k_vdev_stopped_event(struct ath11k_base *ab, u8 *evt_buf, u32 l
 	}
 
 	rcu_read_lock();
-	ar = ath11k_get_ar_vdev_stop_status(ab, vdev_id);
+	ar = ath11k_mac_get_ar_vdev_stop_status(ab, vdev_id);
 	if (!ar) {
 		ath11k_warn(ab, "invalid vdev id in vdev stopped ev %d",
 			    vdev_id);
@@ -4809,7 +4809,7 @@ static void ath11k_mgmt_rx_event(struct ath11k_base *ab, struct sk_buff *skb)
 		   rx_ev.status);
 
 	rcu_read_lock();
-	ar = ath11k_get_ar_by_pdev_id(ab, rx_ev.pdev_id);
+	ar = ath11k_mac_get_ar_by_pdev_id(ab, rx_ev.pdev_id);
 
 	if (!ar) {
 		ath11k_warn(ab, "invalid pdev_id %d in mgmt_rx_event\n",
@@ -4911,7 +4911,7 @@ static void ath11k_mgmt_tx_compl_event(struct ath11k_base *ab, struct sk_buff *s
 	}
 
 	rcu_read_lock();
-	ar = ath11k_get_ar_by_pdev_id(ab, tx_compl_param.pdev_id);
+	ar = ath11k_mac_get_ar_by_pdev_id(ab, tx_compl_param.pdev_id);
 	if (!ar) {
 		ath11k_warn(ab, "invalid pdev id %d in mgmt_tx_compl_event\n",
 			    tx_compl_param.pdev_id);
@@ -4977,7 +4977,7 @@ static void ath11k_scan_event(struct ath11k_base *ab, u8 *evt_buf, u32 len)
 	    scan_ev.reason == WMI_SCAN_REASON_CANCELLED)
 		ar = ath11k_get_ar_on_scan_abort(ab, scan_ev.vdev_id);
 	else
-		ar = ath11k_get_ar_by_vdev_id(ab, scan_ev.vdev_id);
+		ar = ath11k_mac_get_ar_by_vdev_id(ab, scan_ev.vdev_id);
 
 	if (!ar) {
 		ath11k_warn(ab, "Received scan event for unknown vdev");
@@ -5049,7 +5049,7 @@ static void ath11k_peer_sta_kickout_event(struct ath11k_base *ab, u8 *evt_buf, u
 		goto exit;
 	}
 
-	ar = ath11k_get_ar_by_vdev_id(ab, peer->vdev_id);
+	ar = ath11k_mac_get_ar_by_vdev_id(ab, peer->vdev_id);
 	if (!ar) {
 		ath11k_warn(ab, "invalid vdev id in peer sta kickout ev %d",
 			    peer->vdev_id);
@@ -5089,7 +5089,7 @@ static void ath11k_roam_event(struct ath11k_base *ab, u8 *evt_buf, u32 len)
 		   roam_ev.vdev_id, roam_ev.reason, roam_ev.rssi);
 
 	rcu_read_lock();
-	ar = ath11k_get_ar_by_vdev_id(ab, roam_ev.vdev_id);
+	ar = ath11k_mac_get_ar_by_vdev_id(ab, roam_ev.vdev_id);
 	if (!ar) {
 		ath11k_warn(ab, "invalid vdev id in roam ev %d",
 			    roam_ev.vdev_id);
@@ -5147,7 +5147,7 @@ static void ath11k_chan_info_event(struct ath11k_base *ab, u8 *evt_buf, u32 len)
 	}
 
 	rcu_read_lock();
-	ar = ath11k_get_ar_by_vdev_id(ab, ch_info_ev.vdev_id);
+	ar = ath11k_mac_get_ar_by_vdev_id(ab, ch_info_ev.vdev_id);
 	if (!ar) {
 		ath11k_warn(ab, "invalid vdev id in chan info ev %d",
 			    ch_info_ev.vdev_id);
@@ -5231,7 +5231,7 @@ ath11k_pdev_bss_chan_info_event(struct ath11k_base *ab, u8 *evt_buf, u32 len)
 		   tx, rx, rx_bss);
 
 	rcu_read_lock();
-	ar = ath11k_get_ar_by_pdev_id(ab, bss_ch_info_ev.pdev_id);
+	ar = ath11k_mac_get_ar_by_pdev_id(ab, bss_ch_info_ev.pdev_id);
 
 	if (!ar) {
 		ath11k_warn(ab, "invalid pdev id %d in bss_chan_info event\n",
@@ -5285,7 +5285,7 @@ static void ath11k_vdev_install_key_compl_event(struct ath11k_base *ab, u8 *evt_
 		   install_key_compl.macaddr, install_key_compl.status);
 
 	rcu_read_lock();
-	ar = ath11k_get_ar_by_vdev_id(ab, install_key_compl.vdev_id);
+	ar = ath11k_mac_get_ar_by_vdev_id(ab, install_key_compl.vdev_id);
 	if (!ar) {
 		ath11k_warn(ab, "invalid vdev id in install key compl ev %d",
 			    install_key_compl.vdev_id);
@@ -5357,7 +5357,7 @@ static void ath11k_peer_assoc_conf_event(struct ath11k_base *ab, u8 *evt_buf, u3
 		   "peer assoc conf ev vdev id %d macaddr %pM\n",
 		   peer_assoc_conf.vdev_id, peer_assoc_conf.macaddr);
 
-	ar = ath11k_get_ar_by_vdev_id(ab, peer_assoc_conf.vdev_id);
+	ar = ath11k_mac_get_ar_by_vdev_id(ab, peer_assoc_conf.vdev_id);
 
 	if (!ar) {
 		ath11k_warn(ab, "invalid vdev id in peer assoc conf ev %d",
@@ -5425,7 +5425,7 @@ ath11k_wmi_process_csa_switch_count_event(struct ath11k_base *ab,
 
 	rcu_read_lock();
 	for (i = 0; i < ev->num_vdevs; i++) {
-		arvif = ath11k_get_arvif_by_vdev_id(ab, vdev_ids[i]);
+		arvif = ath11k_mac_get_arvif_by_vdev_id(ab, vdev_ids[i]);
 
 		if (!arvif) {
 			ath11k_warn(ab, "Recvd csa status for unknown vdev %d",
@@ -5506,7 +5506,7 @@ ath11k_wmi_pdev_dfs_radar_detected_event(struct ath11k_base *ab,
 		   ev->detector_id, ev->segment_id, ev->timestamp, ev->is_chirp,
 		   ev->freq_offset, ev->sidx);
 
-	ar = ath11k_get_ar_by_pdev_id(ab, ev->pdev_id);
+	ar = ath11k_mac_get_ar_by_pdev_id(ab, ev->pdev_id);
 
 	if (!ar) {
 		ath11k_warn(ab, "radar detected in invalid pdev %d\n",

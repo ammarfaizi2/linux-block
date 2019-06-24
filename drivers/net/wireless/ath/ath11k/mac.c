@@ -345,7 +345,7 @@ static void ath11k_get_arvif_iter(void *data, u8 *mac,
 		arvif_iter->arvif = arvif;
 }
 
-struct ath11k_vif *ath11k_get_arvif(struct ath11k *ar, u32 vdev_id)
+struct ath11k_vif *ath11k_mac_get_arvif(struct ath11k *ar, u32 vdev_id)
 {
 	struct ath11k_vif_iter arvif_iter;
 	u32 flags;
@@ -364,8 +364,8 @@ struct ath11k_vif *ath11k_get_arvif(struct ath11k *ar, u32 vdev_id)
 	return arvif_iter.arvif;
 }
 
-struct ath11k_vif *ath11k_get_arvif_by_vdev_id(struct ath11k_base *ab,
-					       u32 vdev_id)
+struct ath11k_vif *ath11k_mac_get_arvif_by_vdev_id(struct ath11k_base *ab,
+						   u32 vdev_id)
 {
 	int i;
 	struct ath11k_pdev *pdev;
@@ -377,7 +377,7 @@ struct ath11k_vif *ath11k_get_arvif_by_vdev_id(struct ath11k_base *ab,
 	for (i = 0; i < ab->num_radios; i++) {
 		pdev = rcu_dereference(ab->pdevs_active[i]);
 		if (pdev && pdev->ar) {
-			arvif = ath11k_get_arvif(pdev->ar, vdev_id);
+			arvif = ath11k_mac_get_arvif(pdev->ar, vdev_id);
 			if (arvif)
 				return arvif;
 		}
@@ -386,7 +386,7 @@ struct ath11k_vif *ath11k_get_arvif_by_vdev_id(struct ath11k_base *ab,
 	return NULL;
 }
 
-struct ath11k *ath11k_get_ar_by_vdev_id(struct ath11k_base *ab, u32 vdev_id)
+struct ath11k *ath11k_mac_get_ar_by_vdev_id(struct ath11k_base *ab, u32 vdev_id)
 {
 	int i;
 	struct ath11k_pdev *pdev;
@@ -398,7 +398,7 @@ struct ath11k *ath11k_get_ar_by_vdev_id(struct ath11k_base *ab, u32 vdev_id)
 	for (i = 0; i < ab->num_radios; i++) {
 		pdev = rcu_dereference(ab->pdevs_active[i]);
 		if (pdev && pdev->ar) {
-			arvif = ath11k_get_arvif(pdev->ar, vdev_id);
+			arvif = ath11k_mac_get_arvif(pdev->ar, vdev_id);
 			if (arvif)
 				return arvif->ar;
 		}
@@ -407,7 +407,7 @@ struct ath11k *ath11k_get_ar_by_vdev_id(struct ath11k_base *ab, u32 vdev_id)
 	return NULL;
 }
 
-struct ath11k *ath11k_get_ar_by_pdev_id(struct ath11k_base *ab, u32 pdev_id)
+struct ath11k *ath11k_mac_get_ar_by_pdev_id(struct ath11k_base *ab, u32 pdev_id)
 {
 	int i;
 	struct ath11k_pdev *pdev;
@@ -428,8 +428,8 @@ struct ath11k *ath11k_get_ar_by_pdev_id(struct ath11k_base *ab, u32 pdev_id)
 	return NULL;
 }
 
-struct ath11k *ath11k_get_ar_vdev_stop_status(struct ath11k_base *ab,
-					      u32 vdev_id)
+struct ath11k *ath11k_mac_get_ar_vdev_stop_status(struct ath11k_base *ab,
+						  u32 vdev_id)
 {
 	int i;
 	struct ath11k_pdev *pdev;
@@ -1790,7 +1790,7 @@ static void ath11k_bss_info_changed(struct ieee80211_hw *hw,
 /* Scanning */
 /************/
 
-void __ath11k_scan_finish(struct ath11k *ar)
+void __ath11k_mac_scan_finish(struct ath11k *ar)
 {
 	lockdep_assert_held(&ar->data_lock);
 
@@ -1820,10 +1820,10 @@ void __ath11k_scan_finish(struct ath11k *ar)
 	}
 }
 
-void ath11k_scan_finish(struct ath11k *ar)
+void ath11k_mac_scan_finish(struct ath11k *ar)
 {
 	spin_lock_bh(&ar->data_lock);
-	__ath11k_scan_finish(ar);
+	__ath11k_mac_scan_finish(ar);
 	spin_unlock_bh(&ar->data_lock);
 }
 
@@ -1865,7 +1865,7 @@ out:
 	 */
 	spin_lock_bh(&ar->data_lock);
 	if (ar->scan.state != ATH11K_SCAN_IDLE)
-		__ath11k_scan_finish(ar);
+		__ath11k_mac_scan_finish(ar);
 	spin_unlock_bh(&ar->data_lock);
 
 	return ret;
@@ -3457,7 +3457,7 @@ static void ath11k_mac_op_tx(struct ieee80211_hw *hw,
 	}
 }
 
-void ath11k_drain_tx(struct ath11k *ar)
+void ath11k_mac_drain_tx(struct ath11k *ar)
 {
 	/* make sure rcu-protected mac80211 tx path itself is drained */
 	synchronize_net();
@@ -3488,7 +3488,7 @@ static int ath11k_start(struct ieee80211_hw *hw)
 	struct ath11k_pdev *pdev = ar->pdev;
 	int ret;
 
-	ath11k_drain_tx(ar);
+	ath11k_mac_drain_tx(ar);
 	mutex_lock(&ar->conf_mutex);
 
 	switch (ar->state) {
@@ -3591,7 +3591,7 @@ static void ath11k_stop(struct ieee80211_hw *hw)
 	struct htt_ppdu_stats_info *ppdu_stats, *tmp;
 	int ret;
 
-	ath11k_drain_tx(ar);
+	ath11k_mac_drain_tx(ar);
 
 	mutex_lock(&ar->conf_mutex);
 	ret = ath11k_mac_config_mon_status_default(ar, false);

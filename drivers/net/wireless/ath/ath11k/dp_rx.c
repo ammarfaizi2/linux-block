@@ -1247,7 +1247,7 @@ static int ath11k_htt_pull_ppdu_stats(struct ath11k_base *ab,
 	ppdu_id = msg->ppdu_id;
 
 	rcu_read_lock();
-	ar = ath11k_get_ar_by_pdev_id(ab, pdev_id);
+	ar = ath11k_mac_get_ar_by_pdev_id(ab, pdev_id);
 	if (!ar) {
 		ret = -EINVAL;
 		goto exit;

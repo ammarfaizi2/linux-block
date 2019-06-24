@@ -577,7 +577,7 @@ void ath11k_core_halt(struct ath11k *ar)
 
 	ar->num_created_vdevs = 0;
 
-	ath11k_scan_finish(ar);
+	ath11k_mac_scan_finish(ar);
 	ath11k_mac_peer_cleanup_all(ar);
 	cancel_delayed_work_sync(&ar->scan.timeout);
 	cancel_work_sync(&ar->regd_update_work);
@@ -606,7 +606,7 @@ static void ath11k_core_restart(struct work_struct *work)
 			continue;
 
 		ieee80211_stop_queues(ar->hw);
-		ath11k_drain_tx(ar);
+		ath11k_mac_drain_tx(ar);
 		complete(&ar->scan.started);
 		complete(&ar->scan.completed);
 		complete(&ar->peer_assoc_done);
