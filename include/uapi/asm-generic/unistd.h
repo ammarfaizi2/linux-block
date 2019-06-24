@@ -848,9 +848,11 @@ __SYSCALL(__NR_fspick, sys_fspick)
 __SYSCALL(__NR_fsinfo, sys_fsinfo)
 #define __NR_watch_mount 435
 __SYSCALL(__NR_watch_mount, sys_watch_mount)
+#define __NR_watch_sb 436
+__SYSCALL(__NR_watch_sb, sys_watch_sb)
 
 #undef __NR_syscalls
-#define __NR_syscalls 436
+#define __NR_syscalls 437
 
 /*
  * 32 bit systems traditionally used different

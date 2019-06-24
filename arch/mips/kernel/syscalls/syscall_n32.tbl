@@ -374,3 +374,4 @@
 433	n32	fspick				sys_fspick
 434	n32	fsinfo				sys_fsinfo
 435	n32	watch_mount			sys_watch_mount
+436	n32	watch_sb			sys_watch_sb
