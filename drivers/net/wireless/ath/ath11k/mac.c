@@ -3828,7 +3828,8 @@ static int ath11k_mac_op_add_interface(struct ieee80211_hw *hw,
 		goto err_vdev_del;
 	}
 
-	if (arvif->vdev_type == WMI_VDEV_TYPE_AP) {
+	switch (arvif->vdev_type) {
+	case WMI_VDEV_TYPE_AP:
 		peer_param.vdev_id = arvif->vdev_id;
 		peer_param.peer_addr = vif->addr;
 		peer_param.peer_type = WMI_PEER_TYPE_DEFAULT;
@@ -3838,18 +3839,15 @@ static int ath11k_mac_op_add_interface(struct ieee80211_hw *hw,
 				    arvif->vdev_id, ret);
 			goto err_vdev_del;
 		}
-	}
 
-	if (arvif->vdev_type == WMI_VDEV_TYPE_AP) {
 		ret = ath11k_mac_set_kickout(arvif);
 		if (ret) {
 			ath11k_warn(ar->ab, "failed to set vdev %i kickout parameters: %d\n",
 				    arvif->vdev_id, ret);
 			goto err_peer_del;
 		}
-	}
-
-	if (arvif->vdev_type == WMI_VDEV_TYPE_STA) {
+		break;
+	case WMI_VDEV_TYPE_STA:
 		param_id = WMI_STA_PS_PARAM_RX_WAKE_POLICY;
 		param_value = WMI_STA_PS_RX_WAKE_POLICY_WAKE;
 		ret = ath11k_wmi_set_sta_ps_param(ar, arvif->vdev_id,
@@ -3879,6 +3877,9 @@ static int ath11k_mac_op_add_interface(struct ieee80211_hw *hw,
 				    arvif->vdev_id, ret);
 			goto err_peer_del;
 		}
+		break;
+	default:
+		break;
 	}
 
 	arvif->txpower = vif->bss_conf.txpower;
