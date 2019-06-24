@@ -13,7 +13,8 @@ enum watch_notification_type {
 	WATCH_TYPE_KEY_NOTIFY	= 1,	/* Key change event notification */
 	WATCH_TYPE_BLOCK_NOTIFY	= 2,	/* Block layer event notification */
 	WATCH_TYPE_USB_NOTIFY	= 3,	/* USB subsystem event notification */
-	WATCH_TYPE___NR		= 4
+	WATCH_TYPE_MOUNT_NOTIFY	= 4,	/* Mount topology change notification */
+	WATCH_TYPE___NR		= 5
 };
 
 enum watch_meta_notification_subtype {
@@ -166,5 +167,34 @@ struct usb_notification {
 };
 
 #define USB_NOTIFICATION_MAX_NAME_LEN 63
+
+/*
+ * Type of mount topology change notification.
+ */
+enum mount_notification_subtype {
+	NOTIFY_MOUNT_NEW_MOUNT	= 0, /* New mount added */
+	NOTIFY_MOUNT_UNMOUNT	= 1, /* Mount removed manually */
+	NOTIFY_MOUNT_EXPIRY	= 2, /* Automount expired */
+	NOTIFY_MOUNT_READONLY	= 3, /* Mount R/O state changed */
+	NOTIFY_MOUNT_SETATTR	= 4, /* Mount attributes changed */
+	NOTIFY_MOUNT_MOVE_FROM	= 5, /* Mount moved from here */
+	NOTIFY_MOUNT_MOVE_TO	= 6, /* Mount moved to here (compare op_id) */
+};
+
+#define NOTIFY_MOUNT_IN_SUBTREE		WATCH_INFO_FLAG_0 /* Event not actually at watched dentry */
+#define NOTIFY_MOUNT_IS_RECURSIVE	WATCH_INFO_FLAG_1 /* Change applied recursively */
+#define NOTIFY_MOUNT_IS_NOW_RO		WATCH_INFO_FLAG_2 /* Mount changed to R/O */
+#define NOTIFY_MOUNT_IS_SUBMOUNT	WATCH_INFO_FLAG_3 /* New mount is submount */
+
+/*
+ * Mount topology/configuration change notification record.
+ * - watch.type = WATCH_TYPE_MOUNT_NOTIFY
+ * - watch.subtype = enum mount_notification_subtype
+ */
+struct mount_notification {
+	struct watch_notification watch; /* WATCH_TYPE_MOUNT_NOTIFY */
+	__u32	triggered_on;		/* The mount that the notify was on */
+	__u32	changed_mount;		/* The mount that got changed */
+};
 
 #endif /* _UAPI_LINUX_WATCH_QUEUE_H */
