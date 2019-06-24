@@ -39,6 +39,7 @@ enum fsinfo_attribute {
 	FSINFO_ATTR_SERVER_NAME		= 21,	/* Name of the Nth server (string) */
 	FSINFO_ATTR_SERVER_ADDRESS	= 22,	/* Mth address of the Nth server */
 	FSINFO_ATTR_CELL_NAME		= 23,	/* Cell name (string) */
+	FSINFO_ATTR_SB_NOTIFICATIONS	= 24,	/* sb_notify() information */
 	FSINFO_ATTR__NR
 };
 
@@ -314,6 +315,15 @@ struct fsinfo_mount_child {
  */
 struct fsinfo_server_address {
 	struct __kernel_sockaddr_storage address;
+};
+
+/*
+ * Information struct for fsinfo(FSINFO_ATTR_SB_NOTIFICATIONS).
+ */
+struct fsinfo_sb_notifications {
+	__u64		watch_id;	/* Watch ID for superblock. */
+	__u32		notify_counter;	/* Number of notifications. */
+	__u32		__reserved[1];
 };
 
 #endif /* _UAPI_LINUX_FSINFO_H */
