@@ -11,8 +11,9 @@ config WATCH_QUEUE
 	help
 	  This is a general notification queue for the kernel to pass events to
 	  userspace through a mmap()'able ring buffer.  It can be used in
-	  conjunction with watches for key/keyring change notifications and device
-	  notifications.
+	  conjunction with watches for key/keyring change notifications, device
+	  notifications, mount topology change notifications, and superblock
+	  change notifications.
 
 	  Note that in theory this should work fine with NOMMU, but I'm not
 	  sure how to make that work.

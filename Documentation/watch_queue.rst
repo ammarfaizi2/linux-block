@@ -13,6 +13,10 @@ receive notifications from the kernel.  This can be used in conjunction with::
 
     * USB subsystem event notifications
 
+  * Mount topology change notifications
+
+  * Superblock event notifications
+
 
 The notifications buffers can be enabled by:
 
@@ -324,6 +328,19 @@ Any particular buffer can be fed from multiple sources.  Sources include:
     for buses and devices.  Watchpoints of this type are set on the global
     device watch list.
 
+  * WATCH_TYPE_MOUNT_NOTIFY
+
+    Notifications of this type indicate mount tree topology changes and mount
+    attribute changes.  A watch can be set on a particular file or directory
+    and notifications from the path subtree rooted at that point will be
+    intercepted.
+
+  * WATCH_TYPE_SB_NOTIFY
+
+    Notifications of this type indicate superblock events, such as quota limits
+    being hit, I/O errors being produced or network server loss/reconnection.
+    Watches of this type are set directly on superblocks.
+
 
 Event Filtering
 ===============
@@ -365,7 +382,8 @@ Where:
 	(watch.info & info_mask) == info_filter
 
     This could be used, for example, to ignore events that are not exactly on
-    the watched point in a mount tree.
+    the watched point in a mount tree by specifying NOTIFY_MOUNT_IN_SUBTREE
+    must be 0.
 
   * ``subtype_filter`` is a bitmask indicating the subtypes that are of
     interest.  Bit 0 of subtype_filter[0] corresponds to subtype 0, bit 1 to
