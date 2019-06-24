@@ -39,6 +39,7 @@ enum fsinfo_attribute {
 	FSINFO_ATTR_MOUNT_DEVNAME	= 21,	/* Mount object device name (string) */
 	FSINFO_ATTR_MOUNT_CHILDREN	= 22,	/* Submount list (array) */
 	FSINFO_ATTR_MOUNT_SUBMOUNT	= 23,	/* Relative path of Nth submount (string) */
+	FSINFO_ATTR_SB_NOTIFICATIONS	= 24,	/* sb_notify() information */
 	FSINFO_ATTR__NR
 };
 
@@ -314,6 +315,15 @@ struct fsinfo_mount_info {
 struct fsinfo_mount_child {
 	__u32		mnt_id;		/* Mount identifier (use with AT_FSINFO_MOUNTID_PATH) */
 	__u32		change_counter;	/* Number of changes applied to mount. */
+};
+
+/*
+ * Information struct for fsinfo(FSINFO_ATTR_SB_NOTIFICATIONS).
+ */
+struct fsinfo_sb_notifications {
+	__u64		watch_id;	/* Watch ID for superblock. */
+	__u32		notify_counter;	/* Number of notifications. */
+	__u32		__reserved[1];
 };
 
 #endif /* _UAPI_LINUX_FSINFO_H */

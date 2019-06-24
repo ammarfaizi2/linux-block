@@ -321,6 +321,16 @@ void fsinfo_note_sb_params(struct fsinfo_kparams *params, unsigned int s_flags)
 }
 EXPORT_SYMBOL(fsinfo_note_sb_params);
 
+static int fsinfo_generic_sb_notifications(struct path *path,
+					   struct fsinfo_sb_notifications *p)
+{
+	struct super_block *sb = path->dentry->d_sb;
+
+	p->watch_id		= sb->s_unique_id;
+	p->notify_counter	= atomic_read(&sb->s_notify_counter);
+	return sizeof(*p);
+}
+
 static int fsinfo_generic_parameters(struct path *path,
 				     struct fsinfo_kparams *params)
 {
@@ -357,6 +367,7 @@ int generic_fsinfo(struct path *path, struct fsinfo_kparams *params)
 	case _genp(MOUNT_DEVNAME,	mount_devname);
 	case _genp(MOUNT_CHILDREN,	mount_children);
 	case _genp(MOUNT_SUBMOUNT,	mount_submount);
+	case _gen(SB_NOTIFICATIONS,	sb_notifications);
 	default:
 		return -EOPNOTSUPP;
 	}
@@ -645,6 +656,7 @@ static const struct fsinfo_attr_info fsinfo_buffer_info[FSINFO_ATTR__NR] = {
 	FSINFO_STRING		(MOUNT_DEVNAME),
 	FSINFO_STRUCT_ARRAY	(MOUNT_CHILDREN,	mount_child),
 	FSINFO_STRING_N		(MOUNT_SUBMOUNT),
+	FSINFO_STRUCT		(SB_NOTIFICATIONS,	sb_notifications),
 };
 
 /**
