@@ -713,10 +713,7 @@ static void kmemcg_workfn(struct work_struct *work)
 	get_online_mems();
 
 	mutex_lock(&slab_mutex);
-
 	s->memcg_params.work_fn(s);
-	s->memcg_params.work_fn = NULL;
-
 	mutex_unlock(&slab_mutex);
 
 	put_online_mems();
@@ -752,7 +749,6 @@ static void kmemcg_cache_shutdown(struct percpu_ref *percpu_ref)
 	if (s->memcg_params.root_cache->memcg_params.dying)
 		goto unlock;
 
-	WARN_ON(s->memcg_params.work_fn);
 	s->memcg_params.work_fn = kmemcg_cache_shutdown_fn;
 	INIT_WORK(&s->memcg_params.work, kmemcg_workfn);
 	queue_work(memcg_kmem_cache_wq, &s->memcg_params.work);
@@ -783,7 +779,6 @@ static void kmemcg_cache_deactivate(struct kmem_cache *s)
 	if (s->memcg_params.root_cache->memcg_params.dying)
 		goto unlock;
 
-	WARN_ON_ONCE(s->memcg_params.work_fn);
 	s->memcg_params.work_fn = kmemcg_cache_deactivate_after_rcu;
 	call_rcu(&s->memcg_params.rcu_head, kmemcg_rcufn);
 unlock:
