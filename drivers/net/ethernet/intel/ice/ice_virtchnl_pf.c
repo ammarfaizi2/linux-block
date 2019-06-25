@@ -996,8 +996,8 @@ static bool ice_reset_vf(struct ice_vf *vf, bool is_vflr)
 		/* Call Disable LAN Tx queue AQ call even when queues are not
 		 * enabled. This is needed for successful completiom of VFR
 		 */
-		ice_dis_vsi_txq(vsi->port_info, 0, NULL, NULL, ICE_VF_RESET,
-				vf->vf_id, NULL);
+		ice_dis_vsi_txq(vsi->port_info, vsi->idx, 0, 0, NULL, NULL,
+				NULL, ICE_VF_RESET, vf->vf_id, NULL);
 	}
 
 	hw = &pf->hw;
@@ -1134,7 +1134,7 @@ static int ice_alloc_vfs(struct ice_pf *pf, u16 num_alloc_vfs)
 			   GFP_KERNEL);
 	if (!vfs) {
 		ret = -ENOMEM;
-		goto err_unroll_sriov;
+		goto err_pci_disable_sriov;
 	}
 	pf->vf = vfs;
 
@@ -1154,12 +1154,19 @@ static int ice_alloc_vfs(struct ice_pf *pf, u16 num_alloc_vfs)
 	pf->num_alloc_vfs = num_alloc_vfs;
 
 	/* VF resources get allocated during reset */
-	if (!ice_reset_all_vfs(pf, true))
+	if (!ice_reset_all_vfs(pf, true)) {
+		ret = -EIO;
 		goto err_unroll_sriov;
+	}
 
 	goto err_unroll_intr;
 
 err_unroll_sriov:
+	pf->vf = NULL;
+	devm_kfree(&pf->pdev->dev, vfs);
+	vfs = NULL;
+	pf->num_alloc_vfs = 0;
+err_pci_disable_sriov:
 	pci_disable_sriov(pf->pdev);
 err_unroll_intr:
 	/* rearm interrupts here */
@@ -1273,21 +1280,10 @@ void ice_process_vflr_event(struct ice_pf *pf)
 	int vf_id;
 	u32 reg;
 
-	if (!test_bit(__ICE_VFLR_EVENT_PENDING, pf->state) ||
+	if (!test_and_clear_bit(__ICE_VFLR_EVENT_PENDING, pf->state) ||
 	    !pf->num_alloc_vfs)
 		return;
 
-	/* Re-enable the VFLR interrupt cause here, before looking for which
-	 * VF got reset. Otherwise, if another VF gets a reset while the
-	 * first one is being processed, that interrupt will be lost, and
-	 * that VF will be stuck in reset forever.
-	 */
-	reg = rd32(hw, PFINT_OICR_ENA);
-	reg |= PFINT_OICR_VFLR_M;
-	wr32(hw, PFINT_OICR_ENA, reg);
-	ice_flush(hw);
-
-	clear_bit(__ICE_VFLR_EVENT_PENDING, pf->state);
 	for (vf_id = 0; vf_id < pf->num_alloc_vfs; vf_id++) {
 		struct ice_vf *vf = &pf->vf[vf_id];
 		u32 reg_idx, bit_idx;
@@ -1818,21 +1814,29 @@ error_param:
 static int ice_vc_cfg_irq_map_msg(struct ice_vf *vf, u8 *msg)
 {
 	enum virtchnl_status_code v_ret = VIRTCHNL_STATUS_SUCCESS;
-	struct virtchnl_irq_map_info *irqmap_info =
-	    (struct virtchnl_irq_map_info *)msg;
+	struct virtchnl_irq_map_info *irqmap_info;
 	u16 vsi_id, vsi_q_id, vector_id;
 	struct virtchnl_vector_map *map;
-	struct ice_vsi *vsi = NULL;
 	struct ice_pf *pf = vf->pf;
+	struct ice_vsi *vsi;
 	unsigned long qmap;
+	u16 num_q_vectors;
 	int i;
 
-	if (!test_bit(ICE_VF_STATE_ACTIVE, vf->vf_states)) {
+	irqmap_info = (struct virtchnl_irq_map_info *)msg;
+	num_q_vectors = irqmap_info->num_vectors - ICE_NONQ_VECS_VF;
+	vsi = pf->vsi[vf->lan_vsi_idx];
+
+	if (!test_bit(ICE_VF_STATE_ACTIVE, vf->vf_states) ||
+	    !vsi || vsi->num_q_vectors < num_q_vectors ||
+	    irqmap_info->num_vectors == 0) {
 		v_ret = VIRTCHNL_STATUS_ERR_PARAM;
 		goto error_param;
 	}
 
-	for (i = 0; i < irqmap_info->num_vectors; i++) {
+	for (i = 0; i < num_q_vectors; i++) {
+		struct ice_q_vector *q_vector = vsi->q_vectors[i];
+
 		map = &irqmap_info->vecmap[i];
 
 		vector_id = map->vector_id;
@@ -1844,36 +1848,26 @@ static int ice_vc_cfg_irq_map_msg(struct ice_vf *vf, u8 *msg)
 			goto error_param;
 		}
 
-		vsi = pf->vsi[vf->lan_vsi_idx];
-		if (!vsi) {
-			v_ret = VIRTCHNL_STATUS_ERR_PARAM;
-			goto error_param;
-		}
-
 		/* lookout for the invalid queue index */
 		qmap = map->rxq_map;
+		q_vector->num_ring_rx = 0;
 		for_each_set_bit(vsi_q_id, &qmap, ICE_MAX_BASE_QS_PER_VF) {
-			struct ice_q_vector *q_vector;
-
 			if (!ice_vc_isvalid_q_id(vf, vsi_id, vsi_q_id)) {
 				v_ret = VIRTCHNL_STATUS_ERR_PARAM;
 				goto error_param;
 			}
-			q_vector = vsi->q_vectors[i];
 			q_vector->num_ring_rx++;
 			q_vector->rx.itr_idx = map->rxitr_idx;
 			vsi->rx_rings[vsi_q_id]->q_vector = q_vector;
 		}
 
 		qmap = map->txq_map;
+		q_vector->num_ring_tx = 0;
 		for_each_set_bit(vsi_q_id, &qmap, ICE_MAX_BASE_QS_PER_VF) {
-			struct ice_q_vector *q_vector;
-
 			if (!ice_vc_isvalid_q_id(vf, vsi_id, vsi_q_id)) {
 				v_ret = VIRTCHNL_STATUS_ERR_PARAM;
 				goto error_param;
 			}
-			q_vector = vsi->q_vectors[i];
 			q_vector->num_ring_tx++;
 			q_vector->tx.itr_idx = map->txitr_idx;
 			vsi->tx_rings[vsi_q_id]->q_vector = q_vector;
@@ -1916,9 +1910,8 @@ static int ice_vc_cfg_qs_msg(struct ice_vf *vf, u8 *msg)
 	}
 
 	vsi = pf->vsi[vf->lan_vsi_idx];
-	if (!vsi) {
+	if (!vsi)
 		goto error_param;
-	}
 
 	if (qci->num_queue_pairs > ICE_MAX_BASE_QS_PER_VF) {
 		dev_err(&pf->pdev->dev,
@@ -2329,7 +2322,6 @@ static int ice_vc_process_vlan_msg(struct ice_vf *vf, u8 *msg, bool add_v)
 		/* There is no need to let VF know about being not trusted,
 		 * so we can just return success message here
 		 */
-		v_ret = VIRTCHNL_STATUS_ERR_PARAM;
 		goto error_param;
 	}
 
@@ -2370,6 +2362,18 @@ static int ice_vc_process_vlan_msg(struct ice_vf *vf, u8 *msg, bool add_v)
 		for (i = 0; i < vfl->num_elements; i++) {
 			u16 vid = vfl->vlan_id[i];
 
+			if (!ice_is_vf_trusted(vf) &&
+			    vf->num_vlan >= ICE_MAX_VLAN_PER_VF) {
+				dev_info(&pf->pdev->dev,
+					 "VF-%d is not trusted, switch the VF to trusted mode, in order to add more VLAN addresses\n",
+					 vf->vf_id);
+				/* There is no need to let VF know about being
+				 * not trusted, so we can just return success
+				 * message here as well.
+				 */
+				goto error_param;
+			}
+
 			if (ice_vsi_add_vlan(vsi, vid)) {
 				v_ret = VIRTCHNL_STATUS_ERR_PARAM;
 				goto error_param;
@@ -2402,7 +2406,17 @@ static int ice_vc_process_vlan_msg(struct ice_vf *vf, u8 *msg, bool add_v)
 			}
 		}
 	} else {
-		for (i = 0; i < vfl->num_elements; i++) {
+		/* In case of non_trusted VF, number of VLAN elements passed
+		 * to PF for removal might be greater than number of VLANs
+		 * filter programmed for that VF - So, use actual number of
+		 * VLANS added earlier with add VLAN opcode. In order to avoid
+		 * removing VLAN that doesn't exist, which result to sending
+		 * erroneous failed message back to the VF
+		 */
+		int num_vf_vlan;
+
+		num_vf_vlan = vf->num_vlan;
+		for (i = 0; i < vfl->num_elements && i < num_vf_vlan; i++) {
 			u16 vid = vfl->vlan_id[i];
 
 			/* Make sure ice_vsi_kill_vlan is successful before

@@ -152,6 +152,8 @@ enum qca9377_chip_id_rev {
 #define ATH10K_FW_UTF_FILE		"utf.bin"
 #define ATH10K_FW_UTF_API2_FILE		"utf-2.bin"
 
+#define ATH10K_FW_UTF_FILE_BASE		"utf"
+
 /* includes also the null byte */
 #define ATH10K_FIRMWARE_MAGIC               "QCA-ATH10K"
 #define ATH10K_BOARD_MAGIC                  "QCA-ATH10K-BOARD"
@@ -612,6 +614,9 @@ struct ath10k_hw_params {
 	 * firmware bug
 	 */
 	bool uart_pin_workaround;
+
+	/* tx stats support over pktlog */
+	bool tx_stats_over_pktlog;
 };
 
 struct htt_rx_desc;
@@ -1101,6 +1106,7 @@ ath10k_is_rssi_enable(struct ath10k_hw_params *hw,
 #define MBOX_CPU_INT_STATUS_ENABLE_ADDRESS	0x00000819
 #define MBOX_CPU_INT_STATUS_ENABLE_BIT_LSB	0
 #define MBOX_CPU_INT_STATUS_ENABLE_BIT_MASK	0x000000ff
+#define MBOX_CPU_STATUS_ENABLE_ASSERT_MASK 0x00000001
 #define MBOX_ERROR_STATUS_ENABLE_ADDRESS	0x0000081a
 #define MBOX_ERROR_STATUS_ENABLE_RX_UNDERFLOW_LSB  1
 #define MBOX_ERROR_STATUS_ENABLE_RX_UNDERFLOW_MASK 0x00000002

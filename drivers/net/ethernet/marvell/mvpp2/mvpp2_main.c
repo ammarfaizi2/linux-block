@@ -3937,7 +3937,7 @@ static int mvpp2_ethtool_get_rxnfc(struct net_device *dev,
 				   struct ethtool_rxnfc *info, u32 *rules)
 {
 	struct mvpp2_port *port = netdev_priv(dev);
-	int ret = 0;
+	int ret = 0, i, loc = 0;
 
 	if (!mvpp22_rss_is_supported())
 		return -EOPNOTSUPP;
@@ -3948,6 +3948,18 @@ static int mvpp2_ethtool_get_rxnfc(struct net_device *dev,
 		break;
 	case ETHTOOL_GRXRINGS:
 		info->data = port->nrxqs;
+		break;
+	case ETHTOOL_GRXCLSRLCNT:
+		info->rule_cnt = port->n_rfs_rules;
+		break;
+	case ETHTOOL_GRXCLSRULE:
+		ret = mvpp2_ethtool_cls_rule_get(port, info);
+		break;
+	case ETHTOOL_GRXCLSRLALL:
+		for (i = 0; i < MVPP2_N_RFS_ENTRIES_PER_FLOW; i++) {
+			if (port->rfs_rules[i])
+				rules[loc++] = i;
+		}
 		break;
 	default:
 		return -ENOTSUPP;
@@ -3969,6 +3981,12 @@ static int mvpp2_ethtool_set_rxnfc(struct net_device *dev,
 	case ETHTOOL_SRXFH:
 		ret = mvpp2_ethtool_rxfh_set(port, info);
 		break;
+	case ETHTOOL_SRXCLSRLINS:
+		ret = mvpp2_ethtool_cls_rule_ins(port, info);
+		break;
+	case ETHTOOL_SRXCLSRLDEL:
+		ret = mvpp2_ethtool_cls_rule_del(port, info);
+		break;
 	default:
 		return -EOPNOTSUPP;
 	}
@@ -3984,24 +4002,25 @@ static int mvpp2_ethtool_get_rxfh(struct net_device *dev, u32 *indir, u8 *key,
 				  u8 *hfunc)
 {
 	struct mvpp2_port *port = netdev_priv(dev);
+	int ret = 0;
 
 	if (!mvpp22_rss_is_supported())
 		return -EOPNOTSUPP;
 
 	if (indir)
-		memcpy(indir, port->indir,
-		       ARRAY_SIZE(port->indir) * sizeof(port->indir[0]));
+		ret = mvpp22_port_rss_ctx_indir_get(port, 0, indir);
 
 	if (hfunc)
 		*hfunc = ETH_RSS_HASH_CRC32;
 
-	return 0;
+	return ret;
 }
 
 static int mvpp2_ethtool_set_rxfh(struct net_device *dev, const u32 *indir,
 				  const u8 *key, const u8 hfunc)
 {
 	struct mvpp2_port *port = netdev_priv(dev);
+	int ret = 0;
 
 	if (!mvpp22_rss_is_supported())
 		return -EOPNOTSUPP;
@@ -4012,15 +4031,58 @@ static int mvpp2_ethtool_set_rxfh(struct net_device *dev, const u32 *indir,
 	if (key)
 		return -EOPNOTSUPP;
 
-	if (indir) {
-		memcpy(port->indir, indir,
-		       ARRAY_SIZE(port->indir) * sizeof(port->indir[0]));
-		mvpp22_rss_fill_table(port, port->id);
-	}
+	if (indir)
+		ret = mvpp22_port_rss_ctx_indir_set(port, 0, indir);
 
-	return 0;
+	return ret;
 }
 
+static int mvpp2_ethtool_get_rxfh_context(struct net_device *dev, u32 *indir,
+					  u8 *key, u8 *hfunc, u32 rss_context)
+{
+	struct mvpp2_port *port = netdev_priv(dev);
+	int ret = 0;
+
+	if (!mvpp22_rss_is_supported())
+		return -EOPNOTSUPP;
+
+	if (hfunc)
+		*hfunc = ETH_RSS_HASH_CRC32;
+
+	if (indir)
+		ret = mvpp22_port_rss_ctx_indir_get(port, rss_context, indir);
+
+	return ret;
+}
+
+static int mvpp2_ethtool_set_rxfh_context(struct net_device *dev,
+					  const u32 *indir, const u8 *key,
+					  const u8 hfunc, u32 *rss_context,
+					  bool delete)
+{
+	struct mvpp2_port *port = netdev_priv(dev);
+	int ret;
+
+	if (!mvpp22_rss_is_supported())
+		return -EOPNOTSUPP;
+
+	if (hfunc != ETH_RSS_HASH_NO_CHANGE && hfunc != ETH_RSS_HASH_CRC32)
+		return -EOPNOTSUPP;
+
+	if (key)
+		return -EOPNOTSUPP;
+
+	if (delete)
+		return mvpp22_port_rss_ctx_delete(port, *rss_context);
+
+	if (*rss_context == ETH_RXFH_CONTEXT_ALLOC) {
+		ret = mvpp22_port_rss_ctx_create(port, rss_context);
+		if (ret)
+			return ret;
+	}
+
+	return mvpp22_port_rss_ctx_indir_set(port, *rss_context, indir);
+}
 /* Device ops */
 
 static const struct net_device_ops mvpp2_netdev_ops = {
@@ -4057,7 +4119,8 @@ static const struct ethtool_ops mvpp2_eth_tool_ops = {
 	.get_rxfh_indir_size	= mvpp2_ethtool_get_rxfh_indir_size,
 	.get_rxfh		= mvpp2_ethtool_get_rxfh,
 	.set_rxfh		= mvpp2_ethtool_set_rxfh,
-
+	.get_rxfh_context	= mvpp2_ethtool_get_rxfh_context,
+	.set_rxfh_context	= mvpp2_ethtool_set_rxfh_context,
 };
 
 /* Used for PPv2.1, or PPv2.2 with the old Device Tree binding that
@@ -5040,8 +5103,10 @@ static int mvpp2_port_probe(struct platform_device *pdev,
 	dev->hw_features |= features | NETIF_F_RXCSUM | NETIF_F_GRO |
 			    NETIF_F_HW_VLAN_CTAG_FILTER;
 
-	if (mvpp22_rss_is_supported())
+	if (mvpp22_rss_is_supported()) {
 		dev->hw_features |= NETIF_F_RXHASH;
+		dev->features |= NETIF_F_NTUPLE;
+	}
 
 	if (port->pool_long->id == MVPP2_BM_JUMBO && port->id != 0) {
 		dev->features &= ~(NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM);

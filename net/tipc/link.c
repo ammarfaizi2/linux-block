@@ -1705,6 +1705,41 @@ tnl:
 	}
 }
 
+/**
+ * tipc_link_failover_prepare() - prepare tnl for link failover
+ *
+ * This is a special version of the precursor - tipc_link_tnl_prepare(),
+ * see the tipc_node_link_failover() for details
+ *
+ * @l: failover link
+ * @tnl: tunnel link
+ * @xmitq: queue for messages to be xmited
+ */
+void tipc_link_failover_prepare(struct tipc_link *l, struct tipc_link *tnl,
+				struct sk_buff_head *xmitq)
+{
+	struct sk_buff_head *fdefq = &tnl->failover_deferdq;
+
+	tipc_link_create_dummy_tnl_msg(tnl, xmitq);
+
+	/* This failover link enpoint was never established before,
+	 * so it has not received anything from peer.
+	 * Otherwise, it must be a normal failover situation or the
+	 * node has entered SELF_DOWN_PEER_LEAVING and both peer nodes
+	 * would have to start over from scratch instead.
+	 */
+	WARN_ON(l && tipc_link_is_up(l));
+	tnl->drop_point = 1;
+	tnl->failover_reasm_skb = NULL;
+
+	/* Initiate the link's failover deferdq */
+	if (unlikely(!skb_queue_empty(fdefq))) {
+		pr_warn("Link failover deferdq not empty: %d!\n",
+			skb_queue_len(fdefq));
+		__skb_queue_purge(fdefq);
+	}
+}
+
 /* tipc_link_validate_msg(): validate message against current link state
  * Returns true if message should be accepted, otherwise false
  */
@@ -2148,8 +2183,8 @@ int tipc_nl_parse_link_prop(struct nlattr *prop, struct nlattr *props[])
 {
 	int err;
 
-	err = nla_parse_nested(props, TIPC_NLA_PROP_MAX, prop,
-			       tipc_nl_prop_policy, NULL);
+	err = nla_parse_nested_deprecated(props, TIPC_NLA_PROP_MAX, prop,
+					  tipc_nl_prop_policy, NULL);
 	if (err)
 		return err;
 
@@ -2228,7 +2263,7 @@ static int __tipc_nl_add_stats(struct sk_buff *skb, struct tipc_stats *s)
 			(s->accu_queue_sz / s->queue_sz_counts) : 0}
 	};
 
-	stats = nla_nest_start(skb, TIPC_NLA_LINK_STATS);
+	stats = nla_nest_start_noflag(skb, TIPC_NLA_LINK_STATS);
 	if (!stats)
 		return -EMSGSIZE;
 
@@ -2260,7 +2295,7 @@ int __tipc_nl_add_link(struct net *net, struct tipc_nl_msg *msg,
 	if (!hdr)
 		return -EMSGSIZE;
 
-	attrs = nla_nest_start(msg->skb, TIPC_NLA_LINK);
+	attrs = nla_nest_start_noflag(msg->skb, TIPC_NLA_LINK);
 	if (!attrs)
 		goto msg_full;
 
@@ -2282,7 +2317,7 @@ int __tipc_nl_add_link(struct net *net, struct tipc_nl_msg *msg,
 		if (nla_put_flag(msg->skb, TIPC_NLA_LINK_ACTIVE))
 			goto attr_msg_full;
 
-	prop = nla_nest_start(msg->skb, TIPC_NLA_LINK_PROP);
+	prop = nla_nest_start_noflag(msg->skb, TIPC_NLA_LINK_PROP);
 	if (!prop)
 		goto attr_msg_full;
 	if (nla_put_u32(msg->skb, TIPC_NLA_PROP_PRIO, link->priority))
@@ -2349,7 +2384,7 @@ static int __tipc_nl_add_bc_link_stat(struct sk_buff *skb,
 			(stats->accu_queue_sz / stats->queue_sz_counts) : 0}
 	};
 
-	nest = nla_nest_start(skb, TIPC_NLA_LINK_STATS);
+	nest = nla_nest_start_noflag(skb, TIPC_NLA_LINK_STATS);
 	if (!nest)
 		return -EMSGSIZE;
 
@@ -2389,7 +2424,7 @@ int tipc_nl_add_bc_link(struct net *net, struct tipc_nl_msg *msg)
 		return -EMSGSIZE;
 	}
 
-	attrs = nla_nest_start(msg->skb, TIPC_NLA_LINK);
+	attrs = nla_nest_start_noflag(msg->skb, TIPC_NLA_LINK);
 	if (!attrs)
 		goto msg_full;
 
@@ -2406,7 +2441,7 @@ int tipc_nl_add_bc_link(struct net *net, struct tipc_nl_msg *msg)
 	if (nla_put_u32(msg->skb, TIPC_NLA_LINK_TX, 0))
 		goto attr_msg_full;
 
-	prop = nla_nest_start(msg->skb, TIPC_NLA_LINK_PROP);
+	prop = nla_nest_start_noflag(msg->skb, TIPC_NLA_LINK_PROP);
 	if (!prop)
 		goto attr_msg_full;
 	if (nla_put_u32(msg->skb, TIPC_NLA_PROP_WIN, bcl->window))

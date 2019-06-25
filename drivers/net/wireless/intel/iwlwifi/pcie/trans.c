@@ -896,6 +896,8 @@ void iwl_pcie_apply_destination(struct iwl_trans *trans)
 		if (!trans->num_blocks)
 			return;
 
+		IWL_DEBUG_FW(trans,
+			     "WRT: applying DRAM buffer[0] destination\n");
 		iwl_write_umac_prph(trans, MON_BUFF_BASE_ADDR_VER2,
 				    trans->fw_mon[0].physical >>
 				    MON_BUFF_SHIFT_VER2);
@@ -2067,7 +2069,6 @@ static void iwl_trans_pcie_release_nic_access(struct iwl_trans *trans,
 	 * MAC_ACCESS_REQ bit to be performed before any other writes
 	 * scheduled on different CPUs (after we drop reg_lock).
 	 */
-	mmiowb();
 out:
 	spin_unlock_irqrestore(&trans_pcie->reg_lock, *flags);
 }
@@ -2686,16 +2687,17 @@ static ssize_t iwl_dbgfs_rfkill_write(struct file *file,
 {
 	struct iwl_trans *trans = file->private_data;
 	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
-	bool old = trans_pcie->debug_rfkill;
+	bool new_value;
 	int ret;
 
-	ret = kstrtobool_from_user(user_buf, count, &trans_pcie->debug_rfkill);
+	ret = kstrtobool_from_user(user_buf, count, &new_value);
 	if (ret)
 		return ret;
-	if (old == trans_pcie->debug_rfkill)
+	if (new_value == trans_pcie->debug_rfkill)
 		return count;
 	IWL_WARN(trans, "changing debug rfkill %d->%d\n",
-		 old, trans_pcie->debug_rfkill);
+		 trans_pcie->debug_rfkill, new_value);
+	trans_pcie->debug_rfkill = new_value;
 	iwl_pcie_handle_rfkill_irq(trans);
 
 	return count;
@@ -3419,7 +3421,7 @@ struct iwl_trans *iwl_trans_pcie_alloc(struct pci_dev *pdev,
 		ret = -ENOMEM;
 		goto out_no_pci;
 	}
-
+	trans_pcie->debug_rfkill = -1;
 
 	if (!cfg->base_params->pcie_l1_allowed) {
 		/*

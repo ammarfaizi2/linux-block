@@ -7,8 +7,7 @@ struct flow_rule *flow_rule_alloc(unsigned int num_actions)
 {
 	struct flow_rule *rule;
 
-	rule = kzalloc(sizeof(struct flow_rule) +
-		       sizeof(struct flow_action_entry) * num_actions,
+	rule = kzalloc(struct_size(rule, action.entries, num_actions),
 		       GFP_KERNEL);
 	if (!rule)
 		return NULL;
@@ -53,6 +52,13 @@ void flow_rule_match_vlan(const struct flow_rule *rule,
 	FLOW_DISSECTOR_MATCH(rule, FLOW_DISSECTOR_KEY_VLAN, out);
 }
 EXPORT_SYMBOL(flow_rule_match_vlan);
+
+void flow_rule_match_cvlan(const struct flow_rule *rule,
+			   struct flow_match_vlan *out)
+{
+	FLOW_DISSECTOR_MATCH(rule, FLOW_DISSECTOR_KEY_CVLAN, out);
+}
+EXPORT_SYMBOL(flow_rule_match_cvlan);
 
 void flow_rule_match_ipv4_addrs(const struct flow_rule *rule,
 				struct flow_match_ipv4_addrs *out)

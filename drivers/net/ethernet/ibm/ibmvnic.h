@@ -855,6 +855,7 @@ struct ibmvnic_crq_queue {
 	dma_addr_t msg_token;
 	spinlock_t lock;
 	bool active;
+	char name[32];
 };
 
 union sub_crq {
@@ -881,6 +882,7 @@ struct ibmvnic_sub_crq_queue {
 	struct sk_buff *rx_skb_top;
 	struct ibmvnic_adapter *adapter;
 	atomic_t used;
+	char name[32];
 };
 
 struct ibmvnic_long_term_buff {
@@ -967,7 +969,6 @@ struct ibmvnic_tunables {
 	u64 rx_entries;
 	u64 tx_entries;
 	u64 mtu;
-	struct sockaddr mac;
 };
 
 struct ibmvnic_adapter {
@@ -1089,7 +1090,6 @@ struct ibmvnic_adapter {
 	bool resetting;
 	bool napi_enabled, from_passive_init;
 
-	bool mac_change_pending;
 	bool failover_pending;
 	bool force_reset_recovery;
 

@@ -457,18 +457,6 @@ void tcp_init_sock(struct sock *sk)
 }
 EXPORT_SYMBOL(tcp_init_sock);
 
-void tcp_init_transfer(struct sock *sk, int bpf_op)
-{
-	struct inet_connection_sock *icsk = inet_csk(sk);
-
-	tcp_mtup_init(sk);
-	icsk->icsk_af_ops->rebuild_header(sk);
-	tcp_init_metrics(sk);
-	tcp_call_bpf(sk, bpf_op, 0, NULL);
-	tcp_init_congestion_control(sk);
-	tcp_init_buffer_space(sk);
-}
-
 static void tcp_tx_timestamp(struct sock *sk, u16 tsflags)
 {
 	struct sk_buff *skb = tcp_write_queue_tail(sk);
@@ -867,8 +855,8 @@ struct sk_buff *sk_stream_alloc_skb(struct sock *sk, int size, gfp_t gfp,
 
 	if (likely(!size)) {
 		skb = sk->sk_tx_skb_cache;
-		if (skb && !skb_cloned(skb)) {
-			skb->truesize -= skb->data_len;
+		if (skb) {
+			skb->truesize = SKB_TRUESIZE(skb_end_offset(skb));
 			sk->sk_tx_skb_cache = NULL;
 			pskb_trim(skb, 0);
 			INIT_LIST_HEAD(&skb->tcp_tsorted_anchor);

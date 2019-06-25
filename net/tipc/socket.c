@@ -736,11 +736,11 @@ static __poll_t tipc_poll(struct file *file, struct socket *sock,
 
 	switch (sk->sk_state) {
 	case TIPC_ESTABLISHED:
-	case TIPC_CONNECTING:
 		if (!tsk->cong_link_cnt && !tsk_conn_cong(tsk))
 			revents |= EPOLLOUT;
 		/* fall through */
 	case TIPC_LISTEN:
+	case TIPC_CONNECTING:
 		if (!skb_queue_empty(&sk->sk_receive_queue))
 			revents |= EPOLLIN | EPOLLRDNORM;
 		break;
@@ -2043,7 +2043,7 @@ static bool tipc_sk_filter_connect(struct tipc_sock *tsk, struct sk_buff *skb)
 			if (msg_data_sz(hdr))
 				return true;
 			/* Empty ACK-, - wake up sleeping connect() and drop */
-			sk->sk_data_ready(sk);
+			sk->sk_state_change(sk);
 			msg_set_dest_droppable(hdr, 1);
 			return false;
 		}
@@ -3070,6 +3070,9 @@ static int tipc_getsockopt(struct socket *sock, int lvl, int opt,
 	case TIPC_SOCK_RECVQ_DEPTH:
 		value = skb_queue_len(&sk->sk_receive_queue);
 		break;
+	case TIPC_SOCK_RECVQ_USED:
+		value = sk_rmem_alloc_get(sk);
+		break;
 	case TIPC_GROUP_JOIN:
 		seq.type = 0;
 		if (tsk->group)
@@ -3270,7 +3273,7 @@ static int __tipc_nl_add_sk_con(struct sk_buff *skb, struct tipc_sock *tsk)
 	peer_node = tsk_peer_node(tsk);
 	peer_port = tsk_peer_port(tsk);
 
-	nest = nla_nest_start(skb, TIPC_NLA_SOCK_CON);
+	nest = nla_nest_start_noflag(skb, TIPC_NLA_SOCK_CON);
 	if (!nest)
 		return -EMSGSIZE;
 
@@ -3329,7 +3332,7 @@ static int __tipc_nl_add_sk(struct sk_buff *skb, struct netlink_callback *cb,
 	if (!hdr)
 		goto msg_cancel;
 
-	attrs = nla_nest_start(skb, TIPC_NLA_SOCK);
+	attrs = nla_nest_start_noflag(skb, TIPC_NLA_SOCK);
 	if (!attrs)
 		goto genlmsg_cancel;
 
@@ -3434,7 +3437,7 @@ int tipc_sk_fill_sock_diag(struct sk_buff *skb, struct netlink_callback *cb,
 	if (!(sk_filter_state & (1 << sk->sk_state)))
 		return 0;
 
-	attrs = nla_nest_start(skb, TIPC_NLA_SOCK);
+	attrs = nla_nest_start_noflag(skb, TIPC_NLA_SOCK);
 	if (!attrs)
 		goto msg_cancel;
 
@@ -3452,7 +3455,7 @@ int tipc_sk_fill_sock_diag(struct sk_buff *skb, struct netlink_callback *cb,
 			      TIPC_NLA_SOCK_PAD))
 		goto attr_msg_cancel;
 
-	stat = nla_nest_start(skb, TIPC_NLA_SOCK_STAT);
+	stat = nla_nest_start_noflag(skb, TIPC_NLA_SOCK_STAT);
 	if (!stat)
 		goto attr_msg_cancel;
 
@@ -3509,7 +3512,7 @@ static int __tipc_nl_add_sk_publ(struct sk_buff *skb,
 	if (!hdr)
 		goto msg_cancel;
 
-	attrs = nla_nest_start(skb, TIPC_NLA_PUBL);
+	attrs = nla_nest_start_noflag(skb, TIPC_NLA_PUBL);
 	if (!attrs)
 		goto genlmsg_cancel;
 
@@ -3596,9 +3599,9 @@ int tipc_nl_publ_dump(struct sk_buff *skb, struct netlink_callback *cb)
 		if (!attrs[TIPC_NLA_SOCK])
 			return -EINVAL;
 
-		err = nla_parse_nested(sock, TIPC_NLA_SOCK_MAX,
-				       attrs[TIPC_NLA_SOCK],
-				       tipc_nl_sock_policy, NULL);
+		err = nla_parse_nested_deprecated(sock, TIPC_NLA_SOCK_MAX,
+						  attrs[TIPC_NLA_SOCK],
+						  tipc_nl_sock_policy, NULL);
 		if (err)
 			return err;
 

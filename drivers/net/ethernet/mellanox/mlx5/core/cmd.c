@@ -917,7 +917,6 @@ static void cmd_work_handler(struct work_struct *work)
 	mlx5_core_dbg(dev, "writing 0x%x to command doorbell\n", 1 << ent->idx);
 	wmb();
 	iowrite32be(1 << ent->idx, &dev->iseg->cmd_dbell);
-	mmiowb();
 	/* if not in polling don't use ent after this point */
 	if (cmd_mode == CMD_MODE_POLLING || poll_cmd) {
 		poll_timeout(ent);
@@ -1347,7 +1346,7 @@ static void set_wqname(struct mlx5_core_dev *dev)
 	struct mlx5_cmd *cmd = &dev->cmd;
 
 	snprintf(cmd->wq_name, sizeof(cmd->wq_name), "mlx5_cmd_%s",
-		 dev->priv.name);
+		 dev_name(dev->device));
 }
 
 static void clean_debug_files(struct mlx5_core_dev *dev)
@@ -1605,7 +1604,27 @@ void mlx5_cmd_flush(struct mlx5_core_dev *dev)
 
 static int status_to_err(u8 status)
 {
-	return status ? -1 : 0; /* TBD more meaningful codes */
+	switch (status) {
+	case MLX5_CMD_DELIVERY_STAT_OK:
+	case MLX5_DRIVER_STATUS_ABORTED:
+		return 0;
+	case MLX5_CMD_DELIVERY_STAT_SIGNAT_ERR:
+	case MLX5_CMD_DELIVERY_STAT_TOK_ERR:
+		return -EBADR;
+	case MLX5_CMD_DELIVERY_STAT_BAD_BLK_NUM_ERR:
+	case MLX5_CMD_DELIVERY_STAT_OUT_PTR_ALIGN_ERR:
+	case MLX5_CMD_DELIVERY_STAT_IN_PTR_ALIGN_ERR:
+		return -EFAULT; /* Bad address */
+	case MLX5_CMD_DELIVERY_STAT_IN_LENGTH_ERR:
+	case MLX5_CMD_DELIVERY_STAT_OUT_LENGTH_ERR:
+	case MLX5_CMD_DELIVERY_STAT_CMD_DESCR_ERR:
+	case MLX5_CMD_DELIVERY_STAT_RES_FLD_NOT_CLR_ERR:
+		return -ENOMSG;
+	case MLX5_CMD_DELIVERY_STAT_FW_ERR:
+		return -EIO;
+	default:
+		return -EINVAL;
+	}
 }
 
 static struct mlx5_cmd_msg *alloc_msg(struct mlx5_core_dev *dev, int in_size,
@@ -1852,7 +1871,7 @@ static void create_msg_cache(struct mlx5_core_dev *dev)
 
 static int alloc_cmd_page(struct mlx5_core_dev *dev, struct mlx5_cmd *cmd)
 {
-	struct device *ddev = &dev->pdev->dev;
+	struct device *ddev = dev->device;
 
 	cmd->cmd_alloc_buf = dma_alloc_coherent(ddev, MLX5_ADAPTER_PAGE_SIZE,
 						&cmd->alloc_dma, GFP_KERNEL);
@@ -1883,7 +1902,7 @@ static int alloc_cmd_page(struct mlx5_core_dev *dev, struct mlx5_cmd *cmd)
 
 static void free_cmd_page(struct mlx5_core_dev *dev, struct mlx5_cmd *cmd)
 {
-	struct device *ddev = &dev->pdev->dev;
+	struct device *ddev = dev->device;
 
 	dma_free_coherent(ddev, cmd->alloc_size, cmd->cmd_alloc_buf,
 			  cmd->alloc_dma);
@@ -1908,8 +1927,7 @@ int mlx5_cmd_init(struct mlx5_core_dev *dev)
 		return -EINVAL;
 	}
 
-	cmd->pool = dma_pool_create("mlx5_cmd", &dev->pdev->dev, size, align,
-				    0);
+	cmd->pool = dma_pool_create("mlx5_cmd", dev->device, size, align, 0);
 	if (!cmd->pool)
 		return -ENOMEM;
 

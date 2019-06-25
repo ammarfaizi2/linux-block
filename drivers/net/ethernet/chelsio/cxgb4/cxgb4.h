@@ -280,6 +280,7 @@ struct tp_params {
 	unsigned short tx_modq[NCHAN];	/* channel to modulation queue map */
 
 	u32 vlan_pri_map;               /* cached TP_VLAN_PRI_MAP */
+	u32 filter_mask;
 	u32 ingress_config;             /* cached TP_INGRESS_CONFIG */
 
 	/* cached TP_OUT_CONFIG compressed error vector
@@ -600,6 +601,7 @@ struct port_info {
 	u8 vin;
 	u8 vivld;
 	u8 smt_idx;
+	u8 rx_cchan;
 };
 
 struct dentry;

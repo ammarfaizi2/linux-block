@@ -248,8 +248,9 @@ static int validate_filter(struct net_device *dev,
 	u32 fconf, iconf;
 
 	/* Check for unconfigured fields being used. */
-	fconf = adapter->params.tp.vlan_pri_map;
 	iconf = adapter->params.tp.ingress_config;
+	fconf = fs->hash ? adapter->params.tp.filter_mask :
+			   adapter->params.tp.vlan_pri_map;
 
 	if (unsupported(fconf, FCOE_F, fs->val.fcoe, fs->mask.fcoe) ||
 	    unsupported(fconf, PORT_F, fs->val.iport, fs->mask.iport) ||
@@ -524,8 +525,7 @@ static int del_filter_wr(struct adapter *adapter, int fidx)
 		return -ENOMEM;
 
 	fwr = __skb_put(skb, len);
-	t4_mk_filtdelwr(f->tid, fwr, (adapter->flags & CXGB4_SHUTTING_DOWN) ? -1
-			: adapter->sge.fw_evtq.abs_id);
+	t4_mk_filtdelwr(f->tid, fwr, adapter->sge.fw_evtq.abs_id);
 
 	/* Mark the filter as "pending" and ship off the Filter Work Request.
 	 * When we get the Work Request Reply we'll clear the pending status.
@@ -744,16 +744,40 @@ void clear_filter(struct adapter *adap, struct filter_entry *f)
 
 void clear_all_filters(struct adapter *adapter)
 {
+	struct net_device *dev = adapter->port[0];
 	unsigned int i;
 
 	if (adapter->tids.ftid_tab) {
 		struct filter_entry *f = &adapter->tids.ftid_tab[0];
 		unsigned int max_ftid = adapter->tids.nftids +
 					adapter->tids.nsftids;
-
+		/* Clear all TCAM filters */
 		for (i = 0; i < max_ftid; i++, f++)
 			if (f->valid || f->pending)
-				clear_filter(adapter, f);
+				cxgb4_del_filter(dev, i, &f->fs);
+	}
+
+	/* Clear all hash filters */
+	if (is_hashfilter(adapter) && adapter->tids.tid_tab) {
+		struct filter_entry *f;
+		unsigned int sb;
+
+		for (i = adapter->tids.hash_base;
+		     i <= adapter->tids.ntids; i++) {
+			f = (struct filter_entry *)
+				adapter->tids.tid_tab[i];
+
+			if (f && (f->valid || f->pending))
+				cxgb4_del_filter(dev, i, &f->fs);
+		}
+
+		sb = t4_read_reg(adapter, LE_DB_SRVR_START_INDEX_A);
+		for (i = 0; i < sb; i++) {
+			f = (struct filter_entry *)adapter->tids.tid_tab[i];
+
+			if (f && (f->valid || f->pending))
+				cxgb4_del_filter(dev, i, &f->fs);
+		}
 	}
 }
 
@@ -1018,7 +1042,7 @@ static void mk_act_open_req6(struct filter_entry *f, struct sk_buff *skb,
 			    RSS_QUEUE_V(f->fs.iq) |
 			    TX_QUEUE_V(f->fs.nat_mode) |
 			    T5_OPT_2_VALID_F |
-			    RX_CHANNEL_F |
+			    RX_CHANNEL_V(cxgb4_port_e2cchan(f->dev)) |
 			    CONG_CNTRL_V((f->fs.action == FILTER_DROP) |
 					 (f->fs.dirsteer << 1)) |
 			    PACE_V((f->fs.maskhash) |
@@ -1058,7 +1082,7 @@ static void mk_act_open_req(struct filter_entry *f, struct sk_buff *skb,
 			    RSS_QUEUE_V(f->fs.iq) |
 			    TX_QUEUE_V(f->fs.nat_mode) |
 			    T5_OPT_2_VALID_F |
-			    RX_CHANNEL_F |
+			    RX_CHANNEL_V(cxgb4_port_e2cchan(f->dev)) |
 			    CONG_CNTRL_V((f->fs.action == FILTER_DROP) |
 					 (f->fs.dirsteer << 1)) |
 			    PACE_V((f->fs.maskhash) |
@@ -1568,9 +1592,8 @@ int cxgb4_del_filter(struct net_device *dev, int filter_id,
 	struct filter_ctx ctx;
 	int ret;
 
-	/* If we are shutting down the adapter do not wait for completion */
 	if (netdev2adap(dev)->flags & CXGB4_SHUTTING_DOWN)
-		return __cxgb4_del_filter(dev, filter_id, fs, NULL);
+		return 0;
 
 	init_completion(&ctx.completion);
 
@@ -1811,24 +1834,38 @@ void filter_rpl(struct adapter *adap, const struct cpl_set_tcb_rpl *rpl)
 	}
 }
 
-int init_hash_filter(struct adapter *adap)
+void init_hash_filter(struct adapter *adap)
 {
+	u32 reg;
+
 	/* On T6, verify the necessary register configs and warn the user in
 	 * case of improper config
 	 */
 	if (is_t6(adap->params.chip)) {
-		if (TCAM_ACTV_HIT_G(t4_read_reg(adap, LE_DB_RSP_CODE_0_A)) != 4)
-			goto err;
+		if (is_offload(adap)) {
+			if (!(t4_read_reg(adap, TP_GLOBAL_CONFIG_A)
+			   & ACTIVEFILTERCOUNTS_F)) {
+				dev_err(adap->pdev_dev, "Invalid hash filter + ofld config\n");
+				return;
+			}
+		} else {
+			reg = t4_read_reg(adap, LE_DB_RSP_CODE_0_A);
+			if (TCAM_ACTV_HIT_G(reg) != 4) {
+				dev_err(adap->pdev_dev, "Invalid hash filter config\n");
+				return;
+			}
 
-		if (HASH_ACTV_HIT_G(t4_read_reg(adap, LE_DB_RSP_CODE_1_A)) != 4)
-			goto err;
+			reg = t4_read_reg(adap, LE_DB_RSP_CODE_1_A);
+			if (HASH_ACTV_HIT_G(reg) != 4) {
+				dev_err(adap->pdev_dev, "Invalid hash filter config\n");
+				return;
+			}
+		}
+
 	} else {
 		dev_err(adap->pdev_dev, "Hash filter supported only on T6\n");
-		return -EINVAL;
+		return;
 	}
+
 	adap->params.hash_filter = 1;
-	return 0;
-err:
-	dev_warn(adap->pdev_dev, "Invalid hash filter config!\n");
-	return -EINVAL;
 }

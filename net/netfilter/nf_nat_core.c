@@ -415,9 +415,14 @@ static void nf_nat_l4proto_unique_tuple(struct nf_conntrack_tuple *tuple,
 	case IPPROTO_ICMPV6:
 		/* id is same for either direction... */
 		keyptr = &tuple->src.u.icmp.id;
-		min = range->min_proto.icmp.id;
-		range_size = ntohs(range->max_proto.icmp.id) -
-			     ntohs(range->min_proto.icmp.id) + 1;
+		if (!(range->flags & NF_NAT_RANGE_PROTO_SPECIFIED)) {
+			min = 0;
+			range_size = 65536;
+		} else {
+			min = ntohs(range->min_proto.icmp.id);
+			range_size = ntohs(range->max_proto.icmp.id) -
+				     ntohs(range->min_proto.icmp.id) + 1;
+		}
 		goto find_free_id;
 #if IS_ENABLED(CONFIG_NF_CT_PROTO_GRE)
 	case IPPROTO_GRE:
@@ -885,8 +890,8 @@ static int nfnetlink_parse_nat_proto(struct nlattr *attr,
 	struct nlattr *tb[CTA_PROTONAT_MAX+1];
 	int err;
 
-	err = nla_parse_nested(tb, CTA_PROTONAT_MAX, attr,
-			       protonat_nla_policy, NULL);
+	err = nla_parse_nested_deprecated(tb, CTA_PROTONAT_MAX, attr,
+					  protonat_nla_policy, NULL);
 	if (err < 0)
 		return err;
 
@@ -944,7 +949,8 @@ nfnetlink_parse_nat(const struct nlattr *nat,
 
 	memset(range, 0, sizeof(*range));
 
-	err = nla_parse_nested(tb, CTA_NAT_MAX, nat, nat_nla_policy, NULL);
+	err = nla_parse_nested_deprecated(tb, CTA_NAT_MAX, nat,
+					  nat_nla_policy, NULL);
 	if (err < 0)
 		return err;
 

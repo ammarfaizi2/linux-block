@@ -1646,6 +1646,18 @@ unsigned int cxgb4_port_chan(const struct net_device *dev)
 }
 EXPORT_SYMBOL(cxgb4_port_chan);
 
+/**
+ *      cxgb4_port_e2cchan - get the HW c-channel of a port
+ *      @dev: the net device for the port
+ *
+ *      Return the HW RX c-channel of the given port.
+ */
+unsigned int cxgb4_port_e2cchan(const struct net_device *dev)
+{
+	return netdev2pinfo(dev)->rx_cchan;
+}
+EXPORT_SYMBOL(cxgb4_port_e2cchan);
+
 unsigned int cxgb4_dbfifo_count(const struct net_device *dev, int lpfifo)
 {
 	struct adapter *adap = netdev2adap(dev);
@@ -3905,14 +3917,14 @@ static int adap_init0_phy(struct adapter *adap)
  */
 static int adap_init0_config(struct adapter *adapter, int reset)
 {
-	struct fw_caps_config_cmd caps_cmd;
-	const struct firmware *cf;
-	unsigned long mtype = 0, maddr = 0;
-	u32 finiver, finicsum, cfcsum;
-	int ret;
-	int config_issued = 0;
 	char *fw_config_file, fw_config_file_path[256];
+	u32 finiver, finicsum, cfcsum, param, val;
+	struct fw_caps_config_cmd caps_cmd;
+	unsigned long mtype = 0, maddr = 0;
+	const struct firmware *cf;
 	char *config_name = NULL;
+	int config_issued = 0;
+	int ret;
 
 	/*
 	 * Reset device if necessary.
@@ -4018,6 +4030,24 @@ static int adap_init0_config(struct adapter *adapter, int reset)
 		release_firmware(cf);
 		if (ret)
 			goto bye;
+	}
+
+	val = 0;
+
+	/* Ofld + Hash filter is supported. Older fw will fail this request and
+	 * it is fine.
+	 */
+	param = (FW_PARAMS_MNEM_V(FW_PARAMS_MNEM_DEV) |
+		 FW_PARAMS_PARAM_X_V(FW_PARAMS_PARAM_DEV_HASHFILTER_WITH_OFLD));
+	ret = t4_set_params(adapter, adapter->mbox, adapter->pf, 0,
+			    1, &param, &val);
+
+	/* FW doesn't know about Hash filter + ofld support,
+	 * it's not a problem, don't return an error.
+	 */
+	if (ret < 0) {
+		dev_warn(adapter->pdev_dev,
+			 "Hash filter with ofld is not supported by FW\n");
 	}
 
 	/*
@@ -4580,6 +4610,13 @@ static int adap_init0(struct adapter *adap)
 	if (ret < 0)
 		goto bye;
 
+	/* hash filter has some mandatory register settings to be tested and for
+	 * that it needs to test whether offload is enabled or not, hence
+	 * checking and setting it here.
+	 */
+	if (caps_cmd.ofldcaps)
+		adap->params.offload = 1;
+
 	if (caps_cmd.ofldcaps ||
 	    (caps_cmd.niccaps & htons(FW_CAPS_CONFIG_NIC_HASHFILTER))) {
 		/* query offload-related parameters */
@@ -4619,11 +4656,8 @@ static int adap_init0(struct adapter *adap)
 		adap->params.ofldq_wr_cred = val[5];
 
 		if (caps_cmd.niccaps & htons(FW_CAPS_CONFIG_NIC_HASHFILTER)) {
-			ret = init_hash_filter(adap);
-			if (ret < 0)
-				goto bye;
+			init_hash_filter(adap);
 		} else {
-			adap->params.offload = 1;
 			adap->num_ofld_uld += 1;
 		}
 	}
@@ -6024,6 +6058,11 @@ static void remove_one(struct pci_dev *pdev)
 		return;
 	}
 
+	/* If we allocated filters, free up state associated with any
+	 * valid filters ...
+	 */
+	clear_all_filters(adapter);
+
 	adapter->flags |= CXGB4_SHUTTING_DOWN;
 
 	if (adapter->pf == 4) {
@@ -6053,11 +6092,6 @@ static void remove_one(struct pci_dev *pdev)
 			cxgb4_ptp_stop(adapter);
 		if (IS_REACHABLE(CONFIG_THERMAL))
 			cxgb4_thermal_remove(adapter);
-
-		/* If we allocated filters, free up state associated with any
-		 * valid filters ...
-		 */
-		clear_all_filters(adapter);
 
 		if (adapter->flags & CXGB4_FULL_INIT_DONE)
 			cxgb_down(adapter);
@@ -6160,14 +6194,23 @@ static int __init cxgb4_init_module(void)
 
 	ret = pci_register_driver(&cxgb4_driver);
 	if (ret < 0)
-		debugfs_remove(cxgb4_debugfs_root);
+		goto err_pci;
 
 #if IS_ENABLED(CONFIG_IPV6)
 	if (!inet6addr_registered) {
-		register_inet6addr_notifier(&cxgb4_inet6addr_notifier);
-		inet6addr_registered = true;
+		ret = register_inet6addr_notifier(&cxgb4_inet6addr_notifier);
+		if (ret)
+			pci_unregister_driver(&cxgb4_driver);
+		else
+			inet6addr_registered = true;
 	}
 #endif
+
+	if (ret == 0)
+		return ret;
+
+err_pci:
+	debugfs_remove(cxgb4_debugfs_root);
 
 	return ret;
 }

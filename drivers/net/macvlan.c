@@ -836,6 +836,9 @@ static int macvlan_do_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 
 	switch (cmd) {
 	case SIOCSHWTSTAMP:
+		if (!net_eq(dev_net(dev), &init_net))
+			break;
+		/* fall through */
 	case SIOCGHWTSTAMP:
 		if (netif_device_present(real_dev) && ops->ndo_do_ioctl)
 			err = ops->ndo_do_ioctl(real_dev, &ifrr, cmd);
@@ -1624,7 +1627,7 @@ static int macvlan_fill_info(struct sk_buff *skb,
 	if (nla_put_u32(skb, IFLA_MACVLAN_MACADDR_COUNT, vlan->macaddr_count))
 		goto nla_put_failure;
 	if (vlan->macaddr_count > 0) {
-		nest = nla_nest_start(skb, IFLA_MACVLAN_MACADDR_DATA);
+		nest = nla_nest_start_noflag(skb, IFLA_MACVLAN_MACADDR_DATA);
 		if (nest == NULL)
 			goto nla_put_failure;
 

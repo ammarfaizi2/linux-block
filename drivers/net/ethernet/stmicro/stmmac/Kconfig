@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0-only
 config STMMAC_ETH
 	tristate "STMicroelectronics 10/100/1000/EQOS Ethernet driver"
 	depends on HAS_IOMEM && HAS_DMA
@@ -11,6 +12,15 @@ config STMMAC_ETH
 	  Synopsys IP Core.
 
 if STMMAC_ETH
+
+config STMMAC_SELFTESTS
+	bool "Support for STMMAC Selftests"
+	depends on STMMAC_ETH
+	default n
+	---help---
+	  This adds support for STMMAC Selftests using ethtool. Enable this
+	  feature if you are facing problems with your HW and submit the test
+	  results to the netdev Mailing List.
 
 config STMMAC_PLATFORM
 	tristate "STMMAC Platform bus support"

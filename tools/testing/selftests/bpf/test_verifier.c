@@ -47,12 +47,13 @@
 #include "bpf_rlimit.h"
 #include "bpf_rand.h"
 #include "bpf_util.h"
+#include "test_btf.h"
 #include "../../../include/linux/filter.h"
 
 #define MAX_INSNS	BPF_MAXINSNS
 #define MAX_TEST_INSNS	1000000
 #define MAX_FIXUPS	8
-#define MAX_NR_MAPS	16
+#define MAX_NR_MAPS	18
 #define MAX_TEST_RUNS	8
 #define POINTER_VALUE	0xcafe4all
 #define TEST_DATA_LEN	64
@@ -85,6 +86,7 @@ struct bpf_test {
 	int fixup_map_array_ro[MAX_FIXUPS];
 	int fixup_map_array_wo[MAX_FIXUPS];
 	int fixup_map_array_small[MAX_FIXUPS];
+	int fixup_sk_storage_map[MAX_FIXUPS];
 	const char *errstr;
 	const char *errstr_unpriv;
 	uint32_t retval, retval_unpriv, insn_processed;
@@ -206,6 +208,76 @@ static void bpf_fill_rand_ld_dw(struct bpf_test *self)
 	self->prog_len = i + 1;
 	res ^= (res >> 32);
 	self->retval = (uint32_t)res;
+}
+
+/* test the sequence of 1k jumps */
+static void bpf_fill_scale1(struct bpf_test *self)
+{
+	struct bpf_insn *insn = self->fill_insns;
+	int i = 0, k = 0;
+
+	insn[i++] = BPF_MOV64_REG(BPF_REG_6, BPF_REG_1);
+	/* test to check that the sequence of 1024 jumps is acceptable */
+	while (k++ < 1024) {
+		insn[i++] = BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0,
+					 BPF_FUNC_get_prandom_u32);
+		insn[i++] = BPF_JMP_IMM(BPF_JGT, BPF_REG_0, bpf_semi_rand_get(), 2);
+		insn[i++] = BPF_MOV64_REG(BPF_REG_1, BPF_REG_10);
+		insn[i++] = BPF_STX_MEM(BPF_DW, BPF_REG_1, BPF_REG_6,
+					-8 * (k % 64 + 1));
+	}
+	/* every jump adds 1024 steps to insn_processed, so to stay exactly
+	 * within 1m limit add MAX_TEST_INSNS - 1025 MOVs and 1 EXIT
+	 */
+	while (i < MAX_TEST_INSNS - 1025)
+		insn[i++] = BPF_ALU32_IMM(BPF_MOV, BPF_REG_0, 42);
+	insn[i] = BPF_EXIT_INSN();
+	self->prog_len = i + 1;
+	self->retval = 42;
+}
+
+/* test the sequence of 1k jumps in inner most function (function depth 8)*/
+static void bpf_fill_scale2(struct bpf_test *self)
+{
+	struct bpf_insn *insn = self->fill_insns;
+	int i = 0, k = 0;
+
+#define FUNC_NEST 7
+	for (k = 0; k < FUNC_NEST; k++) {
+		insn[i++] = BPF_CALL_REL(1);
+		insn[i++] = BPF_EXIT_INSN();
+	}
+	insn[i++] = BPF_MOV64_REG(BPF_REG_6, BPF_REG_1);
+	/* test to check that the sequence of 1024 jumps is acceptable */
+	while (k++ < 1024) {
+		insn[i++] = BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0,
+					 BPF_FUNC_get_prandom_u32);
+		insn[i++] = BPF_JMP_IMM(BPF_JGT, BPF_REG_0, bpf_semi_rand_get(), 2);
+		insn[i++] = BPF_MOV64_REG(BPF_REG_1, BPF_REG_10);
+		insn[i++] = BPF_STX_MEM(BPF_DW, BPF_REG_1, BPF_REG_6,
+					-8 * (k % (64 - 4 * FUNC_NEST) + 1));
+	}
+	/* every jump adds 1024 steps to insn_processed, so to stay exactly
+	 * within 1m limit add MAX_TEST_INSNS - 1025 MOVs and 1 EXIT
+	 */
+	while (i < MAX_TEST_INSNS - 1025)
+		insn[i++] = BPF_ALU32_IMM(BPF_MOV, BPF_REG_0, 42);
+	insn[i] = BPF_EXIT_INSN();
+	self->prog_len = i + 1;
+	self->retval = 42;
+}
+
+static void bpf_fill_scale(struct bpf_test *self)
+{
+	switch (self->retval) {
+	case 1:
+		return bpf_fill_scale1(self);
+	case 2:
+		return bpf_fill_scale2(self);
+	default:
+		self->prog_len = 0;
+		break;
+	}
 }
 
 /* BPF_SK_LOOKUP contains 13 instructions, if you need to fix up maps */
@@ -427,24 +499,6 @@ static int create_cgroup_storage(bool percpu)
 	return fd;
 }
 
-#define BTF_INFO_ENC(kind, kind_flag, vlen) \
-	((!!(kind_flag) << 31) | ((kind) << 24) | ((vlen) & BTF_MAX_VLEN))
-#define BTF_TYPE_ENC(name, info, size_or_type) \
-	(name), (info), (size_or_type)
-#define BTF_INT_ENC(encoding, bits_offset, nr_bits) \
-	((encoding) << 24 | (bits_offset) << 16 | (nr_bits))
-#define BTF_TYPE_INT_ENC(name, encoding, bits_offset, bits, sz) \
-	BTF_TYPE_ENC(name, BTF_INFO_ENC(BTF_KIND_INT, 0, 0), sz), \
-	BTF_INT_ENC(encoding, bits_offset, bits)
-#define BTF_MEMBER_ENC(name, type, bits_offset) \
-	(name), (type), (bits_offset)
-
-struct btf_raw_data {
-	__u32 raw_types[64];
-	const char *str_sec;
-	__u32 str_sec_size;
-};
-
 /* struct bpf_spin_lock {
  *   int val;
  * };
@@ -519,6 +573,31 @@ static int create_map_spin_lock(void)
 	return fd;
 }
 
+static int create_sk_storage_map(void)
+{
+	struct bpf_create_map_attr attr = {
+		.name = "test_map",
+		.map_type = BPF_MAP_TYPE_SK_STORAGE,
+		.key_size = 4,
+		.value_size = 8,
+		.max_entries = 0,
+		.map_flags = BPF_F_NO_PREALLOC,
+		.btf_key_type_id = 1,
+		.btf_value_type_id = 3,
+	};
+	int fd, btf_fd;
+
+	btf_fd = load_btf();
+	if (btf_fd < 0)
+		return -1;
+	attr.btf_fd = btf_fd;
+	fd = bpf_create_map_xattr(&attr);
+	close(attr.btf_fd);
+	if (fd < 0)
+		printf("Failed to create sk_storage_map\n");
+	return fd;
+}
+
 static char bpf_vlog[UINT_MAX >> 8];
 
 static void do_test_fixup(struct bpf_test *test, enum bpf_prog_type prog_type,
@@ -541,6 +620,7 @@ static void do_test_fixup(struct bpf_test *test, enum bpf_prog_type prog_type,
 	int *fixup_map_array_ro = test->fixup_map_array_ro;
 	int *fixup_map_array_wo = test->fixup_map_array_wo;
 	int *fixup_map_array_small = test->fixup_map_array_small;
+	int *fixup_sk_storage_map = test->fixup_sk_storage_map;
 
 	if (test->fill_helper) {
 		test->fill_insns = calloc(MAX_TEST_INSNS, sizeof(struct bpf_insn));
@@ -694,6 +774,13 @@ static void do_test_fixup(struct bpf_test *test, enum bpf_prog_type prog_type,
 			prog[*fixup_map_array_small].imm = map_fds[16];
 			fixup_map_array_small++;
 		} while (*fixup_map_array_small);
+	}
+	if (*fixup_sk_storage_map) {
+		map_fds[17] = create_sk_storage_map();
+		do {
+			prog[*fixup_sk_storage_map].imm = map_fds[17];
+			fixup_sk_storage_map++;
+		} while (*fixup_sk_storage_map);
 	}
 }
 

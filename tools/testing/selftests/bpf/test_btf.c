@@ -24,6 +24,7 @@
 
 #include "bpf_rlimit.h"
 #include "bpf_util.h"
+#include "test_btf.h"
 
 #define MAX_INSNS	512
 #define MAX_SUBPROGS	16
@@ -57,68 +58,6 @@ static int __base_pr(enum libbpf_print_level level __attribute__((unused)),
 {
 	return vfprintf(stderr, format, args);
 }
-
-#define BTF_INFO_ENC(kind, kind_flag, vlen)			\
-	((!!(kind_flag) << 31) | ((kind) << 24) | ((vlen) & BTF_MAX_VLEN))
-
-#define BTF_TYPE_ENC(name, info, size_or_type)	\
-	(name), (info), (size_or_type)
-
-#define BTF_INT_ENC(encoding, bits_offset, nr_bits)	\
-	((encoding) << 24 | (bits_offset) << 16 | (nr_bits))
-#define BTF_TYPE_INT_ENC(name, encoding, bits_offset, bits, sz)	\
-	BTF_TYPE_ENC(name, BTF_INFO_ENC(BTF_KIND_INT, 0, 0), sz),	\
-	BTF_INT_ENC(encoding, bits_offset, bits)
-
-#define BTF_FWD_ENC(name, kind_flag) \
-	BTF_TYPE_ENC(name, BTF_INFO_ENC(BTF_KIND_FWD, kind_flag, 0), 0)
-
-#define BTF_ARRAY_ENC(type, index_type, nr_elems)	\
-	(type), (index_type), (nr_elems)
-#define BTF_TYPE_ARRAY_ENC(type, index_type, nr_elems) \
-	BTF_TYPE_ENC(0, BTF_INFO_ENC(BTF_KIND_ARRAY, 0, 0), 0), \
-	BTF_ARRAY_ENC(type, index_type, nr_elems)
-
-#define BTF_STRUCT_ENC(name, nr_elems, sz)	\
-	BTF_TYPE_ENC(name, BTF_INFO_ENC(BTF_KIND_STRUCT, 0, nr_elems), sz)
-
-#define BTF_UNION_ENC(name, nr_elems, sz)	\
-	BTF_TYPE_ENC(name, BTF_INFO_ENC(BTF_KIND_UNION, 0, nr_elems), sz)
-
-#define BTF_VAR_ENC(name, type, linkage)	\
-	BTF_TYPE_ENC(name, BTF_INFO_ENC(BTF_KIND_VAR, 0, 0), type), (linkage)
-#define BTF_VAR_SECINFO_ENC(type, offset, size)	\
-	(type), (offset), (size)
-
-#define BTF_MEMBER_ENC(name, type, bits_offset)	\
-	(name), (type), (bits_offset)
-#define BTF_ENUM_ENC(name, val) (name), (val)
-#define BTF_MEMBER_OFFSET(bitfield_size, bits_offset) \
-	((bitfield_size) << 24 | (bits_offset))
-
-#define BTF_TYPEDEF_ENC(name, type) \
-	BTF_TYPE_ENC(name, BTF_INFO_ENC(BTF_KIND_TYPEDEF, 0, 0), type)
-
-#define BTF_PTR_ENC(type) \
-	BTF_TYPE_ENC(0, BTF_INFO_ENC(BTF_KIND_PTR, 0, 0), type)
-
-#define BTF_CONST_ENC(type) \
-	BTF_TYPE_ENC(0, BTF_INFO_ENC(BTF_KIND_CONST, 0, 0), type)
-
-#define BTF_VOLATILE_ENC(type) \
-	BTF_TYPE_ENC(0, BTF_INFO_ENC(BTF_KIND_VOLATILE, 0, 0), type)
-
-#define BTF_RESTRICT_ENC(type) \
-	BTF_TYPE_ENC(0, BTF_INFO_ENC(BTF_KIND_RESTRICT, 0, 0), type)
-
-#define BTF_FUNC_PROTO_ENC(ret_type, nargs) \
-	BTF_TYPE_ENC(0, BTF_INFO_ENC(BTF_KIND_FUNC_PROTO, 0, nargs), ret_type)
-
-#define BTF_FUNC_PROTO_ARG_ENC(name, type) \
-	(name), (type)
-
-#define BTF_FUNC_ENC(name, func_proto) \
-	BTF_TYPE_ENC(name, BTF_INFO_ENC(BTF_KIND_FUNC, 0, 0), func_proto)
 
 #define BTF_END_RAW 0xdeadbeef
 #define NAME_TBD 0xdeadb33f
@@ -6642,6 +6581,51 @@ const struct btf_dedup_test dedup_tests[] = {
 		.dont_resolve_fwds = false,
 	},
 },
+{
+	.descr = "dedup: datasec and vars pass-through",
+	.input = {
+		.raw_types = {
+			/* int */
+			BTF_TYPE_INT_ENC(0, BTF_INT_SIGNED, 0, 32, 4),	/* [1] */
+			/* static int t */
+			BTF_VAR_ENC(NAME_NTH(2), 1, 0),			/* [2] */
+			/* .bss section */				/* [3] */
+			BTF_TYPE_ENC(NAME_NTH(1), BTF_INFO_ENC(BTF_KIND_DATASEC, 0, 1), 4),
+			BTF_VAR_SECINFO_ENC(2, 0, 4),
+			/* int, referenced from [5] */
+			BTF_TYPE_INT_ENC(0, BTF_INT_SIGNED, 0, 32, 4),	/* [4] */
+			/* another static int t */
+			BTF_VAR_ENC(NAME_NTH(2), 4, 0),			/* [5] */
+			/* another .bss section */			/* [6] */
+			BTF_TYPE_ENC(NAME_NTH(1), BTF_INFO_ENC(BTF_KIND_DATASEC, 0, 1), 4),
+			BTF_VAR_SECINFO_ENC(5, 0, 4),
+			BTF_END_RAW,
+		},
+		BTF_STR_SEC("\0.bss\0t"),
+	},
+	.expect = {
+		.raw_types = {
+			/* int */
+			BTF_TYPE_INT_ENC(0, BTF_INT_SIGNED, 0, 32, 4),	/* [1] */
+			/* static int t */
+			BTF_VAR_ENC(NAME_NTH(2), 1, 0),			/* [2] */
+			/* .bss section */				/* [3] */
+			BTF_TYPE_ENC(NAME_NTH(1), BTF_INFO_ENC(BTF_KIND_DATASEC, 0, 1), 4),
+			BTF_VAR_SECINFO_ENC(2, 0, 4),
+			/* another static int t */
+			BTF_VAR_ENC(NAME_NTH(2), 1, 0),			/* [4] */
+			/* another .bss section */			/* [5] */
+			BTF_TYPE_ENC(NAME_NTH(1), BTF_INFO_ENC(BTF_KIND_DATASEC, 0, 1), 4),
+			BTF_VAR_SECINFO_ENC(4, 0, 4),
+			BTF_END_RAW,
+		},
+		BTF_STR_SEC("\0.bss\0t"),
+	},
+	.opts = {
+		.dont_resolve_fwds = false,
+		.dedup_table_size = 1
+	},
+},
 
 };
 
@@ -6671,6 +6655,10 @@ static int btf_type_size(const struct btf_type *t)
 		return base_size + vlen * sizeof(struct btf_member);
 	case BTF_KIND_FUNC_PROTO:
 		return base_size + vlen * sizeof(struct btf_param);
+	case BTF_KIND_VAR:
+		return base_size + sizeof(struct btf_var);
+	case BTF_KIND_DATASEC:
+		return base_size + vlen * sizeof(struct btf_var_secinfo);
 	default:
 		fprintf(stderr, "Unsupported BTF_KIND:%u\n", kind);
 		return -EINVAL;

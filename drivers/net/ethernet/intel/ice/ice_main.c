@@ -317,42 +317,22 @@ static int ice_vsi_sync_fltr(struct ice_vsi *vsi)
 	    test_bit(ICE_VSI_FLAG_PROMISC_CHANGED, vsi->flags)) {
 		clear_bit(ICE_VSI_FLAG_PROMISC_CHANGED, vsi->flags);
 		if (vsi->current_netdev_flags & IFF_PROMISC) {
-			/* Apply Tx filter rule to get traffic from VMs */
-			status = ice_cfg_dflt_vsi(hw, vsi->idx, true,
-						  ICE_FLTR_TX);
-			if (status) {
-				netdev_err(netdev, "Error setting default VSI %i tx rule\n",
-					   vsi->vsi_num);
-				vsi->current_netdev_flags &= ~IFF_PROMISC;
-				err = -EIO;
-				goto out_promisc;
-			}
 			/* Apply Rx filter rule to get traffic from wire */
 			status = ice_cfg_dflt_vsi(hw, vsi->idx, true,
 						  ICE_FLTR_RX);
 			if (status) {
-				netdev_err(netdev, "Error setting default VSI %i rx rule\n",
+				netdev_err(netdev, "Error setting default VSI %i Rx rule\n",
 					   vsi->vsi_num);
 				vsi->current_netdev_flags &= ~IFF_PROMISC;
 				err = -EIO;
 				goto out_promisc;
 			}
 		} else {
-			/* Clear Tx filter rule to stop traffic from VMs */
-			status = ice_cfg_dflt_vsi(hw, vsi->idx, false,
-						  ICE_FLTR_TX);
-			if (status) {
-				netdev_err(netdev, "Error clearing default VSI %i tx rule\n",
-					   vsi->vsi_num);
-				vsi->current_netdev_flags |= IFF_PROMISC;
-				err = -EIO;
-				goto out_promisc;
-			}
 			/* Clear Rx filter to remove traffic from wire */
 			status = ice_cfg_dflt_vsi(hw, vsi->idx, false,
 						  ICE_FLTR_RX);
 			if (status) {
-				netdev_err(netdev, "Error clearing default VSI %i rx rule\n",
+				netdev_err(netdev, "Error clearing default VSI %i Rx rule\n",
 					   vsi->vsi_num);
 				vsi->current_netdev_flags |= IFF_PROMISC;
 				err = -EIO;
@@ -590,6 +570,9 @@ void ice_print_link_msg(struct ice_vsi *vsi, bool isup)
 	const char *speed;
 	const char *fc;
 
+	if (!vsi)
+		return;
+
 	if (vsi->current_isup == isup)
 		return;
 
@@ -659,15 +642,16 @@ void ice_print_link_msg(struct ice_vsi *vsi, bool isup)
  */
 static void ice_vsi_link_event(struct ice_vsi *vsi, bool link_up)
 {
-	if (!vsi || test_bit(__ICE_DOWN, vsi->state))
+	if (!vsi)
+		return;
+
+	if (test_bit(__ICE_DOWN, vsi->state) || !vsi->netdev)
 		return;
 
 	if (vsi->type == ICE_VSI_PF) {
-		if (!vsi->netdev) {
-			dev_dbg(&vsi->back->pdev->dev,
-				"vsi->netdev is not initialized!\n");
+		if (link_up == netif_carrier_ok(vsi->netdev))
 			return;
-		}
+
 		if (link_up) {
 			netif_carrier_on(vsi->netdev);
 			netif_tx_wake_all_queues(vsi->netdev);
@@ -682,61 +666,51 @@ static void ice_vsi_link_event(struct ice_vsi *vsi, bool link_up)
  * ice_link_event - process the link event
  * @pf: pf that the link event is associated with
  * @pi: port_info for the port that the link event is associated with
+ * @link_up: true if the physical link is up and false if it is down
+ * @link_speed: current link speed received from the link event
  *
- * Returns -EIO if ice_get_link_status() fails
- * Returns 0 on success
+ * Returns 0 on success and negative on failure
  */
 static int
-ice_link_event(struct ice_pf *pf, struct ice_port_info *pi)
+ice_link_event(struct ice_pf *pf, struct ice_port_info *pi, bool link_up,
+	       u16 link_speed)
 {
-	u8 new_link_speed, old_link_speed;
 	struct ice_phy_info *phy_info;
-	bool new_link_same_as_old;
-	bool new_link, old_link;
-	u8 lport;
-	u16 v;
+	struct ice_vsi *vsi;
+	u16 old_link_speed;
+	bool old_link;
+	int result;
 
 	phy_info = &pi->phy;
 	phy_info->link_info_old = phy_info->link_info;
-	/* Force ice_get_link_status() to update link info */
-	phy_info->get_link_info = true;
 
-	old_link = (phy_info->link_info_old.link_info & ICE_AQ_LINK_UP);
+	old_link = !!(phy_info->link_info_old.link_info & ICE_AQ_LINK_UP);
 	old_link_speed = phy_info->link_info_old.link_speed;
 
-	lport = pi->lport;
-	if (ice_get_link_status(pi, &new_link)) {
+	/* update the link info structures and re-enable link events,
+	 * don't bail on failure due to other book keeping needed
+	 */
+	result = ice_update_link_info(pi);
+	if (result)
 		dev_dbg(&pf->pdev->dev,
-			"Could not get link status for port %d\n", lport);
-		return -EIO;
-	}
+			"Failed to update link status and re-enable link events for port %d\n",
+			pi->lport);
 
-	new_link_speed = phy_info->link_info.link_speed;
+	/* if the old link up/down and speed is the same as the new */
+	if (link_up == old_link && link_speed == old_link_speed)
+		return result;
 
-	new_link_same_as_old = (new_link == old_link &&
-				new_link_speed == old_link_speed);
+	vsi = ice_find_vsi_by_type(pf, ICE_VSI_PF);
+	if (!vsi || !vsi->port_info)
+		return -EINVAL;
 
-	ice_for_each_vsi(pf, v) {
-		struct ice_vsi *vsi = pf->vsi[v];
+	ice_vsi_link_event(vsi, link_up);
+	ice_print_link_msg(vsi, link_up);
 
-		if (!vsi || !vsi->port_info)
-			continue;
-
-		if (new_link_same_as_old &&
-		    (test_bit(__ICE_DOWN, vsi->state) ||
-		    new_link == netif_carrier_ok(vsi->netdev)))
-			continue;
-
-		if (vsi->port_info->lport == lport) {
-			ice_print_link_msg(vsi, new_link);
-			ice_vsi_link_event(vsi, new_link);
-		}
-	}
-
-	if (!new_link_same_as_old && pf->num_alloc_vfs)
+	if (pf->num_alloc_vfs)
 		ice_vc_notify_link_state(pf);
 
-	return 0;
+	return result;
 }
 
 /**
@@ -801,20 +775,23 @@ static int ice_init_link_events(struct ice_port_info *pi)
 /**
  * ice_handle_link_event - handle link event via ARQ
  * @pf: pf that the link event is associated with
- *
- * Return -EINVAL if port_info is null
- * Return status on success
+ * @event: event structure containing link status info
  */
-static int ice_handle_link_event(struct ice_pf *pf)
+static int
+ice_handle_link_event(struct ice_pf *pf, struct ice_rq_event_info *event)
 {
+	struct ice_aqc_get_link_status_data *link_data;
 	struct ice_port_info *port_info;
 	int status;
 
+	link_data = (struct ice_aqc_get_link_status_data *)event->msg_buf;
 	port_info = pf->hw.port_info;
 	if (!port_info)
 		return -EINVAL;
 
-	status = ice_link_event(pf, port_info);
+	status = ice_link_event(pf, port_info,
+				!!(link_data->link_info & ICE_AQ_LINK_UP),
+				le16_to_cpu(link_data->link_speed));
 	if (status)
 		dev_dbg(&pf->pdev->dev,
 			"Could not process link event, error %d\n", status);
@@ -926,7 +903,7 @@ static int __ice_clean_ctrlq(struct ice_pf *pf, enum ice_ctl_q q_type)
 
 		switch (opcode) {
 		case ice_aqc_opc_get_link_status:
-			if (ice_handle_link_event(pf))
+			if (ice_handle_link_event(pf, &event))
 				dev_err(&pf->pdev->dev,
 					"Could not handle link event\n");
 			break;
@@ -1096,7 +1073,7 @@ static void ice_handle_mdd_event(struct ice_pf *pf)
 	u32 reg;
 	int i;
 
-	if (!test_bit(__ICE_MDD_EVENT_PENDING, pf->state))
+	if (!test_and_clear_bit(__ICE_MDD_EVENT_PENDING, pf->state))
 		return;
 
 	/* find what triggered the MDD event */
@@ -1188,10 +1165,12 @@ static void ice_handle_mdd_event(struct ice_pf *pf)
 	for (i = 0; i < pf->num_alloc_vfs && mdd_detected; i++) {
 		struct ice_vf *vf = &pf->vf[i];
 
+		mdd_detected = false;
+
 		reg = rd32(hw, VP_MDET_TX_PQM(i));
 		if (reg & VP_MDET_TX_PQM_VALID_M) {
 			wr32(hw, VP_MDET_TX_PQM(i), 0xFFFF);
-			vf->num_mdd_events++;
+			mdd_detected = true;
 			dev_info(&pf->pdev->dev, "TX driver issue detected on VF %d\n",
 				 i);
 		}
@@ -1199,7 +1178,7 @@ static void ice_handle_mdd_event(struct ice_pf *pf)
 		reg = rd32(hw, VP_MDET_TX_TCLAN(i));
 		if (reg & VP_MDET_TX_TCLAN_VALID_M) {
 			wr32(hw, VP_MDET_TX_TCLAN(i), 0xFFFF);
-			vf->num_mdd_events++;
+			mdd_detected = true;
 			dev_info(&pf->pdev->dev, "TX driver issue detected on VF %d\n",
 				 i);
 		}
@@ -1207,7 +1186,7 @@ static void ice_handle_mdd_event(struct ice_pf *pf)
 		reg = rd32(hw, VP_MDET_TX_TDPU(i));
 		if (reg & VP_MDET_TX_TDPU_VALID_M) {
 			wr32(hw, VP_MDET_TX_TDPU(i), 0xFFFF);
-			vf->num_mdd_events++;
+			mdd_detected = true;
 			dev_info(&pf->pdev->dev, "TX driver issue detected on VF %d\n",
 				 i);
 		}
@@ -1215,26 +1194,19 @@ static void ice_handle_mdd_event(struct ice_pf *pf)
 		reg = rd32(hw, VP_MDET_RX(i));
 		if (reg & VP_MDET_RX_VALID_M) {
 			wr32(hw, VP_MDET_RX(i), 0xFFFF);
-			vf->num_mdd_events++;
+			mdd_detected = true;
 			dev_info(&pf->pdev->dev, "RX driver issue detected on VF %d\n",
 				 i);
 		}
 
-		if (vf->num_mdd_events > ICE_DFLT_NUM_MDD_EVENTS_ALLOWED) {
-			dev_info(&pf->pdev->dev,
-				 "Too many MDD events on VF %d, disabled\n", i);
+		if (mdd_detected) {
+			vf->num_mdd_events++;
 			dev_info(&pf->pdev->dev,
 				 "Use PF Control I/F to re-enable the VF\n");
 			set_bit(ICE_VF_STATE_DIS, vf->vf_states);
 		}
 	}
 
-	/* re-enable MDD interrupt cause */
-	clear_bit(__ICE_MDD_EVENT_PENDING, pf->state);
-	reg = rd32(hw, PFINT_OICR_ENA);
-	reg |= PFINT_OICR_MAL_DETECT_M;
-	wr32(hw, PFINT_OICR_ENA, reg);
-	ice_flush(hw);
 }
 
 /**
@@ -1338,7 +1310,7 @@ static int ice_vsi_ena_irq(struct ice_vsi *vsi)
 	if (test_bit(ICE_FLAG_MSIX_ENA, pf->flags)) {
 		int i;
 
-		for (i = 0; i < vsi->num_q_vectors; i++)
+		ice_for_each_q_vector(vsi, i)
 			ice_irq_dynamic_ena(hw, vsi, vsi->q_vectors[i]);
 	}
 
@@ -1523,7 +1495,7 @@ static irqreturn_t ice_misc_intr(int __always_unused irq, void *data)
 			rd32(hw, PFHMC_ERRORDATA));
 	}
 
-	/* Report and mask off any remaining unexpected interrupts */
+	/* Report any remaining unexpected interrupts */
 	oicr &= ena_mask;
 	if (oicr) {
 		dev_dbg(&pf->pdev->dev, "unhandled interrupt oicr=0x%08x\n",
@@ -1537,12 +1509,9 @@ static irqreturn_t ice_misc_intr(int __always_unused irq, void *data)
 			set_bit(__ICE_PFR_REQ, pf->state);
 			ice_service_task_schedule(pf);
 		}
-		ena_mask &= ~oicr;
 	}
 	ret = IRQ_HANDLED;
 
-	/* re-enable interrupt causes that are not handled during this pass */
-	wr32(hw, PFINT_OICR_ENA, ena_mask);
 	if (!test_bit(__ICE_DOWN, pf->state)) {
 		ice_service_task_schedule(pf);
 		ice_irq_dynamic_ena(hw, NULL, NULL);
@@ -1601,23 +1570,23 @@ static void ice_free_irq_msix_misc(struct ice_pf *pf)
 /**
  * ice_ena_ctrlq_interrupts - enable control queue interrupts
  * @hw: pointer to HW structure
- * @v_idx: HW vector index to associate the control queue interrupts with
+ * @reg_idx: HW vector index to associate the control queue interrupts with
  */
-static void ice_ena_ctrlq_interrupts(struct ice_hw *hw, u16 v_idx)
+static void ice_ena_ctrlq_interrupts(struct ice_hw *hw, u16 reg_idx)
 {
 	u32 val;
 
-	val = ((v_idx & PFINT_OICR_CTL_MSIX_INDX_M) |
+	val = ((reg_idx & PFINT_OICR_CTL_MSIX_INDX_M) |
 	       PFINT_OICR_CTL_CAUSE_ENA_M);
 	wr32(hw, PFINT_OICR_CTL, val);
 
 	/* enable Admin queue Interrupt causes */
-	val = ((v_idx & PFINT_FW_CTL_MSIX_INDX_M) |
+	val = ((reg_idx & PFINT_FW_CTL_MSIX_INDX_M) |
 	       PFINT_FW_CTL_CAUSE_ENA_M);
 	wr32(hw, PFINT_FW_CTL, val);
 
 	/* enable Mailbox queue Interrupt causes */
-	val = ((v_idx & PFINT_MBX_CTL_MSIX_INDX_M) |
+	val = ((reg_idx & PFINT_MBX_CTL_MSIX_INDX_M) |
 	       PFINT_MBX_CTL_CAUSE_ENA_M);
 	wr32(hw, PFINT_MBX_CTL, val);
 
@@ -1698,14 +1667,14 @@ skip_req_irq:
  * ice_napi_del - Remove NAPI handler for the VSI
  * @vsi: VSI for which NAPI handler is to be removed
  */
-void ice_napi_del(struct ice_vsi *vsi)
+static void ice_napi_del(struct ice_vsi *vsi)
 {
 	int v_idx;
 
 	if (!vsi->netdev)
 		return;
 
-	for (v_idx = 0; v_idx < vsi->num_q_vectors; v_idx++)
+	ice_for_each_q_vector(vsi, v_idx)
 		netif_napi_del(&vsi->q_vectors[v_idx]->napi);
 }
 
@@ -1724,7 +1693,7 @@ static void ice_napi_add(struct ice_vsi *vsi)
 	if (!vsi->netdev)
 		return;
 
-	for (v_idx = 0; v_idx < vsi->num_q_vectors; v_idx++)
+	ice_for_each_q_vector(vsi, v_idx)
 		netif_napi_add(vsi->netdev, &vsi->q_vectors[v_idx]->napi,
 			       ice_napi_poll, NAPI_POLL_WEIGHT);
 }
@@ -2333,7 +2302,7 @@ ice_probe(struct pci_dev *pdev, const struct pci_device_id __always_unused *ent)
 
 	ice_init_pf(pf);
 
-	err = ice_init_pf_dcb(pf);
+	err = ice_init_pf_dcb(pf, false);
 	if (err) {
 		clear_bit(ICE_FLAG_DCB_CAPABLE, pf->flags);
 		clear_bit(ICE_FLAG_DCB_ENA, pf->flags);
@@ -2884,6 +2853,9 @@ ice_set_features(struct net_device *netdev, netdev_features_t features)
 	struct ice_vsi *vsi = np->vsi;
 	int ret = 0;
 
+	/* Multiple features can be changed in one call so keep features in
+	 * separate if/else statements to guarantee each feature is checked
+	 */
 	if (features & NETIF_F_RXHASH && !(netdev->features & NETIF_F_RXHASH))
 		ret = ice_vsi_manage_rss_lut(vsi, true);
 	else if (!(features & NETIF_F_RXHASH) &&
@@ -2896,8 +2868,9 @@ ice_set_features(struct net_device *netdev, netdev_features_t features)
 	else if (!(features & NETIF_F_HW_VLAN_CTAG_RX) &&
 		 (netdev->features & NETIF_F_HW_VLAN_CTAG_RX))
 		ret = ice_vsi_manage_vlan_stripping(vsi, false);
-	else if ((features & NETIF_F_HW_VLAN_CTAG_TX) &&
-		 !(netdev->features & NETIF_F_HW_VLAN_CTAG_TX))
+
+	if ((features & NETIF_F_HW_VLAN_CTAG_TX) &&
+	    !(netdev->features & NETIF_F_HW_VLAN_CTAG_TX))
 		ret = ice_vsi_manage_vlan_insertion(vsi);
 	else if (!(features & NETIF_F_HW_VLAN_CTAG_TX) &&
 		 (netdev->features & NETIF_F_HW_VLAN_CTAG_TX))
@@ -2960,7 +2933,7 @@ static void ice_napi_enable_all(struct ice_vsi *vsi)
 	if (!vsi->netdev)
 		return;
 
-	for (q_idx = 0; q_idx < vsi->num_q_vectors; q_idx++) {
+	ice_for_each_q_vector(vsi, q_idx) {
 		struct ice_q_vector *q_vector = vsi->q_vectors[q_idx];
 
 		if (q_vector->rx.ring || q_vector->tx.ring)
@@ -3334,7 +3307,7 @@ static void ice_napi_disable_all(struct ice_vsi *vsi)
 	if (!vsi->netdev)
 		return;
 
-	for (q_idx = 0; q_idx < vsi->num_q_vectors; q_idx++) {
+	ice_for_each_q_vector(vsi, q_idx) {
 		struct ice_q_vector *q_vector = vsi->q_vectors[q_idx];
 
 		if (q_vector->rx.ring || q_vector->tx.ring)
@@ -4223,8 +4196,7 @@ static void ice_tx_timeout(struct net_device *netdev)
 		/* Read interrupt register */
 		if (test_bit(ICE_FLAG_MSIX_ENA, pf->flags))
 			val = rd32(hw,
-				   GLINT_DYN_CTL(tx_ring->q_vector->v_idx +
-						 tx_ring->vsi->hw_base_vector));
+				   GLINT_DYN_CTL(tx_ring->q_vector->reg_idx));
 
 		netdev_info(netdev, "tx_timeout: VSI_num: %d, Q %d, NTC: 0x%x, HW_HEAD: 0x%x, NTU: 0x%x, INT: 0x%x\n",
 			    vsi->vsi_num, hung_queue, tx_ring->next_to_clean,

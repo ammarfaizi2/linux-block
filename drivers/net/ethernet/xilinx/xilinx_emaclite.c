@@ -27,6 +27,7 @@
 #include <linux/of_net.h>
 #include <linux/phy.h>
 #include <linux/interrupt.h>
+#include <linux/iopoll.h>
 
 #define DRIVER_NAME "xilinx_emaclite"
 
@@ -714,20 +715,15 @@ static irqreturn_t xemaclite_interrupt(int irq, void *dev_id)
 
 static int xemaclite_mdio_wait(struct net_local *lp)
 {
-	unsigned long end = jiffies + 2;
+	u32 val;
 
 	/* wait for the MDIO interface to not be busy or timeout
 	 * after some time.
 	 */
-	while (xemaclite_readl(lp->base_addr + XEL_MDIOCTRL_OFFSET) &
-			XEL_MDIOCTRL_MDIOSTS_MASK) {
-		if (time_before_eq(end, jiffies)) {
-			WARN_ON(1);
-			return -ETIMEDOUT;
-		}
-		msleep(1);
-	}
-	return 0;
+	return readx_poll_timeout(xemaclite_readl,
+				  lp->base_addr + XEL_MDIOCTRL_OFFSET,
+				  val, !(val & XEL_MDIOCTRL_MDIOSTS_MASK),
+				  1000, 20000);
 }
 
 /**
@@ -1165,9 +1161,9 @@ static int xemaclite_of_probe(struct platform_device *ofdev)
 	lp->rx_ping_pong = get_bool(ofdev, "xlnx,rx-ping-pong");
 	mac_address = of_get_mac_address(ofdev->dev.of_node);
 
-	if (mac_address) {
+	if (!IS_ERR(mac_address)) {
 		/* Set the MAC address. */
-		memcpy(ndev->dev_addr, mac_address, ETH_ALEN);
+		ether_addr_copy(ndev->dev_addr, mac_address);
 	} else {
 		dev_warn(dev, "No MAC address found, using random\n");
 		eth_hw_addr_random(ndev);

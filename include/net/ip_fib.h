@@ -83,11 +83,11 @@ struct fnhe_hash_bucket {
 struct fib_nh_common {
 	struct net_device	*nhc_dev;
 	int			nhc_oif;
-	unsigned int		nhc_flags;
-	struct lwtunnel_state	*nhc_lwtstate;
 	unsigned char		nhc_scope;
 	u8			nhc_family;
 	u8			nhc_gw_family;
+	unsigned char		nhc_flags;
+	struct lwtunnel_state	*nhc_lwtstate;
 
 	union {
 		__be32          ipv4;
@@ -96,6 +96,11 @@ struct fib_nh_common {
 
 	int			nhc_weight;
 	atomic_t		nhc_upper_bound;
+
+	/* v4 specific, but allows fib6_nh with v4 routes */
+	struct rtable __rcu * __percpu *nhc_pcpu_rth_output;
+	struct rtable __rcu     *nhc_rth_input;
+	struct fnhe_hash_bucket	__rcu *nhc_exceptions;
 };
 
 struct fib_nh {
@@ -107,9 +112,6 @@ struct fib_nh {
 #endif
 	__be32			nh_saddr;
 	int			nh_saddr_genid;
-	struct rtable __rcu * __percpu *nh_pcpu_rth_output;
-	struct rtable __rcu	*nh_rth_input;
-	struct fnhe_hash_bucket	__rcu *nh_exceptions;
 #define fib_nh_family		nh_common.nhc_family
 #define fib_nh_dev		nh_common.nhc_dev
 #define fib_nh_oif		nh_common.nhc_oif
@@ -148,6 +150,7 @@ struct fib_info {
 #define fib_advmss fib_metrics->metrics[RTAX_ADVMSS-1]
 	int			fib_nhs;
 	bool			fib_nh_is_v6;
+	bool			nh_updated;
 	struct rcu_head		rcu;
 	struct fib_nh		fib_nh[0];
 #define fib_dev		fib_nh[0].fib_nh_dev
@@ -198,7 +201,8 @@ static inline struct fib_nh_common *fib_info_nhc(struct fib_info *fi, int nhsel)
 #define FIB_TABLE_HASHSZ 2
 #endif
 
-__be32 fib_info_update_nh_saddr(struct net *net, struct fib_nh *nh);
+__be32 fib_info_update_nh_saddr(struct net *net, struct fib_nh *nh,
+				unsigned char scope);
 __be32 fib_result_prefsrc(struct net *net, struct fib_result *res);
 
 #define FIB_RES_NHC(res)		((res).nhc)
@@ -229,6 +233,7 @@ int call_fib4_notifiers(struct net *net, enum fib_event_type event_type,
 int __net_init fib4_notifier_init(struct net *net);
 void __net_exit fib4_notifier_exit(struct net *net);
 
+void fib_info_notify_update(struct net *net, struct nl_info *info);
 void fib_notify(struct net *net, struct notifier_block *nb);
 
 struct fib_table {
@@ -425,13 +430,16 @@ int fib_unmerge(struct net *net);
 int ip_fib_check_default(__be32 gw, struct net_device *dev);
 int fib_sync_down_dev(struct net_device *dev, unsigned long event, bool force);
 int fib_sync_down_addr(struct net_device *dev, __be32 local);
-int fib_sync_up(struct net_device *dev, unsigned int nh_flags);
+int fib_sync_up(struct net_device *dev, unsigned char nh_flags);
 void fib_sync_mtu(struct net_device *dev, u32 orig_mtu);
+void fib_nhc_update_mtu(struct fib_nh_common *nhc, u32 new, u32 orig);
 
 #ifdef CONFIG_IP_ROUTE_MULTIPATH
 int fib_multipath_hash(const struct net *net, const struct flowi4 *fl4,
 		       const struct sk_buff *skb, struct flow_keys *flkeys);
 #endif
+int fib_check_nh(struct net *net, struct fib_nh *nh, u32 table, u8 scope,
+		 struct netlink_ext_ack *extack);
 void fib_select_multipath(struct fib_result *res, int hash);
 void fib_select_path(struct net *net, struct fib_result *res,
 		     struct flowi4 *fl4, const struct sk_buff *skb);
@@ -467,6 +475,7 @@ static inline void fib_combine_itag(u32 *itag, const struct fib_result *res)
 #endif
 }
 
+void fib_flush(struct net *net);
 void free_fib_info(struct fib_info *fi);
 
 static inline void fib_info_hold(struct fib_info *fi)
@@ -500,7 +509,7 @@ int ip_valid_fib_dump_req(struct net *net, const struct nlmsghdr *nlh,
 			  struct netlink_callback *cb);
 
 int fib_nexthop_info(struct sk_buff *skb, const struct fib_nh_common *nh,
-		     unsigned int *flags, bool skip_oif);
+		     unsigned char *flags, bool skip_oif);
 int fib_add_nexthop(struct sk_buff *skb, const struct fib_nh_common *nh,
 		    int nh_weight);
 #endif  /* _NET_FIB_H */

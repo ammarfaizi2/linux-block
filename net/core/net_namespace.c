@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
 #include <linux/workqueue.h>
@@ -682,8 +683,8 @@ static int rtnl_net_newid(struct sk_buff *skb, struct nlmsghdr *nlh,
 	struct net *peer;
 	int nsid, err;
 
-	err = nlmsg_parse(nlh, sizeof(struct rtgenmsg), tb, NETNSA_MAX,
-			  rtnl_net_policy, extack);
+	err = nlmsg_parse_deprecated(nlh, sizeof(struct rtgenmsg), tb,
+				     NETNSA_MAX, rtnl_net_policy, extack);
 	if (err < 0)
 		return err;
 	if (!tb[NETNSA_NSID]) {
@@ -787,11 +788,13 @@ static int rtnl_net_valid_getid_req(struct sk_buff *skb,
 	int i, err;
 
 	if (!netlink_strict_get_check(skb))
-		return nlmsg_parse(nlh, sizeof(struct rtgenmsg), tb, NETNSA_MAX,
-				   rtnl_net_policy, extack);
+		return nlmsg_parse_deprecated(nlh, sizeof(struct rtgenmsg),
+					      tb, NETNSA_MAX, rtnl_net_policy,
+					      extack);
 
-	err = nlmsg_parse_strict(nlh, sizeof(struct rtgenmsg), tb, NETNSA_MAX,
-				 rtnl_net_policy, extack);
+	err = nlmsg_parse_deprecated_strict(nlh, sizeof(struct rtgenmsg), tb,
+					    NETNSA_MAX, rtnl_net_policy,
+					    extack);
 	if (err)
 		return err;
 
@@ -929,8 +932,9 @@ static int rtnl_valid_dump_net_req(const struct nlmsghdr *nlh, struct sock *sk,
 	struct nlattr *tb[NETNSA_MAX + 1];
 	int err, i;
 
-	err = nlmsg_parse_strict(nlh, sizeof(struct rtgenmsg), tb, NETNSA_MAX,
-				 rtnl_net_policy, extack);
+	err = nlmsg_parse_deprecated_strict(nlh, sizeof(struct rtgenmsg), tb,
+					    NETNSA_MAX, rtnl_net_policy,
+					    extack);
 	if (err < 0)
 		return err;
 

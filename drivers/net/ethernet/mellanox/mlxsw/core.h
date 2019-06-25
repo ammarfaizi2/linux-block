@@ -28,6 +28,8 @@ unsigned int mlxsw_core_max_ports(const struct mlxsw_core *mlxsw_core);
 
 void *mlxsw_core_driver_priv(struct mlxsw_core *mlxsw_core);
 
+bool mlxsw_core_res_query_enabled(const struct mlxsw_core *mlxsw_core);
+
 int mlxsw_core_driver_register(struct mlxsw_driver *mlxsw_driver);
 void mlxsw_core_driver_unregister(struct mlxsw_driver *mlxsw_driver);
 
@@ -254,13 +256,14 @@ struct mlxsw_driver {
 			   struct devlink_sb_pool_info *pool_info);
 	int (*sb_pool_set)(struct mlxsw_core *mlxsw_core,
 			   unsigned int sb_index, u16 pool_index, u32 size,
-			   enum devlink_sb_threshold_type threshold_type);
+			   enum devlink_sb_threshold_type threshold_type,
+			   struct netlink_ext_ack *extack);
 	int (*sb_port_pool_get)(struct mlxsw_core_port *mlxsw_core_port,
 				unsigned int sb_index, u16 pool_index,
 				u32 *p_threshold);
 	int (*sb_port_pool_set)(struct mlxsw_core_port *mlxsw_core_port,
 				unsigned int sb_index, u16 pool_index,
-				u32 threshold);
+				u32 threshold, struct netlink_ext_ack *extack);
 	int (*sb_tc_pool_bind_get)(struct mlxsw_core_port *mlxsw_core_port,
 				   unsigned int sb_index, u16 tc_index,
 				   enum devlink_sb_pool_type pool_type,
@@ -268,7 +271,8 @@ struct mlxsw_driver {
 	int (*sb_tc_pool_bind_set)(struct mlxsw_core_port *mlxsw_core_port,
 				   unsigned int sb_index, u16 tc_index,
 				   enum devlink_sb_pool_type pool_type,
-				   u16 pool_index, u32 threshold);
+				   u16 pool_index, u32 threshold,
+				   struct netlink_ext_ack *extack);
 	int (*sb_occ_snapshot)(struct mlxsw_core *mlxsw_core,
 			       unsigned int sb_index);
 	int (*sb_occ_max_clear)(struct mlxsw_core *mlxsw_core,

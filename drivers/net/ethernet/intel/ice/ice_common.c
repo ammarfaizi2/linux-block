@@ -647,7 +647,7 @@ void ice_output_fw_log(struct ice_hw *hw, struct ice_aq_desc *desc, void *buf)
  * Determines the itr/intrl granularities based on the maximum aggregate
  * bandwidth according to the device's configuration during power-on.
  */
-static enum ice_status ice_get_itr_intrl_gran(struct ice_hw *hw)
+static void ice_get_itr_intrl_gran(struct ice_hw *hw)
 {
 	u8 max_agg_bw = (rd32(hw, GL_PWR_MODE_CTL) &
 			 GL_PWR_MODE_CTL_CAR_MAX_BW_M) >>
@@ -664,13 +664,7 @@ static enum ice_status ice_get_itr_intrl_gran(struct ice_hw *hw)
 		hw->itr_gran = ICE_ITR_GRAN_MAX_25;
 		hw->intrl_gran = ICE_INTRL_GRAN_MAX_25;
 		break;
-	default:
-		ice_debug(hw, ICE_DBG_INIT,
-			  "Failed to determine itr/intrl granularity\n");
-		return ICE_ERR_CFG;
 	}
-
-	return 0;
 }
 
 /**
@@ -697,9 +691,7 @@ enum ice_status ice_init_hw(struct ice_hw *hw)
 	if (status)
 		return status;
 
-	status = ice_get_itr_intrl_gran(hw);
-	if (status)
-		return status;
+	ice_get_itr_intrl_gran(hw);
 
 	status = ice_init_all_ctrlq(hw);
 	if (status)
@@ -1455,6 +1447,7 @@ ice_parse_caps(struct ice_hw *hw, void *buf, u32 cap_count,
 	struct ice_hw_func_caps *func_p = NULL;
 	struct ice_hw_dev_caps *dev_p = NULL;
 	struct ice_hw_common_caps *caps;
+	char const *prefix;
 	u32 i;
 
 	if (!buf)
@@ -1465,9 +1458,11 @@ ice_parse_caps(struct ice_hw *hw, void *buf, u32 cap_count,
 	if (opc == ice_aqc_opc_list_dev_caps) {
 		dev_p = &hw->dev_caps;
 		caps = &dev_p->common_cap;
+		prefix = "dev cap";
 	} else if (opc == ice_aqc_opc_list_func_caps) {
 		func_p = &hw->func_caps;
 		caps = &func_p->common_cap;
+		prefix = "func cap";
 	} else {
 		ice_debug(hw, ICE_DBG_INIT, "wrong opcode\n");
 		return;
@@ -1483,28 +1478,29 @@ ice_parse_caps(struct ice_hw *hw, void *buf, u32 cap_count,
 		case ICE_AQC_CAPS_VALID_FUNCTIONS:
 			caps->valid_functions = number;
 			ice_debug(hw, ICE_DBG_INIT,
-				  "HW caps: Valid Functions = %d\n",
+				  "%s: valid functions = %d\n", prefix,
 				  caps->valid_functions);
 			break;
 		case ICE_AQC_CAPS_SRIOV:
 			caps->sr_iov_1_1 = (number == 1);
 			ice_debug(hw, ICE_DBG_INIT,
-				  "HW caps: SR-IOV = %d\n", caps->sr_iov_1_1);
+				  "%s: SR-IOV = %d\n", prefix,
+				  caps->sr_iov_1_1);
 			break;
 		case ICE_AQC_CAPS_VF:
 			if (dev_p) {
 				dev_p->num_vfs_exposed = number;
 				ice_debug(hw, ICE_DBG_INIT,
-					  "HW caps: VFs exposed = %d\n",
+					  "%s: VFs exposed = %d\n", prefix,
 					  dev_p->num_vfs_exposed);
 			} else if (func_p) {
 				func_p->num_allocd_vfs = number;
 				func_p->vf_base_id = logical_id;
 				ice_debug(hw, ICE_DBG_INIT,
-					  "HW caps: VFs allocated = %d\n",
+					  "%s: VFs allocated = %d\n", prefix,
 					  func_p->num_allocd_vfs);
 				ice_debug(hw, ICE_DBG_INIT,
-					  "HW caps: VF base_id = %d\n",
+					  "%s: VF base_id = %d\n", prefix,
 					  func_p->vf_base_id);
 			}
 			break;
@@ -1512,69 +1508,69 @@ ice_parse_caps(struct ice_hw *hw, void *buf, u32 cap_count,
 			if (dev_p) {
 				dev_p->num_vsi_allocd_to_host = number;
 				ice_debug(hw, ICE_DBG_INIT,
-					  "HW caps: Dev.VSI cnt = %d\n",
+					  "%s: num VSI alloc to host = %d\n",
+					  prefix,
 					  dev_p->num_vsi_allocd_to_host);
 			} else if (func_p) {
 				func_p->guar_num_vsi =
 					ice_get_num_per_func(hw, ICE_MAX_VSI);
 				ice_debug(hw, ICE_DBG_INIT,
-					  "HW caps: Func.VSI cnt = %d\n",
-					  number);
+					  "%s: num guaranteed VSI (fw) = %d\n",
+					  prefix, number);
+				ice_debug(hw, ICE_DBG_INIT,
+					  "%s: num guaranteed VSI = %d\n",
+					  prefix, func_p->guar_num_vsi);
 			}
 			break;
 		case ICE_AQC_CAPS_RSS:
 			caps->rss_table_size = number;
 			caps->rss_table_entry_width = logical_id;
 			ice_debug(hw, ICE_DBG_INIT,
-				  "HW caps: RSS table size = %d\n",
+				  "%s: RSS table size = %d\n", prefix,
 				  caps->rss_table_size);
 			ice_debug(hw, ICE_DBG_INIT,
-				  "HW caps: RSS table width = %d\n",
+				  "%s: RSS table width = %d\n", prefix,
 				  caps->rss_table_entry_width);
 			break;
 		case ICE_AQC_CAPS_RXQS:
 			caps->num_rxq = number;
 			caps->rxq_first_id = phys_id;
 			ice_debug(hw, ICE_DBG_INIT,
-				  "HW caps: Num Rx Qs = %d\n", caps->num_rxq);
+				  "%s: num Rx queues = %d\n", prefix,
+				  caps->num_rxq);
 			ice_debug(hw, ICE_DBG_INIT,
-				  "HW caps: Rx first queue ID = %d\n",
+				  "%s: Rx first queue ID = %d\n", prefix,
 				  caps->rxq_first_id);
 			break;
 		case ICE_AQC_CAPS_TXQS:
 			caps->num_txq = number;
 			caps->txq_first_id = phys_id;
 			ice_debug(hw, ICE_DBG_INIT,
-				  "HW caps: Num Tx Qs = %d\n", caps->num_txq);
+				  "%s: num Tx queues = %d\n", prefix,
+				  caps->num_txq);
 			ice_debug(hw, ICE_DBG_INIT,
-				  "HW caps: Tx first queue ID = %d\n",
+				  "%s: Tx first queue ID = %d\n", prefix,
 				  caps->txq_first_id);
 			break;
 		case ICE_AQC_CAPS_MSIX:
 			caps->num_msix_vectors = number;
 			caps->msix_vector_first_id = phys_id;
 			ice_debug(hw, ICE_DBG_INIT,
-				  "HW caps: MSIX vector count = %d\n",
+				  "%s: MSIX vector count = %d\n", prefix,
 				  caps->num_msix_vectors);
 			ice_debug(hw, ICE_DBG_INIT,
-				  "HW caps: MSIX first vector index = %d\n",
+				  "%s: MSIX first vector index = %d\n", prefix,
 				  caps->msix_vector_first_id);
 			break;
 		case ICE_AQC_CAPS_MAX_MTU:
 			caps->max_mtu = number;
-			if (dev_p)
-				ice_debug(hw, ICE_DBG_INIT,
-					  "HW caps: Dev.MaxMTU = %d\n",
-					  caps->max_mtu);
-			else if (func_p)
-				ice_debug(hw, ICE_DBG_INIT,
-					  "HW caps: func.MaxMTU = %d\n",
-					  caps->max_mtu);
+			ice_debug(hw, ICE_DBG_INIT, "%s: max MTU = %d\n",
+				  prefix, caps->max_mtu);
 			break;
 		default:
 			ice_debug(hw, ICE_DBG_INIT,
-				  "HW caps: Unknown capability[%d]: 0x%x\n", i,
-				  cap);
+				  "%s: unknown capability[%d]: 0x%x\n", prefix,
+				  i, cap);
 			break;
 		}
 	}
@@ -1888,10 +1884,10 @@ void
 ice_update_phy_type(u64 *phy_type_low, u64 *phy_type_high,
 		    u16 link_speeds_bitmap)
 {
-	u16 speed = ICE_AQ_LINK_SPEED_UNKNOWN;
 	u64 pt_high;
 	u64 pt_low;
 	int index;
+	u16 speed;
 
 	/* We first check with low part of phy_type */
 	for (index = 0; index <= ICE_PHY_TYPE_LOW_MAX_INDEX; index++) {
@@ -2791,10 +2787,35 @@ ice_set_ctx(u8 *src_ctx, u8 *dest_ctx, const struct ice_ctx_ele *ce_info)
 }
 
 /**
+ * ice_get_lan_q_ctx - get the LAN queue context for the given VSI and TC
+ * @hw: pointer to the HW struct
+ * @vsi_handle: software VSI handle
+ * @tc: TC number
+ * @q_handle: software queue handle
+ */
+static struct ice_q_ctx *
+ice_get_lan_q_ctx(struct ice_hw *hw, u16 vsi_handle, u8 tc, u16 q_handle)
+{
+	struct ice_vsi_ctx *vsi;
+	struct ice_q_ctx *q_ctx;
+
+	vsi = ice_get_vsi_ctx(hw, vsi_handle);
+	if (!vsi)
+		return NULL;
+	if (q_handle >= vsi->num_lan_q_entries[tc])
+		return NULL;
+	if (!vsi->lan_q_ctx[tc])
+		return NULL;
+	q_ctx = vsi->lan_q_ctx[tc];
+	return &q_ctx[q_handle];
+}
+
+/**
  * ice_ena_vsi_txq
  * @pi: port information structure
  * @vsi_handle: software VSI handle
  * @tc: TC number
+ * @q_handle: software queue handle
  * @num_qgrps: Number of added queue groups
  * @buf: list of queue groups to be added
  * @buf_size: size of buffer for indirect command
@@ -2803,12 +2824,13 @@ ice_set_ctx(u8 *src_ctx, u8 *dest_ctx, const struct ice_ctx_ele *ce_info)
  * This function adds one LAN queue
  */
 enum ice_status
-ice_ena_vsi_txq(struct ice_port_info *pi, u16 vsi_handle, u8 tc, u8 num_qgrps,
-		struct ice_aqc_add_tx_qgrp *buf, u16 buf_size,
+ice_ena_vsi_txq(struct ice_port_info *pi, u16 vsi_handle, u8 tc, u16 q_handle,
+		u8 num_qgrps, struct ice_aqc_add_tx_qgrp *buf, u16 buf_size,
 		struct ice_sq_cd *cd)
 {
 	struct ice_aqc_txsched_elem_data node = { 0 };
 	struct ice_sched_node *parent;
+	struct ice_q_ctx *q_ctx;
 	enum ice_status status;
 	struct ice_hw *hw;
 
@@ -2824,6 +2846,14 @@ ice_ena_vsi_txq(struct ice_port_info *pi, u16 vsi_handle, u8 tc, u8 num_qgrps,
 		return ICE_ERR_PARAM;
 
 	mutex_lock(&pi->sched_lock);
+
+	q_ctx = ice_get_lan_q_ctx(hw, vsi_handle, tc, q_handle);
+	if (!q_ctx) {
+		ice_debug(hw, ICE_DBG_SCHED, "Enaq: invalid queue handle %d\n",
+			  q_handle);
+		status = ICE_ERR_PARAM;
+		goto ena_txq_exit;
+	}
 
 	/* find a parent node */
 	parent = ice_sched_get_free_qparent(pi, vsi_handle, tc,
@@ -2851,7 +2881,7 @@ ice_ena_vsi_txq(struct ice_port_info *pi, u16 vsi_handle, u8 tc, u8 num_qgrps,
 	/* add the LAN queue */
 	status = ice_aq_add_lan_txq(hw, num_qgrps, buf, buf_size, cd);
 	if (status) {
-		ice_debug(hw, ICE_DBG_SCHED, "enable Q %d failed %d\n",
+		ice_debug(hw, ICE_DBG_SCHED, "enable queue %d failed %d\n",
 			  le16_to_cpu(buf->txqs[0].txq_id),
 			  hw->adminq.sq_last_status);
 		goto ena_txq_exit;
@@ -2859,6 +2889,7 @@ ice_ena_vsi_txq(struct ice_port_info *pi, u16 vsi_handle, u8 tc, u8 num_qgrps,
 
 	node.node_teid = buf->txqs[0].q_teid;
 	node.data.elem_type = ICE_AQC_ELEM_TYPE_LEAF;
+	q_ctx->q_handle = q_handle;
 
 	/* add a leaf node into schduler tree queue layer */
 	status = ice_sched_add_node(pi, hw->num_tx_sched_layers - 1, &node);
@@ -2871,7 +2902,10 @@ ena_txq_exit:
 /**
  * ice_dis_vsi_txq
  * @pi: port information structure
+ * @vsi_handle: software VSI handle
+ * @tc: TC number
  * @num_queues: number of queues
+ * @q_handles: pointer to software queue handle array
  * @q_ids: pointer to the q_id array
  * @q_teids: pointer to queue node teids
  * @rst_src: if called due to reset, specifies the reset source
@@ -2881,25 +2915,30 @@ ena_txq_exit:
  * This function removes queues and their corresponding nodes in SW DB
  */
 enum ice_status
-ice_dis_vsi_txq(struct ice_port_info *pi, u8 num_queues, u16 *q_ids,
-		u32 *q_teids, enum ice_disq_rst_src rst_src, u16 vmvf_num,
+ice_dis_vsi_txq(struct ice_port_info *pi, u16 vsi_handle, u8 tc, u8 num_queues,
+		u16 *q_handles, u16 *q_ids, u32 *q_teids,
+		enum ice_disq_rst_src rst_src, u16 vmvf_num,
 		struct ice_sq_cd *cd)
 {
 	enum ice_status status = ICE_ERR_DOES_NOT_EXIST;
 	struct ice_aqc_dis_txq_item qg_list;
+	struct ice_q_ctx *q_ctx;
 	u16 i;
 
 	if (!pi || pi->port_state != ICE_SCHED_PORT_STATE_READY)
 		return ICE_ERR_CFG;
 
-	/* if queue is disabled already yet the disable queue command has to be
-	 * sent to complete the VF reset, then call ice_aq_dis_lan_txq without
-	 * any queue information
-	 */
 
-	if (!num_queues && rst_src)
-		return ice_aq_dis_lan_txq(pi->hw, 0, NULL, 0, rst_src, vmvf_num,
-					  NULL);
+	if (!num_queues) {
+		/* if queue is disabled already yet the disable queue command
+		 * has to be sent to complete the VF reset, then call
+		 * ice_aq_dis_lan_txq without any queue information
+		 */
+		if (rst_src)
+			return ice_aq_dis_lan_txq(pi->hw, 0, NULL, 0, rst_src,
+						  vmvf_num, NULL);
+		return ICE_ERR_CFG;
+	}
 
 	mutex_lock(&pi->sched_lock);
 
@@ -2909,6 +2948,17 @@ ice_dis_vsi_txq(struct ice_port_info *pi, u8 num_queues, u16 *q_ids,
 		node = ice_sched_find_node_by_teid(pi->root, q_teids[i]);
 		if (!node)
 			continue;
+		q_ctx = ice_get_lan_q_ctx(pi->hw, vsi_handle, tc, q_handles[i]);
+		if (!q_ctx) {
+			ice_debug(pi->hw, ICE_DBG_SCHED, "invalid queue handle%d\n",
+				  q_handles[i]);
+			continue;
+		}
+		if (q_ctx->q_handle != q_handles[i]) {
+			ice_debug(pi->hw, ICE_DBG_SCHED, "Err:handles %d %d\n",
+				  q_ctx->q_handle, q_handles[i]);
+			continue;
+		}
 		qg_list.parent_teid = node->info.parent_teid;
 		qg_list.num_qs = 1;
 		qg_list.q_id[0] = cpu_to_le16(q_ids[i]);
@@ -2919,6 +2969,7 @@ ice_dis_vsi_txq(struct ice_port_info *pi, u8 num_queues, u16 *q_ids,
 		if (status)
 			break;
 		ice_free_sched_node(pi, node);
+		q_ctx->q_handle = ICE_INVAL_Q_HANDLE;
 	}
 	mutex_unlock(&pi->sched_lock);
 	return status;

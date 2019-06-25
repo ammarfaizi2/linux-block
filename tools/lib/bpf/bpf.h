@@ -26,6 +26,7 @@
 #include <linux/bpf.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -92,7 +93,7 @@ struct bpf_load_program_attr {
 #define MAPS_RELAX_COMPAT	0x01
 
 /* Recommend log buffer size */
-#define BPF_LOG_BUF_SIZE (16 * 1024 * 1024) /* verifier maximum in kernels <= 5.1 */
+#define BPF_LOG_BUF_SIZE (UINT32_MAX >> 8) /* verifier maximum in kernels <= 5.1 */
 LIBBPF_API int
 bpf_load_program_xattr(const struct bpf_load_program_attr *load_attr,
 		       char *log_buf, size_t log_buf_sz);

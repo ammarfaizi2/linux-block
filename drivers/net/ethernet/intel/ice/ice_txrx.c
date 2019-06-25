@@ -699,7 +699,7 @@ ice_construct_skb(struct ice_ring *rx_ring, struct ice_rx_buf *rx_buf,
 	/* Determine available headroom for copy */
 	headlen = size;
 	if (headlen > ICE_RX_HDR_SIZE)
-		headlen = eth_get_headlen(va, ICE_RX_HDR_SIZE);
+		headlen = eth_get_headlen(skb->dev, va, ICE_RX_HDR_SIZE);
 
 	/* align pull length to size of long to optimize memcpy performance */
 	memcpy(__skb_put(skb, headlen), va, ALIGN(headlen, sizeof(long)));
@@ -1391,7 +1391,7 @@ ice_update_ena_itr(struct ice_vsi *vsi, struct ice_q_vector *q_vector)
 
 	if (!test_bit(__ICE_DOWN, vsi->state))
 		wr32(&vsi->back->hw,
-		     GLINT_DYN_CTL(vsi->hw_base_vector + q_vector->v_idx),
+		     GLINT_DYN_CTL(q_vector->reg_idx),
 		     itr_val);
 }
 
@@ -1640,11 +1640,6 @@ ice_tx_map(struct ice_ring *tx_ring, struct ice_tx_buf *first,
 	/* notify HW of packet */
 	if (netif_xmit_stopped(txring_txq(tx_ring)) || !netdev_xmit_more()) {
 		writel(i, tx_ring->tail);
-
-		/* we need this if more than one processor can write to our tail
-		 * at a time, it synchronizes IO on IA64/Altix systems
-		 */
-		mmiowb();
 	}
 
 	return;
@@ -1849,6 +1844,7 @@ int ice_tso(struct ice_tx_buf *first, struct ice_tx_offload_params *off)
 	if (err < 0)
 		return err;
 
+	/* cppcheck-suppress unreadVariable */
 	ip.hdr = skb_network_header(skb);
 	l4.hdr = skb_transport_header(skb);
 

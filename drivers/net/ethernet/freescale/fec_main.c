@@ -1655,7 +1655,7 @@ static void fec_get_mac(struct net_device *ndev)
 		struct device_node *np = fep->pdev->dev.of_node;
 		if (np) {
 			const char *mac = of_get_mac_address(np);
-			if (mac)
+			if (!IS_ERR(mac))
 				iap = (unsigned char *) mac;
 		}
 	}
@@ -3473,7 +3473,6 @@ fec_probe(struct platform_device *pdev)
 		if (ret) {
 			dev_err(&pdev->dev,
 				"Failed to enable phy regulator: %d\n", ret);
-			clk_disable_unprepare(fep->clk_ipg);
 			goto failed_regulator;
 		}
 	} else {

@@ -89,7 +89,7 @@ EXPORT_SYMBOL_GPL(phy_10_100_features_array);
 
 const int phy_basic_t1_features_array[2] = {
 	ETHTOOL_LINK_MODE_TP_BIT,
-	ETHTOOL_LINK_MODE_100baseT_Full_BIT,
+	ETHTOOL_LINK_MODE_100baseT1_Full_BIT,
 };
 EXPORT_SYMBOL_GPL(phy_basic_t1_features_array);
 
@@ -1739,12 +1739,16 @@ EXPORT_SYMBOL(genphy_update_link);
  */
 int genphy_read_status(struct phy_device *phydev)
 {
-	int adv, lpa, lpagb, err;
+	int adv, lpa, lpagb, err, old_link = phydev->link;
 
 	/* Update the link, but return if there was an error */
 	err = genphy_update_link(phydev);
 	if (err)
 		return err;
+
+	/* why bother the PHY if nothing can have changed */
+	if (phydev->autoneg == AUTONEG_ENABLE && old_link && phydev->link)
+		return 0;
 
 	phydev->speed = SPEED_UNKNOWN;
 	phydev->duplex = DUPLEX_UNKNOWN;
@@ -1815,13 +1819,25 @@ EXPORT_SYMBOL(genphy_read_status);
  */
 int genphy_soft_reset(struct phy_device *phydev)
 {
+	u16 res = BMCR_RESET;
 	int ret;
 
-	ret = phy_set_bits(phydev, MII_BMCR, BMCR_RESET);
+	if (phydev->autoneg == AUTONEG_ENABLE)
+		res |= BMCR_ANRESTART;
+
+	ret = phy_modify(phydev, MII_BMCR, BMCR_ISOLATE, res);
 	if (ret < 0)
 		return ret;
 
-	return phy_poll_reset(phydev);
+	ret = phy_poll_reset(phydev);
+	if (ret)
+		return ret;
+
+	/* BMCR may be reset to defaults */
+	if (phydev->autoneg == AUTONEG_DISABLE)
+		ret = genphy_setup_forced(phydev);
+
+	return ret;
 }
 EXPORT_SYMBOL(genphy_soft_reset);
 
@@ -1969,9 +1985,34 @@ EXPORT_SYMBOL(genphy_loopback);
 void phy_remove_link_mode(struct phy_device *phydev, u32 link_mode)
 {
 	linkmode_clear_bit(link_mode, phydev->supported);
-	linkmode_copy(phydev->advertising, phydev->supported);
+	phy_advertise_supported(phydev);
 }
 EXPORT_SYMBOL(phy_remove_link_mode);
+
+static void phy_copy_pause_bits(unsigned long *dst, unsigned long *src)
+{
+	linkmode_mod_bit(ETHTOOL_LINK_MODE_Asym_Pause_BIT, dst,
+		linkmode_test_bit(ETHTOOL_LINK_MODE_Asym_Pause_BIT, src));
+	linkmode_mod_bit(ETHTOOL_LINK_MODE_Pause_BIT, dst,
+		linkmode_test_bit(ETHTOOL_LINK_MODE_Pause_BIT, src));
+}
+
+/**
+ * phy_advertise_supported - Advertise all supported modes
+ * @phydev: target phy_device struct
+ *
+ * Description: Called to advertise all supported modes, doesn't touch
+ * pause mode advertising.
+ */
+void phy_advertise_supported(struct phy_device *phydev)
+{
+	__ETHTOOL_DECLARE_LINK_MODE_MASK(new);
+
+	linkmode_copy(new, phydev->supported);
+	phy_copy_pause_bits(new, phydev->advertising);
+	linkmode_copy(phydev->advertising, new);
+}
+EXPORT_SYMBOL(phy_advertise_supported);
 
 /**
  * phy_support_sym_pause - Enable support of symmetrical pause
@@ -1983,8 +2024,7 @@ EXPORT_SYMBOL(phy_remove_link_mode);
 void phy_support_sym_pause(struct phy_device *phydev)
 {
 	linkmode_clear_bit(ETHTOOL_LINK_MODE_Asym_Pause_BIT, phydev->supported);
-	linkmode_set_bit(ETHTOOL_LINK_MODE_Pause_BIT, phydev->supported);
-	linkmode_copy(phydev->advertising, phydev->supported);
+	phy_copy_pause_bits(phydev->advertising, phydev->supported);
 }
 EXPORT_SYMBOL(phy_support_sym_pause);
 
@@ -1996,9 +2036,7 @@ EXPORT_SYMBOL(phy_support_sym_pause);
  */
 void phy_support_asym_pause(struct phy_device *phydev)
 {
-	linkmode_set_bit(ETHTOOL_LINK_MODE_Pause_BIT, phydev->supported);
-	linkmode_set_bit(ETHTOOL_LINK_MODE_Asym_Pause_BIT, phydev->supported);
-	linkmode_copy(phydev->advertising, phydev->supported);
+	phy_copy_pause_bits(phydev->advertising, phydev->supported);
 }
 EXPORT_SYMBOL(phy_support_asym_pause);
 
@@ -2078,11 +2116,14 @@ bool phy_validate_pause(struct phy_device *phydev,
 			struct ethtool_pauseparam *pp)
 {
 	if (!linkmode_test_bit(ETHTOOL_LINK_MODE_Pause_BIT,
-			       phydev->supported) ||
-	    (!linkmode_test_bit(ETHTOOL_LINK_MODE_Asym_Pause_BIT,
-				phydev->supported) &&
-	     pp->rx_pause != pp->tx_pause))
+			       phydev->supported) && pp->rx_pause)
 		return false;
+
+	if (!linkmode_test_bit(ETHTOOL_LINK_MODE_Asym_Pause_BIT,
+			       phydev->supported) &&
+	    pp->rx_pause != pp->tx_pause)
+		return false;
+
 	return true;
 }
 EXPORT_SYMBOL(phy_validate_pause);
@@ -2161,7 +2202,7 @@ static int phy_probe(struct device *dev)
 		phydev->is_gigabit_capable = 1;
 
 	of_set_phy_supported(phydev);
-	linkmode_copy(phydev->advertising, phydev->supported);
+	phy_advertise_supported(phydev);
 
 	/* Get the EEE modes we want to prohibit. We will ask
 	 * the PHY stop advertising these mode later on

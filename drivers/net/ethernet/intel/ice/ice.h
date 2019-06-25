@@ -83,6 +83,8 @@ extern const char ice_drv_ver[];
 #define ICE_MAX_QS_PER_VF		256
 #define ICE_MIN_QS_PER_VF		1
 #define ICE_DFLT_QS_PER_VF		4
+#define ICE_NONQ_VECS_VF		1
+#define ICE_MAX_SCATTER_QS_PER_VF	16
 #define ICE_MAX_BASE_QS_PER_VF		16
 #define ICE_MAX_INTR_PER_VF		65
 #define ICE_MIN_INTR_PER_VF		(ICE_MIN_QS_PER_VF + 1)
@@ -253,6 +255,8 @@ struct ice_vsi {
 
 	s16 vf_id;			/* VF ID for SR-IOV VSIs */
 
+	u16 ethtype;			/* Ethernet protocol for pause frame */
+
 	/* RSS config */
 	u16 rss_table_size;	/* HW RSS table size */
 	u16 rss_size;		/* Allocated RSS queues */
@@ -273,10 +277,10 @@ struct ice_vsi {
 	struct list_head tmp_sync_list;		/* MAC filters to be synced */
 	struct list_head tmp_unsync_list;	/* MAC filters to be unsynced */
 
-	u8 irqs_ready;
-	u8 current_isup;		 /* Sync 'link up' logging */
-	u8 stat_offsets_loaded;
-	u8 vlan_ena;
+	u8 irqs_ready:1;
+	u8 current_isup:1;		 /* Sync 'link up' logging */
+	u8 stat_offsets_loaded:1;
+	u8 vlan_ena:1;
 
 	/* queue information */
 	u8 tx_mapping_mode;		 /* ICE_MAP_MODE_[CONTIG|SCATTER] */
@@ -297,6 +301,7 @@ struct ice_q_vector {
 	struct ice_vsi *vsi;
 
 	u16 v_idx;			/* index in the vsi->q_vector array. */
+	u16 reg_idx;
 	u8 num_ring_rx;			/* total number of Rx rings in vector */
 	u8 num_ring_tx;			/* total number of Tx rings in vector */
 	u8 itr_countdown;		/* when 0 should adjust adaptive ITR */
@@ -325,7 +330,7 @@ enum ice_pf_flags {
 	ICE_FLAG_DCB_CAPABLE,
 	ICE_FLAG_DCB_ENA,
 	ICE_FLAG_LINK_DOWN_ON_CLOSE_ENA,
-	ICE_FLAG_DISABLE_FW_LLDP,
+	ICE_FLAG_ENABLE_FW_LLDP,
 	ICE_FLAG_ETHTOOL_CTXT,		/* set when ethtool holds RTNL lock */
 	ICE_PF_FLAGS_NBITS		/* must be last */
 };
@@ -379,7 +384,7 @@ struct ice_pf {
 	struct ice_hw_port_stats stats;
 	struct ice_hw_port_stats stats_prev;
 	struct ice_hw hw;
-	u8 stat_prev_loaded;	/* has previous stats been loaded */
+	u8 stat_prev_loaded:1; /* has previous stats been loaded */
 #ifdef CONFIG_DCB
 	u16 dcbx_cap;
 #endif /* CONFIG_DCB */
@@ -403,7 +408,7 @@ static inline void
 ice_irq_dynamic_ena(struct ice_hw *hw, struct ice_vsi *vsi,
 		    struct ice_q_vector *q_vector)
 {
-	u32 vector = (vsi && q_vector) ? vsi->hw_base_vector + q_vector->v_idx :
+	u32 vector = (vsi && q_vector) ? q_vector->reg_idx :
 				((struct ice_pf *)hw->back)->hw_oicr_idx;
 	int itr = ICE_ITR_NONE;
 	u32 val;
@@ -419,6 +424,26 @@ ice_irq_dynamic_ena(struct ice_hw *hw, struct ice_vsi *vsi,
 	wr32(hw, GLINT_DYN_CTL(vector), val);
 }
 
+/**
+ * ice_find_vsi_by_type - Find and return VSI of a given type
+ * @pf: PF to search for VSI
+ * @type: Value indicating type of VSI we are looking for
+ */
+static inline struct ice_vsi *
+ice_find_vsi_by_type(struct ice_pf *pf, enum ice_vsi_type type)
+{
+	int i;
+
+	for (i = 0; i < pf->num_alloc_vsi; i++) {
+		struct ice_vsi *vsi = pf->vsi[i];
+
+		if (vsi && vsi->type == type)
+			return vsi;
+	}
+
+	return NULL;
+}
+
 void ice_set_ethtool_ops(struct net_device *netdev);
 int ice_up(struct ice_vsi *vsi);
 int ice_down(struct ice_vsi *vsi);
@@ -426,7 +451,6 @@ int ice_set_rss(struct ice_vsi *vsi, u8 *seed, u8 *lut, u16 lut_size);
 int ice_get_rss(struct ice_vsi *vsi, u8 *seed, u8 *lut, u16 lut_size);
 void ice_fill_rss_lut(u8 *lut, u16 rss_table_size, u16 rss_size);
 void ice_print_link_msg(struct ice_vsi *vsi, bool isup);
-void ice_napi_del(struct ice_vsi *vsi);
 #ifdef CONFIG_DCB
 int ice_pf_ena_all_vsi(struct ice_pf *pf, bool locked);
 void ice_pf_dis_all_vsi(struct ice_pf *pf, bool locked);

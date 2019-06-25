@@ -17,6 +17,7 @@
 #include <linux/list.h>
 #include <linux/netdevice.h>
 #include <linux/spinlock.h>
+#include <linux/workqueue.h>
 #include <net/net_namespace.h>
 #include <uapi/linux/devlink.h>
 
@@ -32,6 +33,7 @@ struct devlink {
 	struct list_head region_list;
 	u32 snapshot_id;
 	struct list_head reporter_list;
+	struct mutex reporters_lock; /* protects reporter_list */
 	struct devlink_dpipe_headers *dpipe_headers;
 	const struct devlink_ops *ops;
 	struct device *dev;
@@ -63,6 +65,7 @@ struct devlink_port {
 	enum devlink_port_type desired_type;
 	void *type_dev;
 	struct devlink_port_attrs attrs;
+	struct delayed_work type_warn_dw;
 };
 
 struct devlink_sb_pool_info {
@@ -491,13 +494,14 @@ struct devlink_ops {
 			   struct devlink_sb_pool_info *pool_info);
 	int (*sb_pool_set)(struct devlink *devlink, unsigned int sb_index,
 			   u16 pool_index, u32 size,
-			   enum devlink_sb_threshold_type threshold_type);
+			   enum devlink_sb_threshold_type threshold_type,
+			   struct netlink_ext_ack *extack);
 	int (*sb_port_pool_get)(struct devlink_port *devlink_port,
 				unsigned int sb_index, u16 pool_index,
 				u32 *p_threshold);
 	int (*sb_port_pool_set)(struct devlink_port *devlink_port,
 				unsigned int sb_index, u16 pool_index,
-				u32 threshold);
+				u32 threshold, struct netlink_ext_ack *extack);
 	int (*sb_tc_pool_bind_get)(struct devlink_port *devlink_port,
 				   unsigned int sb_index,
 				   u16 tc_index,
@@ -507,7 +511,8 @@ struct devlink_ops {
 				   unsigned int sb_index,
 				   u16 tc_index,
 				   enum devlink_sb_pool_type pool_type,
-				   u16 pool_index, u32 threshold);
+				   u16 pool_index, u32 threshold,
+				   struct netlink_ext_ack *extack);
 	int (*sb_occ_snapshot)(struct devlink *devlink,
 			       unsigned int sb_index);
 	int (*sb_occ_max_clear)(struct devlink *devlink,
