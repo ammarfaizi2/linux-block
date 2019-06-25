@@ -1284,8 +1284,7 @@ static void ath11k_htt_pktlog(struct ath11k_base *ab, struct sk_buff *skb)
 
 	len = FIELD_GET(HTT_T2H_PPDU_STATS_INFO_PAYLOAD_SIZE, data->hdr);
 
-	if (len > ATH11K_HTT_PKTLOG_MAX_SIZE)
-	{
+	if (len > ATH11K_HTT_PKTLOG_MAX_SIZE) {
 		ath11k_warn(ab, "htt pktlog buffer size %d, expected < %d\n",
 			    len,
 			    ATH11K_HTT_PKTLOG_MAX_SIZE);
