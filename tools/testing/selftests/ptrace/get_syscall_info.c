@@ -1,5 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0+
- *
+// SPDX-License-Identifier: GPL-2.0+
+/*
  * Copyright (c) 2018 Dmitry V. Levin <ldv@altlinux.org>
  * All rights reserved.
  *
