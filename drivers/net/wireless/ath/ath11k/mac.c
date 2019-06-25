@@ -4928,9 +4928,9 @@ ath11k_mac_op_set_bitrate_mask(struct ieee80211_hw *hw,
 		nss = single_nss;
 	} else {
 		rate = WMI_FIXED_RATE_NONE;
-		nss = min((u32)ar->num_tx_chains,
-			  max(ath11k_mac_max_ht_nss(ht_mcs_mask),
-			      ath11k_mac_max_vht_nss(vht_mcs_mask)));
+		nss = min_t(u32, ar->num_tx_chains,
+			    max(ath11k_mac_max_ht_nss(ht_mcs_mask),
+				ath11k_mac_max_vht_nss(vht_mcs_mask)));
 
 		/* If multiple rates across different preambles are given
 		 * we can reconfigure this info with all peers using PEER_ASSOC
