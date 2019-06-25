@@ -120,6 +120,18 @@ arm/defconfig
 		arm64 defconfig: enable MPT3 SAS and BNX2X drivers
 		arm64 defconfig: enable Mellanox cards
 		arm64 defconfig: enable LVM support
+	qcom/defconfig
+		git://git.kernel.org/pub/scm/linux/kernel/git/qcom/linux tags/qcom-defconfig-for-5.3
+	renesas/defconfig
+		https://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas tags/renesas-arm-defconfig-for-v5.3
+	renesas/defconfig64
+		https://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas tags/renesas-arm64-defconfig-for-v5.3
+	patch
+		ARM: multi_v7_defconfig: enable STMFX pinctrl support
+	tegra/defconfig64
+		git://git.kernel.org/pub/scm/linux/kernel/git/tegra/linux tags/tegra-for-5.3-arm64-defconfig
+	aspeed/defconfig
+		git://git.kernel.org/pub/scm/linux/kernel/git/joel/aspeed tags/aspeed-5.3-defconfig
 
 arm/late
 
