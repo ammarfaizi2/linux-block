@@ -140,6 +140,8 @@ DEFINE_STATIC_KEY_TRUE(init_on_alloc);
 #else
 DEFINE_STATIC_KEY_FALSE(init_on_alloc);
 #endif
+EXPORT_SYMBOL(init_on_alloc);
+
 #ifdef CONFIG_INIT_ON_FREE_DEFAULT_ON
 DEFINE_STATIC_KEY_TRUE(init_on_free);
 #else
