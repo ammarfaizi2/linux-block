@@ -19,10 +19,15 @@ static struct kmem_cache *pgd_cache __ro_after_init;
 
 pgd_t *pgd_alloc(struct mm_struct *mm)
 {
+	gfp_t gfp = GFP_PGTABLE_USER;
+
+	if (unlikely(mm == &init_mm))
+		gfp = GFP_PGTABLE_KERNEL;
+
 	if (PGD_SIZE == PAGE_SIZE)
-		return (pgd_t *)__get_free_page(PGALLOC_GFP);
+		return (pgd_t *)__get_free_page(gfp);
 	else
-		return kmem_cache_alloc(pgd_cache, PGALLOC_GFP);
+		return kmem_cache_alloc(pgd_cache, gfp);
 }
 
 void pgd_free(struct mm_struct *mm, pgd_t *pgd)
