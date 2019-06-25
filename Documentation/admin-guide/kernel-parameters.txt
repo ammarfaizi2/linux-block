@@ -2882,12 +2882,12 @@
 	novmcoredd	[KNL,KDUMP]
 			Disable device dump. Device dump allows drivers to
 			append dump data to vmcore so you can collect driver
-			specified debug info. The drivers could append the
-			data without any limit, and the data is stored in
-			memory, this may bring a significant memory stress.
-			Disable device dump can help save memory but driver
-			debug data will be no longer available.
-			Only available when CONFIG_PROC_VMCORE_DEVICE_DUMP
+			specified debug info.  Drivers can append the data
+			without any limit and this data is stored in memory,
+			so this may cause significant memory stress.  Disabling
+			device dump can help save memory but the driver debug
+			data will be no longer available.  This parameter
+			is only available when CONFIG_PROC_VMCORE_DEVICE_DUMP
 			is set.
 
 	noaliencache	[MM, NUMA, SLAB] Disables the allocation of alien
