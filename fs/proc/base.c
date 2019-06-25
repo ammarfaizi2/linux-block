@@ -2117,6 +2117,7 @@ static struct dentry *proc_map_files_lookup(struct inode *dir,
 	if (down_read_killable(&mm->mmap_sem))
 		goto out_put_mm;
 
+	result = ERR_PTR(-ENOENT);
 	vma = find_exact_vma(mm, vm_start, vm_end);
 	if (!vma)
 		goto out_no_vma;
