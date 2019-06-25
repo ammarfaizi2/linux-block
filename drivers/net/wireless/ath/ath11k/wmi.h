@@ -2725,10 +2725,10 @@ struct wmi_resource_config {
 	u32 num_ocb_schedules;
 	u32 flag1;
 	u32 smart_ant_cap;
-	u32 BK_Minfree;
-	u32 BE_Minfree;
-	u32 VI_Minfree;
-	u32 VO_Minfree;
+	u32 bk_minfree;
+	u32 be_minfree;
+	u32 vi_minfree;
+	u32 vo_minfree;
 	u32 alloc_frag_desc_for_data_pkt;
 	u32 num_ns_ext_tuples_cfg;
 	u32 bpf_instruction_size;
@@ -2962,7 +2962,7 @@ struct wmi_vdev_start_request_cmd {
 	u32 flags;
 	struct wmi_ssid ssid;
 	u32 bcn_tx_rate;
-	u32 bcn_txPower;
+	u32 bcn_txpower;
 	u32 num_noa_descriptors;
 	u32 disable_hw_ack;
 	u32 preferred_tx_streams;
@@ -5122,10 +5122,10 @@ struct target_resource_config {
 	u32 max_frag_entries;
 	u32 max_peer_ext_stats;
 	u32 smart_ant_cap;
-	u32 BK_Minfree;
-	u32 BE_Minfree;
-	u32 VI_Minfree;
-	u32 VO_Minfree;
+	u32 bk_minfree;
+	u32 be_minfree;
+	u32 vi_minfree;
+	u32 vo_minfree;
 	u32 rx_batchmode;
 	u32 tt_support;
 	u32 atf_config;
