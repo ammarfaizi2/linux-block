@@ -107,48 +107,26 @@ static struct ieee80211_rate ath11k_legacy_rates[] = {
 };
 
 static const int
-ath11k_phymodes[NUM_NL80211_BANDS][2][ATH11K_CHAN_WIDTH_NUM] = {
+ath11k_phymodes[NUM_NL80211_BANDS][ATH11K_CHAN_WIDTH_NUM] = {
 	[NL80211_BAND_2GHZ] = {
-		{
 			[NL80211_CHAN_WIDTH_5] = MODE_UNKNOWN,
 			[NL80211_CHAN_WIDTH_10] = MODE_UNKNOWN,
-			[NL80211_CHAN_WIDTH_20_NOHT] = MODE_11G,
-			[NL80211_CHAN_WIDTH_20] = MODE_11NG_HT20,
-			[NL80211_CHAN_WIDTH_40] = MODE_11NG_HT40,
-			[NL80211_CHAN_WIDTH_80] = MODE_UNKNOWN,
-			[NL80211_CHAN_WIDTH_80P80] = MODE_UNKNOWN,
-			[NL80211_CHAN_WIDTH_160] = MODE_UNKNOWN,
-		}, {
-			[NL80211_CHAN_WIDTH_5] = MODE_UNKNOWN,
-			[NL80211_CHAN_WIDTH_10] = MODE_UNKNOWN,
-			[NL80211_CHAN_WIDTH_20_NOHT] = MODE_11G,
+			[NL80211_CHAN_WIDTH_20_NOHT] = MODE_11AX_HE20_2G,
 			[NL80211_CHAN_WIDTH_20] = MODE_11AX_HE20_2G,
 			[NL80211_CHAN_WIDTH_40] = MODE_11AX_HE40_2G,
 			[NL80211_CHAN_WIDTH_80] = MODE_11AX_HE80_2G,
 			[NL80211_CHAN_WIDTH_80P80] = MODE_UNKNOWN,
 			[NL80211_CHAN_WIDTH_160] = MODE_UNKNOWN,
-		},
 	},
 	[NL80211_BAND_5GHZ] = {
-		{
 			[NL80211_CHAN_WIDTH_5] = MODE_UNKNOWN,
 			[NL80211_CHAN_WIDTH_10] = MODE_UNKNOWN,
-			[NL80211_CHAN_WIDTH_20_NOHT] = MODE_11A,
-			[NL80211_CHAN_WIDTH_20] = MODE_11AC_VHT20,
-			[NL80211_CHAN_WIDTH_40] = MODE_11AC_VHT40,
-			[NL80211_CHAN_WIDTH_80] = MODE_11AC_VHT80,
-			[NL80211_CHAN_WIDTH_160] = MODE_11AC_VHT160,
-			[NL80211_CHAN_WIDTH_80P80] = MODE_11AC_VHT80_80,
-		}, {
-			[NL80211_CHAN_WIDTH_5] = MODE_UNKNOWN,
-			[NL80211_CHAN_WIDTH_10] = MODE_UNKNOWN,
-			[NL80211_CHAN_WIDTH_20_NOHT] = MODE_11A,
+			[NL80211_CHAN_WIDTH_20_NOHT] = MODE_11AX_HE20,
 			[NL80211_CHAN_WIDTH_20] = MODE_11AX_HE20,
 			[NL80211_CHAN_WIDTH_40] = MODE_11AX_HE40,
 			[NL80211_CHAN_WIDTH_80] = MODE_11AX_HE80,
 			[NL80211_CHAN_WIDTH_160] = MODE_11AX_HE160,
 			[NL80211_CHAN_WIDTH_80P80] = MODE_11AX_HE80_80,
-		},
 	},
 };
 
@@ -4176,11 +4154,7 @@ ath11k_mac_vdev_start_restart(struct ath11k_vif *arvif,
 	arg.channel.band_center_freq1 = chandef->center_freq1;
 	arg.channel.band_center_freq2 = chandef->center_freq2;
 	arg.channel.mode =
-		ath11k_phymodes[chandef->chan->band][he_support][chandef->width];
-	if (arg.channel.mode == MODE_11G &&
-	    chandef->chan->flags & IEEE80211_CHAN_NO_OFDM)
-		arg.channel.mode = MODE_11B;
-	WARN_ON(arg.channel.mode == MODE_UNKNOWN);
+		ath11k_phymodes[chandef->chan->band][chandef->width];
 
 	arg.channel.min_power = 0;
 	arg.channel.max_power = chandef->chan->max_power * 2;
