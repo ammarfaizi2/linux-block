@@ -746,6 +746,10 @@ void release_pages(struct page **pages, int nr)
 						       flags);
 				locked_pgdat = NULL;
 			}
+			/*
+			 * zone-device-pages can still fail here and will
+			 * therefore need put_page_testzero()
+			 */
 			if (put_devmap_managed_page(page))
 				continue;
 		}
