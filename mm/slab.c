@@ -3745,8 +3745,10 @@ void kfree(const void *objp)
 	local_irq_save(flags);
 	kfree_debugcheck(objp);
 	c = virt_to_cache(objp);
-	if (!c)
+	if (!c) {
+		local_irq_restore(flags);
 		return;
+	}
 	debug_check_no_locks_freed(objp, c->object_size);
 
 	debug_check_no_obj_freed(objp, c->object_size);
