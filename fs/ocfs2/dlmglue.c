@@ -3115,7 +3115,7 @@ static int ocfs2_dlm_seq_show(struct seq_file *m, void *v)
 		 * otherwise, only dump the last N seconds active lock
 		 * resources.
 		 */
-		if ((now - last) / 1000000 > dlm_debug->d_filter_secs)
+		if (div_u64(now - last, 1000000) > dlm_debug->d_filter_secs)
 			return 0;
 	}
 #endif
