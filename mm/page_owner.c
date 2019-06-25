@@ -16,13 +16,14 @@
 /*
  * TODO: teach PAGE_OWNER_STACK_DEPTH (__dump_page_owner and save_stack)
  * to use off stack temporal storage
+ * 16 stacktrace entries + 1 gfp mask
  */
-#define PAGE_OWNER_STACK_DEPTH (16)
+#define PAGE_OWNER_STACK_DEPTH (16 + 1)
+#define MAX_TRACE_ENTRIES(entries) (ARRAY_SIZE(entries) - 1)
 
 struct page_owner {
 	unsigned short order;
 	short last_migrate_reason;
-	gfp_t gfp_mask;
 	depot_stack_handle_t handle;
 };
 
@@ -57,10 +58,11 @@ static bool need_page_owner(void)
 
 static __always_inline depot_stack_handle_t create_dummy_stack(void)
 {
-	unsigned long entries[4];
+	unsigned long entries[8];
 	unsigned int nr_entries;
 
-	nr_entries = stack_trace_save(entries, ARRAY_SIZE(entries), 0);
+	nr_entries = stack_trace_save(entries, MAX_TRACE_ENTRIES(entries), 0);
+	entries[nr_entries++] = 0;
 	return stack_depot_save(entries, nr_entries, GFP_KERNEL);
 }
 
@@ -134,7 +136,7 @@ static noinline depot_stack_handle_t save_stack(gfp_t flags)
 	depot_stack_handle_t handle;
 	unsigned int nr_entries;
 
-	nr_entries = stack_trace_save(entries, ARRAY_SIZE(entries), 2);
+	nr_entries = stack_trace_save(entries, MAX_TRACE_ENTRIES(entries), 2);
 
 	/*
 	 * We need to check recursion here because our request to
@@ -147,6 +149,8 @@ static noinline depot_stack_handle_t save_stack(gfp_t flags)
 	if (check_recursive_alloc(entries, nr_entries, _RET_IP_))
 		return dummy_handle;
 
+	entries[nr_entries++] = flags;
+
 	handle = stack_depot_save(entries, nr_entries, flags);
 	if (!handle)
 		handle = failure_handle;
@@ -155,14 +159,13 @@ static noinline depot_stack_handle_t save_stack(gfp_t flags)
 }
 
 static inline void __set_page_owner_handle(struct page_ext *page_ext,
-	depot_stack_handle_t handle, unsigned int order, gfp_t gfp_mask)
+	depot_stack_handle_t handle, unsigned int order)
 {
 	struct page_owner *page_owner;
 
 	page_owner = get_page_owner(page_ext);
 	page_owner->handle = handle;
 	page_owner->order = order;
-	page_owner->gfp_mask = gfp_mask;
 	page_owner->last_migrate_reason = -1;
 
 	__set_bit(PAGE_EXT_OWNER, &page_ext->flags);
@@ -178,7 +181,7 @@ noinline void __set_page_owner(struct page *page, unsigned int order,
 		return;
 
 	handle = save_stack(gfp_mask);
-	__set_page_owner_handle(page_ext, handle, order, gfp_mask);
+	__set_page_owner_handle(page_ext, handle, order);
 }
 
 void __set_page_owner_migrate_reason(struct page *page, int reason)
@@ -220,7 +223,6 @@ void __copy_page_owner(struct page *oldpage, struct page *newpage)
 	old_page_owner = get_page_owner(old_ext);
 	new_page_owner = get_page_owner(new_ext);
 	new_page_owner->order = old_page_owner->order;
-	new_page_owner->gfp_mask = old_page_owner->gfp_mask;
 	new_page_owner->last_migrate_reason =
 		old_page_owner->last_migrate_reason;
 	new_page_owner->handle = old_page_owner->handle;
@@ -248,6 +250,10 @@ void pagetypeinfo_showmixedcount_print(struct seq_file *m,
 	unsigned long count[MIGRATE_TYPES] = { 0, };
 	int pageblock_mt, page_mt;
 	int i;
+	unsigned long *entries;
+	unsigned int nr_entries;
+	depot_stack_handle_t handle;
+	gfp_t gfp_mask;
 
 	/* Scan block by block. First and last block may be incomplete */
 	pfn = zone->zone_start_pfn;
@@ -298,8 +304,15 @@ void pagetypeinfo_showmixedcount_print(struct seq_file *m,
 				continue;
 
 			page_owner = get_page_owner(page_ext);
-			page_mt = gfpflags_to_migratetype(
-					page_owner->gfp_mask);
+			handle = READ_ONCE(page_owner->handle);
+			if (!handle) {
+				pr_alert("page_owner info is not active (free page?)\n");
+				return;
+			}
+
+			nr_entries = stack_depot_fetch(handle, &entries);
+			gfp_mask = entries[--nr_entries];
+			page_mt = gfpflags_to_migratetype(gfp_mask);
 			if (pageblock_mt != page_mt) {
 				if (is_migrate_cma(pageblock_mt))
 					count[MIGRATE_MOVABLE]++;
@@ -329,23 +342,26 @@ print_page_owner(char __user *buf, size_t count, unsigned long pfn,
 	unsigned long *entries;
 	unsigned int nr_entries;
 	char *kbuf;
+	gfp_t gfp_mask;
 
 	count = min_t(size_t, count, PAGE_SIZE);
 	kbuf = kmalloc(count, GFP_KERNEL);
 	if (!kbuf)
 		return -ENOMEM;
 
+	nr_entries = stack_depot_fetch(handle, &entries);
+	gfp_mask = entries[--nr_entries];
+
 	ret = snprintf(kbuf, count,
 			"Page allocated via order %u, mask %#x(%pGg)\n",
-			page_owner->order, page_owner->gfp_mask,
-			&page_owner->gfp_mask);
+			page_owner->order, gfp_mask, &gfp_mask);
 
 	if (ret >= count)
 		goto err;
 
 	/* Print information relevant to grouping pages by mobility */
 	pageblock_mt = get_pageblock_migratetype(page);
-	page_mt  = gfpflags_to_migratetype(page_owner->gfp_mask);
+	page_mt  = gfpflags_to_migratetype(gfp_mask);
 	ret += snprintf(kbuf + ret, count - ret,
 			"PFN %lu type %s Block %lu type %s Flags %#lx(%pGp)\n",
 			pfn,
@@ -357,7 +373,6 @@ print_page_owner(char __user *buf, size_t count, unsigned long pfn,
 	if (ret >= count)
 		goto err;
 
-	nr_entries = stack_depot_fetch(handle, &entries);
 	ret += stack_trace_snprint(kbuf + ret, count - ret, entries, nr_entries, 0);
 	if (ret >= count)
 		goto err;
@@ -401,14 +416,6 @@ void __dump_page_owner(struct page *page)
 	}
 
 	page_owner = get_page_owner(page_ext);
-	gfp_mask = page_owner->gfp_mask;
-	mt = gfpflags_to_migratetype(gfp_mask);
-
-	if (!test_bit(PAGE_EXT_OWNER, &page_ext->flags)) {
-		pr_alert("page_owner info is not active (free page?)\n");
-		return;
-	}
-
 	handle = READ_ONCE(page_owner->handle);
 	if (!handle) {
 		pr_alert("page_owner info is not active (free page?)\n");
@@ -416,6 +423,14 @@ void __dump_page_owner(struct page *page)
 	}
 
 	nr_entries = stack_depot_fetch(handle, &entries);
+	gfp_mask = entries[--nr_entries];
+	mt = gfpflags_to_migratetype(gfp_mask);
+
+	if (!test_bit(PAGE_EXT_OWNER, &page_ext->flags)) {
+		pr_alert("page_owner info is not active (free page?)\n");
+		return;
+	}
+
 	pr_alert("page allocated via order %u, migratetype %s, gfp_mask %#x(%pGg)\n",
 		 page_owner->order, migratetype_names[mt], gfp_mask, &gfp_mask);
 	stack_trace_print(entries, nr_entries, 0);
@@ -562,7 +577,7 @@ static void init_pages_in_zone(pg_data_t *pgdat, struct zone *zone)
 				continue;
 
 			/* Found early allocated page */
-			__set_page_owner_handle(page_ext, early_handle, 0, 0);
+			__set_page_owner_handle(page_ext, early_handle, 0);
 			count++;
 		}
 		cond_resched();
