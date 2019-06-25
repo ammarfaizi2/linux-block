@@ -294,8 +294,12 @@ static __always_inline int memcg_charge_slab(struct page *page,
 		memcg = parent_mem_cgroup(memcg);
 	rcu_read_unlock();
 
-	if (unlikely(!memcg))
-		return true;
+	if (unlikely(!memcg || mem_cgroup_is_root(memcg))) {
+		mod_node_page_state(page_pgdat(page), cache_vmstat_idx(s),
+				    (1 << order));
+		percpu_ref_get_many(&s->memcg_params.refcnt, 1 << order);
+		return 0;
+	}
 
 	ret = memcg_kmem_charge_memcg(page, gfp, order, memcg);
 	if (ret)
@@ -324,9 +328,14 @@ static __always_inline void memcg_uncharge_slab(struct page *page, int order,
 
 	rcu_read_lock();
 	memcg = READ_ONCE(s->memcg_params.memcg);
-	lruvec = mem_cgroup_lruvec(page_pgdat(page), memcg);
-	mod_lruvec_state(lruvec, cache_vmstat_idx(s), -(1 << order));
-	memcg_kmem_uncharge_memcg(page, order, memcg);
+	if (likely(!mem_cgroup_is_root(memcg))) {
+		lruvec = mem_cgroup_lruvec(page_pgdat(page), memcg);
+		mod_lruvec_state(lruvec, cache_vmstat_idx(s), -(1 << order));
+		memcg_kmem_uncharge_memcg(page, order, memcg);
+	} else {
+		mod_node_page_state(page_pgdat(page), cache_vmstat_idx(s),
+				    -(1 << order));
+	}
 	rcu_read_unlock();
 
 	percpu_ref_put_many(&s->memcg_params.refcnt, 1 << order);
