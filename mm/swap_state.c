@@ -76,8 +76,13 @@ unsigned long total_swapcache_pages(void)
 	struct swap_info_struct *si;
 
 	for (i = 0; i < MAX_SWAPFILES; i++) {
+		swp_entry_t entry = swp_entry(i, 1);
+
+		/* Avoid get_swap_device() to warn for bad swap entry */
+		if (!swp_swap_info(entry))
+			continue;
 		/* Prevent swapoff to free swapper_spaces */
-		si = get_swap_device(swp_entry(i, 1));
+		si = get_swap_device(entry);
 		if (!si)
 			continue;
 		nr = nr_swapper_spaces[i];
