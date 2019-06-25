@@ -2318,7 +2318,7 @@ int ath11k_wmi_pdev_peer_pktlog_filter(struct ath11k *ar, u8 *addr, u8 enable)
 		      FIELD_PREP(WMI_TLV_LEN, 0);
 
 	ptr += TLV_HDR_SIZE;
-	info = (struct wmi_pdev_pktlog_filter_info*)ptr;
+	info = (struct wmi_pdev_pktlog_filter_info *)ptr;
 
 	ether_addr_copy(info->peer_macaddr.addr, addr);
 	info->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_PDEV_PEER_PKTLOG_FILTER_INFO) |

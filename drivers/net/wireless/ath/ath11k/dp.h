@@ -1482,7 +1482,6 @@ struct ath11k_htt_extd_stats_msg {
 	u8 data[0];
 } __packed;
 
-
 struct htt_mac_addr {
 	u32 mac_addr_l32;
 	u32 mac_addr_h16;

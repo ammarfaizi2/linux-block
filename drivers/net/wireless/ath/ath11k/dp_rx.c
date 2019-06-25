@@ -1069,10 +1069,10 @@ ath11k_update_per_peer_tx_stats(struct ath11k *ar,
 	mcs = HTT_USR_RATE_MCS(user_rate->rate_flags);
 	sgi = HTT_USR_RATE_GI(user_rate->rate_flags);
 
-        /* Note: If host configured fixed rates and in some other special
+	/* Note: If host configured fixed rates and in some other special
 	 * cases, the broadcast/management frames are sent in different rates.
 	 * Firmware rate's control to be skipped for this?
-         */
+	 */
 
 	if (flags == WMI_RATE_PREAMBLE_VHT && mcs > 9) {
 		ath11k_warn(ab, "Invalid VHT mcs %hhd peer stats",  mcs);
