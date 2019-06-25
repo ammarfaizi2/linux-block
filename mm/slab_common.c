@@ -1533,7 +1533,7 @@ static int memcg_slabinfo_show(struct seq_file *m, void *unused)
 	struct slabinfo sinfo;
 
 	mutex_lock(&slab_mutex);
-	seq_puts(m, "# <name> <css_id[:dead]> <active_objs> <num_objs>");
+	seq_puts(m, "# <name> <css_id[:dead|deact]> <active_objs> <num_objs>");
 	seq_puts(m, " <active_slabs> <num_slabs>\n");
 	list_for_each_entry(s, &slab_root_caches, root_caches_node) {
 		/*
@@ -1544,22 +1544,24 @@ static int memcg_slabinfo_show(struct seq_file *m, void *unused)
 
 		memset(&sinfo, 0, sizeof(sinfo));
 		get_slabinfo(s, &sinfo);
-		seq_printf(m, "%-17s root      %6lu %6lu %6lu %6lu\n",
+		seq_printf(m, "%-17s root       %6lu %6lu %6lu %6lu\n",
 			   cache_name(s), sinfo.active_objs, sinfo.num_objs,
 			   sinfo.active_slabs, sinfo.num_slabs);
 
 		for_each_memcg_cache(c, s) {
 			struct cgroup_subsys_state *css;
-			char *dead = "";
+			char *status = "";
 
 			css = &c->memcg_params.memcg->css;
 			if (!(css->flags & CSS_ONLINE))
-				dead = ":dead";
+				status = ":dead";
+			else if (c->flags & SLAB_DEACTIVATED)
+				status = ":deact";
 
 			memset(&sinfo, 0, sizeof(sinfo));
 			get_slabinfo(c, &sinfo);
-			seq_printf(m, "%-17s %4d%5s %6lu %6lu %6lu %6lu\n",
-				   cache_name(c), css->id, dead,
+			seq_printf(m, "%-17s %4d%-6s %6lu %6lu %6lu %6lu\n",
+				   cache_name(c), css->id, status,
 				   sinfo.active_objs, sinfo.num_objs,
 				   sinfo.active_slabs, sinfo.num_slabs);
 		}

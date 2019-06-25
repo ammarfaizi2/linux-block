@@ -2237,6 +2237,7 @@ int __kmem_cache_shrink(struct kmem_cache *cachep)
 #ifdef CONFIG_MEMCG
 void __kmemcg_cache_deactivate(struct kmem_cache *cachep)
 {
+	cachep->flags |= SLAB_DEACTIVATED;
 	__kmem_cache_shrink(cachep);
 }
 
