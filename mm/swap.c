@@ -747,10 +747,10 @@ void release_pages(struct page **pages, int nr)
 				locked_pgdat = NULL;
 			}
 			/*
-			 * Not all zone-device-pages require special
-			 * processing.  Those pages return 'false' from
-			 * put_devmap_managed_page() expecting a call to
-			 * put_page_testzero()
+			 * ZONE_DEVICE pages that return 'false' from
+			 * put_devmap_managed_page() do not require special
+			 * processing, and instead, expect a call to
+			 * put_page_testzero().
 			 */
 			if (put_devmap_managed_page(page))
 				continue;
