@@ -5092,7 +5092,7 @@ static void ath11k_mac_op_sta_statistics(struct ieee80211_hw *hw,
 	sinfo->filled |= BIT_ULL(NL80211_STA_INFO_TX_BITRATE);
 
 	/* TODO: Use real NF instead of default one. */
-	sinfo->signal = arsta->rx_stats->rssi_comb + ATH11K_DEFAULT_NOISE_FLOOR;
+	sinfo->signal = arsta->rssi_comb + ATH11K_DEFAULT_NOISE_FLOOR;
 }
 
 static const struct ieee80211_ops ath11k_ops = {
