@@ -218,7 +218,7 @@ offset_to_swap_extent(struct swap_info_struct *sis, unsigned long offset)
 			return se;
 	}
 	/* It *must* be present */
-	BUG_ON(1);
+	BUG();
 }
 
 /*
