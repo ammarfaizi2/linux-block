@@ -4527,9 +4527,7 @@ static int ath11k_reg_chan_list_event(struct ath11k_base *ab, u8 *evt_buf, u32 l
 	struct ath11k *ar;
 
 	reg_info = kzalloc(sizeof(*reg_info), GFP_ATOMIC);
-
 	if (!reg_info) {
-		ath11k_warn(ab, "Unable to allocate memory for processing chan_info event\n");
 		ret = -ENOMEM;
 		goto fallback;
 	}

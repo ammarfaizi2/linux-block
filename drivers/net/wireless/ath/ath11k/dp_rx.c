@@ -569,10 +569,8 @@ static void ath11k_dp_rx_tid_del_func(struct ath11k_dp *dp, void *ctx,
 	}
 
 	elem = kzalloc(sizeof(*elem), GFP_ATOMIC);
-	if (!elem) {
-		ath11k_warn(ab, "failed to allocate memory for cache flush element\n");
+	if (!elem)
 		goto free_desc;
-	}
 
 	elem->ts = jiffies;
 	memcpy(&elem->data, rx_tid, sizeof(*rx_tid));
