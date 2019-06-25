@@ -250,8 +250,6 @@ static void ocfs2_blockcheck_debug_remove(struct ocfs2_blockcheck_stats *stats)
 static void ocfs2_blockcheck_debug_install(struct ocfs2_blockcheck_stats *stats,
 					   struct dentry *parent)
 {
-	int rc = -EINVAL;
-
 	stats->b_debug_dir = debugfs_create_dir("blockcheck", parent);
 
 	blockcheck_debugfs_create("blocks_checked", stats->b_debug_dir,

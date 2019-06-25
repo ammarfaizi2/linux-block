@@ -1413,8 +1413,6 @@ static struct dentry *o2hb_debug_create(const char *name, struct dentry *dir,
 
 static void o2hb_debug_init(void)
 {
-	int ret = -ENOMEM;
-
 	o2hb_debug_dir = debugfs_create_dir(O2HB_DEBUG_DIR, NULL);
 
 	o2hb_debug_create(O2HB_DEBUG_LIVENODES, o2hb_debug_dir,
