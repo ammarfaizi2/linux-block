@@ -1362,7 +1362,7 @@ static char *memory_stat_format(struct mem_cgroup *memcg)
 	struct seq_buf s;
 	int i;
 
-	seq_buf_init(&s, kvmalloc(PAGE_SIZE, GFP_KERNEL), PAGE_SIZE);
+	seq_buf_init(&s, kmalloc(PAGE_SIZE, GFP_KERNEL), PAGE_SIZE);
 	if (!s.buffer)
 		return NULL;
 
@@ -1524,7 +1524,7 @@ void mem_cgroup_print_oom_meminfo(struct mem_cgroup *memcg)
 	if (!buf)
 		return;
 	pr_info("%s", buf);
-	kvfree(buf);
+	kfree(buf);
 }
 
 /*
@@ -5761,7 +5761,7 @@ static int memory_stat_show(struct seq_file *m, void *v)
 	if (!buf)
 		return -ENOMEM;
 	seq_puts(m, buf);
-	kvfree(buf);
+	kfree(buf);
 	return 0;
 }
 
