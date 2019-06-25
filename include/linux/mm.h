@@ -1537,24 +1537,9 @@ long get_user_pages_unlocked(unsigned long start, unsigned long nr_pages,
 int get_user_pages_fast(unsigned long start, int nr_pages,
 			unsigned int gup_flags, struct page **pages);
 
+int account_locked_vm(struct mm_struct *mm, unsigned long pages, bool inc);
 int __account_locked_vm(struct mm_struct *mm, unsigned long pages, bool inc,
 			struct task_struct *task, bool bypass_rlim);
-
-static inline int account_locked_vm(struct mm_struct *mm, unsigned long pages,
-				    bool inc)
-{
-	int ret;
-
-	if (pages == 0 || !mm)
-		return 0;
-
-	down_write(&mm->mmap_sem);
-	ret = __account_locked_vm(mm, pages, inc, current,
-				  capable(CAP_IPC_LOCK));
-	up_write(&mm->mmap_sem);
-
-	return ret;
-}
 
 /* Container for pinned pfns / pages */
 struct frame_vector {
