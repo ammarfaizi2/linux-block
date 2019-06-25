@@ -41,6 +41,54 @@ arm/dt
 		git://git.kernel.org/pub/scm/linux/kernel/git/dinguyen/linux tags/socfpga_dts_updates_for_v5.3
 	ti/k3-soc-dt
 		git://git.kernel.org/pub/scm/linux/kernel/git/kristo/linux tags/ti-k3-soc-for-v5.3
+	broadcom/dt-v2
+		https://github.com/Broadcom/stblinux tags/arm-soc/for-5.3/devicetree-v2
+	hisi/dt64
+		git://github.com/hisilicon/linux-hisi tags/hisi-arm64-dt-for-5.3
+	hisi/dt32
+		git://github.com/hisilicon/linux-hisi tags/hisi-arm32-dt-for-5.3
+	qcom/dt64
+		git://git.kernel.org/pub/scm/linux/kernel/git/qcom/linux tags/qcom-arm64-for-5.3
+	qcom/dt
+		git://git.kernel.org/pub/scm/linux/kernel/git/qcom/linux tags/qcom-dts-for-5.3
+	aspeed/dt
+		git://git.kernel.org/pub/scm/linux/kernel/git/joel/aspeed tags/aspeed-5.3-devicetree
+	davinci/dt
+		git://git.kernel.org/pub/scm/linux/kernel/git/nsekhar/linux-davinci tags/davinci-for-v5.3/dt
+	amlogic/dt
+		https://git.kernel.org/pub/scm/linux/kernel/git/khilman/linux-amlogic tags/amlogic-dt
+	sunxi/dt
+		https://git.kernel.org/pub/scm/linux/kernel/git/sunxi/linux tags/sunxi-dt-for-5.3-201906210807
+	sunxi/dt64
+		https://git.kernel.org/pub/scm/linux/kernel/git/sunxi/linux tags/sunxi-dt64-for-5.3-201906210808
+	sunxi/dt-h3-h5
+		https://git.kernel.org/pub/scm/linux/kernel/git/sunxi/linux tags/sunxi-h3-h5-for-5.3-201906210812
+	renesas/dt-bindings
+		https://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas tags/renesas-dt-bindings-for-v5.3
+	renesas/dt
+		https://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas tags/renesas-arm-dt-for-v5.3
+	renesas/dt64
+		https://git.kernel.org/pub/scm/linux/kernel/git/horms/renesas tags/renesas-arm64-dt-for-v5.3
+	mvebu/dt
+		git://git.infradead.org/linux-mvebu tags/mvebu-dt-5.3-1
+	mvebu/dt64
+		git://git.infradead.org/linux-mvebu tags/mvebu-dt64-5.3-1
+	stm32/dt
+		git://git.kernel.org/pub/scm/linux/kernel/git/atorgue/stm32 tags/stm32-dt-for-v5.3-1
+	tegra/dt64
+		git://git.kernel.org/pub/scm/linux/kernel/git/tegra/linux tags/tegra-for-5.3-arm64-dt
+	at91/dt
+		git://git.kernel.org/pub/scm/linux/kernel/git/at91/linux tags/at91-5.3-dt
+	pxa/dt
+		https://github.com/rjarzmik/linux tags/pxa-dt-5.3
+	imx/dt-bindings
+		git://git.kernel.org/pub/scm/linux/kernel/git/shawnguo/linux tags/imx-bindings-5.3
+	imx/dt-clkdep
+		git://git.kernel.org/pub/scm/linux/kernel/git/shawnguo/linux tags/imx-dt-clkdep-5.3
+	imx/dt
+		git://git.kernel.org/pub/scm/linux/kernel/git/shawnguo/linux tags/imx-dt-5.3
+	imx/dt64
+		git://git.kernel.org/pub/scm/linux/kernel/git/shawnguo/linux tags/imx-dt64-5.3
 
 arm/drivers
 	fsl/soc
@@ -71,6 +119,7 @@ arm/defconfig
 		ARM: multi_v7_defconfig: enable Lima driver
 		arm64 defconfig: enable MPT3 SAS and BNX2X drivers
 		arm64 defconfig: enable Mellanox cards
+		arm64 defconfig: enable LVM support
 
 arm/late
 
@@ -83,4 +132,10 @@ arm/fixes
 		ARM: omap2: remove incorrect __init annotation
 	<no branch> (64f35709d5735ddbf8ab52d60ab3d62550b544d7)
 		https://github.com/Broadcom/stblinux tags/arm-soc/for-5.3/maintainers
+	<no branch> (26d65140e92a626e39c73c9abf769fd174bf5076)
+		https://git.kernel.org/pub/scm/linux/kernel/git/khilman/linux-amlogic tags/amlogic-fixes
+	<no branch> (3cf10132ac8d536565f2c02f60a3aeb315863a52)
+		git://git.kernel.org/pub/scm/linux/kernel/git/shawnguo/linux tags/imx-fixes-5.2-3
+	<no branch> (07c811af1c00d7b4212eac86900b023b6405a954)
+		git://github.com/hisilicon/linux-hisi tags/hisi-fixes-for-5.2
 
