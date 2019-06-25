@@ -376,7 +376,9 @@ static inline int pmd_protnone(pmd_t pmd)
 
 #define pmd_mkhuge(pmd)		(__pmd(pmd_val(pmd) & ~PMD_TABLE_BIT))
 
+#ifdef CONFIG_TRANSPARENT_HUGEPAGE
 #define pmd_devmap(pmd)		pte_devmap(pmd_pte(pmd))
+#endif
 #define pmd_mkdevmap(pmd)	pte_pmd(pte_mkdevmap(pmd_pte(pmd)))
 
 #define __pmd_to_phys(pmd)	__pte_to_phys(pmd_pte(pmd))
@@ -535,11 +537,6 @@ static inline phys_addr_t pud_page_paddr(pud_t pud)
 	return __pud_to_phys(pud);
 }
 
-static inline int pud_devmap(pud_t pud)
-{
-	return 0;
-}
-
 /* Find an entry in the second-level page table. */
 #define pmd_index(addr)		(((addr) >> PMD_SHIFT) & (PTRS_PER_PMD - 1))
 
@@ -627,11 +624,6 @@ static inline phys_addr_t pgd_page_paddr(pgd_t pgd)
 
 #define pgd_ERROR(pgd)		__pgd_error(__FILE__, __LINE__, pgd_val(pgd))
 
-static inline int pgd_devmap(pgd_t pgd)
-{
-	return 0;
-}
-
 /* to find an entry in a page-table-directory */
 #define pgd_index(addr)		(((addr) >> PGDIR_SHIFT) & (PTRS_PER_PGD - 1))
 
@@ -673,6 +665,16 @@ static inline int pmdp_set_access_flags(struct vm_area_struct *vma,
 					pmd_t entry, int dirty)
 {
 	return ptep_set_access_flags(vma, address, (pte_t *)pmdp, pmd_pte(entry), dirty);
+}
+
+static inline int pud_devmap(pud_t pud)
+{
+	return 0;
+}
+
+static inline int pgd_devmap(pgd_t pgd)
+{
+	return 0;
 }
 #endif
 
