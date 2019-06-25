@@ -692,7 +692,7 @@ union inputArgs {
     struct coda_open_by_fd_in coda_open_by_fd;
     struct coda_open_by_path_in coda_open_by_path;
     struct coda_statfs_in coda_statfs;
-	struct coda_access_intent_in coda_access_intent;
+    struct coda_access_intent_in coda_access_intent;
 };
 
 union outputArgs {
