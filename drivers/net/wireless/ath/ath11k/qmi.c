@@ -2109,7 +2109,10 @@ out:
 
 void ath11k_qmi_firmware_stop(struct ath11k_base *ab)
 {
-	if (ath11k_qmi_wlanfw_mode_send(ab, ATH11K_FIRMWARE_MODE_OFF) < 0) {
+	int ret;
+
+	ret = ath11k_qmi_wlanfw_mode_send(ab, ATH11K_FIRMWARE_MODE_OFF);
+	if (ret < 0) {
 		ath11k_warn(ab, "qmi failed to send wlan mode off\n");
 		return;
 	}
