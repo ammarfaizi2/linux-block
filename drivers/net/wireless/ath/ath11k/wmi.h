@@ -4703,7 +4703,7 @@ ath11k_wmi_rx_reord_queue_remove(struct ath11k *ar,
 				 struct rx_reorder_queue_remove_params *param);
 int ath11k_wmi_send_pdev_set_regdomain(struct ath11k *ar,
 				       struct pdev_set_regdomain_params *param);
-int ath11k_wmi_pull_fw_stats(struct ath11k_base *ab, u8 *evt_buf, u32 len,
+int ath11k_wmi_pull_fw_stats(struct ath11k_base *ab, struct sk_buff *skb,
 			     struct ath11k_fw_stats *stats);
 size_t ath11k_wmi_fw_stats_num_peers(struct list_head *head);
 size_t ath11k_wmi_fw_stats_num_peers_extd(struct list_head *head);

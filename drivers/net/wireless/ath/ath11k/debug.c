@@ -166,7 +166,7 @@ static void ath11k_debug_fw_stats_reset(struct ath11k *ar)
 	spin_unlock_bh(&ar->data_lock);
 }
 
-void ath11k_debug_fw_stats_process(struct ath11k_base *ab, u8 *evt_buf, u32 len)
+void ath11k_debug_fw_stats_process(struct ath11k_base *ab, struct sk_buff *skb)
 {
 	struct ath11k_fw_stats stats = {};
 	struct ath11k *ar;
@@ -184,7 +184,7 @@ void ath11k_debug_fw_stats_process(struct ath11k_base *ab, u8 *evt_buf, u32 len)
 	INIT_LIST_HEAD(&stats.bcn);
 	INIT_LIST_HEAD(&stats.peers_extd);
 
-	ret = ath11k_wmi_pull_fw_stats(ab, evt_buf, len, &stats);
+	ret = ath11k_wmi_pull_fw_stats(ab, skb, &stats);
 	if (ret) {
 		ath11k_warn(ab, "failed to pull fw stats: %d\n", ret);
 		goto free;
