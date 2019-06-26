@@ -5026,7 +5026,7 @@ ath11k_mac_update_bss_chan_survey(struct ath11k *ar,
 }
 
 static int ath11k_mac_op_get_survey(struct ieee80211_hw *hw, int idx,
-			     struct survey_info *survey)
+				    struct survey_info *survey)
 {
 	struct ath11k *ar = hw->priv;
 	struct ieee80211_supported_band *sband;
