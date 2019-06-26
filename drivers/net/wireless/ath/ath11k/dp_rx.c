@@ -2280,7 +2280,9 @@ int ath11k_dp_process_rx(struct ath11k_base *ab, int mac_id,
 			if (ret == -EIO) {
 				ath11k_err(ab, "rx ring got corrupted %d\n", ret);
 				__skb_queue_purge(&msdu_list);
-				/* Should stop processing any more rx in future from this ring? */
+				/* Should stop processing any more rx in
+				 * future from this ring?
+				 */
 				goto rcu_unlock;
 			}
 
