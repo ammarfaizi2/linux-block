@@ -467,15 +467,13 @@ static const struct file_operations fops_htt_peer_stats = {
 };
 
 static ssize_t ath11k_dbg_sta_write_peer_pktlog(struct file *file,
-						const char __user *ubuf,
+						const char __user *buf,
 						size_t count, loff_t *ppos)
 {
 	struct ieee80211_sta *sta = file->private_data;
 	struct ath11k_sta *arsta = (struct ath11k_sta *)sta->drv_priv;
 	struct ath11k *ar = arsta->arvif->ar;
-	u8 buf[32] = {0};
 	int ret, enable;
-	ssize_t rc;
 
 	mutex_lock(&ar->conf_mutex);
 
@@ -484,18 +482,9 @@ static ssize_t ath11k_dbg_sta_write_peer_pktlog(struct file *file,
 		goto out;
 	}
 
-	rc = simple_write_to_buffer(buf, sizeof(buf) - 1, ppos, ubuf, count);
-	if (rc < 0) {
-		ret = rc;
+	ret = kstrtoint_from_user(buf, count, 0, &enable);
+	if (ret)
 		goto out;
-	}
-	buf[rc] = '\0';
-
-	ret = sscanf(buf, "%d", &enable);
-	if (ret != 1) {
-		ret = -EINVAL;
-		goto out;
-	}
 
 	ar->debug.pktlog_peer_valid = enable;
 	memcpy(ar->debug.pktlog_peer_addr, sta->addr, ETH_ALEN);
