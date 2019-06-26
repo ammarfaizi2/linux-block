@@ -4996,9 +4996,8 @@ ath11k_mac_update_bss_chan_survey(struct ath11k *ar,
 
 	lockdep_assert_held(&ar->conf_mutex);
 
-	if (!test_bit(WMI_SERVICE_BSS_CHANNEL_INFO_64,
-		      ar->ab->wmi_sc.svc_map) ||
-	    (ar->rx_channel != channel))
+	if (!test_bit(WMI_TLV_SERVICE_BSS_CHANNEL_INFO_64, ar->ab->wmi_sc.svc_map) ||
+	    ar->rx_channel != channel)
 		return;
 
 	if (ar->scan.state != ATH11K_SCAN_IDLE) {

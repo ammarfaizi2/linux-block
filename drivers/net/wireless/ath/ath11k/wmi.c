@@ -437,6 +437,23 @@ static int ath11k_pull_service_ready_tlv(struct ath11k_base *ab,
 	return 0;
 }
 
+/* Save the wmi_service_bitmap into a linear bitmap. The wmi_services in
+ * wmi_service ready event are advertised in b0-b3 (LSB 4-bits) of each
+ * 4-byte word.
+ */
+static void ath11k_wmi_service_bitmap_copy(struct ath11k_pdev_wmi *wmi,
+					   const u32 *wmi_svc_bm)
+{
+	int i, j;
+
+	for (i = 0, j = 0; i < WMI_SERVICE_BM_SIZE && j < WMI_MAX_SERVICE; i++) {
+		do {
+			if (wmi_svc_bm[i] & BIT(j % WMI_SERVICE_BITS_IN_SIZE32))
+				set_bit(j, wmi->wmi_sc->svc_map);
+		} while (++j % WMI_SERVICE_BITS_IN_SIZE32);
+	}
+}
+
 static int ath11k_wmi_tlv_svc_rdy_parse(struct ath11k_base *ab, u16 tag, u16 len,
 					const void *ptr, void *data)
 {
@@ -459,11 +476,7 @@ static int ath11k_wmi_tlv_svc_rdy_parse(struct ath11k_base *ab, u16 tag, u16 len
 				return -EINVAL;
 			}
 
-			wmi_svc_map(ptr, wmi_handle->wmi_sc->svc_map,
-				    WMI_MAX_SERVICE);
-
-			memcpy(ab->service_bitmap, ptr,
-			       expect_len);
+			ath11k_wmi_service_bitmap_copy(wmi_handle, ptr);
 
 			svc_ready->wmi_svc_bitmap_done = true;
 		}
@@ -5310,6 +5323,7 @@ static void ath11k_service_available_event(struct ath11k_base *ab, u8 *evt_buf,
 	const void **tb;
 	const struct wmi_service_available_event *ev;
 	int ret;
+	int i, j;
 
 	tb = ath11k_wmi_tlv_parse_alloc(ab, evt_buf, len, GFP_ATOMIC);
 	if (IS_ERR(tb)) {
@@ -5325,17 +5339,24 @@ static void ath11k_service_available_event(struct ath11k_base *ab, u8 *evt_buf,
 		return;
 	}
 
-	memcpy(ab->ext_service_bitmap, ev->wmi_service_segment_bitmap,
-	       (WMI_SERVICE_SEGMENT_BM_SIZE32 * sizeof(u32)));
-
-	wmi_svc_map_ext(ev->wmi_service_segment_bitmap,
-			ab->wmi_sc.svc_map,
-			WMI_MAX_SERVICE);
+	/* TODO: Use wmi_service_segment_offset information to get the service
+	 * especially when more services are advertised in multiple sevice
+	 * available events.
+	 */
+	for (i = 0, j = WMI_MAX_SERVICE;
+	     i < WMI_SERVICE_SEGMENT_BM_SIZE32 && j < WMI_MAX_EXT_SERVICE;
+	     i++) {
+		do {
+			if (ev->wmi_service_segment_bitmap[i] &
+			    BIT(j % WMI_AVAIL_SERVICE_BITS_IN_SIZE32))
+				set_bit(j, ab->wmi_sc.svc_map);
+		} while (++j % WMI_AVAIL_SERVICE_BITS_IN_SIZE32);
+	}
 
 	ath11k_dbg(ab, ATH11K_DBG_WMI,
 		   "wmi_ext_service_bitmap 0:0x%x, 1:0x%x, 2:0x%x, 3:0x%x",
-		   ab->ext_service_bitmap[0], ab->ext_service_bitmap[1],
-		   ab->ext_service_bitmap[2], ab->ext_service_bitmap[3]);
+		   ev->wmi_service_segment_bitmap[0], ev->wmi_service_segment_bitmap[1],
+		   ev->wmi_service_segment_bitmap[2], ev->wmi_service_segment_bitmap[3]);
 
 	kfree(tb);
 }
