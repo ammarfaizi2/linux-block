@@ -138,6 +138,8 @@ ath11k_accumulate_per_peer_tx_stats(struct ath11k_sta *arsta,
 	STATS_OP_FMT(RETRY).bw[1][bw] += peer_stats->retry_pkts;
 	STATS_OP_FMT(RETRY).nss[1][nss] += peer_stats->retry_pkts;
 	STATS_OP_FMT(RETRY).gi[1][gi] += peer_stats->retry_pkts;
+
+	tx_stats->tx_duration += peer_stats->duration;
 }
 
 void ath11k_update_per_peer_stats_from_txcompl(struct ath11k *ar,

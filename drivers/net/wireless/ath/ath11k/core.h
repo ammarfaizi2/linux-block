@@ -389,7 +389,7 @@ struct ath11k_per_peer_tx_stats {
 	u16 succ_pkts;
 	u16 retry_pkts;
 	u16 failed_pkts;
-	u16 duration;
+	u32 duration;
 	u8 ba_fails;
 	bool is_ampdu;
 };

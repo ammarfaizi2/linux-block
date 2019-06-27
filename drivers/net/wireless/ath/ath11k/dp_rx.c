@@ -1030,7 +1030,7 @@ static u32 ath11k_bw_to_mac80211_bwflags(u8 bw)
 
 static void
 ath11k_update_per_peer_tx_stats(struct ath11k *ar,
-				struct htt_ppdu_user_stats *usr_stats)
+				struct htt_ppdu_stats *ppdu_stats, u8 user)
 {
 	struct ath11k_base *ab = ar->ab;
 	struct ath11k_peer *peer;
@@ -1039,10 +1039,13 @@ ath11k_update_per_peer_tx_stats(struct ath11k *ar,
 	struct htt_ppdu_stats_user_rate *user_rate;
 	struct ieee80211_chanctx_conf *conf = NULL;
 	struct ath11k_per_peer_tx_stats *peer_stats = &ar->peer_tx_stats;
+	struct htt_ppdu_user_stats *usr_stats = &ppdu_stats->user_stats[user];
+	struct htt_ppdu_stats_common *common = &ppdu_stats->common;
 	int ret;
 	u8 flags, mcs, nss, bw, sgi, rate_idx = 0;
 	u32 succ_bytes = 0;
 	u16 rate = 0, succ_pkts = 0;
+	u32 tx_duration = 0;
 	bool is_ampdu = false;
 
 	if (!usr_stats)
@@ -1061,6 +1064,9 @@ ath11k_update_per_peer_tx_stats(struct ath11k *ar,
 		succ_pkts = FIELD_GET(HTT_PPDU_STATS_ACK_BA_INFO_NUM_MSDU_M,
 				      usr_stats->ack_ba.info);
 	}
+
+	if (common->fes_duration_us)
+		tx_duration = common->fes_duration_us;
 
 	user_rate = &usr_stats->rate;
 	flags = HTT_USR_RATE_PREAMBLE(user_rate->rate_flags);
@@ -1167,6 +1173,7 @@ ath11k_update_per_peer_tx_stats(struct ath11k *ar,
 	peer_stats->succ_pkts = succ_pkts;
 	peer_stats->succ_bytes = succ_bytes;
 	peer_stats->is_ampdu = is_ampdu;
+	peer_stats->duration = tx_duration;
 	peer_stats->ba_fails =
 		HTT_USR_CMPLTN_LONG_RETRY(usr_stats->cmpltn_cmn.flags) +
 		HTT_USR_CMPLTN_SHORT_RETRY(usr_stats->cmpltn_cmn.flags);
@@ -1182,13 +1189,10 @@ ath11k_update_per_peer_tx_stats(struct ath11k *ar,
 static void ath11k_htt_update_ppdu_stats(struct ath11k *ar,
 					 struct htt_ppdu_stats *ppdu_stats)
 {
-	struct htt_ppdu_user_stats *usr_stats;
 	u8 user;
 
-	for (user = 0; user < HTT_PPDU_STATS_MAX_USERS - 1; user++) {
-		usr_stats = &ppdu_stats->user_stats[user];
-		ath11k_update_per_peer_tx_stats(ar, usr_stats);
-	}
+	for (user = 0; user < HTT_PPDU_STATS_MAX_USERS - 1; user++)
+		ath11k_update_per_peer_tx_stats(ar, ppdu_stats, user);
 }
 
 static
