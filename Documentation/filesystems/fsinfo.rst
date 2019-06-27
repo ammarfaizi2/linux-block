@@ -7,7 +7,8 @@ security information beyond what stat(), statx() and statfs() can query.  It
 does not require a file to be opened as does ioctl().
 
 fsinfo() may be called on a path, an open file descriptor, a filesystem-context
-file descriptor as allocated by fsopen() or fspick().
+file descriptor as allocated by fsopen() or fspick() or a mount ID (allowing
+for mounts concealed by overmounts to be accessed).
 
 The fsinfo() system call needs to be configured on by enabling:
 
@@ -235,6 +236,10 @@ To summarise the attributes that are defined::
   FSINFO_ATTR_SERVER_NAME		N × string
   FSINFO_ATTR_SERVER_ADDRESS		N × M × struct
   FSINFO_ATTR_AFS_CELL_NAME		string
+  FSINFO_ATTR_MOUNT_INFO		struct
+  FSINFO_ATTR_MOUNT_DEVNAME		string
+  FSINFO_ATTR_MOUNT_CHILDREN		array
+  FSINFO_ATTR_MOUNT_SUBMOUNT		N × string
 
 
 Attribute Catalogue
@@ -384,6 +389,37 @@ before any superblock is attached:
     automatically if the filesystem doesn't implement the attribute, but must,
     and should, be called manually otherwise.  It should also be called first,
     before noting any other parameters.
+
+
+Then there are attributes that convey information about the mount topology:
+
+ *  ``FSINFO_ATTR_MOUNT_INFO``
+
+    This struct-type attribute conveys information about a mount topology node
+    rather than a superblock.  This includes the ID of the superblock mounted
+    there and the ID of the mount node, its parent, group, master and
+    propagation source.  It also contains the attribute flags for the mount and
+    a change counter so that it can be quickly determined if that node changed.
+
+ *  ``FSINFO_ATTR_MOUNT_DEVNAME``
+
+    This string-type attribute returns the "device name" that was supplied when
+    the mount object was created.
+
+ *  ``FSINFO_ATTR_MOUNT_CHILDREN``
+
+    This is an array-type attribute that conveys a set of structs, each of
+    which indicates the mount ID of a child and the change counter for that
+    child.  The kernel also tags an extra element on the end that indicates the
+    ID and change counter of the queried object.  This allows a conflicting
+    change to be quickly detected by comparing the before and after counters.
+
+ *  ``FSINFO_ATTR_MOUNT_SUBMOUNT``
+
+    This is a string-type attribute that conveys the pathname of the Nth
+    mountpoint under the target mount, relative to the mount root or the
+    chroot, whichever is closer.  These correspond on a 1:1 basis with the
+    elements in the FSINFO_ATTR_MOUNT_CHILDREN list.
 
 
 Then there are filesystem-specific attributes.
