@@ -35,6 +35,10 @@ enum fsinfo_attribute {
 	FSINFO_ATTR_SERVER_NAME		= 17,	/* Name of the Nth server (string) */
 	FSINFO_ATTR_SERVER_ADDRESS	= 18,	/* Mth address of the Nth server */
 	FSINFO_ATTR_AFS_CELL_NAME	= 19,	/* AFS cell name (string) */
+	FSINFO_ATTR_MOUNT_INFO		= 20,	/* Mount object information */
+	FSINFO_ATTR_MOUNT_DEVNAME	= 21,	/* Mount object device name (string) */
+	FSINFO_ATTR_MOUNT_CHILDREN	= 22,	/* Submount list (array) */
+	FSINFO_ATTR_MOUNT_SUBMOUNT	= 23,	/* Relative path of Nth submount (string) */
 	FSINFO_ATTR__NR
 };
 
@@ -286,6 +290,30 @@ struct fsinfo_param_enum {
  */
 struct fsinfo_server_address {
 	struct __kernel_sockaddr_storage address;
+};
+
+/*
+ * Information struct for fsinfo(FSINFO_ATTR_MOUNT_INFO).
+ */
+struct fsinfo_mount_info {
+	__u64		f_sb_id;	/* Superblock ID */
+	__u32		mnt_id;		/* Mount identifier (use with AT_FSINFO_MOUNTID_PATH) */
+	__u32		parent_id;	/* Parent mount identifier */
+	__u32		group_id;	/* Mount group ID */
+	__u32		master_id;	/* Slave master group ID */
+	__u32		from_id;	/* Slave propagated from ID */
+	__u32		attr;		/* MOUNT_ATTR_* flags */
+	__u32		change_counter;	/* Number of changed applied. */
+	__u32		__reserved[1];
+};
+
+/*
+ * Information struct element for fsinfo(FSINFO_ATTR_MOUNT_CHILDREN).
+ * - An extra element is placed on the end representing the parent mount.
+ */
+struct fsinfo_mount_child {
+	__u32		mnt_id;		/* Mount identifier (use with AT_FSINFO_MOUNTID_PATH) */
+	__u32		change_counter;	/* Number of changes applied to mount. */
 };
 
 #endif /* _UAPI_LINUX_FSINFO_H */
