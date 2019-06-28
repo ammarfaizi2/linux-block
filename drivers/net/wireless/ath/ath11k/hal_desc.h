@@ -26,7 +26,7 @@ struct ath11k_buffer_addr {
  *		Address (upper 8 bits) of the msdu buffer or msdu extension
  *		descriptor or Link descriptor
  *
- * return_buffer_manager
+ * return_buffer_manager (RBM)
  *		Consumer: WBM
  *		Producer: SW/FW
  *		Indicates to which buffer manager the buffer or MSDU_EXTENSION
