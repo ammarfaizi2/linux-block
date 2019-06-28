@@ -113,8 +113,7 @@ MODULE_PARM_DESC(perf_mode,
 	"interrupt coalescing is enabled on all queues,\n\t\t"
 	"2 - latency: high iops mode is disabled &\n\t\t"
 	"interrupt coalescing is enabled on all queues with timeout value 0xA,\n"
-	"\t\tdefault - on Intel architecture, default perf_mode is\n\t\t"
-	" 'balanced' and in others architectures the default mode is 'latency'"
+	"\t\tdefault - default perf_mode is 'balanced'"
 	);
 
 enum mpt3sas_perf_mode {
@@ -2814,7 +2813,7 @@ _base_free_irq(struct MPT3SAS_ADAPTER *ioc)
 
 	list_for_each_entry_safe(reply_q, next, &ioc->reply_queue_list, list) {
 		list_del(&reply_q->list);
-		if (smp_affinity_enable)
+		if (ioc->smp_affinity_enable)
 			irq_set_affinity_hint(pci_irq_vector(ioc->pdev,
 			    reply_q->msix_index), NULL);
 		free_irq(pci_irq_vector(ioc->pdev, reply_q->msix_index),
@@ -2885,11 +2884,9 @@ _base_assign_reply_queues(struct MPT3SAS_ADAPTER *ioc)
 
 	if (!_base_is_controller_msix_enabled(ioc))
 		return;
-	ioc->msix_load_balance = false;
-	if (ioc->reply_queue_count < num_online_cpus()) {
-		ioc->msix_load_balance = true;
+
+	if (ioc->msix_load_balance)
 		return;
-	}
 
 	memset(ioc->cpu_msix_table, 0, ioc->cpu_msix_table_sz);
 
@@ -2899,7 +2896,7 @@ _base_assign_reply_queues(struct MPT3SAS_ADAPTER *ioc)
 	if (!nr_msix)
 		return;
 
-	if (smp_affinity_enable) {
+	if (ioc->smp_affinity_enable) {
 
 		/*
 		 * set irq affinity to local numa node for those irqs
@@ -2980,7 +2977,7 @@ static void
 _base_check_and_enable_high_iops_queues(struct MPT3SAS_ADAPTER *ioc,
 		int hba_msix_vector_count)
 {
-	enum pci_bus_speed speed = PCI_SPEED_UNKNOWN;
+	u16 lnksta, speed;
 
 	if (perf_mode == MPT_PERF_MODE_IOPS ||
 	    perf_mode == MPT_PERF_MODE_LATENCY) {
@@ -2990,28 +2987,10 @@ _base_check_and_enable_high_iops_queues(struct MPT3SAS_ADAPTER *ioc,
 
 	if (perf_mode == MPT_PERF_MODE_DEFAULT) {
 
-#if defined(CONFIG_X86)
-		/*
-		 * Use global variable boot_cpu_data.x86_vendor to
-		 * determine whether the architecture is Intel or not.
-		 */
-		if (boot_cpu_data.x86_vendor != X86_VENDOR_INTEL) {
-			ioc->high_iops_queues = 0;
-			return;
-		}
-#else
-		ioc->high_iops_queues = 0;
-		return;
-#endif
-		speed = pcie_get_speed_cap(ioc->pdev);
-		dev_info(&ioc->pdev->dev, "PCIe device speed is %s\n",
-		     speed == PCIE_SPEED_2_5GT ? "2.5GHz" :
-		     speed == PCIE_SPEED_5_0GT ? "5.0GHz" :
-		     speed == PCIE_SPEED_8_0GT ? "8.0GHz" :
-		     speed == PCIE_SPEED_16_0GT ? "16.0GHz" :
-		     "Unknown");
+		pcie_capability_read_word(ioc->pdev, PCI_EXP_LNKSTA, &lnksta);
+		speed = lnksta & PCI_EXP_LNKSTA_CLS;
 
-		if (speed < PCIE_SPEED_16_0GT) {
+		if (speed < 0x4) {
 			ioc->high_iops_queues = 0;
 			return;
 		}
@@ -3052,7 +3031,7 @@ _base_alloc_irq_vectors(struct MPT3SAS_ADAPTER *ioc)
 	struct irq_affinity desc = { .pre_vectors = ioc->high_iops_queues };
 	struct irq_affinity *descp = &desc;
 
-	if (smp_affinity_enable)
+	if (ioc->smp_affinity_enable)
 		irq_flags |= PCI_IRQ_AFFINITY;
 	else
 		descp = NULL;
@@ -3078,6 +3057,8 @@ _base_enable_msix(struct MPT3SAS_ADAPTER *ioc)
 	int r;
 	int i, local_max_msix_vectors;
 	u8 try_msix = 0;
+
+	ioc->msix_load_balance = false;
 
 	if (msix_disable == -1 || msix_disable == 0)
 		try_msix = 1;
@@ -3109,8 +3090,21 @@ _base_enable_msix(struct MPT3SAS_ADAPTER *ioc)
 	else if (local_max_msix_vectors == 0)
 		goto try_ioapic;
 
-	if (ioc->msix_vector_count < ioc->cpu_count)
-		smp_affinity_enable = 0;
+	/*
+	 * Enable msix_load_balance only if combined reply queue mode is
+	 * disabled on SAS3 & above generation HBA devices.
+	 */
+	if (!ioc->combined_reply_queue &&
+	    ioc->hba_mpi_version_belonged != MPI2_VERSION) {
+		ioc->msix_load_balance = true;
+	}
+
+	/*
+	 * smp affinity setting is not need when msix load balance
+	 * is enabled.
+	 */
+	if (ioc->msix_load_balance)
+		ioc->smp_affinity_enable = 0;
 
 	r = _base_alloc_irq_vectors(ioc);
 	if (r < 0) {
@@ -6915,6 +6909,8 @@ mpt3sas_base_attach(struct MPT3SAS_ADAPTER *ioc)
 			goto out_free_resources;
 		}
 	}
+
+	ioc->smp_affinity_enable = smp_affinity_enable;
 
 	ioc->rdpq_array_enable_assigned = 0;
 	ioc->dma_mask = 0;
