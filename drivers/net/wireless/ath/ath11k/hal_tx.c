@@ -73,12 +73,14 @@ void ath11k_hal_tx_cmd_desc_setup(struct ath11k_base *ab, void *cmd,
 				    ti->bss_ast_hash);
 }
 
+/* Commit the descriptor to hardware */
 void ath11k_hal_tx_desc_sync(void *tx_desc_cached, void *hw_desc)
 {
 	memcpy(hw_desc + sizeof(struct hal_tlv_hdr), tx_desc_cached,
 	       sizeof(struct hal_tcl_data_cmd));
 }
 
+/* Get the descriptor status from hardware */
 void ath11k_hal_tx_status_desc_sync(void *hw_desc, void *local_desc)
 {
 	memcpy(local_desc, hw_desc, HAL_TX_STATUS_DESC_LEN);
