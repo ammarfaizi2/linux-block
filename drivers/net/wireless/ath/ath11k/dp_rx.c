@@ -2606,8 +2606,7 @@ int ath11k_dp_rx_process_mon_status(struct ath11k_base *ab, int mac_id,
 		if (ath11k_debug_is_pktlog_rx_stats_enabled(ar))
 			trace_ath11k_htt_rxdesc(ar, skb->data, DP_RX_BUFFER_SIZE);
 
-		hal_status = ath11k_hal_rx_parse_mon_status(ab, &ppdu_info,
-							    (u8 *)skb->data);
+		hal_status = ath11k_hal_rx_parse_mon_status(ab, &ppdu_info, skb);
 
 		if (ppdu_info.peer_id == HAL_INVALID_PEERID ||
 		    hal_status != HAL_RX_MON_STATUS_PPDU_DONE) {
@@ -4030,7 +4029,6 @@ static void ath11k_dp_rx_mon_status_process_tlv(struct ath11k *ar,
 	struct ath11k_mon_data *pmon = (struct ath11k_mon_data *)&dp->mon_data;
 	struct hal_rx_mon_ppdu_info *ppdu_info;
 	struct sk_buff *status_skb;
-	u8 *rx_tlv;
 	u32 tlv_status = HAL_TLV_STATUS_BUF_DONE;
 	struct ath11k_pdev_mon_stats *rx_mon_stats;
 
@@ -4043,10 +4041,8 @@ static void ath11k_dp_rx_mon_status_process_tlv(struct ath11k *ar,
 	while (!skb_queue_empty(&pmon->rx_status_q)) {
 		status_skb = skb_dequeue(&pmon->rx_status_q);
 
-		rx_tlv = status_skb->data;
-
 		tlv_status = ath11k_hal_rx_parse_mon_status(ar->ab, ppdu_info,
-							    rx_tlv);
+							    status_skb);
 		if (tlv_status == HAL_TLV_STATUS_PPDU_DONE) {
 			rx_mon_stats->status_ppdu_done++;
 			pmon->mon_ppdu_status = DP_PPDU_STATUS_DONE;

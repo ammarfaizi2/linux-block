@@ -1158,13 +1158,13 @@ ath11k_hal_rx_parse_mon_status_tlv(struct ath11k_base *ab,
 enum hal_rx_mon_status
 ath11k_hal_rx_parse_mon_status(struct ath11k_base *ab,
 			       struct hal_rx_mon_ppdu_info *ppdu_info,
-			       u8 *data)
+			       struct sk_buff *skb)
 {
 	struct hal_tlv_hdr *tlv;
 	enum hal_rx_mon_status hal_status = HAL_RX_MON_STATUS_BUF_DONE;
 	u16 tlv_tag;
 	u16 tlv_len;
-	u8 *ptr = data;
+	u8 *ptr = skb->data;
 
 	do {
 		tlv = (struct hal_tlv_hdr *)ptr;
@@ -1185,7 +1185,7 @@ ath11k_hal_rx_parse_mon_status(struct ath11k_base *ab,
 		ptr += tlv_len;
 		ptr = PTR_ALIGN(ptr, HAL_TLV_ALIGN);
 
-		if ((ptr - data) >= DP_RX_BUFFER_SIZE)
+		if ((ptr - skb->data) >= DP_RX_BUFFER_SIZE)
 			break;
 	} while (hal_status == HAL_RX_MON_STATUS_PPDU_NOT_DONE);
 
