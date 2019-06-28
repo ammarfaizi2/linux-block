@@ -351,12 +351,7 @@ int ath11k_hal_desc_reo_parse_err(struct ath11k_base *ab, u32 *rx_desc,
 		return -EINVAL;
 	}
 
-	*paddr = (((u64)FIELD_GET(BUFFER_ADDR_INFO1_ADDR,
-				  desc->buf_addr_info.info1)) << 32) |
-		FIELD_GET(BUFFER_ADDR_INFO0_ADDR,
-			  desc->buf_addr_info.info0);
-	*desc_bank = FIELD_GET(BUFFER_ADDR_INFO1_SW_COOKIE,
-			       desc->buf_addr_info.info1);
+	ath11k_hal_rx_reo_ent_paddr_get(ab, rx_desc, paddr, desc_bank);
 
 	return 0;
 }
