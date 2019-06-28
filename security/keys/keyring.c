@@ -1018,12 +1018,14 @@ int keyring_restrict(key_ref_t keyring_ref, const char *type,
 	down_write(&keyring->sem);
 	down_write(&keyring_serialise_restrict_sem);
 
-	if (keyring->restrict_link)
+	if (keyring->restrict_link) {
 		ret = -EEXIST;
-	else if (keyring_detect_restriction_cycle(keyring, restrict_link))
+	} else if (keyring_detect_restriction_cycle(keyring, restrict_link)) {
 		ret = -EDEADLK;
-	else
+	} else {
 		keyring->restrict_link = restrict_link;
+		notify_key(keyring, NOTIFY_KEY_SETATTR, 0);
+	}
 
 	up_write(&keyring_serialise_restrict_sem);
 	up_write(&keyring->sem);
@@ -1286,12 +1288,14 @@ int __key_link_check_live_key(struct key *keyring, struct key *key)
  * holds at most one link to any given key of a particular type+description
  * combination.
  */
-void __key_link(struct key *key, struct assoc_array_edit **_edit)
+void __key_link(struct key *keyring, struct key *key,
+		struct assoc_array_edit **_edit)
 {
 	__key_get(key);
 	assoc_array_insert_set_object(*_edit, keyring_key_to_ptr(key));
 	assoc_array_apply_edit(*_edit);
 	*_edit = NULL;
+	notify_key(keyring, NOTIFY_KEY_LINKED, key_serial(key));
 }
 
 /*
@@ -1369,7 +1373,7 @@ int key_link(struct key *keyring, struct key *key)
 		if (ret == 0)
 			ret = __key_link_check_live_key(keyring, key);
 		if (ret == 0)
-			__key_link(key, &edit);
+			__key_link(keyring, key, &edit);
 		__key_link_end(keyring, &key->index_key, edit);
 	}
 
@@ -1398,6 +1402,7 @@ EXPORT_SYMBOL(key_link);
 int key_unlink(struct key *keyring, struct key *key)
 {
 	struct assoc_array_edit *edit;
+	key_serial_t target = key_serial(key);
 	int ret;
 
 	key_check(keyring);
@@ -1419,6 +1424,7 @@ int key_unlink(struct key *keyring, struct key *key)
 		goto error;
 
 	assoc_array_apply_edit(edit);
+	notify_key(keyring, NOTIFY_KEY_UNLINKED, target);
 	key_payload_reserve(keyring, keyring->datalen - KEYQUOTA_LINK_BYTES);
 	ret = 0;
 
@@ -1452,6 +1458,7 @@ int keyring_clear(struct key *keyring)
 	} else {
 		if (edit)
 			assoc_array_apply_edit(edit);
+		notify_key(keyring, NOTIFY_KEY_CLEARED, 0);
 		key_payload_reserve(keyring, 0);
 		ret = 0;
 	}
