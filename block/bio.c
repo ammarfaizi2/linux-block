@@ -836,22 +836,19 @@ int bio_add_page(struct bio *bio, struct page *page,
 }
 EXPORT_SYMBOL(bio_add_page);
 
-static void bio_get_pages(struct bio *bio)
+void bio_release_pages(struct bio *bio, bool mark_dirty)
 {
 	struct bvec_iter_all iter_all;
 	struct bio_vec *bvec;
 
-	bio_for_each_segment_all(bvec, bio, iter_all)
-		get_page(bvec->bv_page);
-}
+	if (bio_flagged(bio, BIO_NO_PAGE_REF))
+		return;
 
-static void bio_release_pages(struct bio *bio)
-{
-	struct bvec_iter_all iter_all;
-	struct bio_vec *bvec;
-
-	bio_for_each_segment_all(bvec, bio, iter_all)
+	bio_for_each_segment_all(bvec, bio, iter_all) {
+		if (mark_dirty && !PageCompound(bvec->bv_page))
+			set_page_dirty_lock(bvec->bv_page);
 		put_page(bvec->bv_page);
+	}
 }
 
 static int __bio_iov_bvec_add_pages(struct bio *bio, struct iov_iter *iter)
@@ -954,11 +951,8 @@ int bio_iov_iter_get_pages(struct bio *bio, struct iov_iter *iter)
 			ret = __bio_iov_iter_get_pages(bio, iter);
 	} while (!ret && iov_iter_count(iter) && !bio_full(bio));
 
-	if (iov_iter_bvec_no_ref(iter))
+	if (is_bvec)
 		bio_set_flag(bio, BIO_NO_PAGE_REF);
-	else if (is_bvec)
-		bio_get_pages(bio);
-
 	return bio->bi_vcnt ? 0 : ret;
 }
 
@@ -1356,8 +1350,6 @@ struct bio *bio_map_user_iov(struct request_queue *q,
 	int j;
 	struct bio *bio;
 	int ret;
-	struct bio_vec *bvec;
-	struct bvec_iter_all iter_all;
 
 	if (!iov_iter_count(iter))
 		return ERR_PTR(-EINVAL);
@@ -1424,29 +1416,9 @@ struct bio *bio_map_user_iov(struct request_queue *q,
 	return bio;
 
  out_unmap:
-	bio_for_each_segment_all(bvec, bio, iter_all) {
-		put_page(bvec->bv_page);
-	}
+	bio_release_pages(bio, false);
 	bio_put(bio);
 	return ERR_PTR(ret);
-}
-
-static void __bio_unmap_user(struct bio *bio)
-{
-	struct bio_vec *bvec;
-	struct bvec_iter_all iter_all;
-
-	/*
-	 * make sure we dirty pages we wrote to
-	 */
-	bio_for_each_segment_all(bvec, bio, iter_all) {
-		if (bio_data_dir(bio) == READ)
-			set_page_dirty_lock(bvec->bv_page);
-
-		put_page(bvec->bv_page);
-	}
-
-	bio_put(bio);
 }
 
 /**
@@ -1460,7 +1432,8 @@ static void __bio_unmap_user(struct bio *bio)
  */
 void bio_unmap_user(struct bio *bio)
 {
-	__bio_unmap_user(bio);
+	bio_release_pages(bio, bio_data_dir(bio) == READ);
+	bio_put(bio);
 	bio_put(bio);
 }
 
@@ -1680,9 +1653,7 @@ static void bio_dirty_fn(struct work_struct *work)
 	while ((bio = next) != NULL) {
 		next = bio->bi_private;
 
-		bio_set_pages_dirty(bio);
-		if (!bio_flagged(bio, BIO_NO_PAGE_REF))
-			bio_release_pages(bio);
+		bio_release_pages(bio, true);
 		bio_put(bio);
 	}
 }
@@ -1698,8 +1669,7 @@ void bio_check_pages_dirty(struct bio *bio)
 			goto defer;
 	}
 
-	if (!bio_flagged(bio, BIO_NO_PAGE_REF))
-		bio_release_pages(bio);
+	bio_release_pages(bio, false);
 	bio_put(bio);
 	return;
 defer:
