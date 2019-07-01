@@ -4234,6 +4234,7 @@ int btrfs_chunk_alloc(struct btrfs_trans_handle *trans, u64 flags,
 	bool wait_for_alloc = false;
 	bool should_alloc = false;
 	int ret = 0;
+	int orig_force = force;
 
 	/* Don't re-enter if we're already allocating a chunk */
 	if (trans->allocating_chunk)
@@ -4267,6 +4268,7 @@ int btrfs_chunk_alloc(struct btrfs_trans_handle *trans, u64 flags,
 			 */
 			wait_for_alloc = true;
 			spin_unlock(&space_info->lock);
+			force = orig_force;
 			mutex_lock(&fs_info->chunk_mutex);
 			mutex_unlock(&fs_info->chunk_mutex);
 		} else {
