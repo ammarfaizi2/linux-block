@@ -119,6 +119,12 @@ arm/dt
 		git://git.kernel.org/pub/scm/linux/kernel/git/qcom/linux tags/qcom-arm64-for-5.3-2
 	qcom/dt-2
 		git://git.kernel.org/pub/scm/linux/kernel/git/qcom/linux tags/qcom-dts-for-5.3-2
+	sprd/dt
+		https://github.com/lyrazhang/linux tags/sprd-dt-v5.3-rc1
+	rockchip/dt-2
+		git://git.kernel.org/pub/scm/linux/kernel/git/mmind/linux-rockchip tags/v5.3-rockchip-dts32-2
+	rockchip/dt64-2
+		git://git.kernel.org/pub/scm/linux/kernel/git/mmind/linux-rockchip tags/v5.3-rockchip-dts64-2
 
 arm/drivers
 	fsl/soc
@@ -188,16 +194,6 @@ arm/defconfig
 arm/late
 
 arm/fixes
-	<no branch> (a019ab40679715ea680cc8561a02888be70bc4e9)
-		git://git.kernel.org/pub/scm/linux/kernel/git/shawnguo/linux tags/imx-fixes-5.2-2
-	<no branch> (36558020128b1a48b7bddd5792ee70e3f64b04b0)
-		git://git.kernel.org/pub/scm/linux/kernel/git/linusw/linux-nomadik tags/gemini-dts-v5.2
-	patch
-		ARM: omap2: remove incorrect __init annotation
-	<no branch> (64f35709d5735ddbf8ab52d60ab3d62550b544d7)
-		https://github.com/Broadcom/stblinux tags/arm-soc/for-5.3/maintainers
-	<no branch> (26d65140e92a626e39c73c9abf769fd174bf5076)
-		https://git.kernel.org/pub/scm/linux/kernel/git/khilman/linux-amlogic tags/amlogic-fixes
-	<no branch> (3cf10132ac8d536565f2c02f60a3aeb315863a52)
-		git://git.kernel.org/pub/scm/linux/kernel/git/shawnguo/linux tags/imx-fixes-5.2-3
+	<no branch> (80031361747aec92163464f2ee08870fec33bcb0)
+		git://git.infradead.org/linux-mvebu tags/mvebu-fixes-5.2-2
 
