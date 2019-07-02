@@ -11,6 +11,7 @@
 #include <linux/slab.h>
 #include <linux/security.h>
 #include <linux/namei.h>
+#include <linux/ctype.h>
 #include "internal.h"
 
 static const struct constant_table bool_names[] = {
@@ -146,6 +147,66 @@ unit_too_small:
 }
 
 /*
+ * Parse string argument as a size in bytes.
+ *
+ * Examples of valid input: 12 24k 32M 64GiB
+ * k, M, G, T, P, E might be lower-case or upper-case
+ * Initial number might be decimal, octal, or hex
+ * SI forms accepted
+ */
+static int fs_parse_size(struct fs_context *fc,
+			 struct fs_parameter *param,
+			 const struct fs_parameter_spec *spec,
+			 struct fs_parse_result *result)
+{
+	char *p = param->string, *endptr;
+	u64 val;
+	int shift = 0;
+
+	val = simple_strtoull(p, &endptr, 0);
+	if (endptr == p)
+		return invalf(fc, "%s: Invalid number", param->key);
+	switch (tolower(endptr[0])) {
+	case 'e':
+		shift += 10;
+		/* Fall through */
+	case 'p':
+		shift += 10;
+		/* Fall through */
+	case 't':
+		shift += 10;
+		/* Fall through */
+	case 'g':
+		shift += 10;
+		/* Fall through */
+	case 'm':
+		shift += 10;
+		/* Fall through */
+	case 'k':
+		shift += 10;
+		if (!endptr[1])
+			break;
+		if (strcasecmp(endptr + 1, "ib") != 0)
+			goto invalid_unit;
+		break;
+	case 0:
+		break;
+	default:
+		goto invalid_unit;
+	}
+
+	result->uint_64 = val << shift;
+	if (result->uint_64 >> shift != val) {
+		errorf(fc, "%s: Cannot represent number", param->key);
+		return -ERANGE;
+	}
+
+	return 0;
+invalid_unit:
+	return invalf(fc, "%s: Invalid unit", param->key);
+}
+
+/*
  * fs_parse - Parse a filesystem configuration parameter
  * @fc: The filesystem context to log errors through (or NULL).
  * @desc: The parameter description to use.
@@ -217,6 +278,7 @@ int fs_parse(struct fs_context *fc,
 	case fs_param_is_time_m:
 	case fs_param_is_time_s:
 	case fs_param_is_time_ds:
+	case fs_param_is_size:
 		if (param->type != fs_value_is_string)
 			goto bad_value;
 		if (!result->has_value) {
@@ -296,6 +358,9 @@ int fs_parse(struct fs_context *fc,
 	case fs_param_is_time_s:
 	case fs_param_is_time_ds:
 		ret =  fs_parse_time(fc, param, p, result);
+		goto maybe_okay;
+	case fs_param_is_size:
+		ret =  fs_parse_size(fc, param, p, result);
 		goto maybe_okay;
 	case fs_param_is_fd: {
 		switch (param->type) {

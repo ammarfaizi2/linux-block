@@ -584,6 +584,7 @@ The members are as follows:
 	fs_param_is_time_s	u64 + time unit		result->uint_64 secs
 	fs_param_is_time_ds	u64 + time unit		result->uint_64 decisecs
 	fs_param_is_time_m	u64 + time unit		result->uint_64 mins
+	fs_param_is_memsize	u64 + memory unit	result->uint_64 bytes
 
      Note that if the value is of fs_param_is_bool type, fs_parse() will try
      to match any string value against "0", "1", "no", "yes", "false", "true".
@@ -592,6 +593,11 @@ The members are as follows:
      given, may be one of w (weeks), d (days), h (hours), m (mins) or s (secs).
      This is converted to seconds, deciseconds or minutes as specified by the
      type.
+
+     Note that is the value is of fs_param_is_memsize type, the memory unit, if
+     given, may be one of k/kib (kibi), m/mib (mibi), g/gib (gibi), t/tib
+     (tibi), p/pib (pibi) or e/eib (exbi) bytes, where the letters are
+     case-independent.  This is converted to bytes.
 
      Each parameter can also be qualified with 'flags':
 
@@ -619,6 +625,7 @@ The members are as follows:
 	fsparam_path()		fs_param_is_path
 	fsparam_fd()		fs_param_is_fd
 	fsparam_time_*()	fs_param_is_time_*
+	fsparam_memsize()	fs_param_is_memsize
 
      all of which take two arguments, name string and option number - for
      example:

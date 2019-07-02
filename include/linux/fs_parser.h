@@ -38,6 +38,7 @@ enum fs_parameter_type {
 	fs_param_is_time_s,	/* time in seconds */
 	fs_param_is_time_ds,	/* time in deciseconds */
 	fs_param_is_time_m,	/* time in minutes */
+	fs_param_is_size,	/* size in bytes */
 	nr__fs_parameter_type,
 };
 
@@ -148,6 +149,7 @@ static inline bool fs_validate_description(const struct fs_parameter_description
 #define fsparam_time_s(NAME, OPT) __fsparam(fs_param_is_time_s, NAME, OPT, 0)
 #define fsparam_time_ds(NAME, OPT) __fsparam(fs_param_is_time_ds, NAME, OPT, 0)
 #define fsparam_time_m(NAME, OPT) __fsparam(fs_param_is_time_m, NAME, OPT, 0)
+#define fsparam_size(NAME, OPT)	__fsparam(fs_param_is_size, NAME, OPT, 0)
 
 
 #endif /* _LINUX_FS_PARSER_H */
