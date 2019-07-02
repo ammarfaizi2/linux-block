@@ -35,6 +35,9 @@ enum fs_parameter_type {
 	fs_param_is_blockdev,
 	fs_param_is_path,
 	fs_param_is_fd,
+	fs_param_is_time_s,	/* time in seconds */
+	fs_param_is_time_ds,	/* time in deciseconds */
+	fs_param_is_time_m,	/* time in minutes */
 	nr__fs_parameter_type,
 };
 
@@ -142,6 +145,9 @@ static inline bool fs_validate_description(const struct fs_parameter_description
 #define fsparam_bdev(NAME, OPT)	__fsparam(fs_param_is_blockdev, NAME, OPT, 0)
 #define fsparam_path(NAME, OPT)	__fsparam(fs_param_is_path, NAME, OPT, 0)
 #define fsparam_fd(NAME, OPT)	__fsparam(fs_param_is_fd, NAME, OPT, 0)
+#define fsparam_time_s(NAME, OPT) __fsparam(fs_param_is_time_s, NAME, OPT, 0)
+#define fsparam_time_ds(NAME, OPT) __fsparam(fs_param_is_time_ds, NAME, OPT, 0)
+#define fsparam_time_m(NAME, OPT) __fsparam(fs_param_is_time_m, NAME, OPT, 0)
 
 
 #endif /* _LINUX_FS_PARSER_H */

@@ -566,8 +566,8 @@ The members are as follows:
 
      The 'type' field indicates the desired value type and must be one of:
 
-	TYPE NAME		EXPECTED VALUE		RESULT IN
-	=======================	=======================	=====================
+	TYPE NAME		EXPECTED VALUE		RESULT IN	UNITS
+	=======================	=======================	===============	=====
 	fs_param_is_flag	No value		n/a
 	fs_param_is_bool	Boolean value		result->boolean
 	fs_param_is_u32		32-bit unsigned int	result->uint_32
@@ -581,9 +581,17 @@ The members are as follows:
 	fs_param_is_blockdev	Blockdev path		* Needs lookup
 	fs_param_is_path	Path			* Needs lookup
 	fs_param_is_fd		File descriptor		result->int_32
+	fs_param_is_time_s	u64 + time unit		result->uint_64 secs
+	fs_param_is_time_ds	u64 + time unit		result->uint_64 decisecs
+	fs_param_is_time_m	u64 + time unit		result->uint_64 mins
 
      Note that if the value is of fs_param_is_bool type, fs_parse() will try
      to match any string value against "0", "1", "no", "yes", "false", "true".
+
+     Note that is the value is of fs_param_is_time_* type, the time unit, if
+     given, may be one of w (weeks), d (days), h (hours), m (mins) or s (secs).
+     This is converted to seconds, deciseconds or minutes as specified by the
+     type.
 
      Each parameter can also be qualified with 'flags':
 
@@ -610,6 +618,7 @@ The members are as follows:
 	fsparam_bdev()		fs_param_is_blockdev
 	fsparam_path()		fs_param_is_path
 	fsparam_fd()		fs_param_is_fd
+	fsparam_time_*()	fs_param_is_time_*
 
      all of which take two arguments, name string and option number - for
      example:

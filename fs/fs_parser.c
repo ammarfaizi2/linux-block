@@ -59,6 +59,93 @@ static const struct fs_parameter_spec *fs_lookup_key(
 }
 
 /*
+ * Parse string argument as time with units.
+ *
+ * Examples of valid input: 12 24s 32m 14d 7h 23w
+ * s, m, d, h, w must be lower-case
+ * initial number might be decimal, octal, or hex
+ */
+static int fs_parse_time(struct fs_context *fc,
+			 struct fs_parameter *param,
+			 const struct fs_parameter_spec *spec,
+			 struct fs_parse_result *result)
+{
+	char *p = param->string, *endptr;
+	u64 val;
+	int mult = 1;
+
+	val = simple_strtoull(p, &endptr, 0);
+	if (endptr == p)
+		goto invalid_unit;
+	switch (endptr[0]) {
+	case 'w':
+		mult = 7 * 24 * 60 * 60 * 10;
+		endptr++;
+		break;
+	case 'd':
+		mult = 24 * 60 * 60 * 10;
+		endptr++;
+		break;
+	case 'h':
+		mult = 60 * 60 * 10;
+		endptr++;
+		break;
+	case 'm':
+		mult = 60 * 10;
+		endptr++;
+		break;
+	case 's':
+		mult = 10;
+		if (spec->type == fs_param_is_time_m)
+			goto unit_too_small;
+		endptr++;
+		break;
+	case 0:
+		switch (spec->type) {
+		case fs_param_is_time_m:
+			mult = 60 * 10;
+			break;
+		case fs_param_is_time_s:
+			mult = 10;
+			break;
+		case fs_param_is_time_ds:
+			break;
+		default:
+			goto invalid_unit;
+		}
+		break;
+	default:
+		goto invalid_unit;
+	}
+
+	if (*endptr)
+		goto invalid_unit;
+
+	// mult is in deciseconds at this point
+
+	switch (spec->type) {
+	case fs_param_is_time_m:
+		mult /= 60 * 10;
+		break;
+	case fs_param_is_time_s:
+		mult /= 10;
+		break;
+	case fs_param_is_time_ds:
+		break;
+	default:
+		break;
+	}
+
+	result->uint_64 = val * mult;
+	return 0;
+
+invalid_unit:
+	return invalf(fc, "%s: Invalid unit", param->key);
+unit_too_small:
+	return invalf(fc, "%s: Unit too small", param->key);
+}
+
+/*
  * fs_parse - Parse a filesystem configuration parameter
  * @fc: The filesystem context to log errors through (or NULL).
  * @desc: The parameter description to use.
@@ -127,6 +214,9 @@ int fs_parse(struct fs_context *fc,
 	case fs_param_is_u64:
 	case fs_param_is_enum:
 	case fs_param_is_string:
+	case fs_param_is_time_m:
+	case fs_param_is_time_s:
+	case fs_param_is_time_ds:
 		if (param->type != fs_value_is_string)
 			goto bad_value;
 		if (!result->has_value) {
@@ -202,7 +292,11 @@ int fs_parse(struct fs_context *fc,
 		if (param->type != fs_value_is_blob)
 			goto bad_value;
 		goto okay;
-
+	case fs_param_is_time_m:
+	case fs_param_is_time_s:
+	case fs_param_is_time_ds:
+		ret =  fs_parse_time(fc, param, p, result);
+		goto maybe_okay;
 	case fs_param_is_fd: {
 		switch (param->type) {
 		case fs_value_is_string:
