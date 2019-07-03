@@ -36,6 +36,7 @@ struct spi_gpio {
 	struct gpio_desc		*miso;
 	struct gpio_desc		*mosi;
 	struct gpio_desc		**cs_gpios;
+	bool				has_cs;
 };
 
 /*----------------------------------------------------------------------*/
@@ -205,7 +206,7 @@ static void spi_gpio_chipselect(struct spi_device *spi, int is_active)
 		gpiod_set_value_cansleep(spi_gpio->sck, spi->mode & SPI_CPOL);
 
 	/* Drive chip select line, if we have one */
-	if (spi_gpio->cs_gpios) {
+	if (spi_gpio->has_cs) {
 		struct gpio_desc *cs = spi_gpio->cs_gpios[spi->chip_select];
 
 		/* SPI chip selects are normally active-low */
@@ -223,12 +224,10 @@ static int spi_gpio_setup(struct spi_device *spi)
 	 * The CS GPIOs have already been
 	 * initialized from the descriptor lookup.
 	 */
-	if (spi_gpio->cs_gpios) {
-		cs = spi_gpio->cs_gpios[spi->chip_select];
-		if (!spi->controller_state && cs)
-			status = gpiod_direction_output(cs,
-						  !(spi->mode & SPI_CS_HIGH));
-	}
+	cs = spi_gpio->cs_gpios[spi->chip_select];
+	if (!spi->controller_state && cs)
+		status = gpiod_direction_output(cs,
+						!(spi->mode & SPI_CS_HIGH));
 
 	if (!status)
 		status = spi_bitbang_setup(spi);
@@ -279,8 +278,12 @@ static void spi_gpio_cleanup(struct spi_device *spi)
  * floating signals.  (A weak pulldown would save power too, but many
  * drivers expect to see all-ones data as the no slave "response".)
  */
-static int spi_gpio_request(struct device *dev, struct spi_gpio *spi_gpio)
+static int spi_gpio_request(struct device *dev,
+			    struct spi_gpio *spi_gpio,
+			    unsigned int num_chipselects)
 {
+	int i;
+
 	spi_gpio->mosi = devm_gpiod_get_optional(dev, "mosi", GPIOD_OUT_LOW);
 	if (IS_ERR(spi_gpio->mosi))
 		return PTR_ERR(spi_gpio->mosi);
@@ -293,6 +296,13 @@ static int spi_gpio_request(struct device *dev, struct spi_gpio *spi_gpio)
 	if (IS_ERR(spi_gpio->sck))
 		return PTR_ERR(spi_gpio->sck);
 
+	for (i = 0; i < num_chipselects; i++) {
+		spi_gpio->cs_gpios[i] = devm_gpiod_get_index(dev, "cs",
+							     i, GPIOD_OUT_HIGH);
+		if (IS_ERR(spi_gpio->cs_gpios[i]))
+			return PTR_ERR(spi_gpio->cs_gpios[i]);
+	}
+
 	return 0;
 }
 
@@ -303,55 +313,44 @@ static const struct of_device_id spi_gpio_dt_ids[] = {
 };
 MODULE_DEVICE_TABLE(of, spi_gpio_dt_ids);
 
-static int spi_gpio_probe_dt(struct platform_device *pdev,
-			     struct spi_master *master)
+static int spi_gpio_probe_dt(struct platform_device *pdev)
 {
-	master->dev.of_node = pdev->dev.of_node;
-	master->use_gpio_descriptors = true;
+	int ret;
+	u32 tmp;
+	struct spi_gpio_platform_data	*pdata;
+	struct device_node *np = pdev->dev.of_node;
+	const struct of_device_id *of_id =
+			of_match_device(spi_gpio_dt_ids, &pdev->dev);
 
-	return 0;
-}
-#else
-static inline int spi_gpio_probe_dt(struct platform_device *pdev,
-				    struct spi_master *master)
-{
-	return 0;
-}
-#endif
+	if (!of_id)
+		return 0;
 
-static int spi_gpio_probe_pdata(struct platform_device *pdev,
-				struct spi_master *master)
-{
-	struct device *dev = &pdev->dev;
-	struct spi_gpio_platform_data *pdata = dev_get_platdata(dev);
-	struct spi_gpio *spi_gpio = spi_master_get_devdata(master);
-	int i;
-
-#ifdef GENERIC_BITBANG
-	if (!pdata || !pdata->num_chipselect)
-		return -ENODEV;
-#endif
-	/*
-	 * The master needs to think there is a chipselect even if not
-	 * connected
-	 */
-	master->num_chipselect = pdata->num_chipselect ?: 1;
-
-	spi_gpio->cs_gpios = devm_kcalloc(dev, master->num_chipselect,
-					  sizeof(*spi_gpio->cs_gpios),
-					  GFP_KERNEL);
-	if (!spi_gpio->cs_gpios)
+	pdata = devm_kzalloc(&pdev->dev, sizeof(*pdata), GFP_KERNEL);
+	if (!pdata)
 		return -ENOMEM;
 
-	for (i = 0; i < master->num_chipselect; i++) {
-		spi_gpio->cs_gpios[i] = devm_gpiod_get_index(dev, "cs", i,
-							     GPIOD_OUT_HIGH);
-		if (IS_ERR(spi_gpio->cs_gpios[i]))
-			return PTR_ERR(spi_gpio->cs_gpios[i]);
+
+	ret = of_property_read_u32(np, "num-chipselects", &tmp);
+	if (ret < 0) {
+		dev_err(&pdev->dev, "num-chipselects property not found\n");
+		goto error_free;
 	}
 
+	pdata->num_chipselect = tmp;
+	pdev->dev.platform_data = pdata;
+
+	return 1;
+
+error_free:
+	devm_kfree(&pdev->dev, pdata);
+	return ret;
+}
+#else
+static inline int spi_gpio_probe_dt(struct platform_device *pdev)
+{
 	return 0;
 }
+#endif
 
 static void spi_gpio_put(void *data)
 {
@@ -363,11 +362,22 @@ static int spi_gpio_probe(struct platform_device *pdev)
 	int				status;
 	struct spi_master		*master;
 	struct spi_gpio			*spi_gpio;
+	struct spi_gpio_platform_data	*pdata;
 	struct device			*dev = &pdev->dev;
 	struct spi_bitbang		*bb;
-	const struct of_device_id	*of_id;
+	bool use_of = 0;
 
-	of_id = of_match_device(spi_gpio_dt_ids, &pdev->dev);
+	status = spi_gpio_probe_dt(pdev);
+	if (status < 0)
+		return status;
+	if (status > 0)
+		use_of = 1;
+
+	pdata = dev_get_platdata(dev);
+#ifdef GENERIC_BITBANG
+	if (!pdata || (!use_of && !pdata->num_chipselect))
+		return -ENODEV;
+#endif
 
 	master = spi_alloc_master(dev, sizeof(*spi_gpio));
 	if (!master)
@@ -377,17 +387,22 @@ static int spi_gpio_probe(struct platform_device *pdev)
 	if (status)
 		return status;
 
-	if (of_id)
-		status = spi_gpio_probe_dt(pdev, master);
-	else
-		status = spi_gpio_probe_pdata(pdev, master);
-
-	if (status)
-		return status;
-
 	spi_gpio = spi_master_get_devdata(master);
 
-	status = spi_gpio_request(dev, spi_gpio);
+	spi_gpio->cs_gpios = devm_kcalloc(dev,
+				pdata->num_chipselect,
+				sizeof(*spi_gpio->cs_gpios),
+				GFP_KERNEL);
+	if (!spi_gpio->cs_gpios)
+		return -ENOMEM;
+
+	platform_set_drvdata(pdev, spi_gpio);
+
+	/* Determine if we have chip selects connected */
+	spi_gpio->has_cs = !!pdata->num_chipselect;
+
+	status = spi_gpio_request(dev, spi_gpio,
+				  pdata->num_chipselect);
 	if (status)
 		return status;
 
@@ -405,9 +420,13 @@ static int spi_gpio_probe(struct platform_device *pdev)
 	}
 
 	master->bus_num = pdev->id;
+	/* The master needs to think there is a chipselect even if not connected */
+	master->num_chipselect = spi_gpio->has_cs ? pdata->num_chipselect : 1;
 	master->setup = spi_gpio_setup;
 	master->cleanup = spi_gpio_cleanup;
-
+#ifdef CONFIG_OF
+	master->dev.of_node = dev->of_node;
+#endif
 	bb = &spi_gpio->bitbang;
 	bb->master = master;
 	bb->chipselect = spi_gpio_chipselect;
