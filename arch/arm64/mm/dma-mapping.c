@@ -38,10 +38,6 @@ void arch_dma_prep_coherent(struct page *page, size_t size)
 
 static int __init arm64_dma_init(void)
 {
-	WARN_TAINT(ARCH_DMA_MINALIGN < cache_line_size(),
-		   TAINT_CPU_OUT_OF_SPEC,
-		   "ARCH_DMA_MINALIGN smaller than CTR_EL0.CWG (%d < %d)",
-		   ARCH_DMA_MINALIGN, cache_line_size());
 	return dma_atomic_pool_init(GFP_DMA32, __pgprot(PROT_NORMAL_NC));
 }
 arch_initcall(arm64_dma_init);
@@ -56,6 +52,14 @@ void arch_teardown_dma_ops(struct device *dev)
 void arch_setup_dma_ops(struct device *dev, u64 dma_base, u64 size,
 			const struct iommu_ops *iommu, bool coherent)
 {
+	int cls = cache_line_size_of_cpu();
+
+	WARN_TAINT(!coherent && cls > ARCH_DMA_MINALIGN,
+		   TAINT_CPU_OUT_OF_SPEC,
+		   "%s %s: ARCH_DMA_MINALIGN smaller than CTR_EL0.CWG (%d < %d)",
+		   dev_driver_string(dev), dev_name(dev),
+		   ARCH_DMA_MINALIGN, cls);
+
 	dev->dma_coherent = coherent;
 	if (iommu)
 		iommu_setup_dma_ops(dev, dma_base, size);
