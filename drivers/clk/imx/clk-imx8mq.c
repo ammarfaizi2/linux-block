@@ -272,13 +272,20 @@ static const char * const imx8mq_clko2_sels[] = {"osc_25m", "sys2_pll_200m", "sy
 
 static struct clk_onecell_data clk_data;
 
+static struct clk ** const uart_clks[] = {
+	&clks[IMX8MQ_CLK_UART1_ROOT],
+	&clks[IMX8MQ_CLK_UART2_ROOT],
+	&clks[IMX8MQ_CLK_UART3_ROOT],
+	&clks[IMX8MQ_CLK_UART4_ROOT],
+	NULL
+};
+
 static int imx8mq_clocks_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
 	struct device_node *np = dev->of_node;
 	void __iomem *base;
 	int err;
-	int i;
 
 	clks[IMX8MQ_CLK_DUMMY] = imx_clk_fixed("dummy", 0);
 	clks[IMX8MQ_CLK_32K] = of_clk_get_by_name(np, "ckil");
@@ -361,9 +368,9 @@ static int imx8mq_clocks_probe(struct platform_device *pdev)
 	clks[IMX8MQ_SYS2_PLL_1000M] = imx_clk_fixed_factor("sys2_pll_1000m", "sys2_pll_out", 1, 1);
 
 	np = dev->of_node;
-	base = of_iomap(np, 0);
-	if (WARN_ON(!base))
-		return -ENOMEM;
+	base = devm_platform_ioremap_resource(pdev, 0);
+	if (WARN_ON(IS_ERR(base)))
+		return PTR_ERR(base);
 
 	/* CORE */
 	clks[IMX8MQ_CLK_A53_SRC] = imx_clk_mux2("arm_a53_src", base + 0x8000, 24, 3, imx8mq_a53_sels, ARRAY_SIZE(imx8mq_a53_sels));
@@ -548,16 +555,15 @@ static int imx8mq_clocks_probe(struct platform_device *pdev)
 					   clks[IMX8MQ_ARM_PLL_OUT],
 					   clks[IMX8MQ_SYS1_PLL_800M]);
 
-	for (i = 0; i < IMX8MQ_CLK_END; i++)
-		if (IS_ERR(clks[i]))
-			pr_err("i.MX8mq clk %u register failed with %ld\n",
-			       i, PTR_ERR(clks[i]));
+	imx_check_clocks(clks, ARRAY_SIZE(clks));
 
 	clk_data.clks = clks;
 	clk_data.clk_num = ARRAY_SIZE(clks);
 
 	err = of_clk_add_provider(np, of_clk_src_onecell_get, &clk_data);
 	WARN_ON(err);
+
+	imx_register_uart_clocks(uart_clks);
 
 	return err;
 }
