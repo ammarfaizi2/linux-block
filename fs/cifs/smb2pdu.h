@@ -123,7 +123,7 @@ struct smb2_sync_pdu {
 	__le16 StructureSize2; /* size of wct area (varies, request specific) */
 } __packed;
 
-#define SMB3_AES128CMM_NONCE 11
+#define SMB3_AES128CCM_NONCE 11
 #define SMB3_AES128GCM_NONCE 12
 
 struct smb2_transform_hdr {
@@ -227,6 +227,7 @@ struct smb2_negotiate_req {
 } __packed;
 
 /* Dialects */
+#define SMB10_PROT_ID 0x0000 /* local only, not sent on wire w/CIFS negprot */
 #define SMB20_PROT_ID 0x0202
 #define SMB21_PROT_ID 0x0210
 #define SMB30_PROT_ID 0x0300
@@ -293,7 +294,7 @@ struct smb2_encryption_neg_context {
 	__le16	DataLength;
 	__le32	Reserved;
 	__le16	CipherCount; /* AES-128-GCM and AES-128-CCM */
-	__le16	Ciphers[1]; /* Ciphers[0] since only one used now */
+	__le16	Ciphers[2];
 } __packed;
 
 /* See MS-SMB2 2.2.3.1.3 */
@@ -316,6 +317,12 @@ struct smb2_compression_capabilities_context {
  * For smb2_netname_negotiate_context_id See MS-SMB2 2.2.3.1.4.
  * Its struct simply contains NetName, an array of Unicode characters
  */
+struct smb2_netname_neg_context {
+	__le16	ContextType; /* 0x100 */
+	__le16	DataLength;
+	__le32	Reserved;
+	__le16	NetName[0]; /* hostname of target converted to UCS-2 */
+} __packed;
 
 #define POSIX_CTXT_DATA_LEN	16
 struct smb2_posix_neg_context {
@@ -640,6 +647,7 @@ struct smb2_tree_disconnect_rsp {
 #define SMB2_CREATE_DURABLE_HANDLE_REQUEST_V2	"DH2Q"
 #define SMB2_CREATE_DURABLE_HANDLE_RECONNECT_V2	"DH2C"
 #define SMB2_CREATE_APP_INSTANCE_ID	0x45BCA66AEFA7F74A9008FA462E144D74
+#define SMB2_CREATE_APP_INSTANCE_VERSION 0xB982D0B73B56074FA07B524A8116A010
 #define SVHDX_OPEN_DEVICE_CONTEX	0x9CCBCF9E04C1E643980E158DA1F6EC83
 #define SMB2_CREATE_TAG_POSIX		0x93AD25509CB411E7B42383DE968BCD7C
 
@@ -804,6 +812,13 @@ struct durable_reconnect_context_v2 {
 	} Fid;
 	__u8 CreateGuid[16];
 	__le32 Flags; /* see above DHANDLE_FLAG_PERSISTENT */
+} __packed;
+
+/* See MS-SMB2 2.2.14.2.9 */
+struct on_disk_id {
+	__le64 DiskFileId;
+	__le64 VolumeId;
+	__u64  Reserved[4];
 } __packed;
 
 /* See MS-SMB2 2.2.14.2.12 */
