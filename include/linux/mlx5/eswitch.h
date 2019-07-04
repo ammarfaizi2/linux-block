@@ -12,9 +12,9 @@
 #define MLX5_ESWITCH_MANAGER(mdev) MLX5_CAP_GEN(mdev, eswitch_manager)
 
 enum {
-	SRIOV_NONE,
-	SRIOV_LEGACY,
-	SRIOV_OFFLOADS
+	MLX5_ESWITCH_NONE,
+	MLX5_ESWITCH_LEGACY,
+	MLX5_ESWITCH_OFFLOADS
 };
 
 enum {
@@ -46,6 +46,8 @@ struct mlx5_eswitch_rep {
 	u16		       vport;
 	u8		       hw_id[ETH_ALEN];
 	u16		       vlan;
+	/* Only IB rep is using vport_index */
+	u16		       vport_index;
 	u32		       vlan_refcount;
 };
 
