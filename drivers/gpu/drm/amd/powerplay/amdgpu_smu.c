@@ -515,6 +515,7 @@ static int smu_set_funcs(struct amdgpu_device *adev)
 	switch (adev->asic_type) {
 	case CHIP_VEGA20:
 	case CHIP_NAVI10:
+	case CHIP_NAVI14:
 		if (adev->pm.pp_feature & PP_OVERDRIVE_MASK)
 			smu->od_enabled = true;
 		smu_v11_0_set_smu_funcs(smu);
@@ -817,6 +818,10 @@ static int smu_smc_table_hw_init(struct smu_context *smu,
 			return ret;
 
 		ret = smu_setup_pptable(smu);
+		if (ret)
+			return ret;
+
+		ret = smu_get_clk_info_from_vbios(smu);
 		if (ret)
 			return ret;
 

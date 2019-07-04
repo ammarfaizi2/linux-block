@@ -140,7 +140,7 @@ uint amdgpu_smu_memory_pool_size = 0;
 uint amdgpu_dc_feature_mask = 0;
 int amdgpu_async_gfx_ring = 1;
 int amdgpu_mcbp = 0;
-int amdgpu_discovery = 0;
+int amdgpu_discovery = -1;
 int amdgpu_mes = 0;
 
 struct amdgpu_mgpu_info mgpu_info = {
@@ -581,14 +581,28 @@ MODULE_PARM_DESC(async_gfx_ring,
 	"Asynchronous GFX rings that could be configured with either different priorities (HP3D ring and LP3D ring), or equal priorities (0 = disabled, 1 = enabled (default))");
 module_param_named(async_gfx_ring, amdgpu_async_gfx_ring, int, 0444);
 
+/**
+ * DOC: mcbp (int)
+ * It is used to enable mid command buffer preemption. (0 = disabled (default), 1 = enabled)
+ */
 MODULE_PARM_DESC(mcbp,
 	"Enable Mid-command buffer preemption (0 = disabled (default), 1 = enabled)");
 module_param_named(mcbp, amdgpu_mcbp, int, 0444);
 
+/**
+ * DOC: discovery (int)
+ * Allow driver to discover hardware IP information from IP Discovery table at the top of VRAM.
+ * (-1 = auto (default), 0 = disabled, 1 = enabled)
+ */
 MODULE_PARM_DESC(discovery,
 	"Allow driver to discover hardware IPs from IP Discovery table at the top of VRAM");
 module_param_named(discovery, amdgpu_discovery, int, 0444);
 
+/**
+ * DOC: mes (int)
+ * Enable Micro Engine Scheduler. This is a new hw scheduling engine for gfx, sdma, and compute.
+ * (0 = disabled (default), 1 = enabled)
+ */
 MODULE_PARM_DESC(mes,
 	"Enable Micro Engine Scheduler (0 = disabled (default), 1 = enabled)");
 module_param_named(mes, amdgpu_mes, int, 0444);
@@ -702,7 +716,7 @@ MODULE_PARM_DESC(hws_gws_support, "MEC FW support gws barriers (false = not supp
   * DOC: queue_preemption_timeout_ms (int)
   * queue preemption timeout in ms (1 = Minimum, 9000 = default)
   */
-int queue_preemption_timeout_ms;
+int queue_preemption_timeout_ms = 9000;
 module_param(queue_preemption_timeout_ms, int, 0644);
 MODULE_PARM_DESC(queue_preemption_timeout_ms, "queue preemption timeout in ms (1 = Minimum, 9000 = default)");
 #endif
