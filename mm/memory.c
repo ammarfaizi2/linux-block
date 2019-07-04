@@ -1441,8 +1441,6 @@ static int insert_page(struct vm_area_struct *vma, unsigned long addr,
 	set_pte_at(mm, addr, pte, mk_pte(page, prot));
 
 	retval = 0;
-	pte_unmap_unlock(pte, ptl);
-	return retval;
 out_unlock:
 	pte_unmap_unlock(pte, ptl);
 out:
@@ -1513,7 +1511,7 @@ static int __vm_map_pages(struct vm_area_struct *vma, struct page **pages,
 	int ret, i;
 
 	/* Fail if the user requested offset is beyond the end of the object */
-	if (offset > num)
+	if (offset >= num)
 		return -ENXIO;
 
 	/* Fail if the user requested size exceeds available object size */
@@ -2003,7 +2001,6 @@ static int apply_to_pte_range(struct pfn_range_apply *closure, pmd_t *pmd,
 {
 	pte_t *pte;
 	int err;
-	pgtable_t token;
 	spinlock_t *uninitialized_var(ptl);
 
 	pte = (closure->mm == &init_mm) ?
@@ -2016,10 +2013,8 @@ static int apply_to_pte_range(struct pfn_range_apply *closure, pmd_t *pmd,
 
 	arch_enter_lazy_mmu_mode();
 
-	token = pmd_pgtable(*pmd);
-
 	do {
-		err = closure->ptefn(pte++, token, addr, closure);
+		err = closure->ptefn(pte++, addr, closure);
 		if (err)
 			break;
 	} while (addr += PAGE_SIZE, addr != end);
@@ -2160,14 +2155,13 @@ struct page_range_apply {
  * Callback wrapper to enable use of apply_to_pfn_range for
  * the apply_to_page_range interface
  */
-static int apply_to_page_range_wrapper(pte_t *pte, pgtable_t token,
-				       unsigned long addr,
+static int apply_to_page_range_wrapper(pte_t *pte, unsigned long addr,
 				       struct pfn_range_apply *pter)
 {
 	struct page_range_apply *pra =
 		container_of(pter, typeof(*pra), pter);
 
-	return pra->fn(pte, token, addr, pra->data);
+	return pra->fn(pte, addr, pra->data);
 }
 
 /*
@@ -2844,7 +2838,7 @@ vm_fault_t do_swap_page(struct vm_fault *vmf)
 		struct swap_info_struct *si = swp_swap_info(entry);
 
 		if (si->flags & SWP_SYNCHRONOUS_IO &&
-				__swap_count(si, entry) == 1) {
+				__swap_count(entry) == 1) {
 			/* skip swapcache */
 			page = alloc_page_vma(GFP_HIGHUSER_MOVABLE, vma,
 							vmf->address);
@@ -2954,7 +2948,6 @@ vm_fault_t do_swap_page(struct vm_fault *vmf)
 	flush_icache_page(vma, page);
 	if (pte_swp_soft_dirty(vmf->orig_pte))
 		pte = pte_mksoft_dirty(pte);
-	set_pte_at(vma->vm_mm, vmf->address, vmf->pte, pte);
 	arch_do_swap_page(vma->vm_mm, vma, vmf->address, pte, vmf->orig_pte);
 	vmf->orig_pte = pte;
 
@@ -2968,6 +2961,7 @@ vm_fault_t do_swap_page(struct vm_fault *vmf)
 		mem_cgroup_commit_charge(page, memcg, true, false);
 		activate_page(page);
 	}
+	set_pte_at(vma->vm_mm, vmf->address, vmf->pte, pte);
 
 	swap_free(entry);
 	if (mem_cgroup_swap_full(page) ||
@@ -3243,19 +3237,6 @@ map_pte:
 }
 
 #ifdef CONFIG_TRANSPARENT_HUGE_PAGECACHE
-
-#define HPAGE_CACHE_INDEX_MASK (HPAGE_PMD_NR - 1)
-static inline bool transhuge_vma_suitable(struct vm_area_struct *vma,
-		unsigned long haddr)
-{
-	if (((vma->vm_start >> PAGE_SHIFT) & HPAGE_CACHE_INDEX_MASK) !=
-			(vma->vm_pgoff & HPAGE_CACHE_INDEX_MASK))
-		return false;
-	if (haddr < vma->vm_start || haddr + HPAGE_PMD_SIZE > vma->vm_end)
-		return false;
-	return true;
-}
-
 static void deposit_prealloc_pte(struct vm_fault *vmf)
 {
 	struct vm_area_struct *vma = vmf->vma;
@@ -4387,7 +4368,9 @@ int __access_remote_vm(struct task_struct *tsk, struct mm_struct *mm,
 	void *old_buf = buf;
 	int write = gup_flags & FOLL_WRITE;
 
-	down_read(&mm->mmap_sem);
+	if (down_read_killable(&mm->mmap_sem))
+		return 0;
+
 	/* ignore errors, just check how much was successfully transferred */
 	while (len) {
 		int bytes, ret, offset;
