@@ -731,8 +731,10 @@ struct amdgpu_ttm_tt {
 
 #define MAX_RETRY_HMM_RANGE_FAULT	16
 
-int amdgpu_ttm_tt_get_user_pages(struct ttm_tt *ttm, struct page **pages)
+int amdgpu_ttm_tt_get_user_pages(struct amdgpu_bo *bo, struct page **pages)
 {
+	struct hmm_mirror *mirror = amdgpu_mn_get_mirror(bo->mn);
+	struct ttm_tt *ttm = bo->tbo.ttm;
 	struct amdgpu_ttm_tt *gtt = (void *)ttm;
 	struct mm_struct *mm = gtt->usertask->mm;
 	unsigned long start = gtt->userptr;
@@ -745,6 +747,12 @@ int amdgpu_ttm_tt_get_user_pages(struct ttm_tt *ttm, struct page **pages)
 
 	if (!mm) /* Happens during process shutdown */
 		return -ESRCH;
+
+	if (unlikely(!mirror)) {
+		DRM_DEBUG_DRIVER("Failed to get hmm_mirror\n");
+		r = -EFAULT;
+		goto out;
+	}
 
 	vma = find_vma(mm, start);
 	if (unlikely(!vma || start < vma->vm_start)) {
@@ -775,7 +783,7 @@ int amdgpu_ttm_tt_get_user_pages(struct ttm_tt *ttm, struct page **pages)
 				0 : range->flags[HMM_PFN_WRITE];
 	range->pfn_flags_mask = 0;
 	range->pfns = pfns;
-	hmm_range_register(range, mm, start,
+	hmm_range_register(range, mirror, start,
 			   start + ttm->num_pages * PAGE_SIZE, PAGE_SHIFT);
 
 retry:

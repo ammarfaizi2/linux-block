@@ -398,6 +398,14 @@ free_amn:
 	return ERR_PTR(r);
 }
 
+struct hmm_mirror *amdgpu_mn_get_mirror(struct amdgpu_mn *amn)
+{
+	if (!amn)
+		return NULL;
+
+	return &amn->mirror;
+}
+
 /**
  * amdgpu_mn_register - register a BO for notifier updates
  *

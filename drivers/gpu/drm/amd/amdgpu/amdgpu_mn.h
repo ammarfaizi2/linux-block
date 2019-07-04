@@ -43,6 +43,7 @@ struct amdgpu_mn *amdgpu_mn_get(struct amdgpu_device *adev,
 int amdgpu_mn_register(struct amdgpu_bo *bo, unsigned long addr);
 void amdgpu_mn_unregister(struct amdgpu_bo *bo);
 void amdgpu_hmm_init_range(struct hmm_range *range);
+struct hmm_mirror *amdgpu_mn_get_mirror(struct amdgpu_mn *amn);
 #else
 static inline void amdgpu_mn_lock(struct amdgpu_mn *mn) {}
 static inline void amdgpu_mn_unlock(struct amdgpu_mn *mn) {}
@@ -58,6 +59,10 @@ static inline int amdgpu_mn_register(struct amdgpu_bo *bo, unsigned long addr)
 	return -ENODEV;
 }
 static inline void amdgpu_mn_unregister(struct amdgpu_bo *bo) {}
+static inline struct hmm_mirror *amdgpu_mn_get_mirror(struct amdgpu_mn *amn)
+{
+	return NULL;
+}
 #endif
 
 #endif
