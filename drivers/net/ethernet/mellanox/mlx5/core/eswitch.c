@@ -134,6 +134,30 @@ static int modify_esw_vport_context_cmd(struct mlx5_core_dev *dev, u16 vport,
 	return mlx5_cmd_exec(dev, in, inlen, out, sizeof(out));
 }
 
+int mlx5_eswitch_modify_esw_vport_context(struct mlx5_eswitch *esw, u16 vport,
+					  void *in, int inlen)
+{
+	return modify_esw_vport_context_cmd(esw->dev, vport, in, inlen);
+}
+
+static int query_esw_vport_context_cmd(struct mlx5_core_dev *dev, u16 vport,
+				       void *out, int outlen)
+{
+	u32 in[MLX5_ST_SZ_DW(query_esw_vport_context_in)] = {};
+
+	MLX5_SET(query_esw_vport_context_in, in, opcode,
+		 MLX5_CMD_OP_QUERY_ESW_VPORT_CONTEXT);
+	MLX5_SET(modify_esw_vport_context_in, in, vport_number, vport);
+	MLX5_SET(modify_esw_vport_context_in, in, other_vport, 1);
+	return mlx5_cmd_exec(dev, in, sizeof(in), out, outlen);
+}
+
+int mlx5_eswitch_query_esw_vport_context(struct mlx5_eswitch *esw, u16 vport,
+					 void *out, int outlen)
+{
+	return query_esw_vport_context_cmd(esw->dev, vport, out, outlen);
+}
+
 static int modify_esw_vport_cvlan(struct mlx5_core_dev *dev, u16 vport,
 				  u16 vlan, u8 qos, u8 set_flags)
 {
@@ -939,7 +963,7 @@ int esw_vport_enable_egress_acl(struct mlx5_eswitch *esw,
 		  vport->vport, MLX5_CAP_ESW_EGRESS_ACL(dev, log_max_ft_size));
 
 	root_ns = mlx5_get_flow_vport_acl_namespace(dev, MLX5_FLOW_NAMESPACE_ESW_EGRESS,
-						    vport->vport);
+			mlx5_eswitch_vport_num_to_index(esw, vport->vport));
 	if (!root_ns) {
 		esw_warn(dev, "Failed to get E-Switch egress flow namespace for vport (%d)\n", vport->vport);
 		return -EOPNOTSUPP;
@@ -1057,7 +1081,7 @@ int esw_vport_enable_ingress_acl(struct mlx5_eswitch *esw,
 		  vport->vport, MLX5_CAP_ESW_INGRESS_ACL(dev, log_max_ft_size));
 
 	root_ns = mlx5_get_flow_vport_acl_namespace(dev, MLX5_FLOW_NAMESPACE_ESW_INGRESS,
-						    vport->vport);
+			mlx5_eswitch_vport_num_to_index(esw, vport->vport));
 	if (!root_ns) {
 		esw_warn(dev, "Failed to get E-Switch ingress flow namespace for vport (%d)\n", vport->vport);
 		return -EOPNOTSUPP;
@@ -1168,6 +1192,8 @@ void esw_vport_cleanup_ingress_rules(struct mlx5_eswitch *esw,
 
 	vport->ingress.drop_rule = NULL;
 	vport->ingress.allow_rule = NULL;
+
+	esw_vport_del_ingress_acl_modify_metadata(esw, vport);
 }
 
 void esw_vport_disable_ingress_acl(struct mlx5_eswitch *esw,

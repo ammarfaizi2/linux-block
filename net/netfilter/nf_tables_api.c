@@ -1446,25 +1446,18 @@ static struct nft_stats __percpu *nft_stats_alloc(const struct nlattr *attr)
 	return newstats;
 }
 
-static void nft_chain_stats_replace(struct net *net,
-				    struct nft_base_chain *chain,
-				    struct nft_stats __percpu *newstats)
+static void nft_chain_stats_replace(struct nft_trans *trans)
 {
-	struct nft_stats __percpu *oldstats;
+	struct nft_base_chain *chain = nft_base_chain(trans->ctx.chain);
 
-	if (newstats == NULL)
+	if (!nft_trans_chain_stats(trans))
 		return;
 
-	if (rcu_access_pointer(chain->stats)) {
-		oldstats = rcu_dereference_protected(chain->stats,
-					lockdep_commit_lock_is_held(net));
-		rcu_assign_pointer(chain->stats, newstats);
-		synchronize_rcu();
-		free_percpu(oldstats);
-	} else {
-		rcu_assign_pointer(chain->stats, newstats);
+	rcu_swap_protected(chain->stats, nft_trans_chain_stats(trans),
+			   lockdep_commit_lock_is_held(trans->ctx.net));
+
+	if (!nft_trans_chain_stats(trans))
 		static_branch_inc(&nft_counters_enabled);
-	}
 }
 
 static void nf_tables_chain_free_chain_rules(struct nft_chain *chain)
@@ -3877,6 +3870,7 @@ static const struct nla_policy nft_set_elem_policy[NFTA_SET_ELEM_MAX + 1] = {
 	[NFTA_SET_ELEM_DATA]		= { .type = NLA_NESTED },
 	[NFTA_SET_ELEM_FLAGS]		= { .type = NLA_U32 },
 	[NFTA_SET_ELEM_TIMEOUT]		= { .type = NLA_U64 },
+	[NFTA_SET_ELEM_EXPIRATION]	= { .type = NLA_U64 },
 	[NFTA_SET_ELEM_USERDATA]	= { .type = NLA_BINARY,
 					    .len = NFT_USERDATA_MAXLEN },
 	[NFTA_SET_ELEM_EXPR]		= { .type = NLA_NESTED },
@@ -4330,7 +4324,7 @@ static struct nft_trans *nft_trans_elem_alloc(struct nft_ctx *ctx,
 void *nft_set_elem_init(const struct nft_set *set,
 			const struct nft_set_ext_tmpl *tmpl,
 			const u32 *key, const u32 *data,
-			u64 timeout, gfp_t gfp)
+			u64 timeout, u64 expiration, gfp_t gfp)
 {
 	struct nft_set_ext *ext;
 	void *elem;
@@ -4345,9 +4339,11 @@ void *nft_set_elem_init(const struct nft_set *set,
 	memcpy(nft_set_ext_key(ext), key, set->klen);
 	if (nft_set_ext_exists(ext, NFT_SET_EXT_DATA))
 		memcpy(nft_set_ext_data(ext), data, set->dlen);
-	if (nft_set_ext_exists(ext, NFT_SET_EXT_EXPIRATION))
-		*nft_set_ext_expiration(ext) =
-			get_jiffies_64() + timeout;
+	if (nft_set_ext_exists(ext, NFT_SET_EXT_EXPIRATION)) {
+		*nft_set_ext_expiration(ext) = get_jiffies_64() + expiration;
+		if (expiration == 0)
+			*nft_set_ext_expiration(ext) += timeout;
+	}
 	if (nft_set_ext_exists(ext, NFT_SET_EXT_TIMEOUT))
 		*nft_set_ext_timeout(ext) = timeout;
 
@@ -4412,6 +4408,7 @@ static int nft_add_set_elem(struct nft_ctx *ctx, struct nft_set *set,
 	struct nft_trans *trans;
 	u32 flags = 0;
 	u64 timeout;
+	u64 expiration;
 	u8 ulen;
 	int err;
 
@@ -4453,6 +4450,16 @@ static int nft_add_set_elem(struct nft_ctx *ctx, struct nft_set *set,
 			return err;
 	} else if (set->flags & NFT_SET_TIMEOUT) {
 		timeout = set->timeout;
+	}
+
+	expiration = 0;
+	if (nla[NFTA_SET_ELEM_EXPIRATION] != NULL) {
+		if (!(set->flags & NFT_SET_TIMEOUT))
+			return -EINVAL;
+		err = nf_msecs_to_jiffies64(nla[NFTA_SET_ELEM_EXPIRATION],
+					    &expiration);
+		if (err)
+			return err;
 	}
 
 	err = nft_data_init(ctx, &elem.key.val, sizeof(elem.key), &d1,
@@ -4537,7 +4544,7 @@ static int nft_add_set_elem(struct nft_ctx *ctx, struct nft_set *set,
 
 	err = -ENOMEM;
 	elem.priv = nft_set_elem_init(set, &tmpl, elem.key.val.data, data.data,
-				      timeout, GFP_KERNEL);
+				      timeout, expiration, GFP_KERNEL);
 	if (elem.priv == NULL)
 		goto err3;
 
@@ -4739,7 +4746,7 @@ static int nft_del_setelem(struct nft_ctx *ctx, struct nft_set *set,
 
 	err = -ENOMEM;
 	elem.priv = nft_set_elem_init(set, &tmpl, elem.key.val.data, NULL, 0,
-				      GFP_KERNEL);
+				      0, GFP_KERNEL);
 	if (elem.priv == NULL)
 		goto err2;
 
@@ -6359,9 +6366,9 @@ static void nft_chain_commit_update(struct nft_trans *trans)
 	if (!nft_is_base_chain(trans->ctx.chain))
 		return;
 
+	nft_chain_stats_replace(trans);
+
 	basechain = nft_base_chain(trans->ctx.chain);
-	nft_chain_stats_replace(trans->ctx.net, basechain,
-				nft_trans_chain_stats(trans));
 
 	switch (nft_trans_chain_policy(trans)) {
 	case NF_DROP:
@@ -6378,6 +6385,7 @@ static void nft_commit_release(struct nft_trans *trans)
 		nf_tables_table_destroy(&trans->ctx);
 		break;
 	case NFT_MSG_NEWCHAIN:
+		free_percpu(nft_trans_chain_stats(trans));
 		kfree(nft_trans_chain_name(trans));
 		break;
 	case NFT_MSG_DELCHAIN:

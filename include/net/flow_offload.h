@@ -1,12 +1,17 @@
 #ifndef _NET_FLOW_OFFLOAD_H
 #define _NET_FLOW_OFFLOAD_H
 
+#include <linux/kernel.h>
 #include <net/flow_dissector.h>
 
 struct flow_match {
 	struct flow_dissector	*dissector;
 	void			*mask;
 	void			*key;
+};
+
+struct flow_match_meta {
+	struct flow_dissector_key_meta *key, *mask;
 };
 
 struct flow_match_basic {
@@ -63,6 +68,8 @@ struct flow_match_enc_opts {
 
 struct flow_rule;
 
+void flow_rule_match_meta(const struct flow_rule *rule,
+			  struct flow_match_meta *out);
 void flow_rule_match_basic(const struct flow_rule *rule,
 			   struct flow_match_basic *out);
 void flow_rule_match_control(const struct flow_rule *rule,

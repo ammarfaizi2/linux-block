@@ -110,8 +110,7 @@ static void hclge_cmd_config_regs(struct hclge_cmq_ring *ring)
 		hclge_write_dev(hw, HCLGE_NIC_CSQ_BASEADDR_H_REG,
 				upper_32_bits(dma));
 		hclge_write_dev(hw, HCLGE_NIC_CSQ_DEPTH_REG,
-				(ring->desc_num >> HCLGE_NIC_CMQ_DESC_NUM_S) |
-				HCLGE_NIC_CMQ_ENABLE);
+				ring->desc_num >> HCLGE_NIC_CMQ_DESC_NUM_S);
 		hclge_write_dev(hw, HCLGE_NIC_CSQ_HEAD_REG, 0);
 		hclge_write_dev(hw, HCLGE_NIC_CSQ_TAIL_REG, 0);
 	} else {
@@ -120,8 +119,7 @@ static void hclge_cmd_config_regs(struct hclge_cmq_ring *ring)
 		hclge_write_dev(hw, HCLGE_NIC_CRQ_BASEADDR_H_REG,
 				upper_32_bits(dma));
 		hclge_write_dev(hw, HCLGE_NIC_CRQ_DEPTH_REG,
-				(ring->desc_num >> HCLGE_NIC_CMQ_DESC_NUM_S) |
-				HCLGE_NIC_CMQ_ENABLE);
+				ring->desc_num >> HCLGE_NIC_CMQ_DESC_NUM_S);
 		hclge_write_dev(hw, HCLGE_NIC_CRQ_HEAD_REG, 0);
 		hclge_write_dev(hw, HCLGE_NIC_CRQ_TAIL_REG, 0);
 	}
@@ -175,7 +173,11 @@ static bool hclge_is_special_opcode(u16 opcode)
 			     HCLGE_OPC_STATS_MAC,
 			     HCLGE_OPC_STATS_MAC_ALL,
 			     HCLGE_OPC_QUERY_32_BIT_REG,
-			     HCLGE_OPC_QUERY_64_BIT_REG};
+			     HCLGE_OPC_QUERY_64_BIT_REG,
+			     HCLGE_QUERY_CLEAR_MPF_RAS_INT,
+			     HCLGE_QUERY_CLEAR_PF_RAS_INT,
+			     HCLGE_QUERY_CLEAR_ALL_MPF_MSIX_INT,
+			     HCLGE_QUERY_CLEAR_ALL_PF_MSIX_INT};
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(spec_opcode); i++) {
@@ -230,6 +232,7 @@ static int hclge_cmd_check_retval(struct hclge_hw *hw, struct hclge_desc *desc,
 int hclge_cmd_send(struct hclge_hw *hw, struct hclge_desc *desc, int num)
 {
 	struct hclge_dev *hdev = container_of(hw, struct hclge_dev, hw);
+	struct hclge_cmq_ring *csq = &hw->cmq.csq;
 	struct hclge_desc *desc_to_use;
 	bool complete = false;
 	u32 timeout = 0;
@@ -239,8 +242,16 @@ int hclge_cmd_send(struct hclge_hw *hw, struct hclge_desc *desc, int num)
 
 	spin_lock_bh(&hw->cmq.csq.lock);
 
-	if (num > hclge_ring_space(&hw->cmq.csq) ||
-	    test_bit(HCLGE_STATE_CMD_DISABLE, &hdev->state)) {
+	if (test_bit(HCLGE_STATE_CMD_DISABLE, &hdev->state)) {
+		spin_unlock_bh(&hw->cmq.csq.lock);
+		return -EBUSY;
+	}
+
+	if (num > hclge_ring_space(&hw->cmq.csq)) {
+		/* If CMDQ ring is full, SW HEAD and HW HEAD may be different,
+		 * need update the SW HEAD pointer csq->next_to_clean
+		 */
+		csq->next_to_clean = hclge_read_dev(hw, HCLGE_NIC_CSQ_HEAD_REG);
 		spin_unlock_bh(&hw->cmq.csq.lock);
 		return -EBUSY;
 	}
@@ -278,7 +289,7 @@ int hclge_cmd_send(struct hclge_hw *hw, struct hclge_desc *desc, int num)
 	}
 
 	if (!complete) {
-		retval = -EAGAIN;
+		retval = -EBADE;
 	} else {
 		retval = hclge_cmd_check_retval(hw, desc, num, ntc);
 	}

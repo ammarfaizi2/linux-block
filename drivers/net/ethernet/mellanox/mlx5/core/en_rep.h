@@ -150,13 +150,12 @@ struct mlx5e_encap_entry {
 	struct hlist_node encap_hlist;
 	struct list_head flows;
 	u32 encap_id;
-	struct ip_tunnel_info tun_info;
+	const struct ip_tunnel_info *tun_info;
 	unsigned char h_dest[ETH_ALEN];	/* destination eth addr	*/
 
 	struct net_device *out_dev;
 	struct net_device *route_dev;
-	int tunnel_type;
-	int tunnel_hlen;
+	struct mlx5e_tc_tunnel *tunnel;
 	int reformat_type;
 	u8 flags;
 	char *encap_header;

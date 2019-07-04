@@ -58,8 +58,6 @@ struct xdp_sock {
 	struct xdp_umem *umem;
 	struct list_head flush_node;
 	u16 queue_id;
-	struct xsk_queue *tx ____cacheline_aligned_in_smp;
-	struct list_head list;
 	bool zc;
 	enum {
 		XSK_READY = 0,
@@ -68,6 +66,8 @@ struct xdp_sock {
 	} state;
 	/* Protects multiple processes in the control path */
 	struct mutex mutex;
+	struct xsk_queue *tx ____cacheline_aligned_in_smp;
+	struct list_head list;
 	/* Mutual exclusion of NAPI TX thread and sendmsg error paths
 	 * in the SKB destructor callback.
 	 */

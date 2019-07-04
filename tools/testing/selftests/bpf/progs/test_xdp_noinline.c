@@ -15,13 +15,6 @@
 #include <linux/udp.h>
 #include "bpf_helpers.h"
 
-#define bpf_printk(fmt, ...)				\
-({							\
-	char ____fmt[] = fmt;				\
-	bpf_trace_printk(____fmt, sizeof(____fmt),	\
-			##__VA_ARGS__);			\
-})
-
 static __u32 rol32(__u32 word, unsigned int shift)
 {
 	return (word << shift) | (word >> ((-shift) & 31));
@@ -170,52 +163,66 @@ struct lb_stats {
 	__u64 v1;
 };
 
-struct bpf_map_def __attribute__ ((section("maps"), used)) vip_map = {
+struct {
+	__u32 type;
+	__u32 max_entries;
+	struct vip_definition *key;
+	struct vip_meta *value;
+} vip_map SEC(".maps") = {
 	.type = BPF_MAP_TYPE_HASH,
-	.key_size = sizeof(struct vip_definition),
-	.value_size = sizeof(struct vip_meta),
 	.max_entries = 512,
-	.map_flags = 0,
 };
 
-struct bpf_map_def __attribute__ ((section("maps"), used)) lru_cache = {
+struct {
+	__u32 type;
+	__u32 max_entries;
+	__u32 map_flags;
+	struct flow_key *key;
+	struct real_pos_lru *value;
+} lru_cache SEC(".maps") = {
 	.type = BPF_MAP_TYPE_LRU_HASH,
-	.key_size = sizeof(struct flow_key),
-	.value_size = sizeof(struct real_pos_lru),
 	.max_entries = 300,
 	.map_flags = 1U << 1,
 };
 
-struct bpf_map_def __attribute__ ((section("maps"), used)) ch_rings = {
+struct {
+	__u32 type;
+	__u32 max_entries;
+	__u32 *key;
+	__u32 *value;
+} ch_rings SEC(".maps") = {
 	.type = BPF_MAP_TYPE_ARRAY,
-	.key_size = sizeof(__u32),
-	.value_size = sizeof(__u32),
 	.max_entries = 12 * 655,
-	.map_flags = 0,
 };
 
-struct bpf_map_def __attribute__ ((section("maps"), used)) reals = {
+struct {
+	__u32 type;
+	__u32 max_entries;
+	__u32 *key;
+	struct real_definition *value;
+} reals SEC(".maps") = {
 	.type = BPF_MAP_TYPE_ARRAY,
-	.key_size = sizeof(__u32),
-	.value_size = sizeof(struct real_definition),
 	.max_entries = 40,
-	.map_flags = 0,
 };
 
-struct bpf_map_def __attribute__ ((section("maps"), used)) stats = {
+struct {
+	__u32 type;
+	__u32 max_entries;
+	__u32 *key;
+	struct lb_stats *value;
+} stats SEC(".maps") = {
 	.type = BPF_MAP_TYPE_PERCPU_ARRAY,
-	.key_size = sizeof(__u32),
-	.value_size = sizeof(struct lb_stats),
 	.max_entries = 515,
-	.map_flags = 0,
 };
 
-struct bpf_map_def __attribute__ ((section("maps"), used)) ctl_array = {
+struct {
+	__u32 type;
+	__u32 max_entries;
+	__u32 *key;
+	struct ctl_value *value;
+} ctl_array SEC(".maps") = {
 	.type = BPF_MAP_TYPE_ARRAY,
-	.key_size = sizeof(__u32),
-	.value_size = sizeof(struct ctl_value),
 	.max_entries = 16,
-	.map_flags = 0,
 };
 
 struct eth_hdr {
