@@ -11,9 +11,8 @@
 #include "xfs_trans_resv.h"
 #include "xfs_mount.h"
 #include "xfs_inode.h"
-#include "xfs_ioctl.h"
-#include "xfs_alloc.h"
 #include "xfs_rtalloc.h"
+#include "xfs_iwalk.h"
 #include "xfs_itable.h"
 #include "xfs_error.h"
 #include "xfs_attr.h"
@@ -25,7 +24,6 @@
 #include "xfs_export.h"
 #include "xfs_trace.h"
 #include "xfs_icache.h"
-#include "xfs_symlink.h"
 #include "xfs_trans.h"
 #include "xfs_acl.h"
 #include "xfs_btree.h"
@@ -36,14 +34,8 @@
 #include "xfs_ag.h"
 #include "xfs_health.h"
 
-#include <linux/capability.h>
-#include <linux/cred.h>
-#include <linux/dcache.h>
 #include <linux/mount.h>
 #include <linux/namei.h>
-#include <linux/pagemap.h>
-#include <linux/slab.h>
-#include <linux/exportfs.h>
 
 /*
  * xfs_find_handle maps from userspace xfs_fsop_handlereq structure to
@@ -721,16 +713,39 @@ out_unlock:
 	return error;
 }
 
+/* Return 0 on success or positive error */
+int
+xfs_bulkstat_one_fmt(
+	struct xfs_ibulk	*breq,
+	const struct xfs_bstat	*bstat)
+{
+	if (copy_to_user(breq->ubuffer, bstat, sizeof(*bstat)))
+		return -EFAULT;
+	return xfs_ibulk_advance(breq, sizeof(struct xfs_bstat));
+}
+
+int
+xfs_inumbers_fmt(
+	struct xfs_ibulk	*breq,
+	const struct xfs_inogrp	*igrp)
+{
+	if (copy_to_user(breq->ubuffer, igrp, sizeof(*igrp)))
+		return -EFAULT;
+	return xfs_ibulk_advance(breq, sizeof(struct xfs_inogrp));
+}
+
 STATIC int
 xfs_ioc_bulkstat(
 	xfs_mount_t		*mp,
 	unsigned int		cmd,
 	void			__user *arg)
 {
-	xfs_fsop_bulkreq_t	bulkreq;
-	int			count;	/* # of records returned */
-	xfs_ino_t		inlast;	/* last inode number */
-	int			done;
+	struct xfs_fsop_bulkreq	bulkreq;
+	struct xfs_ibulk	breq = {
+		.mp		= mp,
+		.ocount		= 0,
+	};
+	xfs_ino_t		lastino;
 	int			error;
 
 	/* done = 1 if there are more stats to get and if bulkstat */
@@ -745,37 +760,54 @@ xfs_ioc_bulkstat(
 	if (copy_from_user(&bulkreq, arg, sizeof(xfs_fsop_bulkreq_t)))
 		return -EFAULT;
 
-	if (copy_from_user(&inlast, bulkreq.lastip, sizeof(__s64)))
+	if (copy_from_user(&lastino, bulkreq.lastip, sizeof(__s64)))
 		return -EFAULT;
 
-	if ((count = bulkreq.icount) <= 0)
+	if (bulkreq.icount <= 0)
 		return -EINVAL;
 
 	if (bulkreq.ubuffer == NULL)
 		return -EINVAL;
 
-	if (cmd == XFS_IOC_FSINUMBERS)
-		error = xfs_inumbers(mp, &inlast, &count,
-					bulkreq.ubuffer, xfs_inumbers_fmt);
-	else if (cmd == XFS_IOC_FSBULKSTAT_SINGLE)
-		error = xfs_bulkstat_one(mp, inlast, bulkreq.ubuffer,
-					sizeof(xfs_bstat_t), NULL, &done);
-	else	/* XFS_IOC_FSBULKSTAT */
-		error = xfs_bulkstat(mp, &inlast, &count, xfs_bulkstat_one,
-				     sizeof(xfs_bstat_t), bulkreq.ubuffer,
-				     &done);
+	breq.ubuffer = bulkreq.ubuffer;
+	breq.icount = bulkreq.icount;
+
+	/*
+	 * FSBULKSTAT_SINGLE expects that *lastip contains the inode number
+	 * that we want to stat.  However, FSINUMBERS and FSBULKSTAT expect
+	 * that *lastip contains either zero or the number of the last inode to
+	 * be examined by the previous call and return results starting with
+	 * the next inode after that.  The new bulk request back end functions
+	 * take the inode to start with, so we have to compute the startino
+	 * parameter from lastino to maintain correct function.  lastino == 0
+	 * is a special case because it has traditionally meant "first inode
+	 * in filesystem".
+	 */
+	if (cmd == XFS_IOC_FSINUMBERS) {
+		breq.startino = lastino ? lastino + 1 : 0;
+		error = xfs_inumbers(&breq, xfs_inumbers_fmt);
+		lastino = breq.startino - 1;
+	} else if (cmd == XFS_IOC_FSBULKSTAT_SINGLE) {
+		breq.startino = lastino;
+		breq.icount = 1;
+		error = xfs_bulkstat_one(&breq, xfs_bulkstat_one_fmt);
+		lastino = breq.startino;
+	} else {	/* XFS_IOC_FSBULKSTAT */
+		breq.startino = lastino ? lastino + 1 : 0;
+		error = xfs_bulkstat(&breq, xfs_bulkstat_one_fmt);
+		lastino = breq.startino - 1;
+	}
 
 	if (error)
 		return error;
 
-	if (bulkreq.ocount != NULL) {
-		if (copy_to_user(bulkreq.lastip, &inlast,
-						sizeof(xfs_ino_t)))
-			return -EFAULT;
+	if (bulkreq.lastip != NULL &&
+	    copy_to_user(bulkreq.lastip, &lastino, sizeof(xfs_ino_t)))
+		return -EFAULT;
 
-		if (copy_to_user(bulkreq.ocount, &count, sizeof(count)))
-			return -EFAULT;
-	}
+	if (bulkreq.ocount != NULL &&
+	    copy_to_user(bulkreq.ocount, &breq.ocount, sizeof(__s32)))
+		return -EFAULT;
 
 	return 0;
 }
