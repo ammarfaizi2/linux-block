@@ -12,6 +12,8 @@
 #include <linux/rculist.h>
 #include <linux/error-injection.h>
 
+#include <asm/setup.h>  /* for COMMAND_LINE_SIZE */
+
 #include "trace_dynevent.h"
 #include "trace_kprobe_selftest.h"
 #include "trace_probe.h"
@@ -19,6 +21,18 @@
 
 #define KPROBE_EVENT_SYSTEM "kprobes"
 #define KRETPROBE_MAXACTIVE_MAX 4096
+#define MAX_KPROBE_CMDLINE_SIZE 1024
+
+/* Kprobe early definition from command line */
+static char kprobe_boot_events_buf[COMMAND_LINE_SIZE] __initdata;
+static bool kprobe_boot_events_enabled __initdata;
+
+static int __init set_kprobe_boot_events(char *str)
+{
+	strlcpy(kprobe_boot_events_buf, str, COMMAND_LINE_SIZE);
+	return 0;
+}
+__setup("kprobe_event=", set_kprobe_boot_events);
 
 static int trace_kprobe_create(int argc, const char **argv);
 static int trace_kprobe_show(struct seq_file *m, struct dyn_event *ev);
@@ -886,6 +900,15 @@ fetch_store_strlen(unsigned long addr)
 	return (ret < 0) ? ret : len;
 }
 
+/* Return the length of string -- including null terminal byte */
+static nokprobe_inline int
+fetch_store_strlen_user(unsigned long addr)
+{
+	const void __user *uaddr =  (__force const void __user *)addr;
+
+	return strnlen_unsafe_user(uaddr, MAX_STRING_SIZE);
+}
+
 /*
  * Fetch a null-terminated string. Caller MUST set *(u32 *)buf with max
  * length and relative data location.
@@ -894,19 +917,46 @@ static nokprobe_inline int
 fetch_store_string(unsigned long addr, void *dest, void *base)
 {
 	int maxlen = get_loc_len(*(u32 *)dest);
-	u8 *dst = get_loc_data(dest, base);
+	void *__dest;
 	long ret;
 
 	if (unlikely(!maxlen))
 		return -ENOMEM;
+
+	__dest = get_loc_data(dest, base);
+
 	/*
 	 * Try to get string again, since the string can be changed while
 	 * probing.
 	 */
-	ret = strncpy_from_unsafe(dst, (void *)addr, maxlen);
-
+	ret = strncpy_from_unsafe(__dest, (void *)addr, maxlen);
 	if (ret >= 0)
-		*(u32 *)dest = make_data_loc(ret, (void *)dst - base);
+		*(u32 *)dest = make_data_loc(ret, __dest - base);
+
+	return ret;
+}
+
+/*
+ * Fetch a null-terminated string from user. Caller MUST set *(u32 *)buf
+ * with max length and relative data location.
+ */
+static nokprobe_inline int
+fetch_store_string_user(unsigned long addr, void *dest, void *base)
+{
+	const void __user *uaddr =  (__force const void __user *)addr;
+	int maxlen = get_loc_len(*(u32 *)dest);
+	void *__dest;
+	long ret;
+
+	if (unlikely(!maxlen))
+		return -ENOMEM;
+
+	__dest = get_loc_data(dest, base);
+
+	ret = strncpy_from_unsafe_user(__dest, uaddr, maxlen);
+	if (ret >= 0)
+		*(u32 *)dest = make_data_loc(ret, __dest - base);
+
 	return ret;
 }
 
@@ -914,6 +964,14 @@ static nokprobe_inline int
 probe_mem_read(void *dest, void *src, size_t size)
 {
 	return probe_kernel_read(dest, src, size);
+}
+
+static nokprobe_inline int
+probe_mem_read_user(void *dest, void *src, size_t size)
+{
+	const void __user *uaddr =  (__force const void __user *)src;
+
+	return probe_user_read(dest, uaddr, size);
 }
 
 /* Note that we don't verify it, since the code does not come from user space */
@@ -1450,6 +1508,46 @@ void destroy_local_trace_kprobe(struct trace_event_call *event_call)
 }
 #endif /* CONFIG_PERF_EVENTS */
 
+static __init void enable_boot_kprobe_events(void)
+{
+	struct trace_array *tr = top_trace_array();
+	struct trace_event_file *file;
+	struct trace_kprobe *tk;
+	struct dyn_event *pos;
+
+	mutex_lock(&event_mutex);
+	for_each_trace_kprobe(tk, pos) {
+		list_for_each_entry(file, &tr->events, list)
+			if (file->event_call == &tk->tp.call)
+				trace_event_enable_disable(file, 1, 0);
+	}
+	mutex_unlock(&event_mutex);
+}
+
+static __init void setup_boot_kprobe_events(void)
+{
+	char *p, *cmd = kprobe_boot_events_buf;
+	int ret;
+
+	strreplace(kprobe_boot_events_buf, ',', ' ');
+
+	while (cmd && *cmd != '\0') {
+		p = strchr(cmd, ';');
+		if (p)
+			*p++ = '\0';
+
+		ret = trace_run_command(cmd, create_or_delete_trace_kprobe);
+		if (ret)
+			pr_warn("Failed to add event(%d): %s\n", ret, cmd);
+		else
+			kprobe_boot_events_enabled = true;
+
+		cmd = p;
+	}
+
+	enable_boot_kprobe_events();
+}
+
 /* Make a tracefs interface for controlling probe points */
 static __init int init_kprobe_trace(void)
 {
@@ -1481,6 +1579,9 @@ static __init int init_kprobe_trace(void)
 
 	if (!entry)
 		pr_warn("Could not create tracefs 'kprobe_profile' entry\n");
+
+	setup_boot_kprobe_events();
+
 	return 0;
 }
 fs_initcall(init_kprobe_trace);
@@ -1512,6 +1613,11 @@ static __init int kprobe_trace_self_tests_init(void)
 
 	if (tracing_is_disabled())
 		return -ENODEV;
+
+	if (kprobe_boot_events_enabled) {
+		pr_info("Skipping kprobe tests due to kprobe_event on cmdline\n");
+		return 0;
+	}
 
 	target = kprobe_trace_selftest_target;
 
