@@ -3290,7 +3290,7 @@ static int nested_svm_vmexit(struct vcpu_svm *svm)
 				       vmcb->control.exit_int_info_err,
 				       KVM_ISA_SVM);
 
-	rc = kvm_vcpu_map(&svm->vcpu, gfn_to_gpa(svm->nested.vmcb), &map);
+	rc = kvm_vcpu_map(&svm->vcpu, gpa_to_gfn(svm->nested.vmcb), &map);
 	if (rc) {
 		if (rc == -EINVAL)
 			kvm_inject_gp(&svm->vcpu, 0);
@@ -3580,7 +3580,7 @@ static bool nested_svm_vmrun(struct vcpu_svm *svm)
 
 	vmcb_gpa = svm->vmcb->save.rax;
 
-	rc = kvm_vcpu_map(&svm->vcpu, gfn_to_gpa(vmcb_gpa), &map);
+	rc = kvm_vcpu_map(&svm->vcpu, gpa_to_gfn(vmcb_gpa), &map);
 	if (rc) {
 		if (rc == -EINVAL)
 			kvm_inject_gp(&svm->vcpu, 0);
@@ -5160,10 +5160,13 @@ static void svm_deliver_avic_intr(struct kvm_vcpu *vcpu, int vec)
 	kvm_lapic_set_irr(vec, vcpu->arch.apic);
 	smp_mb__after_atomic();
 
-	if (avic_vcpu_is_running(vcpu))
-		wrmsrl(SVM_AVIC_DOORBELL,
-		       kvm_cpu_get_apicid(vcpu->cpu));
-	else
+	if (avic_vcpu_is_running(vcpu)) {
+		int cpuid = vcpu->cpu;
+
+		if (cpuid != get_cpu())
+			wrmsrl(SVM_AVIC_DOORBELL, kvm_cpu_get_apicid(cpuid));
+		put_cpu();
+	} else
 		kvm_vcpu_wake_up(vcpu);
 }
 
@@ -5640,6 +5643,10 @@ static void svm_vcpu_run(struct kvm_vcpu *vcpu)
 	clgi();
 	kvm_load_guest_xcr0(vcpu);
 
+	if (lapic_in_kernel(vcpu) &&
+		vcpu->arch.apic->lapic_timer.timer_advance_ns)
+		kvm_wait_lapic_expire(vcpu);
+
 	/*
 	 * If this vCPU has touched SPEC_CTRL, restore the guest's value if
 	 * it's non-zero. Since vmentry is serialising on affected CPUs, there
@@ -5861,9 +5868,9 @@ svm_patch_hypercall(struct kvm_vcpu *vcpu, unsigned char *hypercall)
 	hypercall[2] = 0xd9;
 }
 
-static void svm_check_processor_compat(void *rtn)
+static int __init svm_check_processor_compat(void)
 {
-	*(int *)rtn = 0;
+	return 0;
 }
 
 static bool svm_cpu_has_accelerated_tpr(void)
@@ -5875,6 +5882,7 @@ static bool svm_has_emulated_msr(int index)
 {
 	switch (index) {
 	case MSR_IA32_MCG_EXT_CTL:
+	case MSR_IA32_VMX_BASIC ... MSR_IA32_VMX_VMFUNC:
 		return false;
 	default:
 		break;
@@ -6162,8 +6170,9 @@ out:
 	return ret;
 }
 
-static void svm_handle_external_intr(struct kvm_vcpu *vcpu)
+static void svm_handle_exit_irqoff(struct kvm_vcpu *vcpu)
 {
+	kvm_before_interrupt(vcpu);
 	local_irq_enable();
 	/*
 	 * We must have an instruction with interrupts enabled, so
@@ -6171,6 +6180,7 @@ static void svm_handle_external_intr(struct kvm_vcpu *vcpu)
 	 */
 	asm("nop");
 	local_irq_disable();
+	kvm_after_interrupt(vcpu);
 }
 
 static void svm_sched_in(struct kvm_vcpu *vcpu, int cpu)
@@ -7256,7 +7266,7 @@ static struct kvm_x86_ops svm_x86_ops __ro_after_init = {
 	.set_tdp_cr3 = set_tdp_cr3,
 
 	.check_intercept = svm_check_intercept,
-	.handle_external_intr = svm_handle_external_intr,
+	.handle_exit_irqoff = svm_handle_exit_irqoff,
 
 	.request_immediate_exit = __kvm_request_immediate_exit,
 

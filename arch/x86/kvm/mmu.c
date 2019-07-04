@@ -259,6 +259,11 @@ static const u64 shadow_nonpresent_or_rsvd_mask_len = 5;
  */
 static u64 __read_mostly shadow_nonpresent_or_rsvd_lower_gfn_mask;
 
+/*
+ * The number of non-reserved physical address bits irrespective of features
+ * that repurpose legal bits, e.g. MKTME.
+ */
+static u8 __read_mostly shadow_phys_bits;
 
 static void mmu_spte_set(u64 *sptep, u64 spte);
 static union kvm_mmu_page_role
@@ -468,6 +473,21 @@ void kvm_mmu_set_mask_ptes(u64 user_mask, u64 accessed_mask,
 }
 EXPORT_SYMBOL_GPL(kvm_mmu_set_mask_ptes);
 
+static u8 kvm_get_shadow_phys_bits(void)
+{
+	/*
+	 * boot_cpu_data.x86_phys_bits is reduced when MKTME is detected
+	 * in CPU detection code, but MKTME treats those reduced bits as
+	 * 'keyID' thus they are not reserved bits. Therefore for MKTME
+	 * we should still return physical address bits reported by CPUID.
+	 */
+	if (!boot_cpu_has(X86_FEATURE_TME) ||
+	    WARN_ON_ONCE(boot_cpu_data.extended_cpuid_level < 0x80000008))
+		return boot_cpu_data.x86_phys_bits;
+
+	return cpuid_eax(0x80000008) & 0xff;
+}
+
 static void kvm_mmu_reset_all_pte_masks(void)
 {
 	u8 low_phys_bits;
@@ -480,6 +500,8 @@ static void kvm_mmu_reset_all_pte_masks(void)
 	shadow_mmio_mask = 0;
 	shadow_present_mask = 0;
 	shadow_acc_track_mask = 0;
+
+	shadow_phys_bits = kvm_get_shadow_phys_bits();
 
 	/*
 	 * If the CPU has 46 or less physical address bits, then set an
@@ -4015,19 +4037,6 @@ static int kvm_arch_setup_async_pf(struct kvm_vcpu *vcpu, gva_t gva, gfn_t gfn)
 	return kvm_setup_async_pf(vcpu, gva, kvm_vcpu_gfn_to_hva(vcpu, gfn), &arch);
 }
 
-bool kvm_can_do_async_pf(struct kvm_vcpu *vcpu)
-{
-	if (unlikely(!lapic_in_kernel(vcpu) ||
-		     kvm_event_needs_reinjection(vcpu) ||
-		     vcpu->arch.exception.pending))
-		return false;
-
-	if (!vcpu->arch.apf.delivery_as_pf_vmexit && is_guest_mode(vcpu))
-		return false;
-
-	return kvm_x86_ops->interrupt_allowed(vcpu);
-}
-
 static bool try_async_pf(struct kvm_vcpu *vcpu, bool prefault, gfn_t gfn,
 			 gva_t gva, kvm_pfn_t *pfn, bool write, bool *writable)
 {
@@ -4494,7 +4503,7 @@ reset_shadow_zero_bits_mask(struct kvm_vcpu *vcpu, struct kvm_mmu *context)
 	 */
 	shadow_zero_check = &context->shadow_zero_check;
 	__reset_rsvds_bits_mask(vcpu, shadow_zero_check,
-				boot_cpu_data.x86_phys_bits,
+				shadow_phys_bits,
 				context->shadow_root_level, uses_nx,
 				guest_cpuid_has(vcpu, X86_FEATURE_GBPAGES),
 				is_pse(vcpu), true);
@@ -4531,13 +4540,13 @@ reset_tdp_shadow_zero_bits_mask(struct kvm_vcpu *vcpu,
 
 	if (boot_cpu_is_amd())
 		__reset_rsvds_bits_mask(vcpu, shadow_zero_check,
-					boot_cpu_data.x86_phys_bits,
+					shadow_phys_bits,
 					context->shadow_root_level, false,
 					boot_cpu_has(X86_FEATURE_GBPAGES),
 					true, true);
 	else
 		__reset_rsvds_bits_mask_ept(shadow_zero_check,
-					    boot_cpu_data.x86_phys_bits,
+					    shadow_phys_bits,
 					    false);
 
 	if (!shadow_me_mask)
@@ -4558,7 +4567,7 @@ reset_ept_shadow_zero_bits_mask(struct kvm_vcpu *vcpu,
 				struct kvm_mmu *context, bool execonly)
 {
 	__reset_rsvds_bits_mask_ept(&context->shadow_zero_check,
-				    boot_cpu_data.x86_phys_bits, execonly);
+				    shadow_phys_bits, execonly);
 }
 
 #define BYTE_MASK(access) \
@@ -5935,7 +5944,7 @@ mmu_shrink_scan(struct shrinker *shrink, struct shrink_control *sc)
 	int nr_to_scan = sc->nr_to_scan;
 	unsigned long freed = 0;
 
-	spin_lock(&kvm_lock);
+	mutex_lock(&kvm_lock);
 
 	list_for_each_entry(kvm, &vm_list, vm_list) {
 		int idx;
@@ -5977,7 +5986,7 @@ mmu_shrink_scan(struct shrinker *shrink, struct shrink_control *sc)
 		break;
 	}
 
-	spin_unlock(&kvm_lock);
+	mutex_unlock(&kvm_lock);
 	return freed;
 }
 
@@ -5999,6 +6008,34 @@ static void mmu_destroy_caches(void)
 	kmem_cache_destroy(mmu_page_header_cache);
 }
 
+static void kvm_set_mmio_spte_mask(void)
+{
+	u64 mask;
+
+	/*
+	 * Set the reserved bits and the present bit of an paging-structure
+	 * entry to generate page fault with PFER.RSV = 1.
+	 */
+
+	/*
+	 * Mask the uppermost physical address bit, which would be reserved as
+	 * long as the supported physical address width is less than 52.
+	 */
+	mask = 1ull << 51;
+
+	/* Set the present bit. */
+	mask |= 1ull;
+
+	/*
+	 * If reserved bit is not supported, clear the present bit to disable
+	 * mmio page fault.
+	 */
+	if (IS_ENABLED(CONFIG_X86_64) && shadow_phys_bits == 52)
+		mask &= ~1ull;
+
+	kvm_mmu_set_mmio_spte_mask(mask, mask);
+}
+
 int kvm_mmu_module_init(void)
 {
 	int ret = -ENOMEM;
@@ -6014,6 +6051,8 @@ int kvm_mmu_module_init(void)
 	BUILD_BUG_ON(sizeof(union kvm_mmu_role) != sizeof(u64));
 
 	kvm_mmu_reset_all_pte_masks();
+
+	kvm_set_mmio_spte_mask();
 
 	pte_list_desc_cache = kmem_cache_create("pte_list_desc",
 					    sizeof(struct pte_list_desc),
