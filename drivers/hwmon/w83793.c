@@ -1669,7 +1669,7 @@ static int w83793_probe(struct i2c_client *client,
 	int files_pwm = ARRAY_SIZE(w83793_left_pwm) / 5;
 	int files_temp = ARRAY_SIZE(w83793_temp) / 6;
 
-	data = kzalloc(sizeof(struct w83793_data), GFP_KERNEL);
+	data = kzalloc(sizeof(*data), GFP_KERNEL);
 	if (!data) {
 		err = -ENOMEM;
 		goto exit;

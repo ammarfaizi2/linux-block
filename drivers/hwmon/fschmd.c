@@ -1090,7 +1090,7 @@ static int fschmd_probe(struct i2c_client *client,
 	int i, err;
 	enum chips kind = id->driver_data;
 
-	data = kzalloc(sizeof(struct fschmd_data), GFP_KERNEL);
+	data = kzalloc(sizeof(*data), GFP_KERNEL);
 	if (!data)
 		return -ENOMEM;
 

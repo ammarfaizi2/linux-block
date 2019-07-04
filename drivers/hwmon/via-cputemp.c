@@ -114,8 +114,7 @@ static int via_cputemp_probe(struct platform_device *pdev)
 	int err;
 	u32 eax, edx;
 
-	data = devm_kzalloc(&pdev->dev, sizeof(struct via_cputemp_data),
-			    GFP_KERNEL);
+	data = devm_kzalloc(&pdev->dev, sizeof(*data), GFP_KERNEL);
 	if (!data)
 		return -ENOMEM;
 
@@ -223,7 +222,7 @@ static int via_cputemp_online(unsigned int cpu)
 		goto exit;
 	}
 
-	pdev_entry = kzalloc(sizeof(struct pdev_entry), GFP_KERNEL);
+	pdev_entry = kzalloc(sizeof(*pdev_entry), GFP_KERNEL);
 	if (!pdev_entry) {
 		err = -ENOMEM;
 		goto exit_device_put;
