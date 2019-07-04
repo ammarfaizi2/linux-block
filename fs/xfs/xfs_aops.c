@@ -790,7 +790,7 @@ xfs_add_to_ioend(
 		atomic_inc(&iop->write_count);
 
 	if (!merged) {
-		if (bio_full(wpc->ioend->io_bio))
+		if (bio_full(wpc->ioend->io_bio, len))
 			wpc->ioend->io_bio = xfs_chain_bio(wpc->ioend->io_bio);
 		bio_add_page(wpc->ioend->io_bio, page, len, poff);
 	}
