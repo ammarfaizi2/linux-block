@@ -243,17 +243,14 @@ static int gpio_siox_probe(struct siox_device *sdevice)
 	if (ret) {
 		dev_err(&sdevice->dev,
 			"Failed to register gpio chip (%d)\n", ret);
-		goto err_gpiochip;
+		return ret;
 	}
 
 	ret = gpiochip_irqchip_add(&ddata->gchip, &ddata->ichip,
-				   0, handle_level_irq, IRQ_TYPE_EDGE_RISING);
-	if (ret) {
+				   0, handle_level_irq, IRQ_TYPE_NONE);
+	if (ret)
 		dev_err(&sdevice->dev,
 			"Failed to register irq chip (%d)\n", ret);
-err_gpiochip:
-		gpiochip_remove(&ddata->gchip);
-	}
 
 	return ret;
 }
@@ -275,18 +272,7 @@ static struct siox_driver gpio_siox_driver = {
 		.name = "gpio-siox",
 	},
 };
-
-static int __init gpio_siox_init(void)
-{
-	return siox_driver_register(&gpio_siox_driver);
-}
-module_init(gpio_siox_init);
-
-static void __exit gpio_siox_exit(void)
-{
-	siox_driver_unregister(&gpio_siox_driver);
-}
-module_exit(gpio_siox_exit);
+module_siox_driver(gpio_siox_driver);
 
 MODULE_AUTHOR("Uwe Kleine-Koenig <u.kleine-koenig@pengutronix.de>");
 MODULE_DESCRIPTION("SIOX gpio driver");
