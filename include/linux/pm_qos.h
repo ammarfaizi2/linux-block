@@ -202,7 +202,7 @@ static inline s32 __dev_pm_qos_resume_latency(struct device *dev)
 static inline s32 dev_pm_qos_read_value(struct device *dev,
 					enum dev_pm_qos_req_type type)
 {
-	switch type {
+	switch (type) {
 	case DEV_PM_QOS_RESUME_LATENCY:
 		return PM_QOS_RESUME_LATENCY_NO_CONSTRAINT;
 	case DEV_PM_QOS_MIN_FREQUENCY:
@@ -227,7 +227,7 @@ static inline int dev_pm_qos_remove_request(struct dev_pm_qos_request *req)
 			{ return 0; }
 static inline int dev_pm_qos_add_notifier(struct device *dev,
 					  struct notifier_block *notifier,
-					  enum dev_pm_qos_req_type type);
+					  enum dev_pm_qos_req_type type)
 			{ return 0; }
 static inline int dev_pm_qos_remove_notifier(struct device *dev,
 					     struct notifier_block *notifier,
