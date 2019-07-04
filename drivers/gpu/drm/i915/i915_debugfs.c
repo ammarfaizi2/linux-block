@@ -75,11 +75,6 @@ static int i915_capabilities(struct seq_file *m, void *data)
 	return 0;
 }
 
-static char get_active_flag(struct drm_i915_gem_object *obj)
-{
-	return i915_gem_object_is_active(obj) ? '*' : ' ';
-}
-
 static char get_pin_flag(struct drm_i915_gem_object *obj)
 {
 	return obj->pin_global ? 'p' : ' ';
@@ -144,9 +139,8 @@ describe_obj(struct seq_file *m, struct drm_i915_gem_object *obj)
 	unsigned int frontbuffer_bits;
 	int pin_count = 0;
 
-	seq_printf(m, "%pK: %c%c%c%c%c %8zdKiB %02x %02x %s%s%s",
+	seq_printf(m, "%pK: %c%c%c%c %8zdKiB %02x %02x %s%s%s",
 		   &obj->base,
-		   get_active_flag(obj),
 		   get_pin_flag(obj),
 		   get_tiling_flag(obj),
 		   get_global_flag(obj),
@@ -4087,7 +4081,7 @@ static int i915_hpd_storm_ctl_show(struct seq_file *m, void *data)
 	/* Synchronize with everything first in case there's been an HPD
 	 * storm, but we haven't finished handling it in the kernel yet
 	 */
-	synchronize_irq(dev_priv->drm.irq);
+	intel_synchronize_irq(dev_priv);
 	flush_work(&dev_priv->hotplug.dig_port_work);
 	flush_work(&dev_priv->hotplug.hotplug_work);
 
