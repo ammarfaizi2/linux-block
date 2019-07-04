@@ -208,8 +208,10 @@ static int do_uevent(struct dlm_ls *ls, int in)
 	/* dlm_controld will see the uevent, do the necessary group management
 	   and then write to sysfs to wake us */
 
-	error = wait_event_interruptible(ls->ls_uevent_wait,
-			test_and_clear_bit(LSFL_UEVENT_WAIT, &ls->ls_flags));
+	do {
+		error = wait_event_interruptible(ls->ls_uevent_wait,
+						 test_and_clear_bit(LSFL_UEVENT_WAIT, &ls->ls_flags));
+	} while (error == -ERESTARTSYS);
 
 	log_rinfo(ls, "group event done %d %d", error, ls->ls_uevent_result);
 
