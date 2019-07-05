@@ -103,7 +103,7 @@ struct fsinfo_mount_info {
 	__u32	master_id;		/* Slave master group ID */
 	__u32	from_id;		/* Slave propagated from ID */
 	__u32	attr;			/* MOUNT_ATTR_* flags */
-	__u32	__padding[1];
+	__u32	propagation;		/* MOUNT_PROPAGATION_* flags */
 };
 
 #define FSINFO_ATTR_MOUNT_INFO__STRUCT struct fsinfo_mount_info

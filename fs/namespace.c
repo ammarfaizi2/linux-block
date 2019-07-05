@@ -4177,15 +4177,20 @@ int fsinfo_generic_mount_info(struct path *path, struct fsinfo_context *ctx)
 			p->parent_id = p->mnt_id;
 		rcu_read_unlock();
 	}
-	if (IS_MNT_SHARED(m))
+	if (IS_MNT_SHARED(m)) {
 		p->group_id = m->mnt_group_id;
+		p->propagation |= MOUNT_PROPAGATION_SHARED;
+	}
 	if (IS_MNT_SLAVE(m)) {
 		int master = m->mnt_master->mnt_group_id;
 		int dom = get_dominating_id(m, &root);
 		p->master_id = master;
 		if (dom && dom != master)
 			p->from_id = dom;
+		p->propagation |= MOUNT_PROPAGATION_SLAVE;
 	}
+	if (IS_MNT_UNBINDABLE(m))
+		p->propagation |= MOUNT_PROPAGATION_UNBINDABLE;
 	path_put(&root);
 
 	flags = READ_ONCE(m->mnt.mnt_flags);

@@ -299,6 +299,7 @@ static void dump_fsinfo_generic_mount_info(void *reply, unsigned int size)
 	printf("\tparent  : %x\n", r->parent_id);
 	printf("\tgroup   : %x\n", r->group_id);
 	printf("\tattr    : %x\n", r->attr);
+	printf("\tpropag  : %x\n", r->propagation);
 }
 
 static void dump_fsinfo_generic_mount_child(void *reply, unsigned int size)
