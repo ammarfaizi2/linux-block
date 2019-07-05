@@ -1670,6 +1670,12 @@ static void ath11k_recalculate_mgmt_rate(struct ath11k *ar,
 					    hw_rate_code);
 	if (ret)
 		ath11k_warn(ar->ab, "failed to set mgmt tx rate %d\n", ret);
+
+	vdev_param = WMI_VDEV_PARAM_BEACON_RATE;
+	ret = ath11k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id, vdev_param,
+					    hw_rate_code);
+	if (ret)
+		ath11k_warn(ar->ab, "failed to set beacon tx rate %d\n", ret);
 }
 
 static void ath11k_mac_op_bss_info_changed(struct ieee80211_hw *hw,
