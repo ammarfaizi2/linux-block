@@ -114,6 +114,7 @@ nla_put_failure:
 }
 
 static const struct Qdisc_class_ops ingress_class_ops = {
+	.flags		=	QDISC_CLASS_OPS_DOIT_UNLOCKED,
 	.leaf		=	ingress_leaf,
 	.find		=	ingress_find,
 	.walk		=	ingress_walk,
@@ -246,6 +247,7 @@ static void clsact_destroy(struct Qdisc *sch)
 }
 
 static const struct Qdisc_class_ops clsact_class_ops = {
+	.flags		=	QDISC_CLASS_OPS_DOIT_UNLOCKED,
 	.leaf		=	ingress_leaf,
 	.find		=	clsact_find,
 	.walk		=	ingress_walk,

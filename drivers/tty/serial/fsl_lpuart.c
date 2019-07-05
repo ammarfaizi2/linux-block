@@ -1040,10 +1040,8 @@ static inline int lpuart_start_rx_dma(struct lpuart_port *sport)
 		sport->rx_dma_rng_buf_len = 16;
 
 	ring->buf = kmalloc(sport->rx_dma_rng_buf_len, GFP_ATOMIC);
-	if (!ring->buf) {
-		dev_err(sport->port.dev, "Ring buf alloc failed\n");
+	if (!ring->buf)
 		return -ENOMEM;
-	}
 
 	sg_init_one(&sport->rx_sgl, ring->buf, sport->rx_dma_rng_buf_len);
 	sg_set_buf(&sport->rx_sgl, ring->buf, sport->rx_dma_rng_buf_len);
@@ -2078,7 +2076,7 @@ lpuart_console_get_options(struct lpuart_port *sport, int *baud,
 	baud_raw = uartclk / (16 * (sbr + brfa / 32));
 
 	if (*baud != baud_raw)
-		printk(KERN_INFO "Serial: Console lpuart rounded baud rate"
+		dev_info(sport->port.dev, "Serial: Console lpuart rounded baud rate"
 				"from %d to %d\n", baud_raw, *baud);
 }
 
@@ -2121,7 +2119,7 @@ lpuart32_console_get_options(struct lpuart_port *sport, int *baud,
 	baud_raw = uartclk / (16 * sbr);
 
 	if (*baud != baud_raw)
-		printk(KERN_INFO "Serial: Console lpuart rounded baud rate"
+		dev_info(sport->port.dev, "Serial: Console lpuart rounded baud rate"
 				"from %d to %d\n", baud_raw, *baud);
 }
 

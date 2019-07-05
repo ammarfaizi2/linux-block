@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /* 
  *  Parallel SCSI (SPI) transport specific attributes exported to sysfs.
  *

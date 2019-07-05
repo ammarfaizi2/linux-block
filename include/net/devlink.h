@@ -13,6 +13,7 @@
 #include <linux/list.h>
 #include <linux/netdevice.h>
 #include <linux/spinlock.h>
+#include <linux/workqueue.h>
 #include <net/net_namespace.h>
 #include <uapi/linux/devlink.h>
 
@@ -60,6 +61,7 @@ struct devlink_port {
 	enum devlink_port_type desired_type;
 	void *type_dev;
 	struct devlink_port_attrs attrs;
+	struct delayed_work type_warn_dw;
 };
 
 struct devlink_sb_pool_info {
@@ -526,8 +528,10 @@ struct devlink_ops {
 	int (*eswitch_inline_mode_get)(struct devlink *devlink, u8 *p_inline_mode);
 	int (*eswitch_inline_mode_set)(struct devlink *devlink, u8 inline_mode,
 				       struct netlink_ext_ack *extack);
-	int (*eswitch_encap_mode_get)(struct devlink *devlink, u8 *p_encap_mode);
-	int (*eswitch_encap_mode_set)(struct devlink *devlink, u8 encap_mode,
+	int (*eswitch_encap_mode_get)(struct devlink *devlink,
+				      enum devlink_eswitch_encap_mode *p_encap_mode);
+	int (*eswitch_encap_mode_set)(struct devlink *devlink,
+				      enum devlink_eswitch_encap_mode encap_mode,
 				      struct netlink_ext_ack *extack);
 	int (*info_get)(struct devlink *devlink, struct devlink_info_req *req,
 			struct netlink_ext_ack *extack);
@@ -734,6 +738,14 @@ int devlink_health_report(struct devlink_health_reporter *reporter,
 void
 devlink_health_reporter_state_update(struct devlink_health_reporter *reporter,
 				     enum devlink_health_reporter_state state);
+
+void devlink_flash_update_begin_notify(struct devlink *devlink);
+void devlink_flash_update_end_notify(struct devlink *devlink);
+void devlink_flash_update_status_notify(struct devlink *devlink,
+					const char *status_msg,
+					const char *component,
+					unsigned long done,
+					unsigned long total);
 
 #if IS_ENABLED(CONFIG_NET_DEVLINK)
 

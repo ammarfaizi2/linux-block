@@ -1,12 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
  * iSCSI User/Kernel Shares (Defines, Constants, Protocol definitions, etc)
  *
  * Copyright (C) 2005 Dmitry Yusupov
  * Copyright (C) 2005 Alex Aizman
  * maintained by open-iscsi@googlegroups.com
- *
- * See the file COPYING included with this distribution for more details.
  */
 
 #ifndef ISCSI_IF_H

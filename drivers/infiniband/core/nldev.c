@@ -42,84 +42,94 @@
 #include "cma_priv.h"
 #include "restrack.h"
 
+/*
+ * Sort array elements by the netlink attribute name
+ */
 static const struct nla_policy nldev_policy[RDMA_NLDEV_ATTR_MAX] = {
-	[RDMA_NLDEV_ATTR_DEV_INDEX]     = { .type = NLA_U32 },
-	[RDMA_NLDEV_ATTR_DEV_NAME]	= { .type = NLA_NUL_STRING,
-					    .len = IB_DEVICE_NAME_MAX - 1},
-	[RDMA_NLDEV_ATTR_PORT_INDEX]	= { .type = NLA_U32 },
-	[RDMA_NLDEV_ATTR_FW_VERSION]	= { .type = NLA_NUL_STRING,
-					    .len = IB_FW_VERSION_NAME_MAX - 1},
-	[RDMA_NLDEV_ATTR_NODE_GUID]	= { .type = NLA_U64 },
-	[RDMA_NLDEV_ATTR_SYS_IMAGE_GUID] = { .type = NLA_U64 },
-	[RDMA_NLDEV_ATTR_SUBNET_PREFIX]	= { .type = NLA_U64 },
-	[RDMA_NLDEV_ATTR_LID]		= { .type = NLA_U32 },
-	[RDMA_NLDEV_ATTR_SM_LID]	= { .type = NLA_U32 },
-	[RDMA_NLDEV_ATTR_LMC]		= { .type = NLA_U8 },
-	[RDMA_NLDEV_ATTR_PORT_STATE]	= { .type = NLA_U8 },
-	[RDMA_NLDEV_ATTR_PORT_PHYS_STATE] = { .type = NLA_U8 },
-	[RDMA_NLDEV_ATTR_DEV_NODE_TYPE] = { .type = NLA_U8 },
-	[RDMA_NLDEV_ATTR_RES_SUMMARY]	= { .type = NLA_NESTED },
-	[RDMA_NLDEV_ATTR_RES_SUMMARY_ENTRY]	= { .type = NLA_NESTED },
-	[RDMA_NLDEV_ATTR_RES_SUMMARY_ENTRY_NAME] = { .type = NLA_NUL_STRING,
-					     .len = 16 },
-	[RDMA_NLDEV_ATTR_RES_SUMMARY_ENTRY_CURR] = { .type = NLA_U64 },
+	[RDMA_NLDEV_ATTR_CHARDEV]		= { .type = NLA_U64 },
+	[RDMA_NLDEV_ATTR_CHARDEV_ABI]		= { .type = NLA_U64 },
+	[RDMA_NLDEV_ATTR_CHARDEV_NAME]		= { .type = NLA_NUL_STRING,
+					.len = RDMA_NLDEV_ATTR_ENTRY_STRLEN },
+	[RDMA_NLDEV_ATTR_CHARDEV_TYPE]		= { .type = NLA_NUL_STRING,
+					.len = 128 },
+	[RDMA_NLDEV_ATTR_DEV_INDEX]		= { .type = NLA_U32 },
+	[RDMA_NLDEV_ATTR_DEV_NAME]		= { .type = NLA_NUL_STRING,
+					.len = IB_DEVICE_NAME_MAX - 1},
+	[RDMA_NLDEV_ATTR_DEV_NODE_TYPE]		= { .type = NLA_U8 },
+	[RDMA_NLDEV_ATTR_DEV_PROTOCOL]		= { .type = NLA_NUL_STRING,
+					.len = RDMA_NLDEV_ATTR_ENTRY_STRLEN },
+	[RDMA_NLDEV_ATTR_DRIVER]		= { .type = NLA_NESTED },
+	[RDMA_NLDEV_ATTR_DRIVER_ENTRY]		= { .type = NLA_NESTED },
+	[RDMA_NLDEV_ATTR_DRIVER_PRINT_TYPE]	= { .type = NLA_U8 },
+	[RDMA_NLDEV_ATTR_DRIVER_STRING]		= { .type = NLA_NUL_STRING,
+					.len = RDMA_NLDEV_ATTR_ENTRY_STRLEN },
+	[RDMA_NLDEV_ATTR_DRIVER_S32]		= { .type = NLA_S32 },
+	[RDMA_NLDEV_ATTR_DRIVER_S64]		= { .type = NLA_S64 },
+	[RDMA_NLDEV_ATTR_DRIVER_U32]		= { .type = NLA_U32 },
+	[RDMA_NLDEV_ATTR_DRIVER_U64]		= { .type = NLA_U64 },
+	[RDMA_NLDEV_ATTR_FW_VERSION]		= { .type = NLA_NUL_STRING,
+					.len = IB_FW_VERSION_NAME_MAX - 1},
+	[RDMA_NLDEV_ATTR_LID]			= { .type = NLA_U32 },
+	[RDMA_NLDEV_ATTR_LINK_TYPE]		= { .type = NLA_NUL_STRING,
+					.len = RDMA_NLDEV_ATTR_ENTRY_STRLEN },
+	[RDMA_NLDEV_ATTR_LMC]			= { .type = NLA_U8 },
+	[RDMA_NLDEV_ATTR_NDEV_INDEX]		= { .type = NLA_U32 },
+	[RDMA_NLDEV_ATTR_NDEV_NAME]		= { .type = NLA_NUL_STRING,
+					.len = IFNAMSIZ },
+	[RDMA_NLDEV_ATTR_NODE_GUID]		= { .type = NLA_U64 },
+	[RDMA_NLDEV_ATTR_PORT_INDEX]		= { .type = NLA_U32 },
+	[RDMA_NLDEV_ATTR_PORT_PHYS_STATE]	= { .type = NLA_U8 },
+	[RDMA_NLDEV_ATTR_PORT_STATE]		= { .type = NLA_U8 },
+	[RDMA_NLDEV_ATTR_RES_CM_ID]		= { .type = NLA_NESTED },
+	[RDMA_NLDEV_ATTR_RES_CM_IDN]		= { .type = NLA_U32 },
+	[RDMA_NLDEV_ATTR_RES_CM_ID_ENTRY]	= { .type = NLA_NESTED },
+	[RDMA_NLDEV_ATTR_RES_CQ]		= { .type = NLA_NESTED },
+	[RDMA_NLDEV_ATTR_RES_CQE]		= { .type = NLA_U32 },
+	[RDMA_NLDEV_ATTR_RES_CQN]		= { .type = NLA_U32 },
+	[RDMA_NLDEV_ATTR_RES_CQ_ENTRY]		= { .type = NLA_NESTED },
+	[RDMA_NLDEV_ATTR_RES_CTXN]		= { .type = NLA_U32 },
+	[RDMA_NLDEV_ATTR_RES_DST_ADDR]		= {
+			.len = sizeof(struct __kernel_sockaddr_storage) },
+	[RDMA_NLDEV_ATTR_RES_IOVA]		= { .type = NLA_U64 },
+	[RDMA_NLDEV_ATTR_RES_KERN_NAME]		= { .type = NLA_NUL_STRING,
+					.len = TASK_COMM_LEN },
+	[RDMA_NLDEV_ATTR_RES_LKEY]		= { .type = NLA_U32 },
+	[RDMA_NLDEV_ATTR_RES_LOCAL_DMA_LKEY]	= { .type = NLA_U32 },
+	[RDMA_NLDEV_ATTR_RES_LQPN]		= { .type = NLA_U32 },
+	[RDMA_NLDEV_ATTR_RES_MR]		= { .type = NLA_NESTED },
+	[RDMA_NLDEV_ATTR_RES_MRLEN]		= { .type = NLA_U64 },
+	[RDMA_NLDEV_ATTR_RES_MRN]		= { .type = NLA_U32 },
+	[RDMA_NLDEV_ATTR_RES_MR_ENTRY]		= { .type = NLA_NESTED },
+	[RDMA_NLDEV_ATTR_RES_PATH_MIG_STATE]	= { .type = NLA_U8 },
+	[RDMA_NLDEV_ATTR_RES_PD]		= { .type = NLA_NESTED },
+	[RDMA_NLDEV_ATTR_RES_PDN]		= { .type = NLA_U32 },
+	[RDMA_NLDEV_ATTR_RES_PD_ENTRY]		= { .type = NLA_NESTED },
+	[RDMA_NLDEV_ATTR_RES_PID]		= { .type = NLA_U32 },
+	[RDMA_NLDEV_ATTR_RES_POLL_CTX]		= { .type = NLA_U8 },
+	[RDMA_NLDEV_ATTR_RES_PS]		= { .type = NLA_U32 },
 	[RDMA_NLDEV_ATTR_RES_QP]		= { .type = NLA_NESTED },
 	[RDMA_NLDEV_ATTR_RES_QP_ENTRY]		= { .type = NLA_NESTED },
-	[RDMA_NLDEV_ATTR_RES_LQPN]		= { .type = NLA_U32 },
+	[RDMA_NLDEV_ATTR_RES_RKEY]		= { .type = NLA_U32 },
 	[RDMA_NLDEV_ATTR_RES_RQPN]		= { .type = NLA_U32 },
 	[RDMA_NLDEV_ATTR_RES_RQ_PSN]		= { .type = NLA_U32 },
 	[RDMA_NLDEV_ATTR_RES_SQ_PSN]		= { .type = NLA_U32 },
-	[RDMA_NLDEV_ATTR_RES_PATH_MIG_STATE] = { .type = NLA_U8 },
-	[RDMA_NLDEV_ATTR_RES_TYPE]		= { .type = NLA_U8 },
+	[RDMA_NLDEV_ATTR_RES_SRC_ADDR]		= {
+			.len = sizeof(struct __kernel_sockaddr_storage) },
 	[RDMA_NLDEV_ATTR_RES_STATE]		= { .type = NLA_U8 },
-	[RDMA_NLDEV_ATTR_RES_PID]		= { .type = NLA_U32 },
-	[RDMA_NLDEV_ATTR_RES_KERN_NAME]		= { .type = NLA_NUL_STRING,
-						    .len = TASK_COMM_LEN },
-	[RDMA_NLDEV_ATTR_RES_CM_ID]		= { .type = NLA_NESTED },
-	[RDMA_NLDEV_ATTR_RES_CM_ID_ENTRY]	= { .type = NLA_NESTED },
-	[RDMA_NLDEV_ATTR_RES_PS]		= { .type = NLA_U32 },
-	[RDMA_NLDEV_ATTR_RES_SRC_ADDR]	= {
-			.len = sizeof(struct __kernel_sockaddr_storage) },
-	[RDMA_NLDEV_ATTR_RES_DST_ADDR]	= {
-			.len = sizeof(struct __kernel_sockaddr_storage) },
-	[RDMA_NLDEV_ATTR_RES_CQ]		= { .type = NLA_NESTED },
-	[RDMA_NLDEV_ATTR_RES_CQ_ENTRY]		= { .type = NLA_NESTED },
-	[RDMA_NLDEV_ATTR_RES_CQE]		= { .type = NLA_U32 },
+	[RDMA_NLDEV_ATTR_RES_SUMMARY]		= { .type = NLA_NESTED },
+	[RDMA_NLDEV_ATTR_RES_SUMMARY_ENTRY]	= { .type = NLA_NESTED },
+	[RDMA_NLDEV_ATTR_RES_SUMMARY_ENTRY_CURR]= { .type = NLA_U64 },
+	[RDMA_NLDEV_ATTR_RES_SUMMARY_ENTRY_NAME]= { .type = NLA_NUL_STRING,
+					.len = 16 },
+	[RDMA_NLDEV_ATTR_RES_TYPE]		= { .type = NLA_U8 },
+	[RDMA_NLDEV_ATTR_RES_UNSAFE_GLOBAL_RKEY]= { .type = NLA_U32 },
 	[RDMA_NLDEV_ATTR_RES_USECNT]		= { .type = NLA_U64 },
-	[RDMA_NLDEV_ATTR_RES_POLL_CTX]		= { .type = NLA_U8 },
-	[RDMA_NLDEV_ATTR_RES_MR]		= { .type = NLA_NESTED },
-	[RDMA_NLDEV_ATTR_RES_MR_ENTRY]		= { .type = NLA_NESTED },
-	[RDMA_NLDEV_ATTR_RES_RKEY]		= { .type = NLA_U32 },
-	[RDMA_NLDEV_ATTR_RES_LKEY]		= { .type = NLA_U32 },
-	[RDMA_NLDEV_ATTR_RES_IOVA]		= { .type = NLA_U64 },
-	[RDMA_NLDEV_ATTR_RES_MRLEN]		= { .type = NLA_U64 },
-	[RDMA_NLDEV_ATTR_RES_PD]		= { .type = NLA_NESTED },
-	[RDMA_NLDEV_ATTR_RES_PD_ENTRY]		= { .type = NLA_NESTED },
-	[RDMA_NLDEV_ATTR_RES_LOCAL_DMA_LKEY]	= { .type = NLA_U32 },
-	[RDMA_NLDEV_ATTR_RES_UNSAFE_GLOBAL_RKEY] = { .type = NLA_U32 },
-	[RDMA_NLDEV_ATTR_NDEV_INDEX]		= { .type = NLA_U32 },
-	[RDMA_NLDEV_ATTR_NDEV_NAME]		= { .type = NLA_NUL_STRING,
-						    .len = IFNAMSIZ },
-	[RDMA_NLDEV_ATTR_DRIVER]		= { .type = NLA_NESTED },
-	[RDMA_NLDEV_ATTR_DRIVER_ENTRY]		= { .type = NLA_NESTED },
-	[RDMA_NLDEV_ATTR_DRIVER_STRING]		= { .type = NLA_NUL_STRING,
-				    .len = RDMA_NLDEV_ATTR_ENTRY_STRLEN },
-	[RDMA_NLDEV_ATTR_DRIVER_PRINT_TYPE]	= { .type = NLA_U8 },
-	[RDMA_NLDEV_ATTR_DRIVER_S32]		= { .type = NLA_S32 },
-	[RDMA_NLDEV_ATTR_DRIVER_U32]		= { .type = NLA_U32 },
-	[RDMA_NLDEV_ATTR_DRIVER_S64]		= { .type = NLA_S64 },
-	[RDMA_NLDEV_ATTR_DRIVER_U64]		= { .type = NLA_U64 },
-	[RDMA_NLDEV_ATTR_RES_PDN]		= { .type = NLA_U32 },
-	[RDMA_NLDEV_ATTR_RES_CQN]               = { .type = NLA_U32 },
-	[RDMA_NLDEV_ATTR_RES_MRN]               = { .type = NLA_U32 },
-	[RDMA_NLDEV_ATTR_RES_CM_IDN]            = { .type = NLA_U32 },
-	[RDMA_NLDEV_ATTR_RES_CTXN]              = { .type = NLA_U32 },
-	[RDMA_NLDEV_ATTR_LINK_TYPE]		= { .type = NLA_NUL_STRING,
-				    .len = RDMA_NLDEV_ATTR_ENTRY_STRLEN },
-	[RDMA_NLDEV_SYS_ATTR_NETNS_MODE]	= { .type = NLA_U8 },
-	[RDMA_NLDEV_ATTR_DEV_PROTOCOL]		= { .type = NLA_NUL_STRING,
-				    .len = RDMA_NLDEV_ATTR_ENTRY_STRLEN },
+	[RDMA_NLDEV_ATTR_SM_LID]		= { .type = NLA_U32 },
+	[RDMA_NLDEV_ATTR_SUBNET_PREFIX]		= { .type = NLA_U64 },
+	[RDMA_NLDEV_ATTR_SYS_IMAGE_GUID]	= { .type = NLA_U64 },
+	[RDMA_NLDEV_ATTR_UVERBS_DRIVER_ID]	= { .type = NLA_U32 },
 	[RDMA_NLDEV_NET_NS_FD]			= { .type = NLA_U32 },
+	[RDMA_NLDEV_SYS_ATTR_NETNS_MODE]	= { .type = NLA_U8 },
 };
 
 static int put_driver_name_print_type(struct sk_buff *msg, const char *name,
@@ -1347,6 +1357,91 @@ static int nldev_dellink(struct sk_buff *skb, struct nlmsghdr *nlh,
 	return 0;
 }
 
+static int nldev_get_chardev(struct sk_buff *skb, struct nlmsghdr *nlh,
+			     struct netlink_ext_ack *extack)
+{
+	struct nlattr *tb[RDMA_NLDEV_ATTR_MAX];
+	char client_name[IB_DEVICE_NAME_MAX];
+	struct ib_client_nl_info data = {};
+	struct ib_device *ibdev = NULL;
+	struct sk_buff *msg;
+	u32 index;
+	int err;
+
+	err = nlmsg_parse(nlh, 0, tb, RDMA_NLDEV_ATTR_MAX - 1, nldev_policy,
+			  extack);
+	if (err || !tb[RDMA_NLDEV_ATTR_CHARDEV_TYPE])
+		return -EINVAL;
+
+	if (nla_strlcpy(client_name, tb[RDMA_NLDEV_ATTR_CHARDEV_TYPE],
+			sizeof(client_name)) >= sizeof(client_name))
+		return -EINVAL;
+
+	if (tb[RDMA_NLDEV_ATTR_DEV_INDEX]) {
+		index = nla_get_u32(tb[RDMA_NLDEV_ATTR_DEV_INDEX]);
+		ibdev = ib_device_get_by_index(sock_net(skb->sk), index);
+		if (!ibdev)
+			return -EINVAL;
+
+		if (tb[RDMA_NLDEV_ATTR_PORT_INDEX]) {
+			data.port = nla_get_u32(tb[RDMA_NLDEV_ATTR_PORT_INDEX]);
+			if (!rdma_is_port_valid(ibdev, data.port)) {
+				err = -EINVAL;
+				goto out_put;
+			}
+		} else {
+			data.port = -1;
+		}
+	} else if (tb[RDMA_NLDEV_ATTR_PORT_INDEX]) {
+		return -EINVAL;
+	}
+
+	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
+	if (!msg) {
+		err = -ENOMEM;
+		goto out_put;
+	}
+	nlh = nlmsg_put(msg, NETLINK_CB(skb).portid, nlh->nlmsg_seq,
+			RDMA_NL_GET_TYPE(RDMA_NL_NLDEV,
+					 RDMA_NLDEV_CMD_GET_CHARDEV),
+			0, 0);
+
+	data.nl_msg = msg;
+	err = ib_get_client_nl_info(ibdev, client_name, &data);
+	if (err)
+		goto out_nlmsg;
+
+	err = nla_put_u64_64bit(msg, RDMA_NLDEV_ATTR_CHARDEV,
+				huge_encode_dev(data.cdev->devt),
+				RDMA_NLDEV_ATTR_PAD);
+	if (err)
+		goto out_data;
+	err = nla_put_u64_64bit(msg, RDMA_NLDEV_ATTR_CHARDEV_ABI, data.abi,
+				RDMA_NLDEV_ATTR_PAD);
+	if (err)
+		goto out_data;
+	if (nla_put_string(msg, RDMA_NLDEV_ATTR_CHARDEV_NAME,
+			   dev_name(data.cdev))) {
+		err = -EMSGSIZE;
+		goto out_data;
+	}
+
+	nlmsg_end(msg, nlh);
+	put_device(data.cdev);
+	if (ibdev)
+		ib_device_put(ibdev);
+	return rdma_nl_unicast(msg, NETLINK_CB(skb).portid);
+
+out_data:
+	put_device(data.cdev);
+out_nlmsg:
+	nlmsg_free(msg);
+out_put:
+	if (ibdev)
+		ib_device_put(ibdev);
+	return err;
+}
+
 static int nldev_sys_get_doit(struct sk_buff *skb, struct nlmsghdr *nlh,
 			      struct netlink_ext_ack *extack)
 {
@@ -1403,6 +1498,9 @@ static const struct rdma_nl_cbs nldev_cb_table[RDMA_NLDEV_NUM_OPS] = {
 	[RDMA_NLDEV_CMD_GET] = {
 		.doit = nldev_get_doit,
 		.dump = nldev_get_dumpit,
+	},
+	[RDMA_NLDEV_CMD_GET_CHARDEV] = {
+		.doit = nldev_get_chardev,
 	},
 	[RDMA_NLDEV_CMD_SET] = {
 		.doit = nldev_set_doit,

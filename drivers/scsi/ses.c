@@ -1,14 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0
 /*
  * SCSI Enclosure Services
  *
  * Copyright (C) 2008 James Bottomley <James.Bottomley@HansenPartnership.com>
- *
-**-----------------------------------------------------------------------------
-**
-**
-**-----------------------------------------------------------------------------
-*/
+ */
 
 #include <linux/slab.h>
 #include <linux/module.h>

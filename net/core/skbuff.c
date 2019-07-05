@@ -72,6 +72,7 @@
 #include <linux/highmem.h>
 #include <linux/capability.h>
 #include <linux/user_namespace.h>
+#include <linux/indirect_call_wrapper.h>
 
 #include "datagram.h"
 
@@ -365,34 +366,6 @@ struct napi_alloc_cache {
 static DEFINE_PER_CPU(struct page_frag_cache, netdev_alloc_cache);
 static DEFINE_PER_CPU(struct napi_alloc_cache, napi_alloc_cache);
 
-static void *__netdev_alloc_frag(unsigned int fragsz, gfp_t gfp_mask)
-{
-	struct page_frag_cache *nc;
-	unsigned long flags;
-	void *data;
-
-	local_irq_save(flags);
-	nc = this_cpu_ptr(&netdev_alloc_cache);
-	data = page_frag_alloc(nc, fragsz, gfp_mask);
-	local_irq_restore(flags);
-	return data;
-}
-
-/**
- * netdev_alloc_frag - allocate a page fragment
- * @fragsz: fragment size
- *
- * Allocates a frag from a page for receive buffer.
- * Uses GFP_ATOMIC allocations.
- */
-void *netdev_alloc_frag(unsigned int fragsz)
-{
-	fragsz = SKB_DATA_ALIGN(fragsz);
-
-	return __netdev_alloc_frag(fragsz, GFP_ATOMIC);
-}
-EXPORT_SYMBOL(netdev_alloc_frag);
-
 static void *__napi_alloc_frag(unsigned int fragsz, gfp_t gfp_mask)
 {
 	struct napi_alloc_cache *nc = this_cpu_ptr(&napi_alloc_cache);
@@ -407,6 +380,31 @@ void *napi_alloc_frag(unsigned int fragsz)
 	return __napi_alloc_frag(fragsz, GFP_ATOMIC);
 }
 EXPORT_SYMBOL(napi_alloc_frag);
+
+/**
+ * netdev_alloc_frag - allocate a page fragment
+ * @fragsz: fragment size
+ *
+ * Allocates a frag from a page for receive buffer.
+ * Uses GFP_ATOMIC allocations.
+ */
+void *netdev_alloc_frag(unsigned int fragsz)
+{
+	struct page_frag_cache *nc;
+	void *data;
+
+	fragsz = SKB_DATA_ALIGN(fragsz);
+	if (in_irq() || irqs_disabled()) {
+		nc = this_cpu_ptr(&netdev_alloc_cache);
+		data = page_frag_alloc(nc, fragsz, GFP_ATOMIC);
+	} else {
+		local_bh_disable();
+		data = __napi_alloc_frag(fragsz, GFP_ATOMIC);
+		local_bh_enable();
+	}
+	return data;
+}
+EXPORT_SYMBOL(netdev_alloc_frag);
 
 /**
  *	__netdev_alloc_skb - allocate an skbuff for rx on a specific device
@@ -425,7 +423,6 @@ struct sk_buff *__netdev_alloc_skb(struct net_device *dev, unsigned int len,
 				   gfp_t gfp_mask)
 {
 	struct page_frag_cache *nc;
-	unsigned long flags;
 	struct sk_buff *skb;
 	bool pfmemalloc;
 	void *data;
@@ -446,13 +443,17 @@ struct sk_buff *__netdev_alloc_skb(struct net_device *dev, unsigned int len,
 	if (sk_memalloc_socks())
 		gfp_mask |= __GFP_MEMALLOC;
 
-	local_irq_save(flags);
-
-	nc = this_cpu_ptr(&netdev_alloc_cache);
-	data = page_frag_alloc(nc, len, gfp_mask);
-	pfmemalloc = nc->pfmemalloc;
-
-	local_irq_restore(flags);
+	if (in_irq() || irqs_disabled()) {
+		nc = this_cpu_ptr(&netdev_alloc_cache);
+		data = page_frag_alloc(nc, len, gfp_mask);
+		pfmemalloc = nc->pfmemalloc;
+	} else {
+		local_bh_disable();
+		nc = this_cpu_ptr(&napi_alloc_cache.page);
+		data = page_frag_alloc(nc, len, gfp_mask);
+		pfmemalloc = nc->pfmemalloc;
+		local_bh_enable();
+	}
 
 	if (unlikely(!data))
 		return NULL;
@@ -907,6 +908,31 @@ static struct sk_buff *__skb_clone(struct sk_buff *n, struct sk_buff *skb)
 	return n;
 #undef C
 }
+
+/**
+ * alloc_skb_for_msg() - allocate sk_buff to wrap frag list forming a msg
+ * @first: first sk_buff of the msg
+ */
+struct sk_buff *alloc_skb_for_msg(struct sk_buff *first)
+{
+	struct sk_buff *n;
+
+	n = alloc_skb(0, GFP_ATOMIC);
+	if (!n)
+		return NULL;
+
+	n->len = first->len;
+	n->data_len = first->len;
+	n->truesize = first->truesize;
+
+	skb_shinfo(n)->frag_list = first;
+
+	__copy_skb_header(n, first);
+	n->destructor = NULL;
+
+	return n;
+}
+EXPORT_SYMBOL_GPL(alloc_skb_for_msg);
 
 /**
  *	skb_morph	-	morph one skb into another
@@ -2337,6 +2363,7 @@ do_frag_list:
 		kv.iov_base = skb->data + offset;
 		kv.iov_len = slen;
 		memset(&msg, 0, sizeof(msg));
+		msg.msg_flags = MSG_DONTWAIT;
 
 		ret = kernel_sendmsg_locked(sk, &msg, &kv, 1, slen);
 		if (ret <= 0)
@@ -2507,7 +2534,8 @@ __wsum __skb_checksum(const struct sk_buff *skb, int offset, int len,
 	if (copy > 0) {
 		if (copy > len)
 			copy = len;
-		csum = ops->update(skb->data + offset, copy, csum);
+		csum = INDIRECT_CALL_1(ops->update, csum_partial_ext,
+				       skb->data + offset, copy, csum);
 		if ((len -= copy) == 0)
 			return csum;
 		offset += copy;
@@ -2534,9 +2562,13 @@ __wsum __skb_checksum(const struct sk_buff *skb, int offset, int len,
 					      frag->page_offset + offset - start,
 					      copy, p, p_off, p_len, copied) {
 				vaddr = kmap_atomic(p);
-				csum2 = ops->update(vaddr + p_off, p_len, 0);
+				csum2 = INDIRECT_CALL_1(ops->update,
+							csum_partial_ext,
+							vaddr + p_off, p_len, 0);
 				kunmap_atomic(vaddr);
-				csum = ops->combine(csum, csum2, pos, p_len);
+				csum = INDIRECT_CALL_1(ops->combine,
+						       csum_block_add_ext, csum,
+						       csum2, pos, p_len);
 				pos += p_len;
 			}
 
@@ -2559,7 +2591,8 @@ __wsum __skb_checksum(const struct sk_buff *skb, int offset, int len,
 				copy = len;
 			csum2 = __skb_checksum(frag_iter, offset - start,
 					       copy, 0, ops);
-			csum = ops->combine(csum, csum2, pos, copy);
+			csum = INDIRECT_CALL_1(ops->combine, csum_block_add_ext,
+					       csum, csum2, pos, copy);
 			if ((len -= copy) == 0)
 				return csum;
 			offset += copy;

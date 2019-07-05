@@ -300,7 +300,6 @@ int ftrace_int3_handler(struct pt_regs *regs)
 
 	ip = regs->ip - INT3_INSN_SIZE;
 
-#ifdef CONFIG_X86_64
 	if (ftrace_location(ip)) {
 		int3_emulate_call(regs, (unsigned long)ftrace_regs_caller);
 		return 1;
@@ -312,12 +311,6 @@ int ftrace_int3_handler(struct pt_regs *regs)
 		int3_emulate_call(regs, ftrace_update_func_call);
 		return 1;
 	}
-#else
-	if (ftrace_location(ip) || is_ftrace_caller(ip)) {
-		int3_emulate_jmp(regs, ip + CALL_INSN_SIZE);
-		return 1;
-	}
-#endif
 
 	return 0;
 }
@@ -370,7 +363,7 @@ static int add_brk_on_nop(struct dyn_ftrace *rec)
 	return add_break(rec->ip, old);
 }
 
-static int add_breakpoints(struct dyn_ftrace *rec, int enable)
+static int add_breakpoints(struct dyn_ftrace *rec, bool enable)
 {
 	unsigned long ftrace_addr;
 	int ret;
@@ -478,7 +471,7 @@ static int add_update_nop(struct dyn_ftrace *rec)
 	return add_update_code(ip, new);
 }
 
-static int add_update(struct dyn_ftrace *rec, int enable)
+static int add_update(struct dyn_ftrace *rec, bool enable)
 {
 	unsigned long ftrace_addr;
 	int ret;
@@ -524,7 +517,7 @@ static int finish_update_nop(struct dyn_ftrace *rec)
 	return ftrace_write(ip, new, 1);
 }
 
-static int finish_update(struct dyn_ftrace *rec, int enable)
+static int finish_update(struct dyn_ftrace *rec, bool enable)
 {
 	unsigned long ftrace_addr;
 	int ret;

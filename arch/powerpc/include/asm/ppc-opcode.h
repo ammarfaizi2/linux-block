@@ -338,6 +338,7 @@
 #define PPC_INST_MADDLD			0x10000033
 #define PPC_INST_DIVWU			0x7c000396
 #define PPC_INST_DIVD			0x7c0003d2
+#define PPC_INST_DIVDU			0x7c000392
 #define PPC_INST_RLWINM			0x54000000
 #define PPC_INST_RLWINM_DOT		0x54000001
 #define PPC_INST_RLWIMI			0x50000000
@@ -587,7 +588,16 @@
 
 #define PPC_SLBIA(IH)	stringify_in_c(.long PPC_INST_SLBIA | \
 				       ((IH & 0x7) << 21))
-#define PPC_INVALIDATE_ERAT	PPC_SLBIA(7)
+
+/*
+ * These may only be used on ISA v3.0 or later (aka. CPU_FTR_ARCH_300, radix
+ * implies CPU_FTR_ARCH_300). USER/GUEST invalidates may only be used by radix
+ * mode (on HPT these would also invalidate various SLBEs which may not be
+ * desired).
+ */
+#define PPC_ISA_3_0_INVALIDATE_ERAT	PPC_SLBIA(7)
+#define PPC_RADIX_INVALIDATE_ERAT_USER	PPC_SLBIA(3)
+#define PPC_RADIX_INVALIDATE_ERAT_GUEST	PPC_SLBIA(6)
 
 #define VCMPEQUD_RC(vrt, vra, vrb)	stringify_in_c(.long PPC_INST_VCMPEQUD | \
 			      ___PPC_RT(vrt) | ___PPC_RA(vra) | \

@@ -283,8 +283,6 @@ To summarize::
   gpiod_set_value(desc, 1);          default (active high)  high
   gpiod_set_value(desc, 0);          active low             high
   gpiod_set_value(desc, 1);          active low             low
-  gpiod_set_value(desc, 0);          default (active high)  low
-  gpiod_set_value(desc, 1);          default (active high)  high
   gpiod_set_value(desc, 0);          open drain             low
   gpiod_set_value(desc, 1);          open drain             high impedance
   gpiod_set_value(desc, 0);          open source            high impedance
@@ -437,7 +435,7 @@ case, it will be handled by the GPIO subsystem automatically.  However, if the
 _DSD is not present, the mappings between GpioIo()/GpioInt() resources and GPIO
 connection IDs need to be provided by device drivers.
 
-For details refer to Documentation/acpi/gpio-properties.txt
+For details refer to Documentation/firmware-guide/acpi/gpio-properties.rst
 
 
 Interacting With the Legacy GPIO Subsystem

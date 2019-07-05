@@ -320,7 +320,7 @@ static int get_secret(struct ceph_crypto_key *dst, const char *name) {
 	int err = 0;
 	struct ceph_crypto_key *ckey;
 
-	ukey = request_key(&key_type_ceph, name, NULL);
+	ukey = request_key(&key_type_ceph, name, NULL, NULL);
 	if (IS_ERR(ukey)) {
 		/* request_key errors don't map nicely to mount(2)
 		   errors; don't even try, but still printk */
@@ -714,9 +714,7 @@ static int __init init_ceph_lib(void)
 {
 	int ret = 0;
 
-	ret = ceph_debugfs_init();
-	if (ret < 0)
-		goto out;
+	ceph_debugfs_init();
 
 	ret = ceph_crypto_init();
 	if (ret < 0)
@@ -741,7 +739,6 @@ out_crypto:
 	ceph_crypto_shutdown();
 out_debugfs:
 	ceph_debugfs_cleanup();
-out:
 	return ret;
 }
 

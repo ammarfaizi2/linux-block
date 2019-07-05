@@ -7,8 +7,7 @@ struct flow_rule *flow_rule_alloc(unsigned int num_actions)
 {
 	struct flow_rule *rule;
 
-	rule = kzalloc(sizeof(struct flow_rule) +
-		       sizeof(struct flow_action_entry) * num_actions,
+	rule = kzalloc(struct_size(rule, action.entries, num_actions),
 		       GFP_KERNEL);
 	if (!rule)
 		return NULL;
@@ -25,6 +24,13 @@ EXPORT_SYMBOL(flow_rule_alloc);
 										\
 	(__out)->key = skb_flow_dissector_target(__d, __type, (__m)->key);	\
 	(__out)->mask = skb_flow_dissector_target(__d, __type, (__m)->mask);	\
+
+void flow_rule_match_meta(const struct flow_rule *rule,
+			  struct flow_match_meta *out)
+{
+	FLOW_DISSECTOR_MATCH(rule, FLOW_DISSECTOR_KEY_META, out);
+}
+EXPORT_SYMBOL(flow_rule_match_meta);
 
 void flow_rule_match_basic(const struct flow_rule *rule,
 			   struct flow_match_basic *out)

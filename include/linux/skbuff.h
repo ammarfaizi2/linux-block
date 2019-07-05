@@ -1059,6 +1059,7 @@ struct sk_buff *alloc_skb_with_frags(unsigned long header_len,
 				     int max_page_order,
 				     int *errcode,
 				     gfp_t gfp_mask);
+struct sk_buff *alloc_skb_for_msg(struct sk_buff *first);
 
 /* Layout of fast clones : [skb1][skb2][fclone_ref] */
 struct sk_buff_fclones {
@@ -1318,6 +1319,10 @@ skb_flow_dissect_flow_keys_basic(const struct net *net,
 	return __skb_flow_dissect(net, skb, &flow_keys_basic_dissector, flow,
 				  data, proto, nhoff, hlen, flags);
 }
+
+void skb_flow_dissect_meta(const struct sk_buff *skb,
+			   struct flow_dissector *flow_dissector,
+			   void *target_container);
 
 void
 skb_flow_dissect_tunnel_info(const struct sk_buff *skb,

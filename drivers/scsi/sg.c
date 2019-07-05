@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0+
 /*
  *  History:
  *  Started: Aug 9 by Lawrence Foard (entropy@world.std.com),

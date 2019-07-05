@@ -39,7 +39,7 @@
 #include "session.h"
 #include "string2.h"
 
-#include "sane_ctype.h"
+#include <linux/ctype.h>
 
 #define PERFPROBE_GROUP "probe"
 
@@ -1561,6 +1561,17 @@ static int parse_perf_probe_arg(char *str, struct perf_probe_arg *arg)
 			return -ENOMEM;
 		pr_debug("name:%s ", arg->name);
 		str = tmp + 1;
+	}
+
+	tmp = strchr(str, '@');
+	if (tmp && tmp != str && strcmp(tmp + 1, "user")) { /* user attr */
+		if (!user_access_is_supported()) {
+			semantic_error("ftrace does not support user access\n");
+			return -EINVAL;
+		}
+		*tmp = '\0';
+		arg->user_access = true;
+		pr_debug("user_access ");
 	}
 
 	tmp = strchr(str, ':');

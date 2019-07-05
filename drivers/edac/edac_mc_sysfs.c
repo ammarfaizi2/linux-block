@@ -404,6 +404,8 @@ static inline int nr_pages_per_csrow(struct csrow_info *csrow)
 static int edac_create_csrow_object(struct mem_ctl_info *mci,
 				    struct csrow_info *csrow, int index)
 {
+	int err;
+
 	csrow->dev.type = &csrow_attr_type;
 	csrow->dev.groups = csrow_dev_groups;
 	device_initialize(&csrow->dev);
@@ -415,7 +417,11 @@ static int edac_create_csrow_object(struct mem_ctl_info *mci,
 	edac_dbg(0, "creating (virtual) csrow node %s\n",
 		 dev_name(&csrow->dev));
 
-	return device_add(&csrow->dev);
+	err = device_add(&csrow->dev);
+	if (err)
+		put_device(&csrow->dev);
+
+	return err;
 }
 
 /* Create a CSROW object under specifed edac_mc_device */
@@ -443,7 +449,8 @@ error:
 		csrow = mci->csrows[i];
 		if (!nr_pages_per_csrow(csrow))
 			continue;
-		put_device(&mci->csrows[i]->dev);
+
+		device_del(&mci->csrows[i]->dev);
 	}
 
 	return err;
@@ -645,9 +652,11 @@ static int edac_create_dimm_object(struct mem_ctl_info *mci,
 	dev_set_drvdata(&dimm->dev, dimm);
 	pm_runtime_forbid(&mci->dev);
 
-	err =  device_add(&dimm->dev);
+	err = device_add(&dimm->dev);
+	if (err)
+		put_device(&dimm->dev);
 
-	edac_dbg(0, "creating rank/dimm device %s\n", dev_name(&dimm->dev));
+	edac_dbg(0, "created rank/dimm device %s\n", dev_name(&dimm->dev));
 
 	return err;
 }
@@ -928,6 +937,7 @@ int edac_create_sysfs_mci_device(struct mem_ctl_info *mci,
 	err = device_add(&mci->dev);
 	if (err < 0) {
 		edac_dbg(1, "failure: create device %s\n", dev_name(&mci->dev));
+		put_device(&mci->dev);
 		goto out;
 	}
 

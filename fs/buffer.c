@@ -956,10 +956,20 @@ grow_dev_page(struct block_device *bdev, sector_t block,
 			end_block = init_page_buffers(page, bdev,
 						(sector_t)index << sizebits,
 						size);
+#ifdef CONFIG_DEBUG_AID_FOR_SYZBOT
+			current->getblk_executed |= 0x01;
+#endif
 			goto done;
 		}
-		if (!try_to_free_buffers(page))
+		if (!try_to_free_buffers(page)) {
+#ifdef CONFIG_DEBUG_AID_FOR_SYZBOT
+			current->getblk_executed |= 0x02;
+#endif
 			goto failed;
+		}
+#ifdef CONFIG_DEBUG_AID_FOR_SYZBOT
+		current->getblk_executed |= 0x04;
+#endif
 	}
 
 	/*
@@ -979,6 +989,9 @@ grow_dev_page(struct block_device *bdev, sector_t block,
 	spin_unlock(&inode->i_mapping->private_lock);
 done:
 	ret = (block < end_block) ? 1 : -ENXIO;
+#ifdef CONFIG_DEBUG_AID_FOR_SYZBOT
+	current->getblk_executed |= 0x08;
+#endif
 failed:
 	unlock_page(page);
 	put_page(page);
@@ -1034,6 +1047,12 @@ __getblk_slow(struct block_device *bdev, sector_t block,
 		return NULL;
 	}
 
+#ifdef CONFIG_DEBUG_AID_FOR_SYZBOT
+	current->getblk_stamp = jiffies;
+	current->getblk_executed = 0;
+	current->getblk_bh_count = 0;
+	current->getblk_bh_state = 0;
+#endif
 	for (;;) {
 		struct buffer_head *bh;
 		int ret;
@@ -1045,6 +1064,24 @@ __getblk_slow(struct block_device *bdev, sector_t block,
 		ret = grow_buffers(bdev, block, size, gfp);
 		if (ret < 0)
 			return NULL;
+
+#ifdef CONFIG_DEBUG_AID_FOR_SYZBOT
+		if (!time_after(jiffies, current->getblk_stamp + 3 * HZ))
+			continue;
+		printk(KERN_ERR "%s(%u): getblk(): executed=%x bh_count=%d bh_state=%lx bdev_super_blocksize=%ld size=%u bdev_super_blocksize_bits=%d bdev_inode_blkbits=%d\n",
+		       current->comm, current->pid, current->getblk_executed,
+		       current->getblk_bh_count, current->getblk_bh_state,
+		       IS_ERR_OR_NULL(bdev->bd_super) ? -1L :
+		       bdev->bd_super->s_blocksize, size,
+		       IS_ERR_OR_NULL(bdev->bd_super) ? -1 :
+		       bdev->bd_super->s_blocksize_bits,
+		       IS_ERR_OR_NULL(bdev->bd_inode) ? -1 :
+		       bdev->bd_inode->i_blkbits);
+		current->getblk_executed = 0;
+		current->getblk_bh_count = 0;
+		current->getblk_bh_state = 0;
+		current->getblk_stamp = jiffies;
+#endif
 	}
 }
 
@@ -2086,38 +2123,6 @@ int block_write_begin(struct address_space *mapping, loff_t pos, unsigned len,
 }
 EXPORT_SYMBOL(block_write_begin);
 
-void __generic_write_end(struct inode *inode, loff_t pos, unsigned copied,
-		struct page *page)
-{
-	loff_t old_size = inode->i_size;
-	bool i_size_changed = false;
-
-	/*
-	 * No need to use i_size_read() here, the i_size cannot change under us
-	 * because we hold i_rwsem.
-	 *
-	 * But it's important to update i_size while still holding page lock:
-	 * page writeout could otherwise come in and zero beyond i_size.
-	 */
-	if (pos + copied > inode->i_size) {
-		i_size_write(inode, pos + copied);
-		i_size_changed = true;
-	}
-
-	unlock_page(page);
-
-	if (old_size < pos)
-		pagecache_isize_extended(inode, old_size, pos);
-	/*
-	 * Don't mark the inode dirty under page lock. First, it unnecessarily
-	 * makes the holding time of page lock longer. Second, it forces lock
-	 * ordering of page lock and transaction start for journaling
-	 * filesystems.
-	 */
-	if (i_size_changed)
-		mark_inode_dirty(inode);
-}
-
 int block_write_end(struct file *file, struct address_space *mapping,
 			loff_t pos, unsigned len, unsigned copied,
 			struct page *page, void *fsdata)
@@ -2158,9 +2163,37 @@ int generic_write_end(struct file *file, struct address_space *mapping,
 			loff_t pos, unsigned len, unsigned copied,
 			struct page *page, void *fsdata)
 {
+	struct inode *inode = mapping->host;
+	loff_t old_size = inode->i_size;
+	bool i_size_changed = false;
+
 	copied = block_write_end(file, mapping, pos, len, copied, page, fsdata);
-	__generic_write_end(mapping->host, pos, copied, page);
+
+	/*
+	 * No need to use i_size_read() here, the i_size cannot change under us
+	 * because we hold i_rwsem.
+	 *
+	 * But it's important to update i_size while still holding page lock:
+	 * page writeout could otherwise come in and zero beyond i_size.
+	 */
+	if (pos + copied > inode->i_size) {
+		i_size_write(inode, pos + copied);
+		i_size_changed = true;
+	}
+
+	unlock_page(page);
 	put_page(page);
+
+	if (old_size < pos)
+		pagecache_isize_extended(inode, old_size, pos);
+	/*
+	 * Don't mark the inode dirty under page lock. First, it unnecessarily
+	 * makes the holding time of page lock longer. Second, it forces lock
+	 * ordering of page lock and transaction start for journaling
+	 * filesystems.
+	 */
+	if (i_size_changed)
+		mark_inode_dirty(inode);
 	return copied;
 }
 EXPORT_SYMBOL(generic_write_end);
@@ -3227,6 +3260,11 @@ EXPORT_SYMBOL(sync_dirty_buffer);
  */
 static inline int buffer_busy(struct buffer_head *bh)
 {
+#ifdef CONFIG_DEBUG_AID_FOR_SYZBOT
+	current->getblk_executed |= 0x80;
+	current->getblk_bh_count = atomic_read(&bh->b_count);
+	current->getblk_bh_state = bh->b_state;
+#endif
 	return atomic_read(&bh->b_count) |
 		(bh->b_state & ((1 << BH_Dirty) | (1 << BH_Lock)));
 }
@@ -3265,11 +3303,18 @@ int try_to_free_buffers(struct page *page)
 	int ret = 0;
 
 	BUG_ON(!PageLocked(page));
-	if (PageWriteback(page))
+	if (PageWriteback(page)) {
+#ifdef CONFIG_DEBUG_AID_FOR_SYZBOT
+		current->getblk_executed |= 0x10;
+#endif
 		return 0;
+	}
 
 	if (mapping == NULL) {		/* can this still happen? */
 		ret = drop_buffers(page, &buffers_to_free);
+#ifdef CONFIG_DEBUG_AID_FOR_SYZBOT
+		current->getblk_executed |= 0x20;
+#endif
 		goto out;
 	}
 
@@ -3293,6 +3338,9 @@ int try_to_free_buffers(struct page *page)
 	if (ret)
 		cancel_dirty_page(page);
 	spin_unlock(&mapping->private_lock);
+#ifdef CONFIG_DEBUG_AID_FOR_SYZBOT
+	current->getblk_executed |= 0x40;
+#endif
 out:
 	if (buffers_to_free) {
 		struct buffer_head *bh = buffers_to_free;

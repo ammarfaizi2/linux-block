@@ -101,6 +101,8 @@ needed).
    filesystems/index
    vm/index
    bpf/index
+   PCI/index
+   usb/index
    misc-devices/index
 
 Architecture-specific documentation
@@ -112,7 +114,6 @@ implementation.
 .. toctree::
    :maxdepth: 2
 
-   x86/index
    sh/index
    x86/index
 

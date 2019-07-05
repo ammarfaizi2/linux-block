@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  Simplified MAC Kernel (smack) security module
  *
@@ -12,10 +13,6 @@
  *                Paul Moore <paul@paul-moore.com>
  *  Copyright (C) 2010 Nokia Corporation
  *  Copyright (C) 2011 Intel Corporation.
- *
- *	This program is free software; you can redistribute it and/or modify
- *	it under the terms of the GNU General Public License version 2,
- *      as published by the Free Software Foundation.
  */
 
 #include <linux/xattr.h>
@@ -4287,7 +4284,8 @@ static int smack_key_permission(key_ref_t key_ref,
 #endif
 	if (perm & (KEY_NEED_READ | KEY_NEED_SEARCH | KEY_NEED_VIEW))
 		request |= MAY_READ;
-	if (perm & (KEY_NEED_WRITE | KEY_NEED_LINK | KEY_NEED_SETATTR))
+	if (perm & (KEY_NEED_WRITE | KEY_NEED_LINK | KEY_NEED_SETSEC |
+		    KEY_NEED_INVAL | KEY_NEED_REVOKE | KEY_NEED_CLEAR))
 		request |= MAY_WRITE;
 	rc = smk_access(tkp, keyp->security, request, &ad);
 	rc = smk_bu_note("key access", tkp, keyp->security, request, rc);

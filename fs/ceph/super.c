@@ -868,12 +868,7 @@ static int ceph_real_mount(struct fs_context *fc, struct ceph_fs_client *fsc)
 			dout("mount opening path %s\n", path);
 		}
 
-		err = ceph_fs_debugfs_init(fsc);
-		if (err < 0) {
-			errorf(fc, "ceph: Can't create debugfs entries: %d",
-			       err);
-			goto out;
-		}
+		ceph_fs_debugfs_init(fsc);
 
 		root = open_root_dentry(fsc, path, started);
 		if (IS_ERR(root)) {
@@ -1148,17 +1143,15 @@ static int __init init_ceph(void)
 		goto out;
 
 	ceph_flock_init();
-	ceph_xattr_init();
 	ret = register_filesystem(&ceph_fs_type);
 	if (ret)
-		goto out_xattr;
+		goto out_caches;
 
 	pr_info("loaded (mds proto %d)\n", CEPH_MDSC_PROTOCOL);
 
 	return 0;
 
-out_xattr:
-	ceph_xattr_exit();
+out_caches:
 	destroy_caches();
 out:
 	return ret;
@@ -1168,7 +1161,6 @@ static void __exit exit_ceph(void)
 {
 	dout("exit_ceph\n");
 	unregister_filesystem(&ceph_fs_type);
-	ceph_xattr_exit();
 	destroy_caches();
 }
 

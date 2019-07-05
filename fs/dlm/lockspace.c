@@ -158,6 +158,7 @@ static struct attribute *dlm_attrs[] = {
 	&dlm_attr_recover_nodeid.attr,
 	NULL,
 };
+ATTRIBUTE_GROUPS(dlm);
 
 static ssize_t dlm_attr_show(struct kobject *kobj, struct attribute *attr,
 			     char *buf)
@@ -187,7 +188,7 @@ static const struct sysfs_ops dlm_attr_ops = {
 };
 
 static struct kobj_type dlm_ktype = {
-	.default_attrs = dlm_attrs,
+	.default_groups = dlm_groups,
 	.sysfs_ops     = &dlm_attr_ops,
 	.release       = lockspace_kobj_release,
 };
@@ -208,8 +209,10 @@ static int do_uevent(struct dlm_ls *ls, int in)
 	/* dlm_controld will see the uevent, do the necessary group management
 	   and then write to sysfs to wake us */
 
-	error = wait_event_interruptible(ls->ls_uevent_wait,
-			test_and_clear_bit(LSFL_UEVENT_WAIT, &ls->ls_flags));
+	do {
+		error = wait_event_interruptible(ls->ls_uevent_wait,
+						 test_and_clear_bit(LSFL_UEVENT_WAIT, &ls->ls_flags));
+	} while (error == -ERESTARTSYS);
 
 	log_rinfo(ls, "group event done %d %d", error, ls->ls_uevent_result);
 

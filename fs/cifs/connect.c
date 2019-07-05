@@ -96,7 +96,8 @@ enum {
 	Opt_multiuser, Opt_sloppy, Opt_nosharesock,
 	Opt_persistent, Opt_nopersistent,
 	Opt_resilient, Opt_noresilient,
-	Opt_domainauto, Opt_rdma,
+	Opt_domainauto, Opt_rdma, Opt_modeace,
+	Opt_compress,
 
 	/* Mount options which take numeric value */
 	Opt_backupuid, Opt_backupgid, Opt_uid,
@@ -175,6 +176,7 @@ static const match_table_t cifs_mount_option_tokens = {
 	{ Opt_serverino, "serverino" },
 	{ Opt_noserverino, "noserverino" },
 	{ Opt_rwpidforward, "rwpidforward" },
+	{ Opt_modeace, "modefromace" },
 	{ Opt_cifsacl, "cifsacl" },
 	{ Opt_nocifsacl, "nocifsacl" },
 	{ Opt_acl, "acl" },
@@ -212,6 +214,7 @@ static const match_table_t cifs_mount_option_tokens = {
 	{ Opt_echo_interval, "echo_interval=%s" },
 	{ Opt_max_credits, "max_credits=%s" },
 	{ Opt_snapshot, "snapshot=%s" },
+	{ Opt_compress, "compress=%s" },
 
 	{ Opt_blank_user, "user=" },
 	{ Opt_blank_user, "username=" },
@@ -476,6 +479,7 @@ cifs_reconnect(struct TCP_Server_Info *server)
 	spin_lock(&GlobalMid_Lock);
 	server->nr_targets = 1;
 #ifdef CONFIG_CIFS_DFS_UPCALL
+	spin_unlock(&GlobalMid_Lock);
 	cifs_sb = find_super_by_tcp(server);
 	if (IS_ERR(cifs_sb)) {
 		rc = PTR_ERR(cifs_sb);
@@ -493,6 +497,7 @@ cifs_reconnect(struct TCP_Server_Info *server)
 	}
 	cifs_dbg(FYI, "%s: will retry %d target(s)\n", __func__,
 		 server->nr_targets);
+	spin_lock(&GlobalMid_Lock);
 #endif
 	if (server->tcpStatus == CifsExiting) {
 		/* the demux thread will exit normally
@@ -1828,6 +1833,9 @@ cifs_parse_mount_options(const char *mountdata, const char *devname,
 		case Opt_rwpidforward:
 			vol->rwpidforward = 1;
 			break;
+		case Opt_modeace:
+			vol->mode_ace = 1;
+			break;
 		case Opt_cifsacl:
 			vol->cifs_acl = 1;
 			break;
@@ -1908,6 +1916,11 @@ cifs_parse_mount_options(const char *mountdata, const char *devname,
 			break;
 		case Opt_rdma:
 			vol->rdma = true;
+			break;
+		case Opt_compress:
+			vol->compression = UNKNOWN_TYPE;
+			cifs_dbg(VFS,
+				"SMB3 compression support is experimental\n");
 			break;
 
 		/* Numeric Values */
@@ -2542,8 +2555,15 @@ static int match_server(struct TCP_Server_Info *server, struct smb_vol *vol)
 	if (vol->nosharesock)
 		return 0;
 
-	/* BB update this for smb3any and default case */
-	if ((server->vals != vol->vals) || (server->ops != vol->ops))
+	/* If multidialect negotiation see if existing sessions match one */
+	if (strcmp(vol->vals->version_string, SMB3ANY_VERSION_STRING) == 0) {
+		if (server->vals->protocol_id < SMB30_PROT_ID)
+			return 0;
+	} else if (strcmp(vol->vals->version_string,
+		   SMBDEFAULT_VERSION_STRING) == 0) {
+		if (server->vals->protocol_id < SMB21_PROT_ID)
+			return 0;
+	} else if ((server->vals != vol->vals) || (server->ops != vol->ops))
 		return 0;
 
 	if (!net_eq(cifs_net_ns(server), current->nsproxy->net_ns))
@@ -2629,7 +2649,7 @@ cifs_put_tcp_session(struct TCP_Server_Info *server, int from_reconnect)
 
 	task = xchg(&server->tsk, NULL);
 	if (task)
-		force_sig(SIGKILL, task);
+		send_sig(SIGKILL, task, 1);
 }
 
 static struct TCP_Server_Info *
@@ -2678,6 +2698,7 @@ cifs_get_tcp_session(struct smb_vol *volume_info)
 	tcp_ses->sequence_number = 0;
 	tcp_ses->reconnect_instance = 1;
 	tcp_ses->lstrp = jiffies;
+	tcp_ses->compress_algorithm = cpu_to_le16(volume_info->compression);
 	spin_lock_init(&tcp_ses->req_lock);
 	INIT_LIST_HEAD(&tcp_ses->tcp_ses_list);
 	INIT_LIST_HEAD(&tcp_ses->smb_ses_list);
@@ -2990,7 +3011,7 @@ cifs_set_cifscreds(struct smb_vol *vol, struct cifs_ses *ses)
 	}
 
 	cifs_dbg(FYI, "%s: desc=%s\n", __func__, desc);
-	key = request_key(&key_type_logon, desc, "");
+	key = request_key(&key_type_logon, desc, "", NULL);
 	if (IS_ERR(key)) {
 		if (!ses->domainName) {
 			cifs_dbg(FYI, "domainName is NULL\n");
@@ -3001,7 +3022,7 @@ cifs_set_cifscreds(struct smb_vol *vol, struct cifs_ses *ses)
 		/* didn't work, try to find a domain key */
 		sprintf(desc, "cifs:d:%s", ses->domainName);
 		cifs_dbg(FYI, "%s: desc=%s\n", __func__, desc);
-		key = request_key(&key_type_logon, desc, "");
+		key = request_key(&key_type_logon, desc, "", NULL);
 		if (IS_ERR(key)) {
 			rc = PTR_ERR(key);
 			goto out_err;
@@ -3458,12 +3479,16 @@ compare_mount_options(struct super_block *sb, struct cifs_mnt_data *mnt_data)
 {
 	struct cifs_sb_info *old = CIFS_SB(sb);
 	struct cifs_sb_info *new = mnt_data->cifs_sb;
+	unsigned int oldflags = old->mnt_cifs_flags & CIFS_MOUNT_MASK;
+	unsigned int newflags = new->mnt_cifs_flags & CIFS_MOUNT_MASK;
 
 	if ((sb->s_flags & CIFS_MS_MASK) != (mnt_data->flags & CIFS_MS_MASK))
 		return 0;
 
-	if ((old->mnt_cifs_flags & CIFS_MOUNT_MASK) !=
-	    (new->mnt_cifs_flags & CIFS_MOUNT_MASK))
+	if (old->mnt_cifs_serverino_autodisabled)
+		newflags &= ~CIFS_MOUNT_SERVER_INUM;
+
+	if (oldflags != newflags)
 		return 0;
 
 	/*
@@ -3963,6 +3988,8 @@ int cifs_setup_cifs_sb(struct smb_vol *pvolume_info,
 		cifs_sb->mnt_cifs_flags |= CIFS_MOUNT_NOPOSIXBRL;
 	if (pvolume_info->rwpidforward)
 		cifs_sb->mnt_cifs_flags |= CIFS_MOUNT_RWPIDFORWARD;
+	if (pvolume_info->mode_ace)
+		cifs_sb->mnt_cifs_flags |= CIFS_MOUNT_MODE_FROM_ACE;
 	if (pvolume_info->cifs_acl)
 		cifs_sb->mnt_cifs_flags |= CIFS_MOUNT_CIFS_ACL;
 	if (pvolume_info->backupuid_specified) {

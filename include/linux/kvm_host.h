@@ -1,10 +1,7 @@
+/* SPDX-License-Identifier: GPL-2.0-only */
 #ifndef __KVM_HOST_H
 #define __KVM_HOST_H
 
-/*
- * This work is licensed under the terms of the GNU GPL, version 2.  See
- * the COPYING file in the top-level directory.
- */
 
 #include <linux/types.h>
 #include <linux/hardirq.h>
@@ -162,7 +159,7 @@ static inline bool is_error_page(struct page *page)
 
 extern struct kmem_cache *kvm_vcpu_cache;
 
-extern spinlock_t kvm_lock;
+extern struct mutex kvm_lock;
 extern struct list_head vm_list;
 
 struct kvm_io_range {
@@ -870,7 +867,7 @@ int kvm_arch_hardware_enable(void);
 void kvm_arch_hardware_disable(void);
 int kvm_arch_hardware_setup(void);
 void kvm_arch_hardware_unsetup(void);
-void kvm_arch_check_processor_compat(void *rtn);
+int kvm_arch_check_processor_compat(void);
 int kvm_arch_vcpu_runnable(struct kvm_vcpu *vcpu);
 bool kvm_arch_vcpu_in_kernel(struct kvm_vcpu *vcpu);
 int kvm_arch_vcpu_should_kick(struct kvm_vcpu *vcpu);

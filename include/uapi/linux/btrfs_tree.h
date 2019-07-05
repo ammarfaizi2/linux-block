@@ -300,8 +300,10 @@
 #define BTRFS_CSUM_SIZE 32
 
 /* csum types */
-#define BTRFS_CSUM_TYPE_CRC32	0
-
+enum {
+	BTRFS_CSUM_TYPE_CRC32	= 0,
+	BTRFS_CSUM_TYPE_SHA256	= 1,
+};
 /*
  * flags definitions for directory entry item type
  *
@@ -865,6 +867,8 @@ enum btrfs_raid_types {
 					 BTRFS_BLOCK_GROUP_RAID10)
 #define BTRFS_BLOCK_GROUP_RAID56_MASK	(BTRFS_BLOCK_GROUP_RAID5 |   \
 					 BTRFS_BLOCK_GROUP_RAID6)
+
+#define BTRFS_BLOCK_GROUP_RAID1_MASK	(BTRFS_BLOCK_GROUP_RAID1)
 
 /*
  * We need a bit for restriper to be able to tell when chunks of type

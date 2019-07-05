@@ -62,6 +62,13 @@ static void gfs2_tune_init(struct gfs2_tune *gt)
 	gt->gt_complain_secs = 10;
 }
 
+void free_sbd(struct gfs2_sbd *sdp)
+{
+	if (sdp->sd_lkstats)
+		free_percpu(sdp->sd_lkstats);
+	kfree(sdp);
+}
+
 static struct gfs2_sbd *init_sbd(struct super_block *sb)
 {
 	struct gfs2_sbd *sdp;
@@ -73,10 +80,8 @@ static struct gfs2_sbd *init_sbd(struct super_block *sb)
 
 	sdp->sd_vfs = sb;
 	sdp->sd_lkstats = alloc_percpu(struct gfs2_pcpu_lkstats);
-	if (!sdp->sd_lkstats) {
-		kfree(sdp);
-		return NULL;
-	}
+	if (!sdp->sd_lkstats)
+		goto fail;
 	sb->s_fs_info = sdp;
 
 	set_bit(SDF_NOJOURNALID, &sdp->sd_flags);
@@ -135,8 +140,11 @@ static struct gfs2_sbd *init_sbd(struct super_block *sb)
 	mutex_init(&sdp->sd_freeze_mutex);
 
 	return sdp;
-}
 
+fail:
+	free_sbd(sdp);
+	return NULL;
+}
 
 /**
  * gfs2_check_sb - Check superblock
@@ -569,7 +577,7 @@ static int gfs2_jindex_hold(struct gfs2_sbd *sdp, struct gfs2_holder *ji_gh)
 
 		INIT_WORK(&jd->jd_work, gfs2_recover_func);
 		jd->jd_inode = gfs2_lookupi(sdp->sd_jindex, &name, 1);
-		if (!jd->jd_inode || IS_ERR(jd->jd_inode)) {
+		if (IS_ERR_OR_NULL(jd->jd_inode)) {
 			if (!jd->jd_inode)
 				error = -ENOENT;
 			else
@@ -997,7 +1005,7 @@ hostdata_error:
 void gfs2_lm_unmount(struct gfs2_sbd *sdp)
 {
 	const struct lm_lockops *lm = sdp->sd_lockstruct.ls_ops;
-	if (likely(!test_bit(SDF_SHUTDOWN, &sdp->sd_flags)) &&
+	if (likely(!test_bit(SDF_WITHDRAWN, &sdp->sd_flags)) &&
 	    lm->lm_unmount)
 		lm->lm_unmount(sdp);
 }
@@ -1088,8 +1096,7 @@ static int gfs2_fill_super(struct super_block *sb, struct fs_context *fc)
 	if (error) {
 		/* In this case, we haven't initialized sysfs, so we have to
 		   manually free the sdp. */
-		free_percpu(sdp->sd_lkstats);
-		kfree(sdp);
+		free_sbd(sdp);
 		sb->s_fs_info = NULL;
 		return error;
 	}
@@ -1192,7 +1199,6 @@ fail_lm:
 	gfs2_lm_unmount(sdp);
 fail_debug:
 	gfs2_delete_debugfs_file(sdp);
-	free_percpu(sdp->sd_lkstats);
 	/* gfs2_sys_fs_del must be the last thing we do, since it causes
 	 * sysfs to call function gfs2_sbd_release, which frees sdp. */
 	gfs2_sys_fs_del(sdp);
@@ -1443,7 +1449,7 @@ static int gfs2_reconfigure(struct fs_context *fc)
 	struct gfs2_args *oldargs = &sdp->sd_args;
 	struct gfs2_args *newargs = fc->fs_private;
 	struct gfs2_tune *gt = &sdp->sd_tune;
-	int error;
+	int error = 0;
 
 	sync_filesystem(sb);
 
@@ -1486,16 +1492,12 @@ static int gfs2_reconfigure(struct fs_context *fc)
 	if ((sb->s_flags ^ fc->sb_flags) & SB_RDONLY) {
 		if (fc->sb_flags & SB_RDONLY) {
 			error = gfs2_make_fs_ro(sdp);
-			if (error) {
+			if (error)
 				errorf(fc, "gfs2: unable to remount read-only");
-				return error;
-			}
 		} else {
 			error = gfs2_make_fs_rw(sdp);
-			if (error) {
+			if (error)
 				errorf(fc, "gfs2: unable to remount read-write");
-				return error;
-			}
 		}
 	}
 	sdp->sd_args = *newargs;
@@ -1522,7 +1524,7 @@ static int gfs2_reconfigure(struct fs_context *fc)
 	spin_unlock(&gt->gt_spin);
 
 	gfs2_online_uevent(sdp);
-	return 0;
+	return error;
 }
 
 static const struct fs_context_operations gfs2_context_ops = {
@@ -1626,7 +1628,6 @@ static void gfs2_kill_sb(struct super_block *sb)
 	sdp->sd_root_dir = NULL;
 	sdp->sd_master_dir = NULL;
 	shrink_dcache_sb(sb);
-	free_percpu(sdp->sd_lkstats);
 	kill_block_super(sb);
 }
 

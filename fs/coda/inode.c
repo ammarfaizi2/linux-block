@@ -29,7 +29,7 @@
 #include <linux/vmalloc.h>
 
 #include <linux/coda.h>
-#include <linux/coda_psdev.h>
+#include "coda_psdev.h"
 #include "coda_linux.h"
 #include "coda_cache.h"
 
@@ -271,6 +271,7 @@ static void coda_put_super(struct super_block *sb)
 	vcp->vc_sb = NULL;
 	sb->s_fs_info = NULL;
 	mutex_unlock(&vcp->vc_mutex);
+	mutex_destroy(&vcp->vc_mutex);
 
 	pr_info("Bye bye.\n");
 }
