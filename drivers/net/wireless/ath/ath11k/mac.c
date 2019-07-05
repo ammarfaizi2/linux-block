@@ -1623,8 +1623,17 @@ static void ath11k_mac_op_bss_info_changed(struct ieee80211_hw *hw,
 {
 	struct ath11k *ar = hw->priv;
 	struct ath11k_vif *arvif = ath11k_vif_to_arvif(vif);
+	struct cfg80211_chan_def def;
 	u32 param_id, param_value;
+	enum nl80211_band band;
+	u32 vdev_param;
+	int mcast_rate;
+	u32 preamble;
+	u16 hw_value;
+	u16 bitrate;
 	int ret = 0;
+	u8 rateidx;
+	u8 rate;
 
 	mutex_lock(&ar->conf_mutex);
 
@@ -1768,6 +1777,50 @@ static void ath11k_mac_op_bss_info_changed(struct ieee80211_hw *hw,
 
 		arvif->txpower = info->txpower;
 		ath11k_mac_txpower_recalc(ar);
+	}
+
+	if (changed & BSS_CHANGED_MCAST_RATE &&
+	    !ath11k_mac_vif_chan(arvif->vif, &def)) {
+		band = def.chan->band;
+		mcast_rate = vif->bss_conf.mcast_rate[band];
+
+		if (mcast_rate > 0)
+			rateidx = mcast_rate - 1;
+		else
+			rateidx = ffs(vif->bss_conf.basic_rates) - 1;
+
+		if (ar->pdev->cap.supported_bands & WMI_HOST_WLAN_5G_CAP)
+			rateidx += ATH11K_MAC_FIRST_OFDM_RATE_IDX;
+
+		bitrate = ath11k_legacy_rates[rateidx].bitrate;
+		hw_value = ath11k_legacy_rates[rateidx].hw_value;
+
+		if (ath11k_mac_bitrate_is_cck(bitrate))
+			preamble = WMI_RATE_PREAMBLE_CCK;
+		else
+			preamble = WMI_RATE_PREAMBLE_OFDM;
+
+		rate = ATH11K_HW_RATE_CODE(hw_value, 0, preamble);
+
+		ath11k_dbg(ar->ab, ATH11K_DBG_MAC,
+			   "mac vdev %d mcast_rate %x\n",
+			   arvif->vdev_id, rate);
+
+		vdev_param = WMI_VDEV_PARAM_MCAST_DATA_RATE;
+		ret = ath11k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id,
+						    vdev_param, rate);
+		if (ret)
+			ath11k_warn(ar->ab,
+				    "failed to set mcast rate on vdev %i: %d\n",
+				    arvif->vdev_id,  ret);
+
+		vdev_param = WMI_VDEV_PARAM_BCAST_DATA_RATE;
+		ret = ath11k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id,
+						    vdev_param, rate);
+		if (ret)
+			ath11k_warn(ar->ab,
+				    "failed to set bcast rate on vdev %i: %d\n",
+				    arvif->vdev_id,  ret);
 	}
 
 	mutex_unlock(&ar->conf_mutex);
