@@ -4167,6 +4167,15 @@ int fsinfo_generic_mount_info(struct path *path, struct fsinfo_context *ctx)
 	p->mnt_unique_id	= m->mnt_unique_id;
 	p->mnt_id		= m->mnt_id;
 	p->parent_id		= m->mnt_parent->mnt_id;
+#ifdef CONFIG_SB_NOTIFICATIONS
+	p->sb_changes		= atomic_read(&sb->s_change_counter);
+	p->sb_notifications	= atomic_read(&sb->s_notify_counter);
+#endif
+#ifdef CONFIG_MOUNT_NOTIFICATIONS
+	p->mnt_attr_changes	= atomic_read(&m->mnt_attr_changes);
+	p->mnt_topology_changes	= atomic_read(&m->mnt_topology_changes);
+	p->mnt_subtree_notifications = atomic_read(&m->mnt_subtree_notifications);
+#endif
 
 	get_fs_root(current->fs, &root);
 	if (path->mnt == root.mnt) {
@@ -4293,17 +4302,29 @@ int fsinfo_generic_mount_point_full(struct path *path, struct fsinfo_context *ct
 static void fsinfo_store_mount(struct fsinfo_context *ctx, const struct mount *p)
 {
 	struct fsinfo_mount_child record = {};
+	const struct super_block *sb = p->mnt.mnt_sb;
 	unsigned int usage = ctx->usage;
 
 	if (ctx->usage >= INT_MAX)
 		return;
 	ctx->usage = usage + sizeof(record);
+	if (!ctx->buffer || ctx->usage > ctx->buf_size)
+		return;
 
-	if (ctx->buffer && ctx->usage <= ctx->buf_size) {
-		record.mnt_unique_id	= p->mnt_unique_id;
-		record.mnt_id		= p->mnt_id;
-		memcpy(ctx->buffer + usage, &record, sizeof(record));
-	}
+	record.mnt_unique_id	= p->mnt_unique_id;
+	record.mnt_id		= p->mnt_id;
+	record.notify_sum	= 0;
+#ifdef CONFIG_SB_NOTIFICATIONS
+	record.notify_sum	+= (atomic_read(&sb->s_change_counter) +
+				    atomic_read(&sb->s_notify_counter));
+#endif
+#ifdef CONFIG_MOUNT_NOTIFICATIONS
+	record.notify_sum	+= (atomic_read(&p->mnt_attr_changes) +
+				    atomic_read(&p->mnt_topology_changes) +
+				    atomic_read(&p->mnt_subtree_notifications));
+#endif
+
+	memcpy(ctx->buffer + usage, &record, sizeof(record));
 }
 
 /*
