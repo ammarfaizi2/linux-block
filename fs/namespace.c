@@ -1,8 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  linux/fs/namespace.c
  *
  * (C) Copyright Al Viro 2000, 2001
- *	Released under GPL v2.
  *
  * Based on code from fs/super.c, copyright Linus Torvalds and others.
  * Heavily rewritten.
@@ -2106,6 +2106,7 @@ static int attach_recursive_mnt(struct mount *source_mnt,
 		/* Notice when we are propagating across user namespaces */
 		if (child->mnt_parent->mnt_ns->user_ns != user_ns)
 			lock_mnt_tree(child);
+		child->mnt.mnt_flags &= ~MNT_LOCKED;
 		commit_tree(child);
 	}
 	put_mountpoint(smp);
@@ -2596,11 +2597,12 @@ static int do_move_mount(struct path *old_path, struct path *new_path)
 	if (!check_mnt(p))
 		goto out;
 
-	/* The thing moved should be either ours or completely unattached. */
-	if (attached && !check_mnt(old))
+	/* The thing moved must be mounted... */
+	if (!is_mounted(&old->mnt))
 		goto out;
 
-	if (!attached && !(ns && is_anon_ns(ns)))
+	/* ... and either ours or the root of anon namespace */
+	if (!(attached ? check_mnt(old) : is_anon_ns(ns)))
 		goto out;
 
 	if (old->mnt.mnt_flags & MNT_LOCKED)
@@ -3448,6 +3450,7 @@ SYSCALL_DEFINE3(fsmount, int, fs_fd, unsigned int, flags,
 	ns->root = mnt;
 	ns->mounts = 1;
 	list_add(&mnt->mnt_list, &ns->list);
+	mntget(newmount.mnt);
 
 	/* Attach to an apparent O_PATH fd with a note that we need to unmount
 	 * it, not just simply put it.
