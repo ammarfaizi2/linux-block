@@ -1616,6 +1616,62 @@ static void ath11k_bss_disassoc(struct ieee80211_hw *hw,
 	/* TODO: cancel connection_loss_work */
 }
 
+static u32 ath11k_mac_get_rate_hw_value(int bitrate)
+{
+	u32 preamble;
+	u16 hw_value;
+	int rate;
+	size_t i;
+
+	if (ath11k_mac_bitrate_is_cck(bitrate))
+		preamble = WMI_RATE_PREAMBLE_CCK;
+	else
+		preamble = WMI_RATE_PREAMBLE_OFDM;
+
+	for (i = 0; i < ARRAY_SIZE(ath11k_legacy_rates); i++) {
+		if (ath11k_legacy_rates[i].bitrate != bitrate)
+			continue;
+
+		hw_value = ath11k_legacy_rates[i].hw_value;
+		rate = ATH11K_HW_RATE_CODE(hw_value, 0, preamble);
+
+		return rate;
+	}
+
+	return -EINVAL;
+}
+
+static void ath11k_recalculate_mgmt_rate(struct ath11k *ar,
+					 struct ieee80211_vif *vif,
+					 struct cfg80211_chan_def *def)
+{
+	struct ath11k_vif *arvif = (void *)vif->drv_priv;
+	const struct ieee80211_supported_band *sband;
+	u8 basic_rate_idx;
+	int hw_rate_code;
+	u32 vdev_param;
+	u16 bitrate;
+	int ret;
+
+	lockdep_assert_held(&ar->conf_mutex);
+
+	sband = ar->hw->wiphy->bands[def->chan->band];
+	basic_rate_idx = ffs(vif->bss_conf.basic_rates) - 1;
+	bitrate = sband->bitrates[basic_rate_idx].bitrate;
+
+	hw_rate_code = ath11k_mac_get_rate_hw_value(bitrate);
+	if (hw_rate_code < 0) {
+		ath11k_warn(ar->ab, "bitrate not supported %d\n", bitrate);
+		return;
+	}
+
+	vdev_param = WMI_VDEV_PARAM_MGMT_RATE;
+	ret = ath11k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id, vdev_param,
+					    hw_rate_code);
+	if (ret)
+		ath11k_warn(ar->ab, "failed to set mgmt tx rate %d\n", ret);
+}
+
 static void ath11k_mac_op_bss_info_changed(struct ieee80211_hw *hw,
 					   struct ieee80211_vif *vif,
 					   struct ieee80211_bss_conf *info,
@@ -1822,6 +1878,10 @@ static void ath11k_mac_op_bss_info_changed(struct ieee80211_hw *hw,
 				    "failed to set bcast rate on vdev %i: %d\n",
 				    arvif->vdev_id,  ret);
 	}
+
+	if (changed & BSS_CHANGED_BASIC_RATES &&
+	    !ath11k_mac_vif_chan(arvif->vif, &def))
+		ath11k_recalculate_mgmt_rate(ar, vif, &def);
 
 	mutex_unlock(&ar->conf_mutex);
 }
