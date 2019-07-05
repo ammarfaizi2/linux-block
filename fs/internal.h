@@ -103,6 +103,7 @@ extern struct file *alloc_empty_file_noaccount(int, const struct cred *);
 /*
  * super.c
  */
+extern atomic64_t vfs_unique_counter;
 extern int reconfigure_super(struct fs_context *);
 extern bool trylock_super(struct super_block *sb);
 extern struct super_block *user_get_super(dev_t);
