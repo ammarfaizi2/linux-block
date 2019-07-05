@@ -579,7 +579,7 @@ int main(int argc, char **argv)
 	bool meta = false;
 	int raw = 0, opt, Nth, Mth;
 
-	while ((opt = getopt(argc, argv, "Madlr"))) {
+	while ((opt = getopt(argc, argv, "Madmlr"))) {
 		switch (opt) {
 		case 'M':
 			meta = true;
@@ -595,6 +595,10 @@ int main(int argc, char **argv)
 			params.resolve_flags &= ~RESOLVE_NO_TRAILING_SYMLINKS;
 			params.flags = FSINFO_FLAGS_QUERY_PATH;
 			continue;
+		case 'm':
+			params.resolve_flags = 0;
+			params.flags = FSINFO_FLAGS_QUERY_MOUNT;
+			continue;
 		case 'r':
 			raw = 1;
 			continue;
@@ -607,6 +611,7 @@ int main(int argc, char **argv)
 
 	if (argc != 1) {
 		printf("Format: test-fsinfo [-Madlr] <path>\n");
+		printf("Format: test-fsinfo [-Mdr] -m <mnt_id>\n");
 		exit(2);
 	}
 
