@@ -100,6 +100,9 @@ struct fsinfo_mount_info {
 	__u64	mnt_unique_id;		/* Kernel-lifetime unique mount ID */
 	__u32	mnt_id;			/* Mount identifier (use with AT_FSINFO_MOUNTID_PATH) */
 	__u32	attr;			/* MOUNT_ATTR_* flags */
+	__u64	mnt_attr_changes;	/* Number of attribute changes to this mount. */
+	__u64	mnt_topology_changes;	/* Number of topology changes to this mount. */
+	__u64	mnt_subtree_notifications; /* Number of notifications in mount subtree */
 };
 
 #define FSINFO_ATTR_MOUNT_INFO__STRUCT struct fsinfo_mount_info
@@ -113,6 +116,7 @@ struct fsinfo_mount_topology {
 	__u32	dependent_source_id;	/* Dependent: source mount group ID */
 	__u32	dependent_clone_of_id;	/* Dependent: ID of mount this was cloned from */
 	__u32	propagation_type;	/* MOUNT_PROPAGATION_* type */
+	__u64	mnt_topology_changes;	/* Number of topology changes to this mount. */
 };
 
 #define FSINFO_ATTR_MOUNT_TOPOLOGY__STRUCT struct fsinfo_mount_topology
@@ -125,6 +129,9 @@ struct fsinfo_mount_child {
 	__u64	mnt_unique_id;		/* Kernel-lifetime unique mount ID */
 	__u32	mnt_id;			/* Mount identifier (use with AT_FSINFO_MOUNTID_PATH) */
 	__u32	parent_id;		/* Parent mount identifier */
+	__u64	mnt_notify_sum;		/* Sum of mnt_attr_changes, mnt_topology_changes and
+					 * mnt_subtree_notifications.
+					 */
 };
 
 #define FSINFO_ATTR_MOUNT_CHILDREN__STRUCT struct fsinfo_mount_child

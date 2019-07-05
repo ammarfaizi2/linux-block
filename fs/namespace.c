@@ -4282,6 +4282,17 @@ int fsinfo_generic_mount_info(struct path *path, struct fsinfo_context *ctx)
 	p->mnt_unique_id	= m->mnt_unique_id;
 	p->mnt_id		= m->mnt_id;
 
+#ifdef CONFIG_MOUNT_NOTIFICATIONS
+	p->mnt_subtree_notifications = atomic_long_read(&m->mnt_subtree_notifications);
+	p->mnt_topology_changes	= atomic_long_read(&m->mnt_topology_changes);
+	p->mnt_attr_changes	= atomic_long_read(&m->mnt_attr_changes);
+#endif
+
+	/* Record the counters before reading the attributes as we're not
+	 * holding a lock.  Paired with a write barrier in notify_mount().
+	 */
+	smp_rmb();
+
 	flags = READ_ONCE(m->mnt.mnt_flags);
 	if (flags & MNT_READONLY)
 		p->attr |= MOUNT_ATTR_RDONLY;
@@ -4319,6 +4330,9 @@ int fsinfo_generic_mount_topology(struct path *path, struct fsinfo_context *ctx)
 
 	m = real_mount(path->mnt);
 
+#ifdef CONFIG_MOUNT_NOTIFICATIONS
+	p->mnt_topology_changes	= atomic_long_read(&m->mnt_topology_changes);
+#endif
 	p->parent_id = m->mnt_parent->mnt_id;
 
 	if (path->mnt == root.mnt) {
@@ -4445,6 +4459,13 @@ static void fsinfo_store_mount(struct fsinfo_context *ctx, const struct mount *p
 	record.mnt_unique_id	= p->mnt_unique_id;
 	record.mnt_id		= p->mnt_id;
 	record.parent_id	= is_root ? p->mnt_id : p->mnt_parent->mnt_id;
+
+#ifdef CONFIG_MOUNT_NOTIFICATIONS
+	record.mnt_notify_sum	= (atomic_long_read(&p->mnt_attr_changes) +
+				   atomic_long_read(&p->mnt_topology_changes) +
+				   atomic_long_read(&p->mnt_subtree_notifications));
+#endif
+
 	memcpy(ctx->buffer + usage, &record, sizeof(record));
 }
 
