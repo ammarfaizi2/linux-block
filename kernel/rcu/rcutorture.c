@@ -2190,6 +2190,7 @@ rcu_torture_cleanup(void)
 		 cur_ops->name, gp_seq, flags);
 	torture_stop_kthread(rcu_torture_stats, stats_task);
 	torture_stop_kthread(rcu_torture_fqs, fqs_task);
+	pr_alert("%s: Removing CPU hotplug notifier.\n", cur_ops->name);
 	if (rcu_torture_can_boost())
 		cpuhp_remove_state(rcutor_hp);
 
@@ -2197,6 +2198,7 @@ rcu_torture_cleanup(void)
 	 * Wait for all RCU callbacks to fire, then do torture-type-specific
 	 * cleanup operations.
 	 */
+	pr_alert("%s: Executing callback barrier.\n", cur_ops->name);
 	if (cur_ops->cb_barrier != NULL)
 		cur_ops->cb_barrier();
 	if (cur_ops->cleanup != NULL)
