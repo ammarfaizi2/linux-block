@@ -283,7 +283,6 @@ static inline unsigned int ioremap_max_order(void)
 #define IOREMAP_MAX_ORDER ioremap_max_order()
 
 extern unsigned long __kernel_virt_start;
-extern unsigned long __kernel_virt_size;
 extern unsigned long __kernel_io_start;
 extern unsigned long __kernel_io_end;
 #define KERN_VIRT_START __kernel_virt_start
@@ -1349,6 +1348,27 @@ static inline bool is_pte_rw_upgrade(unsigned long old_val, unsigned long new_va
 		return true;
 
 	return false;
+}
+
+/*
+ * Like pmd_huge() and pmd_large(), but works regardless of config options
+ */
+#define pmd_is_leaf pmd_is_leaf
+static inline bool pmd_is_leaf(pmd_t pmd)
+{
+	return !!(pmd_raw(pmd) & cpu_to_be64(_PAGE_PTE));
+}
+
+#define pud_is_leaf pud_is_leaf
+static inline bool pud_is_leaf(pud_t pud)
+{
+	return !!(pud_raw(pud) & cpu_to_be64(_PAGE_PTE));
+}
+
+#define pgd_is_leaf pgd_is_leaf
+static inline bool pgd_is_leaf(pgd_t pgd)
+{
+	return !!(pgd_raw(pgd) & cpu_to_be64(_PAGE_PTE));
 }
 
 #endif /* __ASSEMBLY__ */
