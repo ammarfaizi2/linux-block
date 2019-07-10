@@ -194,8 +194,10 @@ struct request {
 
 	struct gendisk *rq_disk;
 	struct hd_struct *part;
+#ifdef CONFIG_BLK_CGROUP_IOCOST
 	/* Time that the first bio started allocating this request. */
 	u64 pre_start_time_ns;
+#endif
 	/* Time that this request was allocated for this IO. */
 	u64 start_time_ns;
 	/* Time that I/O was submitted to the device. */
@@ -635,8 +637,13 @@ bool blk_queue_flag_test_and_set(unsigned int flag, struct request_queue *q);
 	test_bit(QUEUE_FLAG_SCSI_PASSTHROUGH, &(q)->queue_flags)
 #define blk_queue_pci_p2pdma(q)	\
 	test_bit(QUEUE_FLAG_PCI_P2PDMA, &(q)->queue_flags)
+
+#ifdef CONFIG_BLK_CGROUP_IOCOST
 #define blk_queue_rec_prestart(q)	\
 	test_bit(QUEUE_FLAG_REC_PRESTART, &(q)->queue_flags)
+#else
+#define blk_queue_rec_prestart(q)		false
+#endif
 
 #define blk_noretry_request(rq) \
 	((rq)->cmd_flags & (REQ_FAILFAST_DEV|REQ_FAILFAST_TRANSPORT| \
