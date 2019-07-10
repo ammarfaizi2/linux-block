@@ -124,6 +124,7 @@ struct hal_rx_mon_ppdu_info {
 	u8 rssi_comb;
 	u8 tid;
 	u8 reception_type;
+	u64 rx_duration;
 };
 
 #define HAL_RX_PPDU_START_INFO0_PPDU_ID		GENMASK(15, 0)
@@ -273,6 +274,13 @@ struct hal_rx_mpdu_info {
 	__le32 rsvd0;
 	__le32 info0;
 	__le32 rsvd1[21];
+} __packed;
+
+#define HAL_RX_PPDU_END_DURATION	GENMASK(23, 0)
+struct hal_rx_ppdu_end_duration {
+	__le32 rsvd0[9];
+	__le32 info0;
+	__le32 rsvd1[4];
 } __packed;
 
 struct hal_rx_rxpcu_classification_overview {

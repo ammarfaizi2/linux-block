@@ -1143,6 +1143,14 @@ ath11k_hal_rx_parse_mon_status_tlv(struct ath11k_base *ab,
 			ppdu_info->peer_id = peer_id;
 		break;
 	}
+	case HAL_RXPCU_PPDU_END_INFO: {
+		struct hal_rx_ppdu_end_duration *ppdu_rx_duration =
+			(struct hal_rx_ppdu_end_duration *)tlv_data;
+		ppdu_info->rx_duration =
+			FIELD_GET(HAL_RX_PPDU_END_DURATION,
+				  __le32_to_cpu(ppdu_rx_duration->info0));
+		break;
+	}
 	case HAL_DUMMY:
 		return HAL_RX_MON_STATUS_BUF_DONE;
 	case HAL_RX_PPDU_END_STATUS_DONE:

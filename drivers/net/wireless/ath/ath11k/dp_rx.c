@@ -2377,6 +2377,8 @@ static void ath11k_dp_rx_update_peer_stats(struct ath11k_sta *arsta,
 	rx_stats->num_mpdu_fcs_err += ppdu_info->num_mpdu_fcs_err;
 
 	arsta->rssi_comb = ppdu_info->rssi_comb;
+	rx_stats->rx_duration += ppdu_info->rx_duration;
+	arsta->rx_duration = rx_stats->rx_duration;
 }
 
 static struct sk_buff *ath11k_dp_rx_alloc_mon_status_buf(struct ath11k_base *ab,

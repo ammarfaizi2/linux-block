@@ -136,7 +136,9 @@ const struct htt_rx_ring_tlv_filter ath11k_mac_mon_status_filter_default = {
 		     HTT_RX_FILTER_TLV_FLAGS_PPDU_END_STATUS_DONE,
 	.pkt_filter_flags0 = HTT_RX_FP_MGMT_FILTER_FLAGS0,
 	.pkt_filter_flags1 = HTT_RX_FP_MGMT_FILTER_FLAGS1,
-	.pkt_filter_flags3 = HTT_RX_FP_DATA_FILTER_FLASG3
+	.pkt_filter_flags2 = HTT_RX_FP_CTRL_FILTER_FLASG2,
+	.pkt_filter_flags3 = HTT_RX_FP_DATA_FILTER_FLASG3 |
+			     HTT_RX_FP_CTRL_FILTER_FLASG3
 };
 
 #define ATH11K_MAC_FIRST_OFDM_RATE_IDX 4
