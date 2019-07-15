@@ -2097,6 +2097,7 @@ static void ath11k_dp_rx_pre_deliver_amsdu(struct ath11k *ar,
 		} else {
 			rxs->flag |= RX_FLAG_ALLOW_SAME_PN;
 		}
+		rxs->flag |= RX_FLAG_SKIP_MONITOR;
 
 		status = IEEE80211_SKB_RXCB(msdu);
 		*status = *rxs;
