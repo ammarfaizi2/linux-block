@@ -3920,6 +3920,7 @@ static int ath11k_dp_rx_mon_deliver(struct ath11k *ar, u32 mac_id,
 
 	header = mon_skb;
 
+	rxs->flag = 0;
 	do {
 		skb_next = mon_skb->next;
 		if (!skb_next)
@@ -3941,6 +3942,7 @@ static int ath11k_dp_rx_mon_deliver(struct ath11k *ar, u32 mac_id,
 		ath11k_dp_rx_deliver_msdu(ar, napi, mon_skb);
 		mon_skb = skb_next;
 	} while (mon_skb && (mon_skb != tail_msdu));
+	rxs->flag = 0;
 
 	return 0;
 
