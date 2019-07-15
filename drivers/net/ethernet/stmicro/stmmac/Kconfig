@@ -3,7 +3,7 @@ config STMMAC_ETH
 	tristate "STMicroelectronics 10/100/1000/EQOS Ethernet driver"
 	depends on HAS_IOMEM && HAS_DMA
 	select MII
-	select PHYLIB
+	select PHYLINK
 	select CRC32
 	imply PTP_1588_CLOCK
 	select RESET_CONTROLLER
@@ -15,6 +15,7 @@ if STMMAC_ETH
 
 config STMMAC_SELFTESTS
 	bool "Support for STMMAC Selftests"
+	depends on INET
 	depends on STMMAC_ETH
 	default n
 	---help---
@@ -40,7 +41,6 @@ if STMMAC_PLATFORM
 
 config DWMAC_DWC_QOS_ETH
 	tristate "Support for snps,dwc-qos-ethernet.txt DT binding."
-	select PHYLIB
 	select CRC32
 	select MII
 	depends on OF && HAS_DMA

@@ -1,13 +1,9 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  *	Linux INET6 implementation 
  *
  *	Authors:
  *	Pedro Roque		<roque@di.fc.ul.pt>	
- *
- *	This program is free software; you can redistribute it and/or
- *      modify it under the terms of the GNU General Public License
- *      as published by the Free Software Foundation; either version
- *      2 of the License, or (at your option) any later version.
  */
 
 #ifndef _IP6_FIB_H
@@ -53,6 +49,7 @@ struct fib6_config {
 	u16		fc_delete_all_nh : 1,
 			fc_ignore_dev_down:1,
 			__unused : 14;
+	u32		fc_nh_id;
 
 	struct in6_addr	fc_dst;
 	struct in6_addr	fc_src;
@@ -146,7 +143,10 @@ struct fib6_info {
 	 * destination, but not the same gateway. nsiblings is just a cache
 	 * to speed up lookup.
 	 */
-	struct list_head		fib6_siblings;
+	union {
+		struct list_head	fib6_siblings;
+		struct list_head	nh_list;
+	};
 	unsigned int			fib6_nsiblings;
 
 	refcount_t			fib6_ref;
@@ -170,6 +170,7 @@ struct fib6_info {
 					unused:3;
 
 	struct rcu_head			rcu;
+	struct nexthop			*nh;
 	struct fib6_nh			fib6_nh[0];
 };
 
@@ -262,8 +263,7 @@ static inline u32 rt6_get_cookie(const struct rt6_info *rt)
 	rcu_read_lock();
 
 	from = rcu_dereference(rt->from);
-	if (from && (rt->rt6i_flags & RTF_PCPU ||
-	    unlikely(!list_empty(&rt->rt6i_uncached))))
+	if (from)
 		fib6_get_cookie_safe(from, &cookie);
 
 	rcu_read_unlock();
@@ -316,6 +316,7 @@ struct fib6_walker {
 	enum fib6_walk_state state;
 	unsigned int skip;
 	unsigned int count;
+	unsigned int skip_in_node;
 	int (*func)(struct fib6_walker *);
 	void *args;
 };
@@ -377,6 +378,7 @@ typedef struct rt6_info *(*pol_lookup_t)(struct net *,
 struct fib6_entry_notifier_info {
 	struct fib_notifier_info info; /* must be first */
 	struct fib6_info *rt;
+	unsigned int nsiblings;
 };
 
 /*
@@ -441,11 +443,6 @@ void rt6_get_prefsrc(const struct rt6_info *rt, struct in6_addr *addr)
 	rcu_read_unlock();
 }
 
-static inline struct net_device *fib6_info_nh_dev(const struct fib6_info *f6i)
-{
-	return f6i->fib6_nh->fib_nh_dev;
-}
-
 int fib6_nh_init(struct net *net, struct fib6_nh *fib6_nh,
 		 struct fib6_config *cfg, gfp_t gfp_flags,
 		 struct netlink_ext_ack *extack);
@@ -455,6 +452,11 @@ int call_fib6_entry_notifiers(struct net *net,
 			      enum fib_event_type event_type,
 			      struct fib6_info *rt,
 			      struct netlink_ext_ack *extack);
+int call_fib6_multipath_entry_notifiers(struct net *net,
+					enum fib_event_type event_type,
+					struct fib6_info *rt,
+					unsigned int nsiblings,
+					struct netlink_ext_ack *extack);
 void fib6_rt_update(struct net *net, struct fib6_info *rt,
 		    struct nl_info *info);
 void inet6_rt_notify(int event, struct fib6_info *rt, struct nl_info *info,

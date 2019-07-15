@@ -1,10 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * inet fragments management
- *
- *		This program is free software; you can redistribute it and/or
- *		modify it under the terms of the GNU General Public License
- *		as published by the Free Software Foundation; either version
- *		2 of the License, or (at your option) any later version.
  *
  * 		Authors:	Pavel Emelyanov <xemul@openvz.org>
  *				Started as consolidation of ipv4/ip_fragment.c,
@@ -110,14 +106,18 @@ int inet_frags_init(struct inet_frags *f)
 	if (!f->frags_cachep)
 		return -ENOMEM;
 
+	refcount_set(&f->refcnt, 1);
+	init_completion(&f->completion);
 	return 0;
 }
 EXPORT_SYMBOL(inet_frags_init);
 
 void inet_frags_fini(struct inet_frags *f)
 {
-	/* We must wait that all inet_frag_destroy_rcu() have completed. */
-	rcu_barrier();
+	if (refcount_dec_and_test(&f->refcnt))
+		complete(&f->completion);
+
+	wait_for_completion(&f->completion);
 
 	kmem_cache_destroy(f->frags_cachep);
 	f->frags_cachep = NULL;
@@ -145,27 +145,49 @@ static void inet_frags_free_cb(void *ptr, void *arg)
 		inet_frag_destroy(fq);
 }
 
-static void fqdir_rwork_fn(struct work_struct *work)
+static void fqdir_work_fn(struct work_struct *work)
 {
-	struct fqdir *fqdir = container_of(to_rcu_work(work),
-					   struct fqdir, destroy_rwork);
+	struct fqdir *fqdir = container_of(work, struct fqdir, destroy_work);
+	struct inet_frags *f = fqdir->f;
 
 	rhashtable_free_and_destroy(&fqdir->rhashtable, inet_frags_free_cb, NULL);
+
+	/* We need to make sure all ongoing call_rcu(..., inet_frag_destroy_rcu)
+	 * have completed, since they need to dereference fqdir.
+	 * Would it not be nice to have kfree_rcu_barrier() ? :)
+	 */
+	rcu_barrier();
+
+	if (refcount_dec_and_test(&f->refcnt))
+		complete(&f->completion);
+
 	kfree(fqdir);
 }
 
+int fqdir_init(struct fqdir **fqdirp, struct inet_frags *f, struct net *net)
+{
+	struct fqdir *fqdir = kzalloc(sizeof(*fqdir), GFP_KERNEL);
+	int res;
+
+	if (!fqdir)
+		return -ENOMEM;
+	fqdir->f = f;
+	fqdir->net = net;
+	res = rhashtable_init(&fqdir->rhashtable, &fqdir->f->rhash_params);
+	if (res < 0) {
+		kfree(fqdir);
+		return res;
+	}
+	refcount_inc(&f->refcnt);
+	*fqdirp = fqdir;
+	return 0;
+}
+EXPORT_SYMBOL(fqdir_init);
+
 void fqdir_exit(struct fqdir *fqdir)
 {
-	fqdir->high_thresh = 0; /* prevent creation of new frags */
-
-	/* paired with READ_ONCE() in inet_frag_kill() :
-	 * We want to prevent rhashtable_remove_fast() calls
-	 */
-	smp_store_release(&fqdir->dead, true);
-
-	INIT_RCU_WORK(&fqdir->destroy_rwork, fqdir_rwork_fn);
-	queue_rcu_work(system_wq, &fqdir->destroy_rwork);
-
+	INIT_WORK(&fqdir->destroy_work, fqdir_work_fn);
+	queue_work(system_wq, &fqdir->destroy_work);
 }
 EXPORT_SYMBOL(fqdir_exit);
 
@@ -179,10 +201,12 @@ void inet_frag_kill(struct inet_frag_queue *fq)
 
 		fq->flags |= INET_FRAG_COMPLETE;
 		rcu_read_lock();
-		/* This READ_ONCE() is paired with smp_store_release()
-		 * in inet_frags_exit_net().
+		/* The RCU read lock provides a memory barrier
+		 * guaranteeing that if fqdir->dead is false then
+		 * the hash table destruction will not start until
+		 * after we unlock.  Paired with inet_frags_exit_net().
 		 */
-		if (!READ_ONCE(fqdir->dead)) {
+		if (!fqdir->dead) {
 			rhashtable_remove_fast(&fqdir->rhashtable, &fq->node,
 					       fqdir->f->rhash_params);
 			refcount_dec(&fq->refcnt);

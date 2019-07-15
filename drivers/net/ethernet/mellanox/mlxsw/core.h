@@ -284,6 +284,9 @@ struct mlxsw_driver {
 				       unsigned int sb_index, u16 tc_index,
 				       enum devlink_sb_pool_type pool_type,
 				       u32 *p_cur, u32 *p_max);
+	int (*flash_update)(struct mlxsw_core *mlxsw_core,
+			    const char *file_name, const char *component,
+			    struct netlink_ext_ack *extack);
 	void (*txhdr_construct)(struct sk_buff *skb,
 				const struct mlxsw_tx_info *tx_info);
 	int (*resources_register)(struct mlxsw_core *mlxsw_core);
@@ -305,6 +308,9 @@ int mlxsw_core_kvd_sizes_get(struct mlxsw_core *mlxsw_core,
 
 void mlxsw_core_fw_flash_start(struct mlxsw_core *mlxsw_core);
 void mlxsw_core_fw_flash_end(struct mlxsw_core *mlxsw_core);
+
+u32 mlxsw_core_read_frc_h(struct mlxsw_core *mlxsw_core);
+u32 mlxsw_core_read_frc_l(struct mlxsw_core *mlxsw_core);
 
 bool mlxsw_core_res_valid(struct mlxsw_core *mlxsw_core,
 			  enum mlxsw_res_id res_id);
@@ -336,6 +342,8 @@ struct mlxsw_bus {
 			char *in_mbox, size_t in_mbox_size,
 			char *out_mbox, size_t out_mbox_size,
 			u8 *p_status);
+	u32 (*read_frc_h)(void *bus_priv);
+	u32 (*read_frc_l)(void *bus_priv);
 	u8 features;
 };
 
@@ -353,7 +361,8 @@ struct mlxsw_bus_info {
 	struct mlxsw_fw_rev fw_rev;
 	u8 vsd[MLXSW_CMD_BOARDINFO_VSD_LEN];
 	u8 psid[MLXSW_CMD_BOARDINFO_PSID_LEN];
-	u8 low_frequency;
+	u8 low_frequency:1,
+	   read_frc_capable:1;
 };
 
 struct mlxsw_hwmon;
