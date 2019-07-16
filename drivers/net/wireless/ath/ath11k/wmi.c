@@ -3366,6 +3366,9 @@ static int wmi_process_mgmt_tx_comp(struct ath11k *ar, u32 desc_id,
 
 	ieee80211_tx_status_irqsafe(ar->hw, msdu);
 
+	WARN_ON_ONCE(atomic_read(&ar->num_pending_mgmt_tx) == 0);
+	atomic_dec(&ar->num_pending_mgmt_tx);
+
 	return 0;
 }
 

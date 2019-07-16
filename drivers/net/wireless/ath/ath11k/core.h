@@ -25,6 +25,11 @@
 
 #define ATH11K_TX_MGMT_NUM_PENDING_MAX	512
 
+#define ATH11K_TX_MGMT_TARGET_MAX_SUPPORT_WMI 64
+
+/* Pending management packets threshold for dropping probe responses */
+#define ATH11K_PRB_RSP_DROP_THRESHOLD ((ATH11K_TX_MGMT_TARGET_MAX_SUPPORT_WMI * 3) / 4)
+
 #define ATH11K_INVALID_HW_MAC_ID	0xFF
 
 enum ath11k_supported_bw {
@@ -486,6 +491,7 @@ struct ath11k {
 	struct idr txmgmt_idr;
 	/* protects txmgmt_idr data */
 	spinlock_t txmgmt_idr_lock;
+	atomic_t num_pending_mgmt_tx;
 
 	/* cycle count is reported twice for each visited channel during scan.
 	 * access protected by data_lock

@@ -3400,16 +3400,31 @@ static void ath11k_mgmt_over_wmi_tx_work(struct work_struct *work)
 			ath11k_warn(ar->ab, "failed to transmit management frame %d\n",
 				    ret);
 			ieee80211_free_txskb(ar->hw, skb);
+		} else {
+			atomic_inc(&ar->num_pending_mgmt_tx);
 		}
 	}
 }
 
-static int ath11k_mac_mgmt_tx(struct ath11k *ar, struct sk_buff *skb)
+static int ath11k_mac_mgmt_tx(struct ath11k *ar, struct sk_buff *skb,
+			      bool is_prb_rsp)
 {
 	struct sk_buff_head *q = &ar->wmi_mgmt_tx_queue;
 
 	if (test_bit(ATH11K_FLAG_CRASH_FLUSH, &ar->ab->dev_flags))
 		return -ESHUTDOWN;
+
+	/* Drop probe response packets when the pending management tx
+	 * count has reached a certain threshold, so as to prioritize
+	 * other mgmt packets like auth and assoc to be sent on time
+	 * for establishing successful connections.
+	 */
+	if (is_prb_rsp &&
+	    atomic_read(&ar->num_pending_mgmt_tx) > ATH11K_PRB_RSP_DROP_THRESHOLD) {
+		ath11k_warn(ar->ab,
+			    "dropping probe response as pending queue is almost full\n");
+		return -ENOSPC;
+	}
 
 	if (skb_queue_len(q) == ATH11K_TX_MGMT_NUM_PENDING_MAX) {
 		ath11k_warn(ar->ab, "mgmt tx queue is full\n");
@@ -3431,10 +3446,12 @@ static void ath11k_mac_op_tx(struct ieee80211_hw *hw,
 	struct ieee80211_vif *vif = info->control.vif;
 	struct ath11k_vif *arvif = ath11k_vif_to_arvif(vif);
 	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *)skb->data;
+	bool is_prb_rsp;
 	int ret;
 
 	if (ieee80211_is_mgmt(hdr->frame_control)) {
-		ret = ath11k_mac_mgmt_tx(ar, skb);
+		is_prb_rsp = ieee80211_is_probe_resp(hdr->frame_control);
+		ret = ath11k_mac_mgmt_tx(ar, skb, is_prb_rsp);
 		if (ret) {
 			ath11k_warn(ar->ab, "failed to queue management frame %d\n",
 				    ret);
@@ -3609,6 +3626,8 @@ static void ath11k_mac_op_stop(struct ieee80211_hw *hw)
 	rcu_assign_pointer(ar->ab->pdevs_active[ar->pdev_idx], NULL);
 
 	synchronize_rcu();
+
+	atomic_set(&ar->num_pending_mgmt_tx, 0);
 }
 
 static void
