@@ -1009,12 +1009,6 @@ ath11k_peer_assoc_h_vht_limit(u16 tx_mcs_set,
 		case 4: /* fall through */
 		case 5: /* fall through */
 		case 6: /* fall through */
-		default:
-			WARN_ON(1);
-			/* fall through */
-		case -1:
-			mcs = IEEE80211_VHT_MCS_NOT_SUPPORTED;
-			break;
 		case 7:
 			mcs = IEEE80211_VHT_MCS_SUPPORT_0_7;
 			break;
@@ -1023,6 +1017,12 @@ ath11k_peer_assoc_h_vht_limit(u16 tx_mcs_set,
 			break;
 		case 9:
 			mcs = IEEE80211_VHT_MCS_SUPPORT_0_9;
+			break;
+		default:
+			WARN_ON(1);
+			/* fall through */
+		case -1:
+			mcs = IEEE80211_VHT_MCS_NOT_SUPPORTED;
 			break;
 		}
 
