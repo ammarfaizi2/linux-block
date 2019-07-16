@@ -3128,6 +3128,8 @@ SYSCALL_DEFINE6(io_uring_enter, unsigned int, fd, u32, to_submit,
 	if (!percpu_ref_tryget(&ctx->refs))
 		goto out_fput;
 
+	current->flags |= PF_IO_URING;
+
 	/*
 	 * For SQ polling, the thread will do all submissions and completions.
 	 * Just return the requested submit count, and wake the thread if
@@ -3148,6 +3150,7 @@ SYSCALL_DEFINE6(io_uring_enter, unsigned int, fd, u32, to_submit,
 		submitted = io_ring_submit(ctx, to_submit);
 		mutex_unlock(&ctx->uring_lock);
 	}
+	current->flags &= ~PF_IO_URING;
 	if (flags & IORING_ENTER_GETEVENTS) {
 		unsigned nr_events = 0;
 
@@ -3166,6 +3169,7 @@ out_ctx:
 	io_ring_drop_ctx_refs(ctx, 1);
 out_fput:
 	fdput(f);
+	current->flags &= ~PF_IO_URING;
 	return submitted ? submitted : ret;
 }
 

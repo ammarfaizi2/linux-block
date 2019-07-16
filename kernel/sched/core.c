@@ -3712,6 +3712,7 @@ static inline void schedule_debug(struct task_struct *prev)
 		preempt_count_set(PREEMPT_DISABLED);
 	}
 	rcu_sleep_check();
+	WARN_ON(prev->state && (prev->flags & PF_IO_URING));
 
 	profile_hit(SCHED_PROFILING, __builtin_return_address(0));
 
