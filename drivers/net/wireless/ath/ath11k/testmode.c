@@ -160,6 +160,7 @@ static int ath11k_tm_cmd_wmi(struct ath11k *ar, struct nlattr *tb[])
 
 	ret = ath11k_wmi_cmd_send(wmi, skb, cmd_id);
 	if (ret) {
+		dev_kfree_skb(skb);
 		ath11k_warn(ar->ab, "failed to transmit wmi command (testmode): %d\n",
 			    ret);
 		goto out;
