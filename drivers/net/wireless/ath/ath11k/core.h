@@ -602,7 +602,7 @@ struct ath11k_base {
 	/* To synchronize core_start/core_stop */
 	struct mutex core_lock;
 	/* Protects data like peers */
-	spinlock_t data_lock;
+	spinlock_t base_lock;
 	struct ath11k_pdev pdevs[MAX_RADIOS];
 	struct ath11k_pdev __rcu *pdevs_active[MAX_RADIOS];
 	struct ath11k_hal_reg_capabilities_ext hal_reg_cap[MAX_RADIOS];

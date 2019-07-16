@@ -156,11 +156,11 @@ void ath11k_update_per_peer_stats_from_txcompl(struct ath11k *ar,
 	int ret;
 
 	rcu_read_lock();
-	spin_lock_bh(&ab->data_lock);
+	spin_lock_bh(&ab->base_lock);
 	peer = ath11k_peer_find_by_id(ab, ts->peer_id);
 	if (!peer || !peer->sta) {
 		ath11k_warn(ab, "failed to find the peer\n");
-		spin_unlock_bh(&ab->data_lock);
+		spin_unlock_bh(&ab->base_lock);
 		rcu_read_unlock();
 		return;
 	}
@@ -177,7 +177,7 @@ void ath11k_update_per_peer_stats_from_txcompl(struct ath11k *ar,
 							    &rate_idx,
 							    &rate);
 		if (ret < 0) {
-			spin_unlock_bh(&ab->data_lock);
+			spin_unlock_bh(&ab->base_lock);
 			rcu_read_unlock();
 			return;
 		}
@@ -185,7 +185,7 @@ void ath11k_update_per_peer_stats_from_txcompl(struct ath11k *ar,
 	} else if (ts->pkt_type == HAL_TX_RATE_STATS_PKT_TYPE_11N) {
 		if (ts->mcs > 7) {
 			ath11k_warn(ab, "Invalid HT mcs index %d\n", ts->mcs);
-			spin_unlock_bh(&ab->data_lock);
+			spin_unlock_bh(&ab->base_lock);
 			rcu_read_unlock();
 			return;
 		}
@@ -197,7 +197,7 @@ void ath11k_update_per_peer_stats_from_txcompl(struct ath11k *ar,
 	} else if (ts->pkt_type == HAL_TX_RATE_STATS_PKT_TYPE_11AC) {
 		if (ts->mcs > 9) {
 			ath11k_warn(ab, "Invalid VHT mcs index %d\n", ts->mcs);
-			spin_unlock_bh(&ab->data_lock);
+			spin_unlock_bh(&ab->base_lock);
 			rcu_read_unlock();
 			return;
 		}
@@ -214,7 +214,7 @@ void ath11k_update_per_peer_stats_from_txcompl(struct ath11k *ar,
 	arsta->txrate.bw = ts->bw;
 
 	ath11k_accumulate_per_peer_tx_stats(arsta, peer_stats, rate_idx);
-	spin_unlock_bh(&ab->data_lock);
+	spin_unlock_bh(&ab->base_lock);
 	rcu_read_unlock();
 }
 
@@ -342,7 +342,7 @@ static ssize_t ath11k_dbg_sta_dump_rx_stats(struct file *file,
 		return -ENOMEM;
 
 	mutex_lock(&ar->conf_mutex);
-	spin_lock_bh(&ar->ab->data_lock);
+	spin_lock_bh(&ar->ab->base_lock);
 
 	len += scnprintf(buf + len, size - len, "RX peer stats:\n");
 	len += scnprintf(buf + len, size - len, "Num of MSDUs: %llu\n",
@@ -395,7 +395,7 @@ static ssize_t ath11k_dbg_sta_dump_rx_stats(struct file *file,
 			 rx_stats->rx_duration);
 	len += scnprintf(buf + len, size - len, "\n");
 
-	spin_unlock_bh(&ar->ab->data_lock);
+	spin_unlock_bh(&ar->ab->base_lock);
 
 	if (len > size)
 		len = size;

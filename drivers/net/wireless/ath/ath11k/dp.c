@@ -24,17 +24,17 @@ void ath11k_dp_peer_cleanup(struct ath11k *ar, int vdev_id, const u8 *addr)
 
 	/* TODO: Any other peer specific DP cleanup */
 
-	spin_lock_bh(&ab->data_lock);
+	spin_lock_bh(&ab->base_lock);
 	peer = ath11k_peer_find(ab, vdev_id, addr);
 	if (!peer) {
 		ath11k_warn(ab, "failed to lookup peer %pM on vdev %d\n",
 			    addr, vdev_id);
-		spin_unlock_bh(&ab->data_lock);
+		spin_unlock_bh(&ab->base_lock);
 		return;
 	}
 
 	ath11k_peer_rx_tid_cleanup(ar, peer);
-	spin_unlock_bh(&ab->data_lock);
+	spin_unlock_bh(&ab->base_lock);
 }
 
 int ath11k_dp_peer_setup(struct ath11k *ar, int vdev_id, const u8 *addr)

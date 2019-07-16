@@ -674,7 +674,7 @@ static void ath11k_dp_rx_tid_mem_free(struct ath11k_base *ab,
 	struct ath11k_peer *peer;
 	struct dp_rx_tid *rx_tid;
 
-	spin_lock_bh(&ab->data_lock);
+	spin_lock_bh(&ab->base_lock);
 
 	peer = ath11k_peer_find(ab, vdev_id, peer_mac);
 	if (!peer) {
@@ -693,7 +693,7 @@ static void ath11k_dp_rx_tid_mem_free(struct ath11k_base *ab,
 	rx_tid->active = false;
 
 unlock_exit:
-	spin_unlock_bh(&ab->data_lock);
+	spin_unlock_bh(&ab->base_lock);
 }
 
 int ath11k_peer_rx_tid_setup(struct ath11k *ar, const u8 *peer_mac, int vdev_id,
@@ -708,12 +708,12 @@ int ath11k_peer_rx_tid_setup(struct ath11k *ar, const u8 *peer_mac, int vdev_id,
 	dma_addr_t paddr;
 	int ret;
 
-	spin_lock_bh(&ab->data_lock);
+	spin_lock_bh(&ab->base_lock);
 
 	peer = ath11k_peer_find(ab, vdev_id, peer_mac);
 	if (!peer) {
 		ath11k_warn(ab, "failed to find the peer to set up rx tid\n");
-		spin_unlock_bh(&ab->data_lock);
+		spin_unlock_bh(&ab->base_lock);
 		return -ENOENT;
 	}
 
@@ -723,7 +723,7 @@ int ath11k_peer_rx_tid_setup(struct ath11k *ar, const u8 *peer_mac, int vdev_id,
 		paddr = rx_tid->paddr;
 		ret = ath11k_peer_rx_tid_reo_update(ar, peer, rx_tid,
 						    ba_win_sz, ssn);
-		spin_unlock_bh(&ab->data_lock);
+		spin_unlock_bh(&ab->base_lock);
 		if (ret) {
 			ath11k_warn(ab, "failed to update reo for rx tid %d\n", tid);
 			return ret;
@@ -752,7 +752,7 @@ int ath11k_peer_rx_tid_setup(struct ath11k *ar, const u8 *peer_mac, int vdev_id,
 
 	vaddr = kzalloc(hw_desc_sz + HAL_LINK_DESC_ALIGN - 1, GFP_KERNEL);
 	if (!vaddr) {
-		spin_unlock_bh(&ab->data_lock);
+		spin_unlock_bh(&ab->base_lock);
 		return -ENOMEM;
 	}
 
@@ -765,7 +765,7 @@ int ath11k_peer_rx_tid_setup(struct ath11k *ar, const u8 *peer_mac, int vdev_id,
 
 	ret = dma_mapping_error(ab->dev, paddr);
 	if (ret) {
-		spin_unlock_bh(&ab->data_lock);
+		spin_unlock_bh(&ab->base_lock);
 		goto err_mem_free;
 	}
 
@@ -774,7 +774,7 @@ int ath11k_peer_rx_tid_setup(struct ath11k *ar, const u8 *peer_mac, int vdev_id,
 	rx_tid->size = hw_desc_sz;
 	rx_tid->active = true;
 
-	spin_unlock_bh(&ab->data_lock);
+	spin_unlock_bh(&ab->base_lock);
 
 	ret = ath11k_wmi_peer_rx_reorder_queue_setup(ar, vdev_id, peer_mac,
 						     paddr, tid, 1, ba_win_sz);
@@ -820,12 +820,12 @@ int ath11k_dp_rx_ampdu_stop(struct ath11k *ar,
 	bool active;
 	int ret;
 
-	spin_lock_bh(&ab->data_lock);
+	spin_lock_bh(&ab->base_lock);
 
 	peer = ath11k_peer_find(ab, vdev_id, params->sta->addr);
 	if (!peer) {
 		ath11k_warn(ab, "failed to find the peer to stop rx aggregation\n");
-		spin_unlock_bh(&ab->data_lock);
+		spin_unlock_bh(&ab->base_lock);
 		return -ENOENT;
 	}
 
@@ -834,7 +834,7 @@ int ath11k_dp_rx_ampdu_stop(struct ath11k *ar,
 
 	ath11k_peer_rx_tid_delete(ar, peer, params->tid);
 
-	spin_unlock_bh(&ab->data_lock);
+	spin_unlock_bh(&ab->base_lock);
 
 	if (!active)
 		return 0;
@@ -1101,11 +1101,11 @@ ath11k_update_per_peer_tx_stats(struct ath11k *ar,
 	}
 
 	rcu_read_lock();
-	spin_lock_bh(&ab->data_lock);
+	spin_lock_bh(&ab->base_lock);
 	peer = ath11k_peer_find_by_id(ab, usr_stats->peer_id);
 
 	if (!peer || !peer->sta) {
-		spin_unlock_bh(&ab->data_lock);
+		spin_unlock_bh(&ab->base_lock);
 		rcu_read_unlock();
 		return;
 	}
@@ -1182,7 +1182,7 @@ ath11k_update_per_peer_tx_stats(struct ath11k *ar,
 		ath11k_accumulate_per_peer_tx_stats(arsta,
 						    peer_stats, rate_idx);
 
-	spin_unlock_bh(&ab->data_lock);
+	spin_unlock_bh(&ab->base_lock);
 	rcu_read_unlock();
 }
 
@@ -2618,13 +2618,13 @@ int ath11k_dp_rx_process_mon_status(struct ath11k_base *ab, int mac_id,
 		}
 
 		rcu_read_lock();
-		spin_lock_bh(&ab->data_lock);
+		spin_lock_bh(&ab->base_lock);
 		peer = ath11k_peer_find_by_id(ab, ppdu_info.peer_id);
 
 		if (!peer || !peer->sta) {
 			ath11k_warn(ab, "failed to find the peer with peer_id %d\n",
 				    ppdu_info.peer_id);
-			spin_unlock_bh(&ab->data_lock);
+			spin_unlock_bh(&ab->base_lock);
 			rcu_read_unlock();
 			dev_kfree_skb_any(skb);
 			continue;
@@ -2636,7 +2636,7 @@ int ath11k_dp_rx_process_mon_status(struct ath11k_base *ab, int mac_id,
 		if (ath11k_debug_is_pktlog_peer_valid(ar, peer->addr))
 			trace_ath11k_htt_rxdesc(ar, skb->data, DP_RX_BUFFER_SIZE);
 
-		spin_unlock_bh(&ab->data_lock);
+		spin_unlock_bh(&ab->base_lock);
 		rcu_read_unlock();
 
 		dev_kfree_skb_any(skb);

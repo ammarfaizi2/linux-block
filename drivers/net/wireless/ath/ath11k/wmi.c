@@ -4569,7 +4569,7 @@ static int ath11k_reg_chan_list_event(struct ath11k_base *ab, struct sk_buff *sk
 		goto fallback;
 	}
 
-	spin_lock(&ab->data_lock);
+	spin_lock(&ab->base_lock);
 	if (ab->mac_registered) {
 		/* Once mac is registered, ar is valid and all CC events from
 		 * fw is considered to be received due to user requests
@@ -4593,7 +4593,7 @@ static int ath11k_reg_chan_list_event(struct ath11k_base *ab, struct sk_buff *sk
 		ab->default_regd[pdev_idx] = regd;
 	}
 	ab->dfs_region = reg_info->dfs_region;
-	spin_unlock(&ab->data_lock);
+	spin_unlock(&ab->base_lock);
 
 	goto mem_free;
 
@@ -5024,7 +5024,7 @@ static void ath11k_peer_sta_kickout_event(struct ath11k_base *ab, struct sk_buff
 
 	rcu_read_lock();
 
-	spin_lock_bh(&ab->data_lock);
+	spin_lock_bh(&ab->base_lock);
 
 	peer = ath11k_peer_find_by_addr(ab, arg.mac_addr);
 
@@ -5055,7 +5055,7 @@ static void ath11k_peer_sta_kickout_event(struct ath11k_base *ab, struct sk_buff
 	ieee80211_report_low_ack(sta, 10);
 
 exit:
-	spin_unlock_bh(&ab->data_lock);
+	spin_unlock_bh(&ab->base_lock);
 	rcu_read_unlock();
 }
 

@@ -608,13 +608,13 @@ void ath11k_mac_peer_cleanup_all(struct ath11k *ar)
 
 	lockdep_assert_held(&ar->conf_mutex);
 
-	spin_lock_bh(&ab->data_lock);
+	spin_lock_bh(&ab->base_lock);
 	list_for_each_entry_safe(peer, tmp, &ab->peers, list) {
 		ath11k_peer_rx_tid_cleanup(ar, peer);
 		list_del(&peer->list);
 		kfree(peer);
 	}
-	spin_unlock_bh(&ab->data_lock);
+	spin_unlock_bh(&ab->base_lock);
 
 	ar->num_peers = 0;
 	ar->num_stations = 0;
@@ -2225,9 +2225,9 @@ static int ath11k_clear_peer_keys(struct ath11k_vif *arvif,
 
 	lockdep_assert_held(&ar->conf_mutex);
 
-	spin_lock_bh(&ab->data_lock);
+	spin_lock_bh(&ab->base_lock);
 	peer = ath11k_peer_find(ab, arvif->vdev_id, addr);
-	spin_unlock_bh(&ab->data_lock);
+	spin_unlock_bh(&ab->base_lock);
 
 	if (!peer)
 		return -ENOENT;
@@ -2246,9 +2246,9 @@ static int ath11k_clear_peer_keys(struct ath11k_vif *arvif,
 			ath11k_warn(ab, "failed to remove peer key %d: %d\n",
 				    i, ret);
 
-		spin_lock_bh(&ab->data_lock);
+		spin_lock_bh(&ab->base_lock);
 		peer->keys[i] = NULL;
-		spin_unlock_bh(&ab->data_lock);
+		spin_unlock_bh(&ab->base_lock);
 	}
 
 	return first_errno;
@@ -2290,9 +2290,9 @@ static int ath11k_mac_op_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 	/* the peer should not disappear in mid-way (unless FW goes awry) since
 	 * we already hold conf_mutex. we just make sure its there now.
 	 */
-	spin_lock_bh(&ab->data_lock);
+	spin_lock_bh(&ab->base_lock);
 	peer = ath11k_peer_find(ab, arvif->vdev_id, peer_addr);
-	spin_unlock_bh(&ab->data_lock);
+	spin_unlock_bh(&ab->base_lock);
 
 	if (!peer) {
 		if (cmd == SET_KEY) {
@@ -2319,7 +2319,7 @@ static int ath11k_mac_op_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 		goto exit;
 	}
 
-	spin_lock_bh(&ab->data_lock);
+	spin_lock_bh(&ab->base_lock);
 	peer = ath11k_peer_find(ab, arvif->vdev_id, peer_addr);
 	if (peer && cmd == SET_KEY)
 		peer->keys[key->keyidx] = key;
@@ -2328,7 +2328,7 @@ static int ath11k_mac_op_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 	else if (!peer)
 		/* impossible unless FW goes crazy */
 		ath11k_warn(ab, "peer %pM disappeared!\n", peer_addr);
-	spin_unlock_bh(&ab->data_lock);
+	spin_unlock_bh(&ab->base_lock);
 
 exit:
 	mutex_unlock(&ar->conf_mutex);
@@ -2792,17 +2792,17 @@ static void ath11k_mac_op_sta_rc_update(struct ieee80211_hw *hw,
 	struct ath11k_peer *peer;
 	u32 bw, smps;
 
-	spin_lock_bh(&ar->ab->data_lock);
+	spin_lock_bh(&ar->ab->base_lock);
 
 	peer = ath11k_peer_find(ar->ab, arvif->vdev_id, sta->addr);
 	if (!peer) {
-		spin_unlock_bh(&ar->ab->data_lock);
+		spin_unlock_bh(&ar->ab->base_lock);
 		ath11k_warn(ar->ab, "mac sta rc update failed to find peer %pM on vdev %i\n",
 			    sta->addr, arvif->vdev_id);
 		return;
 	}
 
-	spin_unlock_bh(&ar->ab->data_lock);
+	spin_unlock_bh(&ar->ab->base_lock);
 
 	ath11k_dbg(ar->ab, ATH11K_DBG_MAC,
 		   "mac sta rc update for %pM changed %08x bw %d nss %d smps %d\n",
@@ -4321,9 +4321,9 @@ ath11k_mac_vdev_start_restart(struct ath11k_vif *arvif,
 
 		arg.channel.passive = arg.channel.chan_radar;
 
-		spin_lock_bh(&ab->data_lock);
+		spin_lock_bh(&ab->base_lock);
 		arg.regdomain = ar->ab->dfs_region;
-		spin_unlock_bh(&ab->data_lock);
+		spin_unlock_bh(&ab->base_lock);
 
 		/* TODO: Notify if secondary 80Mhz also needs radar detection */
 		if (he_support) {

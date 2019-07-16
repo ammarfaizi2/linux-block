@@ -595,9 +595,9 @@ static void ath11k_core_restart(struct work_struct *work)
 	struct ath11k_pdev *pdev;
 	int i, ret = 0;
 
-	spin_lock_bh(&sc->data_lock);
+	spin_lock_bh(&sc->base_lock);
 	sc->stats.fw_crash_counter++;
-	spin_unlock_bh(&sc->data_lock);
+	spin_unlock_bh(&sc->base_lock);
 
 	for (i = 0; i < sc->num_radios; i++) {
 		pdev = &sc->pdevs[i];
@@ -726,7 +726,7 @@ struct ath11k_base *ath11k_core_alloc(struct device *dev)
 		goto err_sc_free;
 
 	mutex_init(&sc->core_lock);
-	spin_lock_init(&sc->data_lock);
+	spin_lock_init(&sc->base_lock);
 
 	INIT_LIST_HEAD(&sc->peers);
 	init_waitqueue_head(&sc->peer_mapping_wq);

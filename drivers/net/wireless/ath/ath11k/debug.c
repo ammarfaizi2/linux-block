@@ -265,10 +265,10 @@ void ath11k_debug_fw_stats_process(struct ath11k_base *ab, struct sk_buff *skb)
 		 */
 		num_peer_stats = ath11k_wmi_fw_stats_num_peers(&stats.peers);
 
-		spin_lock_bh(&ab->data_lock);
+		spin_lock_bh(&ab->base_lock);
 		list_for_each_entry(peer, &ab->peers, list)
 			total_num_peers++;
-		spin_unlock_bh(&ab->data_lock);
+		spin_unlock_bh(&ab->base_lock);
 
 		for (i = 0; i < num_peer_stats; i++) {
 			num_peer++;

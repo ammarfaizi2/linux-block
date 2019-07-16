@@ -12,7 +12,7 @@ struct ath11k_peer *ath11k_peer_find(struct ath11k_base *ab, int vdev_id,
 {
 	struct ath11k_peer *peer;
 
-	lockdep_assert_held(&ab->data_lock);
+	lockdep_assert_held(&ab->base_lock);
 
 	list_for_each_entry(peer, &ab->peers, list) {
 		if (peer->vdev_id != vdev_id)
@@ -31,7 +31,7 @@ struct ath11k_peer *ath11k_peer_find_by_addr(struct ath11k_base *ab,
 {
 	struct ath11k_peer *peer;
 
-	lockdep_assert_held(&ab->data_lock);
+	lockdep_assert_held(&ab->base_lock);
 
 	list_for_each_entry(peer, &ab->peers, list) {
 		if (memcmp(peer->addr, addr, ETH_ALEN))
@@ -48,7 +48,7 @@ struct ath11k_peer *ath11k_peer_find_by_id(struct ath11k_base *ab,
 {
 	struct ath11k_peer *peer;
 
-	lockdep_assert_held(&ab->data_lock);
+	lockdep_assert_held(&ab->base_lock);
 
 	list_for_each_entry(peer, &ab->peers, list)
 		if (peer_id == peer->peer_id)
@@ -61,7 +61,7 @@ void ath11k_peer_unmap_event(struct ath11k_base *ab, u16 peer_id)
 {
 	struct ath11k_peer *peer;
 
-	spin_lock_bh(&ab->data_lock);
+	spin_lock_bh(&ab->base_lock);
 
 	peer = ath11k_peer_find_by_id(ab, peer_id);
 	if (!peer) {
@@ -78,7 +78,7 @@ void ath11k_peer_unmap_event(struct ath11k_base *ab, u16 peer_id)
 	wake_up(&ab->peer_mapping_wq);
 
 exit:
-	spin_unlock_bh(&ab->data_lock);
+	spin_unlock_bh(&ab->base_lock);
 }
 
 void ath11k_peer_map_event(struct ath11k_base *ab, u8 vdev_id, u16 peer_id,
@@ -86,7 +86,7 @@ void ath11k_peer_map_event(struct ath11k_base *ab, u8 vdev_id, u16 peer_id,
 {
 	struct ath11k_peer *peer;
 
-	spin_lock_bh(&ab->data_lock);
+	spin_lock_bh(&ab->base_lock);
 	peer = ath11k_peer_find(ab, vdev_id, mac_addr);
 	if (!peer) {
 		peer = kzalloc(sizeof(*peer), GFP_ATOMIC);
@@ -105,7 +105,7 @@ void ath11k_peer_map_event(struct ath11k_base *ab, u8 vdev_id, u16 peer_id,
 		   vdev_id, mac_addr, peer_id);
 
 exit:
-	spin_unlock_bh(&ab->data_lock);
+	spin_unlock_bh(&ab->base_lock);
 }
 
 static int ath11k_wait_for_peer_common(struct ath11k_base *ab, int vdev_id,
@@ -116,9 +116,9 @@ static int ath11k_wait_for_peer_common(struct ath11k_base *ab, int vdev_id,
 	ret = wait_event_timeout(ab->peer_mapping_wq, ({
 				bool mapped;
 
-				spin_lock_bh(&ab->data_lock);
+				spin_lock_bh(&ab->base_lock);
 				mapped = !!ath11k_peer_find(ab, vdev_id, addr);
-				spin_unlock_bh(&ab->data_lock);
+				spin_unlock_bh(&ab->base_lock);
 
 				(mapped == expect_mapped ||
 				 test_bit(ATH11K_FLAG_CRASH_FLUSH, &ab->dev_flags));
@@ -137,7 +137,7 @@ void ath11k_peer_cleanup(struct ath11k *ar, u32 vdev_id)
 
 	lockdep_assert_held(&ar->conf_mutex);
 
-	spin_lock_bh(&ab->data_lock);
+	spin_lock_bh(&ab->base_lock);
 	list_for_each_entry_safe(peer, tmp, &ab->peers, list) {
 		if (peer->vdev_id != vdev_id)
 			continue;
@@ -150,7 +150,7 @@ void ath11k_peer_cleanup(struct ath11k *ar, u32 vdev_id)
 		ar->num_peers--;
 	}
 
-	spin_unlock_bh(&ab->data_lock);
+	spin_unlock_bh(&ab->base_lock);
 }
 
 static int ath11k_wait_for_peer_deleted(struct ath11k *ar, int vdev_id, const u8 *addr)
@@ -213,11 +213,11 @@ int ath11k_peer_create(struct ath11k *ar, struct ath11k_vif *arvif,
 	if (ret)
 		return ret;
 
-	spin_lock_bh(&ar->ab->data_lock);
+	spin_lock_bh(&ar->ab->base_lock);
 
 	peer = ath11k_peer_find(ar->ab, param->vdev_id, param->peer_addr);
 	if (!peer) {
-		spin_unlock_bh(&ar->ab->data_lock);
+		spin_unlock_bh(&ar->ab->base_lock);
 		ath11k_warn(ar->ab, "failed to find peer %pM on vdev %i after creation\n",
 			    param->peer_addr, param->vdev_id);
 		ath11k_wmi_send_peer_delete_cmd(ar, param->peer_addr,
@@ -230,7 +230,7 @@ int ath11k_peer_create(struct ath11k *ar, struct ath11k_vif *arvif,
 
 	ar->num_peers++;
 
-	spin_unlock_bh(&ar->ab->data_lock);
+	spin_unlock_bh(&ar->ab->base_lock);
 
 	return 0;
 }

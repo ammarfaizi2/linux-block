@@ -202,7 +202,7 @@ int ath11k_regd_update(struct ath11k *ar, bool init)
 	ab = ar->ab;
 	pdev_id = ar->pdev_idx;
 
-	spin_lock(&ab->data_lock);
+	spin_lock(&ab->base_lock);
 
 	if (init) {
 		/* Apply the regd received during init through
@@ -223,7 +223,7 @@ int ath11k_regd_update(struct ath11k *ar, bool init)
 
 	if (!regd) {
 		ret = -EINVAL;
-		spin_unlock(&ab->data_lock);
+		spin_unlock(&ab->base_lock);
 		goto err;
 	}
 
@@ -234,7 +234,7 @@ int ath11k_regd_update(struct ath11k *ar, bool init)
 	if (regd_copy)
 		ath11k_copy_regd(regd, regd_copy);
 
-	spin_unlock(&ab->data_lock);
+	spin_unlock(&ab->base_lock);
 
 	if (!regd_copy) {
 		ret = -ENOMEM;
