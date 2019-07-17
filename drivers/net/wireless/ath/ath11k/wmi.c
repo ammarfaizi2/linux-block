@@ -3891,29 +3891,6 @@ ath11k_wmi_pull_bcn_stats(const struct wmi_bcn_stats *src,
 	dst->tx_bcn_outage_cnt = src->tx_bcn_outage_cnt;
 }
 
-static void
-ath11k_wmi_pull_peer_stats(const struct wmi_peer_stats *src,
-			   struct ath11k_fw_stats_peer *dst)
-{
-	ether_addr_copy(dst->peer_macaddr, src->peer_macaddr.addr);
-	dst->peer_rssi = src->peer_rssi;
-	dst->peer_tx_rate = src->peer_tx_rate;
-	dst->peer_rx_rate = src->peer_rx_rate;
-}
-
-static void
-ath11k_wmi_pull_peer_extd_stats(const struct wmi_peer_extd_stats *src,
-				struct ath11k_fw_stats_peer_extd *dst)
-{
-	ether_addr_copy(dst->peer_macaddr, src->peer_macaddr.addr);
-	dst->rx_duration = src->rx_duration;
-	dst->peer_tx_bytes = src->peer_tx_bytes;
-	dst->peer_rx_bytes = src->peer_rx_bytes;
-	dst->last_tx_rate_code = src->last_tx_rate_code;
-	dst->last_tx_power = src->last_tx_power;
-	dst->rx_mc_bc_cnt = src->rx_mc_bc_cnt;
-}
-
 int ath11k_wmi_pull_fw_stats(struct ath11k_base *ab, struct sk_buff *skb,
 			     struct ath11k_fw_stats *stats)
 {
@@ -3939,10 +3916,9 @@ int ath11k_wmi_pull_fw_stats(struct ath11k_base *ab, struct sk_buff *skb,
 	}
 
 	ath11k_dbg(ab, ATH11K_DBG_WMI,
-		   "wmi stats update ev pdev_id %d pdev %i vdev %i peer %i peer_extd %i bcn %i\n",
+		   "wmi stats update ev pdev_id %d pdev %i vdev %i bcn %i\n",
 		   ev->pdev_id,
 		   ev->num_pdev_stats, ev->num_vdev_stats,
-		   ev->num_peer_stats, ev->num_peer_extd_stats,
 		   ev->num_bcn_stats);
 
 	stats->pdev_id = ev->pdev_id;
@@ -4019,77 +3995,8 @@ int ath11k_wmi_pull_fw_stats(struct ath11k_base *ab, struct sk_buff *skb,
 		list_add_tail(&dst->list, &stats->bcn);
 	}
 
-	for (i = 0; i < ev->num_peer_stats; i++) {
-		const struct wmi_peer_stats *src;
-		struct ath11k_fw_stats_peer *dst;
-
-		src = data;
-		if (len < sizeof(*src)) {
-			kfree(tb);
-			return -EPROTO;
-		}
-
-		stats->stats_id = WMI_REQUEST_PEER_STAT;
-
-		data += sizeof(*src);
-		len -= sizeof(*src);
-
-		dst = kzalloc(sizeof(*dst), GFP_ATOMIC);
-		if (!dst)
-			continue;
-
-		ath11k_wmi_pull_peer_stats(src, dst);
-		list_add_tail(&dst->list, &stats->peers);
-	}
-
-	for (i = 0; i < ev->num_peer_extd_stats; i++) {
-		const struct wmi_peer_extd_stats *src;
-		struct ath11k_fw_stats_peer_extd *dst;
-
-		src = data;
-		if (len < sizeof(*src)) {
-			kfree(tb);
-			return -EPROTO;
-		}
-
-		/* PEER_STAT and PEER_EXTD_STAT come together */
-		stats->stats_id |= WMI_REQUEST_PEER_EXTD_STAT;
-
-		data += sizeof(*src);
-		len -= sizeof(*src);
-
-		dst = kzalloc(sizeof(*dst), GFP_ATOMIC);
-		if (!dst)
-			continue;
-
-		ath11k_wmi_pull_peer_extd_stats(src, dst);
-		list_add_tail(&dst->list, &stats->peers_extd);
-	}
-
 	kfree(tb);
 	return 0;
-}
-
-size_t ath11k_wmi_fw_stats_num_peers(struct list_head *head)
-{
-	struct ath11k_fw_stats_peer *i;
-	size_t num = 0;
-
-	list_for_each_entry(i, head, list)
-		++num;
-
-	return num;
-}
-
-size_t ath11k_wmi_fw_stats_num_peers_extd(struct list_head *head)
-{
-	struct ath11k_fw_stats_peer_extd *i;
-	size_t num = 0;
-
-	list_for_each_entry(i, head, list)
-		++num;
-
-	return num;
 }
 
 size_t ath11k_wmi_fw_stats_num_vdevs(struct list_head *head)
@@ -4328,52 +4235,6 @@ ath11k_wmi_fw_vdev_stats_fill(struct ath11k *ar,
 }
 
 static void
-ath11k_wmi_fw_peer_stats_fill(const struct ath11k_fw_stats_peer *peer,
-			      char *buf, u32 *length)
-{
-	u32 len = *length;
-	u32 buf_len = ATH11K_FW_STATS_BUF_SIZE;
-
-	len += scnprintf(buf + len, buf_len - len, "%30s %pM\n",
-			"Peer MAC address", peer->peer_macaddr);
-	len += scnprintf(buf + len, buf_len - len, "%30s %u\n",
-			"Peer RSSI", peer->peer_rssi);
-	len += scnprintf(buf + len, buf_len - len, "%30s %u\n",
-			"Peer TX rate", peer->peer_tx_rate);
-	len += scnprintf(buf + len, buf_len - len, "%30s %u\n",
-			"Peer RX rate", peer->peer_rx_rate);
-
-	len += scnprintf(buf + len, buf_len - len, "\n");
-	*length = len;
-}
-
-static void
-ath11k_wmi_fw_peer_extd_stats_fill(const struct ath11k_fw_stats_peer_extd *peer,
-				   char *buf, u32 *length)
-{
-	u32 len = *length;
-	u32 buf_len = ATH11K_FW_STATS_BUF_SIZE;
-
-	len += scnprintf(buf + len, buf_len - len, "%30s %pM\n",
-			"Peer MAC address", peer->peer_macaddr);
-	len += scnprintf(buf + len, buf_len - len, "%30s %u\n",
-			"Peer RX duration", peer->rx_duration);
-	len += scnprintf(buf + len, buf_len - len, "%30s %u\n",
-			"Peer TX bytes", peer->peer_tx_bytes);
-	len += scnprintf(buf + len, buf_len - len, "%30s %u\n",
-			"Peer RX bytes", peer->peer_rx_bytes);
-	len += scnprintf(buf + len, buf_len - len, "%30s %u\n",
-			"Peer last Tx rate code", peer->last_tx_rate_code);
-	len += scnprintf(buf + len, buf_len - len, "%30s %d\n",
-			"Peer last Tx power", peer->last_tx_power);
-	len += scnprintf(buf + len, buf_len - len, "%30s %u\n",
-			"Rx bcast/mcast data frames", peer->rx_mc_bc_cnt);
-
-	len += scnprintf(buf + len, buf_len - len, "\n");
-	*length = len;
-}
-
-static void
 ath11k_wmi_fw_bcn_stats_fill(struct ath11k *ar,
 			     const struct ath11k_fw_stats_bcn *bcn,
 			     char *buf, u32 *length)
@@ -4414,11 +4275,7 @@ void ath11k_wmi_fw_stats_fill(struct ath11k *ar,
 	u32 buf_len = ATH11K_FW_STATS_BUF_SIZE;
 	const struct ath11k_fw_stats_pdev *pdev;
 	const struct ath11k_fw_stats_vdev *vdev;
-	const struct ath11k_fw_stats_peer *peer;
-	const struct ath11k_fw_stats_peer_extd *peer_extd;
 	const struct ath11k_fw_stats_bcn *bcn;
-	size_t num_peers;
-	size_t num_peers_extd;
 	size_t num_bcn;
 
 	spin_lock_bh(&ar->data_lock);
@@ -4458,31 +4315,6 @@ void ath11k_wmi_fw_stats_fill(struct ath11k *ar,
 
 		list_for_each_entry(bcn, &fw_stats->bcn, list)
 			ath11k_wmi_fw_bcn_stats_fill(ar, bcn, buf, &len);
-	}
-
-	if (stats_id & WMI_REQUEST_PEER_STAT) {
-		num_peers = ath11k_wmi_fw_stats_num_peers(&fw_stats->peers);
-		len += scnprintf(buf + len, buf_len - len, "\n");
-		len += scnprintf(buf + len, buf_len - len, "%30s (%zu)\n",
-				 "ath11k PEER stats", num_peers);
-		len += scnprintf(buf + len, buf_len - len, "%30s\n\n",
-				 "=================");
-
-		list_for_each_entry(peer, &fw_stats->peers, list)
-			ath11k_wmi_fw_peer_stats_fill(peer, buf, &len);
-	}
-
-	if (stats_id & WMI_REQUEST_PEER_EXTD_STAT) {
-		num_peers_extd =
-			ath11k_wmi_fw_stats_num_peers_extd(&fw_stats->peers_extd);
-		len += scnprintf(buf + len, buf_len - len, "\n");
-		len += scnprintf(buf + len, buf_len - len, "%30s (%zu)\n",
-				 "ath11k PEER extd stats", num_peers_extd);
-		len += scnprintf(buf + len, buf_len - len, "%30s\n\n",
-				 "======================");
-
-		list_for_each_entry(peer_extd, &fw_stats->peers_extd, list)
-			ath11k_wmi_fw_peer_extd_stats_fill(peer_extd, buf, &len);
 	}
 
 unlock:

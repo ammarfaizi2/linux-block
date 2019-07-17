@@ -135,34 +135,12 @@ static void ath11k_fw_stats_bcn_free(struct list_head *head)
 	}
 }
 
-static void ath11k_fw_stats_peers_free(struct list_head *head)
-{
-	struct ath11k_fw_stats_peer *i, *tmp;
-
-	list_for_each_entry_safe(i, tmp, head, list) {
-		list_del(&i->list);
-		kfree(i);
-	}
-}
-
-static void ath11k_fw_stats_peers_extd_free(struct list_head *head)
-{
-	struct ath11k_fw_stats_peer_extd *i, *tmp;
-
-	list_for_each_entry_safe(i, tmp, head, list) {
-		list_del(&i->list);
-		kfree(i);
-	}
-}
-
 static void ath11k_debug_fw_stats_reset(struct ath11k *ar)
 {
 	spin_lock_bh(&ar->data_lock);
 	ar->debug.fw_stats_done = false;
 	ath11k_fw_stats_pdevs_free(&ar->debug.fw_stats.pdevs);
 	ath11k_fw_stats_vdevs_free(&ar->debug.fw_stats.vdevs);
-	ath11k_fw_stats_peers_free(&ar->debug.fw_stats.peers);
-	ath11k_fw_stats_peers_extd_free(&ar->debug.fw_stats.peers_extd);
 	spin_unlock_bh(&ar->data_lock);
 }
 
@@ -171,18 +149,14 @@ void ath11k_debug_fw_stats_process(struct ath11k_base *ab, struct sk_buff *skb)
 	struct ath11k_fw_stats stats = {};
 	struct ath11k *ar;
 	struct ath11k_pdev *pdev;
-	struct ath11k_peer *peer;
 	bool is_end;
-	static unsigned int num_vdev, num_bcn, num_peer;
+	static unsigned int num_vdev, num_bcn;
 	size_t total_vdevs_started = 0;
-	size_t num_peer_stats = 0;
-	int i, ret, total_num_peers = 0;
+	int i, ret;
 
 	INIT_LIST_HEAD(&stats.pdevs);
 	INIT_LIST_HEAD(&stats.vdevs);
-	INIT_LIST_HEAD(&stats.peers);
 	INIT_LIST_HEAD(&stats.bcn);
-	INIT_LIST_HEAD(&stats.peers_extd);
 
 	ret = ath11k_wmi_pull_fw_stats(ab, skb, &stats);
 	if (ret) {
@@ -250,40 +224,6 @@ void ath11k_debug_fw_stats_process(struct ath11k_base *ab, struct sk_buff *skb)
 			ar->debug.fw_stats_done = true;
 			num_bcn = 0;
 		}
-		goto complete;
-	}
-
-	if (stats.stats_id & (WMI_REQUEST_PEER_STAT |
-			      WMI_REQUEST_PEER_EXTD_STAT)) {
-		if (list_empty(&stats.peers) && list_empty(&stats.peers_extd)) {
-			ath11k_warn(ab, "empty peer, peer extd stats");
-			goto complete;
-		}
-		/* FW splits the peer stats when exceeding htc-wmi buffer limit
-		 * and send back-to-back 'update stats' event. Hence we save the
-		 * peer stats based on the count until reaching total peers count
-		 */
-		num_peer_stats = ath11k_wmi_fw_stats_num_peers(&stats.peers);
-
-		spin_lock_bh(&ab->base_lock);
-		list_for_each_entry(peer, &ab->peers, list)
-			total_num_peers++;
-		spin_unlock_bh(&ab->base_lock);
-
-		for (i = 0; i < num_peer_stats; i++) {
-			num_peer++;
-			list_splice_tail_init(&stats.peers,
-					      &ar->debug.fw_stats.peers);
-
-			list_splice_tail_init(&stats.peers_extd,
-					      &ar->debug.fw_stats.peers_extd);
-			ath11k_sta_update_rx_duration(ar, &stats);
-		}
-
-		if (num_peer >= total_num_peers) {
-			ar->debug.fw_stats_done = true;
-			num_peer = 0;
-		}
 	}
 complete:
 	complete(&ar->debug.fw_stats_complete);
@@ -294,8 +234,6 @@ free:
 	ath11k_fw_stats_pdevs_free(&stats.pdevs);
 	ath11k_fw_stats_vdevs_free(&stats.vdevs);
 	ath11k_fw_stats_bcn_free(&stats.bcn);
-	ath11k_fw_stats_peers_free(&stats.peers);
-	ath11k_fw_stats_peers_extd_free(&stats.peers_extd);
 }
 
 static int ath11k_debug_fw_stats_request(struct ath11k *ar,
@@ -571,78 +509,6 @@ static const struct file_operations fops_bcn_stats = {
 	.open = ath11k_open_bcn_stats,
 	.release = ath11k_release_bcn_stats,
 	.read = ath11k_read_bcn_stats,
-	.owner = THIS_MODULE,
-	.llseek = default_llseek,
-};
-
-static int ath11k_open_peer_stats(struct inode *inode, struct file *file)
-{
-	struct ath11k *ar = inode->i_private;
-	struct stats_request_params req_param;
-	void *buf = NULL;
-	int ret;
-
-	mutex_lock(&ar->conf_mutex);
-
-	if (ar->state != ATH11K_STATE_ON) {
-		ret = -ENETDOWN;
-		goto err_unlock;
-	}
-
-	buf = vmalloc(ATH11K_FW_STATS_BUF_SIZE);
-	if (!buf) {
-		ret = -ENOMEM;
-		goto err_unlock;
-	}
-
-	req_param.pdev_id = ar->pdev->pdev_id;
-	req_param.vdev_id = 0;
-	req_param.stats_id = (WMI_REQUEST_PEER_STAT |
-			      WMI_REQUEST_PEER_EXTD_STAT);
-
-	ret = ath11k_debug_fw_stats_request(ar, &req_param);
-	if (ret) {
-		ath11k_warn(ar->ab, "failed to request fw vdev stats: %d\n", ret);
-		goto err_free;
-	}
-
-	ath11k_wmi_fw_stats_fill(ar, &ar->debug.fw_stats, req_param.stats_id,
-				 buf);
-
-	file->private_data = buf;
-
-	mutex_unlock(&ar->conf_mutex);
-	return 0;
-
-err_free:
-	vfree(buf);
-
-err_unlock:
-	mutex_unlock(&ar->conf_mutex);
-	return ret;
-}
-
-static int ath11k_release_peer_stats(struct inode *inode, struct file *file)
-{
-	vfree(file->private_data);
-
-	return 0;
-}
-
-static ssize_t ath11k_read_peer_stats(struct file *file,
-				      char __user *user_buf,
-				      size_t count, loff_t *ppos)
-{
-	const char *buf = file->private_data;
-	size_t len = strlen(buf);
-
-	return simple_read_from_buffer(user_buf, count, ppos, buf, len);
-}
-
-static const struct file_operations fops_peer_stats = {
-	.open = ath11k_open_peer_stats,
-	.release = ath11k_release_peer_stats,
-	.read = ath11k_read_peer_stats,
 	.owner = THIS_MODULE,
 	.llseek = default_llseek,
 };
@@ -977,14 +843,10 @@ void ath11k_debug_fw_stats_init(struct ath11k *ar)
 			    &fops_vdev_stats);
 	debugfs_create_file("beacon_stats", 0600, fwstats_dir, ar,
 			    &fops_bcn_stats);
-	debugfs_create_file("peer_stats", 0600, fwstats_dir, ar,
-			    &fops_peer_stats);
 
 	INIT_LIST_HEAD(&ar->debug.fw_stats.pdevs);
 	INIT_LIST_HEAD(&ar->debug.fw_stats.vdevs);
 	INIT_LIST_HEAD(&ar->debug.fw_stats.bcn);
-	INIT_LIST_HEAD(&ar->debug.fw_stats.peers);
-	INIT_LIST_HEAD(&ar->debug.fw_stats.peers_extd);
 
 	init_completion(&ar->debug.fw_stats_complete);
 }

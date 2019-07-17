@@ -362,8 +362,6 @@ struct ath11k_fw_stats {
 	struct list_head pdevs;
 	struct list_head vdevs;
 	struct list_head bcn;
-	struct list_head peers;
-	struct list_head peers_extd;
 };
 
 struct ath11k_dbg_htt_stats {
@@ -770,27 +768,6 @@ struct ath11k_fw_stats_bcn {
 	u32 vdev_id;
 	u32 tx_bcn_succ_cnt;
 	u32 tx_bcn_outage_cnt;
-};
-
-struct ath11k_fw_stats_peer {
-	struct list_head list;
-
-	u8 peer_macaddr[ETH_ALEN];
-	u32 peer_rssi;
-	u32 peer_tx_rate;
-	u32 peer_rx_rate;
-};
-
-struct ath11k_fw_stats_peer_extd {
-	struct list_head list;
-
-	u8 peer_macaddr[ETH_ALEN];
-	u32 rx_duration;
-	u32 peer_tx_bytes;
-	u32 peer_rx_bytes;
-	u32 last_tx_rate_code;
-	s32 last_tx_power;
-	u32 rx_mc_bc_cnt;
 };
 
 void ath11k_peer_unmap_event(struct ath11k_base *ab, u16 peer_id);

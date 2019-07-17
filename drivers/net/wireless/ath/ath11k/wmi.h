@@ -4025,24 +4025,6 @@ struct wmi_bcn_stats {
 	u32 tx_bcn_outage_cnt;
 } __packed;
 
-struct wmi_peer_stats {
-	struct wmi_mac_addr peer_macaddr;
-	u32 peer_rssi;
-	u32 peer_tx_rate;
-	u32 peer_rx_rate;
-} __packed;
-
-struct wmi_peer_extd_stats {
-	struct wmi_mac_addr peer_macaddr;
-	u32 rx_duration;
-	u32 peer_tx_bytes;
-	u32 peer_rx_bytes;
-	u32 last_tx_rate_code;
-	s32 last_tx_power;
-	u32 rx_mc_bc_cnt;
-	u32 reserved[3];
-} __packed;
-
 struct wmi_stats_event {
 	u32 stats_id;
 	u32 num_pdev_stats;

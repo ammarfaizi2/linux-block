@@ -241,8 +241,6 @@ ath11k_accumulate_per_peer_tx_stats(struct ath11k_sta *arsta,
 void ath11k_update_per_peer_stats_from_txcompl(struct ath11k *ar,
 					       struct sk_buff *msdu,
 					       struct hal_tx_status *ts);
-void ath11k_sta_update_rx_duration(struct ath11k *ar,
-				   struct ath11k_fw_stats *stats);
 #else /* !CONFIG_MAC80211_DEBUGFS */
 static inline void
 ath11k_accumulate_per_peer_tx_stats(struct ath11k_sta *arsta,
@@ -255,11 +253,6 @@ static inline void
 ath11k_update_per_peer_stats_from_txcompl(struct ath11k *ar,
 					  struct sk_buff *msdu,
 					  struct hal_tx_status *ts)
-{
-}
-
-static inline void ath11k_sta_update_rx_duration(struct ath11k *ar,
-						 struct ath11k_fw_stats *stats)
 {
 }
 
