@@ -2908,14 +2908,14 @@ static void ath11k_dp_rx_null_q_desc_sg_drop(struct ath11k *ar,
 					     int msdu_len,
 					     struct sk_buff_head *msdu_list)
 {
-	struct sk_buff *skb;
+	struct sk_buff *skb, *tmp;
 	struct ath11k_skb_rxcb *rxcb;
 	int n_buffs;
 
 	n_buffs = DIV_ROUND_UP(msdu_len,
 			       (DP_RX_BUFFER_SIZE - HAL_RX_DESC_SIZE));
 
-	skb_queue_walk(msdu_list, skb) {
+	skb_queue_walk_safe(msdu_list, skb, tmp) {
 		rxcb = ATH11K_SKB_RXCB(skb);
 		if (rxcb->err_rel_src == HAL_WBM_REL_SRC_MODULE_REO &&
 		    rxcb->err_code == HAL_REO_DEST_RING_ERROR_CODE_DESC_ADDR_ZERO) {
