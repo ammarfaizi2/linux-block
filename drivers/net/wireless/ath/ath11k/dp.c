@@ -198,7 +198,6 @@ static int ath11k_dp_srng_common_setup(struct ath11k_base *ab)
 	struct ath11k_dp *dp = &ab->dp;
 	struct hal_srng *srng;
 	int i, ret;
-	struct hal_reo_params reo_params = {0};
 
 	ret = ath11k_dp_srng_setup(ab, &dp->wbm_desc_rel_ring,
 				   HAL_SW2WBM_RELEASE, 0, 0,
@@ -286,22 +285,7 @@ static int ath11k_dp_srng_common_setup(struct ath11k_base *ab)
 		goto err;
 	}
 
-	/* When hash based routing of rx packet is enabled, 16 entries to map
-	 * the hash values to the ring will be configured. Each hash entry uses
-	 * three bits to map to a particular ring. The ring mapping will be
-	 * 0:TCL, 1:SW1, 2:SW2, 3:SW3, 4:SW4, 5:Release, 6:FW and 7:Not used.
-	 */
-	reo_params.ring_hash_map0_7 = HAL_HASH_ROUTING_RING_SW1 << 0 |
-				      HAL_HASH_ROUTING_RING_SW2 << 3 |
-				      HAL_HASH_ROUTING_RING_SW3 << 6 |
-				      HAL_HASH_ROUTING_RING_SW4 << 9 |
-				      HAL_HASH_ROUTING_RING_SW1 << 12 |
-				      HAL_HASH_ROUTING_RING_SW2 << 15 |
-				      HAL_HASH_ROUTING_RING_SW3 << 18 |
-				      HAL_HASH_ROUTING_RING_SW4 << 21;
-	reo_params.ring_hash_map8_15 = reo_params.ring_hash_map0_7;
-
-	ath11k_hal_reo_hw_setup(ab, &reo_params);
+	ath11k_hal_reo_hw_setup(ab);
 
 	return 0;
 

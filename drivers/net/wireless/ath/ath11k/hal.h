@@ -717,19 +717,6 @@ enum hal_ce_desc {
 	HAL_CE_DESC_DST_STATUS,
 };
 
-#define HAL_HASH_ROUTING_RING_TCL 0
-#define HAL_HASH_ROUTING_RING_SW1 1
-#define HAL_HASH_ROUTING_RING_SW2 2
-#define HAL_HASH_ROUTING_RING_SW3 3
-#define HAL_HASH_ROUTING_RING_SW4 4
-#define HAL_HASH_ROUTING_RING_REL 5
-#define HAL_HASH_ROUTING_RING_FW  6
-
-struct hal_reo_params {
-	u32 ring_hash_map0_7;
-	u32 ring_hash_map8_15;
-};
-
 struct hal_reo_status_header {
 	u16 cmd_num;
 	enum hal_reo_cmd_status cmd_status;
@@ -863,8 +850,7 @@ void ath11k_hal_reo_qdesc_setup(void *vaddr, int tid, u32 ba_window_size,
 				u32 start_seqtype);
 void ath11k_hal_reo_init_cmd_ring(struct ath11k_base *ab,
 				  struct hal_srng *srng);
-void ath11k_hal_reo_hw_setup(struct ath11k_base *ab,
-			     struct hal_reo_params *params);
+void ath11k_hal_reo_hw_setup(struct ath11k_base *ab);
 void ath11k_hal_setup_link_idle_list(struct ath11k_base *ab,
 				     struct hal_wbm_idle_scatter_list *sbuf,
 				     u32 nsbufs, u32 tot_link_desc,
