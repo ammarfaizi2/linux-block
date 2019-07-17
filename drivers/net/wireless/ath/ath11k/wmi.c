@@ -4829,8 +4829,7 @@ static void ath11k_mgmt_rx_event(struct ath11k_base *ab, struct sk_buff *skb)
 		goto exit;
 	}
 
-	if (rx_ev.phy_mode == WLAN_PHYMODE_11B &&
-	    status->band == NL80211_BAND_5GHZ)
+	if (rx_ev.phy_mode == MODE_11B && status->band == NL80211_BAND_5GHZ)
 		ath11k_dbg(ab, ATH11K_DBG_WMI,
 			   "wmi mgmt rx 11b (CCK) on 5GHz\n");
 

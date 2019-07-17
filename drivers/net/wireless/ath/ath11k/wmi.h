@@ -4081,28 +4081,6 @@ struct wmi_pdev_radar_ev {
 	s32 sidx;
 } __packed;
 
-enum wlan_phymode {
-	WLAN_PHYMODE_AUTO             = 0,
-	WLAN_PHYMODE_11A              = 1,
-	WLAN_PHYMODE_11B              = 2,
-	WLAN_PHYMODE_11G              = 3,
-	WLAN_PHYMODE_11NA_HT20        = 4,
-	WLAN_PHYMODE_11NG_HT20        = 5,
-	WLAN_PHYMODE_11NA_HT40PLUS    = 6,
-	WLAN_PHYMODE_11NA_HT40MINUS   = 7,
-	WLAN_PHYMODE_11NG_HT40PLUS    = 8,
-	WLAN_PHYMODE_11NG_HT40MINUS   = 9,
-	WLAN_PHYMODE_11NG_HT40        = 10,
-	WLAN_PHYMODE_11NA_HT40        = 11,
-	WLAN_PHYMODE_11AC_VHT20       = 12,
-	WLAN_PHYMODE_11AC_VHT40PLUS   = 13,
-	WLAN_PHYMODE_11AC_VHT40MINUS  = 14,
-	WLAN_PHYMODE_11AC_VHT40       = 15,
-	WLAN_PHYMODE_11AC_VHT80       = 16,
-	WLAN_PHYMODE_11AC_VHT160      = 17,
-	WLAN_PHYMODE_11AC_VHT80_80    = 18,
-};
-
 #define WMI_RX_STATUS_OK			0x00
 #define WMI_RX_STATUS_ERR_CRC			0x01
 #define WMI_RX_STATUS_ERR_DECRYPT		0x08
@@ -4116,7 +4094,7 @@ struct mgmt_rx_event_params {
 	u32 snr;
 	u8 rssi_ctl[WLAN_MGMT_TXRX_HOST_MAX_ANTENNA];
 	u32 rate;
-	enum wlan_phymode phy_mode;
+	enum wmi_phy_mode phy_mode;
 	u32 buf_len;
 	int status;
 	u32 flags;
