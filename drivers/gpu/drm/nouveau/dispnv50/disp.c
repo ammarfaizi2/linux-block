@@ -29,6 +29,7 @@
 
 #include <linux/dma-mapping.h>
 #include <linux/hdmi.h>
+#include <linux/component.h>
 
 #include <drm/drmP.h>
 #include <drm/drm_atomic_helper.h>
@@ -461,12 +462,113 @@ nv50_dac_create(struct drm_connector *connector, struct dcb_output *dcbe)
 	return 0;
 }
 
+/*
+ * audio component binding for ELD notification
+ */
+static void
+nv50_audio_component_eld_notify(struct nouveau_drm *drm, int port)
+{
+	struct drm_audio_component *acomp = drm->audio.component;
+
+	if (acomp && acomp->audio_ops && acomp->audio_ops->pin_eld_notify)
+		acomp->audio_ops->pin_eld_notify(acomp->audio_ops->audio_ptr,
+						 port, -1);
+}
+
+static int
+nv50_audio_component_get_eld(struct device *kdev, int port, int pipe,
+			     bool *enabled, unsigned char *buf, int max_bytes)
+{
+	struct drm_device *drm_dev = dev_get_drvdata(kdev);
+	struct nouveau_drm *drm = nouveau_drm(drm_dev);
+	struct drm_encoder *encoder;
+	struct nouveau_encoder *nv_encoder;
+	struct nouveau_connector *nv_connector;
+	struct nouveau_crtc *nv_crtc;
+	int ret = 0;
+
+	*enabled = false;
+	drm_for_each_encoder(encoder, drm->dev) {
+		nv_encoder = nouveau_encoder(encoder);
+		nv_connector = nouveau_encoder_connector_get(nv_encoder);
+		nv_crtc = nouveau_crtc(encoder->crtc);
+		if (!nv_connector || !nv_crtc || nv_crtc->index != port)
+			continue;
+		*enabled = drm_detect_monitor_audio(nv_connector->edid);
+		if (*enabled) {
+			ret = drm_eld_size(nv_connector->base.eld);
+			memcpy(buf, nv_connector->base.eld,
+			       min(max_bytes, ret));
+		}
+		break;
+	}
+	return ret;
+}
+
+static const struct drm_audio_component_ops nv50_audio_component_ops = {
+	.get_eld = nv50_audio_component_get_eld,
+};
+
+static int
+nv50_audio_component_bind(struct device *kdev, struct device *hda_kdev,
+			  void *data)
+{
+	struct drm_device *drm_dev = dev_get_drvdata(kdev);
+	struct nouveau_drm *drm = nouveau_drm(drm_dev);
+	struct drm_audio_component *acomp = data;
+
+	acomp->ops = &nv50_audio_component_ops;
+	acomp->dev = kdev;
+	drm->audio.component = acomp;
+	return 0;
+}
+
+static void
+nv50_audio_component_unbind(struct device *kdev, struct device *hda_kdev,
+			    void *data)
+{
+	struct drm_device *drm_dev = dev_get_drvdata(kdev);
+	struct nouveau_drm *drm = nouveau_drm(drm_dev);
+	struct drm_audio_component *acomp = data;
+
+	acomp->ops = NULL;
+	acomp->dev = NULL;
+	drm->audio.component = NULL;
+}
+
+static const struct component_ops nv50_audio_component_bind_ops = {
+	.bind   = nv50_audio_component_bind,
+	.unbind = nv50_audio_component_unbind,
+};
+
+static int
+nv50_audio_component_init(struct nouveau_drm *drm)
+{
+	int ret;
+
+	ret = component_add(drm->dev->dev, &nv50_audio_component_bind_ops);
+	if (ret < 0)
+		return ret;
+	drm->audio.registered = true;
+	return 0;
+}
+
+static void
+nv50_audio_component_fini(struct nouveau_drm *drm)
+{
+	if (drm->audio.registered) {
+		component_del(drm->dev->dev, &nv50_audio_component_bind_ops);
+		drm->audio.registered = false;
+	}
+}
+
 /******************************************************************************
  * Audio
  *****************************************************************************/
 static void
 nv50_audio_disable(struct drm_encoder *encoder, struct nouveau_crtc *nv_crtc)
 {
+	struct nouveau_drm *drm = nouveau_drm(encoder->dev);
 	struct nouveau_encoder *nv_encoder = nouveau_encoder(encoder);
 	struct nv50_disp *disp = nv50_disp(encoder->dev);
 	struct {
@@ -481,11 +583,14 @@ nv50_audio_disable(struct drm_encoder *encoder, struct nouveau_crtc *nv_crtc)
 	};
 
 	nvif_mthd(&disp->disp->object, 0, &args, sizeof(args));
+
+	nv50_audio_component_eld_notify(drm, nv_crtc->index);
 }
 
 static void
 nv50_audio_enable(struct drm_encoder *encoder, struct drm_display_mode *mode)
 {
+	struct nouveau_drm *drm = nouveau_drm(encoder->dev);
 	struct nouveau_encoder *nv_encoder = nouveau_encoder(encoder);
 	struct nouveau_crtc *nv_crtc = nouveau_crtc(encoder->crtc);
 	struct nouveau_connector *nv_connector;
@@ -512,6 +617,8 @@ nv50_audio_enable(struct drm_encoder *encoder, struct drm_display_mode *mode)
 
 	nvif_mthd(&disp->disp->object, 0, &args,
 		  sizeof(args.base) + drm_eld_size(args.data));
+
+	nv50_audio_component_eld_notify(drm, nv_crtc->index);
 }
 
 /******************************************************************************
@@ -2275,6 +2382,8 @@ nv50_display_destroy(struct drm_device *dev)
 {
 	struct nv50_disp *disp = nv50_disp(dev);
 
+	nv50_audio_component_fini(nouveau_drm(dev));
+
 	nv50_core_del(&disp->core);
 
 	nouveau_bo_unmap(disp->sync);
@@ -2394,6 +2503,8 @@ nv50_display_create(struct drm_device *dev)
 
 	/* Disable vblank irqs aggressively for power-saving, safe on nv50+ */
 	dev->vblank_disable_immediate = true;
+
+	nv50_audio_component_init(drm);
 
 out:
 	if (ret)
