@@ -578,10 +578,6 @@ END(\sym)
  * @do_sym:		C function to be called
  * @has_error_code:	True if this IDT vector has an error code on the stack
  * @is_df:		True if the vector is #DF
- * @shift_ist:		Set to an IST index if entries from kernel mode should
- *			decrement the IST stack so that nested entries get a
- *			fresh stack.  (This is for #DB, which has a nasty habit
- *			of recursing.)
  *
  * idtentry generates an IDT stub that sets up a usable kernel context,
  * creates struct pt_regs, and calls @do_sym.  The stub has the following
@@ -601,7 +597,7 @@ END(\sym)
  *
  * @is_df is special: the stub will never switch stacks.  This way, if the thread stack is somehow unusable, we'll still get a useful OOPS.
  */
-.macro idtentry_ist sym do_sym has_error_code:req is_df=0 shift_ist=-1 ist_offset=0
+.macro idtentry_ist sym do_sym has_error_code:req is_df=0
 ENTRY(\sym)
 	UNWIND_HINT_IRET_REGS offset=\has_error_code*8
 
@@ -640,15 +636,8 @@ ENTRY(\sym)
 	xorl	%esi, %esi			/* no error code */
 	.endif
 
-	.if \shift_ist != -1
-	subq	$\ist_offset, CPU_TSS_IST(\shift_ist)
-	.endif
 
 	call	\do_sym
-
-	.if \shift_ist != -1
-	addq	$\ist_offset, CPU_TSS_IST(\shift_ist)
-	.endif
 
 	/* this procedure expect "no swapgs" flag in ebx */
 	jmp	paranoid_exit
@@ -1066,7 +1055,7 @@ apicinterrupt3 HYPERVISOR_CALLBACK_VECTOR \
 	acrn_hv_callback_vector acrn_hv_vector_handler
 #endif
 
-idtentry_ist debug		do_debug		has_error_code=0	shift_ist=IST_INDEX_DB ist_offset=DB_STACK_OFFSET
+idtentry_ist debug		do_debug		has_error_code=0
 idtentry int3			do_int3			has_error_code=0	create_gap=1
 idtentry stack_segment		do_stack_segment	has_error_code=1
 

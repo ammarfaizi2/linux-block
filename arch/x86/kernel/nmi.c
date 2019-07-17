@@ -495,7 +495,7 @@ static bool notrace is_debug_stack(unsigned long addr)
 {
 	struct cea_exception_stacks *cs = __this_cpu_read(cea_exception_stacks);
 	unsigned long top = CEA_ESTACK_TOP(cs, DB);
-	unsigned long bot = CEA_ESTACK_BOT(cs, DB1);
+	unsigned long bot = CEA_ESTACK_BOT(cs, DB);
 
 	if (__this_cpu_read(debug_stack_usage))
 		return true;
