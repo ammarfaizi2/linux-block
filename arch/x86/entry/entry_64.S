@@ -861,130 +861,17 @@ apicinterrupt IRQ_WORK_VECTOR			irq_work_interrupt		smp_irq_work_interrupt
  */
 #define CPU_TSS_IST(x) PER_CPU_VAR(cpu_tss_rw) + (TSS_ist + (x) * 8)
 
-.macro idtentry_part do_sym, has_error_code:req, read_cr2:req, paranoid:req, shift_ist=-1, ist_offset=0
-
-	.if \paranoid
-	call	paranoid_entry
-	/* returned flag: ebx=0: need swapgs on exit, ebx=1: don't need it */
-	.else
-	call	error_entry
-	.endif
-	UNWIND_HINT_REGS
-
-	.if \read_cr2
-	/*
-	 * Store CR2 early so subsequent faults cannot clobber it. Use R12 as
-	 * intermediate storage as RDX can be clobbered in enter_from_user_mode().
-	 * GET_CR2_INTO can clobber RAX.
-	 */
-	GET_CR2_INTO(%r12);
-	.endif
-
-	.if \shift_ist != -1
-	TRACE_IRQS_OFF_DEBUG			/* reload IDT in case of recursion */
-	.else
-	TRACE_IRQS_OFF
-	.endif
-
-	.if \paranoid == 0
-	testb	$3, CS(%rsp)
-	jz	.Lfrom_kernel_no_context_tracking_\@
-	CALL_enter_from_user_mode
-.Lfrom_kernel_no_context_tracking_\@:
-	.endif
-
-	movq	%rsp, %rdi			/* pt_regs pointer */
-
-	.if \has_error_code
-	movq	ORIG_RAX(%rsp), %rsi		/* get error code */
-	movq	$-1, ORIG_RAX(%rsp)		/* no syscall to restart */
-	.else
-	xorl	%esi, %esi			/* no error code */
-	.endif
-
-	.if \shift_ist != -1
-	subq	$\ist_offset, CPU_TSS_IST(\shift_ist)
-	.endif
-
-	.if \read_cr2
-	movq	%r12, %rdx			/* Move CR2 into 3rd argument */
-	.endif
-
-	call	\do_sym
-
-	.if \shift_ist != -1
-	addq	$\ist_offset, CPU_TSS_IST(\shift_ist)
-	.endif
-
-	.if \paranoid
-	/* this procedure expect "no swapgs" flag in ebx */
-	jmp	paranoid_exit
-	.else
-	jmp	error_exit
-	.endif
-
-.endm
-
-/**
- * idtentry - Generate an IDT entry stub
- * @sym:		Name of the generated entry point
- * @do_sym:		C function to be called
- * @has_error_code:	True if this IDT vector has an error code on the stack
- * @paranoid:		non-zero means that this vector may be invoked from
- *			kernel mode with user GSBASE and/or user CR3.
- *			2 is special -- see below.
- * @shift_ist:		Set to an IST index if entries from kernel mode should
- *			decrement the IST stack so that nested entries get a
- *			fresh stack.  (This is for #DB, which has a nasty habit
- *			of recursing.)
- * @create_gap:		create a 6-word stack gap when coming from kernel mode.
- * @read_cr2:		load CR2 into the 3rd argument; done before calling any C code
+/*
+ * This creates the body of a non-paranoid IDT entry.  If the entry
+ * came from user mode, it will switch to the kernel stack.  If the entry
+ * came from kernel mode and create_gap is set, it will create a gap.
  *
- * idtentry generates an IDT stub that sets up a usable kernel context,
- * creates struct pt_regs, and calls @do_sym.  The stub has the following
- * special behaviors:
- *
- * On an entry from user mode, the stub switches from the trampoline or
- * IST stack to the normal thread stack.  On an exit to user mode, the
- * normal exit-to-usermode path is invoked.
- *
- * On an exit to kernel mode, if @paranoid == 0, we check for preemption,
- * whereas we omit the preemption check if @paranoid != 0.  This is purely
- * because the implementation is simpler this way.  The kernel only needs
- * to check for asynchronous kernel preemption when IRQ handlers return.
- *
- * If @paranoid == 0, then the stub will handle IRET faults by pretending
- * that the fault came from user mode.  It will handle gs_change faults by
- * pretending that the fault happened with kernel GSBASE.  Since this handling
- * is omitted for @paranoid != 0, the #GP, #SS, and #NP stubs must have
- * @paranoid == 0.  This special handling will do the wrong thing for
- * espfix-induced #DF on IRET, so #DF must not use @paranoid == 0.
- *
- * @paranoid == 2 is special: the stub will never switch stacks.  This is for
- * #DF: if the thread stack is somehow unusable, we'll still get a useful OOPS.
+ * The user of this macro is expected to have an unwind hint and ASM_CLAC
+ * first.
  */
-.macro idtentry sym do_sym has_error_code:req paranoid=0 shift_ist=-1 ist_offset=0 create_gap=0 read_cr2=0
-ENTRY(\sym)
-	UNWIND_HINT_IRET_REGS offset=\has_error_code*8
-
-	/* Sanity check */
-	.if \shift_ist != -1 && \paranoid != 1
-	.error "using shift_ist requires paranoid=1"
-	.endif
-
-	.if \create_gap && \paranoid
-	.error "using create_gap requires paranoid=0"
-	.endif
-
-	ASM_CLAC
-
+.macro idtentry_simple_body do_sym, has_error_code:req, read_cr2:req, create_gap:req
 	.if \has_error_code == 0
 	pushq	$-1				/* ORIG_RAX: no syscall to restart */
-	.endif
-
-	.if \paranoid == 1
-	testb	$3, CS-ORIG_RAX(%rsp)		/* If coming from userspace, switch stacks */
-	jnz	.Lfrom_usermode_switch_stack_\@
 	.endif
 
 	.if \create_gap == 1
@@ -1001,18 +888,169 @@ ENTRY(\sym)
 .Lfrom_usermode_no_gap_\@:
 	.endif
 
-	idtentry_part \do_sym, \has_error_code, \read_cr2, \paranoid, \shift_ist, \ist_offset
+	call	error_entry
+	UNWIND_HINT_REGS
 
-	.if \paranoid == 1
+	.if \read_cr2
 	/*
-	 * Entry from userspace.  Switch stacks and treat it
-	 * as a normal entry.  This means that paranoid handlers
-	 * run in real process context if user_mode(regs).
+	 * Store CR2 early so subsequent faults cannot clobber it. Use R12 as
+	 * intermediate storage as RDX can be clobbered in enter_from_user_mode().
+	 * GET_CR2_INTO can clobber RAX.
 	 */
-.Lfrom_usermode_switch_stack_\@:
-	idtentry_part \do_sym, \has_error_code, \read_cr2, paranoid=0
+	GET_CR2_INTO(%r12);
 	.endif
 
+	TRACE_IRQS_OFF
+
+	testb	$3, CS(%rsp)
+	jz	.Lfrom_kernel_no_context_tracking_\@
+	CALL_enter_from_user_mode
+.Lfrom_kernel_no_context_tracking_\@:
+
+	movq	%rsp, %rdi			/* pt_regs pointer */
+
+	.if \has_error_code
+	movq	ORIG_RAX(%rsp), %rsi		/* get error code */
+	movq	$-1, ORIG_RAX(%rsp)		/* no syscall to restart */
+	.else
+	xorl	%esi, %esi			/* no error code */
+	.endif
+
+	.if \read_cr2
+	movq	%r12, %rdx			/* Move CR2 into 3rd argument */
+	.endif
+
+	call	\do_sym
+
+	jmp	error_exit
+.endm
+
+/**
+ * idtentry - Generate an IDT entry stub for non-IST vectors
+ * @sym:		Name of the generated entry point
+ * @do_sym:		C function to be called
+ * @has_error_code:	True if this IDT vector has an error code on the stack
+ * @create_gap:		create a 6-word stack gap when coming from kernel mode.
+ * @read_cr2:		load CR2 into the 3rd argument; done before calling any C code
+ *
+ * idtentry generates an IDT stub that sets up a usable kernel context,
+ * creates struct pt_regs, and calls @do_sym.  The stub has the following
+ * special behaviors:
+ *
+ * On an entry from user mode, the stub switches from the trampoline or
+ * IST stack to the normal thread stack.  On an exit to user mode, the
+ * normal exit-to-usermode path is invoked.
+ *
+ * On an exit to kernel mode, we check for preemption.
+ *
+ * The stub will handle IRET faults by pretending that the fault came from
+ * user mode.  It will handle gs_change faults by pretending that the fault
+ * happened with kernel GSBASE.  This special handling will do the wrong thing
+ * for #DF, so #DF must not use this type of entry.
+ *
+ * Other than faults due to IRET or gs_change, this type of entry assumes
+ * that all entries from kernel mode happen with kernel GSBASE.  This entry
+ * path must not be used for exceptions that can occur in kernel mode with
+ * user GSBASE.
+ */
+.macro idtentry sym do_sym has_error_code:req create_gap=0 read_cr2=0
+ENTRY(\sym)
+	UNWIND_HINT_IRET_REGS offset=\has_error_code*8
+	ASM_CLAC
+	idtentry_simple_body \do_sym, has_error_code=\has_error_code, create_gap=\create_gap, read_cr2=\read_cr2
+_ASM_NOKPROBE(\sym)
+END(\sym)
+.endm
+
+/**
+ * idtentry_ist - Generate an IDT entry stub for IST vectors
+ * @sym:		Name of the generated entry point
+ * @do_sym:		C function to be called
+ * @has_error_code:	True if this IDT vector has an error code on the stack
+ * @is_df:		True if the vector is #DF
+ * @shift_ist:		Set to an IST index if entries from kernel mode should
+ *			decrement the IST stack so that nested entries get a
+ *			fresh stack.  (This is for #DB, which has a nasty habit
+ *			of recursing.)
+ * @read_cr2:		load CR2 into the 3rd argument; done before calling any C code
+ *
+ * idtentry generates an IDT stub that sets up a usable kernel context,
+ * creates struct pt_regs, and calls @do_sym.  The stub has the following
+ * special behaviors:
+ *
+ * If !is_df, on an entry from user mode, the stub switches back to the kernel
+ * stack and treats the entry as a normal, non-IST entry from the trampoline
+ * or IST stack to the normal thread stack.  On an exit to user mode, the
+ * normal exit-to-usermode path is invoked.
+ *
+ * On an exit to kernel mode, we do not check for preemption.  This is purely
+ * because the implementation is simpler this way.  The kernel only needs
+ * to check for asynchronous kernel preemption when IRQ handlers return.
+ *
+ * The generated code cannot handle IRET or gs_change faults, so this cannot
+ * be used for #GP, #SS, or #NP.
+ *
+ * @is_df is special: the stub will never switch stacks.  This way, if the thread stack is somehow unusable, we'll still get a useful OOPS.
+ */
+.macro idtentry_ist sym do_sym has_error_code:req is_df=0 shift_ist=-1 ist_offset=0 read_cr2=0
+ENTRY(\sym)
+	UNWIND_HINT_IRET_REGS offset=\has_error_code*8
+
+	ASM_CLAC
+
+	.if \is_df == 0
+	/*
+	 * For everything except #DF, if the entry came from user mode,
+	 * treat it like a normal non-IST entry.  In particular, this means
+	 * that we immediate get off of the IST stack.  This means that, if
+	 * user_mode(regs), the handler is in real process context and can
+	 * safely send signals and such.
+	 */
+	testb	$3, CS-RIP+8*\has_error_code(%rsp)		/* If coming from userspace, switch stacks */
+	jz	.Lfrom_kernel_\@
+	idtentry_simple_body do_sym=\do_sym has_error_code=\has_error_code read_cr2=\read_cr2 create_gap=0
+.Lfrom_kernel_\@:
+	.endif
+
+	.if \has_error_code == 0
+	pushq	$-1				/* ORIG_RAX: no syscall to restart */
+	.endif
+
+	call	paranoid_entry
+	/* returned flag: ebx=0: need swapgs on exit, ebx=1: don't need it */
+	UNWIND_HINT_REGS
+
+	.if \read_cr2
+	GET_CR2_INTO(%rdx);			/* can clobber %rax */
+	.endif
+
+	.if \shift_ist != -1
+	TRACE_IRQS_OFF_DEBUG			/* reload IDT in case of recursion */
+	.else
+	TRACE_IRQS_OFF
+	.endif
+
+	movq	%rsp, %rdi			/* pt_regs pointer */
+
+	.if \has_error_code
+	movq	ORIG_RAX(%rsp), %rsi		/* get error code */
+	movq	$-1, ORIG_RAX(%rsp)		/* no syscall to restart */
+	.else
+	xorl	%esi, %esi			/* no error code */
+	.endif
+
+	.if \shift_ist != -1
+	subq	$\ist_offset, CPU_TSS_IST(\shift_ist)
+	.endif
+
+	call	\do_sym
+
+	.if \shift_ist != -1
+	addq	$\ist_offset, CPU_TSS_IST(\shift_ist)
+	.endif
+
+	/* this procedure expect "no swapgs" flag in ebx */
+	jmp	paranoid_exit
 _ASM_NOKPROBE(\sym)
 END(\sym)
 .endm
@@ -1022,7 +1060,7 @@ idtentry overflow			do_overflow			has_error_code=0
 idtentry bounds				do_bounds			has_error_code=0
 idtentry invalid_op			do_invalid_op			has_error_code=0
 idtentry device_not_available		do_device_not_available		has_error_code=0
-idtentry double_fault			do_double_fault			has_error_code=1 paranoid=2 read_cr2=1
+idtentry_ist double_fault		do_double_fault			has_error_code=1 is_df=1 read_cr2=1
 idtentry coprocessor_segment_overrun	do_coprocessor_segment_overrun	has_error_code=0
 idtentry invalid_TSS			do_invalid_TSS			has_error_code=1
 idtentry segment_not_present		do_segment_not_present		has_error_code=1
@@ -1184,7 +1222,7 @@ apicinterrupt3 HYPERVISOR_CALLBACK_VECTOR \
 	acrn_hv_callback_vector acrn_hv_vector_handler
 #endif
 
-idtentry debug			do_debug		has_error_code=0	paranoid=1 shift_ist=IST_INDEX_DB ist_offset=DB_STACK_OFFSET
+idtentry_ist debug		do_debug		has_error_code=0	shift_ist=IST_INDEX_DB ist_offset=DB_STACK_OFFSET
 idtentry int3			do_int3			has_error_code=0	create_gap=1
 idtentry stack_segment		do_stack_segment	has_error_code=1
 
@@ -1201,7 +1239,7 @@ idtentry async_page_fault	do_async_page_fault	has_error_code=1	read_cr2=1
 #endif
 
 #ifdef CONFIG_X86_MCE
-idtentry machine_check		do_mce			has_error_code=0	paranoid=1
+idtentry_ist machine_check	do_mce			has_error_code=0
 #endif
 
 /*
