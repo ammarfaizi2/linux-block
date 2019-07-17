@@ -1130,8 +1130,14 @@ idtentry_ist machine_check	do_mce			has_error_code=0
 
 /*
  * Save all registers in pt_regs, and switch gs if needed.
- * Use slow, but surefire "are we in kernel?" check.
- * Return: ebx=0: need swapgs on exit, ebx=1: otherwise
+ * Use slow, but surefire "are we in kernel?" check.  Clears DR7 and
+ * sets up kernel CR3.
+ *
+ * This saves the following state in callee-saved registers:
+ *
+ * EBX:	0: need swapgs on exit, 1: no swapgs on exit
+ * R13:	previous value of DR7
+ * R14: previous value of CR3 if PTI is enabled
  */
 ENTRY(paranoid_entry)
 	UNWIND_HINT_FUNC
@@ -1145,8 +1151,19 @@ ENTRY(paranoid_entry)
 	js	1f				/* negative -> in kernel */
 	SWAPGS
 	xorl	%ebx, %ebx
-
 1:
+
+	/*
+	 * Clear DR7 as early as practical -- this minimizes the chance
+	 * that we hit a breakpoint.
+	 */
+	movq	%dr7, %r13
+	testq	%r13, %r13
+	jz 1f
+	xorl	%eax, %eax
+	movq	%rax, %dr7
+1:
+
 	/*
 	 * Always stash CR3 in %r14.  This value will be restored,
 	 * verbatim, at exit.  Needed if paranoid_entry interrupted
@@ -1168,6 +1185,13 @@ ENTRY(paranoid_entry)
 
 	ret
 END(paranoid_entry)
+
+.macro PARANOID_RESTORE_DR7_FROM_R13
+	testq	%r13, %r13
+	jz .Ldr7_was_zero_\@
+	movq	%r13, %dr7
+.Ldr7_was_zero_\@:
+.endm
 
 /*
  * "Paranoid" exit path from exception stack.  This is invoked
@@ -1197,6 +1221,7 @@ ENTRY(paranoid_exit)
 	/* Always restore stashed CR3 value (see paranoid_entry) */
 	RESTORE_CR3	scratch_reg=%rbx save_reg=%r14
 .Lparanoid_exit_restore:
+	PARANOID_RESTORE_DR7_FROM_R13
 	jmp restore_regs_and_return_to_kernel
 END(paranoid_exit)
 
@@ -1610,6 +1635,7 @@ end_repeat_nmi:
 nmi_swapgs:
 	SWAPGS_UNSAFE_STACK
 nmi_restore:
+	PARANOID_RESTORE_DR7_FROM_R13
 	POP_REGS
 
 	/*

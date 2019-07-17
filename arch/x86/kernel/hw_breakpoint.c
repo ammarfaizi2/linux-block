@@ -474,8 +474,13 @@ static int hw_breakpoint_handler(struct die_args *args)
 		return NOTIFY_DONE;
 
 	get_debugreg(dr7, 7);
-	/* Disable breakpoints during exception handling */
-	set_debugreg(0UL, 7);
+	/*
+	 * Disable breakpoints during exception handling.  NB: if we
+	 * are in IST context (i.e. we're handling a kernel breakpoint),
+	 * then the entry code will have cleared DR7 already.
+	 */
+	if (dr7)
+		set_debugreg(0UL, 7);
 	/*
 	 * Assert that local interrupts are disabled
 	 * Reset the DRn bits in the virtualized register value.
