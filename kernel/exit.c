@@ -1019,6 +1019,9 @@ eligible_child(struct wait_opts *wo, bool ptrace, struct task_struct *p)
 	if (!eligible_pid(wo, p))
 		return 0;
 
+	if ((p->flags & PF_WAIT_PID) && (wo->wo_type != PIDTYPE_PID))
+		return 0;
+
 	/*
 	 * Wait for all children (clone and not) if __WALL is set or
 	 * if it is traced by us.

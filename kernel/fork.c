@@ -1910,6 +1910,8 @@ static __latent_entropy struct task_struct *copy_process(
 	delayacct_tsk_init(p);	/* Must remain after dup_task_struct() */
 	p->flags &= ~(PF_SUPERPRIV | PF_WQ_WORKER | PF_IDLE);
 	p->flags |= PF_FORKNOEXEC;
+	if (clone_flags & CLONE_WAIT_PID)
+		p->flags |= PF_WAIT_PID;
 	INIT_LIST_HEAD(&p->children);
 	INIT_LIST_HEAD(&p->sibling);
 	rcu_copy_process(p);
@@ -2590,7 +2592,7 @@ static bool clone3_args_valid(const struct kernel_clone_args *kargs)
 	 * All lower bits of the flag word are taken.
 	 * Verify that no other unknown flags are passed along.
 	 */
-	if (kargs->flags & ~CLONE_LEGACY_FLAGS)
+	if (kargs->flags & ~(CLONE_LEGACY_FLAGS | CLONE_WAIT_PID))
 		return false;
 
 	/*
@@ -2598,6 +2600,13 @@ static bool clone3_args_valid(const struct kernel_clone_args *kargs)
 	 * - make the CSIGNAL bits reuseable for clone3
 	 */
 	if (kargs->flags & (CLONE_DETACHED | CSIGNAL))
+		return false;
+
+	/*
+	 * Currently only allow CLONE_WAIT_PID for processes created as
+	 * pidfds until someone needs this feature for regular pids too.
+	 */
+	if ((kargs->flags & CLONE_WAIT_PID) && !(kargs->flags & CLONE_PIDFD))
 		return false;
 
 	if ((kargs->flags & (CLONE_THREAD | CLONE_PARENT)) &&
