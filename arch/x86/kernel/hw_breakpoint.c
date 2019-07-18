@@ -231,6 +231,25 @@ static int arch_build_bp_info(struct perf_event *bp,
 			      const struct perf_event_attr *attr,
 			      struct arch_hw_breakpoint *hw)
 {
+	unsigned long bp_end = attr->bp_addr + attr->bp_len - 1;
+
+	/* check for overflow */
+	if (bp_end < attr->bp_addr || bp_end != (unsigned long)bp_end)
+		return -EINVAL;
+
+	/*
+	 * Prevent any breakpoint of any type that overlaps the
+	 * cpu_entry_area.  This protects the IST stacks -- a breakpoint early
+	 * on an IST stack would cause unrecoverable IST recursion.
+	 *
+	 * This also prevents a breakpoint on the GDT, IDT, or TSS.  The manual
+	 * is unclear as to exactly what happens if there is a data breakpoint
+	 * on one of these structures but, if such a breakpoint had any effect
+	 * at all, it seems likely that we would fail to handle it correctly.
+	 */
+	if (within_cpu_entry_area(attr->bp_addr, bp_end))
+		return -EINVAL;
+
 	hw->address = attr->bp_addr;
 	hw->mask = 0;
 

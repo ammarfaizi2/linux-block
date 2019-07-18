@@ -4,6 +4,7 @@
 #define _ASM_X86_CPU_ENTRY_AREA_H
 
 #include <linux/percpu-defs.h>
+#include <asm/page_types.h>
 #include <asm/processor.h>
 #include <asm/intel_ds.h>
 
@@ -130,6 +131,16 @@ extern struct cpu_entry_area *get_cpu_entry_area(int cpu);
 static inline struct entry_stack *cpu_entry_stack(int cpu)
 {
 	return &get_cpu_entry_area(cpu)->entry_stack_page.stack;
+}
+
+/*
+ * Checks whether the range from addr to end, inclusive, overlaps the CPU
+ * entry area range.
+ */
+static inline bool within_cpu_entry_area(unsigned long addr, unsigned long end)
+{
+	return end >= CPU_ENTRY_AREA_PER_CPU &&
+		addr < (CPU_ENTRY_AREA_PER_CPU + CPU_ENTRY_AREA_TOT_SIZE);
 }
 
 #define __this_cpu_ist_top_va(name)					\
