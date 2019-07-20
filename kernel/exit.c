@@ -1738,3 +1738,90 @@ __weak void abort(void)
 	panic("Oops failed to kill thread");
 }
 EXPORT_SYMBOL(abort);
+
+static int copy_rusage_to_user_any(struct rusage *kru, struct rusage __user *ru)
+{
+#ifdef CONFIG_COMPAT
+	if (in_compat_syscall())
+		return put_compat_rusage(kru, (struct compat_rusage __user *)ru);
+#endif
+	return copy_to_user(ru, kru, sizeof(*kru));
+}
+
+static int copy_siginfo_to_user_any(kernel_siginfo_t *kinfo, siginfo_t *info)
+{
+#ifdef CONFIG_COMPAT
+	if (in_compat_syscall())
+		return copy_siginfo_to_user32(
+			(struct compat_siginfo __user *)info, kinfo);
+#endif
+	return copy_siginfo_to_user(info, kinfo);
+}
+
+SYSCALL_DEFINE6(pidfd_wait, int, pidfd, int __user *, stat_addr,
+		siginfo_t __user *, info, struct rusage __user *, ru,
+		unsigned int, states, unsigned int, flags)
+{
+	long ret;
+	struct fd f;
+	struct pid *pid;
+	struct wait_opts wo;
+	struct rusage kru = {};
+	kernel_siginfo_t kinfo = {
+		.si_signo = 0,
+	};
+
+	if (pidfd < 0)
+		return -EINVAL;
+
+	if (states & ~(WEXITED | WSTOPPED | WCONTINUED | WUNTRACED))
+		return -EINVAL;
+
+	if (!(states & (WEXITED | WSTOPPED | WCONTINUED | WUNTRACED)))
+		return -EINVAL;
+
+	if (flags & ~(__WNOTHREAD | __WCLONE | __WALL | WNOWAIT | WNOHANG))
+		return -EINVAL;
+
+	f = fdget(pidfd);
+	if (!f.file)
+		return -EBADF;
+
+	pid = pidfd_pid(f.file);
+	if (IS_ERR(pid)) {
+		ret = PTR_ERR(pid);
+		goto out_fdput;
+	}
+
+	wo = (struct wait_opts){
+		.wo_type	= PIDTYPE_PID,
+		.wo_pid		= pid,
+		.wo_flags	= states | flags,
+		.wo_info	= info ? &kinfo : NULL,
+		.wo_rusage	= ru ? &kru : NULL,
+	};
+
+	ret = do_wait(&wo);
+	if (ret > 0) {
+		kinfo.si_signo = SIGCHLD;
+
+		if (stat_addr && put_user(wo.wo_stat, stat_addr)) {
+			ret = -EFAULT;
+			goto out_fdput;
+		}
+
+		if (ru && copy_rusage_to_user_any(&kru, ru)) {
+			ret = -EFAULT;
+			goto out_fdput;
+		}
+	} else {
+		kinfo.si_signo = 0;
+	}
+
+	if (info && copy_siginfo_to_user_any(&kinfo, info))
+		ret = -EFAULT;
+
+out_fdput:
+	fdput(f);
+	return ret;
+}
