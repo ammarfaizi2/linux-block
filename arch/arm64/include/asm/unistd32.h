@@ -877,7 +877,9 @@ __SYSCALL(__NR_fsmount, sys_fsmount)
 __SYSCALL(__NR_fspick, sys_fspick)
 #define __NR_pidfd_open 434
 __SYSCALL(__NR_pidfd_open, sys_pidfd_open)
-#define __NR_clone3 435
+#define __NR_pidfd_wait 438
+__SYSCALL(__NR_pidfd_wait, sys_pidfd_wait)
+#define __NR_clone3 439
 __SYSCALL(__NR_clone3, sys_clone3)
 
 /*
