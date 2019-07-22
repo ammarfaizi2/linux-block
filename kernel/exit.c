@@ -994,19 +994,12 @@ SYSCALL_DEFINE1(exit_group, int, error_code)
 	return 0;
 }
 
-struct waitid_info {
-	pid_t pid;
-	uid_t uid;
-	int status;
-	int cause;
-};
-
 struct wait_opts {
 	enum pid_type		wo_type;
 	int			wo_flags;
 	struct pid		*wo_pid;
 
-	struct waitid_info	*wo_info;
+	kernel_siginfo_t	*wo_info;
 	int			wo_stat;
 	struct rusage		*wo_rusage;
 
@@ -1058,7 +1051,7 @@ static int wait_task_zombie(struct wait_opts *wo, struct task_struct *p)
 	int state, status;
 	pid_t pid = task_pid_vnr(p);
 	uid_t uid = from_kuid_munged(current_user_ns(), task_uid(p));
-	struct waitid_info *infop;
+	kernel_siginfo_t *infop;
 
 	if (!likely(wo->wo_flags & WEXITED))
 		return 0;
@@ -1169,14 +1162,14 @@ out_info:
 	infop = wo->wo_info;
 	if (infop) {
 		if ((status & 0x7f) == 0) {
-			infop->cause = CLD_EXITED;
-			infop->status = status >> 8;
+			infop->si_code = CLD_EXITED;
+			infop->si_status = status >> 8;
 		} else {
-			infop->cause = (status & 0x80) ? CLD_DUMPED : CLD_KILLED;
-			infop->status = status & 0x7f;
+			infop->si_code = (status & 0x80) ? CLD_DUMPED : CLD_KILLED;
+			infop->si_status = status & 0x7f;
 		}
-		infop->pid = pid;
-		infop->uid = uid;
+		infop->si_pid = pid;
+		infop->si_uid = uid;
 	}
 
 	return pid;
@@ -1215,7 +1208,7 @@ static int *task_stopped_code(struct task_struct *p, bool ptrace)
 static int wait_task_stopped(struct wait_opts *wo,
 				int ptrace, struct task_struct *p)
 {
-	struct waitid_info *infop;
+	kernel_siginfo_t *infop;
 	int exit_code, *p_code, why;
 	uid_t uid = 0; /* unneeded, required by compiler */
 	pid_t pid;
@@ -1270,10 +1263,10 @@ unlock_sig:
 
 	infop = wo->wo_info;
 	if (infop) {
-		infop->cause = why;
-		infop->status = exit_code;
-		infop->pid = pid;
-		infop->uid = uid;
+		infop->si_code = why;
+		infop->si_status = exit_code;
+		infop->si_pid = pid;
+		infop->si_uid = uid;
 	}
 	return pid;
 }
@@ -1286,7 +1279,7 @@ unlock_sig:
  */
 static int wait_task_continued(struct wait_opts *wo, struct task_struct *p)
 {
-	struct waitid_info *infop;
+	kernel_siginfo_t *infop;
 	pid_t pid;
 	uid_t uid;
 
@@ -1316,13 +1309,13 @@ static int wait_task_continued(struct wait_opts *wo, struct task_struct *p)
 	put_task_struct(p);
 
 	infop = wo->wo_info;
-	if (!infop) {
-		wo->wo_stat = 0xffff;
+	if (infop) {
+		infop->si_code = CLD_CONTINUED;
+		infop->si_status = SIGCONT;
+		infop->si_pid = pid;
+		infop->si_uid = uid;
 	} else {
-		infop->cause = CLD_CONTINUED;
-		infop->pid = pid;
-		infop->uid = uid;
-		infop->status = SIGCONT;
+		wo->wo_stat = 0xffff;
 	}
 	return pid;
 }
@@ -1552,7 +1545,7 @@ end:
 	return retval;
 }
 
-static long kernel_waitid(int which, pid_t upid, struct waitid_info *infop,
+static long kernel_waitid(int which, pid_t upid, kernel_siginfo_t *infop,
 			  int options, struct rusage *ru)
 {
 	struct wait_opts wo;
@@ -1602,33 +1595,22 @@ SYSCALL_DEFINE5(waitid, int, which, pid_t, upid, struct siginfo __user *,
 		infop, int, options, struct rusage __user *, ru)
 {
 	struct rusage r;
-	struct waitid_info info = {.status = 0};
-	long err = kernel_waitid(which, upid, &info, options, ru ? &r : NULL);
-	int signo = 0;
-
+	kernel_siginfo_t kinfo = {
+		.si_signo = 0,
+	};
+	long err = kernel_waitid(which, upid, infop ? &kinfo : NULL, options,
+				 ru ? &r : NULL);
 	if (err > 0) {
-		signo = SIGCHLD;
+		kinfo.si_signo = SIGCHLD;
 		err = 0;
 		if (ru && copy_to_user(ru, &r, sizeof(struct rusage)))
 			return -EFAULT;
 	}
-	if (!infop)
-		return err;
 
-	if (!user_access_begin(infop, sizeof(*infop)))
+	if (infop && copy_siginfo_to_user(infop, &kinfo))
 		return -EFAULT;
 
-	unsafe_put_user(signo, &infop->si_signo, Efault);
-	unsafe_put_user(0, &infop->si_errno, Efault);
-	unsafe_put_user(info.cause, &infop->si_code, Efault);
-	unsafe_put_user(info.pid, &infop->si_pid, Efault);
-	unsafe_put_user(info.uid, &infop->si_uid, Efault);
-	unsafe_put_user(info.status, &infop->si_status, Efault);
-	user_access_end();
-	return err;
-Efault:
-	user_access_end();
-	return -EFAULT;
+	return err ;
 }
 
 long kernel_wait4(pid_t upid, int __user *stat_addr, int options,
@@ -1722,11 +1704,13 @@ COMPAT_SYSCALL_DEFINE5(waitid,
 		struct compat_rusage __user *, uru)
 {
 	struct rusage ru;
-	struct waitid_info info = {.status = 0};
-	long err = kernel_waitid(which, pid, &info, options, uru ? &ru : NULL);
-	int signo = 0;
+	kernel_siginfo_t kinfo = {
+		.si_signo = 0,
+	};
+	long err = kernel_waitid(which, pid, infop ? &kinfo : NULL, options,
+				 uru ? &ru : NULL);
 	if (err > 0) {
-		signo = SIGCHLD;
+		kinfo.si_signo = SIGCHLD;
 		err = 0;
 		if (uru) {
 			/* kernel_waitid() overwrites everything in ru */
@@ -1739,23 +1723,10 @@ COMPAT_SYSCALL_DEFINE5(waitid,
 		}
 	}
 
-	if (!infop)
-		return err;
-
-	if (!user_access_begin(infop, sizeof(*infop)))
+	if (infop && copy_siginfo_to_user32(infop, &kinfo))
 		return -EFAULT;
 
-	unsafe_put_user(signo, &infop->si_signo, Efault);
-	unsafe_put_user(0, &infop->si_errno, Efault);
-	unsafe_put_user(info.cause, &infop->si_code, Efault);
-	unsafe_put_user(info.pid, &infop->si_pid, Efault);
-	unsafe_put_user(info.uid, &infop->si_uid, Efault);
-	unsafe_put_user(info.status, &infop->si_status, Efault);
-	user_access_end();
 	return err;
-Efault:
-	user_access_end();
-	return -EFAULT;
 }
 #endif
 
