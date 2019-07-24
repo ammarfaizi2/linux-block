@@ -431,8 +431,6 @@ struct ath11k {
 
 	struct {
 		struct ieee80211_supported_band sbands[NUM_NL80211_BANDS];
-		struct ieee80211_sband_iftype_data
-			iftype[NUM_NL80211_BANDS][NUM_NL80211_IFTYPES];
 	} mac;
 	unsigned long dev_flags;
 	unsigned int filter_flags;
