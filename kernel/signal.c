@@ -1960,27 +1960,32 @@ bool do_notify_parent(struct task_struct *tsk, int sig)
 
 	psig = tsk->parent->sighand;
 	spin_lock_irqsave(&psig->siglock, flags);
-	if (!tsk->ptrace && sig == SIGCHLD &&
-	    (psig->action[SIGCHLD-1].sa.sa_handler == SIG_IGN ||
-	     (psig->action[SIGCHLD-1].sa.sa_flags & SA_NOCLDWAIT))) {
-		/*
-		 * We are exiting and our parent doesn't care.  POSIX.1
-		 * defines special semantics for setting SIGCHLD to SIG_IGN
-		 * or setting the SA_NOCLDWAIT flag: we should be reaped
-		 * automatically and not left for our parent's wait4 call.
-		 * Rather than having the parent do it as a magic kind of
-		 * signal handler, we just set this to tell do_exit that we
-		 * can be cleaned up without becoming a zombie.  Note that
-		 * we still call __wake_up_parent in this case, because a
-		 * blocked sys_wait4 might now return -ECHILD.
-		 *
-		 * Whether we send SIGCHLD or not for SA_NOCLDWAIT
-		 * is implementation-defined: we do (if you don't want
-		 * it, just use SIG_IGN instead).
-		 */
-		autoreap = true;
-		if (psig->action[SIGCHLD-1].sa.sa_handler == SIG_IGN)
-			sig = 0;
+	if (!tsk->ptrace) {
+		if (sig == SIGCHLD &&
+		    (psig->action[SIGCHLD-1].sa.sa_handler == SIG_IGN ||
+		     (psig->action[SIGCHLD-1].sa.sa_flags & SA_NOCLDWAIT))) {
+			/*
+			 * We are exiting and our parent doesn't care.  POSIX.1
+			 * defines special semantics for setting SIGCHLD to SIG_IGN
+			 * or setting the SA_NOCLDWAIT flag: we should be reaped
+			 * automatically and not left for our parent's wait4 call.
+			 * Rather than having the parent do it as a magic kind of
+			 * signal handler, we just set this to tell do_exit that we
+			 * can be cleaned up without becoming a zombie.  Note that
+			 * we still call __wake_up_parent in this case, because a
+			 * blocked sys_wait4 might now return -ECHILD.
+			 *
+			 * Whether we send SIGCHLD or not for SA_NOCLDWAIT
+			 * is implementation-defined: we do (if you don't want
+			 * it, just use SIG_IGN instead).
+			 */
+			autoreap = true;
+			if (psig->action[SIGCHLD-1].sa.sa_handler == SIG_IGN)
+				sig = 0;
+		}
+
+		if (tsk->signal->clone_wait_pidfd)
+			autoreap = !has_pidfd(task_pid(tsk));
 	}
 	if (valid_signal(sig) && sig)
 		__group_send_sig_info(sig, &info, tsk->parent);

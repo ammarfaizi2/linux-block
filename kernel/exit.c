@@ -1012,6 +1012,7 @@ struct wait_opts {
 
 	wait_queue_entry_t		child_wait;
 	int			notask_error;
+	bool			wo_p_pidfd;
 };
 
 static int eligible_pid(struct wait_opts *wo, struct task_struct *p)
@@ -1452,9 +1453,14 @@ static int do_wait_thread(struct wait_opts *wo, struct task_struct *tsk)
 {
 	struct task_struct *p;
 
-	list_for_each_entry(p, &tsk->children, sibling) {
-		int ret = wait_consider_task(wo, 0, p);
+	list_for_each_entry (p, &tsk->children, sibling) {
+		int ret;
 
+		if (p->signal->clone_wait_pidfd && has_pidfd(task_pid(p)) &&
+		    !wo->wo_p_pidfd)
+			continue;
+
+		ret = wait_consider_task(wo, 0, p);
 		if (ret)
 			return ret;
 	}
@@ -1583,6 +1589,7 @@ static long kernel_waitid(int which, pid_t upid, struct waitid_info *infop,
 	if (!(options & (WEXITED|WSTOPPED|WCONTINUED)))
 		return -EINVAL;
 
+	wo.wo_p_pidfd = false;
 	switch (which) {
 	case P_ALL:
 		type = PIDTYPE_MAX;
@@ -1609,6 +1616,8 @@ static long kernel_waitid(int which, pid_t upid, struct waitid_info *infop,
 		pid = pidfd_get_pid(upid);
 		if (IS_ERR(pid))
 			return PTR_ERR(pid);
+
+		wo.wo_p_pidfd = true;
 		break;
 	default:
 		return -EINVAL;
@@ -1693,6 +1702,7 @@ long kernel_wait4(pid_t upid, int __user *stat_addr, int options,
 	wo.wo_info	= NULL;
 	wo.wo_stat	= 0;
 	wo.wo_rusage	= ru;
+	wo.wo_p_pidfd = false;
 	ret = do_wait(&wo);
 	put_pid(pid);
 	if (ret > 0 && stat_addr && put_user(wo.wo_stat, stat_addr))

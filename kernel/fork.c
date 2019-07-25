@@ -1578,6 +1578,9 @@ static int copy_signal(unsigned long clone_flags, struct task_struct *tsk)
 	sig->real_timer.function = it_real_fn;
 #endif
 
+	if (clone_flags & CLONE_WAIT_PIDFD)
+		sig->clone_wait_pidfd = 1;
+
 	task_lock(current->group_leader);
 	memcpy(sig->rlim, current->signal->rlim, sizeof sig->rlim);
 	task_unlock(current->group_leader);
@@ -1708,6 +1711,7 @@ static int pidfd_release(struct inode *inode, struct file *file)
 	struct pid *pid = file->private_data;
 
 	file->private_data = NULL;
+	atomic_dec(&pid->pidfd_nr);
 	put_pid(pid);
 	return 0;
 }
@@ -2075,6 +2079,8 @@ static __latent_entropy struct task_struct *copy_process(
 		retval = put_user(pidfd, args->pidfd);
 		if (retval)
 			goto bad_fork_put_pidfd;
+
+		atomic_set(&pid->pidfd_nr, 1);
 	}
 
 #ifdef CONFIG_BLOCK
@@ -2600,7 +2606,7 @@ static bool clone3_args_valid(const struct kernel_clone_args *kargs)
 	 * All lower bits of the flag word are taken.
 	 * Verify that no other unknown flags are passed along.
 	 */
-	if (kargs->flags & ~CLONE_LEGACY_FLAGS)
+	if (kargs->flags & ~(CLONE_LEGACY_FLAGS | CLONE_WAIT_PIDFD))
 		return false;
 
 	/*
@@ -2608,6 +2614,13 @@ static bool clone3_args_valid(const struct kernel_clone_args *kargs)
 	 * - make the CSIGNAL bits reuseable for clone3
 	 */
 	if (kargs->flags & (CLONE_DETACHED | CSIGNAL))
+		return false;
+
+	/*
+	 * Currently only allow CLONE_WAIT_PIDFD for processes created as
+	 * pidfds until someone needs this feature for regular pids too.
+	 */
+	if ((kargs->flags & CLONE_WAIT_PIDFD) && !(kargs->flags & CLONE_PIDFD))
 		return false;
 
 	if ((kargs->flags & (CLONE_THREAD | CLONE_PARENT)) &&
