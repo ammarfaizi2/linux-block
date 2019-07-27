@@ -1523,11 +1523,9 @@ trace_page_fault_entries(struct pt_regs *regs, unsigned long error_code,
 dotraplinkage void
 do_page_fault(struct pt_regs *regs, unsigned long error_code, unsigned long address)
 {
-	enum ctx_state prev_state;
+	RCU_LOCKDEP_WARN(!rcu_is_watching(), "page fault entry code didn't wake RCU");
 
-	prev_state = exception_enter();
 	trace_page_fault_entries(regs, error_code, address);
 	__do_page_fault(regs, error_code, address);
-	exception_exit(prev_state);
 }
 NOKPROBE_SYMBOL(do_page_fault);
