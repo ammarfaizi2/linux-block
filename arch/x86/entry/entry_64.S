@@ -505,7 +505,7 @@ END(spurious_entries_start)
  * The user of this macro is expected to have an unwind hint and ASM_CLAC
  * first.
  */
-.macro idtentry_simple_body do_sym, has_error_code:req, read_cr2:req, create_gap:req
+.macro idtentry_simple_body do_sym, has_error_code:req, read_cr2:req, create_gap:req, irq_stack:req
 	.if \has_error_code == 0
 	pushq	$-1				/* ORIG_RAX: no syscall to restart */
 	.endif
@@ -543,8 +543,6 @@ END(spurious_entries_start)
 	CALL_enter_from_user_mode
 .Lfrom_kernel_no_context_tracking_\@:
 
-	movq	%rsp, %rdi			/* pt_regs pointer */
-
 	.if \has_error_code
 	movq	ORIG_RAX(%rsp), %rsi		/* get error code */
 	movq	$-1, ORIG_RAX(%rsp)		/* no syscall to restart */
@@ -556,7 +554,18 @@ END(spurious_entries_start)
 	movq	%r12, %rdx			/* Move CR2 into 3rd argument */
 	.endif
 
+	.if \irq_stack
+	ENTER_IRQ_STACK old_rsp=%rdi
+	.else
+	movq	%rsp, %rdi			/* pt_regs pointer */
+	.endif
+
 	call	\do_sym
+
+	.if \irq_stack
+	/* we need IRQs off first? */
+	LEAVE_IRQ_STACK
+	.endif
 
 	jmp	error_exit
 .endm
@@ -568,6 +577,7 @@ END(spurious_entries_start)
  * @has_error_code:	True if this IDT vector has an error code on the stack
  * @create_gap:		create a 6-word stack gap when coming from kernel mode.
  * @read_cr2:		load CR2 into the 3rd argument; done before calling any C code
+ * @irq_stack:		Execute the function on the IRQ stack
  *
  * idtentry generates an IDT stub that sets up a usable kernel context,
  * creates struct pt_regs, and calls @do_sym.  The stub has the following
@@ -589,11 +599,11 @@ END(spurious_entries_start)
  * path must not be used for exceptions that can occur in kernel mode with
  * user GSBASE.
  */
-.macro idtentry sym do_sym has_error_code:req create_gap=0 read_cr2=0
+.macro idtentry sym do_sym has_error_code:req create_gap=0 read_cr2=0 irq_stack=0
 ENTRY(\sym)
 	UNWIND_HINT_IRET_REGS offset=\has_error_code*8
 	ASM_CLAC
-	idtentry_simple_body \do_sym, has_error_code=\has_error_code, create_gap=\create_gap, read_cr2=\read_cr2
+	idtentry_simple_body \do_sym, has_error_code=\has_error_code, create_gap=\create_gap, read_cr2=\read_cr2, irq_stack=\irq_stack
 _ASM_NOKPROBE(\sym)
 END(\sym)
 .endm
@@ -644,7 +654,7 @@ ENTRY(\sym)
 	 */
 	testb	$3, CS-RIP+8*\has_error_code(%rsp)		/* If coming from userspace, switch stacks */
 	jz	.Lfrom_kernel_\@
-	idtentry_simple_body do_sym=\do_sym has_error_code=\has_error_code read_cr2=\read_cr2 create_gap=0
+	idtentry_simple_body do_sym=\do_sym has_error_code=\has_error_code read_cr2=\read_cr2 create_gap=0 irq_stack=0
 .Lfrom_kernel_\@:
 	.endif
 
@@ -691,127 +701,14 @@ _ASM_NOKPROBE(\sym)
 END(\sym)
 .endm
 
-/*
- * Interrupt entry helper function.
- *
- * Entry runs with interrupts off. Stack layout at entry:
- * +----------------------------------------------------+
- * | regs->ss						|
- * | regs->rsp						|
- * | regs->eflags					|
- * | regs->cs						|
- * | regs->ip						|
- * +----------------------------------------------------+
- * | regs->orig_ax = ~(interrupt number)		|
- * +----------------------------------------------------+
- * | return address					|
- * +----------------------------------------------------+
- */
-ENTRY(interrupt_entry)
-	UNWIND_HINT_FUNC
-	ASM_CLAC
-	cld
-
-	testb	$3, CS-ORIG_RAX+8(%rsp)
-	jz	1f
-	SWAPGS
-	FENCE_SWAPGS_USER_ENTRY
-	/*
-	 * Switch to the thread stack. The IRET frame and orig_ax are
-	 * on the stack, as well as the return address. RDI..R12 are
-	 * not (yet) on the stack and space has not (yet) been
-	 * allocated for them.
-	 */
-	pushq	%rdi
-
-	/* Need to switch before accessing the thread stack. */
-	SWITCH_TO_KERNEL_CR3 scratch_reg=%rdi
-	movq	%rsp, %rdi
-	movq	PER_CPU_VAR(cpu_current_top_of_stack), %rsp
-
-	 /*
-	  * We have RDI, return address, and orig_ax on the stack on
-	  * top of the IRET frame. That means offset=24
-	  */
-	UNWIND_HINT_IRET_REGS base=%rdi offset=24
-
-	pushq	7*8(%rdi)		/* regs->ss */
-	pushq	6*8(%rdi)		/* regs->rsp */
-	pushq	5*8(%rdi)		/* regs->eflags */
-	pushq	4*8(%rdi)		/* regs->cs */
-	pushq	3*8(%rdi)		/* regs->ip */
-	pushq	2*8(%rdi)		/* regs->orig_ax */
-	pushq	8(%rdi)			/* return address */
-	UNWIND_HINT_FUNC
-
-	movq	(%rdi), %rdi
-	jmp	2f
-1:
-	FENCE_SWAPGS_KERNEL_ENTRY
-2:
-	PUSH_AND_CLEAR_REGS save_ret=1
-	ENCODE_FRAME_POINTER 8
-
-	testb	$3, CS+8(%rsp)
-	jz	1f
-
-	/*
-	 * IRQ from user mode.
-	 *
-	 * We need to tell lockdep that IRQs are off.  We can't do this until
-	 * we fix gsbase, and we should do it before enter_from_user_mode
-	 * (which can take locks).  Since TRACE_IRQS_OFF is idempotent,
-	 * the simplest way to handle it is to just call it twice if
-	 * we enter from user mode.  There's no reason to optimize this since
-	 * TRACE_IRQS_OFF is a no-op if lockdep is off.
-	 */
-	TRACE_IRQS_OFF
-
-	CALL_enter_from_user_mode
-
-1:
-	ENTER_IRQ_STACK old_rsp=%rdi save_ret=1
-	/* We entered an interrupt context - irqs are off: */
-	TRACE_IRQS_OFF
-
-	ret
-END(interrupt_entry)
-_ASM_NOKPROBE(interrupt_entry)
-
 
 /* Interrupt entry/exit. */
 
-/*
- * The interrupt stubs push (~vector+0x80) onto the stack and
- * then jump to common_spurious/interrupt.
- */
-common_spurious:
-	addq	$-0x80, (%rsp)			/* Adjust vector to [-256, -1] range */
-	call	interrupt_entry
-	UNWIND_HINT_REGS indirect=1
-	call	smp_spurious_interrupt		/* rdi points to pt_regs */
-	jmp	ret_from_intr
-END(common_spurious)
-_ASM_NOKPROBE(common_spurious)
-
 /* common_interrupt is a hotpath. Align it */
 	.p2align CONFIG_X86_L1_CACHE_SHIFT
-common_interrupt:
-	addq	$-0x80, (%rsp)			/* Adjust vector to [-256, -1] range */
-	call	interrupt_entry
-	UNWIND_HINT_REGS indirect=1
-	call	do_IRQ	/* rdi points to pt_regs */
-	/* 0(%rsp): old RSP */
-ret_from_intr:
-	DISABLE_INTERRUPTS(CLBR_ANY)
-	TRACE_IRQS_OFF
+idtentry common_interrupt	do_IRQ			has_error_code=1	irq_stack=1
+idtentry common_spurious	smp_spurious_interrupt	has_error_code=1	irq_stack=1
 
-	LEAVE_IRQ_STACK
-
-	testb	$3, CS(%rsp)
-	jz	retint_kernel
-
-	/* Interrupt came from user space */
 .Lretint_user:
 	mov	%rsp,%rdi
 	call	prepare_exit_to_usermode
@@ -991,16 +888,7 @@ _ASM_NOKPROBE(common_interrupt)
  * APIC interrupts.
  */
 .macro apicinterrupt3 num sym do_sym
-ENTRY(\sym)
-	UNWIND_HINT_IRET_REGS
-	pushq	$~(\num)
-.Lcommon_\sym:
-	call	interrupt_entry
-	UNWIND_HINT_REGS indirect=1
-	call	\do_sym	/* rdi points to pt_regs */
-	jmp	ret_from_intr
-END(\sym)
-_ASM_NOKPROBE(\sym)
+idtentry	\sym \do_sym has_error_code=0 irq_stack=1
 .endm
 
 /* Make sure APIC interrupt handlers end up in the irqentry section: */

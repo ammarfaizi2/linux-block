@@ -1183,11 +1183,13 @@ END(spurious_entries_start)
 
 common_spurious:
 	ASM_CLAC
-	addl	$-0x80, (%esp)			/* Adjust vector into the [-256, -1] range */
+
 	SAVE_ALL switch_stacks=1
 	ENCODE_FRAME_POINTER
 	TRACE_IRQS_OFF
 	movl	%esp, %eax
+	movl	PT_ORIG_EAX(%esp), %edx		# get the error code
+	movl	$-1, PT_ORIG_EAX(%esp)		# no syscall to restart
 	call	smp_spurious_interrupt
 	jmp	ret_from_intr
 ENDPROC(common_spurious)
@@ -1200,12 +1202,13 @@ ENDPROC(common_spurious)
 	.p2align CONFIG_X86_L1_CACHE_SHIFT
 common_interrupt:
 	ASM_CLAC
-	addl	$-0x80, (%esp)			/* Adjust vector into the [-256, -1] range */
 
 	SAVE_ALL switch_stacks=1
 	ENCODE_FRAME_POINTER
 	TRACE_IRQS_OFF
 	movl	%esp, %eax
+	movl	PT_ORIG_EAX(%esp), %edx		# get the error code
+	movl	$-1, PT_ORIG_EAX(%esp)		# no syscall to restart
 	call	do_IRQ
 	jmp	ret_from_intr
 ENDPROC(common_interrupt)

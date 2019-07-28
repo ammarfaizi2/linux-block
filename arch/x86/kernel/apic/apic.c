@@ -2146,10 +2146,11 @@ void __init register_lapic_address(unsigned long address)
 /*
  * This interrupt should _never_ happen with our APIC/SMP architecture
  */
-__visible void __irq_entry smp_spurious_interrupt(struct pt_regs *regs)
+__visible void __irq_entry smp_spurious_interrupt(struct pt_regs *regs, unsigned int vector)
 {
-	u8 vector = ~regs->orig_ax;
 	u32 v;
+
+	vector = ~(vector - 0x80);
 
 	entering_irq();
 	trace_spurious_apic_entry(vector);

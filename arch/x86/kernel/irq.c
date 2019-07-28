@@ -230,12 +230,12 @@ u64 arch_irq_stat(void)
  * SMP cross-CPU interrupts have their own specific
  * handlers).
  */
-__visible unsigned int __irq_entry do_IRQ(struct pt_regs *regs)
+__visible unsigned int __irq_entry do_IRQ(struct pt_regs *regs, unsigned int vector)
 {
 	struct pt_regs *old_regs = set_irq_regs(regs);
 	struct irq_desc * desc;
-	/* high bit used in ret_from_ code  */
-	unsigned vector = ~regs->orig_ax;
+
+	vector = ~(vector - 0x80);
 
 	entering_irq();
 
