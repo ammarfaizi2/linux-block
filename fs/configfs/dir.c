@@ -225,32 +225,6 @@ int configfs_make_dirent(struct configfs_dirent * parent_sd,
 	return 0;
 }
 
-static void init_dir(struct inode * inode)
-{
-	inode->i_op = &configfs_dir_inode_operations;
-	inode->i_fop = &configfs_dir_operations;
-
-	/* directory inodes start off with i_nlink == 2 (for "." entry) */
-	inc_nlink(inode);
-}
-
-static void configfs_init_file(struct inode * inode)
-{
-	inode->i_size = PAGE_SIZE;
-	inode->i_fop = &configfs_file_operations;
-}
-
-static void configfs_init_bin_file(struct inode *inode)
-{
-	inode->i_size = 0;
-	inode->i_fop = &configfs_bin_file_operations;
-}
-
-static void init_symlink(struct inode * inode)
-{
-	inode->i_op = &configfs_symlink_inode_operations;
-}
-
 /**
  *	configfs_create_dir - create a directory for an config_item.
  *	@item:		config_itemwe're creating directory for.
@@ -265,6 +239,7 @@ static int configfs_create_dir(struct config_item *item, struct dentry *dentry)
 	int error;
 	umode_t mode = S_IFDIR| S_IRWXU | S_IRUGO | S_IXUGO;
 	struct dentry *p = dentry->d_parent;
+	struct inode *inode;
 
 	BUG_ON(!item);
 
@@ -278,8 +253,15 @@ static int configfs_create_dir(struct config_item *item, struct dentry *dentry)
 		return error;
 
 	configfs_set_dir_dirent_depth(p->d_fsdata, dentry->d_fsdata);
-	error = configfs_create(dentry, mode, init_dir);
-	if (!error) {
+	inode = configfs_create(dentry, mode);
+	if (!IS_ERR(inode)) {
+		inode->i_op = &configfs_dir_inode_operations;
+		inode->i_fop = &configfs_dir_operations;
+		/* directory inodes start off with i_nlink == 2 (for "." entry) */
+		inc_nlink(inode);
+		d_instantiate(dentry, inode);
+		/* already hashed */
+		dget(dentry);  /* pin directory dentries in core */
 		inc_nlink(d_inode(p));
 		item->ci_dentry = dentry;
 	} else {
@@ -290,6 +272,7 @@ static int configfs_create_dir(struct config_item *item, struct dentry *dentry)
 			spin_unlock(&configfs_dirent_lock);
 			configfs_put(sd);
 		}
+		error = PTR_ERR(inode);
 	}
 	return error;
 }
@@ -342,8 +325,8 @@ int configfs_create_link(struct configfs_symlink *sl,
 	err = configfs_make_dirent(parent->d_fsdata, dentry, sl, mode,
 				   CONFIGFS_ITEM_LINK);
 	if (!err) {
-		err = configfs_create(dentry, mode, init_symlink);
-		if (err) {
+		struct inode *inode = configfs_create(dentry, mode);
+		if (IS_ERR(inode)) {
 			struct configfs_dirent *sd = dentry->d_fsdata;
 			if (sd) {
 				spin_lock(&configfs_dirent_lock);
@@ -351,7 +334,11 @@ int configfs_create_link(struct configfs_symlink *sl,
 				spin_unlock(&configfs_dirent_lock);
 				configfs_put(sd);
 			}
+			return PTR_ERR(inode);
 		}
+		inode->i_op = &configfs_symlink_inode_operations;
+		d_instantiate(dentry, inode);
+		dget(dentry);  /* pin link dentries in core */
 	}
 	return err;
 }
@@ -406,20 +393,27 @@ static void configfs_remove_dir(struct config_item * item)
 static int configfs_attach_attr(struct configfs_dirent * sd, struct dentry * dentry)
 {
 	struct configfs_attribute * attr = sd->s_element;
-	int error;
+	struct inode *inode;
 
 	spin_lock(&configfs_dirent_lock);
 	dentry->d_fsdata = configfs_get(sd);
 	sd->s_dentry = dentry;
 	spin_unlock(&configfs_dirent_lock);
 
-	error = configfs_create(dentry, (attr->ca_mode & S_IALLUGO) | S_IFREG,
-				(sd->s_type & CONFIGFS_ITEM_BIN_ATTR) ?
-					configfs_init_bin_file :
-					configfs_init_file);
-	if (error)
+	inode = configfs_create(dentry, (attr->ca_mode & S_IALLUGO) | S_IFREG);
+	if (IS_ERR(inode)) {
 		configfs_put(sd);
-	return error;
+		return PTR_ERR(inode);
+	}
+	if (sd->s_type & CONFIGFS_ITEM_BIN_ATTR) {
+		inode->i_size = 0;
+		inode->i_fop = &configfs_bin_file_operations;
+	} else {
+		inode->i_size = PAGE_SIZE;
+		inode->i_fop = &configfs_file_operations;
+	}
+	d_add(dentry, inode);
+	return 0;
 }
 
 static struct dentry * configfs_lookup(struct inode *dir,
