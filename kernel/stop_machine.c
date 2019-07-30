@@ -20,6 +20,7 @@
 #include <linux/smpboot.h>
 #include <linux/atomic.h>
 #include <linux/nmi.h>
+#include <linux/tick.h>
 #include <linux/sched/wake_q.h>
 
 /*
@@ -187,15 +188,19 @@ static int multi_cpu_stop(void *data)
 {
 	struct multi_stop_data *msdata = data;
 	enum multi_stop_state curstate = MULTI_STOP_NONE;
-	int cpu = smp_processor_id(), err = 0;
+	int cpu, err = 0;
 	const struct cpumask *cpumask;
 	unsigned long flags;
 	bool is_active;
+
+	for_each_online_cpu(cpu)
+		tick_nohz_dep_set_cpu(cpu, TICK_DEP_MASK_RCU);
 
 	/*
 	 * When called from stop_machine_from_inactive_cpu(), irq might
 	 * already be disabled.  Save the state and restore it on exit.
 	 */
+	cpu = smp_processor_id();
 	local_save_flags(flags);
 
 	if (!msdata->active_cpus) {
@@ -236,6 +241,8 @@ static int multi_cpu_stop(void *data)
 	} while (curstate != MULTI_STOP_EXIT);
 
 	local_irq_restore(flags);
+	for_each_online_cpu(cpu)
+		tick_nohz_dep_clear_cpu(cpu, TICK_DEP_MASK_RCU);
 	return err;
 }
 
