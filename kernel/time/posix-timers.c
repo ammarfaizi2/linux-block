@@ -805,6 +805,29 @@ static int common_hrtimer_try_to_cancel(struct k_itimer *timr)
 	return hrtimer_try_to_cancel(&timr->it.real.timer);
 }
 
+#ifdef CONFIG_PREEMPT_RT
+static struct k_itimer *timer_wait_running(struct k_itimer *timer,
+					   unsigned long *flags)
+{
+	const struct k_clock *kc = READ_ONCE(timer->kclock);
+	timer_t timer_id = READ_ONCE(timer->it_id);
+
+	/* Prevent kfree(timer) after dropping the lock */
+	rcu_read_lock();
+	unlock_timer(timer, *flags);
+
+	if (kc->timer_arm == common_hrtimer_arm)
+		hrtimer_cancel_wait_running(&timer->it.real.timer);
+	else if (kc == &alarm_clock)
+		hrtimer_cancel_wait_running(&timer->it.alarm.alarmtimer.timer);
+	else
+		WARN_ON_ONCE(1);
+	rcu_read_unlock();
+
+	/* Relock the timer. It might be not longer hashed. */
+	return lock_timer(timer_id, flags);
+}
+#else
 static struct k_itimer *timer_wait_running(struct k_itimer *timer,
 					   unsigned long *flags)
 {
@@ -815,6 +838,7 @@ static struct k_itimer *timer_wait_running(struct k_itimer *timer,
 	/* Relock the timer. It might be not longer hashed. */
 	return lock_timer(timer_id, flags);
 }
+#endif
 
 /* Set a POSIX.1b interval timer. */
 int common_timer_set(struct k_itimer *timr, int flags,
