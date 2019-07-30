@@ -62,6 +62,11 @@
 #include <net/net_namespace.h>
 #include <net/addrconf.h>
 
+#define IPV6ONLY_FLAGS	\
+		(IFA_F_NODAD | IFA_F_OPTIMISTIC | IFA_F_DADFAILED | \
+		 IFA_F_HOMEADDRESS | IFA_F_TENTATIVE | \
+		 IFA_F_MANAGETEMPADDR | IFA_F_STABLE_PRIVACY)
+
 static struct ipv4_devconf ipv4_devconf = {
 	.data = {
 		[IPV4_DEVCONF_ACCEPT_REDIRECTS - 1] = 1,
@@ -428,8 +433,9 @@ no_promotions:
 		if (prev_prom) {
 			struct in_ifaddr *last_sec;
 
-			last_sec = rtnl_dereference(last_prim->ifa_next);
 			rcu_assign_pointer(prev_prom->ifa_next, next_sec);
+
+			last_sec = rtnl_dereference(last_prim->ifa_next);
 			rcu_assign_pointer(promote->ifa_next, last_sec);
 			rcu_assign_pointer(last_prim->ifa_next, promote);
 		}
@@ -480,6 +486,9 @@ static int __inet_insert_ifa(struct in_ifaddr *ifa, struct nlmsghdr *nlh,
 
 	ifa->ifa_flags &= ~IFA_F_SECONDARY;
 	last_primary = &in_dev->ifa_list;
+
+	/* Don't set IPv6 only flags to IPv4 addresses */
+	ifa->ifa_flags &= ~IPV6ONLY_FLAGS;
 
 	ifap = &in_dev->ifa_list;
 	ifa1 = rtnl_dereference(*ifap);

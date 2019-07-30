@@ -1776,19 +1776,21 @@ static int tcp_zerocopy_receive(struct sock *sk,
 				break;
 			frags = skb_shinfo(skb)->frags;
 			while (offset) {
-				if (frags->size > offset)
+				if (skb_frag_size(frags) > offset)
 					goto out;
-				offset -= frags->size;
+				offset -= skb_frag_size(frags);
 				frags++;
 			}
 		}
-		if (frags->size != PAGE_SIZE || frags->page_offset) {
+		if (skb_frag_size(frags) != PAGE_SIZE || frags->page_offset) {
 			int remaining = zc->recv_skip_hint;
+			int size = skb_frag_size(frags);
 
-			while (remaining && (frags->size != PAGE_SIZE ||
+			while (remaining && (size != PAGE_SIZE ||
 					     frags->page_offset)) {
-				remaining -= frags->size;
+				remaining -= size;
 				frags++;
+				size = skb_frag_size(frags);
 			}
 			zc->recv_skip_hint -= remaining;
 			break;
@@ -2614,6 +2616,8 @@ int tcp_disconnect(struct sock *sk, int flags)
 	tcp_saved_syn_free(tp);
 	tp->compressed_ack = 0;
 	tp->bytes_sent = 0;
+	tp->bytes_acked = 0;
+	tp->bytes_received = 0;
 	tp->bytes_retrans = 0;
 	tp->duplicate_sack[0].start_seq = 0;
 	tp->duplicate_sack[0].end_seq = 0;
@@ -2783,7 +2787,9 @@ static int do_tcp_setsockopt(struct sock *sk, int level,
 		name[val] = 0;
 
 		lock_sock(sk);
-		err = tcp_set_congestion_control(sk, name, true, true);
+		err = tcp_set_congestion_control(sk, name, true, true,
+						 ns_capable(sock_net(sk)->user_ns,
+							    CAP_NET_ADMIN));
 		release_sock(sk);
 		return err;
 	}
@@ -3777,7 +3783,7 @@ int tcp_md5_hash_skb_data(struct tcp_md5sig_pool *hp,
 		return 1;
 
 	for (i = 0; i < shi->nr_frags; ++i) {
-		const struct skb_frag_struct *f = &shi->frags[i];
+		const skb_frag_t *f = &shi->frags[i];
 		unsigned int offset = f->page_offset;
 		struct page *page = skb_frag_page(f) + (offset >> PAGE_SHIFT);
 

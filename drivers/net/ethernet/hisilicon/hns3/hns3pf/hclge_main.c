@@ -30,6 +30,9 @@
 #define HCLGE_BUF_SIZE_UNIT	256U
 #define HCLGE_BUF_MUL_BY	2
 #define HCLGE_BUF_DIV_BY	2
+#define NEED_RESERVE_TC_NUM	2
+#define BUF_MAX_PERCENT		100
+#define BUF_RESERVE_PERCENT	90
 
 #define HCLGE_RESET_MAX_FAIL_CNT	5
 
@@ -561,8 +564,7 @@ static u8 *hclge_comm_get_strings(u32 stringset,
 		return buff;
 
 	for (i = 0; i < size; i++) {
-		snprintf(buff, ETH_GSTRING_LEN,
-			 strs[i].desc);
+		snprintf(buff, ETH_GSTRING_LEN, "%s", strs[i].desc);
 		buff = buff + ETH_GSTRING_LEN;
 	}
 
@@ -1059,6 +1061,7 @@ static void hclge_parse_copper_link_mode(struct hclge_dev *hdev,
 	linkmode_set_bit(ETHTOOL_LINK_MODE_Autoneg_BIT, supported);
 	linkmode_set_bit(ETHTOOL_LINK_MODE_TP_BIT, supported);
 	linkmode_set_bit(ETHTOOL_LINK_MODE_Pause_BIT, supported);
+	linkmode_set_bit(ETHTOOL_LINK_MODE_Asym_Pause_BIT, supported);
 }
 
 static void hclge_parse_link_mode(struct hclge_dev *hdev, u8 speed_ability)
@@ -1357,8 +1360,9 @@ static int hclge_map_tqps_to_func(struct hclge_dev *hdev, u16 func_id,
 	req = (struct hclge_tqp_map_cmd *)desc.data;
 	req->tqp_id = cpu_to_le16(tqp_pid);
 	req->tqp_vf = func_id;
-	req->tqp_flag = !is_pf << HCLGE_TQP_MAP_TYPE_B |
-			1 << HCLGE_TQP_MAP_EN_B;
+	req->tqp_flag = 1U << HCLGE_TQP_MAP_EN_B;
+	if (!is_pf)
+		req->tqp_flag |= 1U << HCLGE_TQP_MAP_TYPE_B;
 	req->tqp_vid = cpu_to_le16(tqp_vid);
 
 	ret = hclge_cmd_send(&hdev->hw, &desc, 1);
@@ -1694,10 +1698,14 @@ static bool  hclge_is_rx_buf_ok(struct hclge_dev *hdev,
 	}
 
 	if (hnae3_dev_dcb_supported(hdev)) {
+		hi_thrd = shared_buf - hdev->dv_buf_size;
+
+		if (tc_num <= NEED_RESERVE_TC_NUM)
+			hi_thrd = hi_thrd * BUF_RESERVE_PERCENT
+					/ BUF_MAX_PERCENT;
+
 		if (tc_num)
-			hi_thrd = (shared_buf - hdev->dv_buf_size) / tc_num;
-		else
-			hi_thrd = shared_buf - hdev->dv_buf_size;
+			hi_thrd = hi_thrd / tc_num;
 
 		hi_thrd = max_t(u32, hi_thrd, HCLGE_BUF_MUL_BY * aligned_mps);
 		hi_thrd = rounddown(hi_thrd, HCLGE_BUF_SIZE_UNIT);
@@ -1837,6 +1845,55 @@ static bool hclge_drop_pfc_buf_till_fit(struct hclge_dev *hdev,
 	return hclge_is_rx_buf_ok(hdev, buf_alloc, rx_all);
 }
 
+static int hclge_only_alloc_priv_buff(struct hclge_dev *hdev,
+				      struct hclge_pkt_buf_alloc *buf_alloc)
+{
+#define COMPENSATE_BUFFER	0x3C00
+#define COMPENSATE_HALF_MPS_NUM	5
+#define PRIV_WL_GAP		0x1800
+
+	u32 rx_priv = hdev->pkt_buf_size - hclge_get_tx_buff_alloced(buf_alloc);
+	u32 tc_num = hclge_get_tc_num(hdev);
+	u32 half_mps = hdev->mps >> 1;
+	u32 min_rx_priv;
+	unsigned int i;
+
+	if (tc_num)
+		rx_priv = rx_priv / tc_num;
+
+	if (tc_num <= NEED_RESERVE_TC_NUM)
+		rx_priv = rx_priv * BUF_RESERVE_PERCENT / BUF_MAX_PERCENT;
+
+	min_rx_priv = hdev->dv_buf_size + COMPENSATE_BUFFER +
+			COMPENSATE_HALF_MPS_NUM * half_mps;
+	min_rx_priv = round_up(min_rx_priv, HCLGE_BUF_SIZE_UNIT);
+	rx_priv = round_down(rx_priv, HCLGE_BUF_SIZE_UNIT);
+
+	if (rx_priv < min_rx_priv)
+		return false;
+
+	for (i = 0; i < HCLGE_MAX_TC_NUM; i++) {
+		struct hclge_priv_buf *priv = &buf_alloc->priv_buf[i];
+
+		priv->enable = 0;
+		priv->wl.low = 0;
+		priv->wl.high = 0;
+		priv->buf_size = 0;
+
+		if (!(hdev->hw_tc_map & BIT(i)))
+			continue;
+
+		priv->enable = 1;
+		priv->buf_size = rx_priv;
+		priv->wl.high = rx_priv - hdev->dv_buf_size;
+		priv->wl.low = priv->wl.high - PRIV_WL_GAP;
+	}
+
+	buf_alloc->s_buf.buf_size = 0;
+
+	return true;
+}
+
 /* hclge_rx_buffer_calc: calculate the rx private buffer size for all TCs
  * @hdev: pointer to struct hclge_dev
  * @buf_alloc: pointer to buffer calculation data
@@ -1855,6 +1912,9 @@ static int hclge_rx_buffer_calc(struct hclge_dev *hdev,
 
 		return 0;
 	}
+
+	if (hclge_only_alloc_priv_buff(hdev, buf_alloc))
+		return 0;
 
 	if (hclge_rx_buf_calc_all(hdev, true, buf_alloc))
 		return 0;
@@ -2261,7 +2321,8 @@ static int hclge_set_autoneg_en(struct hclge_dev *hdev, bool enable)
 	hclge_cmd_setup_basic_desc(&desc, HCLGE_OPC_CONFIG_AN_MODE, false);
 
 	req = (struct hclge_config_auto_neg_cmd *)desc.data;
-	hnae3_set_bit(flag, HCLGE_MAC_CFG_AN_EN_B, !!enable);
+	if (enable)
+		hnae3_set_bit(flag, HCLGE_MAC_CFG_AN_EN_B, 1U);
 	req->cfg_an_cmd_flag = cpu_to_le32(flag);
 
 	ret = hclge_cmd_send(&hdev->hw, &desc, 1);
@@ -2604,6 +2665,7 @@ static int hclge_get_sfp_info(struct hclge_dev *hdev, struct hclge_mac *mac)
 		mac->speed_ability = le32_to_cpu(resp->speed_ability);
 		mac->autoneg = resp->autoneg;
 		mac->support_autoneg = resp->autoneg_ability;
+		mac->speed_type = QUERY_ACTIVE_SPEED;
 		if (!resp->active_fec)
 			mac->fec_mode = 0;
 		else
@@ -2724,8 +2786,9 @@ static u32 hclge_check_event_cause(struct hclge_dev *hdev, u32 *clearval)
 
 	/* check for vector0 msix event source */
 	if (msix_src_reg & HCLGE_VECTOR0_REG_MSIX_MASK) {
-		dev_dbg(&hdev->pdev->dev, "received event 0x%x\n",
-			msix_src_reg);
+		dev_info(&hdev->pdev->dev, "received event 0x%x\n",
+			 msix_src_reg);
+		*clearval = msix_src_reg;
 		return HCLGE_VECTOR0_EVENT_ERR;
 	}
 
@@ -2737,8 +2800,11 @@ static u32 hclge_check_event_cause(struct hclge_dev *hdev, u32 *clearval)
 	}
 
 	/* print other vector0 event source */
-	dev_dbg(&hdev->pdev->dev, "cmdq_src_reg:0x%x, msix_src_reg:0x%x\n",
-		cmdq_src_reg, msix_src_reg);
+	dev_info(&hdev->pdev->dev,
+		 "CMDQ INT status:0x%x, other INT status:0x%x\n",
+		 cmdq_src_reg, msix_src_reg);
+	*clearval = msix_src_reg;
+
 	return HCLGE_VECTOR0_EVENT_OTHER;
 }
 
@@ -2817,7 +2883,8 @@ static irqreturn_t hclge_misc_irq_handle(int irq, void *data)
 	}
 
 	/* clear the source of interrupt if it is not cause by reset */
-	if (event_cause == HCLGE_VECTOR0_EVENT_MBX) {
+	if (!clearval ||
+	    event_cause == HCLGE_VECTOR0_EVENT_MBX) {
 		hclge_clear_event_cause(hdev, event_cause, clearval);
 		hclge_enable_vector(&hdev->misc_vector, true);
 	}
@@ -4027,11 +4094,11 @@ int hclge_rss_init_hw(struct hclge_dev *hdev)
 	struct hclge_vport *vport = hdev->vport;
 	u8 *rss_indir = vport[0].rss_indirection_tbl;
 	u16 rss_size = vport[0].alloc_rss_size;
+	u16 tc_offset[HCLGE_MAX_TC_NUM] = {0};
+	u16 tc_size[HCLGE_MAX_TC_NUM] = {0};
 	u8 *key = vport[0].rss_hash_key;
 	u8 hfunc = vport[0].rss_algo;
-	u16 tc_offset[HCLGE_MAX_TC_NUM];
 	u16 tc_valid[HCLGE_MAX_TC_NUM];
-	u16 tc_size[HCLGE_MAX_TC_NUM];
 	u16 roundup_size;
 	unsigned int i;
 	int ret;
@@ -5870,20 +5937,20 @@ static void hclge_cfg_mac_mode(struct hclge_dev *hdev, bool enable)
 	int ret;
 
 	hclge_cmd_setup_basic_desc(&desc, HCLGE_OPC_CONFIG_MAC_MODE, false);
-	hnae3_set_bit(loop_en, HCLGE_MAC_TX_EN_B, enable);
-	hnae3_set_bit(loop_en, HCLGE_MAC_RX_EN_B, enable);
-	hnae3_set_bit(loop_en, HCLGE_MAC_PAD_TX_B, enable);
-	hnae3_set_bit(loop_en, HCLGE_MAC_PAD_RX_B, enable);
-	hnae3_set_bit(loop_en, HCLGE_MAC_1588_TX_B, 0);
-	hnae3_set_bit(loop_en, HCLGE_MAC_1588_RX_B, 0);
-	hnae3_set_bit(loop_en, HCLGE_MAC_APP_LP_B, 0);
-	hnae3_set_bit(loop_en, HCLGE_MAC_LINE_LP_B, 0);
-	hnae3_set_bit(loop_en, HCLGE_MAC_FCS_TX_B, enable);
-	hnae3_set_bit(loop_en, HCLGE_MAC_RX_FCS_B, enable);
-	hnae3_set_bit(loop_en, HCLGE_MAC_RX_FCS_STRIP_B, enable);
-	hnae3_set_bit(loop_en, HCLGE_MAC_TX_OVERSIZE_TRUNCATE_B, enable);
-	hnae3_set_bit(loop_en, HCLGE_MAC_RX_OVERSIZE_TRUNCATE_B, enable);
-	hnae3_set_bit(loop_en, HCLGE_MAC_TX_UNDER_MIN_ERR_B, enable);
+
+	if (enable) {
+		hnae3_set_bit(loop_en, HCLGE_MAC_TX_EN_B, 1U);
+		hnae3_set_bit(loop_en, HCLGE_MAC_RX_EN_B, 1U);
+		hnae3_set_bit(loop_en, HCLGE_MAC_PAD_TX_B, 1U);
+		hnae3_set_bit(loop_en, HCLGE_MAC_PAD_RX_B, 1U);
+		hnae3_set_bit(loop_en, HCLGE_MAC_FCS_TX_B, 1U);
+		hnae3_set_bit(loop_en, HCLGE_MAC_RX_FCS_B, 1U);
+		hnae3_set_bit(loop_en, HCLGE_MAC_RX_FCS_STRIP_B, 1U);
+		hnae3_set_bit(loop_en, HCLGE_MAC_TX_OVERSIZE_TRUNCATE_B, 1U);
+		hnae3_set_bit(loop_en, HCLGE_MAC_RX_OVERSIZE_TRUNCATE_B, 1U);
+		hnae3_set_bit(loop_en, HCLGE_MAC_TX_UNDER_MIN_ERR_B, 1U);
+	}
+
 	req->txrx_pad_fcs_loop_en = cpu_to_le32(loop_en);
 
 	ret = hclge_cmd_send(&hdev->hw, &desc, 1);
@@ -6245,8 +6312,8 @@ static int hclge_update_desc_vfid(struct hclge_desc *desc, int vfid, bool clr)
 {
 #define HCLGE_VF_NUM_IN_FIRST_DESC 192
 
-	int word_num;
-	int bit_num;
+	unsigned int word_num;
+	unsigned int bit_num;
 
 	if (vfid > 255 || vfid < 0)
 		return -EIO;
@@ -7907,7 +7974,8 @@ static int hclge_send_reset_tqp_cmd(struct hclge_dev *hdev, u16 queue_id,
 
 	req = (struct hclge_reset_tqp_queue_cmd *)desc.data;
 	req->tqp_id = cpu_to_le16(queue_id & HCLGE_RING_ID_MASK);
-	hnae3_set_bit(req->reset_req, HCLGE_TQP_RESET_B, enable);
+	if (enable)
+		hnae3_set_bit(req->reset_req, HCLGE_TQP_RESET_B, 1U);
 
 	ret = hclge_cmd_send(&hdev->hw, &desc, 1);
 	if (ret) {
@@ -8115,8 +8183,9 @@ static void hclge_get_pauseparam(struct hnae3_handle *handle, u32 *auto_neg,
 {
 	struct hclge_vport *vport = hclge_get_vport(handle);
 	struct hclge_dev *hdev = vport->back;
+	struct phy_device *phydev = hdev->hw.mac.phydev;
 
-	*auto_neg = hclge_get_autoneg(handle);
+	*auto_neg = phydev ? hclge_get_autoneg(handle) : 0;
 
 	if (hdev->tm_info.fc_mode == HCLGE_FC_PFC) {
 		*rx_en = 0;
@@ -8147,11 +8216,13 @@ static int hclge_set_pauseparam(struct hnae3_handle *handle, u32 auto_neg,
 	struct phy_device *phydev = hdev->hw.mac.phydev;
 	u32 fc_autoneg;
 
-	fc_autoneg = hclge_get_autoneg(handle);
-	if (auto_neg != fc_autoneg) {
-		dev_info(&hdev->pdev->dev,
-			 "To change autoneg please use: ethtool -s <dev> autoneg <on|off>\n");
-		return -EOPNOTSUPP;
+	if (phydev) {
+		fc_autoneg = hclge_get_autoneg(handle);
+		if (auto_neg != fc_autoneg) {
+			dev_info(&hdev->pdev->dev,
+				 "To change autoneg please use: ethtool -s <dev> autoneg <on|off>\n");
+			return -EOPNOTSUPP;
+		}
 	}
 
 	if (hdev->tm_info.fc_mode == HCLGE_FC_PFC) {
@@ -8162,16 +8233,13 @@ static int hclge_set_pauseparam(struct hnae3_handle *handle, u32 auto_neg,
 
 	hclge_set_flowctrl_adv(hdev, rx_en, tx_en);
 
-	if (!fc_autoneg)
+	if (!auto_neg)
 		return hclge_cfg_pauseparam(hdev, rx_en, tx_en);
 
 	if (phydev)
 		return phy_start_aneg(phydev);
 
-	if (hdev->pdev->revision == 0x20)
-		return -EOPNOTSUPP;
-
-	return hclge_restart_autoneg(handle);
+	return -EOPNOTSUPP;
 }
 
 static void hclge_get_ksettings_an_result(struct hnae3_handle *handle,
@@ -8971,12 +9039,12 @@ static int hclge_set_channels(struct hnae3_handle *handle, u32 new_tqps_num,
 {
 	struct hclge_vport *vport = hclge_get_vport(handle);
 	struct hnae3_knic_private_info *kinfo = &vport->nic.kinfo;
+	u16 tc_offset[HCLGE_MAX_TC_NUM] = {0};
 	struct hclge_dev *hdev = vport->back;
+	u16 tc_size[HCLGE_MAX_TC_NUM] = {0};
 	int cur_rss_size = kinfo->rss_size;
 	int cur_tqps = kinfo->num_tqps;
-	u16 tc_offset[HCLGE_MAX_TC_NUM];
 	u16 tc_valid[HCLGE_MAX_TC_NUM];
-	u16 tc_size[HCLGE_MAX_TC_NUM];
 	u16 roundup_size;
 	u32 *rss_indir;
 	unsigned int i;

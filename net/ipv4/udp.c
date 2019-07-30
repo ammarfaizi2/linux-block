@@ -2170,7 +2170,7 @@ start_lookup:
 
 /* Initialize UDP checksum. If exited with zero value (success),
  * CHECKSUM_UNNECESSARY means, that no more checks are required.
- * Otherwise, csum completion requires chacksumming packet body,
+ * Otherwise, csum completion requires checksumming packet body,
  * including udp header and folding it to skb->csum.
  */
 static inline int udp4_csum_init(struct sk_buff *skb, struct udphdr *uh,
@@ -2224,8 +2224,7 @@ static int udp_unicast_rcv_skb(struct sock *sk, struct sk_buff *skb,
 	int ret;
 
 	if (inet_get_convert_csum(sk) && uh->check && !IS_UDPLITE(sk))
-		skb_checksum_try_convert(skb, IPPROTO_UDP, uh->check,
-					 inet_compute_pseudo);
+		skb_checksum_try_convert(skb, IPPROTO_UDP, inet_compute_pseudo);
 
 	ret = udp_queue_rcv_skb(sk, skb);
 

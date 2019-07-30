@@ -1423,6 +1423,9 @@ static void ixgbevf_update_itr(struct ixgbevf_q_vector *q_vector,
 	 */
 	/* what was last interrupt timeslice? */
 	timepassed_us = q_vector->itr >> 2;
+	if (timepassed_us == 0)
+		return;
+
 	bytes_perint = bytes / timepassed_us; /* bytes/usec */
 
 	switch (itr_setting) {
@@ -3946,7 +3949,7 @@ static void ixgbevf_tx_map(struct ixgbevf_ring *tx_ring,
 	struct sk_buff *skb = first->skb;
 	struct ixgbevf_tx_buffer *tx_buffer;
 	union ixgbe_adv_tx_desc *tx_desc;
-	struct skb_frag_struct *frag;
+	skb_frag_t *frag;
 	dma_addr_t dma;
 	unsigned int data_len, size;
 	u32 tx_flags = first->tx_flags;

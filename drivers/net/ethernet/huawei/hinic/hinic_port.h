@@ -16,6 +16,18 @@
 #define HINIC_RSS_KEY_SIZE	40
 #define HINIC_RSS_INDIR_SIZE	256
 #define HINIC_PORT_STATS_VERSION	0
+#define HINIC_FW_VERSION_NAME	16
+#define HINIC_COMPILE_TIME_LEN	20
+#define HINIC_MGMT_VERSION_MAX_LEN	32
+
+struct hinic_version_info {
+	u8 status;
+	u8 version;
+	u8 rsvd[6];
+
+	u8 ver[HINIC_FW_VERSION_NAME];
+	u8 time[HINIC_COMPILE_TIME_LEN];
+};
 
 enum hinic_rx_mode {
 	HINIC_RX_MODE_UC        = BIT(0),
@@ -221,6 +233,16 @@ struct hinic_lro_timer {
 	u8	enable; /* when set lro time, enable should be 1 */
 	u16	rsvd1;
 	u32	timer;
+};
+
+struct hinic_vlan_cfg {
+	u8      status;
+	u8      version;
+	u8      rsvd0[6];
+
+	u16     func_id;
+	u8      vlan_rx_offload;
+	u8      rsvd1[5];
 };
 
 struct hinic_rss_template_mgmt {
@@ -558,4 +580,9 @@ int hinic_get_phy_port_stats(struct hinic_dev *nic_dev,
 
 int hinic_get_vport_stats(struct hinic_dev *nic_dev,
 			  struct hinic_vport_stats *stats);
+
+int hinic_set_rx_vlan_offload(struct hinic_dev *nic_dev, u8 en);
+
+int hinic_get_mgmt_version(struct hinic_dev *nic_dev, u8 *mgmt_ver);
+
 #endif

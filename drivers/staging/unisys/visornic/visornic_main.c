@@ -285,8 +285,8 @@ static int visor_copy_fragsinfo_from_skb(struct sk_buff *skb,
 			count = add_physinfo_entries(page_to_pfn(
 				  skb_frag_page(&skb_shinfo(skb)->frags[frag])),
 				  skb_shinfo(skb)->frags[frag].page_offset,
-				  skb_shinfo(skb)->frags[frag].size, count,
-				  frags_max, frags);
+				  skb_frag_size(&skb_shinfo(skb)->frags[frag]),
+				  count, frags_max, frags);
 			/* add_physinfo_entries only returns
 			 * zero if the frags array is out of room
 			 * That should never happen because we
@@ -1861,12 +1861,12 @@ static int visornic_probe(struct visor_device *dev)
 	skb_queue_head_init(&devdata->xmitbufhead);
 
 	/* create a cmdrsp we can use to post and unpost rcv buffers */
-	devdata->cmdrsp_rcv = kmalloc(SIZEOF_CMDRSP, GFP_ATOMIC);
+	devdata->cmdrsp_rcv = kmalloc(SIZEOF_CMDRSP, GFP_KERNEL);
 	if (!devdata->cmdrsp_rcv) {
 		err = -ENOMEM;
 		goto cleanup_rcvbuf;
 	}
-	devdata->xmit_cmdrsp = kmalloc(SIZEOF_CMDRSP, GFP_ATOMIC);
+	devdata->xmit_cmdrsp = kmalloc(SIZEOF_CMDRSP, GFP_KERNEL);
 	if (!devdata->xmit_cmdrsp) {
 		err = -ENOMEM;
 		goto cleanup_cmdrsp_rcv;

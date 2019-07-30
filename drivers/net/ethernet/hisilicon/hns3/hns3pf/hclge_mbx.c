@@ -29,6 +29,10 @@ static int hclge_gen_resp_to_vf(struct hclge_vport *vport,
 			"PF fail to gen resp to VF len %d exceeds max len %d\n",
 			resp_data_len,
 			HCLGE_MBX_MAX_RESP_DATA_SIZE);
+		/* If resp_data_len is too long, set the value to max length
+		 * and return the msg to VF
+		 */
+		resp_data_len = HCLGE_MBX_MAX_RESP_DATA_SIZE;
 	}
 
 	hclge_cmd_setup_basic_desc(&desc, HCLGEVF_OPC_MBX_PF_TO_VF, false);
@@ -300,7 +304,7 @@ int hclge_push_vf_port_base_vlan_info(struct hclge_vport *vport, u8 vfid,
 	memcpy(&msg_data[6], &vlan_tag, sizeof(u16));
 
 	return hclge_send_mbx_msg(vport, msg_data, sizeof(msg_data),
-				  HLCGE_MBX_PUSH_VLAN_INFO, vfid);
+				  HCLGE_MBX_PUSH_VLAN_INFO, vfid);
 }
 
 static int hclge_set_vf_vlan_cfg(struct hclge_vport *vport,

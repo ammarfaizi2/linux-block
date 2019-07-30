@@ -2,6 +2,7 @@
 #ifndef _NF_CONNTRACK_SYNPROXY_H
 #define _NF_CONNTRACK_SYNPROXY_H
 
+#include <net/netfilter/nf_conntrack_seqadj.h>
 #include <net/netns/generic.h>
 
 struct nf_conn_synproxy {
@@ -67,6 +68,7 @@ struct synproxy_options {
 	u8				options;
 	u8				wscale;
 	u16				mss;
+	u16				mss_encode;
 	u32				tsval;
 	u32				tsecr;
 };

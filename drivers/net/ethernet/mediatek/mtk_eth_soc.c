@@ -139,9 +139,12 @@ static int mt7621_gmac0_rgmii_adjust(struct mtk_eth *eth,
 {
 	u32 val;
 
-	/* Check DDR memory type. Currently DDR2 is not supported. */
+	/* Check DDR memory type.
+	 * Currently TRGMII mode with DDR2 memory is not supported.
+	 */
 	regmap_read(eth->ethsys, ETHSYS_SYSCFG, &val);
-	if (val & SYSCFG_DRAM_TYPE_DDR2) {
+	if (interface == PHY_INTERFACE_MODE_TRGMII &&
+	    val & SYSCFG_DRAM_TYPE_DDR2) {
 		dev_err(eth->dev,
 			"TRGMII mode with DDR2 memory is not supported!\n");
 		return -EOPNOTSUPP;
@@ -693,7 +696,7 @@ static int mtk_tx_map(struct sk_buff *skb, struct net_device *dev,
 	txd = itxd;
 	nr_frags = skb_shinfo(skb)->nr_frags;
 	for (i = 0; i < nr_frags; i++) {
-		struct skb_frag_struct *frag = &skb_shinfo(skb)->frags[i];
+		skb_frag_t *frag = &skb_shinfo(skb)->frags[i];
 		unsigned int offset = 0;
 		int frag_size = skb_frag_size(frag);
 
@@ -778,7 +781,7 @@ err_dma:
 static inline int mtk_cal_txd_req(struct sk_buff *skb)
 {
 	int i, nfrags;
-	struct skb_frag_struct *frag;
+	skb_frag_t *frag;
 
 	nfrags = 1;
 	if (skb_is_gso(skb)) {
@@ -2545,8 +2548,10 @@ static int mtk_probe(struct platform_device *pdev)
 			continue;
 
 		err = mtk_add_mac(eth, mac_np);
-		if (err)
+		if (err) {
+			of_node_put(mac_np);
 			goto err_deinit_hw;
+		}
 	}
 
 	if (MTK_HAS_CAPS(eth->soc->caps, MTK_SHARED_INT)) {

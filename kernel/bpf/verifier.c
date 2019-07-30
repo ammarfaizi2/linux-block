@@ -1519,9 +1519,9 @@ static int backtrack_insn(struct bpf_verifier_env *env, int idx,
 			return -EFAULT;
 		}
 		*stack_mask |= 1ull << spi;
-	} else if (class == BPF_STX) {
+	} else if (class == BPF_STX || class == BPF_ST) {
 		if (*reg_mask & dreg)
-			/* stx shouldn't be using _scalar_ dst_reg
+			/* stx & st shouldn't be using _scalar_ dst_reg
 			 * to access memory. It means backtracking
 			 * encountered a case of pointer subtraction.
 			 */
@@ -1540,7 +1540,8 @@ static int backtrack_insn(struct bpf_verifier_env *env, int idx,
 		if (!(*stack_mask & (1ull << spi)))
 			return 0;
 		*stack_mask &= ~(1ull << spi);
-		*reg_mask |= sreg;
+		if (class == BPF_STX)
+			*reg_mask |= sreg;
 	} else if (class == BPF_JMP || class == BPF_JMP32) {
 		if (opcode == BPF_CALL) {
 			if (insn->src_reg == BPF_PSEUDO_CALL)
@@ -1568,10 +1569,6 @@ static int backtrack_insn(struct bpf_verifier_env *env, int idx,
 		 */
 		if (mode == BPF_IND || mode == BPF_ABS)
 			/* to be analyzed */
-			return -ENOTSUPP;
-	} else if (class == BPF_ST) {
-		if (*reg_mask & dreg)
-			/* likely pointer subtraction */
 			return -ENOTSUPP;
 	}
 	return 0;
@@ -1659,16 +1656,18 @@ static void mark_all_scalars_precise(struct bpf_verifier_env *env,
 		}
 }
 
-static int mark_chain_precision(struct bpf_verifier_env *env, int regno)
+static int __mark_chain_precision(struct bpf_verifier_env *env, int regno,
+				  int spi)
 {
 	struct bpf_verifier_state *st = env->cur_state;
 	int first_idx = st->first_insn_idx;
 	int last_idx = env->insn_idx;
 	struct bpf_func_state *func;
 	struct bpf_reg_state *reg;
-	u32 reg_mask = 1u << regno;
-	u64 stack_mask = 0;
+	u32 reg_mask = regno >= 0 ? 1u << regno : 0;
+	u64 stack_mask = spi >= 0 ? 1ull << spi : 0;
 	bool skip_first = true;
+	bool new_marks = false;
 	int i, err;
 
 	if (!env->allow_ptr_leaks)
@@ -1676,18 +1675,43 @@ static int mark_chain_precision(struct bpf_verifier_env *env, int regno)
 		return 0;
 
 	func = st->frame[st->curframe];
-	reg = &func->regs[regno];
-	if (reg->type != SCALAR_VALUE) {
-		WARN_ONCE(1, "backtracing misuse");
-		return -EFAULT;
+	if (regno >= 0) {
+		reg = &func->regs[regno];
+		if (reg->type != SCALAR_VALUE) {
+			WARN_ONCE(1, "backtracing misuse");
+			return -EFAULT;
+		}
+		if (!reg->precise)
+			new_marks = true;
+		else
+			reg_mask = 0;
+		reg->precise = true;
 	}
-	if (reg->precise)
-		return 0;
-	func->regs[regno].precise = true;
 
+	while (spi >= 0) {
+		if (func->stack[spi].slot_type[0] != STACK_SPILL) {
+			stack_mask = 0;
+			break;
+		}
+		reg = &func->stack[spi].spilled_ptr;
+		if (reg->type != SCALAR_VALUE) {
+			stack_mask = 0;
+			break;
+		}
+		if (!reg->precise)
+			new_marks = true;
+		else
+			stack_mask = 0;
+		reg->precise = true;
+		break;
+	}
+
+	if (!new_marks)
+		return 0;
+	if (!reg_mask && !stack_mask)
+		return 0;
 	for (;;) {
 		DECLARE_BITMAP(mask, 64);
-		bool new_marks = false;
 		u32 history = st->jmp_history_cnt;
 
 		if (env->log.level & BPF_LOG_LEVEL)
@@ -1730,12 +1754,15 @@ static int mark_chain_precision(struct bpf_verifier_env *env, int regno)
 		if (!st)
 			break;
 
+		new_marks = false;
 		func = st->frame[st->curframe];
 		bitmap_from_u64(mask, reg_mask);
 		for_each_set_bit(i, mask, 32) {
 			reg = &func->regs[i];
-			if (reg->type != SCALAR_VALUE)
+			if (reg->type != SCALAR_VALUE) {
+				reg_mask &= ~(1u << i);
 				continue;
+			}
 			if (!reg->precise)
 				new_marks = true;
 			reg->precise = true;
@@ -1756,11 +1783,15 @@ static int mark_chain_precision(struct bpf_verifier_env *env, int regno)
 				return -EFAULT;
 			}
 
-			if (func->stack[i].slot_type[0] != STACK_SPILL)
+			if (func->stack[i].slot_type[0] != STACK_SPILL) {
+				stack_mask &= ~(1ull << i);
 				continue;
+			}
 			reg = &func->stack[i].spilled_ptr;
-			if (reg->type != SCALAR_VALUE)
+			if (reg->type != SCALAR_VALUE) {
+				stack_mask &= ~(1ull << i);
 				continue;
+			}
 			if (!reg->precise)
 				new_marks = true;
 			reg->precise = true;
@@ -1772,6 +1803,8 @@ static int mark_chain_precision(struct bpf_verifier_env *env, int regno)
 				reg_mask, stack_mask);
 		}
 
+		if (!reg_mask && !stack_mask)
+			break;
 		if (!new_marks)
 			break;
 
@@ -1781,6 +1814,15 @@ static int mark_chain_precision(struct bpf_verifier_env *env, int regno)
 	return 0;
 }
 
+static int mark_chain_precision(struct bpf_verifier_env *env, int regno)
+{
+	return __mark_chain_precision(env, regno, -1);
+}
+
+static int mark_chain_precision_stack(struct bpf_verifier_env *env, int spi)
+{
+	return __mark_chain_precision(env, -1, spi);
+}
 
 static bool is_spillable_regtype(enum bpf_reg_type type)
 {
@@ -2215,6 +2257,13 @@ static bool may_access_direct_pkt_data(struct bpf_verifier_env *env,
 
 		env->seen_direct_write = true;
 		return true;
+
+	case BPF_PROG_TYPE_CGROUP_SOCKOPT:
+		if (t == BPF_WRITE)
+			env->seen_direct_write = true;
+
+		return true;
+
 	default:
 		return false;
 	}
@@ -3407,12 +3456,9 @@ static int check_map_func_compatibility(struct bpf_verifier_env *env,
 		if (func_id != BPF_FUNC_get_local_storage)
 			goto error;
 		break;
-	/* devmap returns a pointer to a live net_device ifindex that we cannot
-	 * allow to be modified from bpf side. So do not allow lookup elements
-	 * for now.
-	 */
 	case BPF_MAP_TYPE_DEVMAP:
-		if (func_id != BPF_FUNC_redirect_map)
+		if (func_id != BPF_FUNC_redirect_map &&
+		    func_id != BPF_FUNC_map_lookup_elem)
 			goto error;
 		break;
 	/* Restrict bpf side of cpumap and xskmap, open when use-cases
@@ -6057,15 +6103,18 @@ static int check_return_code(struct bpf_verifier_env *env)
 		if (env->prog->expected_attach_type == BPF_CGROUP_UDP4_RECVMSG ||
 		    env->prog->expected_attach_type == BPF_CGROUP_UDP6_RECVMSG)
 			range = tnum_range(1, 1);
+		break;
 	case BPF_PROG_TYPE_CGROUP_SKB:
 		if (env->prog->expected_attach_type == BPF_CGROUP_INET_EGRESS) {
 			range = tnum_range(0, 3);
 			enforce_attach_type_range = tnum_range(2, 3);
 		}
+		break;
 	case BPF_PROG_TYPE_CGROUP_SOCK:
 	case BPF_PROG_TYPE_SOCK_OPS:
 	case BPF_PROG_TYPE_CGROUP_DEVICE:
 	case BPF_PROG_TYPE_CGROUP_SYSCTL:
+	case BPF_PROG_TYPE_CGROUP_SOCKOPT:
 		break;
 	default:
 		return 0;
@@ -7106,6 +7155,46 @@ static int propagate_liveness(struct bpf_verifier_env *env,
 	return 0;
 }
 
+/* find precise scalars in the previous equivalent state and
+ * propagate them into the current state
+ */
+static int propagate_precision(struct bpf_verifier_env *env,
+			       const struct bpf_verifier_state *old)
+{
+	struct bpf_reg_state *state_reg;
+	struct bpf_func_state *state;
+	int i, err = 0;
+
+	state = old->frame[old->curframe];
+	state_reg = state->regs;
+	for (i = 0; i < BPF_REG_FP; i++, state_reg++) {
+		if (state_reg->type != SCALAR_VALUE ||
+		    !state_reg->precise)
+			continue;
+		if (env->log.level & BPF_LOG_LEVEL2)
+			verbose(env, "propagating r%d\n", i);
+		err = mark_chain_precision(env, i);
+		if (err < 0)
+			return err;
+	}
+
+	for (i = 0; i < state->allocated_stack / BPF_REG_SIZE; i++) {
+		if (state->stack[i].slot_type[0] != STACK_SPILL)
+			continue;
+		state_reg = &state->stack[i].spilled_ptr;
+		if (state_reg->type != SCALAR_VALUE ||
+		    !state_reg->precise)
+			continue;
+		if (env->log.level & BPF_LOG_LEVEL2)
+			verbose(env, "propagating fp%d\n",
+				(-i - 1) * BPF_REG_SIZE);
+		err = mark_chain_precision_stack(env, i);
+		if (err < 0)
+			return err;
+	}
+	return 0;
+}
+
 static bool states_maybe_looping(struct bpf_verifier_state *old,
 				 struct bpf_verifier_state *cur)
 {
@@ -7198,6 +7287,14 @@ static int is_state_visited(struct bpf_verifier_env *env, int insn_idx)
 			 * this state and will pop a new one.
 			 */
 			err = propagate_liveness(env, &sl->state, cur);
+
+			/* if previous state reached the exit with precision and
+			 * current state is equivalent to it (except precsion marks)
+			 * the precision needs to be propagated back in
+			 * the current state.
+			 */
+			err = err ? : push_jmp_history(env, cur);
+			err = err ? : propagate_precision(env, &sl->state);
 			if (err)
 				return err;
 			return 1;

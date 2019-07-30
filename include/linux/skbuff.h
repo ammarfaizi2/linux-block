@@ -14,6 +14,7 @@
 #include <linux/compiler.h>
 #include <linux/time.h>
 #include <linux/bug.h>
+#include <linux/bvec.h>
 #include <linux/cache.h>
 #include <linux/rbtree.h>
 #include <linux/socket.h>
@@ -308,20 +309,7 @@ extern int sysctl_max_skb_frags;
  */
 #define GSO_BY_FRAGS	0xFFFF
 
-typedef struct skb_frag_struct skb_frag_t;
-
-struct skb_frag_struct {
-	struct {
-		struct page *p;
-	} page;
-#if (BITS_PER_LONG > 32) || (PAGE_SIZE >= 65536)
-	__u32 page_offset;
-	__u32 size;
-#else
-	__u16 page_offset;
-	__u16 size;
-#endif
-};
+typedef struct bio_vec skb_frag_t;
 
 /**
  * skb_frag_size - Returns the size of a skb fragment
@@ -329,7 +317,7 @@ struct skb_frag_struct {
  */
 static inline unsigned int skb_frag_size(const skb_frag_t *frag)
 {
-	return frag->size;
+	return frag->bv_len;
 }
 
 /**
@@ -339,7 +327,7 @@ static inline unsigned int skb_frag_size(const skb_frag_t *frag)
  */
 static inline void skb_frag_size_set(skb_frag_t *frag, unsigned int size)
 {
-	frag->size = size;
+	frag->bv_len = size;
 }
 
 /**
@@ -349,7 +337,7 @@ static inline void skb_frag_size_set(skb_frag_t *frag, unsigned int size)
  */
 static inline void skb_frag_size_add(skb_frag_t *frag, int delta)
 {
-	frag->size += delta;
+	frag->bv_len += delta;
 }
 
 /**
@@ -359,7 +347,7 @@ static inline void skb_frag_size_add(skb_frag_t *frag, int delta)
  */
 static inline void skb_frag_size_sub(skb_frag_t *frag, int delta)
 {
-	frag->size -= delta;
+	frag->bv_len -= delta;
 }
 
 /**
@@ -379,7 +367,7 @@ static inline bool skb_frag_must_loop(struct page *p)
  *	skb_frag_foreach_page - loop over pages in a fragment
  *
  *	@f:		skb frag to operate on
- *	@f_off:		offset from start of f->page.p
+ *	@f_off:		offset from start of f->bv_page
  *	@f_len:		length from f_off to loop over
  *	@p:		(temp var) current page
  *	@p_off:		(temp var) offset from start of current page,
@@ -1024,6 +1012,7 @@ static inline bool skb_unref(struct sk_buff *skb)
 void skb_release_head_state(struct sk_buff *skb);
 void kfree_skb(struct sk_buff *skb);
 void kfree_skb_list(struct sk_buff *segs);
+void skb_dump(const char *level, const struct sk_buff *skb, bool full_pkt);
 void skb_tx_error(struct sk_buff *skb);
 void consume_skb(struct sk_buff *skb);
 void __consume_stateless_skb(struct sk_buff *skb);
@@ -1324,6 +1313,16 @@ void skb_flow_dissect_meta(const struct sk_buff *skb,
 			   struct flow_dissector *flow_dissector,
 			   void *target_container);
 
+/* Gets a skb connection tracking info, ctinfo map should be a
+ * a map of mapsize to translate enum ip_conntrack_info states
+ * to user states.
+ */
+void
+skb_flow_dissect_ct(const struct sk_buff *skb,
+		    struct flow_dissector *flow_dissector,
+		    void *target_container,
+		    u16 *ctinfo_map,
+		    size_t mapsize);
 void
 skb_flow_dissect_tunnel_info(const struct sk_buff *skb,
 			     struct flow_dissector *flow_dissector,
@@ -2078,7 +2077,7 @@ static inline void __skb_fill_page_desc(struct sk_buff *skb, int i,
 	 * that not all callers have unique ownership of the page but rely
 	 * on page_is_pfmemalloc doing the right thing(tm).
 	 */
-	frag->page.p		  = page;
+	frag->bv_page		  = page;
 	frag->page_offset	  = off;
 	skb_frag_size_set(frag, size);
 
@@ -2866,7 +2865,7 @@ static inline void skb_propagate_pfmemalloc(struct page *page,
  */
 static inline struct page *skb_frag_page(const skb_frag_t *frag)
 {
-	return frag->page.p;
+	return frag->bv_page;
 }
 
 /**
@@ -2952,7 +2951,7 @@ static inline void *skb_frag_address_safe(const skb_frag_t *frag)
  */
 static inline void __skb_frag_set_page(skb_frag_t *frag, struct page *page)
 {
-	frag->page.p = page;
+	frag->bv_page = page;
 }
 
 /**
@@ -3155,7 +3154,7 @@ static inline bool skb_can_coalesce(struct sk_buff *skb, int i,
 	if (skb_zcopy(skb))
 		return false;
 	if (i) {
-		const struct skb_frag_struct *frag = &skb_shinfo(skb)->frags[i - 1];
+		const skb_frag_t *frag = &skb_shinfo(skb)->frags[i - 1];
 
 		return page == skb_frag_page(frag) &&
 		       off == frag->page_offset + skb_frag_size(frag);
@@ -3446,6 +3445,10 @@ int skb_ensure_writable(struct sk_buff *skb, int write_len);
 int __skb_vlan_pop(struct sk_buff *skb, u16 *vlan_tci);
 int skb_vlan_pop(struct sk_buff *skb);
 int skb_vlan_push(struct sk_buff *skb, __be16 vlan_proto, u16 vlan_tci);
+int skb_mpls_push(struct sk_buff *skb, __be32 mpls_lse, __be16 mpls_proto);
+int skb_mpls_pop(struct sk_buff *skb, __be16 next_proto);
+int skb_mpls_update_lse(struct sk_buff *skb, __be32 mpls_lse);
+int skb_mpls_dec_ttl(struct sk_buff *skb);
 struct sk_buff *pskb_extract(struct sk_buff *skb, int off, int to_copy,
 			     gfp_t gfp);
 
@@ -3919,18 +3922,16 @@ static inline bool __skb_checksum_convert_check(struct sk_buff *skb)
 	return (skb->ip_summed == CHECKSUM_NONE && skb->csum_valid);
 }
 
-static inline void __skb_checksum_convert(struct sk_buff *skb,
-					  __sum16 check, __wsum pseudo)
+static inline void __skb_checksum_convert(struct sk_buff *skb, __wsum pseudo)
 {
 	skb->csum = ~pseudo;
 	skb->ip_summed = CHECKSUM_COMPLETE;
 }
 
-#define skb_checksum_try_convert(skb, proto, check, compute_pseudo)	\
+#define skb_checksum_try_convert(skb, proto, compute_pseudo)	\
 do {									\
 	if (__skb_checksum_convert_check(skb))				\
-		__skb_checksum_convert(skb, check,			\
-				       compute_pseudo(skb, proto));	\
+		__skb_checksum_convert(skb, compute_pseudo(skb, proto)); \
 } while (0)
 
 static inline void skb_remcsum_adjust_partial(struct sk_buff *skb, void *ptr,

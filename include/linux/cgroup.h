@@ -131,6 +131,8 @@ void cgroup_free(struct task_struct *p);
 int cgroup_init_early(void);
 int cgroup_init(void);
 
+int cgroup_parse_float(const char *input, unsigned dec_shift, s64 *v);
+
 /*
  * Iteration helpers and macros.
  */
@@ -697,6 +699,7 @@ void cgroup_path_from_kernfs_id(const union kernfs_node_id *id,
 struct cgroup_subsys_state;
 struct cgroup;
 
+static inline void css_get(struct cgroup_subsys_state *css) {}
 static inline void css_put(struct cgroup_subsys_state *css) {}
 static inline int cgroup_attach_task_all(struct task_struct *from,
 					 struct task_struct *t) { return 0; }

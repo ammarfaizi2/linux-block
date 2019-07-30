@@ -1296,7 +1296,7 @@ static struct sk_buff *iavf_construct_skb(struct iavf_ring *rx_ring,
 					  struct iavf_rx_buffer *rx_buffer,
 					  unsigned int size)
 {
-	void *va = page_address(rx_buffer->page) + rx_buffer->page_offset;
+	void *va;
 #if (PAGE_SIZE < 8192)
 	unsigned int truesize = iavf_rx_pg_size(rx_ring) / 2;
 #else
@@ -1308,6 +1308,7 @@ static struct sk_buff *iavf_construct_skb(struct iavf_ring *rx_ring,
 	if (!rx_buffer)
 		return NULL;
 	/* prefetch first cache line of first page */
+	va = page_address(rx_buffer->page) + rx_buffer->page_offset;
 	prefetch(va);
 #if L1_CACHE_BYTES < 128
 	prefetch(va + L1_CACHE_BYTES);
@@ -1362,7 +1363,7 @@ static struct sk_buff *iavf_build_skb(struct iavf_ring *rx_ring,
 				      struct iavf_rx_buffer *rx_buffer,
 				      unsigned int size)
 {
-	void *va = page_address(rx_buffer->page) + rx_buffer->page_offset;
+	void *va;
 #if (PAGE_SIZE < 8192)
 	unsigned int truesize = iavf_rx_pg_size(rx_ring) / 2;
 #else
@@ -1374,6 +1375,7 @@ static struct sk_buff *iavf_build_skb(struct iavf_ring *rx_ring,
 	if (!rx_buffer)
 		return NULL;
 	/* prefetch first cache line of first page */
+	va = page_address(rx_buffer->page) + rx_buffer->page_offset;
 	prefetch(va);
 #if L1_CACHE_BYTES < 128
 	prefetch(va + L1_CACHE_BYTES);
@@ -2159,7 +2161,7 @@ static void iavf_create_tx_ctx(struct iavf_ring *tx_ring,
  **/
 bool __iavf_chk_linearize(struct sk_buff *skb)
 {
-	const struct skb_frag_struct *frag, *stale;
+	const skb_frag_t *frag, *stale;
 	int nr_frags, sum;
 
 	/* no need to check if number of frags is less than 7 */
@@ -2267,7 +2269,7 @@ static inline void iavf_tx_map(struct iavf_ring *tx_ring, struct sk_buff *skb,
 {
 	unsigned int data_len = skb->data_len;
 	unsigned int size = skb_headlen(skb);
-	struct skb_frag_struct *frag;
+	skb_frag_t *frag;
 	struct iavf_tx_buffer *tx_bi;
 	struct iavf_tx_desc *tx_desc;
 	u16 i = tx_ring->next_to_use;

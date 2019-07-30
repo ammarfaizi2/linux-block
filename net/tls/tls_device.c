@@ -61,7 +61,7 @@ static void tls_device_free_ctx(struct tls_context *ctx)
 	if (ctx->rx_conf == TLS_HW)
 		kfree(tls_offload_ctx_rx(ctx));
 
-	kfree(ctx);
+	tls_ctx_free(ctx);
 }
 
 static void tls_device_gc_task(struct work_struct *work)
@@ -214,6 +214,7 @@ static void tls_device_resync_tx(struct sock *sk, struct tls_context *tls_ctx,
 {
 	struct net_device *netdev;
 	struct sk_buff *skb;
+	int err = 0;
 	u8 *rcd_sn;
 
 	skb = tcp_write_queue_tail(sk);
@@ -225,9 +226,12 @@ static void tls_device_resync_tx(struct sock *sk, struct tls_context *tls_ctx,
 	down_read(&device_offload_lock);
 	netdev = tls_ctx->netdev;
 	if (netdev)
-		netdev->tlsdev_ops->tls_dev_resync(netdev, sk, seq, rcd_sn,
-						   TLS_OFFLOAD_CTX_DIR_TX);
+		err = netdev->tlsdev_ops->tls_dev_resync(netdev, sk, seq,
+							 rcd_sn,
+							 TLS_OFFLOAD_CTX_DIR_TX);
 	up_read(&device_offload_lock);
+	if (err)
+		return;
 
 	clear_bit_unlock(TLS_TX_SYNC_SCHED, &tls_ctx->flags);
 }
@@ -239,14 +243,14 @@ static void tls_append_frag(struct tls_record_info *record,
 	skb_frag_t *frag;
 
 	frag = &record->frags[record->num_frags - 1];
-	if (frag->page.p == pfrag->page &&
-	    frag->page_offset + frag->size == pfrag->offset) {
-		frag->size += size;
+	if (skb_frag_page(frag) == pfrag->page &&
+	    frag->page_offset + skb_frag_size(frag) == pfrag->offset) {
+		skb_frag_size_add(frag, size);
 	} else {
 		++frag;
-		frag->page.p = pfrag->page;
+		__skb_frag_set_page(frag, pfrag->page);
 		frag->page_offset = pfrag->offset;
-		frag->size = size;
+		skb_frag_size_set(frag, size);
 		++record->num_frags;
 		get_page(pfrag->page);
 	}
@@ -297,8 +301,8 @@ static int tls_push_record(struct sock *sk,
 		frag = &record->frags[i];
 		sg_unmark_end(&offload_ctx->sg_tx_data[i]);
 		sg_set_page(&offload_ctx->sg_tx_data[i], skb_frag_page(frag),
-			    frag->size, frag->page_offset);
-		sk_mem_charge(sk, frag->size);
+			    skb_frag_size(frag), frag->page_offset);
+		sk_mem_charge(sk, skb_frag_size(frag));
 		get_page(skb_frag_page(frag));
 	}
 	sg_mark_end(&offload_ctx->sg_tx_data[record->num_frags - 1]);
@@ -853,6 +857,11 @@ int tls_set_device_offload(struct sock *sk, struct tls_context *ctx)
 	}
 
 	crypto_info = &ctx->crypto_send.info;
+	if (crypto_info->version != TLS_1_2_VERSION) {
+		rc = -EOPNOTSUPP;
+		goto free_offload_ctx;
+	}
+
 	switch (crypto_info->cipher_type) {
 	case TLS_CIPHER_AES_GCM_128:
 		nonce_size = TLS_CIPHER_AES_GCM_128_IV_SIZE;
@@ -874,6 +883,8 @@ int tls_set_device_offload(struct sock *sk, struct tls_context *ctx)
 		goto free_offload_ctx;
 	}
 
+	prot->version = crypto_info->version;
+	prot->cipher_type = crypto_info->cipher_type;
 	prot->prepend_size = TLS_HEADER_SIZE + nonce_size;
 	prot->tag_size = tag_size;
 	prot->overhead_size = prot->prepend_size + prot->tag_size;
@@ -992,6 +1003,9 @@ int tls_set_device_offload_rx(struct sock *sk, struct tls_context *ctx)
 	struct tls_offload_context_rx *context;
 	struct net_device *netdev;
 	int rc = 0;
+
+	if (ctx->crypto_recv.info.version != TLS_1_2_VERSION)
+		return -EOPNOTSUPP;
 
 	/* We support starting offload on multiple sockets
 	 * concurrently, so we only need a read lock here.

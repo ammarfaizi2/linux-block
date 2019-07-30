@@ -1014,7 +1014,7 @@ static u32 be_xmit_enqueue(struct be_adapter *adapter, struct be_tx_obj *txo,
 	}
 
 	for (i = 0; i < skb_shinfo(skb)->nr_frags; i++) {
-		const struct skb_frag_struct *frag = &skb_shinfo(skb)->frags[i];
+		const skb_frag_t *frag = &skb_shinfo(skb)->frags[i];
 		len = skb_frag_size(frag);
 
 		busaddr = skb_frag_dma_map(dev, frag, 0, len, DMA_TO_DEVICE);
@@ -4697,8 +4697,17 @@ int be_update_queues(struct be_adapter *adapter)
 	struct net_device *netdev = adapter->netdev;
 	int status;
 
-	if (netif_running(netdev))
+	if (netif_running(netdev)) {
+		/* be_tx_timeout() must not run concurrently with this
+		 * function, synchronize with an already-running dev_watchdog
+		 */
+		netif_tx_lock_bh(netdev);
+		/* device cannot transmit now, avoid dev_watchdog timeouts */
+		netif_carrier_off(netdev);
+		netif_tx_unlock_bh(netdev);
+
 		be_close(netdev);
+	}
 
 	be_cancel_worker(adapter);
 

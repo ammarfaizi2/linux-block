@@ -861,7 +861,7 @@ static int igc_tx_map(struct igc_ring *tx_ring,
 	struct igc_tx_buffer *tx_buffer;
 	union igc_adv_tx_desc *tx_desc;
 	u32 tx_flags = first->tx_flags;
-	struct skb_frag_struct *frag;
+	skb_frag_t *frag;
 	u16 i = tx_ring->next_to_use;
 	unsigned int data_len, size;
 	dma_addr_t dma;
@@ -1015,7 +1015,8 @@ static netdev_tx_t igc_xmit_frame_ring(struct sk_buff *skb,
 	 * otherwise try next time
 	 */
 	for (f = 0; f < skb_shinfo(skb)->nr_frags; f++)
-		count += TXD_USE_COUNT(skb_shinfo(skb)->frags[f].size);
+		count += TXD_USE_COUNT(skb_frag_size(
+						&skb_shinfo(skb)->frags[f]));
 
 	if (igc_maybe_stop_tx(tx_ring, count + 3)) {
 		/* this is a hard error */
@@ -3912,13 +3913,11 @@ void igc_write_pci_cfg(struct igc_hw *hw, u32 reg, u16 *value)
 s32 igc_read_pcie_cap_reg(struct igc_hw *hw, u32 reg, u16 *value)
 {
 	struct igc_adapter *adapter = hw->back;
-	u16 cap_offset;
 
-	cap_offset = pci_find_capability(adapter->pdev, PCI_CAP_ID_EXP);
-	if (!cap_offset)
+	if (!pci_is_pcie(adapter->pdev))
 		return -IGC_ERR_CONFIG;
 
-	pci_read_config_word(adapter->pdev, cap_offset + reg, value);
+	pcie_capability_read_word(adapter->pdev, reg, value);
 
 	return IGC_SUCCESS;
 }
@@ -3926,13 +3925,11 @@ s32 igc_read_pcie_cap_reg(struct igc_hw *hw, u32 reg, u16 *value)
 s32 igc_write_pcie_cap_reg(struct igc_hw *hw, u32 reg, u16 *value)
 {
 	struct igc_adapter *adapter = hw->back;
-	u16 cap_offset;
 
-	cap_offset = pci_find_capability(adapter->pdev, PCI_CAP_ID_EXP);
-	if (!cap_offset)
+	if (!pci_is_pcie(adapter->pdev))
 		return -IGC_ERR_CONFIG;
 
-	pci_write_config_word(adapter->pdev, cap_offset + reg, *value);
+	pcie_capability_write_word(adapter->pdev, reg, *value);
 
 	return IGC_SUCCESS;
 }

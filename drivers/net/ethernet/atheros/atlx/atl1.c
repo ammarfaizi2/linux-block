@@ -1060,8 +1060,6 @@ static s32 atl1_setup_ring_resources(struct atl1_adapter *adapter)
 		goto err_nomem;
 	}
 
-	memset(ring_header->desc, 0, ring_header->size);
-
 	/* init TPD ring */
 	tpd_ring->dma = ring_header->dma;
 	offset = (tpd_ring->dma & 0x7) ? (8 - (ring_header->dma & 0x7)) : 0;
@@ -2258,10 +2256,9 @@ static void atl1_tx_map(struct atl1_adapter *adapter, struct sk_buff *skb,
 	}
 
 	for (f = 0; f < nr_frags; f++) {
-		const struct skb_frag_struct *frag;
+		const skb_frag_t *frag = &skb_shinfo(skb)->frags[f];
 		u16 i, nseg;
 
-		frag = &skb_shinfo(skb)->frags[f];
 		buf_len = skb_frag_size(frag);
 
 		nseg = (buf_len + ATL1_MAX_TX_BUF_LEN - 1) /

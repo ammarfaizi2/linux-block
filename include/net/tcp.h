@@ -1064,7 +1064,8 @@ void tcp_get_default_congestion_control(struct net *net, char *name);
 void tcp_get_available_congestion_control(char *buf, size_t len);
 void tcp_get_allowed_congestion_control(char *buf, size_t len);
 int tcp_set_allowed_congestion_control(char *allowed);
-int tcp_set_congestion_control(struct sock *sk, const char *name, bool load, bool reinit);
+int tcp_set_congestion_control(struct sock *sk, const char *name, bool load,
+			       bool reinit, bool cap_net_admin);
 u32 tcp_slow_start(struct tcp_sock *tp, u32 acked);
 void tcp_cong_avoid_ai(struct tcp_sock *tp, u32 w, u32 acked);
 
@@ -1708,6 +1709,11 @@ static inline struct sk_buff *tcp_rtx_queue_head(const struct sock *sk)
 	return skb_rb_first(&sk->tcp_rtx_queue);
 }
 
+static inline struct sk_buff *tcp_rtx_queue_tail(const struct sock *sk)
+{
+	return skb_rb_last(&sk->tcp_rtx_queue);
+}
+
 static inline struct sk_buff *tcp_write_queue_head(const struct sock *sk)
 {
 	return skb_peek(&sk->sk_write_queue);
@@ -2219,6 +2225,12 @@ static inline u32 tcp_rwnd_init_bpf(struct sock *sk)
 static inline bool tcp_bpf_ca_needs_ecn(struct sock *sk)
 {
 	return (tcp_call_bpf(sk, BPF_SOCK_OPS_NEEDS_ECN, 0, NULL) == 1);
+}
+
+static inline void tcp_bpf_rtt(struct sock *sk)
+{
+	if (BPF_SOCK_OPS_TEST_FLAG(tcp_sk(sk), BPF_SOCK_OPS_RTT_CB_FLAG))
+		tcp_call_bpf(sk, BPF_SOCK_OPS_RTT_CB, 0, NULL);
 }
 
 #if IS_ENABLED(CONFIG_SMC)

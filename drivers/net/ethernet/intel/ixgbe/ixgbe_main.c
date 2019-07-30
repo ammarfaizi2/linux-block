@@ -1785,7 +1785,7 @@ static bool ixgbe_is_non_eop(struct ixgbe_ring *rx_ring,
 static void ixgbe_pull_tail(struct ixgbe_ring *rx_ring,
 			    struct sk_buff *skb)
 {
-	struct skb_frag_struct *frag = &skb_shinfo(skb)->frags[0];
+	skb_frag_t *frag = &skb_shinfo(skb)->frags[0];
 	unsigned char *va;
 	unsigned int pull_len;
 
@@ -1840,7 +1840,7 @@ static void ixgbe_dma_sync_frag(struct ixgbe_ring *rx_ring,
 					      skb_headlen(skb),
 					      DMA_FROM_DEVICE);
 	} else {
-		struct skb_frag_struct *frag = &skb_shinfo(skb)->frags[0];
+		skb_frag_t *frag = &skb_shinfo(skb)->frags[0];
 
 		dma_sync_single_range_for_cpu(rx_ring->dev,
 					      IXGBE_CB(skb)->dma,
@@ -8186,7 +8186,7 @@ static int ixgbe_tx_map(struct ixgbe_ring *tx_ring,
 	struct sk_buff *skb = first->skb;
 	struct ixgbe_tx_buffer *tx_buffer;
 	union ixgbe_adv_tx_desc *tx_desc;
-	struct skb_frag_struct *frag;
+	skb_frag_t *frag;
 	dma_addr_t dma;
 	unsigned int data_len, size;
 	u32 tx_flags = first->tx_flags;
@@ -8605,7 +8605,8 @@ netdev_tx_t ixgbe_xmit_frame_ring(struct sk_buff *skb,
 	 * otherwise try next time
 	 */
 	for (f = 0; f < skb_shinfo(skb)->nr_frags; f++)
-		count += TXD_USE_COUNT(skb_shinfo(skb)->frags[f].size);
+		count += TXD_USE_COUNT(skb_frag_size(
+						&skb_shinfo(skb)->frags[f]));
 
 	if (ixgbe_maybe_stop_tx(tx_ring, count + 3)) {
 		tx_ring->tx_stats.tx_busy++;
@@ -9607,27 +9608,6 @@ static int ixgbe_setup_tc_block_cb(enum tc_setup_type type, void *type_data,
 	}
 }
 
-static int ixgbe_setup_tc_block(struct net_device *dev,
-				struct tc_block_offload *f)
-{
-	struct ixgbe_adapter *adapter = netdev_priv(dev);
-
-	if (f->binder_type != TCF_BLOCK_BINDER_TYPE_CLSACT_INGRESS)
-		return -EOPNOTSUPP;
-
-	switch (f->command) {
-	case TC_BLOCK_BIND:
-		return tcf_block_cb_register(f->block, ixgbe_setup_tc_block_cb,
-					     adapter, adapter, f->extack);
-	case TC_BLOCK_UNBIND:
-		tcf_block_cb_unregister(f->block, ixgbe_setup_tc_block_cb,
-					adapter);
-		return 0;
-	default:
-		return -EOPNOTSUPP;
-	}
-}
-
 static int ixgbe_setup_tc_mqprio(struct net_device *dev,
 				 struct tc_mqprio_qopt *mqprio)
 {
@@ -9635,12 +9615,19 @@ static int ixgbe_setup_tc_mqprio(struct net_device *dev,
 	return ixgbe_setup_tc(dev, mqprio->num_tc);
 }
 
+static LIST_HEAD(ixgbe_block_cb_list);
+
 static int __ixgbe_setup_tc(struct net_device *dev, enum tc_setup_type type,
 			    void *type_data)
 {
+	struct ixgbe_adapter *adapter = netdev_priv(dev);
+
 	switch (type) {
 	case TC_SETUP_BLOCK:
-		return ixgbe_setup_tc_block(dev, type_data);
+		return flow_block_cb_setup_simple(type_data,
+						  &ixgbe_block_cb_list,
+						  ixgbe_setup_tc_block_cb,
+						  adapter, adapter, true);
 	case TC_SETUP_QDISC_MQPRIO:
 		return ixgbe_setup_tc_mqprio(dev, type_data);
 	default:

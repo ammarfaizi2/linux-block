@@ -192,7 +192,7 @@ static const struct emac_variant emac_variant_h6 = {
 
 /* Used in RX_CTL1*/
 #define EMAC_RX_MD              BIT(1)
-#define EMAC_RX_TH_MASK		GENMASK(4, 5)
+#define EMAC_RX_TH_MASK		GENMASK(5, 4)
 #define EMAC_RX_TH_32		0
 #define EMAC_RX_TH_64		(0x1 << 4)
 #define EMAC_RX_TH_96		(0x2 << 4)
@@ -203,7 +203,7 @@ static const struct emac_variant emac_variant_h6 = {
 /* Used in TX_CTL1*/
 #define EMAC_TX_MD              BIT(1)
 #define EMAC_TX_NEXT_FRM        BIT(2)
-#define EMAC_TX_TH_MASK		GENMASK(8, 10)
+#define EMAC_TX_TH_MASK		GENMASK(10, 8)
 #define EMAC_TX_TH_64		0
 #define EMAC_TX_TH_128		(0x1 << 8)
 #define EMAC_TX_TH_192		(0x2 << 8)
@@ -289,18 +289,18 @@ static void sun8i_dwmac_dma_init(void __iomem *ioaddr,
 
 static void sun8i_dwmac_dma_init_rx(void __iomem *ioaddr,
 				    struct stmmac_dma_cfg *dma_cfg,
-				    u32 dma_rx_phy, u32 chan)
+				    dma_addr_t dma_rx_phy, u32 chan)
 {
 	/* Write RX descriptors address */
-	writel(dma_rx_phy, ioaddr + EMAC_RX_DESC_LIST);
+	writel(lower_32_bits(dma_rx_phy), ioaddr + EMAC_RX_DESC_LIST);
 }
 
 static void sun8i_dwmac_dma_init_tx(void __iomem *ioaddr,
 				    struct stmmac_dma_cfg *dma_cfg,
-				    u32 dma_tx_phy, u32 chan)
+				    dma_addr_t dma_tx_phy, u32 chan)
 {
 	/* Write TX descriptors address */
-	writel(dma_tx_phy, ioaddr + EMAC_TX_DESC_LIST);
+	writel(lower_32_bits(dma_tx_phy), ioaddr + EMAC_TX_DESC_LIST);
 }
 
 /* sun8i_dwmac_dump_regs() - Dump EMAC address space

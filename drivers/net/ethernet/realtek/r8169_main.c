@@ -157,7 +157,7 @@ static const struct {
 	/* PCI-E devices. */
 	[RTL_GIGA_MAC_VER_07] = {"RTL8102e"				},
 	[RTL_GIGA_MAC_VER_08] = {"RTL8102e"				},
-	[RTL_GIGA_MAC_VER_09] = {"RTL8102e"				},
+	[RTL_GIGA_MAC_VER_09] = {"RTL8102e/RTL8103e"			},
 	[RTL_GIGA_MAC_VER_10] = {"RTL8101e"				},
 	[RTL_GIGA_MAC_VER_11] = {"RTL8168b/8111b"			},
 	[RTL_GIGA_MAC_VER_12] = {"RTL8168b/8111b"			},
@@ -190,9 +190,9 @@ static const struct {
 	[RTL_GIGA_MAC_VER_39] = {"RTL8106e",		FIRMWARE_8106E_1},
 	[RTL_GIGA_MAC_VER_40] = {"RTL8168g/8111g",	FIRMWARE_8168G_2},
 	[RTL_GIGA_MAC_VER_41] = {"RTL8168g/8111g"			},
-	[RTL_GIGA_MAC_VER_42] = {"RTL8168g/8111g",	FIRMWARE_8168G_3},
-	[RTL_GIGA_MAC_VER_43] = {"RTL8106e",		FIRMWARE_8106E_2},
-	[RTL_GIGA_MAC_VER_44] = {"RTL8411",		FIRMWARE_8411_2 },
+	[RTL_GIGA_MAC_VER_42] = {"RTL8168gu/8111gu",	FIRMWARE_8168G_3},
+	[RTL_GIGA_MAC_VER_43] = {"RTL8106eus",		FIRMWARE_8106E_2},
+	[RTL_GIGA_MAC_VER_44] = {"RTL8411b",		FIRMWARE_8411_2 },
 	[RTL_GIGA_MAC_VER_45] = {"RTL8168h/8111h",	FIRMWARE_8168H_1},
 	[RTL_GIGA_MAC_VER_46] = {"RTL8168h/8111h",	FIRMWARE_8168H_2},
 	[RTL_GIGA_MAC_VER_47] = {"RTL8107e",		FIRMWARE_8107E_1},
@@ -3251,9 +3251,9 @@ static void rtl8168g_1_hw_phy_config(struct rtl8169_private *tp)
 
 	ret = phy_read_paged(tp->phydev, 0x0a46, 0x13);
 	if (ret & BIT(8))
-		phy_modify_paged(tp->phydev, 0x0c41, 0x12, 0, BIT(1));
+		phy_modify_paged(tp->phydev, 0x0c41, 0x15, 0, BIT(1));
 	else
-		phy_modify_paged(tp->phydev, 0x0c41, 0x12, BIT(1), 0);
+		phy_modify_paged(tp->phydev, 0x0c41, 0x15, BIT(1), 0);
 
 	/* Enable PHY auto speed down */
 	phy_modify_paged(tp->phydev, 0x0a44, 0x11, 0, BIT(3) | BIT(2));
@@ -4667,6 +4667,143 @@ static void rtl_hw_start_8411_2(struct rtl8169_private *tp)
 	/* disable aspm and clock request before access ephy */
 	rtl_hw_aspm_clkreq_enable(tp, false);
 	rtl_ephy_init(tp, e_info_8411_2);
+
+	/* The following Realtek-provided magic fixes an issue with the RX unit
+	 * getting confused after the PHY having been powered-down.
+	 */
+	r8168_mac_ocp_write(tp, 0xFC28, 0x0000);
+	r8168_mac_ocp_write(tp, 0xFC2A, 0x0000);
+	r8168_mac_ocp_write(tp, 0xFC2C, 0x0000);
+	r8168_mac_ocp_write(tp, 0xFC2E, 0x0000);
+	r8168_mac_ocp_write(tp, 0xFC30, 0x0000);
+	r8168_mac_ocp_write(tp, 0xFC32, 0x0000);
+	r8168_mac_ocp_write(tp, 0xFC34, 0x0000);
+	r8168_mac_ocp_write(tp, 0xFC36, 0x0000);
+	mdelay(3);
+	r8168_mac_ocp_write(tp, 0xFC26, 0x0000);
+
+	r8168_mac_ocp_write(tp, 0xF800, 0xE008);
+	r8168_mac_ocp_write(tp, 0xF802, 0xE00A);
+	r8168_mac_ocp_write(tp, 0xF804, 0xE00C);
+	r8168_mac_ocp_write(tp, 0xF806, 0xE00E);
+	r8168_mac_ocp_write(tp, 0xF808, 0xE027);
+	r8168_mac_ocp_write(tp, 0xF80A, 0xE04F);
+	r8168_mac_ocp_write(tp, 0xF80C, 0xE05E);
+	r8168_mac_ocp_write(tp, 0xF80E, 0xE065);
+	r8168_mac_ocp_write(tp, 0xF810, 0xC602);
+	r8168_mac_ocp_write(tp, 0xF812, 0xBE00);
+	r8168_mac_ocp_write(tp, 0xF814, 0x0000);
+	r8168_mac_ocp_write(tp, 0xF816, 0xC502);
+	r8168_mac_ocp_write(tp, 0xF818, 0xBD00);
+	r8168_mac_ocp_write(tp, 0xF81A, 0x074C);
+	r8168_mac_ocp_write(tp, 0xF81C, 0xC302);
+	r8168_mac_ocp_write(tp, 0xF81E, 0xBB00);
+	r8168_mac_ocp_write(tp, 0xF820, 0x080A);
+	r8168_mac_ocp_write(tp, 0xF822, 0x6420);
+	r8168_mac_ocp_write(tp, 0xF824, 0x48C2);
+	r8168_mac_ocp_write(tp, 0xF826, 0x8C20);
+	r8168_mac_ocp_write(tp, 0xF828, 0xC516);
+	r8168_mac_ocp_write(tp, 0xF82A, 0x64A4);
+	r8168_mac_ocp_write(tp, 0xF82C, 0x49C0);
+	r8168_mac_ocp_write(tp, 0xF82E, 0xF009);
+	r8168_mac_ocp_write(tp, 0xF830, 0x74A2);
+	r8168_mac_ocp_write(tp, 0xF832, 0x8CA5);
+	r8168_mac_ocp_write(tp, 0xF834, 0x74A0);
+	r8168_mac_ocp_write(tp, 0xF836, 0xC50E);
+	r8168_mac_ocp_write(tp, 0xF838, 0x9CA2);
+	r8168_mac_ocp_write(tp, 0xF83A, 0x1C11);
+	r8168_mac_ocp_write(tp, 0xF83C, 0x9CA0);
+	r8168_mac_ocp_write(tp, 0xF83E, 0xE006);
+	r8168_mac_ocp_write(tp, 0xF840, 0x74F8);
+	r8168_mac_ocp_write(tp, 0xF842, 0x48C4);
+	r8168_mac_ocp_write(tp, 0xF844, 0x8CF8);
+	r8168_mac_ocp_write(tp, 0xF846, 0xC404);
+	r8168_mac_ocp_write(tp, 0xF848, 0xBC00);
+	r8168_mac_ocp_write(tp, 0xF84A, 0xC403);
+	r8168_mac_ocp_write(tp, 0xF84C, 0xBC00);
+	r8168_mac_ocp_write(tp, 0xF84E, 0x0BF2);
+	r8168_mac_ocp_write(tp, 0xF850, 0x0C0A);
+	r8168_mac_ocp_write(tp, 0xF852, 0xE434);
+	r8168_mac_ocp_write(tp, 0xF854, 0xD3C0);
+	r8168_mac_ocp_write(tp, 0xF856, 0x49D9);
+	r8168_mac_ocp_write(tp, 0xF858, 0xF01F);
+	r8168_mac_ocp_write(tp, 0xF85A, 0xC526);
+	r8168_mac_ocp_write(tp, 0xF85C, 0x64A5);
+	r8168_mac_ocp_write(tp, 0xF85E, 0x1400);
+	r8168_mac_ocp_write(tp, 0xF860, 0xF007);
+	r8168_mac_ocp_write(tp, 0xF862, 0x0C01);
+	r8168_mac_ocp_write(tp, 0xF864, 0x8CA5);
+	r8168_mac_ocp_write(tp, 0xF866, 0x1C15);
+	r8168_mac_ocp_write(tp, 0xF868, 0xC51B);
+	r8168_mac_ocp_write(tp, 0xF86A, 0x9CA0);
+	r8168_mac_ocp_write(tp, 0xF86C, 0xE013);
+	r8168_mac_ocp_write(tp, 0xF86E, 0xC519);
+	r8168_mac_ocp_write(tp, 0xF870, 0x74A0);
+	r8168_mac_ocp_write(tp, 0xF872, 0x48C4);
+	r8168_mac_ocp_write(tp, 0xF874, 0x8CA0);
+	r8168_mac_ocp_write(tp, 0xF876, 0xC516);
+	r8168_mac_ocp_write(tp, 0xF878, 0x74A4);
+	r8168_mac_ocp_write(tp, 0xF87A, 0x48C8);
+	r8168_mac_ocp_write(tp, 0xF87C, 0x48CA);
+	r8168_mac_ocp_write(tp, 0xF87E, 0x9CA4);
+	r8168_mac_ocp_write(tp, 0xF880, 0xC512);
+	r8168_mac_ocp_write(tp, 0xF882, 0x1B00);
+	r8168_mac_ocp_write(tp, 0xF884, 0x9BA0);
+	r8168_mac_ocp_write(tp, 0xF886, 0x1B1C);
+	r8168_mac_ocp_write(tp, 0xF888, 0x483F);
+	r8168_mac_ocp_write(tp, 0xF88A, 0x9BA2);
+	r8168_mac_ocp_write(tp, 0xF88C, 0x1B04);
+	r8168_mac_ocp_write(tp, 0xF88E, 0xC508);
+	r8168_mac_ocp_write(tp, 0xF890, 0x9BA0);
+	r8168_mac_ocp_write(tp, 0xF892, 0xC505);
+	r8168_mac_ocp_write(tp, 0xF894, 0xBD00);
+	r8168_mac_ocp_write(tp, 0xF896, 0xC502);
+	r8168_mac_ocp_write(tp, 0xF898, 0xBD00);
+	r8168_mac_ocp_write(tp, 0xF89A, 0x0300);
+	r8168_mac_ocp_write(tp, 0xF89C, 0x051E);
+	r8168_mac_ocp_write(tp, 0xF89E, 0xE434);
+	r8168_mac_ocp_write(tp, 0xF8A0, 0xE018);
+	r8168_mac_ocp_write(tp, 0xF8A2, 0xE092);
+	r8168_mac_ocp_write(tp, 0xF8A4, 0xDE20);
+	r8168_mac_ocp_write(tp, 0xF8A6, 0xD3C0);
+	r8168_mac_ocp_write(tp, 0xF8A8, 0xC50F);
+	r8168_mac_ocp_write(tp, 0xF8AA, 0x76A4);
+	r8168_mac_ocp_write(tp, 0xF8AC, 0x49E3);
+	r8168_mac_ocp_write(tp, 0xF8AE, 0xF007);
+	r8168_mac_ocp_write(tp, 0xF8B0, 0x49C0);
+	r8168_mac_ocp_write(tp, 0xF8B2, 0xF103);
+	r8168_mac_ocp_write(tp, 0xF8B4, 0xC607);
+	r8168_mac_ocp_write(tp, 0xF8B6, 0xBE00);
+	r8168_mac_ocp_write(tp, 0xF8B8, 0xC606);
+	r8168_mac_ocp_write(tp, 0xF8BA, 0xBE00);
+	r8168_mac_ocp_write(tp, 0xF8BC, 0xC602);
+	r8168_mac_ocp_write(tp, 0xF8BE, 0xBE00);
+	r8168_mac_ocp_write(tp, 0xF8C0, 0x0C4C);
+	r8168_mac_ocp_write(tp, 0xF8C2, 0x0C28);
+	r8168_mac_ocp_write(tp, 0xF8C4, 0x0C2C);
+	r8168_mac_ocp_write(tp, 0xF8C6, 0xDC00);
+	r8168_mac_ocp_write(tp, 0xF8C8, 0xC707);
+	r8168_mac_ocp_write(tp, 0xF8CA, 0x1D00);
+	r8168_mac_ocp_write(tp, 0xF8CC, 0x8DE2);
+	r8168_mac_ocp_write(tp, 0xF8CE, 0x48C1);
+	r8168_mac_ocp_write(tp, 0xF8D0, 0xC502);
+	r8168_mac_ocp_write(tp, 0xF8D2, 0xBD00);
+	r8168_mac_ocp_write(tp, 0xF8D4, 0x00AA);
+	r8168_mac_ocp_write(tp, 0xF8D6, 0xE0C0);
+	r8168_mac_ocp_write(tp, 0xF8D8, 0xC502);
+	r8168_mac_ocp_write(tp, 0xF8DA, 0xBD00);
+	r8168_mac_ocp_write(tp, 0xF8DC, 0x0132);
+
+	r8168_mac_ocp_write(tp, 0xFC26, 0x8000);
+
+	r8168_mac_ocp_write(tp, 0xFC2A, 0x0743);
+	r8168_mac_ocp_write(tp, 0xFC2C, 0x0801);
+	r8168_mac_ocp_write(tp, 0xFC2E, 0x0BE9);
+	r8168_mac_ocp_write(tp, 0xFC30, 0x02FD);
+	r8168_mac_ocp_write(tp, 0xFC32, 0x0C25);
+	r8168_mac_ocp_write(tp, 0xFC34, 0x00A9);
+	r8168_mac_ocp_write(tp, 0xFC36, 0x012D);
+
 	rtl_hw_aspm_clkreq_enable(tp, true);
 }
 
@@ -5771,24 +5908,6 @@ static inline void rtl8169_rx_csum(struct sk_buff *skb, u32 opts1)
 		skb_checksum_none_assert(skb);
 }
 
-static struct sk_buff *rtl8169_try_rx_copy(void *data,
-					   struct rtl8169_private *tp,
-					   int pkt_size,
-					   dma_addr_t addr)
-{
-	struct sk_buff *skb;
-	struct device *d = tp_to_dev(tp);
-
-	dma_sync_single_for_cpu(d, addr, pkt_size, DMA_FROM_DEVICE);
-	prefetch(data);
-	skb = napi_alloc_skb(&tp->napi, pkt_size);
-	if (skb)
-		skb_copy_to_linear_data(skb, data, pkt_size);
-	dma_sync_single_for_device(d, addr, pkt_size, DMA_FROM_DEVICE);
-
-	return skb;
-}
-
 static int rtl_rx(struct net_device *dev, struct rtl8169_private *tp, u32 budget)
 {
 	unsigned int cur_rx, rx_left;
@@ -5824,17 +5943,13 @@ static int rtl_rx(struct net_device *dev, struct rtl8169_private *tp, u32 budget
 				goto process_pkt;
 			}
 		} else {
+			unsigned int pkt_size;
 			struct sk_buff *skb;
-			dma_addr_t addr;
-			int pkt_size;
 
 process_pkt:
-			addr = le64_to_cpu(desc->addr);
+			pkt_size = status & GENMASK(13, 0);
 			if (likely(!(dev->features & NETIF_F_RXFCS)))
-				pkt_size = (status & 0x00003fff) - 4;
-			else
-				pkt_size = status & 0x00003fff;
-
+				pkt_size -= ETH_FCS_LEN;
 			/*
 			 * The driver does not support incoming fragmented
 			 * frames. They are seen as a symptom of over-mtu
@@ -5846,15 +5961,23 @@ process_pkt:
 				goto release_descriptor;
 			}
 
-			skb = rtl8169_try_rx_copy(tp->Rx_databuff[entry],
-						  tp, pkt_size, addr);
-			if (!skb) {
+			dma_sync_single_for_cpu(tp_to_dev(tp),
+						le64_to_cpu(desc->addr),
+						pkt_size, DMA_FROM_DEVICE);
+
+			skb = napi_alloc_skb(&tp->napi, pkt_size);
+			if (unlikely(!skb)) {
 				dev->stats.rx_dropped++;
 				goto release_descriptor;
 			}
 
+			prefetch(tp->Rx_databuff[entry]);
+			skb_copy_to_linear_data(skb, tp->Rx_databuff[entry],
+						pkt_size);
+			skb->tail += pkt_size;
+			skb->len = pkt_size;
+
 			rtl8169_rx_csum(skb, status);
-			skb_put(skb, pkt_size);
 			skb->protocol = eth_type_trans(skb, dev);
 
 			rtl8169_rx_vlan_tag(desc, skb);
@@ -6651,13 +6774,36 @@ static int rtl_get_ether_clk(struct rtl8169_private *tp)
 	return rc;
 }
 
+static void rtl_init_mac_address(struct rtl8169_private *tp)
+{
+	struct net_device *dev = tp->dev;
+	u8 *mac_addr = dev->dev_addr;
+	int rc, i;
+
+	rc = eth_platform_get_mac_address(tp_to_dev(tp), mac_addr);
+	if (!rc)
+		goto done;
+
+	rtl_read_mac_address(tp, mac_addr);
+	if (is_valid_ether_addr(mac_addr))
+		goto done;
+
+	for (i = 0; i < ETH_ALEN; i++)
+		mac_addr[i] = RTL_R8(tp, MAC0 + i);
+	if (is_valid_ether_addr(mac_addr))
+		goto done;
+
+	eth_hw_addr_random(dev);
+	dev_warn(tp_to_dev(tp), "can't read MAC address, setting random one\n");
+done:
+	rtl_rar_set(tp, mac_addr);
+}
+
 static int rtl_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
 {
-	/* align to u16 for is_valid_ether_addr() */
-	u8 mac_addr[ETH_ALEN] __aligned(2) = {};
 	struct rtl8169_private *tp;
 	struct net_device *dev;
-	int chipset, region, i;
+	int chipset, region;
 	int jumbo_max, rc;
 
 	dev = devm_alloc_etherdev(&pdev->dev, sizeof (*tp));
@@ -6723,15 +6869,8 @@ static int rtl_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
 	tp->cp_cmd = RTL_R16(tp, CPlusCmd);
 
 	if (sizeof(dma_addr_t) > 4 && tp->mac_version >= RTL_GIGA_MAC_VER_18 &&
-	    !dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(64))) {
+	    !dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(64)))
 		dev->features |= NETIF_F_HIGHDMA;
-	} else {
-		rc = pci_set_dma_mask(pdev, DMA_BIT_MASK(32));
-		if (rc < 0) {
-			dev_err(&pdev->dev, "DMA configuration failed\n");
-			return rc;
-		}
-	}
 
 	rtl_init_rxcfg(tp);
 
@@ -6756,16 +6895,7 @@ static int rtl_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
 	u64_stats_init(&tp->rx_stats.syncp);
 	u64_stats_init(&tp->tx_stats.syncp);
 
-	/* get MAC address */
-	rc = eth_platform_get_mac_address(&pdev->dev, mac_addr);
-	if (rc)
-		rtl_read_mac_address(tp, mac_addr);
-
-	if (is_valid_ether_addr(mac_addr))
-		rtl_rar_set(tp, mac_addr);
-
-	for (i = 0; i < ETH_ALEN; i++)
-		dev->dev_addr[i] = RTL_R8(tp, MAC0 + i);
+	rtl_init_mac_address(tp);
 
 	dev->ethtool_ops = &rtl8169_ethtool_ops;
 

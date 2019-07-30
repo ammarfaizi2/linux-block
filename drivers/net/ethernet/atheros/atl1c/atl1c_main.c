@@ -2150,9 +2150,7 @@ static int atl1c_tx_map(struct atl1c_adapter *adapter,
 	}
 
 	for (f = 0; f < nr_frags; f++) {
-		struct skb_frag_struct *frag;
-
-		frag = &skb_shinfo(skb)->frags[f];
+		skb_frag_t *frag = &skb_shinfo(skb)->frags[f];
 
 		use_tpd = atl1c_get_tpd(adapter, type);
 		memcpy(use_tpd, tpd, sizeof(struct atl1c_tpd_desc));
@@ -2201,7 +2199,7 @@ static netdev_tx_t atl1c_xmit_frame(struct sk_buff *skb,
 					  struct net_device *netdev)
 {
 	struct atl1c_adapter *adapter = netdev_priv(netdev);
-	u16 tpd_req = 1;
+	u16 tpd_req;
 	struct atl1c_tpd_desc *tpd;
 	enum atl1c_trans_queue type = atl1c_trans_normal;
 

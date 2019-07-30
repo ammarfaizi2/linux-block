@@ -448,7 +448,7 @@ static struct neighbour *ipv4_neigh_lookup(const struct dst_entry *dst,
 		n = ip_neigh_gw4(dev, pkey);
 	}
 
-	if (n && !refcount_inc_not_zero(&n->refcnt))
+	if (!IS_ERR(n) && !refcount_inc_not_zero(&n->refcnt))
 		n = NULL;
 
 	rcu_read_unlock_bh();
@@ -1532,7 +1532,6 @@ static void ipv4_dst_destroy(struct dst_entry *dst)
 
 void rt_flush_dev(struct net_device *dev)
 {
-	struct net *net = dev_net(dev);
 	struct rtable *rt;
 	int cpu;
 
@@ -1543,7 +1542,7 @@ void rt_flush_dev(struct net_device *dev)
 		list_for_each_entry(rt, &ul->head, rt_uncached) {
 			if (rt->dst.dev != dev)
 				continue;
-			rt->dst.dev = net->loopback_dev;
+			rt->dst.dev = blackhole_netdev;
 			dev_hold(rt->dst.dev);
 			dev_put(dev);
 		}
@@ -1647,6 +1646,39 @@ struct rtable *rt_dst_alloc(struct net_device *dev,
 	return rt;
 }
 EXPORT_SYMBOL(rt_dst_alloc);
+
+struct rtable *rt_dst_clone(struct net_device *dev, struct rtable *rt)
+{
+	struct rtable *new_rt;
+
+	new_rt = dst_alloc(&ipv4_dst_ops, dev, 1, DST_OBSOLETE_FORCE_CHK,
+			   rt->dst.flags);
+
+	if (new_rt) {
+		new_rt->rt_genid = rt_genid_ipv4(dev_net(dev));
+		new_rt->rt_flags = rt->rt_flags;
+		new_rt->rt_type = rt->rt_type;
+		new_rt->rt_is_input = rt->rt_is_input;
+		new_rt->rt_iif = rt->rt_iif;
+		new_rt->rt_pmtu = rt->rt_pmtu;
+		new_rt->rt_mtu_locked = rt->rt_mtu_locked;
+		new_rt->rt_gw_family = rt->rt_gw_family;
+		if (rt->rt_gw_family == AF_INET)
+			new_rt->rt_gw4 = rt->rt_gw4;
+		else if (rt->rt_gw_family == AF_INET6)
+			new_rt->rt_gw6 = rt->rt_gw6;
+		INIT_LIST_HEAD(&new_rt->rt_uncached);
+
+		new_rt->dst.flags |= DST_HOST;
+		new_rt->dst.input = rt->dst.input;
+		new_rt->dst.output = rt->dst.output;
+		new_rt->dst.error = rt->dst.error;
+		new_rt->dst.lastuse = jiffies;
+		new_rt->dst.lwtstate = lwtstate_get(rt->dst.lwtstate);
+	}
+	return new_rt;
+}
+EXPORT_SYMBOL(rt_dst_clone);
 
 /* called in rcu_read_lock() section */
 int ip_mc_validate_source(struct sk_buff *skb, __be32 daddr, __be32 saddr,
@@ -1932,17 +1964,30 @@ int fib_multipath_hash(const struct net *net, const struct flowi4 *fl4,
 		break;
 	case 2:
 		memset(&hash_keys, 0, sizeof(hash_keys));
-		hash_keys.control.addr_type = FLOW_DISSECTOR_KEY_IPV4_ADDRS;
 		/* skb is currently provided only when forwarding */
 		if (skb) {
 			struct flow_keys keys;
 
 			skb_flow_dissect_flow_keys(skb, &keys, 0);
-
-			hash_keys.addrs.v4addrs.src = keys.addrs.v4addrs.src;
-			hash_keys.addrs.v4addrs.dst = keys.addrs.v4addrs.dst;
+			/* Inner can be v4 or v6 */
+			if (keys.control.addr_type == FLOW_DISSECTOR_KEY_IPV4_ADDRS) {
+				hash_keys.control.addr_type = FLOW_DISSECTOR_KEY_IPV4_ADDRS;
+				hash_keys.addrs.v4addrs.src = keys.addrs.v4addrs.src;
+				hash_keys.addrs.v4addrs.dst = keys.addrs.v4addrs.dst;
+			} else if (keys.control.addr_type == FLOW_DISSECTOR_KEY_IPV6_ADDRS) {
+				hash_keys.control.addr_type = FLOW_DISSECTOR_KEY_IPV6_ADDRS;
+				hash_keys.addrs.v6addrs.src = keys.addrs.v6addrs.src;
+				hash_keys.addrs.v6addrs.dst = keys.addrs.v6addrs.dst;
+				hash_keys.tags.flow_label = keys.tags.flow_label;
+				hash_keys.basic.ip_proto = keys.basic.ip_proto;
+			} else {
+				/* Same as case 0 */
+				hash_keys.control.addr_type = FLOW_DISSECTOR_KEY_IPV4_ADDRS;
+				ip_multipath_l3_keys(skb, &hash_keys);
+			}
 		} else {
 			/* Same as case 0 */
+			hash_keys.control.addr_type = FLOW_DISSECTOR_KEY_IPV4_ADDRS;
 			hash_keys.addrs.v4addrs.src = fl4->saddr;
 			hash_keys.addrs.v4addrs.dst = fl4->daddr;
 		}
@@ -3293,9 +3338,11 @@ static struct ctl_table ipv4_route_table[] = {
 	{ }
 };
 
+static const char ipv4_route_flush_procname[] = "flush";
+
 static struct ctl_table ipv4_route_flush_table[] = {
 	{
-		.procname	= "flush",
+		.procname	= ipv4_route_flush_procname,
 		.maxlen		= sizeof(int),
 		.mode		= 0200,
 		.proc_handler	= ipv4_sysctl_rtcache_flush,
@@ -3313,9 +3360,11 @@ static __net_init int sysctl_route_net_init(struct net *net)
 		if (!tbl)
 			goto err_dup;
 
-		/* Don't export sysctls to unprivileged users */
-		if (net->user_ns != &init_user_ns)
-			tbl[0].procname = NULL;
+		/* Don't export non-whitelisted sysctls to unprivileged users */
+		if (net->user_ns != &init_user_ns) {
+			if (tbl[0].procname != ipv4_route_flush_procname)
+				tbl[0].procname = NULL;
+		}
 	}
 	tbl[0].extra1 = net;
 
