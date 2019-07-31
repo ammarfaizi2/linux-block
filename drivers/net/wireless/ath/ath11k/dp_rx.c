@@ -2104,32 +2104,6 @@ static void ath11k_dp_rx_pre_deliver_amsdu(struct ath11k *ar,
 	}
 }
 
-static u32 *ath11k_dp_rx_get_reo_desc(struct ath11k_base *ab,
-				      struct hal_srng *srng)
-{
-	u32 *rx_desc;
-
-	lockdep_assert_held(&srng->lock);
-
-	rx_desc = ath11k_hal_srng_dst_get_next_entry(ab, srng);
-
-	/* Hw might have updated the head pointer after we cached it.
-	 * In this case, even though there are entries in the ring we'll
-	 * get rx_desc NULL. Give the read another try with updated cached
-	 * head pointer so that we can reap complete MPDU in the current
-	 * rx processing.
-	 */
-	if (!rx_desc) {
-		ath11k_hal_srng_access_begin(ab, srng);
-		rx_desc = ath11k_hal_srng_dst_get_next_entry(ab, srng);
-		if (!rx_desc)
-			return NULL;
-		ath11k_hal_srng_access_end(ab, srng);
-	}
-
-	return rx_desc;
-}
-
 static void ath11k_dp_rx_process_pending_packets(struct ath11k_base *ab,
 						 struct napi_struct *napi,
 						 struct sk_buff_head *pending_q,
@@ -2178,6 +2152,7 @@ int ath11k_dp_process_rx(struct ath11k_base *ab, int mac_id,
 	int num_buffs_reaped = 0;
 	int quota = budget;
 	int ret;
+	bool done = false;
 
 	/* Process any pending packets from the previous napi poll.
 	 * Note: All msdu's in this pending_q corresponds to the same mac id
@@ -2201,7 +2176,8 @@ int ath11k_dp_process_rx(struct ath11k_base *ab, int mac_id,
 
 	ath11k_hal_srng_access_begin(ab, srng);
 
-	while ((rx_desc = ath11k_dp_rx_get_reo_desc(ab, srng))) {
+try_again:
+	while ((rx_desc = ath11k_hal_srng_dst_get_next_entry(ab, srng))) {
 		memset(&meta_info, 0, sizeof(meta_info));
 		ath11k_hal_rx_parse_dst_ring_desc(ab, rx_desc, &meta_info);
 
@@ -2250,8 +2226,21 @@ int ath11k_dp_process_rx(struct ath11k_base *ab, int mac_id,
 		 * and how use of budget instead of remaining quota affects it.
 		 */
 		if (num_buffs_reaped >= quota && rxcb->is_last_msdu &&
-		    !rxcb->is_continuation)
+		    !rxcb->is_continuation) {
+			done = true;
 			break;
+		}
+	}
+
+	/* Hw might have updated the head pointer after we cached it.
+	 * In this case, even though there are entries in the ring we'll
+	 * get rx_desc NULL. Give the read another try with updated cached
+	 * head pointer so that we can reap complete MPDU in the current
+	 * rx processing.
+	 */
+	if (!done && ath11k_hal_srng_dst_num_free(ab, srng, true)) {
+		ath11k_hal_srng_access_end(ab, srng);
+		goto try_again;
 	}
 
 	ath11k_hal_srng_access_end(ab, srng);
