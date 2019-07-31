@@ -538,7 +538,7 @@ struct hal_srng {
 			u32 tp;
 
 			/* Shadow head pointer location to be updated by HW */
-			u32 *hp_addr;
+			volatile u32 *hp_addr;
 
 			/* Cached head pointer */
 			u32 cached_hp;
