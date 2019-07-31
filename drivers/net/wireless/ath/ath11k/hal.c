@@ -745,9 +745,9 @@ int ath11k_hal_srng_dst_num_free(struct ath11k_base *ab, struct hal_srng *srng,
 	}
 
 	if (hp >= tp)
-		return ((hp - tp) / srng->entry_size) - 1;
+		return (hp - tp) / srng->entry_size;
 	else
-		return ((srng->ring_size - tp + hp) / srng->entry_size) - 1;
+		return (srng->ring_size - tp + hp) / srng->entry_size;
 }
 
 /* Returns number of available entries in src ring */
@@ -862,8 +862,7 @@ void ath11k_hal_srng_access_begin(struct ath11k_base *ab, struct hal_srng *srng)
 		srng->u.src_ring.cached_tp =
 			*(volatile u32 *)srng->u.src_ring.tp_addr;
 	else
-		srng->u.dst_ring.cached_hp =
-			*(volatile u32 *)srng->u.dst_ring.hp_addr;
+		srng->u.dst_ring.cached_hp = *srng->u.dst_ring.hp_addr;
 }
 
 /* Update cached ring head/tail pointers to HW. ath11k_hal_srng_access_begin()
