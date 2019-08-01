@@ -58,6 +58,7 @@ void rcu_segcblist_init(struct rcu_segcblist *rsclp)
 		rsclp->tails[i] = &rsclp->head;
 	rsclp->len = 0;
 	rsclp->len_lazy = 0;
+	rsclp->enabled = 1;
 }
 
 /*
@@ -69,7 +70,16 @@ void rcu_segcblist_disable(struct rcu_segcblist *rsclp)
 	WARN_ON_ONCE(!rcu_segcblist_empty(rsclp));
 	WARN_ON_ONCE(rcu_segcblist_n_cbs(rsclp));
 	WARN_ON_ONCE(rcu_segcblist_n_lazy_cbs(rsclp));
-	rsclp->tails[RCU_NEXT_TAIL] = NULL;
+	rsclp->enabled = 0;
+}
+
+/*
+ * Mark the specified rcu_segcblist structure as offloaded.  This
+ * structure must be empty.
+ */
+void rcu_segcblist_offload(struct rcu_segcblist *rsclp)
+{
+	rsclp->offloaded = 1;
 }
 
 /*
@@ -118,6 +128,18 @@ struct rcu_head *rcu_segcblist_first_pend_cb(struct rcu_segcblist *rsclp)
 }
 
 /*
+ * Return false if there are no CBs awaiting grace periods, otherwise,
+ * return true and store the nearest waited-upon grace period into *lp.
+ */
+bool rcu_segcblist_nextgp(struct rcu_segcblist *rsclp, unsigned long *lp)
+{
+	if (!rcu_segcblist_pend_cbs(rsclp))
+		return false;
+	*lp = rsclp->gp_seq[RCU_WAIT_TAIL];
+	return true;
+}
+
+/*
  * Enqueue the specified callback onto the specified rcu_segcblist
  * structure, updating accounting as needed.  Note that the ->len
  * field may be accessed locklessly, hence the WRITE_ONCE().
@@ -134,8 +156,8 @@ void rcu_segcblist_enqueue(struct rcu_segcblist *rsclp,
 		rsclp->len_lazy++;
 	smp_mb(); /* Ensure counts are updated before callback is enqueued. */
 	rhp->next = NULL;
-	*rsclp->tails[RCU_NEXT_TAIL] = rhp;
-	rsclp->tails[RCU_NEXT_TAIL] = &rhp->next;
+	WRITE_ONCE(*rsclp->tails[RCU_NEXT_TAIL], rhp);
+	WRITE_ONCE(rsclp->tails[RCU_NEXT_TAIL], &rhp->next);
 }
 
 /*
@@ -163,9 +185,9 @@ bool rcu_segcblist_entrain(struct rcu_segcblist *rsclp,
 	for (i = RCU_NEXT_TAIL; i > RCU_DONE_TAIL; i--)
 		if (rsclp->tails[i] != rsclp->tails[i - 1])
 			break;
-	*rsclp->tails[i] = rhp;
+	WRITE_ONCE(*rsclp->tails[i], rhp);
 	for (; i <= RCU_NEXT_TAIL; i++)
-		rsclp->tails[i] = &rhp->next;
+		WRITE_ONCE(rsclp->tails[i], &rhp->next);
 	return true;
 }
 
@@ -200,12 +222,12 @@ void rcu_segcblist_extract_done_cbs(struct rcu_segcblist *rsclp,
 	if (!rcu_segcblist_ready_cbs(rsclp))
 		return; /* Nothing to do. */
 	*rclp->tail = rsclp->head;
-	rsclp->head = *rsclp->tails[RCU_DONE_TAIL];
-	*rsclp->tails[RCU_DONE_TAIL] = NULL;
+	WRITE_ONCE(rsclp->head, *rsclp->tails[RCU_DONE_TAIL]);
+	WRITE_ONCE(*rsclp->tails[RCU_DONE_TAIL], NULL);
 	rclp->tail = rsclp->tails[RCU_DONE_TAIL];
 	for (i = RCU_CBLIST_NSEGS - 1; i >= RCU_DONE_TAIL; i--)
 		if (rsclp->tails[i] == rsclp->tails[RCU_DONE_TAIL])
-			rsclp->tails[i] = &rsclp->head;
+			WRITE_ONCE(rsclp->tails[i], &rsclp->head);
 }
 
 /*
@@ -224,9 +246,9 @@ void rcu_segcblist_extract_pend_cbs(struct rcu_segcblist *rsclp,
 		return; /* Nothing to do. */
 	*rclp->tail = *rsclp->tails[RCU_DONE_TAIL];
 	rclp->tail = rsclp->tails[RCU_NEXT_TAIL];
-	*rsclp->tails[RCU_DONE_TAIL] = NULL;
+	WRITE_ONCE(*rsclp->tails[RCU_DONE_TAIL], NULL);
 	for (i = RCU_DONE_TAIL + 1; i < RCU_CBLIST_NSEGS; i++)
-		rsclp->tails[i] = rsclp->tails[RCU_DONE_TAIL];
+		WRITE_ONCE(rsclp->tails[i], rsclp->tails[RCU_DONE_TAIL]);
 }
 
 /*
@@ -255,10 +277,10 @@ void rcu_segcblist_insert_done_cbs(struct rcu_segcblist *rsclp,
 	if (!rclp->head)
 		return; /* No callbacks to move. */
 	*rclp->tail = rsclp->head;
-	rsclp->head = rclp->head;
+	WRITE_ONCE(rsclp->head, rclp->head);
 	for (i = RCU_DONE_TAIL; i < RCU_CBLIST_NSEGS; i++)
 		if (&rsclp->head == rsclp->tails[i])
-			rsclp->tails[i] = rclp->tail;
+			WRITE_ONCE(rsclp->tails[i], rclp->tail);
 		else
 			break;
 	rclp->head = NULL;
@@ -274,8 +296,8 @@ void rcu_segcblist_insert_pend_cbs(struct rcu_segcblist *rsclp,
 {
 	if (!rclp->head)
 		return; /* Nothing to do. */
-	*rsclp->tails[RCU_NEXT_TAIL] = rclp->head;
-	rsclp->tails[RCU_NEXT_TAIL] = rclp->tail;
+	WRITE_ONCE(*rsclp->tails[RCU_NEXT_TAIL], rclp->head);
+	WRITE_ONCE(rsclp->tails[RCU_NEXT_TAIL], rclp->tail);
 	rclp->head = NULL;
 	rclp->tail = &rclp->head;
 }
@@ -299,7 +321,7 @@ void rcu_segcblist_advance(struct rcu_segcblist *rsclp, unsigned long seq)
 	for (i = RCU_WAIT_TAIL; i < RCU_NEXT_TAIL; i++) {
 		if (ULONG_CMP_LT(seq, rsclp->gp_seq[i]))
 			break;
-		rsclp->tails[RCU_DONE_TAIL] = rsclp->tails[i];
+		WRITE_ONCE(rsclp->tails[RCU_DONE_TAIL], rsclp->tails[i]);
 	}
 
 	/* If no callbacks moved, nothing more need be done. */
@@ -308,7 +330,7 @@ void rcu_segcblist_advance(struct rcu_segcblist *rsclp, unsigned long seq)
 
 	/* Clean up tail pointers that might have been misordered above. */
 	for (j = RCU_WAIT_TAIL; j < i; j++)
-		rsclp->tails[j] = rsclp->tails[RCU_DONE_TAIL];
+		WRITE_ONCE(rsclp->tails[j], rsclp->tails[RCU_DONE_TAIL]);
 
 	/*
 	 * Callbacks moved, so clean up the misordered ->tails[] pointers
@@ -319,7 +341,7 @@ void rcu_segcblist_advance(struct rcu_segcblist *rsclp, unsigned long seq)
 	for (j = RCU_WAIT_TAIL; i < RCU_NEXT_TAIL; i++, j++) {
 		if (rsclp->tails[j] == rsclp->tails[RCU_NEXT_TAIL])
 			break;  /* No more callbacks. */
-		rsclp->tails[j] = rsclp->tails[i];
+		WRITE_ONCE(rsclp->tails[j], rsclp->tails[i]);
 		rsclp->gp_seq[j] = rsclp->gp_seq[i];
 	}
 }
@@ -384,7 +406,7 @@ bool rcu_segcblist_accelerate(struct rcu_segcblist *rsclp, unsigned long seq)
 	 * structure other than in the RCU_NEXT_TAIL segment.
 	 */
 	for (; i < RCU_NEXT_TAIL; i++) {
-		rsclp->tails[i] = rsclp->tails[RCU_NEXT_TAIL];
+		WRITE_ONCE(rsclp->tails[i], rsclp->tails[RCU_NEXT_TAIL]);
 		rsclp->gp_seq[i] = seq;
 	}
 	return true;
