@@ -33,6 +33,11 @@ static void panfrost_gem_free_object(struct drm_gem_object *obj)
 		kfree(bo->sgts);
 	}
 
+	mutex_lock(&pfdev->shrinker_lock);
+	if (!list_empty(&bo->base.madv_list))
+		list_del(&bo->base.madv_list);
+	mutex_unlock(&pfdev->shrinker_lock);
+
 	drm_gem_shmem_free_object(obj);
 }
 

@@ -42,4 +42,7 @@ panfrost_gem_create_with_handle(struct drm_file *file_priv,
 				u32 flags,
 				uint32_t *handle);
 
+void panfrost_gem_shrinker_init(struct drm_device *dev);
+void panfrost_gem_shrinker_cleanup(struct drm_device *dev);
+
 #endif /* __PANFROST_GEM_H__ */
