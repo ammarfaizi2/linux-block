@@ -129,6 +129,28 @@ static void pnv_setup_rfi_flush(void)
 	setup_count_cache_flush();
 }
 
+static void __init pnv_check_guarded_cores(void)
+{
+	struct device_node *dn;
+	int bad_count = 0;
+
+	for_each_node_by_type(dn, "cpu") {
+		if (of_property_match_string(dn, "status", "bad") >= 0)
+			bad_count++;
+	};
+
+	if (bad_count) {
+		pr_cont("  __                           \n");
+		pr_cont(" /  \\        _______________    \n");
+		pr_cont(" |  |       /               \\  \n");
+		pr_cont(" @  @       |    WARNING!   |  \n");
+		pr_cont(" || ||      | It looks like |  \n");
+		pr_cont(" || ||   <--|  you have %*d |  \n", 3, bad_count);
+		pr_cont(" |\\_/|      | guarded cores |  \n");
+		pr_cont(" \\___/      \\_______________/  \n\n");
+	}
+}
+
 static void __init pnv_setup_arch(void)
 {
 	set_arch_panic_timeout(10, ARCH_PANIC_TIMEOUT);
@@ -148,6 +170,8 @@ static void __init pnv_setup_arch(void)
 
 	/* Enable NAP mode */
 	powersave_nap = 1;
+
+	pnv_check_guarded_cores();
 
 	/* XXX PMCS */
 }
