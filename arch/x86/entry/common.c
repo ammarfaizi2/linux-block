@@ -217,6 +217,13 @@ __visible inline void prepare_exit_to_usermode(struct pt_regs *regs)
 
 	user_enter_irqoff();
 
+	/*
+	 * The actual return to usermode will almost certainly turn IRQs on.
+	 * Trace it here to simplify the asm code.
+	 */
+	if (likely(regs->flags & X86_EFLAGS_IF))
+		trace_hardirqs_on();
+
 	mds_user_clear_cpu_buffers();
 }
 
