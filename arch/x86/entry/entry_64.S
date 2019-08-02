@@ -505,7 +505,7 @@ END(spurious_entries_start)
  * The user of this macro is expected to have an unwind hint and ASM_CLAC
  * first.
  */
-.macro idtentry_simple_body do_sym, has_error_code:req, read_cr2:req, create_gap:req, irq_stack:req
+.macro idtentry_simple_body do_sym, has_error_code:req, read_cr2:req, create_gap:req, irq_stack:req, entry_work:req
 	.if \has_error_code == 0
 	pushq	$-1				/* ORIG_RAX: no syscall to restart */
 	.endif
@@ -536,12 +536,14 @@ END(spurious_entries_start)
 	GET_CR2_INTO(%r12);
 	.endif
 
+	.if \entry_work
 	TRACE_IRQS_OFF
 
 	testb	$3, CS(%rsp)
 	jz	.Lfrom_kernel_no_context_tracking_\@
 	CALL_enter_from_user_mode
 .Lfrom_kernel_no_context_tracking_\@:
+	.endif
 
 	.if \has_error_code
 	movq	ORIG_RAX(%rsp), %rsi		/* get error code */
@@ -599,11 +601,11 @@ END(spurious_entries_start)
  * path must not be used for exceptions that can occur in kernel mode with
  * user GSBASE.
  */
-.macro idtentry sym do_sym has_error_code:req create_gap=0 read_cr2=0 irq_stack=0
+.macro idtentry sym do_sym has_error_code:req create_gap=0 read_cr2=0 irq_stack=0 entry_work=1
 ENTRY(\sym)
 	UNWIND_HINT_IRET_REGS offset=\has_error_code*8
 	ASM_CLAC
-	idtentry_simple_body \do_sym, has_error_code=\has_error_code, create_gap=\create_gap, read_cr2=\read_cr2, irq_stack=\irq_stack
+	idtentry_simple_body \do_sym, has_error_code=\has_error_code, create_gap=\create_gap, read_cr2=\read_cr2, irq_stack=\irq_stack, entry_work=\entry_work
 _ASM_NOKPROBE(\sym)
 END(\sym)
 .endm
@@ -654,7 +656,7 @@ ENTRY(\sym)
 	 */
 	testb	$3, CS-RIP+8*\has_error_code(%rsp)		/* If coming from userspace, switch stacks */
 	jz	.Lfrom_kernel_\@
-	idtentry_simple_body do_sym=\do_sym has_error_code=\has_error_code read_cr2=\read_cr2 create_gap=0 irq_stack=0
+	idtentry_simple_body do_sym=\do_sym has_error_code=\has_error_code read_cr2=\read_cr2 create_gap=0 irq_stack=0 entry_work=1
 .Lfrom_kernel_\@:
 	.endif
 
