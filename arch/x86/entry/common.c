@@ -279,6 +279,7 @@ __visible void do_syscall_64(unsigned long nr, struct pt_regs *regs)
 {
 	struct thread_info *ti;
 
+	trace_hardirqs_off();
 	enter_from_user_mode();
 	local_irq_enable();
 	ti = current_thread_info();
@@ -351,6 +352,7 @@ static __always_inline void do_syscall_32_irqs_on(struct pt_regs *regs)
 /* Handles int $0x80 */
 __visible void do_int80_syscall_32(struct pt_regs *regs)
 {
+	trace_hardirqs_off();
 	enter_from_user_mode();
 	local_irq_enable();
 	do_syscall_32_irqs_on(regs);
@@ -359,12 +361,16 @@ __visible void do_int80_syscall_32(struct pt_regs *regs)
 /* Returns 0 to return using IRET or 1 to return using SYSEXIT/SYSRETL. */
 __visible long do_fast_syscall_32(struct pt_regs *regs)
 {
+	unsigned long landing_pad;
+
+	trace_hardirqs_off();
+	enter_from_user_mode();
+
 	/*
 	 * Called using the internal vDSO SYSENTER/SYSCALL32 calling
 	 * convention.  Adjust regs so it looks like we entered using int80.
 	 */
-
-	unsigned long landing_pad = (unsigned long)current->mm->context.vdso +
+	landing_pad = (unsigned long)current->mm->context.vdso +
 		vdso_image_32.sym_int80_landing_pad;
 
 	/*
@@ -373,8 +379,6 @@ __visible long do_fast_syscall_32(struct pt_regs *regs)
 	 * Fix it up.
 	 */
 	regs->ip = landing_pad;
-
-	enter_from_user_mode();
 
 	local_irq_enable();
 
