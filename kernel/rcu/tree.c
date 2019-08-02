@@ -3121,7 +3121,7 @@ int rcutree_offline_cpu(unsigned int cpu)
 
 	// nohz_full CPUs need the tick for stop-machine to work quickly
 	for_each_online_cpu(c)
-		tick_dep_clear_cpu(c, TICK_DEP_MASK_RCU);
+		tick_dep_set_cpu(c, TICK_DEP_MASK_RCU);
 	return 0;
 }
 
