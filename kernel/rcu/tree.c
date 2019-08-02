@@ -2091,6 +2091,7 @@ static void rcu_cleanup_dead_rnp(struct rcu_node *rnp_leaf)
  */
 int rcutree_dead_cpu(unsigned int cpu)
 {
+	int c;
 	struct rcu_data *rdp = per_cpu_ptr(&rcu_data, cpu);
 	struct rcu_node *rnp = rdp->mynode;  /* Outgoing CPU's rdp & rnp. */
 
@@ -2101,6 +2102,10 @@ int rcutree_dead_cpu(unsigned int cpu)
 	rcu_boost_kthread_setaffinity(rnp, -1);
 	/* Do any needed no-CB deferred wakeups from this CPU. */
 	do_nocb_deferred_wakeup(per_cpu_ptr(&rcu_data, cpu));
+
+	// Stop-machine done, so allow nohz_full to disable tick.
+	for_each_online_cpu(c)
+		tick_dep_clear_cpu(c, TICK_DEP_BIT_RCU);
 	return 0;
 }
 
@@ -3074,6 +3079,7 @@ static void rcutree_affinity_setting(unsigned int cpu, int outgoing)
  */
 int rcutree_online_cpu(unsigned int cpu)
 {
+	int c;
 	unsigned long flags;
 	struct rcu_data *rdp;
 	struct rcu_node *rnp;
@@ -3087,6 +3093,10 @@ int rcutree_online_cpu(unsigned int cpu)
 		return 0; /* Too early in boot for scheduler work. */
 	sync_sched_exp_online_cleanup(cpu);
 	rcutree_affinity_setting(cpu, -1);
+
+	// Stop-machine done, so allow nohz_full to disable tick.
+	for_each_online_cpu(c)
+		tick_dep_clear_cpu(c, TICK_DEP_BIT_RCU);
 	return 0;
 }
 
@@ -3096,6 +3106,7 @@ int rcutree_online_cpu(unsigned int cpu)
  */
 int rcutree_offline_cpu(unsigned int cpu)
 {
+	int c;
 	unsigned long flags;
 	struct rcu_data *rdp;
 	struct rcu_node *rnp;
@@ -3107,6 +3118,10 @@ int rcutree_offline_cpu(unsigned int cpu)
 	raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
 
 	rcutree_affinity_setting(cpu, cpu);
+
+	// nohz_full CPUs need the tick for stop-machine to work quickly
+	for_each_online_cpu(c)
+		tick_dep_set_cpu(c, TICK_DEP_BIT_RCU);
 	return 0;
 }
 
