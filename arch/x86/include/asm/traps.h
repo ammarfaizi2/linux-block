@@ -2,7 +2,7 @@
 #ifndef _ASM_X86_TRAPS_H
 #define _ASM_X86_TRAPS_H
 
-#include <linux/context_tracking_state.h>
+#include <linux/context_tracking.h>
 #include <linux/kprobes.h>
 
 #include <asm/debugreg.h>
@@ -117,6 +117,15 @@ void smp_apic_timer_interrupt(struct pt_regs *regs);
 void smp_spurious_interrupt(struct pt_regs *regs, unsigned int vector);
 void smp_error_interrupt(struct pt_regs *regs);
 asmlinkage void smp_irq_move_cleanup_interrupt(void);
+
+/* Called on entry from user mode with IRQs off. */
+static inline void enter_from_user_mode(void)
+{
+#ifdef CONFIG_CONTEXT_TRACKING
+	CT_WARN_ON(ct_state() != CONTEXT_USER);
+	user_exit_irqoff();
+#endif
+}
 
 extern void ist_enter(struct pt_regs *regs);
 extern void ist_exit(struct pt_regs *regs);

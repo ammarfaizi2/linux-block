@@ -38,14 +38,11 @@
 #include <trace/events/syscalls.h>
 
 #ifdef CONFIG_CONTEXT_TRACKING
-/* Called on entry from user mode with IRQs off. */
-__visible inline void enter_from_user_mode(void)
+/* The entry asm needs to use enter_from_user_mode */
+__visible void __enter_from_user_mode(void)
 {
-	CT_WARN_ON(ct_state() != CONTEXT_USER);
-	user_exit_irqoff();
+	enter_from_user_mode();
 }
-#else
-static inline void enter_from_user_mode(void) {}
 #endif
 
 static void do_audit_syscall_entry(struct pt_regs *regs, u32 arch)
