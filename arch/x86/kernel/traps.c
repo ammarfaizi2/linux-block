@@ -90,7 +90,8 @@ static inline void cond_local_irq_disable(struct pt_regs *regs)
 void ist_enter(struct pt_regs *regs)
 {
 	if (user_mode(regs)) {
-		RCU_LOCKDEP_WARN(!rcu_is_watching(), "entry code didn't wake RCU");
+		trace_hardirqs_off();
+		enter_from_user_mode();
 	} else {
 		/*
 		 * We might have interrupted pretty much anything.  In
@@ -105,6 +106,7 @@ void ist_enter(struct pt_regs *regs)
 
 	/* This code is a bit fragile.  Test it. */
 	RCU_LOCKDEP_WARN(!rcu_is_watching(), "ist_enter didn't work");
+	lockdep_assert_irqs_disabled();
 }
 NOKPROBE_SYMBOL(ist_enter);
 

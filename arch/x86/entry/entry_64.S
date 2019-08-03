@@ -656,7 +656,7 @@ ENTRY(\sym)
 	 */
 	testb	$3, CS-RIP+8*\has_error_code(%rsp)		/* If coming from userspace, switch stacks */
 	jz	.Lfrom_kernel_\@
-	idtentry_simple_body do_sym=\do_sym has_error_code=\has_error_code read_cr2=\read_cr2 create_gap=0 irq_stack=0 entry_work=1
+	idtentry_simple_body do_sym=\do_sym has_error_code=\has_error_code read_cr2=\read_cr2 create_gap=0 irq_stack=0 entry_work=0
 .Lfrom_kernel_\@:
 	.endif
 
