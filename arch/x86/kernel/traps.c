@@ -725,16 +725,19 @@ static bool is_sysenter_singlestep(struct pt_regs *regs)
  *
  * May run on IST stack.
  */
-dotraplinkage void do_debug(struct pt_regs *regs, long error_code)
+dotraplinkage void notrace do_debug(struct pt_regs *regs, long error_code)
 {
 	struct task_struct *tsk = current;
 	int user_icebp = 0;
 	unsigned long dr6;
 	int si_code;
 
-	ist_enter(regs);
-
+	/*
+	 * Read DR6 before any possible tracing -- tracing could hit a
+	 * breakpoint and thus corrupt DR6.
+	 */
 	get_debugreg(dr6, 6);
+
 	/*
 	 * The Intel SDM says:
 	 *
@@ -747,6 +750,8 @@ dotraplinkage void do_debug(struct pt_regs *regs, long error_code)
 	 * Keep it simple: clear DR6 immediately.
 	 */
 	set_debugreg(0, 6);
+
+	ist_enter(regs);
 
 	/* Filter out all the reserved bits which are preset to 1 */
 	dr6 &= ~DR6_RESERVED;
