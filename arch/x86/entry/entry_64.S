@@ -620,7 +620,6 @@ END(\sym)
  *			decrement the IST stack so that nested entries get a
  *			fresh stack.  (This is for #DB, which has a nasty habit
  *			of recursing.)
- * @read_cr2:		load CR2 into the 3rd argument; done before calling any C code
  *
  * idtentry generates an IDT stub that sets up a usable kernel context,
  * creates struct pt_regs, and calls @do_sym.  The stub has the following
@@ -640,7 +639,7 @@ END(\sym)
  *
  * @is_df is special: the stub will never switch stacks.  This way, if the thread stack is somehow unusable, we'll still get a useful OOPS.
  */
-.macro idtentry_ist sym do_sym has_error_code:req is_df=0 shift_ist=-1 ist_offset=0 read_cr2=0
+.macro idtentry_ist sym do_sym has_error_code:req is_df=0 shift_ist=-1 ist_offset=0
 ENTRY(\sym)
 	UNWIND_HINT_IRET_REGS offset=\has_error_code*8
 
@@ -656,7 +655,7 @@ ENTRY(\sym)
 	 */
 	testb	$3, CS-RIP+8*\has_error_code(%rsp)		/* If coming from userspace, switch stacks */
 	jz	.Lfrom_kernel_\@
-	idtentry_simple_body do_sym=\do_sym has_error_code=\has_error_code read_cr2=\read_cr2 create_gap=0 irq_stack=0 entry_work=0
+	idtentry_simple_body do_sym=\do_sym has_error_code=\has_error_code read_cr2=0 create_gap=0 irq_stack=0 entry_work=0
 .Lfrom_kernel_\@:
 	.endif
 
@@ -667,10 +666,6 @@ ENTRY(\sym)
 	call	paranoid_entry
 	/* returned flag: ebx=0: need swapgs on exit, ebx=1: don't need it */
 	UNWIND_HINT_REGS
-
-	.if \read_cr2
-	GET_CR2_INTO(%rdx);			/* can clobber %rax */
-	.endif
 
 	.if \shift_ist != -1
 	TRACE_IRQS_OFF_DEBUG			/* reload IDT in case of recursion */
@@ -951,7 +946,7 @@ idtentry overflow			do_overflow			has_error_code=0
 idtentry bounds				do_bounds			has_error_code=0
 idtentry invalid_op			do_invalid_op			has_error_code=0
 idtentry device_not_available		do_device_not_available		has_error_code=0
-idtentry_ist double_fault		do_double_fault			has_error_code=1 is_df=1 read_cr2=1
+idtentry_ist double_fault		do_double_fault			has_error_code=1 is_df=1
 idtentry coprocessor_segment_overrun	do_coprocessor_segment_overrun	has_error_code=0
 idtentry invalid_TSS			do_invalid_TSS			has_error_code=1
 idtentry segment_not_present		do_segment_not_present		has_error_code=1

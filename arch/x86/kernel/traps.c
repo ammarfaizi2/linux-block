@@ -116,6 +116,8 @@ void ist_exit(struct pt_regs *regs)
 
 	if (!user_mode(regs))
 		rcu_nmi_exit();
+
+	/* todo: irqflags? */
 }
 
 /**
@@ -309,11 +311,15 @@ __visible void __noreturn handle_stack_overflow(const char *message,
 #endif
 
 #ifdef CONFIG_X86_64
-/* Runs on IST stack */
-dotraplinkage void do_double_fault(struct pt_regs *regs, long error_code, unsigned long cr2)
+/*
+ * Runs on IST stack.  Tracing and kprobes are disabled because tracing
+ * before CR2 is read can corrupt CR2.
+ */
+dotraplinkage void notrace do_double_fault(struct pt_regs *regs, long error_code)
 {
 	static const char str[] = "double fault";
 	struct task_struct *tsk = current;
+	unsigned long cr2;
 
 #ifdef CONFIG_X86_ESPFIX64
 	extern unsigned char native_irq_return_iret[];
@@ -330,7 +336,7 @@ dotraplinkage void do_double_fault(struct pt_regs *regs, long error_code, unsign
 	 * The net result is that our #GP handler will think that we
 	 * entered from usermode with the bad user context.
 	 *
-	 * No need for ist_enter here because we don't use RCU.
+	 * No need for ist_enter here because we don't use RCU or take locks.
 	 */
 	if (((long)regs->sp >> P4D_SHIFT) == ESPFIX_PGD_ENTRY &&
 		regs->cs == __KERNEL_CS &&
@@ -364,6 +370,12 @@ dotraplinkage void do_double_fault(struct pt_regs *regs, long error_code, unsign
 		return;
 	}
 #endif
+
+	/*
+	 * Read CR2 before doing ist_enter() -- ist_enter() can be traced,
+	 * and tracing can corrupt CR2 due to nested faults.
+	 */
+	cr2 = read_cr2();
 
 	ist_enter(regs);
 	notify_die(DIE_TRAP, str, regs, error_code, X86_TRAP_DF, SIGSEGV);
@@ -423,6 +435,7 @@ dotraplinkage void do_double_fault(struct pt_regs *regs, long error_code, unsign
 	for (;;)
 		die(str, regs, error_code);
 }
+NOKPROBE_SYMBOL(do_double_fault);
 #endif
 
 dotraplinkage void do_bounds(struct pt_regs *regs, long error_code)
