@@ -3108,6 +3108,7 @@ int rcutree_offline_cpu(unsigned int cpu)
 {
 	int c;
 	unsigned long flags;
+	int i;
 	bool needwait = false;
 	struct rcu_data *rdp;
 	struct rcu_node *rnp;
@@ -3123,11 +3124,18 @@ int rcutree_offline_cpu(unsigned int cpu)
 	// nohz_full CPUs need the tick for stop-machine to work quickly
 	for_each_online_cpu(c) {
 		tick_dep_set_cpu(c, TICK_DEP_MASK_RCU);
-		if (tick_nohz_full_cpu(c))
+		if (tick_nohz_full_cpu(c)) {
 			needwait = true;
+			resched_cpu(c);
+		}
 	}
 	if (needwait)
-		schedule_timeout_uninterruptible(10);
+		for (i = 0; i < 10; i++) {
+			schedule_timeout_uninterruptible(10);
+			for_each_online_cpu(c)
+				if (tick_nohz_full_cpu(c))
+					resched_cpu(c);
+		}
 	return 0;
 }
 
