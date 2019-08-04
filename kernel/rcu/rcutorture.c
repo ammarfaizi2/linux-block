@@ -1763,7 +1763,7 @@ static unsigned long rcu_torture_fwd_prog_cbfree(void)
 		kfree(rfcp);
 		freed++;
 		rcu_torture_fwd_prog_cond_resched(freed);
-		if (IS_ENABLED(CONFIG_NO_HZ_FULL))
+		if (tick_nohz_full_enabled())
 			rcu_momentary_dyntick_idle();
 	}
 	return freed;
@@ -1903,7 +1903,7 @@ static void rcu_torture_fwd_prog_cr(void)
 		}
 		cur_ops->call(&rfcp->rh, rcu_torture_fwd_cb_cr);
 		rcu_torture_fwd_prog_cond_resched(n_launders + n_max_cbs);
-		if (IS_ENABLED(CONFIG_NO_HZ_FULL))
+		if (tick_nohz_full_enabled())
 			rcu_momentary_dyntick_idle();
 	}
 	stoppedat = jiffies;
