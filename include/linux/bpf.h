@@ -630,9 +630,9 @@ extern const struct bpf_prog_ops bpf_offload_prog_ops;
 extern const struct bpf_verifier_ops tc_cls_act_analyzer_ops;
 extern const struct bpf_verifier_ops xdp_analyzer_ops;
 
-struct bpf_prog *bpf_prog_get(u32 ufd);
+struct bpf_prog *bpf_prog_get(u32 ufd, int mask);
 struct bpf_prog *bpf_prog_get_type_dev(u32 ufd, enum bpf_prog_type type,
-				       bool attach_drv);
+				       bool attach_drv, int mask);
 struct bpf_prog * __must_check bpf_prog_add(struct bpf_prog *prog, int i);
 void bpf_prog_sub(struct bpf_prog *prog, int i);
 struct bpf_prog * __must_check bpf_prog_inc(struct bpf_prog *prog);
@@ -662,7 +662,7 @@ void bpf_map_init_from_attr(struct bpf_map *map, union bpf_attr *attr);
 extern int sysctl_unprivileged_bpf_disabled;
 
 int bpf_map_new_fd(struct bpf_map *map, int flags);
-int bpf_prog_new_fd(struct bpf_prog *prog);
+int bpf_prog_new_fd(struct bpf_prog *prog, int flags);
 
 int bpf_obj_pin_user(u32 ufd, const char __user *pathname);
 int bpf_obj_get_user(const char __user *pathname, int flags);
@@ -733,7 +733,7 @@ static inline int bpf_map_attr_numa_node(const union bpf_attr *attr)
 		attr->numa_node : NUMA_NO_NODE;
 }
 
-struct bpf_prog *bpf_prog_get_type_path(const char *name, enum bpf_prog_type type);
+struct bpf_prog *bpf_prog_get_type_path(const char *name, enum bpf_prog_type type, int mask);
 int array_map_alloc_check(union bpf_attr *attr);
 
 int bpf_prog_test_run_xdp(struct bpf_prog *prog, const union bpf_attr *kattr,
@@ -850,7 +850,7 @@ static inline int cpu_map_enqueue(struct bpf_cpu_map_entry *rcpu,
 }
 
 static inline struct bpf_prog *bpf_prog_get_type_path(const char *name,
-				enum bpf_prog_type type)
+				enum bpf_prog_type type, int mask)
 {
 	return ERR_PTR(-EOPNOTSUPP);
 }
@@ -878,9 +878,10 @@ static inline int bpf_prog_test_run_flow_dissector(struct bpf_prog *prog,
 #endif /* CONFIG_BPF_SYSCALL */
 
 static inline struct bpf_prog *bpf_prog_get_type(u32 ufd,
-						 enum bpf_prog_type type)
+						 enum bpf_prog_type type,
+						 int mask)
 {
-	return bpf_prog_get_type_dev(ufd, type, false);
+	return bpf_prog_get_type_dev(ufd, type, false, mask);
 }
 
 bool bpf_prog_get_ok(struct bpf_prog *, enum bpf_prog_type *, bool);

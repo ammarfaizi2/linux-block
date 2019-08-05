@@ -562,7 +562,11 @@ int cgroup_bpf_prog_detach(const union bpf_attr *attr, enum bpf_prog_type ptype)
 	if (IS_ERR(cgrp))
 		return PTR_ERR(cgrp);
 
-	prog = bpf_prog_get_type(attr->attach_bpf_fd, ptype);
+	/*
+	 * No particular access required -- this only uses the fd to identify
+	 * a program, not to do anything with the program.
+	 */
+	prog = bpf_prog_get_type(attr->attach_bpf_fd, ptype, 0);
 	if (IS_ERR(prog))
 		prog = NULL;
 

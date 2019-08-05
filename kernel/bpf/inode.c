@@ -58,7 +58,7 @@ static void bpf_any_put(void *raw, enum bpf_type type)
 	}
 }
 
-static void *bpf_fd_probe_obj(u32 ufd, enum bpf_type *type)
+static void *bpf_fd_probe_obj(u32 ufd, enum bpf_type *type, int mask)
 {
 	void *raw;
 
@@ -66,7 +66,7 @@ static void *bpf_fd_probe_obj(u32 ufd, enum bpf_type *type)
 	raw = bpf_map_get_with_uref(ufd);
 	if (IS_ERR(raw)) {
 		*type = BPF_TYPE_PROG;
-		raw = bpf_prog_get(ufd);
+		raw = bpf_prog_get(ufd, mask);
 	}
 
 	return raw;
@@ -430,7 +430,12 @@ int bpf_obj_pin_user(u32 ufd, const char __user *pathname)
 	if (IS_ERR(pname))
 		return PTR_ERR(pname);
 
-	raw = bpf_fd_probe_obj(ufd, &type);
+	/*
+	 * Pinning an object effectively grants the caller all access, because
+	 * the caller ends up owning the inode.  So require all access.
+	 * XXX: If we use FMODE_EXEC, we should require FMODE_EXEC too.
+	 */
+	raw = bpf_fd_probe_obj(ufd, &type, FMODE_READ | FMODE_WRITE);
 	if (IS_ERR(raw)) {
 		ret = PTR_ERR(raw);
 		goto out;
@@ -456,6 +461,10 @@ static void *bpf_obj_do_get(const struct filename *pathname,
 	if (ret)
 		return ERR_PTR(ret);
 
+	/*
+	 * XXX: O_MAYEXEC doesn't exist, which is problematic here if we
+	 * want to use FMODE_EXEC.
+	 */
 	inode = d_backing_inode(path.dentry);
 	ret = inode_permission(inode, ACC_MODE(flags));
 	if (ret)
@@ -499,7 +508,7 @@ int bpf_obj_get_user(const char __user *pathname, int flags)
 	}
 
 	if (type == BPF_TYPE_PROG)
-		ret = bpf_prog_new_fd(raw);
+		ret = bpf_prog_new_fd(raw, f_flags);
 	else if (type == BPF_TYPE_MAP)
 		ret = bpf_map_new_fd(raw, f_flags);
 	else
@@ -512,10 +521,10 @@ out:
 	return ret;
 }
 
-static struct bpf_prog *__get_prog_inode(struct inode *inode, enum bpf_prog_type type)
+static struct bpf_prog *__get_prog_inode(struct inode *inode, enum bpf_prog_type type, int mask)
 {
 	struct bpf_prog *prog;
-	int ret = inode_permission(inode, MAY_READ);
+	int ret = inode_permission(inode, mask);
 	if (ret)
 		return ERR_PTR(ret);
 
@@ -536,14 +545,14 @@ static struct bpf_prog *__get_prog_inode(struct inode *inode, enum bpf_prog_type
 	return bpf_prog_inc(prog);
 }
 
-struct bpf_prog *bpf_prog_get_type_path(const char *name, enum bpf_prog_type type)
+struct bpf_prog *bpf_prog_get_type_path(const char *name, enum bpf_prog_type type, int mask)
 {
 	struct bpf_prog *prog;
 	struct path path;
 	int ret = kern_path(name, LOOKUP_FOLLOW, &path);
 	if (ret)
 		return ERR_PTR(ret);
-	prog = __get_prog_inode(d_backing_inode(path.dentry), type);
+	prog = __get_prog_inode(d_backing_inode(path.dentry), type, mask);
 	if (!IS_ERR(prog))
 		touch_atime(&path);
 	path_put(&path);

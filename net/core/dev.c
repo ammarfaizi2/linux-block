@@ -8093,8 +8093,10 @@ int dev_change_xdp_fd(struct net_device *dev, struct netlink_ext_ack *extack,
 			return -EBUSY;
 		}
 
+		/* XXX: FMODE_EXEC? */
 		prog = bpf_prog_get_type_dev(fd, BPF_PROG_TYPE_XDP,
-					     bpf_op == ops->ndo_bpf);
+					     bpf_op == ops->ndo_bpf,
+					     FMODE_WRITE);
 		if (IS_ERR(prog))
 			return PTR_ERR(prog);
 

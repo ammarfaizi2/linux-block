@@ -8876,7 +8876,8 @@ static int perf_event_set_bpf_handler(struct perf_event *event, u32 prog_fd)
 	if (event->prog)
 		return -EEXIST;
 
-	prog = bpf_prog_get_type(prog_fd, BPF_PROG_TYPE_PERF_EVENT);
+	/* Should maybe be FMODE_EXEC? */
+	prog = bpf_prog_get_type(prog_fd, BPF_PROG_TYPE_PERF_EVENT, FMODE_WRITE);
 	if (IS_ERR(prog))
 		return PTR_ERR(prog);
 
@@ -8942,7 +8943,7 @@ static int perf_event_set_bpf_prog(struct perf_event *event, u32 prog_fd)
 		/* bpf programs can only be attached to u/kprobe or tracepoint */
 		return -EINVAL;
 
-	prog = bpf_prog_get(prog_fd);
+	prog = bpf_prog_get(prog_fd, FMODE_WRITE);
 	if (IS_ERR(prog))
 		return PTR_ERR(prog);
 

@@ -522,6 +522,10 @@ int bpf_fd_array_map_lookup_elem(struct bpf_map *map, void *key, u32 *value)
 }
 
 /* only called from syscall */
+/*
+ * XXX: it's totally unclear to me what this ends up doing with the fd
+ * in general.
+ */
 int bpf_fd_array_map_update_elem(struct bpf_map *map, struct file *map_file,
 				 void *key, void *value, u64 map_flags)
 {
@@ -569,7 +573,9 @@ static void *prog_fd_array_get_ptr(struct bpf_map *map,
 				   struct file *map_file, int fd)
 {
 	struct bpf_array *array = container_of(map, struct bpf_array, map);
-	struct bpf_prog *prog = bpf_prog_get(fd);
+
+	/* XXX: what, exactly, does this end up doing to the prog in question? */
+	struct bpf_prog *prog = bpf_prog_get(fd, FMODE_READ | FMODE_WRITE);
 
 	if (IS_ERR(prog))
 		return prog;

@@ -447,6 +447,7 @@ int bpf_map_new_fd(struct bpf_map *map, int flags)
 
 int bpf_get_file_flag(int flags)
 {
+	/* XXX: What about exec? */
 	if ((flags & BPF_F_RDONLY) && (flags & BPF_F_WRONLY))
 		return -EINVAL;
 	if (flags & BPF_F_RDONLY)
@@ -556,6 +557,10 @@ static int map_create(union bpf_attr *attr)
 	if (err)
 		return -EINVAL;
 
+	/*
+	 * XXX: I'm a bit confused.  Why would you ever create a map and
+	 * grant *yourself* less than full permission?
+	 */
 	f_flags = bpf_get_file_flag(attr->map_flags);
 	if (f_flags < 0)
 		return f_flags;
@@ -1411,7 +1416,7 @@ const struct file_operations bpf_prog_fops = {
 	.write		= bpf_dummy_write,
 };
 
-int bpf_prog_new_fd(struct bpf_prog *prog)
+int bpf_prog_new_fd(struct bpf_prog *prog, int flags)
 {
 	int ret;
 
@@ -1420,16 +1425,20 @@ int bpf_prog_new_fd(struct bpf_prog *prog)
 		return ret;
 
 	return anon_inode_getfd("bpf-prog", &bpf_prog_fops, prog,
-				O_RDWR | O_CLOEXEC);
+				flags | O_CLOEXEC);
 }
 
-static struct bpf_prog *____bpf_prog_get(struct fd f)
+static struct bpf_prog *____bpf_prog_get(struct fd f, int mask)
 {
 	if (!f.file)
 		return ERR_PTR(-EBADF);
 	if (f.file->f_op != &bpf_prog_fops) {
 		fdput(f);
 		return ERR_PTR(-EINVAL);
+	}
+	if ((f.file->f_mode & mask) != mask) {
+		fdput(f);
+		return ERR_PTR(-EACCES);
 	}
 
 	return f.file->private_data;
@@ -1497,12 +1506,12 @@ bool bpf_prog_get_ok(struct bpf_prog *prog,
 }
 
 static struct bpf_prog *__bpf_prog_get(u32 ufd, enum bpf_prog_type *attach_type,
-				       bool attach_drv)
+				       bool attach_drv, int mask)
 {
 	struct fd f = fdget(ufd);
 	struct bpf_prog *prog;
 
-	prog = ____bpf_prog_get(f);
+	prog = ____bpf_prog_get(f, mask);
 	if (IS_ERR(prog))
 		return prog;
 	if (!bpf_prog_get_ok(prog, attach_type, attach_drv)) {
@@ -1516,15 +1525,15 @@ out:
 	return prog;
 }
 
-struct bpf_prog *bpf_prog_get(u32 ufd)
+struct bpf_prog *bpf_prog_get(u32 ufd, int mask)
 {
-	return __bpf_prog_get(ufd, NULL, false);
+	return __bpf_prog_get(ufd, NULL, false, mask);
 }
 
 struct bpf_prog *bpf_prog_get_type_dev(u32 ufd, enum bpf_prog_type type,
-				       bool attach_drv)
+				       bool attach_drv, int mask)
 {
-	return __bpf_prog_get(ufd, &type, attach_drv);
+	return __bpf_prog_get(ufd, &type, attach_drv, mask);
 }
 EXPORT_SYMBOL_GPL(bpf_prog_get_type_dev);
 
@@ -1707,7 +1716,7 @@ static int bpf_prog_load(union bpf_attr *attr, union bpf_attr __user *uattr)
 	if (err)
 		goto free_used_maps;
 
-	err = bpf_prog_new_fd(prog);
+	err = bpf_prog_new_fd(prog, O_RDWR /* | O_MAYEXEC */);
 	if (err < 0) {
 		/* failed to allocate fd.
 		 * bpf_prog_put() is needed because the above
@@ -1808,7 +1817,7 @@ static int bpf_raw_tracepoint_open(const union bpf_attr *attr)
 	}
 	raw_tp->btp = btp;
 
-	prog = bpf_prog_get(attr->raw_tracepoint.prog_fd);
+	prog = bpf_prog_get(attr->raw_tracepoint.prog_fd, MAY_EXEC);
 	if (IS_ERR(prog)) {
 		err = PTR_ERR(prog);
 		goto out_free_tp;
@@ -1929,7 +1938,7 @@ static int bpf_prog_attach(const union bpf_attr *attr)
 		return -EINVAL;
 	}
 
-	prog = bpf_prog_get_type(attr->attach_bpf_fd, ptype);
+	prog = bpf_prog_get_type(attr->attach_bpf_fd, ptype, MAY_EXEC);
 	if (IS_ERR(prog))
 		return PTR_ERR(prog);
 
@@ -2083,7 +2092,11 @@ static int bpf_prog_test_run(const union bpf_attr *attr,
 	    (!attr->test.ctx_size_out && attr->test.ctx_out))
 		return -EINVAL;
 
-	prog = bpf_prog_get(attr->test.prog_fd);
+	/*
+	 * A test run is is a form of query, so require RW.  Using W as a proxy for
+	 * X, since X is awkward due to a lack of O_MAYEXEC.
+	 */
+	prog = bpf_prog_get(attr->test.prog_fd, MAY_READ | MAY_WRITE);
 	if (IS_ERR(prog))
 		return PTR_ERR(prog);
 
@@ -2147,7 +2160,11 @@ static int bpf_prog_get_fd_by_id(const union bpf_attr *attr)
 	if (IS_ERR(prog))
 		return PTR_ERR(prog);
 
-	fd = bpf_prog_new_fd(prog);
+	/*
+	 * We have all permissions.  This is okay, since we also require
+	 * CAP_SYS_ADMIN to do this at all.
+	 */
+	fd = bpf_prog_new_fd(prog, O_RDWR /* | O_MAYEXEC */);
 	if (fd < 0)
 		bpf_prog_put(prog);
 
@@ -2638,6 +2655,11 @@ static int bpf_obj_get_info_by_fd(const union bpf_attr *attr,
 	if (!f.file)
 		return -EBADFD;
 
+	if (!(f.file->f_mode & FMODE_READ)) {
+		err = -EACCES;
+		goto out;
+	}
+
 	if (f.file->f_op == &bpf_prog_fops)
 		err = bpf_prog_get_info_by_fd(f.file->private_data, attr,
 					      uattr);
@@ -2649,6 +2671,7 @@ static int bpf_obj_get_info_by_fd(const union bpf_attr *attr,
 	else
 		err = -EINVAL;
 
+out:
 	fdput(f);
 	return err;
 }

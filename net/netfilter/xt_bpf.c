@@ -44,7 +44,7 @@ static int __bpf_mt_check_fd(int fd, struct bpf_prog **ret)
 {
 	struct bpf_prog *prog;
 
-	prog = bpf_prog_get_type(fd, BPF_PROG_TYPE_SOCKET_FILTER);
+	prog = bpf_prog_get_type(fd, BPF_PROG_TYPE_SOCKET_FILTER, MAY_EXEC);
 	if (IS_ERR(prog))
 		return PTR_ERR(prog);
 
@@ -57,7 +57,8 @@ static int __bpf_mt_check_path(const char *path, struct bpf_prog **ret)
 	if (strnlen(path, XT_BPF_PATH_MAX) == XT_BPF_PATH_MAX)
 		return -EINVAL;
 
-	*ret = bpf_prog_get_type_path(path, BPF_PROG_TYPE_SOCKET_FILTER);
+	*ret = bpf_prog_get_type_path(path, BPF_PROG_TYPE_SOCKET_FILTER,
+				      MAY_EXEC);
 	return PTR_ERR_OR_ZERO(*ret);
 }
 

@@ -1544,7 +1544,8 @@ static struct bpf_prog *__get_bpf(u32 ufd, struct sock *sk)
 	if (sock_flag(sk, SOCK_FILTER_LOCKED))
 		return ERR_PTR(-EPERM);
 
-	return bpf_prog_get_type(ufd, BPF_PROG_TYPE_SOCKET_FILTER);
+	/* FMODE_EXEC? */
+	return bpf_prog_get_type(ufd, BPF_PROG_TYPE_SOCKET_FILTER, FMODE_WRITE);
 }
 
 int sk_attach_bpf(u32 ufd, struct sock *sk)
@@ -1572,9 +1573,10 @@ int sk_reuseport_attach_bpf(u32 ufd, struct sock *sk)
 	if (sock_flag(sk, SOCK_FILTER_LOCKED))
 		return -EPERM;
 
-	prog = bpf_prog_get_type(ufd, BPF_PROG_TYPE_SOCKET_FILTER);
+	prog = bpf_prog_get_type(ufd, BPF_PROG_TYPE_SOCKET_FILTER, FMODE_WRITE);
 	if (IS_ERR(prog) && PTR_ERR(prog) == -EINVAL)
-		prog = bpf_prog_get_type(ufd, BPF_PROG_TYPE_SK_REUSEPORT);
+		prog = bpf_prog_get_type(ufd, BPF_PROG_TYPE_SK_REUSEPORT,
+					 FMODE_WRITE);
 	if (IS_ERR(prog))
 		return PTR_ERR(prog);
 
