@@ -394,10 +394,6 @@ static int bpf_obj_do_pin(const struct filename *pathname, void *raw,
 
 	mode = S_IFREG | ((S_IRUSR | S_IWUSR) & ~current_umask());
 
-	ret = security_path_mknod(&path, dentry, mode, 0);
-	if (ret)
-		goto out;
-
 	dir = d_inode(path.dentry);
 	if (dir->i_op != &bpf_dir_iops) {
 		ret = -EPERM;
