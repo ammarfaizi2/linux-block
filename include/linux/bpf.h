@@ -229,6 +229,7 @@ struct bpf_func_proto {
 	u64 (*func)(u64 r1, u64 r2, u64 r3, u64 r4, u64 r5);
 	bool gpl_only;
 	bool pkt_access;
+	u16 privilege;
 	enum bpf_return_type ret_type;
 	enum bpf_arg_type arg1_type;
 	enum bpf_arg_type arg2_type;
@@ -236,6 +237,20 @@ struct bpf_func_proto {
 	enum bpf_arg_type arg4_type;
 	enum bpf_arg_type arg5_type;
 };
+
+/*
+ * Some functions should require privilege to call at all, even in a test
+ * run.  These flags indicate why privilege is required.  The core BPF
+ * code will verify that the creator of such a program has the requisite
+ * privilege.
+ *
+ * NB: This means that anyone who creates a privileged program (due to
+ * such a call or due to a privilege-requiring pointer-to-integer conversion)
+ * is responsible for restricting access to the program in an appropriate
+ * manner.
+ */
+#define BPF_FUNC_PRIV_READ_KERNEL_MEMORY BIT(0)
+#define BPT_FUNC_PRIV_WRITE_GLOBAL_LOGS BIT(1)
 
 /* bpf_context is intentionally undefined structure. Pointer to bpf_context is
  * the first argument to eBPF programs.

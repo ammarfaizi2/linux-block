@@ -4129,6 +4129,9 @@ static int check_helper_call(struct bpf_verifier_env *env, int func_id, int insn
 
 	if (changes_data)
 		clear_all_pkt_pointers(env);
+
+	env->seen_privileged_funcs |= fn->privilege;
+
 	return 0;
 }
 
@@ -9370,6 +9373,11 @@ skip_full_check:
 
 	if (ret == 0)
 		adjust_btf_func(env);
+
+	if (env->seen_privileged_funcs && !is_priv) {
+		ret = -EPERM;
+		goto err_release_maps;
+	}
 
 err_release_maps:
 	if (!env->prog->aux->used_maps)
