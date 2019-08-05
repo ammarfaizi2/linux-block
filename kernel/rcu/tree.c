@@ -3130,7 +3130,7 @@ int rcutree_offline_cpu(unsigned int cpu)
 		}
 	}
 	if (needwait)
-		for (i = 0; i < 10; i++) {
+		for (i = 0; i < 25; i++) {
 			schedule_timeout_uninterruptible(10);
 			for_each_online_cpu(c)
 				if (tick_nohz_full_cpu(c))
