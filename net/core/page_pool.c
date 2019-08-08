@@ -373,16 +373,17 @@ void __page_pool_free(struct page_pool *pool)
 }
 EXPORT_SYMBOL(__page_pool_free);
 
-/* Request to shutdown: release pages cached by page_pool, and check
- * for in-flight pages
- */
-bool __page_pool_request_shutdown(struct page_pool *pool)
+void __page_pool_flush(struct page_pool *pool)
 {
 	struct page *page;
 
+	/* trace flush operation and inflight pages */
+	trace_page_pool_flush(pool, numa_mem_id());
+	page_pool_inflight(pool);
+
 	/* Empty alloc cache, assume caller made sure this is
 	 * no-longer in use, and page_pool_alloc_pages() cannot be
-	 * call concurrently.
+	 * called concurrently.
 	 */
 	while (pool->alloc.count) {
 		page = pool->alloc.cache[--pool->alloc.count];
@@ -393,6 +394,15 @@ bool __page_pool_request_shutdown(struct page_pool *pool)
 	 * be in-flight.
 	 */
 	__page_pool_empty_ring(pool);
+}
+EXPORT_SYMBOL(__page_pool_flush);
+
+/* Request to shutdown: release pages cached by page_pool, and check
+ * for in-flight pages
+ */
+bool __page_pool_request_shutdown(struct page_pool *pool)
+{
+	__page_pool_flush(pool);
 
 	return __page_pool_safe_to_destroy(pool);
 }

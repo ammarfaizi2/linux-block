@@ -226,4 +226,14 @@ static inline bool page_pool_put(struct page_pool *pool)
 	return refcount_dec_and_test(&pool->user_cnt);
 }
 
+void __page_pool_flush(struct page_pool *pool);
+
+/* Caller must provide appropriate safe context, e.g. NAPI. */
+static inline void page_pool_update_nid(struct page_pool *pool, int new_nid)
+{
+	if (unlikely(pool->p.nid != new_nid)) {
+		__page_pool_flush(pool);
+		pool->p.nid = new_nid;
+	}
+}
 #endif /* _NET_PAGE_POOL_H */
