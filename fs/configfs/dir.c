@@ -22,7 +22,6 @@
 #include <linux/configfs.h>
 #include "configfs_internal.h"
 
-DECLARE_RWSEM(configfs_rename_sem);
 /*
  * Protects mutations of configfs_dirent linkage together with proper i_mutex
  * Also protects mutations of symlinks linkage to target configfs_dirent
@@ -164,7 +163,6 @@ static struct configfs_dirent *configfs_new_dirent(struct configfs_dirent *paren
 		return ERR_PTR(-ENOMEM);
 
 	atomic_set(&sd->s_count, 1);
-	INIT_LIST_HEAD(&sd->s_links);
 	INIT_LIST_HEAD(&sd->s_children);
 	sd->s_element = element;
 	sd->s_type = type;
@@ -315,14 +313,15 @@ int configfs_dirent_is_ready(struct configfs_dirent *sd)
 	return ret;
 }
 
-int configfs_create_link(struct configfs_symlink *sl,
+int configfs_create_link(struct configfs_dirent *target,
 			 struct dentry *parent,
-			 struct dentry *dentry)
+			 struct dentry *dentry,
+			 char *body)
 {
 	int err = 0;
 	umode_t mode = S_IFLNK | S_IRWXUGO;
 
-	err = configfs_make_dirent(parent->d_fsdata, dentry, sl, mode,
+	err = configfs_make_dirent(parent->d_fsdata, dentry, target, mode,
 				   CONFIGFS_ITEM_LINK);
 	if (!err) {
 		struct inode *inode = configfs_create(dentry, mode);
@@ -336,6 +335,7 @@ int configfs_create_link(struct configfs_symlink *sl,
 			}
 			return PTR_ERR(inode);
 		}
+		inode->i_link = body;
 		inode->i_op = &configfs_symlink_inode_operations;
 		d_instantiate(dentry, inode);
 		dget(dentry);  /* pin link dentries in core */
@@ -483,7 +483,7 @@ static int configfs_detach_prep(struct dentry *dentry, struct dentry **wait)
 	parent_sd->s_type |= CONFIGFS_USET_DROPPING;
 
 	ret = -EBUSY;
-	if (!list_empty(&parent_sd->s_links))
+	if (parent_sd->s_links)
 		goto out;
 
 	ret = 0;
@@ -1516,44 +1516,6 @@ const struct inode_operations configfs_root_inode_operations = {
 	.lookup		= configfs_lookup,
 	.setattr	= configfs_setattr,
 };
-
-#if 0
-int configfs_rename_dir(struct config_item * item, const char *new_name)
-{
-	int error = 0;
-	struct dentry * new_dentry, * parent;
-
-	if (!strcmp(config_item_name(item), new_name))
-		return -EINVAL;
-
-	if (!item->parent)
-		return -EINVAL;
-
-	down_write(&configfs_rename_sem);
-	parent = item->parent->dentry;
-
-	inode_lock(d_inode(parent));
-
-	new_dentry = lookup_one_len(new_name, parent, strlen(new_name));
-	if (!IS_ERR(new_dentry)) {
-		if (d_really_is_negative(new_dentry)) {
-			error = config_item_set_name(item, "%s", new_name);
-			if (!error) {
-				d_add(new_dentry, NULL);
-				d_move(item->dentry, new_dentry);
-			}
-			else
-				d_delete(new_dentry);
-		} else
-			error = -EEXIST;
-		dput(new_dentry);
-	}
-	inode_unlock(d_inode(parent));
-	up_write(&configfs_rename_sem);
-
-	return error;
-}
-#endif
 
 static int configfs_dir_open(struct inode *inode, struct file *file)
 {
