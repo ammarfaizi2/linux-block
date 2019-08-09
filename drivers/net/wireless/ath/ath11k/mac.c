@@ -1774,10 +1774,6 @@ static void ath11k_mac_op_bss_info_changed(struct ieee80211_hw *hw,
 	mutex_unlock(&ar->conf_mutex);
 }
 
-/************/
-/* Scanning */
-/************/
-
 void __ath11k_mac_scan_finish(struct ath11k *ar)
 {
 	lockdep_assert_held(&ar->data_lock);
