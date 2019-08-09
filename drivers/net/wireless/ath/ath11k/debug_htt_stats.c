@@ -4060,7 +4060,7 @@ void ath11k_dbg_htt_ext_stats_handler(struct ath11k_base *ab,
 	len = FIELD_GET(HTT_T2H_EXT_STATS_INFO1_LENGTH, msg->info1);
 	ret = ath11k_dp_htt_tlv_iter(ab, msg->data, len,
 				     ath11k_dbg_htt_ext_stats_parse,
-				     (void *)stats_req);
+				     stats_req);
 	if (ret)
 		ath11k_warn(ab, "Failed to parse tlv %d\n", ret);
 
