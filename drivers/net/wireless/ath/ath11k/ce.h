@@ -143,7 +143,7 @@ struct ath11k_ce_ring {
 };
 
 struct ath11k_ce_pipe {
-	struct ath11k_base *sc;
+	struct ath11k_base *ab;
 	u16 pipe_num;
 	unsigned int attr_flags;
 	unsigned int buf_sz;
@@ -177,10 +177,10 @@ void ath11k_ce_rx_replenish_retry(struct timer_list *t);
 void ath11k_ce_per_engine_service(struct ath11k_base *ab, u16 ce_id);
 int ath11k_ce_send(struct ath11k_base *ab, struct sk_buff *skb, u8 pipe_id,
 		   u16 transfer_id);
-void ath11k_ce_rx_post_buf(struct ath11k_base *sc);
-int ath11k_ce_init_pipes(struct ath11k_base *sc);
-int ath11k_ce_alloc_pipes(struct ath11k_base *sc);
-void ath11k_ce_free_pipes(struct ath11k_base *sc);
+void ath11k_ce_rx_post_buf(struct ath11k_base *ab);
+int ath11k_ce_init_pipes(struct ath11k_base *ab);
+int ath11k_ce_alloc_pipes(struct ath11k_base *ab);
+void ath11k_ce_free_pipes(struct ath11k_base *ab);
 int ath11k_ce_get_attr_flags(int ce_id);
 void ath11k_ce_poll_send_completed(struct ath11k_base *ab, u8 pipe_id);
 #endif
