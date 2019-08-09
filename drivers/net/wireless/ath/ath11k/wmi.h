@@ -4553,7 +4553,7 @@ struct target_resource_config {
 #define WMI_SEND_TIMEOUT_HZ (3 * HZ)
 
 struct ath11k_wmi_base {
-	struct ath11k_base *sc;
+	struct ath11k_base *ab;
 	struct ath11k_pdev_wmi wmi[MAX_RADIOS];
 	enum ath11k_htc_ep_id wmi_endpoint_id[MAX_RADIOS];
 	u32 max_msg_len[MAX_RADIOS];
@@ -4591,14 +4591,14 @@ int ath11k_wmi_set_peer_param(struct ath11k *ar, const u8 *peer_addr,
 			      u32 vdev_id, u32 param_id, u32 param_val);
 int ath11k_wmi_pdev_set_param(struct ath11k *ar, u32 param_id,
 			      u32 param_value, u8 pdev_id);
-int ath11k_wmi_wait_for_unified_ready(struct ath11k_base *sc);
-int ath11k_wmi_cmd_init(struct ath11k_base *sc);
-int ath11k_wmi_wait_for_service_ready(struct ath11k_base *sc);
-int ath11k_wmi_connect(struct ath11k_base *sc);
-int ath11k_wmi_pdev_attach(struct ath11k_base *sc,
+int ath11k_wmi_wait_for_unified_ready(struct ath11k_base *ab);
+int ath11k_wmi_cmd_init(struct ath11k_base *ab);
+int ath11k_wmi_wait_for_service_ready(struct ath11k_base *ab);
+int ath11k_wmi_connect(struct ath11k_base *ab);
+int ath11k_wmi_pdev_attach(struct ath11k_base *ab,
 			   u8 pdev_id);
-int ath11k_wmi_attach(struct ath11k_base *sc);
-void ath11k_wmi_detach(struct ath11k_base *sc);
+int ath11k_wmi_attach(struct ath11k_base *ab);
+void ath11k_wmi_detach(struct ath11k_base *ab);
 int ath11k_wmi_vdev_create(struct ath11k *ar, u8 *macaddr,
 			   struct vdev_create_params *param);
 int ath11k_wmi_peer_rx_reorder_queue_setup(struct ath11k *ar, int vdev_id,
