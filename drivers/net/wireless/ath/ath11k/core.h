@@ -594,7 +594,6 @@ struct ath11k_base {
 	struct ath11k_ce ce;
 	struct timer_list rx_replenish_retry;
 	struct ath11k_hal hal;
-	bool mac_registered;
 	/* To synchronize core_start/core_stop */
 	struct mutex core_lock;
 	/* Protects data like peers */

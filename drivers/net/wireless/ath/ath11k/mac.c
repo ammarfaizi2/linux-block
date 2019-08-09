@@ -360,9 +360,6 @@ struct ath11k_vif *ath11k_mac_get_arvif_by_vdev_id(struct ath11k_base *ab,
 	struct ath11k_pdev *pdev;
 	struct ath11k_vif *arvif;
 
-	if (!ab->mac_registered)
-		return NULL;
-
 	for (i = 0; i < ab->num_radios; i++) {
 		pdev = rcu_dereference(ab->pdevs_active[i]);
 		if (pdev && pdev->ar) {
@@ -381,9 +378,6 @@ struct ath11k *ath11k_mac_get_ar_by_vdev_id(struct ath11k_base *ab, u32 vdev_id)
 	struct ath11k_pdev *pdev;
 	struct ath11k_vif *arvif;
 
-	if (!ab->mac_registered)
-		return NULL;
-
 	for (i = 0; i < ab->num_radios; i++) {
 		pdev = rcu_dereference(ab->pdevs_active[i]);
 		if (pdev && pdev->ar) {
@@ -400,9 +394,6 @@ struct ath11k *ath11k_mac_get_ar_by_pdev_id(struct ath11k_base *ab, u32 pdev_id)
 {
 	int i;
 	struct ath11k_pdev *pdev;
-
-	if (!ab->mac_registered)
-		return NULL;
 
 	if (WARN_ON(pdev_id > ab->num_radios))
 		return NULL;
@@ -5350,7 +5341,6 @@ void ath11k_mac_unregister(struct ath11k_base *ab)
 
 		SET_IEEE80211_DEV(ar->hw, NULL);
 	}
-	ab->mac_registered = false;
 }
 
 int ath11k_mac_create(struct ath11k_base *ab)
@@ -5361,7 +5351,7 @@ int ath11k_mac_create(struct ath11k_base *ab)
 	int ret;
 	int i;
 
-	if (ab->mac_registered)
+	if (test_bit(ATH11K_FLAG_REGISTERED, &ab->dev_flags))
 		return 0;
 
 	for (i = 0; i < ab->num_radios; i++) {
@@ -5431,8 +5421,6 @@ int ath11k_mac_create(struct ath11k_base *ab)
 	/* Initialize channel counters frequency value in hertz */
 	ab->cc_freq_hz = IPQ8074_CC_FREQ_HERTZ;
 	ab->free_vdev_map = (1LL << (ab->num_radios * TARGET_NUM_VDEVS)) - 1;
-
-	ab->mac_registered = true;
 
 	return 0;
 
