@@ -142,7 +142,7 @@ static int ath11k_ce_rx_buf_enqueue_pipe(struct ath11k_ce_pipe *pipe,
 
 	ath11k_hal_ce_dst_set_desc(desc, paddr);
 
-	ring->per_transfer_context[write_index] = skb;
+	ring->skb[write_index] = skb;
 	write_index = CE_RING_IDX_INCR(nentries_mask, write_index);
 	ring->write_index = write_index;
 
@@ -212,7 +212,7 @@ exit:
 }
 
 static int ath11k_ce_completed_recv_next(struct ath11k_ce_pipe *pipe,
-					 struct sk_buff **context, int *nbytes)
+					 struct sk_buff **skb, int *nbytes)
 {
 	struct ath11k_base *ab = pipe->ab;
 	struct hal_srng *srng;
@@ -244,8 +244,8 @@ static int ath11k_ce_completed_recv_next(struct ath11k_ce_pipe *pipe,
 		goto err;
 	}
 
-	*context = pipe->dest_ring->per_transfer_context[sw_index];
-	pipe->dest_ring->per_transfer_context[sw_index] = NULL;
+	*skb = pipe->dest_ring->skb[sw_index];
+	pipe->dest_ring->skb[sw_index] = NULL;
 
 	sw_index = CE_RING_IDX_INCR(nentries_mask, sw_index);
 	pipe->dest_ring->sw_index = sw_index;
@@ -302,7 +302,7 @@ static void ath11k_ce_recv_process_cb(struct ath11k_ce_pipe *pipe)
 }
 
 static int ath11k_ce_completed_send_next(struct ath11k_ce_pipe *pipe,
-					 struct sk_buff **transfer_contextp)
+					 struct sk_buff **skb)
 {
 	struct ath11k_base *ab = pipe->ab;
 	struct hal_srng *srng;
@@ -328,9 +328,9 @@ static int ath11k_ce_completed_send_next(struct ath11k_ce_pipe *pipe,
 		goto err_unlock;
 	}
 
-	*transfer_contextp = pipe->src_ring->per_transfer_context[sw_index];
+	*skb = pipe->src_ring->skb[sw_index];
 
-	pipe->src_ring->per_transfer_context[sw_index] = NULL;
+	pipe->src_ring->skb[sw_index] = NULL;
 
 	sw_index = CE_RING_IDX_INCR(nentries_mask, sw_index);
 	pipe->src_ring->sw_index = sw_index;
@@ -412,9 +412,7 @@ ath11k_ce_alloc_ring(struct ath11k_base *ab, int nentries, int desc_sz)
 	struct ath11k_ce_ring *ce_ring;
 	dma_addr_t base_addr;
 
-	ce_ring = kzalloc(sizeof(*ce_ring) +
-			  (nentries *
-			   sizeof(*ce_ring->per_transfer_context)),
+	ce_ring = kzalloc(sizeof(*ce_ring) + (nentries * sizeof(*ce_ring->skb)),
 			  GFP_KERNEL);
 	if (ce_ring == NULL)
 		return ERR_PTR(-ENOMEM);
@@ -568,7 +566,7 @@ int ath11k_ce_send(struct ath11k_base *ab, struct sk_buff *skb, u8 pipe_id,
 	ath11k_hal_ce_src_set_desc(desc, ATH11K_SKB_CB(skb)->paddr,
 				   skb->len, transfer_id, byte_swap_data);
 
-	pipe->src_ring->per_transfer_context[write_index] = skb;
+	pipe->src_ring->skb[write_index] = skb;
 	pipe->src_ring->write_index = CE_RING_IDX_INCR(nentries_mask,
 						       write_index);
 
@@ -599,11 +597,11 @@ static void ath11k_ce_rx_pipe_cleanup(struct ath11k_ce_pipe *pipe)
 		return;
 
 	for (i = 0; i < ring->nentries; i++) {
-		skb = ring->per_transfer_context[i];
+		skb = ring->skb[i];
 		if (!skb)
 			continue;
 
-		ring->per_transfer_context[i] = NULL;
+		ring->skb[i] = NULL;
 		dma_unmap_single(ab->dev, ATH11K_SKB_RXCB(skb)->paddr,
 				 skb->len + skb_tailroom(skb), DMA_FROM_DEVICE);
 		dev_kfree_skb_any(skb);
