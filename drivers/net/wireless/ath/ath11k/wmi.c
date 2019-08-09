@@ -1343,17 +1343,16 @@ int ath11k_wmi_set_sta_ps_param(struct ath11k *ar, u32 vdev_id,
 	return ret;
 }
 
-int ath11k_send_crash_inject_cmd(struct ath11k_pdev_wmi *wmi_handle,
-				 struct crash_inject *param)
+int ath11k_wmi_force_fw_hang_cmd(struct ath11k *ar, u32 type, u32 delay_time_ms)
 {
-	struct ath11k_base *ab = wmi_handle->wmi_sc->ab;
+	struct ath11k_pdev_wmi *wmi = ar->wmi;
 	struct wmi_force_fw_hang_cmd *cmd;
 	struct sk_buff *skb;
 	int ret, len;
 
 	len = sizeof(*cmd);
 
-	skb = ath11k_wmi_alloc_skb(wmi_handle->wmi_sc, len);
+	skb = ath11k_wmi_alloc_skb(wmi->wmi_sc, len);
 	if (!skb)
 		return -ENOMEM;
 
@@ -1361,14 +1360,13 @@ int ath11k_send_crash_inject_cmd(struct ath11k_pdev_wmi *wmi_handle,
 	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_FORCE_FW_HANG_CMD) |
 			  FIELD_PREP(WMI_TLV_LEN, len - TLV_HDR_SIZE);
 
-	cmd->type = param->type;
-	cmd->delay_time_ms = param->delay_time_ms;
+	cmd->type = type;
+	cmd->delay_time_ms = delay_time_ms;
 
-	ret = ath11k_wmi_cmd_send(wmi_handle, skb,
-				  WMI_FORCE_FW_HANG_CMDID);
+	ret = ath11k_wmi_cmd_send(wmi, skb, WMI_FORCE_FW_HANG_CMDID);
 
 	if (ret) {
-		ath11k_warn(ab, "Failed to send WMI_FORCE_FW_HANG_CMDID");
+		ath11k_warn(ar->ab, "Failed to send WMI_FORCE_FW_HANG_CMDID");
 		dev_kfree_skb(skb);
 	}
 	return ret;

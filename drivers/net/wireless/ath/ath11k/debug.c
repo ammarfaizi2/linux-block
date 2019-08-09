@@ -539,7 +539,6 @@ static ssize_t ath11k_write_simulate_fw_crash(struct file *file,
 	struct ath11k_base *ab = file->private_data;
 	struct ath11k_pdev *pdev;
 	struct ath11k *ar = ab->pdevs[0].ar;
-	struct crash_inject param;
 	char buf[32] = {0};
 	ssize_t rc;
 	int i, ret, radioup;
@@ -571,9 +570,9 @@ static ssize_t ath11k_write_simulate_fw_crash(struct file *file,
 
 	if (!strcmp(buf, "assert")) {
 		ath11k_info(ab, "simulating firmware assert crash\n");
-		param.type = ATH11K_WMI_FW_HANG_ASSERT_TYPE;
-		param.delay_time_ms = ATH11K_WMI_FW_HANG_DELAY;
-		ret = ath11k_send_crash_inject_cmd(&ab->wmi_sc.wmi[0], &param);
+		ret = ath11k_wmi_force_fw_hang_cmd(ar,
+						   ATH11K_WMI_FW_HANG_ASSERT_TYPE,
+						   ATH11K_WMI_FW_HANG_DELAY);
 	} else {
 		ret = -EINVAL;
 		goto exit;

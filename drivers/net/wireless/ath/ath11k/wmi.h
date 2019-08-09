@@ -3521,11 +3521,6 @@ struct ap_ps_params {
 	u32 value;
 };
 
-struct crash_inject {
-	u32 type;
-	u32 delay_time_ms;
-};
-
 struct vdev_set_params {
 	u32 if_id;
 	u32 param_id;
@@ -4612,8 +4607,7 @@ int ath11k_wmi_vdev_set_param_cmd(struct ath11k *ar, u32 vdev_id,
 
 int ath11k_wmi_set_sta_ps_param(struct ath11k *ar, u32 vdev_id,
 				u32 param, u32 param_value);
-int ath11k_send_crash_inject_cmd(struct ath11k_pdev_wmi *wmi_handle,
-				 struct crash_inject *param);
+int ath11k_wmi_force_fw_hang_cmd(struct ath11k *ar, u32 type, u32 delay_time_ms);
 int ath11k_wmi_send_peer_delete_cmd(struct ath11k *ar,
 				    const u8 *peer_addr, u8 vdev_id);
 int ath11k_wmi_vdev_delete(struct ath11k *ar, u8 vdev_id);
