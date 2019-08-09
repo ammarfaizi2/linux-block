@@ -193,7 +193,7 @@ struct ath11k_pdev_dp {
 #define DP_TX_DESC_ID_POOL_ID GENMASK(20, 19)
 
 struct ath11k_dp {
-	struct ath11k_base *sc;
+	struct ath11k_base *ab;
 	enum ath11k_htc_ep_id eid;
 	struct completion htt_tgt_version_received;
 	u8 htt_tgt_ver_major;
@@ -1498,13 +1498,13 @@ static inline void ath11k_dp_get_mac_addr(u32 addr_l32, u16 addr_h16, u8 *addr)
 	memcpy(addr + 4, &addr_h16, ETH_ALEN - 4);
 }
 
-int ath11k_dp_service_srng(struct ath11k_base *sc,
+int ath11k_dp_service_srng(struct ath11k_base *ab,
 			   struct ath11k_ext_irq_grp *irq_grp,
 			   int budget);
 int ath11k_dp_htt_connect(struct ath11k_dp *dp);
 void ath11k_dp_vdev_tx_attach(struct ath11k *ar, struct ath11k_vif *arvif);
-void ath11k_dp_free(struct ath11k_base *sc);
-int ath11k_dp_alloc(struct ath11k_base *sc);
+void ath11k_dp_free(struct ath11k_base *ab);
+int ath11k_dp_alloc(struct ath11k_base *ab);
 int ath11k_dp_pdev_alloc(struct ath11k_base *ab);
 void ath11k_dp_pdev_free(struct ath11k_base *ab);
 int ath11k_dp_tx_htt_srng_setup(struct ath11k_base *ab, u32 ring_id,
