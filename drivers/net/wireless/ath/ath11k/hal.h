@@ -876,10 +876,10 @@ u32 *ath11k_hal_srng_dst_get_next_entry(struct ath11k_base *ab,
 u32 *ath11k_hal_srng_dst_peek(struct ath11k_base *ab, struct hal_srng *srng);
 int ath11k_hal_srng_dst_num_free(struct ath11k_base *ab, struct hal_srng *srng,
 				 bool sync_hw_ptr);
-u32 *ath11k_hal_srng_src_peek(struct ath11k_base *sc, struct hal_srng *srng);
-u32 *ath11k_hal_srng_src_get_next_reaped(struct ath11k_base *sc,
+u32 *ath11k_hal_srng_src_peek(struct ath11k_base *ab, struct hal_srng *srng);
+u32 *ath11k_hal_srng_src_get_next_reaped(struct ath11k_base *ab,
 					 struct hal_srng *srng);
-u32 *ath11k_hal_srng_src_reap_next(struct ath11k_base *sc,
+u32 *ath11k_hal_srng_src_reap_next(struct ath11k_base *ab,
 				   struct hal_srng *srng);
 u32 *ath11k_hal_srng_src_get_next_entry(struct ath11k_base *ab,
 					struct hal_srng *srng);
@@ -888,7 +888,7 @@ int ath11k_hal_srng_src_num_free(struct ath11k_base *ab, struct hal_srng *srng,
 void ath11k_hal_srng_access_begin(struct ath11k_base *ab,
 				  struct hal_srng *srng);
 void ath11k_hal_srng_access_end(struct ath11k_base *ab, struct hal_srng *srng);
-int ath11k_hal_srng_setup(struct ath11k_base *sc, enum hal_ring_type type,
+int ath11k_hal_srng_setup(struct ath11k_base *ab, enum hal_ring_type type,
 			  int ring_num, int mac_id,
 			  struct hal_srng_params *params);
 int ath11k_hal_srng_init(struct ath11k_base *ath11k);
