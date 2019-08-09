@@ -164,14 +164,6 @@ struct ath11k_ce {
 	spinlock_t ce_lock;
 };
 
-struct ath11k_ce_sg_item {
-	u16 transfer_id;
-	void *transfer_context; /* NULL = tx completion callback not called */
-	void *vaddr; /* for debugging mostly */
-	u32 paddr;
-	u16 len;
-};
-
 void ath11k_ce_cleanup_pipes(struct ath11k_base *ab);
 void ath11k_ce_rx_replenish_retry(struct timer_list *t);
 void ath11k_ce_per_engine_service(struct ath11k_base *ab, u16 ce_id);
