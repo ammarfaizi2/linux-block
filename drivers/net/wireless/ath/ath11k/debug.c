@@ -745,12 +745,12 @@ static ssize_t ath11k_debug_dump_soc_rx_stats(struct file *file,
 	struct ath11k_soc_dp_rx_stats *soc_stats = &ab->soc_stats;
 	int len = 0, i, retval;
 	const int size = 4096;
-	const char *rxdma_err[HAL_REO_ENTR_RING_RXDMA_ECODE_MAX] = {
+	static const char *rxdma_err[HAL_REO_ENTR_RING_RXDMA_ECODE_MAX] = {
 			"Overflow", "MPDU len", "FCS", "Decrypt", "TKIP MIC",
 			"Unencrypt", "MSDU len", "MSDU limit", "WiFi parse",
 			"AMSDU parse", "SA timeout", "DA timeout",
 			"Flow timeout", "Flush req"};
-	const char *reo_err[HAL_REO_DEST_RING_ERROR_CODE_MAX] = {
+	static const char *reo_err[HAL_REO_DEST_RING_ERROR_CODE_MAX] = {
 			"Desc addr zero", "Desc inval", "AMPDU in non BA",
 			"Non BA dup", "BA dup", "Frame 2k jump", "BAR 2k jump",
 			"Frame OOR", "BAR OOR", "No BA session",
