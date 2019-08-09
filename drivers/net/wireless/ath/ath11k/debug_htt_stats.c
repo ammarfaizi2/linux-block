@@ -4203,6 +4203,14 @@ static ssize_t ath11k_write_htt_stats_type(struct file *file,
 	return ret;
 }
 
+static const struct file_operations fops_htt_stats_type = {
+	.read = ath11k_read_htt_stats_type,
+	.write = ath11k_write_htt_stats_type,
+	.open = simple_open,
+	.owner = THIS_MODULE,
+	.llseek = default_llseek,
+};
+
 static int ath11k_prep_htt_stats_cfg_params(struct ath11k *ar, u8 type,
 					    const u8 *mac_addr,
 					    struct htt_ext_stats_cfg_params *cfg_params)
@@ -4345,6 +4353,14 @@ static ssize_t ath11k_read_htt_stats(struct file *file,
 	return simple_read_from_buffer(user_buf, count, ppos, buf, length);
 }
 
+static const struct file_operations fops_dump_htt_stats = {
+	.open = ath11k_open_htt_stats,
+	.release = ath11k_release_htt_stats,
+	.read = ath11k_read_htt_stats,
+	.owner = THIS_MODULE,
+	.llseek = default_llseek,
+};
+
 static ssize_t ath11k_read_htt_stats_reset(struct file *file,
 					   char __user *user_buf,
 					   size_t count, loff_t *ppos)
@@ -4395,22 +4411,6 @@ static ssize_t ath11k_write_htt_stats_reset(struct file *file,
 
 	return ret;
 }
-
-static const struct file_operations fops_htt_stats_type = {
-	.read = ath11k_read_htt_stats_type,
-	.write = ath11k_write_htt_stats_type,
-	.open = simple_open,
-	.owner = THIS_MODULE,
-	.llseek = default_llseek,
-};
-
-static const struct file_operations fops_dump_htt_stats = {
-	.open = ath11k_open_htt_stats,
-	.release = ath11k_release_htt_stats,
-	.read = ath11k_read_htt_stats,
-	.owner = THIS_MODULE,
-	.llseek = default_llseek,
-};
 
 static const struct file_operations fops_htt_stats_reset = {
 	.read = ath11k_read_htt_stats_reset,
