@@ -12,7 +12,7 @@
 #include "debug_htt_stats.h"
 #include "peer.h"
 
-void ath11k_info(struct ath11k_base *sc, const char *fmt, ...)
+void ath11k_info(struct ath11k_base *ab, const char *fmt, ...)
 {
 	struct va_format vaf = {
 		.fmt = fmt,
@@ -21,12 +21,12 @@ void ath11k_info(struct ath11k_base *sc, const char *fmt, ...)
 
 	va_start(args, fmt);
 	vaf.va = &args;
-	dev_info(sc->dev, "%pV", &vaf);
+	dev_info(ab->dev, "%pV", &vaf);
 	/* TODO: Trace the log */
 	va_end(args);
 }
 
-void ath11k_err(struct ath11k_base *sc, const char *fmt, ...)
+void ath11k_err(struct ath11k_base *ab, const char *fmt, ...)
 {
 	struct va_format vaf = {
 		.fmt = fmt,
@@ -35,12 +35,12 @@ void ath11k_err(struct ath11k_base *sc, const char *fmt, ...)
 
 	va_start(args, fmt);
 	vaf.va = &args;
-	dev_err(sc->dev, "%pV", &vaf);
+	dev_err(ab->dev, "%pV", &vaf);
 	/* TODO: Trace the log */
 	va_end(args);
 }
 
-void ath11k_warn(struct ath11k_base *sc, const char *fmt, ...)
+void ath11k_warn(struct ath11k_base *ab, const char *fmt, ...)
 {
 	struct va_format vaf = {
 		.fmt = fmt,
@@ -49,7 +49,7 @@ void ath11k_warn(struct ath11k_base *sc, const char *fmt, ...)
 
 	va_start(args, fmt);
 	vaf.va = &args;
-	dev_warn_ratelimited(sc->dev, "%pV", &vaf);
+	dev_warn_ratelimited(ab->dev, "%pV", &vaf);
 	/* TODO: Trace the log */
 	va_end(args);
 }
