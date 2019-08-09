@@ -801,9 +801,9 @@ static const struct file_operations fops_soc_rx_stats = {
 	.llseek = default_llseek,
 };
 
-int ath11k_debug_soc_create(struct ath11k_base *ab)
+int ath11k_debug_pdev_create(struct ath11k_base *ab)
 {
-	ab->debugfs_soc = debugfs_create_dir("ath11k", NULL);
+	ab->debugfs_soc = debugfs_create_dir(ab->hw_params.name, ab->debugfs_ath11k);
 
 	if (IS_ERR_OR_NULL(ab->debugfs_soc)) {
 		if (IS_ERR(ab->debugfs_soc))
@@ -816,6 +816,25 @@ int ath11k_debug_soc_create(struct ath11k_base *ab)
 
 	debugfs_create_file("soc_rx_stats", 0600, ab->debugfs_soc, ab,
 			    &fops_soc_rx_stats);
+
+	return 0;
+}
+
+void ath11k_debug_pdev_destroy(struct ath11k_base *ab)
+{
+	debugfs_remove_recursive(ab->debugfs_ath11k);
+	ab->debugfs_ath11k = NULL;
+}
+
+int ath11k_debug_soc_create(struct ath11k_base *ab)
+{
+	ab->debugfs_ath11k = debugfs_create_dir("ath11k", NULL);
+
+	if (IS_ERR_OR_NULL(ab->debugfs_ath11k)) {
+		if (IS_ERR(ab->debugfs_ath11k))
+			return PTR_ERR(ab->debugfs_ath11k);
+		return -ENOMEM;
+	}
 
 	return 0;
 }
@@ -1006,7 +1025,7 @@ int ath11k_debug_register(struct ath11k *ar)
 	}
 
 	/* Create a symlink under ieee80211/phy* */
-	snprintf(buf, 100, "../../%pd2", ar->debug.debugfs_pdev);
+	snprintf(buf, 100, "../../ath11k/%pd2", ar->debug.debugfs_pdev);
 	debugfs_create_symlink("ath11k", ar->hw->wiphy->debugfsdir, buf);
 
 	ath11k_debug_htt_stats_init(ar);
