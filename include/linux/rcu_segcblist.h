@@ -67,6 +67,8 @@ struct rcu_segcblist {
 	unsigned long gp_seq[RCU_CBLIST_NSEGS];
 	long len;
 	long len_lazy;
+	u8 enabled;
+	u8 offloaded;
 };
 
 #define RCU_SEGCBLIST_INITIALIZER(n) \
