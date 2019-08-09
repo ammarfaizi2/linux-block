@@ -100,9 +100,9 @@ enum ath11k_pktlog_enum {
 	ATH11K_PKTLOG_TYPE_LITE_RX      = 24,
 };
 
-__printf(2, 3) void ath11k_info(struct ath11k_base *sc, const char *fmt, ...);
-__printf(2, 3) void ath11k_err(struct ath11k_base *sc, const char *fmt, ...);
-__printf(2, 3) void ath11k_warn(struct ath11k_base *sc, const char *fmt, ...);
+__printf(2, 3) void ath11k_info(struct ath11k_base *ab, const char *fmt, ...);
+__printf(2, 3) void ath11k_err(struct ath11k_base *ab, const char *fmt, ...);
+__printf(2, 3) void ath11k_warn(struct ath11k_base *ab, const char *fmt, ...);
 
 extern unsigned int ath11k_debug_mask;
 
@@ -131,8 +131,8 @@ static inline void ath11k_dbg_dump(struct ath11k_base *ab,
 #endif /* CONFIG_ATH11K_DEBUG */
 
 #ifdef CONFIG_ATH11K_DEBUGFS
-int ath11k_debug_soc_create(struct ath11k_base *sc);
-void ath11k_debug_soc_destroy(struct ath11k_base *sc);
+int ath11k_debug_soc_create(struct ath11k_base *ab);
+void ath11k_debug_soc_destroy(struct ath11k_base *ab);
 int ath11k_debug_register(struct ath11k *ar);
 void ath11k_debug_unregister(struct ath11k *ar);
 void ath11k_dbg_htt_ext_stats_handler(struct ath11k_base *ab,
@@ -168,12 +168,12 @@ static inline int ath11k_debug_is_extd_rx_stats_enabled(struct ath11k *ar)
 	return ar->debug.extd_rx_stats;
 }
 #else
-static inline int ath11k_debug_soc_create(struct ath11k_base *sc)
+static inline int ath11k_debug_soc_create(struct ath11k_base *ab)
 {
 	return 0;
 }
 
-static inline void ath11k_debug_soc_destroy(struct ath11k_base *sc)
+static inline void ath11k_debug_soc_destroy(struct ath11k_base *ab)
 {
 }
 
