@@ -5301,23 +5301,6 @@ err_free:
 	return ret;
 }
 
-void ath11k_mac_destroy(struct ath11k_base *ab)
-{
-	struct ath11k *ar;
-	struct ath11k_pdev *pdev;
-	int i;
-
-	for (i = 0; i < ab->num_radios; i++) {
-		pdev = &ab->pdevs[i];
-		ar = pdev->ar;
-		if (!ar)
-			continue;
-
-		ieee80211_free_hw(ar->hw);
-		pdev->ar = NULL;
-	}
-}
-
 void ath11k_mac_unregister(struct ath11k_base *ab)
 {
 	struct ath11k *ar;
@@ -5428,4 +5411,21 @@ err_destroy_mac:
 	ath11k_mac_destroy(ab);
 
 	return ret;
+}
+
+void ath11k_mac_destroy(struct ath11k_base *ab)
+{
+	struct ath11k *ar;
+	struct ath11k_pdev *pdev;
+	int i;
+
+	for (i = 0; i < ab->num_radios; i++) {
+		pdev = &ab->pdevs[i];
+		ar = pdev->ar;
+		if (!ar)
+			continue;
+
+		ieee80211_free_hw(ar->hw);
+		pdev->ar = NULL;
+	}
 }
