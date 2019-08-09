@@ -963,6 +963,12 @@ static ssize_t ath11k_read_pktlog_filter(struct file *file,
 	return simple_read_from_buffer(ubuf, count, ppos, buf, len);
 }
 
+static const struct file_operations fops_pktlog_filter = {
+	.read = ath11k_read_pktlog_filter,
+	.write = ath11k_write_pktlog_filter,
+	.open = simple_open
+};
+
 static ssize_t ath11k_write_simulate_radar(struct file *file,
 					   const char __user *user_buf,
 					   size_t count, loff_t *ppos)
@@ -976,12 +982,6 @@ static ssize_t ath11k_write_simulate_radar(struct file *file,
 
 	return count;
 }
-
-static const struct file_operations fops_pktlog_filter = {
-	.read = ath11k_read_pktlog_filter,
-	.write = ath11k_write_pktlog_filter,
-	.open = simple_open
-};
 
 static const struct file_operations fops_simulate_radar = {
 	.write = ath11k_write_simulate_radar,
