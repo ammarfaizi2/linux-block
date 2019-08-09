@@ -3388,9 +3388,9 @@ static int ath11k_pull_mgmt_tx_compl_param_tlv(struct ath11k_base *ab,
 		return -EPROTO;
 	}
 
-	param->pdev_id =  ev->pdev_id;
-	param->desc_id =  ev->desc_id;
-	param->status =  ev->status;
+	param->pdev_id = ev->pdev_id;
+	param->desc_id = ev->desc_id;
+	param->status = ev->status;
 
 	kfree(tb);
 	return 0;

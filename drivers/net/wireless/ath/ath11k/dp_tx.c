@@ -112,7 +112,7 @@ int ath11k_dp_tx(struct ath11k *ar, struct ath11k_vif *arvif,
 
 	if (info->control.hw_key)
 		ti.encrypt_type =
-		ath11k_dp_tx_get_encrypt_type(info->control.hw_key->cipher);
+			ath11k_dp_tx_get_encrypt_type(info->control.hw_key->cipher);
 	else
 		ti.encrypt_type = HAL_ENCRYPT_TYPE_OPEN;
 
@@ -123,6 +123,7 @@ int ath11k_dp_tx(struct ath11k *ar, struct ath11k_vif *arvif,
 	ti.lmac_id = ar->lmac_id;
 	ti.bss_ast_hash = arvif->ast_hash;
 	ti.dscp_tid_tbl_idx = 0;
+
 	if (skb->ip_summed == CHECKSUM_PARTIAL) {
 		ti.flags0 |= FIELD_PREP(HAL_TCL_DATA_CMD_INFO1_IP4_CKSUM_EN, 1) |
 			     FIELD_PREP(HAL_TCL_DATA_CMD_INFO1_UDP4_CKSUM_EN, 1) |
@@ -133,6 +134,7 @@ int ath11k_dp_tx(struct ath11k *ar, struct ath11k_vif *arvif,
 
 	if (ieee80211_vif_is_mesh(arvif->vif))
 		ti.flags1 |= FIELD_PREP(HAL_TCL_DATA_CMD_INFO2_MESH_ENABLE, 1);
+
 	ti.flags1 |= FIELD_PREP(HAL_TCL_DATA_CMD_INFO2_TID_OVERWRITE, 1);
 
 	ti.tid = ath11k_dp_tx_get_tid(skb);
