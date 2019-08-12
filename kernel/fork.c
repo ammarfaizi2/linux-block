@@ -2456,8 +2456,7 @@ pid_t kernel_thread(int (*fn)(void *), void *arg, unsigned long flags)
 	return _do_fork(&args);
 }
 
-#ifdef __ARCH_WANT_SYS_FORK
-SYSCALL_DEFINE0(fork)
+static long simple_fork(void)
 {
 #ifdef CONFIG_MMU
 	struct kernel_clone_args args = {
@@ -2469,6 +2468,12 @@ SYSCALL_DEFINE0(fork)
 	/* can not support in nommu mode */
 	return -EINVAL;
 #endif
+}
+
+#ifdef __ARCH_WANT_SYS_FORK
+SYSCALL_DEFINE0(fork)
+{
+	return simple_fork();
 }
 #endif
 
@@ -2604,6 +2609,9 @@ SYSCALL_DEFINE2(clone3, struct clone_args __user *, uargs, size_t, size)
 	int err;
 
 	struct kernel_clone_args kargs;
+
+	if (!uargs && size == 0)
+		return simple_fork();
 
 	err = copy_clone_args_from_user(&kargs, uargs, size);
 	if (err)
