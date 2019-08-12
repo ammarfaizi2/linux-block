@@ -1577,7 +1577,7 @@ static void ath11k_mac_op_bss_info_changed(struct ieee80211_hw *hw,
 	u16 bitrate;
 	int ret = 0;
 	u8 rateidx;
-	u8 rate;
+	u32 rate;
 
 	mutex_lock(&ar->conf_mutex);
 
