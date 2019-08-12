@@ -26,6 +26,7 @@ struct kernel_clone_args {
 	unsigned long stack;
 	unsigned long stack_size;
 	unsigned long tls;
+	pid_t set_tid;
 };
 
 /*
