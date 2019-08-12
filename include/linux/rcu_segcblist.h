@@ -14,6 +14,9 @@
 #ifndef __INCLUDE_LINUX_RCU_SEGCBLIST_H
 #define __INCLUDE_LINUX_RCU_SEGCBLIST_H
 
+#include <uapi/asm-generic/types.h>
+#include <asm-generic/atomic-long.h>
+
 /* Simple unsegmented callback lists. */
 struct rcu_cblist {
 	struct rcu_head *head;
