@@ -29,14 +29,11 @@
 		}									\
 	} while (0)
 
-static inline void htt_print_stats_string_tlv(const u32 *tag_buf,
+static inline void htt_print_stats_string_tlv(const void *tag_buf,
 					      u16 tag_len,
-					      u8 *user_data)
+					      struct debug_htt_stats_req *stats_req)
 {
-	struct htt_stats_string_tlv *htt_stats_buf =
-			(struct htt_stats_string_tlv *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)user_data;
+	const struct htt_stats_string_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -66,12 +63,10 @@ static inline void htt_print_stats_string_tlv(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_pdev_stats_cmn_tlv(const u32 *tag_buf, u8 *data)
+static inline void htt_print_tx_pdev_stats_cmn_tlv(const void *tag_buf,
+						   struct debug_htt_stats_req *stats_req)
 {
-	struct htt_tx_pdev_stats_cmn_tlv *htt_stats_buf =
-			(struct htt_tx_pdev_stats_cmn_tlv *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_pdev_stats_cmn_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -186,14 +181,12 @@ static inline void htt_print_tx_pdev_stats_cmn_tlv(const u32 *tag_buf, u8 *data)
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_pdev_stats_urrn_tlv_v(const u32 *tag_buf,
-						      u16 tag_len,
-						      u8 *data)
+static inline void
+htt_print_tx_pdev_stats_urrn_tlv_v(const void *tag_buf,
+				   u16 tag_len,
+				   struct debug_htt_stats_req *stats_req)
 {
-	struct htt_tx_pdev_stats_urrn_tlv_v *htt_stats_buf =
-			(struct htt_tx_pdev_stats_urrn_tlv_v *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_pdev_stats_urrn_tlv_v *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -213,14 +206,12 @@ static inline void htt_print_tx_pdev_stats_urrn_tlv_v(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_pdev_stats_flush_tlv_v(const u32 *tag_buf,
-						       u16 tag_len,
-						       u8 *data)
+static inline void
+htt_print_tx_pdev_stats_flush_tlv_v(const void *tag_buf,
+				    u16 tag_len,
+				    struct debug_htt_stats_req *stats_req)
 {
-	struct htt_tx_pdev_stats_flush_tlv_v *htt_stats_buf =
-			(struct htt_tx_pdev_stats_flush_tlv_v *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_pdev_stats_flush_tlv_v *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -240,14 +231,12 @@ static inline void htt_print_tx_pdev_stats_flush_tlv_v(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_pdev_stats_sifs_tlv_v(const u32 *tag_buf,
-						      u16 tag_len,
-						      u8 *data)
+static inline void
+htt_print_tx_pdev_stats_sifs_tlv_v(const void *tag_buf,
+				   u16 tag_len,
+				   struct debug_htt_stats_req *stats_req)
 {
-	struct htt_tx_pdev_stats_sifs_tlv_v *htt_stats_buf =
-			(struct htt_tx_pdev_stats_sifs_tlv_v *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_pdev_stats_sifs_tlv_v *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -268,14 +257,12 @@ static inline void htt_print_tx_pdev_stats_sifs_tlv_v(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_pdev_stats_phy_err_tlv_v(const u32 *tag_buf,
-							 u16 tag_len,
-							 u8 *data)
+static inline void
+htt_print_tx_pdev_stats_phy_err_tlv_v(const void *tag_buf,
+				      u16 tag_len,
+				      struct debug_htt_stats_req *stats_req)
 {
-	struct htt_tx_pdev_stats_phy_err_tlv_v *htt_stats_buf =
-			(struct htt_tx_pdev_stats_phy_err_tlv_v *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_pdev_stats_phy_err_tlv_v *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -295,14 +282,12 @@ static inline void htt_print_tx_pdev_stats_phy_err_tlv_v(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_pdev_stats_sifs_hist_tlv_v(const u32 *tag_buf,
-							   u16 tag_len,
-							   u8 *data)
+static inline void
+htt_print_tx_pdev_stats_sifs_hist_tlv_v(const void *tag_buf,
+					u16 tag_len,
+					struct debug_htt_stats_req *stats_req)
 {
-	struct htt_tx_pdev_stats_sifs_hist_tlv_v *htt_stats_buf =
-			(struct htt_tx_pdev_stats_sifs_hist_tlv_v *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_pdev_stats_sifs_hist_tlv_v *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -324,13 +309,11 @@ static inline void htt_print_tx_pdev_stats_sifs_hist_tlv_v(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_pdev_stats_tx_ppdu_stats_tlv_v(const u32 *tag_buf,
-							       u8 *data)
+static inline void
+htt_print_tx_pdev_stats_tx_ppdu_stats_tlv_v(const void *tag_buf,
+					    struct debug_htt_stats_req *stats_req)
 {
-	struct htt_tx_pdev_stats_tx_ppdu_stats_tlv_v *htt_stats_buf =
-			(struct htt_tx_pdev_stats_tx_ppdu_stats_tlv_v *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_pdev_stats_tx_ppdu_stats_tlv_v *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -362,14 +345,11 @@ static inline void htt_print_tx_pdev_stats_tx_ppdu_stats_tlv_v(const u32 *tag_bu
 }
 
 static inline void
-htt_print_tx_pdev_stats_tried_mpdu_cnt_hist_tlv_v(const u32 *tag_buf,
+htt_print_tx_pdev_stats_tried_mpdu_cnt_hist_tlv_v(const void *tag_buf,
 						  u16 tag_len,
-						  u8 *data)
+						  struct debug_htt_stats_req *stats_req)
 {
-	struct htt_tx_pdev_stats_tried_mpdu_cnt_hist_tlv_v *htt_stats_buf =
-		(struct htt_tx_pdev_stats_tried_mpdu_cnt_hist_tlv_v *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-		(struct debug_htt_stats_req *)data;
+	const struct htt_tx_pdev_stats_tried_mpdu_cnt_hist_tlv_v *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -401,12 +381,10 @@ htt_print_tx_pdev_stats_tried_mpdu_cnt_hist_tlv_v(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_hw_stats_intr_misc_tlv(const u32 *tag_buf, u8 *data)
+static inline void htt_print_hw_stats_intr_misc_tlv(const void *tag_buf,
+						    struct debug_htt_stats_req *stats_req)
 {
-	struct htt_hw_stats_intr_misc_tlv *htt_stats_buf =
-			(struct htt_hw_stats_intr_misc_tlv *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_hw_stats_intr_misc_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -429,12 +407,11 @@ static inline void htt_print_hw_stats_intr_misc_tlv(const u32 *tag_buf, u8 *data
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_hw_stats_wd_timeout_tlv(const u32 *tag_buf, u8 *data)
+static inline void
+htt_print_hw_stats_wd_timeout_tlv(const void *tag_buf,
+				  struct debug_htt_stats_req *stats_req)
 {
-	struct htt_hw_stats_wd_timeout_tlv *htt_stats_buf =
-			(struct htt_hw_stats_wd_timeout_tlv *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_hw_stats_wd_timeout_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -456,12 +433,10 @@ static inline void htt_print_hw_stats_wd_timeout_tlv(const u32 *tag_buf, u8 *dat
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_hw_stats_pdev_errs_tlv(const u32 *tag_buf, u8 *data)
+static inline void htt_print_hw_stats_pdev_errs_tlv(const void *tag_buf,
+						    struct debug_htt_stats_req *stats_req)
 {
-	struct htt_hw_stats_pdev_errs_tlv *htt_stats_buf =
-			(struct htt_hw_stats_pdev_errs_tlv *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_hw_stats_pdev_errs_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -498,12 +473,10 @@ static inline void htt_print_hw_stats_pdev_errs_tlv(const u32 *tag_buf, u8 *data
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_msdu_flow_stats_tlv(const u32 *tag_buf, u8 *data)
+static inline void htt_print_msdu_flow_stats_tlv(const void *tag_buf,
+						 struct debug_htt_stats_req *stats_req)
 {
-	struct htt_msdu_flow_stats_tlv *htt_stats_buf =
-			(struct htt_msdu_flow_stats_tlv *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_msdu_flow_stats_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -546,12 +519,10 @@ static inline void htt_print_msdu_flow_stats_tlv(const u32 *tag_buf, u8 *data)
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_tid_stats_tlv(const u32 *tag_buf, u8 *data)
+static inline void htt_print_tx_tid_stats_tlv(const void *tag_buf,
+					      struct debug_htt_stats_req *stats_req)
 {
-	struct htt_tx_tid_stats_tlv *htt_stats_buf =
-			(struct htt_tx_tid_stats_tlv *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_tid_stats_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -598,12 +569,10 @@ static inline void htt_print_tx_tid_stats_tlv(const u32 *tag_buf, u8 *data)
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_tid_stats_v1_tlv(const u32 *tag_buf, u8 *data)
+static inline void htt_print_tx_tid_stats_v1_tlv(const void *tag_buf,
+						 struct debug_htt_stats_req *stats_req)
 {
-	struct htt_tx_tid_stats_v1_tlv *htt_stats_buf =
-			(struct htt_tx_tid_stats_v1_tlv *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_tid_stats_v1_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -654,12 +623,10 @@ static inline void htt_print_tx_tid_stats_v1_tlv(const u32 *tag_buf, u8 *data)
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_rx_tid_stats_tlv(const u32 *tag_buf, u8 *data)
+static inline void htt_print_rx_tid_stats_tlv(const void *tag_buf,
+					      struct debug_htt_stats_req *stats_req)
 {
-	struct htt_rx_tid_stats_tlv *htt_stats_buf =
-			(struct htt_rx_tid_stats_tlv *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_rx_tid_stats_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -689,12 +656,10 @@ static inline void htt_print_rx_tid_stats_tlv(const u32 *tag_buf, u8 *data)
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_counter_tlv(const u32 *tag_buf, u8 *data)
+static inline void htt_print_counter_tlv(const void *tag_buf,
+					 struct debug_htt_stats_req *stats_req)
 {
-	struct htt_counter_tlv *htt_stats_buf =
-			(struct htt_counter_tlv *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_counter_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -717,12 +682,10 @@ static inline void htt_print_counter_tlv(const u32 *tag_buf, u8 *data)
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_peer_stats_cmn_tlv(const u32 *tag_buf, u8 *data)
+static inline void htt_print_peer_stats_cmn_tlv(const void *tag_buf,
+						struct debug_htt_stats_req *stats_req)
 {
-	struct htt_peer_stats_cmn_tlv *htt_stats_buf =
-			(struct htt_peer_stats_cmn_tlv *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_peer_stats_cmn_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -765,12 +728,10 @@ static inline void htt_print_peer_stats_cmn_tlv(const u32 *tag_buf, u8 *data)
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_peer_details_tlv(const u32 *tag_buf, u8 *data)
+static inline void htt_print_peer_details_tlv(const void *tag_buf,
+					      struct debug_htt_stats_req *stats_req)
 {
-	struct htt_peer_details_tlv *htt_stats_buf =
-			(struct htt_peer_details_tlv *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_peer_details_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -807,12 +768,10 @@ static inline void htt_print_peer_details_tlv(const u32 *tag_buf, u8 *data)
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_peer_rate_stats_tlv(const u32 *tag_buf, u8 *data)
+static inline void htt_print_tx_peer_rate_stats_tlv(const void *tag_buf,
+						    struct debug_htt_stats_req *stats_req)
 {
-	struct htt_tx_peer_rate_stats_tlv *htt_stats_buf =
-			(struct htt_tx_peer_rate_stats_tlv *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_peer_rate_stats_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -893,12 +852,10 @@ static inline void htt_print_tx_peer_rate_stats_tlv(const u32 *tag_buf, u8 *data
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_rx_peer_rate_stats_tlv(const u32 *tag_buf, u8 *data)
+static inline void htt_print_rx_peer_rate_stats_tlv(const void *tag_buf,
+						    struct debug_htt_stats_req *stats_req)
 {
-	struct htt_rx_peer_rate_stats_tlv *htt_stats_buf =
-			(struct htt_rx_peer_rate_stats_tlv *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_rx_peer_rate_stats_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -985,12 +942,11 @@ static inline void htt_print_rx_peer_rate_stats_tlv(const u32 *tag_buf, u8 *data
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_hwq_mu_mimo_sch_stats_tlv(const u32 *tag_buf, u8 *data)
+static inline void
+htt_print_tx_hwq_mu_mimo_sch_stats_tlv(const void *tag_buf,
+				       struct debug_htt_stats_req *stats_req)
 {
-	struct htt_tx_hwq_mu_mimo_sch_stats_tlv *htt_stats_buf =
-			(struct htt_tx_hwq_mu_mimo_sch_stats_tlv *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_hwq_mu_mimo_sch_stats_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -1011,13 +967,11 @@ static inline void htt_print_tx_hwq_mu_mimo_sch_stats_tlv(const u32 *tag_buf, u8
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_hwq_mu_mimo_mpdu_stats_tlv(const u32 *tag_buf,
-							   u8 *data)
+static inline void
+htt_print_tx_hwq_mu_mimo_mpdu_stats_tlv(const void *tag_buf,
+					struct debug_htt_stats_req *stats_req)
 {
-	struct htt_tx_hwq_mu_mimo_mpdu_stats_tlv *htt_stats_buf =
-			(struct htt_tx_hwq_mu_mimo_mpdu_stats_tlv *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_hwq_mu_mimo_mpdu_stats_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -1047,13 +1001,11 @@ static inline void htt_print_tx_hwq_mu_mimo_mpdu_stats_tlv(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_hwq_mu_mimo_cmn_stats_tlv(const u32 *tag_buf,
-							  u8 *data)
+static inline void
+htt_print_tx_hwq_mu_mimo_cmn_stats_tlv(const void *tag_buf,
+				       struct debug_htt_stats_req *stats_req)
 {
-	struct htt_tx_hwq_mu_mimo_cmn_stats_tlv *htt_stats_buf =
-			(struct htt_tx_hwq_mu_mimo_cmn_stats_tlv *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_hwq_mu_mimo_cmn_stats_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -1072,12 +1024,10 @@ static inline void htt_print_tx_hwq_mu_mimo_cmn_stats_tlv(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_hwq_stats_cmn_tlv(const u32 *tag_buf, u8 *data)
+static inline void
+htt_print_tx_hwq_stats_cmn_tlv(const void *tag_buf, struct debug_htt_stats_req *stats_req)
 {
-	struct htt_tx_hwq_stats_cmn_tlv *htt_stats_buf =
-			(struct htt_tx_hwq_stats_cmn_tlv *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_hwq_stats_cmn_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -1137,14 +1087,12 @@ static inline void htt_print_tx_hwq_stats_cmn_tlv(const u32 *tag_buf, u8 *data)
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_hwq_difs_latency_stats_tlv_v(const u32 *tag_buf,
-							     u16 tag_len,
-							     u8 *data)
+static inline void
+htt_print_tx_hwq_difs_latency_stats_tlv_v(const void *tag_buf,
+					  u16 tag_len,
+					  struct debug_htt_stats_req *stats_req)
 {
-	struct htt_tx_hwq_difs_latency_stats_tlv_v *htt_stats_buf =
-			(struct htt_tx_hwq_difs_latency_stats_tlv_v *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_hwq_difs_latency_stats_tlv_v *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -1169,14 +1117,12 @@ static inline void htt_print_tx_hwq_difs_latency_stats_tlv_v(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_hwq_cmd_result_stats_tlv_v(const u32 *tag_buf,
-							   u16 tag_len,
-							   u8 *data)
+static inline void
+htt_print_tx_hwq_cmd_result_stats_tlv_v(const void *tag_buf,
+					u16 tag_len,
+					struct debug_htt_stats_req *stats_req)
 {
-	struct htt_tx_hwq_cmd_result_stats_tlv_v *htt_stats_buf =
-		(struct htt_tx_hwq_cmd_result_stats_tlv_v *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_hwq_cmd_result_stats_tlv_v *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -1200,14 +1146,12 @@ static inline void htt_print_tx_hwq_cmd_result_stats_tlv_v(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_hwq_cmd_stall_stats_tlv_v(const u32 *tag_buf,
-							  u16 tag_len,
-							  u8 *data)
+static inline void
+htt_print_tx_hwq_cmd_stall_stats_tlv_v(const void *tag_buf,
+				       u16 tag_len,
+				       struct debug_htt_stats_req *stats_req)
 {
-	struct htt_tx_hwq_cmd_stall_stats_tlv_v *htt_stats_buf =
-			(struct htt_tx_hwq_cmd_stall_stats_tlv_v *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_hwq_cmd_stall_stats_tlv_v *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -1230,14 +1174,12 @@ static inline void htt_print_tx_hwq_cmd_stall_stats_tlv_v(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_hwq_fes_result_stats_tlv_v(const u32 *tag_buf,
-							   u16 tag_len,
-							   u8 *data)
+static inline void
+htt_print_tx_hwq_fes_result_stats_tlv_v(const void *tag_buf,
+					u16 tag_len,
+					struct debug_htt_stats_req *stats_req)
 {
-	struct htt_tx_hwq_fes_result_stats_tlv_v *htt_stats_buf =
-			(struct htt_tx_hwq_fes_result_stats_tlv_v *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_hwq_fes_result_stats_tlv_v *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -1260,14 +1202,12 @@ static inline void htt_print_tx_hwq_fes_result_stats_tlv_v(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_hwq_tried_mpdu_cnt_hist_tlv_v(const u32 *tag_buf,
-							      u16 tag_len,
-							      u8 *data)
+static inline void
+htt_print_tx_hwq_tried_mpdu_cnt_hist_tlv_v(const void *tag_buf,
+					   u16 tag_len,
+					   struct debug_htt_stats_req *stats_req)
 {
-	struct htt_tx_hwq_tried_mpdu_cnt_hist_tlv_v *htt_stats_buf =
-			(struct htt_tx_hwq_tried_mpdu_cnt_hist_tlv_v *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_hwq_tried_mpdu_cnt_hist_tlv_v *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -1301,14 +1241,12 @@ static inline void htt_print_tx_hwq_tried_mpdu_cnt_hist_tlv_v(const u32 *tag_buf
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_hwq_txop_used_cnt_hist_tlv_v(const u32 *tag_buf,
-							     u16 tag_len,
-							     u8 *data)
+static inline void
+htt_print_tx_hwq_txop_used_cnt_hist_tlv_v(const void *tag_buf,
+					  u16 tag_len,
+					  struct debug_htt_stats_req *stats_req)
 {
-	struct htt_tx_hwq_txop_used_cnt_hist_tlv_v *htt_stats_buf =
-			(struct htt_tx_hwq_txop_used_cnt_hist_tlv_v *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_hwq_txop_used_cnt_hist_tlv_v *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -1337,20 +1275,18 @@ static inline void htt_print_tx_hwq_txop_used_cnt_hist_tlv_v(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_sounding_stats_tlv(const u32 *tag_buf, u8 *data)
+static inline void htt_print_tx_sounding_stats_tlv(const void *tag_buf,
+						   struct debug_htt_stats_req *stats_req)
 {
 	s32 i;
-	struct htt_tx_sounding_stats_tlv *htt_stats_buf =
-			(struct htt_tx_sounding_stats_tlv *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_sounding_stats_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	u32 *cbf_20 = htt_stats_buf->cbf_20;
-	u32 *cbf_40 = htt_stats_buf->cbf_40;
-	u32 *cbf_80 = htt_stats_buf->cbf_80;
-	u32 *cbf_160 = htt_stats_buf->cbf_160;
+	const u32 *cbf_20 = htt_stats_buf->cbf_20;
+	const u32 *cbf_40 = htt_stats_buf->cbf_40;
+	const u32 *cbf_80 = htt_stats_buf->cbf_80;
+	const u32 *cbf_160 = htt_stats_buf->cbf_160;
 
 	if (htt_stats_buf->tx_sounding_mode == HTT_TX_AC_SOUNDING_MODE) {
 		len += HTT_DBG_OUT(buf + len, buf_len - len,
@@ -1444,12 +1380,11 @@ static inline void htt_print_tx_sounding_stats_tlv(const u32 *tag_buf, u8 *data)
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_selfgen_cmn_stats_tlv(const u32 *tag_buf, u8 *data)
+static inline void
+htt_print_tx_selfgen_cmn_stats_tlv(const void *tag_buf,
+				   struct debug_htt_stats_req *stats_req)
 {
-	struct htt_tx_selfgen_cmn_stats_tlv *htt_stats_buf =
-		(struct htt_tx_selfgen_cmn_stats_tlv *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_selfgen_cmn_stats_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -1488,12 +1423,11 @@ static inline void htt_print_tx_selfgen_cmn_stats_tlv(const u32 *tag_buf, u8 *da
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_selfgen_ac_stats_tlv(const u32 *tag_buf, u8 *data)
+static inline void
+htt_print_tx_selfgen_ac_stats_tlv(const void *tag_buf,
+				  struct debug_htt_stats_req *stats_req)
 {
-	struct htt_tx_selfgen_ac_stats_tlv *htt_stats_buf =
-			(struct htt_tx_selfgen_ac_stats_tlv *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_selfgen_ac_stats_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -1522,12 +1456,11 @@ static inline void htt_print_tx_selfgen_ac_stats_tlv(const u32 *tag_buf, u8 *dat
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_selfgen_ax_stats_tlv(const u32 *tag_buf, u8 *data)
+static inline void
+htt_print_tx_selfgen_ax_stats_tlv(const void *tag_buf,
+				  struct debug_htt_stats_req *stats_req)
 {
-	struct htt_tx_selfgen_ax_stats_tlv *htt_stats_buf =
-		(struct htt_tx_selfgen_ax_stats_tlv *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_selfgen_ax_stats_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -1572,12 +1505,11 @@ static inline void htt_print_tx_selfgen_ax_stats_tlv(const u32 *tag_buf, u8 *dat
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_selfgen_ac_err_stats_tlv(const u32 *tag_buf, u8 *data)
+static inline void
+htt_print_tx_selfgen_ac_err_stats_tlv(const void *tag_buf,
+				      struct debug_htt_stats_req *stats_req)
 {
-	struct htt_tx_selfgen_ac_err_stats_tlv *htt_stats_buf =
-			(struct htt_tx_selfgen_ac_err_stats_tlv *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_selfgen_ac_err_stats_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -1606,12 +1538,11 @@ static inline void htt_print_tx_selfgen_ac_err_stats_tlv(const u32 *tag_buf, u8 
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_selfgen_ax_err_stats_tlv(const u32 *tag_buf, u8 *data)
+static inline void
+htt_print_tx_selfgen_ax_err_stats_tlv(const void *tag_buf,
+				      struct debug_htt_stats_req *stats_req)
 {
-	struct htt_tx_selfgen_ax_err_stats_tlv *htt_stats_buf =
-			(struct htt_tx_selfgen_ax_err_stats_tlv *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_selfgen_ax_err_stats_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -1656,13 +1587,11 @@ static inline void htt_print_tx_selfgen_ax_err_stats_tlv(const u32 *tag_buf, u8 
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_pdev_mu_mimo_sch_stats_tlv(const u32 *tag_buf,
-							   u8 *data)
+static inline void
+htt_print_tx_pdev_mu_mimo_sch_stats_tlv(const void *tag_buf,
+					struct debug_htt_stats_req *stats_req)
 {
-	struct htt_tx_pdev_mu_mimo_sch_stats_tlv *htt_stats_buf =
-			(struct htt_tx_pdev_mu_mimo_sch_stats_tlv *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_pdev_mu_mimo_sch_stats_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -1706,12 +1635,11 @@ static inline void htt_print_tx_pdev_mu_mimo_sch_stats_tlv(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_pdev_mu_mimo_mpdu_stats_tlv(const u32 *tag_buf, u8 *data)
+static inline void
+htt_print_tx_pdev_mu_mimo_mpdu_stats_tlv(const void *tag_buf,
+					 struct debug_htt_stats_req *stats_req)
 {
-	struct htt_tx_pdev_mpdu_stats_tlv *htt_stats_buf =
-			(struct htt_tx_pdev_mpdu_stats_tlv *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_pdev_mpdu_stats_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -1837,14 +1765,12 @@ static inline void htt_print_tx_pdev_mu_mimo_mpdu_stats_tlv(const u32 *tag_buf, 
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_sched_txq_cmd_posted_tlv_v(const u32 *tag_buf,
-							u16 tag_len,
-							u8 *data)
+static inline void
+htt_print_sched_txq_cmd_posted_tlv_v(const void *tag_buf,
+				     u16 tag_len,
+				     struct debug_htt_stats_req *stats_req)
 {
-	struct htt_sched_txq_cmd_posted_tlv_v *htt_stats_buf =
-			(struct htt_sched_txq_cmd_posted_tlv_v *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_sched_txq_cmd_posted_tlv_v *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -1866,14 +1792,12 @@ static inline void htt_print_sched_txq_cmd_posted_tlv_v(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_sched_txq_cmd_reaped_tlv_v(const u32 *tag_buf,
-							u16 tag_len,
-							u8 *data)
+static inline void
+htt_print_sched_txq_cmd_reaped_tlv_v(const void *tag_buf,
+				     u16 tag_len,
+				     struct debug_htt_stats_req *stats_req)
 {
-	struct htt_sched_txq_cmd_reaped_tlv_v *htt_stats_buf =
-			(struct htt_sched_txq_cmd_reaped_tlv_v *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_sched_txq_cmd_reaped_tlv_v *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -1895,14 +1819,12 @@ static inline void htt_print_sched_txq_cmd_reaped_tlv_v(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_sched_txq_sched_order_su_tlv_v(const u32 *tag_buf,
-							    u16 tag_len,
-							    u8 *data)
+static inline void
+htt_print_sched_txq_sched_order_su_tlv_v(const void *tag_buf,
+					 u16 tag_len,
+					 struct debug_htt_stats_req *stats_req)
 {
-	struct htt_sched_txq_sched_order_su_tlv_v *htt_stats_buf =
-		(struct htt_sched_txq_sched_order_su_tlv_v *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_sched_txq_sched_order_su_tlv_v *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -1927,14 +1849,12 @@ static inline void htt_print_sched_txq_sched_order_su_tlv_v(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_sched_txq_sched_ineligibility_tlv_v(const u32 *tag_buf,
-								 u16 tag_len,
-								 u8 *data)
+static inline void
+htt_print_sched_txq_sched_ineligibility_tlv_v(const void *tag_buf,
+					      u16 tag_len,
+					      struct debug_htt_stats_req *stats_req)
 {
-	struct htt_sched_txq_sched_ineligibility_tlv_v *htt_stats_buf =
-		(struct htt_sched_txq_sched_ineligibility_tlv_v *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_sched_txq_sched_ineligibility_tlv_v *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -1958,13 +1878,11 @@ static inline void htt_print_sched_txq_sched_ineligibility_tlv_v(const u32 *tag_
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_pdev_stats_sched_per_txq_tlv(const u32 *tag_buf,
-							     u8 *data)
+static inline void
+htt_print_tx_pdev_stats_sched_per_txq_tlv(const void *tag_buf,
+					  struct debug_htt_stats_req *stats_req)
 {
-	struct htt_tx_pdev_stats_sched_per_txq_tlv *htt_stats_buf =
-		(struct htt_tx_pdev_stats_sched_per_txq_tlv *)tag_buf;
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_pdev_stats_sched_per_txq_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -2026,16 +1944,13 @@ static inline void htt_print_tx_pdev_stats_sched_per_txq_tlv(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_stats_tx_sched_cmn_tlv(const u32 *tag_buf,
-						    u8 *data)
+static inline void htt_print_stats_tx_sched_cmn_tlv(const void *tag_buf,
+						    struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_stats_tx_sched_cmn_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_stats_tx_sched_cmn_tlv *htt_stats_buf =
-		(struct htt_stats_tx_sched_cmn_tlv *)tag_buf;
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_STATS_TX_SCHED_CMN_TLV:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "mac_id = %u",
@@ -2051,17 +1966,15 @@ static inline void htt_print_stats_tx_sched_cmn_tlv(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_tqm_gen_mpdu_stats_tlv_v(const u32 *tag_buf,
-							 u16 tag_len,
-							 u8 *data)
+static inline void
+htt_print_tx_tqm_gen_mpdu_stats_tlv_v(const void *tag_buf,
+				      u16 tag_len,
+				      struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_tqm_gen_mpdu_stats_tlv_v *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_tx_tqm_gen_mpdu_stats_tlv_v *htt_stats_buf =
-		(struct htt_tx_tqm_gen_mpdu_stats_tlv_v *)tag_buf;
 	char gen_mpdu_end_reason[HTT_MAX_STRING_LEN] = {0};
 	u16 num_elements = min_t(u16, (tag_len >> 2),
 				 HTT_TX_TQM_MAX_LIST_MPDU_END_REASON);
@@ -2081,17 +1994,15 @@ static inline void htt_print_tx_tqm_gen_mpdu_stats_tlv_v(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_tqm_list_mpdu_stats_tlv_v(const u32 *tag_buf,
-							  u16 tag_len,
-							  u8 *data)
+static inline void
+htt_print_tx_tqm_list_mpdu_stats_tlv_v(const void *tag_buf,
+				       u16 tag_len,
+				       struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_tqm_list_mpdu_stats_tlv_v *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_tx_tqm_list_mpdu_stats_tlv_v *htt_stats_buf =
-		(struct htt_tx_tqm_list_mpdu_stats_tlv_v *)tag_buf;
 	char list_mpdu_end_reason[HTT_MAX_STRING_LEN] = {0};
 	u16 num_elems = min_t(u16, (tag_len >> 2), HTT_TX_TQM_MAX_LIST_MPDU_END_REASON);
 
@@ -2110,17 +2021,15 @@ static inline void htt_print_tx_tqm_list_mpdu_stats_tlv_v(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_tqm_list_mpdu_cnt_tlv_v(const u32 *tag_buf,
-							u16 tag_len,
-							u8 *data)
+static inline void
+htt_print_tx_tqm_list_mpdu_cnt_tlv_v(const void *tag_buf,
+				     u16 tag_len,
+				     struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_tqm_list_mpdu_cnt_tlv_v *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_tx_tqm_list_mpdu_cnt_tlv_v *htt_stats_buf =
-		(struct htt_tx_tqm_list_mpdu_cnt_tlv_v *)tag_buf;
 	char list_mpdu_cnt_hist[HTT_MAX_STRING_LEN] = {0};
 	u16 num_elems = min_t(u16, (tag_len >> 2),
 			      HTT_TX_TQM_MAX_LIST_MPDU_CNT_HISTOGRAM_BINS);
@@ -2140,15 +2049,14 @@ static inline void htt_print_tx_tqm_list_mpdu_cnt_tlv_v(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_tqm_pdev_stats_tlv_v(const u32 *tag_buf, u8 *data)
+static inline void
+htt_print_tx_tqm_pdev_stats_tlv_v(const void *tag_buf,
+				  struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_tqm_pdev_stats_tlv_v *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_tx_tqm_pdev_stats_tlv_v *htt_stats_buf =
-			(struct htt_tx_tqm_pdev_stats_tlv_v *)tag_buf;
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_TQM_PDEV_STATS_TLV_V:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "msdu_count = %u",
@@ -2222,15 +2130,13 @@ static inline void htt_print_tx_tqm_pdev_stats_tlv_v(const u32 *tag_buf, u8 *dat
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_tqm_cmn_stats_tlv(const u32 *tag_buf, u8 *data)
+static inline void htt_print_tx_tqm_cmn_stats_tlv(const void *tag_buf,
+						  struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_tqm_cmn_stats_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_tx_tqm_cmn_stats_tlv *htt_stats_buf =
-			(struct htt_tx_tqm_cmn_stats_tlv *)tag_buf;
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_TQM_CMN_STATS_TLV:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "mac_id = %u",
@@ -2258,15 +2164,13 @@ static inline void htt_print_tx_tqm_cmn_stats_tlv(const u32 *tag_buf, u8 *data)
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_tqm_error_stats_tlv(const u32 *tag_buf, u8 *data)
+static inline void htt_print_tx_tqm_error_stats_tlv(const void *tag_buf,
+						    struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_tqm_error_stats_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_tx_tqm_error_stats_tlv *htt_stats_buf =
-		(struct htt_tx_tqm_error_stats_tlv *)tag_buf;
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_TQM_ERROR_STATS_TLV:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "q_empty_failure = %u",
@@ -2284,15 +2188,13 @@ static inline void htt_print_tx_tqm_error_stats_tlv(const u32 *tag_buf, u8 *data
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_tqm_cmdq_status_tlv(const u32 *tag_buf, u8 *data)
+static inline void htt_print_tx_tqm_cmdq_status_tlv(const void *tag_buf,
+						    struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_tqm_cmdq_status_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_tx_tqm_cmdq_status_tlv *htt_stats_buf =
-		(struct htt_tx_tqm_cmdq_status_tlv *)tag_buf;
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_TQM_CMDQ_STATUS_TLV:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "mac_id = %u",
@@ -2330,15 +2232,14 @@ static inline void htt_print_tx_tqm_cmdq_status_tlv(const u32 *tag_buf, u8 *data
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_de_eapol_packets_stats_tlv(const u32 *tag_buf, u8 *data)
+static inline void
+htt_print_tx_de_eapol_packets_stats_tlv(const void *tag_buf,
+					struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_de_eapol_packets_stats_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_tx_de_eapol_packets_stats_tlv *htt_stats_buf =
-		(struct htt_tx_de_eapol_packets_stats_tlv *)tag_buf;
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len,
 			   "HTT_TX_DE_EAPOL_PACKETS_STATS_TLV:");
@@ -2363,15 +2264,14 @@ static inline void htt_print_tx_de_eapol_packets_stats_tlv(const u32 *tag_buf, u
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_de_classify_failed_stats_tlv(const u32 *tag_buf, u8 *data)
+static inline void
+htt_print_tx_de_classify_failed_stats_tlv(const void *tag_buf,
+					  struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_de_classify_failed_stats_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_tx_de_classify_failed_stats_tlv *htt_stats_buf =
-		(struct htt_tx_de_classify_failed_stats_tlv *)tag_buf;
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len,
 			   "HTT_TX_DE_CLASSIFY_FAILED_STATS_TLV:");
@@ -2410,15 +2310,14 @@ static inline void htt_print_tx_de_classify_failed_stats_tlv(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_de_classify_stats_tlv(const u32 *tag_buf, u8 *data)
+static inline void
+htt_print_tx_de_classify_stats_tlv(const void *tag_buf,
+				   struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_de_classify_stats_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_tx_de_classify_stats_tlv *htt_stats_buf =
-		(struct htt_tx_de_classify_stats_tlv *)tag_buf;
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_DE_CLASSIFY_STATS_TLV:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "arp_packets = %u",
@@ -2496,15 +2395,14 @@ static inline void htt_print_tx_de_classify_stats_tlv(const u32 *tag_buf, u8 *da
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_de_classify_status_stats_tlv(const u32 *tag_buf, u8 *data)
+static inline void
+htt_print_tx_de_classify_status_stats_tlv(const void *tag_buf,
+					  struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_de_classify_status_stats_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_tx_de_classify_status_stats_tlv *htt_stats_buf =
-		(struct htt_tx_de_classify_status_stats_tlv *)tag_buf;
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len,
 			   "HTT_TX_DE_CLASSIFY_STATUS_STATS_TLV:");
@@ -2533,15 +2431,14 @@ static inline void htt_print_tx_de_classify_status_stats_tlv(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_de_enqueue_packets_stats_tlv(const u32 *tag_buf, u8 *data)
+static inline void
+htt_print_tx_de_enqueue_packets_stats_tlv(const void *tag_buf,
+					  struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_de_enqueue_packets_stats_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_tx_de_enqueue_packets_stats_tlv *htt_stats_buf =
-		(struct htt_tx_de_enqueue_packets_stats_tlv *)tag_buf;
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len,
 			   "HTT_TX_DE_ENQUEUE_PACKETS_STATS_TLV:");
@@ -2560,15 +2457,14 @@ static inline void htt_print_tx_de_enqueue_packets_stats_tlv(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_de_enqueue_discard_stats_tlv(const u32 *tag_buf, u8 *data)
+static inline void
+htt_print_tx_de_enqueue_discard_stats_tlv(const void *tag_buf,
+					  struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_de_enqueue_discard_stats_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_tx_de_enqueue_discard_stats_tlv *htt_stats_buf =
-		(struct htt_tx_de_enqueue_discard_stats_tlv *)tag_buf;
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len,
 			   "HTT_TX_DE_ENQUEUE_DISCARD_STATS_TLV:");
@@ -2587,15 +2483,13 @@ static inline void htt_print_tx_de_enqueue_discard_stats_tlv(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_de_compl_stats_tlv(const u32 *tag_buf, u8 *data)
+static inline void htt_print_tx_de_compl_stats_tlv(const void *tag_buf,
+						   struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_de_compl_stats_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_tx_de_compl_stats_tlv *htt_stats_buf =
-		(struct htt_tx_de_compl_stats_tlv *)tag_buf;
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_DE_COMPL_STATS_TLV:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "tcl_dummy_frame = %u",
@@ -2617,17 +2511,15 @@ static inline void htt_print_tx_de_compl_stats_tlv(const u32 *tag_buf, u8 *data)
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_de_fw2wbm_ring_full_hist_tlv(const u32 *tag_buf,
-							     u16 tag_len,
-							     u8 *data)
+static inline void
+htt_print_tx_de_fw2wbm_ring_full_hist_tlv(const void *tag_buf,
+					  u16 tag_len,
+					  struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_de_fw2wbm_ring_full_hist_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_tx_de_fw2wbm_ring_full_hist_tlv *htt_stats_buf =
-		(struct htt_tx_de_fw2wbm_ring_full_hist_tlv *)tag_buf;
 	char fw2wbm_ring_full_hist[HTT_MAX_STRING_LEN] = {0};
 	u16  num_elements = tag_len >> 2;
 	u32  required_buffer_size = HTT_MAX_PRINT_CHAR_PER_ELEM * num_elements;
@@ -2655,15 +2547,13 @@ static inline void htt_print_tx_de_fw2wbm_ring_full_hist_tlv(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_de_cmn_stats_tlv(const u32 *tag_buf, u8 *data)
+static inline void
+htt_print_tx_de_cmn_stats_tlv(const void *tag_buf, struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_de_cmn_stats_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_tx_de_cmn_stats_tlv *htt_stats_buf =
-		(struct htt_tx_de_cmn_stats_tlv *)tag_buf;
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_TX_DE_CMN_STATS_TLV:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "mac_id = %u",
@@ -2689,15 +2579,13 @@ static inline void htt_print_tx_de_cmn_stats_tlv(const u32 *tag_buf, u8 *data)
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_ring_if_stats_tlv(const u32 *tag_buf, u8 *data)
+static inline void htt_print_ring_if_stats_tlv(const void *tag_buf,
+					       struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_ring_if_stats_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_ring_if_stats_tlv *htt_stats_buf =
-		(struct htt_ring_if_stats_tlv *)tag_buf;
 	char low_wm_hit_count[HTT_MAX_STRING_LEN] = {0};
 	char high_wm_hit_count[HTT_MAX_STRING_LEN] = {0};
 
@@ -2753,15 +2641,13 @@ static inline void htt_print_ring_if_stats_tlv(const u32 *tag_buf, u8 *data)
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_ring_if_cmn_tlv(const u32 *tag_buf, u8 *data)
+static inline void htt_print_ring_if_cmn_tlv(const void *tag_buf,
+					     struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_ring_if_cmn_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_ring_if_cmn_tlv *htt_stats_buf =
-		(struct htt_ring_if_cmn_tlv *)tag_buf;
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_RING_IF_CMN_TLV:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "mac_id = %u",
@@ -2777,17 +2663,14 @@ static inline void htt_print_ring_if_cmn_tlv(const u32 *tag_buf, u8 *data)
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_sfm_client_user_tlv_v(const u32 *tag_buf,
+static inline void htt_print_sfm_client_user_tlv_v(const void *tag_buf,
 						   u16 tag_len,
-						   u8 *data)
+						   struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_sfm_client_user_tlv_v *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_sfm_client_user_tlv_v *htt_stats_buf =
-		(struct htt_sfm_client_user_tlv_v *)tag_buf;
 	char dwords_used_by_user_n[HTT_MAX_STRING_LEN] = {0};
 	u16 num_elems = tag_len >> 2;
 
@@ -2807,15 +2690,13 @@ static inline void htt_print_sfm_client_user_tlv_v(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_sfm_client_tlv(const u32 *tag_buf, u8 *data)
+static inline void htt_print_sfm_client_tlv(const void *tag_buf,
+					    struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_sfm_client_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_sfm_client_tlv *htt_stats_buf =
-		(struct htt_sfm_client_tlv *)tag_buf;
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_SFM_CLIENT_TLV:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "client_id = %u",
@@ -2841,15 +2722,13 @@ static inline void htt_print_sfm_client_tlv(const u32 *tag_buf, u8 *data)
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_sfm_cmn_tlv(const u32 *tag_buf, u8 *data)
+static inline void htt_print_sfm_cmn_tlv(const void *tag_buf,
+					 struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_sfm_cmn_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_sfm_cmn_tlv *htt_stats_buf =
-		(struct htt_sfm_cmn_tlv *)tag_buf;
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_SFM_CMN_TLV:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "mac_id = %u",
@@ -2871,15 +2750,13 @@ static inline void htt_print_sfm_cmn_tlv(const u32 *tag_buf, u8 *data)
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_sring_stats_tlv(const u32 *tag_buf, u8 *data)
+static inline void htt_print_sring_stats_tlv(const void *tag_buf,
+					     struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_sring_stats_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_sring_stats_tlv *htt_stats_buf =
-		(struct htt_sring_stats_tlv *)tag_buf;
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_SRING_STATS_TLV:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "mac_id = %u",
@@ -2926,15 +2803,13 @@ static inline void htt_print_sring_stats_tlv(const u32 *tag_buf, u8 *data)
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_sring_cmn_tlv(const u32 *tag_buf, u8 *data)
+static inline void htt_print_sring_cmn_tlv(const void *tag_buf,
+					   struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_sring_cmn_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_sring_cmn_tlv *htt_stats_buf =
-		(struct htt_sring_cmn_tlv *)tag_buf;
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_SRING_CMN_TLV:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "num_records = %u\n",
@@ -2948,15 +2823,13 @@ static inline void htt_print_sring_cmn_tlv(const u32 *tag_buf, u8 *data)
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_tx_pdev_rate_stats_tlv(const u32 *tag_buf, u8 *data)
+static inline void htt_print_tx_pdev_rate_stats_tlv(const void *tag_buf,
+						    struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_tx_pdev_rate_stats_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_tx_pdev_rate_stats_tlv *htt_stats_buf =
-		(struct htt_tx_pdev_rate_stats_tlv *)tag_buf;
 	u8 j;
 	char str_buf[HTT_MAX_STRING_LEN] = {0};
 	char *tx_gi[HTT_TX_PEER_STATS_NUM_GI_COUNTERS];
@@ -3126,15 +2999,13 @@ static inline void htt_print_tx_pdev_rate_stats_tlv(const u32 *tag_buf, u8 *data
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_rx_pdev_rate_stats_tlv(const u32 *tag_buf, u8 *data)
+static inline void htt_print_rx_pdev_rate_stats_tlv(const void *tag_buf,
+						    struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_rx_pdev_rate_stats_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_rx_pdev_rate_stats_tlv *htt_stats_buf =
-		(struct htt_rx_pdev_rate_stats_tlv *)tag_buf;
 	u8 j;
 	char *rssi_chain[HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS];
 	char *rx_gi[HTT_RX_PDEV_STATS_NUM_GI_COUNTERS];
@@ -3250,15 +3121,13 @@ static inline void htt_print_rx_pdev_rate_stats_tlv(const u32 *tag_buf, u8 *data
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_rx_soc_fw_stats_tlv(const u32 *tag_buf, u8 *data)
+static inline void htt_print_rx_soc_fw_stats_tlv(const void *tag_buf,
+						 struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_rx_soc_fw_stats_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_rx_soc_fw_stats_tlv *htt_stats_buf =
-			(struct htt_rx_soc_fw_stats_tlv *)tag_buf;
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_RX_SOC_FW_STATS_TLV:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "fw_reo_ring_data_msdu = %u",
@@ -3297,17 +3166,15 @@ static inline void htt_print_rx_soc_fw_stats_tlv(const u32 *tag_buf, u8 *data)
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_rx_soc_fw_refill_ring_empty_tlv_v(const u32 *tag_buf,
-							       u16 tag_len,
-							       u8 *data)
+static inline void
+htt_print_rx_soc_fw_refill_ring_empty_tlv_v(const void *tag_buf,
+					    u16 tag_len,
+					    struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_rx_soc_fw_refill_ring_empty_tlv_v *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_rx_soc_fw_refill_ring_empty_tlv_v *htt_stats_buf =
-			(struct htt_rx_soc_fw_refill_ring_empty_tlv_v *)tag_buf;
 	char refill_ring_empty_cnt[HTT_MAX_STRING_LEN] = {0};
 	u16 num_elems = min_t(u16, (tag_len >> 2), HTT_RX_STATS_REFILL_MAX_RING);
 
@@ -3329,17 +3196,15 @@ static inline void htt_print_rx_soc_fw_refill_ring_empty_tlv_v(const u32 *tag_bu
 }
 
 static inline void
-htt_print_rx_soc_fw_refill_ring_num_rxdma_err_tlv_v(const u32 *tag_buf,
+htt_print_rx_soc_fw_refill_ring_num_rxdma_err_tlv_v(const void *tag_buf,
 						    u16 tag_len,
-						    u8 *data)
+						    struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_rx_soc_fw_refill_ring_num_rxdma_err_tlv_v *htt_stats_buf =
+		tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_rx_soc_fw_refill_ring_num_rxdma_err_tlv_v *htt_stats_buf =
-			(struct htt_rx_soc_fw_refill_ring_num_rxdma_err_tlv_v *)tag_buf;
 	char rxdma_err_cnt[HTT_MAX_STRING_LEN] = {0};
 	u16 num_elems = min_t(u16, (tag_len >> 2), HTT_RX_RXDMA_MAX_ERR_CODE);
 
@@ -3360,17 +3225,15 @@ htt_print_rx_soc_fw_refill_ring_num_rxdma_err_tlv_v(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_rx_soc_fw_refill_ring_num_reo_err_tlv_v(const u32 *tag_buf,
-								     u16 tag_len,
-								     u8 *data)
+static inline void
+htt_print_rx_soc_fw_refill_ring_num_reo_err_tlv_v(const void *tag_buf,
+						  u16 tag_len,
+						  struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_rx_soc_fw_refill_ring_num_reo_err_tlv_v *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_rx_soc_fw_refill_ring_num_reo_err_tlv_v *htt_stats_buf =
-			(struct htt_rx_soc_fw_refill_ring_num_reo_err_tlv_v *)tag_buf;
 	char reo_err_cnt[HTT_MAX_STRING_LEN] = {0};
 	u16 num_elems = min_t(u16, (tag_len >> 2), HTT_RX_REO_MAX_ERR_CODE);
 
@@ -3391,16 +3254,14 @@ static inline void htt_print_rx_soc_fw_refill_ring_num_reo_err_tlv_v(const u32 *
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_rx_reo_debug_stats_tlv_v(const u32 *tag_buf,
-						      u8 *data)
+static inline void
+htt_print_rx_reo_debug_stats_tlv_v(const void *tag_buf,
+				   struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_rx_reo_resource_stats_tlv_v *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_rx_reo_resource_stats_tlv_v *htt_stats_buf =
-			(struct htt_rx_reo_resource_stats_tlv_v *)tag_buf;
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_RX_REO_RESOURCE_STATS_TLV:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "sample_id = %u",
@@ -3432,17 +3293,15 @@ static inline void htt_print_rx_reo_debug_stats_tlv_v(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_rx_soc_fw_refill_ring_num_refill_tlv_v(const u32 *tag_buf,
-								    u16 tag_len,
-								    u8 *data)
+static inline void
+htt_print_rx_soc_fw_refill_ring_num_refill_tlv_v(const void *tag_buf,
+						 u16 tag_len,
+						 struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_rx_soc_fw_refill_ring_num_refill_tlv_v *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_rx_soc_fw_refill_ring_num_refill_tlv_v *htt_stats_buf =
-			(struct htt_rx_soc_fw_refill_ring_num_refill_tlv_v *)tag_buf;
 	char refill_ring_num_refill[HTT_MAX_STRING_LEN] = {0};
 	u16 num_elems = min_t(u16, (tag_len >> 2), HTT_RX_STATS_REFILL_MAX_RING);
 
@@ -3463,16 +3322,13 @@ static inline void htt_print_rx_soc_fw_refill_ring_num_refill_tlv_v(const u32 *t
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_rx_pdev_fw_stats_tlv(const u32 *tag_buf,
-						  u8 *data)
+static inline void htt_print_rx_pdev_fw_stats_tlv(const void *tag_buf,
+						  struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_rx_pdev_fw_stats_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_rx_pdev_fw_stats_tlv *htt_stats_buf =
-		(struct htt_rx_pdev_fw_stats_tlv *)tag_buf;
 	char fw_ring_mgmt_subtype[HTT_MAX_STRING_LEN] = {0};
 	char fw_ring_ctrl_subtype[HTT_MAX_STRING_LEN] = {0};
 
@@ -3589,16 +3445,14 @@ static inline void htt_print_rx_pdev_fw_stats_tlv(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_rx_pdev_fw_ring_mpdu_err_tlv_v(const u32 *tag_buf,
-							    u8 *data)
+static inline void
+htt_print_rx_pdev_fw_ring_mpdu_err_tlv_v(const void *tag_buf,
+					 struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_rx_pdev_fw_ring_mpdu_err_tlv_v *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_rx_pdev_fw_ring_mpdu_err_tlv_v *htt_stats_buf =
-		(struct htt_rx_pdev_fw_ring_mpdu_err_tlv_v *)tag_buf;
 	char fw_ring_mpdu_err[HTT_MAX_STRING_LEN] = {0};
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len,
@@ -3618,17 +3472,15 @@ static inline void htt_print_rx_pdev_fw_ring_mpdu_err_tlv_v(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_rx_pdev_fw_mpdu_drop_tlv_v(const u32 *tag_buf,
-							u16 tag_len,
-							u8 *data)
+static inline void
+htt_print_rx_pdev_fw_mpdu_drop_tlv_v(const void *tag_buf,
+				     u16 tag_len,
+				     struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_rx_pdev_fw_mpdu_drop_tlv_v *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_rx_pdev_fw_mpdu_drop_tlv_v *htt_stats_buf =
-		(struct htt_rx_pdev_fw_mpdu_drop_tlv_v *)tag_buf;
 	char fw_mpdu_drop[HTT_MAX_STRING_LEN] = {0};
 	u16 num_elems = min_t(u16, (tag_len >> 2), HTT_RX_STATS_FW_DROP_REASON_MAX);
 
@@ -3647,16 +3499,14 @@ static inline void htt_print_rx_pdev_fw_mpdu_drop_tlv_v(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_rx_pdev_fw_stats_phy_err_tlv(const u32 *tag_buf,
-							  u8 *data)
+static inline void
+htt_print_rx_pdev_fw_stats_phy_err_tlv(const void *tag_buf,
+				       struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_rx_pdev_fw_stats_phy_err_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_rx_pdev_fw_stats_phy_err_tlv *htt_stats_buf =
-		(struct htt_rx_pdev_fw_stats_phy_err_tlv *)tag_buf;
 	char phy_errs[HTT_MAX_STRING_LEN] = {0};
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_RX_PDEV_FW_STATS_PHY_ERR_TLV:");
@@ -3678,16 +3528,14 @@ static inline void htt_print_rx_pdev_fw_stats_phy_err_tlv(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_pdev_cca_stats_hist_tlv(const u32 *tag_buf,
-						     u8 *data)
+static inline void
+htt_print_pdev_cca_stats_hist_tlv(const void *tag_buf,
+				  struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_pdev_cca_stats_hist_v1_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_pdev_cca_stats_hist_v1_tlv *htt_stats_buf =
-			(struct htt_pdev_cca_stats_hist_v1_tlv *)tag_buf;
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "\nHTT_PDEV_CCA_STATS_HIST_TLV:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "chan_num = %u",
@@ -3712,15 +3560,14 @@ static inline void htt_print_pdev_cca_stats_hist_tlv(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_pdev_stats_cca_counters_tlv(const u32 *tag_buf, u8 *data)
+static inline void
+htt_print_pdev_stats_cca_counters_tlv(const void *tag_buf,
+				      struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_pdev_stats_cca_counters_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_pdev_stats_cca_counters_tlv *htt_stats_buf =
-			(struct htt_pdev_stats_cca_counters_tlv *)tag_buf;
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len,
 			   "|%10u| %10u| %10u| %11u| %10u| %11u| %18u| %10u|",
@@ -3741,16 +3588,13 @@ static inline void htt_print_pdev_stats_cca_counters_tlv(const u32 *tag_buf, u8 
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_hw_stats_whal_tx_tlv(const u32 *tag_buf,
-						  u8 *data)
+static inline void htt_print_hw_stats_whal_tx_tlv(const void *tag_buf,
+						  struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_hw_stats_whal_tx_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_hw_stats_whal_tx_tlv *htt_stats_buf =
-			(struct htt_hw_stats_whal_tx_tlv *)tag_buf;
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_HW_STATS_WHAL_TX_TLV:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "mac_id = %u",
@@ -3787,16 +3631,14 @@ static inline void htt_print_hw_stats_whal_tx_tlv(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_pdev_stats_twt_sessions_tlv(const u32 *tag_buf,
-							 u8 *data)
+static inline void
+htt_print_pdev_stats_twt_sessions_tlv(const void *tag_buf,
+				      struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_pdev_stats_twt_sessions_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_pdev_stats_twt_sessions_tlv *htt_stats_buf =
-			(struct htt_pdev_stats_twt_sessions_tlv *)tag_buf;
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_PDEV_STATS_TWT_SESSIONS_TLV:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "pdev_id = %u",
@@ -3812,16 +3654,14 @@ static inline void htt_print_pdev_stats_twt_sessions_tlv(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_pdev_stats_twt_session_tlv(const u32 *tag_buf,
-							u8 *data)
+static inline void
+htt_print_pdev_stats_twt_session_tlv(const void *tag_buf,
+				     struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_pdev_stats_twt_session_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_pdev_stats_twt_session_tlv *htt_stats_buf =
-		(struct htt_pdev_stats_twt_session_tlv *)tag_buf;
 
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "HTT_PDEV_STATS_TWT_SESSION_TLV:");
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "vdev_id = %u",
@@ -3853,16 +3693,15 @@ static inline void htt_print_pdev_stats_twt_session_tlv(const u32 *tag_buf,
 	stats_req->buf_len = len;
 }
 
-static inline void htt_print_pdev_obss_pd_stats_tlv_v(const u32 *tag_buf,
-						      u8 *data)
+static inline void
+htt_print_pdev_obss_pd_stats_tlv_v(const void *tag_buf,
+				   struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
+	const struct htt_pdev_obss_pd_stats_tlv *htt_stats_buf = tag_buf;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
-	struct htt_pdev_obss_pd_stats_tlv *htt_stats_buf =
-			(struct htt_pdev_obss_pd_stats_tlv *)tag_buf;
+
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "OBSS Tx success PPDU = %u",
 			   htt_stats_buf->num_obss_tx_ppdu_success);
 	len += HTT_DBG_OUT(buf + len, buf_len - len, "OBSS Tx failures PPDU = %u\n",
@@ -3877,10 +3716,8 @@ static inline void htt_print_pdev_obss_pd_stats_tlv_v(const u32 *tag_buf,
 }
 
 static inline void htt_htt_stats_debug_dump(const u32 *tag_buf,
-					    u8 *data)
+					    struct debug_htt_stats_req *stats_req)
 {
-	struct debug_htt_stats_req *stats_req =
-			(struct debug_htt_stats_req *)data;
 	u8 *buf = stats_req->buf;
 	u32 len = stats_req->buf_len;
 	u32 buf_len = ATH11K_HTT_STATS_BUF_SIZE;
@@ -3926,347 +3763,349 @@ static int ath11k_dbg_htt_ext_stats_parse(struct ath11k_base *ab,
 					  u16 tag, u16 len, const void *tag_buf,
 					  void *user_data)
 {
+	struct debug_htt_stats_req *stats_req = user_data;
+
 	switch (tag) {
 	case HTT_STATS_TX_PDEV_CMN_TAG:
-		htt_print_tx_pdev_stats_cmn_tlv(tag_buf, user_data);
+		htt_print_tx_pdev_stats_cmn_tlv(tag_buf, stats_req);
 		break;
 	case HTT_STATS_TX_PDEV_UNDERRUN_TAG:
-		htt_print_tx_pdev_stats_urrn_tlv_v(tag_buf, len, user_data);
+		htt_print_tx_pdev_stats_urrn_tlv_v(tag_buf, len, stats_req);
 		break;
 	case HTT_STATS_TX_PDEV_SIFS_TAG:
-		htt_print_tx_pdev_stats_sifs_tlv_v(tag_buf, len, user_data);
+		htt_print_tx_pdev_stats_sifs_tlv_v(tag_buf, len, stats_req);
 		break;
 	case HTT_STATS_TX_PDEV_FLUSH_TAG:
-		htt_print_tx_pdev_stats_flush_tlv_v(tag_buf, len, user_data);
+		htt_print_tx_pdev_stats_flush_tlv_v(tag_buf, len, stats_req);
 		break;
 	case HTT_STATS_TX_PDEV_PHY_ERR_TAG:
-		htt_print_tx_pdev_stats_phy_err_tlv_v(tag_buf, len, user_data);
+		htt_print_tx_pdev_stats_phy_err_tlv_v(tag_buf, len, stats_req);
 		break;
 	case HTT_STATS_TX_PDEV_SIFS_HIST_TAG:
-		htt_print_tx_pdev_stats_sifs_hist_tlv_v(tag_buf, len, user_data);
+		htt_print_tx_pdev_stats_sifs_hist_tlv_v(tag_buf, len, stats_req);
 		break;
 
 	case HTT_STATS_TX_PDEV_TX_PPDU_STATS_TAG:
-		htt_print_tx_pdev_stats_tx_ppdu_stats_tlv_v(tag_buf, user_data);
+		htt_print_tx_pdev_stats_tx_ppdu_stats_tlv_v(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_TX_PDEV_TRIED_MPDU_CNT_HIST_TAG:
 		htt_print_tx_pdev_stats_tried_mpdu_cnt_hist_tlv_v(tag_buf, len,
-								  user_data);
+								  stats_req);
 		break;
 
 	case HTT_STATS_STRING_TAG:
-		htt_print_stats_string_tlv(tag_buf, len, user_data);
+		htt_print_stats_string_tlv(tag_buf, len, stats_req);
 		break;
 
 	case HTT_STATS_TX_HWQ_CMN_TAG:
-		htt_print_tx_hwq_stats_cmn_tlv(tag_buf, user_data);
+		htt_print_tx_hwq_stats_cmn_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_TX_HWQ_DIFS_LATENCY_TAG:
-		htt_print_tx_hwq_difs_latency_stats_tlv_v(tag_buf, len, user_data);
+		htt_print_tx_hwq_difs_latency_stats_tlv_v(tag_buf, len, stats_req);
 		break;
 
 	case HTT_STATS_TX_HWQ_CMD_RESULT_TAG:
-		htt_print_tx_hwq_cmd_result_stats_tlv_v(tag_buf, len, user_data);
+		htt_print_tx_hwq_cmd_result_stats_tlv_v(tag_buf, len, stats_req);
 		break;
 
 	case HTT_STATS_TX_HWQ_CMD_STALL_TAG:
-		htt_print_tx_hwq_cmd_stall_stats_tlv_v(tag_buf, len, user_data);
+		htt_print_tx_hwq_cmd_stall_stats_tlv_v(tag_buf, len, stats_req);
 		break;
 
 	case HTT_STATS_TX_HWQ_FES_STATUS_TAG:
-		htt_print_tx_hwq_fes_result_stats_tlv_v(tag_buf, len, user_data);
+		htt_print_tx_hwq_fes_result_stats_tlv_v(tag_buf, len, stats_req);
 		break;
 
 	case HTT_STATS_TX_HWQ_TRIED_MPDU_CNT_HIST_TAG:
-		htt_print_tx_hwq_tried_mpdu_cnt_hist_tlv_v(tag_buf, len, user_data);
+		htt_print_tx_hwq_tried_mpdu_cnt_hist_tlv_v(tag_buf, len, stats_req);
 		break;
 
 	case HTT_STATS_TX_HWQ_TXOP_USED_CNT_HIST_TAG:
-		htt_print_tx_hwq_txop_used_cnt_hist_tlv_v(tag_buf, len, user_data);
+		htt_print_tx_hwq_txop_used_cnt_hist_tlv_v(tag_buf, len, stats_req);
 		break;
 	case HTT_STATS_TX_TQM_GEN_MPDU_TAG:
-		htt_print_tx_tqm_gen_mpdu_stats_tlv_v(tag_buf, len, user_data);
+		htt_print_tx_tqm_gen_mpdu_stats_tlv_v(tag_buf, len, stats_req);
 		break;
 
 	case HTT_STATS_TX_TQM_LIST_MPDU_TAG:
-		htt_print_tx_tqm_list_mpdu_stats_tlv_v(tag_buf, len, user_data);
+		htt_print_tx_tqm_list_mpdu_stats_tlv_v(tag_buf, len, stats_req);
 		break;
 
 	case HTT_STATS_TX_TQM_LIST_MPDU_CNT_TAG:
-		htt_print_tx_tqm_list_mpdu_cnt_tlv_v(tag_buf, len, user_data);
+		htt_print_tx_tqm_list_mpdu_cnt_tlv_v(tag_buf, len, stats_req);
 		break;
 
 	case HTT_STATS_TX_TQM_CMN_TAG:
-		htt_print_tx_tqm_cmn_stats_tlv(tag_buf, user_data);
+		htt_print_tx_tqm_cmn_stats_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_TX_TQM_PDEV_TAG:
-		htt_print_tx_tqm_pdev_stats_tlv_v(tag_buf, user_data);
+		htt_print_tx_tqm_pdev_stats_tlv_v(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_TX_TQM_CMDQ_STATUS_TAG:
-		htt_print_tx_tqm_cmdq_status_tlv(tag_buf, user_data);
+		htt_print_tx_tqm_cmdq_status_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_TX_DE_EAPOL_PACKETS_TAG:
-		htt_print_tx_de_eapol_packets_stats_tlv(tag_buf, user_data);
+		htt_print_tx_de_eapol_packets_stats_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_TX_DE_CLASSIFY_FAILED_TAG:
-		htt_print_tx_de_classify_failed_stats_tlv(tag_buf, user_data);
+		htt_print_tx_de_classify_failed_stats_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_TX_DE_CLASSIFY_STATS_TAG:
-		htt_print_tx_de_classify_stats_tlv(tag_buf, user_data);
+		htt_print_tx_de_classify_stats_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_TX_DE_CLASSIFY_STATUS_TAG:
-		htt_print_tx_de_classify_status_stats_tlv(tag_buf, user_data);
+		htt_print_tx_de_classify_status_stats_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_TX_DE_ENQUEUE_PACKETS_TAG:
-		htt_print_tx_de_enqueue_packets_stats_tlv(tag_buf, user_data);
+		htt_print_tx_de_enqueue_packets_stats_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_TX_DE_ENQUEUE_DISCARD_TAG:
-		htt_print_tx_de_enqueue_discard_stats_tlv(tag_buf, user_data);
+		htt_print_tx_de_enqueue_discard_stats_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_TX_DE_FW2WBM_RING_FULL_HIST_TAG:
-		htt_print_tx_de_fw2wbm_ring_full_hist_tlv(tag_buf, len, user_data);
+		htt_print_tx_de_fw2wbm_ring_full_hist_tlv(tag_buf, len, stats_req);
 		break;
 
 	case HTT_STATS_TX_DE_CMN_TAG:
-		htt_print_tx_de_cmn_stats_tlv(tag_buf, user_data);
+		htt_print_tx_de_cmn_stats_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_RING_IF_TAG:
-		htt_print_ring_if_stats_tlv(tag_buf, user_data);
+		htt_print_ring_if_stats_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_TX_PDEV_MU_MIMO_STATS_TAG:
-		htt_print_tx_pdev_mu_mimo_sch_stats_tlv(tag_buf, user_data);
+		htt_print_tx_pdev_mu_mimo_sch_stats_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_SFM_CMN_TAG:
-		htt_print_sfm_cmn_tlv(tag_buf, user_data);
+		htt_print_sfm_cmn_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_SRING_STATS_TAG:
-		htt_print_sring_stats_tlv(tag_buf, user_data);
+		htt_print_sring_stats_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_RX_PDEV_FW_STATS_TAG:
-		htt_print_rx_pdev_fw_stats_tlv(tag_buf, user_data);
+		htt_print_rx_pdev_fw_stats_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_RX_PDEV_FW_RING_MPDU_ERR_TAG:
-		htt_print_rx_pdev_fw_ring_mpdu_err_tlv_v(tag_buf, user_data);
+		htt_print_rx_pdev_fw_ring_mpdu_err_tlv_v(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_RX_PDEV_FW_MPDU_DROP_TAG:
-		htt_print_rx_pdev_fw_mpdu_drop_tlv_v(tag_buf, len, user_data);
+		htt_print_rx_pdev_fw_mpdu_drop_tlv_v(tag_buf, len, stats_req);
 		break;
 
 	case HTT_STATS_RX_SOC_FW_STATS_TAG:
-		htt_print_rx_soc_fw_stats_tlv(tag_buf, user_data);
+		htt_print_rx_soc_fw_stats_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_RX_SOC_FW_REFILL_RING_EMPTY_TAG:
-		htt_print_rx_soc_fw_refill_ring_empty_tlv_v(tag_buf, len, user_data);
+		htt_print_rx_soc_fw_refill_ring_empty_tlv_v(tag_buf, len, stats_req);
 		break;
 
 	case HTT_STATS_RX_SOC_FW_REFILL_RING_NUM_REFILL_TAG:
 		htt_print_rx_soc_fw_refill_ring_num_refill_tlv_v(
-				tag_buf, len, user_data);
+				tag_buf, len, stats_req);
 		break;
 	case HTT_STATS_RX_REFILL_RXDMA_ERR_TAG:
 		htt_print_rx_soc_fw_refill_ring_num_rxdma_err_tlv_v(
-				tag_buf, len, user_data);
+				tag_buf, len, stats_req);
 		break;
 
 	case HTT_STATS_RX_REFILL_REO_ERR_TAG:
 		htt_print_rx_soc_fw_refill_ring_num_reo_err_tlv_v(
-				tag_buf, len, user_data);
+				tag_buf, len, stats_req);
 		break;
 
 	case HTT_STATS_RX_REO_RESOURCE_STATS_TAG:
 		htt_print_rx_reo_debug_stats_tlv_v(
-				tag_buf, user_data);
+				tag_buf, stats_req);
 		break;
 	case HTT_STATS_RX_PDEV_FW_STATS_PHY_ERR_TAG:
-		htt_print_rx_pdev_fw_stats_phy_err_tlv(tag_buf, user_data);
+		htt_print_rx_pdev_fw_stats_phy_err_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_TX_PDEV_RATE_STATS_TAG:
-		htt_print_tx_pdev_rate_stats_tlv(tag_buf, user_data);
+		htt_print_tx_pdev_rate_stats_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_RX_PDEV_RATE_STATS_TAG:
-		htt_print_rx_pdev_rate_stats_tlv(tag_buf, user_data);
+		htt_print_rx_pdev_rate_stats_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_TX_PDEV_SCHEDULER_TXQ_STATS_TAG:
-		htt_print_tx_pdev_stats_sched_per_txq_tlv(tag_buf, user_data);
+		htt_print_tx_pdev_stats_sched_per_txq_tlv(tag_buf, stats_req);
 		break;
 	case HTT_STATS_TX_SCHED_CMN_TAG:
-		htt_print_stats_tx_sched_cmn_tlv(tag_buf, user_data);
+		htt_print_stats_tx_sched_cmn_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_TX_PDEV_MPDU_STATS_TAG:
-		htt_print_tx_pdev_mu_mimo_mpdu_stats_tlv(tag_buf, user_data);
+		htt_print_tx_pdev_mu_mimo_mpdu_stats_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_SCHED_TXQ_CMD_POSTED_TAG:
-		htt_print_sched_txq_cmd_posted_tlv_v(tag_buf, len, user_data);
+		htt_print_sched_txq_cmd_posted_tlv_v(tag_buf, len, stats_req);
 		break;
 
 	case HTT_STATS_RING_IF_CMN_TAG:
-		htt_print_ring_if_cmn_tlv(tag_buf, user_data);
+		htt_print_ring_if_cmn_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_SFM_CLIENT_USER_TAG:
-		htt_print_sfm_client_user_tlv_v(tag_buf, len, user_data);
+		htt_print_sfm_client_user_tlv_v(tag_buf, len, stats_req);
 		break;
 
 	case HTT_STATS_SFM_CLIENT_TAG:
-		htt_print_sfm_client_tlv(tag_buf, user_data);
+		htt_print_sfm_client_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_TX_TQM_ERROR_STATS_TAG:
-		htt_print_tx_tqm_error_stats_tlv(tag_buf, user_data);
+		htt_print_tx_tqm_error_stats_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_SCHED_TXQ_CMD_REAPED_TAG:
-		htt_print_sched_txq_cmd_reaped_tlv_v(tag_buf, len, user_data);
+		htt_print_sched_txq_cmd_reaped_tlv_v(tag_buf, len, stats_req);
 		break;
 
 	case HTT_STATS_SRING_CMN_TAG:
-		htt_print_sring_cmn_tlv(tag_buf, user_data);
+		htt_print_sring_cmn_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_TX_SOUNDING_STATS_TAG:
-		htt_print_tx_sounding_stats_tlv(tag_buf, user_data);
+		htt_print_tx_sounding_stats_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_TX_SELFGEN_AC_ERR_STATS_TAG:
-		htt_print_tx_selfgen_ac_err_stats_tlv(tag_buf, user_data);
+		htt_print_tx_selfgen_ac_err_stats_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_TX_SELFGEN_CMN_STATS_TAG:
-		htt_print_tx_selfgen_cmn_stats_tlv(tag_buf, user_data);
+		htt_print_tx_selfgen_cmn_stats_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_TX_SELFGEN_AC_STATS_TAG:
-		htt_print_tx_selfgen_ac_stats_tlv(tag_buf, user_data);
+		htt_print_tx_selfgen_ac_stats_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_TX_SELFGEN_AX_STATS_TAG:
-		htt_print_tx_selfgen_ax_stats_tlv(tag_buf, user_data);
+		htt_print_tx_selfgen_ax_stats_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_TX_SELFGEN_AX_ERR_STATS_TAG:
-		htt_print_tx_selfgen_ax_err_stats_tlv(tag_buf, user_data);
+		htt_print_tx_selfgen_ax_err_stats_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_TX_HWQ_MUMIMO_SCH_STATS_TAG:
-		htt_print_tx_hwq_mu_mimo_sch_stats_tlv(tag_buf, user_data);
+		htt_print_tx_hwq_mu_mimo_sch_stats_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_TX_HWQ_MUMIMO_MPDU_STATS_TAG:
-		htt_print_tx_hwq_mu_mimo_mpdu_stats_tlv(tag_buf, user_data);
+		htt_print_tx_hwq_mu_mimo_mpdu_stats_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_TX_HWQ_MUMIMO_CMN_STATS_TAG:
-		htt_print_tx_hwq_mu_mimo_cmn_stats_tlv(tag_buf, user_data);
+		htt_print_tx_hwq_mu_mimo_cmn_stats_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_HW_INTR_MISC_TAG:
-		htt_print_hw_stats_intr_misc_tlv(tag_buf, user_data);
+		htt_print_hw_stats_intr_misc_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_HW_WD_TIMEOUT_TAG:
-		htt_print_hw_stats_wd_timeout_tlv(tag_buf, user_data);
+		htt_print_hw_stats_wd_timeout_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_HW_PDEV_ERRS_TAG:
-		htt_print_hw_stats_pdev_errs_tlv(tag_buf, user_data);
+		htt_print_hw_stats_pdev_errs_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_COUNTER_NAME_TAG:
-		htt_print_counter_tlv(tag_buf, user_data);
+		htt_print_counter_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_TX_TID_DETAILS_TAG:
-		htt_print_tx_tid_stats_tlv(tag_buf, user_data);
+		htt_print_tx_tid_stats_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_TX_TID_DETAILS_V1_TAG:
-		htt_print_tx_tid_stats_v1_tlv(tag_buf, user_data);
+		htt_print_tx_tid_stats_v1_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_RX_TID_DETAILS_TAG:
-		htt_print_rx_tid_stats_tlv(tag_buf, user_data);
+		htt_print_rx_tid_stats_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_PEER_STATS_CMN_TAG:
-		htt_print_peer_stats_cmn_tlv(tag_buf, user_data);
+		htt_print_peer_stats_cmn_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_PEER_DETAILS_TAG:
-		htt_print_peer_details_tlv(tag_buf, user_data);
+		htt_print_peer_details_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_PEER_MSDU_FLOWQ_TAG:
-		htt_print_msdu_flow_stats_tlv(tag_buf, user_data);
+		htt_print_msdu_flow_stats_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_PEER_TX_RATE_STATS_TAG:
-		htt_print_tx_peer_rate_stats_tlv(tag_buf, user_data);
+		htt_print_tx_peer_rate_stats_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_PEER_RX_RATE_STATS_TAG:
-		htt_print_rx_peer_rate_stats_tlv(tag_buf, user_data);
+		htt_print_rx_peer_rate_stats_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_TX_DE_COMPL_STATS_TAG:
-		htt_print_tx_de_compl_stats_tlv(tag_buf, user_data);
+		htt_print_tx_de_compl_stats_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_PDEV_CCA_1SEC_HIST_TAG:
 	case HTT_STATS_PDEV_CCA_100MSEC_HIST_TAG:
 	case HTT_STATS_PDEV_CCA_STAT_CUMULATIVE_TAG:
-		htt_print_pdev_cca_stats_hist_tlv(tag_buf, user_data);
+		htt_print_pdev_cca_stats_hist_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_PDEV_CCA_COUNTERS_TAG:
-		htt_print_pdev_stats_cca_counters_tlv(tag_buf, user_data);
+		htt_print_pdev_stats_cca_counters_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_WHAL_TX_TAG:
-		htt_print_hw_stats_whal_tx_tlv(tag_buf, user_data);
+		htt_print_hw_stats_whal_tx_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_PDEV_TWT_SESSIONS_TAG:
-		htt_print_pdev_stats_twt_sessions_tlv(tag_buf, user_data);
+		htt_print_pdev_stats_twt_sessions_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_PDEV_TWT_SESSION_TAG:
-		htt_print_pdev_stats_twt_session_tlv(tag_buf, user_data);
+		htt_print_pdev_stats_twt_session_tlv(tag_buf, stats_req);
 		break;
 
 	case HTT_STATS_SCHED_TXQ_SCHED_ORDER_SU_TAG:
-		htt_print_sched_txq_sched_order_su_tlv_v(tag_buf, len, user_data);
+		htt_print_sched_txq_sched_order_su_tlv_v(tag_buf, len, stats_req);
 		break;
 
 	case HTT_STATS_SCHED_TXQ_SCHED_INELIGIBILITY_TAG:
-		htt_print_sched_txq_sched_ineligibility_tlv_v(tag_buf, len, user_data);
+		htt_print_sched_txq_sched_ineligibility_tlv_v(tag_buf, len, stats_req);
 		break;
 
 	case HTT_STATS_PDEV_OBSS_PD_TAG:
-		htt_print_pdev_obss_pd_stats_tlv_v(tag_buf, user_data);
+		htt_print_pdev_obss_pd_stats_tlv_v(tag_buf, stats_req);
 		break;
 	default:
 		break;
@@ -4318,7 +4157,7 @@ void ath11k_dbg_htt_ext_stats_handler(struct ath11k_base *ab,
 	len = FIELD_GET(HTT_T2H_EXT_STATS_INFO1_LENGTH, msg->info1);
 	ret = ath11k_dp_htt_tlv_iter(ab, msg->data, len,
 				     ath11k_dbg_htt_ext_stats_parse,
-				     (void *)stats_req);
+				     stats_req);
 	if (ret)
 		ath11k_warn(ab, "Failed to parse tlv %d\n", ret);
 
@@ -4363,6 +4202,14 @@ static ssize_t ath11k_write_htt_stats_type(struct file *file,
 
 	return ret;
 }
+
+static const struct file_operations fops_htt_stats_type = {
+	.read = ath11k_read_htt_stats_type,
+	.write = ath11k_write_htt_stats_type,
+	.open = simple_open,
+	.owner = THIS_MODULE,
+	.llseek = default_llseek,
+};
 
 static int ath11k_prep_htt_stats_cfg_params(struct ath11k *ar, u8 type,
 					    const u8 *mac_addr,
@@ -4506,6 +4353,14 @@ static ssize_t ath11k_read_htt_stats(struct file *file,
 	return simple_read_from_buffer(user_buf, count, ppos, buf, length);
 }
 
+static const struct file_operations fops_dump_htt_stats = {
+	.open = ath11k_open_htt_stats,
+	.release = ath11k_release_htt_stats,
+	.read = ath11k_read_htt_stats,
+	.owner = THIS_MODULE,
+	.llseek = default_llseek,
+};
+
 static ssize_t ath11k_read_htt_stats_reset(struct file *file,
 					   char __user *user_buf,
 					   size_t count, loff_t *ppos)
@@ -4556,22 +4411,6 @@ static ssize_t ath11k_write_htt_stats_reset(struct file *file,
 
 	return ret;
 }
-
-static const struct file_operations fops_htt_stats_type = {
-	.read = ath11k_read_htt_stats_type,
-	.write = ath11k_write_htt_stats_type,
-	.open = simple_open,
-	.owner = THIS_MODULE,
-	.llseek = default_llseek,
-};
-
-static const struct file_operations fops_dump_htt_stats = {
-	.open = ath11k_open_htt_stats,
-	.release = ath11k_release_htt_stats,
-	.read = ath11k_read_htt_stats,
-	.owner = THIS_MODULE,
-	.llseek = default_llseek,
-};
 
 static const struct file_operations fops_htt_stats_reset = {
 	.read = ath11k_read_htt_stats_reset,

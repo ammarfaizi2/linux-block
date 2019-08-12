@@ -104,7 +104,7 @@ extern const u8 ath11k_host2rxdma_ring_mask[ATH11K_EXT_IRQ_GRP_NUM_MAX];
 extern const u8 rx_mon_status_ring_mask[ATH11K_EXT_IRQ_GRP_NUM_MAX];
 
 struct ath11k_ext_irq_grp {
-	struct ath11k_base *sc;
+	struct ath11k_base *ab;
 	u32 irqs[ATH11K_EXT_IRQ_NUM_MAX];
 	u32 num_irq;
 	u32 grp_id;
@@ -594,7 +594,6 @@ struct ath11k_base {
 	struct ath11k_ce ce;
 	struct timer_list rx_replenish_retry;
 	struct ath11k_hal hal;
-	bool mac_registered;
 	/* To synchronize core_start/core_stop */
 	struct mutex core_lock;
 	/* Protects data like peers */
@@ -783,7 +782,7 @@ struct ath11k_base *ath11k_core_alloc(struct device *dev);
 void ath11k_core_free(struct ath11k_base *ath11k);
 int ath11k_core_fetch_bdf(struct ath11k_base *ath11k,
 			  struct ath11k_board_data *bd);
-void ath11k_core_free_bdf(struct ath11k_base *sc, struct ath11k_board_data *bd);
+void ath11k_core_free_bdf(struct ath11k_base *ab, struct ath11k_board_data *bd);
 
 void ath11k_core_halt(struct ath11k *ar);
 u8 ath11k_core_get_hw_mac_id(struct ath11k_base *ab, int pdev_idx);

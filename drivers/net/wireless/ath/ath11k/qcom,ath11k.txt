@@ -12,8 +12,6 @@ Optional properties:
 - interrupt-names: Must include the entries for CE interrupt
 		   names ("ce0" to "ce11") and hw srng interrupt
 		   names.
-- qcom,tgt-mem-mode: Target memory mode used to select BDF Address
-- qcom,bdf-addr: List of BDF address used to configure for the device
 - qcom,rproc: DT entry of q6v5-wcss
 
 Example:
@@ -125,7 +123,5 @@ wifi0: wifi@c000000 {
 			  "wbm2host-tx-completions-ring2",
 			  "wbm2host-tx-completions-ring1",
 			  "tcl2host-status-ring";
-	qcom,tgt-mem-mode = <0>;
-	qcom,bdf-addr = <0x4BE00000 0x4BE00000>;
 	qcom,rproc = <&qcom_q6v5_wcss>;
 };

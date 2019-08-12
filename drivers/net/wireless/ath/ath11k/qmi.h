@@ -12,6 +12,7 @@
 #define ATH11K_HOST_VERSION_STRING		"WIN"
 #define ATH11K_QMI_WLANFW_TIMEOUT_MS		5000
 #define ATH11K_QMI_MAX_BDF_FILE_NAME_SIZE	64
+#define ATH11K_QMI_BDF_ADDRESS			0x4B0C0000
 #define ATH11K_QMI_BDF_MAX_SIZE			(256 * 1024)
 #define ATH11K_QMI_CALDATA_OFFSET		(128 * 1024)
 #define ATH11K_QMI_WLANFW_MAX_BUILD_ID_LEN_V01	128
@@ -31,6 +32,7 @@
 
 #define QMI_WLANFW_MAX_DATA_SIZE_V01		6144
 #define ATH11K_FIRMWARE_MODE_OFF		4
+#define ATH11K_QMI_TARGET_MEM_MODE_DEFAULT	0
 
 struct ath11k_base;
 
@@ -432,12 +434,12 @@ struct qmi_wlanfw_wlan_cfg_resp_msg_v01 {
 	struct qmi_response_type_v01 resp;
 };
 
-int ath11k_qmi_firmware_start(struct ath11k_base *sc,
+int ath11k_qmi_firmware_start(struct ath11k_base *ab,
 			      u32 mode);
-void ath11k_qmi_firmware_stop(struct ath11k_base *sc);
+void ath11k_qmi_firmware_stop(struct ath11k_base *ab);
 void ath11k_qmi_event_work(struct work_struct *work);
 void ath11k_qmi_msg_recv_work(struct work_struct *work);
-void ath11k_qmi_deinit_service(struct ath11k_base *sc);
-int ath11k_qmi_init_service(struct ath11k_base *sc);
+void ath11k_qmi_deinit_service(struct ath11k_base *ab);
+int ath11k_qmi_init_service(struct ath11k_base *ab);
 
 #endif

@@ -505,10 +505,10 @@ static void ath11k_dp_reo_cmd_free(struct ath11k_dp *dp, void *ctx,
 	struct dp_rx_tid *rx_tid = ctx;
 
 	if (status != HAL_REO_CMD_SUCCESS)
-		ath11k_warn(dp->sc, "failed to flush rx tid hw desc, tid %d status %d\n",
+		ath11k_warn(dp->ab, "failed to flush rx tid hw desc, tid %d status %d\n",
 			    rx_tid->tid, status);
 
-	dma_unmap_single(dp->sc->dev, rx_tid->paddr, rx_tid->size,
+	dma_unmap_single(dp->ab->dev, rx_tid->paddr, rx_tid->size,
 			 DMA_BIDIRECTIONAL);
 	kfree(rx_tid->vaddr);
 }
@@ -555,7 +555,7 @@ static void ath11k_dp_reo_cache_flush(struct ath11k_base *ab,
 static void ath11k_dp_rx_tid_del_func(struct ath11k_dp *dp, void *ctx,
 				      enum hal_reo_cmd_status status)
 {
-	struct ath11k_base *ab = dp->sc;
+	struct ath11k_base *ab = dp->ab;
 	struct dp_rx_tid *rx_tid = ctx;
 	struct dp_reo_cache_flush_elem *elem, *tmp;
 

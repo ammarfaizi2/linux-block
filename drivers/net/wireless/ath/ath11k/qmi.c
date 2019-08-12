@@ -1676,22 +1676,13 @@ out:
 
 static int ath11k_qmi_alloc_target_mem_chunk(struct ath11k_base *ab)
 {
-	u32 bdf_location[2] = {0, 0};
-	struct device *dev = ab->dev;
-	int i, idx, mode = ab->qmi.target_mem_mode;
-
-	if (of_property_read_u32_array(dev->of_node, "qcom,bdf-addr",
-				       &bdf_location[0],
-				       ARRAY_SIZE(bdf_location))) {
-		ath11k_warn(ab, "qmi no bdf_addr in device_tree\n");
-		return -EINVAL;
-	}
+	int i, idx;
 
 	for (i = 0, idx = 0; i < ab->qmi.mem_seg_count; i++) {
 		switch (ab->qmi.target_mem[i].type) {
 		case BDF_MEM_REGION_TYPE:
-			ab->qmi.target_mem[idx].paddr = bdf_location[mode];
-			ab->qmi.target_mem[idx].vaddr = bdf_location[mode];
+			ab->qmi.target_mem[idx].paddr = ATH11K_QMI_BDF_ADDRESS;
+			ab->qmi.target_mem[idx].vaddr = ATH11K_QMI_BDF_ADDRESS;
 			ab->qmi.target_mem[idx].size = ab->qmi.target_mem[i].size;
 			ab->qmi.target_mem[idx].type = ab->qmi.target_mem[i].type;
 			idx++;
@@ -1854,9 +1845,7 @@ static int ath11k_qmi_load_bdf(struct ath11k_base *ab)
 {
 	struct qmi_wlanfw_bdf_download_req_msg_v01 *req;
 	struct qmi_wlanfw_bdf_download_resp_msg_v01 resp;
-	struct device *dev = ab->dev;
 	struct qmi_txn txn = {};
-	u32 location[2];
 	void __iomem *bdf_addr = NULL;
 	int type, ret;
 
@@ -1865,15 +1854,7 @@ static int ath11k_qmi_load_bdf(struct ath11k_base *ab)
 		return -ENOMEM;
 	memset(&resp, 0, sizeof(resp));
 
-	if (of_property_read_u32_array(dev->of_node, "qcom,bdf-addr", &location[0],
-				       ARRAY_SIZE(location))) {
-		ath11k_err(ab, "qmi bdf_addr is not in device_tree\n");
-		ret = -EINVAL;
-		goto out;
-	}
-
-	bdf_addr = ioremap(location[ab->qmi.target_mem_mode],
-			   ATH11K_QMI_BDF_MAX_SIZE);
+	bdf_addr = ioremap(ATH11K_QMI_BDF_ADDRESS, ATH11K_QMI_BDF_MAX_SIZE);
 	if (!bdf_addr) {
 		ath11k_warn(ab, "qmi ioremap error for BDF\n");
 		ret = -EIO;
@@ -2410,19 +2391,12 @@ static void ath11k_qmi_driver_event_work(struct work_struct *work)
 int ath11k_qmi_init_service(struct ath11k_base *ab)
 {
 	int ret;
-	struct device *dev = ab->dev;
 
 	memset(&ab->qmi.target, 0, sizeof(struct target_info));
 	memset(&ab->qmi.target_mem, 0, sizeof(struct target_mem_chunk));
 	ab->qmi.ab = ab;
 
-	if (of_property_read_u32(dev->of_node,
-				 "qcom,tgt-mem-mode",
-				 &ab->qmi.target_mem_mode)) {
-		ath11k_err(ab, "No ipq8074_tgt_mem_mode entry in dev-tree.\n");
-		ab->qmi.target_mem_mode = 0;
-	}
-
+	ab->qmi.target_mem_mode = ATH11K_QMI_TARGET_MEM_MODE_DEFAULT;
 	ret = qmi_handle_init(&ab->qmi.handle, ATH11K_QMI_RESP_LEN_MAX,
 			      &ath11k_qmi_ops, ath11k_qmi_msg_handlers);
 	if (ret < 0) {

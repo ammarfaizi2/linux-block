@@ -207,9 +207,9 @@ static ssize_t ath11k_dbg_sta_dump_tx_stats(struct file *file,
 	struct ath11k_sta *arsta = (struct ath11k_sta *)sta->drv_priv;
 	struct ath11k *ar = arsta->arvif->ar;
 	struct ath11k_htt_data_stats *stats;
-	const char *str_name[ATH11K_STATS_TYPE_MAX] = {"succ", "fail",
-						       "retry", "ampdu"};
-	const char *str[ATH11K_COUNTER_TYPE_MAX] = {"bytes", "packets"};
+	static const char *str_name[ATH11K_STATS_TYPE_MAX] = {"succ", "fail",
+							      "retry", "ampdu"};
+	static const char *str[ATH11K_COUNTER_TYPE_MAX] = {"bytes", "packets"};
 	int len = 0, i, j, k, retval = 0;
 	const int size = 2 * 4096;
 	char *buf;

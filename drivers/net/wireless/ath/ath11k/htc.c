@@ -25,10 +25,6 @@ struct sk_buff *ath11k_htc_alloc_skb(struct ath11k_base *ab, int size)
 	return skb;
 }
 
-/********/
-/* Send */
-/********/
-
 static void ath11k_htc_control_tx_complete(struct ath11k_base *ab,
 					   struct sk_buff *skb)
 {
@@ -152,10 +148,6 @@ err_pull:
 	skb_pull(skb, sizeof(struct ath11k_htc_hdr));
 	return ret;
 }
-
-/***********/
-/* Receive */
-/***********/
 
 static void
 ath11k_htc_process_credit_report(struct ath11k_htc *htc,
@@ -374,10 +366,6 @@ static void ath11k_htc_control_rx_complete(struct ath11k_base *ab,
 	ath11k_warn(ab, "unexpected htc rx\n");
 	kfree_skb(skb);
 }
-
-/***************/
-/* Init/Deinit */
-/***************/
 
 static const char *htc_service_name(enum ath11k_htc_svc_id id)
 {

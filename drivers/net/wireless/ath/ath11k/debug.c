@@ -12,7 +12,7 @@
 #include "debug_htt_stats.h"
 #include "peer.h"
 
-void ath11k_info(struct ath11k_base *sc, const char *fmt, ...)
+void ath11k_info(struct ath11k_base *ab, const char *fmt, ...)
 {
 	struct va_format vaf = {
 		.fmt = fmt,
@@ -21,12 +21,12 @@ void ath11k_info(struct ath11k_base *sc, const char *fmt, ...)
 
 	va_start(args, fmt);
 	vaf.va = &args;
-	dev_info(sc->dev, "%pV", &vaf);
+	dev_info(ab->dev, "%pV", &vaf);
 	/* TODO: Trace the log */
 	va_end(args);
 }
 
-void ath11k_err(struct ath11k_base *sc, const char *fmt, ...)
+void ath11k_err(struct ath11k_base *ab, const char *fmt, ...)
 {
 	struct va_format vaf = {
 		.fmt = fmt,
@@ -35,12 +35,12 @@ void ath11k_err(struct ath11k_base *sc, const char *fmt, ...)
 
 	va_start(args, fmt);
 	vaf.va = &args;
-	dev_err(sc->dev, "%pV", &vaf);
+	dev_err(ab->dev, "%pV", &vaf);
 	/* TODO: Trace the log */
 	va_end(args);
 }
 
-void ath11k_warn(struct ath11k_base *sc, const char *fmt, ...)
+void ath11k_warn(struct ath11k_base *ab, const char *fmt, ...)
 {
 	struct va_format vaf = {
 		.fmt = fmt,
@@ -49,7 +49,7 @@ void ath11k_warn(struct ath11k_base *sc, const char *fmt, ...)
 
 	va_start(args, fmt);
 	vaf.va = &args;
-	dev_warn_ratelimited(sc->dev, "%pV", &vaf);
+	dev_warn_ratelimited(ab->dev, "%pV", &vaf);
 	/* TODO: Trace the log */
 	va_end(args);
 }
@@ -539,7 +539,6 @@ static ssize_t ath11k_write_simulate_fw_crash(struct file *file,
 	struct ath11k_base *ab = file->private_data;
 	struct ath11k_pdev *pdev;
 	struct ath11k *ar = ab->pdevs[0].ar;
-	struct crash_inject param;
 	char buf[32] = {0};
 	ssize_t rc;
 	int i, ret, radioup;
@@ -571,9 +570,9 @@ static ssize_t ath11k_write_simulate_fw_crash(struct file *file,
 
 	if (!strcmp(buf, "assert")) {
 		ath11k_info(ab, "simulating firmware assert crash\n");
-		param.type = ATH11K_WMI_FW_HANG_ASSERT_TYPE;
-		param.delay_time_ms = ATH11K_WMI_FW_HANG_DELAY;
-		ret = ath11k_send_crash_inject_cmd(&ab->wmi_sc.wmi[0], &param);
+		ret = ath11k_wmi_force_fw_hang_cmd(ar,
+						   ATH11K_WMI_FW_HANG_ASSERT_TYPE,
+						   ATH11K_WMI_FW_HANG_DELAY);
 	} else {
 		ret = -EINVAL;
 		goto exit;
@@ -746,12 +745,12 @@ static ssize_t ath11k_debug_dump_soc_rx_stats(struct file *file,
 	struct ath11k_soc_dp_rx_stats *soc_stats = &ab->soc_stats;
 	int len = 0, i, retval;
 	const int size = 4096;
-	const char *rxdma_err[HAL_REO_ENTR_RING_RXDMA_ECODE_MAX] = {
+	static const char *rxdma_err[HAL_REO_ENTR_RING_RXDMA_ECODE_MAX] = {
 			"Overflow", "MPDU len", "FCS", "Decrypt", "TKIP MIC",
 			"Unencrypt", "MSDU len", "MSDU limit", "WiFi parse",
 			"AMSDU parse", "SA timeout", "DA timeout",
 			"Flow timeout", "Flush req"};
-	const char *reo_err[HAL_REO_DEST_RING_ERROR_CODE_MAX] = {
+	static const char *reo_err[HAL_REO_DEST_RING_ERROR_CODE_MAX] = {
 			"Desc addr zero", "Desc inval", "AMPDU in non BA",
 			"Non BA dup", "BA dup", "Frame 2k jump", "BAR 2k jump",
 			"Frame OOR", "BAR OOR", "No BA session",
@@ -964,6 +963,12 @@ static ssize_t ath11k_read_pktlog_filter(struct file *file,
 	return simple_read_from_buffer(ubuf, count, ppos, buf, len);
 }
 
+static const struct file_operations fops_pktlog_filter = {
+	.read = ath11k_read_pktlog_filter,
+	.write = ath11k_write_pktlog_filter,
+	.open = simple_open
+};
+
 static ssize_t ath11k_write_simulate_radar(struct file *file,
 					   const char __user *user_buf,
 					   size_t count, loff_t *ppos)
@@ -977,12 +982,6 @@ static ssize_t ath11k_write_simulate_radar(struct file *file,
 
 	return count;
 }
-
-static const struct file_operations fops_pktlog_filter = {
-	.read = ath11k_read_pktlog_filter,
-	.write = ath11k_write_pktlog_filter,
-	.open = simple_open
-};
 
 static const struct file_operations fops_simulate_radar = {
 	.write = ath11k_write_simulate_radar,

@@ -139,11 +139,11 @@ struct ath11k_ce_ring {
 	u32 hal_ring_id;
 
 	/* keep last */
-	struct sk_buff *per_transfer_context[0];
+	struct sk_buff *skb[0];
 };
 
 struct ath11k_ce_pipe {
-	struct ath11k_base *sc;
+	struct ath11k_base *ab;
 	u16 pipe_num;
 	unsigned int attr_flags;
 	unsigned int buf_sz;
@@ -164,23 +164,15 @@ struct ath11k_ce {
 	spinlock_t ce_lock;
 };
 
-struct ath11k_ce_sg_item {
-	u16 transfer_id;
-	void *transfer_context; /* NULL = tx completion callback not called */
-	void *vaddr; /* for debugging mostly */
-	u32 paddr;
-	u16 len;
-};
-
 void ath11k_ce_cleanup_pipes(struct ath11k_base *ab);
 void ath11k_ce_rx_replenish_retry(struct timer_list *t);
 void ath11k_ce_per_engine_service(struct ath11k_base *ab, u16 ce_id);
 int ath11k_ce_send(struct ath11k_base *ab, struct sk_buff *skb, u8 pipe_id,
 		   u16 transfer_id);
-void ath11k_ce_rx_post_buf(struct ath11k_base *sc);
-int ath11k_ce_init_pipes(struct ath11k_base *sc);
-int ath11k_ce_alloc_pipes(struct ath11k_base *sc);
-void ath11k_ce_free_pipes(struct ath11k_base *sc);
+void ath11k_ce_rx_post_buf(struct ath11k_base *ab);
+int ath11k_ce_init_pipes(struct ath11k_base *ab);
+int ath11k_ce_alloc_pipes(struct ath11k_base *ab);
+void ath11k_ce_free_pipes(struct ath11k_base *ab);
 int ath11k_ce_get_attr_flags(int ce_id);
 void ath11k_ce_poll_send_completed(struct ath11k_base *ab, u8 pipe_id);
 #endif
