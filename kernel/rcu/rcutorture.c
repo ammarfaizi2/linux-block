@@ -1787,8 +1787,6 @@ static void rcu_torture_fwd_prog_nr(int *tested, int *tested_tries)
 		init_rcu_head_on_stack(&fcs.rh);
 		selfpropcb = true;
 	}
-	if (IS_ENABLED(CONFIG_NO_HZ_FULL))
-		tick_dep_set_task(current, TICK_DEP_MASK_RCU);
 
 	/* Tight loop containing cond_resched(). */
 	WRITE_ONCE(rcu_fwd_cb_nodelay, true);
@@ -1834,8 +1832,6 @@ static void rcu_torture_fwd_prog_nr(int *tested, int *tested_tries)
 		destroy_rcu_head_on_stack(&fcs.rh);
 	}
 	schedule_timeout_uninterruptible(HZ / 10); /* Let kthreads recover. */
-	if (IS_ENABLED(CONFIG_NO_HZ_FULL))
-		tick_dep_clear_task(current, TICK_DEP_MASK_RCU);
 	WRITE_ONCE(rcu_fwd_cb_nodelay, false);
 }
 
