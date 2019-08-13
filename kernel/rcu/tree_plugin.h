@@ -1787,10 +1787,11 @@ static bool rcu_nocb_try_bypass(struct rcu_data *rdp, struct rcu_head *rhp,
 	} else {
 		WRITE_ONCE(rdp->nocb_nobypass_last, j);
 		c = rdp->nocb_nobypass_count - nocb_nobypass_lim_per_jiffy;
-		if (c > nocb_nobypass_lim_per_jiffy)
-			c = nocb_nobypass_lim_per_jiffy;
-		else if (c < 0)
+		if (ULONG_CMP_LT(rdp->nocb_nobypass_count,
+				 nocb_nobypass_lim_per_jiffy))
 			c = 0;
+		else if (c > nocb_nobypass_lim_per_jiffy)
+			c = nocb_nobypass_lim_per_jiffy;
 	}
 	WRITE_ONCE(rdp->nocb_nobypass_count, c);
 
