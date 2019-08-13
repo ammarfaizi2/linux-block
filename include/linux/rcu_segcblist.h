@@ -14,6 +14,7 @@
 #ifndef __INCLUDE_LINUX_RCU_SEGCBLIST_H
 #define __INCLUDE_LINUX_RCU_SEGCBLIST_H
 
+#include <linux/types.h>
 #include <uapi/asm-generic/types.h>
 #include <asm-generic/atomic-long.h>
 
