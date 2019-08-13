@@ -97,10 +97,12 @@ void device_links_read_unlock(int not_used)
 	up_read(&device_links_lock);
 }
 
+#ifdef CONFIG_DEBUG_LOCK_ALLOC
 int device_links_read_lock_held(void)
 {
-	return lock_is_held(&device_links_lock);
+	return lockdep_is_held(&device_links_lock);
 }
+#endif
 #endif /* !CONFIG_SRCU */
 
 /**
