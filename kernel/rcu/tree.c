@@ -898,8 +898,10 @@ void rcu_irq_enter_irqson(void)
  */
 void rcu_disable_tick_upon_qs(struct rcu_data *rdp)
 {
-	if (tick_nohz_full_cpu(rdp->cpu) && rdp->rcu_forced_tick)
+	if (tick_nohz_full_cpu(rdp->cpu) && rdp->rcu_forced_tick) {
 		tick_dep_clear_cpu(rdp->cpu, TICK_DEP_MASK_RCU);
+		rdp->rcu_forced_tick = false;
+	}
 }
 
 /**
