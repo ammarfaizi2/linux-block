@@ -58,7 +58,7 @@
 struct mlx5_nic_flow_attr {
 	u32 action;
 	u32 flow_tag;
-	u32 mod_hdr_id;
+	struct mlx5_modify_hdr *modify_hdr;
 	u32 hairpin_tirn;
 	u8 match_level;
 	struct mlx5_flow_table	*hairpin_ft;
@@ -179,7 +179,7 @@ struct mlx5e_mod_hdr_entry {
 
 	struct mod_hdr_key key;
 
-	u32 mod_hdr_id;
+	struct mlx5_modify_hdr *modify_hdr;
 };
 
 #define MLX5_MH_ACT_SZ MLX5_UN_SZ_BYTES(set_action_in_add_action_in_auto)
@@ -250,12 +250,13 @@ static int mlx5e_attach_mod_hdr(struct mlx5e_priv *priv,
 	mh->key.num_actions = num_actions;
 	INIT_LIST_HEAD(&mh->flows);
 
-	err = mlx5_modify_header_alloc(priv->mdev, namespace,
-				       mh->key.num_actions,
-				       mh->key.actions,
-				       &mh->mod_hdr_id);
-	if (err)
+	mh->modify_hdr = mlx5_modify_header_alloc(priv->mdev, namespace,
+						  mh->key.num_actions,
+						  mh->key.actions);
+	if (IS_ERR(mh->modify_hdr)) {
+		err = PTR_ERR(mh->modify_hdr);
 		goto out_err;
+	}
 
 	if (flow->flags & MLX5E_TC_FLOW_ESWITCH)
 		hash_add(esw->offloads.mod_hdr_tbl, &mh->mod_hdr_hlist, hash_key);
@@ -264,10 +265,11 @@ static int mlx5e_attach_mod_hdr(struct mlx5e_priv *priv,
 
 attach_flow:
 	list_add(&flow->mod_hdr, &mh->flows);
+
 	if (flow->flags & MLX5E_TC_FLOW_ESWITCH)
-		flow->esw_attr->mod_hdr_id = mh->mod_hdr_id;
+		flow->esw_attr->modify_hdr = mh->modify_hdr;
 	else
-		flow->nic_attr->mod_hdr_id = mh->mod_hdr_id;
+		flow->nic_attr->modify_hdr = mh->modify_hdr;
 
 	return 0;
 
@@ -288,7 +290,7 @@ static void mlx5e_detach_mod_hdr(struct mlx5e_priv *priv,
 
 		mh = list_entry(next, struct mlx5e_mod_hdr_entry, flows);
 
-		mlx5_modify_header_dealloc(priv->mdev, mh->mod_hdr_id);
+		mlx5_modify_header_dealloc(priv->mdev, mh->modify_hdr);
 		hash_del(&mh->mod_hdr_hlist);
 		kfree(mh);
 	}
@@ -723,7 +725,6 @@ mlx5e_tc_add_nic_flow(struct mlx5e_priv *priv,
 	struct mlx5_flow_destination dest[2] = {};
 	struct mlx5_flow_act flow_act = {
 		.action = attr->action,
-		.reformat_id = 0,
 		.flags    = FLOW_ACT_NO_APPEND,
 	};
 	struct mlx5_fc *counter = NULL;
@@ -766,7 +767,7 @@ mlx5e_tc_add_nic_flow(struct mlx5e_priv *priv,
 
 	if (attr->action & MLX5_FLOW_CONTEXT_ACTION_MOD_HDR) {
 		err = mlx5e_attach_mod_hdr(priv, flow, parse_attr);
-		flow_act.modify_id = attr->mod_hdr_id;
+		flow_act.modify_hdr = attr->modify_hdr;
 		kfree(parse_attr->mod_hdr_actions);
 		if (err)
 			goto err_create_mod_hdr_id;
@@ -1129,14 +1130,13 @@ void mlx5e_tc_encap_flows_add(struct mlx5e_priv *priv,
 	struct mlx5e_tc_flow *flow;
 	int err;
 
-	err = mlx5_packet_reformat_alloc(priv->mdev,
-					 e->reformat_type,
-					 e->encap_size, e->encap_header,
-					 MLX5_FLOW_NAMESPACE_FDB,
-					 &e->encap_id);
-	if (err) {
-		mlx5_core_warn(priv->mdev, "Failed to offload cached encapsulation header, %d\n",
-			       err);
+	e->pkt_reformat = mlx5_packet_reformat_alloc(priv->mdev,
+						     e->reformat_type,
+						     e->encap_size, e->encap_header,
+						     MLX5_FLOW_NAMESPACE_FDB);
+	if (IS_ERR(e->pkt_reformat)) {
+		mlx5_core_warn(priv->mdev, "Failed to offload cached encapsulation header, %lu\n",
+			       PTR_ERR(e->pkt_reformat));
 		return;
 	}
 	e->flags |= MLX5_ENCAP_ENTRY_VALID;
@@ -1150,8 +1150,9 @@ void mlx5e_tc_encap_flows_add(struct mlx5e_priv *priv,
 		esw_attr = flow->esw_attr;
 		spec = &esw_attr->parse_attr->spec;
 
-		esw_attr->dests[efi->index].encap_id = e->encap_id;
+		esw_attr->dests[efi->index].pkt_reformat = e->pkt_reformat;
 		esw_attr->dests[efi->index].flags |= MLX5_ESW_DEST_ENCAP_VALID;
+
 		/* Flow can be associated with multiple encap entries.
 		 * Before offloading the flow verify that all of them have
 		 * a valid neighbour.
@@ -1216,7 +1217,7 @@ void mlx5e_tc_encap_flows_del(struct mlx5e_priv *priv,
 
 	/* we know that the encap is valid */
 	e->flags &= ~MLX5_ENCAP_ENTRY_VALID;
-	mlx5_packet_reformat_dealloc(priv->mdev, e->encap_id);
+	mlx5_packet_reformat_dealloc(priv->mdev, e->pkt_reformat);
 }
 
 static struct mlx5_fc *mlx5e_tc_get_counter(struct mlx5e_tc_flow *flow)
@@ -1295,7 +1296,7 @@ static void mlx5e_detach_encap(struct mlx5e_priv *priv,
 		mlx5e_rep_encap_entry_detach(netdev_priv(e->out_dev), e);
 
 		if (e->flags & MLX5_ENCAP_ENTRY_VALID)
-			mlx5_packet_reformat_dealloc(priv->mdev, e->encap_id);
+			mlx5_packet_reformat_dealloc(priv->mdev, e->pkt_reformat);
 
 		hash_del_rcu(&e->encap_hlist);
 		kfree(e->encap_header);
@@ -2691,7 +2692,7 @@ attach_flow:
 	flow->encaps[out_index].index = out_index;
 	*encap_dev = e->out_dev;
 	if (e->flags & MLX5_ENCAP_ENTRY_VALID) {
-		attr->dests[out_index].encap_id = e->encap_id;
+		attr->dests[out_index].pkt_reformat = e->pkt_reformat;
 		attr->dests[out_index].flags |= MLX5_ESW_DEST_ENCAP_VALID;
 		*encap_valid = true;
 	} else {
