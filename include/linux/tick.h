@@ -111,6 +111,7 @@ enum tick_dep_bits {
 	TICK_DEP_BIT_CLOCK_UNSTABLE	= 3,
 	TICK_DEP_BIT_RCU		= 4
 };
+#define TICK_DEP_BIT_MAX TICK_DEP_BIT_RCU
 
 #define TICK_DEP_MASK_NONE		0
 #define TICK_DEP_MASK_POSIX_TIMER	(1 << TICK_DEP_BIT_POSIX_TIMER)
@@ -215,24 +216,28 @@ extern void tick_nohz_dep_clear_signal(struct signal_struct *signal,
  */
 static inline void tick_dep_set(enum tick_dep_bits bit)
 {
+	WARN_ON_ONCE(bit > TICK_DEP_BIT_MAX);
 	if (tick_nohz_full_enabled())
 		tick_nohz_dep_set(bit);
 }
 
 static inline void tick_dep_clear(enum tick_dep_bits bit)
 {
+	WARN_ON_ONCE(bit > TICK_DEP_BIT_MAX);
 	if (tick_nohz_full_enabled())
 		tick_nohz_dep_clear(bit);
 }
 
 static inline void tick_dep_set_cpu(int cpu, enum tick_dep_bits bit)
 {
+	WARN_ON_ONCE(bit > TICK_DEP_BIT_MAX);
 	if (tick_nohz_full_cpu(cpu))
 		tick_nohz_dep_set_cpu(cpu, bit);
 }
 
 static inline void tick_dep_clear_cpu(int cpu, enum tick_dep_bits bit)
 {
+	WARN_ON_ONCE(bit > TICK_DEP_BIT_MAX);
 	if (tick_nohz_full_cpu(cpu))
 		tick_nohz_dep_clear_cpu(cpu, bit);
 }
@@ -240,24 +245,28 @@ static inline void tick_dep_clear_cpu(int cpu, enum tick_dep_bits bit)
 static inline void tick_dep_set_task(struct task_struct *tsk,
 				     enum tick_dep_bits bit)
 {
+	WARN_ON_ONCE(bit > TICK_DEP_BIT_MAX);
 	if (tick_nohz_full_enabled())
 		tick_nohz_dep_set_task(tsk, bit);
 }
 static inline void tick_dep_clear_task(struct task_struct *tsk,
 				       enum tick_dep_bits bit)
 {
+	WARN_ON_ONCE(bit > TICK_DEP_BIT_MAX);
 	if (tick_nohz_full_enabled())
 		tick_nohz_dep_clear_task(tsk, bit);
 }
 static inline void tick_dep_set_signal(struct signal_struct *signal,
 				       enum tick_dep_bits bit)
 {
+	WARN_ON_ONCE(bit > TICK_DEP_BIT_MAX);
 	if (tick_nohz_full_enabled())
 		tick_nohz_dep_set_signal(signal, bit);
 }
 static inline void tick_dep_clear_signal(struct signal_struct *signal,
 					 enum tick_dep_bits bit)
 {
+	WARN_ON_ONCE(bit > TICK_DEP_BIT_MAX);
 	if (tick_nohz_full_enabled())
 		tick_nohz_dep_clear_signal(signal, bit);
 }
