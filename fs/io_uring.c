@@ -1097,10 +1097,8 @@ static int io_import_fixed(struct io_ring_ctx *ctx, int rw,
 
 			iter->bvec = bvec + seg_skip;
 			iter->nr_segs -= seg_skip;
-			iter->count -= (seg_skip << PAGE_SHIFT);
+			iter->count -= bvec->bv_len + offset;
 			iter->iov_offset = offset & ~PAGE_MASK;
-			if (iter->iov_offset)
-				iter->count -= iter->iov_offset;
 		}
 	}
 
@@ -1838,6 +1836,7 @@ restart:
 	do {
 		struct sqe_submit *s = &req->submit;
 		const struct io_uring_sqe *sqe = s->sqe;
+		unsigned int flags = req->flags;
 
 		/* Ensure we clear previously set non-block flag */
 		req->rw.ki_flags &= ~IOCB_NOWAIT;
@@ -1883,7 +1882,7 @@ restart:
 		kfree(sqe);
 
 		/* req from defer and link list needn't decrease async cnt */
-		if (req->flags & (REQ_F_IO_DRAINED | REQ_F_LINK_DONE))
+		if (flags & (REQ_F_IO_DRAINED | REQ_F_LINK_DONE))
 			goto out;
 
 		if (!async_list)
@@ -2024,6 +2023,15 @@ static int io_queue_sqe(struct io_ring_ctx *ctx, struct io_kiocb *req,
 {
 	int ret;
 
+	ret = io_req_defer(ctx, req, s->sqe);
+	if (ret) {
+		if (ret != -EIOCBQUEUED) {
+			io_free_req(req);
+			io_cqring_add_event(ctx, s->sqe->user_data, ret);
+		}
+		return 0;
+	}
+
 	ret = __io_submit_sqe(ctx, req, s, true);
 	if (ret == -EAGAIN && !(req->flags & REQ_F_NOWAIT)) {
 		struct io_uring_sqe *sqe_copy;
@@ -2093,13 +2101,6 @@ err_req:
 		io_free_req(req);
 err:
 		io_cqring_add_event(ctx, s->sqe->user_data, ret);
-		return;
-	}
-
-	ret = io_req_defer(ctx, req, s->sqe);
-	if (ret) {
-		if (ret != -EIOCBQUEUED)
-			goto err_req;
 		return;
 	}
 
