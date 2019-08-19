@@ -275,28 +275,27 @@ void *edac_align_ptr(void **p, unsigned size, int n_elems)
 
 static void _edac_mc_free(struct mem_ctl_info *mci)
 {
-	int i, chn, row;
 	struct csrow_info *csr;
-	const unsigned int tot_dimms = mci->tot_dimms;
-	const unsigned int tot_channels = mci->num_cschannel;
-	const unsigned int tot_csrows = mci->nr_csrows;
+	int i, chn, row;
 
 	if (mci->dimms) {
-		for (i = 0; i < tot_dimms; i++)
+		for (i = 0; i < mci->tot_dimms; i++)
 			kfree(mci->dimms[i]);
 		kfree(mci->dimms);
 	}
+
 	if (mci->csrows) {
-		for (row = 0; row < tot_csrows; row++) {
+		for (row = 0; row < mci->nr_csrows; row++) {
 			csr = mci->csrows[row];
-			if (csr) {
-				if (csr->channels) {
-					for (chn = 0; chn < tot_channels; chn++)
-						kfree(csr->channels[chn]);
-					kfree(csr->channels);
-				}
-				kfree(csr);
+			if (!csr)
+				continue;
+
+			if (csr->channels) {
+				for (chn = 0; chn < mci->num_cschannel; chn++)
+					kfree(csr->channels[chn]);
+				kfree(csr->channels);
 			}
+			kfree(csr);
 		}
 		kfree(mci->csrows);
 	}
@@ -1235,9 +1234,13 @@ void edac_mc_handle_error(const enum hw_event_mc_err_type type,
 	if (p > e->location)
 		*(p - 1) = '\0';
 
-	/* Report the error via the trace interface */
-	grain_bits = fls_long(e->grain) + 1;
+	/* Sanity-check driver-supplied grain value. */
+	if (WARN_ON_ONCE(!e->grain))
+		e->grain = 1;
 
+	grain_bits = fls_long(e->grain - 1);
+
+	/* Report the error via the trace interface */
 	if (IS_ENABLED(CONFIG_RAS))
 		trace_mc_event(type, e->msg, e->label, e->error_count,
 			       mci->mc_idx, e->top_layer, e->mid_layer,
