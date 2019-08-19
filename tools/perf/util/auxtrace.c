@@ -124,20 +124,20 @@ void auxtrace_mmap_params__init(struct auxtrace_mmap_params *mp,
 }
 
 void auxtrace_mmap_params__set_idx(struct auxtrace_mmap_params *mp,
-				   struct perf_evlist *evlist, int idx,
+				   struct evlist *evlist, int idx,
 				   bool per_cpu)
 {
 	mp->idx = idx;
 
 	if (per_cpu) {
-		mp->cpu = evlist->cpus->map[idx];
-		if (evlist->threads)
-			mp->tid = thread_map__pid(evlist->threads, 0);
+		mp->cpu = evlist->core.cpus->map[idx];
+		if (evlist->core.threads)
+			mp->tid = thread_map__pid(evlist->core.threads, 0);
 		else
 			mp->tid = -1;
 	} else {
 		mp->cpu = -1;
-		mp->tid = thread_map__pid(evlist->threads, idx);
+		mp->tid = thread_map__pid(evlist->core.threads, idx);
 	}
 }
 
@@ -503,7 +503,7 @@ void auxtrace_heap__pop(struct auxtrace_heap *heap)
 }
 
 size_t auxtrace_record__info_priv_size(struct auxtrace_record *itr,
-				       struct perf_evlist *evlist)
+				       struct evlist *evlist)
 {
 	if (itr)
 		return itr->info_priv_size(itr, evlist);
@@ -539,9 +539,9 @@ int auxtrace_record__snapshot_start(struct auxtrace_record *itr)
 	return 0;
 }
 
-int auxtrace_record__snapshot_finish(struct auxtrace_record *itr)
+int auxtrace_record__snapshot_finish(struct auxtrace_record *itr, bool on_exit)
 {
-	if (itr && itr->snapshot_finish)
+	if (!on_exit && itr && itr->snapshot_finish)
 		return itr->snapshot_finish(itr);
 	return 0;
 }
@@ -556,7 +556,7 @@ int auxtrace_record__find_snapshot(struct auxtrace_record *itr, int idx,
 }
 
 int auxtrace_record__options(struct auxtrace_record *itr,
-			     struct perf_evlist *evlist,
+			     struct evlist *evlist,
 			     struct record_opts *opts)
 {
 	if (itr)
@@ -577,6 +577,16 @@ int auxtrace_parse_snapshot_options(struct auxtrace_record *itr,
 	if (!str)
 		return 0;
 
+	/* PMU-agnostic options */
+	switch (*str) {
+	case 'e':
+		opts->auxtrace_snapshot_on_exit = true;
+		str++;
+		break;
+	default:
+		break;
+	}
+
 	if (itr)
 		return itr->parse_snapshot_options(itr, opts, str);
 
@@ -585,7 +595,7 @@ int auxtrace_parse_snapshot_options(struct auxtrace_record *itr,
 }
 
 struct auxtrace_record *__weak
-auxtrace_record__init(struct perf_evlist *evlist __maybe_unused, int *err)
+auxtrace_record__init(struct evlist *evlist __maybe_unused, int *err)
 {
 	*err = 0;
 	return NULL;
@@ -964,6 +974,7 @@ void itrace_synth_opts__set_default(struct itrace_synth_opts *synth_opts,
 	synth_opts->transactions = true;
 	synth_opts->ptwrites = true;
 	synth_opts->pwr_events = true;
+	synth_opts->other_events = true;
 	synth_opts->errors = true;
 	if (no_sample) {
 		synth_opts->period_type = PERF_ITRACE_PERIOD_INSTRUCTIONS;
@@ -1060,6 +1071,9 @@ int itrace_parse_synth_opts(const struct option *opt, const char *str,
 			break;
 		case 'p':
 			synth_opts->pwr_events = true;
+			break;
+		case 'o':
+			synth_opts->other_events = true;
 			break;
 		case 'e':
 			synth_opts->errors = true;
@@ -2084,7 +2098,7 @@ static char *addr_filter__to_str(struct addr_filter *filt)
 	return err < 0 ? NULL : filter;
 }
 
-static int parse_addr_filter(struct perf_evsel *evsel, const char *filter,
+static int parse_addr_filter(struct evsel *evsel, const char *filter,
 			     int max_nr)
 {
 	struct addr_filters filts;
@@ -2135,19 +2149,19 @@ out_exit:
 	return err;
 }
 
-static struct perf_pmu *perf_evsel__find_pmu(struct perf_evsel *evsel)
+static struct perf_pmu *perf_evsel__find_pmu(struct evsel *evsel)
 {
 	struct perf_pmu *pmu = NULL;
 
 	while ((pmu = perf_pmu__scan(pmu)) != NULL) {
-		if (pmu->type == evsel->attr.type)
+		if (pmu->type == evsel->core.attr.type)
 			break;
 	}
 
 	return pmu;
 }
 
-static int perf_evsel__nr_addr_filter(struct perf_evsel *evsel)
+static int perf_evsel__nr_addr_filter(struct evsel *evsel)
 {
 	struct perf_pmu *pmu = perf_evsel__find_pmu(evsel);
 	int nr_addr_filters = 0;
@@ -2160,9 +2174,9 @@ static int perf_evsel__nr_addr_filter(struct perf_evsel *evsel)
 	return nr_addr_filters;
 }
 
-int auxtrace_parse_filters(struct perf_evlist *evlist)
+int auxtrace_parse_filters(struct evlist *evlist)
 {
-	struct perf_evsel *evsel;
+	struct evsel *evsel;
 	char *filter;
 	int err, max_nr;
 
