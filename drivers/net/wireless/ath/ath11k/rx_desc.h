@@ -721,7 +721,7 @@ struct rx_msdu_start {
  *		if either ipv4_proto or ipv6_proto is set to 1) or indicates
  *		the offset in bytes to the start of TCP or UDP header from
  *		the start of the IP header after decapsulation (Only valid if
- *		tcp_proto or udp_proto is set).  The value 0 indicates that
+ *		tcp_proto or udp_proto is set). The value 0 indicates that
  *		the offset is longer than 127 bytes.
  *
  * msdu_number
