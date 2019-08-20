@@ -505,10 +505,10 @@ struct hal_srng {
 	/* Size of ring entry */
 	u32 entry_size;
 
-	/* Interrupt timer threshold – in micro seconds */
+	/* Interrupt timer threshold - in micro seconds */
 	u32 intr_timer_thres_us;
 
-	/* Interrupt batch counter threshold – in number of ring entries */
+	/* Interrupt batch counter threshold - in number of ring entries */
 	u32 intr_batch_cntr_thres_entries;
 
 	/* MSI Address */
@@ -543,7 +543,7 @@ struct hal_srng {
 			/* Cached head pointer */
 			u32 cached_hp;
 
-			/* Tail pointer location to be updated by SW – This
+			/* Tail pointer location to be updated by SW - This
 			 * will be a register address and need not be
 			 * accessed through SW structure
 			 */
@@ -569,13 +569,13 @@ struct hal_srng {
 			/* Cached tail pointer */
 			u32 cached_tp;
 
-			/* Head pointer location to be updated by SW – This
+			/* Head pointer location to be updated by SW - This
 			 * will be a register address and need not be accessed
 			 * through SW structure
 			 */
 			u32 *hp_addr;
 
-			/* Low threshold – in number of ring entries */
+			/* Low threshold - in number of ring entries */
 			u32 low_threshold;
 		} src_ring;
 	} u;
