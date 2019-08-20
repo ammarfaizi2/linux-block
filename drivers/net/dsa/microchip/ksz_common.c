@@ -18,17 +18,7 @@
 #include <net/dsa.h>
 #include <net/switchdev.h>
 
-#include "ksz_priv.h"
-
-void ksz_port_cleanup(struct ksz_device *dev, int port)
-{
-	/* Common code for port cleanup. */
-	mutex_lock(&dev->dev_mutex);
-	dev->on_ports &= ~(1 << port);
-	dev->live_ports &= ~(1 << port);
-	mutex_unlock(&dev->dev_mutex);
-}
-EXPORT_SYMBOL_GPL(ksz_port_cleanup);
+#include "ksz_common.h"
 
 void ksz_update_port_member(struct ksz_device *dev, int port)
 {
@@ -373,7 +363,8 @@ int ksz_enable_port(struct dsa_switch *ds, int port, struct phy_device *phy)
 
 	/* setup slave port */
 	dev->dev_ops->port_setup(dev, port, false);
-	dev->dev_ops->phy_setup(dev, port, phy);
+	if (dev->dev_ops->phy_setup)
+		dev->dev_ops->phy_setup(dev, port, phy);
 
 	/* port_stp_state_set() will be called after to enable the port so
 	 * there is no need to do anything.
@@ -396,9 +387,7 @@ void ksz_disable_port(struct dsa_switch *ds, int port)
 }
 EXPORT_SYMBOL_GPL(ksz_disable_port);
 
-struct ksz_device *ksz_switch_alloc(struct device *base,
-				    const struct ksz_io_ops *ops,
-				    void *priv)
+struct ksz_device *ksz_switch_alloc(struct device *base, void *priv)
 {
 	struct dsa_switch *ds;
 	struct ksz_device *swdev;
@@ -416,7 +405,6 @@ struct ksz_device *ksz_switch_alloc(struct device *base,
 
 	swdev->ds = ds;
 	swdev->priv = priv;
-	swdev->ops = ops;
 
 	return swdev;
 }
@@ -442,7 +430,6 @@ int ksz_switch_register(struct ksz_device *dev,
 	}
 
 	mutex_init(&dev->dev_mutex);
-	mutex_init(&dev->reg_mutex);
 	mutex_init(&dev->stats_mutex);
 	mutex_init(&dev->alu_mutex);
 	mutex_init(&dev->vlan_mutex);
@@ -463,6 +450,8 @@ int ksz_switch_register(struct ksz_device *dev,
 		ret = of_get_phy_mode(dev->dev->of_node);
 		if (ret >= 0)
 			dev->interface = ret;
+		dev->synclko_125 = of_property_read_bool(dev->dev->of_node,
+							 "microchip,synclko-125");
 	}
 
 	ret = dsa_register_switch(dev->ds);

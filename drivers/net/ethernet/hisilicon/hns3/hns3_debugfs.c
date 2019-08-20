@@ -8,10 +8,12 @@
 #include "hns3_enet.h"
 
 #define HNS3_DBG_READ_LEN 256
+#define HNS3_DBG_WRITE_LEN 1024
 
 static struct dentry *hns3_dbgfs_root;
 
-static int hns3_dbg_queue_info(struct hnae3_handle *h, char *cmd_buf)
+static int hns3_dbg_queue_info(struct hnae3_handle *h,
+			       const char *cmd_buf)
 {
 	struct hns3_nic_priv *priv = h->priv;
 	struct hns3_nic_ring_data *ring_data;
@@ -155,7 +157,7 @@ static int hns3_dbg_queue_map(struct hnae3_handle *h)
 	return 0;
 }
 
-static int hns3_dbg_bd_info(struct hnae3_handle *h, char *cmd_buf)
+static int hns3_dbg_bd_info(struct hnae3_handle *h, const char *cmd_buf)
 {
 	struct hns3_nic_priv *priv = h->priv;
 	struct hns3_nic_ring_data *ring_data;
@@ -252,6 +254,7 @@ static void hns3_dbg_help(struct hnae3_handle *h)
 	dev_info(&h->pdev->dev, "dump qos buf cfg\n");
 	dev_info(&h->pdev->dev, "dump mng tbl\n");
 	dev_info(&h->pdev->dev, "dump reset info\n");
+	dev_info(&h->pdev->dev, "dump m7 info\n");
 	dev_info(&h->pdev->dev, "dump ncl_config <offset> <length>(in hex)\n");
 	dev_info(&h->pdev->dev, "dump mac tnl status\n");
 
@@ -320,6 +323,9 @@ static ssize_t hns3_dbg_cmd_write(struct file *filp, const char __user *buffer,
 	    test_bit(HNS3_NIC_STATE_RESETTING, &priv->state))
 		return 0;
 
+	if (count > HNS3_DBG_WRITE_LEN)
+		return -ENOSPC;
+
 	cmd_buf = kzalloc(count + 1, GFP_KERNEL);
 	if (!cmd_buf)
 		return count;
@@ -370,20 +376,11 @@ static const struct file_operations hns3_dbg_cmd_fops = {
 void hns3_dbg_init(struct hnae3_handle *handle)
 {
 	const char *name = pci_name(handle->pdev);
-	struct dentry *pfile;
 
 	handle->hnae3_dbgfs = debugfs_create_dir(name, hns3_dbgfs_root);
-	if (!handle->hnae3_dbgfs)
-		return;
 
-	pfile = debugfs_create_file("cmd", 0600, handle->hnae3_dbgfs, handle,
-				    &hns3_dbg_cmd_fops);
-	if (!pfile) {
-		debugfs_remove_recursive(handle->hnae3_dbgfs);
-		handle->hnae3_dbgfs = NULL;
-		dev_warn(&handle->pdev->dev, "create file for %s fail\n",
-			 name);
-	}
+	debugfs_create_file("cmd", 0600, handle->hnae3_dbgfs, handle,
+			    &hns3_dbg_cmd_fops);
 }
 
 void hns3_dbg_uninit(struct hnae3_handle *handle)
@@ -395,10 +392,6 @@ void hns3_dbg_uninit(struct hnae3_handle *handle)
 void hns3_dbg_register_debugfs(const char *debugfs_dir_name)
 {
 	hns3_dbgfs_root = debugfs_create_dir(debugfs_dir_name, NULL);
-	if (!hns3_dbgfs_root) {
-		pr_warn("Register debugfs for %s fail\n", debugfs_dir_name);
-		return;
-	}
 }
 
 void hns3_dbg_unregister_debugfs(void)
