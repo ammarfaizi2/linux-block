@@ -3,6 +3,7 @@
  */
 
 #include "main.h"
+#include "coex.h"
 #include "fw.h"
 #include "tx.h"
 #include "rx.h"
@@ -31,6 +32,7 @@ static int rtw8822c_read_efuse(struct rtw_dev *rtwdev, u8 *log_map)
 	map = (struct rtw8822c_efuse *)log_map;
 
 	efuse->rfe_option = map->rfe_option;
+	efuse->rf_board_option = map->rf_board_option;
 	efuse->crystal_cap = map->xtal_k;
 	efuse->channel_plan = map->channel_plan;
 	efuse->country_code[0] = map->country_code[0];
@@ -203,7 +205,7 @@ static void rtw8822c_dac_iq_offset(struct rtw_dev *rtwdev, u32 *vec, u32 *val)
 	*val = t;
 }
 
-static u32 rtw8822c_get_path_base_addr(u8 path)
+static u32 rtw8822c_get_path_write_addr(u8 path)
 {
 	u32 base_addr;
 
@@ -213,6 +215,25 @@ static u32 rtw8822c_get_path_base_addr(u8 path)
 		break;
 	case RF_PATH_B:
 		base_addr = 0x4100;
+		break;
+	default:
+		WARN_ON(1);
+		return -1;
+	}
+
+	return base_addr;
+}
+
+static u32 rtw8822c_get_path_read_addr(u8 path)
+{
+	u32 base_addr;
+
+	switch (path) {
+	case RF_PATH_A:
+		base_addr = 0x2800;
+		break;
+	case RF_PATH_B:
+		base_addr = 0x4500;
 		break;
 	default:
 		WARN_ON(1);
@@ -316,8 +337,6 @@ static void rtw8822c_dac_cal_rf_mode(struct rtw_dev *rtwdev,
 	u32 iv[DACK_SN_8822C], qv[DACK_SN_8822C];
 	u32 rf_a, rf_b;
 
-	mdelay(10);
-
 	rf_a = rtw_read_rf(rtwdev, RF_PATH_A, 0x0, RFREG_MASK);
 	rf_b = rtw_read_rf(rtwdev, RF_PATH_B, 0x0, RFREG_MASK);
 
@@ -347,6 +366,7 @@ static void rtw8822c_dac_bb_setting(struct rtw_dev *rtwdev)
 static void rtw8822c_dac_cal_adc(struct rtw_dev *rtwdev,
 				 u8 path, u32 *adc_ic, u32 *adc_qc)
 {
+	struct rtw_dm_info *dm_info = &rtwdev->dm_info;
 	u32 ic = 0, qc = 0, temp = 0;
 	u32 base_addr;
 	u32 path_sel;
@@ -354,7 +374,7 @@ static void rtw8822c_dac_cal_adc(struct rtw_dev *rtwdev,
 
 	rtw_dbg(rtwdev, RTW_DBG_RFK, "[DACK] ADCK path(%d)\n", path);
 
-	base_addr = rtw8822c_get_path_base_addr(path);
+	base_addr = rtw8822c_get_path_write_addr(path);
 	switch (path) {
 	case RF_PATH_A:
 		path_sel = 0xa0000;
@@ -396,6 +416,7 @@ static void rtw8822c_dac_cal_adc(struct rtw_dev *rtwdev,
 		}
 		temp = (ic & 0x3ff) | ((qc & 0x3ff) << 10);
 		rtw_write32(rtwdev, base_addr + 0x68, temp);
+		dm_info->dack_adck[path] = temp;
 		rtw_dbg(rtwdev, RTW_DBG_RFK, "[DACK] ADCK 0x%08x=0x08%x\n",
 			base_addr + 0x68, temp);
 		/* check ADC DC offset */
@@ -422,10 +443,14 @@ static void rtw8822c_dac_cal_adc(struct rtw_dev *rtwdev,
 
 static void rtw8822c_dac_cal_step1(struct rtw_dev *rtwdev, u8 path)
 {
+	struct rtw_dm_info *dm_info = &rtwdev->dm_info;
 	u32 base_addr;
+	u32 read_addr;
 
-	base_addr = rtw8822c_get_path_base_addr(path);
+	base_addr = rtw8822c_get_path_write_addr(path);
+	read_addr = rtw8822c_get_path_read_addr(path);
 
+	rtw_write32(rtwdev, base_addr + 0x68, dm_info->dack_adck[path]);
 	rtw_write32(rtwdev, base_addr + 0x0c, 0xdff00220);
 	if (path == RF_PATH_A) {
 		rtw_write32(rtwdev, base_addr + 0x60, 0xf0040ff0);
@@ -447,11 +472,13 @@ static void rtw8822c_dac_cal_step1(struct rtw_dev *rtwdev, u8 path)
 	rtw_write32(rtwdev, base_addr + 0xcc, 0x0a11fb89);
 	mdelay(1);
 	rtw_write32(rtwdev, base_addr + 0xb8, 0x62000000);
-	mdelay(20);
 	rtw_write32(rtwdev, base_addr + 0xd4, 0x62000000);
 	mdelay(20);
+	if (!check_hw_ready(rtwdev, read_addr + 0x08, 0x7fff80, 0xffff) ||
+	    !check_hw_ready(rtwdev, read_addr + 0x34, 0x7fff80, 0xffff))
+		rtw_err(rtwdev, "failed to wait for dack ready\n");
 	rtw_write32(rtwdev, base_addr + 0xb8, 0x02000000);
-	mdelay(20);
+	mdelay(1);
 	rtw_write32(rtwdev, base_addr + 0xbc, 0x0008ff87);
 	rtw_write32(rtwdev, 0x9b4, 0xdb6db600);
 	rtw_write32(rtwdev, base_addr + 0x10, 0x02d508c5);
@@ -465,7 +492,7 @@ static void rtw8822c_dac_cal_step2(struct rtw_dev *rtwdev,
 	u32 base_addr;
 	u32 ic, qc, ic_in, qc_in;
 
-	base_addr = rtw8822c_get_path_base_addr(path);
+	base_addr = rtw8822c_get_path_write_addr(path);
 	rtw_write32_mask(rtwdev, base_addr + 0xbc, 0xf0000000, 0x0);
 	rtw_write32_mask(rtwdev, base_addr + 0xc0, 0xf, 0x8);
 	rtw_write32_mask(rtwdev, base_addr + 0xd8, 0xf0000000, 0x0);
@@ -514,10 +541,12 @@ static void rtw8822c_dac_cal_step3(struct rtw_dev *rtwdev, u8 path,
 				   u32 *i_out, u32 *q_out)
 {
 	u32 base_addr;
+	u32 read_addr;
 	u32 ic, qc;
 	u32 temp;
 
-	base_addr = rtw8822c_get_path_base_addr(path);
+	base_addr = rtw8822c_get_path_write_addr(path);
+	read_addr = rtw8822c_get_path_read_addr(path);
 	ic = *ic_in;
 	qc = *qc_in;
 
@@ -542,11 +571,13 @@ static void rtw8822c_dac_cal_step3(struct rtw_dev *rtwdev, u8 path,
 	rtw_write32(rtwdev, base_addr + 0xcc, 0x0a11fb89);
 	mdelay(1);
 	rtw_write32(rtwdev, base_addr + 0xb8, 0x62000000);
-	mdelay(20);
 	rtw_write32(rtwdev, base_addr + 0xd4, 0x62000000);
 	mdelay(20);
+	if (!check_hw_ready(rtwdev, read_addr + 0x24, 0x07f80000, ic) ||
+	    !check_hw_ready(rtwdev, read_addr + 0x50, 0x07f80000, qc))
+		rtw_err(rtwdev, "failed to write IQ vector to hardware\n");
 	rtw_write32(rtwdev, base_addr + 0xb8, 0x02000000);
-	mdelay(20);
+	mdelay(1);
 	rtw_write32_mask(rtwdev, base_addr + 0xbc, 0xe, 0x3);
 	rtw_write32(rtwdev, 0x9b4, 0xdb6db600);
 
@@ -583,12 +614,302 @@ static void rtw8822c_dac_cal_step3(struct rtw_dev *rtwdev, u8 path,
 
 static void rtw8822c_dac_cal_step4(struct rtw_dev *rtwdev, u8 path)
 {
-	u32 base_addr = rtw8822c_get_path_base_addr(path);
+	u32 base_addr = rtw8822c_get_path_write_addr(path);
 
 	rtw_write32(rtwdev, base_addr + 0x68, 0x0);
 	rtw_write32(rtwdev, base_addr + 0x10, 0x02d508c4);
 	rtw_write32_mask(rtwdev, base_addr + 0xbc, 0x1, 0x0);
 	rtw_write32_mask(rtwdev, base_addr + 0x30, BIT(30), 0x1);
+}
+
+static void rtw8822c_dac_cal_backup_vec(struct rtw_dev *rtwdev,
+					u8 path, u8 vec, u32 w_addr, u32 r_addr)
+{
+	struct rtw_dm_info *dm_info = &rtwdev->dm_info;
+	u16 val;
+	u32 i;
+
+	if (WARN_ON(vec >= 2))
+		return;
+
+	for (i = 0; i < DACK_MSBK_BACKUP_NUM; i++) {
+		rtw_write32_mask(rtwdev, w_addr, 0xf0000000, i);
+		val = (u16)rtw_read32_mask(rtwdev, r_addr, 0x7fc0000);
+		dm_info->dack_msbk[path][vec][i] = val;
+	}
+}
+
+static void rtw8822c_dac_cal_backup_path(struct rtw_dev *rtwdev, u8 path)
+{
+	u32 w_off = 0x1c;
+	u32 r_off = 0x2c;
+	u32 w_addr, r_addr;
+
+	if (WARN_ON(path >= 2))
+		return;
+
+	/* backup I vector */
+	w_addr = rtw8822c_get_path_write_addr(path) + 0xb0;
+	r_addr = rtw8822c_get_path_read_addr(path) + 0x10;
+	rtw8822c_dac_cal_backup_vec(rtwdev, path, 0, w_addr, r_addr);
+
+	/* backup Q vector */
+	w_addr = rtw8822c_get_path_write_addr(path) + 0xb0 + w_off;
+	r_addr = rtw8822c_get_path_read_addr(path) + 0x10 + r_off;
+	rtw8822c_dac_cal_backup_vec(rtwdev, path, 1, w_addr, r_addr);
+}
+
+static void rtw8822c_dac_cal_backup_dck(struct rtw_dev *rtwdev)
+{
+	struct rtw_dm_info *dm_info = &rtwdev->dm_info;
+	u8 val;
+
+	val = (u8)rtw_read32_mask(rtwdev, REG_DCKA_I_0, 0xf0000000);
+	dm_info->dack_dck[RF_PATH_A][0][0] = val;
+	val = (u8)rtw_read32_mask(rtwdev, REG_DCKA_I_1, 0xf);
+	dm_info->dack_dck[RF_PATH_A][0][1] = val;
+	val = (u8)rtw_read32_mask(rtwdev, REG_DCKA_Q_0, 0xf0000000);
+	dm_info->dack_dck[RF_PATH_A][1][0] = val;
+	val = (u8)rtw_read32_mask(rtwdev, REG_DCKA_Q_1, 0xf);
+	dm_info->dack_dck[RF_PATH_A][1][1] = val;
+
+	val = (u8)rtw_read32_mask(rtwdev, REG_DCKB_I_0, 0xf0000000);
+	dm_info->dack_dck[RF_PATH_B][0][0] = val;
+	val = (u8)rtw_read32_mask(rtwdev, REG_DCKB_I_1, 0xf);
+	dm_info->dack_dck[RF_PATH_B][1][0] = val;
+	val = (u8)rtw_read32_mask(rtwdev, REG_DCKB_Q_0, 0xf0000000);
+	dm_info->dack_dck[RF_PATH_B][0][1] = val;
+	val = (u8)rtw_read32_mask(rtwdev, REG_DCKB_Q_1, 0xf);
+	dm_info->dack_dck[RF_PATH_B][1][1] = val;
+}
+
+static void rtw8822c_dac_cal_backup(struct rtw_dev *rtwdev)
+{
+	u32 temp[3];
+
+	temp[0] = rtw_read32(rtwdev, 0x1860);
+	temp[1] = rtw_read32(rtwdev, 0x4160);
+	temp[2] = rtw_read32(rtwdev, 0x9b4);
+
+	/* set clock */
+	rtw_write32(rtwdev, 0x9b4, 0xdb66db00);
+
+	/* backup path-A I/Q */
+	rtw_write32_clr(rtwdev, 0x1830, BIT(30));
+	rtw_write32_mask(rtwdev, 0x1860, 0xfc000000, 0x3c);
+	rtw8822c_dac_cal_backup_path(rtwdev, RF_PATH_A);
+
+	/* backup path-B I/Q */
+	rtw_write32_clr(rtwdev, 0x4130, BIT(30));
+	rtw_write32_mask(rtwdev, 0x4160, 0xfc000000, 0x3c);
+	rtw8822c_dac_cal_backup_path(rtwdev, RF_PATH_B);
+
+	rtw8822c_dac_cal_backup_dck(rtwdev);
+	rtw_write32_set(rtwdev, 0x1830, BIT(30));
+	rtw_write32_set(rtwdev, 0x4130, BIT(30));
+
+	rtw_write32(rtwdev, 0x1860, temp[0]);
+	rtw_write32(rtwdev, 0x4160, temp[1]);
+	rtw_write32(rtwdev, 0x9b4, temp[2]);
+}
+
+static void rtw8822c_dac_cal_restore_dck(struct rtw_dev *rtwdev)
+{
+	struct rtw_dm_info *dm_info = &rtwdev->dm_info;
+	u8 val;
+
+	rtw_write32_set(rtwdev, REG_DCKA_I_0, BIT(19));
+	val = dm_info->dack_dck[RF_PATH_A][0][0];
+	rtw_write32_mask(rtwdev, REG_DCKA_I_0, 0xf0000000, val);
+	val = dm_info->dack_dck[RF_PATH_A][0][1];
+	rtw_write32_mask(rtwdev, REG_DCKA_I_1, 0xf, val);
+
+	rtw_write32_set(rtwdev, REG_DCKA_Q_0, BIT(19));
+	val = dm_info->dack_dck[RF_PATH_A][1][0];
+	rtw_write32_mask(rtwdev, REG_DCKA_Q_0, 0xf0000000, val);
+	val = dm_info->dack_dck[RF_PATH_A][1][1];
+	rtw_write32_mask(rtwdev, REG_DCKA_Q_1, 0xf, val);
+
+	rtw_write32_set(rtwdev, REG_DCKB_I_0, BIT(19));
+	val = dm_info->dack_dck[RF_PATH_B][0][0];
+	rtw_write32_mask(rtwdev, REG_DCKB_I_0, 0xf0000000, val);
+	val = dm_info->dack_dck[RF_PATH_B][0][1];
+	rtw_write32_mask(rtwdev, REG_DCKB_I_1, 0xf, val);
+
+	rtw_write32_set(rtwdev, REG_DCKB_Q_0, BIT(19));
+	val = dm_info->dack_dck[RF_PATH_B][1][0];
+	rtw_write32_mask(rtwdev, REG_DCKB_Q_0, 0xf0000000, val);
+	val = dm_info->dack_dck[RF_PATH_B][1][1];
+	rtw_write32_mask(rtwdev, REG_DCKB_Q_1, 0xf, val);
+}
+
+static void rtw8822c_dac_cal_restore_prepare(struct rtw_dev *rtwdev)
+{
+	rtw_write32(rtwdev, 0x9b4, 0xdb66db00);
+
+	rtw_write32_mask(rtwdev, 0x18b0, BIT(27), 0x0);
+	rtw_write32_mask(rtwdev, 0x18cc, BIT(27), 0x0);
+	rtw_write32_mask(rtwdev, 0x41b0, BIT(27), 0x0);
+	rtw_write32_mask(rtwdev, 0x41cc, BIT(27), 0x0);
+
+	rtw_write32_mask(rtwdev, 0x1830, BIT(30), 0x0);
+	rtw_write32_mask(rtwdev, 0x1860, 0xfc000000, 0x3c);
+	rtw_write32_mask(rtwdev, 0x18b4, BIT(0), 0x1);
+	rtw_write32_mask(rtwdev, 0x18d0, BIT(0), 0x1);
+
+	rtw_write32_mask(rtwdev, 0x4130, BIT(30), 0x0);
+	rtw_write32_mask(rtwdev, 0x4160, 0xfc000000, 0x3c);
+	rtw_write32_mask(rtwdev, 0x41b4, BIT(0), 0x1);
+	rtw_write32_mask(rtwdev, 0x41d0, BIT(0), 0x1);
+
+	rtw_write32_mask(rtwdev, 0x18b0, 0xf00, 0x0);
+	rtw_write32_mask(rtwdev, 0x18c0, BIT(14), 0x0);
+	rtw_write32_mask(rtwdev, 0x18cc, 0xf00, 0x0);
+	rtw_write32_mask(rtwdev, 0x18dc, BIT(14), 0x0);
+
+	rtw_write32_mask(rtwdev, 0x18b0, BIT(0), 0x0);
+	rtw_write32_mask(rtwdev, 0x18cc, BIT(0), 0x0);
+	rtw_write32_mask(rtwdev, 0x18b0, BIT(0), 0x1);
+	rtw_write32_mask(rtwdev, 0x18cc, BIT(0), 0x1);
+
+	rtw8822c_dac_cal_restore_dck(rtwdev);
+
+	rtw_write32_mask(rtwdev, 0x18c0, 0x38000, 0x7);
+	rtw_write32_mask(rtwdev, 0x18dc, 0x38000, 0x7);
+	rtw_write32_mask(rtwdev, 0x41c0, 0x38000, 0x7);
+	rtw_write32_mask(rtwdev, 0x41dc, 0x38000, 0x7);
+
+	rtw_write32_mask(rtwdev, 0x18b8, BIT(26) | BIT(25), 0x1);
+	rtw_write32_mask(rtwdev, 0x18d4, BIT(26) | BIT(25), 0x1);
+
+	rtw_write32_mask(rtwdev, 0x41b0, 0xf00, 0x0);
+	rtw_write32_mask(rtwdev, 0x41c0, BIT(14), 0x0);
+	rtw_write32_mask(rtwdev, 0x41cc, 0xf00, 0x0);
+	rtw_write32_mask(rtwdev, 0x41dc, BIT(14), 0x0);
+
+	rtw_write32_mask(rtwdev, 0x41b0, BIT(0), 0x0);
+	rtw_write32_mask(rtwdev, 0x41cc, BIT(0), 0x0);
+	rtw_write32_mask(rtwdev, 0x41b0, BIT(0), 0x1);
+	rtw_write32_mask(rtwdev, 0x41cc, BIT(0), 0x1);
+
+	rtw_write32_mask(rtwdev, 0x41b8, BIT(26) | BIT(25), 0x1);
+	rtw_write32_mask(rtwdev, 0x41d4, BIT(26) | BIT(25), 0x1);
+}
+
+static bool rtw8822c_dac_cal_restore_wait(struct rtw_dev *rtwdev,
+					  u32 target_addr, u32 toggle_addr)
+{
+	u32 cnt = 0;
+
+	do {
+		rtw_write32_mask(rtwdev, toggle_addr, BIT(26) | BIT(25), 0x0);
+		rtw_write32_mask(rtwdev, toggle_addr, BIT(26) | BIT(25), 0x2);
+
+		if (rtw_read32_mask(rtwdev, target_addr, 0xf) == 0x6)
+			return true;
+
+	} while (cnt++ < 100);
+
+	return false;
+}
+
+static bool rtw8822c_dac_cal_restore_path(struct rtw_dev *rtwdev, u8 path)
+{
+	struct rtw_dm_info *dm_info = &rtwdev->dm_info;
+	u32 w_off = 0x1c;
+	u32 r_off = 0x2c;
+	u32 w_i, r_i, w_q, r_q;
+	u32 value;
+	u32 i;
+
+	w_i = rtw8822c_get_path_write_addr(path) + 0xb0;
+	r_i = rtw8822c_get_path_read_addr(path) + 0x08;
+	w_q = rtw8822c_get_path_write_addr(path) + 0xb0 + w_off;
+	r_q = rtw8822c_get_path_read_addr(path) + 0x08 + r_off;
+
+	if (!rtw8822c_dac_cal_restore_wait(rtwdev, r_i, w_i + 0x8))
+		return false;
+
+	for (i = 0; i < DACK_MSBK_BACKUP_NUM; i++) {
+		rtw_write32_mask(rtwdev, w_i + 0x4, BIT(2), 0x0);
+		value = dm_info->dack_msbk[path][0][i];
+		rtw_write32_mask(rtwdev, w_i + 0x4, 0xff8, value);
+		rtw_write32_mask(rtwdev, w_i, 0xf0000000, i);
+		rtw_write32_mask(rtwdev, w_i + 0x4, BIT(2), 0x1);
+	}
+
+	rtw_write32_mask(rtwdev, w_i + 0x4, BIT(2), 0x0);
+
+	if (!rtw8822c_dac_cal_restore_wait(rtwdev, r_q, w_q + 0x8))
+		return false;
+
+	for (i = 0; i < DACK_MSBK_BACKUP_NUM; i++) {
+		rtw_write32_mask(rtwdev, w_q + 0x4, BIT(2), 0x0);
+		value = dm_info->dack_msbk[path][1][i];
+		rtw_write32_mask(rtwdev, w_q + 0x4, 0xff8, value);
+		rtw_write32_mask(rtwdev, w_q, 0xf0000000, i);
+		rtw_write32_mask(rtwdev, w_q + 0x4, BIT(2), 0x1);
+	}
+	rtw_write32_mask(rtwdev, w_q + 0x4, BIT(2), 0x0);
+
+	rtw_write32_mask(rtwdev, w_i + 0x8, BIT(26) | BIT(25), 0x0);
+	rtw_write32_mask(rtwdev, w_q + 0x8, BIT(26) | BIT(25), 0x0);
+	rtw_write32_mask(rtwdev, w_i + 0x4, BIT(0), 0x0);
+	rtw_write32_mask(rtwdev, w_q + 0x4, BIT(0), 0x0);
+
+	return true;
+}
+
+static bool __rtw8822c_dac_cal_restore(struct rtw_dev *rtwdev)
+{
+	if (!rtw8822c_dac_cal_restore_path(rtwdev, RF_PATH_A))
+		return false;
+
+	if (!rtw8822c_dac_cal_restore_path(rtwdev, RF_PATH_B))
+		return false;
+
+	return true;
+}
+
+static bool rtw8822c_dac_cal_restore(struct rtw_dev *rtwdev)
+{
+	struct rtw_dm_info *dm_info = &rtwdev->dm_info;
+	u32 temp[3];
+
+	/* sample the first element for both path's IQ vector */
+	if (dm_info->dack_msbk[RF_PATH_A][0][0] == 0 &&
+	    dm_info->dack_msbk[RF_PATH_A][1][0] == 0 &&
+	    dm_info->dack_msbk[RF_PATH_B][0][0] == 0 &&
+	    dm_info->dack_msbk[RF_PATH_B][1][0] == 0)
+		return false;
+
+	temp[0] = rtw_read32(rtwdev, 0x1860);
+	temp[1] = rtw_read32(rtwdev, 0x4160);
+	temp[2] = rtw_read32(rtwdev, 0x9b4);
+
+	rtw8822c_dac_cal_restore_prepare(rtwdev);
+	if (!check_hw_ready(rtwdev, 0x2808, 0x7fff80, 0xffff) ||
+	    !check_hw_ready(rtwdev, 0x2834, 0x7fff80, 0xffff) ||
+	    !check_hw_ready(rtwdev, 0x4508, 0x7fff80, 0xffff) ||
+	    !check_hw_ready(rtwdev, 0x4534, 0x7fff80, 0xffff))
+		return false;
+
+	if (!__rtw8822c_dac_cal_restore(rtwdev)) {
+		rtw_err(rtwdev, "failed to restore dack vectors\n");
+		return false;
+	}
+
+	rtw_write32_mask(rtwdev, 0x1830, BIT(30), 0x1);
+	rtw_write32_mask(rtwdev, 0x4130, BIT(30), 0x1);
+	rtw_write32(rtwdev, 0x1860, temp[0]);
+	rtw_write32(rtwdev, 0x4160, temp[1]);
+	rtw_write32_mask(rtwdev, 0x18b0, BIT(27), 0x1);
+	rtw_write32_mask(rtwdev, 0x18cc, BIT(27), 0x1);
+	rtw_write32_mask(rtwdev, 0x41b0, BIT(27), 0x1);
+	rtw_write32_mask(rtwdev, 0x41cc, BIT(27), 0x1);
+	rtw_write32(rtwdev, 0x9b4, temp[2]);
+
+	return true;
 }
 
 static void rtw8822c_rf_dac_cal(struct rtw_dev *rtwdev)
@@ -599,6 +920,11 @@ static void rtw8822c_rf_dac_cal(struct rtw_dev *rtwdev)
 	u32 i_a = 0x0, q_a = 0x0, i_b = 0x0, q_b = 0x0;
 	u32 ic_a = 0x0, qc_a = 0x0, ic_b = 0x0, qc_b = 0x0;
 	u32 adc_ic_a = 0x0, adc_qc_a = 0x0, adc_ic_b = 0x0, adc_qc_b = 0x0;
+
+	if (rtw8822c_dac_cal_restore(rtwdev))
+		return;
+
+	/* not able to restore, do it */
 
 	rtw8822c_dac_backup_reg(rtwdev, backup, backup_rf);
 
@@ -643,6 +969,9 @@ static void rtw8822c_rf_dac_cal(struct rtw_dev *rtwdev)
 	rtw_write8(rtwdev, 0x1bcc, 0x0);
 
 	rtw8822c_dac_restore_reg(rtwdev, backup, backup_rf);
+
+	/* backup results to restore, saving a lot of time */
+	rtw8822c_dac_cal_backup(rtwdev);
 
 	rtw_dbg(rtwdev, RTW_DBG_RFK, "[DACK] path A: ic=0x%x, qc=0x%x\n", ic_a, qc_a);
 	rtw_dbg(rtwdev, RTW_DBG_RFK, "[DACK] path B: ic=0x%x, qc=0x%x\n", ic_b, qc_b);
@@ -714,12 +1043,6 @@ static void rtw8822c_phy_set_param(struct rtw_dev *rtwdev)
 	dm_info->cck_gi_l_bnd = ((cck_gi_l_bnd_msb << 4) | (cck_gi_l_bnd_lsb));
 
 	rtw8822c_rf_init(rtwdev);
-	/* wifi path controller */
-	rtw_write32_mask(rtwdev, 0x70, 0xff000000, 0x0e);
-	rtw_write32_mask(rtwdev, 0x1704, 0xffffffff, 0x7700);
-	rtw_write32_mask(rtwdev, 0x1700, 0xffffffff, 0xc00f0038);
-	rtw_write32_mask(rtwdev, 0x6c0, 0xffffffff, 0xaaaaaaaa);
-	rtw_write32_mask(rtwdev, 0x6c4, 0xffffffff, 0xaaaaaaaa);
 }
 
 #define WLAN_TXQ_RPT_EN		0x1F
@@ -1015,8 +1338,28 @@ static void rtw8822c_set_channel_bb(struct rtw_dev *rtwdev, u8 channel, u8 bw,
 		rtw_write32_clr(rtwdev, REG_CCKTXONLY, BIT_BB_CCK_CHECK_EN);
 		rtw_write32_mask(rtwdev, REG_CCAMSK, 0x3F000000, 0xF);
 
-		rtw_write32_mask(rtwdev, REG_RXAGCCTL0, 0x1f0, 0x0);
-		rtw_write32_mask(rtwdev, REG_RXAGCCTL, 0x1f0, 0x0);
+		switch (bw) {
+		case RTW_CHANNEL_WIDTH_20:
+			rtw_write32_mask(rtwdev, REG_RXAGCCTL0, BITS_RXAGC_CCK,
+					 0x5);
+			rtw_write32_mask(rtwdev, REG_RXAGCCTL, BITS_RXAGC_CCK,
+					 0x5);
+			rtw_write32_mask(rtwdev, REG_RXAGCCTL0, BITS_RXAGC_OFDM,
+					 0x6);
+			rtw_write32_mask(rtwdev, REG_RXAGCCTL, BITS_RXAGC_OFDM,
+					 0x6);
+			break;
+		case RTW_CHANNEL_WIDTH_40:
+			rtw_write32_mask(rtwdev, REG_RXAGCCTL0, BITS_RXAGC_CCK,
+					 0x4);
+			rtw_write32_mask(rtwdev, REG_RXAGCCTL, BITS_RXAGC_CCK,
+					 0x4);
+			rtw_write32_mask(rtwdev, REG_RXAGCCTL0, BITS_RXAGC_OFDM,
+					 0x0);
+			rtw_write32_mask(rtwdev, REG_RXAGCCTL, BITS_RXAGC_OFDM,
+					 0x0);
+			break;
+		}
 		if (channel == 13 || channel == 14)
 			rtw_write32_mask(rtwdev, REG_SCOTRK, 0xfff, 0x969);
 		else if (channel == 11 || channel == 12)
@@ -1061,14 +1404,20 @@ static void rtw8822c_set_channel_bb(struct rtw_dev *rtwdev, u8 channel, u8 bw,
 		rtw_write32_mask(rtwdev, REG_CCAMSK, 0x3F000000, 0x22);
 		rtw_write32_mask(rtwdev, REG_TXDFIR0, 0x70, 0x3);
 		if (channel >= 36 && channel <= 64) {
-			rtw_write32_mask(rtwdev, REG_RXAGCCTL0, 0x1f0, 0x1);
-			rtw_write32_mask(rtwdev, REG_RXAGCCTL, 0x1f0, 0x1);
+			rtw_write32_mask(rtwdev, REG_RXAGCCTL0, BITS_RXAGC_OFDM,
+					 0x1);
+			rtw_write32_mask(rtwdev, REG_RXAGCCTL, BITS_RXAGC_OFDM,
+					 0x1);
 		} else if (channel >= 100 && channel <= 144) {
-			rtw_write32_mask(rtwdev, REG_RXAGCCTL0, 0x1f0, 0x2);
-			rtw_write32_mask(rtwdev, REG_RXAGCCTL, 0x1f0, 0x2);
+			rtw_write32_mask(rtwdev, REG_RXAGCCTL0, BITS_RXAGC_OFDM,
+					 0x2);
+			rtw_write32_mask(rtwdev, REG_RXAGCCTL, BITS_RXAGC_OFDM,
+					 0x2);
 		} else if (channel >= 149) {
-			rtw_write32_mask(rtwdev, REG_RXAGCCTL0, 0x1f0, 0x3);
-			rtw_write32_mask(rtwdev, REG_RXAGCCTL, 0x1f0, 0x3);
+			rtw_write32_mask(rtwdev, REG_RXAGCCTL0, BITS_RXAGC_OFDM,
+					 0x3);
+			rtw_write32_mask(rtwdev, REG_RXAGCCTL, BITS_RXAGC_OFDM,
+					 0x3);
 		}
 
 		if (channel >= 36 && channel <= 51)
@@ -1092,6 +1441,9 @@ static void rtw8822c_set_channel_bb(struct rtw_dev *rtwdev, u8 channel, u8 bw,
 		rtw_write32_mask(rtwdev, REG_TXBWCTL, 0xffc0, 0x0);
 		rtw_write32_mask(rtwdev, REG_TXCLK, 0x700, 0x7);
 		rtw_write32_mask(rtwdev, REG_TXCLK, 0x700000, 0x6);
+		rtw_write32_mask(rtwdev, REG_CCK_SOURCE, BIT_NBI_EN, 0x0);
+		rtw_write32_mask(rtwdev, REG_SBD, BITS_SUBTUNE, 0x1);
+		rtw_write32_mask(rtwdev, REG_PT_CHSMO, BIT_PT_OPT, 0x0);
 		break;
 	case RTW_CHANNEL_WIDTH_40:
 		rtw_write32_mask(rtwdev, REG_CCKSB, BIT(4),
@@ -1100,12 +1452,17 @@ static void rtw8822c_set_channel_bb(struct rtw_dev *rtwdev, u8 channel, u8 bw,
 		rtw_write32_mask(rtwdev, REG_TXBWCTL, 0xc0, 0x0);
 		rtw_write32_mask(rtwdev, REG_TXBWCTL, 0xff00,
 				 (primary_ch_idx | (primary_ch_idx << 4)));
+		rtw_write32_mask(rtwdev, REG_CCK_SOURCE, BIT_NBI_EN, 0x1);
+		rtw_write32_mask(rtwdev, REG_SBD, BITS_SUBTUNE, 0x1);
+		rtw_write32_mask(rtwdev, REG_PT_CHSMO, BIT_PT_OPT, 0x1);
 		break;
 	case RTW_CHANNEL_WIDTH_80:
 		rtw_write32_mask(rtwdev, REG_TXBWCTL, 0xf, 0xa);
 		rtw_write32_mask(rtwdev, REG_TXBWCTL, 0xc0, 0x0);
 		rtw_write32_mask(rtwdev, REG_TXBWCTL, 0xff00,
 				 (primary_ch_idx | (primary_ch_idx << 4)));
+		rtw_write32_mask(rtwdev, REG_SBD, BITS_SUBTUNE, 0x6);
+		rtw_write32_mask(rtwdev, REG_PT_CHSMO, BIT_PT_OPT, 0x1);
 		break;
 	case RTW_CHANNEL_WIDTH_5:
 		rtw_write32_mask(rtwdev, REG_DFIRBW, 0x3FF0, 0x2AB);
@@ -1113,6 +1470,9 @@ static void rtw8822c_set_channel_bb(struct rtw_dev *rtwdev, u8 channel, u8 bw,
 		rtw_write32_mask(rtwdev, REG_TXBWCTL, 0xffc0, 0x1);
 		rtw_write32_mask(rtwdev, REG_TXCLK, 0x700, 0x4);
 		rtw_write32_mask(rtwdev, REG_TXCLK, 0x700000, 0x4);
+		rtw_write32_mask(rtwdev, REG_CCK_SOURCE, BIT_NBI_EN, 0x0);
+		rtw_write32_mask(rtwdev, REG_SBD, BITS_SUBTUNE, 0x1);
+		rtw_write32_mask(rtwdev, REG_PT_CHSMO, BIT_PT_OPT, 0x0);
 		break;
 	case RTW_CHANNEL_WIDTH_10:
 		rtw_write32_mask(rtwdev, REG_DFIRBW, 0x3FF0, 0x2AB);
@@ -1120,6 +1480,9 @@ static void rtw8822c_set_channel_bb(struct rtw_dev *rtwdev, u8 channel, u8 bw,
 		rtw_write32_mask(rtwdev, REG_TXBWCTL, 0xffc0, 0x2);
 		rtw_write32_mask(rtwdev, REG_TXCLK, 0x700, 0x6);
 		rtw_write32_mask(rtwdev, REG_TXCLK, 0x700000, 0x5);
+		rtw_write32_mask(rtwdev, REG_CCK_SOURCE, BIT_NBI_EN, 0x0);
+		rtw_write32_mask(rtwdev, REG_SBD, BITS_SUBTUNE, 0x1);
+		rtw_write32_mask(rtwdev, REG_PT_CHSMO, BIT_PT_OPT, 0x0);
 		break;
 	}
 }
@@ -1450,30 +1813,220 @@ static void rtw8822c_false_alarm_statistics(struct rtw_dev *rtwdev)
 	struct rtw_dm_info *dm_info = &rtwdev->dm_info;
 	u32 cck_enable;
 	u32 cck_fa_cnt;
+	u32 crc32_cnt;
 	u32 ofdm_fa_cnt;
-	u32 ofdm_tx_counter;
+	u32 ofdm_fa_cnt1, ofdm_fa_cnt2, ofdm_fa_cnt3, ofdm_fa_cnt4, ofdm_fa_cnt5;
+	u16 parity_fail, rate_illegal, crc8_fail, mcs_fail, sb_search_fail,
+	    fast_fsync, crc8_fail_vhta, mcs_fail_vht;
 
 	cck_enable = rtw_read32(rtwdev, REG_ENCCK) & BIT_CCK_BLK_EN;
 	cck_fa_cnt = rtw_read16(rtwdev, REG_CCK_FACNT);
-	ofdm_fa_cnt = rtw_read16(rtwdev, REG_OFDM_FACNT);
-	ofdm_tx_counter = rtw_read16(rtwdev, REG_OFDM_TXCNT);
-	ofdm_fa_cnt -= ofdm_tx_counter;
+
+	ofdm_fa_cnt1 = rtw_read32(rtwdev, REG_OFDM_FACNT1);
+	ofdm_fa_cnt2 = rtw_read32(rtwdev, REG_OFDM_FACNT2);
+	ofdm_fa_cnt3 = rtw_read32(rtwdev, REG_OFDM_FACNT3);
+	ofdm_fa_cnt4 = rtw_read32(rtwdev, REG_OFDM_FACNT4);
+	ofdm_fa_cnt5 = rtw_read32(rtwdev, REG_OFDM_FACNT5);
+
+	parity_fail	= FIELD_GET(GENMASK(31, 16), ofdm_fa_cnt1);
+	rate_illegal	= FIELD_GET(GENMASK(15, 0), ofdm_fa_cnt2);
+	crc8_fail	= FIELD_GET(GENMASK(31, 16), ofdm_fa_cnt2);
+	crc8_fail_vhta	= FIELD_GET(GENMASK(15, 0), ofdm_fa_cnt3);
+	mcs_fail	= FIELD_GET(GENMASK(15, 0), ofdm_fa_cnt4);
+	mcs_fail_vht	= FIELD_GET(GENMASK(31, 16), ofdm_fa_cnt4);
+	fast_fsync	= FIELD_GET(GENMASK(15, 0), ofdm_fa_cnt5);
+	sb_search_fail	= FIELD_GET(GENMASK(31, 16), ofdm_fa_cnt5);
+
+	ofdm_fa_cnt = parity_fail + rate_illegal + crc8_fail + crc8_fail_vhta +
+		      mcs_fail + mcs_fail_vht + fast_fsync + sb_search_fail;
 
 	dm_info->cck_fa_cnt = cck_fa_cnt;
 	dm_info->ofdm_fa_cnt = ofdm_fa_cnt;
 	dm_info->total_fa_cnt = ofdm_fa_cnt;
 	dm_info->total_fa_cnt += cck_enable ? cck_fa_cnt : 0;
 
+	crc32_cnt = rtw_read32(rtwdev, 0x2c04);
+	dm_info->cck_ok_cnt = crc32_cnt & 0xffff;
+	dm_info->cck_err_cnt = (crc32_cnt & 0xffff0000) >> 16;
+	crc32_cnt = rtw_read32(rtwdev, 0x2c14);
+	dm_info->ofdm_ok_cnt = crc32_cnt & 0xffff;
+	dm_info->ofdm_err_cnt = (crc32_cnt & 0xffff0000) >> 16;
+	crc32_cnt = rtw_read32(rtwdev, 0x2c10);
+	dm_info->ht_ok_cnt = crc32_cnt & 0xffff;
+	dm_info->ht_err_cnt = (crc32_cnt & 0xffff0000) >> 16;
+	crc32_cnt = rtw_read32(rtwdev, 0x2c0c);
+	dm_info->vht_ok_cnt = crc32_cnt & 0xffff;
+	dm_info->vht_err_cnt = (crc32_cnt & 0xffff0000) >> 16;
+
 	rtw_write32_mask(rtwdev, REG_CCANRX, BIT_CCK_FA_RST, 0);
 	rtw_write32_mask(rtwdev, REG_CCANRX, BIT_CCK_FA_RST, 2);
 	rtw_write32_mask(rtwdev, REG_CCANRX, BIT_OFDM_FA_RST, 0);
 	rtw_write32_mask(rtwdev, REG_CCANRX, BIT_OFDM_FA_RST, 2);
+
+	/* disable rx clk gating to reset counters */
+	rtw_write32_clr(rtwdev, REG_RX_BREAK, BIT_COM_RX_GCK_EN);
 	rtw_write32_set(rtwdev, REG_CNT_CTRL, BIT_ALL_CNT_RST);
 	rtw_write32_clr(rtwdev, REG_CNT_CTRL, BIT_ALL_CNT_RST);
+	rtw_write32_set(rtwdev, REG_RX_BREAK, BIT_COM_RX_GCK_EN);
 }
 
 static void rtw8822c_do_iqk(struct rtw_dev *rtwdev)
 {
+}
+
+/* for coex */
+static void rtw8822c_coex_cfg_init(struct rtw_dev *rtwdev)
+{
+	/* enable TBTT nterrupt */
+	rtw_write8_set(rtwdev, REG_BCN_CTRL, BIT_EN_BCN_FUNCTION);
+
+	/* BT report packet sample rate	 */
+	/* 0x790[5:0]=0x5 */
+	rtw_write8_set(rtwdev, REG_BT_TDMA_TIME, 0x05);
+
+	/* enable BT counter statistics */
+	rtw_write8(rtwdev, REG_BT_STAT_CTRL, 0x1);
+
+	/* enable PTA (3-wire function form BT side) */
+	rtw_write32_set(rtwdev, REG_GPIO_MUXCFG, BIT_BT_PTA_EN);
+	rtw_write32_set(rtwdev, REG_GPIO_MUXCFG, BIT_BT_AOD_GPIO3);
+
+	/* enable PTA (tx/rx signal form WiFi side) */
+	rtw_write8_set(rtwdev, REG_QUEUE_CTRL, BIT_PTA_WL_TX_EN);
+	/* wl tx signal to PTA not case EDCCA */
+	rtw_write8_clr(rtwdev, REG_QUEUE_CTRL, BIT_PTA_EDCCA_EN);
+	/* GNT_BT=1 while select both */
+	rtw_write8_set(rtwdev, REG_BT_COEX_V2, BIT_GNT_BT_POLARITY);
+	/* BT_CCA = ~GNT_WL_BB, (not or GNT_BT_BB, LTE_Rx */
+	rtw_write8_clr(rtwdev, REG_DUMMY_PAGE4_V1, BIT_BTCCA_CTRL);
+
+	/* to avoid RF parameter error */
+	rtw_write_rf(rtwdev, RF_PATH_B, 0x1, 0xfffff, 0x40000);
+}
+
+static void rtw8822c_coex_cfg_gnt_fix(struct rtw_dev *rtwdev)
+{
+	struct rtw_coex *coex = &rtwdev->coex;
+	struct rtw_coex_stat *coex_stat = &coex->stat;
+	struct rtw_efuse *efuse = &rtwdev->efuse;
+	u32 rf_0x1;
+
+	if (coex_stat->gnt_workaround_state == coex_stat->wl_coex_mode)
+		return;
+
+	coex_stat->gnt_workaround_state = coex_stat->wl_coex_mode;
+
+	if ((coex_stat->kt_ver == 0 && coex->under_5g) || coex->freerun)
+		rf_0x1 = 0x40021;
+	else
+		rf_0x1 = 0x40000;
+
+	/* BT at S1 for Shared-Ant */
+	if (efuse->share_ant)
+		rf_0x1 |= BIT(13);
+
+	rtw_write_rf(rtwdev, RF_PATH_B, 0x1, 0xfffff, rf_0x1);
+
+	/* WL-S0 2G RF TRX cannot be masked by GNT_BT
+	 * enable "WLS0 BB chage RF mode if GNT_BT = 1" for shared-antenna type
+	 * disable:0x1860[3] = 1, enable:0x1860[3] = 0
+	 *
+	 * enable "DAC off if GNT_WL = 0" for non-shared-antenna
+	 * disable 0x1c30[22] = 0,
+	 * enable: 0x1c30[22] = 1, 0x1c38[12] = 0, 0x1c38[28] = 1
+	 *
+	 * disable WL-S1 BB chage RF mode if GNT_BT
+	 * since RF TRx mask can do it
+	 */
+	rtw_write8_mask(rtwdev, 0x1c32, BIT(6), 1);
+	rtw_write8_mask(rtwdev, 0x1c39, BIT(4), 0);
+	rtw_write8_mask(rtwdev, 0x1c3b, BIT(4), 1);
+	rtw_write8_mask(rtwdev, 0x4160, BIT(3), 1);
+
+	/* disable WL-S0 BB chage RF mode if wifi is at 5G,
+	 * or antenna path is separated
+	 */
+	if (coex_stat->wl_coex_mode == COEX_WLINK_5G ||
+	    coex->under_5g || !efuse->share_ant) {
+		if (coex_stat->kt_ver >= 3) {
+			rtw_write8_mask(rtwdev, 0x1860, BIT(3), 0);
+			rtw_write8_mask(rtwdev, 0x1ca7, BIT(3), 1);
+		} else {
+			rtw_write8_mask(rtwdev, 0x1860, BIT(3), 1);
+		}
+	} else {
+		/* shared-antenna */
+		rtw_write8_mask(rtwdev, 0x1860, BIT(3), 0);
+		if (coex_stat->kt_ver >= 3)
+			rtw_write8_mask(rtwdev, 0x1ca7, BIT(3), 0);
+	}
+}
+
+static void rtw8822c_coex_cfg_gnt_debug(struct rtw_dev *rtwdev)
+{
+	rtw_write8_mask(rtwdev, 0x66, BIT(4), 0);
+	rtw_write8_mask(rtwdev, 0x67, BIT(0), 0);
+	rtw_write8_mask(rtwdev, 0x42, BIT(3), 0);
+	rtw_write8_mask(rtwdev, 0x65, BIT(7), 0);
+	rtw_write8_mask(rtwdev, 0x73, BIT(3), 0);
+}
+
+static void rtw8822c_coex_cfg_rfe_type(struct rtw_dev *rtwdev)
+{
+	struct rtw_coex *coex = &rtwdev->coex;
+	struct rtw_coex_rfe *coex_rfe = &coex->rfe;
+	struct rtw_efuse *efuse = &rtwdev->efuse;
+
+	coex_rfe->rfe_module_type = rtwdev->efuse.rfe_option;
+	coex_rfe->ant_switch_polarity = 0;
+	coex_rfe->ant_switch_exist = false;
+	coex_rfe->ant_switch_with_bt = false;
+	coex_rfe->ant_switch_diversity = false;
+
+	if (efuse->share_ant)
+		coex_rfe->wlg_at_btg = true;
+	else
+		coex_rfe->wlg_at_btg = false;
+
+	/* disable LTE coex in wifi side */
+	rtw_coex_write_indirect_reg(rtwdev, 0x38, BIT_LTE_COEX_EN, 0x0);
+	rtw_coex_write_indirect_reg(rtwdev, 0xa0, MASKLWORD, 0xffff);
+	rtw_coex_write_indirect_reg(rtwdev, 0xa4, MASKLWORD, 0xffff);
+}
+
+static void rtw8822c_coex_cfg_wl_tx_power(struct rtw_dev *rtwdev, u8 wl_pwr)
+{
+	struct rtw_coex *coex = &rtwdev->coex;
+	struct rtw_coex_dm *coex_dm = &coex->dm;
+
+	if (wl_pwr == coex_dm->cur_wl_pwr_lvl)
+		return;
+
+	coex_dm->cur_wl_pwr_lvl = wl_pwr;
+}
+
+static void rtw8822c_coex_cfg_wl_rx_gain(struct rtw_dev *rtwdev, bool low_gain)
+{
+	struct rtw_coex *coex = &rtwdev->coex;
+	struct rtw_coex_dm *coex_dm = &coex->dm;
+
+	if (low_gain == coex_dm->cur_wl_rx_low_gain_en)
+		return;
+
+	coex_dm->cur_wl_rx_low_gain_en = low_gain;
+
+	if (coex_dm->cur_wl_rx_low_gain_en) {
+		/* set Rx filter corner RCK offset */
+		rtw_write_rf(rtwdev, RF_PATH_A, 0xde, 0xfffff, 0x22);
+		rtw_write_rf(rtwdev, RF_PATH_A, 0x1d, 0xfffff, 0x36);
+		rtw_write_rf(rtwdev, RF_PATH_B, 0xde, 0xfffff, 0x22);
+		rtw_write_rf(rtwdev, RF_PATH_B, 0x1d, 0xfffff, 0x36);
+	} else {
+		/* set Rx filter corner RCK offset */
+		rtw_write_rf(rtwdev, RF_PATH_A, 0xde, 0xfffff, 0x20);
+		rtw_write_rf(rtwdev, RF_PATH_A, 0x1d, 0xfffff, 0x0);
+		rtw_write_rf(rtwdev, RF_PATH_B, 0x1d, 0xfffff, 0x0);
+	}
 }
 
 static struct rtw_pwr_seq_cmd trans_carddis_to_cardemu_8822c[] = {
@@ -1844,7 +2397,159 @@ static struct rtw_chip_ops rtw8822c_ops = {
 	.cfg_ldo25		= rtw8822c_cfg_ldo25,
 	.false_alarm_statistics	= rtw8822c_false_alarm_statistics,
 	.do_iqk			= rtw8822c_do_iqk,
+
+	.coex_set_init		= rtw8822c_coex_cfg_init,
+	.coex_set_ant_switch	= NULL,
+	.coex_set_gnt_fix	= rtw8822c_coex_cfg_gnt_fix,
+	.coex_set_gnt_debug	= rtw8822c_coex_cfg_gnt_debug,
+	.coex_set_rfe_type	= rtw8822c_coex_cfg_rfe_type,
+	.coex_set_wl_tx_power	= rtw8822c_coex_cfg_wl_tx_power,
+	.coex_set_wl_rx_gain	= rtw8822c_coex_cfg_wl_rx_gain,
 };
+
+/* Shared-Antenna Coex Table */
+static const struct coex_table_para table_sant_8822c[] = {
+	{0xffffffff, 0xffffffff}, /* case-0 */
+	{0x55555555, 0x55555555},
+	{0x66555555, 0x66555555},
+	{0xaaaaaaaa, 0xaaaaaaaa},
+	{0x5a5a5a5a, 0x5a5a5a5a},
+	{0xfafafafa, 0xfafafafa}, /* case-5 */
+	{0x6a5a6a5a, 0xaaaaaaaa},
+	{0x6a5a56aa, 0x6a5a56aa},
+	{0x6a5a5a5a, 0x6a5a5a5a},
+	{0x66555555, 0x5a5a5a5a},
+	{0x66555555, 0x6a5a5a5a}, /* case-10 */
+	{0x66555555, 0xfafafafa},
+	{0x66555555, 0x6a5a5aaa},
+	{0x66555555, 0x5aaa5aaa},
+	{0x66555555, 0xaaaa5aaa},
+	{0x66555555, 0xaaaaaaaa}, /* case-15 */
+	{0xffff55ff, 0xfafafafa},
+	{0xffff55ff, 0x6afa5afa},
+	{0xaaffffaa, 0xfafafafa},
+	{0xaa5555aa, 0x5a5a5a5a},
+	{0xaa5555aa, 0x6a5a5a5a}, /* case-20 */
+	{0xaa5555aa, 0xaaaaaaaa},
+	{0xffffffff, 0x5a5a5a5a},
+	{0xffffffff, 0x6a5a5a5a},
+	{0xffffffff, 0x55555555},
+	{0xffffffff, 0x6a5a5aaa}, /* case-25 */
+	{0x55555555, 0x5a5a5a5a},
+	{0x55555555, 0xaaaaaaaa},
+	{0x55555555, 0x6a5a6a5a},
+	{0x66556655, 0x66556655}
+};
+
+/* Non-Shared-Antenna Coex Table */
+static const struct coex_table_para table_nsant_8822c[] = {
+	{0xffffffff, 0xffffffff}, /* case-100 */
+	{0x55555555, 0x55555555},
+	{0x66555555, 0x66555555},
+	{0xaaaaaaaa, 0xaaaaaaaa},
+	{0x5a5a5a5a, 0x5a5a5a5a},
+	{0xfafafafa, 0xfafafafa}, /* case-105 */
+	{0x5afa5afa, 0x5afa5afa},
+	{0x55555555, 0xfafafafa},
+	{0x66555555, 0xfafafafa},
+	{0x66555555, 0x5a5a5a5a},
+	{0x66555555, 0x6a5a5a5a}, /* case-110 */
+	{0x66555555, 0xaaaaaaaa},
+	{0xffff55ff, 0xfafafafa},
+	{0xffff55ff, 0x5afa5afa},
+	{0xffff55ff, 0xaaaaaaaa},
+	{0xaaffffaa, 0xfafafafa}, /* case-115 */
+	{0xaaffffaa, 0x5afa5afa},
+	{0xaaffffaa, 0xaaaaaaaa},
+	{0xffffffff, 0xfafafafa},
+	{0xffffffff, 0x5afa5afa},
+	{0xffffffff, 0xaaaaaaaa},/* case-120 */
+	{0x55ff55ff, 0x5afa5afa},
+	{0x55ff55ff, 0xaaaaaaaa},
+	{0x55ff55ff, 0x55ff55ff}
+};
+
+/* Shared-Antenna TDMA */
+static const struct coex_tdma_para tdma_sant_8822c[] = {
+	{ {0x00, 0x00, 0x00, 0x00, 0x00} }, /* case-0 */
+	{ {0x61, 0x45, 0x03, 0x11, 0x11} },
+	{ {0x61, 0x3a, 0x03, 0x11, 0x11} },
+	{ {0x61, 0x30, 0x03, 0x11, 0x11} },
+	{ {0x61, 0x20, 0x03, 0x11, 0x11} },
+	{ {0x61, 0x10, 0x03, 0x11, 0x11} }, /* case-5 */
+	{ {0x61, 0x45, 0x03, 0x11, 0x10} },
+	{ {0x61, 0x3a, 0x03, 0x11, 0x10} },
+	{ {0x61, 0x30, 0x03, 0x11, 0x10} },
+	{ {0x61, 0x20, 0x03, 0x11, 0x10} },
+	{ {0x61, 0x10, 0x03, 0x11, 0x10} }, /* case-10 */
+	{ {0x61, 0x08, 0x03, 0x11, 0x14} },
+	{ {0x61, 0x08, 0x03, 0x10, 0x14} },
+	{ {0x51, 0x08, 0x03, 0x10, 0x54} },
+	{ {0x51, 0x08, 0x03, 0x10, 0x55} },
+	{ {0x51, 0x08, 0x07, 0x10, 0x54} }, /* case-15 */
+	{ {0x51, 0x45, 0x03, 0x10, 0x10} },
+	{ {0x51, 0x3a, 0x03, 0x10, 0x50} },
+	{ {0x51, 0x30, 0x03, 0x10, 0x50} },
+	{ {0x51, 0x20, 0x03, 0x10, 0x50} },
+	{ {0x51, 0x10, 0x03, 0x10, 0x50} }, /* case-20 */
+	{ {0x51, 0x4a, 0x03, 0x10, 0x50} },
+	{ {0x51, 0x0c, 0x03, 0x10, 0x54} },
+	{ {0x55, 0x08, 0x03, 0x10, 0x54} },
+	{ {0x65, 0x10, 0x03, 0x11, 0x11} },
+	{ {0x51, 0x10, 0x03, 0x10, 0x51} }, /* case-25 */
+	{ {0x51, 0x08, 0x03, 0x10, 0x50} }
+};
+
+/* Non-Shared-Antenna TDMA */
+static const struct coex_tdma_para tdma_nsant_8822c[] = {
+	{ {0x00, 0x00, 0x00, 0x00, 0x00} }, /* case-100 */
+	{ {0x61, 0x45, 0x03, 0x11, 0x11} },
+	{ {0x61, 0x3a, 0x03, 0x11, 0x11} },
+	{ {0x61, 0x30, 0x03, 0x11, 0x11} },
+	{ {0x61, 0x20, 0x03, 0x11, 0x11} },
+	{ {0x61, 0x10, 0x03, 0x11, 0x11} }, /* case-105 */
+	{ {0x61, 0x45, 0x03, 0x11, 0x10} },
+	{ {0x61, 0x3a, 0x03, 0x11, 0x10} },
+	{ {0x61, 0x30, 0x03, 0x11, 0x10} },
+	{ {0x61, 0x20, 0x03, 0x11, 0x10} },
+	{ {0x61, 0x10, 0x03, 0x11, 0x10} }, /* case-110 */
+	{ {0x61, 0x08, 0x03, 0x11, 0x14} },
+	{ {0x61, 0x08, 0x03, 0x10, 0x14} },
+	{ {0x51, 0x08, 0x03, 0x10, 0x54} },
+	{ {0x51, 0x08, 0x03, 0x10, 0x55} },
+	{ {0x51, 0x08, 0x07, 0x10, 0x54} }, /* case-115 */
+	{ {0x51, 0x45, 0x03, 0x10, 0x50} },
+	{ {0x51, 0x3a, 0x03, 0x10, 0x50} },
+	{ {0x51, 0x30, 0x03, 0x10, 0x50} },
+	{ {0x51, 0x20, 0x03, 0x10, 0x50} },
+	{ {0x51, 0x10, 0x03, 0x10, 0x50} }  /* case-120 */
+};
+
+/* rssi in percentage % (dbm = % - 100) */
+static const u8 wl_rssi_step_8822c[] = {60, 50, 44, 30};
+static const u8 bt_rssi_step_8822c[] = {8, 15, 20, 25};
+static const struct coex_5g_afh_map afh_5g_8822c[] = { {0, 0, 0} };
+
+/* wl_tx_dec_power, bt_tx_dec_power, wl_rx_gain, bt_rx_lna_constrain */
+static const struct coex_rf_para rf_para_tx_8822c[] = {
+	{0, 0, false, 7},  /* for normal */
+	{0, 16, false, 7}, /* for WL-CPT */
+	{8, 17, true, 4},
+	{7, 18, true, 4},
+	{6, 19, true, 4},
+	{5, 20, true, 4}
+};
+
+static const struct coex_rf_para rf_para_rx_8822c[] = {
+	{0, 0, false, 7},  /* for normal */
+	{0, 16, false, 7}, /* for WL-CPT */
+	{3, 24, true, 5},
+	{2, 26, true, 5},
+	{1, 27, true, 5},
+	{0, 28, true, 5}
+};
+
+static_assert(ARRAY_SIZE(rf_para_tx_8822c) == ARRAY_SIZE(rf_para_rx_8822c));
 
 struct rtw_chip_info rtw8822c_hw_spec = {
 	.ops = &rtw8822c_ops,
@@ -1884,6 +2589,32 @@ struct rtw_chip_info rtw8822c_hw_spec = {
 	.rf_tbl = {&rtw8822c_rf_a_tbl, &rtw8822c_rf_b_tbl},
 	.rfe_defs = rtw8822c_rfe_defs,
 	.rfe_defs_size = ARRAY_SIZE(rtw8822c_rfe_defs),
+
+	.coex_para_ver = 0x19062706,
+	.bt_desired_ver = 0x6,
+	.scbd_support = true,
+	.new_scbd10_def = true,
+	.pstdma_type = COEX_PSTDMA_FORCE_LPSOFF,
+	.bt_rssi_type = COEX_BTRSSI_DBM,
+	.ant_isolation = 15,
+	.rssi_tolerance = 2,
+	.wl_rssi_step = wl_rssi_step_8822c,
+	.bt_rssi_step = bt_rssi_step_8822c,
+	.table_sant_num = ARRAY_SIZE(table_sant_8822c),
+	.table_sant = table_sant_8822c,
+	.table_nsant_num = ARRAY_SIZE(table_nsant_8822c),
+	.table_nsant = table_nsant_8822c,
+	.tdma_sant_num = ARRAY_SIZE(tdma_sant_8822c),
+	.tdma_sant = tdma_sant_8822c,
+	.tdma_nsant_num = ARRAY_SIZE(tdma_nsant_8822c),
+	.tdma_nsant = tdma_nsant_8822c,
+	.wl_rf_para_num = ARRAY_SIZE(rf_para_tx_8822c),
+	.wl_rf_para_tx = rf_para_tx_8822c,
+	.wl_rf_para_rx = rf_para_rx_8822c,
+	.bt_afh_span_bw20 = 0x24,
+	.bt_afh_span_bw40 = 0x36,
+	.afh_5g_num = ARRAY_SIZE(afh_5g_8822c),
+	.afh_5g = afh_5g_8822c,
 };
 EXPORT_SYMBOL(rtw8822c_hw_spec);
 

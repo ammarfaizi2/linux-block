@@ -174,6 +174,7 @@ static const struct {
 	QEDE_STAT(coalesced_bytes),
 
 	QEDE_STAT(link_change_count),
+	QEDE_STAT(ptp_skip_txts),
 };
 
 #define QEDE_NUM_STATS	ARRAY_SIZE(qede_stats_arr)
@@ -423,12 +424,13 @@ struct qede_link_mode_mapping {
 };
 
 static const struct qede_link_mode_mapping qed_lm_map[] = {
+	{QED_LM_FIBRE_BIT, ETHTOOL_LINK_MODE_FIBRE_BIT},
 	{QED_LM_Autoneg_BIT, ETHTOOL_LINK_MODE_Autoneg_BIT},
 	{QED_LM_Asym_Pause_BIT, ETHTOOL_LINK_MODE_Asym_Pause_BIT},
 	{QED_LM_Pause_BIT, ETHTOOL_LINK_MODE_Pause_BIT},
 	{QED_LM_1000baseT_Full_BIT, ETHTOOL_LINK_MODE_1000baseT_Full_BIT},
 	{QED_LM_10000baseT_Full_BIT, ETHTOOL_LINK_MODE_10000baseT_Full_BIT},
-	{QED_LM_2500baseX_Full_BIT, ETHTOOL_LINK_MODE_2500baseX_Full_BIT},
+	{QED_LM_TP_BIT, ETHTOOL_LINK_MODE_TP_BIT},
 	{QED_LM_Backplane_BIT, ETHTOOL_LINK_MODE_Backplane_BIT},
 	{QED_LM_1000baseKX_Full_BIT, ETHTOOL_LINK_MODE_1000baseKX_Full_BIT},
 	{QED_LM_10000baseKX4_Full_BIT, ETHTOOL_LINK_MODE_10000baseKX4_Full_BIT},
