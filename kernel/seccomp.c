@@ -75,6 +75,7 @@ struct seccomp_knotif {
 	/* The return values, only valid when in SECCOMP_NOTIFY_REPLIED */
 	int error;
 	long val;
+	u32 flags;
 
 	/* Signals when this has entered SECCOMP_NOTIFY_REPLIED */
 	struct completion ready;
@@ -622,12 +623,14 @@ static void seccomp_send_sigsys(int syscall, int reason)
 #define SECCOMP_LOG_LOG			(1 << 5)
 #define SECCOMP_LOG_ALLOW		(1 << 6)
 #define SECCOMP_LOG_USER_NOTIF		(1 << 7)
+#define SECCOMP_LOG_USER_NOTIF_ALLOW	(1 << 8)
 
 static u32 seccomp_actions_logged = SECCOMP_LOG_KILL_PROCESS |
 				    SECCOMP_LOG_KILL_THREAD  |
 				    SECCOMP_LOG_TRAP  |
 				    SECCOMP_LOG_ERRNO |
 				    SECCOMP_LOG_USER_NOTIF |
+				    SECCOMP_LOG_USER_NOTIF_ALLOW |
 				    SECCOMP_LOG_TRACE |
 				    SECCOMP_LOG_LOG;
 
@@ -650,6 +653,9 @@ static inline void seccomp_log(unsigned long syscall, long signr, u32 action,
 		break;
 	case SECCOMP_RET_USER_NOTIF:
 		log = requested && seccomp_actions_logged & SECCOMP_LOG_USER_NOTIF;
+		break;
+	case SECCOMP_RET_USER_NOTIF_ALLOW:
+		log = requested && seccomp_actions_logged & SECCOMP_LOG_USER_NOTIF_ALLOW;
 		break;
 	case SECCOMP_RET_LOG:
 		log = seccomp_actions_logged & SECCOMP_LOG_LOG;
@@ -732,11 +738,12 @@ static u64 seccomp_next_notify_id(struct seccomp_filter *filter)
 	return filter->notif->next_id++;
 }
 
-static void seccomp_do_user_notification(int this_syscall,
-					 struct seccomp_filter *match,
-					 const struct seccomp_data *sd)
+static int seccomp_do_user_notification(int this_syscall,
+					struct seccomp_filter *match,
+					const struct seccomp_data *sd)
 {
 	int err;
+	u32 flags = 0;
 	long ret = 0;
 	struct seccomp_knotif n = {};
 
@@ -764,6 +771,7 @@ static void seccomp_do_user_notification(int this_syscall,
 	if (err == 0) {
 		ret = n.val;
 		err = n.error;
+		flags = n.flags;
 	}
 
 	/*
@@ -780,8 +788,13 @@ static void seccomp_do_user_notification(int this_syscall,
 		list_del(&n.list);
 out:
 	mutex_unlock(&match->notify_lock);
+
+	if (flags & SECCOMP_RET_USER_NOTIF_ALLOW)
+		return 0;
+
 	syscall_set_return_value(current, task_pt_regs(current),
 				 err, ret);
+	return 1;
 }
 
 static int __seccomp_filter(int this_syscall, const struct seccomp_data *sd,
@@ -867,8 +880,9 @@ static int __seccomp_filter(int this_syscall, const struct seccomp_data *sd,
 		return 0;
 
 	case SECCOMP_RET_USER_NOTIF:
-		seccomp_do_user_notification(this_syscall, match, sd);
-		goto skip;
+		if (seccomp_do_user_notification(this_syscall, match, sd))
+			goto skip;
+		return 0;
 
 	case SECCOMP_RET_LOG:
 		seccomp_log(this_syscall, 0, action, true);
@@ -1087,7 +1101,7 @@ static long seccomp_notify_send(struct seccomp_filter *filter,
 	if (copy_from_user(&resp, buf, sizeof(resp)))
 		return -EFAULT;
 
-	if (resp.flags)
+	if (resp.flags & ~SECCOMP_RET_USER_NOTIF_ALLOW)
 		return -EINVAL;
 
 	ret = mutex_lock_interruptible(&filter->notify_lock);
@@ -1116,6 +1130,7 @@ static long seccomp_notify_send(struct seccomp_filter *filter,
 	knotif->state = SECCOMP_NOTIFY_REPLIED;
 	knotif->error = resp.error;
 	knotif->val = resp.val;
+	knotif->flags = resp.flags;
 	complete(&knotif->ready);
 out:
 	mutex_unlock(&filter->notify_lock);
@@ -1351,6 +1366,7 @@ static long seccomp_get_action_avail(const char __user *uaction)
 	case SECCOMP_RET_TRAP:
 	case SECCOMP_RET_ERRNO:
 	case SECCOMP_RET_USER_NOTIF:
+	case SECCOMP_RET_USER_NOTIF_ALLOW:
 	case SECCOMP_RET_TRACE:
 	case SECCOMP_RET_LOG:
 	case SECCOMP_RET_ALLOW:
@@ -1566,23 +1582,25 @@ long seccomp_get_metadata(struct task_struct *task,
 #ifdef CONFIG_SYSCTL
 
 /* Human readable action names for friendly sysctl interaction */
-#define SECCOMP_RET_KILL_PROCESS_NAME	"kill_process"
-#define SECCOMP_RET_KILL_THREAD_NAME	"kill_thread"
-#define SECCOMP_RET_TRAP_NAME		"trap"
-#define SECCOMP_RET_ERRNO_NAME		"errno"
-#define SECCOMP_RET_USER_NOTIF_NAME	"user_notif"
-#define SECCOMP_RET_TRACE_NAME		"trace"
-#define SECCOMP_RET_LOG_NAME		"log"
-#define SECCOMP_RET_ALLOW_NAME		"allow"
+#define SECCOMP_RET_KILL_PROCESS_NAME		"kill_process"
+#define SECCOMP_RET_KILL_THREAD_NAME		"kill_thread"
+#define SECCOMP_RET_TRAP_NAME			"trap"
+#define SECCOMP_RET_ERRNO_NAME			"errno"
+#define SECCOMP_RET_USER_NOTIF_NAME		"user_notif"
+#define SECCOMP_RET_USER_NOTIF_ALLOW_NAME	"user_notif_allow"
+#define SECCOMP_RET_TRACE_NAME			"trace"
+#define SECCOMP_RET_LOG_NAME			"log"
+#define SECCOMP_RET_ALLOW_NAME			"allow"
 
 static const char seccomp_actions_avail[] =
-				SECCOMP_RET_KILL_PROCESS_NAME	" "
-				SECCOMP_RET_KILL_THREAD_NAME	" "
-				SECCOMP_RET_TRAP_NAME		" "
-				SECCOMP_RET_ERRNO_NAME		" "
-				SECCOMP_RET_USER_NOTIF_NAME     " "
-				SECCOMP_RET_TRACE_NAME		" "
-				SECCOMP_RET_LOG_NAME		" "
+				SECCOMP_RET_KILL_PROCESS_NAME		" "
+				SECCOMP_RET_KILL_THREAD_NAME		" "
+				SECCOMP_RET_TRAP_NAME			" "
+				SECCOMP_RET_ERRNO_NAME			" "
+				SECCOMP_RET_USER_NOTIF_NAME		" "
+				SECCOMP_RET_USER_NOTIF_ALLOW_NAME	" "
+				SECCOMP_RET_TRACE_NAME			" "
+				SECCOMP_RET_LOG_NAME			" "
 				SECCOMP_RET_ALLOW_NAME;
 
 struct seccomp_log_name {
@@ -1596,6 +1614,7 @@ static const struct seccomp_log_name seccomp_log_names[] = {
 	{ SECCOMP_LOG_TRAP, SECCOMP_RET_TRAP_NAME },
 	{ SECCOMP_LOG_ERRNO, SECCOMP_RET_ERRNO_NAME },
 	{ SECCOMP_LOG_USER_NOTIF, SECCOMP_RET_USER_NOTIF_NAME },
+	{ SECCOMP_LOG_USER_NOTIF_ALLOW, SECCOMP_RET_USER_NOTIF_ALLOW_NAME },
 	{ SECCOMP_LOG_TRACE, SECCOMP_RET_TRACE_NAME },
 	{ SECCOMP_LOG_LOG, SECCOMP_RET_LOG_NAME },
 	{ SECCOMP_LOG_ALLOW, SECCOMP_RET_ALLOW_NAME },
