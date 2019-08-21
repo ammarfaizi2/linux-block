@@ -264,12 +264,14 @@ TRACE_EVENT_RCU(rcu_exp_funnel_lock,
  * "Check": rcuo GP kthread checking specified CPU for work.
  * "DeferredWake": Timer expired or polled check, time to wake.
  * "DoWake": The to-be-awakened rcuo kthread needs to be awakened.
+ * "EndSleep": Done waiting for GP for !rcu_nocb_poll.
  * "FirstBQ": New CB to empty ->nocb_bypass (->cblist maybe non-empty).
  * "FirstBQnoWake": FirstBQ plus rcuo kthread need not be awakened.
  * "FirstBQwake": FirstBQ plus rcuo kthread must be awakened.
  * "FirstQ": New CB to empty ->cblist (->nocb_bypass maybe non-empty).
  * "NeedWaitGP": rcuo GP kthread must wait on a grace period.
  * "Poll": Start of new polling cycle for rcu_nocb_poll.
+ * "Sleep": Sleep waiting for GP for !rcu_nocb_poll.
  * "Timer": Deferred-wake timer expired.
  * "WakeEmptyIsDeferred": Wake rcuo kthread later, first CB to empty list.
  * "WakeEmpty": Wake rcuo kthread, first CB to empty list.
