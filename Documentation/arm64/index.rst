@@ -18,6 +18,7 @@ ARM64 Architecture
     memory
     memory-tagging-extension
     perf
+    perf_counter_user_access
     pointer-authentication
     silicon-errata
     sve
