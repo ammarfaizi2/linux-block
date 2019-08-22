@@ -297,8 +297,7 @@ void __init setbat(int index, unsigned long virt, phys_addr_t phys,
 /*
  * Preload a translation in the hash table
  */
-void hash_preload(struct mm_struct *mm, unsigned long ea,
-		  bool is_exec, unsigned long trap)
+void hash_preload(struct mm_struct *mm, unsigned long ea)
 {
 	pmd_t *pmd;
 
@@ -307,6 +306,39 @@ void hash_preload(struct mm_struct *mm, unsigned long ea,
 	pmd = pmd_offset(pud_offset(pgd_offset(mm, ea), ea), ea);
 	if (!pmd_none(*pmd))
 		add_hash_page(mm->context.id, ea, pmd_val(*pmd));
+}
+
+/*
+ * This is called at the end of handling a user page fault, when the
+ * fault has been handled by updating a PTE in the linux page tables.
+ * We use it to preload an HPTE into the hash table corresponding to
+ * the updated linux PTE.
+ *
+ * This must always be called with the pte lock held.
+ */
+void update_mmu_cache(struct vm_area_struct *vma, unsigned long address,
+		      pte_t *ptep)
+{
+	if (!mmu_has_feature(MMU_FTR_HPTE_TABLE))
+		return;
+	/*
+	 * We don't need to worry about _PAGE_PRESENT here because we are
+	 * called with either mm->page_table_lock held or ptl lock held
+	 */
+
+	/* We only want HPTEs for linux PTEs that have _PAGE_ACCESSED set */
+	if (!pte_young(*ptep) || address >= TASK_SIZE)
+		return;
+
+	/* We have to test for regs NULL since init will get here first thing at boot */
+	if (!current->thread.regs)
+		return;
+
+	/* We also avoid filling the hash if not coming from a fault */
+	if (TRAP(current->thread.regs) != 0x300 && TRAP(current->thread.regs) != 0x400)
+		return;
+
+	hash_preload(vma->vm_mm, address);
 }
 
 /*
@@ -358,6 +390,15 @@ void __init MMU_init_hw(void)
 	hash_mb2 = hash_mb = 32 - LG_HPTEG_SIZE - lg_n_hpteg;
 	if (lg_n_hpteg > 16)
 		hash_mb2 = 16 - LG_HPTEG_SIZE;
+
+	/*
+	 * When KASAN is selected, there is already an early temporary hash
+	 * table and the switch to the final hash table is done later.
+	 */
+	if (IS_ENABLED(CONFIG_KASAN))
+		return;
+
+	MMU_init_hw_patch();
 }
 
 void __init MMU_init_hw_patch(void)

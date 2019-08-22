@@ -46,7 +46,15 @@ struct xive_irq_data {
 
 	/* Setup/used by frontend */
 	int target;
+	/*
+	 * saved_p means that there is a queue entry for this interrupt
+	 * in some CPU's queue (not including guest vcpu queues), even
+	 * if P is not set in the source ESB.
+	 * stale_p means that there is no queue entry for this interrupt
+	 * in some CPU's queue, even if P is set in the source ESB.
+	 */
 	bool saved_p;
+	bool stale_p;
 };
 #define XIVE_IRQ_FLAG_STORE_EOI	0x01
 #define XIVE_IRQ_FLAG_LSI	0x02
@@ -91,6 +99,8 @@ extern void xive_flush_interrupt(void);
 
 /* xmon hook */
 extern void xmon_xive_do_dump(int cpu);
+extern int xmon_xive_get_irq_config(u32 irq, u32 *target, u8 *prio,
+				    u32 *sw_irq);
 
 /* APIs used by KVM */
 extern u32 xive_native_default_eq_shift(void);
