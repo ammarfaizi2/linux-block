@@ -11,6 +11,10 @@ struct test arch_tests[] = {
 	},
 #endif
 	{
+		.desc = "Pinned CPU user counter access",
+		.func = test__rd_pinned,
+	},
+	{
 		.func = NULL,
 	},
 };
