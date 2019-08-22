@@ -3505,6 +3505,23 @@ err_siblings:
 	return ret;
 }
 
+static bool instance_has_memory(struct amd64_pvt *pvt)
+{
+	bool cs_enabled = false;
+	int num_channels = 2;
+	int cs = 0, dct = 0;
+
+	if (pvt->umc)
+		num_channels = num_umcs;
+
+	for (dct = 0; dct < num_channels; dct++) {
+		for_each_chip_select(cs, dct, pvt)
+			cs_enabled |= csrow_enabled(cs, dct, pvt);
+	}
+
+	return cs_enabled;
+}
+
 static int probe_one_instance(unsigned int nid)
 {
 	struct pci_dev *F3 = node_to_amd_nb(nid)->misc;
@@ -3533,6 +3550,10 @@ static int probe_one_instance(unsigned int nid)
 
 	ret = get_hardware_info(pvt, fam_type);
 	if (ret < 0)
+		goto err_enable;
+
+	ret = 0;
+	if (!instance_has_memory(pvt))
 		goto err_enable;
 
 	if (!ecc_enabled(pvt)) {
