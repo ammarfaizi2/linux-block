@@ -13,6 +13,7 @@ ARM64 Architecture
     hugetlbpage
     legacy_instructions
     memory
+    perf_counter_user_access
     pointer-authentication
     silicon-errata
     sve
