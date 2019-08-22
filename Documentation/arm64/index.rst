@@ -15,6 +15,7 @@ ARM64 Architecture
     legacy_instructions
     memory
     perf
+    perf_counter_user_access
     pointer-authentication
     silicon-errata
     sve
