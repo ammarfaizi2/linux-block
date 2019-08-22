@@ -11,6 +11,18 @@ struct test arch_tests[] = {
 	},
 #endif
 	{
+		.desc = "User event counter access",
+		.func = test__rd_pmevcntr,
+	},
+	{
+		.desc = "User cycle counter access",
+		.func = test__rd_pmccntr,
+	},
+	{
+		.desc = "Pinned CPU user counter access",
+		.func = test__rd_pinned,
+	},
+	{
 		.func = NULL,
 	},
 };
