@@ -57,6 +57,12 @@ struct pmu_hw_events {
 	DECLARE_BITMAP(used_mask, ARMPMU_MAX_HWEVENTS);
 
 	/*
+	 * A 1 bit for an index indicates that the counter was used for an
+	 * event and has not been cleared. A 0 means that the counter is cleared.
+	 */
+	DECLARE_BITMAP(dirty_mask, ARMPMU_MAX_HWEVENTS);
+
+	/*
 	 * Hardware lock to serialize accesses to PMU registers. Needed for the
 	 * read/modify/write sequences.
 	 */
