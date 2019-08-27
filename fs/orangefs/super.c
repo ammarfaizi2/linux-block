@@ -33,7 +33,6 @@ static const struct fs_parameter_spec orangefs_param_specs[] = {
 };
 
 const struct fs_parameter_description orangefs_fs_parameters = {
-	.name		= "orangefs",
 	.specs		= orangefs_param_specs,
 };
 

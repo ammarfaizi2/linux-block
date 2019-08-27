@@ -59,7 +59,6 @@ static const struct fs_parameter_spec binderfs_param_specs[] = {
 };
 
 static const struct fs_parameter_description binderfs_fs_parameters = {
-	.name		= "binderfs",
 	.specs		= binderfs_param_specs,
 };
 

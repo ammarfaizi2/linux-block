@@ -118,7 +118,6 @@ static const struct fs_parameter_spec devpts_param_specs[] = {
 };
 
 static const struct fs_parameter_description devpts_fs_parameters = {
-	.name		= "devpts",
 	.specs		= devpts_param_specs,
 };
 

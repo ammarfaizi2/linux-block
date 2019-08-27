@@ -120,7 +120,6 @@ static const struct fs_parameter_spec coda_param_specs[] = {
 };
 
 static const struct fs_parameter_description coda_fs_parameters = {
-	.name		= "coda",
 	.specs		= coda_param_specs,
 };
 

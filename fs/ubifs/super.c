@@ -972,7 +972,6 @@ static const struct fs_parameter_spec ubifs_param_specs[] = {
 };
 
 static const struct fs_parameter_description ubifs_fs_parameters = {
-	.name		= "ubifs",
 	.specs		= ubifs_param_specs,
 };
 

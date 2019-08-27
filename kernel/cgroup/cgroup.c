@@ -1826,7 +1826,6 @@ static const struct fs_parameter_spec cgroup2_param_specs[] = {
 };
 
 static const struct fs_parameter_description cgroup2_fs_parameters = {
-	.name		= "cgroup2",
 	.specs		= cgroup2_param_specs,
 };
 

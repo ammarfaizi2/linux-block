@@ -155,7 +155,6 @@ static const struct fs_parameter_spec tracefs_param_specs[] = {
 };
 
 static const struct fs_parameter_description tracefs_fs_parameters = {
-	.name		= "tracefs",
 	.specs		= tracefs_param_specs,
 };
 

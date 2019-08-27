@@ -2820,7 +2820,6 @@ static const struct fs_parameter_spec selinux_param_specs[] = {
 };
 
 static const struct fs_parameter_description selinux_fs_parameters = {
-	.name		= "SELinux",
 	.specs		= selinux_param_specs,
 };
 
@@ -7021,7 +7020,7 @@ static __init int selinux_init(void)
 	else
 		pr_debug("SELinux:  Starting in permissive mode\n");
 
-	fs_validate_description(&selinux_fs_parameters);
+	fs_validate_description("selinux", &selinux_fs_parameters);
 
 	return 0;
 }

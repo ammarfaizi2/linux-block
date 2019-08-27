@@ -145,7 +145,6 @@ static const struct fs_parameter_spec autofs_param_specs[] = {
 };
 
 const struct fs_parameter_description autofs_fs_parameters = {
-	.name		= "autofs",
 	.specs		= autofs_param_specs,
 };
 

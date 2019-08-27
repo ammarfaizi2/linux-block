@@ -229,7 +229,6 @@ static const struct fs_parameter_spec pstore_param_specs[] = {
 };
 
 static const struct fs_parameter_description pstore_fs_parameters = {
-	.name		= "pstore",
 	.specs		= pstore_param_specs,
 };
 

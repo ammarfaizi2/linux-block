@@ -61,7 +61,6 @@ static const struct fs_parameter_spec debugfs_param_specs[] = {
 };
 
 static const struct fs_parameter_description debugfs_fs_parameters = {
-	.name		= "debugfs",
 	.specs		= debugfs_param_specs,
 };
 

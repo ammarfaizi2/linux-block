@@ -111,7 +111,7 @@ int fs_parse(struct fs_context *fc,
 
 	if (p->flags & fs_param_deprecated)
 		warnf(fc, "%s: Deprecated parameter '%s'",
-		      desc->name, param->key);
+		      fc->fs_type->name, param->key);
 
 	if (result->negated)
 		goto okay;
@@ -147,7 +147,7 @@ int fs_parse(struct fs_context *fc,
 		if (param->type != fs_value_is_flag &&
 		    (param->type != fs_value_is_string || result->has_value))
 			return invalf(fc, "%s: Unexpected value for '%s'",
-				      desc->name, param->key);
+				      fc->fs_type->name, param->key);
 		result->boolean = true;
 		goto okay;
 
@@ -236,7 +236,8 @@ okay:
 	return p->opt;
 
 bad_value:
-	return invalf(fc, "%s: Bad value for '%s'", desc->name, param->key);
+	return invalf(fc, "%s: Bad value for '%s'",
+		      fc->fs_type->name, param->key);
 unknown_parameter:
 	return -ENOPARAM;
 }
@@ -356,19 +357,13 @@ bool validate_constant_table(const struct constant_table *tbl, size_t tbl_size,
  * fs_validate_description - Validate a parameter description
  * @desc: The parameter description to validate.
  */
-bool fs_validate_description(const struct fs_parameter_description *desc)
+bool fs_validate_description(const char *name,
+	const struct fs_parameter_description *desc)
 {
 	const struct fs_parameter_spec *param, *p2;
-	const char *name = desc->name;
 	bool good = true;
 
 	pr_notice("*** VALIDATE %s ***\n", name);
-
-	if (!name[0]) {
-		pr_err("VALIDATE Parser: No name\n");
-		name = "Unknown";
-		good = false;
-	}
 
 	if (desc->specs) {
 		for (param = desc->specs; param->name; param++) {

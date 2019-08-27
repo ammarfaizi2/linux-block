@@ -62,7 +62,6 @@ struct fs_parameter_enum {
 };
 
 struct fs_parameter_description {
-	const char	name[16];		/* Name for logging purposes */
 	const struct fs_parameter_spec *specs;	/* List of param specifications */
 };
 
@@ -96,12 +95,14 @@ extern int __lookup_constant(const struct constant_table tbl[], size_t tbl_size,
 #ifdef CONFIG_VALIDATE_FS_PARSER
 extern bool validate_constant_table(const struct constant_table *tbl, size_t tbl_size,
 				    int low, int high, int special);
-extern bool fs_validate_description(const struct fs_parameter_description *desc);
+extern bool fs_validate_description(const char *name,
+				    const struct fs_parameter_description *desc);
 #else
 static inline bool validate_constant_table(const struct constant_table *tbl, size_t tbl_size,
 					   int low, int high, int special)
 { return true; }
-static inline bool fs_validate_description(const struct fs_parameter_description *desc)
+static inline bool fs_validate_description(const char *name,
+					   const struct fs_parameter_description *desc)
 { return true; }
 #endif
 
