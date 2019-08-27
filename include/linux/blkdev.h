@@ -391,10 +391,6 @@ static inline int blkdev_reset_zones_ioctl(struct block_device *bdev,
 #endif /* CONFIG_BLK_DEV_ZONED */
 
 struct request_queue {
-	/*
-	 * Together with queue_head for cacheline sharing
-	 */
-	struct list_head	queue_head;
 	struct request		*last_merge;
 	struct elevator_queue	*elevator;
 
@@ -539,6 +535,7 @@ struct request_queue {
 	struct delayed_work	requeue_work;
 
 	struct mutex		sysfs_lock;
+	struct mutex		sysfs_dir_lock;
 
 	/*
 	 * for reusing dead hctx instance in case of updating
@@ -611,6 +608,7 @@ struct request_queue {
 #define QUEUE_FLAG_SCSI_PASSTHROUGH 23	/* queue supports SCSI commands */
 #define QUEUE_FLAG_QUIESCED	24	/* queue has been quiesced */
 #define QUEUE_FLAG_PCI_P2PDMA	25	/* device supports PCI p2p requests */
+#define QUEUE_FLAG_ZONE_RESETALL 26	/* supports Zone Reset All */
 
 #define QUEUE_FLAG_MQ_DEFAULT	((1 << QUEUE_FLAG_IO_STAT) |		\
 				 (1 << QUEUE_FLAG_SAME_COMP))
@@ -630,6 +628,8 @@ bool blk_queue_flag_test_and_set(unsigned int flag, struct request_queue *q);
 #define blk_queue_io_stat(q)	test_bit(QUEUE_FLAG_IO_STAT, &(q)->queue_flags)
 #define blk_queue_add_random(q)	test_bit(QUEUE_FLAG_ADD_RANDOM, &(q)->queue_flags)
 #define blk_queue_discard(q)	test_bit(QUEUE_FLAG_DISCARD, &(q)->queue_flags)
+#define blk_queue_zone_resetall(q)	\
+	test_bit(QUEUE_FLAG_ZONE_RESETALL, &(q)->queue_flags)
 #define blk_queue_secure_erase(q) \
 	(test_bit(QUEUE_FLAG_SECERASE, &(q)->queue_flags))
 #define blk_queue_dax(q)	test_bit(QUEUE_FLAG_DAX, &(q)->queue_flags)
@@ -644,6 +644,7 @@ bool blk_queue_flag_test_and_set(unsigned int flag, struct request_queue *q);
 #define blk_queue_quiesced(q)	test_bit(QUEUE_FLAG_QUIESCED, &(q)->queue_flags)
 #define blk_queue_pm_only(q)	atomic_read(&(q)->pm_only)
 #define blk_queue_fua(q)	test_bit(QUEUE_FLAG_FUA, &(q)->queue_flags)
+#define blk_queue_registered(q)	test_bit(QUEUE_FLAG_REGISTERED, &(q)->queue_flags)
 
 extern void blk_set_pm_only(struct request_queue *q);
 extern void blk_clear_pm_only(struct request_queue *q);
@@ -1232,42 +1233,42 @@ enum blk_default_limits {
 	BLK_SEG_BOUNDARY_MASK	= 0xFFFFFFFFUL,
 };
 
-static inline unsigned long queue_segment_boundary(struct request_queue *q)
+static inline unsigned long queue_segment_boundary(const struct request_queue *q)
 {
 	return q->limits.seg_boundary_mask;
 }
 
-static inline unsigned long queue_virt_boundary(struct request_queue *q)
+static inline unsigned long queue_virt_boundary(const struct request_queue *q)
 {
 	return q->limits.virt_boundary_mask;
 }
 
-static inline unsigned int queue_max_sectors(struct request_queue *q)
+static inline unsigned int queue_max_sectors(const struct request_queue *q)
 {
 	return q->limits.max_sectors;
 }
 
-static inline unsigned int queue_max_hw_sectors(struct request_queue *q)
+static inline unsigned int queue_max_hw_sectors(const struct request_queue *q)
 {
 	return q->limits.max_hw_sectors;
 }
 
-static inline unsigned short queue_max_segments(struct request_queue *q)
+static inline unsigned short queue_max_segments(const struct request_queue *q)
 {
 	return q->limits.max_segments;
 }
 
-static inline unsigned short queue_max_discard_segments(struct request_queue *q)
+static inline unsigned short queue_max_discard_segments(const struct request_queue *q)
 {
 	return q->limits.max_discard_segments;
 }
 
-static inline unsigned int queue_max_segment_size(struct request_queue *q)
+static inline unsigned int queue_max_segment_size(const struct request_queue *q)
 {
 	return q->limits.max_segment_size;
 }
 
-static inline unsigned short queue_logical_block_size(struct request_queue *q)
+static inline unsigned short queue_logical_block_size(const struct request_queue *q)
 {
 	int retval = 512;
 
@@ -1282,7 +1283,7 @@ static inline unsigned short bdev_logical_block_size(struct block_device *bdev)
 	return queue_logical_block_size(bdev_get_queue(bdev));
 }
 
-static inline unsigned int queue_physical_block_size(struct request_queue *q)
+static inline unsigned int queue_physical_block_size(const struct request_queue *q)
 {
 	return q->limits.physical_block_size;
 }
@@ -1292,7 +1293,7 @@ static inline unsigned int bdev_physical_block_size(struct block_device *bdev)
 	return queue_physical_block_size(bdev_get_queue(bdev));
 }
 
-static inline unsigned int queue_io_min(struct request_queue *q)
+static inline unsigned int queue_io_min(const struct request_queue *q)
 {
 	return q->limits.io_min;
 }
@@ -1302,7 +1303,7 @@ static inline int bdev_io_min(struct block_device *bdev)
 	return queue_io_min(bdev_get_queue(bdev));
 }
 
-static inline unsigned int queue_io_opt(struct request_queue *q)
+static inline unsigned int queue_io_opt(const struct request_queue *q)
 {
 	return q->limits.io_opt;
 }
@@ -1312,7 +1313,7 @@ static inline int bdev_io_opt(struct block_device *bdev)
 	return queue_io_opt(bdev_get_queue(bdev));
 }
 
-static inline int queue_alignment_offset(struct request_queue *q)
+static inline int queue_alignment_offset(const struct request_queue *q)
 {
 	if (q->limits.misaligned)
 		return -1;
@@ -1342,7 +1343,7 @@ static inline int bdev_alignment_offset(struct block_device *bdev)
 	return q->limits.alignment_offset;
 }
 
-static inline int queue_discard_alignment(struct request_queue *q)
+static inline int queue_discard_alignment(const struct request_queue *q)
 {
 	if (q->limits.discard_misaligned)
 		return -1;
@@ -1432,7 +1433,7 @@ static inline sector_t bdev_zone_sectors(struct block_device *bdev)
 	return 0;
 }
 
-static inline int queue_dma_alignment(struct request_queue *q)
+static inline int queue_dma_alignment(const struct request_queue *q)
 {
 	return q ? q->dma_alignment : 511;
 }
@@ -1543,7 +1544,7 @@ static inline void blk_queue_max_integrity_segments(struct request_queue *q,
 }
 
 static inline unsigned short
-queue_max_integrity_segments(struct request_queue *q)
+queue_max_integrity_segments(const struct request_queue *q)
 {
 	return q->limits.max_integrity_segments;
 }
@@ -1626,7 +1627,7 @@ static inline void blk_queue_max_integrity_segments(struct request_queue *q,
 						    unsigned int segs)
 {
 }
-static inline unsigned short queue_max_integrity_segments(struct request_queue *q)
+static inline unsigned short queue_max_integrity_segments(const struct request_queue *q)
 {
 	return 0;
 }
