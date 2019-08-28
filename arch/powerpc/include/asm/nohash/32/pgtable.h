@@ -11,8 +11,6 @@
 #include <asm/mmu.h>			/* For sub-arch specific PPC_PIN_SIZE */
 #include <asm/asm-405.h>
 
-extern unsigned long ioremap_bot;
-
 #ifdef CONFIG_44x
 extern int icache_44x_need_flush;
 #endif
@@ -94,6 +92,10 @@ int map_kernel_page(unsigned long va, phys_addr_t pa, pgprot_t prot);
 #else
 #define IOREMAP_TOP	KVIRT_TOP
 #endif
+
+/* PPC32 shares vmalloc area with ioremap */
+#define IOREMAP_START	VMALLOC_START
+#define IOREMAP_END	VMALLOC_END
 
 /*
  * Just any arbitrary offset to the start of the vmalloc VM area: the

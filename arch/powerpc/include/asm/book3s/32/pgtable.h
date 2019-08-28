@@ -165,6 +165,10 @@ int map_kernel_page(unsigned long va, phys_addr_t pa, pgprot_t prot);
 #define IOREMAP_TOP	KVIRT_TOP
 #endif
 
+/* PPC32 shares vmalloc area with ioremap */
+#define IOREMAP_START	VMALLOC_START
+#define IOREMAP_END	VMALLOC_END
+
 /*
  * Just any arbitrary offset to the start of the vmalloc VM area: the
  * current 16MB value just means that there will be a 64MB "hole" after the
@@ -200,8 +204,6 @@ int map_kernel_page(unsigned long va, phys_addr_t pa, pgprot_t prot);
 #ifndef __ASSEMBLY__
 #include <linux/sched.h>
 #include <linux/threads.h>
-
-extern unsigned long ioremap_bot;
 
 /* Bits to mask out from a PGD to get to the PUD page */
 #define PGD_MASKED_BITS		0
