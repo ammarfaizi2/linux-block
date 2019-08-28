@@ -1967,6 +1967,25 @@ static void ioc_pd_free(struct blkg_policy_data *pd)
 	kfree(iocg);
 }
 
+static size_t ioc_pd_stat(struct blkg_policy_data *pd, char *buf, size_t size)
+{
+	struct ioc_gq *iocg = pd_to_iocg(pd);
+	struct ioc *ioc = iocg->ioc;
+
+	if (!ioc->enabled)
+		return 0;
+
+	if (!iocg->level) {
+		unsigned vpct = DIV64_U64_ROUND_CLOSEST(
+					atomic64_read(&ioc->vtime_rate) * 10000,
+					VTIME_PER_USEC);
+		return scnprintf(buf, size, " cost.vrate=%u.%02u",
+				 vpct / 100, vpct % 100);
+	}
+
+	return 0;
+}
+
 static u64 ioc_weight_prfill(struct seq_file *sf, struct blkg_policy_data *pd,
 			     int off)
 {
@@ -2379,6 +2398,7 @@ static struct blkcg_policy blkcg_policy_iocost = {
 	.pd_alloc_fn	= ioc_pd_alloc,
 	.pd_init_fn	= ioc_pd_init,
 	.pd_free_fn	= ioc_pd_free,
+	.pd_stat_fn	= ioc_pd_stat,
 };
 
 static int __init ioc_init(void)
