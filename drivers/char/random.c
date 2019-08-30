@@ -377,6 +377,8 @@
  */
 static int random_write_wakeup_bits = 28 * OUTPUT_POOL_WORDS;
 
+static int may_init;
+
 /*
  * Originally, we used a primitive polynomial of degree .poolwords
  * over GF(2).  The taps for various sizes are defined below.  They
@@ -955,6 +957,9 @@ static void crng_reseed(struct crng_state *crng, struct entropy_store *r)
 		__u8	block[CHACHA_BLOCK_SIZE];
 		__u32	key[8];
 	} buf;
+
+	if (!may_init)
+		return;
 
 	if (r) {
 		num = extract_entropy(r, &buf, 32, 16, 0);
@@ -1763,7 +1768,9 @@ static ssize_t initialized_read(struct file *file,
 static ssize_t initialized_write(struct file *file,
 	const char __user *user_buf, size_t count, loff_t *ppos)
 {
-	return -EINVAL;
+	may_init = 1;
+	crng_reseed(&primary_crng, &input_pool);
+	return count;
 }
 
 static const struct file_operations initialized_fops = {
