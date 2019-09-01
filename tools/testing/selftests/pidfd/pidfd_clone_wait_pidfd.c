@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
 	if (pid == 0)
 		exit(EXIT_SUCCESS);
 
-	pid = sys_waitid(P_PIDFD, pidfd, &info, WEXITED, NULL);
+	pid = sys_waitid(P_PIDFD, pidfd, &info, WEXITED | __WCLONE, NULL);
 	if (pid < 0)
 		err(EXIT_FAILURE, "Failed to wait on first new process via P_PIDFD");
 
@@ -108,21 +108,21 @@ int main(int argc, char *argv[])
 	if (pid == 0)
 		exit(EXIT_SUCCESS);
 
-	pid = sys_waitid(P_PID, pid, &info, WEXITED, NULL);
+	pid = sys_waitid(P_PID, parent_tid, &info, WEXITED | __WCLONE, NULL);
 	if (pid > 0)
 		err(EXIT_FAILURE, "Managed to wait on second new process via P_PID");
 
-	pid = sys_waitid(P_PGID, pid, &info, WEXITED, NULL);
+	pid = sys_waitid(P_PGID, parent_tid, &info, WEXITED | __WCLONE, NULL);
 	if (pid > 0)
 		err(EXIT_FAILURE, "Managed to wait on second new process via P_PGID");
 
-	pid = sys_waitid(P_ALL, pid, &info, WEXITED, NULL);
+	pid = sys_waitid(P_ALL, parent_tid, &info, WEXITED | __WCLONE, NULL);
 	if (pid > 0)
 		err(EXIT_FAILURE, "Managed to wait on second new process via P_ALL");
 
 	close(pidfd);
 
-	pid = sys_waitid(P_PID, parent_tid, &info, WEXITED, NULL);
+	pid = sys_waitid(P_PID, parent_tid, &info, WEXITED | __WCLONE, NULL);
 	if (pid < 0)
 		err(EXIT_FAILURE, "Failed to wait on second new process via P_PID after close(pidfd)");
 
