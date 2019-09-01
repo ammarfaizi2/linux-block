@@ -1467,7 +1467,8 @@ EXC_COMMON_BEGIN(fp_unavailable_common)
 	RECONCILE_IRQ_STATE(r10, r11)
 	addi	r3,r1,STACK_FRAME_OVERHEAD
 	bl	kernel_fp_unavailable_exception
-	BUG_OPCODE
+0:	trap
+	EMIT_BUG_ENTRY 0b, __FILE__, __LINE__, 0
 1:
 #ifdef CONFIG_PPC_TRANSACTIONAL_MEM
 BEGIN_FTR_SECTION
@@ -1521,8 +1522,6 @@ EXC_COMMON(trap_0b_common, 0xb00, unknown_exception)
  * system call / hypercall (0xc00, 0x4c00)
  *
  * The system call exception is invoked with "sc 0" and does not alter HV bit.
- * There is support for kernel code to invoke system calls but there are no
- * in-tree users.
  *
  * The hypercall is invoked with "sc 1" and sets HV=1.
  *
