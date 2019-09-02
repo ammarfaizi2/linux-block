@@ -1456,7 +1456,7 @@ static int do_wait_thread(struct wait_opts *wo, struct task_struct *tsk)
 	list_for_each_entry (p, &tsk->children, sibling) {
 		int ret;
 
-		pr_err("AAAA: %d - %d - %d\n", p->signal->clone_wait_pidfd, has_pidfd(task_pid(p)), wo->wo_p_pidfd);
+		pr_warn("AAAA: %d - %d - %d\n", p->signal->clone_wait_pidfd, has_pidfd(task_pid(p)), wo->wo_p_pidfd);
 		if (p->signal->clone_wait_pidfd && has_pidfd(task_pid(p)) &&
 		    !wo->wo_p_pidfd)
 			continue;

@@ -1984,8 +1984,10 @@ bool do_notify_parent(struct task_struct *tsk, int sig)
 				sig = 0;
 		}
 
-		if (tsk->signal->clone_wait_pidfd)
+		if (tsk->signal->clone_wait_pidfd) {
+			pr_warn("BBBB: %d - %d\n", tsk->signal->clone_wait_pidfd, has_pidfd(task_pid(tsk)));
 			autoreap = !has_pidfd(task_pid(tsk));
+		}
 	}
 	if (valid_signal(sig) && sig)
 		__group_send_sig_info(sig, &info, tsk->parent);
