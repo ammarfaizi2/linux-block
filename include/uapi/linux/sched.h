@@ -33,6 +33,7 @@
 #define CLONE_NEWNET		0x40000000	/* New network namespace */
 #define CLONE_IO		0x80000000	/* Clone io context */
 #define CLONE_WAIT_PID		0x100000000ULL  /* set if process only appears in specific wait requests */
+#define CLONE_PIDFD_KILL_ON_CLOSE	0x200000000ULL  /* set if process should be killed on close of last pidfd */
 
 /*
  * Arguments for the clone3 syscall

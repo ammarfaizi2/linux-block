@@ -1706,11 +1706,32 @@ struct pid *pidfd_pid(const struct file *file)
 	return ERR_PTR(-EBADF);
 }
 
+static void pidfd_kill(struct pid *pid)
+{
+	struct task_struct *tsk;
+
+	/*
+	 * This condition can only be true if the pidfd was created with
+	 * the CLONE_PIDFD_KILL_ON_CLOSE flag.
+	 */
+	if (!atomic_dec_and_test(&pid->pidfd_nr))
+		return;
+
+	rcu_read_lock();
+	read_lock(&tasklist_lock);
+	tsk = pid_task(pid, PIDTYPE_PID);
+	if (tsk)
+		do_send_sig_info(SIGKILL, SEND_SIG_PRIV, tsk, PIDTYPE_TGID);
+	read_unlock(&tasklist_lock);
+	rcu_read_unlock();
+}
+
 static int pidfd_release(struct inode *inode, struct file *file)
 {
 	struct pid *pid = file->private_data;
 
 	file->private_data = NULL;
+	pidfd_kill(pid);
 	put_pid(pid);
 	return 0;
 }
@@ -2078,6 +2099,9 @@ static __latent_entropy struct task_struct *copy_process(
 		retval = put_user(pidfd, args->pidfd);
 		if (retval)
 			goto bad_fork_put_pidfd;
+
+		if (!(clone_flags & CLONE_PIDFD_KILL_ON_CLOSE))
+			atomic_inc(&pid->pidfd_nr);
 	}
 
 #ifdef CONFIG_BLOCK
@@ -2603,7 +2627,8 @@ static bool clone3_args_valid(const struct kernel_clone_args *kargs)
 	 * All lower bits of the flag word are taken.
 	 * Verify that no other unknown flags are passed along.
 	 */
-	if (kargs->flags & ~(CLONE_LEGACY_FLAGS | CLONE_WAIT_PID))
+	if (kargs->flags &
+	    ~(CLONE_LEGACY_FLAGS | CLONE_WAIT_PID | CLONE_PIDFD_KILL_ON_CLOSE))
 		return false;
 
 	/*
@@ -2614,10 +2639,12 @@ static bool clone3_args_valid(const struct kernel_clone_args *kargs)
 		return false;
 
 	/*
-	 * Currently only allow CLONE_WAIT_PID for processes created as
-	 * pidfds until someone needs this feature for regular pids too.
+	 * - Currently only allow CLONE_WAIT_PID for processes created as
+	 *   pidfds until someone needs this feature for regular pids too.
+	 * - CLONE_PIDFD_KILL_ON_CLOSE only works with pidfds.
 	 */
-	if ((kargs->flags & CLONE_WAIT_PID) && !(kargs->flags & CLONE_PIDFD))
+	if ((kargs->flags & (CLONE_WAIT_PID | CLONE_PIDFD_KILL_ON_CLOSE)) &&
+	    !(kargs->flags & CLONE_PIDFD))
 		return false;
 
 	if ((kargs->flags & (CLONE_THREAD | CLONE_PARENT)) &&

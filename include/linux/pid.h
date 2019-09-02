@@ -59,6 +59,7 @@ struct upid {
 struct pid
 {
 	refcount_t count;
+	atomic_t pidfd_nr;
 	unsigned int level;
 	/* lists of tasks that use this pid */
 	struct hlist_head tasks[PIDTYPE_MAX];
