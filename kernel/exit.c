@@ -1033,6 +1033,9 @@ eligible_child(struct wait_opts *wo, bool ptrace, struct task_struct *p)
 	if (ptrace || (wo->wo_flags & __WALL))
 		return 1;
 
+	if (p->signal->clone_wait_pid && (wo->wo_type != PIDTYPE_PID))
+		return 0;
+
 	/*
 	 * Otherwise, wait for clone children *only* if __WCLONE is set;
 	 * otherwise, wait for non-clone children *only*.
