@@ -28,6 +28,10 @@
 #define CLONE_WAIT_PID 0x100000000ULL
 #endif
 
+#ifndef CLONE_PIDFD_KILL_ON_CLOSE
+#define CLONE_PIDFD_KILL_ON_CLOSE 0x200000000ULL
+#endif
+
 #ifndef __NR_pidfd_open
 #define __NR_pidfd_open -1
 #endif

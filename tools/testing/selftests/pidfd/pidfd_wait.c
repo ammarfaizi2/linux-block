@@ -339,14 +339,138 @@ static int test_pidfd_wait_clone_wait_pid(void)
 	return 0;
 }
 
+/* test CLONE_PIDFD_KILL_ON_CLOSE */
+static int test_pidfd_wait_clone_pidfd_kill_on_close(void)
+{
+	const char *test_name = "pidfd CLONE_PIDFD_KILL_ON_CLOSE";
+	int pidfd = -1, pidfd2 = -1, pidfd3 = -1, pidfd4 = -1, status = 0;
+	pid_t parent_tid = -1;
+	struct clone_args args = {
+		.parent_tid = ptr_to_u64(&parent_tid),
+		.pidfd = ptr_to_u64(&pidfd),
+		.flags = CLONE_PIDFD | CLONE_PARENT_SETTID |
+			 CLONE_PIDFD_KILL_ON_CLOSE,
+		.exit_signal = 0,
+	};
+	int ret;
+	pid_t pid;
+	siginfo_t info = {
+		.si_signo = 0,
+	};
+
+	pid = sys_clone3(&args);
+	if (pid < 0)
+		ksft_exit_fail_msg("%s test: failed to create new process %s\n",
+				   test_name, strerror(errno));
+
+	if (pid == 0) {
+		raise(SIGSTOP);
+		exit(EXIT_SUCCESS);
+	}
+
+	pidfd2 = sys_pidfd_open(parent_tid, 0);
+	if (pidfd2 < 0)
+		ksft_exit_fail_msg("%s test: Failed to open second pidfd\n",
+				   test_name);
+
+	pidfd3 = sys_pidfd_open(parent_tid, 0);
+	if (pidfd3 < 0)
+		ksft_exit_fail_msg("%s test: Failed to open third pidfd\n",
+				   test_name);
+
+	pidfd4 = sys_pidfd_open(parent_tid, 0);
+	if (pidfd4 < 0)
+		ksft_exit_fail_msg("%s test: Failed to open fourth pidfd\n",
+				   test_name);
+
+	/* verify process is stopped and alive */
+	ret = sys_waitid(P_PIDFD, pidfd, &info, WSTOPPED | __WCLONE, NULL);
+	if (ret < 0)
+		ksft_exit_fail_msg(
+			"%s test: failed to wait on WSTOPPED process with pid %d and pidfd %d: %s\n",
+			test_name, parent_tid, pidfd, strerror(errno));
+
+	if (!WIFSIGNALED(info.si_status) || WTERMSIG(info.si_status) != SIGSTOP)
+		ksft_exit_fail_msg(
+			"%s test: process with pid %d and pidfd %d did not correctly stop via SIGSTOP: %s\n",
+			test_name, parent_tid, pidfd, strerror(errno));
+
+	if (info.si_code != CLD_STOPPED)
+		ksft_exit_fail_msg(
+			"%s test: unexpected si_code value %d received after waiting on process with pid %d and pidfd %d: %s\n",
+			test_name, info.si_code, parent_tid, pidfd,
+			strerror(errno));
+
+	if (info.si_pid != parent_tid)
+		ksft_exit_fail_msg(
+			"%s test: unexpected si_pid value %d received after waiting on process with pid %d and pidfd %d: %s\n",
+			test_name, info.si_pid, parent_tid, pidfd,
+			strerror(errno));
+
+	close(pidfd4);
+	sleep(1);
+	ret = sys_waitid(P_PIDFD, pidfd, &info, WEXITED | __WCLONE | WNOHANG, NULL);
+	if (ret < 0)
+		ksft_exit_fail_msg(
+			"%s test: process with pid %d and pidfd %d was killed on close(pidfd4): %s\n",
+			test_name, parent_tid, pidfd, strerror(errno));
+
+	close(pidfd3);
+	sleep(1);
+	ret = sys_waitid(P_PIDFD, pidfd, &info, WEXITED | __WCLONE | WNOHANG, NULL);
+	if (ret < 0)
+		ksft_exit_fail_msg(
+			"%s test: process with pid %d and pidfd %d was killed on close(pidfd3): %s\n",
+			test_name, parent_tid, pidfd, strerror(errno));
+
+	close(pidfd2);
+	sleep(1);
+	ret = sys_waitid(P_PIDFD, pidfd, &info, WEXITED | __WCLONE | WNOHANG, NULL);
+	if (ret < 0)
+		ksft_exit_fail_msg(
+			"%s test: process with pid %d and pidfd %d was killed on close(pidfd2): %s\n",
+			test_name, parent_tid, pidfd, strerror(errno));
+
+	close(pidfd);
+
+	memset(&info, 0, sizeof(info));
+
+	ret = sys_waitid(P_PID, parent_tid, &info, WEXITED | __WCLONE, NULL);
+	if (ret < 0)
+		ksft_exit_fail_msg(
+			"%s test: process with pid %d and pidfd %d was not killed on close(pidfd): %s\n",
+			test_name, parent_tid, pidfd, strerror(errno));
+
+	if (!WIFSIGNALED(info.si_status) || WTERMSIG(info.si_status) != SIGKILL)
+		ksft_exit_fail_msg(
+			"%s test: failed to wait on SIGKILLed process with pid %d and pidfd %d: %s\n",
+			test_name, parent_tid, pidfd, strerror(errno));
+
+	if (info.si_code != CLD_KILLED)
+		ksft_exit_fail_msg(
+			"%s test: unexpected si_code value %d received after waiting on SIGKILLed process with pid %d and pidfd %d: %s\n",
+			test_name, info.si_code, parent_tid, pidfd,
+			strerror(errno));
+
+	if (info.si_pid != parent_tid)
+		ksft_exit_fail_msg(
+			"%s test: unexpected si_pid value %d received after waiting on SIGKILLed process with pid %d and pidfd %d: %s\n",
+			test_name, info.si_pid, parent_tid, pidfd,
+			strerror(errno));
+
+	ksft_test_result_pass("%s test: Passed\n", test_name);
+	return 0;
+}
+
 int main(int argc, char **argv)
 {
 	ksft_print_header();
-	ksft_set_plan(3);
+	ksft_set_plan(4);
 
 	test_pidfd_wait_simple();
 	test_pidfd_wait_states();
 	test_pidfd_wait_clone_wait_pid();
+	test_pidfd_wait_clone_pidfd_kill_on_close();
 
 	return ksft_exit_pass();
 }
