@@ -259,13 +259,94 @@ static int test_pidfd_wait_states(void)
 	return 0;
 }
 
+/* test CLONE_WAIT_PID */
+static int test_pidfd_wait_clone_wait_pid(void)
+{
+	const char *test_name = "pidfd CLONE_WAIT_PID";
+	int pidfd = -1, status = 0;
+	pid_t parent_tid = -1;
+	struct clone_args args = {
+		.parent_tid = ptr_to_u64(&parent_tid),
+		.pidfd = ptr_to_u64(&pidfd),
+		.flags = CLONE_VFORK | CLONE_PIDFD | CLONE_PARENT_SETTID |
+			 CLONE_WAIT_PID,
+		.exit_signal = 0,
+	};
+	int ret;
+	pid_t pid;
+	siginfo_t info = {
+		.si_signo = 0,
+	};
+
+	pid = sys_clone3(&args);
+	if (pid < 0)
+		ksft_exit_fail_msg("%s test: failed to create new process %s\n",
+				   test_name, strerror(errno));
+
+	if (pid == 0)
+		exit(EXIT_SUCCESS);
+
+	ret = sys_waitid(P_PGID, parent_tid, &info, WEXITED | __WCLONE, NULL);
+	if (ret == 0)
+		ksft_exit_fail_msg(
+			"%s test: managed to waitid(P_PGID) on process with pid %d and pidfd %d: %s\n",
+			test_name, parent_tid, pidfd, strerror(errno));
+
+	ret = sys_waitid(P_ALL, parent_tid, &info, WEXITED | __WCLONE, NULL);
+	if (ret == 0)
+		ksft_exit_fail_msg(
+			"%s test: managed to waitid(P_ALL) on process with pid %d and pidfd %d: %s\n",
+			test_name, parent_tid, pidfd, strerror(errno));
+
+	ret = sys_waitid(P_PIDFD, pidfd, &info, WEXITED | __WCLONE | WNOWAIT, NULL);
+	if (ret < 0)
+		ksft_exit_fail_msg(
+			"%s test: failed to waitid(P_PIDFD, WNOWAIT) on process with pid %d and pidfd %d: %s\n",
+			test_name, parent_tid, pidfd, strerror(errno));
+
+	ret = sys_waitid(P_PID, parent_tid, &info, WEXITED | __WCLONE | WNOWAIT, NULL);
+	if (ret < 0)
+		ksft_exit_fail_msg(
+			"%s test: failed to waitid(P_PID, WNOWAIT) on process with pid %d and pidfd %d: %s\n",
+			test_name, parent_tid, pidfd, strerror(errno));
+
+	ret = sys_waitid(P_PIDFD, pidfd, &info, WEXITED | __WCLONE, NULL);
+	if (ret < 0)
+		ksft_exit_fail_msg(
+			"%s test: failed to waitid(P_PIDFD) on process with pid %d and pidfd %d: %s\n",
+			test_name, parent_tid, pidfd, strerror(errno));
+
+	if (!WIFEXITED(info.si_status) || WEXITSTATUS(info.si_status))
+		ksft_exit_fail_msg(
+			"%s test: failed to wait on WEXITED process with pid %d and pidfd %d: %s\n",
+			test_name, parent_tid, pidfd, strerror(errno));
+
+	if (info.si_code != CLD_EXITED)
+		ksft_exit_fail_msg(
+			"%s test: unexpected si_code value %d received after waiting on process with pid %d and pidfd %d: %s\n",
+			test_name, info.si_code, parent_tid, pidfd,
+			strerror(errno));
+
+	if (info.si_pid != parent_tid)
+		ksft_exit_fail_msg(
+			"%s test: unexpected si_pid value %d received after waiting on process with pid %d and pidfd %d: %s\n",
+			test_name, info.si_pid, parent_tid, pidfd,
+			strerror(errno));
+
+	close(pidfd);
+
+	ksft_test_result_pass("%s test: Passed\n", test_name);
+	return 0;
+}
+
 int main(int argc, char **argv)
 {
 	ksft_print_header();
-	ksft_set_plan(2);
+	ksft_set_plan(3);
 
 	test_pidfd_wait_simple();
 	test_pidfd_wait_states();
+	test_pidfd_wait_clone_wait_pid();
 
 	return ksft_exit_pass();
 }
