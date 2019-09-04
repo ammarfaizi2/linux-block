@@ -12,6 +12,8 @@
 
 #include <uapi/linux/fsinfo.h>
 
+struct path;
+
 #define FSINFO_NORMAL_ATTR_MAX_SIZE 4096
 #define FSINFO_SCRATCH_BUFFER_SIZE 4096
 

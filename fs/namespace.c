@@ -2110,7 +2110,7 @@ static int attach_recursive_mnt(struct mount *source_mnt,
 		mnt_set_mountpoint(dest_mnt, dest_mp, source_mnt);
 		notify_mount(dest_mnt, source_mnt, NOTIFY_MOUNT_NEW_MOUNT,
 			     source_mnt->mnt.mnt_sb->s_flags & SB_SUBMOUNT ?
-			     WATCH_INFO_FLAG_0 : 0);
+			     0x10000 : 0);
 		commit_tree(source_mnt);
 	}
 
