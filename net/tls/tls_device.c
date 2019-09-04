@@ -61,7 +61,7 @@ static void tls_device_free_ctx(struct tls_context *ctx)
 	if (ctx->rx_conf == TLS_HW)
 		kfree(tls_offload_ctx_rx(ctx));
 
-	tls_ctx_free(ctx);
+	tls_ctx_free(NULL, ctx);
 }
 
 static void tls_device_gc_task(struct work_struct *work)
@@ -244,12 +244,12 @@ static void tls_append_frag(struct tls_record_info *record,
 
 	frag = &record->frags[record->num_frags - 1];
 	if (skb_frag_page(frag) == pfrag->page &&
-	    frag->page_offset + skb_frag_size(frag) == pfrag->offset) {
+	    skb_frag_off(frag) + skb_frag_size(frag) == pfrag->offset) {
 		skb_frag_size_add(frag, size);
 	} else {
 		++frag;
 		__skb_frag_set_page(frag, pfrag->page);
-		frag->page_offset = pfrag->offset;
+		skb_frag_off_set(frag, pfrag->offset);
 		skb_frag_size_set(frag, size);
 		++record->num_frags;
 		get_page(pfrag->page);
@@ -301,7 +301,7 @@ static int tls_push_record(struct sock *sk,
 		frag = &record->frags[i];
 		sg_unmark_end(&offload_ctx->sg_tx_data[i]);
 		sg_set_page(&offload_ctx->sg_tx_data[i], skb_frag_page(frag),
-			    skb_frag_size(frag), frag->page_offset);
+			    skb_frag_size(frag), skb_frag_off(frag));
 		sk_mem_charge(sk, skb_frag_size(frag));
 		get_page(skb_frag_page(frag));
 	}
@@ -324,7 +324,7 @@ static int tls_create_new_record(struct tls_offload_context_tx *offload_ctx,
 
 	frag = &record->frags[0];
 	__skb_frag_set_page(frag, pfrag->page);
-	frag->page_offset = pfrag->offset;
+	skb_frag_off_set(frag, pfrag->offset);
 	skb_frag_size_set(frag, prepend_size);
 
 	get_page(pfrag->page);
@@ -373,9 +373,9 @@ static int tls_push_data(struct sock *sk,
 	struct tls_context *tls_ctx = tls_get_ctx(sk);
 	struct tls_prot_info *prot = &tls_ctx->prot_info;
 	struct tls_offload_context_tx *ctx = tls_offload_ctx_tx(tls_ctx);
-	int tls_push_record_flags = flags | MSG_SENDPAGE_NOTLAST;
 	int more = flags & (MSG_SENDPAGE_NOTLAST | MSG_MORE);
 	struct tls_record_info *record = ctx->open_record;
+	int tls_push_record_flags;
 	struct page_frag *pfrag;
 	size_t orig_size = size;
 	u32 max_open_record_len;
@@ -389,6 +389,9 @@ static int tls_push_data(struct sock *sk,
 
 	if (sk->sk_err)
 		return -sk->sk_err;
+
+	flags |= MSG_SENDPAGE_DECRYPTED;
+	tls_push_record_flags = flags | MSG_SENDPAGE_NOTLAST;
 
 	timeo = sock_sndtimeo(sk, flags & MSG_DONTWAIT);
 	if (tls_is_partially_sent_record(tls_ctx)) {
@@ -576,7 +579,9 @@ void tls_device_write_space(struct sock *sk, struct tls_context *ctx)
 		gfp_t sk_allocation = sk->sk_allocation;
 
 		sk->sk_allocation = GFP_ATOMIC;
-		tls_push_partial_record(sk, ctx, MSG_DONTWAIT | MSG_NOSIGNAL);
+		tls_push_partial_record(sk, ctx,
+					MSG_DONTWAIT | MSG_NOSIGNAL |
+					MSG_SENDPAGE_DECRYPTED);
 		sk->sk_allocation = sk_allocation;
 	}
 }

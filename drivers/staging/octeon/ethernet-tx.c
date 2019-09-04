@@ -22,20 +22,10 @@
 #include <linux/atomic.h>
 #include <net/sch_generic.h>
 
-#include <asm/octeon/octeon.h>
-
-#include "ethernet-defines.h"
 #include "octeon-ethernet.h"
+#include "ethernet-defines.h"
 #include "ethernet-tx.h"
 #include "ethernet-util.h"
-
-#include <asm/octeon/cvmx-wqe.h>
-#include <asm/octeon/cvmx-fau.h>
-#include <asm/octeon/cvmx-pip.h>
-#include <asm/octeon/cvmx-pko.h>
-#include <asm/octeon/cvmx-helper.h>
-
-#include <asm/octeon/cvmx-gmxx-defs.h>
 
 #define CVM_OCT_SKB_CB(skb)	((u64 *)((skb)->cb))
 
@@ -284,7 +274,7 @@ int cvm_oct_xmit(struct sk_buff *skb, struct net_device *dev)
 
 			hw_buffer.s.addr =
 				XKPHYS_TO_PHYS((u64)skb_frag_address(fs));
-			hw_buffer.s.size = fs->size;
+			hw_buffer.s.size = skb_frag_size(fs);
 			CVM_OCT_SKB_CB(skb)[i + 1] = hw_buffer.u64;
 		}
 		hw_buffer.s.addr = XKPHYS_TO_PHYS((u64)CVM_OCT_SKB_CB(skb));

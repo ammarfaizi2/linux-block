@@ -57,6 +57,7 @@ enum mv88e6xxx_model {
 	MV88E6190,
 	MV88E6190X,
 	MV88E6191,
+	MV88E6220,
 	MV88E6240,
 	MV88E6250,
 	MV88E6290,
@@ -77,7 +78,7 @@ enum mv88e6xxx_family {
 	MV88E6XXX_FAMILY_6097,	/* 6046 6085 6096 6097 */
 	MV88E6XXX_FAMILY_6165,	/* 6123 6161 6165 */
 	MV88E6XXX_FAMILY_6185,	/* 6108 6121 6122 6131 6152 6155 6182 6185 */
-	MV88E6XXX_FAMILY_6250,	/* 6250 */
+	MV88E6XXX_FAMILY_6250,	/* 6220 6250 */
 	MV88E6XXX_FAMILY_6320,	/* 6320 6321 */
 	MV88E6XXX_FAMILY_6341,	/* 6141 6341 */
 	MV88E6XXX_FAMILY_6351,	/* 6171 6175 6350 6351 */
@@ -105,6 +106,11 @@ struct mv88e6xxx_info {
 	unsigned int g2_irqs;
 	bool pvt;
 
+	/* Mark certain ports as invalid. This is required for example for the
+	 * MV88E6220 (which is in general a MV88E6250 with 7 ports) but the
+	 * ports 2-4 are not routet to pins.
+	 */
+	unsigned int invalid_port_mask;
 	/* Multi-chip Addressing Mode.
 	 * Some chips respond to only 2 registers of its own SMI device address
 	 * when it is non-zero, and use indirect access to internal registers.
@@ -193,7 +199,7 @@ struct mv88e6xxx_port {
 	u64 vtu_member_violation;
 	u64 vtu_miss_violation;
 	u8 cmode;
-	int serdes_irq;
+	unsigned int serdes_irq;
 };
 
 struct mv88e6xxx_chip {
@@ -389,6 +395,7 @@ struct mv88e6xxx_ops {
 				u8 out);
 	int (*port_disable_learn_limit)(struct mv88e6xxx_chip *chip, int port);
 	int (*port_disable_pri_override)(struct mv88e6xxx_chip *chip, int port);
+	int (*port_setup_message_port)(struct mv88e6xxx_chip *chip, int port);
 
 	/* CMODE control what PHY mode the MAC will use, eg. SGMII, RGMII, etc.
 	 * Some chips allow this to be configured on specific ports.
@@ -434,11 +441,19 @@ struct mv88e6xxx_ops {
 	int (*mgmt_rsvd2cpu)(struct mv88e6xxx_chip *chip);
 
 	/* Power on/off a SERDES interface */
-	int (*serdes_power)(struct mv88e6xxx_chip *chip, int port, bool on);
+	int (*serdes_power)(struct mv88e6xxx_chip *chip, int port, u8 lane,
+			    bool up);
+
+	/* SERDES lane mapping */
+	u8 (*serdes_get_lane)(struct mv88e6xxx_chip *chip, int port);
 
 	/* SERDES interrupt handling */
-	int (*serdes_irq_setup)(struct mv88e6xxx_chip *chip, int port);
-	void (*serdes_irq_free)(struct mv88e6xxx_chip *chip, int port);
+	unsigned int (*serdes_irq_mapping)(struct mv88e6xxx_chip *chip,
+					   int port);
+	int (*serdes_irq_enable)(struct mv88e6xxx_chip *chip, int port, u8 lane,
+				 bool enable);
+	irqreturn_t (*serdes_irq_status)(struct mv88e6xxx_chip *chip, int port,
+					 u8 lane);
 
 	/* Statistics from the SERDES interface */
 	int (*serdes_get_sset_count)(struct mv88e6xxx_chip *chip, int port);
@@ -532,6 +547,10 @@ struct mv88e6xxx_ptp_ops {
 	int arr1_sts_reg;
 	int dep_sts_reg;
 	u32 rx_filters;
+	u32 cc_shift;
+	u32 cc_mult;
+	u32 cc_mult_num;
+	u32 cc_mult_dem;
 };
 
 #define STATS_TYPE_PORT		BIT(0)
@@ -570,11 +589,17 @@ static inline unsigned int mv88e6xxx_num_gpio(struct mv88e6xxx_chip *chip)
 	return chip->info->num_gpio;
 }
 
+static inline bool mv88e6xxx_is_invalid_port(struct mv88e6xxx_chip *chip, int port)
+{
+	return (chip->info->invalid_port_mask & BIT(port)) != 0;
+}
+
 int mv88e6xxx_read(struct mv88e6xxx_chip *chip, int addr, int reg, u16 *val);
 int mv88e6xxx_write(struct mv88e6xxx_chip *chip, int addr, int reg, u16 val);
-int mv88e6xxx_update(struct mv88e6xxx_chip *chip, int addr, int reg,
-		     u16 update);
-int mv88e6xxx_wait(struct mv88e6xxx_chip *chip, int addr, int reg, u16 mask);
+int mv88e6xxx_wait_mask(struct mv88e6xxx_chip *chip, int addr, int reg,
+			u16 mask, u16 val);
+int mv88e6xxx_wait_bit(struct mv88e6xxx_chip *chip, int addr, int reg,
+		       int bit, int val);
 int mv88e6xxx_port_setup_mac(struct mv88e6xxx_chip *chip, int port, int link,
 			     int speed, int duplex, int pause,
 			     phy_interface_t mode);

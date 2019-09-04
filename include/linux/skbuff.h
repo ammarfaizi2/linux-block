@@ -312,7 +312,7 @@ extern int sysctl_max_skb_frags;
 typedef struct bio_vec skb_frag_t;
 
 /**
- * skb_frag_size - Returns the size of a skb fragment
+ * skb_frag_size() - Returns the size of a skb fragment
  * @frag: skb fragment
  */
 static inline unsigned int skb_frag_size(const skb_frag_t *frag)
@@ -321,7 +321,7 @@ static inline unsigned int skb_frag_size(const skb_frag_t *frag)
 }
 
 /**
- * skb_frag_size_set - Sets the size of a skb fragment
+ * skb_frag_size_set() - Sets the size of a skb fragment
  * @frag: skb fragment
  * @size: size of fragment
  */
@@ -331,7 +331,7 @@ static inline void skb_frag_size_set(skb_frag_t *frag, unsigned int size)
 }
 
 /**
- * skb_frag_size_add - Incrementes the size of a skb fragment by %delta
+ * skb_frag_size_add() - Increments the size of a skb fragment by @delta
  * @frag: skb fragment
  * @delta: value to add
  */
@@ -341,7 +341,7 @@ static inline void skb_frag_size_add(skb_frag_t *frag, int delta)
 }
 
 /**
- * skb_frag_size_sub - Decrements the size of a skb fragment by %delta
+ * skb_frag_size_sub() - Decrements the size of a skb fragment by @delta
  * @frag: skb fragment
  * @delta: value to subtract
  */
@@ -1271,7 +1271,7 @@ static inline int skb_flow_dissector_bpf_prog_detach(const union bpf_attr *attr)
 
 struct bpf_flow_dissector;
 bool bpf_flow_dissect(struct bpf_prog *prog, struct bpf_flow_dissector *ctx,
-		      __be16 proto, int nhoff, int hlen);
+		      __be16 proto, int nhoff, int hlen, unsigned int flags);
 
 bool __skb_flow_dissect(const struct net *net,
 			const struct sk_buff *skb,
@@ -1361,6 +1361,14 @@ static inline void skb_copy_hash(struct sk_buff *to, const struct sk_buff *from)
 	to->sw_hash = from->sw_hash;
 	to->l4_hash = from->l4_hash;
 };
+
+static inline void skb_copy_decrypted(struct sk_buff *to,
+				      const struct sk_buff *from)
+{
+#ifdef CONFIG_TLS_DEVICE
+	to->decrypted = from->decrypted;
+#endif
+}
 
 #ifdef NET_SKBUFF_DATA_USES_OFFSET
 static inline unsigned char *skb_end_pointer(const struct sk_buff *skb)
@@ -2078,7 +2086,7 @@ static inline void __skb_fill_page_desc(struct sk_buff *skb, int i,
 	 * on page_is_pfmemalloc doing the right thing(tm).
 	 */
 	frag->bv_page		  = page;
-	frag->page_offset	  = off;
+	frag->bv_offset		  = off;
 	skb_frag_size_set(frag, size);
 
 	page = compound_head(page);
@@ -2858,6 +2866,46 @@ static inline void skb_propagate_pfmemalloc(struct page *page,
 }
 
 /**
+ * skb_frag_off() - Returns the offset of a skb fragment
+ * @frag: the paged fragment
+ */
+static inline unsigned int skb_frag_off(const skb_frag_t *frag)
+{
+	return frag->bv_offset;
+}
+
+/**
+ * skb_frag_off_add() - Increments the offset of a skb fragment by @delta
+ * @frag: skb fragment
+ * @delta: value to add
+ */
+static inline void skb_frag_off_add(skb_frag_t *frag, int delta)
+{
+	frag->bv_offset += delta;
+}
+
+/**
+ * skb_frag_off_set() - Sets the offset of a skb fragment
+ * @frag: skb fragment
+ * @offset: offset of fragment
+ */
+static inline void skb_frag_off_set(skb_frag_t *frag, unsigned int offset)
+{
+	frag->bv_offset = offset;
+}
+
+/**
+ * skb_frag_off_copy() - Sets the offset of a skb fragment from another fragment
+ * @fragto: skb fragment where offset is set
+ * @fragfrom: skb fragment offset is copied from
+ */
+static inline void skb_frag_off_copy(skb_frag_t *fragto,
+				     const skb_frag_t *fragfrom)
+{
+	fragto->bv_offset = fragfrom->bv_offset;
+}
+
+/**
  * skb_frag_page - retrieve the page referred to by a paged fragment
  * @frag: the paged fragment
  *
@@ -2923,7 +2971,7 @@ static inline void skb_frag_unref(struct sk_buff *skb, int f)
  */
 static inline void *skb_frag_address(const skb_frag_t *frag)
 {
-	return page_address(skb_frag_page(frag)) + frag->page_offset;
+	return page_address(skb_frag_page(frag)) + skb_frag_off(frag);
 }
 
 /**
@@ -2939,7 +2987,18 @@ static inline void *skb_frag_address_safe(const skb_frag_t *frag)
 	if (unlikely(!ptr))
 		return NULL;
 
-	return ptr + frag->page_offset;
+	return ptr + skb_frag_off(frag);
+}
+
+/**
+ * skb_frag_page_copy() - sets the page in a fragment from another fragment
+ * @fragto: skb fragment where page is set
+ * @fragfrom: skb fragment page is copied from
+ */
+static inline void skb_frag_page_copy(skb_frag_t *fragto,
+				      const skb_frag_t *fragfrom)
+{
+	fragto->bv_page = fragfrom->bv_page;
 }
 
 /**
@@ -2987,7 +3046,7 @@ static inline dma_addr_t skb_frag_dma_map(struct device *dev,
 					  enum dma_data_direction dir)
 {
 	return dma_map_page(dev, skb_frag_page(frag),
-			    frag->page_offset + offset, size, dir);
+			    skb_frag_off(frag) + offset, size, dir);
 }
 
 static inline struct sk_buff *pskb_copy(struct sk_buff *skb,
@@ -3157,7 +3216,7 @@ static inline bool skb_can_coalesce(struct sk_buff *skb, int i,
 		const skb_frag_t *frag = &skb_shinfo(skb)->frags[i - 1];
 
 		return page == skb_frag_page(frag) &&
-		       off == frag->page_offset + skb_frag_size(frag);
+		       off == skb_frag_off(frag) + skb_frag_size(frag);
 	}
 	return false;
 }

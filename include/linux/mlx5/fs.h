@@ -75,6 +75,7 @@ enum mlx5_flow_namespace_type {
 	MLX5_FLOW_NAMESPACE_SNIFFER_TX,
 	MLX5_FLOW_NAMESPACE_EGRESS,
 	MLX5_FLOW_NAMESPACE_RDMA_RX,
+	MLX5_FLOW_NAMESPACE_RDMA_RX_KERNEL,
 };
 
 enum {
@@ -124,6 +125,11 @@ struct mlx5_flow_destination {
 			u8		flags;
 		} vport;
 	};
+};
+
+struct mod_hdr_tbl {
+	struct mutex lock; /* protects hlist */
+	DECLARE_HASHTABLE(hlist, 8);
 };
 
 struct mlx5_flow_namespace *
@@ -220,6 +226,7 @@ int mlx5_modify_rule_destination(struct mlx5_flow_handle *handler,
 
 struct mlx5_fc *mlx5_fc_create(struct mlx5_core_dev *dev, bool aging);
 void mlx5_fc_destroy(struct mlx5_core_dev *dev, struct mlx5_fc *counter);
+u64 mlx5_fc_query_lastuse(struct mlx5_fc *counter);
 void mlx5_fc_query_cached(struct mlx5_fc *counter,
 			  u64 *bytes, u64 *packets, u64 *lastuse);
 int mlx5_fc_query(struct mlx5_core_dev *dev, struct mlx5_fc *counter,

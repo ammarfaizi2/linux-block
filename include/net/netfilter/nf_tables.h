@@ -25,6 +25,7 @@ struct nft_pktinfo {
 	struct xt_action_param		xt;
 };
 
+#if IS_ENABLED(CONFIG_NETFILTER)
 static inline struct net *nft_net(const struct nft_pktinfo *pkt)
 {
 	return pkt->xt.state->net;
@@ -57,6 +58,7 @@ static inline void nft_set_pktinfo(struct nft_pktinfo *pkt,
 	pkt->skb = skb;
 	pkt->xt.state = state;
 }
+#endif
 
 static inline void nft_set_pktinfo_unspec(struct nft_pktinfo *pkt,
 					  struct sk_buff *skb)
@@ -421,8 +423,7 @@ struct nft_set {
 	unsigned char			*udata;
 	/* runtime data below here */
 	const struct nft_set_ops	*ops ____cacheline_aligned;
-	u16				flags:13,
-					bound:1,
+	u16				flags:14,
 					genmask:2;
 	u8				klen;
 	u8				dlen;
@@ -927,9 +928,11 @@ struct nft_chain_type {
 	int				family;
 	struct module			*owner;
 	unsigned int			hook_mask;
+#if IS_ENABLED(CONFIG_NETFILTER)
 	nf_hookfn			*hooks[NF_MAX_HOOKS];
 	int				(*ops_register)(struct net *net, const struct nf_hook_ops *ops);
 	void				(*ops_unregister)(struct net *net, const struct nf_hook_ops *ops);
+#endif
 };
 
 int nft_chain_validate_dependency(const struct nft_chain *chain,
@@ -955,7 +958,9 @@ struct nft_stats {
  *	@flow_block: flow block (for hardware offload)
  */
 struct nft_base_chain {
+#if IS_ENABLED(CONFIG_NETFILTER)
 	struct nf_hook_ops		ops;
+#endif
 	const struct nft_chain_type	*type;
 	u8				policy;
 	u8				flags;
@@ -1152,7 +1157,9 @@ struct nft_flowtable {
 					use:30;
 	u64				handle;
 	/* runtime data below here */
+#if IS_ENABLED(CONFIG_NETFILTER)
 	struct nf_hook_ops		*ops ____cacheline_aligned;
+#endif
 	struct nf_flowtable		data;
 };
 
@@ -1206,6 +1213,8 @@ void nft_trace_notify(struct nft_traceinfo *info);
 
 #define MODULE_ALIAS_NFT_OBJ(type) \
 	MODULE_ALIAS("nft-obj-" __stringify(type))
+
+#if IS_ENABLED(CONFIG_NF_TABLES)
 
 /*
  * The gencursor defines two generations, the currently active and the
@@ -1280,6 +1289,8 @@ static inline void nft_set_elem_change_active(const struct net *net,
 	ext->genmask ^= nft_genmask_next(net);
 }
 
+#endif /* IS_ENABLED(CONFIG_NF_TABLES) */
+
 /*
  * We use a free bit in the genmask field to indicate the element
  * is busy, meaning it is currently being processed either by
@@ -1348,12 +1359,15 @@ struct nft_trans_rule {
 struct nft_trans_set {
 	struct nft_set			*set;
 	u32				set_id;
+	bool				bound;
 };
 
 #define nft_trans_set(trans)	\
 	(((struct nft_trans_set *)trans->data)->set)
 #define nft_trans_set_id(trans)	\
 	(((struct nft_trans_set *)trans->data)->set_id)
+#define nft_trans_set_bound(trans)	\
+	(((struct nft_trans_set *)trans->data)->bound)
 
 struct nft_trans_chain {
 	bool				update;
@@ -1384,12 +1398,15 @@ struct nft_trans_table {
 struct nft_trans_elem {
 	struct nft_set			*set;
 	struct nft_set_elem		elem;
+	bool				bound;
 };
 
 #define nft_trans_elem_set(trans)	\
 	(((struct nft_trans_elem *)trans->data)->set)
 #define nft_trans_elem(trans)	\
 	(((struct nft_trans_elem *)trans->data)->elem)
+#define nft_trans_elem_set_bound(trans)	\
+	(((struct nft_trans_elem *)trans->data)->bound)
 
 struct nft_trans_obj {
 	struct nft_object		*obj;
