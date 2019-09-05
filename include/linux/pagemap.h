@@ -286,14 +286,32 @@ static inline void *detach_page_private(struct page *page)
 	return data;
 }
 
-#ifdef CONFIG_NUMA
-extern struct page *__page_cache_alloc(gfp_t gfp);
-#else
-static inline struct page *__page_cache_alloc(gfp_t gfp)
+static inline gfp_t thp_gfpmask(gfp_t gfp)
 {
-	return alloc_pages(gfp, 0);
+#ifdef CONFIG_TRANSPARENT_HUGEPAGE
+	/* We'd rather allocate smaller pages than stall a page fault */
+	gfp |= GFP_TRANSHUGE_LIGHT;
+	gfp &= ~__GFP_DIRECT_RECLAIM;
+#endif
+	return gfp;
+}
+
+#ifdef CONFIG_NUMA
+extern struct page *__page_cache_alloc_order(gfp_t gfp, unsigned int order);
+#else
+static inline
+struct page *__page_cache_alloc_order(gfp_t gfp, unsigned int order)
+{
+	if (order == 0)
+		return alloc_pages(gfp, 0);
+	return thp_prep(alloc_pages(thp_gfpmask(gfp), order));
 }
 #endif
+
+static inline struct page *__page_cache_alloc(gfp_t gfp)
+{
+	return __page_cache_alloc_order(gfp, 0);
+}
 
 static inline struct page *page_cache_alloc(struct address_space *x)
 {
