@@ -811,23 +811,25 @@ noinline int __add_to_page_cache_locked(struct page *page,
 {
 	XA_STATE(xas, &mapping->i_pages, offset);
 	int huge = PageHuge(page);
-	int error;
+	unsigned int nr = 1;
 
 	VM_BUG_ON_PAGE(!PageLocked(page), page);
 	VM_BUG_ON_PAGE(PageSwapBacked(page), page);
 	mapping_set_update(&xas, mapping);
 
-	get_page(page);
-	page->mapping = mapping;
-	page->index = offset;
-
 	if (!huge) {
-		error = mem_cgroup_charge(page, current->mm, gfp);
+		int error = mem_cgroup_charge(page, current->mm, gfp);
+
 		if (error)
-			goto error;
+			return error;
+		xas_set_order(&xas, offset, thp_order(page));
+		nr = thp_nr_pages(page);
 	}
 
 	gfp &= GFP_RECLAIM_MASK;
+	page_ref_add(page, nr);
+	page->mapping = mapping;
+	page->index = xas.xa_index;
 
 	do {
 		unsigned int order = xa_get_order(xas.xa, xas.xa_index);
@@ -851,6 +853,8 @@ noinline int __add_to_page_cache_locked(struct page *page,
 			/* entry may have been split before we acquired lock */
 			order = xa_get_order(xas.xa, xas.xa_index);
 			if (order > thp_order(page)) {
+				/* How to handle large swap entries? */
+				BUG_ON(shmem_mapping(mapping));
 				xas_split(&xas, old, order);
 				xas_reset(&xas);
 			}
@@ -860,27 +864,30 @@ noinline int __add_to_page_cache_locked(struct page *page,
 		if (xas_error(&xas))
 			goto unlock;
 
-		mapping->nrpages++;
+		mapping->nrpages += nr;
 
 		/* hugetlb pages do not participate in page cache accounting */
-		if (!huge)
-			__inc_lruvec_page_state(page, NR_FILE_PAGES);
+		if (!huge) {
+			__mod_lruvec_page_state(page, NR_FILE_PAGES, nr);
+			if (nr > 1)
+				__mod_node_page_state(page_pgdat(page),
+						NR_FILE_THPS, nr);
+		}
 unlock:
 		xas_unlock_irq(&xas);
 	} while (xas_nomem(&xas, gfp));
 
-	if (xas_error(&xas)) {
-		error = xas_error(&xas);
+	if (xas_error(&xas))
 		goto error;
-	}
 
 	trace_mm_filemap_add_to_page_cache(page);
 	return 0;
 error:
 	page->mapping = NULL;
 	/* Leave page->index set: truncation relies upon it */
-	put_page(page);
-	return error;
+	page_ref_sub(page, nr);
+	VM_BUG_ON_PAGE(page_count(page) <= 0, page);
+	return xas_error(&xas);
 }
 ALLOW_ERROR_INJECTION(__add_to_page_cache_locked, ERRNO);
 
