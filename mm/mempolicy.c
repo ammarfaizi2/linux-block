@@ -1226,19 +1226,12 @@ static struct page *new_page(struct page *page, unsigned long start)
 		vma = vma->vm_next;
 	}
 
-	if (PageHuge(page)) {
+	if (PageHuge(page))
 		return alloc_huge_page_vma(page_hstate(compound_head(page)),
 				vma, address);
-	} else if (PageTransHuge(page)) {
-		struct page *thp;
-
-		thp = alloc_hugepage_vma(GFP_TRANSHUGE, vma, address,
-					 HPAGE_PMD_ORDER);
-		if (!thp)
-			return NULL;
-		prep_transhuge_page(thp);
-		return thp;
-	}
+	if (PageTransHuge(page))
+		return thp_prep(alloc_hugepage_vma(GFP_TRANSHUGE, vma,
+				address, thp_order(page)));
 	/*
 	 * if !vma, alloc_page_vma() will use task or system default policy
 	 */

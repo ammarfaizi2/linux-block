@@ -867,14 +867,13 @@ khugepaged_alloc_page(struct page **hpage, gfp_t gfp, int node)
 {
 	VM_BUG_ON_PAGE(*hpage, *hpage);
 
-	*hpage = __alloc_pages_node(node, gfp, HPAGE_PMD_ORDER);
+	*hpage = thp_prep(__alloc_pages_node(node, gfp, HPAGE_PMD_ORDER));
 	if (unlikely(!*hpage)) {
 		count_vm_event(THP_COLLAPSE_ALLOC_FAILED);
 		*hpage = ERR_PTR(-ENOMEM);
 		return NULL;
 	}
 
-	prep_transhuge_page(*hpage);
 	count_vm_event(THP_COLLAPSE_ALLOC);
 	return *hpage;
 }
@@ -886,13 +885,8 @@ static int khugepaged_find_target_node(void)
 
 static inline struct page *alloc_khugepaged_hugepage(void)
 {
-	struct page *page;
-
-	page = alloc_pages(alloc_hugepage_khugepaged_gfpmask(),
-			   HPAGE_PMD_ORDER);
-	if (page)
-		prep_transhuge_page(page);
-	return page;
+	return thp_prep(alloc_pages(alloc_hugepage_khugepaged_gfpmask(),
+			   HPAGE_PMD_ORDER));
 }
 
 static struct page *khugepaged_alloc_hugepage(bool *wait)
