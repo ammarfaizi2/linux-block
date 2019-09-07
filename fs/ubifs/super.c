@@ -941,37 +941,39 @@ enum {
 	Opt_ignore,
 };
 
-static const struct fs_parameter_spec ubifs_param_specs[] = {
-	fsparam_flag	("fast_unmount",		Opt_fast_unmount),
-	fsparam_flag	("norm_unmount",		Opt_norm_unmount),
-	fsparam_flag	("bulk_read",			Opt_bulk_read),
-	fsparam_flag	("no_bulk_read",		Opt_no_bulk_read),
-	fsparam_flag	("chk_data_crc",		Opt_chk_data_crc),
-	fsparam_flag	("no_chk_data_crc",		Opt_no_chk_data_crc),
-	fsparam_enum	("compr",			Opt_compr),
-	fsparam_enum	("assert",			Opt_assert),
-	fsparam_string	("auth_key",			Opt_auth_key),
-	fsparam_string	("auth_hash_name",		Opt_auth_hash_name),
-	fsparam_string	("ubi",				Opt_ignore),
-	fsparam_string	("vol",				Opt_ignore),
+static const struct fs_parameter_enum ubifs_param_compr[] = {
+	{"none",	UBIFS_COMPR_NONE },
+	{"lzo",		UBIFS_COMPR_LZO },
+	{"zlib",	UBIFS_COMPR_ZLIB },
+	{"zstd",	UBIFS_COMPR_ZSTD },
+	{}
+};
+static const struct fs_parameter_enum ubifs_param_assert[] = {
+	{"report",	ASSACT_REPORT },
+	{"read-only",	ASSACT_RO },
+	{"panic",	ASSACT_PANIC },
 	{}
 };
 
-static const struct fs_parameter_enum ubifs_param_enums[] = {
-	{ Opt_compr,	"none",		UBIFS_COMPR_NONE },
-	{ Opt_compr,	"lzo",		UBIFS_COMPR_LZO },
-	{ Opt_compr,	"zlib",		UBIFS_COMPR_ZLIB },
-	{ Opt_compr,	"zstd",		UBIFS_COMPR_ZSTD },
-	{ Opt_assert,	"report",	ASSACT_REPORT },
-	{ Opt_assert,	"read-only",	ASSACT_RO },
-	{ Opt_assert,	"panic",	ASSACT_PANIC },
+static const struct fs_parameter_spec ubifs_param_specs[] = {
+	fsparam_flag	("fast_unmount",	Opt_fast_unmount),
+	fsparam_flag	("norm_unmount",	Opt_norm_unmount),
+	fsparam_flag	("bulk_read",		Opt_bulk_read),
+	fsparam_flag	("no_bulk_read",	Opt_no_bulk_read),
+	fsparam_flag	("chk_data_crc",	Opt_chk_data_crc),
+	fsparam_flag	("no_chk_data_crc",	Opt_no_chk_data_crc),
+	fsparam_enum	("compr",		Opt_compr, ubifs_param_compr),
+	fsparam_enum	("assert",		Opt_assert, ubifs_param_assert),
+	fsparam_string	("auth_key",		Opt_auth_key),
+	fsparam_string	("auth_hash_name",	Opt_auth_hash_name),
+	fsparam_string	("ubi",			Opt_ignore),
+	fsparam_string	("vol",			Opt_ignore),
 	{}
 };
 
 static const struct fs_parameter_description ubifs_fs_parameters = {
 	.name		= "ubifs",
 	.specs		= ubifs_param_specs,
-	.enums		= ubifs_param_enums,
 };
 
 /**

@@ -3415,9 +3415,19 @@ enum shmem_param {
 	Opt_uid,
 };
 
+static const struct fs_parameter_enum shmem_param_enums_huge[] = {
+	{"never",	SHMEM_HUGE_NEVER },
+	{"always",	SHMEM_HUGE_ALWAYS },
+	{"within_size",	SHMEM_HUGE_WITHIN_SIZE },
+	{"advise",	SHMEM_HUGE_ADVISE },
+	{"deny",	SHMEM_HUGE_DENY },
+	{"force",	SHMEM_HUGE_FORCE },
+	{}
+};
+
 static const struct fs_parameter_spec shmem_param_specs[] = {
 	fsparam_u32   ("gid",		Opt_gid),
-	fsparam_enum  ("huge",		Opt_huge),
+	fsparam_enum  ("huge",		Opt_huge,  shmem_param_enums_huge),
 	fsparam_u32oct("mode",		Opt_mode),
 	fsparam_string("mpol",		Opt_mpol),
 	fsparam_string("nr_blocks",	Opt_nr_blocks),
@@ -3427,20 +3437,9 @@ static const struct fs_parameter_spec shmem_param_specs[] = {
 	{}
 };
 
-static const struct fs_parameter_enum shmem_param_enums[] = {
-	{ Opt_huge,	"never",	SHMEM_HUGE_NEVER },
-	{ Opt_huge,	"always",	SHMEM_HUGE_ALWAYS },
-	{ Opt_huge,	"within_size",	SHMEM_HUGE_WITHIN_SIZE },
-	{ Opt_huge,	"advise",	SHMEM_HUGE_ADVISE },
-	{ Opt_huge,	"deny",		SHMEM_HUGE_DENY },
-	{ Opt_huge,	"force",	SHMEM_HUGE_FORCE },
-	{}
-};
-
 const struct fs_parameter_description shmem_fs_parameters = {
 	.name		= "shmem",
 	.specs		= shmem_param_specs,
-	.enums		= shmem_param_enums,
 };
 
 static void shmem_apply_options(struct shmem_sb_info *sbinfo,
