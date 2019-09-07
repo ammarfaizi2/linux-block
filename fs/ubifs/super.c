@@ -955,7 +955,7 @@ static const struct fs_parameter_enum ubifs_param_assert[] = {
 	{}
 };
 
-static const struct fs_parameter_spec ubifs_param_specs[] = {
+static const struct fs_parameter_spec ubifs_fs_parameters[] = {
 	fsparam_flag	("fast_unmount",	Opt_fast_unmount),
 	fsparam_flag	("norm_unmount",	Opt_norm_unmount),
 	fsparam_flag	("bulk_read",		Opt_bulk_read),
@@ -969,10 +969,6 @@ static const struct fs_parameter_spec ubifs_param_specs[] = {
 	fsparam_string	("ubi",			Opt_ignore),
 	fsparam_string	("vol",			Opt_ignore),
 	{}
-};
-
-static const struct fs_parameter_description ubifs_fs_parameters = {
-	.specs		= ubifs_param_specs,
 };
 
 /**
@@ -990,7 +986,7 @@ static int ubifs_parse_param(struct fs_context *fc, struct fs_parameter *param)
 	struct fs_parse_result result;
 	int opt;
 
-	opt = fs_parse(fc, &ubifs_fs_parameters, param, &result);
+	opt = fs_parse(fc, ubifs_fs_parameters, param, &result);
 	if (opt < 0)
 		return opt;
 
@@ -2237,7 +2233,7 @@ static struct file_system_type ubifs_fs_type = {
 	.name    = "ubifs",
 	.owner   = THIS_MODULE,
 	.init_fs_context = ubifs_init_fs_context,
-	.parameters	= &ubifs_fs_parameters,
+	.parameters	= ubifs_fs_parameters,
 	.kill_sb = kill_ubifs_super,
 };
 MODULE_ALIAS_FS("ubifs");

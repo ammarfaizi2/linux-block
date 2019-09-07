@@ -147,15 +147,11 @@ enum {
 	Opt_uid,
 };
 
-static const struct fs_parameter_spec tracefs_param_specs[] = {
+static const struct fs_parameter_spec tracefs_fs_parameters[] = {
 	fsparam_u32	("gid",				Opt_gid),
 	fsparam_u32oct	("mode",			Opt_mode),
 	fsparam_u32	("uid",				Opt_uid),
 	{}
-};
-
-static const struct fs_parameter_description tracefs_fs_parameters = {
-	.specs		= tracefs_param_specs,
 };
 
 static int tracefs_parse_param(struct fs_context *fc, struct fs_parameter *param)
@@ -166,7 +162,7 @@ static int tracefs_parse_param(struct fs_context *fc, struct fs_parameter *param
 	kgid_t gid;
 	int opt;
 
-	opt = fs_parse(fc, &tracefs_fs_parameters, param, &result);
+	opt = fs_parse(fc, tracefs_fs_parameters, param, &result);
 	if (opt < 0)
 		return opt;
 
@@ -287,7 +283,7 @@ static struct file_system_type trace_fs_type = {
 	.owner =	THIS_MODULE,
 	.name =		"tracefs",
 	.init_fs_context = tracefs_init_fs_context,
-	.parameters	= &tracefs_fs_parameters,
+	.parameters	= tracefs_fs_parameters,
 	.kill_sb =	kill_litter_super,
 };
 MODULE_ALIAS_FS("tracefs");

@@ -25,15 +25,11 @@ enum orangefs_param {
 	Opt_local_lock,
 };
 
-static const struct fs_parameter_spec orangefs_param_specs[] = {
+const struct fs_parameter_spec orangefs_fs_parameters[] = {
 	fsparam_flag	("acl",			Opt_acl),
 	fsparam_flag	("intr",		Opt_intr),
 	fsparam_flag	("local_lock",		Opt_local_lock),
 	{}
-};
-
-const struct fs_parameter_description orangefs_fs_parameters = {
-	.specs		= orangefs_param_specs,
 };
 
 uint64_t orangefs_features;
@@ -57,7 +53,7 @@ static int orangefs_parse_param(struct fs_context *fc, struct fs_parameter *para
 	struct fs_parse_result result;
 	int opt;
 
-	opt = fs_parse(fc, &orangefs_fs_parameters, param, &result);
+	opt = fs_parse(fc, orangefs_fs_parameters, param, &result);
 	if (opt < 0)
 		return opt;
 

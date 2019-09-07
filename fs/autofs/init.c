@@ -11,7 +11,7 @@ struct file_system_type autofs_fs_type = {
 	.owner		= THIS_MODULE,
 	.name		= "autofs",
 	.init_fs_context = autofs_init_fs_context,
-	.parameters	= &autofs_fs_parameters,
+	.parameters	= autofs_fs_parameters,
 	.kill_sb	= autofs_kill_sb,
 };
 MODULE_ALIAS_FS("autofs");

@@ -47,7 +47,7 @@ MODULE_PARM_DESC(hash_table_size,
 static struct file_system_type orangefs_fs_type = {
 	.name = "pvfs2",
 	.init_fs_context	= orangefs_init_fs_context,
-	.parameters		= &orangefs_fs_parameters,
+	.parameters		= orangefs_fs_parameters,
 	.kill_sb = orangefs_kill_sb,
 	.owner = THIS_MODULE,
 };

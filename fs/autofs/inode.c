@@ -129,7 +129,7 @@ enum {
 	Opt_uid,
 };
 
-static const struct fs_parameter_spec autofs_param_specs[] = {
+const struct fs_parameter_spec autofs_fs_parameters[] = {
 	fsparam_flag	("direct",			Opt_direct),
 	fsparam_fd	("fd",				Opt_fd),
 	fsparam_u32	("gid",				Opt_gid),
@@ -142,10 +142,6 @@ static const struct fs_parameter_spec autofs_param_specs[] = {
 	fsparam_flag	("strictexpire",		Opt_strictexpire),
 	fsparam_u32	("uid",				Opt_uid),
 	{}
-};
-
-const struct fs_parameter_description autofs_fs_parameters = {
-	.specs		= autofs_param_specs,
 };
 
 /*
@@ -187,7 +183,7 @@ static int autofs_parse_param(struct fs_context *fc, struct fs_parameter *param)
 	kgid_t gid;
 	int opt;
 
-	opt = fs_parse(fc, &autofs_fs_parameters, param, &result);
+	opt = fs_parse(fc, autofs_fs_parameters, param, &result);
 	if (opt < 0)
 		return opt;
 

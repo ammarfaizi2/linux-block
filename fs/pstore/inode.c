@@ -223,13 +223,9 @@ enum {
 	Opt_kmsg_bytes,
 };
 
-static const struct fs_parameter_spec pstore_param_specs[] = {
+static const struct fs_parameter_spec pstore_fs_parameters[] = {
 	fsparam_u32	("kmsg_bytes",		Opt_kmsg_bytes),
 	{}
-};
-
-static const struct fs_parameter_description pstore_fs_parameters = {
-	.specs		= pstore_param_specs,
 };
 
 static int pstore_parse_param(struct fs_context *fc, struct fs_parameter *param)
@@ -238,7 +234,7 @@ static int pstore_parse_param(struct fs_context *fc, struct fs_parameter *param)
 	struct fs_parse_result result;
 	int opt;
 
-	opt = fs_parse(fc, &pstore_fs_parameters, param, &result);
+	opt = fs_parse(fc, pstore_fs_parameters, param, &result);
 	if (opt < 0)
 		return opt;
 
@@ -453,7 +449,7 @@ static struct file_system_type pstore_fs_type = {
 	.owner          = THIS_MODULE,
 	.name		= "pstore",
 	.init_fs_context = pstore_init_fs_context,
-	.parameters	= &pstore_fs_parameters,
+	.parameters	= pstore_fs_parameters,
 	.kill_sb	= pstore_kill_sb,
 };
 

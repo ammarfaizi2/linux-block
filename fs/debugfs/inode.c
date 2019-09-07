@@ -53,15 +53,11 @@ enum {
 	Opt_uid,
 };
 
-static const struct fs_parameter_spec debugfs_param_specs[] = {
+static const struct fs_parameter_spec debugfs_fs_parameters[] = {
 	fsparam_u32	("gid",				Opt_gid),
 	fsparam_u32oct	("mode",			Opt_mode),
 	fsparam_u32	("uid",				Opt_uid),
 	{}
-};
-
-static const struct fs_parameter_description debugfs_fs_parameters = {
-	.specs		= debugfs_param_specs,
 };
 
 struct debugfs_fs_info {
@@ -78,7 +74,7 @@ static int debugfs_parse_param(struct fs_context *fc, struct fs_parameter *param
 	kgid_t gid;
 	int opt;
 
-	opt = fs_parse(fc, &debugfs_fs_parameters, param, &result);
+	opt = fs_parse(fc, debugfs_fs_parameters, param, &result);
 	if (opt < 0)
 		return opt;
 
@@ -228,7 +224,7 @@ static struct file_system_type debug_fs_type = {
 	.owner =	THIS_MODULE,
 	.name =		"debugfs",
 	.init_fs_context = debugfs_init_fs_context,
-	.parameters	= &debugfs_fs_parameters,
+	.parameters	= debugfs_fs_parameters,
 	.kill_sb =	kill_litter_super,
 };
 MODULE_ALIAS_FS("debugfs");

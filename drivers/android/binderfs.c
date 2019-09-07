@@ -53,13 +53,9 @@ enum {
 	Opt_max,
 };
 
-static const struct fs_parameter_spec binderfs_param_specs[] = {
+static const struct fs_parameter_spec binderfs_fs_parameters[] = {
 	fsparam_s32   ("max",	Opt_max),
 	{}
-};
-
-static const struct fs_parameter_description binderfs_fs_parameters = {
-	.specs		= binderfs_param_specs,
 };
 
 /**
@@ -291,7 +287,7 @@ static int binderfs_parse_param(struct fs_context *fc, struct fs_parameter *para
 	struct binderfs_info *info = fc->s_fs_info;
 	int opt;
 
-	opt = fs_parse(fc, &binderfs_fs_parameters, param, &result);
+	opt = fs_parse(fc, binderfs_fs_parameters, param, &result);
 	if (opt < 0)
 		return opt;
 
@@ -550,7 +546,7 @@ static void binderfs_kill_super(struct super_block *sb)
 static struct file_system_type binder_fs_type = {
 	.name		= "binder",
 	.init_fs_context = binderfs_init_fs_context,
-	.parameters	= &binderfs_fs_parameters,
+	.parameters	= binderfs_fs_parameters,
 	.kill_sb	= binderfs_kill_super,
 	.fs_flags	= FS_USERNS_MOUNT,
 };

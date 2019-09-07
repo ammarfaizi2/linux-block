@@ -179,15 +179,11 @@ static const struct fs_parameter_enum jffs2_param_compr[] = {
 	{}
 };
 
-static const struct fs_parameter_spec jffs2_param_specs[] = {
+static const struct fs_parameter_spec jffs2_fs_parameters[] = {
 	fsparam_string	("source",	Opt_source),
 	fsparam_enum	("compr",	Opt_override_compr, jffs2_param_compr),
 	fsparam_u32	("rp_size",	Opt_rp_size),
 	{}
-};
-
-const struct fs_parameter_description jffs2_fs_parameters = {
-	.specs		= jffs2_param_specs,
 };
 
 static int jffs2_parse_param(struct fs_context *fc, struct fs_parameter *param)
@@ -196,7 +192,7 @@ static int jffs2_parse_param(struct fs_context *fc, struct fs_parameter *param)
 	struct jffs2_sb_info *c = fc->s_fs_info;
 	int opt;
 
-	opt = fs_parse(fc, &jffs2_fs_parameters, param, &result);
+	opt = fs_parse(fc, jffs2_fs_parameters, param, &result);
 	if (opt < 0)
 		return opt;
 
@@ -339,7 +335,7 @@ static struct file_system_type jffs2_fs_type = {
 	.owner =	THIS_MODULE,
 	.name =		"jffs2",
 	.init_fs_context = jffs2_init_fs_context,
-	.parameters =	&jffs2_fs_parameters,
+	.parameters =	jffs2_fs_parameters,
 	.kill_sb =	jffs2_kill_sb,
 };
 MODULE_ALIAS_FS("jffs2");

@@ -61,10 +61,6 @@ struct fs_parameter_enum {
 	u8		value;
 };
 
-struct fs_parameter_description {
-	const struct fs_parameter_spec *specs;	/* List of param specifications */
-};
-
 /*
  * Result of parse.
  */
@@ -80,7 +76,7 @@ struct fs_parse_result {
 };
 
 extern int fs_parse(struct fs_context *fc,
-		    const struct fs_parameter_description *desc,
+		    const struct fs_parameter_spec *desc,
 		    struct fs_parameter *value,
 		    struct fs_parse_result *result);
 extern int fs_lookup_param(struct fs_context *fc,
@@ -96,13 +92,13 @@ extern int __lookup_constant(const struct constant_table tbl[], size_t tbl_size,
 extern bool validate_constant_table(const struct constant_table *tbl, size_t tbl_size,
 				    int low, int high, int special);
 extern bool fs_validate_description(const char *name,
-				    const struct fs_parameter_description *desc);
+				    const struct fs_parameter_spec *desc);
 #else
 static inline bool validate_constant_table(const struct constant_table *tbl, size_t tbl_size,
 					   int low, int high, int special)
 { return true; }
 static inline bool fs_validate_description(const char *name,
-					   const struct fs_parameter_description *desc)
+					   const struct fs_parameter_spec *desc)
 { return true; }
 #endif
 

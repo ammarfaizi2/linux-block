@@ -114,13 +114,9 @@ enum {
 	Opt_fd,
 };
 
-static const struct fs_parameter_spec coda_param_specs[] = {
+static const struct fs_parameter_spec coda_fs_parameters[] = {
 	fsparam_fd	("fd",				Opt_fd),
 	{}
-};
-
-static const struct fs_parameter_description coda_fs_parameters = {
-	.specs		= coda_param_specs,
 };
 
 static int coda_parse_fd(struct fs_context *fc, int fd)
@@ -154,7 +150,7 @@ static int coda_parse_param(struct fs_context *fc, struct fs_parameter *param)
 	struct fs_parse_result result;
 	int opt;
 
-	opt = fs_parse(fc, &coda_fs_parameters, param, &result);
+	opt = fs_parse(fc, coda_fs_parameters, param, &result);
 	if (opt < 0)
 		return opt;
 
@@ -380,7 +376,7 @@ struct file_system_type coda_fs_type = {
 	.owner		= THIS_MODULE,
 	.name		= "coda",
 	.init_fs_context = coda_init_fs_context,
-	.parameters	= &coda_fs_parameters,
+	.parameters	= coda_fs_parameters,
 	.kill_sb	= kill_anon_super,
 	.fs_flags	= FS_BINARY_MOUNTDATA,
 };

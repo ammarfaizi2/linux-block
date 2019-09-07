@@ -107,7 +107,7 @@ enum {
 	Opt_err
 };
 
-static const struct fs_parameter_spec devpts_param_specs[] = {
+static const struct fs_parameter_spec devpts_fs_parameters[] = {
 	fsparam_u32	("gid",		Opt_gid),
 	fsparam_s32	("max",		Opt_max),
 	fsparam_u32oct	("mode",	Opt_mode),
@@ -115,10 +115,6 @@ static const struct fs_parameter_spec devpts_param_specs[] = {
 	fsparam_u32oct	("ptmxmode",	Opt_ptmxmode),
 	fsparam_u32	("uid",		Opt_uid),
 	{}
-};
-
-static const struct fs_parameter_description devpts_fs_parameters = {
-	.specs		= devpts_param_specs,
 };
 
 struct pts_fs_info {
@@ -250,7 +246,7 @@ static int devpts_parse_param(struct fs_context *fc, struct fs_parameter *param)
 	kgid_t gid;
 	int opt;
 
-	opt = fs_parse(fc, &devpts_fs_parameters, param, &result);
+	opt = fs_parse(fc, devpts_fs_parameters, param, &result);
 	if (opt < 0)
 		return opt;
 
@@ -499,7 +495,7 @@ static void devpts_kill_sb(struct super_block *sb)
 static struct file_system_type devpts_fs_type = {
 	.name		= "devpts",
 	.init_fs_context = devpts_init_fs_context,
-	.parameters	= &devpts_fs_parameters,
+	.parameters	= devpts_fs_parameters,
 	.kill_sb	= devpts_kill_sb,
 	.fs_flags	= FS_USERNS_MOUNT,
 };
