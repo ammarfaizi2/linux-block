@@ -898,7 +898,6 @@ void rcu_irq_enter_irqson(void)
  */
 void rcu_disable_urgency_upon_qs(struct rcu_data *rdp)
 {
-	WRITE_ONCE(rdp->core_needs_qs, false); // WRITE_ONCE() for FQS
 	WRITE_ONCE(rdp->rcu_urgent_qs, false);
 	WRITE_ONCE(rdp->rcu_need_heavy_qs, false);
 	if (tick_nohz_full_cpu(rdp->cpu) && rdp->rcu_forced_tick) {
@@ -1421,7 +1420,7 @@ static bool __note_gp_changes(struct rcu_node *rnp, struct rcu_data *rdp)
 		trace_rcu_grace_period(rcu_state.name, rnp->gp_seq, TPS("cpustart"));
 		need_gp = !!(rnp->qsmask & rdp->grpmask);
 		rdp->cpu_no_qs.b.norm = need_gp;
-		WRITE_ONCE(rdp->core_needs_qs, need_gp);
+		rdp->core_needs_qs = need_gp;
 		zero_cpu_stall_ticks(rdp);
 	}
 	rdp->gp_seq = rnp->gp_seq;  /* Remember new grace-period state. */
@@ -1991,6 +1990,7 @@ rcu_report_qs_rdp(int cpu, struct rcu_data *rdp)
 		return;
 	}
 	mask = rdp->grpmask;
+	rdp->core_needs_qs = false;
 	if ((rnp->qsmask & mask) == 0) {
 		raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
 	} else {
@@ -2025,7 +2025,7 @@ rcu_check_quiescent_state(struct rcu_data *rdp)
 	 * Does this CPU still need to do its part for current grace period?
 	 * If no, return and let the other CPUs do their part as well.
 	 */
-	if (!READ_ONCE(rdp->core_needs_qs))
+	if (!rdp->core_needs_qs)
 		return;
 
 	/*
@@ -3007,7 +3007,7 @@ static int rcu_pending(void)
 		return 0;
 
 	/* Is the RCU core waiting for a quiescent state from this CPU? */
-	if (READ_ONCE(rdp->core_needs_qs) && !rdp->cpu_no_qs.b.norm)
+	if (rdp->core_needs_qs && !rdp->cpu_no_qs.b.norm)
 		return 1;
 
 	/* Does this CPU have callbacks ready to invoke? */
@@ -3247,6 +3247,7 @@ int rcutree_prepare_cpu(unsigned int cpu)
 	rdp->gp_seq = rnp->gp_seq;
 	rdp->gp_seq_needed = rnp->gp_seq;
 	rdp->cpu_no_qs.b.norm = true;
+	rdp->core_needs_qs = false;
 	rdp->rcu_iw_pending = false;
 	rdp->rcu_iw_gp_seq = rnp->gp_seq - 1;
 	trace_rcu_grace_period(rcu_state.name, rdp->gp_seq, TPS("cpuonl"));
