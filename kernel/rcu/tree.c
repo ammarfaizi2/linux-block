@@ -3008,11 +3008,8 @@ static int rcu_pending(int user)
 
 	/* Is the RCU core waiting for a quiescent state from this CPU? */
 	gp_in_progress = rcu_gp_in_progress();
-	if (rdp->core_needs_qs && !rdp->cpu_no_qs.b.norm) {
-		if (!gp_in_progress)
-			rdp->core_needs_qs = false;
+	if (rdp->core_needs_qs && !rdp->cpu_no_qs.b.norm && gp_in_progress)
 		return 1;
-	}
 
 	/* Does this CPU have callbacks ready to invoke? */
 	if (rcu_segcblist_ready_cbs(&rdp->cblist))
