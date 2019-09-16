@@ -155,6 +155,14 @@ struct seccomp_data {
 #ifndef PTRACE_SECCOMP_GET_METADATA
 #define PTRACE_SECCOMP_GET_METADATA	0x420d
 
+#ifndef PTRACE_EVENTMSG_SYSCALL_ENTRY
+#define PTRACE_EVENTMSG_SYSCALL_ENTRY 1
+#endif
+
+#ifndef PTRACE_EVENTMSG_SYSCALL_EXIT
+#define PTRACE_EVENTMSG_SYSCALL_EXIT 2
+#endif
+
 struct seccomp_metadata {
 	__u64 filter_off;       /* Input: which filter */
 	__u64 flags;             /* Output: filter's flags */
