@@ -55,6 +55,22 @@ void lockref_get(struct lockref *lockref)
 }
 EXPORT_SYMBOL(lockref_get);
 
+#ifdef CONFIG_DEBUG_LOCK_ALLOC
+void lockref_get_nested(struct lockref *lockref, unsigned int subclass)
+{
+	CMPXCHG_LOOP(
+		new.count++;
+	,
+		return;
+	);
+
+	spin_lock_nested(&lockref->lock, subclass);
+	lockref->count++;
+	spin_unlock(&lockref->lock);
+}
+EXPORT_SYMBOL(lockref_get_nested);
+#endif
+
 /**
  * lockref_get_not_zero - Increments count unless the count is 0 or dead
  * @lockref: pointer to lockref structure

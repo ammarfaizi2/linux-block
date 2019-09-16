@@ -40,6 +40,12 @@ extern int lockref_get_not_zero(struct lockref *);
 extern int lockref_put_not_zero(struct lockref *);
 extern int lockref_get_or_lock(struct lockref *);
 extern int lockref_put_or_lock(struct lockref *);
+#ifdef CONFIG_DEBUG_LOCK_ALLOC
+extern void lockref_get_nested(struct lockref *, unsigned int);
+#else
+# define lockref_get_nested(lockref, subclass)	\
+	lockref_get(((void)(subclass),(lockref)))
+#endif
 
 extern void lockref_mark_dead(struct lockref *);
 extern int lockref_get_not_dead(struct lockref *);
