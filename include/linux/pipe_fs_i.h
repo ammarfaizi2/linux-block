@@ -30,9 +30,10 @@ struct pipe_buffer {
  *	struct pipe_inode_info - a linux kernel pipe
  *	@mutex: mutex protecting the whole thing
  *	@wait: reader/writer wait point in case of empty/full pipe
- *	@nrbufs: the number of non-empty pipe buffers in this pipe
- *	@buffers: total number of buffers (should be a power of 2)
- *	@curbuf: the current pipe buffer entry
+ *	@head: The point of buffer production
+ *	@tail: The point of buffer consumption
+ *	@max_usage: The maximum number of slots that may be used in the ring
+ *	@ring_size: total number of buffers (should be a power of 2)
  *	@tmp_page: cached released page
  *	@readers: number of current readers of this pipe
  *	@writers: number of current writers of this pipe
@@ -48,7 +49,10 @@ struct pipe_buffer {
 struct pipe_inode_info {
 	struct mutex mutex;
 	wait_queue_head_t wait;
-	unsigned int nrbufs, curbuf, buffers;
+	unsigned int head;
+	unsigned int tail;
+	unsigned int max_usage;
+	unsigned int ring_size;
 	unsigned int readers;
 	unsigned int writers;
 	unsigned int files;
@@ -103,6 +107,32 @@ struct pipe_buf_operations {
 	 */
 	bool (*get)(struct pipe_inode_info *, struct pipe_buffer *);
 };
+
+/**
+ * pipe_commit_read - Set pipe buffer tail pointer in the read-side
+ * @pipe: The pipe in question
+ * @tail: The new tail pointer
+ *
+ * Update the tail pointer in the read-side code after a read has taken place.
+ */
+static inline void pipe_commit_read(struct pipe_inode_info *pipe,
+				    unsigned int tail)
+{
+	pipe->tail = tail;
+}
+
+/**
+ * pipe_commit_write - Set pipe buffer head pointer in the write-side
+ * @pipe: The pipe in question
+ * @head: The new head pointer
+ *
+ * Update the head pointer in the write-side code after a write has taken place.
+ */
+static inline void pipe_commit_write(struct pipe_inode_info *pipe,
+				     unsigned int head)
+{
+	pipe->head = head;
+}
 
 /**
  * pipe_buf_get - get a reference to a pipe_buffer
