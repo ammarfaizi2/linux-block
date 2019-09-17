@@ -721,7 +721,7 @@ static void rtw_coex_set_rf_para(struct rtw_dev *rtwdev,
 	rtw_coex_set_bt_rx_gain(rtwdev, para.bt_lna_lvl);
 }
 
-static u32 rtw_coex_read_indirect_reg(struct rtw_dev *rtwdev, u16 addr)
+u32 rtw_coex_read_indirect_reg(struct rtw_dev *rtwdev, u16 addr)
 {
 	u32 val;
 
@@ -1059,7 +1059,7 @@ static void rtw_coex_set_ant_path(struct rtw_dev *rtwdev, bool force, u8 phase)
 		pos_type = COEX_SWITCH_TO_WLG_BT;
 		break;
 	default:
-		WARN_ON("unknown phase when setting antenna path\n");
+		WARN(1, "unknown phase when setting antenna path\n");
 		return;
 	}
 
@@ -2452,11 +2452,6 @@ void rtw_coex_wl_fwdbginfo_notify(struct rtw_dev *rtwdev, u8 *buf, u8 length)
 	coex_stat->cnt_wl[COEX_CNT_WL_FW_NOTIFY]++;
 	rtw_coex_wl_ccklock_action(rtwdev);
 	rtw_coex_wl_ccklock_detect(rtwdev);
-}
-
-void rtw_coex_coex_dm_reset(struct rtw_dev *rtwdev)
-{
-	__rtw_coex_init_hw_config(rtwdev, false);
 }
 
 void rtw_coex_wl_status_change_notify(struct rtw_dev *rtwdev)

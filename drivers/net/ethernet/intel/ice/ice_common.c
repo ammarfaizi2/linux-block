@@ -729,6 +729,29 @@ static void ice_get_itr_intrl_gran(struct ice_hw *hw)
 }
 
 /**
+ * ice_get_nvm_version - get cached NVM version data
+ * @hw: pointer to the hardware structure
+ * @oem_ver: 8 bit NVM version
+ * @oem_build: 16 bit NVM build number
+ * @oem_patch: 8 NVM patch number
+ * @ver_hi: high 16 bits of the NVM version
+ * @ver_lo: low 16 bits of the NVM version
+ */
+void
+ice_get_nvm_version(struct ice_hw *hw, u8 *oem_ver, u16 *oem_build,
+		    u8 *oem_patch, u8 *ver_hi, u8 *ver_lo)
+{
+	struct ice_nvm_info *nvm = &hw->nvm;
+
+	*oem_ver = (u8)((nvm->oem_ver & ICE_OEM_VER_MASK) >> ICE_OEM_VER_SHIFT);
+	*oem_patch = (u8)(nvm->oem_ver & ICE_OEM_VER_PATCH_MASK);
+	*oem_build = (u16)((nvm->oem_ver & ICE_OEM_VER_BUILD_MASK) >>
+			   ICE_OEM_VER_BUILD_SHIFT);
+	*ver_hi = (nvm->ver & ICE_NVM_VER_HI_MASK) >> ICE_NVM_VER_HI_SHIFT;
+	*ver_lo = (nvm->ver & ICE_NVM_VER_LO_MASK) >> ICE_NVM_VER_LO_SHIFT;
+}
+
+/**
  * ice_init_hw - main hardware initialization routine
  * @hw: pointer to the hardware structure
  */
@@ -859,7 +882,9 @@ enum ice_status ice_init_hw(struct ice_hw *hw)
 
 	ice_init_flex_flds(hw, ICE_RXDID_FLEX_NIC);
 	ice_init_flex_flds(hw, ICE_RXDID_FLEX_NIC_2);
-
+	status = ice_init_hw_tbls(hw);
+	if (status)
+		goto err_unroll_fltr_mgmt_struct;
 	return 0;
 
 err_unroll_fltr_mgmt_struct:
@@ -887,6 +912,8 @@ void ice_deinit_hw(struct ice_hw *hw)
 
 	ice_sched_cleanup_all(hw);
 	ice_sched_clear_agg(hw);
+	ice_free_seg(hw);
+	ice_free_hw_tbls(hw);
 
 	if (hw->port_info) {
 		devm_kfree(ice_hw_to_dev(hw), hw->port_info);
@@ -1132,6 +1159,7 @@ const struct ice_ctx_ele ice_tlan_ctx_info[] = {
 	ICE_CTX_STORE(ice_tlan_ctx, vmvf_type,			2,	78),
 	ICE_CTX_STORE(ice_tlan_ctx, src_vsi,			10,	80),
 	ICE_CTX_STORE(ice_tlan_ctx, tsyn_ena,			1,	90),
+	ICE_CTX_STORE(ice_tlan_ctx, internal_usage_flag,	1,	91),
 	ICE_CTX_STORE(ice_tlan_ctx, alt_vlan,			1,	92),
 	ICE_CTX_STORE(ice_tlan_ctx, cpuid,			8,	93),
 	ICE_CTX_STORE(ice_tlan_ctx, wb_mode,			1,	101),
@@ -1150,7 +1178,7 @@ const struct ice_ctx_ele ice_tlan_ctx_info[] = {
 	ICE_CTX_STORE(ice_tlan_ctx, drop_ena,			1,	165),
 	ICE_CTX_STORE(ice_tlan_ctx, cache_prof_idx,		2,	166),
 	ICE_CTX_STORE(ice_tlan_ctx, pkt_shaper_prof_idx,	3,	168),
-	ICE_CTX_STORE(ice_tlan_ctx, int_q_state,		110,	171),
+	ICE_CTX_STORE(ice_tlan_ctx, int_q_state,		122,	171),
 	{ 0 }
 };
 
@@ -1206,6 +1234,12 @@ ice_debug_cq(struct ice_hw *hw, u32 __maybe_unused mask, void *desc, void *buf,
 
 /* FW Admin Queue command wrappers */
 
+/* Software lock/mutex that is meant to be held while the Global Config Lock
+ * in firmware is acquired by the software to prevent most (but not all) types
+ * of AQ commands from being sent to FW
+ */
+DEFINE_MUTEX(ice_global_cfg_lock_sw);
+
 /**
  * ice_aq_send_cmd - send FW Admin Queue command to FW Admin Queue
  * @hw: pointer to the HW struct
@@ -1220,7 +1254,38 @@ enum ice_status
 ice_aq_send_cmd(struct ice_hw *hw, struct ice_aq_desc *desc, void *buf,
 		u16 buf_size, struct ice_sq_cd *cd)
 {
-	return ice_sq_send_cmd(hw, &hw->adminq, desc, buf, buf_size, cd);
+	struct ice_aqc_req_res *cmd = &desc->params.res_owner;
+	bool lock_acquired = false;
+	enum ice_status status;
+
+	/* When a package download is in process (i.e. when the firmware's
+	 * Global Configuration Lock resource is held), only the Download
+	 * Package, Get Version, Get Package Info List and Release Resource
+	 * (with resource ID set to Global Config Lock) AdminQ commands are
+	 * allowed; all others must block until the package download completes
+	 * and the Global Config Lock is released.  See also
+	 * ice_acquire_global_cfg_lock().
+	 */
+	switch (le16_to_cpu(desc->opcode)) {
+	case ice_aqc_opc_download_pkg:
+	case ice_aqc_opc_get_pkg_info_list:
+	case ice_aqc_opc_get_ver:
+		break;
+	case ice_aqc_opc_release_res:
+		if (le16_to_cpu(cmd->res_id) == ICE_AQC_RES_ID_GLBL_LOCK)
+			break;
+		/* fall-through */
+	default:
+		mutex_lock(&ice_global_cfg_lock_sw);
+		lock_acquired = true;
+		break;
+	}
+
+	status = ice_sq_send_cmd(hw, &hw->adminq, desc, buf, buf_size, cd);
+	if (lock_acquired)
+		mutex_unlock(&ice_global_cfg_lock_sw);
+
+	return status;
 }
 
 /**
@@ -1258,6 +1323,43 @@ enum ice_status ice_aq_get_fw_ver(struct ice_hw *hw, struct ice_sq_cd *cd)
 }
 
 /**
+ * ice_aq_send_driver_ver
+ * @hw: pointer to the HW struct
+ * @dv: driver's major, minor version
+ * @cd: pointer to command details structure or NULL
+ *
+ * Send the driver version (0x0002) to the firmware
+ */
+enum ice_status
+ice_aq_send_driver_ver(struct ice_hw *hw, struct ice_driver_ver *dv,
+		       struct ice_sq_cd *cd)
+{
+	struct ice_aqc_driver_ver *cmd;
+	struct ice_aq_desc desc;
+	u16 len;
+
+	cmd = &desc.params.driver_ver;
+
+	if (!dv)
+		return ICE_ERR_PARAM;
+
+	ice_fill_dflt_direct_cmd_desc(&desc, ice_aqc_opc_driver_ver);
+
+	desc.flags |= cpu_to_le16(ICE_AQ_FLAG_RD);
+	cmd->major_ver = dv->major_ver;
+	cmd->minor_ver = dv->minor_ver;
+	cmd->build_ver = dv->build_ver;
+	cmd->subbuild_ver = dv->subbuild_ver;
+
+	len = 0;
+	while (len < sizeof(dv->driver_string) &&
+	       isascii(dv->driver_string[len]) && dv->driver_string[len])
+		len++;
+
+	return ice_aq_send_cmd(hw, &desc, dv->driver_string, len, cd);
+}
+
+/**
  * ice_aq_q_shutdown
  * @hw: pointer to the HW struct
  * @unloading: is the driver unloading itself
@@ -1275,7 +1377,7 @@ enum ice_status ice_aq_q_shutdown(struct ice_hw *hw, bool unloading)
 	ice_fill_dflt_direct_cmd_desc(&desc, ice_aqc_opc_q_shutdown);
 
 	if (unloading)
-		cmd->driver_unloading = cpu_to_le32(ICE_AQC_DRIVER_UNLOADING);
+		cmd->driver_unloading = ICE_AQC_DRIVER_UNLOADING;
 
 	return ice_aq_send_cmd(hw, &desc, NULL, 0, NULL);
 }
@@ -1550,29 +1652,29 @@ ice_parse_caps(struct ice_hw *hw, void *buf, u32 cap_count,
 		case ICE_AQC_CAPS_VALID_FUNCTIONS:
 			caps->valid_functions = number;
 			ice_debug(hw, ICE_DBG_INIT,
-				  "%s: valid functions = %d\n", prefix,
+				  "%s: valid_functions (bitmap) = %d\n", prefix,
 				  caps->valid_functions);
 			break;
 		case ICE_AQC_CAPS_SRIOV:
 			caps->sr_iov_1_1 = (number == 1);
 			ice_debug(hw, ICE_DBG_INIT,
-				  "%s: SR-IOV = %d\n", prefix,
+				  "%s: sr_iov_1_1 = %d\n", prefix,
 				  caps->sr_iov_1_1);
 			break;
 		case ICE_AQC_CAPS_VF:
 			if (dev_p) {
 				dev_p->num_vfs_exposed = number;
 				ice_debug(hw, ICE_DBG_INIT,
-					  "%s: VFs exposed = %d\n", prefix,
+					  "%s: num_vfs_exposed = %d\n", prefix,
 					  dev_p->num_vfs_exposed);
 			} else if (func_p) {
 				func_p->num_allocd_vfs = number;
 				func_p->vf_base_id = logical_id;
 				ice_debug(hw, ICE_DBG_INIT,
-					  "%s: VFs allocated = %d\n", prefix,
+					  "%s: num_allocd_vfs = %d\n", prefix,
 					  func_p->num_allocd_vfs);
 				ice_debug(hw, ICE_DBG_INIT,
-					  "%s: VF base_id = %d\n", prefix,
+					  "%s: vf_base_id = %d\n", prefix,
 					  func_p->vf_base_id);
 			}
 			break;
@@ -1580,63 +1682,75 @@ ice_parse_caps(struct ice_hw *hw, void *buf, u32 cap_count,
 			if (dev_p) {
 				dev_p->num_vsi_allocd_to_host = number;
 				ice_debug(hw, ICE_DBG_INIT,
-					  "%s: num VSI alloc to host = %d\n",
+					  "%s: num_vsi_allocd_to_host = %d\n",
 					  prefix,
 					  dev_p->num_vsi_allocd_to_host);
 			} else if (func_p) {
 				func_p->guar_num_vsi =
 					ice_get_num_per_func(hw, ICE_MAX_VSI);
 				ice_debug(hw, ICE_DBG_INIT,
-					  "%s: num guaranteed VSI (fw) = %d\n",
+					  "%s: guar_num_vsi (fw) = %d\n",
 					  prefix, number);
 				ice_debug(hw, ICE_DBG_INIT,
-					  "%s: num guaranteed VSI = %d\n",
+					  "%s: guar_num_vsi = %d\n",
 					  prefix, func_p->guar_num_vsi);
 			}
+			break;
+		case ICE_AQC_CAPS_DCB:
+			caps->dcb = (number == 1);
+			caps->active_tc_bitmap = logical_id;
+			caps->maxtc = phys_id;
+			ice_debug(hw, ICE_DBG_INIT,
+				  "%s: dcb = %d\n", prefix, caps->dcb);
+			ice_debug(hw, ICE_DBG_INIT,
+				  "%s: active_tc_bitmap = %d\n", prefix,
+				  caps->active_tc_bitmap);
+			ice_debug(hw, ICE_DBG_INIT,
+				  "%s: maxtc = %d\n", prefix, caps->maxtc);
 			break;
 		case ICE_AQC_CAPS_RSS:
 			caps->rss_table_size = number;
 			caps->rss_table_entry_width = logical_id;
 			ice_debug(hw, ICE_DBG_INIT,
-				  "%s: RSS table size = %d\n", prefix,
+				  "%s: rss_table_size = %d\n", prefix,
 				  caps->rss_table_size);
 			ice_debug(hw, ICE_DBG_INIT,
-				  "%s: RSS table width = %d\n", prefix,
+				  "%s: rss_table_entry_width = %d\n", prefix,
 				  caps->rss_table_entry_width);
 			break;
 		case ICE_AQC_CAPS_RXQS:
 			caps->num_rxq = number;
 			caps->rxq_first_id = phys_id;
 			ice_debug(hw, ICE_DBG_INIT,
-				  "%s: num Rx queues = %d\n", prefix,
+				  "%s: num_rxq = %d\n", prefix,
 				  caps->num_rxq);
 			ice_debug(hw, ICE_DBG_INIT,
-				  "%s: Rx first queue ID = %d\n", prefix,
+				  "%s: rxq_first_id = %d\n", prefix,
 				  caps->rxq_first_id);
 			break;
 		case ICE_AQC_CAPS_TXQS:
 			caps->num_txq = number;
 			caps->txq_first_id = phys_id;
 			ice_debug(hw, ICE_DBG_INIT,
-				  "%s: num Tx queues = %d\n", prefix,
+				  "%s: num_txq = %d\n", prefix,
 				  caps->num_txq);
 			ice_debug(hw, ICE_DBG_INIT,
-				  "%s: Tx first queue ID = %d\n", prefix,
+				  "%s: txq_first_id = %d\n", prefix,
 				  caps->txq_first_id);
 			break;
 		case ICE_AQC_CAPS_MSIX:
 			caps->num_msix_vectors = number;
 			caps->msix_vector_first_id = phys_id;
 			ice_debug(hw, ICE_DBG_INIT,
-				  "%s: MSIX vector count = %d\n", prefix,
+				  "%s: num_msix_vectors = %d\n", prefix,
 				  caps->num_msix_vectors);
 			ice_debug(hw, ICE_DBG_INIT,
-				  "%s: MSIX first vector index = %d\n", prefix,
+				  "%s: msix_vector_first_id = %d\n", prefix,
 				  caps->msix_vector_first_id);
 			break;
 		case ICE_AQC_CAPS_MAX_MTU:
 			caps->max_mtu = number;
-			ice_debug(hw, ICE_DBG_INIT, "%s: max MTU = %d\n",
+			ice_debug(hw, ICE_DBG_INIT, "%s: max_mtu = %d\n",
 				  prefix, caps->max_mtu);
 			break;
 		default:
@@ -1730,6 +1844,75 @@ ice_discover_caps(struct ice_hw *hw, enum ice_adminq_opc opc)
 	} while (--retries);
 
 	return status;
+}
+
+/**
+ * ice_set_safe_mode_caps - Override dev/func capabilities when in safe mode
+ * @hw: pointer to the hardware structure
+ */
+void ice_set_safe_mode_caps(struct ice_hw *hw)
+{
+	struct ice_hw_func_caps *func_caps = &hw->func_caps;
+	struct ice_hw_dev_caps *dev_caps = &hw->dev_caps;
+	u32 valid_func, rxq_first_id, txq_first_id;
+	u32 msix_vector_first_id, max_mtu;
+	u32 num_func = 0;
+	u8 i;
+
+	/* cache some func_caps values that should be restored after memset */
+	valid_func = func_caps->common_cap.valid_functions;
+	txq_first_id = func_caps->common_cap.txq_first_id;
+	rxq_first_id = func_caps->common_cap.rxq_first_id;
+	msix_vector_first_id = func_caps->common_cap.msix_vector_first_id;
+	max_mtu = func_caps->common_cap.max_mtu;
+
+	/* unset func capabilities */
+	memset(func_caps, 0, sizeof(*func_caps));
+
+	/* restore cached values */
+	func_caps->common_cap.valid_functions = valid_func;
+	func_caps->common_cap.txq_first_id = txq_first_id;
+	func_caps->common_cap.rxq_first_id = rxq_first_id;
+	func_caps->common_cap.msix_vector_first_id = msix_vector_first_id;
+	func_caps->common_cap.max_mtu = max_mtu;
+
+	/* one Tx and one Rx queue in safe mode */
+	func_caps->common_cap.num_rxq = 1;
+	func_caps->common_cap.num_txq = 1;
+
+	/* two MSIX vectors, one for traffic and one for misc causes */
+	func_caps->common_cap.num_msix_vectors = 2;
+	func_caps->guar_num_vsi = 1;
+
+	/* cache some dev_caps values that should be restored after memset */
+	valid_func = dev_caps->common_cap.valid_functions;
+	txq_first_id = dev_caps->common_cap.txq_first_id;
+	rxq_first_id = dev_caps->common_cap.rxq_first_id;
+	msix_vector_first_id = dev_caps->common_cap.msix_vector_first_id;
+	max_mtu = dev_caps->common_cap.max_mtu;
+
+	/* unset dev capabilities */
+	memset(dev_caps, 0, sizeof(*dev_caps));
+
+	/* restore cached values */
+	dev_caps->common_cap.valid_functions = valid_func;
+	dev_caps->common_cap.txq_first_id = txq_first_id;
+	dev_caps->common_cap.rxq_first_id = rxq_first_id;
+	dev_caps->common_cap.msix_vector_first_id = msix_vector_first_id;
+	dev_caps->common_cap.max_mtu = max_mtu;
+
+	/* valid_func is a bitmap. get number of functions */
+#define ICE_MAX_FUNCS 8
+	for (i = 0; i < ICE_MAX_FUNCS; i++)
+		if (valid_func & BIT(i))
+			num_func++;
+
+	/* one Tx and one Rx queue per function in safe mode */
+	dev_caps->common_cap.num_rxq = num_func;
+	dev_caps->common_cap.num_txq = num_func;
+
+	/* two MSIX vectors per function */
+	dev_caps->common_cap.num_msix_vectors = 2 * num_func;
 }
 
 /**

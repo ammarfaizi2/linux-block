@@ -66,6 +66,7 @@ static void hclge_rfs_filter_expire(struct hclge_dev *hdev);
 static void hclge_clear_arfs_rules(struct hnae3_handle *handle);
 static enum hnae3_reset_type hclge_get_reset_level(struct hnae3_ae_dev *ae_dev,
 						   unsigned long *addr);
+static int hclge_set_default_loopback(struct hclge_dev *hdev);
 
 static struct hnae3_ae_algo ae_algo;
 
@@ -2599,6 +2600,10 @@ static int hclge_mac_init(struct hclge_dev *hdev)
 		return ret;
 	}
 
+	ret = hclge_set_default_loopback(hdev);
+	if (ret)
+		return ret;
+
 	ret = hclge_buffer_alloc(hdev);
 	if (ret)
 		dev_err(&hdev->pdev->dev,
@@ -3542,12 +3547,12 @@ static bool hclge_reset_err_handle(struct hclge_dev *hdev)
 			 "reset failed because new reset interrupt\n");
 		hclge_clear_reset_cause(hdev);
 		return false;
-	} else if (hdev->reset_fail_cnt < MAX_RESET_FAIL_CNT) {
-		hdev->reset_fail_cnt++;
+	} else if (hdev->rst_stats.reset_fail_cnt < MAX_RESET_FAIL_CNT) {
+		hdev->rst_stats.reset_fail_cnt++;
 		set_bit(hdev->reset_type, &hdev->reset_pending);
 		dev_info(&hdev->pdev->dev,
 			 "re-schedule reset task(%d)\n",
-			 hdev->reset_fail_cnt);
+			 hdev->rst_stats.reset_fail_cnt);
 		return true;
 	}
 
@@ -3619,6 +3624,7 @@ static int hclge_reset_stack(struct hclge_dev *hdev)
 static void hclge_reset(struct hclge_dev *hdev)
 {
 	struct hnae3_ae_dev *ae_dev = pci_get_drvdata(hdev->pdev);
+	enum hnae3_reset_type reset_level;
 	int ret;
 
 	/* Initialize ae_dev reset status as well, in case enet layer wants to
@@ -3673,7 +3679,8 @@ static void hclge_reset(struct hclge_dev *hdev)
 	/* ignore RoCE notify error if it fails HCLGE_RESET_MAX_FAIL_CNT - 1
 	 * times
 	 */
-	if (ret && hdev->reset_fail_cnt < HCLGE_RESET_MAX_FAIL_CNT - 1)
+	if (ret &&
+	    hdev->rst_stats.reset_fail_cnt < HCLGE_RESET_MAX_FAIL_CNT - 1)
 		goto err_reset;
 
 	rtnl_lock();
@@ -3689,7 +3696,7 @@ static void hclge_reset(struct hclge_dev *hdev)
 		goto err_reset;
 
 	hdev->last_reset_time = jiffies;
-	hdev->reset_fail_cnt = 0;
+	hdev->rst_stats.reset_fail_cnt = 0;
 	hdev->rst_stats.reset_done_cnt++;
 	ae_dev->reset_type = HNAE3_NONE_RESET;
 
@@ -3697,10 +3704,10 @@ static void hclge_reset(struct hclge_dev *hdev)
 	 * it should be handled as soon as possible. since some errors
 	 * need this kind of reset to fix.
 	 */
-	hdev->reset_level = hclge_get_reset_level(ae_dev,
-						  &hdev->default_reset_request);
-	if (hdev->reset_level != HNAE3_NONE_RESET)
-		set_bit(hdev->reset_level, &hdev->reset_request);
+	reset_level = hclge_get_reset_level(ae_dev,
+					    &hdev->default_reset_request);
+	if (reset_level != HNAE3_NONE_RESET)
+		set_bit(reset_level, &hdev->reset_request);
 
 	return;
 
@@ -3745,7 +3752,7 @@ static void hclge_reset_event(struct pci_dev *pdev, struct hnae3_handle *handle)
 	else if (time_after(jiffies, (hdev->last_reset_time + 4 * 5 * HZ)))
 		hdev->reset_level = HNAE3_FUNC_RESET;
 
-	dev_info(&hdev->pdev->dev, "received reset event , reset type is %d",
+	dev_info(&hdev->pdev->dev, "received reset event, reset type is %d\n",
 		 hdev->reset_level);
 
 	/* request reset & schedule reset task */
@@ -6173,7 +6180,7 @@ static void hclge_enable_fd(struct hnae3_handle *handle, bool enable)
 	bool clear;
 
 	hdev->fd_en = enable;
-	clear = hdev->fd_active_type == HCLGE_FD_ARFS_ACTIVE ? true : false;
+	clear = hdev->fd_active_type == HCLGE_FD_ARFS_ACTIVE;
 	if (!enable)
 		hclge_del_all_fd_entries(handle, clear);
 	else
@@ -6330,7 +6337,7 @@ static int hclge_set_app_loopback(struct hclge_dev *hdev, bool en)
 	return ret;
 }
 
-static int hclge_set_serdes_loopback(struct hclge_dev *hdev, bool en,
+static int hclge_cfg_serdes_loopback(struct hclge_dev *hdev, bool en,
 				     enum hnae3_loop loop_mode)
 {
 #define HCLGE_SERDES_RETRY_MS	10
@@ -6391,6 +6398,17 @@ static int hclge_set_serdes_loopback(struct hclge_dev *hdev, bool en,
 		dev_err(&hdev->pdev->dev, "serdes loopback set failed in fw\n");
 		return -EIO;
 	}
+	return ret;
+}
+
+static int hclge_set_serdes_loopback(struct hclge_dev *hdev, bool en,
+				     enum hnae3_loop loop_mode)
+{
+	int ret;
+
+	ret = hclge_cfg_serdes_loopback(hdev, en, loop_mode);
+	if (ret)
+		return ret;
 
 	hclge_cfg_mac_mode(hdev, en);
 
@@ -6532,6 +6550,22 @@ static int hclge_set_loopback(struct hnae3_handle *handle,
 	}
 
 	return 0;
+}
+
+static int hclge_set_default_loopback(struct hclge_dev *hdev)
+{
+	int ret;
+
+	ret = hclge_set_app_loopback(hdev, false);
+	if (ret)
+		return ret;
+
+	ret = hclge_cfg_serdes_loopback(hdev, false, HNAE3_LOOP_SERIAL_SERDES);
+	if (ret)
+		return ret;
+
+	return hclge_cfg_serdes_loopback(hdev, false,
+					 HNAE3_LOOP_PARALLEL_SERDES);
 }
 
 static void hclge_reset_tqp_stats(struct hnae3_handle *handle)
@@ -7691,6 +7725,7 @@ static int hclge_set_vlan_tx_offload_cfg(struct hclge_vport *vport)
 	struct hclge_vport_vtag_tx_cfg_cmd *req;
 	struct hclge_dev *hdev = vport->back;
 	struct hclge_desc desc;
+	u16 bmap_index;
 	int status;
 
 	hclge_cmd_setup_basic_desc(&desc, HCLGE_OPC_VLAN_PORT_TX_CFG, false);
@@ -7713,8 +7748,10 @@ static int hclge_set_vlan_tx_offload_cfg(struct hclge_vport *vport)
 	hnae3_set_bit(req->vport_vlan_cfg, HCLGE_CFG_NIC_ROCE_SEL_B, 0);
 
 	req->vf_offset = vport->vport_id / HCLGE_VF_NUM_PER_CMD;
-	req->vf_bitmap[req->vf_offset] =
-		1 << (vport->vport_id % HCLGE_VF_NUM_PER_BYTE);
+	bmap_index = vport->vport_id % HCLGE_VF_NUM_PER_CMD /
+			HCLGE_VF_NUM_PER_BYTE;
+	req->vf_bitmap[bmap_index] =
+		1U << (vport->vport_id % HCLGE_VF_NUM_PER_BYTE);
 
 	status = hclge_cmd_send(&hdev->hw, &desc, 1);
 	if (status)
@@ -7731,6 +7768,7 @@ static int hclge_set_vlan_rx_offload_cfg(struct hclge_vport *vport)
 	struct hclge_vport_vtag_rx_cfg_cmd *req;
 	struct hclge_dev *hdev = vport->back;
 	struct hclge_desc desc;
+	u16 bmap_index;
 	int status;
 
 	hclge_cmd_setup_basic_desc(&desc, HCLGE_OPC_VLAN_PORT_RX_CFG, false);
@@ -7746,8 +7784,10 @@ static int hclge_set_vlan_rx_offload_cfg(struct hclge_vport *vport)
 		      vcfg->vlan2_vlan_prionly ? 1 : 0);
 
 	req->vf_offset = vport->vport_id / HCLGE_VF_NUM_PER_CMD;
-	req->vf_bitmap[req->vf_offset] =
-		1 << (vport->vport_id % HCLGE_VF_NUM_PER_BYTE);
+	bmap_index = vport->vport_id % HCLGE_VF_NUM_PER_CMD /
+			HCLGE_VF_NUM_PER_BYTE;
+	req->vf_bitmap[bmap_index] =
+		1U << (vport->vport_id % HCLGE_VF_NUM_PER_BYTE);
 
 	status = hclge_cmd_send(&hdev->hw, &desc, 1);
 	if (status)
