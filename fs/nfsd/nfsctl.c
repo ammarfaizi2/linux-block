@@ -1251,9 +1251,10 @@ static void nfsdfs_remove_file(struct inode *dir, struct dentry *dentry)
 
 static void nfsdfs_remove_files(struct dentry *root)
 {
-	struct dentry *dentry, *tmp;
+	struct dentry *dentry;
+	struct hlist_node *n;
 
-	list_for_each_entry_safe(dentry, tmp, &root->d_subdirs, d_child) {
+	hlist_for_each_entry_safe(dentry, n, &root->d_children, d_sibling) {
 		if (!simple_positive(dentry)) {
 			WARN_ON_ONCE(1); /* I think this can't happen? */
 			continue;

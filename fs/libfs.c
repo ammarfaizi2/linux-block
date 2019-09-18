@@ -96,15 +96,16 @@ EXPORT_SYMBOL(dcache_dir_close);
  * If no such element exists, NULL is returned.
  */
 static struct dentry *scan_positives(struct dentry *cursor,
-					struct list_head *p,
+					struct hlist_node **p,
 					loff_t count,
 					struct dentry *last)
 {
 	struct dentry *dentry = cursor->d_parent, *found = NULL;
 
 	spin_lock(&dentry->d_lock);
-	while ((p = p->next) != &dentry->d_subdirs) {
-		struct dentry *d = list_entry(p, struct dentry, d_child);
+	while (*p) {
+		struct dentry *d = hlist_entry(*p, struct dentry, d_sibling);
+		p = &d->d_sibling.next;
 		// we must at least skip cursors, to avoid livelocks
 		if (d->d_flags & DCACHE_DENTRY_CURSOR)
 			continue;
@@ -118,8 +119,10 @@ static struct dentry *scan_positives(struct dentry *cursor,
 			count = 1;
 		}
 		if (need_resched()) {
-			list_move(&cursor->d_child, p);
-			p = &cursor->d_child;
+			if (!hlist_unhashed(&cursor->d_sibling))
+				__hlist_del(&cursor->d_sibling);
+			hlist_add_behind(&cursor->d_sibling, &d->d_sibling);
+			p = &cursor->d_sibling.next;
 			spin_unlock(&dentry->d_lock);
 			cond_resched();
 			spin_lock(&dentry->d_lock);
@@ -151,14 +154,14 @@ loff_t dcache_dir_lseek(struct file *file, loff_t offset, int whence)
 		inode_lock_shared(dentry->d_inode);
 
 		if (offset > 2)
-			to = scan_positives(cursor, &dentry->d_subdirs,
+			to = scan_positives(cursor, &dentry->d_children.first,
 					    offset - 2, NULL);
 		spin_lock(&dentry->d_lock);
+		hlist_del_init(&cursor->d_sibling);
 		if (to)
-			list_move(&cursor->d_child, &to->d_child);
-		else
-			list_del_init(&cursor->d_child);
+			hlist_add_behind(&cursor->d_sibling, &to->d_sibling);
 		spin_unlock(&dentry->d_lock);
+
 		dput(to);
 
 		file->f_pos = offset;
@@ -185,32 +188,28 @@ int dcache_readdir(struct file *file, struct dir_context *ctx)
 {
 	struct dentry *dentry = file->f_path.dentry;
 	struct dentry *cursor = file->private_data;
-	struct list_head *anchor = &dentry->d_subdirs;
 	struct dentry *next = NULL;
-	struct list_head *p;
+	struct hlist_node **p;
 
 	if (!dir_emit_dots(file, ctx))
 		return 0;
 
 	if (ctx->pos == 2)
-		p = anchor;
-	else if (!list_empty(&cursor->d_child))
-		p = &cursor->d_child;
+		p = &dentry->d_children.first;
 	else
-		return 0;
+		p = &cursor->d_sibling.next;
 
 	while ((next = scan_positives(cursor, p, 1, next)) != NULL) {
 		if (!dir_emit(ctx, next->d_name.name, next->d_name.len,
 			      d_inode(next)->i_ino, dt_type(d_inode(next))))
 			break;
 		ctx->pos++;
-		p = &next->d_child;
+		p = &next->d_sibling.next;
 	}
 	spin_lock(&dentry->d_lock);
+	hlist_del_init(&cursor->d_sibling);
 	if (next)
-		list_move_tail(&cursor->d_child, &next->d_child);
-	else
-		list_del_init(&cursor->d_child);
+		hlist_add_before(&cursor->d_sibling, &next->d_sibling);
 	spin_unlock(&dentry->d_lock);
 	dput(next);
 
@@ -337,7 +336,7 @@ int simple_empty(struct dentry *dentry)
 	int ret = 0;
 
 	spin_lock(&dentry->d_lock);
-	list_for_each_entry(child, &dentry->d_subdirs, d_child) {
+	hlist_for_each_entry(child, &dentry->d_children, d_sibling) {
 		spin_lock_nested(&child->d_lock, DENTRY_D_LOCK_NESTED);
 		if (simple_positive(child)) {
 			spin_unlock(&child->d_lock);

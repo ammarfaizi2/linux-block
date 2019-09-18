@@ -108,8 +108,8 @@ struct dentry {
 		struct list_head d_lru;		/* LRU list */
 		wait_queue_head_t *d_wait;	/* in-lookup ones only */
 	};
-	struct list_head d_child;	/* child of parent list */
-	struct list_head d_subdirs;	/* our children */
+	struct hlist_node d_sibling;	/* child of parent list */
+	struct hlist_head d_children;	/* our children */
 	/*
 	 * d_alias and d_rcu can share memory
 	 */

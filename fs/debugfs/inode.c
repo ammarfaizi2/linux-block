@@ -735,18 +735,13 @@ void debugfs_remove_recursive(struct dentry *dentry)
  down:
 	inode_lock(d_inode(parent));
  loop:
-	/*
-	 * The parent->d_subdirs is protected by the d_lock. Outside that
-	 * lock, the child can be unlinked and set to be freed which can
-	 * use the d_u.d_child as the rcu head and corrupt this list.
-	 */
 	spin_lock(&parent->d_lock);
-	list_for_each_entry(child, &parent->d_subdirs, d_child) {
+	hlist_for_each_entry(child, &parent->d_children, d_sibling) {
 		if (!simple_positive(child))
 			continue;
 
 		/* perhaps simple_empty(child) makes more sense */
-		if (!list_empty(&child->d_subdirs)) {
+		if (!hlist_empty(&child->d_children)) {
 			spin_unlock(&parent->d_lock);
 			inode_unlock(d_inode(parent));
 			parent = child;
@@ -760,7 +755,7 @@ void debugfs_remove_recursive(struct dentry *dentry)
 
 		/*
 		 * The parent->d_lock protects agaist child from unlinking
-		 * from d_subdirs. When releasing the parent->d_lock we can
+		 * from d_children. When releasing the parent->d_lock we can
 		 * no longer trust that the next pointer is valid.
 		 * Restart the loop. We'll skip this one with the
 		 * simple_positive() check.
