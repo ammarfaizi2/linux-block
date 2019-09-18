@@ -76,6 +76,8 @@ struct seccomp_notif {
 	struct seccomp_data data;
 };
 
+#define SECCOMP_RET_USER_NOTIF_ALLOW 0x00000001
+
 struct seccomp_notif_resp {
 	__u64 id;
 	__s64 val;
