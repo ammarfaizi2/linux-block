@@ -853,14 +853,22 @@ static void test_callback(struct rcu_head *r)
 
 DEFINE_STATIC_SRCU(early_srcu);
 
+struct early_boot_kfree_rcu {
+	struct rcu_head *rh;
+};
+
 static void early_boot_test_call_rcu(void)
 {
 	static struct rcu_head head;
 	static struct rcu_head shead;
+	struct early_boot_kfree_rcu *rhp;
 
 	call_rcu(&head, test_callback);
 	if (IS_ENABLED(CONFIG_SRCU))
 		call_srcu(&early_srcu, &shead, test_callback);
+	rhp = kmalloc(sizeof(*rhp), GFP_KERNEL);
+	if (!WARN_ON_ONCE(!rhp))
+		kfree_rcu(rhp, rh);
 }
 
 void rcu_early_boot_tests(void)
