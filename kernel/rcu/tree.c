@@ -2691,35 +2691,28 @@ EXPORT_SYMBOL_GPL(call_rcu);
 /* Maximum number of jiffies to wait before draining a batch. */
 #define KFREE_DRAIN_JIFFIES (HZ / 50)
 
-/*
- * Maximum number of kfree(s) to batch, if this limit is hit then the batch of
- * kfree(s) is queued for freeing after a grace period, right away.
+/**
+ * struct kfree_rcu_cpu - batch up kfree_rcu() requests for RCU grace period
+ * @rcu_work: Let queue_rcu_work() invoke workqueue handler after grace period
+ * @head: List of kfree_rcu() objects not yet waiting for a grace period
+ * @head_free: List of kfree_rcu() objects already waiting for a grace period
+ * @lock: Synchronize access to this structure
+ * @monitor_work: Promote @head to @head_free after KFREE_DRAIN_JIFFIES
+ * @monitor_todo: Tracks whether a @monitor_work delayed work is pending
+ * @initialized: The @lock and @rcu_work fields have been initialized
+ *
+ * This is a per-CPU structure.  The reason that it is not included in
+ * the rcu_data structure is to permit this code to be extracted from
+ * the RCU files.  Such extraction could allow further optimization of
+ * the interactions with the slab allocators.
  */
 struct kfree_rcu_cpu {
-	/* The rcu_work node for queuing work with queue_rcu_work(). The work
-	 * is done after a grace period.
-	 */
 	struct rcu_work rcu_work;
-
-	/* The list of objects being queued in a batch but are not yet
-	 * scheduled to be freed.
-	 */
 	struct rcu_head *head;
-
-	/* The list of objects that have now left ->head and are queued for
-	 * freeing after a grace period.
-	 */
 	struct rcu_head *head_free;
-
-	/* Protect concurrent access to this structure. */
 	spinlock_t lock;
-
-	/* The delayed work that flushes ->head to ->head_free incase ->head
-	 * within KFREE_DRAIN_JIFFIES. In case flushing cannot be done if RCU
-	 * is busy, ->head just continues to grow and we retry flushing later.
-	 */
 	struct delayed_work monitor_work;
-	int monitor_todo;	/* Is a delayed work pending execution? */
+	int monitor_todo;
 	bool initialized;
 };
 
