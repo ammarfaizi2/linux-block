@@ -2866,6 +2866,24 @@ void kfree_call_rcu(struct rcu_head *head, rcu_callback_t func)
 }
 EXPORT_SYMBOL_GPL(kfree_call_rcu);
 
+void __init kfree_rcu_scheduler_running(void)
+{
+	int cpu;
+	unsigned long flags;
+
+	for_each_online_cpu(cpu) {
+		struct kfree_rcu_cpu *krcp = per_cpu_ptr(&krc, cpu);
+
+		spin_lock_irqsave(&krcp->lock, flags);
+		if (!krcp->head || xchg(&krcp->monitor_todo, true)) {
+			spin_unlock_irqrestore(&krcp->lock, flags);
+			continue;
+		}
+		schedule_delayed_work(&krcp->monitor_work, KFREE_DRAIN_JIFFIES);
+		spin_unlock_irqrestore(&krcp->lock, flags);
+	}
+}
+
 /*
  * During early boot, any blocking grace-period wait automatically
  * implies a grace period.  Later on, this is never the case for PREEMPT.
