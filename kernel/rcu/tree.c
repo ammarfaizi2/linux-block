@@ -2720,6 +2720,7 @@ struct kfree_rcu_cpu {
 	 */
 	struct delayed_work monitor_work;
 	int monitor_todo;	/* Is a delayed work pending execution? */
+	bool initialized;
 };
 
 static DEFINE_PER_CPU(struct kfree_rcu_cpu, krc);
@@ -2843,27 +2844,24 @@ void kfree_call_rcu(struct rcu_head *head, rcu_callback_t func)
 	unsigned long flags;
 	struct kfree_rcu_cpu *krcp;
 
-	/* kfree_call_rcu() batching requires timers to be up. If the scheduler
-	 * is not yet up, just skip batching and do the non-batched version.
-	 */
-	if (rcu_scheduler_active != RCU_SCHEDULER_RUNNING)
-		return kfree_call_rcu_nobatch(head, func);
-
 	head->func = func;
 
 	local_irq_save(flags);	/* For safely calling this_cpu_ptr(). */
 	krcp = this_cpu_ptr(&krc);
-	spin_lock(&krcp->lock);
+	if (krcp->initialized)
+		spin_lock(&krcp->lock);
 
 	/* Queue the kfree but don't yet schedule the batch. */
 	head->next = krcp->head;
 	krcp->head = head;
 
 	/* Schedule monitor for timely drain after KFREE_DRAIN_JIFFIES. */
-	if (!xchg(&krcp->monitor_todo, true))
+	if (rcu_scheduler_active == RCU_SCHEDULER_RUNNING &&
+	    !xchg(&krcp->monitor_todo, true))
 		schedule_delayed_work(&krcp->monitor_work, KFREE_DRAIN_JIFFIES);
 
-	spin_unlock(&krcp->lock);
+	if (krcp->initialized)
+		spin_unlock(&krcp->lock);
 	local_irq_restore(flags);
 }
 EXPORT_SYMBOL_GPL(kfree_call_rcu);
@@ -3742,6 +3740,7 @@ static void __init kfree_rcu_batch_init(void)
 
 		spin_lock_init(&krcp->lock);
 		INIT_DELAYED_WORK(&krcp->monitor_work, kfree_rcu_monitor);
+		krcp->initialized = true;
 	}
 }
 
@@ -3749,10 +3748,9 @@ void __init rcu_init(void)
 {
 	int cpu;
 
-	kfree_rcu_batch_init();
-
 	rcu_early_boot_tests();
 
+	kfree_rcu_batch_init();
 	rcu_bootup_announce();
 	rcu_init_geometry();
 	rcu_init_one();
