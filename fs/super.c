@@ -32,6 +32,7 @@
 #include <linux/backing-dev.h>
 #include <linux/rculist_bl.h>
 #include <linux/cleancache.h>
+#include <linux/fscrypt.h>
 #include <linux/fsnotify.h>
 #include <linux/lockdep.h>
 #include <linux/user_namespace.h>
@@ -257,6 +258,8 @@ static struct super_block *alloc_super(struct file_system_type *type, int flags,
 	s->s_maxbytes = MAX_NON_LFS;
 	s->s_op = &default_op;
 	s->s_time_gran = 1000000000;
+	s->s_time_min = TIME64_MIN;
+	s->s_time_max = TIME64_MAX;
 	s->cleancache_poolid = CLEANCACHE_NO_POOL;
 
 	s->s_shrink.seeks = DEFAULT_SEEKS;
@@ -290,6 +293,7 @@ static void __put_super(struct super_block *s)
 		WARN_ON(s->s_inode_lru.node);
 		WARN_ON(!list_empty(&s->s_mounts));
 		security_sb_free(s);
+		fscrypt_sb_free(s);
 		put_user_ns(s->s_user_ns);
 		kfree(s->s_subtype);
 		call_rcu(&s->rcu, destroy_super_rcu);
@@ -1160,9 +1164,11 @@ int vfs_get_super(struct fs_context *fc,
 {
 	int (*test)(struct super_block *, struct fs_context *);
 	struct super_block *sb;
+	int err;
 
 	switch (keying) {
 	case vfs_get_single_super:
+	case vfs_get_single_reconf_super:
 		test = test_single_super;
 		break;
 	case vfs_get_keyed_super:
@@ -1180,18 +1186,29 @@ int vfs_get_super(struct fs_context *fc,
 		return PTR_ERR(sb);
 
 	if (!sb->s_root) {
-		int err = fill_super(sb, fc);
-		if (err) {
-			deactivate_locked_super(sb);
-			return err;
-		}
+		err = fill_super(sb, fc);
+		if (err)
+			goto error;
 
 		sb->s_flags |= SB_ACTIVE;
+		fc->root = dget(sb->s_root);
+	} else {
+		fc->root = dget(sb->s_root);
+		if (keying == vfs_get_single_reconf_super) {
+			err = reconfigure_super(fc);
+			if (err < 0) {
+				dput(fc->root);
+				fc->root = NULL;
+				goto error;
+			}
+		}
 	}
 
-	BUG_ON(fc->root);
-	fc->root = dget(sb->s_root);
 	return 0;
+
+error:
+	deactivate_locked_super(sb);
+	return err;
 }
 EXPORT_SYMBOL(vfs_get_super);
 
@@ -1210,6 +1227,14 @@ int get_tree_single(struct fs_context *fc,
 	return vfs_get_super(fc, vfs_get_single_super, fill_super);
 }
 EXPORT_SYMBOL(get_tree_single);
+
+int get_tree_single_reconf(struct fs_context *fc,
+		  int (*fill_super)(struct super_block *sb,
+				    struct fs_context *fc))
+{
+	return vfs_get_super(fc, vfs_get_single_reconf_super, fill_super);
+}
+EXPORT_SYMBOL(get_tree_single_reconf);
 
 int get_tree_keyed(struct fs_context *fc,
 		  int (*fill_super)(struct super_block *sb,
