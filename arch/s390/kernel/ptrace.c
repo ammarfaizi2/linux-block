@@ -439,7 +439,7 @@ static int poke_user(struct task_struct *child, addr_t addr, addr_t data)
 long arch_ptrace(struct task_struct *child, long request,
 		 unsigned long addr, unsigned long data)
 {
-	ptrace_area parea; 
+	ptrace_area parea;
 	int copied, ret;
 
 	switch (request) {
@@ -856,7 +856,7 @@ asmlinkage long do_syscall_trace_enter(struct pt_regs *regs)
 	}
 
 	/* Do the secure computing check after ptrace. */
-	if (secure_computing(NULL)) {
+	if (secure_computing()) {
 		/* seccomp failures shouldn't expose any additional code. */
 		return -1;
 	}
