@@ -122,9 +122,3 @@ void arch_dma_prep_coherent(struct page *page, size_t size)
 
 	flush_dcache_range(kaddr, kaddr + size);
 }
-
-static int __init atomic_pool_init(void)
-{
-	return dma_atomic_pool_init(GFP_KERNEL, pgprot_noncached(PAGE_KERNEL));
-}
-postcore_initcall(atomic_pool_init);
