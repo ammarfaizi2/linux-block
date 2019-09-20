@@ -2726,21 +2726,18 @@ static void kfree_rcu_work(struct work_struct *work)
 {
 	unsigned long flags;
 	struct rcu_head *head, *next;
-	struct kfree_rcu_cpu *krcp = container_of(to_rcu_work(work),
-					struct kfree_rcu_cpu, rcu_work);
+	struct kfree_rcu_cpu *krcp;
 
+	krcp = container_of(to_rcu_work(work), struct kfree_rcu_cpu, rcu_work);
 	spin_lock_irqsave(&krcp->lock, flags);
 	head = krcp->head_free;
 	krcp->head_free = NULL;
 	spin_unlock_irqrestore(&krcp->lock, flags);
 
-	/*
-	 * The head is detached and not referenced from anywhere, so lockless
-	 * access is Ok.
-	 */
+	// List "head" is now private, so traverse locklessly.
 	for (; head; head = next) {
 		next = head->next;
-		/* Could be possible to optimize with kfree_bulk in future */
+		// Potentially optimize with kfree_bulk in future.
 		__rcu_reclaim(rcu_state.name, head);
 		cond_resched_tasks_rcu_qs();
 	}
@@ -2756,10 +2753,8 @@ static inline bool queue_kfree_rcu_work(struct kfree_rcu_cpu *krcp)
 {
 	lockdep_assert_held(&krcp->lock);
 
-	/* If a previous RCU batch work is already in progress, we cannot queue
-	 * another one, just refuse the optimization and it will be retried
-	 * again in KFREE_DRAIN_JIFFIES time.
-	 */
+	// If a previous RCU batch is in progress, we cannot immediately
+	// queue another one, so return false to tell caller to retry.
 	if (krcp->head_free)
 		return false;
 
@@ -2767,33 +2762,28 @@ static inline bool queue_kfree_rcu_work(struct kfree_rcu_cpu *krcp)
 	krcp->head = NULL;
 	INIT_RCU_WORK(&krcp->rcu_work, kfree_rcu_work);
 	queue_rcu_work(system_wq, &krcp->rcu_work);
-
 	return true;
 }
 
 static inline void kfree_rcu_drain_unlock(struct kfree_rcu_cpu *krcp,
-				   unsigned long flags)
+					  unsigned long flags)
 {
-	/* Flush ->head to ->head_free, all objects on ->head_free will be
-	 * kfree'd after a grace period.
-	 */
+	// Attempt to start a new batch.
 	if (queue_kfree_rcu_work(krcp)) {
-		/* Success! Our job is done here. */
+		// Success! Our job is done here.
 		spin_unlock_irqrestore(&krcp->lock, flags);
 		return;
 	}
 
-	/* Previous batch that was queued to RCU did not get free yet, let us
-	 * try again soon.
-	 */
+	// Previous RCU batch still in progress, try again later.
 	if (!xchg(&krcp->monitor_todo, true))
 		schedule_delayed_work(&krcp->monitor_work, KFREE_DRAIN_JIFFIES);
 	spin_unlock_irqrestore(&krcp->lock, flags);
 }
 
 /*
- * This function is invoked after the KFREE_DRAIN_JIFFIES timeout has elapsed,
- * and it drains the specified kfree_rcu_cpu structure's ->head list.
+ * This function is invoked after the KFREE_DRAIN_JIFFIES timeout.
+ * It invokes kfree_rcu_drain_unlock() to attempt to start another batch.
  */
 static void kfree_rcu_monitor(struct work_struct *work)
 {
@@ -2825,12 +2815,12 @@ EXPORT_SYMBOL_GPL(kfree_call_rcu_nobatch);
  * every KFREE_DRAIN_JIFFIES number of jiffies. All the objects in the batch
  * will be kfree'd in workqueue context. This allows us to:
  *
- * 1. Batch requests together to reduce the number of grace periods during
- * heavy kfree_rcu() load.
+ * 1.	Batch requests together to reduce the number of grace periods during
+ *	heavy kfree_rcu() load.
  *
- * 2. In the future, makes it possible to use kfree_bulk() on a large number of
- * kfree_rcu() requests thus reducing the per-object overhead of kfree() and
- * also reducing cache misses.
+ * 2.	It makes it possible to use kfree_bulk() on a large number of
+ *	kfree_rcu() requests thus reducing cache misses and the per-object
+ *	overhead of kfree().
  */
 void kfree_call_rcu(struct rcu_head *head, rcu_callback_t func)
 {
@@ -2839,16 +2829,17 @@ void kfree_call_rcu(struct rcu_head *head, rcu_callback_t func)
 
 	head->func = func;
 
-	local_irq_save(flags);	/* For safely calling this_cpu_ptr(). */
+	local_irq_save(flags);	// For safely calling this_cpu_ptr().
 	krcp = this_cpu_ptr(&krc);
 	if (krcp->initialized)
 		spin_lock(&krcp->lock);
 
-	/* Queue the kfree but don't yet schedule the batch. */
+	// Queue the object but don't yet schedule the batch.
+	head->func = func;
 	head->next = krcp->head;
 	krcp->head = head;
 
-	/* Schedule monitor for timely drain after KFREE_DRAIN_JIFFIES. */
+	// Set timer to drain after KFREE_DRAIN_JIFFIES.
 	if (rcu_scheduler_active == RCU_SCHEDULER_RUNNING &&
 	    !xchg(&krcp->monitor_todo, true))
 		schedule_delayed_work(&krcp->monitor_work, KFREE_DRAIN_JIFFIES);
