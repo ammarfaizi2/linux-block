@@ -2769,6 +2769,7 @@ static inline void kfree_rcu_drain_unlock(struct kfree_rcu_cpu *krcp,
 					  unsigned long flags)
 {
 	// Attempt to start a new batch.
+	krcp->monitor_todo = false;
 	if (queue_kfree_rcu_work(krcp)) {
 		// Success! Our job is done here.
 		spin_unlock_irqrestore(&krcp->lock, flags);
@@ -2794,12 +2795,10 @@ static void kfree_rcu_monitor(struct work_struct *work)
 						 monitor_work.work);
 
 	spin_lock_irqsave(&krcp->lock, flags);
-	if (krcp->monitor_todo) {
-		krcp->monitor_todo = false;
+	if (krcp->monitor_todo)
 		kfree_rcu_drain_unlock(krcp, flags);
-	} else {
+	else
 		spin_unlock_irqrestore(&krcp->lock, flags);
-	}
 }
 
 /*
