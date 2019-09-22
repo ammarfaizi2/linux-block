@@ -2794,10 +2794,12 @@ static void kfree_rcu_monitor(struct work_struct *work)
 						 monitor_work.work);
 
 	spin_lock_irqsave(&krcp->lock, flags);
-	if (xchg(&krcp->monitor_todo, false))
+	if (krcp->monitor_todo) {
+		krcp->monitor_todo = false;
 		kfree_rcu_drain_unlock(krcp, flags);
-	else
+	} else {
 		spin_unlock_irqrestore(&krcp->lock, flags);
+	}
 }
 
 /*
