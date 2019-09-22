@@ -2842,8 +2842,10 @@ void kfree_call_rcu(struct rcu_head *head, rcu_callback_t func)
 
 	// Set timer to drain after KFREE_DRAIN_JIFFIES.
 	if (rcu_scheduler_active == RCU_SCHEDULER_RUNNING &&
-	    !xchg(&krcp->monitor_todo, true))
+	    !krcp->monitor_todo) {
+		krcp->monitor_todo = true;
 		schedule_delayed_work(&krcp->monitor_work, KFREE_DRAIN_JIFFIES);
+	}
 
 	if (krcp->initialized)
 		spin_unlock(&krcp->lock);
