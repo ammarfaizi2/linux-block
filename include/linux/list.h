@@ -793,21 +793,23 @@ static inline void hlist_add_head(struct hlist_node *n, struct hlist_head *h)
 static inline void hlist_add_before(struct hlist_node *n,
 					struct hlist_node *next)
 {
-	n->pprev = next->pprev;
+	struct hlist_node **pprev = next->pprev;
+	n->pprev = pprev;
 	n->next = next;
 	next->pprev = &n->next;
-	WRITE_ONCE(*(n->pprev), n);
+	WRITE_ONCE(*pprev, n);
 }
 
 static inline void hlist_add_behind(struct hlist_node *n,
 				    struct hlist_node *prev)
 {
-	n->next = prev->next;
+	struct hlist_node *next = prev->next;
+	n->next = next;
 	prev->next = n;
 	n->pprev = &prev->next;
 
-	if (n->next)
-		n->next->pprev  = &n->next;
+	if (next)
+		next->pprev  = &n->next;
 }
 
 /* after that we'll appear to be on some hlist and hlist_del will work */
