@@ -2862,10 +2862,11 @@ void __init kfree_rcu_scheduler_running(void)
 		struct kfree_rcu_cpu *krcp = per_cpu_ptr(&krc, cpu);
 
 		spin_lock_irqsave(&krcp->lock, flags);
-		if (!krcp->head || xchg(&krcp->monitor_todo, true)) {
+		if (!krcp->head || krcp->monitor_todo) {
 			spin_unlock_irqrestore(&krcp->lock, flags);
 			continue;
 		}
+		krcp->monitor_todo = true;
 		schedule_delayed_work(&krcp->monitor_work, KFREE_DRAIN_JIFFIES);
 		spin_unlock_irqrestore(&krcp->lock, flags);
 	}
