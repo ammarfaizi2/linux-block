@@ -2777,10 +2777,8 @@ static inline void kfree_rcu_drain_unlock(struct kfree_rcu_cpu *krcp,
 	}
 
 	// Previous RCU batch still in progress, try again later.
-	if (!krcp->monitor_todo) {
-		krcp->monitor_todo = true;
-		schedule_delayed_work(&krcp->monitor_work, KFREE_DRAIN_JIFFIES);
-	}
+	krcp->monitor_todo = true;
+	schedule_delayed_work(&krcp->monitor_work, KFREE_DRAIN_JIFFIES);
 	spin_unlock_irqrestore(&krcp->lock, flags);
 }
 
