@@ -2712,7 +2712,7 @@ struct kfree_rcu_cpu {
 	struct rcu_head *head_free;
 	spinlock_t lock;
 	struct delayed_work monitor_work;
-	int monitor_todo;
+	bool monitor_todo;
 	bool initialized;
 };
 
