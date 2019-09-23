@@ -1649,8 +1649,9 @@ ath10k_wmi_tlv_op_gen_pdev_set_param(struct ath10k *ar, u32 param_id,
 static void
 ath10k_wmi_tlv_put_host_mem_chunks(struct ath10k *ar, void *host_mem_chunks)
 {
-	struct host_memory_chunk *chunk;
+	struct host_memory_chunk_tlv *chunk;
 	struct wmi_tlv *tlv;
+	dma_addr_t paddr;
 	int i;
 	__le16 tlv_len, tlv_tag;
 
@@ -1665,6 +1666,12 @@ ath10k_wmi_tlv_put_host_mem_chunks(struct ath10k *ar, void *host_mem_chunks)
 		chunk->ptr = __cpu_to_le32(ar->wmi.mem_chunks[i].paddr);
 		chunk->size = __cpu_to_le32(ar->wmi.mem_chunks[i].len);
 		chunk->req_id = __cpu_to_le32(ar->wmi.mem_chunks[i].req_id);
+
+		if (test_bit(WMI_SERVICE_SUPPORT_EXTEND_ADDRESS,
+			     ar->wmi.svc_map)) {
+			paddr = ar->wmi.mem_chunks[i].paddr;
+			chunk->ptr_high = __cpu_to_le32(upper_32_bits(paddr));
+		}
 
 		ath10k_dbg(ar, ATH10K_DBG_WMI,
 			   "wmi-tlv chunk %d len %d, addr 0x%llx, id 0x%x\n",
@@ -1689,7 +1696,7 @@ static struct sk_buff *ath10k_wmi_tlv_op_gen_init(struct ath10k *ar)
 	void *ptr;
 
 	chunks_len = ar->wmi.num_mem_chunks *
-		     (sizeof(struct host_memory_chunk) + sizeof(*tlv));
+		     (sizeof(struct host_memory_chunk_tlv) + sizeof(*tlv));
 	len = (sizeof(*tlv) + sizeof(*cmd)) +
 	      (sizeof(*tlv) + sizeof(*cfg)) +
 	      (sizeof(*tlv) + chunks_len);
@@ -4206,6 +4213,24 @@ static struct wmi_pdev_param_map wmi_tlv_pdev_param_map = {
 	.arp_dstaddr = WMI_PDEV_PARAM_UNSUPPORTED,
 };
 
+static struct wmi_peer_param_map wmi_tlv_peer_param_map = {
+	.smps_state = WMI_TLV_PEER_SMPS_STATE,
+	.ampdu = WMI_TLV_PEER_AMPDU,
+	.authorize = WMI_TLV_PEER_AUTHORIZE,
+	.chan_width = WMI_TLV_PEER_CHAN_WIDTH,
+	.nss = WMI_TLV_PEER_NSS,
+	.use_4addr = WMI_TLV_PEER_USE_4ADDR,
+	.membership = WMI_TLV_PEER_MEMBERSHIP,
+	.user_pos = WMI_TLV_PEER_USERPOS,
+	.crit_proto_hint_enabled = WMI_TLV_PEER_CRIT_PROTO_HINT_ENABLED,
+	.tx_fail_cnt_thr = WMI_TLV_PEER_TX_FAIL_CNT_THR,
+	.set_hw_retry_cts2s = WMI_TLV_PEER_SET_HW_RETRY_CTS2S,
+	.ibss_atim_win_len = WMI_TLV_PEER_IBSS_ATIM_WINDOW_LENGTH,
+	.phymode = WMI_TLV_PEER_PHYMODE,
+	.use_fixed_power = WMI_TLV_PEER_USE_FIXED_PWR,
+	.dummy_var = WMI_TLV_PEER_DUMMY_VAR,
+};
+
 static struct wmi_vdev_param_map wmi_tlv_vdev_param_map = {
 	.rts_threshold = WMI_TLV_VDEV_PARAM_RTS_THRESHOLD,
 	.fragmentation_threshold = WMI_TLV_VDEV_PARAM_FRAGMENTATION_THRESHOLD,
@@ -4394,6 +4419,7 @@ void ath10k_wmi_tlv_attach(struct ath10k *ar)
 	ar->wmi.cmd = &wmi_tlv_cmd_map;
 	ar->wmi.vdev_param = &wmi_tlv_vdev_param_map;
 	ar->wmi.pdev_param = &wmi_tlv_pdev_param_map;
+	ar->wmi.peer_param = &wmi_tlv_peer_param_map;
 	ar->wmi.ops = &wmi_tlv_ops;
 	ar->wmi.peer_flags = &wmi_tlv_peer_flags_map;
 }

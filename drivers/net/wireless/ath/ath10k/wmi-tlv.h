@@ -528,6 +528,24 @@ enum wmi_tlv_vdev_param {
 	WMI_TLV_VDEV_PARAM_IBSS_PS_1RX_CHAIN_IN_ATIM_WINDOW_ENABLE,
 };
 
+enum wmi_tlv_peer_param {
+	WMI_TLV_PEER_SMPS_STATE = 0x1, /* see %wmi_peer_smps_state */
+	WMI_TLV_PEER_AMPDU      = 0x2,
+	WMI_TLV_PEER_AUTHORIZE  = 0x3,
+	WMI_TLV_PEER_CHAN_WIDTH = 0x4,
+	WMI_TLV_PEER_NSS        = 0x5,
+	WMI_TLV_PEER_USE_4ADDR  = 0x6,
+	WMI_TLV_PEER_MEMBERSHIP = 0x7,
+	WMI_TLV_PEER_USERPOS = 0x8,
+	WMI_TLV_PEER_CRIT_PROTO_HINT_ENABLED = 0x9,
+	WMI_TLV_PEER_TX_FAIL_CNT_THR = 0xa,
+	WMI_TLV_PEER_SET_HW_RETRY_CTS2S = 0xb,
+	WMI_TLV_PEER_IBSS_ATIM_WINDOW_LENGTH = 0xc,
+	WMI_TLV_PEER_PHYMODE = 0xd,
+	WMI_TLV_PEER_USE_FIXED_PWR = 0xe,
+	WMI_TLV_PEER_DUMMY_VAR = 0xff,
+};
+
 enum wmi_tlv_peer_flags {
 	WMI_TLV_PEER_AUTH = 0x00000001,
 	WMI_TLV_PEER_QOS = 0x00000002,
@@ -1409,6 +1427,11 @@ enum wmi_tlv_service {
 	WMI_TLV_SERVICE_WLAN_HPCS_PULSE = 172,
 	WMI_TLV_SERVICE_PER_VDEV_CHAINMASK_CONFIG_SUPPORT = 173,
 	WMI_TLV_SERVICE_TX_DATA_MGMT_ACK_RSSI = 174,
+	WMI_TLV_SERVICE_NAN_DISABLE_SUPPORT = 175,
+	WMI_TLV_SERVICE_HTT_H2T_NO_HTC_HDR_LEN_IN_MSG_LEN = 176,
+	WMI_TLV_SERVICE_COEX_SUPPORT_UNEQUAL_ISOLATION = 177,
+	WMI_TLV_SERVICE_HW_DB2DBM_CONVERSION_SUPPORT = 178,
+	WMI_TLV_SERVICE_SUPPORT_EXTEND_ADDRESS = 179,
 
 	WMI_TLV_MAX_EXT_SERVICE = 256,
 };
@@ -1588,6 +1611,9 @@ wmi_tlv_svc_map_ext(const __le32 *in, unsigned long *out, size_t len)
 	       WMI_TLV_MAX_SERVICE);
 	SVCMAP(WMI_TLV_SERVICE_TX_DATA_MGMT_ACK_RSSI,
 	       WMI_SERVICE_TX_DATA_ACK_RSSI, WMI_TLV_MAX_SERVICE);
+	SVCMAP(WMI_TLV_SERVICE_SUPPORT_EXTEND_ADDRESS,
+	       WMI_SERVICE_SUPPORT_EXTEND_ADDRESS,
+	       WMI_TLV_MAX_SERVICE);
 }
 
 #undef SVCMAP
@@ -1741,6 +1767,21 @@ struct wmi_tlv_resource_config {
 	__le32 num_ocb_channels;
 	__le32 num_ocb_schedules;
 	__le32 host_capab;
+} __packed;
+
+/* structure describing host memory chunk. */
+struct host_memory_chunk_tlv {
+	/* id of the request that is passed up in service ready */
+	__le32 req_id;
+
+	/* the physical address the memory chunk */
+	__le32 ptr;
+
+	/* size of the chunk */
+	__le32 size;
+
+	/* the upper 32 bit address valid only for more than 32 bit target */
+	__le32 ptr_high;
 } __packed;
 
 struct wmi_tlv_init_cmd {
