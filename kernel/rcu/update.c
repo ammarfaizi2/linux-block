@@ -40,6 +40,7 @@
 #include <linux/rcupdate_wait.h>
 #include <linux/sched/isolation.h>
 #include <linux/kprobes.h>
+#include <linux/slab.h>
 
 #define CREATE_TRACE_POINTS
 
@@ -855,7 +856,7 @@ static void test_callback(struct rcu_head *r)
 DEFINE_STATIC_SRCU(early_srcu);
 
 struct early_boot_kfree_rcu {
-	struct rcu_head *rh;
+	struct rcu_head rh;
 };
 
 static void early_boot_test_call_rcu(void)
