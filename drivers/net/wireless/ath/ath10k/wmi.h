@@ -202,6 +202,7 @@ enum wmi_service {
 	WMI_SERVICE_REPORT_AIRTIME,
 	WMI_SERVICE_SYNC_DELETE_CMDS,
 	WMI_SERVICE_TX_PWR_PER_PEER,
+	WMI_SERVICE_SUPPORT_EXTEND_ADDRESS,
 
 	/* Remember to add the new value to wmi_service_name()! */
 
@@ -496,6 +497,7 @@ static inline char *wmi_service_name(enum wmi_service service_id)
 	SVCSTR(WMI_SERVICE_REPORT_AIRTIME);
 	SVCSTR(WMI_SERVICE_SYNC_DELETE_CMDS);
 	SVCSTR(WMI_SERVICE_TX_PWR_PER_PEER);
+	SVCSTR(WMI_SERVICE_SUPPORT_EXTEND_ADDRESS);
 
 	case WMI_SERVICE_MAX:
 		return NULL;
@@ -5070,6 +5072,25 @@ enum wmi_rate_preamble {
 
 /* Value to disable fixed rate setting */
 #define WMI_FIXED_RATE_NONE    (0xff)
+
+struct wmi_peer_param_map {
+	u32 smps_state;
+	u32 ampdu;
+	u32 authorize;
+	u32 chan_width;
+	u32 nss;
+	u32 use_4addr;
+	u32 membership;
+	u32 use_fixed_power;
+	u32 user_pos;
+	u32 crit_proto_hint_enabled;
+	u32 tx_fail_cnt_thr;
+	u32 set_hw_retry_cts2s;
+	u32 ibss_atim_win_len;
+	u32 debug;
+	u32 phymode;
+	u32 dummy_var;
+};
 
 struct wmi_vdev_param_map {
 	u32 rts_threshold;
