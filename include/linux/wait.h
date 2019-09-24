@@ -229,6 +229,8 @@ void __wake_up_sync(struct wait_queue_head *wq_head, unsigned int mode, int nr);
 	__wake_up(x, TASK_INTERRUPTIBLE, 1, poll_to_key(m))
 #define wake_up_interruptible_sync_poll(x, m)					\
 	__wake_up_sync_key((x), TASK_INTERRUPTIBLE, 1, poll_to_key(m))
+void prelocked_wake_up_interruptible_sync_poll(struct wait_queue_head *wq_head,
+					       __poll_t mask);
 
 #define ___wait_cond_timeout(condition)						\
 ({										\

@@ -126,6 +126,13 @@ static void __wake_up_common_lock(struct wait_queue_head *wq_head, unsigned int 
 	} while (bookmark.flags & WQ_FLAG_BOOKMARK);
 }
 
+void prelocked_wake_up_interruptible_sync_poll(struct wait_queue_head *wq_head,
+					       __poll_t mask)
+{
+	__wake_up_common(wq_head, TASK_INTERRUPTIBLE, 1, WF_SYNC,
+			 poll_to_key(mask), NULL);
+}
+
 /**
  * __wake_up - wake up threads blocked on a waitqueue.
  * @wq_head: the waitqueue
