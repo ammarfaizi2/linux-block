@@ -93,7 +93,7 @@ static int versatile_pci_probe(struct platform_device *pdev)
 	if (IS_ERR(versatile_cfg_base[1]))
 		return PTR_ERR(versatile_cfg_base[1]);
 
-	ret = pci_parse_request_of_pci_ranges(dev, &pci_res, NULL);
+	ret = pci_parse_request_of_pci_ranges(dev, &pci_res, NULL, NULL);
 	if (ret)
 		return ret;
 
