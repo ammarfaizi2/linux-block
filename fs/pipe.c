@@ -327,11 +327,13 @@ pipe_read(struct kiocb *iocb, struct iov_iter *to)
 				spin_lock_irq(&pipe->wait.lock);
 				tail++;
 				pipe_commit_read(pipe, tail);
-				do_wakeup = 0;
-				prelocked_wake_up_interruptible_sync_poll(
-					&pipe->wait, EPOLLOUT | EPOLLWRNORM);
+				do_wakeup = 1;
+				if (head - (tail - 1) == pipe->max_usage)
+					prelocked_wake_up_interruptible_sync_poll(
+						&pipe->wait, EPOLLOUT | EPOLLWRNORM);
 				spin_unlock_irq(&pipe->wait.lock);
-				kill_fasync(&pipe->fasync_writers, SIGIO, POLL_OUT);
+				if (head - (tail - 1) == pipe->max_usage)
+					kill_fasync(&pipe->fasync_writers, SIGIO, POLL_OUT);
 			}
 			total_len -= chars;
 			if (!total_len)
@@ -359,11 +361,6 @@ pipe_read(struct kiocb *iocb, struct iov_iter *to)
 			if (!ret)
 				ret = -ERESTARTSYS;
 			break;
-		}
-		if (do_wakeup) {
-			wake_up_interruptible_sync_poll(&pipe->wait, EPOLLOUT | EPOLLWRNORM);
- 			kill_fasync(&pipe->fasync_writers, SIGIO, POLL_OUT);
-			do_wakeup = 0;
 		}
 		pipe_wait(pipe);
 	}
