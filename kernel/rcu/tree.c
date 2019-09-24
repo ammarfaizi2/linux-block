@@ -2704,7 +2704,7 @@ EXPORT_SYMBOL_GPL(call_rcu);
  * struct kfree_rcu_cpu_work - single batch of kfree_rcu() requests
  * @rcu_work: Let queue_rcu_work() invoke workqueue handler after grace period
  * @head_free: List of kfree_rcu() objects waiting for a grace period
- * @kcrp: Pointer to @kfree_rcu_cpu structure
+ * @krcp: Pointer to @kfree_rcu_cpu structure
  */
 
 struct kfree_rcu_cpu_work {
