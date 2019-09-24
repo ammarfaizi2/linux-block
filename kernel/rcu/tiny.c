@@ -22,6 +22,7 @@
 #include <linux/time.h>
 #include <linux/cpu.h>
 #include <linux/prefetch.h>
+#include <linux/slab.h>
 
 #include "rcu.h"
 
@@ -72,8 +73,6 @@ void rcu_sched_clock_irq(int user)
 		set_preempt_need_resched();
 	}
 }
-
-void kfree(const void *);
 
 /*
  * Reclaim the specified callback, either by invoking it for non-kfree cases or
