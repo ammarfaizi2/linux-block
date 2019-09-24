@@ -2870,7 +2870,7 @@ void kfree_call_rcu(struct rcu_head *head, rcu_callback_t func)
 		// Probable double kfree_rcu(), just leak.
 		WARN_ONCE(1, "%s(): Double-freed call. rcu_head %p\n",
 			  __func__, head);
-		return;
+		goto unlock_return;
 	}
 	head->func = func;
 	head->next = krcp->head;
@@ -2883,6 +2883,7 @@ void kfree_call_rcu(struct rcu_head *head, rcu_callback_t func)
 		schedule_delayed_work(&krcp->monitor_work, KFREE_DRAIN_JIFFIES);
 	}
 
+unlock_return:
 	if (krcp->initialized)
 		spin_unlock(&krcp->lock);
 	local_irq_restore(flags);
