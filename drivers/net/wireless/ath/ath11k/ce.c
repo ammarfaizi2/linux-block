@@ -296,15 +296,14 @@ static void ath11k_ce_recv_process_cb(struct ath11k_ce_pipe *pipe)
 	}
 }
 
-static int ath11k_ce_completed_send_next(struct ath11k_ce_pipe *pipe,
-					 struct sk_buff **skb)
+static struct sk_buff *ath11k_ce_completed_send_next(struct ath11k_ce_pipe *pipe)
 {
 	struct ath11k_base *ab = pipe->ab;
 	struct hal_srng *srng;
 	unsigned int sw_index;
 	unsigned int nentries_mask;
+	struct sk_buff *skb;
 	u32 *desc;
-	int ret = 0;
 
 	spin_lock_bh(&ab->ce.ce_lock);
 
@@ -319,11 +318,11 @@ static int ath11k_ce_completed_send_next(struct ath11k_ce_pipe *pipe,
 
 	desc = ath11k_hal_srng_src_reap_next(ab, srng);
 	if (!desc) {
-		ret = -EIO;
+		skb = ERR_PTR(-EIO);
 		goto err_unlock;
 	}
 
-	*skb = pipe->src_ring->skb[sw_index];
+	skb = pipe->src_ring->skb[sw_index];
 
 	pipe->src_ring->skb[sw_index] = NULL;
 
@@ -335,7 +334,7 @@ err_unlock:
 
 	spin_unlock_bh(&ab->ce.ce_lock);
 
-	return ret;
+	return skb;
 }
 
 static void ath11k_ce_send_done_cb(struct ath11k_ce_pipe *pipe)
@@ -343,7 +342,7 @@ static void ath11k_ce_send_done_cb(struct ath11k_ce_pipe *pipe)
 	struct ath11k_base *ab = pipe->ab;
 	struct sk_buff *skb;
 
-	while (ath11k_ce_completed_send_next(pipe, &skb) == 0) {
+	while (!IS_ERR(skb = ath11k_ce_completed_send_next(pipe))) {
 		if (!skb)
 			continue;
 
