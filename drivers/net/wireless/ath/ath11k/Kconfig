@@ -1,20 +1,20 @@
 config ATH11K
-        tristate "Qualcomm Technologies 802.11ax chipset support"
-        depends on MAC80211 && HAS_DMA
+	tristate "Qualcomm Technologies 802.11ax chipset support"
+	depends on MAC80211 && HAS_DMA
 	depends on REMOTEPROC
 	depends on ARCH_QCOM || COMPILE_TEST
 	select ATH_COMMON
 	select QCOM_QMI_HELPERS
-        help
-          This module adds support for Qualcomm Technologies 802.11ax family of
+	---help---
+	  This module adds support for Qualcomm Technologies 802.11ax family of
 	  chipsets.
 
-          If you choose to build a module, it'll be called ath11k.
+	  If you choose to build a module, it'll be called ath11k.
 
 config ATH11K_DEBUG
 	bool "QCA ath11k debugging"
 	depends on ATH11K
-	help
+	---help---
 	  Enables debug support
 
 	  If unsure, say Y to make it easier to debug problems.
@@ -22,7 +22,7 @@ config ATH11K_DEBUG
 config ATH11K_DEBUGFS
 	bool "QCA ath11k debugfs support"
 	depends on ATH11K && DEBUG_FS
-	help
+	---help---
 	  Enable ath11k debugfs support
 
 	  If unsure, say Y to make it easier to debug problems.
