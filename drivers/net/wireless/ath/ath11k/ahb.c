@@ -434,16 +434,6 @@ enum ext_irq_num {
 	tcl2host_status_ring,
 };
 
-inline u32 ath11k_ahb_read32(struct ath11k_base *ab, u32 offset)
-{
-	return ioread32(ab->mem + offset);
-}
-
-inline void ath11k_ahb_write32(struct ath11k_base *ab, u32 offset, u32 value)
-{
-	iowrite32(value, ab->mem + offset);
-}
-
 static void ath11k_ahb_kill_tasklets(struct ath11k_base *ab)
 {
 	int i;

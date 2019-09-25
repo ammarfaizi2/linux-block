@@ -10,8 +10,16 @@
 #define ATH11K_AHB_RECOVERY_TIMEOUT (3 * HZ)
 struct ath11k_base;
 
-u32 ath11k_ahb_read32(struct ath11k_base *ab, u32 address);
-void ath11k_ahb_write32(struct ath11k_base *ab, u32 address, u32 data);
+static inline u32 ath11k_ahb_read32(struct ath11k_base *ab, u32 offset)
+{
+	return ioread32(ab->mem + offset);
+}
+
+static inline void ath11k_ahb_write32(struct ath11k_base *ab, u32 offset, u32 value)
+{
+	iowrite32(value, ab->mem + offset);
+}
+
 void ath11k_ahb_ext_irq_enable(struct ath11k_base *ab);
 void ath11k_ahb_ext_irq_disable(struct ath11k_base *ab);
 int ath11k_ahb_start(struct ath11k_base *ab);
