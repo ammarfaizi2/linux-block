@@ -131,13 +131,13 @@ static int ath11k_ce_rx_buf_enqueue_pipe(struct ath11k_ce_pipe *pipe,
 
 	if (unlikely(ath11k_hal_srng_src_num_free(ab, srng, false) < 1)) {
 		ret = -ENOSPC;
-		goto err;
+		goto exit;
 	}
 
 	desc = ath11k_hal_srng_src_get_next_entry(ab, srng);
 	if (!desc) {
 		ret = -ENOSPC;
-		goto err;
+		goto exit;
 	}
 
 	ath11k_hal_ce_dst_set_desc(desc, paddr);
@@ -146,15 +146,10 @@ static int ath11k_ce_rx_buf_enqueue_pipe(struct ath11k_ce_pipe *pipe,
 	write_index = CE_RING_IDX_INCR(nentries_mask, write_index);
 	ring->write_index = write_index;
 
-	ath11k_hal_srng_access_end(ab, srng);
-
-	spin_unlock_bh(&srng->lock);
-
 	pipe->rx_buf_needed--;
 
-	return 0;
-
-err:
+	ret = 0;
+exit:
 	ath11k_hal_srng_access_end(ab, srng);
 
 	spin_unlock_bh(&srng->lock);
