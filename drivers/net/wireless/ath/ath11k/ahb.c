@@ -392,7 +392,7 @@ const u8 ath11k_host2rxdma_ring_mask[ATH11K_EXT_IRQ_GRP_NUM_MAX] = {
 	ATH11K_HOST2RXDMA_RING_MASK_2,
 };
 
-/* enum ext_irq_num - irq nubers that can be used by external modules
+/* enum ext_irq_num - irq numbers that can be used by external modules
  * like datapath
  */
 enum ext_irq_num {
@@ -584,8 +584,6 @@ int ath11k_ahb_start(struct ath11k_base *ab)
 	ath11k_ahb_ce_irqs_enable(ab);
 	ath11k_ce_rx_post_buf(ab);
 
-	/* Bring up other components as appropriate */
-
 	return 0;
 }
 
@@ -615,7 +613,6 @@ void ath11k_ahb_stop(struct ath11k_base *ab)
 	ath11k_ahb_kill_tasklets(ab);
 	del_timer_sync(&ab->rx_replenish_retry);
 	ath11k_ce_cleanup_pipes(ab);
-	/* Shutdown other components as appropriate */
 }
 
 int ath11k_ahb_power_up(struct ath11k_base *ab)
