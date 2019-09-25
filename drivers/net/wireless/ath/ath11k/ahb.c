@@ -482,49 +482,49 @@ static void ath11k_ahb_ext_grp_enable(struct ath11k_ext_irq_grp *irq_grp)
 		enable_irq(irq_grp->ab->irq_num[irq_grp->irqs[i]]);
 }
 
+static void ath11k_ahb_setbit32(struct ath11k_base *ab, u8 bit, u32 offset)
+{
+	u32 val;
+
+	val = ath11k_ahb_read32(ab, offset);
+	ath11k_ahb_write32(ab, offset, val | BIT(bit));
+}
+
+static void ath11k_ahb_clearbit32(struct ath11k_base *ab, u8 bit, u32 offset)
+{
+	u32 val;
+
+	val = ath11k_ahb_read32(ab, offset);
+	ath11k_ahb_write32(ab, offset, val & ~BIT(bit));
+}
+
 static void ath11k_ahb_ce_irq_enable(struct ath11k_base *ab, u16 ce_id)
 {
 	const struct ce_pipe_config *ce_config;
-	u32 val;
 
 	ce_config = &target_ce_config_wlan[ce_id];
-	if (__le32_to_cpu(ce_config->pipedir) & PIPEDIR_OUT) {
-		val = ath11k_ahb_read32(ab, CE_HOST_IE_ADDRESS);
-		val |= BIT(ce_id);
-		ath11k_ahb_write32(ab, CE_HOST_IE_ADDRESS, val);
-	}
+	if (__le32_to_cpu(ce_config->pipedir) & PIPEDIR_OUT)
+		ath11k_ahb_setbit32(ab, ce_id, CE_HOST_IE_ADDRESS);
 
 	if (__le32_to_cpu(ce_config->pipedir) & PIPEDIR_IN) {
-		val = ath11k_ahb_read32(ab, CE_HOST_IE_2_ADDRESS);
-		val |= BIT(ce_id);
-		ath11k_ahb_write32(ab, CE_HOST_IE_2_ADDRESS, val);
-
-		val = ath11k_ahb_read32(ab, CE_HOST_IE_3_ADDRESS);
-		val |= BIT(ce_id + CE_HOST_IE_3_SHIFT);
-		ath11k_ahb_write32(ab, CE_HOST_IE_3_ADDRESS, val);
+		ath11k_ahb_setbit32(ab, ce_id, CE_HOST_IE_2_ADDRESS);
+		ath11k_ahb_setbit32(ab, ce_id + CE_HOST_IE_3_SHIFT,
+				    CE_HOST_IE_3_ADDRESS);
 	}
 }
 
 static void ath11k_ahb_ce_irq_disable(struct ath11k_base *ab, u16 ce_id)
 {
 	const struct ce_pipe_config *ce_config;
-	u32 val;
 
 	ce_config = &target_ce_config_wlan[ce_id];
-	if (__le32_to_cpu(ce_config->pipedir) & PIPEDIR_OUT) {
-		val = ath11k_ahb_read32(ab, CE_HOST_IE_ADDRESS);
-		val &= ~BIT(ce_id);
-		ath11k_ahb_write32(ab, CE_HOST_IE_ADDRESS, val);
-	}
+	if (__le32_to_cpu(ce_config->pipedir) & PIPEDIR_OUT)
+		ath11k_ahb_clearbit32(ab, ce_id, CE_HOST_IE_ADDRESS);
 
 	if (__le32_to_cpu(ce_config->pipedir) & PIPEDIR_IN) {
-		val = ath11k_ahb_read32(ab, CE_HOST_IE_2_ADDRESS);
-		val &= ~BIT(ce_id);
-		ath11k_ahb_write32(ab, CE_HOST_IE_2_ADDRESS, val);
-
-		val = ath11k_ahb_read32(ab, CE_HOST_IE_3_ADDRESS);
-		val &= ~BIT(ce_id + CE_HOST_IE_3_SHIFT);
-		ath11k_ahb_write32(ab, CE_HOST_IE_3_ADDRESS, val);
+		ath11k_ahb_clearbit32(ab, ce_id, CE_HOST_IE_2_ADDRESS);
+		ath11k_ahb_clearbit32(ab, ce_id + CE_HOST_IE_3_SHIFT,
+				      CE_HOST_IE_3_ADDRESS);
 	}
 }
 
