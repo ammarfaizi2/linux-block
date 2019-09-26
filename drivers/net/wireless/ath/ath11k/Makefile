@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: ISC
+# SPDX-License-Identifier: BSD-3-Clause-Clear
 obj-$(CONFIG_ATH11K) += ath11k.o
 ath11k-y += core.o \
 	    hal.o \
