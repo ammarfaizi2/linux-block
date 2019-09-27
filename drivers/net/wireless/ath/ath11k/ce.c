@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: ISC
+// SPDX-License-Identifier: BSD-3-Clause-Clear
 /*
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  */
@@ -131,13 +131,13 @@ static int ath11k_ce_rx_buf_enqueue_pipe(struct ath11k_ce_pipe *pipe,
 
 	if (unlikely(ath11k_hal_srng_src_num_free(ab, srng, false) < 1)) {
 		ret = -ENOSPC;
-		goto err;
+		goto exit;
 	}
 
 	desc = ath11k_hal_srng_src_get_next_entry(ab, srng);
 	if (!desc) {
 		ret = -ENOSPC;
-		goto err;
+		goto exit;
 	}
 
 	ath11k_hal_ce_dst_set_desc(desc, paddr);
@@ -146,15 +146,10 @@ static int ath11k_ce_rx_buf_enqueue_pipe(struct ath11k_ce_pipe *pipe,
 	write_index = CE_RING_IDX_INCR(nentries_mask, write_index);
 	ring->write_index = write_index;
 
-	ath11k_hal_srng_access_end(ab, srng);
-
-	spin_unlock_bh(&srng->lock);
-
 	pipe->rx_buf_needed--;
 
-	return 0;
-
-err:
+	ret = 0;
+exit:
 	ath11k_hal_srng_access_end(ab, srng);
 
 	spin_unlock_bh(&srng->lock);
@@ -301,15 +296,14 @@ static void ath11k_ce_recv_process_cb(struct ath11k_ce_pipe *pipe)
 	}
 }
 
-static int ath11k_ce_completed_send_next(struct ath11k_ce_pipe *pipe,
-					 struct sk_buff **skb)
+static struct sk_buff *ath11k_ce_completed_send_next(struct ath11k_ce_pipe *pipe)
 {
 	struct ath11k_base *ab = pipe->ab;
 	struct hal_srng *srng;
 	unsigned int sw_index;
 	unsigned int nentries_mask;
+	struct sk_buff *skb;
 	u32 *desc;
-	int ret = 0;
 
 	spin_lock_bh(&ab->ce.ce_lock);
 
@@ -324,11 +318,11 @@ static int ath11k_ce_completed_send_next(struct ath11k_ce_pipe *pipe,
 
 	desc = ath11k_hal_srng_src_reap_next(ab, srng);
 	if (!desc) {
-		ret = -EIO;
+		skb = ERR_PTR(-EIO);
 		goto err_unlock;
 	}
 
-	*skb = pipe->src_ring->skb[sw_index];
+	skb = pipe->src_ring->skb[sw_index];
 
 	pipe->src_ring->skb[sw_index] = NULL;
 
@@ -340,7 +334,7 @@ err_unlock:
 
 	spin_unlock_bh(&ab->ce.ce_lock);
 
-	return ret;
+	return skb;
 }
 
 static void ath11k_ce_send_done_cb(struct ath11k_ce_pipe *pipe)
@@ -348,7 +342,7 @@ static void ath11k_ce_send_done_cb(struct ath11k_ce_pipe *pipe)
 	struct ath11k_base *ab = pipe->ab;
 	struct sk_buff *skb;
 
-	while (ath11k_ce_completed_send_next(pipe, &skb) == 0) {
+	while (!IS_ERR(skb = ath11k_ce_completed_send_next(pipe))) {
 		if (!skb)
 			continue;
 
@@ -412,8 +406,7 @@ ath11k_ce_alloc_ring(struct ath11k_base *ab, int nentries, int desc_sz)
 	struct ath11k_ce_ring *ce_ring;
 	dma_addr_t base_addr;
 
-	ce_ring = kzalloc(sizeof(*ce_ring) + (nentries * sizeof(*ce_ring->skb)),
-			  GFP_KERNEL);
+	ce_ring = kzalloc(struct_size(ce_ring, skb, nentries), GFP_KERNEL);
 	if (ce_ring == NULL)
 		return ERR_PTR(-ENOMEM);
 

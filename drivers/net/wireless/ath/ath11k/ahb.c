@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: ISC
+// SPDX-License-Identifier: BSD-3-Clause-Clear
 /*
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  */
@@ -153,118 +153,114 @@ static const struct ce_pipe_config target_ce_config_wlan[] = {
  */
 static const struct service_to_pipe target_service_to_ce_map_wlan[] = {
 	{
-		__cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_DATA_VO),
-		__cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
-		__cpu_to_le32(3),
+		.service_id = __cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_DATA_VO),
+		.pipedir = __cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
+		.pipenum = __cpu_to_le32(3),
 	},
 	{
-		__cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_DATA_VO),
-		__cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
-		__cpu_to_le32(2),
+		.service_id = __cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_DATA_VO),
+		.pipedir = __cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
+		.pipenum = __cpu_to_le32(2),
 	},
 	{
-		__cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_DATA_BK),
-		__cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
-		__cpu_to_le32(3),
+		.service_id = __cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_DATA_BK),
+		.pipedir = __cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
+		.pipenum = __cpu_to_le32(3),
 	},
 	{
-		__cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_DATA_BK),
-		__cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
-		__cpu_to_le32(2),
+		.service_id = __cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_DATA_BK),
+		.pipedir = __cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
+		.pipenum = __cpu_to_le32(2),
 	},
 	{
-		__cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_DATA_BE),
-		__cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
-		__cpu_to_le32(3),
+		.service_id = __cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_DATA_BE),
+		.pipedir = __cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
+		.pipenum = __cpu_to_le32(3),
 	},
 	{
-		__cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_DATA_BE),
-		__cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
-		__cpu_to_le32(2),
+		.service_id = __cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_DATA_BE),
+		.pipedir = __cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
+		.pipenum = __cpu_to_le32(2),
 	},
 	{
-		__cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_DATA_VI),
-		__cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
-		__cpu_to_le32(3),
+		.service_id = __cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_DATA_VI),
+		.pipedir = __cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
+		.pipenum = __cpu_to_le32(3),
 	},
 	{
-		__cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_DATA_VI),
-		__cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
-		__cpu_to_le32(2),
+		.service_id = __cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_DATA_VI),
+		.pipedir = __cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
+		.pipenum = __cpu_to_le32(2),
 	},
 	{
-		__cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_CONTROL),
-		__cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
-		__cpu_to_le32(3),
+		.service_id = __cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_CONTROL),
+		.pipedir = __cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
+		.pipenum = __cpu_to_le32(3),
 	},
 	{
-		__cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_CONTROL),
-		__cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
-		__cpu_to_le32(2),
+		.service_id = __cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_CONTROL),
+		.pipedir = __cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
+		.pipenum = __cpu_to_le32(2),
 	},
 	{
-		__cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_CONTROL_MAC1),
-		__cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
-		__cpu_to_le32(7),
+		.service_id = __cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_CONTROL_MAC1),
+		.pipedir = __cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
+		.pipenum = __cpu_to_le32(7),
 	},
 	{
-		__cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_CONTROL_MAC1),
-		__cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
-		__cpu_to_le32(2),
+		.service_id = __cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_CONTROL_MAC1),
+		.pipedir = __cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
+		.pipenum = __cpu_to_le32(2),
 	},
 	{
-		__cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_CONTROL_MAC2),
-		__cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
-		__cpu_to_le32(9),
+		.service_id = __cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_CONTROL_MAC2),
+		.pipedir = __cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
+		.pipenum = __cpu_to_le32(9),
 	},
 	{
-		__cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_CONTROL_MAC2),
-		__cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
-		__cpu_to_le32(2),
+		.service_id = __cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_CONTROL_MAC2),
+		.pipedir = __cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
+		.pipenum = __cpu_to_le32(2),
 	},
 	{
-		__cpu_to_le32(ATH11K_HTC_SVC_ID_RSVD_CTRL),
-		__cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
-		__cpu_to_le32(0),
+		.service_id = __cpu_to_le32(ATH11K_HTC_SVC_ID_RSVD_CTRL),
+		.pipedir = __cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
+		.pipenum = __cpu_to_le32(0),
 	},
 	{
-		__cpu_to_le32(ATH11K_HTC_SVC_ID_RSVD_CTRL),
-		__cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
-		__cpu_to_le32(1),
+		.service_id = __cpu_to_le32(ATH11K_HTC_SVC_ID_RSVD_CTRL),
+		.pipedir = __cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
+		.pipenum = __cpu_to_le32(1),
 	},
 	{ /* not used */
-		__cpu_to_le32(ATH11K_HTC_SVC_ID_TEST_RAW_STREAMS),
-		__cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
-		__cpu_to_le32(0),
+		.service_id = __cpu_to_le32(ATH11K_HTC_SVC_ID_TEST_RAW_STREAMS),
+		.pipedir = __cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
+		.pipenum = __cpu_to_le32(0),
 	},
 	{ /* not used */
-		__cpu_to_le32(ATH11K_HTC_SVC_ID_TEST_RAW_STREAMS),
-		__cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
-		__cpu_to_le32(1),
+		.service_id = __cpu_to_le32(ATH11K_HTC_SVC_ID_TEST_RAW_STREAMS),
+		.pipedir = __cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
+		.pipenum = __cpu_to_le32(1),
 	},
 	{
-		__cpu_to_le32(ATH11K_HTC_SVC_ID_HTT_DATA_MSG),
-		__cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
-		__cpu_to_le32(4),
+		.service_id = __cpu_to_le32(ATH11K_HTC_SVC_ID_HTT_DATA_MSG),
+		.pipedir = __cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
+		.pipenum = __cpu_to_le32(4),
 	},
 	{
-		__cpu_to_le32(ATH11K_HTC_SVC_ID_HTT_DATA_MSG),
-		__cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
-		__cpu_to_le32(1),
+		.service_id = __cpu_to_le32(ATH11K_HTC_SVC_ID_HTT_DATA_MSG),
+		.pipedir = __cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
+		.pipenum = __cpu_to_le32(1),
 	},
 	{
-		__cpu_to_le32(ATH11K_HTC_SVC_ID_PKT_LOG),
-		__cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
-		__cpu_to_le32(5),
+		.service_id = __cpu_to_le32(ATH11K_HTC_SVC_ID_PKT_LOG),
+		.pipedir = __cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
+		.pipenum = __cpu_to_le32(5),
 	},
 
 	/* (Additions here) */
 
-	{ /* must be last */
-		__cpu_to_le32(0),
-		__cpu_to_le32(0),
-		__cpu_to_le32(0),
-	},
+	{ /* terminator entry */ }
 };
 
 #define ATH11K_IRQ_CE0_OFFSET 4
@@ -327,7 +323,6 @@ static const char *irq_name[ATH11K_IRQ_NUM_MAX] = {
 #define ATH11K_TX_RING_MASK_0 0x1
 #define ATH11K_TX_RING_MASK_1 0x2
 #define ATH11K_TX_RING_MASK_2 0x4
-#define ATH11K_TX_RING_MASK_3 0x0
 
 #define ATH11K_RX_RING_MASK_0 0x1
 #define ATH11K_RX_RING_MASK_1 0x2
@@ -335,40 +330,27 @@ static const char *irq_name[ATH11K_IRQ_NUM_MAX] = {
 #define ATH11K_RX_RING_MASK_3 0x8
 
 #define ATH11K_RX_ERR_RING_MASK_0 0x1
-#define ATH11K_RX_ERR_RING_MASK_1 0x0
-#define ATH11K_RX_ERR_RING_MASK_2 0x0
-#define ATH11K_RX_ERR_RING_MASK_3 0x0
 
 #define ATH11K_RX_WBM_REL_RING_MASK_0 0x1
-#define ATH11K_RX_WBM_REL_RING_MASK_1 0x0
-#define ATH11K_RX_WBM_REL_RING_MASK_2 0x0
-#define ATH11K_RX_WBM_REL_RING_MASK_3 0x0
 
 #define ATH11K_REO_STATUS_RING_MASK_0 0x1
-#define ATH11K_REO_STATUS_RING_MASK_1 0x0
-#define ATH11K_REO_STATUS_RING_MASK_2 0x0
-#define ATH11K_REO_STATUS_RING_MASK_3 0x0
 
 #define ATH11K_RXDMA2HOST_RING_MASK_0 0x1
 #define ATH11K_RXDMA2HOST_RING_MASK_1 0x2
 #define ATH11K_RXDMA2HOST_RING_MASK_2 0x4
-#define ATH11K_RXDMA2HOST_RING_MASK_3 0x0
 
 #define ATH11K_HOST2RXDMA_RING_MASK_0 0x1
 #define ATH11K_HOST2RXDMA_RING_MASK_1 0x2
 #define ATH11K_HOST2RXDMA_RING_MASK_2 0x4
-#define ATH11K_HOST2RXDMA_RING_MASK_3 0x0
 
 #define ATH11K_RX_MON_STATUS_RING_MASK_0 0x1
 #define ATH11K_RX_MON_STATUS_RING_MASK_1 0x2
 #define ATH11K_RX_MON_STATUS_RING_MASK_2 0x4
-#define ATH11K_RX_MON_STATUS_RING_MASK_3 0x0
 
 const u8 ath11k_tx_ring_mask[ATH11K_EXT_IRQ_GRP_NUM_MAX] = {
 	ATH11K_TX_RING_MASK_0,
 	ATH11K_TX_RING_MASK_1,
 	ATH11K_TX_RING_MASK_2,
-	ATH11K_TX_RING_MASK_3,
 };
 
 const u8 rx_mon_status_ring_mask[ATH11K_EXT_IRQ_GRP_NUM_MAX] = {
@@ -388,40 +370,29 @@ const u8 ath11k_rx_ring_mask[ATH11K_EXT_IRQ_GRP_NUM_MAX] = {
 
 const u8 ath11k_rx_err_ring_mask[ATH11K_EXT_IRQ_GRP_NUM_MAX] = {
 	ATH11K_RX_ERR_RING_MASK_0,
-	ATH11K_RX_ERR_RING_MASK_1,
-	ATH11K_RX_ERR_RING_MASK_2,
-	ATH11K_RX_ERR_RING_MASK_3,
 };
 
 const u8 ath11k_rx_wbm_rel_ring_mask[ATH11K_EXT_IRQ_GRP_NUM_MAX] = {
 	ATH11K_RX_WBM_REL_RING_MASK_0,
-	ATH11K_RX_WBM_REL_RING_MASK_1,
-	ATH11K_RX_WBM_REL_RING_MASK_2,
-	ATH11K_RX_WBM_REL_RING_MASK_3,
 };
 
 const u8 ath11k_reo_status_ring_mask[ATH11K_EXT_IRQ_GRP_NUM_MAX] = {
 	ATH11K_REO_STATUS_RING_MASK_0,
-	ATH11K_REO_STATUS_RING_MASK_1,
-	ATH11K_REO_STATUS_RING_MASK_2,
-	ATH11K_REO_STATUS_RING_MASK_3,
 };
 
 const u8 ath11k_rxdma2host_ring_mask[ATH11K_EXT_IRQ_GRP_NUM_MAX] = {
 	ATH11K_RXDMA2HOST_RING_MASK_0,
 	ATH11K_RXDMA2HOST_RING_MASK_1,
 	ATH11K_RXDMA2HOST_RING_MASK_2,
-	ATH11K_RXDMA2HOST_RING_MASK_3,
 };
 
 const u8 ath11k_host2rxdma_ring_mask[ATH11K_EXT_IRQ_GRP_NUM_MAX] = {
 	ATH11K_HOST2RXDMA_RING_MASK_0,
 	ATH11K_HOST2RXDMA_RING_MASK_1,
 	ATH11K_HOST2RXDMA_RING_MASK_2,
-	ATH11K_HOST2RXDMA_RING_MASK_3,
 };
 
-/* enum ext_irq_num - irq nubers that can be used by external modules
+/* enum ext_irq_num - irq numbers that can be used by external modules
  * like datapath
  */
 enum ext_irq_num {
@@ -462,16 +433,6 @@ enum ext_irq_num {
 	wbm2host_tx_completions_ring1,
 	tcl2host_status_ring,
 };
-
-inline u32 ath11k_ahb_read32(struct ath11k_base *ab, u32 offset)
-{
-	return ioread32(ab->mem + offset);
-}
-
-inline void ath11k_ahb_write32(struct ath11k_base *ab, u32 offset, u32 value)
-{
-	iowrite32(value, ab->mem + offset);
-}
 
 static void ath11k_ahb_kill_tasklets(struct ath11k_base *ab)
 {
@@ -521,49 +482,49 @@ static void ath11k_ahb_ext_grp_enable(struct ath11k_ext_irq_grp *irq_grp)
 		enable_irq(irq_grp->ab->irq_num[irq_grp->irqs[i]]);
 }
 
+static void ath11k_ahb_setbit32(struct ath11k_base *ab, u8 bit, u32 offset)
+{
+	u32 val;
+
+	val = ath11k_ahb_read32(ab, offset);
+	ath11k_ahb_write32(ab, offset, val | BIT(bit));
+}
+
+static void ath11k_ahb_clearbit32(struct ath11k_base *ab, u8 bit, u32 offset)
+{
+	u32 val;
+
+	val = ath11k_ahb_read32(ab, offset);
+	ath11k_ahb_write32(ab, offset, val & ~BIT(bit));
+}
+
 static void ath11k_ahb_ce_irq_enable(struct ath11k_base *ab, u16 ce_id)
 {
 	const struct ce_pipe_config *ce_config;
-	u32 val;
 
 	ce_config = &target_ce_config_wlan[ce_id];
-	if (__le32_to_cpu(ce_config->pipedir) & PIPEDIR_OUT) {
-		val = ath11k_ahb_read32(ab, CE_HOST_IE_ADDRESS);
-		val |= BIT(ce_id);
-		ath11k_ahb_write32(ab, CE_HOST_IE_ADDRESS, val);
-	}
+	if (__le32_to_cpu(ce_config->pipedir) & PIPEDIR_OUT)
+		ath11k_ahb_setbit32(ab, ce_id, CE_HOST_IE_ADDRESS);
 
 	if (__le32_to_cpu(ce_config->pipedir) & PIPEDIR_IN) {
-		val = ath11k_ahb_read32(ab, CE_HOST_IE_2_ADDRESS);
-		val |= BIT(ce_id);
-		ath11k_ahb_write32(ab, CE_HOST_IE_2_ADDRESS, val);
-
-		val = ath11k_ahb_read32(ab, CE_HOST_IE_3_ADDRESS);
-		val |= BIT(ce_id + CE_HOST_IE_3_SHIFT);
-		ath11k_ahb_write32(ab, CE_HOST_IE_3_ADDRESS, val);
+		ath11k_ahb_setbit32(ab, ce_id, CE_HOST_IE_2_ADDRESS);
+		ath11k_ahb_setbit32(ab, ce_id + CE_HOST_IE_3_SHIFT,
+				    CE_HOST_IE_3_ADDRESS);
 	}
 }
 
 static void ath11k_ahb_ce_irq_disable(struct ath11k_base *ab, u16 ce_id)
 {
 	const struct ce_pipe_config *ce_config;
-	u32 val;
 
 	ce_config = &target_ce_config_wlan[ce_id];
-	if (__le32_to_cpu(ce_config->pipedir) & PIPEDIR_OUT) {
-		val = ath11k_ahb_read32(ab, CE_HOST_IE_ADDRESS);
-		val &= ~BIT(ce_id);
-		ath11k_ahb_write32(ab, CE_HOST_IE_ADDRESS, val);
-	}
+	if (__le32_to_cpu(ce_config->pipedir) & PIPEDIR_OUT)
+		ath11k_ahb_clearbit32(ab, ce_id, CE_HOST_IE_ADDRESS);
 
 	if (__le32_to_cpu(ce_config->pipedir) & PIPEDIR_IN) {
-		val = ath11k_ahb_read32(ab, CE_HOST_IE_2_ADDRESS);
-		val &= ~BIT(ce_id);
-		ath11k_ahb_write32(ab, CE_HOST_IE_2_ADDRESS, val);
-
-		val = ath11k_ahb_read32(ab, CE_HOST_IE_3_ADDRESS);
-		val &= ~BIT(ce_id + CE_HOST_IE_3_SHIFT);
-		ath11k_ahb_write32(ab, CE_HOST_IE_3_ADDRESS, val);
+		ath11k_ahb_clearbit32(ab, ce_id, CE_HOST_IE_2_ADDRESS);
+		ath11k_ahb_clearbit32(ab, ce_id + CE_HOST_IE_3_SHIFT,
+				      CE_HOST_IE_3_ADDRESS);
 	}
 }
 
@@ -623,8 +584,6 @@ int ath11k_ahb_start(struct ath11k_base *ab)
 	ath11k_ahb_ce_irqs_enable(ab);
 	ath11k_ce_rx_post_buf(ab);
 
-	/* Bring up other components as appropriate */
-
 	return 0;
 }
 
@@ -654,7 +613,6 @@ void ath11k_ahb_stop(struct ath11k_base *ab)
 	ath11k_ahb_kill_tasklets(ab);
 	del_timer_sync(&ab->rx_replenish_retry);
 	ath11k_ce_cleanup_pipes(ab);
-	/* Shutdown other components as appropriate */
 }
 
 int ath11k_ahb_power_up(struct ath11k_base *ab)
