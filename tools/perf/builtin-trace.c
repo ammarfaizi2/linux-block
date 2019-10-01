@@ -702,7 +702,7 @@ struct syscall_arg_fmt {
 	bool	   show_zero;
 };
 
-static struct syscall_fmt {
+struct event_fmt {
 	const char *name;
 	const char *alias;
 	struct {
@@ -714,7 +714,9 @@ static struct syscall_fmt {
 	bool	   errpid;
 	bool	   timeout;
 	bool	   hexret;
-} syscall_fmts[] = {
+};
+
+static struct event_fmt syscall_fmts[] = {
 	{ .name	    = "access",
 	  .arg = { [1] = { .scnprintf = SCA_ACCMODE,  /* mode */ }, }, },
 	{ .name	    = "arch_prctl",
@@ -958,19 +960,19 @@ static struct syscall_fmt {
 	  .arg = { [3] = { .scnprintf = SCA_WAITID_OPTIONS, /* options */ }, }, },
 };
 
-static int syscall_fmt__cmp(const void *name, const void *fmtp)
+static int event_fmt__cmp(const void *name, const void *fmtp)
 {
-	const struct syscall_fmt *fmt = fmtp;
+	const struct event_fmt *fmt = fmtp;
 	return strcmp(name, fmt->name);
 }
 
-static struct syscall_fmt *syscall_fmt__find(const char *name)
+static struct event_fmt *syscall_fmt__find(const char *name)
 {
 	const int nmemb = ARRAY_SIZE(syscall_fmts);
-	return bsearch(name, syscall_fmts, nmemb, sizeof(struct syscall_fmt), syscall_fmt__cmp);
+	return bsearch(name, syscall_fmts, nmemb, sizeof(struct event_fmt), event_fmt__cmp);
 }
 
-static struct syscall_fmt *syscall_fmt__find_by_alias(const char *alias)
+static struct event_fmt *syscall_fmt__find_by_alias(const char *alias)
 {
 	int i, nmemb = ARRAY_SIZE(syscall_fmts);
 
@@ -1001,7 +1003,7 @@ struct syscall {
 	bool		    nonexistent;
 	struct tep_format_field *args;
 	const char	    *name;
-	struct syscall_fmt  *fmt;
+	struct event_fmt    *fmt;
 	struct syscall_arg_fmt *arg_fmt;
 };
 
@@ -3915,7 +3917,7 @@ static int trace__parse_events_option(const struct option *opt, const char *str,
 	int len = strlen(str) + 1, err = -1, list, idx;
 	char *strace_groups_dir = system_path(STRACE_GROUPS_DIR);
 	char group_name[PATH_MAX];
-	struct syscall_fmt *fmt;
+	struct event_fmt *fmt;
 
 	if (strace_groups_dir == NULL)
 		return -1;
