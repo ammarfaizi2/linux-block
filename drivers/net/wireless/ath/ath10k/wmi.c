@@ -5357,11 +5357,14 @@ ath10k_wmi_main_op_pull_svc_rdy_ev(struct ath10k *ar, struct sk_buff *skb,
 	arg->max_tx_power = ev->hw_max_tx_power;
 	arg->ht_cap = ev->ht_cap_info;
 	arg->vht_cap = ev->vht_cap_info;
+	arg->vht_supp_mcs = ev->vht_supp_mcs;
 	arg->sw_ver0 = ev->sw_version;
 	arg->sw_ver1 = ev->sw_version_1;
 	arg->phy_capab = ev->phy_capability;
 	arg->num_rf_chains = ev->num_rf_chains;
 	arg->eeprom_rd = ev->hal_reg_capabilities.eeprom_rd;
+	arg->low_2ghz_chan = ev->hal_reg_capabilities.low_2ghz_chan;
+	arg->high_2ghz_chan = ev->hal_reg_capabilities.high_2ghz_chan;
 	arg->low_5ghz_chan = ev->hal_reg_capabilities.low_5ghz_chan;
 	arg->high_5ghz_chan = ev->hal_reg_capabilities.high_5ghz_chan;
 	arg->num_mem_reqs = ev->num_mem_reqs;
@@ -5396,10 +5399,13 @@ ath10k_wmi_10x_op_pull_svc_rdy_ev(struct ath10k *ar, struct sk_buff *skb,
 	arg->max_tx_power = ev->hw_max_tx_power;
 	arg->ht_cap = ev->ht_cap_info;
 	arg->vht_cap = ev->vht_cap_info;
+	arg->vht_supp_mcs = ev->vht_supp_mcs;
 	arg->sw_ver0 = ev->sw_version;
 	arg->phy_capab = ev->phy_capability;
 	arg->num_rf_chains = ev->num_rf_chains;
 	arg->eeprom_rd = ev->hal_reg_capabilities.eeprom_rd;
+	arg->low_2ghz_chan = ev->hal_reg_capabilities.low_2ghz_chan;
+	arg->high_2ghz_chan = ev->hal_reg_capabilities.high_2ghz_chan;
 	arg->low_5ghz_chan = ev->hal_reg_capabilities.low_5ghz_chan;
 	arg->high_5ghz_chan = ev->hal_reg_capabilities.high_5ghz_chan;
 	arg->num_mem_reqs = ev->num_mem_reqs;
@@ -5445,6 +5451,7 @@ static void ath10k_wmi_event_service_ready_work(struct work_struct *work)
 	ar->hw_max_tx_power = __le32_to_cpu(arg.max_tx_power);
 	ar->ht_cap_info = __le32_to_cpu(arg.ht_cap);
 	ar->vht_cap_info = __le32_to_cpu(arg.vht_cap);
+	ar->vht_supp_mcs = __le32_to_cpu(arg.vht_supp_mcs);
 	ar->fw_version_major =
 		(__le32_to_cpu(arg.sw_ver0) & 0xff000000) >> 24;
 	ar->fw_version_minor = (__le32_to_cpu(arg.sw_ver0) & 0x00ffffff);
@@ -5454,6 +5461,8 @@ static void ath10k_wmi_event_service_ready_work(struct work_struct *work)
 	ar->phy_capability = __le32_to_cpu(arg.phy_capab);
 	ar->num_rf_chains = __le32_to_cpu(arg.num_rf_chains);
 	ar->hw_eeprom_rd = __le32_to_cpu(arg.eeprom_rd);
+	ar->low_2ghz_chan = __le32_to_cpu(arg.low_2ghz_chan);
+	ar->high_2ghz_chan = __le32_to_cpu(arg.high_2ghz_chan);
 	ar->low_5ghz_chan = __le32_to_cpu(arg.low_5ghz_chan);
 	ar->high_5ghz_chan = __le32_to_cpu(arg.high_5ghz_chan);
 
@@ -5557,17 +5566,22 @@ static void ath10k_wmi_event_service_ready_work(struct work_struct *work)
 
 skip_mem_alloc:
 	ath10k_dbg(ar, ATH10K_DBG_WMI,
-		   "wmi event service ready min_tx_power 0x%08x max_tx_power 0x%08x ht_cap 0x%08x vht_cap 0x%08x sw_ver0 0x%08x sw_ver1 0x%08x fw_build 0x%08x phy_capab 0x%08x num_rf_chains 0x%08x eeprom_rd 0x%08x num_mem_reqs 0x%08x\n",
+		   "wmi event service ready min_tx_power 0x%08x max_tx_power 0x%08x ht_cap 0x%08x vht_cap 0x%08x vht_supp_mcs 0x%08x sw_ver0 0x%08x sw_ver1 0x%08x fw_build 0x%08x phy_capab 0x%08x num_rf_chains 0x%08x eeprom_rd 0x%08x low_2ghz_chan %d high_2ghz_chan %d low_5ghz_chan %d high_5ghz_chan %d num_mem_reqs 0x%08x\n",
 		   __le32_to_cpu(arg.min_tx_power),
 		   __le32_to_cpu(arg.max_tx_power),
 		   __le32_to_cpu(arg.ht_cap),
 		   __le32_to_cpu(arg.vht_cap),
+		   __le32_to_cpu(arg.vht_supp_mcs),
 		   __le32_to_cpu(arg.sw_ver0),
 		   __le32_to_cpu(arg.sw_ver1),
 		   __le32_to_cpu(arg.fw_build),
 		   __le32_to_cpu(arg.phy_capab),
 		   __le32_to_cpu(arg.num_rf_chains),
 		   __le32_to_cpu(arg.eeprom_rd),
+		   __le32_to_cpu(arg.low_2ghz_chan),
+		   __le32_to_cpu(arg.high_2ghz_chan),
+		   __le32_to_cpu(arg.low_5ghz_chan),
+		   __le32_to_cpu(arg.high_5ghz_chan),
 		   __le32_to_cpu(arg.num_mem_reqs));
 
 	dev_kfree_skb(skb);
@@ -5636,7 +5650,7 @@ int ath10k_wmi_event_ready(struct ath10k *ar, struct sk_buff *skb)
 	}
 
 	ath10k_dbg(ar, ATH10K_DBG_WMI,
-		   "wmi event ready sw_version %u abi_version %u mac_addr %pM status %d\n",
+		   "wmi event ready sw_version 0x%08x abi_version %u mac_addr %pM status %d\n",
 		   __le32_to_cpu(arg.sw_version),
 		   __le32_to_cpu(arg.abi_version),
 		   arg.mac_addr,

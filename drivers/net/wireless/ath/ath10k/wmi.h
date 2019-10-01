@@ -6863,6 +6863,7 @@ struct wmi_svc_rdy_ev_arg {
 	__le32 max_tx_power;
 	__le32 ht_cap;
 	__le32 vht_cap;
+	__le32 vht_supp_mcs;
 	__le32 sw_ver0;
 	__le32 sw_ver1;
 	__le32 fw_build;
@@ -6870,6 +6871,8 @@ struct wmi_svc_rdy_ev_arg {
 	__le32 num_rf_chains;
 	__le32 eeprom_rd;
 	__le32 num_mem_reqs;
+	__le32 low_2ghz_chan;
+	__le32 high_2ghz_chan;
 	__le32 low_5ghz_chan;
 	__le32 high_5ghz_chan;
 	const __le32 *service_map;
