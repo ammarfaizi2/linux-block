@@ -163,6 +163,7 @@ struct trace {
 	bool			vfs_getname;
 	int			trace_pgfaults;
 	char			*perfconfig_events;
+	char			*deleted_augmented_syscalls;
 	struct {
 		struct ordered_events	data;
 		u64			last;
@@ -3117,7 +3118,28 @@ static int trace__init_syscalls_bpf_prog_array_maps(struct trace *trace)
 
 	return err;
 }
-#else
+
+static void trace__delete_augmented_syscalls(struct trace *trace)
+{
+	struct evsel *evsel, *tmp;
+
+	evlist__remove(trace->evlist, trace->syscalls.events.augmented);
+	evsel__delete(trace->syscalls.events.augmented);
+	trace->syscalls.events.augmented = NULL;
+
+	evlist__for_each_entry_safe(trace->evlist, tmp, evsel) {
+		if (evsel->bpf_obj == trace->bpf_obj) {
+			evlist__remove(trace->evlist, evsel);
+			evsel__delete(evsel);
+		}
+
+	}
+
+	trace->deleted_augmented_syscalls = strdup(bpf_object__name(trace->bpf_obj));
+	bpf_object__close(trace->bpf_obj);
+	trace->bpf_obj = NULL;
+}
+#else // HAVE_LIBBPF_SUPPORT
 static int trace__set_ev_qualifier_bpf_filter(struct trace *trace __maybe_unused)
 {
 	return 0;
@@ -3137,6 +3159,10 @@ static struct bpf_program *trace__find_bpf_program_by_title(struct trace *trace 
 static int trace__init_syscalls_bpf_prog_array_maps(struct trace *trace __maybe_unused)
 {
 	return 0;
+}
+
+static void trace__delete_augmented_syscalls(struct trace *trace __maybe_unused)
+{
 }
 #endif // HAVE_LIBBPF_SUPPORT
 
@@ -3316,6 +3342,25 @@ static int trace__run(struct trace *trace, int argc, const char **argv)
 	    perf_evlist__add_newtp(evlist, "sched", "sched_stat_runtime",
 				   trace__sched_stat_runtime))
 		goto out_error_sched_stat_runtime;
+
+	/*
+	 * From now on we will not add any new event, so if no events are present
+	 * we should bail out, not entering in an endless loop.
+	 *
+	 * Also if a BPF based augmented_syscalls was provided but deleted, because
+	 * no syscall events was requested not --syscalls was asked for, warn the
+	 * user about it.
+	 */
+	if (evlist->core.nr_entries == 0) {
+		if (trace->deleted_augmented_syscalls) {
+			fprintf(trace->output,
+				"ERROR: Specify '--syscalls' or '-e list,of,syscall,names' to use with the provided\n\n"
+				"  %s\n\n"
+				"be it via -e or via the used .perfconfig 'trace.add_events'.\n",
+				trace->deleted_augmented_syscalls);
+		}
+		goto out_delete_evlist;
+	}
 
 	/*
 	 * If a global cgroup was set, apply it to all the events without an
@@ -4221,6 +4266,22 @@ int cmd_trace(int argc, const char **argv)
 
 	argc = parse_options_subcommand(argc, argv, trace_options, trace_subcommands,
 				 trace_usage, PARSE_OPT_STOP_AT_NON_OPTION);
+
+	/*
+	 * Here we already passed thru trace__parse_events_option() and it has
+	 * already figured out if -e syscall_name, if not but if --event
+	 * foo:bar was used, the user is interested _just_ in those, say,
+	 * tracepoint events, not in the strace-like syscall-name-based mode.
+	 *
+	 * This is important because we need to check if strace-like mode is
+	 * needed to decided if we should filter out the eBPF
+	 * __augmented_syscalls__ code, if it is in the mix, say, via
+	 * .perfconfig trace.add_events, and filter those out.
+	 */
+	if (!trace.trace_syscalls && !trace.trace_pgfaults &&
+	    trace.evlist->core.nr_entries == 0 /* Was --events used? */) {
+		trace.trace_syscalls = true;
+	}
 	/*
 	 * Now that we have --verbose figured out, lets see if we need to parse
 	 * events from .perfconfig, so that if those events fail parsing, say some
@@ -4265,9 +4326,38 @@ int cmd_trace(int argc, const char **argv)
 
 		trace.bpf_obj = evsel->bpf_obj;
 
-		trace__set_bpf_map_filtered_pids(&trace);
-		trace__set_bpf_map_syscalls(&trace);
-		trace.syscalls.unaugmented_prog = trace__find_bpf_program_by_title(&trace, "!raw_syscalls:unaugmented");
+		/*
+		 * So, if we have a syscall augmenter, but trace_syscalls, aka
+		 * strace-like syscall tracing is not set, then we need to trow
+		 * away the augmenter, i.e. all the events that were created
+		 * from that BPF object file.
+		 *
+		 * This is more to fix the current .perfconfig trace.add_events
+		 * style of setting up the strace-like eBPF based syscall point
+		 * payload augmenter.
+		 *
+		 * All this complexity will be avoided by adding an alternative
+		 * to trace.add_events in the form of
+		 * trace.bpf_augmented_syscalls, that will be only parsed if we
+		 * need it.
+		 *
+		 * .perfconfig trace.add_events is still useful if we want, for
+		 * instance, have msr_write.msr in some .perfconfig profile based
+		 * 'perf trace --config determinism.profile' mode, where for some
+		 * particular goal/workload type we want a set of events and
+		 * output mode (with timings, etc) instead of having to add
+		 * all via the command line.
+		 *
+		 * Also --config to specify an alternate .perfconfig file needs
+		 * to be implemented.
+		 */
+		if (!trace.trace_syscalls) {
+			trace__delete_augmented_syscalls(&trace);
+		} else {
+			trace__set_bpf_map_filtered_pids(&trace);
+			trace__set_bpf_map_syscalls(&trace);
+			trace.syscalls.unaugmented_prog = trace__find_bpf_program_by_title(&trace, "!raw_syscalls:unaugmented");
+		}
 	}
 
 	err = bpf__setup_stdout(trace.evlist);
@@ -4409,11 +4499,6 @@ init_augmented_syscall_tp:
 	/* summary_only implies summary option, but don't overwrite summary if set */
 	if (trace.summary_only)
 		trace.summary = trace.summary_only;
-
-	if (!trace.trace_syscalls && !trace.trace_pgfaults &&
-	    trace.evlist->core.nr_entries == 0 /* Was --events used? */) {
-		trace.trace_syscalls = true;
-	}
 
 	if (output_name != NULL) {
 		err = trace__open_output(&trace, output_name);
