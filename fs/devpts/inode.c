@@ -617,13 +617,18 @@ void *devpts_get_priv(struct dentry *dentry)
  */
 void devpts_pty_kill(struct dentry *dentry)
 {
-	WARN_ON_ONCE(dentry->d_sb->s_magic != DEVPTS_SUPER_MAGIC);
+	struct super_block *sb = dentry->d_sb;
+	struct dentry *parent = sb->s_root;
 
+	WARN_ON_ONCE(sb->s_magic != DEVPTS_SUPER_MAGIC);
+
+	inode_lock(parent->d_inode);
 	dentry->d_fsdata = NULL;
 	drop_nlink(dentry->d_inode);
 	fsnotify_unlink(d_inode(dentry->d_parent), dentry);
 	d_drop(dentry);
 	dput(dentry);	/* d_alloc_name() in devpts_pty_new() */
+	inode_unlock(parent->d_inode);
 }
 
 static int __init init_devpts_fs(void)
