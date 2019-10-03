@@ -35,11 +35,15 @@ extern struct mmu_psize_def mmu_psize_defs[MMU_PAGE_COUNT];
  * memory requirements with large number of sections.
  * 51 bits is the max physical real address on POWER9
  */
-#if defined(CONFIG_SPARSEMEM_VMEMMAP) && defined(CONFIG_SPARSEMEM_EXTREME) &&  \
-	defined(CONFIG_PPC_64K_PAGES)
+
+#if defined(CONFIG_PPC_64K_PAGES)
+#if defined(CONFIG_SPARSEMEM_VMEMMAP) && defined(CONFIG_SPARSEMEM_EXTREME)
 #define MAX_PHYSMEM_BITS 51
 #else
 #define MAX_PHYSMEM_BITS 46
+#endif
+#else /* CONFIG_PPC_64K_PAGES */
+#define MAX_PHYSMEM_BITS 44
 #endif
 
 /* 64-bit classic hash table MMU */
