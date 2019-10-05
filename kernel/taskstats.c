@@ -553,26 +553,32 @@ static int taskstats_user_cmd(struct sk_buff *skb, struct genl_info *info)
 
 static struct taskstats *taskstats_tgid_alloc(struct task_struct *tsk)
 {
+	int empty;
+	struct taskstats *stats_new, *stats = NULL;
 	struct signal_struct *sig = tsk->signal;
-	struct taskstats *stats;
-
-	if (sig->stats || thread_group_empty(tsk))
-		goto ret;
 
 	/* No problem if kmem_cache_zalloc() fails */
-	stats = kmem_cache_zalloc(taskstats_cache, GFP_KERNEL);
+	stats_new = kmem_cache_zalloc(taskstats_cache, GFP_KERNEL);
+
+	empty = thread_group_empty(tsk);
 
 	spin_lock_irq(&tsk->sighand->siglock);
+	if (sig->stats || empty) {
+		stats = sig->stats;
+		spin_unlock_irq(&tsk->sighand->siglock);
+		goto free_cache;
+	}
+
 	if (!sig->stats) {
-		sig->stats = stats;
-		stats = NULL;
+		sig->stats = stats_new;
+		spin_unlock_irq(&tsk->sighand->siglock);
+		return stats_new;
 	}
 	spin_unlock_irq(&tsk->sighand->siglock);
 
-	if (stats)
-		kmem_cache_free(taskstats_cache, stats);
-ret:
-	return sig->stats;
+free_cache:
+	kmem_cache_free(taskstats_cache, stats_new);
+	return stats;
 }
 
 /* Send pid data out on exit */
