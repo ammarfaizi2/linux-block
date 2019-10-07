@@ -462,6 +462,11 @@ pipe_write(struct kiocb *iocb, struct iov_iter *from)
 			spin_lock_irq(&pipe->wait.lock);
 
 			head = pipe->head;
+			if (head - pipe->tail == buffers) {
+				spin_unlock_irq(&pipe->wait.lock);
+				continue;
+			}
+
 			pipe_commit_write(pipe, head + 1);
 
 			/* Always wake up, even if the copy fails. Otherwise
