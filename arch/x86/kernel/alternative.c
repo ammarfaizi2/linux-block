@@ -949,7 +949,7 @@ static struct bp_patching_desc {
 	int nr_entries;
 } bp_patching;
 
-static int patch_cmp(const void *key, const void *elt)
+static int notrace patch_cmp(const void *key, const void *elt)
 {
 	struct text_poke_loc *tp = (struct text_poke_loc *) elt;
 
@@ -961,7 +961,7 @@ static int patch_cmp(const void *key, const void *elt)
 }
 NOKPROBE_SYMBOL(patch_cmp);
 
-int poke_int3_handler(struct pt_regs *regs)
+int notrace poke_int3_handler(struct pt_regs *regs)
 {
 	struct text_poke_loc *tp;
 	void *ip;
