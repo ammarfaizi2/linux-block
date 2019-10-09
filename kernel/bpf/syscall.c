@@ -58,35 +58,31 @@ static const struct bpf_map_ops * const bpf_map_types[] = {
  * There is a ToCToU between this function call and the following
  * copy_from_user() call. However, this is not a concern since this function is
  * meant to be a future-proofing of bits.
+ *
+ * Note, instead of using bpf_check_uarg_tail_zero() followed by
+ * copy_from_user() use the dedicated copy_struct_from_user() helper which
+ * performs both tasks whenever possible.
  */
 int bpf_check_uarg_tail_zero(void __user *uaddr,
 			     size_t expected_size,
 			     size_t actual_size)
 {
-	unsigned char __user *addr;
-	unsigned char __user *end;
-	unsigned char val;
+	size_t size = min(expected_size, actual_size);
+	size_t rest = max(expected_size, actual_size) - size;
 	int err;
 
 	if (unlikely(actual_size > PAGE_SIZE))	/* silly large */
 		return -E2BIG;
 
-	if (unlikely(!access_ok(uaddr, actual_size)))
-		return -EFAULT;
-
 	if (actual_size <= expected_size)
 		return 0;
 
-	addr = uaddr + expected_size;
-	end  = uaddr + actual_size;
+	err = check_zeroed_user(uaddr + expected_size, rest);
+	if (err < 0)
+		return err;
 
-	for (; addr < end; addr++) {
-		err = get_user(val, addr);
-		if (err)
-			return err;
-		if (val)
-			return -E2BIG;
-	}
+	if (err)
+		return -E2BIG;
 
 	return 0;
 }
