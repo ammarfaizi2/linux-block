@@ -2817,20 +2817,17 @@ out:
 
 SYSCALL_DEFINE3(bpf, int, cmd, union bpf_attr __user *, uattr, unsigned int, size)
 {
-	union bpf_attr attr = {};
+	union bpf_attr attr;
 	int err;
 
 	if (sysctl_unprivileged_bpf_disabled && !capable(CAP_SYS_ADMIN))
 		return -EPERM;
 
-	err = bpf_check_uarg_tail_zero(uattr, sizeof(attr), size);
+	size = min_t(u32, size, sizeof(attr));
+	/* copy attributes from user space, may be less than sizeof(bpf_attr) */
+	err = copy_struct_from_user(&attr, sizeof(attr), uattr, size);
 	if (err)
 		return err;
-	size = min_t(u32, size, sizeof(attr));
-
-	/* copy attributes from user space, may be less than sizeof(bpf_attr) */
-	if (copy_from_user(&attr, uattr, size) != 0)
-		return -EFAULT;
 
 	err = security_bpf(cmd, &attr, size);
 	if (err < 0)
