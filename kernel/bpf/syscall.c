@@ -2312,13 +2312,10 @@ static int bpf_prog_get_info_by_fd(struct bpf_prog *prog,
 	u32 ulen;
 	int err;
 
-	err = bpf_check_uarg_tail_zero(uinfo, sizeof(info), info_len);
+	info_len = min_t(u32, sizeof(info), info_len);
+	err = copy_struct_from_user(&info, sizeof(info), uinfo, info_len);
 	if (err)
 		return err;
-	info_len = min_t(u32, sizeof(info), info_len);
-
-	if (copy_from_user(&info, uinfo, info_len))
-		return -EFAULT;
 
 	info.type = prog->type;
 	info.id = prog->aux->id;
