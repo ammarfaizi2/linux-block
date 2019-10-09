@@ -2584,6 +2584,15 @@ static bool clone3_args_valid(const struct kernel_clone_args *kargs)
 	return true;
 }
 
+static inline int clone3_set_supported_flags(struct clone_args __user *uargs,
+					     size_t size)
+{
+	if (size < CLONE_ARGS_SIZE_VER1)
+		return 0;
+
+	return put_user(CLONE3_SUPPORTED_FLAGS, &uargs->supported_flags);
+}
+
 /**
  * clone3 - create a new process with specific properties
  * @uargs: argument structure
@@ -2602,6 +2611,10 @@ SYSCALL_DEFINE2(clone3, struct clone_args __user *, uargs, size_t, size)
 	struct kernel_clone_args kargs;
 
 	err = copy_clone_args_from_user(&kargs, uargs, size);
+	if (err)
+		return err;
+
+	err = clone3_set_supported_flags(uargs, size);
 	if (err)
 		return err;
 

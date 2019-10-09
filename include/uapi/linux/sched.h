@@ -36,24 +36,28 @@
 #ifndef __ASSEMBLY__
 /**
  * struct clone_args - arguments for the clone3 syscall
- * @flags:       Flags for the new process as listed above.
- *               All flags are valid except for CSIGNAL and
- *               CLONE_DETACHED.
- * @pidfd:       If CLONE_PIDFD is set, a pidfd will be
- *               returned in this argument.
- * @child_tid:   If CLONE_CHILD_SETTID is set, the TID of the
- *               child process will be returned in the child's
- *               memory.
- * @parent_tid:  If CLONE_PARENT_SETTID is set, the TID of
- *               the child process will be returned in the
- *               parent's memory.
- * @exit_signal: The exit_signal the parent process will be
- *               sent when the child exits.
- * @stack:       Specify the location of the stack for the
- *               child process.
- * @stack_size:  The size of the stack for the child process.
- * @tls:         If CLONE_SETTLS is set, the tls descriptor
- *               is set to tls.
+ * @flags:           Flags for the new process as listed above.
+ *                   All flags are valid except for CSIGNAL and
+ *                   CLONE_DETACHED.
+ * @pidfd:           If CLONE_PIDFD is set, a pidfd will be
+ *                   returned in this argument.
+ * @child_tid:       If CLONE_CHILD_SETTID is set, the TID of the
+ *                   child process will be returned in the child's
+ *                   memory.
+ * @parent_tid:      If CLONE_PARENT_SETTID is set, the TID of
+ *                   the child process will be returned in the
+ *                   parent's memory.
+ * @exit_signal:     The exit_signal the parent process will be
+ *                   sent when the child exits.
+ * @stack:           Specify the location of the stack for the
+ *                   child process.
+ * @stack_size:      The size of the stack for the child process.
+ * @tls:             If CLONE_SETTLS is set, the tls descriptor
+ *                   is set to tls.
+ * @supported_flags: The flags that this kernel supports.
+ *                   The kernel will set all known flags.
+ *                   Userspace can use this to check for
+ *                   the presence of certain features.
  *
  * The structure is versioned by size and thus extensible.
  * New struct members must go at the end of the struct and
@@ -68,10 +72,21 @@ struct clone_args {
 	__aligned_u64 stack;
 	__aligned_u64 stack_size;
 	__aligned_u64 tls;
+	__aligned_u64 supported_flags;
 };
 #endif
 
 #define CLONE_ARGS_SIZE_VER0 64 /* sizeof first published struct */
+#define CLONE_ARGS_SIZE_VER1 72 /* add supported_flags */
+/* All flags supported by clone3(). */
+#define CLONE3_SUPPORTED_FLAGS                                                 \
+	((u64)(CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND |             \
+	       CLONE_PIDFD | CLONE_PTRACE | CLONE_VFORK | CLONE_PARENT |       \
+	       CLONE_THREAD | CLONE_NEWNS | CLONE_SYSVSEM | CLONE_SETTLS |     \
+	       CLONE_PARENT_SETTID | CLONE_CHILD_CLEARTID | CLONE_UNTRACED |   \
+	       CLONE_CHILD_SETTID | CLONE_NEWCGROUP | CLONE_NEWUTS |           \
+	       CLONE_NEWIPC | CLONE_NEWUSER | CLONE_NEWPID | CLONE_NEWNET |    \
+	       CLONE_IO))
 
 /*
  * Scheduling policies
