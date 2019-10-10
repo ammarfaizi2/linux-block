@@ -560,6 +560,19 @@ static int rxrpc_sendmsg_cmsg(struct msghdr *msg, struct rxrpc_send_params *p)
 				return -ERANGE;
 			break;
 
+		case RXRPC_SET_SECURITY_KEY:
+			p->key_desc = CMSG_DATA(cmsg);
+			p->key_desc_len = len;
+			break;
+
+		case RXRPC_SET_SECURITY_LEVEL:
+			if (len != sizeof(p->sec_level))
+				return -EINVAL;
+			memcpy(&p->sec_level, CMSG_DATA(cmsg), sizeof(p->sec_level));
+			if (p->sec_level > RXRPC_SECURITY_ENCRYPT)
+				return -EINVAL;
+			break;
+
 		default:
 			return -EINVAL;
 		}
@@ -587,6 +600,7 @@ rxrpc_new_client_call_for_sendmsg(struct rxrpc_sock *rx, struct msghdr *msg,
 	struct rxrpc_conn_parameters cp;
 	struct rxrpc_call *call;
 	struct key *key;
+	bool put_key = false;
 
 	DECLARE_SOCKADDR(struct sockaddr_rxrpc *, srx, msg->msg_name);
 
@@ -597,14 +611,27 @@ rxrpc_new_client_call_for_sendmsg(struct rxrpc_sock *rx, struct msghdr *msg,
 		return ERR_PTR(-EDESTADDRREQ);
 	}
 
-	key = rx->key;
-	if (key && !rx->key->payload.data[0])
-		key = NULL;
+	if (p->key_desc) {
+		if (!*p->key_desc) {
+			key = NULL;
+		} else {
+			key = rxrpc_request_key(rx, p->key_desc, p->key_desc_len);
+			if (IS_ERR(key)) {
+				release_sock(&rx->sk);
+				return ERR_CAST(key);
+			}
+			put_key = true;
+		}
+	} else  {
+		key = rx->key;
+		if (key && !rx->key->payload.data[0])
+			key = NULL;
+	}
 
 	memset(&cp, 0, sizeof(cp));
 	cp.local		= rx->local;
 	cp.key			= rx->key;
-	cp.security_level	= rx->min_sec_level;
+	cp.security_level	= p->sec_level;
 	cp.exclusive		= rx->exclusive | p->exclusive;
 	cp.upgrade		= p->upgrade;
 	cp.service_id		= srx->srx_service;
@@ -613,6 +640,8 @@ rxrpc_new_client_call_for_sendmsg(struct rxrpc_sock *rx, struct msghdr *msg,
 	/* The socket is now unlocked */
 
 	rxrpc_put_peer(cp.peer);
+	if (put_key)
+		key_put(key);
 	_leave(" = %p\n", call);
 	return call;
 }
@@ -640,6 +669,8 @@ int rxrpc_do_sendmsg(struct rxrpc_sock *rx, struct msghdr *msg, size_t len)
 		.command		= RXRPC_CMD_SEND_DATA,
 		.exclusive		= false,
 		.upgrade		= false,
+		.sec_level		= rx->min_sec_level,
+		.key_desc		= NULL,
 	};
 
 	_enter("");

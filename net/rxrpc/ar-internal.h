@@ -777,6 +777,9 @@ struct rxrpc_send_params {
 	enum rxrpc_command	command : 8;	/* The command to implement */
 	bool			exclusive;	/* Shared or exclusive call */
 	bool			upgrade;	/* If the connection is upgradeable */
+	unsigned int		sec_level;	/* Security level */
+	unsigned int		key_desc_len;
+	char			*key_desc;	/* Description of key to use (or NULL) */
 };
 
 #include <trace/events/rxrpc.h>
@@ -950,7 +953,8 @@ extern const struct rxrpc_security rxrpc_no_security;
  */
 extern struct key_type key_type_rxrpc;
 
-int rxrpc_request_key(struct rxrpc_sock *, sockptr_t , int);
+struct key *rxrpc_request_key(struct rxrpc_sock *, const char *, int);
+int rxrpc_set_key(struct rxrpc_sock *, const sockptr_t, int);
 int rxrpc_get_server_data_key(struct rxrpc_connection *, const void *, time64_t,
 			      u32);
 

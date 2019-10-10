@@ -920,7 +920,7 @@ static int rxrpc_setsockopt(struct socket *sock, int level, int optname,
 			ret = -EISCONN;
 			if (rx->sk.sk_state != RXRPC_UNBOUND)
 				goto error;
-			ret = rxrpc_request_key(rx, optval, optlen);
+			ret = rxrpc_set_key(rx, optval, optlen);
 			goto error;
 
 		case RXRPC_SECURITY_KEYRING:

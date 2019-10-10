@@ -59,6 +59,8 @@ enum rxrpc_cmsg_type {
 	RXRPC_TX_LENGTH		= 12,	/* s-: Total length of Tx data */
 	RXRPC_SET_CALL_TIMEOUT	= 13,	/* s-: Set one or more call timeouts */
 	RXRPC_CHARGE_ACCEPT	= 14,	/* s-: Charge the accept pool with a user call ID */
+	RXRPC_SET_SECURITY_KEY	= 15,	/* s-: Set the security key description for the call */
+	RXRPC_SET_SECURITY_LEVEL = 16,	/* s-: Set the security level for the call */
 	RXRPC__SUPPORTED
 };
 
