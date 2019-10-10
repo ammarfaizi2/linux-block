@@ -443,9 +443,31 @@ static void rxrpc_describe(const struct key *key, struct seq_file *m)
 }
 
 /*
- * grab the security key for a socket
+ * Look up a security key
  */
-int rxrpc_request_key(struct rxrpc_sock *rx, sockptr_t optval, int optlen)
+struct key *rxrpc_request_key(struct rxrpc_sock *rx, const char *name, int len)
+{
+	struct key *key;
+	char *description;
+
+	_enter("");
+
+	if (len <= 0 || len > PAGE_SIZE - 1)
+		return ERR_PTR(-EINVAL);
+
+	description = kmemdup_nul(name, len, GFP_KERNEL);
+	if (IS_ERR(description))
+		return ERR_PTR(-ENOMEM);
+
+	key = request_key_net(&key_type_rxrpc, description, sock_net(&rx->sk), NULL);
+	kfree(description);
+	return key;
+}
+
+/*
+ * Set the security key for a socket
+ */
+int rxrpc_set_key(struct rxrpc_sock *rx, sockptr_t optval, int optlen)
 {
 	struct key *key;
 	char *description;
