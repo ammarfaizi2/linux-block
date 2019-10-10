@@ -116,6 +116,9 @@
 	EM(rxrpc_recvmsg_full,			"FULL") \
 	EM(rxrpc_recvmsg_hole,			"HOLE") \
 	EM(rxrpc_recvmsg_next,			"NEXT") \
+	EM(rxrpc_recvmsg_splice,		"SPLC") \
+	EM(rxrpc_recvmsg_splice_full,		"SPFU") \
+	EM(rxrpc_recvmsg_splice_skb,		"SPSK") \
 	EM(rxrpc_recvmsg_requeue,		"REQU") \
 	EM(rxrpc_recvmsg_return,		"RETN") \
 	EM(rxrpc_recvmsg_terminal,		"TERM") \

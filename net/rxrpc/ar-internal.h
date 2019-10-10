@@ -1056,6 +1056,8 @@ bool rxrpc_call_completed(struct rxrpc_call *);
 bool __rxrpc_abort_call(const char *, struct rxrpc_call *, rxrpc_seq_t, u32, int);
 bool rxrpc_abort_call(const char *, struct rxrpc_call *, rxrpc_seq_t, u32, int);
 int rxrpc_recvmsg(struct socket *, struct msghdr *, size_t, int);
+ssize_t rxrpc_splice_read(struct socket *, loff_t *, struct pipe_inode_info *,
+			  size_t, unsigned int);
 
 /*
  * Abort a call due to a protocol error.
