@@ -799,6 +799,44 @@ error:
 }
 
 /*
+ * Splice into a call.  The call to send as part of must have been set with
+ * setsockopt(RXRPC_SELECT_CALL_FOR_SEND).
+ */
+static ssize_t rxrpc_sendpage(struct socket *sock, struct page *page, int offset,
+			      size_t size, int flags)
+{
+	struct rxrpc_sock *rx = rxrpc_sk(sock->sk);
+	struct rxrpc_call *call;
+	ssize_t ret;
+
+	_enter("{%d},,%u,%zu,%x", rx->sk.sk_state, offset, size, flags);
+
+	lock_sock(&rx->sk);
+
+	read_lock_bh(&rx->recvmsg_lock);
+	call = rx->selected_send_call;
+	if (!call) {
+		read_unlock_bh(&rx->recvmsg_lock);
+		release_sock(&rx->sk);
+		return -EBADSLT;
+	}
+
+	rxrpc_get_call(call, rxrpc_call_got);
+	read_unlock_bh(&rx->recvmsg_lock);
+
+	ret = mutex_lock_interruptible(&call->user_mutex);
+	release_sock(&rx->sk);
+	if (ret == 0) {
+		ret = rxrpc_do_sendpage(rx, call, page, offset, size, flags);
+		mutex_unlock(&call->user_mutex);
+	}
+
+	rxrpc_put_call(call, rxrpc_call_put);
+	_leave(" = %zd", ret);
+	return ret;
+}
+
+/*
  * Set the default call for 'targetless' operations such as splice(), SIOCINQ
  * and SIOCOUTQ and also as a filter for recvmsg().  Calling this function
  * always clears the old call attachment, and specifying a call_id
@@ -1279,9 +1317,9 @@ static const struct proto_ops rxrpc_rpc_ops = {
 	.setsockopt	= rxrpc_setsockopt,
 	.getsockopt	= rxrpc_getsockopt,
 	.sendmsg	= rxrpc_sendmsg,
+	.sendpage	= rxrpc_sendpage,
 	.recvmsg	= rxrpc_recvmsg,
 	.mmap		= sock_no_mmap,
-	.sendpage	= sock_no_sendpage,
 };
 
 static struct proto rxrpc_proto = {

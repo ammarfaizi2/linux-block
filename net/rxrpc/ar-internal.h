@@ -1107,6 +1107,8 @@ struct key *rxrpc_look_up_server_security(struct rxrpc_connection *,
  * sendmsg.c
  */
 int rxrpc_do_sendmsg(struct rxrpc_sock *, struct msghdr *, size_t);
+ssize_t rxrpc_do_sendpage(struct rxrpc_sock *, struct rxrpc_call *,
+			  struct page *, int, size_t, int);
 
 /*
  * server_key.c

@@ -762,6 +762,45 @@ error_release_sock:
 	return ret;
 }
 
+/*
+ * Handle data input from a splice.  The call to send as part of must have been
+ * set with setsockopt(RXRPC_SELECT_CALL_FOR_SEND).
+ */
+ssize_t rxrpc_do_sendpage(struct rxrpc_sock *rx, struct rxrpc_call *call,
+			  struct page *page, int offset, size_t size, int flags)
+{
+	struct bio_vec bv = {
+		.bv_page	= page,
+		.bv_offset	= offset,
+		.bv_len		= size,
+	};
+	struct msghdr msg = {
+		.msg_flags	= flags,
+	};
+
+	_enter(",,%lx,%u,%zu,%x", page->index, offset, size, flags);
+
+	switch (READ_ONCE(call->state)) {
+	case RXRPC_CALL_COMPLETE:
+		return -ESHUTDOWN;
+	default:
+		return -EPROTO;
+	case RXRPC_CALL_CLIENT_SEND_REQUEST:
+	case RXRPC_CALL_SERVER_ACK_REQUEST:
+	case RXRPC_CALL_SERVER_SEND_REPLY:
+		break;
+	}
+
+	/* Ideally, we'd allow sendfile() to end the Tx phase - but there's no
+	 * way for userspace to communicate this option through that syscall.
+	 */
+	//if (flags & MSG_SENDPAGE_NOTLAST)
+	msg.msg_flags |= MSG_MORE;
+
+	iov_iter_bvec(&msg.msg_iter, WRITE, &bv, 1, size);
+	return rxrpc_send_data(rx, call, &msg, size, NULL);
+}
+
 /**
  * rxrpc_kernel_send_data - Allow a kernel service to send data on a call
  * @sock: The socket the call is on
