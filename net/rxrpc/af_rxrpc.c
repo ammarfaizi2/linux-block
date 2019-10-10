@@ -799,12 +799,61 @@ error:
 }
 
 /*
+ * Set the default call for 'targetless' operations such as splice(), SIOCINQ
+ * and SIOCOUTQ and also as a filter for recvmsg().  Calling this function
+ * always clears the old call attachment, and specifying a call_id
+ * of 0 doesn't attach a new call.
+ */
+static int rxrpc_set_select_call(struct rxrpc_sock *rx, unsigned long call_id,
+				 int optname)
+{
+	struct rxrpc_call *call, *old;
+
+	write_lock_bh(&rx->recvmsg_lock);
+	if (optname == RXRPC_SELECT_CALL_FOR_RECV) {
+		old = rx->selected_recv_call;
+		rx->selected_recv_call = NULL;
+	} else {
+		old = rx->selected_send_call;
+		rx->selected_send_call = NULL;
+	}
+	write_unlock_bh(&rx->recvmsg_lock);
+
+	if (old)
+		rxrpc_put_call(old, rxrpc_call_put);
+
+	if (!call_id)
+		return 0;
+
+	call = rxrpc_find_call_by_user_ID(rx, call_id);
+	if (!call)
+		return -EBADSLT;
+
+	switch (call->state) {
+	case RXRPC_CALL_UNINITIALISED:
+	case RXRPC_CALL_SERVER_PREALLOC:
+	case RXRPC_CALL_SERVER_SECURING:
+		rxrpc_put_call(call, rxrpc_call_put);
+		return -EBUSY;
+	default:
+		write_lock_bh(&rx->recvmsg_lock);
+		if (optname == RXRPC_SELECT_CALL_FOR_RECV)
+			rx->selected_recv_call = call;
+		else
+			rx->selected_send_call = call;
+		write_unlock_bh(&rx->recvmsg_lock);
+	}
+	return 0;
+}
+
+/*
  * set RxRPC socket options
  */
 static int rxrpc_setsockopt(struct socket *sock, int level, int optname,
 			    sockptr_t optval, unsigned int optlen)
 {
 	struct rxrpc_sock *rx = rxrpc_sk(sock->sk);
+	unsigned long long call_id;
 	unsigned int min_sec_level;
 	u16 service_upgrade[2];
 	int ret, fd;
@@ -894,9 +943,24 @@ static int rxrpc_setsockopt(struct socket *sock, int level, int optname,
 				goto error;
 			goto success;
 
+		case RXRPC_SELECT_CALL_FOR_RECV:
+		case RXRPC_SELECT_CALL_FOR_SEND:
+#warning compat_setsockopt disappeared
+			ret = -EINVAL;
+			if (optlen != sizeof(call_id))
+				goto error;
+			ret = -EFAULT;
+			if (copy_from_sockptr(&call_id, optval,
+					      sizeof(call_id)) != 0)
+				goto error;
+			ret = rxrpc_set_select_call(rx, call_id, optname);
+			goto error;
+
 		default:
-			break;
+			goto error;
 		}
+	} else {
+		goto error;
 	}
 
 success:
@@ -912,7 +976,10 @@ error:
 static int rxrpc_getsockopt(struct socket *sock, int level, int optname,
 			    char __user *optval, int __user *_optlen)
 {
+	struct rxrpc_sock *rx = rxrpc_sk(sock->sk);
+	unsigned long call_id;
 	int optlen;
+	int ret;
 
 	if (level != SOL_RXRPC)
 		return -EOPNOTSUPP;
@@ -920,18 +987,57 @@ static int rxrpc_getsockopt(struct socket *sock, int level, int optname,
 	if (get_user(optlen, _optlen))
 		return -EFAULT;
 
+	lock_sock(&rx->sk);
+
 	switch (optname) {
 	case RXRPC_SUPPORTED_CMSG:
+		ret = -ETOOSMALL;
 		if (optlen < sizeof(int))
-			return -ETOOSMALL;
+			break;
+		ret = -EFAULT;
 		if (put_user(RXRPC__SUPPORTED - 1, (int __user *)optval) ||
 		    put_user(sizeof(int), _optlen))
-			return -EFAULT;
-		return 0;
+			break;
+		ret = 0;
+		break;
+
+	case RXRPC_SELECT_CALL_FOR_RECV:
+		ret = -ETOOSMALL;
+		if (optlen < sizeof(unsigned long))
+			break;
+		read_lock_bh(&rx->recvmsg_lock);
+		call_id = rx->selected_recv_call ?
+			rx->selected_recv_call->user_call_ID : 0;
+		read_unlock_bh(&rx->recvmsg_lock);
+		ret = -EFAULT;
+		if (put_user(call_id, (unsigned long __user *)optval) ||
+		    put_user(sizeof(unsigned long), _optlen))
+			break;
+		ret = 0;
+		break;
+
+	case RXRPC_SELECT_CALL_FOR_SEND:
+		ret = -ETOOSMALL;
+		if (optlen < sizeof(unsigned long))
+			break;
+		read_lock_bh(&rx->recvmsg_lock);
+		call_id = rx->selected_send_call ?
+			rx->selected_send_call->user_call_ID : 0;
+		read_unlock_bh(&rx->recvmsg_lock);
+		ret = -EFAULT;
+		if (put_user(call_id, (unsigned long __user *)optval) ||
+		    put_user(sizeof(unsigned long), _optlen))
+			break;
+		ret = 0;
+		break;
 
 	default:
-		return -EOPNOTSUPP;
+		ret = -EOPNOTSUPP;
+		break;
 	}
+
+	release_sock(&rx->sk);
+	return ret;
 }
 
 /*
@@ -1086,6 +1192,16 @@ static int rxrpc_release_sock(struct sock *sk)
 	sk->sk_shutdown = SHUTDOWN_MASK;
 	if (rx->service)
 		rxrpc_deactivate_service(rx);
+
+	if (rx->selected_recv_call) {
+		rxrpc_put_call(rx->selected_recv_call, rxrpc_call_put);
+		rx->selected_recv_call = NULL;
+	}
+
+	if (rx->selected_send_call) {
+		rxrpc_put_call(rx->selected_send_call, rxrpc_call_put);
+		rx->selected_send_call = NULL;
+	}
 
 	/* We want to kill off all connections from a service socket
 	 * as fast as possible because we can't share these; client

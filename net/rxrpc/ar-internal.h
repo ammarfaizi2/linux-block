@@ -170,6 +170,8 @@ struct rxrpc_sock {
 	struct rb_root		calls;		/* User ID -> call mapping */
 	unsigned long		flags;
 #define RXRPC_SOCK_CONNECTED	0		/* connect_srx is set */
+	struct rxrpc_call	*selected_recv_call; /* Selected call for receive (or 0) */
+	struct rxrpc_call	*selected_send_call; /* Selected call for send (or 0) */
 	rwlock_t		call_lock;	/* lock for calls */
 	u32			min_sec_level;	/* minimum security level */
 #define RXRPC_SECURITY_MAX	RXRPC_SECURITY_ENCRYPT
