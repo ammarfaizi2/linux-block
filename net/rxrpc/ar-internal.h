@@ -662,7 +662,7 @@ struct rxrpc_call {
 	struct rb_node		sock_node;	/* Node in rx->calls */
 	struct list_head	attend_link;	/* Link in local->call_attend_q */
 	struct rxrpc_txbuf	*tx_pending;	/* Tx buffer being filled */
-	wait_queue_head_t	waitq;		/* Wait queue for channel or Tx */
+	wait_queue_head_t	waitq;		/* Wait queue for channel, Tx or splice */
 	s64			tx_total_len;	/* Total length left to be transmitted (or -1) */
 	unsigned long		user_call_ID;	/* user-defined call ID */
 	unsigned long		flags;
@@ -1216,6 +1216,8 @@ extern const struct seq_operations rxrpc_socket_seq_ops;
  * recvmsg.c
  */
 void rxrpc_notify_socket(struct rxrpc_call *);
+int rxrpc_verify_data(struct rxrpc_call *call, struct sk_buff *skb);
+bool rxrpc_rotate_rx_window(struct rxrpc_call *call);
 int rxrpc_recvmsg(struct socket *, struct msghdr *, size_t, int);
 
 /*
@@ -1287,6 +1289,13 @@ void rxrpc_eaten_skb(struct sk_buff *, enum rxrpc_skb_trace);
 void rxrpc_get_skb(struct sk_buff *, enum rxrpc_skb_trace);
 void rxrpc_free_skb(struct sk_buff *, enum rxrpc_skb_trace);
 void rxrpc_purge_queue(struct sk_buff_head *);
+
+/*
+ * splice.c
+ */
+ssize_t rxrpc_splice_read(struct socket *sock, loff_t *ppos,
+			  struct pipe_inode_info *pipe, size_t len,
+			  unsigned int splice_flags);
 
 /*
  * stats.c

@@ -33,10 +33,16 @@ void rxrpc_notify_socket(struct rxrpc_call *call)
 	rcu_read_lock();
 
 	if (call->notify_rx) {
+		bool notified = true;
+
 		spin_lock(&call->notify_lock);
-		call->notify_rx(sk, call, call->user_call_ID);
+		if (call->notify_rx)
+			call->notify_rx(sk, call, call->user_call_ID);
+		else
+			notified = false;
 		spin_unlock(&call->notify_lock);
-		goto out;
+		if (notified)
+			goto out;
 	}
 
 	rx = rcu_dereference(call->socket);
@@ -126,7 +132,7 @@ static int rxrpc_recvmsg_term(struct rxrpc_call *call, struct msghdr *msg)
 /*
  * Discard a packet we've used up and advance the Rx window by one.
  */
-static void rxrpc_rotate_rx_window(struct rxrpc_call *call)
+bool rxrpc_rotate_rx_window(struct rxrpc_call *call)
 {
 	struct rxrpc_skb_priv *sp;
 	struct sk_buff *skb;
@@ -163,12 +169,13 @@ static void rxrpc_rotate_rx_window(struct rxrpc_call *call)
 	if (acked > 8 &&
 	    !test_and_set_bit(RXRPC_CALL_RX_IS_IDLE, &call->flags))
 		rxrpc_poke_call(call, rxrpc_call_poke_idle);
+	return last;
 }
 
 /*
  * Decrypt and verify a DATA packet.
  */
-static int rxrpc_verify_data(struct rxrpc_call *call, struct sk_buff *skb)
+int rxrpc_verify_data(struct rxrpc_call *call, struct sk_buff *skb)
 {
 	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
 
@@ -544,6 +551,7 @@ error_requeue_call:
 		rx->nr_recvmsg++;
 		spin_unlock(&rx->recvmsg_lock);
 		trace_rxrpc_recvmsg(call_debug_id, rxrpc_recvmsg_requeue, 0);
+		rx->sk.sk_data_ready(&rx->sk);
 	} else {
 		rxrpc_put_call(call, rxrpc_call_put_recvmsg);
 	}

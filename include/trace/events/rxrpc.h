@@ -259,6 +259,8 @@
 	EM(rxrpc_call_get_release_sock,		"GET rel-sock") \
 	EM(rxrpc_call_get_sendmsg,		"GET sendmsg ") \
 	EM(rxrpc_call_get_sendpage,		"GET sendpage") \
+	EM(rxrpc_call_get_splice_read,		"GET splc-rd ") \
+	EM(rxrpc_call_get_splice_requeue,	"GET splc-rqu") \
 	EM(rxrpc_call_get_userid,		"GET user-id ") \
 	EM(rxrpc_call_new_client,		"NEW client  ") \
 	EM(rxrpc_call_new_prealloc_service,	"NEW prealloc") \
@@ -274,6 +276,8 @@
 	EM(rxrpc_call_put_sendmsg,		"PUT sendmsg ") \
 	EM(rxrpc_call_put_sendpage,		"PUT sendpage") \
 	EM(rxrpc_call_put_select_call,		"PUT sel-call") \
+	EM(rxrpc_call_put_splice_drop,		"PUT splc-drp") \
+	EM(rxrpc_call_put_splice_read,		"PUT splc-rd ") \
 	EM(rxrpc_call_put_unnotify,		"PUT unnotify") \
 	EM(rxrpc_call_put_userid_exists,	"PUT u-exists") \
 	EM(rxrpc_call_put_userid,		"PUT user-id ") \
@@ -321,7 +325,12 @@
 	EM(rxrpc_recvmsg_enter,			"ENTR") \
 	EM(rxrpc_recvmsg_full,			"FULL") \
 	EM(rxrpc_recvmsg_hole,			"HOLE") \
+	EM(rxrpc_recvmsg_last,			"LAST") \
 	EM(rxrpc_recvmsg_next,			"NEXT") \
+	EM(rxrpc_recvmsg_splice,		"SPLC") \
+	EM(rxrpc_recvmsg_splice_full,		"SPFU") \
+	EM(rxrpc_recvmsg_splice_requeue,	"SPRQ") \
+	EM(rxrpc_recvmsg_splice_skb,		"SPSK") \
 	EM(rxrpc_recvmsg_requeue,		"REQU") \
 	EM(rxrpc_recvmsg_return,		"RETN") \
 	EM(rxrpc_recvmsg_terminal,		"TERM") \

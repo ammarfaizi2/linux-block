@@ -1346,6 +1346,7 @@ static const struct proto_ops rxrpc_rpc_ops = {
 	.sendmsg	= rxrpc_sendmsg,
 	.sendpage	= rxrpc_sendpage,
 	.recvmsg	= rxrpc_recvmsg,
+	.splice_read	= rxrpc_splice_read,
 	.mmap		= sock_no_mmap,
 };
 

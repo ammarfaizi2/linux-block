@@ -32,6 +32,7 @@ rxrpc-y := \
 	sendmsg.o \
 	server_key.o \
 	skbuff.o \
+	splice.o \
 	txbuf.o \
 	utils.o
 
