@@ -37,6 +37,8 @@ struct sockaddr_rxrpc {
 #define RXRPC_UPGRADEABLE_SERVICE	5	/* Upgrade service[0] -> service[1] */
 #define RXRPC_SUPPORTED_CMSG		6	/* Get highest supported control message type */
 #define RXRPC_BIND_CHANNEL		7	/* Bind a socket as an additional recvmsg channel */
+#define RXRPC_SELECT_CALL_FOR_RECV	8	/* Specify the call for recvmsg, SIOCINQ, etc. */
+#define RXRPC_SELECT_CALL_FOR_SEND	9	/* Specify the call for splice, SIOCOUTQ, etc. */
 
 /*
  * RxRPC control messages

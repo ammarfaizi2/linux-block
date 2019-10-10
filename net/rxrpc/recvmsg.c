@@ -456,8 +456,25 @@ call_complete:
 	ret = rxrpc_recvmsg_term(call, msg);
 	if (ret < 0)
 		goto error_unlock_call;
-	if (!(flags & MSG_PEEK))
+	if (!(flags & MSG_PEEK)) {
+		if (rx->selected_send_call || rx->selected_recv_call) {
+			struct rxrpc_call *s = NULL, *r = NULL;
+
+			spin_lock(&rx->recvmsg_lock);
+			if (rx->selected_send_call == call) {
+				rx->selected_send_call = NULL;
+				s = call;
+			}
+			if (rx->selected_recv_call == call) {
+				rx->selected_recv_call = NULL;
+				r = call;
+			}
+			spin_unlock(&rx->recvmsg_lock);
+			rxrpc_put_call(s, rxrpc_call_put_select_call);
+			rxrpc_put_call(r, rxrpc_call_put_select_call);
+		}
 		rxrpc_release_call(rx, call);
+	}
 	msg->msg_flags |= MSG_EOR;
 	ret = 1;
 

@@ -188,6 +188,8 @@ struct rxrpc_sock {
 	unsigned long		flags;
 #define RXRPC_SOCK_CONNECTED	0		/* connect_srx is set */
 #define RXRPC_SOCK_KERNEL	1		/* This is a kernel socket (prevents sharing) */
+	struct rxrpc_call	*selected_recv_call; /* Selected call for receive (or 0) */
+	struct rxrpc_call	*selected_send_call; /* Selected call for send (or 0) */
 	rwlock_t		call_lock;	/* lock for calls */
 	u32			min_sec_level;	/* minimum security level */
 #define RXRPC_SECURITY_MAX	RXRPC_SECURITY_ENCRYPT
