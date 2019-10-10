@@ -1266,6 +1266,9 @@ struct key *rxrpc_look_up_server_security(struct rxrpc_connection *,
 bool rxrpc_propose_abort(struct rxrpc_call *call, s32 abort_code, int error,
 			 enum rxrpc_abort_reason why);
 int rxrpc_do_sendmsg(struct rxrpc_sock *, struct msghdr *, size_t);
+ssize_t rxrpc_do_sendpage(struct rxrpc_sock *rx, struct rxrpc_call *call,
+			  struct page *page, int offset, size_t size, int flags,
+			  bool *_dropped_lock);
 
 /*
  * server_key.c

@@ -258,6 +258,7 @@
 	EM(rxrpc_call_get_recvmsg_selected,	"GET recvmsgS") \
 	EM(rxrpc_call_get_release_sock,		"GET rel-sock") \
 	EM(rxrpc_call_get_sendmsg,		"GET sendmsg ") \
+	EM(rxrpc_call_get_sendpage,		"GET sendpage") \
 	EM(rxrpc_call_get_userid,		"GET user-id ") \
 	EM(rxrpc_call_new_client,		"NEW client  ") \
 	EM(rxrpc_call_new_prealloc_service,	"NEW prealloc") \
@@ -271,6 +272,7 @@
 	EM(rxrpc_call_put_release_sock,		"PUT rls-sock") \
 	EM(rxrpc_call_put_release_sock_tba,	"PUT rls-sk-a") \
 	EM(rxrpc_call_put_sendmsg,		"PUT sendmsg ") \
+	EM(rxrpc_call_put_sendpage,		"PUT sendpage") \
 	EM(rxrpc_call_put_select_call,		"PUT sel-call") \
 	EM(rxrpc_call_put_unnotify,		"PUT unnotify") \
 	EM(rxrpc_call_put_userid_exists,	"PUT u-exists") \
