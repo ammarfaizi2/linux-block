@@ -540,6 +540,51 @@ try_again:
 		return -EAGAIN;
 	}
 
+	if (rx->selected_recv_call) {
+		/* The call to receive from was dictated by
+		 * setsockopt(RXRPC_SELECT_CALL_FOR_RECV).
+		 */
+		call = rx->selected_recv_call;
+		rxrpc_get_call(call, rxrpc_call_got);
+		if (!list_empty(&call->recvmsg_link)) {
+			write_lock_bh(&rx->recvmsg_lock);
+			goto use_this_call;
+		}
+
+		if (timeo == 0) {
+			ret = -EWOULDBLOCK;
+			call = NULL;
+			goto error_no_call;
+		}
+
+		release_sock(&rx->sk);
+
+		/* Wait for something to happen */
+		prepare_to_wait_exclusive(sk_sleep(&rx->sk), &wait,
+					  TASK_INTERRUPTIBLE);
+		for (;;) {
+			ret = sock_error(&rx->sk);
+			if (ret) {
+				rxrpc_put_call(call, rxrpc_call_put);
+				goto wait_error;
+			}
+
+			if (!list_empty(&call->recvmsg_link))
+				break;
+
+			if (signal_pending(current)) {
+				rxrpc_put_call(call, rxrpc_call_put);
+				goto wait_interrupted;
+			}
+			trace_rxrpc_recvmsg(NULL, rxrpc_recvmsg_wait,
+					    0, 0, 0, 0);
+			timeo = schedule_timeout(timeo);
+		}
+		finish_wait(sk_sleep(&rx->sk), &wait);
+		write_lock_bh(&rx->recvmsg_lock);
+		goto use_this_call;
+	}
+
 	if (list_empty(&rx->recvmsg_q)) {
 		ret = -EWOULDBLOCK;
 		if (timeo == 0) {
@@ -573,10 +618,11 @@ try_again:
 	write_lock_bh(&rx->recvmsg_lock);
 	l = rx->recvmsg_q.next;
 	call = list_entry(l, struct rxrpc_call, recvmsg_link);
+	if (flags & MSG_PEEK)
+		rxrpc_get_call(call, rxrpc_call_got);
+use_this_call:
 	if (!(flags & MSG_PEEK))
 		list_del_init(&call->recvmsg_link);
-	else
-		rxrpc_get_call(call, rxrpc_call_got);
 	write_unlock_bh(&rx->recvmsg_lock);
 
 	trace_rxrpc_recvmsg(call, rxrpc_recvmsg_dequeue, 0, 0, 0, 0);
@@ -654,8 +700,15 @@ try_again:
 		ret = rxrpc_recvmsg_term(call, msg);
 		if (ret < 0)
 			goto error_unlock_call;
-		if (!(flags & MSG_PEEK))
+		if (!(flags & MSG_PEEK)) {
+			struct rxrpc_call *old = call;
+			if (try_cmpxchg(&rx->selected_recv_call, &old, NULL))
+				rxrpc_put_call(call, rxrpc_call_put);
+			old = call;
+			if (try_cmpxchg(&rx->selected_send_call, &old, NULL))
+				rxrpc_put_call(call, rxrpc_call_put);
 			rxrpc_release_call(call);
+		}
 		msg->msg_flags |= MSG_EOR;
 		ret = 1;
 	}
