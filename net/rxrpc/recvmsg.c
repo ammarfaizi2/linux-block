@@ -334,6 +334,51 @@ try_again:
 		return -EAGAIN;
 	}
 
+	if (rx->selected_recv_call) {
+		/* The call to receive from was dictated by
+		 * setsockopt(RXRPC_SELECT_CALL_FOR_RECV).
+		 */
+		call = rx->selected_recv_call;
+		rxrpc_get_call(call, rxrpc_call_get_recvmsg_selected);
+		call_debug_id = call->debug_id;
+		if (!list_empty(&call->recvmsg_link)) {
+			spin_lock(&rx->recvmsg_lock);
+			goto use_this_call;
+		}
+
+		if (timeo == 0) {
+			ret = -EWOULDBLOCK;
+			call = NULL;
+			goto error_no_call;
+		}
+
+		release_sock(&rx->sk);
+
+		/* Wait for something to happen */
+		prepare_to_wait_exclusive(sk_sleep(&rx->sk), &wait,
+					  TASK_INTERRUPTIBLE);
+		for (;;) {
+			ret = sock_error(&rx->sk);
+			if (ret) {
+				rxrpc_put_call(call, rxrpc_call_put_wait_error);
+				goto wait_error;
+			}
+
+			if (!list_empty(&call->recvmsg_link))
+				break;
+
+			if (signal_pending(current)) {
+				rxrpc_put_call(call, rxrpc_call_put_wait_error);
+				goto wait_interrupted;
+			}
+			trace_rxrpc_recvmsg(call_debug_id, rxrpc_recvmsg_wait, 0);
+			timeo = schedule_timeout(timeo);
+		}
+		finish_wait(sk_sleep(&rx->sk), &wait);
+		spin_lock(&rx->recvmsg_lock);
+		goto use_this_call;
+	}
+
 	if (list_empty(&rx->recvmsg_q)) {
 		ret = -EWOULDBLOCK;
 		if (timeo == 0) {
@@ -380,11 +425,12 @@ try_again:
 		goto try_again;
 	}
 
+	if (flags & MSG_PEEK)
+		rxrpc_get_call(call, rxrpc_call_get_recvmsg);
+use_this_call:
 	if (!(flags & MSG_PEEK)) {
 		list_del_init(&call->recvmsg_link);
 		rx->nr_recvmsg--;
-	} else {
-		rxrpc_get_call(call, rxrpc_call_get_recvmsg);
 	}
 	spin_unlock(&rx->recvmsg_lock);
 

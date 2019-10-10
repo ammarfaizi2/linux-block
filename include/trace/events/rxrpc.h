@@ -255,6 +255,7 @@
 	EM(rxrpc_call_get_notify_socket,	"GET notify  ") \
 	EM(rxrpc_call_get_poke,			"GET poke    ") \
 	EM(rxrpc_call_get_recvmsg,		"GET recvmsg ") \
+	EM(rxrpc_call_get_recvmsg_selected,	"GET recvmsgS") \
 	EM(rxrpc_call_get_release_sock,		"GET rel-sock") \
 	EM(rxrpc_call_get_sendmsg,		"GET sendmsg ") \
 	EM(rxrpc_call_get_userid,		"GET user-id ") \
@@ -274,6 +275,7 @@
 	EM(rxrpc_call_put_unnotify,		"PUT unnotify") \
 	EM(rxrpc_call_put_userid_exists,	"PUT u-exists") \
 	EM(rxrpc_call_put_userid,		"PUT user-id ") \
+	EM(rxrpc_call_put_wait_error,		"PUT wait-err") \
 	EM(rxrpc_call_see_accept,		"SEE accept  ") \
 	EM(rxrpc_call_see_accepted,		"SEE accepted") \
 	EM(rxrpc_call_see_activate_client,	"SEE act-clnt") \
