@@ -374,11 +374,17 @@ static int ath11k_core_pdev_create(struct ath11k_base *ab)
 {
 	int ret;
 
+	ret = ath11k_debug_pdev_create(ab);
+	if (ret) {
+		ath11k_err(ab, "failed to create core pdev debugfs: %d\n", ret);
+		return ret;
+	}
+
 	ret = ath11k_mac_create(ab);
 	if (ret) {
 		ath11k_err(ab, "failed to create new hw device with mac80211 :%d\n",
 			   ret);
-		return ret;
+		goto err_pdev_debug;
 	}
 
 	ret = ath11k_dp_pdev_alloc(ab);
@@ -392,6 +398,9 @@ static int ath11k_core_pdev_create(struct ath11k_base *ab)
 err_mac_destroy:
 	ath11k_mac_destroy(ab);
 
+err_pdev_debug:
+	ath11k_debug_pdev_destroy(ab);
+
 	return ret;
 }
 
@@ -400,6 +409,7 @@ static void ath11k_core_pdev_destroy(struct ath11k_base *ab)
 	ath11k_mac_unregister(ab);
 	ath11k_ahb_ext_irq_disable(ab);
 	ath11k_dp_pdev_free(ab);
+	ath11k_debug_pdev_destroy(ab);
 }
 
 static int ath11k_core_start(struct ath11k_base *ab,

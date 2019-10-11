@@ -112,69 +112,68 @@ enum {
 enum wmi_cmd_group {
 	/* 0 to 2 are reserved */
 	WMI_GRP_START = 0x3,
-	WMI_GRP_SCAN = WMI_GRP_START, /* 0x3 */
-	WMI_GRP_PDEV,           /* 0x4 */
-	WMI_GRP_VDEV,           /* 0x5 */
-	WMI_GRP_PEER,           /* 0x6 */
-	WMI_GRP_MGMT,           /* 0x7 */
-	WMI_GRP_BA_NEG,         /* 0x8 */
-	WMI_GRP_STA_PS,         /* 0x9 */
-	WMI_GRP_DFS,            /* 0xa */
-	WMI_GRP_ROAM,           /* 0xb */
-	WMI_GRP_OFL_SCAN,       /* 0xc */
-	WMI_GRP_P2P,            /* 0xd */
-	WMI_GRP_AP_PS,          /* 0xe */
-	WMI_GRP_RATE_CTRL,      /* 0xf */
-	WMI_GRP_PROFILE,        /* 0x10 */
-	WMI_GRP_SUSPEND,        /* 0x11 */
-	WMI_GRP_BCN_FILTER,     /* 0x12 */
-	WMI_GRP_WOW,            /* 0x13 */
-	WMI_GRP_RTT,            /* 0x14 */
-	WMI_GRP_SPECTRAL,       /* 0x15 */
-	WMI_GRP_STATS,          /* 0x16 */
-	WMI_GRP_ARP_NS_OFL,     /* 0x17 */
-	WMI_GRP_NLO_OFL,        /* 0x18 */
-	WMI_GRP_GTK_OFL,        /* 0x19 */
-	WMI_GRP_CSA_OFL,        /* 0x1a */
-	WMI_GRP_CHATTER,        /* 0x1b */
-	WMI_GRP_TID_ADDBA,      /* 0x1c */
-	WMI_GRP_MISC,           /* 0x1d */
-	WMI_GRP_GPIO,           /* 0x1e */
-	WMI_GRP_FWTEST,         /* 0x1f */
-	WMI_GRP_TDLS,           /* 0x20 */
-	WMI_GRP_RESMGR,         /* 0x21 */
-	WMI_GRP_STA_SMPS,       /* 0x22 */
-	WMI_GRP_WLAN_HB,        /* 0x23 */
-	WMI_GRP_RMC,            /* 0x24 */
-	WMI_GRP_MHF_OFL,        /* 0x25 */
-	WMI_GRP_LOCATION_SCAN,  /* 0x26 */
-	WMI_GRP_OEM,            /* 0x27 */
-	WMI_GRP_NAN,            /* 0x28 */
-	WMI_GRP_COEX,           /* 0x29 */
-	WMI_GRP_OBSS_OFL,       /* 0x2a */
-	WMI_GRP_LPI,            /* 0x2b */
-	WMI_GRP_EXTSCAN,        /* 0x2c */
-	WMI_GRP_DHCP_OFL,       /* 0x2d */
-	WMI_GRP_IPA,            /* 0x2e */
-	WMI_GRP_MDNS_OFL,       /* 0x2f */
-	WMI_GRP_SAP_OFL,        /* 0x30 */
-	WMI_GRP_OCB,            /* 0x31 */
-	WMI_GRP_SOC,            /* 0x32 */
-	WMI_GRP_PKT_FILTER,     /* 0x33 */
-	WMI_GRP_MAWC,           /* 0x34 */
-	WMI_GRP_PMF_OFFLOAD,    /* 0x35 */
-	WMI_GRP_BPF_OFFLOAD,    /* 0x36 Berkeley Packet Filter */
-	WMI_GRP_NAN_DATA,       /* 0x37 */
-	WMI_GRP_PROTOTYPE,      /* 0x38 */
-	WMI_GRP_MONITOR,        /* 0x39 */
-	WMI_GRP_REGULATORY,     /* 0x3a */
-	WMI_GRP_HW_DATA_FILTER, /* 0x3b */
-	WMI_GRP_WLM,            /* 0x3c */
-	WMI_GRP_11K_OFFLOAD,    /* 0x3d */
-	WMI_GRP_TWT,            /* 0x3e */
-	WMI_GRP_MOTION_DET,     /* 0x3f */
-	WMI_GRP_SPATIAL_REUSE,  /* 0x40 */
-
+	WMI_GRP_SCAN = WMI_GRP_START,
+	WMI_GRP_PDEV		= 0x4,
+	WMI_GRP_VDEV           = 0x5,
+	WMI_GRP_PEER           = 0x6,
+	WMI_GRP_MGMT           = 0x7,
+	WMI_GRP_BA_NEG         = 0x8,
+	WMI_GRP_STA_PS         = 0x9,
+	WMI_GRP_DFS            = 0xa,
+	WMI_GRP_ROAM           = 0xb,
+	WMI_GRP_OFL_SCAN       = 0xc,
+	WMI_GRP_P2P            = 0xd,
+	WMI_GRP_AP_PS          = 0xe,
+	WMI_GRP_RATE_CTRL      = 0xf,
+	WMI_GRP_PROFILE        = 0x10,
+	WMI_GRP_SUSPEND        = 0x11,
+	WMI_GRP_BCN_FILTER     = 0x12,
+	WMI_GRP_WOW            = 0x13,
+	WMI_GRP_RTT            = 0x14,
+	WMI_GRP_SPECTRAL       = 0x15,
+	WMI_GRP_STATS          = 0x16,
+	WMI_GRP_ARP_NS_OFL     = 0x17,
+	WMI_GRP_NLO_OFL        = 0x18,
+	WMI_GRP_GTK_OFL        = 0x19,
+	WMI_GRP_CSA_OFL        = 0x1a,
+	WMI_GRP_CHATTER        = 0x1b,
+	WMI_GRP_TID_ADDBA      = 0x1c,
+	WMI_GRP_MISC           = 0x1d,
+	WMI_GRP_GPIO           = 0x1e,
+	WMI_GRP_FWTEST         = 0x1f,
+	WMI_GRP_TDLS           = 0x20,
+	WMI_GRP_RESMGR         = 0x21,
+	WMI_GRP_STA_SMPS       = 0x22,
+	WMI_GRP_WLAN_HB        = 0x23,
+	WMI_GRP_RMC            = 0x24,
+	WMI_GRP_MHF_OFL        = 0x25,
+	WMI_GRP_LOCATION_SCAN  = 0x26,
+	WMI_GRP_OEM            = 0x27,
+	WMI_GRP_NAN            = 0x28,
+	WMI_GRP_COEX           = 0x29,
+	WMI_GRP_OBSS_OFL       = 0x2a,
+	WMI_GRP_LPI            = 0x2b,
+	WMI_GRP_EXTSCAN        = 0x2c,
+	WMI_GRP_DHCP_OFL       = 0x2d,
+	WMI_GRP_IPA            = 0x2e,
+	WMI_GRP_MDNS_OFL       = 0x2f,
+	WMI_GRP_SAP_OFL        = 0x30,
+	WMI_GRP_OCB            = 0x31,
+	WMI_GRP_SOC            = 0x32,
+	WMI_GRP_PKT_FILTER     = 0x33,
+	WMI_GRP_MAWC           = 0x34,
+	WMI_GRP_PMF_OFFLOAD    = 0x35,
+	WMI_GRP_BPF_OFFLOAD    = 0x36,
+	WMI_GRP_NAN_DATA       = 0x37,
+	WMI_GRP_PROTOTYPE      = 0x38,
+	WMI_GRP_MONITOR        = 0x39,
+	WMI_GRP_REGULATORY     = 0x3a,
+	WMI_GRP_HW_DATA_FILTER = 0x3b,
+	WMI_GRP_WLM            = 0x3c,
+	WMI_GRP_11K_OFFLOAD    = 0x3d,
+	WMI_GRP_TWT            = 0x3e,
+	WMI_GRP_MOTION_DET     = 0x3f,
+	WMI_GRP_SPATIAL_REUSE  = 0x40,
 };
 
 #define WMI_CMD_GRP(grp_id) (((grp_id) << 12) | 0x1)
