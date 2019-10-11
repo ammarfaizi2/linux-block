@@ -39,6 +39,12 @@ struct nsproxy {
 };
 extern struct nsproxy init_nsproxy;
 
+struct dentry;
+extern struct dentry *uts_debugfs;
+
+struct file_operations;
+extern const struct file_operations ns_file_operations;
+
 /*
  * the namespaces access rules are:
  *

@@ -10,6 +10,7 @@
  */
 
 #include <linux/slab.h>
+#include <linux/debugfs.h>
 #include <linux/export.h>
 #include <linux/nsproxy.h>
 #include <linux/init_task.h>
@@ -25,6 +26,7 @@
 #include <linux/perf_event.h>
 
 static struct kmem_cache *nsproxy_cachep;
+struct dentry *uts_debugfs;
 
 struct nsproxy init_nsproxy = {
 	.count			= ATOMIC_INIT(1),
@@ -271,3 +273,21 @@ int __init nsproxy_cache_init(void)
 	nsproxy_cachep = KMEM_CACHE(nsproxy, SLAB_PANIC);
 	return 0;
 }
+
+static int __init init_ns_debugfs(void)
+{
+	struct dentry *ns_dir;
+
+	ns_dir = debugfs_create_dir("ns", NULL);
+	if (!ns_dir)
+		return -ENOMEM;
+
+#ifdef CONFIG_UTS_NS
+	uts_debugfs = debugfs_create_dir("uts", ns_dir);
+	if (!uts_debugfs)
+		return -ENOMEM;
+#endif
+
+	return 0;
+}
+late_initcall(init_ns_debugfs);

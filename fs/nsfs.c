@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
+#include <linux/debugfs.h>
+#include <linux/nsproxy.h>
 #include <linux/mount.h>
 #include <linux/pseudo_fs.h>
 #include <linux/file.h>
@@ -15,7 +17,7 @@ static struct vfsmount *nsfs_mnt;
 
 static long ns_ioctl(struct file *filp, unsigned int ioctl,
 			unsigned long arg);
-static const struct file_operations ns_file_operations = {
+const struct file_operations ns_file_operations = {
 	.llseek		= no_llseek,
 	.unlocked_ioctl = ns_ioctl,
 };
@@ -230,13 +232,20 @@ int ns_get_name(char *buf, size_t size, struct task_struct *task,
 struct file *proc_ns_fget(int fd)
 {
 	struct file *file;
+	const struct file_operations *real_fops;
 
 	file = fget(fd);
 	if (!file)
 		return ERR_PTR(-EBADF);
 
-	if (file->f_op != &ns_file_operations)
-		goto out_invalid;
+	if (file->f_op != &ns_file_operations) {
+		if (file_dentry(file)->d_sb->s_magic != DEBUGFS_MAGIC)
+			goto out_invalid;
+
+		real_fops = debugfs_real_fops(file);
+		if (real_fops != &ns_file_operations)
+			goto out_invalid;
+	}
 
 	return file;
 
