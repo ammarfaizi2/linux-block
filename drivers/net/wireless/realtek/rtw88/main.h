@@ -16,6 +16,7 @@
 
 #define RTW_MAX_MAC_ID_NUM		32
 #define RTW_MAX_SEC_CAM_NUM		32
+#define MAX_PG_CAM_BACKUP_NUM		8
 
 #define RTW_WATCH_DOG_DELAY_TIME	round_jiffies_relative(HZ * 2)
 
@@ -27,6 +28,7 @@
 #define RTW_RF_PATH_MAX			4
 #define HW_FEATURE_LEN			13
 
+extern unsigned int rtw_fw_lps_deep_mode;
 extern unsigned int rtw_debug_mask;
 extern const struct ieee80211_ops rtw_ops;
 extern struct rtw_chip_info rtw8822b_hw_spec;
@@ -50,6 +52,7 @@ struct rtw_hci {
 	enum rtw_hci_type type;
 
 	u32 rpwm_addr;
+	u32 cpwm_addr;
 
 	u8 bulkout_num;
 };
@@ -309,6 +312,7 @@ enum rtw_flags {
 	RTW_FLAG_SCANNING,
 	RTW_FLAG_INACTIVE_PS,
 	RTW_FLAG_LEISURE_PS,
+	RTW_FLAG_LEISURE_PS_DEEP,
 	RTW_FLAG_DIG_DISABLE,
 	RTW_FLAG_BUSY_TRAFFIC,
 
@@ -526,6 +530,12 @@ enum rtw_lps_mode {
 	RTW_MODE_WMM_PS	= 2,
 };
 
+enum rtw_lps_deep_mode {
+	LPS_DEEP_MODE_NONE	= 0,
+	LPS_DEEP_MODE_LCLK	= 1,
+	LPS_DEEP_MODE_PG	= 2,
+};
+
 enum rtw_pwr_state {
 	RTW_RF_OFF	= 0x0,
 	RTW_RF_ON	= 0x4,
@@ -533,14 +543,14 @@ enum rtw_pwr_state {
 };
 
 struct rtw_lps_conf {
-	/* the interface to enter lps */
-	struct rtw_vif *rtwvif;
 	enum rtw_lps_mode mode;
+	enum rtw_lps_deep_mode deep_mode;
 	enum rtw_pwr_state state;
 	u8 awake_interval;
 	u8 rlbm;
 	u8 smart_ps;
 	u8 port_id;
+	bool sec_cam_backup;
 };
 
 enum rtw_hw_key_type {
@@ -844,6 +854,7 @@ struct rtw_chip_info {
 
 	bool ht_supported;
 	bool vht_supported;
+	u8 lps_deep_mode_supported;
 
 	/* init values */
 	u8 sys_func_en;
@@ -1361,7 +1372,7 @@ struct rtw_dev {
 
 	/* lps power state & handler work */
 	struct rtw_lps_conf lps_conf;
-	struct delayed_work lps_work;
+	bool ps_enabled;
 
 	struct dentry *debugfs;
 
@@ -1377,21 +1388,6 @@ struct rtw_dev {
 };
 
 #include "hci.h"
-
-static inline bool rtw_flag_check(struct rtw_dev *rtwdev, enum rtw_flags flag)
-{
-	return test_bit(flag, rtwdev->flags);
-}
-
-static inline void rtw_flag_clear(struct rtw_dev *rtwdev, enum rtw_flags flag)
-{
-	clear_bit(flag, rtwdev->flags);
-}
-
-static inline void rtw_flag_set(struct rtw_dev *rtwdev, enum rtw_flags flag)
-{
-	set_bit(flag, rtwdev->flags);
-}
 
 static inline bool rtw_is_assoc(struct rtw_dev *rtwdev)
 {

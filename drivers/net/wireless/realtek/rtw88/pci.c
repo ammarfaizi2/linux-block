@@ -9,6 +9,7 @@
 #include "tx.h"
 #include "rx.h"
 #include "fw.h"
+#include "ps.h"
 #include "debug.h"
 
 static bool rtw_disable_msi;
@@ -90,16 +91,13 @@ static inline void *rtw_pci_get_tx_desc(struct rtw_pci_tx_ring *tx_ring, u8 idx)
 	return tx_ring->r.head + offset;
 }
 
-static void rtw_pci_free_tx_ring(struct rtw_dev *rtwdev,
-				 struct rtw_pci_tx_ring *tx_ring)
+static void rtw_pci_free_tx_ring_skbs(struct rtw_dev *rtwdev,
+				      struct rtw_pci_tx_ring *tx_ring)
 {
 	struct pci_dev *pdev = to_pci_dev(rtwdev->dev);
 	struct rtw_pci_tx_data *tx_data;
 	struct sk_buff *skb, *tmp;
 	dma_addr_t dma;
-	u8 *head = tx_ring->r.head;
-	u32 len = tx_ring->r.len;
-	int ring_sz = len * tx_ring->r.desc_size;
 
 	/* free every skb remained in tx list */
 	skb_queue_walk_safe(&tx_ring->queue, skb, tmp) {
@@ -110,21 +108,30 @@ static void rtw_pci_free_tx_ring(struct rtw_dev *rtwdev,
 		pci_unmap_single(pdev, dma, skb->len, PCI_DMA_TODEVICE);
 		dev_kfree_skb_any(skb);
 	}
+}
+
+static void rtw_pci_free_tx_ring(struct rtw_dev *rtwdev,
+				 struct rtw_pci_tx_ring *tx_ring)
+{
+	struct pci_dev *pdev = to_pci_dev(rtwdev->dev);
+	u8 *head = tx_ring->r.head;
+	u32 len = tx_ring->r.len;
+	int ring_sz = len * tx_ring->r.desc_size;
+
+	rtw_pci_free_tx_ring_skbs(rtwdev, tx_ring);
 
 	/* free the ring itself */
 	pci_free_consistent(pdev, ring_sz, head, tx_ring->r.dma);
 	tx_ring->r.head = NULL;
 }
 
-static void rtw_pci_free_rx_ring(struct rtw_dev *rtwdev,
-				 struct rtw_pci_rx_ring *rx_ring)
+static void rtw_pci_free_rx_ring_skbs(struct rtw_dev *rtwdev,
+				      struct rtw_pci_rx_ring *rx_ring)
 {
 	struct pci_dev *pdev = to_pci_dev(rtwdev->dev);
 	struct sk_buff *skb;
-	dma_addr_t dma;
-	u8 *head = rx_ring->r.head;
 	int buf_sz = RTK_PCI_RX_BUF_SIZE;
-	int ring_sz = rx_ring->r.desc_size * rx_ring->r.len;
+	dma_addr_t dma;
 	int i;
 
 	for (i = 0; i < rx_ring->r.len; i++) {
@@ -137,6 +144,16 @@ static void rtw_pci_free_rx_ring(struct rtw_dev *rtwdev,
 		dev_kfree_skb(skb);
 		rx_ring->buf[i] = NULL;
 	}
+}
+
+static void rtw_pci_free_rx_ring(struct rtw_dev *rtwdev,
+				 struct rtw_pci_rx_ring *rx_ring)
+{
+	struct pci_dev *pdev = to_pci_dev(rtwdev->dev);
+	u8 *head = rx_ring->r.head;
+	int ring_sz = rx_ring->r.desc_size * rx_ring->r.len;
+
+	rtw_pci_free_rx_ring_skbs(rtwdev, rx_ring);
 
 	pci_free_consistent(pdev, ring_sz, head, rx_ring->r.dma);
 }
@@ -441,9 +458,9 @@ static void rtw_pci_reset_buf_desc(struct rtw_dev *rtwdev)
 	/* reset read/write point */
 	rtw_write32(rtwdev, RTK_PCI_TXBD_RWPTR_CLR, 0xffffffff);
 
-	/* rest H2C Queue index */
-	rtw_write32_set(rtwdev, RTK_PCI_TXBD_H2CQ_CSR, BIT_CLR_H2CQ_HOST_IDX);
-	rtw_write32_set(rtwdev, RTK_PCI_TXBD_H2CQ_CSR, BIT_CLR_H2CQ_HW_IDX);
+	/* reset H2C Queue index in a single write */
+	rtw_write32_set(rtwdev, RTK_PCI_TXBD_H2CQ_CSR,
+			BIT_CLR_H2CQ_HOST_IDX | BIT_CLR_H2CQ_HW_IDX);
 }
 
 static void rtw_pci_reset_trx_ring(struct rtw_dev *rtwdev)
@@ -484,6 +501,17 @@ static void rtw_pci_dma_reset(struct rtw_dev *rtwdev, struct rtw_pci *rtwpci)
 	rtwpci->rx_tag = 0;
 }
 
+static void rtw_pci_dma_release(struct rtw_dev *rtwdev, struct rtw_pci *rtwpci)
+{
+	struct rtw_pci_tx_ring *tx_ring;
+	u8 queue;
+
+	for (queue = 0; queue < RTK_MAX_TX_QUEUE_NUM; queue++) {
+		tx_ring = &rtwpci->tx_rings[queue];
+		rtw_pci_free_tx_ring_skbs(rtwdev, tx_ring);
+	}
+}
+
 static int rtw_pci_start(struct rtw_dev *rtwdev)
 {
 	struct rtw_pci *rtwpci = (struct rtw_pci *)rtwdev->priv;
@@ -505,6 +533,70 @@ static void rtw_pci_stop(struct rtw_dev *rtwdev)
 
 	spin_lock_irqsave(&rtwpci->irq_lock, flags);
 	rtw_pci_disable_interrupt(rtwdev, rtwpci);
+	rtw_pci_dma_release(rtwdev, rtwpci);
+	spin_unlock_irqrestore(&rtwpci->irq_lock, flags);
+}
+
+static void rtw_pci_deep_ps_enter(struct rtw_dev *rtwdev)
+{
+	struct rtw_pci *rtwpci = (struct rtw_pci *)rtwdev->priv;
+	struct rtw_pci_tx_ring *tx_ring;
+	bool tx_empty = true;
+	u8 queue;
+
+	lockdep_assert_held(&rtwpci->irq_lock);
+
+	/* Deep PS state is not allowed to TX-DMA */
+	for (queue = 0; queue < RTK_MAX_TX_QUEUE_NUM; queue++) {
+		/* BCN queue is rsvd page, does not have DMA interrupt
+		 * H2C queue is managed by firmware
+		 */
+		if (queue == RTW_TX_QUEUE_BCN ||
+		    queue == RTW_TX_QUEUE_H2C)
+			continue;
+
+		tx_ring = &rtwpci->tx_rings[queue];
+
+		/* check if there is any skb DMAing */
+		if (skb_queue_len(&tx_ring->queue)) {
+			tx_empty = false;
+			break;
+		}
+	}
+
+	if (!tx_empty) {
+		rtw_dbg(rtwdev, RTW_DBG_PS,
+			"TX path not empty, cannot enter deep power save state\n");
+		return;
+	}
+
+	set_bit(RTW_FLAG_LEISURE_PS_DEEP, rtwdev->flags);
+	rtw_power_mode_change(rtwdev, true);
+}
+
+static void rtw_pci_deep_ps_leave(struct rtw_dev *rtwdev)
+{
+	struct rtw_pci *rtwpci = (struct rtw_pci *)rtwdev->priv;
+
+	lockdep_assert_held(&rtwpci->irq_lock);
+
+	if (test_and_clear_bit(RTW_FLAG_LEISURE_PS_DEEP, rtwdev->flags))
+		rtw_power_mode_change(rtwdev, false);
+}
+
+static void rtw_pci_deep_ps(struct rtw_dev *rtwdev, bool enter)
+{
+	struct rtw_pci *rtwpci = (struct rtw_pci *)rtwdev->priv;
+	unsigned long flags;
+
+	spin_lock_irqsave(&rtwpci->irq_lock, flags);
+
+	if (enter && !test_bit(RTW_FLAG_LEISURE_PS_DEEP, rtwdev->flags))
+		rtw_pci_deep_ps_enter(rtwdev);
+
+	if (!enter && test_bit(RTW_FLAG_LEISURE_PS_DEEP, rtwdev->flags))
+		rtw_pci_deep_ps_leave(rtwdev);
+
 	spin_unlock_irqrestore(&rtwpci->irq_lock, flags);
 }
 
@@ -588,6 +680,7 @@ static int rtw_pci_xmit(struct rtw_dev *rtwdev,
 	u8 *pkt_desc;
 	struct rtw_pci_tx_buffer_desc *buf_desc;
 	u32 bd_idx;
+	unsigned long flags;
 
 	ring = &rtwpci->tx_rings[queue];
 
@@ -623,6 +716,10 @@ static int rtw_pci_xmit(struct rtw_dev *rtwdev,
 	tx_data = rtw_pci_get_tx_data(skb);
 	tx_data->dma = dma;
 	tx_data->sn = pkt_info->sn;
+
+	spin_lock_irqsave(&rtwpci->irq_lock, flags);
+
+	rtw_pci_deep_ps_leave(rtwdev);
 	skb_queue_tail(&ring->queue, skb);
 
 	/* kick off tx queue */
@@ -638,6 +735,7 @@ static int rtw_pci_xmit(struct rtw_dev *rtwdev,
 		reg_bcn_work |= BIT_PCI_BCNQ_FLAG;
 		rtw_write8(rtwdev, RTK_PCI_TXBD_BCN_WORK, reg_bcn_work);
 	}
+	spin_unlock_irqrestore(&rtwpci->irq_lock, flags);
 
 	return 0;
 }
@@ -1114,6 +1212,7 @@ static struct rtw_hci_ops rtw_pci_ops = {
 	.setup = rtw_pci_setup,
 	.start = rtw_pci_start,
 	.stop = rtw_pci_stop,
+	.deep_ps = rtw_pci_deep_ps,
 
 	.read8 = rtw_pci_read8,
 	.read16 = rtw_pci_read16,

@@ -2603,9 +2603,9 @@ static bool rtw8822c_dpk_coef_iq_check(struct rtw_dev *rtwdev,
 {
 	if (coef_i == 0x1000 || coef_i == 0x0fff ||
 	    coef_q == 0x1000 || coef_q == 0x0fff)
-		return 1;
-	else
-		return 0;
+		return true;
+
+	return false;
 }
 
 static u32 rtw8822c_dpk_coef_transfer(struct rtw_dev *rtwdev)
@@ -3747,6 +3747,7 @@ struct rtw_chip_info rtw8822c_hw_spec = {
 	.dig_min = 0x20,
 	.ht_supported = true,
 	.vht_supported = true,
+	.lps_deep_mode_supported = BIT(LPS_DEEP_MODE_LCLK) | BIT(LPS_DEEP_MODE_PG),
 	.sys_func_en = 0xD8,
 	.pwr_on_seq = card_enable_flow_8822c,
 	.pwr_off_seq = card_disable_flow_8822c,
