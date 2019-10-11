@@ -5,6 +5,8 @@
  *  Author: Serge Hallyn <serue@us.ibm.com>
  */
 
+#include <linux/nsproxy.h>
+#include <linux/debugfs.h>
 #include <linux/export.h>
 #include <linux/uts.h>
 #include <linux/utsname.h>
@@ -90,6 +92,7 @@ struct uts_namespace *copy_utsname(unsigned long flags,
 	struct user_namespace *user_ns, struct uts_namespace *old_ns)
 {
 	struct uts_namespace *new_ns;
+	char name[50];
 
 	BUG_ON(!old_ns);
 	get_uts_ns(old_ns);
@@ -100,6 +103,13 @@ struct uts_namespace *copy_utsname(unsigned long flags,
 	new_ns = clone_uts_ns(user_ns, old_ns);
 
 	put_uts_ns(old_ns);
+
+	if (uts_debugfs) {
+		snprintf(name, 50, "uts:[%u]", new_ns->ns.inum);
+		new_ns->ns.debugfs = debugfs_create_file(name, 0600, uts_debugfs,
+					    &new_ns->ns, &ns_file_operations);
+	}
+
 	return new_ns;
 }
 
@@ -108,6 +118,8 @@ void free_uts_ns(struct kref *kref)
 	struct uts_namespace *ns;
 
 	ns = container_of(kref, struct uts_namespace, kref);
+	if (uts_debugfs && ns->ns.debugfs)
+		debugfs_remove(ns->ns.debugfs);
 	dec_uts_namespaces(ns->ucounts);
 	put_user_ns(ns->user_ns);
 	ns_free_inum(&ns->ns);
