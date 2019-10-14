@@ -310,6 +310,12 @@ static int __init init_ns_debugfs(void)
 		return -ENOMEM;
 #endif
 
+#ifdef CONFIG_PID_NS
+	pid_debugfs = debugfs_create_dir("pid", ns_dir);
+	if (!pid_debugfs)
+		return -ENOMEM;
+#endif
+
 	return 0;
 }
 late_initcall(init_ns_debugfs);

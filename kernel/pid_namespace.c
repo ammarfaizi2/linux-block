@@ -23,6 +23,8 @@
 #include <linux/sched/task.h>
 #include <linux/sched/signal.h>
 #include <linux/idr.h>
+#include <linux/debugfs.h>
+#include <linux/nsproxy.h>
 
 static DEFINE_MUTEX(pid_caches_mutex);
 static struct kmem_cache *pid_ns_cachep;
@@ -30,6 +32,8 @@ static struct kmem_cache *pid_ns_cachep;
 #define MAX_PID_NS_LEVEL 32
 /* Write once array, filled from the beginning. */
 static struct kmem_cache *pid_cache[MAX_PID_NS_LEVEL];
+
+struct dentry *pid_debugfs;
 
 /*
  * creates the kmem cache to allocate pids from.
@@ -118,6 +122,13 @@ static struct pid_namespace *create_pid_namespace(struct user_namespace *user_ns
 	ns->pid_allocated = PIDNS_ADDING;
 	INIT_WORK(&ns->proc_work, proc_cleanup_work);
 
+	if (pid_debugfs) {
+		char name[50];
+		snprintf(name, 50, "pid:[%u]", ns->ns.inum);
+		ns->ns.debugfs = debugfs_create_file(name, 0600, pid_debugfs,
+					    &ns->ns, &ns_file_operations);
+	}
+
 	return ns;
 
 out_free_idr:
@@ -132,6 +143,9 @@ out:
 static void delayed_free_pidns(struct rcu_head *p)
 {
 	struct pid_namespace *ns = container_of(p, struct pid_namespace, rcu);
+
+	if (pid_debugfs && ns->ns.debugfs)
+		debugfs_remove(ns->ns.debugfs);
 
 	dec_pid_namespaces(ns->ucounts);
 	put_user_ns(ns->user_ns);
