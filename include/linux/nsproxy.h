@@ -46,6 +46,7 @@ extern struct dentry *cgroup_debugfs;
 extern struct dentry *ipc_debugfs;
 extern struct dentry *net_debugfs;
 extern struct dentry *pid_debugfs;
+extern struct dentry *user_debugfs;
 
 struct file_operations;
 extern const struct file_operations ns_file_operations;

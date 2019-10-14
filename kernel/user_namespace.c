@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 
 #include <linux/export.h>
+#include <linux/debugfs.h>
 #include <linux/nsproxy.h>
 #include <linux/slab.h>
 #include <linux/sched/signal.h>
@@ -23,6 +24,7 @@
 
 static struct kmem_cache *user_ns_cachep __read_mostly;
 static DEFINE_MUTEX(userns_state_mutex);
+struct dentry *user_debugfs;
 
 static bool new_idmap_permitted(const struct file *file,
 				struct user_namespace *ns, int cap_setid,
@@ -137,6 +139,14 @@ int create_user_ns(struct cred *new)
 		goto fail_keyring;
 
 	set_cred_user_ns(new, ns);
+
+	if (user_debugfs) {
+		char name[50];
+		snprintf(name, 50, "user:[%u]", ns->ns.inum);
+		ns->ns.debugfs = debugfs_create_file(name, 0600, user_debugfs,
+					    &ns->ns, &ns_file_operations);
+	}
+
 	return 0;
 fail_keyring:
 #ifdef CONFIG_PERSISTENT_KEYRINGS
@@ -202,6 +212,9 @@ static void free_user_ns(struct work_struct *work)
 
 void __put_user_ns(struct user_namespace *ns)
 {
+	if (user_debugfs && ns->ns.debugfs)
+		debugfs_remove(ns->ns.debugfs);
+
 	schedule_work(&ns->work);
 }
 EXPORT_SYMBOL(__put_user_ns);

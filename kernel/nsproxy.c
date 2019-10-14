@@ -316,6 +316,12 @@ static int __init init_ns_debugfs(void)
 		return -ENOMEM;
 #endif
 
+#ifdef CONFIG_USER_NS
+	user_debugfs = debugfs_create_dir("user", ns_dir);
+	if (!user_debugfs)
+		return -ENOMEM;
+#endif
+
 	return 0;
 }
 late_initcall(init_ns_debugfs);
