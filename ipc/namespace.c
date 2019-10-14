@@ -8,6 +8,7 @@
 #include <linux/msg.h>
 #include <linux/ipc_namespace.h>
 #include <linux/rcupdate.h>
+#include <linux/debugfs.h>
 #include <linux/nsproxy.h>
 #include <linux/slab.h>
 #include <linux/cred.h>
@@ -18,6 +19,8 @@
 #include <linux/sched/task.h>
 
 #include "util.h"
+
+struct dentry *ipc_debugfs;
 
 static struct ucounts *inc_ipc_namespaces(struct user_namespace *ns)
 {
@@ -62,6 +65,13 @@ static struct ipc_namespace *create_ipc_ns(struct user_namespace *user_ns,
 	sem_init_ns(ns);
 	msg_init_ns(ns);
 	shm_init_ns(ns);
+
+	if (ipc_debugfs) {
+		char name[50];
+		snprintf(name, 50, "mnt:[%u]", ns->ns.inum);
+		ns->ns.debugfs = debugfs_create_file(name, 0600, ipc_debugfs,
+					    &ns->ns, &ns_file_operations);
+	}
 
 	return ns;
 
@@ -117,6 +127,9 @@ void free_ipcs(struct ipc_namespace *ns, struct ipc_ids *ids,
 
 static void free_ipc_ns(struct ipc_namespace *ns)
 {
+	if (ipc_debugfs && ns->ns.debugfs)
+		debugfs_remove(ns->ns.debugfs);
+
 	sem_exit_ns(ns);
 	msg_exit_ns(ns);
 	shm_exit_ns(ns);

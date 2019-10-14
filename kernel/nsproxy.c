@@ -298,6 +298,12 @@ static int __init init_ns_debugfs(void)
 		return -ENOMEM;
 #endif
 
+#ifdef CONFIG_IPC_NS
+	ipc_debugfs = debugfs_create_dir("ipc", ns_dir);
+	if (!ipc_debugfs)
+		return -ENOMEM;
+#endif
+
 	return 0;
 }
 late_initcall(init_ns_debugfs);
