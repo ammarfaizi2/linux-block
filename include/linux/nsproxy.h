@@ -42,6 +42,7 @@ extern struct nsproxy init_nsproxy;
 struct dentry;
 extern struct dentry *uts_debugfs;
 extern struct dentry *mnt_debugfs;
+extern struct dentry *cgroup_debugfs;
 
 struct file_operations;
 extern const struct file_operations ns_file_operations;

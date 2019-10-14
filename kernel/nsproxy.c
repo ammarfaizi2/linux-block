@@ -292,6 +292,12 @@ static int __init init_ns_debugfs(void)
 	if (!mnt_debugfs)
 		return -ENOMEM;
 
+#ifdef CONFIG_CGROUPS
+	cgroup_debugfs = debugfs_create_dir("cgroup", ns_dir);
+	if (!cgroup_debugfs)
+		return -ENOMEM;
+#endif
+
 	return 0;
 }
 late_initcall(init_ns_debugfs);

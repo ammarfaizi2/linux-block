@@ -3,9 +3,12 @@
 
 #include <linux/sched/task.h>
 #include <linux/slab.h>
+#include <linux/debugfs.h>
 #include <linux/nsproxy.h>
 #include <linux/proc_ns.h>
 
+
+struct dentry *cgroup_debugfs;
 
 /* cgroup namespaces */
 
@@ -39,6 +42,8 @@ static struct cgroup_namespace *alloc_cgroup_ns(void)
 
 void free_cgroup_ns(struct cgroup_namespace *ns)
 {
+	if (cgroup_debugfs && ns->ns.debugfs)
+		debugfs_remove(ns->ns.debugfs);
 	put_css_set(ns->root_cset);
 	dec_cgroup_namespaces(ns->ucounts);
 	put_user_ns(ns->user_ns);
@@ -86,6 +91,13 @@ struct cgroup_namespace *copy_cgroup_ns(unsigned long flags,
 	new_ns->user_ns = get_user_ns(user_ns);
 	new_ns->ucounts = ucounts;
 	new_ns->root_cset = cset;
+
+	if (cgroup_debugfs) {
+		char name[50];
+		snprintf(name, 50, "cgroup:[%u]", new_ns->ns.inum);
+		new_ns->ns.debugfs = debugfs_create_file(name, 0600, cgroup_debugfs,
+					    &new_ns->ns, &ns_file_operations);
+	}
 
 	return new_ns;
 }
