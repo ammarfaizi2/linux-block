@@ -288,6 +288,10 @@ static int __init init_ns_debugfs(void)
 		return -ENOMEM;
 #endif
 
+	mnt_debugfs = debugfs_create_dir("mnt", ns_dir);
+	if (!mnt_debugfs)
+		return -ENOMEM;
+
 	return 0;
 }
 late_initcall(init_ns_debugfs);

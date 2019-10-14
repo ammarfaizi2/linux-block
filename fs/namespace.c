@@ -9,6 +9,7 @@
  */
 
 #include <linux/syscalls.h>
+#include <linux/debugfs.h>
 #include <linux/export.h>
 #include <linux/capability.h>
 #include <linux/mnt_namespace.h>
@@ -21,6 +22,7 @@
 #include <linux/fs_struct.h>	/* get_fs_root et.al. */
 #include <linux/fsnotify.h>	/* fsnotify_vfsmount_delete */
 #include <linux/file.h>
+#include <linux/nsproxy.h>
 #include <linux/uaccess.h>
 #include <linux/proc_ns.h>
 #include <linux/magic.h>
@@ -76,6 +78,8 @@ static LIST_HEAD(ex_mountpoints); /* protected by namespace_sem */
 /* /sys/fs */
 struct kobject *fs_kobj;
 EXPORT_SYMBOL_GPL(fs_kobj);
+
+struct dentry *mnt_debugfs;
 
 /*
  * vfsmount lock may be taken for read to prevent changes to the
@@ -3286,6 +3290,13 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
 	if (pwdmnt)
 		mntput(pwdmnt);
 
+	if (mnt_debugfs) {
+		char name[50];
+		snprintf(name, 50, "mnt:[%u]", new_ns->ns.inum);
+		new_ns->ns.debugfs = debugfs_create_file(name, 0600, mnt_debugfs,
+					    &new_ns->ns, &ns_file_operations);
+	}
+
 	return new_ns;
 }
 
@@ -3782,6 +3793,8 @@ void put_mnt_ns(struct mnt_namespace *ns)
 {
 	if (!atomic_dec_and_test(&ns->count))
 		return;
+	if (mnt_debugfs && ns->ns.debugfs)
+		debugfs_remove(ns->ns.debugfs);
 	drop_collected_mounts(&ns->root->mnt);
 	free_mnt_ns(ns);
 }
