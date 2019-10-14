@@ -304,6 +304,12 @@ static int __init init_ns_debugfs(void)
 		return -ENOMEM;
 #endif
 
+#ifdef CONFIG_NET_NS
+	net_debugfs = debugfs_create_dir("net", ns_dir);
+	if (!net_debugfs)
+		return -ENOMEM;
+#endif
+
 	return 0;
 }
 late_initcall(init_ns_debugfs);

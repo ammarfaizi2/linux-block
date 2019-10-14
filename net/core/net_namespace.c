@@ -10,6 +10,7 @@
 #include <linux/sched.h>
 #include <linux/idr.h>
 #include <linux/rculist.h>
+#include <linux/debugfs.h>
 #include <linux/nsproxy.h>
 #include <linux/fs.h>
 #include <linux/proc_ns.h>
@@ -42,6 +43,8 @@ EXPORT_SYMBOL_GPL(net_rwsem);
 #ifdef CONFIG_KEYS
 static struct key_tag init_net_key_domain = { .usage = REFCOUNT_INIT(1) };
 #endif
+
+struct dentry *net_debugfs;
 
 struct net init_net = {
 	.count		= REFCOUNT_INIT(1),
@@ -441,8 +444,11 @@ static void net_free(struct net *net)
 void net_drop_ns(void *p)
 {
 	struct net *ns = p;
-	if (ns && refcount_dec_and_test(&ns->passive))
+	if (ns && refcount_dec_and_test(&ns->passive)) {
+		if (net_debugfs && ns->ns.debugfs)
+			debugfs_remove(ns->ns.debugfs);
 		net_free(ns);
+	}
 }
 
 struct net *copy_net_ns(unsigned long flags,
@@ -484,6 +490,14 @@ dec_ucounts:
 		dec_net_namespaces(ucounts);
 		return ERR_PTR(rv);
 	}
+
+	if (net_debugfs) {
+		char name[50];
+		snprintf(name, 50, "net:[%u]", net->ns.inum);
+		net->ns.debugfs = debugfs_create_file(name, 0600, net_debugfs,
+					    &net->ns, &ns_file_operations);
+	}
+
 	return net;
 }
 
