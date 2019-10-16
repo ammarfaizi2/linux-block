@@ -13,18 +13,16 @@
 #include "debug.h"
 
 unsigned int ath11k_debug_mask;
-
 module_param_named(debug_mask, ath11k_debug_mask, uint, 0644);
-
 MODULE_PARM_DESC(debug_mask, "Debugging mask");
 
 static const struct ath11k_hw_params ath11k_hw_params = {
-			.name = "ipq8074",
-			.fw = {
-				.dir = IPQ8074_FW_DIR,
-				.board_size = IPQ8074_MAX_BOARD_DATA_SZ,
-				.cal_size =  IPQ8074_MAX_CAL_DATA_SZ,
-			},
+	.name = "ipq8074",
+	.fw = {
+		.dir = IPQ8074_FW_DIR,
+		.board_size = IPQ8074_MAX_BOARD_DATA_SZ,
+		.cal_size =  IPQ8074_MAX_CAL_DATA_SZ,
+	},
 };
 
 /* Map from pdev index to hw mac index */
