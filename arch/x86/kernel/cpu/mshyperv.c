@@ -216,6 +216,8 @@ static void __init ms_hyperv_init_platform(void)
 	int hv_host_info_ecx;
 	int hv_host_info_edx;
 
+	pv_info.name = "Hyper-V";
+
 	/*
 	 * Extract the features and hints
 	 */
