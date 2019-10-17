@@ -1065,10 +1065,10 @@ idtentry xendebug		do_debug		has_error_code=0
 #endif
 
 idtentry general_protection	do_general_protection	has_error_code=1
-idtentry page_fault		do_page_fault		has_error_code=1	read_cr2=1
+idtentry page_fault		do_page_fault		has_error_code=1	read_cr2=1 entry_work=0
 
 #ifdef CONFIG_KVM_GUEST
-idtentry async_page_fault	do_async_page_fault	has_error_code=1	read_cr2=1
+idtentry async_page_fault	do_async_page_fault	has_error_code=1	read_cr2=1 entry_work=0
 #endif
 
 #ifdef CONFIG_X86_MCE
