@@ -19,15 +19,16 @@ struct ghes_edac_pvt {
 	struct list_head list;
 	struct ghes *ghes;
 	struct mem_ctl_info *mci;
-
-	/* Buffers for the error handling routine */
-	char detail_location[240];
-	char other_detail[160];
-	char msg[80];
 };
 
 static atomic_t ghes_init = ATOMIC_INIT(0);
 static struct ghes_edac_pvt *ghes_pvt;
+static struct mem_ctl_info *ghes_mci;
+
+/* Buffers for the error handling routine */
+static char detail_location[240];
+static char other_detail[160];
+static char msg[80];
 
 /*
  * Sync with other, potentially concurrent callers of
@@ -196,15 +197,10 @@ static void ghes_edac_dmidecode(const struct dmi_header *dh, void *arg)
 void ghes_edac_report_mem_error(int sev, struct cper_sec_mem_err *mem_err)
 {
 	enum hw_event_mc_err_type type;
-	struct edac_raw_error_desc *e;
-	struct mem_ctl_info *mci;
-	struct ghes_edac_pvt *pvt = ghes_pvt;
+	struct edac_raw_error_desc e;
 	unsigned long flags;
-	char *p;
 	u8 grain_bits;
-
-	if (!pvt)
-		return;
+	char *p;
 
 	/*
 	 * We can do the locking below because GHES defers error processing
@@ -216,20 +212,20 @@ void ghes_edac_report_mem_error(int sev, struct cper_sec_mem_err *mem_err)
 
 	spin_lock_irqsave(&ghes_lock, flags);
 
-	mci = pvt->mci;
-	e = &mci->error_desc;
+	if (!ghes_mci)
+		goto unlock;
 
 	/* Cleans the error report buffer */
-	memset(e, 0, sizeof (*e));
-	e->error_count = 1;
-	strcpy(e->label, "unknown label");
-	e->msg = pvt->msg;
-	e->other_detail = pvt->other_detail;
-	e->top_layer = -1;
-	e->mid_layer = -1;
-	e->low_layer = -1;
-	*pvt->other_detail = '\0';
-	*pvt->msg = '\0';
+	memset(&e, 0, sizeof (e));
+	e.error_count = 1;
+	strcpy(e.label, "unknown label");
+	e.msg = msg;
+	e.other_detail = other_detail;
+	e.top_layer = -1;
+	e.mid_layer = -1;
+	e.low_layer = -1;
+	*other_detail = '\0';
+	*msg = '\0';
 
 	switch (sev) {
 	case GHES_SEV_CORRECTED:
@@ -249,9 +245,9 @@ void ghes_edac_report_mem_error(int sev, struct cper_sec_mem_err *mem_err)
 	edac_dbg(1, "error validation_bits: 0x%08llx\n",
 		 (long long)mem_err->validation_bits);
 
-	/* Error type, mapped on e->msg */
+	/* Error type, mapped on e.msg */
 	if (mem_err->validation_bits & CPER_MEM_VALID_ERROR_TYPE) {
-		p = pvt->msg;
+		p = msg;
 		switch (mem_err->error_type) {
 		case 0:
 			p += sprintf(p, "Unknown");
@@ -306,21 +302,21 @@ void ghes_edac_report_mem_error(int sev, struct cper_sec_mem_err *mem_err)
 				     mem_err->error_type);
 		}
 	} else {
-		strcpy(pvt->msg, "unknown error");
+		strcpy(msg, "unknown error");
 	}
 
 	/* Error address */
 	if (mem_err->validation_bits & CPER_MEM_VALID_PA) {
-		e->page_frame_number = mem_err->physical_addr >> PAGE_SHIFT;
-		e->offset_in_page = mem_err->physical_addr & ~PAGE_MASK;
+		e.page_frame_number = mem_err->physical_addr >> PAGE_SHIFT;
+		e.offset_in_page = mem_err->physical_addr & ~PAGE_MASK;
 	}
 
 	/* Error grain */
 	if (mem_err->validation_bits & CPER_MEM_VALID_PA_MASK)
-		e->grain = ~(mem_err->physical_addr_mask & ~PAGE_MASK);
+		e.grain = ~(mem_err->physical_addr_mask & ~PAGE_MASK);
 
-	/* Memory error location, mapped on e->location */
-	p = e->location;
+	/* Memory error location, mapped on e.location */
+	p = e.location;
 	if (mem_err->validation_bits & CPER_MEM_VALID_NODE)
 		p += sprintf(p, "node:%d ", mem_err->node);
 	if (mem_err->validation_bits & CPER_MEM_VALID_CARD)
@@ -337,12 +333,13 @@ void ghes_edac_report_mem_error(int sev, struct cper_sec_mem_err *mem_err)
 		p += sprintf(p, "col:%d ", mem_err->column);
 	if (mem_err->validation_bits & CPER_MEM_VALID_BIT_POSITION)
 		p += sprintf(p, "bit_pos:%d ", mem_err->bit_pos);
+
 	if (mem_err->validation_bits & CPER_MEM_VALID_MODULE_HANDLE) {
 		const char *bank = NULL, *device = NULL;
 		int index = -1;
 
 		dmi_memdev_name(mem_err->mem_dev_handle, &bank, &device);
-		if (bank != NULL && device != NULL)
+		if (bank && device)
 			p += sprintf(p, "DIMM location:%s %s ", bank, device);
 		else
 			p += sprintf(p, "DIMM DMI handle: 0x%.4x ",
@@ -350,16 +347,16 @@ void ghes_edac_report_mem_error(int sev, struct cper_sec_mem_err *mem_err)
 
 		index = get_dimm_smbios_index(mem_err->mem_dev_handle);
 		if (index >= 0) {
-			e->top_layer = index;
-			e->enable_per_layer_report = true;
+			e.top_layer = index;
+			e.enable_per_layer_report = true;
 		}
 
 	}
-	if (p > e->location)
+	if (p > e.location)
 		*(p - 1) = '\0';
 
-	/* All other fields are mapped on e->other_detail */
-	p = pvt->other_detail;
+	/* All other fields are mapped on e.other_detail */
+	p = other_detail;
 	if (mem_err->validation_bits & CPER_MEM_VALID_ERROR_STATUS) {
 		u64 status = mem_err->error_status;
 
@@ -421,6 +418,7 @@ void ghes_edac_report_mem_error(int sev, struct cper_sec_mem_err *mem_err)
 			break;
 		}
 	}
+
 	if (mem_err->validation_bits & CPER_MEM_VALID_REQUESTOR_ID)
 		p += sprintf(p, "requestorID: 0x%016llx ",
 			     (long long)mem_err->requestor_id);
@@ -430,19 +428,21 @@ void ghes_edac_report_mem_error(int sev, struct cper_sec_mem_err *mem_err)
 	if (mem_err->validation_bits & CPER_MEM_VALID_TARGET_ID)
 		p += sprintf(p, "targetID: 0x%016llx ",
 			     (long long)mem_err->responder_id);
-	if (p > pvt->other_detail)
+	if (p > other_detail)
 		*(p - 1) = '\0';
 
 	/* Generate the trace event */
-	grain_bits = fls_long(e->grain);
-	snprintf(pvt->detail_location, sizeof(pvt->detail_location),
-		 "APEI location: %s %s", e->location, e->other_detail);
-	trace_mc_event(type, e->msg, e->label, e->error_count,
-		       mci->mc_idx, e->top_layer, e->mid_layer, e->low_layer,
-		       (e->page_frame_number << PAGE_SHIFT) | e->offset_in_page,
-		       grain_bits, e->syndrome, pvt->detail_location);
+	grain_bits = fls_long(e.grain);
+	snprintf(detail_location, sizeof(detail_location),
+		 "APEI location: %s %s", e.location, e.other_detail);
+	trace_mc_event(type, msg, e.label, e.error_count,
+		       0, e.top_layer, e.mid_layer, e.low_layer,
+		       (e.page_frame_number << PAGE_SHIFT) | e.offset_in_page,
+		       grain_bits, e.syndrome, detail_location);
 
-	edac_raw_mc_handle_error(type, mci, e);
+	edac_raw_mc_handle_error(type, ghes_mci, &e);
+
+unlock:
 	spin_unlock_irqrestore(&ghes_lock, flags);
 }
 
@@ -500,6 +500,7 @@ int ghes_edac_register(struct ghes *ghes, struct device *dev)
 	ghes_pvt	= mci->pvt_info;
 	ghes_pvt->ghes	= ghes;
 	ghes_pvt->mci	= mci;
+	ghes_mci	= mci;
 
 	mci->pdev = dev;
 	mci->mtype_cap = MEM_FLAG_EMPTY;
