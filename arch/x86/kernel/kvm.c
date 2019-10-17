@@ -257,9 +257,7 @@ do_async_page_fault(struct pt_regs *regs, unsigned long error_code, unsigned lon
 		break;
 	case KVM_PV_REASON_PAGE_NOT_PRESENT:
 		/* page is swapped out by the host. */
-		prev_state = exception_enter();
 		kvm_async_pf_task_wait((u32)address, !user_mode(regs));
-		exception_exit(prev_state);
 		break;
 	case KVM_PV_REASON_PAGE_READY:
 		rcu_irq_enter();
