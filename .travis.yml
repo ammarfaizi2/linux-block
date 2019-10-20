@@ -69,7 +69,7 @@ matrix:
     - os:   linux
       arch: amd64
       env:  TARGET=selftests SUBARCH=ppc64 IMAGE=ubuntu-19.04
-      name: "selftests: ppc64 (native)"
+      name: "selftests: ppc64"
 
 install:
   - docker pull linuxppc/build:$IMAGE-$(uname -m)
