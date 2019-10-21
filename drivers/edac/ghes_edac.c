@@ -15,14 +15,6 @@
 #include "edac_module.h"
 #include <ras/ras_event.h>
 
-struct ghes_edac_pvt {
-	struct list_head list;
-	struct ghes *ghes;
-	struct mem_ctl_info *mci;
-};
-
-static atomic_t ghes_init = ATOMIC_INIT(0);
-static struct ghes_edac_pvt *ghes_pvt;
 static struct mem_ctl_info *ghes_mci;
 
 /* Buffers for the error handling routine */
@@ -80,9 +72,8 @@ static void ghes_edac_count_dimms(const struct dmi_header *dh, void *arg)
 		(*num_dimm)++;
 }
 
-static int get_dimm_smbios_index(u16 handle)
+static int get_dimm_smbios_index(struct mem_ctl_info *mci, u16 handle)
 {
-	struct mem_ctl_info *mci = ghes_pvt->mci;
 	int i;
 
 	for (i = 0; i < mci->tot_dimms; i++) {
@@ -345,7 +336,7 @@ void ghes_edac_report_mem_error(int sev, struct cper_sec_mem_err *mem_err)
 			p += sprintf(p, "DIMM DMI handle: 0x%.4x ",
 				     mem_err->mem_dev_handle);
 
-		index = get_dimm_smbios_index(mem_err->mem_dev_handle);
+		index = get_dimm_smbios_index(ghes_mci, mem_err->mem_dev_handle);
 		if (index >= 0) {
 			e.top_layer = index;
 			e.enable_per_layer_report = true;
@@ -456,12 +447,13 @@ static struct acpi_platform_list plat_list[] = {
 
 int ghes_edac_register(struct ghes *ghes, struct device *dev)
 {
-	bool fake = false;
-	int rc, num_dimm = 0;
-	struct mem_ctl_info *mci;
-	struct edac_mc_layer layers[1];
 	struct ghes_edac_dimm_fill dimm_fill;
-	int idx = -1;
+	struct edac_mc_layer layers[1];
+	struct mem_ctl_info *mci;
+	int err = 0, idx = -1;
+	int rc, num_dimm = 0;
+	unsigned long flags;
+	bool fake = false;
 
 	if (IS_ENABLED(CONFIG_X86)) {
 		/* Check if safe to enable on this system */
@@ -475,8 +467,9 @@ int ghes_edac_register(struct ghes *ghes, struct device *dev)
 	/*
 	 * We have only one logical memory controller to which all DIMMs belong.
 	 */
-	if (atomic_inc_return(&ghes_init) > 1)
-		return 0;
+	spin_lock_irqsave(&ghes_lock, flags);
+	if (ghes_mci)
+		goto unlock;
 
 	/* Get the number of DIMMs */
 	dmi_walk(ghes_edac_count_dimms, &num_dimm);
@@ -491,16 +484,12 @@ int ghes_edac_register(struct ghes *ghes, struct device *dev)
 	layers[0].size = num_dimm;
 	layers[0].is_virt_csrow = true;
 
-	mci = edac_mc_alloc(0, ARRAY_SIZE(layers), layers, sizeof(struct ghes_edac_pvt));
+	mci = edac_mc_alloc(0, ARRAY_SIZE(layers), layers, 0);
 	if (!mci) {
 		pr_info("Can't allocate memory for EDAC data\n");
-		return -ENOMEM;
+		err = -ENOMEM;
+		goto unlock;
 	}
-
-	ghes_pvt	= mci->pvt_info;
-	ghes_pvt->ghes	= ghes;
-	ghes_pvt->mci	= mci;
-	ghes_mci	= mci;
 
 	mci->pdev = dev;
 	mci->mtype_cap = MEM_FLAG_EMPTY;
@@ -542,23 +531,30 @@ int ghes_edac_register(struct ghes *ghes, struct device *dev)
 	if (rc < 0) {
 		pr_info("Can't register at EDAC core\n");
 		edac_mc_free(mci);
-		return -ENODEV;
+		err = -ENODEV;
 	}
-	return 0;
+
+	ghes_mci = mci;
+
+unlock:
+	spin_unlock_irqrestore(&ghes_lock, flags);
+
+	return err;
 }
 
 void ghes_edac_unregister(struct ghes *ghes)
 {
-	struct mem_ctl_info *mci;
+	unsigned long flags;
 
-	if (!ghes_pvt)
-		return;
+	spin_lock_irqsave(&ghes_lock, flags);
 
-	if (atomic_dec_return(&ghes_init))
-		return;
+	if (!ghes_mci)
+		goto unlock;
 
-	mci = ghes_pvt->mci;
-	ghes_pvt = NULL;
-	edac_mc_del_mc(mci->pdev);
-	edac_mc_free(mci);
+	edac_mc_del_mc(ghes_mci->pdev);
+	edac_mc_free(ghes_mci);
+	ghes_mci = NULL;
+
+unlock:
+	spin_unlock_irqrestore(&ghes_lock, flags);
 }
