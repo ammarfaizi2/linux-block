@@ -28,7 +28,11 @@ arch/x86/include/asm/disabled-features.h
 arch/x86/include/asm/required-features.h
 arch/x86/include/asm/cpufeatures.h
 arch/x86/include/asm/inat_types.h
+<<<<<<< HEAD
 arch/x86/include/asm/emulate_prefix.h
+=======
+arch/x86/include/asm/msr-index.h
+>>>>>>> perf/core
 arch/x86/include/uapi/asm/prctl.h
 arch/x86/lib/x86-opcode-map.txt
 arch/x86/tools/gen-insn-attr-x86.awk
