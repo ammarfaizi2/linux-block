@@ -13,11 +13,11 @@ matrix:
     - os:   linux
       arch: ppc64le
       env:  TARGET=kernel SUBARCH=ppc64le IMAGE=ubuntu-19.04 DEFCONFIG=ppc64le_defconfig
-      name: "kernel: ppc64le (native) (PPC_BOOK3S_64 && LITTLE_ENDIAN)"
+      name: "kernel: ppc64le (PPC_BOOK3S_64 && LITTLE_ENDIAN)"
     - os:   linux
       arch: ppc64le
       env:  TARGET=kernel SUBARCH=ppc64le IMAGE=ubuntu-devel DEFCONFIG=ppc64le_defconfig
-      name: "kernel: ppc64le GCC9 (native) (PPC_BOOK3S_64 && LITTLE_ENDIAN)"
+      name: "kernel: ppc64le GCC9 (PPC_BOOK3S_64 && LITTLE_ENDIAN)"
     - os:   linux
       arch: amd64
       env:  TARGET=kernel SUBARCH=ppc64 IMAGE=ubuntu-19.04 DEFCONFIG=ppc64_defconfig
@@ -49,11 +49,11 @@ matrix:
     - os:   linux
       arch: ppc64le
       env:  TARGET=ppctests SUBARCH=ppc64le IMAGE=ubuntu-19.04
-      name: "ppctests: ppc64le (native) Ubuntu 19.04"
+      name: "ppctests: ppc64le Ubuntu 19.04"
     - os:   linux
       arch: ppc64le
       env:  TARGET=ppctests SUBARCH=ppc64le IMAGE=ubuntu-16.04
-      name: "ppctests: ppc64le (native) Ubuntu 16.04"
+      name: "ppctests: ppc64le Ubuntu 16.04"
     - os:   linux
       arch: amd64
       env:  TARGET=ppctests SUBARCH=ppc64 IMAGE=ubuntu-19.04
@@ -65,7 +65,7 @@ matrix:
     - os:   linux
       arch: ppc64le
       env:  TARGET=selftests SUBARCH=ppc64le IMAGE=ubuntu-19.04
-      name: "selftests: ppc64le (native)"
+      name: "selftests: ppc64le"
     - os:   linux
       arch: amd64
       env:  TARGET=selftests SUBARCH=ppc64 IMAGE=ubuntu-19.04
