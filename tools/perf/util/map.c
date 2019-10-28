@@ -139,7 +139,7 @@ void map__init(struct map *map, u64 start, u64 end, u64 pgoff, struct dso *dso)
 	map->map_ip   = map__map_ip;
 	map->unmap_ip = map__unmap_ip;
 	RB_CLEAR_NODE(&map->rb_node);
-	map->erange_warned = false;
+	map->is_node  = map->erange_warned = false;
 	refcount_set(&map->refcnt, 1);
 }
 
@@ -275,7 +275,11 @@ bool map__has_symbols(const struct map *map)
 static void map__exit(struct map *map)
 {
 	BUG_ON(refcount_read(&map->refcnt) != 0);
-	dso__zput(map->dso);
+	if (map->is_node) {
+		struct map_node *node = (struct map_node *)map;
+		map__zput(node->map);
+	} else
+		dso__zput(map->dso);
 }
 
 void map__delete(struct map *map)
@@ -375,15 +379,27 @@ struct symbol *map__find_symbol_by_name(struct map *map, const char *name)
 
 struct map *map__clone(struct map *from)
 {
-	struct map *map = memdup(from, sizeof(*map));
+	struct map *map = memdup(map__ptr(from), sizeof(*map));
 
 	if (map != NULL) {
 		refcount_set(&map->refcnt, 1);
-		RB_CLEAR_NODE(&map->rb_node);
 		dso__get(map->dso);
 	}
 
 	return map;
+}
+
+static struct map *map__share(struct map *map)
+{
+	struct map_node *node = malloc(sizeof(*node));
+
+	if (node != NULL) {
+		refcount_set(&node->refcnt, 1);
+		node->is_node = true;
+		node->map = map__get(map__ptr(map));
+	}
+
+	return (struct map *)node;
 }
 
 size_t map__fprintf(struct map *map, FILE *fp)
@@ -680,12 +696,12 @@ void map_groups__put(struct map_groups *mg)
 struct symbol *map_groups__find_symbol(struct map_groups *mg,
 				       u64 addr, struct map **mapp)
 {
-	struct map *map = map_groups__find(mg, addr);
+	struct map *node = map_groups__find(mg, addr), *map = map__ptr(node);
 
 	/* Ensure map is loaded before using map->map_ip */
 	if (map != NULL && map__load(map) >= 0) {
 		if (mapp != NULL)
-			*mapp = map;
+			*mapp = node;
 		return map__find_symbol(map, map->map_ip(map, addr));
 	}
 
@@ -695,7 +711,6 @@ struct symbol *map_groups__find_symbol(struct map_groups *mg,
 static bool map__contains_symbol(struct map *map, struct symbol *sym)
 {
 	u64 ip = map->unmap_ip(map, sym->start);
-
 	return ip >= map->start && ip < map->end;
 }
 
@@ -703,11 +718,12 @@ struct symbol *maps__find_symbol_by_name(struct maps *maps, const char *name,
 					 struct map **mapp)
 {
 	struct symbol *sym;
-	struct map *pos;
+	struct map *node, *pos;
 
 	down_read(&maps->lock);
 
-	maps__for_each_entry(maps, pos) {
+	maps__for_each_entry(maps, node) {
+		pos = map__ptr(node);
 		sym = map__find_symbol_by_name(pos, name);
 
 		if (sym == NULL)
@@ -753,11 +769,12 @@ int map_groups__find_ams(struct map_groups *mg, struct addr_map_symbol *ams)
 static size_t maps__fprintf(struct maps *maps, FILE *fp)
 {
 	size_t printed = 0;
-	struct map *pos;
+	struct map *pos, *node;
 
 	down_read(&maps->lock);
 
-	maps__for_each_entry(maps, pos) {
+	maps__for_each_entry(maps, node) {
+		pos = map__ptr(node);
 		printed += fprintf(fp, "Map:");
 		printed += map__fprintf(pos, fp);
 		if (verbose > 2) {
@@ -792,6 +809,7 @@ int map_groups__fixup_overlappings(struct map_groups *mg, struct map *map, FILE 
 
 	root = &maps->entries;
 
+	map = map__ptr(map);
 	/*
 	 * Find first map where end > map->start.
 	 * Same as find_vma() in kernel.
@@ -799,7 +817,7 @@ int map_groups__fixup_overlappings(struct map_groups *mg, struct map *map, FILE 
 	next = root->rb_node;
 	first = NULL;
 	while (next) {
-		struct map *pos = rb_entry(next, struct map, rb_node);
+		struct map *pos = map__ptr(rb_entry(next, struct map, rb_node));
 
 		if (pos->end > map->start) {
 			first = next;
@@ -812,8 +830,10 @@ int map_groups__fixup_overlappings(struct map_groups *mg, struct map *map, FILE 
 
 	next = first;
 	while (next) {
-		struct map *pos = rb_entry(next, struct map, rb_node);
-		next = rb_next(&pos->rb_node);
+		struct map *node = rb_entry(next, struct map, rb_node), // Linkage
+			   *pos = map__ptr(node);			// Full map
+
+		next = rb_next(&node->rb_node);
 
 		/*
 		 * Stop if current map starts after map->end.
@@ -823,7 +843,6 @@ int map_groups__fixup_overlappings(struct map_groups *mg, struct map *map, FILE 
 			break;
 
 		if (verbose >= 2) {
-
 			if (use_browser) {
 				pr_debug("overlapping maps in %s (disable tui for more info)\n",
 					   map->dso->name);
@@ -834,7 +853,7 @@ int map_groups__fixup_overlappings(struct map_groups *mg, struct map *map, FILE 
 			}
 		}
 
-		rb_erase_init(&pos->rb_node, root);
+		rb_erase_init(&node->rb_node, root);
 		/*
 		 * Now check if we need to create new maps for areas not
 		 * overlapped by the new map:
@@ -871,7 +890,7 @@ int map_groups__fixup_overlappings(struct map_groups *mg, struct map *map, FILE 
 			map__put(after);
 		}
 put_map:
-		map__put(pos);
+		map__put(node);
 
 		if (err)
 			goto out;
@@ -883,9 +902,6 @@ out:
 	return err;
 }
 
-/*
- * XXX This should not really _copy_ te maps, but refcount them.
- */
 int map_groups__clone(struct thread *thread, struct map_groups *parent)
 {
 	struct map_groups *mg = thread->mg;
@@ -896,11 +912,10 @@ int map_groups__clone(struct thread *thread, struct map_groups *parent)
 	down_read(&maps->lock);
 
 	maps__for_each_entry(maps, map) {
-		struct map *new = map__clone(map);
+		struct map *new = map__share(map);
 		if (new == NULL)
 			goto out_unlock;
-
-		err = unwind__prepare_access(mg, new, NULL);
+		err = unwind__prepare_access(mg, map__ptr(new), NULL);
 		if (err)
 			goto out_unlock;
 
@@ -918,12 +933,12 @@ static void __maps__insert(struct maps *maps, struct map *map)
 {
 	struct rb_node **p = &maps->entries.rb_node;
 	struct rb_node *parent = NULL;
-	const u64 ip = map->start;
+	const u64 ip = map__ptr(map)->start;
 	struct map *m;
 
 	while (*p != NULL) {
 		parent = *p;
-		m = rb_entry(parent, struct map, rb_node);
+		m = map__ptr(rb_entry(parent, struct map, rb_node));
 		if (ip < m->start)
 			p = &(*p)->rb_left;
 		else
@@ -958,13 +973,13 @@ void maps__remove(struct maps *maps, struct map *map)
 struct map *maps__find(struct maps *maps, u64 ip)
 {
 	struct rb_node *p;
-	struct map *m;
+	struct map *m, *node;
 
 	down_read(&maps->lock);
 
 	p = maps->entries.rb_node;
 	while (p != NULL) {
-		m = rb_entry(p, struct map, rb_node);
+		m = map__ptr(node = rb_entry(p, struct map, rb_node));
 		if (ip < m->start)
 			p = p->rb_left;
 		else if (ip >= m->end)
@@ -973,10 +988,10 @@ struct map *maps__find(struct maps *maps, u64 ip)
 			goto out;
 	}
 
-	m = NULL;
+	node = NULL;
 out:
 	up_read(&maps->lock);
-	return m;
+	return node;
 }
 
 struct map *maps__first(struct maps *maps)

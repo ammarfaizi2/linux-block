@@ -468,7 +468,7 @@ struct map *thread__find_map(struct thread *thread, u8 cpumode, u64 addr,
 	al->filtered = 0;
 
 	if (machine == NULL) {
-		al->map = NULL;
+		al->map = al->node = NULL;
 		return NULL;
 	}
 
@@ -486,7 +486,7 @@ struct map *thread__find_map(struct thread *thread, u8 cpumode, u64 addr,
 		al->level = 'u';
 	} else {
 		al->level = 'H';
-		al->map = NULL;
+		al->map = al->node = NULL;
 
 		if ((cpumode == PERF_RECORD_MISC_GUEST_USER ||
 			cpumode == PERF_RECORD_MISC_GUEST_KERNEL) &&
@@ -500,8 +500,9 @@ struct map *thread__find_map(struct thread *thread, u8 cpumode, u64 addr,
 		return NULL;
 	}
 
-	al->map = map_groups__find(mg, al->addr);
+	al->map = al->node = map_groups__find(mg, al->addr);
 	if (al->map != NULL) {
+		al->map = map__ptr(al->node);
 		/*
 		 * Kernel maps might be changed when loading symbols so loading
 		 * must be done prior to using kernel maps.

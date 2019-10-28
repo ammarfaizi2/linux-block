@@ -109,7 +109,7 @@ struct ref_reloc_sym {
 struct addr_location {
 	struct thread *thread;
 	struct map_groups *mg;
-	struct map    *map;
+	struct map    *map, *node;
 	struct symbol *sym;
 	const char    *srcline;
 	u64	      addr;

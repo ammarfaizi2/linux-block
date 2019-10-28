@@ -351,7 +351,7 @@ static int __thread__prepare_access(struct thread *thread)
 	down_read(&maps->lock);
 
 	maps__for_each_entry(maps, map) {
-		err = unwind__prepare_access(thread->mg, map, &initialized);
+		err = unwind__prepare_access(thread->mg, map__ptr(map), &initialized);
 		if (err || initialized)
 			break;
 	}

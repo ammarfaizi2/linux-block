@@ -145,7 +145,7 @@ static enum dso_type machine__thread_dso_type(struct machine *machine,
 	struct map *map;
 
 	map_groups__for_each_entry(thread->mg, map) {
-		struct dso *dso = map->dso;
+		struct dso *dso = map__ptr(map)->dso;
 		if (!dso || dso->long_name[0] != '/')
 			continue;
 		dso_type = dso__type(dso, machine);

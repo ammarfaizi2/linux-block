@@ -14,20 +14,47 @@
 struct dso;
 struct ip_callchain;
 struct ref_reloc_sym;
+struct map;
 struct map_groups;
 struct machine;
 struct evsel;
+
+// See 'struct map' comment below.
+struct map_node {
+	union {
+		struct rb_node   rb_node;
+		struct list_head node;
+	};
+	refcount_t		 refcnt;
+	bool                     is_node:1;
+	// End of common part.
+	struct map		 *map;
+};
 
 struct map {
 	union {
 		struct rb_node	rb_node;
 		struct list_head node;
 	};
-	u64			start;
-	u64			end;
+	refcount_t		refcnt;
+	bool			is_node:1;
+	/*
+	 * The previous fields need to be at the start of the struct, as we'll
+	 * have instances of both 'struct map' and 'struct map_node' in
+	 * rbtrees, when we share a map. This keeps all the code dealing with
+	 * kernel maps unchanged, as we don't need any sharing there.
+	 * Places that only read maps like the hists code end up using something
+	 * obtained thru an addr_location.map field and those are already the
+	 * real full 'struct map', so nothing gets changed there as well.
+	 * The addr_location.node can be used for unlinking. And code using
+	 * lower level maps__find, maps__for_each_entry, etc, can use the return
+	 * value for unlinking and pass it to map__ptr() when needing the full
+	 * 'struct map'.
+	 */
 	bool			erange_warned:1;
 	bool			priv:1;
-	u32			prot;
+	u64			start;
+	u64			end;
 	u64			pgoff;
 	u64			reloc;
 
@@ -37,9 +64,18 @@ struct map {
 	u64			(*unmap_ip)(struct map *, u64);
 
 	struct dso		*dso;
-	refcount_t		refcnt;
 	u32			flags;
+	u32			prot;
 };
+
+static inline struct map *map__ptr(const struct map *map)
+{
+	if (map && map->is_node) {
+		struct map_node *node = (struct map_node *)map;
+		map = node->map;
+	}
+	return (struct map *)map;
+}
 
 struct kmap;
 
