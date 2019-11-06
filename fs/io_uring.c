@@ -329,7 +329,6 @@ struct io_kiocb {
 #define REQ_F_IO_DRAIN		16	/* drain existing IO first */
 #define REQ_F_IO_DRAINED	32	/* drain done */
 #define REQ_F_LINK		64	/* linked sqes */
-#define REQ_F_LINK_DONE		128	/* linked sqes done */
 #define REQ_F_FAIL_LINK		256	/* fail rest of links */
 #define REQ_F_SHADOW_DRAIN	512	/* link-drain shadow req */
 #define REQ_F_TIMEOUT		1024	/* timeout request */
@@ -731,7 +730,6 @@ static void io_req_link_next(struct io_kiocb *req, struct io_kiocb **nxtptr)
 			nxt->flags |= REQ_F_LINK;
 		}
 
-		nxt->flags |= REQ_F_LINK_DONE;
 		/*
 		 * If we're in async work, we can continue processing the chain
 		 * in this context instead of having to queue up new async work.
@@ -1672,6 +1670,8 @@ static int io_send_recvmsg(struct io_kiocb *req, const struct io_uring_sqe *sqe,
 	}
 
 	io_cqring_add_event(req->ctx, sqe->user_data, ret);
+	if (ret < 0 && (req->flags & REQ_F_LINK))
+		req->flags |= REQ_F_FAIL_LINK;
 	io_put_req(req, nxt);
 	return 0;
 }
@@ -1787,6 +1787,8 @@ static int io_poll_remove(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 	spin_unlock_irq(&ctx->completion_lock);
 
 	io_cqring_add_event(req->ctx, sqe->user_data, ret);
+	if (ret < 0 && (req->flags & REQ_F_LINK))
+		req->flags |= REQ_F_FAIL_LINK;
 	io_put_req(req, NULL);
 	return 0;
 }
@@ -1994,6 +1996,8 @@ static enum hrtimer_restart io_timeout_fn(struct hrtimer *timer)
 	spin_unlock_irqrestore(&ctx->completion_lock, flags);
 
 	io_cqring_ev_posted(ctx);
+	if (req->flags & REQ_F_LINK)
+		req->flags |= REQ_F_FAIL_LINK;
 	io_put_req(req, NULL);
 	return HRTIMER_NORESTART;
 }
@@ -2035,6 +2039,8 @@ fill_ev:
 		io_commit_cqring(ctx);
 		spin_unlock_irq(&ctx->completion_lock);
 		io_cqring_ev_posted(ctx);
+		if (req->flags & REQ_F_LINK)
+			req->flags |= REQ_F_FAIL_LINK;
 		io_put_req(req, NULL);
 		return 0;
 	}
@@ -2328,6 +2334,8 @@ static void io_wq_submit_work(struct io_wq_work **workptr)
 	io_put_req(req, NULL);
 
 	if (ret) {
+		if (req->flags & REQ_F_LINK)
+			req->flags |= REQ_F_FAIL_LINK;
 		io_cqring_add_event(ctx, sqe->user_data, ret);
 		io_put_req(req, NULL);
 	}
@@ -2686,12 +2694,12 @@ static bool io_get_sqring(struct io_ring_ctx *ctx, struct sqe_submit *s)
 }
 
 static int io_submit_sqes(struct io_ring_ctx *ctx, unsigned int nr,
-			  struct mm_struct **mm)
+			  struct file *ring_file, int ring_fd,
+			  struct mm_struct **mm, bool async)
 {
 	struct io_submit_state state, *statep = NULL;
 	struct io_kiocb *link = NULL;
 	struct io_kiocb *shadow_req = NULL;
-	bool prev_was_link = false;
 	int i, submitted = 0;
 	bool mm_fault = false;
 
@@ -2714,17 +2722,6 @@ static int io_submit_sqes(struct io_ring_ctx *ctx, unsigned int nr,
 			}
 		}
 
-		/*
-		 * If previous wasn't linked and we have a linked command,
-		 * that's the end of the chain. Submit the previous link.
-		 */
-		if (!prev_was_link && link) {
-			io_queue_link_head(ctx, link, &link->submit, shadow_req);
-			link = NULL;
-			shadow_req = NULL;
-		}
-		prev_was_link = (s.sqe->flags & IOSQE_IO_LINK) != 0;
-
 		if (link && (s.sqe->flags & IOSQE_IO_DRAIN)) {
 			if (!shadow_req) {
 				shadow_req = io_get_req(ctx, NULL);
@@ -2737,18 +2734,33 @@ static int io_submit_sqes(struct io_ring_ctx *ctx, unsigned int nr,
 		}
 
 out:
+		s.ring_file = ring_file;
+		s.ring_fd = ring_fd;
 		s.has_user = *mm != NULL;
-		s.in_async = true;
-		s.needs_fixed_file = true;
-		trace_io_uring_submit_sqe(ctx, s.sqe->user_data, true, true);
+		s.in_async = async;
+		s.needs_fixed_file = async;
+		trace_io_uring_submit_sqe(ctx, s.sqe->user_data, true, async);
 		io_submit_sqe(ctx, &s, statep, &link);
 		submitted++;
+
+		/*
+		 * If previous wasn't linked and we have a linked command,
+		 * that's the end of the chain. Submit the previous link.
+		 */
+		if (!(s.sqe->flags & IOSQE_IO_LINK) && link) {
+			io_queue_link_head(ctx, link, &link->submit, shadow_req);
+			link = NULL;
+			shadow_req = NULL;
+		}
 	}
 
 	if (link)
 		io_queue_link_head(ctx, link, &link->submit, shadow_req);
 	if (statep)
 		io_submit_state_end(&state);
+
+	 /* Commit SQ ring head once we've consumed and submitted all SQEs */
+	io_commit_sqring(ctx);
 
 	return submitted;
 }
@@ -2854,10 +2866,8 @@ static int io_sq_thread(void *data)
 		}
 
 		to_submit = min(to_submit, ctx->sq_entries);
-		inflight += io_submit_sqes(ctx, to_submit, &cur_mm);
-
-		/* Commit SQ ring head once we've consumed all SQEs */
-		io_commit_sqring(ctx);
+		inflight += io_submit_sqes(ctx, to_submit, NULL, -1, &cur_mm,
+					   true);
 	}
 
 	set_fs(old_fs);
@@ -2869,69 +2879,6 @@ static int io_sq_thread(void *data)
 	kthread_parkme();
 
 	return 0;
-}
-
-static int io_ring_submit(struct io_ring_ctx *ctx, unsigned int to_submit,
-			  struct file *ring_file, int ring_fd)
-{
-	struct io_submit_state state, *statep = NULL;
-	struct io_kiocb *link = NULL;
-	struct io_kiocb *shadow_req = NULL;
-	bool prev_was_link = false;
-	int i, submit = 0;
-
-	if (to_submit > IO_PLUG_THRESHOLD) {
-		io_submit_state_start(&state, ctx, to_submit);
-		statep = &state;
-	}
-
-	for (i = 0; i < to_submit; i++) {
-		struct sqe_submit s;
-
-		if (!io_get_sqring(ctx, &s))
-			break;
-
-		/*
-		 * If previous wasn't linked and we have a linked command,
-		 * that's the end of the chain. Submit the previous link.
-		 */
-		if (!prev_was_link && link) {
-			io_queue_link_head(ctx, link, &link->submit, shadow_req);
-			link = NULL;
-			shadow_req = NULL;
-		}
-		prev_was_link = (s.sqe->flags & IOSQE_IO_LINK) != 0;
-
-		if (link && (s.sqe->flags & IOSQE_IO_DRAIN)) {
-			if (!shadow_req) {
-				shadow_req = io_get_req(ctx, NULL);
-				if (unlikely(!shadow_req))
-					goto out;
-				shadow_req->flags |= (REQ_F_IO_DRAIN | REQ_F_SHADOW_DRAIN);
-				refcount_dec(&shadow_req->refs);
-			}
-			shadow_req->sequence = s.sequence;
-		}
-
-out:
-		s.ring_file = ring_file;
-		s.has_user = true;
-		s.in_async = false;
-		s.needs_fixed_file = false;
-		s.ring_fd = ring_fd;
-		submit++;
-		trace_io_uring_submit_sqe(ctx, s.sqe->user_data, true, false);
-		io_submit_sqe(ctx, &s, statep, &link);
-	}
-
-	if (link)
-		io_queue_link_head(ctx, link, &link->submit, shadow_req);
-	if (statep)
-		io_submit_state_end(statep);
-
-	io_commit_sqring(ctx);
-
-	return submit;
 }
 
 struct io_wait_queue {
@@ -4054,10 +4001,14 @@ SYSCALL_DEFINE6(io_uring_enter, unsigned int, fd, u32, to_submit,
 			wake_up(&ctx->sqo_wait);
 		submitted = to_submit;
 	} else if (to_submit) {
-		to_submit = min(to_submit, ctx->sq_entries);
+		struct mm_struct *cur_mm;
 
+		to_submit = min(to_submit, ctx->sq_entries);
 		mutex_lock(&ctx->uring_lock);
-		submitted = io_ring_submit(ctx, to_submit, f.file, fd);
+		/* already have mm, so io_submit_sqes() won't try to grab it */
+		cur_mm = ctx->sqo_mm;
+		submitted = io_submit_sqes(ctx, to_submit, f.file, fd,
+					   &cur_mm, false);
 		mutex_unlock(&ctx->uring_lock);
 	}
 	if (flags & IORING_ENTER_GETEVENTS) {
