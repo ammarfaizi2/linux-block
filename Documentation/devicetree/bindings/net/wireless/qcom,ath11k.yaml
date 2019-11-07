@@ -12,19 +12,17 @@ maintainers:
   - Kalle Valo <kvalo@codeaurora.org>
 
 description: |
-  These are dt entries used on ath11k driver. AHB based ipq8074 uses most of the properties defined in this doc.
+  These are dt entries for Qualcomm Technologies, Inc. IEEE 802.11ax
+  devices, for example like AHB based IPQ8074.
 
 properties:
   compatible:
-    const: "qcom,ipq8074-wifi"
+    const: qcom,ipq8074-wifi
 
   reg:
-    description: Address and length of the register set for the device
     maxItems: 1
 
   interrupts:
-    minItems: 53
-    maxItems: 53
     items:
       - description: misc-pulse1 interrupt events
       - description: misc-latch interrupt events
@@ -81,8 +79,6 @@ properties:
 
 
   interrupt-names:
-    minItems: 53
-    maxItems: 53
     items:
       - const: misc-pulse1
       - const: misc-latch
