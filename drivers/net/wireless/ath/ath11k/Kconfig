@@ -32,4 +32,4 @@ config ATH11K_TRACING
 	bool "ath11k tracing support"
 	depends on ATH11K && EVENT_TRACING
 	---help---
-	  Select this to ath11k use tracing infrastructure.
+	  Select this to use ath11k tracing infrastructure.
