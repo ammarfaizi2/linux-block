@@ -216,6 +216,7 @@ struct pid *alloc_pid(struct pid_namespace *ns)
 		INIT_HLIST_HEAD(&pid->tasks[type]);
 
 	init_waitqueue_head(&pid->wait_pidfd);
+	spin_lock_init(&pid->pidfd_lock);
 
 	upid = pid->numbers + ns->level;
 	spin_lock_irq(&pidmap_lock);
@@ -469,13 +470,37 @@ struct pid *find_ge_pid(int nr, struct pid_namespace *ns)
  */
 static int pidfd_create(struct pid *pid)
 {
-	int fd;
+	int err, fd;
+	struct file *file, *file_new;
 
-	fd = anon_inode_getfd("[pidfd]", &pidfd_fops, get_pid(pid),
-			      O_RDWR | O_CLOEXEC);
-	if (fd < 0)
-		put_pid(pid);
+	err = get_unused_fd_flags(O_RDWR | O_CLOEXEC);
+	if (err < 0)
+		return err;
+	fd = err;
 
+	file = READ_ONCE(pid->pidfd_f);
+	if (file)
+		file_new = get_file(file);
+	else
+		file_new = anon_inode_getfile("[pidfd]", &pidfd_fops, pid,
+					      O_RDWR | O_CLOEXEC);
+	if (IS_ERR(file_new)) {
+		put_unused_fd(fd);
+		return PTR_ERR(file_new);
+	}
+
+	spin_lock(&p->pidfd_lock);
+	if (!READ_ONCE(pid->pidfd_f)) {
+		WRITE_ONCE(pid->pidfd_f, file_new);
+		file = file_new;
+		file_new = NULL;
+	}
+	spin_unlock(&p->pidfd_lock);
+
+	if (file_new)
+		fput(file_new);
+
+	fd_install(fd, file);
 	return fd;
 }
 

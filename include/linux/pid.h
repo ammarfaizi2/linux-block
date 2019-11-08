@@ -56,8 +56,7 @@ struct upid {
 	struct pid_namespace *ns;
 };
 
-struct pid
-{
+struct pid {
 	refcount_t count;
 	unsigned int level;
 	/* lists of tasks that use this pid */
@@ -66,6 +65,8 @@ struct pid
 	wait_queue_head_t wait_pidfd;
 	struct rcu_head rcu;
 	struct upid numbers[1];
+	spinlock_t pidfd_lock;
+	struct file *pidfd_f;
 };
 
 extern struct pid init_struct_pid;

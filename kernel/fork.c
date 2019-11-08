@@ -1690,7 +1690,13 @@ static int pidfd_release(struct inode *inode, struct file *file)
 	struct pid *pid = file->private_data;
 
 	file->private_data = NULL;
+
+	spin_lock(&p->pidfd_lock);
+	WRITE_ONCE(p->pidfd_f, NULL)
+	spin_unlock(&p->pidfd_lock);
+
 	put_pid(pid);
+
 	return 0;
 }
 
