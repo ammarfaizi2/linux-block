@@ -9,6 +9,7 @@
 #include "mac.h"
 #include "coex.h"
 #include "debug.h"
+#include "reg.h"
 
 static int rtw_ips_pwr_up(struct rtw_dev *rtwdev)
 {
@@ -68,24 +69,26 @@ void rtw_power_mode_change(struct rtw_dev *rtwdev, bool enter)
 	u8 polling_cnt;
 	u8 retry_cnt = 0;
 
-retry:
-	request = rtw_read8(rtwdev, rtwdev->hci.rpwm_addr);
-	confirm = rtw_read8(rtwdev, rtwdev->hci.cpwm_addr);
+	for (retry_cnt = 0; retry_cnt < 3; retry_cnt++) {
+		request = rtw_read8(rtwdev, rtwdev->hci.rpwm_addr);
+		confirm = rtw_read8(rtwdev, rtwdev->hci.cpwm_addr);
 
-	/* toggle to request power mode, others remain 0 */
-	request ^= request | BIT_RPWM_TOGGLE;
-	if (!enter) {
-		request |= POWER_MODE_ACK;
-	} else {
-		request |= POWER_MODE_LCLK;
-		if (rtw_fw_lps_deep_mode == LPS_DEEP_MODE_PG)
-			request |= POWER_MODE_PG;
-	}
+		/* toggle to request power mode, others remain 0 */
+		request ^= request | BIT_RPWM_TOGGLE;
+		if (!enter) {
+			request |= POWER_MODE_ACK;
+		} else {
+			request |= POWER_MODE_LCLK;
+			if (rtw_fw_lps_deep_mode == LPS_DEEP_MODE_PG)
+				request |= POWER_MODE_PG;
+		}
 
-	rtw_write8(rtwdev, rtwdev->hci.rpwm_addr, request);
+		rtw_write8(rtwdev, rtwdev->hci.rpwm_addr, request);
 
-	/* check confirm power mode has left power save state */
-	if (!enter) {
+		if (enter)
+			return;
+
+		/* check confirm power mode has left power save state */
 		for (polling_cnt = 0; polling_cnt < 3; polling_cnt++) {
 			polling = rtw_read8(rtwdev, rtwdev->hci.cpwm_addr);
 			if ((polling ^ confirm) & BIT_RPWM_TOGGLE)
@@ -93,29 +96,50 @@ retry:
 			mdelay(20);
 		}
 
-		/* in case of fw/hw missed the request, retry 3 times */
-		if (retry_cnt < 3) {
-			rtw_warn(rtwdev, "failed to leave deep PS, retry=%d\n",
-				 retry_cnt);
-			retry_cnt++;
-			goto retry;
-		}
-
-		/* Hit here means that driver failed to change hardware
-		 * power mode to active state after retry 3 times.
-		 * If the power state is locked at Deep sleep, most of
-		 * the hardware circuits is not working, even register
-		 * read/write. It should be treated as fatal error and
-		 * requires an entire analysis about the firmware/hardware
-		 */
-		WARN_ON("Hardware power state locked\n");
+		/* in case of fw/hw missed the request, retry */
+		rtw_warn(rtwdev, "failed to leave deep PS, retry=%d\n",
+			 retry_cnt);
 	}
+
+	/* Hit here means that driver failed to change hardware power mode to
+	 * active state after retry 3 times. If the power state is locked at
+	 * Deep sleep, most of the hardware circuits is not working, even
+	 * register read/write. It should be treated as fatal error and
+	 * requires an entire analysis about the firmware/hardware
+	 */
+	WARN(1, "Hardware power state locked\n");
 }
 EXPORT_SYMBOL(rtw_power_mode_change);
 
 static void __rtw_leave_lps_deep(struct rtw_dev *rtwdev)
 {
 	rtw_hci_deep_ps(rtwdev, false);
+}
+
+static void rtw_fw_leave_lps_state_check(struct rtw_dev *rtwdev)
+{
+	int i;
+
+	/* Driver needs to wait for firmware to leave LPS state
+	 * successfully. Firmware will send null packet to inform AP,
+	 * and see if AP sends an ACK back, then firmware will restore
+	 * the REG_TCR register.
+	 *
+	 * If driver does not wait for firmware, null packet with
+	 * PS bit could be sent due to incorrect REG_TCR setting.
+	 *
+	 * In our test, 100ms should be enough for firmware to finish
+	 * the flow. If REG_TCR Register is still incorrect after 100ms,
+	 * just modify it directly, and throw a warn message.
+	 */
+	for (i = 0 ; i < LEAVE_LPS_TRY_CNT; i++) {
+		if (rtw_read32_mask(rtwdev, REG_TCR, BIT_PWRMGT_HWDATA_EN) == 0)
+			return;
+		msleep(20);
+	}
+
+	rtw_write32_mask(rtwdev, REG_TCR, BIT_PWRMGT_HWDATA_EN, 0);
+	rtw_warn(rtwdev, "firmware failed to restore hardware setting\n");
 }
 
 static void rtw_leave_lps_core(struct rtw_dev *rtwdev)
@@ -128,6 +152,8 @@ static void rtw_leave_lps_core(struct rtw_dev *rtwdev)
 	conf->smart_ps = 0;
 
 	rtw_fw_set_pwr_mode(rtwdev);
+	rtw_fw_leave_lps_state_check(rtwdev);
+
 	clear_bit(RTW_FLAG_LEISURE_PS, rtwdev->flags);
 
 	rtw_coex_lps_notify(rtwdev, COEX_LPS_DISABLE);

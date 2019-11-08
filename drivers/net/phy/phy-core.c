@@ -8,7 +8,7 @@
 
 const char *phy_speed_to_str(int speed)
 {
-	BUILD_BUG_ON_MSG(__ETHTOOL_LINK_MODE_MASK_NBITS != 69,
+	BUILD_BUG_ON_MSG(__ETHTOOL_LINK_MODE_MASK_NBITS != 74,
 		"Enum ethtool_link_mode_bit_indices and phylib are out of sync. "
 		"If a speed or mode has been added please update phy_speed_to_str "
 		"and the PHY settings array.\n");
@@ -42,6 +42,8 @@ const char *phy_speed_to_str(int speed)
 		return "100Gbps";
 	case SPEED_200000:
 		return "200Gbps";
+	case SPEED_400000:
+		return "400Gbps";
 	case SPEED_UNKNOWN:
 		return "Unknown";
 	default:
@@ -70,6 +72,12 @@ EXPORT_SYMBOL_GPL(phy_duplex_to_str);
 			       .bit = ETHTOOL_LINK_MODE_ ## b ## _BIT}
 
 static const struct phy_setting settings[] = {
+	/* 400G */
+	PHY_SETTING( 400000, FULL, 400000baseCR8_Full		),
+	PHY_SETTING( 400000, FULL, 400000baseKR8_Full		),
+	PHY_SETTING( 400000, FULL, 400000baseLR8_ER8_FR8_Full	),
+	PHY_SETTING( 400000, FULL, 400000baseDR8_Full		),
+	PHY_SETTING( 400000, FULL, 400000baseSR8_Full		),
 	/* 200G */
 	PHY_SETTING( 200000, FULL, 200000baseCR4_Full		),
 	PHY_SETTING( 200000, FULL, 200000baseKR4_Full		),
@@ -283,6 +291,18 @@ void of_set_phy_eee_broken(struct phy_device *phydev)
 	phydev->eee_broken_modes = broken;
 }
 
+void phy_resolve_aneg_pause(struct phy_device *phydev)
+{
+	if (phydev->duplex == DUPLEX_FULL) {
+		phydev->pause = linkmode_test_bit(ETHTOOL_LINK_MODE_Pause_BIT,
+						  phydev->lp_advertising);
+		phydev->asym_pause = linkmode_test_bit(
+			ETHTOOL_LINK_MODE_Asym_Pause_BIT,
+			phydev->lp_advertising);
+	}
+}
+EXPORT_SYMBOL_GPL(phy_resolve_aneg_pause);
+
 /**
  * phy_resolve_aneg_linkmode - resolve the advertisements into phy settings
  * @phydev: The phy_device struct
@@ -305,13 +325,7 @@ void phy_resolve_aneg_linkmode(struct phy_device *phydev)
 			break;
 		}
 
-	if (phydev->duplex == DUPLEX_FULL) {
-		phydev->pause = linkmode_test_bit(ETHTOOL_LINK_MODE_Pause_BIT,
-						  phydev->lp_advertising);
-		phydev->asym_pause = linkmode_test_bit(
-			ETHTOOL_LINK_MODE_Asym_Pause_BIT,
-			phydev->lp_advertising);
-	}
+	phy_resolve_aneg_pause(phydev);
 }
 EXPORT_SYMBOL_GPL(phy_resolve_aneg_linkmode);
 
@@ -683,11 +697,17 @@ EXPORT_SYMBOL_GPL(phy_modify_mmd);
 
 static int __phy_read_page(struct phy_device *phydev)
 {
+	if (WARN_ONCE(!phydev->drv->read_page, "read_page callback not available, PHY driver not loaded?\n"))
+		return -EOPNOTSUPP;
+
 	return phydev->drv->read_page(phydev);
 }
 
 static int __phy_write_page(struct phy_device *phydev, int page)
 {
+	if (WARN_ONCE(!phydev->drv->write_page, "write_page callback not available, PHY driver not loaded?\n"))
+		return -EOPNOTSUPP;
+
 	return phydev->drv->write_page(phydev, page);
 }
 

@@ -11,22 +11,6 @@
 /* FW bin information */
 #define FW_HDR_SIZE			64
 #define FW_HDR_CHKSUM_SIZE		8
-#define FW_HDR_VERSION			4
-#define FW_HDR_SUBVERSION		6
-#define FW_HDR_SUBINDEX			7
-#define FW_HDR_MONTH			16
-#define FW_HDR_DATE			17
-#define FW_HDR_HOUR			18
-#define FW_HDR_MIN			19
-#define FW_HDR_YEAR			20
-#define FW_HDR_MEM_USAGE		24
-#define FW_HDR_H2C_FMT_VER		28
-#define FW_HDR_DMEM_ADDR		32
-#define FW_HDR_DMEM_SIZE		36
-#define FW_HDR_IMEM_SIZE		48
-#define FW_HDR_EMEM_SIZE		52
-#define FW_HDR_EMEM_ADDR		56
-#define FW_HDR_IMEM_ADDR		60
 
 #define FIFO_PAGE_SIZE_SHIFT		12
 #define FIFO_PAGE_SIZE			4096
@@ -36,6 +20,7 @@
 enum rtw_c2h_cmd_id {
 	C2H_BT_INFO = 0x09,
 	C2H_BT_MP_INFO = 0x0b,
+	C2H_RA_RPT = 0x0c,
 	C2H_HW_FEATURE_REPORT = 0x19,
 	C2H_WLAN_INFO = 0x27,
 	C2H_HW_FEATURE_DUMP = 0xfd,
@@ -115,9 +100,43 @@ struct rtw_rsvd_page {
 	bool add_txdesc;
 };
 
+struct rtw_fw_hdr {
+	__le16 signature;
+	u8 category;
+	u8 function;
+	__le16 version;		/* 0x04 */
+	u8 subversion;
+	u8 subindex;
+	__le32 rsvd;		/* 0x08 */
+	__le32 rsvd2;		/* 0x0C */
+	u8 month;		/* 0x10 */
+	u8 day;
+	u8 hour;
+	u8 min;
+	__le16 year;		/* 0x14 */
+	__le16 rsvd3;
+	u8 mem_usage;		/* 0x18 */
+	u8 rsvd4[3];
+	__le16 h2c_fmt_ver;	/* 0x1C */
+	__le16 rsvd5;
+	__le32 dmem_addr;	/* 0x20 */
+	__le32 dmem_size;
+	__le32 rsvd6;
+	__le32 rsvd7;
+	__le32 imem_size;	/* 0x30 */
+	__le32 emem_size;
+	__le32 emem_addr;
+	__le32 imem_addr;
+} __packed;
+
 /* C2H */
 #define GET_CCX_REPORT_SEQNUM(c2h_payload)	(c2h_payload[8] & 0xfc)
 #define GET_CCX_REPORT_STATUS(c2h_payload)	(c2h_payload[9] & 0xc0)
+
+#define GET_RA_REPORT_RATE(c2h_payload)		(c2h_payload[0] & 0x7f)
+#define GET_RA_REPORT_SGI(c2h_payload)		((c2h_payload[0] & 0x80) >> 7)
+#define GET_RA_REPORT_BW(c2h_payload)		(c2h_payload[6])
+#define GET_RA_REPORT_MACID(c2h_payload)	(c2h_payload[1])
 
 /* PKT H2C */
 #define H2C_PKT_CMD_ID 0xFF

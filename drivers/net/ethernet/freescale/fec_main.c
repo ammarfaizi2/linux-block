@@ -2706,7 +2706,6 @@ static void fec_enet_free_buffers(struct net_device *ndev)
 
 	for (q = 0; q < fep->num_tx_queues; q++) {
 		txq = fep->tx_queue[q];
-		bdp = txq->bd.base;
 		for (i = 0; i < txq->bd.ring_size; i++) {
 			kfree(txq->tx_bounce[i]);
 			txq->tx_bounce[i] = NULL;
@@ -3394,6 +3393,7 @@ fec_probe(struct platform_device *pdev)
 {
 	struct fec_enet_private *fep;
 	struct fec_platform_data *pdata;
+	phy_interface_t interface;
 	struct net_device *ndev;
 	int i, irq, ret = 0;
 	const struct of_device_id *of_id;
@@ -3466,15 +3466,15 @@ fec_probe(struct platform_device *pdev)
 	}
 	fep->phy_node = phy_node;
 
-	ret = of_get_phy_mode(pdev->dev.of_node);
-	if (ret < 0) {
+	ret = of_get_phy_mode(pdev->dev.of_node, &interface);
+	if (ret) {
 		pdata = dev_get_platdata(&pdev->dev);
 		if (pdata)
 			fep->phy_interface = pdata->phy;
 		else
 			fep->phy_interface = PHY_INTERFACE_MODE_MII;
 	} else {
-		fep->phy_interface = ret;
+		fep->phy_interface = interface;
 	}
 
 	fep->clk_ipg = devm_clk_get(&pdev->dev, "ipg");
@@ -3558,7 +3558,7 @@ fec_probe(struct platform_device *pdev)
 
 	for (i = 0; i < irq_cnt; i++) {
 		snprintf(irq_name, sizeof(irq_name), "int%d", i);
-		irq = platform_get_irq_byname(pdev, irq_name);
+		irq = platform_get_irq_byname_optional(pdev, irq_name);
 		if (irq < 0)
 			irq = platform_get_irq(pdev, i);
 		if (irq < 0) {

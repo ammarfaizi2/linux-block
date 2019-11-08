@@ -3405,17 +3405,17 @@ static int macb_clk_init(struct platform_device *pdev, struct clk **pclk,
 		return err;
 	}
 
-	*tx_clk = devm_clk_get(&pdev->dev, "tx_clk");
+	*tx_clk = devm_clk_get_optional(&pdev->dev, "tx_clk");
 	if (IS_ERR(*tx_clk))
-		*tx_clk = NULL;
+		return PTR_ERR(*tx_clk);
 
-	*rx_clk = devm_clk_get(&pdev->dev, "rx_clk");
+	*rx_clk = devm_clk_get_optional(&pdev->dev, "rx_clk");
 	if (IS_ERR(*rx_clk))
-		*rx_clk = NULL;
+		return PTR_ERR(*rx_clk);
 
-	*tsu_clk = devm_clk_get(&pdev->dev, "tsu_clk");
+	*tsu_clk = devm_clk_get_optional(&pdev->dev, "tsu_clk");
 	if (IS_ERR(*tsu_clk))
-		*tsu_clk = NULL;
+		return PTR_ERR(*tsu_clk);
 
 	err = clk_prepare_enable(*pclk);
 	if (err) {
@@ -4182,6 +4182,7 @@ static int macb_probe(struct platform_device *pdev)
 	unsigned int queue_mask, num_queues;
 	bool native_io;
 	struct phy_device *phydev;
+	phy_interface_t interface;
 	struct net_device *dev;
 	struct resource *regs;
 	void __iomem *mem;
@@ -4308,12 +4309,12 @@ static int macb_probe(struct platform_device *pdev)
 		macb_get_hwaddr(bp);
 	}
 
-	err = of_get_phy_mode(np);
-	if (err < 0)
+	err = of_get_phy_mode(np, &interface);
+	if (err)
 		/* not found in DT, MII by default */
 		bp->phy_interface = PHY_INTERFACE_MODE_MII;
 	else
-		bp->phy_interface = err;
+		bp->phy_interface = interface;
 
 	/* IP specific init */
 	err = init(pdev);

@@ -199,7 +199,7 @@ resubmit:
 				kfree_skb(skb);
 				return;
 			}
-			nf_reset(skb);
+			nf_reset_ct(skb);
 		}
 		ret = INDIRECT_CALL_2(ipprot->handler, tcp_v4_rcv, udp_rcv,
 				      skb);
@@ -611,5 +611,6 @@ void ip_list_rcv(struct list_head *head, struct packet_type *pt,
 		list_add_tail(&skb->list, &sublist);
 	}
 	/* dispatch final sublist */
-	ip_sublist_rcv(&sublist, curr_dev, curr_net);
+	if (!list_empty(&sublist))
+		ip_sublist_rcv(&sublist, curr_dev, curr_net);
 }

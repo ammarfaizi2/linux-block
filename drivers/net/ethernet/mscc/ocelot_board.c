@@ -364,12 +364,12 @@ static int mscc_ocelot_probe(struct platform_device *pdev)
 
 	for_each_available_child_of_node(ports, portnp) {
 		struct device_node *phy_node;
+		phy_interface_t phy_mode;
 		struct phy_device *phy;
 		struct resource *res;
 		struct phy *serdes;
 		void __iomem *regs;
 		char res_name[8];
-		int phy_mode;
 		u32 port;
 
 		if (of_property_read_u32(portnp, "reg", &port))
@@ -388,20 +388,21 @@ static int mscc_ocelot_probe(struct platform_device *pdev)
 			continue;
 
 		phy = of_phy_find_device(phy_node);
+		of_node_put(phy_node);
 		if (!phy)
 			continue;
 
 		err = ocelot_probe_port(ocelot, port, regs, phy);
 		if (err) {
 			of_node_put(portnp);
-			return err;
+			goto out_put_ports;
 		}
 
-		phy_mode = of_get_phy_mode(portnp);
-		if (phy_mode < 0)
-			ocelot->ports[port]->phy_mode = PHY_INTERFACE_MODE_NA;
-		else
-			ocelot->ports[port]->phy_mode = phy_mode;
+		err = of_get_phy_mode(portnp, &phy_mode);
+		if (err && err != -ENODEV)
+			goto out_put_ports;
+
+		ocelot->ports[port]->phy_mode = phy_mode;
 
 		switch (ocelot->ports[port]->phy_mode) {
 		case PHY_INTERFACE_MODE_NA:
@@ -422,7 +423,8 @@ static int mscc_ocelot_probe(struct platform_device *pdev)
 				"invalid phy mode for port%d, (Q)SGMII only\n",
 				port);
 			of_node_put(portnp);
-			return -EINVAL;
+			err = -EINVAL;
+			goto out_put_ports;
 		}
 
 		serdes = devm_of_phy_get(ocelot->dev, portnp, NULL);
@@ -435,7 +437,8 @@ static int mscc_ocelot_probe(struct platform_device *pdev)
 					"missing SerDes phys for port%d\n",
 					port);
 
-			goto err_probe_ports;
+			of_node_put(portnp);
+			goto out_put_ports;
 		}
 
 		ocelot->ports[port]->serdes = serdes;
@@ -447,9 +450,8 @@ static int mscc_ocelot_probe(struct platform_device *pdev)
 
 	dev_info(&pdev->dev, "Ocelot switch probed\n");
 
-	return 0;
-
-err_probe_ports:
+out_put_ports:
+	of_node_put(ports);
 	return err;
 }
 

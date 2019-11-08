@@ -5550,6 +5550,14 @@ const struct ieee80211_reg_rule *freq_reg_info(struct wiphy *wiphy,
 const char *reg_initiator_name(enum nl80211_reg_initiator initiator);
 
 /**
+ * regulatory_pre_cac_allowed - check if pre-CAC allowed in the current regdom
+ * @wiphy: wiphy for which pre-CAC capability is checked.
+ *
+ * Pre-CAC is allowed only in some regdomains (notable ETSI).
+ */
+bool regulatory_pre_cac_allowed(struct wiphy *wiphy);
+
+/**
  * DOC: Internal regulatory db functions
  *
  */
@@ -6585,7 +6593,7 @@ struct cfg80211_roam_info {
  * time it is accessed in __cfg80211_roamed() due to delay in scheduling
  * rdev->event_work. In case of any failures, the reference is released
  * either in cfg80211_roamed() or in __cfg80211_romed(), Otherwise, it will be
- * released while diconneting from the current bss.
+ * released while disconnecting from the current bss.
  */
 void cfg80211_roamed(struct net_device *dev, struct cfg80211_roam_info *info,
 		     gfp_t gfp);
