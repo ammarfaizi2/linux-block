@@ -745,7 +745,7 @@ static struct io_kiocb *io_get_req(struct io_ring_ctx *ctx,
 	struct io_kiocb *req;
 
 	if (!percpu_ref_tryget(&ctx->refs))
-		return NULL;
+		return ERR_PTR(-ENXIO);
 
 	if (!state) {
 		req = kmem_cache_alloc(req_cachep, gfp);
@@ -791,7 +791,7 @@ fallback:
 	if (req)
 		goto got_it;
 	percpu_ref_put(&ctx->refs);
-	return NULL;
+	return ERR_PTR(-EBUSY);
 }
 
 static void io_free_req_many(struct io_ring_ctx *ctx, void **reqs, int *nr)
@@ -3042,6 +3042,31 @@ static bool io_get_sqring(struct io_ring_ctx *ctx, struct sqe_submit *s)
 	return false;
 }
 
+static bool io_sq_over_limit(struct io_ring_ctx *ctx, unsigned to_submit)
+{
+	unsigned inflight;
+
+	if (!list_empty(&ctx->cq_overflow_list)) {
+		io_cqring_overflow_flush(ctx, false);
+		return true;
+	}
+
+	/*
+	 * This doesn't need to be super precise, so only check every once
+	 * in a while.
+	 */
+	if ((ctx->cached_sq_head & ~ctx->sq_mask) ==
+	    ((ctx->cached_sq_head + to_submit) & ~ctx->sq_mask))
+		return false;
+
+	/*
+	 * Limit us to 2x the CQ ring size
+	 */
+	inflight = ctx->cached_sq_head -
+		  (ctx->cached_cq_tail + atomic_read(&ctx->cached_cq_overflow));
+	return inflight > 2 * ctx->cq_entries;
+}
+
 static int io_submit_sqes(struct io_ring_ctx *ctx, unsigned int nr,
 			  struct file *ring_file, int ring_fd,
 			  struct mm_struct **mm, bool async)
@@ -3052,10 +3077,8 @@ static int io_submit_sqes(struct io_ring_ctx *ctx, unsigned int nr,
 	int i, submitted = 0;
 	bool mm_fault = false;
 
-	if (!list_empty(&ctx->cq_overflow_list)) {
-		io_cqring_overflow_flush(ctx, false);
+	if (unlikely(io_sq_over_limit(ctx, nr)))
 		return -EBUSY;
-	}
 
 	if (nr > IO_PLUG_THRESHOLD) {
 		io_submit_state_start(&state, ctx, nr);
@@ -3067,9 +3090,9 @@ static int io_submit_sqes(struct io_ring_ctx *ctx, unsigned int nr,
 		unsigned int sqe_flags;
 
 		req = io_get_req(ctx, statep);
-		if (unlikely(!req)) {
+		if (unlikely(IS_ERR(req))) {
 			if (!submitted)
-				submitted = -EAGAIN;
+				submitted = PTR_ERR(req);
 			break;
 		}
 		if (!io_get_sqring(ctx, &req->submit)) {
@@ -3090,8 +3113,10 @@ static int io_submit_sqes(struct io_ring_ctx *ctx, unsigned int nr,
 		if (link && (sqe_flags & IOSQE_IO_DRAIN)) {
 			if (!shadow_req) {
 				shadow_req = io_get_req(ctx, NULL);
-				if (unlikely(!shadow_req))
+				if (unlikely(IS_ERR(shadow_req))) {
+					shadow_req = NULL;
 					goto out;
+				}
 				shadow_req->flags |= (REQ_F_IO_DRAIN | REQ_F_SHADOW_DRAIN);
 				refcount_dec(&shadow_req->refs);
 			}
