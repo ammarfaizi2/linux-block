@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: BSD-3-Clause-Clear
+# SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
 # Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
 
 %YAML 1.2
@@ -12,19 +12,17 @@ maintainers:
   - Kalle Valo <kvalo@codeaurora.org>
 
 description: |
-  These are dt entries used on ath11k driver. AHB based ipq8074 uses most of the properties defined in this doc.
+  These are dt entries for Qualcomm Technologies, Inc. IEEE 802.11ax
+  devices, for example like AHB based IPQ8074.
 
 properties:
   compatible:
-    const: "qcom,ipq8074-wifi"
+    const: qcom,ipq8074-wifi
 
   reg:
-    description: Address and length of the register set for the device
     maxItems: 1
 
   interrupts:
-    minItems: 53
-    maxItems: 53
     items:
       - description: misc-pulse1 interrupt events
       - description: misc-latch interrupt events
@@ -81,8 +79,6 @@ properties:
 
 
   interrupt-names:
-    minItems: 53
-    maxItems: 53
     items:
       - const: misc-pulse1
       - const: misc-latch
@@ -159,119 +155,119 @@ examples:
   - |
 
     q6v5_wcss: q6v5_wcss@CD00000 {
-    	compatible = "qcom,ipq8074-wcss-pil";
-    	reg = <0xCD00000 0x4040>,
-    	      <0x4AB000 0x20>;
-    	reg-names = "qdsp6",
-    		    "rmb";
+        compatible = "qcom,ipq8074-wcss-pil";
+        reg = <0xCD00000 0x4040>,
+              <0x4AB000 0x20>;
+        reg-names = "qdsp6",
+                    "rmb";
     };
 
     wifi0: wifi@c000000 {
-        	compatible = "qcom,ipq8074-wifi";
-    	reg = <0xc000000 0x2000000>;
-    	interrupts = <0 320 1>,
-    		     <0 319 1>,
-    		     <0 318 1>,
-    		     <0 317 1>,
-    		     <0 316 1>,
-    		     <0 315 1>,
-    		     <0 314 1>,
-    		     <0 311 1>,
-    		     <0 310 1>,
-    		     <0 411 1>,
-    		     <0 410 1>,
-    		     <0 40 1>,
-    		     <0 39 1>,
-    		     <0 302 1>,
-    		     <0 301 1>,
-    		     <0 37 1>,
-    		     <0 36 1>,
-    		     <0 296 1>,
-    		     <0 295 1>,
-    		     <0 294 1>,
-    		     <0 293 1>,
-    		     <0 292 1>,
-    		     <0 291 1>,
-    		     <0 290 1>,
-    		     <0 289 1>,
-    		     <0 288 1>,
-    		     <0 239 1>,
-    		     <0 236 1>,
-    		     <0 235 1>,
-    		     <0 234 1>,
-    		     <0 233 1>,
-    		     <0 232 1>,
-    		     <0 231 1>,
-    		     <0 230 1>,
-    		     <0 229 1>,
-    		     <0 228 1>,
-    		     <0 224 1>,
-    		     <0 223 1>,
-    		     <0 203 1>,
-    		     <0 183 1>,
-    		     <0 180 1>,
-    		     <0 179 1>,
-    		     <0 178 1>,
-    		     <0 177 1>,
-    		     <0 176 1>,
-    		     <0 163 1>,
-    		     <0 162 1>,
-    		     <0 160 1>,
-    		     <0 159 1>,
-    		     <0 158 1>,
-    		     <0 157 1>,
-    		     <0 156 1>;
-    	interrupt-names = "misc-pulse1",
-    			  "misc-latch",
-    			  "sw-exception",
-    			  "watchdog",
-    			  "ce0",
-    			  "ce1",
-    			  "ce2",
-    			  "ce3",
-    			  "ce4",
-    			  "ce5",
-    			  "ce6",
-    			  "ce7",
-    			  "ce8",
-    			  "ce9",
-    			  "ce10",
-    			  "ce11",
-    			  "host2wbm-desc-feed",
-    			  "host2reo-re-injection",
-    			  "host2reo-command",
-    			  "host2rxdma-monitor-ring3",
-    			  "host2rxdma-monitor-ring2",
-    			  "host2rxdma-monitor-ring1",
-    			  "reo2ost-exception",
-    			  "wbm2host-rx-release",
-    			  "reo2host-status",
-    			  "reo2host-destination-ring4",
-    			  "reo2host-destination-ring3",
-    			  "reo2host-destination-ring2",
-    			  "reo2host-destination-ring1",
-    			  "rxdma2host-monitor-destination-mac3",
-    			  "rxdma2host-monitor-destination-mac2",
-    			  "rxdma2host-monitor-destination-mac1",
-    			  "ppdu-end-interrupts-mac3",
-    			  "ppdu-end-interrupts-mac2",
-    			  "ppdu-end-interrupts-mac1",
-    			  "rxdma2host-monitor-status-ring-mac3",
-    			  "rxdma2host-monitor-status-ring-mac2",
-    			  "rxdma2host-monitor-status-ring-mac1",
-    			  "host2rxdma-host-buf-ring-mac3",
-    			  "host2rxdma-host-buf-ring-mac2",
-    			  "host2rxdma-host-buf-ring-mac1",
-    			  "rxdma2host-destination-ring-mac3",
-    			  "rxdma2host-destination-ring-mac2",
-    			  "rxdma2host-destination-ring-mac1",
-    			  "host2tcl-input-ring4",
-    			  "host2tcl-input-ring3",
-    			  "host2tcl-input-ring2",
-    			  "host2tcl-input-ring1",
-    			  "wbm2host-tx-completions-ring3",
-    			  "wbm2host-tx-completions-ring2",
-    			  "wbm2host-tx-completions-ring1",
-    			  "tcl2host-status-ring";
-    	qcom,rproc = <&q6v5_wcss>;
+        compatible = "qcom,ipq8074-wifi";
+        reg = <0xc000000 0x2000000>;
+        interrupts = <0 320 1>,
+                     <0 319 1>,
+                     <0 318 1>,
+                     <0 317 1>,
+                     <0 316 1>,
+                     <0 315 1>,
+                     <0 314 1>,
+                     <0 311 1>,
+                     <0 310 1>,
+                     <0 411 1>,
+                     <0 410 1>,
+                     <0 40 1>,
+                     <0 39 1>,
+                     <0 302 1>,
+                     <0 301 1>,
+                     <0 37 1>,
+                     <0 36 1>,
+                     <0 296 1>,
+                     <0 295 1>,
+                     <0 294 1>,
+                     <0 293 1>,
+                     <0 292 1>,
+                     <0 291 1>,
+                     <0 290 1>,
+                     <0 289 1>,
+                     <0 288 1>,
+                     <0 239 1>,
+                     <0 236 1>,
+                     <0 235 1>,
+                     <0 234 1>,
+                     <0 233 1>,
+                     <0 232 1>,
+                     <0 231 1>,
+                     <0 230 1>,
+                     <0 229 1>,
+                     <0 228 1>,
+                     <0 224 1>,
+                     <0 223 1>,
+                     <0 203 1>,
+                     <0 183 1>,
+                     <0 180 1>,
+                     <0 179 1>,
+                     <0 178 1>,
+                     <0 177 1>,
+                     <0 176 1>,
+                     <0 163 1>,
+                     <0 162 1>,
+                     <0 160 1>,
+                     <0 159 1>,
+                     <0 158 1>,
+                     <0 157 1>,
+                     <0 156 1>;
+        interrupt-names = "misc-pulse1",
+                          "misc-latch",
+                          "sw-exception",
+                          "watchdog",
+                          "ce0",
+                          "ce1",
+                          "ce2",
+                          "ce3",
+                          "ce4",
+                          "ce5",
+                          "ce6",
+                          "ce7",
+                          "ce8",
+                          "ce9",
+                          "ce10",
+                          "ce11",
+                          "host2wbm-desc-feed",
+                          "host2reo-re-injection",
+                          "host2reo-command",
+                          "host2rxdma-monitor-ring3",
+                          "host2rxdma-monitor-ring2",
+                          "host2rxdma-monitor-ring1",
+                          "reo2ost-exception",
+                          "wbm2host-rx-release",
+                          "reo2host-status",
+                          "reo2host-destination-ring4",
+                          "reo2host-destination-ring3",
+                          "reo2host-destination-ring2",
+                          "reo2host-destination-ring1",
+                          "rxdma2host-monitor-destination-mac3",
+                          "rxdma2host-monitor-destination-mac2",
+                          "rxdma2host-monitor-destination-mac1",
+                          "ppdu-end-interrupts-mac3",
+                          "ppdu-end-interrupts-mac2",
+                          "ppdu-end-interrupts-mac1",
+                          "rxdma2host-monitor-status-ring-mac3",
+                          "rxdma2host-monitor-status-ring-mac2",
+                          "rxdma2host-monitor-status-ring-mac1",
+                          "host2rxdma-host-buf-ring-mac3",
+                          "host2rxdma-host-buf-ring-mac2",
+                          "host2rxdma-host-buf-ring-mac1",
+                          "rxdma2host-destination-ring-mac3",
+                          "rxdma2host-destination-ring-mac2",
+                          "rxdma2host-destination-ring-mac1",
+                          "host2tcl-input-ring4",
+                          "host2tcl-input-ring3",
+                          "host2tcl-input-ring2",
+                          "host2tcl-input-ring1",
+                          "wbm2host-tx-completions-ring3",
+                          "wbm2host-tx-completions-ring2",
+                          "wbm2host-tx-completions-ring1",
+                          "tcl2host-status-ring";
+        qcom,rproc = <&q6v5_wcss>;
     };
