@@ -61,6 +61,14 @@ config PROC_VMCORE_DEVICE_DUMP
 	  as ELF notes to /proc/vmcore. You can still disable device
 	  dump using the kernel command line option 'novmcoredd'.
 
+config PROC_PIDFS
+	bool "pidfs file system support"
+	depends on PROC_FS
+	default n
+	help
+	  The pidfs filesystem contains a subset of the /proc file system
+	  which contains only information only about the processes.
+
 config PROC_SYSCTL
 	bool "Sysctl support (/proc/sys)" if EXPERT
 	depends on PROC_FS

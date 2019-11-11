@@ -98,10 +98,14 @@ static void proc_apply_options(struct super_block *s,
 static int proc_fill_super(struct super_block *s, struct fs_context *fc)
 {
 	struct pid_namespace *pid_ns = get_pid_ns(s->s_fs_info);
+	struct proc_dir_entry *fs_root = &proc_root;
 	struct inode *root_inode;
 	int ret;
 
 	proc_apply_options(s, fc, pid_ns, current_user_ns());
+
+	if (IS_ENABLED(CONFIG_PROC_PIDFS) && s->s_type == &pidfs_fs_type)
+		fs_root = &pidfs_root;
 
 	/* User space would break if executables or devices appear on proc */
 	s->s_iflags |= SB_I_USERNS_VISIBLE | SB_I_NOEXEC | SB_I_NODEV;
@@ -118,12 +122,12 @@ static int proc_fill_super(struct super_block *s, struct fs_context *fc)
 	 * top of it
 	 */
 	s->s_stack_depth = FILESYSTEM_MAX_STACK_DEPTH;
-	
+
 	/* procfs dentries and inodes don't require IO to create */
 	s->s_shrink.seeks = 0;
 
-	pde_get(&proc_root);
-	root_inode = proc_get_inode(s, &proc_root);
+	pde_get(fs_root);
+	root_inode = proc_get_inode(s, fs_root);
 	if (!root_inode) {
 		pr_err("proc_fill_super: get root inode failed\n");
 		return -ENOMEM;
@@ -196,16 +200,34 @@ static void proc_kill_sb(struct super_block *sb)
 	struct pid_namespace *ns;
 
 	ns = (struct pid_namespace *)sb->s_fs_info;
-	if (ns->proc_self)
-		dput(ns->proc_self);
-	if (ns->proc_thread_self)
-		dput(ns->proc_thread_self);
+	if (IS_ENABLED(CONFIG_PROC_PIDFS) && sb->s_type == &pidfs_fs_type) {
+		if (ns->pidfs_self)
+			dput(ns->pidfs_self);
+
+		if (ns->pidfs_thread_self)
+			dput(ns->pidfs_thread_self);
+	} else {
+		if (ns->proc_self)
+			dput(ns->proc_self);
+
+		if (ns->proc_thread_self)
+			dput(ns->proc_thread_self);
+	}
+
 	kill_anon_super(sb);
 	put_pid_ns(ns);
 }
 
 static struct file_system_type proc_fs_type = {
 	.name			= "proc",
+	.init_fs_context	= proc_init_fs_context,
+	.parameters		= &proc_fs_parameters,
+	.kill_sb		= proc_kill_sb,
+	.fs_flags		= FS_USERNS_MOUNT | FS_DISALLOW_NOTIFY_PERM,
+};
+
+struct file_system_type pidfs_fs_type = {
+	.name			= "pidfs",
 	.init_fs_context	= proc_init_fs_context,
 	.parameters		= &proc_fs_parameters,
 	.kill_sb		= proc_kill_sb,
@@ -233,6 +255,7 @@ void __init proc_root_init(void)
 	proc_sys_init();
 
 	register_filesystem(&proc_fs_type);
+	register_filesystem(&pidfs_fs_type);
 }
 
 static int proc_root_getattr(const struct path *path, struct kstat *stat,
@@ -251,6 +274,11 @@ static struct dentry *proc_root_lookup(struct inode * dir, struct dentry * dentr
 	return proc_lookup(dir, dentry, flags);
 }
 
+static struct dentry *proc_pidfs_lookup(struct inode * dir, struct dentry * dentry, unsigned int flags)
+{
+	return proc_pid_lookup(dentry, flags);
+}
+
 static int proc_root_readdir(struct file *file, struct dir_context *ctx)
 {
 	if (ctx->pos < FIRST_PROCESS_ENTRY) {
@@ -259,6 +287,14 @@ static int proc_root_readdir(struct file *file, struct dir_context *ctx)
 			return error;
 		ctx->pos = FIRST_PROCESS_ENTRY;
 	}
+
+	return proc_pid_readdir(file, ctx);
+}
+
+static int pidfs_root_readdir(struct file *file, struct dir_context *ctx)
+{
+	if (ctx->pos < FIRST_PROCESS_ENTRY)
+		ctx->pos = FIRST_PROCESS_ENTRY;
 
 	return proc_pid_readdir(file, ctx);
 }
@@ -274,6 +310,12 @@ static const struct file_operations proc_root_operations = {
 	.llseek		= generic_file_llseek,
 };
 
+static const struct file_operations pidfs_root_operations = {
+	.read		 = generic_read_dir,
+	.iterate_shared	 = pidfs_root_readdir,
+	.llseek		= generic_file_llseek,
+};
+
 /*
  * proc root can do almost nothing..
  */
@@ -282,31 +324,51 @@ static const struct inode_operations proc_root_inode_operations = {
 	.getattr	= proc_root_getattr,
 };
 
+static const struct inode_operations pidfs_root_inode_operations = {
+	.lookup		= proc_pidfs_lookup,
+	.getattr	= proc_root_getattr,
+};
+
+
 /*
  * This is the root "inode" in the /proc tree..
  */
 struct proc_dir_entry proc_root = {
-	.low_ino	= PROC_ROOT_INO, 
-	.namelen	= 5, 
-	.mode		= S_IFDIR | S_IRUGO | S_IXUGO, 
-	.nlink		= 2, 
+	.low_ino	= PROC_ROOT_INO,
+	.namelen	= 5,
+	.mode		= S_IFDIR | S_IRUGO | S_IXUGO,
+	.nlink		= 2,
 	.refcnt		= REFCOUNT_INIT(1),
-	.proc_iops	= &proc_root_inode_operations, 
+	.proc_iops	= &proc_root_inode_operations,
 	.proc_fops	= &proc_root_operations,
 	.parent		= &proc_root,
 	.subdir		= RB_ROOT,
 	.name		= "/proc",
 };
 
-int pid_ns_prepare_proc(struct pid_namespace *ns)
+struct proc_dir_entry pidfs_root = {
+	.low_ino	= PROC_ROOT_INO,
+	.namelen	= 6,
+	.mode		= S_IFDIR | S_IRUGO | S_IXUGO,
+	.nlink		= 2,
+	.refcnt		= REFCOUNT_INIT(1),
+	.proc_iops	= &pidfs_root_inode_operations,
+	.proc_fops	= &pidfs_root_operations,
+	.parent		= &pidfs_root,
+	.subdir		= RB_ROOT,
+	.name		= "/pidfs",
+};
+
+static struct vfsmount *_pid_ns_prepare_proc(struct pid_namespace *ns,
+					     struct file_system_type *type)
 {
 	struct proc_fs_context *ctx;
 	struct fs_context *fc;
 	struct vfsmount *mnt;
 
-	fc = fs_context_for_mount(&proc_fs_type, SB_KERNMOUNT);
+	fc = fs_context_for_mount(type, SB_KERNMOUNT);
 	if (IS_ERR(fc))
-		return PTR_ERR(fc);
+		return ERR_CAST(fc);
 
 	if (fc->user_ns != ns->user_ns) {
 		put_user_ns(fc->user_ns);
@@ -322,14 +384,29 @@ int pid_ns_prepare_proc(struct pid_namespace *ns)
 
 	mnt = fc_mount(fc);
 	put_fs_context(fc);
+	return mnt;
+}
+
+int pid_ns_prepare_proc(struct pid_namespace *ns)
+{
+	struct vfsmount *mnt;
+
+	mnt = _pid_ns_prepare_proc(ns, &proc_fs_type);
 	if (IS_ERR(mnt))
 		return PTR_ERR(mnt);
-
 	ns->proc_mnt = mnt;
+
+	mnt = _pid_ns_prepare_proc(ns, &pidfs_fs_type);
+	if (IS_ERR(mnt))
+		return PTR_ERR(mnt);
+	ns->pidfs_mnt = mnt;
 	return 0;
 }
 
 void pid_ns_release_proc(struct pid_namespace *ns)
 {
 	kern_unmount(ns->proc_mnt);
+
+	if (IS_ENABLED(CONFIG_PROC_PIDFS))
+		kern_unmount(ns->pidfs_mnt);
 }

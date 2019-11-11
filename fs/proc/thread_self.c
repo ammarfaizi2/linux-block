@@ -61,6 +61,8 @@ int proc_setup_thread_self(struct super_block *s)
 
 	if (ret)
 		pr_err("proc_fill_super: can't allocate /proc/thread_self\n");
+	else if (IS_ENABLED(CONFIG_PROC_PIDFS) && s->s_type == &pidfs_fs_type)
+		ns->pidfs_thread_self = thread_self;
 	else
 		ns->proc_thread_self = thread_self;
 

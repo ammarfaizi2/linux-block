@@ -265,6 +265,8 @@ static inline void proc_tty_init(void) {}
 /*
  * root.c
  */
+extern struct file_system_type pidfs_fs_type;
+extern struct proc_dir_entry pidfs_root;
 extern struct proc_dir_entry proc_root;
 
 extern void proc_self_init(void);

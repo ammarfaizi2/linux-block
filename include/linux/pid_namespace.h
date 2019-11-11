@@ -45,6 +45,11 @@ struct pid_namespace {
 	int hide_pid;
 	int reboot;	/* group exit code if this pidns was rebooted */
 	struct ns_common ns;
+#ifdef CONFIG_PROC_PIDFS
+	struct vfsmount *pidfs_mnt;
+	struct dentry *pidfs_self;
+	struct dentry *pidfs_thread_self;
+#endif
 } __randomize_layout;
 
 extern struct pid_namespace init_pid_ns;

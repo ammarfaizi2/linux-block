@@ -1,0 +1,16 @@
+The PIDFS Filesystem
+====================
+
+The pidfs filesystem contains a subset of the /proc file system which contains
+only information about the processes. The link self points to the process
+reading the file system. All other special files and directories in /proc are
+not available in this filesystem.
+
+The pidfs is not an independent filesystem, its implementation shares code
+with /proc.
+
+All mount options applicable to /proc filesystem are also applicable
+to pidfs filesystem. For example, access to the information in /proc/[pid]
+directories can be restricted using hidepid option.
+
+To get more information about the processes read the proc.txt
