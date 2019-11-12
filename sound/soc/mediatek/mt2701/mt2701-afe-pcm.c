@@ -515,7 +515,6 @@ static const struct snd_soc_dai_ops mt2701_single_memif_dai_ops = {
 	.startup	= mt2701_simple_fe_startup,
 	.shutdown	= mtk_afe_fe_shutdown,
 	.hw_params	= mt2701_simple_fe_hw_params,
-	.hw_free	= mtk_afe_fe_hw_free,
 	.prepare	= mtk_afe_fe_prepare,
 	.trigger	= mtk_afe_fe_trigger,
 };
@@ -524,7 +523,6 @@ static const struct snd_soc_dai_ops mt2701_dlm_memif_dai_ops = {
 	.startup	= mt2701_dlm_fe_startup,
 	.shutdown	= mt2701_dlm_fe_shutdown,
 	.hw_params	= mt2701_dlm_fe_hw_params,
-	.hw_free	= mtk_afe_fe_hw_free,
 	.prepare	= mtk_afe_fe_prepare,
 	.trigger	= mt2701_dlm_fe_trigger,
 };

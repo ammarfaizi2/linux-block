@@ -122,11 +122,7 @@ int mtk_afe_fe_hw_params(struct snd_pcm_substream *substream,
 	struct mtk_base_afe *afe = snd_soc_dai_get_drvdata(dai);
 	struct mtk_base_afe_memif *memif = &afe->memif[rtd->cpu_dai->id];
 	int msb_at_bit33 = 0;
-	int ret, fs = 0;
-
-	ret = snd_pcm_lib_malloc_pages(substream, params_buffer_bytes(params));
-	if (ret < 0)
-		return ret;
+	int fs = 0;
 
 	msb_at_bit33 = upper_32_bits(substream->runtime->dma_addr) ? 1 : 0;
 	memif->phys_buf_addr = lower_32_bits(substream->runtime->dma_addr);
@@ -168,13 +164,6 @@ int mtk_afe_fe_hw_params(struct snd_pcm_substream *substream,
 	return 0;
 }
 EXPORT_SYMBOL_GPL(mtk_afe_fe_hw_params);
-
-int mtk_afe_fe_hw_free(struct snd_pcm_substream *substream,
-		       struct snd_soc_dai *dai)
-{
-	return snd_pcm_lib_free_pages(substream);
-}
-EXPORT_SYMBOL_GPL(mtk_afe_fe_hw_free);
 
 int mtk_afe_fe_trigger(struct snd_pcm_substream *substream, int cmd,
 		       struct snd_soc_dai *dai)
@@ -275,7 +264,6 @@ const struct snd_soc_dai_ops mtk_afe_fe_ops = {
 	.startup	= mtk_afe_fe_startup,
 	.shutdown	= mtk_afe_fe_shutdown,
 	.hw_params	= mtk_afe_fe_hw_params,
-	.hw_free	= mtk_afe_fe_hw_free,
 	.prepare	= mtk_afe_fe_prepare,
 	.trigger	= mtk_afe_fe_trigger,
 };
