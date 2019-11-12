@@ -7,6 +7,7 @@
 #include <linux/io.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>
+#include <linux/moduleparam.h>
 #include <linux/platform_device.h>
 #include <drm/bridge/dw_hdmi.h>
 #include <drm/drm_edid.h>
@@ -21,6 +22,10 @@
 #include "dw-hdmi-audio.h"
 
 #define DRIVER_NAME "dw-hdmi-ahb-audio"
+
+static unsigned int hw_buffer_size = 128 * 1024;
+module_param_named(buffer_size, hw_buffer_size, uint, 0444);
+MODULE_PARM_DESC(buffer_size, "Hardware buffer size to preallocate");
 
 /* Provide some bits rather than bit offsets */
 enum {
@@ -119,6 +124,7 @@ struct snd_dw_hdmi {
 	spinlock_t lock;
 	struct dw_hdmi_audio_data data;
 	struct snd_pcm_substream *substream;
+	struct snd_dma_buffer hw_buffer;
 	void (*reformat)(struct snd_dw_hdmi *, size_t, size_t);
 	void *buf_src;
 	void *buf_dst;
@@ -339,8 +345,8 @@ static int dw_hdmi_open(struct snd_pcm_substream *substream)
 
 	/* Limit the buffer size to the size of the preallocated buffer */
 	ret = snd_pcm_hw_constraint_minmax(runtime,
-					   SNDRV_PCM_HW_PARAM_BUFFER_SIZE,
-					   0, substream->dma_buffer.bytes);
+					   SNDRV_PCM_HW_PARAM_BUFFER_BYTES,
+					   0, dw->hw_buffer.bytes);
 	if (ret < 0)
 		return ret;
 
@@ -380,19 +386,6 @@ static int dw_hdmi_close(struct snd_pcm_substream *substream)
 	free_irq(dw->data.irq, dw);
 
 	return 0;
-}
-
-static int dw_hdmi_hw_free(struct snd_pcm_substream *substream)
-{
-	return snd_pcm_lib_free_vmalloc_buffer(substream);
-}
-
-static int dw_hdmi_hw_params(struct snd_pcm_substream *substream,
-	struct snd_pcm_hw_params *params)
-{
-	/* Allocate the PCM runtime buffer, which is exposed to userspace. */
-	return snd_pcm_lib_alloc_vmalloc_buffer(substream,
-						params_buffer_bytes(params));
 }
 
 static int dw_hdmi_prepare(struct snd_pcm_substream *substream)
@@ -449,8 +442,8 @@ static int dw_hdmi_prepare(struct snd_pcm_substream *substream)
 	dw->iec_offset = 0;
 	dw->channels = runtime->channels;
 	dw->buf_src  = runtime->dma_area;
-	dw->buf_dst  = substream->dma_buffer.area;
-	dw->buf_addr = substream->dma_buffer.addr;
+	dw->buf_dst  = dw->hw_buffer.area;
+	dw->buf_addr = dw->hw_buffer.addr;
 	dw->buf_period = snd_pcm_lib_period_bytes(substream);
 	dw->buf_size = snd_pcm_lib_buffer_bytes(substream);
 
@@ -506,13 +499,18 @@ static const struct snd_pcm_ops snd_dw_hdmi_ops = {
 	.open = dw_hdmi_open,
 	.close = dw_hdmi_close,
 	.ioctl = snd_pcm_lib_ioctl,
-	.hw_params = dw_hdmi_hw_params,
-	.hw_free = dw_hdmi_hw_free,
 	.prepare = dw_hdmi_prepare,
 	.trigger = dw_hdmi_trigger,
 	.pointer = dw_hdmi_pointer,
-	.page = snd_pcm_lib_get_vmalloc_page,
 };
+
+static void snd_dw_hdmi_free(struct snd_card *card)
+{
+	struct snd_dw_hdmi *dw = card->private_data;
+
+	if (dw->hw_buffer.bytes)
+		snd_dma_free_pages(&dw->hw_buffer);
+}
 
 static int snd_dw_hdmi_probe(struct platform_device *pdev)
 {
@@ -548,6 +546,7 @@ static int snd_dw_hdmi_probe(struct platform_device *pdev)
 	dw->card = card;
 	dw->data = *data;
 	dw->revision = revision;
+	card->private_free = snd_dw_hdmi_free;
 
 	spin_lock_init(&dw->lock);
 
@@ -559,13 +558,18 @@ static int snd_dw_hdmi_probe(struct platform_device *pdev)
 	pcm->private_data = dw;
 	strlcpy(pcm->name, DRIVER_NAME, sizeof(pcm->name));
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK, &snd_dw_hdmi_ops);
+	snd_pcm_set_managed_buffer_all(pcm, SNDRV_DMA_TYPE_VMALLOC, dev, 0, 0);
 
 	/*
 	 * To support 8-channel 96kHz audio reliably, we need 512k
 	 * to satisfy alsa with our restricted period (ERR004323).
 	 */
-	snd_pcm_lib_preallocate_pages_for_all(pcm, SNDRV_DMA_TYPE_DEV,
-			dev, 128 * 1024, 1024 * 1024);
+	if (hw_buffer_size > 1024 * 1024)
+		hw_buffer_size = 1024 * 1024;
+	ret  = snd_dma_alloc_pages_fallback(SNDRV_DMA_TYPE_DEV, dev,
+					    hw_buffer_size, &dw->hw_buffer);
+	if (ret < 0)
+		goto err;
 
 	ret = snd_card_register(card);
 	if (ret < 0)
