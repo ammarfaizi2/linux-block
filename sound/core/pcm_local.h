@@ -72,6 +72,8 @@ struct page *snd_pcm_sgbuf_ops_page(struct snd_pcm_substream *substream,
 				    unsigned long offset);
 #endif
 
+void snd_pcm_lib_preallocate_free_for_all(struct snd_pcm *pcm);
+
 #define PCM_RUNTIME_CHECK(sub) snd_BUG_ON(!(sub) || !(sub)->runtime)
 
 #endif	/* __SOUND_CORE_PCM_LOCAL_H */

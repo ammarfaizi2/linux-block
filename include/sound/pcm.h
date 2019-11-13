@@ -1179,8 +1179,6 @@ static inline void snd_pcm_gettime(struct snd_pcm_runtime *runtime,
  *  Memory
  */
 
-void snd_pcm_lib_preallocate_free(struct snd_pcm_substream *substream);
-void snd_pcm_lib_preallocate_free_for_all(struct snd_pcm *pcm);
 void snd_pcm_lib_preallocate_pages(struct snd_pcm_substream *substream,
 				  int type, struct device *data,
 				  size_t size, size_t max);

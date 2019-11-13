@@ -67,18 +67,7 @@ static void snd_pcm_lib_preallocate_dma_free(struct snd_pcm_substream *substream
 	substream->dma_buffer.area = NULL;
 }
 
-/**
- * snd_pcm_lib_preallocate_free - release the preallocated buffer of the specified substream.
- * @substream: the pcm substream instance
- *
- * Releases the pre-allocated buffer of the given substream.
- */
-void snd_pcm_lib_preallocate_free(struct snd_pcm_substream *substream)
-{
-	snd_pcm_lib_preallocate_dma_free(substream);
-}
-
-/**
+/*
  * snd_pcm_lib_preallocate_free_for_all - release all pre-allocated buffers on the pcm
  * @pcm: the pcm instance
  *
@@ -91,9 +80,8 @@ void snd_pcm_lib_preallocate_free_for_all(struct snd_pcm *pcm)
 
 	for (stream = 0; stream < 2; stream++)
 		for (substream = pcm->streams[stream].substream; substream; substream = substream->next)
-			snd_pcm_lib_preallocate_free(substream);
+			snd_pcm_lib_preallocate_dma_free(substream);
 }
-EXPORT_SYMBOL(snd_pcm_lib_preallocate_free_for_all);
 
 #ifdef CONFIG_SND_VERBOSE_PROCFS
 /*
