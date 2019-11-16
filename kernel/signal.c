@@ -1967,7 +1967,10 @@ bool do_notify_parent(struct task_struct *tsk, int sig)
 
 	psig = tsk->parent->sighand;
 	spin_lock_irqsave(&psig->siglock, flags);
-	if (!tsk->ptrace && sig == SIGCHLD &&
+	if (tsk->ptrace)
+		goto out_task_ptraced;
+
+	if (sig == SIGCHLD &&
 	    (psig->action[SIGCHLD-1].sa.sa_handler == SIG_IGN ||
 	     (psig->action[SIGCHLD-1].sa.sa_flags & SA_NOCLDWAIT))) {
 		/*
@@ -1988,7 +1991,16 @@ bool do_notify_parent(struct task_struct *tsk, int sig)
 		autoreap = true;
 		if (psig->action[SIGCHLD-1].sa.sa_handler == SIG_IGN)
 			sig = 0;
+	} else if (tsk->signal->clone_wait_pidfd) {
+		/*
+		 * If the task has already opted into autoreaping we
+		 * don't need to perform an additional atomic operation
+		 * to confirm the same thing again.
+		 */
+		autoreap = !has_pidfd(task_pid(tsk));
 	}
+
+out_task_ptraced:
 	/*
 	 * Send with __send_signal as si_pid and si_uid are in the
 	 * parent's namespaces.

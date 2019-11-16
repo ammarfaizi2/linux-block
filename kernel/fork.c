@@ -1592,6 +1592,9 @@ static int copy_signal(unsigned long clone_flags, struct task_struct *tsk)
 	sig->real_timer.function = it_real_fn;
 #endif
 
+	if (clone_flags & CLONE_WAIT_PIDFD)
+		sig->clone_wait_pidfd = 1;
+
 	task_lock(current->group_leader);
 	memcpy(sig->rlim, current->signal->rlim, sizeof sig->rlim);
 	task_unlock(current->group_leader);
@@ -1711,7 +1714,9 @@ static int pidfd_release(struct inode *inode, struct file *file)
 	struct pid *pid = file->private_data;
 
 	file->private_data = NULL;
+	pidfd_reap_zombie(pid);
 	put_pid(pid);
+
 	return 0;
 }
 
@@ -2144,6 +2149,8 @@ static __latent_entropy struct task_struct *copy_process(
 		retval = put_user(pidfd, args->pidfd);
 		if (retval)
 			goto bad_fork_put_pidfd;
+
+		atomic_set(&pid->pidfd_nr, 1);
 	}
 
 #ifdef CONFIG_BLOCK
@@ -2711,8 +2718,8 @@ static inline bool clone3_stack_valid(struct kernel_clone_args *kargs)
 static bool clone3_args_valid(struct kernel_clone_args *kargs)
 {
 	/* Verify that no unknown flags are passed along. */
-	if (kargs->flags &
-	    ~(CLONE_LEGACY_FLAGS | CLONE_CLEAR_SIGHAND | CLONE_INTO_CGROUP))
+	if (kargs->flags & ~(CLONE_LEGACY_FLAGS | CLONE_CLEAR_SIGHAND |
+			     CLONE_INTO_CGROUP | CLONE_WAIT_PIDFD))
 		return false;
 
 	/*
@@ -2724,6 +2731,13 @@ static bool clone3_args_valid(struct kernel_clone_args *kargs)
 
 	if ((kargs->flags & (CLONE_SIGHAND | CLONE_CLEAR_SIGHAND)) ==
 	    (CLONE_SIGHAND | CLONE_CLEAR_SIGHAND))
+		return false;
+
+	/*
+	 * Currently only allow CLONE_WAIT_PIDFD for processes created as
+	 * pidfds until someone needs this feature for regular pids too.
+	 */
+	if ((kargs->flags & CLONE_WAIT_PIDFD) && !(kargs->flags & CLONE_PIDFD))
 		return false;
 
 	if ((kargs->flags & (CLONE_THREAD | CLONE_PARENT)) &&
