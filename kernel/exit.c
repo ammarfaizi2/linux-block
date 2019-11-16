@@ -952,6 +952,7 @@ struct wait_opts {
 
 	wait_queue_entry_t		child_wait;
 	int			notask_error;
+	bool			wo_p_pidfd;
 };
 
 static int eligible_pid(struct wait_opts *wo, struct task_struct *p)
@@ -987,6 +988,95 @@ eligible_child(struct wait_opts *wo, bool ptrace, struct task_struct *p)
 	return 1;
 }
 
+static inline int exit_trace_or_dead(struct task_struct *task)
+{
+	if (ptrace_reparented(task) && thread_group_leader(task))
+		return EXIT_TRACE;
+
+	return EXIT_DEAD;
+}
+
+void pidfd_reap_zombie(struct pid *pid)
+{
+	int state;
+	struct task_struct *task;
+
+	if (!atomic_dec_and_test(&pid->pidfd_nr))
+		return;
+
+	read_lock(&tasklist_lock);
+
+	task = pid_task(pid, PIDTYPE_TGID);
+	if (!task)
+		goto out_read_unlock;
+
+	if (!task->signal->clone_wait_pidfd)
+		goto out_read_unlock;
+
+	/*
+	 * Note, that all exiting threads will see that there's no
+	 * pidfd anymore and autoreap.
+	 */
+
+	/* Do we need to do anything fancy at all? */
+	state = READ_ONCE(task->exit_state);
+	if (state == 0 || state == EXIT_DEAD || state == EXIT_TRACE)
+		goto out_read_unlock;
+
+	/*
+	 * If our thread-group is non-empty then the last thread to
+	 * exit will reap the task.
+	 */
+	if (delay_group_leader(task))
+		goto out_read_unlock;
+
+	/*
+	 * If this task is traced and we're not it's parent the ptracer
+	 * will reap it once it it's done with it.
+	 */
+	if (task->ptrace && task->parent != current)
+		goto out_read_unlock;
+
+	state = exit_trace_or_dead(task);
+	if (cmpxchg(&task->exit_state, EXIT_ZOMBIE, state) != EXIT_ZOMBIE)
+		goto out_read_unlock;
+
+	/* We own this thread, nobody else can reap it. */
+	read_unlock(&tasklist_lock);
+	sched_annotate_sleep();
+
+	if (state == EXIT_TRACE) {
+		write_lock_irq(&tasklist_lock);
+		ptrace_unlink(task);
+
+		/*
+		 * ptrace_unlink() above will have cleared task->ptrace
+		 * so do_notify_parent() will always check whether we
+		 * need to autoreap. If do_notify_parent() does _not_
+		 * indicate autoreap it means that SIGCHLD is not
+		 * SIG_IGN and does not have SA_NOCLDWAIT set _and_
+		 * that someone opened another pidfd. If another pidfd
+		 * has been opened the owner of that pidfd will either
+		 * call waitid(P_PIDFD, pidfd, ...) or the task gets
+		 * autoreaped when it exits.
+		 */
+		state = EXIT_ZOMBIE;
+		if (do_notify_parent(task, task->exit_signal))
+			state = EXIT_DEAD;
+
+		task->exit_state = state;
+		write_unlock_irq(&tasklist_lock);
+	}
+
+	if (state == EXIT_DEAD)
+		release_task(task);
+
+	return;
+
+out_read_unlock:
+	read_unlock(&tasklist_lock);
+}
+
 /*
  * Handle sys_wait4 work for one task in state EXIT_ZOMBIE.  We hold
  * read_lock(&tasklist_lock) on entry.  If we return zero, we still hold
@@ -1016,8 +1106,7 @@ static int wait_task_zombie(struct wait_opts *wo, struct task_struct *p)
 	/*
 	 * Move the task's state to DEAD/TRACE, only one thread can do this.
 	 */
-	state = (ptrace_reparented(p) && thread_group_leader(p)) ?
-		EXIT_TRACE : EXIT_DEAD;
+	state = exit_trace_or_dead(p);
 	if (cmpxchg(&p->exit_state, EXIT_ZOMBIE, state) != EXIT_ZOMBIE)
 		return 0;
 	/*
@@ -1299,7 +1388,7 @@ static int wait_consider_task(struct wait_opts *wo, int ptrace,
 		 * ptrace == 0 means we are the natural parent. In this case
 		 * we should clear notask_error, debugger will notify us.
 		 */
-		if (likely(!ptrace))
+		if (likely(!ptrace) && (!p->signal->clone_wait_pidfd || wo->wo_p_pidfd))
 			wo->notask_error = 0;
 		return 0;
 	}
@@ -1325,11 +1414,18 @@ static int wait_consider_task(struct wait_opts *wo, int ptrace,
 		/* we don't reap group leaders with subthreads */
 		if (!delay_group_leader(p)) {
 			/*
+			 * if @ptrace:
 			 * A zombie ptracee is only visible to its ptracer.
 			 * Notification and reaping will be cascaded to the
 			 * real parent when the ptracer detaches.
+			 *
+			 * if !@ptrace:
+			 * If this task does not require an exclusive wait reap
+			 * it. If it does require an exclusive wait and this is
+			 * a pidfd reap it otherwise don't.
 			 */
-			if (unlikely(ptrace) || likely(!p->ptrace))
+			if (unlikely(ptrace) ||
+			    (likely(!p->ptrace) && (!p->signal->clone_wait_pidfd || wo->wo_p_pidfd)))
 				return wait_task_zombie(wo, p);
 		}
 
@@ -1354,14 +1450,24 @@ static int wait_consider_task(struct wait_opts *wo, int ptrace,
 		 * Clear notask_error if WCONTINUED | WEXITED.
 		 */
 		if (likely(!ptrace) || (wo->wo_flags & (WCONTINUED | WEXITED)))
-			wo->notask_error = 0;
+			if (ptrace || !p->signal->clone_wait_pidfd || wo->wo_p_pidfd)
+				wo->notask_error = 0;
 	} else {
 		/*
 		 * @p is alive and it's gonna stop, continue or exit, so
 		 * there always is something to wait for.
+		 *
+		 * We just need to ensure that children which require
+		 * exclusive waiting don't clear notask_error since these
+		 * children are hidden.
 		 */
-		wo->notask_error = 0;
+		if (ptrace || !p->signal->clone_wait_pidfd || wo->wo_p_pidfd)
+			wo->notask_error = 0;
 	}
+
+	/* Exclusive waits without a pidfd don't see any other states. */
+	if (!ptrace && p->signal->clone_wait_pidfd && !wo->wo_p_pidfd)
+		return 0;
 
 	/*
 	 * Wait for stopped.  Depending on @ptrace, different stopped state
@@ -1393,8 +1499,9 @@ static int do_wait_thread(struct wait_opts *wo, struct task_struct *tsk)
 	struct task_struct *p;
 
 	list_for_each_entry(p, &tsk->children, sibling) {
-		int ret = wait_consider_task(wo, 0, p);
+		int ret;
 
+		ret = wait_consider_task(wo, 0, p);
 		if (ret)
 			return ret;
 	}
@@ -1523,6 +1630,7 @@ static long kernel_waitid(int which, pid_t upid, struct waitid_info *infop,
 	if (!(options & (WEXITED|WSTOPPED|WCONTINUED)))
 		return -EINVAL;
 
+	wo.wo_p_pidfd = false;
 	switch (which) {
 	case P_ALL:
 		type = PIDTYPE_MAX;
@@ -1552,6 +1660,8 @@ static long kernel_waitid(int which, pid_t upid, struct waitid_info *infop,
 		pid = pidfd_get_pid(upid);
 		if (IS_ERR(pid))
 			return PTR_ERR(pid);
+
+		wo.wo_p_pidfd = true;
 		break;
 	default:
 		return -EINVAL;
@@ -1636,6 +1746,7 @@ long kernel_wait4(pid_t upid, int __user *stat_addr, int options,
 	wo.wo_info	= NULL;
 	wo.wo_stat	= 0;
 	wo.wo_rusage	= ru;
+	wo.wo_p_pidfd = false;
 	ret = do_wait(&wo);
 	put_pid(pid);
 	if (ret > 0 && stat_addr && put_user(wo.wo_stat, stat_addr))

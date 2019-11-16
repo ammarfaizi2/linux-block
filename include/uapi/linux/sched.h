@@ -34,7 +34,8 @@
 #define CLONE_IO		0x80000000	/* Clone io context */
 
 /* Flags for the clone3() syscall. */
-#define CLONE_CLEAR_SIGHAND 0x100000000ULL /* Clear any signal handler and reset to SIG_DFL. */
+#define CLONE_CLEAR_SIGHAND	0x100000000ULL /* Clear any signal handler and reset to SIG_DFL. */
+#define CLONE_WAIT_PIDFD	0x200000000ULL  /* set if process only appears in pidfd-based wait requests */
 
 #ifndef __ASSEMBLY__
 /**

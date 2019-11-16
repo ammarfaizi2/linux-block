@@ -254,6 +254,7 @@ struct pid *alloc_pid(struct pid_namespace *ns, pid_t *set_tid,
 
 	get_pid_ns(ns);
 	refcount_set(&pid->count, 1);
+	atomic_set(&pid->pidfd_nr, 0);
 	for (type = 0; type < PIDTYPE_MAX; ++type)
 		INIT_HLIST_HEAD(&pid->tasks[type]);
 
@@ -517,6 +518,8 @@ static int pidfd_create(struct pid *pid)
 			      O_RDWR | O_CLOEXEC);
 	if (fd < 0)
 		put_pid(pid);
+	else
+		atomic_inc(&pid->pidfd_nr);
 
 	return fd;
 }

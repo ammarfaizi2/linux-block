@@ -59,6 +59,7 @@ struct upid {
 struct pid
 {
 	refcount_t count;
+	atomic_t pidfd_nr;
 	unsigned int level;
 	/* lists of tasks that use this pid */
 	struct hlist_head tasks[PIDTYPE_MAX];
@@ -75,6 +76,15 @@ extern const struct file_operations pidfd_fops;
 struct file;
 
 extern struct pid *pidfd_pid(const struct file *file);
+extern void pidfd_reap_zombie(struct pid *pid);
+
+static inline bool has_pidfd(struct pid *pid)
+{
+	if (pid)
+		return atomic_read(&pid->pidfd_nr) != 0;
+
+	return false;
+}
 
 static inline struct pid *get_pid(struct pid *pid)
 {

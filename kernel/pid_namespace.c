@@ -214,8 +214,13 @@ void zap_pid_ns_processes(struct pid_namespace *pid_ns)
 	nr = 2;
 	idr_for_each_entry_continue(&pid_ns->idr, pid, nr) {
 		task = pid_task(pid, PIDTYPE_PID);
-		if (task && !__fatal_signal_pending(task))
-			group_send_sig_info(SIGKILL, SEND_SIG_PRIV, task, PIDTYPE_MAX);
+		if (task) {
+			if (!__fatal_signal_pending(task))
+				group_send_sig_info(SIGKILL, SEND_SIG_PRIV,
+						    task, PIDTYPE_MAX);
+			/* Make sure that we can be found by kernel_wait4() */
+			task->signal->clone_wait_pidfd = 0;
+		}
 	}
 	read_unlock(&tasklist_lock);
 	rcu_read_unlock();

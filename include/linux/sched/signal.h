@@ -120,6 +120,12 @@ struct signal_struct {
 	unsigned int		is_child_subreaper:1;
 	unsigned int		has_child_subreaper:1;
 
+	/*
+	 * If non-zero the process will only appear in pidfd-based
+	 * wait requests.
+	 */
+	unsigned int		clone_wait_pidfd:1;
+
 #ifdef CONFIG_POSIX_TIMERS
 
 	/* POSIX.1b Interval Timers */
