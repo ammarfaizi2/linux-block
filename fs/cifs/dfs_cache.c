@@ -86,7 +86,7 @@ static inline int get_normalized_path(const char *path, char **npath)
 	if (*path == '\\') {
 		*npath = (char *)path;
 	} else {
-		*npath = kstrndup(path, strlen(path), GFP_KERNEL);
+		*npath = kstrdup(path, GFP_KERNEL);
 		if (!*npath)
 			return -ENOMEM;
 		convert_delimiter(*npath, '\\');
@@ -353,7 +353,7 @@ static inline struct dfs_cache_tgt *alloc_tgt(const char *name)
 	t = kmalloc(sizeof(*t), GFP_KERNEL);
 	if (!t)
 		return ERR_PTR(-ENOMEM);
-	t->t_name = kstrndup(name, strlen(name), GFP_KERNEL);
+	t->t_name = kstrdup(name, GFP_KERNEL);
 	if (!t->t_name) {
 		kfree(t);
 		return ERR_PTR(-ENOMEM);
@@ -575,7 +575,7 @@ __update_cache_entry(const char *path, const struct dfs_info3_param *refs,
 
 	if (ce->ce_tgthint) {
 		s = ce->ce_tgthint->t_name;
-		th = kstrndup(s, strlen(s), GFP_KERNEL);
+		th = kstrdup(s, GFP_KERNEL);
 		if (!th)
 			return ERR_PTR(-ENOMEM);
 	}
@@ -732,13 +732,13 @@ static int setup_ref(const char *path, const struct dfs_cache_entry *ce,
 
 	memset(ref, 0, sizeof(*ref));
 
-	ref->path_name = kstrndup(path, strlen(path), GFP_KERNEL);
+	ref->path_name = kstrdup(path, GFP_KERNEL);
 	if (!ref->path_name)
 		return -ENOMEM;
 
 	ref->path_consumed = ce->ce_path_consumed;
 
-	ref->node_name = kstrndup(tgt, strlen(tgt), GFP_KERNEL);
+	ref->node_name = kstrdup(tgt, GFP_KERNEL);
 	if (!ref->node_name) {
 		rc = -ENOMEM;
 		goto err_free_path;
@@ -775,8 +775,7 @@ static int get_tgt_list(const struct dfs_cache_entry *ce,
 			goto err_free_it;
 		}
 
-		it->it_name = kstrndup(t->t_name, strlen(t->t_name),
-				       GFP_KERNEL);
+		it->it_name = kstrdup(t->t_name, GFP_KERNEL);
 		if (!it->it_name) {
 			kfree(it);
 			rc = -ENOMEM;
@@ -1084,39 +1083,34 @@ static int dup_vol(struct smb_vol *vol, struct smb_vol *new)
 	memcpy(new, vol, sizeof(*new));
 
 	if (vol->username) {
-		new->username = kstrndup(vol->username, strlen(vol->username),
-					GFP_KERNEL);
+		new->username = kstrdup(vol->username, GFP_KERNEL);
 		if (!new->username)
 			return -ENOMEM;
 	}
 	if (vol->password) {
-		new->password = kstrndup(vol->password, strlen(vol->password),
-					 GFP_KERNEL);
+		new->password = kstrdup(vol->password, GFP_KERNEL);
 		if (!new->password)
 			goto err_free_username;
 	}
 	if (vol->UNC) {
 		cifs_dbg(FYI, "%s: vol->UNC: %s\n", __func__, vol->UNC);
-		new->UNC = kstrndup(vol->UNC, strlen(vol->UNC), GFP_KERNEL);
+		new->UNC = kstrdup(vol->UNC, GFP_KERNEL);
 		if (!new->UNC)
 			goto err_free_password;
 	}
 	if (vol->domainname) {
-		new->domainname = kstrndup(vol->domainname,
-					  strlen(vol->domainname), GFP_KERNEL);
+		new->domainname = kstrdup(vol->domainname, GFP_KERNEL);
 		if (!new->domainname)
 			goto err_free_unc;
 	}
 	if (vol->iocharset) {
-		new->iocharset = kstrndup(vol->iocharset,
-					  strlen(vol->iocharset), GFP_KERNEL);
+		new->iocharset = kstrdup(vol->iocharset, GFP_KERNEL);
 		if (!new->iocharset)
 			goto err_free_domainname;
 	}
 	if (vol->prepath) {
 		cifs_dbg(FYI, "%s: vol->prepath: %s\n", __func__, vol->prepath);
-		new->prepath = kstrndup(vol->prepath, strlen(vol->prepath),
-					GFP_KERNEL);
+		new->prepath = kstrdup(vol->prepath, GFP_KERNEL);
 		if (!new->prepath)
 			goto err_free_iocharset;
 	}
@@ -1161,7 +1155,7 @@ int dfs_cache_add_vol(char *mntdata, struct smb_vol *vol, const char *fullpath)
 	if (!vi)
 		return -ENOMEM;
 
-	vi->vi_fullpath = kstrndup(fullpath, strlen(fullpath), GFP_KERNEL);
+	vi->vi_fullpath = kstrdup(fullpath, GFP_KERNEL);
 	if (!vi->vi_fullpath) {
 		rc = -ENOMEM;
 		goto err_free_vi;

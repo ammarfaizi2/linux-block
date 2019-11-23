@@ -3235,9 +3235,7 @@ cifs_set_cifscreds(struct smb_vol *vol, struct cifs_ses *ses)
 	 * for the request.
 	 */
 	if (is_domain && ses->domainName) {
-		vol->domainname = kstrndup(ses->domainName,
-					   strlen(ses->domainName),
-					   GFP_KERNEL);
+		vol->domainname = kstrdup(ses->domainName, GFP_KERNEL);
 		if (!vol->domainname) {
 			cifs_dbg(FYI, "Unable to allocate %zd bytes for "
 				 "domain\n", len);
@@ -4870,8 +4868,7 @@ int cifs_mount(struct cifs_sb_info *cifs_sb, struct smb_vol *vol)
 	}
 
 	/* Save DFS root volume information for DFS refresh worker */
-	origin_mountdata = kstrndup(cifs_sb->mountdata,
-				    strlen(cifs_sb->mountdata), GFP_KERNEL);
+	origin_mountdata = kstrdup(cifs_sb->mountdata, GFP_KERNEL);
 	if (!origin_mountdata) {
 		rc = -ENOMEM;
 		goto error;
@@ -4976,8 +4973,7 @@ int cifs_mount(struct cifs_sb_info *cifs_sb, struct smb_vol *vol)
 		full_path = NULL;
 		tcon->remap = cifs_remap(cifs_sb);
 	}
-	cifs_sb->origin_fullpath = kstrndup(tcon->dfs_path,
-					    strlen(tcon->dfs_path),
+	cifs_sb->origin_fullpath = kstrdup(tcon->dfs_path,
 					    GFP_ATOMIC);
 	if (!cifs_sb->origin_fullpath) {
 		spin_unlock(&cifs_tcp_ses_lock);

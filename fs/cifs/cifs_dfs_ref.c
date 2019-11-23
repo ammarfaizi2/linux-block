@@ -258,7 +258,7 @@ static struct vfsmount *cifs_dfs_do_refmount(struct dentry *mntpt,
 	 * Always pass down the DFS full path to smb3_do_mount() so we
 	 * can use it later for failover.
 	 */
-	devname = kstrndup(fullpath, strlen(fullpath), GFP_KERNEL);
+	devname = kstrdup(fullpath, GFP_KERNEL);
 	if (!devname)
 		return ERR_PTR(-ENOMEM);
 
