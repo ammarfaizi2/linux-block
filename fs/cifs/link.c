@@ -520,8 +520,8 @@ cifs_hardlink(struct dentry *old_file, struct inode *inode,
 {
 	int rc = -EACCES;
 	unsigned int xid;
-	char *from_name = NULL;
-	char *to_name = NULL;
+	char *from_name, *fpage;
+	char *to_name, *tpage;
 	struct cifs_sb_info *cifs_sb = CIFS_SB(inode->i_sb);
 	struct tcon_link *tlink;
 	struct cifs_tcon *tcon;
@@ -535,10 +535,16 @@ cifs_hardlink(struct dentry *old_file, struct inode *inode,
 
 	xid = get_xid();
 
-	from_name = build_path_from_dentry(old_file);
-	to_name = build_path_from_dentry(direntry);
-	if ((from_name == NULL) || (to_name == NULL)) {
-		rc = -ENOMEM;
+	fpage = __getname();
+	tpage = __getname();
+	from_name = build_path_from_dentry(old_file, fpage);
+	if (IS_ERR(from_name)) {
+		rc = PTR_ERR(from_name);
+		goto cifs_hl_exit;
+	}
+	to_name = build_path_from_dentry(direntry, tpage);
+	if (IS_ERR(to_name)) {
+		rc = PTR_ERR(to_name);
 		goto cifs_hl_exit;
 	}
 
@@ -597,8 +603,8 @@ cifs_hardlink(struct dentry *old_file, struct inode *inode,
 	}
 
 cifs_hl_exit:
-	kfree(from_name);
-	kfree(to_name);
+	__putname(fpage);
+	__putname(tpage);
 	free_xid(xid);
 	cifs_put_tlink(tlink);
 	return rc;
@@ -610,7 +616,8 @@ cifs_get_link(struct dentry *direntry, struct inode *inode,
 {
 	int rc = -ENOMEM;
 	unsigned int xid;
-	char *full_path = NULL;
+	char *full_path;
+	char *page;
 	char *target_path = NULL;
 	struct cifs_sb_info *cifs_sb = CIFS_SB(inode->i_sb);
 	struct tcon_link *tlink = NULL;
@@ -630,11 +637,13 @@ cifs_get_link(struct dentry *direntry, struct inode *inode,
 	tcon = tlink_tcon(tlink);
 	server = tcon->ses->server;
 
-	full_path = build_path_from_dentry(direntry);
-	if (!full_path) {
+	page = __getname();
+	full_path = build_path_from_dentry(direntry, page);
+	if (IS_ERR(full_path)) {
 		free_xid(xid);
 		cifs_put_tlink(tlink);
-		return ERR_PTR(-ENOMEM);
+		__putname(page);
+		return ERR_CAST(full_path);
 	}
 
 	cifs_dbg(FYI, "Full path: %s inode = 0x%p\n", full_path, inode);
@@ -659,7 +668,7 @@ cifs_get_link(struct dentry *direntry, struct inode *inode,
 						&target_path, reparse_point);
 	}
 
-	kfree(full_path);
+	__putname(page);
 	free_xid(xid);
 	cifs_put_tlink(tlink);
 	if (rc != 0) {
@@ -678,7 +687,8 @@ cifs_symlink(struct inode *inode, struct dentry *direntry, const char *symname)
 	struct cifs_sb_info *cifs_sb = CIFS_SB(inode->i_sb);
 	struct tcon_link *tlink;
 	struct cifs_tcon *pTcon;
-	char *full_path = NULL;
+	char *full_path;
+	char *page = __getname();
 	struct inode *newinode = NULL;
 
 	xid = get_xid();
@@ -690,9 +700,9 @@ cifs_symlink(struct inode *inode, struct dentry *direntry, const char *symname)
 	}
 	pTcon = tlink_tcon(tlink);
 
-	full_path = build_path_from_dentry(direntry);
-	if (full_path == NULL) {
-		rc = -ENOMEM;
+	full_path = build_path_from_dentry(direntry, page);
+	if (IS_ERR(full_path)) {
+		rc = PTR_ERR(full_path);
 		goto symlink_exit;
 	}
 
@@ -726,7 +736,7 @@ cifs_symlink(struct inode *inode, struct dentry *direntry, const char *symname)
 		}
 	}
 symlink_exit:
-	kfree(full_path);
+	__putname(page);
 	cifs_put_tlink(tlink);
 	free_xid(xid);
 	return rc;

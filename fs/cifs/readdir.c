@@ -268,7 +268,8 @@ initiate_cifs_search(const unsigned int xid, struct file *file)
 {
 	__u16 search_flags;
 	int rc = 0;
-	char *full_path = NULL;
+	char *full_path;
+	char *page = NULL;
 	struct cifsFileInfo *cifsFile;
 	struct cifs_sb_info *cifs_sb = CIFS_FILE_SB(file);
 	struct tcon_link *tlink = NULL;
@@ -304,9 +305,10 @@ initiate_cifs_search(const unsigned int xid, struct file *file)
 	cifsFile->invalidHandle = true;
 	cifsFile->srch_inf.endOfSearch = false;
 
-	full_path = build_path_from_dentry(file_dentry(file));
-	if (full_path == NULL) {
-		rc = -ENOMEM;
+	page = __getname();
+	full_path = build_path_from_dentry(file_dentry(file), page);
+	if (IS_ERR(full_path)) {
+		rc = PTR_ERR(full_path);
 		goto error_exit;
 	}
 
@@ -346,7 +348,7 @@ ffirst_retry:
 		goto ffirst_retry;
 	}
 error_exit:
-	kfree(full_path);
+	__putname(page);
 	cifs_put_tlink(tlink);
 	return rc;
 }

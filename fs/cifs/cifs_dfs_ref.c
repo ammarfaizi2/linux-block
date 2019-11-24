@@ -298,6 +298,7 @@ static struct vfsmount *cifs_dfs_do_automount(struct dentry *mntpt)
 	struct cifs_ses *ses;
 	struct cifs_tcon *tcon;
 	char *full_path, *root_path;
+	char *page = __getname();
 	unsigned int xid;
 	int len;
 	int rc;
@@ -317,13 +318,15 @@ static struct vfsmount *cifs_dfs_do_automount(struct dentry *mntpt)
 	cifs_sb = CIFS_SB(mntpt->d_sb);
 	if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_NO_DFS) {
 		mnt = ERR_PTR(-EREMOTE);
-		goto cdda_exit;
+		goto free_full_path;
 	}
 
 	/* always use tree name prefix */
-	full_path = build_path_from_dentry_optional_prefix(mntpt, true);
-	if (full_path == NULL)
-		goto cdda_exit;
+	full_path = build_path_from_dentry_optional_prefix(mntpt, page, true);
+	if (IS_ERR(full_path)) {
+		mnt = ERR_CAST(full_path);
+		goto free_full_path;
+	}
 
 	cifs_dbg(FYI, "%s: full_path: %s\n", __func__, full_path);
 
@@ -389,8 +392,7 @@ free_dfs_ref:
 free_root_path:
 	kfree(root_path);
 free_full_path:
-	kfree(full_path);
-cdda_exit:
+	__putname(page);
 	cifs_dbg(FYI, "leaving %s\n" , __func__);
 	return mnt;
 }

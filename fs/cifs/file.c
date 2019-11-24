@@ -525,7 +525,8 @@ int cifs_open(struct inode *inode, struct file *file)
 	struct cifs_tcon *tcon;
 	struct tcon_link *tlink;
 	struct cifsFileInfo *cfile = NULL;
-	char *full_path = NULL;
+	char *full_path;
+	char *page;
 	bool posix_open_ok = false;
 	struct cifs_fid fid;
 	struct cifs_pending_open open;
@@ -541,9 +542,10 @@ int cifs_open(struct inode *inode, struct file *file)
 	tcon = tlink_tcon(tlink);
 	server = tcon->ses->server;
 
-	full_path = build_path_from_dentry(file_dentry(file));
-	if (full_path == NULL) {
-		rc = -ENOMEM;
+	page = __getname();
+	full_path = build_path_from_dentry(file_dentry(file), page);
+	if (IS_ERR(full_path)) {
+		rc = PTR_ERR(full_path);
 		goto out;
 	}
 
@@ -635,7 +637,7 @@ int cifs_open(struct inode *inode, struct file *file)
 	}
 
 out:
-	kfree(full_path);
+	__putname(page);
 	free_xid(xid);
 	cifs_put_tlink(tlink);
 	return rc;
@@ -684,7 +686,8 @@ cifs_reopen_file(struct cifsFileInfo *cfile, bool can_flush)
 	struct TCP_Server_Info *server;
 	struct cifsInodeInfo *cinode;
 	struct inode *inode;
-	char *full_path = NULL;
+	char *full_path;
+	char *page;
 	int desired_access;
 	int disposition = FILE_OPEN;
 	int create_options = CREATE_NOT_DIR;
@@ -710,9 +713,11 @@ cifs_reopen_file(struct cifsFileInfo *cfile, bool can_flush)
 	 * called and if the server was down that means we end up here, and we
 	 * can never tell if the caller already has the rename_sem.
 	 */
-	full_path = build_path_from_dentry(cfile->dentry);
-	if (full_path == NULL) {
-		rc = -ENOMEM;
+	page = __getname();
+	full_path = build_path_from_dentry(cfile->dentry, page);
+	if (IS_ERR(full_path)) {
+		__putname(page);
+		rc = PTR_ERR(full_path);
 		mutex_unlock(&cfile->fh_mutex);
 		free_xid(xid);
 		return rc;
@@ -834,7 +839,7 @@ reopen_success:
 		cifs_relock_file(cfile);
 
 reopen_error_exit:
-	kfree(full_path);
+	__putname(page);
 	free_xid(xid);
 	return rc;
 }
@@ -2071,6 +2076,7 @@ cifs_get_writable_path(struct cifs_tcon *tcon, const char *name,
 	struct cifsFileInfo *cfile;
 	struct cifsInodeInfo *cinode;
 	char *full_path;
+	char *page = __getname();
 
 	*ret_file = NULL;
 
@@ -2078,23 +2084,23 @@ cifs_get_writable_path(struct cifs_tcon *tcon, const char *name,
 	list_for_each(tmp, &tcon->openFileList) {
 		cfile = list_entry(tmp, struct cifsFileInfo,
 			     tlist);
-		full_path = build_path_from_dentry(cfile->dentry);
-		if (full_path == NULL) {
+		full_path = build_path_from_dentry(cfile->dentry, page);
+		if (IS_ERR(full_path)) {
 			spin_unlock(&tcon->open_file_lock);
-			return -ENOMEM;
+			__putname(page);
+			return PTR_ERR(full_path);
 		}
-		if (strcmp(full_path, name)) {
-			kfree(full_path);
+		if (strcmp(full_path, name))
 			continue;
-		}
 
-		kfree(full_path);
 		cinode = CIFS_I(d_inode(cfile->dentry));
 		spin_unlock(&tcon->open_file_lock);
+		__putname(page);
 		return cifs_get_writable_file(cinode, 0, ret_file);
 	}
 
 	spin_unlock(&tcon->open_file_lock);
+	__putname(page);
 	return -ENOENT;
 }
 
@@ -2106,6 +2112,7 @@ cifs_get_readable_path(struct cifs_tcon *tcon, const char *name,
 	struct cifsFileInfo *cfile;
 	struct cifsInodeInfo *cinode;
 	char *full_path;
+	char *page = __getname();
 
 	*ret_file = NULL;
 
@@ -2113,24 +2120,24 @@ cifs_get_readable_path(struct cifs_tcon *tcon, const char *name,
 	list_for_each(tmp, &tcon->openFileList) {
 		cfile = list_entry(tmp, struct cifsFileInfo,
 			     tlist);
-		full_path = build_path_from_dentry(cfile->dentry);
-		if (full_path == NULL) {
+		full_path = build_path_from_dentry(cfile->dentry, page);
+		if (IS_ERR(full_path)) {
 			spin_unlock(&tcon->open_file_lock);
-			return -ENOMEM;
+			__putname(page);
+			return PTR_ERR(full_path);
 		}
-		if (strcmp(full_path, name)) {
-			kfree(full_path);
+		if (strcmp(full_path, name))
 			continue;
-		}
 
-		kfree(full_path);
 		cinode = CIFS_I(d_inode(cfile->dentry));
 		spin_unlock(&tcon->open_file_lock);
+		__putname(page);
 		*ret_file = find_readable_file(cinode, 0);
 		return *ret_file ? 0 : -ENOENT;
 	}
 
 	spin_unlock(&tcon->open_file_lock);
+	__putname(page);
 	return -ENOENT;
 }
 

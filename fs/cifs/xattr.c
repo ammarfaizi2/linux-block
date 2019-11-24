@@ -59,6 +59,7 @@ static int cifs_xattr_set(const struct xattr_handler *handler,
 	struct tcon_link *tlink;
 	struct cifs_tcon *pTcon;
 	char *full_path;
+	char *page;
 
 	tlink = cifs_sb_tlink(cifs_sb);
 	if (IS_ERR(tlink))
@@ -67,9 +68,10 @@ static int cifs_xattr_set(const struct xattr_handler *handler,
 
 	xid = get_xid();
 
-	full_path = build_path_from_dentry(dentry);
-	if (full_path == NULL) {
-		rc = -ENOMEM;
+	page = __getname();
+	full_path = build_path_from_dentry(dentry, page);
+	if (IS_ERR(full_path)) {
+		rc = PTR_ERR(full_path);
 		goto out;
 	}
 	/* return dos attributes as pseudo xattr */
@@ -145,7 +147,7 @@ static int cifs_xattr_set(const struct xattr_handler *handler,
 	}
 
 out:
-	kfree(full_path);
+	__putname(page);
 	free_xid(xid);
 	cifs_put_tlink(tlink);
 	return rc;
@@ -208,6 +210,7 @@ static int cifs_xattr_get(const struct xattr_handler *handler,
 	struct tcon_link *tlink;
 	struct cifs_tcon *pTcon;
 	char *full_path;
+	char *page;
 
 	tlink = cifs_sb_tlink(cifs_sb);
 	if (IS_ERR(tlink))
@@ -216,9 +219,10 @@ static int cifs_xattr_get(const struct xattr_handler *handler,
 
 	xid = get_xid();
 
-	full_path = build_path_from_dentry(dentry);
-	if (full_path == NULL) {
-		rc = -ENOMEM;
+	page = __getname();
+	full_path = build_path_from_dentry(dentry, page);
+	if (IS_ERR(full_path)) {
+		rc = PTR_ERR(full_path);
 		goto out;
 	}
 
@@ -300,7 +304,7 @@ static int cifs_xattr_get(const struct xattr_handler *handler,
 		rc = -EOPNOTSUPP;
 
 out:
-	kfree(full_path);
+	__putname(page);
 	free_xid(xid);
 	cifs_put_tlink(tlink);
 	return rc;
@@ -314,6 +318,7 @@ ssize_t cifs_listxattr(struct dentry *direntry, char *data, size_t buf_size)
 	struct tcon_link *tlink;
 	struct cifs_tcon *pTcon;
 	char *full_path;
+	char *page;
 
 	if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_NO_XATTR)
 		return -EOPNOTSUPP;
@@ -325,9 +330,10 @@ ssize_t cifs_listxattr(struct dentry *direntry, char *data, size_t buf_size)
 
 	xid = get_xid();
 
-	full_path = build_path_from_dentry(direntry);
-	if (full_path == NULL) {
-		rc = -ENOMEM;
+	page = __getname();
+	full_path = build_path_from_dentry(direntry, page);
+	if (IS_ERR(full_path)) {
+		rc = PTR_ERR(full_path);
 		goto list_ea_exit;
 	}
 	/* return dos attributes as pseudo xattr */
@@ -341,7 +347,7 @@ ssize_t cifs_listxattr(struct dentry *direntry, char *data, size_t buf_size)
 		rc = pTcon->ses->server->ops->query_all_EAs(xid, pTcon,
 				full_path, NULL, data, buf_size, cifs_sb);
 list_ea_exit:
-	kfree(full_path);
+	__putname(page);
 	free_xid(xid);
 	cifs_put_tlink(tlink);
 	return rc;
