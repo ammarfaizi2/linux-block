@@ -1834,13 +1834,18 @@ static struct worker *alloc_worker(int node)
 static void worker_attach_to_pool(struct worker *worker,
 				   struct worker_pool *pool)
 {
+	int ret;
+
 	mutex_lock(&wq_pool_attach_mutex);
 
 	/*
 	 * set_cpus_allowed_ptr() will fail if the cpumask doesn't have any
 	 * online CPUs.  It'll be re-applied when any of the CPUs come up.
 	 */
-	set_cpus_allowed_ptr(worker->task, pool->attrs->cpumask);
+	ret = set_cpus_allowed_ptr(worker->task, pool->attrs->cpumask);
+	if (ret && !(pool->flags & POOL_DISASSOCIATED))
+		printk("XXX worker pid %d failed to attach to cpus of pool %d, ret=%d\n",
+		       task_pid_nr(worker->task), pool->id, ret);
 
 	/*
 	 * The wq_pool_attach_mutex ensures %POOL_DISASSOCIATED remains
@@ -2175,8 +2180,10 @@ __acquires(&pool->lock)
 	lockdep_copy_map(&lockdep_map, &work->lockdep_map);
 #endif
 	/* ensure we're on the correct CPU */
-	WARN_ON_ONCE(!(pool->flags & POOL_DISASSOCIATED) &&
-		     raw_smp_processor_id() != pool->cpu);
+	WARN_ONCE(!(pool->flags & POOL_DISASSOCIATED) &&
+		  raw_smp_processor_id() != pool->cpu,
+		  "expected on cpu %d but on cpu %d, pool %d, workfn=%pf\n",
+		  pool->cpu, raw_smp_processor_id(), pool->id, work->func);
 
 	/*
 	 * A single work shouldn't be executed concurrently by
