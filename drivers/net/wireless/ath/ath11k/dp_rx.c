@@ -987,28 +987,6 @@ int ath11k_dp_htt_tlv_iter(struct ath11k_base *ab, const void *ptr, size_t len,
 	return 0;
 }
 
-static u8 ath11k_bw_to_mac80211_bw(u8 bw)
-{
-	u8 ret = 0;
-
-	switch (bw) {
-	case ATH11K_BW_20:
-		ret = RATE_INFO_BW_20;
-		break;
-	case ATH11K_BW_40:
-		ret = RATE_INFO_BW_40;
-		break;
-	case ATH11K_BW_80:
-		ret = RATE_INFO_BW_80;
-		break;
-	case ATH11K_BW_160:
-		ret = RATE_INFO_BW_160;
-		break;
-	}
-
-	return ret;
-}
-
 static u32 ath11k_bw_to_mac80211_bwflags(u8 bw)
 {
 	u32 bwflags = 0;
@@ -1157,7 +1135,7 @@ ath11k_update_per_peer_tx_stats(struct ath11k *ar,
 	}
 
 	arsta->txrate.nss = nss;
-	arsta->txrate.bw = ath11k_bw_to_mac80211_bw(bw);
+	arsta->txrate.bw = ath11k_mac_bw_to_mac80211_bw(bw);
 	arsta->tx_info.status.rates[0].flags |= ath11k_bw_to_mac80211_bwflags(bw);
 
 	memcpy(&arsta->last_txrate, &arsta->txrate, sizeof(struct rate_info));
@@ -1370,12 +1348,6 @@ static int ath11k_dp_rx_msdu_coalesce(struct ath11k *ar,
 	int space_extra;
 	int rem_len;
 	int buf_len;
-
-	if (!rxcb->is_continuation) {
-		skb_put(first, HAL_RX_DESC_SIZE + l3pad_bytes + msdu_len);
-		skb_pull(first, HAL_RX_DESC_SIZE + l3pad_bytes);
-		return 0;
-	}
 
 	if (WARN_ON_ONCE(msdu_len <= (DP_RX_BUFFER_SIZE -
 			 (HAL_RX_DESC_SIZE + l3pad_bytes)))) {
@@ -1934,7 +1906,7 @@ static void ath11k_dp_rx_h_rate(struct ath11k *ar, struct hal_rx_desc *rx_desc,
 		rx_status->rate_idx = rate_mcs + (8 * (nss - 1));
 		if (sgi)
 			rx_status->enc_flags |= RX_ENC_FLAG_SHORT_GI;
-		rx_status->bw = ath11k_bw_to_mac80211_bw(bw);
+		rx_status->bw = ath11k_mac_bw_to_mac80211_bw(bw);
 		break;
 	case RX_MSDU_START_PKT_TYPE_11AC:
 		rx_status->encoding = RX_ENC_VHT;
@@ -1948,7 +1920,7 @@ static void ath11k_dp_rx_h_rate(struct ath11k *ar, struct hal_rx_desc *rx_desc,
 		rx_status->nss = nss;
 		if (sgi)
 			rx_status->enc_flags |= RX_ENC_FLAG_SHORT_GI;
-		rx_status->bw = ath11k_bw_to_mac80211_bw(bw);
+		rx_status->bw = ath11k_mac_bw_to_mac80211_bw(bw);
 		break;
 	case RX_MSDU_START_PKT_TYPE_11AX:
 		rx_status->rate_idx = rate_mcs;
@@ -1960,7 +1932,7 @@ static void ath11k_dp_rx_h_rate(struct ath11k *ar, struct hal_rx_desc *rx_desc,
 		}
 		rx_status->encoding = RX_ENC_HE;
 		rx_status->nss = nss;
-		rx_status->bw = ath11k_bw_to_mac80211_bw(bw);
+		rx_status->bw = ath11k_mac_bw_to_mac80211_bw(bw);
 		break;
 	}
 }
@@ -2038,11 +2010,21 @@ static char *ath11k_print_get_tid(struct ieee80211_hdr *hdr, char *out,
 static void ath11k_dp_rx_deliver_msdu(struct ath11k *ar, struct napi_struct *napi,
 				      struct sk_buff *msdu)
 {
+	static const struct ieee80211_radiotap_he known = {
+		.data1 = cpu_to_le16(IEEE80211_RADIOTAP_HE_DATA1_DATA_MCS_KNOWN),
+		.data2 = cpu_to_le16(IEEE80211_RADIOTAP_HE_DATA2_GI_KNOWN),
+	};
 	struct ieee80211_rx_status *status;
 	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *)msdu->data;
+	struct ieee80211_radiotap_he *he = NULL;
 	char tid[32];
 
 	status = IEEE80211_SKB_RXCB(msdu);
+	if (status->encoding == RX_ENC_HE) {
+		he = skb_push(msdu, sizeof(known));
+		memcpy(he, &known, sizeof(known));
+		status->flag |= RX_FLAG_RADIOTAP_HE;
+	}
 
 	ath11k_dbg(ar->ab, ATH11K_DBG_DATA,
 		   "rx skb %pK len %u peer %pM %s %s sn %u %s%s%s%s%s%s%s %srate_idx %u vht_nss %u freq %u band %u flag 0x%x fcs-err %i mic-err %i amsdu-more %i\n",
@@ -2611,8 +2593,9 @@ int ath11k_dp_rx_process_mon_status(struct ath11k_base *ab, int mac_id,
 		peer = ath11k_peer_find_by_id(ab, ppdu_info.peer_id);
 
 		if (!peer || !peer->sta) {
-			ath11k_warn(ab, "failed to find the peer with peer_id %d\n",
-				    ppdu_info.peer_id);
+			ath11k_dbg(ab, ATH11K_DBG_DATA,
+				   "failed to find the peer with peer_id %d\n",
+				   ppdu_info.peer_id);
 			spin_unlock_bh(&ab->base_lock);
 			rcu_read_unlock();
 			dev_kfree_skb_any(skb);
