@@ -2276,7 +2276,6 @@ struct wmi_hw_mode_capabilities {
 #define WMI_MAX_HECAP_PHY_SIZE                 (3)
 
 struct wmi_mac_phy_capabilities {
-	u32 tlv_header;
 	u32 hw_mode_id;
 	u32 pdev_id;
 	u32 phy_id;
@@ -4502,8 +4501,8 @@ struct wmi_wmm_params {
 struct wmi_wmm_params_arg {
 	u8 acm;
 	u8 aifs;
-	u8 cwmin;
-	u8 cwmax;
+	u16 cwmin;
+	u16 cwmax;
 	u16 txop;
 	u8 no_ack;
 };

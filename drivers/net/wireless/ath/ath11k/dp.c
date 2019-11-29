@@ -478,6 +478,9 @@ static int ath11k_wbm_idle_ring_setup(struct ath11k_base *ab, u32 *n_link_desc)
 	*n_link_desc = n_mpdu_link_desc + n_mpdu_queue_desc +
 		      n_tx_msdu_link_desc + n_rx_msdu_link_desc;
 
+	if (*n_link_desc & (*n_link_desc - 1))
+		*n_link_desc = 1 << fls(*n_link_desc);
+
 	ret = ath11k_dp_srng_setup(ab, &dp->wbm_idle_ring,
 				   HAL_WBM_IDLE_LINK, 0, 0, *n_link_desc);
 	if (ret) {
@@ -498,9 +501,6 @@ int ath11k_dp_link_desc_setup(struct ath11k_base *ab,
 	u32 paddr;
 	u32 *desc;
 	int i, ret;
-
-	if (n_link_desc & (n_link_desc - 1))
-		n_link_desc = 1 << fls(n_link_desc);
 
 	tot_mem_sz = n_link_desc * HAL_LINK_DESC_SIZE;
 	tot_mem_sz += HAL_LINK_DESC_ALIGN;
@@ -684,11 +684,10 @@ void ath11k_dp_pdev_free(struct ath11k_base *ab)
 	}
 }
 
-int ath11k_dp_pdev_alloc(struct ath11k_base *ab)
+void ath11k_dp_pdev_pre_alloc(struct ath11k_base *ab)
 {
 	struct ath11k *ar;
 	struct ath11k_pdev_dp *dp;
-	int ret;
 	int i;
 
 	for (i = 0; i <  ab->num_radios; i++) {
@@ -704,6 +703,13 @@ int ath11k_dp_pdev_alloc(struct ath11k_base *ab)
 		idr_init(&dp->rxdma_mon_buf_ring.bufs_idr);
 		spin_lock_init(&dp->rxdma_mon_buf_ring.idr_lock);
 	}
+}
+
+int ath11k_dp_pdev_alloc(struct ath11k_base *ab)
+{
+	struct ath11k *ar;
+	int ret;
+	int i;
 
 	/* TODO:Per-pdev rx ring unlike tx ring which is mapped to different AC's */
 	for (i = 0; i < ab->num_radios; i++) {
@@ -758,13 +764,12 @@ int ath11k_dp_htt_connect(struct ath11k_dp *dp)
 
 static void ath11k_dp_update_vdev_search(struct ath11k_vif *arvif)
 {
-	/* Enable AddrY (SA based search) for STA mode. All other modes it
-	 * is going to be AddrX (DA based search). For STA mode, set search
-	 * type based on AST value.
-	 */
+	 /* For STA mode, enable address search index,
+	  * tcl uses ast_hash value in the descriptor.
+	  */
 	switch (arvif->vdev_type) {
 	case WMI_VDEV_TYPE_STA:
-		arvif->hal_addr_search_flags = HAL_TX_ADDRY_EN;
+		arvif->hal_addr_search_flags = HAL_TX_ADDRX_EN;
 		arvif->search_type = HAL_TX_ADDR_SEARCH_INDEX;
 		break;
 	case WMI_VDEV_TYPE_AP:

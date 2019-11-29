@@ -395,10 +395,49 @@ static void ath11k_dp_rx_pdev_srng_free(struct ath11k *ar)
 	struct ath11k_pdev_dp *dp = &ar->dp;
 
 	ath11k_dp_srng_cleanup(ar->ab, &dp->rx_refill_buf_ring.refill_buf_ring);
-	ath11k_dp_srng_cleanup(ar->ab, &dp->reo_dst_ring);
 	ath11k_dp_srng_cleanup(ar->ab, &dp->rxdma_err_dst_ring);
 	ath11k_dp_srng_cleanup(ar->ab, &dp->rx_mon_status_refill_ring.refill_buf_ring);
 	ath11k_dp_srng_cleanup(ar->ab, &dp->rxdma_mon_buf_ring.refill_buf_ring);
+}
+
+void ath11k_dp_pdev_reo_cleanup(struct ath11k_base *ab)
+{
+	struct ath11k_pdev_dp *dp;
+	struct ath11k *ar;
+	int i;
+
+	for (i = 0; i < ab->num_radios; i++) {
+		ar = ab->pdevs[i].ar;
+		dp = &ar->dp;
+		ath11k_dp_srng_cleanup(ab, &dp->reo_dst_ring);
+	}
+}
+
+int ath11k_dp_pdev_reo_setup(struct ath11k_base *ab)
+{
+	struct ath11k *ar;
+	struct ath11k_pdev_dp *dp;
+	int ret;
+	int i;
+
+	for (i = 0; i < ab->num_radios; i++) {
+		ar = ab->pdevs[i].ar;
+		dp = &ar->dp;
+		ret = ath11k_dp_srng_setup(ab, &dp->reo_dst_ring, HAL_REO_DST,
+					   dp->mac_id, dp->mac_id,
+					   DP_REO_DST_RING_SIZE);
+		if (ret) {
+			ath11k_warn(ar->ab, "failed to setup reo_dst_ring\n");
+			goto err_reo_cleanup;
+		}
+	}
+
+	return 0;
+
+err_reo_cleanup:
+	ath11k_dp_pdev_reo_cleanup(ab);
+
+	return ret;
 }
 
 static int ath11k_dp_rx_pdev_srng_alloc(struct ath11k *ar)
@@ -413,14 +452,6 @@ static int ath11k_dp_rx_pdev_srng_alloc(struct ath11k *ar)
 				   dp->mac_id, DP_RXDMA_BUF_RING_SIZE);
 	if (ret) {
 		ath11k_warn(ar->ab, "failed to setup rx_refill_buf_ring\n");
-		return ret;
-	}
-
-	ret = ath11k_dp_srng_setup(ar->ab, &dp->reo_dst_ring, HAL_REO_DST,
-				   dp->mac_id, dp->mac_id,
-				   DP_REO_DST_RING_SIZE);
-	if (ret) {
-		ath11k_warn(ar->ab, "failed to setup reo_dst_ring\n");
 		return ret;
 	}
 
@@ -641,7 +672,8 @@ void ath11k_peer_rx_tid_cleanup(struct ath11k *ar, struct ath11k_peer *peer)
 static int ath11k_peer_rx_tid_reo_update(struct ath11k *ar,
 					 struct ath11k_peer *peer,
 					 struct dp_rx_tid *rx_tid,
-					 u32 ba_win_sz, u16 ssn)
+					 u32 ba_win_sz, u16 ssn,
+					 bool update_ssn)
 {
 	struct ath11k_hal_reo_cmd cmd = {0};
 	int ret;
@@ -649,10 +681,13 @@ static int ath11k_peer_rx_tid_reo_update(struct ath11k *ar,
 	cmd.addr_lo = lower_32_bits(rx_tid->paddr);
 	cmd.addr_hi = upper_32_bits(rx_tid->paddr);
 	cmd.flag = HAL_REO_CMD_FLG_NEED_STATUS;
-	cmd.upd0 = HAL_REO_CMD_UPD0_BA_WINDOW_SIZE |
-		   HAL_REO_CMD_UPD0_SSN;
+	cmd.upd0 = HAL_REO_CMD_UPD0_BA_WINDOW_SIZE;
 	cmd.ba_window_size = ba_win_sz;
-	cmd.upd2 = FIELD_PREP(HAL_REO_CMD_UPD2_SSN, ssn);
+
+	if (update_ssn) {
+		cmd.upd0 |= HAL_REO_CMD_UPD0_SSN;
+		cmd.upd2 = FIELD_PREP(HAL_REO_CMD_UPD2_SSN, ssn);
+	}
 
 	ret = ath11k_dp_tx_send_reo_cmd(ar->ab, rx_tid,
 					HAL_REO_CMD_UPDATE_RX_QUEUE, &cmd,
@@ -722,7 +757,7 @@ int ath11k_peer_rx_tid_setup(struct ath11k *ar, const u8 *peer_mac, int vdev_id,
 	if (rx_tid->active) {
 		paddr = rx_tid->paddr;
 		ret = ath11k_peer_rx_tid_reo_update(ar, peer, rx_tid,
-						    ba_win_sz, ssn);
+						    ba_win_sz, ssn, true);
 		spin_unlock_bh(&ab->base_lock);
 		if (ret) {
 			ath11k_warn(ab, "failed to update reo for rx tid %d\n", tid);
@@ -832,12 +867,18 @@ int ath11k_dp_rx_ampdu_stop(struct ath11k *ar,
 	paddr = peer->rx_tid[params->tid].paddr;
 	active = peer->rx_tid[params->tid].active;
 
-	ath11k_peer_rx_tid_delete(ar, peer, params->tid);
-
-	spin_unlock_bh(&ab->base_lock);
-
-	if (!active)
+	if (!active) {
+		spin_unlock_bh(&ab->base_lock);
 		return 0;
+	}
+
+	ret = ath11k_peer_rx_tid_reo_update(ar, peer, peer->rx_tid, 1, 0, false);
+	spin_unlock_bh(&ab->base_lock);
+	if (ret) {
+		ath11k_warn(ab, "failed to update reo for rx tid %d: %d\n",
+			    params->tid, ret);
+		return ret;
+	}
 
 	ret = ath11k_wmi_peer_rx_reorder_queue_setup(ar, vdev_id,
 						     params->sta->addr, paddr,
@@ -1024,6 +1065,7 @@ ath11k_update_per_peer_tx_stats(struct ath11k *ar,
 	u32 succ_bytes = 0;
 	u16 rate = 0, succ_pkts = 0;
 	u32 tx_duration = 0;
+	u8 tid = HTT_PPDU_STATS_NON_QOS_TID;
 	bool is_ampdu = false;
 
 	if (!usr_stats)
@@ -1041,6 +1083,8 @@ ath11k_update_per_peer_tx_stats(struct ath11k *ar,
 		succ_bytes = usr_stats->ack_ba.success_bytes;
 		succ_pkts = FIELD_GET(HTT_PPDU_STATS_ACK_BA_INFO_NUM_MSDU_M,
 				      usr_stats->ack_ba.info);
+		tid = FIELD_GET(HTT_PPDU_STATS_ACK_BA_INFO_TID_NUM,
+				usr_stats->ack_ba.info);
 	}
 
 	if (common->fes_duration_us)
@@ -1137,7 +1181,7 @@ ath11k_update_per_peer_tx_stats(struct ath11k *ar,
 	arsta->txrate.nss = nss;
 	arsta->txrate.bw = ath11k_mac_bw_to_mac80211_bw(bw);
 	arsta->tx_info.status.rates[0].flags |= ath11k_bw_to_mac80211_bwflags(bw);
-
+	arsta->tx_duration += tx_duration;
 	memcpy(&arsta->last_txrate, &arsta->txrate, sizeof(struct rate_info));
 
 	if (succ_pkts) {
@@ -1146,19 +1190,23 @@ ath11k_update_per_peer_tx_stats(struct ath11k *ar,
 		ieee80211_tx_rate_update(ar->hw, sta, &arsta->tx_info);
 	}
 
-	memset(peer_stats, 0, sizeof(*peer_stats));
+	/* PPDU stats reported for mgmt packet doesn't have valid tx bytes.
+	 * So skip peer stats update for mgmt packets.
+	 */
+	if (tid < HTT_PPDU_STATS_NON_QOS_TID) {
+		memset(peer_stats, 0, sizeof(*peer_stats));
+		peer_stats->succ_pkts = succ_pkts;
+		peer_stats->succ_bytes = succ_bytes;
+		peer_stats->is_ampdu = is_ampdu;
+		peer_stats->duration = tx_duration;
+		peer_stats->ba_fails =
+			HTT_USR_CMPLTN_LONG_RETRY(usr_stats->cmpltn_cmn.flags) +
+			HTT_USR_CMPLTN_SHORT_RETRY(usr_stats->cmpltn_cmn.flags);
 
-	peer_stats->succ_pkts = succ_pkts;
-	peer_stats->succ_bytes = succ_bytes;
-	peer_stats->is_ampdu = is_ampdu;
-	peer_stats->duration = tx_duration;
-	peer_stats->ba_fails =
-		HTT_USR_CMPLTN_LONG_RETRY(usr_stats->cmpltn_cmn.flags) +
-		HTT_USR_CMPLTN_SHORT_RETRY(usr_stats->cmpltn_cmn.flags);
-
-	if (ath11k_debug_is_extd_tx_stats_enabled(ar))
-		ath11k_accumulate_per_peer_tx_stats(arsta,
-						    peer_stats, rate_idx);
+		if (ath11k_debug_is_extd_tx_stats_enabled(ar))
+			ath11k_accumulate_per_peer_tx_stats(arsta,
+							    peer_stats, rate_idx);
+	}
 
 	spin_unlock_bh(&ab->base_lock);
 	rcu_read_unlock();
@@ -1265,7 +1313,6 @@ static void ath11k_htt_pktlog(struct ath11k_base *ab, struct sk_buff *skb)
 	u8 pdev_id;
 
 	len = FIELD_GET(HTT_T2H_PPDU_STATS_INFO_PAYLOAD_SIZE, data->hdr);
-
 	if (len > ATH11K_HTT_PKTLOG_MAX_SIZE) {
 		ath11k_warn(ab, "htt pktlog buffer size %d, expected < %d\n",
 			    len,
@@ -1274,8 +1321,11 @@ static void ath11k_htt_pktlog(struct ath11k_base *ab, struct sk_buff *skb)
 	}
 
 	pdev_id = FIELD_GET(HTT_T2H_PPDU_STATS_INFO_PDEV_ID, data->hdr);
-	pdev_id = DP_HW2SW_MACID(pdev_id);
-	ar = ab->pdevs[pdev_id].ar;
+	ar = ath11k_mac_get_ar_by_pdev_id(ab, pdev_id);
+	if (!ar) {
+		ath11k_warn(ab, "invalid pdev id %d on htt pktlog\n", pdev_id);
+		return;
+	}
 
 	trace_ath11k_htt_pktlog(ar, data->payload, len);
 }
@@ -1312,7 +1362,7 @@ void ath11k_dp_htt_htc_t2h_msg_handler(struct ath11k_base *ab,
 		ath11k_dp_get_mac_addr(resp->peer_map_ev.mac_addr_l32,
 				       peer_mac_h16, mac_addr);
 		ast_hash = FIELD_GET(HTT_T2H_PEER_MAP_INFO2_AST_HASH_VAL,
-				     resp->peer_map_ev.info1);
+				     resp->peer_map_ev.info2);
 		ath11k_peer_map_event(ab, vdev_id, peer_id, mac_addr, ast_hash);
 		break;
 	case HTT_T2H_MSG_TYPE_PEER_UNMAP:
@@ -1344,15 +1394,22 @@ static int ath11k_dp_rx_msdu_coalesce(struct ath11k *ar,
 {
 	struct sk_buff *skb;
 	struct ath11k_skb_rxcb *rxcb = ATH11K_SKB_RXCB(first);
+	int buf_first_hdr_len, buf_first_len;
 	struct hal_rx_desc *ldesc;
 	int space_extra;
 	int rem_len;
 	int buf_len;
 
-	if (WARN_ON_ONCE(msdu_len <= (DP_RX_BUFFER_SIZE -
-			 (HAL_RX_DESC_SIZE + l3pad_bytes)))) {
-		skb_put(first, HAL_RX_DESC_SIZE + l3pad_bytes + msdu_len);
-		skb_pull(first, HAL_RX_DESC_SIZE + l3pad_bytes);
+	/* As the msdu is spread across multiple rx buffers,
+	 * find the offset to the start of msdu for computing
+	 * the length of the msdu in the first buffer.
+	 */
+	buf_first_hdr_len = HAL_RX_DESC_SIZE + l3pad_bytes;
+	buf_first_len = DP_RX_BUFFER_SIZE - buf_first_hdr_len;
+
+	if (WARN_ON_ONCE(msdu_len <= buf_first_len)) {
+		skb_put(first, buf_first_hdr_len + msdu_len);
+		skb_pull(first, buf_first_hdr_len);
 		return 0;
 	}
 
@@ -1365,9 +1422,14 @@ static int ath11k_dp_rx_msdu_coalesce(struct ath11k *ar,
 	 * in the first buf is of length DP_RX_BUFFER_SIZE - HAL_RX_DESC_SIZE.
 	 */
 	skb_put(first, DP_RX_BUFFER_SIZE);
-	skb_pull(first, HAL_RX_DESC_SIZE + l3pad_bytes);
+	skb_pull(first, buf_first_hdr_len);
 
-	space_extra = msdu_len - (DP_RX_BUFFER_SIZE + skb_tailroom(first));
+	/* When an MSDU spread over multiple buffers attention, MSDU_END and
+	 * MPDU_END tlvs are valid only in the last buffer. Copy those tlvs.
+	 */
+	ath11k_dp_rx_desc_end_tlv_copy(rxcb->rx_desc, ldesc);
+
+	space_extra = msdu_len - (buf_first_len + skb_tailroom(first));
 	if (space_extra > 0 &&
 	    (pskb_expand_head(first, 0, space_extra, GFP_ATOMIC) < 0)) {
 		/* Free up all buffers of the MSDU */
@@ -1382,13 +1444,7 @@ static int ath11k_dp_rx_msdu_coalesce(struct ath11k *ar,
 		return -ENOMEM;
 	}
 
-	/* When an MSDU spread over multiple buffers attention, MSDU_END and
-	 * MPDU_END tlvs are valid only in the last buffer. Copy those tlvs.
-	 */
-	ath11k_dp_rx_desc_end_tlv_copy(rxcb->rx_desc, ldesc);
-
-	rem_len = msdu_len -
-		  (DP_RX_BUFFER_SIZE - HAL_RX_DESC_SIZE - l3pad_bytes);
+	rem_len = msdu_len - buf_first_len;
 	while ((skb = __skb_dequeue(msdu_list)) != NULL && rem_len > 0) {
 		rxcb = ATH11K_SKB_RXCB(skb);
 		if (rxcb->is_continuation)
@@ -2124,7 +2180,6 @@ int ath11k_dp_process_rx(struct ath11k_base *ab, int mac_id,
 	struct ieee80211_rx_status *rx_status = &dp->rx_status;
 	struct dp_rxdma_ring *rx_ring = &dp->rx_refill_buf_ring;
 	struct hal_srng *srng;
-	struct hal_rx_meta_info meta_info;
 	struct sk_buff *msdu;
 	struct sk_buff_head msdu_list;
 	struct sk_buff_head amsdu_list;
@@ -2160,11 +2215,14 @@ int ath11k_dp_process_rx(struct ath11k_base *ab, int mac_id,
 
 try_again:
 	while ((rx_desc = ath11k_hal_srng_dst_get_next_entry(ab, srng))) {
-		memset(&meta_info, 0, sizeof(meta_info));
-		ath11k_hal_rx_parse_dst_ring_desc(ab, rx_desc, &meta_info);
+		struct hal_reo_dest_ring *desc = (struct hal_reo_dest_ring *)rx_desc;
+		enum hal_reo_dest_ring_push_reason push_reason;
+		u32 cookie;
 
+		cookie = FIELD_GET(BUFFER_ADDR_INFO1_SW_COOKIE,
+				   desc->buf_addr_info.info1);
 		buf_id = FIELD_GET(DP_RXDMA_BUF_COOKIE_BUF_ID,
-				   meta_info.msdu_meta.cookie);
+				   cookie);
 		spin_lock_bh(&rx_ring->idr_lock);
 		msdu = idr_find(&rx_ring->bufs_idr, buf_id);
 		if (!msdu) {
@@ -2184,7 +2242,9 @@ try_again:
 
 		num_buffs_reaped++;
 
-		if (meta_info.push_reason !=
+		push_reason = FIELD_GET(HAL_REO_DEST_RING_INFO0_PUSH_REASON,
+					desc->info0);
+		if (push_reason !=
 		    HAL_REO_DEST_RING_PUSH_REASON_ROUTING_INSTRUCTION) {
 			/* TODO: Check if the msdu can be sent up for processing */
 			dev_kfree_skb_any(msdu);
@@ -2192,9 +2252,12 @@ try_again:
 			continue;
 		}
 
-		rxcb->is_first_msdu = meta_info.msdu_meta.first;
-		rxcb->is_last_msdu = meta_info.msdu_meta.last;
-		rxcb->is_continuation = meta_info.msdu_meta.continuation;
+		rxcb->is_first_msdu = !!(desc->rx_msdu_info.info0 &
+					 RX_MSDU_DESC_INFO0_FIRST_MSDU_IN_MPDU);
+		rxcb->is_last_msdu = !!(desc->rx_msdu_info.info0 &
+					RX_MSDU_DESC_INFO0_LAST_MSDU_IN_MPDU);
+		rxcb->is_continuation = !!(desc->rx_msdu_info.info0 &
+					   RX_MSDU_DESC_INFO0_MSDU_CONTINUATION);
 		rxcb->mac_id = mac_id;
 		__skb_queue_tail(&msdu_list, msdu);
 
@@ -2770,12 +2833,11 @@ exit:
 int ath11k_dp_process_rx_err(struct ath11k_base *ab, struct napi_struct *napi,
 			     int budget)
 {
-	struct hal_rx_msdu_meta meta[HAL_NUM_RX_MSDUS_PER_LINK_DESC];
+	u32 msdu_cookies[HAL_NUM_RX_MSDUS_PER_LINK_DESC];
 	struct dp_link_desc_bank *link_desc_banks;
 	enum hal_rx_buf_return_buf_manager rbm;
 	int tot_n_bufs_reaped, quota, ret, i;
 	int n_bufs_reaped[MAX_RADIOS] = {0};
-	struct hal_rx_meta_info meta_info;
 	struct dp_rxdma_ring *rx_ring;
 	struct dp_srng *reo_except;
 	u32 desc_bank, num_msdus;
@@ -2803,6 +2865,8 @@ int ath11k_dp_process_rx_err(struct ath11k_base *ab, struct napi_struct *napi,
 
 	while (budget &&
 	       (desc = ath11k_hal_srng_dst_get_next_entry(ab, srng))) {
+		struct hal_reo_dest_ring *reo_desc = (struct hal_reo_dest_ring *)desc;
+
 		ab->soc_stats.err_ring_pkts++;
 		ret = ath11k_hal_desc_reo_parse_err(ab, desc, &paddr,
 						    &desc_bank);
@@ -2813,7 +2877,7 @@ int ath11k_dp_process_rx_err(struct ath11k_base *ab, struct napi_struct *napi,
 		}
 		link_desc_va = link_desc_banks[desc_bank].vaddr +
 			       (paddr - link_desc_banks[desc_bank].paddr);
-		ath11k_hal_rx_msdu_link_info_get(link_desc_va, &num_msdus, meta,
+		ath11k_hal_rx_msdu_link_info_get(link_desc_va, &num_msdus, msdu_cookies,
 						 &rbm);
 		if (rbm != HAL_RX_BUF_RBM_WBM_IDLE_DESC_LIST &&
 		    rbm != HAL_RX_BUF_RBM_SW3_BM) {
@@ -2824,10 +2888,7 @@ int ath11k_dp_process_rx_err(struct ath11k_base *ab, struct napi_struct *napi,
 			continue;
 		}
 
-		memset(&meta_info, 0, sizeof(meta_info));
-		ath11k_hal_rx_parse_dst_ring_desc(ab, desc, &meta_info);
-
-		is_frag = meta_info.mpdu_meta.frag;
+		is_frag = !!(reo_desc->rx_mpdu_info.info0 & RX_MPDU_DESC_INFO0_FRAG_FLAG);
 
 		/* Return the link desc back to wbm idle list */
 		ath11k_dp_rx_link_desc_return(ab, desc,
@@ -2835,10 +2896,10 @@ int ath11k_dp_process_rx_err(struct ath11k_base *ab, struct napi_struct *napi,
 
 		for (i = 0; i < num_msdus; i++) {
 			buf_id = FIELD_GET(DP_RXDMA_BUF_COOKIE_BUF_ID,
-					   meta[i].cookie);
+					   msdu_cookies[i]);
 
 			mac_id = FIELD_GET(DP_RXDMA_BUF_COOKIE_PDEV_ID,
-					   meta[i].cookie);
+					   msdu_cookies[i]);
 
 			ar = ab->pdevs[mac_id].ar;
 
@@ -3192,7 +3253,7 @@ int ath11k_dp_process_rxdma_err(struct ath11k_base *ab, int mac_id, int budget)
 	struct dp_rxdma_ring *rx_ring = &ar->dp.rx_refill_buf_ring;
 	struct dp_link_desc_bank *link_desc_banks = ab->dp.link_desc_banks;
 	struct hal_srng *srng;
-	struct hal_rx_msdu_meta meta[HAL_NUM_RX_MSDUS_PER_LINK_DESC];
+	u32 msdu_cookies[HAL_NUM_RX_MSDUS_PER_LINK_DESC];
 	enum hal_rx_buf_return_buf_manager rbm;
 	enum hal_reo_entr_rxdma_ecode rxdma_err_code;
 	struct ath11k_skb_rxcb *rxcb;
@@ -3226,12 +3287,12 @@ int ath11k_dp_process_rxdma_err(struct ath11k_base *ab, int mac_id, int budget)
 
 		link_desc_va = link_desc_banks[desc_bank].vaddr +
 			       (paddr - link_desc_banks[desc_bank].paddr);
-		ath11k_hal_rx_msdu_link_info_get(link_desc_va, &num_msdus, meta,
-						 &rbm);
+		ath11k_hal_rx_msdu_link_info_get(link_desc_va, &num_msdus,
+						 msdu_cookies, &rbm);
 
 		for (i = 0; i < num_msdus; i++) {
 			buf_id = FIELD_GET(DP_RXDMA_BUF_COOKIE_BUF_ID,
-					   meta[i].cookie);
+					   msdu_cookies[i]);
 
 			spin_lock_bh(&rx_ring->idr_lock);
 			skb = idr_find(&rx_ring->bufs_idr, buf_id);
@@ -3712,8 +3773,15 @@ ath11k_dp_rx_mon_mpdu_pop(struct ath11k *ar,
 
 				if (ath11k_dp_rx_mon_comp_ppduid(msdu_ppdu_id,
 								 ppdu_id,
-								 &rx_bufs_used))
+								 &rx_bufs_used)) {
+					if (rx_bufs_used) {
+						drop_mpdu = true;
+						dev_kfree_skb_any(msdu);
+						msdu = NULL;
+						goto next_msdu;
+					}
 					return rx_bufs_used;
+				}
 				pmon->mon_last_linkdesc_paddr = paddr;
 				is_first_msdu = false;
 			}
@@ -3915,7 +3983,7 @@ static int ath11k_dp_rx_mon_deliver(struct ath11k *ar, u32 mac_id,
 
 		ath11k_dp_rx_deliver_msdu(ar, napi, mon_skb);
 		mon_skb = skb_next;
-	} while (mon_skb && (mon_skb != tail_msdu));
+	} while (mon_skb);
 	rxs->flag = 0;
 
 	return 0;

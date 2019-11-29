@@ -310,7 +310,7 @@ ath11k_pull_mac_phy_cap_svc_ready_ext(struct ath11k_pdev_wmi *wmi_handle,
 	if (phy_id >= hal_reg_caps->num_phy)
 		return -EINVAL;
 
-	mac_phy_caps = &wmi_mac_phy_caps[phy_idx];
+	mac_phy_caps = wmi_mac_phy_caps + phy_idx;
 
 	pdev->pdev_id = mac_phy_caps->pdev_id;
 	pdev_cap->supported_bands = mac_phy_caps->supported_bands;
@@ -1804,8 +1804,17 @@ int ath11k_wmi_send_peer_assoc_cmd(struct ath11k *ar,
 	}
 
 	ath11k_dbg(ar->ab, ATH11K_DBG_WMI,
-		   "WMI peer assoc vdev id %d assoc id %d peer mac %pM\n",
-		   param->vdev_id, param->peer_associd, param->peer_mac);
+		   "wmi peer assoc vdev id %d assoc id %d peer mac %pM peer_flags %x rate_caps %x peer_caps %x listen_intval %d ht_caps %x max_mpdu %d nss %d phymode %d peer_mpdu_density %d vht_caps %x he cap_info %x he ops %x he cap_info_ext %x he phy %x %x %x peer_bw_rxnss_override %x\n",
+		   cmd->vdev_id, cmd->peer_associd, param->peer_mac,
+		   cmd->peer_flags, cmd->peer_rate_caps, cmd->peer_caps,
+		   cmd->peer_listen_intval, cmd->peer_ht_caps,
+		   cmd->peer_max_mpdu, cmd->peer_nss, cmd->peer_phymode,
+		   cmd->peer_mpdu_density,
+		   cmd->peer_vht_caps, cmd->peer_he_cap_info,
+		   cmd->peer_he_ops, cmd->peer_he_cap_info_ext,
+		   cmd->peer_he_cap_phy[0], cmd->peer_he_cap_phy[1],
+		   cmd->peer_he_cap_phy[2],
+		   cmd->peer_bw_rxnss_override);
 
 	return ret;
 }
@@ -2321,7 +2330,7 @@ int ath11k_wmi_pdev_peer_pktlog_filter(struct ath11k *ar, u8 *addr, u8 enable)
 	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_PDEV_PEER_PKTLOG_FILTER_CMD) |
 			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
 
-	cmd->pdev_id = ar->pdev->pdev_id;
+	cmd->pdev_id = DP_HW2SW_MACID(ar->pdev->pdev_id);
 	cmd->num_mac = 1;
 	cmd->enable = enable;
 
@@ -2329,7 +2338,7 @@ int ath11k_wmi_pdev_peer_pktlog_filter(struct ath11k *ar, u8 *addr, u8 enable)
 
 	tlv = ptr;
 	tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_STRUCT) |
-		      FIELD_PREP(WMI_TLV_LEN, 0);
+		      FIELD_PREP(WMI_TLV_LEN, sizeof(*info));
 
 	ptr += TLV_HDR_SIZE;
 	info = ptr;
@@ -2419,7 +2428,7 @@ int ath11k_wmi_pdev_pktlog_enable(struct ath11k *ar, u32 pktlog_filter)
 	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_PDEV_PKTLOG_ENABLE_CMD) |
 			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
 
-	cmd->pdev_id = ar->pdev->pdev_id;
+	cmd->pdev_id = DP_HW2SW_MACID(ar->pdev->pdev_id);
 	cmd->evlist = pktlog_filter;
 	cmd->enable = ATH11K_WMI_PKTLOG_ENABLE_FORCE;
 
@@ -2449,7 +2458,7 @@ int ath11k_wmi_pdev_pktlog_disable(struct ath11k *ar)
 	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_PDEV_PKTLOG_DISABLE_CMD) |
 			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
 
-	cmd->pdev_id = ar->pdev->pdev_id;
+	cmd->pdev_id = DP_HW2SW_MACID(ar->pdev->pdev_id);
 
 	ret = ath11k_wmi_cmd_send(wmi, skb,
 				  WMI_PDEV_PKTLOG_DISABLE_CMDID);
@@ -2959,6 +2968,15 @@ static int ath11k_wmi_tlv_mac_phy_caps_parse(struct ath11k_base *soc,
 	if (svc_rdy_ext->n_mac_phy_caps >= svc_rdy_ext->tot_phy_id)
 		return -ENOBUFS;
 
+	len = min_t(u16, len, sizeof(struct wmi_mac_phy_capabilities));
+	if (!svc_rdy_ext->n_mac_phy_caps) {
+		svc_rdy_ext->mac_phy_caps = kzalloc((svc_rdy_ext->tot_phy_id) * len,
+						    GFP_ATOMIC);
+		if (!svc_rdy_ext->mac_phy_caps)
+			return -ENOMEM;
+	}
+
+	memcpy(svc_rdy_ext->mac_phy_caps + svc_rdy_ext->n_mac_phy_caps, ptr, len);
 	svc_rdy_ext->n_mac_phy_caps++;
 	return 0;
 }
@@ -3092,8 +3110,6 @@ static int ath11k_wmi_tlv_svc_rdy_ext_parse(struct ath11k_base *ab,
 			svc_rdy_ext->hw_mode_done = true;
 		} else if (!svc_rdy_ext->mac_phy_done) {
 			svc_rdy_ext->n_mac_phy_caps = 0;
-			svc_rdy_ext->mac_phy_caps =
-					(struct wmi_mac_phy_capabilities *)ptr;
 			ret = ath11k_wmi_tlv_iter(ab, ptr, len,
 						  ath11k_wmi_tlv_mac_phy_caps_parse,
 						  svc_rdy_ext);
@@ -3134,6 +3150,7 @@ static int ath11k_service_ready_ext_event(struct ath11k_base *ab,
 		return ret;
 	}
 
+	kfree(svc_rdy_ext.mac_phy_caps);
 	return 0;
 }
 

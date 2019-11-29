@@ -2682,6 +2682,87 @@ static void ath11k_mac_dec_num_stations(struct ath11k_vif *arvif,
 	ar->num_stations--;
 }
 
+static int ath11k_mac_station_add(struct ath11k *ar,
+				  struct ieee80211_vif *vif,
+				  struct ieee80211_sta *sta)
+{
+	struct ath11k_base *ab = ar->ab;
+	struct ath11k_vif *arvif = ath11k_vif_to_arvif(vif);
+	struct ath11k_sta *arsta = (struct ath11k_sta *)sta->drv_priv;
+	struct peer_create_params peer_param;
+	int ret;
+
+	lockdep_assert_held(&ar->conf_mutex);
+
+	ret = ath11k_mac_inc_num_stations(arvif, sta);
+	if (ret) {
+		ath11k_warn(ab, "refusing to associate station: too many connected already (%d)\n",
+			    ar->max_num_stations);
+		goto exit;
+	}
+
+	arsta->rx_stats = kzalloc(sizeof(*arsta->rx_stats), GFP_KERNEL);
+	if (!arsta->rx_stats) {
+		ret = -ENOMEM;
+		goto dec_num_station;
+	}
+
+	peer_param.vdev_id = arvif->vdev_id;
+	peer_param.peer_addr = sta->addr;
+	peer_param.peer_type = WMI_PEER_TYPE_DEFAULT;
+
+	ret = ath11k_peer_create(ar, arvif, sta, &peer_param);
+	if (ret) {
+		ath11k_warn(ab, "Failed to add peer: %pM for VDEV: %d\n",
+			    sta->addr, arvif->vdev_id);
+		goto free_rx_stats;
+	}
+
+	ath11k_dbg(ab, ATH11K_DBG_MAC, "Added peer: %pM for VDEV: %d\n",
+		   sta->addr, arvif->vdev_id);
+
+	if (ath11k_debug_is_extd_tx_stats_enabled(ar)) {
+		arsta->tx_stats = kzalloc(sizeof(*arsta->tx_stats), GFP_KERNEL);
+		if (!arsta->tx_stats) {
+			ret = -ENOMEM;
+			goto free_peer;
+		}
+	}
+
+	if (ieee80211_vif_is_mesh(vif)) {
+		ret = ath11k_wmi_set_peer_param(ar, sta->addr,
+						arvif->vdev_id,
+						WMI_PEER_USE_4ADDR, 1);
+		if (ret) {
+			ath11k_warn(ab, "failed to STA %pM 4addr capability: %d\n",
+				    sta->addr, ret);
+			goto free_tx_stats;
+		}
+	}
+
+	ret = ath11k_dp_peer_setup(ar, arvif->vdev_id, sta->addr);
+	if (ret) {
+		ath11k_warn(ab, "failed to setup dp for peer %pM on vdev %i (%d)\n",
+			    sta->addr, arvif->vdev_id, ret);
+		goto free_tx_stats;
+	}
+
+	return 0;
+
+free_tx_stats:
+	kfree(arsta->tx_stats);
+	arsta->tx_stats = NULL;
+free_peer:
+	ath11k_peer_delete(ar, arvif->vdev_id, sta->addr);
+free_rx_stats:
+	kfree(arsta->rx_stats);
+	arsta->rx_stats = NULL;
+dec_num_station:
+	ath11k_mac_dec_num_stations(arvif, sta);
+exit:
+	return ret;
+}
+
 static int ath11k_mac_op_sta_state(struct ieee80211_hw *hw,
 				   struct ieee80211_vif *vif,
 				   struct ieee80211_sta *sta,
@@ -2691,7 +2772,6 @@ static int ath11k_mac_op_sta_state(struct ieee80211_hw *hw,
 	struct ath11k *ar = hw->priv;
 	struct ath11k_vif *arvif = ath11k_vif_to_arvif(vif);
 	struct ath11k_sta *arsta = (struct ath11k_sta *)sta->drv_priv;
-	struct peer_create_params peer_param;
 	int ret = 0;
 
 	/* cancel must be done outside the mutex to avoid deadlock */
@@ -2707,60 +2787,10 @@ static int ath11k_mac_op_sta_state(struct ieee80211_hw *hw,
 		arsta->arvif = arvif;
 		INIT_WORK(&arsta->update_wk, ath11k_sta_rc_update_wk);
 
-		ret = ath11k_mac_inc_num_stations(arvif, sta);
-		if (ret) {
-			ath11k_warn(ar->ab, "refusing to associate station: too many connected already (%d)\n",
-				    ar->max_num_stations);
-			goto exit;
-		}
-
-		arsta->rx_stats = kzalloc(sizeof(*arsta->rx_stats), GFP_KERNEL);
-		if (!arsta->rx_stats) {
-			ret = -ENOMEM;
-			goto exit;
-		}
-
-		peer_param.vdev_id = arvif->vdev_id;
-		peer_param.peer_addr = sta->addr;
-		peer_param.peer_type = WMI_PEER_TYPE_DEFAULT;
-		ret = ath11k_peer_create(ar, arvif, sta, &peer_param);
-		if (ret) {
-			ath11k_warn(ar->ab, "Failed to add peer: %pM for VDEV: %d\n",
+		ret = ath11k_mac_station_add(ar, vif, sta);
+		if (ret)
+			ath11k_warn(ar->ab, "Failed to add station: %pM for VDEV: %d\n",
 				    sta->addr, arvif->vdev_id);
-			ath11k_mac_dec_num_stations(arvif, sta);
-			goto exit;
-		}
-
-		ath11k_info(ar->ab, "Added peer: %pM for VDEV: %d\n",
-			    sta->addr, arvif->vdev_id);
-
-		if (ath11k_debug_is_extd_tx_stats_enabled(ar)) {
-			arsta->tx_stats = kzalloc(sizeof(*arsta->tx_stats),
-						  GFP_KERNEL);
-			if (!arsta->tx_stats) {
-				ret = -ENOMEM;
-				goto exit;
-			}
-		}
-
-		if (ieee80211_vif_is_mesh(vif)) {
-			ret = ath11k_wmi_set_peer_param(ar, sta->addr,
-							arvif->vdev_id,
-							WMI_PEER_USE_4ADDR, 1);
-			if (ret) {
-				ath11k_warn(ar->ab, "failed to STA %pM 4addr capability: %d\n",
-					    sta->addr, ret);
-				goto exit;
-			}
-		}
-
-		ret = ath11k_dp_peer_setup(ar, arvif->vdev_id, sta->addr);
-		if (ret) {
-			ath11k_warn(ar->ab, "failed to setup dp for peer %pM on vdev %i (%d)\n",
-				    sta->addr, arvif->vdev_id, ret);
-			ath11k_peer_delete(ar, arvif->vdev_id, sta->addr);
-			ath11k_mac_dec_num_stations(arvif, sta);
-		}
 	} else if ((old_state == IEEE80211_STA_NONE &&
 		    new_state == IEEE80211_STA_NOTEXIST)) {
 		ath11k_dp_peer_cleanup(ar, arvif->vdev_id, sta->addr);
@@ -2770,9 +2800,8 @@ static int ath11k_mac_op_sta_state(struct ieee80211_hw *hw,
 			ath11k_warn(ar->ab, "Failed to delete peer: %pM for VDEV: %d\n",
 				    sta->addr, arvif->vdev_id);
 		else
-			ath11k_info(ar->ab,
-				    "Removed peer: %pM for VDEV: %d\n",
-				    sta->addr, arvif->vdev_id);
+			ath11k_dbg(ar->ab, ATH11K_DBG_MAC, "Removed peer: %pM for VDEV: %d\n",
+				   sta->addr, arvif->vdev_id);
 
 		ath11k_mac_dec_num_stations(arvif, sta);
 
@@ -2809,7 +2838,41 @@ static int ath11k_mac_op_sta_state(struct ieee80211_hw *hw,
 				    sta->addr);
 	}
 
-exit:
+	mutex_unlock(&ar->conf_mutex);
+	return ret;
+}
+
+static int ath11k_mac_op_sta_set_txpwr(struct ieee80211_hw *hw,
+				       struct ieee80211_vif *vif,
+				       struct ieee80211_sta *sta)
+{
+	struct ath11k *ar = hw->priv;
+	struct ath11k_vif *arvif = (void *)vif->drv_priv;
+	int ret = 0;
+	s16 txpwr;
+
+	if (sta->txpwr.type == NL80211_TX_POWER_AUTOMATIC) {
+		txpwr = 0;
+	} else {
+		txpwr = sta->txpwr.power;
+		if (!txpwr)
+			return -EINVAL;
+	}
+
+	if (txpwr > ATH11K_TX_POWER_MAX_VAL || txpwr < ATH11K_TX_POWER_MIN_VAL)
+		return -EINVAL;
+
+	mutex_lock(&ar->conf_mutex);
+
+	ret = ath11k_wmi_set_peer_param(ar, sta->addr, arvif->vdev_id,
+					WMI_PEER_USE_FIXED_PWR, txpwr);
+	if (ret) {
+		ath11k_warn(ar->ab, "failed to set tx power for station ret: %d\n",
+			    ret);
+		goto out;
+	}
+
+out:
 	mutex_unlock(&ar->conf_mutex);
 	return ret;
 }
@@ -2995,12 +3058,7 @@ static int ath11k_mac_op_conf_tx(struct ieee80211_hw *hw,
 	p->cwmin = params->cw_min;
 	p->cwmax = params->cw_max;
 	p->aifs = params->aifs;
-
-	/* The channel time duration programmed in the HW is in absolute
-	 * microseconds, while mac80211 gives the txop in units of
-	 * 32 microseconds.
-	 */
-	p->txop = params->txop * 32;
+	p->txop = params->txop;
 
 	ret = ath11k_wmi_send_wmm_update_cmd_tlv(ar, arvif->vdev_id,
 						 &arvif->wmm_params);
@@ -3031,7 +3089,7 @@ ath11k_create_ht_cap(struct ath11k *ar, u32 ar_ht_cap, u32 rate_cap_rx_chainmask
 
 	ht_cap.ht_supported = 1;
 	ht_cap.ampdu_factor = IEEE80211_HT_MAX_AMPDU_64K;
-	ht_cap.ampdu_density = IEEE80211_HT_MPDU_DENSITY_8;
+	ht_cap.ampdu_density = IEEE80211_HT_MPDU_DENSITY_NONE;
 	ht_cap.cap |= IEEE80211_HT_CAP_SUP_WIDTH_20_40;
 	ht_cap.cap |= IEEE80211_HT_CAP_DSSSCCK40;
 	ht_cap.cap |= WLAN_HT_CAP_SM_PS_STATIC << IEEE80211_HT_CAP_SM_PS_SHIFT;
@@ -3422,6 +3480,8 @@ static int __ath11k_set_antenna(struct ath11k *ar, u32 tx_ant, u32 rx_ant)
 		return ret;
 	}
 
+	ar->num_tx_chains = get_num_chains(tx_ant);
+
 	ret = ath11k_wmi_pdev_set_param(ar, WMI_PDEV_PARAM_RX_CHAIN_MASK,
 					rx_ant, ar->pdev->pdev_id);
 	if (ret) {
@@ -3429,6 +3489,8 @@ static int __ath11k_set_antenna(struct ath11k *ar, u32 tx_ant, u32 rx_ant)
 			    ret, rx_ant);
 		return ret;
 	}
+
+	ar->num_rx_chains = get_num_chains(rx_ant);
 
 	/* Reload HT/VHT/HE capability */
 	ath11k_mac_setup_ht_vht_cap(ar, &ar->pdev->cap, NULL);
@@ -3821,15 +3883,15 @@ ath11k_mac_prepare_he_mode(struct ath11k_pdev *pdev, u32 viftype)
 	hecap_phy_ptr = &cap_band->he_cap_phy_info[0];
 
 	hemode = FIELD_PREP(HE_MODE_SU_TX_BFEE, HE_SU_BFEE_ENABLE) |
-		FIELD_PREP(HE_MODE_SU_TX_BFER, HECAP_PHY_SUBFMR_GET(hecap_phy_ptr)) |
-		FIELD_PREP(HE_MODE_UL_MUMIMO, HECAP_PHY_ULMUMIMO_GET(hecap_phy_ptr));
+		 FIELD_PREP(HE_MODE_SU_TX_BFER, HECAP_PHY_SUBFMR_GET(hecap_phy_ptr)) |
+		 FIELD_PREP(HE_MODE_UL_MUMIMO, HECAP_PHY_ULMUMIMO_GET(hecap_phy_ptr));
 
 	/* TODO WDS and other modes */
 	if (viftype == NL80211_IFTYPE_AP) {
 		hemode |= FIELD_PREP(HE_MODE_MU_TX_BFER,
-			   HECAP_PHY_MUBFMR_GET(hecap_phy_ptr)) |
-			FIELD_PREP(HE_MODE_DL_OFDMA, HE_DL_MUOFDMA_ENABLE) |
-			FIELD_PREP(HE_MODE_UL_OFDMA, HE_UL_MUOFDMA_ENABLE);
+			  HECAP_PHY_MUBFMR_GET(hecap_phy_ptr)) |
+			  FIELD_PREP(HE_MODE_DL_OFDMA, HE_DL_MUOFDMA_ENABLE) |
+			  FIELD_PREP(HE_MODE_UL_OFDMA, HE_UL_MUOFDMA_ENABLE);
 	} else {
 		hemode |= FIELD_PREP(HE_MODE_MU_TX_BFEE, HE_MU_BFEE_ENABLE);
 	}
@@ -5254,6 +5316,9 @@ static void ath11k_mac_op_sta_statistics(struct ieee80211_hw *hw,
 	sinfo->rx_duration = arsta->rx_duration;
 	sinfo->filled |= BIT_ULL(NL80211_STA_INFO_RX_DURATION);
 
+	sinfo->tx_duration = arsta->tx_duration;
+	sinfo->filled |= BIT_ULL(NL80211_STA_INFO_TX_DURATION);
+
 	if (!arsta->txrate.legacy && !arsta->txrate.nss)
 		return;
 
@@ -5288,6 +5353,7 @@ static const struct ieee80211_ops ath11k_ops = {
 	.cancel_hw_scan                 = ath11k_mac_op_cancel_hw_scan,
 	.set_key                        = ath11k_mac_op_set_key,
 	.sta_state                      = ath11k_mac_op_sta_state,
+	.sta_set_txpwr			= ath11k_mac_op_sta_set_txpwr,
 	.sta_rc_update			= ath11k_mac_op_sta_rc_update,
 	.conf_tx                        = ath11k_mac_op_conf_tx,
 	.set_antenna			= ath11k_mac_op_set_antenna,
@@ -5447,7 +5513,38 @@ static const struct wiphy_iftype_ext_capab ath11k_iftypes_ext_capa[] = {
 	},
 };
 
-static int ath11k_mac_register(struct ath11k *ar)
+static void __ath11k_mac_unregister(struct ath11k *ar)
+{
+	cancel_work_sync(&ar->regd_update_work);
+
+	ieee80211_unregister_hw(ar->hw);
+
+	idr_for_each(&ar->txmgmt_idr, ath11k_mac_tx_mgmt_pending_free, ar);
+	idr_destroy(&ar->txmgmt_idr);
+
+	kfree(ar->mac.sbands[NL80211_BAND_2GHZ].channels);
+	kfree(ar->mac.sbands[NL80211_BAND_5GHZ].channels);
+
+	SET_IEEE80211_DEV(ar->hw, NULL);
+}
+
+void ath11k_mac_unregister(struct ath11k_base *ab)
+{
+	struct ath11k *ar;
+	struct ath11k_pdev *pdev;
+	int i;
+
+	for (i = 0; i < ab->num_radios; i++) {
+		pdev = &ab->pdevs[i];
+		ar = pdev->ar;
+		if (!ar)
+			continue;
+
+		__ath11k_mac_unregister(ar);
+	}
+}
+
+static int __ath11k_mac_register(struct ath11k *ar)
 {
 	struct ath11k_base *ab = ar->ab;
 	struct ath11k_pdev_cap *cap = &ar->pdev->cap;
@@ -5548,6 +5645,7 @@ static int ath11k_mac_register(struct ath11k *ar)
 	ar->hw->wiphy->n_iface_combinations = ARRAY_SIZE(ath11k_if_comb);
 
 	wiphy_ext_feature_set(ar->hw->wiphy, NL80211_EXT_FEATURE_CQM_RSSI_LIST);
+	wiphy_ext_feature_set(ar->hw->wiphy, NL80211_EXT_FEATURE_STA_TX_PWR);
 
 	ar->hw->wiphy->cipher_suites = cipher_suites;
 	ar->hw->wiphy->n_cipher_suites = ARRAY_SIZE(cipher_suites);
@@ -5590,32 +5688,48 @@ err_free:
 	return ret;
 }
 
-void ath11k_mac_unregister(struct ath11k_base *ab)
+int ath11k_mac_register(struct ath11k_base *ab)
 {
 	struct ath11k *ar;
 	struct ath11k_pdev *pdev;
 	int i;
+	int ret;
 
 	for (i = 0; i < ab->num_radios; i++) {
 		pdev = &ab->pdevs[i];
 		ar = pdev->ar;
-		if (!ar)
-			continue;
-		cancel_work_sync(&ar->regd_update_work);
+		if (ab->pdevs_macaddr_valid) {
+			ether_addr_copy(ar->mac_addr, pdev->mac_addr);
+		} else {
+			ether_addr_copy(ar->mac_addr, ab->mac_addr);
+			ar->mac_addr[4] += i;
+		}
 
-		ieee80211_unregister_hw(ar->hw);
+		ret = __ath11k_mac_register(ar);
+		if (ret)
+			goto err_cleanup;
 
-		idr_for_each(&ar->txmgmt_idr, ath11k_mac_tx_mgmt_pending_free, ar);
-		idr_destroy(&ar->txmgmt_idr);
-
-		kfree(ar->mac.sbands[NL80211_BAND_2GHZ].channels);
-		kfree(ar->mac.sbands[NL80211_BAND_5GHZ].channels);
-
-		SET_IEEE80211_DEV(ar->hw, NULL);
+		idr_init(&ar->txmgmt_idr);
+		spin_lock_init(&ar->txmgmt_idr_lock);
 	}
+
+	/* Initialize channel counters frequency value in hertz */
+	ab->cc_freq_hz = IPQ8074_CC_FREQ_HERTZ;
+	ab->free_vdev_map = (1LL << (ab->num_radios * TARGET_NUM_VDEVS)) - 1;
+
+	return 0;
+
+err_cleanup:
+	for (i = i - 1; i >= 0; i--) {
+		pdev = &ab->pdevs[i];
+		ar = pdev->ar;
+		__ath11k_mac_unregister(ar);
+	}
+
+	return ret;
 }
 
-int ath11k_mac_create(struct ath11k_base *ab)
+int ath11k_mac_allocate(struct ath11k_base *ab)
 {
 	struct ieee80211_hw *hw;
 	struct ath11k *ar;
@@ -5632,7 +5746,7 @@ int ath11k_mac_create(struct ath11k_base *ab)
 		if (!hw) {
 			ath11k_warn(ab, "failed to allocate mac80211 hw device\n");
 			ret = -ENOMEM;
-			goto err_destroy_mac;
+			goto err_free_mac;
 		}
 
 		ar = hw->priv;
@@ -5653,13 +5767,6 @@ int ath11k_mac_create(struct ath11k_base *ab)
 		ar->num_tx_chains = get_num_chains(pdev->cap.tx_chain_mask);
 		ar->num_rx_chains = get_num_chains(pdev->cap.rx_chain_mask);
 
-		if (ab->pdevs_macaddr_valid) {
-			ether_addr_copy(ar->mac_addr, pdev->mac_addr);
-		} else {
-			ether_addr_copy(ar->mac_addr, ab->mac_addr);
-			ar->mac_addr[4] += i;
-		}
-
 		pdev->ar = ar;
 		spin_lock_init(&ar->data_lock);
 		INIT_LIST_HEAD(&ar->arvifs);
@@ -5677,26 +5784,11 @@ int ath11k_mac_create(struct ath11k_base *ab)
 		INIT_WORK(&ar->wmi_mgmt_tx_work, ath11k_mgmt_over_wmi_tx_work);
 		skb_queue_head_init(&ar->wmi_mgmt_tx_queue);
 		clear_bit(ATH11K_FLAG_MONITOR_ENABLED, &ar->monitor_flags);
-
-		ret = ath11k_mac_register(ar);
-		if (ret) {
-			ath11k_warn(ab, "failed to register hw device\n");
-			pdev->ar = NULL;
-			ieee80211_free_hw(hw);
-			goto err_destroy_mac;
-		}
-
-		idr_init(&ar->txmgmt_idr);
-		spin_lock_init(&ar->txmgmt_idr_lock);
 	}
-
-	/* Initialize channel counters frequency value in hertz */
-	ab->cc_freq_hz = IPQ8074_CC_FREQ_HERTZ;
-	ab->free_vdev_map = (1LL << (ab->num_radios * TARGET_NUM_VDEVS)) - 1;
 
 	return 0;
 
-err_destroy_mac:
+err_free_mac:
 	ath11k_mac_destroy(ab);
 
 	return ret;

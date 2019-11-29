@@ -63,7 +63,6 @@ struct dp_tx_ring {
 	struct dp_srng tcl_data_ring;
 	struct dp_srng tcl_comp_ring;
 	struct idr txbuf_idr;
-	u32 num_tx_pending;
 	/* Protects txbuf_idr and num_pending */
 	spinlock_t tx_idr_lock;
 	DECLARE_KFIFO_PTR(tx_status_fifo, struct hal_wbm_release_ring);
@@ -1177,7 +1176,9 @@ struct htt_ppdu_stats_usr_cmpltn_cmn {
 
 #define HTT_PPDU_STATS_ACK_BA_INFO_NUM_MPDU_M	GENMASK(8, 0)
 #define HTT_PPDU_STATS_ACK_BA_INFO_NUM_MSDU_M	GENMASK(24, 9)
-#define HTT_PPDU_STATS_ACK_BA_INFO_TID_NUM	GENMASK(3, 0)
+#define HTT_PPDU_STATS_ACK_BA_INFO_TID_NUM	GENMASK(31, 25)
+
+#define HTT_PPDU_STATS_NON_QOS_TID	16
 
 struct htt_ppdu_stats_usr_cmpltn_ack_ba_status {
 	u32 ppdu_id;
@@ -1365,8 +1366,8 @@ struct htt_ext_stats_cfg_cmd {
 #define HTT_STAT_DEFAULT_CFG0_ALL_CMDQS 0xffff
 #define HTT_STAT_DEFAULT_CFG0_ALL_RINGS 0xffff
 #define HTT_STAT_DEFAULT_CFG0_ACTIVE_PEERS 0xff
-#define HTT_STAT_DEFAULT_CFG0_CCA_CUMULATIVE 0x10
-#define HTT_STAT_DEFAULT_CFG0_ACTIVE_VDEVS 0xff
+#define HTT_STAT_DEFAULT_CFG0_CCA_CUMULATIVE 0x00
+#define HTT_STAT_DEFAULT_CFG0_ACTIVE_VDEVS 0x00
 
 /* HTT_DBG_EXT_STATS_PEER_INFO
  * PARAMS:
@@ -1506,6 +1507,7 @@ void ath11k_dp_vdev_tx_attach(struct ath11k *ar, struct ath11k_vif *arvif);
 void ath11k_dp_free(struct ath11k_base *ab);
 int ath11k_dp_alloc(struct ath11k_base *ab);
 int ath11k_dp_pdev_alloc(struct ath11k_base *ab);
+void ath11k_dp_pdev_pre_alloc(struct ath11k_base *ab);
 void ath11k_dp_pdev_free(struct ath11k_base *ab);
 int ath11k_dp_tx_htt_srng_setup(struct ath11k_base *ab, u32 ring_id,
 				int mac_id, enum hal_ring_type ring_type);
