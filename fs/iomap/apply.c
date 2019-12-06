@@ -92,5 +92,40 @@ iomap_apply(struct iomap_ctx *data, const struct iomap_ops *ops,
 				     data->flags, &iomap);
 	}
 
+	if (written <= 0)
+		goto out;
+
+	/*
+	 * If this is an uncached write, then we need to write and sync this
+	 * range of data. This is only true for a buffered write, not for
+	 * O_DIRECT.
+	 */
+	if ((data->flags & (IOMAP_WRITE|IOMAP_DIRECT|IOMAP_UNCACHED)) ==
+			(IOMAP_WRITE|IOMAP_UNCACHED)) {
+		struct address_space *mapping = data->inode->i_mapping;
+
+		end = data->pos + written;
+		ret = filemap_write_and_wait_range(mapping, data->pos, end);
+		if (ret)
+			goto out;
+
+		/*
+		 * No pages were created for this range, we're done. We only
+		 * invalidate the range if no pages were created for the
+		 * entire range.
+		 */
+		if (!(iomap.flags & IOMAP_F_PAGE_CREATE))
+			goto out;
+
+		/*
+		 * Try to invalidate cache pages for the range we just wrote.
+		 * We don't care if invalidation fails as the write has still
+		 * worked and leaving clean uptodate pages in the page cache
+		 * isn't a corruption vector for uncached IO.
+		 */
+		invalidate_inode_pages2_range(mapping,
+				data->pos >> PAGE_SHIFT, end >> PAGE_SHIFT);
+	}
+out:
 	return written ? written : ret;
 }

@@ -582,6 +582,7 @@ EXPORT_SYMBOL_GPL(iomap_migrate_page);
 
 enum {
 	IOMAP_WRITE_F_UNSHARE		= (1 << 0),
+	IOMAP_WRITE_F_UNCACHED		= (1 << 1),
 };
 
 static void
@@ -659,6 +660,7 @@ iomap_write_begin(struct inode *inode, loff_t pos, unsigned len, unsigned flags,
 		struct page **pagep, struct iomap *iomap, struct iomap *srcmap)
 {
 	const struct iomap_page_ops *page_ops = iomap->page_ops;
+	unsigned aop_flags;
 	struct page *page;
 	int status = 0;
 
@@ -675,8 +677,11 @@ iomap_write_begin(struct inode *inode, loff_t pos, unsigned len, unsigned flags,
 			return status;
 	}
 
+	aop_flags = AOP_FLAG_NOFS;
+	if (flags & IOMAP_WRITE_F_UNCACHED)
+		aop_flags |= AOP_FLAG_UNCACHED;
 	page = grab_cache_page_write_begin(inode->i_mapping, pos >> PAGE_SHIFT,
-			AOP_FLAG_NOFS);
+						aop_flags);
 	if (!page) {
 		status = -ENOMEM;
 		goto out_no_page;
@@ -820,8 +825,12 @@ iomap_write_actor(const struct iomap_ctx *data, struct iomap *iomap,
 	struct iov_iter *i = data->priv;
 	loff_t length = data->len;
 	loff_t pos = data->pos;
+	unsigned flags = 0;
 	long status = 0;
 	ssize_t written = 0;
+
+	if (data->flags & IOMAP_UNCACHED)
+		flags |= IOMAP_WRITE_F_UNCACHED;
 
 	do {
 		struct page *page;
@@ -851,10 +860,18 @@ again:
 			break;
 		}
 
-		status = iomap_write_begin(inode, pos, bytes, 0, &page, iomap,
-				srcmap);
-		if (unlikely(status))
+retry:
+		status = iomap_write_begin(inode, pos, bytes, flags,
+						&page, iomap, srcmap);
+		if (unlikely(status)) {
+			if (status == -ENOMEM &&
+			    (flags & IOMAP_WRITE_F_UNCACHED)) {
+				iomap->flags |= IOMAP_F_PAGE_CREATE;
+				flags &= ~IOMAP_WRITE_F_UNCACHED;
+				goto retry;
+			}
 			break;
+		}
 
 		if (mapping_writably_mapped(inode->i_mapping))
 			flush_dcache_page(page);
@@ -906,6 +923,9 @@ iomap_file_buffered_write(struct kiocb *iocb, struct iov_iter *iter,
 		.flags	= IOMAP_WRITE
 	};
 	loff_t ret = 0, written = 0;
+
+	if (iocb->ki_flags & IOCB_UNCACHED)
+		data.flags |= IOMAP_UNCACHED;
 
 	while (iov_iter_count(iter)) {
 		data.len = iov_iter_count(iter);

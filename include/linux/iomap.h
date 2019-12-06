@@ -48,12 +48,16 @@ struct vm_fault;
  *
  * IOMAP_F_BUFFER_HEAD indicates that the file system requires the use of
  * buffer heads for this mapping.
+ *
+ * IOMAP_F_PAGE_CREATE indicates that pages had to be allocated to satisfy
+ * this operation.
  */
 #define IOMAP_F_NEW		0x01
 #define IOMAP_F_DIRTY		0x02
 #define IOMAP_F_SHARED		0x04
 #define IOMAP_F_MERGED		0x08
 #define IOMAP_F_BUFFER_HEAD	0x10
+#define IOMAP_F_PAGE_CREATE	0x20
 
 /*
  * Flags set by the core iomap code during operations:
@@ -121,6 +125,7 @@ struct iomap_page_ops {
 #define IOMAP_FAULT		(1 << 3) /* mapping for page fault */
 #define IOMAP_DIRECT		(1 << 4) /* direct I/O */
 #define IOMAP_NOWAIT		(1 << 5) /* do not block */
+#define IOMAP_UNCACHED		(1 << 6) /* uncached IO */
 
 struct iomap_ops {
 	/*
