@@ -3268,22 +3268,66 @@ EXPORT_SYMBOL(generic_file_direct_write);
 struct page *grab_cache_page_write_begin(struct address_space *mapping,
 					pgoff_t index, unsigned flags)
 {
-	struct page *page;
+	gfp_t gfp = mapping_gfp_mask(mapping);
 	int fgp_flags = FGP_LOCK|FGP_WRITE;
+	struct page *page;
 
 	if (flags & AOP_FLAG_NOFS)
 		fgp_flags |= FGP_NOFS;
 	if (!(flags & AOP_FLAG_UNCACHED))
 		fgp_flags |= FGP_CREAT;
-
-	page = pagecache_get_page(mapping, index, fgp_flags,
-			mapping_gfp_mask(mapping));
-	if (page)
+	page = pagecache_get_page(mapping, index, fgp_flags, gfp);
+	if (!page && (flags & AOP_FLAG_UNCACHED)) {
+		if (flags & AOP_FLAG_NOFS)
+			gfp &= ~__GFP_FS;
+		page = __page_cache_alloc(gfp);
+		if (page) {
+			page->mapping = mapping;
+			page->index = index;
+			__SetPageLocked(page);
+			__SetPagePrivio(page);
+			get_page(page);
+		}
+	} else if (page)
 		wait_for_stable_page(page);
 
 	return page;
 }
 EXPORT_SYMBOL(grab_cache_page_write_begin);
+
+void uncached_write_pages(struct address_space *mapping,
+			  struct list_head *wb_list)
+{
+	struct writeback_control wbc = {
+		.sync_mode	= WB_SYNC_ALL,
+		.for_sync	= 1,
+	};
+	struct blk_plug plug;
+	struct page *page;
+
+	wbc_attach_fdatawrite_inode(&wbc, mapping->host);
+	blk_start_plug(&plug);
+
+	list_for_each_entry(page, wb_list, lru) {
+		lock_page(page);
+		wbc.nr_to_write = 1;
+		wbc.pages_skipped = 0;
+		test_clear_page_writeback(page);
+		mapping->a_ops->writepage(page, &wbc);
+		if (wbc.pages_skipped)
+			printk("wp done: skipped %ld\n", wbc.pages_skipped);
+	}
+	while (!list_empty(wb_list)) {
+		page = list_first_entry(wb_list, struct page, lru);
+		list_del(&page->lru);
+		wait_on_page_writeback(page);
+		page->mapping = NULL;
+		put_page(page);
+	}
+
+	blk_finish_plug(&plug);
+	wbc_detach_inode(&wbc);
+}
 
 ssize_t generic_perform_write(struct file *file,
 				struct iov_iter *i, struct kiocb *iocb)

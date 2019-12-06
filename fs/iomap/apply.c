@@ -24,7 +24,10 @@ loff_t
 iomap_apply(struct iomap_data *data, const struct iomap_ops *ops,
 	    iomap_actor_t actor)
 {
-	struct iomap iomap = { .type = IOMAP_HOLE };
+	struct iomap iomap = {
+		.type		= IOMAP_HOLE,
+		.page_list	= LIST_HEAD_INIT(iomap.page_list)
+	};
 	struct iomap srcmap = { .type = IOMAP_HOLE };
 	loff_t written = 0, ret;
 	u64 end;
@@ -91,6 +94,9 @@ iomap_apply(struct iomap_data *data, const struct iomap_ops *ops,
 				     written > 0 ? written : 0,
 				     data->flags, &iomap);
 	}
+
+	if (!list_empty(&iomap.page_list))
+		uncached_write_pages(data->inode->i_mapping, &iomap.page_list);
 
 	return written ? written : ret;
 }
