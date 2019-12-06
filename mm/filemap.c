@@ -3257,10 +3257,12 @@ struct page *grab_cache_page_write_begin(struct address_space *mapping,
 					pgoff_t index, unsigned flags)
 {
 	struct page *page;
-	int fgp_flags = FGP_LOCK|FGP_WRITE|FGP_CREAT;
+	int fgp_flags = FGP_LOCK|FGP_WRITE;
 
 	if (flags & AOP_FLAG_NOFS)
 		fgp_flags |= FGP_NOFS;
+	if (!(flags & AOP_FLAG_UNCACHED))
+		fgp_flags |= FGP_CREAT;
 
 	page = pagecache_get_page(mapping, index, fgp_flags,
 			mapping_gfp_mask(mapping));
@@ -3280,6 +3282,9 @@ ssize_t generic_perform_write(struct file *file,
 	long status = 0;
 	ssize_t written = 0;
 	unsigned int flags = 0;
+
+	if (iocb->ki_flags & IOCB_UNCACHED)
+		flags |= AOP_FLAG_UNCACHED;
 
 	do {
 		struct page *page;
@@ -3313,10 +3318,16 @@ again:
 			break;
 		}
 
+retry:
 		status = a_ops->write_begin(file, mapping, pos, bytes, flags,
 						&page, &fsdata);
-		if (unlikely(status < 0))
+		if (unlikely(status < 0)) {
+			if (status == -ENOMEM && (flags & AOP_FLAG_UNCACHED)) {
+				flags &= ~AOP_FLAG_UNCACHED;
+				goto retry;
+			}
 			break;
+		}
 
 		if (mapping_writably_mapped(mapping))
 			flush_dcache_page(page);
@@ -3352,6 +3363,32 @@ again:
 		balance_dirty_pages_ratelimited(mapping);
 	} while (iov_iter_count(i));
 
+	if (written && (iocb->ki_flags & IOCB_UNCACHED)) {
+		loff_t end;
+
+		pos = iocb->ki_pos;
+		end = pos + written;
+
+		status = filemap_write_and_wait_range(mapping, pos, end);
+		if (status)
+			goto out;
+
+		/*
+		 * No pages were created for this range, we're done
+		 */
+		if (flags & AOP_FLAG_UNCACHED)
+			 goto out;
+
+		/*
+		 * Try to invalidate cache pages for the range we just wrote.
+		 * We don't care if invalidation fails as the write has still
+		 * worked and leaving clean uptodate pages in the page cache
+		 * isn't a corruption vector for uncached IO.
+		 */
+		 invalidate_inode_pages2_range(mapping,
+					pos >> PAGE_SHIFT, end >> PAGE_SHIFT);
+	}
+out:
 	return written ? written : status;
 }
 EXPORT_SYMBOL(generic_perform_write);
