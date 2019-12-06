@@ -2013,6 +2013,7 @@ static ssize_t generic_file_buffered_read(struct kiocb *iocb,
 	struct address_space *mapping = filp->f_mapping;
 	struct inode *inode = mapping->host;
 	struct file_ra_state *ra = &filp->f_ra;
+	bool did_dio_begin = false;
 	loff_t *ppos = &iocb->ki_pos;
 	pgoff_t index;
 	pgoff_t last_index;
@@ -2048,6 +2049,13 @@ find_page:
 		if (!page) {
 			if (iocb->ki_flags & IOCB_NOWAIT)
 				goto would_block;
+			/* UNCACHED implies no read-ahead */
+			if (iocb->ki_flags & IOCB_UNCACHED) {
+				did_dio_begin = true;
+				/* block truncate for UNCACHED reads */
+				inode_dio_begin(inode);
+				goto no_cached_page;
+			}
 			page_cache_sync_readahead(mapping,
 					ra, filp,
 					index, last_index - index);
@@ -2234,6 +2242,14 @@ no_cached_page:
 			error = -ENOMEM;
 			goto out;
 		}
+		if (iocb->ki_flags & IOCB_UNCACHED) {
+			__SetPageLocked(page);
+			__SetPagePrivio(page);
+			page->mapping = mapping;
+			page->index = index;
+			goto readpage;
+		}
+
 		error = add_to_page_cache_lru(page, mapping, index,
 				mapping_gfp_constraint(mapping, GFP_KERNEL));
 		if (error) {
@@ -2250,6 +2266,8 @@ no_cached_page:
 would_block:
 	error = -EAGAIN;
 out:
+	if (did_dio_begin)
+		inode_dio_end(inode);
 	ra->prev_pos = prev_index;
 	ra->prev_pos <<= PAGE_SHIFT;
 	ra->prev_pos |= prev_offset;
