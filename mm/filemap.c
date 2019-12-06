@@ -1968,6 +1968,13 @@ static void shrink_readahead_size_eio(struct file *filp,
 	ra->ra_pages /= 4;
 }
 
+static void buffered_put_page(struct page *page, bool uncached)
+{
+	if (uncached)
+		page->mapping = NULL;
+	put_page(page);
+}
+
 /**
  * generic_file_buffered_read - generic file read routine
  * @iocb:	the iocb to read
@@ -1991,6 +1998,7 @@ static ssize_t generic_file_buffered_read(struct kiocb *iocb,
 	struct address_space *mapping = filp->f_mapping;
 	struct inode *inode = mapping->host;
 	struct file_ra_state *ra = &filp->f_ra;
+	bool did_dio_begin = false;
 	loff_t *ppos = &iocb->ki_pos;
 	pgoff_t index;
 	pgoff_t last_index;
@@ -2010,6 +2018,7 @@ static ssize_t generic_file_buffered_read(struct kiocb *iocb,
 	offset = *ppos & ~PAGE_MASK;
 
 	for (;;) {
+		bool uncached = false;
 		struct page *page;
 		pgoff_t end_index;
 		loff_t isize;
@@ -2026,6 +2035,15 @@ find_page:
 		if (!page) {
 			if (iocb->ki_flags & IOCB_NOWAIT)
 				goto would_block;
+			/* UNCACHED implies no read-ahead */
+			if (iocb->ki_flags & IOCB_UNCACHED) {
+				/* block truncate for UNCACHED reads */
+				if (!did_dio_begin) {
+					inode_dio_begin(inode);
+					did_dio_begin = true;
+				}
+				goto no_cached_page;
+			}
 			page_cache_sync_readahead(mapping,
 					ra, filp,
 					index, last_index - index);
@@ -2084,7 +2102,7 @@ page_ok:
 		isize = i_size_read(inode);
 		end_index = (isize - 1) >> PAGE_SHIFT;
 		if (unlikely(!isize || index > end_index)) {
-			put_page(page);
+			buffered_put_page(page, uncached);
 			goto out;
 		}
 
@@ -2093,7 +2111,7 @@ page_ok:
 		if (index == end_index) {
 			nr = ((isize - 1) & ~PAGE_MASK) + 1;
 			if (nr <= offset) {
-				put_page(page);
+				buffered_put_page(page, uncached);
 				goto out;
 			}
 		}
@@ -2125,7 +2143,7 @@ page_ok:
 		offset &= ~PAGE_MASK;
 		prev_offset = offset;
 
-		put_page(page);
+		buffered_put_page(page, uncached);
 		written += ret;
 		if (!iov_iter_count(iter))
 			goto out;
@@ -2167,7 +2185,7 @@ readpage:
 
 		if (unlikely(error)) {
 			if (error == AOP_TRUNCATED_PAGE) {
-				put_page(page);
+				buffered_put_page(page, uncached);
 				error = 0;
 				goto find_page;
 			}
@@ -2184,7 +2202,7 @@ readpage:
 					 * invalidate_mapping_pages got it
 					 */
 					unlock_page(page);
-					put_page(page);
+					buffered_put_page(page, uncached);
 					goto find_page;
 				}
 				unlock_page(page);
@@ -2199,7 +2217,7 @@ readpage:
 
 readpage_error:
 		/* UHHUH! A synchronous read error occurred. Report it */
-		put_page(page);
+		buffered_put_page(page, uncached);
 		goto out;
 
 no_cached_page:
@@ -2212,6 +2230,14 @@ no_cached_page:
 			error = -ENOMEM;
 			goto out;
 		}
+		if (iocb->ki_flags & IOCB_UNCACHED) {
+			__SetPageLocked(page);
+			page->mapping = mapping;
+			page->index = index;
+			uncached = true;
+			goto readpage;
+		}
+
 		error = add_to_page_cache_lru(page, mapping, index,
 				mapping_gfp_constraint(mapping, GFP_KERNEL));
 		if (error) {
@@ -2228,6 +2254,8 @@ no_cached_page:
 would_block:
 	error = -EAGAIN;
 out:
+	if (did_dio_begin)
+		inode_dio_end(inode);
 	ra->prev_pos = prev_index;
 	ra->prev_pos <<= PAGE_SHIFT;
 	ra->prev_pos |= prev_offset;
