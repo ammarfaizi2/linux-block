@@ -80,6 +80,7 @@ enum {
 	IORING_OP_FALLOCATE,
 	IORING_OP_OPENAT,
 	IORING_OP_CLOSE,
+	IORING_OP_FILES_UPDATE,
 
 	/* this goes last, obviously */
 	IORING_OP_LAST,
@@ -182,7 +183,8 @@ struct io_uring_params {
 
 struct io_uring_files_update {
 	__u32 offset;
-	__s32 *fds;
+	__u32 resv;
+	__aligned_u64 /* __s32 * */ fds;
 };
 
 #endif
