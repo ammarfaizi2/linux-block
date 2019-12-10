@@ -183,7 +183,7 @@ void rcu_unexpedite_gp(void)
 }
 EXPORT_SYMBOL_GPL(rcu_unexpedite_gp);
 
-bool rcu_boot_ended __read_mostly;
+static bool rcu_boot_ended __read_mostly;
 
 /*
  * Inform RCU of the end of the in-kernel boot sequence.
