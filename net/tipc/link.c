@@ -44,6 +44,7 @@
 #include "netlink.h"
 #include "monitor.h"
 #include "trace.h"
+#include "crypto.h"
 
 #include <linux/pkt_sched.h>
 
@@ -397,6 +398,15 @@ int tipc_link_mtu(struct tipc_link *l)
 	return l->mtu;
 }
 
+int tipc_link_mss(struct tipc_link *l)
+{
+#ifdef CONFIG_TIPC_CRYPTO
+	return l->mtu - INT_H_SIZE - EMSG_OVERHEAD;
+#else
+	return l->mtu - INT_H_SIZE;
+#endif
+}
+
 u16 tipc_link_rcv_nxt(struct tipc_link *l)
 {
 	return l->rcv_nxt;
@@ -540,7 +550,7 @@ bool tipc_link_bc_create(struct net *net, u32 ownnode, u32 peer,
 
 	/* Disable replicast if even a single peer doesn't support it */
 	if (link_is_bc_rcvlink(l) && !(peer_caps & TIPC_BCAST_RCAST))
-		tipc_bcast_disable_rcast(net);
+		tipc_bcast_toggle_rcast(net, false);
 
 	return true;
 }
@@ -948,6 +958,7 @@ int tipc_link_xmit(struct tipc_link *l, struct sk_buff_head *list,
 	u16 seqno = l->snd_nxt;
 	int pkt_cnt = skb_queue_len(list);
 	int imp = msg_importance(hdr);
+	unsigned int mss = tipc_link_mss(l);
 	unsigned int maxwin = l->window;
 	unsigned int mtu = l->mtu;
 	bool new_bundle;
@@ -1000,8 +1011,7 @@ int tipc_link_xmit(struct tipc_link *l, struct sk_buff_head *list,
 			continue;
 		}
 		if (tipc_msg_try_bundle(l->backlog[imp].target_bskb, &skb,
-					mtu - INT_H_SIZE, l->addr,
-					&new_bundle)) {
+					mss, l->addr, &new_bundle)) {
 			if (skb) {
 				/* Keep a ref. to the skb for next try */
 				l->backlog[imp].target_bskb = skb;
@@ -1087,7 +1097,7 @@ static bool link_retransmit_failure(struct tipc_link *l, struct tipc_link *r,
 		return false;
 
 	if (!time_after(jiffies, TIPC_SKB_CB(skb)->retr_stamp +
-			msecs_to_jiffies(r->tolerance)))
+			msecs_to_jiffies(r->tolerance * 10)))
 		return false;
 
 	hdr = buf_msg(skb);
@@ -1154,7 +1164,7 @@ static int tipc_link_bc_retrans(struct tipc_link *l, struct tipc_link *r,
 		if (time_before(jiffies, TIPC_SKB_CB(skb)->nxt_retr))
 			continue;
 		TIPC_SKB_CB(skb)->nxt_retr = TIPC_BC_RETR_LIM;
-		_skb = __pskb_copy(skb, LL_MAX_HEADER + MIN_H_SIZE, GFP_ATOMIC);
+		_skb = pskb_copy(skb, GFP_ATOMIC);
 		if (!_skb)
 			return 0;
 		hdr = buf_msg(_skb);
@@ -1430,8 +1440,7 @@ next_gap_ack:
 			if (time_before(jiffies, TIPC_SKB_CB(skb)->nxt_retr))
 				continue;
 			TIPC_SKB_CB(skb)->nxt_retr = TIPC_UC_RETR_TIME;
-			_skb = __pskb_copy(skb, LL_MAX_HEADER + MIN_H_SIZE,
-					   GFP_ATOMIC);
+			_skb = pskb_copy(skb, GFP_ATOMIC);
 			if (!_skb)
 				continue;
 			hdr = buf_msg(_skb);
@@ -1731,21 +1740,6 @@ void tipc_link_tnl_prepare(struct tipc_link *l, struct tipc_link *tnl,
 		return;
 
 	__skb_queue_head_init(&tnlq);
-	__skb_queue_head_init(&tmpxq);
-	__skb_queue_head_init(&frags);
-
-	/* At least one packet required for safe algorithm => add dummy */
-	skb = tipc_msg_create(TIPC_LOW_IMPORTANCE, TIPC_DIRECT_MSG,
-			      BASIC_H_SIZE, 0, l->addr, tipc_own_addr(l->net),
-			      0, 0, TIPC_ERR_NO_PORT);
-	if (!skb) {
-		pr_warn("%sunable to create tunnel packet\n", link_co_err);
-		return;
-	}
-	__skb_queue_tail(&tnlq, skb);
-	tipc_link_xmit(l, &tnlq, &tmpxq);
-	__skb_queue_purge(&tmpxq);
-
 	/* Link Synching:
 	 * From now on, send only one single ("dummy") SYNCH message
 	 * to peer. The SYNCH message does not contain any data, just
@@ -1770,6 +1764,20 @@ void tipc_link_tnl_prepare(struct tipc_link *l, struct tipc_link *tnl,
 		tipc_link_xmit(tnl, &tnlq, xmitq);
 		return;
 	}
+
+	__skb_queue_head_init(&tmpxq);
+	__skb_queue_head_init(&frags);
+	/* At least one packet required for safe algorithm => add dummy */
+	skb = tipc_msg_create(TIPC_LOW_IMPORTANCE, TIPC_DIRECT_MSG,
+			      BASIC_H_SIZE, 0, l->addr, tipc_own_addr(l->net),
+			      0, 0, TIPC_ERR_NO_PORT);
+	if (!skb) {
+		pr_warn("%sunable to create tunnel packet\n", link_co_err);
+		return;
+	}
+	__skb_queue_tail(&tnlq, skb);
+	tipc_link_xmit(l, &tnlq, &tmpxq);
+	__skb_queue_purge(&tmpxq);
 
 	/* Initialize reusable tunnel packet header */
 	tipc_msg_init(tipc_own_addr(l->net), &tnlhdr, TUNNEL_PROTOCOL,

@@ -13,8 +13,6 @@
 #include "qeth_core.h"
 #include <linux/hashtable.h>
 
-#define QETH_SNIFF_AVAIL	0x0008
-
 enum qeth_ip_types {
 	QETH_IP_TYPE_NORMAL,
 	QETH_IP_TYPE_VIPA,
@@ -54,6 +52,7 @@ static inline void qeth_l3_init_ipaddr(struct qeth_ipaddr *addr,
 	addr->type = type;
 	addr->proto = proto;
 	addr->disp_flag = QETH_DISP_ADDR_DO_NOTHING;
+	addr->ref_counter = 1;
 }
 
 static inline bool qeth_l3_addr_match_ip(struct qeth_ipaddr *a1,

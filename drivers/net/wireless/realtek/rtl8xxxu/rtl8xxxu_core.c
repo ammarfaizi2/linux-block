@@ -1255,7 +1255,7 @@ void rtl8xxxu_gen1_config_channel(struct ieee80211_hw *hw)
 void rtl8xxxu_gen2_config_channel(struct ieee80211_hw *hw)
 {
 	struct rtl8xxxu_priv *priv = hw->priv;
-	u32 val32, rsr;
+	u32 val32;
 	u8 val8, subchannel;
 	u16 rf_mode_bw;
 	bool ht = true;
@@ -1264,7 +1264,6 @@ void rtl8xxxu_gen2_config_channel(struct ieee80211_hw *hw)
 
 	rf_mode_bw = rtl8xxxu_read16(priv, REG_WMAC_TRXPTCL_CTL);
 	rf_mode_bw &= ~WMAC_TRXPTCL_CTL_BW_MASK;
-	rsr = rtl8xxxu_read32(priv, REG_RESPONSE_RATE_SET);
 	channel = hw->conf.chandef.chan->hw_value;
 
 /* Hack */
@@ -5394,18 +5393,13 @@ static void rtl8xxxu_c2hcmd_callback(struct work_struct *work)
 {
 	struct rtl8xxxu_priv *priv;
 	struct rtl8723bu_c2h *c2h;
-	struct ieee80211_vif *vif;
-	struct device *dev;
 	struct sk_buff *skb = NULL;
 	unsigned long flags;
-	int len;
 	u8 bt_info = 0;
 	struct rtl8xxxu_btcoex *btcoex;
 
 	priv = container_of(work, struct rtl8xxxu_priv, c2hcmd_work);
-	vif = priv->vif;
 	btcoex = &priv->bt_coex;
-	dev = &priv->udev->dev;
 
 	if (priv->rf_paths > 1)
 		goto out;
@@ -5416,7 +5410,6 @@ static void rtl8xxxu_c2hcmd_callback(struct work_struct *work)
 		spin_unlock_irqrestore(&priv->c2hcmd_lock, flags);
 
 		c2h = (struct rtl8723bu_c2h *)skb->data;
-		len = skb->len - 2;
 
 		switch (c2h->id) {
 		case C2H_8723B_BT_INFO:
@@ -6481,7 +6474,7 @@ static int rtl8xxxu_probe(struct usb_interface *interface,
 		}
 		break;
 	case 0x7392:
-		if (id->idProduct == 0x7811)
+		if (id->idProduct == 0x7811 || id->idProduct == 0xa611)
 			untested = 0;
 		break;
 	case 0x050d:
@@ -6688,6 +6681,8 @@ static const struct usb_device_id dev_table[] = {
 {USB_DEVICE_AND_INTERFACE_INFO(0x2357, 0x0109, 0xff, 0xff, 0xff),
 	.driver_info = (unsigned long)&rtl8192eu_fops},
 {USB_DEVICE_AND_INTERFACE_INFO(USB_VENDOR_ID_REALTEK, 0xb720, 0xff, 0xff, 0xff),
+	.driver_info = (unsigned long)&rtl8723bu_fops},
+{USB_DEVICE_AND_INTERFACE_INFO(0x7392, 0xa611, 0xff, 0xff, 0xff),
 	.driver_info = (unsigned long)&rtl8723bu_fops},
 #ifdef CONFIG_RTL8XXXU_UNTESTED
 /* Still supported by rtlwifi */

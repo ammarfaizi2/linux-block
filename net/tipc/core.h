@@ -61,6 +61,12 @@
 #include <net/genetlink.h>
 #include <net/netns/hash.h>
 
+#ifdef pr_fmt
+#undef pr_fmt
+#endif
+
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+
 struct tipc_node;
 struct tipc_bearer;
 struct tipc_bc_base;
@@ -68,6 +74,9 @@ struct tipc_link;
 struct tipc_name_table;
 struct tipc_topsrv;
 struct tipc_monitor;
+#ifdef CONFIG_TIPC_CRYPTO
+struct tipc_crypto;
+#endif
 
 #define TIPC_MOD_VER "2.0.0"
 
@@ -129,6 +138,11 @@ struct tipc_net {
 
 	/* Tracing of node internal messages */
 	struct packet_type loopback_pt;
+
+#ifdef CONFIG_TIPC_CRYPTO
+	/* TX crypto handler */
+	struct tipc_crypto *crypto_tx;
+#endif
 };
 
 static inline struct tipc_net *tipc_net(struct net *net)
