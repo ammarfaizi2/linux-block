@@ -23,6 +23,8 @@
 #define WINDOW_START MAX_UNWINDOWED_ADDRESS
 #define WINDOW_RANGE_MASK 0x7FFFF
 
+#define ATH11K_IRQ_CE0_OFFSET 3
+
 struct ath11k_msi_user {
 	char *name;
 	int num_vectors;
