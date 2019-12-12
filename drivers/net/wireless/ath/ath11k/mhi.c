@@ -123,8 +123,8 @@ int ath11k_pci_register_mhi(struct ath11k_pci *ar_pci)
 		return ret;
 	}
 
-	mhi_ctrl->iova_start = memblock_start_of_DRAM();
-	mhi_ctrl->iova_stop = memblock_end_of_DRAM();
+	mhi_ctrl->iova_start = 0x0;
+	mhi_ctrl->iova_stop = 0xffffffff;
 
 	mhi_ctrl->link_status = ath11k_mhi_link_status;
 	mhi_ctrl->status_cb = ath11k_mhi_notify_status;
