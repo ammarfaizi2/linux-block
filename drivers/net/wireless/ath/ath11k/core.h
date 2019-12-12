@@ -646,6 +646,7 @@ struct ath11k_base {
 	bool m3_fw_support;
 	bool mhi_support;
 	bool fixed_mem_region;
+	bool use_register_windowing;
 	/* must be last */
 	u8 drv_priv[0] __aligned(sizeof(void *));
 };

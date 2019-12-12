@@ -15,6 +15,14 @@
 #define PCI_DMA_MASK_64_BIT		64
 #define PCI_DMA_MASK_32_BIT		32
 
+#define MAX_UNWINDOWED_ADDRESS 0x80000
+#define WINDOW_ENABLE_BIT 0x40000000
+#define WINDOW_REG_ADDRESS 0x310C
+#define WINDOW_SHIFT 19
+#define WINDOW_VALUE_MASK 0x3F
+#define WINDOW_START MAX_UNWINDOWED_ADDRESS
+#define WINDOW_RANGE_MASK 0x7FFFF
+
 struct ath11k_msi_user {
 	char *name;
 	int num_vectors;
@@ -39,6 +47,8 @@ struct ath11k_pci {
 	u32 msi_ep_base_data;
 	struct mhi_controller *mhi_ctrl;
 	unsigned long mhi_state;
+	u32 register_window;
+	spinlock_t window_lock;
 };
 
 int ath11k_pci_get_user_msi_assignment(struct ath11k_pci *ar_pci, char *user_name,
