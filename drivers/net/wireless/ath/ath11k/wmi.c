@@ -2819,6 +2819,34 @@ int ath11k_wmi_wait_for_unified_ready(struct ath11k_base *ab)
 	return 0;
 }
 
+int ath11k_wmi_set_hw_mode(struct ath11k_base *ab, int hw_mode_index)
+{
+	struct wmi_pdev_set_hw_mode_cmd_param *cmd;
+	struct sk_buff *skb;
+	struct ath11k_wmi_base *wmi_sc = &ab->wmi_sc;
+	int len;
+	int ret;
+
+	len = sizeof(*cmd);
+
+	skb = ath11k_wmi_alloc_skb(wmi_sc, len);
+	cmd = (struct wmi_pdev_set_hw_mode_cmd_param *)skb->data;
+
+	cmd->tlv_header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_PDEV_SET_HW_MODE_CMD) |
+			  FIELD_PREP(WMI_TLV_LEN, sizeof(*cmd) - TLV_HDR_SIZE);
+
+	cmd->pdev_id = WMI_PDEV_ID_SOC;
+	cmd->hw_mode_index = hw_mode_index;
+
+	ret = ath11k_wmi_cmd_send(&wmi_sc->wmi[0], skb, WMI_PDEV_SET_HW_MODE_CMDID);
+	if (ret) {
+		ath11k_warn(ab, "failed to send WMI_PDEV_SET_HW_MODE_CMDID\n");
+		dev_kfree_skb(skb);
+	}
+
+	return ret;
+}
+
 int ath11k_wmi_cmd_init(struct ath11k_base *ab)
 {
 	struct ath11k_wmi_base *wmi_sc = &ab->wmi_sc;

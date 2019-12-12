@@ -517,6 +517,15 @@ static int ath11k_core_start(struct ath11k_base *ab,
 		goto err_reo_cleanup;
 	}
 
+	// put hardware to DBS mode
+	if (ab->hw_params.single_pdev_only) {
+		ret = ath11k_wmi_set_hw_mode(ab, 1);
+		if (ret) {
+			ath11k_err(ab, "failed to send dbs mode: %d\n", ret);
+			goto err_hif_stop;
+		}
+	}
+
 	ret = ath11k_dp_tx_htt_h2t_ver_req_msg(ab);
 	if (ret) {
 		ath11k_err(ab, "failed to send htt version request message: %d\n",
