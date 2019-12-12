@@ -8,6 +8,7 @@
 #include "debug.h"
 #include "hw.h"
 
+int tx_cnt;
 /* NOTE: Any of the mapped ring id value must not exceed DP_TCL_NUM_RING_MAX */
 static const u8
 ath11k_txq_tcl_ring_map[ATH11K_HW_MAX_QUEUES] = { 0x0, 0x1, 0x2, 0x2 };
@@ -906,7 +907,7 @@ int ath11k_dp_tx_htt_monitor_mode_ring_config(struct ath11k *ar, bool reset)
 {
 	struct ath11k_pdev_dp *dp = &ar->dp;
 	struct htt_rx_ring_tlv_filter tlv_filter = {0};
-	int ret = 0, ring_id = 0;
+	int ret = 0, ring_id = 0, i = 0;
 
 	ring_id = dp->rxdma_mon_buf_ring.refill_buf_ring.ring_id;
 
@@ -935,16 +936,19 @@ int ath11k_dp_tx_htt_monitor_mode_ring_config(struct ath11k *ar, bool reset)
 	if (ret)
 		return ret;
 
-	ring_id = dp->rx_mon_status_refill_ring.refill_buf_ring.ring_id;
-	if (!reset)
-		tlv_filter.rx_filter =
-				HTT_RX_MON_FILTER_TLV_FLAGS_MON_STATUS_RING;
-	else
-		tlv_filter = ath11k_mac_mon_status_filter_default;
+	for (i = 0; i < MAX_MACS_PER_PDEV; i++) {
+		ring_id = dp->rx_mon_status_refill_ring[i].refill_buf_ring.ring_id;
+		if (!reset)
+			tlv_filter.rx_filter =
+					HTT_RX_MON_FILTER_TLV_FLAGS_MON_STATUS_RING;
+		else
+			tlv_filter = ath11k_mac_mon_status_filter_default;
 
-	ret = ath11k_dp_tx_htt_rx_filter_setup(ar->ab, ring_id, dp->mac_id,
-					       HAL_RXDMA_MONITOR_STATUS,
-					       DP_RXDMA_REFILL_RING_SIZE,
-					       &tlv_filter);
+		ret = ath11k_dp_tx_htt_rx_filter_setup(ar->ab, ring_id, dp->mac_id + i,
+						       HAL_RXDMA_MONITOR_STATUS,
+						       DP_RXDMA_REFILL_RING_SIZE,
+						       &tlv_filter);
+	}
+
 	return ret;
 }

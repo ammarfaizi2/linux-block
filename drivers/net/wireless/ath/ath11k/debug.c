@@ -662,6 +662,7 @@ static ssize_t ath11k_write_extd_rx_stats(struct file *file,
 	struct ath11k *ar = file->private_data;
 	struct htt_rx_ring_tlv_filter tlv_filter = {0};
 	u32 enable, rx_filter = 0, ring_id;
+	int i;
 	int ret;
 
 	if (kstrtouint_from_user(ubuf, count, 0, &enable))
@@ -702,14 +703,15 @@ static ssize_t ath11k_write_extd_rx_stats(struct file *file,
 		tlv_filter = ath11k_mac_mon_status_filter_default;
 	}
 
-	ring_id = ar->dp.rx_mon_status_refill_ring.refill_buf_ring.ring_id;
-	ret = ath11k_dp_tx_htt_rx_filter_setup(ar->ab, ring_id, ar->dp.mac_id,
-					       HAL_RXDMA_MONITOR_STATUS,
-					       DP_RX_BUFFER_SIZE, &tlv_filter);
-
-	if (ret) {
-		ath11k_warn(ar->ab, "failed to set rx filter for moniter status ring\n");
-		goto exit;
+	for (i = 0; i < MAX_MACS_PER_PDEV; i++) {
+		ring_id = ar->dp.rx_mon_status_refill_ring[i].refill_buf_ring.ring_id;
+		ret = ath11k_dp_tx_htt_rx_filter_setup(ar->ab, ring_id, ar->dp.mac_id,
+						       HAL_RXDMA_MONITOR_STATUS,
+						       DP_RX_BUFFER_SIZE, &tlv_filter);
+		if (ret) {
+			ath11k_warn(ar->ab, "failed to set rx filter for moniter status ring\n");
+			goto exit;
+		}
 	}
 
 	ar->debug.extd_rx_stats = enable;
@@ -882,6 +884,7 @@ static ssize_t ath11k_write_pktlog_filter(struct file *file,
 	u32 rx_filter = 0, ring_id, filter, mode;
 	u8 buf[128] = {0};
 	int ret;
+	int i;
 	ssize_t rc;
 
 	mutex_lock(&ar->conf_mutex);
@@ -947,15 +950,17 @@ static ssize_t ath11k_write_pktlog_filter(struct file *file,
 					       HTT_RX_FP_DATA_FILTER_FLASG3;
 	}
 
-	ring_id = ar->dp.rx_mon_status_refill_ring.refill_buf_ring.ring_id;
-	ret = ath11k_dp_tx_htt_rx_filter_setup(ar->ab, ring_id, ar->dp.mac_id,
-					       HAL_RXDMA_MONITOR_STATUS,
-					       DP_RX_BUFFER_SIZE, &tlv_filter);
-	if (ret) {
-		ath11k_warn(ar->ab, "failed to set rx filter for moniter status ring\n");
-		goto out;
-	}
+	for (i = 0; i < MAX_MACS_PER_PDEV; i++) {
+		ring_id = ar->dp.rx_mon_status_refill_ring[i].refill_buf_ring.ring_id;
+		ret = ath11k_dp_tx_htt_rx_filter_setup(ar->ab, ring_id, ar->dp.mac_id,
+						       HAL_RXDMA_MONITOR_STATUS,
+						       DP_RX_BUFFER_SIZE, &tlv_filter);
 
+		if (ret) {
+			ath11k_warn(ar->ab, "failed to set rx filter for moniter status ring\n");
+			goto out;
+		}
+	}
 	ath11k_dbg(ar->ab, ATH11K_DBG_WMI, "pktlog filter %d mode %s\n",
 		   filter, ((mode == ATH11K_PKTLOG_MODE_FULL) ? "full" : "lite"));
 

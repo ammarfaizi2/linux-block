@@ -9,6 +9,16 @@
 #include <linux/kfifo.h>
 #include "hal_rx.h"
 
+#ifdef CONFIG_ATH11K_AHB
+#define MAX_MACS_PER_PDEV 1
+#define MAC_ID_TO_PDEV_ID(X) X
+#define MAC_ID_TO_SRNG_ID(X) 0
+#else
+#define MAX_MACS_PER_PDEV 2
+#define MAC_ID_TO_PDEV_ID(X) 0
+#define MAC_ID_TO_SRNG_ID(X) X
+#endif
+
 struct ath11k_base;
 struct ath11k_peer;
 struct ath11k_dp;
@@ -131,13 +141,13 @@ struct ath11k_pdev_dp {
 	wait_queue_head_t tx_empty_waitq;
 	struct dp_srng reo_dst_ring;
 	struct dp_rxdma_ring rx_refill_buf_ring;
-	struct dp_srng rx_mac_buf_ring;
-	struct dp_srng rxdma_err_dst_ring;
+	struct dp_srng rx_mac_buf_ring[MAX_MACS_PER_PDEV];
+	struct dp_srng rxdma_err_dst_ring[MAX_MACS_PER_PDEV];
 	struct dp_srng rxdma_mon_dst_ring;
 	struct dp_srng rxdma_mon_desc_ring;
 
 	struct dp_rxdma_ring rxdma_mon_buf_ring;
-	struct dp_rxdma_ring rx_mon_status_refill_ring;
+	struct dp_rxdma_ring rx_mon_status_refill_ring[MAX_MACS_PER_PDEV];
 	struct ieee80211_rx_status rx_status;
 	struct ath11k_mon_data mon_data;
 };

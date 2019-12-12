@@ -1038,6 +1038,9 @@ int ath11k_hal_srng_setup(struct ath11k_base *ab, enum hal_ring_type type,
 					(HAL_REO1_RING_TP - HAL_REO1_RING_HP));
 		}
 	}
+	ath11k_info(ab, "%s type:%d, ring_num:%d, ring_id:%d, lmac_ring:%d,msi_addr:0x%llx, msi_data:%d\n",
+		    __func__, type, ring_num, srng->ring_id, srng_config->lmac_ring,
+		    srng->msi_addr, srng->msi_data);
 
 	if (srng_config->lmac_ring)
 		return ring_id;

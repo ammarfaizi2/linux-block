@@ -827,6 +827,7 @@ void ath11k_dp_pdev_pre_alloc(struct ath11k_base *ab)
 	struct ath11k *ar;
 	struct ath11k_pdev_dp *dp;
 	int i;
+	int j;
 
 	for (i = 0; i <  ab->num_radios; i++) {
 		ar = ab->pdevs[i].ar;
@@ -836,8 +837,10 @@ void ath11k_dp_pdev_pre_alloc(struct ath11k_base *ab)
 		spin_lock_init(&dp->rx_refill_buf_ring.idr_lock);
 		atomic_set(&dp->num_tx_pending, 0);
 		init_waitqueue_head(&dp->tx_empty_waitq);
-		idr_init(&dp->rx_mon_status_refill_ring.bufs_idr);
-		spin_lock_init(&dp->rx_mon_status_refill_ring.idr_lock);
+		for (j = 0; j < MAX_MACS_PER_PDEV; j++) {
+			idr_init(&dp->rx_mon_status_refill_ring[i].bufs_idr);
+			spin_lock_init(&dp->rx_mon_status_refill_ring[i].idr_lock);
+		}
 		idr_init(&dp->rxdma_mon_buf_ring.bufs_idr);
 		spin_lock_init(&dp->rxdma_mon_buf_ring.idr_lock);
 	}
