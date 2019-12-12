@@ -87,6 +87,141 @@ void ath11k_dp_srng_cleanup(struct ath11k_base *ab, struct dp_srng *ring)
 	ring->vaddr_unaligned = NULL;
 }
 
+static int dp_srng_find_ring_in_mask(int ring_num, const u8 *grp_mask)
+{
+	int ext_group_num;
+	u8 mask = 1 << ring_num;
+
+	for (ext_group_num = 0; ext_group_num < ATH11K_EXT_IRQ_GRP_NUM_MAX;
+	     ext_group_num++) {
+		if (mask & grp_mask[ext_group_num])
+			return ext_group_num;
+	}
+
+	return -ENOENT;
+}
+
+int dp_srng_calculate_msi_group(struct ath11k_base *ab, enum hal_ring_type type,
+				int ring_num)
+{
+	const u8 *grp_mask;
+
+	switch (type) {
+	case HAL_WBM2SW_RELEASE:
+		/* dp_tx_comp_handler - soc->tx_comp_ring */
+		if (ring_num < 3)
+			grp_mask = &ath11k_tx_ring_mask[0];
+
+		/* dp_rx_wbm_err_process - soc->rx_rel_ring */
+		else if (ring_num == 3) {
+			/* sw treats this as a separate ring type */
+			grp_mask = &ath11k_rx_wbm_rel_ring_mask[0];
+			ring_num = 0;
+		} else {
+			//qdf_assert(0);
+			return -ENOENT;
+		}
+	break;
+
+	case HAL_REO_EXCEPTION:
+		/* dp_rx_err_process - &soc->reo_exception_ring */
+		grp_mask = &ath11k_rx_err_ring_mask[0];
+	break;
+
+	case HAL_REO_DST:
+		/* dp_rx_process - soc->reo_dest_ring */
+		grp_mask = &ath11k_rx_ring_mask[0];
+	break;
+
+	case HAL_REO_STATUS:
+		/* dp_reo_status_ring_handler - soc->reo_status_ring */
+		grp_mask = &ath11k_reo_status_ring_mask[0];
+	break;
+
+	/* dp_rx_mon_status_srng_process - pdev->rxdma_mon_status_ring*/
+	case HAL_RXDMA_MONITOR_STATUS:
+	/* dp_rx_mon_dest_process - pdev->rxdma_mon_dst_ring */
+	case HAL_RXDMA_MONITOR_DST:
+		/* dp_mon_process */
+		grp_mask = &rx_mon_status_ring_mask[0];
+	break;
+	case HAL_RXDMA_DST:
+		/* dp_rxdma_err_process */
+		grp_mask = &ath11k_rxdma2host_ring_mask[0];
+	break;
+
+	case HAL_RXDMA_BUF:
+		grp_mask = &ath11k_host2rxdma_ring_mask[0];
+	break;
+
+	case HAL_RXDMA_MONITOR_BUF:
+		/* TODO: support low_thresh interrupt */
+		return -ENOENT;
+	break;
+
+	case HAL_TCL_DATA:
+	case HAL_TCL_CMD:
+	case HAL_REO_CMD:
+	case HAL_SW2WBM_RELEASE:
+	case HAL_WBM_IDLE_LINK:
+		/* normally empty SW_TO_HW rings */
+		return -ENOENT;
+	break;
+
+	case HAL_TCL_STATUS:
+	case HAL_REO_REINJECT:
+		/* misc unused rings */
+		return -ENOENT;
+	break;
+
+	case HAL_CE_SRC:
+	case HAL_CE_DST:
+	case HAL_CE_DST_STATUS:
+		/* CE_rings - currently handled by hif */
+	default:
+		return -ENOENT;
+	break;
+	}
+
+	return dp_srng_find_ring_in_mask(ring_num, grp_mask);
+}
+
+static void dp_srng_msi_setup(struct ath11k_base *ab, struct hal_srng_params
+			      *ring_params, enum hal_ring_type type, int ring_num)
+{
+	int msi_group_number;
+	int msi_data_count;
+	u32 msi_data_start, msi_irq_start, addr_lo, addr_hi;
+
+	ab->hif.ops->get_user_msi_vector(ab, "DP",
+					    &msi_data_count, &msi_data_start,
+					    &msi_irq_start);
+
+	msi_group_number = dp_srng_calculate_msi_group(ab, type,
+						       ring_num);
+	if (msi_group_number < 0) {
+		ath11k_info(ab, "ring not part of an ext_group; ring_type: %d,ring_num %d",
+			    type, ring_num);
+		ring_params->msi_addr = 0;
+		ring_params->msi_data = 0;
+		return;
+	}
+
+	if (msi_group_number > msi_data_count) {
+		ath11k_err(ab, "2 msi_groups will share an msi; msi_group_num %d",
+			   msi_group_number);
+		return;
+	}
+
+	ab->hif.ops->get_msi_address(ab, &addr_lo, &addr_hi);
+
+	ring_params->msi_addr = addr_lo;
+	ring_params->msi_addr |= (dma_addr_t)(((uint64_t)addr_hi) << 32);
+	ring_params->msi_data = (msi_group_number % msi_data_count)
+		+ msi_data_start;
+	ring_params->flags |= HAL_SRNG_FLAGS_MSI_INTR;
+}
+
 int ath11k_dp_srng_setup(struct ath11k_base *ab, struct dp_srng *ring,
 			 enum hal_ring_type type, int ring_num,
 			 int mac_id, int num_entries)
@@ -116,6 +251,7 @@ int ath11k_dp_srng_setup(struct ath11k_base *ab, struct dp_srng *ring,
 	params.ring_base_vaddr = ring->vaddr;
 	params.ring_base_paddr = ring->paddr;
 	params.num_entries = num_entries;
+	dp_srng_msi_setup(ab, &params, type, ring_num);
 
 	switch (type) {
 	case HAL_REO_DST:
@@ -671,6 +807,7 @@ int ath11k_dp_service_srng(struct ath11k_base *ab,
 done:
 	return tot_work_done;
 }
+EXPORT_SYMBOL(ath11k_dp_service_srng);
 
 void ath11k_dp_pdev_free(struct ath11k_base *ab)
 {
