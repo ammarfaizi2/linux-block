@@ -125,6 +125,7 @@ struct ath11k_hw_params {
 	bool vdev_start_delay;
 	bool disable_pktlog;
 	bool channel_num_war;
+	bool band_2g_fake;
 };
 
 struct ath11k_fw_ie {

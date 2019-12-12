@@ -5628,6 +5628,9 @@ static int __ath11k_mac_register(struct ath11k *ar)
 
 	SET_IEEE80211_DEV(ar->hw, ab->dev);
 
+	if (ab->hw_params.band_2g_fake)
+		cap->supported_bands = WMI_HOST_WLAN_2G_CAP | WMI_HOST_WLAN_5G_CAP;
+
 	ret = ath11k_mac_setup_channels_rates(ar,
 					      cap->supported_bands);
 	if (ret)

@@ -32,6 +32,7 @@ static const struct ath11k_hw_params ath11k_hw_params_list[] = {
 		.vdev_start_delay = false,
 		.disable_pktlog = false,
 		.channel_num_war = false,
+		.band_2g_fake = false,
 	},
 	{
 		.name = "hst6390",
@@ -41,6 +42,7 @@ static const struct ath11k_hw_params ath11k_hw_params_list[] = {
 		.vdev_start_delay = true,
 		.disable_pktlog = true,
 		.channel_num_war = true,
+		.band_2g_fake = true,
 	}
 };
 
