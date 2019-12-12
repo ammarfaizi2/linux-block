@@ -156,6 +156,10 @@ static const u32 ath11k_smps_map[] = {
 	[WLAN_HT_CAP_SM_PS_DISABLED] = WMI_PEER_SMPS_PS_NONE,
 };
 
+static int
+ath11k_start_vdev_delay(struct ieee80211_hw *hw,
+			struct ieee80211_vif *vif);
+
 u8 ath11k_mac_bw_to_mac80211_bw(u8 bw)
 {
 	u8 ret = 0;
@@ -2752,6 +2756,9 @@ static int ath11k_mac_station_add(struct ath11k *ar,
 		goto free_tx_stats;
 	}
 
+	if (ab->hw_params.vdev_start_delay)
+		ret = ath11k_start_vdev_delay(ar->hw, vif);
+
 	return 0;
 
 free_tx_stats:
@@ -4711,6 +4718,43 @@ unlock:
 }
 
 static int
+ath11k_start_vdev_delay(struct ieee80211_hw *hw,
+			struct ieee80211_vif *vif)
+{
+	struct ath11k *ar = hw->priv;
+	struct ath11k_base *ab = ar->ab;
+	struct ath11k_vif *arvif = (void *)vif->drv_priv;
+	int ret;
+
+	if (WARN_ON(arvif->is_started)) {
+		mutex_unlock(&ar->conf_mutex);
+		return -EBUSY;
+	}
+
+	ret = ath11k_mac_vdev_start(arvif, &arvif->chanctx.def);
+	if (ret) {
+		ath11k_warn(ab, "failed to start vdev %i addr %pM on freq %d: %d\n",
+			    arvif->vdev_id, vif->addr,
+			    arvif->chanctx.def.chan->center_freq, ret);
+		goto err;
+	}
+	if (arvif->vdev_type == WMI_VDEV_TYPE_MONITOR) {
+		ret = ath11k_monitor_vdev_up(ar, arvif->vdev_id);
+		if (ret)
+			goto err;
+	}
+
+	arvif->is_started = true;
+
+	/* TODO: Setup ps and cts/rts protection */
+	return 0;
+
+err:
+	mutex_unlock(&ar->conf_mutex);
+	return ret;
+}
+
+static int
 ath11k_mac_op_assign_vif_chanctx(struct ieee80211_hw *hw,
 				 struct ieee80211_vif *vif,
 				 struct ieee80211_chanctx_conf *ctx)
@@ -4721,6 +4765,13 @@ ath11k_mac_op_assign_vif_chanctx(struct ieee80211_hw *hw,
 	int ret;
 
 	mutex_lock(&ar->conf_mutex);
+
+	//For QCA6390,bss peer must be created before vdev_start.
+	if (ab->hw_params.vdev_start_delay) {
+		memcpy(&arvif->chanctx, ctx, sizeof(*ctx));
+		mutex_unlock(&ar->conf_mutex);
+		return 0;
+	}
 
 	ath11k_dbg(ab, ATH11K_DBG_MAC,
 		   "mac chanctx assign ptr %pK vdev_id %i\n",

@@ -29,12 +29,14 @@ static const struct ath11k_hw_params ath11k_hw_params_list[] = {
 		},
 		.single_pdev_only = false,
 		.hw_ops = &ath11k_hw_ops_ipa8074,
+		.vdev_start_delay = false,
 	},
 	{
 		.name = "hst6390",
 		.dev_id = ATH11K_HW_QCA6390,
 		.single_pdev_only = true,
 		.hw_ops = &ath11k_hw_ops_qca6x90,
+		.vdev_start_delay = true,
 	}
 };
 

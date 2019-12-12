@@ -209,6 +209,7 @@ struct ath11k_vif {
 	int num_legacy_stations;
 	int rtscts_prot_mode;
 	int txpower;
+	struct ieee80211_chanctx_conf chanctx;
 };
 
 struct ath11k_vif_iter {
