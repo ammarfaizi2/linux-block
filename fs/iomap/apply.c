@@ -21,15 +21,16 @@
  * iomap_end call.
  */
 loff_t
-iomap_apply(struct inode *inode, loff_t pos, loff_t length, unsigned flags,
-		const struct iomap_ops *ops, void *data, iomap_actor_t actor)
+iomap_apply(struct iomap_ctx *data, const struct iomap_ops *ops,
+	    iomap_actor_t actor)
 {
 	struct iomap iomap = { .type = IOMAP_HOLE };
 	struct iomap srcmap = { .type = IOMAP_HOLE };
 	loff_t written = 0, ret;
 	u64 end;
 
-	trace_iomap_apply(inode, pos, length, flags, ops, actor, _RET_IP_);
+	trace_iomap_apply(data->inode, data->pos, data->len, data->flags, ops,
+				actor, _RET_IP_);
 
 	/*
 	 * Need to map a range from start position for length bytes. This can
@@ -43,17 +44,18 @@ iomap_apply(struct inode *inode, loff_t pos, loff_t length, unsigned flags,
 	 * expose transient stale data. If the reserve fails, we can safely
 	 * back out at this point as there is nothing to undo.
 	 */
-	ret = ops->iomap_begin(inode, pos, length, flags, &iomap, &srcmap);
+	ret = ops->iomap_begin(data->inode, data->pos, data->len, data->flags,
+				&iomap, &srcmap);
 	if (ret)
 		return ret;
-	if (WARN_ON(iomap.offset > pos))
+	if (WARN_ON(iomap.offset > data->pos))
 		return -EIO;
 	if (WARN_ON(iomap.length == 0))
 		return -EIO;
 
-	trace_iomap_apply_dstmap(inode, &iomap);
+	trace_iomap_apply_dstmap(data->inode, &iomap);
 	if (srcmap.type != IOMAP_HOLE)
-		trace_iomap_apply_srcmap(inode, &srcmap);
+		trace_iomap_apply_srcmap(data->inode, &srcmap);
 
 	/*
 	 * Cut down the length to the one actually provided by the filesystem,
@@ -62,8 +64,8 @@ iomap_apply(struct inode *inode, loff_t pos, loff_t length, unsigned flags,
 	end = iomap.offset + iomap.length;
 	if (srcmap.type != IOMAP_HOLE)
 		end = min(end, srcmap.offset + srcmap.length);
-	if (pos + length > end)
-		length = end - pos;
+	if (data->pos + data->len > end)
+		data->len = end - data->pos;
 
 	/*
 	 * Now that we have guaranteed that the space allocation will succeed,
@@ -77,7 +79,7 @@ iomap_apply(struct inode *inode, loff_t pos, loff_t length, unsigned flags,
 	 * iomap into the actors so that they don't need to have special
 	 * handling for the two cases.
 	 */
-	written = actor(inode, pos, length, data, &iomap,
+	written = actor(data, &iomap,
 			srcmap.type != IOMAP_HOLE ? &srcmap : &iomap);
 
 	/*
@@ -85,9 +87,9 @@ iomap_apply(struct inode *inode, loff_t pos, loff_t length, unsigned flags,
 	 * should not fail unless the filesystem has had a fatal error.
 	 */
 	if (ops->iomap_end) {
-		ret = ops->iomap_end(inode, pos, length,
+		ret = ops->iomap_end(data->inode, data->pos, data->len,
 				     written > 0 ? written : 0,
-				     flags, &iomap);
+				     data->flags, &iomap);
 	}
 
 	return written ? written : ret;

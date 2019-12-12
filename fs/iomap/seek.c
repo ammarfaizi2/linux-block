@@ -118,21 +118,23 @@ out:
 
 
 static loff_t
-iomap_seek_hole_actor(struct inode *inode, loff_t offset, loff_t length,
-		      void *data, struct iomap *iomap, struct iomap *srcmap)
+iomap_seek_hole_actor(const struct iomap_ctx *data, struct iomap *iomap,
+		      struct iomap *srcmap)
 {
+	loff_t offset = data->pos;
+
 	switch (iomap->type) {
 	case IOMAP_UNWRITTEN:
-		offset = page_cache_seek_hole_data(inode, offset, length,
-						   SEEK_HOLE);
+		offset = page_cache_seek_hole_data(data->inode, offset,
+						   data->len, SEEK_HOLE);
 		if (offset < 0)
-			return length;
+			return data->len;
 		/* fall through */
 	case IOMAP_HOLE:
-		*(loff_t *)data = offset;
+		*(loff_t *)data->priv = offset;
 		return 0;
 	default:
-		return length;
+		return data->len;
 	}
 }
 
@@ -140,23 +142,28 @@ loff_t
 iomap_seek_hole(struct inode *inode, loff_t offset, const struct iomap_ops *ops)
 {
 	loff_t size = i_size_read(inode);
-	loff_t length = size - offset;
+	struct iomap_ctx data = {
+		.inode	= inode,
+		.len	= size - offset,
+		.priv	= &offset,
+		.flags	= IOMAP_REPORT
+	};
 	loff_t ret;
 
 	/* Nothing to be found before or beyond the end of the file. */
 	if (offset < 0 || offset >= size)
 		return -ENXIO;
 
-	while (length > 0) {
-		ret = iomap_apply(inode, offset, length, IOMAP_REPORT, ops,
-				  &offset, iomap_seek_hole_actor);
+	while (data.len > 0) {
+		data.pos = offset;
+		ret = iomap_apply(&data, ops, iomap_seek_hole_actor);
 		if (ret < 0)
 			return ret;
 		if (ret == 0)
 			break;
 
 		offset += ret;
-		length -= ret;
+		data.len -= ret;
 	}
 
 	return offset;
@@ -164,20 +171,22 @@ iomap_seek_hole(struct inode *inode, loff_t offset, const struct iomap_ops *ops)
 EXPORT_SYMBOL_GPL(iomap_seek_hole);
 
 static loff_t
-iomap_seek_data_actor(struct inode *inode, loff_t offset, loff_t length,
-		      void *data, struct iomap *iomap, struct iomap *srcmap)
+iomap_seek_data_actor(const struct iomap_ctx *data, struct iomap *iomap,
+		      struct iomap *srcmap)
 {
+	loff_t offset = data->pos;
+
 	switch (iomap->type) {
 	case IOMAP_HOLE:
-		return length;
+		return data->len;
 	case IOMAP_UNWRITTEN:
-		offset = page_cache_seek_hole_data(inode, offset, length,
-						   SEEK_DATA);
+		offset = page_cache_seek_hole_data(data->inode, offset,
+						   data->len, SEEK_DATA);
 		if (offset < 0)
-			return length;
+			return data->len;
 		/*FALLTHRU*/
 	default:
-		*(loff_t *)data = offset;
+		*(loff_t *)data->priv = offset;
 		return 0;
 	}
 }
@@ -186,26 +195,31 @@ loff_t
 iomap_seek_data(struct inode *inode, loff_t offset, const struct iomap_ops *ops)
 {
 	loff_t size = i_size_read(inode);
-	loff_t length = size - offset;
+	struct iomap_ctx data = {
+		.inode  = inode,
+		.len    = size - offset,
+		.priv   = &offset,
+		.flags  = IOMAP_REPORT
+	};
 	loff_t ret;
 
 	/* Nothing to be found before or beyond the end of the file. */
 	if (offset < 0 || offset >= size)
 		return -ENXIO;
 
-	while (length > 0) {
-		ret = iomap_apply(inode, offset, length, IOMAP_REPORT, ops,
-				  &offset, iomap_seek_data_actor);
+	while (data.len > 0) {
+		data.pos = offset;
+		ret = iomap_apply(&data, ops, iomap_seek_data_actor);
 		if (ret < 0)
 			return ret;
 		if (ret == 0)
 			break;
 
 		offset += ret;
-		length -= ret;
+		data.len -= ret;
 	}
 
-	if (length <= 0)
+	if (data.len <= 0)
 		return -ENXIO;
 	return offset;
 }

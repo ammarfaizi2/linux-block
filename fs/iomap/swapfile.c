@@ -75,11 +75,10 @@ static int iomap_swapfile_add_extent(struct iomap_swapfile_info *isi)
  * swap only cares about contiguous page-aligned physical extents and makes no
  * distinction between written and unwritten extents.
  */
-static loff_t iomap_swapfile_activate_actor(struct inode *inode, loff_t pos,
-		loff_t count, void *data, struct iomap *iomap,
-		struct iomap *srcmap)
+static loff_t iomap_swapfile_activate_actor(const struct iomap_ctx *data,
+		struct iomap *iomap, struct iomap *srcmap)
 {
-	struct iomap_swapfile_info *isi = data;
+	struct iomap_swapfile_info *isi = data->priv;
 	int error;
 
 	switch (iomap->type) {
@@ -125,7 +124,7 @@ static loff_t iomap_swapfile_activate_actor(struct inode *inode, loff_t pos,
 			return error;
 		memcpy(&isi->iomap, iomap, sizeof(isi->iomap));
 	}
-	return count;
+	return data->len;
 }
 
 /*
@@ -142,8 +141,13 @@ int iomap_swapfile_activate(struct swap_info_struct *sis,
 	};
 	struct address_space *mapping = swap_file->f_mapping;
 	struct inode *inode = mapping->host;
-	loff_t pos = 0;
-	loff_t len = ALIGN_DOWN(i_size_read(inode), PAGE_SIZE);
+	struct iomap_ctx data = {
+		.inode	= inode,
+		.pos	= 0,
+		.len 	= ALIGN_DOWN(i_size_read(inode), PAGE_SIZE),
+		.priv	= &isi,
+		.flags	= IOMAP_REPORT
+	};
 	loff_t ret;
 
 	/*
@@ -154,14 +158,13 @@ int iomap_swapfile_activate(struct swap_info_struct *sis,
 	if (ret)
 		return ret;
 
-	while (len > 0) {
-		ret = iomap_apply(inode, pos, len, IOMAP_REPORT,
-				ops, &isi, iomap_swapfile_activate_actor);
+	while (data.len > 0) {
+		ret = iomap_apply(&data, ops, iomap_swapfile_activate_actor);
 		if (ret <= 0)
 			return ret;
 
-		pos += ret;
-		len -= ret;
+		data.pos += ret;
+		data.len -= ret;
 	}
 
 	if (isi.iomap.length) {

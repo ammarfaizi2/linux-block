@@ -364,24 +364,27 @@ iomap_dio_inline_actor(struct inode *inode, loff_t pos, loff_t length,
 }
 
 static loff_t
-iomap_dio_actor(struct inode *inode, loff_t pos, loff_t length,
-		void *data, struct iomap *iomap, struct iomap *srcmap)
+iomap_dio_actor(const struct iomap_ctx *data, struct iomap *iomap,
+		struct iomap *srcmap)
 {
-	struct iomap_dio *dio = data;
+	struct iomap_dio *dio = data->priv;
 
 	switch (iomap->type) {
 	case IOMAP_HOLE:
 		if (WARN_ON_ONCE(dio->flags & IOMAP_DIO_WRITE))
 			return -EIO;
-		return iomap_dio_hole_actor(length, dio);
+		return iomap_dio_hole_actor(data->len, dio);
 	case IOMAP_UNWRITTEN:
 		if (!(dio->flags & IOMAP_DIO_WRITE))
-			return iomap_dio_hole_actor(length, dio);
-		return iomap_dio_bio_actor(inode, pos, length, dio, iomap);
+			return iomap_dio_hole_actor(data->len, dio);
+		return iomap_dio_bio_actor(data->inode, data->pos, data->len,
+						dio, iomap);
 	case IOMAP_MAPPED:
-		return iomap_dio_bio_actor(inode, pos, length, dio, iomap);
+		return iomap_dio_bio_actor(data->inode, data->pos, data->len,
+						dio, iomap);
 	case IOMAP_INLINE:
-		return iomap_dio_inline_actor(inode, pos, length, dio, iomap);
+		return iomap_dio_inline_actor(data->inode, data->pos, data->len,
+						dio, iomap);
 	default:
 		WARN_ON_ONCE(1);
 		return -EIO;
@@ -404,16 +407,19 @@ iomap_dio_rw(struct kiocb *iocb, struct iov_iter *iter,
 {
 	struct address_space *mapping = iocb->ki_filp->f_mapping;
 	struct inode *inode = file_inode(iocb->ki_filp);
-	size_t count = iov_iter_count(iter);
-	loff_t pos = iocb->ki_pos;
-	loff_t end = iocb->ki_pos + count - 1, ret = 0;
-	unsigned int flags = IOMAP_DIRECT;
+	struct iomap_ctx data = {
+		.inode	= inode,
+		.pos	= iocb->ki_pos,
+		.len	= iov_iter_count(iter),
+		.flags	= IOMAP_DIRECT
+	};
+	loff_t end = data.pos + data.len - 1, ret = 0;
 	struct blk_plug plug;
 	struct iomap_dio *dio;
 
 	lockdep_assert_held(&inode->i_rwsem);
 
-	if (!count)
+	if (!data.len)
 		return 0;
 
 	if (WARN_ON(is_sync_kiocb(iocb) && !wait_for_completion))
@@ -436,14 +442,16 @@ iomap_dio_rw(struct kiocb *iocb, struct iov_iter *iter,
 	dio->submit.cookie = BLK_QC_T_NONE;
 	dio->submit.last_queue = NULL;
 
+	data.priv = dio;
+
 	if (iov_iter_rw(iter) == READ) {
-		if (pos >= dio->i_size)
+		if (data.pos >= dio->i_size)
 			goto out_free_dio;
 
 		if (iter_is_iovec(iter))
 			dio->flags |= IOMAP_DIO_DIRTY;
 	} else {
-		flags |= IOMAP_WRITE;
+		data.flags |= IOMAP_WRITE;
 		dio->flags |= IOMAP_DIO_WRITE;
 
 		/* for data sync or sync, we need sync completion processing */
@@ -461,14 +469,14 @@ iomap_dio_rw(struct kiocb *iocb, struct iov_iter *iter,
 	}
 
 	if (iocb->ki_flags & IOCB_NOWAIT) {
-		if (filemap_range_has_page(mapping, pos, end)) {
+		if (filemap_range_has_page(mapping, data.pos, end)) {
 			ret = -EAGAIN;
 			goto out_free_dio;
 		}
-		flags |= IOMAP_NOWAIT;
+		data.flags |= IOMAP_NOWAIT;
 	}
 
-	ret = filemap_write_and_wait_range(mapping, pos, end);
+	ret = filemap_write_and_wait_range(mapping, data.pos, end);
 	if (ret)
 		goto out_free_dio;
 
@@ -479,7 +487,7 @@ iomap_dio_rw(struct kiocb *iocb, struct iov_iter *iter,
 	 * pretty crazy thing to do, so we don't support it 100%.
 	 */
 	ret = invalidate_inode_pages2_range(mapping,
-			pos >> PAGE_SHIFT, end >> PAGE_SHIFT);
+			data.pos >> PAGE_SHIFT, end >> PAGE_SHIFT);
 	if (ret)
 		dio_warn_stale_pagecache(iocb->ki_filp);
 	ret = 0;
@@ -495,8 +503,7 @@ iomap_dio_rw(struct kiocb *iocb, struct iov_iter *iter,
 
 	blk_start_plug(&plug);
 	do {
-		ret = iomap_apply(inode, pos, count, flags, ops, dio,
-				iomap_dio_actor);
+		ret = iomap_apply(&data, ops, iomap_dio_actor);
 		if (ret <= 0) {
 			/* magic error code to fall back to buffered I/O */
 			if (ret == -ENOTBLK) {
@@ -505,18 +512,18 @@ iomap_dio_rw(struct kiocb *iocb, struct iov_iter *iter,
 			}
 			break;
 		}
-		pos += ret;
+		data.pos += ret;
 
-		if (iov_iter_rw(iter) == READ && pos >= dio->i_size) {
+		if (iov_iter_rw(iter) == READ && data.pos >= dio->i_size) {
 			/*
 			 * We only report that we've read data up to i_size.
 			 * Revert iter to a state corresponding to that as
 			 * some callers (such as splice code) rely on it.
 			 */
-			iov_iter_revert(iter, pos - dio->i_size);
+			iov_iter_revert(iter, data.pos - dio->i_size);
 			break;
 		}
-	} while ((count = iov_iter_count(iter)) > 0);
+	} while ((data.len = iov_iter_count(iter)) > 0);
 	blk_finish_plug(&plug);
 
 	if (ret < 0)

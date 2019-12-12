@@ -43,20 +43,20 @@ static int iomap_to_fiemap(struct fiemap_extent_info *fi,
 }
 
 static loff_t
-iomap_fiemap_actor(struct inode *inode, loff_t pos, loff_t length, void *data,
-		struct iomap *iomap, struct iomap *srcmap)
+iomap_fiemap_actor(const struct iomap_ctx *data, struct iomap *iomap,
+		   struct iomap *srcmap)
 {
-	struct fiemap_ctx *ctx = data;
-	loff_t ret = length;
+	struct fiemap_ctx *ctx = data->priv;
+	loff_t ret = data->len;
 
 	if (iomap->type == IOMAP_HOLE)
-		return length;
+		return data->len;
 
 	ret = iomap_to_fiemap(ctx->fi, &ctx->prev, 0);
 	ctx->prev = *iomap;
 	switch (ret) {
 	case 0:		/* success */
-		return length;
+		return data->len;
 	case 1:		/* extent array full */
 		return 0;
 	default:
@@ -68,6 +68,13 @@ int iomap_fiemap(struct inode *inode, struct fiemap_extent_info *fi,
 		loff_t start, loff_t len, const struct iomap_ops *ops)
 {
 	struct fiemap_ctx ctx;
+	struct iomap_ctx data = {
+		.inode	= inode,
+		.pos	= start,
+		.len	= len,
+		.flags	= IOMAP_REPORT,
+		.priv	= &ctx
+	};
 	loff_t ret;
 
 	memset(&ctx, 0, sizeof(ctx));
@@ -84,9 +91,8 @@ int iomap_fiemap(struct inode *inode, struct fiemap_extent_info *fi,
 			return ret;
 	}
 
-	while (len > 0) {
-		ret = iomap_apply(inode, start, len, IOMAP_REPORT, ops, &ctx,
-				iomap_fiemap_actor);
+	while (data.len > 0) {
+		ret = iomap_apply(&data, ops, iomap_fiemap_actor);
 		/* inode with no (attribute) mapping will give ENOENT */
 		if (ret == -ENOENT)
 			break;
@@ -95,8 +101,8 @@ int iomap_fiemap(struct inode *inode, struct fiemap_extent_info *fi,
 		if (ret == 0)
 			break;
 
-		start += ret;
-		len -= ret;
+		data.pos += ret;
+		data.len -= ret;
 	}
 
 	if (ctx.prev.type != IOMAP_HOLE) {
@@ -110,13 +116,14 @@ int iomap_fiemap(struct inode *inode, struct fiemap_extent_info *fi,
 EXPORT_SYMBOL_GPL(iomap_fiemap);
 
 static loff_t
-iomap_bmap_actor(struct inode *inode, loff_t pos, loff_t length,
-		void *data, struct iomap *iomap, struct iomap *srcmap)
+iomap_bmap_actor(const struct iomap_ctx *data, struct iomap *iomap,
+		 struct iomap *srcmap)
 {
-	sector_t *bno = data, addr;
+	sector_t *bno = data->priv, addr;
 
 	if (iomap->type == IOMAP_MAPPED) {
-		addr = (pos - iomap->offset + iomap->addr) >> inode->i_blkbits;
+		addr = (data->pos - iomap->offset + iomap->addr) >>
+				data->inode->i_blkbits;
 		if (addr > INT_MAX)
 			WARN(1, "would truncate bmap result\n");
 		else
@@ -131,16 +138,19 @@ iomap_bmap(struct address_space *mapping, sector_t bno,
 		const struct iomap_ops *ops)
 {
 	struct inode *inode = mapping->host;
-	loff_t pos = bno << inode->i_blkbits;
-	unsigned blocksize = i_blocksize(inode);
+	struct iomap_ctx data = {
+		.inode	= inode,
+		.pos	= bno << inode->i_blkbits,
+		.len	= i_blocksize(inode),
+		.priv	= &bno
+	};
 	int ret;
 
 	if (filemap_write_and_wait(mapping))
 		return 0;
 
 	bno = 0;
-	ret = iomap_apply(inode, pos, blocksize, 0, ops, &bno,
-			  iomap_bmap_actor);
+	ret = iomap_apply(&data, ops, iomap_bmap_actor);
 	if (ret)
 		return 0;
 	return bno;

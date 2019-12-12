@@ -1090,13 +1090,16 @@ int __dax_zero_page_range(struct block_device *bdev,
 EXPORT_SYMBOL_GPL(__dax_zero_page_range);
 
 static loff_t
-dax_iomap_actor(struct inode *inode, loff_t pos, loff_t length, void *data,
-		struct iomap *iomap, struct iomap *srcmap)
+dax_iomap_actor(const struct iomap_ctx *data, struct iomap *iomap,
+		struct iomap *srcmap)
 {
 	struct block_device *bdev = iomap->bdev;
 	struct dax_device *dax_dev = iomap->dax_dev;
-	struct iov_iter *iter = data;
+	struct iov_iter *iter = data->priv;
+	loff_t pos = data->pos;
+	loff_t length = data->len;
 	loff_t end = pos + length, done = 0;
+	struct inode *inode = data->inode;
 	ssize_t ret = 0;
 	size_t xfer;
 	int id;
@@ -1197,22 +1200,26 @@ dax_iomap_rw(struct kiocb *iocb, struct iov_iter *iter,
 {
 	struct address_space *mapping = iocb->ki_filp->f_mapping;
 	struct inode *inode = mapping->host;
-	loff_t pos = iocb->ki_pos, ret = 0, done = 0;
-	unsigned flags = 0;
+	loff_t ret = 0, done = 0;
+	struct iomap_ctx data = {
+		.inode	= inode,
+		.pos	= iocb->ki_pos,
+		.priv	= iter,
+	};
 
 	if (iov_iter_rw(iter) == WRITE) {
 		lockdep_assert_held_write(&inode->i_rwsem);
-		flags |= IOMAP_WRITE;
+		data.flags |= IOMAP_WRITE;
 	} else {
 		lockdep_assert_held(&inode->i_rwsem);
 	}
 
 	while (iov_iter_count(iter)) {
-		ret = iomap_apply(inode, pos, iov_iter_count(iter), flags, ops,
-				iter, dax_iomap_actor);
+		data.len = iov_iter_count(iter);
+		ret = iomap_apply(&data, ops, dax_iomap_actor);
 		if (ret <= 0)
 			break;
-		pos += ret;
+		data.pos += ret;
 		done += ret;
 	}
 

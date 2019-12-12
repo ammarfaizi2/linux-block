@@ -248,14 +248,15 @@ static inline bool iomap_block_needs_zeroing(struct inode *inode,
 }
 
 static loff_t
-iomap_readpage_actor(struct inode *inode, loff_t pos, loff_t length, void *data,
-		struct iomap *iomap, struct iomap *srcmap)
+iomap_readpage_actor(const struct iomap_ctx *data, struct iomap *iomap,
+		     struct iomap *srcmap)
 {
-	struct iomap_readpage_ctx *ctx = data;
+	struct iomap_readpage_ctx *ctx = data->priv;
+	struct inode *inode = data->inode;
 	struct page *page = ctx->cur_page;
 	struct iomap_page *iop = iomap_page_create(inode, page);
 	bool same_page = false, is_contig = false;
-	loff_t orig_pos = pos;
+	loff_t pos = data->pos, orig_pos = data->pos;
 	unsigned poff, plen;
 	sector_t sector;
 
@@ -266,7 +267,7 @@ iomap_readpage_actor(struct inode *inode, loff_t pos, loff_t length, void *data,
 	}
 
 	/* zero post-eof blocks as the page may be mapped */
-	iomap_adjust_read_range(inode, iop, &pos, length, &poff, &plen);
+	iomap_adjust_read_range(inode, iop, &pos, data->len, &poff, &plen);
 	if (plen == 0)
 		goto done;
 
@@ -302,7 +303,7 @@ iomap_readpage_actor(struct inode *inode, loff_t pos, loff_t length, void *data,
 
 	if (!ctx->bio || !is_contig || bio_full(ctx->bio, plen)) {
 		gfp_t gfp = mapping_gfp_constraint(page->mapping, GFP_KERNEL);
-		int nr_vecs = (length + PAGE_SIZE - 1) >> PAGE_SHIFT;
+		int nr_vecs = (data->len + PAGE_SIZE - 1) >> PAGE_SHIFT;
 
 		if (ctx->bio)
 			submit_bio(ctx->bio);
@@ -333,16 +334,20 @@ int
 iomap_readpage(struct page *page, const struct iomap_ops *ops)
 {
 	struct iomap_readpage_ctx ctx = { .cur_page = page };
-	struct inode *inode = page->mapping->host;
+	struct iomap_ctx data = {
+		.inode	= page->mapping->host,
+		.priv	= &ctx,
+		.flags	= 0
+	};
 	unsigned poff;
 	loff_t ret;
 
 	trace_iomap_readpage(page->mapping->host, 1);
 
 	for (poff = 0; poff < PAGE_SIZE; poff += ret) {
-		ret = iomap_apply(inode, page_offset(page) + poff,
-				PAGE_SIZE - poff, 0, ops, &ctx,
-				iomap_readpage_actor);
+		data.pos = page_offset(page) + poff;
+		data.len = PAGE_SIZE - poff;
+		ret = iomap_apply(&data, ops, iomap_readpage_actor);
 		if (ret <= 0) {
 			WARN_ON_ONCE(ret == 0);
 			SetPageError(page);
@@ -396,28 +401,34 @@ iomap_next_page(struct inode *inode, struct list_head *pages, loff_t pos,
 }
 
 static loff_t
-iomap_readpages_actor(struct inode *inode, loff_t pos, loff_t length,
-		void *data, struct iomap *iomap, struct iomap *srcmap)
+iomap_readpages_actor(const struct iomap_ctx *data, struct iomap *iomap,
+		      struct iomap *srcmap)
 {
-	struct iomap_readpage_ctx *ctx = data;
+	struct iomap_readpage_ctx *ctx = data->priv;
 	loff_t done, ret;
 
-	for (done = 0; done < length; done += ret) {
-		if (ctx->cur_page && offset_in_page(pos + done) == 0) {
+	for (done = 0; done < data->len; done += ret) {
+		struct iomap_ctx rp_data = {
+			.inode	= data->inode,
+			.pos	= data->pos + done,
+			.len	= data->len - done,
+			.priv	= ctx,
+		};
+
+		if (ctx->cur_page && offset_in_page(rp_data.pos) == 0) {
 			if (!ctx->cur_page_in_bio)
 				unlock_page(ctx->cur_page);
 			put_page(ctx->cur_page);
 			ctx->cur_page = NULL;
 		}
 		if (!ctx->cur_page) {
-			ctx->cur_page = iomap_next_page(inode, ctx->pages,
-					pos, length, &done);
+			ctx->cur_page = iomap_next_page(data->inode, ctx->pages,
+					data->pos, data->len, &done);
 			if (!ctx->cur_page)
 				break;
 			ctx->cur_page_in_bio = false;
 		}
-		ret = iomap_readpage_actor(inode, pos + done, length - done,
-				ctx, iomap, srcmap);
+		ret = iomap_readpage_actor(&rp_data, iomap, srcmap);
 	}
 
 	return done;
@@ -431,21 +442,27 @@ iomap_readpages(struct address_space *mapping, struct list_head *pages,
 		.pages		= pages,
 		.is_readahead	= true,
 	};
-	loff_t pos = page_offset(list_entry(pages->prev, struct page, lru));
+	struct iomap_ctx data = {
+		.inode	= mapping->host,
+		.priv	= &ctx,
+		.flags	= 0
+	};
 	loff_t last = page_offset(list_entry(pages->next, struct page, lru));
-	loff_t length = last - pos + PAGE_SIZE, ret = 0;
+	loff_t ret = 0;
 
-	trace_iomap_readpages(mapping->host, nr_pages);
+	data.pos = page_offset(list_entry(pages->prev, struct page, lru));
+	data.len = last - data.pos + PAGE_SIZE;
 
-	while (length > 0) {
-		ret = iomap_apply(mapping->host, pos, length, 0, ops,
-				&ctx, iomap_readpages_actor);
+	trace_iomap_readpages(data.inode, nr_pages);
+
+	while (data.len > 0) {
+		ret = iomap_apply(&data, ops, iomap_readpages_actor);
 		if (ret <= 0) {
 			WARN_ON_ONCE(ret == 0);
 			goto done;
 		}
-		pos += ret;
-		length -= ret;
+		data.pos += ret;
+		data.len -= ret;
 	}
 	ret = 0;
 done:
@@ -796,10 +813,13 @@ iomap_write_end(struct inode *inode, loff_t pos, unsigned len, unsigned copied,
 }
 
 static loff_t
-iomap_write_actor(struct inode *inode, loff_t pos, loff_t length, void *data,
-		struct iomap *iomap, struct iomap *srcmap)
+iomap_write_actor(const struct iomap_ctx *data, struct iomap *iomap,
+		  struct iomap *srcmap)
 {
-	struct iov_iter *i = data;
+	struct inode *inode = data->inode;
+	struct iov_iter *i = data->priv;
+	loff_t length = data->len;
+	loff_t pos = data->pos;
 	long status = 0;
 	ssize_t written = 0;
 
@@ -879,15 +899,20 @@ ssize_t
 iomap_file_buffered_write(struct kiocb *iocb, struct iov_iter *iter,
 		const struct iomap_ops *ops)
 {
-	struct inode *inode = iocb->ki_filp->f_mapping->host;
-	loff_t pos = iocb->ki_pos, ret = 0, written = 0;
+	struct iomap_ctx data = {
+		.inode	= iocb->ki_filp->f_mapping->host,
+		.pos	= iocb->ki_pos,
+		.priv	= iter,
+		.flags	= IOMAP_WRITE
+	};
+	loff_t ret = 0, written = 0;
 
 	while (iov_iter_count(iter)) {
-		ret = iomap_apply(inode, pos, iov_iter_count(iter),
-				IOMAP_WRITE, ops, iter, iomap_write_actor);
+		data.len = iov_iter_count(iter);
+		ret = iomap_apply(&data, ops, iomap_write_actor);
 		if (ret <= 0)
 			break;
-		pos += ret;
+		data.pos += ret;
 		written += ret;
 	}
 
@@ -896,9 +921,11 @@ iomap_file_buffered_write(struct kiocb *iocb, struct iov_iter *iter,
 EXPORT_SYMBOL_GPL(iomap_file_buffered_write);
 
 static loff_t
-iomap_unshare_actor(struct inode *inode, loff_t pos, loff_t length, void *data,
-		struct iomap *iomap, struct iomap *srcmap)
+iomap_unshare_actor(const struct iomap_ctx *data, struct iomap *iomap,
+		    struct iomap *srcmap)
 {
+	loff_t pos = data->pos;
+	loff_t length = data->len;
 	long status = 0;
 	ssize_t written = 0;
 
@@ -914,13 +941,13 @@ iomap_unshare_actor(struct inode *inode, loff_t pos, loff_t length, void *data,
 		unsigned long bytes = min_t(loff_t, PAGE_SIZE - offset, length);
 		struct page *page;
 
-		status = iomap_write_begin(inode, pos, bytes,
+		status = iomap_write_begin(data->inode, pos, bytes,
 				IOMAP_WRITE_F_UNSHARE, &page, iomap, srcmap);
 		if (unlikely(status))
 			return status;
 
-		status = iomap_write_end(inode, pos, bytes, bytes, page, iomap,
-				srcmap);
+		status = iomap_write_end(data->inode, pos, bytes, bytes, page,
+						iomap, srcmap);
 		if (unlikely(status <= 0)) {
 			if (WARN_ON_ONCE(status == 0))
 				return -EIO;
@@ -933,7 +960,7 @@ iomap_unshare_actor(struct inode *inode, loff_t pos, loff_t length, void *data,
 		written += status;
 		length -= status;
 
-		balance_dirty_pages_ratelimited(inode->i_mapping);
+		balance_dirty_pages_ratelimited(data->inode->i_mapping);
 	} while (length);
 
 	return written;
@@ -943,15 +970,20 @@ int
 iomap_file_unshare(struct inode *inode, loff_t pos, loff_t len,
 		const struct iomap_ops *ops)
 {
+	struct iomap_ctx data = {
+		.inode	= inode,
+		.pos	= pos,
+		.len	= len,
+		.flags	= IOMAP_WRITE,
+	};
 	loff_t ret;
 
-	while (len) {
-		ret = iomap_apply(inode, pos, len, IOMAP_WRITE, ops, NULL,
-				iomap_unshare_actor);
+	while (data.len) {
+		ret = iomap_apply(&data, ops, iomap_unshare_actor);
 		if (ret <= 0)
 			return ret;
-		pos += ret;
-		len -= ret;
+		data.pos += ret;
+		data.len -= ret;
 	}
 
 	return 0;
@@ -982,16 +1014,18 @@ static int iomap_dax_zero(loff_t pos, unsigned offset, unsigned bytes,
 }
 
 static loff_t
-iomap_zero_range_actor(struct inode *inode, loff_t pos, loff_t count,
-		void *data, struct iomap *iomap, struct iomap *srcmap)
+iomap_zero_range_actor(const struct iomap_ctx *data, struct iomap *iomap,
+		       struct iomap *srcmap)
 {
-	bool *did_zero = data;
+	bool *did_zero = data->priv;
+	ssize_t count = data->len;
+	loff_t pos = data->pos;
 	loff_t written = 0;
 	int status;
 
 	/* already zeroed?  we're done. */
 	if (srcmap->type == IOMAP_HOLE || srcmap->type == IOMAP_UNWRITTEN)
-		return count;
+		return data->len;
 
 	do {
 		unsigned offset, bytes;
@@ -999,11 +1033,11 @@ iomap_zero_range_actor(struct inode *inode, loff_t pos, loff_t count,
 		offset = offset_in_page(pos);
 		bytes = min_t(loff_t, PAGE_SIZE - offset, count);
 
-		if (IS_DAX(inode))
+		if (IS_DAX(data->inode))
 			status = iomap_dax_zero(pos, offset, bytes, iomap);
 		else
-			status = iomap_zero(inode, pos, offset, bytes, iomap,
-					srcmap);
+			status = iomap_zero(data->inode, pos, offset, bytes,
+						iomap, srcmap);
 		if (status < 0)
 			return status;
 
@@ -1021,16 +1055,22 @@ int
 iomap_zero_range(struct inode *inode, loff_t pos, loff_t len, bool *did_zero,
 		const struct iomap_ops *ops)
 {
+	struct iomap_ctx data = {
+		.inode	= inode,
+		.pos	= pos,
+		.len	= len,
+		.priv	= did_zero,
+		.flags	= IOMAP_ZERO
+	};
 	loff_t ret;
 
-	while (len > 0) {
-		ret = iomap_apply(inode, pos, len, IOMAP_ZERO,
-				ops, did_zero, iomap_zero_range_actor);
+	while (data.len > 0) {
+		ret = iomap_apply(&data, ops, iomap_zero_range_actor);
 		if (ret <= 0)
 			return ret;
 
-		pos += ret;
-		len -= ret;
+		data.pos += ret;
+		data.len -= ret;
 	}
 
 	return 0;
@@ -1052,49 +1092,50 @@ iomap_truncate_page(struct inode *inode, loff_t pos, bool *did_zero,
 EXPORT_SYMBOL_GPL(iomap_truncate_page);
 
 static loff_t
-iomap_page_mkwrite_actor(struct inode *inode, loff_t pos, loff_t length,
-		void *data, struct iomap *iomap, struct iomap *srcmap)
+iomap_page_mkwrite_actor(const struct iomap_ctx *data,
+			 struct iomap *iomap, struct iomap *srcmap)
 {
-	struct page *page = data;
+	struct page *page = data->priv;
 	int ret;
 
 	if (iomap->flags & IOMAP_F_BUFFER_HEAD) {
-		ret = __block_write_begin_int(page, pos, length, NULL, iomap);
+		ret = __block_write_begin_int(page, data->pos, data->len, NULL,
+						iomap);
 		if (ret)
 			return ret;
-		block_commit_write(page, 0, length);
+		block_commit_write(page, 0, data->len);
 	} else {
 		WARN_ON_ONCE(!PageUptodate(page));
-		iomap_page_create(inode, page);
+		iomap_page_create(data->inode, page);
 		set_page_dirty(page);
 	}
 
-	return length;
+	return data->len;
 }
 
 vm_fault_t iomap_page_mkwrite(struct vm_fault *vmf, const struct iomap_ops *ops)
 {
 	struct page *page = vmf->page;
-	struct inode *inode = file_inode(vmf->vma->vm_file);
-	unsigned long length;
-	loff_t offset;
+	struct iomap_ctx data = {
+		.inode	= file_inode(vmf->vma->vm_file),
+		.flags	= IOMAP_WRITE | IOMAP_FAULT,
+		.priv	= page,
+	};
 	ssize_t ret;
 
 	lock_page(page);
-	ret = page_mkwrite_check_truncate(page, inode);
+	ret = page_mkwrite_check_truncate(page, data.inode);
 	if (ret < 0)
 		goto out_unlock;
-	length = ret;
+	data.len = ret;
 
-	offset = page_offset(page);
-	while (length > 0) {
-		ret = iomap_apply(inode, offset, length,
-				IOMAP_WRITE | IOMAP_FAULT, ops, page,
-				iomap_page_mkwrite_actor);
+	data.pos = page_offset(page);
+	while (data.len > 0) {
+		ret = iomap_apply(&data, ops, iomap_page_mkwrite_actor);
 		if (unlikely(ret <= 0))
 			goto out_unlock;
-		offset += ret;
-		length -= ret;
+		data.pos += ret;
+		data.len -= ret;
 	}
 
 	wait_for_stable_page(page);
