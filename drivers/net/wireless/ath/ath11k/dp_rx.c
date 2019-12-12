@@ -381,8 +381,10 @@ static int ath11k_dp_rxdma_pdev_buf_setup(struct ath11k *ar)
 
 	ath11k_dp_rxdma_ring_buf_setup(ar, rx_ring, HAL_RXDMA_BUF);
 
+#ifdef CONFIG_ATH11K_AHB
 	rx_ring = &dp->rxdma_mon_buf_ring;
 	ath11k_dp_rxdma_ring_buf_setup(ar, rx_ring, HAL_RXDMA_MONITOR_BUF);
+#endif
 
 	rx_ring = &dp->rx_mon_status_refill_ring;
 	ath11k_dp_rxdma_ring_buf_setup(ar, rx_ring, HAL_RXDMA_MONITOR_STATUS);
@@ -483,6 +485,7 @@ static int ath11k_dp_rx_pdev_srng_alloc(struct ath11k *ar)
 			    "failed to setup rx_mon_status_refill_ring\n");
 		return ret;
 	}
+#ifdef CONFIG_ATH11K_AHB
 	ret = ath11k_dp_srng_setup(ar->ab,
 				   &dp->rxdma_mon_buf_ring.refill_buf_ring,
 				   HAL_RXDMA_MONITOR_BUF, 0, dp->mac_id,
@@ -510,7 +513,7 @@ static int ath11k_dp_rx_pdev_srng_alloc(struct ath11k *ar)
 			    "failed to setup HAL_RXDMA_MONITOR_DESC\n");
 		return ret;
 	}
-
+#endif
 	return 0;
 }
 
