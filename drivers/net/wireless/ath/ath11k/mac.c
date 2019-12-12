@@ -417,6 +417,11 @@ struct ath11k *ath11k_mac_get_ar_by_pdev_id(struct ath11k_base *ab, u32 pdev_id)
 	int i;
 	struct ath11k_pdev *pdev;
 
+	if (ab->hw_params.single_pdev_only) {
+		pdev = rcu_dereference(ab->pdevs_active[0]);
+		return pdev->ar;
+	}
+
 	if (WARN_ON(pdev_id > ab->num_radios))
 		return NULL;
 
@@ -5739,6 +5744,10 @@ int ath11k_mac_allocate(struct ath11k_base *ab)
 
 	if (test_bit(ATH11K_FLAG_REGISTERED, &ab->dev_flags))
 		return 0;
+
+	// For QCA6390, pdev_id is 0 and it means soc level.
+	if (ab->hw_params.single_pdev_only)
+		ab->pdevs[0].pdev_id = 0;
 
 	for (i = 0; i < ab->num_radios; i++) {
 		pdev = &ab->pdevs[i];

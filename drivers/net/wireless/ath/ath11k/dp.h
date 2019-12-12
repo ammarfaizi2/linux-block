@@ -131,6 +131,7 @@ struct ath11k_pdev_dp {
 	wait_queue_head_t tx_empty_waitq;
 	struct dp_srng reo_dst_ring;
 	struct dp_rxdma_ring rx_refill_buf_ring;
+	struct dp_srng rx_mac_buf_ring;
 	struct dp_srng rxdma_err_dst_ring;
 	struct dp_srng rxdma_mon_dst_ring;
 	struct dp_srng rxdma_mon_desc_ring;

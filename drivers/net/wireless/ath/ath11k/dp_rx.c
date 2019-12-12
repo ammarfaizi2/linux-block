@@ -455,6 +455,16 @@ static int ath11k_dp_rx_pdev_srng_alloc(struct ath11k *ar)
 		return ret;
 	}
 
+	/* FIXME: kvalo: there was a conflict with this function call, not
+	 * sure if this is the right location.
+	 */
+	ret = ath11k_dp_srng_setup(ar->ab, &dp->rx_mac_buf_ring, HAL_RXDMA_BUF,
+				   1, dp->mac_id, 1024);
+	if (ret) {
+		ath11k_warn(ar->ab, "failed to setup rx_mac_buf_ring\n");
+		return ret;
+	}
+
 	ret = ath11k_dp_srng_setup(ar->ab, &dp->rxdma_err_dst_ring,
 				   HAL_RXDMA_DST, 0, dp->mac_id,
 				   DP_RXDMA_ERR_DST_RING_SIZE);
@@ -3444,6 +3454,13 @@ int ath11k_dp_rx_pdev_alloc(struct ath11k_base *ab, int mac_id)
 		return ret;
 	}
 
+	ring_id = dp->rx_mac_buf_ring.ring_id;
+	ret = ath11k_dp_tx_htt_srng_setup(ab, ring_id, mac_id, HAL_RXDMA_BUF);
+	if (ret) {
+		ath11k_warn(ab, "failed to configure rx_mac_buf_ring %d\n", ret);
+		return ret;
+	}
+
 	ring_id = dp->rxdma_err_dst_ring.ring_id;
 	ret = ath11k_dp_tx_htt_srng_setup(ab, ring_id, mac_id, HAL_RXDMA_DST);
 	if (ret) {
@@ -3452,6 +3469,7 @@ int ath11k_dp_rx_pdev_alloc(struct ath11k_base *ab, int mac_id)
 		return ret;
 	}
 
+#ifdef CONFIG_ATH11K_AHB
 	ring_id = dp->rxdma_mon_buf_ring.refill_buf_ring.ring_id;
 	ret = ath11k_dp_tx_htt_srng_setup(ab, ring_id,
 					  mac_id, HAL_RXDMA_MONITOR_BUF);
@@ -3476,6 +3494,8 @@ int ath11k_dp_rx_pdev_alloc(struct ath11k_base *ab, int mac_id)
 			    ret);
 		return ret;
 	}
+#endif
+
 	ring_id = dp->rx_mon_status_refill_ring.refill_buf_ring.ring_id;
 	ret = ath11k_dp_tx_htt_srng_setup(ab, ring_id, mac_id,
 					  HAL_RXDMA_MONITOR_STATUS);
@@ -4144,12 +4164,14 @@ static int ath11k_dp_rx_pdev_mon_status_attach(struct ath11k *ar)
 
 int ath11k_dp_rx_pdev_mon_attach(struct ath11k *ar)
 {
+#ifdef CONFIG_ATH11K_AHB
 	struct ath11k_pdev_dp *dp = &ar->dp;
 	struct ath11k_mon_data *pmon = &dp->mon_data;
 	struct hal_srng *mon_desc_srng = NULL;
 	struct dp_srng *dp_srng;
-	int ret = 0;
 	u32 n_link_desc = 0;
+#endif
+	int ret = 0;
 
 	ret = ath11k_dp_rx_pdev_mon_status_attach(ar);
 	if (ret) {
@@ -4157,6 +4179,7 @@ int ath11k_dp_rx_pdev_mon_attach(struct ath11k *ar)
 		return ret;
 	}
 
+#ifdef CONFIG_ATH11K_AHB
 	dp_srng = &dp->rxdma_mon_desc_ring;
 	n_link_desc = dp_srng->size /
 		ath11k_hal_srng_get_entrysize(HAL_RXDMA_MONITOR_DESC);
@@ -4173,6 +4196,7 @@ int ath11k_dp_rx_pdev_mon_attach(struct ath11k *ar)
 	pmon->mon_last_linkdesc_paddr = 0;
 	pmon->mon_last_buf_cookie = DP_RX_DESC_COOKIE_MAX + 1;
 	spin_lock_init(&pmon->mon_lock);
+#endif
 	return 0;
 }
 

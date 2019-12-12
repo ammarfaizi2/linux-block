@@ -558,14 +558,25 @@ ath11k_dp_tx_get_ring_id_type(struct ath11k_base *ab,
 	switch (ring_type) {
 	case HAL_RXDMA_BUF:
 		lmac_ring_id_offset = mac_id * HAL_SRNG_RINGS_PER_LMAC;
+#ifdef CONFIG_ATH11K_AHB
 		if (!(ring_id == (HAL_SRNG_RING_ID_WMAC1_SW2RXDMA0_BUF +
 				  lmac_ring_id_offset) ||
-		    ring_id == (HAL_SRNG_RING_ID_WMAC1_SW2RXDMA1_BUF +
+			ring_id == (HAL_SRNG_RING_ID_WMAC1_SW2RXDMA1_BUF +
 				lmac_ring_id_offset))) {
 			ret = -EINVAL;
 		}
 		*htt_ring_id = HTT_RXDMA_HOST_BUF_RING;
 		*htt_ring_type = HTT_SW_TO_HW_RING;
+#else
+		if (ring_id == HAL_SRNG_RING_ID_WMAC1_SW2RXDMA0_BUF) {
+			*htt_ring_id = HTT_HOST1_TO_FW_RXBUF_RING;
+			*htt_ring_type = HTT_SW_TO_SW_RING;
+		} else {
+			*htt_ring_id = HTT_RXDMA_HOST_BUF_RING;
+			*htt_ring_type = HTT_SW_TO_HW_RING;
+		}
+#endif
+
 		break;
 	case HAL_RXDMA_DST:
 		*htt_ring_id = HTT_RXDMA_NON_MONITOR_DEST_RING;
