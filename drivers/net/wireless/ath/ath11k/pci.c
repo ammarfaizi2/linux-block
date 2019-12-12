@@ -33,6 +33,192 @@ static struct ath11k_msi_config msi_config = {
 	},
 };
 
+/* Target firmware's Copy Engine configuration. */
+static const struct ce_pipe_config target_ce_config_wlan[] = {
+	/* CE0: host->target HTC control and raw streams */
+	{
+		.pipenum = __cpu_to_le32(0),
+		.pipedir = __cpu_to_le32(PIPEDIR_OUT),
+		.nentries = __cpu_to_le32(32),
+		.nbytes_max = __cpu_to_le32(2048),
+		.flags = __cpu_to_le32(CE_ATTR_FLAGS),
+		.reserved = __cpu_to_le32(0),
+	},
+
+	/* CE1: target->host HTT + HTC control */
+	{
+		.pipenum = __cpu_to_le32(1),
+		.pipedir = __cpu_to_le32(PIPEDIR_IN),
+		.nentries = __cpu_to_le32(32),
+		.nbytes_max = __cpu_to_le32(2048),
+		.flags = __cpu_to_le32(CE_ATTR_FLAGS),
+		.reserved = __cpu_to_le32(0),
+	},
+
+	/* CE2: target->host WMI */
+	{
+		.pipenum = __cpu_to_le32(2),
+		.pipedir = __cpu_to_le32(PIPEDIR_IN),
+		.nentries = __cpu_to_le32(32),
+		.nbytes_max = __cpu_to_le32(2048),
+		.flags = __cpu_to_le32(CE_ATTR_FLAGS),
+		.reserved = __cpu_to_le32(0),
+	},
+
+	/* CE3: host->target WMI */
+	{
+		.pipenum = __cpu_to_le32(3),
+		.pipedir = __cpu_to_le32(PIPEDIR_OUT),
+		.nentries = __cpu_to_le32(32),
+		.nbytes_max = __cpu_to_le32(2048),
+		.flags = __cpu_to_le32(CE_ATTR_FLAGS),
+		.reserved = __cpu_to_le32(0),
+	},
+
+	/* CE4: host->target HTT */
+	{
+		.pipenum = __cpu_to_le32(4),
+		.pipedir = __cpu_to_le32(PIPEDIR_OUT),
+		.nentries = __cpu_to_le32(256),
+		.nbytes_max = __cpu_to_le32(256),
+		.flags = __cpu_to_le32(CE_ATTR_FLAGS | CE_ATTR_DIS_INTR),
+		.reserved = __cpu_to_le32(0),
+	},
+
+	/* CE5: target->host Pktlog */
+	{
+		.pipenum = __cpu_to_le32(5),
+		.pipedir = __cpu_to_le32(PIPEDIR_IN),
+		.nentries = __cpu_to_le32(32),
+		.nbytes_max = __cpu_to_le32(2048),
+		.flags = __cpu_to_le32(CE_ATTR_FLAGS),
+		.reserved = __cpu_to_le32(0),
+	},
+
+	/* CE6: Reserved for target autonomous hif_memcpy */
+	{
+		.pipenum = __cpu_to_le32(6),
+		.pipedir = __cpu_to_le32(PIPEDIR_INOUT),
+		.nentries = __cpu_to_le32(32),
+		.nbytes_max = __cpu_to_le32(16384),
+		.flags = __cpu_to_le32(CE_ATTR_FLAGS),
+		.reserved = __cpu_to_le32(0),
+	},
+
+	/* CE7 used only by Host */
+	{
+		.pipenum = __cpu_to_le32(7),
+		.pipedir = __cpu_to_le32(PIPEDIR_INOUT_H2H),
+		.nentries = __cpu_to_le32(0),
+		.nbytes_max = __cpu_to_le32(0),
+		.flags = __cpu_to_le32(CE_ATTR_FLAGS | CE_ATTR_DIS_INTR),
+		.reserved = __cpu_to_le32(0),
+	},
+
+	/* CE8 target->host used only by IPA */
+	{
+		.pipenum = __cpu_to_le32(8),
+		.pipedir = __cpu_to_le32(PIPEDIR_INOUT),
+		.nentries = __cpu_to_le32(32),
+		.nbytes_max = __cpu_to_le32(16384),
+		.flags = __cpu_to_le32(CE_ATTR_FLAGS),
+		.reserved = __cpu_to_le32(0),
+	},
+	/* CE 9, 10, 11 are used by MHI driver */
+};
+
+/* Map from service/endpoint to Copy Engine.
+ * This table is derived from the CE_PCI TABLE, above.
+ * It is passed to the Target at startup for use by firmware.
+ */
+static const struct service_to_pipe target_service_to_ce_map_wlan[] = {
+	{
+		__cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_DATA_VO),
+		__cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
+		__cpu_to_le32(3),
+	},
+	{
+		__cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_DATA_VO),
+		__cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
+		__cpu_to_le32(2),
+	},
+	{
+		__cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_DATA_BK),
+		__cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
+		__cpu_to_le32(3),
+	},
+	{
+		__cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_DATA_BK),
+		__cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
+		__cpu_to_le32(2),
+	},
+	{
+		__cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_DATA_BE),
+		__cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
+		__cpu_to_le32(3),
+	},
+	{
+		__cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_DATA_BE),
+		__cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
+		__cpu_to_le32(2),
+	},
+	{
+		__cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_DATA_VI),
+		__cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
+		__cpu_to_le32(3),
+	},
+	{
+		__cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_DATA_VI),
+		__cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
+		__cpu_to_le32(2),
+	},
+	{
+		__cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_CONTROL),
+		__cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
+		__cpu_to_le32(3),
+	},
+	{
+		__cpu_to_le32(ATH11K_HTC_SVC_ID_WMI_CONTROL),
+		__cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
+		__cpu_to_le32(2),
+	},
+
+	{
+		__cpu_to_le32(ATH11K_HTC_SVC_ID_RSVD_CTRL),
+		__cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
+		__cpu_to_le32(0),
+	},
+	{
+		__cpu_to_le32(ATH11K_HTC_SVC_ID_RSVD_CTRL),
+		__cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
+		__cpu_to_le32(2),
+	},
+
+	{
+		__cpu_to_le32(ATH11K_HTC_SVC_ID_HTT_DATA_MSG),
+		__cpu_to_le32(PIPEDIR_OUT),	/* out = UL = host -> target */
+		__cpu_to_le32(4),
+	},
+	{
+		__cpu_to_le32(ATH11K_HTC_SVC_ID_HTT_DATA_MSG),
+		__cpu_to_le32(PIPEDIR_IN),	/* in = DL = target -> host */
+		__cpu_to_le32(1),
+	},
+
+	/* (Additions here) */
+
+	{ /* must be last */
+		__cpu_to_le32(0),
+		__cpu_to_le32(0),
+		__cpu_to_le32(0),
+	},
+};
+
+static inline struct ath11k_pci *ath11k_pci_priv(struct ath11k_base *ab)
+{
+	return (struct ath11k_pci *)ab->drv_priv;
+}
+
 int ath11k_pci_get_msi_irq(struct device *dev, unsigned int vector)
 {
 	struct pci_dev *pci_dev = to_pci_dev(dev);
@@ -78,6 +264,105 @@ int ath11k_pci_get_user_msi_assignment(struct ath11k_pci *ar_pci, char *user_nam
 	return -EINVAL;
 }
 
+static void ath11k_pci_free_irq(struct ath11k_base *ab)
+{
+	int irq_idx;
+	int i;
+
+	for (i = 0; i < CE_COUNT; i++) {
+		if (ath11k_ce_get_attr_flags(i) & CE_ATTR_DIS_INTR)
+			continue;
+		irq_idx = ATH11K_IRQ_CE0_OFFSET + i;
+		free_irq(ab->irq_num[irq_idx], &ab->ce.ce_pipe[i]);
+	}
+}
+
+static void ath11k_pci_ce_irq_disable(struct ath11k_base *ab, u16 ce_id)
+{
+	u32 irq_idx;
+
+	irq_idx = ATH11K_IRQ_CE0_OFFSET + ce_id;
+	disable_irq_nosync(ab->irq_num[irq_idx]);
+}
+
+static irqreturn_t ath11k_pci_ce_interrupt_handler(int irq, void *arg)
+{
+	struct ath11k_ce_pipe *ce_pipe = arg;
+
+	ath11k_pci_ce_irq_disable(ce_pipe->ab, ce_pipe->pipe_num);
+
+	return IRQ_HANDLED;
+}
+
+static int ath11k_pci_config_irq(struct ath11k_base *ab)
+{
+	struct ath11k_ce_pipe *ce_pipe;
+	u32 msi_data_start;
+	u32 msi_data_count;
+	u32 msi_irq_start;
+	unsigned int msi_data;
+	int irq, i, ret, irq_idx;
+
+	ret = ath11k_pci_get_user_msi_assignment(ath11k_pci_priv(ab),
+						 "CE", &msi_data_count,
+						 &msi_data_start, &msi_irq_start);
+
+	/* Configure CE irqs */
+	for (i = 0; i < CE_COUNT; i++) {
+		msi_data = (i % msi_data_count) +
+				msi_irq_start;
+		irq = ath11k_pci_get_msi_irq(ab->dev, msi_data);
+		ce_pipe = &ab->ce.ce_pipe[i];
+
+		if (ath11k_ce_get_attr_flags(i) & CE_ATTR_DIS_INTR)
+			continue;
+
+		irq_idx = ATH11K_IRQ_CE0_OFFSET + i;
+
+		ret = request_irq(irq, ath11k_pci_ce_interrupt_handler,
+				  IRQF_SHARED, irq_name[irq_idx],
+				  ce_pipe);
+		if (ret)
+			return ret;
+
+		ab->irq_num[irq_idx] = irq;
+	}
+
+	/* To Do Configure external interrupts */
+
+	return ret;
+}
+
+static void ath11k_pci_init_qmi_ce_config(struct ath11k_base *ab)
+{
+	struct ath11k_qmi_ce_cfg *cfg = &ab->qmi.ce_cfg;
+
+	cfg->tgt_ce = target_ce_config_wlan;
+	cfg->tgt_ce_len = sizeof(target_ce_config_wlan);
+
+	cfg->svc_to_ce_map = target_service_to_ce_map_wlan;
+	cfg->svc_to_ce_map_len = sizeof(target_service_to_ce_map_wlan);
+}
+
+static void ath11k_pci_ce_irq_enable(struct ath11k_base *ab, u16 ce_id)
+{
+	u32 irq_idx;
+
+	irq_idx = ATH11K_IRQ_CE0_OFFSET + ce_id;
+	enable_irq(ab->irq_num[irq_idx]);
+}
+
+static void ath11k_pci_ce_irqs_enable(struct ath11k_base *ab)
+{
+	int i;
+
+	for (i = 0; i < CE_COUNT; i++) {
+		if (ath11k_ce_get_attr_flags(i) & CE_ATTR_DIS_INTR)
+			continue;
+		ath11k_pci_ce_irq_enable(ab, i);
+	}
+}
+
 int ath11k_pci_qca6x90_powerup(struct ath11k_pci *ar_pci)
 {
 	return ath11k_pci_start_mhi(ar_pci);
@@ -93,11 +378,6 @@ static int ath11k_pci_get_msi_assignment(struct ath11k_pci *ar_pci)
 	ar_pci->msi_config = &msi_config;
 
 	return 0;
-}
-
-static inline struct ath11k_pci *ath11k_pci_priv(struct ath11k_base *ab)
-{
-	return (struct ath11k_pci *)ab->drv_priv;
 }
 
 static int ath11k_pci_enable_msi(struct ath11k_pci *ar_pci)
@@ -262,7 +542,23 @@ static void ath11k_pci_power_down(struct ath11k_base *ab)
 	ath11k_pci_qca6x90_powerdown(ar_pci);
 }
 
+static void ath11k_pci_stop(struct ath11k_base *ab)
+{
+	ath11k_ce_cleanup_pipes(ab);
+	/* Shutdown other components as appropriate */
+}
+
+static int ath11k_pci_start(struct ath11k_base *ab)
+{
+	ath11k_pci_ce_irqs_enable(ab);
+	/* Bring up other components as appropriate */
+
+	return 0;
+}
+
 static const struct ath11k_hif_ops ath11k_pci_hif_ops = {
+	.start = ath11k_pci_start,
+	.stop = ath11k_pci_stop,
 	.power_down = ath11k_pci_power_down,
 	.power_up = ath11k_pci_power_up,
 };
@@ -304,6 +600,7 @@ static int ath11k_pci_probe(struct pci_dev *pdev,
 	ar_pci->pdev = pdev;
 	ab->dev = &pdev->dev;
 	ab->hw_rev = hw_rev;
+	ab->hif.ops = &ath11k_pci_hif_ops;
 	pci_set_drvdata(pdev, ab);
 
 	ret = ath11k_pci_claim(ar_pci, pdev);
@@ -325,10 +622,43 @@ static int ath11k_pci_probe(struct pci_dev *pdev,
 		goto err_pci_disable_msi;
 	}
 
+	ret = ath11k_hal_srng_init(ab);
+	if (ret)
+		goto err_pci_unregister_mhi;
+
+	ret = ath11k_ce_alloc_pipes(ab);
+	if (ret) {
+		ath11k_err(ab, "failed to allocate ce pipes: %d\n", ret);
+		goto err_hal_srng_deinit;
+	}
+
+	ath11k_pci_init_qmi_ce_config(ab);
+	ath11k_pci_config_irq(ab);
+	if (ret) {
+		ath11k_err(ab, "failed to config irq: %d\n", ret);
+		goto err_ce_free;
+	}
+	ret = ath11k_core_init(ab);
+	if (ret) {
+		ath11k_err(ab, "failed to init core: %d\n", ret);
+		goto err_free_irq;
+	}
+	return 0;
+
+err_free_irq:
+	ath11k_pci_free_irq(ab);
+
+err_ce_free:
+	ath11k_ce_free_pipes(ab);
+
+err_hal_srng_deinit:
+	ath11k_hal_srng_deinit(ab);
+
+err_pci_unregister_mhi:
+	ath11k_pci_unregister_mhi(ar_pci);
+
 err_pci_disable_msi:
 	ath11k_pci_disable_msi(ar_pci);
-
-	return 0;
 
 err_pci_free_region:
 	ath11k_pci_free_region(ar_pci);
@@ -348,6 +678,7 @@ static void ath11k_pci_remove(struct pci_dev *pdev)
 	ath11k_pci_unregister_mhi(ar_pci);
 	ath11k_pci_disable_msi(ar_pci);
 	ath11k_pci_free_region(ar_pci);
+	ath11k_pci_free_irq(ab);
 	ath11k_core_free(ab);
 }
 
