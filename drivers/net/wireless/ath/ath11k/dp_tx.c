@@ -804,6 +804,9 @@ int ath11k_dp_tx_htt_rx_filter_setup(struct ath11k_base *ab, u32 ring_id,
 	enum htt_srng_ring_id htt_ring_id;
 	int ret = 0;
 
+	if (ab->hw_params.disable_pktlog)
+		return 0;
+
 	skb = ath11k_htc_alloc_skb(ab, len);
 	if (!skb)
 		return -ENOMEM;

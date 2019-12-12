@@ -123,6 +123,7 @@ struct ath11k_hw_params {
 	bool single_pdev_only;
 	const struct ath11k_hw_ops *hw_ops;
 	bool vdev_start_delay;
+	bool disable_pktlog;
 };
 
 struct ath11k_fw_ie {
