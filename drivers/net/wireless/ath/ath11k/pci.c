@@ -641,6 +641,8 @@ static int ath11k_pci_ext_irq_config(struct ath11k_base *ab)
 				ath11k_err(ab, "failed request_irq for %d\n",
 					   vector);
 			}
+			//balance irq_enable
+			disable_irq_nosync(ab->irq_num[irq_idx]);
 		}
 	}
 
