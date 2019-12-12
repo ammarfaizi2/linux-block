@@ -1971,7 +1971,7 @@ static int ath11k_qmi_load_bdf_target_mem(struct ath11k_base *ab)
 			 ab->qmi.target.board_id);
 	else
 		snprintf(filename, sizeof(filename),
-			 BDF_FILE_NAME_PREFIX "%02x.b%02x",
+			 BDF_FILE_NAME_PREFIX "%02x.e%02x",
 			 ab->qmi.target.board_id >> 8 & 0xFF,
 			 ab->qmi.target.board_id & 0xFF);
 
@@ -1989,11 +1989,12 @@ static int ath11k_qmi_load_bdf_target_mem(struct ath11k_base *ab)
 		req->file_id_valid = 1;
 		req->file_id = ab->qmi.target.board_id;
 		req->total_size_valid = 1;
+		req->total_size = fw_entry->size;
 		req->seg_id_valid = 1;
-		req->data_valid = 0;
+		req->data_valid = 1;
 		req->data_len = ATH11K_QMI_MAX_BDF_FILE_NAME_SIZE;
-		req->bdf_type = 0;
-		req->bdf_type_valid = 0;
+		req->bdf_type = 1;
+		req->bdf_type_valid = 1;
 		req->end_valid = 1;
 		req->end = 0;
 
