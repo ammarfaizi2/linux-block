@@ -818,6 +818,10 @@ static int ath11k_ahb_probe(struct platform_device *pdev)
 	ab->fixed_mem_region = true;
 	platform_set_drvdata(pdev, ab);
 
+	ret = ath11k_core_pre_init(ab);
+	if (ret)
+		goto err_core_free;
+
 	ret = ath11k_hal_srng_init(ab);
 	if (ret)
 		goto err_core_free;

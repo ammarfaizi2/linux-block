@@ -797,6 +797,10 @@ static int ath11k_pci_probe(struct pci_dev *pdev,
 		goto err_pci_disable_msi;
 	}
 
+	ret = ath11k_core_pre_init(ab);
+	if (ret)
+		goto err_pci_unregister_mhi;
+
 	ret = ath11k_hal_srng_init(ab);
 	if (ret)
 		goto err_pci_unregister_mhi;

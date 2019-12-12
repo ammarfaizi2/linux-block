@@ -10,6 +10,7 @@ ath11k-y += core.o \
 	    htc.o \
 	    qmi.o \
 	    dp.o  \
+	    hw.o  \
 	    dp_tx.o \
 	    dp_rx.o \
 	    debug.o \
