@@ -730,6 +730,8 @@ static int ath11k_init_hw_params(struct ath11k_base *ab)
 
 int ath11k_core_pre_init(struct ath11k_base *ab)
 {
+	int ret;
+
 	switch (ab->hw_rev) {
 	case ATH11K_HW_IPQ8074:
 		ab->regs = &ipa8074_regs;
@@ -743,7 +745,10 @@ int ath11k_core_pre_init(struct ath11k_base *ab)
 			   ab->hw_rev);
 		return -ENOTSUPP;
 	}
-	return 0;
+
+	ret = ath11k_ce_attr_attach(ab);
+
+	return ret;
 }
 EXPORT_SYMBOL(ath11k_core_pre_init);
 

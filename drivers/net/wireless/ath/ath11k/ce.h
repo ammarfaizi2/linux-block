@@ -6,7 +6,8 @@
 #ifndef ATH11K_CE_H
 #define ATH11K_CE_H
 
-#define CE_COUNT 12
+#define CE_COUNT (ab->ce.ce_count)
+#define MAX_CE_COUNT 12
 
 /* Byte swap data words */
 #define CE_ATTR_BYTE_SWAP_DATA 2
@@ -164,9 +165,11 @@ struct ath11k_ce_pipe {
 };
 
 struct ath11k_ce {
-	struct ath11k_ce_pipe ce_pipe[CE_COUNT];
+	struct ath11k_ce_pipe ce_pipe[MAX_CE_COUNT];
 	/* Protects rings of all ce pipes */
 	spinlock_t ce_lock;
+	const struct ce_attr *host_ce_config;
+	u32	ce_count;
 };
 
 void ath11k_ce_cleanup_pipes(struct ath11k_base *ab);
@@ -178,8 +181,9 @@ void ath11k_ce_rx_post_buf(struct ath11k_base *ab);
 int ath11k_ce_init_pipes(struct ath11k_base *ab);
 int ath11k_ce_alloc_pipes(struct ath11k_base *ab);
 void ath11k_ce_free_pipes(struct ath11k_base *ab);
-int ath11k_ce_get_attr_flags(int ce_id);
+int ath11k_ce_get_attr_flags(struct ath11k_base *ab, int ce_id);
 void ath11k_ce_poll_send_completed(struct ath11k_base *ab, u8 pipe_id);
 int ath11k_ce_map_service_to_pipe(struct ath11k_base *ab, u16 service_id,
 				  u8 *ul_pipe, u8 *dl_pipe);
+int ath11k_ce_attr_attach(struct ath11k_base *ab);
 #endif

@@ -177,4 +177,9 @@ struct ath11k_hw_regs {
 extern const struct ath11k_hw_regs ipa8074_regs;
 extern const struct ath11k_hw_regs qca6x90_regs;
 
+struct ath11k_hw_ce {
+	u32 count;
+	struct ce_attr *host_ce_config_wlan;
+};
+
 #endif
