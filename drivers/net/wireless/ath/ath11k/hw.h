@@ -6,6 +6,8 @@
 #ifndef ATH11K_HW_H
 #define ATH11K_HW_H
 
+#include "wmi.h"
+
 /* Target configuration defines */
 
 /* Num VDEVS per radio */
@@ -103,6 +105,13 @@ enum ath11k_bus {
 	ATH11K_BUS_PCI,
 };
 
+/* Defines needed for Rx descriptor abstraction */
+struct ath11k_hw_ops {
+	void (*wmi_init_config)(struct ath11k_base *ab,
+				struct target_resource_config *config);
+
+};
+
 struct ath11k_hw_params {
 	const char *name;
 	u16 dev_id;
@@ -112,6 +121,7 @@ struct ath11k_hw_params {
 		size_t cal_size;
 	} fw;
 	bool single_pdev_only;
+	const struct ath11k_hw_ops *hw_ops;
 };
 
 struct ath11k_fw_ie {
@@ -178,9 +188,7 @@ struct ath11k_hw_regs {
 extern const struct ath11k_hw_regs ipa8074_regs;
 extern const struct ath11k_hw_regs qca6x90_regs;
 
-struct ath11k_hw_ce {
-	u32 count;
-	struct ce_attr *host_ce_config_wlan;
-};
+extern const struct ath11k_hw_ops ath11k_hw_ops_ipa8074;
+extern const struct ath11k_hw_ops ath11k_hw_ops_qca6x90;
 
 #endif
