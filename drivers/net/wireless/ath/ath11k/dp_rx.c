@@ -2019,6 +2019,11 @@ static void ath11k_dp_rx_h_ppdu(struct ath11k *ar, struct hal_rx_desc *rx_desc,
 	rx_status->flag |= RX_FLAG_NO_SIGNAL_VAL;
 
 	channel_num = ath11k_dp_rx_h_msdu_start_freq(rx_desc);
+	/* QCA6390 firmware doesn't pop channel number yet.
+	 * firmwar team and phy team is working on it.
+	 */
+	if (ar->ab->hw_params.channel_num_war)
+		channel_num = 36;
 
 	if (channel_num >= 1 && channel_num <= 14) {
 		rx_status->band = NL80211_BAND_2GHZ;

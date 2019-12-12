@@ -124,6 +124,7 @@ struct ath11k_hw_params {
 	const struct ath11k_hw_ops *hw_ops;
 	bool vdev_start_delay;
 	bool disable_pktlog;
+	bool channel_num_war;
 };
 
 struct ath11k_fw_ie {
