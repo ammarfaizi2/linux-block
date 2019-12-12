@@ -2385,6 +2385,49 @@ static void ath11k_qmi_msg_mem_request_cb(struct qmi_handle *qmi_hdl,
 		ath11k_warn(ab, "Invalid memory segment length: %u\n",
 			    msg->mem_seg_len);
 
+	/*For QCA6390, by default FW requests a block of ~4M contiguous DMA
+	 *memory, it's hard to allocate from OS. See host returns failure to
+	 *FW and FW will then request mulitple blocks of small chunk size
+	 *memory.
+	 */
+	if (!ab->fixed_mem_region && msg->mem_seg_len <= 2) {
+		struct qmi_wlanfw_respond_mem_req_msg_v01 req;
+		struct qmi_wlanfw_respond_mem_resp_msg_v01 resp;
+
+		ath11k_warn(ab, "invalid block size: %u\n",
+			    msg->mem_seg_len);
+
+	memset(&req, 0, sizeof(req));
+	memset(&resp, 0, sizeof(resp));
+
+	ret = qmi_txn_init(&ab->qmi.handle, txn,
+			   qmi_wlanfw_respond_mem_resp_msg_v01_ei, &resp);
+	if (ret < 0)
+		return;
+
+	ret = qmi_send_request(&qmi->handle, NULL, txn,
+			       QMI_WLANFW_RESPOND_MEM_REQ_V01,
+			       QMI_WLANFW_RESPOND_MEM_REQ_MSG_V01_MAX_LEN,
+			       qmi_wlanfw_respond_mem_req_msg_v01_ei, &req);
+		if (ret < 0) {
+			ath11k_warn(ab, "qmi failed to respond memory request, err = %d\n",
+				    ret);
+			return;
+		}
+
+		ret = qmi_txn_wait(txn, msecs_to_jiffies(ATH11K_QMI_WLANFW_TIMEOUT_MS));
+		if (ret < 0) {
+			ath11k_warn(ab, "qmi failed memory request, err = %d\n", ret);
+			return;
+		}
+
+		if (resp.resp.result != QMI_RESULT_SUCCESS_V01) {
+			ath11k_warn(ab, "Respond mem req failed, result: %d, err: %d\n",
+				    resp.resp.result, resp.resp.error);
+			return;
+		}
+	}
+
 	ab->qmi.mem_seg_count = msg->mem_seg_len;
 
 	for (i = 0; i < qmi->mem_seg_count ; i++) {
