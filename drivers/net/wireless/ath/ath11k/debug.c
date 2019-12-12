@@ -25,6 +25,7 @@ void ath11k_info(struct ath11k_base *ab, const char *fmt, ...)
 	/* TODO: Trace the log */
 	va_end(args);
 }
+EXPORT_SYMBOL(ath11k_info);
 
 void ath11k_err(struct ath11k_base *ab, const char *fmt, ...)
 {
@@ -39,6 +40,7 @@ void ath11k_err(struct ath11k_base *ab, const char *fmt, ...)
 	/* TODO: Trace the log */
 	va_end(args);
 }
+EXPORT_SYMBOL(ath11k_err);
 
 void ath11k_warn(struct ath11k_base *ab, const char *fmt, ...)
 {
@@ -53,6 +55,7 @@ void ath11k_warn(struct ath11k_base *ab, const char *fmt, ...)
 	/* TODO: Trace the log */
 	va_end(args);
 }
+EXPORT_SYMBOL(ath11k_warn);
 
 #ifdef CONFIG_ATH11K_DEBUG
 void __ath11k_dbg(struct ath11k_base *ab, enum ath11k_debug_mask mask,
@@ -73,6 +76,7 @@ void __ath11k_dbg(struct ath11k_base *ab, enum ath11k_debug_mask mask,
 
 	va_end(args);
 }
+EXPORT_SYMBOL(__ath11k_dbg);
 
 void ath11k_dbg_dump(struct ath11k_base *ab,
 		     enum ath11k_debug_mask mask,
@@ -101,7 +105,7 @@ void ath11k_dbg_dump(struct ath11k_base *ab,
 		}
 	}
 }
-
+EXPORT_SYMBOL(ath11k_dbg_dump);
 #endif
 
 #ifdef CONFIG_ATH11K_DEBUGFS

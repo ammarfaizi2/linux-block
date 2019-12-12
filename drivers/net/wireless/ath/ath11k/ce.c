@@ -749,6 +749,7 @@ void ath11k_ce_free_pipes(struct ath11k_base *ab)
 		}
 	}
 }
+EXPORT_SYMBOL(ath11k_ce_free_pipes);
 
 int ath11k_ce_alloc_pipes(struct ath11k_base *ab)
 {
@@ -803,3 +804,4 @@ int ath11k_ce_get_attr_flags(int ce_id)
 
 	return host_ce_config_wlan[ce_id].flags;
 }
+EXPORT_SYMBOL(ath11k_ce_get_attr_flags);

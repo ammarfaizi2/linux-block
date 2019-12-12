@@ -1123,3 +1123,4 @@ void ath11k_hal_srng_deinit(struct ath11k_base *ab)
 	ath11k_hal_free_cont_rdp(ab);
 	ath11k_hal_free_cont_wrp(ab);
 }
+EXPORT_SYMBOL(ath11k_hal_srng_deinit);
