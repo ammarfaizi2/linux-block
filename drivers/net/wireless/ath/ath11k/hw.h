@@ -105,6 +105,7 @@ enum ath11k_bus {
 
 struct ath11k_hw_params {
 	const char *name;
+	u16 dev_id;
 	struct {
 		const char *dir;
 		size_t board_size;
