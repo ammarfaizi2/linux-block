@@ -73,7 +73,7 @@ const struct ath11k_hw_regs qca6x90_regs = {
 	.hal_tcl1_ring_msi1_base_msb = 0x000006d0,
 	.hal_tcl1_ring_msi1_data = 0x000006d4,
 	.hal_tcl2_ring_base_lsb = 0x000006dc,
-	.hal_tcl_ring_base_lsb = 0x00000178,
+	.hal_tcl_ring_base_lsb = 0x0000078c,
 
 	/* TCL STATUS ring address */
 	.hal_tcl_status_ring_base_lsb = 0x00000894,
