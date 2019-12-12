@@ -27,10 +27,12 @@ static const struct ath11k_hw_params ath11k_hw_params_list[] = {
 			.board_size = IPQ8074_MAX_BOARD_DATA_SZ,
 			.cal_size =  IPQ8074_MAX_CAL_DATA_SZ,
 		},
+		.single_pdev_only = false,
 	},
 	{
 		.name = "hst6390",
 		.dev_id = ATH11K_HW_QCA6390,
+		.single_pdev_only = true,
 	}
 };
 

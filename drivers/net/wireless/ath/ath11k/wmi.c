@@ -2937,6 +2937,12 @@ static int ath11k_wmi_tlv_hw_mode_caps(struct ath11k_base *soc,
 		return ret;
 	}
 
+	if (soc->hw_params.single_pdev_only) {
+		svc_rdy_ext->pref_hw_mode_caps = svc_rdy_ext->hw_mode_caps[0];
+		soc->wmi_sc.preferred_hw_mode = 0;
+		goto done;
+	}
+
 	i = 0;
 	while (i < svc_rdy_ext->n_hw_mode_caps) {
 		hw_mode_caps = &svc_rdy_ext->hw_mode_caps[i];
@@ -2950,6 +2956,7 @@ static int ath11k_wmi_tlv_hw_mode_caps(struct ath11k_base *soc,
 		i++;
 	}
 
+done:
 	if (soc->wmi_sc.preferred_hw_mode == WMI_HOST_HW_MODE_MAX)
 		return -EINVAL;
 
@@ -5761,6 +5768,8 @@ int ath11k_wmi_attach(struct ath11k_base *ab)
 
 	ab->wmi_sc.ab = ab;
 	ab->wmi_sc.preferred_hw_mode = WMI_HOST_HW_MODE_MAX;
+	if (ab->hw_params.single_pdev_only)
+		ab->wmi_sc.preferred_hw_mode = WMI_HOST_HW_MODE_SINGLE;
 
 	/* TODO: Init remaining wmi soc resources required */
 	init_completion(&ab->wmi_sc.service_ready);

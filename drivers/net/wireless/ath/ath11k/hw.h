@@ -111,6 +111,7 @@ struct ath11k_hw_params {
 		size_t board_size;
 		size_t cal_size;
 	} fw;
+	bool single_pdev_only;
 };
 
 struct ath11k_fw_ie {
