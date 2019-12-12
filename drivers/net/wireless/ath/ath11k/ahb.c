@@ -813,6 +813,8 @@ static int ath11k_ahb_probe(struct platform_device *pdev)
 	ab->hw_rev = (enum ath11k_hw_rev)of_id->data;
 	ab->mem = mem;
 	ab->mem_len = resource_size(mem_res);
+	ab->fixed_bdf_addr= true;
+	ab->fixed_mem_region = true;
 	platform_set_drvdata(pdev, ab);
 
 	ret = ath11k_hal_srng_init(ab);

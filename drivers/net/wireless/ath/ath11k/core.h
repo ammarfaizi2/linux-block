@@ -642,6 +642,10 @@ struct ath11k_base {
 		u32 fw_crash_counter;
 	} stats;
 
+	bool fixed_bdf_addr;
+	bool m3_fw_support;
+	bool mhi_support;
+	bool fixed_mem_region;
 	/* must be last */
 	u8 drv_priv[0] __aligned(sizeof(void *));
 };

@@ -9,6 +9,12 @@
 #include <linux/of.h>
 #include <linux/firmware.h>
 
+#define BIN_BDF_FILE_NAME		"bdwlan.bin"
+#define BIN_BDF_FILE_NAME_PREFIX	"bdwlan.e"
+#define BDF_FILE_NAME_PREFIX		"bdwlan"
+#define MAX_M3_FILE_NAME_LENGTH		13
+#define DEFAULT_M3_FILE_NAME		"m3.bin"
+
 static struct qmi_elem_info qmi_wlanfw_host_cap_req_msg_v01_ei[] = {
 	{
 		.data_type	= QMI_OPT_FLAG,
@@ -1516,11 +1522,17 @@ static int ath11k_qmi_host_cap_send(struct ath11k_base *ab)
 	req.bdf_support_valid = 1;
 	req.bdf_support = 1;
 
-	req.m3_support_valid = 0;
-	req.m3_support = 0;
-
-	req.m3_cache_support_valid = 0;
-	req.m3_cache_support = 0;
+	if (ab->m3_fw_support) {
+		req.m3_support_valid = 1;
+		req.m3_support = 1;
+		req.m3_cache_support_valid = 1;
+		req.m3_cache_support = 1;
+	} else {
+		req.m3_support_valid = 0;
+		req.m3_support = 0;
+		req.m3_cache_support_valid = 0;
+		req.m3_cache_support = 0;
+	}
 
 	req.cal_done_valid = 1;
 	req.cal_done = ab->qmi.cal_done;
@@ -1675,6 +1687,25 @@ out:
 }
 
 static int ath11k_qmi_alloc_target_mem_chunk(struct ath11k_base *ab)
+{
+	int i, idx;
+
+	for (i = 0, idx = 0; i < ab->qmi.mem_seg_count; i++) {
+		ab->qmi.target_mem[i].vaddr = (unsigned long)dma_alloc_coherent(ab->dev, ab->qmi.target_mem[i].size,
+						&ab->qmi.target_mem[i].paddr, GFP_KERNEL);
+		if (!ab->qmi.target_mem[idx].vaddr) {
+			ath11k_err(ab, "failed to allocate memory for FW, size: 0x%x, type: %u\n",
+				    ab->qmi.target_mem[i].size, ab->qmi.target_mem[i].type);
+			return -EINVAL;
+		}
+		ab->qmi.target_mem[i].size = ab->qmi.target_mem[i].size;
+		ab->qmi.target_mem[i].type = ab->qmi.target_mem[i].type;
+	}
+
+	return 0;
+}
+
+static int ath11k_qmi_assign_target_mem_chunk(struct ath11k_base *ab)
 {
 	int i, idx;
 
@@ -1914,8 +1945,141 @@ out:
 	return ret;
 }
 
+static int ath11k_qmi_load_bdf_target_mem(struct ath11k_base *ab)
+{
+	struct qmi_wlanfw_bdf_download_req_msg_v01 *req;
+	struct qmi_wlanfw_bdf_download_resp_msg_v01 resp;
+	char filename[ATH11K_QMI_MAX_BDF_FILE_NAME_SIZE];
+	const struct firmware *fw_entry;
+	struct device *dev = ab->dev;
+	unsigned int remaining;
+	struct qmi_txn txn = {};
+	int ret;
+	const u8 *temp;
+
+	req = kzalloc(sizeof(*req), GFP_KERNEL);
+	if (!req)
+		return -ENOMEM;
+	memset(&resp, 0, sizeof(resp));
+
+
+	if (ab->qmi.target.board_id == 0xFF)
+		snprintf(filename, sizeof(filename), BIN_BDF_FILE_NAME);
+	else if (ab->qmi.target.board_id < 0xFF)
+		snprintf(filename, sizeof(filename),
+			 BIN_BDF_FILE_NAME_PREFIX "%02x",
+			 ab->qmi.target.board_id);
+	else
+		snprintf(filename, sizeof(filename),
+			 BDF_FILE_NAME_PREFIX "%02x.b%02x",
+			 ab->qmi.target.board_id >> 8 & 0xFF,
+			 ab->qmi.target.board_id & 0xFF);
+
+	ret = request_firmware(&fw_entry, filename, dev);
+	if (ret) {
+		ath11k_warn(ab, "qmi failed to load bdf: %s\n", filename);
+		goto out;
+	}
+
+	temp = fw_entry->data;
+	remaining = fw_entry->size;
+
+	while (remaining) {
+		req->valid = 1;
+		req->file_id_valid = 1;
+		req->file_id = ab->qmi.target.board_id;
+		req->total_size_valid = 1;
+		req->seg_id_valid = 1;
+		req->data_valid = 0;
+		req->data_len = ATH11K_QMI_MAX_BDF_FILE_NAME_SIZE;
+		req->bdf_type = 0;
+		req->bdf_type_valid = 0;
+		req->end_valid = 1;
+		req->end = 0;
+
+		if (remaining > QMI_WLANFW_MAX_DATA_SIZE_V01) {
+			req->data_len = QMI_WLANFW_MAX_DATA_SIZE_V01;
+		} else {
+			req->data_len = remaining;
+			req->end = 1;
+		}
+
+		memcpy(req->data, temp, req->data_len);
+
+		ret = qmi_txn_init(&ab->qmi.handle, &txn,
+				   qmi_wlanfw_bdf_download_resp_msg_v01_ei,
+				   &resp);
+		if (ret < 0)
+			goto out_qmi_bdf;
+
+		ret = qmi_send_request(&ab->qmi.handle, NULL, &txn,
+				       QMI_WLANFW_BDF_DOWNLOAD_REQ_V01,
+				       QMI_WLANFW_BDF_DOWNLOAD_REQ_MSG_V01_MAX_LEN,
+				       qmi_wlanfw_bdf_download_req_msg_v01_ei, req);
+		if (ret < 0) {
+			qmi_txn_cancel(&txn);
+			goto out_qmi_bdf;
+		}
+
+		ret = qmi_txn_wait(&txn, msecs_to_jiffies(ATH11K_QMI_WLANFW_TIMEOUT_MS));
+		if (ret < 0)
+			goto out_qmi_bdf;
+
+		if (resp.resp.result != QMI_RESULT_SUCCESS_V01) {
+			ath11k_warn(ab, "qmi BDF download failed, result: %d, err: %d\n",
+				    resp.resp.result, resp.resp.error);
+			ret = resp.resp.result;
+			goto out_qmi_bdf;
+		}
+		remaining -= req->data_len;
+		temp += req->data_len;
+		req->seg_id++;
+	}
+	ath11k_info(ab, "qmi BDF download\n");
+
+out_qmi_bdf:
+	release_firmware(fw_entry);
+out:
+	kfree(req);
+	return ret;
+}
+
+static int ath11k_load_m3_bin(struct ath11k_base *ab)
+{
+	struct m3_mem_region *m3_mem = &ab->qmi.m3_mem;
+	char filename[MAX_M3_FILE_NAME_LENGTH];
+	const struct firmware *fw_entry;
+	int ret;
+
+	snprintf(filename, sizeof(filename), DEFAULT_M3_FILE_NAME);
+	ret = request_firmware(&fw_entry, filename,
+			       ab->dev);
+	if (ret) {
+		ath11k_err(ab, "Failed to load M3 image: %s\n", filename);
+		return ret;
+	}
+
+	m3_mem->vaddr = dma_alloc_coherent(ab->dev,
+					fw_entry->size, &m3_mem->paddr,
+					GFP_KERNEL);
+	if (!m3_mem->vaddr) {
+		ath11k_err(ab, "Failed to allocate memory for M3, size: 0x%zx\n",
+			    fw_entry->size);
+		release_firmware(fw_entry);
+		return -ENOMEM;
+	}
+
+	ath11k_err(ab, " memory for M3, size: 0x%zx\n",
+			    fw_entry->size);
+	memcpy(m3_mem->vaddr, fw_entry->data, fw_entry->size);
+	m3_mem->size = fw_entry->size;
+	release_firmware(fw_entry);
+
+	return 0;
+}
 static int ath11k_qmi_wlanfw_m3_info_send(struct ath11k_base *ab)
 {
+	struct m3_mem_region *m3_mem = &ab->qmi.m3_mem;
 	struct qmi_wlanfw_m3_info_req_msg_v01 req;
 	struct qmi_wlanfw_m3_info_resp_msg_v01 resp;
 	struct qmi_txn txn = {};
@@ -1923,8 +2087,15 @@ static int ath11k_qmi_wlanfw_m3_info_send(struct ath11k_base *ab)
 
 	memset(&req, 0, sizeof(req));
 	memset(&resp, 0, sizeof(resp));
-	req.addr = 0;
-	req.size = 0;
+
+	if (ab->m3_fw_support) {
+		ath11k_load_m3_bin(ab);
+		req.addr = m3_mem->paddr;
+		req.size = m3_mem->size;
+	} else {
+		req.addr = 0;
+		req.size = 0;
+	}
 
 	ret = qmi_txn_init(&ab->qmi.handle, &txn,
 			   qmi_wlanfw_m3_info_resp_msg_v01_ei, &resp);
@@ -2181,7 +2352,10 @@ static void ath11k_qmi_event_load_bdf(struct ath11k_qmi *qmi)
 		return;
 	}
 
-	ret = ath11k_qmi_load_bdf(ab);
+	if (ab->fixed_bdf_addr)
+		ret = ath11k_qmi_load_bdf(ab);
+	else
+		ret = ath11k_qmi_load_bdf_target_mem(ab);
 	if (ret < 0) {
 		ath11k_warn(ab, "qmi failed to load board data file:%d\n", ret);
 		return;
@@ -2220,7 +2394,10 @@ static void ath11k_qmi_msg_mem_request_cb(struct qmi_handle *qmi_hdl,
 			   msg->mem_seg[i].type, msg->mem_seg[i].size);
 	}
 
-	ret = ath11k_qmi_alloc_target_mem_chunk(ab);
+	if (ab->fixed_mem_region)
+		ret = ath11k_qmi_assign_target_mem_chunk(ab);
+	else
+		ret = ath11k_qmi_alloc_target_mem_chunk(ab);
 	if (ret < 0) {
 		ath11k_warn(ab, "qmi failed to alloc target memory:%d\n", ret);
 		return;
