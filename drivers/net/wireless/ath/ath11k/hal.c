@@ -976,6 +976,8 @@ int ath11k_hal_srng_setup(struct ath11k_base *ab, enum hal_ring_type type,
 				params->intr_batch_cntr_thres_entries;
 	srng->intr_timer_thres_us = params->intr_timer_thres_us;
 	srng->flags = params->flags;
+	srng->msi_addr = params->msi_addr;
+	srng->msi_data = params->msi_data;
 	spin_lock_init(&srng->lock);
 
 	for (i = 0; i < HAL_SRNG_NUM_REG_GRP; i++) {
