@@ -1021,7 +1021,7 @@ static inline bool page_expected_state(struct page *page,
 	if (unlikely(atomic_read(&page->_mapcount) != -1))
 		return false;
 
-	if (unlikely((unsigned long)page->mapping |
+	if (unlikely((page->mapping && !PagePrivio(page)) |
 			page_ref_count(page) |
 #ifdef CONFIG_MEMCG
 			(unsigned long)page->mem_cgroup |
@@ -1042,7 +1042,7 @@ static void free_pages_check_bad(struct page *page)
 
 	if (unlikely(atomic_read(&page->_mapcount) != -1))
 		bad_reason = "nonzero mapcount";
-	if (unlikely(page->mapping != NULL))
+	if (unlikely(page->mapping != NULL && !PagePrivio(page)))
 		bad_reason = "non-NULL mapping";
 	if (unlikely(page_ref_count(page) != 0))
 		bad_reason = "nonzero _refcount";
@@ -2057,7 +2057,7 @@ static void check_new_page_bad(struct page *page)
 
 	if (unlikely(atomic_read(&page->_mapcount) != -1))
 		bad_reason = "nonzero mapcount";
-	if (unlikely(page->mapping != NULL))
+	if (unlikely(page->mapping != NULL) && !PagePrivio(page))
 		bad_reason = "non-NULL mapping";
 	if (unlikely(page_ref_count(page) != 0))
 		bad_reason = "nonzero _refcount";

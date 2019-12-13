@@ -71,6 +71,8 @@ static void __page_cache_release(struct page *page)
 		del_page_from_lru_list(page, lruvec, page_off_lru(page));
 		spin_unlock_irqrestore(&pgdat->lru_lock, flags);
 	}
+	if (PagePrivio(page))
+		page->mapping = NULL;
 	__ClearPageWaiters(page);
 }
 
