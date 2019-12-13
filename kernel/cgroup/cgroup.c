@@ -5882,21 +5882,155 @@ void cgroup_fork(struct task_struct *child)
 	INIT_LIST_HEAD(&child->cg_list);
 }
 
+static struct cgroup *cgroup_get_from_file(struct file *f)
+{
+	struct cgroup_subsys_state *css;
+	struct cgroup *cgrp;
+
+	css = css_tryget_online_from_dir(f->f_path.dentry, NULL);
+	if (IS_ERR(css))
+		return ERR_CAST(css);
+
+	cgrp = css->cgroup;
+	if (!cgroup_on_dfl(cgrp)) {
+		cgroup_put(cgrp);
+		return ERR_PTR(-EBADF);
+	}
+
+	return cgrp;
+}
+
+/**
+ * cgroup_css_set_fork - find or create a css_set for a child process
+ * @parent: the parent of the child process
+ * @kargs: the arguments passed to create the child process
+ *
+ * This functions finds or creates a new css_set which the child
+ * process will be attached to in cgroup_post_fork(). By default,
+ * the child process will be given the same css_set as its parent.
+ *
+ * If CLONE_INTO_CGROUP is specified this function will try to find an
+ * existing css_set which includes the request cgorup and if not create
+ * new css_set that the child will be attached to. After this function
+ * returns when CLONE_INTO_CGROUP is used we will hold a reference to the
+ * target cgroup. This is done so we can check whether the cgroup is
+ * still alive when we retake the cgroup_mutex in cgroup_lock_fork().
+ * The reference is dropped in cgroup_post_fork().
+ *
+ */
+static int cgroup_css_set_fork(struct task_struct *parent,
+			       struct kernel_clone_args *kargs)
+	__acquires(&cgroup_mutex) __releases(&cgroup_mutex)
+{
+	int ret;
+	struct cgroup *dst_cgrp, *src_cgrp;
+	struct css_set *cset;
+	struct super_block *sb;
+	struct file *f;
+
+	spin_lock_irq(&css_set_lock);
+	cset = task_css_set(parent);
+	get_css_set(cset);
+	spin_unlock_irq(&css_set_lock);
+
+	if (!(kargs->flags & CLONE_INTO_CGROUP)) {
+		kargs->cset = cset;
+		return 0;
+	}
+
+	f = fget_raw(kargs->cgroup);
+	if (!f) {
+		put_css_set(cset);
+		return -EBADF;
+	}
+	sb = f->f_path.dentry->d_sb;
+
+	dst_cgrp = cgroup_get_from_file(f);
+	if (IS_ERR(dst_cgrp)) {
+		put_css_set(cset);
+		fput(f);
+		return PTR_ERR(dst_cgrp);
+	}
+
+	mutex_lock(&cgroup_mutex);
+
+	spin_lock_irq(&css_set_lock);
+	src_cgrp = task_cgroup_from_root(parent, &cgrp_dfl_root);
+	spin_unlock_irq(&css_set_lock);
+
+	ret = cgroup_attach_permissions(src_cgrp, dst_cgrp, sb,
+					!!(kargs->flags & CLONE_THREAD));
+	if (!ret)
+		kargs->cset = find_css_set(cset, dst_cgrp);
+
+	mutex_unlock(&cgroup_mutex);
+
+	put_css_set(cset);
+	fput(f);
+
+	if (!ret && !kargs->cset)
+		ret = -ENOMEM;
+
+	if (ret)
+		cgroup_put(dst_cgrp);
+	else
+		kargs->cgrp = dst_cgrp;
+
+	return ret;
+}
+
+/**
+ * cgroup_css_set_put_fork - drop references we took during fork
+ * @parent: the parent of the child process
+ * @kargs: the arguments passed to create the child process
+ *
+ * Drop references to the prepared css_set and target cgroup if
+ * CLONE_INTO_CGROUP was requested.
+ * This is only valid to call before fork()'s point of no return.
+ */
+static void cgroup_css_set_put_fork(struct kernel_clone_args *kargs)
+{
+	struct cgroup *cgrp;
+	struct css_set *cset;
+
+	if (!(kargs->flags & CLONE_INTO_CGROUP))
+		return;
+
+	cset = kargs->cset;
+	if (cset)
+		put_css_set(cset);
+	kargs->cset = NULL;
+
+	cgrp = kargs->cgrp;
+	if (cgrp)
+		cgroup_put(cgrp);
+	kargs->cgrp = NULL;
+}
+
 /**
  * cgroup_can_fork - called on a new task before the process is exposed
- * @child: the task in question.
+ * @parent: the parent process of @child
+ * @child: the child process of @parent
+ * @kargs: the arguments passed to create the child process
  *
- * This calls the subsystem can_fork() callbacks. If the can_fork() callback
- * returns an error, the fork aborts with that error code. This allows for
- * a cgroup subsystem to conditionally allow or deny new forks.
+ * This prepares a new css_set for the child process which the child will
+ * be attached to in cgroup_post_fork().
+ * This calls the subsystem can_fork() callbacks. If the cgroup_can_fork()
+ * callback returns an error, the fork aborts with that error code. This allows
+ * for a cgroup subsystem to conditionally allow or deny new forks.
  */
-int cgroup_can_fork(struct task_struct *child)
+int cgroup_can_fork(struct task_struct *parent, struct task_struct *child,
+			struct kernel_clone_args *kargs)
 {
 	struct cgroup_subsys *ss;
 	int i, j, ret;
 
+	ret = cgroup_css_set_fork(parent, kargs);
+	if (ret)
+		return ret;
+
 	do_each_subsys_mask(ss, i, have_canfork_callback) {
-		ret = ss->can_fork(child);
+		ret = ss->can_fork(parent, child, kargs);
 		if (ret)
 			goto out_revert;
 	} while_each_subsys_mask();
@@ -5908,50 +6042,110 @@ out_revert:
 		if (j >= i)
 			break;
 		if (ss->cancel_fork)
-			ss->cancel_fork(child);
+			ss->cancel_fork(child, kargs);
 	}
+
+	cgroup_css_set_put_fork(kargs);
 
 	return ret;
 }
 
 /**
  * cgroup_cancel_fork - called if a fork failed after cgroup_can_fork()
- * @child: the task in question
+ * @child: the child process of @parent
+ * @kargs: the arguments passed to create the child process
  *
  * This calls the cancel_fork() callbacks if a fork failed *after*
- * cgroup_can_fork() succeded.
+ * cgroup_can_fork() succeded and cleans up references we took to
+ * prepare a new css_set for the child process in cgroup_can_fork().
  */
-void cgroup_cancel_fork(struct task_struct *child)
+void cgroup_cancel_fork(struct task_struct *child,
+			struct kernel_clone_args *kargs)
 {
 	struct cgroup_subsys *ss;
 	int i;
 
 	for_each_subsys(ss, i)
 		if (ss->cancel_fork)
-			ss->cancel_fork(child);
+			ss->cancel_fork(child, kargs);
+
+	cgroup_css_set_put_fork(kargs);
 }
 
 /**
- * cgroup_post_fork - called on a new task after adding it to the task list
- * @child: the task in question
+ * cgroup_lock_fork - take cgroup mutex and verify cgroup is alive
+ * @kargs: the arguments passed to create the child process
  *
- * Adds the task to the list running through its css_set if necessary and
- * call the subsystem fork() callbacks.  Has to be after the task is
- * visible on the task list in case we race with the first call to
- * cgroup_task_iter_start() - to guarantee that the new task ends up on its
- * list.
+ * If CLONE_INTO_CGROUP was specified we take the cgroup mutex and
+ * check whether the target cgroup is still alive. If this function
+ * returns successfully we are protected against cgroup removal
+ * since rmdir acquires the cgroup mutex. cgroup_post_fork() can then
+ * safely attach the child process to its css_set which includes the
+ * new cgroup.
+ * Only call right before fork()'s point of no return.
  */
-void cgroup_post_fork(struct task_struct *child)
+int cgroup_lock_fork(struct kernel_clone_args *kargs)
+	__acquires(&cgroup_mutex)
+{
+	struct cgroup *cgrp;
+
+	if (!(kargs->flags & CLONE_INTO_CGROUP))
+		return 0;
+
+	cgrp = kargs->cgrp;
+	if (!cgrp)
+		return 0;
+
+	mutex_lock(&cgroup_mutex);
+
+	if (!cgroup_is_dead(cgrp))
+		return 0;
+
+	mutex_unlock(&cgroup_mutex);
+	return -ENODEV;
+}
+
+/**
+ * cgroup_unlock_fork - drop the cgroup mutex if we had to take it
+ * @kargs: the arguments passed to create the child process
+ *
+ * If CLONE_INTO_CGROUP was specified drop the reference
+ * we took on the target cgroup in cgroup_css_set_fork() and
+ * release the cgroup mutex.
+ */
+void cgroup_unlock_fork(struct kernel_clone_args *kargs)
+	__releases(&cgroup_mutex)
+{
+	struct cgroup *cgrp;
+
+	if (!(kargs->flags & CLONE_INTO_CGROUP))
+		return;
+
+	mutex_unlock(&cgroup_mutex);
+
+	cgrp = kargs->cgrp;
+	cgroup_put(cgrp);
+	kargs->cgrp = NULL;
+}
+
+/**
+ * cgroup_post_fork - finalize cgroup setup for the child process
+ * @child: the child process
+ * @kargs: the arguments passed to create the child process
+ *
+ * Attach the child process to its css_set calling the subsystem fork()
+ * callbacks.
+ */
+void cgroup_post_fork(struct task_struct *child,
+		      struct kernel_clone_args *kargs)
 {
 	struct cgroup_subsys *ss;
-	struct css_set *cset;
+	struct css_set *cset = kargs->cset;
 	int i;
 
 	spin_lock_irq(&css_set_lock);
 
 	WARN_ON_ONCE(!list_empty(&child->cg_list));
-	cset = task_css_set(current); /* current is @child's parent */
-	get_css_set(cset);
 	cset->nr_tasks++;
 	css_set_move_task(child, NULL, cset, false);
 
@@ -6170,7 +6364,6 @@ EXPORT_SYMBOL_GPL(cgroup_get_from_path);
  */
 struct cgroup *cgroup_get_from_fd(int fd)
 {
-	struct cgroup_subsys_state *css;
 	struct cgroup *cgrp;
 	struct file *f;
 
@@ -6178,17 +6371,8 @@ struct cgroup *cgroup_get_from_fd(int fd)
 	if (!f)
 		return ERR_PTR(-EBADF);
 
-	css = css_tryget_online_from_dir(f->f_path.dentry, NULL);
+	cgrp = cgroup_get_from_file(f);
 	fput(f);
-	if (IS_ERR(css))
-		return ERR_CAST(css);
-
-	cgrp = css->cgroup;
-	if (!cgroup_on_dfl(cgrp)) {
-		cgroup_put(cgrp);
-		return ERR_PTR(-EBADF);
-	}
-
 	return cgrp;
 }
 EXPORT_SYMBOL_GPL(cgroup_get_from_fd);
