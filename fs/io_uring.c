@@ -379,9 +379,13 @@ struct io_sr_msg {
 struct io_open {
 	struct file			*file;
 	int				dfd;
-	umode_t				mode;
+	union {
+		umode_t			mode;
+		unsigned		mask;
+	};
 	const char __user		*fname;
 	struct filename			*filename;
+	struct statx __user		*buffer;
 	int				flags;
 };
 
@@ -2212,7 +2216,7 @@ static int io_openat_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 	return 0;
 }
 
-static void io_openat_async(struct io_wq_work **workptr)
+static void io_openat_statx_async(struct io_wq_work **workptr)
 {
 	struct io_kiocb *req = container_of(*workptr, struct io_kiocb, work);
 	struct filename *filename = req->open.filename;
@@ -2244,7 +2248,7 @@ static int io_openat(struct io_kiocb *req, struct io_kiocb **nxt,
 		ret = PTR_ERR(file);
 		if (ret == -EAGAIN) {
 			req->work.flags |= IO_WQ_WORK_NEEDS_FILES;
-			req->work.func = io_openat_async;
+			req->work.func = io_openat_statx_async;
 			return -EAGAIN;
 		}
 	} else {
@@ -2254,6 +2258,78 @@ static int io_openat(struct io_kiocb *req, struct io_kiocb **nxt,
 err:
 	if (!io_wq_current_is_worker())
 		putname(req->open.filename);
+	if (ret < 0)
+		req_set_fail_links(req);
+	io_cqring_add_event(req, ret);
+	io_put_req_find_next(req, nxt);
+	return 0;
+}
+
+static int io_statx_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe)
+{
+	unsigned lookup_flags;
+	int ret;
+
+	if (sqe->ioprio || sqe->buf_index)
+		return -EINVAL;
+
+	req->open.dfd = READ_ONCE(sqe->fd);
+	req->open.mask = READ_ONCE(sqe->len);
+	req->open.fname = u64_to_user_ptr(READ_ONCE(sqe->addr));
+	req->open.buffer = u64_to_user_ptr(READ_ONCE(sqe->addr2));
+	req->open.flags = READ_ONCE(sqe->statx_flags);
+
+	if (vfs_stat_set_lookup_flags(&lookup_flags, req->open.flags))
+		return -EINVAL;
+
+	req->open.filename = getname_flags(req->open.fname, lookup_flags, NULL);
+	if (IS_ERR(req->open.filename)) {
+		ret = PTR_ERR(req->open.filename);
+		req->open.filename = NULL;
+		return ret;
+	}
+
+	return 0;
+}
+
+static int io_statx(struct io_kiocb *req, struct io_kiocb **nxt,
+		    bool force_nonblock)
+{
+	struct io_open *ctx = &req->open;
+	unsigned lookup_flags;
+	struct path path;
+	struct kstat stat;
+	int ret;
+
+	if (vfs_stat_set_lookup_flags(&lookup_flags, ctx->flags))
+		return -EINVAL;
+	if (force_nonblock)
+		lookup_flags |= LOOKUP_NONBLOCK;
+
+retry:
+	/* filename_lookup() drops it, keep a reference */
+	ctx->filename->refcnt++;
+
+	ret = filename_lookup(ctx->dfd, ctx->filename, lookup_flags, &path,
+				NULL);
+	if (ret) {
+		if (ret != -EAGAIN)
+			goto err;
+		req->work.func = io_openat_statx_async;
+		return -EAGAIN;
+	}
+
+	ret = vfs_getattr(&path, &stat, ctx->mask, ctx->flags);
+	path_put(&path);
+	if (retry_estale(ret, lookup_flags)) {
+		lookup_flags |= LOOKUP_REVAL;
+		goto retry;
+	}
+	if (!ret)
+		ret = cp_statx(&stat, ctx->buffer);
+err:
+	if (!io_wq_current_is_worker())
+		putname(ctx->filename);
 	if (ret < 0)
 		req_set_fail_links(req);
 	io_cqring_add_event(req, ret);
@@ -3422,6 +3498,9 @@ static int io_req_defer_prep(struct io_kiocb *req,
 	case IORING_OP_FILES_UPDATE:
 		ret = io_files_update_prep(req, sqe);
 		break;
+	case IORING_OP_STATX:
+		ret = io_statx_prep(req, sqe);
+		break;
 	default:
 		printk_once(KERN_WARNING "io_uring: unhandled opcode %d\n",
 				req->opcode);
@@ -3608,6 +3687,14 @@ static int io_issue_sqe(struct io_kiocb *req, const struct io_uring_sqe *sqe,
 		}
 		ret = io_files_update(req, force_nonblock);
 		break;
+	case IORING_OP_STATX:
+		if (sqe) {
+			ret = io_statx_prep(req, sqe);
+			if (ret)
+				break;
+		}
+		ret = io_statx(req, nxt, force_nonblock);
+		break;
 	default:
 		ret = -EINVAL;
 		break;
@@ -3703,6 +3790,7 @@ static int io_req_needs_file(struct io_kiocb *req, int fd)
 	case IORING_OP_LINK_TIMEOUT:
 		return 0;
 	case IORING_OP_OPENAT:
+	case IORING_OP_STATX:
 		return fd != -1;
 	default:
 		if (io_req_op_valid(req->opcode))
