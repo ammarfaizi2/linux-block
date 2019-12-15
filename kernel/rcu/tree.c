@@ -1760,10 +1760,11 @@ static void rcu_gp_cleanup(void)
 		/* smp_mb() provided by prior unlock-lock pair. */
 		needgp = rcu_future_gp_cleanup(rnp) || needgp;
 		// Reset overload indication for CPUs no longer overloaded
-		for_each_leaf_node_cpu_mask(rnp, cpu, rnp->cbovldmask) {
-			rdp = per_cpu_ptr(&rcu_data, cpu);
-			check_cb_ovld_locked(rdp, rnp);
-		}
+		if (rcu_is_leaf_node(rnp))
+			for_each_leaf_node_cpu_mask(rnp, cpu, rnp->cbovldmask) {
+				rdp = per_cpu_ptr(&rcu_data, cpu);
+				check_cb_ovld_locked(rdp, rnp);
+			}
 		sq = rcu_nocb_gp_get(rnp);
 		raw_spin_unlock_irq_rcu_node(rnp);
 		rcu_nocb_gp_cleanup(sq);
