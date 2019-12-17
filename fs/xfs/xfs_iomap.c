@@ -847,8 +847,11 @@ xfs_buffered_write_iomap_begin(
 	int			allocfork = XFS_DATA_FORK;
 	int			error = 0;
 
-	/* we can't use delayed allocations when using extent size hints */
-	if (xfs_get_extsz_hint(ip))
+	/*
+	 * Don't do delayed allocations when using extent size hints, or
+	 * if we were asked to do uncached buffered writes.
+	 */
+	if (xfs_get_extsz_hint(ip) || (flags & IOMAP_UNCACHED))
 		return xfs_direct_write_iomap_begin(inode, offset, count,
 				flags, iomap, srcmap);
 
