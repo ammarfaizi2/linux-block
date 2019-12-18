@@ -1758,6 +1758,20 @@ static void ath11k_mac_op_bss_info_changed(struct ieee80211_hw *hw,
 		if (ret)
 			ath11k_warn(ar->ab, "failed to update bcn template: %d\n",
 				    ret);
+
+		if (vif->bss_conf.he_support) {
+			ret = ath11k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id,
+							    WMI_VDEV_PARAM_BA_MODE,
+							    WMI_BA_MODE_BUFFER_SIZE_256);
+			if (ret)
+				ath11k_warn(ar->ab,
+					    "failed to set BA BUFFER SIZE 256 for vdev: %d\n",
+					    arvif->vdev_id);
+			else
+				ath11k_dbg(ar->ab, ATH11K_DBG_MAC,
+					   "Set BA BUFFER SIZE 256 for VDEV: %d\n",
+					   arvif->vdev_id);
+		}
 	}
 
 	if (changed & (BSS_CHANGED_BEACON_INFO | BSS_CHANGED_BEACON)) {
@@ -1917,9 +1931,9 @@ static void ath11k_mac_op_bss_info_changed(struct ieee80211_hw *hw,
 
 	if (changed & BSS_CHANGED_TWT) {
 		if (info->twt_requester || info->twt_responder)
-			ath11k_wmi_send_twt_enable_cmd(ar, ar->pdev_idx);
+			ath11k_wmi_send_twt_enable_cmd(ar, ar->pdev->pdev_id);
 		else
-			ath11k_wmi_send_twt_disable_cmd(ar, ar->pdev_idx);
+			ath11k_wmi_send_twt_disable_cmd(ar, ar->pdev->pdev_id);
 	}
 
 	if (changed & BSS_CHANGED_HE_OBSS_PD)
@@ -4172,6 +4186,13 @@ static int ath11k_mac_op_add_interface(struct ieee80211_hw *hw,
 				    arvif->vdev_id, ret);
 			goto err_peer_del;
 		}
+
+		ret = ath11k_wmi_pdev_set_ps_mode(ar, arvif->vdev_id, false);
+		if (ret) {
+			ath11k_warn(ar->ab, "failed to disable vdev %d ps mode: %d\n",
+				    arvif->vdev_id, ret);
+			goto err_peer_del;
+		}
 		break;
 	default:
 		break;
@@ -5313,7 +5334,7 @@ ath11k_mac_update_bss_chan_survey(struct ath11k *ar,
 
 	lockdep_assert_held(&ar->conf_mutex);
 
-	if (!test_bit(WMI_TLV_SERVICE_BSS_CHANNEL_INFO_64, ar->ab->wmi_sc.svc_map) ||
+	if (!test_bit(WMI_TLV_SERVICE_BSS_CHANNEL_INFO_64, ar->ab->wmi_ab.svc_map) ||
 	    ar->rx_channel != channel)
 		return;
 
@@ -5831,7 +5852,7 @@ int ath11k_mac_allocate(struct ath11k_base *ab)
 		ar->pdev_idx = i;
 		ar->lmac_id = ath11k_core_get_hw_mac_id(ab, i);
 
-		ar->wmi = &ab->wmi_sc.wmi[i];
+		ar->wmi = &ab->wmi_ab.wmi[i];
 		/* FIXME wmi[0] is already initialized during attach,
 		 * Should we do this again?
 		 */
