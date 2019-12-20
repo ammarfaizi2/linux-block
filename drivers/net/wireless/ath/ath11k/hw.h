@@ -126,6 +126,7 @@ struct ath11k_hw_params {
 	bool disable_pktlog;
 	bool channel_num_war;
 	bool band_2g_fake;
+	bool v2_map_support;
 };
 
 struct ath11k_fw_ie {
