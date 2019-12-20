@@ -392,6 +392,14 @@ static void ath11k_pci_free_irq(struct ath11k_base *ab)
 		irq_idx = ATH11K_IRQ_CE0_OFFSET + i;
 		free_irq(ab->irq_num[irq_idx], &ab->ce.ce_pipe[i]);
 	}
+
+	for (i = 0; i < ATH11K_EXT_IRQ_GRP_NUM_MAX; i++) {
+		struct ath11k_ext_irq_grp *irq_grp = &ab->ext_irq_grp[i];
+		int j;
+
+		for (j = 0; j < irq_grp->num_irq; j++)
+			free_irq(ab->irq_num[irq_grp->irqs[j]], irq_grp);
+	}
 }
 
 static void ath11k_pci_ce_irq_enable(struct ath11k_base *ab, u16 ce_id)
@@ -1068,10 +1076,16 @@ static void ath11k_pci_remove(struct pci_dev *pdev)
 	struct ath11k_pci *ar_pci = ath11k_pci_priv(ab);
 
 	set_bit(ATH11K_FLAG_UNREGISTERING, &ab->dev_flags);
+	ath11k_core_deinit(ab);
+
 	ath11k_pci_unregister_mhi(ar_pci);
+
+	ath11k_pci_free_irq(ab);
 	ath11k_pci_disable_msi(ar_pci);
 	ath11k_pci_free_region(ar_pci);
-	ath11k_pci_free_irq(ab);
+
+	ath11k_hal_srng_deinit(ab);
+	ath11k_ce_free_pipes(ab);
 	ath11k_core_free(ab);
 }
 
