@@ -838,8 +838,8 @@ void ath11k_dp_pdev_pre_alloc(struct ath11k_base *ab)
 		atomic_set(&dp->num_tx_pending, 0);
 		init_waitqueue_head(&dp->tx_empty_waitq);
 		for (j = 0; j < MAX_MACS_PER_PDEV; j++) {
-			idr_init(&dp->rx_mon_status_refill_ring[i].bufs_idr);
-			spin_lock_init(&dp->rx_mon_status_refill_ring[i].idr_lock);
+			idr_init(&dp->rx_mon_status_refill_ring[j].bufs_idr);
+			spin_lock_init(&dp->rx_mon_status_refill_ring[j].idr_lock);
 		}
 		idr_init(&dp->rxdma_mon_buf_ring.bufs_idr);
 		spin_lock_init(&dp->rxdma_mon_buf_ring.idr_lock);
