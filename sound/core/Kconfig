@@ -178,6 +178,14 @@ config SND_PCM_XRUN_DEBUG
 	  sound clicking when system is loaded, it may help to determine
 	  the process or driver which causes the scheduling gaps.
 
+config SND_CTL_VALIDATION
+	bool "Perform sanity-checks for each control element access"
+	depends on SND_DEBUG
+	help
+	  Say Y to enable the sanity-checks for each control element access.
+	  This will check whether the values returned from the driver are
+	  in the given ranges or check the out-of-array access.
+
 config SND_VMASTER
 	bool
 
