@@ -9,38 +9,6 @@
 #include <linux/sbitmap.h>
 #include <linux/seq_file.h>
 
-/*
- * See if we have deferred clears that we can batch move
- */
-static inline bool sbitmap_deferred_clear(struct sbitmap *sb, int index)
-{
-	unsigned long mask, val;
-	bool ret = false;
-	unsigned long flags;
-
-	spin_lock_irqsave(&sb->map[index].swap_lock, flags);
-
-	if (!sb->map[index].cleared)
-		goto out_unlock;
-
-	/*
-	 * First get a stable cleared mask, setting the old mask to 0.
-	 */
-	mask = xchg(&sb->map[index].cleared, 0);
-
-	/*
-	 * Now clear the masked bits in our free word
-	 */
-	do {
-		val = sb->map[index].word;
-	} while (cmpxchg(&sb->map[index].word, val, val & ~mask) != val);
-
-	ret = true;
-out_unlock:
-	spin_unlock_irqrestore(&sb->map[index].swap_lock, flags);
-	return ret;
-}
-
 int sbitmap_init_node(struct sbitmap *sb, unsigned int depth, int shift,
 		      gfp_t flags, int node)
 {
@@ -80,7 +48,6 @@ int sbitmap_init_node(struct sbitmap *sb, unsigned int depth, int shift,
 	for (i = 0; i < sb->map_nr; i++) {
 		sb->map[i].depth = min(depth, bits_per_word);
 		depth -= sb->map[i].depth;
-		spin_lock_init(&sb->map[i].swap_lock);
 	}
 	return 0;
 }
@@ -90,9 +57,6 @@ void sbitmap_resize(struct sbitmap *sb, unsigned int depth)
 {
 	unsigned int bits_per_word = 1U << sb->shift;
 	unsigned int i;
-
-	for (i = 0; i < sb->map_nr; i++)
-		sbitmap_deferred_clear(sb, i);
 
 	sb->depth = depth;
 	sb->map_nr = DIV_ROUND_UP(sb->depth, bits_per_word);
@@ -136,24 +100,6 @@ static int __sbitmap_get_word(unsigned long *word, unsigned long depth,
 	return nr;
 }
 
-static int sbitmap_find_bit_in_index(struct sbitmap *sb, int index,
-				     unsigned int alloc_hint, bool round_robin)
-{
-	int nr;
-
-	do {
-		nr = __sbitmap_get_word(&sb->map[index].word,
-					sb->map[index].depth, alloc_hint,
-					!round_robin);
-		if (nr != -1)
-			break;
-		if (!sbitmap_deferred_clear(sb, index))
-			break;
-	} while (1);
-
-	return nr;
-}
-
 int sbitmap_get(struct sbitmap *sb, unsigned int alloc_hint, bool round_robin)
 {
 	unsigned int i, index;
@@ -172,8 +118,10 @@ int sbitmap_get(struct sbitmap *sb, unsigned int alloc_hint, bool round_robin)
 		alloc_hint = 0;
 
 	for (i = 0; i < sb->map_nr; i++) {
-		nr = sbitmap_find_bit_in_index(sb, index, alloc_hint,
-						round_robin);
+		nr = __sbitmap_get_word(&sb->map[index].word,
+					sb->map[index].depth, alloc_hint,
+					!round_robin);
+
 		if (nr != -1) {
 			nr += index << sb->shift;
 			break;
@@ -198,7 +146,6 @@ int sbitmap_get_shallow(struct sbitmap *sb, unsigned int alloc_hint,
 	index = SB_NR_TO_INDEX(sb, alloc_hint);
 
 	for (i = 0; i < sb->map_nr; i++) {
-again:
 		nr = __sbitmap_get_word(&sb->map[index].word,
 					min(sb->map[index].depth, shallow_depth),
 					SB_NR_TO_BIT(sb, alloc_hint), true);
@@ -206,9 +153,6 @@ again:
 			nr += index << sb->shift;
 			break;
 		}
-
-		if (sbitmap_deferred_clear(sb, index))
-			goto again;
 
 		/* Jump to next index. */
 		index++;
@@ -229,43 +173,29 @@ bool sbitmap_any_bit_set(const struct sbitmap *sb)
 	unsigned int i;
 
 	for (i = 0; i < sb->map_nr; i++) {
-		if (sb->map[i].word & ~sb->map[i].cleared)
+		if (sb->map[i].word)
 			return true;
 	}
 	return false;
 }
 EXPORT_SYMBOL_GPL(sbitmap_any_bit_set);
 
-static unsigned int __sbitmap_weight(const struct sbitmap *sb, bool set)
+static unsigned int sbitmap_weight(const struct sbitmap *sb)
 {
 	unsigned int i, weight = 0;
 
 	for (i = 0; i < sb->map_nr; i++) {
 		const struct sbitmap_word *word = &sb->map[i];
 
-		if (set)
-			weight += bitmap_weight(&word->word, word->depth);
-		else
-			weight += bitmap_weight(&word->cleared, word->depth);
+		weight += bitmap_weight(&word->word, word->depth);
 	}
 	return weight;
-}
-
-static unsigned int sbitmap_weight(const struct sbitmap *sb)
-{
-	return __sbitmap_weight(sb, true);
-}
-
-static unsigned int sbitmap_cleared(const struct sbitmap *sb)
-{
-	return __sbitmap_weight(sb, false);
 }
 
 void sbitmap_show(struct sbitmap *sb, struct seq_file *m)
 {
 	seq_printf(m, "depth=%u\n", sb->depth);
-	seq_printf(m, "busy=%u\n", sbitmap_weight(sb) - sbitmap_cleared(sb));
-	seq_printf(m, "cleared=%u\n", sbitmap_cleared(sb));
+	seq_printf(m, "busy=%u\n", sbitmap_weight(sb));
 	seq_printf(m, "bits_per_word=%u\n", 1U << sb->shift);
 	seq_printf(m, "map_nr=%u\n", sb->map_nr);
 }
@@ -570,7 +500,7 @@ void sbitmap_queue_clear(struct sbitmap_queue *sbq, unsigned int nr,
 	 * is in use.
 	 */
 	smp_mb__before_atomic();
-	sbitmap_deferred_clear_bit(&sbq->sb, nr);
+	sbitmap_clear_bit_unlock(&sbq->sb, nr);
 
 	/*
 	 * Pairs with the memory barrier in set_current_state() to ensure the

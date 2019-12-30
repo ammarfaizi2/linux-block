@@ -27,16 +27,6 @@ struct sbitmap_word {
 	 * @word: word holding free bits
 	 */
 	unsigned long word ____cacheline_aligned_in_smp;
-
-	/**
-	 * @cleared: word holding cleared bits
-	 */
-	unsigned long cleared ____cacheline_aligned_in_smp;
-
-	/**
-	 * @swap_lock: Held while swapping word <-> cleared
-	 */
-	spinlock_t swap_lock;
 } ____cacheline_aligned_in_smp;
 
 /**
@@ -251,7 +241,7 @@ static inline void __sbitmap_for_each_set(struct sbitmap *sb,
 					   sb->depth - scanned);
 
 		scanned += depth;
-		word = sb->map[index].word & ~sb->map[index].cleared;
+		word = sb->map[index].word;
 		if (!word)
 			goto next;
 
@@ -305,19 +295,6 @@ static inline void sbitmap_set_bit(struct sbitmap *sb, unsigned int bitnr)
 static inline void sbitmap_clear_bit(struct sbitmap *sb, unsigned int bitnr)
 {
 	clear_bit(SB_NR_TO_BIT(sb, bitnr), __sbitmap_word(sb, bitnr));
-}
-
-/*
- * This one is special, since it doesn't actually clear the bit, rather it
- * sets the corresponding bit in the ->cleared mask instead. Paired with
- * the caller doing sbitmap_deferred_clear() if a given index is full, which
- * will clear the previously freed entries in the corresponding ->word.
- */
-static inline void sbitmap_deferred_clear_bit(struct sbitmap *sb, unsigned int bitnr)
-{
-	unsigned long *addr = &sb->map[SB_NR_TO_INDEX(sb, bitnr)].cleared;
-
-	set_bit(SB_NR_TO_BIT(sb, bitnr), addr);
 }
 
 static inline void sbitmap_clear_bit_unlock(struct sbitmap *sb,
