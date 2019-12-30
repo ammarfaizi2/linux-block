@@ -367,6 +367,27 @@ static inline void sbitmap_queue_free(struct sbitmap_queue *sbq)
 void sbitmap_queue_resize(struct sbitmap_queue *sbq, unsigned int depth);
 
 /**
+ * __sbitmap_queue_get_batch() - Try to allocate a batch of free tags from a
+ * &struct sbitmap_queue with preemption already disabled.
+ * @sbq: Bitmap queue to allocate from.
+ * @offset: tag offset
+ * @mask: mask of free tags
+ *
+ * Return: Zero if successful, non-zero if not
+ */
+int __sbitmap_queue_get_batch(struct sbitmap_queue *sbq, unsigned int *offset,
+			      unsigned long *mask);
+
+/**
+ * __sbitmap_queue_clear_batch() - Free a batch a tags
+ * @sbq: Bitmap queue to allocate from.
+ * @offset: tag offset
+ * @mask: mask of free tags
+ */
+void __sbitmap_queue_clear_batch(struct sbitmap_queue *sbq, unsigned int offset,
+				 unsigned long mask);
+
+/**
  * __sbitmap_queue_get() - Try to allocate a free bit from a &struct
  * sbitmap_queue with preemption already disabled.
  * @sbq: Bitmap queue to allocate from.

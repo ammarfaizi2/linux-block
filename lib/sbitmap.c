@@ -137,6 +137,45 @@ int sbitmap_get(struct sbitmap *sb, unsigned int alloc_hint, bool round_robin)
 }
 EXPORT_SYMBOL_GPL(sbitmap_get);
 
+static int __sbitmap_get_batch(struct sbitmap *sb, unsigned int index,
+			       unsigned long *ret)
+{
+	unsigned long val, new_val;
+
+	do {
+		val = sb->map[index].word;
+
+		*ret = ~val;
+		if (sb->map[index].depth != BITS_PER_LONG)
+			*ret &= (1UL << sb->map[index].depth) - 1;
+		if (!*ret)
+			return -1;
+
+		new_val = val | *ret;
+		if (cmpxchg(&sb->map[index].word, val, new_val) == val)
+			break;
+	} while (1);
+
+	return 0;
+}
+
+static unsigned int sbitmap_get_batch(struct sbitmap *sb, unsigned int index,
+				      unsigned long *ret)
+{
+	int i;
+
+	for (i = 0; i < sb->map_nr; i++) {
+		if (!__sbitmap_get_batch(sb, index, ret))
+			return index;
+
+		/* Jump to next index. */
+		if (++index >= sb->map_nr)
+			index = 0;
+	}
+
+	return -1U;
+}
+
 int sbitmap_get_shallow(struct sbitmap *sb, unsigned int alloc_hint,
 			unsigned long shallow_depth)
 {
@@ -347,6 +386,64 @@ void sbitmap_queue_resize(struct sbitmap_queue *sbq, unsigned int depth)
 	sbitmap_resize(&sbq->sb, depth);
 }
 EXPORT_SYMBOL_GPL(sbitmap_queue_resize);
+
+void __sbitmap_queue_clear_batch(struct sbitmap_queue *sbq, unsigned int index,
+				 unsigned long mask)
+{
+	index >>= sbq->sb.shift;
+	do {
+		unsigned long val = sbq->sb.map[index].word;
+		unsigned long new_val = ~(val & mask);
+
+		if (cmpxchg(&sbq->sb.map[index].word, val, new_val) == val)
+			break;
+	} while (1);
+
+	/*
+	 * Pairs with the memory barrier in set_current_state() to ensure the
+	 * proper ordering of clear_bit_unlock()/waitqueue_active() in the waker
+	 * and test_and_set_bit_lock()/prepare_to_wait()/finish_wait() in the
+	 * waiter. See the comment on waitqueue_active().
+	 */
+	smp_mb__after_atomic();
+	sbitmap_queue_wake_up(sbq);
+}
+
+int __sbitmap_queue_get_batch(struct sbitmap_queue *sbq, unsigned int *offset,
+			      unsigned long *mask)
+{
+	struct sbitmap *sb = &sbq->sb;
+	unsigned long __mask = 0;
+	unsigned int hint, depth;
+	unsigned int index;
+
+	hint = this_cpu_read(*sbq->alloc_hint);
+	depth = READ_ONCE(sb->depth);
+	if (unlikely(hint >= depth))
+		hint = depth ? prandom_u32() % depth : 0;
+
+	index = sbitmap_get_batch(&sbq->sb, SB_NR_TO_INDEX(sb, hint), &__mask);
+
+	if (index == -1U) {
+		/* If the map is full, a hint won't do us much good. */
+		this_cpu_write(*sbq->alloc_hint, 0);
+		return 1;
+	}
+
+	/*
+	 * Only update the hint if we used it. We might not have gotten a
+	 * full 'count' worth of bits, but pretend we did. Even if we didn't,
+	 * we want to advance to the next index since we failed to get a full
+	 * batch in this one.
+	 */
+	hint = (index + 1) << sb->shift;
+	if (hint >= depth - 1)
+		hint = 0;
+	this_cpu_write(*sbq->alloc_hint, hint);
+	*offset = index << sb->shift;
+	*mask = __mask;
+	return 0;
+}
 
 int __sbitmap_queue_get(struct sbitmap_queue *sbq)
 {
