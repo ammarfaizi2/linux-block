@@ -229,7 +229,7 @@ int blk_rq_map_kern(struct request_queue *q, struct request *rq, void *kbuf,
 
 	if (len > (queue_max_hw_sectors(q) << 9))
 		return -EINVAL;
-	if (!len || !kbuf)
+	if (!len || !virt_addr_valid(kbuf))
 		return -EINVAL;
 
 	do_copy = !blk_rq_aligned(q, addr, len) || object_is_on_stack(kbuf);
