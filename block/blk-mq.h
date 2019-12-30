@@ -14,6 +14,10 @@ struct blk_mq_ctxs {
 
 struct blk_mq_ctx_type {
 	struct list_head		rq_list;
+
+	/* tag batch cache */
+	unsigned long			tags;
+	unsigned int			tag_offset;
 };
 
 /**
@@ -23,6 +27,7 @@ struct blk_mq_ctx {
 	struct {
 		spinlock_t		lock;
 		struct blk_mq_ctx_type	type[HCTX_MAX_TYPES];
+		unsigned long		tag_hit, tag_refill;
 	} ____cacheline_aligned_in_smp;
 
 	unsigned int		cpu;

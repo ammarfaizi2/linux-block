@@ -2255,6 +2255,8 @@ static int blk_mq_hctx_notify_dead(unsigned int cpu, struct hlist_node *node)
 	ctx = __blk_mq_get_ctx(hctx->queue, cpu);
 	type = hctx->type;
 
+	blk_mq_tag_ctx_flush_batch(hctx, ctx);
+
 	spin_lock(&ctx->lock);
 	if (!list_empty(&ctx->type[type].rq_list)) {
 		list_splice_init(&ctx->type[type].rq_list, &tmp);
@@ -2436,8 +2438,10 @@ static void blk_mq_init_cpu_queues(struct request_queue *q,
 
 		__ctx->cpu = i;
 		spin_lock_init(&__ctx->lock);
-		for (k = HCTX_TYPE_DEFAULT; k < HCTX_MAX_TYPES; k++)
+		for (k = HCTX_TYPE_DEFAULT; k < HCTX_MAX_TYPES; k++) {
 			INIT_LIST_HEAD(&__ctx->type[k].rq_list);
+			__ctx->type[k].tags = 0;
+		}
 
 		/*
 		 * Set local node, IFF we have more than one hw queue. If
@@ -2521,6 +2525,7 @@ static void blk_mq_map_swqueue(struct request_queue *q)
 			}
 
 			hctx = blk_mq_map_queue_type(q, j, i);
+			ctx->type[j].tags = 0;
 			ctx->hctxs[j] = hctx;
 			/*
 			 * If the CPU is already set in the mask, then we've
@@ -2542,9 +2547,11 @@ static void blk_mq_map_swqueue(struct request_queue *q)
 			BUG_ON(!hctx->nr_ctx);
 		}
 
-		for (; j < HCTX_MAX_TYPES; j++)
+		for (; j < HCTX_MAX_TYPES; j++) {
 			ctx->hctxs[j] = blk_mq_map_queue_type(q,
 					HCTX_TYPE_DEFAULT, i);
+			ctx->type[j].tags = 0;
+		}
 	}
 
 	queue_for_each_hw_ctx(q, hctx, i) {
@@ -3298,8 +3305,11 @@ static void __blk_mq_update_nr_hw_queues(struct blk_mq_tag_set *set,
 	if (nr_hw_queues < 1 || nr_hw_queues == set->nr_hw_queues)
 		return;
 
-	list_for_each_entry(q, &set->tag_list, tag_set_list)
+	list_for_each_entry(q, &set->tag_list, tag_set_list) {
+		blk_mq_tag_queue_flush_batches(q);
 		blk_mq_freeze_queue(q);
+	}
+
 	/*
 	 * Switch IO scheduler to 'none', cleaning up the data associated
 	 * with the previous scheduler. We will switch back once we are done

@@ -659,6 +659,23 @@ CTX_RQ_SEQ_OPS(default, HCTX_TYPE_DEFAULT);
 CTX_RQ_SEQ_OPS(read, HCTX_TYPE_READ);
 CTX_RQ_SEQ_OPS(poll, HCTX_TYPE_POLL);
 
+static ssize_t ctx_tag_hit_write(void *data, const char __user *buf,
+				    size_t count, loff_t *ppos)
+{
+	struct blk_mq_ctx *ctx = data;
+
+	ctx->tag_hit = ctx->tag_refill = 0;
+	return count;
+}
+
+static int ctx_tag_hit_show(void *data, struct seq_file *m)
+{
+	struct blk_mq_ctx *ctx = data;
+
+	seq_printf(m, "hit=%lu refills=%lu\n", ctx->tag_hit, ctx->tag_refill);
+	return 0;
+}
+
 static int ctx_dispatched_show(void *data, struct seq_file *m)
 {
 	struct blk_mq_ctx *ctx = data;
@@ -800,6 +817,7 @@ static const struct blk_mq_debugfs_attr blk_mq_debugfs_ctx_attrs[] = {
 	{"read_rq_list", 0400, .seq_ops = &ctx_read_rq_list_seq_ops},
 	{"poll_rq_list", 0400, .seq_ops = &ctx_poll_rq_list_seq_ops},
 	{"dispatched", 0600, ctx_dispatched_show, ctx_dispatched_write},
+	{"tag_hit", 0600, ctx_tag_hit_show, ctx_tag_hit_write},
 	{"merged", 0600, ctx_merged_show, ctx_merged_write},
 	{"completed", 0600, ctx_completed_show, ctx_completed_write},
 	{},

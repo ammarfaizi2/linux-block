@@ -34,6 +34,9 @@ extern int blk_mq_tag_update_depth(struct blk_mq_hw_ctx *hctx,
 extern void blk_mq_tag_wakeup_all(struct blk_mq_tags *tags, bool);
 void blk_mq_queue_tag_busy_iter(struct request_queue *q, busy_iter_fn *fn,
 		void *priv);
+void blk_mq_tag_queue_flush_batches(struct request_queue *q);
+void blk_mq_tag_ctx_flush_batch(struct blk_mq_hw_ctx *hctx,
+				struct blk_mq_ctx *ctx);
 
 static inline struct sbq_wait_state *bt_wait_ptr(struct sbitmap_queue *bt,
 						 struct blk_mq_hw_ctx *hctx)

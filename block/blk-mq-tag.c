@@ -8,9 +8,10 @@
  */
 #include <linux/kernel.h>
 #include <linux/module.h>
-
 #include <linux/blk-mq.h>
 #include <linux/delay.h>
+#include <linux/cpu.h>
+
 #include "blk.h"
 #include "blk-mq.h"
 #include "blk-mq-tag.h"
@@ -99,6 +100,103 @@ static int __blk_mq_get_tag(struct blk_mq_alloc_data *data,
 		return __sbitmap_queue_get(bt);
 }
 
+void blk_mq_tag_ctx_flush_batch(struct blk_mq_hw_ctx *hctx,
+				struct blk_mq_ctx *ctx)
+{
+	struct sbitmap_queue *bt = &hctx->tags->bitmap_tags;
+	unsigned int i;
+
+	for (i = 0; i < hctx->queue->tag_set->nr_maps; i++) {
+		struct blk_mq_ctx_type *type = &ctx->type[i];
+
+		if (!type->tags)
+			continue;
+
+		__sbitmap_queue_clear_batch(bt, type->tag_offset, type->tags);
+		type->tags = 0;
+	}
+}
+
+static void ctx_flush_ipi(void *data)
+{
+	struct blk_mq_hw_ctx *hctx = data;
+	struct blk_mq_ctx *ctx;
+
+	ctx = __blk_mq_get_ctx(hctx->queue, smp_processor_id());
+	blk_mq_tag_ctx_flush_batch(hctx, ctx);
+	atomic_dec(&hctx->flush_pending);
+}
+
+static void blk_mq_tag_flush_batches(struct blk_mq_hw_ctx *hctx)
+{
+	int cpu, err;
+
+	if (atomic_cmpxchg(&hctx->flush_pending, 0, hctx->nr_ctx))
+		return;
+	cpus_read_lock();
+	for_each_cpu(cpu, hctx->cpumask) {
+		err = smp_call_function_single(cpu, ctx_flush_ipi, hctx, 0);
+		if (err)
+			atomic_dec(&hctx->flush_pending);
+	}
+	cpus_read_unlock();
+}
+
+void blk_mq_tag_queue_flush_batches(struct request_queue *q)
+{
+	struct blk_mq_hw_ctx *hctx;
+	unsigned int i;
+
+	queue_for_each_hw_ctx(q, hctx, i)
+		blk_mq_tag_flush_batches(hctx);
+}
+
+static int blk_mq_get_tag_batch(struct blk_mq_alloc_data *data)
+{
+	struct blk_mq_hw_ctx *hctx = data->hctx;
+	struct blk_mq_ctx_type *type;
+	struct blk_mq_ctx *ctx = data->ctx;
+	struct blk_mq_tags *tags;
+	struct sbitmap_queue *bt;
+	int tag = -1;
+
+	if (!ctx || (data->flags & BLK_MQ_REQ_INTERNAL))
+		return -1;
+
+	tags = hctx->tags;
+	bt = &tags->bitmap_tags;
+	/* don't do batches for round-robin or (very) sparse maps */
+	if (bt->round_robin || bt->sb.shift < ilog2(BITS_PER_LONG) - 1)
+		return -1;
+
+	/* we could make do with preempt disable, but we need to block flush */
+	local_irq_disable();
+	if (unlikely(ctx->cpu != smp_processor_id()))
+		goto out;
+
+	type = &ctx->type[hctx->type];
+
+	if (type->tags) {
+get_tag:
+		ctx->tag_hit++;
+
+		tag = __ffs(type->tags);
+		type->tags &= ~(1UL << tag);
+		tag += type->tag_offset;
+out:
+		local_irq_enable();
+		return tag;
+	}
+
+	/* no current tag cache, attempt to refill a batch */
+	if (!__sbitmap_queue_get_batch(bt, &type->tag_offset, &type->tags)) {
+		ctx->tag_refill++;
+		goto get_tag;
+	}
+
+	goto out;
+}
+
 unsigned int blk_mq_get_tag(struct blk_mq_alloc_data *data)
 {
 	struct blk_mq_tags *tags = blk_mq_tags_from_data(data);
@@ -116,8 +214,13 @@ unsigned int blk_mq_get_tag(struct blk_mq_alloc_data *data)
 		bt = &tags->breserved_tags;
 		tag_offset = 0;
 	} else {
-		bt = &tags->bitmap_tags;
 		tag_offset = tags->nr_reserved_tags;
+
+		tag = blk_mq_get_tag_batch(data);
+		if (tag != -1)
+			goto found_tag;
+
+		bt = &tags->bitmap_tags;
 	}
 
 	tag = __blk_mq_get_tag(data, bt);
@@ -145,6 +248,9 @@ unsigned int blk_mq_get_tag(struct blk_mq_alloc_data *data)
 		tag = __blk_mq_get_tag(data, bt);
 		if (tag != -1)
 			break;
+
+		if (!(data->flags & BLK_MQ_REQ_RESERVED))
+			blk_mq_tag_flush_batches(data->hctx);
 
 		sbitmap_prepare_to_wait(bt, ws, &wait, TASK_UNINTERRUPTIBLE);
 
