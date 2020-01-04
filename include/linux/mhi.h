@@ -84,6 +84,17 @@ enum mhi_ch_type {
 };
 
 /**
+ * struct image_info - Firmware and RDDM table table
+ * @mhi_buf - Buffer for firmware and RDDM table
+ * @entries - # of entries in table
+ */
+struct image_info {
+	struct mhi_buf *mhi_buf;
+	struct bhi_vec_entry *bhi_vec;
+	u32 entries;
+};
+
+/**
  * enum mhi_ee_type - Execution environment types
  * @MHI_EE_PBL: Primary Bootloader
  * @MHI_EE_SBL: Secondary Bootloader
@@ -280,6 +291,7 @@ struct mhi_controller_config {
  * @mhi_dev: MHI device instance for the controller
  * @regs: Base address of MHI MMIO register space (required)
  * @bhi: Points to base of MHI BHI register space
+ * @bhie: Points to base of MHI BHIe register space
  * @wake_db: MHI WAKE doorbell register address
  * @iova_start: IOMMU starting address for data (required)
  * @iova_stop: IOMMU stop address for data (required)
@@ -288,6 +300,7 @@ struct mhi_controller_config {
  * @fbc_download: MHI host needs to do complete image transfer (optional)
  * @sbl_size: SBL image size downloaded through BHIe (optional)
  * @seg_len: BHIe vector size (optional)
+ * @fbc_image: Points to firmware image buffer
  * @max_chan: Maximum number of channels the controller supports
  * @mhi_chan: Points to the channel configuration table
  * @lpm_chans: List of channels that require LPM notifications
@@ -339,6 +352,7 @@ struct mhi_controller {
 	struct mhi_device *mhi_dev;
 	void __iomem *regs;
 	void __iomem *bhi;
+	void __iomem *bhie;
 	void __iomem *wake_db;
 
 	dma_addr_t iova_start;
@@ -348,6 +362,7 @@ struct mhi_controller {
 	bool fbc_download;
 	size_t sbl_size;
 	size_t seg_len;
+	struct image_info *fbc_image;
 	u32 max_chan;
 	struct mhi_chan *mhi_chan;
 	struct list_head lpm_chans;
@@ -533,5 +548,41 @@ void mhi_driver_unregister(struct mhi_driver *mhi_drv);
  */
 void mhi_set_mhi_state(struct mhi_controller *mhi_cntrl,
 		       enum mhi_state state);
+
+/**
+ * mhi_prepare_for_power_up - Do pre-initialization before power up.
+ *                            This is optional, call this before power up if
+ *                            the controller does not want bus framework to
+ *                            automatically free any allocated memory during
+ *                            shutdown process.
+ * @mhi_cntrl: MHI controller
+ */
+int mhi_prepare_for_power_up(struct mhi_controller *mhi_cntrl);
+
+/**
+ * mhi_async_power_up - Start MHI power up sequence
+ * @mhi_cntrl: MHI controller
+ */
+int mhi_async_power_up(struct mhi_controller *mhi_cntrl);
+
+/**
+ * mhi_sync_power_up - Start MHI power up sequence and wait till the device
+ *                     device enters valid EE state
+ * @mhi_cntrl: MHI controller
+ */
+int mhi_sync_power_up(struct mhi_controller *mhi_cntrl);
+
+/**
+ * mhi_power_down - Start MHI power down sequence
+ * @mhi_cntrl: MHI controller
+ * @graceful: Link is still accessible, so do a graceful shutdown process
+ */
+void mhi_power_down(struct mhi_controller *mhi_cntrl, bool graceful);
+
+/**
+ * mhi_unprepare_after_power_down - Free any allocated memory after power down
+ * @mhi_cntrl: MHI controller
+ */
+void mhi_unprepare_after_power_down(struct mhi_controller *mhi_cntrl);
 
 #endif /* _MHI_H_ */
