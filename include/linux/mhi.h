@@ -298,9 +298,11 @@ struct mhi_controller_config {
  * @fw_image: Firmware image name for normal booting (required)
  * @edl_image: Firmware image name for emergency download mode (optional)
  * @fbc_download: MHI host needs to do complete image transfer (optional)
+ * @rddm_size: RAM dump size that host should allocate for debugging purpose  
  * @sbl_size: SBL image size downloaded through BHIe (optional)
  * @seg_len: BHIe vector size (optional)
  * @fbc_image: Points to firmware image buffer
+ * @rddm_image: Points to RAM dump buffer
  * @max_chan: Maximum number of channels the controller supports
  * @mhi_chan: Points to the channel configuration table
  * @lpm_chans: List of channels that require LPM notifications
@@ -360,9 +362,11 @@ struct mhi_controller {
 	const char *fw_image;
 	const char *edl_image;
 	bool fbc_download;
+	size_t rddm_size;
 	size_t sbl_size;
 	size_t seg_len;
 	struct image_info *fbc_image;
+	struct image_info *rddm_image;
 	u32 max_chan;
 	struct mhi_chan *mhi_chan;
 	struct list_head lpm_chans;
@@ -584,5 +588,25 @@ void mhi_power_down(struct mhi_controller *mhi_cntrl, bool graceful);
  * @mhi_cntrl: MHI controller
  */
 void mhi_unprepare_after_power_down(struct mhi_controller *mhi_cntrl);
+
+/**
+ * mhi_download_rddm_img - Download ramdump image from device for
+ *                         debugging purpose.
+ * @mhi_cntrl: MHI controller
+ * @in_panic: Download rddm image during kernel panic
+ */
+int mhi_download_rddm_img(struct mhi_controller *mhi_cntrl, bool in_panic);
+
+/**
+ * mhi_force_rddm_mode - Force device into rddm mode
+ * @mhi_cntrl: MHI controller
+ */
+int mhi_force_rddm_mode(struct mhi_controller *mhi_cntrl);
+
+/**
+ * mhi_get_mhi_state - Get MHI state of the device
+ * @mhi_cntrl: MHI controller
+ */
+enum mhi_state mhi_get_mhi_state(struct mhi_controller *mhi_cntrl);
 
 #endif /* _MHI_H_ */
