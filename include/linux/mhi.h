@@ -31,6 +31,7 @@ struct mhi_buf_info;
  * @MHI_CB_EE_MISSION_MODE: MHI device entered Mission Mode exec env
  * @MHI_CB_SYS_ERROR: MHI device entered error state (may recover)
  * @MHI_CB_FATAL_ERROR: MHI device entered fatal error state
+ * @MHI_CB_BW_REQ: Received a bandwidth switch request from device
  */
 enum mhi_callback {
 	MHI_CB_IDLE,
@@ -41,6 +42,7 @@ enum mhi_callback {
 	MHI_CB_EE_MISSION_MODE,
 	MHI_CB_SYS_ERROR,
 	MHI_CB_FATAL_ERROR,
+	MHI_CB_BW_REQ,
 };
 
 /**
@@ -92,6 +94,16 @@ struct image_info {
 	struct mhi_buf *mhi_buf;
 	struct bhi_vec_entry *bhi_vec;
 	u32 entries;
+};
+
+/**
+ * struct mhi_link_info - BW requirement
+ * target_link_speed - Link speed as defined by TLS bits in LinkControl reg
+ * target_link_width - Link width as defined by NLW bits in LinkStatus reg
+ */
+struct mhi_link_info {
+	unsigned int target_link_speed;
+	unsigned int target_link_width;
 };
 
 /**
@@ -329,6 +341,7 @@ struct mhi_controller_config {
  * @pending_pkts: Pending packets for the controller
  * @transition_list: List of MHI state transitions
  * @wlock: Lock for protecting device wakeup
+ * @mhi_link_info: Device bandwidth info
  * @M0: M0 state counter for debugging
  * @M2: M2 state counter for debugging
  * @M3: M3 state counter for debugging
@@ -396,6 +409,8 @@ struct mhi_controller {
 	struct list_head transition_list;
 	spinlock_t transition_lock;
 	spinlock_t wlock;
+	struct mhi_link_info mhi_link_info;
+
 	u32 M0, M2, M3, M3_FAST;
 	struct work_struct st_worker;
 	struct work_struct fw_worker;
