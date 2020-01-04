@@ -482,6 +482,68 @@ int mhi_init_mmio(struct mhi_controller *mhi_cntrl)
 	return 0;
 }
 
+void mhi_deinit_chan_ctxt(struct mhi_controller *mhi_cntrl,
+			  struct mhi_chan *mhi_chan)
+{
+	struct mhi_ring *buf_ring;
+	struct mhi_ring *tre_ring;
+	struct mhi_chan_ctxt *chan_ctxt;
+
+	buf_ring = &mhi_chan->buf_ring;
+	tre_ring = &mhi_chan->tre_ring;
+	chan_ctxt = &mhi_cntrl->mhi_ctxt->chan_ctxt[mhi_chan->chan];
+
+	mhi_free_coherent(mhi_cntrl, tre_ring->alloc_size,
+			  tre_ring->pre_aligned, tre_ring->dma_handle);
+	vfree(buf_ring->base);
+
+	buf_ring->base = tre_ring->base = NULL;
+	chan_ctxt->rbase = 0;
+}
+
+int mhi_init_chan_ctxt(struct mhi_controller *mhi_cntrl,
+		       struct mhi_chan *mhi_chan)
+{
+	struct mhi_ring *buf_ring;
+	struct mhi_ring *tre_ring;
+	struct mhi_chan_ctxt *chan_ctxt;
+	int ret;
+
+	buf_ring = &mhi_chan->buf_ring;
+	tre_ring = &mhi_chan->tre_ring;
+	tre_ring->el_size = sizeof(struct mhi_tre);
+	tre_ring->len = tre_ring->el_size * tre_ring->elements;
+	chan_ctxt = &mhi_cntrl->mhi_ctxt->chan_ctxt[mhi_chan->chan];
+	ret = mhi_alloc_aligned_ring(mhi_cntrl, tre_ring, tre_ring->len);
+	if (ret)
+		return -ENOMEM;
+
+	buf_ring->el_size = sizeof(struct mhi_buf_info);
+	buf_ring->len = buf_ring->el_size * buf_ring->elements;
+	buf_ring->base = vzalloc(buf_ring->len);
+
+	if (!buf_ring->base) {
+		mhi_free_coherent(mhi_cntrl, tre_ring->alloc_size,
+				  tre_ring->pre_aligned, tre_ring->dma_handle);
+		return -ENOMEM;
+	}
+
+	chan_ctxt->chstate = MHI_CH_STATE_ENABLED;
+	chan_ctxt->rbase = tre_ring->iommu_base;
+	chan_ctxt->rp = chan_ctxt->wp = chan_ctxt->rbase;
+	chan_ctxt->rlen = tre_ring->len;
+	tre_ring->ctxt_wp = &chan_ctxt->wp;
+
+	tre_ring->rp = tre_ring->wp = tre_ring->base;
+	buf_ring->rp = buf_ring->wp = buf_ring->base;
+	mhi_chan->db_cfg.db_mode = 1;
+
+	/* Update to all cores */
+	smp_wmb();
+
+	return 0;
+}
+
 static int parse_ev_cfg(struct mhi_controller *mhi_cntrl,
 			struct mhi_controller_config *config)
 {
@@ -637,6 +699,31 @@ static int parse_ch_cfg(struct mhi_controller *mhi_cntrl,
 		mhi_chan->db_cfg.pollcfg = ch_cfg->pollcfg;
 		mhi_chan->xfer_type = ch_cfg->data_type;
 
+		switch (mhi_chan->xfer_type) {
+		case MHI_BUF_RAW:
+			mhi_chan->gen_tre = mhi_gen_tre;
+			mhi_chan->queue_xfer = mhi_queue_buf;
+			break;
+		case MHI_BUF_SKB:
+			mhi_chan->queue_xfer = mhi_queue_skb;
+			break;
+		case MHI_BUF_SCLIST:
+			mhi_chan->gen_tre = mhi_gen_tre;
+			mhi_chan->queue_xfer = mhi_queue_sclist;
+			break;
+		case MHI_BUF_NOP:
+			mhi_chan->queue_xfer = mhi_queue_nop;
+			break;
+		case MHI_BUF_DMA:
+		case MHI_BUF_RSC_DMA:
+			mhi_chan->queue_xfer = mhi_queue_dma;
+			break;
+		default:
+			dev_err(mhi_cntrl->dev,
+				"Channel datatype not supported\n");
+			goto error_chan_cfg;
+		}
+
 		mhi_chan->lpm_notify = ch_cfg->lpm_notify;
 		mhi_chan->offload_ch = ch_cfg->offload_channel;
 		mhi_chan->db_cfg.reset_req = ch_cfg->doorbell_mode_switch;
@@ -665,6 +752,13 @@ static int parse_ch_cfg(struct mhi_controller *mhi_cntrl,
 				"Invalid channel configuration\n");
 			goto error_chan_cfg;
 		}
+
+		/*
+		 * If MHI host pre-allocates buffers then client drivers
+		 * cannot queue
+		 */
+		if (mhi_chan->pre_alloc)
+			mhi_chan->queue_xfer = mhi_queue_nop;
 
 		if (!mhi_chan->offload_ch) {
 			mhi_chan->db_cfg.brstmode = ch_cfg->doorbell;
@@ -793,6 +887,14 @@ int mhi_register_controller(struct mhi_controller *mhi_cntrl,
 		mutex_init(&mhi_chan->mutex);
 		init_completion(&mhi_chan->completion);
 		rwlock_init(&mhi_chan->lock);
+	}
+
+	if (mhi_cntrl->bounce_buf) {
+		mhi_cntrl->map_single = mhi_map_single_use_bb;
+		mhi_cntrl->unmap_single = mhi_unmap_single_use_bb;
+	} else {
+		mhi_cntrl->map_single = mhi_map_single_no_bb;
+		mhi_cntrl->unmap_single = mhi_unmap_single_no_bb;
 	}
 
 	/* Register controller with MHI bus */
@@ -960,6 +1062,14 @@ static int mhi_driver_probe(struct device *dev)
 	struct mhi_event *mhi_event;
 	struct mhi_chan *ul_chan = mhi_dev->ul_chan;
 	struct mhi_chan *dl_chan = mhi_dev->dl_chan;
+	int ret;
+
+	/* Bring device out of LPM */
+	ret = mhi_device_get_sync(mhi_dev);
+	if (ret)
+		return ret;
+
+	ret = -EINVAL;
 
 	if (ul_chan) {
 		/*
@@ -967,13 +1077,18 @@ static int mhi_driver_probe(struct device *dev)
 		 * be provided
 		 */
 		if (ul_chan->lpm_notify && !mhi_drv->status_cb)
-			return -EINVAL;
+			goto exit_probe;
 
 		/* For non-offload channels then xfer_cb should be provided */
 		if (!ul_chan->offload_ch && !mhi_drv->ul_xfer_cb)
-			return -EINVAL;
+			goto exit_probe;
 
 		ul_chan->xfer_cb = mhi_drv->ul_xfer_cb;
+		if (ul_chan->auto_start) {
+			ret = mhi_prepare_channel(mhi_cntrl, ul_chan);
+			if (ret)
+				goto exit_probe;
+		}
 	}
 
 	if (dl_chan) {
@@ -982,11 +1097,11 @@ static int mhi_driver_probe(struct device *dev)
 		 * be provided
 		 */
 		if (dl_chan->lpm_notify && !mhi_drv->status_cb)
-			return -EINVAL;
+			goto exit_probe;
 
 		/* For non-offload channels then xfer_cb should be provided */
 		if (!dl_chan->offload_ch && !mhi_drv->dl_xfer_cb)
-			return -EINVAL;
+			goto exit_probe;
 
 		mhi_event = &mhi_cntrl->mhi_event[dl_chan->er_index];
 
@@ -996,19 +1111,36 @@ static int mhi_driver_probe(struct device *dev)
 		 * notify pending data
 		 */
 		if (mhi_event->cl_manage && !mhi_drv->status_cb)
-			return -EINVAL;
+			goto exit_probe;
 
 		dl_chan->xfer_cb = mhi_drv->dl_xfer_cb;
 	}
 
 	/* Call the user provided probe function */
-	return mhi_drv->probe(mhi_dev, mhi_dev->id);
+	ret = mhi_drv->probe(mhi_dev, mhi_dev->id);
+	if (ret)
+		goto exit_probe;
+
+	if (dl_chan && dl_chan->auto_start)
+		mhi_prepare_channel(mhi_cntrl, dl_chan);
+
+	mhi_device_put(mhi_dev);
+
+	return ret;
+
+exit_probe:
+	mhi_unprepare_from_transfer(mhi_dev);
+
+	mhi_device_put(mhi_dev);
+
+	return ret;
 }
 
 static int mhi_driver_remove(struct device *dev)
 {
 	struct mhi_device *mhi_dev = to_mhi_device(dev);
 	struct mhi_driver *mhi_drv = to_mhi_driver(dev->driver);
+	struct mhi_controller *mhi_cntrl = mhi_dev->mhi_cntrl;
 	struct mhi_chan *mhi_chan;
 	enum mhi_ch_state ch_state[] = {
 		MHI_CH_STATE_DISABLED,
@@ -1040,6 +1172,10 @@ static int mhi_driver_remove(struct device *dev)
 		mhi_chan->ch_state = MHI_CH_STATE_SUSPENDED;
 		write_unlock_irq(&mhi_chan->lock);
 
+		/* Reset the non-offload channel */
+		if (!mhi_chan->offload_ch)
+			mhi_reset_chan(mhi_cntrl, mhi_chan);
+
 		mutex_unlock(&mhi_chan->mutex);
 	}
 
@@ -1054,10 +1190,19 @@ static int mhi_driver_remove(struct device *dev)
 
 		mutex_lock(&mhi_chan->mutex);
 
+		if (ch_state[dir] == MHI_CH_STATE_ENABLED &&
+		    !mhi_chan->offload_ch)
+			mhi_deinit_chan_ctxt(mhi_cntrl, mhi_chan);
+
 		mhi_chan->ch_state = MHI_CH_STATE_DISABLED;
 
 		mutex_unlock(&mhi_chan->mutex);
 	}
+
+	read_lock_bh(&mhi_cntrl->pm_lock);
+	while (atomic_read(&mhi_dev->dev_wake))
+		mhi_device_put(mhi_dev);
+	read_unlock_bh(&mhi_cntrl->pm_lock);
 
 	return 0;
 }
