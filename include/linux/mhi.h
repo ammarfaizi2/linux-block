@@ -176,6 +176,7 @@ enum mhi_db_brst_mode {
  * @doorbell_mode_switch: Channel switches to doorbell mode on M0 transition
  * @auto_queue: Framework will automatically queue buffers for DL traffic
  * @auto_start: Automatically start (open) this channel
+ * @wake-capable: Channel capable of waking up the system
  */
 struct mhi_channel_config {
 	u32 num;
@@ -194,6 +195,7 @@ struct mhi_channel_config {
 	bool doorbell_mode_switch;
 	bool auto_queue;
 	bool auto_start;
+	bool wake_capable;
 };
 
 /**
@@ -367,6 +369,8 @@ struct mhi_controller {
  * struct mhi_device - Structure representing a MHI device which binds
  *                     to channels
  * @dev: Driver model device node for the MHI device
+ * @ul_chan_id: MHI channel id for UL transfer
+ * @dl_chan_id: MHI channel id for DL transfer
  * @tiocm: Device current terminal settings
  * @id: Pointer to MHI device ID struct
  * @chan_name: Name of the channel to which the device binds
@@ -378,6 +382,8 @@ struct mhi_controller {
  */
 struct mhi_device {
 	struct device dev;
+	int ul_chan_id;
+	int dl_chan_id;
 	u32 tiocm;
 	const struct mhi_device_id *id;
 	const char *chan_name;

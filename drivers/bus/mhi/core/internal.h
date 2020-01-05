@@ -130,6 +130,7 @@ struct mhi_chan {
 	bool offload_ch;
 	bool pre_alloc;
 	bool auto_start;
+	bool wake_capable;
 	int (*gen_tre)(struct mhi_controller *mhi_cntrl,
 		       struct mhi_chan *mhi_chan, void *buf, void *cb,
 		       size_t len, enum mhi_flags flags);
