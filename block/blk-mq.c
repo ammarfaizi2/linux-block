@@ -2439,8 +2439,6 @@ static void blk_mq_init_cpu_queues(struct request_queue *q,
 		for (k = HCTX_TYPE_DEFAULT; k < HCTX_MAX_TYPES; k++)
 			INIT_LIST_HEAD(&__ctx->rq_lists[k]);
 
-		__ctx->queue = q;
-
 		/*
 		 * Set local node, IFF we have more than one hw queue. If
 		 * not, we remain on the home node of the device

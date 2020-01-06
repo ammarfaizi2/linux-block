@@ -69,7 +69,7 @@ static ssize_t blk_mq_sysfs_show(struct kobject *kobj, struct attribute *attr,
 
 	entry = container_of(attr, struct blk_mq_ctx_sysfs_entry, attr);
 	ctx = container_of(kobj, struct blk_mq_ctx, kobj);
-	q = ctx->queue;
+	q = ctx->hctxs[0]->queue;
 
 	if (!entry->show)
 		return -EIO;
@@ -90,7 +90,7 @@ static ssize_t blk_mq_sysfs_store(struct kobject *kobj, struct attribute *attr,
 
 	entry = container_of(attr, struct blk_mq_ctx_sysfs_entry, attr);
 	ctx = container_of(kobj, struct blk_mq_ctx, kobj);
-	q = ctx->queue;
+	q = ctx->hctxs[0]->queue;
 
 	if (!entry->store)
 		return -EIO;
