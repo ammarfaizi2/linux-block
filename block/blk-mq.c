@@ -338,7 +338,6 @@ static struct request *blk_mq_get_request(struct request_queue *q,
 	struct elevator_queue *e = q->elevator;
 	struct request *rq;
 	unsigned int tag;
-	bool clear_ctx_on_error = false;
 	u64 alloc_time_ns = 0;
 
 	blk_queue_enter_live(q);
@@ -348,10 +347,8 @@ static struct request *blk_mq_get_request(struct request_queue *q,
 		alloc_time_ns = ktime_get_ns();
 
 	data->q = q;
-	if (likely(!data->ctx)) {
+	if (likely(!data->ctx))
 		data->ctx = blk_mq_get_ctx(q);
-		clear_ctx_on_error = true;
-	}
 	if (likely(!data->hctx))
 		data->hctx = blk_mq_map_queue(q, data->cmd_flags,
 						data->ctx);
@@ -376,8 +373,6 @@ static struct request *blk_mq_get_request(struct request_queue *q,
 
 	tag = blk_mq_get_tag(data);
 	if (tag == BLK_MQ_TAG_FAIL) {
-		if (clear_ctx_on_error)
-			data->ctx = NULL;
 		blk_queue_exit(q);
 		return NULL;
 	}
