@@ -622,14 +622,14 @@ static int hctx_dispatch_busy_show(void *data, struct seq_file *m)
 	return 0;
 }
 
-#define CTX_RQ_SEQ_OPS(name, type)					\
+#define CTX_RQ_SEQ_OPS(name, __type)					\
 static void *ctx_##name##_rq_list_start(struct seq_file *m, loff_t *pos) \
 	__acquires(&ctx->lock)						\
 {									\
 	struct blk_mq_ctx *ctx = m->private;				\
 									\
 	spin_lock(&ctx->lock);						\
-	return seq_list_start(&ctx->rq_lists[type], *pos);		\
+	return seq_list_start(&ctx->type[__type].rq_list, *pos);		\
 }									\
 									\
 static void *ctx_##name##_rq_list_next(struct seq_file *m, void *v,	\
@@ -637,7 +637,7 @@ static void *ctx_##name##_rq_list_next(struct seq_file *m, void *v,	\
 {									\
 	struct blk_mq_ctx *ctx = m->private;				\
 									\
-	return seq_list_next(v, &ctx->rq_lists[type], pos);		\
+	return seq_list_next(v, &ctx->type[__type].rq_list, pos);	\
 }									\
 									\
 static void ctx_##name##_rq_list_stop(struct seq_file *m, void *v)	\

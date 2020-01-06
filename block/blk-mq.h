@@ -12,13 +12,17 @@ struct blk_mq_ctxs {
 	struct blk_mq_ctx __percpu	*queue_ctx;
 };
 
+struct blk_mq_ctx_type {
+	struct list_head		rq_list;
+};
+
 /**
  * struct blk_mq_ctx - State for a software queue facing the submitting CPUs
  */
 struct blk_mq_ctx {
 	struct {
 		spinlock_t		lock;
-		struct list_head	rq_lists[HCTX_MAX_TYPES];
+		struct blk_mq_ctx_type	type[HCTX_MAX_TYPES];
 	} ____cacheline_aligned_in_smp;
 
 	unsigned int		cpu;

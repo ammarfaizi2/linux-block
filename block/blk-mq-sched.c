@@ -313,7 +313,7 @@ static bool blk_mq_attempt_merge(struct request_queue *q,
 
 	lockdep_assert_held(&ctx->lock);
 
-	if (blk_mq_bio_list_merge(q, &ctx->rq_lists[type], bio, nr_segs)) {
+	if (blk_mq_bio_list_merge(q, &ctx->type[type].rq_list, bio, nr_segs)) {
 		ctx->rq_merged++;
 		return true;
 	}
@@ -335,7 +335,7 @@ bool __blk_mq_sched_bio_merge(struct request_queue *q, struct bio *bio,
 
 	type = hctx->type;
 	if ((hctx->flags & BLK_MQ_F_SHOULD_MERGE) &&
-			!list_empty_careful(&ctx->rq_lists[type])) {
+			!list_empty_careful(&ctx->type[type].rq_list)) {
 		/* default per sw-queue merge */
 		spin_lock(&ctx->lock);
 		ret = blk_mq_attempt_merge(q, hctx, ctx, bio, nr_segs);

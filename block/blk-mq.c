@@ -953,7 +953,7 @@ static bool flush_busy_ctx(struct sbitmap *sb, unsigned int bitnr, void *data)
 	enum hctx_type type = hctx->type;
 
 	spin_lock(&ctx->lock);
-	list_splice_tail_init(&ctx->rq_lists[type], flush_data->list);
+	list_splice_tail_init(&ctx->type[type].rq_list, flush_data->list);
 	sbitmap_clear_bit(sb, bitnr);
 	spin_unlock(&ctx->lock);
 	return true;
@@ -985,13 +985,13 @@ static bool dispatch_rq_from_ctx(struct sbitmap *sb, unsigned int bitnr,
 	struct dispatch_rq_data *dispatch_data = data;
 	struct blk_mq_hw_ctx *hctx = dispatch_data->hctx;
 	struct blk_mq_ctx *ctx = hctx->ctxs[bitnr];
-	enum hctx_type type = hctx->type;
+	struct blk_mq_ctx_type *type = &ctx->type[hctx->type];
 
 	spin_lock(&ctx->lock);
-	if (!list_empty(&ctx->rq_lists[type])) {
-		dispatch_data->rq = list_entry_rq(ctx->rq_lists[type].next);
+	if (!list_empty(&type->rq_list)) {
+		dispatch_data->rq = list_entry_rq(type->rq_list.next);
 		list_del_init(&dispatch_data->rq->queuelist);
-		if (list_empty(&ctx->rq_lists[type]))
+		if (list_empty(&type->rq_list))
 			sbitmap_clear_bit(sb, bitnr);
 	}
 	spin_unlock(&ctx->lock);
@@ -1648,9 +1648,9 @@ static inline void __blk_mq_insert_req_list(struct blk_mq_hw_ctx *hctx,
 	trace_block_rq_insert(hctx->queue, rq);
 
 	if (at_head)
-		list_add(&rq->queuelist, &ctx->rq_lists[type]);
+		list_add(&rq->queuelist, &ctx->type[type].rq_list);
 	else
-		list_add_tail(&rq->queuelist, &ctx->rq_lists[type]);
+		list_add_tail(&rq->queuelist, &ctx->type[type].rq_list);
 }
 
 void __blk_mq_insert_request(struct blk_mq_hw_ctx *hctx, struct request *rq,
@@ -1701,7 +1701,7 @@ void blk_mq_insert_requests(struct blk_mq_hw_ctx *hctx, struct blk_mq_ctx *ctx,
 	}
 
 	spin_lock(&ctx->lock);
-	list_splice_tail_init(list, &ctx->rq_lists[type]);
+	list_splice_tail_init(list, &ctx->type[type].rq_list);
 	blk_mq_hctx_mark_pending(hctx, ctx);
 	spin_unlock(&ctx->lock);
 }
@@ -2256,8 +2256,8 @@ static int blk_mq_hctx_notify_dead(unsigned int cpu, struct hlist_node *node)
 	type = hctx->type;
 
 	spin_lock(&ctx->lock);
-	if (!list_empty(&ctx->rq_lists[type])) {
-		list_splice_init(&ctx->rq_lists[type], &tmp);
+	if (!list_empty(&ctx->type[type].rq_list)) {
+		list_splice_init(&ctx->type[type].rq_list, &tmp);
 		blk_mq_hctx_clear_pending(hctx, ctx);
 	}
 	spin_unlock(&ctx->lock);
@@ -2437,7 +2437,7 @@ static void blk_mq_init_cpu_queues(struct request_queue *q,
 		__ctx->cpu = i;
 		spin_lock_init(&__ctx->lock);
 		for (k = HCTX_TYPE_DEFAULT; k < HCTX_MAX_TYPES; k++)
-			INIT_LIST_HEAD(&__ctx->rq_lists[k]);
+			INIT_LIST_HEAD(&__ctx->type[k].rq_list);
 
 		/*
 		 * Set local node, IFF we have more than one hw queue. If
