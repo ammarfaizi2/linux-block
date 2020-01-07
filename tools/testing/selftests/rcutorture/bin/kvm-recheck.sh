@@ -73,12 +73,12 @@ do
 done
 EDITOR=echo kvm-find-errors.sh "${@: -1}" > $T 2>&1
 ret=$?
-builderrors="`grep -c '/Make.out' $T`"
+builderrors="`tr ' ' '\012' < $T | grep -c '/Make.out.diags'`"
 if test "$builderrors" -gt 0
 then
 	echo $builderrors runs with build errors.
 fi
-runerrors="`grep -c '/console.log.diags' $T`"
+runerrors="`tr ' ' '\012' < $T | grep -c '/console.log.diags'`"
 if test "$runerrors" -gt 0
 then
 	echo $runerrors runs with runtime errors.
