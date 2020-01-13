@@ -34,6 +34,7 @@
 #include <linux/rculist.h>
 #include <linux/memblock.h>
 #include <linux/pid_namespace.h>
+#include <linux/pidfd.h>
 #include <linux/init_task.h>
 #include <linux/syscalls.h>
 #include <linux/proc_ns.h>
@@ -512,11 +513,16 @@ struct pid *find_ge_pid(int nr, struct pid_namespace *ns)
 static int pidfd_create(struct pid *pid)
 {
 	int fd;
+	struct pidfd_struct *pidfd;
 
-	fd = anon_inode_getfd("[pidfd]", &pidfd_fops, get_pid(pid),
+	pidfd = pidfd_alloc(pid);
+	if (IS_ERR(pidfd))
+		return PTR_ERR(pidfd);
+
+	fd = anon_inode_getfd("[pidfd]", &pidfd_fops, pidfd,
 			      O_RDWR | O_CLOEXEC);
 	if (fd < 0)
-		put_pid(pid);
+		pidfd_put(pidfd);
 
 	return fd;
 }
@@ -647,7 +653,7 @@ static int pidfd_getfd(struct pid *pid, int fd)
 SYSCALL_DEFINE3(pidfd_getfd, int, pidfd, int, fd,
 		unsigned int, flags)
 {
-	struct pid *pid;
+	struct pidfd_struct *pid_fd;
 	struct fd f;
 	int ret;
 
@@ -659,11 +665,11 @@ SYSCALL_DEFINE3(pidfd_getfd, int, pidfd, int, fd,
 	if (!f.file)
 		return -EBADF;
 
-	pid = pidfd_pid(f.file);
-	if (IS_ERR(pid))
-		ret = PTR_ERR(pid);
+	pid_fd = pidfd_file(f.file);
+	if (IS_ERR(pid_fd))
+		ret = PTR_ERR(pid_fd);
 	else
-		ret = pidfd_getfd(pid, fd);
+		ret = pidfd_getfd(pid_fd->pid, fd);
 
 	fdput(f);
 	return ret;

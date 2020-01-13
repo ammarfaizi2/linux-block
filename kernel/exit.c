@@ -24,6 +24,7 @@
 #include <linux/cpu.h>
 #include <linux/acct.h>
 #include <linux/tsacct_kern.h>
+#include <linux/pidfd.h>
 #include <linux/file.h>
 #include <linux/fdtable.h>
 #include <linux/freezer.h>
@@ -1470,18 +1471,21 @@ end:
 	return retval;
 }
 
-static struct pid *pidfd_get_pid(unsigned int fd)
+static struct pid *__pidfd_get_pid(unsigned int fd)
 {
 	struct fd f;
 	struct pid *pid;
+	struct pidfd_struct *pidfd;
 
 	f = fdget(fd);
 	if (!f.file)
 		return ERR_PTR(-EBADF);
 
-	pid = pidfd_pid(f.file);
-	if (!IS_ERR(pid))
-		get_pid(pid);
+	pidfd = pidfd_file(f.file);
+	if (!IS_ERR(pidfd))
+		pid = pidfd_get_pid(pidfd);
+	else
+		pid = ERR_CAST(pidfd);
 
 	fdput(f);
 	return pid;
@@ -1527,7 +1531,7 @@ static long kernel_waitid(int which, pid_t upid, struct waitid_info *infop,
 		if (upid < 0)
 			return -EINVAL;
 
-		pid = pidfd_get_pid(upid);
+		pid = __pidfd_get_pid(upid);
 		if (IS_ERR(pid))
 			return PTR_ERR(pid);
 		break;
