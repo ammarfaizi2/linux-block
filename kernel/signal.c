@@ -20,6 +20,7 @@
 #include <linux/sched/task.h>
 #include <linux/sched/task_stack.h>
 #include <linux/sched/cputime.h>
+#include <linux/pidfd.h>
 #include <linux/file.h>
 #include <linux/fs.h>
 #include <linux/proc_fs.h>
@@ -3678,11 +3679,11 @@ static int copy_siginfo_from_user_any(kernel_siginfo_t *kinfo, siginfo_t *info)
 
 static struct pid *pidfd_to_pid(const struct file *file)
 {
-	struct pid *pid;
+	struct pidfd_struct *pidfd;
 
-	pid = pidfd_pid(file);
-	if (!IS_ERR(pid))
-		return pid;
+	pidfd = pidfd_file(file);
+	if (!IS_ERR(pidfd))
+		return pidfd_pid(pidfd);
 
 	return tgid_pidfd_to_pid(file);
 }

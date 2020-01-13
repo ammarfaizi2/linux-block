@@ -33,6 +33,7 @@
 #include <linux/personality.h>
 #include <linux/mempolicy.h>
 #include <linux/sem.h>
+#include <linux/pidfd.h>
 #include <linux/file.h>
 #include <linux/fdtable.h>
 #include <linux/iocontext.h>
@@ -800,6 +801,9 @@ static void task_struct_whitelist(unsigned long *offset, unsigned long *size)
 }
 #endif /* CONFIG_ARCH_TASK_STRUCT_ALLOCATOR */
 
+/* SLAB cache for pidfd_struct structures */
+static struct kmem_cache *pidfd_struct_cachep;
+
 void __init fork_init(void)
 {
 	int i;
@@ -839,6 +843,8 @@ void __init fork_init(void)
 
 	lockdep_init_task(&init_task);
 	uprobes_init();
+
+	pidfd_struct_cachep = KMEM_CACHE(pidfd_struct, SLAB_PANIC|SLAB_ACCOUNT);
 }
 
 int __weak arch_dup_task_struct(struct task_struct *dst,
@@ -1681,7 +1687,27 @@ static inline void rcu_copy_process(struct task_struct *p)
 #endif /* #ifdef CONFIG_TASKS_RCU */
 }
 
-struct pid *pidfd_pid(const struct file *file)
+struct pidfd_struct *pidfd_alloc(struct pid *pid)
+{
+	struct pidfd_struct *pidfd;
+
+	pidfd = kmem_cache_zalloc(pidfd_struct_cachep, GFP_KERNEL);
+	if (unlikely(!pidfd))
+		return ERR_PTR(-ENOMEM);
+	pidfd->pid = get_pid(pid);
+
+	return pidfd;
+}
+
+void pidfd_put(struct pidfd_struct *pidfd)
+{
+	if (pidfd) {
+		put_pid(pidfd->pid);
+		kmem_cache_free(pidfd_struct_cachep, pidfd);
+	}
+}
+
+struct pidfd_struct *pidfd_file(const struct file *file)
 {
 	if (file->f_op == &pidfd_fops)
 		return file->private_data;
@@ -1691,10 +1717,10 @@ struct pid *pidfd_pid(const struct file *file)
 
 static int pidfd_release(struct inode *inode, struct file *file)
 {
-	struct pid *pid = file->private_data;
+	struct pidfd_struct *pidfd = pidfd_file(file);
 
 	file->private_data = NULL;
-	put_pid(pid);
+	pidfd_put(pidfd);
 	return 0;
 }
 
@@ -1736,7 +1762,8 @@ static int pidfd_release(struct inode *inode, struct file *file)
  */
 static void pidfd_show_fdinfo(struct seq_file *m, struct file *f)
 {
-	struct pid *pid = f->private_data;
+	struct pidfd_struct *pidfd = pidfd_file(f);
+	struct pid *pid = pidfd_pid(pidfd);
 	struct pid_namespace *ns;
 	pid_t nr = -1;
 
@@ -1771,7 +1798,8 @@ static void pidfd_show_fdinfo(struct seq_file *m, struct file *f)
 static __poll_t pidfd_poll(struct file *file, struct poll_table_struct *pts)
 {
 	struct task_struct *task;
-	struct pid *pid = file->private_data;
+	struct pidfd_struct *pidfd = pidfd_file(file);
+	struct pid *pid = pidfd_pid(pidfd);
 	__poll_t poll_flags = 0;
 
 	poll_wait(file, &pid->wait_pidfd, pts);
@@ -2100,20 +2128,30 @@ static __latent_entropy struct task_struct *copy_process(
 	 * if the fd table isn't shared).
 	 */
 	if (clone_flags & CLONE_PIDFD) {
-		retval = get_unused_fd_flags(O_RDWR | O_CLOEXEC);
-		if (retval < 0)
+		struct pidfd_struct *pidfd_struct;
+
+		pidfd_struct = pidfd_alloc(pid);
+		if (IS_ERR(pidfd_struct)) {
+			retval = PTR_ERR(pidfd_struct);
 			goto bad_fork_free_pid;
+		}
+
+		retval = get_unused_fd_flags(O_RDWR | O_CLOEXEC);
+		if (retval < 0) {
+			pidfd_put(pidfd_struct);
+			goto bad_fork_free_pid;
+		}
 
 		pidfd = retval;
 
-		pidfile = anon_inode_getfile("[pidfd]", &pidfd_fops, pid,
-					      O_RDWR | O_CLOEXEC);
+		pidfile = anon_inode_getfile("[pidfd]", &pidfd_fops,
+					     pidfd_struct, O_RDWR | O_CLOEXEC);
 		if (IS_ERR(pidfile)) {
 			put_unused_fd(pidfd);
+			pidfd_put(pidfd_struct);
 			retval = PTR_ERR(pidfile);
 			goto bad_fork_free_pid;
 		}
-		get_pid(pid);	/* held by pidfile now */
 
 		retval = put_user(pidfd, args->pidfd);
 		if (retval)
