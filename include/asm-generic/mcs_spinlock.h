@@ -4,8 +4,8 @@
 /*
  * Architectures can define their own:
  *
- *   arch_mcs_spin_lock_contended(l)
- *   arch_mcs_spin_unlock_contended(l)
+ *   arch_mcs_spin_lock(l)
+ *   arch_mcs_pass_lock(l, val)
  *
  * See kernel/locking/mcs_spinlock.c.
  */
