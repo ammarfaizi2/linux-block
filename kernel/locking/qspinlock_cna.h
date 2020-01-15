@@ -51,12 +51,24 @@ struct cna_node {
 	int			numa_node;
 	u32			encoded_tail;
 	u32			pre_scan_result; /* encoded tail or enum val */
+	u32			intra_count;
 };
 
 enum {
 	LOCAL_WAITER_FOUND = 2,	/* 0 and 1 are reserved for @locked */
+	FLUSH_SECONDARY_QUEUE = 3,
 	MIN_ENCODED_TAIL
 };
+
+/*
+ * Controls the threshold for the number of intra-node lock hand-offs before
+ * the NUMA-aware variant of spinlock is forced to be passed to a thread on
+ * another NUMA node. By default, the chosen value provides reasonable
+ * long-term fairness without sacrificing performance compared to a lock
+ * that does not have any fairness guarantees. The default setting can
+ * be changed with the "numa_spinlock_threshold" boot option.
+ */
+unsigned int intra_node_handoff_threshold __ro_after_init = 1 << 16;
 
 static void __init cna_init_nodes_per_cpu(unsigned int cpu)
 {
@@ -96,6 +108,11 @@ static int __init cna_init_nodes(void)
 	return 0;
 }
 early_initcall(cna_init_nodes);
+
+static __always_inline void cna_init_node(struct mcs_spinlock *node)
+{
+	((struct cna_node *)node)->intra_count = 0;
+}
 
 /* this function is called only when the primary queue is empty */
 static inline bool cna_try_change_tail(struct qspinlock *lock, u32 val,
@@ -232,7 +249,9 @@ __always_inline u32 cna_pre_scan(struct qspinlock *lock,
 {
 	struct cna_node *cn = (struct cna_node *)node;
 
-	cn->pre_scan_result = cna_scan_main_queue(node, node);
+	cn->pre_scan_result =
+		cn->intra_count == intra_node_handoff_threshold ?
+			FLUSH_SECONDARY_QUEUE : cna_scan_main_queue(node, node);
 
 	return 0;
 }
@@ -262,6 +281,9 @@ static inline void cna_pass_lock(struct mcs_spinlock *node,
 		 * if we acquired the MCS lock when its queue was empty
 		 */
 		val = node->locked ? node->locked : 1;
+		/* inc @intra_count if the secondary queue is not empty */
+		((struct cna_node *)next_holder)->intra_count =
+			cn->intra_count + (node->locked > 1);
 	} else if (node->locked > 1) {	  /* if secondary queue is not empty */
 		/* next holder will be the first node in the secondary queue */
 		tail_2nd = decode_tail(node->locked);
@@ -316,3 +338,20 @@ void __init cna_configure_spin_lock_slowpath(void)
 		pr_info("Enabling CNA spinlock\n");
 	}
 }
+
+static int __init numa_spinlock_threshold_setup(char *str)
+{
+	int new_threshold_param;
+
+	if (get_option(&str, &new_threshold_param)) {
+		/* valid value is between 0 and 31 */
+		if (new_threshold_param < 0 || new_threshold_param > 31)
+			return 0;
+
+		intra_node_handoff_threshold = 1 << new_threshold_param;
+		return 1;
+	}
+
+	return 0;
+}
+__setup("numa_spinlock_threshold=", numa_spinlock_threshold_setup);
