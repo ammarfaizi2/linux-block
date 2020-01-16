@@ -27,6 +27,8 @@
 
 #include <linux/cgroup-defs.h>
 
+struct kernel_clone_args;
+
 #ifdef CONFIG_CGROUPS
 
 /*
@@ -122,11 +124,14 @@ int proc_cgroup_show(struct seq_file *m, struct pid_namespace *ns,
 
 void cgroup_fork(struct task_struct *p);
 extern int cgroup_can_fork(struct task_struct *parent,
-			   struct task_struct *child);
+			   struct task_struct *child,
+			   struct kernel_clone_args *kargs);
 extern void cgroup_cancel_fork(struct task_struct *parent,
-			       struct task_struct *child);
+			       struct task_struct *child,
+			       struct kernel_clone_args *kargs);
 extern void cgroup_post_fork(struct task_struct *parent,
-			     struct task_struct *child);
+			     struct task_struct *child,
+			     struct kernel_clone_args *kargs);
 void cgroup_exit(struct task_struct *p);
 void cgroup_release(struct task_struct *p);
 void cgroup_free(struct task_struct *p);
@@ -711,11 +716,14 @@ static inline int cgroupstats_build(struct cgroupstats *stats,
 
 static inline void cgroup_fork(struct task_struct *p) {}
 static inline int cgroup_can_fork(struct task_struct *parent,
-				  struct task_struct *child) { return 0; }
+				  struct task_struct *child,
+				  struct kernel_clone_args *kargs) { return 0; }
 static inline void cgroup_cancel_fork(struct task_struct *parent,
-			       struct task_struct *child) {};
+				      struct task_struct *child,
+				      struct kernel_clone_args *kargs) {};
 static inline void cgroup_post_fork(struct task_struct *parent,
-				    struct task_struct *child) {};
+				    struct task_struct *child,
+				    struct kernel_clone_args *kargs) {};
 static inline void cgroup_exit(struct task_struct *p) {}
 static inline void cgroup_release(struct task_struct *p) {}
 static inline void cgroup_free(struct task_struct *p) {}

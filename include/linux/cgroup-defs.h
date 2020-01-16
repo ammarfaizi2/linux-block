@@ -33,6 +33,7 @@ struct kernfs_ops;
 struct kernfs_open_file;
 struct seq_file;
 struct poll_table_struct;
+struct kernel_clone_args;
 
 #define MAX_CGROUP_TYPE_NAMELEN 32
 #define MAX_CGROUP_ROOT_NAMELEN 64
@@ -628,8 +629,9 @@ struct cgroup_subsys {
 	void (*cancel_attach)(struct cgroup_taskset *tset);
 	void (*attach)(struct cgroup_taskset *tset);
 	void (*post_attach)(void);
-	int (*can_fork)(struct task_struct *task);
-	void (*cancel_fork)(struct task_struct *task);
+	int (*can_fork)(struct task_struct *parent, struct task_struct *child,
+			struct css_set *cset);
+	void (*cancel_fork)(struct task_struct *child, struct css_set *cset);
 	void (*fork)(struct task_struct *task);
 	void (*exit)(struct task_struct *task);
 	void (*release)(struct task_struct *task);
