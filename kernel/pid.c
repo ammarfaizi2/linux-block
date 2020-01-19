@@ -501,6 +501,7 @@ struct pid *find_ge_pid(int nr, struct pid_namespace *ns)
  * pidfd_create() - Create a new pid file descriptor.
  *
  * @pid:  struct pid that the pidfd will reference
+ * @flags: caps that this pidfd supports
  *
  * This creates a new pid file descriptor with the O_CLOEXEC flag set.
  *
@@ -510,7 +511,7 @@ struct pid *find_ge_pid(int nr, struct pid_namespace *ns)
  * Return: On success, a cloexec pidfd is returned.
  *         On error, a negative errno number will be returned.
  */
-static int pidfd_create(struct pid *pid)
+static int pidfd_create(struct pid *pid, unsigned int flags)
 {
 	int fd;
 	struct pidfd_struct *pidfd;
@@ -521,10 +522,30 @@ static int pidfd_create(struct pid *pid)
 
 	fd = anon_inode_getfd("[pidfd]", &pidfd_fops, pidfd,
 			      O_RDWR | O_CLOEXEC);
-	if (fd < 0)
+	if (fd < 0) {
 		pidfd_put(pidfd);
+	} else {
+		/* Copy pidfd feature mask. */
+		if (flags & PIDFD_CAP_GETFD)
+			pidfd->creator_cred = get_current_cred();
+		pidfd->flags = flags;
+	}
 
 	return fd;
+}
+
+int pidfd_flags_allowed(u32 flags, const struct task_struct *child)
+{
+	if (!flags)
+		return 0;
+
+	if (flags & PIDFD_CAP_GETFD) {
+		if (ns_capable(task_cred_xxx(child, user_ns), CAP_SYS_PTRACE) ||
+		    task_no_new_privs((struct task_struct *)child))
+			return 0;
+	}
+
+	return -EPERM;
 }
 
 /**
@@ -547,8 +568,9 @@ SYSCALL_DEFINE2(pidfd_open, pid_t, pid, unsigned int, flags)
 {
 	int fd;
 	struct pid *p;
+	struct task_struct *task;
 
-	if (flags)
+	if (flags & ~PIDFD_CAP_GETFD)
 		return -EINVAL;
 
 	if (pid <= 0)
@@ -558,10 +580,16 @@ SYSCALL_DEFINE2(pidfd_open, pid_t, pid, unsigned int, flags)
 	if (!p)
 		return -ESRCH;
 
-	if (pid_has_task(p, PIDTYPE_TGID))
-		fd = pidfd_create(p);
+	rcu_read_lock();
+	task = pid_task(p, PIDTYPE_TGID);
+	if (task)
+		fd = pidfd_flags_allowed(flags, task);
 	else
 		fd = -EINVAL;
+	rcu_read_unlock();
+
+	if (!fd)
+		fd = pidfd_create(p, flags);
 
 	put_pid(p);
 	return fd;
@@ -585,14 +613,21 @@ void __init pid_idr_init(void)
 			SLAB_HWCACHE_ALIGN | SLAB_PANIC | SLAB_ACCOUNT);
 }
 
-static struct file *__pidfd_fget(struct task_struct *task, int fd)
+static struct file *__pidfd_fget(struct task_struct *task,
+				 const struct pidfd_struct *pidfd, int fd)
 {
+	const struct cred *oldcred;
 	struct file *file;
 	int ret;
 
 	ret = mutex_lock_killable(&task->signal->cred_guard_mutex);
 	if (ret)
 		return ERR_PTR(ret);
+
+	if (pidfd_has_flag(pidfd, PIDFD_CAP_GETFD))
+		oldcred = override_creds(pidfd->creator_cred);
+	else
+		oldcred = NULL;
 
 	if (ptrace_may_access(task, PTRACE_MODE_ATTACH_REALCREDS))
 		file = fget_task(task, fd);
@@ -601,20 +636,23 @@ static struct file *__pidfd_fget(struct task_struct *task, int fd)
 
 	mutex_unlock(&task->signal->cred_guard_mutex);
 
+	if (oldcred)
+		revert_creds(oldcred);
+
 	return file ?: ERR_PTR(-EBADF);
 }
 
-static int pidfd_getfd(struct pid *pid, int fd)
+static int pidfd_getfd(struct pidfd_struct *pidfd, int fd)
 {
 	struct task_struct *task;
 	struct file *file;
 	int ret;
 
-	task = get_pid_task(pid, PIDTYPE_PID);
+	task = get_pid_task(pidfd->pid, PIDTYPE_PID);
 	if (!task)
 		return -ESRCH;
 
-	file = __pidfd_fget(task, fd);
+	file = __pidfd_fget(task, pidfd, fd);
 	put_task_struct(task);
 	if (IS_ERR(file))
 		return PTR_ERR(file);
@@ -669,7 +707,7 @@ SYSCALL_DEFINE3(pidfd_getfd, int, pidfd, int, fd,
 	if (IS_ERR(pid_fd))
 		ret = PTR_ERR(pid_fd);
 	else
-		ret = pidfd_getfd(pid_fd->pid, fd);
+		ret = pidfd_getfd(pid_fd, fd);
 
 	fdput(f);
 	return ret;

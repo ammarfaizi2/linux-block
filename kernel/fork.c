@@ -1703,6 +1703,7 @@ void pidfd_put(struct pidfd_struct *pidfd)
 {
 	if (pidfd) {
 		put_pid(pidfd->pid);
+		put_cred(pidfd->creator_cred);
 		kmem_cache_free(pidfd_struct_cachep, pidfd);
 	}
 }
@@ -1973,6 +1974,10 @@ static __latent_entropy struct task_struct *copy_process(
 	if (retval < 0)
 		goto bad_fork_free;
 
+	retval = pidfd_flags_allowed(args->pidfd_flags, p);
+	if (retval)
+		goto bad_fork_free;
+
 	/*
 	 * If multiple threads are within copy_process(), then this check
 	 * triggers too late. This doesn't hurt, the check is only there
@@ -2152,6 +2157,11 @@ static __latent_entropy struct task_struct *copy_process(
 			retval = PTR_ERR(pidfile);
 			goto bad_fork_free_pid;
 		}
+
+		/* Copy pidfd feature mask. */
+		if (args->pidfd_flags & PIDFD_CAP_GETFD)
+			pidfd_struct->creator_cred = get_current_cred();
+		pidfd_struct->flags = args->pidfd_flags;
 
 		retval = put_user(pidfd, args->pidfd);
 		if (retval)
@@ -2660,6 +2670,9 @@ noinline static int copy_clone_args_from_user(struct kernel_clone_args *kargs,
 		     !valid_signal(args.exit_signal)))
 		return -EINVAL;
 
+	if (unlikely(args.pidfd_flags && !(args.flags & CLONE_PIDFD)))
+		return -EINVAL;
+
 	*kargs = (struct kernel_clone_args){
 		.flags		= args.flags,
 		.pidfd		= u64_to_user_ptr(args.pidfd),
@@ -2670,6 +2683,7 @@ noinline static int copy_clone_args_from_user(struct kernel_clone_args *kargs,
 		.stack_size	= args.stack_size,
 		.tls		= args.tls,
 		.set_tid_size	= args.set_tid_size,
+		.pidfd_flags	= args.pidfd_flags,
 	};
 
 	if (args.set_tid &&
@@ -2729,6 +2743,9 @@ static bool clone3_args_valid(struct kernel_clone_args *kargs)
 
 	if ((kargs->flags & (CLONE_THREAD | CLONE_PARENT)) &&
 	    kargs->exit_signal)
+		return false;
+
+	if (kargs->pidfd_flags & ~PIDFD_CAP_GETFD)
 		return false;
 
 	if (!clone3_stack_valid(kargs))
