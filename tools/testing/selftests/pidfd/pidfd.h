@@ -16,6 +16,14 @@
 
 #include "../kselftest.h"
 
+#ifndef PR_SET_NO_NEW_PRIVS
+#define PR_SET_NO_NEW_PRIVS 38
+#endif
+
+#ifndef PIDFD_CAP_GETFD
+#define PIDFD_CAP_GETFD (1UL << 0)
+#endif
+
 #ifndef P_PIDFD
 #define P_PIDFD 3
 #endif

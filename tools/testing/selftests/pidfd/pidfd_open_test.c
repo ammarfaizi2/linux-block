@@ -135,7 +135,7 @@ int main(int argc, char **argv)
 	}
 	ksft_test_result_pass("do not allow invalid pid test: passed\n");
 
-	pidfd = sys_pidfd_open(getpid(), 1);
+	pidfd = sys_pidfd_open(getpid(), -1);
 	if (pidfd >= 0) {
 		ksft_print_msg(
 			"%s - succeeded to open pidfd with invalid flag value specified\n",
