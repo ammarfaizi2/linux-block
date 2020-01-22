@@ -130,6 +130,8 @@ FIXTURE(child)
 	pid_t pid;
 	/* pidfd is the pidfd of the child */
 	int pidfd;
+	/* if @am_root is true this will contain a pidfd with PIDFD_CAP_GETFD */
+	int pidfd_with_cap;
 	/*
 	 * sk is our side of the socketpair used to communicate with the child.
 	 * When it is closed, the child will exit.
@@ -161,6 +163,13 @@ FIXTURE_SETUP(child)
 	self->pidfd = sys_pidfd_open(self->pid, 0);
 	ASSERT_GE(self->pidfd, 0);
 
+	if (geteuid() == 0) {
+		self->pidfd_with_cap = sys_pidfd_open(self->pid, PIDFD_CAP_GETFD);
+		ASSERT_GE(self->pidfd_with_cap, 0);
+	} else {
+		self->pidfd_with_cap = -EBADF;
+	}
+
 	/*
 	 * Wait for the child to complete setup. It'll send the remote memfd's
 	 * number when ready.
@@ -172,6 +181,8 @@ FIXTURE_SETUP(child)
 FIXTURE_TEARDOWN(child)
 {
 	EXPECT_EQ(0, close(self->pidfd));
+	if (self->pidfd_with_cap >= 0)
+		EXPECT_EQ(0, close(self->pidfd_with_cap));
 	EXPECT_EQ(0, close(self->sk));
 
 	EXPECT_EQ(0, wait_for_pid(self->pid));
@@ -217,6 +228,63 @@ TEST_F(child, fetch_fd)
 	EXPECT_GE(ret & FD_CLOEXEC, 0);
 
 	close(fd);
+}
+
+TEST_F(child, fetch_fd_unpriv)
+{
+	if (self->pidfd_with_cap >= 0) {
+		int fd, ret;
+
+		/*
+		 * Turn into nobody if we're root, to avoid CAP_SYS_PTRACE
+		 *
+		 * The tests should run in their own process, so even this test fails,
+		 * it shouldn't result in subsequent tests failing.
+		 */
+		ASSERT_EQ(0, setresuid(UID_NOBODY, UID_NOBODY, -1));
+
+		ret = prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
+		ASSERT_EQ(0, ret) {
+			TH_LOG("Kernel does not support PR_SET_NO_NEW_PRIVS!");
+		}
+
+		fd = sys_pidfd_getfd(self->pidfd, self->remote_fd, 0);
+		EXPECT_EQ(-1, fd);
+		EXPECT_EQ(EPERM, errno);
+
+		fd = sys_pidfd_getfd(self->pidfd_with_cap, self->remote_fd, 0);
+		ASSERT_GE(fd, 0);
+
+		ASSERT_EQ(0, setresuid(0, 0, -1));
+		EXPECT_EQ(0, sys_kcmp(getpid(), self->pid, KCMP_FILE, fd, self->remote_fd));
+
+		ret = fcntl(fd, F_GETFD);
+		ASSERT_GE(ret, 0);
+		EXPECT_GE(ret & FD_CLOEXEC, 0);
+
+		close(fd);
+	}
+}
+
+TEST_F(child, pidfd_cap_getfd_nnp)
+{
+	int pidfd;
+
+	ASSERT_EQ(0, setresuid(UID_NOBODY, UID_NOBODY, -1));
+
+	pidfd = sys_pidfd_open(self->pid, PIDFD_CAP_GETFD);
+	EXPECT_EQ(-1, pidfd);
+	EXPECT_EQ(EPERM, errno);
+
+	pidfd = prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
+	ASSERT_EQ(0, pidfd) {
+		TH_LOG("Kernel does not support PR_SET_NO_NEW_PRIVS!");
+		return;
+	}
+
+	pidfd = sys_pidfd_open(self->pid, PIDFD_CAP_GETFD);
+	ASSERT_GE(pidfd, 0);
+	close(pidfd);
 }
 
 TEST_F(child, test_unknown_fd)
