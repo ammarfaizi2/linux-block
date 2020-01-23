@@ -26,7 +26,6 @@
 #define rxrpc_skb_traces \
 	EM(rxrpc_skb_eaten_by_unshare,		"ETN unshare  ") \
 	EM(rxrpc_skb_eaten_by_unshare_nomem,	"ETN unshar-nm") \
-	EM(rxrpc_skb_get_ack,			"GET ack      ") \
 	EM(rxrpc_skb_get_conn_work,		"GET conn-work") \
 	EM(rxrpc_skb_get_to_recvmsg,		"GET to-recv  ") \
 	EM(rxrpc_skb_get_to_recvmsg_oos,	"GET to-recv-o") \
@@ -34,7 +33,6 @@
 	EM(rxrpc_skb_new_error_report,		"NEW error-rpt") \
 	EM(rxrpc_skb_new_jumbo_subpacket,	"NEW jumbo-sub") \
 	EM(rxrpc_skb_new_unshared,		"NEW unshared ") \
-	EM(rxrpc_skb_put_ack,			"PUT ack      ") \
 	EM(rxrpc_skb_put_conn_work,		"PUT conn-work") \
 	EM(rxrpc_skb_put_error_report,		"PUT error-rep") \
 	EM(rxrpc_skb_put_input,			"PUT input    ") \
@@ -44,7 +42,6 @@
 	EM(rxrpc_skb_put_rotate,		"PUT rotate   ") \
 	EM(rxrpc_skb_put_unknown,		"PUT unknown  ") \
 	EM(rxrpc_skb_see_conn_work,		"SEE conn-work") \
-	EM(rxrpc_skb_see_local_work,		"SEE locl-work") \
 	EM(rxrpc_skb_see_recvmsg,		"SEE recvmsg  ") \
 	EM(rxrpc_skb_see_reject,		"SEE reject   ") \
 	EM(rxrpc_skb_see_rotate,		"SEE rotate   ") \
@@ -56,18 +53,13 @@
 	EM(rxrpc_local_get_for_use,		"GET for-use ") \
 	EM(rxrpc_local_get_peer,		"GET peer    ") \
 	EM(rxrpc_local_get_prealloc_conn,	"GET conn-pre") \
-	EM(rxrpc_local_get_queue,		"GET queue   ") \
 	EM(rxrpc_local_new,			"NEW         ") \
-	EM(rxrpc_local_processing,		"PROCESSING  ") \
-	EM(rxrpc_local_put_already_queued,	"PUT alreadyq") \
 	EM(rxrpc_local_put_bind,		"PUT bind    ") \
 	EM(rxrpc_local_put_for_use,		"PUT for-use ") \
 	EM(rxrpc_local_put_kill_conn,		"PUT conn-kil") \
 	EM(rxrpc_local_put_peer,		"PUT peer    ") \
 	EM(rxrpc_local_put_prealloc_conn,	"PUT conn-pre") \
 	EM(rxrpc_local_put_release_sock,	"PUT rel-sock") \
-	EM(rxrpc_local_put_queue,		"PUT queue   ") \
-	EM(rxrpc_local_queued,			"QUEUED      ") \
 	EM(rxrpc_local_see_tx_ack,		"SEE tx-ack  ") \
 	EM(rxrpc_local_stop,			"STOP        ") \
 	EM(rxrpc_local_stopped,			"STOPPED     ") \
@@ -75,11 +67,9 @@
 	EM(rxrpc_local_unuse_conn_work,		"UNU conn-wrk") \
 	EM(rxrpc_local_unuse_peer_keepalive,	"UNU peer-kpa") \
 	EM(rxrpc_local_unuse_release_sock,	"UNU rel-sock") \
-	EM(rxrpc_local_unuse_work,		"UNU work    ") \
 	EM(rxrpc_local_use_conn_work,		"USE conn-wrk") \
 	EM(rxrpc_local_use_lookup,		"USE lookup  ") \
-	EM(rxrpc_local_use_peer_keepalive,	"USE peer-kpa") \
-	E_(rxrpc_local_use_work,		"USE work    ")
+	E_(rxrpc_local_use_peer_keepalive,	"USE peer-kpa")
 
 #define rxrpc_peer_traces \
 	EM(rxrpc_peer_free,			"FREE        ") \
@@ -161,14 +151,11 @@
 	EM(rxrpc_call_get_poke,			"GET poke    ") \
 	EM(rxrpc_call_get_recvmsg,		"GET recvmsg ") \
 	EM(rxrpc_call_get_release_sock,		"GET rel-sock") \
-	EM(rxrpc_call_get_retrans,		"GET retrans ") \
 	EM(rxrpc_call_get_sendmsg,		"GET sendmsg ") \
 	EM(rxrpc_call_get_send_ack,		"GET send-ack") \
-	EM(rxrpc_call_get_timer,		"GET timer   ") \
 	EM(rxrpc_call_get_userid,		"GET user-id ") \
 	EM(rxrpc_call_new_client,		"NEW client  ") \
 	EM(rxrpc_call_new_prealloc_service,	"NEW prealloc") \
-	EM(rxrpc_call_put_already_queued,	"PUT alreadyq") \
 	EM(rxrpc_call_put_discard_prealloc,	"PUT disc-pre") \
 	EM(rxrpc_call_put_input,		"PUT input   ") \
 	EM(rxrpc_call_put_kernel,		"PUT kernel  ") \
@@ -178,16 +165,8 @@
 	EM(rxrpc_call_put_release_sock_tba,	"PUT rls-sk-a") \
 	EM(rxrpc_call_put_send_ack,		"PUT send-ack") \
 	EM(rxrpc_call_put_sendmsg,		"PUT sendmsg ") \
-	EM(rxrpc_call_put_timer,		"PUT timer   ") \
-	EM(rxrpc_call_put_timer_already,	"PUT timer-al") \
 	EM(rxrpc_call_put_unnotify,		"PUT unnotify") \
 	EM(rxrpc_call_put_userid_exists,	"PUT u-exists") \
-	EM(rxrpc_call_put_work,			"PUT work    ") \
-	EM(rxrpc_call_queue_abort,		"QUE abort   ") \
-	EM(rxrpc_call_queue_requeue,		"QUE requeue ") \
-	EM(rxrpc_call_queue_resend,		"QUE resend  ") \
-	EM(rxrpc_call_queue_timer,		"QUE timer   ") \
-	EM(rxrpc_call_queue_tx_data,		"QUE tx-data ") \
 	EM(rxrpc_call_see_accept,		"SEE accept  ") \
 	EM(rxrpc_call_see_activate_client,	"SEE act-clnt") \
 	EM(rxrpc_call_see_connect_failed,	"SEE con-fail") \
@@ -285,6 +264,7 @@
 	EM(rxrpc_propose_ack_respond_to_ping,	"Rsp2Png") \
 	EM(rxrpc_propose_ack_retry_tx,		"RetryTx") \
 	EM(rxrpc_propose_ack_rotate_rx,		"RxAck  ") \
+	EM(rxrpc_propose_ack_rx_idle,		"RxIdle ") \
 	E_(rxrpc_propose_ack_terminal_ack,	"ClTerm ")
 
 #define rxrpc_congest_modes \
@@ -1551,23 +1531,30 @@ TRACE_EVENT(rxrpc_connect_call,
 	    );
 
 TRACE_EVENT(rxrpc_resend,
-	    TP_PROTO(struct rxrpc_call *call),
+	    TP_PROTO(struct rxrpc_call *call, struct sk_buff *ack),
 
-	    TP_ARGS(call),
+	    TP_ARGS(call, ack),
 
 	    TP_STRUCT__entry(
 		    __field(unsigned int,		call		)
 		    __field(rxrpc_seq_t,		seq		)
+		    __field(rxrpc_seq_t,		transmitted	)
+		    __field(rxrpc_serial_t,		ack_serial	)
 			     ),
 
 	    TP_fast_assign(
+		    struct rxrpc_skb_priv *sp = ack ? rxrpc_skb(ack) : NULL;
 		    __entry->call = call->debug_id;
 		    __entry->seq = call->acks_hard_ack;
+		    __entry->transmitted = call->tx_transmitted;
+		    __entry->ack_serial = sp ? sp->hdr.serial : 0;
 			   ),
 
-	    TP_printk("c=%08x q=%x",
+	    TP_printk("c=%08x r=%x q=%x tq=%x",
 		      __entry->call,
-		      __entry->seq)
+		      __entry->ack_serial,
+		      __entry->seq,
+		      __entry->transmitted)
 	    );
 
 TRACE_EVENT(rxrpc_rx_icmp,

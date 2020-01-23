@@ -100,6 +100,7 @@ static int rxrpc_service_prealloc_one(struct rxrpc_sock *rx,
 		return -ENOMEM;
 	call->flags |= (1 << RXRPC_CALL_IS_SERVICE);
 	call->state = RXRPC_CALL_SERVER_PREALLOC;
+	__set_bit(RXRPC_CALL_EV_INITIAL_PING, &call->events);
 
 	trace_rxrpc_call(call->debug_id, refcount_read(&call->ref),
 			 user_call_ID, rxrpc_call_new_prealloc_service);
@@ -232,21 +233,6 @@ void rxrpc_discard_prealloc(struct rxrpc_sock *rx)
 	}
 
 	kfree(b);
-}
-
-/*
- * Ping the other end to fill our RTT cache and to retrieve the rwind
- * and MTU parameters.
- */
-static void rxrpc_send_ping(struct rxrpc_call *call, struct sk_buff *skb)
-{
-	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
-	ktime_t now = skb->tstamp;
-
-	if (call->peer->rtt_count < 3 ||
-	    ktime_before(ktime_add_ms(call->peer->rtt_last_req, 1000), now))
-		rxrpc_send_ACK(call, RXRPC_ACK_PING, sp->hdr.serial,
-			       rxrpc_propose_ack_ping_for_params);
 }
 
 /*
@@ -393,35 +379,14 @@ struct rxrpc_call *rxrpc_new_incoming_call(struct rxrpc_local *local,
 		rx->notify_new_call(&rx->sk, call, call->user_call_ID);
 
 	spin_lock(&conn->state_lock);
-	switch (conn->state) {
-	case RXRPC_CONN_SERVICE_UNSECURED:
+	if (conn->state == RXRPC_CONN_SERVICE_UNSECURED) {
 		conn->state = RXRPC_CONN_SERVICE_CHALLENGING;
 		set_bit(RXRPC_CONN_EV_CHALLENGE, &call->conn->events);
 		rxrpc_queue_conn(call->conn, rxrpc_conn_queue_challenge);
-		break;
-
-	case RXRPC_CONN_SERVICE:
-		write_lock(&call->state_lock);
-		if (call->state < RXRPC_CALL_COMPLETE)
-			call->state = RXRPC_CALL_SERVER_RECV_REQUEST;
-		write_unlock(&call->state_lock);
-		break;
-
-	case RXRPC_CONN_REMOTELY_ABORTED:
-		rxrpc_set_call_completion(call, RXRPC_CALL_REMOTELY_ABORTED,
-					  conn->abort_code, conn->error);
-		break;
-	case RXRPC_CONN_LOCALLY_ABORTED:
-		rxrpc_abort_call("CON", call, sp->hdr.seq,
-				 conn->abort_code, conn->error);
-		break;
-	default:
-		BUG();
 	}
 	spin_unlock(&conn->state_lock);
-	spin_unlock(&rx->incoming_lock);
 
-	rxrpc_send_ping(call, skb);
+	spin_unlock(&rx->incoming_lock);
 
 	/* We have to discard the prealloc queue's ref here and rely on a
 	 * combination of the RCU read lock and refs held either by the socket
