@@ -348,7 +348,8 @@ static int build_insn(const struct bpf_insn *insn, struct jit_ctx *ctx,
 		      bool extra_pass)
 {
 	const u8 code = insn->code;
-	const u8 dst = bpf2a64(ctx, insn->dst_reg);
+	const u8 dstw = bpf2a64(ctx, insn->dst_reg);
+	const u8 dstr = bpf2a64(ctx, insn->dst_reg);
 	const u8 src = bpf2a64(ctx, insn->src_reg);
 	const u8 tmp = bpf2a64(ctx, TMP_REG_1);
 	const u8 tmp2 = bpf2a64(ctx, TMP_REG_2);
@@ -377,32 +378,32 @@ static int build_insn(const struct bpf_insn *insn, struct jit_ctx *ctx,
 	/* dst = src */
 	case BPF_ALU | BPF_MOV | BPF_X:
 	case BPF_ALU64 | BPF_MOV | BPF_X:
-		emit(A64_MOV(is64, dst, src), ctx);
+		emit(A64_MOV(is64, dstw, src), ctx);
 		break;
 	/* dst = dst OP src */
 	case BPF_ALU | BPF_ADD | BPF_X:
 	case BPF_ALU64 | BPF_ADD | BPF_X:
-		emit(A64_ADD(is64, dst, dst, src), ctx);
+		emit(A64_ADD(is64, dstw, dstr, src), ctx);
 		break;
 	case BPF_ALU | BPF_SUB | BPF_X:
 	case BPF_ALU64 | BPF_SUB | BPF_X:
-		emit(A64_SUB(is64, dst, dst, src), ctx);
+		emit(A64_SUB(is64, dstw, dstr, src), ctx);
 		break;
 	case BPF_ALU | BPF_AND | BPF_X:
 	case BPF_ALU64 | BPF_AND | BPF_X:
-		emit(A64_AND(is64, dst, dst, src), ctx);
+		emit(A64_AND(is64, dstw, dstr, src), ctx);
 		break;
 	case BPF_ALU | BPF_OR | BPF_X:
 	case BPF_ALU64 | BPF_OR | BPF_X:
-		emit(A64_ORR(is64, dst, dst, src), ctx);
+		emit(A64_ORR(is64, dstw, dstr, src), ctx);
 		break;
 	case BPF_ALU | BPF_XOR | BPF_X:
 	case BPF_ALU64 | BPF_XOR | BPF_X:
-		emit(A64_EOR(is64, dst, dst, src), ctx);
+		emit(A64_EOR(is64, dstw, dstr, src), ctx);
 		break;
 	case BPF_ALU | BPF_MUL | BPF_X:
 	case BPF_ALU64 | BPF_MUL | BPF_X:
-		emit(A64_MUL(is64, dst, dst, src), ctx);
+		emit(A64_MUL(is64, dstw, dstr, src), ctx);
 		break;
 	case BPF_ALU | BPF_DIV | BPF_X:
 	case BPF_ALU64 | BPF_DIV | BPF_X:
@@ -410,30 +411,30 @@ static int build_insn(const struct bpf_insn *insn, struct jit_ctx *ctx,
 	case BPF_ALU64 | BPF_MOD | BPF_X:
 		switch (BPF_OP(code)) {
 		case BPF_DIV:
-			emit(A64_UDIV(is64, dst, dst, src), ctx);
+			emit(A64_UDIV(is64, dstw, dstr, src), ctx);
 			break;
 		case BPF_MOD:
-			emit(A64_UDIV(is64, tmp, dst, src), ctx);
-			emit(A64_MSUB(is64, dst, dst, tmp, src), ctx);
+			emit(A64_UDIV(is64, tmp, dstr, src), ctx);
+			emit(A64_MSUB(is64, dstw, dstr, tmp, src), ctx);
 			break;
 		}
 		break;
 	case BPF_ALU | BPF_LSH | BPF_X:
 	case BPF_ALU64 | BPF_LSH | BPF_X:
-		emit(A64_LSLV(is64, dst, dst, src), ctx);
+		emit(A64_LSLV(is64, dstw, dstr, src), ctx);
 		break;
 	case BPF_ALU | BPF_RSH | BPF_X:
 	case BPF_ALU64 | BPF_RSH | BPF_X:
-		emit(A64_LSRV(is64, dst, dst, src), ctx);
+		emit(A64_LSRV(is64, dstw, dstr, src), ctx);
 		break;
 	case BPF_ALU | BPF_ARSH | BPF_X:
 	case BPF_ALU64 | BPF_ARSH | BPF_X:
-		emit(A64_ASRV(is64, dst, dst, src), ctx);
+		emit(A64_ASRV(is64, dstw, dstr, src), ctx);
 		break;
 	/* dst = -dst */
 	case BPF_ALU | BPF_NEG:
 	case BPF_ALU64 | BPF_NEG:
-		emit(A64_NEG(is64, dst, dst), ctx);
+		emit(A64_NEG(is64, dstw, dstr), ctx);
 		break;
 	/* dst = BSWAP##imm(dst) */
 	case BPF_ALU | BPF_END | BPF_FROM_LE:
@@ -447,16 +448,16 @@ static int build_insn(const struct bpf_insn *insn, struct jit_ctx *ctx,
 #endif
 		switch (imm) {
 		case 16:
-			emit(A64_REV16(is64, dst, dst), ctx);
+			emit(A64_REV16(is64, dstw, dstr), ctx);
 			/* zero-extend 16 bits into 64 bits */
-			emit(A64_UXTH(is64, dst, dst), ctx);
+			emit(A64_UXTH(is64, dstw, dstr), ctx);
 			break;
 		case 32:
-			emit(A64_REV32(is64, dst, dst), ctx);
+			emit(A64_REV32(is64, dstw, dstr), ctx);
 			/* upper 32 bits already cleared */
 			break;
 		case 64:
-			emit(A64_REV64(dst, dst), ctx);
+			emit(A64_REV64(dstw, dstr), ctx);
 			break;
 		}
 		break;
@@ -464,11 +465,11 @@ emit_bswap_uxt:
 		switch (imm) {
 		case 16:
 			/* zero-extend 16 bits into 64 bits */
-			emit(A64_UXTH(is64, dst, dst), ctx);
+			emit(A64_UXTH(is64, dstw, dstr), ctx);
 			break;
 		case 32:
 			/* zero-extend 32 bits into 64 bits */
-			emit(A64_UXTW(is64, dst, dst), ctx);
+			emit(A64_UXTW(is64, dstw, dstr), ctx);
 			break;
 		case 64:
 			/* nop */
@@ -478,61 +479,61 @@ emit_bswap_uxt:
 	/* dst = imm */
 	case BPF_ALU | BPF_MOV | BPF_K:
 	case BPF_ALU64 | BPF_MOV | BPF_K:
-		emit_a64_mov_i(is64, dst, imm, ctx);
+		emit_a64_mov_i(is64, dstw, imm, ctx);
 		break;
 	/* dst = dst OP imm */
 	case BPF_ALU | BPF_ADD | BPF_K:
 	case BPF_ALU64 | BPF_ADD | BPF_K:
 		emit_a64_mov_i(is64, tmp, imm, ctx);
-		emit(A64_ADD(is64, dst, dst, tmp), ctx);
+		emit(A64_ADD(is64, dstw, dstr, tmp), ctx);
 		break;
 	case BPF_ALU | BPF_SUB | BPF_K:
 	case BPF_ALU64 | BPF_SUB | BPF_K:
 		emit_a64_mov_i(is64, tmp, imm, ctx);
-		emit(A64_SUB(is64, dst, dst, tmp), ctx);
+		emit(A64_SUB(is64, dstw, dstr, tmp), ctx);
 		break;
 	case BPF_ALU | BPF_AND | BPF_K:
 	case BPF_ALU64 | BPF_AND | BPF_K:
 		emit_a64_mov_i(is64, tmp, imm, ctx);
-		emit(A64_AND(is64, dst, dst, tmp), ctx);
+		emit(A64_AND(is64, dstw, dstr, tmp), ctx);
 		break;
 	case BPF_ALU | BPF_OR | BPF_K:
 	case BPF_ALU64 | BPF_OR | BPF_K:
 		emit_a64_mov_i(is64, tmp, imm, ctx);
-		emit(A64_ORR(is64, dst, dst, tmp), ctx);
+		emit(A64_ORR(is64, dstw, dstr, tmp), ctx);
 		break;
 	case BPF_ALU | BPF_XOR | BPF_K:
 	case BPF_ALU64 | BPF_XOR | BPF_K:
 		emit_a64_mov_i(is64, tmp, imm, ctx);
-		emit(A64_EOR(is64, dst, dst, tmp), ctx);
+		emit(A64_EOR(is64, dstw, dstr, tmp), ctx);
 		break;
 	case BPF_ALU | BPF_MUL | BPF_K:
 	case BPF_ALU64 | BPF_MUL | BPF_K:
 		emit_a64_mov_i(is64, tmp, imm, ctx);
-		emit(A64_MUL(is64, dst, dst, tmp), ctx);
+		emit(A64_MUL(is64, dstw, dstr, tmp), ctx);
 		break;
 	case BPF_ALU | BPF_DIV | BPF_K:
 	case BPF_ALU64 | BPF_DIV | BPF_K:
 		emit_a64_mov_i(is64, tmp, imm, ctx);
-		emit(A64_UDIV(is64, dst, dst, tmp), ctx);
+		emit(A64_UDIV(is64, dstw, dstr, tmp), ctx);
 		break;
 	case BPF_ALU | BPF_MOD | BPF_K:
 	case BPF_ALU64 | BPF_MOD | BPF_K:
 		emit_a64_mov_i(is64, tmp2, imm, ctx);
-		emit(A64_UDIV(is64, tmp, dst, tmp2), ctx);
-		emit(A64_MSUB(is64, dst, dst, tmp, tmp2), ctx);
+		emit(A64_UDIV(is64, tmp, dstr, tmp2), ctx);
+		emit(A64_MSUB(is64, dstw, dstr, tmp, tmp2), ctx);
 		break;
 	case BPF_ALU | BPF_LSH | BPF_K:
 	case BPF_ALU64 | BPF_LSH | BPF_K:
-		emit(A64_LSL(is64, dst, dst, imm), ctx);
+		emit(A64_LSL(is64, dstw, dstr, imm), ctx);
 		break;
 	case BPF_ALU | BPF_RSH | BPF_K:
 	case BPF_ALU64 | BPF_RSH | BPF_K:
-		emit(A64_LSR(is64, dst, dst, imm), ctx);
+		emit(A64_LSR(is64, dstw, dstr, imm), ctx);
 		break;
 	case BPF_ALU | BPF_ARSH | BPF_K:
 	case BPF_ALU64 | BPF_ARSH | BPF_K:
-		emit(A64_ASR(is64, dst, dst, imm), ctx);
+		emit(A64_ASR(is64, dstw, dstr, imm), ctx);
 		break;
 
 	/* JUMP off */
@@ -562,7 +563,7 @@ emit_bswap_uxt:
 	case BPF_JMP32 | BPF_JSLT | BPF_X:
 	case BPF_JMP32 | BPF_JSGE | BPF_X:
 	case BPF_JMP32 | BPF_JSLE | BPF_X:
-		emit(A64_CMP(is64, dst, src), ctx);
+		emit(A64_CMP(is64, dstr, src), ctx);
 emit_cond_jmp:
 		jmp_offset = bpf2a64_offset(i + off, i, ctx);
 		check_imm19(jmp_offset);
@@ -605,7 +606,7 @@ emit_cond_jmp:
 		break;
 	case BPF_JMP | BPF_JSET | BPF_X:
 	case BPF_JMP32 | BPF_JSET | BPF_X:
-		emit(A64_TST(is64, dst, src), ctx);
+		emit(A64_TST(is64, dstr, src), ctx);
 		goto emit_cond_jmp;
 	/* IF (dst COND imm) JUMP off */
 	case BPF_JMP | BPF_JEQ | BPF_K:
@@ -629,12 +630,12 @@ emit_cond_jmp:
 	case BPF_JMP32 | BPF_JSGE | BPF_K:
 	case BPF_JMP32 | BPF_JSLE | BPF_K:
 		emit_a64_mov_i(is64, tmp, imm, ctx);
-		emit(A64_CMP(is64, dst, tmp), ctx);
+		emit(A64_CMP(is64, dstr, tmp), ctx);
 		goto emit_cond_jmp;
 	case BPF_JMP | BPF_JSET | BPF_K:
 	case BPF_JMP32 | BPF_JSET | BPF_K:
 		emit_a64_mov_i(is64, tmp, imm, ctx);
-		emit(A64_TST(is64, dst, tmp), ctx);
+		emit(A64_TST(is64, dstr, tmp), ctx);
 		goto emit_cond_jmp;
 	/* function call */
 	case BPF_JMP | BPF_CALL:
@@ -676,7 +677,7 @@ emit_cond_jmp:
 		u64 imm64;
 
 		imm64 = (u64)insn1.imm << 32 | (u32)imm;
-		emit_a64_mov_i64(dst, imm64, ctx);
+		emit_a64_mov_i64(dstw, imm64, ctx);
 
 		return 1;
 	}
@@ -689,16 +690,16 @@ emit_cond_jmp:
 		emit_a64_mov_i(1, tmp, off, ctx);
 		switch (BPF_SIZE(code)) {
 		case BPF_W:
-			emit(A64_LDR32(dst, src, tmp), ctx);
+			emit(A64_LDR32(dstw, src, tmp), ctx);
 			break;
 		case BPF_H:
-			emit(A64_LDRH(dst, src, tmp), ctx);
+			emit(A64_LDRH(dstw, src, tmp), ctx);
 			break;
 		case BPF_B:
-			emit(A64_LDRB(dst, src, tmp), ctx);
+			emit(A64_LDRB(dstw, src, tmp), ctx);
 			break;
 		case BPF_DW:
-			emit(A64_LDR64(dst, src, tmp), ctx);
+			emit(A64_LDR64(dstw, src, tmp), ctx);
 			break;
 		}
 		break;
@@ -713,16 +714,16 @@ emit_cond_jmp:
 		emit_a64_mov_i(1, tmp, imm, ctx);
 		switch (BPF_SIZE(code)) {
 		case BPF_W:
-			emit(A64_STR32(tmp, dst, tmp2), ctx);
+			emit(A64_STR32(tmp, dstr, tmp2), ctx);
 			break;
 		case BPF_H:
-			emit(A64_STRH(tmp, dst, tmp2), ctx);
+			emit(A64_STRH(tmp, dstr, tmp2), ctx);
 			break;
 		case BPF_B:
-			emit(A64_STRB(tmp, dst, tmp2), ctx);
+			emit(A64_STRB(tmp, dstr, tmp2), ctx);
 			break;
 		case BPF_DW:
-			emit(A64_STR64(tmp, dst, tmp2), ctx);
+			emit(A64_STR64(tmp, dstr, tmp2), ctx);
 			break;
 		}
 		break;
@@ -735,16 +736,16 @@ emit_cond_jmp:
 		emit_a64_mov_i(1, tmp, off, ctx);
 		switch (BPF_SIZE(code)) {
 		case BPF_W:
-			emit(A64_STR32(src, dst, tmp), ctx);
+			emit(A64_STR32(src, dstr, tmp), ctx);
 			break;
 		case BPF_H:
-			emit(A64_STRH(src, dst, tmp), ctx);
+			emit(A64_STRH(src, dstr, tmp), ctx);
 			break;
 		case BPF_B:
-			emit(A64_STRB(src, dst, tmp), ctx);
+			emit(A64_STRB(src, dstr, tmp), ctx);
 			break;
 		case BPF_DW:
-			emit(A64_STR64(src, dst, tmp), ctx);
+			emit(A64_STR64(src, dstr, tmp), ctx);
 			break;
 		}
 		break;
@@ -754,10 +755,10 @@ emit_cond_jmp:
 	/* STX XADD: lock *(u64 *)(dst + off) += src */
 	case BPF_STX | BPF_XADD | BPF_DW:
 		if (!off) {
-			reg = dst;
+			reg = dstr;
 		} else {
 			emit_a64_mov_i(1, tmp, off, ctx);
-			emit(A64_ADD(1, tmp, tmp, dst), ctx);
+			emit(A64_ADD(1, tmp, tmp, dstr), ctx);
 			reg = tmp;
 		}
 		if (cpus_have_cap(ARM64_HAS_LSE_ATOMICS)) {
