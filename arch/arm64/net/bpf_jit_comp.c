@@ -25,7 +25,7 @@
 #define TMP_REG_3 (MAX_BPF_JIT_REG + 3)
 
 /* Map BPF registers to A64 registers */
-static const int bpf2a64[] = {
+static const int bpf2a64_default[] = {
 	/* return value from in-kernel function, and exit value from eBPF */
 	[BPF_REG_0] = A64_R(7),
 	/* arguments from eBPF program to in-kernel function */
@@ -59,6 +59,11 @@ struct jit_ctx {
 	__le32 *image;
 	u32 stack_size;
 };
+
+static inline int bpf2a64(struct jit_ctx *ctx, int bpf_reg)
+{
+	return bpf2a64_default[bpf_reg];
+}
 
 static inline void emit(const u32 insn, struct jit_ctx *ctx)
 {
@@ -176,12 +181,12 @@ static inline int epilogue_offset(const struct jit_ctx *ctx)
 static int build_prologue(struct jit_ctx *ctx, bool ebpf_from_cbpf)
 {
 	const struct bpf_prog *prog = ctx->prog;
-	const u8 r6 = bpf2a64[BPF_REG_6];
-	const u8 r7 = bpf2a64[BPF_REG_7];
-	const u8 r8 = bpf2a64[BPF_REG_8];
-	const u8 r9 = bpf2a64[BPF_REG_9];
-	const u8 fp = bpf2a64[BPF_REG_FP];
-	const u8 tcc = bpf2a64[TCALL_CNT];
+	const u8 r6 = bpf2a64(ctx, BPF_REG_6);
+	const u8 r7 = bpf2a64(ctx, BPF_REG_7);
+	const u8 r8 = bpf2a64(ctx, BPF_REG_8);
+	const u8 r9 = bpf2a64(ctx, BPF_REG_9);
+	const u8 fp = bpf2a64(ctx, BPF_REG_FP);
+	const u8 tcc = bpf2a64(ctx, TCALL_CNT);
 	const int idx0 = ctx->idx;
 	int cur_offset;
 
@@ -243,12 +248,12 @@ static int out_offset = -1; /* initialized on the first pass of build_body() */
 static int emit_bpf_tail_call(struct jit_ctx *ctx)
 {
 	/* bpf_tail_call(void *prog_ctx, struct bpf_array *array, u64 index) */
-	const u8 r2 = bpf2a64[BPF_REG_2];
-	const u8 r3 = bpf2a64[BPF_REG_3];
+	const u8 r2 = bpf2a64(ctx, BPF_REG_2);
+	const u8 r3 = bpf2a64(ctx, BPF_REG_3);
 
-	const u8 tmp = bpf2a64[TMP_REG_1];
-	const u8 prg = bpf2a64[TMP_REG_2];
-	const u8 tcc = bpf2a64[TCALL_CNT];
+	const u8 tmp = bpf2a64(ctx, TMP_REG_1);
+	const u8 prg = bpf2a64(ctx, TMP_REG_2);
+	const u8 tcc = bpf2a64(ctx, TCALL_CNT);
 	const int idx0 = ctx->idx;
 #define cur_offset (ctx->idx - idx0)
 #define jmp_offset (out_offset - (cur_offset))
@@ -307,12 +312,12 @@ static int emit_bpf_tail_call(struct jit_ctx *ctx)
 
 static void build_epilogue(struct jit_ctx *ctx)
 {
-	const u8 r0 = bpf2a64[BPF_REG_0];
-	const u8 r6 = bpf2a64[BPF_REG_6];
-	const u8 r7 = bpf2a64[BPF_REG_7];
-	const u8 r8 = bpf2a64[BPF_REG_8];
-	const u8 r9 = bpf2a64[BPF_REG_9];
-	const u8 fp = bpf2a64[BPF_REG_FP];
+	const u8 r0 = bpf2a64(ctx, BPF_REG_0);
+	const u8 r6 = bpf2a64(ctx, BPF_REG_6);
+	const u8 r7 = bpf2a64(ctx, BPF_REG_7);
+	const u8 r8 = bpf2a64(ctx, BPF_REG_8);
+	const u8 r9 = bpf2a64(ctx, BPF_REG_9);
+	const u8 fp = bpf2a64(ctx, BPF_REG_FP);
 
 	/* We're done with BPF stack */
 	emit(A64_ADD_I(1, A64_SP, A64_SP, ctx->stack_size), ctx);
@@ -343,11 +348,11 @@ static int build_insn(const struct bpf_insn *insn, struct jit_ctx *ctx,
 		      bool extra_pass)
 {
 	const u8 code = insn->code;
-	const u8 dst = bpf2a64[insn->dst_reg];
-	const u8 src = bpf2a64[insn->src_reg];
-	const u8 tmp = bpf2a64[TMP_REG_1];
-	const u8 tmp2 = bpf2a64[TMP_REG_2];
-	const u8 tmp3 = bpf2a64[TMP_REG_3];
+	const u8 dst = bpf2a64(ctx, insn->dst_reg);
+	const u8 src = bpf2a64(ctx, insn->src_reg);
+	const u8 tmp = bpf2a64(ctx, TMP_REG_1);
+	const u8 tmp2 = bpf2a64(ctx, TMP_REG_2);
+	const u8 tmp3 = bpf2a64(ctx, TMP_REG_3);
 	const s16 off = insn->off;
 	const s32 imm = insn->imm;
 	const int i = insn - ctx->prog->insnsi;
@@ -634,7 +639,7 @@ emit_cond_jmp:
 	/* function call */
 	case BPF_JMP | BPF_CALL:
 	{
-		const u8 r0 = bpf2a64[BPF_REG_0];
+		const u8 r0 = bpf2a64(ctx, BPF_REG_0);
 		bool func_addr_fixed;
 		u64 func_addr;
 		int ret;
