@@ -1060,6 +1060,14 @@ extern const struct seq_operations rxrpc_peer_seq_ops;
 extern const struct seq_operations rxrpc_local_seq_ops;
 
 /*
+ * receive.c
+ */
+bool rxrpc_validate_data(struct sk_buff *);
+void rxrpc_input_call_packet(struct rxrpc_call *, struct sk_buff *);
+void rxrpc_input_implicit_end_call(struct rxrpc_sock *, struct rxrpc_connection *,
+				   struct rxrpc_call *);
+
+/*
  * recvmsg.c
  */
 void rxrpc_notify_socket(struct rxrpc_call *);

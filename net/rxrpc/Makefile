@@ -24,6 +24,7 @@ rxrpc-y := \
 	output.o \
 	peer_event.o \
 	peer_object.o \
+	receive.o \
 	recvmsg.o \
 	rtt.o \
 	security.o \
