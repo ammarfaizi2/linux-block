@@ -288,7 +288,7 @@ int rxrpc_input_packet(struct sock *udp_sk, struct sk_buff *skb)
 			if (rxrpc_to_client(sp))
 				goto reject_packet;
 			if (call)
-				rxrpc_input_implicit_end_call(rx, conn, call);
+				rxrpc_receive_implicit_end_call(rx, conn, call);
 			call = NULL;
 		}
 
@@ -316,7 +316,7 @@ int rxrpc_input_packet(struct sock *udp_sk, struct sk_buff *skb)
 	/* Process a call packet; this either discards or passes on the ref
 	 * elsewhere.
 	 */
-	rxrpc_input_call_packet(call, skb);
+	rxrpc_receive_call_packet(call, skb);
 	goto out;
 
 discard:

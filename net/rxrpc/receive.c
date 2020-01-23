@@ -376,8 +376,8 @@ protocol_error:
  * call.  After that, we tell the other side we're no longer accepting jumbos
  * (that information is encoded in the ACK packet).
  */
-static void rxrpc_input_dup_data(struct rxrpc_call *call, rxrpc_seq_t seq,
-				 bool is_jumbo, bool *_jumbo_bad)
+static void rxrpc_receive_dup_data(struct rxrpc_call *call, rxrpc_seq_t seq,
+				   bool is_jumbo, bool *_jumbo_bad)
 {
 	/* Discard normal packets that are duplicates. */
 	if (is_jumbo)
@@ -393,8 +393,8 @@ static void rxrpc_input_dup_data(struct rxrpc_call *call, rxrpc_seq_t seq,
 	}
 }
 
-static void rxrpc_input_update_ack_window(struct rxrpc_call *call,
-					  rxrpc_seq_t window, rxrpc_seq_t wtop)
+static void rxrpc_receive_update_ack_window(struct rxrpc_call *call,
+					    rxrpc_seq_t window, rxrpc_seq_t wtop)
 {
 	atomic64_set_release(&call->ackr_window, ((u64)wtop) << 32 | window);
 }
@@ -402,15 +402,15 @@ static void rxrpc_input_update_ack_window(struct rxrpc_call *call,
 /*
  * Push a DATA packet onto the Rx queue.
  */
-static void rxrpc_input_queue_data(struct rxrpc_call *call, struct sk_buff *skb,
-				   rxrpc_seq_t window, rxrpc_seq_t wtop,
-				   enum rxrpc_receive_trace why)
+static void rxrpc_receive_queue_data(struct rxrpc_call *call, struct sk_buff *skb,
+				     rxrpc_seq_t window, rxrpc_seq_t wtop,
+				     enum rxrpc_receive_trace why)
 {
 	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
 	bool last = sp->flags & RXRPC_RX_LAST;
 
 	__skb_queue_tail(&call->rx_queue, skb);
-	rxrpc_input_update_ack_window(call, window, wtop);
+	rxrpc_receive_update_ack_window(call, window, wtop);
 
 	trace_rxrpc_receive(call, last ? why + 1 : why,
 			    sp->hdr.serial, sp->hdr.seq, sp->nr_subpackets);
@@ -419,7 +419,7 @@ static void rxrpc_input_queue_data(struct rxrpc_call *call, struct sk_buff *skb,
 /*
  * Process a DATA packet.
  */
-static void rxrpc_input_data_sub(struct rxrpc_call *call, struct sk_buff *skb)
+static void rxrpc_receive_data_sub(struct rxrpc_call *call, struct sk_buff *skb)
 {
 	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
 	struct sk_buff *oos;
@@ -509,7 +509,7 @@ static void rxrpc_input_data_sub(struct rxrpc_call *call, struct sk_buff *skb)
 		window = top;
 
 		spin_lock(&call->rx_queue.lock);
-		rxrpc_input_queue_data(call, skb, window, wtop, rxrpc_receive_queue);
+		rxrpc_receive_queue_data(call, skb, window, wtop, rxrpc_receive_queue);
 		skb = NULL;
 
 		while ((oos = skb_peek(&call->rx_oos_queue))) {
@@ -527,8 +527,8 @@ static void rxrpc_input_data_sub(struct rxrpc_call *call, struct sk_buff *skb)
 			}
 
 			window = top;
-			rxrpc_input_queue_data(call, oos, window, wtop,
-					       rxrpc_receive_queue_oos);
+			rxrpc_receive_queue_data(call, oos, window, wtop,
+						 rxrpc_receive_queue_oos);
 		}
 
 		spin_unlock(&call->rx_queue.lock);
@@ -551,11 +551,11 @@ static void rxrpc_input_data_sub(struct rxrpc_call *call, struct sk_buff *skb)
 
 		if (after(top, wtop)) {
 			wtop = top;
-			rxrpc_input_update_ack_window(call, window, wtop);
+			rxrpc_receive_update_ack_window(call, window, wtop);
 		}
 
 		if (!keep) {
-			rxrpc_input_dup_data(call, seq, nr_sub > 1, &jumbo_bad);
+			rxrpc_receive_dup_data(call, seq, nr_sub > 1, &jumbo_bad);
 			if (ack_reason < 0) {
 				ack_reason = RXRPC_ACK_DUPLICATE;
 				ack_serial = serial;
@@ -603,7 +603,7 @@ err_free:
  * Process a DATA packet, adding the packet to the Rx ring.  The caller's
  * packet ref must be passed on or discarded.
  */
-static void rxrpc_input_data(struct rxrpc_call *call, struct sk_buff *skb)
+static void rxrpc_receive_data(struct rxrpc_call *call, struct sk_buff *skb)
 {
 	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
 	enum rxrpc_call_state state;
@@ -652,7 +652,7 @@ static void rxrpc_input_data(struct rxrpc_call *call, struct sk_buff *skb)
 	    !rxrpc_receiving_reply(call))
 		goto unlock;
 
-	rxrpc_input_data_sub(call, skb);
+	rxrpc_receive_data_sub(call, skb);
 	skb = NULL;
 
 unlock:
@@ -725,7 +725,7 @@ static void rxrpc_complete_rtt_probe(struct rxrpc_call *call,
  * had at the time of the ping transmission, we adjudge all the DATA packets
  * sent between the response tx_top and the ping-time tx_top to have been lost.
  */
-static void rxrpc_input_check_for_lost_ack(struct rxrpc_call *call)
+static void rxrpc_receive_check_for_lost_ack(struct rxrpc_call *call)
 {
 	if (after(call->acks_lost_top, call->acks_prev_seq) &&
 	    !test_and_set_bit(RXRPC_CALL_EV_RESEND, &call->events))
@@ -735,20 +735,20 @@ static void rxrpc_input_check_for_lost_ack(struct rxrpc_call *call)
 /*
  * Process a ping response.
  */
-static void rxrpc_input_ping_response(struct rxrpc_call *call,
-				      ktime_t resp_time,
-				      rxrpc_serial_t acked_serial,
-				      rxrpc_serial_t ack_serial)
+static void rxrpc_receive_ping_response(struct rxrpc_call *call,
+					ktime_t resp_time,
+					rxrpc_serial_t acked_serial,
+					rxrpc_serial_t ack_serial)
 {
 	if (acked_serial == call->acks_lost_ping)
-		rxrpc_input_check_for_lost_ack(call);
+		rxrpc_receive_check_for_lost_ack(call);
 }
 
 /*
  * Process the extra information that may be appended to an ACK packet
  */
-static void rxrpc_input_ackinfo(struct rxrpc_call *call, struct sk_buff *skb,
-				struct rxrpc_ackinfo *ackinfo)
+static void rxrpc_receive_ackinfo(struct rxrpc_call *call, struct sk_buff *skb,
+				  struct rxrpc_ackinfo *ackinfo)
 {
 	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
 	struct rxrpc_peer *peer;
@@ -797,9 +797,9 @@ static void rxrpc_input_ackinfo(struct rxrpc_call *call, struct sk_buff *skb,
  * the timer on the basis that the peer might just not have processed them at
  * the time the ACK was sent.
  */
-static void rxrpc_input_soft_acks(struct rxrpc_call *call, u8 *acks,
-				  rxrpc_seq_t seq, int nr_acks,
-				  struct rxrpc_ack_summary *summary)
+static void rxrpc_receive_soft_acks(struct rxrpc_call *call, u8 *acks,
+				    rxrpc_seq_t seq, int nr_acks,
+				    struct rxrpc_ack_summary *summary)
 {
 	unsigned int i;
 
@@ -852,7 +852,7 @@ static bool rxrpc_is_ack_valid(struct rxrpc_call *call,
  * soft-ACK means that the packet may be discarded and retransmission
  * requested.  A phase is complete when all packets are hard-ACK'd.
  */
-static void rxrpc_input_ack(struct rxrpc_call *call, struct sk_buff *skb)
+static void rxrpc_receive_ack(struct rxrpc_call *call, struct sk_buff *skb)
 {
 	struct rxrpc_ack_summary summary = { 0 };
 	struct rxrpc_ackpacket ack;
@@ -975,8 +975,8 @@ static void rxrpc_input_ack(struct rxrpc_call *call, struct sk_buff *skb)
 	case RXRPC_ACK_PING:
 		break;
 	case RXRPC_ACK_PING_RESPONSE:
-		rxrpc_input_ping_response(call, skb->tstamp, acked_serial,
-					  ack_serial);
+		rxrpc_receive_ping_response(call, skb->tstamp, acked_serial,
+					    ack_serial);
 		fallthrough;
 	default:
 		if (after(acked_serial, call->acks_highest_serial))
@@ -986,7 +986,7 @@ static void rxrpc_input_ack(struct rxrpc_call *call, struct sk_buff *skb)
 
 	/* Parse rwind and mtu sizes if provided. */
 	if (info.rxMTU)
-		rxrpc_input_ackinfo(call, skb, &info);
+		rxrpc_receive_ackinfo(call, skb, &info);
 
 	if (first_soft_ack == 0) {
 		rxrpc_proto_abort("AK0", call, 0);
@@ -1032,8 +1032,8 @@ static void rxrpc_input_ack(struct rxrpc_call *call, struct sk_buff *skb)
 		call->acks_soft_tbl = skb;
 		spin_unlock(&call->acks_ack_lock);
 
-		rxrpc_input_soft_acks(call, skb->data + offset, first_soft_ack,
-				      nr_acks, &summary);
+		rxrpc_receive_soft_acks(call, skb->data + offset, first_soft_ack,
+					nr_acks, &summary);
 		skb_put = NULL;
 	} else if (call->acks_soft_tbl) {
 		spin_lock(&call->acks_ack_lock);
@@ -1059,7 +1059,7 @@ out_not_locked:
 /*
  * Process an ACKALL packet.
  */
-static void rxrpc_input_ackall(struct rxrpc_call *call, struct sk_buff *skb)
+static void rxrpc_receive_ackall(struct rxrpc_call *call, struct sk_buff *skb)
 {
 	struct rxrpc_ack_summary summary = { 0 };
 	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
@@ -1077,7 +1077,7 @@ static void rxrpc_input_ackall(struct rxrpc_call *call, struct sk_buff *skb)
 /*
  * Process an ABORT packet directed at a call.
  */
-static void rxrpc_input_abort(struct rxrpc_call *call, struct sk_buff *skb)
+static void rxrpc_receive_abort(struct rxrpc_call *call, struct sk_buff *skb)
 {
 	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
 	__be32 wtmp;
@@ -1101,8 +1101,8 @@ static void rxrpc_input_abort(struct rxrpc_call *call, struct sk_buff *skb)
 /*
  * Process an incoming call packet.
  */
-void rxrpc_input_call_packet(struct rxrpc_call *call,
-				    struct sk_buff *skb)
+void rxrpc_receive_call_packet(struct rxrpc_call *call,
+			       struct sk_buff *skb)
 {
 	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
 	unsigned long timo;
@@ -1121,11 +1121,11 @@ void rxrpc_input_call_packet(struct rxrpc_call *call,
 
 	switch (sp->hdr.type) {
 	case RXRPC_PACKET_TYPE_DATA:
-		rxrpc_input_data(call, skb);
+		rxrpc_receive_data(call, skb);
 		goto no_free;
 
 	case RXRPC_PACKET_TYPE_ACK:
-		rxrpc_input_ack(call, skb);
+		rxrpc_receive_ack(call, skb);
 		goto no_free;
 
 	case RXRPC_PACKET_TYPE_BUSY:
@@ -1138,11 +1138,11 @@ void rxrpc_input_call_packet(struct rxrpc_call *call,
 		break;
 
 	case RXRPC_PACKET_TYPE_ABORT:
-		rxrpc_input_abort(call, skb);
+		rxrpc_receive_abort(call, skb);
 		break;
 
 	case RXRPC_PACKET_TYPE_ACKALL:
-		rxrpc_input_ackall(call, skb);
+		rxrpc_receive_ackall(call, skb);
 		break;
 
 	default:
@@ -1160,9 +1160,9 @@ no_free:
  *
  * TODO: If callNumber > call_id + 1, renegotiate security.
  */
-void rxrpc_input_implicit_end_call(struct rxrpc_sock *rx,
-				   struct rxrpc_connection *conn,
-				   struct rxrpc_call *call)
+void rxrpc_receive_implicit_end_call(struct rxrpc_sock *rx,
+				     struct rxrpc_connection *conn,
+				     struct rxrpc_call *call)
 {
 	switch (READ_ONCE(call->state)) {
 	case RXRPC_CALL_SERVER_AWAIT_ACK:
