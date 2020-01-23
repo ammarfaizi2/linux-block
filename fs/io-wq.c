@@ -16,8 +16,13 @@
 #include <linux/slab.h>
 #include <linux/kthread.h>
 #include <linux/rculist_nulls.h>
+#include <linux/idr.h>
 
 #include "io-wq.h"
+
+static LIST_HEAD(wq_list);
+static DEFINE_MUTEX(wq_lock);
+static DEFINE_IDR(wq_idr);
 
 #define WORKER_IDLE_TIMEOUT	(5 * HZ)
 
@@ -115,6 +120,8 @@ struct io_wq {
 	struct completion done;
 
 	refcount_t use_refs;
+	struct list_head wq_list;
+	unsigned int id;
 };
 
 static bool io_worker_get(struct io_worker *worker)
@@ -1076,6 +1083,15 @@ struct io_wq *io_wq_create(unsigned bounded, struct io_wq_data *data)
 			goto err;
 		}
 		refcount_set(&wq->use_refs, 1);
+
+		/* if we're out of IDs or fail to get one, use 0 */
+		mutex_lock(&wq_lock);
+		wq->id = idr_alloc(&wq_idr, wq, 0, INT_MAX, GFP_KERNEL);
+		if (wq->id < 0)
+			wq->id = 0;
+
+		list_add(&wq->wq_list, &wq_list);
+		mutex_unlock(&wq_lock);
 		reinit_completion(&wq->done);
 		return wq;
 	}
@@ -1119,6 +1135,13 @@ static void __io_wq_destroy(struct io_wq *wq)
 
 void io_wq_destroy(struct io_wq *wq)
 {
-	if (refcount_dec_and_test(&wq->use_refs))
+	if (refcount_dec_and_test(&wq->use_refs)) {
+		mutex_lock(&wq_lock);
+		if (wq->id)
+			idr_remove(&wq_idr, wq->id);
+		list_del(&wq->wq_list);
+		mutex_unlock(&wq_lock);
+
 		__io_wq_destroy(wq);
+	}
 }
