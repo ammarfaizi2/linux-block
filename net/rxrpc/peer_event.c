@@ -21,8 +21,7 @@
 
 static void rxrpc_adjust_mtu(struct rxrpc_peer *, unsigned int);
 static void rxrpc_store_error(struct rxrpc_peer *, struct sock_exterr_skb *);
-static void rxrpc_distribute_error(struct rxrpc_peer *, int,
-				   enum rxrpc_call_completion);
+static void rxrpc_distribute_error(struct rxrpc_peer *, int);
 
 /*
  * Find the peer associated with an ICMPv4 packet.
@@ -262,7 +261,7 @@ void rxrpc_encap_err_rcv(struct sock *sk, struct sk_buff *skb,
 
 	trace_rxrpc_rx_icmp(peer, &ee, &srx);
 
-	rxrpc_distribute_error(peer, err, RXRPC_CALL_NETWORK_ERROR);
+	rxrpc_distribute_error(peer, err);
 	rcu_read_unlock();
 	rxrpc_put_peer(peer);
 }
@@ -435,14 +434,12 @@ void rxrpc_error_report(struct sock *sk)
 static void rxrpc_store_error(struct rxrpc_peer *peer,
 			      struct sock_exterr_skb *serr)
 {
-	enum rxrpc_call_completion compl = RXRPC_CALL_NETWORK_ERROR;
 	struct sock_extended_err *ee;
 	int err;
 
 	_enter("");
 
 	ee = &serr->ee;
-
 	err = ee->ee_errno;
 
 	switch (ee->ee_origin) {
@@ -486,7 +483,7 @@ static void rxrpc_store_error(struct rxrpc_peer *peer,
 	case SO_EE_ORIGIN_NONE:
 	case SO_EE_ORIGIN_LOCAL:
 		_proto("Rx Received local error { error=%d }", err);
-		compl = RXRPC_CALL_LOCAL_ERROR;
+		err |= 0x10000;
 		break;
 
 	case SO_EE_ORIGIN_ICMP6:
@@ -498,20 +495,21 @@ static void rxrpc_store_error(struct rxrpc_peer *peer,
 		break;
 	}
 
-	rxrpc_distribute_error(peer, err, compl);
+	rxrpc_distribute_error(peer, err);
 }
 
 /*
  * Distribute an error that occurred on a peer.
  */
-static void rxrpc_distribute_error(struct rxrpc_peer *peer, int error,
-				   enum rxrpc_call_completion compl)
+static void rxrpc_distribute_error(struct rxrpc_peer *peer, int error_report)
 {
 	struct rxrpc_call *call;
 
 	hlist_for_each_entry_rcu(call, &peer->error_targets, error_link) {
 		rxrpc_see_call(call);
-		rxrpc_set_call_completion(call, compl, 0, -error);
+		if (call->state < RXRPC_CALL_COMPLETE &&
+		    cmpxchg(&call->error_report, 0, error_report) == 0)
+			rxrpc_queue_call(call);
 	}
 }
 

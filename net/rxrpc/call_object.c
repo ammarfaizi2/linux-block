@@ -146,6 +146,7 @@ struct rxrpc_call *rxrpc_alloc_call(struct rxrpc_sock *rx, gfp_t gfp,
 	INIT_LIST_HEAD(&call->recvmsg_link);
 	INIT_LIST_HEAD(&call->sock_link);
 	INIT_LIST_HEAD(&call->tx_buffer);
+	skb_queue_head_init(&call->input_queue);
 	skb_queue_head_init(&call->rx_queue);
 	skb_queue_head_init(&call->rx_oos_queue);
 	init_waitqueue_head(&call->waitq);
@@ -409,6 +410,29 @@ void rxrpc_incoming_call(struct rxrpc_sock *rx,
 	call->state		= RXRPC_CALL_SERVER_SECURING;
 	call->cong_tstamp	= skb->tstamp;
 
+	spin_lock(&conn->state_lock);
+
+	switch (conn->state) {
+	case RXRPC_CONN_SERVICE_UNSECURED:
+	case RXRPC_CONN_SERVICE_CHALLENGING:
+		call->state = RXRPC_CALL_SERVER_SECURING;
+		break;
+	case RXRPC_CONN_SERVICE:
+		call->state = RXRPC_CALL_SERVER_RECV_REQUEST;
+		break;
+
+	case RXRPC_CONN_REMOTELY_ABORTED:
+		__rxrpc_set_call_completion(call, RXRPC_CALL_REMOTELY_ABORTED,
+					    conn->abort_code, conn->error);
+		break;
+	case RXRPC_CONN_LOCALLY_ABORTED:
+		__rxrpc_abort_call("CON", call, 1,
+				   conn->abort_code, conn->error);
+		break;
+	default:
+		BUG();
+	}
+
 	/* Set the channel for this call.  We don't get channel_lock as we're
 	 * only defending against the data_ready handler (which we're called
 	 * from) and the RESPONSE packet parser (which is only really
@@ -419,6 +443,7 @@ void rxrpc_incoming_call(struct rxrpc_sock *rx,
 	conn->channels[chan].call_counter = call->call_id;
 	conn->channels[chan].call_id = call->call_id;
 	rcu_assign_pointer(conn->channels[chan].call, call);
+	spin_unlock(&conn->state_lock);
 
 	spin_lock(&conn->params.peer->lock);
 	hlist_add_head_rcu(&call->error_link, &conn->params.peer->error_targets);
@@ -685,6 +710,7 @@ void rxrpc_cleanup_call(struct rxrpc_call *call)
 	}
 	rxrpc_put_txbuf(call->tx_pending, rxrpc_txbuf_put_cleaned);
 	rxrpc_free_skb(call->acks_soft_tbl, rxrpc_skb_cleaned);
+	rxrpc_purge_queue(&call->input_queue);
 
 	call_rcu(&call->rcu, rxrpc_rcu_destroy_call);
 }

@@ -515,6 +515,7 @@ enum rxrpc_call_flag {
 	RXRPC_CALL_UPGRADE,		/* Service upgrade was requested for the call */
 	RXRPC_CALL_DELAY_ACK_PENDING,	/* DELAY ACK generation is pending */
 	RXRPC_CALL_IDLE_ACK_PENDING,	/* IDLE ACK generation is pending */
+	RXRPC_CALL_IS_DEAD,		/* The call is not interested in any further packets */
 };
 
 /*
@@ -525,6 +526,7 @@ enum rxrpc_call_event {
 	RXRPC_CALL_EV_RESEND,		/* Tx resend required */
 	RXRPC_CALL_EV_EXPIRED,		/* Expiry occurred */
 	RXRPC_CALL_EV_ACK_LOST,		/* ACK may be lost, send ping */
+	RXRPC_CALL_EV_INITIAL_PING,	/* Send initial ping for a new service call */
 };
 
 /*
@@ -612,6 +614,7 @@ struct rxrpc_call {
 	spinlock_t		notify_lock;	/* Kernel notification lock */
 	rwlock_t		state_lock;	/* lock for state transition */
 	u32			abort_code;	/* Local/remote abort code */
+	unsigned int		error_report;	/* Error from UDP socket (|0x10000 if local) */
 	int			error;		/* Local error incurred */
 	enum rxrpc_call_state	state;		/* current state of call */
 	enum rxrpc_call_completion completion;	/* Call completion condition */
@@ -639,6 +642,7 @@ struct rxrpc_call {
 	ktime_t			tx_last_sent;	/* Last time a transmission occurred */
 
 	/* Received data tracking */
+	struct sk_buff_head	input_queue;	/* Received call-level packets */
 	struct sk_buff_head	rx_queue;	/* Queue of packets ready for recvmsg() */
 	struct sk_buff_head	rx_oos_queue;	/* Queue of out of sequence packets */
 
@@ -1062,10 +1066,7 @@ extern const struct seq_operations rxrpc_local_seq_ops;
 /*
  * receive.c
  */
-bool rxrpc_validate_data(struct sk_buff *);
-void rxrpc_receive_call_packet(struct rxrpc_call *, struct sk_buff *);
-void rxrpc_receive_implicit_end_call(struct rxrpc_sock *, struct rxrpc_connection *,
-				     struct rxrpc_call *);
+void rxrpc_receive(struct rxrpc_call *);
 
 /*
  * recvmsg.c

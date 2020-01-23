@@ -342,6 +342,8 @@ void rxrpc_process_call(struct work_struct *work)
 	_enter("{%d,%s,%lx}",
 	       call->debug_id, rxrpc_call_states[call->state], call->events);
 
+	rxrpc_receive(call);
+
 recheck_state:
 	/* Limit the number of times we do this before returning to the manager */
 	iterations++;

@@ -10,6 +10,53 @@
 #include "ar-internal.h"
 
 /*
+ * Post a call-level packet to a call.
+ */
+static void rxrpc_post_packet_to_call(struct rxrpc_call *call, struct sk_buff *skb)
+{
+	if (!test_bit(RXRPC_CALL_IS_DEAD, &call->flags)) {
+		skb_queue_tail(&call->input_queue, skb);
+		rxrpc_queue_call(call);
+	} else {
+		rxrpc_free_skb(skb, rxrpc_skb_freed);
+	}
+}
+
+/*
+ * Handle a new service call on a channel implicitly completing the preceding
+ * call on that channel.  This does not apply to client conns.
+ *
+ * TODO: If callNumber > call_id + 1, renegotiate security.
+ */
+static struct sk_buff *rxrpc_input_implicit_end_call(struct rxrpc_sock *rx,
+						     struct rxrpc_channel *chan,
+						     struct rxrpc_call *call,
+						     struct sk_buff *skb)
+{
+	struct sk_buff *copy;
+
+	/* We post a copy of the message to the call we're terminating to make
+	 * sure it gets terminated.  If we fail to copy the message, we steal
+	 * the original and hope the server sends us a new copy.
+	 */
+	if (call->state < RXRPC_CALL_COMPLETE &&
+	    cmpxchg(&chan->call, call, NULL) == call) {
+		set_bit(RXRPC_CALL_IS_DEAD, &call->flags);
+		copy = skb_clone(skb, GFP_ATOMIC | __GFP_NOWARN);
+		if (copy) {
+			rxrpc_new_skb(skb, rxrpc_skb_new);
+		} else {
+			copy = skb;
+			skb = NULL;
+		}
+		skb_queue_tail(&call->input_queue, copy);
+		rxrpc_queue_call(call);
+	}
+
+	return skb;
+}
+
+/*
  * post connection-level events to the connection
  * - this includes challenges, responses, some aborts and call terminal packet
  *   retransmission.
@@ -162,26 +209,6 @@ int rxrpc_input_packet(struct sock *udp_sk, struct sk_buff *skb)
 		if (sp->hdr.callNumber == 0 ||
 		    sp->hdr.seq == 0)
 			goto bad_message;
-		if (!rxrpc_validate_data(skb))
-			goto bad_message;
-
-		/* Unshare the packet so that it can be modified for in-place
-		 * decryption.
-		 */
-		if (sp->hdr.securityIndex != 0) {
-			struct sk_buff *nskb = skb_unshare(skb, GFP_ATOMIC);
-			if (!nskb) {
-				rxrpc_eaten_skb(skb, rxrpc_skb_unshared_nomem);
-				goto out;
-			}
-
-			if (nskb != skb) {
-				rxrpc_eaten_skb(skb, rxrpc_skb_received);
-				skb = nskb;
-				rxrpc_new_skb(skb, rxrpc_skb_unshared);
-				sp = rxrpc_skb(skb);
-			}
-		}
 		break;
 
 	case RXRPC_PACKET_TYPE_CHALLENGE:
@@ -287,8 +314,11 @@ int rxrpc_input_packet(struct sock *udp_sk, struct sk_buff *skb)
 		if (sp->hdr.callNumber > chan->call_id) {
 			if (rxrpc_to_client(sp))
 				goto reject_packet;
-			if (call)
-				rxrpc_receive_implicit_end_call(rx, conn, call);
+			if (call) {
+				skb = rxrpc_input_implicit_end_call(rx, chan, call, skb);
+				if (!skb)
+					goto out;
+			}
 			call = NULL;
 		}
 
@@ -316,7 +346,7 @@ int rxrpc_input_packet(struct sock *udp_sk, struct sk_buff *skb)
 	/* Process a call packet; this either discards or passes on the ref
 	 * elsewhere.
 	 */
-	rxrpc_receive_call_packet(call, skb);
+	rxrpc_post_packet_to_call(call, skb);
 	goto out;
 
 discard:

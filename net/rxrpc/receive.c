@@ -13,10 +13,8 @@ static void rxrpc_proto_abort(const char *why,
 			      struct rxrpc_call *call, rxrpc_seq_t seq)
 {
 	kdebug("proto-abort %s", why);
-	if (rxrpc_abort_call(why, call, seq, RX_PROTOCOL_ERROR, -EBADMSG)) {
-		set_bit(RXRPC_CALL_EV_ABORT, &call->events);
-		rxrpc_queue_call(call);
-	}
+	if (rxrpc_abort_call(why, call, seq, RX_PROTOCOL_ERROR, -EBADMSG))
+		rxrpc_send_abort_packet(call);
 }
 
 /*
@@ -329,7 +327,7 @@ static bool rxrpc_receiving_reply(struct rxrpc_call *call)
  * the last are RXRPC_JUMBO_DATALEN in size.  The last subpacket may be of any
  * size.
  */
-bool rxrpc_validate_data(struct sk_buff *skb)
+static bool rxrpc_validate_data(struct sk_buff *skb)
 {
 	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
 	unsigned int offset = sizeof(struct rxrpc_wire_header);
@@ -619,6 +617,30 @@ static void rxrpc_receive_data(struct rxrpc_call *call, struct sk_buff *skb)
 
 	state = READ_ONCE(call->state);
 	if (state >= RXRPC_CALL_COMPLETE) {
+		rxrpc_free_skb(skb, rxrpc_skb_freed);
+		return;
+	}
+
+	/* Unshare the packet so that it can be modified for in-place
+	 * decryption.
+	 */
+	if (sp->hdr.securityIndex != 0) {
+		struct sk_buff *nskb = skb_unshare(skb, GFP_NOFS);
+		if (!nskb) {
+			rxrpc_eaten_skb(skb, rxrpc_skb_unshared_nomem);
+			return;
+		}
+
+		if (nskb != skb) {
+			rxrpc_eaten_skb(skb, rxrpc_skb_received);
+			skb = nskb;
+			rxrpc_new_skb(skb, rxrpc_skb_unshared);
+			sp = rxrpc_skb(skb);
+		}
+	}
+
+	if (!rxrpc_validate_data(skb)) {
+		rxrpc_proto_abort("VLD", call, sp->hdr.seq);
 		rxrpc_free_skb(skb, rxrpc_skb_freed);
 		return;
 	}
@@ -1101,8 +1123,7 @@ static void rxrpc_receive_abort(struct rxrpc_call *call, struct sk_buff *skb)
 /*
  * Process an incoming call packet.
  */
-void rxrpc_receive_call_packet(struct rxrpc_call *call,
-			       struct sk_buff *skb)
+static void rxrpc_receive_call_packet(struct rxrpc_call *call, struct sk_buff *skb)
 {
 	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
 	unsigned long timo;
@@ -1160,10 +1181,11 @@ no_free:
  *
  * TODO: If callNumber > call_id + 1, renegotiate security.
  */
-void rxrpc_receive_implicit_end_call(struct rxrpc_sock *rx,
-				     struct rxrpc_connection *conn,
-				     struct rxrpc_call *call)
+static void rxrpc_receive_implicit_end_call(struct rxrpc_sock *rx,
+					    struct rxrpc_call *call)
 {
+	struct rxrpc_connection *conn = call->conn;
+
 	switch (READ_ONCE(call->state)) {
 	case RXRPC_CALL_SERVER_AWAIT_ACK:
 		rxrpc_call_completed(call);
@@ -1171,15 +1193,70 @@ void rxrpc_receive_implicit_end_call(struct rxrpc_sock *rx,
 	case RXRPC_CALL_COMPLETE:
 		break;
 	default:
-		if (rxrpc_abort_call("IMP", call, 0, RX_CALL_DEAD, -ESHUTDOWN)) {
-			set_bit(RXRPC_CALL_EV_ABORT, &call->events);
-			rxrpc_queue_call(call);
-		}
+		if (rxrpc_abort_call("IMP", call, 0, RX_CALL_DEAD, -ESHUTDOWN))
+			rxrpc_send_abort_packet(call);
 		trace_rxrpc_improper_term(call);
 		break;
 	}
 
-	spin_lock(&rx->incoming_lock);
+	spin_lock_bh(&rx->incoming_lock);
 	__rxrpc_disconnect_call(conn, call);
-	spin_unlock(&rx->incoming_lock);
+	spin_unlock_bh(&rx->incoming_lock);
+}
+
+/*
+ * Ping the other end to fill our RTT cache and to retrieve the rwind
+ * and MTU parameters.
+ */
+static void rxrpc_send_initial_ping(struct rxrpc_call *call, struct sk_buff *skb)
+{
+	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
+	ktime_t now = skb->tstamp;
+
+	if (call->peer->rtt_count < 3 ||
+	    ktime_before(ktime_add_ms(call->peer->rtt_last_req, 1000), now))
+		rxrpc_send_ACK(call, RXRPC_ACK_PING, sp->hdr.serial,
+			       rxrpc_propose_ack_ping_for_params);
+}
+
+/*
+ * Process a call's receive queue.
+ */
+void rxrpc_receive(struct rxrpc_call *call)
+{
+	struct rxrpc_skb_priv *sp;
+	struct rxrpc_sock *rx = rcu_access_pointer(call->socket);
+	struct sk_buff *skb;
+	int error_report;
+
+	for (;;) {
+		error_report = READ_ONCE(call->error_report);
+		if (error_report) {
+			if (error_report & 0x10000) {
+				error_report &= ~0x10000;
+				rxrpc_set_call_completion(
+					call, RXRPC_CALL_LOCAL_ERROR, 0, -error_report);
+			} else {
+				rxrpc_set_call_completion(
+					call, RXRPC_CALL_NETWORK_ERROR, 0, -error_report);
+			}
+		}
+
+		skb = skb_dequeue(&call->input_queue);
+		if (!skb)
+			break;
+
+		sp = rxrpc_skb(skb);
+
+		if (sp->hdr.callNumber != call->call_id) {
+			rxrpc_free_skb(skb, rxrpc_skb_freed);
+			rxrpc_receive_implicit_end_call(rx, call);
+			continue;
+		}
+
+		if (test_and_set_bit(RXRPC_CALL_EV_INITIAL_PING, &call->events))
+			rxrpc_send_initial_ping(call, skb);
+
+		rxrpc_receive_call_packet(call, skb);
+	}
 }
