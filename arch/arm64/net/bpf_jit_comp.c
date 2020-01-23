@@ -58,10 +58,14 @@ struct jit_ctx {
 	int *offset;
 	__le32 *image;
 	u32 stack_size;
+	int reg0_in_reg1;
 };
 
 static inline int bpf2a64(struct jit_ctx *ctx, int bpf_reg)
 {
+	if (ctx->reg0_in_reg1 && bpf_reg == BPF_REG_0)
+		bpf_reg = BPF_REG_1;
+
 	return bpf2a64_default[bpf_reg];
 }
 
@@ -338,6 +342,47 @@ static void build_epilogue(struct jit_ctx *ctx)
 	emit(A64_RET(A64_LR), ctx);
 }
 
+static int dead_register(const struct jit_ctx *ctx, int offset, int bpf_reg)
+{
+	const struct bpf_prog *prog = ctx->prog;
+	int i;
+
+	for (i = offset; i < prog->len; ++i) {
+		const struct bpf_insn *insn = &prog->insnsi[i];
+		const u8 code = insn->code;
+		const u8 bpf_dst = insn->dst_reg;
+		const u8 bpf_src = insn->src_reg;
+		const int writes_dst = !((code & BPF_ST) || (code & BPF_STX)
+					 || (code & BPF_JMP32) || (code & BPF_JMP));
+		const int reads_dst  = !((code & BPF_LD));
+		const int reads_src  = true;
+
+		/* Calls are a bit special in that they clobber a bunch of regisers. */
+		if ((code & (BPF_JMP | BPF_CALL)) || (code & (BPF_JMP | BPF_TAIL_CALL)))
+			if ((bpf_reg >= BPF_REG_0) && (bpf_reg <= BPF_REG_5))
+				return false;
+
+		/* Registers that are read before they're written are alive.
+		 * Most opcodes are of the form DST = DEST op SRC, but there
+		 * are some exceptions.*/
+		if (bpf_src == bpf_reg && reads_src)
+			return false;
+
+		if (bpf_dst == bpf_reg && reads_dst)
+			return false;
+		
+		if (bpf_dst == bpf_reg && writes_dst)
+			return true;
+
+		/* Most BPF instructions are 8 bits long, but some ar 16 bits
+		 * long. */
+		if (code & (BPF_LD | BPF_IMM | BPF_DW))
+			++i;
+	}
+
+	return true;
+}
+
 /* JITs an eBPF instruction.
  * Returns:
  * 0  - successfully JITed an 8-byte eBPF instruction.
@@ -348,7 +393,7 @@ static int build_insn(const struct bpf_insn *insn, struct jit_ctx *ctx,
 		      bool extra_pass)
 {
 	const u8 code = insn->code;
-	const u8 dstw = bpf2a64(ctx, insn->dst_reg);
+	u8 dstw;
 	const u8 dstr = bpf2a64(ctx, insn->dst_reg);
 	const u8 src = bpf2a64(ctx, insn->src_reg);
 	const u8 tmp = bpf2a64(ctx, TMP_REG_1);
@@ -373,6 +418,27 @@ static int build_insn(const struct bpf_insn *insn, struct jit_ctx *ctx,
 } while (0)
 #define check_imm19(imm) check_imm(19, imm)
 #define check_imm26(imm) check_imm(26, imm)
+
+	/* Handle BPF_REG_0, which may be in the wrong place because the ARM64
+	 * ABI doesn't match the BPF ABI for function calls. */
+	if (ctx->reg0_in_reg1) {
+		/* If we're writing BPF_REG_0 then we don't need to do any
+		 * extra work to get the registers back in their correct
+		 * locations. */
+		if (insn->dst_reg == BPF_REG_0)
+			ctx->reg0_in_reg1 = false;
+
+		/* If we're writing to BPF_REG_1 then we need to save BPF_REG_0
+		 * into the correct location if it's still alive, as otherwise
+		 * it will be clobbered. */
+		if (insn->dst_reg == BPF_REG_1) {
+			if (!dead_register(ctx, off + 1, BPF_REG_0))
+				emit(A64_MOV(1, A64_R(7), A64_R(0)), ctx);
+			ctx->reg0_in_reg1 = false;
+		}
+	}
+
+	dstw = bpf2a64(ctx, insn->dst_reg);
 
 	switch (code) {
 	/* dst = src */
@@ -640,7 +706,6 @@ emit_cond_jmp:
 	/* function call */
 	case BPF_JMP | BPF_CALL:
 	{
-		const u8 r0 = bpf2a64(ctx, BPF_REG_0);
 		bool func_addr_fixed;
 		u64 func_addr;
 		int ret;
@@ -651,7 +716,7 @@ emit_cond_jmp:
 			return ret;
 		emit_addr_mov_i64(tmp, func_addr, ctx);
 		emit(A64_BLR(tmp), ctx);
-		emit(A64_MOV(1, r0, A64_R(0)), ctx);
+		ctx->reg0_in_reg1 = true;
 		break;
 	}
 	/* tail call */
