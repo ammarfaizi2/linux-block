@@ -1024,7 +1024,7 @@ void io_wq_flush(struct io_wq *wq)
 	}
 }
 
-struct io_wq *io_wq_create(unsigned bounded, struct io_wq_data *data)
+static struct io_wq *__io_wq_create(unsigned bounded, struct io_wq_data *data)
 {
 	int ret = -ENOMEM, node;
 	struct io_wq *wq;
@@ -1106,6 +1106,36 @@ err:
 	return ERR_PTR(ret);
 }
 
+static bool io_wq_match(struct io_wq *wq, struct io_wq_data *data)
+{
+	if (data->creds != wq->creds || data->user != wq->user)
+		return false;
+	if (data->get_work != wq->get_work || data->put_work != wq->put_work)
+		return false;
+	return refcount_inc_not_zero(&wq->use_refs);
+}
+
+/*
+ * Find and return io_wq with given id and grab a reference to it.
+ */
+struct io_wq *io_wq_create_id(unsigned bounded, struct io_wq_data *data,
+			      unsigned int id)
+{
+	if (id) {
+		struct io_wq *wq;
+
+		mutex_lock(&wq_lock);
+		wq = idr_find(&wq_idr, id);
+		if (wq && io_wq_match(wq, data)) {
+			mutex_unlock(&wq_lock);
+			return wq;
+		}
+		mutex_unlock(&wq_lock);
+	}
+
+	return __io_wq_create(bounded, data);
+}
+
 static bool io_wq_worker_wake(struct io_worker *worker, void *data)
 {
 	wake_up_process(worker->task);
@@ -1144,4 +1174,9 @@ void io_wq_destroy(struct io_wq *wq)
 
 		__io_wq_destroy(wq);
 	}
+}
+
+unsigned int io_wq_id(struct io_wq *wq)
+{
+	return wq->id;
 }
