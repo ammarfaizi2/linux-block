@@ -14,6 +14,8 @@
  */
 static void rxrpc_post_packet_to_call(struct rxrpc_call *call, struct sk_buff *skb)
 {
+	if (!test_bit(RXRPC_CALL_RX_HEARD, &call->flags))
+		set_bit(RXRPC_CALL_RX_HEARD, &call->flags);
 	if (!test_bit(RXRPC_CALL_IS_DEAD, &call->flags)) {
 		skb_queue_tail(&call->input_queue, skb);
 		rxrpc_queue_call(call);
@@ -320,15 +322,6 @@ int rxrpc_input_packet(struct sock *udp_sk, struct sk_buff *skb)
 					goto out;
 			}
 			call = NULL;
-		}
-
-		if (call) {
-			if (sp->hdr.serviceId != call->service_id)
-				call->service_id = sp->hdr.serviceId;
-			if ((int)sp->hdr.serial - (int)call->rx_serial > 0)
-				call->rx_serial = sp->hdr.serial;
-			if (!test_bit(RXRPC_CALL_RX_HEARD, &call->flags))
-				set_bit(RXRPC_CALL_RX_HEARD, &call->flags);
 		}
 	}
 

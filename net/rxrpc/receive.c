@@ -616,10 +616,8 @@ static void rxrpc_receive_data(struct rxrpc_call *call, struct sk_buff *skb)
 	       sp->hdr.serial, seq0, sp->hdr.flags, sp->nr_subpackets);
 
 	state = READ_ONCE(call->state);
-	if (state >= RXRPC_CALL_COMPLETE) {
-		rxrpc_free_skb(skb, rxrpc_skb_freed);
-		return;
-	}
+	if (state >= RXRPC_CALL_COMPLETE)
+		goto out;
 
 	/* Unshare the packet so that it can be modified for in-place
 	 * decryption.
@@ -641,8 +639,7 @@ static void rxrpc_receive_data(struct rxrpc_call *call, struct sk_buff *skb)
 
 	if (!rxrpc_validate_data(skb)) {
 		rxrpc_proto_abort("VLD", call, sp->hdr.seq);
-		rxrpc_free_skb(skb, rxrpc_skb_freed);
-		return;
+		goto out;
 	}
 
 	if (state == RXRPC_CALL_SERVER_RECV_REQUEST) {
@@ -670,12 +667,12 @@ static void rxrpc_receive_data(struct rxrpc_call *call, struct sk_buff *skb)
 	if ((state == RXRPC_CALL_CLIENT_SEND_REQUEST ||
 	     state == RXRPC_CALL_CLIENT_AWAIT_REPLY) &&
 	    !rxrpc_receiving_reply(call))
-		goto unlock;
+		goto out;
 
 	rxrpc_receive_data_sub(call, skb);
 	skb = NULL;
 
-unlock:
+out:
 	trace_rxrpc_notify_socket(call->debug_id, serial);
 	rxrpc_notify_socket(call);
 
@@ -1242,6 +1239,11 @@ void rxrpc_receive(struct rxrpc_call *call)
 			rxrpc_receive_implicit_end_call(rx, call);
 			continue;
 		}
+
+		if (sp->hdr.serviceId != call->service_id)
+			call->service_id = sp->hdr.serviceId;
+		if ((int)sp->hdr.serial - (int)call->rx_serial > 0)
+			call->rx_serial = sp->hdr.serial;
 
 		if (test_and_set_bit(RXRPC_CALL_EV_INITIAL_PING, &call->events))
 			rxrpc_send_initial_ping(call, skb);
