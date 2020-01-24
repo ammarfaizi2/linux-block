@@ -106,9 +106,9 @@ void rxrpc_send_ACK(struct rxrpc_call *call, u8 ack_reason,
 		return;
 	}
 
-	spin_lock_bh(&local->ack_tx_lock);
+	spin_lock(&local->ack_tx_lock);
 	list_add_tail(&txb->tx_link, &local->ack_tx_queue);
-	spin_unlock_bh(&local->ack_tx_lock);
+	spin_unlock(&local->ack_tx_lock);
 	trace_rxrpc_send_ack(call, why, ack_reason, serial);
 
 	if (!rcu_read_lock_held()) {
@@ -150,13 +150,13 @@ static void rxrpc_resend(struct rxrpc_call *call, unsigned long now_j)
 
 	/* See if there's an ACK saved with a soft-ACK table in it. */
 	if (call->acks_soft_tbl) {
-		spin_lock_bh(&call->acks_ack_lock);
+		spin_lock(&call->acks_ack_lock);
 		ack_skb = call->acks_soft_tbl;
 		if (ack_skb) {
 			rxrpc_get_skb(ack_skb, rxrpc_skb_get_ack);
 			ack = (void *)ack_skb->data + sizeof(struct rxrpc_wire_header);
 		}
-		spin_unlock_bh(&call->acks_ack_lock);
+		spin_unlock(&call->acks_ack_lock);
 	}
 
 	if (list_empty(&call->tx_buffer))

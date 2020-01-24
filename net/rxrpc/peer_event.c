@@ -121,10 +121,10 @@ static void rxrpc_adjust_mtu(struct rxrpc_peer *peer, unsigned int mtu)
 	}
 
 	if (mtu < peer->mtu) {
-		spin_lock_bh(&peer->lock);
+		spin_lock(&peer->lock);
 		peer->mtu = mtu;
 		peer->maxdata = peer->mtu - peer->hdrsize;
-		spin_unlock_bh(&peer->lock);
+		spin_unlock(&peer->lock);
 	}
 }
 
@@ -227,7 +227,7 @@ static void rxrpc_peer_keepalive_dispatch(struct rxrpc_net *rxnet,
 	time64_t keepalive_at;
 	int slot;
 
-	spin_lock_bh(&rxnet->peer_hash_lock);
+	spin_lock(&rxnet->peer_hash_lock);
 
 	while (!list_empty(collector)) {
 		peer = list_entry(collector->next,
@@ -238,7 +238,7 @@ static void rxrpc_peer_keepalive_dispatch(struct rxrpc_net *rxnet,
 			continue;
 
 		if (__rxrpc_use_local(peer->local, rxrpc_local_use_peer_keepalive)) {
-			spin_unlock_bh(&rxnet->peer_hash_lock);
+			spin_unlock(&rxnet->peer_hash_lock);
 
 			keepalive_at = peer->last_tx_at + RXRPC_KEEPALIVE_TIME;
 			slot = keepalive_at - base;
@@ -257,7 +257,7 @@ static void rxrpc_peer_keepalive_dispatch(struct rxrpc_net *rxnet,
 			 */
 			slot += cursor;
 			slot &= mask;
-			spin_lock_bh(&rxnet->peer_hash_lock);
+			spin_lock(&rxnet->peer_hash_lock);
 			list_add_tail(&peer->keepalive_link,
 				      &rxnet->peer_keepalive[slot & mask]);
 			rxrpc_unuse_local(peer->local, rxrpc_local_unuse_peer_keepalive);
@@ -265,7 +265,7 @@ static void rxrpc_peer_keepalive_dispatch(struct rxrpc_net *rxnet,
 		rxrpc_put_peer_locked(peer, rxrpc_peer_put_keepalive);
 	}
 
-	spin_unlock_bh(&rxnet->peer_hash_lock);
+	spin_unlock(&rxnet->peer_hash_lock);
 }
 
 /*
@@ -295,7 +295,7 @@ void rxrpc_peer_keepalive_worker(struct work_struct *work)
 	 * second; the bucket at cursor + 1 goes at now + 1s and so
 	 * on...
 	 */
-	spin_lock_bh(&rxnet->peer_hash_lock);
+	spin_lock(&rxnet->peer_hash_lock);
 	list_splice_init(&rxnet->peer_keepalive_new, &collector);
 
 	stop = cursor + ARRAY_SIZE(rxnet->peer_keepalive);
@@ -307,7 +307,7 @@ void rxrpc_peer_keepalive_worker(struct work_struct *work)
 	}
 
 	base = now;
-	spin_unlock_bh(&rxnet->peer_hash_lock);
+	spin_unlock(&rxnet->peer_hash_lock);
 
 	rxnet->peer_keepalive_base = base;
 	rxnet->peer_keepalive_cursor = cursor;
