@@ -642,3 +642,38 @@ int sysfs_file_change_owner(struct kobject *kobj, const char *name)
 	return error;
 }
 EXPORT_SYMBOL_GPL(sysfs_file_change_owner);
+
+/**
+ *	sysfs_change_owner - change owner of the given object.
+ *	@kobj:	object.
+ */
+int sysfs_change_owner(struct kobject *kobj)
+{
+	int error;
+	const struct kobj_type *ktype;
+
+	if (!kobj->state_in_sysfs)
+		return -EINVAL;
+
+	error = sysfs_file_change_owner(kobj, NULL);
+	if (error)
+		return error;
+
+	ktype = get_ktype(kobj);
+	if (ktype) {
+		struct attribute **kattr;
+
+		for (kattr = ktype->default_attrs; kattr && *kattr; kattr++) {
+			error = sysfs_file_change_owner(kobj, (*kattr)->name);
+			if (error)
+				return error;
+		}
+
+		error = sysfs_groups_change_owner(kobj, ktype->default_groups);
+		if (error)
+			return error;
+	}
+
+	return 0;
+}
+EXPORT_SYMBOL_GPL(sysfs_change_owner);

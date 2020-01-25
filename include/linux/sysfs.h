@@ -310,6 +310,7 @@ static inline void sysfs_enable_ns(struct kernfs_node *kn)
 	return kernfs_enable_ns(kn);
 }
 
+int sysfs_change_owner(struct kobject *kobj);
 int sysfs_file_change_owner(struct kobject *kobj, const char *name);
 int sysfs_link_change_owner(struct kobject *kobj, struct kobject *targ,
 			    const char *name);
@@ -538,6 +539,11 @@ static inline int sysfs_file_change_owner(struct kobject *kobj, const char *name
 static inline int sysfs_link_change_owner(struct kobject *kobj,
 					  struct kobject *targ,
 					  const char *name)
+{
+	return 0;
+}
+
+static inline int sysfs_change_owner(struct kobject *kobj)
 {
 	return 0;
 }
