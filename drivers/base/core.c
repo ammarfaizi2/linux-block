@@ -3515,6 +3515,10 @@ int device_change_owner(struct device *dev)
 	if (error)
 		goto out;
 
+	error = dpm_sysfs_change_owner(dev);
+	if (error)
+		goto out;
+
 #ifdef CONFIG_BLOCK
 	if (sysfs_deprecated && dev->class == &block_class)
 		goto out;
