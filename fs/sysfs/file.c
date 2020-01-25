@@ -558,3 +558,85 @@ void sysfs_remove_bin_file(struct kobject *kobj,
 	kernfs_remove_by_name(kobj->sd, attr->attr.name);
 }
 EXPORT_SYMBOL_GPL(sysfs_remove_bin_file);
+
+static int internal_change_owner(struct kernfs_node *kn, struct kobject *kobj)
+{
+	kuid_t uid;
+	kgid_t gid;
+	struct iattr newattrs = {
+		.ia_valid = ATTR_UID | ATTR_GID,
+	};
+
+	kobject_get_ownership(kobj, &uid, &gid);
+	newattrs.ia_uid = uid;
+	newattrs.ia_gid = gid;
+
+	return kernfs_setattr(kn, &newattrs);
+}
+
+/**
+ *	sysfs_file_change_owner_by_name - change owner of a file.
+ *	@kobj:	object.
+ *	@name:	name of the file to change.
+ *
+ * To change the ownership of a sysfs object, the caller must first change the
+ * uid/gid of the kobject and then call this function. Usually this will be
+ * taken care of by the relevant subsystem, e.g. moving a network device
+ * between network namespaces owned by different user namespaces will change
+ * the uid/gid of the kobject to the uid/gid of the root user in the user
+ * namespace. Calling this function afterwards will cause the sysfs object to
+ * reflect the new uid/gid.
+ */
+int sysfs_file_change_owner_by_name(struct kobject *kobj, const char *name)
+{
+	struct kernfs_node *kn;
+	int error;
+
+	if (!name)
+		return -EINVAL;
+
+	if (!kobj->state_in_sysfs)
+		return -EINVAL;
+
+	kn = kernfs_find_and_get(kobj->sd, name);
+	if (!kn)
+		return -ENOENT;
+
+	error = internal_change_owner(kn, kobj);
+
+	kernfs_put(kn);
+
+	return error;
+}
+EXPORT_SYMBOL_GPL(sysfs_file_change_owner_by_name);
+
+/**
+ *	sysfs_file_change_owner - change owner of a file.
+ *	@kobj:	object.
+ *
+ * To change the ownership of a sysfs object, the caller must first change the
+ * uid/gid of the kobject and then call this function. Usually this will be
+ * taken care of by the relevant subsystem, e.g. moving a network device
+ * between network namespaces owned by different user namespaces will change
+ * the uid/gid of the kobject to the uid/gid of the root user in the user
+ * namespace. Calling this function afterwards will cause the sysfs object to
+ * reflect the new uid/gid.
+ */
+int sysfs_file_change_owner(struct kobject *kobj)
+{
+	struct kernfs_node *kn;
+	int error;
+
+	if (!kobj->state_in_sysfs)
+		return -EINVAL;
+
+	kernfs_get(kobj->sd);
+
+	kn = kobj->sd;
+	error = internal_change_owner(kn, kobj);
+
+	kernfs_put(kn);
+
+	return error;
+}
+EXPORT_SYMBOL_GPL(sysfs_file_change_owner);

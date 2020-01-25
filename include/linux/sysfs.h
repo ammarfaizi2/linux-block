@@ -310,6 +310,9 @@ static inline void sysfs_enable_ns(struct kernfs_node *kn)
 	return kernfs_enable_ns(kn);
 }
 
+int sysfs_file_change_owner(struct kobject *kobj);
+int sysfs_file_change_owner_by_name(struct kobject *kobj, const char *name);
+
 #else /* CONFIG_SYSFS */
 
 static inline int sysfs_create_dir_ns(struct kobject *kobj, const void *ns)
@@ -520,6 +523,17 @@ static inline int __must_check sysfs_init(void)
 
 static inline void sysfs_enable_ns(struct kernfs_node *kn)
 {
+}
+
+static inline int int sysfs_file_change_owner(struct kobject *kobj)
+{
+	return 0;
+}
+
+static inline int sysfs_file_change_owner_by_name(struct kobject *kobj,
+						  const char *name)
+{
+	return 0;
 }
 
 #endif /* CONFIG_SYSFS */
