@@ -575,6 +575,52 @@ static int internal_change_owner(struct kernfs_node *kn, struct kobject *kobj)
 }
 
 /**
+ *	sysfs_link_change_owner - change owner of a link.
+ *	@kobj:	object of the kernfs_node the symlink is located in.
+ *	@targ:	object of the kernfs_node the symlink points to.
+ *	@name:	name of the link.
+ *
+ * To change the ownership of a sysfs object, the caller must first change the
+ * uid/gid of the kobject and then call this function. Usually this will be
+ * taken care of by the relevant subsystem, e.g. moving a network device
+ * between network namespaces owned by different user namespaces will change
+ * the uid/gid of the kobject to the uid/gid of the root user in the user
+ * namespace. Calling this function afterwards will cause the sysfs object to
+ * reflect the new uid/gid.
+ */
+int sysfs_link_change_owner(struct kobject *kobj, struct kobject *targ,
+			    const char *name)
+{
+	struct kernfs_node *parent, *kn = NULL;
+	int error;
+
+	if (!kobj)
+		parent = sysfs_root_kn;
+	else
+		parent = kobj->sd;
+
+	if (!targ->state_in_sysfs)
+		return -EINVAL;
+
+	error = -ENOENT;
+	kn = kernfs_find_and_get_ns(parent, name, targ->sd->ns);
+	if (!kn)
+		goto out;
+
+	error = -EINVAL;
+	if (kernfs_type(kn) != KERNFS_LINK)
+		goto out;
+	if (kn->symlink.target_kn->priv != targ)
+		goto out;
+
+	error = internal_change_owner(kn, targ);
+
+out:
+	kernfs_put(kn);
+	return error;
+}
+
+/**
  *	sysfs_file_change_owner_by_name - change owner of a file.
  *	@kobj:	object.
  *	@name:	name of the file to change.
