@@ -3458,6 +3458,79 @@ out:
 }
 EXPORT_SYMBOL_GPL(device_move);
 
+static int device_attrs_change_owner(struct device *dev)
+{
+	struct kobject *kobj = &dev->kobj;
+	struct class *class = dev->class;
+	const struct device_type *type = dev->type;
+	int error;
+
+	if (class) {
+		error = sysfs_groups_change_owner(kobj, class->dev_groups);
+		if (error)
+			return error;
+	}
+
+	if (type) {
+		error = sysfs_groups_change_owner(kobj, type->groups);
+		if (error)
+			return error;
+	}
+
+	error = sysfs_groups_change_owner(kobj, dev->groups);
+	if (error)
+		return error;
+
+	if (device_supports_offline(dev) && !dev->offline_disabled) {
+		error = sysfs_file_change_owner_by_name(kobj, dev_attr_online.attr.name);
+		if (error)
+			return error;
+	}
+
+	return 0;
+}
+
+/**
+ * device_change_owner - change the owner of an existing device.
+ * @dev: device.
+ */
+int device_change_owner(struct device *dev)
+{
+	int error;
+	struct kobject *kobj = &dev->kobj;
+
+	dev = get_device(dev);
+	if (!dev)
+		return -EINVAL;
+
+	error = sysfs_change_owner(kobj);
+	if (error)
+		goto out;
+
+	error = sysfs_file_change_owner_by_name(kobj, dev_attr_uevent.attr.name);
+	if (error)
+		goto out;
+
+	error = device_attrs_change_owner(dev);
+	if (error)
+		goto out;
+
+#ifdef CONFIG_BLOCK
+	if (sysfs_deprecated && dev->class == &block_class)
+		goto out;
+#endif
+
+	error = sysfs_link_change_owner(&dev->class->p->subsys.kobj, &dev->kobj,
+					dev_name(dev));
+	if (error)
+		goto out;
+
+out:
+	put_device(dev);
+	return error;
+}
+EXPORT_SYMBOL_GPL(device_change_owner);
+
 /**
  * device_shutdown - call ->shutdown() on each device to shutdown.
  */
