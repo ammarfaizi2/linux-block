@@ -686,3 +686,46 @@ int sysfs_file_change_owner(struct kobject *kobj)
 	return error;
 }
 EXPORT_SYMBOL_GPL(sysfs_file_change_owner);
+
+/**
+ *	sysfs_change_owner - change owner of the given object.
+ *	@kobj:	object.
+ *
+ * To change the ownership of a sysfs object, the caller must first change the
+ * uid/gid of the kobject and then call this function. Usually this will be
+ * taken care of by the relevant subsystem, e.g. moving a network device
+ * between network namespaces owned by different user namespaces will change
+ * the uid/gid of the kobject to the uid/gid of the root user in the user
+ * namespace. Calling this function afterwards will cause the sysfs object to
+ * reflect the new uid/gid.
+ */
+int sysfs_change_owner(struct kobject *kobj)
+{
+	int error;
+	const struct kobj_type *ktype;
+
+	if (!kobj->state_in_sysfs)
+		return -EINVAL;
+
+	error = sysfs_file_change_owner(kobj);
+	if (error)
+		return error;
+
+	ktype = get_ktype(kobj);
+	if (ktype) {
+		struct attribute **kattr;
+
+		for (kattr = ktype->default_attrs; kattr && *kattr; kattr++) {
+			error = sysfs_file_change_owner_by_name(kobj, (*kattr)->name);
+			if (error)
+				return error;
+		}
+
+		error = sysfs_groups_change_owner(kobj, ktype->default_groups);
+		if (error)
+			return error;
+	}
+
+	return 0;
+}
+EXPORT_SYMBOL_GPL(sysfs_change_owner);
