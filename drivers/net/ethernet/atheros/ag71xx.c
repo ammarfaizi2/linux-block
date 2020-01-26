@@ -313,7 +313,7 @@ struct ag71xx {
 	struct ag71xx_desc *stop_desc;
 	dma_addr_t stop_desc_dma;
 
-	int phy_if_mode;
+	phy_interface_t phy_if_mode;
 
 	struct delayed_work restart_work;
 	struct timer_list oom_timer;
@@ -1409,7 +1409,7 @@ static void ag71xx_oom_timer_handler(struct timer_list *t)
 	napi_schedule(&ag->napi);
 }
 
-static void ag71xx_tx_timeout(struct net_device *ndev)
+static void ag71xx_tx_timeout(struct net_device *ndev, unsigned int txqueue)
 {
 	struct ag71xx *ag = netdev_priv(ndev);
 
@@ -1744,7 +1744,7 @@ static int ag71xx_probe(struct platform_device *pdev)
 		eth_random_addr(ndev->dev_addr);
 	}
 
-	err = of_get_phy_mode(np, ag->phy_if_mode);
+	err = of_get_phy_mode(np, &ag->phy_if_mode);
 	if (err) {
 		netif_err(ag, probe, ndev, "missing phy-mode property in DT\n");
 		goto err_free;

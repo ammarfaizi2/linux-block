@@ -45,11 +45,9 @@
 #include "spectrum_ptp.h"
 #include "../mlxfw/mlxfw.h"
 
-#define MLXSW_SP_FWREV_MINOR_TO_BRANCH(minor) ((minor) / 100)
-
 #define MLXSW_SP1_FWREV_MAJOR 13
 #define MLXSW_SP1_FWREV_MINOR 2000
-#define MLXSW_SP1_FWREV_SUBMINOR 2308
+#define MLXSW_SP1_FWREV_SUBMINOR 2714
 #define MLXSW_SP1_FWREV_CAN_RESET_MINOR 1702
 
 static const struct mlxsw_fw_rev mlxsw_sp1_fw_rev = {
@@ -66,7 +64,7 @@ static const struct mlxsw_fw_rev mlxsw_sp1_fw_rev = {
 
 #define MLXSW_SP2_FWREV_MAJOR 29
 #define MLXSW_SP2_FWREV_MINOR 2000
-#define MLXSW_SP2_FWREV_SUBMINOR 2308
+#define MLXSW_SP2_FWREV_SUBMINOR 2714
 
 static const struct mlxsw_fw_rev mlxsw_sp2_fw_rev = {
 	.major = MLXSW_SP2_FWREV_MAJOR,
@@ -423,13 +421,12 @@ static int mlxsw_sp_fw_rev_validate(struct mlxsw_sp *mlxsw_sp)
 		     rev->major, req_rev->major);
 		return -EINVAL;
 	}
-	if (MLXSW_SP_FWREV_MINOR_TO_BRANCH(rev->minor) ==
-	    MLXSW_SP_FWREV_MINOR_TO_BRANCH(req_rev->minor) &&
-	    mlxsw_core_fw_rev_minor_subminor_validate(rev, req_rev))
+	if (mlxsw_core_fw_rev_minor_subminor_validate(rev, req_rev))
 		return 0;
 
-	dev_info(mlxsw_sp->bus_info->dev, "The firmware version %d.%d.%d is incompatible with the driver\n",
-		 rev->major, rev->minor, rev->subminor);
+	dev_err(mlxsw_sp->bus_info->dev, "The firmware version %d.%d.%d is incompatible with the driver (required >= %d.%d.%d)\n",
+		rev->major, rev->minor, rev->subminor, req_rev->major,
+		req_rev->minor, req_rev->subminor);
 	dev_info(mlxsw_sp->bus_info->dev, "Flashing firmware using file %s\n",
 		 fw_filename);
 
@@ -1796,6 +1793,8 @@ static int mlxsw_sp_setup_tc(struct net_device *dev, enum tc_setup_type type,
 		return mlxsw_sp_setup_tc_red(mlxsw_sp_port, type_data);
 	case TC_SETUP_QDISC_PRIO:
 		return mlxsw_sp_setup_tc_prio(mlxsw_sp_port, type_data);
+	case TC_SETUP_QDISC_ETS:
+		return mlxsw_sp_setup_tc_ets(mlxsw_sp_port, type_data);
 	default:
 		return -EOPNOTSUPP;
 	}
@@ -3602,26 +3601,25 @@ static int mlxsw_sp_port_ets_init(struct mlxsw_sp_port *mlxsw_sp_port)
 	 * one subgroup, which are all member in the same group.
 	 */
 	err = mlxsw_sp_port_ets_set(mlxsw_sp_port,
-				    MLXSW_REG_QEEC_HIERARCY_GROUP, 0, 0, false,
-				    0);
+				    MLXSW_REG_QEEC_HR_GROUP, 0, 0, false, 0);
 	if (err)
 		return err;
 	for (i = 0; i < IEEE_8021QAZ_MAX_TCS; i++) {
 		err = mlxsw_sp_port_ets_set(mlxsw_sp_port,
-					    MLXSW_REG_QEEC_HIERARCY_SUBGROUP, i,
+					    MLXSW_REG_QEEC_HR_SUBGROUP, i,
 					    0, false, 0);
 		if (err)
 			return err;
 	}
 	for (i = 0; i < IEEE_8021QAZ_MAX_TCS; i++) {
 		err = mlxsw_sp_port_ets_set(mlxsw_sp_port,
-					    MLXSW_REG_QEEC_HIERARCY_TC, i, i,
+					    MLXSW_REG_QEEC_HR_TC, i, i,
 					    false, 0);
 		if (err)
 			return err;
 
 		err = mlxsw_sp_port_ets_set(mlxsw_sp_port,
-					    MLXSW_REG_QEEC_HIERARCY_TC,
+					    MLXSW_REG_QEEC_HR_TC,
 					    i + 8, i,
 					    true, 100);
 		if (err)
@@ -3633,13 +3631,13 @@ static int mlxsw_sp_port_ets_init(struct mlxsw_sp_port *mlxsw_sp_port)
 	 * for the initial configuration.
 	 */
 	err = mlxsw_sp_port_ets_maxrate_set(mlxsw_sp_port,
-					    MLXSW_REG_QEEC_HIERARCY_PORT, 0, 0,
+					    MLXSW_REG_QEEC_HR_PORT, 0, 0,
 					    MLXSW_REG_QEEC_MAS_DIS);
 	if (err)
 		return err;
 	for (i = 0; i < IEEE_8021QAZ_MAX_TCS; i++) {
 		err = mlxsw_sp_port_ets_maxrate_set(mlxsw_sp_port,
-						    MLXSW_REG_QEEC_HIERARCY_SUBGROUP,
+						    MLXSW_REG_QEEC_HR_SUBGROUP,
 						    i, 0,
 						    MLXSW_REG_QEEC_MAS_DIS);
 		if (err)
@@ -3647,14 +3645,14 @@ static int mlxsw_sp_port_ets_init(struct mlxsw_sp_port *mlxsw_sp_port)
 	}
 	for (i = 0; i < IEEE_8021QAZ_MAX_TCS; i++) {
 		err = mlxsw_sp_port_ets_maxrate_set(mlxsw_sp_port,
-						    MLXSW_REG_QEEC_HIERARCY_TC,
+						    MLXSW_REG_QEEC_HR_TC,
 						    i, i,
 						    MLXSW_REG_QEEC_MAS_DIS);
 		if (err)
 			return err;
 
 		err = mlxsw_sp_port_ets_maxrate_set(mlxsw_sp_port,
-						    MLXSW_REG_QEEC_HIERARCY_TC,
+						    MLXSW_REG_QEEC_HR_TC,
 						    i + 8, i,
 						    MLXSW_REG_QEEC_MAS_DIS);
 		if (err)
@@ -3664,7 +3662,7 @@ static int mlxsw_sp_port_ets_init(struct mlxsw_sp_port *mlxsw_sp_port)
 	/* Configure the min shaper for multicast TCs. */
 	for (i = 0; i < IEEE_8021QAZ_MAX_TCS; i++) {
 		err = mlxsw_sp_port_min_bw_set(mlxsw_sp_port,
-					       MLXSW_REG_QEEC_HIERARCY_TC,
+					       MLXSW_REG_QEEC_HR_TC,
 					       i + 8, i,
 					       MLXSW_REG_QEEC_MIS_MIN);
 		if (err)
@@ -4542,8 +4540,16 @@ static const struct mlxsw_listener mlxsw_sp_listener[] = {
 	MLXSW_SP_RXL_MARK(ROUTER_ALERT_IPV6, TRAP_TO_CPU, ROUTER_EXP, false),
 	MLXSW_SP_RXL_MARK(IPIP_DECAP_ERROR, TRAP_TO_CPU, ROUTER_EXP, false),
 	MLXSW_SP_RXL_MARK(DECAP_ECN0, TRAP_TO_CPU, ROUTER_EXP, false),
-	MLXSW_SP_RXL_MARK(IPV4_VRRP, TRAP_TO_CPU, ROUTER_EXP, false),
-	MLXSW_SP_RXL_MARK(IPV6_VRRP, TRAP_TO_CPU, ROUTER_EXP, false),
+	MLXSW_SP_RXL_MARK(IPV4_VRRP, TRAP_TO_CPU, VRRP, false),
+	MLXSW_SP_RXL_MARK(IPV6_VRRP, TRAP_TO_CPU, VRRP, false),
+	MLXSW_SP_RXL_NO_MARK(DISCARD_ING_ROUTER_SIP_CLASS_E, FORWARD,
+			     ROUTER_EXP, false),
+	MLXSW_SP_RXL_NO_MARK(DISCARD_ING_ROUTER_MC_DMAC, FORWARD,
+			     ROUTER_EXP, false),
+	MLXSW_SP_RXL_NO_MARK(DISCARD_ING_ROUTER_SIP_DIP, FORWARD,
+			     ROUTER_EXP, false),
+	MLXSW_SP_RXL_NO_MARK(DISCARD_ING_ROUTER_DIP_LINK_LOCAL, FORWARD,
+			     ROUTER_EXP, false),
 	/* PKT Sample trap */
 	MLXSW_RXL(mlxsw_sp_rx_listener_sample_func, PKT_SAMPLE, MIRROR_TO_CPU,
 		  false, SP_IP2ME, DISCARD),
@@ -4626,6 +4632,10 @@ static int mlxsw_sp_cpu_policers_set(struct mlxsw_core *mlxsw_core)
 			rate = 19 * 1024;
 			burst_size = 12;
 			break;
+		case MLXSW_REG_HTGT_TRAP_GROUP_SP_VRRP:
+			rate = 360;
+			burst_size = 7;
+			break;
 		default:
 			continue;
 		}
@@ -4665,6 +4675,7 @@ static int mlxsw_sp_trap_groups_set(struct mlxsw_core *mlxsw_core)
 		case MLXSW_REG_HTGT_TRAP_GROUP_SP_OSPF:
 		case MLXSW_REG_HTGT_TRAP_GROUP_SP_PIM:
 		case MLXSW_REG_HTGT_TRAP_GROUP_SP_PTP0:
+		case MLXSW_REG_HTGT_TRAP_GROUP_SP_VRRP:
 			priority = 5;
 			tc = 5;
 			break;

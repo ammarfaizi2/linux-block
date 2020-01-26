@@ -225,6 +225,29 @@ log_info()
 	echo "INFO: $msg"
 }
 
+busywait()
+{
+	local timeout=$1; shift
+
+	local start_time="$(date -u +%s%3N)"
+	while true
+	do
+		local out
+		out=$("$@")
+		local ret=$?
+		if ((!ret)); then
+			echo -n "$out"
+			return 0
+		fi
+
+		local current_time="$(date -u +%s%3N)"
+		if ((current_time - start_time > timeout)); then
+			echo -n "$out"
+			return 1
+		fi
+	done
+}
+
 setup_wait_dev()
 {
 	local dev=$1; shift
@@ -1064,4 +1087,22 @@ flood_test()
 
 	flood_unicast_test $br_port $host1_if $host2_if
 	flood_multicast_test $br_port $host1_if $host2_if
+}
+
+start_traffic()
+{
+	local h_in=$1; shift    # Where the traffic egresses the host
+	local sip=$1; shift
+	local dip=$1; shift
+	local dmac=$1; shift
+
+	$MZ $h_in -p 8000 -A $sip -B $dip -c 0 \
+		-a own -b $dmac -t udp -q &
+	sleep 1
+}
+
+stop_traffic()
+{
+	# Suppress noise from killing mausezahn.
+	{ kill %% && wait %%; } 2>/dev/null
 }

@@ -414,7 +414,8 @@ ice_xsk_umem_enable(struct ice_vsi *vsi, struct xdp_umem *umem, u16 qid)
 	if (vsi->type != ICE_VSI_PF)
 		return -EINVAL;
 
-	vsi->num_xsk_umems = min_t(u16, vsi->num_rxq, vsi->num_txq);
+	if (!vsi->num_xsk_umems)
+		vsi->num_xsk_umems = min_t(u16, vsi->num_rxq, vsi->num_txq);
 	if (qid >= vsi->num_xsk_umems)
 		return -EINVAL;
 
@@ -555,7 +556,7 @@ ice_alloc_buf_fast_zc(struct ice_ring *rx_ring, struct ice_rx_buf *rx_buf)
 
 	rx_buf->handle = handle + umem->headroom;
 
-	xsk_umem_discard_addr(umem);
+	xsk_umem_release_addr(umem);
 	return true;
 }
 
@@ -591,7 +592,7 @@ ice_alloc_buf_slow_zc(struct ice_ring *rx_ring, struct ice_rx_buf *rx_buf)
 
 	rx_buf->handle = handle + umem->headroom;
 
-	xsk_umem_discard_addr_rq(umem);
+	xsk_umem_release_addr_rq(umem);
 	return true;
 }
 

@@ -233,7 +233,7 @@ static bool icmp_has_id(u8 type)
  * @skb: sk_buff to extract from
  * @key_icmp: struct flow_dissector_key_icmp to fill
  * @data: raw buffer pointer to the packet
- * @toff: offset to extract at
+ * @thoff: offset to extract at
  * @hlen: packet header length
  */
 void skb_flow_get_icmp_tci(const struct sk_buff *skb,
@@ -599,8 +599,8 @@ __skb_flow_dissect_gre(const struct sk_buff *skb,
 	offset += sizeof(struct gre_base_hdr);
 
 	if (hdr->flags & GRE_CSUM)
-		offset += FIELD_SIZEOF(struct gre_full_hdr, csum) +
-			  FIELD_SIZEOF(struct gre_full_hdr, reserved1);
+		offset += sizeof_field(struct gre_full_hdr, csum) +
+			  sizeof_field(struct gre_full_hdr, reserved1);
 
 	if (hdr->flags & GRE_KEY) {
 		const __be32 *keyid;
@@ -622,11 +622,11 @@ __skb_flow_dissect_gre(const struct sk_buff *skb,
 			else
 				key_keyid->keyid = *keyid & GRE_PPTP_KEY_MASK;
 		}
-		offset += FIELD_SIZEOF(struct gre_full_hdr, key);
+		offset += sizeof_field(struct gre_full_hdr, key);
 	}
 
 	if (hdr->flags & GRE_SEQ)
-		offset += FIELD_SIZEOF(struct pptp_gre_header, seq);
+		offset += sizeof_field(struct pptp_gre_header, seq);
 
 	if (gre_ver == 0) {
 		if (*p_proto == htons(ETH_P_TEB)) {
@@ -653,7 +653,7 @@ __skb_flow_dissect_gre(const struct sk_buff *skb,
 		u8 *ppp_hdr;
 
 		if (hdr->flags & GRE_ACK)
-			offset += FIELD_SIZEOF(struct pptp_gre_header, ack);
+			offset += sizeof_field(struct pptp_gre_header, ack);
 
 		ppp_hdr = __skb_header_pointer(skb, *p_nhoff + offset,
 					       sizeof(_ppp_hdr),
