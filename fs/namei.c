@@ -3211,10 +3211,7 @@ static const char *do_last(struct nameidata *nd,
 		audit_inode(nd->name, file->f_path.dentry, 0);
 		dput(nd->path.dentry);
 		nd->path.dentry = dentry;
-		error = may_open(&nd->path, acc_mode, open_flag);
-		if (error)
-			goto out;
-		goto opened;
+		goto finish_open_created;
 	}
 
 	if (file->f_mode & FMODE_CREATED) {
@@ -3280,11 +3277,10 @@ finish_open_created:
 	error = may_open(&nd->path, acc_mode, open_flag);
 	if (error)
 		goto out;
-	BUG_ON(file->f_mode & FMODE_OPENED); /* once it's opened, it's opened */
-	error = vfs_open(&nd->path, file);
+	if (!(file->f_mode & FMODE_OPENED))
+		error = vfs_open(&nd->path, file);
 	if (error)
 		goto out;
-opened:
 	error = ima_file_check(file, op->acc_mode);
 	if (!error && will_truncate)
 		error = handle_truncate(file);
