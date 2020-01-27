@@ -888,8 +888,13 @@ static inline bool io_prep_async_work(struct io_kiocb *req,
 		if (def->unbound_nonreg_file)
 			req->work.flags |= IO_WQ_WORK_UNBOUND;
 	}
-	if (def->needs_mm)
-		req->work.flags |= IO_WQ_WORK_NEEDS_USER;
+
+	if (!req->work.mm && def->needs_mm) {
+		mmgrab(current->mm);
+		req->work.mm = current->mm;
+	}
+	if (!req->work.creds)
+		req->work.creds = get_current_cred();
 
 	*link = io_prep_linked_timeout(req);
 	return do_hashed;
@@ -3963,6 +3968,12 @@ static int io_req_defer_prep(struct io_kiocb *req,
 {
 	ssize_t ret = 0;
 
+	if (io_op_defs[req->opcode].needs_mm) {
+		mmgrab(current->mm);
+		req->work.mm = current->mm;
+	}
+	req->work.creds = get_current_cred();
+
 	switch (req->opcode) {
 	case IORING_OP_NOP:
 		break;
@@ -5667,6 +5678,10 @@ static void io_put_work(struct io_wq_work *work)
 {
 	struct io_kiocb *req = container_of(work, struct io_kiocb, work);
 
+	if (work->mm) {
+		mmdrop(work->mm);
+		work->mm = NULL;
+	}
 	io_put_req(req);
 }
 
@@ -5725,9 +5740,7 @@ static int io_sq_offload_start(struct io_ring_ctx *ctx,
 		goto err;
 	}
 
-	data.mm = ctx->sqo_mm;
 	data.user = ctx->user;
-	data.creds = ctx->creds;
 	data.get_work = io_get_work;
 	data.put_work = io_put_work;
 
@@ -6535,7 +6548,8 @@ static int io_uring_create(unsigned entries, struct io_uring_params *p)
 		goto err;
 
 	p->features = IORING_FEAT_SINGLE_MMAP | IORING_FEAT_NODROP |
-			IORING_FEAT_SUBMIT_STABLE | IORING_FEAT_RW_CUR_POS;
+			IORING_FEAT_SUBMIT_STABLE | IORING_FEAT_RW_CUR_POS |
+			IORING_FEAT_CUR_PERSONALITY;
 	trace_io_uring_create(ret, ctx, p->sq_entries, p->cq_entries, p->flags);
 	return ret;
 err:
