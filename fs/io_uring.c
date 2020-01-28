@@ -1188,6 +1188,8 @@ static void __io_req_aux_free(struct io_kiocb *req)
 		else
 			fput(req->file);
 	}
+	if (req->work.creds)
+		put_cred(req->work.creds);
 }
 
 static void __io_free_req(struct io_kiocb *req)
@@ -3975,7 +3977,8 @@ static int io_req_defer_prep(struct io_kiocb *req,
 		mmgrab(current->mm);
 		req->work.mm = current->mm;
 	}
-	req->work.creds = get_current_cred();
+	if (!req->work.creds)
+		req->work.creds = get_current_cred();
 
 	switch (req->opcode) {
 	case IORING_OP_NOP:
@@ -4605,11 +4608,13 @@ static inline void io_queue_link_head(struct io_kiocb *req)
 }
 
 #define SQE_VALID_FLAGS	(IOSQE_FIXED_FILE|IOSQE_IO_DRAIN|IOSQE_IO_LINK|	\
-				IOSQE_IO_HARDLINK | IOSQE_ASYNC)
+				IOSQE_IO_HARDLINK | IOSQE_ASYNC | \
+				IOSQE_PERSONALITY)
 
 static bool io_submit_sqe(struct io_kiocb *req, const struct io_uring_sqe *sqe,
 			  struct io_submit_state *state, struct io_kiocb **link)
 {
+	const struct cred *old_creds = NULL;
 	struct io_ring_ctx *ctx = req->ctx;
 	unsigned int sqe_flags;
 	int ret;
@@ -4621,6 +4626,18 @@ static bool io_submit_sqe(struct io_kiocb *req, const struct io_uring_sqe *sqe,
 		ret = -EINVAL;
 		goto err_req;
 	}
+
+	if (sqe_flags & IOSQE_PERSONALITY) {
+		int id = READ_ONCE(sqe->personality);
+
+		req->work.creds = idr_find(&ctx->personality_idr, id);
+		if (unlikely(!req->work.creds)) {
+			ret = -EINVAL;
+			goto err_req;
+		}
+		old_creds = override_creds(req->work.creds);
+	}
+
 	/* same numerical values with corresponding REQ_F_*, safe to copy */
 	req->flags |= sqe_flags & (IOSQE_IO_DRAIN|IOSQE_IO_HARDLINK|
 					IOSQE_ASYNC);
@@ -4630,6 +4647,8 @@ static bool io_submit_sqe(struct io_kiocb *req, const struct io_uring_sqe *sqe,
 err_req:
 		io_cqring_add_event(req, ret);
 		io_double_put_req(req);
+		if (old_creds)
+			revert_creds(old_creds);
 		return false;
 	}
 
@@ -4690,6 +4709,8 @@ err_req:
 		}
 	}
 
+	if (old_creds)
+		revert_creds(old_creds);
 	return true;
 }
 
