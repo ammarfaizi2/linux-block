@@ -69,7 +69,6 @@ void rxrpc_propose_delay_ACK(struct rxrpc_call *call, rxrpc_serial_t serial,
 void rxrpc_send_ACK(struct rxrpc_call *call, u8 ack_reason,
 		    rxrpc_serial_t serial, enum rxrpc_propose_ack_trace why)
 {
-	struct rxrpc_local *local = call->conn->params.local;
 	struct rxrpc_txbuf *txb;
 
 	if (test_bit(RXRPC_CALL_DISCONNECTED, &call->flags))
@@ -106,17 +105,8 @@ void rxrpc_send_ACK(struct rxrpc_call *call, u8 ack_reason,
 		return;
 	}
 
-	spin_lock_bh(&local->ack_tx_lock);
-	list_add_tail(&txb->tx_link, &local->ack_tx_queue);
-	spin_unlock_bh(&local->ack_tx_lock);
 	trace_rxrpc_send_ack(call, why, ack_reason, serial);
-
-	if (in_task()) {
-		rxrpc_transmit_ack_packets(call->peer->local);
-	} else {
-		rxrpc_get_local(local);
-		rxrpc_queue_local(local);
-	}
+	rxrpc_send_ack_packet(call, txb);
 }
 
 /*

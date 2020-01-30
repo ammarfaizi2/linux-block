@@ -179,7 +179,8 @@
 	EM(rxrpc_propose_ack_respond_to_ping,	"Rsp2Png") \
 	EM(rxrpc_propose_ack_retry_tx,		"RetryTx") \
 	EM(rxrpc_propose_ack_rotate_rx,		"RxAck  ") \
-	E_(rxrpc_propose_ack_terminal_ack,	"ClTerm ")
+	EM(rxrpc_propose_ack_terminal_ack,	"ClTerm ") \
+	E_(rxrpc_propose_ack_rx_underrun,	"RxUnder")
 
 #define rxrpc_congest_modes \
 	EM(RXRPC_CALL_CONGEST_AVOIDANCE,	"CongAvoid") \
