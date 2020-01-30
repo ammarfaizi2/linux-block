@@ -174,7 +174,7 @@ static int rxrpc_send_ack_packet(struct rxrpc_local *local, struct rxrpc_ack *ac
 
 	serial = atomic_inc_return(&conn->serial);
 	pkt->whdr.serial = htonl(serial);
-	trace_rxrpc_tx_ack(call->debug_id, ack->ack_id, serial,
+	trace_rxrpc_tx_ack(call->debug_id, local->ack_tx_tail, serial,
 			   ntohl(pkt->ack.firstPacket),
 			   ack->acked_serial, ack->ack_reason, pkt->ack.nAcks);
 	if (ack->why == rxrpc_propose_ack_ping_for_lost_ack)
@@ -232,39 +232,28 @@ void rxrpc_local_ack_transmitter(struct work_struct *work)
 {
 	struct rxrpc_local *local =
 		container_of(work, struct rxrpc_local, ack_tx);
-	LIST_HEAD(queue);
+	unsigned int tail = local->ack_tx_tail;
 	int ret;
 
-	if (list_empty(&local->ack_tx_queue))
+	if (tail == local->ack_tx_head)
 		goto out;
 
 	if (atomic_fetch_add_unless(&local->active_users, 1, 0) == 0)
 		goto out;
 
-	spin_lock_bh(&local->ack_tx_lock);
-	list_splice_tail_init(&local->ack_tx_queue, &queue);
-	spin_unlock_bh(&local->ack_tx_lock);
-
-	while (!list_empty(&queue)) {
+	while (tail != smp_load_acquire(&local->ack_tx_head)) {
 		struct rxrpc_ack *ack =
-			list_entry(queue.next, struct rxrpc_ack, link);
+			&local->ack_tx_ring[tail & (RXRPC_ACK_TX_RING_SIZE - 1)];
 
 		//kdebug("ACK %08x %u", ack->acked_serial, ack->ack_reason);
 
 		ret = rxrpc_send_ack_packet(local, ack);
-		if (ret < 0 && ret != -ECONNRESET) {
+		if (ret < 0 && ret != -ECONNRESET)
 			kdebug("send = %d", ret);
-			spin_lock_bh(&local->ack_tx_lock);
-			list_splice_init(&queue, &local->ack_tx_queue);
-			spin_unlock_bh(&local->ack_tx_lock);
-			rxrpc_queue_local_ack(local);
-			break;
-		}
 
-		atomic_dec(&local->ack_tx_count);
-		list_del(&ack->link);
+		tail++;
+		smp_store_release(&local->ack_tx_tail, tail);
 		rxrpc_put_call(ack->call, rxrpc_call_put);
-		kfree(ack);
 	}
 
 	rxrpc_unuse_local(local);

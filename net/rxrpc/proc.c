@@ -359,7 +359,8 @@ static int rxrpc_local_seq_show(struct seq_file *seq, void *v)
 		   lbuff,
 		   atomic_read(&local->usage),
 		   atomic_read(&local->active_users),
-		   atomic_read(&local->ack_tx_count), local->ack_tx_max, local->ack_tx_send);
+		   local->ack_tx_head - local->ack_tx_tail,
+		   local->ack_tx_max, local->ack_tx_send);
 
 	return 0;
 }

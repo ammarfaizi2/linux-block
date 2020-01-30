@@ -270,9 +270,11 @@ struct rxrpc_local {
 	struct hlist_node	link;
 	struct socket		*socket;	/* my UDP socket */
 	struct work_struct	processor;
-	struct list_head	ack_tx_queue;	/* List of ACKs that need sending */
+	struct rxrpc_ack	*ack_tx_ring;	/* Ring of ACKs that need sending */
 	struct work_struct	ack_tx;		/* Transmitter of ACKs */
-	atomic_t		ack_tx_count;
+#define RXRPC_ACK_TX_RING_SIZE	512
+	unsigned int		ack_tx_head;
+	unsigned int		ack_tx_tail;
 	unsigned int		ack_tx_max;
 	unsigned int		ack_tx_send;
 	spinlock_t		ack_tx_lock;	/* ACK list lock */
@@ -689,9 +691,7 @@ struct rxrpc_call {
  * Ready-to-be-transmitted ACK.
  */
 struct rxrpc_ack {
-	struct list_head	link;		/* Link in local->ack_tx_queue */
 	struct rxrpc_call	*call;
-	unsigned int		ack_id;
 	rxrpc_serial_t		acked_serial;	/* Serial of packet being ACK'd */
 	u8			ack_reason;	/* Reason to ACK */
 	u8			why;

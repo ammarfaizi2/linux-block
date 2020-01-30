@@ -78,12 +78,19 @@ static struct rxrpc_local *rxrpc_alloc_local(struct rxrpc_net *rxnet,
 
 	local = kzalloc(sizeof(struct rxrpc_local), GFP_KERNEL);
 	if (local) {
+		local->ack_tx_ring = kvcalloc(RXRPC_ACK_TX_RING_SIZE,
+					      sizeof(struct rxrpc_ack),
+					      GFP_KERNEL);
+		if (!local->ack_tx_ring) {
+			kfree(local);
+			return NULL;
+		}
+
 		atomic_set(&local->usage, 1);
 		atomic_set(&local->active_users, 1);
 		local->rxnet = rxnet;
 		INIT_HLIST_NODE(&local->link);
 		INIT_WORK(&local->processor, rxrpc_local_processor);
-		INIT_LIST_HEAD(&local->ack_tx_queue);
 		INIT_WORK(&local->ack_tx, rxrpc_local_ack_transmitter);
 		spin_lock_init(&local->ack_tx_lock);
 		init_rwsem(&local->defrag_sem);
@@ -526,6 +533,7 @@ static void rxrpc_local_rcu(struct rcu_head *rcu)
 	ASSERT(!work_pending(&local->processor));
 
 	_net("DESTROY LOCAL %d", local->debug_id);
+	kvfree(local->ack_tx_ring);
 	kfree(local);
 	_leave("");
 }

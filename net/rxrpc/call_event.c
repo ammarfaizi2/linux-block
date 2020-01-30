@@ -119,8 +119,6 @@ void rxrpc_propose_ACK(struct rxrpc_call *call, u8 ack_reason, u32 serial,
 	spin_unlock_bh(&call->lock);
 }
 
-static atomic_t rxrpc_ack_ids;
-
 /*
  * Queue an ACK for immediate transmission.
  */
@@ -129,36 +127,36 @@ void rxrpc_send_ACK(struct rxrpc_call *call, u8 ack_reason,
 {
 	struct rxrpc_local *local = call->conn->params.local;
 	struct rxrpc_ack *ack;
-	unsigned int ack_id;
-	int c;
+	unsigned int head, occupancy;
+	bool queued = false;
 
 	if (test_bit(RXRPC_CALL_DISCONNECTED, &call->flags))
 		return;
 
-	ack = kzalloc(sizeof(struct rxrpc_ack),
-		      in_softirq() ? GFP_ATOMIC | __GFP_NOWARN : GFP_NOFS);
-	if (!ack) {
-		kleave(" = -ENOMEM");
-		return;
+	spin_lock_bh(&local->ack_tx_lock);
+	head = local->ack_tx_head;
+	occupancy = head - READ_ONCE(local->ack_tx_tail);
+	if (occupancy != RXRPC_ACK_TX_RING_SIZE) {
+		ack = &local->ack_tx_ring[head & (RXRPC_ACK_TX_RING_SIZE - 1)];
+		ack->call		= call;
+		ack->ack_reason		= ack_reason;
+		ack->acked_serial	= serial;
+		ack->why		= why;
+		rxrpc_get_call(call, rxrpc_call_got);
+
+		if (occupancy > local->ack_tx_max)
+			local->ack_tx_max = occupancy;
+		smp_store_release(&local->ack_tx_head, head + 1);
+		local->ack_tx_send++;
+		queued = true;
 	}
 
-	ack_id = atomic_inc_return(&rxrpc_ack_ids);
-	ack->call		= call;
-	ack->ack_reason		= ack_reason;
-	ack->acked_serial	= serial;
-	ack->why		= why;
-	ack->ack_id		= ack_id;
-	rxrpc_get_call(call, rxrpc_call_got);
-
-	spin_lock_bh(&local->ack_tx_lock);
-	list_add_tail(&ack->link, &local->ack_tx_queue);
-	c = atomic_inc_return(&local->ack_tx_count);
-	if (c > local->ack_tx_max)
-		local->ack_tx_max = c;
-	local->ack_tx_send++;
 	spin_unlock_bh(&local->ack_tx_lock);
-	trace_rxrpc_send_ack(call, why, ack_reason, serial, ack_id);
-	rxrpc_queue_local_ack(local);
+
+	if (queued) {
+		trace_rxrpc_send_ack(call, why, ack_reason, serial, head);
+		rxrpc_queue_local_ack(local);
+	}
 }
 
 /*
