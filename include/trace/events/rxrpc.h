@@ -1277,6 +1277,35 @@ TRACE_EVENT(rxrpc_send_ack,
 		      __entry->serial)
 	    );
 
+TRACE_EVENT(rxrpc_drop_ack,
+	    TP_PROTO(struct rxrpc_call *call, enum rxrpc_propose_ack_trace why,
+		     u8 ack_reason, rxrpc_serial_t serial, bool nobuf),
+
+	    TP_ARGS(call, why, ack_reason, serial, nobuf),
+
+	    TP_STRUCT__entry(
+		    __field(unsigned int,			call		)
+		    __field(enum rxrpc_propose_ack_trace,	why		)
+		    __field(rxrpc_serial_t,			serial		)
+		    __field(u8,					ack_reason	)
+		    __field(bool,				nobuf		)
+			     ),
+
+	    TP_fast_assign(
+		    __entry->call	= call->debug_id;
+		    __entry->why	= why;
+		    __entry->serial	= serial;
+		    __entry->ack_reason	= ack_reason;
+		    __entry->nobuf	= nobuf;
+			   ),
+
+	    TP_printk("c=%08x %s %s r=%08x nbf=%u",
+		      __entry->call,
+		      __print_symbolic(__entry->why, rxrpc_propose_ack_traces),
+		      __print_symbolic(__entry->ack_reason, rxrpc_ack_names),
+		      __entry->serial, __entry->nobuf)
+	    );
+
 TRACE_EVENT(rxrpc_retransmit,
 	    TP_PROTO(struct rxrpc_call *call, rxrpc_seq_t seq, u8 annotation,
 		     s64 expiry),

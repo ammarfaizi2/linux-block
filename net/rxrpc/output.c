@@ -162,6 +162,9 @@ static int rxrpc_send_ack_packet(struct rxrpc_local *local, struct rxrpc_ack *ac
 	if (ack->ack_reason == RXRPC_ACK_PING)
 		pkt->whdr.flags |= RXRPC_REQUEST_ACK;
 
+	if (ack->ack_reason == RXRPC_ACK_DELAY)
+		clear_bit(RXRPC_CALL_DELAY_ACK_PENDING, &call->flags);
+
 	spin_lock_bh(&call->lock);
 	n = rxrpc_fill_out_ack(conn, call, ack, pkt, &hard_ack, &top);
 	spin_unlock_bh(&call->lock);

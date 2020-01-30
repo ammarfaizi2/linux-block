@@ -132,6 +132,11 @@ void rxrpc_send_ACK(struct rxrpc_call *call, u8 ack_reason,
 
 	if (test_bit(RXRPC_CALL_DISCONNECTED, &call->flags))
 		return;
+	if (ack_reason == RXRPC_ACK_DELAY &&
+	    test_and_set_bit(RXRPC_CALL_DELAY_ACK_PENDING, &call->flags)) {
+		trace_rxrpc_drop_ack(call, why, ack_reason, serial, false);
+		return;
+	}
 
 	spin_lock_bh(&local->ack_tx_lock);
 	head = local->ack_tx_head;
