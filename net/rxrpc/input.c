@@ -587,9 +587,14 @@ static void rxrpc_input_data(struct rxrpc_call *call, struct sk_buff *skb)
 	}
 
 unlock:
-	if (unacked)
-		rxrpc_propose_ACK(call, RXRPC_ACK_DELAY, serial,
-				  rxrpc_propose_ack_input_data);
+	if (unacked) {
+		if (after_eq(seq0 + j, call->ackr_seen + 2))
+			rxrpc_send_ACK(call, RXRPC_ACK_DELAY, serial,
+				       rxrpc_propose_ack_input_data);
+		else
+			rxrpc_propose_ACK(call, RXRPC_ACK_DELAY, serial,
+					  rxrpc_propose_ack_input_data);
+	}
 
 	trace_rxrpc_notify_socket(call->debug_id, serial);
 	rxrpc_notify_socket(call);

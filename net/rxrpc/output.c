@@ -254,6 +254,7 @@ void rxrpc_local_ack_transmitter(struct work_struct *work)
 		tail++;
 		smp_store_release(&local->ack_tx_tail, tail);
 		rxrpc_put_call(ack->call, rxrpc_call_put);
+		cond_resched();
 	}
 
 	rxrpc_unuse_local(local);
