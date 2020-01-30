@@ -985,14 +985,15 @@ TRACE_EVENT(rxrpc_tx_data,
 	    );
 
 TRACE_EVENT(rxrpc_tx_ack,
-	    TP_PROTO(unsigned int call, rxrpc_serial_t serial,
+	    TP_PROTO(unsigned int call, unsigned int ack_id, rxrpc_serial_t serial,
 		     rxrpc_seq_t ack_first, rxrpc_serial_t ack_serial,
 		     u8 reason, u8 n_acks),
 
-	    TP_ARGS(call, serial, ack_first, ack_serial, reason, n_acks),
+	    TP_ARGS(call, ack_id, serial, ack_first, ack_serial, reason, n_acks),
 
 	    TP_STRUCT__entry(
 		    __field(unsigned int,		call		)
+		    __field(unsigned int,		ack_id		)
 		    __field(rxrpc_serial_t,		serial		)
 		    __field(rxrpc_seq_t,		ack_first	)
 		    __field(rxrpc_serial_t,		ack_serial	)
@@ -1002,6 +1003,7 @@ TRACE_EVENT(rxrpc_tx_ack,
 
 	    TP_fast_assign(
 		    __entry->call = call;
+		    __entry->ack_id = ack_id;
 		    __entry->serial = serial;
 		    __entry->ack_first = ack_first;
 		    __entry->ack_serial = ack_serial;
@@ -1009,8 +1011,9 @@ TRACE_EVENT(rxrpc_tx_ack,
 		    __entry->n_acks = n_acks;
 			   ),
 
-	    TP_printk(" c=%08x ACK  %08x %s f=%08x r=%08x n=%u",
+	    TP_printk(" c=%08x A=%08x ACK  %08x %s f=%08x r=%08x n=%u",
 		      __entry->call,
+		      __entry->ack_id,
 		      __entry->serial,
 		      __print_symbolic(__entry->reason, rxrpc_ack_names),
 		      __entry->ack_first,
@@ -1242,6 +1245,36 @@ TRACE_EVENT(rxrpc_propose_ack,
 		      __print_symbolic(__entry->ack_reason, rxrpc_ack_names),
 		      __entry->serial,
 		      __print_symbolic(__entry->outcome, rxrpc_propose_ack_outcomes))
+	    );
+
+TRACE_EVENT(rxrpc_send_ack,
+	    TP_PROTO(struct rxrpc_call *call, enum rxrpc_propose_ack_trace why,
+		     u8 ack_reason, rxrpc_serial_t serial, unsigned int ack_id),
+
+	    TP_ARGS(call, why, ack_reason, serial, ack_id),
+
+	    TP_STRUCT__entry(
+		    __field(unsigned int,			call		)
+		    __field(enum rxrpc_propose_ack_trace,	why		)
+		    __field(rxrpc_serial_t,			serial		)
+		    __field(u8,					ack_reason	)
+		    __field(unsigned int,			ack_id		)
+			     ),
+
+	    TP_fast_assign(
+		    __entry->call	= call->debug_id;
+		    __entry->why	= why;
+		    __entry->serial	= serial;
+		    __entry->ack_reason	= ack_reason;
+		    __entry->ack_id	= ack_id;
+			   ),
+
+	    TP_printk("c=%08x A=%08x %s %s r=%08x",
+		      __entry->call,
+		      __entry->ack_id,
+		      __print_symbolic(__entry->why, rxrpc_propose_ack_traces),
+		      __print_symbolic(__entry->ack_reason, rxrpc_ack_names),
+		      __entry->serial)
 	    );
 
 TRACE_EVENT(rxrpc_retransmit,

@@ -174,7 +174,7 @@ static int rxrpc_send_ack_packet(struct rxrpc_local *local, struct rxrpc_ack *ac
 
 	serial = atomic_inc_return(&conn->serial);
 	pkt->whdr.serial = htonl(serial);
-	trace_rxrpc_tx_ack(call->debug_id, serial,
+	trace_rxrpc_tx_ack(call->debug_id, ack->ack_id, serial,
 			   ntohl(pkt->ack.firstPacket),
 			   ack->acked_serial, ack->ack_reason, pkt->ack.nAcks);
 	if (ack->why == rxrpc_propose_ack_ping_for_lost_ack)
@@ -261,6 +261,7 @@ void rxrpc_local_ack_transmitter(struct work_struct *work)
 			break;
 		}
 
+		atomic_dec(&local->ack_tx_count);
 		list_del(&ack->link);
 		rxrpc_put_call(ack->call, rxrpc_call_put);
 		kfree(ack);

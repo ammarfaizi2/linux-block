@@ -272,6 +272,9 @@ struct rxrpc_local {
 	struct work_struct	processor;
 	struct list_head	ack_tx_queue;	/* List of ACKs that need sending */
 	struct work_struct	ack_tx;		/* Transmitter of ACKs */
+	atomic_t		ack_tx_count;
+	unsigned int		ack_tx_max;
+	unsigned int		ack_tx_send;
 	spinlock_t		ack_tx_lock;	/* ACK list lock */
 	struct rxrpc_sock __rcu	*service;	/* Service(s) listening on this endpoint */
 	struct rw_semaphore	defrag_sem;	/* control re-enablement of IP DF bit */
@@ -688,6 +691,7 @@ struct rxrpc_call {
 struct rxrpc_ack {
 	struct list_head	link;		/* Link in local->ack_tx_queue */
 	struct rxrpc_call	*call;
+	unsigned int		ack_id;
 	rxrpc_serial_t		acked_serial;	/* Serial of packet being ACK'd */
 	u8			ack_reason;	/* Reason to ACK */
 	u8			why;

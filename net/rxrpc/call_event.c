@@ -119,6 +119,8 @@ void rxrpc_propose_ACK(struct rxrpc_call *call, u8 ack_reason, u32 serial,
 	spin_unlock_bh(&call->lock);
 }
 
+static atomic_t rxrpc_ack_ids;
+
 /*
  * Queue an ACK for immediate transmission.
  */
@@ -127,6 +129,8 @@ void rxrpc_send_ACK(struct rxrpc_call *call, u8 ack_reason,
 {
 	struct rxrpc_local *local = call->conn->params.local;
 	struct rxrpc_ack *ack;
+	unsigned int ack_id;
+	int c;
 
 	if (test_bit(RXRPC_CALL_DISCONNECTED, &call->flags))
 		return;
@@ -138,16 +142,23 @@ void rxrpc_send_ACK(struct rxrpc_call *call, u8 ack_reason,
 		return;
 	}
 
+	ack_id = atomic_inc_return(&rxrpc_ack_ids);
 	ack->call		= call;
 	ack->ack_reason		= ack_reason;
 	ack->acked_serial	= serial;
 	ack->why		= why;
+	ack->ack_id		= ack_id;
 	rxrpc_get_call(call, rxrpc_call_got);
 
 	spin_lock_bh(&local->ack_tx_lock);
 	list_add_tail(&ack->link, &local->ack_tx_queue);
-	rxrpc_queue_local_ack(local);
+	c = atomic_inc_return(&local->ack_tx_count);
+	if (c > local->ack_tx_max)
+		local->ack_tx_max = c;
+	local->ack_tx_send++;
 	spin_unlock_bh(&local->ack_tx_lock);
+	trace_rxrpc_send_ack(call, why, ack_reason, serial, ack_id);
+	rxrpc_queue_local_ack(local);
 }
 
 /*

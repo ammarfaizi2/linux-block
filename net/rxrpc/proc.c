@@ -355,10 +355,11 @@ static int rxrpc_local_seq_show(struct seq_file *seq, void *v)
 	sprintf(lbuff, "%pISpc", &local->srx.transport);
 
 	seq_printf(seq,
-		   "UDP   %-47.47s %3u %3u\n",
+		   "UDP   %-47.47s %3u %3u %u/%u %u\n",
 		   lbuff,
 		   atomic_read(&local->usage),
-		   atomic_read(&local->active_users));
+		   atomic_read(&local->active_users),
+		   atomic_read(&local->ack_tx_count), local->ack_tx_max, local->ack_tx_send);
 
 	return 0;
 }
