@@ -189,7 +189,7 @@ static void rxrpc_end_rx_phase(struct rxrpc_call *call, rxrpc_serial_t serial)
 	ASSERTCMP(call->rx_hard_ack, ==, call->rx_top);
 
 	if (call->state == RXRPC_CALL_CLIENT_RECV_REPLY) {
-		rxrpc_propose_ACK(call, RXRPC_ACK_IDLE, serial, false, true,
+		rxrpc_propose_ACK(call, RXRPC_ACK_IDLE, serial,
 				  rxrpc_propose_ack_terminal_ack);
 		//rxrpc_send_ack_packet(call, false, NULL);
 	}
@@ -207,7 +207,7 @@ static void rxrpc_end_rx_phase(struct rxrpc_call *call, rxrpc_serial_t serial)
 		call->state = RXRPC_CALL_SERVER_ACK_REQUEST;
 		call->expect_req_by = jiffies + MAX_JIFFY_OFFSET;
 		write_unlock_bh(&call->state_lock);
-		rxrpc_propose_ACK(call, RXRPC_ACK_DELAY, serial, false, true,
+		rxrpc_propose_ACK(call, RXRPC_ACK_DELAY, serial,
 				  rxrpc_propose_ack_processing_op);
 		break;
 	default:
@@ -261,11 +261,8 @@ static void rxrpc_rotate_rx_window(struct rxrpc_call *call)
 	} else {
 		/* Check to see if there's an ACK that needs sending. */
 		if (atomic_inc_return(&call->ackr_nr_consumed) > 2)
-			rxrpc_propose_ACK(call, RXRPC_ACK_IDLE, serial,
-					  true, false,
-					  rxrpc_propose_ack_rotate_rx);
-		if (call->ackr_reason && call->ackr_reason != RXRPC_ACK_DELAY)
-			rxrpc_send_ack_packet(call, false, NULL);
+			rxrpc_send_ACK(call, RXRPC_ACK_IDLE, serial,
+				       rxrpc_propose_ack_rotate_rx);
 	}
 }
 
@@ -363,10 +360,6 @@ static int rxrpc_recvmsg_data(struct socket *sock, struct rxrpc_call *call,
 	bool rx_pkt_last;
 	unsigned int rx_pkt_offset, rx_pkt_len;
 	int ix, copy, ret = -EAGAIN, ret2;
-
-	if (test_and_clear_bit(RXRPC_CALL_RX_UNDERRUN, &call->flags) &&
-	    call->ackr_reason)
-		rxrpc_send_ack_packet(call, false, NULL);
 
 	rx_pkt_offset = call->rx_pkt_offset;
 	rx_pkt_len = call->rx_pkt_len;
@@ -735,17 +728,6 @@ int rxrpc_kernel_recv_data(struct socket *sock, struct rxrpc_call *call,
 read_phase_complete:
 	ret = 1;
 out:
-	switch (call->ackr_reason) {
-	case RXRPC_ACK_IDLE:
-		break;
-	case RXRPC_ACK_DELAY:
-		if (ret != -EAGAIN)
-			break;
-		fallthrough;
-	default:
-		rxrpc_send_ack_packet(call, false, NULL);
-	}
-
 	if (_service)
 		*_service = call->service_id;
 	mutex_unlock(&call->user_mutex);

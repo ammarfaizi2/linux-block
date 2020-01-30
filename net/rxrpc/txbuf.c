@@ -30,6 +30,7 @@ struct rxrpc_txbuf *rxrpc_alloc_txbuf(struct rxrpc_call *call, gfp_t gfp)
 		txb->len		= 0;
 		txb->offset		= 0;
 		txb->flags		= 0;
+		txb->ack_why		= 0;
 		txb->seq		= call->tx_top + 1;
 		txb->wire.epoch		= htonl(call->conn->proto.epoch);
 		txb->wire.cid		= htonl(call->cid);

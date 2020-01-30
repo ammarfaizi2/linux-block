@@ -401,8 +401,7 @@ static void rxrpc_input_data(struct rxrpc_call *call, struct sk_buff *skb)
 	unsigned int j, nr_subpackets, nr_unacked = 0;
 	rxrpc_serial_t serial = sp->hdr.serial, ack_serial = serial;
 	rxrpc_seq_t seq0 = sp->hdr.seq, hard_ack;
-	bool immediate_ack = false, jumbo_bad = false;
-	u8 ack = 0;
+	bool jumbo_bad = false;
 
 	_enter("{%u,%u},{%u,%u}",
 	       call->rx_hard_ack, call->rx_top, skb->len, seq0);
@@ -444,9 +443,9 @@ static void rxrpc_input_data(struct rxrpc_call *call, struct sk_buff *skb)
 	nr_subpackets = sp->nr_subpackets;
 	if (nr_subpackets > 1) {
 		if (call->nr_jumbo_bad > 3) {
-			ack = RXRPC_ACK_NOSPACE;
-			ack_serial = serial;
-			goto ack;
+			rxrpc_send_ACK(call, RXRPC_ACK_NOSPACE, serial,
+				       rxrpc_propose_ack_input_data);
+			goto unlock;
 		}
 	}
 
@@ -456,6 +455,7 @@ static void rxrpc_input_data(struct rxrpc_call *call, struct sk_buff *skb)
 		unsigned int ix = seq & RXRPC_RX_BUFF_MASK;
 		bool terminal = (j == nr_subpackets - 1);
 		bool last = terminal && (sp->rx_flags & RXRPC_SKB_INCL_LAST);
+		bool acked = false;
 		u8 flags, annotation = j;
 
 		_proto("Rx DATA+%u %%%u { #%x t=%u l=%u }",
@@ -485,25 +485,22 @@ static void rxrpc_input_data(struct rxrpc_call *call, struct sk_buff *skb)
 		trace_rxrpc_rx_data(call->debug_id, seq, serial, flags, annotation);
 
 		if (before_eq(seq, hard_ack)) {
-			ack = RXRPC_ACK_DUPLICATE;
-			ack_serial = serial;
+			rxrpc_send_ACK(call, RXRPC_ACK_DUPLICATE, serial,
+				       rxrpc_propose_ack_input_data);
 			continue;
 		}
 
 		if (call->rx_buffer[ix]) {
 			rxrpc_input_dup_data(call, seq, nr_subpackets > 1,
 					     &jumbo_bad);
-			if (ack != RXRPC_ACK_DUPLICATE) {
-				ack = RXRPC_ACK_DUPLICATE;
-				ack_serial = serial;
-			}
-			immediate_ack = true;
+			rxrpc_send_ACK(call, RXRPC_ACK_DUPLICATE, serial,
+				       rxrpc_propose_ack_input_data);
 			continue;
 		}
 
 		if (after(seq, hard_ack + call->rx_winsize)) {
-			ack = RXRPC_ACK_EXCEEDS_WINDOW;
-			ack_serial = serial;
+			rxrpc_send_ACK(call, RXRPC_ACK_EXCEEDS_WINDOW, serial,
+				       rxrpc_propose_ack_input_data);
 			if (flags & RXRPC_JUMBO_PACKET) {
 				if (!jumbo_bad) {
 					call->nr_jumbo_bad++;
@@ -511,12 +508,13 @@ static void rxrpc_input_data(struct rxrpc_call *call, struct sk_buff *skb)
 				}
 			}
 
-			goto ack;
+			goto unlock;
 		}
 
-		if (flags & RXRPC_REQUEST_ACK && !ack) {
-			ack = RXRPC_ACK_REQUESTED;
-			ack_serial = serial;
+		if (flags & RXRPC_REQUEST_ACK) {
+			rxrpc_send_ACK(call, RXRPC_ACK_REQUESTED, serial,
+				       rxrpc_propose_ack_input_data);
+			acked = true;
 		}
 
 		if (after(seq0, call->ackr_highest_seq))
@@ -539,11 +537,11 @@ static void rxrpc_input_data(struct rxrpc_call *call, struct sk_buff *skb)
 			smp_store_release(&call->rx_top, seq);
 		} else if (before(seq, call->rx_top)) {
 			/* Send an immediate ACK if we fill in a hole */
-			if (!ack) {
-				ack = RXRPC_ACK_DELAY;
-				ack_serial = serial;
+			if (!acked) {
+				rxrpc_send_ACK(call, RXRPC_ACK_DELAY, serial,
+					       rxrpc_propose_ack_input_data);
+				acked = true;
 			}
-			immediate_ack = true;
 		}
 
 		if (terminal) {
@@ -555,14 +553,8 @@ static void rxrpc_input_data(struct rxrpc_call *call, struct sk_buff *skb)
 			sp = NULL;
 		}
 
-		nr_unacked++;
-
 		if (last) {
 			set_bit(RXRPC_CALL_RX_LAST, &call->flags);
-			if (!ack) {
-				ack = RXRPC_ACK_DELAY;
-				ack_serial = serial;
-			}
 			trace_rxrpc_receive(call, rxrpc_receive_queue_last, serial, seq);
 		} else {
 			trace_rxrpc_receive(call, rxrpc_receive_queue, serial, seq);
@@ -571,32 +563,30 @@ static void rxrpc_input_data(struct rxrpc_call *call, struct sk_buff *skb)
 		if (after_eq(seq, call->rx_expect_next)) {
 			if (after(seq, call->rx_expect_next)) {
 				_net("OOS %u > %u", seq, call->rx_expect_next);
-				ack = RXRPC_ACK_OUT_OF_SEQUENCE;
-				ack_serial = serial;
+				rxrpc_send_ACK(call, RXRPC_ACK_OUT_OF_SEQUENCE, serial,
+					       rxrpc_propose_ack_input_data);
+				acked = true;
 			}
 			call->rx_expect_next = seq + 1;
 		}
-		if (!ack)
+
+		if (!acked) {
+			nr_unacked++;
 			ack_serial = serial;
+		}
 	}
 
-ack:
-	if (atomic_add_return(nr_unacked, &call->ackr_nr_unacked) > 2 && !ack)
-		ack = RXRPC_ACK_IDLE;
-
-	if (ack)
-		rxrpc_propose_ACK(call, ack, ack_serial,
-				  immediate_ack, true,
-				  rxrpc_propose_ack_input_data);
+unlock:
+	if (atomic_add_return(nr_unacked, &call->ackr_nr_unacked) > 2)
+		rxrpc_send_ACK(call, RXRPC_ACK_IDLE, ack_serial,
+			       rxrpc_propose_ack_input_data);
 	else
-		rxrpc_propose_ACK(call, RXRPC_ACK_DELAY, serial,
-				  false, true,
+		rxrpc_propose_ACK(call, RXRPC_ACK_DELAY, ack_serial,
 				  rxrpc_propose_ack_input_data);
 
 	trace_rxrpc_notify_socket(call->debug_id, serial);
 	rxrpc_notify_socket(call);
 
-unlock:
 	spin_unlock(&call->input_lock);
 	rxrpc_free_skb(skb, rxrpc_skb_freed);
 	_leave(" [queued]");
@@ -881,13 +871,11 @@ static void rxrpc_input_ack(struct rxrpc_call *call, struct sk_buff *skb)
 
 	if (buf.ack.reason == RXRPC_ACK_PING) {
 		_proto("Rx ACK %%%u PING Request", ack_serial);
-		rxrpc_propose_ACK(call, RXRPC_ACK_PING_RESPONSE,
-				  ack_serial, true, true,
-				  rxrpc_propose_ack_respond_to_ping);
+		rxrpc_send_ACK(call, RXRPC_ACK_PING_RESPONSE, ack_serial,
+			       rxrpc_propose_ack_respond_to_ping);
 	} else if (sp->hdr.flags & RXRPC_REQUEST_ACK) {
-		rxrpc_propose_ACK(call, RXRPC_ACK_REQUESTED,
-				  ack_serial, true, true,
-				  rxrpc_propose_ack_respond_to_ack);
+		rxrpc_send_ACK(call, RXRPC_ACK_REQUESTED, ack_serial,
+			       rxrpc_propose_ack_respond_to_ack);
 	}
 
 	/* Discard any out-of-order or duplicate ACKs (outside lock). */
@@ -971,9 +959,8 @@ static void rxrpc_input_ack(struct rxrpc_call *call, struct sk_buff *skb)
 	if (test_bit(RXRPC_CALL_TX_LAST, &call->flags) &&
 	    summary.nr_acks == call->tx_top - hard_ack &&
 	    rxrpc_is_client_call(call))
-		rxrpc_propose_ACK(call, RXRPC_ACK_PING, ack_serial,
-				  false, true,
-				  rxrpc_propose_ack_ping_for_lost_reply);
+		rxrpc_propose_ping(call, ack_serial,
+				   rxrpc_propose_ack_ping_for_lost_reply);
 
 	rxrpc_congestion_management(call, skb, &summary, acked_serial);
 out:
