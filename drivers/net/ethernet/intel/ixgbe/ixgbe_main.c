@@ -46,6 +46,9 @@
 #include "ixgbe_model.h"
 #include "ixgbe_txrx_common.h"
 
+#define CREATE_TRACE_POINTS
+#include <trace/events/ixgbe.h>
+
 char ixgbe_driver_name[] = "ixgbe";
 static const char ixgbe_driver_string[] =
 			      "Intel(R) 10 Gigabit PCI Express Network Driver";
@@ -1201,6 +1204,9 @@ static bool ixgbe_clean_tx_irq(struct ixgbe_q_vector *q_vector,
 		/* update budget accounting */
 		budget--;
 	} while (likely(budget));
+
+	if (total_packets)
+		trace_ixgbe_tx_done(adapter->netdev, total_packets);
 
 	i += tx_ring->count;
 	tx_ring->next_to_clean = i;
@@ -2403,6 +2409,9 @@ static int ixgbe_clean_rx_irq(struct ixgbe_q_vector *q_vector,
 		total_rx_packets++;
 	}
 
+	if (total_rx_packets)
+		trace_ixgbe_rx(adapter->netdev, total_rx_packets, budget);
+
 	if (xdp_xmit & IXGBE_XDP_REDIR)
 		xdp_do_flush_map();
 
@@ -3167,6 +3176,8 @@ int ixgbe_poll(struct napi_struct *napi, int budget)
 		ixgbe_update_dca(q_vector);
 #endif
 
+	trace_ixgbe_poll(adapter->netdev, budget);
+
 	ixgbe_for_each_ring(ring, q_vector->tx) {
 		bool wd = ring->xsk_umem ?
 			  ixgbe_clean_xdp_tx_irq(q_vector, ring, budget) :
@@ -3318,6 +3329,8 @@ static irqreturn_t ixgbe_intr(int irq, void *data)
 			ixgbe_irq_enable(adapter, true, true);
 		return IRQ_NONE;	/* Not our interrupt */
 	}
+
+	trace_ixgbe_intr(adapter->netdev, eicr);
 
 	if (eicr & IXGBE_EICR_LSC)
 		ixgbe_check_lsc(adapter);
@@ -8217,7 +8230,7 @@ static int ixgbe_tx_map(struct ixgbe_ring *tx_ring,
 	union ixgbe_adv_tx_desc *tx_desc;
 	skb_frag_t *frag;
 	dma_addr_t dma;
-	unsigned int data_len, size;
+	unsigned int data_len, size, count = 0;
 	u32 tx_flags = first->tx_flags;
 	u32 cmd_type = ixgbe_tx_cmd_type(skb, tx_flags);
 	u16 i = tx_ring->next_to_use;
@@ -8251,6 +8264,7 @@ static int ixgbe_tx_map(struct ixgbe_ring *tx_ring,
 		/* record length, and DMA address */
 		dma_unmap_len_set(tx_buffer, len, size);
 		dma_unmap_addr_set(tx_buffer, dma, dma);
+		count++;
 
 		tx_desc->read.buffer_addr = cpu_to_le64(dma);
 
@@ -8334,6 +8348,7 @@ static int ixgbe_tx_map(struct ixgbe_ring *tx_ring,
 		writel(i, tx_ring->tail);
 	}
 
+	trace_ixgbe_tx(tx_ring->netdev, count);
 	return 0;
 dma_error:
 	dev_err(tx_ring->dev, "TX DMA map failed\n");

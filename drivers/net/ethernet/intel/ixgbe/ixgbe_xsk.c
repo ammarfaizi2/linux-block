@@ -4,6 +4,7 @@
 #include <linux/bpf_trace.h>
 #include <net/xdp_sock.h>
 #include <net/xdp.h>
+#include <trace/events/ixgbe.h>
 
 #include "ixgbe.h"
 #include "ixgbe_txrx_common.h"
@@ -538,6 +539,8 @@ int ixgbe_clean_rx_irq_zc(struct ixgbe_q_vector *q_vector,
 		wmb();
 		writel(ring->next_to_use, ring->tail);
 	}
+
+	trace_ixgbe_rx(adapter->netdev, total_rx_packets, budget);
 
 	u64_stats_update_begin(&rx_ring->syncp);
 	rx_ring->stats.packets += total_rx_packets;
