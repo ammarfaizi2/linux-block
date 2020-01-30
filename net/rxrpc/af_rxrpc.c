@@ -403,9 +403,7 @@ EXPORT_SYMBOL(rxrpc_kernel_check_life);
  */
 void rxrpc_kernel_probe_life(struct socket *sock, struct rxrpc_call *call)
 {
-	rxrpc_propose_ACK(call, RXRPC_ACK_PING, 0, true, false,
-			  rxrpc_propose_ack_ping_for_check_life);
-	rxrpc_send_ack_packet(call, true, NULL);
+	rxrpc_send_ACK(call, RXRPC_ACK_PING, 0, rxrpc_propose_ack_ping_for_check_life);
 }
 EXPORT_SYMBOL(rxrpc_kernel_probe_life);
 

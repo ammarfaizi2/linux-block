@@ -68,34 +68,25 @@ static void rxrpc_set_keepalive(struct rxrpc_call *call)
  */
 static size_t rxrpc_fill_out_ack(struct rxrpc_connection *conn,
 				 struct rxrpc_call *call,
+				 struct rxrpc_ack *ack,
 				 struct rxrpc_ack_buffer *pkt,
 				 rxrpc_seq_t *_hard_ack,
-				 rxrpc_seq_t *_top,
-				 u8 reason)
+				 rxrpc_seq_t *_top)
 {
-	rxrpc_serial_t serial;
 	rxrpc_seq_t hard_ack, top, seq;
 	int ix;
 	u32 mtu, jmax;
 	u8 *ackp = pkt->acks;
 
 	/* Barrier against rxrpc_input_data(). */
-	serial = call->ackr_serial;
 	hard_ack = READ_ONCE(call->rx_hard_ack);
 	top = smp_load_acquire(&call->rx_top);
 	*_hard_ack = hard_ack;
 	*_top = top;
 
-	pkt->ack.bufferSpace	= htons(8);
-	pkt->ack.maxSkew	= htons(0);
 	pkt->ack.firstPacket	= htonl(hard_ack + 1);
 	pkt->ack.previousPacket	= htonl(call->ackr_prev_seq);
-	pkt->ack.serial		= htonl(serial);
-	pkt->ack.reason		= reason;
 	pkt->ack.nAcks		= top - hard_ack;
-
-	if (reason == RXRPC_ACK_PING)
-		pkt->whdr.flags |= RXRPC_REQUEST_ACK;
 
 	if (after(top, hard_ack)) {
 		seq = hard_ack + 1;
@@ -126,18 +117,17 @@ static size_t rxrpc_fill_out_ack(struct rxrpc_connection *conn,
 /*
  * Send an ACK call packet.
  */
-int rxrpc_send_ack_packet(struct rxrpc_call *call, bool ping,
-			  rxrpc_serial_t *_serial)
+static int rxrpc_send_ack_packet(struct rxrpc_local *local, struct rxrpc_ack *ack)
 {
 	struct rxrpc_connection *conn;
 	struct rxrpc_ack_buffer *pkt;
+	struct rxrpc_call *call = ack->call;
 	struct msghdr msg;
 	struct kvec iov[2];
 	rxrpc_serial_t serial;
 	rxrpc_seq_t hard_ack, top;
 	size_t len, n;
 	int ret;
-	u8 reason;
 
 	if (test_bit(RXRPC_CALL_DISCONNECTED, &call->flags))
 		return -ECONNRESET;
@@ -164,21 +154,16 @@ int rxrpc_send_ack_packet(struct rxrpc_call *call, bool ping,
 	pkt->whdr.securityIndex	= call->security_ix;
 	pkt->whdr._rsvd		= 0;
 	pkt->whdr.serviceId	= htons(call->service_id);
+	pkt->ack.bufferSpace	= htons(8);
+	pkt->ack.maxSkew	= htons(0);
+	pkt->ack.serial		= htonl(ack->acked_serial);
+	pkt->ack.reason		= ack->ack_reason;
+
+	if (ack->ack_reason == RXRPC_ACK_PING)
+		pkt->whdr.flags |= RXRPC_REQUEST_ACK;
 
 	spin_lock_bh(&call->lock);
-	if (ping) {
-		reason = RXRPC_ACK_PING;
-	} else {
-		reason = call->ackr_reason;
-		if (!call->ackr_reason) {
-			spin_unlock_bh(&call->lock);
-			ret = 0;
-			goto out;
-		}
-		call->ackr_reason = 0;
-	}
-	n = rxrpc_fill_out_ack(conn, call, pkt, &hard_ack, &top, reason);
-
+	n = rxrpc_fill_out_ack(conn, call, ack, pkt, &hard_ack, &top);
 	spin_unlock_bh(&call->lock);
 
 	iov[0].iov_base	= pkt;
@@ -191,12 +176,11 @@ int rxrpc_send_ack_packet(struct rxrpc_call *call, bool ping,
 	pkt->whdr.serial = htonl(serial);
 	trace_rxrpc_tx_ack(call->debug_id, serial,
 			   ntohl(pkt->ack.firstPacket),
-			   ntohl(pkt->ack.serial),
-			   pkt->ack.reason, pkt->ack.nAcks);
-	if (_serial)
-		*_serial = serial;
+			   ack->acked_serial, ack->ack_reason, pkt->ack.nAcks);
+	if (ack->why == rxrpc_propose_ack_ping_for_lost_ack)
+		call->acks_lost_ping = serial;
 
-	if (ping) {
+	if (ack->ack_reason == RXRPC_ACK_PING) {
 		call->ping_serial = serial;
 		smp_wmb();
 		/* We need to stick a time in before we send the packet in case
@@ -209,8 +193,8 @@ int rxrpc_send_ack_packet(struct rxrpc_call *call, bool ping,
 		trace_rxrpc_rtt_tx(call, rxrpc_rtt_tx_ping, serial);
 	}
 
-	ret = kernel_sendmsg(conn->params.local->socket, &msg, iov, 2, len);
-	conn->params.peer->last_tx_at = ktime_get_seconds();
+	ret = kernel_sendmsg(local->socket, &msg, iov, 2, len);
+	call->peer->last_tx_at = ktime_get_seconds();
 	if (ret < 0)
 		trace_rxrpc_tx_fail(call->debug_id, serial, ret,
 				    rxrpc_tx_point_call_ack);
@@ -221,12 +205,8 @@ int rxrpc_send_ack_packet(struct rxrpc_call *call, bool ping,
 
 	if (call->state < RXRPC_CALL_COMPLETE) {
 		if (ret < 0) {
-			if (ping)
+			if (ack->ack_reason == RXRPC_ACK_PING)
 				clear_bit(RXRPC_CALL_PINGING, &call->flags);
-			rxrpc_propose_ACK(call, pkt->ack.reason,
-					  ntohl(pkt->ack.serial),
-					  false, true,
-					  rxrpc_propose_ack_retry_tx);
 		} else {
 			spin_lock_bh(&call->lock);
 			if (after(hard_ack, call->ackr_consumed))
@@ -239,9 +219,58 @@ int rxrpc_send_ack_packet(struct rxrpc_call *call, bool ping,
 		rxrpc_set_keepalive(call);
 	}
 
-out:
 	kfree(pkt);
 	return ret;
+}
+
+/*
+ * ACK transmitter for a local endpoint.  The UDP socket locks around each
+ * transmission, so we can only transmit one packet at a time, ACK, DATA or
+ * otherwise.
+ */
+void rxrpc_local_ack_transmitter(struct work_struct *work)
+{
+	struct rxrpc_local *local =
+		container_of(work, struct rxrpc_local, ack_tx);
+	LIST_HEAD(queue);
+	int ret;
+
+	if (list_empty(&local->ack_tx_queue))
+		goto out;
+
+	if (atomic_fetch_add_unless(&local->active_users, 1, 0) == 0)
+		goto out;
+
+	spin_lock_bh(&local->ack_tx_lock);
+	list_splice_tail_init(&local->ack_tx_queue, &queue);
+	spin_unlock_bh(&local->ack_tx_lock);
+
+	while (!list_empty(&queue)) {
+		struct rxrpc_ack *ack =
+			list_entry(queue.next, struct rxrpc_ack, link);
+
+		//kdebug("ACK %08x %u", ack->acked_serial, ack->ack_reason);
+
+		ret = rxrpc_send_ack_packet(local, ack);
+		if (ret < 0 && ret != -ECONNRESET) {
+			kdebug("send = %d", ret);
+			spin_lock_bh(&local->ack_tx_lock);
+			list_splice_init(&queue, &local->ack_tx_queue);
+			spin_unlock_bh(&local->ack_tx_lock);
+			rxrpc_queue_local_ack(local);
+			break;
+		}
+
+		list_del(&ack->link);
+		rxrpc_put_call(ack->call, rxrpc_call_put);
+		kfree(ack);
+	}
+
+	rxrpc_unuse_local(local);
+	return;
+
+out:
+	rxrpc_put_local(local);
 }
 
 /*

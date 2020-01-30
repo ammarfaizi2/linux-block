@@ -270,6 +270,9 @@ struct rxrpc_local {
 	struct list_head	link;
 	struct socket		*socket;	/* my UDP socket */
 	struct work_struct	processor;
+	struct list_head	ack_tx_queue;	/* List of ACKs that need sending */
+	struct work_struct	ack_tx;		/* Transmitter of ACKs */
+	spinlock_t		ack_tx_lock;	/* ACK list lock */
 	struct rxrpc_sock __rcu	*service;	/* Service(s) listening on this endpoint */
 	struct rw_semaphore	defrag_sem;	/* control re-enablement of IP DF bit */
 	struct sk_buff_head	reject_queue;	/* packets awaiting rejection */
@@ -497,10 +500,8 @@ enum rxrpc_call_flag {
  * Events that can be raised on a call.
  */
 enum rxrpc_call_event {
-	RXRPC_CALL_EV_ACK,		/* need to generate ACK */
 	RXRPC_CALL_EV_ABORT,		/* need to generate abort */
 	RXRPC_CALL_EV_RESEND,		/* Tx resend required */
-	RXRPC_CALL_EV_PING,		/* Ping send required */
 	RXRPC_CALL_EV_EXPIRED,		/* Expiry occurred */
 	RXRPC_CALL_EV_ACK_LOST,		/* ACK may be lost, send ping */
 };
@@ -682,6 +683,17 @@ struct rxrpc_call {
 };
 
 /*
+ * Ready-to-be-transmitted ACK.
+ */
+struct rxrpc_ack {
+	struct list_head	link;		/* Link in local->ack_tx_queue */
+	struct rxrpc_call	*call;
+	rxrpc_serial_t		acked_serial;	/* Serial of packet being ACK'd */
+	u8			ack_reason;	/* Reason to ACK */
+	u8			why;
+};
+
+/*
  * Summary of a new ACK and the changes it made to the Tx buffer packet states.
  */
 struct rxrpc_ack_summary {
@@ -756,8 +768,8 @@ int rxrpc_reject_call(struct rxrpc_sock *);
 /*
  * call_event.c
  */
-void rxrpc_propose_ACK(struct rxrpc_call *, u8, u32, bool, bool,
-		       enum rxrpc_propose_ack_trace);
+void rxrpc_send_ACK(struct rxrpc_call *, u8, rxrpc_serial_t, enum rxrpc_propose_ack_trace);
+void rxrpc_propose_ACK(struct rxrpc_call *, u8, u32, enum rxrpc_propose_ack_trace);
 void rxrpc_process_call(struct work_struct *);
 
 static inline void rxrpc_reduce_call_timer(struct rxrpc_call *call,
@@ -1009,6 +1021,7 @@ int rxrpc_get_server_data_key(struct rxrpc_connection *, const void *, time64_t,
  * local_event.c
  */
 extern void rxrpc_process_local_events(struct rxrpc_local *);
+extern void rxrpc_local_ack_transmitter(struct work_struct *);
 
 /*
  * local_object.c
@@ -1020,6 +1033,7 @@ void rxrpc_put_local(struct rxrpc_local *);
 struct rxrpc_local *rxrpc_use_local(struct rxrpc_local *);
 void rxrpc_unuse_local(struct rxrpc_local *);
 void rxrpc_queue_local(struct rxrpc_local *);
+void rxrpc_queue_local_ack(struct rxrpc_local *);
 void rxrpc_destroy_all_locals(struct rxrpc_net *);
 
 static inline bool __rxrpc_unuse_local(struct rxrpc_local *local)
@@ -1060,7 +1074,6 @@ static inline struct rxrpc_net *rxrpc_net(struct net *net)
 /*
  * output.c
  */
-int rxrpc_send_ack_packet(struct rxrpc_call *, bool, rxrpc_serial_t *);
 int rxrpc_send_abort_packet(struct rxrpc_call *);
 int rxrpc_send_data_packet(struct rxrpc_call *, struct sk_buff *, bool);
 void rxrpc_reject_packets(struct rxrpc_local *);

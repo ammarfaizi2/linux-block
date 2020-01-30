@@ -250,9 +250,8 @@ static void rxrpc_send_ping(struct rxrpc_call *call, struct sk_buff *skb)
 
 	if (call->peer->rtt_usage < 3 ||
 	    ktime_before(ktime_add_ms(call->peer->rtt_last_req, 1000), now))
-		rxrpc_propose_ACK(call, RXRPC_ACK_PING, sp->hdr.serial,
-				  true, true,
-				  rxrpc_propose_ack_ping_for_params);
+		rxrpc_send_ACK(call, RXRPC_ACK_PING, sp->hdr.serial,
+			       rxrpc_propose_ack_ping_for_params);
 }
 
 /*

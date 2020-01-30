@@ -83,6 +83,9 @@ static struct rxrpc_local *rxrpc_alloc_local(struct rxrpc_net *rxnet,
 		local->rxnet = rxnet;
 		INIT_LIST_HEAD(&local->link);
 		INIT_WORK(&local->processor, rxrpc_local_processor);
+		INIT_LIST_HEAD(&local->ack_tx_queue);
+		INIT_WORK(&local->ack_tx, rxrpc_local_ack_transmitter);
+		spin_lock_init(&local->ack_tx_lock);
 		init_rwsem(&local->defrag_sem);
 		skb_queue_head_init(&local->reject_queue);
 		skb_queue_head_init(&local->event_queue);
@@ -353,6 +356,22 @@ void rxrpc_queue_local(struct rxrpc_local *local)
 	int n = atomic_read(&local->usage);
 
 	if (rxrpc_queue_work(&local->processor))
+		trace_rxrpc_local(debug_id, rxrpc_local_queued, n, here);
+	else
+		rxrpc_put_local(local);
+}
+
+/*
+ * Queue a local endpoint ACK transmitter and pass an extra reference to the
+ * work item.
+ */
+void rxrpc_queue_local_ack(struct rxrpc_local *local)
+{
+	const void *here = __builtin_return_address(0);
+	unsigned int debug_id = local->debug_id;
+	int n = atomic_inc_return(&local->usage);
+
+	if (rxrpc_queue_work(&local->ack_tx))
 		trace_rxrpc_local(debug_id, rxrpc_local_queued, n, here);
 	else
 		rxrpc_put_local(local);
