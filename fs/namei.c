@@ -39,6 +39,7 @@
 #include <linux/bitops.h>
 #include <linux/init_task.h>
 #include <linux/uaccess.h>
+#include <linux/fsuidgid.h>
 
 #include "internal.h"
 #include "mount.h"
@@ -287,6 +288,13 @@ static int check_acl(struct inode *inode, int mask)
 	return -EAGAIN;
 }
 
+static inline kuid_t get_current_fsuid(const struct inode *inode)
+{
+	if (is_userns_visible(inode->i_sb->s_iflags))
+		return current_kfsuid();
+	return current_fsuid();
+}
+
 /*
  * This does the basic permission checking
  */
@@ -294,7 +302,7 @@ static int acl_permission_check(struct inode *inode, int mask)
 {
 	unsigned int mode = inode->i_mode;
 
-	if (likely(uid_eq(current_fsuid(), inode->i_uid)))
+	if (likely(uid_eq(get_current_fsuid(inode), inode->i_uid)))
 		mode >>= 6;
 	else {
 		if (IS_POSIXACL(inode) && (mode & S_IRWXG)) {
@@ -980,7 +988,7 @@ static inline int may_follow_link(struct nameidata *nd)
 
 	/* Allowed if owner and follower match. */
 	inode = nd->link_inode;
-	if (uid_eq(current_cred()->fsuid, inode->i_uid))
+	if (uid_eq(get_current_fsuid(inode), inode->i_uid))
 		return 0;
 
 	/* Allowed if parent directory not sticky and world-writable. */
@@ -1097,7 +1105,7 @@ static int may_create_in_sticky(umode_t dir_mode, kuid_t dir_uid,
 	    (!sysctl_protected_regular && S_ISREG(inode->i_mode)) ||
 	    likely(!(dir_mode & S_ISVTX)) ||
 	    uid_eq(inode->i_uid, dir_uid) ||
-	    uid_eq(current_fsuid(), inode->i_uid))
+	    uid_eq(get_current_fsuid(inode), inode->i_uid))
 		return 0;
 
 	if (likely(dir_mode & 0002) ||
@@ -2832,7 +2840,7 @@ EXPORT_SYMBOL(kern_path_mountpoint);
 
 int __check_sticky(struct inode *dir, struct inode *inode)
 {
-	kuid_t fsuid = current_fsuid();
+	kuid_t fsuid = get_current_fsuid(inode);
 
 	if (uid_eq(inode->i_uid, fsuid))
 		return 0;
@@ -2902,6 +2910,20 @@ static int may_delete(struct inode *dir, struct dentry *victim, bool isdir)
 	return 0;
 }
 
+static bool fsid_has_mapping(struct user_namespace *ns, struct super_block *sb)
+{
+	if (is_userns_visible(sb->s_iflags)) {
+		if (!kuid_has_mapping(ns, current_kfsuid()) ||
+		    !kgid_has_mapping(ns, current_kfsgid()))
+			return false;
+	} else if (!kfsuid_has_mapping(ns, current_fsuid()) ||
+		   !kfsgid_has_mapping(ns, current_fsgid())) {
+		return false;
+	}
+
+	return true;
+}
+
 /*	Check whether we can create an object with dentry child in directory
  *  dir.
  *  1. We can't do it if child already exists (open has special treatment for
@@ -2920,8 +2942,7 @@ static inline int may_create(struct inode *dir, struct dentry *child)
 	if (IS_DEADDIR(dir))
 		return -ENOENT;
 	s_user_ns = dir->i_sb->s_user_ns;
-	if (!kuid_has_mapping(s_user_ns, current_fsuid()) ||
-	    !kgid_has_mapping(s_user_ns, current_fsgid()))
+	if (!fsid_has_mapping(s_user_ns, dir->i_sb))
 		return -EOVERFLOW;
 	return inode_permission(dir, MAY_WRITE | MAY_EXEC);
 }
@@ -3103,8 +3124,7 @@ static int may_o_create(const struct path *dir, struct dentry *dentry, umode_t m
 		return error;
 
 	s_user_ns = dir->dentry->d_sb->s_user_ns;
-	if (!kuid_has_mapping(s_user_ns, current_fsuid()) ||
-	    !kgid_has_mapping(s_user_ns, current_fsgid()))
+	if (!fsid_has_mapping(s_user_ns, dir->dentry->d_sb))
 		return -EOVERFLOW;
 
 	error = inode_permission(dir->dentry->d_inode, MAY_WRITE | MAY_EXEC);
