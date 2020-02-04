@@ -20,13 +20,23 @@
 #include <linux/fs_struct.h>
 #include <linux/bsearch.h>
 #include <linux/sort.h>
+#include <linux/fsuidgid.h>
 
 static struct kmem_cache *user_ns_cachep __read_mostly;
 static DEFINE_MUTEX(userns_state_mutex);
 
+enum idmap_type {
+	UID_MAP,
+	GID_MAP,
+	FSUID_MAP,
+	FSGID_MAP,
+	PROJID_MAP,
+};
+
 static bool new_idmap_permitted(const struct file *file,
 				struct user_namespace *ns, int cap_setid,
-				struct uid_gid_map *map);
+				struct uid_gid_map *new_map,
+				enum idmap_type idmap_type);
 static void free_user_ns(struct work_struct *work);
 
 static struct ucounts *inc_user_namespaces(struct user_namespace *ns, kuid_t uid)
@@ -583,6 +593,142 @@ projid_t from_kprojid_munged(struct user_namespace *targ, kprojid_t kprojid)
 }
 EXPORT_SYMBOL(from_kprojid_munged);
 
+#ifdef CONFIG_USER_NS_FSID
+/**
+ *	make_kfsuid - Map a user-namespace fsuid pair into a kuid.
+ *	@ns:  User namespace that the fsuid is in
+ *	@fsuid: User identifier
+ *
+ *	Maps a user-namespace fsuid pair into a kernel internal kfsuid,
+ *	and returns that kfsuid.
+ *
+ *	When there is no mapping defined for the user-namespace kfsuid
+ *	pair INVALID_UID is returned.  Callers are expected to test
+ *	for and handle INVALID_UID being returned.  INVALID_UID
+ *	may be tested for using uid_valid().
+ */
+kuid_t make_kfsuid(struct user_namespace *ns, uid_t fsuid)
+{
+	/* Map the fsuid to a global kernel fsuid */
+	return KUIDT_INIT(map_id_down(&ns->fsuid_map, fsuid));
+}
+EXPORT_SYMBOL(make_kfsuid);
+
+/**
+ *	from_kfsuid - Create a fsuid from a kfsuid user-namespace pair.
+ *	@targ: The user namespace we want a fsuid in.
+ *	@kfsuid: The kernel internal fsuid to start with.
+ *
+ *	Map @kfsuid into the user-namespace specified by @targ and
+ *	return the resulting fsuid.
+ *
+ *	There is always a mapping into the initial user_namespace.
+ *
+ *	If @kfsuid has no mapping in @targ (uid_t)-1 is returned.
+ */
+uid_t from_kfsuid(struct user_namespace *targ, kuid_t kfsuid)
+{
+	/* Map the fsuid from a global kernel fsuid */
+	return map_id_up(&targ->fsuid_map, __kuid_val(kfsuid));
+}
+EXPORT_SYMBOL(from_kfsuid);
+
+/**
+ *	from_kfsuid_munged - Create a fsuid from a kfsuid user-namespace pair.
+ *	@targ: The user namespace we want a fsuid in.
+ *	@kfsuid: The kernel internal fsuid to start with.
+ *
+ *	Map @kfsuid into the user-namespace specified by @targ and
+ *	return the resulting fsuid.
+ *
+ *	There is always a mapping into the initial user_namespace.
+ *
+ *	Unlike from_kfsuid from_kfsuid_munged never fails and always
+ *	returns a valid fsuid.  This makes from_kfsuid_munged appropriate
+ *	for use in syscalls like stat and getuid where failing the
+ *	system call and failing to provide a valid fsuid are not an
+ *	options.
+ *
+ *	If @kfsuid has no mapping in @targ overflowuid is returned.
+ */
+uid_t from_kfsuid_munged(struct user_namespace *targ, kuid_t kfsuid)
+{
+	uid_t fsuid;
+	fsuid = from_kfsuid(targ, kfsuid);
+
+	if (fsuid == (uid_t) -1)
+		fsuid = overflowuid;
+	return fsuid;
+}
+EXPORT_SYMBOL(from_kfsuid_munged);
+
+/**
+ *	make_kfsgid - Map a user-namespace fsgid pair into a kfsgid.
+ *	@ns:  User namespace that the fsgid is in
+ *	@fsgid: User identifier
+ *
+ *	Maps a user-namespace fsgid pair into a kernel internal kfsgid,
+ *	and returns that kfsgid.
+ *
+ *	When there is no mapping defined for the user-namespace fsgid
+ *	pair INVALID_GID is returned.  Callers are expected to test
+ *	for and handle INVALID_GID being returned.  INVALID_GID
+ *	may be tested for using gid_valid().
+ */
+kgid_t make_kfsgid(struct user_namespace *ns, gid_t fsgid)
+{
+	/* Map the fsgid to a global kernel fsgid */
+	return KGIDT_INIT(map_id_down(&ns->fsgid_map, fsgid));
+}
+EXPORT_SYMBOL(make_kfsgid);
+
+/**
+ *	from_kfsgid - Create a fsgid from a kfsgid user-namespace pair.
+ *	@targ: The user namespace we want a fsgid in.
+ *	@kfsgid: The kernel internal fsgid to start with.
+ *
+ *	Map @kfsgid into the user-namespace specified by @targ and
+ *	return the resulting fsgid.
+ *
+ *	There is always a mapping into the initial user_namespace.
+ *
+ *	If @kfsgid has no mapping in @targ (gid_t)-1 is returned.
+ */
+gid_t from_kfsgid(struct user_namespace *targ, kgid_t kfsgid)
+{
+	/* Map the fsgid from a global kernel fsgid */
+	return map_id_up(&targ->fsgid_map, __kgid_val(kfsgid));
+}
+EXPORT_SYMBOL(from_kfsgid);
+
+/**
+ *	from_kfsgid_munged - Create a fsgid from a kfsgid user-namespace pair.
+ *	@targ: The user namespace we want a fsgid in.
+ *	@kfsgid: The kernel internal fsgid to start with.
+ *
+ *	Map @kfsgid into the user-namespace specified by @targ and
+ *	return the resulting fsgid.
+ *
+ *	There is always a mapping into the initial user_namespace.
+ *
+ *	Unlike from_kfsgid from_kfsgid_munged never fails and always
+ *	returns a valid fsgid.  This makes from_kfsgid_munged appropriate
+ *	for use in syscalls like stat and getgid where failing the
+ *	system call and failing to provide a valid fsgid are not options.
+ *
+ *	If @kfsgid has no mapping in @targ overflowgid is returned.
+ */
+gid_t from_kfsgid_munged(struct user_namespace *targ, kgid_t kfsgid)
+{
+	gid_t fsgid;
+	fsgid = from_kfsgid(targ, kfsgid);
+
+	if (fsgid == (gid_t) -1)
+		fsgid = overflowgid;
+	return fsgid;
+}
+EXPORT_SYMBOL(from_kfsgid_munged);
+#endif /* CONFIG_USER_NS_FSID */
 
 static int uid_m_show(struct seq_file *seq, void *v)
 {
@@ -659,7 +805,7 @@ static int fsuid_m_show(struct seq_file *seq, void *v)
 	if ((lower_ns == ns) && lower_ns->parent)
 		lower_ns = lower_ns->parent;
 
-	lower = from_kuid(lower_ns, KUIDT_INIT(extent->lower_first));
+	lower = from_kfsuid(lower_ns, KUIDT_INIT(extent->lower_first));
 
 	seq_printf(seq, "%10u %10u %10u\n",
 		extent->first,
@@ -680,7 +826,7 @@ static int fsgid_m_show(struct seq_file *seq, void *v)
 	if ((lower_ns == ns) && lower_ns->parent)
 		lower_ns = lower_ns->parent;
 
-	lower = from_kgid(lower_ns, KGIDT_INIT(extent->lower_first));
+	lower = from_kfsgid(lower_ns, KGIDT_INIT(extent->lower_first));
 
 	seq_printf(seq, "%10u %10u %10u\n",
 		extent->first,
@@ -901,10 +1047,10 @@ static int cmp_extents_reverse(const void *a, const void *b)
 }
 
 /**
- * sort_idmaps - Sorts an array of idmap entries.
+ * sort_map - Sorts an array of idmap entries.
  * Can only be called if number of mappings exceeds UID_GID_MAP_MAX_BASE_EXTENTS.
  */
-static int sort_idmaps(struct uid_gid_map *map)
+static int sort_map(struct uid_gid_map *map)
 {
 	if (map->nr_extents <= UID_GID_MAP_MAX_BASE_EXTENTS)
 		return 0;
@@ -927,16 +1073,165 @@ static int sort_idmaps(struct uid_gid_map *map)
 	return 0;
 }
 
+static int sort_idmaps(struct uid_gid_map *map, struct uid_gid_map *fsid_map)
+{
+	int ret;
+
+	ret = sort_map(map);
+	if (ret)
+		return ret;
+
+	/* Sort fsid maps in case they mirror id maps. */
+	return sort_map(fsid_map);
+}
+
+static int map_from_parent(struct uid_gid_map *new_map,
+			   struct uid_gid_map *parent_map)
+{
+	unsigned idx;
+
+	/* Map the lower ids from the parent user namespace to the
+	 * kernel global id space.
+	 */
+	for (idx = 0; idx < new_map->nr_extents; idx++) {
+		struct uid_gid_extent *e;
+		u32 lower_first;
+
+		if (new_map->nr_extents <= UID_GID_MAP_MAX_BASE_EXTENTS)
+			e = &new_map->extent[idx];
+		else
+			e = &new_map->forward[idx];
+
+		lower_first = map_id_range_down(parent_map, e->lower_first, e->count);
+
+		/* Fail if we can not map the specified extent to
+		 * the kernel global id space.
+		 */
+		if (lower_first == (u32)-1)
+			return -EPERM;
+
+		e->lower_first = lower_first;
+	}
+
+	return 0;
+}
+
+static int map_into_kids(struct user_namespace *ns, struct uid_gid_map *id_map,
+			 struct uid_gid_map *parent_id_map,
+			 struct uid_gid_map *fsid_map, enum idmap_type type)
+{
+	int ret;
+
+	ret = map_from_parent(id_map, parent_id_map);
+	if (ret)
+		return ret;
+
+	if (type != UID_MAP && type != GID_MAP)
+		return 0;
+
+	/* fsid maps mirror id maps. */
+	if (fsid_map->nr_extents != 0)
+		ret = map_from_parent(fsid_map, type == UID_MAP ?
+							&ns->parent->fsuid_map :
+							&ns->parent->fsgid_map);
+
+	return ret;
+}
+
+static inline unsigned idmap_exists(const struct uid_gid_map *map)
+{
+	unsigned extents = map->nr_extents;
+	smp_rmb();
+	return extents;
+}
+
+static int idmap_to_fsidmap(struct uid_gid_map *id_map,
+			    struct uid_gid_map *fsid_map,
+			    struct uid_gid_map *new_fsid_map,
+			    enum idmap_type type)
+{
+	if (type != UID_MAP && type != GID_MAP)
+		return 0;
+
+	/* Separate fsid maps have been written. */
+	if (idmap_exists(fsid_map))
+		return 0;
+
+	/* fsid maps mirror id maps. */
+	if (id_map->nr_extents <= UID_GID_MAP_MAX_BASE_EXTENTS) {
+		memcpy(new_fsid_map, id_map, sizeof(struct uid_gid_map));
+		return 0;
+	}
+
+	new_fsid_map->forward = kmemdup(id_map->forward,
+			id_map->nr_extents * sizeof(struct uid_gid_extent),
+			GFP_KERNEL);
+	if (!new_fsid_map->forward)
+		return -ENOMEM;
+	new_fsid_map->nr_extents = id_map->nr_extents;
+
+	return 0;
+}
+
+static void install_idmaps(struct uid_gid_map *id_map,
+			   struct uid_gid_map *new_id_map,
+			   struct uid_gid_map *fsid_map,
+			   struct uid_gid_map *new_fsid_map,
+			   enum idmap_type type)
+{
+	if (new_id_map->nr_extents <= UID_GID_MAP_MAX_BASE_EXTENTS) {
+		memcpy(id_map->extent, new_id_map->extent,
+		       new_id_map->nr_extents * sizeof(new_id_map->extent[0]));
+	} else {
+		id_map->forward = new_id_map->forward;
+		id_map->reverse = new_id_map->reverse;
+	}
+
+	if (type != UID_MAP && type != GID_MAP)
+		return;
+
+	/* fsid maps mirror id maps. */
+	if (new_fsid_map->nr_extents <= UID_GID_MAP_MAX_BASE_EXTENTS) {
+		memcpy(fsid_map->extent, new_fsid_map->extent,
+		       new_fsid_map->nr_extents * sizeof(new_fsid_map->extent[0]));
+	} else {
+		fsid_map->forward = new_fsid_map->forward;
+		fsid_map->reverse = new_fsid_map->reverse;
+	}
+}
+
+static void free_idmaps(struct uid_gid_map *new_id_map,
+			struct uid_gid_map *new_fsid_map)
+{
+	if (new_id_map->nr_extents > UID_GID_MAP_MAX_BASE_EXTENTS) {
+		kfree(new_id_map->forward);
+		kfree(new_id_map->reverse);
+		new_id_map->forward = NULL;
+		new_id_map->reverse = NULL;
+		new_id_map->nr_extents = 0;
+	}
+
+	/* fsid maps mirror id maps. */
+	if (new_fsid_map->nr_extents > UID_GID_MAP_MAX_BASE_EXTENTS) {
+		kfree(new_fsid_map->forward);
+		kfree(new_fsid_map->reverse);
+		new_fsid_map->forward = NULL;
+		new_fsid_map->reverse = NULL;
+		new_fsid_map->nr_extents = 0;
+	}
+}
+
 static ssize_t map_write(struct file *file, const char __user *buf,
 			 size_t count, loff_t *ppos,
 			 int cap_setid,
 			 struct uid_gid_map *map,
-			 struct uid_gid_map *parent_map)
+			 struct uid_gid_map *parent_map,
+			 enum idmap_type type)
 {
 	struct seq_file *seq = file->private_data;
 	struct user_namespace *ns = seq->private;
-	struct uid_gid_map new_map;
-	unsigned idx;
+	struct uid_gid_map *fsid_map;
+	struct uid_gid_map new_map, new_map_fsid;
 	struct uid_gid_extent extent;
 	char *kbuf = NULL, *pos, *next_line;
 	ssize_t ret;
@@ -972,6 +1267,19 @@ static ssize_t map_write(struct file *file, const char __user *buf,
 	mutex_lock(&userns_state_mutex);
 
 	memset(&new_map, 0, sizeof(struct uid_gid_map));
+	new_map_fsid.nr_extents = 0;
+
+	/* Take pointer to fsid maps in case we're mirroring id maps. */
+	switch (type) {
+	case UID_MAP:
+		fsid_map = &ns->fsuid_map;
+		break;
+	case GID_MAP:
+		fsid_map = &ns->fsgid_map;
+		break;
+	default:
+		fsid_map = NULL;
+	}
 
 	ret = -EPERM;
 	/* Only allow one successful write to the map */
@@ -1051,64 +1359,37 @@ static ssize_t map_write(struct file *file, const char __user *buf,
 
 	ret = -EPERM;
 	/* Validate the user is allowed to use user id's mapped to. */
-	if (!new_idmap_permitted(file, ns, cap_setid, &new_map))
+	if (!new_idmap_permitted(file, ns, cap_setid, &new_map, type))
 		goto out;
 
-	ret = -EPERM;
-	/* Map the lower ids from the parent user namespace to the
-	 * kernel global id space.
-	 */
-	for (idx = 0; idx < new_map.nr_extents; idx++) {
-		struct uid_gid_extent *e;
-		u32 lower_first;
+	ret = idmap_to_fsidmap(&new_map, fsid_map, &new_map_fsid, type);
+	if (ret)
+		goto out;
 
-		if (new_map.nr_extents <= UID_GID_MAP_MAX_BASE_EXTENTS)
-			e = &new_map.extent[idx];
-		else
-			e = &new_map.forward[idx];
-
-		lower_first = map_id_range_down(parent_map,
-						e->lower_first,
-						e->count);
-
-		/* Fail if we can not map the specified extent to
-		 * the kernel global id space.
-		 */
-		if (lower_first == (u32) -1)
-			goto out;
-
-		e->lower_first = lower_first;
-	}
+	ret = map_into_kids(ns, &new_map, parent_map, &new_map_fsid, type);
+	if (ret)
+		goto out;
 
 	/*
 	 * If we want to use binary search for lookup, this clones the extent
 	 * array and sorts both copies.
 	 */
-	ret = sort_idmaps(&new_map);
-	if (ret < 0)
+	ret = sort_idmaps(&new_map, &new_map_fsid);
+	if (ret)
 		goto out;
 
 	/* Install the map */
-	if (new_map.nr_extents <= UID_GID_MAP_MAX_BASE_EXTENTS) {
-		memcpy(map->extent, new_map.extent,
-		       new_map.nr_extents * sizeof(new_map.extent[0]));
-	} else {
-		map->forward = new_map.forward;
-		map->reverse = new_map.reverse;
-	}
+	install_idmaps(map, &new_map, fsid_map, &new_map_fsid, type);
 	smp_wmb();
 	map->nr_extents = new_map.nr_extents;
+	if (fsid_map && new_map_fsid.nr_extents)
+		fsid_map->nr_extents = new_map_fsid.nr_extents;
 
 	*ppos = count;
 	ret = count;
 out:
-	if (ret < 0 && new_map.nr_extents > UID_GID_MAP_MAX_BASE_EXTENTS) {
-		kfree(new_map.forward);
-		kfree(new_map.reverse);
-		map->forward = NULL;
-		map->reverse = NULL;
-		map->nr_extents = 0;
-	}
+	if (ret < 0)
+		free_idmaps(&new_map, &new_map_fsid);
 
 	mutex_unlock(&userns_state_mutex);
 	kfree(kbuf);
@@ -1128,8 +1409,8 @@ ssize_t proc_uid_map_write(struct file *file, const char __user *buf,
 	if ((seq_ns != ns) && (seq_ns != ns->parent))
 		return -EPERM;
 
-	return map_write(file, buf, size, ppos, CAP_SETUID,
-			 &ns->uid_map, &ns->parent->uid_map);
+	return map_write(file, buf, size, ppos, CAP_SETUID, &ns->uid_map,
+			 &ns->parent->uid_map, UID_MAP);
 }
 
 ssize_t proc_gid_map_write(struct file *file, const char __user *buf,
@@ -1145,8 +1426,8 @@ ssize_t proc_gid_map_write(struct file *file, const char __user *buf,
 	if ((seq_ns != ns) && (seq_ns != ns->parent))
 		return -EPERM;
 
-	return map_write(file, buf, size, ppos, CAP_SETGID,
-			 &ns->gid_map, &ns->parent->gid_map);
+	return map_write(file, buf, size, ppos, CAP_SETGID, &ns->gid_map,
+			 &ns->parent->gid_map, GID_MAP);
 }
 
 ssize_t proc_projid_map_write(struct file *file, const char __user *buf,
@@ -1163,8 +1444,8 @@ ssize_t proc_projid_map_write(struct file *file, const char __user *buf,
 		return -EPERM;
 
 	/* Anyone can set any valid project id no capability needed */
-	return map_write(file, buf, size, ppos, -1,
-			 &ns->projid_map, &ns->parent->projid_map);
+	return map_write(file, buf, size, ppos, -1, &ns->projid_map,
+			 &ns->parent->projid_map, PROJID_MAP);
 }
 
 #ifdef CONFIG_USER_NS_FSID
@@ -1182,7 +1463,7 @@ ssize_t proc_fsuid_map_write(struct file *file, const char __user *buf,
 		return -EPERM;
 
 	return map_write(file, buf, size, ppos, CAP_SETUID, &ns->fsuid_map,
-			 &ns->parent->fsuid_map);
+			 &ns->parent->fsuid_map, FSUID_MAP);
 }
 
 ssize_t proc_fsgid_map_write(struct file *file, const char __user *buf,
@@ -1199,15 +1480,25 @@ ssize_t proc_fsgid_map_write(struct file *file, const char __user *buf,
 		return -EPERM;
 
 	return map_write(file, buf, size, ppos, CAP_SETGID, &ns->fsgid_map,
-			 &ns->parent->fsgid_map);
+			 &ns->parent->fsgid_map, FSGID_MAP);
 }
 #endif
 
 static bool new_idmap_permitted(const struct file *file,
 				struct user_namespace *ns, int cap_setid,
-				struct uid_gid_map *new_map)
+				struct uid_gid_map *new_map,
+				enum idmap_type idmap_type)
 {
 	const struct cred *cred = file->f_cred;
+
+	/* Don't allow writing fsuid maps when uid maps have been written. */
+	if (idmap_type == FSUID_MAP && idmap_exists(&ns->uid_map))
+		return false;
+
+	/* Don't allow writing fsgid maps when gid maps have been written. */
+	if (idmap_type == FSGID_MAP && idmap_exists(&ns->gid_map))
+		return false;
+
 	/* Don't allow mappings that would allow anything that wouldn't
 	 * be allowed without the establishment of unprivileged mappings.
 	 */
@@ -1215,11 +1506,15 @@ static bool new_idmap_permitted(const struct file *file,
 	    uid_eq(ns->owner, cred->euid)) {
 		u32 id = new_map->extent[0].lower_first;
 		if (cap_setid == CAP_SETUID) {
-			kuid_t uid = make_kuid(ns->parent, id);
+			kuid_t uid = idmap_type == FSUID_MAP ?
+					     make_kfsuid(ns->parent, id) :
+					     make_kuid(ns->parent, id);
 			if (uid_eq(uid, cred->euid))
 				return true;
 		} else if (cap_setid == CAP_SETGID) {
-			kgid_t gid = make_kgid(ns->parent, id);
+			kgid_t gid = idmap_type == FSGID_MAP ?
+					     make_kfsgid(ns->parent, id) :
+					     make_kgid(ns->parent, id);
 			if (!(ns->flags & USERNS_SETGROUPS_ALLOWED) &&
 			    gid_eq(gid, cred->egid))
 				return true;
