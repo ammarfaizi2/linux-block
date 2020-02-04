@@ -39,6 +39,7 @@
 #include <linux/bitops.h>
 #include <linux/init_task.h>
 #include <linux/uaccess.h>
+#include <linux/fsuidgid.h>
 
 #include "internal.h"
 #include "mount.h"
@@ -2771,6 +2772,20 @@ static int may_delete(struct inode *dir, struct dentry *victim, bool isdir)
 	return 0;
 }
 
+static bool fsid_has_mapping(struct user_namespace *ns, struct super_block *sb)
+{
+	if (is_userns_visible(sb->s_iflags)) {
+		if (!kuid_has_mapping(ns, current_fsuid()) ||
+		    !kgid_has_mapping(ns, current_fsgid()))
+			return false;
+	} else if (!kfsuid_has_mapping(ns, current_fsuid()) ||
+		   !kfsgid_has_mapping(ns, current_fsgid())) {
+		return false;
+	}
+
+	return true;
+}
+
 /*	Check whether we can create an object with dentry child in directory
  *  dir.
  *  1. We can't do it if child already exists (open has special treatment for
@@ -2789,8 +2804,7 @@ static inline int may_create(struct inode *dir, struct dentry *child)
 	if (IS_DEADDIR(dir))
 		return -ENOENT;
 	s_user_ns = dir->i_sb->s_user_ns;
-	if (!kuid_has_mapping(s_user_ns, current_fsuid()) ||
-	    !kgid_has_mapping(s_user_ns, current_fsgid()))
+	if (!fsid_has_mapping(s_user_ns, dir->i_sb))
 		return -EOVERFLOW;
 	return inode_permission(dir, MAY_WRITE | MAY_EXEC);
 }
@@ -2972,8 +2986,7 @@ static int may_o_create(const struct path *dir, struct dentry *dentry, umode_t m
 		return error;
 
 	s_user_ns = dir->dentry->d_sb->s_user_ns;
-	if (!kuid_has_mapping(s_user_ns, current_fsuid()) ||
-	    !kgid_has_mapping(s_user_ns, current_fsgid()))
+	if (!fsid_has_mapping(s_user_ns, dir->dentry->d_sb))
 		return -EOVERFLOW;
 
 	error = inode_permission(dir->dentry->d_inode, MAY_WRITE | MAY_EXEC);
