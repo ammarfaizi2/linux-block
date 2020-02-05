@@ -32,6 +32,7 @@
 #include <linux/ima.h>
 #include <linux/dnotify.h>
 #include <linux/compat.h>
+#include <linux/fsuidgid.h>
 
 #include "internal.h"
 
@@ -626,8 +627,13 @@ static int chown_common(const struct path *path, uid_t user, gid_t group)
 	kuid_t uid;
 	kgid_t gid;
 
-	uid = make_kuid(current_user_ns(), user);
-	gid = make_kgid(current_user_ns(), group);
+	if (is_userns_visible(inode->i_sb->s_iflags)) {
+		uid = make_kuid(current_user_ns(), user);
+		gid = make_kgid(current_user_ns(), group);
+	} else {
+		uid = make_kfsuid(current_user_ns(), user);
+		gid = make_kfsgid(current_user_ns(), group);
+	}
 
 retry_deleg:
 	newattrs.ia_valid =  ATTR_CTIME;
