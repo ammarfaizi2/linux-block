@@ -756,7 +756,7 @@ long __sys_setresgid(gid_t rgid, gid_t egid, gid_t sgid)
 	const struct cred *old;
 	struct cred *new;
 	int retval;
-	kgid_t krgid, kegid, ksgid;
+	kgid_t krgid, kegid, ksgid, kfsgid;
 
 	krgid = make_kgid(ns, rgid);
 	kegid = make_kgid(ns, egid);
@@ -789,11 +789,21 @@ long __sys_setresgid(gid_t rgid, gid_t egid, gid_t sgid)
 
 	if (rgid != (gid_t) -1)
 		new->gid = krgid;
-	if (egid != (gid_t) -1)
+	if (egid != (gid_t) -1) {
 		new->egid = kegid;
+		kfsgid = make_kfsgid(ns, egid);
+	} else {
+		kfsgid = kgid_to_kfsgid(new->user_ns, new->egid);
+	}
+	if (!gid_valid(kfsgid)) {
+		retval = -EINVAL;
+		goto error;
+	}
+
 	if (sgid != (gid_t) -1)
 		new->sgid = ksgid;
-	new->fsgid = new->egid;
+	new->kfsgid = new->egid;
+	new->fsgid = kfsgid;
 
 	return commit_creds(new);
 
