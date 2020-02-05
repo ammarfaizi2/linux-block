@@ -650,11 +650,12 @@ long __sys_setresuid(uid_t ruid, uid_t euid, uid_t suid)
 	const struct cred *old;
 	struct cred *new;
 	int retval;
-	kuid_t kruid, keuid, ksuid;
+	kuid_t kruid, keuid, ksuid, kfsuid;
 
 	kruid = make_kuid(ns, ruid);
 	keuid = make_kuid(ns, euid);
 	ksuid = make_kuid(ns, suid);
+	kfsuid = make_kfsuid(ns, euid);
 
 	if ((ruid != (uid_t) -1) && !uid_valid(kruid))
 		return -EINVAL;
@@ -663,6 +664,9 @@ long __sys_setresuid(uid_t ruid, uid_t euid, uid_t suid)
 		return -EINVAL;
 
 	if ((suid != (uid_t) -1) && !uid_valid(ksuid))
+		return -EINVAL;
+
+	if ((euid != (uid_t) -1) && !uid_valid(kfsuid))
 		return -EINVAL;
 
 	new = prepare_creds();
@@ -692,11 +696,15 @@ long __sys_setresuid(uid_t ruid, uid_t euid, uid_t suid)
 				goto error;
 		}
 	}
-	if (euid != (uid_t) -1)
+	if (euid != (uid_t) -1) {
 		new->euid = keuid;
+	} else {
+		uid_t fsuid = from_kuid_munged(new->user_ns, new->euid);
+		kfsuid = make_kfsuid(ns, fsuid);
+	}
 	if (suid != (uid_t) -1)
 		new->suid = ksuid;
-	new->fsuid = new->euid;
+	new->fsuid = kfsuid;
 
 	retval = security_task_fix_setuid(new, old, LSM_SETID_RES);
 	if (retval < 0)
