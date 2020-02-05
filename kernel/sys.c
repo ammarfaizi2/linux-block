@@ -416,10 +416,14 @@ long __sys_setgid(gid_t gid)
 	const struct cred *old;
 	struct cred *new;
 	int retval;
-	kgid_t kgid;
+	kgid_t kgid, kfsgid;
 
 	kgid = make_kgid(ns, gid);
 	if (!gid_valid(kgid))
+		return -EINVAL;
+
+	kfsgid = make_kfsgid(ns, gid);
+	if (!gid_valid(kfsgid))
 		return -EINVAL;
 
 	new = prepare_creds();
@@ -428,12 +432,15 @@ long __sys_setgid(gid_t gid)
 	old = current_cred();
 
 	retval = -EPERM;
-	if (ns_capable(old->user_ns, CAP_SETGID))
-		new->gid = new->egid = new->sgid = new->fsgid = kgid;
-	else if (gid_eq(kgid, old->gid) || gid_eq(kgid, old->sgid))
-		new->egid = new->fsgid = kgid;
-	else
+	if (ns_capable(old->user_ns, CAP_SETGID)) {
+		new->gid = new->egid = new->sgid = new->kfsgid = kgid;
+		new->fsgid = kfsgid;
+	} else if (gid_eq(kgid, old->gid) || gid_eq(kgid, old->sgid)) {
+		new->egid = new->kfsgid = kgid;
+		new->fsgid = kfsgid;
+	} else {
 		goto error;
+	}
 
 	return commit_creds(new);
 
