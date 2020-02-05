@@ -574,9 +574,14 @@ long __sys_setuid(uid_t uid)
 	struct cred *new;
 	int retval;
 	kuid_t kuid;
+	kuid_t kfsuid;
 
 	kuid = make_kuid(ns, uid);
 	if (!uid_valid(kuid))
+		return -EINVAL;
+
+	kfsuid = make_kfsuid(ns, uid);
+	if (!uid_valid(kfsuid))
 		return -EINVAL;
 
 	new = prepare_creds();
@@ -596,7 +601,8 @@ long __sys_setuid(uid_t uid)
 		goto error;
 	}
 
-	new->fsuid = new->euid = kuid;
+	new->euid = kuid;
+	new->fsuid = kfsuid;
 
 	retval = security_task_fix_setuid(new, old, LSM_SETID_ID);
 	if (retval < 0)
