@@ -32,6 +32,7 @@
 #include <linux/ima.h>
 #include <linux/dnotify.h>
 #include <linux/compat.h>
+#include <linux/fsuidgid.h>
 
 #include "internal.h"
 
@@ -361,8 +362,10 @@ long do_faccessat(int dfd, const char __user *filename, int mode)
 	if (!override_cred)
 		return -ENOMEM;
 
-	override_cred->fsuid = override_cred->uid;
-	override_cred->fsgid = override_cred->gid;
+	override_cred->kfsuid = override_cred->uid;
+	override_cred->kfsgid = override_cred->gid;
+	override_cred->fsuid = kuid_to_kfsuid(override_cred->user_ns, override_cred->uid);
+	override_cred->fsgid = kgid_to_kfsgid(override_cred->user_ns, override_cred->gid);
 
 	if (!issecure(SECURE_NO_SETUID_FIXUP)) {
 		/* Clear the capabilities if we switch to a non-root user */
@@ -626,8 +629,13 @@ static int chown_common(const struct path *path, uid_t user, gid_t group)
 	kuid_t uid;
 	kgid_t gid;
 
-	uid = make_kuid(current_user_ns(), user);
-	gid = make_kgid(current_user_ns(), group);
+	if (is_userns_visible(inode->i_sb->s_iflags)) {
+		uid = make_kuid(current_user_ns(), user);
+		gid = make_kgid(current_user_ns(), group);
+	} else {
+		uid = make_kfsuid(current_user_ns(), user);
+		gid = make_kfsgid(current_user_ns(), group);
+	}
 
 retry_deleg:
 	newattrs.ia_valid =  ATTR_CTIME;
