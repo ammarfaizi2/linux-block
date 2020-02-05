@@ -3651,4 +3651,9 @@ static inline int inode_drain_writes(struct inode *inode)
 	return filemap_write_and_wait(inode->i_mapping);
 }
 
+static inline bool is_userns_visible(unsigned long iflags)
+{
+	return (iflags & SB_I_USERNS_VISIBLE);
+}
+
 #endif /* _LINUX_FS_H */
