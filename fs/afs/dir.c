@@ -381,6 +381,10 @@ expand:
 	if (test_bit(AFS_VNODE_DIR_VALID, &dvnode->flags))
 		goto success;
 
+	if (test_and_clear_bit(AFS_VNODE_INVAL_CACHE, &dvnode->flags))
+		fscache_invalidate(afs_vnode_cache(dvnode), i_size,
+				   FSCACHE_INVAL_LIGHT);
+
 	up_read(&dvnode->validate_lock);
 	if (down_write_killable(&dvnode->validate_lock) < 0)
 		goto error;

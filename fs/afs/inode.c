@@ -219,6 +219,7 @@ static void afs_apply_status(struct afs_fs_cursor *fc,
 				fc->type ? fc->type->name : "???");
 
 		vnode->invalid_before = status->data_version;
+		set_bit(AFS_VNODE_INVAL_CACHE, &vnode->flags);
 		if (vnode->status.type == AFS_FTYPE_DIR) {
 			if (test_and_clear_bit(AFS_VNODE_DIR_VALID, &vnode->flags))
 				afs_stat_v(vnode, n_inval);
@@ -577,7 +578,9 @@ static void afs_zap_data(struct afs_vnode *vnode)
 	_enter("{%llx:%llu}", vnode->fid.vid, vnode->fid.vnode);
 
 #ifdef CONFIG_AFS_FSCACHE
-	fscache_invalidate(vnode->cache, i_size_read(&vnode->vfs_inode), 0);
+	if (test_and_clear_bit(AFS_VNODE_INVAL_CACHE, &vnode->flags))
+		fscache_invalidate(afs_vnode_cache(vnode),
+				   i_size_read(&vnode->vfs_inode), 0);
 #endif
 
 	/* nuke all the non-dirty pages that aren't locked, mapped or being
