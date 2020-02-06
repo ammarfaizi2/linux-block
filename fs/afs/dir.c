@@ -43,6 +43,7 @@ static int afs_rename(struct inode *old_dir, struct dentry *old_dentry,
 static int afs_dir_releasepage(struct page *page, gfp_t gfp_flags);
 static void afs_dir_invalidatepage(struct page *page, unsigned int offset,
 				   unsigned int length);
+static void afs_dir_write_to_cache(struct afs_vnode *dvnode);
 
 static int afs_dir_set_page_dirty(struct page *page)
 {
@@ -1371,6 +1372,19 @@ static void afs_update_dentry_version(struct afs_fs_cursor *fc,
 }
 
 /*
+ * Finish usage of a directory cookie.
+ */
+static void afs_dir_unuse_cookie(struct afs_vnode *dvnode)
+{
+	loff_t i_size = i_size_read(&dvnode->vfs_inode);
+	struct afs_vnode_cache_aux aux = {
+		.data_version = dvnode->status.data_version,
+	};
+
+	fscache_unuse_cookie(afs_vnode_cache(dvnode), &aux, &i_size);
+}
+
+/*
  * create a directory on an AFS filesystem
  */
 static int afs_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode)
@@ -1381,6 +1395,7 @@ static int afs_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode)
 	struct afs_vnode *dvnode = AFS_FS_I(dir);
 	struct key *key;
 	afs_dataversion_t data_version;
+	bool update_cache = false;
 	int ret;
 
 	mode |= S_IFDIR;
@@ -1398,6 +1413,8 @@ static int afs_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode)
 		ret = PTR_ERR(key);
 		goto error_scb;
 	}
+
+	fscache_use_cookie(afs_vnode_cache(dvnode), true);
 
 	ret = -ERESTARTSYS;
 	if (afs_begin_vnode_operation(&fc, dvnode, key, true)) {
@@ -1425,18 +1442,24 @@ static int afs_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode)
 	if (ret == 0) {
 		down_write(&dvnode->validate_lock);
 		if (test_bit(AFS_VNODE_DIR_VALID, &dvnode->flags) &&
-		    dvnode->status.data_version == data_version)
+		    dvnode->status.data_version == data_version) {
 			afs_edit_dir_add(dvnode, &dentry->d_name, &iget_data.fid,
 					 afs_edit_dir_for_create);
+			update_cache = true;
+		}
 		up_write(&dvnode->validate_lock);
+		if (update_cache)
+			afs_dir_write_to_cache(dvnode);
 	}
 
+	afs_dir_unuse_cookie(dvnode);
 	key_put(key);
 	kfree(scb);
 	_leave(" = 0");
 	return 0;
 
 error_key:
+	fscache_unuse_cookie(afs_vnode_cache(dvnode), NULL, NULL);
 	key_put(key);
 error_scb:
 	kfree(scb);
@@ -1471,6 +1494,7 @@ static int afs_rmdir(struct inode *dir, struct dentry *dentry)
 	struct afs_vnode *dvnode = AFS_FS_I(dir), *vnode = NULL;
 	struct key *key;
 	afs_dataversion_t data_version;
+	bool update_cache = false;
 	int ret;
 
 	_enter("{%llx:%llu},{%pd}",
@@ -1485,6 +1509,8 @@ static int afs_rmdir(struct inode *dir, struct dentry *dentry)
 		ret = PTR_ERR(key);
 		goto error;
 	}
+
+	fscache_use_cookie(afs_vnode_cache(dvnode), true);
 
 	/* Try to make sure we have a callback promise on the victim. */
 	if (d_really_is_positive(dentry)) {
@@ -1517,16 +1543,21 @@ static int afs_rmdir(struct inode *dir, struct dentry *dentry)
 			afs_dir_remove_subdir(dentry);
 			down_write(&dvnode->validate_lock);
 			if (test_bit(AFS_VNODE_DIR_VALID, &dvnode->flags) &&
-			    dvnode->status.data_version == data_version)
+			    dvnode->status.data_version == data_version) {
 				afs_edit_dir_remove(dvnode, &dentry->d_name,
 						    afs_edit_dir_for_rmdir);
+				update_cache = true;
+			}
 			up_write(&dvnode->validate_lock);
+			if (update_cache)
+				afs_dir_write_to_cache(dvnode);
 		}
 	}
 
 	if (vnode)
 		up_write(&vnode->rmdir_lock);
 error_key:
+	afs_dir_unuse_cookie(dvnode);
 	key_put(key);
 error:
 	kfree(scb);
@@ -1588,6 +1619,7 @@ static int afs_unlink(struct inode *dir, struct dentry *dentry)
 	struct afs_vnode *dvnode = AFS_FS_I(dir);
 	struct afs_vnode *vnode = AFS_FS_I(d_inode(dentry));
 	struct key *key;
+	bool update_cache = false;
 	bool need_rehash = false;
 	int ret;
 
@@ -1607,6 +1639,8 @@ static int afs_unlink(struct inode *dir, struct dentry *dentry)
 		ret = PTR_ERR(key);
 		goto error_scb;
 	}
+
+	fscache_use_cookie(afs_vnode_cache(dvnode), true);
 
 	/* Try to make sure we have a callback promise on the victim. */
 	ret = afs_validate(vnode, key);
@@ -1662,10 +1696,14 @@ static int afs_unlink(struct inode *dir, struct dentry *dentry)
 		if (ret == 0) {
 			down_write(&dvnode->validate_lock);
 			if (test_bit(AFS_VNODE_DIR_VALID, &dvnode->flags) &&
-			    dvnode->status.data_version == data_version)
+			    dvnode->status.data_version == data_version) {
 				afs_edit_dir_remove(dvnode, &dentry->d_name,
 						    afs_edit_dir_for_unlink);
+				update_cache = true;
+			}
 			up_write(&dvnode->validate_lock);
+			if (update_cache)
+				afs_dir_write_to_cache(dvnode);
 		}
 	}
 
@@ -1673,6 +1711,7 @@ static int afs_unlink(struct inode *dir, struct dentry *dentry)
 		d_rehash(dentry);
 
 error_key:
+	afs_dir_unuse_cookie(dvnode);
 	key_put(key);
 error_scb:
 	kfree(scb);
@@ -1693,6 +1732,7 @@ static int afs_create(struct inode *dir, struct dentry *dentry, umode_t mode,
 	struct afs_vnode *dvnode = AFS_FS_I(dir);
 	struct key *key;
 	afs_dataversion_t data_version;
+	bool update_cache = false;
 	int ret;
 
 	mode |= S_IFREG;
@@ -1709,6 +1749,8 @@ static int afs_create(struct inode *dir, struct dentry *dentry, umode_t mode,
 		ret = PTR_ERR(key);
 		goto error;
 	}
+
+	fscache_use_cookie(afs_vnode_cache(dvnode), true);
 
 	ret = -ENOMEM;
 	scb = kcalloc(2, sizeof(struct afs_status_cb), GFP_KERNEL);
@@ -1740,12 +1782,17 @@ static int afs_create(struct inode *dir, struct dentry *dentry, umode_t mode,
 
 	down_write(&dvnode->validate_lock);
 	if (test_bit(AFS_VNODE_DIR_VALID, &dvnode->flags) &&
-	    dvnode->status.data_version == data_version)
+	    dvnode->status.data_version == data_version) {
 		afs_edit_dir_add(dvnode, &dentry->d_name, &iget_data.fid,
 				 afs_edit_dir_for_create);
+		update_cache = true;
+	}
 	up_write(&dvnode->validate_lock);
+	if (update_cache)
+		afs_dir_write_to_cache(dvnode);
 
 	kfree(scb);
+	afs_dir_unuse_cookie(dvnode);
 	key_put(key);
 	_leave(" = 0");
 	return 0;
@@ -1753,6 +1800,7 @@ static int afs_create(struct inode *dir, struct dentry *dentry, umode_t mode,
 error_scb:
 	kfree(scb);
 error_key:
+	afs_dir_unuse_cookie(dvnode);
 	key_put(key);
 error:
 	d_drop(dentry);
@@ -1772,6 +1820,7 @@ static int afs_link(struct dentry *from, struct inode *dir,
 	struct afs_vnode *vnode = AFS_FS_I(d_inode(from));
 	struct key *key;
 	afs_dataversion_t data_version;
+	bool update_cache = false;
 	int ret;
 
 	_enter("{%llx:%llu},{%llx:%llu},{%pd}",
@@ -1793,6 +1842,8 @@ static int afs_link(struct dentry *from, struct inode *dir,
 		ret = PTR_ERR(key);
 		goto error_scb;
 	}
+
+	fscache_use_cookie(afs_vnode_cache(dvnode), true);
 
 	ret = -ERESTARTSYS;
 	if (afs_begin_vnode_operation(&fc, dvnode, key, true)) {
@@ -1828,17 +1879,23 @@ static int afs_link(struct dentry *from, struct inode *dir,
 
 	down_write(&dvnode->validate_lock);
 	if (test_bit(AFS_VNODE_DIR_VALID, &dvnode->flags) &&
-	    dvnode->status.data_version == data_version)
+	    dvnode->status.data_version == data_version) {
 		afs_edit_dir_add(dvnode, &dentry->d_name, &vnode->fid,
 				 afs_edit_dir_for_link);
+		update_cache = true;
+	}
 	up_write(&dvnode->validate_lock);
+	if (update_cache)
+		afs_dir_write_to_cache(dvnode);
 
+	afs_dir_unuse_cookie(dvnode);
 	key_put(key);
 	kfree(scb);
 	_leave(" = 0");
 	return 0;
 
 error_key:
+	afs_dir_unuse_cookie(dvnode);
 	key_put(key);
 error_scb:
 	kfree(scb);
@@ -1860,6 +1917,7 @@ static int afs_symlink(struct inode *dir, struct dentry *dentry,
 	struct afs_vnode *dvnode = AFS_FS_I(dir);
 	struct key *key;
 	afs_dataversion_t data_version;
+	bool update_cache = false;
 	int ret;
 
 	_enter("{%llx:%llu},{%pd},%s",
@@ -1884,6 +1942,8 @@ static int afs_symlink(struct inode *dir, struct dentry *dentry,
 		ret = PTR_ERR(key);
 		goto error_scb;
 	}
+
+	fscache_use_cookie(afs_vnode_cache(dvnode), true);
 
 	ret = -ERESTARTSYS;
 	if (afs_begin_vnode_operation(&fc, dvnode, key, true)) {
@@ -1910,17 +1970,23 @@ static int afs_symlink(struct inode *dir, struct dentry *dentry,
 
 	down_write(&dvnode->validate_lock);
 	if (test_bit(AFS_VNODE_DIR_VALID, &dvnode->flags) &&
-	    dvnode->status.data_version == data_version)
+	    dvnode->status.data_version == data_version) {
 		afs_edit_dir_add(dvnode, &dentry->d_name, &iget_data.fid,
 				 afs_edit_dir_for_symlink);
+		update_cache = true;
+	}
 	up_write(&dvnode->validate_lock);
+	if (update_cache)
+		afs_dir_write_to_cache(dvnode);
 
+	afs_dir_unuse_cookie(dvnode);
 	key_put(key);
 	kfree(scb);
 	_leave(" = 0");
 	return 0;
 
 error_key:
+	afs_dir_unuse_cookie(dvnode);
 	key_put(key);
 error_scb:
 	kfree(scb);
@@ -1946,6 +2012,7 @@ static int afs_rename(struct inode *old_dir, struct dentry *old_dentry,
 	afs_dataversion_t orig_data_version;
 	afs_dataversion_t new_data_version;
 	bool new_negative = d_is_negative(new_dentry);
+	bool update_cache = false;
 	int ret;
 
 	if (flags)
@@ -1975,6 +2042,10 @@ static int afs_rename(struct inode *old_dir, struct dentry *old_dentry,
 		ret = PTR_ERR(key);
 		goto error_scb;
 	}
+
+	fscache_use_cookie(afs_vnode_cache(orig_dvnode), true);
+	if (new_dvnode != orig_dvnode)
+		fscache_use_cookie(afs_vnode_cache(new_dvnode), true);
 
 	/* For non-directories, check whether the target is busy and if so,
 	 * make a copy of the dentry and then do a silly-rename.  If the
@@ -2063,9 +2134,9 @@ static int afs_rename(struct inode *old_dir, struct dentry *old_dentry,
 		    orig_dvnode->status.data_version == orig_data_version)
 			afs_edit_dir_remove(orig_dvnode, &old_dentry->d_name,
 					    afs_edit_dir_for_rename_0);
+
 		if (orig_dvnode != new_dvnode) {
 			up_write(&orig_dvnode->validate_lock);
-
 			down_write(&new_dvnode->validate_lock);
 		}
 		if (test_bit(AFS_VNODE_DIR_VALID, &new_dvnode->flags) &&
@@ -2096,6 +2167,10 @@ static int afs_rename(struct inode *old_dir, struct dentry *old_dentry,
 		afs_update_dentry_version(&fc, new_dentry, &scb[1]);
 		d_move(old_dentry, new_dentry);
 		up_write(&new_dvnode->validate_lock);
+
+		if (new_dvnode != orig_dvnode)
+			afs_dir_write_to_cache(new_dvnode);
+		afs_dir_write_to_cache(orig_dvnode);
 		goto error_tmp;
 	}
 
@@ -2107,6 +2182,9 @@ error_rehash:
 error_tmp:
 	if (tmp)
 		dput(tmp);
+	if (new_dvnode != orig_dvnode)
+		afs_dir_unuse_cookie(new_dvnode);
+	afs_dir_unuse_cookie(orig_dvnode);
 	key_put(key);
 error_scb:
 	kfree(scb);
@@ -2157,4 +2235,70 @@ static void afs_dir_invalidatepage(struct page *page, unsigned int offset,
 		set_page_private(page, 0);
 		ClearPagePrivate(page);
 	}
+}
+
+static void afs_dir_write_to_cache_done(struct fscache_io_request *req)
+{
+	pgoff_t index = req->pos >> PAGE_SHIFT;
+	pgoff_t last = index + req->nr_pages - 1;
+
+	_enter("%lx,%x,%llx", index, req->nr_pages, req->transferred);
+
+	afs_clear_fscache_bits(req->mapping, index, last);
+}
+
+static const struct fscache_io_request_ops afs_dir_write_req_ops = {
+	.get		= afs_req_get,
+	.put		= afs_req_put,
+};
+
+/*
+ * Write the locally modified dir back to the cache.
+ */
+static void afs_dir_write_to_cache(struct afs_vnode *dvnode)
+{
+	struct afs_read *req;
+	struct iov_iter iter;
+	unsigned int x;
+	pgoff_t nr_pages;
+	loff_t i_size, size;
+	struct fscache_extent extent = { .start = 0, };
+	int ret;
+
+	i_size = i_size_read(&dvnode->vfs_inode);
+	size = round_up(i_size, PAGE_SIZE);
+	nr_pages = size >> PAGE_SHIFT;
+
+	extent.block_end = nr_pages;
+	extent.limit = nr_pages;
+	x = fscache_shape_extent(afs_vnode_cache(dvnode), &extent, i_size, true);
+	_enter("c=%08x,%x", afs_vnode_cache(dvnode)->debug_id, x);
+	if (!(x & FSCACHE_WRITE_TO_CACHE))
+		goto abandon;
+
+	fscache_invalidate(afs_vnode_cache(dvnode), i_size, FSCACHE_INVAL_LIGHT);
+
+	size = round_up(size, extent.dio_block_size);
+
+	req = afs_alloc_read(GFP_KERNEL);
+	if (!req)
+		goto abandon;
+
+	fscache_init_io_request(&req->cache, afs_vnode_cache(dvnode),
+				&afs_dir_write_req_ops);
+	req->cache.pos		= 0;
+	req->cache.len		= size;
+	req->cache.nr_pages	= nr_pages;
+	req->cache.mapping	= dvnode->vfs_inode.i_mapping;
+	req->cache.io_done	= afs_dir_write_to_cache_done;
+
+	iov_iter_mapping(&iter, WRITE, req->cache.mapping, 0, size);
+	ret = fscache_write(&req->cache, &iter);
+	afs_put_read(req);
+	_leave(" = %d", ret);
+	return;
+
+abandon:
+	afs_clear_fscache_bits(dvnode->vfs_inode.i_mapping, 0, nr_pages);
+	_leave(" [ab]");
 }

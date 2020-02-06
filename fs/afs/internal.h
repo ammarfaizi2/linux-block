@@ -1356,6 +1356,7 @@ extern int afs_fsync(struct file *, loff_t, loff_t, int);
 extern vm_fault_t afs_page_mkwrite(struct vm_fault *vmf);
 extern void afs_prune_wb_keys(struct afs_vnode *);
 extern int afs_launder_page(struct page *);
+extern void afs_clear_fscache_bits(struct address_space *, pgoff_t, pgoff_t);
 
 /*
  * xattr.c

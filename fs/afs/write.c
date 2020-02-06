@@ -844,8 +844,8 @@ int afs_launder_page(struct page *page)
  * Clear the PG_fscache flag from a sequence of pages and wake up anyone who's
  * waiting.  The last page is included in the sequence.
  */
-static void afs_clear_fscache_bits(struct address_space *mapping,
-				   pgoff_t start, pgoff_t last)
+void afs_clear_fscache_bits(struct address_space *mapping,
+			    pgoff_t start, pgoff_t last)
 {
 	struct page *page;
 
