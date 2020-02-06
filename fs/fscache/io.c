@@ -232,3 +232,31 @@ void fscache_put_super(struct super_block *sb,
 	}
 }
 EXPORT_SYMBOL(fscache_put_super);
+
+/*
+ * Change the size of a backing object.
+ */
+void __fscache_resize_cookie(struct fscache_cookie *cookie, loff_t new_size)
+{
+	struct fscache_op_resources opr;
+
+	ASSERT(cookie->type != FSCACHE_COOKIE_TYPE_INDEX);
+
+	trace_fscache_resize(cookie, new_size);
+	if (fscache_begin_operation(cookie, &opr, FSCACHE_WANT_WRITE) != -ENOBUFS) {
+		struct fscache_object *object = opr.object;
+
+		fscache_stat(&fscache_n_resizes);
+		set_bit(FSCACHE_OBJECT_NEEDS_UPDATE, &object->flags);
+
+		/* We cannot defer a resize as we need to do it inside the
+		 * netfs's inode lock so that we're serialised with respect to
+		 * writes.
+		 */
+		object->cache->ops->resize_object(object, new_size);
+		fscache_end_operation(&opr);
+	} else {
+		fscache_stat(&fscache_n_resizes_null);
+	}
+}
+EXPORT_SYMBOL(__fscache_resize_cookie);
