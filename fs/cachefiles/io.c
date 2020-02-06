@@ -411,8 +411,7 @@ static const struct netfs_cache_ops cachefiles_netfs_cache_ops = {
 /*
  * Open the cache file when beginning a cache operation.
  */
-int cachefiles_begin_operation(struct netfs_cache_resources *cres,
-			       struct fscache_operation *op)
+int cachefiles_begin_operation(struct netfs_cache_resources *cres)
 {
 #if 0
 	struct cachefiles_object *object;

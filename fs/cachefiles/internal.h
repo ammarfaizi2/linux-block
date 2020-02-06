@@ -150,8 +150,7 @@ extern int cachefiles_check_in_use(struct cachefiles_cache *cache,
 /*
  * rdwr2.c
  */
-extern int cachefiles_begin_operation(struct netfs_cache_resources *,
-				      struct fscache_operation *);
+extern int cachefiles_begin_operation(struct netfs_cache_resources *);
 
 /*
  * security.c
