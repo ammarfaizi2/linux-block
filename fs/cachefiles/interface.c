@@ -453,6 +453,18 @@ static unsigned int cachefiles_get_object_usage(const struct fscache_object *_ob
 	return atomic_read(&object->usage);
 }
 
+static const struct fscache_op_ops cachefiles_io_ops = {
+	.wait_for_operation	= __fscache_wait_for_operation,
+	.end_operation		= __fscache_end_operation,
+	.read			= cachefiles_read,
+	.write			= cachefiles_write,
+};
+
+static void cachefiles_begin_operation(struct fscache_op_resources *opr)
+{
+	opr->ops = &cachefiles_io_ops;
+}
+
 const struct fscache_cache_ops cachefiles_cache_ops = {
 	.name			= "cachefiles",
 	.alloc_object		= cachefiles_alloc_object,
@@ -466,4 +478,5 @@ const struct fscache_cache_ops cachefiles_cache_ops = {
 	.put_object		= cachefiles_put_object,
 	.get_object_usage	= cachefiles_get_object_usage,
 	.sync_cache		= cachefiles_sync_cache,
+	.begin_operation	= cachefiles_begin_operation,
 };
