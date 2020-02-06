@@ -39,6 +39,13 @@ enum fscache_cookie_trace {
 	fscache_cookie_see_discard,
 };
 
+enum fscache_read_helper_trace {
+	fscache_read_helper_download,
+	fscache_read_helper_read,
+	fscache_read_helper_skip,
+	fscache_read_helper_zero,
+};
+
 #endif
 
 /*
@@ -63,6 +70,13 @@ enum fscache_cookie_trace {
 	EM(fscache_cookie_put_work,		"PUT work ")		\
 	E_(fscache_cookie_see_discard,		"SEE discd")
 
+#define fscache_read_helper_traces				\
+	EM(fscache_read_helper_download,	"DOWN")		\
+	EM(fscache_read_helper_read,		"READ")		\
+	EM(fscache_read_helper_skip,		"SKIP")		\
+	E_(fscache_read_helper_zero,		"ZERO")
+
+
 /*
  * Export enum symbols via userspace.
  */
@@ -72,6 +86,7 @@ enum fscache_cookie_trace {
 #define E_(a, b) TRACE_DEFINE_ENUM(a);
 
 fscache_cookie_traces;
+fscache_read_helper_traces;
 
 /*
  * Now redefine the EM() and E_() macros to map the enums to the strings that
@@ -196,6 +211,35 @@ TRACE_EVENT(fscache_relinquish,
 		      __entry->cookie, __entry->usage,
 		      __entry->parent, __entry->n_children, __entry->n_active,
 		      __entry->flags, __entry->retire)
+	    );
+
+TRACE_EVENT(fscache_read_helper,
+	    TP_PROTO(struct fscache_cookie *cookie, pgoff_t start, pgoff_t end,
+		     unsigned int notes, enum fscache_read_helper_trace what),
+
+	    TP_ARGS(cookie, start, end, notes, what),
+
+	    TP_STRUCT__entry(
+		    __field(unsigned int,		cookie		)
+		    __field(pgoff_t,			start		)
+		    __field(pgoff_t,			end		)
+		    __field(unsigned int,		notes		)
+		    __field(enum fscache_read_helper_trace, what	)
+			     ),
+
+	    TP_fast_assign(
+		    __entry->cookie	= cookie->debug_id;
+		    __entry->start	= start;
+		    __entry->end	= end;
+		    __entry->what	= what;
+		    __entry->notes	= notes;
+			   ),
+
+	    TP_printk("c=%08x %s n=%08x p=%lx-%lx",
+		      __entry->cookie,
+		      __print_symbolic(__entry->what, fscache_read_helper_traces),
+		      __entry->notes,
+		      __entry->start, __entry->end)
 	    );
 
 #endif /* _TRACE_FSCACHE_H */

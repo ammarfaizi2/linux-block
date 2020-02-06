@@ -152,7 +152,16 @@ struct fscache_io_request {
 	unsigned long		flags;
 #define FSCACHE_IO_DATA_FROM_SERVER	0	/* Set if data was read from server */
 #define FSCACHE_IO_DATA_FROM_CACHE	1	/* Set if data was read from the cache */
+#define FSCACHE_IO_DONT_UNLOCK_PAGES	2	/* Don't unlock the pages on completion */
 	void (*io_done)(struct fscache_io_request *);
+	struct work_struct	work;
+
+	/* Bits for readpages helper */
+	struct address_space	*mapping;	/* The mapping being accessed */
+	unsigned int		nr_pages;	/* Number of pages involved in the I/O */
+	unsigned int		dio_block_size;	/* Rounding for direct I/O in the cache */
+	bool			write_to_cache;	/* T if should write to the cache */
+	struct page		*no_unlock_page; /* Don't unlock this page after read */
 };
 
 struct fscache_io_request_ops {
@@ -570,5 +579,18 @@ int fscache_write(struct fscache_io_request *req, struct iov_iter *iter)
 		req->io_done(req);
 	return -ENOBUFS;
 }
+
+enum fscache_read_type {
+	FSCACHE_READ_PAGE_LIST,		/* Read the list of pages (readpages) */
+	FSCACHE_READ_LOCKED_PAGE,	/* requested_page is added and locked */
+	FSCACHE_READ_FOR_WRITE,		/* This read is a prelude to write_begin */
+};
+
+extern int fscache_read_helper(struct fscache_io_request *,
+			       struct fscache_extent *,
+			       struct page **,
+			       struct list_head *,
+			       enum fscache_read_type,
+			       unsigned int);
 
 #endif /* _LINUX_FSCACHE_H */
