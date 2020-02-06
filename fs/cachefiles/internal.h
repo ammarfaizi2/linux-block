@@ -34,7 +34,7 @@ extern unsigned cachefiles_debug;
  */
 struct cachefiles_object {
 	struct fscache_object		fscache;	/* fscache handle */
-	struct cachefiles_lookup_data	*lookup_data;	/* cached lookup data */
+	char				*lookup_key;	/* key to look up */
 	struct dentry			*dentry;	/* the file/dir representing this object */
 	struct dentry			*backer;	/* backing file */
 	loff_t				i_size;		/* object size */
@@ -88,15 +88,6 @@ struct cachefiles_cache {
 	char				*tag;		/* cache binding tag */
 };
 
-/*
- * auxiliary data xattr buffer
- */
-struct cachefiles_xattr {
-	uint16_t			len;
-	uint8_t				type;
-	uint8_t				data[];
-};
-
 #include <trace/events/cachefiles.h>
 
 /*
@@ -145,8 +136,7 @@ extern int cachefiles_delete_object(struct cachefiles_cache *cache,
 				    struct cachefiles_object *object);
 extern int cachefiles_walk_to_object(struct cachefiles_object *parent,
 				     struct cachefiles_object *object,
-				     const char *key,
-				     struct cachefiles_xattr *auxdata);
+				     const char *key);
 extern struct dentry *cachefiles_get_directory(struct cachefiles_cache *cache,
 					       struct dentry *dir,
 					       const char *name);
@@ -212,12 +202,8 @@ static inline void cachefiles_end_secure(struct cachefiles_cache *cache,
  */
 extern int cachefiles_check_object_type(struct cachefiles_object *object);
 extern int cachefiles_set_object_xattr(struct cachefiles_object *object,
-				       struct cachefiles_xattr *auxdata);
-extern int cachefiles_update_object_xattr(struct cachefiles_object *object,
-					  struct cachefiles_xattr *auxdata);
+				       unsigned int xattr_flags);
 extern int cachefiles_check_auxdata(struct cachefiles_object *object);
-extern int cachefiles_check_object_xattr(struct cachefiles_object *object,
-					 struct cachefiles_xattr *auxdata);
 extern int cachefiles_remove_object_xattr(struct cachefiles_cache *cache,
 					  struct dentry *dentry);
 

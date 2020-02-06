@@ -45,8 +45,9 @@ struct fscache_cache_tag {
 	struct fscache_cache	*cache;		/* cache referred to by this tag */
 	unsigned long		flags;
 #define FSCACHE_TAG_RESERVED	0		/* T if tag is reserved for a cache */
-	atomic_t		usage;
-	char			name[];	/* tag name */
+	atomic_t		usage;		/* Number of using netfs's */
+	refcount_t		ref;		/* Reference count on structure */
+	char			name[];		/* tag name */
 };
 
 /*
@@ -417,11 +418,6 @@ extern void fscache_io_error(struct fscache_cache *cache);
 
 extern bool fscache_object_sleep_till_congested(signed long *timeoutp);
 
-extern enum fscache_checkaux fscache_check_aux(struct fscache_object *object,
-					       const void *data,
-					       uint16_t datalen,
-					       loff_t object_size);
-
 extern void fscache_object_retrying_stale(struct fscache_object *object);
 
 enum fscache_why_object_killed {
@@ -432,5 +428,27 @@ enum fscache_why_object_killed {
 };
 extern void fscache_object_mark_killed(struct fscache_object *object,
 				       enum fscache_why_object_killed why);
+
+/*
+ * Find the key on a cookie.
+ */
+static inline void *fscache_get_key(struct fscache_cookie *cookie)
+{
+	if (cookie->key_len <= sizeof(cookie->inline_key))
+		return cookie->inline_key;
+	else
+		return cookie->key;
+}
+
+/*
+ * Find the auxiliary data on a cookie.
+ */
+static inline void *fscache_get_aux(struct fscache_cookie *cookie)
+{
+	if (cookie->aux_len <= sizeof(cookie->inline_aux))
+		return cookie->inline_aux;
+	else
+		return cookie->aux;
+}
 
 #endif /* _LINUX_FSCACHE_CACHE_H */

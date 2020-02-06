@@ -910,54 +910,6 @@ static void fscache_dequeue_object(struct fscache_object *object)
 	_leave("");
 }
 
-/**
- * fscache_check_aux - Ask the netfs whether an object on disk is still valid
- * @object: The object to ask about
- * @data: The auxiliary data for the object
- * @datalen: The size of the auxiliary data
- *
- * This function consults the netfs about the coherency state of an object.
- * The caller must be holding a ref on cookie->n_active (held by
- * fscache_look_up_object() on behalf of the cache backend during object lookup
- * and creation).
- */
-enum fscache_checkaux fscache_check_aux(struct fscache_object *object,
-					const void *data, uint16_t datalen,
-					loff_t object_size)
-{
-	enum fscache_checkaux result;
-
-	if (!object->cookie->def->check_aux) {
-		fscache_stat(&fscache_n_checkaux_none);
-		return FSCACHE_CHECKAUX_OKAY;
-	}
-
-	result = object->cookie->def->check_aux(object->cookie->netfs_data,
-						data, datalen, object_size);
-	switch (result) {
-		/* entry okay as is */
-	case FSCACHE_CHECKAUX_OKAY:
-		fscache_stat(&fscache_n_checkaux_okay);
-		break;
-
-		/* entry requires update */
-	case FSCACHE_CHECKAUX_NEEDS_UPDATE:
-		fscache_stat(&fscache_n_checkaux_update);
-		break;
-
-		/* entry requires deletion */
-	case FSCACHE_CHECKAUX_OBSOLETE:
-		fscache_stat(&fscache_n_checkaux_obsolete);
-		break;
-
-	default:
-		BUG();
-	}
-
-	return result;
-}
-EXPORT_SYMBOL(fscache_check_aux);
-
 /*
  * Asynchronously invalidate an object.
  */

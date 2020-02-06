@@ -45,11 +45,10 @@ void __cachefiles_printk_object(struct cachefiles_object *object,
 	spin_lock(&object->fscache.lock);
 	cookie = object->fscache.cookie;
 	if (cookie) {
-		pr_err("%scookie=%p [pr=%p nd=%p fl=%lx]\n",
+		pr_err("%scookie=%p [pr=%p fl=%lx]\n",
 		       prefix,
 		       object->fscache.cookie,
 		       object->fscache.cookie->parent,
-		       object->fscache.cookie->netfs_data,
 		       object->fscache.cookie->flags);
 		pr_err("%skey=[%u] '", prefix, cookie->key_len);
 		k = (cookie->key_len <= sizeof(cookie->inline_key)) ?
@@ -489,8 +488,7 @@ int cachefiles_delete_object(struct cachefiles_cache *cache,
  */
 int cachefiles_walk_to_object(struct cachefiles_object *parent,
 			      struct cachefiles_object *object,
-			      const char *key,
-			      struct cachefiles_xattr *auxdata)
+			      const char *key)
 {
 	struct cachefiles_cache *cache;
 	struct dentry *dir, *next = NULL;
@@ -645,7 +643,7 @@ lookup_again:
 	if (!object->new) {
 		_debug("validate '%pd'", next);
 
-		ret = cachefiles_check_object_xattr(object, auxdata);
+		ret = cachefiles_check_auxdata(object);
 		if (ret == -ESTALE) {
 			/* delete the object (the deleter drops the directory
 			 * mutex) */
@@ -680,7 +678,7 @@ lookup_again:
 
 	if (object->new) {
 		/* attach data to a newly constructed terminal object */
-		ret = cachefiles_set_object_xattr(object, auxdata);
+		ret = cachefiles_set_object_xattr(object, XATTR_CREATE);
 		if (ret < 0)
 			goto check_error;
 	} else {

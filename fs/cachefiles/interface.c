@@ -7,12 +7,8 @@
 
 #include <linux/slab.h>
 #include <linux/mount.h>
+#include <linux/xattr.h>
 #include "internal.h"
-
-struct cachefiles_lookup_data {
-	struct cachefiles_xattr	*auxdata;	/* auxiliary data */
-	char			*key;		/* key path */
-};
 
 static int cachefiles_attr_changed(struct fscache_object *_object);
 
@@ -23,21 +19,15 @@ static struct fscache_object *cachefiles_alloc_object(
 	struct fscache_cache *_cache,
 	struct fscache_cookie *cookie)
 {
-	struct cachefiles_lookup_data *lookup_data;
 	struct cachefiles_object *object;
 	struct cachefiles_cache *cache;
-	struct cachefiles_xattr *auxdata;
-	unsigned keylen, auxlen;
+	unsigned keylen;
 	void *buffer, *p;
 	char *key;
 
 	cache = container_of(_cache, struct cachefiles_cache, cache);
 
 	_enter("{%s},%p,", cache->cache.identifier, cookie);
-
-	lookup_data = kmalloc(sizeof(*lookup_data), cachefiles_gfp);
-	if (!lookup_data)
-		goto nomem_lookup_data;
 
 	/* create a new object record and a temporary leaf image */
 	object = kmem_cache_alloc(cachefiles_object_jar, cachefiles_gfp);
@@ -62,10 +52,7 @@ static struct fscache_object *cachefiles_alloc_object(
 		goto nomem_buffer;
 
 	keylen = cookie->key_len;
-	if (keylen <= sizeof(cookie->inline_key))
-		p = cookie->inline_key;
-	else
-		p = cookie->key;
+	p = fscache_get_key(cookie);
 	memcpy(buffer + 2, p, keylen);
 
 	*(uint16_t *)buffer = keylen;
@@ -75,28 +62,13 @@ static struct fscache_object *cachefiles_alloc_object(
 
 	/* turn the raw key into something that can work with as a filename */
 	key = cachefiles_cook_key(buffer, keylen + 2, object->type);
+	kfree(buffer);
 	if (!key)
 		goto nomem_key;
 
-	/* get hold of the auxiliary data and prepend the object type */
-	auxdata = buffer;
-	auxlen = cookie->aux_len;
-	if (auxlen) {
-		if (auxlen <= sizeof(cookie->inline_aux))
-			p = cookie->inline_aux;
-		else
-			p = cookie->aux;
-		memcpy(auxdata->data, p, auxlen);
-	}
+	object->lookup_key = key;
 
-	auxdata->len = auxlen + 1;
-	auxdata->type = cookie->type;
-
-	lookup_data->auxdata = auxdata;
-	lookup_data->key = key;
-	object->lookup_data = lookup_data;
-
-	_leave(" = %p [%p]", &object->fscache, lookup_data);
+	_leave(" = %p [%s]", &object->fscache, key);
 	return &object->fscache;
 
 nomem_key:
@@ -106,8 +78,6 @@ nomem_buffer:
 	kmem_cache_free(cachefiles_object_jar, object);
 	fscache_object_destroyed(&cache->cache);
 nomem_object:
-	kfree(lookup_data);
-nomem_lookup_data:
 	_leave(" = -ENOMEM");
 	return ERR_PTR(-ENOMEM);
 }
@@ -118,7 +88,6 @@ nomem_lookup_data:
  */
 static int cachefiles_lookup_object(struct fscache_object *_object)
 {
-	struct cachefiles_lookup_data *lookup_data;
 	struct cachefiles_object *parent, *object;
 	struct cachefiles_cache *cache;
 	const struct cred *saved_cred;
@@ -130,15 +99,12 @@ static int cachefiles_lookup_object(struct fscache_object *_object)
 	parent = container_of(_object->parent,
 			      struct cachefiles_object, fscache);
 	object = container_of(_object, struct cachefiles_object, fscache);
-	lookup_data = object->lookup_data;
 
-	ASSERTCMP(lookup_data, !=, NULL);
+	ASSERTCMP(object->lookup_key, !=, NULL);
 
 	/* look up the key, creating any missing bits */
 	cachefiles_begin_secure(cache, &saved_cred);
-	ret = cachefiles_walk_to_object(parent, object,
-					lookup_data->key,
-					lookup_data->auxdata);
+	ret = cachefiles_walk_to_object(parent, object, object->lookup_key);
 	cachefiles_end_secure(cache, saved_cred);
 
 	/* polish off by setting the attributes of non-index files */
@@ -165,14 +131,10 @@ static void cachefiles_lookup_complete(struct fscache_object *_object)
 
 	object = container_of(_object, struct cachefiles_object, fscache);
 
-	_enter("{OBJ%x,%p}", object->fscache.debug_id, object->lookup_data);
+	_enter("{OBJ%x}", object->fscache.debug_id);
 
-	if (object->lookup_data) {
-		kfree(object->lookup_data->key);
-		kfree(object->lookup_data->auxdata);
-		kfree(object->lookup_data);
-		object->lookup_data = NULL;
-	}
+	kfree(object->lookup_key);
+	object->lookup_key = NULL;
 }
 
 /*
@@ -204,12 +166,8 @@ struct fscache_object *cachefiles_grab_object(struct fscache_object *_object,
 static void cachefiles_update_object(struct fscache_object *_object)
 {
 	struct cachefiles_object *object;
-	struct cachefiles_xattr *auxdata;
 	struct cachefiles_cache *cache;
-	struct fscache_cookie *cookie;
 	const struct cred *saved_cred;
-	const void *aux;
-	unsigned auxlen;
 
 	_enter("{OBJ%x}", _object->debug_id);
 
@@ -217,40 +175,9 @@ static void cachefiles_update_object(struct fscache_object *_object)
 	cache = container_of(object->fscache.cache, struct cachefiles_cache,
 			     cache);
 
-	if (!fscache_use_cookie(_object)) {
-		_leave(" [relinq]");
-		return;
-	}
-
-	cookie = object->fscache.cookie;
-	auxlen = cookie->aux_len;
-
-	if (!auxlen) {
-		fscache_unuse_cookie(_object);
-		_leave(" [no aux]");
-		return;
-	}
-
-	auxdata = kmalloc(2 + auxlen + 3, cachefiles_gfp);
-	if (!auxdata) {
-		fscache_unuse_cookie(_object);
-		_leave(" [nomem]");
-		return;
-	}
-
-	aux = (auxlen <= sizeof(cookie->inline_aux)) ?
-		cookie->inline_aux : cookie->aux;
-
-	memcpy(auxdata->data, aux, auxlen);
-	fscache_unuse_cookie(_object);
-
-	auxdata->len = auxlen + 1;
-	auxdata->type = cookie->type;
-
 	cachefiles_begin_secure(cache, &saved_cred);
-	cachefiles_update_object_xattr(object, auxdata);
+	cachefiles_set_object_xattr(object, XATTR_REPLACE);
 	cachefiles_end_secure(cache, saved_cred);
-	kfree(auxdata);
 	_leave("");
 }
 
@@ -354,12 +281,7 @@ void cachefiles_put_object(struct fscache_object *_object,
 		ASSERTCMP(object->fscache.n_ops, ==, 0);
 		ASSERTCMP(object->fscache.n_children, ==, 0);
 
-		if (object->lookup_data) {
-			kfree(object->lookup_data->key);
-			kfree(object->lookup_data->auxdata);
-			kfree(object->lookup_data);
-			object->lookup_data = NULL;
-		}
+		kfree(object->lookup_key);
 
 		cache = object->fscache.cache;
 		fscache_object_destroy(&object->fscache);

@@ -43,11 +43,10 @@ static void fscache_print_cookie(struct fscache_cookie *cookie, char prefix)
 	       cookie->flags,
 	       atomic_read(&cookie->n_children),
 	       atomic_read(&cookie->n_active));
-	pr_err("%c-cookie d=%p{%s} n=%p\n",
+	pr_err("%c-cookie d=%p{%s}\n",
 	       prefix,
 	       cookie->def,
-	       cookie->def ? cookie->def->name : "?",
-	       cookie->netfs_data);
+	       cookie->def ? cookie->def->name : "?");
 
 	o = READ_ONCE(cookie->backing_objects.first);
 	if (o) {
@@ -74,6 +73,7 @@ void fscache_free_cookie(struct fscache_cookie *cookie)
 			kfree(cookie->aux);
 		if (cookie->key_len > sizeof(cookie->inline_key))
 			kfree(cookie->key);
+		fscache_put_cache_tag(cookie->preferred_cache);
 		kmem_cache_free(fscache_cookie_jar, cookie);
 	}
 }
@@ -150,9 +150,9 @@ static atomic_t fscache_cookie_debug_id = ATOMIC_INIT(1);
 struct fscache_cookie *fscache_alloc_cookie(
 	struct fscache_cookie *parent,
 	const struct fscache_cookie_def *def,
+	struct fscache_cache_tag *preferred_cache,
 	const void *index_key, size_t index_key_len,
 	const void *aux_data, size_t aux_data_len,
-	void *netfs_data,
 	loff_t object_size)
 {
 	struct fscache_cookie *cookie;
@@ -187,7 +187,9 @@ struct fscache_cookie *fscache_alloc_cookie(
 
 	cookie->def		= def;
 	cookie->parent		= parent;
-	cookie->netfs_data	= netfs_data;
+
+	cookie->preferred_cache	= fscache_get_cache_tag(preferred_cache);
+	
 	cookie->flags		= (1 << FSCACHE_COOKIE_NO_DATA_YET);
 	cookie->type		= def->type;
 	spin_lock_init(&cookie->lock);
@@ -252,7 +254,6 @@ collision:
  *   - the top level index cookie for each netfs is stored in the fscache_netfs
  *     struct upon registration
  * - def points to the definition
- * - the netfs_data will be passed to the functions pointed to in *def
  * - all attached caches will be searched to see if they contain this object
  * - index objects aren't stored on disk until there's a dependent file that
  *   needs storing
@@ -264,9 +265,9 @@ collision:
 struct fscache_cookie *__fscache_acquire_cookie(
 	struct fscache_cookie *parent,
 	const struct fscache_cookie_def *def,
+	struct fscache_cache_tag *preferred_cache,
 	const void *index_key, size_t index_key_len,
 	const void *aux_data, size_t aux_data_len,
-	void *netfs_data,
 	loff_t object_size,
 	bool enable)
 {
@@ -274,9 +275,9 @@ struct fscache_cookie *__fscache_acquire_cookie(
 
 	BUG_ON(!def);
 
-	_enter("{%s},{%s},%p,%u",
+	_enter("{%s},{%s},%u",
 	       parent ? (char *) parent->def->name : "<no-parent>",
-	       def->name, netfs_data, enable);
+	       def->name, enable);
 
 	if (!index_key || !index_key_len || index_key_len > 255 || aux_data_len > 255)
 		return NULL;
@@ -300,10 +301,10 @@ struct fscache_cookie *__fscache_acquire_cookie(
 	BUG_ON(def->type == FSCACHE_COOKIE_TYPE_INDEX &&
 	       parent->type != FSCACHE_COOKIE_TYPE_INDEX);
 
-	candidate = fscache_alloc_cookie(parent, def,
+	candidate = fscache_alloc_cookie(parent, def, preferred_cache,
 					 index_key, index_key_len,
 					 aux_data, aux_data_len,
-					 netfs_data, object_size);
+					 object_size);
 	if (!candidate) {
 		fscache_stat(&fscache_n_acquires_oom);
 		_leave(" [ENOMEM]");
@@ -814,8 +815,8 @@ void __fscache_relinquish_cookie(struct fscache_cookie *cookie,
 		return;
 	}
 
-	_enter("%p{%s,%p,%d},%d",
-	       cookie, cookie->def->name, cookie->netfs_data,
+	_enter("%p{%s,%d},%d",
+	       cookie, cookie->def->name,
 	       atomic_read(&cookie->n_active), retire);
 
 	trace_fscache_relinquish(cookie, retire);
@@ -827,7 +828,6 @@ void __fscache_relinquish_cookie(struct fscache_cookie *cookie,
 	__fscache_disable_cookie(cookie, aux_data, retire);
 
 	/* Clear pointers back to the netfs */
-	cookie->netfs_data	= NULL;
 	cookie->def		= NULL;
 
 	if (cookie->parent) {
@@ -981,8 +981,8 @@ static int fscache_cookies_seq_show(struct seq_file *m, void *v)
 
 	if (v == &fscache_cookies) {
 		seq_puts(m,
-			 "COOKIE   PARENT   USAGE CHILD ACT TY FL  DEF              NETFS_DATA\n"
-			 "======== ======== ===== ===== === == === ================ ==========\n"
+			 "COOKIE   PARENT   USAGE CHILD ACT TY FL  DEF             \n"
+			 "======== ======== ===== ===== === == === ================\n"
 			 );
 		return 0;
 	}
@@ -1004,7 +1004,7 @@ static int fscache_cookies_seq_show(struct seq_file *m, void *v)
 	}
 
 	seq_printf(m,
-		   "%08x %08x %5u %5u %3u %s %03lx %-16s %px",
+		   "%08x %08x %5u %5u %3u %s %03lx %-16s",
 		   cookie->debug_id,
 		   cookie->parent ? cookie->parent->debug_id : 0,
 		   atomic_read(&cookie->usage),
@@ -1012,8 +1012,7 @@ static int fscache_cookies_seq_show(struct seq_file *m, void *v)
 		   atomic_read(&cookie->n_active),
 		   type,
 		   cookie->flags,
-		   cookie->def->name,
-		   cookie->netfs_data);
+		   cookie->def->name);
 
 	keylen = cookie->key_len;
 	auxlen = cookie->aux_len;

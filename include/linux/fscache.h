@@ -39,13 +39,6 @@ struct fscache_cookie;
 struct fscache_netfs;
 struct netfs_read_request;
 
-/* result of index entry consultation */
-enum fscache_checkaux {
-	FSCACHE_CHECKAUX_OKAY,		/* entry okay as is */
-	FSCACHE_CHECKAUX_NEEDS_UPDATE,	/* entry requires update */
-	FSCACHE_CHECKAUX_OBSOLETE,	/* entry requires deletion */
-};
-
 /*
  * fscache cookie definition
  */
@@ -57,26 +50,6 @@ struct fscache_cookie_def {
 	uint8_t type;
 #define FSCACHE_COOKIE_TYPE_INDEX	0
 #define FSCACHE_COOKIE_TYPE_DATAFILE	1
-
-	/* select the cache into which to insert an entry in this index
-	 * - optional
-	 * - should return a cache identifier or NULL to cause the cache to be
-	 *   inherited from the parent if possible or the first cache picked
-	 *   for a non-index file if not
-	 */
-	struct fscache_cache_tag *(*select_cache)(
-		const void *parent_netfs_data,
-		const void *cookie_netfs_data);
-
-	/* consult the netfs about the state of an object
-	 * - this function can be absent if the index carries no state data
-	 * - the netfs data from the cookie being used as the target is
-	 *   presented, as is the auxiliary data and the object size
-	 */
-	enum fscache_checkaux (*check_aux)(void *cookie_netfs_data,
-					   const void *data,
-					   uint16_t datalen,
-					   loff_t object_size);
 };
 
 /*
@@ -106,9 +79,9 @@ struct fscache_cookie {
 	struct hlist_head		backing_objects; /* object(s) backing this file/index */
 	const struct fscache_cookie_def	*def;		/* definition */
 	struct fscache_cookie		*parent;	/* parent of this entry */
+	struct fscache_cache_tag	*preferred_cache; /* The preferred cache or NULL */
 	struct hlist_bl_node		hash_link;	/* Link in hash table */
 	struct list_head		proc_link;	/* Link in proc list */
-	void				*netfs_data;	/* back pointer to netfs */
 
 	unsigned long			flags;
 #define FSCACHE_COOKIE_LOOKING_UP	0	/* T if non-index cookie being looked up still */
@@ -156,9 +129,10 @@ extern void __fscache_release_cache_tag(struct fscache_cache_tag *);
 extern struct fscache_cookie *__fscache_acquire_cookie(
 	struct fscache_cookie *,
 	const struct fscache_cookie_def *,
+	struct fscache_cache_tag *,
 	const void *, size_t,
 	const void *, size_t,
-	void *, loff_t, bool);
+	loff_t, bool);
 extern void __fscache_relinquish_cookie(struct fscache_cookie *, const void *, bool);
 extern int __fscache_check_consistency(struct fscache_cookie *, const void *);
 extern void __fscache_update_cookie(struct fscache_cookie *, const void *);
@@ -245,6 +219,7 @@ void fscache_release_cache_tag(struct fscache_cache_tag *tag)
  * fscache_acquire_cookie - Acquire a cookie to represent a cache object
  * @parent: The cookie that's to be the parent of this one
  * @def: A description of the cache object, including callback operations
+ * @preferred_cache: The cache to use (or NULL)
  * @index_key: The index key for this cookie
  * @index_key_len: Size of the index key
  * @aux_data: The auxiliary data for the cookie (may be NULL)
@@ -265,19 +240,19 @@ static inline
 struct fscache_cookie *fscache_acquire_cookie(
 	struct fscache_cookie *parent,
 	const struct fscache_cookie_def *def,
+	struct fscache_cache_tag *preferred_cache,
 	const void *index_key,
 	size_t index_key_len,
 	const void *aux_data,
 	size_t aux_data_len,
-	void *netfs_data,
 	loff_t object_size,
 	bool enable)
 {
 	if (fscache_cookie_valid(parent) && fscache_cookie_enabled(parent))
-		return __fscache_acquire_cookie(parent, def,
+		return __fscache_acquire_cookie(parent, def, preferred_cache,
 						index_key, index_key_len,
 						aux_data, aux_data_len,
-						netfs_data, object_size, enable);
+						object_size, enable);
 	else
 		return NULL;
 }

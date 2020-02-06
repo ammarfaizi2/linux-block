@@ -15,6 +15,11 @@
 #include <linux/slab.h>
 #include "internal.h"
 
+struct cachefiles_xattr {
+	uint8_t				type;
+	uint8_t				data[];
+} __packed;
+
 static const char cachefiles_xattr_cache[] =
 	XATTR_USER_PREFIX "CacheFiles.cache";
 
@@ -98,21 +103,31 @@ bad_type:
  * set the state xattr on a cache file
  */
 int cachefiles_set_object_xattr(struct cachefiles_object *object,
-				struct cachefiles_xattr *auxdata)
+				unsigned int xattr_flags)
 {
+	struct cachefiles_xattr *buf;
 	struct dentry *dentry = object->dentry;
+	unsigned int len = object->fscache.cookie->aux_len;
 	int ret;
 
-	ASSERT(dentry);
+	if (!dentry)
+		return -ESTALE;
 
-	_enter("%p,#%d", object, auxdata->len);
+	_enter("%p,#%d", object, len);
 
-	/* attempt to install the cache metadata directly */
-	_debug("SET #%u", auxdata->len);
+	buf = kmalloc(sizeof(struct cachefiles_xattr) + len, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
+
+	buf->type = object->fscache.cookie->def->type;
+	if (len > 0)
+		memcpy(buf->data, fscache_get_aux(object->fscache.cookie), len);
 
 	clear_bit(FSCACHE_COOKIE_AUX_UPDATED, &object->fscache.cookie->flags);
 	ret = vfs_setxattr(&init_user_ns, dentry, cachefiles_xattr_cache,
-			   &auxdata->type, auxdata->len, XATTR_CREATE);
+			   buf, sizeof(struct cachefiles_xattr) + len,
+			   xattr_flags);
+	kfree(buf);
 	if (ret < 0 && ret != -ENOMEM)
 		cachefiles_io_error_obj(
 			object,
@@ -123,181 +138,34 @@ int cachefiles_set_object_xattr(struct cachefiles_object *object,
 }
 
 /*
- * update the state xattr on a cache file
- */
-int cachefiles_update_object_xattr(struct cachefiles_object *object,
-				   struct cachefiles_xattr *auxdata)
-{
-	struct dentry *dentry = object->dentry;
-	int ret;
-
-	if (!dentry)
-		return -ESTALE;
-
-	_enter("%p,#%d", object, auxdata->len);
-
-	/* attempt to install the cache metadata directly */
-	_debug("SET #%u", auxdata->len);
-
-	clear_bit(FSCACHE_COOKIE_AUX_UPDATED, &object->fscache.cookie->flags);
-	ret = vfs_setxattr(&init_user_ns, dentry, cachefiles_xattr_cache,
-			   &auxdata->type, auxdata->len, XATTR_REPLACE);
-	if (ret < 0 && ret != -ENOMEM)
-		cachefiles_io_error_obj(
-			object,
-			"Failed to update xattr with error %d", ret);
-
-	_leave(" = %d", ret);
-	return ret;
-}
-
-/*
  * check the consistency between the backing cache and the FS-Cache cookie
  */
 int cachefiles_check_auxdata(struct cachefiles_object *object)
 {
-	struct cachefiles_xattr *auxbuf;
-	enum fscache_checkaux validity;
+	struct cachefiles_xattr *buf;
 	struct dentry *dentry = object->dentry;
-	ssize_t xlen;
-	int ret;
-
-	ASSERT(dentry);
-	ASSERT(d_backing_inode(dentry));
-	ASSERT(object->fscache.cookie->def->check_aux);
-
-	auxbuf = kmalloc(sizeof(struct cachefiles_xattr) + 512, GFP_KERNEL);
-	if (!auxbuf)
-		return -ENOMEM;
-
-	xlen = vfs_getxattr(&init_user_ns, dentry, cachefiles_xattr_cache,
-			    &auxbuf->type, 512 + 1);
-	ret = -ESTALE;
-	if (xlen < 1 ||
-	    auxbuf->type != object->fscache.cookie->def->type)
-		goto error;
-
-	xlen--;
-	validity = fscache_check_aux(&object->fscache, &auxbuf->data, xlen,
-				     i_size_read(d_backing_inode(dentry)));
-	if (validity != FSCACHE_CHECKAUX_OKAY)
-		goto error;
-
-	ret = 0;
-error:
-	kfree(auxbuf);
-	return ret;
-}
-
-/*
- * check the state xattr on a cache file
- * - return -ESTALE if the object should be deleted
- */
-int cachefiles_check_object_xattr(struct cachefiles_object *object,
-				  struct cachefiles_xattr *auxdata)
-{
-	struct cachefiles_xattr *auxbuf;
-	struct dentry *dentry = object->dentry;
-	int ret;
-
-	_enter("%p,#%d", object, auxdata->len);
+	unsigned int len = object->fscache.cookie->aux_len, tlen;
+	const void *p = fscache_get_aux(object->fscache.cookie);
+	ssize_t ret;
 
 	ASSERT(dentry);
 	ASSERT(d_backing_inode(dentry));
 
-	auxbuf = kmalloc(sizeof(struct cachefiles_xattr) + 512, cachefiles_gfp);
-	if (!auxbuf) {
-		_leave(" = -ENOMEM");
+	tlen = sizeof(struct cachefiles_xattr) + len;
+	buf = kmalloc(tlen, GFP_KERNEL);
+	if (!buf)
 		return -ENOMEM;
-	}
 
-	/* read the current type label */
-	ret = vfs_getxattr(&init_user_ns, dentry, cachefiles_xattr_cache,
-			   &auxbuf->type, 512 + 1);
-	if (ret < 0) {
-		if (ret == -ENODATA)
-			goto stale; /* no attribute - power went off
-				     * mid-cull? */
+	ret = vfs_getxattr(&init_user_ns, dentry, cachefiles_xattr_cache, buf, tlen);
+	if (ret == tlen &&
+	    buf->type == object->fscache.cookie->def->type &&
+	    memcmp(buf->data, p, len) == 0)
+		ret = 0;
+	else
+		ret = -ESTALE;
 
-		if (ret == -ERANGE)
-			goto bad_type_length;
-
-		cachefiles_io_error_obj(object,
-					"Can't read xattr on %lu (err %d)",
-					d_backing_inode(dentry)->i_ino, -ret);
-		goto error;
-	}
-
-	/* check the on-disk object */
-	if (ret < 1)
-		goto bad_type_length;
-
-	if (auxbuf->type != auxdata->type)
-		goto stale;
-
-	auxbuf->len = ret;
-
-	/* consult the netfs */
-	if (object->fscache.cookie->def->check_aux) {
-		enum fscache_checkaux result;
-		unsigned int dlen;
-
-		dlen = auxbuf->len - 1;
-
-		_debug("checkaux %s #%u",
-		       object->fscache.cookie->def->name, dlen);
-
-		result = fscache_check_aux(&object->fscache,
-					   &auxbuf->data, dlen,
-					   i_size_read(d_backing_inode(dentry)));
-
-		switch (result) {
-			/* entry okay as is */
-		case FSCACHE_CHECKAUX_OKAY:
-			goto okay;
-
-			/* entry requires update */
-		case FSCACHE_CHECKAUX_NEEDS_UPDATE:
-			break;
-
-			/* entry requires deletion */
-		case FSCACHE_CHECKAUX_OBSOLETE:
-			goto stale;
-
-		default:
-			BUG();
-		}
-
-		/* update the current label */
-		ret = vfs_setxattr(&init_user_ns, dentry,
-				   cachefiles_xattr_cache, &auxdata->type,
-				   auxdata->len, XATTR_REPLACE);
-		if (ret < 0) {
-			cachefiles_io_error_obj(object,
-						"Can't update xattr on %lu"
-						" (error %d)",
-						d_backing_inode(dentry)->i_ino, -ret);
-			goto error;
-		}
-	}
-
-okay:
-	ret = 0;
-
-error:
-	kfree(auxbuf);
-	_leave(" = %d", ret);
+	kfree(buf);
 	return ret;
-
-bad_type_length:
-	pr_err("Cache object %lu xattr length incorrect\n",
-	       d_backing_inode(dentry)->i_ino);
-	ret = -EIO;
-	goto error;
-
-stale:
-	ret = -ESTALE;
-	goto error;
 }
 
 /*
