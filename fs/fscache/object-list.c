@@ -21,8 +21,6 @@ struct fscache_objlist_data {
 	unsigned long	config;		/* display configuration */
 #define FSCACHE_OBJLIST_CONFIG_KEY	0x00000001	/* show object keys */
 #define FSCACHE_OBJLIST_CONFIG_AUX	0x00000002	/* show object auxdata */
-#define FSCACHE_OBJLIST_CONFIG_COOKIE	0x00000004	/* show objects with cookies */
-#define FSCACHE_OBJLIST_CONFIG_NOCOOKIE	0x00000008	/* show objects without cookies */
 #define FSCACHE_OBJLIST_CONFIG_BUSY	0x00000010	/* show busy objects */
 #define FSCACHE_OBJLIST_CONFIG_IDLE	0x00000020	/* show idle objects */
 #define FSCACHE_OBJLIST_CONFIG_PENDWR	0x00000040	/* show objects with pending writes */
@@ -170,7 +168,7 @@ static int fscache_objlist_show(struct seq_file *m, void *v)
 	if ((unsigned long) v == 1) {
 		seq_puts(m, "OBJECT   PARENT   STAT CHLDN OPS OOP IPR EX READS"
 			 " EM EV FL S"
-			 " | COOKIE   NETFS_COOKIE_DEF TY FL");
+			 " | COOKIE   TYPE    TY FL");
 		if (config & (FSCACHE_OBJLIST_CONFIG_KEY |
 			      FSCACHE_OBJLIST_CONFIG_AUX))
 			seq_puts(m, "       ");
@@ -189,7 +187,7 @@ static int fscache_objlist_show(struct seq_file *m, void *v)
 	if ((unsigned long) v == 2) {
 		seq_puts(m, "======== ======== ==== ===== === === === == ====="
 			 " == == == ="
-			 " | ======== ================ == ===");
+			 " | ======== ======= == ===");
 		if (config & (FSCACHE_OBJLIST_CONFIG_KEY |
 			      FSCACHE_OBJLIST_CONFIG_AUX))
 			seq_puts(m, " ================");
@@ -213,8 +211,6 @@ static int fscache_objlist_show(struct seq_file *m, void *v)
 
 	cookie = obj->cookie;
 	if (~config) {
-		FILTER(cookie->def,
-		       COOKIE, NOCOOKIE);
 		FILTER(fscache_object_is_active(obj) ||
 		       obj->n_ops != 0 ||
 		       obj->n_obj_ops != 0 ||
@@ -263,9 +259,9 @@ static int fscache_objlist_show(struct seq_file *m, void *v)
 			break;
 		}
 
-		seq_printf(m, "%08x %-16s %s %3lx",
+		seq_printf(m, "%08x %-7s %s %3lx",
 			   cookie->debug_id,
-			   cookie->def->name,
+			   cookie->type_name,
 			   type,
 			   cookie->flags);
 
@@ -338,8 +334,6 @@ static void fscache_objlist_config(struct fscache_objlist_data *data)
 		switch (buf[len]) {
 		case 'K': config |= FSCACHE_OBJLIST_CONFIG_KEY;		break;
 		case 'A': config |= FSCACHE_OBJLIST_CONFIG_AUX;		break;
-		case 'C': config |= FSCACHE_OBJLIST_CONFIG_COOKIE;	break;
-		case 'c': config |= FSCACHE_OBJLIST_CONFIG_NOCOOKIE;	break;
 		case 'B': config |= FSCACHE_OBJLIST_CONFIG_BUSY;	break;
 		case 'b': config |= FSCACHE_OBJLIST_CONFIG_IDLE;	break;
 		case 'W': config |= FSCACHE_OBJLIST_CONFIG_PENDWR;	break;
@@ -354,8 +348,6 @@ static void fscache_objlist_config(struct fscache_objlist_data *data)
 	rcu_read_unlock();
 	key_put(key);
 
-	if (!(config & (FSCACHE_OBJLIST_CONFIG_COOKIE | FSCACHE_OBJLIST_CONFIG_NOCOOKIE)))
-	    config   |= FSCACHE_OBJLIST_CONFIG_COOKIE | FSCACHE_OBJLIST_CONFIG_NOCOOKIE;
 	if (!(config & (FSCACHE_OBJLIST_CONFIG_BUSY | FSCACHE_OBJLIST_CONFIG_IDLE)))
 	    config   |= FSCACHE_OBJLIST_CONFIG_BUSY | FSCACHE_OBJLIST_CONFIG_IDLE;
 	if (!(config & (FSCACHE_OBJLIST_CONFIG_PENDWR | FSCACHE_OBJLIST_CONFIG_NOPENDWR)))

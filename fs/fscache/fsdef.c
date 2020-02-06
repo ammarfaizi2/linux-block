@@ -33,29 +33,14 @@
  * cache.  It can create whatever objects it likes in that index, including
  * further indices.
  */
-static struct fscache_cookie_def fscache_fsdef_index_def = {
-	.name		= ".FS-Cache",
-	.type		= FSCACHE_COOKIE_TYPE_INDEX,
-};
-
 struct fscache_cookie fscache_fsdef_index = {
 	.debug_id	= 1,
 	.usage		= ATOMIC_INIT(1),
 	.n_active	= ATOMIC_INIT(1),
 	.lock		= __SPIN_LOCK_UNLOCKED(fscache_fsdef_index.lock),
 	.backing_objects = HLIST_HEAD_INIT,
-	.def		= &fscache_fsdef_index_def,
+	.type_name	= ".fscach",
 	.flags		= 1 << FSCACHE_COOKIE_ENABLED,
 	.type		= FSCACHE_COOKIE_TYPE_INDEX,
 };
 EXPORT_SYMBOL(fscache_fsdef_index);
-
-/*
- * Definition of an entry in the root index.  Each entry is an index, keyed to
- * a specific netfs and only applicable to a particular version of the index
- * structure used by that netfs.
- */
-struct fscache_cookie_def fscache_fsdef_netfs_def = {
-	.name		= "FSDEF.netfs",
-	.type		= FSCACHE_COOKIE_TYPE_INDEX,
-};
