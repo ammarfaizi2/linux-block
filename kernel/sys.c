@@ -59,6 +59,7 @@
 #include <linux/sched/cputime.h>
 #include <linux/rcupdate.h>
 #include <linux/uidgid.h>
+#include <linux/fsuidgid.h>
 #include <linux/cred.h>
 
 #include <linux/nospec.h>
@@ -353,7 +354,7 @@ long __sys_setregid(gid_t rgid, gid_t egid)
 	const struct cred *old;
 	struct cred *new;
 	int retval;
-	kgid_t krgid, kegid;
+	kgid_t krgid, kegid, kfsgid;
 
 	krgid = make_kgid(ns, rgid);
 	kegid = make_kgid(ns, egid);
@@ -385,12 +386,20 @@ long __sys_setregid(gid_t rgid, gid_t egid)
 			new->egid = kegid;
 		else
 			goto error;
+		kfsgid = make_kfsgid(ns, egid);
+	} else {
+		kfsgid = kgid_to_kfsgid(new->user_ns, new->egid);
+	}
+	if (!gid_valid(kfsgid)) {
+		retval = -EINVAL;
+		goto error;
 	}
 
 	if (rgid != (gid_t) -1 ||
 	    (egid != (gid_t) -1 && !gid_eq(kegid, old->gid)))
 		new->sgid = new->egid;
-	new->fsgid = new->egid;
+	new->kfsgid = new->egid;
+	new->fsgid = kfsgid;
 
 	return commit_creds(new);
 
@@ -415,10 +424,14 @@ long __sys_setgid(gid_t gid)
 	const struct cred *old;
 	struct cred *new;
 	int retval;
-	kgid_t kgid;
+	kgid_t kgid, kfsgid;
 
 	kgid = make_kgid(ns, gid);
 	if (!gid_valid(kgid))
+		return -EINVAL;
+
+	kfsgid = make_kfsgid(ns, gid);
+	if (!gid_valid(kfsgid))
 		return -EINVAL;
 
 	new = prepare_creds();
@@ -427,12 +440,15 @@ long __sys_setgid(gid_t gid)
 	old = current_cred();
 
 	retval = -EPERM;
-	if (ns_capable(old->user_ns, CAP_SETGID))
-		new->gid = new->egid = new->sgid = new->fsgid = kgid;
-	else if (gid_eq(kgid, old->gid) || gid_eq(kgid, old->sgid))
-		new->egid = new->fsgid = kgid;
-	else
+	if (ns_capable(old->user_ns, CAP_SETGID)) {
+		new->gid = new->egid = new->sgid = new->kfsgid = kgid;
+		new->fsgid = kfsgid;
+	} else if (gid_eq(kgid, old->gid) || gid_eq(kgid, old->sgid)) {
+		new->egid = new->kfsgid = kgid;
+		new->fsgid = kfsgid;
+	} else {
 		goto error;
+	}
 
 	return commit_creds(new);
 
@@ -496,7 +512,7 @@ long __sys_setreuid(uid_t ruid, uid_t euid)
 	const struct cred *old;
 	struct cred *new;
 	int retval;
-	kuid_t kruid, keuid;
+	kuid_t kruid, keuid, kfsuid;
 
 	kruid = make_kuid(ns, ruid);
 	keuid = make_kuid(ns, euid);
@@ -527,6 +543,13 @@ long __sys_setreuid(uid_t ruid, uid_t euid)
 		    !uid_eq(old->suid, keuid) &&
 		    !ns_capable_setid(old->user_ns, CAP_SETUID))
 			goto error;
+		kfsuid = make_kfsuid(new->user_ns, euid);
+	} else {
+		kfsuid = kuid_to_kfsuid(new->user_ns, new->euid);
+	}
+	if (!uid_valid(kfsuid)) {
+		retval = -EINVAL;
+		goto error;
 	}
 
 	if (!uid_eq(new->uid, old->uid)) {
@@ -537,7 +560,8 @@ long __sys_setreuid(uid_t ruid, uid_t euid)
 	if (ruid != (uid_t) -1 ||
 	    (euid != (uid_t) -1 && !uid_eq(keuid, old->uid)))
 		new->suid = new->euid;
-	new->fsuid = new->euid;
+	new->kfsuid = new->euid;
+	new->fsuid = kfsuid;
 
 	retval = security_task_fix_setuid(new, old, LSM_SETID_RE);
 	if (retval < 0)
@@ -573,9 +597,14 @@ long __sys_setuid(uid_t uid)
 	struct cred *new;
 	int retval;
 	kuid_t kuid;
+	kuid_t kfsuid;
 
 	kuid = make_kuid(ns, uid);
 	if (!uid_valid(kuid))
+		return -EINVAL;
+
+	kfsuid = make_kfsuid(ns, uid);
+	if (!uid_valid(kfsuid))
 		return -EINVAL;
 
 	new = prepare_creds();
@@ -595,7 +624,8 @@ long __sys_setuid(uid_t uid)
 		goto error;
 	}
 
-	new->fsuid = new->euid = kuid;
+	new->kfsuid = new->euid = kuid;
+	new->fsuid = kfsuid;
 
 	retval = security_task_fix_setuid(new, old, LSM_SETID_ID);
 	if (retval < 0)
@@ -624,7 +654,7 @@ long __sys_setresuid(uid_t ruid, uid_t euid, uid_t suid)
 	const struct cred *old;
 	struct cred *new;
 	int retval;
-	kuid_t kruid, keuid, ksuid;
+	kuid_t kruid, keuid, ksuid, kfsuid;
 
 	kruid = make_kuid(ns, ruid);
 	keuid = make_kuid(ns, euid);
@@ -666,11 +696,21 @@ long __sys_setresuid(uid_t ruid, uid_t euid, uid_t suid)
 				goto error;
 		}
 	}
-	if (euid != (uid_t) -1)
+	if (euid != (uid_t) -1) {
 		new->euid = keuid;
+		kfsuid = make_kfsuid(ns, euid);
+	} else {
+		kfsuid = kuid_to_kfsuid(new->user_ns, new->euid);
+	}
+	if (!uid_valid(kfsuid)) {
+		return -EINVAL;
+		goto error;
+	}
+
 	if (suid != (uid_t) -1)
 		new->suid = ksuid;
-	new->fsuid = new->euid;
+	new->kfsuid = new->euid;
+	new->fsuid = kfsuid;
 
 	retval = security_task_fix_setuid(new, old, LSM_SETID_RES);
 	if (retval < 0)
@@ -716,7 +756,7 @@ long __sys_setresgid(gid_t rgid, gid_t egid, gid_t sgid)
 	const struct cred *old;
 	struct cred *new;
 	int retval;
-	kgid_t krgid, kegid, ksgid;
+	kgid_t krgid, kegid, ksgid, kfsgid;
 
 	krgid = make_kgid(ns, rgid);
 	kegid = make_kgid(ns, egid);
@@ -749,11 +789,21 @@ long __sys_setresgid(gid_t rgid, gid_t egid, gid_t sgid)
 
 	if (rgid != (gid_t) -1)
 		new->gid = krgid;
-	if (egid != (gid_t) -1)
+	if (egid != (gid_t) -1) {
 		new->egid = kegid;
+		kfsgid = make_kfsgid(ns, egid);
+	} else {
+		kfsgid = kgid_to_kfsgid(new->user_ns, new->egid);
+	}
+	if (!gid_valid(kfsgid)) {
+		retval = -EINVAL;
+		goto error;
+	}
+
 	if (sgid != (gid_t) -1)
 		new->sgid = ksgid;
-	new->fsgid = new->egid;
+	new->kfsgid = new->egid;
+	new->fsgid = kfsgid;
 
 	return commit_creds(new);
 
@@ -799,13 +849,17 @@ long __sys_setfsuid(uid_t uid)
 	const struct cred *old;
 	struct cred *new;
 	uid_t old_fsuid;
-	kuid_t kuid;
+	kuid_t kuid, kfsuid;
 
 	old = current_cred();
-	old_fsuid = from_kuid_munged(old->user_ns, old->fsuid);
+	old_fsuid = from_kfsuid_munged(old->user_ns, old->fsuid);
 
-	kuid = make_kuid(old->user_ns, uid);
+	kuid = make_kfsuid(old->user_ns, uid);
 	if (!uid_valid(kuid))
+		return old_fsuid;
+
+	kfsuid = make_kuid(old->user_ns, uid);
+	if (!uid_valid(kfsuid))
 		return old_fsuid;
 
 	new = prepare_creds();
@@ -817,6 +871,7 @@ long __sys_setfsuid(uid_t uid)
 	    ns_capable_setid(old->user_ns, CAP_SETUID)) {
 		if (!uid_eq(kuid, old->fsuid)) {
 			new->fsuid = kuid;
+			new->kfsuid = kfsuid;
 			if (security_task_fix_setuid(new, old, LSM_SETID_FS) == 0)
 				goto change_okay;
 		}
@@ -843,13 +898,17 @@ long __sys_setfsgid(gid_t gid)
 	const struct cred *old;
 	struct cred *new;
 	gid_t old_fsgid;
-	kgid_t kgid;
+	kgid_t kgid, kfsgid;
 
 	old = current_cred();
-	old_fsgid = from_kgid_munged(old->user_ns, old->fsgid);
+	old_fsgid = from_kfsgid_munged(old->user_ns, old->fsgid);
 
-	kgid = make_kgid(old->user_ns, gid);
+	kgid = make_kfsgid(old->user_ns, gid);
 	if (!gid_valid(kgid))
+		return old_fsgid;
+
+	kfsgid = make_kgid(old->user_ns, gid);
+	if (!gid_valid(kfsgid))
 		return old_fsgid;
 
 	new = prepare_creds();
@@ -861,6 +920,7 @@ long __sys_setfsgid(gid_t gid)
 	    ns_capable(old->user_ns, CAP_SETGID)) {
 		if (!gid_eq(kgid, old->fsgid)) {
 			new->fsgid = kgid;
+			new->kfsgid = kfsgid;
 			goto change_okay;
 		}
 	}
