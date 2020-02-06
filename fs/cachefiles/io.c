@@ -17,6 +17,7 @@
 struct cachefiles_kiocb {
 	struct kiocb		iocb;
 	refcount_t		ki_refcnt;
+	unsigned int		inval_counter;
 	loff_t			start;
 	union {
 		size_t		skipped;
@@ -46,10 +47,15 @@ static void cachefiles_read_complete(struct kiocb *iocb, long ret, long ret2)
 	_enter("%ld,%ld", ret, ret2);
 
 	if (ki->term_func) {
-		if (ret < 0)
+		if (ret < 0) {
 			ki->term_func(ki->term_func_priv, ret);
-		else
-			ki->term_func(ki->term_func_priv, ki->skipped + ret);
+		} else {
+			if (ki->object->fscache.inval_counter == ki->inval_counter)
+				ki->skipped += ret;
+			else
+				ret = -ESTALE;
+			ki->term_func(ki->term_func_priv, ret);
+		}
 	}
 
 	fscache_uncount_io_operation(ki->object->fscache.cookie);
@@ -126,6 +132,7 @@ int cachefiles_read(struct fscache_op_resources *opr,
 	ki->iocb.ki_flags	= IOCB_DIRECT;
 	ki->iocb.ki_hint	= ki_hint_validate(file_write_hint(file));
 	ki->iocb.ki_ioprio	= get_current_ioprio();
+	ki->inval_counter	= opr->inval_counter;
 	ki->skipped		= skipped;
 	ki->object		= object;
 	ki->term_func		= term_func;
@@ -197,7 +204,8 @@ static void cachefiles_write_complete(struct kiocb *iocb, long ret, long ret2)
 			ki->term_func(ki->term_func_priv, ret);
 	} else {
 		if (ret == ki->len)
-			cachefiles_mark_content_map(ki->object, ki->start, ki->len);
+			cachefiles_mark_content_map(ki->object, ki->start, ki->len,
+						    ki->inval_counter);
 		if (ki->term_func)
 			ki->term_func(ki->term_func_priv, ret);
 	}
@@ -246,6 +254,7 @@ int cachefiles_write(struct fscache_op_resources *opr,
 	ki->iocb.ki_flags	= IOCB_DIRECT | IOCB_WRITE;
 	ki->iocb.ki_hint	= ki_hint_validate(file_write_hint(file));
 	ki->iocb.ki_ioprio	= get_current_ioprio();
+	ki->inval_counter	= opr->inval_counter;
 	ki->start		= start_pos;
 	ki->len			= len;
 	ki->object		= object;

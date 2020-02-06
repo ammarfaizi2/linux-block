@@ -111,6 +111,7 @@ ready:
 		goto not_live;
 
 	opr->object = object;
+	opr->inval_counter = object->inval_counter;
 	object->cache->ops->grab_object(object, fscache_obj_get_ioreq);
 	object->cache->ops->begin_operation(opr);
 
