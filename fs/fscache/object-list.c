@@ -23,10 +23,6 @@ struct fscache_objlist_data {
 #define FSCACHE_OBJLIST_CONFIG_AUX	0x00000002	/* show object auxdata */
 #define FSCACHE_OBJLIST_CONFIG_BUSY	0x00000010	/* show busy objects */
 #define FSCACHE_OBJLIST_CONFIG_IDLE	0x00000020	/* show idle objects */
-#define FSCACHE_OBJLIST_CONFIG_EVENTS	0x00000400	/* show objects with events */
-#define FSCACHE_OBJLIST_CONFIG_NOEVENTS	0x00000800	/* show objects without no events */
-#define FSCACHE_OBJLIST_CONFIG_WORK	0x00001000	/* show objects with work */
-#define FSCACHE_OBJLIST_CONFIG_NOWORK	0x00002000	/* show objects without work */
 };
 
 /*
@@ -162,32 +158,15 @@ static int fscache_objlist_show(struct seq_file *m, void *v)
 	u8 *p;
 
 	if ((unsigned long) v == 1) {
-		seq_puts(m, "OBJECT   PARENT   STAT CHLDN OPS OOP"
-			 " EM EV FL S"
-			 " | COOKIE   TYPE    TY FL");
-		if (config & (FSCACHE_OBJLIST_CONFIG_KEY |
-			      FSCACHE_OBJLIST_CONFIG_AUX))
-			seq_puts(m, "       ");
-		if (config & FSCACHE_OBJLIST_CONFIG_KEY)
-			seq_puts(m, "OBJECT_KEY");
-		if ((config & (FSCACHE_OBJLIST_CONFIG_KEY |
-			       FSCACHE_OBJLIST_CONFIG_AUX)) ==
-		    (FSCACHE_OBJLIST_CONFIG_KEY | FSCACHE_OBJLIST_CONFIG_AUX))
-			seq_puts(m, ", ");
-		if (config & FSCACHE_OBJLIST_CONFIG_AUX)
-			seq_puts(m, "AUX_DATA");
+		seq_puts(m, "OBJECT   PARENT   USE CHLDN OPS FL  S"
+			 " | COOKIE   TYPE    TY S FLG CONTENT_MAP");
 		seq_puts(m, "\n");
 		return 0;
 	}
 
 	if ((unsigned long) v == 2) {
-		seq_puts(m, "======== ======== ==== ===== === ==="
-			 " == == == ="
-			 " | ======== ======= == ===");
-		if (config & (FSCACHE_OBJLIST_CONFIG_KEY |
-			      FSCACHE_OBJLIST_CONFIG_AUX))
-			seq_puts(m, " ================");
-		seq_puts(m, "\n");
+		seq_puts(m, "======== ======== === ===== === === ="
+			 " | ======== ======= == = === ================\n");
 		return 0;
 	}
 
@@ -207,29 +186,19 @@ static int fscache_objlist_show(struct seq_file *m, void *v)
 
 	cookie = obj->cookie;
 	if (~config) {
-		FILTER(fscache_object_is_active(obj) ||
-		       obj->n_ops != 0 ||
-		       obj->n_obj_ops != 0 ||
-		       obj->flags ||
-		       !list_empty(&obj->dependents),
+		FILTER(atomic_read(&cookie->n_ops) > 0,
 		       BUSY, IDLE);
-		FILTER(obj->events & obj->event_mask,
-		       EVENTS, NOEVENTS);
-		FILTER(work_busy(&obj->work), WORK, NOWORK);
 	}
 
 	seq_printf(m,
-		   "%08x %08x %s %5u %3u %3u %2lx %2lx %2lx %1x | ",
+		   "%08x %08x %3u %5u %3u %3lx %u | ",
 		   obj->debug_id,
 		   obj->parent ? obj->parent->debug_id : UINT_MAX,
-		   obj->state->short_name,
+		   obj->cache->ops->get_object_usage(obj),
 		   obj->n_children,
-		   obj->n_ops,
-		   obj->n_obj_ops,
-		   obj->event_mask,
-		   obj->events,
+		   atomic_read(&obj->cookie->n_ops),
 		   obj->flags,
-		   work_busy(&obj->work));
+		   obj->stage);
 
 	if (obj->cookie) {
 		uint16_t keylen = 0, auxlen = 0;
@@ -248,10 +217,11 @@ static int fscache_objlist_show(struct seq_file *m, void *v)
 			break;
 		}
 
-		seq_printf(m, "%08x %-7s %s %3lx",
+		seq_printf(m, "%08x %-7s %s %u %3lx",
 			   cookie->debug_id,
 			   cookie->type_name,
 			   type,
+			   cookie->stage,
 			   cookie->flags);
 
 		if (config & FSCACHE_OBJLIST_CONFIG_KEY)
@@ -325,8 +295,6 @@ static void fscache_objlist_config(struct fscache_objlist_data *data)
 		case 'A': config |= FSCACHE_OBJLIST_CONFIG_AUX;		break;
 		case 'B': config |= FSCACHE_OBJLIST_CONFIG_BUSY;	break;
 		case 'b': config |= FSCACHE_OBJLIST_CONFIG_IDLE;	break;
-		case 'S': config |= FSCACHE_OBJLIST_CONFIG_WORK;	break;
-		case 's': config |= FSCACHE_OBJLIST_CONFIG_NOWORK;	break;
 		}
 	}
 
@@ -335,10 +303,6 @@ static void fscache_objlist_config(struct fscache_objlist_data *data)
 
 	if (!(config & (FSCACHE_OBJLIST_CONFIG_BUSY | FSCACHE_OBJLIST_CONFIG_IDLE)))
 	    config   |= FSCACHE_OBJLIST_CONFIG_BUSY | FSCACHE_OBJLIST_CONFIG_IDLE;
-	if (!(config & (FSCACHE_OBJLIST_CONFIG_EVENTS | FSCACHE_OBJLIST_CONFIG_NOEVENTS)))
-	    config   |= FSCACHE_OBJLIST_CONFIG_EVENTS | FSCACHE_OBJLIST_CONFIG_NOEVENTS;
-	if (!(config & (FSCACHE_OBJLIST_CONFIG_WORK | FSCACHE_OBJLIST_CONFIG_NOWORK)))
-	    config   |= FSCACHE_OBJLIST_CONFIG_WORK | FSCACHE_OBJLIST_CONFIG_NOWORK;
 
 	data->config = config;
 	return;

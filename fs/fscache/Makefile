@@ -10,7 +10,8 @@ fscache-y := \
 	fsdef.o \
 	main.o \
 	netfs.o \
-	object.o
+	obj.o \
+	object_bits.o
 
 fscache-$(CONFIG_PROC_FS) += proc.o
 fscache-$(CONFIG_FSCACHE_STATS) += stats.o
