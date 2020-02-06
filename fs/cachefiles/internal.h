@@ -116,6 +116,20 @@ extern struct fscache_object *cachefiles_grab_object(struct fscache_object *_obj
 						     enum fscache_obj_ref_trace why);
 
 /*
+ * io.c
+ */
+extern unsigned int cachefiles_shape_extent(struct fscache_object *object,
+					    struct fscache_extent *extent,
+					    loff_t i_size, bool for_write);
+extern int cachefiles_read(struct fscache_object *object,
+			   struct fscache_io_request *req,
+			   struct iov_iter *iter);
+extern int cachefiles_write(struct fscache_object *object,
+			    struct fscache_io_request *req,
+			    struct iov_iter *iter);
+extern bool cachefiles_open_object(struct cachefiles_object *obj);
+
+/*
  * key.c
  */
 extern char *cachefiles_cook_key(const u8 *raw, int keylen, uint8_t type);
