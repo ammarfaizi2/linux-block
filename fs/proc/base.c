@@ -2975,6 +2975,11 @@ static int proc_fsuid_map_open(struct inode *inode, struct file *file)
 {
 	return proc_id_map_open(inode, file, &proc_fsuid_seq_operations);
 }
+
+static int proc_fsgid_map_open(struct inode *inode, struct file *file)
+{
+	return proc_id_map_open(inode, file, &proc_fsgid_seq_operations);
+}
 #endif
 
 static const struct file_operations proc_uid_map_operations = {
@@ -3005,6 +3010,14 @@ static const struct file_operations proc_projid_map_operations = {
 static const struct file_operations proc_fsuid_map_operations = {
 	.open		= proc_fsuid_map_open,
 	.write		= proc_fsuid_map_write,
+	.read		= seq_read,
+	.llseek		= seq_lseek,
+	.release	= proc_id_map_release,
+};
+
+static const struct file_operations proc_fsgid_map_operations = {
+	.open		= proc_fsgid_map_open,
+	.write		= proc_fsgid_map_write,
 	.read		= seq_read,
 	.llseek		= seq_lseek,
 	.release	= proc_id_map_release,
@@ -3195,6 +3208,7 @@ static const struct pid_entry tgid_base_stuff[] = {
 #ifdef CONFIG_USER_NS
 #ifdef CONFIG_USER_NS_FSID
 	REG("fsuid_map",  S_IRUGO|S_IWUSR, proc_fsuid_map_operations),
+	REG("fsgid_map",  S_IRUGO|S_IWUSR, proc_fsgid_map_operations),
 #endif
 	REG("uid_map",    S_IRUGO|S_IWUSR, proc_uid_map_operations),
 	REG("gid_map",    S_IRUGO|S_IWUSR, proc_gid_map_operations),
