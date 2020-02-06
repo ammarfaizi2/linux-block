@@ -33,24 +33,6 @@ enum fscache_cookie_trace {
 	fscache_cookie_put_parent,
 };
 
-enum fscache_op_trace {
-	fscache_op_cancel,
-	fscache_op_cancel_all,
-	fscache_op_cancelled,
-	fscache_op_completed,
-	fscache_op_enqueue_async,
-	fscache_op_enqueue_mythread,
-	fscache_op_gc,
-	fscache_op_init,
-	fscache_op_put,
-	fscache_op_run,
-	fscache_op_signal,
-	fscache_op_submit,
-	fscache_op_submit_ex,
-	fscache_op_work,
-	fscache_op_trace__nr
-};
-
 #endif
 
 /*
@@ -68,22 +50,6 @@ enum fscache_op_trace {
 	EM(fscache_cookie_put_relinquish,	"PUT rlq")		\
 	EM(fscache_cookie_put_object,		"PUT obj")		\
 	E_(fscache_cookie_put_parent,		"PUT prn")
-
-#define fscache_op_traces						\
-	EM(fscache_op_cancel,			"Cancel1")		\
-	EM(fscache_op_cancel_all,		"CancelA")		\
-	EM(fscache_op_cancelled,		"Canclld")		\
-	EM(fscache_op_completed,		"Complet")		\
-	EM(fscache_op_enqueue_async,		"EnqAsyn")		\
-	EM(fscache_op_enqueue_mythread,		"EnqMyTh")		\
-	EM(fscache_op_gc,			"GC     ")		\
-	EM(fscache_op_init,			"Init   ")		\
-	EM(fscache_op_put,			"Put    ")		\
-	EM(fscache_op_run,			"Run    ")		\
-	EM(fscache_op_signal,			"Signal ")		\
-	EM(fscache_op_submit,			"Submit ")		\
-	EM(fscache_op_submit_ex,		"SubmitX")		\
-	E_(fscache_op_work,			"Work   ")
 
 /*
  * Export enum symbols via userspace.
@@ -307,29 +273,6 @@ TRACE_EVENT(fscache_osm,
 				       { true,  " OOB " },
 				       { false, " " }),
 		      __entry->event_num)
-	    );
-
-TRACE_EVENT(fscache_op,
-	    TP_PROTO(struct fscache_cookie *cookie, struct fscache_operation *op,
-		     enum fscache_op_trace why),
-
-	    TP_ARGS(cookie, op, why),
-
-	    TP_STRUCT__entry(
-		    __field(unsigned int,		cookie		)
-		    __field(unsigned int,		op		)
-		    __field(enum fscache_op_trace,	why		)
-			     ),
-
-	    TP_fast_assign(
-		    __entry->cookie		= cookie->debug_id;
-		    __entry->op			= op->debug_id;
-		    __entry->why		= why;
-			   ),
-
-	    TP_printk("c=%08x op=%08x %s",
-		      __entry->cookie, __entry->op,
-		      __print_symbolic(__entry->why, fscache_op_traces))
 	    );
 
 #endif /* _TRACE_FSCACHE_H */

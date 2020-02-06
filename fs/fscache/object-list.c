@@ -23,10 +23,6 @@ struct fscache_objlist_data {
 #define FSCACHE_OBJLIST_CONFIG_AUX	0x00000002	/* show object auxdata */
 #define FSCACHE_OBJLIST_CONFIG_BUSY	0x00000010	/* show busy objects */
 #define FSCACHE_OBJLIST_CONFIG_IDLE	0x00000020	/* show idle objects */
-#define FSCACHE_OBJLIST_CONFIG_PENDWR	0x00000040	/* show objects with pending writes */
-#define FSCACHE_OBJLIST_CONFIG_NOPENDWR	0x00000080	/* show objects without pending writes */
-#define FSCACHE_OBJLIST_CONFIG_READS	0x00000100	/* show objects with active reads */
-#define FSCACHE_OBJLIST_CONFIG_NOREADS	0x00000200	/* show objects without active reads */
 #define FSCACHE_OBJLIST_CONFIG_EVENTS	0x00000400	/* show objects with events */
 #define FSCACHE_OBJLIST_CONFIG_NOEVENTS	0x00000800	/* show objects without no events */
 #define FSCACHE_OBJLIST_CONFIG_WORK	0x00001000	/* show objects with work */
@@ -166,7 +162,7 @@ static int fscache_objlist_show(struct seq_file *m, void *v)
 	u8 *p;
 
 	if ((unsigned long) v == 1) {
-		seq_puts(m, "OBJECT   PARENT   STAT CHLDN OPS OOP IPR EX READS"
+		seq_puts(m, "OBJECT   PARENT   STAT CHLDN OPS OOP"
 			 " EM EV FL S"
 			 " | COOKIE   TYPE    TY FL");
 		if (config & (FSCACHE_OBJLIST_CONFIG_KEY |
@@ -185,7 +181,7 @@ static int fscache_objlist_show(struct seq_file *m, void *v)
 	}
 
 	if ((unsigned long) v == 2) {
-		seq_puts(m, "======== ======== ==== ===== === === === == ====="
+		seq_puts(m, "======== ======== ==== ===== === ==="
 			 " == == == ="
 			 " | ======== ======= == ===");
 		if (config & (FSCACHE_OBJLIST_CONFIG_KEY |
@@ -217,26 +213,19 @@ static int fscache_objlist_show(struct seq_file *m, void *v)
 		       obj->flags ||
 		       !list_empty(&obj->dependents),
 		       BUSY, IDLE);
-		FILTER(test_bit(FSCACHE_OBJECT_PENDING_WRITE, &obj->flags),
-		       PENDWR, NOPENDWR);
-		FILTER(atomic_read(&obj->n_reads),
-		       READS, NOREADS);
 		FILTER(obj->events & obj->event_mask,
 		       EVENTS, NOEVENTS);
 		FILTER(work_busy(&obj->work), WORK, NOWORK);
 	}
 
 	seq_printf(m,
-		   "%08x %08x %s %5u %3u %3u %3u %2u %5u %2lx %2lx %2lx %1x | ",
+		   "%08x %08x %s %5u %3u %3u %2lx %2lx %2lx %1x | ",
 		   obj->debug_id,
 		   obj->parent ? obj->parent->debug_id : UINT_MAX,
 		   obj->state->short_name,
 		   obj->n_children,
 		   obj->n_ops,
 		   obj->n_obj_ops,
-		   obj->n_in_progress,
-		   obj->n_exclusive,
-		   atomic_read(&obj->n_reads),
 		   obj->event_mask,
 		   obj->events,
 		   obj->flags,
@@ -336,10 +325,6 @@ static void fscache_objlist_config(struct fscache_objlist_data *data)
 		case 'A': config |= FSCACHE_OBJLIST_CONFIG_AUX;		break;
 		case 'B': config |= FSCACHE_OBJLIST_CONFIG_BUSY;	break;
 		case 'b': config |= FSCACHE_OBJLIST_CONFIG_IDLE;	break;
-		case 'W': config |= FSCACHE_OBJLIST_CONFIG_PENDWR;	break;
-		case 'w': config |= FSCACHE_OBJLIST_CONFIG_NOPENDWR;	break;
-		case 'R': config |= FSCACHE_OBJLIST_CONFIG_READS;	break;
-		case 'r': config |= FSCACHE_OBJLIST_CONFIG_NOREADS;	break;
 		case 'S': config |= FSCACHE_OBJLIST_CONFIG_WORK;	break;
 		case 's': config |= FSCACHE_OBJLIST_CONFIG_NOWORK;	break;
 		}
@@ -350,10 +335,6 @@ static void fscache_objlist_config(struct fscache_objlist_data *data)
 
 	if (!(config & (FSCACHE_OBJLIST_CONFIG_BUSY | FSCACHE_OBJLIST_CONFIG_IDLE)))
 	    config   |= FSCACHE_OBJLIST_CONFIG_BUSY | FSCACHE_OBJLIST_CONFIG_IDLE;
-	if (!(config & (FSCACHE_OBJLIST_CONFIG_PENDWR | FSCACHE_OBJLIST_CONFIG_NOPENDWR)))
-	    config   |= FSCACHE_OBJLIST_CONFIG_PENDWR | FSCACHE_OBJLIST_CONFIG_NOPENDWR;
-	if (!(config & (FSCACHE_OBJLIST_CONFIG_READS | FSCACHE_OBJLIST_CONFIG_NOREADS)))
-	    config   |= FSCACHE_OBJLIST_CONFIG_READS | FSCACHE_OBJLIST_CONFIG_NOREADS;
 	if (!(config & (FSCACHE_OBJLIST_CONFIG_EVENTS | FSCACHE_OBJLIST_CONFIG_NOEVENTS)))
 	    config   |= FSCACHE_OBJLIST_CONFIG_EVENTS | FSCACHE_OBJLIST_CONFIG_NOEVENTS;
 	if (!(config & (FSCACHE_OBJLIST_CONFIG_WORK | FSCACHE_OBJLIST_CONFIG_NOWORK)))
