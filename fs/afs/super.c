@@ -40,6 +40,12 @@ static int afs_show_options(struct seq_file *m, struct dentry *root);
 static int afs_init_fs_context(struct fs_context *fc);
 static const struct fs_parameter_spec afs_fs_parameters[];
 
+#ifdef CONFIG_AFS_FSCACHE
+static void afs_put_super (struct super_block *sb);
+#else
+#define afs_put_super NULL
+#endif
+
 struct file_system_type afs_fs_type = {
 	.owner			= THIS_MODULE,
 	.name			= "afs",
@@ -61,6 +67,7 @@ static const struct super_operations afs_super_ops = {
 	.evict_inode	= afs_evict_inode,
 	.show_devname	= afs_show_devname,
 	.show_options	= afs_show_options,
+	.put_super	= afs_put_super,
 };
 
 static struct kmem_cache *afs_inode_cachep;
@@ -548,6 +555,23 @@ static void afs_kill_super(struct super_block *sb)
 		afs_deactivate_volume(as->volume);
 	afs_destroy_sbi(as);
 }
+
+#ifdef CONFIG_AFS_FSCACHE
+static struct fscache_cookie *afs_put_super_get_cookie(struct inode *inode)
+{
+	return afs_vnode_cache(AFS_FS_I(inode));
+}
+
+static void afs_put_super(struct super_block *sb)
+{
+	struct afs_super_info *as = AFS_FS_S(sb);
+
+	if (as &&
+	    as->volume &&
+	    as->volume->cache)
+		fscache_put_super(sb, afs_put_super_get_cookie);
+}
+#endif
 
 /*
  * Get an AFS superblock and root directory.
