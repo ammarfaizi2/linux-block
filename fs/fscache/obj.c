@@ -245,30 +245,15 @@ void fscache_lookup_object(struct fscache_cookie *cookie,
 }
 
 /*
- * Invalidate an object
+ * Invalidate an object.  param passes the invalidation flags.
  */
 void fscache_invalidate_object(struct fscache_cookie *cookie,
-			       struct fscache_object *unused, int param)
+			       struct fscache_object *object, int flags)
 {
-	struct fscache_object *object = NULL;
-	bool success = true;
+	bool success;
 
-	spin_lock(&cookie->lock);
-
-	if (!hlist_empty(&cookie->backing_objects)) {
-		object = hlist_entry(cookie->backing_objects.first,
-				     struct fscache_object,
-				     cookie_link);
-		object = object->cache->ops->grab_object(object,
-							 fscache_obj_get_inval);
-	}
-
-	spin_unlock(&cookie->lock);
-
-	if (object) {
-		success = object->cache->ops->invalidate_object(object);
-		fscache_do_put_object(object, fscache_obj_put_inval);
-	}
+	success = object->cache->ops->invalidate_object(object, flags);
+	fscache_do_put_object(object, fscache_obj_put_inval);
 
 	if (success)
 		fscache_set_cookie_stage(cookie, FSCACHE_COOKIE_STAGE_NO_DATA_YET);

@@ -111,6 +111,7 @@ ready:
 
 	cres->debug_id = cookie->debug_id;
 	cres->cache_priv = object;
+	cres->inval_counter = object->inval_counter;
 	object->cache->ops->grab_object(object, fscache_obj_get_ioreq);
 	object->cache->ops->begin_operation(cres);
 

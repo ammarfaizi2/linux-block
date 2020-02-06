@@ -120,7 +120,8 @@ struct fscache_cache_ops {
 	void (*update_object)(struct fscache_object *object);
 
 	/* Invalidate an object */
-	bool (*invalidate_object)(struct fscache_object *object);
+	bool (*invalidate_object)(struct fscache_object *object,
+				  unsigned int flags);
 
 	/* discard the resources pinned by an object and effect retirement if
 	 * necessary */
@@ -165,10 +166,12 @@ enum fscache_object_stage {
 struct fscache_object {
 	int			debug_id;	/* debugging ID */
 	int			n_children;	/* number of child objects */
+	unsigned int		inval_counter;	/* Number of invalidations applied */
 	enum fscache_object_stage stage;	/* Stage of object's lifecycle */
 	spinlock_t		lock;		/* state and operations lock */
 
 	unsigned long		flags;
+#define FSCACHE_OBJECT_NEEDS_INVAL	8	/* T if object needs invalidation */
 #define FSCACHE_OBJECT_NEEDS_UPDATE	9	/* T if object attrs need writing to disk */
 
 	struct list_head	cache_link;	/* link in cache->object_list */

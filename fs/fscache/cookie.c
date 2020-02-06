@@ -532,15 +532,21 @@ void fscache_set_cookie_stage(struct fscache_cookie *cookie,
 }
 
 /*
- * Invalidate an object.  Callable with spinlocks held.
+ * Invalidate an object.
  */
-void __fscache_invalidate(struct fscache_cookie *cookie, loff_t new_size)
+void __fscache_invalidate(struct fscache_cookie *cookie,
+			  const void *aux_data, loff_t new_size,
+			  unsigned int flags)
 {
 	struct fscache_object *object = NULL;
 
 	_enter("{%s}", cookie->type_name);
 
 	fscache_stat(&fscache_n_invalidates);
+
+	if (WARN(test_bit(FSCACHE_COOKIE_RELINQUISHED, &cookie->flags),
+		 "Trying to invalidate relinquished cookie\n"))
+		return;
 
 	/* Only permit invalidation of data files.  Invalidating an index will
 	 * require the caller to release all its attachments to the tree rooted
@@ -550,12 +556,16 @@ void __fscache_invalidate(struct fscache_cookie *cookie, loff_t new_size)
 	ASSERTCMP(cookie->type, !=, FSCACHE_COOKIE_TYPE_INDEX);
 
 	spin_lock(&cookie->lock);
-	cookie->object_size = new_size;
+	fscache_update_aux(cookie, aux_data, &new_size);
 	cookie->zero_point = new_size;
 
-	if (!hlist_empty(&cookie->backing_objects))
+	trace_fscache_invalidate(cookie, new_size);
+
+	if (!hlist_empty(&cookie->backing_objects)) {
 		object = hlist_entry(cookie->backing_objects.first,
 				     struct fscache_object, cookie_link);
+		object->inval_counter++;
+	}
 
 	switch (cookie->stage) {
 	case FSCACHE_COOKIE_STAGE_INITIALISING: /* Assume later checks will catch it */
@@ -567,7 +577,7 @@ void __fscache_invalidate(struct fscache_cookie *cookie, loff_t new_size)
 
 	case FSCACHE_COOKIE_STAGE_LOOKING_UP:
 		spin_unlock(&cookie->lock);
-		_leave(" [look]");
+		_leave(" [look %x]", object->inval_counter);
 		return;
 
 	case FSCACHE_COOKIE_STAGE_NO_DATA_YET:
@@ -579,7 +589,7 @@ void __fscache_invalidate(struct fscache_cookie *cookie, loff_t new_size)
 		spin_unlock(&cookie->lock);
 		wake_up_cookie_stage(cookie);
 
-		fscache_dispatch(cookie, object, 0, fscache_invalidate_object);
+		fscache_dispatch(cookie, object, flags, fscache_invalidate_object);
 		_leave(" [inv]");
 		return;
 	}

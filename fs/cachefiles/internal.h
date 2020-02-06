@@ -54,6 +54,8 @@ struct cachefiles_object {
 	struct file			*backing_file;	/* File open on backing storage */
 	loff_t				i_size;		/* object size */
 	atomic_t			usage;		/* object usage count */
+	unsigned long			flags;
+#define CACHEFILES_OBJECT_USING_TMPFILE	0		/* Object has a tmpfile that need linking */
 	uint8_t				type;		/* object type */
 	bool				new;		/* T if object new */
 
@@ -137,8 +139,10 @@ extern void cachefiles_expand_readahead(struct netfs_cache_resources *cres,
 					loff_t *_start, size_t *_len, loff_t i_size);
 extern enum netfs_read_source cachefiles_prepare_read(struct netfs_read_subrequest *subreq,
 						      loff_t i_size);
+extern u8 *cachefiles_new_content_map(struct cachefiles_object *object,
+				      unsigned int *_size);
 extern void cachefiles_mark_content_map(struct cachefiles_object *object,
-					loff_t start, loff_t len);
+					loff_t start, loff_t len, unsigned int inval_counter);
 extern void cachefiles_expand_content_map(struct cachefiles_object *object, loff_t size);
 extern void cachefiles_shorten_content_map(struct cachefiles_object *object, loff_t new_size);
 extern bool cachefiles_load_content_map(struct cachefiles_object *object);
@@ -194,6 +198,9 @@ extern int cachefiles_cull(struct cachefiles_cache *cache, struct dentry *dir,
 
 extern int cachefiles_check_in_use(struct cachefiles_cache *cache,
 				   struct dentry *dir, char *filename);
+
+extern bool cachefiles_commit_tmpfile(struct cachefiles_cache *cache,
+				      struct cachefiles_object *object);
 
 /*
  * proc.c
@@ -252,8 +259,7 @@ static inline void cachefiles_end_secure(struct cachefiles_cache *cache,
  * xattr.c
  */
 extern int cachefiles_check_object_type(struct cachefiles_object *object);
-extern int cachefiles_set_object_xattr(struct cachefiles_object *object,
-				       unsigned int xattr_flags);
+extern int cachefiles_set_object_xattr(struct cachefiles_object *object);
 extern int cachefiles_check_auxdata(struct cachefiles_object *object);
 extern int cachefiles_remove_object_xattr(struct cachefiles_cache *cache,
 					  struct dentry *dentry);

@@ -201,7 +201,7 @@ static void cachefiles_update_object(struct fscache_object *_object)
 		}
 	}
 
-	cachefiles_set_object_xattr(object, XATTR_REPLACE);
+	cachefiles_set_object_xattr(object);
 
 out:
 	cachefiles_end_secure(cache, saved_cred);
@@ -211,11 +211,15 @@ out:
 /*
  * Commit changes to the object as we drop it.
  */
-static void cachefiles_commit_object(struct cachefiles_object *object,
+static bool cachefiles_commit_object(struct cachefiles_object *object,
 				     struct cachefiles_cache *cache)
 {
 	if (object->content_map_changed)
 		cachefiles_save_content_map(object);
+
+	if (test_bit(CACHEFILES_OBJECT_USING_TMPFILE, &object->flags))
+		return cachefiles_commit_tmpfile(cache, object);
+	return true;
 }
 
 /*
@@ -422,48 +426,133 @@ truncate_failed:
 }
 
 /*
- * Invalidate an object
+ * Create a temporary file and leave it unattached and un-xattr'd until the
+ * time comes to discard the object from memory.
  */
-static bool cachefiles_invalidate_object(struct fscache_object *_object)
+static struct file *cachefiles_create_tmpfile(struct cachefiles_object *object)
 {
-	struct cachefiles_object *object;
 	struct cachefiles_cache *cache;
 	const struct cred *saved_cred;
+	struct file *file;
 	struct path path;
 	uint64_t ni_size;
-	int ret;
+	long ret;
 
-	object = container_of(_object, struct cachefiles_object, fscache);
 	cache = container_of(object->fscache.cache,
 			     struct cachefiles_cache, cache);
 
 	ni_size = object->fscache.cookie->object_size;
 	ni_size = round_up(ni_size, CACHEFILES_DIO_BLOCK_SIZE);
 
+	cachefiles_begin_secure(cache, &saved_cred);
+
+	path.mnt = cache->mnt;
+	path.dentry = vfs_tmpfile(&init_user_ns, cache->graveyard, S_IFREG, O_RDWR);
+	if (IS_ERR(path.dentry)) {
+		if (PTR_ERR(path.dentry) == -EIO)
+			cachefiles_io_error_obj(object, "Failed to create tmpfile");
+		file = ERR_CAST(path.dentry);
+		goto out;
+	}
+
+	trace_cachefiles_tmpfile(object, d_inode(path.dentry));
+
+	if (ni_size > 0) {
+		trace_cachefiles_trunc(object, d_inode(path.dentry), 0, ni_size);
+		ret = vfs_truncate(&path, ni_size);
+		if (ret < 0) {
+			file = ERR_PTR(ret);
+			goto out_dput;
+		}
+	}
+
+	file = open_with_fake_path(&path,
+				   O_RDWR | O_LARGEFILE | O_DIRECT,
+				   d_backing_inode(path.dentry),
+				   cache->cache_cred);
+out_dput:
+	dput(path.dentry);
+out:
+	cachefiles_end_secure(cache, saved_cred);
+	return file;
+}
+
+/*
+ * Invalidate an object
+ */
+static bool cachefiles_invalidate_object(struct fscache_object *_object,
+					 unsigned int flags)
+{
+	struct cachefiles_object *object;
+	struct file *file, *old_file;
+	struct dentry *old_dentry;
+	u8 *map, *old_map;
+	unsigned int map_size;
+
+	object = container_of(_object, struct cachefiles_object, fscache);
+
 	_enter("{OBJ%x},[%llu]",
-	       object->fscache.debug_id, (unsigned long long)ni_size);
+	       object->fscache.debug_id, _object->cookie->object_size);
+
+	if ((flags & FSCACHE_INVAL_LIGHT) &&
+	    test_bit(CACHEFILES_OBJECT_USING_TMPFILE, &object->flags)) {
+		_leave(" = t [light]");
+		return true;
+	}
 
 	if (object->dentry) {
 		ASSERT(d_is_reg(object->dentry));
 
-		path.dentry = object->dentry;
-		path.mnt = cache->mnt;
+		file = cachefiles_create_tmpfile(object);
+		if (IS_ERR(file))
+			goto failed;
 
-		cachefiles_begin_secure(cache, &saved_cred);
-		ret = vfs_truncate(&path, 0);
-		if (ret == 0)
-			ret = vfs_truncate(&path, ni_size);
-		cachefiles_end_secure(cache, saved_cred);
+		map = cachefiles_new_content_map(object, &map_size);
+		if (IS_ERR(map))
+			goto failed_fput;
 
-		if (ret != 0) {
-			if (ret == -EIO)
-				cachefiles_io_error_obj(object,
-							"Invalidate failed");
-			return false;
+		/* Substitute the VFS target */
+		_debug("sub");
+		dget(file->f_path.dentry); /* Do outside of content_map_lock */
+		spin_lock(&object->fscache.lock);
+		write_lock_bh(&object->content_map_lock);
+
+		if (!object->old) {
+			/* Save the dentry carrying the path information */
+			object->old = object->dentry;
+			old_dentry = NULL;
+		} else {
+			old_dentry = object->dentry;
 		}
+
+		old_file = object->backing_file;
+		old_map = object->content_map;
+		object->backing_file = file;
+		object->dentry = file->f_path.dentry;
+		object->content_info = CACHEFILES_CONTENT_NO_DATA;
+		object->content_map = map;
+		object->content_map_size = map_size;
+		object->content_map_changed = true;
+		set_bit(CACHEFILES_OBJECT_USING_TMPFILE, &object->flags);
+		set_bit(FSCACHE_OBJECT_NEEDS_UPDATE, &object->fscache.flags);
+
+		write_unlock_bh(&object->content_map_lock);
+		spin_unlock(&object->fscache.lock);
+		_debug("subbed");
+
+		kfree(old_map);
+		fput(old_file);
+		dput(old_dentry);
 	}
 
+	_leave(" = t [tmpfile]");
 	return true;
+
+failed_fput:
+	fput(file);
+failed:
+	_leave(" = f");
+	return false;
 }
 
 static unsigned int cachefiles_get_object_usage(const struct fscache_object *_object)
