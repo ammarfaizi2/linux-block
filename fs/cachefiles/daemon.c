@@ -102,8 +102,6 @@ static int cachefiles_daemon_open(struct inode *inode, struct file *file)
 	}
 
 	mutex_init(&cache->daemon_mutex);
-	cache->active_nodes = RB_ROOT;
-	rwlock_init(&cache->active_lock);
 	init_waitqueue_head(&cache->daemon_pollwq);
 
 	/* set default caching limits
@@ -137,8 +135,6 @@ static int cachefiles_daemon_release(struct inode *inode, struct file *file)
 	set_bit(CACHEFILES_DEAD, &cache->flags);
 
 	cachefiles_daemon_unbind(cache);
-
-	ASSERT(!cache->active_nodes.rb_node);
 
 	/* clean up the control file interface */
 	cache->cachefilesd = NULL;
