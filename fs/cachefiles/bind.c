@@ -102,6 +102,7 @@ static int cachefiles_daemon_add_cache(struct cachefiles_cache *cache)
 		goto error_root_object;
 
 	atomic_set(&fsdef->usage, 1);
+	rwlock_init(&fsdef->content_map_lock);
 	fsdef->type = FSCACHE_COOKIE_TYPE_INDEX;
 
 	_debug("- fsdef %p", fsdef);
