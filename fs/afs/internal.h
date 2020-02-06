@@ -225,6 +225,7 @@ struct afs_read {
 	loff_t			file_size;	/* File size returned by server */
 	struct key		*key;		/* The key to use to reissue the read */
 	struct afs_vnode	*vnode;		/* The file being read into. */
+	struct page		*page;		/* The page for symlinks */
 	afs_dataversion_t	data_version;	/* Version number returned by server */
 	refcount_t		usage;
 	unsigned int		debug_id;
@@ -1003,6 +1004,7 @@ extern int afs_wait_for_fs_probes(struct afs_server_list *, unsigned long);
 /*
  * inode.c
  */
+extern struct page *afs_read_symlink(struct afs_vnode *);
 extern void afs_vnode_commit_status(struct afs_fs_cursor *,
 				    struct afs_vnode *,
 				    unsigned int,

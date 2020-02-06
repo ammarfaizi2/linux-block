@@ -25,8 +25,127 @@
 #include "internal.h"
 #include "afs_fs.h"
 
+static int afs_symlink_check(struct fscache_io_request *fsreq)
+{
+	struct afs_read *req = container_of(fsreq, struct afs_read, cache);
+	loff_t i_size;
+	char *p;
+
+	i_size = i_size_read(req->cache.mapping->host);
+	p = kmap(req->page);
+	nd_terminate_link(p, i_size, PAGE_SIZE - 1);
+	kunmap(req->page);
+	return 0;
+}
+
+/*
+ * Read a symlink.  Note that we don't want to go through fscache_read_helper()
+ * as a symlink is a monolithic object rather than a granular one from the
+ * point of view of the cache.
+ */
+struct page *afs_read_symlink(struct afs_vnode *vnode)
+{
+	struct afs_vnode_cache_aux aux;
+	struct address_space *mapping = vnode->vfs_inode.i_mapping;
+	struct afs_read *req;
+	struct page *page;
+	struct key *key;
+	int ret = -ENOMEM;
+
+	_enter("");
+
+	page = find_or_create_page(mapping, 0, readahead_gfp_mask(mapping));
+	if (!page)
+		goto err;
+
+	if (!PageUptodate(page)) {
+		req = afs_alloc_read(readahead_gfp_mask(mapping));
+		if (!req)
+			goto err_page;
+
+		key = afs_request_key(vnode->volume->cell);
+		if (IS_ERR(key)) {
+			ret = PTR_ERR(key);
+			goto err_req;
+		}
+
+		get_page(page);
+		req->key = key;
+		req->vnode = vnode;
+		req->page = page;
+		req->cache.mapping = vnode->vfs_inode.i_mapping;
+		req->cache.pos = 0;
+		req->cache.len = PAGE_SIZE;
+		req->cache.nr_pages = 1;
+
+		fscache_use_cookie(afs_vnode_cache(vnode), false);
+		fscache_init_io_request(&req->cache, afs_vnode_cache(vnode),
+					&afs_req_ops);
+
+		ret = fscache_read_helper_single(&req->cache, afs_symlink_check);
+		if (ret < 0)
+			goto err_unuse;
+
+		if (test_bit(FSCACHE_IO_DATA_FROM_SERVER, &req->cache.flags)) {
+			aux.data_version = vnode->status.data_version;
+			fscache_unuse_cookie(afs_vnode_cache(vnode), &aux, &req->file_size);
+		} else {
+			fscache_unuse_cookie(afs_vnode_cache(vnode), NULL, NULL);
+		}
+		afs_put_read(req);
+	} else {
+		unlock_page(page);
+	}
+
+	_leave(" = {%lx}", page->index);
+	return page;
+
+err_unuse:
+	fscache_unuse_cookie(afs_vnode_cache(vnode), NULL, NULL);
+err_req:
+	afs_put_read(req);
+err_page:
+	unlock_page(page);
+	put_page(page);
+err:
+	_leave(" = %d", ret);
+	return ERR_PTR(ret);
+}
+
+/*
+ * Load a symlink's contents into the pagecache and then return a pointer to it
+ * to the caller.
+ */
+static const char *afs_get_link(struct dentry *dentry, struct inode *inode,
+				struct delayed_call *callback)
+{
+	struct address_space *mapping = inode->i_mapping;
+	struct afs_vnode *vnode = AFS_FS_I(inode);
+	struct page *page;
+	char *kaddr;
+
+	if (!dentry) {
+		page = find_get_page(mapping, 0);
+		if (!page)
+			return ERR_PTR(-ECHILD);
+		if (!PageUptodate(page)) {
+			put_page(page);
+			return ERR_PTR(-ECHILD);
+		}
+	} else {
+		page = afs_read_symlink(vnode);
+		if (IS_ERR(page))
+			return ERR_CAST(page);
+	}
+
+	set_delayed_call(callback, page_put_link, page);
+	BUG_ON(mapping_gfp_mask(mapping) & __GFP_HIGHMEM);
+	kaddr = page_address(page);
+	return kaddr;
+}
+
 static const struct inode_operations afs_symlink_inode_operations = {
-	.get_link	= page_get_link,
+	.get_link	= afs_get_link,
 	.listxattr	= afs_listxattr,
 };
 
