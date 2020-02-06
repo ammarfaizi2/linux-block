@@ -10,6 +10,7 @@
 #include <linux/file.h>
 #include <linux/swap.h>
 #include <linux/xattr.h>
+#include <linux/netfs.h>
 #include "internal.h"
 
 static const char cachefiles_xattr_content_map[] =
@@ -38,6 +39,172 @@ static size_t cachefiles_map_size(loff_t i_size)
 	map_size = roundup_pow_of_two(bytes);
 	_leave(" = %zx [i=%llx g=%zu b=%zu]", map_size, i_size, granules, bits);
 	return map_size;
+}
+
+static bool cachefiles_granule_is_present(struct cachefiles_object *object,
+					  long granule)
+{
+	bool res;
+
+	if (granule / 8 >= object->content_map_size)
+		return false;
+	read_lock_bh(&object->content_map_lock);
+	res = test_bit_le(granule, object->content_map);
+	read_unlock_bh(&object->content_map_lock);
+	return res;
+}
+
+static long cachefiles_find_next_granule(struct cachefiles_object *object,
+					 long start_from, long *_limit)
+{
+	long result, limit;
+
+	read_lock_bh(&object->content_map_lock);
+	*_limit = limit = object->content_map_size * 8;
+	result = find_next_bit_le(object->content_map, limit, start_from);
+	read_unlock_bh(&object->content_map_lock);
+	return result;
+}
+
+static long cachefiles_find_next_hole(struct cachefiles_object *object,
+				      long start_from, long *_limit)
+{
+	long result, limit;
+
+	read_lock_bh(&object->content_map_lock);
+	*_limit = limit = object->content_map_size * 8;
+	result = find_next_zero_bit_le(object->content_map, limit, start_from);
+	read_unlock_bh(&object->content_map_lock);
+	return result;
+}
+
+/*
+ * Expand a readahead proposal from the VM to align with cache limits
+ * and granularity.
+ */
+void cachefiles_expand_readahead(struct netfs_cache_resources *cres,
+				 loff_t *_start, size_t *_len, loff_t i_size)
+{
+	loff_t start = *_start, delta;
+	size_t len = *_len;
+
+	if (start >= CACHEFILES_SIZE_LIMIT)
+		return;
+
+	if (len > CACHEFILES_SIZE_LIMIT - start)
+		len = *_len = CACHEFILES_SIZE_LIMIT - start;
+
+	delta = start & (CACHEFILES_GRAN_SIZE - 1);
+	if (start - delta < i_size) {
+		start -= delta;
+		len = round_up(len + delta, CACHEFILES_GRAN_SIZE);
+		if (len > i_size - start) {
+			_debug("overshot eof");
+			len = i_size - start;
+		}
+	}
+
+	*_start = start;
+	*_len = len;
+}
+
+/*
+ * Prepare a I/O subrequest of a read request.  We're asked to retrieve all the
+ * remaining data in the read request, but we are allowed to shrink that and we
+ * set flags to indicate where we want it read from.
+ */
+enum netfs_read_source cachefiles_prepare_read(struct netfs_read_subrequest *subreq,
+					       loff_t i_size)
+{
+	struct netfs_read_request *rreq = subreq->rreq;
+	struct cachefiles_object *object = cachefiles_cres_object(&rreq->cache_resources);
+	struct cachefiles_cache *cache =
+		container_of(object->fscache.cache, struct cachefiles_cache, cache);
+	loff_t start = subreq->start, len = subreq->len, boundary;
+	long granule, next, limit;
+
+	_enter("%llx,%llx", start, len);
+
+	if (start >= CACHEFILES_SIZE_LIMIT) {
+		if (start >= i_size)
+			goto zero_pages_nocache;
+		goto on_server_nocache;
+	}
+	if (len > CACHEFILES_SIZE_LIMIT - start)
+		len = CACHEFILES_SIZE_LIMIT - start;
+
+	granule = start / CACHEFILES_GRAN_SIZE;
+	if (granule / 8 >= object->content_map_size) {
+		cachefiles_expand_content_map(object, i_size);
+		if (granule / 8 >= object->content_map_size)
+			goto maybe_on_server_nocache;
+	}
+
+	if (start >= i_size)
+		goto zero_pages;
+
+	if (cachefiles_granule_is_present(object, granule)) {
+		/* The start of the request is present in the cache - restrict
+		 * the length to what's available.
+		 */
+		if (start & (CACHEFILES_DIO_BLOCK_SIZE - 1)) {
+			/* We should never see DIO-unaligned requests here. */
+			WARN_ON_ONCE(1);
+			len &= CACHEFILES_DIO_BLOCK_SIZE - 1;
+			goto maybe_on_server;
+		}
+
+		next = cachefiles_find_next_hole(object, granule + 1, &limit);
+		_debug("present %lx %lx", granule, limit);
+		if (granule >= limit)
+			goto maybe_on_server;
+		boundary = next * CACHEFILES_GRAN_SIZE;
+		if (len > boundary - start)
+			len = boundary - start;
+		goto in_cache;
+	} else {
+		/* The start of the request is not present in the cache -
+		 * restrict the length to the size of the hole.
+		 */
+		next = cachefiles_find_next_granule(object, granule + 1, &limit);
+		_debug("hole %lx %lx", granule, limit);
+		if (granule >= limit)
+			goto maybe_on_server;
+		boundary = next * CACHEFILES_GRAN_SIZE;
+		if (len > boundary - start)
+			len = boundary - start;
+		goto maybe_on_server;
+	}
+
+maybe_on_server:
+	/* If the start of the request is beyond the original EOF of the file
+	 * on the server then it's not going to be found on the server.
+	 */
+	if (start >= object->fscache.cookie->zero_point)
+		goto zero_pages;
+	goto on_server;
+maybe_on_server_nocache:
+	if (start >= object->fscache.cookie->zero_point)
+		goto zero_pages_nocache;
+	goto on_server_nocache;
+on_server:
+	if (cachefiles_has_space(cache, 0, (subreq->len + PAGE_SIZE - 1) / PAGE_SIZE) == 0)
+		__set_bit(NETFS_SREQ_WRITE_TO_CACHE, &subreq->flags);
+on_server_nocache:
+	subreq->len = len;
+	_leave(" = down %llx", len);
+	return NETFS_DOWNLOAD_FROM_SERVER;
+zero_pages:
+	if (cachefiles_has_space(cache, 0, (subreq->len + PAGE_SIZE - 1) / PAGE_SIZE) == 0)
+		__set_bit(NETFS_SREQ_WRITE_TO_CACHE, &subreq->flags);
+zero_pages_nocache:
+	subreq->len = len;
+	_leave(" = zero %llx", len);
+	return NETFS_FILL_WITH_ZEROES;
+in_cache:
+	subreq->len = len;
+	_leave(" = read %llx", len);
+	return NETFS_READ_FROM_CACHE;
 }
 
 /*

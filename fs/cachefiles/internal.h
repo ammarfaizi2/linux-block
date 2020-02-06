@@ -107,6 +107,14 @@ struct cachefiles_cache {
 
 #include <trace/events/cachefiles.h>
 
+static inline
+struct cachefiles_object *cachefiles_cres_object(struct netfs_cache_resources *cres)
+{
+	return container_of(fscache_cres_object(cres),
+			    struct cachefiles_object, fscache);
+
+}
+
 /*
  * note change of state for daemon
  */
@@ -125,6 +133,10 @@ extern void cachefiles_daemon_unbind(struct cachefiles_cache *cache);
 /*
  * content-map.c
  */
+extern void cachefiles_expand_readahead(struct netfs_cache_resources *cres,
+					loff_t *_start, size_t *_len, loff_t i_size);
+extern enum netfs_read_source cachefiles_prepare_read(struct netfs_read_subrequest *subreq,
+						      loff_t i_size);
 extern void cachefiles_mark_content_map(struct cachefiles_object *object,
 					loff_t start, loff_t len);
 extern void cachefiles_expand_content_map(struct cachefiles_object *object, loff_t size);

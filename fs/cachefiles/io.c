@@ -13,14 +13,6 @@
 #include <linux/netfs.h>
 #include "internal.h"
 
-static inline
-struct cachefiles_object *cachefiles_cres_object(struct netfs_cache_resources *cres)
-{
-	return container_of(fscache_cres_object(cres),
-			    struct cachefiles_object, fscache);
-
-}
-
 struct cachefiles_kiocb {
 	struct kiocb		iocb;
 	refcount_t		ki_refcnt;
@@ -276,73 +268,6 @@ presubmission_error:
 }
 
 /*
- * Prepare a read operation, shortening it to a cached/uncached
- * boundary as appropriate.
- */
-static enum netfs_read_source cachefiles_prepare_read(struct netfs_read_subrequest *subreq,
-						      loff_t i_size)
-{
-	struct netfs_read_request *rreq = subreq->rreq;
-	struct cachefiles_object *object = cachefiles_cres_object(&rreq->cache_resources);
-	struct cachefiles_cache *cache;
-	const struct cred *saved_cred;
-	struct file *file = rreq->cache_resources.cache_priv2;
-	loff_t off, to;
-
-	_enter("%zx @%llx/%llx", subreq->len, subreq->start, i_size);
-
-	cache = container_of(object->fscache.cache,
-			     struct cachefiles_cache, cache);
-
-	if (!file)
-		goto cache_fail_nosec;
-
-	if (subreq->start >= i_size)
-		return NETFS_FILL_WITH_ZEROES;
-
-	cachefiles_begin_secure(cache, &saved_cred);
-
-	off = vfs_llseek(file, subreq->start, SEEK_DATA);
-	if (off < 0 && off >= (loff_t)-MAX_ERRNO) {
-		if (off == (loff_t)-ENXIO)
-			goto download_and_store;
-		goto cache_fail;
-	}
-
-	if (off >= subreq->start + subreq->len)
-		goto download_and_store;
-
-	if (off > subreq->start) {
-		off = round_up(off, cache->bsize);
-		subreq->len = off - subreq->start;
-		goto download_and_store;
-	}
-
-	to = vfs_llseek(file, subreq->start, SEEK_HOLE);
-	if (to < 0 && to >= (loff_t)-MAX_ERRNO)
-		goto cache_fail;
-
-	if (to < subreq->start + subreq->len) {
-		if (subreq->start + subreq->len >= i_size)
-			to = round_up(to, cache->bsize);
-		else
-			to = round_down(to, cache->bsize);
-		subreq->len = to - subreq->start;
-	}
-
-	cachefiles_end_secure(cache, saved_cred);
-	return NETFS_READ_FROM_CACHE;
-
-download_and_store:
-	if (cachefiles_has_space(cache, 0, (subreq->len + PAGE_SIZE - 1) / PAGE_SIZE) == 0)
-		__set_bit(NETFS_SREQ_WRITE_TO_CACHE, &subreq->flags);
-cache_fail:
-	cachefiles_end_secure(cache, saved_cred);
-cache_fail_nosec:
-	return NETFS_DOWNLOAD_FROM_SERVER;
-}
-
-/*
  * Prepare for a write to occur.
  */
 static int cachefiles_prepare_write(struct netfs_cache_resources *cres,
@@ -378,6 +303,7 @@ static const struct netfs_cache_ops cachefiles_netfs_cache_ops = {
 	.end_operation		= cachefiles_end_operation,
 	.read			= cachefiles_read,
 	.write			= cachefiles_write,
+	.expand_readahead	= cachefiles_expand_readahead,
 	.prepare_read		= cachefiles_prepare_read,
 	.prepare_write		= cachefiles_prepare_write,
 };
