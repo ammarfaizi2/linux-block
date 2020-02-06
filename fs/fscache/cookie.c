@@ -666,17 +666,16 @@ static void fscache_cookie_drop_from_lru(struct fscache_cookie *cookie)
  */
 static void fscache_invalidate_cookie(struct fscache_cookie *cookie)
 {
-	if (cookie->volume->cache->ops->invalidate_cookie(cookie, 0))
-		fscache_set_cookie_stage(cookie, FSCACHE_COOKIE_STAGE_ACTIVE);
-	else
-		fscache_set_cookie_stage(cookie, FSCACHE_COOKIE_STAGE_FAILED);
+	cookie->volume->cache->ops->invalidate_cookie(cookie);
 	fscache_end_cookie_access(cookie, fscache_access_invalidate_cookie_end);
 }
 
 /*
- * Invalidate an object.  Callable with spinlocks held.
+ * Invalidate an object.
  */
-void __fscache_invalidate(struct fscache_cookie *cookie, loff_t new_size)
+void __fscache_invalidate(struct fscache_cookie *cookie,
+			  const void *aux_data, loff_t new_size,
+			  unsigned int flags)
 {
 	bool is_caching;
 
@@ -690,9 +689,10 @@ void __fscache_invalidate(struct fscache_cookie *cookie, loff_t new_size)
 
 	spin_lock(&cookie->lock);
 	set_bit(FSCACHE_COOKIE_NO_DATA_TO_READ, &cookie->flags);
-	cookie->object_size = new_size;
+	fscache_update_aux(cookie, aux_data, &new_size);
 	cookie->zero_point = new_size;
 	cookie->inval_counter++;
+	trace_fscache_invalidate(cookie, new_size);
 
 	switch (cookie->stage) {
 	case FSCACHE_COOKIE_STAGE_INVALIDATING: /* is_still_valid will catch it */
@@ -721,7 +721,7 @@ void __fscache_invalidate(struct fscache_cookie *cookie, loff_t new_size)
 	}
 }
 EXPORT_SYMBOL(__fscache_invalidate);
- 
+
 /*
  * Remove a cookie from the hash table.
  */
