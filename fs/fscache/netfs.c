@@ -22,9 +22,10 @@ int __fscache_register_netfs(struct fscache_netfs *netfs)
 	/* allocate a cookie for the primary index */
 	candidate = fscache_alloc_cookie(&fscache_fsdef_index,
 					 &fscache_fsdef_netfs_def,
+					 NULL,
 					 netfs->name, strlen(netfs->name),
 					 &netfs->version, sizeof(netfs->version),
-					 netfs, 0);
+					 0);
 	if (!candidate) {
 		_leave(" = -ENOMEM");
 		return -ENOMEM;
