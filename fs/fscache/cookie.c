@@ -493,20 +493,6 @@ void __fscache_invalidate(struct fscache_cookie *cookie)
 EXPORT_SYMBOL(__fscache_invalidate);
 
 /*
- * Wait for object invalidation to complete.
- */
-void __fscache_wait_on_invalidate(struct fscache_cookie *cookie)
-{
-	_enter("%p", cookie);
-
-	wait_on_bit(&cookie->flags, FSCACHE_COOKIE_INVALIDATING,
-		    TASK_UNINTERRUPTIBLE);
-
-	_leave("");
-}
-EXPORT_SYMBOL(__fscache_wait_on_invalidate);
-
-/*
  * Update the index entries backing a cookie.  The writeback is done lazily.
  */
 void __fscache_update_cookie(struct fscache_cookie *cookie,
