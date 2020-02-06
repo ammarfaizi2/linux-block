@@ -67,8 +67,7 @@ struct fscache_cache_ops {
 	void (*withdraw_cookie)(struct fscache_cookie *cookie);
 
 	/* Invalidate an object */
-	bool (*invalidate_cookie)(struct fscache_cookie *cookie,
-				  unsigned int flags);
+	bool (*invalidate_cookie)(struct fscache_cookie *cookie);
 
 	/* Begin an operation for the netfs lib */
 	bool (*begin_operation)(struct netfs_cache_resources *cres);

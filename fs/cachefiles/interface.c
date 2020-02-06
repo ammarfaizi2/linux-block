@@ -377,8 +377,7 @@ truncate_failed:
 /*
  * Invalidate the storage associated with a cookie.
  */
-static bool cachefiles_invalidate_cookie(struct fscache_cookie *cookie,
-					 unsigned int flags)
+static bool cachefiles_invalidate_cookie(struct fscache_cookie *cookie)
 {
 	struct cachefiles_object *object = cookie->cache_priv;
 	struct file *new_file, *old_file;
