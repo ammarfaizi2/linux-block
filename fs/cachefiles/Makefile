@@ -10,7 +10,6 @@ cachefiles-y := \
 	key.o \
 	main.o \
 	namei.o \
-	rdwr.o \
 	security.o \
 	xattr.o
 
