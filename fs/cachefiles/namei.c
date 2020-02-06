@@ -344,6 +344,12 @@ static int cachefiles_open_file(struct cachefiles_object *object,
 	if (ret < 0)
 		goto check_failed;
 
+	if (object->content_info == CACHEFILES_CONTENT_MAP) {
+		ret = cachefiles_load_content_map(object);
+		if (ret < 0)
+			goto check_failed;
+	}
+
 	/* Always update the atime on an object we've just looked up (this is
 	 * used to keep track of culling, and atimes are only updated by read,
 	 * write and readdir but not lookup or open).

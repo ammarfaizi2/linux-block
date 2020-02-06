@@ -187,6 +187,9 @@ static void cachefiles_write_complete(struct kiocb *iocb, long ret, long ret2)
 	__sb_writers_acquired(inode->i_sb, SB_FREEZE_WRITE);
 	__sb_end_write(inode->i_sb, SB_FREEZE_WRITE);
 
+	if (ret == ki->len)
+		cachefiles_mark_content_map(ki->object, ki->start, ki->len,
+					    ki->inval_counter);
 	if (ki->term_func)
 		ki->term_func(ki->term_func_priv, ret, ki->was_async);
 	cachefiles_put_kiocb(ki);
