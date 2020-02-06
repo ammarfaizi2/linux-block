@@ -15,6 +15,8 @@
 #include <linux/slab.h>
 #include "internal.h"
 
+#define CACHEFILES_COOKIE_TYPE_DATA 1
+
 struct cachefiles_xattr {
 	uint8_t				type;
 	uint8_t				data[];
@@ -44,11 +46,10 @@ int cachefiles_set_object_xattr(struct cachefiles_object *object)
 	if (!buf)
 		return -ENOMEM;
 
-	buf->type = object->cookie->type;
+	buf->type = CACHEFILES_COOKIE_TYPE_DATA;
 	if (len > 0)
 		memcpy(buf->data, fscache_get_aux(object->cookie), len);
 
-	clear_bit(FSCACHE_COOKIE_AUX_UPDATED, &object->cookie->flags);
 	ret = vfs_setxattr(&init_user_ns, dentry, cachefiles_xattr_cache,
 			   buf, sizeof(struct cachefiles_xattr) + len, 0);
 	if (ret < 0) {
@@ -95,7 +96,7 @@ int cachefiles_check_auxdata(struct cachefiles_object *object)
 				object,
 				"Failed to read aux with error %zd", xlen);
 		why = cachefiles_coherency_check_xattr;
-	} else if (buf->type != object->cookie->type) {
+	} else if (buf->type != CACHEFILES_COOKIE_TYPE_DATA) {
 		why = cachefiles_coherency_check_type;
 	} else if (memcmp(buf->data, p, len) != 0) {
 		why = cachefiles_coherency_check_aux;
