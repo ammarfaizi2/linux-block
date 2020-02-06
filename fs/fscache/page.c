@@ -50,7 +50,7 @@ int __fscache_attr_changed(struct fscache_cookie *cookie)
 
 	_enter("%p", cookie);
 
-	ASSERTCMP(cookie->def->type, !=, FSCACHE_COOKIE_TYPE_INDEX);
+	ASSERTCMP(cookie->type, !=, FSCACHE_COOKIE_TYPE_INDEX);
 
 	fscache_stat(&fscache_n_attr_changed);
 
