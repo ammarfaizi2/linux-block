@@ -21,8 +21,9 @@ int __fscache_register_netfs(struct fscache_netfs *netfs)
 
 	/* allocate a cookie for the primary index */
 	candidate = fscache_alloc_cookie(&fscache_fsdef_index,
-					 &fscache_fsdef_netfs_def,
-					 NULL,
+					 FSCACHE_COOKIE_TYPE_INDEX,
+					 ".netfs",
+					 0, NULL,
 					 netfs->name, strlen(netfs->name),
 					 &netfs->version, sizeof(netfs->version),
 					 0);
