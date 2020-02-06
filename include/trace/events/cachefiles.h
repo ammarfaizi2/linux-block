@@ -19,9 +19,25 @@
 #define __CACHEFILES_DECLARE_TRACE_ENUMS_ONCE_ONLY
 
 enum cachefiles_obj_ref_trace {
-	cachefiles_obj_put_wait_retry = fscache_obj_ref__nr_traces,
-	cachefiles_obj_put_wait_timeo,
-	cachefiles_obj_ref__nr_traces
+	cachefiles_obj_get_ioreq,
+	cachefiles_obj_new,
+	cachefiles_obj_put_alloc_fail,
+	cachefiles_obj_put_detach,
+	cachefiles_obj_put_ioreq,
+	cachefiles_obj_see_clean_commit,
+	cachefiles_obj_see_clean_delete,
+	cachefiles_obj_see_clean_drop_tmp,
+	cachefiles_obj_see_lookup_cookie,
+	cachefiles_obj_see_lookup_failed,
+	cachefiles_obj_see_withdraw_cookie,
+	cachefiles_obj_see_withdrawal,
+};
+
+enum fscache_why_object_killed {
+	FSCACHE_OBJECT_IS_STALE,
+	FSCACHE_OBJECT_NO_SPACE,
+	FSCACHE_OBJECT_WAS_RETIRED,
+	FSCACHE_OBJECT_WAS_CULLED,
 };
 
 enum cachefiles_coherency_trace {
@@ -40,6 +56,8 @@ enum cachefiles_coherency_trace {
 enum cachefiles_trunc_trace {
 	cachefiles_trunc_invalidate,
 	cachefiles_trunc_set_size,
+	cachefiles_trunc_dio_adjust,
+	cachefiles_trunc_shrink,
 };
 
 #endif
@@ -54,16 +72,18 @@ enum cachefiles_trunc_trace {
 	E_(FSCACHE_OBJECT_WAS_CULLED,	"was_culled")
 
 #define cachefiles_obj_ref_traces					\
-	EM(fscache_obj_get_add_to_deps,		"GET add_to_deps")	\
-	EM(fscache_obj_get_queue,		"GET queue")		\
-	EM(fscache_obj_put_alloc_fail,		"PUT alloc_fail")	\
-	EM(fscache_obj_put_attach_fail,		"PUT attach_fail")	\
-	EM(fscache_obj_put_drop_obj,		"PUT drop_obj")		\
-	EM(fscache_obj_put_enq_dep,		"PUT enq_dep")		\
-	EM(fscache_obj_put_queue,		"PUT queue")		\
-	EM(fscache_obj_put_work,		"PUT work")		\
-	EM(cachefiles_obj_put_wait_retry,	"PUT wait_retry")	\
-	E_(cachefiles_obj_put_wait_timeo,	"PUT wait_timeo")
+	EM(cachefiles_obj_get_ioreq,		"GET ioreq")		\
+	EM(cachefiles_obj_new,			"NEW obj")		\
+	EM(cachefiles_obj_put_alloc_fail,	"PUT alloc_fail")	\
+	EM(cachefiles_obj_put_detach,		"PUT detach")		\
+	EM(cachefiles_obj_put_ioreq,		"PUT ioreq")		\
+	EM(cachefiles_obj_see_clean_commit,	"SEE clean_commit")	\
+	EM(cachefiles_obj_see_clean_delete,	"SEE clean_delete")	\
+	EM(cachefiles_obj_see_clean_drop_tmp,	"SEE clean_drop_tmp")	\
+	EM(cachefiles_obj_see_lookup_cookie,	"SEE lookup_cookie")	\
+	EM(cachefiles_obj_see_lookup_failed,	"SEE lookup_failed")	\
+	EM(cachefiles_obj_see_withdraw_cookie,	"SEE withdraw_cookie")	\
+	E_(cachefiles_obj_see_withdrawal,	"SEE withdrawal")
 
 #define cachefiles_coherency_traces					\
 	EM(cachefiles_coherency_check_aux,	"BAD aux ")		\
@@ -79,7 +99,9 @@ enum cachefiles_trunc_trace {
 
 #define cachefiles_trunc_traces						\
 	EM(cachefiles_trunc_invalidate,		"INVAL ")		\
-	E_(cachefiles_trunc_set_size,		"SETSIZ")
+	EM(cachefiles_trunc_set_size,		"SETSIZ")		\
+	EM(cachefiles_trunc_dio_adjust,		"DIOADJ")		\
+	E_(cachefiles_trunc_shrink,		"SHRINK")
 
 /*
  * Export enum symbols via userspace.
@@ -105,12 +127,12 @@ cachefiles_trunc_traces;
 
 
 TRACE_EVENT(cachefiles_ref,
-	    TP_PROTO(struct cachefiles_object *obj,
-		     struct fscache_cookie *cookie,
-		     enum cachefiles_obj_ref_trace why,
-		     int usage),
+	    TP_PROTO(unsigned int object_debug_id,
+		     unsigned int cookie_debug_id,
+		     int usage,
+		     enum cachefiles_obj_ref_trace why),
 
-	    TP_ARGS(obj, cookie, why, usage),
+	    TP_ARGS(object_debug_id, cookie_debug_id, usage, why),
 
 	    /* Note that obj may be NULL */
 	    TP_STRUCT__entry(
@@ -121,8 +143,8 @@ TRACE_EVENT(cachefiles_ref,
 			     ),
 
 	    TP_fast_assign(
-		    __entry->obj	= obj->debug_id;
-		    __entry->cookie	= cookie->debug_id;
+		    __entry->obj	= object_debug_id;
+		    __entry->cookie	= cookie_debug_id;
 		    __entry->usage	= usage;
 		    __entry->why	= why;
 			   ),

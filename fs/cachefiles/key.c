@@ -22,6 +22,11 @@ static const char cachefiles_filecharmap[256] = {
 	[48 ... 127] = 1,		/* '0' -> '~' */
 };
 
+static inline unsigned int how_many_hex_digits(unsigned int x)
+{
+	return x ? round_up(ilog2(x) + 1, 4) / 4 : 0;
+}
+
 /*
  * turn the raw key into something cooked
  * - the key may be up to NAME_MAX in length (including the length word)
@@ -31,21 +36,20 @@ static const char cachefiles_filecharmap[256] = {
  */
 bool cachefiles_cook_key(struct cachefiles_object *object)
 {
-	const u8 *key = fscache_get_key(object->cookie);
-	unsigned int acc, sum, keylen = object->cookie->key_len;
-	char *name;
-	u8 *buffer, *p;
-	int i, len, elem3, print;
-	u8 type;
+	const u8 *key = fscache_get_key(object->cookie), *kend;
+	unsigned char sum, ch;
+	unsigned int acc, i, n, nle, nbe, keylen = object->cookie->key_len;
+	unsigned int b64len, len, print, pad;
+	char *name, sep;
 
-	_enter(",%d", keylen);
+	_enter(",%u,%*phN", keylen, keylen, key);
 
 	BUG_ON(keylen > NAME_MAX - 3);
 
 	sum = 0;
 	print = 1;
 	for (i = 0; i < keylen; i++) {
-		u8 ch = key[i];
+		ch = key[i];
 		sum += ch;
 		print &= cachefiles_filecharmap[ch];
 	}
@@ -53,63 +57,72 @@ bool cachefiles_cook_key(struct cachefiles_object *object)
 
 	/* If the path is usable ASCII, then we render it directly */
 	if (print) {
-		name = kmalloc(3 + keylen + 1, cachefiles_gfp);
+		len = 1 + keylen + 1;
+		name = kmalloc(len, cachefiles_gfp);
 		if (!name)
 			return false;
 
-		switch (object->cookie->type) {
-		case FSCACHE_COOKIE_TYPE_INDEX:		type = 'I';	break;
-		case FSCACHE_COOKIE_TYPE_DATAFILE:	type = 'D';	break;
-		default:				type = 'S';	break;
-		}
-
-		name[0] = type;
-		name[1] = cachefiles_charmap[(keylen >> 6) & 63];
-		name[2] = cachefiles_charmap[keylen & 63];
-
-		memcpy(name + 3, key, keylen);
-		name[3 + keylen] = 0;
-		object->d_name = name;
-		object->d_name_len = 3 + keylen;
+		name[0] = 'D'; /* Data object type, string encoding */
+		name[1 + keylen] = 0;
+		memcpy(name + 1, key, keylen);
 		goto success;
 	}
 
-	/* Construct the key we actually want to render.  We stick the length
-	 * on the front and leave NULs on the back for the encoder to overread.
+	/* See if it makes sense to encode it as "hex,hex,hex" for each 32-bit
+	 * chunk.  We rely on the key having been padded out to a whole number
+	 * of 32-bit words.
 	 */
-	buffer = kmalloc(2 + keylen + 3, cachefiles_gfp);
-	if (!buffer)
+	n = round_up(keylen, 4);
+	nbe = nle = 0;
+	for (i = 0; i < n; i += 4) {
+		u32 be = be32_to_cpu(*(__be32 *)(key + i));
+		u32 le = le32_to_cpu(*(__le32 *)(key + i));
+
+		nbe += 1 + how_many_hex_digits(be);
+		nle += 1 + how_many_hex_digits(le);
+	}
+
+	b64len = DIV_ROUND_UP(keylen, 3);
+	pad = b64len * 3 - keylen;
+	b64len = 2 + b64len * 4; /* Length if we base64-encode it */
+	_debug("len=%u nbe=%u nle=%u b64=%u", keylen, nbe, nle, b64len);
+	if (nbe < b64len || nle < b64len) {
+		unsigned int nlen = min(nbe, nle) + 1;
+		name = kmalloc(nlen, cachefiles_gfp);
+		if (!name)
+			return false;
+		sep = (nbe <= nle) ? 'S' : 'T'; /* Encoding indicator */
+		len = 0;
+		for (i = 0; i < n; i += 4) {
+			u32 x;
+			if (nbe <= nle)
+				x = be32_to_cpu(*(__be32 *)(key + i));
+			else
+				x = le32_to_cpu(*(__le32 *)(key + i));
+			name[len++] = sep;
+			if (x != 0)
+				len += snprintf(name + len, nlen - len, "%x", x);
+			sep = ',';
+		}
+		goto success;
+	}
+
+	/* We need to base64-encode it */
+	name = kmalloc(b64len + 1, cachefiles_gfp);
+	if (!name)
 		return false;
 
-	memcpy(buffer + 2, key, keylen);
-
-	*(uint16_t *)buffer = keylen;
-	((char *)buffer)[keylen + 2] = 0;
-	((char *)buffer)[keylen + 3] = 0;
-	((char *)buffer)[keylen + 4] = 0;
-
-	elem3 = DIV_ROUND_UP(2 + keylen, 3); /* Count of 3-byte elements */
-	len = elem3 * 4;
-
-	name = kmalloc(1 + len + 1, cachefiles_gfp);
-	if (!name) {
-		kfree(buffer);
-		return false;
-	}
-
-	switch (object->cookie->type) {
-	case FSCACHE_COOKIE_TYPE_INDEX:		type = 'J';	break;
-	case FSCACHE_COOKIE_TYPE_DATAFILE:	type = 'E';	break;
-	default:				type = 'T';	break;
-	}
-
-	name[0] = type;
-	len = 1;
-	p = buffer;
-	for (i = 0; i < elem3; i++) {
-		acc = *p++;
-		acc |= *p++ << 8;
-		acc |= *p++ << 16;
+	name[0] = 'E';
+	name[1] = '0' + pad;
+	len = 2;
+	kend = key + keylen;
+	do {
+		acc  = *key++;
+		if (key < kend) {
+			acc |= *key++ << 8;
+			if (key < kend)
+				acc |= *key++ << 16;
+		}
 
 		name[len++] = cachefiles_charmap[acc & 63];
 		acc >>= 6;
@@ -118,13 +131,12 @@ bool cachefiles_cook_key(struct cachefiles_object *object)
 		name[len++] = cachefiles_charmap[acc & 63];
 		acc >>= 6;
 		name[len++] = cachefiles_charmap[acc & 63];
-	}
+	} while (key < kend);
 
+success:
 	name[len] = 0;
 	object->d_name = name;
 	object->d_name_len = len;
-	kfree(buffer);
-success:
 	_leave(" = %s", object->d_name);
 	return true;
 }

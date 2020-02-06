@@ -31,16 +31,50 @@ extern unsigned cachefiles_debug;
 
 #define cachefiles_gfp (__GFP_RECLAIM | __GFP_NORETRY | __GFP_NOMEMALLOC)
 
+/*
+ * Cached volume representation.
+ */
+struct cachefiles_volume {
+	struct cachefiles_cache		*cache;
+	struct list_head		cache_link;	/* Link in cache->volumes */
+	struct fscache_volume		*vcookie;	/* The netfs's representation */
+	struct dentry			*dentry;	/* The volume dentry */
+	struct dentry			*fanout[256];	/* Fanout subdirs */
+};
+
+/*
+ * node records
+ */
+struct cachefiles_object {
+	int				debug_id;	/* debugging ID */
+	spinlock_t			lock;		/* state and operations lock */
+
+	struct list_head		cache_link;	/* Link in cache->*_list */
+	struct cachefiles_volume	*volume;	/* Cache volume that holds this object */
+	struct fscache_cookie		*cookie;	/* netfs's file/index object */
+	struct file			*file;		/* The file representing this object */
+	char				*d_name;	/* Filename */
+	atomic_t			usage;		/* object usage count */
+	u8				d_name_len;	/* Length of filename */
+	u8				key_hash;	/* Hash of object key */
+	unsigned long			flags;
+#define CACHEFILES_OBJECT_IS_NEW	0		/* Set if object is new */
+};
+
 extern struct kmem_cache *cachefiles_object_jar;
 
 /*
  * Cache files cache definition
  */
 struct cachefiles_cache {
-	struct fscache_cache		cache;		/* FS-Cache record */
+	struct fscache_cache		*cache;		/* Cache cookie */
 	struct vfsmount			*mnt;		/* mountpoint holding the cache */
+	struct dentry			*store;		/* Directory into which live objects go */
 	struct dentry			*graveyard;	/* directory into which dead objects go */
 	struct file			*cachefilesd;	/* manager daemon handle */
+	struct list_head		volumes;	/* List of volume objects */
+	struct list_head		object_list;	/* List of active objects */
+	spinlock_t			object_list_lock;
 	const struct cred		*cache_cred;	/* security override for accessing cache */
 	struct mutex			daemon_mutex;	/* command serialisation mutex */
 	wait_queue_head_t		daemon_pollwq;	/* poll waitqueue for daemon */
@@ -79,6 +113,12 @@ struct file *cachefiles_cres_file(struct netfs_cache_resources *cres)
 	return cres->cache_priv2;
 }
 
+static inline
+struct cachefiles_object *cachefiles_cres_object(struct netfs_cache_resources *cres)
+{
+	return fscache_cres_cookie(cres)->cache_priv;
+}
+
 /*
  * note change of state for daemon
  */
@@ -91,6 +131,8 @@ static inline void cachefiles_state_changed(struct cachefiles_cache *cache)
 /*
  * bind.c
  */
+extern wait_queue_head_t cachefiles_clearance_wq;
+
 extern int cachefiles_daemon_bind(struct cachefiles_cache *cache, char *args);
 extern void cachefiles_daemon_unbind(struct cachefiles_cache *cache);
 
@@ -106,9 +148,19 @@ extern int cachefiles_has_space(struct cachefiles_cache *cache,
  * interface.c
  */
 extern const struct fscache_cache_ops cachefiles_cache_ops;
+extern void cachefiles_see_object(struct cachefiles_object *object,
+				  enum cachefiles_obj_ref_trace why);
+extern struct cachefiles_object *cachefiles_grab_object(struct cachefiles_object *object,
+							enum cachefiles_obj_ref_trace why);
+extern void cachefiles_put_object(struct cachefiles_object *object,
+				  enum cachefiles_obj_ref_trace why);
+extern void cachefiles_sync_cache(struct cachefiles_cache *cache);
 
-void cachefiles_put_object(struct cachefiles_object *_object,
-			   enum fscache_obj_ref_trace why);
+/*
+ * io.c
+ */
+extern bool cachefiles_begin_operation(struct netfs_cache_resources *cres,
+				       enum fscache_want_stage want_stage);
 
 /*
  * key.c
@@ -119,25 +171,18 @@ extern bool cachefiles_cook_key(struct cachefiles_object *object);
  * namei.c
  */
 extern void cachefiles_unmark_inode_in_use(struct cachefiles_object *object);
-extern int cachefiles_delete_object(struct cachefiles_cache *cache,
-				    struct cachefiles_object *object);
-extern int cachefiles_walk_to_object(struct cachefiles_object *parent,
-				     struct cachefiles_object *object);
+extern int cachefiles_delete_object(struct cachefiles_object *object,
+				    enum fscache_why_object_killed why);
+extern bool cachefiles_walk_to_object(struct cachefiles_object *object);
 extern struct dentry *cachefiles_get_directory(struct cachefiles_cache *cache,
 					       struct dentry *dir,
-					       const char *name,
-					       struct cachefiles_object *object);
+					       const char *name);
 
 extern int cachefiles_cull(struct cachefiles_cache *cache, struct dentry *dir,
 			   char *filename);
 
 extern int cachefiles_check_in_use(struct cachefiles_cache *cache,
 				   struct dentry *dir, char *filename);
-
-/*
- * rdwr2.c
- */
-extern int cachefiles_begin_operation(struct netfs_cache_resources *);
 
 /*
  * security.c
@@ -160,6 +205,13 @@ static inline void cachefiles_end_secure(struct cachefiles_cache *cache,
 }
 
 /*
+ * volume.c
+ */
+void cachefiles_acquire_volume(struct fscache_volume *volume);
+void cachefiles_free_volume(struct fscache_volume *volume);
+void cachefiles_withdraw_volume(struct cachefiles_volume *volume);
+
+/*
  * xattr.c
  */
 extern int cachefiles_set_object_xattr(struct cachefiles_object *object);
@@ -175,7 +227,7 @@ extern int cachefiles_remove_object_xattr(struct cachefiles_cache *cache,
 #define cachefiles_io_error(___cache, FMT, ...)		\
 do {							\
 	pr_err("I/O Error: " FMT"\n", ##__VA_ARGS__);	\
-	fscache_io_error(&(___cache)->cache);		\
+	fscache_io_error((___cache)->cache);		\
 	set_bit(CACHEFILES_DEAD, &(___cache)->flags);	\
 } while (0)
 
@@ -183,9 +235,9 @@ do {							\
 do {									\
 	struct cachefiles_cache *___cache;				\
 									\
-	___cache = container_of((object)->cache,			\
-				struct cachefiles_cache, cache);	\
-	cachefiles_io_error(___cache, FMT, ##__VA_ARGS__);		\
+	___cache = (object)->volume->cache;				\
+	cachefiles_io_error(___cache, FMT " [o=%08x]", ##__VA_ARGS__,	\
+			    (object)->debug_id);			\
 } while (0)
 
 
@@ -193,7 +245,7 @@ do {									\
  * debug tracing
  */
 #define dbgprintk(FMT, ...) \
-	printk(KERN_DEBUG "[%-6.6s] "FMT"\n", current->comm, ##__VA_ARGS__)
+	printk("[%-6.6s] "FMT"\n", current->comm, ##__VA_ARGS__)
 
 #define kenter(FMT, ...) dbgprintk("==> %s("FMT")", __func__, ##__VA_ARGS__)
 #define kleave(FMT, ...) dbgprintk("<== %s()"FMT"", __func__, ##__VA_ARGS__)

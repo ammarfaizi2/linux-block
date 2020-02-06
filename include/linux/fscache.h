@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 /* General filesystem caching interface
  *
- * Copyright (C) 2004-2007 Red Hat, Inc. All Rights Reserved.
+ * Copyright (C) 2004-2007, 2021 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  *
  * NOTE!!! See:
@@ -23,76 +23,110 @@
 #include <linux/netfs.h>
 
 #if defined(CONFIG_FSCACHE) || defined(CONFIG_FSCACHE_MODULE)
+#define __fscache_available (1)
 #define fscache_available() (1)
+#define fscache_volume_valid(volume) (volume)
 #define fscache_cookie_valid(cookie) (cookie)
 #define fscache_resources_valid(cres) ((cres)->cache_priv)
 #else
+#define __fscache_available (0)
 #define fscache_available() (0)
+#define fscache_volume_valid(volume) (0)
 #define fscache_cookie_valid(cookie) (0)
 #define fscache_resources_valid(cres) (false)
 #endif
 
-struct fscache_cache_tag;
 struct fscache_cookie;
-struct fscache_netfs;
-struct netfs_read_request;
-
-enum fscache_cookie_type {
-	FSCACHE_COOKIE_TYPE_INDEX,
-	FSCACHE_COOKIE_TYPE_DATAFILE,
-};
 
 #define FSCACHE_ADV_SINGLE_CHUNK	0x01 /* The object is a single chunk of data */
+#define FSCACHE_ADV_WRITE_CACHE		0x00 /* Do cache if written to locally */
+#define FSCACHE_ADV_WRITE_NOCACHE	0x02 /* Don't cache if written to locally */
+#define FSCACHE_ADV_FALLBACK_IO		0x04 /* Going to use the fallback I/O API (dangerous) */
 
-/*
- * fscache cached network filesystem type
- * - name, version and ops must be filled in before registration
- * - all other fields will be set during registration
- */
-struct fscache_netfs {
-	uint32_t			version;	/* indexing version */
-	const char			*name;		/* filesystem name */
-	struct fscache_cookie		*primary_index;
+enum fscache_want_stage {
+	FSCACHE_WANT_PARAMS,
+	FSCACHE_WANT_WRITE,
+	FSCACHE_WANT_READ,
 };
 
 /*
- * data file or index object cookie
+ * Data object state.
+ */
+enum fscache_cookie_stage {
+	FSCACHE_COOKIE_STAGE_QUIESCENT,		/* The cookie is uncached */
+	FSCACHE_COOKIE_STAGE_LOOKING_UP,	/* The cache object is being looked up */
+	FSCACHE_COOKIE_STAGE_CREATING,		/* The cache object is being created */
+	FSCACHE_COOKIE_STAGE_ACTIVE,		/* The cache is active, readable and writable */
+	FSCACHE_COOKIE_STAGE_INVALIDATING,	/* The cache is being invalidated */
+	FSCACHE_COOKIE_STAGE_FAILED,		/* The cache failed, withdraw to clear */
+	FSCACHE_COOKIE_STAGE_WITHDRAWING,	/* The cookie is being withdrawn */
+	FSCACHE_COOKIE_STAGE_RELINQUISHING,	/* The cookie is being relinquished */
+	FSCACHE_COOKIE_STAGE_DROPPED,		/* The cookie has been dropped */
+#define FSCACHE_COOKIE_STAGE__NR (FSCACHE_COOKIE_STAGE_DROPPED + 1)
+} __attribute__((mode(byte)));
+
+/*
+ * Volume representation cookie.
+ */
+struct fscache_volume {
+	refcount_t			ref;
+	atomic_t			n_cookies;	/* Number of data cookies in volume */
+	atomic_t			n_accesses;	/* Number of cache accesses in progress */
+	unsigned int			debug_id;
+	unsigned int			key_hash;	/* Hash of key string */
+	char				*key;		/* Volume ID, eg. "afs@example.com@1234" */
+	struct list_head		proc_link;	/* Link in /proc/fs/fscache/volumes */
+	struct hlist_bl_node		hash_link;	/* Link in hash table */
+	struct work_struct		work;
+	struct fscache_cache		*cache;		/* The cache in which this resides */
+	void				*cache_priv;	/* Cache private data */
+	u64				coherency;	/* Coherency data */
+	spinlock_t			lock;
+	unsigned long			flags;
+#define FSCACHE_VOLUME_RELINQUISHED	0	/* Volume is being cleaned up */
+#define FSCACHE_VOLUME_INVALIDATE	1	/* Volume was invalidated */
+#define FSCACHE_VOLUME_COLLIDED_WITH	2	/* Volume was collided with */
+#define FSCACHE_VOLUME_ACQUIRE_PENDING	3	/* Volume is waiting to complete acquisition */
+#define FSCACHE_VOLUME_CREATING		4	/* Volume is being created on disk */
+};
+
+/*
+ * Data file representation cookie.
  * - a file will only appear in one cache
  * - a request to cache a file may or may not be honoured, subject to
  *   constraints such as disk space
  * - indices are created on disk just-in-time
  */
 struct fscache_cookie {
-	refcount_t			ref;		/* number of users of this cookie */
-	atomic_t			n_children;	/* number of children of this cookie */
-	atomic_t			n_active;	/* number of active users of netfs ptrs */
+	refcount_t			ref;
+	atomic_t			n_active;	/* number of active users of cookie */
+	atomic_t			n_accesses;	/* Number of cache accesses in progress */
 	unsigned int			debug_id;
+	unsigned int			inval_counter;	/* Number of invalidations made */
 	spinlock_t			lock;
-	struct hlist_head		backing_objects; /* object(s) backing this file/index */
-	struct fscache_cookie		*parent;	/* parent of this entry */
-	struct fscache_cache_tag	*preferred_cache; /* The preferred cache or NULL */
+	struct fscache_volume		*volume;	/* Parent volume of this file. */
+	void				*cache_priv;	/* Cache-side representation */
 	struct hlist_bl_node		hash_link;	/* Link in hash table */
 	struct list_head		proc_link;	/* Link in proc list */
-	char				type_name[8];	/* Cookie type name */
+	struct work_struct		work;		/* Commit/relinq/withdraw work */
 	loff_t				object_size;	/* Size of the netfs object */
 
 	unsigned long			flags;
-#define FSCACHE_COOKIE_LOOKING_UP	0	/* T if non-index cookie being looked up still */
-#define FSCACHE_COOKIE_NO_DATA_YET	1	/* T if new object with no cached data yet */
-#define FSCACHE_COOKIE_UNAVAILABLE	2	/* T if cookie is unavailable (error, etc) */
-#define FSCACHE_COOKIE_INVALIDATING	3	/* T if cookie is being invalidated */
-#define FSCACHE_COOKIE_RELINQUISHED	4	/* T if cookie has been relinquished */
-#define FSCACHE_COOKIE_ENABLED		5	/* T if cookie is enabled */
-#define FSCACHE_COOKIE_ENABLEMENT_LOCK	6	/* T if cookie is being en/disabled */
-#define FSCACHE_COOKIE_AUX_UPDATED	8	/* T if the auxiliary data was updated */
-#define FSCACHE_COOKIE_ACQUIRED		9	/* T if cookie is in use */
-#define FSCACHE_COOKIE_RELINQUISHING	10	/* T if cookie is being relinquished */
+#define FSCACHE_COOKIE_RELINQUISHED	0		/* T if cookie has been relinquished */
+#define FSCACHE_COOKIE_RETIRED		1		/* T if this cookie has retired on relinq */
+#define FSCACHE_COOKIE_IS_CACHING	2		/* T if this cookie is cached */
+#define FSCACHE_COOKIE_NO_DATA_TO_READ	3		/* T if this cookie has nothing to read */
+#define FSCACHE_COOKIE_NEEDS_UPDATE	4		/* T if attrs have been updated */
+#define FSCACHE_COOKIE_HAS_BEEN_CACHED	5		/* T if cookie needs withdraw-on-relinq */
+#define FSCACHE_COOKIE_NACC_ELEVATED	8		/* T if n_accesses is incremented */
+#define FSCACHE_COOKIE_DO_RELINQUISH	9		/* T if this cookie needs relinquishment */
+#define FSCACHE_COOKIE_DO_WITHDRAW	10		/* T if this cookie needs withdrawing */
 
-	enum fscache_cookie_type	type:8;
-	u8				advice;		/* FSCACHE_COOKIE_ADV_* */
+	enum fscache_cookie_stage	stage;
+	u8				advice;		/* FSCACHE_ADV_* */
 	u8				key_len;	/* Length of index key */
 	u8				aux_len;	/* Length of auxiliary data */
-	u32				key_hash;	/* Hash of parent, type, key, len */
+	u32				key_hash;	/* Hash of volume, key, len */
 	union {
 		void			*key;		/* Index key */
 		u8			inline_key[16];	/* - If the key is short enough */
@@ -103,12 +137,6 @@ struct fscache_cookie {
 	};
 };
 
-static inline bool fscache_cookie_enabled(struct fscache_cookie *cookie)
-{
-	return (fscache_cookie_valid(cookie) &&
-		test_bit(FSCACHE_COOKIE_ENABLED, &cookie->flags));
-}
-
 /*
  * slow-path functions for when there is actually caching available, and the
  * netfs does actually have a valid token
@@ -116,195 +144,172 @@ static inline bool fscache_cookie_enabled(struct fscache_cookie *cookie)
  * - these are undefined symbols when FS-Cache is not configured and the
  *   optimiser takes care of not using them
  */
-extern int __fscache_register_netfs(struct fscache_netfs *);
-extern void __fscache_unregister_netfs(struct fscache_netfs *);
-extern struct fscache_cache_tag *__fscache_lookup_cache_tag(const char *);
-extern void __fscache_release_cache_tag(struct fscache_cache_tag *);
+extern struct fscache_volume *__fscache_acquire_volume(const char *, const char *, u64);
+extern void __fscache_relinquish_volume(struct fscache_volume *, u64, bool);
 
 extern struct fscache_cookie *__fscache_acquire_cookie(
-	struct fscache_cookie *,
-	enum fscache_cookie_type,
-	const char *,
+	struct fscache_volume *,
 	u8,
-	struct fscache_cache_tag *,
 	const void *, size_t,
 	const void *, size_t,
-	loff_t, bool);
-extern void __fscache_relinquish_cookie(struct fscache_cookie *, const void *, bool);
-extern void __fscache_update_cookie(struct fscache_cookie *, const void *);
+	loff_t);
+extern void __fscache_use_cookie(struct fscache_cookie *, bool);
+extern void __fscache_unuse_cookie(struct fscache_cookie *, const void *, const loff_t *);
+extern void __fscache_relinquish_cookie(struct fscache_cookie *, bool);
+extern void __fscache_update_cookie(struct fscache_cookie *, const void *, const loff_t *);
 extern void __fscache_invalidate(struct fscache_cookie *);
-extern void __fscache_wait_on_invalidate(struct fscache_cookie *);
 #ifdef FSCACHE_USE_NEW_IO_API
-extern int __fscache_begin_operation(struct netfs_cache_resources *, struct fscache_cookie *,
-				     bool);
+extern int __fscache_begin_read_operation(struct netfs_cache_resources *, struct fscache_cookie *);
 #endif
 #ifdef FSCACHE_USE_FALLBACK_IO_API
 extern int __fscache_fallback_read_page(struct fscache_cookie *, struct page *);
 extern int __fscache_fallback_write_page(struct fscache_cookie *, struct page *);
 #endif
-extern void __fscache_disable_cookie(struct fscache_cookie *, const void *, bool);
-extern void __fscache_enable_cookie(struct fscache_cookie *, const void *, loff_t,
-				    bool (*)(void *), void *);
 
 /**
- * fscache_register_netfs - Register a filesystem as desiring caching services
- * @netfs: The description of the filesystem
+ * fscache_acquire_volume - Register a volume as desiring caching services
+ * @volume_key: An identification string for the volume
+ * @cache_name: The name of the cache to use (or NULL for the default)
+ * @coherency_data: Piece of arbitrary coherency data to check
  *
- * Register a filesystem as desiring caching services if they're available.
- *
- * See Documentation/filesystems/caching/netfs-api.rst for a complete
- * description.
+ * Register a volume as desiring caching services if they're available.  The
+ * caller must provide an identifier for the volume and may also indicate which
+ * cache it should be in.  If a preexisting volume entry is found in the cache,
+ * the coherency data must match otherwise the entry will be invalidated.
  */
 static inline
-int fscache_register_netfs(struct fscache_netfs *netfs)
+struct fscache_volume *fscache_acquire_volume(const char *volume_key,
+					      const char *cache_name,
+					      u64 coherency_data)
 {
-	if (fscache_available())
-		return __fscache_register_netfs(netfs);
-	else
-		return 0;
-}
-
-/**
- * fscache_unregister_netfs - Indicate that a filesystem no longer desires
- * caching services
- * @netfs: The description of the filesystem
- *
- * Indicate that a filesystem no longer desires caching services for the
- * moment.
- *
- * See Documentation/filesystems/caching/netfs-api.rst for a complete
- * description.
- */
-static inline
-void fscache_unregister_netfs(struct fscache_netfs *netfs)
-{
-	if (fscache_available())
-		__fscache_unregister_netfs(netfs);
-}
-
-/**
- * fscache_lookup_cache_tag - Look up a cache tag
- * @name: The name of the tag to search for
- *
- * Acquire a specific cache referral tag that can be used to select a specific
- * cache in which to cache an index.
- *
- * See Documentation/filesystems/caching/netfs-api.rst for a complete
- * description.
- */
-static inline
-struct fscache_cache_tag *fscache_lookup_cache_tag(const char *name)
-{
-	if (fscache_available())
-		return __fscache_lookup_cache_tag(name);
-	else
+	if (!fscache_available())
 		return NULL;
+	return __fscache_acquire_volume(volume_key, cache_name, coherency_data);
 }
 
 /**
- * fscache_release_cache_tag - Release a cache tag
- * @tag: The tag to release
+ * fscache_relinquish_volume - Cease caching a volume
+ * @volume: The volume cookie
+ * @coherency_data: Piece of arbitrary coherency data to set
+ * @invalidate: True if the volume should be invalidated
  *
- * Release a reference to a cache referral tag previously looked up.
- *
- * See Documentation/filesystems/caching/netfs-api.rst for a complete
- * description.
+ * Indicate that a filesystem no longer desires caching services for a volume.
+ * The caller must have relinquished all file cookies prior to calling this.
+ * The coherency data stored is updated.
  */
 static inline
-void fscache_release_cache_tag(struct fscache_cache_tag *tag)
+void fscache_relinquish_volume(struct fscache_volume *volume,
+			       u64 coherency_data,
+			       bool invalidate)
 {
-	if (fscache_available())
-		__fscache_release_cache_tag(tag);
+	if (fscache_volume_valid(volume))
+		__fscache_relinquish_volume(volume, coherency_data, invalidate);
 }
 
 /**
  * fscache_acquire_cookie - Acquire a cookie to represent a cache object
- * @parent: The cookie that's to be the parent of this one
- * @type: Type of the cookie
- * @type_name: Name of cookie type (max 7 chars)
+ * @volume: The volume in which to locate/create this cookie
  * @advice: Advice flags (FSCACHE_COOKIE_ADV_*)
- * @preferred_cache: The cache to use (or NULL)
  * @index_key: The index key for this cookie
  * @index_key_len: Size of the index key
  * @aux_data: The auxiliary data for the cookie (may be NULL)
  * @aux_data_len: Size of the auxiliary data buffer
- * @netfs_data: An arbitrary piece of data to be kept in the cookie to
- * represent the cache object to the netfs
  * @object_size: The initial size of object
- * @enable: Whether or not to enable a data cookie immediately
  *
- * This function is used to inform FS-Cache about part of an index hierarchy
- * that can be used to locate files.  This is done by requesting a cookie for
- * each index in the path to the file.
+ * Acquire a cookie to represent a data file within the given cache volume.
  *
  * See Documentation/filesystems/caching/netfs-api.rst for a complete
  * description.
  */
 static inline
-struct fscache_cookie *fscache_acquire_cookie(
-	struct fscache_cookie *parent,
-	enum fscache_cookie_type type,
-	const char *type_name,
-	u8 advice,
-	struct fscache_cache_tag *preferred_cache,
-	const void *index_key,
-	size_t index_key_len,
-	const void *aux_data,
-	size_t aux_data_len,
-	loff_t object_size,
-	bool enable)
+struct fscache_cookie *fscache_acquire_cookie(struct fscache_volume *volume,
+					      u8 advice,
+					      const void *index_key,
+					      size_t index_key_len,
+					      const void *aux_data,
+					      size_t aux_data_len,
+					      loff_t object_size)
 {
-	if (fscache_cookie_valid(parent) && fscache_cookie_enabled(parent))
-		return __fscache_acquire_cookie(parent, type, type_name, advice,
-						preferred_cache,
-						index_key, index_key_len,
-						aux_data, aux_data_len,
-						object_size, enable);
-	else
+	if (!fscache_volume_valid(volume))
 		return NULL;
+	return __fscache_acquire_cookie(volume, advice,
+					index_key, index_key_len,
+					aux_data, aux_data_len,
+					object_size);
+}
+
+/**
+ * fscache_use_cookie - Request usage of cookie attached to an object
+ * @object: Object description
+ * @will_modify: If cache is expected to be modified locally
+ *
+ * Request usage of the cookie attached to an object.  The caller should tell
+ * the cache if the object's contents are about to be modified locally and then
+ * the cache can apply the policy that has been set to handle this case.
+ */
+static inline void fscache_use_cookie(struct fscache_cookie *cookie,
+				      bool will_modify)
+{
+	if (fscache_cookie_valid(cookie))
+		__fscache_use_cookie(cookie, will_modify);
+}
+
+/**
+ * fscache_unuse_cookie - Cease usage of cookie attached to an object
+ * @object: Object description
+ * @aux_data: Updated auxiliary data (or NULL)
+ * @object_size: Revised size of the object (or NULL)
+ *
+ * Cease usage of the cookie attached to an object.  When the users count
+ * reaches zero then the cookie relinquishment will be permitted to proceed.
+ */
+static inline void fscache_unuse_cookie(struct fscache_cookie *cookie,
+					const void *aux_data,
+					const loff_t *object_size)
+{
+	if (fscache_cookie_valid(cookie))
+		__fscache_unuse_cookie(cookie, aux_data, object_size);
 }
 
 /**
  * fscache_relinquish_cookie - Return the cookie to the cache, maybe discarding
  * it
  * @cookie: The cookie being returned
- * @aux_data: The updated auxiliary data for the cookie (may be NULL)
  * @retire: True if the cache object the cookie represents is to be discarded
  *
  * This function returns a cookie to the cache, forcibly discarding the
- * associated cache object if retire is set to true.  The opportunity is
- * provided to update the auxiliary data in the cache before the object is
- * disconnected.
+ * associated cache object if retire is set to true.
  *
  * See Documentation/filesystems/caching/netfs-api.rst for a complete
  * description.
  */
 static inline
-void fscache_relinquish_cookie(struct fscache_cookie *cookie,
-			       const void *aux_data,
-			       bool retire)
+void fscache_relinquish_cookie(struct fscache_cookie *cookie, bool retire)
 {
 	if (fscache_cookie_valid(cookie))
-		__fscache_relinquish_cookie(cookie, aux_data, retire);
+		__fscache_relinquish_cookie(cookie, retire);
 }
 
 /**
  * fscache_update_cookie - Request that a cache object be updated
  * @cookie: The cookie representing the cache object
  * @aux_data: The updated auxiliary data for the cookie (may be NULL)
+ * @object_size: The current size of the object (may be NULL)
  *
  * Request an update of the index data for the cache object associated with the
  * cookie.  The auxiliary data on the cookie will be updated first if @aux_data
- * is set.
+ * is set and the object size will be updated and the object possibly trimmed
+ * if @object_size is set.
  *
  * See Documentation/filesystems/caching/netfs-api.rst for a complete
  * description.
  */
 static inline
-void fscache_update_cookie(struct fscache_cookie *cookie, const void *aux_data)
+void fscache_update_cookie(struct fscache_cookie *cookie, const void *aux_data,
+			   const loff_t *object_size)
 {
-	if (fscache_cookie_valid(cookie) && fscache_cookie_enabled(cookie))
-		__fscache_update_cookie(cookie, aux_data);
+	if (fscache_cookie_valid(cookie))
+		__fscache_update_cookie(cookie, aux_data, object_size);
 }
 
 /**
@@ -352,24 +357,20 @@ void fscache_unpin_cookie(struct fscache_cookie *cookie)
 static inline
 void fscache_invalidate(struct fscache_cookie *cookie)
 {
-	if (fscache_cookie_valid(cookie) && fscache_cookie_enabled(cookie))
+	if (fscache_cookie_valid(cookie))
 		__fscache_invalidate(cookie);
 }
 
 /**
- * fscache_wait_on_invalidate - Wait for invalidation to complete
- * @cookie: The cookie representing the cache object
+ * fscache_operation_valid - Return true if operations resources are usable
+ * @cres: The resources to check.
  *
- * Wait for the invalidation of an object to complete.
- *
- * See Documentation/filesystems/caching/netfs-api.rst for a complete
- * description.
+ * Returns a pointer to the operations table if usable or NULL if not.
  */
 static inline
-void fscache_wait_on_invalidate(struct fscache_cookie *cookie)
+const struct netfs_cache_ops *fscache_operation_valid(const struct netfs_cache_resources *cres)
 {
-	if (fscache_cookie_valid(cookie))
-		__fscache_wait_on_invalidate(cookie);
+	return fscache_resources_valid(cres) ? cres->ops : NULL;
 }
 
 #ifdef FSCACHE_USE_NEW_IO_API
@@ -395,21 +396,9 @@ static inline
 int fscache_begin_read_operation(struct netfs_cache_resources *cres,
 				 struct fscache_cookie *cookie)
 {
-	if (fscache_cookie_valid(cookie) && fscache_cookie_enabled(cookie))
-		return __fscache_begin_operation(cres, cookie, false);
+	if (fscache_cookie_valid(cookie))
+		return __fscache_begin_read_operation(cres, cookie);
 	return -ENOBUFS;
-}
-
-/**
- * fscache_operation_valid - Return true if operations resources are usable
- * @cres: The resources to check.
- *
- * Returns a pointer to the operations table if usable or NULL if not.
- */
-static inline
-const struct netfs_cache_ops *fscache_operation_valid(const struct netfs_cache_resources *cres)
-{
-	return fscache_resources_valid(cres) ? cres->ops : NULL;
 }
 
 /**
@@ -478,60 +467,6 @@ int fscache_write(struct netfs_cache_resources *cres,
 
 #endif /* FSCACHE_USE_NEW_IO_API */
 
-/**
- * fscache_disable_cookie - Disable a cookie
- * @cookie: The cookie representing the cache object
- * @aux_data: The updated auxiliary data for the cookie (may be NULL)
- * @invalidate: Invalidate the backing object
- *
- * Disable a cookie from accepting further alloc, read, write, invalidate,
- * update or acquire operations.  Outstanding operations can still be waited
- * upon and pages can still be uncached and the cookie relinquished.
- *
- * This will not return until all outstanding operations have completed.
- *
- * If @invalidate is set, then the backing object will be invalidated and
- * detached, otherwise it will just be detached.
- *
- * If @aux_data is set, then auxiliary data will be updated from that.
- */
-static inline
-void fscache_disable_cookie(struct fscache_cookie *cookie,
-			    const void *aux_data,
-			    bool invalidate)
-{
-	if (fscache_cookie_valid(cookie) && fscache_cookie_enabled(cookie))
-		__fscache_disable_cookie(cookie, aux_data, invalidate);
-}
-
-/**
- * fscache_enable_cookie - Reenable a cookie
- * @cookie: The cookie representing the cache object
- * @aux_data: The updated auxiliary data for the cookie (may be NULL)
- * @object_size: Current size of object
- * @can_enable: A function to permit enablement once lock is held
- * @data: Data for can_enable()
- *
- * Reenable a previously disabled cookie, allowing it to accept further alloc,
- * read, write, invalidate, update or acquire operations.  An attempt will be
- * made to immediately reattach the cookie to a backing object.  If @aux_data
- * is set, the auxiliary data attached to the cookie will be updated.
- *
- * The can_enable() function is called (if not NULL) once the enablement lock
- * is held to rule on whether enablement is still permitted to go ahead.
- */
-static inline
-void fscache_enable_cookie(struct fscache_cookie *cookie,
-			   const void *aux_data,
-			   loff_t object_size,
-			   bool (*can_enable)(void *data),
-			   void *data)
-{
-	if (fscache_cookie_valid(cookie) && !fscache_cookie_enabled(cookie))
-		__fscache_enable_cookie(cookie, aux_data, object_size,
-					can_enable, data);
-}
-
 #ifdef FSCACHE_USE_FALLBACK_IO_API
 
 /**
@@ -549,7 +484,7 @@ void fscache_enable_cookie(struct fscache_cookie *cookie,
 static inline
 int fscache_fallback_read_page(struct fscache_cookie *cookie, struct page *page)
 {
-	if (fscache_cookie_enabled(cookie))
+	if (fscache_cookie_valid(cookie))
 		return __fscache_fallback_read_page(cookie, page);
 	return -ENOBUFS;
 }
@@ -569,7 +504,7 @@ int fscache_fallback_read_page(struct fscache_cookie *cookie, struct page *page)
 static inline
 int fscache_fallback_write_page(struct fscache_cookie *cookie, struct page *page)
 {
-	if (fscache_cookie_enabled(cookie))
+	if (fscache_cookie_valid(cookie))
 		return __fscache_fallback_write_page(cookie, page);
 	return -ENOBUFS;
 }
