@@ -403,11 +403,19 @@ struct fscache_cookie *__fscache_acquire_cookie(
 EXPORT_SYMBOL(__fscache_acquire_cookie);
 
 /*
+ * Prepare a cache object to be written to.
+ */
+static void fscache_prepare_to_write(struct fscache_cookie *cookie)
+{
+	cookie->volume->cache->ops->prepare_to_write(cookie);
+}
+
+/*
  * Look up a cookie to the cache.
  */
 static void fscache_lookup_cookie(struct fscache_cookie *cookie)
 {
-	bool changed_stage = false, need_withdraw = false;
+	bool changed_stage = false, need_withdraw = false, prep_write = false;
 
 	_enter("");
 
@@ -429,6 +437,7 @@ static void fscache_lookup_cookie(struct fscache_cookie *cookie)
 
 	spin_lock(&cookie->lock);
 	if (cookie->stage != FSCACHE_COOKIE_STAGE_RELINQUISHING) {
+		prep_write = test_bit(FSCACHE_COOKIE_LOCAL_WRITE, &cookie->flags);
 		__fscache_set_cookie_stage(cookie, FSCACHE_COOKIE_STAGE_ACTIVE);
 		fscache_see_cookie(cookie, fscache_cookie_see_active);
 		changed_stage = true;
@@ -436,6 +445,8 @@ static void fscache_lookup_cookie(struct fscache_cookie *cookie)
 	spin_unlock(&cookie->lock);
 	if (changed_stage)
 		wake_up_cookie_stage(cookie);
+	if (prep_write)
+		fscache_prepare_to_write(cookie);
 
 out:
 	fscache_end_cookie_access(cookie, fscache_access_lookup_cookie_end);
@@ -467,6 +478,10 @@ again:
 	stage = cookie->stage;
 	switch (stage) {
 	case FSCACHE_COOKIE_STAGE_QUIESCENT:
+		if (will_modify) {
+			set_bit(FSCACHE_COOKIE_LOCAL_WRITE, &cookie->flags);
+			set_bit(FSCACHE_COOKIE_DO_PREP_TO_WRITE, &cookie->flags);
+		}
 		if (!fscache_begin_volume_access(cookie->volume,
 						 fscache_access_lookup_cookie))
 			break;
@@ -484,8 +499,18 @@ again:
 
 	case FSCACHE_COOKIE_STAGE_LOOKING_UP:
 	case FSCACHE_COOKIE_STAGE_CREATING:
+		if (will_modify)
+			set_bit(FSCACHE_COOKIE_LOCAL_WRITE, &cookie->flags);
+		break;
 	case FSCACHE_COOKIE_STAGE_ACTIVE:
 	case FSCACHE_COOKIE_STAGE_INVALIDATING:
+		if (will_modify &&
+		    !test_and_set_bit(FSCACHE_COOKIE_LOCAL_WRITE, &cookie->flags)) {
+			set_bit(FSCACHE_COOKIE_DO_PREP_TO_WRITE, &cookie->flags);
+			queue = true;
+		}
+		break;
+
 	case FSCACHE_COOKIE_STAGE_FAILED:
 	case FSCACHE_COOKIE_STAGE_WITHDRAWING:
 		break;
@@ -551,6 +576,8 @@ static void __fscache_cookie_worker(struct fscache_cookie *cookie)
 again:
 	switch (READ_ONCE(cookie->stage)) {
 	case FSCACHE_COOKIE_STAGE_ACTIVE:
+		if (test_and_clear_bit(FSCACHE_COOKIE_DO_PREP_TO_WRITE, &cookie->flags))
+			fscache_prepare_to_write(cookie);
 		break;
 
 	case FSCACHE_COOKIE_STAGE_LOOKING_UP:
@@ -591,6 +618,7 @@ again:
 		clear_bit(FSCACHE_COOKIE_NEEDS_UPDATE, &cookie->flags);
 		clear_bit(FSCACHE_COOKIE_DO_WITHDRAW, &cookie->flags);
 		clear_bit(FSCACHE_COOKIE_DO_COMMIT, &cookie->flags);
+		clear_bit(FSCACHE_COOKIE_DO_PREP_TO_WRITE, &cookie->flags);
 		set_bit(FSCACHE_COOKIE_NO_DATA_TO_READ, &cookie->flags);
 		fscache_set_cookie_stage(cookie, FSCACHE_COOKIE_STAGE_QUIESCENT);
 		break;
