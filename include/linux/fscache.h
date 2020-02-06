@@ -52,6 +52,7 @@ struct fscache_cookie;
 struct fscache_netfs;
 struct fscache_op_resources;
 struct fscache_op_ops;
+struct netfs_read_subrequest;
 
 typedef void (*fscache_io_terminated_t)(void *priv, ssize_t transferred_or_error);
 
@@ -174,6 +175,16 @@ struct fscache_op_ops {
 		     struct iov_iter *iter,
 		     fscache_io_terminated_t term_func,
 		     void *term_func_priv);
+
+	/* Expand readahead request */
+	void (*expand_readahead)(struct fscache_op_resources *opr,
+				 loff_t *_start, size_t *_len, loff_t i_size);
+
+	/* Prepare a read operation, shortening it to a cached/uncached
+	 * boundary as appropriate.
+	 */
+	enum netfs_read_source (*prepare_read)(struct netfs_read_subrequest *subreq,
+					       loff_t i_size);
 };
 
 /*

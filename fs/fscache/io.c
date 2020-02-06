@@ -9,6 +9,7 @@
 #include <linux/module.h>
 #include <linux/fscache-cache.h>
 #include <linux/slab.h>
+#include <linux/netfs.h>
 #include "internal.h"
 
 /*
