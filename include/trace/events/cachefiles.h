@@ -35,6 +35,7 @@ enum cachefiles_obj_ref_trace {
 
 enum fscache_why_object_killed {
 	FSCACHE_OBJECT_IS_STALE,
+	FSCACHE_OBJECT_INVALIDATED,
 	FSCACHE_OBJECT_NO_SPACE,
 	FSCACHE_OBJECT_WAS_RETIRED,
 	FSCACHE_OBJECT_WAS_CULLED,
@@ -54,9 +55,8 @@ enum cachefiles_coherency_trace {
 };
 
 enum cachefiles_trunc_trace {
-	cachefiles_trunc_invalidate,
-	cachefiles_trunc_set_size,
 	cachefiles_trunc_dio_adjust,
+	cachefiles_trunc_expand_tmpfile,
 	cachefiles_trunc_shrink,
 };
 
@@ -67,6 +67,7 @@ enum cachefiles_trunc_trace {
  */
 #define cachefiles_obj_kill_traces				\
 	EM(FSCACHE_OBJECT_IS_STALE,	"stale")		\
+	EM(FSCACHE_OBJECT_INVALIDATED,	"inval")		\
 	EM(FSCACHE_OBJECT_NO_SPACE,	"no_space")		\
 	EM(FSCACHE_OBJECT_WAS_RETIRED,	"was_retired")		\
 	E_(FSCACHE_OBJECT_WAS_CULLED,	"was_culled")
@@ -98,9 +99,8 @@ enum cachefiles_trunc_trace {
 	E_(cachefiles_coherency_set_ok,		"SET ok  ")
 
 #define cachefiles_trunc_traces						\
-	EM(cachefiles_trunc_invalidate,		"INVAL ")		\
-	EM(cachefiles_trunc_set_size,		"SETSIZ")		\
 	EM(cachefiles_trunc_dio_adjust,		"DIOADJ")		\
+	EM(cachefiles_trunc_expand_tmpfile,	"EXPTMP")		\
 	E_(cachefiles_trunc_shrink,		"SHRINK")
 
 /*
@@ -177,26 +177,44 @@ TRACE_EVENT(cachefiles_lookup,
 		      __entry->obj, __entry->ino, __entry->error)
 	    );
 
-TRACE_EVENT(cachefiles_create,
-	    TP_PROTO(struct cachefiles_object *obj,
-		     struct dentry *de, int ret),
+TRACE_EVENT(cachefiles_tmpfile,
+	    TP_PROTO(struct cachefiles_object *obj, struct inode *backer),
 
-	    TP_ARGS(obj, de, ret),
+	    TP_ARGS(obj, backer),
 
 	    TP_STRUCT__entry(
-		    __field(unsigned int,		obj	)
-		    __field(struct dentry *,		de	)
-		    __field(int,			ret	)
+		    __field(unsigned int,			obj	)
+		    __field(unsigned int,			backer	)
 			     ),
 
 	    TP_fast_assign(
 		    __entry->obj	= obj->debug_id;
-		    __entry->de		= de;
-		    __entry->ret	= ret;
+		    __entry->backer	= backer->i_ino;
 			   ),
 
-	    TP_printk("o=%08x d=%p r=%u",
-		      __entry->obj, __entry->de, __entry->ret)
+	    TP_printk("o=%08x b=%08x",
+		      __entry->obj,
+		      __entry->backer)
+	    );
+
+TRACE_EVENT(cachefiles_link,
+	    TP_PROTO(struct cachefiles_object *obj, struct inode *backer),
+
+	    TP_ARGS(obj, backer),
+
+	    TP_STRUCT__entry(
+		    __field(unsigned int,			obj	)
+		    __field(unsigned int,			backer	)
+			     ),
+
+	    TP_fast_assign(
+		    __entry->obj	= obj->debug_id;
+		    __entry->backer	= backer->i_ino;
+			   ),
+
+	    TP_printk("o=%08x b=%08x",
+		      __entry->obj,
+		      __entry->backer)
 	    );
 
 TRACE_EVENT(cachefiles_unlink,

@@ -59,6 +59,7 @@ struct cachefiles_object {
 	u8				key_hash;	/* Hash of object key */
 	unsigned long			flags;
 #define CACHEFILES_OBJECT_IS_NEW	0		/* Set if object is new */
+#define CACHEFILES_OBJECT_USING_TMPFILE	1		/* Have an unlinked tmpfile */
 };
 
 extern struct kmem_cache *cachefiles_object_jar;
@@ -170,6 +171,11 @@ extern bool cachefiles_cook_key(struct cachefiles_object *object);
  * namei.c
  */
 extern void cachefiles_unmark_inode_in_use(struct cachefiles_object *object);
+extern int cachefiles_bury_object(struct cachefiles_cache *cache,
+				  struct cachefiles_object *object,
+				  struct dentry *dir,
+				  struct dentry *rep,
+				  enum fscache_why_object_killed why);
 extern int cachefiles_delete_object(struct cachefiles_object *object,
 				    enum fscache_why_object_killed why);
 extern bool cachefiles_walk_to_object(struct cachefiles_object *object);
@@ -182,6 +188,9 @@ extern int cachefiles_cull(struct cachefiles_cache *cache, struct dentry *dir,
 
 extern int cachefiles_check_in_use(struct cachefiles_cache *cache,
 				   struct dentry *dir, char *filename);
+extern struct file *cachefiles_create_tmpfile(struct cachefiles_object *object);
+extern bool cachefiles_commit_tmpfile(struct cachefiles_cache *cache,
+				      struct cachefiles_object *object);
 
 /*
  * security.c
