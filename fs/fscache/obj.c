@@ -117,7 +117,8 @@ out:
  * Create an object chain, making sure that the index chain is fully created.
  */
 static struct fscache_object *fscache_lookup_object_chain(struct fscache_cookie *cookie,
-							  struct fscache_cache *cache)
+							  struct fscache_cache *cache,
+							  bool will_modify)
 {
 	struct fscache_object *object = NULL, *parent, *xobject;
 
@@ -131,7 +132,7 @@ static struct fscache_object *fscache_lookup_object_chain(struct fscache_cookie 
 	spin_unlock(&cookie->lock);
 
 	/* Recurse to look up/create the parent index. */
-	parent = fscache_lookup_object_chain(cookie->parent, cache);
+	parent = fscache_lookup_object_chain(cookie->parent, cache, false);
 	if (IS_ERR(parent))
 		goto error;
 
@@ -146,9 +147,13 @@ static struct fscache_object *fscache_lookup_object_chain(struct fscache_cookie 
 	if (!object)
 		goto error;
 
+	if (will_modify)
+		__set_bit(FSCACHE_OBJECT_LOCAL_WRITE, &object->flags);
+
 	xobject = fscache_attach_object(cookie, object);
 	if (xobject != object) {
 		fscache_do_put_object(object, fscache_obj_put_alloc_dup);
+		object = xobject;
 		goto object_exists;
 	}
 
@@ -198,7 +203,8 @@ error:
  * - this must make sure the index chain is instantiated and instantiate the
  *   object representation too
  */
-static void fscache_lookup_object_locked(struct fscache_cookie *cookie)
+static void fscache_lookup_object_locked(struct fscache_cookie *cookie,
+					 bool will_modify)
 {
 	struct fscache_object *object;
 	struct fscache_cache *cache;
@@ -216,11 +222,15 @@ static void fscache_lookup_object_locked(struct fscache_cookie *cookie)
 
 	_debug("cache %s", cache->tag->name);
 
-	object = fscache_lookup_object_chain(cookie, cache);
+	object = fscache_lookup_object_chain(cookie, cache, will_modify);
 	if (!object) {
 		_leave(" [fail]");
 		return;
 	}
+
+	if (will_modify &&
+	    test_and_set_bit(FSCACHE_OBJECT_LOCAL_WRITE, &object->flags))
+		fscache_prepare_to_write(cookie, object, 0);
 
 	fscache_do_put_object(object, fscache_obj_put);
 	_leave(" [done]");
@@ -230,7 +240,7 @@ void fscache_lookup_object(struct fscache_cookie *cookie,
 			   struct fscache_object *object, int param)
 {
 	down_read(&fscache_addremove_sem);
-	fscache_lookup_object_locked(cookie);
+	fscache_lookup_object_locked(cookie, param);
 	up_read(&fscache_addremove_sem);
 	__fscache_unuse_cookie(cookie, NULL, NULL);
 }
@@ -334,4 +344,13 @@ void fscache_discard_objects(struct fscache_cookie *cookie,
 
 	up_read(&fscache_addremove_sem);
 	_leave("");
+}
+
+/*
+ * Prepare a cache object to be written to.
+ */
+void fscache_prepare_to_write(struct fscache_cookie *cookie,
+			      struct fscache_object *object, int param)
+{
+	object->cache->ops->prepare_to_write(object);
 }

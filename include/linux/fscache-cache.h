@@ -155,6 +155,9 @@ struct fscache_cache_ops {
 		     struct fscache_io_request *req,
 		     struct iov_iter *iter);
 
+	/* Prepare to write to a live cache object */
+	int (*prepare_to_write)(struct fscache_object *object);
+
 	/* Display object info in /proc/fs/fscache/objects */
 	int (*display_object)(struct seq_file *m, struct fscache_object *object);
 };
@@ -183,6 +186,7 @@ struct fscache_object {
 	spinlock_t		lock;		/* state and operations lock */
 
 	unsigned long		flags;
+#define FSCACHE_OBJECT_LOCAL_WRITE	1	/* T if the object is being modified locally */
 #define FSCACHE_OBJECT_NEEDS_INVAL	8	/* T if object needs invalidation */
 #define FSCACHE_OBJECT_NEEDS_UPDATE	9	/* T if object attrs need writing to disk */
 

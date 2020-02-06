@@ -211,13 +211,77 @@ out:
 }
 
 /*
+ * Shorten the backing object to discard any dirty data and free up
+ * any unused granules.
+ */
+static bool cachefiles_shorten_object(struct cachefiles_object *object, loff_t new_size)
+{
+	struct cachefiles_cache *cache;
+	struct inode *inode;
+	struct path path;
+	loff_t i_size;
+
+	cache = container_of(object->fscache.cache,
+			     struct cachefiles_cache, cache);
+	path.mnt = cache->mnt;
+	path.dentry = object->dentry;
+
+	inode = d_inode(object->dentry);
+	trace_cachefiles_trunc(object, inode, i_size_read(inode), new_size);
+	if (vfs_truncate(&path, new_size) < 0) {
+		cachefiles_io_error_obj(object, "Trunc-to-size failed");
+		cachefiles_remove_object_xattr(cache, object->dentry);
+		return false;
+	}
+
+	new_size = round_up(new_size, CACHEFILES_DIO_BLOCK_SIZE);
+	i_size = i_size_read(inode);
+	if (i_size < new_size) {
+		trace_cachefiles_trunc(object, inode, i_size, new_size);
+		if (vfs_truncate(&path, new_size) < 0) {
+			cachefiles_io_error_obj(object, "Trunc-to-dio-size failed");
+			cachefiles_remove_object_xattr(cache, object->dentry);
+			return false;
+		}
+	}
+
+	return true;
+}
+
+/*
+ * Trim excess stored data off of an object.
+ */
+static bool cachefiles_trim_object(struct cachefiles_object *object)
+{
+	loff_t object_size;
+
+	_enter("{OBJ%x}", object->fscache.debug_id);
+
+	object_size = object->fscache.cookie->object_size;
+	if (i_size_read(d_inode(object->dentry)) <= object_size)
+		return true;
+
+	return cachefiles_shorten_object(object, object_size);
+}
+
+/*
  * Commit changes to the object as we drop it.
  */
 static void cachefiles_commit_object(struct cachefiles_object *object,
 				     struct cachefiles_cache *cache)
 {
+	bool update = false;
+
 	if (object->content_map_changed)
 		cachefiles_save_content_map(object);
+	if (test_and_clear_bit(FSCACHE_OBJECT_LOCAL_WRITE, &object->fscache.flags))
+		update = true;
+	if (test_and_clear_bit(FSCACHE_OBJECT_NEEDS_UPDATE, &object->fscache.flags))
+		update = true;
+	if (update) {
+		if (cachefiles_trim_object(object))
+			cachefiles_set_object_xattr(object);
+	}
 
 	if (test_bit(CACHEFILES_OBJECT_USING_TMPFILE, &object->flags))
 		cachefiles_commit_tmpfile(cache, object);
@@ -577,5 +641,6 @@ const struct fscache_cache_ops cachefiles_cache_ops = {
 	.shape_extent		= cachefiles_shape_extent,
 	.read			= cachefiles_read,
 	.write			= cachefiles_write,
+	.prepare_to_write	= cachefiles_prepare_to_write,
 	.display_object		= cachefiles_display_object,
 };

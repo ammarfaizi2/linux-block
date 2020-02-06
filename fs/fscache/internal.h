@@ -134,6 +134,7 @@ extern void fscache_lookup_object(struct fscache_cookie *, struct fscache_object
 extern void fscache_invalidate_object(struct fscache_cookie *, struct fscache_object *, int);
 extern void fscache_drop_object(struct fscache_cookie *, struct fscache_object *, bool);
 extern void fscache_discard_objects(struct fscache_cookie *, struct fscache_object *, int);
+extern void fscache_prepare_to_write(struct fscache_cookie *, struct fscache_object *, int);
 
 /*
  * object-list.c
