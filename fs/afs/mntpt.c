@@ -120,8 +120,8 @@ static int afs_mntpt_set_params(struct fs_context *fc, struct dentry *mntpt)
 	} else {
 		/* read the contents of the AFS special symlink */
 		struct page *page;
+		const char *buf;
 		loff_t size = i_size_read(d_inode(mntpt));
-		char *buf;
 
 		if (src_as->cell)
 			ctx->cell = afs_get_cell(src_as->cell);
@@ -129,14 +129,11 @@ static int afs_mntpt_set_params(struct fs_context *fc, struct dentry *mntpt)
 		if (size < 2 || size > PAGE_SIZE - 1)
 			return -EINVAL;
 
-		page = read_mapping_page(d_inode(mntpt)->i_mapping, 0, NULL);
-		if (IS_ERR(page))
+		page = afs_read_symlink(vnode);
+		if (IS_ERR(page)) {
+			if (PTR_ERR(page) == -EIO)
+				afs_bad(vnode, afs_file_error_mntpt);
 			return PTR_ERR(page);
-
-		if (PageError(page)) {
-			ret = afs_bad(AFS_FS_I(d_inode(mntpt)), afs_file_error_mntpt);
-			put_page(page);
-			return ret;
 		}
 
 		buf = kmap(page);
