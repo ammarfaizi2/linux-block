@@ -37,6 +37,7 @@ struct fscache_object *cachefiles_alloc_object(struct fscache_cookie *cookie,
 		return NULL;
 	}
 
+	rwlock_init(&object->content_map_lock);
 	fscache_object_init(&object->fscache, cookie, &cache->cache);
 	object->fscache.parent = parent;
 	object->fscache.stage = FSCACHE_OBJECT_STAGE_LOOKING_UP;
@@ -198,6 +199,8 @@ out:
 static void cachefiles_commit_object(struct cachefiles_object *object,
 				     struct cachefiles_cache *cache)
 {
+	if (object->content_map_changed)
+		cachefiles_save_content_map(object);
 }
 
 /*
@@ -297,6 +300,8 @@ static void cachefiles_put_object(struct fscache_object *_object,
 		ASSERTCMP(object->old, ==, NULL);
 		ASSERTCMP(object->dentry, ==, NULL);
 		ASSERTCMP(object->fscache.n_children, ==, 0);
+
+		kfree(object->content_map);
 
 		cache = object->fscache.cache;
 		fscache_object_destroy(&object->fscache);

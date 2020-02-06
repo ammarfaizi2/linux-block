@@ -5,6 +5,7 @@
 
 cachefiles-y := \
 	bind.o \
+	content-map.o \
 	daemon.o \
 	interface.o \
 	io.o \
