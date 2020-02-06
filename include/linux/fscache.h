@@ -105,6 +105,7 @@ struct fscache_cookie {
 	loff_t				zero_point;	/* Size after which no data on server */
 
 	unsigned long			flags;
+#define FSCACHE_COOKIE_WRITING_SINGLE	3	/* T if we're writing a single-chunk object */
 #define FSCACHE_COOKIE_INVALIDATING	4	/* T if cookie is being invalidated */
 #define FSCACHE_COOKIE_ACQUIRED		5	/* T if cookie is in use */
 #define FSCACHE_COOKIE_RELINQUISHED	6	/* T if cookie has been relinquished */
@@ -592,5 +593,8 @@ extern int fscache_read_helper(struct fscache_io_request *,
 			       struct list_head *,
 			       enum fscache_read_type,
 			       unsigned int);
+
+extern int fscache_read_helper_single(struct fscache_io_request *,
+				      int (*)(struct fscache_io_request *));
 
 #endif /* _LINUX_FSCACHE_H */

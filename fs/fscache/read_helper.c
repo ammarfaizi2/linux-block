@@ -41,6 +41,11 @@ static void fscache_read_copy_done(struct fscache_io_request *req)
 		unlock_page_fscache(page);
 	}
 	rcu_read_unlock();
+
+	if (test_bit(FSCACHE_COOKIE_WRITING_SINGLE, &req->cookie->flags)) {
+		clear_bit_unlock(FSCACHE_COOKIE_WRITING_SINGLE, &req->cookie->flags);
+		wake_up_bit(&req->cookie->flags, FSCACHE_COOKIE_WRITING_SINGLE);
+	}
 }
 
 /*
@@ -536,3 +541,90 @@ dont:
 	return ret;
 }
 EXPORT_SYMBOL(fscache_read_helper);
+
+/**
+ * fscache_read_helper_single - Helper for reading single-chunk object
+ * @req: The request
+ * @check: Function to check the content of a download
+ *
+ * Helper to synchronously read a single-chunk object into the pages
+ * pre-attached to a mapping.  The caller is responsible for appropriately
+ * locking them to make sure they don't evaporate under us.
+ *
+ * If data is downloaded, then, if given, the check function will be called to
+ * check the contents before we write it to the cache.
+ *
+ * A ref on @req is consumed eventually by this function or one of its
+ * eventually-dispatched callees.
+ */
+int fscache_read_helper_single(struct fscache_io_request *req,
+			       int (*check)(struct fscache_io_request *req))
+{
+	struct fscache_extent extent;
+	unsigned int notes = 0;
+	loff_t i_size = req->len;
+	int ret = 0;
+
+	extent.start = 0;
+	extent.block_end = req->nr_pages;
+	extent.limit = req->nr_pages;
+
+	if (req->cookie) {
+		notes = fscache_shape_extent(req->cookie, &extent, i_size, false);
+		req->dio_block_size = extent.dio_block_size;
+
+		_enter("c=%08x,%x", req->cookie->debug_id, notes);
+
+		if (wait_on_bit(&req->cookie->flags, FSCACHE_COOKIE_WRITING_SINGLE,
+				TASK_INTERRUPTIBLE) < 0) {
+			ret = -ERESTARTSYS;
+			goto out;
+		}
+
+		if (notes & FSCACHE_RHLP_NOTE_READ_FROM_CACHE) {
+			struct iov_iter iter;
+
+			trace_fscache_read_helper(req->cookie, 0, req->nr_pages,
+						  notes, fscache_read_helper_single_read);
+
+			iov_iter_mapping(&iter, READ, req->mapping, 0,
+					 round_up(i_size, req->dio_block_size));
+			req->io_done = NULL; /* Synchronous */
+			ret = fscache_read(req, &iter);
+			if (ret == 0 && req->transferred >= i_size) {
+				req->transferred = i_size;
+				task_io_account_read(req->transferred);
+				fscache_read_done(req);
+				goto out;
+			}
+
+			if (ret < 0 && ret != -ENODATA)
+				goto out;
+
+			_debug("inval d %d", ret);
+			__fscache_invalidate(req->cookie, i_size);
+		}
+
+		if (notes & FSCACHE_RHLP_NOTE_WRITE_TO_CACHE)
+			req->write_to_cache = true;
+	}
+
+	trace_fscache_read_helper(req->cookie, 0, req->nr_pages,
+				  notes, fscache_read_helper_single_download);
+
+	fscache_read_from_server(req);
+	ret = req->error;
+	if (ret == 0) {
+		task_io_account_read(req->transferred);
+		if (check) {
+			ret = check(req);
+			if (ret < 0)
+				goto out;
+		}
+		fscache_read_done(req);
+	}
+
+out:
+	return ret;
+}
+EXPORT_SYMBOL(fscache_read_helper_single);

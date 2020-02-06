@@ -42,6 +42,8 @@ enum fscache_cookie_trace {
 enum fscache_read_helper_trace {
 	fscache_read_helper_download,
 	fscache_read_helper_read,
+	fscache_read_helper_single_download,
+	fscache_read_helper_single_read,
 	fscache_read_helper_skip,
 	fscache_read_helper_zero,
 };
@@ -73,6 +75,8 @@ enum fscache_read_helper_trace {
 #define fscache_read_helper_traces				\
 	EM(fscache_read_helper_download,	"DOWN")		\
 	EM(fscache_read_helper_read,		"READ")		\
+	EM(fscache_read_helper_single_download,	"S-DW")		\
+	EM(fscache_read_helper_single_read,	"S-RD")		\
 	EM(fscache_read_helper_skip,		"SKIP")		\
 	E_(fscache_read_helper_zero,		"ZERO")
 
@@ -228,7 +232,7 @@ TRACE_EVENT(fscache_read_helper,
 			     ),
 
 	    TP_fast_assign(
-		    __entry->cookie	= cookie->debug_id;
+		    __entry->cookie	= cookie ? cookie->debug_id : 0;
 		    __entry->start	= start;
 		    __entry->end	= end;
 		    __entry->what	= what;
