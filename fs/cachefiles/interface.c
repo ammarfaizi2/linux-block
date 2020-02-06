@@ -197,6 +197,9 @@ static void cachefiles_commit_object(struct cachefiles_object *object,
 		update = true;
 	if (update)
 		cachefiles_update_object(object);
+
+	if (test_bit(CACHEFILES_OBJECT_USING_TMPFILE, &object->flags))
+		cachefiles_commit_tmpfile(cache, object);
 }
 
 /*
@@ -206,9 +209,14 @@ static void cachefiles_clean_up_object(struct cachefiles_object *object,
 				       struct cachefiles_cache *cache)
 {
 	if (test_bit(FSCACHE_COOKIE_RETIRED, &object->cookie->flags)) {
-		cachefiles_see_object(object, cachefiles_obj_see_clean_delete);
-		_debug("- inval object OBJ%x", object->debug_id);
-		cachefiles_delete_object(object, FSCACHE_OBJECT_WAS_RETIRED);
+		if (!test_bit(CACHEFILES_OBJECT_USING_TMPFILE, &object->flags)) {
+			cachefiles_see_object(object, cachefiles_obj_see_clean_delete);
+			_debug("- inval object OBJ%x", object->debug_id);
+			cachefiles_delete_object(object, FSCACHE_OBJECT_WAS_RETIRED);
+		} else {
+			cachefiles_see_object(object, cachefiles_obj_see_clean_drop_tmp);
+			_debug("- inval object OBJ%x tmpfile", object->debug_id);
+		}
 	} else {
 		cachefiles_see_object(object, cachefiles_obj_see_clean_commit);
 		cachefiles_commit_object(object, cache);
@@ -372,41 +380,58 @@ static bool cachefiles_invalidate_cookie(struct fscache_cookie *cookie,
 					 unsigned int flags)
 {
 	struct cachefiles_object *object = cookie->cache_priv;
-	struct cachefiles_cache *cache = object->volume->cache;
-	const struct cred *saved_cred;
-	struct file *file = object->file;
-	uint64_t ni_size = cookie->object_size;
-	int ret;
+	struct file *new_file, *old_file;
+	bool old_tmpfile;
 
-	_enter("{OBJ%x},[%llu]",
-	       object->debug_id, (unsigned long long)ni_size);
+	_enter("o=%x,[%llu]", object->debug_id, object->cookie->object_size);
 
-	if (file) {
-		ASSERT(d_is_reg(file->f_path.dentry));
+	old_tmpfile = test_bit(CACHEFILES_OBJECT_USING_TMPFILE, &object->flags);
 
-		cachefiles_begin_secure(cache, &saved_cred);
-		trace_cachefiles_trunc(object, file_inode(file),
-				       i_size_read(file_inode(file)), 0,
-				       cachefiles_trunc_invalidate);
-		ret = vfs_truncate(&file->f_path, 0);
-		if (ret == 0) {
-			ni_size = round_up(ni_size, CACHEFILES_DIO_BLOCK_SIZE);
-			trace_cachefiles_trunc(object, file_inode(file),
-					       0, ni_size,
-					       cachefiles_trunc_set_size);
-			ret = vfs_truncate(&file->f_path, ni_size);
-		}
-		cachefiles_end_secure(cache, saved_cred);
-
-		if (ret != 0) {
-			if (ret == -EIO)
-				cachefiles_io_error_obj(object,
-							"Invalidate failed");
-			return false;
-		}
+	if (!object->file) {
+		fscache_set_cookie_stage(cookie, FSCACHE_COOKIE_STAGE_ACTIVE);
+		_leave(" = t [light]");
+		return true;
 	}
 
+	new_file = cachefiles_create_tmpfile(object);
+	if (IS_ERR(new_file))
+		goto failed;
+
+	/* Substitute the VFS target */
+	_debug("sub");
+	spin_lock(&object->lock);
+
+	old_file = object->file;
+	object->file = new_file;
+	set_bit(CACHEFILES_OBJECT_USING_TMPFILE, &object->flags);
+	set_bit(FSCACHE_COOKIE_NEEDS_UPDATE, &object->cookie->flags);
+
+	spin_unlock(&object->lock);
+	_debug("subbed");
+
+	/* Allow I/O to take place again */
+	fscache_set_cookie_stage(cookie, FSCACHE_COOKIE_STAGE_ACTIVE);
+
+	if (old_file) {
+		if (!old_tmpfile) {
+			struct cachefiles_volume *volume = object->volume;
+			struct dentry *fan = volume->fanout[(u8)object->key_hash];
+
+			inode_lock_nested(d_inode(fan), I_MUTEX_PARENT);
+			cachefiles_bury_object(volume->cache, object, fan,
+					       old_file->f_path.dentry,
+					       FSCACHE_OBJECT_INVALIDATED);
+		}
+		fput(old_file);
+	}
+
+	_leave(" = t");
 	return true;
+
+failed:
+	fscache_set_cookie_stage(cookie, FSCACHE_COOKIE_STAGE_FAILED);
+	_leave(" = f");
+	return false;
 }
 
 const struct fscache_cache_ops cachefiles_cache_ops = {

@@ -80,11 +80,11 @@ static void cachefiles_mark_object_inactive(struct cachefiles_object *object)
  * - directory backed objects are stuffed into the graveyard for userspace to
  *   delete
  */
-static int cachefiles_bury_object(struct cachefiles_cache *cache,
-				  struct cachefiles_object *object,
-				  struct dentry *dir,
-				  struct dentry *rep,
-				  enum fscache_why_object_killed why)
+int cachefiles_bury_object(struct cachefiles_cache *cache,
+			   struct cachefiles_object *object,
+			   struct dentry *dir,
+			   struct dentry *rep,
+			   enum fscache_why_object_killed why)
 {
 	struct dentry *grave, *trap;
 	struct path path, path_to_graveyard;
@@ -302,83 +302,73 @@ static int cachefiles_open_file(struct cachefiles_object *object,
 {
 	struct cachefiles_cache *cache = object->volume->cache;
 	struct dentry *dentry;
-	struct inode *dinode = d_backing_inode(fan), *inode;
 	struct file *file;
-	struct path fan_path, path;
+	struct path path;
 	int ret;
 
 	_enter("%pd %s", fan, object->d_name);
 
-	inode_lock_nested(dinode, I_MUTEX_PARENT);
-
-	dentry = lookup_one_len(object->d_name, fan, object->d_name_len);
+	dentry = lookup_positive_unlocked(object->d_name, fan, object->d_name_len);
 	trace_cachefiles_lookup(object, dentry);
-	if (IS_ERR(dentry)) {
-		ret = PTR_ERR(dentry);
-		goto error_unlock;
-	}
-
-	if (d_is_negative(dentry)) {
+	if (dentry == ERR_PTR(-ENOENT)) {
+		set_bit(CACHEFILES_OBJECT_IS_NEW, &object->flags);
 		fscache_cookie_lookup_negative(object->cookie);
 
 		ret = cachefiles_has_space(cache, 1, 0);
 		if (ret < 0)
-			goto error_dput;
+			goto error;
 
-		fan_path.mnt = cache->mnt;
-		fan_path.dentry = fan;
-		ret = security_path_mknod(&fan_path, dentry, S_IFREG, 0);
-		if (ret < 0)
-			goto error_dput;
-		ret = vfs_create(&init_user_ns, dinode, dentry, S_IFREG, true);
-		trace_cachefiles_create(object, dentry, ret);
-		if (ret < 0)
-			goto error_dput;
+		file = cachefiles_create_tmpfile(object);
+		if (IS_ERR(file)) {
+			ret = PTR_ERR(file);
+			goto error;
+		}
 
-		inode = d_backing_inode(dentry);
-		_debug("create -> %pd{ino=%lu}", dentry, inode->i_ino);
-		set_bit(CACHEFILES_OBJECT_IS_NEW, &object->flags);
+		set_bit(FSCACHE_COOKIE_NEEDS_UPDATE, &object->cookie->flags);
+		set_bit(CACHEFILES_OBJECT_USING_TMPFILE, &object->flags);
+		_debug("create -> %pD{ino=%lu}", file, file_inode(file)->i_ino);
+		goto out;
+	}
 
-	} else if (!d_is_reg(dentry)) {
-		inode = d_backing_inode(dentry);
-		pr_err("inode %lu is not a file\n", inode->i_ino);
+	if (IS_ERR(dentry)) {
+		ret = PTR_ERR(dentry);
+		goto error;
+	}
+
+	if (!d_is_reg(dentry)) {
+		pr_err("%pd is not a file\n", dentry);
+		dput(dentry);
 		ret = -EIO;
-		goto error_dput;
+		goto error;
 	} else {
-		inode = d_backing_inode(dentry);
+		clear_bit(CACHEFILES_OBJECT_IS_NEW, &object->flags);
+
+		/* We need to open a file interface onto a data file now as we
+		 * can't do it on demand because writeback called from
+		 * do_exit() sees current->fs == NULL - which breaks d_path()
+		 * called from ext4 open.
+		 */
+		path.mnt = cache->mnt;
+		path.dentry = dentry;
+		file = open_with_fake_path(&path, O_RDWR | O_LARGEFILE | O_DIRECT,
+					   d_backing_inode(dentry), cache->cache_cred);
+		dput(dentry);
+		if (IS_ERR(file)) {
+			ret = PTR_ERR(file);
+			goto error;
+		}
+		if (unlikely(!file->f_op->read_iter) ||
+		    unlikely(!file->f_op->write_iter)) {
+			pr_notice("Cache does not support read_iter and write_iter\n");
+			ret = -EIO;
+			goto error_fput;
+		}
 		_debug("file -> %pd positive", dentry);
 	}
 
-	inode_unlock(dinode);
-
-	/* We need to open a file interface onto a data file now as we can't do
-	 * it on demand because writeback called from do_exit() sees
-	 * current->fs == NULL - which breaks d_path() called from ext4 open.
-	 */
-	path.mnt = cache->mnt;
-	path.dentry = dentry;
-	file = open_with_fake_path(&path, O_RDWR | O_LARGEFILE | O_DIRECT,
-				   inode, cache->cache_cred);
-	dput(dentry);
-	if (IS_ERR(file)) {
-		ret = PTR_ERR(file);
-		goto error;
-	}
-	if (unlikely(!file->f_op->read_iter) ||
-	    unlikely(!file->f_op->write_iter)) {
-		pr_notice("Cache does not support read_iter and write_iter\n");
-		ret = -EIO;
-		goto error_fput;
-	}
-
+out:
 	object->file = file;
 	return 0;
-
-error_dput:
-	dput(dentry);
-error_unlock:
-	inode_unlock(dinode);
-	return ret;
 error_fput:
 	fput(file);
 error:
@@ -458,9 +448,11 @@ retry:
 
 	/* we need to create the subdir if it doesn't exist yet */
 	if (d_is_negative(subdir)) {
-		ret = cachefiles_has_space(cache, 1, 0);
-		if (ret < 0)
-			goto mkdir_error;
+		if (cache->store) {
+			ret = cachefiles_has_space(cache, 1, 0);
+			if (ret < 0)
+				goto mkdir_error;
+		}
 
 		_debug("attempt mkdir");
 
@@ -498,7 +490,6 @@ retry:
 	if (!(d_backing_inode(subdir)->i_opflags & IOP_XATTR) ||
 	    !d_backing_inode(subdir)->i_op->lookup ||
 	    !d_backing_inode(subdir)->i_op->mkdir ||
-	    !d_backing_inode(subdir)->i_op->create ||
 	    !d_backing_inode(subdir)->i_op->rename ||
 	    !d_backing_inode(subdir)->i_op->rmdir ||
 	    !d_backing_inode(subdir)->i_op->unlink)
@@ -686,4 +677,102 @@ int cachefiles_check_in_use(struct cachefiles_cache *cache, struct dentry *dir,
 	dput(victim);
 	//_leave(" = 0");
 	return ret;
+}
+
+/*
+ * Create a temporary file and leave it unattached and un-xattr'd until the
+ * time comes to discard the object from memory.
+ */
+struct file *cachefiles_create_tmpfile(struct cachefiles_object *object)
+{
+	struct cachefiles_volume *volume = object->volume;
+	struct cachefiles_cache *cache = volume->cache;
+	const struct cred *saved_cred;
+	struct dentry *fan = volume->fanout[(u8)object->key_hash];
+	struct file *file;
+	struct path path;
+	uint64_t ni_size = object->cookie->object_size;
+	long ret;
+
+	ni_size = round_up(ni_size, CACHEFILES_DIO_BLOCK_SIZE);
+
+	cachefiles_begin_secure(cache, &saved_cred);
+
+	path.mnt = cache->mnt,
+	path.dentry = vfs_tmpfile(&init_user_ns, fan, S_IFREG, O_RDWR);
+	if (IS_ERR(path.dentry)) {
+		if (PTR_ERR(path.dentry) == -EIO)
+			cachefiles_io_error_obj(object, "Failed to create tmpfile");
+		file = ERR_CAST(path.dentry);
+		goto out;
+	}
+
+	trace_cachefiles_tmpfile(object, d_backing_inode(path.dentry));
+
+	if (ni_size > 0) {
+		trace_cachefiles_trunc(object, d_backing_inode(path.dentry), 0, ni_size,
+				       cachefiles_trunc_expand_tmpfile);
+		ret = vfs_truncate(&path, ni_size);
+		if (ret < 0) {
+			file = ERR_PTR(ret);
+			goto out_dput;
+		}
+	}
+
+	file = open_with_fake_path(&path, O_RDWR | O_LARGEFILE | O_DIRECT,
+				   d_backing_inode(path.dentry), cache->cache_cred);
+	if (IS_ERR(file))
+		goto out_dput;
+	if (unlikely(!file->f_op->read_iter) ||
+	    unlikely(!file->f_op->write_iter)) {
+		fput(file);
+		pr_notice("Cache does not support read_iter and write_iter\n");
+		file = ERR_PTR(-EINVAL);
+	}
+
+out_dput:
+	dput(path.dentry);
+out:
+	cachefiles_end_secure(cache, saved_cred);
+	return file;
+}
+
+/*
+ * Attempt to link a temporary file into its rightful place in the cache.
+ */
+bool cachefiles_commit_tmpfile(struct cachefiles_cache *cache,
+			       struct cachefiles_object *object)
+{
+	struct cachefiles_volume *volume = object->volume;
+	struct dentry *dentry, *fan = volume->fanout[(u8)object->key_hash];
+	bool success = false;
+	int ret;
+
+	_enter(",%pD", object->file);
+
+	inode_lock_nested(d_inode(fan), I_MUTEX_PARENT);
+	dentry = lookup_one_len(object->d_name, fan, object->d_name_len);
+	if (IS_ERR(dentry)) {
+		_debug("lookup fail %ld", PTR_ERR(dentry));
+		goto out_unlock;
+	}
+
+	ret = vfs_link(object->file->f_path.dentry, &init_user_ns,
+		       d_inode(fan), dentry, NULL);
+	if (ret < 0) {
+		_debug("link fail %d", ret);
+	} else {
+		trace_cachefiles_link(object, file_inode(object->file));
+		spin_lock(&object->lock);
+		/* TODO: Do we want to switch the file pointer to the new dentry? */
+		clear_bit(CACHEFILES_OBJECT_USING_TMPFILE, &object->flags);
+		spin_unlock(&object->lock);
+		success = true;
+	}
+
+	dput(dentry);
+out_unlock:
+	inode_unlock(d_inode(fan));
+	_leave(" = %u", success);
+	return success;
 }
