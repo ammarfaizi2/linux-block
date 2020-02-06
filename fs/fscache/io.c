@@ -65,8 +65,6 @@ int __fscache_begin_operation(struct netfs_cache_resources *cres,
 		(1UL << FSCACHE_OP_WAITING) |
 		(1UL << FSCACHE_OP_UNUSE_COOKIE);
 
-	trace_fscache_page_op(cookie, NULL, op, fscache_page_op_retr_multi);
-
 	spin_lock(&cookie->lock);
 
 	if (!fscache_cookie_enabled(cookie) ||
