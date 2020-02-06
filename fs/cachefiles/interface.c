@@ -36,7 +36,6 @@ static struct fscache_object *cachefiles_alloc_object(
 
 	ASSERTCMP(object->backer, ==, NULL);
 
-	BUG_ON(test_bit(CACHEFILES_OBJECT_ACTIVE, &object->flags));
 	atomic_set(&object->usage, 1);
 
 	fscache_object_init(&object->fscache, cookie, &cache->cache);
@@ -74,7 +73,6 @@ static struct fscache_object *cachefiles_alloc_object(
 nomem_key:
 	kfree(buffer);
 nomem_buffer:
-	BUG_ON(test_bit(CACHEFILES_OBJECT_ACTIVE, &object->flags));
 	kmem_cache_free(cachefiles_object_jar, object);
 	fscache_object_destroyed(&cache->cache);
 nomem_object:
@@ -190,8 +188,6 @@ static void cachefiles_drop_object(struct fscache_object *_object)
 	struct cachefiles_object *object;
 	struct cachefiles_cache *cache;
 	const struct cred *saved_cred;
-	struct inode *inode;
-	blkcnt_t i_blocks = 0;
 
 	ASSERT(_object);
 
@@ -218,10 +214,6 @@ static void cachefiles_drop_object(struct fscache_object *_object)
 		    _object != cache->cache.fsdef
 		    ) {
 			_debug("- retire object OBJ%x", object->fscache.debug_id);
-			inode = d_backing_inode(object->dentry);
-			if (inode)
-				i_blocks = inode->i_blocks;
-
 			cachefiles_begin_secure(cache, &saved_cred);
 			cachefiles_delete_object(cache, object);
 			cachefiles_end_secure(cache, saved_cred);
@@ -231,14 +223,11 @@ static void cachefiles_drop_object(struct fscache_object *_object)
 		if (object->backer != object->dentry)
 			dput(object->backer);
 		object->backer = NULL;
+
+		cachefiles_unmark_inode_in_use(object, object->dentry);
+		dput(object->dentry);
+		object->dentry = NULL;
 	}
-
-	/* note that the object is now inactive */
-	if (test_bit(CACHEFILES_OBJECT_ACTIVE, &object->flags))
-		cachefiles_mark_object_inactive(cache, object, i_blocks);
-
-	dput(object->dentry);
-	object->dentry = NULL;
 
 	_leave("");
 }
@@ -274,7 +263,6 @@ void cachefiles_put_object(struct fscache_object *_object,
 	if (u == 0) {
 		_debug("- kill object OBJ%x", object->fscache.debug_id);
 
-		ASSERT(!test_bit(CACHEFILES_OBJECT_ACTIVE, &object->flags));
 		ASSERTCMP(object->fscache.parent, ==, NULL);
 		ASSERTCMP(object->backer, ==, NULL);
 		ASSERTCMP(object->dentry, ==, NULL);
