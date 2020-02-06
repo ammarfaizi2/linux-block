@@ -2970,6 +2970,13 @@ static int proc_projid_map_open(struct inode *inode, struct file *file)
 	return proc_id_map_open(inode, file, &proc_projid_seq_operations);
 }
 
+#ifdef CONFIG_USER_NS_FSID
+static int proc_fsuid_map_open(struct inode *inode, struct file *file)
+{
+	return proc_id_map_open(inode, file, &proc_fsuid_seq_operations);
+}
+#endif
+
 static const struct file_operations proc_uid_map_operations = {
 	.open		= proc_uid_map_open,
 	.write		= proc_uid_map_write,
@@ -2993,6 +3000,16 @@ static const struct file_operations proc_projid_map_operations = {
 	.llseek		= seq_lseek,
 	.release	= proc_id_map_release,
 };
+
+#ifdef CONFIG_USER_NS_FSID
+static const struct file_operations proc_fsuid_map_operations = {
+	.open		= proc_fsuid_map_open,
+	.write		= proc_fsuid_map_write,
+	.read		= seq_read,
+	.llseek		= seq_lseek,
+	.release	= proc_id_map_release,
+};
+#endif
 
 static int proc_setgroups_open(struct inode *inode, struct file *file)
 {
@@ -3176,6 +3193,9 @@ static const struct pid_entry tgid_base_stuff[] = {
 	ONE("io",	S_IRUSR, proc_tgid_io_accounting),
 #endif
 #ifdef CONFIG_USER_NS
+#ifdef CONFIG_USER_NS_FSID
+	REG("fsuid_map",  S_IRUGO|S_IWUSR, proc_fsuid_map_operations),
+#endif
 	REG("uid_map",    S_IRUGO|S_IWUSR, proc_uid_map_operations),
 	REG("gid_map",    S_IRUGO|S_IWUSR, proc_gid_map_operations),
 	REG("projid_map", S_IRUGO|S_IWUSR, proc_projid_map_operations),
