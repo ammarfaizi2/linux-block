@@ -480,11 +480,6 @@ static void afs_get_inode_cache(struct afs_vnode *vnode)
 	} __packed key;
 	struct afs_vnode_cache_aux aux;
 
-	if (vnode->status.type == AFS_FTYPE_DIR) {
-		vnode->cache = NULL;
-		return;
-	}
-
 	key.vnode_id		= vnode->fid.vnode;
 	key.unique		= vnode->fid.unique;
 	key.vnode_id_ext[0]	= vnode->fid.vnode >> 32;

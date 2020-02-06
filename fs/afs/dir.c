@@ -115,30 +115,19 @@ static void afs_dir_read_cleanup(struct afs_read *req)
 	struct page *page;
 	pgoff_t last = req->cache.nr_pages - 1;
 
-	XA_STATE(xas, &mapping->i_pages, 0);
+	if (req->cache.nr_pages > 0) {
+		XA_STATE(xas, &mapping->i_pages, 0);
 
-	if (unlikely(!req->cache.nr_pages))
-		return;
+		rcu_read_lock();
+		xas_for_each(&xas, page, last) {
+			BUG_ON(xa_is_value(page));
+			BUG_ON(PageCompound(page));
+			ASSERTCMP(page->mapping, ==, mapping);
 
-	rcu_read_lock();
-	xas_for_each(&xas, page, last) {
-		if (xas_retry(&xas, page))
-			continue;
-		BUG_ON(xa_is_value(page));
-		BUG_ON(PageCompound(page));
-		ASSERTCMP(page->mapping, ==, mapping);
-
-		put_page(page);
+			put_page(page);
+		}
+		rcu_read_unlock();
 	}
-
-	rcu_read_unlock();
-}
-
-/*
- * Do nothing upon completion of the request.
- */
-static void afs_dir_read_done(struct fscache_io_request *fsreq)
-{
 }
 
 /*
@@ -234,14 +223,19 @@ static void afs_dir_dump(struct afs_vnode *dvnode, struct afs_read *req)
 /*
  * Check all the pages in a directory.  All the pages are held pinned.
  */
-static int afs_dir_check(struct afs_vnode *dvnode, struct afs_read *req)
+static int afs_dir_check(struct fscache_io_request *fsreq)
 {
-	struct address_space *mapping = dvnode->vfs_inode.i_mapping;
+	struct afs_read *req = container_of(fsreq, struct afs_read, cache);
+	struct afs_vnode *dvnode = req->vnode;
+	struct address_space *mapping = req->cache.mapping;
 	struct page *page;
 	pgoff_t last = req->cache.nr_pages - 1;
 	int ret = 0;
 
 	XA_STATE(xas, &mapping->i_pages, 0);
+
+	if (req->cache.len < req->file_size)
+		return -ETOOSMALL;
 
 	if (unlikely(!req->cache.nr_pages))
 		return 0;
@@ -281,6 +275,40 @@ static int afs_dir_open(struct inode *inode, struct file *file)
 	return afs_open(inode, file);
 }
 
+static void afs_dir_update_cache(struct afs_read *req)
+{
+	struct afs_vnode_cache_aux aux;
+
+	aux.data_version = req->data_version;
+	fscache_update_cookie(req->cache.cookie, &aux, &req->cache.transferred);
+}
+
+/*
+ * Read the directory content from the server.
+ */
+static void afs_dir_req_issue_op(struct fscache_io_request *fsreq)
+{
+	struct afs_read *req = container_of(fsreq, struct afs_read, cache);
+	int ret;
+
+	iov_iter_mapping(&req->def_iter, READ, req->cache.mapping,
+			 req->cache.pos, req->cache.len);
+	req->iter = &req->def_iter;
+
+	ret = afs_fetch_data(req->vnode, req);
+	if (ret < 0)
+		req->cache.error = ret;
+	else
+		afs_dir_update_cache(req);
+}
+
+const struct fscache_io_request_ops afs_dir_req_ops = {
+	.issue_op	= afs_dir_req_issue_op,
+	.done		= afs_req_done,
+	.get		= afs_req_get,
+	.put		= afs_req_put,
+};
+
 /*
  * Read the directory into the pagecache in one go, scrubbing the previous
  * contents.  The list of pages is returned, pinning them so that they don't
@@ -296,16 +324,15 @@ static struct afs_read *afs_read_dir(struct afs_vnode *dvnode, struct key *key)
 
 	_enter("");
 
-	req = kzalloc(sizeof(*req), GFP_KERNEL);
+	req = afs_alloc_read(GFP_KERNEL);
 	if (!req)
 		return ERR_PTR(-ENOMEM);
 
-	refcount_set(&req->usage, 1);
 	req->key = key_get(key);
 	req->vnode = dvnode;
 	req->cleanup = afs_dir_read_cleanup;
-	req->cache.io_done = afs_dir_read_done;
-	fscache_init_io_request(&req->cache, NULL, NULL);
+	fscache_init_io_request(&req->cache, afs_vnode_cache(dvnode),
+				&afs_dir_req_ops);
 
 expand:
 	i_size = i_size_read(&dvnode->vfs_inode);
@@ -325,10 +352,8 @@ expand:
 
 	req->cache.transferred = i_size; /* May change */
 	req->cache.len = nr_pages * PAGE_SIZE; /* We can ask for more than there is */
+	req->cache.mapping = dvnode->vfs_inode.i_mapping;
 	req->data_version = dvnode->status.data_version; /* May change */
-	iov_iter_mapping(&req->def_iter, READ, dvnode->vfs_inode.i_mapping,
-			 0, i_size);
-	req->iter = &req->def_iter;
 
 	/* Fill in any gaps that we might find where the memory reclaimer has
 	 * been at work and pin all the pages.  If there are any gaps, we will
@@ -387,24 +412,14 @@ expand:
 
 	if (!test_bit(AFS_VNODE_DIR_VALID, &dvnode->flags)) {
 		trace_afs_reload_dir(dvnode);
-		ret = afs_fetch_data(dvnode, req);
-		if (ret < 0)
+		ret = fscache_read_helper_single(&req->cache, afs_dir_check);
+		if (ret < 0) {
+			if (ret == -ETOOSMALL) {
+				up_write(&dvnode->validate_lock);
+				goto expand;
+			}
 			goto error_unlock;
-
-		task_io_account_read(PAGE_SIZE * req->cache.nr_pages);
-
-		if (req->cache.len < req->file_size) {
-			/* The content has grown, so we need to expand the
-			 * buffer.
-			 */
-			up_write(&dvnode->validate_lock);
-			goto expand;
 		}
-
-		/* Validate the data we just read. */
-		ret = afs_dir_check(dvnode, req);
-		if (ret < 0)
-			goto error_unlock;
 
 		// TODO: Trim excess pages
 
@@ -1036,7 +1051,9 @@ static struct dentry *afs_lookup(struct inode *dir, struct dentry *dentry,
 		return afs_lookup_atsys(dir, dentry, key);
 
 	afs_stat_v(dvnode, n_lookup);
+	fscache_use_cookie(afs_vnode_cache(dvnode), false);
 	inode = afs_do_lookup(dir, dentry, key);
+	fscache_unuse_cookie(afs_vnode_cache(dvnode), NULL, NULL);
 	key_put(key);
 	if (inode == ERR_PTR(-ENOENT))
 		inode = afs_try_auto_mntpt(dentry, dir);
@@ -1178,7 +1195,9 @@ static int afs_d_revalidate(struct dentry *dentry, unsigned int flags)
 	afs_stat_v(dir, n_reval);
 
 	/* search the directory for this vnode */
+	fscache_use_cookie(afs_vnode_cache(dir), false);
 	ret = afs_do_lookup_one(&dir->vfs_inode, dentry, &fid, key, &dir_version);
+	fscache_unuse_cookie(afs_vnode_cache(dir), NULL, NULL);
 	switch (ret) {
 	case 0:
 		/* the filename maps to something */

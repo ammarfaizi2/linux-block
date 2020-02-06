@@ -874,6 +874,7 @@ extern bool afs_cm_incoming_call(struct afs_call *);
 /*
  * dir.c
  */
+extern const struct fscache_io_request_ops afs_dir_req_ops;
 extern const struct file_operations afs_dir_file_operations;
 extern const struct inode_operations afs_dir_inode_operations;
 extern const struct address_space_operations afs_dir_aops;
