@@ -80,6 +80,9 @@ static int cachefiles_read(struct netfs_cache_resources *cres,
 	       file, file_inode(file)->i_ino, start_pos, len,
 	       i_size_read(file->f_inode));
 
+	fscache_wait_for_operation(cres, FSCACHE_WANT_READ);
+	fscache_count_io_operation(fscache_cres_object(cres)->cookie);
+
 	/* If the caller asked us to seek for data before doing the read, then
 	 * we should do that now.  If we find a gap, we fill it with zeros.
 	 */
@@ -204,6 +207,9 @@ static int cachefiles_write(struct netfs_cache_resources *cres,
 	       file, file_inode(file)->i_ino, start_pos, len,
 	       i_size_read(file->f_inode));
 
+	fscache_wait_for_operation(cres, FSCACHE_WANT_WRITE);
+	fscache_count_io_operation(fscache_cres_object(cres)->cookie);
+
 	ki = kzalloc(sizeof(struct cachefiles_kiocb), GFP_KERNEL);
 	if (!ki)
 		goto presubmission_error;
@@ -284,7 +290,7 @@ static enum netfs_read_source cachefiles_prepare_read(struct netfs_read_subreque
 	loff_t off, to;
 
 	_enter("%zx @%llx/%llx", subreq->len, subreq->start, i_size);
-	
+
 	cache = container_of(object->fscache.cache,
 			     struct cachefiles_cache, cache);
 
@@ -367,12 +373,52 @@ static void cachefiles_end_operation(struct netfs_cache_resources *cres)
 }
 
 static const struct netfs_cache_ops cachefiles_netfs_cache_ops = {
+	//.wait_for_operation	= __fscache_wait_for_operation,
+	//.end_operation		= __fscache_end_operation,
 	.end_operation		= cachefiles_end_operation,
 	.read			= cachefiles_read,
 	.write			= cachefiles_write,
 	.prepare_read		= cachefiles_prepare_read,
 	.prepare_write		= cachefiles_prepare_write,
 };
+
+/*
+ * Open a cache object.
+ */
+bool cachefiles_open_object(struct cachefiles_object *object)
+{
+	struct cachefiles_cache *cache =
+		container_of(object->fscache.cache, struct cachefiles_cache, cache);
+	struct file *file;
+	struct path path;
+
+	path.mnt = cache->mnt;
+	path.dentry = object->backer;
+
+	file = open_with_fake_path(&path,
+				   O_RDWR | O_LARGEFILE | O_DIRECT,
+				   d_backing_inode(object->backer),
+				   cache->cache_cred);
+	if (IS_ERR(file))
+		goto error;
+
+	if (!S_ISREG(file_inode(file)->i_mode))
+		goto error_file;
+
+	if (unlikely(!file->f_op->read_iter) ||
+	    unlikely(!file->f_op->write_iter)) {
+		pr_notice("Cache does not support read_iter and write_iter\n");
+		goto error_file;
+	}
+
+	object->backing_file = file;
+	return true;
+
+error_file:
+	fput(file);
+error:
+	return false;
+}
 
 /*
  * Open the cache file when beginning a cache operation.

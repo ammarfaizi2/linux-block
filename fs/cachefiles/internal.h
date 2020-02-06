@@ -119,6 +119,11 @@ void cachefiles_put_object(struct fscache_object *_object,
 			   enum fscache_obj_ref_trace why);
 
 /*
+ * io.c
+ */
+extern bool cachefiles_open_object(struct cachefiles_object *obj);
+
+/*
  * key.c
  */
 extern char *cachefiles_cook_key(const u8 *raw, int keylen, uint8_t type);
@@ -224,7 +229,8 @@ do {									\
 									\
 	___cache = container_of((object)->fscache.cache,		\
 				struct cachefiles_cache, cache);	\
-	cachefiles_io_error(___cache, FMT, ##__VA_ARGS__);		\
+	cachefiles_io_error(___cache, FMT " [o=%08x]", ##__VA_ARGS__,	\
+			    object->fscache.debug_id);			\
 } while (0)
 
 
