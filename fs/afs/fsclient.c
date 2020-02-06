@@ -422,8 +422,11 @@ static int afs_deliver_fs_fetch_data(struct afs_call *call)
 	 */
 	req->cache.transferred = min(req->actual_len, req->cache.len);
 	set_bit(FSCACHE_IO_DATA_FROM_SERVER, &req->cache.flags);
-	if (req->cache.io_done)
+	if (req->cache.io_done) {
 		req->cache.io_done(&req->cache);
+		afs_put_read(req);
+		call->read_request = NULL;
+	}
 
 	_leave(" = 0 [done]");
 	return 0;
@@ -433,7 +436,8 @@ static void afs_fetch_data_destructor(struct afs_call *call)
 {
 	struct afs_read *req = call->read_request;
 
-	afs_put_read(req);
+	if (req)
+		afs_put_read(req);
 	afs_flat_call_destructor(call);
 }
 

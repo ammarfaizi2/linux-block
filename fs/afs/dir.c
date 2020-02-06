@@ -305,6 +305,7 @@ static struct afs_read *afs_read_dir(struct afs_vnode *dvnode, struct key *key)
 	req->vnode = dvnode;
 	req->cleanup = afs_dir_read_cleanup;
 	req->cache.io_done = afs_dir_read_done;
+	fscache_init_io_request(&req->cache, NULL, NULL);
 
 expand:
 	i_size = i_size_read(&dvnode->vfs_inode);
