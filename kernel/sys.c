@@ -59,6 +59,7 @@
 #include <linux/sched/cputime.h>
 #include <linux/rcupdate.h>
 #include <linux/uidgid.h>
+#include <linux/fsuidgid.h>
 #include <linux/cred.h>
 
 #include <linux/nospec.h>
@@ -799,13 +800,17 @@ long __sys_setfsuid(uid_t uid)
 	const struct cred *old;
 	struct cred *new;
 	uid_t old_fsuid;
-	kuid_t kuid;
+	kuid_t kuid, kfsuid;
 
 	old = current_cred();
-	old_fsuid = from_kuid_munged(old->user_ns, old->fsuid);
+	old_fsuid = from_kfsuid_munged(old->user_ns, old->fsuid);
 
-	kuid = make_kuid(old->user_ns, uid);
+	kuid = make_kfsuid(old->user_ns, uid);
 	if (!uid_valid(kuid))
+		return old_fsuid;
+
+	kfsuid = make_kuid(old->user_ns, uid);
+	if (!uid_valid(kfsuid))
 		return old_fsuid;
 
 	new = prepare_creds();
@@ -817,6 +822,7 @@ long __sys_setfsuid(uid_t uid)
 	    ns_capable_setid(old->user_ns, CAP_SETUID)) {
 		if (!uid_eq(kuid, old->fsuid)) {
 			new->fsuid = kuid;
+			new->kfsuid = kfsuid;
 			if (security_task_fix_setuid(new, old, LSM_SETID_FS) == 0)
 				goto change_okay;
 		}
