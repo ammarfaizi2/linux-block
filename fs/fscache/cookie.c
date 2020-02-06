@@ -612,8 +612,6 @@ cant_attach_object:
  */
 void __fscache_invalidate(struct fscache_cookie *cookie)
 {
-	struct fscache_object *object;
-
 	_enter("{%s}", cookie->type_name);
 
 	fscache_stat(&fscache_n_invalidates);
@@ -625,26 +623,7 @@ void __fscache_invalidate(struct fscache_cookie *cookie)
 	 */
 	ASSERTCMP(cookie->type, ==, FSCACHE_COOKIE_TYPE_DATAFILE);
 
-	/* If there's an object, we tell the object state machine to handle the
-	 * invalidation on our behalf, otherwise there's nothing to do.
-	 */
-	if (!hlist_empty(&cookie->backing_objects)) {
-		spin_lock(&cookie->lock);
-
-		if (fscache_cookie_enabled(cookie) &&
-		    !hlist_empty(&cookie->backing_objects) &&
-		    !test_and_set_bit(FSCACHE_COOKIE_INVALIDATING,
-				      &cookie->flags)) {
-			object = hlist_entry(cookie->backing_objects.first,
-					     struct fscache_object,
-					     cookie_link);
-			if (fscache_object_is_live(object))
-				fscache_raise_event(
-					object, FSCACHE_OBJECT_EV_INVALIDATE);
-		}
-
-		spin_unlock(&cookie->lock);
-	}
+	/* TODO: Do invalidation */
 
 	_leave("");
 }
