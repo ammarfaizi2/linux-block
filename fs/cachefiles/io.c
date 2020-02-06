@@ -10,7 +10,6 @@
 #include <linux/file.h>
 #include <linux/uio.h>
 #include <linux/sched/mm.h>
-#include <linux/netfs.h>
 #include "internal.h"
 
 struct cachefiles_kiocb {
@@ -21,6 +20,7 @@ struct cachefiles_kiocb {
 		size_t		skipped;
 		size_t		len;
 	};
+	struct cachefiles_object *object;
 	netfs_io_terminated_t	term_func;
 	void			*term_func_priv;
 	bool			was_async;
@@ -29,6 +29,7 @@ struct cachefiles_kiocb {
 static inline void cachefiles_put_kiocb(struct cachefiles_kiocb *ki)
 {
 	if (refcount_dec_and_test(&ki->ki_refcnt)) {
+		cachefiles_put_object(&ki->object->fscache, fscache_obj_put_ioreq);
 		fput(ki->iocb.ki_filp);
 		kfree(ki);
 	}
@@ -49,6 +50,7 @@ static void cachefiles_read_complete(struct kiocb *iocb, long ret, long ret2)
 		ki->term_func(ki->term_func_priv, ret, ki->was_async);
 	}
 
+	fscache_uncount_io_operation(ki->object->fscache.cookie);
 	cachefiles_put_kiocb(ki);
 }
 
@@ -62,6 +64,7 @@ static int cachefiles_read(struct netfs_cache_resources *cres,
 			   netfs_io_terminated_t term_func,
 			   void *term_func_priv)
 {
+	struct cachefiles_object *object = cachefiles_cres_object(cres);
 	struct cachefiles_kiocb *ki;
 	struct file *file = cres->cache_priv2;
 	unsigned int old_nofs;
@@ -73,7 +76,7 @@ static int cachefiles_read(struct netfs_cache_resources *cres,
 	       i_size_read(file->f_inode));
 
 	fscache_wait_for_operation(cres, FSCACHE_WANT_READ);
-	fscache_count_io_operation(fscache_cres_object(cres)->cookie);
+	fscache_count_io_operation(object->fscache.cookie);
 
 	/* If the caller asked us to seek for data before doing the read, then
 	 * we should do that now.  If we find a gap, we fill it with zeros.
@@ -95,6 +98,7 @@ static int cachefiles_read(struct netfs_cache_resources *cres,
 			 */
 			iov_iter_zero(len, iter);
 			skipped = len;
+			fscache_uncount_io_operation(object->fscache.cookie);
 			ret = 0;
 			goto presubmission_error;
 		}
@@ -115,6 +119,7 @@ static int cachefiles_read(struct netfs_cache_resources *cres,
 	ki->iocb.ki_hint	= ki_hint_validate(file_write_hint(file));
 	ki->iocb.ki_ioprio	= get_current_ioprio();
 	ki->skipped		= skipped;
+	ki->object		= object;
 	ki->term_func		= term_func;
 	ki->term_func_priv	= term_func_priv;
 	ki->was_async		= true;
@@ -123,6 +128,7 @@ static int cachefiles_read(struct netfs_cache_resources *cres,
 		ki->iocb.ki_complete = cachefiles_read_complete;
 
 	get_file(ki->iocb.ki_filp);
+	cachefiles_grab_object(&object->fscache, fscache_obj_get_ioreq);
 
 	old_nofs = memalloc_nofs_save();
 	ret = vfs_iocb_iter_read(file, &ki->iocb, iter);
@@ -173,9 +179,12 @@ static void cachefiles_write_complete(struct kiocb *iocb, long ret, long ret2)
 	__sb_writers_acquired(inode->i_sb, SB_FREEZE_WRITE);
 	__sb_end_write(inode->i_sb, SB_FREEZE_WRITE);
 
+	if (ret == ki->len)
+		cachefiles_mark_content_map(ki->object, ki->start, ki->len);
 	if (ki->term_func)
 		ki->term_func(ki->term_func_priv, ret, ki->was_async);
 
+	fscache_uncount_io_operation(ki->object->fscache.cookie);
 	cachefiles_put_kiocb(ki);
 }
 
@@ -188,6 +197,7 @@ static int cachefiles_write(struct netfs_cache_resources *cres,
 			    netfs_io_terminated_t term_func,
 			    void *term_func_priv)
 {
+	struct cachefiles_object *object = cachefiles_cres_object(cres);
 	struct cachefiles_kiocb *ki;
 	struct inode *inode;
 	struct file *file = cres->cache_priv2;
@@ -200,7 +210,7 @@ static int cachefiles_write(struct netfs_cache_resources *cres,
 	       i_size_read(file->f_inode));
 
 	fscache_wait_for_operation(cres, FSCACHE_WANT_WRITE);
-	fscache_count_io_operation(fscache_cres_object(cres)->cookie);
+	fscache_count_io_operation(object->fscache.cookie);
 
 	ki = kzalloc(sizeof(struct cachefiles_kiocb), GFP_KERNEL);
 	if (!ki)
@@ -214,6 +224,7 @@ static int cachefiles_write(struct netfs_cache_resources *cres,
 	ki->iocb.ki_ioprio	= get_current_ioprio();
 	ki->start		= start_pos;
 	ki->len			= len;
+	ki->object		= object;
 	ki->term_func		= term_func;
 	ki->term_func_priv	= term_func_priv;
 	ki->was_async		= true;
@@ -231,6 +242,7 @@ static int cachefiles_write(struct netfs_cache_resources *cres,
 	__sb_writers_release(inode->i_sb, SB_FREEZE_WRITE);
 
 	get_file(ki->iocb.ki_filp);
+	cachefiles_grab_object(&object->fscache, fscache_obj_get_ioreq);
 
 	old_nofs = memalloc_nofs_save();
 	ret = vfs_iocb_iter_write(file, &ki->iocb, iter);
@@ -357,7 +369,7 @@ int cachefiles_begin_operation(struct netfs_cache_resources *cres)
 {
 	struct cachefiles_object *object = cachefiles_cres_object(cres);
 	struct cachefiles_cache *cache;
-	struct path path;
+	//struct path path;
 	struct file *file;
 
 	_enter("");
@@ -365,6 +377,11 @@ int cachefiles_begin_operation(struct netfs_cache_resources *cres)
 	cache = container_of(object->fscache.cache,
 			     struct cachefiles_cache, cache);
 
+#if 1 // TODO - Resolve how best to do this
+	spin_lock(&object->fscache.lock);
+	file = get_file(object->backing_file);
+	spin_unlock(&object->fscache.lock);
+#else
 	path.mnt = cache->mnt;
 	path.dentry = object->dentry;
 	file = open_with_fake_path(&path, O_RDWR | O_LARGEFILE | O_DIRECT,
@@ -379,13 +396,16 @@ int cachefiles_begin_operation(struct netfs_cache_resources *cres)
 		pr_notice("Cache does not support read_iter and write_iter\n");
 		goto error_file;
 	}
+#endif
 
 	cres->cache_priv2 = file;
 	cres->ops = &cachefiles_netfs_cache_ops;
 	_leave("");
 	return 0;
 
+#if 0
 error_file:
 	fput(file);
 	return -EIO;
+#endif
 }

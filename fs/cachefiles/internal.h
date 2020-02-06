@@ -158,6 +158,8 @@ extern int cachefiles_has_space(struct cachefiles_cache *cache,
 extern const struct fscache_cache_ops cachefiles_cache_ops;
 extern struct fscache_object *cachefiles_grab_object(struct fscache_object *_object,
 						     enum fscache_obj_ref_trace why);
+extern void cachefiles_put_object(struct fscache_object *_object,
+				  enum fscache_obj_ref_trace why);
 
 void cachefiles_put_object(struct fscache_object *_object,
 			   enum fscache_obj_ref_trace why);
