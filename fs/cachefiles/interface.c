@@ -488,4 +488,5 @@ const struct fscache_cache_ops cachefiles_cache_ops = {
 	.get_object_usage	= cachefiles_get_object_usage,
 	.sync_cache		= cachefiles_sync_cache,
 	.begin_operation	= cachefiles_begin_operation,
+	.display_object		= cachefiles_display_object,
 };
