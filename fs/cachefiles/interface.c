@@ -9,6 +9,7 @@
 #include <linux/mount.h>
 #include <linux/xattr.h>
 #include <linux/file.h>
+#include <linux/falloc.h>
 #include <trace/events/fscache.h>
 #include "internal.h"
 
@@ -134,55 +135,72 @@ struct cachefiles_object *cachefiles_grab_object(struct cachefiles_object *objec
 }
 
 /*
- * update the auxiliary data for an object object on disk
+ * Shorten the backing object to discard any dirty data and free up
+ * any unused granules.
  */
-static void cachefiles_update_object(struct cachefiles_object *object)
+static bool cachefiles_shorten_object(struct cachefiles_object *object,
+				      struct file *file, loff_t new_size)
 {
 	struct cachefiles_cache *cache = object->volume->cache;
-	const struct cred *saved_cred;
-	struct file *file = object->file;
-	loff_t object_size, i_size;
+	struct inode *inode = file_inode(file);
+	loff_t i_size, dio_size;
 	int ret;
 
-	_enter("{OBJ%x}", object->debug_id);
+	dio_size = round_up(new_size, CACHEFILES_DIO_BLOCK_SIZE);
+	i_size = i_size_read(inode);
 
-	cachefiles_begin_secure(cache, &saved_cred);
+	trace_cachefiles_trunc(object, inode, i_size, dio_size,
+			       cachefiles_trunc_shrink);
+	ret = vfs_truncate(&file->f_path, dio_size);
+	if (ret < 0) {
+		cachefiles_io_error_obj(object, "Trunc-to-size failed %d", ret);
+		cachefiles_remove_object_xattr(cache, file->f_path.dentry);
+		return false;
+	}
 
-	object_size = object->cookie->object_size;
-	i_size = i_size_read(file_inode(file));
-	if (i_size > object_size) {
-		_debug("trunc %llx -> %llx", i_size, object_size);
-		trace_cachefiles_trunc(object, file_inode(file),
-				       i_size, object_size,
-				       cachefiles_trunc_shrink);
-		ret = vfs_truncate(&file->f_path, object_size);
+	if (new_size < dio_size) {
+		trace_cachefiles_trunc(object, inode, dio_size, new_size,
+				       cachefiles_trunc_dio_adjust);
+		ret = vfs_fallocate(file, FALLOC_FL_ZERO_RANGE,
+				    new_size, dio_size);
 		if (ret < 0) {
-			cachefiles_io_error_obj(object, "Trunc-to-size failed");
+			cachefiles_io_error_obj(object, "Trunc-to-dio-size failed %d", ret);
 			cachefiles_remove_object_xattr(cache, file->f_path.dentry);
-			goto out;
-		}
-
-		object_size = round_up(object_size, CACHEFILES_DIO_BLOCK_SIZE);
-		i_size = i_size_read(file_inode(file));
-		_debug("trunc %llx -> %llx", i_size, object_size);
-		if (i_size < object_size) {
-			trace_cachefiles_trunc(object, file_inode(file),
-					       i_size, object_size,
-					       cachefiles_trunc_dio_adjust);
-			ret = vfs_truncate(&file->f_path, object_size);
-			if (ret < 0) {
-				cachefiles_io_error_obj(object, "Trunc-to-dio-size failed");
-				cachefiles_remove_object_xattr(cache, file->f_path.dentry);
-				goto out;
-			}
+			return false;
 		}
 	}
 
-	cachefiles_set_object_xattr(object);
+	return true;
+}
 
-out:
-	cachefiles_end_secure(cache, saved_cred);
-	_leave("");
+/*
+ * Resize the backing object.
+ */
+static void cachefiles_resize_cookie(struct netfs_cache_resources *cres,
+				     loff_t new_size)
+{
+	struct cachefiles_object *object = cachefiles_cres_object(cres);
+	struct cachefiles_cache *cache = object->volume->cache;
+	struct fscache_cookie *cookie = object->cookie;
+	const struct cred *saved_cred;
+	struct file *file = cachefiles_cres_file(cres);
+	loff_t old_size = cookie->object_size;
+
+	_enter("%llu->%llu", old_size, new_size);
+
+	if (new_size < old_size) {
+		cachefiles_begin_secure(cache, &saved_cred);
+		cachefiles_shorten_object(object, file, new_size);
+		cachefiles_end_secure(cache, saved_cred);
+		object->cookie->object_size = new_size;
+		return;
+	}
+
+	/* The file is being expanded.  We don't need to do anything
+	 * particularly.  cookie->initial_size doesn't change and so the point
+	 * at which we have to download before doesn't change.
+	 */
+	cookie->object_size = new_size;
 }
 
 /*
@@ -196,7 +214,7 @@ static void cachefiles_commit_object(struct cachefiles_object *object,
 	if (test_and_clear_bit(FSCACHE_COOKIE_NEEDS_UPDATE, &object->cookie->flags))
 		update = true;
 	if (update)
-		cachefiles_update_object(object);
+		cachefiles_set_object_xattr(object);
 
 	if (test_bit(CACHEFILES_OBJECT_USING_TMPFILE, &object->flags))
 		cachefiles_commit_tmpfile(cache, object);
@@ -440,5 +458,6 @@ const struct fscache_cache_ops cachefiles_cache_ops = {
 	.lookup_cookie		= cachefiles_lookup_cookie,
 	.withdraw_cookie	= cachefiles_withdraw_cookie,
 	.invalidate_cookie	= cachefiles_invalidate_cookie,
+	.resize_cookie		= cachefiles_resize_cookie,
 	.begin_operation	= cachefiles_begin_operation,
 };
