@@ -41,6 +41,7 @@ struct cachefiles_object *cachefiles_alloc_object(struct fscache_cookie *cookie)
 	object->volume = volume;
 	object->debug_id = atomic_inc_return(&cachefiles_object_debug_id);
 	object->cookie = fscache_get_cookie(cookie, fscache_cookie_get_attach_object);
+	rwlock_init(&object->content_map_lock);
 
 	atomic_inc(&vcookie->cache->object_count);
 	trace_cachefiles_ref(object->debug_id, cookie->debug_id, 1,
@@ -190,6 +191,7 @@ static void cachefiles_resize_cookie(struct netfs_cache_resources *cres,
 
 	if (new_size < old_size) {
 		cachefiles_begin_secure(cache, &saved_cred);
+		cachefiles_shorten_content_map(object, new_size);
 		cachefiles_shorten_object(object, file, new_size);
 		cachefiles_end_secure(cache, saved_cred);
 		object->cookie->object_size = new_size;
@@ -211,6 +213,8 @@ static void cachefiles_commit_object(struct cachefiles_object *object,
 {
 	bool update = false;
 
+	if (object->content_map_changed)
+		cachefiles_save_content_map(object);
 	if (test_and_clear_bit(FSCACHE_COOKIE_NEEDS_UPDATE, &object->cookie->flags))
 		update = true;
 	if (update)
@@ -300,6 +304,8 @@ void cachefiles_put_object(struct cachefiles_object *object,
 		cache = object->volume->cache->cache;
 		fscache_put_cookie(object->cookie, fscache_cookie_put_object);
 		object->cookie = NULL;
+
+		kfree(object->content_map);
 		kmem_cache_free(cachefiles_object_jar, object);
 		if (atomic_dec_and_test(&cache->object_count))
 			wake_up_all(&cachefiles_clearance_wq);
@@ -399,6 +405,8 @@ static bool cachefiles_invalidate_cookie(struct fscache_cookie *cookie)
 {
 	struct cachefiles_object *object = cookie->cache_priv;
 	struct file *new_file, *old_file;
+	u8 *map, *old_map;
+	size_t map_size;
 	bool old_tmpfile;
 
 	_enter("o=%x,[%llu]", object->debug_id, object->cookie->object_size);
@@ -415,20 +423,32 @@ static bool cachefiles_invalidate_cookie(struct fscache_cookie *cookie)
 	if (IS_ERR(new_file))
 		goto failed;
 
+	map = cachefiles_new_content_map(object, &map_size);
+	if (IS_ERR(map))
+		goto failed_fput;
+
 	/* Substitute the VFS target */
 	_debug("sub");
 	spin_lock(&object->lock);
+	write_lock_bh(&object->content_map_lock);
 
 	old_file = object->file;
-	object->file = new_file;
+	old_map = object->content_map;
+	object->file			= new_file;
+	object->content_map		= map;
+	object->content_map_size	= map_size;
+	object->content_map_changed	= true;
+	object->content_info		= CACHEFILES_CONTENT_NO_DATA;
 	set_bit(CACHEFILES_OBJECT_USING_TMPFILE, &object->flags);
 	set_bit(FSCACHE_COOKIE_NEEDS_UPDATE, &object->cookie->flags);
 
+	write_unlock_bh(&object->content_map_lock);
 	spin_unlock(&object->lock);
 	_debug("subbed");
 
 	/* Allow I/O to take place again */
 	fscache_set_cookie_stage(cookie, FSCACHE_COOKIE_STAGE_ACTIVE);
+	kfree(old_map);
 
 	if (old_file) {
 		if (!old_tmpfile) {
@@ -446,6 +466,8 @@ static bool cachefiles_invalidate_cookie(struct fscache_cookie *cookie)
 	_leave(" = t");
 	return true;
 
+failed_fput:
+	fput(new_file);
 failed:
 	fscache_set_cookie_stage(cookie, FSCACHE_COOKIE_STAGE_FAILED);
 	_leave(" = f");

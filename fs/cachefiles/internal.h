@@ -21,6 +21,10 @@
 
 #define CACHEFILES_DIO_BLOCK_SIZE 4096
 
+/* Cachefile content map parameters */
+#define CACHEFILES_GRAN_SIZE	(256 * 1024)
+#define CACHEFILES_SIZE_LIMIT	(512 * 8 * CACHEFILES_GRAN_SIZE)
+
 struct cachefiles_cache;
 struct cachefiles_object;
 
@@ -30,6 +34,16 @@ extern unsigned cachefiles_debug;
 #define CACHEFILES_DEBUG_KDEBUG	4
 
 #define cachefiles_gfp (__GFP_RECLAIM | __GFP_NORETRY | __GFP_NOMEMALLOC)
+
+enum cachefiles_content {
+	/* These values are saved on disk */
+	CACHEFILES_CONTENT_NO_DATA	= 0, /* No content stored */
+	CACHEFILES_CONTENT_SINGLE	= 1, /* Content is monolithic, all is present */
+	CACHEFILES_CONTENT_ALL		= 2, /* Content is all present, no map */
+	CACHEFILES_CONTENT_MAP		= 3, /* Content is piecemeal, map in use */
+	CACHEFILES_CONTENT_DIRTY	= 4, /* Content is dirty (only seen on disk) */
+	nr__cachefiles_content
+};
 
 /*
  * Cached volume representation.
@@ -59,6 +73,13 @@ struct cachefiles_object {
 	u8				key_hash;	/* Hash of object key */
 	unsigned long			flags;
 #define CACHEFILES_OBJECT_USING_TMPFILE	0		/* Have an unlinked tmpfile */
+
+	/* Map of the content blocks in the object */
+	enum cachefiles_content		content_info:8;	/* Info about content presence */
+	bool				content_map_changed;
+	u8				*content_map;		/* Content present bitmap */
+	unsigned int			content_map_size;	/* Size of buffer */
+	rwlock_t			content_map_lock;
 };
 
 extern struct kmem_cache *cachefiles_object_jar;
@@ -135,6 +156,18 @@ extern wait_queue_head_t cachefiles_clearance_wq;
 
 extern int cachefiles_daemon_bind(struct cachefiles_cache *cache, char *args);
 extern void cachefiles_daemon_unbind(struct cachefiles_cache *cache);
+
+/*
+ * content-map.c
+ */
+extern u8 *cachefiles_new_content_map(struct cachefiles_object *object,
+				      size_t *_size);
+extern void cachefiles_mark_content_map(struct cachefiles_object *object,
+					loff_t start, loff_t len, unsigned int inval_counter);
+extern void cachefiles_expand_content_map(struct cachefiles_object *object, loff_t size);
+extern void cachefiles_shorten_content_map(struct cachefiles_object *object, loff_t new_size);
+extern int cachefiles_load_content_map(struct cachefiles_object *object);
+extern void cachefiles_save_content_map(struct cachefiles_object *object);
 
 /*
  * daemon.c
