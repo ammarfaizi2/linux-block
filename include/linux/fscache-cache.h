@@ -23,7 +23,6 @@
 struct fscache_cache;
 struct fscache_cache_ops;
 struct fscache_object;
-struct fscache_operation;
 
 enum fscache_obj_ref_trace {
 	fscache_obj_get_add_to_deps,
@@ -62,11 +61,8 @@ struct fscache_cache {
 	char			identifier[36];	/* cache label */
 
 	/* node management */
-	struct work_struct	op_gc;		/* operation garbage collector */
 	struct list_head	object_list;	/* list of data/index objects */
-	struct list_head	op_gc_list;	/* list of ops to be deleted */
 	spinlock_t		object_list_lock;
-	spinlock_t		op_gc_list_lock;
 	atomic_t		object_count;	/* no. of live objects in this cache */
 	struct fscache_object	*fsdef;		/* object for the fsdef index */
 	unsigned long		flags;
@@ -75,68 +71,6 @@ struct fscache_cache {
 };
 
 extern wait_queue_head_t fscache_cache_cleared_wq;
-
-/*
- * operation to be applied to a cache object
- * - retrieval initiation operations are done in the context of the process
- *   that issued them, and not in an async thread pool
- */
-typedef void (*fscache_operation_release_t)(struct fscache_operation *op);
-typedef void (*fscache_operation_processor_t)(struct fscache_operation *op);
-typedef void (*fscache_operation_cancel_t)(struct fscache_operation *op);
-
-enum fscache_operation_state {
-	FSCACHE_OP_ST_BLANK,		/* Op is not yet submitted */
-	FSCACHE_OP_ST_INITIALISED,	/* Op is initialised */
-	FSCACHE_OP_ST_PENDING,		/* Op is blocked from running */
-	FSCACHE_OP_ST_IN_PROGRESS,	/* Op is in progress */
-	FSCACHE_OP_ST_COMPLETE,		/* Op is complete */
-	FSCACHE_OP_ST_CANCELLED,	/* Op has been cancelled */
-	FSCACHE_OP_ST_DEAD		/* Op is now dead */
-};
-
-struct fscache_operation {
-	struct work_struct	work;		/* record for async ops */
-	struct list_head	pend_link;	/* link in object->pending_ops */
-	struct fscache_object	*object;	/* object to be operated upon */
-
-	unsigned long		flags;
-#define FSCACHE_OP_TYPE		0x000f	/* operation type */
-#define FSCACHE_OP_ASYNC	0x0001	/* - async op, processor may sleep for disk */
-#define FSCACHE_OP_MYTHREAD	0x0002	/* - processing is done be issuing thread, not pool */
-#define FSCACHE_OP_WAITING	4	/* cleared when op is woken */
-#define FSCACHE_OP_EXCLUSIVE	5	/* exclusive op, other ops must wait */
-#define FSCACHE_OP_DEC_READ_CNT	6	/* decrement object->n_reads on destruction */
-#define FSCACHE_OP_UNUSE_COOKIE	7	/* call fscache_unuse_cookie() on completion */
-#define FSCACHE_OP_KEEP_FLAGS	0x00f0	/* flags to keep when repurposing an op */
-
-	enum fscache_operation_state state;
-	atomic_t		usage;
-	unsigned		debug_id;	/* debugging ID */
-
-	/* operation processor callback
-	 * - can be NULL if FSCACHE_OP_WAITING is going to be used to perform
-	 *   the op in a non-pool thread */
-	fscache_operation_processor_t processor;
-
-	/* Operation cancellation cleanup (optional) */
-	fscache_operation_cancel_t cancel;
-
-	/* operation releaser */
-	fscache_operation_release_t release;
-};
-
-extern atomic_t fscache_op_debug_id;
-extern void fscache_op_work_func(struct work_struct *work);
-
-extern void fscache_enqueue_operation(struct fscache_operation *);
-extern void fscache_op_complete(struct fscache_operation *, bool);
-extern void fscache_put_operation(struct fscache_operation *);
-extern void fscache_operation_init(struct fscache_cookie *,
-				   struct fscache_operation *,
-				   fscache_operation_processor_t,
-				   fscache_operation_cancel_t,
-				   fscache_operation_release_t);
 
 /*
  * cache operations
@@ -235,9 +169,6 @@ struct fscache_object {
 	int			n_children;	/* number of child objects */
 	int			n_ops;		/* number of extant ops on object */
 	int			n_obj_ops;	/* number of object ops outstanding on object */
-	int			n_in_progress;	/* number of ops in progress */
-	int			n_exclusive;	/* number of exclusive ops queued or in progress */
-	atomic_t		n_reads;	/* number of read ops in progress */
 	spinlock_t		lock;		/* state and operations lock */
 
 	unsigned long		lookup_jif;	/* time at which lookup started */
@@ -248,7 +179,6 @@ struct fscache_object {
 
 	unsigned long		flags;
 #define FSCACHE_OBJECT_LOCK		0	/* T if object is busy being processed */
-#define FSCACHE_OBJECT_PENDING_WRITE	1	/* T if object has pending write */
 #define FSCACHE_OBJECT_WAITING		2	/* T if object is waiting on its parent */
 #define FSCACHE_OBJECT_IS_LIVE		3	/* T if object is not withdrawn or relinquished */
 #define FSCACHE_OBJECT_IS_LOOKED_UP	4	/* T if object has been looked up */
@@ -265,7 +195,6 @@ struct fscache_object {
 	struct work_struct	work;		/* attention scheduling record */
 	struct list_head	dependents;	/* FIFO of dependent objects */
 	struct list_head	dep_link;	/* link in parent's dependents list */
-	struct list_head	pending_ops;	/* unstarted operations on this object */
 #ifdef CONFIG_FSCACHE_OBJECT_LIST
 	struct rb_node		objlist_link;	/* link in global object list */
 #endif
