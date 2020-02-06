@@ -27,6 +27,7 @@
 int __fscache_begin_read_operation(struct netfs_read_request *rreq,
 				   struct fscache_cookie *cookie)
 {
+#if 0
 	struct fscache_retrieval *op;
 	struct fscache_object *object;
 	bool wake_cookie = false;
@@ -109,6 +110,7 @@ nobufs_unlock:
 	if (wake_cookie)
 		__fscache_wake_unused_cookie(cookie);
 nobufs:
+#endif
 	fscache_stat(&fscache_n_retrievals_nobufs);
 	_leave(" = -ENOBUFS");
 	return -ENOBUFS;

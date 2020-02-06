@@ -13,6 +13,8 @@
 #include <linux/netfs.h>
 #include "internal.h"
 
+#if 0
+
 struct cachefiles_kiocb {
 	struct kiocb		iocb;
 	refcount_t		ki_refcnt;
@@ -373,13 +375,14 @@ static const struct netfs_cache_ops cachefiles_netfs_cache_ops = {
 	.prepare_read		= cachefiles_prepare_read,
 	.prepare_write		= cachefiles_prepare_write,
 };
+#endif
 
 /*
  * Open the cache file when beginning a cache operation.
  */
-int cachefiles_begin_read_operation(struct netfs_read_request *rreq,
-				    struct fscache_retrieval *op)
+int cachefiles_begin_read_operation(struct netfs_read_request *rreq)
 {
+#if 0
 	struct cachefiles_object *object;
 	struct cachefiles_cache *cache;
 	struct path path;
@@ -416,5 +419,6 @@ int cachefiles_begin_read_operation(struct netfs_read_request *rreq,
 
 error_file:
 	fput(file);
+#endif
 	return -EIO;
 }
