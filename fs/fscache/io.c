@@ -110,8 +110,8 @@ nobufs_unlock:
 	if (wake_cookie)
 		__fscache_wake_unused_cookie(cookie);
 nobufs:
-#endif
 	fscache_stat(&fscache_n_retrievals_nobufs);
+#endif
 	_leave(" = -ENOBUFS");
 	return -ENOBUFS;
 }
