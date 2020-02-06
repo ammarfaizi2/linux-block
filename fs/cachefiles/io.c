@@ -84,6 +84,7 @@ int cachefiles_read(struct fscache_op_resources *opr,
 
 	__fscache_wait_for_operation(opr, FSCACHE_WANT_READ);
 	fscache_count_io_operation(opr->object->cookie);
+	fscache_count_read();
 
 	/* If the caller asked us to seek for data before doing the read, then
 	 * we should do that now.  If we find a gap, we fill it with zeros.
@@ -233,6 +234,7 @@ int cachefiles_write(struct fscache_op_resources *opr,
 
 	__fscache_wait_for_operation(opr, FSCACHE_WANT_WRITE);
 	fscache_count_io_operation(opr->object->cookie);
+	fscache_count_write();
 
 	ki = kzalloc(sizeof(struct cachefiles_kiocb), GFP_KERNEL);
 	if (!ki)
