@@ -474,8 +474,11 @@ void fscache_set_cookie_stage(struct fscache_cookie *cookie,
 /*
  * Invalidate an object.  Callable with spinlocks held.
  */
-void __fscache_invalidate(struct fscache_cookie *cookie, loff_t new_size)
+void __fscache_invalidate(struct fscache_cookie *cookie, loff_t new_size,
+			  unsigned int flags)
 {
+	struct fscache_object *object = NULL;
+
 	_enter("{%s}", cookie->type_name);
 
 	fscache_stat(&fscache_n_invalidates);
@@ -490,11 +493,39 @@ void __fscache_invalidate(struct fscache_cookie *cookie, loff_t new_size)
 	spin_lock(&cookie->lock);
 	cookie->object_size = new_size;
 	cookie->zero_point = new_size;
-	spin_unlock(&cookie->lock);
 
-	if (!hlist_empty(&cookie->backing_objects) &&
-	    test_and_set_bit(FSCACHE_COOKIE_INVALIDATING, &cookie->flags))
-		fscache_dispatch(cookie, NULL, 0, fscache_invalidate_object);
+	if (!hlist_empty(&cookie->backing_objects)) {
+		object = hlist_entry(cookie->backing_objects.first,
+				     struct fscache_object, cookie_link);
+		object->inval_counter++;
+	}
+
+	switch (cookie->stage) {
+	case FSCACHE_COOKIE_STAGE_QUIESCENT:
+	case FSCACHE_COOKIE_STAGE_DEAD:
+	case FSCACHE_COOKIE_STAGE_INITIALISING: /* Assume later checks will catch it */
+	case FSCACHE_COOKIE_STAGE_INVALIDATING: /* is_still_valid will catch it */
+		spin_unlock(&cookie->lock);
+		_leave(" [no %u]", cookie->stage);
+		return;
+
+	case FSCACHE_COOKIE_STAGE_LOOKING_UP:
+		_leave(" [look %x]", object->inval_counter);
+		return;
+
+	case FSCACHE_COOKIE_STAGE_NO_DATA_YET:
+	case FSCACHE_COOKIE_STAGE_ACTIVE:
+		cookie->stage = FSCACHE_COOKIE_STAGE_INVALIDATING;
+		wake_up_var(&cookie->stage);
+
+		atomic_inc(&cookie->n_ops);
+		object->cache->ops->grab_object(object, fscache_obj_get_inval);
+		spin_unlock(&cookie->lock);
+
+		fscache_dispatch(cookie, object, flags, fscache_invalidate_object);
+		_leave(" [inv]");
+		return;
+	}
 }
 EXPORT_SYMBOL(__fscache_invalidate);
 

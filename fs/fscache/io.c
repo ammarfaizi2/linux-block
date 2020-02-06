@@ -84,6 +84,8 @@ ready:
 		goto not_live;
 
 	object->cache->ops->grab_object(object, fscache_obj_get_ioreq);
+	if (req)
+		req->inval_counter = object->inval_counter;
 
 	atomic_inc(&cookie->n_ops);
 	spin_unlock(&cookie->lock);

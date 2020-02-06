@@ -205,6 +205,34 @@ unsigned int cachefiles_shape_extent(struct fscache_object *obj,
 }
 
 /*
+ * Allocate a new content map.
+ */
+u8 *cachefiles_new_content_map(struct cachefiles_object *object,
+			       unsigned int *_size)
+{
+	size_t size;
+	u8 *map = NULL;
+
+	_enter("");
+
+	if (!(object->fscache.cookie->advice & FSCACHE_ADV_SINGLE_CHUNK)) {
+		/* Single-chunk object.  The presence or absence of the content
+		 * map xattr is sufficient indication.
+		 */
+		*_size = 0;
+		return NULL;
+	}
+
+	/* Granular object. */
+	size = cachefiles_map_size(object->fscache.cookie->object_size);
+	map = kzalloc(size, GFP_KERNEL);
+	if (!map)
+		return ERR_PTR(-ENOMEM);
+	*_size = size;
+	return map;
+}
+
+/*
  * Mark the content map to indicate stored granule.
  */
 void cachefiles_mark_content_map(struct fscache_io_request *req)
@@ -217,7 +245,9 @@ void cachefiles_mark_content_map(struct fscache_io_request *req)
 
 	read_lock_bh(&object->content_map_lock);
 
-	if (object->fscache.cookie->advice & FSCACHE_ADV_SINGLE_CHUNK) {
+	if (req->inval_counter != object->fscache.inval_counter) {
+		_debug("inval mark");
+	} else if (object->fscache.cookie->advice & FSCACHE_ADV_SINGLE_CHUNK) {
 		if (pos == 0) {
 			object->content_info = CACHEFILES_CONTENT_SINGLE;
 			set_bit(FSCACHE_OBJECT_NEEDS_UPDATE, &object->fscache.flags);

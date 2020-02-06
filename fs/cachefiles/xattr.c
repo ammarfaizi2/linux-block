@@ -104,8 +104,7 @@ bad_type:
 /*
  * set the state xattr on a cache file
  */
-int cachefiles_set_object_xattr(struct cachefiles_object *object,
-				unsigned int xattr_flags)
+int cachefiles_set_object_xattr(struct cachefiles_object *object)
 {
 	struct cachefiles_xattr *buf;
 	struct dentry *dentry = object->dentry;
@@ -129,8 +128,7 @@ int cachefiles_set_object_xattr(struct cachefiles_object *object,
 		memcpy(buf->data, fscache_get_aux(object->fscache.cookie), len);
 
 	ret = vfs_setxattr(dentry, cachefiles_xattr_cache,
-			   buf, sizeof(struct cachefiles_xattr) + len,
-			   xattr_flags);
+			   buf, sizeof(struct cachefiles_xattr) + len, 0);
 	if (ret < 0) {
 		trace_cachefiles_coherency(object, d_inode(dentry)->i_ino,
 					   buf->content,

@@ -635,7 +635,7 @@ int fscache_read_helper_single(struct fscache_io_request *req,
 				goto out;
 
 			_debug("inval d %d", ret);
-			__fscache_invalidate(req->cookie, i_size);
+			__fscache_invalidate(req->cookie, i_size, 0);
 		}
 
 		if (notes & FSCACHE_RHLP_NOTE_WRITE_TO_CACHE)

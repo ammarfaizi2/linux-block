@@ -468,7 +468,7 @@ lookup_again:
 
 	if (object->new) {
 		/* attach data to a newly constructed terminal object */
-		ret = cachefiles_set_object_xattr(object, XATTR_CREATE);
+		ret = cachefiles_set_object_xattr(object);
 		if (ret < 0)
 			goto check_error;
 	} else {
@@ -810,4 +810,60 @@ int cachefiles_check_in_use(struct cachefiles_cache *cache, struct dentry *dir,
 	dput(victim);
 	//_leave(" = 0");
 	return ret;
+}
+
+/*
+ * Attempt to link a temporary file into its rightful place in the cache.
+ */
+void cachefiles_commit_tmpfile(struct cachefiles_cache *cache,
+			       struct cachefiles_object *object)
+{
+	struct dentry *dir, *dentry;
+	char *name;
+	unsigned int namelen;
+	int ret;
+
+	_enter(",%pd", object->old);
+
+	namelen = object->old->d_name.len;
+	name = kmemdup_nul(object->old->d_name.name, namelen, GFP_KERNEL);
+	if (!name)
+		goto out;
+
+	dir = dget_parent(object->old);
+
+	inode_lock_nested(d_inode(dir), I_MUTEX_PARENT);
+	ret = cachefiles_bury_object(cache, object, dir, object->old,
+				     FSCACHE_OBJECT_IS_STALE);
+	dput(object->old);
+	object->old = NULL;
+	if (ret < 0 && ret != -ENOENT) {
+		_debug("bury fail %d", ret);
+		goto out_name;
+	}
+
+	inode_lock_nested(d_inode(dir), I_MUTEX_PARENT);
+	dentry = lookup_one_len(name, dir, namelen);
+	if (IS_ERR(dentry)) {
+		_debug("lookup fail %ld", PTR_ERR(dentry));
+		goto out_unlock;
+	}
+
+	ret = vfs_link(object->dentry, d_inode(dir), dentry, NULL);
+	if (ret < 0) {
+		_debug("link fail %d", ret);
+		dput(dentry);
+	} else {
+		trace_cachefiles_link(object, d_inode(object->dentry));
+		dput(object->dentry);
+		object->dentry = dentry;
+	}
+
+out_unlock:
+	inode_unlock(d_inode(dir));
+out_name:
+	kfree(name);
+	dput(dir);
+out:
+	_leave("");
 }
