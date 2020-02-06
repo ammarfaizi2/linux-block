@@ -99,11 +99,9 @@ static int cachefiles_daemon_add_cache(struct cachefiles_cache *cache)
 	/* allocate the root index object */
 	ret = -ENOMEM;
 
-	fsdef = kmem_cache_alloc(cachefiles_object_jar, GFP_KERNEL);
+	fsdef = kmem_cache_zalloc(cachefiles_object_jar, GFP_KERNEL);
 	if (!fsdef)
 		goto error_root_object;
-
-	ASSERTCMP(fsdef->backer, ==, NULL);
 
 	atomic_set(&fsdef->usage, 1);
 	fsdef->type = FSCACHE_COOKIE_TYPE_INDEX;

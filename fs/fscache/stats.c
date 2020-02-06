@@ -5,7 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#define FSCACHE_DEBUG_LEVEL THREAD
+#define FSCACHE_DEBUG_LEVEL CACHE
 #include <linux/module.h>
 #include <linux/proc_fs.h>
 #include <linux/seq_file.h>

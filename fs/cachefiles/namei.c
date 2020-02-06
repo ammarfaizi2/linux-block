@@ -18,8 +18,6 @@
 #include <linux/slab.h>
 #include "internal.h"
 
-#define CACHEFILES_KEYBUF_SIZE 512
-
 /*
  * Mark the backing file as being a cache file if it's not already in use so.
  */
@@ -263,12 +261,23 @@ int cachefiles_delete_object(struct cachefiles_cache *cache,
 }
 
 /*
+ * Handle negative lookup.  We create a temporary file for a datafile to use
+ * which we will link into place later.
+ */
+static void cachefiles_negative_lookup(struct cachefiles_object *parent,
+				       struct cachefiles_object *object)
+{
+	// TODO: Use vfs_tmpfile() for datafiles
+	//fscache_object_lookup_negative(&object->fscache);
+}
+
+/*
  * walk from the parent object to the child object through the backing
  * filesystem, creating directories as we go
  */
-int cachefiles_walk_to_object(struct cachefiles_object *parent,
-			      struct cachefiles_object *object,
-			      const char *key)
+bool cachefiles_walk_to_object(struct cachefiles_object *parent,
+			       struct cachefiles_object *object,
+			       const char *key)
 {
 	struct cachefiles_cache *cache;
 	struct dentry *dir, *next = NULL;
@@ -276,7 +285,7 @@ int cachefiles_walk_to_object(struct cachefiles_object *parent,
 	struct path path;
 	unsigned long start;
 	const char *name;
-	bool marked = false;
+	bool marked = false, negated = false;
 	int ret, nlen;
 
 	_enter("OBJ%x{%pd},OBJ%x,%s,",
@@ -293,7 +302,7 @@ int cachefiles_walk_to_object(struct cachefiles_object *parent,
 	if (!(d_is_dir(parent->dentry))) {
 		// TODO: convert file to dir
 		_leave("looking up in none directory");
-		return -ENOBUFS;
+		return false;
 	}
 
 	dir = dget(parent->dentry);
@@ -333,8 +342,10 @@ lookup_again:
 	/* if this element of the path doesn't exist, then the lookup phase
 	 * failed, and we can release any readers in the certain knowledge that
 	 * there's nothing for them to actually read */
-	if (d_is_negative(next))
-		fscache_object_lookup_negative(&object->fscache);
+	if (d_is_negative(next) && !negated) {
+		cachefiles_negative_lookup(object, parent);
+		negated = true;
+	}
 
 	/* we need to create the object if it's negative */
 	if (key || object->type == FSCACHE_COOKIE_TYPE_INDEX) {
@@ -450,6 +461,9 @@ lookup_again:
 			fscache_object_retrying_stale(&object->fscache);
 			goto lookup_again;
 		}
+
+		if (ret < 0)
+			goto check_error_unlock;
 	}
 
 	inode_unlock(d_inode(dir));
@@ -475,14 +489,10 @@ lookup_again:
 	/* open a file interface onto a data file */
 	if (object->type != FSCACHE_COOKIE_TYPE_INDEX) {
 		if (d_is_reg(object->dentry)) {
-			const struct address_space_operations *aops;
-
-			ret = -EPERM;
-			aops = d_backing_inode(object->dentry)->i_mapping->a_ops;
-			if (!aops->bmap)
+			if (object->dentry->d_sb->s_blocksize > PAGE_SIZE) {
+				pr_warn("cachefiles: Block size too large\n");
 				goto check_error;
-			if (object->dentry->d_sb->s_blocksize > PAGE_SIZE)
-				goto check_error;
+			}
 
 			object->backer = object->dentry;
 		} else {
@@ -490,11 +500,15 @@ lookup_again:
 		}
 	}
 
-	object->new = 0;
-	fscache_obtained_object(&object->fscache);
+	if (object->new)
+		object->fscache.stage = FSCACHE_OBJECT_STAGE_LIVE_EMPTY;
+	else
+		object->fscache.stage = FSCACHE_OBJECT_STAGE_LIVE;
+	wake_up_var(&object->fscache.stage);
 
-	_leave(" = 0 [%lu]", d_backing_inode(object->dentry)->i_ino);
-	return 0;
+	object->new = false;
+	_leave(" = t [%lu]", d_backing_inode(object->dentry)->i_ino);
+	return true;
 
 no_space_error:
 	fscache_object_mark_killed(&object->fscache, FSCACHE_OBJECT_NO_SPACE);
@@ -526,8 +540,10 @@ error:
 error_out2:
 	dput(dir);
 error_out:
-	_leave(" = error %d", -ret);
-	return ret;
+	object->fscache.stage = FSCACHE_OBJECT_STAGE_DEAD;
+	wake_up_var(&object->fscache.stage);
+	_leave(" = f");
+	return false;
 }
 
 /*

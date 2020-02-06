@@ -34,13 +34,13 @@ extern unsigned cachefiles_debug;
  */
 struct cachefiles_object {
 	struct fscache_object		fscache;	/* fscache handle */
-	char				*lookup_key;	/* key to look up */
 	struct dentry			*dentry;	/* the file/dir representing this object */
 	struct dentry			*backer;	/* backing file */
+	struct file			*backing_file;	/* File open on backing storage */
 	loff_t				i_size;		/* object size */
 	atomic_t			usage;		/* object usage count */
 	uint8_t				type;		/* object type */
-	uint8_t				new;		/* T if object new */
+	bool				new;		/* T if object new */
 };
 
 extern struct kmem_cache *cachefiles_object_jar;
@@ -112,6 +112,8 @@ extern int cachefiles_has_space(struct cachefiles_cache *cache,
  * interface.c
  */
 extern const struct fscache_cache_ops cachefiles_cache_ops;
+extern struct fscache_object *cachefiles_grab_object(struct fscache_object *_object,
+						     enum fscache_obj_ref_trace why);
 
 void cachefiles_put_object(struct fscache_object *_object,
 			   enum fscache_obj_ref_trace why);
@@ -128,9 +130,9 @@ extern void cachefiles_unmark_inode_in_use(struct cachefiles_object *object,
 				    struct dentry *dentry);
 extern int cachefiles_delete_object(struct cachefiles_cache *cache,
 				    struct cachefiles_object *object);
-extern int cachefiles_walk_to_object(struct cachefiles_object *parent,
-				     struct cachefiles_object *object,
-				     const char *key);
+extern bool cachefiles_walk_to_object(struct cachefiles_object *parent,
+				      struct cachefiles_object *object,
+				      const char *key);
 extern struct dentry *cachefiles_get_directory(struct cachefiles_cache *cache,
 					       struct dentry *dir,
 					       const char *name);

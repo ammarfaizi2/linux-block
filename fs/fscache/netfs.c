@@ -32,7 +32,7 @@ int __fscache_register_netfs(struct fscache_netfs *netfs)
 		return -ENOMEM;
 	}
 
-	candidate->flags = 1 << FSCACHE_COOKIE_ENABLED;
+	trace_fscache_cookie(candidate->debug_id, 1, fscache_cookie_new_netfs);
 
 	/* check the netfs type is not already present */
 	cookie = fscache_hash_cookie(candidate);
@@ -69,7 +69,7 @@ void __fscache_unregister_netfs(struct fscache_netfs *netfs)
 {
 	_enter("{%s.%u}", netfs->name, netfs->version);
 
-	fscache_relinquish_cookie(netfs->primary_index, NULL, false);
+	fscache_relinquish_cookie(netfs->primary_index, false);
 	pr_notice("Netfs '%s' unregistered from caching\n", netfs->name);
 
 	_leave("");

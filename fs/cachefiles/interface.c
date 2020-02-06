@@ -8,39 +8,54 @@
 #include <linux/slab.h>
 #include <linux/mount.h>
 #include <linux/xattr.h>
+#include <linux/file.h>
 #include "internal.h"
 
 static int cachefiles_attr_changed(struct cachefiles_object *object);
 
 /*
- * allocate an object record for a cookie lookup and prepare the lookup data
+ * Allocate an object record for a cookie lookup and prepare the lookup data.
+ * Eats the caller's ref on parent.
  */
-static struct fscache_object *cachefiles_alloc_object(
-	struct fscache_cache *_cache,
-	struct fscache_cookie *cookie)
+static
+struct fscache_object *cachefiles_alloc_object(struct fscache_cookie *cookie,
+					       struct fscache_cache *_cache,
+					       struct fscache_object *parent)
 {
 	struct cachefiles_object *object;
 	struct cachefiles_cache *cache;
-	unsigned keylen;
-	void *buffer, *p;
-	char *key;
 
 	cache = container_of(_cache, struct cachefiles_cache, cache);
 
 	_enter("{%s},%x,", cache->cache.identifier, cookie->debug_id);
 
-	/* create a new object record and a temporary leaf image */
-	object = kmem_cache_alloc(cachefiles_object_jar, cachefiles_gfp);
-	if (!object)
-		goto nomem_object;
-
-	ASSERTCMP(object->backer, ==, NULL);
-
-	atomic_set(&object->usage, 1);
+	object = kmem_cache_zalloc(cachefiles_object_jar, cachefiles_gfp);
+	if (!object) {
+		cachefiles_put_object(parent, fscache_obj_put_alloc_fail);
+		return NULL;
+	}
 
 	fscache_object_init(&object->fscache, cookie, &cache->cache);
+	object->fscache.parent = parent;
+	object->fscache.stage = FSCACHE_OBJECT_STAGE_LOOKING_UP;
+	atomic_set(&object->usage, 1);
 
 	object->type = cookie->type;
+	trace_cachefiles_ref(object, cookie,
+			     (enum cachefiles_obj_ref_trace)fscache_obj_new, 1);
+	return &object->fscache;
+}
+
+/*
+ * Prepare data for use in lookup.  This involves cooking the binary key into
+ * something that can be used as a filename.
+ */
+static void *cachefiles_prepare_lookup_data(struct fscache_object *object)
+{
+	struct fscache_cookie *cookie = object->cookie;
+	unsigned keylen;
+	void *buffer, *p;
+	char *key;
 
 	/* get hold of the raw key
 	 * - stick the length on the front and leave space on the back for the
@@ -48,7 +63,7 @@ static struct fscache_object *cachefiles_alloc_object(
 	 */
 	buffer = kmalloc((2 + 512) + 3, cachefiles_gfp);
 	if (!buffer)
-		goto nomem_buffer;
+		goto nomem;
 
 	keylen = cookie->key_len;
 	p = fscache_get_key(cookie);
@@ -60,36 +75,29 @@ static struct fscache_object *cachefiles_alloc_object(
 	((char *)buffer)[keylen + 4] = 0;
 
 	/* turn the raw key into something that can work with as a filename */
-	key = cachefiles_cook_key(buffer, keylen + 2, object->type);
+	key = cachefiles_cook_key(buffer, keylen + 2, cookie->type);
 	kfree(buffer);
 	if (!key)
-		goto nomem_key;
+		goto nomem;
 
-	object->lookup_key = key;
+	_leave(" = %s", key);
+	return key;
 
-	_leave(" = %x [%s]", object->fscache.debug_id, key);
-	return &object->fscache;
-
-nomem_key:
-	kfree(buffer);
-nomem_buffer:
-	kmem_cache_free(cachefiles_object_jar, object);
-	fscache_object_destroyed(&cache->cache);
-nomem_object:
-	_leave(" = -ENOMEM");
+nomem:
 	return ERR_PTR(-ENOMEM);
 }
 
 /*
- * attempt to look up the nominated node in this cache
- * - return -ETIMEDOUT to be scheduled again
+ * Attempt to look up the nominated node in this cache
  */
-static int cachefiles_lookup_object(struct fscache_object *_object)
+static bool cachefiles_lookup_object(struct fscache_object *_object,
+				     void *lookup_data)
 {
 	struct cachefiles_object *parent, *object;
 	struct cachefiles_cache *cache;
 	const struct cred *saved_cred;
-	int ret;
+	char *lookup_key = lookup_data;
+	bool success;
 
 	_enter("{OBJ%x}", _object->debug_id);
 
@@ -98,47 +106,30 @@ static int cachefiles_lookup_object(struct fscache_object *_object)
 			      struct cachefiles_object, fscache);
 	object = container_of(_object, struct cachefiles_object, fscache);
 
-	ASSERTCMP(object->lookup_key, !=, NULL);
+	ASSERTCMP(lookup_key, !=, NULL);
 
 	/* look up the key, creating any missing bits */
 	cachefiles_begin_secure(cache, &saved_cred);
-	ret = cachefiles_walk_to_object(parent, object, object->lookup_key);
+	success = cachefiles_walk_to_object(parent, object, lookup_key);
 	cachefiles_end_secure(cache, saved_cred);
 
 	/* polish off by setting the attributes of non-index files */
-	if (ret == 0 &&
+	if (success &&
 	    object->fscache.cookie->type != FSCACHE_COOKIE_TYPE_INDEX)
 		cachefiles_attr_changed(object);
 
-	if (ret < 0 && ret != -ETIMEDOUT) {
-		if (ret != -ENOBUFS)
-			pr_warn("Lookup failed error %d\n", ret);
-		fscache_object_lookup_error(&object->fscache);
-	}
-
-	_leave(" [%d]", ret);
-	return ret;
+	_leave(" [%d]", success);
+	return success;
 }
 
-/*
- * indication of lookup completion
- */
-static void cachefiles_lookup_complete(struct fscache_object *_object)
+static void cachefiles_free_lookup_data(struct fscache_object *object, void *lookup_data)
 {
-	struct cachefiles_object *object;
-
-	object = container_of(_object, struct cachefiles_object, fscache);
-
-	_enter("{OBJ%x}", object->fscache.debug_id);
-
-	kfree(object->lookup_key);
-	object->lookup_key = NULL;
+	kfree(lookup_data);
 }
 
 /*
  * increment the usage count on an inode object (may fail if unmounting)
  */
-static
 struct fscache_object *cachefiles_grab_object(struct fscache_object *_object,
 					      enum fscache_obj_ref_trace why)
 {
@@ -166,6 +157,8 @@ static void cachefiles_update_object(struct fscache_object *_object)
 	struct cachefiles_object *object;
 	struct cachefiles_cache *cache;
 	const struct cred *saved_cred;
+	loff_t object_size;
+	int ret;
 
 	_enter("{OBJ%x}", _object->debug_id);
 
@@ -174,7 +167,25 @@ static void cachefiles_update_object(struct fscache_object *_object)
 			     cache);
 
 	cachefiles_begin_secure(cache, &saved_cred);
+
+	object_size = object->fscache.cookie->object_size;
+	if (i_size_read(d_inode(object->backer)) > object_size) {
+		struct path path = {
+			.mnt	= cache->mnt,
+			.dentry	= object->backer
+		};
+		_debug("trunc %llx -> %llx", i_size_read(d_inode(object->backer)), object_size);
+		ret = vfs_truncate(&path, object_size);
+		if (ret < 0) {
+			cachefiles_io_error_obj(object, "Trunc-to-size failed");
+			cachefiles_remove_object_xattr(cache, object->backer);
+			goto out;
+		}
+	}
+
 	cachefiles_set_object_xattr(object, XATTR_REPLACE);
+
+out:
 	cachefiles_end_secure(cache, saved_cred);
 	_leave("");
 }
@@ -183,7 +194,8 @@ static void cachefiles_update_object(struct fscache_object *_object)
  * discard the resources pinned by an object and effect retirement if
  * requested
  */
-static void cachefiles_drop_object(struct fscache_object *_object)
+static void cachefiles_drop_object(struct fscache_object *_object,
+				   bool invalidate)
 {
 	struct cachefiles_object *object;
 	struct cachefiles_cache *cache;
@@ -209,17 +221,18 @@ static void cachefiles_drop_object(struct fscache_object *_object)
 	 * before we set it up.
 	 */
 	if (object->dentry) {
-		/* delete retired objects */
-		if (test_bit(FSCACHE_OBJECT_RETIRED, &object->fscache.flags) &&
-		    _object != cache->cache.fsdef
-		    ) {
-			_debug("- retire object OBJ%x", object->fscache.debug_id);
+		if (invalidate && _object != cache->cache.fsdef) {
+			_debug("- inval object OBJ%x", object->fscache.debug_id);
 			cachefiles_begin_secure(cache, &saved_cred);
 			cachefiles_delete_object(cache, object);
 			cachefiles_end_secure(cache, saved_cred);
 		}
 
 		/* close the filesystem stuff attached to the object */
+		if (object->backing_file)
+			fput(object->backing_file);
+		object->backing_file = NULL;
+
 		if (object->backer != object->dentry)
 			dput(object->backer);
 		object->backer = NULL;
@@ -253,9 +266,6 @@ void cachefiles_put_object(struct fscache_object *_object,
 	ASSERT((atomic_read(&object->usage) & 0xffff0000) != 0x6b6b0000);
 #endif
 
-	ASSERTIFCMP(object->fscache.parent,
-		    object->fscache.parent->n_children, >, 0);
-
 	u = atomic_dec_return(&object->usage);
 	trace_cachefiles_ref(object, _object->cookie,
 			     (enum cachefiles_obj_ref_trace)why, u);
@@ -263,13 +273,9 @@ void cachefiles_put_object(struct fscache_object *_object,
 	if (u == 0) {
 		_debug("- kill object OBJ%x", object->fscache.debug_id);
 
-		ASSERTCMP(object->fscache.parent, ==, NULL);
 		ASSERTCMP(object->backer, ==, NULL);
 		ASSERTCMP(object->dentry, ==, NULL);
-		ASSERTCMP(object->fscache.n_ops, ==, 0);
 		ASSERTCMP(object->fscache.n_children, ==, 0);
-
-		kfree(object->lookup_key);
 
 		cache = object->fscache.cache;
 		fscache_object_destroy(&object->fscache);
@@ -376,7 +382,7 @@ truncate_failed:
 /*
  * Invalidate an object
  */
-static void cachefiles_invalidate_object(struct fscache_object *_object)
+static bool cachefiles_invalidate_object(struct fscache_object *_object)
 {
 	struct cachefiles_object *object;
 	struct cachefiles_cache *cache;
@@ -410,22 +416,33 @@ static void cachefiles_invalidate_object(struct fscache_object *_object)
 			if (ret == -EIO)
 				cachefiles_io_error_obj(object,
 							"Invalidate failed");
+			return false;
 		}
 	}
 
-	_leave("");
+	return true;
+}
+
+static unsigned int cachefiles_get_object_usage(const struct fscache_object *_object)
+{
+	struct cachefiles_object *object;
+
+	object = container_of(_object, struct cachefiles_object, fscache);
+	return atomic_read(&object->usage);
 }
 
 const struct fscache_cache_ops cachefiles_cache_ops = {
 	.name			= "cachefiles",
 	.alloc_object		= cachefiles_alloc_object,
+	.prepare_lookup_data	= cachefiles_prepare_lookup_data,
 	.lookup_object		= cachefiles_lookup_object,
-	.lookup_complete	= cachefiles_lookup_complete,
+	.free_lookup_data	= cachefiles_free_lookup_data,
 	.grab_object		= cachefiles_grab_object,
 	.update_object		= cachefiles_update_object,
 	.invalidate_object	= cachefiles_invalidate_object,
 	.drop_object		= cachefiles_drop_object,
 	.put_object		= cachefiles_put_object,
+	.get_object_usage	= cachefiles_get_object_usage,
 	.sync_cache		= cachefiles_sync_cache,
 	.begin_read_operation	= cachefiles_begin_read_operation,
 };

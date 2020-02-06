@@ -74,6 +74,23 @@ extern struct fscache_cookie *fscache_alloc_cookie(struct fscache_cookie *,
 extern struct fscache_cookie *fscache_hash_cookie(struct fscache_cookie *);
 extern void fscache_put_cookie(struct fscache_cookie *,
 			       enum fscache_cookie_trace);
+extern struct fscache_object *fscache_attach_object(struct fscache_cookie *,
+						    struct fscache_object *);
+extern void fscache_set_cookie_stage(struct fscache_cookie *,
+				     enum fscache_cookie_stage);
+extern void fscache_drop_cookie(struct fscache_cookie *);
+
+static inline void wake_up_cookie_stage(struct fscache_cookie *cookie)
+{
+	/* Use a barrier to ensure that waiters see the stage variable
+	 * change, as spin_unlock doesn't guarantee a barrier.
+	 *
+	 * See comments over wake_up_bit() and waitqueue_active().
+	 */
+	smp_mb();
+	wake_up_var(&cookie->stage);
+}
+
 
 /*
  * dispatcher.c
@@ -115,23 +132,17 @@ extern const struct seq_operations fscache_histogram_ops;
 /*
  * main.c
  */
-extern unsigned fscache_defer_lookup;
-extern unsigned fscache_defer_create;
 extern unsigned fscache_debug;
 extern struct kobject *fscache_root;
-extern struct workqueue_struct *fscache_object_wq;
 extern struct workqueue_struct *fscache_op_wq;
-DECLARE_PER_CPU(wait_queue_head_t, fscache_object_cong_wait);
-
-static inline bool fscache_object_congested(void)
-{
-	return workqueue_congested(WORK_CPU_UNBOUND, fscache_object_wq);
-}
 
 /*
- * object.c
+ * obj.c
  */
-extern void fscache_enqueue_object(struct fscache_object *);
+extern void fscache_lookup_object(struct fscache_cookie *, struct fscache_object *, int);
+extern void fscache_invalidate_object(struct fscache_cookie *, struct fscache_object *, int);
+extern void fscache_drop_object(struct fscache_cookie *, struct fscache_object *, bool);
+extern void fscache_relinquish_objects(struct fscache_cookie *, struct fscache_object *, int);
 
 /*
  * object-list.c
@@ -247,35 +258,18 @@ static inline void fscache_see_cookie(struct fscache_cookie *cookie,
 }
 
 /*
- * raise an event on an object
- * - if the event is not masked for that object, then the object is
- *   queued for attention by the thread pool.
- */
-static inline void fscache_raise_event(struct fscache_object *object,
-				       unsigned event)
-{
-	BUG_ON(event >= NR_FSCACHE_OBJECT_EVENTS);
-#if 0
-	printk("*** fscache_raise_event(OBJ%d{%lx},%x)\n",
-	       object->debug_id, object->event_mask, (1 << event));
-#endif
-	if (!test_and_set_bit(event, &object->events) &&
-	    test_bit(event, &object->event_mask))
-		fscache_enqueue_object(object);
-}
-
-/*
  * Update the auxiliary data on a cookie.
  */
 static inline
-void fscache_update_aux(struct fscache_cookie *cookie, const void *aux_data)
+void fscache_update_aux(struct fscache_cookie *cookie,
+			const void *aux_data, const loff_t *object_size)
 {
 	void *p = fscache_get_aux(cookie);
 
-	if (p && memcmp(p, aux_data, cookie->aux_len) != 0) {
+	if (aux_data && p)
 		memcpy(p, aux_data, cookie->aux_len);
-		set_bit(FSCACHE_COOKIE_AUX_UPDATED, &cookie->flags);
-	}
+	if (object_size)
+		cookie->object_size = *object_size;
 }
 
 /*****************************************************************************/
@@ -336,7 +330,7 @@ do {						\
 
 #define FSCACHE_DEBUG_CACHE	0
 #define FSCACHE_DEBUG_COOKIE	1
-#define FSCACHE_DEBUG_PAGE	2
+#define FSCACHE_DEBUG_OBJECT	2
 #define FSCACHE_DEBUG_OPERATION	3
 
 #define FSCACHE_POINT_ENTER	1

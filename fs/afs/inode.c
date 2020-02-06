@@ -448,7 +448,7 @@ static void afs_get_inode_cache(struct afs_vnode *vnode)
 		NULL,
 		&key, sizeof(key),
 		&aux, sizeof(aux),
-		vnode->status.size, true);
+		vnode->status.size);
 #endif
 }
 
@@ -802,14 +802,9 @@ void afs_evict_inode(struct inode *inode)
 	}
 
 #ifdef CONFIG_AFS_FSCACHE
-	{
-		struct afs_vnode_cache_aux aux;
-
-		aux.data_version = vnode->status.data_version;
-		fscache_relinquish_cookie(vnode->cache, &aux,
-					  test_bit(AFS_VNODE_DELETED, &vnode->flags));
-		vnode->cache = NULL;
-	}
+	fscache_relinquish_cookie(vnode->cache,
+				  test_bit(AFS_VNODE_DELETED, &vnode->flags));
+	vnode->cache = NULL;
 #endif
 
 	afs_prune_wb_keys(vnode);
