@@ -273,9 +273,9 @@ void afs_activate_volume(struct afs_volume *volume)
 #ifdef CONFIG_AFS_FSCACHE
 	volume->cache = fscache_acquire_cookie(volume->cell->cache,
 					       &afs_volume_cache_index_def,
+					       NULL,
 					       &volume->vid, sizeof(volume->vid),
-					       NULL, 0,
-					       volume, 0, true);
+					       NULL, 0, 0, true);
 #endif
 }
 

@@ -30,6 +30,7 @@ struct fscache_cache_tag *__fscache_lookup_cache_tag(const char *name)
 	list_for_each_entry(tag, &fscache_cache_tag_list, link) {
 		if (strcmp(tag->name, name) == 0) {
 			atomic_inc(&tag->usage);
+			refcount_inc(&tag->ref);
 			up_read(&fscache_addremove_sem);
 			return tag;
 		}
@@ -44,6 +45,7 @@ struct fscache_cache_tag *__fscache_lookup_cache_tag(const char *name)
 		return ERR_PTR(-ENOMEM);
 
 	atomic_set(&xtag->usage, 1);
+	refcount_set(&xtag->ref, 1);
 	strcpy(xtag->name, name);
 
 	/* write lock, search again and add if still not present */
@@ -52,6 +54,7 @@ struct fscache_cache_tag *__fscache_lookup_cache_tag(const char *name)
 	list_for_each_entry(tag, &fscache_cache_tag_list, link) {
 		if (strcmp(tag->name, name) == 0) {
 			atomic_inc(&tag->usage);
+			refcount_inc(&tag->ref);
 			up_write(&fscache_addremove_sem);
 			kfree(xtag);
 			return tag;
@@ -64,7 +67,7 @@ struct fscache_cache_tag *__fscache_lookup_cache_tag(const char *name)
 }
 
 /*
- * release a reference to a cache tag
+ * Unuse a cache tag
  */
 void __fscache_release_cache_tag(struct fscache_cache_tag *tag)
 {
@@ -77,8 +80,7 @@ void __fscache_release_cache_tag(struct fscache_cache_tag *tag)
 			tag = NULL;
 
 		up_write(&fscache_addremove_sem);
-
-		kfree(tag);
+		fscache_put_cache_tag(tag);
 	}
 }
 
@@ -130,19 +132,9 @@ struct fscache_cache *fscache_select_cache_for_object(
 
 	spin_unlock(&cookie->lock);
 
-	if (!cookie->def->select_cache)
-		goto no_preference;
-
-	/* ask the netfs for its preference */
-	tag = cookie->def->select_cache(cookie->parent->netfs_data,
-					cookie->netfs_data);
+	tag = cookie->preferred_cache;
 	if (!tag)
 		goto no_preference;
-
-	if (tag == ERR_PTR(-ENOMEM)) {
-		_leave(" = NULL [nomem tag]");
-		return NULL;
-	}
 
 	if (!tag->cache) {
 		_leave(" = NULL [unbacked tag]");
