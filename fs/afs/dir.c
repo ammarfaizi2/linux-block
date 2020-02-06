@@ -351,24 +351,20 @@ expand:
 				afs_stat_v(dvnode, n_inval);
 
 			ret = -ENOMEM;
-			page = __page_cache_alloc(gfp);
+			page = find_or_create_page(dvnode->vfs_inode.i_mapping,
+						   i, gfp);
 			if (!page)
-				goto error;
-			ret = add_to_page_cache_lru(page,
-						    dvnode->vfs_inode.i_mapping,
-						    i, gfp);
-			if (ret < 0)
 				goto error;
 
 			set_page_private(page, 1);
 			SetPagePrivate(page);
 			unlock_page(page);
-			req->cache.nr_pages++;
-			i++;
-		} else {
-			req->cache.nr_pages += n;
-			i += n;
+			pages[0] = page;
+			n = 1;
 		}
+
+		req->cache.nr_pages += n;
+		i += n;
 	}
 
 	/* If we're going to reload, we need to lock all the pages to prevent
