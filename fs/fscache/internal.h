@@ -59,6 +59,7 @@ static inline void fscache_put_cache_tag(struct fscache_cache_tag *tag)
 /*
  * cookie.c
  */
+extern void fscache_print_cookie(struct fscache_cookie *cookie, char prefix);
 extern struct kmem_cache *fscache_cookie_jar;
 extern const struct seq_operations fscache_cookies_seq_ops;
 

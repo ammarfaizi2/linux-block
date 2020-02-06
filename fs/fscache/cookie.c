@@ -20,7 +20,7 @@ static struct hlist_bl_head fscache_cookie_hash[1 << fscache_cookie_hash_shift];
 static LIST_HEAD(fscache_cookies);
 static DEFINE_RWLOCK(fscache_cookies_lock);
 
-static void fscache_print_cookie(struct fscache_cookie *cookie, char prefix)
+void fscache_print_cookie(struct fscache_cookie *cookie, char prefix)
 {
 	struct fscache_object *object;
 	struct hlist_node *o;
@@ -570,7 +570,7 @@ void __fscache_invalidate(struct fscache_cookie *cookie)
 	case FSCACHE_COOKIE_STAGE_ACTIVE:
 		cookie->stage = FSCACHE_COOKIE_STAGE_INVALIDATING;
 
-		atomic_inc(&cookie->n_ops);
+		fscache_count_io_operation(cookie);
 		object->cache->ops->grab_object(object, fscache_obj_get_inval);
 		spin_unlock(&cookie->lock);
 		wake_up_cookie_stage(cookie);

@@ -171,7 +171,7 @@ void cachefiles_hist(atomic_t histogram[], unsigned long start_jif)
 /*
  * rdwr2.c
  */
-extern int cachefiles_begin_read_operation(struct netfs_read_request *);
+extern int cachefiles_begin_operation(struct netfs_cache_resources *);
 
 /*
  * security.c

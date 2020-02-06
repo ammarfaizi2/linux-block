@@ -51,12 +51,14 @@ enum fscache_cookie_trace {
 	EM(fscache_cookie_get_acquire_parent,	"GET paren")		\
 	EM(fscache_cookie_get_attach_object,	"GET attch")		\
 	EM(fscache_cookie_get_hash_collision,	"GET hcoll")		\
+	EM(fscache_cookie_get_ioreq,		"GET ioreq")		\
 	EM(fscache_cookie_get_register_netfs,	"GET rgstr")		\
 	EM(fscache_cookie_get_work,		"GET work ")		\
 	EM(fscache_cookie_new_acquire,		"NEW acq  ")		\
 	EM(fscache_cookie_new_netfs,		"NEW netfs")		\
 	EM(fscache_cookie_put_dup_netfs,	"PUT dupnf")		\
 	EM(fscache_cookie_put_hash_collision,	"PUT hcoll")		\
+	EM(fscache_cookie_put_ioreq,		"PUT ioreq")		\
 	EM(fscache_cookie_put_object,		"PUT obj  ")		\
 	EM(fscache_cookie_put_parent,		"PUT paren")		\
 	EM(fscache_cookie_put_relinquish,	"PUT relnq")		\

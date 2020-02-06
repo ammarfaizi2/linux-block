@@ -39,6 +39,7 @@ enum cachefiles_obj_ref_trace {
 	EM(fscache_obj_get_attach,		"GET attach")		\
 	EM(fscache_obj_get_exists,		"GET exists")		\
 	EM(fscache_obj_get_inval,		"GET inval")		\
+	EM(fscache_obj_get_ioreq,		"GET ioreq")		\
 	EM(fscache_obj_get_wait,		"GET wait")		\
 	EM(fscache_obj_get_withdraw,		"GET withdraw")		\
 	EM(fscache_obj_new,			"NEW obj")		\
@@ -49,6 +50,7 @@ enum cachefiles_obj_ref_trace {
 	EM(fscache_obj_put_drop_child,		"PUT drop_child")	\
 	EM(fscache_obj_put_drop_obj,		"PUT drop_obj")		\
 	EM(fscache_obj_put_inval,		"PUT inval")		\
+	EM(fscache_obj_put_ioreq,		"PUT ioreq")		\
 	EM(fscache_obj_put_withdraw,		"PUT withdraw")		\
 	EM(fscache_obj_put_lookup_fail,		"PUT lookup_fail")	\
 	EM(cachefiles_obj_put_wait_retry,	"PUT wait_retry")	\
