@@ -274,7 +274,7 @@ void fscache_invalidate_object(struct fscache_cookie *cookie,
 		fscache_set_cookie_stage(cookie, FSCACHE_COOKIE_STAGE_NO_DATA_YET);
 	else
 		fscache_set_cookie_stage(cookie, FSCACHE_COOKIE_STAGE_FAILED);
-	fscache_end_io_operation(cookie);
+	fscache_uncount_io_operation(cookie);
 }
 
 /*

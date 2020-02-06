@@ -21,11 +21,15 @@
 #include <linux/list_bl.h>
 
 #if defined(CONFIG_FSCACHE) || defined(CONFIG_FSCACHE_MODULE)
+#define __fscache_available (1)
 #define fscache_available() (1)
 #define fscache_cookie_valid(cookie) (cookie)
+#define fscache_object_valid(object) (object)
 #else
+#define __fscache_available (0)
 #define fscache_available() (0)
 #define fscache_cookie_valid(cookie) (0)
+#define fscache_object_valid(object) (NULL)
 #endif
 
 
@@ -45,6 +49,10 @@
 struct fscache_cache_tag;
 struct fscache_cookie;
 struct fscache_netfs;
+struct fscache_op_resources;
+struct fscache_op_ops;
+
+typedef void (*fscache_io_terminated_t)(void *priv, ssize_t transferred_or_error);
 
 enum fscache_cookie_type {
 	FSCACHE_COOKIE_TYPE_INDEX,
@@ -54,6 +62,12 @@ enum fscache_cookie_type {
 #define FSCACHE_ADV_SINGLE_CHUNK	0x01 /* The object is a single chunk of data */
 #define FSCACHE_ADV_WRITE_CACHE		0x00 /* Do cache if written to locally */
 #define FSCACHE_ADV_WRITE_NOCACHE	0x02 /* Don't cache if written to locally */
+
+enum fscache_want_stage {
+	FSCACHE_WANT_PARAMS,
+	FSCACHE_WANT_WRITE,
+	FSCACHE_WANT_READ,
+};
 
 /*
  * fscache cached network filesystem type
@@ -125,6 +139,42 @@ struct fscache_cookie {
 };
 
 /*
+ * Resources required to do operations.
+ */
+struct fscache_op_resources {
+#if __fscache_available
+	const struct fscache_op_ops	*ops;
+	struct fscache_object		*object;
+#endif
+};
+
+/*
+ * Table of operations for doing things to a non-index cookie.
+ */
+struct fscache_op_ops {
+	/* Wait for an operation to complete */
+	void (*wait_for_operation)(struct fscache_op_resources *opr,
+				   enum fscache_want_stage want_stage);
+	/* End an operation */
+	void (*end_operation)(struct fscache_op_resources *opr);
+
+	/* Read data from the cache */
+	int (*read)(struct fscache_op_resources *opr,
+		    loff_t start_pos,
+		    struct iov_iter *iter,
+		    bool seek_data,
+		    fscache_io_terminated_t term_func,
+		    void *term_func_priv);
+
+	/* Write data to the cache */
+	int (*write)(struct fscache_op_resources *opr,
+		     loff_t start_pos,
+		     struct iov_iter *iter,
+		     fscache_io_terminated_t term_func,
+		     void *term_func_priv);
+};
+
+/*
  * slow-path functions for when there is actually caching available, and the
  * netfs does actually have a valid token
  * - these are not to be called directly
@@ -147,6 +197,8 @@ extern struct fscache_cookie *__fscache_acquire_cookie(
 	loff_t);
 extern void __fscache_use_cookie(struct fscache_cookie *, bool);
 extern void __fscache_unuse_cookie(struct fscache_cookie *, const void *, const loff_t *);
+extern int __fscache_begin_operation(struct fscache_cookie *, struct fscache_op_resources *,
+				     enum fscache_want_stage);
 extern void __fscache_relinquish_cookie(struct fscache_cookie *, bool);
 extern void __fscache_update_cookie(struct fscache_cookie *, const void *, const loff_t *);
 extern void __fscache_invalidate(struct fscache_cookie *);
@@ -390,6 +442,140 @@ void fscache_invalidate(struct fscache_cookie *cookie)
 {
 	if (fscache_cookie_valid(cookie))
 		__fscache_invalidate(cookie);
+}
+
+/**
+ * fscache_begin_operation - Begin an fscache I/O operation
+ * @cookie: The cookie representing the cache object
+ * @opr: Where to stash the resources
+ * @want_stage: The minimum stage the object must be at
+ *
+ * Prepare to do an operation against a cache object, represented by @cookie.
+ * Any resources pinned to make the operation possible will be cached in *@opr.
+ * The stage that the object must be at before the operation can take place
+ * should be specified in @want_stage.  The function will wait until this is
+ * the case, or the object fails.
+ *
+ * Returns 0 on success, -ENODATA if reading is desired, but there's no data
+ * available yet and -ENOBUFS if the cache object is unavailable.
+ */
+static inline
+int fscache_begin_operation(struct fscache_cookie *cookie,
+			    struct fscache_op_resources *opr,
+			    enum fscache_want_stage want_stage)
+{
+	if (fscache_cookie_valid(cookie))
+		return __fscache_begin_operation(cookie, opr, want_stage);
+	return -ENOBUFS;
+}
+
+/**
+ * fscache_operation_valid - Return true if operations resources are usable
+ * @opr: The resources to check.
+ *
+ * Returns a pointer to the operations table if usable or NULL if not.
+ */
+static inline
+const struct fscache_op_ops *fscache_operation_valid(const struct fscache_op_resources *opr)
+{
+#if __fscache_available
+	return fscache_object_valid(opr->object) ? opr->ops : NULL;
+#else
+	return NULL;
+#endif
+}
+
+/**
+ * fscache_wait_for_operation - Wait for an object become accessible
+ * @cookie: The cookie representing the cache object
+ * @want_stage: The minimum stage the object must be at
+ *
+ * See if the target cache object is at the specified minimum stage of
+ * accessibility yet, and if not, wait for it.
+ */
+static inline
+void fscache_wait_for_operation(struct fscache_op_resources *opr,
+				enum fscache_want_stage want_stage)
+{
+	const struct fscache_op_ops *ops = fscache_operation_valid(opr);
+	if (ops)
+		ops->wait_for_operation(opr, want_stage);
+}
+
+/**
+ * fscache_end_operation - End an fscache I/O operation.
+ * @opr: The resources to dispose of.
+ */
+static inline
+void fscache_end_operation(struct fscache_op_resources *opr)
+{
+	const struct fscache_op_ops *ops = fscache_operation_valid(opr);
+	if (ops)
+		ops->end_operation(opr);
+}
+
+/**
+ * fscache_read - Start a read from the cache.
+ * @opr: The cache resources to use
+ * @start_pos: The beginning file offset in the cache file
+ * @iter: The buffer to fill - and also the length
+ * @seek_data: True to seek for the data
+ * @term_func: The function to call upon completion
+ * @term_func_priv: The private data for @term_func
+ *
+ * Start a read from the cache.  @opr indicates the cache object to read from
+ * and must be obtained by a call to fscache_begin_operation() beforehand.
+ *
+ * The data is read into the iterator, @iter, and that also indicates the size
+ * of the operation.  @start_pos is the start position in the file, though if
+ * @seek_data is set, the cache will use SEEK_DATA to find the next piece of
+ * data, writing zeros for the hole into the iterator.
+ *
+ * Upon termination of the operation, @term_func will be called and supplied
+ * with @term_func_priv plus the amount of data written, if successful, or the
+ * error code otherwise.
+ */
+static inline
+int fscache_read(struct fscache_op_resources *opr,
+		 loff_t start_pos,
+		 struct iov_iter *iter,
+		 bool seek_data,
+		 fscache_io_terminated_t term_func,
+		 void *term_func_priv)
+{
+	const struct fscache_op_ops *ops = fscache_operation_valid(opr);
+	return ops->read(opr, start_pos, iter, seek_data,
+			 term_func, term_func_priv);
+}
+
+/**
+ * fscache_write - Start a write to the cache.
+ * @opr: The cache resources to use
+ * @start_pos: The beginning file offset in the cache file
+ * @iter: The data to write - and also the length
+ * @term_func: The function to call upon completion
+ * @term_func_priv: The private data for @term_func
+ *
+ * Start a write to the cache.  @opr indicates the cache object to write to and
+ * must be obtained by a call to fscache_begin_operation() beforehand.
+ *
+ * The data to be written is obtained from the iterator, @iter, and that also
+ * indicates the size of the operation.  @start_pos is the start position in
+ * the file.
+ *
+ * Upon termination of the operation, @term_func will be called and supplied
+ * with @term_func_priv plus the amount of data written, if successful, or the
+ * error code otherwise.
+ */
+static inline
+int fscache_write(struct fscache_op_resources *opr,
+		 loff_t start_pos,
+		 struct iov_iter *iter,
+		 fscache_io_terminated_t term_func,
+		 void *term_func_priv)
+{
+	const struct fscache_op_ops *ops = fscache_operation_valid(opr);
+	return ops->write(opr, start_pos, iter, term_func, term_func_priv);
 }
 
 #endif /* _LINUX_FSCACHE_H */

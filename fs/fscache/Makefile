@@ -8,6 +8,7 @@ fscache-y := \
 	cookie.o \
 	dispatcher.o \
 	fsdef.o \
+	io.o \
 	main.o \
 	netfs.o \
 	obj.o \
