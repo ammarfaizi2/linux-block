@@ -76,6 +76,14 @@ extern void fscache_put_cookie(struct fscache_cookie *,
 			       enum fscache_cookie_trace);
 
 /*
+ * dispatcher.c
+ */
+extern void fscache_dispatch(struct fscache_cookie *, struct fscache_object *, int,
+			     void (*func)(struct fscache_cookie *, struct fscache_object *, int));
+extern int fscache_init_dispatchers(void);
+extern void fscache_kill_dispatchers(void);
+
+/*
  * fsdef.c
  */
 extern struct fscache_cookie fscache_fsdef_index;
