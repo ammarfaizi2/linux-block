@@ -237,35 +237,6 @@ TRACE_EVENT(cachefiles_mark_active,
 		      __entry->obj, __entry->de)
 	    );
 
-TRACE_EVENT(cachefiles_wait_active,
-	    TP_PROTO(struct cachefiles_object *obj,
-		     struct dentry *de,
-		     struct cachefiles_object *xobj),
-
-	    TP_ARGS(obj, de, xobj),
-
-	    /* Note that obj may be NULL */
-	    TP_STRUCT__entry(
-		    __field(unsigned int,		obj		)
-		    __field(unsigned int,		xobj		)
-		    __field(struct dentry *,		de		)
-		    __field(u16,			flags		)
-		    __field(u16,			fsc_flags	)
-			     ),
-
-	    TP_fast_assign(
-		    __entry->obj	= obj->fscache.debug_id;
-		    __entry->de		= de;
-		    __entry->xobj	= xobj->fscache.debug_id;
-		    __entry->flags	= xobj->flags;
-		    __entry->fsc_flags	= xobj->fscache.flags;
-			   ),
-
-	    TP_printk("o=%08x d=%p wo=%08x wf=%x wff=%x",
-		      __entry->obj, __entry->de, __entry->xobj,
-		      __entry->flags, __entry->fsc_flags)
-	    );
-
 TRACE_EVENT(cachefiles_mark_inactive,
 	    TP_PROTO(struct cachefiles_object *obj,
 		     struct dentry *de,
@@ -288,31 +259,6 @@ TRACE_EVENT(cachefiles_mark_inactive,
 
 	    TP_printk("o=%08x d=%p i=%p",
 		      __entry->obj, __entry->de, __entry->inode)
-	    );
-
-TRACE_EVENT(cachefiles_mark_buried,
-	    TP_PROTO(struct cachefiles_object *obj,
-		     struct dentry *de,
-		     enum fscache_why_object_killed why),
-
-	    TP_ARGS(obj, de, why),
-
-	    /* Note that obj may be NULL */
-	    TP_STRUCT__entry(
-		    __field(unsigned int,		obj		)
-		    __field(struct dentry *,		de		)
-		    __field(enum fscache_why_object_killed, why		)
-			     ),
-
-	    TP_fast_assign(
-		    __entry->obj	= obj->fscache.debug_id;
-		    __entry->de		= de;
-		    __entry->why	= why;
-			   ),
-
-	    TP_printk("o=%08x d=%p w=%s",
-		      __entry->obj, __entry->de,
-		      __print_symbolic(__entry->why, cachefiles_obj_kill_traces))
 	    );
 
 #endif /* _TRACE_CACHEFILES_H */
