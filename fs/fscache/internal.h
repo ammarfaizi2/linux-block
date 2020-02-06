@@ -24,6 +24,7 @@
 
 #define pr_fmt(fmt) "FS-Cache: " fmt
 
+#include <linux/slab.h>
 #include <linux/fscache-cache.h>
 #include <trace/events/fscache.h>
 #include <linux/sched.h>
@@ -41,6 +42,20 @@ extern struct rw_semaphore fscache_addremove_sem;
 extern struct fscache_cache *fscache_select_cache_for_object(
 	struct fscache_cookie *);
 
+static inline
+struct fscache_cache_tag *fscache_get_cache_tag(struct fscache_cache_tag *tag)
+{
+	if (tag)
+		refcount_inc(&tag->ref);
+	return tag;
+}
+
+static inline void fscache_put_cache_tag(struct fscache_cache_tag *tag)
+{
+	if (tag && refcount_dec_and_test(&tag->ref))
+		kfree(tag);
+}
+
 /*
  * cookie.c
  */
@@ -50,9 +65,10 @@ extern const struct seq_operations fscache_cookies_seq_ops;
 extern void fscache_free_cookie(struct fscache_cookie *);
 extern struct fscache_cookie *fscache_alloc_cookie(struct fscache_cookie *,
 						   const struct fscache_cookie_def *,
+						   struct fscache_cache_tag *,
 						   const void *, size_t,
 						   const void *, size_t,
-						   void *, loff_t);
+						   loff_t);
 extern struct fscache_cookie *fscache_hash_cookie(struct fscache_cookie *);
 extern void fscache_cookie_put(struct fscache_cookie *,
 			       enum fscache_cookie_trace);
@@ -329,16 +345,9 @@ static inline void fscache_cookie_get(struct fscache_cookie *cookie,
 static inline
 void fscache_update_aux(struct fscache_cookie *cookie, const void *aux_data)
 {
-	void *p;
+	void *p = fscache_get_aux(cookie);
 
-	if (!aux_data)
-		return;
-	if (cookie->aux_len <= sizeof(cookie->inline_aux))
-		p = cookie->inline_aux;
-	else
-		p = cookie->aux;
-
-	if (memcmp(p, aux_data, cookie->aux_len) != 0) {
+	if (p && memcmp(p, aux_data, cookie->aux_len) != 0) {
 		memcpy(p, aux_data, cookie->aux_len);
 		set_bit(FSCACHE_COOKIE_AUX_UPDATED, &cookie->flags);
 	}
