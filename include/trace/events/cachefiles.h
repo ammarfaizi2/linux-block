@@ -36,14 +36,21 @@ enum cachefiles_obj_ref_trace {
 	E_(FSCACHE_OBJECT_WAS_CULLED,	"was_culled")
 
 #define cachefiles_obj_ref_traces					\
-	EM(fscache_obj_get_add_to_deps,		"GET add_to_deps")	\
-	EM(fscache_obj_get_queue,		"GET queue")		\
+	EM(fscache_obj_get_attach,		"GET attach")		\
+	EM(fscache_obj_get_exists,		"GET exists")		\
+	EM(fscache_obj_get_inval,		"GET inval")		\
+	EM(fscache_obj_get_wait,		"GET wait")		\
+	EM(fscache_obj_get_withdraw,		"GET withdraw")		\
+	EM(fscache_obj_new,			"NEW obj")		\
+	EM(fscache_obj_put,			"PUT general")		\
+	EM(fscache_obj_put_alloc_dup,		"PUT alloc_dup")	\
 	EM(fscache_obj_put_alloc_fail,		"PUT alloc_fail")	\
 	EM(fscache_obj_put_attach_fail,		"PUT attach_fail")	\
+	EM(fscache_obj_put_drop_child,		"PUT drop_child")	\
 	EM(fscache_obj_put_drop_obj,		"PUT drop_obj")		\
-	EM(fscache_obj_put_enq_dep,		"PUT enq_dep")		\
-	EM(fscache_obj_put_queue,		"PUT queue")		\
-	EM(fscache_obj_put_work,		"PUT work")		\
+	EM(fscache_obj_put_inval,		"PUT inval")		\
+	EM(fscache_obj_put_withdraw,		"PUT withdraw")		\
+	EM(fscache_obj_put_lookup_fail,		"PUT lookup_fail")	\
 	EM(cachefiles_obj_put_wait_retry,	"PUT wait_retry")	\
 	E_(cachefiles_obj_put_wait_timeo,	"PUT wait_timeo")
 

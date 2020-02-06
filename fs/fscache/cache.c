@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 /* FS-Cache cache handling
  *
- * Copyright (C) 2007 Red Hat, Inc. All Rights Reserved.
+ * Copyright (C) 2007, 2020 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
@@ -93,6 +93,7 @@ struct fscache_cache *fscache_select_cache_for_object(
 	struct fscache_cookie *cookie)
 {
 	struct fscache_cache_tag *tag;
+	struct fscache_cookie *parent = cookie->parent;
 	struct fscache_object *object;
 	struct fscache_cache *cache;
 
@@ -104,33 +105,32 @@ struct fscache_cache *fscache_select_cache_for_object(
 	}
 
 	/* we check the parent to determine the cache to use */
-	spin_lock(&cookie->lock);
+	spin_lock(&parent->lock);
 
 	/* the first in the parent's backing list should be the preferred
 	 * cache */
-	if (!hlist_empty(&cookie->backing_objects)) {
-		object = hlist_entry(cookie->backing_objects.first,
+	if (!hlist_empty(&parent->backing_objects)) {
+		object = hlist_entry(parent->backing_objects.first,
 				     struct fscache_object, cookie_link);
 
 		cache = object->cache;
-		if (fscache_object_is_dying(object) ||
-		    test_bit(FSCACHE_IOERROR, &cache->flags))
+		if (test_bit(FSCACHE_IOERROR, &cache->flags))
 			cache = NULL;
 
-		spin_unlock(&cookie->lock);
+		spin_unlock(&parent->lock);
 		_leave(" = %s [parent]", cache ? cache->tag->name : "NULL");
 		return cache;
 	}
 
 	/* the parent is unbacked */
-	if (cookie->type != FSCACHE_COOKIE_TYPE_INDEX) {
+	if (parent->type != FSCACHE_COOKIE_TYPE_INDEX) {
 		/* cookie not an index and is unbacked */
-		spin_unlock(&cookie->lock);
-		_leave(" = NULL [cookie ub,ni]");
+		spin_unlock(&parent->lock);
+		_leave(" = NULL [parent ub,ni]");
 		return NULL;
 	}
 
-	spin_unlock(&cookie->lock);
+	spin_unlock(&parent->lock);
 
 	tag = cookie->preferred_cache;
 	if (!tag)
@@ -210,10 +210,7 @@ int fscache_add_cache(struct fscache_cache *cache,
 	BUG_ON(!ifsdef);
 
 	cache->flags = 0;
-	ifsdef->event_mask =
-		((1 << NR_FSCACHE_OBJECT_EVENTS) - 1) &
-		~(1 << FSCACHE_OBJECT_EV_CLEARED);
-	__set_bit(FSCACHE_OBJECT_IS_AVAILABLE, &ifsdef->flags);
+	ifsdef->stage = FSCACHE_OBJECT_STAGE_LIVE;
 
 	if (!tagname)
 		tagname = cache->identifier;
@@ -308,33 +305,86 @@ void fscache_io_error(struct fscache_cache *cache)
 EXPORT_SYMBOL(fscache_io_error);
 
 /*
- * request withdrawal of all the objects in a cache
- * - all the objects being withdrawn are moved onto the supplied list
+ * Withdraw an object.
  */
-static void fscache_withdraw_all_objects(struct fscache_cache *cache,
-					 struct list_head *dying_objects)
+static void fscache_withdraw_object(struct fscache_cookie *cookie,
+				    struct fscache_object *object,
+				    int param)
+{
+	_enter("c=%08x o=%08x", cookie ? cookie->debug_id : 0, object->debug_id);
+
+	_debug("WITHDRAW %x", object->debug_id);
+
+retry:
+	spin_lock(&cookie->lock);
+	if (cookie->stage == FSCACHE_COOKIE_STAGE_RELINQUISHING) {
+		spin_unlock(&cookie->lock);
+		wait_var_event(&cookie->stage,
+			       READ_ONCE(cookie->stage) != FSCACHE_COOKIE_STAGE_RELINQUISHING);
+		cond_resched();
+		goto retry;
+	}
+
+	if (cookie->stage == FSCACHE_COOKIE_STAGE_DROPPED) {
+		spin_unlock(&cookie->lock);
+		kleave(" [dropped]");
+		return;
+	}
+
+	if (cookie->stage != FSCACHE_COOKIE_STAGE_INDEX)
+		cookie->stage = FSCACHE_COOKIE_STAGE_WITHDRAWING;
+	hlist_del_init(&object->cookie_link);
+	spin_unlock(&cookie->lock);
+	wake_up_cookie_stage(cookie);
+
+	if (cookie->stage == FSCACHE_COOKIE_STAGE_WITHDRAWING) {
+		atomic_dec(&cookie->n_ops);
+		wait_var_event(&cookie->n_ops, atomic_read(&cookie->n_ops) == 0);
+		atomic_inc(&cookie->n_ops);
+	}
+
+	fscache_drop_object(cookie, object, param);
+
+	spin_lock(&cookie->lock);
+	if (cookie->stage == FSCACHE_COOKIE_STAGE_WITHDRAWING)
+		cookie->stage = FSCACHE_COOKIE_STAGE_QUIESCENT;
+	spin_unlock(&cookie->lock);
+	wake_up_cookie_stage(cookie);
+	object->cache->ops->put_object(object, fscache_obj_put_withdraw);
+}
+
+/*
+ * Request withdrawal of all the objects in a cache.
+ */
+static void fscache_withdraw_all_objects(struct fscache_cache *cache)
 {
 	struct fscache_object *object;
 
+	_enter("");
+
+	spin_lock(&cache->object_list_lock);
 	while (!list_empty(&cache->object_list)) {
-		spin_lock(&cache->object_list_lock);
-
-		if (!list_empty(&cache->object_list)) {
-			object = list_entry(cache->object_list.next,
-					    struct fscache_object, cache_link);
-			list_move_tail(&object->cache_link, dying_objects);
-
-			_debug("withdraw %x", object->cookie->debug_id);
-
-			/* This must be done under object_list_lock to prevent
-			 * a race with fscache_drop_object().
-			 */
-			fscache_raise_event(object, FSCACHE_OBJECT_EV_KILL);
-		}
-
+		/* Go through the list backwards so that we do children before
+		 * their parents.
+		 */
+		object = list_entry(cache->object_list.prev,
+				    struct fscache_object, cache_link);
+		list_del_init(&object->cache_link);
+		cache->ops->grab_object(object, fscache_obj_get_withdraw);
 		spin_unlock(&cache->object_list_lock);
+
+		_debug("o=%08x n=%u", object->debug_id, object->n_children);
+		wait_var_event(&object->n_children, READ_ONCE(object->n_children) == 0);
+
+		fscache_dispatch(object->cookie, object, 0,
+				 fscache_withdraw_object);
+
 		cond_resched();
+		spin_lock(&cache->object_list_lock);
 	}
+	spin_unlock(&cache->object_list_lock);
+
+	_leave("");
 }
 
 /**
@@ -349,12 +399,10 @@ static void fscache_withdraw_all_objects(struct fscache_cache *cache,
  */
 void fscache_withdraw_cache(struct fscache_cache *cache)
 {
-	LIST_HEAD(dying_objects);
-
 	_enter("");
 
-	pr_notice("Withdrawing cache \"%s\"\n",
-		  cache->tag->name);
+	pr_notice("Withdrawing cache \"%s\" (%u objs)\n",
+		  cache->tag->name, atomic_read(&cache->object_count));
 
 	/* make the cache unavailable for cookie acquisition */
 	if (test_and_set_bit(FSCACHE_CACHE_WITHDRAWN, &cache->flags))
@@ -365,29 +413,27 @@ void fscache_withdraw_cache(struct fscache_cache *cache)
 	cache->tag->cache = NULL;
 	up_write(&fscache_addremove_sem);
 
-	/* make sure all pages pinned by operations on behalf of the netfs are
-	 * written to disk */
-	fscache_stat(&fscache_n_cop_sync_cache);
-	cache->ops->sync_cache(cache);
-	fscache_stat_d(&fscache_n_cop_sync_cache);
-
 	/* we now have to destroy all the active objects pertaining to this
 	 * cache - which we do by passing them off to thread pool to be
 	 * disposed of */
 	_debug("destroy");
 
-	fscache_withdraw_all_objects(cache, &dying_objects);
+	fscache_withdraw_all_objects(cache);
+
+	/* make sure all outstanding data is written to disk */
+	fscache_stat(&fscache_n_cop_sync_cache);
+	cache->ops->sync_cache(cache);
+	fscache_stat_d(&fscache_n_cop_sync_cache);
 
 	/* wait for all extant objects to finish their outstanding operations
 	 * and go away */
-	_debug("wait for finish");
+	_debug("wait for finish %u", atomic_read(&cache->object_count));
 	wait_event(fscache_cache_cleared_wq,
 		   atomic_read(&cache->object_count) == 0);
 	_debug("wait for clearance");
 	wait_event(fscache_cache_cleared_wq,
 		   list_empty(&cache->object_list));
 	_debug("cleared");
-	ASSERT(list_empty(&dying_objects));
 
 	kobject_put(cache->kobj);
 

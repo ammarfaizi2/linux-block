@@ -5,7 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#define FSCACHE_DEBUG_LEVEL OPERATION
+#define FSCACHE_DEBUG_LEVEL CACHE
 #include <linux/module.h>
 #include <linux/proc_fs.h>
 #include <linux/seq_file.h>
@@ -16,8 +16,6 @@
  */
 int __init fscache_proc_init(void)
 {
-	_enter("");
-
 	if (!proc_mkdir("fs/fscache", NULL))
 		goto error_dir;
 
@@ -43,7 +41,6 @@ int __init fscache_proc_init(void)
 		goto error_objects;
 #endif
 
-	_leave(" = 0");
 	return 0;
 
 #ifdef CONFIG_FSCACHE_OBJECT_LIST
@@ -61,7 +58,6 @@ error_stats:
 error_cookies:
 	remove_proc_entry("fs/fscache", NULL);
 error_dir:
-	_leave(" = -ENOMEM");
 	return -ENOMEM;
 }
 
