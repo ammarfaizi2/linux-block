@@ -41,7 +41,7 @@ static struct fscache_object *cachefiles_alloc_object(
 
 	fscache_object_init(&object->fscache, cookie, &cache->cache);
 
-	object->type = cookie->def->type;
+	object->type = cookie->type;
 
 	/* get hold of the raw key
 	 * - stick the length on the front and leave space on the back for the
@@ -109,7 +109,7 @@ static int cachefiles_lookup_object(struct fscache_object *_object)
 
 	/* polish off by setting the attributes of non-index files */
 	if (ret == 0 &&
-	    object->fscache.cookie->def->type != FSCACHE_COOKIE_TYPE_INDEX)
+	    object->fscache.cookie->type != FSCACHE_COOKIE_TYPE_INDEX)
 		cachefiles_attr_changed(&object->fscache);
 
 	if (ret < 0 && ret != -ETIMEDOUT) {

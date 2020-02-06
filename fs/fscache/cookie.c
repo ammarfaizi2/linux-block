@@ -43,10 +43,9 @@ static void fscache_print_cookie(struct fscache_cookie *cookie, char prefix)
 	       cookie->flags,
 	       atomic_read(&cookie->n_children),
 	       atomic_read(&cookie->n_active));
-	pr_err("%c-cookie d=%p{%s}\n",
+	pr_err("%c-cookie d=%s\n",
 	       prefix,
-	       cookie->def,
-	       cookie->def ? cookie->def->name : "?");
+	       cookie->type_name);
 
 	o = READ_ONCE(cookie->backing_objects.first);
 	if (o) {
@@ -149,7 +148,9 @@ static atomic_t fscache_cookie_debug_id = ATOMIC_INIT(1);
  */
 struct fscache_cookie *fscache_alloc_cookie(
 	struct fscache_cookie *parent,
-	const struct fscache_cookie_def *def,
+	enum fscache_cookie_type type,
+	const char *type_name,
+	u8 advice,
 	struct fscache_cache_tag *preferred_cache,
 	const void *index_key, size_t index_key_len,
 	const void *aux_data, size_t aux_data_len,
@@ -162,8 +163,11 @@ struct fscache_cookie *fscache_alloc_cookie(
 	if (!cookie)
 		return NULL;
 
+	cookie->type = type;
+	cookie->advice = advice;
 	cookie->key_len = index_key_len;
 	cookie->aux_len = aux_data_len;
+	strlcpy(cookie->type_name, type_name, sizeof(cookie->type_name));
 
 	if (fscache_set_key(cookie, index_key, index_key_len) < 0)
 		goto nomem;
@@ -185,13 +189,10 @@ struct fscache_cookie *fscache_alloc_cookie(
 	 */
 	atomic_set(&cookie->n_active, 1);
 
-	cookie->def		= def;
 	cookie->parent		= parent;
-
 	cookie->preferred_cache	= fscache_get_cache_tag(preferred_cache);
 	
 	cookie->flags		= (1 << FSCACHE_COOKIE_NO_DATA_YET);
-	cookie->type		= def->type;
 	spin_lock_init(&cookie->lock);
 	INIT_HLIST_HEAD(&cookie->backing_objects);
 
@@ -253,7 +254,6 @@ collision:
  * - parent specifies the parent object
  *   - the top level index cookie for each netfs is stored in the fscache_netfs
  *     struct upon registration
- * - def points to the definition
  * - all attached caches will be searched to see if they contain this object
  * - index objects aren't stored on disk until there's a dependent file that
  *   needs storing
@@ -264,7 +264,9 @@ collision:
  */
 struct fscache_cookie *__fscache_acquire_cookie(
 	struct fscache_cookie *parent,
-	const struct fscache_cookie_def *def,
+	enum fscache_cookie_type type,
+	const char *type_name,
+	u8 advice,
 	struct fscache_cache_tag *preferred_cache,
 	const void *index_key, size_t index_key_len,
 	const void *aux_data, size_t aux_data_len,
@@ -273,11 +275,8 @@ struct fscache_cookie *__fscache_acquire_cookie(
 {
 	struct fscache_cookie *candidate, *cookie;
 
-	BUG_ON(!def);
-
 	_enter("{%s},{%s},%u",
-	       parent ? (char *) parent->def->name : "<no-parent>",
-	       def->name, enable);
+	       parent ? parent->type_name : "<no-parent>", type_name, enable);
 
 	if (!index_key || !index_key_len || index_key_len > 255 || aux_data_len > 255)
 		return NULL;
@@ -296,12 +295,11 @@ struct fscache_cookie *__fscache_acquire_cookie(
 	}
 
 	/* validate the definition */
-	BUG_ON(!def->name[0]);
-
-	BUG_ON(def->type == FSCACHE_COOKIE_TYPE_INDEX &&
+	BUG_ON(type == FSCACHE_COOKIE_TYPE_INDEX &&
 	       parent->type != FSCACHE_COOKIE_TYPE_INDEX);
 
-	candidate = fscache_alloc_cookie(parent, def, preferred_cache,
+	candidate = fscache_alloc_cookie(parent, type, type_name, advice,
+					 preferred_cache,
 					 index_key, index_key_len,
 					 aux_data, aux_data_len,
 					 object_size);
@@ -496,7 +494,7 @@ static int fscache_alloc_object(struct fscache_cache *cache,
 	struct fscache_object *object;
 	int ret;
 
-	_enter("%p,%p{%s}", cache, cookie, cookie->def->name);
+	_enter("%p,%p{%s}", cache, cookie, cookie->type_name);
 
 	spin_lock(&cookie->lock);
 	hlist_for_each_entry(object, &cookie->backing_objects,
@@ -523,7 +521,7 @@ static int fscache_alloc_object(struct fscache_cache *cache,
 	object->debug_id = atomic_inc_return(&fscache_object_debug_id);
 
 	_debug("ALLOC OBJ%x: %s {%lx}",
-	       object->debug_id, cookie->def->name, object->events);
+	       object->debug_id, cookie->type_name, object->events);
 
 	ret = fscache_alloc_object(cache, cookie->parent);
 	if (ret < 0)
@@ -571,7 +569,7 @@ static int fscache_attach_object(struct fscache_cookie *cookie,
 	struct fscache_cache *cache = object->cache;
 	int ret;
 
-	_enter("{%s},{OBJ%x}", cookie->def->name, object->debug_id);
+	_enter("{%s},{OBJ%x}", cookie->type_name, object->debug_id);
 
 	ASSERTCMP(object->cookie, ==, cookie);
 
@@ -633,7 +631,7 @@ void __fscache_invalidate(struct fscache_cookie *cookie)
 {
 	struct fscache_object *object;
 
-	_enter("{%s}", cookie->def->name);
+	_enter("{%s}", cookie->type_name);
 
 	fscache_stat(&fscache_n_invalidates);
 
@@ -698,7 +696,7 @@ void __fscache_update_cookie(struct fscache_cookie *cookie, const void *aux_data
 		return;
 	}
 
-	_enter("{%s}", cookie->def->name);
+	_enter("{%s}", cookie->type_name);
 
 	spin_lock(&cookie->lock);
 
@@ -737,7 +735,7 @@ void __fscache_disable_cookie(struct fscache_cookie *cookie,
 
 	if (atomic_read(&cookie->n_children) != 0) {
 		pr_err("Cookie '%s' still has children\n",
-		       cookie->def->name);
+		       cookie->type_name);
 		BUG();
 	}
 
@@ -816,7 +814,7 @@ void __fscache_relinquish_cookie(struct fscache_cookie *cookie,
 	}
 
 	_enter("%p{%s,%d},%d",
-	       cookie, cookie->def->name,
+	       cookie, cookie->type_name,
 	       atomic_read(&cookie->n_active), retire);
 
 	trace_fscache_relinquish(cookie, retire);
@@ -826,9 +824,6 @@ void __fscache_relinquish_cookie(struct fscache_cookie *cookie,
 		BUG();
 
 	__fscache_disable_cookie(cookie, aux_data, retire);
-
-	/* Clear pointers back to the netfs */
-	cookie->def		= NULL;
 
 	if (cookie->parent) {
 		ASSERTCMP(atomic_read(&cookie->parent->usage), >, 0);
@@ -1012,7 +1007,7 @@ static int fscache_cookies_seq_show(struct seq_file *m, void *v)
 		   atomic_read(&cookie->n_active),
 		   type,
 		   cookie->flags,
-		   cookie->def->name);
+		   cookie->type_name);
 
 	keylen = cookie->key_len;
 	auxlen = cookie->aux_len;
