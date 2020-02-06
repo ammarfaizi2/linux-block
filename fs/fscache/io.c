@@ -51,7 +51,7 @@ int __fscache_begin_operation(struct netfs_cache_resources *cres,
 		return -ENOBUFS;
 	}
 
-	ASSERTCMP(cookie->def->type, !=, FSCACHE_COOKIE_TYPE_INDEX);
+	ASSERTCMP(cookie->type, !=, FSCACHE_COOKIE_TYPE_INDEX);
 
 	if (fscache_wait_for_deferred_lookup(cookie) < 0)
 		return -ERESTARTSYS;

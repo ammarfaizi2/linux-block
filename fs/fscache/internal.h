@@ -64,7 +64,9 @@ extern const struct seq_operations fscache_cookies_seq_ops;
 
 extern void fscache_free_cookie(struct fscache_cookie *);
 extern struct fscache_cookie *fscache_alloc_cookie(struct fscache_cookie *,
-						   const struct fscache_cookie_def *,
+						   enum fscache_cookie_type,
+						   const char *,
+						   u8,
 						   struct fscache_cache_tag *,
 						   const void *, size_t,
 						   const void *, size_t,
@@ -86,7 +88,6 @@ static inline void fscache_cookie_see(struct fscache_cookie *cookie,
  * fsdef.c
  */
 extern struct fscache_cookie fscache_fsdef_index;
-extern struct fscache_cookie_def fscache_fsdef_netfs_def;
 
 /*
  * main.c
