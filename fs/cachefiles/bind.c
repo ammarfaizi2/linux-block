@@ -126,7 +126,8 @@ static int cachefiles_daemon_add_cache(struct cachefiles_cache *cache)
 	    !d_backing_inode(root)->i_op->mkdir ||
 	    !(d_backing_inode(root)->i_opflags & IOP_XATTR) ||
 	    !root->d_sb->s_op->statfs ||
-	    !root->d_sb->s_op->sync_fs)
+	    !root->d_sb->s_op->sync_fs ||
+	    root->d_sb->s_blocksize > PAGE_SIZE)
 		goto error_unsupported;
 
 	ret = -EROFS;

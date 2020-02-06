@@ -268,6 +268,7 @@ static int cachefiles_attr_changed(struct cachefiles_object *object)
 	int ret;
 
 	ni_size = object->cookie->object_size;
+	ni_size = round_up(ni_size, CACHEFILES_DIO_BLOCK_SIZE);
 
 	_enter("{OBJ%x},[%llu]",
 	       object->debug_id, (unsigned long long) ni_size);
@@ -346,6 +347,7 @@ static void cachefiles_invalidate_object(struct cachefiles_object *object)
 				       cachefiles_trunc_invalidate);
 		ret = vfs_truncate(&file->f_path, 0);
 		if (ret == 0) {
+			ni_size = round_up(ni_size, CACHEFILES_DIO_BLOCK_SIZE);
 			trace_cachefiles_trunc(object, file_inode(file),
 					       0, ni_size,
 					       cachefiles_trunc_set_size);
