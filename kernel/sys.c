@@ -849,13 +849,17 @@ long __sys_setfsgid(gid_t gid)
 	const struct cred *old;
 	struct cred *new;
 	gid_t old_fsgid;
-	kgid_t kgid;
+	kgid_t kgid, kfsgid;
 
 	old = current_cred();
-	old_fsgid = from_kgid_munged(old->user_ns, old->fsgid);
+	old_fsgid = from_kfsgid_munged(old->user_ns, old->fsgid);
 
-	kgid = make_kgid(old->user_ns, gid);
+	kgid = make_kfsgid(old->user_ns, gid);
 	if (!gid_valid(kgid))
+		return old_fsgid;
+
+	kfsgid = make_kgid(old->user_ns, gid);
+	if (!gid_valid(kfsgid))
 		return old_fsgid;
 
 	new = prepare_creds();
@@ -867,6 +871,7 @@ long __sys_setfsgid(gid_t gid)
 	    ns_capable(old->user_ns, CAP_SETGID)) {
 		if (!gid_eq(kgid, old->fsgid)) {
 			new->fsgid = kgid;
+			new->kfsgid = kfsgid;
 			goto change_okay;
 		}
 	}
