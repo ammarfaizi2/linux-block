@@ -141,6 +141,7 @@ int __fscache_read(struct fscache_io_request *req, struct iov_iter *iter)
 		fscache_begin_io_operation(req->cookie, FSCACHE_WANT_READ, req);
 
 	if (!IS_ERR(object)) {
+		fscache_stat(&fscache_n_read);
 		req->object = object;
 		return object->cache->ops->read(object, req, iter);
 	} else {
@@ -161,6 +162,7 @@ int __fscache_write(struct fscache_io_request *req, struct iov_iter *iter)
 		fscache_begin_io_operation(req->cookie, FSCACHE_WANT_WRITE, req);
 
 	if (!IS_ERR(object)) {
+		fscache_stat(&fscache_n_write);
 		req->object = object;
 		return object->cache->ops->write(object, req, iter);
 	} else {

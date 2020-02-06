@@ -207,6 +207,31 @@ extern atomic_t fscache_n_cache_stale_objects;
 extern atomic_t fscache_n_cache_retired_objects;
 extern atomic_t fscache_n_cache_culled_objects;
 
+extern atomic_t fscache_n_dispatch_count;
+extern atomic_t fscache_n_dispatch_deferred;
+extern atomic_t fscache_n_dispatch_inline;
+extern atomic_t fscache_n_dispatch_in_pool;
+
+extern atomic_t fscache_n_read;
+extern atomic_t fscache_n_write;
+
+extern atomic_t fscache_n_read_helper;
+extern atomic_t fscache_n_read_helper_stop_nomem;
+extern atomic_t fscache_n_read_helper_stop_noncontig;
+extern atomic_t fscache_n_read_helper_stop_uptodate;
+extern atomic_t fscache_n_read_helper_stop_exist;
+extern atomic_t fscache_n_read_helper_stop_kill;
+extern atomic_t fscache_n_read_helper_read;
+extern atomic_t fscache_n_read_helper_download;
+extern atomic_t fscache_n_read_helper_zero;
+extern atomic_t fscache_n_read_helper_beyond_eof;
+extern atomic_t fscache_n_read_helper_reissue;
+extern atomic_t fscache_n_read_helper_read_done;
+extern atomic_t fscache_n_read_helper_read_failed;
+extern atomic_t fscache_n_read_helper_copy;
+extern atomic_t fscache_n_read_helper_copy_done;
+extern atomic_t fscache_n_read_helper_copy_failed;
+
 static inline void fscache_stat(atomic_t *stat)
 {
 	atomic_inc(stat);

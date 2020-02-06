@@ -32,6 +32,11 @@ static void fscache_read_copy_done(struct fscache_io_request *req)
 
 	_enter("%lx,%x,%llx", index, req->nr_pages, req->transferred);
 
+	if (req->error == 0)
+		fscache_stat(&fscache_n_read_helper_copy_done);
+	else
+		fscache_stat(&fscache_n_read_helper_copy_failed);
+
 	/* Clear PG_fscache on the pages that were being written out. */
 	rcu_read_lock();
 	xas_for_each(&xas, page, last) {
@@ -58,6 +63,8 @@ static void fscache_do_read_copy_to_cache(struct work_struct *work)
 	struct iov_iter iter;
 
 	_enter("");
+
+	fscache_stat(&fscache_n_read_helper_copy);
 
 	iov_iter_mapping(&iter, WRITE, req->mapping, req->pos,
 			 round_up(req->len, req->dio_block_size));
@@ -111,6 +118,11 @@ static void fscache_read_done(struct fscache_io_request *req)
 	_enter("%lx,%x,%llx,%d",
 	       start, req->nr_pages, req->transferred, req->error);
 
+	if (req->error == 0)
+		fscache_stat(&fscache_n_read_helper_read_done);
+	else
+		fscache_stat(&fscache_n_read_helper_read_failed);
+
 	if (req->transferred < req->len)
 		fscache_clear_unread(req);
 
@@ -162,6 +174,7 @@ static void fscache_file_read_maybe_reissue(struct fscache_io_request *req)
 	if (req->error == 0) {
 		fscache_read_done(req);
 	} else {
+		fscache_stat(&fscache_n_read_helper_reissue);
 		INIT_WORK(&req->work, fscache_reissue_read);
 		fscache_get_io_request(req);
 		queue_work(fscache_op_wq, &req->work);
@@ -260,6 +273,8 @@ int fscache_read_helper(struct fscache_io_request *req,
 	loff_t i_size;
 	int ret;
 
+	fscache_stat(&fscache_n_read_helper);
+
 	first_index = extent->start;
 	_enter("{%lx,%lx}", first_index, extent->limit);
 
@@ -299,8 +314,10 @@ int fscache_read_helper(struct fscache_io_request *req,
 		while (cursor < first_index) {
 			page = find_or_create_page(mapping, cursor,
 						   readahead_gfp_mask(mapping));
-			if (!page)
+			if (!page) {
+				fscache_stat(&fscache_n_read_helper_stop_nomem);
 				goto nomem;
+			}
 			if (!PageUptodate(page)) {
 				req->nr_pages++; /* Add to the reading list */
 				cursor++;
@@ -312,6 +329,7 @@ int fscache_read_helper(struct fscache_io_request *req,
 			 * cache.
 			 */
 			notes |= FSCACHE_RHLP_NOTE_U2D_IN_PREFACE;
+			fscache_stat(&fscache_n_read_helper_stop_uptodate);
 			fscache_ignore_pages(mapping, extent->start, cursor + 1);
 			req->write_to_cache = false;
 			start = cursor = first_index;
@@ -332,14 +350,18 @@ int fscache_read_helper(struct fscache_io_request *req,
 			_debug("prewrite req %lx", cursor);
 			page = *requested_page;
 			ret = -ERESTARTSYS;
-			if (lock_page_killable(page) < 0)
+			if (lock_page_killable(page) < 0) {
+				fscache_stat(&fscache_n_read_helper_stop_kill);
 				goto dont;
+			}
 		} else {
 			_debug("prewrite new %lx %lx", cursor, eof);
 			page = grab_cache_page_write_begin(mapping, first_index,
 							   aop_flags);
-			if (!page)
+			if (!page) {
+				fscache_stat(&fscache_n_read_helper_stop_nomem);
 				goto nomem;
+			}
 			*requested_page = page;
 		}
 		get_page(page);
@@ -371,6 +393,7 @@ int fscache_read_helper(struct fscache_io_request *req,
 			page = lru_to_page(pages);
 			if (page->index != cursor) {
 				notes |= FSCACHE_RHLP_NOTE_LIST_NOTCONTIG;
+				fscache_stat(&fscache_n_read_helper_stop_noncontig);
 				break;
 			}
 
@@ -394,12 +417,14 @@ int fscache_read_helper(struct fscache_io_request *req,
 							   readahead_gfp_mask(mapping));
 				if (!page) {
 					notes |= FSCACHE_RHLP_NOTE_LIST_NOMEM;
+					fscache_stat(&fscache_n_read_helper_stop_nomem);
 					goto stop;
 				}
 
 				if (PageUptodate(page)) {
 					unlock_page(page);
 					put_page(page); /* Avoid overwriting */
+					fscache_stat(&fscache_n_read_helper_stop_exist);
 					ret = 0;
 					notes |= FSCACHE_RHLP_NOTE_LIST_U2D;
 					goto stop;
@@ -412,6 +437,7 @@ int fscache_read_helper(struct fscache_io_request *req,
 			default:
 				_debug("add fail %lx %d", cursor, ret);
 				put_page(page);
+				fscache_stat(&fscache_n_read_helper_stop_nomem);
 				page = NULL;
 				notes |= FSCACHE_RHLP_NOTE_LIST_ERROR;
 				goto stop;
@@ -445,12 +471,14 @@ int fscache_read_helper(struct fscache_io_request *req,
 						   readahead_gfp_mask(mapping));
 			if (!page) {
 				notes |= FSCACHE_RHLP_NOTE_TRAILER_NOMEM;
+				fscache_stat(&fscache_n_read_helper_stop_nomem);
 				goto stop;
 			}
 			if (PageUptodate(page)) {
 				unlock_page(page);
 				put_page(page); /* Avoid overwriting */
 				notes |= FSCACHE_RHLP_NOTE_TRAILER_U2D;
+				fscache_stat(&fscache_n_read_helper_stop_uptodate);
 				goto stop;
 			}
 
@@ -509,18 +537,22 @@ submit_anyway:
 		 * the pages.
 		 */
 		_debug("SKIP READ: %llu", req->len);
+		fscache_stat(&fscache_n_read_helper_beyond_eof);
 		fscache_read_done(req);
 		break;
 	case fscache_read_helper_zero:
 		_debug("ZERO READ: %llu", req->len);
+		fscache_stat(&fscache_n_read_helper_zero);
 		fscache_read_done(req);
 		break;
 	case fscache_read_helper_read:
+		fscache_stat(&fscache_n_read_helper_read);
 		req->io_done = fscache_file_read_maybe_reissue;
 		fscache_read_from_cache(req);
 		break;
 	case fscache_read_helper_download:
 		_debug("DOWNLOAD: %llu", req->len);
+		fscache_stat(&fscache_n_read_helper_download);
 		req->io_done = fscache_read_done;
 		fscache_read_from_server(req);
 		break;
@@ -590,6 +622,7 @@ int fscache_read_helper_single(struct fscache_io_request *req,
 			iov_iter_mapping(&iter, READ, req->mapping, 0,
 					 round_up(i_size, req->dio_block_size));
 			req->io_done = NULL; /* Synchronous */
+			fscache_stat(&fscache_n_read_helper_read);
 			ret = fscache_read(req, &iter);
 			if (ret == 0 && req->transferred >= i_size) {
 				req->transferred = i_size;
@@ -612,6 +645,7 @@ int fscache_read_helper_single(struct fscache_io_request *req,
 	trace_fscache_read_helper(req->cookie, 0, req->nr_pages,
 				  notes, fscache_read_helper_single_download);
 
+	fscache_stat(&fscache_n_read_helper_download);
 	fscache_read_from_server(req);
 	ret = req->error;
 	if (ret == 0) {
