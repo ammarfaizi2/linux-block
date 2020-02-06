@@ -12,6 +12,7 @@ cachefiles-y := \
 	main.o \
 	namei.o \
 	security.o \
+	volume.o \
 	xattr.o
 
 obj-$(CONFIG_CACHEFILES) := cachefiles.o
