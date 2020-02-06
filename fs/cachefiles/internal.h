@@ -125,6 +125,10 @@ extern void cachefiles_daemon_unbind(struct cachefiles_cache *cache);
 /*
  * content-map.c
  */
+extern void cachefiles_expand_readahead(struct fscache_op_resources *opr,
+					loff_t *_start, size_t *_len, loff_t i_size);
+extern enum netfs_read_source cachefiles_prepare_read(struct netfs_read_subrequest *subreq,
+						      loff_t i_size);
 extern void cachefiles_mark_content_map(struct cachefiles_object *object,
 					loff_t start, loff_t len);
 extern void cachefiles_expand_content_map(struct cachefiles_object *object, loff_t size);

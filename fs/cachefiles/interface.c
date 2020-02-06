@@ -462,6 +462,8 @@ static const struct fscache_op_ops cachefiles_io_ops = {
 	.end_operation		= __fscache_end_operation,
 	.read			= cachefiles_read,
 	.write			= cachefiles_write,
+	.expand_readahead	= cachefiles_expand_readahead,
+	.prepare_read		= cachefiles_prepare_read,
 };
 
 static void cachefiles_begin_operation(struct fscache_op_resources *opr)
