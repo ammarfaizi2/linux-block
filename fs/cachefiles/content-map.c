@@ -71,7 +71,8 @@ static unsigned int cachefiles_shape_single(struct fscache_object *obj,
 
 	extent->dio_block_size = CACHEFILES_DIO_BLOCK_SIZE;
 
-	if (object->content_info == CACHEFILES_CONTENT_SINGLE) {
+	if (!for_write &&
+	    object->content_info == CACHEFILES_CONTENT_SINGLE) {
 		ret = FSCACHE_READ_FROM_CACHE;
 	} else {
 		eof = (i_size + PAGE_SIZE - 1) >> PAGE_SHIFT;
@@ -128,13 +129,20 @@ unsigned int cachefiles_shape_extent(struct fscache_object *obj,
 
 	granule = start / CACHEFILES_GRAN_PAGES;
 
-	/* If the content map didn't get expanded for some reason - simply
-	 * ignore this granule.
-	 */
-	if (granule / 8 >= object->content_map_size)
-		return 0;
+	if (granule / 8 >= object->content_map_size) {
+		cachefiles_expand_content_map(object, i_size);
+		if (granule / 8 >= object->content_map_size)
+			return 0;
+	}
 
-	if (cachefiles_granule_is_present(object, granule)) {
+	if (for_write) {
+		/* Assume that the preparation to write involved preloading any
+		 * bits of the cache that weren't to be written and filling any
+		 * gaps that didn't end up being written.
+		 */
+		bend = end;
+		ret = FSCACHE_WRITE_TO_CACHE;
+	} else if (cachefiles_granule_is_present(object, granule)) {
 		/* The start of the requested extent is present in the cache -
 		 * restrict the returned extent to the maximum length of what's
 		 * available.
