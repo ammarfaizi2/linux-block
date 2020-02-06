@@ -260,6 +260,7 @@ static struct fscache_cookie *fscache_alloc_cookie(
 	cookie->key_len		= index_key_len;
 	cookie->aux_len		= aux_data_len;
 	cookie->object_size	= object_size;
+	cookie->zero_point	= object_size;
 
 	if (fscache_set_key(cookie, index_key, index_key_len) < 0)
 		goto nomem;
@@ -675,7 +676,7 @@ static void fscache_invalidate_cookie(struct fscache_cookie *cookie)
 /*
  * Invalidate an object.  Callable with spinlocks held.
  */
-void __fscache_invalidate(struct fscache_cookie *cookie)
+void __fscache_invalidate(struct fscache_cookie *cookie, loff_t new_size)
 {
 	bool is_caching;
 
@@ -689,6 +690,8 @@ void __fscache_invalidate(struct fscache_cookie *cookie)
 
 	spin_lock(&cookie->lock);
 	set_bit(FSCACHE_COOKIE_NO_DATA_TO_READ, &cookie->flags);
+	cookie->object_size = new_size;
+	cookie->zero_point = new_size;
 	cookie->inval_counter++;
 
 	switch (cookie->stage) {
