@@ -215,6 +215,8 @@ static void cachefiles_commit_object(struct cachefiles_object *object,
 
 	if (object->content_map_changed)
 		cachefiles_save_content_map(object);
+	if (test_and_clear_bit(FSCACHE_COOKIE_LOCAL_WRITE, &object->cookie->flags))
+		update = true;
 	if (test_and_clear_bit(FSCACHE_COOKIE_NEEDS_UPDATE, &object->cookie->flags))
 		update = true;
 	if (update)
@@ -483,4 +485,5 @@ const struct fscache_cache_ops cachefiles_cache_ops = {
 	.invalidate_cookie	= cachefiles_invalidate_cookie,
 	.resize_cookie		= cachefiles_resize_cookie,
 	.begin_operation	= cachefiles_begin_operation,
+	.prepare_to_write	= cachefiles_prepare_to_write,
 };
