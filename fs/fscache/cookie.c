@@ -756,7 +756,6 @@ void __fscache_disable_cookie(struct fscache_cookie *cookie,
 		hlist_for_each_entry(object, &cookie->backing_objects, cookie_link) {
 			if (invalidate)
 				set_bit(FSCACHE_OBJECT_RETIRED, &object->flags);
-			clear_bit(FSCACHE_OBJECT_PENDING_WRITE, &object->flags);
 			fscache_raise_event(object, FSCACHE_OBJECT_EV_KILL);
 		}
 	} else {

@@ -36,9 +36,8 @@ void __cachefiles_printk_object(struct cachefiles_object *object,
 	       prefix, object->fscache.state->name,
 	       object->fscache.flags, work_busy(&object->fscache.work),
 	       object->fscache.events, object->fscache.event_mask);
-	pr_err("%sops=%u inp=%u exc=%u\n",
-	       prefix, object->fscache.n_ops, object->fscache.n_in_progress,
-	       object->fscache.n_exclusive);
+	pr_err("%sops=%u\n",
+	       prefix, object->fscache.n_ops);
 	pr_err("%sparent=%p\n",
 	       prefix, object->fscache.parent);
 

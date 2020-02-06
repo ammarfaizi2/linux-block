@@ -315,9 +315,8 @@ void fscache_object_init(struct fscache_object *object,
 	INIT_WORK(&object->work, fscache_object_work_func);
 	INIT_LIST_HEAD(&object->dependents);
 	INIT_LIST_HEAD(&object->dep_link);
-	INIT_LIST_HEAD(&object->pending_ops);
 	object->n_children = 0;
-	object->n_ops = object->n_in_progress = object->n_exclusive = 0;
+	object->n_ops = 0;
 	object->events = 0;
 	object->cache = cache;
 	object->cookie = cookie;
@@ -580,14 +579,6 @@ static const struct fscache_state *fscache_object_available(struct fscache_objec
 	spin_lock(&object->lock);
 
 	fscache_done_parent_op(object);
-	if (object->n_in_progress == 0) {
-		if (object->n_ops > 0) {
-			ASSERTCMP(object->n_ops, >=, object->n_obj_ops);
-			fscache_start_operations(object);
-		} else {
-			ASSERT(list_empty(&object->pending_ops));
-		}
-	}
 	spin_unlock(&object->lock);
 
 	fscache_stat(&fscache_n_cop_lookup_complete);
@@ -654,23 +645,10 @@ static const struct fscache_state *fscache_kill_object(struct fscache_object *ob
 	fscache_mark_object_dead(object);
 	object->oob_event_mask = 0;
 
-	if (test_bit(FSCACHE_OBJECT_RETIRED, &object->flags)) {
-		/* Reject any new read/write ops and abort any that are pending. */
-		clear_bit(FSCACHE_OBJECT_PENDING_WRITE, &object->flags);
-		fscache_cancel_all_ops(object);
-	}
-
 	if (list_empty(&object->dependents) &&
 	    object->n_ops == 0 &&
 	    object->n_children == 0)
 		return transit_to(DROP_OBJECT);
-
-	if (object->n_in_progress == 0) {
-		spin_lock(&object->lock);
-		if (object->n_ops > 0 && object->n_in_progress == 0)
-			fscache_start_operations(object);
-		spin_unlock(&object->lock);
-	}
 
 	if (!list_empty(&object->dependents))
 		return transit_to(KILL_DEPENDENTS);
