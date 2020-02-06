@@ -364,6 +364,8 @@ EXPORT_SYMBOL(__fscache_acquire_cookie);
 void __fscache_use_cookie(struct fscache_cookie *cookie, bool will_modify)
 {
 	enum fscache_cookie_stage stage;
+	struct fscache_object *object;
+	bool write_set;
 
 	_enter("c=%08x", cookie->debug_id);
 
@@ -399,8 +401,17 @@ again:
 	case FSCACHE_COOKIE_STAGE_NO_DATA_YET:
 	case FSCACHE_COOKIE_STAGE_ACTIVE:
 	case FSCACHE_COOKIE_STAGE_INVALIDATING:
-		// TODO: Handle will_modify
-		spin_unlock(&cookie->lock);
+		if (will_modify) {
+			object = hlist_entry(cookie->backing_objects.first,
+					     struct fscache_object, cookie_link);
+			write_set = test_and_set_bit(FSCACHE_OBJECT_LOCAL_WRITE,
+						     &object->flags);
+			spin_unlock(&cookie->lock);
+			if (!write_set)
+				fscache_dispatch(cookie, object, 0, fscache_prepare_to_write);
+		} else {
+			spin_unlock(&cookie->lock);
+		}
 		break;
 
 	case FSCACHE_COOKIE_STAGE_FAILED:

@@ -125,6 +125,8 @@ int cachefiles_set_object_xattr(struct cachefiles_object *object)
 	buf->zero_point		= cpu_to_be64(object->fscache.cookie->zero_point);
 	buf->type		= object->fscache.cookie->type;
 	buf->content		= object->content_info;
+	if (test_bit(FSCACHE_OBJECT_LOCAL_WRITE, &object->fscache.flags))
+		buf->content	= CACHEFILES_CONTENT_DIRTY;
 	if (len > 0)
 		memcpy(buf->data, fscache_get_aux(object->fscache.cookie), len);
 
@@ -185,6 +187,10 @@ int cachefiles_check_auxdata(struct cachefiles_object *object)
 		why = cachefiles_coherency_check_aux;
 	} else if (be64_to_cpu(buf->object_size) != object->fscache.cookie->object_size) {
 		why = cachefiles_coherency_check_objsize;
+	} else if (buf->content == CACHEFILES_CONTENT_DIRTY) {
+		// TODO: Begin conflict resolution
+		pr_warn("Dirty object in cache\n");
+		why = cachefiles_coherency_check_dirty;
 	} else {
 		object->fscache.cookie->zero_point = be64_to_cpu(buf->zero_point);
 		object->content_info = buf->content;
@@ -218,5 +224,26 @@ int cachefiles_remove_object_xattr(struct cachefiles_cache *cache,
 	}
 
 	_leave(" = %d", ret);
+	return ret;
+}
+
+/*
+ * Stick a marker on the cache object to indicate that it's dirty.
+ */
+int cachefiles_prepare_to_write(struct fscache_object *_object)
+{
+	int ret;
+	const struct cred *saved_cred;
+	struct cachefiles_object *object =
+		container_of(_object, struct cachefiles_object, fscache);
+	struct cachefiles_cache *cache =
+		container_of(_object->cache, struct cachefiles_cache, cache);
+
+	_enter("c=%08x", object->fscache.cookie->debug_id);
+
+	cachefiles_begin_secure(cache, &saved_cred);
+	ret = cachefiles_set_object_xattr(object);
+	cachefiles_end_secure(cache, saved_cred);
+
 	return ret;
 }
