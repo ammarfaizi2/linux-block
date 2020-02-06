@@ -233,7 +233,7 @@ TRACE_EVENT(fscache_acquire,
 		    __entry->p_usage		= atomic_read(&cookie->parent->usage);
 		    __entry->p_n_children	= atomic_read(&cookie->parent->n_children);
 		    __entry->p_flags		= cookie->parent->flags;
-		    memcpy(__entry->name, cookie->def->name, 8);
+		    memcpy(__entry->name, cookie->type_name, 8);
 		    __entry->name[7]		= 0;
 			   ),
 

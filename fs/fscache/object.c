@@ -474,7 +474,7 @@ static const struct fscache_state *fscache_look_up_object(struct fscache_object 
 	}
 
 	_debug("LOOKUP \"%s\" in \"%s\"",
-	       cookie->def->name, object->cache->tag->name);
+	       cookie->type_name, object->cache->tag->name);
 
 	fscache_stat(&fscache_n_object_lookups);
 	fscache_stat(&fscache_n_cop_lookup_object);

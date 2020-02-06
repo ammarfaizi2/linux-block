@@ -680,7 +680,9 @@ static int afs_activate_cell(struct afs_net *net, struct afs_cell *cell)
 
 #ifdef CONFIG_AFS_FSCACHE
 	cell->cache = fscache_acquire_cookie(afs_cache_netfs.primary_index,
-					     &afs_cell_cache_index_def,
+					     FSCACHE_COOKIE_TYPE_INDEX,
+					     "AFS.cell",
+					     0,
 					     NULL,
 					     cell->name, strlen(cell->name),
 					     NULL, 0,

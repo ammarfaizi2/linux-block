@@ -39,7 +39,7 @@ int cachefiles_check_object_type(struct cachefiles_object *object)
 	if (!object->fscache.cookie)
 		strcpy(type, "C3");
 	else
-		snprintf(type, 3, "%02x", object->fscache.cookie->def->type);
+		snprintf(type, 3, "%02x", object->fscache.cookie->type);
 
 	_enter("%p{%s}", object, type);
 
@@ -119,7 +119,7 @@ int cachefiles_set_object_xattr(struct cachefiles_object *object,
 	if (!buf)
 		return -ENOMEM;
 
-	buf->type = object->fscache.cookie->def->type;
+	buf->type = object->fscache.cookie->type;
 	if (len > 0)
 		memcpy(buf->data, fscache_get_aux(object->fscache.cookie), len);
 
@@ -158,7 +158,7 @@ int cachefiles_check_auxdata(struct cachefiles_object *object)
 
 	ret = vfs_getxattr(&init_user_ns, dentry, cachefiles_xattr_cache, buf, tlen);
 	if (ret == tlen &&
-	    buf->type == object->fscache.cookie->def->type &&
+	    buf->type == object->fscache.cookie->type &&
 	    memcmp(buf->data, p, len) == 0)
 		ret = 0;
 	else
