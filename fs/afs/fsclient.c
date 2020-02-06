@@ -361,7 +361,7 @@ static int afs_deliver_fs_fetch_data(struct afs_call *call)
 
 		call->unmarshall++;
 		call->iter = req->iter;
-		call->iov_len = min(req->actual_len, req->len);
+		call->iov_len = min(req->actual_len, req->cache.len);
 		/* Fall through */
 
 		/* extract the returned data */
@@ -374,17 +374,17 @@ static int afs_deliver_fs_fetch_data(struct afs_call *call)
 			return ret;
 
 		call->iter = &call->def_iter;
-		if (req->actual_len <= req->len)
+		if (req->actual_len <= req->cache.len)
 			goto no_more_data;
 
 		/* Discard any excess data the server gave us */
-		afs_extract_discard(call, req->actual_len - req->len);
+		afs_extract_discard(call, req->actual_len - req->cache.len);
 		call->unmarshall = 3;
 		/* Fall through */
 
 	case 3:
 		_debug("extract discard %zu/%llu",
-		       iov_iter_count(call->iter), req->actual_len - req->len);
+		       iov_iter_count(call->iter), req->actual_len - req->cache.len);
 
 		ret = afs_extract_data(call, true);
 		if (ret < 0)
@@ -417,8 +417,8 @@ static int afs_deliver_fs_fetch_data(struct afs_call *call)
 		break;
 	}
 
-	if (req->done)
-		req->done(req);
+	if (req->cache.io_done)
+		req->cache.io_done(&req->cache);
 
 	_leave(" = 0 [done]");
 	return 0;
@@ -478,10 +478,10 @@ static int afs_fs_fetch_data64(struct afs_fs_cursor *fc,
 	bp[1] = htonl(vnode->fid.vid);
 	bp[2] = htonl(vnode->fid.vnode);
 	bp[3] = htonl(vnode->fid.unique);
-	bp[4] = htonl(upper_32_bits(req->pos));
-	bp[5] = htonl(lower_32_bits(req->pos));
+	bp[4] = htonl(upper_32_bits(req->cache.pos));
+	bp[5] = htonl(lower_32_bits(req->cache.pos));
 	bp[6] = 0;
-	bp[7] = htonl(lower_32_bits(req->len));
+	bp[7] = htonl(lower_32_bits(req->cache.len));
 
 	afs_use_fs_server(call, fc->cbi);
 	trace_afs_make_fs_call(call, &vnode->fid);
@@ -505,9 +505,9 @@ int afs_fs_fetch_data(struct afs_fs_cursor *fc,
 	if (test_bit(AFS_SERVER_FL_IS_YFS, &fc->cbi->server->flags))
 		return yfs_fs_fetch_data(fc, scb, req);
 
-	if (upper_32_bits(req->pos) ||
-	    upper_32_bits(req->len) ||
-	    upper_32_bits(req->pos + req->len))
+	if (upper_32_bits(req->cache.pos) ||
+	    upper_32_bits(req->cache.len) ||
+	    upper_32_bits(req->cache.pos + req->cache.len))
 		return afs_fs_fetch_data64(fc, scb, req);
 
 	_enter("");
@@ -528,8 +528,8 @@ int afs_fs_fetch_data(struct afs_fs_cursor *fc,
 	bp[1] = htonl(vnode->fid.vid);
 	bp[2] = htonl(vnode->fid.vnode);
 	bp[3] = htonl(vnode->fid.unique);
-	bp[4] = htonl(lower_32_bits(req->pos));
-	bp[5] = htonl(lower_32_bits(req->len));
+	bp[4] = htonl(lower_32_bits(req->cache.pos));
+	bp[5] = htonl(lower_32_bits(req->cache.len));
 
 	afs_use_fs_server(call, fc->cbi);
 	trace_afs_make_fs_call(call, &vnode->fid);

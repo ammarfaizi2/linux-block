@@ -51,9 +51,9 @@ static int afs_fill_page(struct file *file,
 
 	refcount_set(&req->usage, 1);
 	req->key = afs_file_key(file);
-	req->pos = pos;
-	req->len = len;
-	req->nr_pages = 1;
+	req->cache.pos = pos;
+	req->cache.len = len;
+	req->cache.nr_pages = 1;
 	iov_iter_mapping(&req->def_iter, READ, vnode->vfs_inode.i_mapping,
 			 pos, len);
 	req->iter = &req->def_iter;

@@ -110,13 +110,14 @@ struct afs_lookup_cookie {
  */
 static void afs_dir_read_cleanup(struct afs_read *req)
 {
-	struct address_space *mapping = req->iter->mapping;
+	struct afs_vnode *vnode = req->vnode;
+	struct address_space *mapping = vnode->vfs_inode.i_mapping;
 	struct page *page;
-	pgoff_t last = req->nr_pages - 1;
+	pgoff_t last = req->cache.nr_pages - 1;
 
 	XA_STATE(xas, &mapping->i_pages, 0);
 
-	if (unlikely(!req->nr_pages))
+	if (unlikely(!req->cache.nr_pages))
 		return;
 
 	rcu_read_lock();
@@ -131,6 +132,13 @@ static void afs_dir_read_cleanup(struct afs_read *req)
 	}
 
 	rcu_read_unlock();
+}
+
+/*
+ * Do nothing upon completion of the request.
+ */
+static void afs_dir_read_done(struct fscache_io_request *fsreq)
+{
 }
 
 /*
@@ -196,15 +204,15 @@ static void afs_dir_dump(struct afs_vnode *dvnode, struct afs_read *req)
 	struct address_space *mapping = dvnode->vfs_inode.i_mapping;
 	struct page *page;
 	unsigned int i, qty = PAGE_SIZE / sizeof(union afs_xdr_dir_block);
-	pgoff_t last = req->nr_pages - 1;
+	pgoff_t last = req->cache.nr_pages - 1;
 
 	XA_STATE(xas, &mapping->i_pages, 0);
 
 	pr_warn("DIR %llx:%llx f=%llx l=%llx al=%llx\n",
 		dvnode->fid.vid, dvnode->fid.vnode,
-		req->file_size, req->len, req->actual_len);
+		req->file_size, req->cache.len, req->actual_len);
 	pr_warn("DIR %llx %x %zx %zx\n",
-		req->pos, req->nr_pages,
+		req->cache.pos, req->cache.nr_pages,
 		req->iter->iov_offset,  iov_iter_count(req->iter));
 
 	xas_for_each(&xas, page, last) {
@@ -231,12 +239,12 @@ static int afs_dir_check(struct afs_vnode *dvnode, struct afs_read *req)
 {
 	struct address_space *mapping = dvnode->vfs_inode.i_mapping;
 	struct page *page;
-	pgoff_t last = req->nr_pages - 1;
+	pgoff_t last = req->cache.nr_pages - 1;
 	int ret = 0;
 
 	XA_STATE(xas, &mapping->i_pages, 0);
 
-	if (unlikely(!req->nr_pages))
+	if (unlikely(!req->cache.nr_pages))
 		return 0;
 
 	rcu_read_lock();
@@ -295,7 +303,9 @@ static struct afs_read *afs_read_dir(struct afs_vnode *dvnode, struct key *key)
 
 	refcount_set(&req->usage, 1);
 	req->key = key_get(key);
+	req->vnode = dvnode;
 	req->cleanup = afs_dir_read_cleanup;
+	req->cache.io_done = afs_dir_read_done;
 
 expand:
 	i_size = i_size_read(&dvnode->vfs_inode);
@@ -314,7 +324,7 @@ expand:
 	nr_pages = (i_size + PAGE_SIZE - 1) / PAGE_SIZE;
 
 	req->actual_len = i_size; /* May change */
-	req->len = nr_pages * PAGE_SIZE; /* We can ask for more than there is */
+	req->cache.len = nr_pages * PAGE_SIZE; /* We can ask for more than there is */
 	req->data_version = dvnode->status.data_version; /* May change */
 	iov_iter_mapping(&req->def_iter, READ, dvnode->vfs_inode.i_mapping,
 			 0, i_size);
@@ -324,7 +334,7 @@ expand:
 	 * been at work and pin all the pages.  If there are any gaps, we will
 	 * need to reread the entire directory contents.
 	 */
-	i = req->nr_pages;
+	i = req->cache.nr_pages;
 	while (i < nr_pages) {
 		struct page *pages[8], *page;
 
@@ -353,10 +363,10 @@ expand:
 			set_page_private(page, 1);
 			SetPagePrivate(page);
 			unlock_page(page);
-			req->nr_pages++;
+			req->cache.nr_pages++;
 			i++;
 		} else {
-			req->nr_pages += n;
+			req->cache.nr_pages += n;
 			i += n;
 		}
 	}
@@ -381,9 +391,9 @@ expand:
 		if (ret < 0)
 			goto error_unlock;
 
-		task_io_account_read(PAGE_SIZE * req->nr_pages);
+		task_io_account_read(PAGE_SIZE * req->cache.nr_pages);
 
-		if (req->len < req->file_size) {
+		if (req->cache.len < req->file_size) {
 			/* The content has grown, so we need to expand the
 			 * buffer.
 			 */

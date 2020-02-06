@@ -218,8 +218,9 @@ static inline struct key *afs_file_key(struct file *file)
  * Record of an outstanding read operation on a vnode.
  */
 struct afs_read {
-	loff_t			pos;		/* Where to start reading */
-	loff_t			len;		/* How much we're asking for */
+	struct fscache_io_request cache;
+	struct iov_iter		def_iter;	/* Default iterator */
+	struct iov_iter		*iter;		/* Iterator to use */
 	loff_t			actual_len;	/* How much we're actually getting */
 	loff_t			file_size;	/* File size returned by server */
 	struct key		*key;		/* The key to use to reissue the read */
@@ -227,12 +228,7 @@ struct afs_read {
 	afs_dataversion_t	data_version;	/* Version number returned by server */
 	refcount_t		usage;
 	unsigned int		call_debug_id;
-	unsigned int		nr_pages;
-	int			error;
-	void (*done)(struct afs_read *);
-	void (*cleanup)(struct afs_read *);
-	struct iov_iter		*iter;		/* Iterator representing the buffer */
-	struct iov_iter		def_iter;	/* Default iterator */
+	void (*cleanup)(struct afs_read *req);
 };
 
 /*
