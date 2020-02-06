@@ -118,6 +118,7 @@ struct afs_call {
 	struct address_space	*mapping;	/* Pages being written from */
 	size_t			iov_len;	/* Size of *iter to be used */
 	struct iov_iter		def_iter;	/* Default buffer/data iterator */
+	struct iov_iter		*write_iter;	/* Iterator defining write to be made */
 	struct iov_iter		*iter;		/* Iterator currently in use */
 	union {	/* Convenience for ->def_iter */
 		struct kvec	kvec[1];
@@ -138,8 +139,6 @@ struct afs_call {
 	struct afs_volume_status *out_volstatus;
 	struct afs_read		*read_request;
 	unsigned int		server_index;
-	pgoff_t			first;		/* first page in mapping to deal with */
-	pgoff_t			last;		/* last page in mapping to deal with */
 	atomic_t		usage;
 	enum afs_call_state	state;
 	spinlock_t		state_lock;
@@ -149,15 +148,10 @@ struct afs_call {
 	unsigned int		max_lifespan;	/* Maximum lifespan to set if not 0 */
 	unsigned		request_size;	/* size of request data */
 	unsigned		reply_max;	/* maximum size of reply */
-	unsigned		first_offset;	/* offset into mapping[first] */
-	union {
-		unsigned	last_to;	/* amount of mapping[last] */
-		unsigned	count2;		/* count used in unmarshalling */
-	};
+	unsigned		count2;		/* count used in unmarshalling */
 	unsigned char		unmarshall;	/* unmarshalling phase */
 	unsigned char		addr_ix;	/* Address in ->alist */
 	bool			drop_ref;	/* T if need to drop ref for incoming call */
-	bool			send_pages;	/* T if data from mapping should be sent */
 	bool			need_attention;	/* T if RxRPC poked us */
 	bool			async;		/* T if asynchronous */
 	bool			upgrade;	/* T to request service upgrade */
@@ -962,8 +956,8 @@ extern int afs_fs_symlink(struct afs_fs_cursor *, const char *, const char *,
 extern int afs_fs_rename(struct afs_fs_cursor *, const char *,
 			 struct afs_vnode *, const char *,
 			 struct afs_status_cb *, struct afs_status_cb *);
-extern int afs_fs_store_data(struct afs_fs_cursor *, struct address_space *,
-			     pgoff_t, pgoff_t, unsigned, unsigned, struct afs_status_cb *);
+extern int afs_fs_store_data(struct afs_fs_cursor *, struct iov_iter *, loff_t,
+			     struct afs_status_cb *);
 extern int afs_fs_setattr(struct afs_fs_cursor *, struct iattr *, struct afs_status_cb *);
 extern int afs_fs_get_volume_status(struct afs_fs_cursor *, struct afs_volume_status *);
 extern int afs_fs_set_lock(struct afs_fs_cursor *, afs_lock_type_t, struct afs_status_cb *);
@@ -1378,8 +1372,8 @@ extern int yfs_fs_symlink(struct afs_fs_cursor *, const char *, const char *,
 			  struct afs_status_cb *, struct afs_fid *, struct afs_status_cb *);
 extern int yfs_fs_rename(struct afs_fs_cursor *, const char *, struct afs_vnode *, const char *,
 			 struct afs_status_cb *, struct afs_status_cb *);
-extern int yfs_fs_store_data(struct afs_fs_cursor *, struct address_space *,
-			     pgoff_t, pgoff_t, unsigned, unsigned, struct afs_status_cb *);
+extern int yfs_fs_store_data(struct afs_fs_cursor *, struct iov_iter *, loff_t,
+			     struct afs_status_cb *);
 extern int yfs_fs_setattr(struct afs_fs_cursor *, struct iattr *, struct afs_status_cb *);
 extern int yfs_fs_get_volume_status(struct afs_fs_cursor *, struct afs_volume_status *);
 extern int yfs_fs_set_lock(struct afs_fs_cursor *, afs_lock_type_t, struct afs_status_cb *);

@@ -1108,10 +1108,7 @@ static const struct afs_call_type afs_RXFSStoreData64 = {
 /*
  * store a set of pages to a very large file
  */
-static int afs_fs_store_data64(struct afs_fs_cursor *fc,
-			       struct address_space *mapping,
-			       pgoff_t first, pgoff_t last,
-			       unsigned offset, unsigned to,
+static int afs_fs_store_data64(struct afs_fs_cursor *fc, struct iov_iter *iter,
 			       loff_t size, loff_t pos, loff_t i_size,
 			       struct afs_status_cb *scb)
 {
@@ -1130,12 +1127,7 @@ static int afs_fs_store_data64(struct afs_fs_cursor *fc,
 		return -ENOMEM;
 
 	call->key = fc->key;
-	call->mapping = mapping;
-	call->first = first;
-	call->last = last;
-	call->first_offset = offset;
-	call->last_to = to;
-	call->send_pages = true;
+	call->write_iter = iter;
 	call->out_scb = scb;
 
 	/* marshall the parameters */
@@ -1166,30 +1158,24 @@ static int afs_fs_store_data64(struct afs_fs_cursor *fc,
 }
 
 /*
- * store a set of pages
+ * Write data to a file on the server.
  */
-int afs_fs_store_data(struct afs_fs_cursor *fc, struct address_space *mapping,
-		      pgoff_t first, pgoff_t last,
-		      unsigned offset, unsigned to,
+int afs_fs_store_data(struct afs_fs_cursor *fc, struct iov_iter *iter, loff_t pos,
 		      struct afs_status_cb *scb)
 {
 	struct afs_vnode *vnode = fc->vnode;
 	struct afs_call *call;
 	struct afs_net *net = afs_v2net(vnode);
-	loff_t size, pos, i_size;
+	loff_t size, i_size;
 	__be32 *bp;
 
 	if (test_bit(AFS_SERVER_FL_IS_YFS, &fc->cbi->server->flags))
-		return yfs_fs_store_data(fc, mapping, first, last, offset, to, scb);
+		return yfs_fs_store_data(fc, iter, pos, scb);
 
 	_enter(",%x,{%llx:%llu},,",
 	       key_serial(fc->key), vnode->fid.vid, vnode->fid.vnode);
 
-	size = (loff_t)to - (loff_t)offset;
-	if (first != last)
-		size += (loff_t)(last - first) << PAGE_SHIFT;
-	pos = (loff_t)first << PAGE_SHIFT;
-	pos += offset;
+	size = iov_iter_count(iter);
 
 	i_size = i_size_read(&vnode->vfs_inode);
 	if (pos + size > i_size)
@@ -1200,8 +1186,7 @@ int afs_fs_store_data(struct afs_fs_cursor *fc, struct address_space *mapping,
 	       (unsigned long long) i_size);
 
 	if (pos >> 32 || i_size >> 32 || size >> 32 || (pos + size) >> 32)
-		return afs_fs_store_data64(fc, mapping, first, last, offset, to,
-					   size, pos, i_size, scb);
+		return afs_fs_store_data64(fc, iter, size, pos, i_size, scb);
 
 	call = afs_alloc_flat_call(net, &afs_RXFSStoreData,
 				   (4 + 6 + 3) * 4,
@@ -1210,12 +1195,7 @@ int afs_fs_store_data(struct afs_fs_cursor *fc, struct address_space *mapping,
 		return -ENOMEM;
 
 	call->key = fc->key;
-	call->mapping = mapping;
-	call->first = first;
-	call->last = last;
-	call->first_offset = offset;
-	call->last_to = to;
-	call->send_pages = true;
+	call->write_iter = iter;
 	call->out_scb = scb;
 
 	/* marshall the parameters */

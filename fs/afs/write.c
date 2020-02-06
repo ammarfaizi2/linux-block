@@ -311,38 +311,30 @@ static void afs_redirty_pages(struct writeback_control *wbc,
 /*
  * completion of write to server
  */
-static void afs_pages_written_back(struct afs_vnode *vnode,
-				   pgoff_t first, pgoff_t last)
+static void afs_pages_written_back(struct afs_vnode *vnode, pgoff_t start, pgoff_t last)
 {
-	struct pagevec pv;
+	struct address_space *mapping = vnode->vfs_inode.i_mapping;
+	struct page *page;
 	unsigned long priv;
-	unsigned count, loop;
+
+	XA_STATE(xas, &mapping->i_pages, start);
 
 	_enter("{%llx:%llu},{%lx-%lx}",
-	       vnode->fid.vid, vnode->fid.vnode, first, last);
+	       vnode->fid.vid, vnode->fid.vnode, start, last);
 
-	pagevec_init(&pv);
+	rcu_read_lock();
 
-	do {
-		_debug("done %lx-%lx", first, last);
+	xas_for_each(&xas, page, last) {
+		ASSERT(PageWriteback(page));
 
-		count = last - first + 1;
-		if (count > PAGEVEC_SIZE)
-			count = PAGEVEC_SIZE;
-		pv.nr = find_get_pages_contig(vnode->vfs_inode.i_mapping,
-					      first, count, pv.pages);
-		ASSERTCMP(pv.nr, ==, count);
+		priv = page_private(page);
+		trace_afs_page_dirty(vnode, tracepoint_string("clear"),
+				     page->index, priv);
+		set_page_private(page, 0);
+		page_endio(page, true, 0);
+	}
 
-		for (loop = 0; loop < count; loop++) {
-			priv = page_private(pv.pages[loop]);
-			trace_afs_page_dirty(vnode, tracepoint_string("clear"),
-					     pv.pages[loop]->index, priv);
-			set_page_private(pv.pages[loop], 0);
-			end_page_writeback(pv.pages[loop]);
-		}
-		first += count;
-		__pagevec_release(&pv);
-	} while (first <= last);
+	rcu_read_unlock();
 
 	afs_prune_wb_keys(vnode);
 	_leave("");
@@ -351,23 +343,22 @@ static void afs_pages_written_back(struct afs_vnode *vnode,
 /*
  * write to a file
  */
-static int afs_store_data(struct address_space *mapping,
-			  pgoff_t first, pgoff_t last,
-			  unsigned offset, unsigned to)
+static int afs_store_data(struct afs_vnode *vnode, struct iov_iter *iter,
+			  loff_t pos, pgoff_t first, pgoff_t last)
 {
-	struct afs_vnode *vnode = AFS_FS_I(mapping->host);
 	struct afs_fs_cursor fc;
 	struct afs_status_cb *scb;
 	struct afs_wb_key *wbk = NULL;
 	struct list_head *p;
+	loff_t count = iov_iter_count(iter);
 	int ret = -ENOKEY, ret2;
 
-	_enter("%s{%llx:%llu.%u},%lx,%lx,%x,%x",
+	_enter("%s{%llx:%llu.%u},%llx,%llx",
 	       vnode->volume->name,
 	       vnode->fid.vid,
 	       vnode->fid.vnode,
 	       vnode->fid.unique,
-	       first, last, offset, to);
+	       count, pos);
 
 	scb = kzalloc(sizeof(struct afs_status_cb), GFP_NOFS);
 	if (!scb)
@@ -407,7 +398,7 @@ found_key:
 
 		while (afs_select_fileserver(&fc)) {
 			fc.cb_break = afs_calc_vnode_cb_break(vnode);
-			afs_fs_store_data(&fc, mapping, first, last, offset, to, scb);
+			afs_fs_store_data(&fc, iter, pos, scb);
 		}
 
 		afs_check_for_remote_deletion(&fc, vnode);
@@ -421,9 +412,7 @@ found_key:
 	switch (ret) {
 	case 0:
 		afs_stat_v(vnode, n_stores);
-		atomic_long_add((last * PAGE_SIZE + to) -
-				(first * PAGE_SIZE + offset),
-				&afs_v2net(vnode)->n_store_bytes);
+		atomic_long_add(count, &afs_v2net(vnode)->n_store_bytes);
 		break;
 	case -EACCES:
 	case -EPERM:
@@ -454,10 +443,12 @@ static int afs_write_back_from_locked_page(struct address_space *mapping,
 					   pgoff_t final_page)
 {
 	struct afs_vnode *vnode = AFS_FS_I(mapping->host);
+	struct iov_iter iter;
 	struct page *pages[8], *page;
 	unsigned long count, priv;
 	unsigned n, offset, to, f, t;
 	pgoff_t start, first, last;
+	loff_t a, b;
 	int loop, ret;
 
 	_enter(",%lx", primary_page->index);
@@ -557,10 +548,17 @@ no_more:
 
 	first = primary_page->index;
 	last = first + count - 1;
-
 	_debug("write back %lx[%u..] to %lx[..%u]", first, offset, last, to);
 
-	ret = afs_store_data(mapping, first, last, offset, to);
+	a = first;
+	a <<= PAGE_SHIFT;
+	a += offset;
+	b = last;
+	b <<= PAGE_SHIFT;
+	b += to;
+	iov_iter_mapping(&iter, WRITE, mapping, a, b - a);
+
+	ret = afs_store_data(vnode, &iter, a, first, last);
 	switch (ret) {
 	case 0:
 		ret = count;
@@ -848,6 +846,8 @@ int afs_launder_page(struct page *page)
 {
 	struct address_space *mapping = page->mapping;
 	struct afs_vnode *vnode = AFS_FS_I(mapping->host);
+	struct iov_iter iter;
+	struct bio_vec bv[1];
 	unsigned long priv;
 	unsigned int f, t;
 	int ret = 0;
@@ -863,9 +863,15 @@ int afs_launder_page(struct page *page)
 			t = priv >> AFS_PRIV_SHIFT;
 		}
 
+		bv[0].bv_page = page;
+		bv[0].bv_offset = f;
+		bv[0].bv_len = t - f;
+		iov_iter_bvec(&iter, WRITE, bv, 1, bv[0].bv_len);
+
 		trace_afs_page_dirty(vnode, tracepoint_string("launder"),
 				     page->index, priv);
-		ret = afs_store_data(mapping, page->index, page->index, t, f);
+		ret = afs_store_data(vnode, &iter, (loff_t)page->index << PAGE_SHIFT,
+				     page->index, page->index);
 	}
 
 	trace_afs_page_dirty(vnode, tracepoint_string("laundered"),
