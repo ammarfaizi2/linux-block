@@ -324,7 +324,7 @@ TRACE_EVENT(cachefiles_mark_buried,
 TRACE_EVENT(cachefiles_coherency,
 	    TP_PROTO(struct cachefiles_object *obj,
 		     ino_t ino,
-		     int content,
+		     enum cachefiles_content content,
 		     enum cachefiles_coherency_trace why),
 
 	    TP_ARGS(obj, ino, content, why),
@@ -333,7 +333,7 @@ TRACE_EVENT(cachefiles_coherency,
 	    TP_STRUCT__entry(
 		    __field(unsigned int,			obj	)
 		    __field(enum cachefiles_coherency_trace,	why	)
-		    __field(int,				content	)
+		    __field(enum cachefiles_content,		content	)
 		    __field(u64,				ino	)
 			     ),
 

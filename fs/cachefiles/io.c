@@ -395,6 +395,10 @@ bool cachefiles_open_object(struct cachefiles_object *object)
 	path.mnt = cache->mnt;
 	path.dentry = object->dentry;
 
+	if (object->content_info == CACHEFILES_CONTENT_MAP &&
+	    !cachefiles_load_content_map(object))
+		goto error;
+
 	file = open_with_fake_path(&path,
 				   O_RDWR | O_LARGEFILE | O_DIRECT,
 				   d_backing_inode(object->dentry),

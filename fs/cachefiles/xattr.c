@@ -16,8 +16,11 @@
 #include "internal.h"
 
 struct cachefiles_xattr {
-	uint8_t				type;
-	uint8_t				data[];
+	__be64	object_size;	/* Actual size of the object */
+	__be64	zero_point;	/* Size after which server has no data not written by us */
+	__u8	type;		/* Type of object */
+	__u8	content;	/* Content presence (enum cachefiles_content) */
+	__u8	data[];		/* netfs coherency data */
 } __packed;
 
 static const char cachefiles_xattr_cache[] =
@@ -119,7 +122,10 @@ int cachefiles_set_object_xattr(struct cachefiles_object *object,
 	if (!buf)
 		return -ENOMEM;
 
-	buf->type = object->fscache.cookie->type;
+	buf->object_size	= cpu_to_be64(object->fscache.cookie->object_size);
+	buf->zero_point		= cpu_to_be64(object->fscache.cookie->zero_point);
+	buf->type		= object->fscache.cookie->type;
+	buf->content		= object->content_info;
 	if (len > 0)
 		memcpy(buf->data, fscache_get_aux(object->fscache.cookie), len);
 
@@ -128,7 +134,7 @@ int cachefiles_set_object_xattr(struct cachefiles_object *object,
 			   xattr_flags);
 	if (ret < 0) {
 		trace_cachefiles_coherency(object, d_inode(dentry)->i_ino,
-					   0,
+					   buf->content,
 					   cachefiles_coherency_set_fail);
 		if (ret != -ENOMEM)
 			cachefiles_io_error_obj(
@@ -136,7 +142,7 @@ int cachefiles_set_object_xattr(struct cachefiles_object *object,
 				"Failed to set xattr with error %d", ret);
 	} else {
 		trace_cachefiles_coherency(object, d_inode(dentry)->i_ino,
-					   0,
+					   buf->content,
 					   cachefiles_coherency_set_ok);
 	}
 
@@ -175,15 +181,21 @@ int cachefiles_check_auxdata(struct cachefiles_object *object)
 		why = cachefiles_coherency_check_xattr;
 	} else if (buf->type != object->fscache.cookie->type) {
 		why = cachefiles_coherency_check_type;
+	} else if (buf->content >= nr__cachefiles_content) {
+		why = cachefiles_coherency_check_content;
 	} else if (memcmp(buf->data, p, len) != 0) {
 		why = cachefiles_coherency_check_aux;
+	} else if (be64_to_cpu(buf->object_size) != object->fscache.cookie->object_size) {
+		why = cachefiles_coherency_check_objsize;
 	} else {
+		object->fscache.cookie->zero_point = be64_to_cpu(buf->zero_point);
+		object->content_info = buf->content;
 		why = cachefiles_coherency_check_ok;
 		ret = 0;
 	}
 
 	trace_cachefiles_coherency(object, d_inode(dentry)->i_ino,
-				   0, why);
+				   buf->content, why);
 	kfree(buf);
 	return ret;
 }
