@@ -24,6 +24,7 @@
 #include <linux/parser.h>
 #include <linux/fsnotify.h>
 #include <linux/seq_file.h>
+#include <linux/fsuidgid.h>
 
 #define DEVPTS_DEFAULT_MODE 0600
 /*
@@ -277,7 +278,7 @@ static int parse_mount_options(char *data, int op, struct pts_mount_opts *opts)
 		case Opt_uid:
 			if (match_int(&args[0], &option))
 				return -EINVAL;
-			uid = make_kuid(current_user_ns(), option);
+			uid = make_kfsuid(current_user_ns(), option);
 			if (!uid_valid(uid))
 				return -EINVAL;
 			opts->uid = uid;
@@ -286,7 +287,7 @@ static int parse_mount_options(char *data, int op, struct pts_mount_opts *opts)
 		case Opt_gid:
 			if (match_int(&args[0], &option))
 				return -EINVAL;
-			gid = make_kgid(current_user_ns(), option);
+			gid = make_kfsgid(current_user_ns(), option);
 			if (!gid_valid(gid))
 				return -EINVAL;
 			opts->gid = gid;
@@ -410,7 +411,7 @@ static int devpts_show_options(struct seq_file *seq, struct dentry *root)
 			   from_kuid_munged(&init_user_ns, opts->uid));
 	if (opts->setgid)
 		seq_printf(seq, ",gid=%u",
-			   from_kgid_munged(&init_user_ns, opts->gid));
+			   from_kfsgid_munged(&init_user_ns, opts->gid));
 	seq_printf(seq, ",mode=%03o", opts->mode);
 	seq_printf(seq, ",ptmxmode=%03o", opts->ptmxmode);
 	if (opts->max < NR_UNIX98_PTY_MAX)
