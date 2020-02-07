@@ -256,7 +256,7 @@ EXPORT_SYMBOL(fs_param_is_enum);
 int fs_param_is_string(struct p_log *log, const struct fs_parameter_spec *p,
 		       struct fs_parameter *param, struct fs_parse_result *result)
 {
-	if (param->type != fs_value_is_string)
+	if (param->type != fs_value_is_string || !*param->string)
 		return fs_param_bad_value(log, param);
 	return 0;
 }
