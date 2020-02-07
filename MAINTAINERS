@@ -7658,9 +7658,8 @@ S:	Orphan
 F:	drivers/net/usb/hso.c
 
 HSR NETWORK PROTOCOL
-M:	Arvid Brodin <arvid.brodin@alten.se>
 L:	netdev@vger.kernel.org
-S:	Maintained
+S:	Orphan
 F:	net/hsr/
 
 HT16K33 LED CONTROLLER DRIVER
@@ -8909,8 +8908,10 @@ L:	isdn4linux@listserv.isdn4linux.de (subscribers-only)
 L:	netdev@vger.kernel.org
 W:	http://www.isdn4linux.de
 S:	Maintained
-F:	drivers/isdn/mISDN
-F:	drivers/isdn/hardware
+F:	drivers/isdn/mISDN/
+F:	drivers/isdn/hardware/
+F:	drivers/isdn/Kconfig
+F:	drivers/isdn/Makefile
 
 ISDN/CMTP OVER BLUETOOTH
 M:	Karsten Keil <isdn@linux-pingi.de>
@@ -14105,7 +14106,6 @@ F:	include/linux/platform_data/rtc-*
 F:	tools/testing/selftests/rtc/
 
 REALTEK AUDIO CODECS
-M:	Bard Liao <bardliao@realtek.com>
 M:	Oder Chiou <oder_chiou@realtek.com>
 S:	Maintained
 F:	sound/soc/codecs/rt*
@@ -14946,8 +14946,8 @@ S:	Maintained
 F:	drivers/mmc/host/sdhci-omap.c
 
 SECURE ENCRYPTING DEVICE (SED) OPAL DRIVER
-M:	Scott Bauer <scott.bauer@intel.com>
 M:	Jonathan Derrick <jonathan.derrick@intel.com>
+M:	Revanth Rajashekar <revanth.rajashekar@intel.com>
 L:	linux-block@vger.kernel.org
 S:	Supported
 F:	block/sed*
@@ -15932,6 +15932,15 @@ W:	http://www.stlinux.com
 S:	Supported
 F:	Documentation/networking/device_drivers/stmicro/
 F:	drivers/net/ethernet/stmicro/stmmac/
+
+EXTRA BOOT CONFIG
+M:	Masami Hiramatsu <mhiramat@kernel.org>
+S:	Maintained
+F:	lib/bootconfig.c
+F:	fs/proc/bootconfig.c
+F:	include/linux/bootconfig.h
+F:	tools/bootconfig/*
+F:	Documentation/admin-guide/bootconfig.rst
 
 SUN3/3X
 M:	Sam Creasey <sammy@sammy.net>
