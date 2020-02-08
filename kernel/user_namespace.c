@@ -191,6 +191,16 @@ static void free_user_ns(struct work_struct *work)
 			kfree(ns->projid_map.forward);
 			kfree(ns->projid_map.reverse);
 		}
+#ifdef CONFIG_USER_NS_FSID
+		if (ns->fsgid_map.nr_extents > UID_GID_MAP_MAX_BASE_EXTENTS) {
+			kfree(ns->fsgid_map.forward);
+			kfree(ns->fsgid_map.reverse);
+		}
+		if (ns->fsuid_map.nr_extents > UID_GID_MAP_MAX_BASE_EXTENTS) {
+			kfree(ns->fsuid_map.forward);
+			kfree(ns->fsuid_map.reverse);
+		}
+#endif
 		retire_userns_sysctls(ns);
 		key_free_user_ns(ns);
 		ns_free_inum(&ns->ns);
@@ -637,6 +647,50 @@ static int projid_m_show(struct seq_file *seq, void *v)
 	return 0;
 }
 
+#ifdef CONFIG_USER_NS_FSID
+static int fsuid_m_show(struct seq_file *seq, void *v)
+{
+	struct user_namespace *ns = seq->private;
+	struct uid_gid_extent *extent = v;
+	struct user_namespace *lower_ns;
+	uid_t lower;
+
+	lower_ns = seq_user_ns(seq);
+	if ((lower_ns == ns) && lower_ns->parent)
+		lower_ns = lower_ns->parent;
+
+	lower = from_kuid(lower_ns, KUIDT_INIT(extent->lower_first));
+
+	seq_printf(seq, "%10u %10u %10u\n",
+		extent->first,
+		lower,
+		extent->count);
+
+	return 0;
+}
+
+static int fsgid_m_show(struct seq_file *seq, void *v)
+{
+	struct user_namespace *ns = seq->private;
+	struct uid_gid_extent *extent = v;
+	struct user_namespace *lower_ns;
+	gid_t lower;
+
+	lower_ns = seq_user_ns(seq);
+	if ((lower_ns == ns) && lower_ns->parent)
+		lower_ns = lower_ns->parent;
+
+	lower = from_kgid(lower_ns, KGIDT_INIT(extent->lower_first));
+
+	seq_printf(seq, "%10u %10u %10u\n",
+		extent->first,
+		lower,
+		extent->count);
+
+	return 0;
+}
+#endif
+
 static void *m_start(struct seq_file *seq, loff_t *ppos,
 		     struct uid_gid_map *map)
 {
@@ -674,6 +728,22 @@ static void *projid_m_start(struct seq_file *seq, loff_t *ppos)
 	return m_start(seq, ppos, &ns->projid_map);
 }
 
+#ifdef CONFIG_USER_NS_FSID
+static void *fsuid_m_start(struct seq_file *seq, loff_t *ppos)
+{
+	struct user_namespace *ns = seq->private;
+
+	return m_start(seq, ppos, &ns->fsuid_map);
+}
+
+static void *fsgid_m_start(struct seq_file *seq, loff_t *ppos)
+{
+	struct user_namespace *ns = seq->private;
+
+	return m_start(seq, ppos, &ns->fsgid_map);
+}
+#endif
+
 static void *m_next(struct seq_file *seq, void *v, loff_t *pos)
 {
 	(*pos)++;
@@ -705,6 +775,22 @@ const struct seq_operations proc_projid_seq_operations = {
 	.next = m_next,
 	.show = projid_m_show,
 };
+
+#ifdef CONFIG_USER_NS_FSID
+const struct seq_operations proc_fsuid_seq_operations = {
+	.start = fsuid_m_start,
+	.stop = m_stop,
+	.next = m_next,
+	.show = fsuid_m_show,
+};
+
+const struct seq_operations proc_fsgid_seq_operations = {
+	.start = fsgid_m_start,
+	.stop = m_stop,
+	.next = m_next,
+	.show = fsgid_m_show,
+};
+#endif
 
 static bool mappings_overlap(struct uid_gid_map *new_map,
 			     struct uid_gid_extent *extent)
@@ -1080,6 +1166,42 @@ ssize_t proc_projid_map_write(struct file *file, const char __user *buf,
 	return map_write(file, buf, size, ppos, -1,
 			 &ns->projid_map, &ns->parent->projid_map);
 }
+
+#ifdef CONFIG_USER_NS_FSID
+ssize_t proc_fsuid_map_write(struct file *file, const char __user *buf,
+			     size_t size, loff_t *ppos)
+{
+	struct seq_file *seq = file->private_data;
+	struct user_namespace *ns = seq->private;
+	struct user_namespace *seq_ns = seq_user_ns(seq);
+
+	if (!ns->parent)
+		return -EPERM;
+
+	if ((seq_ns != ns) && (seq_ns != ns->parent))
+		return -EPERM;
+
+	return map_write(file, buf, size, ppos, CAP_SETUID, &ns->fsuid_map,
+			 &ns->parent->fsuid_map);
+}
+
+ssize_t proc_fsgid_map_write(struct file *file, const char __user *buf,
+			     size_t size, loff_t *ppos)
+{
+	struct seq_file *seq = file->private_data;
+	struct user_namespace *ns = seq->private;
+	struct user_namespace *seq_ns = seq_user_ns(seq);
+
+	if (!ns->parent)
+		return -EPERM;
+
+	if ((seq_ns != ns) && (seq_ns != ns->parent))
+		return -EPERM;
+
+	return map_write(file, buf, size, ppos, CAP_SETGID, &ns->fsgid_map,
+			 &ns->parent->fsgid_map);
+}
+#endif
 
 static bool new_idmap_permitted(const struct file *file,
 				struct user_namespace *ns, int cap_setid,
