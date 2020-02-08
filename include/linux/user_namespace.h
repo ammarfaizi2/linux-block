@@ -56,6 +56,10 @@ enum ucount_type {
 struct user_namespace {
 	struct uid_gid_map	uid_map;
 	struct uid_gid_map	gid_map;
+#ifdef CONFIG_USER_NS_FSID
+	struct uid_gid_map	fsuid_map;
+	struct uid_gid_map	fsgid_map;
+#endif
 	struct uid_gid_map	projid_map;
 	atomic_t		count;
 	struct user_namespace	*parent;
@@ -127,6 +131,12 @@ struct seq_operations;
 extern const struct seq_operations proc_uid_seq_operations;
 extern const struct seq_operations proc_gid_seq_operations;
 extern const struct seq_operations proc_projid_seq_operations;
+#ifdef CONFIG_USER_NS_FSID
+extern const struct seq_operations proc_fsuid_seq_operations;
+extern const struct seq_operations proc_fsgid_seq_operations;
+extern ssize_t proc_fsuid_map_write(struct file *, const char __user *, size_t, loff_t *);
+extern ssize_t proc_fsgid_map_write(struct file *, const char __user *, size_t, loff_t *);
+#endif
 extern ssize_t proc_uid_map_write(struct file *, const char __user *, size_t, loff_t *);
 extern ssize_t proc_gid_map_write(struct file *, const char __user *, size_t, loff_t *);
 extern ssize_t proc_projid_map_write(struct file *, const char __user *, size_t, loff_t *);
