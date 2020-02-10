@@ -3622,17 +3622,11 @@ static void io_poll_trigger_evfd(struct io_wq_work **workptr)
 	io_put_req(req);
 }
 
-static int io_poll_wake(struct wait_queue_entry *wait, unsigned mode, int sync,
-			void *key)
+static void __io_poll_wake(struct io_kiocb *req, struct io_poll_iocb *poll,
+			   __poll_t mask)
 {
-	struct io_kiocb *req = wait->private;
-	struct io_poll_iocb *poll = &req->poll;
 	struct io_ring_ctx *ctx = req->ctx;
-	__poll_t mask = key_to_poll(key);
-
-	/* for instances that support it check for an event match first: */
-	if (mask && !(mask & poll->events))
-		return 0;
+	unsigned long flags;
 
 	list_del_init(&poll->wait.entry);
 
@@ -3642,40 +3636,50 @@ static int io_poll_wake(struct wait_queue_entry *wait, unsigned mode, int sync,
 	 * If we have a link timeout we're going to need the completion_lock
 	 * for finalizing the request, mark us as having grabbed that already.
 	 */
-	if (mask) {
-		unsigned long flags;
+	if (llist_empty(&ctx->poll_llist) && !req->io &&
+	    spin_trylock_irqsave(&ctx->completion_lock, flags)) {
+		bool trigger_ev;
 
-		if (llist_empty(&ctx->poll_llist) &&
-		    spin_trylock_irqsave(&ctx->completion_lock, flags)) {
-			bool trigger_ev;
+		hash_del(&req->hash_node);
+		io_poll_complete(req, mask, 0);
 
-			hash_del(&req->hash_node);
-			io_poll_complete(req, mask, 0);
-
-			trigger_ev = io_should_trigger_evfd(ctx);
-			if (trigger_ev && eventfd_signal_count()) {
-				trigger_ev = false;
-				req->work.func = io_poll_trigger_evfd;
-			} else {
-				req->flags |= REQ_F_COMP_LOCKED;
-				io_put_req(req);
-				req = NULL;
-			}
-			spin_unlock_irqrestore(&ctx->completion_lock, flags);
-			__io_cqring_ev_posted(ctx, trigger_ev);
+		trigger_ev = io_should_trigger_evfd(ctx);
+		if (trigger_ev && eventfd_signal_count()) {
+			trigger_ev = false;
+			req->work.func = io_poll_trigger_evfd;
 		} else {
-			req->result = mask;
-			req->llist_node.next = NULL;
-			/* if the list wasn't empty, we're done */
-			if (!llist_add(&req->llist_node, &ctx->poll_llist))
-				req = NULL;
-			else
-				req->work.func = io_poll_flush;
+			req->flags |= REQ_F_COMP_LOCKED;
+			io_put_req(req);
+			req = NULL;
 		}
+		spin_unlock_irqrestore(&ctx->completion_lock, flags);
+		__io_cqring_ev_posted(ctx, trigger_ev);
+	} else {
+		req->result = mask;
+		req->llist_node.next = NULL;
+		/* if the list wasn't empty, we're done */
+		if (!llist_add(&req->llist_node, &ctx->poll_llist))
+			req = NULL;
+		else
+			req->work.func = io_poll_flush;
 	}
+
 	if (req)
 		io_queue_async_work(req);
+}
 
+static int io_poll_wake(struct wait_queue_entry *wait, unsigned mode, int sync,
+			void *key)
+{
+	struct io_kiocb *req = wait->private;
+	struct io_poll_iocb *poll = &req->poll;
+	__poll_t mask = key_to_poll(key);
+
+	/* for instances that support it check for an event match first: */
+	if (mask && !(mask & poll->events))
+		return 0;
+
+	__io_poll_wake(req, &req->poll, mask);
 	return 1;
 }
 
