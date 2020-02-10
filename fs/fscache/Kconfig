@@ -61,3 +61,7 @@ config FSCACHE_OBJECT_LIST
 	help
 	  Maintain a global list of active fscache objects that can be
 	  retrieved through /proc/fs/fscache/objects for debugging purposes
+
+config FSCACHE_OLD
+	bool
+	default n
