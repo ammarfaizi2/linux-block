@@ -3440,9 +3440,26 @@ out:
 #endif
 }
 
+static void io_poll_remove_double(struct io_kiocb *req)
+{
+	struct io_poll_iocb *poll = (struct io_poll_iocb *) req->io;
+
+	if (poll && poll->head) {
+		unsigned long flags;
+
+		spin_lock_irqsave(&poll->head->lock, flags);
+		list_del_init(&poll->wait.entry);
+		if (poll->wait.private)
+			refcount_dec(&req->refs);
+		spin_unlock_irqrestore(&poll->head->lock, flags);
+	}
+}
+
 static void io_poll_remove_one(struct io_kiocb *req)
 {
 	struct io_poll_iocb *poll = &req->poll;
+
+	io_poll_remove_double(req);
 
 	spin_lock(&poll->head->lock);
 	WRITE_ONCE(poll->canceled, true);
@@ -3679,7 +3696,35 @@ static int io_poll_wake(struct wait_queue_entry *wait, unsigned mode, int sync,
 	if (mask && !(mask & poll->events))
 		return 0;
 
+	io_poll_remove_double(req);
 	__io_poll_wake(req, &req->poll, mask);
+	return 1;
+}
+
+static int io_poll_double_wake(struct wait_queue_entry *wait, unsigned mode,
+			       int sync, void *key)
+{
+	struct io_kiocb *req = wait->private;
+	struct io_poll_iocb *poll = (void *) req->io;
+	__poll_t mask = key_to_poll(key);
+	bool done = true;
+
+	/* for instances that support it check for an event match first: */
+	if (mask && !(mask & poll->events))
+		return 0;
+
+	if (req->poll.head) {
+		unsigned long flags;
+
+		spin_lock_irqsave(&req->poll.head->lock, flags);
+		done = list_empty(&req->poll.wait.entry);
+		if (!done)
+			list_del_init(&req->poll.wait.entry);
+		spin_unlock_irqrestore(&req->poll.head->lock, flags);
+	}
+	if (!done)
+		__io_poll_wake(req, poll, mask);
+	refcount_dec(&req->refs);
 	return 1;
 }
 
@@ -3693,15 +3738,38 @@ static void io_poll_queue_proc(struct file *file, struct wait_queue_head *head,
 			       struct poll_table_struct *p)
 {
 	struct io_poll_table *pt = container_of(p, struct io_poll_table, pt);
+	struct io_kiocb *req = pt->req;
+	struct io_poll_iocb *poll = &req->poll;
 
-	if (unlikely(pt->req->poll.head)) {
-		pt->error = -EINVAL;
-		return;
+	/*
+	 * If poll->head is already set, it's because the file being polled
+	 * use multiple waitqueues for poll handling (eg one for read, one
+	 * for write). Setup a separate io_poll_iocb if this happens.
+	 */
+	if (unlikely(poll->head)) {
+		/* already have a 2nd entry, fail a third attempt */
+		if (req->io) {
+			pt->error = -EINVAL;
+			return;
+		}
+		poll = kmalloc(sizeof(*poll), GFP_ATOMIC);
+		if (!poll) {
+			pt->error = -ENOMEM;
+			return;
+		}
+		poll->done = false;
+		poll->canceled = false;
+		poll->events = req->poll.events;
+		INIT_LIST_HEAD(&poll->wait.entry);
+		init_waitqueue_func_entry(&poll->wait, io_poll_double_wake);
+		refcount_inc(&req->refs);
+		poll->wait.private = req;
+		req->io = (void *) poll;
 	}
 
 	pt->error = 0;
-	pt->req->poll.head = head;
-	add_wait_queue(head, &pt->req->poll.wait);
+	poll->head = head;
+	add_wait_queue(head, &poll->wait);
 }
 
 static void io_poll_req_insert(struct io_kiocb *req)
@@ -3778,6 +3846,7 @@ static int io_poll_add(struct io_kiocb *req, struct io_kiocb **nxt)
 	}
 	if (mask) { /* no async, we'd stolen it */
 		ipt.error = 0;
+		io_poll_remove_double(req);
 		io_poll_complete(req, mask, 0);
 	}
 	spin_unlock_irq(&ctx->completion_lock);
