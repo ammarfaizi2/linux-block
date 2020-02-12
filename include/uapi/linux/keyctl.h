@@ -133,6 +133,7 @@ enum key_ace_standard_subject {
 #define KEYCTL_MOVE			30	/* Move keys between keyrings */
 #define KEYCTL_CAPABILITIES		31	/* Find capabilities of keyrings subsystem */
 #define KEYCTL_WATCH_KEY		32	/* Watch a key or ring of keys for changes */
+#define KEYCTL_GRANT_PERMISSION		33	/* Grant a permit to a key */
 
 /* keyctl structures */
 struct keyctl_dh_params {
@@ -196,5 +197,6 @@ struct keyctl_pkey_params {
 #define KEYCTL_CAPS1_NS_KEY_TAG		0x02 /* Key indexing can include a namespace tag */
 #define KEYCTL_CAPS1_NOTIFICATIONS	0x04 /* Keys generate watchable notifications */
 #define KEYCTL_CAPS1_ACL		0x08 /* Keys have ACLs rather than a p-u-g-o bitmask */
+#define KEYCTL_CAPS1_GRANT_PERMISSION	0x10 /* KEYCTL_GRANT_PERMISSION is supported */
 
 #endif /*  _LINUX_KEYCTL_H */

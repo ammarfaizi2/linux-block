@@ -372,6 +372,11 @@ static inline long keyctl_watch_key(key_serial_t key_id, int watch_fd, int watch
 }
 #endif
 
+extern long keyctl_grant_permission(key_serial_t keyid,
+				    enum key_ace_subject_type type,
+				    unsigned int subject,
+				    unsigned int perm);
+
 /*
  * Debugging key validation
  */
