@@ -2495,7 +2495,7 @@ static int crypt_set_keyring_key(struct crypt_config *cc, const char *key_string
 	if (!new_key_string)
 		return -ENOMEM;
 
-	key = request_key(type, key_desc + 1, NULL);
+	key = request_key(type, key_desc + 1, NULL, NULL);
 	if (IS_ERR(key)) {
 		kfree_sensitive(new_key_string);
 		return PTR_ERR(key);

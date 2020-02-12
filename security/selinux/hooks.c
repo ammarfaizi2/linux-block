@@ -6569,8 +6569,8 @@ static int selinux_keyperm_to_av(struct key *key, const struct cred *cred,
 		auth_can_override = true;
 		break;
 
+	case KEY_NEED_CHANGE_ACL:
 	case KEY_NEED_CHOWN:
-	case KEY_NEED_SETPERM:
 	case KEY_NEED_SET_RESTRICTION:
 		*_perm = KEY__SETATTR;
 		break;

@@ -4301,6 +4301,7 @@ static int smack_key_permission(key_ref_t key_ref,
 		auth_can_override = true;
 		break;
 
+	case KEY_NEED_CHANGE_ACL:
 	case KEY_NEED_CHOWN:
 	case KEY_NEED_INVALIDATE:
 	case KEY_NEED_JOIN:
@@ -4309,7 +4310,6 @@ static int smack_key_permission(key_ref_t key_ref,
 	case KEY_NEED_KEYRING_CLEAR:
 	case KEY_NEED_KEYRING_DELETE:
 	case KEY_NEED_REVOKE:
-	case KEY_NEED_SETPERM:
 	case KEY_NEED_SET_RESTRICTION:
 	case KEY_NEED_UPDATE:
 		request |= MAY_WRITE;

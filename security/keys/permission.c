@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 /* Key permission checking
  *
- * Copyright (C) 2005 Red Hat, Inc. All Rights Reserved.
+ * Copyright (C) 2005, 2020 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
@@ -10,14 +10,67 @@
 #include <keys/request_key_auth-type.h>
 #include "internal.h"
 
+struct key_acl default_key_acl = {
+	.usage	= REFCOUNT_INIT(1),
+	.nr_ace	= 2,
+	.possessor_viewable = true,
+	.aces = {
+		KEY_POSSESSOR_ACE(KEY_ACE__PERMS & ~KEY_ACE_JOIN),
+		KEY_OWNER_ACE(KEY_ACE_VIEW),
+	}
+};
+EXPORT_SYMBOL(default_key_acl);
+
+struct key_acl joinable_keyring_acl = {
+	.usage	= REFCOUNT_INIT(1),
+	.nr_ace	= 2,
+	.possessor_viewable = true,
+	.aces	= {
+		KEY_POSSESSOR_ACE(KEY_ACE__PERMS & ~KEY_ACE_JOIN),
+		KEY_OWNER_ACE(KEY_ACE_VIEW | KEY_ACE_READ | KEY_ACE_LINK | KEY_ACE_JOIN),
+	}
+};
+EXPORT_SYMBOL(joinable_keyring_acl);
+
+struct key_acl internal_key_acl = {
+	.usage	= REFCOUNT_INIT(1),
+	.nr_ace	= 2,
+	.aces = {
+		KEY_POSSESSOR_ACE(KEY_ACE_SEARCH),
+		KEY_OWNER_ACE(KEY_ACE_VIEW | KEY_ACE_READ | KEY_ACE_SEARCH),
+	}
+};
+EXPORT_SYMBOL(internal_key_acl);
+
+struct key_acl internal_keyring_acl = {
+	.usage	= REFCOUNT_INIT(1),
+	.nr_ace	= 2,
+	.aces = {
+		KEY_POSSESSOR_ACE(KEY_ACE_SEARCH | KEY_ACE_WRITE),
+		KEY_OWNER_ACE(KEY_ACE_VIEW | KEY_ACE_READ | KEY_ACE_SEARCH),
+	}
+};
+EXPORT_SYMBOL(internal_keyring_acl);
+
+struct key_acl internal_writable_keyring_acl = {
+	.usage	= REFCOUNT_INIT(1),
+	.nr_ace	= 2,
+	.aces = {
+		KEY_POSSESSOR_ACE(KEY_ACE_SEARCH | KEY_ACE_WRITE),
+		KEY_OWNER_ACE(KEY_ACE_VIEW | KEY_ACE_READ | KEY_ACE_WRITE | KEY_ACE_SEARCH),
+	}
+};
+EXPORT_SYMBOL(internal_writable_keyring_acl);
+
 /*
  * Determine if we have sufficient permission to perform an operation.
  */
-static int check_key_permission(struct key *key, const struct cred *cred,
-				key_perm_t perms, enum key_need_perm need_perm,
+static int check_key_permission(const key_ref_t key_ref, const struct cred *cred,
+				unsigned int allow, enum key_need_perm need_perm,
 				unsigned int *_notes)
 {
 	struct request_key_auth *rka;
+	const struct key *key = key_ref_to_ptr(key_ref);
 
 	switch (need_perm) {
 	case KEY_NEED_ASSUME_AUTHORITY:
@@ -25,14 +78,14 @@ static int check_key_permission(struct key *key, const struct cred *cred,
 
 	case KEY_NEED_DESCRIBE:
 	case KEY_NEED_GET_SECURITY:
-		if (perms & KEY_OTH_VIEW)
+		if (allow & KEY_ACE_VIEW)
 			return 0;
 		goto check_auth_override;
 
+	case KEY_NEED_CHANGE_ACL:
 	case KEY_NEED_CHOWN:
-	case KEY_NEED_SETPERM:
 	case KEY_NEED_SET_RESTRICTION:
-		return perms & KEY_OTH_SETATTR ? 0 : -EACCES;
+		return allow & KEY_ACE_SETSEC ? 0 : -EACCES;
 
 	case KEY_NEED_INSTANTIATE:
 		goto check_auth_override;
@@ -40,47 +93,49 @@ static int check_key_permission(struct key *key, const struct cred *cred,
 	case KEY_NEED_INVALIDATE:
 		if (test_bit(KEY_FLAG_KEEP, &key->flags))
 			return -EPERM;
-		if (perms & KEY_OTH_SEARCH)
+		if (allow & KEY_ACE_INVAL)
 			return 0;
 		if (test_bit(KEY_FLAG_ROOT_CAN_INVAL, &key->flags))
 			goto check_sysadmin_override;
 		return -EACCES;
 
 	case KEY_NEED_JOIN:
+		return allow & KEY_ACE_JOIN ? 0 : -EACCES;
+
 	case KEY_NEED_LINK:
-		return perms & KEY_OTH_LINK ? 0 : -EACCES;
+		return allow & KEY_ACE_LINK ? 0 : -EACCES;
 
 	case KEY_NEED_KEYRING_DELETE:
 		if (test_bit(KEY_FLAG_KEEP, &key->flags))
 			return -EPERM;
 		/* Fall through. */
 	case KEY_NEED_KEYRING_ADD:
-		return perms & KEY_OTH_WRITE ? 0 : -EACCES;
+		return allow & KEY_ACE_WRITE ? 0 : -EACCES;
 
 	case KEY_NEED_KEYRING_CLEAR:
 		if (test_bit(KEY_FLAG_KEEP, &key->flags))
 			return -EPERM;
-		if (perms & KEY_OTH_WRITE)
+		if (allow & KEY_ACE_CLEAR)
 			return 0;
 		if (test_bit(KEY_FLAG_ROOT_CAN_CLEAR, &key->flags))
 			goto check_sysadmin_override;
 		return -EACCES;
 
 	case KEY_NEED_READ:
-		return perms & (KEY_OTH_READ | KEY_OTH_SEARCH) ? 0 : -EACCES;
+		return allow & (KEY_ACE_READ | KEY_ACE_SEARCH) ? 0 : -EACCES;
 
 	case KEY_NEED_REVOKE:
 		if (test_bit(KEY_FLAG_KEEP, &key->flags))
 			return -EPERM;
-		return perms & (KEY_OTH_WRITE | KEY_OTH_SETATTR) ? 0 : -EACCES;
+		return allow & KEY_ACE_REVOKE ? 0 : -EACCES;
 
 	case KEY_NEED_SEARCH:
-		return perms & KEY_OTH_SEARCH ? 0 : -EACCES;
+		return allow & KEY_ACE_SEARCH ? 0 : -EACCES;
 
 	case KEY_NEED_SET_TIMEOUT:
 		if (test_bit(KEY_FLAG_KEEP, &key->flags))
 			return -EPERM;
-		if (perms & KEY_OTH_SETATTR)
+		if (allow & KEY_ACE_SETSEC)
 			return 0;
 		goto check_auth_override;
 
@@ -90,13 +145,13 @@ static int check_key_permission(struct key *key, const struct cred *cred,
 		return 0;
 
 	case KEY_NEED_UPDATE:
-		return perms & KEY_OTH_WRITE ? 0 : -EACCES;
+		return allow & KEY_ACE_WRITE ? 0 : -EACCES;
 
 	case KEY_NEED_USE:
-		return perms & (KEY_OTH_READ | KEY_OTH_SEARCH) ? 0 : -EACCES;
+		return allow & (KEY_ACE_READ | KEY_ACE_SEARCH) ? 0 : -EACCES;
 
 	case KEY_NEED_WATCH:
-		return perms & KEY_OTH_VIEW ? 0 : -EACCES;
+		return allow & KEY_ACE_VIEW ? 0 : -EACCES;
 
 	default:
 		WARN_ON(1);
@@ -119,6 +174,53 @@ check_sysadmin_override:
 	return 0;
 }
 
+/*
+ * Resolve an ACL to a mask.
+ */
+static unsigned int key_resolve_acl(const key_ref_t key_ref, const struct cred *cred)
+{
+	const struct key *key = key_ref_to_ptr(key_ref);
+	const struct key_acl *acl;
+	unsigned int i, allow = 0;
+	bool possessed = is_key_possessed(key_ref);
+
+	acl = rcu_dereference(key->acl);
+	if (!acl || acl->nr_ace == 0)
+		return 0;
+
+	for (i = 0; i < acl->nr_ace; i++) {
+		const struct key_ace *ace = &acl->aces[i];
+
+		switch (ace->type) {
+		case KEY_ACE_SUBJ_STANDARD:
+			switch (ace->subject_id) {
+			case KEY_ACE_POSSESSOR:
+				if (possessed)
+					allow |= ace->perm;
+				break;
+			case KEY_ACE_OWNER:
+				if (uid_eq(key->uid, cred->fsuid))
+					allow |= ace->perm;
+				break;
+			case KEY_ACE_GROUP:
+				if (gid_valid(key->gid)) {
+					if (gid_eq(key->gid, cred->fsgid))
+						allow |= ace->perm;
+					else if (groups_search(cred->group_info, key->gid))
+						allow |= ace->perm;
+				}
+				break;
+			case KEY_ACE_EVERYONE:
+				allow |= ace->perm;
+				break;
+			}
+			break;
+		}
+	}
+
+	return allow;
+}
+
 /**
  * key_task_permission - Check a key can be used
  * @key_ref: The key to check.
@@ -136,53 +238,20 @@ check_sysadmin_override:
 int key_task_permission(const key_ref_t key_ref, const struct cred *cred,
 			enum key_need_perm need_perm)
 {
-	struct key *key;
-	unsigned int notes = 0;
-	key_perm_t kperm;
+	unsigned int allow, notes = 0;
 	int ret;
 
-	key = key_ref_to_ptr(key_ref);
+	rcu_read_lock();
+	allow = key_resolve_acl(key_ref, cred);
+	rcu_read_unlock();
 
-	/* use the second 8-bits of permissions for keys the caller owns */
-	if (uid_eq(key->uid, cred->fsuid)) {
-		kperm = key->perm >> 16;
-		goto use_these_perms;
-	}
-
-	/* use the third 8-bits of permissions for keys the caller has a group
-	 * membership in common with */
-	if (gid_valid(key->gid) && key->perm & KEY_GRP_ALL) {
-		if (gid_eq(key->gid, cred->fsgid)) {
-			kperm = key->perm >> 8;
-			goto use_these_perms;
-		}
-
-		ret = groups_search(cred->group_info, key->gid);
-		if (ret) {
-			kperm = key->perm >> 8;
-			goto use_these_perms;
-		}
-	}
-
-	/* otherwise use the least-significant 8-bits */
-	kperm = key->perm;
-
-use_these_perms:
-	/* use the top 8-bits of permissions for keys the caller possesses
-	 * - possessor permissions are additive with other permissions
-	 */
-	if (is_key_possessed(key_ref))
-		kperm |= key->perm >> 24;
-
-	ret = check_key_permission(key, cred, kperm & KEY_OTH_ALL, need_perm,
-				   &notes);
+	ret = check_key_permission(key_ref, cred, allow, need_perm, &notes);
 	if (ret < 0)
 		return ret;
 
 	/* Let the LSMs be the final arbiter */
 	return security_key_permission(key_ref, cred, need_perm, notes);
 }
-EXPORT_SYMBOL(key_task_permission);
 
 /**
  * key_validate - Validate a key.
@@ -214,3 +283,100 @@ int key_validate(const struct key *key)
 	return 0;
 }
 EXPORT_SYMBOL(key_validate);
+
+/*
+ * Roughly render an ACL to an old-style permissions mask.  We cannot
+ * accurately render what the ACL, particularly if it has ACEs that represent
+ * subjects outside of { poss, user, group, other }.
+ */
+unsigned int key_acl_to_perm(const struct key_acl *acl)
+{
+	unsigned int perm = 0, tperm;
+	int i;
+
+	BUILD_BUG_ON(KEY_OTH_VIEW	!= KEY_ACE_VIEW		||
+		     KEY_OTH_READ	!= KEY_ACE_READ		||
+		     KEY_OTH_WRITE	!= KEY_ACE_WRITE	||
+		     KEY_OTH_SEARCH	!= KEY_ACE_SEARCH	||
+		     KEY_OTH_LINK	!= KEY_ACE_LINK		||
+		     KEY_OTH_SETATTR	!= KEY_ACE_SETSEC);
+
+	if (!acl || acl->nr_ace == 0)
+		return 0;
+
+	for (i = 0; i < acl->nr_ace; i++) {
+		const struct key_ace *ace = &acl->aces[i];
+
+		switch (ace->type) {
+		case KEY_ACE_SUBJ_STANDARD:
+			tperm = ace->perm & KEY_OTH_ALL;
+
+			/* Invalidation and joining were allowed by SEARCH */
+			if (ace->perm & (KEY_ACE_INVAL | KEY_ACE_JOIN))
+				tperm |= KEY_OTH_SEARCH;
+
+			/* Revocation was allowed by either SETATTR or WRITE */
+			if ((ace->perm & KEY_ACE_REVOKE) && !(tperm & KEY_OTH_SETATTR))
+				tperm |= KEY_OTH_WRITE;
+
+			/* Clearing was allowed by WRITE */
+			if (ace->perm & KEY_ACE_CLEAR)
+				tperm |= KEY_OTH_WRITE;
+
+			switch (ace->subject_id) {
+			case KEY_ACE_POSSESSOR:
+				perm |= tperm << 24;
+				break;
+			case KEY_ACE_OWNER:
+				perm |= tperm << 16;
+				break;
+			case KEY_ACE_GROUP:
+				perm |= tperm << 8;
+				break;
+			case KEY_ACE_EVERYONE:
+				perm |= tperm << 0;
+				break;
+			}
+		}
+	}
+
+	return perm;
+}
+
+/*
+ * Destroy a key's ACL.
+ */
+void key_put_acl(struct key_acl *acl)
+{
+	if (acl && refcount_dec_and_test(&acl->usage))
+		kfree_rcu(acl, rcu);
+}
+
+/*
+ * Try to set the ACL.  This either attaches or discards the proposed ACL.
+ */
+long key_set_acl(struct key *key, struct key_acl *acl)
+{
+	int i;
+
+	/* If we're not the sysadmin, we can only change a key that we own. */
+	if (!capable(CAP_SYS_ADMIN) && !uid_eq(key->uid, current_fsuid())) {
+		key_put_acl(acl);
+		return -EACCES;
+	}
+
+	for (i = 0; i < acl->nr_ace; i++) {
+		const struct key_ace *ace = &acl->aces[i];
+		if (ace->type == KEY_ACE_SUBJ_STANDARD &&
+		    ace->subject_id == KEY_ACE_POSSESSOR) {
+			if (ace->perm & KEY_ACE_VIEW)
+				acl->possessor_viewable = true;
+			break;
+		}
+	}
+
+	acl = rcu_replace_pointer(key->acl, acl, lockdep_is_held(&key->sem));
+	notify_key(key, NOTIFY_KEY_SETATTR, 0);
+	key_put_acl(acl);
+	return 0;
+}

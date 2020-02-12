@@ -196,7 +196,7 @@ serial_exists:
  * @uid: The owner of the new key.
  * @gid: The group ID for the new key's group permissions.
  * @cred: The credentials specifying UID namespace.
- * @perm: The permissions mask of the new key.
+ * @acl: The ACL to attach to the new key.
  * @flags: Flags specifying quota properties.
  * @restrict_link: Optional link restriction for new keyrings.
  *
@@ -224,7 +224,7 @@ serial_exists:
  */
 struct key *key_alloc(struct key_type *type, const char *desc,
 		      kuid_t uid, kgid_t gid, const struct cred *cred,
-		      key_perm_t perm, unsigned long flags,
+		      struct key_acl *acl, unsigned long flags,
 		      struct key_restriction *restrict_link)
 {
 	struct key_user *user = NULL;
@@ -246,6 +246,9 @@ struct key *key_alloc(struct key_type *type, const char *desc,
 
 	desclen = strlen(desc);
 	quotalen = desclen + 1 + type->def_datalen;
+
+	if (!acl)
+		acl = &default_key_acl;
 
 	/* get hold of the key tracking for this user */
 	user = key_user_lookup(uid);
@@ -293,7 +296,8 @@ struct key *key_alloc(struct key_type *type, const char *desc,
 	key->datalen = type->def_datalen;
 	key->uid = uid;
 	key->gid = gid;
-	key->perm = perm;
+	refcount_inc(&acl->usage);
+	rcu_assign_pointer(key->acl, acl);
 	key->restrict_link = restrict_link;
 	key->last_used_at = ktime_get_real_seconds();
 
@@ -795,15 +799,14 @@ error:
  * @description: The searchable description for the key.
  * @payload: The data to use to instantiate or update the key.
  * @plen: The length of @payload.
- * @perm: The permissions mask for a new key.
+ * @acl: The ACL to attach if a key is created (or NULL).
  * @flags: The quota flags for a new key.
  *
  * Search the destination keyring for a key of the same description and if one
  * is found, update it, otherwise create and instantiate a new one and create a
  * link to it from that keyring.
  *
- * If perm is KEY_PERM_UNDEF then an appropriate key permissions mask will be
- * concocted.
+ * If acl is NULL then a default ACL will be used.
  *
  * Returns a pointer to the new key if successful, -ENODEV if the key type
  * wasn't available, -ENOTDIR if the keyring wasn't a keyring, -EACCES if the
@@ -818,7 +821,7 @@ key_ref_t key_create_or_update_perm_checked(key_ref_t keyring_ref,
 					    const char *description,
 					    const void *payload,
 					    size_t plen,
-					    key_perm_t perm,
+					    struct key_acl *acl,
 					    unsigned long flags)
 {
 	struct keyring_index_key index_key = {
@@ -908,22 +911,9 @@ key_ref_t key_create_or_update_perm_checked(key_ref_t keyring_ref,
 			goto found_matching_key;
 	}
 
-	/* if the client doesn't provide, decide on the permissions we want */
-	if (perm == KEY_PERM_UNDEF) {
-		perm = KEY_POS_VIEW | KEY_POS_SEARCH | KEY_POS_LINK | KEY_POS_SETATTR;
-		perm |= KEY_USR_VIEW;
-
-		if (index_key.type->read)
-			perm |= KEY_POS_READ;
-
-		if (index_key.type == &key_type_keyring ||
-		    index_key.type->update)
-			perm |= KEY_POS_WRITE;
-	}
-
 	/* allocate a new key */
 	key = key_alloc(index_key.type, index_key.description,
-			cred->fsuid, cred->fsgid, cred, perm, flags, NULL);
+			cred->fsuid, cred->fsgid, cred, acl, flags, NULL);
 	if (IS_ERR(key)) {
 		key_ref = ERR_CAST(key);
 		goto error_link_end;
@@ -983,7 +973,7 @@ key_ref_t key_create_or_update(key_ref_t keyring_ref,
 			       const char *description,
 			       const void *payload,
 			       size_t plen,
-			       key_perm_t perm,
+			       struct key_acl *acl,
 			       unsigned long flags)
 {
 	int ret;
@@ -994,7 +984,7 @@ key_ref_t key_create_or_update(key_ref_t keyring_ref,
 
 	return key_create_or_update_perm_checked(keyring_ref, type,
 						 description, payload,
-						 plen, perm, flags);
+						 plen, acl, flags);
 }
 EXPORT_SYMBOL(key_create_or_update);
 
