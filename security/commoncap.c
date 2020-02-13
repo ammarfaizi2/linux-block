@@ -328,7 +328,7 @@ static bool rootid_owns_currentns(kuid_t kroot)
 		return false;
 
 	for (ns = current_user_ns(); ; ns = ns->parent) {
-		if (from_kuid(ns, kroot) == 0)
+		if (from_kfsuid(ns, kroot) == 0)
 			return true;
 		if (ns == &init_user_ns)
 			break;
@@ -411,11 +411,11 @@ int cap_inode_getsecurity(struct inode *inode, const char *name, void **buffer,
 
 	nscap = (struct vfs_ns_cap_data *) tmpbuf;
 	root = le32_to_cpu(nscap->rootid);
-	kroot = make_kuid(fs_ns, root);
+	kroot = make_kfsuid(fs_ns, root);
 
-	/* If the root kuid maps to a valid uid in current ns, then return
+	/* If the root kfsuid maps to a valid uid in current ns, then return
 	 * this as a nscap. */
-	mappedroot = from_kuid(current_user_ns(), kroot);
+	mappedroot = from_kfsuid(current_user_ns(), kroot);
 	if (mappedroot != (uid_t)-1 && mappedroot != (uid_t)0) {
 		if (alloc) {
 			*buffer = tmpbuf;
@@ -460,7 +460,7 @@ static kuid_t rootid_from_xattr(const void *value, size_t size,
 	if (size == XATTR_CAPS_SZ_3)
 		rootid = le32_to_cpu(nscap->rootid);
 
-	return make_kuid(task_ns, rootid);
+	return make_kfsuid(task_ns, rootid);
 }
 
 static bool validheader(size_t size, const struct vfs_cap_data *cap)
@@ -501,7 +501,7 @@ int cap_convert_nscap(struct dentry *dentry, void **ivalue, size_t size)
 	if (!uid_valid(rootid))
 		return -EINVAL;
 
-	nsrootid = from_kuid(fs_ns, rootid);
+	nsrootid = from_kfsuid(fs_ns, rootid);
 	if (nsrootid == -1)
 		return -EINVAL;
 
@@ -600,7 +600,7 @@ int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data 
 
 	cpu_caps->magic_etc = magic_etc = le32_to_cpu(caps->magic_etc);
 
-	rootkuid = make_kuid(fs_ns, 0);
+	rootkuid = make_kfsuid(fs_ns, 0);
 	switch (magic_etc & VFS_CAP_REVISION_MASK) {
 	case VFS_CAP_REVISION_1:
 		if (size != XATTR_CAPS_SZ_1)
@@ -616,7 +616,7 @@ int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data 
 		if (size != XATTR_CAPS_SZ_3)
 			return -EINVAL;
 		tocopy = VFS_CAP_U32_3;
-		rootkuid = make_kuid(fs_ns, le32_to_cpu(nscaps->rootid));
+		rootkuid = make_kfsuid(fs_ns, le32_to_cpu(nscaps->rootid));
 		break;
 
 	default:
