@@ -62,6 +62,7 @@
 #include <linux/oom.h>
 #include <linux/compat.h>
 #include <linux/vmalloc.h>
+#include <linux/fsuidgid.h>
 
 #include <linux/uaccess.h>
 #include <asm/mmu_context.h>
@@ -1518,8 +1519,8 @@ static void bprm_fill_uid(struct linux_binprm *bprm)
 {
 	struct inode *inode;
 	unsigned int mode;
-	kuid_t uid;
-	kgid_t gid;
+	kuid_t uid, euid;
+	kgid_t gid, egid;
 
 	/*
 	 * Since this can be called multiple times (via prepare_binprm),
@@ -1551,18 +1552,30 @@ static void bprm_fill_uid(struct linux_binprm *bprm)
 	inode_unlock(inode);
 
 	/* We ignore suid/sgid if there are no mappings for them in the ns */
-	if (!kuid_has_mapping(bprm->cred->user_ns, uid) ||
-		 !kgid_has_mapping(bprm->cred->user_ns, gid))
+	if (!kfsuid_has_mapping(bprm->cred->user_ns, uid) ||
+		 !kfsgid_has_mapping(bprm->cred->user_ns, gid))
 		return;
 
 	if (mode & S_ISUID) {
+		euid = kfsuid_to_kuid(bprm->cred->user_ns, uid);
+		if (!uid_valid(euid))
+			return;
+	}
+
+	if ((mode & (S_ISGID | S_IXGRP)) == (S_ISGID | S_IXGRP)) {
+		egid = kfsgid_to_kgid(bprm->cred->user_ns, gid);
+		if (!gid_valid(egid))
+			return;
+	}
+
+	if (mode & S_ISUID) {
 		bprm->per_clear |= PER_CLEAR_ON_SETID;
-		bprm->cred->euid = uid;
+		bprm->cred->euid = euid;
 	}
 
 	if ((mode & (S_ISGID | S_IXGRP)) == (S_ISGID | S_IXGRP)) {
 		bprm->per_clear |= PER_CLEAR_ON_SETID;
-		bprm->cred->egid = gid;
+		bprm->cred->egid = egid;
 	}
 }
 
