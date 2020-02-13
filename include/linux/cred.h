@@ -125,6 +125,8 @@ struct cred {
 	kgid_t		egid;		/* effective GID of the task */
 	kuid_t		fsuid;		/* UID for VFS ops */
 	kgid_t		fsgid;		/* GID for VFS ops */
+	kuid_t		kfsuid;		/* UID for VFS ops for userns visible filesystems */
+	kgid_t		kfsgid;		/* GID for VFS ops for userns visible filesystems */
 	unsigned	securebits;	/* SUID-less security management */
 	kernel_cap_t	cap_inheritable; /* caps our children can inherit */
 	kernel_cap_t	cap_permitted;	/* caps we're permitted */
@@ -384,6 +386,8 @@ static inline void put_cred(const struct cred *_cred)
 #define current_sgid()		(current_cred_xxx(sgid))
 #define current_fsuid() 	(current_cred_xxx(fsuid))
 #define current_fsgid() 	(current_cred_xxx(fsgid))
+#define current_kfsuid() 	(current_cred_xxx(kfsuid))
+#define current_kfsgid() 	(current_cred_xxx(kfsgid))
 #define current_cap()		(current_cred_xxx(cap_effective))
 #define current_user()		(current_cred_xxx(user))
 
