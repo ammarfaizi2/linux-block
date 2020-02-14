@@ -304,8 +304,8 @@ static int __ptrace_may_access(struct task_struct *task, unsigned int mode)
 		return 0;
 	rcu_read_lock();
 	if (mode & PTRACE_MODE_FSCREDS) {
-		caller_uid = cred->fsuid;
-		caller_gid = cred->fsgid;
+		caller_uid = cred->kfsuid;
+		caller_gid = cred->kfsgid;
 	} else {
 		/*
 		 * Using the euid would make more sense here, but something
