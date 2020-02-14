@@ -374,6 +374,40 @@ static void dump_afs_fsinfo_server_address(void *reply, unsigned int size)
 	printf("family=%u\n", ss->ss_family);
 }
 
+static char *dump_ext4_time(char *buffer, time_t tim)
+{
+	struct tm tm;
+	int len;
+
+	if (tim == 0)
+		return "-";
+
+	if (!localtime_r(&tim, &tm)) {
+		perror("localtime_r");
+		exit(1);
+	}
+	len = strftime(buffer, 100, "%F %T", &tm);
+	if (len == 0) {
+		perror("strftime");
+		exit(1);
+	}
+	return buffer;
+}
+
+static void dump_ext4_fsinfo_timestamps(void *reply, unsigned int size)
+{
+	struct fsinfo_ext4_timestamps *r = reply;
+	char buffer[100];
+
+	printf("\n");
+	printf("\tmkfs    : %s\n", dump_ext4_time(buffer, r->mkfs_time));
+	printf("\tmount   : %s\n", dump_ext4_time(buffer, r->mount_time));
+	printf("\twrite   : %s\n", dump_ext4_time(buffer, r->write_time));
+	printf("\tfsck    : %s\n", dump_ext4_time(buffer, r->last_check_time));
+	printf("\t1st-err : %s\n", dump_ext4_time(buffer, r->first_error_time));
+	printf("\tlast-err: %s\n", dump_ext4_time(buffer, r->last_error_time));
+}
+
 static void dump_string(void *reply, unsigned int size)
 {
 	char *s = reply, *p;
@@ -460,6 +494,7 @@ static const struct fsinfo_attribute fsinfo_attributes[] = {
 	FSINFO_STRING	(FSINFO_ATTR_AFS_CELL_NAME,	string),
 	FSINFO_STRING	(FSINFO_ATTR_AFS_SERVER_NAME,	string),
 	FSINFO_LIST_N	(FSINFO_ATTR_AFS_SERVER_ADDRESSES, afs_fsinfo_server_address),
+	FSINFO_VSTRUCT	(FSINFO_ATTR_EXT4_TIMESTAMPS,	ext4_fsinfo_timestamps),
 	{}
 };
 

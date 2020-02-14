@@ -41,6 +41,8 @@
 #define FSINFO_ATTR_AFS_SERVER_NAME	0x301	/* Name of the Nth server (string) */
 #define FSINFO_ATTR_AFS_SERVER_ADDRESSES 0x302	/* List of addresses of the Nth server */
 
+#define FSINFO_ATTR_EXT4_TIMESTAMPS	0x400	/* Ext4 superblock timestamps */
+
 /*
  * Optional fsinfo() parameter structure.
  *
@@ -311,5 +313,19 @@ struct fsinfo_afs_server_address {
 };
 
 #define FSINFO_ATTR_AFS_SERVER_ADDRESSES__STRUCT struct fsinfo_afs_server_address
+
+/*
+ * Information struct for fsinfo(FSINFO_ATTR_EXT4_TIMESTAMPS).
+ */
+struct fsinfo_ext4_timestamps {
+	__u64		mkfs_time;
+	__u64		mount_time;
+	__u64		write_time;
+	__u64		last_check_time;
+	__u64		first_error_time;
+	__u64		last_error_time;
+};
+
+#define FSINFO_ATTR_EXT4_TIMESTAMPS__STRUCT struct fsinfo_ext4_timestamps
 
 #endif /* _UAPI_LINUX_FSINFO_H */
