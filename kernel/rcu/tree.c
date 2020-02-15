@@ -835,6 +835,12 @@ void rcu_nmi_enter(void)
 		   rdp->dynticks_nmi_nesting + incby);
 	barrier();
 }
+/*
+ * On x86, All functions in do_int3() must be marked NOKPROBE before
+ * kprobe_int3_handler() is called. ist_enter() which is called in do_int3()
+ * before kprobe_int3_handle() happens to call rcu_nmi_enter() which means
+ * that rcu_nmi_enter() must be marked NOKRPOBE.
+ */
 NOKPROBE_SYMBOL(rcu_nmi_enter);
 
 /**
