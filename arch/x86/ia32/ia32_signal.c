@@ -154,13 +154,10 @@ badframe:
 
 #define get_user_seg(seg)	({ unsigned int v; savesegment(seg, v); v; })
 
-static int ia32_setup_sigcontext(struct sigcontext_32 __user *sc,
+static __always_inline int ia32_setup_sigcontext(struct sigcontext_32 __user *sc,
 				 void __user *fpstate,
 				 struct pt_regs *regs, unsigned int mask)
 {
-	if (!user_access_begin(sc, sizeof(struct sigcontext_32)))
-		return -EFAULT;
-
 	unsafe_put_user(get_user_seg(gs), (unsigned int __user *)&sc->gs, Efault);
 	unsafe_put_user(get_user_seg(fs), (unsigned int __user *)&sc->fs, Efault);
 	unsafe_put_user(get_user_seg(ds), (unsigned int __user *)&sc->ds, Efault);
@@ -187,10 +184,9 @@ static int ia32_setup_sigcontext(struct sigcontext_32 __user *sc,
 	/* non-iBCS2 extensions.. */
 	unsafe_put_user(mask, &sc->oldmask, Efault);
 	unsafe_put_user(current->thread.cr2, &sc->cr2, Efault);
-	user_access_end();
 	return 0;
+
 Efault:
-	user_access_end();
 	return -EFAULT;
 }
 
@@ -255,8 +251,12 @@ int ia32_setup_frame(int sig, struct ksignal *ksig,
 	if (__put_user(sig, &frame->sig))
 		return -EFAULT;
 
-	if (ia32_setup_sigcontext(&frame->sc, fpstate, regs, set->sig[0]))
+	if (!user_access_begin(&frame->sc, sizeof(struct sigcontext_32)))
 		return -EFAULT;
+
+	if (ia32_setup_sigcontext(&frame->sc, fpstate, regs, set->sig[0]))
+		goto Efault;
+	user_access_end();
 
 	if (__put_user(set->sig[1], &frame->extramask[0]))
 		return -EFAULT;
@@ -301,6 +301,9 @@ int ia32_setup_frame(int sig, struct ksignal *ksig,
 	regs->ss = __USER32_DS;
 
 	return 0;
+Efault:
+	user_access_end();
+	return -EFAULT;
 }
 
 int ia32_setup_rt_frame(int sig, struct ksignal *ksig,
@@ -356,8 +359,11 @@ int ia32_setup_rt_frame(int sig, struct ksignal *ksig,
 	user_access_end();
 
 	err |= __copy_siginfo_to_user32(&frame->info, &ksig->info, false);
+	if (!user_access_begin(&frame->uc.uc_mcontext, sizeof(struct sigcontext_32)))
+		return -EFAULT;
 	err |= ia32_setup_sigcontext(&frame->uc.uc_mcontext, fpstate,
 				     regs, set->sig[0]);
+	user_access_end();
 	err |= __copy_to_user(&frame->uc.uc_sigmask, set, sizeof(*set));
 
 	if (err)
