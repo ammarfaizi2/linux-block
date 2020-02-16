@@ -71,7 +71,7 @@ out_err:
 EXPORT_SYMBOL(csum_and_copy_from_user);
 
 /**
- * csum_partial_copy_to_user - Copy and checksum to user space.
+ * csum_and_copy_to_user - Copy and checksum to user space.
  * @src: source address
  * @dst: destination address (user space)
  * @len: number of bytes to be copied.
@@ -82,7 +82,7 @@ EXPORT_SYMBOL(csum_and_copy_from_user);
  * src and dst are best aligned to 64bits.
  */
 __wsum
-csum_partial_copy_to_user(const void *src, void __user *dst,
+csum_and_copy_to_user(const void *src, void __user *dst,
 			  int len, __wsum isum, int *errp)
 {
 	__wsum ret;
@@ -117,7 +117,7 @@ out:
 	*errp = -EFAULT;
 	return isum;
 }
-EXPORT_SYMBOL(csum_partial_copy_to_user);
+EXPORT_SYMBOL(csum_and_copy_to_user);
 
 /**
  * csum_partial_copy_nocheck - Copy and checksum.
