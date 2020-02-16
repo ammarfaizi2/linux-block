@@ -134,8 +134,17 @@ EXPORT_SYMBOL(csum_partial_copy_from_user);
 __wsum
 csum_partial_copy_nocheck(const void *src, void *dst, int len, __wsum sum)
 {
-	return csum_partial_copy_from_user((__force const void __user *)src,
-					   dst, len, sum, NULL);
+	unsigned long result;
+
+	memcpy(dst, src, len);
+
+	result = do_csum(dst, len);
+
+	/* add in old sum, and carry.. */
+	result += (__force u32)sum;
+	/* 32+c bits -> 32 bits */
+	result = (result & 0xffffffff) + (result >> 32);
+	return (__force __wsum)result;
 }
 
 EXPORT_SYMBOL(csum_partial_copy_nocheck);
