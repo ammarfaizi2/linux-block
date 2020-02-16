@@ -196,6 +196,17 @@ Efault:
 	return -EFAULT;
 }
 
+#define unsafe_put_sigcontext(sc, fpstate, regs, set, label)	\
+do {								\
+	if (setup_sigcontext(sc, fpstate, regs, set->sig[0]))	\
+		goto label;					\
+} while(0);
+
+#define unsafe_put_sigmask(set, frame, label) \
+	unsafe_put_user(*(__u64 *)(set), \
+			(__u64 __user *)&(frame)->uc.uc_sigmask, \
+			label)
+
 /*
  * Set up a signal frame.
  */
@@ -303,8 +314,7 @@ __setup_frame(int sig, struct ksignal *ksig, sigset_t *set,
 		return -EFAULT;
 
 	unsafe_put_user(sig, &frame->sig, Efault);
-	if (setup_sigcontext(&frame->sc, fpstate, regs, set->sig[0]))
-		goto Efault;
+	unsafe_put_sigcontext(&frame->sc, fpstate, regs, set, Efault);
 	unsafe_put_user(set->sig[1], &frame->extramask[0], Efault);
 	if (current->mm->context.vdso)
 		restorer = current->mm->context.vdso +
@@ -351,9 +361,9 @@ static int __setup_rt_frame(int sig, struct ksignal *ksig,
 {
 	struct rt_sigframe __user *frame;
 	void __user *restorer;
-	void __user *fpstate = NULL;
+	void __user *fp = NULL;
 
-	frame = get_sigframe(&ksig->ka, regs, sizeof(*frame), &fpstate);
+	frame = get_sigframe(&ksig->ka, regs, sizeof(*frame), &fp);
 
 	if (!user_access_begin(frame, sizeof(*frame)))
 		return -EFAULT;
@@ -385,11 +395,8 @@ static int __setup_rt_frame(int sig, struct ksignal *ksig,
 	 * signal handler stack frames.
 	 */
 	unsafe_put_user(*((u64 *)&rt_retcode), (u64 *)frame->retcode, Efault);
-	if (setup_sigcontext(&frame->uc.uc_mcontext, fpstate,
-				regs, set->sig[0]))
-		goto Efault;
-	unsafe_put_user(*(__u64 *)set,
-			(__u64 __user *)&frame->uc.uc_sigmask, Efault);
+	unsafe_put_sigcontext(&frame->uc.uc_mcontext, fp, regs, set, Efault);
+	unsafe_put_sigmask(set, frame, Efault);
 	user_access_end();
 	
 	if (copy_siginfo_to_user(&frame->info, &ksig->info))
@@ -453,9 +460,8 @@ static int __setup_rt_frame(int sig, struct ksignal *ksig,
 	/* Set up to return from userspace.  If provided, use a stub
 	   already in userspace.  */
 	unsafe_put_user(ksig->ka.sa.sa_restorer, &frame->pretcode, Efault);
-	if (setup_sigcontext(&frame->uc.uc_mcontext, fp, regs, set->sig[0]))
-		goto Efault;
-	unsafe_put_user(set->sig[0], &frame->uc.uc_sigmask.sig[0], Efault);
+	unsafe_put_sigcontext(&frame->uc.uc_mcontext, fp, regs, set, Efault);
+	unsafe_put_sigmask(set, frame, Efault);
 	user_access_end();
 
 	if (ksig->ka.sa.sa_flags & SA_SIGINFO) {
@@ -514,12 +520,12 @@ static int x32_setup_rt_frame(struct ksignal *ksig,
 	struct rt_sigframe_x32 __user *frame;
 	unsigned long uc_flags;
 	void __user *restorer;
-	void __user *fpstate = NULL;
+	void __user *fp = NULL;
 
 	if (!(ksig->ka.sa.sa_flags & SA_RESTORER))
 		return -EFAULT;
 
-	frame = get_sigframe(&ksig->ka, regs, sizeof(*frame), &fpstate);
+	frame = get_sigframe(&ksig->ka, regs, sizeof(*frame), &fp);
 
 	uc_flags = frame_uc_flags(regs);
 
@@ -533,10 +539,8 @@ static int x32_setup_rt_frame(struct ksignal *ksig,
 	unsafe_put_user(0, &frame->uc.uc__pad0, Efault);
 	restorer = ksig->ka.sa.sa_restorer;
 	unsafe_put_user(restorer, (unsigned long __user *)&frame->pretcode, Efault);
-	if (setup_sigcontext(&frame->uc.uc_mcontext, fpstate,
-				regs, set->sig[0]))
-		goto Efault;
-	unsafe_put_user(*(__u64 *)set, (__u64 __user *)&frame->uc.uc_sigmask, Efault);
+	unsafe_put_sigcontext(&frame->uc.uc_mcontext, fp, regs, set, Efault);
+	unsafe_put_sigmask(set, frame, Efault);
 	user_access_end();
 
 	if (ksig->ka.sa.sa_flags & SA_SIGINFO) {
