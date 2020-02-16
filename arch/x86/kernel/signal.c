@@ -140,12 +140,9 @@ static int restore_sigcontext(struct pt_regs *regs,
 			       IS_ENABLED(CONFIG_X86_32));
 }
 
-static int setup_sigcontext(struct sigcontext __user *sc, void __user *fpstate,
+static __always_inline int setup_sigcontext(struct sigcontext __user *sc, void __user *fpstate,
 		     struct pt_regs *regs, unsigned long mask)
 {
-	if (!user_access_begin(sc, sizeof(struct sigcontext)))
-		return -EFAULT;
-
 #ifdef CONFIG_X86_32
 	unsafe_put_user(get_user_gs(regs),
 				  (unsigned int __user *)&sc->gs, Efault);
@@ -194,10 +191,8 @@ static int setup_sigcontext(struct sigcontext __user *sc, void __user *fpstate,
 	/* non-iBCS2 extensions.. */
 	unsafe_put_user(mask, &sc->oldmask, Efault);
 	unsafe_put_user(current->thread.cr2, &sc->cr2, Efault);
-	user_access_end();
 	return 0;
 Efault:
-	user_access_end();
 	return -EFAULT;
 }
 
@@ -311,8 +306,11 @@ __setup_frame(int sig, struct ksignal *ksig, sigset_t *set,
 	if (__put_user(sig, &frame->sig))
 		return -EFAULT;
 
-	if (setup_sigcontext(&frame->sc, fpstate, regs, set->sig[0]))
+	if (!user_access_begin(&frame->sc, sizeof(struct sigcontext)))
 		return -EFAULT;
+	if (setup_sigcontext(&frame->sc, fpstate, regs, set->sig[0]))
+		goto Efault;
+	user_access_end();
 
 	if (__put_user(set->sig[1], &frame->extramask[0]))
 		return -EFAULT;
@@ -353,6 +351,10 @@ __setup_frame(int sig, struct ksignal *ksig, sigset_t *set,
 	regs->cs = __USER_CS;
 
 	return 0;
+
+Efault:
+	user_access_end();
+	return -EFAULT;
 }
 
 static int __setup_rt_frame(int sig, struct ksignal *ksig,
@@ -395,13 +397,13 @@ static int __setup_rt_frame(int sig, struct ksignal *ksig,
 	 * signal handler stack frames.
 	 */
 	unsafe_put_user(*((u64 *)&rt_retcode), (u64 *)frame->retcode, Efault);
+	if (setup_sigcontext(&frame->uc.uc_mcontext, fpstate,
+				regs, set->sig[0]))
+		goto Efault;
 	user_access_end();
 	
 	err |= copy_siginfo_to_user(&frame->info, &ksig->info);
-	err |= setup_sigcontext(&frame->uc.uc_mcontext, fpstate,
-				regs, set->sig[0]);
 	err |= __copy_to_user(&frame->uc.uc_sigmask, set, sizeof(*set));
-
 	if (err)
 		return -EFAULT;
 
@@ -472,9 +474,9 @@ static int __setup_rt_frame(int sig, struct ksignal *ksig,
 	/* Set up to return from userspace.  If provided, use a stub
 	   already in userspace.  */
 	unsafe_put_user(ksig->ka.sa.sa_restorer, &frame->pretcode, Efault);
+	if (setup_sigcontext(&frame->uc.uc_mcontext, fp, regs, set->sig[0]))
+		goto Efault;
 	user_access_end();
-
-	err |= setup_sigcontext(&frame->uc.uc_mcontext, fp, regs, set->sig[0]);
 	err |= __put_user(set->sig[0], &frame->uc.uc_sigmask.sig[0]);
 
 	if (err)
@@ -559,10 +561,10 @@ static int x32_setup_rt_frame(struct ksignal *ksig,
 	unsafe_put_user(0, &frame->uc.uc__pad0, Efault);
 	restorer = ksig->ka.sa.sa_restorer;
 	unsafe_put_user(restorer, (unsigned long __user *)&frame->pretcode, Efault);
+	if (setup_sigcontext(&frame->uc.uc_mcontext, fpstate,
+				regs, set->sig[0]))
+		goto Efault;
 	user_access_end();
-
-	err |= setup_sigcontext(&frame->uc.uc_mcontext, fpstate,
-				regs, set->sig[0]);
 	err |= __put_user(*(__u64 *)set, (__u64 __user *)&frame->uc.uc_sigmask);
 
 	if (err)
