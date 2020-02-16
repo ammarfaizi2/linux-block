@@ -229,7 +229,6 @@ int ia32_setup_frame(int sig, struct ksignal *ksig,
 {
 	struct sigframe_ia32 __user *frame;
 	void __user *restorer;
-	int err = 0;
 	void __user *fpstate = NULL;
 
 	/* copy_to_user optimizes that into a single 8 byte store */
@@ -245,22 +244,6 @@ int ia32_setup_frame(int sig, struct ksignal *ksig,
 
 	frame = get_sigframe(ksig, regs, sizeof(*frame), &fpstate);
 
-	if (!access_ok(frame, sizeof(*frame)))
-		return -EFAULT;
-
-	if (__put_user(sig, &frame->sig))
-		return -EFAULT;
-
-	if (!user_access_begin(&frame->sc, sizeof(struct sigcontext_32)))
-		return -EFAULT;
-
-	if (ia32_setup_sigcontext(&frame->sc, fpstate, regs, set->sig[0]))
-		goto Efault;
-	user_access_end();
-
-	if (__put_user(set->sig[1], &frame->extramask[0]))
-		return -EFAULT;
-
 	if (ksig->ka.sa.sa_flags & SA_RESTORER) {
 		restorer = ksig->ka.sa.sa_restorer;
 	} else {
@@ -272,18 +255,20 @@ int ia32_setup_frame(int sig, struct ksignal *ksig,
 			restorer = &frame->retcode;
 	}
 
-	put_user_try {
-		put_user_ex(ptr_to_compat(restorer), &frame->pretcode);
-
-		/*
-		 * These are actually not used anymore, but left because some
-		 * gdb versions depend on them as a marker.
-		 */
-		put_user_ex(*((u64 *)&code), (u64 __user *)frame->retcode);
-	} put_user_catch(err);
-
-	if (err)
+	if (!user_access_begin(frame, sizeof(*frame)))
 		return -EFAULT;
+
+	unsafe_put_user(sig, &frame->sig, Efault);
+	if (ia32_setup_sigcontext(&frame->sc, fpstate, regs, set->sig[0]))
+		goto Efault;
+	unsafe_put_user(set->sig[1], &frame->extramask[0], Efault);
+	unsafe_put_user(ptr_to_compat(restorer), &frame->pretcode, Efault);
+	/*
+	 * These are actually not used anymore, but left because some
+	 * gdb versions depend on them as a marker.
+	 */
+	unsafe_put_user(*((u64 *)&code), (u64 __user *)frame->retcode, Efault);
+	user_access_end();
 
 	/* Set up registers for signal handler */
 	regs->sp = (unsigned long) frame;
