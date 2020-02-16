@@ -296,10 +296,9 @@ int ia32_setup_rt_frame(int sig, struct ksignal *ksig,
 {
 	struct rt_sigframe_ia32 __user *frame;
 	void __user *restorer;
-	int err = 0;
 	void __user *fpstate = NULL;
 
-	/* __copy_to_user optimizes that into a single 8 byte store */
+	/* unsafe_put_user optimizes that into a single 8 byte store */
 	static const struct {
 		u8 movl;
 		u32 val;
@@ -341,17 +340,13 @@ int ia32_setup_rt_frame(int sig, struct ksignal *ksig,
 	 * versions need it.
 	 */
 	unsafe_put_user(*((u64 *)&code), (u64 __user *)frame->retcode, Efault);
+	if (ia32_setup_sigcontext(&frame->uc.uc_mcontext, fpstate,
+				     regs, set->sig[0]))
+		goto Efault;
+	unsafe_put_user(set->sig[0], (__u64 *)&frame->uc.uc_sigmask, Efault);
 	user_access_end();
 
-	err |= __copy_siginfo_to_user32(&frame->info, &ksig->info, false);
-	if (!user_access_begin(&frame->uc.uc_mcontext, sizeof(struct sigcontext_32)))
-		return -EFAULT;
-	err |= ia32_setup_sigcontext(&frame->uc.uc_mcontext, fpstate,
-				     regs, set->sig[0]);
-	user_access_end();
-	err |= __copy_to_user(&frame->uc.uc_sigmask, set, sizeof(*set));
-
-	if (err)
+	if (__copy_siginfo_to_user32(&frame->info, &ksig->info, false))
 		return -EFAULT;
 
 	/* Set up registers for signal handler */
