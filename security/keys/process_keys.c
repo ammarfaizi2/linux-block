@@ -379,7 +379,7 @@ void key_fsuid_changed(struct cred *new_cred)
 	/* update the ownership of the thread keyring */
 	if (new_cred->thread_keyring) {
 		down_write(&new_cred->thread_keyring->sem);
-		new_cred->thread_keyring->uid = new_cred->fsuid;
+		new_cred->thread_keyring->uid = new_cred->kfsuid;
 		up_write(&new_cred->thread_keyring->sem);
 	}
 }
@@ -392,7 +392,7 @@ void key_fsgid_changed(struct cred *new_cred)
 	/* update the ownership of the thread keyring */
 	if (new_cred->thread_keyring) {
 		down_write(&new_cred->thread_keyring->sem);
-		new_cred->thread_keyring->gid = new_cred->fsgid;
+		new_cred->thread_keyring->gid = new_cred->kfsgid;
 		up_write(&new_cred->thread_keyring->sem);
 	}
 }
@@ -923,10 +923,12 @@ void key_change_session_keyring(struct callback_head *twork)
 	new-> euid	= old-> euid;
 	new-> suid	= old-> suid;
 	new->fsuid	= old->fsuid;
+	new->kfsuid	= old->kfsuid;
 	new->  gid	= old->  gid;
 	new-> egid	= old-> egid;
 	new-> sgid	= old-> sgid;
 	new->fsgid	= old->fsgid;
+	new->kfsgid	= old->kfsgid;
 	new->user	= get_uid(old->user);
 	new->user_ns	= get_user_ns(old->user_ns);
 	new->group_info	= get_group_info(old->group_info);

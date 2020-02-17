@@ -33,7 +33,7 @@ int key_task_permission(const key_ref_t key_ref, const struct cred *cred,
 	key = key_ref_to_ptr(key_ref);
 
 	/* use the second 8-bits of permissions for keys the caller owns */
-	if (uid_eq(key->uid, cred->fsuid)) {
+	if (uid_eq(key->uid, cred->kfsuid)) {
 		kperm = key->perm >> 16;
 		goto use_these_perms;
 	}
@@ -41,7 +41,7 @@ int key_task_permission(const key_ref_t key_ref, const struct cred *cred,
 	/* use the third 8-bits of permissions for keys the caller has a group
 	 * membership in common with */
 	if (gid_valid(key->gid) && key->perm & KEY_GRP_ALL) {
-		if (gid_eq(key->gid, cred->fsgid)) {
+		if (gid_eq(key->gid, cred->kfsgid)) {
 			kperm = key->perm >> 8;
 			goto use_these_perms;
 		}
