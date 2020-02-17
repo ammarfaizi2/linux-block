@@ -1038,10 +1038,10 @@ static int cmp_extents_reverse(const void *a, const void *b)
 }
 
 /**
- * sort_idmaps - Sorts an array of idmap entries.
+ * sort_map - Sorts an array of idmap entries.
  * Can only be called if number of mappings exceeds UID_GID_MAP_MAX_BASE_EXTENTS.
  */
-static int sort_idmaps(struct uid_gid_map *map)
+static int sort_map(struct uid_gid_map *map)
 {
 	if (map->nr_extents <= UID_GID_MAP_MAX_BASE_EXTENTS)
 		return 0;
@@ -1064,6 +1064,71 @@ static int sort_idmaps(struct uid_gid_map *map)
 	return 0;
 }
 
+static int sort_idmaps(struct uid_gid_map *map)
+{
+	return sort_map(map);
+}
+
+static int map_from_parent(struct uid_gid_map *new_map,
+			   struct uid_gid_map *parent_map)
+{
+	unsigned idx;
+
+	/* Map the lower ids from the parent user namespace to the
+	 * kernel global id space.
+	 */
+	for (idx = 0; idx < new_map->nr_extents; idx++) {
+		struct uid_gid_extent *e;
+		u32 lower_first;
+
+		if (new_map->nr_extents <= UID_GID_MAP_MAX_BASE_EXTENTS)
+			e = &new_map->extent[idx];
+		else
+			e = &new_map->forward[idx];
+
+		lower_first = map_id_range_down(parent_map, e->lower_first, e->count);
+
+		/* Fail if we can not map the specified extent to
+		 * the kernel global id space.
+		 */
+		if (lower_first == (u32)-1)
+			return -EPERM;
+
+		e->lower_first = lower_first;
+	}
+
+	return 0;
+}
+
+static int map_into_kids(struct uid_gid_map *id_map,
+			 struct uid_gid_map *parent_id_map)
+{
+	return map_from_parent(id_map, parent_id_map);
+}
+
+static void install_idmaps(struct uid_gid_map *id_map,
+			   struct uid_gid_map *new_id_map)
+{
+	if (new_id_map->nr_extents <= UID_GID_MAP_MAX_BASE_EXTENTS) {
+		memcpy(id_map->extent, new_id_map->extent,
+		       new_id_map->nr_extents * sizeof(new_id_map->extent[0]));
+	} else {
+		id_map->forward = new_id_map->forward;
+		id_map->reverse = new_id_map->reverse;
+	}
+}
+
+static void free_idmaps(struct uid_gid_map *new_id_map)
+{
+	if (new_id_map->nr_extents > UID_GID_MAP_MAX_BASE_EXTENTS) {
+		kfree(new_id_map->forward);
+		kfree(new_id_map->reverse);
+		new_id_map->forward = NULL;
+		new_id_map->reverse = NULL;
+		new_id_map->nr_extents = 0;
+	}
+}
+
 static ssize_t map_write(struct file *file, const char __user *buf,
 			 size_t count, loff_t *ppos,
 			 int cap_setid,
@@ -1073,7 +1138,6 @@ static ssize_t map_write(struct file *file, const char __user *buf,
 	struct seq_file *seq = file->private_data;
 	struct user_namespace *ns = seq->private;
 	struct uid_gid_map new_map;
-	unsigned idx;
 	struct uid_gid_extent extent;
 	char *kbuf = NULL, *pos, *next_line;
 	ssize_t ret;
@@ -1191,61 +1255,28 @@ static ssize_t map_write(struct file *file, const char __user *buf,
 	if (!new_idmap_permitted(file, ns, cap_setid, &new_map))
 		goto out;
 
-	ret = -EPERM;
-	/* Map the lower ids from the parent user namespace to the
-	 * kernel global id space.
-	 */
-	for (idx = 0; idx < new_map.nr_extents; idx++) {
-		struct uid_gid_extent *e;
-		u32 lower_first;
-
-		if (new_map.nr_extents <= UID_GID_MAP_MAX_BASE_EXTENTS)
-			e = &new_map.extent[idx];
-		else
-			e = &new_map.forward[idx];
-
-		lower_first = map_id_range_down(parent_map,
-						e->lower_first,
-						e->count);
-
-		/* Fail if we can not map the specified extent to
-		 * the kernel global id space.
-		 */
-		if (lower_first == (u32) -1)
-			goto out;
-
-		e->lower_first = lower_first;
-	}
+	ret = map_into_kids(&new_map, parent_map);
+	if (ret)
+		goto out;
 
 	/*
 	 * If we want to use binary search for lookup, this clones the extent
 	 * array and sorts both copies.
 	 */
 	ret = sort_idmaps(&new_map);
-	if (ret < 0)
+	if (ret)
 		goto out;
 
 	/* Install the map */
-	if (new_map.nr_extents <= UID_GID_MAP_MAX_BASE_EXTENTS) {
-		memcpy(map->extent, new_map.extent,
-		       new_map.nr_extents * sizeof(new_map.extent[0]));
-	} else {
-		map->forward = new_map.forward;
-		map->reverse = new_map.reverse;
-	}
+	install_idmaps(map, &new_map);
 	smp_wmb();
 	map->nr_extents = new_map.nr_extents;
 
 	*ppos = count;
 	ret = count;
 out:
-	if (ret < 0 && new_map.nr_extents > UID_GID_MAP_MAX_BASE_EXTENTS) {
-		kfree(new_map.forward);
-		kfree(new_map.reverse);
-		map->forward = NULL;
-		map->reverse = NULL;
-		map->nr_extents = 0;
-	}
+	if (ret < 0)
+		free_idmaps(&new_map);
 
 	mutex_unlock(&userns_state_mutex);
 	kfree(kbuf);
