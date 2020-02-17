@@ -134,7 +134,7 @@ static int call_sbin_request_key(struct key *authkey, void *aux)
 	sprintf(desc, "_req.%u", key->serial);
 
 	cred = get_current_cred();
-	keyring = keyring_alloc(desc, cred->fsuid, cred->fsgid, cred,
+	keyring = keyring_alloc(desc, cred->kfsuid, cred->kfsgid, cred,
 				KEY_POS_ALL | KEY_USR_VIEW | KEY_USR_READ,
 				KEY_ALLOC_QUOTA_OVERRUN, NULL, NULL);
 	put_cred(cred);
@@ -149,8 +149,8 @@ static int call_sbin_request_key(struct key *authkey, void *aux)
 		goto error_link;
 
 	/* record the UID and GID */
-	sprintf(uid_str, "%d", from_kuid(&init_user_ns, cred->fsuid));
-	sprintf(gid_str, "%d", from_kgid(&init_user_ns, cred->fsgid));
+	sprintf(uid_str, "%d", from_kuid(&init_user_ns, cred->kfsuid));
+	sprintf(gid_str, "%d", from_kgid(&init_user_ns, cred->kfsgid));
 
 	/* we say which key is under construction */
 	sprintf(key_str, "%d", key->serial);
@@ -390,7 +390,7 @@ static int construct_alloc_key(struct keyring_search_context *ctx,
 		perm |= KEY_POS_WRITE;
 
 	key = key_alloc(ctx->index_key.type, ctx->index_key.description,
-			ctx->cred->fsuid, ctx->cred->fsgid, ctx->cred,
+			ctx->cred->kfsuid, ctx->cred->kfsgid, ctx->cred,
 			perm, flags, NULL);
 	if (IS_ERR(key))
 		goto alloc_failed;
@@ -490,7 +490,7 @@ static struct key *construct_key_and_link(struct keyring_search_context *ctx,
 	if (ret)
 		goto error;
 
-	user = key_user_lookup(current_fsuid());
+	user = key_user_lookup(current_kfsuid());
 	if (!user) {
 		ret = -ENOMEM;
 		goto error_put_dest_keyring;
