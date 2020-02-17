@@ -456,94 +456,55 @@ unsigned long __must_check __clear_user(void __user *mem, unsigned long len);
 extern void __cmpxchg_wrong_size(void)
 	__compiletime_error("Bad argument size for cmpxchg");
 
-#define __user_atomic_cmpxchg_inatomic(uval, ptr, old, new, size)	\
+#define __user_atomic_do_cmpxchg(op, cons, ret, old, new, ptr)	\
+	asm volatile("\n"					\
+		"1:\t" LOCK_PREFIX op" %4, %2\n"		\
+		"2:\n"						\
+		"\t.section .fixup, \"ax\"\n"			\
+		"3:\tmov     %3, %0\n"				\
+		"\tjmp     2b\n"				\
+		"\t.previous\n"					\
+		_ASM_EXTABLE_UA(1b, 3b)				\
+		: "+r" (ret), "=a" (old), "+m" (*(ptr))		\
+		: "i" (-EFAULT), cons (new), "1" (old)		\
+		: "memory"					\
+		);
+
+#define user_atomic_cmpxchg_inatomic(uval, ptr, old, new)		\
 ({									\
 	int __ret = 0;							\
 	__typeof__(*(ptr)) __old = (old);				\
 	__typeof__(*(ptr)) __new = (new);				\
-	__uaccess_begin_nospec();					\
-	switch (size) {							\
-	case 1:								\
-	{								\
-		asm volatile("\n"					\
-			"1:\t" LOCK_PREFIX "cmpxchgb %4, %2\n"		\
-			"2:\n"						\
-			"\t.section .fixup, \"ax\"\n"			\
-			"3:\tmov     %3, %0\n"				\
-			"\tjmp     2b\n"				\
-			"\t.previous\n"					\
-			_ASM_EXTABLE_UA(1b, 3b)				\
-			: "+r" (__ret), "=a" (__old), "+m" (*(ptr))	\
-			: "i" (-EFAULT), "q" (__new), "1" (__old)	\
-			: "memory"					\
-		);							\
-		break;							\
-	}								\
-	case 2:								\
-	{								\
-		asm volatile("\n"					\
-			"1:\t" LOCK_PREFIX "cmpxchgw %4, %2\n"		\
-			"2:\n"						\
-			"\t.section .fixup, \"ax\"\n"			\
-			"3:\tmov     %3, %0\n"				\
-			"\tjmp     2b\n"				\
-			"\t.previous\n"					\
-			_ASM_EXTABLE_UA(1b, 3b)				\
-			: "+r" (__ret), "=a" (__old), "+m" (*(ptr))	\
-			: "i" (-EFAULT), "r" (__new), "1" (__old)	\
-			: "memory"					\
-		);							\
-		break;							\
-	}								\
-	case 4:								\
-	{								\
-		asm volatile("\n"					\
-			"1:\t" LOCK_PREFIX "cmpxchgl %4, %2\n"		\
-			"2:\n"						\
-			"\t.section .fixup, \"ax\"\n"			\
-			"3:\tmov     %3, %0\n"				\
-			"\tjmp     2b\n"				\
-			"\t.previous\n"					\
-			_ASM_EXTABLE_UA(1b, 3b)				\
-			: "+r" (__ret), "=a" (__old), "+m" (*(ptr))	\
-			: "i" (-EFAULT), "r" (__new), "1" (__old)	\
-			: "memory"					\
-		);							\
-		break;							\
-	}								\
-	case 8:								\
-	{								\
-		if (!IS_ENABLED(CONFIG_X86_64))				\
-			__cmpxchg_wrong_size();				\
+	if (user_access_begin(ptr, sizeof(__old))) {			\
+		switch (sizeof(__old)) {				\
+		case 1:							\
+			__user_atomic_do_cmpxchg("cmpxchgb", "q",	\
+					__ret, __old, __new, ptr);	\
+			break;						\
+		case 2:							\
+			__user_atomic_do_cmpxchg("cmpxchgw", "r",	\
+					__ret, __old, __new, ptr);	\
+			break;						\
+		case 4:							\
+			__user_atomic_do_cmpxchg("cmpxchgl", "r",	\
+					__ret, __old, __new, ptr);	\
+			break;						\
+		case 8:							\
+			if (!IS_ENABLED(CONFIG_X86_64))			\
+				__cmpxchg_wrong_size();			\
 									\
-		asm volatile("\n"					\
-			"1:\t" LOCK_PREFIX "cmpxchgq %4, %2\n"		\
-			"2:\n"						\
-			"\t.section .fixup, \"ax\"\n"			\
-			"3:\tmov     %3, %0\n"				\
-			"\tjmp     2b\n"				\
-			"\t.previous\n"					\
-			_ASM_EXTABLE_UA(1b, 3b)				\
-			: "+r" (__ret), "=a" (__old), "+m" (*(ptr))	\
-			: "i" (-EFAULT), "r" (__new), "1" (__old)	\
-			: "memory"					\
-		);							\
-		break;							\
+			__user_atomic_do_cmpxchg("cmpxchgq", "r",	\
+					__ret, __old, __new, ptr);	\
+			break;						\
+		default:						\
+			__cmpxchg_wrong_size();				\
+		}							\
+		user_access_end();					\
+		*(uval) = __old;					\
+	} else {							\
+		__ret = -EFAULT;					\
 	}								\
-	default:							\
-		__cmpxchg_wrong_size();					\
-	}								\
-	__uaccess_end();						\
-	*(uval) = __old;						\
 	__ret;								\
-})
-
-#define user_atomic_cmpxchg_inatomic(uval, ptr, old, new)		\
-({									\
-	access_ok((ptr), sizeof(*(ptr))) ?		\
-		__user_atomic_cmpxchg_inatomic((uval), (ptr),		\
-				(old), (new), sizeof(*(ptr))) :		\
-		-EFAULT;						\
 })
 
 /*
