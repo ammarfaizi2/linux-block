@@ -106,24 +106,6 @@ out:
 extern unsigned long do_csum(const unsigned char *, long);
 
 __wsum
-csum_and_copy_from_user(const void __user *src, void *dst,
-				int len, __wsum psum, int *errp)
-{
-	/* XXX Fixme
-	 * for now we separate the copy from checksum for obvious
-	 * alignment difficulties. Look at the Alpha code and you'll be
-	 * scared.
-	 */
-
-	if (copy_from_user(dst, src, len))
-		*errp = -EFAULT;
-
-	return csum_partial(dst, len, psum);
-}
-
-EXPORT_SYMBOL(csum_and_copy_from_user);
-
-__wsum
 csum_partial_copy_nocheck(const void *src, void *dst, int len, __wsum sum)
 {
 	unsigned long result;
