@@ -22,6 +22,7 @@
 #include <linux/xattr.h>
 #include <linux/export.h>
 #include <linux/user_namespace.h>
+#include <linux/fsuidgid.h>
 
 static struct posix_acl **acl_by_type(struct inode *inode, int type)
 {
@@ -692,12 +693,12 @@ static void posix_acl_fix_xattr_userns(
 	for (end = entry + count; entry != end; entry++) {
 		switch(le16_to_cpu(entry->e_tag)) {
 		case ACL_USER:
-			uid = make_kuid(from, le32_to_cpu(entry->e_id));
-			entry->e_id = cpu_to_le32(from_kuid(to, uid));
+			uid = make_kfsuid(from, le32_to_cpu(entry->e_id));
+			entry->e_id = cpu_to_le32(from_kfsuid(to, uid));
 			break;
 		case ACL_GROUP:
-			gid = make_kgid(from, le32_to_cpu(entry->e_id));
-			entry->e_id = cpu_to_le32(from_kgid(to, gid));
+			gid = make_kfsgid(from, le32_to_cpu(entry->e_id));
+			entry->e_id = cpu_to_le32(from_kfsgid(to, gid));
 			break;
 		default:
 			break;
@@ -765,14 +766,14 @@ posix_acl_from_xattr(struct user_namespace *user_ns,
 
 			case ACL_USER:
 				acl_e->e_uid =
-					make_kuid(user_ns,
+					make_kfsuid(user_ns,
 						  le32_to_cpu(entry->e_id));
 				if (!uid_valid(acl_e->e_uid))
 					goto fail;
 				break;
 			case ACL_GROUP:
 				acl_e->e_gid =
-					make_kgid(user_ns,
+					make_kfsgid(user_ns,
 						  le32_to_cpu(entry->e_id));
 				if (!gid_valid(acl_e->e_gid))
 					goto fail;
@@ -817,11 +818,11 @@ posix_acl_to_xattr(struct user_namespace *user_ns, const struct posix_acl *acl,
 		switch(acl_e->e_tag) {
 		case ACL_USER:
 			ext_entry->e_id =
-				cpu_to_le32(from_kuid(user_ns, acl_e->e_uid));
+				cpu_to_le32(from_kfsuid(user_ns, acl_e->e_uid));
 			break;
 		case ACL_GROUP:
 			ext_entry->e_id =
-				cpu_to_le32(from_kgid(user_ns, acl_e->e_gid));
+				cpu_to_le32(from_kfsgid(user_ns, acl_e->e_gid));
 			break;
 		default:
 			ext_entry->e_id = cpu_to_le32(ACL_UNDEFINED_ID);
