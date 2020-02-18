@@ -408,6 +408,40 @@ static void dump_ext4_fsinfo_timestamps(void *reply, unsigned int size)
 	printf("\tlast-err: %s\n", dump_ext4_time(buffer, r->last_error_time));
 }
 
+static void dump_nfs_fsinfo_info(void *reply, unsigned int size)
+{
+	struct fsinfo_nfs_info *r = reply;
+
+	printf("ver=%u.%u proto=%u\n", r->version, r->minor_version, r->transport_proto);
+}
+
+static void dump_nfs_fsinfo_server_addresses(void *reply, unsigned int size)
+{
+	struct fsinfo_nfs_server_address *r = reply;
+	struct sockaddr_storage *ss = (struct sockaddr_storage *)&r->address;
+	struct sockaddr_in6 *sin6;
+	struct sockaddr_in *sin;
+	char buf[1024];
+
+	switch (ss->ss_family) {
+	case AF_INET:
+		sin = (struct sockaddr_in *)ss;
+		if (!inet_ntop(AF_INET, &sin->sin_addr, buf, sizeof(buf)))
+			break;
+		printf("%5u %s\n", ntohs(sin->sin_port), buf);
+		return;
+	case AF_INET6:
+		sin6 = (struct sockaddr_in6 *)ss;
+		if (!inet_ntop(AF_INET6, &sin6->sin6_addr, buf, sizeof(buf)))
+			break;
+		printf("%5u %s\n", ntohs(sin6->sin6_port), buf);
+		return;
+	default:
+		printf("family=%u\n", ss->ss_family);
+		return;
+	}
+}
+
 static void dump_string(void *reply, unsigned int size)
 {
 	char *s = reply, *p;
@@ -495,6 +529,10 @@ static const struct fsinfo_attribute fsinfo_attributes[] = {
 	FSINFO_STRING	(FSINFO_ATTR_AFS_SERVER_NAME,	string),
 	FSINFO_LIST_N	(FSINFO_ATTR_AFS_SERVER_ADDRESSES, afs_fsinfo_server_address),
 	FSINFO_VSTRUCT	(FSINFO_ATTR_EXT4_TIMESTAMPS,	ext4_fsinfo_timestamps),
+	FSINFO_VSTRUCT	(FSINFO_ATTR_NFS_INFO,		nfs_fsinfo_info),
+	FSINFO_STRING	(FSINFO_ATTR_NFS_SERVER_NAME,	string),
+	FSINFO_LIST	(FSINFO_ATTR_NFS_SERVER_ADDRESSES, nfs_fsinfo_server_addresses),
+	FSINFO_STRING	(FSINFO_ATTR_NFS_GSSAPI_NAME,	string),
 	{}
 };
 

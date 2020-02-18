@@ -10,6 +10,7 @@
 #include <linux/sunrpc/addr.h>
 #include <linux/nfs_page.h>
 #include <linux/wait_bit.h>
+#include <linux/fsinfo.h>
 
 #define NFS_SB_MASK (SB_RDONLY|SB_NOSUID|SB_NODEV|SB_NOEXEC|SB_SYNCHRONOUS)
 
@@ -246,6 +247,11 @@ extern const struct svc_version nfs4_callback_version4;
 
 /* fs_context.c */
 extern struct file_system_type nfs_fs_type;
+
+/* fsinfo.c */
+#ifdef CONFIG_FSINFO
+extern int nfs_fsinfo(struct path *path, struct fsinfo_context *ctx);
+#endif
 
 /* pagelist.c */
 extern int __init nfs_init_nfspagecache(void);
