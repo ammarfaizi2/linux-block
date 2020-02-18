@@ -60,6 +60,7 @@ endif
 TARGETS += tmpfs
 TARGETS += tpm2
 TARGETS += user
+TARGETS += user_namespace
 TARGETS += vm
 TARGETS += x86
 TARGETS += zram
