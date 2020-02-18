@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: GPL-2.0
+CFLAGS += -Wall
+
+all:
+
+TEST_GEN_PROGS += test_fsid_map
+
+include ../lib.mk
+
+$(OUTPUT)/test_fsid_map: test_fsid_map.c ../clone3/clone3_selftests.h
+
