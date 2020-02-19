@@ -766,6 +766,24 @@ static long do_pselect(int n, fd_set __user *inp, fd_set __user *outp,
  * which has a pointer to the sigset_t itself followed by a size_t containing
  * the sigset size.
  */
+static inline int unkludge_sigmask(void __user *sig,
+				   sigset_t __user **up,
+				   size_t *sigsetsize)
+{
+	if (sig) {
+		if (!user_access_begin(sig, sizeof(void *)+sizeof(size_t)))
+			return -EFAULT;
+		unsafe_get_user(*up, (sigset_t __user * __user *)sig, Efault);
+		unsafe_get_user(*sigsetsize,
+				(size_t __user *)(sig+sizeof(void *)), Efault);
+		user_access_end();
+	}
+	return 0;
+Efault:
+	user_access_end();
+	return -EFAULT;
+}
+
 SYSCALL_DEFINE6(pselect6, int, n, fd_set __user *, inp, fd_set __user *, outp,
 		fd_set __user *, exp, struct __kernel_timespec __user *, tsp,
 		void __user *, sig)
@@ -773,13 +791,8 @@ SYSCALL_DEFINE6(pselect6, int, n, fd_set __user *, inp, fd_set __user *, outp,
 	size_t sigsetsize = 0;
 	sigset_t __user *up = NULL;
 
-	if (sig) {
-		if (!access_ok(sig, sizeof(void *)+sizeof(size_t))
-		    || __get_user(up, (sigset_t __user * __user *)sig)
-		    || __get_user(sigsetsize,
-				(size_t __user *)(sig+sizeof(void *))))
-			return -EFAULT;
-	}
+	if (unkludge_sigmask(sig, &up, &sigsetsize))
+		return -EFAULT;
 
 	return do_pselect(n, inp, outp, exp, tsp, up, sigsetsize, PT_TIMESPEC);
 }
@@ -793,13 +806,8 @@ SYSCALL_DEFINE6(pselect6_time32, int, n, fd_set __user *, inp, fd_set __user *, 
 	size_t sigsetsize = 0;
 	sigset_t __user *up = NULL;
 
-	if (sig) {
-		if (!access_ok(sig, sizeof(void *)+sizeof(size_t))
-		    || __get_user(up, (sigset_t __user * __user *)sig)
-		    || __get_user(sigsetsize,
-				(size_t __user *)(sig+sizeof(void *))))
-			return -EFAULT;
-	}
+	if (unkludge_sigmask(sig, &up, &sigsetsize))
+		return -EFAULT;
 
 	return do_pselect(n, inp, outp, exp, tsp, up, sigsetsize, PT_OLD_TIMESPEC);
 }
@@ -1325,6 +1333,25 @@ static long do_compat_pselect(int n, compat_ulong_t __user *inp,
 	return poll_select_finish(&end_time, tsp, type, ret);
 }
 
+static inline int unkludge_compat_sigmask(void __user *sig,
+				   compat_uptr_t *up,
+				   compat_size_t *sigsetsize)
+{
+	if (sig) {
+		if (!user_access_begin(sig,
+				sizeof(compat_uptr_t)+sizeof(compat_size_t)))
+			return -EFAULT;
+		unsafe_get_user(*up, (compat_uptr_t __user *)sig, Efault);
+		unsafe_get_user(*sigsetsize,
+				(compat_size_t __user *)(sig+sizeof(up)), Efault);
+		user_access_end();
+	}
+	return 0;
+Efault:
+	user_access_end();
+	return -EFAULT;
+}
+
 COMPAT_SYSCALL_DEFINE6(pselect6_time64, int, n, compat_ulong_t __user *, inp,
 	compat_ulong_t __user *, outp, compat_ulong_t __user *, exp,
 	struct __kernel_timespec __user *, tsp, void __user *, sig)
@@ -1332,14 +1359,8 @@ COMPAT_SYSCALL_DEFINE6(pselect6_time64, int, n, compat_ulong_t __user *, inp,
 	compat_size_t sigsetsize = 0;
 	compat_uptr_t up = 0;
 
-	if (sig) {
-		if (!access_ok(sig,
-				sizeof(compat_uptr_t)+sizeof(compat_size_t)) ||
-				__get_user(up, (compat_uptr_t __user *)sig) ||
-				__get_user(sigsetsize,
-				(compat_size_t __user *)(sig+sizeof(up))))
-			return -EFAULT;
-	}
+	if (unkludge_compat_sigmask(sig, &up, &sigsetsize))
+		return -EFAULT;
 
 	return do_compat_pselect(n, inp, outp, exp, tsp, compat_ptr(up),
 				 sigsetsize, PT_TIMESPEC);
@@ -1354,14 +1375,8 @@ COMPAT_SYSCALL_DEFINE6(pselect6_time32, int, n, compat_ulong_t __user *, inp,
 	compat_size_t sigsetsize = 0;
 	compat_uptr_t up = 0;
 
-	if (sig) {
-		if (!access_ok(sig,
-				sizeof(compat_uptr_t)+sizeof(compat_size_t)) ||
-		    	__get_user(up, (compat_uptr_t __user *)sig) ||
-		    	__get_user(sigsetsize,
-				(compat_size_t __user *)(sig+sizeof(up))))
-			return -EFAULT;
-	}
+	if (unkludge_compat_sigmask(sig, &up, &sigsetsize))
+		return -EFAULT;
 
 	return do_compat_pselect(n, inp, outp, exp, tsp, compat_ptr(up),
 				 sigsetsize, PT_OLD_TIMESPEC);
