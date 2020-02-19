@@ -313,6 +313,14 @@ unsigned long read_word_at_a_time(const void *addr)
 	__u.__val;					\
 })
 
+#define __READ_ONCE_SCALAR(x)				\
+	(*(const volatile typeof(x) *)&(x))
+
+#define __WRITE_ONCE_SCALAR(x, val)			\
+do {							\
+	*(volatile typeof(x) *)&(x) = val;		\
+} while (0)
+
 /**
  * data_race - mark an expression as containing intentional data races
  *
