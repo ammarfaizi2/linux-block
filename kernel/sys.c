@@ -2632,6 +2632,7 @@ struct compat_sysinfo {
 COMPAT_SYSCALL_DEFINE1(sysinfo, struct compat_sysinfo __user *, info)
 {
 	struct sysinfo s;
+	struct compat_sysinfo s32;
 
 	do_sysinfo(&s);
 
@@ -2656,23 +2657,23 @@ COMPAT_SYSCALL_DEFINE1(sysinfo, struct compat_sysinfo __user *, info)
 		s.freehigh >>= bitcount;
 	}
 
-	if (!access_ok(info, sizeof(struct compat_sysinfo)) ||
-	    __put_user(s.uptime, &info->uptime) ||
-	    __put_user(s.loads[0], &info->loads[0]) ||
-	    __put_user(s.loads[1], &info->loads[1]) ||
-	    __put_user(s.loads[2], &info->loads[2]) ||
-	    __put_user(s.totalram, &info->totalram) ||
-	    __put_user(s.freeram, &info->freeram) ||
-	    __put_user(s.sharedram, &info->sharedram) ||
-	    __put_user(s.bufferram, &info->bufferram) ||
-	    __put_user(s.totalswap, &info->totalswap) ||
-	    __put_user(s.freeswap, &info->freeswap) ||
-	    __put_user(s.procs, &info->procs) ||
-	    __put_user(s.totalhigh, &info->totalhigh) ||
-	    __put_user(s.freehigh, &info->freehigh) ||
-	    __put_user(s.mem_unit, &info->mem_unit))
+	memset(&s32, 0, sizeof(s32));
+	s32.uptime = s.uptime;
+	s32.loads[0] = s.loads[0];
+	s32.loads[1] = s.loads[1];
+	s32.loads[2] = s.loads[2];
+	s32.totalram = s.totalram;
+	s32.freeram = s.freeram;
+	s32.sharedram = s.sharedram;
+	s32.bufferram = s.bufferram;
+	s32.totalswap = s.totalswap;
+	s32.freeswap = s.freeswap;
+	s32.procs = s.procs;
+	s32.totalhigh = s.totalhigh;
+	s32.freehigh = s.freehigh;
+	s32.mem_unit = s.mem_unit;
+	if (copy_to_user(info, &s32, sizeof(s32)))
 		return -EFAULT;
-
 	return 0;
 }
 #endif /* CONFIG_COMPAT */
