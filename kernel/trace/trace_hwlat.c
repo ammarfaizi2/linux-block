@@ -139,7 +139,7 @@ static void trace_hwlat_sample(struct hwlat_sample *sample)
 #define init_time(a, b)	(a = b)
 #define time_u64(a)	a
 
-void trace_hwlat_callback(bool enter)
+noinstr void trace_hwlat_callback(bool enter)
 {
 	if (smp_processor_id() != nmi_cpu)
 		return;

@@ -22,6 +22,7 @@
 #include <linux/sched/clock.h>
 #include <linux/ktime.h>
 #include <linux/trace_clock.h>
+#include <linux/kprobes.h>
 
 /*
  * trace_clock_local(): the simplest and least coherent tracing clock.
@@ -29,7 +30,7 @@
  * Useful for tracing that does not cross to other CPUs nor
  * does it go through idle events.
  */
-u64 notrace trace_clock_local(void)
+u64 noinstr trace_clock_local(void)
 {
 	u64 clock;
 

@@ -7,7 +7,7 @@ extern bool trace_hwlat_callback_enabled;
 extern void trace_hwlat_callback(bool enter);
 #endif
 
-static inline void ftrace_nmi_enter(void)
+static __always_inline void ftrace_nmi_enter(void)
 {
 #ifdef CONFIG_HWLAT_TRACER
 	if (trace_hwlat_callback_enabled)
@@ -15,7 +15,7 @@ static inline void ftrace_nmi_enter(void)
 #endif
 }
 
-static inline void ftrace_nmi_exit(void)
+static __always_inline void ftrace_nmi_exit(void)
 {
 #ifdef CONFIG_HWLAT_TRACER
 	if (trace_hwlat_callback_enabled)
