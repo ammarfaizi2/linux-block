@@ -380,4 +380,9 @@ DECLARE_IDTENTRY_XEN(X86_TRAP_NMI,	nmi);
 DECLARE_IDTENTRY_DEBUG(X86_TRAP_DB,	exc_debug);
 DECLARE_IDTENTRY_XEN(X86_TRAP_DB,	debug);
 
+/* #DF */
+#if defined(CONFIG_X86_64) || defined(CONFIG_DOUBLEFAULT)
+DECLARE_IDTENTRY_DF(X86_TRAP_DF,	exc_double_fault);
+#endif
+
 #endif

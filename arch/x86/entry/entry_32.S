@@ -1489,7 +1489,7 @@ ret_to_user:
 SYM_CODE_END(handle_exception)
 
 #ifdef CONFIG_DOUBLEFAULT
-SYM_CODE_START(double_fault)
+SYM_CODE_START(asm_exc_double_fault)
 1:
 	/*
 	 * This is a task gate handler, not an interrupt gate handler.
@@ -1527,7 +1527,7 @@ SYM_CODE_START(double_fault)
 1:
 	hlt
 	jmp 1b
-SYM_CODE_END(double_fault)
+SYM_CODE_END(asm_exc_double_fault)
 #endif
 
 /*
