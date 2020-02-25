@@ -27,6 +27,9 @@
 #include <linux/syscalls.h>
 #include <linux/uaccess.h>
 
+#include <xen/xen-ops.h>
+#include <xen/events.h>
+
 #include <asm/desc.h>
 #include <asm/traps.h>
 #include <asm/vdso.h>
@@ -35,6 +38,7 @@
 #include <asm/nospec-branch.h>
 #include <asm/io_bitmap.h>
 #include <asm/syscall.h>
+#include <asm/irq_stack.h>
 
 #define CREATE_TRACE_POINTS
 #include <trace/events/syscalls.h>
@@ -539,7 +543,8 @@ void noinstr idtentry_enter(struct pt_regs *regs)
 	}
 }
 
-static __always_inline void __idtentry_exit(struct pt_regs *regs)
+static __always_inline void __idtentry_exit(struct pt_regs *regs,
+					    bool preempt_hcall)
 {
 	lockdep_assert_irqs_disabled();
 
@@ -567,6 +572,16 @@ static __always_inline void __idtentry_exit(struct pt_regs *regs)
 				if (need_resched())
 					preempt_schedule_irq();
 				/* Covers both tracing and lockdep */
+				trace_hardirqs_on();
+				instr_end();
+				return;
+			}
+		} else if (IS_ENABLED(CONFIG_XEN_PV)) {
+			if (preempt_hcall) {
+				/* See CONFIG_PREEMPTION above */
+				instr_begin();
+				rcu_irq_exit_preempt();
+				xen_maybe_preempt_hcall();
 				trace_hardirqs_on();
 				instr_end();
 				return;
@@ -602,5 +617,52 @@ static __always_inline void __idtentry_exit(struct pt_regs *regs)
  */
 void noinstr idtentry_exit(struct pt_regs *regs)
 {
-	__idtentry_exit(regs);
+	__idtentry_exit(regs, false);
 }
+
+#ifdef CONFIG_XEN_PV
+__visible void __xen_pv_evtchn_do_upcall(void)
+{
+	irq_enter_rcu();
+	inc_irq_stat(irq_hv_callback_count);
+
+	xen_hvm_evtchn_do_upcall();
+
+	irq_exit_rcu();
+}
+
+/*
+ * Separate function as objtool is unhappy about having
+ * the macro at the call site.
+ */
+static noinstr void run_on_irqstack(void)
+{
+	RUN_ON_IRQSTACK(__xen_pv_evtchn_do_upcall);
+}
+
+__visible noinstr void xen_pv_evtchn_do_upcall(struct pt_regs *regs)
+{
+	struct pt_regs *old_regs;
+
+	idtentry_enter(regs);
+	old_regs = set_irq_regs(regs);
+
+	if (!irq_needs_irq_stack(regs)) {
+		instr_begin();
+		__xen_pv_evtchn_do_upcall();
+		instr_end();
+	} else {
+		run_on_irqstack();
+	}
+
+	set_irq_regs(old_regs);
+
+	if (IS_ENABLED(CONFIG_PREEMPTION)) {
+		__idtentry_exit(regs, false);
+	} else {
+		bool inhcall = __this_cpu_read(xen_in_preemptible_hcall);
+
+		__idtentry_exit(regs, inhcall && need_resched());
+	}
+}
+#endif /* CONFIG_XEN_PV */

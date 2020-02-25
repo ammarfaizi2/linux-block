@@ -225,6 +225,8 @@ static inline void xen_preemptible_hcall_end(void)
 {
 }
 
+static inline void xen_maybe_preempt_hcall(void) { }
+
 #else
 
 DECLARE_PER_CPU(bool, xen_in_preemptible_hcall);
@@ -238,6 +240,8 @@ static inline void xen_preemptible_hcall_end(void)
 {
 	__this_cpu_write(xen_in_preemptible_hcall, false);
 }
+
+void xen_maybe_preempt_hcall(void);
 
 #endif /* CONFIG_PREEMPTION */
 
