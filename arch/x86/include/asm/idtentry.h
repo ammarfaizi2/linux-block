@@ -6,6 +6,9 @@
 #include <asm/trapnr.h>
 
 #ifndef __ASSEMBLY__
+#include <linux/hardirq.h>
+
+#include <asm/irq_stack.h>
 
 void idtentry_enter(struct pt_regs *regs);
 void idtentry_exit(struct pt_regs *regs);
@@ -207,6 +210,71 @@ __visible noinstr void func(struct pt_regs *regs,			\
 									\
 static __always_inline void __##func(struct pt_regs *regs, u8 vector)
 
+/**
+ * DECLARE_IDTENTRY_SYSVEC - Declare functions for system vector entry points
+ * @vector:	Vector number (ignored for C)
+ * @func:	Function name of the entry point
+ *
+ * Declares three functions:
+ * - The ASM entry point: asm_##func
+ * - The XEN PV trap entry point: xen_##func (maybe unused)
+ * - The C handler called from the ASM entry point
+ *
+ * Maps to DECLARE_IDTENTRY().
+ */
+#define DECLARE_IDTENTRY_SYSVEC(vector, func)				\
+	DECLARE_IDTENTRY(vector, func)
+
+
+static __always_inline void idtentry_sysvec_enter(struct pt_regs *regs)
+{
+	idtentry_enter(regs);
+	instr_begin();
+	irq_enter_rcu();
+	kvm_set_cpu_l1tf_flush_l1d();
+	instr_end();
+}
+
+static __always_inline void idtentry_sysvec_exit(struct pt_regs *regs)
+{
+	instr_begin();
+	irq_exit_rcu();
+	lockdep_hardirq_exit();
+	instr_end();
+	idtentry_exit(regs);
+}
+
+/**
+ * DEFINE_IDTENTRY_SYSVEC - Emit code for system vector IDT entry points
+ * @func:	Function name of the entry point
+ *
+ * idtentry_enter/exit() and irq_enter/exit_rcu() are invoked before the
+ * function body. KVM L1D flush request is set.
+ *
+ * Runs the function on the interrupt stack if the entry hit kernel mode
+ */
+#define DEFINE_IDTENTRY_SYSVEC(func)					\
+__visible void __##func(struct pt_regs *regs);				\
+									\
+static noinstr void irqst_##func(struct pt_regs *regs)			\
+{									\
+	RUN_ON_IRQSTACK_ARG1(__##func, regs);				\
+}									\
+									\
+__visible noinstr void func(struct pt_regs *regs)			\
+{									\
+	idtentry_sysvec_enter(regs);					\
+	instr_begin();							\
+	if (!irq_needs_irq_stack(regs))					\
+		__##func (regs);					\
+	else								\
+		irqst_##func(regs);					\
+	instr_end();							\
+	idtentry_sysvec_exit(regs);					\
+}									\
+									\
+__visible void __##func(struct pt_regs *regs)
+
 #ifdef CONFIG_X86_64
 /**
  * DECLARE_IDTENTRY_IST - Declare functions for IST handling IDT entry points
@@ -353,6 +421,10 @@ static __always_inline void __##func(struct pt_regs *regs,		\
 /* Entries for common/spurious (device) interrupts */
 #define DECLARE_IDTENTRY_IRQ(vector, func)				\
 	idtentry_irq vector func
+
+/* System vector entries */
+#define DECLARE_IDTENTRY_SYSVEC(vector, func)				\
+	idtentry_sysvec vector func
 
 #ifdef CONFIG_X86_64
 # define DECLARE_IDTENTRY_MCE(vector, func)				\

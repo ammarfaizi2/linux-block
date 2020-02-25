@@ -46,9 +46,40 @@ static __always_inline bool irqstack_active(void)
 	__this_cpu_sub(irq_count, 1);					\
 }
 
+#define RUN_ON_IRQSTACK_ARG1(func, arg) {				\
+	unsigned long tos;						\
+									\
+	tos = ((unsigned long)__this_cpu_read(hardirq_stack_ptr)) - 8;	\
+									\
+	__this_cpu_add(irq_count, 1);					\
+	asm volatile(							\
+		"pushq  %%rbp					\n"	\
+		"movq   %%rsp, %%rbp				\n"	\
+		"movq	%%rsp, (%[ts])				\n"	\
+		"movq	%[ts], %%rsp				\n"	\
+		"1:						\n"	\
+		"	.pushsection .discard.instr_begin	\n"	\
+		"	.long 1b - .				\n"	\
+		"	.popsection				\n"	\
+		"call	" __ASM_FORM(func) "			\n"	\
+		"2:						\n"	\
+		"	.pushsection .discard.instr_end		\n"	\
+		"	.long 2b - .				\n"	\
+		"	.popsection				\n"	\
+		"popq	%%rsp					\n"	\
+		"leaveq						\n"	\
+		:							\
+		: [ts] "r" (tos),					\
+		  "D" (arg)						\
+		: "memory"						\
+		);							\
+	__this_cpu_sub(irq_count, 1);					\
+}
+
 #else /* CONFIG_X86_64 */
 static __always_inline bool irqstack_active(void) { return false; }
-#define RUN_ON_IRQSTACK(func)	do { } while (0)
+#define RUN_ON_IRQSTACK(func)		do { } while (0)
+#define RUN_ON_IRQSTACK_ARG1(func, arg)	do { } while (0)
 #endif /* !CONFIG_X86_64 */
 
 static __always_inline bool irq_needs_irq_stack(struct pt_regs *regs)
