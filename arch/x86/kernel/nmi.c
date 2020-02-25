@@ -507,8 +507,7 @@ static bool notrace is_debug_stack(unsigned long addr)
 NOKPROBE_SYMBOL(is_debug_stack);
 #endif
 
-dotraplinkage notrace void
-do_nmi(struct pt_regs *regs, long error_code)
+DEFINE_IDTENTRY_NMI(exc_nmi)
 {
 	if (IS_ENABLED(CONFIG_SMP) && cpu_is_offline(smp_processor_id()))
 		return;
@@ -558,7 +557,6 @@ nmi_restart:
 	if (user_mode(regs))
 		mds_user_clear_cpu_buffers();
 }
-NOKPROBE_SYMBOL(do_nmi);
 
 void stop_nmi(void)
 {
