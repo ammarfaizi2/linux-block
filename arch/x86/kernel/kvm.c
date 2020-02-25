@@ -218,7 +218,7 @@ again:
 }
 EXPORT_SYMBOL_GPL(kvm_async_pf_task_wake);
 
-u32 kvm_read_and_reset_pf_reason(void)
+u32 noinstr kvm_read_and_reset_pf_reason(void)
 {
 	u32 reason = 0;
 
@@ -230,9 +230,8 @@ u32 kvm_read_and_reset_pf_reason(void)
 	return reason;
 }
 EXPORT_SYMBOL_GPL(kvm_read_and_reset_pf_reason);
-NOKPROBE_SYMBOL(kvm_read_and_reset_pf_reason);
 
-bool __kvm_handle_async_pf(struct pt_regs *regs, u32 token)
+noinstr bool __kvm_handle_async_pf(struct pt_regs *regs, u32 token)
 {
 	u32 reason = kvm_read_and_reset_pf_reason();
 
@@ -243,6 +242,9 @@ bool __kvm_handle_async_pf(struct pt_regs *regs, u32 token)
 	default:
 		return false;
 	}
+
+	idtentry_enter(regs);
+	instr_begin();
 
 	/*
 	 * If the host managed to inject an async #PF into an interrupt
@@ -258,13 +260,13 @@ bool __kvm_handle_async_pf(struct pt_regs *regs, u32 token)
 		/* Page is swapped out by the host. */
 		kvm_async_pf_task_wait_schedule(token);
 	} else {
-		rcu_irq_enter();
 		kvm_async_pf_task_wake(token);
-		rcu_irq_exit();
 	}
+
+	instr_end();
+	idtentry_exit(regs);
 	return true;
 }
-NOKPROBE_SYMBOL(__kvm_handle_async_pf);
 
 static void __init paravirt_ops_setup(void)
 {
