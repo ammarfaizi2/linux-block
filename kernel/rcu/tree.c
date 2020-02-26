@@ -3381,12 +3381,16 @@ void rcu_barrier(void)
 			rcu_barrier_trace(TPS("OnlineQ"), cpu,
 					  rcu_state.barrier_sequence);
 			smp_call_function_single(cpu, rcu_barrier_func, (void *)cpu, 1);
-		} else if (cpu_is_offline(cpu)) {
+		} else if (rcu_segcblist_n_cbs(&rdp->cblist) &&
+			   cpu_is_offline(cpu)) {
 			rcu_barrier_trace(TPS("OfflineNoCBQ"), cpu,
 					  rcu_state.barrier_sequence);
 			local_irq_disable();
 			rcu_barrier_func((void *)cpu);
 			local_irq_enable();
+		} else if (cpu_is_offline(cpu)) {
+			rcu_barrier_trace(TPS("OfflineNoCBNoQ"), cpu,
+					  rcu_state.barrier_sequence);
 		} else {
 			rcu_barrier_trace(TPS("OnlineNQ"), cpu,
 					  rcu_state.barrier_sequence);
