@@ -329,14 +329,18 @@ struct vm_area_struct {
 		unsigned long rb_subtree_last;
 	} shared;
 
-	/*
-	 * A file's MAP_PRIVATE vma can be in both i_mmap tree and anon_vma
-	 * list, after a COW of one of the file pages.	A MAP_SHARED vma
-	 * can only be in the i_mmap tree.  An anonymous MAP_PRIVATE, stack
-	 * or brk vma (with NULL file) can only be in an anon_vma list.
-	 */
-	struct list_head anon_vma_chain; /* Serialized by mmap_lock &
-					  * page_table_lock */
+	union {
+		/*
+		 * A file's MAP_PRIVATE vma can be in both i_mmap tree and
+		 * anon_vma list, after a COW of one of the file pages.
+		 * A MAP_SHARED vma can only be in the i_mmap tree.
+		 * An anonymous MAP_PRIVATE, stack or brk vma (with NULL
+		 * file) can only be in an anon_vma list.
+		 */
+		struct list_head anon_vma_chain; /* Serialized by mmap_lock &
+						  * page_table_lock */
+		struct rcu_head rcu;		/* For freeing */
+	};
 	struct anon_vma *anon_vma;	/* Serialized by page_table_lock */
 	/* Third cache line starts here. */
 

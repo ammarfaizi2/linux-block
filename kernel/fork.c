@@ -367,9 +367,16 @@ struct vm_area_struct *vm_area_dup(struct vm_area_struct *orig)
 	return new;
 }
 
+static void rcu_vma_free(struct rcu_head *head)
+{
+	struct vm_area_struct *vma = container_of(head,
+			struct vm_area_struct, rcu);
+	kmem_cache_free(vm_area_cachep, vma);
+}
+
 void vm_area_free(struct vm_area_struct *vma)
 {
-	kmem_cache_free(vm_area_cachep, vma);
+	call_rcu(&vma->rcu, rcu_vma_free);
 }
 
 static void account_kernel_stack(struct task_struct *tsk, int account)
