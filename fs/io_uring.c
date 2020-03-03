@@ -3366,10 +3366,8 @@ static int io_close_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 		return -EBADF;
 
 	req->close.fd = READ_ONCE(sqe->fd);
-	if (req->file->f_op == &io_uring_fops ||
-	    req->close.fd == req->ctx->ring_fd)
+	if (req->close.fd == req->ctx->ring_fd)
 		return -EBADF;
-
 	return 0;
 }
 
@@ -3398,6 +3396,9 @@ static void io_close_finish(struct io_wq_work **workptr)
 static int io_close(struct io_kiocb *req, bool force_nonblock)
 {
 	int ret;
+
+	if (req->file->f_op == &io_uring_fops)
+		return -EBADF;
 
 	req->close.put_file = NULL;
 	ret = __close_fd_get_file(req->close.fd, &req->close.put_file);
