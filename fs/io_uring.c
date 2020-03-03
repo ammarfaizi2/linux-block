@@ -2030,24 +2030,52 @@ static bool io_file_supports_async(struct file *file)
 	return false;
 }
 
-static int io_prep_rw(struct io_kiocb *req, const struct io_uring_sqe *sqe,
-		      bool force_nonblock)
+static int io_prep_rw(struct io_kiocb *req, bool force_nonblock)
 {
-	struct io_ring_ctx *ctx = req->ctx;
 	struct kiocb *kiocb = &req->rw.kiocb;
-	unsigned ioprio;
-	int ret;
 
 	if (S_ISREG(file_inode(req->file)->i_mode))
 		req->flags |= REQ_F_ISREG;
 
-	kiocb->ki_pos = READ_ONCE(sqe->off);
 	if (kiocb->ki_pos == -1 && !(req->file->f_mode & FMODE_STREAM)) {
 		req->flags |= REQ_F_CUR_POS;
 		kiocb->ki_pos = req->file->f_pos;
 	}
 	kiocb->ki_hint = ki_hint_validate(file_write_hint(kiocb->ki_filp));
-	kiocb->ki_flags = iocb_flags(kiocb->ki_filp);
+	kiocb->ki_flags |= iocb_flags(kiocb->ki_filp);
+
+	/* don't allow async punt if RWF_NOWAIT was requested */
+	if ((kiocb->ki_flags & IOCB_NOWAIT) ||
+	    (req->file->f_flags & O_NONBLOCK))
+		req->flags |= REQ_F_NOWAIT;
+
+	if (force_nonblock)
+		kiocb->ki_flags |= IOCB_NOWAIT;
+
+	if (req->ctx->flags & IORING_SETUP_IOPOLL) {
+		if (!(kiocb->ki_flags & IOCB_DIRECT) ||
+		    !kiocb->ki_filp->f_op->iopoll)
+			return -EOPNOTSUPP;
+
+		kiocb->ki_flags |= IOCB_HIPRI;
+		kiocb->ki_complete = io_complete_rw_iopoll;
+		req->result = 0;
+	} else {
+		if (kiocb->ki_flags & IOCB_HIPRI)
+			return -EINVAL;
+		kiocb->ki_complete = io_complete_rw;
+	}
+
+	return 0;
+}
+
+static int io_sqe_prep_rw(struct io_kiocb *req, const struct io_uring_sqe *sqe)
+{
+	struct kiocb *kiocb = &req->rw.kiocb;
+	unsigned ioprio;
+	int ret;
+
+	kiocb->ki_pos = READ_ONCE(sqe->off);
 	ret = kiocb_set_rw_flags(kiocb, READ_ONCE(sqe->rw_flags));
 	if (unlikely(ret))
 		return ret;
@@ -2061,28 +2089,6 @@ static int io_prep_rw(struct io_kiocb *req, const struct io_uring_sqe *sqe,
 		kiocb->ki_ioprio = ioprio;
 	} else
 		kiocb->ki_ioprio = get_current_ioprio();
-
-	/* don't allow async punt if RWF_NOWAIT was requested */
-	if ((kiocb->ki_flags & IOCB_NOWAIT) ||
-	    (req->file->f_flags & O_NONBLOCK))
-		req->flags |= REQ_F_NOWAIT;
-
-	if (force_nonblock)
-		kiocb->ki_flags |= IOCB_NOWAIT;
-
-	if (ctx->flags & IORING_SETUP_IOPOLL) {
-		if (!(kiocb->ki_flags & IOCB_DIRECT) ||
-		    !kiocb->ki_filp->f_op->iopoll)
-			return -EOPNOTSUPP;
-
-		kiocb->ki_flags |= IOCB_HIPRI;
-		kiocb->ki_complete = io_complete_rw_iopoll;
-		req->result = 0;
-	} else {
-		if (kiocb->ki_flags & IOCB_HIPRI)
-			return -EINVAL;
-		kiocb->ki_complete = io_complete_rw;
-	}
 
 	req->rw.addr = READ_ONCE(sqe->addr);
 	req->rw.len = READ_ONCE(sqe->len);
@@ -2487,12 +2493,9 @@ static int io_read_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe,
 	struct iov_iter iter;
 	ssize_t ret;
 
-	ret = io_prep_rw(req, sqe, force_nonblock);
+	ret = io_sqe_prep_rw(req, sqe);
 	if (ret)
 		return ret;
-
-	if (unlikely(!(req->file->f_mode & FMODE_READ)))
-		return -EBADF;
 
 	/* either don't need iovec imported or already have it */
 	if (!req->io || req->flags & REQ_F_NEED_CLEANUP)
@@ -2517,6 +2520,13 @@ static int io_read(struct io_kiocb *req, bool force_nonblock)
 	struct iov_iter iter;
 	size_t iov_count;
 	ssize_t io_size, ret;
+
+	if (unlikely(!(req->file->f_mode & FMODE_READ)))
+		return -EBADF;
+
+	ret = io_prep_rw(req, force_nonblock);
+	if (ret)
+		return ret;
 
 	ret = io_import_iovec(READ, req, &iovec, &iter, !force_nonblock);
 	if (ret < 0)
@@ -2576,12 +2586,9 @@ static int io_write_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe,
 	struct iov_iter iter;
 	ssize_t ret;
 
-	ret = io_prep_rw(req, sqe, force_nonblock);
+	ret = io_sqe_prep_rw(req, sqe);
 	if (ret)
 		return ret;
-
-	if (unlikely(!(req->file->f_mode & FMODE_WRITE)))
-		return -EBADF;
 
 	/* either don't need iovec imported or already have it */
 	if (!req->io || req->flags & REQ_F_NEED_CLEANUP)
@@ -2606,6 +2613,13 @@ static int io_write(struct io_kiocb *req, bool force_nonblock)
 	struct iov_iter iter;
 	size_t iov_count;
 	ssize_t ret, io_size;
+
+	if (unlikely(!(req->file->f_mode & FMODE_WRITE)))
+		return -EBADF;
+
+	ret = io_prep_rw(req, force_nonblock);
+	if (ret)
+		return ret;
 
 	ret = io_import_iovec(WRITE, req, &iovec, &iter, !force_nonblock);
 	if (ret < 0)
