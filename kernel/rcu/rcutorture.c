@@ -675,6 +675,43 @@ static struct rcu_torture_ops tasks_ops = {
 	.name		= "tasks"
 };
 
+/*
+ * Definitions for rude RCU-tasks torture testing.
+ */
+static int rcu_torture_read_lock_trivial(void) __acquires(RCU)
+{
+	preempt_disable();
+	return 0;
+}
+
+static void rcu_torture_read_unlock_trivial(int idx) __releases(RCU)
+{
+	preempt_enable();
+}
+
+static void rcu_tasks_rude_torture_deferred_free(struct rcu_torture *p)
+{
+	call_rcu_tasks_rude(&p->rtort_rcu, rcu_torture_cb);
+}
+
+static struct rcu_torture_ops tasks_rude_ops = {
+	.ttype		= RCU_TASKS_RUDE_FLAVOR,
+	.init		= rcu_sync_torture_init,
+	.readlock	= rcu_torture_read_lock_trivial,
+	.read_delay	= rcu_read_delay,  /* just reuse rcu's version. */
+	.readunlock	= rcu_torture_read_unlock_trivial,
+	.get_gp_seq	= rcu_no_completed,
+	.deferred_free	= rcu_tasks_rude_torture_deferred_free,
+	.sync		= synchronize_rcu_tasks_rude,
+	.exp_sync	= synchronize_rcu_tasks_rude,
+	.call		= call_rcu_tasks_rude,
+	.cb_barrier	= rcu_barrier_tasks_rude,
+	.fqs		= NULL,
+	.stats		= NULL,
+	.irq_capable	= 1,
+	.name		= "tasks-rude"
+};
+
 static unsigned long rcutorture_seq_diff(unsigned long new, unsigned long old)
 {
 	if (!cur_ops->gp_diff)
@@ -684,7 +721,7 @@ static unsigned long rcutorture_seq_diff(unsigned long new, unsigned long old)
 
 static bool __maybe_unused torturing_tasks(void)
 {
-	return cur_ops == &tasks_ops;
+	return cur_ops == &tasks_ops || cur_ops == &tasks_rude_ops;
 }
 
 /*
@@ -2245,7 +2282,7 @@ rcu_torture_init(void)
 	int firsterr = 0;
 	static struct rcu_torture_ops *torture_ops[] = {
 		&rcu_ops, &rcu_busted_ops, &srcu_ops, &srcud_ops,
-		&busted_srcud_ops, &tasks_ops,
+		&busted_srcud_ops, &tasks_ops, &tasks_rude_ops,
 	};
 
 	if (!torture_init_begin(torture_type, verbose))
