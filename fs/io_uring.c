@@ -1691,9 +1691,10 @@ static inline bool io_req_multi_free(struct req_batch *rb, struct io_kiocb *req)
 
 static int io_put_kbuf(struct io_kiocb *req)
 {
-	struct io_buffer *kbuf = (struct io_buffer *) req->rw.addr;
+	struct io_buffer *kbuf;
 	int cflags;
 
+	kbuf = (struct io_buffer *) (unsigned long) req->rw.addr;
 	cflags = kbuf->bid << IORING_CQE_BUFFER_SHIFT;
 	cflags |= IORING_CQE_F_BUFFER;
 	req->rw.addr = 0;
@@ -2238,14 +2239,15 @@ static struct io_buffer *io_buffer_select(struct io_kiocb *req, int gid,
 static void __user *io_rw_buffer_select(struct io_kiocb *req, size_t *len,
 					bool needs_lock)
 {
-	struct io_buffer *kbuf = (struct io_buffer *) req->rw.addr;
+	struct io_buffer *kbuf;
 	int gid;
 
+	kbuf = (struct io_buffer *) (unsigned long) req->rw.addr;
 	gid = (int) (unsigned long) req->rw.kiocb.private;
 	kbuf = io_buffer_select(req, gid, kbuf, needs_lock);
 	if (IS_ERR(kbuf))
 		return kbuf;
-	req->rw.addr = (u64) kbuf;
+	req->rw.addr = (u64) (unsigned long) kbuf;
 	if (*len > kbuf->len)
 		*len = kbuf->len;
 	req->flags |= REQ_F_BUFFER_SELECTED;
@@ -4945,7 +4947,7 @@ static void io_cleanup_req(struct io_kiocb *req)
 	case IORING_OP_WRITE_FIXED:
 	case IORING_OP_WRITE:
 		if (req->flags & REQ_F_BUFFER_SELECTED)
-			kfree((void *)req->rw.addr);
+			kfree((void *)(unsigned long)req->rw.addr);
 		if (io->rw.iov != io->rw.fast_iov)
 			kfree(io->rw.iov);
 		break;
