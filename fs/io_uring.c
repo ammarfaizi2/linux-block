@@ -511,6 +511,7 @@ enum {
 	REQ_F_OVERFLOW_BIT,
 	REQ_F_POLLED_BIT,
 	REQ_F_BUFFER_SELECTED_BIT,
+	REQ_F_OPEN_FD_BIT,
 
 	/* not a real bit, just to check we're not overflowing the space */
 	__REQ_F_LAST_BIT,
@@ -562,6 +563,8 @@ enum {
 	REQ_F_POLLED		= BIT(REQ_F_POLLED_BIT),
 	/* buffer already selected */
 	REQ_F_BUFFER_SELECTED	= BIT(REQ_F_BUFFER_SELECTED_BIT),
+	/* use chain previous open fd */
+	REQ_F_OPEN_FD		= BIT(REQ_F_OPEN_FD_BIT),
 };
 
 struct async_poll {
@@ -599,6 +602,9 @@ struct io_kiocb {
 	struct io_async_ctx		*io;
 	bool				needs_fixed_file;
 	u8				opcode;
+
+	int			last_open_fd;
+	struct file		*last_open_file;
 
 	struct io_ring_ctx	*ctx;
 	struct list_head	list;
@@ -1344,7 +1350,7 @@ static inline void io_put_file(struct io_kiocb *req, struct file *file,
 {
 	if (fixed)
 		percpu_ref_put(&req->ctx->file_data->refs);
-	else
+	else if (!(req->flags & REQ_F_OPEN_FD))
 		fput(file);
 }
 
@@ -1487,6 +1493,14 @@ static void io_req_link_next(struct io_kiocb *req, struct io_kiocb **nxtptr)
 		list_del_init(&req->link_list);
 		if (!list_empty(&nxt->link_list))
 			nxt->flags |= REQ_F_LINK;
+		if (nxt->flags & REQ_F_OPEN_FD) {
+			WARN_ON_ONCE(nxt->file);
+			if (unlikely(!req->last_open_file))
+				nxt->flags |= REQ_F_FAIL_LINK;
+			nxt->last_open_file = req->last_open_file;
+			nxt->last_open_fd = req->last_open_fd;
+			nxt->file = req->last_open_file;
+		}
 		*nxtptr = nxt;
 		break;
 	}
@@ -2965,8 +2979,8 @@ static int io_openat2_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 
 static int io_openat2(struct io_kiocb *req, bool force_nonblock)
 {
+	struct file *file = NULL;
 	struct open_flags op;
-	struct file *file;
 	int ret;
 
 	if (force_nonblock)
@@ -2991,8 +3005,12 @@ static int io_openat2(struct io_kiocb *req, bool force_nonblock)
 err:
 	putname(req->open.filename);
 	req->flags &= ~REQ_F_NEED_CLEANUP;
-	if (ret < 0)
+	if (ret < 0) {
 		req_set_fail_links(req);
+	} else if (req->flags & REQ_F_LINK) {
+		req->last_open_file = file;
+		req->last_open_fd = ret;
+	}
 	io_cqring_add_event(req, ret);
 	io_put_req(req);
 	return 0;
@@ -3409,6 +3427,14 @@ static void io_close_finish(struct io_wq_work **workptr)
 static int io_close(struct io_kiocb *req, bool force_nonblock)
 {
 	int ret;
+
+	if (req->flags & REQ_F_OPEN_FD) {
+		if (req->close.fd != IOSQE_FD_LAST_OPEN)
+			return -EBADF;
+		req->close.fd = req->last_open_fd;
+		req->last_open_file = NULL;
+		req->last_open_fd = -1;
+	}
 
 	if (req->file->f_op == &io_uring_fops ||
 	    req->close.fd == req->ctx->ring_fd)
@@ -3963,8 +3989,14 @@ static int __io_accept(struct io_kiocb *req, bool force_nonblock)
 		return -EAGAIN;
 	if (ret == -ERESTARTSYS)
 		ret = -EINTR;
-	if (ret < 0)
+	if (ret < 0) {
 		req_set_fail_links(req);
+	} else if (req->flags & REQ_F_LINK) {
+		rcu_read_lock();
+		req->last_open_file = fcheck_files(current->files, ret);
+		rcu_read_unlock();
+		req->last_open_fd = ret;
+	}
 	io_cqring_add_event(req, ret);
 	io_put_req(req);
 	return 0;
@@ -5000,6 +5032,9 @@ static int io_issue_sqe(struct io_kiocb *req, const struct io_uring_sqe *sqe,
 	struct io_ring_ctx *ctx = req->ctx;
 	int ret;
 
+	if ((req->flags & REQ_F_OPEN_FD) && !req->file)
+		return -EBADF;
+
 	switch (req->opcode) {
 	case IORING_OP_NOP:
 		ret = io_nop(req);
@@ -5336,6 +5371,14 @@ static int io_req_set_file(struct io_submit_state *state, struct io_kiocb *req,
 		return 0;
 
 	fixed = (flags & IOSQE_FIXED_FILE);
+	if (fd == IOSQE_FD_LAST_OPEN) {
+		if (fixed)
+			return -EBADF;
+		req->flags |= REQ_F_OPEN_FD;
+		req->file = NULL;
+		return 0;
+	}
+
 	if (unlikely(!fixed && req->needs_fixed_file))
 		return -EBADF;
 
@@ -5647,6 +5690,9 @@ err_req:
 		trace_io_uring_link(ctx, req, head);
 		list_add_tail(&req->link_list, &head->link_list);
 
+		req->last_open_fd = -1;
+		req->last_open_file = NULL;
+
 		/* last request of a link, enqueue the link */
 		if (!(sqe_flags & (IOSQE_IO_LINK|IOSQE_IO_HARDLINK))) {
 			io_queue_link_head(head);
@@ -5659,6 +5705,8 @@ err_req:
 		}
 		if (sqe_flags & (IOSQE_IO_LINK|IOSQE_IO_HARDLINK)) {
 			req->flags |= REQ_F_LINK;
+			req->last_open_fd = -1;
+			req->last_open_file = NULL;
 			INIT_LIST_HEAD(&req->link_list);
 			ret = io_req_defer_prep(req, sqe);
 			if (ret)

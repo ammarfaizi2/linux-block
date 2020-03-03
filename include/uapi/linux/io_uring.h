@@ -86,6 +86,12 @@ enum {
 #define IOSQE_BUFFER_SELECT	(1U << IOSQE_BUFFER_SELECT_BIT)
 
 /*
+ * 'magic' ->fd values don't point to a real fd, but rather define how fds
+ * can be inherited through links in a chain
+ */
+#define IOSQE_FD_LAST_OPEN	(-4096)	/* previous result is fd */
+
+/*
  * io_uring_setup() flags
  */
 #define IORING_SETUP_IOPOLL	(1U << 0)	/* io_context is polled */
