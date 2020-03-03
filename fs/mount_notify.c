@@ -90,7 +90,7 @@ void notify_mount(struct mount *trigger,
 	n.watch.type	= WATCH_TYPE_MOUNT_NOTIFY;
 	n.watch.subtype	= subtype;
 	n.watch.info	= info_flags | watch_sizeof(n);
-	n.triggered_on	= trigger->mnt_id;
+	n.triggered_on	= trigger->mnt_unique_id;
 
 	switch (subtype) {
 	case NOTIFY_MOUNT_EXPIRY:
@@ -102,7 +102,7 @@ void notify_mount(struct mount *trigger,
 	case NOTIFY_MOUNT_UNMOUNT:
 	case NOTIFY_MOUNT_MOVE_FROM:
 	case NOTIFY_MOUNT_MOVE_TO:
-		n.auxiliary_mount	= aux->mnt_id;
+		n.auxiliary_mount = aux->mnt_unique_id;
 		break;
 
 	default:
