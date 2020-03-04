@@ -1036,27 +1036,22 @@ idtentry alignment_check		do_alignment_check		has_error_code=1
 idtentry simd_coprocessor_error		do_simd_coprocessor_error	has_error_code=0
 
 
-	/*
-	 * Reload gs selector with exception handling
-	 * edi:  new selector
-	 */
+/*
+ * Reload gs selector with exception handling
+ * edi:  new selector
+ */
 .pushsection .text, "ax"
-SYM_FUNC_START(native_load_gs_index)
+SYM_FUNC_START(asm_native_load_gs_index)
 	FRAME_BEGIN
-	pushfq
-	DISABLE_INTERRUPTS(CLBR_ANY & ~CLBR_RDI)
-	TRACE_IRQS_OFF
 	SWAPGS
 .Lgs_change:
 	movl	%edi, %gs
 2:	ALTERNATIVE "", "mfence", X86_BUG_SWAPGS_FENCE
 	SWAPGS
-	TRACE_IRQS_FLAGS (%rsp)
-	popfq
 	FRAME_END
 	ret
-SYM_FUNC_END(native_load_gs_index)
-EXPORT_SYMBOL(native_load_gs_index)
+SYM_FUNC_END(asm_native_load_gs_index)
+EXPORT_SYMBOL(asm_native_load_gs_index)
 .popsection
 
 	_ASM_EXTABLE(.Lgs_change, .Lbad_gs)
