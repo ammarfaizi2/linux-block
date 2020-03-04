@@ -89,6 +89,7 @@ extern void set_min_fd(unsigned int min_fd);
 extern unsigned int get_min_fd(void);
 extern int get_unused_fd_flags(unsigned flags);
 extern void put_unused_fd(unsigned int fd);
+extern int get_specific_unused_fd_flags(unsigned int fd, unsigned flags);
 
 extern void fd_install(unsigned int fd, struct file *file);
 

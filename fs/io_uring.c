@@ -2961,7 +2961,7 @@ static int io_openat2(struct io_kiocb *req, bool force_nonblock)
 	if (ret)
 		goto err;
 
-	ret = get_unused_fd_flags(req->open.how.flags);
+	ret = get_specific_unused_fd_flags(req->open.how.fd, req->open.how.flags);
 	if (ret < 0)
 		goto err;
 

@@ -20,6 +20,8 @@ struct open_how {
 	__u64 flags;
 	__u64 mode;
 	__u64 resolve;
+	__s32 fd;
+	__u32 pad; /* Must be 0 in the current version */
 };
 
 /* how->resolve flags for openat2(2). */

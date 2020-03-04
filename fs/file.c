@@ -562,6 +562,39 @@ void put_unused_fd(unsigned int fd)
 
 EXPORT_SYMBOL(put_unused_fd);
 
+int get_specific_unused_fd_flags(unsigned int fd, unsigned flags)
+{
+	int ret;
+	struct fdtable *fdt;
+	struct files_struct *files = current->files;
+
+	if (!(flags & O_SPECIFIC_FD) || fd == -1)
+		return get_unused_fd_flags(flags);
+
+	if (fd >= rlimit(RLIMIT_NOFILE))
+		return -EBADF;
+
+	spin_lock(&files->file_lock);
+	ret = expand_files(files, fd);
+	if (unlikely(ret < 0))
+		goto out_unlock;
+	fdt = files_fdtable(files);
+	if (fdt->fd[fd]) {
+		ret = -EBUSY;
+		goto out_unlock;
+	}
+	__set_open_fd(fd, fdt);
+	if (flags & O_CLOEXEC)
+		__set_close_on_exec(fd, fdt);
+	else
+		__clear_close_on_exec(fd, fdt);
+	ret = fd;
+
+out_unlock:
+	spin_unlock(&files->file_lock);
+	return ret;
+}
+
 /*
  * Install a file pointer in the fd array.
  *

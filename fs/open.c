@@ -961,7 +961,7 @@ EXPORT_SYMBOL(open_with_fake_path);
 inline struct open_how build_open_how(int flags, umode_t mode)
 {
 	struct open_how how = {
-		.flags = flags & VALID_OPEN_FLAGS,
+		.flags = flags & VALID_OPEN_FLAGS & ~O_SPECIFIC_FD,
 		.mode = mode & S_IALLUGO,
 	};
 
@@ -1144,7 +1144,7 @@ static long do_sys_openat2(int dfd, const char __user *filename,
 	if (IS_ERR(tmp))
 		return PTR_ERR(tmp);
 
-	fd = get_unused_fd_flags(how->flags);
+	fd = get_specific_unused_fd_flags(how->fd, how->flags);
 	if (fd >= 0) {
 		struct file *f = do_filp_open(dfd, tmp, &op);
 		if (IS_ERR(f)) {
@@ -1194,6 +1194,8 @@ SYSCALL_DEFINE4(openat2, int, dfd, const char __user *, filename,
 	err = copy_struct_from_user(&tmp, sizeof(tmp), how, usize);
 	if (err)
 		return err;
+	if (tmp.pad != 0)
+		return -EINVAL;
 
 	/* O_LARGEFILE is only allowed for non-O_PATH. */
 	if (!(tmp.flags & O_PATH) && force_o_largefile())
