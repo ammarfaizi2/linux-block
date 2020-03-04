@@ -354,6 +354,7 @@ struct io_accept {
 	struct sockaddr __user		*addr;
 	int __user			*addr_len;
 	int				flags;
+	int				open_fd;
 };
 
 struct io_sync {
@@ -3917,12 +3918,15 @@ static int io_accept_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 
 	if (unlikely(req->ctx->flags & (IORING_SETUP_IOPOLL|IORING_SETUP_SQPOLL)))
 		return -EINVAL;
-	if (sqe->ioprio || sqe->len || sqe->buf_index)
+	if (sqe->ioprio || sqe->buf_index)
 		return -EINVAL;
 
 	accept->addr = u64_to_user_ptr(READ_ONCE(sqe->addr));
 	accept->addr_len = u64_to_user_ptr(READ_ONCE(sqe->addr2));
 	accept->flags = READ_ONCE(sqe->accept_flags);
+	accept->open_fd = READ_ONCE(sqe->len);
+	if (!(accept->flags & SOCK_SPECIFIC_FD) && accept->open_fd)
+		return -EINVAL;
 	return 0;
 }
 
@@ -3934,7 +3938,8 @@ static int __io_accept(struct io_kiocb *req, bool force_nonblock)
 
 	file_flags = force_nonblock ? O_NONBLOCK : 0;
 	ret = __sys_accept4_file(req->file, file_flags, accept->addr,
-					accept->addr_len, accept->flags, -1);
+					accept->addr_len, accept->flags,
+					accept->open_fd);
 	if (ret == -EAGAIN && force_nonblock)
 		return -EAGAIN;
 	if (ret == -ERESTARTSYS)
