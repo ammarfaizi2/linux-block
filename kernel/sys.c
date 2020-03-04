@@ -2513,6 +2513,16 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
 
 		error = (current->flags & PR_IO_FLUSHER) == PR_IO_FLUSHER;
 		break;
+	case PR_SET_MIN_FD:
+		if (arg3 || arg4 || arg5)
+			return -EINVAL;
+		set_min_fd((int)arg2);
+		break;
+	case PR_GET_MIN_FD:
+		if (arg3 || arg4 || arg5)
+			return -EINVAL;
+		error = put_user(get_min_fd(), (int __user *)arg2);
+		break;
 	default:
 		error = -EINVAL;
 		break;

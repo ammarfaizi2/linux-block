@@ -60,6 +60,7 @@ struct files_struct {
    */
 	spinlock_t file_lock ____cacheline_aligned_in_smp;
 	unsigned int next_fd;
+	unsigned int min_fd; /* min for "lowest available fd" allocation */
 	unsigned long close_on_exec_init[1];
 	unsigned long open_fds_init[1];
 	unsigned long full_fds_bits_init[1];

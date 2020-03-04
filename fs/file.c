@@ -286,7 +286,6 @@ struct files_struct *dup_fd(struct files_struct *oldf, int *errorp)
 	spin_lock_init(&newf->file_lock);
 	newf->resize_in_progress = false;
 	init_waitqueue_head(&newf->resize_wait);
-	newf->next_fd = 0;
 	new_fdt = &newf->fdtab;
 	new_fdt->max_fds = NR_OPEN_DEFAULT;
 	new_fdt->close_on_exec = newf->close_on_exec_init;
@@ -295,6 +294,7 @@ struct files_struct *dup_fd(struct files_struct *oldf, int *errorp)
 	new_fdt->fd = &newf->fd_array[0];
 
 	spin_lock(&oldf->file_lock);
+	newf->next_fd = newf->min_fd = oldf->min_fd;
 	old_fdt = files_fdtable(oldf);
 	open_files = count_open_files(old_fdt);
 
@@ -487,9 +487,7 @@ int __alloc_fd(struct files_struct *files,
 	spin_lock(&files->file_lock);
 repeat:
 	fdt = files_fdtable(files);
-	fd = start;
-	if (fd < files->next_fd)
-		fd = files->next_fd;
+	fd = max3(start, files->min_fd, files->next_fd);
 
 	if (fd < fdt->max_fds)
 		fd = find_next_fd(fdt, fd);
@@ -514,7 +512,7 @@ repeat:
 		goto repeat;
 
 	if (start <= files->next_fd)
-		files->next_fd = fd + 1;
+		files->next_fd = max(fd + 1, files->min_fd);
 
 	__set_open_fd(fd, fdt);
 	if (flags & O_CLOEXEC)
@@ -550,7 +548,7 @@ static void __put_unused_fd(struct files_struct *files, unsigned int fd)
 {
 	struct fdtable *fdt = files_fdtable(files);
 	__clear_open_fd(fd, fdt);
-	if (fd < files->next_fd)
+	if (fd < files->next_fd && fd >= files->min_fd)
 		files->next_fd = fd;
 }
 
@@ -679,6 +677,7 @@ void do_close_on_exec(struct files_struct *files)
 
 	/* exec unshares first */
 	spin_lock(&files->file_lock);
+	files->min_fd = 0;
 	for (i = 0; ; i++) {
 		unsigned long set;
 		unsigned fd = i * BITS_PER_LONG;
@@ -858,6 +857,24 @@ bool get_close_on_exec(unsigned int fd)
 	res = close_on_exec(fd, fdt);
 	rcu_read_unlock();
 	return res;
+}
+
+void set_min_fd(unsigned int min_fd)
+{
+	struct files_struct *files = current->files;
+	spin_lock(&files->file_lock);
+	files->min_fd = min_fd;
+	spin_unlock(&files->file_lock);
+}
+
+unsigned int get_min_fd(void)
+{
+	struct files_struct *files = current->files;
+	unsigned int min_fd;
+	spin_lock(&files->file_lock);
+	min_fd = files->min_fd;
+	spin_unlock(&files->file_lock);
+	return min_fd;
 }
 
 static int do_dup2(struct files_struct *files,

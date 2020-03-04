@@ -238,4 +238,8 @@ struct prctl_mm_map {
 #define PR_SET_IO_FLUSHER		57
 #define PR_GET_IO_FLUSHER		58
 
+/* Minimum file descriptor for automatic "lowest available fd" allocation */
+#define PR_SET_MIN_FD			59
+#define PR_GET_MIN_FD			60
+
 #endif /* _LINUX_PRCTL_H */
