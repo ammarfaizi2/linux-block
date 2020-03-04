@@ -685,34 +685,6 @@ static struct rcu_torture_ops tasks_ops = {
 };
 
 /*
- * Definitions for rude RCU-tasks torture testing.
- */
-
-static void rcu_tasks_rude_torture_deferred_free(struct rcu_torture *p)
-{
-	call_rcu_tasks_rude(&p->rtort_rcu, rcu_torture_cb);
-}
-
-static struct rcu_torture_ops tasks_rude_ops = {
-	.ttype		= RCU_TASKS_RUDE_FLAVOR,
-	.init		= rcu_sync_torture_init,
-	.readlock	= tasks_torture_read_lock,
-	.read_delay	= rcu_read_delay,  /* just reuse rcu's version. */
-	.readunlock	= tasks_torture_read_unlock,
-	.get_gp_seq	= rcu_no_completed,
-	.deferred_free	= rcu_tasks_rude_torture_deferred_free,
-	.sync		= synchronize_rcu_tasks_rude,
-	.exp_sync	= synchronize_rcu_tasks_rude,
-	.call		= call_rcu_tasks_rude,
-	.cb_barrier	= rcu_barrier_tasks_rude,
-	.fqs		= NULL,
-	.stats		= NULL,
-	.irq_capable	= 1,
-	.slow_gps	= 1,
-	.name		= "tasks-rude"
-};
-
-/*
  * Definitions for trivial CONFIG_PREEMPT=n-only torture testing.
  * This implementation does not necessarily work well with CPU hotplug.
  */
@@ -751,6 +723,34 @@ static struct rcu_torture_ops trivial_ops = {
 	.stats		= NULL,
 	.irq_capable	= 1,
 	.name		= "trivial"
+};
+
+/*
+ * Definitions for rude RCU-tasks torture testing.
+ */
+
+static void rcu_tasks_rude_torture_deferred_free(struct rcu_torture *p)
+{
+	call_rcu_tasks_rude(&p->rtort_rcu, rcu_torture_cb);
+}
+
+static struct rcu_torture_ops tasks_rude_ops = {
+	.ttype		= RCU_TASKS_RUDE_FLAVOR,
+	.init		= rcu_sync_torture_init,
+	.readlock	= rcu_torture_read_lock_trivial,
+	.read_delay	= rcu_read_delay,  /* just reuse rcu's version. */
+	.readunlock	= rcu_torture_read_unlock_trivial,
+	.get_gp_seq	= rcu_no_completed,
+	.deferred_free	= rcu_tasks_rude_torture_deferred_free,
+	.sync		= synchronize_rcu_tasks_rude,
+	.exp_sync	= synchronize_rcu_tasks_rude,
+	.call		= call_rcu_tasks_rude,
+	.cb_barrier	= rcu_barrier_tasks_rude,
+	.fqs		= NULL,
+	.stats		= NULL,
+	.irq_capable	= 1,
+	.slow_gps	= 1,
+	.name		= "tasks-rude"
 };
 
 static unsigned long rcutorture_seq_diff(unsigned long new, unsigned long old)
