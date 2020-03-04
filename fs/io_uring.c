@@ -511,6 +511,7 @@ enum {
 	REQ_F_OVERFLOW_BIT,
 	REQ_F_POLLED_BIT,
 	REQ_F_BUFFER_SELECTED_BIT,
+	REQ_F_DEFERRED_FD_BIT,
 
 	/* not a real bit, just to check we're not overflowing the space */
 	__REQ_F_LAST_BIT,
@@ -562,6 +563,8 @@ enum {
 	REQ_F_POLLED		= BIT(REQ_F_POLLED_BIT),
 	/* buffer already selected */
 	REQ_F_BUFFER_SELECTED	= BIT(REQ_F_BUFFER_SELECTED_BIT),
+	/* file assignment has been deferred */
+	REQ_F_DEFERRED_FD	= BIT(REQ_F_DEFERRED_FD_BIT),
 };
 
 struct async_poll {
@@ -599,6 +602,7 @@ struct io_kiocb {
 	struct io_async_ctx		*io;
 	bool				needs_fixed_file;
 	u8				opcode;
+	int				deferred_fd;
 
 	struct io_ring_ctx	*ctx;
 	struct list_head	list;
@@ -5011,6 +5015,12 @@ static int io_issue_sqe(struct io_kiocb *req, const struct io_uring_sqe *sqe,
 	struct io_ring_ctx *ctx = req->ctx;
 	int ret;
 
+	if (req->flags & REQ_F_DEFERRED_FD) {
+		ret = io_file_get(NULL, req, req->deferred_fd, &req->file, false);
+		if (ret)
+			return ret;
+	}
+
 	switch (req->opcode) {
 	case IORING_OP_NOP:
 		ret = io_nop(req);
@@ -5337,7 +5347,7 @@ static int io_req_set_file(struct io_submit_state *state, struct io_kiocb *req,
 			   const struct io_uring_sqe *sqe)
 {
 	unsigned flags;
-	int fd;
+	int fd, ret;
 	bool fixed;
 
 	flags = READ_ONCE(sqe->flags);
@@ -5350,7 +5360,14 @@ static int io_req_set_file(struct io_submit_state *state, struct io_kiocb *req,
 	if (unlikely(!fixed && req->needs_fixed_file))
 		return -EBADF;
 
-	return io_file_get(state, req, fd, &req->file, fixed);
+	ret = io_file_get(state, req, fd, &req->file, fixed);
+	if (ret) {
+		if (fixed)
+			return ret;
+		req->deferred_fd = fd;
+		req->flags |= REQ_F_DEFERRED_FD;
+	}
+	return 0;
 }
 
 static int io_grab_files(struct io_kiocb *req)
