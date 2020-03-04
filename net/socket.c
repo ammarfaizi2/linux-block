@@ -1707,14 +1707,14 @@ SYSCALL_DEFINE2(listen, int, fd, int, backlog)
 
 int __sys_accept4_file(struct file *file, unsigned file_flags,
 		       struct sockaddr __user *upeer_sockaddr,
-		       int __user *upeer_addrlen, int flags)
+		       int __user *upeer_addrlen, int flags, int open_fd)
 {
 	struct socket *sock, *newsock;
 	struct file *newfile;
 	int err, len, newfd;
 	struct sockaddr_storage address;
 
-	if (flags & ~(SOCK_CLOEXEC | SOCK_NONBLOCK))
+	if (flags & ~(SOCK_CLOEXEC | SOCK_NONBLOCK | SOCK_SPECIFIC_FD))
 		return -EINVAL;
 
 	if (SOCK_NONBLOCK != O_NONBLOCK && (flags & SOCK_NONBLOCK))
@@ -1738,7 +1738,7 @@ int __sys_accept4_file(struct file *file, unsigned file_flags,
 	 */
 	__module_get(newsock->ops->owner);
 
-	newfd = get_unused_fd_flags(flags);
+	newfd = get_specific_unused_fd_flags(open_fd, flags);
 	if (unlikely(newfd < 0)) {
 		err = newfd;
 		sock_release(newsock);
@@ -1804,10 +1804,14 @@ int __sys_accept4(int fd, struct sockaddr __user *upeer_sockaddr,
 	int ret = -EBADF;
 	struct fd f;
 
+	/* only valid through __sys_accept4_file() directly */
+	if (flags & SOCK_SPECIFIC_FD)
+		return -EINVAL;
+
 	f = fdget(fd);
 	if (f.file) {
 		ret = __sys_accept4_file(f.file, 0, upeer_sockaddr,
-						upeer_addrlen, flags);
+						upeer_addrlen, flags, -1);
 		if (f.flags)
 			fput(f.file);
 	}

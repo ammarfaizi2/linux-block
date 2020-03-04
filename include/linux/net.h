@@ -72,6 +72,7 @@ enum sock_type {
 #define SOCK_TYPE_MASK 0xf
 
 /* Flags for socket, socketpair, accept4 */
+#define SOCK_SPECIFIC_FD	O_SPECIFIC_FD
 #define SOCK_CLOEXEC	O_CLOEXEC
 #ifndef SOCK_NONBLOCK
 #define SOCK_NONBLOCK	O_NONBLOCK
