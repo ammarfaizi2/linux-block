@@ -3,7 +3,6 @@
  * Save registers before calling assembly functions. This avoids
  * disturbance of register allocation in some inline assembly constructs.
  * Copyright 2001,2002 by Andi Kleen, SuSE Labs.
- * Added trace_hardirqs callers - Copyright 2007 Steven Rostedt, Red Hat, Inc.
  */
 #include <linux/linkage.h>
 #include "calling.h"
@@ -70,11 +69,6 @@ SYM_FUNC_START_NOALIGN(\name)
 SYM_FUNC_END(\name)
 	.endm
 
-#ifdef CONFIG_TRACE_IRQFLAGS
-	THUNK trace_hardirqs_on_thunk,trace_hardirqs_on_caller, put_ret_addr_in_rdi=1
-	THUNK trace_hardirqs_off_thunk,trace_hardirqs_off_caller, put_ret_addr_in_rdi=1
-#endif
-
 #ifdef CONFIG_PREEMPTION
 	THUNK preempt_schedule_thunk, preempt_schedule
 	EXPORT_SYMBOL(preempt_schedule_thunk)
@@ -83,8 +77,7 @@ SYM_FUNC_END(\name)
 	EXPORT_SYMBOL(preempt_schedule_notrace_thunk)
 #endif
 
-#if defined(CONFIG_TRACE_IRQFLAGS) \
- || defined(CONFIG_PREEMPTION)
+#ifdef CONFIG_PREEMPTION
 SYM_CODE_START_LOCAL_NOALIGN(.L_restore)
 	popq %r11
 	popq %r10
