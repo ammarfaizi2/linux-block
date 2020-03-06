@@ -22,7 +22,10 @@ struct open_how {
 	__u64 resolve;
 };
 
-/* how->resolve flags for openat2(2). */
+/*
+ * Path resolution paths to replace AT_* paths in all new syscalls that would
+ * use them.
+ */
 #define RESOLVE_NO_XDEV		0x01 /* Block mount-point crossings
 					(includes bind-mounts). */
 #define RESOLVE_NO_MAGICLINKS	0x02 /* Block traversal through procfs-style
@@ -35,5 +38,8 @@ struct open_how {
 #define RESOLVE_IN_ROOT		0x10 /* Make all jumps to "/" and ".."
 					be scoped inside the dirfd
 					(similar to chroot(2)). */
+#define RESOLVE_NO_TRAILING_SYMLINKS	0x20 /* Don't follow trailing symlinks in the path */
+#define RESOLVE_NO_TRAILING_AUTOMOUNTS	0x40 /* Don't follow trailing automounts in the path */
+#define RESOLVE_EMPTY_PATH	0x80	/* Permit a path of "" to indicate the dfd exactly */
 
 #endif /* _UAPI_LINUX_OPENAT2_H */

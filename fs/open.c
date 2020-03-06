@@ -977,7 +977,7 @@ inline struct open_how build_open_how(int flags, umode_t mode)
 inline int build_open_flags(const struct open_how *how, struct open_flags *op)
 {
 	int flags = how->flags;
-	int lookup_flags = 0;
+	int lookup_flags = LOOKUP_FOLLOW | LOOKUP_AUTOMOUNT;
 	int acc_mode = ACC_MODE(flags);
 
 	/* Must never be set by userspace */
@@ -1055,8 +1055,8 @@ inline int build_open_flags(const struct open_how *how, struct open_flags *op)
 
 	if (flags & O_DIRECTORY)
 		lookup_flags |= LOOKUP_DIRECTORY;
-	if (!(flags & O_NOFOLLOW))
-		lookup_flags |= LOOKUP_FOLLOW;
+	if (flags & O_NOFOLLOW)
+		lookup_flags &= ~LOOKUP_FOLLOW;
 
 	if (how->resolve & RESOLVE_NO_XDEV)
 		lookup_flags |= LOOKUP_NO_XDEV;
@@ -1068,6 +1068,8 @@ inline int build_open_flags(const struct open_how *how, struct open_flags *op)
 		lookup_flags |= LOOKUP_BENEATH;
 	if (how->resolve & RESOLVE_IN_ROOT)
 		lookup_flags |= LOOKUP_IN_ROOT;
+	if (how->resolve & RESOLVE_NO_TRAILING_SYMLINKS)
+		lookup_flags &= ~LOOKUP_FOLLOW;
 
 	op->lookup_flags = lookup_flags;
 	return 0;
