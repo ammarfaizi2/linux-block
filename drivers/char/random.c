@@ -2195,8 +2195,6 @@ static __always_inline void get_batched_random(void *out, size_t size)
 	static void *previous;
 	size_t position;
 
-	warn_unseeded_randomness(&previous);
-
 	local_irq_save(flags);
 	batch = this_cpu_ptr(&batched_entropy);
 	position = READ_ONCE(batch->position);
@@ -2207,6 +2205,8 @@ static __always_inline void get_batched_random(void *out, size_t size)
 	 * it's okay if we still return the data in the batch.
 	 */
 	if (unlikely(position + size > BATCHED_ENTROPY_SIZE)) {
+		warn_unseeded_randomness(&previous);
+
 		extract_crng(batch->entropy);
 		position = 0;
 	}
