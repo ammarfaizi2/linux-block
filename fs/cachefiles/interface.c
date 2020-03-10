@@ -179,6 +179,7 @@ static void cachefiles_update_object(struct fscache_object *_object)
 			.dentry	= object->dentry
 		};
 		_debug("trunc %llx -> %llx", i_size, object_size);
+		trace_cachefiles_trunc(object, inode, i_size, object_size);
 		ret = vfs_truncate(&path, object_size);
 		if (ret < 0) {
 			cachefiles_io_error_obj(object, "Trunc-to-size failed");
@@ -190,6 +191,7 @@ static void cachefiles_update_object(struct fscache_object *_object)
 		i_size = i_size_read(inode);
 		_debug("trunc %llx -> %llx", i_size, object_size);
 		if (i_size < object_size) {
+			trace_cachefiles_trunc(object, inode, i_size, object_size);
 			ret = vfs_truncate(&path, object_size);
 			if (ret < 0) {
 				cachefiles_io_error_obj(object, "Trunc-to-dio-size failed");
