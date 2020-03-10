@@ -88,6 +88,7 @@ int cachefiles_read(struct fscache_object *obj,
 		goto presubmission_error_free;
 
 	fscache_get_io_request(req);
+	trace_cachefiles_read(object, file_inode(file), req);
 	ret = call_read_iter(file, &ki->iocb, iter);
 	switch (ret) {
 	case -EIOCBQUEUED:
@@ -198,6 +199,7 @@ int cachefiles_write(struct fscache_object *obj,
 	__sb_writers_release(inode->i_sb, SB_FREEZE_WRITE);
 
 	fscache_get_io_request(req);
+	trace_cachefiles_write(object, inode, req);
 	ret = call_write_iter(file, &ki->iocb, iter);
 	switch (ret) {
 	case -EIOCBQUEUED:
