@@ -788,8 +788,9 @@ static void rcu_tasks_trace_postscan(void)
 
 /* Do one scan of the holdout list. */
 static void check_all_holdout_tasks_trace(struct list_head *hop,
-					  bool ndrpt, bool *frptp)
+					  bool needreport, bool *firstreport)
 {
+	int cpu;
 	struct task_struct *g, *t;
 
 	list_for_each_entry_safe(t, g, hop, trc_holdout_list) {
@@ -799,9 +800,32 @@ static void check_all_holdout_tasks_trace(struct list_head *hop,
 			trc_wait_for_one_reader(t, hop);
 
 		// If check succeeded, remove this task from the list.
-		if (READ_ONCE(t->trc_reader_checked))
+		if (READ_ONCE(t->trc_reader_checked)) {
 			trc_del_holdout(t);
+			continue;
+		} else if (!needreport) {
+			continue;
+		}
+		if (*firstreport) {
+			pr_err("INFO: rcu_tasks_trace detected stalls on tasks:\n");
+			*firstreport = false;
+		}
+		cpu = task_cpu(t);
+		pr_alert("%p: %c%c%c nesting: %d%c cpu: %d\n",
+			 t,
+			 ".I"[READ_ONCE(t->trc_ipi_to_cpu) > 0],
+			 ".i"[is_idle_task(t)],
+			 "N."[cpu < 0 || !tick_nohz_full_cpu(cpu)],
+			 t->trc_reader_nesting,
+			 " N"[!!t->trc_reader_need_end],
+			 cpu);
+		sched_show_task(t);
 	}
+	if (!needreport)
+		return;
+	for_each_possible_cpu(cpu)
+		if (per_cpu(trc_ipi_to_cpu, cpu))
+			pr_alert("\tIPI outstanding to CPU %d\n", cpu);
 }
 
 /* Wait for grace period to complete and provide ordering. */
