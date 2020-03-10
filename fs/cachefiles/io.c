@@ -62,6 +62,7 @@ static int cachefiles_read(struct netfs_cache_resources *cres,
 			   netfs_io_terminated_t term_func,
 			   void *term_func_priv)
 {
+	struct cachefiles_object *object = cres->cache_priv;
 	struct cachefiles_kiocb *ki;
 	struct file *file = cachefiles_cres_file(cres);
 	unsigned int old_nofs;
@@ -124,6 +125,7 @@ static int cachefiles_read(struct netfs_cache_resources *cres,
 
 	get_file(ki->iocb.ki_filp);
 
+	trace_cachefiles_read(object, file_inode(file), ki->iocb.ki_pos, len - skipped);
 	old_nofs = memalloc_nofs_save();
 	ret = vfs_iocb_iter_read(file, &ki->iocb, iter);
 	memalloc_nofs_restore(old_nofs);
@@ -188,6 +190,7 @@ static int cachefiles_write(struct netfs_cache_resources *cres,
 			    netfs_io_terminated_t term_func,
 			    void *term_func_priv)
 {
+	struct cachefiles_object *object = cres->cache_priv;
 	struct cachefiles_kiocb *ki;
 	struct inode *inode;
 	struct file *file = cachefiles_cres_file(cres);
@@ -229,6 +232,7 @@ static int cachefiles_write(struct netfs_cache_resources *cres,
 
 	get_file(ki->iocb.ki_filp);
 
+	trace_cachefiles_write(object, inode, ki->iocb.ki_pos, len);
 	old_nofs = memalloc_nofs_save();
 	ret = vfs_iocb_iter_write(file, &ki->iocb, iter);
 	memalloc_nofs_restore(old_nofs);
@@ -418,7 +422,7 @@ int cachefiles_begin_operation(struct netfs_cache_resources *cres)
 
 	_enter("");
 
-	cres->cache_priv	= op;
+	cres->cache_priv	= object;
 	cres->cache_priv2	= get_file(object->file);
 	cres->ops		= &cachefiles_netfs_cache_ops;
 	cres->debug_id		= object->cookie->debug_id;
