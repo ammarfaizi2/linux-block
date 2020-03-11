@@ -1148,4 +1148,6 @@ int autoremove_wake_function(struct wait_queue_entry *wq_entry, unsigned mode, i
 		(wait)->flags = 0;						\
 	} while (0)
 
+bool try_invoke_on_nonrunning_task(struct task_struct *p, void (*func)(void *arg), void *arg);
+
 #endif /* _LINUX_WAIT_H */
