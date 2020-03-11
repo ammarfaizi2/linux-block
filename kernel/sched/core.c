@@ -2580,6 +2580,8 @@ try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags)
 	 *
 	 * Pairs with the LOCK+smp_mb__after_spinlock() on rq->lock in
 	 * __schedule().  See the comment for smp_mb__after_spinlock().
+	 *
+	 * A similar smb_rmb() lives in try_invoke_on_nonrunning_task().
 	 */
 	smp_rmb();
 	if (p->on_rq && ttwu_remote(p, wake_flags))
@@ -2651,6 +2653,53 @@ out:
 	preempt_enable();
 
 	return success;
+}
+
+/**
+ * try_invoke_on_nonrunning_task - Invoke a function for a non-running task
+ * @p: Process for which the function is to be invoked.
+ * @func: Function to invoke.
+ * @arg: Argument to function.
+ *
+ * If the specified task is not running (either sleeping or runnable but
+ * not actually running), arrange to keep it in that state while invoking
+ * @func(@arg).  Given that @func can be invoked with a runqueue lock held,
+ * it had better be quite lightweight.
+ *
+ * Returns:
+ *	@false if the task is running or blocked.
+ *	@true if the task is runnable but not running.
+ */
+bool try_invoke_on_nonrunning_task(struct task_struct *p, void (*func)(void *arg), void *arg)
+{
+	bool ret = false;
+	struct rq_flags rf;
+	struct rq *rq;
+
+	lockdep_assert_irqs_enabled();
+	raw_spin_lock_irq(&p->pi_lock);
+	if (p->on_rq) {
+		rq = __task_rq_lock(p, &rf);
+		if (task_rq(p) == rq && !task_curr(p)) {
+			func(arg);
+			ret = true;
+		}
+		rq_unlock(rq, &rf);
+	} else {
+		switch (p->state) {
+		case TASK_RUNNING:
+		case TASK_WAKING:
+			break;
+		default:
+			smp_rmb();
+			if (!p->on_rq) {
+				func(arg);
+				ret = true;
+			}
+		}
+	}
+	raw_spin_unlock_irq(&p->pi_lock);
+	return ret;
 }
 
 /**
