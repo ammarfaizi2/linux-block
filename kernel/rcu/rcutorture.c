@@ -794,6 +794,7 @@ static struct rcu_torture_ops tasks_tracing_ops = {
 	.fqs		= NULL,
 	.stats		= NULL,
 	.irq_capable	= 1,
+	.slow_gps	= 1,
 	.name		= "tasks-tracing"
 };
 
