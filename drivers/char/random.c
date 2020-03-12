@@ -2188,14 +2188,14 @@ static DEFINE_PER_CPU(struct batched_entropy, batched_entropy) = {
 };
 
 /* Assumes size <= sizeof(batch->entropy) */
-static __always_inline void get_batched_random(void *out, size_t size)
+static __always_inline void get_batched_random_irqsoff(void *out, size_t size)
 {
-	unsigned long flags;
 	struct batched_entropy *batch;
 	static void *previous;
 	size_t position;
 
-	local_irq_save(flags);
+	lockdep_assert_irqs_disabled();
+
 	batch = this_cpu_ptr(&batched_entropy);
 	position = READ_ONCE(batch->position);
 
@@ -2213,21 +2213,46 @@ static __always_inline void get_batched_random(void *out, size_t size)
 	memcpy(out, &batch->entropy[position], size);
 	position += size;
 	WRITE_ONCE(batch->position, position);
-	local_irq_restore(flags);
 }
+
+u64 get_random_u64_irqsoff(void)
+{
+	u64 ret;
+	get_batched_random_irqsoff(&ret, sizeof(ret));
+	return ret;
+}
+EXPORT_SYMBOL(get_random_u64_irqsoff);
 
 u64 get_random_u64(void)
 {
 	u64 ret;
-	get_batched_random(&ret, sizeof(ret));
+	unsigned long flags;
+
+	local_irq_save(flags);
+	get_batched_random_irqsoff(&ret, sizeof(ret));
+	local_irq_restore(flags);
+
 	return ret;
 }
 EXPORT_SYMBOL(get_random_u64);
 
+u32 get_random_u32_irqsoff(void)
+{
+	u32 ret;
+	get_batched_random_irqsoff(&ret, sizeof(ret));
+	return ret;
+}
+EXPORT_SYMBOL(get_random_u32_irqsoff);
+
 u32 get_random_u32(void)
 {
 	u32 ret;
-	get_batched_random(&ret, sizeof(ret));
+	unsigned long flags;
+
+	local_irq_save(flags);
+	get_batched_random_irqsoff(&ret, sizeof(ret));
+	local_irq_restore(flags);
+
 	return ret;
 }
 EXPORT_SYMBOL(get_random_u32);
