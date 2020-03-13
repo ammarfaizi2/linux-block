@@ -786,16 +786,21 @@ static void rcu_tasks_trace_postscan(void)
 }
 
 /* Show the state of a task stalling the current RCU tasks trace GP. */
-static void show_stalled_task_trace(struct task_struct *t)
+static void show_stalled_task_trace(struct task_struct *t, bool *firstreport)
 {
 	int cpu;
 
+	if (*firstreport) {
+		pr_err("INFO: rcu_tasks_trace detected stalls on tasks:\n");
+		*firstreport = false;
+	}
+	// FIXME: This should attempt to use try_invoke_on_nonrunning_task().
 	cpu = task_cpu(t);
-	pr_alert("%p: %c%c%c nesting: %d%c cpu: %d\n",
-		 t,
+	pr_alert("P%d: %c%c%c nesting: %d%c cpu: %d\n",
+		 t->pid,
 		 ".I"[READ_ONCE(t->trc_ipi_to_cpu) > 0],
 		 ".i"[is_idle_task(t)],
-		 "N."[cpu < 0 || !tick_nohz_full_cpu(cpu)],
+		 ".N"[cpu > 0 && tick_nohz_full_cpu(cpu)],
 		 t->trc_reader_nesting,
 		 " N"[!!t->trc_reader_need_end],
 		 cpu);
@@ -831,11 +836,7 @@ static void check_all_holdout_tasks_trace(struct list_head *hop,
 		} else if (!needreport) {
 			continue;
 		}
-		if (*firstreport) {
-			pr_err("INFO: rcu_tasks_trace detected stalls on tasks:\n");
-			*firstreport = false;
-		}
-		show_stalled_task_trace(t);
+		show_stalled_task_trace(t, firstreport);
 	}
 	if (!needreport)
 		return;
@@ -845,15 +846,37 @@ static void check_all_holdout_tasks_trace(struct list_head *hop,
 /* Wait for grace period to complete and provide ordering. */
 static void rcu_tasks_trace_postgp(void)
 {
+	bool firstreport;
+	struct task_struct *g, *t;
+	LIST_HEAD(holdouts);
+	long ret;
+
 	// Remove the safety count.
 	smp_mb__before_atomic();  // Order vs. earlier atomics
 	atomic_dec(&trc_n_readers_need_end);
 	smp_mb__after_atomic();  // Order vs. later atomics
 
 	// Wait for readers.
-	wait_event_idle_exclusive(trc_wait,
-				  atomic_read(&trc_n_readers_need_end) == 0);
-
+	for (;;) {
+		ret = wait_event_idle_exclusive_timeout(
+				trc_wait,
+				atomic_read(&trc_n_readers_need_end) == 0,
+				READ_ONCE(rcu_task_stall_timeout));
+		if (ret)
+			break;  // Count reached zero.
+		for_each_process_thread(g, t) {
+			if (READ_ONCE(t->trc_reader_need_end)) {
+				trc_add_holdout(t, &holdouts);
+			}
+		}
+		firstreport = false;
+		list_for_each_entry_safe(t, g, &holdouts, trc_holdout_list)
+			if (READ_ONCE(t->trc_reader_need_end)) {
+				show_stalled_task_trace(t, &firstreport);
+				trc_del_holdout(t);
+			}
+		show_stalled_ipi_trace();
+	}
 	smp_mb(); // Caller's code must be ordered after wakeup.
 }
 
