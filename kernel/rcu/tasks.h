@@ -830,17 +830,13 @@ static void check_all_holdout_tasks_trace(struct list_head *hop,
 			trc_wait_for_one_reader(t, hop);
 
 		// If check succeeded, remove this task from the list.
-		if (READ_ONCE(t->trc_reader_checked)) {
+		if (READ_ONCE(t->trc_reader_checked))
 			trc_del_holdout(t);
-			continue;
-		} else if (!needreport) {
-			continue;
-		}
-		show_stalled_task_trace(t, firstreport);
+		else if (needreport)
+			show_stalled_task_trace(t, firstreport);
 	}
-	if (!needreport)
-		return;
-	show_stalled_ipi_trace();
+	if (needreport)
+		show_stalled_ipi_trace();
 }
 
 /* Wait for grace period to complete and provide ordering. */
