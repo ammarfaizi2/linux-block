@@ -127,9 +127,8 @@ static inline notrace unsigned long arch_local_irq_save(void)
 #define DISABLE_INTERRUPTS(x)	cli
 
 #ifdef CONFIG_X86_64
-#ifdef CONFIG_DEBUG_ENTRY
+
 #define SAVE_FLAGS(x)		pushfq; popq %rax
-#endif
 
 #define SWAPGS	swapgs
 /*
