@@ -12,6 +12,7 @@
 #include <asm/irqflags.h>
 
 .code64
+.section .noinstr.text, "ax"
 
 	/* rdi:	arg1 ... normal C conventions. rax is saved/restored. */
 	.macro THUNK name, func, put_ret_addr_in_rdi=0, check_if=0
@@ -49,10 +50,24 @@ SYM_FUNC_START_NOALIGN(\name)
 	movq 8(%rbp), %rdi
 	.endif
 
+	/*
+	 * noinstr callers will have interrupts disabled and will thus
+	 * not get here. Annotate the call as objtool does not know about
+	 * this and would complain about leaving the noinstr section.
+	 */
+1:
+	.pushsection .discard.instr_begin
+	.long 1b - .
+	.popsection
+
 	call \func
+2:
+	.pushsection .discard.instr_end
+	.long 2b - .
+	.popsection
+
 	jmp  .L_restore
 SYM_FUNC_END(\name)
-	_ASM_NOKPROBE(\name)
 	.endm
 
 #ifdef CONFIG_TRACE_IRQFLAGS
@@ -82,6 +97,5 @@ SYM_CODE_START_LOCAL_NOALIGN(.L_restore)
 	popq %rdi
 	popq %rbp
 	ret
-	_ASM_NOKPROBE(.L_restore)
 SYM_CODE_END(.L_restore)
 #endif
