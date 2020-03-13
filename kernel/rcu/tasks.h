@@ -504,7 +504,6 @@ static void rcu_tasks_rude_wait_gp(struct rcu_tasks *rtp)
 {
 	schedule_on_each_cpu(rcu_tasks_be_rude);
 }
-EXPORT_SYMBOL_GPL(rcu_tasks_rude_wait_gp);
 
 void call_rcu_tasks_rude(struct rcu_head *rhp, rcu_callback_t func);
 DEFINE_RCU_TASKS(rcu_tasks_rude, rcu_tasks_rude_wait_gp, call_rcu_tasks_rude,
