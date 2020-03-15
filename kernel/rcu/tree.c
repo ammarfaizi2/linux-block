@@ -2925,9 +2925,9 @@ static void kfree_rcu_work(struct work_struct *work)
 	}
 
 	/*
-	 * Emergency case only. It can happen under low memory
-	 * condition when an allocation gets failed, so the "bulk"
-	 * path can not be temporary maintained.
+	 * vmalloc() pointers end up here also emergency case. It can
+	 * happen under low memory condition when an allocation gets
+	 * failed, so the "bulk" path can not be temporary maintained.
 	 */
 	for (; head; head = next) {
 		unsigned long offset = (unsigned long)head->func;
@@ -2938,7 +2938,7 @@ static void kfree_rcu_work(struct work_struct *work)
 		trace_rcu_invoke_kfree_callback(rcu_state.name, head, offset);
 
 		if (!WARN_ON_ONCE(!__is_kfree_rcu_offset(offset)))
-			kfree((void *)head - offset);
+			kvfree((void *)head - offset);
 
 		rcu_lock_release(&rcu_callback_map);
 		cond_resched_tasks_rcu_qs();
@@ -3112,10 +3112,17 @@ void kfree_call_rcu(struct rcu_head *head, rcu_callback_t func)
 	}
 
 	/*
+	 * We do not queue vmalloc pointers into array,
+	 * instead they are just queued to the list. We
+	 * do it because of:
+	 *    a) to distinguish kmalloc()/vmalloc() ptrs;
+	 *    b) there is no vmalloc_bulk() interface.
+	 *
 	 * Under high memory pressure GFP_NOWAIT can fail,
 	 * in that case the emergency path is maintained.
 	 */
-	if (unlikely(!kfree_call_rcu_add_ptr_to_bulk(krcp, head, func))) {
+	if (is_vmalloc_addr((void *) head - (unsigned long) func) ||
+			!kfree_call_rcu_add_ptr_to_bulk(krcp, head, func)) {
 		head->func = func;
 		head->next = krcp->head;
 		krcp->head = head;
