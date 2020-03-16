@@ -359,6 +359,8 @@ void rcu_note_context_switch(bool preempt)
 	rcu_qs();
 	if (rdp->deferred_qs)
 		rcu_report_exp_rdp(rdp);
+	if (!preempt)
+		rcu_tasks_qs(current);
 	trace_rcu_utilization(TPS("End context switch"));
 	barrier(); /* Avoid RCU read-side critical sections leaking up. */
 }
