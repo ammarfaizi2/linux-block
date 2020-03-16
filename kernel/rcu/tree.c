@@ -2926,9 +2926,10 @@ static void kfree_rcu_work(struct work_struct *work)
 	}
 
 	/*
-	 * vmalloc() pointers end up here also emergency case. It can
-	 * happen under low memory condition when an allocation gets
-	 * failed, so the "bulk" path can not be temporary maintained.
+	 * We can end up here either with 1) vmalloc() pointers or 2) were low
+	 * on memory and could not allocate a bulk array. It can happen under
+	 * low memory condition when an allocation gets failed, so the "bulk"
+	 * path can not be temporarly used.
 	 */
 	for (; head; head = next) {
 		unsigned long offset = (unsigned long)head->func;
