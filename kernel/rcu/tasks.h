@@ -866,13 +866,16 @@ static void rcu_tasks_trace_postgp(void)
 				trc_add_holdout(t, &holdouts);
 			}
 		}
-		firstreport = false;
+		firstreport = true;
 		list_for_each_entry_safe(t, g, &holdouts, trc_holdout_list)
 			if (READ_ONCE(t->trc_reader_need_end)) {
 				show_stalled_task_trace(t, &firstreport);
 				trc_del_holdout(t);
 			}
+		if (firstreport)
+			pr_err("INFO: rcu_tasks_trace detected stalls?\n");
 		show_stalled_ipi_trace();
+		pr_err("\t%d holdouts\n", atomic_read(&trc_n_readers_need_end));
 	}
 	smp_mb(); // Caller's code must be ordered after wakeup.
 }
