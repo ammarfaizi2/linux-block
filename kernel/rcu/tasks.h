@@ -836,8 +836,11 @@ static void check_all_holdout_tasks_trace(struct list_head *hop,
 		else if (needreport)
 			show_stalled_task_trace(t, firstreport);
 	}
-	if (needreport)
+	if (needreport) {
+		if (firstreport)
+			pr_err("INFO: rcu_tasks_trace detected stalls?\n");
 		show_stalled_ipi_trace();
+	}
 }
 
 /* Wait for grace period to complete and provide ordering. */
