@@ -3082,18 +3082,18 @@ kfree_call_rcu_add_ptr_to_bulk(struct kfree_rcu_cpu *krcp,
 }
 
 /*
- * Queue a request for lazy invocation of kfree_bulk()/kfree() after a grace
+ * Queue a request for lazy invocation of kfree_bulk()/kvfree() after a grace
  * period. Please note there are two paths are maintained, one is the main one
  * that uses kfree_bulk() interface and second one is emergency one, that is
  * used only when the main path can not be maintained temporary, due to memory
  * pressure.
  *
- * Each kfree_call_rcu() request is added to a batch. The batch will be drained
+ * Each kvfree_call_rcu() request is added to a batch. The batch will be drained
  * every KFREE_DRAIN_JIFFIES number of jiffies. All the objects in the batch will
  * be free'd in workqueue context. This allows us to: batch requests together to
  * reduce the number of grace periods during heavy kfree_rcu() load.
  */
-void kfree_call_rcu(struct rcu_head *head, rcu_callback_t func)
+void kvfree_call_rcu(struct rcu_head *head, rcu_callback_t func)
 {
 	unsigned long flags;
 	struct kfree_rcu_cpu *krcp;
@@ -3142,7 +3142,7 @@ unlock_return:
 		spin_unlock(&krcp->lock);
 	local_irq_restore(flags);
 }
-EXPORT_SYMBOL_GPL(kfree_call_rcu);
+EXPORT_SYMBOL_GPL(kvfree_call_rcu);
 
 static unsigned long
 kfree_rcu_shrink_count(struct shrinker *shrink, struct shrink_control *sc)
