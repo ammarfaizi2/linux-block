@@ -21,6 +21,7 @@
 #include <sys/syscall.h>
 #include <linux/fsinfo.h>
 #include <linux/socket.h>
+#include <linux/mount.h>
 #include <sys/stat.h>
 #include <arpa/inet.h>
 
@@ -305,6 +306,58 @@ static void dump_fsinfo_generic_mount_info(void *reply, unsigned int size)
 	printf("\tattr    : %x\n", r->attr);
 }
 
+static void dump_fsinfo_generic_mount_topology(void *reply, unsigned int size)
+{
+	struct fsinfo_mount_topology *r = reply;
+
+	printf("\n");
+	printf("\tparent  : %x\n", r->parent_id);
+
+	switch (r->propagation_type) {
+	case MOUNT_PROPAGATION_UNBINDABLE:
+		printf("\tpropag  : unbindable\n");
+		break;
+	case MOUNT_PROPAGATION_PRIVATE:
+		printf("\tpropag  : private\n");
+		break;
+	case MOUNT_PROPAGATION_DEPENDENT:
+		printf("\tpropag  : dependent source=%x clone_of=%x\n",
+		       r->dependent_source_id, r->dependent_clone_of_id);
+		break;
+	case MOUNT_PROPAGATION_SHARED:
+		printf("\tpropag  : shared group=%x\n", r->shared_group_id);
+		break;
+	default:
+		printf("\tpropag  : unknown type %x\n", r->propagation_type);
+		break;
+	}
+
+}
+
+static void dump_fsinfo_generic_mount_children(void *reply, unsigned int size)
+{
+	struct fsinfo_mount_child *r = reply;
+	ssize_t mplen;
+	char path[32], *mp;
+
+	struct fsinfo_params params = {
+		.flags		= FSINFO_FLAGS_QUERY_MOUNT,
+		.request	= FSINFO_ATTR_MOUNT_POINT,
+	};
+
+	if (!list_last) {
+		sprintf(path, "%u", r->mnt_id);
+		mplen = get_fsinfo(path, "FSINFO_ATTR_MOUNT_POINT", &params, (void **)&mp);
+		if (mplen < 0)
+			mp = "-";
+	} else {
+		mp = "<this>";
+	}
+
+	printf("%8x %16llx %s\n",
+	       r->mnt_id, (unsigned long long)r->mnt_unique_id, mp);
+}
+
 static void dump_string(void *reply, unsigned int size)
 {
 	char *s = reply, *p;
@@ -383,9 +436,11 @@ static const struct fsinfo_attribute fsinfo_attributes[] = {
 	FSINFO_LIST	(FSINFO_ATTR_FSINFO_ATTRIBUTES,	fsinfo_meta_attributes),
 
 	FSINFO_VSTRUCT	(FSINFO_ATTR_MOUNT_INFO,	fsinfo_generic_mount_info),
+	FSINFO_VSTRUCT	(FSINFO_ATTR_MOUNT_TOPOLOGY,	fsinfo_generic_mount_topology),
 	FSINFO_STRING	(FSINFO_ATTR_MOUNT_PATH,	string),
 	FSINFO_STRING_N	(FSINFO_ATTR_MOUNT_POINT,	string),
 	FSINFO_STRING_N	(FSINFO_ATTR_MOUNT_POINT_FULL,	string),
+	FSINFO_LIST	(FSINFO_ATTR_MOUNT_CHILDREN,	fsinfo_generic_mount_children),
 	{}
 };
 
