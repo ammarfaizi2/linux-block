@@ -1289,7 +1289,9 @@ EXPORT_SYMBOL(b53_phylink_mac_link_down);
 void b53_phylink_mac_link_up(struct dsa_switch *ds, int port,
 			     unsigned int mode,
 			     phy_interface_t interface,
-			     struct phy_device *phydev)
+			     struct phy_device *phydev,
+			     int speed, int duplex,
+			     bool tx_pause, bool rx_pause)
 {
 	struct b53_device *dev = ds->priv;
 
@@ -1365,6 +1367,9 @@ void b53_vlan_add(struct dsa_switch *ds, int port,
 		vl = &dev->vlans[vid];
 
 		b53_get_vlan_entry(dev, vid, vl);
+
+		if (vid == 0 && vid == b53_default_pvid(dev))
+			untagged = true;
 
 		vl->members |= BIT(port);
 		if (untagged && !dsa_is_cpu_port(ds, port))

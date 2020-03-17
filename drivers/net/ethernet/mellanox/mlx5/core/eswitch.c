@@ -39,6 +39,7 @@
 #include "lib/eq.h"
 #include "eswitch.h"
 #include "fs_core.h"
+#include "devlink.h"
 #include "ecpf.h"
 
 enum {
@@ -459,11 +460,15 @@ static void esw_destroy_legacy_table(struct mlx5_eswitch *esw)
 
 static int esw_legacy_enable(struct mlx5_eswitch *esw)
 {
-	int ret;
+	struct mlx5_vport *vport;
+	int ret, i;
 
 	ret = esw_create_legacy_table(esw);
 	if (ret)
 		return ret;
+
+	mlx5_esw_for_each_vf_vport(esw, i, vport, esw->esw_funcs.num_vfs)
+		vport->info.link_state = MLX5_VPORT_ADMIN_STATE_AUTO;
 
 	ret = mlx5_eswitch_enable_pf_vf_vports(esw, MLX5_LEGACY_SRIOV_VPORT_EVENTS);
 	if (ret)
@@ -2002,6 +2007,25 @@ void mlx5_eswitch_disable_pf_vf_vports(struct mlx5_eswitch *esw)
 		esw_disable_vport(esw, vport);
 }
 
+static void mlx5_eswitch_get_devlink_param(struct mlx5_eswitch *esw)
+{
+	struct devlink *devlink = priv_to_devlink(esw->dev);
+	union devlink_param_value val;
+	int err;
+
+	err = devlink_param_driverinit_value_get(devlink,
+						 MLX5_DEVLINK_PARAM_ID_ESW_LARGE_GROUP_NUM,
+						 &val);
+	if (!err) {
+		esw->params.large_group_num = val.vu32;
+	} else {
+		esw_warn(esw->dev,
+			 "Devlink can't get param fdb_large_groups, uses default (%d).\n",
+			 ESW_OFFLOADS_DEFAULT_NUM_GROUPS);
+		esw->params.large_group_num = ESW_OFFLOADS_DEFAULT_NUM_GROUPS;
+	}
+}
+
 int mlx5_eswitch_enable(struct mlx5_eswitch *esw, int mode)
 {
 	int err;
@@ -2017,6 +2041,8 @@ int mlx5_eswitch_enable(struct mlx5_eswitch *esw, int mode)
 
 	if (!MLX5_CAP_ESW_EGRESS_ACL(esw->dev, ft_support))
 		esw_warn(esw->dev, "engress ACL is not supported by FW\n");
+
+	mlx5_eswitch_get_devlink_param(esw);
 
 	esw_create_tsar(esw);
 
@@ -2452,25 +2478,17 @@ out:
 
 int mlx5_eswitch_get_vepa(struct mlx5_eswitch *esw, u8 *setting)
 {
-	int err = 0;
-
 	if (!esw)
 		return -EOPNOTSUPP;
 
 	if (!ESW_ALLOWED(esw))
 		return -EPERM;
 
-	mutex_lock(&esw->state_lock);
-	if (esw->mode != MLX5_ESWITCH_LEGACY) {
-		err = -EOPNOTSUPP;
-		goto out;
-	}
+	if (esw->mode != MLX5_ESWITCH_LEGACY)
+		return -EOPNOTSUPP;
 
 	*setting = esw->fdb_table.legacy.vepa_uplink_rule ? 1 : 0;
-
-out:
-	mutex_unlock(&esw->state_lock);
-	return err;
+	return 0;
 }
 
 int mlx5_eswitch_set_vport_trust(struct mlx5_eswitch *esw,

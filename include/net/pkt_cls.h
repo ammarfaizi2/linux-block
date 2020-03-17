@@ -509,7 +509,7 @@ tcf_match_indev(struct sk_buff *skb, int ifindex)
 }
 
 int tc_setup_flow_action(struct flow_action *flow_action,
-			 const struct tcf_exts *exts, bool rtnl_held);
+			 const struct tcf_exts *exts);
 void tc_cleanup_flow_action(struct flow_action *flow_action);
 
 int tc_setup_cb_call(struct tcf_block *block, enum tc_setup_type type,
@@ -877,6 +877,21 @@ struct tc_tbf_qopt_offload {
 	u32 parent;
 	union {
 		struct tc_tbf_qopt_offload_replace_params replace_params;
+		struct tc_qopt_offload_stats stats;
+	};
+};
+
+enum tc_fifo_command {
+	TC_FIFO_REPLACE,
+	TC_FIFO_DESTROY,
+	TC_FIFO_STATS,
+};
+
+struct tc_fifo_qopt_offload {
+	enum tc_fifo_command command;
+	u32 handle;
+	u32 parent;
+	union {
 		struct tc_qopt_offload_stats stats;
 	};
 };

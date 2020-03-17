@@ -26,11 +26,20 @@ static int mlxsw_sp_flower_parse_actions(struct mlxsw_sp *mlxsw_sp,
 
 	if (!flow_action_has_entries(flow_action))
 		return 0;
+	if (!flow_action_mixed_hw_stats_types_check(flow_action, extack))
+		return -EOPNOTSUPP;
 
-	/* Count action is inserted first */
-	err = mlxsw_sp_acl_rulei_act_count(mlxsw_sp, rulei, extack);
-	if (err)
-		return err;
+	act = flow_action_first_entry_get(flow_action);
+	if (act->hw_stats_type == FLOW_ACTION_HW_STATS_TYPE_ANY ||
+	    act->hw_stats_type == FLOW_ACTION_HW_STATS_TYPE_IMMEDIATE) {
+		/* Count action is inserted first */
+		err = mlxsw_sp_acl_rulei_act_count(mlxsw_sp, rulei, extack);
+		if (err)
+			return err;
+	} else if (act->hw_stats_type != FLOW_ACTION_HW_STATS_TYPE_DISABLED) {
+		NL_SET_ERR_MSG_MOD(extack, "Unsupported action HW stats type");
+		return -EOPNOTSUPP;
+	}
 
 	flow_action_for_each(i, act, flow_action) {
 		switch (act->id) {
@@ -41,11 +50,29 @@ static int mlxsw_sp_flower_parse_actions(struct mlxsw_sp *mlxsw_sp,
 				return err;
 			}
 			break;
-		case FLOW_ACTION_DROP:
-			err = mlxsw_sp_acl_rulei_act_drop(rulei);
+		case FLOW_ACTION_DROP: {
+			bool ingress;
+
+			if (mlxsw_sp_acl_block_is_mixed_bound(block)) {
+				NL_SET_ERR_MSG_MOD(extack, "Drop action is not supported when block is bound to ingress and egress");
+				return -EOPNOTSUPP;
+			}
+			ingress = mlxsw_sp_acl_block_is_ingress_bound(block);
+			err = mlxsw_sp_acl_rulei_act_drop(rulei, ingress,
+							  act->cookie, extack);
 			if (err) {
 				NL_SET_ERR_MSG_MOD(extack, "Cannot append drop action");
 				return err;
+			}
+
+			/* Forbid block with this rulei to be bound
+			 * to ingress/egress in future. Ingress rule is
+			 * a blocker for egress and vice versa.
+			 */
+			if (ingress)
+				rulei->egress_bind_blocker = 1;
+			else
+				rulei->ingress_bind_blocker = 1;
 			}
 			break;
 		case FLOW_ACTION_TRAP:

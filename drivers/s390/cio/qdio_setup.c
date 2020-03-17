@@ -8,6 +8,7 @@
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/export.h>
+#include <linux/io.h>
 #include <asm/qdio.h>
 
 #include "cio.h"
@@ -205,7 +206,7 @@ static void setup_storage_lists(struct qdio_q *q, struct qdio_irq *irq_ptr,
 
 	/* fill in sl */
 	for (j = 0; j < QDIO_MAX_BUFFERS_PER_Q; j++)
-		q->sl->element[j].sbal = (unsigned long)q->sbal[j];
+		q->sl->element[j].sbal = virt_to_phys(q->sbal[j]);
 }
 
 static void setup_queues(struct qdio_irq *irq_ptr,
@@ -223,8 +224,15 @@ static void setup_queues(struct qdio_irq *irq_ptr,
 		setup_queues_misc(q, irq_ptr, qdio_init->input_handler, i);
 
 		q->is_input_q = 1;
-		q->u.in.queue_start_poll = qdio_init->queue_start_poll_array ?
-				qdio_init->queue_start_poll_array[i] : NULL;
+		if (qdio_init->queue_start_poll_array &&
+		    qdio_init->queue_start_poll_array[i]) {
+			q->u.in.queue_start_poll =
+				qdio_init->queue_start_poll_array[i];
+			set_bit(QDIO_QUEUE_IRQS_DISABLED,
+				&q->u.in.queue_irq_state);
+		} else {
+			q->u.in.queue_start_poll = NULL;
+		}
 
 		setup_storage_lists(q, irq_ptr, input_sbal_array, i);
 		input_sbal_array += QDIO_MAX_BUFFERS_PER_Q;
@@ -536,7 +544,7 @@ void qdio_print_subchannel_info(struct qdio_irq *irq_ptr,
 int qdio_enable_async_operation(struct qdio_output_q *outq)
 {
 	outq->aobs = kcalloc(QDIO_MAX_BUFFERS_PER_Q, sizeof(struct qaob *),
-			     GFP_ATOMIC);
+			     GFP_KERNEL);
 	if (!outq->aobs) {
 		outq->use_cq = 0;
 		return -ENOMEM;

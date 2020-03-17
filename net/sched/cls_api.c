@@ -3382,14 +3382,40 @@ int tc_setup_cb_reoffload(struct tcf_block *block, struct tcf_proto *tp,
 }
 EXPORT_SYMBOL(tc_setup_cb_reoffload);
 
+static int tcf_act_get_cookie(struct flow_action_entry *entry,
+			      const struct tc_action *act)
+{
+	struct tc_cookie *cookie;
+	int err = 0;
+
+	rcu_read_lock();
+	cookie = rcu_dereference(act->act_cookie);
+	if (cookie) {
+		entry->cookie = flow_action_cookie_create(cookie->data,
+							  cookie->len,
+							  GFP_ATOMIC);
+		if (!entry->cookie)
+			err = -ENOMEM;
+	}
+	rcu_read_unlock();
+	return err;
+}
+
+static void tcf_act_put_cookie(struct flow_action_entry *entry)
+{
+	flow_action_cookie_destroy(entry->cookie);
+}
+
 void tc_cleanup_flow_action(struct flow_action *flow_action)
 {
 	struct flow_action_entry *entry;
 	int i;
 
-	flow_action_for_each(i, entry, flow_action)
+	flow_action_for_each(i, entry, flow_action) {
+		tcf_act_put_cookie(entry);
 		if (entry->destructor)
 			entry->destructor(entry->destructor_priv);
+	}
 }
 EXPORT_SYMBOL(tc_cleanup_flow_action);
 
@@ -3433,22 +3459,30 @@ static void tcf_sample_get_group(struct flow_action_entry *entry,
 }
 
 int tc_setup_flow_action(struct flow_action *flow_action,
-			 const struct tcf_exts *exts, bool rtnl_held)
+			 const struct tcf_exts *exts)
 {
-	const struct tc_action *act;
+	struct tc_action *act;
 	int i, j, k, err = 0;
+
+	BUILD_BUG_ON(TCA_ACT_HW_STATS_TYPE_ANY != FLOW_ACTION_HW_STATS_TYPE_ANY);
+	BUILD_BUG_ON(TCA_ACT_HW_STATS_TYPE_IMMEDIATE != FLOW_ACTION_HW_STATS_TYPE_IMMEDIATE);
+	BUILD_BUG_ON(TCA_ACT_HW_STATS_TYPE_DELAYED != FLOW_ACTION_HW_STATS_TYPE_DELAYED);
 
 	if (!exts)
 		return 0;
-
-	if (!rtnl_held)
-		rtnl_lock();
 
 	j = 0;
 	tcf_exts_for_each_action(i, act, exts) {
 		struct flow_action_entry *entry;
 
 		entry = &flow_action->entries[j];
+		spin_lock_bh(&act->tcfa_lock);
+		err = tcf_act_get_cookie(entry, act);
+		if (err)
+			goto err_out_locked;
+
+		entry->hw_stats_type = act->hw_stats_type;
+
 		if (is_tcf_gact_ok(act)) {
 			entry->id = FLOW_ACTION_ACCEPT;
 		} else if (is_tcf_gact_shot(act)) {
@@ -3489,13 +3523,13 @@ int tc_setup_flow_action(struct flow_action *flow_action,
 				break;
 			default:
 				err = -EOPNOTSUPP;
-				goto err_out;
+				goto err_out_locked;
 			}
 		} else if (is_tcf_tunnel_set(act)) {
 			entry->id = FLOW_ACTION_TUNNEL_ENCAP;
 			err = tcf_tunnel_encap_get_tunnel(entry, act);
 			if (err)
-				goto err_out;
+				goto err_out_locked;
 		} else if (is_tcf_tunnel_release(act)) {
 			entry->id = FLOW_ACTION_TUNNEL_DECAP;
 		} else if (is_tcf_pedit(act)) {
@@ -3509,7 +3543,7 @@ int tc_setup_flow_action(struct flow_action *flow_action,
 					break;
 				default:
 					err = -EOPNOTSUPP;
-					goto err_out;
+					goto err_out_locked;
 				}
 				entry->mangle.htype = tcf_pedit_htype(act, k);
 				entry->mangle.mask = tcf_pedit_mask(act, k);
@@ -3560,28 +3594,29 @@ int tc_setup_flow_action(struct flow_action *flow_action,
 				entry->mpls_mangle.ttl = tcf_mpls_ttl(act);
 				break;
 			default:
-				goto err_out;
+				goto err_out_locked;
 			}
 		} else if (is_tcf_skbedit_ptype(act)) {
 			entry->id = FLOW_ACTION_PTYPE;
 			entry->ptype = tcf_skbedit_ptype(act);
 		} else {
 			err = -EOPNOTSUPP;
-			goto err_out;
+			goto err_out_locked;
 		}
+		spin_unlock_bh(&act->tcfa_lock);
 
 		if (!is_tcf_pedit(act))
 			j++;
 	}
 
 err_out:
-	if (!rtnl_held)
-		rtnl_unlock();
-
 	if (err)
 		tc_cleanup_flow_action(flow_action);
 
 	return err;
+err_out_locked:
+	spin_unlock_bh(&act->tcfa_lock);
+	goto err_out;
 }
 EXPORT_SYMBOL(tc_setup_flow_action);
 

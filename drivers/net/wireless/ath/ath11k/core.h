@@ -77,6 +77,7 @@ struct ath11k_skb_rxcb {
 	u8 err_code;
 	u8 mac_id;
 	u8 unmapped;
+	u8 is_frag;
 };
 
 enum ath11k_hw_rev {
@@ -332,6 +333,7 @@ struct ath11k_sta {
 	u32 bw;
 	u32 nss;
 	u32 smps;
+	enum hal_pn_type pn_type;
 
 	struct work_struct update_wk;
 	struct rate_info txrate;

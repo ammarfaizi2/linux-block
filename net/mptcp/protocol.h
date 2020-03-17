@@ -56,8 +56,8 @@
 #define MPTCP_DSS_FLAG_MASK	(0x1F)
 
 /* MPTCP socket flags */
-#define MPTCP_DATA_READY	BIT(0)
-#define MPTCP_SEND_SPACE	BIT(1)
+#define MPTCP_DATA_READY	0
+#define MPTCP_SEND_SPACE	1
 
 /* MPTCP connection sock */
 struct mptcp_sock {
@@ -70,6 +70,7 @@ struct mptcp_sock {
 	u32		token;
 	unsigned long	flags;
 	bool		can_ack;
+	struct work_struct work;
 	struct list_head conn_list;
 	struct skb_ext	*cached_ext;	/* for the next sendmsg */
 	struct socket	*subflow; /* outgoing connect/listener/!mp_capable */
@@ -124,7 +125,9 @@ struct mptcp_subflow_context {
 		mpc_map : 1,
 		data_avail : 1,
 		rx_eof : 1,
+		data_fin_tx_enable : 1,
 		can_ack : 1;	    /* only after processing the remote a key */
+	u64	data_fin_tx_seq;
 
 	struct	sock *tcp_sock;	    /* tcp sk backpointer */
 	struct	sock *conn;	    /* parent mptcp_sock */
@@ -190,17 +193,11 @@ void mptcp_proto_init(void);
 int mptcp_proto_v6_init(void);
 #endif
 
-struct mptcp_read_arg {
-	struct msghdr *msg;
-};
-
-int mptcp_read_actor(read_descriptor_t *desc, struct sk_buff *skb,
-		     unsigned int offset, size_t len);
-
 void mptcp_get_options(const struct sk_buff *skb,
 		       struct tcp_options_received *opt_rx);
 
 void mptcp_finish_connect(struct sock *sk);
+void mptcp_data_ready(struct sock *sk, struct sock *ssk);
 
 int mptcp_token_new_request(struct request_sock *req);
 void mptcp_token_destroy_request(u32 token);

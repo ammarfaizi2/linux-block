@@ -3693,14 +3693,16 @@ static int check_map_func_compatibility(struct bpf_verifier_env *env,
 		if (func_id != BPF_FUNC_sk_redirect_map &&
 		    func_id != BPF_FUNC_sock_map_update &&
 		    func_id != BPF_FUNC_map_delete_elem &&
-		    func_id != BPF_FUNC_msg_redirect_map)
+		    func_id != BPF_FUNC_msg_redirect_map &&
+		    func_id != BPF_FUNC_sk_select_reuseport)
 			goto error;
 		break;
 	case BPF_MAP_TYPE_SOCKHASH:
 		if (func_id != BPF_FUNC_sk_redirect_hash &&
 		    func_id != BPF_FUNC_sock_hash_update &&
 		    func_id != BPF_FUNC_map_delete_elem &&
-		    func_id != BPF_FUNC_msg_redirect_hash)
+		    func_id != BPF_FUNC_msg_redirect_hash &&
+		    func_id != BPF_FUNC_sk_select_reuseport)
 			goto error;
 		break;
 	case BPF_MAP_TYPE_REUSEPORT_SOCKARRAY:
@@ -3774,7 +3776,9 @@ static int check_map_func_compatibility(struct bpf_verifier_env *env,
 			goto error;
 		break;
 	case BPF_FUNC_sk_select_reuseport:
-		if (map->map_type != BPF_MAP_TYPE_REUSEPORT_SOCKARRAY)
+		if (map->map_type != BPF_MAP_TYPE_REUSEPORT_SOCKARRAY &&
+		    map->map_type != BPF_MAP_TYPE_SOCKMAP &&
+		    map->map_type != BPF_MAP_TYPE_SOCKHASH)
 			goto error;
 		break;
 	case BPF_FUNC_map_peek_elem:
@@ -8139,26 +8143,48 @@ static bool is_tracing_prog_type(enum bpf_prog_type type)
 	}
 }
 
+static bool is_preallocated_map(struct bpf_map *map)
+{
+	if (!check_map_prealloc(map))
+		return false;
+	if (map->inner_map_meta && !check_map_prealloc(map->inner_map_meta))
+		return false;
+	return true;
+}
+
 static int check_map_prog_compatibility(struct bpf_verifier_env *env,
 					struct bpf_map *map,
 					struct bpf_prog *prog)
 
 {
-	/* Make sure that BPF_PROG_TYPE_PERF_EVENT programs only use
-	 * preallocated hash maps, since doing memory allocation
-	 * in overflow_handler can crash depending on where nmi got
-	 * triggered.
+	/*
+	 * Validate that trace type programs use preallocated hash maps.
+	 *
+	 * For programs attached to PERF events this is mandatory as the
+	 * perf NMI can hit any arbitrary code sequence.
+	 *
+	 * All other trace types using preallocated hash maps are unsafe as
+	 * well because tracepoint or kprobes can be inside locked regions
+	 * of the memory allocator or at a place where a recursion into the
+	 * memory allocator would see inconsistent state.
+	 *
+	 * On RT enabled kernels run-time allocation of all trace type
+	 * programs is strictly prohibited due to lock type constraints. On
+	 * !RT kernels it is allowed for backwards compatibility reasons for
+	 * now, but warnings are emitted so developers are made aware of
+	 * the unsafety and can fix their programs before this is enforced.
 	 */
-	if (prog->type == BPF_PROG_TYPE_PERF_EVENT) {
-		if (!check_map_prealloc(map)) {
+	if (is_tracing_prog_type(prog->type) && !is_preallocated_map(map)) {
+		if (prog->type == BPF_PROG_TYPE_PERF_EVENT) {
 			verbose(env, "perf_event programs can only use preallocated hash map\n");
 			return -EINVAL;
 		}
-		if (map->inner_map_meta &&
-		    !check_map_prealloc(map->inner_map_meta)) {
-			verbose(env, "perf_event programs can only use preallocated inner hash map\n");
+		if (IS_ENABLED(CONFIG_PREEMPT_RT)) {
+			verbose(env, "trace type programs can only use preallocated hash map\n");
 			return -EINVAL;
 		}
+		WARN_ONCE(1, "trace type BPF program uses run-time allocation\n");
+		verbose(env, "trace type programs with run-time allocated hash maps are unsafe. Switch to preallocated hash maps.\n");
 	}
 
 	if ((is_tracing_prog_type(prog->type) ||
