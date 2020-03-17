@@ -26,14 +26,14 @@ static inline phys_addr_t __dma_to_phys(struct device *dev, dma_addr_t dev_addr)
 }
 #endif /* !CONFIG_ARCH_HAS_PHYS_TO_DMA */
 
-#ifdef CONFIG_ARCH_HAS_FORCE_DMA_UNENCRYPTED
-bool force_dma_unencrypted(struct device *dev);
+#ifdef CONFIG_ARCH_HAS_FORCE_DMA_DECRYPTED
+bool force_dma_decrypted(struct device *dev);
 #else
-static inline bool force_dma_unencrypted(struct device *dev)
+static inline bool force_dma_decrypted(struct device *dev)
 {
 	return false;
 }
-#endif /* CONFIG_ARCH_HAS_FORCE_DMA_UNENCRYPTED */
+#endif /* CONFIG_ARCH_HAS_FORCE_DMA_DECRYPTED */
 
 /*
  * If memory encryption is supported, phys_to_dma will set the memory encryption

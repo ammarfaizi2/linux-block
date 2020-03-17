@@ -15,7 +15,7 @@ static inline bool mem_encrypt_active(void)
 	return is_secure_guest();
 }
 
-static inline bool force_dma_unencrypted(struct device *dev)
+static inline bool force_dma_decrypted(struct device *dev)
 {
 	return is_secure_guest();
 }

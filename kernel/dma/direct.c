@@ -26,7 +26,7 @@ unsigned int zone_dma_bits __ro_after_init = 24;
 static inline dma_addr_t phys_to_dma_direct(struct device *dev,
 		phys_addr_t phys)
 {
-	if (force_dma_unencrypted(dev))
+	if (force_dma_decrypted(dev))
 		return __phys_to_dma(dev, phys);
 	return phys_to_dma(dev, phys);
 }
@@ -49,7 +49,7 @@ static gfp_t __dma_direct_optimal_gfp_mask(struct device *dev, u64 dma_mask,
 {
 	u64 dma_limit = min_not_zero(dma_mask, dev->bus_dma_limit);
 
-	if (force_dma_unencrypted(dev))
+	if (force_dma_decrypted(dev))
 		*phys_limit = __dma_to_phys(dev, dma_limit);
 	else
 		*phys_limit = dma_to_phys(dev, dma_limit);
@@ -138,7 +138,7 @@ void *dma_direct_alloc_pages(struct device *dev, size_t size,
 		return NULL;
 
 	if ((attrs & DMA_ATTR_NO_KERNEL_MAPPING) &&
-	    !force_dma_unencrypted(dev)) {
+	    !force_dma_decrypted(dev)) {
 		/* remove any dirty cache lines on the kernel alias */
 		if (!PageHighMem(page))
 			arch_dma_prep_coherent(page, size);
@@ -179,7 +179,7 @@ void *dma_direct_alloc_pages(struct device *dev, size_t size,
 	}
 
 	ret = page_address(page);
-	if (force_dma_unencrypted(dev))
+	if (force_dma_decrypted(dev))
 		set_memory_decrypted((unsigned long)ret, 1 << get_order(size));
 
 	memset(ret, 0, size);
@@ -190,7 +190,7 @@ void *dma_direct_alloc_pages(struct device *dev, size_t size,
 		ret = uncached_kernel_address(ret);
 	}
 done:
-	if (force_dma_unencrypted(dev))
+	if (force_dma_decrypted(dev))
 		*dma_handle = __phys_to_dma(dev, page_to_phys(page));
 	else
 		*dma_handle = phys_to_dma(dev, page_to_phys(page));
@@ -203,7 +203,7 @@ void dma_direct_free_pages(struct device *dev, size_t size, void *cpu_addr,
 	unsigned int page_order = get_order(size);
 
 	if ((attrs & DMA_ATTR_NO_KERNEL_MAPPING) &&
-	    !force_dma_unencrypted(dev)) {
+	    !force_dma_decrypted(dev)) {
 		/* cpu_addr is a struct page cookie, not a kernel address */
 		dma_free_contiguous(dev, cpu_addr, size);
 		return;
@@ -213,7 +213,7 @@ void dma_direct_free_pages(struct device *dev, size_t size, void *cpu_addr,
 	    dma_free_from_pool(cpu_addr, PAGE_ALIGN(size)))
 		return;
 
-	if (force_dma_unencrypted(dev))
+	if (force_dma_decrypted(dev))
 		set_memory_encrypted((unsigned long)cpu_addr, 1 << page_order);
 
 	if (IS_ENABLED(CONFIG_DMA_REMAP) && is_vmalloc_addr(cpu_addr))
