@@ -142,13 +142,13 @@ static inline void rcu_init_nohz(void) { }
 # define rcu_tasks_classic_qs(t, preempt) do { } while (0)
 # endif
 
-# ifdef CONFIG_TASKS_RCU
+# ifdef CONFIG_TASKS_RCU_TRACE
 # define rcu_tasks_trace_qs(t)						\
 	do {								\
 		if (!likely(READ_ONCE((t)->trc_reader_checked)) &&	\
 		    !unlikely(READ_ONCE((t)->trc_reader_nesting))) {	\
-			smp_mb(); /* Readers end before store. */	\
-			WRITE_ONCE((t)->trc_reader_checked, true);	\
+			smp_store_release(&(t)->trc_reader_checked, true); \
+			smp_mb(); /* Readers partitioned by store. */	\
 		}							\
 	} while (0)
 # else
