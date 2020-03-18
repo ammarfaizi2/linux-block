@@ -777,9 +777,10 @@ reset_ipi:
 }
 
 /* Callback function for scheduler to check non-running) task.  */
-static void trc_inspect_reader_notrunning(void *arg)
+static bool trc_inspect_reader_notrunning(struct task_struct *t, void *arg)
 {
-	struct task_struct *t = arg;
+	if (task_curr(t))
+		return false;  // It is running, so decline to inspect it.
 
 	// Mark as checked.  Because this is called from the grace-period
 	// kthread, also remove the task from the holdout list.
@@ -794,6 +795,7 @@ static void trc_inspect_reader_notrunning(void *arg)
 		WARN_ON_ONCE(t->trc_reader_special.b.need_qs);
 		WRITE_ONCE(t->trc_reader_special.b.need_qs, true);
 	}
+	return true;
 }
 
 /* Attempt to extract the state for the specified task. */
@@ -815,7 +817,7 @@ static void trc_wait_for_one_reader(struct task_struct *t,
 	}
 
 	// Attempt to nail down the task for inspection.
-	if (try_invoke_on_nonrunning_task(t, trc_inspect_reader_notrunning, t))
+	if (try_invoke_on_locked_down_task(t, trc_inspect_reader_notrunning, t))
 		return;
 
 	// If currently running, send an IPI, either way, add to list.
