@@ -2656,21 +2656,24 @@ out:
 }
 
 /**
- * try_invoke_on_nonrunning_task - Invoke a function for a non-running task
+ * try_invoke_on_locked_down_task - Invoke a function on task in fixed state
  * @p: Process for which the function is to be invoked.
  * @func: Function to invoke.
  * @arg: Argument to function.
  *
- * If the specified task is not running (either sleeping or runnable but
- * not actually running), arrange to keep it in that state while invoking
- * @func(@arg).  Given that @func can be invoked with a runqueue lock held,
- * it had better be quite lightweight.
+ * If the specified task can be quickly locked into a definite state
+ * (either sleeping or on a given runqueue), arrange to keep it in that
+ * state while invoking @func(@arg).  This function can use ->on_rq and
+ * task_curr() to work out what the state is, if required.  Given that
+ * @func can be invoked with a runqueue lock held, it had better be quite
+ * lightweight.
  *
  * Returns:
- *	@false if the task is running or blocked.
- *	@true if the task is runnable but not running.
+ *	@false if the task slipped out from under the locks.
+ *	@true if the task was locked onto a runqueue or is sleeping.
+ *		However, @func can override this by returning @false.
  */
-bool try_invoke_on_nonrunning_task(struct task_struct *p, void (*func)(void *arg), void *arg)
+bool try_invoke_on_locked_down_task(struct task_struct *p, bool (*func)(struct task_struct *t, void *arg), void *arg)
 {
 	bool ret = false;
 	struct rq_flags rf;
@@ -2680,10 +2683,8 @@ bool try_invoke_on_nonrunning_task(struct task_struct *p, void (*func)(void *arg
 	raw_spin_lock_irq(&p->pi_lock);
 	if (p->on_rq) {
 		rq = __task_rq_lock(p, &rf);
-		if (task_rq(p) == rq && !task_curr(p)) {
-			func(arg);
-			ret = true;
-		}
+		if (task_rq(p) == rq)
+			ret = func(p, arg);
 		rq_unlock(rq, &rf);
 	} else {
 		switch (p->state) {
@@ -2692,10 +2693,8 @@ bool try_invoke_on_nonrunning_task(struct task_struct *p, void (*func)(void *arg
 			break;
 		default:
 			smp_rmb();
-			if (!p->on_rq) {
-				func(arg);
-				ret = true;
-			}
+			if (!p->on_rq)
+				ret = func(p, arg);
 		}
 	}
 	raw_spin_unlock_irq(&p->pi_lock);
