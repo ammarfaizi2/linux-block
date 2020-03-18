@@ -78,6 +78,7 @@ struct ath11k_skb_rxcb {
 	u8 mac_id;
 	u8 unmapped;
 	u8 is_frag;
+	u8 tid;
 };
 
 enum ath11k_hw_rev {
@@ -110,12 +111,9 @@ struct ath11k_ext_irq_grp {
 	u32 irqs[ATH11K_EXT_IRQ_NUM_MAX];
 	u32 num_irq;
 	u32 grp_id;
+	u64 timestamp;
 	struct napi_struct napi;
 	struct net_device napi_ndev;
-	/* Queue of pending packets, not expected to be accessed concurrently
-	 * to avoid locking overhead.
-	 */
-	struct sk_buff_head pending_q;
 };
 
 #define HEHANDLE_CAP_PHYINFO_SIZE       3

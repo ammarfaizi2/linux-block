@@ -2418,10 +2418,13 @@ static int ath11k_mac_op_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 	peer = ath11k_peer_find(ab, arvif->vdev_id, peer_addr);
 	if (peer && cmd == SET_KEY) {
 		peer->keys[key->keyidx] = key;
-		if (key->flags & IEEE80211_KEY_FLAG_PAIRWISE)
+		if (key->flags & IEEE80211_KEY_FLAG_PAIRWISE) {
 			peer->ucast_keyidx = key->keyidx;
-		else
+			peer->sec_type = ath11k_dp_tx_get_encrypt_type(key->cipher);
+		} else {
 			peer->mcast_keyidx = key->keyidx;
+			peer->sec_type_grp = ath11k_dp_tx_get_encrypt_type(key->cipher);
+		}
 	} else if (peer && cmd == DISABLE_KEY) {
 		peer->keys[key->keyidx] = NULL;
 		if (key->flags & IEEE80211_KEY_FLAG_PAIRWISE)
@@ -2451,6 +2454,7 @@ static int ath11k_mac_op_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 			break;
 		}
 	}
+
 	spin_unlock_bh(&ab->base_lock);
 
 exit:
@@ -3973,6 +3977,9 @@ static int ath11k_mac_op_start(struct ieee80211_hw *hw)
 			   ret);
 		goto err;
 	}
+
+	/* Configure the hash seed for hash based reo dest ring selection */
+	ath11k_wmi_pdev_lro_cfg(ar, ar->pdev->pdev_id);
 
 	mutex_unlock(&ar->conf_mutex);
 
@@ -5791,6 +5798,7 @@ static int __ath11k_mac_register(struct ath11k *ar)
 		ieee80211_hw_set(ar->hw, TX_AMPDU_SETUP_IN_HW);
 		ieee80211_hw_set(ar->hw, SUPPORTS_REORDERING_BUFFER);
 		ieee80211_hw_set(ar->hw, SUPPORTS_AMSDU_IN_AMPDU);
+		ieee80211_hw_set(ar->hw, USES_RSS);
 	}
 
 	ar->hw->wiphy->features |= NL80211_FEATURE_STATIC_SMPS;
