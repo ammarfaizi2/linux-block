@@ -194,7 +194,6 @@ static void rcu_print_detail_task_stall_rnp(struct rcu_node *rnp)
 
 // Communicate task state back to the RCU CPU stall warning request.
 struct rcu_stall_chk_rdr {
-	struct task_struct *t;
 	int nesting;
 	union rcu_special rs;
 	bool on_blkd_list;
@@ -204,16 +203,18 @@ struct rcu_stall_chk_rdr {
  * Report out the state of a not-running task that is stalling the
  * current RCU grace period.
  */
-static void check_slow_task(void *arg)
+static bool check_slow_task(struct task_struct *t, void *arg)
 {
 	struct rcu_node *rnp;
 	struct rcu_stall_chk_rdr *rscrp = arg;
-	struct task_struct *t = rscrp->t;
 
+	if (task_curr(t))
+		return false; // It is running, so decline to inspect it.
 	rscrp->nesting = t->rcu_read_lock_nesting;
 	rscrp->rs = t->rcu_read_unlock_special;
 	rnp = t->rcu_blocked_node;
 	rscrp->on_blkd_list = !list_empty(&t->rcu_node_entry);
+	return true;
 }
 
 /*
@@ -233,8 +234,7 @@ static int rcu_print_task_stall(struct rcu_node *rnp)
 	t = list_entry(rnp->gp_tasks->prev,
 		       struct task_struct, rcu_node_entry);
 	list_for_each_entry_continue(t, &rnp->blkd_tasks, rcu_node_entry) {
-		rscr.t = t;
-		if (!try_invoke_on_nonrunning_task(t, check_slow_task, &rscr))
+		if (!try_invoke_on_locked_down_task(t, check_slow_task, &rscr))
 			pr_cont(" P%d", t->pid);
 		else
 			pr_cont(" P%d/%d:%c%c%c%c",
