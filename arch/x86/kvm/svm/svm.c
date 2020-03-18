@@ -3331,12 +3331,23 @@ static void svm_vcpu_run(struct kvm_vcpu *vcpu)
 	x86_spec_ctrl_set_guest(svm->spec_ctrl, svm->virt_spec_ctrl);
 
 	/*
-	 * Tell context tracking that this CPU is about to enter guest
-	 * mode. This has to be after x86_spec_ctrl_set_guest() because
-	 * that can take locks (lockdep needs RCU) and calls into world and
-	 * some more.
+	 * VMENTER enables interrupts (host state), but the kernel state is
+	 * interrupts disabled when this is invoked. Also tell RCU about
+	 * it. This is the same logic as for exit_to_user_mode().
+	 *
+	 * 1) Trace interrupts on state
+	 * 2) Prepare lockdep with RCU on
+	 * 3) Invoke context tracking if enabled to adjust RCU state
+	 * 4) Tell lockdep that interrupts are enabled
+	 *
+	 * This has to be after x86_spec_ctrl_set_guest() because that can
+	 * take locks (lockdep needs RCU) and calls into world and some
+	 * more.
 	 */
+	trace_hardirqs_on_prepare();
+	lockdep_hardirqs_on_prepare(CALLER_ADDR0);
 	guest_enter_irqoff();
+	lockdep_hardirqs_on(CALLER_ADDR0);
 
 	__svm_vcpu_run(svm->vmcb_pa, (unsigned long *)&svm->vcpu.arch.regs);
 
@@ -3348,14 +3359,23 @@ static void svm_vcpu_run(struct kvm_vcpu *vcpu)
 	loadsegment(gs, svm->host.gs);
 #endif
 #endif
+
 	/*
-	 * Tell context tracking that this CPU is back.
+	 * VMEXIT disables interrupts (host state, see the CLI in the ASM
+	 * above), but tracing and lockdep have them in state 'on'. Same as
+	 * enter_from_user_mode().
+	 *
+	 * 1) Tell lockdep that interrupts are disabled
+	 * 2) Invoke context tracking if enabled to reactivate RCU
+	 * 3) Trace interrupts off state
 	 *
 	 * This needs to be done before the below as native_read_msr()
 	 * contains a tracepoint and x86_spec_ctrl_restore_host() calls
 	 * into world and some more.
 	 */
+	lockdep_hardirqs_off(CALLER_ADDR0);
 	guest_exit_irqoff();
+	trace_hardirqs_off_prepare();
 
 	/*
 	 * We do not use IBRS in the kernel. If this vCPU has used the
