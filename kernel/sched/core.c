@@ -2692,7 +2692,7 @@ bool try_invoke_on_locked_down_task(struct task_struct *p, bool (*func)(struct t
 		case TASK_WAKING:
 			break;
 		default:
-			smp_rmb();
+			smp_rmb(); // See smp_rmb() comment in try_to_wake_up().
 			if (!p->on_rq)
 				ret = func(p, arg);
 		}
