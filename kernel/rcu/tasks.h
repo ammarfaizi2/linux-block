@@ -829,8 +829,8 @@ static bool trc_inspect_reader_notrunning(struct task_struct *t, void *arg)
 		return true;  // Already in quiescent state, done!!!
 
 	// The task is in a read-side critical section, so set up its
-	// its state so that it will awaken the grace-period kthread upon
-	// exit from that critical section.
+	// state so that it will awaken the grace-period kthread upon exit
+	// from that critical section.
 	atomic_inc(&trc_n_readers_need_end); // One more to wait on.
 	WARN_ON_ONCE(t->trc_reader_special.b.need_qs);
 	WRITE_ONCE(t->trc_reader_special.b.need_qs, true);
