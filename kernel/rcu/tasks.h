@@ -585,10 +585,10 @@ static void show_rcu_tasks_classic_gp_kthread(void) { }
 //
 // "Rude" variant of Tasks RCU, inspired by Steve Rostedt's trick of
 // passing an empty function to schedule_on_each_cpu().  This approach
-// provides an asynchronous call_rcu_tasks_rude() API and batching
-// of concurrent calls to the synchronous synchronize_rcu_rude() API.
-// This sends IPIs far and wide and induces otherwise unnecessary context
-// switches on all online CPUs, whether online or not.
+// provides an asynchronous call_rcu_rude() API and batching of concurrent
+// calls to the synchronous synchronize_rcu_rude() API.  This sends IPIs
+// far and wide and induces otherwise unnecessary context switches on all
+// online CPUs, whether online or not.
 
 // Empty function to allow workqueues to force a context switch.
 static void rcu_tasks_be_rude(struct work_struct *work)
