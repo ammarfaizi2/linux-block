@@ -2808,38 +2808,36 @@ EXPORT_SYMBOL_GPL(call_rcu);
 #define KFREE_N_BATCHES 2
 
 /**
- * struct kfree_rcu_bulk_data - single block to store kfree_rcu() pointers
+ * struct kvfree_rcu_bulk_data - single block to store kvfree() pointers
  * @nr_records: Number of active pointers in the array
- * @records: Array of the kfree_rcu() pointers
  * @next: Next bulk object in the block chain
- * @head_free_debug: For debug, when CONFIG_DEBUG_OBJECTS_RCU_HEAD is set
+ * @records: Array of the SLAB pointers
  */
-struct kfree_rcu_bulk_data {
+struct kvfree_rcu_bulk_data {
 	unsigned long nr_records;
-	void *records[KFREE_BULK_MAX_ENTR];
-	struct kfree_rcu_bulk_data *next;
+	struct kvfree_rcu_bulk_data *next;
+	void *records[];
 };
 
 /*
  * This macro defines how many entries the "records" array
  * will contain. It is based on the fact that the size of
- * kfree_rcu_bulk_data structure becomes exactly one page.
+ * kvfree_rcu_bulk_data become exactly one page.
  */
-#define KFREE_BULK_MAX_ENTR \
-	((PAGE_SIZE - sizeof(struct kfree_rcu_bulk_data)) / sizeof(void *))
+#define KVFREE_BULK_MAX_ENTR \
+	((PAGE_SIZE - sizeof(struct kvfree_rcu_bulk_data)) / sizeof(void *))
 
 /**
  * struct kfree_rcu_cpu_work - single batch of kfree_rcu() requests
  * @rcu_work: Let queue_rcu_work() invoke workqueue handler after grace period
  * @head_free: List of kfree_rcu() objects waiting for a grace period
- * @bhead_free: Bulk-List of kfree_rcu() objects waiting for a grace period
+ * @bkvhead_free: Bulk-List of kfree_rcu() objects waiting for a grace period
  * @krcp: Pointer to @kfree_rcu_cpu structure
  */
-
 struct kfree_rcu_cpu_work {
 	struct rcu_work rcu_work;
 	struct rcu_head *head_free;
-	struct kfree_rcu_bulk_data *bhead_free;
+	struct kvfree_rcu_bulk_data *bkvhead_free[2];
 	struct kfree_rcu_cpu *krcp;
 };
 
@@ -2861,8 +2859,9 @@ struct kfree_rcu_cpu_work {
  */
 struct kfree_rcu_cpu {
 	struct rcu_head *head;
-	struct kfree_rcu_bulk_data *bhead;
-	struct kfree_rcu_bulk_data *bcached;
+	struct kvfree_rcu_bulk_data *bkvhead[2];
+	struct kvfree_rcu_bulk_data *bkvcache[2];
+
 	struct kfree_rcu_cpu_work krw_arr[KFREE_N_BATCHES];
 	spinlock_t lock;
 	struct delayed_work monitor_work;
@@ -2875,7 +2874,7 @@ struct kfree_rcu_cpu {
 static DEFINE_PER_CPU(struct kfree_rcu_cpu, krc);
 
 static __always_inline void
-debug_rcu_bhead_unqueue(struct kfree_rcu_bulk_data *bhead)
+debug_rcu_bhead_unqueue(struct kvfree_rcu_bulk_data *bhead)
 {
 #ifdef CONFIG_DEBUG_OBJECTS_RCU_HEAD
 	int i;
@@ -2892,45 +2891,77 @@ debug_rcu_bhead_unqueue(struct kfree_rcu_bulk_data *bhead)
 static void kfree_rcu_work(struct work_struct *work)
 {
 	unsigned long flags;
+	struct kvfree_rcu_bulk_data *bkhead, *bknext;
+	struct kvfree_rcu_bulk_data *bvhead, *bvnext;
 	struct rcu_head *head, *next;
-	struct kfree_rcu_bulk_data *bhead, *bnext;
 	struct kfree_rcu_cpu *krcp;
 	struct kfree_rcu_cpu_work *krwp;
+	int i;
 
 	krwp = container_of(to_rcu_work(work),
-			    struct kfree_rcu_cpu_work, rcu_work);
+				struct kfree_rcu_cpu_work, rcu_work);
+
 	krcp = krwp->krcp;
 	spin_lock_irqsave(&krcp->lock, flags);
+	/* Channel 1. */
+	bkhead = krwp->bkvhead_free[0];
+	krwp->bkvhead_free[0] = NULL;
+
+	/* Channel 2. */
+	bvhead = krwp->bkvhead_free[1];
+	krwp->bkvhead_free[1] = NULL;
+
+	/* Channel 3. */
 	head = krwp->head_free;
 	krwp->head_free = NULL;
-	bhead = krwp->bhead_free;
-	krwp->bhead_free = NULL;
 	spin_unlock_irqrestore(&krcp->lock, flags);
 
-	/* "bhead" is now private, so traverse locklessly. */
-	for (; bhead; bhead = bnext) {
-		bnext = bhead->next;
+	/* kmalloc()/kfree() channel. */
+	for (; bkhead; bkhead = bknext) {
+		bknext = bkhead->next;
 
-		debug_rcu_bhead_unqueue(bhead);
+		debug_rcu_bhead_unqueue(bkhead);
 
 		rcu_lock_acquire(&rcu_callback_map);
 		trace_rcu_invoke_kfree_bulk_callback(rcu_state.name,
-			bhead->nr_records, bhead->records);
+			bkhead->nr_records, bkhead->records);
 
-		kfree_bulk(bhead->nr_records, bhead->records);
+		kfree_bulk(bkhead->nr_records, bkhead->records);
 		rcu_lock_release(&rcu_callback_map);
 
-		if (cmpxchg(&krcp->bcached, NULL, bhead))
-			free_page((unsigned long) bhead);
+		if (cmpxchg(&krcp->bkvcache[0], NULL, bkhead))
+			free_page((unsigned long) bkhead);
+
+		cond_resched_tasks_rcu_qs();
+	}
+
+	/* vmalloc()/vfree() channel. */
+	for (; bvhead; bvhead = bvnext) {
+		bvnext = bvhead->next;
+
+		debug_rcu_bhead_unqueue(bvhead);
+
+		rcu_lock_acquire(&rcu_callback_map);
+		for (i = 0; i < bvhead->nr_records; i++) {
+			trace_rcu_invoke_kvfree_callback(rcu_state.name,
+				(struct rcu_head *) bvhead->records[i], 0);
+			vfree(bvhead->records[i]);
+		}
+		rcu_lock_release(&rcu_callback_map);
+
+		if (cmpxchg(&krcp->bkvcache[1], NULL, bvhead))
+			free_page((unsigned long) bvhead);
 
 		cond_resched_tasks_rcu_qs();
 	}
 
 	/*
-	 * We can end up here either with 1) vmalloc() pointers or 2) were low
-	 * on memory and could not allocate a bulk array. It can happen under
-	 * low memory condition when an allocation gets failed, so the "bulk"
-	 * path can not be temporarly used.
+	 * This path covers emergency case only due to high
+	 * memory pressure also means low memory condition,
+	 * when we could not allocate a bulk array.
+	 *
+	 * Under that condition an object is queued to the
+	 * list instead.
 	 */
 	for (; head; head = next) {
 		unsigned long offset = (unsigned long)head->func;
@@ -2967,21 +2998,34 @@ static inline bool queue_kfree_rcu_work(struct kfree_rcu_cpu *krcp)
 		krwp = &(krcp->krw_arr[i]);
 
 		/*
-		 * Try to detach bhead or head and attach it over any
+		 * Try to detach bkvhead or head and attach it over any
 		 * available corresponding free channel. It can be that
 		 * a previous RCU batch is in progress, it means that
 		 * immediately to queue another one is not possible so
 		 * return false to tell caller to retry.
 		 */
-		if ((krcp->bhead && !krwp->bhead_free) ||
+		if ((krcp->bkvhead[0] && !krwp->bkvhead_free[0]) ||
+			(krcp->bkvhead[1] && !krwp->bkvhead_free[1]) ||
 				(krcp->head && !krwp->head_free)) {
-			/* Channel 1. */
-			if (!krwp->bhead_free) {
-				krwp->bhead_free = krcp->bhead;
-				krcp->bhead = NULL;
+			/*
+			 * Channel 1 corresponds to SLAB ptrs.
+			 */
+			if (!krwp->bkvhead_free[0]) {
+				krwp->bkvhead_free[0] = krcp->bkvhead[0];
+				krcp->bkvhead[0] = NULL;
 			}
 
-			/* Channel 2. */
+			/*
+			 * Channel 2 corresponds to vmalloc ptrs.
+			 */
+			if (!krwp->bkvhead_free[1]) {
+				krwp->bkvhead_free[1] = krcp->bkvhead[1];
+				krcp->bkvhead[1] = NULL;
+			}
+
+			/*
+			 * Channel 3 corresponds to emergency path.
+			 */
 			if (!krwp->head_free) {
 				krwp->head_free = krcp->head;
 				krcp->head = NULL;
@@ -2990,10 +3034,11 @@ static inline bool queue_kfree_rcu_work(struct kfree_rcu_cpu *krcp)
 			WRITE_ONCE(krcp->count, 0);
 
 			/*
-			 * One work is per one batch, so there are two "free channels",
-			 * "bhead_free" and "head_free" the batch can handle. It can be
-			 * that the work is in the pending state when two channels have
-			 * been detached following each other, one by one.
+			 * One work is per one batch, so there are three
+			 * "free channels", the batch can handle. It can
+			 * be that the work is in the pending state when
+			 * channels have been detached following by each
+			 * other.
 			 */
 			queue_rcu_work(system_wq, &krwp->rcu_work);
 			queued = true;
@@ -3038,26 +3083,25 @@ static void kfree_rcu_monitor(struct work_struct *work)
 }
 
 static inline bool
-kfree_call_rcu_add_ptr_to_bulk(struct kfree_rcu_cpu *krcp,
-	struct rcu_head *head, rcu_callback_t func)
+kvfree_call_rcu_add_ptr_to_bulk(struct kfree_rcu_cpu *krcp, void *ptr)
 {
-	struct kfree_rcu_bulk_data *bnode;
+	struct kvfree_rcu_bulk_data *bnode;
+	int idx;
 
 	if (unlikely(!krcp->initialized))
 		return false;
 
 	lockdep_assert_held(&krcp->lock);
+	idx = !is_vmalloc_addr(ptr) ? 0:1;
 
 	/* Check if a new block is required. */
-	if (!krcp->bhead ||
-			krcp->bhead->nr_records == KFREE_BULK_MAX_ENTR) {
-		bnode = xchg(&krcp->bcached, NULL);
-		if (!bnode) {
-			WARN_ON_ONCE(sizeof(struct kfree_rcu_bulk_data) > PAGE_SIZE);
-
-			bnode = (struct kfree_rcu_bulk_data *)
+	if (!krcp->bkvhead[idx] ||
+			krcp->bkvhead[idx]->nr_records ==
+				KVFREE_BULK_MAX_ENTR) {
+		bnode = xchg(&krcp->bkvcache[idx], NULL);
+		if (!bnode)
+			bnode = (struct kvfree_rcu_bulk_data *)
 				__get_free_page(GFP_NOWAIT | __GFP_NOWARN);
-		}
 
 		/* Switch to emergency path. */
 		if (unlikely(!bnode))
@@ -3065,30 +3109,30 @@ kfree_call_rcu_add_ptr_to_bulk(struct kfree_rcu_cpu *krcp,
 
 		/* Initialize the new block. */
 		bnode->nr_records = 0;
-		bnode->next = krcp->bhead;
+		bnode->next = krcp->bkvhead[idx];
 
 		/* Attach it to the head. */
-		krcp->bhead = bnode;
+		krcp->bkvhead[idx] = bnode;
 	}
 
 	/* Finally insert. */
-	krcp->bhead->records[krcp->bhead->nr_records++] =
-		(void *) head - (unsigned long) func;
+	krcp->bkvhead[idx]->records
+		[krcp->bkvhead[idx]->nr_records++] = ptr;
 
 	return true;
 }
 
 /*
- * Queue a request for lazy invocation of kfree_bulk()/kvfree() after a grace
- * period. Please note there are two paths are maintained, one is the main one
- * that uses kfree_bulk() interface and second one is emergency one, that is
- * used only when the main path can not be maintained temporary, due to memory
- * pressure.
+ * Queue a request for lazy invocation of appropriate free routine after a
+ * grace period. Please note there are three paths are maintained, two are the
+ * main ones that use array of pointers interface and third one is emergency
+ * one, that is used only when the main path can not be maintained temporary,
+ * due to memory pressure.
  *
  * Each kvfree_call_rcu() request is added to a batch. The batch will be drained
  * every KFREE_DRAIN_JIFFIES number of jiffies. All the objects in the batch will
  * be free'd in workqueue context. This allows us to: batch requests together to
- * reduce the number of grace periods during heavy kfree_rcu() load.
+ * reduce the number of grace periods during heavy kfree_rcu()/kvfree_rcu() load.
  */
 void kvfree_call_rcu(struct rcu_head *head, rcu_callback_t func)
 {
@@ -3112,17 +3156,10 @@ void kvfree_call_rcu(struct rcu_head *head, rcu_callback_t func)
 	}
 
 	/*
-	 * We do not queue vmalloc pointers into array,
-	 * instead they are just queued to the list. We
-	 * do it because of:
-	 *    a) to distinguish kmalloc()/vmalloc() ptrs;
-	 *    b) there is no vmalloc_bulk() interface.
-	 *
 	 * Under high memory pressure GFP_NOWAIT can fail,
 	 * in that case the emergency path is maintained.
 	 */
-	if (is_vmalloc_addr(ptr) ||
-	    !kfree_call_rcu_add_ptr_to_bulk(krcp, head, func)) {
+	if (!kvfree_call_rcu_add_ptr_to_bulk(krcp, ptr)) {
 		head->func = func;
 		head->next = krcp->head;
 		krcp->head = head;
