@@ -751,8 +751,10 @@ void rcu_read_unlock_trace_special(struct task_struct *t, int nesting)
 	if (IS_ENABLED(CONFIG_TASKS_TRACE_RCU_READ_MB) &&
 	    t->trc_reader_special.b.need_mb)
 		smp_mb(); // Pairs with update-side barriers.
+	// Update .needqs before ->trc_reader_nesting for irq/NMI handlers.
+	if (t->trc_reader_special.b.need_qs)
+		WRITE_ONCE(t->trc_reader_special.b.need_qs, false);
 	WRITE_ONCE(t->trc_reader_nesting, nesting);
-	WRITE_ONCE(t->trc_reader_special.b.need_qs, false);
 	if (atomic_dec_and_test(&trc_n_readers_need_end))
 		irq_work_queue(&rcu_tasks_trace_iw);
 }
