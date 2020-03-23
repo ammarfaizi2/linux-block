@@ -40,6 +40,29 @@ static struct rcu_ctrlblk rcu_ctrlblk = {
 	.curtail	= &rcu_ctrlblk.rcucblist,
 };
 
+/* Can be common with tree-RCU. */
+#define KVFREE_DRAIN_JIFFIES (HZ / 50)
+
+/* Can be common with tree-RCU. */
+struct kvfree_rcu_bulk_data {
+	unsigned long nr_records;
+	struct kvfree_rcu_bulk_data *next;
+	void *records[];
+};
+
+/* Can be common with tree-RCU. */
+#define KVFREE_BULK_MAX_ENTR \
+	((PAGE_SIZE - sizeof(struct kvfree_rcu_bulk_data)) / sizeof(void *))
+
+static struct kvfree_rcu_bulk_data *kvhead;
+static struct kvfree_rcu_bulk_data *kvhead_free;
+static struct kvfree_rcu_bulk_data *kvcache;
+
+static DEFINE_STATIC_KEY_FALSE(rcu_init_done);
+static struct delayed_work monitor_work;
+static struct rcu_work rcu_work;
+static bool monitor_todo;
+
 void rcu_barrier(void)
 {
 	wait_rcu_gp(call_rcu);
@@ -177,9 +200,137 @@ void call_rcu(struct rcu_head *head, rcu_callback_t func)
 }
 EXPORT_SYMBOL_GPL(call_rcu);
 
+static inline bool
+kvfree_call_rcu_add_ptr_to_bulk(void *ptr)
+{
+	struct kvfree_rcu_bulk_data *bnode;
+
+	if (!kvhead || kvhead->nr_records == KVFREE_BULK_MAX_ENTR) {
+		bnode = xchg(&kvcache, NULL);
+		if (!bnode)
+			bnode = (struct kvfree_rcu_bulk_data *)
+				__get_free_page(GFP_NOWAIT | __GFP_NOWARN);
+
+		if (unlikely(!bnode))
+			return false;
+
+		/* Initialize the new block. */
+		bnode->nr_records = 0;
+		bnode->next = kvhead;
+
+		/* Attach it to the bvhead. */
+		kvhead = bnode;
+	}
+
+	/* Done. */
+	kvhead->records[kvhead->nr_records++] = ptr;
+	return true;
+}
+
+static void
+kvfree_rcu_work(struct work_struct *work)
+{
+	struct kvfree_rcu_bulk_data *kvhead_tofree, *next;
+	unsigned long flags;
+	int i;
+
+	local_irq_save(flags);
+	kvhead_tofree = kvhead_free;
+	kvhead_free = NULL;
+	local_irq_restore(flags);
+
+	/* Reclaim process. */
+	for (; kvhead_tofree; kvhead_tofree = next) {
+		next = kvhead_tofree->next;
+
+		for (i = 0; i < kvhead_tofree->nr_records; i++) {
+			debug_rcu_head_unqueue((struct rcu_head *)
+				kvhead_tofree->records[i]);
+			kvfree(kvhead_tofree->records[i]);
+		}
+
+		if (cmpxchg(&kvcache, NULL, kvhead_tofree))
+			free_page((unsigned long) kvhead_tofree);
+	}
+}
+
+static inline bool
+queue_kvfree_rcu_work(void)
+{
+	/* Check if the free channel is available. */
+	if (kvhead_free)
+		return false;
+
+	kvhead_free = kvhead;
+	kvhead = NULL;
+
+	/*
+	 * Queue the job for memory reclaim after GP.
+	 */
+	queue_rcu_work(system_wq, &rcu_work);
+	return true;
+}
+
+static void kvfree_rcu_monitor(struct work_struct *work)
+{
+	unsigned long flags;
+	bool queued;
+
+	local_irq_save(flags);
+	queued = queue_kvfree_rcu_work();
+	if (queued)
+		/* Success. */
+		monitor_todo = false;
+	local_irq_restore(flags);
+
+	/*
+	 * If previous RCU reclaim process is still in progress,
+	 * schedule the work one more time to try again later.
+	 */
+	if (monitor_todo)
+		schedule_delayed_work(&monitor_work,
+			KVFREE_DRAIN_JIFFIES);
+}
+
 void kvfree_call_rcu(struct rcu_head *head, rcu_callback_t func)
 {
-	call_rcu(head, func);
+	unsigned long flags;
+	bool success;
+	void *ptr;
+
+	if (head) {
+		ptr = (void *) head - (unsigned long) func;
+	} else {
+		might_sleep();
+		ptr = (void *) func;
+	}
+
+	if (debug_rcu_head_queue(ptr)) {
+		/* Probable double free, just leak. */
+		WARN_ONCE(1, "%s(): Double-freed call. rcu_head %p\n",
+			  __func__, head);
+		return;
+	}
+
+	local_irq_save(flags);
+	success = kvfree_call_rcu_add_ptr_to_bulk(ptr);
+	if (static_branch_likely(&rcu_init_done)) {
+		if (success && !monitor_todo) {
+			monitor_todo = true;
+			schedule_delayed_work(&monitor_work,
+				KVFREE_DRAIN_JIFFIES);
+		}
+	}
+	local_irq_restore(flags);
+
+	if (!success) {
+		if (!head) {
+			synchronize_rcu();
+			kvfree(ptr);
+		} else {
+			call_rcu(head, func);
+		}
+	}
 }
 EXPORT_SYMBOL_GPL(kvfree_call_rcu);
 
@@ -188,4 +339,8 @@ void __init rcu_init(void)
 	open_softirq(RCU_SOFTIRQ, rcu_process_callbacks);
 	rcu_early_boot_tests();
 	srcu_init();
+
+	INIT_DELAYED_WORK(&monitor_work, kvfree_rcu_monitor);
+	INIT_RCU_WORK(&rcu_work, kvfree_rcu_work);
+	static_branch_enable(&rcu_init_done);
 }
