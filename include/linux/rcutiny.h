@@ -34,11 +34,7 @@ static inline void synchronize_rcu_expedited(void)
 	synchronize_rcu();
 }
 
-static inline void kvfree_call_rcu(struct rcu_head *head, rcu_callback_t func)
-{
-	call_rcu(head, func);
-}
-
+void kvfree_call_rcu(struct rcu_head *head, rcu_callback_t func);
 void rcu_qs(void);
 
 static inline void rcu_softirq_qs(void)
