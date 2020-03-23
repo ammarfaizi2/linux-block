@@ -3130,14 +3130,16 @@ kvfree_call_rcu_add_ptr_to_bulk(struct kfree_rcu_cpu *krcp, void *ptr)
  * due to memory pressure.
  *
  * Each kvfree_call_rcu() request is added to a batch. The batch will be drained
- * every KFREE_DRAIN_JIFFIES number of jiffies. All the objects in the batch will
- * be free'd in workqueue context. This allows us to: batch requests together to
- * reduce the number of grace periods during heavy kfree_rcu()/kvfree_rcu() load.
+ * every KFREE_DRAIN_JIFFIES number of jiffies or can be scheduled right away if
+ * a low memory is detected. All the objects in the batch will be free'd in
+ * workqueue context. This allows us to: batch requests together to reduce the
+ * number of grace periods during heavy kfree_rcu()/kvfree_rcu() load.
  */
 void kvfree_call_rcu(struct rcu_head *head, rcu_callback_t func)
 {
 	unsigned long flags;
 	struct kfree_rcu_cpu *krcp;
+	bool expedited_drain = false;
 	void *ptr;
 
 	local_irq_save(flags);	// For safely calling this_cpu_ptr().
@@ -3163,6 +3165,14 @@ void kvfree_call_rcu(struct rcu_head *head, rcu_callback_t func)
 		head->func = func;
 		head->next = krcp->head;
 		krcp->head = head;
+
+		/*
+		 * There was an issue to place the pointer directly
+		 * into array, due to memory pressure. Initiate an
+		 * expedited drain to accelerate lazy invocation of
+		 * appropriate free calls.
+		 */
+		expedited_drain = true;
 	}
 
 	WRITE_ONCE(krcp->count, krcp->count + 1);
@@ -3171,7 +3181,9 @@ void kvfree_call_rcu(struct rcu_head *head, rcu_callback_t func)
 	if (rcu_scheduler_active == RCU_SCHEDULER_RUNNING &&
 	    !krcp->monitor_todo) {
 		krcp->monitor_todo = true;
-		schedule_delayed_work(&krcp->monitor_work, KFREE_DRAIN_JIFFIES);
+
+		schedule_delayed_work(&krcp->monitor_work,
+			expedited_drain ? 0 : KFREE_DRAIN_JIFFIES);
 	}
 
 unlock_return:
