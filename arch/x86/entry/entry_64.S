@@ -279,6 +279,7 @@ SYM_CODE_END(entry_SYSCALL_64)
  * %rdi: prev task
  * %rsi: next task
  */
+.pushsection .text, "ax"
 SYM_CODE_START(__switch_to_asm)
 	UNWIND_HINT_FUNC
 	/*
@@ -322,6 +323,7 @@ SYM_CODE_START(__switch_to_asm)
 
 	jmp	__switch_to
 SYM_CODE_END(__switch_to_asm)
+.popsection
 
 /*
  * A newly forked process directly context switches into this address.
@@ -330,6 +332,7 @@ SYM_CODE_END(__switch_to_asm)
  * rbx: kernel thread func (NULL for user thread)
  * r12: kernel thread arg
  */
+.pushsection .text, "ax"
 SYM_CODE_START(ret_from_fork)
 	UNWIND_HINT_EMPTY
 	movq	%rax, %rdi
@@ -358,6 +361,7 @@ SYM_CODE_START(ret_from_fork)
 	movq	$0, RAX(%rsp)
 	jmp	2b
 SYM_CODE_END(ret_from_fork)
+.popsection
 
 /*
  * Build the entry stubs with some assembler magic.
@@ -1042,6 +1046,7 @@ idtentry simd_coprocessor_error		do_simd_coprocessor_error	has_error_code=0
 	 * Reload gs selector with exception handling
 	 * edi:  new selector
 	 */
+.pushsection .text, "ax"
 SYM_FUNC_START(native_load_gs_index)
 	FRAME_BEGIN
 	pushfq
@@ -1058,6 +1063,7 @@ SYM_FUNC_START(native_load_gs_index)
 	ret
 SYM_FUNC_END(native_load_gs_index)
 EXPORT_SYMBOL(native_load_gs_index)
+.popsection
 
 	_ASM_EXTABLE(.Lgs_change, .Lbad_gs)
 	.section .fixup, "ax"
@@ -1077,6 +1083,7 @@ SYM_CODE_END(.Lbad_gs)
 	.previous
 
 /* Call softirq on interrupt stack. Interrupts are off. */
+.pushsection .text, "ax"
 SYM_FUNC_START(do_softirq_own_stack)
 	pushq	%rbp
 	mov	%rsp, %rbp
@@ -1086,6 +1093,7 @@ SYM_FUNC_START(do_softirq_own_stack)
 	leaveq
 	ret
 SYM_FUNC_END(do_softirq_own_stack)
+.popsection
 
 #ifdef CONFIG_XEN_PV
 idtentry hypervisor_callback xen_do_hypervisor_callback has_error_code=0
@@ -1730,6 +1738,7 @@ SYM_CODE_START(ignore_sysret)
 SYM_CODE_END(ignore_sysret)
 #endif
 
+.pushsection .text, "ax"
 SYM_CODE_START(rewind_stack_do_exit)
 	UNWIND_HINT_FUNC
 	/* Prevent any naive code from trying to unwind to our caller. */
@@ -1741,3 +1750,4 @@ SYM_CODE_START(rewind_stack_do_exit)
 
 	call	do_exit
 SYM_CODE_END(rewind_stack_do_exit)
+.popsection
