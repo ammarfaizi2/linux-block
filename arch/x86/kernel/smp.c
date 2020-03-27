@@ -222,24 +222,39 @@ static void native_stop_other_cpus(int wait)
  * Reschedule call back. KVM uses this interrupt to force a cpu out of
  * guest mode
  */
-__visible void __irq_entry smp_reschedule_interrupt(struct pt_regs *regs)
+DEFINE_IDTENTRY_RAW(sysvec_reschedule_ipi)
 {
+	/*
+	 * User mode entry goes through the regular entry_from_user_mode()
+	 * path in both cases otherwise scheduling on return could be
+	 * invoked with the wrong NOHZ_FULL state.
+	 *
+	 * Kernel entry does not require the full sysvec treatment just for
+	 * folding the preempt count.
+	 *
+	 * Even if tracing is enabled the only requirement is that RCU is
+	 * watching and preempt_count has the hardirq bit on.
+	 *
+	 * The NOHZ tick state does not have to be adjusted. If the tick is
+	 * not running then the CPU is in idle and the idle exit will
+	 * restore the tick. Softinterrupts are not raised here, so handling
+	 * them on return is not required either.
+	 */
+	bool rcu_exit = idtentry_enter_cond_rcu(regs);
+
+	instr_begin();
+	__irq_enter_raw();
+	trace_reschedule_entry(RESCHEDULE_VECTOR);
 	ack_APIC_irq();
 	inc_irq_stat(irq_resched_count);
 
-	if (trace_resched_ipi_enabled()) {
-		/*
-		 * scheduler_ipi() might call irq_enter() as well, but
-		 * nested calls are fine.
-		 */
-		irq_enter();
-		trace_reschedule_entry(RESCHEDULE_VECTOR);
-		scheduler_ipi();
-		trace_reschedule_exit(RESCHEDULE_VECTOR);
-		irq_exit();
-		return;
-	}
 	scheduler_ipi();
+
+	trace_reschedule_entry(RESCHEDULE_VECTOR);
+	__irq_exit_raw();
+	instr_end();
+
+	idtentry_exit_cond_rcu(regs, rcu_exit);
 }
 
 DEFINE_IDTENTRY_SYSVEC(sysvec_call_function)
