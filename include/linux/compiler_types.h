@@ -203,6 +203,10 @@ struct ftrace_likely_data {
 #define asm_inline asm
 #endif
 
+#ifndef __no_stack_protector
+# define __no_stack_protector
+#endif
+
 #ifndef __no_fgcse
 # define __no_fgcse
 #endif

@@ -172,3 +172,4 @@
 #endif
 
 #define __no_fgcse __attribute__((optimize("-fno-gcse")))
+#define __no_stack_protector __attribute__((optimize("-fno-stack-protector")))

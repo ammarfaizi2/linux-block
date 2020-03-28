@@ -209,10 +209,14 @@ static void smp_callin(void)
 
 static int cpu0_logical_apicid;
 static int enable_start_cpu0;
+
 /*
  * Activate a secondary processor.
+ *
+ * Note: boot_init_stack_canary() sets up the canary value so omit the stack
+ * canary creation for this function only.
  */
-static void notrace start_secondary(void *unused)
+static void __no_stack_protector notrace start_secondary(void *unused)
 {
 	/*
 	 * Don't put *anything* except direct CPU state initialization
