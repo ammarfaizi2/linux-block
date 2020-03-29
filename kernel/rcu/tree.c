@@ -3106,7 +3106,7 @@ kvfree_call_rcu_add_ptr_to_bulk(struct kfree_rcu_cpu *krcp, void *ptr)
 		return false;
 
 	lockdep_assert_held(&krcp->lock);
-	idx = !is_vmalloc_addr(ptr) ? 0:1;
+	idx = !!is_vmalloc_addr(ptr);
 
 	/* Check if a new block is required. */
 	if (!krcp->bkvhead[idx] ||
