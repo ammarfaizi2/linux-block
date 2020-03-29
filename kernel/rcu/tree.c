@@ -2891,8 +2891,7 @@ debug_rcu_bhead_unqueue(struct kvfree_rcu_bulk_data *bhead)
 static void kfree_rcu_work(struct work_struct *work)
 {
 	unsigned long flags;
-	struct kvfree_rcu_bulk_data *bkhead, *bknext;
-	struct kvfree_rcu_bulk_data *bvhead, *bvnext;
+	struct kvfree_rcu_bulk_data *bkhead, *bvhead, *bnext;
 	struct rcu_head *head, *next;
 	struct kfree_rcu_cpu *krcp;
 	struct kfree_rcu_cpu_work *krwp;
@@ -2917,8 +2916,8 @@ static void kfree_rcu_work(struct work_struct *work)
 	spin_unlock_irqrestore(&krcp->lock, flags);
 
 	/* kmalloc()/kfree() channel. */
-	for (; bkhead; bkhead = bknext) {
-		bknext = bkhead->next;
+	for (; bkhead; bkhead = bnext) {
+		bnext = bkhead->next;
 
 		debug_rcu_bhead_unqueue(bkhead);
 
@@ -2936,8 +2935,8 @@ static void kfree_rcu_work(struct work_struct *work)
 	}
 
 	/* vmalloc()/vfree() channel. */
-	for (; bvhead; bvhead = bvnext) {
-		bvnext = bvhead->next;
+	for (; bvhead; bvhead = bnext) {
+		bnext = bvhead->next;
 
 		debug_rcu_bhead_unqueue(bvhead);
 
