@@ -2827,6 +2827,9 @@ struct kvfree_rcu_bulk_data {
 #define KVFREE_BULK_MAX_ENTR \
 	((PAGE_SIZE - sizeof(struct kvfree_rcu_bulk_data)) / sizeof(void *))
 
+/* Encoding the offset of a fake rcu_head to indicate the head is a wrapper. */
+#define RCU_HEADLESS_KFREE BIT(31)
+
 /**
  * struct kfree_rcu_cpu_work - single batch of kfree_rcu() requests
  * @rcu_work: Let queue_rcu_work() invoke workqueue handler after grace period
@@ -2972,9 +2975,9 @@ static void kfree_rcu_work(struct work_struct *work)
 		next = head->next;
 
 		/* We tag the headless object, if so adjust offset. */
-		headless = (((unsigned long) head - offset) & BIT(0));
+		headless = !!(offset & RCU_HEADLESS_KFREE);
 		if (headless)
-			offset -= 1;
+			offset &= ~(RCU_HEADLESS_KFREE);
 
 		ptr = (void *) head - offset;
 		debug_rcu_head_unqueue((struct rcu_head *)ptr);
@@ -3223,7 +3226,7 @@ void kvfree_call_rcu(struct rcu_head *head, rcu_callback_t func)
 			 * to the original allocated memory, that has to be freed as
 			 * well as dynamically attached wrapper/head.
 			 */
-			func = (rcu_callback_t) (sizeof(unsigned long *) + 1);
+			func = (rcu_callback_t)(sizeof(unsigned long *) | RCU_HEADLESS_KFREE);
 		}
 
 		head->func = func;
