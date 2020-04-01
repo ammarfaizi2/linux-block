@@ -400,7 +400,7 @@ static int kobject_uevent_net_broadcast(struct kobject *kobj,
 	 * are the only tag relevant here since we want to decide which
 	 * network namespaces to broadcast the uevent into.
 	 */
-	if (ops && ops->netlink_ns && kobj->ktype->namespace)
+	if (ops && kobj->ktype->namespace)
 		if (ops->type == KOBJ_NS_TYPE_NET)
 			net = kobj->ktype->namespace(kobj);
 
