@@ -415,6 +415,7 @@ static void rcu_check_gp_kthread_starvation(void)
 			sched_show_task(gpk);
 			wake_up_process(gpk);
 		}
+		pr_err("\tUnless %s kthread gets sufficient CPU time, OOM is now expected behavior.\n", rcu_state.name);
 	}
 }
 
