@@ -357,6 +357,7 @@ static bool rcu_is_gp_kthread_starving(unsigned long *jp)
 static void print_cpu_stall_info(int cpu)
 {
 	unsigned long delta;
+	bool falsepositive;
 	char fast_no_hz[72];
 	struct rcu_data *rdp = per_cpu_ptr(&rcu_data, cpu);
 	char *ticks_title;
@@ -377,6 +378,8 @@ static void print_cpu_stall_info(int cpu)
 	}
 	print_cpu_stall_fast_no_hz(fast_no_hz, cpu);
 	delta = rcu_seq_ctr(rdp->mynode->gp_seq - rdp->rcu_iw_gp_seq);
+	falsepositive = rcu_is_gp_kthread_starving(NULL) &&
+			rcu_dynticks_in_eqs(rcu_dynticks_snap(rdp));
 	pr_err("\t%d-%c%c%c%c: (%lu %s) idle=%03x/%ld/%#lx softirq=%u/%u fqs=%ld %s%s\n",
 	       cpu,
 	       "O."[!!cpu_online(cpu)],
@@ -391,7 +394,7 @@ static void print_cpu_stall_info(int cpu)
 	       rdp->softirq_snap, kstat_softirqs_cpu(RCU_SOFTIRQ, cpu),
 	       data_race(rcu_state.n_force_qs) - rcu_state.n_force_qs_gpstart,
 	       fast_no_hz,
-	       rcu_is_gp_kthread_starving(NULL) ? " (false positive?)" : "");
+	       falsepositive ? " (false positive?)" : "");
 }
 
 /* Complain about starvation of grace-period kthread.  */
