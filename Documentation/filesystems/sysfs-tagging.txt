@@ -37,6 +37,5 @@ Users of this interface:
 - define a type in the kobj_ns_type enumeration.
 - call kobj_ns_type_register() with its kobj_ns_type_operations which has
   - current_ns() which returns current's namespace
-  - netlink_ns() which returns a socket's namespace
   - initial_ns() which returns the initial namesapce
 - call kobj_ns_exit() when an individual tag is no longer valid
