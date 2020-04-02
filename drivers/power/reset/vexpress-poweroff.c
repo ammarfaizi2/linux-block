@@ -5,6 +5,7 @@
  */
 
 #include <linux/delay.h>
+#include <linux/module.h>
 #include <linux/notifier.h>
 #include <linux/of.h>
 #include <linux/of_device.h>
@@ -87,6 +88,7 @@ static const struct of_device_id vexpress_reset_of_match[] = {
 	},
 	{}
 };
+MODULE_DEVICE_TABLE(of, vexpress_reset_of_match);
 
 static int _vexpress_register_restart_handler(struct device *dev)
 {
@@ -145,9 +147,5 @@ static struct platform_driver vexpress_reset_driver = {
 		.of_match_table = vexpress_reset_of_match,
 	},
 };
-
-static int __init vexpress_reset_init(void)
-{
-	return platform_driver_register(&vexpress_reset_driver);
-}
-device_initcall(vexpress_reset_init);
+module_platform_driver(vexpress_reset_driver);
+MODULE_LICENSE("GPL v2");
