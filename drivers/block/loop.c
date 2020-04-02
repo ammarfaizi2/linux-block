@@ -81,6 +81,10 @@
 
 #include "loop.h"
 
+#ifdef CONFIG_BLK_DEV_LOOPFS
+#include "loopfs/loopfs.h"
+#endif
+
 #include <linux/uaccess.h>
 
 static DEFINE_IDR(loop_index_idr);
@@ -1142,7 +1146,7 @@ static int __loop_clr_fd(struct loop_device *lo, bool release)
 	}
 	set_capacity(lo->lo_disk, 0);
 	loop_sysfs_exit(lo);
-	if (bdev) {
+	if (bdev && bdev->bd_disk) {
 		bd_set_size(bdev, 0);
 		/* let user-space know about this change */
 		kobject_uevent(&disk_to_dev(bdev->bd_disk)->kobj, KOBJ_CHANGE);
@@ -1152,7 +1156,7 @@ static int __loop_clr_fd(struct loop_device *lo, bool release)
 	module_put(THIS_MODULE);
 	blk_mq_unfreeze_queue(lo->lo_queue);
 
-	partscan = lo->lo_flags & LO_FLAGS_PARTSCAN && bdev;
+	partscan = lo->lo_flags & LO_FLAGS_PARTSCAN && bdev && bdev->bd_disk;
 	lo_number = lo->lo_number;
 	loop_unprepare_queue(lo);
 out_unlock:
@@ -1236,6 +1240,61 @@ static int loop_clr_fd(struct loop_device *lo)
 
 	return __loop_clr_fd(lo, false);
 }
+
+static void loop_remove(struct loop_device *lo)
+{
+#ifdef CONFIG_BLK_DEV_LOOPFS
+	loopfs_loop_device_remove(lo);
+#endif
+	del_gendisk(lo->lo_disk);
+	blk_cleanup_queue(lo->lo_queue);
+	blk_mq_free_tag_set(&lo->tag_set);
+	put_disk(lo->lo_disk);
+	kfree(lo);
+}
+
+#ifdef CONFIG_BLK_DEV_LOOPFS
+int loopfs_rundown_locked(struct loop_device *lo)
+{
+	int ret;
+
+	if (WARN_ON_ONCE(!loopfs_i_sb(lo->lo_loopfs_i)))
+		return -EINVAL;
+
+	ret = mutex_lock_killable(&loop_ctl_mutex);
+	if (ret)
+		return ret;
+
+	if (lo->lo_state != Lo_unbound || atomic_read(&lo->lo_refcnt) > 0) {
+		ret = -EBUSY;
+	} else {
+		/*
+		 * Since the device is unbound it has no associated backing
+		 * file and we can safely set Lo_rundown to prevent it from
+		 * being found. Actual cleanup happens during inode eviction.
+		 */
+		lo->lo_state = Lo_rundown;
+		ret = 0;
+	}
+
+	mutex_unlock(&loop_ctl_mutex);
+	return ret;
+}
+
+void loopfs_remove_locked(struct loop_device *lo)
+{
+	if (WARN_ON_ONCE(!loopfs_i_sb(lo->lo_loopfs_i)))
+		return;
+
+	loop_clr_fd(lo);
+
+	mutex_lock(&loop_ctl_mutex);
+	idr_remove(&loop_index_idr, lo->lo_number);
+	lo->lo_loopfs_i = NULL;
+	loop_remove(lo);
+	mutex_unlock(&loop_ctl_mutex);
+}
+#endif /* CONFIG_BLK_DEV_LOOPFS */
 
 static int
 loop_set_status(struct loop_device *lo, const struct loop_info64 *info)
@@ -1856,6 +1915,11 @@ static const struct block_device_operations lo_fops = {
  * And now the modules code and kernel interface.
  */
 static int max_loop;
+#ifdef CONFIG_BLK_DEV_LOOPFS
+unsigned long max_devices;
+#else
+static unsigned long max_devices;
+#endif
 module_param(max_loop, int, 0444);
 MODULE_PARM_DESC(max_loop, "Maximum number of loop devices");
 module_param(max_part, int, 0444);
@@ -1981,7 +2045,7 @@ static const struct blk_mq_ops loop_mq_ops = {
 	.complete	= lo_complete_rq,
 };
 
-static int loop_add(struct loop_device **l, int i)
+static int loop_add(struct loop_device **l, int i, struct inode *inode)
 {
 	struct loop_device *lo;
 	struct gendisk *disk;
@@ -2071,7 +2135,17 @@ static int loop_add(struct loop_device **l, int i)
 	disk->private_data	= lo;
 	disk->queue		= lo->lo_queue;
 	sprintf(disk->disk_name, "loop%d", i);
+
 	add_disk(disk);
+
+#ifdef CONFIG_BLK_DEV_LOOPFS
+	err = loopfs_loop_device_create(lo, inode, disk_devt(disk));
+	if (err) {
+		loop_remove(lo);
+		goto out;
+	}
+#endif
+
 	*l = lo;
 	return lo->lo_number;
 
@@ -2087,36 +2161,41 @@ out:
 	return err;
 }
 
-static void loop_remove(struct loop_device *lo)
-{
-	del_gendisk(lo->lo_disk);
-	blk_cleanup_queue(lo->lo_queue);
-	blk_mq_free_tag_set(&lo->tag_set);
-	put_disk(lo->lo_disk);
-	kfree(lo);
-}
+struct find_free_cb_data {
+	struct loop_device **l;
+	struct inode *inode;
+};
 
 static int find_free_cb(int id, void *ptr, void *data)
 {
 	struct loop_device *lo = ptr;
-	struct loop_device **l = data;
+	struct find_free_cb_data *cb_data = data;
 
-	if (lo->lo_state == Lo_unbound) {
-		*l = lo;
-		return 1;
-	}
-	return 0;
+	if (lo->lo_state != Lo_unbound)
+		return 0;
+
+#ifdef CONFIG_BLK_DEV_LOOPFS
+	if (!loopfs_same_instance(cb_data->inode, lo->lo_loopfs_i))
+		return 0;
+#endif
+
+	*cb_data->l = lo;
+	return 1;
 }
 
-static int loop_lookup(struct loop_device **l, int i)
+static int loop_lookup(struct loop_device **l, int i, struct inode *inode)
 {
 	struct loop_device *lo;
 	int ret = -ENODEV;
 
 	if (i < 0) {
 		int err;
+		struct find_free_cb_data cb_data = {
+			.l = &lo,
+			.inode = inode,
+		};
 
-		err = idr_for_each(&loop_index_idr, &find_free_cb, &lo);
+		err = idr_for_each(&loop_index_idr, &find_free_cb, &cb_data);
 		if (err == 1) {
 			*l = lo;
 			ret = lo->lo_number;
@@ -2127,6 +2206,11 @@ static int loop_lookup(struct loop_device **l, int i)
 	/* lookup and return a specific i */
 	lo = idr_find(&loop_index_idr, i);
 	if (lo) {
+#ifdef CONFIG_BLK_DEV_LOOPFS
+		if (!loopfs_same_instance(inode, lo->lo_loopfs_i))
+			return -EACCES;
+#endif
+
 		*l = lo;
 		ret = lo->lo_number;
 	}
@@ -2141,9 +2225,9 @@ static struct kobject *loop_probe(dev_t dev, int *part, void *data)
 	int err;
 
 	mutex_lock(&loop_ctl_mutex);
-	err = loop_lookup(&lo, MINOR(dev) >> part_shift);
+	err = loop_lookup(&lo, MINOR(dev) >> part_shift, NULL);
 	if (err < 0)
-		err = loop_add(&lo, MINOR(dev) >> part_shift);
+		err = loop_add(&lo, MINOR(dev) >> part_shift, NULL);
 	if (err < 0)
 		kobj = NULL;
 	else
@@ -2167,15 +2251,15 @@ static long loop_control_ioctl(struct file *file, unsigned int cmd,
 	ret = -ENOSYS;
 	switch (cmd) {
 	case LOOP_CTL_ADD:
-		ret = loop_lookup(&lo, parm);
+		ret = loop_lookup(&lo, parm, file_inode(file));
 		if (ret >= 0) {
 			ret = -EEXIST;
 			break;
 		}
-		ret = loop_add(&lo, parm);
+		ret = loop_add(&lo, parm, file_inode(file));
 		break;
 	case LOOP_CTL_REMOVE:
-		ret = loop_lookup(&lo, parm);
+		ret = loop_lookup(&lo, parm, file_inode(file));
 		if (ret < 0)
 			break;
 		if (lo->lo_state != Lo_unbound) {
@@ -2191,10 +2275,10 @@ static long loop_control_ioctl(struct file *file, unsigned int cmd,
 		loop_remove(lo);
 		break;
 	case LOOP_CTL_GET_FREE:
-		ret = loop_lookup(&lo, -1);
+		ret = loop_lookup(&lo, -1, file_inode(file));
 		if (ret >= 0)
 			break;
-		ret = loop_add(&lo, -1);
+		ret = loop_add(&lo, -1, file_inode(file));
 	}
 	mutex_unlock(&loop_ctl_mutex);
 
@@ -2221,7 +2305,6 @@ MODULE_ALIAS("devname:loop-control");
 static int __init loop_init(void)
 {
 	int i, nr;
-	unsigned long range;
 	struct loop_device *lo;
 	int err;
 
@@ -2260,10 +2343,10 @@ static int __init loop_init(void)
 	 */
 	if (max_loop) {
 		nr = max_loop;
-		range = max_loop << part_shift;
+		max_devices = max_loop << part_shift;
 	} else {
 		nr = CONFIG_BLK_DEV_LOOP_MIN_COUNT;
-		range = 1UL << MINORBITS;
+		max_devices = 1UL << MINORBITS;
 	}
 
 	err = misc_register(&loop_misc);
@@ -2276,13 +2359,13 @@ static int __init loop_init(void)
 		goto misc_out;
 	}
 
-	blk_register_region(MKDEV(LOOP_MAJOR, 0), range,
+	blk_register_region(MKDEV(LOOP_MAJOR, 0), max_devices,
 				  THIS_MODULE, loop_probe, NULL, NULL);
 
 	/* pre-create number of devices given by config or max_loop */
 	mutex_lock(&loop_ctl_mutex);
 	for (i = 0; i < nr; i++)
-		loop_add(&lo, i);
+		loop_add(&lo, i, NULL);
 	mutex_unlock(&loop_ctl_mutex);
 
 	printk(KERN_INFO "loop: module loaded\n");
@@ -2304,14 +2387,10 @@ static int loop_exit_cb(int id, void *ptr, void *data)
 
 static void __exit loop_exit(void)
 {
-	unsigned long range;
-
-	range = max_loop ? max_loop << part_shift : 1UL << MINORBITS;
-
 	idr_for_each(&loop_index_idr, &loop_exit_cb, NULL);
 	idr_destroy(&loop_index_idr);
 
-	blk_unregister_region(MKDEV(LOOP_MAJOR, 0), range);
+	blk_unregister_region(MKDEV(LOOP_MAJOR, 0), max_devices);
 	unregister_blkdev(LOOP_MAJOR, "loop");
 
 	misc_deregister(&loop_misc);

@@ -62,6 +62,9 @@ struct loop_device {
 	struct request_queue	*lo_queue;
 	struct blk_mq_tag_set	tag_set;
 	struct gendisk		*lo_disk;
+#ifdef CONFIG_BLK_DEV_LOOPFS
+	struct inode		*lo_loopfs_i;
+#endif
 };
 
 struct loop_cmd {
@@ -89,6 +92,9 @@ struct loop_func_table {
 }; 
 
 int loop_register_transfer(struct loop_func_table *funcs);
-int loop_unregister_transfer(int number); 
+int loop_unregister_transfer(int number);
+#ifdef CONFIG_BLK_DEV_LOOPFS
+extern unsigned long max_devices;
+#endif
 
 #endif
