@@ -523,6 +523,8 @@ struct dev_links_info {
  *		  sync_state() callback.
  * @dma_coherent: this particular device is dma coherent, even if the
  *		architecture supports non-coherent devices.
+ * @no_devnode: whether device nodes associated with this device are kept out
+ *		of devtmpfs (e.g. due to separate filesystem)
  *
  * At the lowest level, every device in a Linux system is represented by an
  * instance of struct device. The device structure contains the information
@@ -622,6 +624,7 @@ struct device {
     defined(CONFIG_ARCH_HAS_SYNC_DMA_FOR_CPU_ALL)
 	bool			dma_coherent:1;
 #endif
+	bool			no_devnode:1;
 };
 
 static inline struct device *kobj_to_dev(struct kobject *kobj)

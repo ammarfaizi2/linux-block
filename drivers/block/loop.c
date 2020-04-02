@@ -2208,8 +2208,10 @@ static int loop_add(struct loop_device **l, int i, struct inode *inode)
 	disk->queue		= lo->lo_queue;
 	sprintf(disk->disk_name, "loop%d", i);
 #ifdef CONFIG_BLK_DEV_LOOPFS
-	if (loopfs_i_sb(inode))
+	if (loopfs_i_sb(inode)) {
 		disk->user_ns = loopfs_i_sb(inode)->s_user_ns;
+		disk_to_dev(disk)->no_devnode = true;
+	}
 #endif
 
 	add_disk(disk);
