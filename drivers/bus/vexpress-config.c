@@ -114,26 +114,31 @@ static void vexpress_config_devres_release(struct device *dev, void *res)
 	bridge->ops->regmap_exit(regmap, bridge->context);
 }
 
-struct regmap *devm_regmap_init_vexpress_config(struct device *dev)
+struct regmap *regmap_init_vexpress_config(struct device *dev)
 {
 	struct vexpress_config_bridge *bridge;
-	struct regmap *regmap;
-	struct regmap **res;
 
 	bridge = dev_get_drvdata(dev->parent);
 	if (WARN_ON(!bridge))
 		return ERR_PTR(-EINVAL);
 
+	return (bridge->ops->regmap_init)(dev, bridge->context);
+}
+EXPORT_SYMBOL_GPL(regmap_init_vexpress_config);
+
+struct regmap *devm_regmap_init_vexpress_config(struct device *dev)
+{
+	struct regmap *regmap;
+	struct regmap **res;
+
+	regmap = regmap_init_vexpress_config(dev);
+	if (IS_ERR(regmap))
+		return regmap;
+
 	res = devres_alloc(vexpress_config_devres_release, sizeof(*res),
 			GFP_KERNEL);
 	if (!res)
 		return ERR_PTR(-ENOMEM);
-
-	regmap = (bridge->ops->regmap_init)(dev, bridge->context);
-	if (IS_ERR(regmap)) {
-		devres_free(res);
-		return regmap;
-	}
 
 	*res = regmap;
 	devres_add(dev, res);

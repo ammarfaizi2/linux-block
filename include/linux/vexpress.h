@@ -20,7 +20,7 @@
 void vexpress_config_set_master(u32 site);
 
 /* Config regmap API */
-
+struct regmap *regmap_init_vexpress_config(struct device *dev);
 struct regmap *devm_regmap_init_vexpress_config(struct device *dev);
 
 /* Platform control */
