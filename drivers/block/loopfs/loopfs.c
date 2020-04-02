@@ -76,8 +76,10 @@ bool loopfs_wants_remove(const struct loop_device *lo)
 
 void loopfs_init(struct gendisk *disk, struct inode *inode)
 {
-	if (loopfs_i_sb(inode))
+	if (loopfs_i_sb(inode)) {
 		disk->user_ns = loopfs_i_sb(inode)->s_user_ns;
+		disk_to_dev(disk)->no_devnode = true;
+	}
 }
 
 /**

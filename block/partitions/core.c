@@ -416,6 +416,7 @@ struct hd_struct *add_partition(struct gendisk *disk, int partno,
 	pdev->class = &block_class;
 	pdev->type = &part_type;
 	pdev->parent = ddev;
+	pdev->no_devnode = ddev->no_devnode;
 
 	err = blk_alloc_devt(p, &devt);
 	if (err)

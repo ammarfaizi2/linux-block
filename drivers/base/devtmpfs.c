@@ -111,7 +111,7 @@ int devtmpfs_create_node(struct device *dev)
 	const char *tmp = NULL;
 	struct req req;
 
-	if (!thread)
+	if (!thread || dev->no_devnode)
 		return 0;
 
 	req.mode = 0;
@@ -138,7 +138,7 @@ int devtmpfs_delete_node(struct device *dev)
 	const char *tmp = NULL;
 	struct req req;
 
-	if (!thread)
+	if (!thread || dev->no_devnode)
 		return 0;
 
 	req.name = device_get_devnode(dev, NULL, NULL, NULL, &tmp);
