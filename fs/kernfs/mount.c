@@ -279,14 +279,15 @@ static int kernfs_test_super(struct super_block *sb, struct fs_context *fc)
 	struct kernfs_super_info *sb_info = kernfs_info(sb);
 	struct kernfs_super_info *info = fc->s_fs_info;
 
-	return sb_info->root == info->root && sb_info->ns == info->ns;
+	return sb_info->root == info->root &&
+	       memcmp(sb_info->ns, info->ns, sizeof(sb_info->ns)) == 0;
 }
 
 static int kernfs_set_super(struct super_block *sb, struct fs_context *fc)
 {
 	struct kernfs_fs_context *kfc = fc->fs_private;
 
-	kfc->ns_tag = NULL;
+	memset(kfc->ns_tag, 0, sizeof(kfc->ns_tag));
 	return set_anon_super_fc(sb, fc);
 }
 
@@ -296,7 +297,7 @@ static int kernfs_set_super(struct super_block *sb, struct fs_context *fc)
  *
  * Return the namespace tag associated with kernfs super_block @sb.
  */
-const void *kernfs_super_ns(struct super_block *sb)
+const void **kernfs_super_ns(struct super_block *sb)
 {
 	struct kernfs_super_info *info = kernfs_info(sb);
 
@@ -324,7 +325,9 @@ int kernfs_get_tree(struct fs_context *fc)
 		return -ENOMEM;
 
 	info->root = kfc->root;
-	info->ns = kfc->ns_tag;
+	BUILD_BUG_ON(sizeof(info->ns) != sizeof(kfc->ns_tag));
+	memcpy(info->ns, kfc->ns_tag, sizeof(info->ns));
+
 	INIT_LIST_HEAD(&info->node);
 
 	fc->s_fs_info = info;
