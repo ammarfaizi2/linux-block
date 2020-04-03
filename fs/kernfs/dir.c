@@ -576,7 +576,7 @@ static int kernfs_dop_revalidate(struct dentry *dentry, unsigned int flags)
 
 	/* The kernfs node has been moved to a different namespace */
 	if (kn->parent && kernfs_ns_enabled(kn->parent) &&
-	    kernfs_info(dentry->d_sb)->ns != kn->ns)
+	    kernfs_info(dentry->d_sb)->ns[kn->ns_type] != kn->ns)
 		goto out_bad;
 
 	mutex_unlock(&kernfs_mutex);
@@ -1087,7 +1087,7 @@ static struct dentry *kernfs_iop_lookup(struct inode *dir,
 	mutex_lock(&kernfs_mutex);
 
 	if (kernfs_ns_enabled(parent))
-		ns = kernfs_info(dir->i_sb)->ns;
+		ns = kernfs_info(dir->i_sb)->ns[parent->ns_type];
 
 	kn = kernfs_find_ns(parent, dentry->d_name.name, ns);
 
@@ -1673,7 +1673,7 @@ static int kernfs_fop_readdir(struct file *file, struct dir_context *ctx)
 	mutex_lock(&kernfs_mutex);
 
 	if (kernfs_ns_enabled(parent))
-		ns = kernfs_info(dentry->d_sb)->ns;
+		ns = kernfs_info(dentry->d_sb)->ns[parent->ns_type];
 
 	for (pos = kernfs_dir_pos(ns, parent, ctx->pos, pos);
 	     pos;
