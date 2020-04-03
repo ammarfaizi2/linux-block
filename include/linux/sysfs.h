@@ -306,9 +306,10 @@ void sysfs_notify(struct kobject *kobj, const char *dir, const char *attr);
 
 int __must_check sysfs_init(void);
 
-static inline void sysfs_enable_ns(struct kernfs_node *kn)
+static inline void sysfs_enable_ns(struct kernfs_node *kn,
+				   enum kobj_ns_type ns_type)
 {
-	return kernfs_enable_ns(kn);
+	return kernfs_enable_ns(kn, ns_type);
 }
 
 int sysfs_file_change_owner(struct kobject *kobj, const char *name, kuid_t kuid,
@@ -531,7 +532,8 @@ static inline int __must_check sysfs_init(void)
 	return 0;
 }
 
-static inline void sysfs_enable_ns(struct kernfs_node *kn)
+static inline void sysfs_enable_ns(struct kernfs_node *kn,
+				   enum kobj_ns_type ns_type)
 {
 }
 

@@ -41,8 +41,8 @@ static void sysfs_fs_context_free(struct fs_context *fc)
 {
 	struct kernfs_fs_context *kfc = fc->fs_private;
 
-	if (kfc->ns_tag)
-		kobj_ns_drop(KOBJ_NS_TYPE_NET, kfc->ns_tag);
+	if (kfc->ns_tag[KOBJ_NS_TYPE_NET])
+		kobj_ns_drop(KOBJ_NS_TYPE_NET, kfc->ns_tag[KOBJ_NS_TYPE_NET]);
 	kernfs_free_fs_context(fc);
 	kfree(kfc);
 }
@@ -66,7 +66,7 @@ static int sysfs_init_fs_context(struct fs_context *fc)
 	if (!kfc)
 		return -ENOMEM;
 
-	kfc->ns_tag = netns = kobj_ns_grab_current(KOBJ_NS_TYPE_NET);
+	kfc->ns_tag[KOBJ_NS_TYPE_NET] = netns = kobj_ns_grab_current(KOBJ_NS_TYPE_NET);
 	kfc->root = sysfs_root;
 	kfc->magic = SYSFS_MAGIC;
 	fc->fs_private = kfc;
@@ -81,10 +81,10 @@ static int sysfs_init_fs_context(struct fs_context *fc)
 
 static void sysfs_kill_sb(struct super_block *sb)
 {
-	void *ns = (void *)kernfs_super_ns(sb);
+	void **ns = (void **)kernfs_super_ns(sb);
 
+	kobj_ns_drop(KOBJ_NS_TYPE_NET, ns[KOBJ_NS_TYPE_NET]);
 	kernfs_kill_sb(sb);
-	kobj_ns_drop(KOBJ_NS_TYPE_NET, ns);
 }
 
 static struct file_system_type sysfs_fs_type = {

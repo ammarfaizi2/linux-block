@@ -16,6 +16,7 @@
 #include <linux/atomic.h>
 #include <linux/uidgid.h>
 #include <linux/wait.h>
+#include <linux/kobject_ns.h>
 
 struct file;
 struct dentry;
@@ -137,8 +138,9 @@ struct kernfs_node {
 
 	struct rb_node		rb;
 
-	const void		*ns;	/* namespace tag */
-	unsigned int		hash;	/* ns + name hash */
+	const void		*ns;		/* namespace tag */
+	enum kobj_ns_type	ns_type;	/* type of namespace tag */
+	unsigned int		hash;		/* ns + name hash */
 	union {
 		struct kernfs_elem_dir		dir;
 		struct kernfs_elem_symlink	symlink;
@@ -275,7 +277,7 @@ struct kernfs_ops {
  */
 struct kernfs_fs_context {
 	struct kernfs_root	*root;		/* Root of the hierarchy being mounted */
-	void			*ns_tag;	/* Namespace tag of the mount (or NULL) */
+	void			*ns_tag[KOBJ_NS_TYPES]; /* Namespace tags of the mount (or empty) */
 	unsigned long		magic;		/* File system specific magic number */
 
 	/* The following are set/used by kernfs_mount() */
@@ -319,17 +321,20 @@ static inline ino_t kernfs_gen(struct kernfs_node *kn)
 
 /**
  * kernfs_enable_ns - enable namespace under a directory
- * @kn: directory of interest, should be empty
+ * @kn:		directory of interest, should be empty
+ * @ns_type:	type of namespace that should be enabled for this directory
  *
  * This is to be called right after @kn is created to enable namespace
  * under it.  All children of @kn must have non-NULL namespace tags and
  * only the ones which match the super_block's tag will be visible.
  */
-static inline void kernfs_enable_ns(struct kernfs_node *kn)
+static inline void kernfs_enable_ns(struct kernfs_node *kn,
+				    enum kobj_ns_type ns_type)
 {
 	WARN_ON_ONCE(kernfs_type(kn) != KERNFS_DIR);
 	WARN_ON_ONCE(!RB_EMPTY_ROOT(&kn->dir.children));
 	kn->flags |= KERNFS_NS;
+	kn->ns_type = ns_type;
 }
 
 /**
@@ -401,7 +406,7 @@ int kernfs_xattr_get(struct kernfs_node *kn, const char *name,
 int kernfs_xattr_set(struct kernfs_node *kn, const char *name,
 		     const void *value, size_t size, int flags);
 
-const void *kernfs_super_ns(struct super_block *sb);
+const void **kernfs_super_ns(struct super_block *sb);
 int kernfs_get_tree(struct fs_context *fc);
 void kernfs_free_fs_context(struct fs_context *fc);
 void kernfs_kill_sb(struct super_block *sb);
@@ -415,7 +420,8 @@ struct kernfs_node *kernfs_find_and_get_node_by_id(struct kernfs_root *root,
 static inline enum kernfs_node_type kernfs_type(struct kernfs_node *kn)
 { return 0; }	/* whatever */
 
-static inline void kernfs_enable_ns(struct kernfs_node *kn) { }
+static inline void kernfs_enable_ns(struct kernfs_node *kn,
+				    enum kobj_ns_type ns_type) { }
 
 static inline bool kernfs_ns_enabled(struct kernfs_node *kn)
 { return false; }
@@ -511,7 +517,7 @@ static inline int kernfs_xattr_set(struct kernfs_node *kn, const char *name,
 				   const void *value, size_t size, int flags)
 { return -ENOSYS; }
 
-static inline const void *kernfs_super_ns(struct super_block *sb)
+static inline const void **kernfs_super_ns(struct super_block *sb)
 { return NULL; }
 
 static inline int kernfs_get_tree(struct fs_context *fc)

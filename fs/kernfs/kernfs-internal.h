@@ -16,6 +16,7 @@
 #include <linux/xattr.h>
 
 #include <linux/kernfs.h>
+#include <linux/kobject_ns.h>
 #include <linux/fs_context.h>
 
 struct kernfs_iattrs {
@@ -62,12 +63,10 @@ struct kernfs_super_info {
 	struct kernfs_root	*root;
 
 	/*
-	 * Each sb is associated with one namespace tag, currently the
-	 * network namespace of the task which mounted this kernfs
-	 * instance.  If multiple tags become necessary, make the following
-	 * an array and compare kernfs_node tag against every entry.
+	 * Each sb can be associated with namespace tags. They will be used
+	 * to compare kernfs_node tags against relevant entries.
 	 */
-	const void		*ns;
+	const void		*ns[KOBJ_NS_TYPES];
 
 	/* anchored at kernfs_root->supers, protected by kernfs_mutex */
 	struct list_head	node;
