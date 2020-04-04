@@ -34,6 +34,8 @@ enum kobj_ns_type {
  *   @grab_current_ns: return a new reference to calling task's namespace
  *   @initial_ns: return the initial namespace (i.e. init_net_ns)
  *   @drop_ns: drops a reference to namespace
+ *   @initial_ns_propagates: whether devices in the initial namespace propagate
+ *			to all other namespaces
  */
 struct kobj_ns_type_operations {
 	enum kobj_ns_type type;
@@ -41,6 +43,7 @@ struct kobj_ns_type_operations {
 	void *(*grab_current_ns)(void);
 	const void *(*initial_ns)(void);
 	void (*drop_ns)(void *);
+	bool (*initial_ns_propagates)(void);
 };
 
 int kobj_ns_type_register(const struct kobj_ns_type_operations *ops);
