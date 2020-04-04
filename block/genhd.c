@@ -1198,11 +1198,87 @@ static struct kobject *base_probe(dev_t devt, int *partno, void *data)
 	return NULL;
 }
 
+#ifdef CONFIG_BLK_DEV_LOOPFS
+static void *user_grab_current_ns(void)
+{
+	struct user_namespace *ns = current_user_ns();
+	return get_user_ns(ns);
+}
+
+static const void *user_initial_ns(void)
+{
+	return &init_user_ns;
+}
+
+static void user_put_ns(void *p)
+{
+	struct user_namespace *ns = p;
+	put_user_ns(ns);
+}
+
+static bool user_current_may_mount(void)
+{
+	return ns_capable(current_user_ns(), CAP_SYS_ADMIN);
+}
+
+static bool user_initial_ns_propagates(void)
+{
+	return true;
+}
+
+const struct kobj_ns_type_operations user_ns_type_operations = {
+	.type			= KOBJ_NS_TYPE_USER,
+	.current_may_mount	= user_current_may_mount,
+	.grab_current_ns	= user_grab_current_ns,
+	.initial_ns		= user_initial_ns,
+	.drop_ns		= user_put_ns,
+	.initial_ns_propagates	= user_initial_ns_propagates,
+};
+
+static const void *block_class_user_namespace(struct device *dev)
+{
+	struct gendisk *disk;
+
+	if (dev->type == &part_type)
+		disk = part_to_disk(dev_to_part(dev));
+	else
+		disk = dev_to_disk(dev);
+
+	return disk->user_ns;
+}
+
+static void block_class_get_ownership(struct device *dev, kuid_t *uid, kgid_t *gid)
+{
+	struct gendisk *disk;
+	struct user_namespace *ns;
+
+	if (dev->type == &part_type)
+		disk = part_to_disk(dev_to_part(dev));
+	else
+		disk = dev_to_disk(dev);
+
+	ns = disk->user_ns;
+	if (ns && ns != &init_user_ns) {
+		kuid_t ns_root_uid = make_kuid(ns, 0);
+		kgid_t ns_root_gid = make_kgid(ns, 0);
+
+		if (uid_valid(ns_root_uid))
+			*uid = ns_root_uid;
+
+		if (gid_valid(ns_root_gid))
+			*gid = ns_root_gid;
+	}
+}
+#endif /* CONFIG_BLK_DEV_LOOPFS */
+
 static int __init genhd_device_init(void)
 {
 	int error;
 
 	block_class.dev_kobj = sysfs_dev_block_kobj;
+#ifdef CONFIG_BLK_DEV_LOOPFS
+	kobj_ns_type_register(&user_ns_type_operations);
+#endif
 	error = class_register(&block_class);
 	if (unlikely(error))
 		return error;
@@ -1524,8 +1600,14 @@ static void disk_release(struct device *dev)
 		blk_put_queue(disk->queue);
 	kfree(disk);
 }
+
 struct class block_class = {
 	.name		= "block",
+#ifdef CONFIG_BLK_DEV_LOOPFS
+	.ns_type	= &user_ns_type_operations,
+	.namespace	= block_class_user_namespace,
+	.get_ownership	= block_class_get_ownership,
+#endif
 };
 
 static char *block_devnode(struct device *dev, umode_t *mode,
@@ -1715,6 +1797,9 @@ struct gendisk *__alloc_disk_node(int minors, int node_id)
 		disk_to_dev(disk)->class = &block_class;
 		disk_to_dev(disk)->type = &disk_type;
 		device_initialize(disk_to_dev(disk));
+#ifdef CONFIG_BLK_DEV_LOOPFS
+		disk->user_ns = &init_user_ns;
+#endif
 	}
 	return disk;
 }
