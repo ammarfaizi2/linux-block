@@ -575,10 +575,15 @@ static int kernfs_dop_revalidate(struct dentry *dentry, unsigned int flags)
 		goto out_bad;
 
 	/* The kernfs node has been moved to a different namespace */
-	if (kn->parent && kernfs_ns_enabled(kn->parent) &&
-	    kernfs_info(dentry->d_sb)->ns[kn->ns_type] != kn->ns)
-		goto out_bad;
+	if (kn->parent && kernfs_ns_enabled(kn->parent)) {
+		if (kernfs_init_ns_propagates(kn->parent) &&
+		    kn->ns == kernfs_init_ns(kn->parent->ns_type))
+			goto out_good;
+		if (kernfs_info(dentry->d_sb)->ns[kn->parent->ns_type] != kn->ns)
+			goto out_bad;
+	}
 
+out_good:
 	mutex_unlock(&kernfs_mutex);
 	return 1;
 out_bad:
@@ -1090,6 +1095,10 @@ static struct dentry *kernfs_iop_lookup(struct inode *dir,
 		ns = kernfs_info(dir->i_sb)->ns[parent->ns_type];
 
 	kn = kernfs_find_ns(parent, dentry->d_name.name, ns);
+	if (!kn && kernfs_init_ns_propagates(parent)) {
+		ns = kernfs_init_ns(parent->ns_type);
+		kn = kernfs_find_ns(parent, dentry->d_name.name, ns);
+	}
 
 	/* no such entry */
 	if (!kn || !kernfs_active(kn)) {
@@ -1614,6 +1623,8 @@ static int kernfs_dir_fop_release(struct inode *inode, struct file *filp)
 static struct kernfs_node *kernfs_dir_pos(const void *ns,
 	struct kernfs_node *parent, loff_t hash, struct kernfs_node *pos)
 {
+	const void *init_ns;
+
 	if (pos) {
 		int valid = kernfs_active(pos) &&
 			pos->parent == parent && hash == pos->hash;
@@ -1621,6 +1632,12 @@ static struct kernfs_node *kernfs_dir_pos(const void *ns,
 		if (!valid)
 			pos = NULL;
 	}
+
+	if (kernfs_init_ns_propagates(parent))
+		init_ns = kernfs_init_ns(parent->ns_type);
+	else
+		init_ns = NULL;
+
 	if (!pos && (hash > 1) && (hash < INT_MAX)) {
 		struct rb_node *node = parent->dir.children.rb_node;
 		while (node) {
@@ -1635,7 +1652,7 @@ static struct kernfs_node *kernfs_dir_pos(const void *ns,
 		}
 	}
 	/* Skip over entries which are dying/dead or in the wrong namespace */
-	while (pos && (!kernfs_active(pos) || pos->ns != ns)) {
+	while (pos && (!kernfs_active(pos) || (pos->ns != ns && pos->ns != init_ns))) {
 		struct rb_node *node = rb_next(&pos->rb);
 		if (!node)
 			pos = NULL;
@@ -1650,13 +1667,20 @@ static struct kernfs_node *kernfs_dir_next_pos(const void *ns,
 {
 	pos = kernfs_dir_pos(ns, parent, ino, pos);
 	if (pos) {
+		const void *init_ns;
+		if (kernfs_init_ns_propagates(parent))
+			init_ns = kernfs_init_ns(parent->ns_type);
+		else
+			init_ns = NULL;
+
 		do {
 			struct rb_node *node = rb_next(&pos->rb);
 			if (!node)
 				pos = NULL;
 			else
 				pos = rb_to_kn(node);
-		} while (pos && (!kernfs_active(pos) || pos->ns != ns));
+		} while (pos && (!kernfs_active(pos) ||
+				 (pos->ns != ns && pos->ns != init_ns)));
 	}
 	return pos;
 }

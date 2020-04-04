@@ -53,6 +53,7 @@ enum kernfs_node_flag {
 	KERNFS_SUICIDED		= 0x0800,
 	KERNFS_EMPTY_DIR	= 0x1000,
 	KERNFS_HAS_RELEASE	= 0x2000,
+	KERNFS_NS_PROPAGATE	= 0x4000,
 };
 
 /* @flags for kernfs_create_root() */
@@ -335,6 +336,27 @@ static inline void kernfs_enable_ns(struct kernfs_node *kn,
 	WARN_ON_ONCE(!RB_EMPTY_ROOT(&kn->dir.children));
 	kn->flags |= KERNFS_NS;
 	kn->ns_type = ns_type;
+}
+
+static inline void kernfs_enable_init_ns_propagates(struct kernfs_node *kn)
+{
+	WARN_ON_ONCE(kernfs_type(kn) != KERNFS_DIR);
+	WARN_ON_ONCE(!RB_EMPTY_ROOT(&kn->dir.children));
+	WARN_ON_ONCE(!(kn->flags & KERNFS_NS));
+	kn->flags |= KERNFS_NS_PROPAGATE;
+}
+
+/**
+ * kernfs_init_ns_propagates - test whether init ns propagates
+ * @kn: the node to test
+ *
+ * Test whether kernfs entries created in the init namespace propagate into
+ * other namespaces.
+ */
+static inline bool kernfs_init_ns_propagates(const struct kernfs_node *kn)
+{
+	return ((kn->flags & (KERNFS_NS | KERNFS_NS_PROPAGATE)) ==
+		(KERNFS_NS | KERNFS_NS_PROPAGATE));
 }
 
 /**
