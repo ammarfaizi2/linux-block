@@ -80,6 +80,30 @@ static inline struct kernfs_node *kernfs_dentry_node(struct dentry *dentry)
 	return d_inode(dentry)->i_private;
 }
 
+#ifdef CONFIG_NET
+extern struct net init_net;
+#endif
+
+extern struct user_namespace init_user_ns;
+
+static inline const void *kernfs_init_ns(enum kobj_ns_type ns_type)
+{
+	switch (ns_type) {
+	case KOBJ_NS_TYPE_NET:
+#ifdef CONFIG_NET
+		return &init_net;
+#else
+		break;
+#endif
+	case KOBJ_NS_TYPE_USER:
+		return &init_user_ns;
+	default:
+		pr_debug("Unsupported namespace type %d for kernfs\n", ns_type);
+	}
+
+	return NULL;
+}
+
 extern const struct super_operations kernfs_sops;
 extern struct kmem_cache *kernfs_node_cache, *kernfs_iattrs_cache;
 

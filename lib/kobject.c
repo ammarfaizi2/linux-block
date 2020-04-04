@@ -121,6 +121,8 @@ static int create_dir(struct kobject *kobj)
 		BUG_ON(!kobj_ns_type_registered(ops->type));
 
 		sysfs_enable_ns(kobj->sd, ops->type);
+		if (ops->initial_ns_propagates && ops->initial_ns_propagates())
+			kernfs_enable_init_ns_propagates(kobj->sd);
 	}
 
 	return 0;
