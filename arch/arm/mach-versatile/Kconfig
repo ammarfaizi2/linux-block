@@ -6,9 +6,7 @@ config ARCH_VERSATILE
 	select ARM_TIMER_SP804
 	select ARM_VIC
 	select CLKSRC_VERSATILE
-	select COMMON_CLK_VERSATILE
 	select CPU_ARM926T
-	select ICST
 	select MFD_SYSCON
 	select PLAT_VERSATILE
 	select POWER_RESET
@@ -16,4 +14,3 @@ config ARCH_VERSATILE
 	select VERSATILE_FPGA_IRQ
 	help
 	  This enables support for ARM Ltd Versatile board.
-
