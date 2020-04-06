@@ -26,7 +26,7 @@ static const bool per_bus_mapping = !IS_ENABLED(CONFIG_64BIT);
  */
 struct pci_config_window *pci_ecam_create(struct device *dev,
 		struct resource *cfgres, struct resource *busr,
-		struct pci_ecam_ops *ops)
+		const struct pci_ecam_ops *ops)
 {
 	struct pci_config_window *cfg;
 	unsigned int bus_range, bus_range_max, bsz;

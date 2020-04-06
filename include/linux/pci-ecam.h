@@ -29,7 +29,7 @@ struct pci_config_window {
 	struct resource			res;
 	struct resource			busr;
 	void				*priv;
-	struct pci_ecam_ops		*ops;
+	const struct pci_ecam_ops	*ops;
 	union {
 		void __iomem		*win;	/* 64-bit single mapping */
 		void __iomem		**winp; /* 32-bit per-bus mapping */
@@ -40,7 +40,7 @@ struct pci_config_window {
 /* create and free pci_config_window */
 struct pci_config_window *pci_ecam_create(struct device *dev,
 		struct resource *cfgres, struct resource *busr,
-		struct pci_ecam_ops *ops);
+		const struct pci_ecam_ops *ops);
 void pci_ecam_free(struct pci_config_window *cfg);
 
 /* map_bus when ->sysdata is an instance of pci_config_window */
@@ -62,7 +62,7 @@ extern struct pci_ecam_ops al_pcie_ops; /* Amazon Annapurna Labs PCIe */
 #ifdef CONFIG_PCI_HOST_COMMON
 /* for DT-based PCI controllers that support ECAM */
 int pci_host_common_probe(struct platform_device *pdev,
-			  struct pci_ecam_ops *ops);
+			  const struct pci_ecam_ops *ops);
 int pci_host_common_remove(struct platform_device *pdev);
 #endif
 #endif
