@@ -46,6 +46,10 @@
 
 #define MLXSW_SP_RESOURCE_NAME_SPAN "span_agents"
 
+#define MLXSW_SP_RESOURCE_NAME_COUNTERS "counters"
+#define MLXSW_SP_RESOURCE_NAME_COUNTERS_FLOW "flow"
+#define MLXSW_SP_RESOURCE_NAME_COUNTERS_RIF "rif"
+
 enum mlxsw_sp_resource_id {
 	MLXSW_SP_RESOURCE_KVD = 1,
 	MLXSW_SP_RESOURCE_KVD_LINEAR,
@@ -55,6 +59,9 @@ enum mlxsw_sp_resource_id {
 	MLXSW_SP_RESOURCE_KVD_LINEAR_CHUNKS,
 	MLXSW_SP_RESOURCE_KVD_LINEAR_LARGE_CHUNKS,
 	MLXSW_SP_RESOURCE_SPAN,
+	MLXSW_SP_RESOURCE_COUNTERS,
+	MLXSW_SP_RESOURCE_COUNTERS_FLOW,
+	MLXSW_SP_RESOURCE_COUNTERS_RIF,
 };
 
 struct mlxsw_sp_port;
@@ -739,6 +746,9 @@ int mlxsw_sp_acl_rulei_act_vlan(struct mlxsw_sp *mlxsw_sp,
 				struct mlxsw_sp_acl_rule_info *rulei,
 				u32 action, u16 vid, u16 proto, u8 prio,
 				struct netlink_ext_ack *extack);
+int mlxsw_sp_acl_rulei_act_priority(struct mlxsw_sp *mlxsw_sp,
+				    struct mlxsw_sp_acl_rule_info *rulei,
+				    u32 prio, struct netlink_ext_ack *extack);
 int mlxsw_sp_acl_rulei_act_count(struct mlxsw_sp *mlxsw_sp,
 				 struct mlxsw_sp_acl_rule_info *rulei,
 				 struct netlink_ext_ack *extack);

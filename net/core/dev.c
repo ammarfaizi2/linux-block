@@ -2875,7 +2875,6 @@ int netif_set_real_num_tx_queues(struct net_device *dev, unsigned int txq)
 			netif_setup_tc(dev, txq);
 
 		dev->real_num_tx_queues = txq;
-		dev_qdisc_set_real_num_tx_queues(dev);
 
 		if (disabling) {
 			synchronize_net();
@@ -4849,7 +4848,8 @@ sch_handle_ingress(struct sk_buff *skb, struct packet_type **pt_prev, int *ret,
 	skb->tc_at_ingress = 1;
 	mini_qdisc_bstats_cpu_update(miniq, skb);
 
-	switch (tcf_classify(skb, miniq->filter_list, &cl_res, false)) {
+	switch (tcf_classify_ingress(skb, miniq->block, miniq->filter_list,
+				     &cl_res, false)) {
 	case TC_ACT_OK:
 	case TC_ACT_RECLASSIFY:
 		skb->tc_index = TC_H_MIN(cl_res.classid);
@@ -9282,6 +9282,10 @@ int register_netdevice(struct net_device *dev)
 	/* When net_device's are persistent, this will be fatal. */
 	BUG_ON(dev->reg_state != NETREG_UNINITIALIZED);
 	BUG_ON(!net);
+
+	ret = ethtool_check_ops(dev->ethtool_ops);
+	if (ret)
+		return ret;
 
 	spin_lock_init(&dev->addr_list_lock);
 	lockdep_set_class(&dev->addr_list_lock, &dev->addr_list_lock_key);
