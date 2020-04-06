@@ -691,6 +691,44 @@ static bool is_sysenter_singlestep(struct pt_regs *regs)
 #endif
 }
 
+static __always_inline void debug_enter(unsigned long *dr6, unsigned long *dr7)
+{
+	/*
+	 * Disable breakpoints during exception handling; recursive exceptions
+	 * are exceedingly 'fun'.
+	 *
+	 * Since this function is NOKPROBE, and that also applies to
+	 * HW_BREAKPOINT_X, we can't hit a breakpoint before this (XXX except a
+	 * HW_BREAKPOINT_W on our stack)
+	 *
+	 * Entry text is excluded for HW_BP_X and cpu_entry_area, which
+	 * includes the entry stack is excluded for everything.
+	 */
+	get_debugreg(*dr7, 6);
+	set_debugreg(0, 7);
+
+	/*
+	 * The Intel SDM says:
+	 *
+	 *   Certain debug exceptions may clear bits 0-3. The remaining
+	 *   contents of the DR6 register are never cleared by the
+	 *   processor. To avoid confusion in identifying debug
+	 *   exceptions, debug handlers should clear the register before
+	 *   returning to the interrupted task.
+	 *
+	 * Keep it simple: clear DR6 immediately.
+	 */
+	get_debugreg(*dr6, 6);
+	set_debugreg(0, 6);
+	/* Filter out all the reserved bits which are preset to 1 */
+	*dr6 &= ~DR6_RESERVED;
+}
+
+static __always_inline void debug_exit(unsigned long dr7)
+{
+	set_debugreg(dr7, 7);
+}
+
 /*
  * Our handling of the processor debug registers is non-trivial.
  * We do not clear them on entry and exit from the kernel. Therefore
@@ -718,28 +756,13 @@ static bool is_sysenter_singlestep(struct pt_regs *regs)
 dotraplinkage void do_debug(struct pt_regs *regs, long error_code)
 {
 	struct task_struct *tsk = current;
+	unsigned long dr6, dr7;
 	int user_icebp = 0;
-	unsigned long dr6;
 	int si_code;
 
+	debug_enter(&dr6, &dr7);
+
 	nmi_enter();
-
-	get_debugreg(dr6, 6);
-	/*
-	 * The Intel SDM says:
-	 *
-	 *   Certain debug exceptions may clear bits 0-3. The remaining
-	 *   contents of the DR6 register are never cleared by the
-	 *   processor. To avoid confusion in identifying debug
-	 *   exceptions, debug handlers should clear the register before
-	 *   returning to the interrupted task.
-	 *
-	 * Keep it simple: clear DR6 immediately.
-	 */
-	set_debugreg(0, 6);
-
-	/* Filter out all the reserved bits which are preset to 1 */
-	dr6 &= ~DR6_RESERVED;
 
 	/*
 	 * The SDM says "The processor clears the BTF flag when it
@@ -777,7 +800,7 @@ dotraplinkage void do_debug(struct pt_regs *regs, long error_code)
 #endif
 
 	if (notify_die(DIE_DEBUG, "debug", regs, (long)&dr6, error_code,
-							SIGTRAP) == NOTIFY_STOP)
+		       SIGTRAP) == NOTIFY_STOP)
 		goto exit;
 
 	/*
@@ -816,6 +839,7 @@ dotraplinkage void do_debug(struct pt_regs *regs, long error_code)
 
 exit:
 	nmi_exit();
+	debug_exit(dr7);
 }
 NOKPROBE_SYMBOL(do_debug);
 
