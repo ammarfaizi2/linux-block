@@ -31,6 +31,7 @@ extern void loopfs_remove(struct loop_device *lo);
 extern bool loopfs_wants_remove(const struct loop_device *lo);
 extern void loopfs_evict_locked(struct loop_device *lo);
 extern int loopfs_rundown_locked(struct loop_device *lo);
+extern void loopfs_init(struct gendisk *disk, struct inode *inode);
 
 #endif
 

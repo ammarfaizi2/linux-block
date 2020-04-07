@@ -74,6 +74,12 @@ bool loopfs_wants_remove(const struct loop_device *lo)
 	       (lo->lo_info->lo_flags & LOOPFS_FLAGS_INACTIVE);
 }
 
+void loopfs_init(struct gendisk *disk, struct inode *inode)
+{
+	if (loopfs_i_sb(inode))
+		disk->user_ns = loopfs_i_sb(inode)->s_user_ns;
+}
+
 /**
  * loopfs_add - allocate inode from super block of a loopfs mount
  * @lo:		loop device for which we are creating a new device entry

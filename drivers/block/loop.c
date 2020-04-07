@@ -2207,6 +2207,9 @@ static int loop_add(struct loop_device **l, int i, struct inode *inode)
 	disk->private_data	= lo;
 	disk->queue		= lo->lo_queue;
 	sprintf(disk->disk_name, "loop%d", i);
+#ifdef CONFIG_BLK_DEV_LOOPFS
+	loopfs_init(disk, inode);
+#endif
 
 	add_disk(disk);
 
