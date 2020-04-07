@@ -26,6 +26,7 @@
 
 static DEFINE_IDR(icc_idr);
 static LIST_HEAD(icc_providers);
+static int providers_count = 0;
 static DEFINE_MUTEX(icc_lock);
 static struct dentry *icc_debugfs_dir;
 
@@ -960,8 +961,41 @@ int icc_provider_del(struct icc_provider *provider)
 }
 EXPORT_SYMBOL_GPL(icc_provider_del);
 
+static int of_count_providers(void)
+{
+	struct device_node *root = of_find_node_by_path("/");
+	struct device_node *child;
+	int count = 0;
+
+	for_each_child_of_node(root, child) {
+		if (of_property_read_bool(child, "#interconnect-cells"))
+			count++;
+	}
+
+	pr_info("***** providers count = %d\n", count);
+	return count;
+}
+
+void icc_sync_state(struct device *dev)
+{
+	static int count = 0;
+
+	count++;
+
+	pr_info("***** %s count=[%d/%d]\n", __func__, count, providers_count);
+
+	if (count != providers_count)
+		return;
+
+	pr_info("***** sync_stated, remove votes\n");
+
+}
+EXPORT_SYMBOL_GPL(icc_sync_state);
+
 static int __init icc_init(void)
 {
+	providers_count = of_count_providers();
+
 	icc_debugfs_dir = debugfs_create_dir("interconnect", NULL);
 	debugfs_create_file("interconnect_summary", 0444,
 			    icc_debugfs_dir, NULL, &icc_summary_fops);
