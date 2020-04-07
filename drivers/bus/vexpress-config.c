@@ -120,6 +120,11 @@ struct regmap *devm_regmap_init_vexpress_config(struct device *dev)
 	struct regmap *regmap;
 	struct regmap **res;
 
+	/* Check if we've already setup the regmap */
+	res = devres_find(dev, vexpress_config_devres_release, NULL, NULL);
+	if (res)
+		return *res;
+
 	bridge = dev_get_drvdata(dev->parent);
 	if (WARN_ON(!bridge))
 		return ERR_PTR(-EINVAL);
