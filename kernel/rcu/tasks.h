@@ -1030,7 +1030,7 @@ static void check_all_holdout_tasks_trace(struct list_head *hop,
 
 	if (needreport) {
 		if (firstreport)
-			pr_err("INFO: rcu_tasks_trace detected stalls?\n");
+			pr_err("INFO: rcu_tasks_trace detected stalls? (Late IPI?)\n");
 		show_stalled_ipi_trace();
 	}
 }
@@ -1068,7 +1068,7 @@ static void rcu_tasks_trace_postgp(struct rcu_tasks *rtp)
 				trc_del_holdout(t);
 			}
 		if (firstreport)
-			pr_err("INFO: rcu_tasks_trace detected stalls?\n");
+			pr_err("INFO: rcu_tasks_trace detected stalls? (Counter/taskslist mismatch?)\n");
 		show_stalled_ipi_trace();
 		pr_err("\t%d holdouts\n", atomic_read(&trc_n_readers_need_end));
 	}
