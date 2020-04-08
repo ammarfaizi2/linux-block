@@ -415,6 +415,9 @@ struct request *blk_mq_alloc_request(struct request_queue *q, unsigned int op,
 		return ERR_PTR(-EWOULDBLOCK);
 
 	rq->__data_len = 0;
+#ifdef CONFIG_BLK_RQ_IO_DATA_LEN
+	rq->io_data_len = 0;
+#endif
 	rq->__sector = (sector_t) -1;
 	rq->bio = rq->biotail = NULL;
 	return rq;
@@ -655,6 +658,9 @@ void blk_mq_start_request(struct request *rq)
 
 	trace_block_rq_issue(q, rq);
 
+#ifdef CONFIG_BLK_RQ_IO_DATA_LEN
+	rq->io_data_len = blk_rq_bytes(rq);
+#endif
 	if (test_bit(QUEUE_FLAG_STATS, &q->queue_flags)) {
 		rq->io_start_time_ns = ktime_get_ns();
 		rq->stats_sectors = blk_rq_sectors(rq);

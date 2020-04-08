@@ -26,6 +26,9 @@ menuconfig BLOCK
 
 if BLOCK
 
+config BLK_RQ_IO_DATA_LEN
+	bool
+
 config BLK_RQ_ALLOC_TIME
 	bool
 

@@ -142,6 +142,14 @@ struct request {
 
 	/* the following two fields are internal, NEVER access directly */
 	unsigned int __data_len;	/* total data len */
+#ifdef CONFIG_BLK_RQ_IO_DATA_LEN
+	/*
+	 * Total data len at the time of issue. This doesn't get deducted by
+	 * blk_update_request() and can be used by completion path to determine
+	 * the request size.
+	 */
+	unsigned int io_data_len;
+#endif
 	sector_t __sector;		/* sector cursor */
 
 	struct bio *bio;
