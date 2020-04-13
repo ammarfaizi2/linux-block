@@ -4156,20 +4156,57 @@ static int __io_async_wake(struct io_kiocb *req, struct io_poll_iocb *poll,
 	return 1;
 }
 
+static bool io_poll_rewait(struct io_kiocb *req, struct io_poll_iocb *poll)
+	__acquires(&req->ctx->completion_lock)
+{
+	struct io_ring_ctx *ctx = req->ctx;
+
+	if (!req->result && !READ_ONCE(poll->canceled)) {
+		struct poll_table_struct pt = { ._key = poll->events };
+
+		req->result = vfs_poll(req->file, &pt) & poll->events;
+	}
+
+	spin_lock_irq(&ctx->completion_lock);
+	if (!req->result && !READ_ONCE(poll->canceled)) {
+		add_wait_queue(poll->head, &poll->wait);
+		return true;
+	}
+
+	return false;
+}
+
 static void io_async_task_func(struct callback_head *cb)
 {
 	struct io_kiocb *req = container_of(cb, struct io_kiocb, task_work);
 	struct async_poll *apoll = req->apoll;
 	struct io_ring_ctx *ctx = req->ctx;
+	bool canceled;
 
 	trace_io_uring_task_run(req->ctx, req->opcode, req->user_data);
 
-	WARN_ON_ONCE(!list_empty(&req->apoll->poll.wait.entry));
-
-	if (hash_hashed(&req->hash_node)) {
-		spin_lock_irq(&ctx->completion_lock);
-		hash_del(&req->hash_node);
+	if (io_poll_rewait(req, &apoll->poll)) {
 		spin_unlock_irq(&ctx->completion_lock);
+		return;
+	}
+
+	if (hash_hashed(&req->hash_node))
+		hash_del(&req->hash_node);
+
+	canceled = READ_ONCE(apoll->poll.canceled);
+	if (canceled) {
+		io_cqring_fill_event(req, -ECANCELED);
+		io_commit_cqring(ctx);
+	}
+
+	spin_unlock_irq(&ctx->completion_lock);
+
+	if (canceled) {
+		kfree(apoll);
+		io_cqring_ev_posted(ctx);
+		req_set_fail_links(req);
+		io_put_req(req);
+		return;
 	}
 
 	/* restore ->work in case we need to retry again */
@@ -4355,7 +4392,7 @@ static void io_poll_remove_all(struct io_ring_ctx *ctx)
 {
 	struct hlist_node *tmp;
 	struct io_kiocb *req;
-	int i;
+	int posted = 0, i;
 
 	spin_lock_irq(&ctx->completion_lock);
 	for (i = 0; i < (1U << ctx->cancel_hash_bits); i++) {
@@ -4363,11 +4400,12 @@ static void io_poll_remove_all(struct io_ring_ctx *ctx)
 
 		list = &ctx->cancel_hash[i];
 		hlist_for_each_entry_safe(req, tmp, list, hash_node)
-			io_poll_remove_one(req);
+			posted += io_poll_remove_one(req);
 	}
 	spin_unlock_irq(&ctx->completion_lock);
 
-	io_cqring_ev_posted(ctx);
+	if (posted)
+		io_cqring_ev_posted(ctx);
 }
 
 static int io_poll_cancel(struct io_ring_ctx *ctx, __u64 sqe_addr)
@@ -4436,18 +4474,11 @@ static void io_poll_task_handler(struct io_kiocb *req, struct io_kiocb **nxt)
 	struct io_ring_ctx *ctx = req->ctx;
 	struct io_poll_iocb *poll = &req->poll;
 
-	if (!req->result && !READ_ONCE(poll->canceled)) {
-		struct poll_table_struct pt = { ._key = poll->events };
-
-		req->result = vfs_poll(req->file, &pt) & poll->events;
-	}
-
-	spin_lock_irq(&ctx->completion_lock);
-	if (!req->result && !READ_ONCE(poll->canceled)) {
-		add_wait_queue(poll->head, &poll->wait);
+	if (io_poll_rewait(req, poll)) {
 		spin_unlock_irq(&ctx->completion_lock);
 		return;
 	}
+
 	hash_del(&req->hash_node);
 	io_poll_complete(req, req->result, 0);
 	req->flags |= REQ_F_COMP_LOCKED;
