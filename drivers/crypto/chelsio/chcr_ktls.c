@@ -2,6 +2,7 @@
 /* Copyright (C) 2020 Chelsio Communications.  All rights reserved. */
 
 #ifdef CONFIG_CHELSIO_TLS_DEVICE
+#include <linux/highmem.h>
 #include "chcr_ktls.h"
 #include "clip_tbl.h"
 
@@ -981,7 +982,7 @@ chcr_ktls_write_tcp_options(struct chcr_ktls_info *tx_info, struct sk_buff *skb,
 		ip->tot_len = htons(pktlen - maclen);
 	} else {
 		ip6 = (struct ipv6hdr *)(buf + maclen);
-		ip6->payload_len = htons(pktlen - maclen);
+		ip6->payload_len = htons(pktlen - maclen - iplen);
 	}
 	/* now take care of the tcp header, if fin is not set then clear push
 	 * bit as well, and if fin is set, it will be sent at the last so we

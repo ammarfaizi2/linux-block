@@ -213,23 +213,6 @@ enum mlx5_port_status {
 	MLX5_PORT_DOWN      = 2,
 };
 
-struct mlx5_bfreg_info {
-	u32		       *sys_pages;
-	int			num_low_latency_bfregs;
-	unsigned int	       *count;
-
-	/*
-	 * protect bfreg allocation data structs
-	 */
-	struct mutex		lock;
-	u32			ver;
-	bool			lib_uar_4k;
-	u32			num_sys_pages;
-	u32			num_static_sys_pages;
-	u32			total_num_bfregs;
-	u32			num_dyn_bfregs;
-};
-
 struct mlx5_cmd_first {
 	__be32		data[4];
 };
@@ -574,10 +557,6 @@ struct mlx5_priv {
 	struct list_head        pgdir_list;
 	/* end: alloc staff */
 	struct dentry	       *dbg_root;
-
-	/* protect mkey key part */
-	spinlock_t		mkey_lock;
-	u8			mkey_key;
 
 	struct list_head        dev_list;
 	struct list_head        ctx_list;
@@ -948,12 +927,6 @@ struct mlx5_cmd_mailbox *mlx5_alloc_cmd_mailbox_chain(struct mlx5_core_dev *dev,
 						      gfp_t flags, int npages);
 void mlx5_free_cmd_mailbox_chain(struct mlx5_core_dev *dev,
 				 struct mlx5_cmd_mailbox *head);
-int mlx5_core_create_mkey_cb(struct mlx5_core_dev *dev,
-			     struct mlx5_core_mkey *mkey,
-			     struct mlx5_async_ctx *async_ctx, u32 *in,
-			     int inlen, u32 *out, int outlen,
-			     mlx5_async_cbk_t callback,
-			     struct mlx5_async_work *context);
 int mlx5_core_create_mkey(struct mlx5_core_dev *dev,
 			  struct mlx5_core_mkey *mkey,
 			  u32 *in, int inlen);

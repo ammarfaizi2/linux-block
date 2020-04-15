@@ -262,7 +262,8 @@ static inline void tcf_exts_put_net(struct tcf_exts *exts)
 
 static inline void
 tcf_exts_stats_update(const struct tcf_exts *exts,
-		      u64 bytes, u64 packets, u64 lastuse)
+		      u64 bytes, u64 packets, u64 lastuse,
+		      u8 used_hw_stats, bool used_hw_stats_valid)
 {
 #ifdef CONFIG_NET_CLS_ACT
 	int i;
@@ -273,6 +274,8 @@ tcf_exts_stats_update(const struct tcf_exts *exts,
 		struct tc_action *a = exts->actions[i];
 
 		tcf_action_stats_update(a, bytes, packets, lastuse, true);
+		a->used_hw_stats = used_hw_stats;
+		a->used_hw_stats_valid = used_hw_stats_valid;
 	}
 
 	preempt_enable();
@@ -502,12 +505,16 @@ tcf_change_indev(struct net *net, struct nlattr *indev_tlv,
 	struct net_device *dev;
 
 	if (nla_strlcpy(indev, indev_tlv, IFNAMSIZ) >= IFNAMSIZ) {
-		NL_SET_ERR_MSG(extack, "Interface name too long");
+		NL_SET_ERR_MSG_ATTR(extack, indev_tlv,
+				    "Interface name too long");
 		return -EINVAL;
 	}
 	dev = __dev_get_by_name(net, indev);
-	if (!dev)
+	if (!dev) {
+		NL_SET_ERR_MSG_ATTR(extack, indev_tlv,
+				    "Network device not found");
 		return -ENODEV;
+	}
 	return dev->ifindex;
 }
 

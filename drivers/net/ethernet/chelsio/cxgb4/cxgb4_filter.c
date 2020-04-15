@@ -544,8 +544,8 @@ int cxgb4_get_free_ftid(struct net_device *dev, u8 family, bool hash_en,
 {
 	struct adapter *adap = netdev2adap(dev);
 	struct tid_info *t = &adap->tids;
-	struct filter_entry *tab, *f;
 	u32 bmap_ftid, max_ftid;
+	struct filter_entry *f;
 	unsigned long *bmap;
 	bool found = false;
 	u8 i, cnt, n;
@@ -617,7 +617,6 @@ int cxgb4_get_free_ftid(struct net_device *dev, u8 family, bool hash_en,
 
 			bmap = t->hpftid_bmap;
 			bmap_ftid = ftid;
-			tab = t->hpftid_tab;
 		} else if (hash_en) {
 			/* Ensure priority is >= last rule in HPFILTER
 			 * region.
@@ -657,7 +656,6 @@ int cxgb4_get_free_ftid(struct net_device *dev, u8 family, bool hash_en,
 
 			bmap = t->ftid_bmap;
 			bmap_ftid = ftid - t->nhpftids;
-			tab = t->ftid_tab;
 		}
 
 		cnt = 0;
@@ -1035,7 +1033,7 @@ void clear_all_filters(struct adapter *adapter)
 				adapter->tids.tid_tab[i];
 
 			if (f && (f->valid || f->pending))
-				cxgb4_del_filter(dev, i, &f->fs);
+				cxgb4_del_filter(dev, f->tid, &f->fs);
 		}
 
 		sb = t4_read_reg(adapter, LE_DB_SRVR_START_INDEX_A);
@@ -1043,7 +1041,7 @@ void clear_all_filters(struct adapter *adapter)
 			f = (struct filter_entry *)adapter->tids.tid_tab[i];
 
 			if (f && (f->valid || f->pending))
-				cxgb4_del_filter(dev, i, &f->fs);
+				cxgb4_del_filter(dev, f->tid, &f->fs);
 		}
 	}
 }

@@ -39,14 +39,11 @@ static struct dentry *nsim_dev_ddir;
 
 #define NSIM_DEV_DUMMY_REGION_SIZE (1024 * 32)
 
-static ssize_t nsim_dev_take_snapshot_write(struct file *file,
-					    const char __user *data,
-					    size_t count, loff_t *ppos)
+static int
+nsim_dev_take_snapshot(struct devlink *devlink, struct netlink_ext_ack *extack,
+		       u8 **data)
 {
-	struct nsim_dev *nsim_dev = file->private_data;
 	void *dummy_data;
-	int err;
-	u32 id;
 
 	dummy_data = kmalloc(NSIM_DEV_DUMMY_REGION_SIZE, GFP_KERNEL);
 	if (!dummy_data)
@@ -54,9 +51,36 @@ static ssize_t nsim_dev_take_snapshot_write(struct file *file,
 
 	get_random_bytes(dummy_data, NSIM_DEV_DUMMY_REGION_SIZE);
 
-	id = devlink_region_snapshot_id_get(priv_to_devlink(nsim_dev));
+	*data = dummy_data;
+
+	return 0;
+}
+
+static ssize_t nsim_dev_take_snapshot_write(struct file *file,
+					    const char __user *data,
+					    size_t count, loff_t *ppos)
+{
+	struct nsim_dev *nsim_dev = file->private_data;
+	struct devlink *devlink;
+	u8 *dummy_data;
+	int err;
+	u32 id;
+
+	devlink = priv_to_devlink(nsim_dev);
+
+	err = nsim_dev_take_snapshot(devlink, NULL, &dummy_data);
+	if (err)
+		return err;
+
+	err = devlink_region_snapshot_id_get(devlink, &id);
+	if (err) {
+		pr_err("Failed to get snapshot id\n");
+		kfree(dummy_data);
+		return err;
+	}
 	err = devlink_region_snapshot_create(nsim_dev->dummy_region,
-					     dummy_data, id, kfree);
+					     dummy_data, id);
+	devlink_region_snapshot_id_put(devlink, id);
 	if (err) {
 		pr_err("Failed to create region snapshot\n");
 		kfree(dummy_data);
@@ -192,6 +216,15 @@ static int nsim_dev_debugfs_init(struct nsim_dev *nsim_dev)
 			    &nsim_dev->fail_reload);
 	debugfs_create_file("trap_flow_action_cookie", 0600, nsim_dev->ddir,
 			    nsim_dev, &nsim_dev_trap_fa_cookie_fops);
+	debugfs_create_bool("fail_trap_group_set", 0600,
+			    nsim_dev->ddir,
+			    &nsim_dev->fail_trap_group_set);
+	debugfs_create_bool("fail_trap_policer_set", 0600,
+			    nsim_dev->ddir,
+			    &nsim_dev->fail_trap_policer_set);
+	debugfs_create_bool("fail_trap_policer_counter_get", 0600,
+			    nsim_dev->ddir,
+			    &nsim_dev->fail_trap_policer_counter_get);
 	return 0;
 }
 
@@ -340,11 +373,17 @@ static void nsim_devlink_param_load_driverinit_values(struct devlink *devlink)
 
 #define NSIM_DEV_DUMMY_REGION_SNAPSHOT_MAX 16
 
+static const struct devlink_region_ops dummy_region_ops = {
+	.name = "dummy",
+	.destructor = &kfree,
+	.snapshot = nsim_dev_take_snapshot,
+};
+
 static int nsim_dev_dummy_region_init(struct nsim_dev *nsim_dev,
 				      struct devlink *devlink)
 {
 	nsim_dev->dummy_region =
-		devlink_region_create(devlink, "dummy",
+		devlink_region_create(devlink, &dummy_region_ops,
 				      NSIM_DEV_DUMMY_REGION_SNAPSHOT_MAX,
 				      NSIM_DEV_DUMMY_REGION_SIZE);
 	return PTR_ERR_OR_ZERO(nsim_dev->dummy_region);
@@ -363,6 +402,7 @@ struct nsim_trap_item {
 struct nsim_trap_data {
 	struct delayed_work trap_report_dw;
 	struct nsim_trap_item *trap_items_arr;
+	u64 *trap_policers_cnt_arr;
 	struct nsim_dev *nsim_dev;
 	spinlock_t trap_lock;	/* Protects trap_items_arr */
 };
@@ -397,11 +437,29 @@ enum {
 			    DEVLINK_TRAP_GROUP_GENERIC_ID_##_group_id,	      \
 			    NSIM_TRAP_METADATA)
 
+#define NSIM_DEV_TRAP_POLICER_MIN_RATE	1
+#define NSIM_DEV_TRAP_POLICER_MAX_RATE	8000
+#define NSIM_DEV_TRAP_POLICER_MIN_BURST	8
+#define NSIM_DEV_TRAP_POLICER_MAX_BURST	65536
+
+#define NSIM_TRAP_POLICER(_id, _rate, _burst)				      \
+	DEVLINK_TRAP_POLICER(_id, _rate, _burst,			      \
+			     NSIM_DEV_TRAP_POLICER_MAX_RATE,		      \
+			     NSIM_DEV_TRAP_POLICER_MIN_RATE,		      \
+			     NSIM_DEV_TRAP_POLICER_MAX_BURST,		      \
+			     NSIM_DEV_TRAP_POLICER_MIN_BURST)
+
+static const struct devlink_trap_policer nsim_trap_policers_arr[] = {
+	NSIM_TRAP_POLICER(1, 1000, 128),
+	NSIM_TRAP_POLICER(2, 2000, 256),
+	NSIM_TRAP_POLICER(3, 3000, 512),
+};
+
 static const struct devlink_trap_group nsim_trap_groups_arr[] = {
-	DEVLINK_TRAP_GROUP_GENERIC(L2_DROPS),
-	DEVLINK_TRAP_GROUP_GENERIC(L3_DROPS),
-	DEVLINK_TRAP_GROUP_GENERIC(BUFFER_DROPS),
-	DEVLINK_TRAP_GROUP_GENERIC(ACL_DROPS),
+	DEVLINK_TRAP_GROUP_GENERIC(L2_DROPS, 0),
+	DEVLINK_TRAP_GROUP_GENERIC(L3_DROPS, 1),
+	DEVLINK_TRAP_GROUP_GENERIC(BUFFER_DROPS, 2),
+	DEVLINK_TRAP_GROUP_GENERIC(ACL_DROPS, 3),
 };
 
 static const struct devlink_trap nsim_traps_arr[] = {
@@ -539,6 +597,7 @@ static void nsim_dev_trap_report_work(struct work_struct *work)
 
 static int nsim_dev_traps_init(struct devlink *devlink)
 {
+	size_t policers_count = ARRAY_SIZE(nsim_trap_policers_arr);
 	struct nsim_dev *nsim_dev = devlink_priv(devlink);
 	struct nsim_trap_data *nsim_trap_data;
 	int err;
@@ -555,6 +614,14 @@ static int nsim_dev_traps_init(struct devlink *devlink)
 		goto err_trap_data_free;
 	}
 
+	nsim_trap_data->trap_policers_cnt_arr = kcalloc(policers_count,
+							sizeof(u64),
+							GFP_KERNEL);
+	if (!nsim_trap_data->trap_policers_cnt_arr) {
+		err = -ENOMEM;
+		goto err_trap_items_free;
+	}
+
 	/* The lock is used to protect the action state of the registered
 	 * traps. The value is written by user and read in delayed work when
 	 * iterating over all the traps.
@@ -563,10 +630,15 @@ static int nsim_dev_traps_init(struct devlink *devlink)
 	nsim_trap_data->nsim_dev = nsim_dev;
 	nsim_dev->trap_data = nsim_trap_data;
 
+	err = devlink_trap_policers_register(devlink, nsim_trap_policers_arr,
+					     policers_count);
+	if (err)
+		goto err_trap_policers_cnt_free;
+
 	err = devlink_trap_groups_register(devlink, nsim_trap_groups_arr,
 					   ARRAY_SIZE(nsim_trap_groups_arr));
 	if (err)
-		goto err_trap_items_free;
+		goto err_trap_policers_unregister;
 
 	err = devlink_traps_register(devlink, nsim_traps_arr,
 				     ARRAY_SIZE(nsim_traps_arr), NULL);
@@ -583,6 +655,11 @@ static int nsim_dev_traps_init(struct devlink *devlink)
 err_trap_groups_unregister:
 	devlink_trap_groups_unregister(devlink, nsim_trap_groups_arr,
 				       ARRAY_SIZE(nsim_trap_groups_arr));
+err_trap_policers_unregister:
+	devlink_trap_policers_unregister(devlink, nsim_trap_policers_arr,
+					 ARRAY_SIZE(nsim_trap_policers_arr));
+err_trap_policers_cnt_free:
+	kfree(nsim_trap_data->trap_policers_cnt_arr);
 err_trap_items_free:
 	kfree(nsim_trap_data->trap_items_arr);
 err_trap_data_free:
@@ -599,6 +676,9 @@ static void nsim_dev_traps_exit(struct devlink *devlink)
 				 ARRAY_SIZE(nsim_traps_arr));
 	devlink_trap_groups_unregister(devlink, nsim_trap_groups_arr,
 				       ARRAY_SIZE(nsim_trap_groups_arr));
+	devlink_trap_policers_unregister(devlink, nsim_trap_policers_arr,
+					 ARRAY_SIZE(nsim_trap_policers_arr));
+	kfree(nsim_dev->trap_data->trap_policers_cnt_arr);
 	kfree(nsim_dev->trap_data->trap_items_arr);
 	kfree(nsim_dev->trap_data);
 }
@@ -737,6 +817,53 @@ nsim_dev_devlink_trap_action_set(struct devlink *devlink,
 	return 0;
 }
 
+static int
+nsim_dev_devlink_trap_group_set(struct devlink *devlink,
+				const struct devlink_trap_group *group,
+				const struct devlink_trap_policer *policer)
+{
+	struct nsim_dev *nsim_dev = devlink_priv(devlink);
+
+	if (nsim_dev->fail_trap_group_set)
+		return -EINVAL;
+
+	return 0;
+}
+
+static int
+nsim_dev_devlink_trap_policer_set(struct devlink *devlink,
+				  const struct devlink_trap_policer *policer,
+				  u64 rate, u64 burst,
+				  struct netlink_ext_ack *extack)
+{
+	struct nsim_dev *nsim_dev = devlink_priv(devlink);
+
+	if (nsim_dev->fail_trap_policer_set) {
+		NL_SET_ERR_MSG_MOD(extack, "User setup the operation to fail for testing purposes");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+static int
+nsim_dev_devlink_trap_policer_counter_get(struct devlink *devlink,
+					  const struct devlink_trap_policer *policer,
+					  u64 *p_drops)
+{
+	struct nsim_dev *nsim_dev = devlink_priv(devlink);
+	u64 *cnt;
+
+	if (nsim_dev->fail_trap_policer_counter_get)
+		return -EINVAL;
+
+	cnt = &nsim_dev->trap_data->trap_policers_cnt_arr[policer->id - 1];
+	*p_drops = *cnt;
+	*cnt += jiffies % 64;
+
+	return 0;
+}
+
 static const struct devlink_ops nsim_dev_devlink_ops = {
 	.reload_down = nsim_dev_reload_down,
 	.reload_up = nsim_dev_reload_up,
@@ -744,6 +871,9 @@ static const struct devlink_ops nsim_dev_devlink_ops = {
 	.flash_update = nsim_dev_flash_update,
 	.trap_init = nsim_dev_devlink_trap_init,
 	.trap_action_set = nsim_dev_devlink_trap_action_set,
+	.trap_group_set = nsim_dev_devlink_trap_group_set,
+	.trap_policer_set = nsim_dev_devlink_trap_policer_set,
+	.trap_policer_counter_get = nsim_dev_devlink_trap_policer_counter_get,
 };
 
 #define NSIM_DEV_MAX_MACS_DEFAULT 32

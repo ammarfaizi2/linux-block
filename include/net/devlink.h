@@ -18,6 +18,7 @@
 #include <net/net_namespace.h>
 #include <net/flow_offload.h>
 #include <uapi/linux/devlink.h>
+#include <linux/xarray.h>
 
 struct devlink_ops;
 
@@ -29,13 +30,14 @@ struct devlink {
 	struct list_head resource_list;
 	struct list_head param_list;
 	struct list_head region_list;
-	u32 snapshot_id;
 	struct list_head reporter_list;
 	struct mutex reporters_lock; /* protects reporter_list */
 	struct devlink_dpipe_headers *dpipe_headers;
 	struct list_head trap_list;
 	struct list_head trap_group_list;
+	struct list_head trap_policer_list;
 	const struct devlink_ops *ops;
+	struct xarray snapshot_ids;
 	struct device *dev;
 	possible_net_t _net;
 	struct mutex lock;
@@ -480,6 +482,8 @@ enum devlink_param_generic_id {
 #define DEVLINK_INFO_VERSION_GENERIC_FW		"fw"
 /* Control processor FW version */
 #define DEVLINK_INFO_VERSION_GENERIC_FW_MGMT	"fw.mgmt"
+/* FW interface specification version */
+#define DEVLINK_INFO_VERSION_GENERIC_FW_MGMT_API	"fw.mgmt.api"
 /* Data path microcode controlling high-speed packet processing */
 #define DEVLINK_INFO_VERSION_GENERIC_FW_APP	"fw.app"
 /* UNDI software version */
@@ -496,7 +500,21 @@ enum devlink_param_generic_id {
 struct devlink_region;
 struct devlink_info_req;
 
-typedef void devlink_snapshot_data_dest_t(const void *data);
+/**
+ * struct devlink_region_ops - Region operations
+ * @name: region name
+ * @destructor: callback used to free snapshot memory when deleting
+ * @snapshot: callback to request an immediate snapshot. On success,
+ *            the data variable must be updated to point to the snapshot data.
+ *            The function will be called while the devlink instance lock is
+ *            held.
+ */
+struct devlink_region_ops {
+	const char *name;
+	void (*destructor)(const void *data);
+	int (*snapshot)(struct devlink *devlink, struct netlink_ext_ack *extack,
+			u8 **data);
+};
 
 struct devlink_fmsg;
 struct devlink_health_reporter;
@@ -529,10 +547,34 @@ struct devlink_health_reporter_ops {
 };
 
 /**
+ * struct devlink_trap_policer - Immutable packet trap policer attributes.
+ * @id: Policer identifier.
+ * @init_rate: Initial rate in packets / sec.
+ * @init_burst: Initial burst size in packets.
+ * @max_rate: Maximum rate.
+ * @min_rate: Minimum rate.
+ * @max_burst: Maximum burst size.
+ * @min_burst: Minimum burst size.
+ *
+ * Describes immutable attributes of packet trap policers that drivers register
+ * with devlink.
+ */
+struct devlink_trap_policer {
+	u32 id;
+	u64 init_rate;
+	u64 init_burst;
+	u64 max_rate;
+	u64 min_rate;
+	u64 max_burst;
+	u64 min_burst;
+};
+
+/**
  * struct devlink_trap_group - Immutable packet trap group attributes.
  * @name: Trap group name.
  * @id: Trap group identifier.
  * @generic: Whether the trap group is generic or not.
+ * @init_policer_id: Initial policer identifier.
  *
  * Describes immutable attributes of packet trap groups that drivers register
  * with devlink.
@@ -541,6 +583,7 @@ struct devlink_trap_group {
 	const char *name;
 	u16 id;
 	bool generic;
+	u32 init_policer_id;
 };
 
 #define DEVLINK_TRAP_METADATA_TYPE_F_IN_PORT	BIT(0)
@@ -718,11 +761,24 @@ enum devlink_trap_group_generic_id {
 		.metadata_cap = _metadata_cap,				      \
 	}
 
-#define DEVLINK_TRAP_GROUP_GENERIC(_id)					      \
+#define DEVLINK_TRAP_GROUP_GENERIC(_id, _policer_id)			      \
 	{								      \
 		.name = DEVLINK_TRAP_GROUP_GENERIC_NAME_##_id,		      \
 		.id = DEVLINK_TRAP_GROUP_GENERIC_ID_##_id,		      \
 		.generic = true,					      \
+		.init_policer_id = _policer_id,				      \
+	}
+
+#define DEVLINK_TRAP_POLICER(_id, _rate, _burst, _max_rate, _min_rate,	      \
+			     _max_burst, _min_burst)			      \
+	{								      \
+		.id = _id,						      \
+		.init_rate = _rate,					      \
+		.init_burst = _burst,					      \
+		.max_rate = _max_rate,					      \
+		.min_rate = _min_rate,					      \
+		.max_burst = _max_burst,				      \
+		.min_burst = _min_burst,				      \
 	}
 
 struct devlink_ops {
@@ -821,6 +877,47 @@ struct devlink_ops {
 	 */
 	int (*trap_group_init)(struct devlink *devlink,
 			       const struct devlink_trap_group *group);
+	/**
+	 * @trap_group_set: Trap group parameters set function.
+	 *
+	 * Note: @policer can be NULL when a policer is being unbound from
+	 * @group.
+	 */
+	int (*trap_group_set)(struct devlink *devlink,
+			      const struct devlink_trap_group *group,
+			      const struct devlink_trap_policer *policer);
+	/**
+	 * @trap_policer_init: Trap policer initialization function.
+	 *
+	 * Should be used by device drivers to initialize the trap policer in
+	 * the underlying device.
+	 */
+	int (*trap_policer_init)(struct devlink *devlink,
+				 const struct devlink_trap_policer *policer);
+	/**
+	 * @trap_policer_fini: Trap policer de-initialization function.
+	 *
+	 * Should be used by device drivers to de-initialize the trap policer
+	 * in the underlying device.
+	 */
+	void (*trap_policer_fini)(struct devlink *devlink,
+				  const struct devlink_trap_policer *policer);
+	/**
+	 * @trap_policer_set: Trap policer parameters set function.
+	 */
+	int (*trap_policer_set)(struct devlink *devlink,
+				const struct devlink_trap_policer *policer,
+				u64 rate, u64 burst,
+				struct netlink_ext_ack *extack);
+	/**
+	 * @trap_policer_counter_get: Trap policer counter get function.
+	 *
+	 * Should be used by device drivers to report number of packets dropped
+	 * by the policer.
+	 */
+	int (*trap_policer_counter_get)(struct devlink *devlink,
+					const struct devlink_trap_policer *policer,
+					u64 *p_drops);
 };
 
 static inline void *devlink_priv(struct devlink *devlink)
@@ -963,15 +1060,15 @@ void devlink_port_param_value_changed(struct devlink_port *devlink_port,
 				      u32 param_id);
 void devlink_param_value_str_fill(union devlink_param_value *dst_val,
 				  const char *src);
-struct devlink_region *devlink_region_create(struct devlink *devlink,
-					     const char *region_name,
-					     u32 region_max_snapshots,
-					     u64 region_size);
+struct devlink_region *
+devlink_region_create(struct devlink *devlink,
+		      const struct devlink_region_ops *ops,
+		      u32 region_max_snapshots, u64 region_size);
 void devlink_region_destroy(struct devlink_region *region);
-u32 devlink_region_snapshot_id_get(struct devlink *devlink);
+int devlink_region_snapshot_id_get(struct devlink *devlink, u32 *id);
+void devlink_region_snapshot_id_put(struct devlink *devlink, u32 id);
 int devlink_region_snapshot_create(struct devlink_region *region,
-				   u8 *data, u32 snapshot_id,
-				   devlink_snapshot_data_dest_t *data_destructor);
+				   u8 *data, u32 snapshot_id);
 int devlink_info_serial_number_put(struct devlink_info_req *req,
 				   const char *sn);
 int devlink_info_driver_name_put(struct devlink_info_req *req,
@@ -1023,8 +1120,7 @@ int devlink_fmsg_binary_pair_put(struct devlink_fmsg *fmsg, const char *name,
 struct devlink_health_reporter *
 devlink_health_reporter_create(struct devlink *devlink,
 			       const struct devlink_health_reporter_ops *ops,
-			       u64 graceful_period, bool auto_recover,
-			       void *priv);
+			       u64 graceful_period, void *priv);
 void
 devlink_health_reporter_destroy(struct devlink_health_reporter *reporter);
 
@@ -1064,6 +1160,14 @@ int devlink_trap_groups_register(struct devlink *devlink,
 void devlink_trap_groups_unregister(struct devlink *devlink,
 				    const struct devlink_trap_group *groups,
 				    size_t groups_count);
+int
+devlink_trap_policers_register(struct devlink *devlink,
+			       const struct devlink_trap_policer *policers,
+			       size_t policers_count);
+void
+devlink_trap_policers_unregister(struct devlink *devlink,
+				 const struct devlink_trap_policer *policers,
+				 size_t policers_count);
 
 #if IS_ENABLED(CONFIG_NET_DEVLINK)
 

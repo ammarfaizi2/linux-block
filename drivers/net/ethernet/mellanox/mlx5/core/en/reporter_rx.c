@@ -90,7 +90,7 @@ static int mlx5e_rx_reporter_err_icosq_cqe_recover(void *ctx)
 		goto out;
 
 	mlx5e_reset_icosq_cc_pc(icosq);
-	mlx5e_free_rx_descs(rq);
+	mlx5e_free_rx_in_progress_descs(rq);
 	clear_bit(MLX5E_SQ_STATE_RECOVERING, &icosq->state);
 	mlx5e_activate_icosq(icosq);
 	mlx5e_activate_rq(rq);
@@ -571,7 +571,7 @@ int mlx5e_reporter_rx_create(struct mlx5e_priv *priv)
 	reporter = devlink_health_reporter_create(devlink,
 						  &mlx5_rx_reporter_ops,
 						  MLX5E_REPORTER_RX_GRACEFUL_PERIOD,
-						  true, priv);
+						  priv);
 	if (IS_ERR(reporter)) {
 		netdev_warn(priv->netdev, "Failed to create rx reporter, err = %ld\n",
 			    PTR_ERR(reporter));

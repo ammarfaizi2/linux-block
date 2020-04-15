@@ -202,7 +202,8 @@ struct flow_action_entry {
 			__be16		proto;
 			u8		prio;
 		} vlan;
-		struct {				/* FLOW_ACTION_PACKET_EDIT */
+		struct {				/* FLOW_ACTION_MANGLE */
+							/* FLOW_ACTION_ADD */
 			enum flow_action_mangle_base htype;
 			u32		offset;
 			u32		mask;
@@ -369,14 +370,24 @@ struct flow_stats {
 	u64	pkts;
 	u64	bytes;
 	u64	lastused;
+	enum flow_action_hw_stats used_hw_stats;
+	bool used_hw_stats_valid;
 };
 
 static inline void flow_stats_update(struct flow_stats *flow_stats,
-				     u64 bytes, u64 pkts, u64 lastused)
+				     u64 bytes, u64 pkts, u64 lastused,
+				     enum flow_action_hw_stats used_hw_stats)
 {
 	flow_stats->pkts	+= pkts;
 	flow_stats->bytes	+= bytes;
 	flow_stats->lastused	= max_t(u64, flow_stats->lastused, lastused);
+
+	/* The driver should pass value with a maximum of one bit set.
+	 * Passing FLOW_ACTION_HW_STATS_ANY is invalid.
+	 */
+	WARN_ON(used_hw_stats == FLOW_ACTION_HW_STATS_ANY);
+	flow_stats->used_hw_stats |= used_hw_stats;
+	flow_stats->used_hw_stats_valid = true;
 }
 
 enum flow_block_command {
@@ -522,6 +533,7 @@ void flow_indr_block_cb_unregister(struct net_device *dev,
 
 void flow_indr_block_call(struct net_device *dev,
 			  struct flow_block_offload *bo,
-			  enum flow_block_command command);
+			  enum flow_block_command command,
+			  enum tc_setup_type type);
 
 #endif /* _NET_FLOW_OFFLOAD_H */

@@ -51,7 +51,7 @@
 #include "en_rep.h"
 #include "en_tc.h"
 #include "eswitch.h"
-#include "eswitch_offloads_chains.h"
+#include "esw/chains.h"
 #include "fs_core.h"
 #include "en/port.h"
 #include "en/tc_tun.h"
@@ -2714,10 +2714,11 @@ static int offload_pedit_fields(struct mlx5e_priv *priv,
 			continue;
 
 		if (f->field_bsize == 32) {
-			mask_be32 = *(__be32 *)&mask;
+			mask_be32 = (__be32)mask;
 			mask = (__force unsigned long)cpu_to_le32(be32_to_cpu(mask_be32));
 		} else if (f->field_bsize == 16) {
-			mask_be16 = *(__be16 *)&mask;
+			mask_be32 = (__be32)mask;
+			mask_be16 = *(__be16 *)&mask_be32;
 			mask = (__force unsigned long)cpu_to_le16(be16_to_cpu(mask_be16));
 		}
 
@@ -3057,7 +3058,7 @@ static bool actions_match_supported(struct mlx5e_priv *priv,
 			 */
 			NL_SET_ERR_MSG_MOD(extack,
 					   "Can't offload mirroring with action ct");
-			return -EOPNOTSUPP;
+			return false;
 		}
 	} else {
 		actions = flow->nic_attr->action;
@@ -4467,7 +4468,8 @@ int mlx5e_stats_flower(struct net_device *dev, struct mlx5e_priv *priv,
 no_peer_counter:
 	mlx5_devcom_release_peer_data(devcom, MLX5_DEVCOM_ESW_OFFLOADS);
 out:
-	flow_stats_update(&f->stats, bytes, packets, lastuse);
+	flow_stats_update(&f->stats, bytes, packets, lastuse,
+			  FLOW_ACTION_HW_STATS_DELAYED);
 	trace_mlx5e_stats_flower(f);
 errout:
 	mlx5e_flow_put(priv, flow);
@@ -4584,7 +4586,8 @@ void mlx5e_tc_stats_matchall(struct mlx5e_priv *priv,
 	dpkts = cur_stats.rx_packets - rpriv->prev_vf_vport_stats.rx_packets;
 	dbytes = cur_stats.rx_bytes - rpriv->prev_vf_vport_stats.rx_bytes;
 	rpriv->prev_vf_vport_stats = cur_stats;
-	flow_stats_update(&ma->stats, dpkts, dbytes, jiffies);
+	flow_stats_update(&ma->stats, dpkts, dbytes, jiffies,
+			  FLOW_ACTION_HW_STATS_DELAYED);
 }
 
 static void mlx5e_tc_hairpin_update_dead_peer(struct mlx5e_priv *priv,
