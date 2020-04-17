@@ -54,6 +54,7 @@ struct snd_usb_audio {
 	bool keep_iface;		/* keep interface/altset after closing
 					 * or parameter change
 					 */
+	bool lowlatency;
 
 	struct usb_host_interface *ctrl_intf;	/* the audio control interface */
 	struct media_device *media_dev;

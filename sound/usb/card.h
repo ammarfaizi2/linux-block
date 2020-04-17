@@ -48,6 +48,7 @@ struct snd_urb_ctx {
 	int index;	/* index for urb array */
 	int packets;	/* number of packets per urb */
 	int packet_size[MAX_PACKS_HS]; /* size of packets for next submission */
+	bool period_elapsed;
 	struct list_head ready_list;
 };
 
@@ -134,6 +135,7 @@ struct snd_usb_substream {
 	unsigned int pkt_offset_adj;	/* Bytes to drop from beginning of packets (for non-compliant devices) */
 
 	unsigned int running: 1;	/* running status */
+	unsigned int lowlatency:1;
 
 	unsigned int hwptr_done;	/* processed byte position in the buffer */
 	unsigned int transfer_done;		/* processed frames since last period update */
