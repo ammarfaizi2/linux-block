@@ -892,11 +892,11 @@ static void trc_wait_for_one_reader(struct task_struct *t,
 	}
 
 	// Attempt to nail down the task for inspection.
+	trc_add_holdout(t, bhp);
 	if (try_invoke_on_locked_down_task(t, trc_inspect_reader, NULL))
 		return;
 
 	// If currently running, send an IPI, either way, add to list.
-	trc_add_holdout(t, bhp);
 	if (task_curr(t) && time_after(jiffies, rcu_tasks_trace.gp_start + rcu_task_ipi_delay)) {
 		// The task is currently running, so try IPIing it.
 		cpu = task_cpu(t);
