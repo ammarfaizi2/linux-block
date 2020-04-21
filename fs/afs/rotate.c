@@ -367,6 +367,7 @@ selected_server:
 
 	_debug("USING SERVER: %pU", &server->uuid);
 
+	op->flags |= AFS_OPERATION_RETRY_SERVER;
 	op->server = server;
 	if (vnode->cb_server != server) {
 		vnode->cb_server = server;
@@ -381,6 +382,7 @@ selected_server:
 	afs_get_addrlist(alist);
 	read_unlock(&server->fs_lock);
 
+retry_server:
 	memset(&op->ac, 0, sizeof(op->ac));
 
 	if (!op->ac.alist)
@@ -396,12 +398,35 @@ iterate_address:
 	 * address on which it will respond to us.
 	 */
 	if (!afs_iterate_addresses(&op->ac))
-		goto next_server;
+		goto out_of_addresses;
 
-	_debug("address [%u] %u/%u", op->index, op->ac.index, op->ac.alist->nr_addrs);
+	_debug("address [%u] %u/%u %pISp",
+	       op->index, op->ac.index, op->ac.alist->nr_addrs,
+	       &op->ac.alist->addrs[op->ac.index].transport);
 
 	_leave(" = t");
 	return true;
+
+out_of_addresses:
+	/* We've now had a failure to respond on all of a server's addresses -
+	 * immediately probe them again and consider retrying the server.
+	 */
+	afs_probe_fileserver(op->net, op->server);
+	if (op->flags & AFS_OPERATION_RETRY_SERVER) {
+		alist = op->ac.alist;
+		error = afs_wait_for_one_fs_probe(
+			op->server, !(op->flags & AFS_OPERATION_UNINTR));
+		switch (error) {
+		case 0:
+			op->flags &= ~AFS_OPERATION_RETRY_SERVER;
+			goto retry_server;
+		case -ERESTARTSYS:
+			goto failed_set_error;
+		case -ETIME:
+		case -EDESTADDRREQ:
+			goto next_server;
+		}
+	}
 
 next_server:
 	_debug("next");
