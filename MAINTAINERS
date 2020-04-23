@@ -9957,6 +9957,11 @@ W:	http://www.avagotech.com/support/
 F:	drivers/message/fusion/
 F:	drivers/scsi/mpt3sas/
 
+LOOPFS FILE SYSTEM
+M:	Christian Brauner <christian.brauner@ubuntu.com>
+S:	Supported
+F:	drivers/block/loopfs/
+
 LSILOGIC/SYMBIOS/NCR 53C8XX and 53C1010 PCI-SCSI drivers
 M:	Matthew Wilcox <willy@infradead.org>
 L:	linux-scsi@vger.kernel.org

@@ -81,6 +81,10 @@
 
 #include "loop.h"
 
+#ifdef CONFIG_BLK_DEV_LOOPFS
+#include "loopfs/loopfs.h"
+#endif
+
 #include <linux/uaccess.h>
 
 static DEFINE_IDR(loop_index_idr);
@@ -1115,6 +1119,24 @@ loop_init_xfer(struct loop_device *lo, struct loop_func_table *xfer,
 	return err;
 }
 
+static void loop_remove(struct loop_device *lo)
+{
+	del_gendisk(lo->lo_disk);
+	blk_cleanup_queue(lo->lo_queue);
+	blk_mq_free_tag_set(&lo->tag_set);
+	put_disk(lo->lo_disk);
+#ifdef CONFIG_BLK_DEV_LOOPFS
+	loopfs_remove(lo);
+#endif
+	kfree(lo);
+}
+
+static inline void __loop_remove(struct loop_device *lo)
+{
+	idr_remove(&loop_index_idr, lo->lo_number);
+	loop_remove(lo);
+}
+
 static int __loop_clr_fd(struct loop_device *lo, bool release)
 {
 	struct file *filp = NULL;
@@ -1164,7 +1186,7 @@ static int __loop_clr_fd(struct loop_device *lo, bool release)
 	}
 	set_capacity(lo->lo_disk, 0);
 	loop_sysfs_exit(lo);
-	if (bdev) {
+	if (bdev && bdev->bd_disk) {
 		bd_set_size(bdev, 0);
 		/* let user-space know about this change */
 		kobject_uevent(&disk_to_dev(bdev->bd_disk)->kobj, KOBJ_CHANGE);
@@ -1174,7 +1196,7 @@ static int __loop_clr_fd(struct loop_device *lo, bool release)
 	module_put(THIS_MODULE);
 	blk_mq_unfreeze_queue(lo->lo_queue);
 
-	partscan = lo->lo_flags & LO_FLAGS_PARTSCAN && bdev;
+	partscan = lo->lo_flags & LO_FLAGS_PARTSCAN && bdev && bdev->bd_disk;
 	lo_number = lo->lo_number;
 	loop_unprepare_queue(lo);
 out_unlock:
@@ -1213,7 +1235,12 @@ out_unlock:
 	lo->lo_flags = 0;
 	if (!part_shift)
 		lo->lo_disk->flags |= GENHD_FL_NO_PART_SCAN;
-	lo->lo_state = Lo_unbound;
+#ifdef CONFIG_BLK_DEV_LOOPFS
+	if (loopfs_wants_remove(lo))
+		__loop_remove(lo);
+	else
+#endif
+		lo->lo_state = Lo_unbound;
 	mutex_unlock(&loop_ctl_mutex);
 
 	/*
@@ -1258,6 +1285,74 @@ static int loop_clr_fd(struct loop_device *lo)
 
 	return __loop_clr_fd(lo, false);
 }
+
+#ifdef CONFIG_BLK_DEV_LOOPFS
+int loopfs_rundown_locked(struct loop_device *lo)
+{
+	int ret;
+
+	if (WARN_ON_ONCE(!loopfs_device(lo)))
+		return -EINVAL;
+
+	ret = mutex_lock_killable(&loop_ctl_mutex);
+	if (ret)
+		return ret;
+
+	if (lo->lo_state != Lo_unbound || atomic_read(&lo->lo_refcnt) > 0) {
+		ret = -EBUSY;
+	} else {
+		/*
+		 * Since the device is unbound it has no associated backing
+		 * file and we can safely set Lo_rundown to prevent it from
+		 * being found. Actual cleanup happens during inode eviction.
+		 */
+		lo->lo_state = Lo_rundown;
+		ret = 0;
+	}
+
+	mutex_unlock(&loop_ctl_mutex);
+	return ret;
+}
+
+/**
+ * loopfs_evict_locked() - remove loop device or mark inactive
+ * @lo:	loopfs loop device
+ *
+ * This function will remove a loop device. If it has no users
+ * and is bound the backing file will be cleaned up. If the loop
+ * device has users it will be marked for auto cleanup.
+ * This function is only called when a loopfs instance is shutdown
+ * when all references to it from this loopfs instance have been
+ * dropped. If there are still any references to it cleanup will
+ * happen in lo_release().
+ */
+void loopfs_evict_locked(struct loop_device *lo)
+{
+	struct lo_loopfs *lo_info;
+	struct inode *lo_inode;
+
+	WARN_ON_ONCE(!loopfs_device(lo));
+
+	mutex_lock(&loop_ctl_mutex);
+	lo_info = lo->lo_info;
+	lo_inode = lo_info->lo_inode;
+	lo_info->lo_inode = NULL;
+	lo_info->lo_flags |= LOOPFS_FLAGS_INACTIVE;
+
+	if (atomic_read(&lo->lo_refcnt) > 0) {
+		lo->lo_flags |= LO_FLAGS_AUTOCLEAR;
+	} else {
+		lo->lo_state = Lo_rundown;
+		lo->lo_disk->private_data = NULL;
+		lo_inode->i_private = NULL;
+
+		mutex_unlock(&loop_ctl_mutex);
+		__loop_clr_fd(lo, false);
+		return;
+	}
+	mutex_unlock(&loop_ctl_mutex);
+}
+#endif /* CONFIG_BLK_DEV_LOOPFS */
 
 static int
 loop_set_status(struct loop_device *lo, const struct loop_info64 *info)
@@ -1842,7 +1937,7 @@ static void lo_release(struct gendisk *disk, fmode_t mode)
 
 	if (lo->lo_flags & LO_FLAGS_AUTOCLEAR) {
 		if (lo->lo_state != Lo_bound)
-			goto out_unlock;
+			goto out_remove;
 		lo->lo_state = Lo_rundown;
 		mutex_unlock(&loop_ctl_mutex);
 		/*
@@ -1859,6 +1954,12 @@ static void lo_release(struct gendisk *disk, fmode_t mode)
 		blk_mq_freeze_queue(lo->lo_queue);
 		blk_mq_unfreeze_queue(lo->lo_queue);
 	}
+
+out_remove:
+#ifdef CONFIG_BLK_DEV_LOOPFS
+	if (lo->lo_state != Lo_bound && loopfs_wants_remove(lo))
+		__loop_remove(lo);
+#endif
 
 out_unlock:
 	mutex_unlock(&loop_ctl_mutex);
@@ -2006,7 +2107,7 @@ static const struct blk_mq_ops loop_mq_ops = {
 	.complete	= lo_complete_rq,
 };
 
-static int loop_add(struct loop_device **l, int i)
+static int loop_add(struct loop_device **l, int i, struct inode *inode)
 {
 	struct loop_device *lo;
 	struct gendisk *disk;
@@ -2096,7 +2197,17 @@ static int loop_add(struct loop_device **l, int i)
 	disk->private_data	= lo;
 	disk->queue		= lo->lo_queue;
 	sprintf(disk->disk_name, "loop%d", i);
+
 	add_disk(disk);
+
+#ifdef CONFIG_BLK_DEV_LOOPFS
+	err = loopfs_add(lo, inode, disk_devt(disk));
+	if (err) {
+		__loop_remove(lo);
+		goto out;
+	}
+#endif
+
 	*l = lo;
 	return lo->lo_number;
 
@@ -2112,36 +2223,41 @@ out:
 	return err;
 }
 
-static void loop_remove(struct loop_device *lo)
-{
-	del_gendisk(lo->lo_disk);
-	blk_cleanup_queue(lo->lo_queue);
-	blk_mq_free_tag_set(&lo->tag_set);
-	put_disk(lo->lo_disk);
-	kfree(lo);
-}
+struct find_free_cb_data {
+	struct loop_device **l;
+	struct inode *inode;
+};
 
 static int find_free_cb(int id, void *ptr, void *data)
 {
 	struct loop_device *lo = ptr;
-	struct loop_device **l = data;
+	struct find_free_cb_data *cb_data = data;
 
-	if (lo->lo_state == Lo_unbound) {
-		*l = lo;
-		return 1;
-	}
-	return 0;
+	if (lo->lo_state != Lo_unbound)
+		return 0;
+
+#ifdef CONFIG_BLK_DEV_LOOPFS
+	if (!loopfs_access(cb_data->inode, lo))
+		return 0;
+#endif
+
+	*cb_data->l = lo;
+	return 1;
 }
 
-static int loop_lookup(struct loop_device **l, int i)
+static int loop_lookup(struct loop_device **l, int i, struct inode *inode)
 {
 	struct loop_device *lo;
 	int ret = -ENODEV;
 
 	if (i < 0) {
 		int err;
+		struct find_free_cb_data cb_data = {
+			.l = &lo,
+			.inode = inode,
+		};
 
-		err = idr_for_each(&loop_index_idr, &find_free_cb, &lo);
+		err = idr_for_each(&loop_index_idr, &find_free_cb, &cb_data);
 		if (err == 1) {
 			*l = lo;
 			ret = lo->lo_number;
@@ -2152,6 +2268,11 @@ static int loop_lookup(struct loop_device **l, int i)
 	/* lookup and return a specific i */
 	lo = idr_find(&loop_index_idr, i);
 	if (lo) {
+#ifdef CONFIG_BLK_DEV_LOOPFS
+		if (!loopfs_access(inode, lo))
+			return -EACCES;
+#endif
+
 		*l = lo;
 		ret = lo->lo_number;
 	}
@@ -2166,9 +2287,9 @@ static struct kobject *loop_probe(dev_t dev, int *part, void *data)
 	int err;
 
 	mutex_lock(&loop_ctl_mutex);
-	err = loop_lookup(&lo, MINOR(dev) >> part_shift);
+	err = loop_lookup(&lo, MINOR(dev) >> part_shift, NULL);
 	if (err < 0)
-		err = loop_add(&lo, MINOR(dev) >> part_shift);
+		err = loop_add(&lo, MINOR(dev) >> part_shift, NULL);
 	if (err < 0)
 		kobj = NULL;
 	else
@@ -2192,15 +2313,15 @@ static long loop_control_ioctl(struct file *file, unsigned int cmd,
 	ret = -ENOSYS;
 	switch (cmd) {
 	case LOOP_CTL_ADD:
-		ret = loop_lookup(&lo, parm);
+		ret = loop_lookup(&lo, parm, file_inode(file));
 		if (ret >= 0) {
 			ret = -EEXIST;
 			break;
 		}
-		ret = loop_add(&lo, parm);
+		ret = loop_add(&lo, parm, file_inode(file));
 		break;
 	case LOOP_CTL_REMOVE:
-		ret = loop_lookup(&lo, parm);
+		ret = loop_lookup(&lo, parm, file_inode(file));
 		if (ret < 0)
 			break;
 		if (lo->lo_state != Lo_unbound) {
@@ -2212,14 +2333,13 @@ static long loop_control_ioctl(struct file *file, unsigned int cmd,
 			break;
 		}
 		lo->lo_disk->private_data = NULL;
-		idr_remove(&loop_index_idr, lo->lo_number);
-		loop_remove(lo);
+		__loop_remove(lo);
 		break;
 	case LOOP_CTL_GET_FREE:
-		ret = loop_lookup(&lo, -1);
+		ret = loop_lookup(&lo, -1, file_inode(file));
 		if (ret >= 0)
 			break;
-		ret = loop_add(&lo, -1);
+		ret = loop_add(&lo, -1, file_inode(file));
 	}
 	mutex_unlock(&loop_ctl_mutex);
 
@@ -2307,7 +2427,7 @@ static int __init loop_init(void)
 	/* pre-create number of devices given by config or max_loop */
 	mutex_lock(&loop_ctl_mutex);
 	for (i = 0; i < nr; i++)
-		loop_add(&lo, i);
+		loop_add(&lo, i, NULL);
 	mutex_unlock(&loop_ctl_mutex);
 
 	printk(KERN_INFO "loop: module loaded\n");

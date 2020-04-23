@@ -214,6 +214,10 @@ config BLK_DEV_LOOP
 
 	  Most users will answer N here.
 
+config BLK_DEV_LOOPFS
+	bool "Loopback device virtual filesystem support"
+	depends on BLK_DEV_LOOP=y
+
 config BLK_DEV_LOOP_MIN_COUNT
 	int "Number of loop devices to pre-create at init time"
 	depends on BLK_DEV_LOOP

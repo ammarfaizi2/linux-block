@@ -74,6 +74,9 @@ static struct ctl_table user_table[] = {
 	UCOUNT_ENTRY("max_inotify_instances"),
 	UCOUNT_ENTRY("max_inotify_watches"),
 #endif
+#ifdef CONFIG_BLK_DEV_LOOPFS
+	UCOUNT_ENTRY("max_loop_devices"),
+#endif
 	{ }
 };
 #endif /* CONFIG_SYSCTL */
