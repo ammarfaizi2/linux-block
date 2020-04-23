@@ -17,6 +17,10 @@
 #include <linux/kthread.h>
 #include <uapi/linux/loop.h>
 
+#ifdef CONFIG_BLK_DEV_LOOPFS
+#include "loopfs/loopfs.h"
+#endif
+
 /* Possible states of device */
 enum {
 	Lo_unbound,
@@ -62,6 +66,9 @@ struct loop_device {
 	struct request_queue	*lo_queue;
 	struct blk_mq_tag_set	tag_set;
 	struct gendisk		*lo_disk;
+#ifdef CONFIG_BLK_DEV_LOOPFS
+	struct lo_loopfs	*lo_info;
+#endif
 };
 
 struct loop_cmd {
