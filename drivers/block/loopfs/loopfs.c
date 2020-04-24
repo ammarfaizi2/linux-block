@@ -315,6 +315,7 @@ static void loopfs_evict_inode(struct inode *inode)
 	if (lo && S_ISBLK(inode->i_mode) && imajor(inode) == LOOP_MAJOR) {
 		loopfs_evict_locked(lo);
 		inode->i_private = NULL;
+		pr_err("AAAA: loopfs_evict_inode()\n");
 	}
 }
 
@@ -399,6 +400,7 @@ static void loopfs_kill_sb(struct super_block *sb)
 	kfree(info);
 
 	kill_litter_super(sb);
+	pr_err("BBBB: loopfs_kill_sb()\n");
 }
 
 static struct file_system_type loop_fs_type = {
