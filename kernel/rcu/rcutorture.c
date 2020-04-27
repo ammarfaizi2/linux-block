@@ -2394,12 +2394,11 @@ static int rcu_torture_read_exit(void *unused)
 		if (++count > read_exit_burst) {
 			VERBOSE_TOROUT_STRING("rcu_torture_read_exit: End of episode");
 			schedule_timeout_uninterruptible(HZ * read_exit_delay);
-			stutter_wait("rcu_torture_read_exit");
 			VERBOSE_TOROUT_STRING("rcu_torture_read_exit: Start of episode");
 			count = 0;
 		}
 		// Spawn children.
-		for (i = 0; i < read_exit; i++) {
+		for (i = 0; i < read_exit && i <= num_online_cpus(); i++) {
 			// We don't want per-child console messages.
 			rep[i] = kthread_run(rcu_torture_read_exit_child,
 					     &trsp[i], "%s",
@@ -2420,6 +2419,7 @@ static int rcu_torture_read_exit(void *unused)
 			cond_resched();
 		}
 		rcu_barrier(); // Wait for task_struct freeing, avoid OOM.
+		stutter_wait("rcu_torture_read_exit");
 	}
 
 	// Clean up and exit.
