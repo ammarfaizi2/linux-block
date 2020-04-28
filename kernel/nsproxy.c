@@ -19,6 +19,8 @@
 #include <net/net_namespace.h>
 #include <linux/ipc_namespace.h>
 #include <linux/time_namespace.h>
+#include <linux/fs_struct.h>
+#include <linux/proc_fs.h>
 #include <linux/proc_ns.h>
 #include <linux/file.h>
 #include <linux/syscalls.h>
@@ -257,21 +259,213 @@ void exit_task_namespaces(struct task_struct *p)
 	switch_task_namespaces(p, NULL);
 }
 
-SYSCALL_DEFINE2(setns, int, fd, int, nstype)
+static int check_setns_flags(unsigned long flags)
+{
+	if (!flags || (flags & ~(CLONE_NEWNS | CLONE_NEWUTS | CLONE_NEWIPC |
+				 CLONE_NEWNET | CLONE_NEWUSER | CLONE_NEWPID |
+				 CLONE_NEWCGROUP)))
+		return -EINVAL;
+
+	return 0;
+}
+
+static inline int __ns_install(struct nsset *nsset, struct ns_common *ns)
+{
+	return ns->ops->install(nsset, ns);
+}
+
+/*
+ * This is the inverse operation to unshare().
+ * Ordering is equivalent to the standard ordering used everywhere else
+ * during unshare and process creation. The switch to the new set of
+ * namespaces occurs at the point of no return after installation of
+ * all requested namespaces was successful.
+ */
+static int ns_install(struct nsset *nsset, struct pid *pid)
+{
+	int ret = 0;
+	unsigned flags = nsset->flags;
+	struct task_struct *me = current;
+	struct task_struct *tsk;
+	struct nsproxy *nsp = NULL;
+
+	tsk = get_pid_task(pid, PIDTYPE_PID);
+	if (!tsk)
+		return -ESRCH;
+
+	if (!ptrace_may_access(tsk, PTRACE_MODE_READ_REALCREDS)) {
+		ret = -EPERM;
+		goto err;
+	}
+
+	task_lock(tsk);
+	nsp = tsk->nsproxy;
+	if (nsp)
+		get_nsproxy(nsp);
+	task_unlock(tsk);
+
+	/* Target task has already exited. */
+	if (!nsp) {
+		ret = -ESRCH;
+		goto err;
+	}
+
+	if (flags & CLONE_NEWUSER) {
+#ifdef CONFIG_USER_NS
+		struct user_namespace *user_ns;
+
+		nsset->cred = prepare_creds();
+		if (!nsset->cred) {
+			ret = -ENOMEM;
+			goto err;
+		}
+
+		user_ns = get_user_ns(__task_cred(tsk)->user_ns);
+		ret = __ns_install(nsset, &user_ns->ns);
+		put_user_ns(user_ns);
+#else
+		ret = -EINVAL;
+#endif
+		if (ret)
+			goto err;
+	}
+
+	if (flags & CLONE_NEWNS) {
+		nsset->fs = copy_fs_struct(me->fs);
+		if (nsset->fs)
+			ret = __ns_install(nsset, mnt_ns_to_common(nsp->mnt_ns));
+		else
+			ret = -ENOMEM;
+		if (ret)
+			goto err;
+	}
+
+	if (flags & CLONE_NEWUTS) {
+#ifdef CONFIG_UTS_NS
+		ret = __ns_install(nsset, &nsp->uts_ns->ns);
+#else
+		ret = -EINVAL;
+#endif
+		if (ret)
+			goto err;
+	}
+
+	if (flags & CLONE_NEWIPC) {
+#ifdef CONFIG_IPC_NS
+		ret = __ns_install(nsset, &nsp->ipc_ns->ns);
+#else
+		ret = -EINVAL;
+#endif
+		if (ret)
+			goto err;
+	}
+
+	if (flags & CLONE_NEWPID) {
+#ifdef CONFIG_PID_NS
+		struct pid_namespace *pidns;
+
+		pidns = task_active_pid_ns(tsk);
+		if (pidns) {
+			get_pid_ns(pidns);
+			ret = __ns_install(nsset, &pidns->ns);
+			put_pid_ns(pidns);
+		} else {
+			ret = -ESRCH;
+		}
+#else
+		ret = EINVAL;
+#endif
+		if (ret)
+			goto err;
+	}
+
+	if (flags & CLONE_NEWCGROUP) {
+#ifdef CONFIG_CGROUPS
+		ret = __ns_install(nsset, &nsp->cgroup_ns->ns);
+#else
+		ret = EINVAL;
+#endif
+		if (ret)
+			goto err;
+	}
+
+	if (flags & CLONE_NEWNET) {
+#ifdef CONFIG_NET_NS
+		ret = __ns_install(nsset, &nsp->net_ns->ns);
+#else
+		ret = -EINVAL;
+#endif
+		if (ret)
+			goto err;
+	}
+
+err:
+	put_task_struct(tsk);
+	if (nsp)
+		put_nsproxy(nsp);
+	if (ret) {
+		put_cred(nsset_cred(nsset));
+		if (flags & CLONE_NEWUSER)
+			free_fs_struct(nsset->fs);
+	}
+
+	return ret;
+}
+
+/*
+ * This is the point of no return. There are just a few namespaces
+ * that do some actual work here and it's sufficiently minimal that
+ * a separate ns_common operation seems unnecessary. Unshare is doing
+ * the same thing. If there'll be more interesting stuff we can
+ * add a simple commit handler on ns_common.
+ */
+static void ns_attach(struct nsset *nsset)
+{
+	unsigned flags = nsset->flags;
+	struct task_struct *me = current;
+
+#ifdef CONFIG_USER_NS
+	if (flags & CLONE_NEWUSER)
+		commit_creds(nsset_cred(nsset));
+#endif
+
+	if ((flags & CLONE_NEWNS) && nsset->fs != me->fs) {
+		set_fs_root(me->fs, &nsset->fs->root);
+		set_fs_pwd(me->fs, &nsset->fs->pwd);
+		free_fs_struct(nsset->fs);
+	}
+
+#ifdef CONFIG_IPC_NS
+	if (flags & CLONE_NEWIPC)
+		exit_sem(me);
+#endif
+
+	switch_task_namespaces(me, nsset->nsproxy);
+}
+
+SYSCALL_DEFINE2(setns, int, fd, int, flags)
 {
 	struct task_struct *tsk = current;
 	struct file *file;
-	struct ns_common *ns;
+	struct ns_common *ns = NULL;
 	struct nsset nsset = {};
 	int err;
 
-	file = proc_ns_fget(fd);
-	if (IS_ERR(file))
-		return PTR_ERR(file);
+	file = fget(fd);
+	if (!file)
+		return -EBADF;
 
-	err = -EINVAL;
-	ns = get_proc_ns(file_inode(file));
-	if (nstype && (ns->ops->type != nstype))
+	if (proc_ns_file(file)) {
+		ns = get_proc_ns(file_inode(file));
+		if (flags && (ns->ops->type != flags))
+			err = -EINVAL;
+		flags = ns->ops->type;
+	} else if (pidfd_pid(file)) {
+		err = check_setns_flags(flags);
+	} else {
+		err = -EINVAL;
+	}
+	if (err)
 		goto out;
 
 	nsset.nsproxy = create_new_namespaces(0, tsk, current_user_ns(), tsk->fs);
@@ -279,13 +473,25 @@ SYSCALL_DEFINE2(setns, int, fd, int, nstype)
 		err = PTR_ERR(nsset.nsproxy);
 		goto out;
 	}
+	nsset.flags = flags;
+	nsset.cred = current_cred();
+	nsset.fs = current->fs;
 
-	err = ns->ops->install(&nsset, ns);
+	if (proc_ns_file(file)) {
+		if (ns->ops->type == CLONE_NEWUSER)
+			nsset.cred = prepare_creds();
+		if (!nsset.cred)
+			err = -ENOMEM;
+		else
+			err = ns->ops->install(&nsset, ns);
+	} else {
+		err = ns_install(&nsset, file->private_data);
+	}
 	if (err) {
 		free_nsproxy(nsset.nsproxy);
 		goto out;
 	}
-	switch_task_namespaces(tsk, nsset.nsproxy);
+	ns_attach(&nsset);
 
 	perf_event_namespaces(tsk);
 out:

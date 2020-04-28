@@ -289,8 +289,8 @@ static int timens_install(struct nsset *nsset, struct ns_common *new)
 	if (!current_is_single_threaded())
 		return -EUSERS;
 
-	if (!ns_capable(ns->user_ns, CAP_SYS_ADMIN) ||
-	    !ns_capable(current_user_ns(), CAP_SYS_ADMIN))
+	if (!ns_capable_cred(nsset->cred, ns->user_ns, CAP_SYS_ADMIN) ||
+	    !ns_capable_cred(nsset->cred, current_user_ns(), CAP_SYS_ADMIN))
 		return -EPERM;
 
 	timens_set_vvar_page(current, ns);
