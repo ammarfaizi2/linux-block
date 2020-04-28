@@ -181,12 +181,10 @@ static int ipcns_install(struct newns_set *newns_set, struct ns_common *new)
 {
 	struct nsproxy *nsproxy = newns_set->nsproxy;
 	struct ipc_namespace *ns = to_ipc_ns(new);
-	if (!ns_capable(ns->user_ns, CAP_SYS_ADMIN) ||
-	    !ns_capable(current_user_ns(), CAP_SYS_ADMIN))
+	if (!ns_capable_cred(newns_set->cred, ns->user_ns, CAP_SYS_ADMIN) ||
+	    !ns_capable_cred(newns_set->cred, current_user_ns(), CAP_SYS_ADMIN))
 		return -EPERM;
 
-	/* Ditch state from the old ipc namespace */
-	exit_sem(current);
 	put_ipc_ns(nsproxy->ipc_ns);
 	nsproxy->ipc_ns = get_ipc_ns(ns);
 	return 0;

@@ -384,8 +384,8 @@ static int pidns_install(struct newns_set *newns_set, struct ns_common *ns)
 	struct pid_namespace *active = task_active_pid_ns(current);
 	struct pid_namespace *ancestor, *new = to_pid_ns(ns);
 
-	if (!ns_capable(new->user_ns, CAP_SYS_ADMIN) ||
-	    !ns_capable(current_user_ns(), CAP_SYS_ADMIN))
+	if (!ns_capable_cred(newns_set->cred, new->user_ns, CAP_SYS_ADMIN) ||
+	    !ns_capable_cred(newns_set->cred, current_user_ns(), CAP_SYS_ADMIN))
 		return -EPERM;
 
 	/*

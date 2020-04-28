@@ -1358,8 +1358,8 @@ static int netns_install(struct newns_set *newns_set, struct ns_common *ns)
 	struct nsproxy *nsproxy = newns_set->nsproxy;
 	struct net *net = to_net_ns(ns);
 
-	if (!ns_capable(net->user_ns, CAP_SYS_ADMIN) ||
-	    !ns_capable(current_user_ns(), CAP_SYS_ADMIN))
+	if (!ns_capable_cred(newns_set->cred, net->user_ns, CAP_SYS_ADMIN) ||
+	    !ns_capable_cred(newns_set->cred, current_user_ns(), CAP_SYS_ADMIN))
 		return -EPERM;
 
 	put_net(nsproxy->net_ns);

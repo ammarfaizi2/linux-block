@@ -1255,9 +1255,8 @@ static void userns_put(struct ns_common *ns)
 
 static int userns_install(struct newns_set *newns_set, struct ns_common *ns)
 {
-	struct nsproxy *nsproxy = newns_set->nsproxy;
 	struct user_namespace *user_ns = to_user_ns(ns);
-	struct cred *cred;
+	struct cred *cred = newns_set->__cred;
 
 	/* Don't allow gaining capabilities by reentering
 	 * the same user namespace.
@@ -1275,14 +1274,10 @@ static int userns_install(struct newns_set *newns_set, struct ns_common *ns)
 	if (!ns_capable(user_ns, CAP_SYS_ADMIN))
 		return -EPERM;
 
-	cred = prepare_creds();
-	if (!cred)
-		return -ENOMEM;
-
 	put_user_ns(cred->user_ns);
 	set_cred_user_ns(cred, get_user_ns(user_ns));
 
-	return commit_creds(cred);
+	return 0;
 }
 
 struct ns_common *ns_get_owner(struct ns_common *ns)

@@ -42,7 +42,13 @@ struct nsproxy {
 extern struct nsproxy init_nsproxy;
 
 struct newns_set {
+	int flags;
 	struct nsproxy *nsproxy;
+	struct fs_struct *fs;
+	union {
+		const struct cred *cred;
+		struct cred *__cred;
+	};
 };
 
 /*
