@@ -100,8 +100,8 @@ static int cgroupns_install(struct nsset *nsset, struct ns_common *ns)
 	struct nsproxy *nsproxy = nsset->nsproxy;
 	struct cgroup_namespace *cgroup_ns = to_cg_ns(ns);
 
-	if (!ns_capable(current_user_ns(), CAP_SYS_ADMIN) ||
-	    !ns_capable(cgroup_ns->user_ns, CAP_SYS_ADMIN))
+	if (!ns_capable_cred(nsset->cred, nsset->cred->user_ns, CAP_SYS_ADMIN) ||
+	    !ns_capable_cred(nsset->cred, cgroup_ns->user_ns, CAP_SYS_ADMIN))
 		return -EPERM;
 
 	/* Don't need to do anything if we are attaching to our own cgroupns. */

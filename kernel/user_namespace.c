@@ -1274,14 +1274,14 @@ static int userns_install(struct nsset *nsset, struct ns_common *ns)
 	if (!ns_capable(user_ns, CAP_SYS_ADMIN))
 		return -EPERM;
 
-	cred = prepare_creds();
+	cred = nsset_cred(nsset);
 	if (!cred)
-		return -ENOMEM;
+		return -EINVAL;
 
 	put_user_ns(cred->user_ns);
 	set_cred_user_ns(cred, get_user_ns(user_ns));
 
-	return commit_creds(cred);
+	return 0;
 }
 
 struct ns_common *ns_get_owner(struct ns_common *ns)

@@ -1733,6 +1733,11 @@ static struct mnt_namespace *to_mnt_ns(struct ns_common *ns)
 	return container_of(ns, struct mnt_namespace, ns);
 }
 
+struct ns_common *mnt_ns_to_common(struct mnt_namespace *mnt)
+{
+	return &mnt->ns;
+}
+
 static bool mnt_ns_loop(struct dentry *dentry)
 {
 	/* Could bind mounting the mount namespace inode cause a
@@ -3957,14 +3962,15 @@ static void mntns_put(struct ns_common *ns)
 static int mntns_install(struct nsset *nsset, struct ns_common *ns)
 {
 	struct nsproxy *nsproxy = nsset->nsproxy;
-	struct fs_struct *fs = current->fs;
+	struct fs_struct *fs = nsset->fs;
 	struct mnt_namespace *mnt_ns = to_mnt_ns(ns), *old_mnt_ns;
+	struct user_namespace *user_ns = nsset->cred->user_ns;
 	struct path root;
 	int err;
 
-	if (!ns_capable(mnt_ns->user_ns, CAP_SYS_ADMIN) ||
-	    !ns_capable(current_user_ns(), CAP_SYS_CHROOT) ||
-	    !ns_capable(current_user_ns(), CAP_SYS_ADMIN))
+	if (!ns_capable_cred(nsset->cred, mnt_ns->user_ns, CAP_SYS_ADMIN) ||
+	    !ns_capable_cred(nsset->cred, user_ns, CAP_SYS_CHROOT) ||
+	    !ns_capable_cred(nsset->cred, user_ns, CAP_SYS_ADMIN))
 		return -EPERM;
 
 	if (is_anon_ns(mnt_ns))
