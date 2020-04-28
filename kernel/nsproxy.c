@@ -260,9 +260,9 @@ void exit_task_namespaces(struct task_struct *p)
 SYSCALL_DEFINE2(setns, int, fd, int, nstype)
 {
 	struct task_struct *tsk = current;
-	struct nsproxy *new_nsproxy;
 	struct file *file;
 	struct ns_common *ns;
+	struct nsset nsset = {};
 	int err;
 
 	file = proc_ns_fget(fd);
@@ -274,18 +274,18 @@ SYSCALL_DEFINE2(setns, int, fd, int, nstype)
 	if (nstype && (ns->ops->type != nstype))
 		goto out;
 
-	new_nsproxy = create_new_namespaces(0, tsk, current_user_ns(), tsk->fs);
-	if (IS_ERR(new_nsproxy)) {
-		err = PTR_ERR(new_nsproxy);
+	nsset.nsproxy = create_new_namespaces(0, tsk, current_user_ns(), tsk->fs);
+	if (IS_ERR(nsset.nsproxy)) {
+		err = PTR_ERR(nsset.nsproxy);
 		goto out;
 	}
 
-	err = ns->ops->install(new_nsproxy, ns);
+	err = ns->ops->install(&nsset, ns);
 	if (err) {
-		free_nsproxy(new_nsproxy);
+		free_nsproxy(nsset.nsproxy);
 		goto out;
 	}
-	switch_task_namespaces(tsk, new_nsproxy);
+	switch_task_namespaces(tsk, nsset.nsproxy);
 
 	perf_event_namespaces(tsk);
 out:

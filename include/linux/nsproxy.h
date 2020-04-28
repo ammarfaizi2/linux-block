@@ -41,6 +41,10 @@ struct nsproxy {
 };
 extern struct nsproxy init_nsproxy;
 
+struct nsset {
+	struct nsproxy *nsproxy;
+};
+
 /*
  * the namespaces access rules are:
  *
