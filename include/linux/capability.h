@@ -40,6 +40,7 @@ struct cpu_vfs_cap_data {
 struct file;
 struct inode;
 struct dentry;
+struct cred;
 struct task_struct;
 struct user_namespace;
 
@@ -209,6 +210,8 @@ extern bool has_ns_capability_noaudit(struct task_struct *t,
 				      struct user_namespace *ns, int cap);
 extern bool capable(int cap);
 extern bool ns_capable(struct user_namespace *ns, int cap);
+extern bool ns_capable_cred(const struct cred *cred,
+			    struct user_namespace *ns, int cap);
 extern bool ns_capable_noaudit(struct user_namespace *ns, int cap);
 extern bool ns_capable_setid(struct user_namespace *ns, int cap);
 #else
