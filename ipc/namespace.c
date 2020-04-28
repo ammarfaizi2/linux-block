@@ -177,8 +177,9 @@ static void ipcns_put(struct ns_common *ns)
 	return put_ipc_ns(to_ipc_ns(ns));
 }
 
-static int ipcns_install(struct nsproxy *nsproxy, struct ns_common *new)
+static int ipcns_install(struct nsset *nsset, struct ns_common *new)
 {
+	struct nsproxy *nsproxy = nsset->nsproxy;
 	struct ipc_namespace *ns = to_ipc_ns(new);
 	if (!ns_capable(ns->user_ns, CAP_SYS_ADMIN) ||
 	    !ns_capable(current_user_ns(), CAP_SYS_ADMIN))
