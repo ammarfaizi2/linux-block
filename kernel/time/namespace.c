@@ -280,8 +280,9 @@ static void timens_put(struct ns_common *ns)
 	put_time_ns(to_time_ns(ns));
 }
 
-static int timens_install(struct nsproxy *nsproxy, struct ns_common *new)
+static int timens_install(struct newns_set *newns_set, struct ns_common *new)
 {
+	struct nsproxy *nsproxy = newns_set->nsproxy;
 	struct time_namespace *ns = to_time_ns(new);
 	int err;
 

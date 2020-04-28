@@ -1253,8 +1253,9 @@ static void userns_put(struct ns_common *ns)
 	put_user_ns(to_user_ns(ns));
 }
 
-static int userns_install(struct nsproxy *nsproxy, struct ns_common *ns)
+static int userns_install(struct newns_set *newns_set, struct ns_common *ns)
 {
+	struct nsproxy *nsproxy = newns_set->nsproxy;
 	struct user_namespace *user_ns = to_user_ns(ns);
 	struct cred *cred;
 

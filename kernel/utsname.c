@@ -140,8 +140,9 @@ static void utsns_put(struct ns_common *ns)
 	put_uts_ns(to_uts_ns(ns));
 }
 
-static int utsns_install(struct nsproxy *nsproxy, struct ns_common *new)
+static int utsns_install(struct newns_set *newns_set, struct ns_common *new)
 {
+	struct nsproxy *nsproxy = newns_set->nsproxy;
 	struct uts_namespace *ns = to_uts_ns(new);
 
 	if (!ns_capable(ns->user_ns, CAP_SYS_ADMIN) ||

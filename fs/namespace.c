@@ -3954,8 +3954,9 @@ static void mntns_put(struct ns_common *ns)
 	put_mnt_ns(to_mnt_ns(ns));
 }
 
-static int mntns_install(struct nsproxy *nsproxy, struct ns_common *ns)
+static int mntns_install(struct newns_set *newns_set, struct ns_common *ns)
 {
+	struct nsproxy *nsproxy = newns_set->nsproxy;
 	struct fs_struct *fs = current->fs;
 	struct mnt_namespace *mnt_ns = to_mnt_ns(ns), *old_mnt_ns;
 	struct path root;
