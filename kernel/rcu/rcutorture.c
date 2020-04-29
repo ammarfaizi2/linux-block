@@ -109,11 +109,10 @@ torture_param(int, object_debug, 0,
 torture_param(int, onoff_holdoff, 0, "Time after boot before CPU hotplugs (s)");
 torture_param(int, onoff_interval, 0,
 	     "Time between CPU hotplugs (jiffies), 0=disable");
-torture_param(int, read_exit, 4, "# of read-then-exit kthreads");
 torture_param(int, read_exit_delay, 13,
 	      "Delay between read-then-exit episodes (s)");
 torture_param(int, read_exit_burst, 16,
-	      "# of read-then-exit bursts per episode");
+	      "# of read-then-exit bursts per episode, zero to disable");
 torture_param(int, shuffle_interval, 3, "Number of seconds between shuffles");
 torture_param(int, shutdown_secs, 0, "Shutdown time (s), <= zero to disable.");
 torture_param(int, stall_cpu, 0, "Stall duration (s), zero to disable.");
@@ -1644,7 +1643,7 @@ rcu_torture_print_module_parms(struct rcu_torture_ops *cur_ops, const char *tag)
 		 "stall_cpu_block=%d "
 		 "n_barrier_cbs=%d "
 		 "onoff_interval=%d onoff_holdoff=%d "
-		 "read_exit=%d read_exit_delay=%d read_exit_burst=%d\n",
+		 "read_exit_delay=%d read_exit_burst=%d\n",
 		 torture_type, tag, nrealreaders, nfakewriters,
 		 stat_interval, verbose, test_no_idle_hz, shuffle_interval,
 		 stutter, irqreader, fqs_duration, fqs_holdoff, fqs_stutter,
@@ -1654,7 +1653,7 @@ rcu_torture_print_module_parms(struct rcu_torture_ops *cur_ops, const char *tag)
 		 stall_cpu_block,
 		 n_barrier_cbs,
 		 onoff_interval, onoff_holdoff,
-		 read_exit, read_exit_delay, read_exit_burst);
+		 read_exit_delay, read_exit_burst);
 }
 
 static int rcutorture_booster_cleanup(unsigned int cpu)
@@ -2359,9 +2358,10 @@ static int rcu_torture_read_exit_child(void *trsp_in)
 	struct torture_random_state *trsp = trsp_in;
 
 	set_user_nice(current, MAX_NICE);
-	(void)rcu_torture_one_read(trsp);
+	// Minimize time between reading and exiting.
 	while (!kthread_should_stop())
 		schedule_timeout_uninterruptible(1);
+	(void)rcu_torture_one_read(trsp);
 	return 0;
 }
 
@@ -2370,66 +2370,42 @@ static int rcu_torture_read_exit(void *unused)
 {
 	int count = 0;
 	bool errexit = false;
-	int i;
-	struct task_struct **rep;
-	struct torture_random_state *trsp;
+	struct task_struct *tsp;
+	DEFINE_TORTURE_RANDOM(trs);
 
 	// Allocate and initialize.
 	set_user_nice(current, MAX_NICE);
-	rep = kcalloc(read_exit, sizeof(*rep), GFP_KERNEL);
-	trsp = kcalloc(read_exit, sizeof(*trsp), GFP_KERNEL);
-	if (rep && trsp) {
-		for (i = 0; i < read_exit; i++)
-			torture_random_init(&trsp[i]);
-		VERBOSE_TOROUT_STRING("rcu_torture_read_exit: Start of test");
-	} else {
-		kfree(rep);
-		kfree(trsp);
-		rep = NULL;
-		trsp = NULL;
-		errexit = true;
-		VERBOSE_TOROUT_ERRSTRING("out of memory");
-	}
+	VERBOSE_TOROUT_STRING("rcu_torture_read_exit: Start of test");
 
 	// Each pass through this loop does one read-exit episode.
-	while (!errexit && ! READ_ONCE(read_exit_child_stop)) {
+	do {
 		if (++count > read_exit_burst) {
 			VERBOSE_TOROUT_STRING("rcu_torture_read_exit: End of episode");
+			rcu_barrier(); // Wait for task_struct free, avoid OOM.
 			schedule_timeout_uninterruptible(HZ * read_exit_delay);
 			VERBOSE_TOROUT_STRING("rcu_torture_read_exit: Start of episode");
 			count = 0;
 		}
-		// Spawn children.
-		for (i = 0; i < read_exit && i <= num_online_cpus(); i++) {
-			// We don't want per-child console messages.
-			rep[i] = kthread_run(rcu_torture_read_exit_child,
-					     &trsp[i], "%s",
-					     "rcu_torture_read_exit_child");
-			if (IS_ERR(rep[i])) {
-				VERBOSE_TOROUT_ERRSTRING("out of memory");
-				errexit = true;
-				rep[i] = NULL;
-				break;
-			}
-			cond_resched();
+		// Spawn child.
+		tsp = kthread_run(rcu_torture_read_exit_child,
+				     &trs, "%s",
+				     "rcu_torture_read_exit_child");
+		if (IS_ERR(tsp)) {
+			VERBOSE_TOROUT_ERRSTRING("out of memory");
+			errexit = true;
+			tsp = NULL;
+			break;
 		}
-		n_read_exits += i;
-		// Reap children.
-		for (i--; i >= 0; i--) {
-			kthread_stop(rep[i]);
-			rep[i] = NULL;
-			cond_resched();
-		}
-		rcu_barrier(); // Wait for task_struct freeing, avoid OOM.
+		cond_resched();
+		kthread_stop(tsp);
+		n_read_exits ++;
 		stutter_wait("rcu_torture_read_exit");
-	}
+	} while (!errexit && !READ_ONCE(read_exit_child_stop));
 
 	// Clean up and exit.
 	smp_store_release(&read_exit_child_stopped, true); // After reaping.
 	smp_mb(); // Store before wakeup.
 	wake_up(&read_exit_wq);
-	kfree(rep);
-	kfree(trsp);
 	while (!torture_must_stop())
 		schedule_timeout_uninterruptible(1);
 	torture_kthread_stopping("rcu_torture_read_exit");
@@ -2438,7 +2414,7 @@ static int rcu_torture_read_exit(void *unused)
 
 static int rcu_torture_read_exit_init(void)
 {
-	if (read_exit <= 0)
+	if (read_exit_burst <= 0)
 		return -EINVAL;
 	init_waitqueue_head(&read_exit_wq);
 	read_exit_child_stop = false;
