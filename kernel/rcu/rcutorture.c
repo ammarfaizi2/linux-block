@@ -2385,6 +2385,8 @@ static int rcu_torture_read_exit(void *unused)
 	} else {
 		kfree(rep);
 		kfree(trsp);
+		rep = NULL;
+		trsp = NULL;
 		errexit = true;
 		VERBOSE_TOROUT_ERRSTRING("out of memory");
 	}
@@ -2434,10 +2436,10 @@ static int rcu_torture_read_exit(void *unused)
 	return 0;
 }
 
-static bool rcu_torture_read_exit_init(void)
+static int rcu_torture_read_exit_init(void)
 {
 	if (read_exit <= 0)
-		return true;
+		return -EINVAL;
 	init_waitqueue_head(&read_exit_wq);
 	read_exit_child_stop = false;
 	read_exit_child_stopped = false;
