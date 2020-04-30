@@ -361,8 +361,8 @@ bool has_capability_noaudit(struct task_struct *t, int cap)
 	return has_ns_capability_noaudit(t, &init_user_ns, cap);
 }
 
-static bool ns_capable_common(struct user_namespace *ns,
-			      int cap,
+static bool ns_capable_common(const struct cred *cred,
+			      struct user_namespace *ns, int cap,
 			      unsigned int opts)
 {
 	int capable;
@@ -372,7 +372,7 @@ static bool ns_capable_common(struct user_namespace *ns,
 		BUG();
 	}
 
-	capable = security_capable(current_cred(), ns, cap, opts);
+	capable = security_capable(cred, ns, cap, opts);
 	if (capable == 0) {
 		current->flags |= PF_SUPERPRIV;
 		return true;
@@ -393,9 +393,14 @@ static bool ns_capable_common(struct user_namespace *ns,
  */
 bool ns_capable(struct user_namespace *ns, int cap)
 {
-	return ns_capable_common(ns, cap, CAP_OPT_NONE);
+	return ns_capable_common(current_cred(), ns, cap, CAP_OPT_NONE);
 }
 EXPORT_SYMBOL(ns_capable);
+
+bool ns_capable_cred(const struct cred *cred, struct user_namespace *ns, int cap)
+{
+	return ns_capable_common(cred, ns, cap, CAP_OPT_NONE);
+}
 
 /**
  * ns_capable_noaudit - Determine if the current task has a superior capability
@@ -411,7 +416,7 @@ EXPORT_SYMBOL(ns_capable);
  */
 bool ns_capable_noaudit(struct user_namespace *ns, int cap)
 {
-	return ns_capable_common(ns, cap, CAP_OPT_NOAUDIT);
+	return ns_capable_common(current_cred(), ns, cap, CAP_OPT_NOAUDIT);
 }
 EXPORT_SYMBOL(ns_capable_noaudit);
 
@@ -430,7 +435,7 @@ EXPORT_SYMBOL(ns_capable_noaudit);
  */
 bool ns_capable_setid(struct user_namespace *ns, int cap)
 {
-	return ns_capable_common(ns, cap, CAP_OPT_INSETID);
+	return ns_capable_common(current_cred(), ns, cap, CAP_OPT_INSETID);
 }
 EXPORT_SYMBOL(ns_capable_setid);
 
