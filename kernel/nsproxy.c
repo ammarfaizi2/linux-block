@@ -19,6 +19,7 @@
 #include <net/net_namespace.h>
 #include <linux/ipc_namespace.h>
 #include <linux/time_namespace.h>
+#include <linux/fs_struct.h>
 #include <linux/proc_ns.h>
 #include <linux/file.h>
 #include <linux/syscalls.h>
@@ -257,12 +258,85 @@ void exit_task_namespaces(struct task_struct *p)
 	switch_task_namespaces(p, NULL);
 }
 
+static void put_nsset(struct nsset *nsset)
+{
+	unsigned flags = nsset->flags;
+
+	if (flags & CLONE_NEWUSER)
+		put_cred(nsset_cred(nsset));
+	if (nsset->nsproxy)
+		free_nsproxy(nsset->nsproxy);
+}
+
+static int prepare_nsset(unsigned flags, struct nsset *nsset)
+{
+	struct task_struct *me = current;
+
+	nsset->nsproxy = create_new_namespaces(0, me, current_user_ns(), me->fs);
+	if (IS_ERR(nsset->nsproxy))
+		return PTR_ERR(nsset->nsproxy);
+
+	if (flags & CLONE_NEWUSER)
+		nsset->cred = prepare_creds();
+	else
+		nsset->cred = current_cred();
+	if (!nsset->cred)
+		goto out;
+
+	if (flags & CLONE_NEWNS)
+		nsset->fs = me->fs;
+
+	nsset->flags = flags;
+	return 0;
+
+out:
+	put_nsset(nsset);
+	return -ENOMEM;
+}
+
+/*
+ * This is the point of no return. There are just a few namespaces
+ * that do some actual work here and it's sufficiently minimal that
+ * a separate ns_common operation seems unnecessary for now.
+ * Unshare is doing the same thing. If we'll end up needing to do
+ * more in a given namespace or a helper here is ultimately not
+ * exported anymore a simple commit handler for each namespace
+ * should be added to ns_common.
+ */
+static void commit_nsset(struct nsset *nsset)
+{
+	unsigned flags = nsset->flags;
+	struct task_struct *me = current;
+
+#ifdef CONFIG_USER_NS
+	if (flags & CLONE_NEWUSER) {
+		/* transfer ownership */
+		commit_creds(nsset_cred(nsset));
+		nsset->cred = NULL;
+	}
+#endif
+
+#ifdef CONFIG_IPC_NS
+	if (flags & CLONE_NEWIPC)
+		exit_sem(me);
+#endif
+
+	/* transfer ownership */
+	switch_task_namespaces(me, nsset->nsproxy);
+	nsset->nsproxy = NULL;
+}
+
+static inline int validate_ns(struct nsset *nsset, struct ns_common *ns)
+{
+	return ns->ops->install(nsset, ns);
+}
+
 SYSCALL_DEFINE2(setns, int, fd, int, nstype)
 {
 	struct task_struct *tsk = current;
-	struct nsproxy *new_nsproxy;
 	struct file *file;
 	struct ns_common *ns;
+	struct nsset nsset = {};
 	int err;
 
 	file = proc_ns_fget(fd);
@@ -274,20 +348,16 @@ SYSCALL_DEFINE2(setns, int, fd, int, nstype)
 	if (nstype && (ns->ops->type != nstype))
 		goto out;
 
-	new_nsproxy = create_new_namespaces(0, tsk, current_user_ns(), tsk->fs);
-	if (IS_ERR(new_nsproxy)) {
-		err = PTR_ERR(new_nsproxy);
+	err = prepare_nsset(nstype, &nsset);
+	if (err)
 		goto out;
-	}
 
-	err = ns->ops->install(new_nsproxy, ns);
-	if (err) {
-		free_nsproxy(new_nsproxy);
-		goto out;
+	err = validate_ns(&nsset, ns);
+	if (!err) {
+		commit_nsset(&nsset);
+		perf_event_namespaces(tsk);
 	}
-	switch_task_namespaces(tsk, new_nsproxy);
-
-	perf_event_namespaces(tsk);
+	put_nsset(&nsset);
 out:
 	fput(file);
 	return err;
