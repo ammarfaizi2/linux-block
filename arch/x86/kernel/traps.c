@@ -762,14 +762,19 @@ static void noinstr handle_debug(struct pt_regs *regs, unsigned long dr6,
 	/* Store the virtualized DR6 value */
 	tsk->thread.debugreg6 = dr6;
 
+	instr_begin();
 #ifdef CONFIG_KPROBES
-	if (kprobe_debug_handler(regs))
+	if (kprobe_debug_handler(regs)) {
+		instr_end();
 		return;
+	}
 #endif
 
 	if (notify_die(DIE_DEBUG, "debug", regs, (long)&dr6, 0,
-		       SIGTRAP) == NOTIFY_STOP)
+		       SIGTRAP) == NOTIFY_STOP) {
+		instr_end();
 		return;
+	}
 
 	/*
 	 * Let others (NMI) know that the debug stack is in use
@@ -805,6 +810,7 @@ static void noinstr handle_debug(struct pt_regs *regs, unsigned long dr6,
 out:
 	cond_local_irq_disable(regs);
 	debug_stack_usage_dec();
+	instr_end();
 }
 
 static __always_inline void exc_debug_kernel(struct pt_regs *regs,
@@ -816,7 +822,7 @@ static __always_inline void exc_debug_kernel(struct pt_regs *regs,
 	 * generates a debug exception."  Clear TIF_BLOCKSTEP to keep
 	 * TIF_BLOCKSTEP in sync with the hardware BTF flag.
 	 */
-	clear_tsk_thread_flag(tsk, TIF_BLOCKSTEP);
+	clear_thread_flag(TIF_BLOCKSTEP);
 
 	/*
 	 * Catch SYSENTER with TF set and clear DR_STEP. If this hit a
@@ -839,7 +845,7 @@ static __always_inline void exc_debug_user(struct pt_regs *regs,
 					   unsigned long dr6)
 {
 	idtentry_enter(regs);
-	clear_tsk_thread_flag(tsk, TIF_BLOCKSTEP);
+	clear_thread_flag(TIF_BLOCKSTEP);
 
 	/*
 	 * If dr6 has no reason to give us about the origin of this trap,
