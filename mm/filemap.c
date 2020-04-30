@@ -2256,13 +2256,13 @@ find_page:
 			if (unlikely(page == NULL))
 				goto no_cached_page;
 		}
-		if (PageReadahead(page)) {
+		if (PageReadahead(thp_head(page))) {
 			if (iocb->ki_flags & IOCB_NOIO) {
 				put_page(page);
 				goto out;
 			}
 			page_cache_async_readahead(mapping,
-					ra, filp, page,
+					ra, filp, thp_head(page),
 					index, last_index - index);
 		}
 		if (!PageUptodate(page)) {
@@ -2757,10 +2757,10 @@ static struct file *do_async_mmap_readahead(struct vm_fault *vmf,
 	mmap_miss = READ_ONCE(ra->mmap_miss);
 	if (mmap_miss)
 		WRITE_ONCE(ra->mmap_miss, --mmap_miss);
-	if (PageReadahead(page)) {
+	if (PageReadahead(thp_head(page))) {
 		fpin = maybe_unlock_mmap_for_io(vmf, fpin);
 		page_cache_async_readahead(mapping, ra, file,
-					   page, offset, ra->ra_pages);
+				thp_head(page), offset, ra->ra_pages);
 	}
 	return fpin;
 }
