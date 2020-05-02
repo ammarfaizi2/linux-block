@@ -20,6 +20,7 @@
 #include <linux/sched/task_stack.h>
 
 #include <asm/cpu_entry_area.h>
+#include <asm/irq_stack.h>
 #include <asm/io_apic.h>
 #include <asm/apic.h>
 
@@ -69,4 +70,15 @@ int irq_init_percpu_irqstack(unsigned int cpu)
 	if (per_cpu(hardirq_stack_ptr, cpu))
 		return 0;
 	return map_irq_stack(cpu);
+}
+
+noinstr void do_softirq_own_stack(void)
+{
+	if (irqstack_active()) {
+		instr_begin();
+		__do_softirq();
+		instr_end();
+	} else {
+		RUN_ON_IRQSTACK(__do_softirq);
+	}
 }
