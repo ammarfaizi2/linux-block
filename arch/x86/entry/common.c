@@ -539,22 +539,7 @@ void noinstr idtentry_enter(struct pt_regs *regs)
 	}
 }
 
-/**
- * idtentry_exit - Common code to handle return from exceptions
- * @regs:	Pointer to pt_regs (exception entry regs)
- *
- * Depending on the return target (kernel/user) this runs the necessary
- * preemption and work checks if possible and reguired and returns to
- * the caller with interrupts disabled and no further work pending.
- *
- * This is the last action before returning to the low level ASM code which
- * just needs to return to the appropriate context.
- *
- * Invoked by all exception/interrupt IDTENTRY handlers which are not
- * returning through the paranoid exit path (all except NMI, #DF and the IST
- * variants of #MC and #DB).
- */
-void noinstr idtentry_exit(struct pt_regs *regs)
+static __always_inline void __idtentry_exit(struct pt_regs *regs)
 {
 	lockdep_assert_irqs_disabled();
 
@@ -598,4 +583,24 @@ void noinstr idtentry_exit(struct pt_regs *regs)
 		/* IRQ flags state is correct already. Just tell RCU */
 		rcu_irq_exit();
 	}
+}
+
+/**
+ * idtentry_exit - Common code to handle return from exceptions
+ * @regs:	Pointer to pt_regs (exception entry regs)
+ *
+ * Depending on the return target (kernel/user) this runs the necessary
+ * preemption and work checks if possible and reguired and returns to
+ * the caller with interrupts disabled and no further work pending.
+ *
+ * This is the last action before returning to the low level ASM code which
+ * just needs to return to the appropriate context.
+ *
+ * Invoked by all exception/interrupt IDTENTRY handlers which are not
+ * returning through the paranoid exit path (all except NMI, #DF and the IST
+ * variants of #MC and #DB).
+ */
+void noinstr idtentry_exit(struct pt_regs *regs)
+{
+	__idtentry_exit(regs);
 }
