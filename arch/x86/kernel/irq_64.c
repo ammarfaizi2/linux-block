@@ -72,6 +72,48 @@ int irq_init_percpu_irqstack(unsigned int cpu)
 	return map_irq_stack(cpu);
 }
 
+static noinstr void handle_irq_on_irqstack(struct irq_desc *desc)
+{
+	unsigned long tos;
+
+	tos = (unsigned long) __this_cpu_read(hardirq_stack_ptr);
+	tos -= 8;
+	/*
+	 * The unwinder requires that the top of the IRQ stack links back
+	 * to the previous stack and RBP is set up.
+	 */
+	asm volatile(
+		"pushq  %%rbp					\n"
+		"movq   %%rsp, %%rbp				\n"
+		"movq	%%rsp, (%[ts])				\n"
+		"movq	%[ts], %%rsp				\n"
+		"1:						\n"
+		"	.pushsection .discard.instr_begin	\n"
+		"	.long 1b - .				\n"
+		"	.popsection				\n"
+		CALL_NOSPEC
+		"2:						\n"
+		"	.pushsection .discard.instr_end		\n"
+		"	.long 2b - .				\n"
+		"	.popsection				\n"
+		"popq	%%rsp					\n"
+		"leaveq						\n"
+		:
+		: [ts] "r" (tos),
+		  [thunk_target] "r" (desc->handle_irq),
+		  "D" (desc)
+		: "memory"
+		);
+}
+
+void handle_irq(struct irq_desc *desc, struct pt_regs *regs)
+{
+	if (!irq_needs_irq_stack(regs))
+		generic_handle_irq_desc(desc);
+	else
+		handle_irq_on_irqstack(desc);
+}
+
 noinstr void do_softirq_own_stack(void)
 {
 	if (irqstack_active()) {
