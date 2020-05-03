@@ -515,6 +515,28 @@ SYSCALL_DEFINE0(ni_syscall)
 	return -ENOSYS;
 }
 
+static __always_inline bool __idtentry_enter(struct pt_regs *regs,
+					     bool cond_rcu)
+{
+	if (user_mode(regs)) {
+		enter_from_user_mode();
+	} else {
+		if (!cond_rcu || !rcu_is_watching()) {
+			lockdep_hardirqs_off(CALLER_ADDR0);
+			rcu_irq_enter();
+			instr_begin();
+			trace_hardirqs_off_prepare();
+			instr_end();
+			return true;
+		} else {
+			instr_begin();
+			trace_hardirqs_off();
+			instr_end();
+		}
+	}
+	return false;
+}
+
 /**
  * idtentry_enter - Handle state tracking on idtentry
  * @regs:	Pointer to pt_regs of interrupted context
@@ -532,19 +554,60 @@ SYSCALL_DEFINE0(ni_syscall)
  */
 void noinstr idtentry_enter(struct pt_regs *regs)
 {
-	if (user_mode(regs)) {
-		enter_from_user_mode();
-	} else {
-		lockdep_hardirqs_off(CALLER_ADDR0);
-		rcu_irq_enter();
-		instr_begin();
-		trace_hardirqs_off_prepare();
-		instr_end();
-	}
+	__idtentry_enter(regs, false);
+}
+
+/**
+ * idtentry_enter_cond_rcu - Handle state tracking on idtentry with conditional
+ *			     RCU handling
+ * @regs:	Pointer to pt_regs of interrupted context
+ *
+ * Invokes:
+ *  - lockdep irqflag state tracking as low level ASM entry disabled
+ *    interrupts.
+ *
+ *  - Context tracking if the exception hit user mode.
+ *
+ *  - The hardirq tracer to keep the state consistent as low level ASM
+ *    entry disabled interrupts.
+ *
+ * For kernel mode entries the conditional RCU handling is useful for two
+ * purposes
+ *
+ * 1) Pagefaults: Kernel code can fault and sleep, e.g. on exec. This code
+ *    is not in an RCU idle section. If rcu_irq_enter() would be invoked
+ *    then nothing would invoke rcu_irq_exit() before scheduling.
+ *
+ *   If the kernel faults in a RCU idle section then all bets are off
+ *   anyway but at least avoiding a subsequent issue vs. RCU is helpful for
+ *   debugging.
+ *
+ * 2) Scheduler IPI: To avoid the overhead of a regular idtentry vs. RCU
+ *    and irq_enter() the IPI can be made lightweight if the tracepoints
+ *    are not enabled. While the IPI functionality itself does not require
+ *    RCU (folding preempt count) it still calls out into instrumentable
+ *    functions, e.g. ack_APIC_irq(). The scheduler IPI can hit RCU idle
+ *    sections, so RCU needs to be adjusted. For the fast path case, e.g.
+ *    KVM kicking a vCPU out of guest mode this can be avoided because the
+ *    IPI is handled after KVM reestablished kernel context including RCU.
+ *
+ * For user mode entries enter_from_user_mode() must be invoked to
+ * establish the proper context for NOHZ_FULL. Otherwise scheduling on exit
+ * would not be possible.
+ *
+ * Returns: True if RCU has been adjusted on a kernel entry
+ *	    False otherwise
+ *
+ * The return value must be fed into the rcu_exit argument of
+ * idtentry_exit_cond_rcu().
+ */
+bool noinstr idtentry_enter_cond_rcu(struct pt_regs *regs)
+{
+	return __idtentry_enter(regs, true);
 }
 
 static __always_inline void __idtentry_exit(struct pt_regs *regs,
-					    bool preempt_hcall)
+					    bool preempt_hcall, bool rcu_exit)
 {
 	lockdep_assert_irqs_disabled();
 
@@ -568,7 +631,8 @@ static __always_inline void __idtentry_exit(struct pt_regs *regs,
 			 */
 			if (!preempt_count()) {
 				instr_begin();
-				rcu_irq_exit_preempt();
+				if (rcu_exit)
+					rcu_irq_exit_preempt();
 				if (need_resched())
 					preempt_schedule_irq();
 				/* Covers both tracing and lockdep */
@@ -592,11 +656,13 @@ static __always_inline void __idtentry_exit(struct pt_regs *regs,
 		trace_hardirqs_on_prepare();
 		lockdep_hardirqs_on_prepare(CALLER_ADDR0);
 		instr_end();
-		rcu_irq_exit();
+		if (rcu_exit)
+			rcu_irq_exit();
 		lockdep_hardirqs_on(CALLER_ADDR0);
 	} else {
 		/* IRQ flags state is correct already. Just tell RCU */
-		rcu_irq_exit();
+		if (rcu_exit)
+			rcu_irq_exit();
 	}
 }
 
@@ -617,7 +683,28 @@ static __always_inline void __idtentry_exit(struct pt_regs *regs,
  */
 void noinstr idtentry_exit(struct pt_regs *regs)
 {
-	__idtentry_exit(regs, false);
+	__idtentry_exit(regs, false, true);
+}
+
+/**
+ * idtentry_exit_cond_rcu - Handle return from exception with conditional RCU
+ *			    handling
+ * @regs:	Pointer to pt_regs (exception entry regs)
+ * @rcu_exit:	Invoke rcu_irq_exit() if true
+ *
+ * Depending on the return target (kernel/user) this runs the necessary
+ * preemption and work checks if possible and reguired and returns to
+ * the caller with interrupts disabled and no further work pending.
+ *
+ * This is the last action before returning to the low level ASM code which
+ * just needs to return to the appropriate context.
+ *
+ * Counterpart to idtentry_enter_cond_rcu(). The return value of the entry
+ * function must be fed into the @rcu_exit argument.
+ */
+void noinstr idtentry_exit_cond_rcu(struct pt_regs *regs, bool rcu_exit)
+{
+	__idtentry_exit(regs, false, rcu_exit);
 }
 
 #ifdef CONFIG_XEN_PV
@@ -658,11 +745,11 @@ __visible noinstr void xen_pv_evtchn_do_upcall(struct pt_regs *regs)
 	set_irq_regs(old_regs);
 
 	if (IS_ENABLED(CONFIG_PREEMPTION)) {
-		__idtentry_exit(regs, false);
+		__idtentry_exit(regs, false, true);
 	} else {
 		bool inhcall = __this_cpu_read(xen_in_preemptible_hcall);
 
-		__idtentry_exit(regs, inhcall && need_resched());
+		__idtentry_exit(regs, inhcall && need_resched(), true);
 	}
 }
 #endif /* CONFIG_XEN_PV */

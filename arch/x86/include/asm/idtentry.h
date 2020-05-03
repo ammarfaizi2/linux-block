@@ -10,6 +10,9 @@
 void idtentry_enter(struct pt_regs *regs);
 void idtentry_exit(struct pt_regs *regs);
 
+bool idtentry_enter_cond_rcu(struct pt_regs *regs);
+void idtentry_exit_cond_rcu(struct pt_regs *regs, bool rcu_exit);
+
 /**
  * DECLARE_IDTENTRY - Declare functions for simple IDT entry points
  *		      No error code pushed by hardware
