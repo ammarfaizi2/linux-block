@@ -84,7 +84,6 @@
 
 static DEFINE_PER_CPU_SHARED_ALIGNED(struct rcu_data, rcu_data) = {
 	.dynticks_nesting = 1,
-	.dynticks_nmi_nesting = DYNTICK_IRQ_NONIDLE,
 	.dynticks = ATOMIC_INIT(1),
 };
 static struct rcu_state rcu_state = {
@@ -553,17 +552,19 @@ EXPORT_SYMBOL_GPL(rcutorture_get_gp_data);
 /*
  * Enter an RCU extended quiescent state, which can be either the
  * idle loop or adaptive-tickless usermode execution.
- *
- * We crowbar the ->dynticks_nmi_nesting field to zero to allow for
- * the possibility of usermode upcalls having messed up our count
- * of interrupt nesting level during the prior busy period.
  */
 static void rcu_eqs_enter(bool user)
 {
 	struct rcu_data *rdp = this_cpu_ptr(&rcu_data);
 
-	WARN_ON_ONCE(rdp->dynticks_nmi_nesting != DYNTICK_IRQ_NONIDLE);
-	WRITE_ONCE(rdp->dynticks_nmi_nesting, 0);
+	/*
+	 * Entering usermode/idle from interrupt is not handled. These would
+	 * mean usermode upcalls or idle exit happened from interrupts. Remove
+	 * the warning by 2020.
+	 */
+	if (WARN_ON_ONCE(rdp->dynticks_nmi_nesting != 0))
+		WRITE_ONCE(rdp->dynticks_nmi_nesting, 0);
+
 	WARN_ON_ONCE(IS_ENABLED(CONFIG_RCU_EQS_DEBUG) &&
 		     rdp->dynticks_nesting == 0);
 	if (rdp->dynticks_nesting != 1) {
@@ -641,26 +642,29 @@ static __always_inline void rcu_nmi_exit_common(bool irq)
 	 * (We are exiting an NMI handler, so RCU better be paying attention
 	 * to us!)
 	 */
+	WARN_ON_ONCE(rdp->dynticks_nesting <= 0);
 	WARN_ON_ONCE(rdp->dynticks_nmi_nesting <= 0);
 	WARN_ON_ONCE(rcu_dynticks_curr_cpu_in_eqs());
 
+	WRITE_ONCE(rdp->dynticks_nmi_nesting, /* No store tearing. */
+		   rdp->dynticks_nmi_nesting - 1);
 	/*
 	 * If the nesting level is not 1, the CPU wasn't RCU-idle, so
 	 * leave it in non-RCU-idle state.
 	 */
-	if (rdp->dynticks_nmi_nesting != 1) {
+	if (rdp->dynticks_nesting != 1) {
 		trace_rcu_dyntick(TPS("StillNonIdle"), TPS("IRQ"),
-				  rdp->dynticks_nmi_nesting,
-				  rdp->dynticks_nmi_nesting - 2, atomic_read(&rdp->dynticks));
-		WRITE_ONCE(rdp->dynticks_nmi_nesting, /* No store tearing. */
-			   rdp->dynticks_nmi_nesting - 2);
+				  rdp->dynticks_nesting,
+				  rdp->dynticks_nesting - 2, atomic_read(&rdp->dynticks));
+		WRITE_ONCE(rdp->dynticks_nesting, /* No store tearing. */
+			   rdp->dynticks_nesting - 2);
 		return;
 	}
 
 	/* This NMI interrupted an RCU-idle CPU, restore RCU-idleness. */
-	trace_rcu_dyntick(TPS("Start"), TPS("IRQ"), rdp->dynticks_nmi_nesting,
+	trace_rcu_dyntick(TPS("Start"), TPS("IRQ"), rdp->dynticks_nesting,
 			  0, atomic_read(&rdp->dynticks));
-	WRITE_ONCE(rdp->dynticks_nmi_nesting, 0); /* Avoid store tearing. */
+	WRITE_ONCE(rdp->dynticks_nesting, 0); /* Avoid store tearing. */
 
 	if (irq)
 		rcu_prepare_for_idle();
@@ -727,10 +731,6 @@ void rcu_irq_exit_irqson(void)
 /*
  * Exit an RCU extended quiescent state, which can be either the
  * idle loop or adaptive-tickless usermode execution.
- *
- * We crowbar the ->dynticks_nmi_nesting field to DYNTICK_IRQ_NONIDLE to
- * allow for the possibility of usermode upcalls messing up our count of
- * interrupt nesting level during the busy period that is just now starting.
  */
 static void rcu_eqs_exit(bool user)
 {
@@ -755,8 +755,14 @@ static void rcu_eqs_exit(bool user)
 			  rdp->dynticks_nesting, 1, atomic_read(&rdp->dynticks));
 	WARN_ON_ONCE(IS_ENABLED(CONFIG_RCU_EQS_DEBUG) && !user && !is_idle_task(current));
 	WRITE_ONCE(rdp->dynticks_nesting, 1);
-	WARN_ON_ONCE(rdp->dynticks_nmi_nesting);
-	WRITE_ONCE(rdp->dynticks_nmi_nesting, DYNTICK_IRQ_NONIDLE);
+
+	/*
+	 * Exiting usermode/idle from interrupt is not handled. These would
+	 * mean usermode upcalls or idle exit happened from interrupts. Remove
+	 * the warning by 2020.
+	 */
+	if (WARN_ON_ONCE(rdp->dynticks_nmi_nesting != 0))
+		WRITE_ONCE(rdp->dynticks_nmi_nesting, 0);
 }
 
 /**
@@ -812,6 +818,7 @@ static __always_inline void rcu_nmi_enter_common(bool irq)
 	struct rcu_data *rdp = this_cpu_ptr(&rcu_data);
 
 	/* Complain about underflow. */
+	WARN_ON_ONCE(rdp->dynticks_nesting < 0);
 	WARN_ON_ONCE(rdp->dynticks_nmi_nesting < 0);
 
 	/*
@@ -836,7 +843,7 @@ static __always_inline void rcu_nmi_enter_common(bool irq)
 
 		incby = 1;
 	} else if (irq && tick_nohz_full_cpu(rdp->cpu) &&
-		   rdp->dynticks_nmi_nesting == DYNTICK_IRQ_NONIDLE &&
+		   !rdp->dynticks_nmi_nesting &&
 		   READ_ONCE(rdp->rcu_urgent_qs) &&
 		   !READ_ONCE(rdp->rcu_forced_tick)) {
 		// We get here only if we had already exited the extended
@@ -856,11 +863,14 @@ static __always_inline void rcu_nmi_enter_common(bool irq)
 	}
 
 	trace_rcu_dyntick(incby == 1 ? TPS("End") : TPS("StillNonIdle"),
-			  TPS("IRQ"), rdp->dynticks_nmi_nesting,
-			  rdp->dynticks_nmi_nesting + incby, atomic_read(&rdp->dynticks));
+			  TPS("IRQ"), rdp->dynticks_nesting,
+			  rdp->dynticks_nesting + incby, atomic_read(&rdp->dynticks));
+
+	WRITE_ONCE(rdp->dynticks_nesting, /* Prevent store tearing. */
+		   rdp->dynticks_nesting + incby);
 
 	WRITE_ONCE(rdp->dynticks_nmi_nesting, /* Prevent store tearing. */
-		   rdp->dynticks_nmi_nesting + incby);
+		   rdp->dynticks_nmi_nesting + 1);
 	barrier();
 }
 
