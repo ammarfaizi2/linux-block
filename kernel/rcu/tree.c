@@ -2368,8 +2368,15 @@ static void force_qs_rnp(int (*f)(struct rcu_data *rdp))
 	struct rcu_data *rdp;
 	struct rcu_node *rnp;
 
-	rcu_state.cbovld = rcu_state.cbovldnext;
+	// Load .oomovld before .oomovldend, pairing with .oomovld set.
+	rcu_state.cbovld = smp_load_acquire(&rcu_state.oomovld) || // ^^^
+			   rcu_state.cbovldnext;
 	rcu_state.cbovldnext = false;
+	if (READ_ONCE(rcu_state.oomovld) &&
+	    time_after(jiffies, READ_ONCE(rcu_state.oomovldend))) {
+		WRITE_ONCE(rcu_state.oomovld, false);
+		pr_info("%s: Ending OOM-mode grace periods.\n", __func__);
+	}
 	rcu_for_each_leaf_node(rnp) {
 		cond_resched_tasks_rcu_qs();
 		mask = 0;
@@ -2696,6 +2703,35 @@ static void check_cb_ovld(struct rcu_data *rdp)
 	check_cb_ovld_locked(rdp, rnp);
 	raw_spin_unlock_rcu_node(rnp);
 }
+
+/* Return a rough count of the RCU callbacks outstanding. */
+static unsigned long rcu_oom_count(struct shrinker *unused1,
+				   struct shrink_control *unused2)
+{
+	int cpu;
+	unsigned long ncbs = 0;
+
+	for_each_possible_cpu(cpu)
+		ncbs += rcu_get_n_cbs_cpu(cpu);
+	return ncbs;
+}
+
+/* Start up an interval of fast high-overhead grace periods. */
+static unsigned long rcu_oom_scan(struct shrinker *unused1,
+				  struct shrink_control *unused2)
+{
+	pr_info("%s: Starting OOM-mode grace periods.\n", __func__);
+	WRITE_ONCE(rcu_state.oomovldend, jiffies + HZ / 10);
+	smp_store_release(&rcu_state.oomovld, true); // After .oomovldend
+	rcu_force_quiescent_state();  // Kick grace period
+	return 0;  // We haven't actually reclaimed anything yet.
+}
+
+static struct shrinker rcu_shrinker = {
+	.count_objects = rcu_oom_count,
+	.scan_objects = rcu_oom_scan,
+	.seeks = DEFAULT_SEEKS,
+};
 
 /* Helper function for call_rcu() and friends.  */
 static void
@@ -4146,6 +4182,7 @@ void __init rcu_init(void)
 		qovld_calc = DEFAULT_RCU_QOVLD_MULT * qhimark;
 	else
 		qovld_calc = qovld;
+	WARN_ON(register_shrinker(&rcu_shrinker));
 }
 
 #include "tree_stall.h"

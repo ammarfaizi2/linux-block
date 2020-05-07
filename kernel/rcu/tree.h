@@ -326,6 +326,8 @@ struct rcu_state {
 	int ncpus_snap;				/* # CPUs seen last time. */
 	u8 cbovld;				/* Callback overload now? */
 	u8 cbovldnext;				/* ^        ^  next time? */
+	u8 oomovld;				/* OOM overload? */
+	unsigned long oomovldend;		/* OOM ovld end, jiffies. */
 
 	unsigned long jiffies_force_qs;		/* Time at which to invoke */
 						/*  force_quiescent_state(). */
