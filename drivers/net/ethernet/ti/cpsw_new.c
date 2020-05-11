@@ -1228,7 +1228,7 @@ static int cpsw_probe_dt(struct cpsw_common *cpsw)
 	data->active_slave = 0;
 	data->channels = CPSW_MAX_QUEUES;
 	data->ale_entries = CPSW_ALE_NUM_ENTRIES;
-	data->dual_emac = 1;
+	data->dual_emac = true;
 	data->bd_ram_size = CPSW_BD_RAM_SIZE;
 	data->mac_control = 0;
 
@@ -1896,6 +1896,11 @@ static int cpsw_probe(struct platform_device *pdev)
 		return irq;
 	cpsw->irqs_table[1] = irq;
 
+	irq = platform_get_irq_byname(pdev, "misc");
+	if (irq <= 0)
+		return irq;
+	cpsw->misc_irq = irq;
+
 	platform_set_drvdata(pdev, cpsw);
 	/* This may be required here for child devices. */
 	pm_runtime_enable(dev);
@@ -1916,7 +1921,7 @@ static int cpsw_probe(struct platform_device *pdev)
 
 	soc = soc_device_match(cpsw_soc_devices);
 	if (soc)
-		cpsw->quirk_irq = 1;
+		cpsw->quirk_irq = true;
 
 	cpsw->rx_packet_max = rx_packet_max;
 	cpsw->descs_pool_size = descs_pool_size;
@@ -1975,6 +1980,21 @@ static int cpsw_probe(struct platform_device *pdev)
 		goto clean_unregister_netdev;
 	}
 
+	if (!cpsw->cpts)
+		goto skip_cpts;
+
+	ret = devm_request_irq(dev, cpsw->misc_irq, cpsw_misc_interrupt,
+			       0, dev_name(&pdev->dev), cpsw);
+	if (ret < 0) {
+		dev_err(dev, "error attaching misc irq (%d)\n", ret);
+		goto clean_unregister_netdev;
+	}
+
+	/* Enable misc CPTS evnt_pend IRQ */
+	cpts_set_irqpoll(cpsw->cpts, false);
+	writel(0x10, &cpsw->wr_regs->misc_en);
+
+skip_cpts:
 	ret = cpsw_register_notifiers(cpsw);
 	if (ret)
 		goto clean_unregister_netdev;

@@ -25,6 +25,7 @@
 #include <linux/u64_stats_sync.h>
 #include <linux/irqreturn.h>
 #include <linux/iopoll.h>
+#include <linux/refcount.h>
 
 #include <linux/atomic.h>
 
@@ -227,6 +228,28 @@ struct mdio_bus_stats {
 	struct u64_stats_sync syncp;
 };
 
+/* Represents a shared structure between different phydev's in the same
+ * package, for example a quad PHY. See phy_package_join() and
+ * phy_package_leave().
+ */
+struct phy_package_shared {
+	int addr;
+	refcount_t refcnt;
+	unsigned long flags;
+	size_t priv_size;
+
+	/* private data pointer */
+	/* note that this pointer is shared between different phydevs and
+	 * the user has to take care of appropriate locking. It is allocated
+	 * and freed automatically by phy_package_join() and
+	 * phy_package_leave().
+	 */
+	void *priv;
+};
+
+/* used as bit number in atomic bitops */
+#define PHY_SHARED_F_INIT_DONE 0
+
 /*
  * The Bus class for PHYs.  Devices which provide access to
  * PHYs should register using this structure
@@ -240,6 +263,9 @@ struct mii_bus {
 	int (*write)(struct mii_bus *bus, int addr, int regnum, u16 val);
 	int (*reset)(struct mii_bus *bus);
 	struct mdio_bus_stats stats[PHY_MAX_ADDR];
+
+	unsigned int is_managed:1;	/* is device-managed */
+	unsigned int is_managed_registered:1;
 
 	/*
 	 * A lock to ensure that only one thing can read/write
@@ -275,6 +301,12 @@ struct mii_bus {
 	int reset_delay_us;
 	/* RESET GPIO descriptor pointer */
 	struct gpio_desc *reset_gpiod;
+
+	/* protect access to the shared element */
+	struct mutex shared_lock;
+
+	/* shared state across different PHYs */
+	struct phy_package_shared *shared[PHY_MAX_ADDR];
 };
 #define to_mii_bus(d) container_of(d, struct mii_bus, dev)
 
@@ -286,6 +318,20 @@ static inline struct mii_bus *mdiobus_alloc(void)
 
 int __mdiobus_register(struct mii_bus *bus, struct module *owner);
 #define mdiobus_register(bus) __mdiobus_register(bus, THIS_MODULE)
+static inline int devm_mdiobus_register(struct mii_bus *bus)
+{
+	int ret;
+
+	if (!bus->is_managed)
+		return -EPERM;
+
+	ret = mdiobus_register(bus);
+	if (!ret)
+		bus->is_managed_registered = 1;
+
+	return ret;
+}
+
 void mdiobus_unregister(struct mii_bus *bus);
 void mdiobus_free(struct mii_bus *bus);
 struct mii_bus *devm_mdiobus_alloc_size(struct device *dev, int sizeof_priv);
@@ -431,6 +477,9 @@ struct phy_device {
 	int duplex;
 	int pause;
 	int asym_pause;
+	u8 master_slave_get;
+	u8 master_slave_set;
+	u8 master_slave_state;
 
 	/* Union of PHY and Attached devices' supported link modes */
 	/* See ethtool.h for more info */
@@ -460,6 +509,10 @@ struct phy_device {
 	/* private data pointer */
 	/* For use by PHYs to maintain extra state */
 	void *priv;
+
+	/* shared data pointer */
+	/* For use by PHYs inside the same package that need a shared state. */
+	struct phy_package_shared *shared;
 
 	/* Interrupt and Polling infrastructure */
 	struct delayed_work state_queue;
@@ -1234,10 +1287,6 @@ static inline int genphy_config_aneg(struct phy_device *phydev)
 	return __genphy_config_aneg(phydev, false);
 }
 
-static inline int genphy_no_soft_reset(struct phy_device *phydev)
-{
-	return 0;
-}
 static inline int genphy_no_ack_interrupt(struct phy_device *phydev)
 {
 	return 0;
@@ -1341,6 +1390,10 @@ int phy_ethtool_get_link_ksettings(struct net_device *ndev,
 int phy_ethtool_set_link_ksettings(struct net_device *ndev,
 				   const struct ethtool_link_ksettings *cmd);
 int phy_ethtool_nway_reset(struct net_device *ndev);
+int phy_package_join(struct phy_device *phydev, int addr, size_t priv_size);
+void phy_package_leave(struct phy_device *phydev);
+int devm_phy_package_join(struct device *dev, struct phy_device *phydev,
+			  int addr, size_t priv_size);
 
 #if IS_ENABLED(CONFIG_PHYLIB)
 int __init mdio_bus_init(void);
@@ -1391,6 +1444,58 @@ static inline int phy_ethtool_get_stats(struct phy_device *phydev,
 	mutex_unlock(&phydev->lock);
 
 	return 0;
+}
+
+static inline int phy_package_read(struct phy_device *phydev, u32 regnum)
+{
+	struct phy_package_shared *shared = phydev->shared;
+
+	if (!shared)
+		return -EIO;
+
+	return mdiobus_read(phydev->mdio.bus, shared->addr, regnum);
+}
+
+static inline int __phy_package_read(struct phy_device *phydev, u32 regnum)
+{
+	struct phy_package_shared *shared = phydev->shared;
+
+	if (!shared)
+		return -EIO;
+
+	return __mdiobus_read(phydev->mdio.bus, shared->addr, regnum);
+}
+
+static inline int phy_package_write(struct phy_device *phydev,
+				    u32 regnum, u16 val)
+{
+	struct phy_package_shared *shared = phydev->shared;
+
+	if (!shared)
+		return -EIO;
+
+	return mdiobus_write(phydev->mdio.bus, shared->addr, regnum, val);
+}
+
+static inline int __phy_package_write(struct phy_device *phydev,
+				      u32 regnum, u16 val)
+{
+	struct phy_package_shared *shared = phydev->shared;
+
+	if (!shared)
+		return -EIO;
+
+	return __mdiobus_write(phydev->mdio.bus, shared->addr, regnum, val);
+}
+
+static inline bool phy_package_init_once(struct phy_device *phydev)
+{
+	struct phy_package_shared *shared = phydev->shared;
+
+	if (!shared)
+		return false;
+
+	return !test_and_set_bit(PHY_SHARED_F_INIT_DONE, &shared->flags);
 }
 
 extern struct bus_type mdio_bus_type;

@@ -329,11 +329,7 @@ int mlx5_eswitch_get_vport_stats(struct mlx5_eswitch *esw,
 void mlx5_eswitch_del_send_to_vport_rule(struct mlx5_flow_handle *rule);
 
 int mlx5_eswitch_modify_esw_vport_context(struct mlx5_core_dev *dev, u16 vport,
-					  bool other_vport,
-					  void *in, int inlen);
-int mlx5_eswitch_query_esw_vport_context(struct mlx5_core_dev *dev, u16 vport,
-					 bool other_vport,
-					 void *out, int outlen);
+					  bool other_vport, void *in);
 
 struct mlx5_flow_spec;
 struct mlx5_esw_flow_attr;
@@ -403,7 +399,6 @@ enum {
 	MLX5_ESW_ATTR_FLAG_VLAN_HANDLED  = BIT(0),
 	MLX5_ESW_ATTR_FLAG_SLOW_PATH     = BIT(1),
 	MLX5_ESW_ATTR_FLAG_NO_IN_PORT    = BIT(2),
-	MLX5_ESW_ATTR_FLAG_HAIRPIN	 = BIT(3),
 };
 
 struct mlx5_esw_flow_attr {

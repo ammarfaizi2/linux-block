@@ -3352,7 +3352,7 @@ static unsigned int cpuset_mems_nr(unsigned int *array)
 #ifdef CONFIG_SYSCTL
 static int hugetlb_sysctl_handler_common(bool obey_mempolicy,
 			 struct ctl_table *table, int write,
-			 void __user *buffer, size_t *length, loff_t *ppos)
+			 void *buffer, size_t *length, loff_t *ppos)
 {
 	struct hstate *h = &default_hstate;
 	unsigned long tmp = h->max_huge_pages;
@@ -3375,7 +3375,7 @@ out:
 }
 
 int hugetlb_sysctl_handler(struct ctl_table *table, int write,
-			  void __user *buffer, size_t *length, loff_t *ppos)
+			  void *buffer, size_t *length, loff_t *ppos)
 {
 
 	return hugetlb_sysctl_handler_common(false, table, write,
@@ -3384,7 +3384,7 @@ int hugetlb_sysctl_handler(struct ctl_table *table, int write,
 
 #ifdef CONFIG_NUMA
 int hugetlb_mempolicy_sysctl_handler(struct ctl_table *table, int write,
-			  void __user *buffer, size_t *length, loff_t *ppos)
+			  void *buffer, size_t *length, loff_t *ppos)
 {
 	return hugetlb_sysctl_handler_common(true, table, write,
 							buffer, length, ppos);
@@ -3392,8 +3392,7 @@ int hugetlb_mempolicy_sysctl_handler(struct ctl_table *table, int write,
 #endif /* CONFIG_NUMA */
 
 int hugetlb_overcommit_handler(struct ctl_table *table, int write,
-			void __user *buffer,
-			size_t *length, loff_t *ppos)
+		void *buffer, size_t *length, loff_t *ppos)
 {
 	struct hstate *h = &default_hstate;
 	unsigned long tmp;
@@ -5365,8 +5364,8 @@ pte_t *huge_pte_offset(struct mm_struct *mm,
 {
 	pgd_t *pgd;
 	p4d_t *p4d;
-	pud_t *pud;
-	pmd_t *pmd;
+	pud_t *pud, pud_entry;
+	pmd_t *pmd, pmd_entry;
 
 	pgd = pgd_offset(mm, addr);
 	if (!pgd_present(*pgd))
@@ -5376,17 +5375,19 @@ pte_t *huge_pte_offset(struct mm_struct *mm,
 		return NULL;
 
 	pud = pud_offset(p4d, addr);
-	if (sz != PUD_SIZE && pud_none(*pud))
+	pud_entry = READ_ONCE(*pud);
+	if (sz != PUD_SIZE && pud_none(pud_entry))
 		return NULL;
 	/* hugepage or swap? */
-	if (pud_huge(*pud) || !pud_present(*pud))
+	if (pud_huge(pud_entry) || !pud_present(pud_entry))
 		return (pte_t *)pud;
 
 	pmd = pmd_offset(pud, addr);
-	if (sz != PMD_SIZE && pmd_none(*pmd))
+	pmd_entry = READ_ONCE(*pmd);
+	if (sz != PMD_SIZE && pmd_none(pmd_entry))
 		return NULL;
 	/* hugepage or swap? */
-	if (pmd_huge(*pmd) || !pmd_present(*pmd))
+	if (pmd_huge(pmd_entry) || !pmd_present(pmd_entry))
 		return (pte_t *)pmd;
 
 	return NULL;

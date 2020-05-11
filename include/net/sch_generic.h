@@ -407,6 +407,7 @@ struct tcf_block {
 	struct mutex lock;
 	struct list_head chain_list;
 	u32 index; /* block index for shared blocks */
+	u32 classid; /* which class this block belongs to */
 	refcount_t refcnt;
 	struct net *net;
 	struct Qdisc *q;
@@ -708,11 +709,6 @@ static inline void qdisc_reset_all_tx_gt(struct net_device *dev, unsigned int i)
 			spin_unlock_bh(qdisc_lock(qdisc));
 		}
 	}
-}
-
-static inline void qdisc_reset_all_tx(struct net_device *dev)
-{
-	qdisc_reset_all_tx_gt(dev, 0);
 }
 
 /* Are all TX queues of the device empty?  */

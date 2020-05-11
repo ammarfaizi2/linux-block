@@ -445,12 +445,11 @@ static inline netdev_tx_t dsa_slave_netpoll_send_skb(struct net_device *dev,
 #ifdef CONFIG_NET_POLL_CONTROLLER
 	struct dsa_slave_priv *p = netdev_priv(dev);
 
-	if (p->netpoll)
-		netpoll_send_skb(p->netpoll, skb);
+	return netpoll_send_skb(p->netpoll, skb);
 #else
 	BUG();
-#endif
 	return NETDEV_TX_OK;
+#endif
 }
 
 static void dsa_skb_tx_timestamp(struct dsa_slave_priv *p,
@@ -856,19 +855,17 @@ dsa_slave_add_cls_matchall_mirred(struct net_device *dev,
 	struct dsa_port *to_dp;
 	int err;
 
-	act = &cls->rule->action.entries[0];
-
 	if (!ds->ops->port_mirror_add)
 		return -EOPNOTSUPP;
-
-	if (!act->dev)
-		return -EINVAL;
 
 	if (!flow_action_basic_hw_stats_check(&cls->rule->action,
 					      cls->common.extack))
 		return -EOPNOTSUPP;
 
 	act = &cls->rule->action.entries[0];
+
+	if (!act->dev)
+		return -EINVAL;
 
 	if (!dsa_slave_dev_check(act->dev))
 		return -EOPNOTSUPP;
@@ -913,13 +910,13 @@ dsa_slave_add_cls_matchall_police(struct net_device *dev,
 
 	if (!ds->ops->port_policer_add) {
 		NL_SET_ERR_MSG_MOD(extack,
-				   "Policing offload not implemented\n");
+				   "Policing offload not implemented");
 		return -EOPNOTSUPP;
 	}
 
 	if (!ingress) {
 		NL_SET_ERR_MSG_MOD(extack,
-				   "Only supported on ingress qdisc\n");
+				   "Only supported on ingress qdisc");
 		return -EOPNOTSUPP;
 	}
 
@@ -930,7 +927,7 @@ dsa_slave_add_cls_matchall_police(struct net_device *dev,
 	list_for_each_entry(mall_tc_entry, &p->mall_tc_list, list) {
 		if (mall_tc_entry->type == DSA_PORT_MALL_POLICER) {
 			NL_SET_ERR_MSG_MOD(extack,
-					   "Only one port policer allowed\n");
+					   "Only one port policer allowed");
 			return -EEXIST;
 		}
 	}
@@ -1590,10 +1587,10 @@ void dsa_port_phylink_mac_change(struct dsa_switch *ds, int port, bool up)
 }
 EXPORT_SYMBOL_GPL(dsa_port_phylink_mac_change);
 
-static void dsa_slave_phylink_fixed_state(struct net_device *dev,
+static void dsa_slave_phylink_fixed_state(struct phylink_config *config,
 					  struct phylink_link_state *state)
 {
-	struct dsa_port *dp = dsa_slave_to_port(dev);
+	struct dsa_port *dp = container_of(config, struct dsa_port, pl_config);
 	struct dsa_switch *ds = dp->ds;
 
 	/* No need to check that this operation is valid, the callback would
@@ -1633,6 +1630,15 @@ static int dsa_slave_phy_setup(struct net_device *slave_dev)
 	dp->pl_config.dev = &slave_dev->dev;
 	dp->pl_config.type = PHYLINK_NETDEV;
 
+	/* The get_fixed_state callback takes precedence over polling the
+	 * link GPIO in PHYLINK (see phylink_get_fixed_state).  Only set
+	 * this if the switch provides such a callback.
+	 */
+	if (ds->ops->phylink_fixed_state) {
+		dp->pl_config.get_fixed_state = dsa_slave_phylink_fixed_state;
+		dp->pl_config.poll_fixed_state = true;
+	}
+
 	dp->pl = phylink_create(&dp->pl_config, of_fwnode_handle(port_dn), mode,
 				&dsa_port_phylink_mac_ops);
 	if (IS_ERR(dp->pl)) {
@@ -1640,13 +1646,6 @@ static int dsa_slave_phy_setup(struct net_device *slave_dev)
 			   "error creating PHYLINK: %ld\n", PTR_ERR(dp->pl));
 		return PTR_ERR(dp->pl);
 	}
-
-	/* Register only if the switch provides such a callback, since this
-	 * callback takes precedence over polling the link GPIO in PHYLINK
-	 * (see phylink_get_fixed_state).
-	 */
-	if (ds->ops->phylink_fixed_state)
-		phylink_fixed_state_cb(dp->pl, dsa_slave_phylink_fixed_state);
 
 	if (ds->ops->get_phy_flags)
 		phy_flags = ds->ops->get_phy_flags(ds, dp->index);
@@ -1667,6 +1666,15 @@ static int dsa_slave_phy_setup(struct net_device *slave_dev)
 	}
 
 	return ret;
+}
+
+static struct lock_class_key dsa_slave_netdev_xmit_lock_key;
+static void dsa_slave_set_lockdep_class_one(struct net_device *dev,
+					    struct netdev_queue *txq,
+					    void *_unused)
+{
+	lockdep_set_class(&txq->_xmit_lock,
+			  &dsa_slave_netdev_xmit_lock_key);
 }
 
 int dsa_slave_suspend(struct net_device *slave_dev)
@@ -1752,6 +1760,9 @@ int dsa_slave_create(struct dsa_port *port)
 		slave_dev->max_mtu = ETH_MAX_MTU;
 	SET_NETDEV_DEVTYPE(slave_dev, &dsa_type);
 
+	netdev_for_each_tx_queue(slave_dev, dsa_slave_set_lockdep_class_one,
+				 NULL);
+
 	SET_NETDEV_DEV(slave_dev, port->ds->dev);
 	slave_dev->dev.of_node = port->dn;
 	slave_dev->vlan_features = master->vlan_features;
@@ -1762,6 +1773,11 @@ int dsa_slave_create(struct dsa_port *port)
 		free_netdev(slave_dev);
 		return -ENOMEM;
 	}
+
+	ret = gro_cells_init(&p->gcells, slave_dev);
+	if (ret)
+		goto out_free;
+
 	p->dp = port;
 	INIT_LIST_HEAD(&p->mall_tc_list);
 	p->xmit = cpu_dp->tag_ops->xmit;
@@ -1770,18 +1786,16 @@ int dsa_slave_create(struct dsa_port *port)
 	rtnl_lock();
 	ret = dsa_slave_change_mtu(slave_dev, ETH_DATA_LEN);
 	rtnl_unlock();
-	if (ret && ret != -EOPNOTSUPP) {
-		dev_err(ds->dev, "error %d setting MTU on port %d\n",
-			ret, port->index);
-		goto out_free;
-	}
+	if (ret)
+		dev_warn(ds->dev, "nonfatal error %d setting MTU on port %d\n",
+			 ret, port->index);
 
 	netif_carrier_off(slave_dev);
 
 	ret = dsa_slave_phy_setup(slave_dev);
 	if (ret) {
 		netdev_err(master, "error %d setting up slave phy\n", ret);
-		goto out_free;
+		goto out_gcells;
 	}
 
 	dsa_slave_notify(slave_dev, DSA_PORT_REGISTER);
@@ -1800,6 +1814,8 @@ out_phy:
 	phylink_disconnect_phy(p->dp->pl);
 	rtnl_unlock();
 	phylink_destroy(p->dp->pl);
+out_gcells:
+	gro_cells_destroy(&p->gcells);
 out_free:
 	free_percpu(p->stats64);
 	free_netdev(slave_dev);
@@ -1820,6 +1836,7 @@ void dsa_slave_destroy(struct net_device *slave_dev)
 	dsa_slave_notify(slave_dev, DSA_PORT_UNREGISTER);
 	unregister_netdev(slave_dev);
 	phylink_destroy(dp->pl);
+	gro_cells_destroy(&p->gcells);
 	free_percpu(p->stats64);
 	free_netdev(slave_dev);
 }

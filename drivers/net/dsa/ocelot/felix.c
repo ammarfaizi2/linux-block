@@ -7,6 +7,7 @@
 #include <soc/mscc/ocelot_sys.h>
 #include <soc/mscc/ocelot_dev.h>
 #include <soc/mscc/ocelot_ana.h>
+#include <soc/mscc/ocelot_ptp.h>
 #include <soc/mscc/ocelot.h>
 #include <linux/packing.h>
 #include <linux/module.h>
@@ -46,11 +47,8 @@ static int felix_fdb_add(struct dsa_switch *ds, int port,
 			 const unsigned char *addr, u16 vid)
 {
 	struct ocelot *ocelot = ds->priv;
-	bool vlan_aware;
 
-	vlan_aware = dsa_port_is_vlan_filtering(dsa_to_port(ds, port));
-
-	return ocelot_fdb_add(ocelot, port, addr, vid, vlan_aware);
+	return ocelot_fdb_add(ocelot, port, addr, vid);
 }
 
 static int felix_fdb_del(struct dsa_switch *ds, int port,
@@ -403,6 +401,7 @@ static int felix_init_structs(struct felix *felix, int num_phys_ports)
 	ocelot->stats_layout	= felix->info->stats_layout;
 	ocelot->num_stats	= felix->info->num_stats;
 	ocelot->shared_queue_sz	= felix->info->shared_queue_sz;
+	ocelot->num_mact_rows	= felix->info->num_mact_rows;
 	ocelot->vcap_is2_keys	= felix->info->vcap_is2_keys;
 	ocelot->vcap_is2_actions= felix->info->vcap_is2_actions;
 	ocelot->vcap		= felix->info->vcap;
@@ -497,6 +496,23 @@ static int felix_init_structs(struct felix *felix, int num_phys_ports)
 	return 0;
 }
 
+static struct ptp_clock_info ocelot_ptp_clock_info = {
+	.owner		= THIS_MODULE,
+	.name		= "felix ptp",
+	.max_adj	= 0x7fffffff,
+	.n_alarm	= 0,
+	.n_ext_ts	= 0,
+	.n_per_out	= OCELOT_PTP_PINS_NUM,
+	.n_pins		= OCELOT_PTP_PINS_NUM,
+	.pps		= 0,
+	.gettime64	= ocelot_ptp_gettime64,
+	.settime64	= ocelot_ptp_settime64,
+	.adjtime	= ocelot_ptp_adjtime,
+	.adjfine	= ocelot_ptp_adjfine,
+	.verify		= ocelot_ptp_verify,
+	.enable		= ocelot_ptp_enable,
+};
+
 /* Hardware initialization done here so that we can allocate structures with
  * devm without fear of dsa_register_switch returning -EPROBE_DEFER and causing
  * us to allocate structures twice (leak memory) and map PCI memory twice
@@ -507,12 +523,21 @@ static int felix_setup(struct dsa_switch *ds)
 	struct ocelot *ocelot = ds->priv;
 	struct felix *felix = ocelot_to_felix(ocelot);
 	int port, err;
+	int tc;
 
 	err = felix_init_structs(felix, ds->num_ports);
 	if (err)
 		return err;
 
 	ocelot_init(ocelot);
+	if (ocelot->ptp) {
+		err = ocelot_init_timestamp(ocelot, &ocelot_ptp_clock_info);
+		if (err) {
+			dev_err(ocelot->dev,
+				"Timestamp initialization failed\n");
+			ocelot->ptp = 0;
+		}
+	}
 
 	for (port = 0; port < ds->num_ports; port++) {
 		ocelot_init_port(ocelot, port);
@@ -532,6 +557,12 @@ static int felix_setup(struct dsa_switch *ds)
 	ocelot_write_rix(ocelot,
 			 ANA_PGID_PGID_PGID(GENMASK(ocelot->num_phys_ports, 0)),
 			 ANA_PGID_PGID, PGID_UC);
+	/* Setup the per-traffic class flooding PGIDs */
+	for (tc = 0; tc < FELIX_NUM_TC; tc++)
+		ocelot_write_rix(ocelot, ANA_FLOODING_FLD_MULTICAST(PGID_MC) |
+				 ANA_FLOODING_FLD_BROADCAST(PGID_MC) |
+				 ANA_FLOODING_FLD_UNICAST(PGID_UC),
+				 ANA_FLOODING, tc);
 
 	ds->mtu_enforcement_ingress = true;
 	/* It looks like the MAC/PCS interrupt register - PM0_IEVENT (0x8040)
@@ -551,6 +582,7 @@ static void felix_teardown(struct dsa_switch *ds)
 	if (felix->info->mdio_bus_free)
 		felix->info->mdio_bus_free(ocelot);
 
+	ocelot_deinit_timestamp(ocelot);
 	/* stop workqueue thread */
 	ocelot_deinit(ocelot);
 }
@@ -741,6 +773,11 @@ static int felix_pci_probe(struct pci_dev *pdev,
 	struct ocelot *ocelot;
 	struct felix *felix;
 	int err;
+
+	if (pdev->dev.of_node && !of_device_is_available(pdev->dev.of_node)) {
+		dev_info(&pdev->dev, "device is disabled, skipping\n");
+		return -ENODEV;
+	}
 
 	err = pci_enable_device(pdev);
 	if (err) {

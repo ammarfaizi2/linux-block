@@ -61,7 +61,7 @@
 #include "lib/geneve.h"
 #include "diag/en_tc_tracepoint.h"
 
-#define MLX5_MH_ACT_SZ MLX5_UN_SZ_BYTES(set_action_in_add_action_in_auto)
+#define MLX5_MH_ACT_SZ MLX5_UN_SZ_BYTES(set_add_copy_action_in_auto)
 
 struct mlx5_nic_flow_attr {
 	u32 action;
@@ -169,6 +169,11 @@ struct tunnel_match_key {
 	};
 
 	int filter_ifindex;
+};
+
+struct tunnel_match_enc_opts {
+	struct flow_dissector_key_enc_opts key;
+	struct flow_dissector_key_enc_opts mask;
 };
 
 /* Tunnel_id mapping is TUNNEL_INFO_BITS + ENC_OPTS_BITS.
@@ -568,7 +573,7 @@ struct mlx5_core_dev *mlx5e_hairpin_get_mdev(struct net *net, int ifindex)
 
 static int mlx5e_hairpin_create_transport(struct mlx5e_hairpin *hp)
 {
-	u32 in[MLX5_ST_SZ_DW(create_tir_in)] = {0};
+	u32 in[MLX5_ST_SZ_DW(create_tir_in)] = {};
 	void *tirc;
 	int err;
 
@@ -582,7 +587,7 @@ static int mlx5e_hairpin_create_transport(struct mlx5e_hairpin *hp)
 	MLX5_SET(tirc, tirc, inline_rqn, hp->pair->rqn[0]);
 	MLX5_SET(tirc, tirc, transport_domain, hp->tdn);
 
-	err = mlx5_core_create_tir(hp->func_mdev, in, MLX5_ST_SZ_BYTES(create_tir_in), &hp->tirn);
+	err = mlx5_core_create_tir(hp->func_mdev, in, &hp->tirn);
 	if (err)
 		goto create_tir_err;
 
@@ -666,7 +671,7 @@ static int mlx5e_hairpin_create_indirect_tirs(struct mlx5e_hairpin *hp)
 		mlx5e_build_indir_tir_ctx_hash(&priv->rss_params, &ttconfig, tirc, false);
 
 		err = mlx5_core_create_tir(hp->func_mdev, in,
-					   MLX5_ST_SZ_BYTES(create_tir_in), &hp->indir_tirn[tt]);
+					   &hp->indir_tirn[tt]);
 		if (err) {
 			mlx5_core_warn(hp->func_mdev, "create indirect tirs failed, %d\n", err);
 			goto err_destroy_tirs;
@@ -1092,7 +1097,7 @@ mlx5e_tc_add_nic_flow(struct mlx5e_priv *priv,
 		if (IS_ERR(priv->fs.tc.t)) {
 			mutex_unlock(&priv->fs.tc.t_lock);
 			NL_SET_ERR_MSG_MOD(extack,
-					   "Failed to create tc offload table\n");
+					   "Failed to create tc offload table");
 			netdev_err(priv->netdev,
 				   "Failed to create tc offload table\n");
 			return PTR_ERR(priv->fs.tc.t);
@@ -1343,7 +1348,8 @@ mlx5e_tc_add_fdb_flow(struct mlx5e_priv *priv,
 	if (err)
 		return err;
 
-	if (attr->action & MLX5_FLOW_CONTEXT_ACTION_MOD_HDR) {
+	if (attr->action & MLX5_FLOW_CONTEXT_ACTION_MOD_HDR &&
+	    !(attr->ct_attr.ct_action & TCA_CT_ACT_CLEAR)) {
 		err = mlx5e_attach_mod_hdr(priv, flow, parse_attr);
 		dealloc_mod_hdr_actions(&parse_attr->mod_hdr_acts);
 		if (err)
@@ -1823,9 +1829,7 @@ enc_opts_is_dont_care_or_full_match(struct mlx5e_priv *priv,
 			*dont_care = false;
 
 			if (opt->opt_class != U16_MAX ||
-			    opt->type != U8_MAX ||
-			    memchr_inv(opt->opt_data, 0xFF,
-				       opt->length * 4)) {
+			    opt->type != U8_MAX) {
 				NL_SET_ERR_MSG(extack,
 					       "Partial match of tunnel options in chain > 0 isn't supported");
 				netdev_warn(priv->netdev,
@@ -1862,6 +1866,7 @@ static int mlx5e_get_flow_tunnel_id(struct mlx5e_priv *priv,
 	struct mlx5_esw_flow_attr *attr = flow->esw_attr;
 	struct mlx5e_tc_mod_hdr_acts *mod_hdr_acts;
 	struct flow_match_enc_opts enc_opts_match;
+	struct tunnel_match_enc_opts tun_enc_opts;
 	struct mlx5_rep_uplink_priv *uplink_priv;
 	struct mlx5e_rep_priv *uplink_rpriv;
 	struct tunnel_match_key tunnel_key;
@@ -1904,8 +1909,14 @@ static int mlx5e_get_flow_tunnel_id(struct mlx5e_priv *priv,
 		goto err_enc_opts;
 
 	if (!enc_opts_is_dont_care) {
+		memset(&tun_enc_opts, 0, sizeof(tun_enc_opts));
+		memcpy(&tun_enc_opts.key, enc_opts_match.key,
+		       sizeof(*enc_opts_match.key));
+		memcpy(&tun_enc_opts.mask, enc_opts_match.mask,
+		       sizeof(*enc_opts_match.mask));
+
 		err = mapping_add(uplink_priv->tunnel_enc_opts_mapping,
-				  enc_opts_match.key, &enc_opts_id);
+				  &tun_enc_opts, &enc_opts_id);
 		if (err)
 			goto err_enc_opts;
 	}
@@ -2660,7 +2671,7 @@ static int offload_pedit_fields(struct mlx5e_priv *priv,
 	set_vals = &hdrs[0].vals;
 	add_vals = &hdrs[1].vals;
 
-	action_size = MLX5_UN_SZ_BYTES(set_action_in_add_action_in_auto);
+	action_size = MLX5_UN_SZ_BYTES(set_add_copy_action_in_auto);
 
 	for (i = 0; i < ARRAY_SIZE(fields); i++) {
 		bool skip;
@@ -2793,7 +2804,7 @@ int alloc_mod_hdr_actions(struct mlx5_core_dev *mdev,
 	if (mod_hdr_acts->num_actions < mod_hdr_acts->max_actions)
 		return 0;
 
-	action_size = MLX5_UN_SZ_BYTES(set_action_in_add_action_in_auto);
+	action_size = MLX5_UN_SZ_BYTES(set_add_copy_action_in_auto);
 
 	max_hw_actions = mlx5e_flow_namespace_max_modify_action(mdev,
 								namespace);
@@ -3558,12 +3569,13 @@ static int add_vlan_pop_action(struct mlx5e_priv *priv,
 			       struct mlx5_esw_flow_attr *attr,
 			       u32 *action)
 {
-	int nest_level = attr->parse_attr->filter_dev->lower_level;
 	struct flow_action_entry vlan_act = {
 		.id = FLOW_ACTION_VLAN_POP,
 	};
-	int err = 0;
+	int nest_level, err = 0;
 
+	nest_level = attr->parse_attr->filter_dev->lower_level -
+						priv->netdev->lower_level;
 	while (nest_level--) {
 		err = parse_tc_vlan_action(priv, &vlan_act, attr, action);
 		if (err)
@@ -4705,7 +4717,7 @@ void mlx5e_tc_nic_cleanup(struct mlx5e_priv *priv)
 
 int mlx5e_tc_esw_init(struct rhashtable *tc_ht)
 {
-	const size_t sz_enc_opts = sizeof(struct flow_dissector_key_enc_opts);
+	const size_t sz_enc_opts = sizeof(struct tunnel_match_enc_opts);
 	struct mlx5_rep_uplink_priv *uplink_priv;
 	struct mlx5e_rep_priv *priv;
 	struct mapping_ctx *mapping;
@@ -4800,7 +4812,7 @@ static bool mlx5e_restore_tunnel(struct mlx5e_priv *priv, struct sk_buff *skb,
 				 u32 tunnel_id)
 {
 	struct mlx5_eswitch *esw = priv->mdev->priv.eswitch;
-	struct flow_dissector_key_enc_opts enc_opts = {};
+	struct tunnel_match_enc_opts enc_opts = {};
 	struct mlx5_rep_uplink_priv *uplink_priv;
 	struct mlx5e_rep_priv *uplink_rpriv;
 	struct metadata_dst *tun_dst;
@@ -4838,7 +4850,7 @@ static bool mlx5e_restore_tunnel(struct mlx5e_priv *priv, struct sk_buff *skb,
 		}
 	}
 
-	tun_dst = tun_rx_dst(enc_opts.len);
+	tun_dst = tun_rx_dst(enc_opts.key.len);
 	if (!tun_dst) {
 		WARN_ON_ONCE(true);
 		return false;
@@ -4852,9 +4864,11 @@ static bool mlx5e_restore_tunnel(struct mlx5e_priv *priv, struct sk_buff *skb,
 			   key32_to_tunnel_id(key.enc_key_id.keyid),
 			   TUNNEL_KEY);
 
-	if (enc_opts.len)
-		ip_tunnel_info_opts_set(&tun_dst->u.tun_info, enc_opts.data,
-					enc_opts.len, enc_opts.dst_opt_type);
+	if (enc_opts.key.len)
+		ip_tunnel_info_opts_set(&tun_dst->u.tun_info,
+					enc_opts.key.data,
+					enc_opts.key.len,
+					enc_opts.key.dst_opt_type);
 
 	skb_dst_set(skb, (struct dst_entry *)tun_dst);
 	dev = dev_get_by_index(&init_net, key.filter_ifindex);
@@ -4891,7 +4905,7 @@ bool mlx5e_tc_rep_update_skb(struct mlx5_cqe64 *cqe,
 	reg_c0 = (be32_to_cpu(cqe->sop_drop_qpn) & MLX5E_TC_FLOW_ID_MASK);
 	if (reg_c0 == MLX5_FS_DEFAULT_FLOW_TAG)
 		reg_c0 = 0;
-	reg_c1 = be32_to_cpu(cqe->imm_inval_pkey);
+	reg_c1 = be32_to_cpu(cqe->ft_metadata);
 
 	if (!reg_c0)
 		return true;

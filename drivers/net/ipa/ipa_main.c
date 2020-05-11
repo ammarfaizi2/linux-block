@@ -108,7 +108,7 @@ int ipa_setup(struct ipa *ipa)
 	struct ipa_endpoint *command_endpoint;
 	int ret;
 
-	/* IPA v4.0 and above don't use the doorbell engine. */
+	/* Setup for IPA v3.5.1 has some slight differences */
 	ret = gsi_setup(&ipa->gsi, ipa->version == IPA_VERSION_3_5_1);
 	if (ret)
 		return ret;
@@ -778,7 +778,7 @@ static int ipa_probe(struct platform_device *pdev)
 	if (ret)
 		goto err_kfree_ipa;
 
-	ret = ipa_mem_init(ipa, data->mem_count, data->mem_data);
+	ret = ipa_mem_init(ipa, data->mem_data);
 	if (ret)
 		goto err_reg_exit;
 

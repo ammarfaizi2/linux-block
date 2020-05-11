@@ -1152,23 +1152,31 @@ set_rcvbuf:
 		break;
 
 	case SO_TXTIME:
-		if (!ns_capable(sock_net(sk)->user_ns, CAP_NET_ADMIN)) {
-			ret = -EPERM;
-		} else if (optlen != sizeof(struct sock_txtime)) {
+		if (optlen != sizeof(struct sock_txtime)) {
 			ret = -EINVAL;
+			break;
 		} else if (copy_from_user(&sk_txtime, optval,
 			   sizeof(struct sock_txtime))) {
 			ret = -EFAULT;
+			break;
 		} else if (sk_txtime.flags & ~SOF_TXTIME_FLAGS_MASK) {
 			ret = -EINVAL;
-		} else {
-			sock_valbool_flag(sk, SOCK_TXTIME, true);
-			sk->sk_clockid = sk_txtime.clockid;
-			sk->sk_txtime_deadline_mode =
-				!!(sk_txtime.flags & SOF_TXTIME_DEADLINE_MODE);
-			sk->sk_txtime_report_errors =
-				!!(sk_txtime.flags & SOF_TXTIME_REPORT_ERRORS);
+			break;
 		}
+		/* CLOCK_MONOTONIC is only used by sch_fq, and this packet
+		 * scheduler has enough safe guards.
+		 */
+		if (sk_txtime.clockid != CLOCK_MONOTONIC &&
+		    !ns_capable(sock_net(sk)->user_ns, CAP_NET_ADMIN)) {
+			ret = -EPERM;
+			break;
+		}
+		sock_valbool_flag(sk, SOCK_TXTIME, true);
+		sk->sk_clockid = sk_txtime.clockid;
+		sk->sk_txtime_deadline_mode =
+			!!(sk_txtime.flags & SOF_TXTIME_DEADLINE_MODE);
+		sk->sk_txtime_report_errors =
+			!!(sk_txtime.flags & SOF_TXTIME_REPORT_ERRORS);
 		break;
 
 	case SO_BINDTOIFINDEX:
@@ -1872,7 +1880,7 @@ struct sock *sk_clone_lock(const struct sock *sk, const gfp_t priority)
 		 * as not suitable for copying when cloning.
 		 */
 		if (sk_user_data_is_nocopy(newsk))
-			RCU_INIT_POINTER(newsk->sk_user_data, NULL);
+			newsk->sk_user_data = NULL;
 
 		newsk->sk_err	   = 0;
 		newsk->sk_err_soft = 0;
@@ -2364,7 +2372,6 @@ static void sk_leave_memory_pressure(struct sock *sk)
 	}
 }
 
-/* On 32bit arches, an skb frag is limited to 2^15 */
 #define SKB_FRAG_PAGE_ORDER	get_order(32768)
 DEFINE_STATIC_KEY_FALSE(net_high_order_alloc_disable_key);
 

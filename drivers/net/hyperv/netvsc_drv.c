@@ -707,7 +707,8 @@ no_memory:
 	goto drop;
 }
 
-static int netvsc_start_xmit(struct sk_buff *skb, struct net_device *ndev)
+static netdev_tx_t netvsc_start_xmit(struct sk_buff *skb,
+				     struct net_device *ndev)
 {
 	return netvsc_xmit(skb, ndev, false);
 }
@@ -2455,6 +2456,8 @@ static int netvsc_probe(struct hv_device *dev,
 		NETIF_F_HIGHDMA | NETIF_F_HW_VLAN_CTAG_TX |
 		NETIF_F_HW_VLAN_CTAG_RX;
 	net->vlan_features = net->features;
+
+	netdev_lockdep_set_classes(net);
 
 	/* MTU range: 68 - 1500 or 65521 */
 	net->min_mtu = NETVSC_MTU_MIN;

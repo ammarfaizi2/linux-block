@@ -147,7 +147,7 @@ Maintainers List
 M:	Steffen Klassert <klassert@kernel.org>
 L:	netdev@vger.kernel.org
 S:	Odd Fixes
-F:	Documentation/networking/device_drivers/3com/vortex.txt
+F:	Documentation/networking/device_drivers/3com/vortex.rst
 F:	drivers/net/ethernet/3com/3c59x.c
 
 3CR990 NETWORK DRIVER
@@ -189,11 +189,11 @@ F:	drivers/net/hamradio/6pack.c
 M:	Johannes Berg <johannes@sipsolutions.net>
 L:	linux-wireless@vger.kernel.org
 S:	Maintained
-W:	http://wireless.kernel.org/
+W:	https://wireless.wiki.kernel.org/
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/jberg/mac80211.git
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/jberg/mac80211-next.git
 F:	Documentation/driver-api/80211/cfg80211.rst
-F:	Documentation/networking/regulatory.txt
+F:	Documentation/networking/regulatory.rst
 F:	include/linux/ieee80211.h
 F:	include/net/cfg80211.h
 F:	include/net/ieee80211_radiotap.h
@@ -505,7 +505,7 @@ F:	drivers/hwmon/adm1029.c
 ADM8211 WIRELESS DRIVER
 L:	linux-wireless@vger.kernel.org
 S:	Orphan
-W:	http://wireless.kernel.org/
+W:	https://wireless.wiki.kernel.org/
 F:	drivers/net/wireless/admtek/adm8211.*
 
 ADP1653 FLASH CONTROLLER DRIVER
@@ -570,7 +570,7 @@ F:	Documentation/devicetree/bindings/iio/accel/adi,adxl345.yaml
 F:	drivers/input/misc/adxl34x.c
 
 ADXL372 THREE-AXIS DIGITAL ACCELEROMETER DRIVER
-M:	Stefan Popa <stefan.popa@analog.com>
+M:	Michael Hennerich <michael.hennerich@analog.com>
 S:	Supported
 W:	http://ez.analog.com/community/linux-device-drivers
 F:	Documentation/devicetree/bindings/iio/accel/adi,adxl372.yaml
@@ -815,7 +815,7 @@ R:	Saeed Bishara <saeedb@amazon.com>
 R:	Zorik Machulsky <zorik@amazon.com>
 L:	netdev@vger.kernel.org
 S:	Supported
-F:	Documentation/networking/device_drivers/amazon/ena.txt
+F:	Documentation/networking/device_drivers/amazon/ena.rst
 F:	drivers/net/ethernet/amazon/
 
 AMAZON RDMA EFA DRIVER
@@ -922,7 +922,7 @@ F:	arch/arm64/boot/dts/amd/amd-seattle-xgbe*.dtsi
 F:	drivers/net/ethernet/amd/xgbe/
 
 ANALOG DEVICES INC AD5686 DRIVER
-M:	Stefan Popa <stefan.popa@analog.com>
+M:	Michael Hennerich <Michael.Hennerich@analog.com>
 L:	linux-pm@vger.kernel.org
 S:	Supported
 W:	http://ez.analog.com/community/linux-device-drivers
@@ -930,7 +930,7 @@ F:	drivers/iio/dac/ad5686*
 F:	drivers/iio/dac/ad5696*
 
 ANALOG DEVICES INC AD5758 DRIVER
-M:	Stefan Popa <stefan.popa@analog.com>
+M:	Michael Hennerich <Michael.Hennerich@analog.com>
 L:	linux-iio@vger.kernel.org
 S:	Supported
 W:	http://ez.analog.com/community/linux-device-drivers
@@ -946,7 +946,7 @@ F:	Documentation/devicetree/bindings/iio/adc/adi,ad7091r5.yaml
 F:	drivers/iio/adc/ad7091r5.c
 
 ANALOG DEVICES INC AD7124 DRIVER
-M:	Stefan Popa <stefan.popa@analog.com>
+M:	Michael Hennerich <Michael.Hennerich@analog.com>
 L:	linux-iio@vger.kernel.org
 S:	Supported
 W:	http://ez.analog.com/community/linux-device-drivers
@@ -970,7 +970,7 @@ F:	Documentation/devicetree/bindings/iio/adc/adi,ad7292.yaml
 F:	drivers/iio/adc/ad7292.c
 
 ANALOG DEVICES INC AD7606 DRIVER
-M:	Stefan Popa <stefan.popa@analog.com>
+M:	Michael Hennerich <Michael.Hennerich@analog.com>
 M:	Beniamin Bia <beniamin.bia@analog.com>
 L:	linux-iio@vger.kernel.org
 S:	Supported
@@ -979,7 +979,7 @@ F:	Documentation/devicetree/bindings/iio/adc/adi,ad7606.yaml
 F:	drivers/iio/adc/ad7606.c
 
 ANALOG DEVICES INC AD7768-1 DRIVER
-M:	Stefan Popa <stefan.popa@analog.com>
+M:	Michael Hennerich <Michael.Hennerich@analog.com>
 L:	linux-iio@vger.kernel.org
 S:	Supported
 W:	http://ez.analog.com/community/linux-device-drivers
@@ -1040,7 +1040,7 @@ F:	Documentation/devicetree/bindings/hwmon/adi,adm1177.yaml
 F:	drivers/hwmon/adm1177.c
 
 ANALOG DEVICES INC ADP5061 DRIVER
-M:	Stefan Popa <stefan.popa@analog.com>
+M:	Michael Hennerich <Michael.Hennerich@analog.com>
 L:	linux-pm@vger.kernel.org
 S:	Supported
 W:	http://ez.analog.com/community/linux-device-drivers
@@ -1109,7 +1109,6 @@ F:	drivers/iio/amplifiers/hmc425a.c
 ANALOG DEVICES INC IIO DRIVERS
 M:	Lars-Peter Clausen <lars@metafoo.de>
 M:	Michael Hennerich <Michael.Hennerich@analog.com>
-M:	Stefan Popa <stefan.popa@analog.com>
 S:	Supported
 W:	http://wiki.analog.com/
 W:	http://ez.analog.com/community/linux-device-drivers
@@ -1275,7 +1274,7 @@ L:	netdev@vger.kernel.org
 S:	Supported
 W:	https://www.marvell.com/
 Q:	http://patchwork.ozlabs.org/project/netdev/list/
-F:	Documentation/networking/device_drivers/aquantia/atlantic.txt
+F:	Documentation/networking/device_drivers/aquantia/atlantic.rst
 F:	drivers/net/ethernet/aquantia/atlantic/
 
 AQUANTIA ETHERNET DRIVER PTP SUBSYSTEM
@@ -1323,7 +1322,10 @@ ARM INTEGRATOR, VERSATILE AND REALVIEW SUPPORT
 M:	Linus Walleij <linus.walleij@linaro.org>
 L:	linux-arm-kernel@lists.infradead.org (moderated for non-subscribers)
 S:	Maintained
-F:	Documentation/devicetree/bindings/arm/arm-boards
+F:	Documentation/devicetree/bindings/arm/arm,integrator.yaml
+F:	Documentation/devicetree/bindings/arm/arm,realview.yaml
+F:	Documentation/devicetree/bindings/arm/arm,versatile.yaml
+F:	Documentation/devicetree/bindings/arm/arm,vexpress-juno.yaml
 F:	Documentation/devicetree/bindings/auxdisplay/arm-charlcd.txt
 F:	Documentation/devicetree/bindings/clock/arm,syscon-icst.yaml
 F:	Documentation/devicetree/bindings/i2c/i2c-versatile.txt
@@ -2847,14 +2849,14 @@ M:	Nick Kossifidis <mickflemm@gmail.com>
 M:	Luis Chamberlain <mcgrof@kernel.org>
 L:	linux-wireless@vger.kernel.org
 S:	Maintained
-W:	http://wireless.kernel.org/en/users/Drivers/ath5k
+W:	https://wireless.wiki.kernel.org/en/users/Drivers/ath5k
 F:	drivers/net/wireless/ath/ath5k/
 
 ATHEROS ATH6KL WIRELESS DRIVER
 M:	Kalle Valo <kvalo@codeaurora.org>
 L:	linux-wireless@vger.kernel.org
 S:	Supported
-W:	http://wireless.kernel.org/en/users/Drivers/ath6kl
+W:	https://wireless.wiki.kernel.org/en/users/Drivers/ath6kl
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/kvalo/ath.git
 F:	drivers/net/wireless/ath/ath6kl/
 
@@ -3017,7 +3019,7 @@ B43 WIRELESS DRIVER
 L:	linux-wireless@vger.kernel.org
 L:	b43-dev@lists.infradead.org
 S:	Odd Fixes
-W:	http://wireless.kernel.org/en/users/Drivers/b43
+W:	https://wireless.wiki.kernel.org/en/users/Drivers/b43
 F:	drivers/net/wireless/broadcom/b43/
 
 B43LEGACY WIRELESS DRIVER
@@ -3025,7 +3027,7 @@ M:	Larry Finger <Larry.Finger@lwfinger.net>
 L:	linux-wireless@vger.kernel.org
 L:	b43-dev@lists.infradead.org
 S:	Maintained
-W:	http://wireless.kernel.org/en/users/Drivers/b43
+W:	https://wireless.wiki.kernel.org/en/users/Drivers/b43
 F:	drivers/net/wireless/broadcom/b43legacy/
 
 BACKLIGHT CLASS/SUBSYSTEM
@@ -3189,7 +3191,7 @@ Q:	https://patchwork.ozlabs.org/project/netdev/list/?delegate=77147
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf-next.git
 F:	Documentation/bpf/
-F:	Documentation/networking/filter.txt
+F:	Documentation/networking/filter.rst
 F:	arch/*/net/*
 F:	include/linux/bpf*
 F:	include/linux/filter.h
@@ -3655,7 +3657,7 @@ L:	linux-btrfs@vger.kernel.org
 S:	Maintained
 W:	http://btrfs.wiki.kernel.org/
 Q:	http://patchwork.kernel.org/project/linux-btrfs/list/
-T:	git git://git.kernel.org/pub/scm/linux/kernel/git/mason/linux-btrfs.git
+T:	git git://git.kernel.org/pub/scm/linux/kernel/git/kdave/linux.git
 F:	Documentation/filesystems/btrfs.rst
 F:	fs/btrfs/
 F:	include/linux/btrfs*
@@ -3840,7 +3842,7 @@ CARL9170 LINUX COMMUNITY WIRELESS DRIVER
 M:	Christian Lamparter <chunkeey@googlemail.com>
 L:	linux-wireless@vger.kernel.org
 S:	Maintained
-W:	http://wireless.kernel.org/en/users/Drivers/carl9170
+W:	https://wireless.wiki.kernel.org/en/users/Drivers/carl9170
 F:	drivers/net/wireless/ath/carl9170/
 
 CAVIUM I2C DRIVER
@@ -4691,7 +4693,7 @@ F:	net/ax25/sysctl_net_ax25.c
 DAVICOM FAST ETHERNET (DMFE) NETWORK DRIVER
 L:	netdev@vger.kernel.org
 S:	Orphan
-F:	Documentation/networking/device_drivers/dec/dmfe.txt
+F:	Documentation/networking/device_drivers/dec/dmfe.rst
 F:	drivers/net/ethernet/dec/tulip/dmfe.c
 
 DC390/AM53C974 SCSI driver
@@ -4725,7 +4727,7 @@ DECnet NETWORK LAYER
 L:	linux-decnet-user@lists.sourceforge.net
 S:	Orphan
 W:	http://linux-decnet.sourceforge.net
-F:	Documentation/networking/decnet.txt
+F:	Documentation/networking/decnet.rst
 F:	net/decnet/
 
 DECSTATION PLATFORM SUPPORT
@@ -5173,6 +5175,7 @@ S:	Maintained
 F:	drivers/soc/fsl/dpio
 
 DPAA2 ETHERNET DRIVER
+M:	Ioana Ciornei <ioana.ciornei@nxp.com>
 M:	Ioana Radulescu <ruxandra.radulescu@nxp.com>
 L:	netdev@vger.kernel.org
 S:	Maintained
@@ -5552,7 +5555,7 @@ M:	Chen-Yu Tsai <wens@csie.org>
 L:	dri-devel@lists.freedesktop.org
 S:	Supported
 T:	git git://anongit.freedesktop.org/drm/drm-misc
-F:	Documentation/devicetree/bindings/display/sunxi/sun4i-drm.txt
+F:	Documentation/devicetree/bindings/display/allwinner*
 F:	drivers/gpu/drm/sun4i/
 
 DRM DRIVERS FOR AMLOGIC SOCS
@@ -5932,6 +5935,7 @@ F:	lib/dynamic_debug.c
 DYNAMIC INTERRUPT MODERATION
 M:	Tal Gilboa <talgi@mellanox.com>
 S:	Maintained
+F:	Documentation/networking/net_dim.rst
 F:	include/linux/dim.h
 F:	lib/dim/
 
@@ -7810,7 +7814,7 @@ HUAWEI ETHERNET DRIVER
 M:	Aviad Krawczyk <aviad.krawczyk@huawei.com>
 L:	netdev@vger.kernel.org
 S:	Supported
-F:	Documentation/networking/hinic.txt
+F:	Documentation/networking/hinic.rst
 F:	drivers/net/ethernet/huawei/hinic/
 
 HUGETLB FILESYSTEM
@@ -7862,7 +7866,7 @@ S:	Supported
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/hyperv/linux.git
 F:	Documentation/ABI/stable/sysfs-bus-vmbus
 F:	Documentation/ABI/testing/debugfs-hyperv
-F:	Documentation/networking/device_drivers/microsoft/netvsc.txt
+F:	Documentation/networking/device_drivers/microsoft/netvsc.rst
 F:	arch/x86/hyperv
 F:	arch/x86/include/asm/hyperv-tlfs.h
 F:	arch/x86/include/asm/mshyperv.h
@@ -8737,8 +8741,8 @@ INTEL PRO/WIRELESS 2100, 2200BG, 2915ABG NETWORK CONNECTION SUPPORT
 M:	Stanislav Yakovlev <stas.yakovlev@gmail.com>
 L:	linux-wireless@vger.kernel.org
 S:	Maintained
-F:	Documentation/networking/device_drivers/intel/ipw2100.txt
-F:	Documentation/networking/device_drivers/intel/ipw2200.txt
+F:	Documentation/networking/device_drivers/intel/ipw2100.rst
+F:	Documentation/networking/device_drivers/intel/ipw2200.rst
 F:	drivers/net/wireless/intel/ipw2x00/
 
 INTEL PSTATE DRIVER
@@ -8929,7 +8933,7 @@ L:	lvs-devel@vger.kernel.org
 S:	Maintained
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/horms/ipvs-next.git
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/horms/ipvs.git
-F:	Documentation/networking/ipvs-sysctl.txt
+F:	Documentation/networking/ipvs-sysctl.rst
 F:	include/net/ip_vs.h
 F:	include/uapi/linux/ip_vs.h
 F:	net/netfilter/ipvs/
@@ -9325,6 +9329,7 @@ M:	Christian Borntraeger <borntraeger@de.ibm.com>
 M:	Janosch Frank <frankja@linux.ibm.com>
 R:	David Hildenbrand <david@redhat.com>
 R:	Cornelia Huck <cohuck@redhat.com>
+R:	Claudio Imbrenda <imbrenda@linux.ibm.com>
 L:	kvm@vger.kernel.org
 S:	Supported
 W:	http://www.ibm.com/developerworks/linux/linux390/
@@ -9411,6 +9416,13 @@ F:	include/linux/key.h
 F:	include/linux/keyctl.h
 F:	include/uapi/linux/keyctl.h
 F:	security/keys/
+
+KFIFO
+M:	Stefani Seibold <stefani@seibold.net>
+S:	Maintained
+F:	include/linux/kfifo.h
+F:	lib/kfifo.c
+F:	samples/kfifo/
 
 KGDB / KDB /debug_core
 M:	Jason Wessel <jason.wessel@windriver.com>
@@ -9502,7 +9514,7 @@ F:	drivers/soc/lantiq
 LAPB module
 L:	linux-x25@vger.kernel.org
 S:	Orphan
-F:	Documentation/networking/lapb-module.txt
+F:	Documentation/networking/lapb-module.rst
 F:	include/*/lapb.h
 F:	net/lapb/
 
@@ -10063,10 +10075,10 @@ MAC80211
 M:	Johannes Berg <johannes@sipsolutions.net>
 L:	linux-wireless@vger.kernel.org
 S:	Maintained
-W:	http://wireless.kernel.org/
+W:	https://wireless.wiki.kernel.org/
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/jberg/mac80211.git
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/jberg/mac80211-next.git
-F:	Documentation/networking/mac80211-injection.txt
+F:	Documentation/networking/mac80211-injection.rst
 F:	Documentation/networking/mac80211_hwsim/mac80211_hwsim.rst
 F:	drivers/net/wireless/mac80211_hwsim.[ch]
 F:	include/net/mac80211.h
@@ -10693,7 +10705,6 @@ MEDIATEK MT76 WIRELESS LAN DRIVER
 M:	Felix Fietkau <nbd@nbd.name>
 M:	Lorenzo Bianconi <lorenzo.bianconi83@gmail.com>
 R:	Ryder Lee <ryder.lee@mediatek.com>
-R:	Roy Luo <royluo@google.com>
 L:	linux-wireless@vger.kernel.org
 S:	Maintained
 F:	drivers/net/wireless/mediatek/mt76/
@@ -11644,8 +11655,8 @@ NETERION 10GbE DRIVERS (s2io/vxge)
 M:	Jon Mason <jdmason@kudzu.us>
 L:	netdev@vger.kernel.org
 S:	Supported
-F:	Documentation/networking/device_drivers/neterion/s2io.txt
-F:	Documentation/networking/device_drivers/neterion/vxge.txt
+F:	Documentation/networking/device_drivers/neterion/s2io.rst
+F:	Documentation/networking/device_drivers/neterion/vxge.rst
 F:	drivers/net/ethernet/neterion/
 
 NETFILTER
@@ -12644,7 +12655,7 @@ F:	fs/orangefs/
 ORINOCO DRIVER
 L:	linux-wireless@vger.kernel.org
 S:	Orphan
-W:	http://wireless.kernel.org/en/users/Drivers/orinoco
+W:	https://wireless.wiki.kernel.org/en/users/Drivers/orinoco
 W:	http://www.nongnu.org/orinoco/
 F:	drivers/net/wireless/intersil/orinoco/
 
@@ -12670,7 +12681,7 @@ P54 WIRELESS DRIVER
 M:	Christian Lamparter <chunkeey@googlemail.com>
 L:	linux-wireless@vger.kernel.org
 S:	Maintained
-W:	http://wireless.kernel.org/en/users/Drivers/p54
+W:	https://wireless.wiki.kernel.org/en/users/Drivers/p54
 F:	drivers/net/wireless/intersil/p54/
 
 PACKING
@@ -13038,7 +13049,7 @@ F:	drivers/pci/controller/pci-xgene-msi.c
 
 PCI NATIVE HOST BRIDGE AND ENDPOINT DRIVERS
 M:	Lorenzo Pieralisi <lorenzo.pieralisi@arm.com>
-R:	Andrew Murray <amurray@thegoodpenguin.co.uk>
+R:	Rob Herring <robh@kernel.org>
 L:	linux-pci@vger.kernel.org
 S:	Supported
 Q:	http://patchwork.ozlabs.org/project/linux-pci/list/
@@ -13250,7 +13261,7 @@ F:	drivers/input/joystick/pxrc.c
 PHONET PROTOCOL
 M:	Remi Denis-Courmont <courmisch@gmail.com>
 S:	Supported
-F:	Documentation/networking/phonet.txt
+F:	Documentation/networking/phonet.rst
 F:	include/linux/phonet.h
 F:	include/net/phonet/
 F:	include/uapi/linux/phonet.h
@@ -13591,7 +13602,7 @@ PRISM54 WIRELESS DRIVER
 M:	Luis Chamberlain <mcgrof@kernel.org>
 L:	linux-wireless@vger.kernel.org
 S:	Obsolete
-W:	http://wireless.kernel.org/en/users/Drivers/p54
+W:	https://wireless.wiki.kernel.org/en/users/Drivers/p54
 F:	drivers/net/wireless/intersil/prism54/
 
 PROC FILESYSTEM
@@ -13853,7 +13864,8 @@ S:	Maintained
 F:	drivers/scsi/qla1280.[ch]
 
 QLOGIC QLA2XXX FC-SCSI DRIVER
-M:	hmadhani@marvell.com
+M:	Nilesh Javali <njavali@marvell.com>
+M:	GR-QLogic-Storage-Upstream@marvell.com
 L:	linux-scsi@vger.kernel.org
 S:	Supported
 F:	Documentation/scsi/LICENSE.qla2xxx
@@ -13931,7 +13943,7 @@ QUALCOMM ATHEROS ATH10K WIRELESS DRIVER
 M:	Kalle Valo <kvalo@codeaurora.org>
 L:	ath10k@lists.infradead.org
 S:	Supported
-W:	http://wireless.kernel.org/en/users/Drivers/ath10k
+W:	https://wireless.wiki.kernel.org/en/users/Drivers/ath10k
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/kvalo/ath.git
 F:	drivers/net/wireless/ath/ath10k/
 
@@ -13946,7 +13958,7 @@ QUALCOMM ATHEROS ATH9K WIRELESS DRIVER
 M:	QCA ath9k Development <ath9k-devel@qca.qualcomm.com>
 L:	linux-wireless@vger.kernel.org
 S:	Supported
-W:	http://wireless.kernel.org/en/users/Drivers/ath9k
+W:	https://wireless.wiki.kernel.org/en/users/Drivers/ath9k
 F:	drivers/net/wireless/ath/ath9k/
 
 QUALCOMM CAMERA SUBSYSTEM DRIVER
@@ -14018,7 +14030,7 @@ M:	Subash Abhinov Kasiviswanathan <subashab@codeaurora.org>
 M:	Sean Tranchetti <stranche@codeaurora.org>
 L:	netdev@vger.kernel.org
 S:	Maintained
-F:	Documentation/networking/device_drivers/qualcomm/rmnet.txt
+F:	Documentation/networking/device_drivers/qualcomm/rmnet.rst
 F:	drivers/net/ethernet/qualcomm/rmnet/
 F:	include/linux/if_rmnet.h
 
@@ -14043,13 +14055,12 @@ QUALCOMM WCN36XX WIRELESS DRIVER
 M:	Kalle Valo <kvalo@codeaurora.org>
 L:	wcn36xx@lists.infradead.org
 S:	Supported
-W:	http://wireless.kernel.org/en/users/Drivers/wcn36xx
+W:	https://wireless.wiki.kernel.org/en/users/Drivers/wcn36xx
 T:	git git://github.com/KrasnikovEugene/wcn36xx.git
 F:	drivers/net/wireless/ath/wcn36xx/
 
 QUANTENNA QTNFMAC WIRELESS DRIVER
 M:	Igor Mitsyanko <imitsyanko@quantenna.com>
-M:	Avinash Patil <avinashp@quantenna.com>
 M:	Sergey Matyukevich <smatyukevich@quantenna.com>
 L:	linux-wireless@vger.kernel.org
 S:	Maintained
@@ -14207,7 +14218,7 @@ L:	linux-rdma@vger.kernel.org
 L:	rds-devel@oss.oracle.com (moderated for non-subscribers)
 S:	Supported
 W:	https://oss.oracle.com/projects/rds/
-F:	Documentation/networking/rds.txt
+F:	Documentation/networking/rds.rst
 F:	net/rds/
 
 RDT - RESOURCE ALLOCATION
@@ -14271,7 +14282,7 @@ REALTEK WIRELESS DRIVER (rtlwifi family)
 M:	Ping-Ke Shih <pkshih@realtek.com>
 L:	linux-wireless@vger.kernel.org
 S:	Maintained
-W:	http://wireless.kernel.org/
+W:	https://wireless.wiki.kernel.org/
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/linville/wireless-testing.git
 F:	drivers/net/wireless/realtek/rtlwifi/
 
@@ -14406,7 +14417,7 @@ RFKILL
 M:	Johannes Berg <johannes@sipsolutions.net>
 L:	linux-wireless@vger.kernel.org
 S:	Maintained
-W:	http://wireless.kernel.org/
+W:	https://wireless.wiki.kernel.org/
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/jberg/mac80211.git
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/jberg/mac80211-next.git
 F:	Documentation/ABI/stable/sysfs-class-rfkill
@@ -14555,7 +14566,7 @@ F:	drivers/media/dvb-frontends/rtl2832_sdr*
 RTL8180 WIRELESS DRIVER
 L:	linux-wireless@vger.kernel.org
 S:	Orphan
-W:	http://wireless.kernel.org/
+W:	https://wireless.wiki.kernel.org/
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/linville/wireless-testing.git
 F:	drivers/net/wireless/realtek/rtl818x/rtl8180/
 
@@ -14565,7 +14576,7 @@ M:	Hin-Tak Leung <htl10@users.sourceforge.net>
 M:	Larry Finger <Larry.Finger@lwfinger.net>
 L:	linux-wireless@vger.kernel.org
 S:	Maintained
-W:	http://wireless.kernel.org/
+W:	https://wireless.wiki.kernel.org/
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/linville/wireless-testing.git
 F:	drivers/net/wireless/realtek/rtl818x/rtl8187/
 
@@ -14581,7 +14592,7 @@ M:	David Howells <dhowells@redhat.com>
 L:	linux-afs@lists.infradead.org
 S:	Supported
 W:	https://www.infradead.org/~dhowells/kafs/
-F:	Documentation/networking/rxrpc.txt
+F:	Documentation/networking/rxrpc.rst
 F:	include/keys/rxrpc-type.h
 F:	include/net/af_rxrpc.h
 F:	include/trace/events/rxrpc.h
@@ -14987,7 +14998,7 @@ M:	Marcelo Ricardo Leitner <marcelo.leitner@gmail.com>
 L:	linux-sctp@vger.kernel.org
 S:	Maintained
 W:	http://lksctp.sourceforge.net
-F:	Documentation/networking/sctp.txt
+F:	Documentation/networking/sctp.rst
 F:	include/linux/sctp.h
 F:	include/net/sctp/
 F:	include/uapi/linux/sctp.h
@@ -15862,7 +15873,7 @@ SPIDERNET NETWORK DRIVER for CELL
 M:	Ishizaki Kou <kou.ishizaki@toshiba.co.jp>
 L:	netdev@vger.kernel.org
 S:	Supported
-F:	Documentation/networking/device_drivers/toshiba/spider_net.txt
+F:	Documentation/networking/device_drivers/toshiba/spider_net.rst
 F:	drivers/net/ethernet/toshiba/spider_net*
 
 SPMI SUBSYSTEM
@@ -16920,8 +16931,8 @@ F:	drivers/media/platform/ti-vpe/
 TI WILINK WIRELESS DRIVERS
 L:	linux-wireless@vger.kernel.org
 S:	Orphan
-W:	http://wireless.kernel.org/en/users/Drivers/wl12xx
-W:	http://wireless.kernel.org/en/users/Drivers/wl1251
+W:	https://wireless.wiki.kernel.org/en/users/Drivers/wl12xx
+W:	https://wireless.wiki.kernel.org/en/users/Drivers/wl1251
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/luca/wl12xx.git
 F:	drivers/net/wireless/ti/
 F:	include/linux/wl12xx.h
@@ -16959,7 +16970,7 @@ M:	Samuel Chessman <chessman@tux.org>
 L:	tlan-devel@lists.sourceforge.net (subscribers-only)
 S:	Maintained
 W:	http://sourceforge.net/projects/tlan/
-F:	Documentation/networking/device_drivers/ti/tlan.txt
+F:	Documentation/networking/device_drivers/ti/tlan.rst
 F:	drivers/net/ethernet/ti/tlan.*
 
 TM6000 VIDEO4LINUX DRIVER
@@ -17149,7 +17160,7 @@ TUN/TAP driver
 M:	Maxim Krasnyansky <maxk@qti.qualcomm.com>
 S:	Maintained
 W:	http://vtun.sourceforge.net/tun
-F:	Documentation/networking/tuntap.txt
+F:	Documentation/networking/tuntap.rst
 F:	arch/um/os-Linux/drivers/
 
 TURBOCHANNEL SUBSYSTEM
@@ -18094,7 +18105,7 @@ M:	David Ahern <dsahern@kernel.org>
 M:	Shrijeet Mukherjee <shrijeet@gmail.com>
 L:	netdev@vger.kernel.org
 S:	Maintained
-F:	Documentation/networking/vrf.txt
+F:	Documentation/networking/vrf.rst
 F:	drivers/net/vrf.c
 
 VSPRINTF
@@ -18203,7 +18214,7 @@ M:	Maya Erez <merez@codeaurora.org>
 L:	linux-wireless@vger.kernel.org
 L:	wil6210@qti.qualcomm.com
 S:	Supported
-W:	http://wireless.kernel.org/en/users/Drivers/wil6210
+W:	https://wireless.wiki.kernel.org/en/users/Drivers/wil6210
 F:	drivers/net/wireless/ath/wil6210/
 
 WIMAX STACK
@@ -18632,7 +18643,7 @@ L:	linux-hams@vger.kernel.org
 S:	Maintained
 W:	http://yaina.de/jreuter/
 W:	http://www.qsl.net/dl1bke/
-F:	Documentation/networking/z8530drv.txt
+F:	Documentation/networking/z8530drv.rst
 F:	drivers/net/hamradio/*scc.c
 F:	drivers/net/hamradio/z8530.h
 

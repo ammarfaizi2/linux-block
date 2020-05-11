@@ -243,6 +243,10 @@ struct nft_set_elem {
 		u32		buf[NFT_DATA_VALUE_MAXLEN / sizeof(u32)];
 		struct nft_data	val;
 	} key_end;
+	union {
+		u32		buf[NFT_DATA_VALUE_MAXLEN / sizeof(u32)];
+		struct nft_data val;
+	} data;
 	void			*priv;
 };
 
@@ -901,7 +905,7 @@ static inline void nft_set_elem_update_expr(const struct nft_set_ext *ext,
 {
 	struct nft_expr *expr;
 
-	if (nft_set_ext_exists(ext, NFT_SET_EXT_EXPR)) {
+	if (__nft_set_ext_exists(ext, NFT_SET_EXT_EXPR)) {
 		expr = nft_set_ext_expr(ext);
 		expr->ops->eval(expr, regs, pkt);
 	}
