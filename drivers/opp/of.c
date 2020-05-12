@@ -338,6 +338,7 @@ int dev_pm_opp_of_find_icc_paths(struct device *dev,
 	struct device_node *np;
 	int ret = 0, i, count, num_paths;
 	struct icc_path **paths;
+	u32 tag;
 
 	np = of_node_get(dev->of_node);
 	if (!np)
@@ -345,20 +346,24 @@ int dev_pm_opp_of_find_icc_paths(struct device *dev,
 
 	count = of_count_phandle_with_args(np, "interconnects",
 					   "#interconnect-cells");
-	of_node_put(np);
-	if (count < 0)
-		return 0;
+	if (count < 0) {
+		ret = 0;
+		goto put_np;
+	}
 
 	/* two phandles when #interconnect-cells = <1> */
 	if (count % 2) {
 		dev_err(dev, "%s: Invalid interconnects values\n", __func__);
-		return -EINVAL;
+		ret = -EINVAL;
+		goto put_np;
 	}
 
 	num_paths = count / 2;
 	paths = kcalloc(num_paths, sizeof(*paths), GFP_KERNEL);
-	if (!paths)
-		return -ENOMEM;
+	if (!paths) {
+		ret = -ENOMEM;
+		goto put_np;
+	}
 
 	for (i = 0; i < num_paths; i++) {
 		paths[i] = of_icc_get_by_index(dev, i);
@@ -370,6 +375,11 @@ int dev_pm_opp_of_find_icc_paths(struct device *dev,
 			}
 			goto err;
 		}
+
+		/* Set tag if present */
+		if (!of_property_read_u32_index(np, "interconnect-tags",
+						i, &tag))
+			icc_set_tag(paths[i], tag);
 	}
 
 	if (opp_table) {
@@ -377,12 +387,15 @@ int dev_pm_opp_of_find_icc_paths(struct device *dev,
 		opp_table->path_count = num_paths;
 		return 0;
 	}
+	of_node_put(np);
 
 err:
 	while (i--)
 		icc_put(paths[i]);
 
 	kfree(paths);
+put_np:
+	of_node_put(np);
 
 	return ret;
 }
