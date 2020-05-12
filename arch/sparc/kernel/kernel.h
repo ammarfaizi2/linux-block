@@ -154,10 +154,9 @@ extern unsigned long sun4m_cpu_startup;
 extern unsigned long sun4d_cpu_startup;
 
 /* process_32.c */
-asmlinkage int sparc_do_fork(unsigned long clone_flags,
-                             unsigned long stack_start,
-                             struct pt_regs *regs,
-                             unsigned long stack_size);
+asmlinkage int sparc_clone(struct pt_regs *regs);
+asmlinkage int sparc_fork(struct pt_regs *regs);
+asmlinkage int sparc_vfork(struct pt_regs *regs);
 
 /* signal_32.c */
 asmlinkage void do_sigreturn(struct pt_regs *regs);
