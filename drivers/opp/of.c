@@ -332,6 +332,62 @@ free_required_opps:
 	return ret;
 }
 
+int dev_pm_opp_of_find_icc_paths(struct device *dev,
+				 struct opp_table *opp_table)
+{
+	struct device_node *np;
+	int ret = 0, i, count, num_paths;
+	struct icc_path **paths;
+
+	np = of_node_get(dev->of_node);
+	if (!np)
+		return 0;
+
+	count = of_count_phandle_with_args(np, "interconnects",
+					   "#interconnect-cells");
+	of_node_put(np);
+	if (count < 0)
+		return 0;
+
+	/* two phandles when #interconnect-cells = <1> */
+	if (count % 2) {
+		dev_err(dev, "%s: Invalid interconnects values\n", __func__);
+		return -EINVAL;
+	}
+
+	num_paths = count / 2;
+	paths = kcalloc(num_paths, sizeof(*paths), GFP_KERNEL);
+	if (!paths)
+		return -ENOMEM;
+
+	for (i = 0; i < num_paths; i++) {
+		paths[i] = of_icc_get_by_index(dev, i);
+		if (IS_ERR(paths[i])) {
+			ret = PTR_ERR(paths[i]);
+			if (ret != -EPROBE_DEFER) {
+				dev_err(dev, "%s: Unable to get path%d: %d\n",
+					__func__, i, ret);
+			}
+			goto err;
+		}
+	}
+
+	if (opp_table) {
+		opp_table->paths = paths;
+		opp_table->path_count = num_paths;
+		return 0;
+	}
+
+err:
+	while (i--)
+		icc_put(paths[i]);
+
+	kfree(paths);
+
+	return ret;
+}
+EXPORT_SYMBOL_GPL(dev_pm_opp_of_find_icc_paths);
+
 static bool _opp_is_supported(struct device *dev, struct opp_table *opp_table,
 			      struct device_node *np)
 {
@@ -524,8 +580,11 @@ EXPORT_SYMBOL_GPL(dev_pm_opp_of_remove_table);
 static int _read_opp_key(struct dev_pm_opp *new_opp, struct device_node *np,
 			 bool *rate_not_available)
 {
+	struct property *peak, *avg;
+	u32 *peak_bw, *avg_bw;
 	u64 rate;
-	int ret;
+	int ret, i, count;
+	bool found = false;
 
 	ret = of_property_read_u64(np, "opp-hz", &rate);
 	if (!ret) {
@@ -535,10 +594,72 @@ static int _read_opp_key(struct dev_pm_opp *new_opp, struct device_node *np,
 		 * bit guaranteed in clk API.
 		 */
 		new_opp->rate = (unsigned long)rate;
+		found = true;
 	}
 	*rate_not_available = !!ret;
 
-	of_property_read_u32(np, "opp-level", &new_opp->level);
+	peak = of_find_property(np, "opp-peak-kBps", NULL);
+	if (peak) {
+		/*
+		 * Bandwidth consists of peak and average (optional) values:
+		 * opp-peak-kBps = <path1_value path2_value>;
+		 * opp-avg-kBps = <path1_value path2_value>;
+		 */
+		count = peak->length / sizeof(u32);
+		peak_bw = kmalloc_array(count, sizeof(*peak_bw), GFP_KERNEL);
+		if (!peak_bw)
+			return -ENOMEM;
+
+		ret = of_property_read_u32_array(np, "opp-peak-kBps", peak_bw,
+						 count);
+		if (ret) {
+			pr_err("%s: Error parsing opp-peak-kBps: %d\n",
+			       __func__, ret);
+			goto free_peak_bw;
+		}
+
+		for (i = 0; i < count; i++)
+			new_opp->bandwidth[i].peak = kBps_to_icc(peak_bw[i]);
+
+		found = true;
+		kfree(peak_bw);
+	}
+
+	avg = of_find_property(np, "opp-avg-kBps", NULL);
+	if (peak && avg) {
+		count = avg->length / sizeof(u32);
+		avg_bw = kmalloc_array(count, sizeof(*avg_bw), GFP_KERNEL);
+		if (!avg_bw) {
+			ret = -ENOMEM;
+			goto free_peak_bw;
+		}
+
+		ret = of_property_read_u32_array(np, "opp-avg-kBps", avg_bw,
+						 count);
+		if (ret) {
+			pr_err("%s: Error parsing opp-avg-kBps: %d\n",
+			       __func__, ret);
+			goto free_avg_bw;
+		}
+
+		for (i = 0; i < count; i++)
+			new_opp->bandwidth[i].avg = kBps_to_icc(avg_bw[i]);
+
+		kfree(avg_bw);
+	}
+
+	if (!of_property_read_u32(np, "opp-level", &new_opp->level))
+		found = true;
+
+	if (found)
+		return 0;
+
+	return ret;
+
+free_avg_bw:
+	kfree(avg_bw);
+free_peak_bw:
+	kfree(peak_bw);
 
 	return ret;
 }
