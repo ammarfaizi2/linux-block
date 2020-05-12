@@ -27,6 +27,10 @@ MP+onceassign+derefonce.litmus
     Demonstrates that rcu_assign_pointer() and rcu_dereference() to
     ensure that an RCU reader will not see pre-initialization garbage.
 
+MP+onceassign+derefonce.litmus (under tools/memory-model/litmus-tests/)
+    Demonstrates the use of rcu_assign_pointer() and rcu_dereference() to
+    ensure that an RCU reader will not see pre-initialization garbage.
+
 RCU+sync+read.litmus
 RCU+sync+free.litmus
     Both the above litmus tests demonstrate the RCU grace period guarantee
