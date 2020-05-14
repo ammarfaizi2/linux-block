@@ -88,21 +88,12 @@ typedef struct xfs_mount {
 	struct xfs_buf		*m_sb_bp;	/* buffer for superblock */
 	char			*m_rtname;	/* realtime device name */
 	char			*m_logname;	/* external log device name */
-	int			m_bsize;	/* fs logical block size */
 	xfs_agnumber_t		m_agfrotor;	/* last ag where space found */
 	xfs_agnumber_t		m_agirotor;	/* last ag dir inode alloced */
 	spinlock_t		m_agirotor_lock;/* .. and lock protecting it */
-	xfs_agnumber_t		m_maxagi;	/* highest inode alloc group */
-	uint			m_allocsize_log;/* min write size log bytes */
-	uint			m_allocsize_blocks; /* min write size blocks */
 	struct xfs_da_geometry	*m_dir_geo;	/* directory block geometry */
 	struct xfs_da_geometry	*m_attr_geo;	/* attribute block geometry */
 	struct xlog		*m_log;		/* log specific stuff */
-	struct xfs_ino_geometry	m_ino_geo;	/* inode geometry */
-	int			m_logbufs;	/* number of log buffers */
-	int			m_logbsize;	/* size of each log buffer */
-	uint			m_rsumlevels;	/* rt summary levels */
-	uint			m_rsumsize;	/* size of rt summary, bytes */
 	/*
 	 * Optional cache of rt summary level per bitmap block with the
 	 * invariant that m_rsum_cache[bbno] <= the minimum i for which
@@ -117,9 +108,17 @@ typedef struct xfs_mount {
 	xfs_buftarg_t		*m_ddev_targp;	/* saves taking the address */
 	xfs_buftarg_t		*m_logdev_targp;/* ptr to log device */
 	xfs_buftarg_t		*m_rtdev_targp;	/* ptr to rt device */
+
+	/*
+	 * Read-only variables that are pre-calculated at mount time.
+	 * We want these to be aligned to a cache line to prevent them from
+	 * bouncing between frequently read and frequently written fields.
+	 */
+	int ____cacheline_aligned m_bsize;	/* fs logical block size */
 	uint8_t			m_blkbit_log;	/* blocklog + NBBY */
 	uint8_t			m_blkbb_log;	/* blocklog - BBSHIFT */
 	uint8_t			m_agno_log;	/* log #ag's */
+	uint8_t			m_sectbb_log;	/* sectlog - BBSHIFT */
 	uint			m_blockmask;	/* sb_blocksize-1 */
 	uint			m_blockwsize;	/* sb_blocksize in words */
 	uint			m_blockwmask;	/* blockwsize-1 */
@@ -138,20 +137,35 @@ typedef struct xfs_mount {
 	xfs_extlen_t		m_ag_prealloc_blocks; /* reserved ag blocks */
 	uint			m_alloc_set_aside; /* space we can't use */
 	uint			m_ag_max_usable; /* max space per AG */
+	int			m_dalign;	/* stripe unit */
+	int			m_swidth;	/* stripe width */
+	xfs_agnumber_t		m_maxagi;	/* highest inode alloc group */
+	uint			m_allocsize_log;/* min write size log bytes */
+	uint			m_allocsize_blocks; /* min write size blocks */
+	int			m_logbufs;	/* number of log buffers */
+	int			m_logbsize;	/* size of each log buffer */
+	uint			m_rsumlevels;	/* rt summary levels */
+	uint			m_rsumsize;	/* size of rt summary, bytes */
+	int			m_fixedfsid[2];	/* unchanged for life of FS */
+	uint			m_qflags;	/* quota status flags */
+	uint64_t		m_flags;	/* global mount flags */
+	int64_t			m_low_space[XFS_LOWSP_MAX];
+	struct xfs_ino_geometry	m_ino_geo;	/* inode geometry */
+	struct xfs_trans_resv	m_resv;		/* precomputed res values */
+						/* low free space thresholds */
+	bool			m_always_cow;
+	bool			m_fail_unmount;
+	bool			m_finobt_nores; /* no per-AG finobt resv. */
+	/*
+	 * End of pre-calculated read-only variables
+	 */
+
 	struct radix_tree_root	m_perag_tree;	/* per-ag accounting info */
 	spinlock_t		m_perag_lock;	/* lock for m_perag_tree */
 	struct mutex		m_growlock;	/* growfs mutex */
-	int			m_fixedfsid[2];	/* unchanged for life of FS */
-	uint64_t		m_flags;	/* global mount flags */
-	bool			m_finobt_nores; /* no per-AG finobt resv. */
-	uint			m_qflags;	/* quota status flags */
-	struct xfs_trans_resv	m_resv;		/* precomputed res values */
 	uint64_t		m_resblks;	/* total reserved blocks */
 	uint64_t		m_resblks_avail;/* available reserved blocks */
 	uint64_t		m_resblks_save;	/* reserved blks @ remount,ro */
-	int			m_dalign;	/* stripe unit */
-	int			m_swidth;	/* stripe width */
-	uint8_t			m_sectbb_log;	/* sectlog - BBSHIFT */
 	atomic_t		m_active_trans;	/* number trans frozen */
 	struct xfs_mru_cache	*m_filestream;  /* per-mount filestream data */
 	struct delayed_work	m_reclaim_work;	/* background inode reclaim */
@@ -160,8 +174,6 @@ typedef struct xfs_mount {
 	struct delayed_work	m_cowblocks_work; /* background cow blocks
 						     trimming */
 	bool			m_update_sb;	/* sb needs update in mount */
-	int64_t			m_low_space[XFS_LOWSP_MAX];
-						/* low free space thresholds */
 	struct xfs_kobj		m_kobj;
 	struct xfs_kobj		m_error_kobj;
 	struct xfs_kobj		m_error_meta_kobj;
@@ -191,8 +203,6 @@ typedef struct xfs_mount {
 	 */
 	uint32_t		m_generation;
 
-	bool			m_always_cow;
-	bool			m_fail_unmount;
 #ifdef DEBUG
 	/*
 	 * Frequency with which errors are injected.  Replaces xfs_etest; the
