@@ -108,6 +108,14 @@ extern void __key_link_end(struct key *keyring,
 
 extern key_ref_t find_key_to_update(key_ref_t keyring_ref,
 				    const struct keyring_index_key *index_key);
+extern key_ref_t key_create_or_update_perm_checked(key_ref_t keyring_ref,
+						   const char *type,
+						   const char *description,
+						   const void *payload,
+						   size_t plen,
+						   key_perm_t perm,
+						   unsigned long flags);
+extern int key_update_perm_checked(key_ref_t key_ref, const void *payload, size_t plen);
 
 extern struct key *keyring_search_instkey(struct key *keyring,
 					  key_serial_t target_id);
@@ -165,8 +173,9 @@ extern struct key *request_key_and_link(struct key_type *type,
 
 extern bool lookup_user_key_possessed(const struct key *key,
 				      const struct key_match_data *match_data);
-#define KEY_LOOKUP_CREATE	0x01
-#define KEY_LOOKUP_PARTIAL	0x02
+#define KEY_LOOKUP_CREATE		0x01
+#define KEY_LOOKUP_PARTIAL		0x02
+#define KEY_LOOKUP_AUTH_OVERRIDE	0x04
 
 extern long join_session_keyring(const char *name);
 extern void key_change_session_keyring(struct callback_head *twork);

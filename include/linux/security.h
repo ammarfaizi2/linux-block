@@ -1797,13 +1797,17 @@ static inline int security_path_chroot(const struct path *path)
 }
 #endif	/* CONFIG_SECURITY_PATH */
 
+/* Flags for security_key_permission() */
+#define KEY_PERMISSION_USED_AUTH_OVERRIDE	0x01 /* Auth token overrode lack of permission */
+#define KEY_PERMISSION_USED_SYSADMIN_OVERRIDE	0x02 /* Sysadmin overrode lack of permission */
+
 #ifdef CONFIG_KEYS
 #ifdef CONFIG_SECURITY
 
 int security_key_alloc(struct key *key, const struct cred *cred, unsigned long flags);
 void security_key_free(struct key *key);
 int security_key_permission(key_ref_t key_ref, const struct cred *cred,
-			    enum key_need_perm need_perm);
+			    enum key_need_perm need_perm, unsigned int flags);
 int security_key_getsecurity(struct key *key, char **_buffer);
 
 #else
@@ -1821,7 +1825,8 @@ static inline void security_key_free(struct key *key)
 
 static inline int security_key_permission(key_ref_t key_ref,
 					  const struct cred *cred,
-					  enum key_need_perm need_perm)
+					  enum key_need_perm need_perm,
+					  unsigned int flags)
 {
 	return 0;
 }

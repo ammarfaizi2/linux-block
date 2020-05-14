@@ -4264,37 +4264,14 @@ static void smack_key_free(struct key *key)
  */
 static int smack_key_permission(key_ref_t key_ref,
 				const struct cred *cred,
-				enum key_need_perm need_perm)
+				enum key_need_perm need_perm,
+				unsigned int flags)
 {
 	struct key *keyp;
 	struct smk_audit_info ad;
 	struct smack_known *tkp = smk_of_task(smack_cred(cred));
 	int request = 0;
 	int rc;
-
-	/*
-	 * Validate requested permissions
-	 */
-	switch (need_perm) {
-	case KEY_NEED_READ:
-	case KEY_NEED_SEARCH:
-	case KEY_NEED_VIEW:
-		request |= MAY_READ;
-		break;
-	case KEY_NEED_WRITE:
-	case KEY_NEED_LINK:
-	case KEY_NEED_SETATTR:
-		request |= MAY_WRITE;
-		break;
-	case KEY_NEED_UNSPECIFIED:
-	case KEY_NEED_UNLINK:
-	case KEY_SYSADMIN_OVERRIDE:
-	case KEY_AUTHTOKEN_OVERRIDE:
-	case KEY_DEFER_PERM_CHECK:
-		return 0;
-	default:
-		return -EINVAL;
-	}
 
 	keyp = key_ref_to_ptr(key_ref);
 	if (keyp == NULL)
@@ -4311,7 +4288,72 @@ static int smack_key_permission(key_ref_t key_ref,
 	if (tkp == NULL)
 		return -EACCES;
 
-	if (smack_privileged(CAP_MAC_OVERRIDE))
+	/*
+	 * Validate requested permissions
+	 */
+	switch (need_perm) {
+	case KEY_NEED_ASSUME_AUTHORITY:
+		return 0;
+
+	case KEY_NEED_DESCRIBE:
+	case KEY_NEED_GET_SECURITY:
+		request |= MAY_READ;
+		auth_can_override = true;
+		break;
+
+	case KEY_NEED_CHOWN:
+	case KEY_NEED_INVALIDATE:
+	case KEY_NEED_JOIN:
+	case KEY_NEED_LINK:
+	case KEY_NEED_KEYRING_ADD:
+	case KEY_NEED_KEYRING_CLEAR:
+	case KEY_NEED_KEYRING_DELETE:
+	case KEY_NEED_REVOKE:
+	case KEY_NEED_SETPERM:
+	case KEY_NEED_SET_RESTRICTION:
+	case KEY_NEED_UPDATE:
+		request |= MAY_WRITE;
+		break;
+
+	case KEY_NEED_INSTANTIATE:
+		auth_can_override = true;
+		break;
+
+	case KEY_NEED_READ:
+	case KEY_NEED_SEARCH:
+	case KEY_NEED_USE:
+	case KEY_NEED_WATCH:
+		request |= MAY_READ;
+		break;
+
+	case KEY_NEED_SET_TIMEOUT:
+		request |= MAY_WRITE;
+		auth_can_override = true;
+		break;
+
+	case KEY_NEED_UNLINK:
+		return 0; /* Mustn't prevent this; KEY_FLAG_KEEP is already
+			   * dealt with. */
+
+	default:
+		WARN_ON(1);
+		return -EINVAL;
+	}
+
+	/* Just allow the operation if the process has an authorisation token.
+	 * The presence of the token means that the kernel delegated
+	 * instantiation of a key to the process - which is problematic if we
+	 * then say that the process isn't allowed to get the description of
+	 * the key or actually instantiate it.
+	 */
+	if (auth_can_override && cred->request_key_auth) {
+		struct request_key_auth *rka =
+			cred->request_key_auth->payload.data[0];
+		if (rka->target_key == key)
+			*_perm = 0;
+	}
+
+	if (smack_privileged_cred(CAP_MAC_OVERRIDE, cred))
 		return 0;
 
 #ifdef CONFIG_AUDIT

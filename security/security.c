@@ -2461,9 +2461,9 @@ void security_key_free(struct key *key)
 }
 
 int security_key_permission(key_ref_t key_ref, const struct cred *cred,
-			    enum key_need_perm need_perm)
+			    enum key_need_perm need_perm, unsigned int flags)
 {
-	return call_int_hook(key_permission, 0, key_ref, cred, need_perm);
+	return call_int_hook(key_permission, 0, key_ref, cred, need_perm, flags);
 }
 
 int security_key_getsecurity(struct key *key, char **_buffer)

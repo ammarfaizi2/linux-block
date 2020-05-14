@@ -92,6 +92,7 @@
 #include <uapi/linux/mount.h>
 #include <linux/fsnotify.h>
 #include <linux/fanotify.h>
+#include <keys/request_key_auth-type.h>
 
 #include "avc.h"
 #include "objsec.h"
@@ -6541,6 +6542,121 @@ static int selinux_inode_getsecctx(struct inode *inode, void **ctx, u32 *ctxlen)
 }
 #ifdef CONFIG_KEYS
 
+/*
+ * Convert the requested KEY_NEED_* permit into an SELinux KEY__* permission.
+ *
+ * flags may also convey override flags such as
+ * KEY_PERMISSION_USED_AUTH/SYSADMIN_OVERRIDE to indicate when the main
+ * permission check overrode the permissions on the key.
+ *
+ * Returns the perms to check for in *_perm and *_perm2.  If either perm is
+ * present, then the operation is allowed.
+ */
+static int selinux_keyperm_to_av(struct key *key, const struct cred *cred,
+				 unsigned int need_perm, unsigned int flags,
+				 u32 *_perm, u32 *_perm2)
+{
+	bool auth_can_override = false; /* See KEYCTL_ASSUME_AUTHORITY */
+	bool sysadmin_can_override = false;
+
+	switch (need_perm) {
+	case KEY_NEED_ASSUME_AUTHORITY:
+		return 0;
+
+	case KEY_NEED_DESCRIBE:
+	case KEY_NEED_GET_SECURITY:
+		*_perm = KEY__VIEW;
+		auth_can_override = true;
+		break;
+
+	case KEY_NEED_CHOWN:
+	case KEY_NEED_SETPERM:
+	case KEY_NEED_SET_RESTRICTION:
+		*_perm = KEY__SETATTR;
+		break;
+
+	case KEY_NEED_INSTANTIATE:
+		auth_can_override = true;
+		break;
+
+	case KEY_NEED_INVALIDATE:
+		*_perm = KEY__SEARCH;
+		if (test_bit(KEY_FLAG_ROOT_CAN_INVAL, &key->flags))
+			sysadmin_can_override = true;
+		break;
+
+	case KEY_NEED_JOIN:
+	case KEY_NEED_LINK:
+		*_perm = KEY__LINK;
+		break;
+
+	case KEY_NEED_KEYRING_ADD:
+	case KEY_NEED_KEYRING_DELETE:
+		*_perm = KEY__WRITE;
+		break;
+
+	case KEY_NEED_KEYRING_CLEAR:
+		*_perm = KEY__WRITE;
+		if (test_bit(KEY_FLAG_ROOT_CAN_CLEAR, &key->flags))
+			sysadmin_can_override = true;
+		break;
+
+	case KEY_NEED_READ:
+		*_perm = KEY__READ;
+		break;
+
+	case KEY_NEED_REVOKE:
+		*_perm = KEY__SETATTR;
+		*_perm2 = KEY__WRITE;
+		break;
+
+	case KEY_NEED_SEARCH:
+		*_perm = KEY__SEARCH;
+		break;
+
+	case KEY_NEED_SET_TIMEOUT:
+		*_perm = KEY__SETATTR;
+		auth_can_override = true;
+		break;
+
+	case KEY_NEED_UNLINK:
+		return 0; /* Mustn't prevent this; KEY_FLAG_KEEP is already
+			   * dealt with. */
+
+	case KEY_NEED_UPDATE:
+		*_perm = KEY__WRITE;
+		break;
+
+	case KEY_NEED_USE:
+		*_perm = KEY__READ;
+		*_perm2 = KEY__SEARCH;
+		break;
+
+	case KEY_NEED_WATCH:
+		*_perm = KEY__VIEW;
+		break;
+
+	default:
+		WARN_ON(1);
+		return -EPERM;
+	}
+
+	/* Just allow the operation if the process has an authorisation token.
+	 * The presence of the token means that the kernel delegated
+	 * instantiation of a key to the process - which is problematic if we
+	 * then say that the process isn't allowed to get the description of
+	 * the key or actually instantiate it.
+	 */
+	if (auth_can_override && cred->request_key_auth) {
+		struct request_key_auth *rka =
+			cred->request_key_auth->payload.data[0];
+		if (rka->target_key == key)
+			*_perm = 0;
+	}
+
+	return 0;
+}
+
 static int selinux_key_alloc(struct key *k, const struct cred *cred,
 			     unsigned long flags)
 {
@@ -6571,48 +6687,29 @@ static void selinux_key_free(struct key *k)
 
 static int selinux_key_permission(key_ref_t key_ref,
 				  const struct cred *cred,
-				  enum key_need_perm need_perm)
+				  enum key_need_perm need_perm,
+				  unsigned int flags)
 {
 	struct key *key;
 	struct key_security_struct *ksec;
-	u32 perm, sid;
-
-	switch (need_perm) {
-	case KEY_NEED_VIEW:
-		perm = KEY__VIEW;
-		break;
-	case KEY_NEED_READ:
-		perm = KEY__READ;
-		break;
-	case KEY_NEED_WRITE:
-		perm = KEY__WRITE;
-		break;
-	case KEY_NEED_SEARCH:
-		perm = KEY__SEARCH;
-		break;
-	case KEY_NEED_LINK:
-		perm = KEY__LINK;
-		break;
-	case KEY_NEED_SETATTR:
-		perm = KEY__SETATTR;
-		break;
-	case KEY_NEED_UNLINK:
-	case KEY_SYSADMIN_OVERRIDE:
-	case KEY_AUTHTOKEN_OVERRIDE:
-	case KEY_DEFER_PERM_CHECK:
-		return 0;
-	default:
-		WARN_ON(1);
-		return -EPERM;
-
-	}
+	u32 sid, perm = 0, perm2 = 0;
+	int ret;
 
 	sid = cred_sid(cred);
 	key = key_ref_to_ptr(key_ref);
 	ksec = key->security;
 
+	ret = selinux_keyperm_to_av(key, cred, need_perm, flags, &perm, &perm2);
+	if (ret < 0 || !perm)
+		return ret;
+
+	ret = avc_has_perm(&selinux_state,
+			   sid, ksec->sid, SECCLASS_KEY, perm, NULL);
+	if (ret == 0 || !perm2)
+		return ret;
+
 	return avc_has_perm(&selinux_state,
-			    sid, ksec->sid, SECCLASS_KEY, perm, NULL);
+			    sid, ksec->sid, SECCLASS_KEY, perm2, NULL);
 }
 
 static int selinux_key_getsecurity(struct key *key, char **_buffer)

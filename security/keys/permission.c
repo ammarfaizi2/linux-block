@@ -7,7 +7,117 @@
 
 #include <linux/export.h>
 #include <linux/security.h>
+#include <keys/request_key_auth-type.h>
 #include "internal.h"
+
+/*
+ * Determine if we have sufficient permission to perform an operation.
+ */
+static int check_key_permission(struct key *key, const struct cred *cred,
+				key_perm_t perms, enum key_need_perm need_perm,
+				unsigned int *_notes)
+{
+	struct request_key_auth *rka;
+
+	switch (need_perm) {
+	case KEY_NEED_ASSUME_AUTHORITY:
+		return 0;
+
+	case KEY_NEED_DESCRIBE:
+	case KEY_NEED_GET_SECURITY:
+		if (perms & KEY_OTH_VIEW)
+			return 0;
+		goto check_auth_override;
+
+	case KEY_NEED_CHOWN:
+	case KEY_NEED_SETPERM:
+	case KEY_NEED_SET_RESTRICTION:
+		return perms & KEY_OTH_SETATTR ? 0 : -EACCES;
+
+	case KEY_NEED_INSTANTIATE:
+		goto check_auth_override;
+
+	case KEY_NEED_INVALIDATE:
+		if (test_bit(KEY_FLAG_KEEP, &key->flags))
+			return -EPERM;
+		if (perms & KEY_OTH_SEARCH)
+			return 0;
+		if (test_bit(KEY_FLAG_ROOT_CAN_INVAL, &key->flags))
+			goto check_sysadmin_override;
+		return -EACCES;
+
+	case KEY_NEED_JOIN:
+	case KEY_NEED_LINK:
+		return perms & KEY_OTH_LINK ? 0 : -EACCES;
+
+	case KEY_NEED_KEYRING_DELETE:
+		if (test_bit(KEY_FLAG_KEEP, &key->flags))
+			return -EPERM;
+		/* Fall through. */
+	case KEY_NEED_KEYRING_ADD:
+		return perms & KEY_OTH_WRITE ? 0 : -EACCES;
+
+	case KEY_NEED_KEYRING_CLEAR:
+		if (test_bit(KEY_FLAG_KEEP, &key->flags))
+			return -EPERM;
+		if (perms & KEY_OTH_WRITE)
+			return 0;
+		if (test_bit(KEY_FLAG_ROOT_CAN_CLEAR, &key->flags))
+			goto check_sysadmin_override;
+		return -EACCES;
+
+	case KEY_NEED_READ:
+		return perms & (KEY_OTH_READ | KEY_OTH_SEARCH) ? 0 : -EACCES;
+
+	case KEY_NEED_REVOKE:
+		if (test_bit(KEY_FLAG_KEEP, &key->flags))
+			return -EPERM;
+		return perms & (KEY_OTH_WRITE | KEY_OTH_SETATTR) ? 0 : -EACCES;
+
+	case KEY_NEED_SEARCH:
+		return perms & KEY_OTH_SEARCH ? 0 : -EACCES;
+
+	case KEY_NEED_SET_TIMEOUT:
+		if (test_bit(KEY_FLAG_KEEP, &key->flags))
+			return -EPERM;
+		if (perms & KEY_OTH_SETATTR)
+			return 0;
+		goto check_auth_override;
+
+	case KEY_NEED_UNLINK:
+		if (test_bit(KEY_FLAG_KEEP, &key->flags))
+			return -EPERM;
+		return 0;
+
+	case KEY_NEED_UPDATE:
+		return perms & KEY_OTH_WRITE ? 0 : -EACCES;
+
+	case KEY_NEED_USE:
+		return perms & (KEY_OTH_READ | KEY_OTH_SEARCH) ? 0 : -EACCES;
+
+	case KEY_NEED_WATCH:
+		return perms & KEY_OTH_VIEW ? 0 : -EACCES;
+
+	default:
+		WARN_ON(1);
+		return -EACCES;
+	}
+
+check_auth_override:
+	if (!cred->request_key_auth)
+		return -EACCES;
+	rka = cred->request_key_auth->payload.data[0];
+	if (rka->target_key != key)
+		return -EACCES;
+	*_notes |= KEY_PERMISSION_USED_AUTH_OVERRIDE;
+	return 0;
+
+check_sysadmin_override:
+	if (!capable(CAP_SYS_ADMIN))
+		return -EACCES;
+	*_notes |= KEY_PERMISSION_USED_SYSADMIN_OVERRIDE;
+	return 0;
+}
 
 /**
  * key_task_permission - Check a key can be used
@@ -27,26 +137,9 @@ int key_task_permission(const key_ref_t key_ref, const struct cred *cred,
 			enum key_need_perm need_perm)
 {
 	struct key *key;
-	key_perm_t kperm, mask;
+	unsigned int notes = 0;
+	key_perm_t kperm;
 	int ret;
-
-	switch (need_perm) {
-	default:
-		WARN_ON(1);
-		return -EACCES;
-	case KEY_NEED_UNLINK:
-	case KEY_SYSADMIN_OVERRIDE:
-	case KEY_AUTHTOKEN_OVERRIDE:
-	case KEY_DEFER_PERM_CHECK:
-		goto lsm;
-
-	case KEY_NEED_VIEW:	mask = KEY_OTH_VIEW;	break;
-	case KEY_NEED_READ:	mask = KEY_OTH_READ;	break;
-	case KEY_NEED_WRITE:	mask = KEY_OTH_WRITE;	break;
-	case KEY_NEED_SEARCH:	mask = KEY_OTH_SEARCH;	break;
-	case KEY_NEED_LINK:	mask = KEY_OTH_LINK;	break;
-	case KEY_NEED_SETATTR:	mask = KEY_OTH_SETATTR;	break;
-	}
 
 	key = key_ref_to_ptr(key_ref);
 
@@ -75,19 +168,19 @@ int key_task_permission(const key_ref_t key_ref, const struct cred *cred,
 	kperm = key->perm;
 
 use_these_perms:
-
 	/* use the top 8-bits of permissions for keys the caller possesses
 	 * - possessor permissions are additive with other permissions
 	 */
 	if (is_key_possessed(key_ref))
 		kperm |= key->perm >> 24;
 
-	if ((kperm & mask) != mask)
-		return -EACCES;
+	ret = check_key_permission(key, cred, kperm & KEY_OTH_ALL, need_perm,
+				   &notes);
+	if (ret < 0)
+		return ret;
 
-	/* let LSM be the final arbiter */
-lsm:
-	return security_key_permission(key_ref, cred, need_perm);
+	/* Let the LSMs be the final arbiter */
+	return security_key_permission(key_ref, cred, need_perm, notes);
 }
 EXPORT_SYMBOL(key_task_permission);
 

@@ -758,7 +758,7 @@ static inline key_ref_t __key_update(key_ref_t key_ref,
 	int ret;
 
 	/* need write permission on the key to update it */
-	ret = key_permission(key_ref, KEY_NEED_WRITE);
+	ret = key_permission(key_ref, KEY_NEED_UPDATE);
 	if (ret < 0)
 		goto error;
 
@@ -813,13 +813,13 @@ error:
  * On success, the possession flag from the keyring ref will be tacked on to
  * the key ref before it is returned.
  */
-key_ref_t key_create_or_update(key_ref_t keyring_ref,
-			       const char *type,
-			       const char *description,
-			       const void *payload,
-			       size_t plen,
-			       key_perm_t perm,
-			       unsigned long flags)
+key_ref_t key_create_or_update_perm_checked(key_ref_t keyring_ref,
+					    const char *type,
+					    const char *description,
+					    const void *payload,
+					    size_t plen,
+					    key_perm_t perm,
+					    unsigned long flags)
 {
 	struct keyring_index_key index_key = {
 		.description	= description,
@@ -896,14 +896,6 @@ key_ref_t key_create_or_update(key_ref_t keyring_ref,
 			key_ref = ERR_PTR(ret);
 			goto error_link_end;
 		}
-	}
-
-	/* if we're going to allocate a new key, we're going to have
-	 * to modify the keyring */
-	ret = key_permission(keyring_ref, KEY_NEED_WRITE);
-	if (ret < 0) {
-		key_ref = ERR_PTR(ret);
-		goto error_link_end;
 	}
 
 	/* if it's possible to update this type of key, search for an existing
@@ -985,6 +977,25 @@ error:
 
 	goto error_free_prep;
 }
+
+key_ref_t key_create_or_update(key_ref_t keyring_ref,
+			       const char *type,
+			       const char *description,
+			       const void *payload,
+			       size_t plen,
+			       key_perm_t perm,
+			       unsigned long flags)
+{
+	int ret;
+
+	ret = key_permission(keyring_ref, KEY_NEED_KEYRING_ADD);
+	if (ret < 0)
+		return ERR_PTR(ret);
+
+	return key_create_or_update_perm_checked(keyring_ref, type,
+						 description, payload,
+						 plen, perm, flags);
+}
 EXPORT_SYMBOL(key_create_or_update);
 
 /**
@@ -1000,18 +1011,11 @@ EXPORT_SYMBOL(key_create_or_update);
  * Returns 0 on success, -EACCES if not permitted and -EOPNOTSUPP if the key
  * type does not support updating.  The key type may return other errors.
  */
-int key_update(key_ref_t key_ref, const void *payload, size_t plen)
+int key_update_perm_checked(key_ref_t key_ref, const void *payload, size_t plen)
 {
 	struct key_preparsed_payload prep;
 	struct key *key = key_ref_to_ptr(key_ref);
 	int ret;
-
-	key_check(key);
-
-	/* the key must be writable */
-	ret = key_permission(key_ref, KEY_NEED_WRITE);
-	if (ret < 0)
-		return ret;
 
 	/* attempt to update it if supported */
 	if (!key->type->update)
@@ -1043,6 +1047,20 @@ error:
 	if (key->type->preparse)
 		key->type->free_preparse(&prep);
 	return ret;
+}
+
+int key_update(key_ref_t key_ref, const void *payload, size_t plen)
+{
+	int ret;
+
+	key_check(key_ref_to_ptr(key_ref));
+
+	/* the key must be writable */
+	ret = key_permission(key_ref, KEY_NEED_UPDATE);
+	if (ret < 0)
+		return ret;
+
+	return key_update_perm_checked(key_ref, payload, plen);
 }
 EXPORT_SYMBOL(key_update);
 

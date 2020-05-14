@@ -75,17 +75,28 @@ struct net;
  * The permissions required on a key that we're looking up.
  */
 enum key_need_perm {
-	KEY_NEED_UNSPECIFIED,	/* Needed permission unspecified */
-	KEY_NEED_VIEW,		/* Require permission to view attributes */
-	KEY_NEED_READ,		/* Require permission to read content */
-	KEY_NEED_WRITE,		/* Require permission to update / modify */
-	KEY_NEED_SEARCH,	/* Require permission to search (keyring) or find (key) */
-	KEY_NEED_LINK,		/* Require permission to link */
-	KEY_NEED_SETATTR,	/* Require permission to change attributes */
-	KEY_NEED_UNLINK,	/* Require permission to unlink key */
-	KEY_SYSADMIN_OVERRIDE,	/* Special: override by CAP_SYS_ADMIN */
-	KEY_AUTHTOKEN_OVERRIDE,	/* Special: override by possession of auth token */
-	KEY_DEFER_PERM_CHECK,	/* Special: permission check is deferred */
+	KEY_NEED_UNSPECIFIED,		/* Needed permission unspecified */
+	KEY_NEED_ASSUME_AUTHORITY,	/* Want to assume instantiation authority */
+	KEY_NEED_CHOWN,			/* Want to change key's ownership/group */
+	KEY_NEED_DESCRIBE,		/* Want to get a key's attributes */
+	KEY_NEED_GET_SECURITY,		/* Want to get a key's security label */
+	KEY_NEED_INSTANTIATE,		/* Want to instantiate a key */
+	KEY_NEED_INVALIDATE,		/* Want to invalidate key */
+	KEY_NEED_JOIN,			/* Want to set a keyring as the session keyring */
+	KEY_NEED_KEYRING_ADD,		/* Want to add a link to a keyring */
+	KEY_NEED_KEYRING_CLEAR,		/* Want to clear a keyring */
+	KEY_NEED_KEYRING_DELETE,	/* Want to remove a link from a keyring */
+	KEY_NEED_LINK,			/* Want to create a link to a key */
+	KEY_NEED_READ,			/* Want to read content to userspace */
+	KEY_NEED_REVOKE,		/* Want to revoke a key */
+	KEY_NEED_SEARCH,		/* Want to find a key in a search */
+	KEY_NEED_SETPERM,		/* Want to set the permissions mask */
+	KEY_NEED_SET_RESTRICTION,	/* Want to set a restriction on a keyring */
+	KEY_NEED_SET_TIMEOUT,		/* Want to set the expiration time on a key */
+	KEY_NEED_UNLINK,		/* Want to remove a link from a key */
+	KEY_NEED_UPDATE,		/* Want to update a key's payload */
+	KEY_NEED_USE,			/* Want to use a key (in kernel) */
+	KEY_NEED_WATCH,			/* Want to watch a key for events */
 };
 
 struct seq_file;

@@ -22,10 +22,8 @@ static ssize_t dh_data_from_key(key_serial_t keyid, void **data)
 	ssize_t ret;
 
 	key_ref = lookup_user_key(keyid, 0, KEY_NEED_READ);
-	if (IS_ERR(key_ref)) {
-		ret = -ENOKEY;
-		goto error;
-	}
+	if (IS_ERR(key_ref))
+		return PTR_ERR(key_ref);
 
 	key = key_ref_to_ptr(key_ref);
 
@@ -52,7 +50,6 @@ static ssize_t dh_data_from_key(key_serial_t keyid, void **data)
 	}
 
 	key_put(key);
-error:
 	return ret;
 }
 

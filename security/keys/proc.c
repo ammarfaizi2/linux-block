@@ -188,7 +188,7 @@ static int proc_keys_show(struct seq_file *m, void *v)
 	}
 
 	/* check whether the current task is allowed to view the key */
-	rc = key_task_permission(key_ref, ctx.cred, KEY_NEED_VIEW);
+	rc = key_task_permission(key_ref, ctx.cred, KEY_NEED_DESCRIBE);
 	if (rc < 0)
 		return 0;
 

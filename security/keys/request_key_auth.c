@@ -258,6 +258,7 @@ struct key *key_get_instantiation_authkey(key_serial_t target_id)
 	};
 	struct key *authkey;
 	key_ref_t authkey_ref;
+	int ret;
 
 	ctx.index_key.desc_len = sprintf(description, "%x", target_id);
 
@@ -270,6 +271,12 @@ struct key *key_get_instantiation_authkey(key_serial_t target_id)
 		if (authkey == ERR_PTR(-EAGAIN))
 			authkey = ERR_PTR(-ENOKEY);
 		goto error;
+	}
+
+	ret = key_permission(authkey_ref, KEY_NEED_ASSUME_AUTHORITY);
+	if (ret < 0) {
+		key_ref_put(authkey_ref);
+		authkey = ERR_PTR(ret);
 	}
 
 	authkey = key_ref_to_ptr(authkey_ref);

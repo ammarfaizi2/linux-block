@@ -77,7 +77,8 @@ static int keyctl_pkey_params_parse(struct kernel_pkey_params *params)
  */
 static int keyctl_pkey_params_get(key_serial_t id,
 				  const char __user *_info,
-				  struct kernel_pkey_params *params)
+				  struct kernel_pkey_params *params,
+				  enum key_need_perm need_perm)
 {
 	key_ref_t key_ref;
 	void *p;
@@ -95,7 +96,7 @@ static int keyctl_pkey_params_get(key_serial_t id,
 	if (ret < 0)
 		return ret;
 
-	key_ref = lookup_user_key(id, 0, KEY_NEED_SEARCH);
+	key_ref = lookup_user_key(id, 0, need_perm);
 	if (IS_ERR(key_ref))
 		return PTR_ERR(key_ref);
 	params->key = key_ref_to_ptr(key_ref);
@@ -113,7 +114,8 @@ static int keyctl_pkey_params_get(key_serial_t id,
 static int keyctl_pkey_params_get_2(const struct keyctl_pkey_params __user *_params,
 				    const char __user *_info,
 				    int op,
-				    struct kernel_pkey_params *params)
+				    struct kernel_pkey_params *params,
+				    enum key_need_perm need_perm)
 {
 	struct keyctl_pkey_params uparams;
 	struct kernel_pkey_query info;
@@ -125,7 +127,7 @@ static int keyctl_pkey_params_get_2(const struct keyctl_pkey_params __user *_par
 	if (copy_from_user(&uparams, _params, sizeof(uparams)) != 0)
 		return -EFAULT;
 
-	ret = keyctl_pkey_params_get(uparams.key_id, _info, params);
+	ret = keyctl_pkey_params_get(uparams.key_id, _info, params, need_perm);
 	if (ret < 0)
 		return ret;
 
@@ -166,7 +168,7 @@ long keyctl_pkey_query(key_serial_t id,
 	struct kernel_pkey_query res;
 	long ret;
 
-	ret = keyctl_pkey_params_get(id, _info, &params);
+	ret = keyctl_pkey_params_get(id, _info, &params, KEY_NEED_DESCRIBE);
 	if (ret < 0)
 		goto error;
 
@@ -211,7 +213,8 @@ long keyctl_pkey_e_d_s(int op,
 	void *in, *out;
 	long ret;
 
-	ret = keyctl_pkey_params_get_2(_params, _info, op, &params);
+	ret = keyctl_pkey_params_get_2(_params, _info, op, &params,
+				       KEY_NEED_USE);
 	if (ret < 0)
 		goto error_params;
 
@@ -287,7 +290,7 @@ long keyctl_pkey_verify(const struct keyctl_pkey_params __user *_params,
 	long ret;
 
 	ret = keyctl_pkey_params_get_2(_params, _info, KEYCTL_PKEY_VERIFY,
-				       &params);
+				       &params, KEY_NEED_USE);
 	if (ret < 0)
 		goto error_params;
 

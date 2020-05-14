@@ -776,27 +776,16 @@ try_again:
 	if (need_perm != KEY_NEED_UNLINK) {
 		if (!(lflags & KEY_LOOKUP_PARTIAL)) {
 			ret = wait_for_key_construction(key, true);
-			switch (ret) {
-			case -ERESTARTSYS:
+			if (ret < 0)
 				goto invalid_key;
-			default:
-				if (need_perm != KEY_AUTHTOKEN_OVERRIDE &&
-				    need_perm != KEY_DEFER_PERM_CHECK)
-					goto invalid_key;
-				break;
-			case 0:
-				break;
-			}
-		} else if (need_perm != KEY_DEFER_PERM_CHECK) {
+			ret = -EIO;
+			if (key_read_state(key) == KEY_IS_UNINSTANTIATED)
+				goto invalid_key;
+		} else {
 			ret = key_validate(key);
 			if (ret < 0)
 				goto invalid_key;
 		}
-
-		ret = -EIO;
-		if (!(lflags & KEY_LOOKUP_PARTIAL) &&
-		    key_read_state(key) == KEY_IS_UNINSTANTIATED)
-			goto invalid_key;
 	}
 
 	/* check the permissions */

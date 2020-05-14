@@ -332,10 +332,10 @@ static int construct_get_dest_keyring(struct key **_dest_keyring)
 			BUG();
 		}
 
-		/*
-		 * Require Write permission on the keyring.  This is essential
-		 * because the default keyring may be the session keyring, and
-		 * joining a keyring only requires Search permission.
+		/* Require permission to add a link to the keyring.  This is
+		 * essential because the default keyring may be the session
+		 * keyring, and joining a keyring only requires Search
+		 * permission.
 		 *
 		 * However, this check is skipped for the "requestor keyring" so
 		 * that /sbin/request-key can itself use request_key() to add
@@ -343,7 +343,7 @@ static int construct_get_dest_keyring(struct key **_dest_keyring)
 		 */
 		if (dest_keyring && do_perm_check) {
 			ret = key_permission(make_key_ref(dest_keyring, 1),
-					     KEY_NEED_WRITE);
+					     KEY_NEED_KEYRING_ADD);
 			if (ret) {
 				key_put(dest_keyring);
 				return ret;

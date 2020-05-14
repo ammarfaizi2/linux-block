@@ -1132,6 +1132,14 @@
  *	@cred points to the credentials to provide the context against which to
  *	evaluate the security data on the key.
  *	@perm describes the combination of permissions required of this key.
+ *	@flags indicates any special conditions set in the normal checks, such
+ *	as:
+ *		KEY_PERMISSION_USED_AUTH_OVERRIDE - A lack of permission was
+ *		overridden by the presence of an instantiation authorisation
+ *		token.
+ *		KEY_PERMISSION_USED_SYSADMIN_OVERRIDE - A lack of permission was
+ *		overridden by the presence of a KEY_FLAG_ROOT_CAN_xxx flag on
+ *		the key an the success of a CAP_SYS_ADMIN check.
  *	Return 0 if permission is granted, -ve error otherwise.
  * @key_getsecurity:
  *	Get a textual representation of the security context attached to a key
