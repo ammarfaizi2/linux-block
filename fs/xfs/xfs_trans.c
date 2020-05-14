@@ -68,7 +68,7 @@ xfs_trans_free(
 	xfs_extent_busy_clear(tp->t_mountp, &tp->t_busy, false);
 
 	trace_xfs_trans_free(tp, _RET_IP_);
-	atomic_dec(&tp->t_mountp->m_active_trans);
+	percpu_counter_dec(&tp->t_mountp->m_active_trans);
 	if (!(tp->t_flags & XFS_TRANS_NO_WRITECOUNT))
 		sb_end_intwrite(tp->t_mountp->m_super);
 	xfs_trans_free_dqinfo(tp);
@@ -126,7 +126,7 @@ xfs_trans_dup(
 
 	xfs_trans_dup_dqinfo(tp, ntp);
 
-	atomic_inc(&tp->t_mountp->m_active_trans);
+	percpu_counter_inc(&tp->t_mountp->m_active_trans);
 	return ntp;
 }
 
@@ -275,7 +275,7 @@ xfs_trans_alloc(
 	 */
 	WARN_ON(resp->tr_logres > 0 &&
 		mp->m_super->s_writers.frozen == SB_FREEZE_COMPLETE);
-	atomic_inc(&mp->m_active_trans);
+	percpu_counter_inc(&mp->m_active_trans);
 
 	tp->t_magic = XFS_TRANS_HEADER_MAGIC;
 	tp->t_flags = flags;
