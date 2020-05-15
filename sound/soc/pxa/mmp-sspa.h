@@ -38,7 +38,7 @@
 #define	SSPA_CTL_XFRLEN2(x)	((x) << 24)	/* Transmit Frame Length in Phase 2 */
 #define	SSPA_CTL_XWDLEN2_MASK	(7 << 21)
 #define	SSPA_CTL_XWDLEN2(x)	((x) << 21)	/* Transmit Word Length in Phase 2 */
-#define	SSPA_CTL_XDATDLY(x)	((x) << 19)	/* Tansmit Data Delay */
+#define	SSPA_CTL_XDATDLY(x)	((x) << 19)	/* Transmit Data Delay */
 #define	SSPA_CTL_XSSZ2_MASK	(7 << 16)
 #define	SSPA_CTL_XSSZ2(x)	((x) << 16)	/* Transmit Sample Audio Size */
 #define	SSPA_CTL_XFRLEN1_MASK	(7 << 8)
@@ -63,7 +63,9 @@
 #define	SSPA_SP_FFLUSH		(1 << 2)	/* FIFO Flush */
 #define	SSPA_SP_S_RST		(1 << 1)	/* Active High Reset Signal */
 #define	SSPA_SP_S_EN		(1 << 0)	/* Serial Clock Domain Enable */
+#define	SSPA_SP_FWID_MASK	(0x3f << 20)
 #define	SSPA_SP_FWID(x)		((x) << 20)	/* Frame-Sync Width */
+#define	SSPA_TXSP_FPER_MASK	(0x3f << 4)
 #define	SSPA_TXSP_FPER(x)	((x) << 4)	/* Frame-Sync Active */
 
 /* sspa clock sources */
