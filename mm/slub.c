@@ -728,8 +728,6 @@ static void print_trailer(struct kmem_cache *s, struct page *page, u8 *p)
 		/* Beginning of the filler is the free pointer */
 		print_section(KERN_ERR, "Padding ", p + off,
 			      size_from_object(s) - off);
-
-	dump_stack();
 }
 
 void object_err(struct kmem_cache *s, struct page *page,
@@ -737,6 +735,9 @@ void object_err(struct kmem_cache *s, struct page *page,
 {
 	slab_bug(s, "%s", reason);
 	print_trailer(s, page, object);
+	if (unlikely(s->flags & SLAB_PANIC_ON_ERROR))
+		panic("BUG: %s: %s", s->name, reason);
+	dump_stack();
 }
 
 static __printf(3, 4) void slab_err(struct kmem_cache *s, struct page *page,
@@ -750,6 +751,8 @@ static __printf(3, 4) void slab_err(struct kmem_cache *s, struct page *page,
 	va_end(args);
 	slab_bug(s, "%s", buf);
 	print_page_info(page);
+	if (unlikely(s->flags & SLAB_PANIC_ON_ERROR))
+		panic("BUG: %s: %s", s->name, buf);
 	dump_stack();
 }
 
@@ -799,7 +802,7 @@ static int check_bytes_and_report(struct kmem_cache *s, struct page *page,
 					fault, end - 1, fault - addr,
 					fault[0], value);
 	print_trailer(s, page, object);
-
+	dump_stack();
 	restore_bytes(s, what, value, fault, end);
 	return 0;
 }
@@ -1197,13 +1200,14 @@ static inline int free_consistency_checks(struct kmem_cache *s,
 		if (!PageSlab(page)) {
 			slab_err(s, page, "Attempt to free object(0x%p) outside of slab",
 				 object);
-		} else if (!page->slab_cache) {
-			pr_err("SLUB <none>: no slab for object 0x%p.\n",
-			       object);
-			dump_stack();
-		} else
-			object_err(s, page, object,
-					"page slab pointer corrupt.");
+		} else {
+			char reason[80];
+
+			snprintf(reason, sizeof(reason),
+				 "page slab pointer corruption: 0x%p (0x%p expected)",
+				 page->slab_cache, s);
+			object_err(s, page, object, reason);
+		}
 		return 0;
 	}
 	return 1;
@@ -1314,6 +1318,9 @@ static int __init setup_slub_debug(char *str)
 			 * order would increase as a result.
 			 */
 			disable_higher_order_debug = 1;
+			break;
+		case 'c':
+			slub_debug |= SLAB_PANIC_ON_ERROR;
 			break;
 		default:
 			pr_err("slub_debug option '%c' unknown. skipped\n",
@@ -5364,6 +5371,22 @@ static ssize_t free_calls_show(struct kmem_cache *s, char *buf)
 	return list_locations(s, buf, TRACK_FREE);
 }
 SLAB_ATTR_RO(free_calls);
+
+static ssize_t
+panic_on_error_show(struct kmem_cache *s, char *buf)
+{
+	return sprintf(buf, "%d\n", !!(s->flags & SLAB_PANIC_ON_ERROR));
+}
+
+static ssize_t
+panic_on_error_store(struct kmem_cache *s, const char *buf, size_t length)
+{
+	s->flags &= ~SLAB_PANIC_ON_ERROR;
+	if (buf[0] == '1')
+		s->flags |= SLAB_PANIC_ON_ERROR;
+	return length;
+}
+SLAB_ATTR(panic_on_error);
 #endif /* CONFIG_SLUB_DEBUG */
 
 #ifdef CONFIG_FAILSLAB
@@ -5538,6 +5561,7 @@ static struct attribute *slab_attrs[] = {
 	&validate_attr.attr,
 	&alloc_calls_attr.attr,
 	&free_calls_attr.attr,
+	&panic_on_error_attr.attr,
 #endif
 #ifdef CONFIG_ZONE_DMA
 	&cache_dma_attr.attr,

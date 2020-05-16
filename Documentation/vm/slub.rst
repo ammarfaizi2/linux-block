@@ -54,6 +54,8 @@ Possible debug options are::
 			caused higher minimum slab orders
 	-		Switch all debugging off (useful if the kernel is
 			configured with CONFIG_SLUB_DEBUG_ON)
+	C		Toggle panic on error (crash) to allow for post-mortem
+			analysis of a coredump taken at the error-spotting time
 
 F.e. in order to boot just with sanity checks and red zoning one would specify::
 
