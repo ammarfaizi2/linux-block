@@ -142,7 +142,8 @@ docscope()
 
 dogtags()
 {
-	all_target_sources | gtags -i -f -
+	all_target_sources > gtags.files
+	gtags -i -f gtags.files
 }
 
 # Basic regular expressions with an optional /kind-spec/ for ctags and
