@@ -309,8 +309,8 @@ ia64_load_extra (struct task_struct *task)
  *
  *	<clone syscall>	        <some kernel call frames>
  *	sys_clone		   :
- *	do_fork			do_fork
- *	copy_thread		copy_thread
+ *	_do_fork		_do_fork
+ *	copy_thread_tls		copy_thread_tls
  *
  * This means that the stack layout is as follows:
  *
@@ -332,9 +332,9 @@ ia64_load_extra (struct task_struct *task)
  * so there is nothing to worry about.
  */
 int
-copy_thread(unsigned long clone_flags,
-	     unsigned long user_stack_base, unsigned long user_stack_size,
-	     struct task_struct *p)
+copy_thread_tls(unsigned long clone_flags, unsigned long user_stack_base,
+		    unsigned long user_stack_size, struct task_struct *p,
+		    unsigned long tls)
 {
 	extern char ia64_ret_from_clone;
 	struct switch_stack *child_stack, *stack;
@@ -415,7 +415,7 @@ copy_thread(unsigned long clone_flags,
 	rbs_size = stack->ar_bspstore - rbs;
 	memcpy((void *) child_rbs, (void *) rbs, rbs_size);
 	if (clone_flags & CLONE_SETTLS)
-		child_ptregs->r13 = regs->r16;	/* see sys_clone2() in entry.S */
+		child_ptregs->r13 = tls;
 	if (user_stack_base) {
 		child_ptregs->r12 = user_stack_base + user_stack_size - 16;
 		child_ptregs->ar_bspstore = user_stack_base;
@@ -438,6 +438,27 @@ copy_thread(unsigned long clone_flags,
 		pfm_inherit(p, child_ptregs);
 #endif
 	return retval;
+}
+
+asmlinkage long ia64_clone(unsigned long clone_flags, unsigned long stack_start,
+			   unsigned long stack_size, unsigned long parent_tidptr,
+			   unsigned long child_tidptr, unsigned long tls)
+{
+	struct kernel_clone_args args = {
+		.flags		= (lower_32_bits(clone_flags) & ~CSIGNAL),
+		.pidfd		= (int __user *)parent_tidptr,
+		.child_tid	= (int __user *)child_tidptr,
+		.parent_tid	= (int __user *)parent_tidptr,
+		.exit_signal	= (lower_32_bits(clone_flags) & CSIGNAL),
+		.stack		= stack_start,
+		.stack_size	= stack_size,
+		.tls		= tls,
+	};
+
+	if (!legacy_clone_args_valid(&args))
+		return -EINVAL;
+
+	return _do_fork(&args);
 }
 
 static void
