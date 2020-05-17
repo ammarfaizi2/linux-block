@@ -1,0 +1,79 @@
+arm/soc
+	versatile/soc
+		git://git.kernel.org/pub/scm/linux/kernel/git/linusw/linux-integrator tags/versatile-v5.8-1
+	renesas/soc
+		git://git.kernel.org/pub/scm/linux/kernel/git/geert/renesas-devel tags/renesas-arm-soc-for-v5.8-tag1
+	patch
+		clk: versatile: Drop the legacy IM-PD1 clock code
+		ARM/time: Replace <linux/clk-provider.h> by <linux/of_clk.h>
+		ARM: mediatek: Replace <linux/clk-provider.h> by <linux/of_clk.h>
+		ARM: mmp: Replace <linux/clk-provider.h> by <linux/of_clk.h>
+	realtek/soc
+		git://git.kernel.org/pub/scm/linux/kernel/git/afaerber/linux-realtek tags/realtek-soc-for-5.8
+	broadcom/maintainers
+		https://github.com/Broadcom/stblinux tags/arm-soc/for-5.8/maintainers
+	broadcom/soc
+		https://github.com/Broadcom/stblinux tags/arm-soc/for-5.8/soc
+	samsung/soc
+		git://git.kernel.org/pub/scm/linux/kernel/git/krzk/linux tags/samsung-soc-5.8
+	omap/soc
+		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v5.8/soc-signed-take2
+	vexpress/modules
+		git://git.kernel.org/pub/scm/linux/kernel/git/robh/linux tags/vexpress-modules-for-soc-v2
+	renesas/soc-2
+		git://git.kernel.org/pub/scm/linux/kernel/git/geert/renesas-devel tags/renesas-arm-soc-for-v5.8-tag2
+	<no branch> (b9bf73aed99ed3170b37fbbf98557c70a6f19e50)
+		git://git.kernel.org/pub/scm/linux/kernel/git/tegra/linux tags/tegra-for-5.8-arm-core
+	patch
+		ARM: arch timer: Drop unneeded select GENERIC_CLOCKEVENTS
+		ARM: actions: Drop unneeded select of COMMON_CLK
+		ARM: alpine: Drop unneeded select of HAVE_SMP
+		ARM: asm9260: Drop unneeded select of GENERIC_CLOCKEVENTS
+		ARM: aspeed: Drop unneeded select of HAVE_SMP
+		ARM: berlin: Drop unneeded select of HAVE_SMP
+		ARM: clps711x: Drop unneeded select of multi-platform selected options
+		ARM: davinci: Drop unneeded select of TIMER_OF
+		ARM: mmp: Drop unneeded select of COMMON_CLK
+		ARM: mvebu: Drop unneeded select of HAVE_SMP
+		ARM: prima2: Drop unneeded select of HAVE_SMP
+		ARM: socfpga: Drop unneeded select of PCI_DOMAINS_GENERIC
+
+arm/dt
+
+arm/drivers
+
+arm/defconfig
+
+arm/newsoc
+
+arm/late
+
+arm/fixes
+	<no branch> (7710f80ecd9c74544a22557ab581cf603e713f51)
+		git://git.kernel.org/pub/scm/linux/kernel/git/qcom/linux tags/qcom-arm64-fixes-for-5.7
+	<no branch> (1248c86fd6391c63da947718bbd43686fa95185f)
+		git://git.kernel.org/pub/scm/linux/kernel/git/shawnguo/linux tags/imx-fixes-5.7
+	<no branch> (b704fc1da9b84d7145db550a13e2b7140f6b419b)
+		git://git.kernel.org/pub/scm/linux/kernel/git/geert/renesas-devel tags/renesas-fixes-for-v5.7-tag1
+	<no branch> (90670f0ef690f9c8712f236e8cf14c156c9a6365)
+		git://git.kernel.org/pub/scm/linux/kernel/git/tegra/linux tags/tegra-for-5.7-arm64-defconfig-fixes
+	<no branch> (855bdca1781c79eb661f89c8944c4a719ce720e8)
+		git://git.kernel.org/pub/scm/linux/kernel/git/mmind/linux-rockchip tags/v5.7-rockchip-dtsfixes1
+	<no branch> (738b150ecefbffb6e55cfa8a3b66a844f777d8fb)
+		git://git.kernel.org/pub/scm/linux/kernel/git/tmlind/linux-omap tags/omap-for-v5.6/fixes-rc4
+	<no branch> (adf27a87eb4e85bb2136572121e06ad83e5f1407)
+		git://git.kernel.org/pub/scm/linux/kernel/git/khilman/linux-amlogic tags/amlogic-fixes
+	<no branch> (bd84dff0217414d9f9b829a3b75b2487aff857b7)
+		git://git.kernel.org/pub/scm/linux/kernel/git/narmstrong/linux-oxnas tags/arm-soc-fixes-for-5.7
+	patch
+		arm64: defconfig: DRM_DUMB_VGA_DAC: follow changed config symbol name
+		arm64: defconfig: add DRM_DISPLAY_CONNECTOR
+		arm64: defconfig: ARCH_R8A7795: follow changed config symbol name
+		arm64: defconfig: add MEDIA_PLATFORM_SUPPORT
+	<no branch> (29ee412bb7090023a8dba15726d9be2f4f2644a4)
+		git://git.kernel.org/pub/scm/linux/kernel/git/sunxi/linux tags/sunxi-fixes-for-5.7-1
+	<no branch> (c8e233bfba3b21cb6b9814b4bfe2502478c7b895)
+		git://git.kernel.org/pub/scm/linux/kernel/git/geert/renesas-devel tags/renesas-fixes-for-v5.7-tag2
+	hisi/logic_pio
+		git://github.com/hisilicon/linux-hisi tags/hisi-drivers-for-5.8
+
