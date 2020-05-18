@@ -288,6 +288,7 @@ enum netdev_state_t {
 	__LINK_STATE_NOCARRIER,
 	__LINK_STATE_LINKWATCH_PENDING,
 	__LINK_STATE_DORMANT,
+	__LINK_STATE_TESTING,
 };
 
 
@@ -328,6 +329,7 @@ struct napi_struct {
 
 	unsigned long		state;
 	int			weight;
+	int			defer_hard_irqs_count;
 	unsigned long		gro_bitmask;
 	int			(*poll)(struct napi_struct *, int);
 #ifdef CONFIG_NETPOLL
@@ -1812,13 +1814,11 @@ enum netdev_priv_flags {
  *	@phydev:	Physical device may attach itself
  *			for hardware timestamping
  *	@sfp_bus:	attached &struct sfp_bus structure.
- *	@qdisc_tx_busylock_key: lockdep class annotating Qdisc->busylock
- *				spinlock
- *	@qdisc_running_key:	lockdep class annotating Qdisc->running seqcount
- *	@qdisc_xmit_lock_key:	lockdep class annotating
- *				netdev_queue->_xmit_lock spinlock
+ *
  *	@addr_list_lock_key:	lockdep class annotating
  *				net_device->addr_list_lock spinlock
+ *	@qdisc_tx_busylock: lockdep class annotating Qdisc->busylock spinlock
+ *	@qdisc_running_key: lockdep class annotating Qdisc->running seqcount
  *
  *	@proto_down:	protocol port state information can be sent to the
  *			switch driver and used to set the phys state of the
@@ -2003,6 +2003,7 @@ struct net_device {
 
 	struct bpf_prog __rcu	*xdp_prog;
 	unsigned long		gro_flush_timeout;
+	int			napi_defer_hard_irqs;
 	rx_handler_func_t __rcu	*rx_handler;
 	void __rcu		*rx_handler_data;
 
@@ -2118,10 +2119,9 @@ struct net_device {
 #endif
 	struct phy_device	*phydev;
 	struct sfp_bus		*sfp_bus;
-	struct lock_class_key	qdisc_tx_busylock_key;
-	struct lock_class_key	qdisc_running_key;
-	struct lock_class_key	qdisc_xmit_lock_key;
 	struct lock_class_key	addr_list_lock_key;
+	struct lock_class_key	*qdisc_tx_busylock;
+	struct lock_class_key	*qdisc_running_key;
 	bool			proto_down;
 	unsigned		wol_enabled:1;
 
@@ -2204,6 +2204,20 @@ static inline void netdev_for_each_tx_queue(struct net_device *dev,
 
 	for (i = 0; i < dev->num_tx_queues; i++)
 		f(dev, &dev->_tx[i], arg);
+}
+
+#define netdev_lockdep_set_classes(dev)				\
+{								\
+	static struct lock_class_key qdisc_tx_busylock_key;	\
+	static struct lock_class_key qdisc_running_key;		\
+	static struct lock_class_key qdisc_xmit_lock_key;	\
+	unsigned int i;						\
+								\
+	(dev)->qdisc_tx_busylock = &qdisc_tx_busylock_key;	\
+	(dev)->qdisc_running_key = &qdisc_running_key;		\
+	for (i = 0; i < (dev)->num_tx_queues; i++)		\
+		lockdep_set_class(&(dev)->_tx[i]._xmit_lock,	\
+				  &qdisc_xmit_lock_key);	\
 }
 
 u16 netdev_pick_tx(struct net_device *dev, struct sk_buff *skb,
@@ -3916,6 +3930,46 @@ static inline void netif_dormant_off(struct net_device *dev)
 static inline bool netif_dormant(const struct net_device *dev)
 {
 	return test_bit(__LINK_STATE_DORMANT, &dev->state);
+}
+
+
+/**
+ *	netif_testing_on - mark device as under test.
+ *	@dev: network device
+ *
+ * Mark device as under test (as per RFC2863).
+ *
+ * The testing state indicates that some test(s) must be performed on
+ * the interface. After completion, of the test, the interface state
+ * will change to up, dormant, or down, as appropriate.
+ */
+static inline void netif_testing_on(struct net_device *dev)
+{
+	if (!test_and_set_bit(__LINK_STATE_TESTING, &dev->state))
+		linkwatch_fire_event(dev);
+}
+
+/**
+ *	netif_testing_off - set device as not under test.
+ *	@dev: network device
+ *
+ * Device is not in testing state.
+ */
+static inline void netif_testing_off(struct net_device *dev)
+{
+	if (test_and_clear_bit(__LINK_STATE_TESTING, &dev->state))
+		linkwatch_fire_event(dev);
+}
+
+/**
+ *	netif_testing - test if device is under test
+ *	@dev: network device
+ *
+ * Check if device is under test
+ */
+static inline bool netif_testing(const struct net_device *dev)
+{
+	return test_bit(__LINK_STATE_TESTING, &dev->state);
 }
 
 
