@@ -3762,46 +3762,6 @@ out:
 	return ret;
 }
 
-void btrfs_get_block_group_trimming(struct btrfs_block_group *cache)
-{
-	atomic_inc(&cache->trimming);
-}
-
-void btrfs_put_block_group_trimming(struct btrfs_block_group *block_group)
-{
-	struct btrfs_fs_info *fs_info = block_group->fs_info;
-	struct extent_map_tree *em_tree;
-	struct extent_map *em;
-	bool cleanup;
-
-	spin_lock(&block_group->lock);
-	cleanup = (atomic_dec_and_test(&block_group->trimming) &&
-		   block_group->removed);
-	spin_unlock(&block_group->lock);
-
-	if (cleanup) {
-		mutex_lock(&fs_info->chunk_mutex);
-		em_tree = &fs_info->mapping_tree;
-		write_lock(&em_tree->lock);
-		em = lookup_extent_mapping(em_tree, block_group->start,
-					   1);
-		BUG_ON(!em); /* logic error, can't happen */
-		remove_extent_mapping(em_tree, em);
-		write_unlock(&em_tree->lock);
-		mutex_unlock(&fs_info->chunk_mutex);
-
-		/* once for us and once for the tree */
-		free_extent_map(em);
-		free_extent_map(em);
-
-		/*
-		 * We've left one free space entry and other tasks trimming
-		 * this block group have left 1 entry each one. Free them.
-		 */
-		__btrfs_remove_free_space_cache(block_group->free_space_ctl);
-	}
-}
-
 int btrfs_trim_block_group(struct btrfs_block_group *block_group,
 			   u64 *trimmed, u64 start, u64 end, u64 minlen)
 {
@@ -3816,7 +3776,7 @@ int btrfs_trim_block_group(struct btrfs_block_group *block_group,
 		spin_unlock(&block_group->lock);
 		return 0;
 	}
-	btrfs_get_block_group_trimming(block_group);
+	btrfs_freeze_block_group(block_group);
 	spin_unlock(&block_group->lock);
 
 	ret = trim_no_bitmap(block_group, trimmed, start, end, minlen, false);
@@ -3829,7 +3789,7 @@ int btrfs_trim_block_group(struct btrfs_block_group *block_group,
 	if (rem)
 		reset_trimming_bitmap(ctl, offset_to_bitmap(ctl, end));
 out:
-	btrfs_put_block_group_trimming(block_group);
+	btrfs_unfreeze_block_group(block_group);
 	return ret;
 }
 
@@ -3846,11 +3806,11 @@ int btrfs_trim_block_group_extents(struct btrfs_block_group *block_group,
 		spin_unlock(&block_group->lock);
 		return 0;
 	}
-	btrfs_get_block_group_trimming(block_group);
+	btrfs_freeze_block_group(block_group);
 	spin_unlock(&block_group->lock);
 
 	ret = trim_no_bitmap(block_group, trimmed, start, end, minlen, async);
-	btrfs_put_block_group_trimming(block_group);
+	btrfs_unfreeze_block_group(block_group);
 
 	return ret;
 }
@@ -3868,13 +3828,13 @@ int btrfs_trim_block_group_bitmaps(struct btrfs_block_group *block_group,
 		spin_unlock(&block_group->lock);
 		return 0;
 	}
-	btrfs_get_block_group_trimming(block_group);
+	btrfs_freeze_block_group(block_group);
 	spin_unlock(&block_group->lock);
 
 	ret = trim_bitmaps(block_group, trimmed, start, end, minlen, maxlen,
 			   async);
 
-	btrfs_put_block_group_trimming(block_group);
+	btrfs_unfreeze_block_group(block_group);
 
 	return ret;
 }
