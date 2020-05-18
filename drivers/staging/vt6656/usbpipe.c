@@ -77,7 +77,7 @@ int vnt_control_out_u8(struct vnt_private *priv, u8 reg, u8 reg_off, u8 data)
 }
 
 int vnt_control_out_blocks(struct vnt_private *priv,
-			   u16 block, u8 reg, u16 length, u8 *data)
+			   u16 block, u8 reg, u16 length, const u8 *data)
 {
 	int ret = 0, i;
 
@@ -196,32 +196,18 @@ static void vnt_int_process_data(struct vnt_private *priv)
 	if (int_data->tsr3 & TSR_VALID)
 		vnt_int_report_rate(priv, int_data->pkt3, int_data->tsr3);
 
-	if (int_data->isr0 != 0) {
-		if (int_data->isr0 & ISR_BNTX &&
-		    priv->op_mode == NL80211_IFTYPE_AP)
-			vnt_schedule_command(priv, WLAN_CMD_BECON_SEND);
+	if (!int_data->isr0)
+		return;
 
-		if (int_data->isr0 & ISR_TBTT &&
-		    priv->hw->conf.flags & IEEE80211_CONF_PS) {
-			if (!priv->wake_up_count)
-				priv->wake_up_count =
-					priv->hw->conf.listen_interval;
+	if (int_data->isr0 & ISR_BNTX && priv->op_mode == NL80211_IFTYPE_AP)
+		vnt_schedule_command(priv, WLAN_CMD_BECON_SEND);
 
-			if (priv->wake_up_count)
-				--priv->wake_up_count;
+	priv->current_tsf = le64_to_cpu(int_data->tsf);
 
-			/* Turn on wake up to listen next beacon */
-			if (priv->wake_up_count == 1)
-				vnt_schedule_command(priv,
-						     WLAN_CMD_TBTT_WAKEUP);
-		}
-		priv->current_tsf = le64_to_cpu(int_data->tsf);
-
-		low_stats->dot11RTSSuccessCount += int_data->rts_success;
-		low_stats->dot11RTSFailureCount += int_data->rts_fail;
-		low_stats->dot11ACKFailureCount += int_data->ack_fail;
-		low_stats->dot11FCSErrorCount += int_data->fcs_err;
-	}
+	low_stats->dot11RTSSuccessCount += int_data->rts_success;
+	low_stats->dot11RTSFailureCount += int_data->rts_fail;
+	low_stats->dot11ACKFailureCount += int_data->ack_fail;
+	low_stats->dot11FCSErrorCount += int_data->fcs_err;
 }
 
 static void vnt_start_interrupt_urb_complete(struct urb *urb)
