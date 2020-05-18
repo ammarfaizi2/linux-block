@@ -1021,6 +1021,7 @@ xfs_qm_dqflush_done(
 	struct xfs_dq_logitem	*qip = (struct xfs_dq_logitem *)lip;
 	struct xfs_dquot	*dqp = qip->qli_dquot;
 	struct xfs_ail		*ailp = lip->li_ailp;
+	xfs_lsn_t		tail_lsn;
 
 	/*
 	 * We only want to pull the item from the AIL if its
@@ -1034,10 +1035,11 @@ xfs_qm_dqflush_done(
 	    ((lip->li_lsn == qip->qli_flush_lsn) ||
 	     test_bit(XFS_LI_FAILED, &lip->li_flags))) {
 
-		/* xfs_trans_ail_delete() drops the AIL lock. */
 		spin_lock(&ailp->ail_lock);
 		if (lip->li_lsn == qip->qli_flush_lsn) {
-			xfs_trans_ail_delete(ailp, lip, SHUTDOWN_CORRUPT_INCORE);
+			/* xfs_ail_update_finish() drops the AIL lock */
+			tail_lsn = xfs_ail_delete_one(ailp, lip);
+			xfs_ail_update_finish(ailp, tail_lsn);
 		} else {
 			/*
 			 * Clear the failed state since we are about to drop the
@@ -1068,6 +1070,7 @@ xfs_qm_dqflush(
 	struct xfs_buf		**bpp)
 {
 	struct xfs_mount	*mp = dqp->q_mount;
+	struct xfs_log_item	*lip = &dqp->q_logitem.qli_item;
 	struct xfs_buf		*bp;
 	struct xfs_dqblk	*dqb;
 	struct xfs_disk_dquot	*ddqp;
@@ -1084,31 +1087,15 @@ xfs_qm_dqflush(
 	xfs_qm_dqunpin_wait(dqp);
 
 	/*
-	 * This may have been unpinned because the filesystem is shutting
-	 * down forcibly. If that's the case we must not write this dquot
-	 * to disk, because the log record didn't make it to disk.
-	 *
-	 * We also have to remove the log item from the AIL in this case,
-	 * as we wait for an emptry AIL as part of the unmount process.
-	 */
-	if (XFS_FORCED_SHUTDOWN(mp)) {
-		struct xfs_log_item	*lip = &dqp->q_logitem.qli_item;
-		dqp->dq_flags &= ~XFS_DQ_DIRTY;
-
-		xfs_trans_ail_remove(lip, SHUTDOWN_CORRUPT_INCORE);
-
-		error = -EIO;
-		goto out_unlock;
-	}
-
-	/*
 	 * Get the buffer containing the on-disk dquot
 	 */
 	error = xfs_trans_read_buf(mp, NULL, mp->m_ddev_targp, dqp->q_blkno,
 				   mp->m_quotainfo->qi_dqchunklen, XBF_TRYLOCK,
 				   &bp, &xfs_dquot_buf_ops);
-	if (error)
+	if (error == -EAGAIN)
 		goto out_unlock;
+	if (error)
+		goto out_abort;
 
 	/*
 	 * Calculate the location of the dquot inside the buffer.
@@ -1116,17 +1103,15 @@ xfs_qm_dqflush(
 	dqb = bp->b_addr + dqp->q_bufoffset;
 	ddqp = &dqb->dd_diskdq;
 
-	/*
-	 * A simple sanity check in case we got a corrupted dquot.
-	 */
-	fa = xfs_dqblk_verify(mp, dqb, be32_to_cpu(ddqp->d_id), 0);
+	/* sanity check the in-core structure before we flush */
+	fa = xfs_dquot_verify(mp, &dqp->q_core, be32_to_cpu(dqp->q_core.d_id),
+			      0);
 	if (fa) {
 		xfs_alert(mp, "corrupt dquot ID 0x%x in memory at %pS",
-				be32_to_cpu(ddqp->d_id), fa);
+				be32_to_cpu(dqp->q_core.d_id), fa);
 		xfs_buf_relse(bp);
-		xfs_dqfunlock(dqp);
-		xfs_force_shutdown(mp, SHUTDOWN_CORRUPT_INCORE);
-		return -EFSCORRUPTED;
+		error = -EFSCORRUPTED;
+		goto out_abort;
 	}
 
 	/* This is the only portion of data that needs to persist */
@@ -1175,6 +1160,10 @@ xfs_qm_dqflush(
 	*bpp = bp;
 	return 0;
 
+out_abort:
+	dqp->dq_flags &= ~XFS_DQ_DIRTY;
+	xfs_trans_ail_delete(lip, 0);
+	xfs_force_shutdown(mp, SHUTDOWN_CORRUPT_INCORE);
 out_unlock:
 	xfs_dqfunlock(dqp);
 	return error;
