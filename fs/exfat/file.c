@@ -165,7 +165,7 @@ int __exfat_truncate(struct inode *inode, loff_t new_size)
 				&ep->dentry.file.modify_tz,
 				&ep->dentry.file.modify_time,
 				&ep->dentry.file.modify_date,
-				&ep->dentry.file.modify_time_ms);
+				&ep->dentry.file.modify_time_cs);
 		ep->dentry.file.attr = cpu_to_le16(ei->attr);
 
 		/* File size should be zero if there is no cluster allocated */
@@ -348,12 +348,13 @@ out:
 }
 
 const struct file_operations exfat_file_operations = {
-	.llseek      = generic_file_llseek,
-	.read_iter   = generic_file_read_iter,
-	.write_iter  = generic_file_write_iter,
-	.mmap        = generic_file_mmap,
-	.fsync       = generic_file_fsync,
-	.splice_read = generic_file_splice_read,
+	.llseek		= generic_file_llseek,
+	.read_iter	= generic_file_read_iter,
+	.write_iter	= generic_file_write_iter,
+	.mmap		= generic_file_mmap,
+	.fsync		= generic_file_fsync,
+	.splice_read	= generic_file_splice_read,
+	.splice_write	= iter_file_splice_write,
 };
 
 const struct inode_operations exfat_file_inode_operations = {
