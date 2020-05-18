@@ -52,27 +52,26 @@ struct dmz_dev {
 	struct block_device	*bdev;
 
 	char			name[BDEVNAME_SIZE];
+	uuid_t			uuid;
 
 	sector_t		capacity;
 
 	unsigned int		nr_zones;
+	unsigned int		zone_offset;
 
 	unsigned int		flags;
 
 	sector_t		zone_nr_sectors;
-	unsigned int		zone_nr_sectors_shift;
-
-	sector_t		zone_nr_blocks;
-	sector_t		zone_nr_blocks_shift;
 };
 
-#define dmz_bio_chunk(dev, bio)	((bio)->bi_iter.bi_sector >> \
-				 (dev)->zone_nr_sectors_shift)
-#define dmz_chunk_block(dev, b)	((b) & ((dev)->zone_nr_blocks - 1))
+#define dmz_bio_chunk(zmd, bio)	((bio)->bi_iter.bi_sector >> \
+				 dmz_zone_nr_sectors_shift(zmd))
+#define dmz_chunk_block(zmd, b)	((b) & (dmz_zone_nr_blocks(zmd) - 1))
 
 /* Device flags. */
 #define DMZ_BDEV_DYING		(1 << 0)
 #define DMZ_CHECK_BDEV		(2 << 0)
+#define DMZ_BDEV_REGULAR	(4 << 0)
 
 /*
  * Zone descriptor.
@@ -86,6 +85,9 @@ struct dm_zone {
 
 	/* Zone activation reference count */
 	atomic_t		refcount;
+
+	/* Zone id */
+	unsigned int		id;
 
 	/* Zone write pointer block (relative to the zone start block) */
 	unsigned int		wp_block;
@@ -164,7 +166,8 @@ struct dmz_reclaim;
 /*
  * Functions defined in dm-zoned-metadata.c
  */
-int dmz_ctr_metadata(struct dmz_dev *dev, struct dmz_metadata **zmd);
+int dmz_ctr_metadata(struct dmz_dev *dev, int num_dev,
+		     struct dmz_metadata **zmd, const char *devname);
 void dmz_dtr_metadata(struct dmz_metadata *zmd);
 int dmz_resume_metadata(struct dmz_metadata *zmd);
 
@@ -175,11 +178,15 @@ void dmz_unlock_metadata(struct dmz_metadata *zmd);
 void dmz_lock_flush(struct dmz_metadata *zmd);
 void dmz_unlock_flush(struct dmz_metadata *zmd);
 int dmz_flush_metadata(struct dmz_metadata *zmd);
+const char *dmz_metadata_label(struct dmz_metadata *zmd);
 
-unsigned int dmz_id(struct dmz_metadata *zmd, struct dm_zone *zone);
 sector_t dmz_start_sect(struct dmz_metadata *zmd, struct dm_zone *zone);
 sector_t dmz_start_block(struct dmz_metadata *zmd, struct dm_zone *zone);
 unsigned int dmz_nr_chunks(struct dmz_metadata *zmd);
+struct dmz_dev *dmz_zone_to_dev(struct dmz_metadata *zmd, struct dm_zone *zone);
+
+bool dmz_check_dev(struct dmz_metadata *zmd);
+bool dmz_dev_is_dying(struct dmz_metadata *zmd);
 
 #define DMZ_ALLOC_RND		0x01
 #define DMZ_ALLOC_RECLAIM	0x02
@@ -190,8 +197,15 @@ void dmz_free_zone(struct dmz_metadata *zmd, struct dm_zone *zone);
 void dmz_map_zone(struct dmz_metadata *zmd, struct dm_zone *zone,
 		  unsigned int chunk);
 void dmz_unmap_zone(struct dmz_metadata *zmd, struct dm_zone *zone);
+unsigned int dmz_nr_zones(struct dmz_metadata *zmd);
 unsigned int dmz_nr_rnd_zones(struct dmz_metadata *zmd);
 unsigned int dmz_nr_unmap_rnd_zones(struct dmz_metadata *zmd);
+unsigned int dmz_nr_seq_zones(struct dmz_metadata *zmd);
+unsigned int dmz_nr_unmap_seq_zones(struct dmz_metadata *zmd);
+unsigned int dmz_zone_nr_blocks(struct dmz_metadata *zmd);
+unsigned int dmz_zone_nr_blocks_shift(struct dmz_metadata *zmd);
+unsigned int dmz_zone_nr_sectors(struct dmz_metadata *zmd);
+unsigned int dmz_zone_nr_sectors_shift(struct dmz_metadata *zmd);
 
 /*
  * Activate a zone (increment its reference count).
@@ -244,8 +258,7 @@ int dmz_merge_valid_blocks(struct dmz_metadata *zmd, struct dm_zone *from_zone,
 /*
  * Functions defined in dm-zoned-reclaim.c
  */
-int dmz_ctr_reclaim(struct dmz_dev *dev, struct dmz_metadata *zmd,
-		    struct dmz_reclaim **zrc);
+int dmz_ctr_reclaim(struct dmz_metadata *zmd, struct dmz_reclaim **zrc);
 void dmz_dtr_reclaim(struct dmz_reclaim *zrc);
 void dmz_suspend_reclaim(struct dmz_reclaim *zrc);
 void dmz_resume_reclaim(struct dmz_reclaim *zrc);
