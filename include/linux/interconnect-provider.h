@@ -103,6 +103,7 @@ void icc_node_del(struct icc_node *node);
 int icc_nodes_remove(struct icc_provider *provider);
 int icc_provider_add(struct icc_provider *provider);
 int icc_provider_del(struct icc_provider *provider);
+void icc_sync_state(struct device *dev);
 
 #else
 
@@ -117,7 +118,7 @@ static inline struct icc_node *icc_node_create(int id)
 	return ERR_PTR(-ENOTSUPP);
 }
 
-void icc_node_destroy(int id)
+static inline void icc_node_destroy(int id)
 {
 }
 
@@ -126,16 +127,16 @@ static inline int icc_link_create(struct icc_node *node, const int dst_id)
 	return -ENOTSUPP;
 }
 
-int icc_link_destroy(struct icc_node *src, struct icc_node *dst)
+static inline int icc_link_destroy(struct icc_node *src, struct icc_node *dst)
 {
 	return -ENOTSUPP;
 }
 
-void icc_node_add(struct icc_node *node, struct icc_provider *provider)
+static inline void icc_node_add(struct icc_node *node, struct icc_provider *provider)
 {
 }
 
-void icc_node_del(struct icc_node *node)
+static inline void icc_node_del(struct icc_node *node)
 {
 }
 

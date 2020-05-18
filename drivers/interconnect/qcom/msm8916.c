@@ -546,6 +546,7 @@ static struct platform_driver msm8916_noc_driver = {
 	.driver = {
 		.name = "qnoc-msm8916",
 		.of_match_table = msm8916_noc_of_match,
+		.sync_state = icc_sync_state,
 	},
 };
 module_platform_driver(msm8916_noc_driver);
