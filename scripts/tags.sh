@@ -89,22 +89,30 @@ all_sources()
 	find_other_sources '*.[chS]'
 }
 
+# COMPILED_SOURCE=1                           make {cscope,gtags}
+# COMPILED_SOURCE=1 KBUILD_ABS_SRCTREE=1      make {cscope,gtags}
+# COMPILED_SOURCE=1              ./scripts/tags.sh {cscope,gtags}
+# COMPILED_SOURCE=1 ABSPWD=$PWD/ ./scripts/tags.sh {cscope,gtags}
+xtags_juggle_list()
+{
+	SRCTREE=$(realpath ${tree}.)
+
+	cd $(dirname $(find -name .config -print -quit).)
+
+	realpath -e --relative-to=${SRCTREE} $(find -name "*.cmd" -exec \
+		grep -Poh '(?(?=^source_.* \K).*|(?=^  \K\S).*(?= \\))' {} \+ |
+		awk '!a[$0]++') include/generated/autoconf.h |
+	sed -e "/\.\./d" -e "s,^,${ABSPWD}${tree},"
+}
+
 all_compiled_sources()
 {
-	for i in $(all_sources); do
-		case "$i" in
-			*.[cS])
-				j=${i/\.[cS]/\.o}
-				j="${j#$tree}"
-				if [ -e $j ]; then
-					echo $i
-				fi
-				;;
-			*)
-				echo $i
-				;;
-		esac
-	done
+	# Consider 'git ls-files' features:
+	#   1) sort and uniq target files
+	#   2) limit target files by index
+	# git ls-files $(xtags_juggle_list)
+
+	xtags_juggle_list | sort -u
 }
 
 all_target_sources()
@@ -134,7 +142,8 @@ docscope()
 
 dogtags()
 {
-	all_target_sources | gtags -i -f -
+	all_target_sources > gtags.files
+	gtags -i -f gtags.files
 }
 
 # Basic regular expressions with an optional /kind-spec/ for ctags and
