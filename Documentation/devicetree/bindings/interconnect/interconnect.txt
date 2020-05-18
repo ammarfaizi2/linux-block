@@ -55,6 +55,11 @@ interconnect-names : List of interconnect path name strings sorted in the same
 			 * dma-mem: Path from the device to the main memory of
 			            the system
 
+interconnect-tags : List of interconnect path tags sorted in the same order as the
+		    interconnects property. Consumers can append a specific tag to
+		    the path and pass this information to the interconnect framework
+		    to do aggregation based on the attached tag.
+
 Example:
 
 	sdhci@7864000 {
