@@ -1008,7 +1008,7 @@ madvise_behavior_valid(int behavior)
 }
 
 static bool
-process_madvise_behavior_valid(int behavior)
+pidfd_madvise_behavior_valid(int behavior)
 {
 	switch (behavior) {
 	case MADV_COLD:
@@ -1211,7 +1211,7 @@ SYSCALL_DEFINE3(madvise, unsigned long, start, size_t, len_in, int, behavior)
 	return do_madvise(current, current->mm, start, len_in, behavior);
 }
 
-static int process_madvise_vec(struct task_struct *target_task,
+static int pidfd_madvise_vec(struct task_struct *target_task,
 		struct mm_struct *mm, struct iov_iter *iter, int behavior)
 {
 	struct iovec iovec;
@@ -1229,7 +1229,7 @@ static int process_madvise_vec(struct task_struct *target_task,
 	return ret;
 }
 
-static ssize_t do_process_madvise(int pidfd, struct iov_iter *iter,
+static ssize_t do_pidfd_madvise(int pidfd, struct iov_iter *iter,
 				int behavior, unsigned int flags)
 {
 	ssize_t ret;
@@ -1255,7 +1255,7 @@ static ssize_t do_process_madvise(int pidfd, struct iov_iter *iter,
 	}
 
 	if (task->mm != current->mm &&
-			!process_madvise_behavior_valid(behavior)) {
+			!pidfd_madvise_behavior_valid(behavior)) {
 		ret = -EINVAL;
 		goto release_task;
 	}
@@ -1266,7 +1266,7 @@ static ssize_t do_process_madvise(int pidfd, struct iov_iter *iter,
 		goto release_task;
 	}
 
-	ret = process_madvise_vec(task, mm, iter, behavior);
+	ret = pidfd_madvise_vec(task, mm, iter, behavior);
 	if (ret >= 0)
 		ret = total_len - iov_iter_count(iter);
 
@@ -1278,7 +1278,7 @@ put_pid:
 	return ret;
 }
 
-SYSCALL_DEFINE5(process_madvise, int, pidfd, const struct iovec __user *, vec,
+SYSCALL_DEFINE5(pidfd_madvise, int, pidfd, const struct iovec __user *, vec,
 		unsigned long, vlen, int, behavior, unsigned int, flags)
 {
 	ssize_t ret;
@@ -1288,14 +1288,14 @@ SYSCALL_DEFINE5(process_madvise, int, pidfd, const struct iovec __user *, vec,
 
 	ret = import_iovec(READ, vec, vlen, ARRAY_SIZE(iovstack), &iov, &iter);
 	if (ret >= 0) {
-		ret = do_process_madvise(pidfd, &iter, behavior, flags);
+		ret = do_pidfd_madvise(pidfd, &iter, behavior, flags);
 		kfree(iov);
 	}
 	return ret;
 }
 
 #ifdef CONFIG_COMPAT
-COMPAT_SYSCALL_DEFINE5(process_madvise, compat_int_t, pidfd,
+COMPAT_SYSCALL_DEFINE5(pidfd_madvise, compat_int_t, pidfd,
 			const struct compat_iovec __user *, vec,
 			compat_ulong_t, vlen,
 			compat_int_t, behavior,
@@ -1310,7 +1310,7 @@ COMPAT_SYSCALL_DEFINE5(process_madvise, compat_int_t, pidfd,
 	ret = compat_import_iovec(READ, vec, vlen, ARRAY_SIZE(iovstack),
 				&iov, &iter);
 	if (ret >= 0) {
-		ret = do_process_madvise(pidfd, &iter, behavior, flags);
+		ret = do_pidfd_madvise(pidfd, &iter, behavior, flags);
 		kfree(iov);
 	}
 	return ret;
