@@ -2370,6 +2370,7 @@ static int rcu_torture_read_exit(void *unused)
 {
 	int count = 0;
 	bool errexit = false;
+	int i;
 	struct task_struct *tsp;
 	DEFINE_TORTURE_RANDOM(trs);
 
@@ -2382,10 +2383,17 @@ static int rcu_torture_read_exit(void *unused)
 		if (++count > read_exit_burst) {
 			VERBOSE_TOROUT_STRING("rcu_torture_read_exit: End of episode");
 			rcu_barrier(); // Wait for task_struct free, avoid OOM.
-			schedule_timeout_uninterruptible(HZ * read_exit_delay);
-			VERBOSE_TOROUT_STRING("rcu_torture_read_exit: Start of episode");
+			for (i = 0; i < read_exit_delay; i++) {
+				schedule_timeout_uninterruptible(HZ);
+				if (READ_ONCE(read_exit_child_stop))
+					break;
+			}
+			if (!READ_ONCE(read_exit_child_stop))
+				VERBOSE_TOROUT_STRING("rcu_torture_read_exit: Start of episode");
 			count = 0;
 		}
+		if (READ_ONCE(read_exit_child_stop))
+			break;
 		// Spawn child.
 		tsp = kthread_run(rcu_torture_read_exit_child,
 				     &trs, "%s",
