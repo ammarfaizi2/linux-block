@@ -6246,6 +6246,7 @@ struct ctl_table * __net_init ipv6_route_sysctl_init(struct net *net)
 static int __net_init ip6_route_net_init(struct net *net)
 {
 	int ret = -ENOMEM;
+	struct net *current_net = current->nsproxy->net_ns;
 
 	memcpy(&net->ipv6.ip6_dst_ops, &ip6_dst_ops_template,
 	       sizeof(net->ipv6.ip6_dst_ops));
@@ -6294,9 +6295,8 @@ static int __net_init ip6_route_net_init(struct net *net)
 	net->ipv6.fib6_routes_require_src = 0;
 #endif
 #endif
-
 	net->ipv6.sysctl.flush_delay = 0;
-	net->ipv6.sysctl.ip6_rt_max_size = 4096;
+	net->ipv6.sysctl.ip6_rt_max_size = READ_ONCE(current_net->ipv6.sysctl.ip6_rt_max_size);
 	net->ipv6.sysctl.ip6_rt_gc_min_interval = HZ / 2;
 	net->ipv6.sysctl.ip6_rt_gc_timeout = 60*HZ;
 	net->ipv6.sysctl.ip6_rt_gc_interval = 30*HZ;
