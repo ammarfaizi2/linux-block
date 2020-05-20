@@ -23,6 +23,9 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/thermal_pressure.h>
 
+#undef CREATE_TRACE_POINTS
+#include <trace/hooks/sched.h>
+
 static DEFINE_PER_CPU(struct scale_freq_data __rcu *, sft_data);
 static struct cpumask scale_freq_counters_mask;
 static bool scale_freq_invariant;
@@ -201,8 +204,11 @@ void topology_update_thermal_pressure(const struct cpumask *cpus,
 
 	trace_thermal_pressure_update(cpu, th_pressure);
 
-	for_each_cpu(cpu, cpus)
+	for_each_cpu(cpu, cpus) {
 		WRITE_ONCE(per_cpu(thermal_pressure, cpu), th_pressure);
+		trace_android_rvh_update_thermal_stats(cpu);
+	}
+
 }
 EXPORT_SYMBOL_GPL(topology_update_thermal_pressure);
 
@@ -254,6 +260,7 @@ static void update_topology_flags_workfn(struct work_struct *work)
 {
 	update_topology = 1;
 	rebuild_sched_domains();
+	trace_android_vh_update_topology_flags_workfn(NULL);
 	pr_debug("sched_domain hierarchy rebuilt, flags updated\n");
 	update_topology = 0;
 }
