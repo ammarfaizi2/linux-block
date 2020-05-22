@@ -456,8 +456,21 @@ static inline pgoff_t linear_page_index(struct vm_area_struct *vma,
 	return pgoff;
 }
 
+/* This has the same layout as wait_bit_key - see fs/cachefiles/rdwr.c */
+struct wait_page_key {
+	struct page *page;
+	int bit_nr;
+	int page_match;
+};
+
+struct wait_page_async {
+	struct wait_queue_entry wait;
+	struct wait_page_key key;
+};
+
 extern void __lock_page(struct page *page);
 extern int __lock_page_killable(struct page *page);
+extern int __lock_page_async(struct page *page, struct wait_page_async *wait);
 extern int __lock_page_or_retry(struct page *page, struct mm_struct *mm,
 				unsigned int flags);
 extern void unlock_page(struct page *page);
@@ -491,6 +504,14 @@ static inline int lock_page_killable(struct page *page)
 	might_sleep();
 	if (!trylock_page(page))
 		return __lock_page_killable(page);
+	return 0;
+}
+
+static inline int lock_page_async(struct page *page,
+				  struct wait_page_async *wait)
+{
+	if (!trylock_page(page))
+		return __lock_page_async(page, wait);
 	return 0;
 }
 
