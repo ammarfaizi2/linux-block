@@ -106,9 +106,9 @@ void flush_thread(void)
 {
 }
 
-int copy_thread(unsigned long clone_flags,
-		unsigned long usp, unsigned long topstk,
-		struct task_struct *p)
+int copy_thread_tls(unsigned long clone_flags, unsigned long usp,
+		    unsigned long topstk, struct task_struct *p,
+		    unsigned long tls)
 {
 	struct pt_regs *childregs;
 
@@ -160,11 +160,22 @@ asmlinkage int sys_clone(unsigned long __user *args)
 	unsigned long  newsp;
 	uintptr_t parent_tidptr;
 	uintptr_t child_tidptr;
+	struct kernel_clone_args kargs = {};
 
 	get_user(clone_flags, &args[0]);
 	get_user(newsp, &args[1]);
 	get_user(parent_tidptr, &args[2]);
 	get_user(child_tidptr, &args[3]);
-	return do_fork(clone_flags, newsp, 0,
-		       (int __user *)parent_tidptr, (int __user *)child_tidptr);
+
+	kargs.flags		= (lower_32_bits(clone_flags) & ~CSIGNAL);
+	kargs.pidfd		= (int __user *)parent_tidptr;
+	kargs.child_tid		= (int __user *)child_tidptr;
+	kargs.parent_tid	= (int __user *)parent_tidptr;
+	kargs.exit_signal	= (lower_32_bits(clone_flags) & CSIGNAL);
+	kargs.stack		= newsp;
+
+	if (!legacy_clone_args_valid(&kargs))
+		return -EINVAL;
+
+	return _do_fork(&kargs);
 }
