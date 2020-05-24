@@ -1525,3 +1525,53 @@ int stream_open(struct inode *inode, struct file *filp)
 }
 
 EXPORT_SYMBOL(stream_open);
+
+static struct file *readfile_open(int dfd, const char __user *filename,
+				  struct open_flags *op)
+{
+	struct filename *tmp;
+	struct file *f;
+
+	tmp = getname(filename);
+	if (IS_ERR(tmp))
+		return (struct file *)tmp;
+
+	f = do_filp_open(dfd, tmp, op);
+	if (!IS_ERR(f))
+		fsnotify_open(f);
+
+	putname(tmp);
+	return f;
+}
+
+SYSCALL_DEFINE5(readfile, int, dfd, const char __user *, filename,
+		char __user *, buffer, size_t, bufsize, int, flags)
+{
+	struct open_flags op;
+	struct open_how how;
+	struct file *file;
+	loff_t pos = 0;
+	int retval;
+
+	/* only accept a small subset of O_ flags that make sense */
+	if ((flags & (O_NOFOLLOW | O_NOATIME)) != flags)
+		return -EINVAL;
+
+	/* add some needed flags to be able to open the file properly */
+	flags |= O_RDONLY | O_LARGEFILE;
+
+	how = build_open_how(flags, 0000);
+	retval = build_open_flags(&how, &op);
+	if (retval)
+		return retval;
+
+	file = readfile_open(dfd, filename, &op);
+	if (IS_ERR(file))
+		return PTR_ERR(file);
+
+	retval = vfs_read(file, buffer, bufsize, &pos);
+
+	filp_close(file, NULL);
+
+	return retval;
+}
