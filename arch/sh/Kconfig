@@ -54,7 +54,6 @@ config SUPERH
 	select HAVE_NMI
 	select NEED_SG_DMA_LENGTH
 	select ARCH_HAS_GIGANTIC_PAGE
-	select HAVE_COPY_THREAD_TLS
 
 	help
 	  The SuperH is a RISC processor targeted for use in embedded systems
