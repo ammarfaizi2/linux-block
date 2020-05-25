@@ -62,6 +62,8 @@ torture_param(int, holdoff, IS_BUILTIN(CONFIG_RCU_REF_PERF_TEST) ? 10 : 0,
 	      "Holdoff time before test start (s)");
 // Number of loops per experiment, all readers execute operations concurrently.
 torture_param(long, loops, 10000000, "Number of loops per experiment.");
+// Number of readers, with -1 defaulting to about 75% of the CPUs.
+torture_param(int, nreaders, -1, "Number of loops per experiment.");
 
 #ifdef MODULE
 # define REFPERF_SHUTDOWN 0
@@ -93,7 +95,6 @@ static wait_queue_head_t main_wq;
 static int shutdown_start;
 
 static struct reader_task *reader_tasks;
-static int nreaders;
 
 // Number of readers that are part of the current experiment.
 static atomic_t nreaders_exp;
@@ -501,8 +502,9 @@ ref_perf_init(void)
 		schedule_timeout_uninterruptible(1);
 	}
 
-	// Reader tasks (~75% of online CPUs).
-	nreaders = (num_online_cpus() >> 1) + (num_online_cpus() >> 2);
+	// Reader tasks (default to ~75% of online CPUs).
+	if (nreaders < 0)
+		nreaders = (num_online_cpus() >> 1) + (num_online_cpus() >> 2);
 	reader_tasks = kcalloc(nreaders, sizeof(reader_tasks[0]),
 			       GFP_KERNEL);
 	if (!reader_tasks) {
