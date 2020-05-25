@@ -32,7 +32,7 @@ awk -v configfile="$configfile" '
 	next;
 }
 
-/[^ 	]*[0-9][0-9]*	[0-9][0-9]*$/ {
+/[^ 	]*[0-9][0-9]*	[0-9][0-9]*\.[0-9][0-9]*$/ {
 	if (dataphase == 1) {
 		# print $0;
 		readertimes[++n] = $2;
