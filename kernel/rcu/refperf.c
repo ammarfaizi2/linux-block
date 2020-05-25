@@ -57,7 +57,10 @@ MODULE_PARM_DESC(perf_type, "Type of test (rcu, srcu, refcnt, rwsem, rwlock.");
 
 torture_param(int, verbose, 0, "Enable verbose debugging printk()s");
 
-// Number of loops per experiment, all readers execute an operation concurrently
+// Wait until there are multiple CPUs before starting test.
+torture_param(int, holdoff, IS_BUILTIN(CONFIG_RCU_REF_PERF_TEST) ? 10 : 0,
+	      "Holdoff time before test start (s)");
+// Number of loops per experiment, all readers execute operations concurrently.
 torture_param(long, loops, 10000000, "Number of loops per experiment.");
 
 #ifdef MODULE
@@ -244,6 +247,8 @@ ref_perf_reader(void *arg)
 	u64 start;
 	s64 duration;
 
+	if (holdoff)
+		schedule_timeout_interruptible(holdoff * HZ);
 	VERBOSE_PERFOUT("ref_perf_reader %ld: task started", me);
 	set_cpus_allowed_ptr(current, cpumask_of(me % nr_cpu_ids));
 	set_user_nice(current, MAX_NICE);
@@ -352,6 +357,8 @@ static int main_func(void *arg)
 	set_cpus_allowed_ptr(current, cpumask_of(nreaders % nr_cpu_ids));
 	set_user_nice(current, MAX_NICE);
 
+	if (holdoff)
+		schedule_timeout_interruptible(holdoff * HZ);
 	VERBOSE_PERFOUT("main_func task started");
 	atomic_inc(&n_init);
 
