@@ -59,9 +59,7 @@ END {
 		medianvalue = (readertimes[medianidx - 1] + readertimes[medianidx]) / 2;
 	else
 		medianvalue = readertimes[medianidx];
-	if (medianvalue < 1)
-		medianvalue = 1;
-	print "Average grace-period duration: " sum / newNR " microseconds";
+	print "Average grace-period duration: " sum / newNR " nanoseconds";
 	print "Minimum grace-period duration: " readertimes[1];
 	print "Median grace-period duration: " medianvalue;
 	print "Maximum grace-period duration: " readertimes[newNR];
