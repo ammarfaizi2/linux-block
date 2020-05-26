@@ -446,8 +446,8 @@ static void
 ref_perf_print_module_parms(struct ref_perf_ops *cur_ops, const char *tag)
 {
 	pr_alert("%s" PERF_FLAG
-		 "--- %s:  verbose=%d shutdown=%d loops=%ld\n", perf_type, tag,
-		 verbose, shutdown, loops);
+		 "--- %s:  verbose=%d shutdown=%d holdoff=%d loops=%ld\n", perf_type, tag,
+		 verbose, shutdown, holdoff, loops);
 }
 
 static void
