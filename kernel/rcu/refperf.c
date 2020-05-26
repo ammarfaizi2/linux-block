@@ -78,7 +78,7 @@ torture_param(bool, shutdown, REFPERF_SHUTDOWN,
 
 struct reader_task {
 	struct task_struct *task;
-	atomic_t start;
+	int start_reader;
 	wait_queue_head_t wq;
 	u64 last_duration_ns;
 };
@@ -241,7 +241,7 @@ repeat:
 	VERBOSE_PERFOUT("ref_perf_reader %ld: waiting to start next experiment on cpu %d", me, smp_processor_id());
 
 	// Wait for signal that this reader can start.
-	wait_event(rt->wq, (atomic_read(&nreaders_exp) && atomic_read(&rt->start)) ||
+	wait_event(rt->wq, (atomic_read(&nreaders_exp) && smp_load_acquire(&rt->start_reader)) ||
 			   torture_must_stop());
 
 	if (torture_must_stop())
@@ -250,8 +250,7 @@ repeat:
 	// Make sure that the CPU is affinitized appropriately during testing.
 	WARN_ON_ONCE(smp_processor_id() != me);
 
-	smp_mb__before_atomic();
-	atomic_dec(&rt->start);
+	WRITE_ONCE(rt->start_reader, 0);
 
 	VERBOSE_PERFOUT("ref_perf_reader %ld: experiment %d started", me, exp_idx);
 
@@ -370,7 +369,7 @@ static int main_func(void *arg)
 		exp_idx = exp;
 
 		for (r = 0; r < nreaders; r++) {
-			atomic_set(&reader_tasks[r].start, 1);
+			smp_store_release(&reader_tasks[r].start_reader, 1);
 			wake_up(&reader_tasks[r].wq);
 		}
 
