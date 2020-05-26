@@ -325,7 +325,7 @@ static u64 process_durations(int n)
 	sprintf(buf, "Experiment #%d (Format: <THREAD-NUM>:<Total loop time in ns>)",
 		exp_idx);
 
-	for (i = 0; i <= n && !torture_must_stop(); i++) {
+	for (i = 0; i < n && !torture_must_stop(); i++) {
 		rt = &(reader_tasks[i]);
 		sprintf(buf1, "%d: %llu\t", i, rt->last_duration_ns);
 
