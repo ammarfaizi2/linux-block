@@ -193,6 +193,8 @@ repeat:
 
 	cgroup_release(p);
 
+	seccomp_filter_release(p);
+
 	write_lock_irq(&tasklist_lock);
 	ptrace_release_task(p);
 	thread_pid = get_pid(p->thread_pid);
