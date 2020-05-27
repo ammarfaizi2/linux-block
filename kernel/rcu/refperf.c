@@ -318,7 +318,7 @@ static u64 process_durations(int n)
 	char *buf;
 	u64 sum = 0;
 
-	buf = kmalloc(nreaders * 32, GFP_KERNEL);
+	buf = kmalloc(128 + nreaders * 32, GFP_KERNEL);
 	if (!buf)
 		return 0;
 	buf[0] = 0;
