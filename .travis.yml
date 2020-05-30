@@ -21,10 +21,6 @@ matrix:
       name: "kernel: ppc64 (PPC_BOOK3S_64 && BIG_ENDIAN)"
     - os:   linux
       arch: amd64
-      env:  TARGET=kernel SUBARCH=ppc64 IMAGE=korg-4.6 DEFCONFIG=ppc64_defconfig
-      name: "kernel: ppc64 gcc4.6 (PPC_BOOK3S_64 && BIG_ENDIAN)"
-    - os:   linux
-      arch: amd64
       env:  TARGET=kernel SUBARCH=ppc64 IMAGE=ubuntu-20.04 DEFCONFIG=corenet64_smp_defconfig
       name: "kernel: corenet64_smp (PPC_BOOK3E_64)"
     - os:   linux
@@ -47,6 +43,14 @@ matrix:
       arch: amd64
       env:  TARGET=kernel SUBARCH=ppc64 IMAGE=ubuntu-20.04 DEFCONFIG=corenet32_smp_defconfig
       name: "kernel: corenet32_smp (PPC_85xx)"
+
+    # kernel.org GCC 4.9.4 - BE only
+    - os:   linux
+      arch: amd64
+      env:  TARGET=kernel SUBARCH=ppc64 IMAGE=korg-4.9.4 DEFCONFIG=ppc64_defconfig
+      name: "GCC 4.9.4 kernel: ppc64 (PPC_BOOK3S_64 && BIG_ENDIAN)"
+
+    # Selftests
     - os:   linux
       arch: ppc64le
       env:  TARGET=ppctests SUBARCH=ppc64le IMAGE=ubuntu-20.04
