@@ -25,12 +25,18 @@
 
 #define HINIC_PF_SET_VF_ALREADY				0x4
 #define HINIC_MGMT_STATUS_EXIST				0x6
+#define HINIC_MGMT_CMD_UNSUPPORTED			0xFF
 
 struct hinic_cap {
 	u16     max_qps;
 	u16     num_qps;
 	u8		max_vf;
 	u16     max_vf_qps;
+};
+
+enum hw_ioctxt_set_cmdq_depth {
+	HW_IOCTXT_SET_CMDQ_DEPTH_DEFAULT,
+	HW_IOCTXT_SET_CMDQ_DEPTH_ENABLE,
 };
 
 enum hinic_port_cmd {
@@ -47,6 +53,9 @@ enum hinic_port_cmd {
 	HINIC_PORT_CMD_DEL_MAC          = 11,
 
 	HINIC_PORT_CMD_SET_RX_MODE      = 12,
+
+	HINIC_PORT_CMD_GET_PAUSE_INFO	= 20,
+	HINIC_PORT_CMD_SET_PAUSE_INFO	= 21,
 
 	HINIC_PORT_CMD_GET_LINK_STATE   = 24,
 
@@ -86,11 +95,15 @@ enum hinic_port_cmd {
 
 	HINIC_PORT_CMD_FWCTXT_INIT      = 69,
 
+	HINIC_PORT_CMD_ENABLE_SPOOFCHK = 78,
+
 	HINIC_PORT_CMD_GET_MGMT_VERSION = 88,
 
 	HINIC_PORT_CMD_SET_FUNC_STATE   = 93,
 
 	HINIC_PORT_CMD_GET_GLOBAL_QPN   = 102,
+
+	HINIC_PORT_CMD_SET_VF_RATE = 105,
 
 	HINIC_PORT_CMD_SET_VF_VLAN	= 106,
 
@@ -106,7 +119,21 @@ enum hinic_port_cmd {
 
 	HINIC_PORT_CMD_GET_CAP          = 170,
 
+	HINIC_PORT_CMD_GET_LINK_MODE	= 217,
+
+	HINIC_PORT_CMD_SET_SPEED	= 218,
+
+	HINIC_PORT_CMD_SET_AUTONEG	= 219,
+
 	HINIC_PORT_CMD_SET_LRO_TIMER	= 244,
+
+	HINIC_PORT_CMD_SET_VF_MAX_MIN_RATE = 249,
+};
+
+/* cmd of mgmt CPU message for HILINK module */
+enum hinic_hilink_cmd {
+	HINIC_HILINK_CMD_GET_LINK_INFO		= 0x3,
+	HINIC_HILINK_CMD_SET_LINK_SETTINGS	= 0x8,
 };
 
 enum hinic_ucode_cmd {
@@ -247,6 +274,15 @@ struct hinic_cmd_hw_ci {
 	u64     ci_addr;
 };
 
+struct hinic_cmd_l2nic_reset {
+	u8	status;
+	u8	version;
+	u8	rsvd0[6];
+
+	u16	func_id;
+	u16	reset_flag;
+};
+
 struct hinic_hwdev {
 	struct hinic_hwif               *hwif;
 	struct msix_entry               *msix_entries;
@@ -307,7 +343,11 @@ int hinic_port_msg_cmd(struct hinic_hwdev *hwdev, enum hinic_port_cmd cmd,
 		       void *buf_in, u16 in_size, void *buf_out,
 		       u16 *out_size);
 
-int hinic_hwdev_ifup(struct hinic_hwdev *hwdev);
+int hinic_hilink_msg_cmd(struct hinic_hwdev *hwdev, enum hinic_hilink_cmd cmd,
+			 void *buf_in, u16 in_size, void *buf_out,
+			 u16 *out_size);
+
+int hinic_hwdev_ifup(struct hinic_hwdev *hwdev, u16 sq_depth, u16 rq_depth);
 
 void hinic_hwdev_ifdown(struct hinic_hwdev *hwdev);
 

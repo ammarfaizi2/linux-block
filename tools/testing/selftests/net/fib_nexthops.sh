@@ -19,8 +19,8 @@ ret=0
 ksft_skip=4
 
 # all tests in this script. Can be overridden with -t option
-IPV4_TESTS="ipv4_fcnal ipv4_grp_fcnal ipv4_withv6_fcnal ipv4_fcnal_runtime ipv4_compat_mode"
-IPV6_TESTS="ipv6_fcnal ipv6_grp_fcnal ipv6_fcnal_runtime ipv6_compat_mode"
+IPV4_TESTS="ipv4_fcnal ipv4_grp_fcnal ipv4_withv6_fcnal ipv4_fcnal_runtime ipv4_large_grp ipv4_compat_mode ipv4_fdb_grp_fcnal"
+IPV6_TESTS="ipv6_fcnal ipv6_grp_fcnal ipv6_fcnal_runtime ipv6_large_grp ipv6_compat_mode ipv6_fdb_grp_fcnal"
 
 ALL_TESTS="basic ${IPV4_TESTS} ${IPV6_TESTS}"
 TESTS="${ALL_TESTS}"
@@ -146,6 +146,7 @@ setup()
 	create_ns remote
 
 	IP="ip -netns me"
+	BRIDGE="bridge -netns me"
 	set -e
 	$IP li add veth1 type veth peer name veth2
 	$IP li set veth1 up
@@ -253,6 +254,60 @@ check_route6()
 	check_output "${out}" "${expected}"
 }
 
+check_large_grp()
+{
+	local ipv=$1
+	local ecmp=$2
+	local grpnum=100
+	local nhidstart=100
+	local grpidstart=1000
+	local iter=0
+	local nhidstr=""
+	local grpidstr=""
+	local grpstr=""
+	local ipstr=""
+
+	if [ $ipv -eq 4 ]; then
+		ipstr="172.16.1."
+	else
+		ipstr="2001:db8:91::"
+	fi
+
+	#
+	# Create $grpnum groups with specified $ecmp and dump them
+	#
+
+	# create nexthops with different gateways
+	iter=2
+	while [ $iter -le $(($ecmp + 1)) ]
+	do
+		nhidstr="$(($nhidstart + $iter))"
+		run_cmd "$IP nexthop add id $nhidstr via $ipstr$iter dev veth1"
+		check_nexthop "id $nhidstr" "id $nhidstr via $ipstr$iter dev veth1 scope link"
+
+		if [ $iter -le $ecmp ]; then
+			grpstr+="$nhidstr/"
+		else
+			grpstr+="$nhidstr"
+		fi
+		((iter++))
+	done
+
+	# create duplicate large ecmp groups
+	iter=0
+	while [ $iter -le $grpnum ]
+	do
+		grpidstr="$(($grpidstart + $iter))"
+		run_cmd "$IP nexthop add id $grpidstr group $grpstr"
+		check_nexthop "id $grpidstr" "id $grpidstr group $grpstr"
+		((iter++))
+	done
+
+	# dump large groups
+	run_cmd "$IP nexthop list"
+	log_test $? 0 "Dump large (x$ecmp) ecmp groups"
+}
+
 start_ip_monitor()
 {
 	local mtype=$1
@@ -278,6 +333,161 @@ stop_ip_monitor()
 	rm -rf $tmpfile
 
 	return $rc
+}
+
+check_nexthop_fdb_support()
+{
+	$IP nexthop help 2>&1 | grep -q fdb
+	if [ $? -ne 0 ]; then
+		echo "SKIP: iproute2 too old, missing fdb nexthop support"
+		return $ksft_skip
+	fi
+}
+
+ipv6_fdb_grp_fcnal()
+{
+	local rc
+
+	echo
+	echo "IPv6 fdb groups functional"
+	echo "--------------------------"
+
+	check_nexthop_fdb_support
+	if [ $? -eq $ksft_skip ]; then
+		return $ksft_skip
+	fi
+
+	# create group with multiple nexthops
+	run_cmd "$IP nexthop add id 61 via 2001:db8:91::2 fdb"
+	run_cmd "$IP nexthop add id 62 via 2001:db8:91::3 fdb"
+	run_cmd "$IP nexthop add id 102 group 61/62 fdb"
+	check_nexthop "id 102" "id 102 group 61/62 fdb"
+	log_test $? 0 "Fdb Nexthop group with multiple nexthops"
+
+	## get nexthop group
+	run_cmd "$IP nexthop get id 102"
+	check_nexthop "id 102" "id 102 group 61/62 fdb"
+	log_test $? 0 "Get Fdb nexthop group by id"
+
+	# fdb nexthop group can only contain fdb nexthops
+	run_cmd "$IP nexthop add id 63 via 2001:db8:91::4"
+	run_cmd "$IP nexthop add id 64 via 2001:db8:91::5"
+	run_cmd "$IP nexthop add id 103 group 63/64 fdb"
+	log_test $? 2 "Fdb Nexthop group with non-fdb nexthops"
+
+	# Non fdb nexthop group can not contain fdb nexthops
+	run_cmd "$IP nexthop add id 65 via 2001:db8:91::5 fdb"
+	run_cmd "$IP nexthop add id 66 via 2001:db8:91::6 fdb"
+	run_cmd "$IP nexthop add id 104 group 65/66"
+	log_test $? 2 "Non-Fdb Nexthop group with fdb nexthops"
+
+	# fdb nexthop cannot have blackhole
+	run_cmd "$IP nexthop add id 67 blackhole fdb"
+	log_test $? 2 "Fdb Nexthop with blackhole"
+
+	# fdb nexthop with oif
+	run_cmd "$IP nexthop add id 68 via 2001:db8:91::7 dev veth1 fdb"
+	log_test $? 2 "Fdb Nexthop with oif"
+
+	# fdb nexthop with onlink
+	run_cmd "$IP nexthop add id 68 via 2001:db8:91::7 onlink fdb"
+	log_test $? 2 "Fdb Nexthop with onlink"
+
+	# fdb nexthop with encap
+	run_cmd "$IP nexthop add id 69 encap mpls 101 via 2001:db8:91::8 dev veth1 fdb"
+	log_test $? 2 "Fdb Nexthop with encap"
+
+	run_cmd "$IP link add name vx10 type vxlan id 1010 local 2001:db8:91::9 remote 2001:db8:91::10 dstport 4789 nolearning noudpcsum tos inherit ttl 100"
+	run_cmd "$BRIDGE fdb add 02:02:00:00:00:13 dev vx10 nhid 102 self"
+	log_test $? 0 "Fdb mac add with nexthop group"
+
+	## fdb nexthops can only reference nexthop groups and not nexthops
+	run_cmd "$BRIDGE fdb add 02:02:00:00:00:14 dev vx10 nhid 61 self"
+	log_test $? 255 "Fdb mac add with nexthop"
+
+	run_cmd "$IP -6 ro add 2001:db8:101::1/128 nhid 66"
+	log_test $? 2 "Route add with fdb nexthop"
+
+	run_cmd "$IP -6 ro add 2001:db8:101::1/128 nhid 103"
+	log_test $? 2 "Route add with fdb nexthop group"
+
+	run_cmd "$IP nexthop del id 102"
+	log_test $? 0 "Fdb nexthop delete"
+
+	$IP link del dev vx10
+}
+
+ipv4_fdb_grp_fcnal()
+{
+	local rc
+
+	echo
+	echo "IPv4 fdb groups functional"
+	echo "--------------------------"
+
+	check_nexthop_fdb_support
+	if [ $? -eq $ksft_skip ]; then
+		return $ksft_skip
+	fi
+
+	# create group with multiple nexthops
+	run_cmd "$IP nexthop add id 12 via 172.16.1.2 fdb"
+	run_cmd "$IP nexthop add id 13 via 172.16.1.3 fdb"
+	run_cmd "$IP nexthop add id 102 group 12/13 fdb"
+	check_nexthop "id 102" "id 102 group 12/13 fdb"
+	log_test $? 0 "Fdb Nexthop group with multiple nexthops"
+
+	# get nexthop group
+	run_cmd "$IP nexthop get id 102"
+	check_nexthop "id 102" "id 102 group 12/13 fdb"
+	log_test $? 0 "Get Fdb nexthop group by id"
+
+	# fdb nexthop group can only contain fdb nexthops
+	run_cmd "$IP nexthop add id 14 via 172.16.1.2"
+	run_cmd "$IP nexthop add id 15 via 172.16.1.3"
+	run_cmd "$IP nexthop add id 103 group 14/15 fdb"
+	log_test $? 2 "Fdb Nexthop group with non-fdb nexthops"
+
+	# Non fdb nexthop group can not contain fdb nexthops
+	run_cmd "$IP nexthop add id 16 via 172.16.1.2 fdb"
+	run_cmd "$IP nexthop add id 17 via 172.16.1.3 fdb"
+	run_cmd "$IP nexthop add id 104 group 14/15"
+	log_test $? 2 "Non-Fdb Nexthop group with fdb nexthops"
+
+	# fdb nexthop cannot have blackhole
+	run_cmd "$IP nexthop add id 18 blackhole fdb"
+	log_test $? 2 "Fdb Nexthop with blackhole"
+
+	# fdb nexthop with oif
+	run_cmd "$IP nexthop add id 16 via 172.16.1.2 dev veth1 fdb"
+	log_test $? 2 "Fdb Nexthop with oif"
+
+	# fdb nexthop with onlink
+	run_cmd "$IP nexthop add id 16 via 172.16.1.2 onlink fdb"
+	log_test $? 2 "Fdb Nexthop with onlink"
+
+	# fdb nexthop with encap
+	run_cmd "$IP nexthop add id 17 encap mpls 101 via 172.16.1.2 dev veth1 fdb"
+	log_test $? 2 "Fdb Nexthop with encap"
+
+	run_cmd "$IP link add name vx10 type vxlan id 1010 local 10.0.0.1 remote 10.0.0.2 dstport 4789 nolearning noudpcsum tos inherit ttl 100"
+	run_cmd "$BRIDGE fdb add 02:02:00:00:00:13 dev vx10 nhid 102 self"
+	log_test $? 0 "Fdb mac add with nexthop group"
+
+	# fdb nexthops can only reference nexthop groups and not nexthops
+	run_cmd "$BRIDGE fdb add 02:02:00:00:00:14 dev vx10 nhid 12 self"
+	log_test $? 255 "Fdb mac add with nexthop"
+
+	run_cmd "$IP ro add 172.16.0.0/22 nhid 15"
+	log_test $? 2 "Route add with fdb nexthop"
+
+	run_cmd "$IP ro add 172.16.0.0/22 nhid 103"
+	log_test $? 2 "Route add with fdb nexthop group"
+
+	run_cmd "$IP nexthop del id 102"
+	log_test $? 0 "Fdb nexthop delete"
+
+	$IP link del dev vx10
 }
 
 ################################################################################
@@ -542,6 +752,19 @@ ipv6_fcnal_runtime()
 	# existing route with old nexthop; replace route with new
 	# existing route with new nexthop; replace route with old
 	# route with src address and using nexthop - not allowed
+}
+
+ipv6_large_grp()
+{
+	local ecmp=32
+
+	echo
+	echo "IPv6 large groups (x$ecmp)"
+	echo "---------------------"
+
+	check_large_grp 6 $ecmp
+
+	$IP nexthop flush >/dev/null 2>&1
 }
 
 ipv4_fcnal()
@@ -910,6 +1133,19 @@ ipv4_fcnal_runtime()
 	log_test $? 0 "IPv4 route with MPLS encap, v6 gw - check"
 }
 
+ipv4_large_grp()
+{
+	local ecmp=32
+
+	echo
+	echo "IPv4 large groups (x$ecmp)"
+	echo "---------------------"
+
+	check_large_grp 4 $ecmp
+
+	$IP nexthop flush >/dev/null 2>&1
+}
+
 sysctl_nexthop_compat_mode_check()
 {
 	local sysctlname="net.ipv4.nexthop_compat_mode"
@@ -965,7 +1201,7 @@ ipv6_compat_mode()
 	log_test $? 0 "IPv6 compat mode on - route add notification"
 
 	# route dump should contain expanded nexthops
-	check_route6 "2001:db8:101::1" "2001:db8:101::1 nhid 122 metric 1024 pref medium nexthop via 2001:db8:91::2 dev veth1 weight 1 nexthop via 2001:db8:91::3 dev veth1 weight 1"
+	check_route6 "2001:db8:101::1" "2001:db8:101::1 nhid 122 metric 1024 nexthop via 2001:db8:91::2 dev veth1 weight 1 nexthop via 2001:db8:91::3 dev veth1 weight 1"
 	log_test $? 0 "IPv6 compat mode on - route dump"
 
 	# change in nexthop group should generate route notification
@@ -992,7 +1228,7 @@ ipv6_compat_mode()
 	log_test $? 0 "IPv6 compat mode off - route add notification"
 
 	# route dump should not contain expanded nexthops
-	check_route6 "2001:db8:101::1" "2001:db8:101::1 nhid 122 metric 1024 pref medium"
+	check_route6 "2001:db8:101::1" "2001:db8:101::1 nhid 122 metric 1024"
 	log_test $? 0 "IPv6 compat mode off - route dump"
 
 	# change in nexthop group should not generate route notification

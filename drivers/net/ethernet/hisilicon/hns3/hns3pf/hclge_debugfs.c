@@ -691,7 +691,7 @@ static void hclge_dbg_dump_tm_map(struct hclge_dev *hdev,
 	enum hclge_opcode_type cmd;
 	struct hclge_desc desc;
 	int queue_id, group_id;
-	u32 qset_maping[32];
+	u32 qset_mapping[32];
 	int tc_id, qset_id;
 	int pri_id, ret;
 	u32 i;
@@ -746,7 +746,7 @@ static void hclge_dbg_dump_tm_map(struct hclge_dev *hdev,
 		if (ret)
 			goto err_tm_map_cmd_send;
 
-		qset_maping[group_id] =
+		qset_mapping[group_id] =
 			le32_to_cpu(bp_to_qs_map_cmd->qs_bit_map);
 	}
 
@@ -756,11 +756,11 @@ static void hclge_dbg_dump_tm_map(struct hclge_dev *hdev,
 	for (group_id = 0; group_id < 4; group_id++) {
 		dev_info(&hdev->pdev->dev,
 			 "%04d  | %08x:%08x:%08x:%08x:%08x:%08x:%08x:%08x\n",
-			 group_id * 256, qset_maping[(u32)(i + 7)],
-			 qset_maping[(u32)(i + 6)], qset_maping[(u32)(i + 5)],
-			 qset_maping[(u32)(i + 4)], qset_maping[(u32)(i + 3)],
-			 qset_maping[(u32)(i + 2)], qset_maping[(u32)(i + 1)],
-			 qset_maping[i]);
+			 group_id * 256, qset_mapping[(u32)(i + 7)],
+			 qset_mapping[(u32)(i + 6)], qset_mapping[(u32)(i + 5)],
+			 qset_mapping[(u32)(i + 4)], qset_mapping[(u32)(i + 3)],
+			 qset_mapping[(u32)(i + 2)], qset_mapping[(u32)(i + 1)],
+			 qset_mapping[i]);
 		i += 8;
 	}
 
@@ -1258,6 +1258,7 @@ static void hclge_dbg_dump_ncl_config(struct hclge_dev *hdev,
 {
 #define HCLGE_MAX_NCL_CONFIG_OFFSET	4096
 #define HCLGE_NCL_CONFIG_LENGTH_IN_EACH_CMD	(20 + 24 * 4)
+#define HCLGE_NCL_CONFIG_PARAM_NUM	2
 
 	struct hclge_desc desc[HCLGE_CMD_NCL_CONFIG_BD_NUM];
 	int bd_num = HCLGE_CMD_NCL_CONFIG_BD_NUM;
@@ -1267,13 +1268,17 @@ static void hclge_dbg_dump_ncl_config(struct hclge_dev *hdev,
 	int ret;
 
 	ret = sscanf(cmd_buf, "%x %x", &offset, &length);
-	if (ret != 2 || offset >= HCLGE_MAX_NCL_CONFIG_OFFSET ||
-	    length > HCLGE_MAX_NCL_CONFIG_OFFSET - offset) {
-		dev_err(&hdev->pdev->dev, "Invalid offset or length.\n");
+	if (ret != HCLGE_NCL_CONFIG_PARAM_NUM) {
+		dev_err(&hdev->pdev->dev,
+			"Too few parameters, num = %d.\n", ret);
 		return;
 	}
-	if (offset < 0 || length <= 0) {
-		dev_err(&hdev->pdev->dev, "Non-positive offset or length.\n");
+
+	if (offset < 0 || offset >= HCLGE_MAX_NCL_CONFIG_OFFSET ||
+	    length <= 0 || length > HCLGE_MAX_NCL_CONFIG_OFFSET - offset) {
+		dev_err(&hdev->pdev->dev,
+			"Invalid input, offset = %d, length = %d.\n",
+			offset, length);
 		return;
 	}
 

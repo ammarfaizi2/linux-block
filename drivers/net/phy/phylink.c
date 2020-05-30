@@ -803,8 +803,7 @@ void phylink_destroy(struct phylink *pl)
 }
 EXPORT_SYMBOL_GPL(phylink_destroy);
 
-static void phylink_phy_change(struct phy_device *phydev, bool up,
-			       bool do_carrier)
+static void phylink_phy_change(struct phy_device *phydev, bool up)
 {
 	struct phylink *pl = phydev->phylink;
 	bool tx_pause, rx_pause;
@@ -1632,7 +1631,7 @@ static int phylink_phy_read(struct phylink *pl, unsigned int phy_id,
 	if (mdio_phy_id_is_c45(phy_id)) {
 		prtad = mdio_phy_id_prtad(phy_id);
 		devad = mdio_phy_id_devad(phy_id);
-		devad = MII_ADDR_C45 | devad << 16 | reg;
+		devad = mdiobus_c45_addr(devad, reg);
 	} else if (phydev->is_c45) {
 		switch (reg) {
 		case MII_BMCR:
@@ -1655,7 +1654,7 @@ static int phylink_phy_read(struct phylink *pl, unsigned int phy_id,
 			return -EINVAL;
 		}
 		prtad = phy_id;
-		devad = MII_ADDR_C45 | devad << 16 | reg;
+		devad = mdiobus_c45_addr(devad, reg);
 	} else {
 		prtad = phy_id;
 		devad = reg;
@@ -1672,7 +1671,7 @@ static int phylink_phy_write(struct phylink *pl, unsigned int phy_id,
 	if (mdio_phy_id_is_c45(phy_id)) {
 		prtad = mdio_phy_id_prtad(phy_id);
 		devad = mdio_phy_id_devad(phy_id);
-		devad = MII_ADDR_C45 | devad << 16 | reg;
+		devad = mdiobus_c45_addr(devad, reg);
 	} else if (phydev->is_c45) {
 		switch (reg) {
 		case MII_BMCR:
@@ -1695,7 +1694,7 @@ static int phylink_phy_write(struct phylink *pl, unsigned int phy_id,
 			return -EINVAL;
 		}
 		prtad = phy_id;
-		devad = MII_ADDR_C45 | devad << 16 | reg;
+		devad = mdiobus_c45_addr(devad, reg);
 	} else {
 		prtad = phy_id;
 		devad = reg;
@@ -2293,7 +2292,6 @@ void phylink_mii_c22_pcs_an_restart(struct mdio_device *pcs)
 }
 EXPORT_SYMBOL_GPL(phylink_mii_c22_pcs_an_restart);
 
-#define C45_ADDR(d,a)	(MII_ADDR_C45 | (d) << 16 | (a))
 void phylink_mii_c45_pcs_get_state(struct mdio_device *pcs,
 				   struct phylink_link_state *state)
 {
@@ -2301,7 +2299,7 @@ void phylink_mii_c45_pcs_get_state(struct mdio_device *pcs,
 	int addr = pcs->addr;
 	int stat;
 
-	stat = mdiobus_read(bus, addr, C45_ADDR(MDIO_MMD_PCS, MDIO_STAT1));
+	stat = mdiobus_c45_read(bus, addr, MDIO_MMD_PCS, MDIO_STAT1);
 	if (stat < 0) {
 		state->link = false;
 		return;

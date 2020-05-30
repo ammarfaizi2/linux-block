@@ -1,7 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
-/*
- * aQuantia Corporation Network Driver
- * Copyright (C) 2014-2017 aQuantia Corporation. All rights reserved
+/* Atlantic Network Driver
+ *
+ * Copyright (C) 2014-2019 aQuantia Corporation
+ * Copyright (C) 2019-2020 Marvell International Ltd.
  */
 
 /* File hw_atl_b0.h: Declaration of abstract interface for Atlantic hardware
@@ -35,8 +36,6 @@ extern const struct aq_hw_ops hw_atl_ops_b0;
 
 int hw_atl_b0_hw_rss_hash_set(struct aq_hw_s *self,
 			      struct aq_rss_parameters *rss_params);
-int hw_atl_b0_hw_rss_set(struct aq_hw_s *self,
-			 struct aq_rss_parameters *rss_params);
 int hw_atl_b0_hw_offload_set(struct aq_hw_s *self,
 			     struct aq_nic_cfg_s *aq_nic_cfg);
 
@@ -58,6 +57,8 @@ int hw_atl_b0_hw_ring_tx_head_update(struct aq_hw_s *self,
 
 int hw_atl_b0_hw_ring_tx_stop(struct aq_hw_s *self, struct aq_ring_s *ring);
 int hw_atl_b0_hw_ring_rx_stop(struct aq_hw_s *self, struct aq_ring_s *ring);
+
+void hw_atl_b0_hw_init_rx_rss_ctrl1(struct aq_hw_s *self);
 
 int hw_atl_b0_hw_mac_addr_set(struct aq_hw_s *self, u8 *mac_addr);
 

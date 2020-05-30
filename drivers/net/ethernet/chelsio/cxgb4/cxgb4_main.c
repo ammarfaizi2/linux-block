@@ -180,6 +180,7 @@ static struct dentry *cxgb4_debugfs_root;
 
 LIST_HEAD(adapter_list);
 DEFINE_MUTEX(uld_mutex);
+LIST_HEAD(uld_list);
 
 static int cfg_queues(struct adapter *adap);
 
@@ -1579,6 +1580,7 @@ static int tid_init(struct tid_info *t)
 	atomic_set(&t->tids_in_use, 0);
 	atomic_set(&t->conns_in_use, 0);
 	atomic_set(&t->hash_tids_in_use, 0);
+	atomic_set(&t->eotids_in_use, 0);
 
 	/* Setup the free list for atid_tab and clear the stid bitmap. */
 	if (natids) {
@@ -3021,7 +3023,7 @@ static int cxgb4_mgmt_set_vf_rate(struct net_device *dev, int vf,
 			      SCHED_CLASS_RATEUNIT_BITS,
 			      SCHED_CLASS_RATEMODE_ABS,
 			      pi->tx_chan, class_id, 0,
-			      max_tx_rate * 1000, 0, pktsize);
+			      max_tx_rate * 1000, 0, pktsize, 0);
 	if (ret) {
 		dev_err(adap->pdev_dev, "Err %d for Traffic Class config\n",
 			ret);
@@ -6518,11 +6520,8 @@ fw_attach_fail:
 	/* PCIe EEH recovery on powerpc platforms needs fundamental reset */
 	pdev->needs_freset = 1;
 
-	if (is_uld(adapter)) {
-		mutex_lock(&uld_mutex);
-		list_add_tail(&adapter->list_node, &adapter_list);
-		mutex_unlock(&uld_mutex);
-	}
+	if (is_uld(adapter))
+		cxgb4_uld_enable(adapter);
 
 	if (!is_t4(adapter->params.chip))
 		cxgb4_ptp_init(adapter);

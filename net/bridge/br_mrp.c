@@ -37,6 +37,26 @@ static struct br_mrp *br_mrp_find_id(struct net_bridge *br, u32 ring_id)
 	return res;
 }
 
+static bool br_mrp_unique_ifindex(struct net_bridge *br, u32 ifindex)
+{
+	struct br_mrp *mrp;
+
+	list_for_each_entry_rcu(mrp, &br->mrp_list, list,
+				lockdep_rtnl_is_held()) {
+		struct net_bridge_port *p;
+
+		p = rtnl_dereference(mrp->p_port);
+		if (p && p->dev->ifindex == ifindex)
+			return false;
+
+		p = rtnl_dereference(mrp->s_port);
+		if (p && p->dev->ifindex == ifindex)
+			return false;
+	}
+
+	return true;
+}
+
 static struct br_mrp *br_mrp_find_port(struct net_bridge *br,
 				       struct net_bridge_port *p)
 {
@@ -203,6 +223,7 @@ out:
 static void br_mrp_del_impl(struct net_bridge *br, struct br_mrp *mrp)
 {
 	struct net_bridge_port *p;
+	u8 state;
 
 	/* Stop sending MRP_Test frames */
 	cancel_delayed_work_sync(&mrp->test_work);
@@ -214,20 +235,24 @@ static void br_mrp_del_impl(struct net_bridge *br, struct br_mrp *mrp)
 	p = rtnl_dereference(mrp->p_port);
 	if (p) {
 		spin_lock_bh(&br->lock);
-		p->state = BR_STATE_FORWARDING;
+		state = netif_running(br->dev) ?
+				BR_STATE_FORWARDING : BR_STATE_DISABLED;
+		p->state = state;
 		p->flags &= ~BR_MRP_AWARE;
 		spin_unlock_bh(&br->lock);
-		br_mrp_port_switchdev_set_state(p, BR_STATE_FORWARDING);
+		br_mrp_port_switchdev_set_state(p, state);
 		rcu_assign_pointer(mrp->p_port, NULL);
 	}
 
 	p = rtnl_dereference(mrp->s_port);
 	if (p) {
 		spin_lock_bh(&br->lock);
-		p->state = BR_STATE_FORWARDING;
+		state = netif_running(br->dev) ?
+				BR_STATE_FORWARDING : BR_STATE_DISABLED;
+		p->state = state;
 		p->flags &= ~BR_MRP_AWARE;
 		spin_unlock_bh(&br->lock);
-		br_mrp_port_switchdev_set_state(p, BR_STATE_FORWARDING);
+		br_mrp_port_switchdev_set_state(p, state);
 		rcu_assign_pointer(mrp->s_port, NULL);
 	}
 
@@ -253,6 +278,11 @@ int br_mrp_add(struct net_bridge *br, struct br_mrp_instance *instance)
 
 	if (!br_mrp_get_port(br, instance->p_ifindex) ||
 	    !br_mrp_get_port(br, instance->s_ifindex))
+		return -EINVAL;
+
+	/* It is not possible to have the same port part of multiple rings */
+	if (!br_mrp_unique_ifindex(br, instance->p_ifindex) ||
+	    !br_mrp_unique_ifindex(br, instance->s_ifindex))
 		return -EINVAL;
 
 	mrp = kzalloc(sizeof(*mrp), GFP_KERNEL);
@@ -346,24 +376,24 @@ int br_mrp_set_port_state(struct net_bridge_port *p,
  * note: already called with rtnl_lock
  */
 int br_mrp_set_port_role(struct net_bridge_port *p,
-			 struct br_mrp_port_role *role)
+			 enum br_mrp_port_role_type role)
 {
 	struct br_mrp *mrp;
 
 	if (!p || !(p->flags & BR_MRP_AWARE))
 		return -EINVAL;
 
-	mrp = br_mrp_find_id(p->br, role->ring_id);
+	mrp = br_mrp_find_port(p->br, p);
 
 	if (!mrp)
 		return -EINVAL;
 
-	if (role->role == BR_MRP_PORT_ROLE_PRIMARY)
+	if (role == BR_MRP_PORT_ROLE_PRIMARY)
 		rcu_assign_pointer(mrp->p_port, p);
 	else
 		rcu_assign_pointer(mrp->s_port, p);
 
-	br_mrp_port_switchdev_set_role(p, role->role);
+	br_mrp_port_switchdev_set_role(p, role);
 
 	return 0;
 }

@@ -6,26 +6,12 @@
 
 #include "en.h"
 
-#define MLX5E_SQ_NOPS_ROOM (MLX5_SEND_WQE_MAX_WQEBBS - 1)
-#define MLX5E_SQ_STOP_ROOM (MLX5_SEND_WQE_MAX_WQEBBS +\
-			    MLX5E_SQ_NOPS_ROOM)
-
-#ifndef CONFIG_MLX5_EN_TLS
-#define MLX5E_SQ_TLS_ROOM (0)
-#else
-/* TLS offload requires additional stop_room for:
- *  - a resync SKB.
- * kTLS offload requires fixed additional stop_room for:
- * - a static params WQE, and a progress params WQE.
- * The additional MTU-depending room for the resync DUMP WQEs
- * will be calculated and added in runtime.
- */
-#define MLX5E_SQ_TLS_ROOM  \
-	(MLX5_SEND_WQE_MAX_WQEBBS + \
-	 MLX5E_KTLS_STATIC_WQEBBS + MLX5E_KTLS_PROGRESS_WQEBBS)
-#endif
-
 #define INL_HDR_START_SZ (sizeof(((struct mlx5_wqe_eth_seg *)NULL)->inline_hdr.start))
+
+enum mlx5e_icosq_wqe_type {
+	MLX5E_ICOSQ_WQE_NOP,
+	MLX5E_ICOSQ_WQE_UMR_RX,
+};
 
 static inline bool
 mlx5e_wqc_has_room_for(struct mlx5_wq_cyc *wq, u16 cc, u16 pc, u16 n)
@@ -81,6 +67,16 @@ mlx5e_post_nop_fence(struct mlx5_wq_cyc *wq, u32 sqn, u16 *pc)
 	return wqe;
 }
 
+struct mlx5e_tx_wqe_info {
+	struct sk_buff *skb;
+	u32 num_bytes;
+	u8 num_wqebbs;
+	u8 num_dma;
+#ifdef CONFIG_MLX5_EN_TLS
+	struct page *resync_dump_frag_page;
+#endif
+};
+
 static inline u16 mlx5e_txqsq_get_next_pi(struct mlx5e_txqsq *sq, u16 size)
 {
 	struct mlx5_wq_cyc *wq = &sq->wq;
@@ -109,6 +105,18 @@ static inline u16 mlx5e_txqsq_get_next_pi(struct mlx5e_txqsq *sq, u16 size)
 	return pi;
 }
 
+struct mlx5e_icosq_wqe_info {
+	u8 wqe_type;
+	u8 num_wqebbs;
+
+	/* Auxiliary data for different wqe types. */
+	union {
+		struct {
+			struct mlx5e_rq *rq;
+		} umr;
+	};
+};
+
 static inline u16 mlx5e_icosq_get_next_pi(struct mlx5e_icosq *sq, u16 size)
 {
 	struct mlx5_wq_cyc *wq = &sq->wq;
@@ -125,7 +133,7 @@ static inline u16 mlx5e_icosq_get_next_pi(struct mlx5e_icosq *sq, u16 size)
 		/* Fill SQ frag edge with NOPs to avoid WQE wrapping two pages. */
 		for (; wi < edge_wi; wi++) {
 			*wi = (struct mlx5e_icosq_wqe_info) {
-				.opcode = MLX5_OPCODE_NOP,
+				.wqe_type   = MLX5E_ICOSQ_WQE_NOP,
 				.num_wqebbs = 1,
 			};
 			mlx5e_post_nop(wq, sq->sqn, &sq->pc);
@@ -302,6 +310,27 @@ mlx5e_set_eseg_swp(struct sk_buff *skb, struct mlx5_wqe_eth_seg *eseg,
 		eseg->swp_inner_l4_offset = skb_inner_transport_offset(skb) / 2;
 		break;
 	}
+}
+
+static inline u16 mlx5e_stop_room_for_wqe(u16 wqe_size)
+{
+	BUILD_BUG_ON(PAGE_SIZE / MLX5_SEND_WQE_BB < MLX5_SEND_WQE_MAX_WQEBBS);
+
+	/* A WQE must not cross the page boundary, hence two conditions:
+	 * 1. Its size must not exceed the page size.
+	 * 2. If the WQE size is X, and the space remaining in a page is less
+	 *    than X, this space needs to be padded with NOPs. So, one WQE of
+	 *    size X may require up to X-1 WQEBBs of padding, which makes the
+	 *    stop room of X-1 + X.
+	 * WQE size is also limited by the hardware limit.
+	 */
+
+	if (__builtin_constant_p(wqe_size))
+		BUILD_BUG_ON(wqe_size > MLX5_SEND_WQE_MAX_WQEBBS);
+	else
+		WARN_ON_ONCE(wqe_size > MLX5_SEND_WQE_MAX_WQEBBS);
+
+	return wqe_size * 2 - 1;
 }
 
 #endif

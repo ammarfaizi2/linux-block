@@ -672,26 +672,6 @@ int mlx5_core_disable_hca(struct mlx5_core_dev *dev, u16 func_id)
 	return mlx5_cmd_exec_in(dev, disable_hca, in);
 }
 
-u64 mlx5_read_internal_timer(struct mlx5_core_dev *dev,
-			     struct ptp_system_timestamp *sts)
-{
-	u32 timer_h, timer_h1, timer_l;
-
-	timer_h = ioread32be(&dev->iseg->internal_timer_h);
-	ptp_read_system_prets(sts);
-	timer_l = ioread32be(&dev->iseg->internal_timer_l);
-	ptp_read_system_postts(sts);
-	timer_h1 = ioread32be(&dev->iseg->internal_timer_h);
-	if (timer_h != timer_h1) {
-		/* wrap around */
-		ptp_read_system_prets(sts);
-		timer_l = ioread32be(&dev->iseg->internal_timer_l);
-		ptp_read_system_postts(sts);
-	}
-
-	return (u64)timer_l | (u64)timer_h1 << 32;
-}
-
 static int mlx5_core_set_issi(struct mlx5_core_dev *dev)
 {
 	u32 query_out[MLX5_ST_SZ_DW(query_issi_out)] = {};
@@ -966,6 +946,8 @@ static int mlx5_function_setup(struct mlx5_core_dev *dev, bool boot)
 		goto err_cmd_cleanup;
 	}
 
+	mlx5_cmd_set_state(dev, MLX5_CMDIF_STATE_UP);
+
 	err = mlx5_core_enable_hca(dev, 0);
 	if (err) {
 		mlx5_core_err(dev, "enable hca failed\n");
@@ -1027,6 +1009,7 @@ reclaim_boot_pages:
 err_disable_hca:
 	mlx5_core_disable_hca(dev, 0);
 err_cmd_cleanup:
+	mlx5_cmd_set_state(dev, MLX5_CMDIF_STATE_DOWN);
 	mlx5_cmd_cleanup(dev);
 
 	return err;
@@ -1044,6 +1027,7 @@ static int mlx5_function_teardown(struct mlx5_core_dev *dev, bool boot)
 	}
 	mlx5_reclaim_startup_pages(dev);
 	mlx5_core_disable_hca(dev, 0);
+	mlx5_cmd_set_state(dev, MLX5_CMDIF_STATE_DOWN);
 	mlx5_cmd_cleanup(dev);
 
 	return 0;
@@ -1191,7 +1175,7 @@ int mlx5_load_one(struct mlx5_core_dev *dev, bool boot)
 
 	err = mlx5_function_setup(dev, boot);
 	if (err)
-		goto out;
+		goto err_function;
 
 	if (boot) {
 		err = mlx5_init_once(dev);
@@ -1217,10 +1201,9 @@ int mlx5_load_one(struct mlx5_core_dev *dev, bool boot)
 		mlx5_register_device(dev);
 
 	set_bit(MLX5_INTERFACE_STATE_UP, &dev->intf_state);
-out:
-	mutex_unlock(&dev->intf_state_mutex);
 
-	return err;
+	mutex_unlock(&dev->intf_state_mutex);
+	return 0;
 
 err_devlink_reg:
 	mlx5_unload(dev);
@@ -1229,18 +1212,17 @@ err_load:
 		mlx5_cleanup_once(dev);
 function_teardown:
 	mlx5_function_teardown(dev, boot);
+err_function:
 	dev->state = MLX5_DEVICE_STATE_INTERNAL_ERROR;
+out:
 	mutex_unlock(&dev->intf_state_mutex);
-
 	return err;
 }
 
 void mlx5_unload_one(struct mlx5_core_dev *dev, bool cleanup)
 {
-	if (cleanup) {
+	if (cleanup)
 		mlx5_unregister_device(dev);
-		mlx5_drain_health_wq(dev);
-	}
 
 	mutex_lock(&dev->intf_state_mutex);
 	if (!test_bit(MLX5_INTERFACE_STATE_UP, &dev->intf_state)) {
@@ -1383,6 +1365,7 @@ static void remove_one(struct pci_dev *pdev)
 	mlx5_crdump_disable(dev);
 	mlx5_devlink_unregister(devlink);
 
+	mlx5_drain_health_wq(dev);
 	mlx5_unload_one(dev, true);
 	mlx5_pci_close(dev);
 	mlx5_mdev_uninit(dev);

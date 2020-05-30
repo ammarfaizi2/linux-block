@@ -372,14 +372,15 @@ static void hinic_enable_rss(struct hinic_dev *nic_dev)
 		netif_err(nic_dev, drv, netdev, "Failed to init rss\n");
 }
 
-static int hinic_open(struct net_device *netdev)
+int hinic_open(struct net_device *netdev)
 {
 	struct hinic_dev *nic_dev = netdev_priv(netdev);
 	enum hinic_port_link_state link_state;
 	int err, ret;
 
 	if (!(nic_dev->flags & HINIC_INTF_UP)) {
-		err = hinic_hwdev_ifup(nic_dev->hwdev);
+		err = hinic_hwdev_ifup(nic_dev->hwdev, nic_dev->sq_depth,
+				       nic_dev->rq_depth);
 		if (err) {
 			netif_err(nic_dev, drv, netdev,
 				  "Failed - HW interface up\n");
@@ -426,10 +427,6 @@ static int hinic_open(struct net_device *netdev)
 			  "Failed to set func port state\n");
 		goto err_func_port_state;
 	}
-
-	if (!HINIC_IS_VF(nic_dev->hwdev->hwif))
-		/* Wait up to 3 sec between port enable to link state */
-		msleep(3000);
 
 	down(&nic_dev->mgmt_lock);
 
@@ -487,11 +484,10 @@ err_create_txqs:
 	return err;
 }
 
-static int hinic_close(struct net_device *netdev)
+int hinic_close(struct net_device *netdev)
 {
 	struct hinic_dev *nic_dev = netdev_priv(netdev);
 	unsigned int flags;
-	int err;
 
 	down(&nic_dev->mgmt_lock);
 
@@ -508,20 +504,9 @@ static int hinic_close(struct net_device *netdev)
 	if (!HINIC_IS_VF(nic_dev->hwdev->hwif))
 		hinic_notify_all_vfs_link_changed(nic_dev->hwdev, 0);
 
-	err = hinic_port_set_func_state(nic_dev, HINIC_FUNC_PORT_DISABLE);
-	if (err) {
-		netif_err(nic_dev, drv, netdev,
-			  "Failed to set func port state\n");
-		nic_dev->flags |= (flags & HINIC_INTF_UP);
-		return err;
-	}
+	hinic_port_set_state(nic_dev, HINIC_PORT_DISABLE);
 
-	err = hinic_port_set_state(nic_dev, HINIC_PORT_DISABLE);
-	if (err) {
-		netif_err(nic_dev, drv, netdev, "Failed to set port state\n");
-		nic_dev->flags |= (flags & HINIC_INTF_UP);
-		return err;
-	}
+	hinic_port_set_func_state(nic_dev, HINIC_FUNC_PORT_DISABLE);
 
 	if (nic_dev->flags & HINIC_RSS_ENABLE) {
 		hinic_rss_deinit(nic_dev);
@@ -766,10 +751,12 @@ static void hinic_set_rx_mode(struct net_device *netdev)
 		  HINIC_RX_MODE_MC |
 		  HINIC_RX_MODE_BC;
 
-	if (netdev->flags & IFF_PROMISC)
-		rx_mode |= HINIC_RX_MODE_PROMISC;
-	else if (netdev->flags & IFF_ALLMULTI)
+	if (netdev->flags & IFF_PROMISC) {
+		if (!HINIC_IS_VF(nic_dev->hwdev->hwif))
+			rx_mode |= HINIC_RX_MODE_PROMISC;
+	} else if (netdev->flags & IFF_ALLMULTI) {
 		rx_mode |= HINIC_RX_MODE_MC_ALL;
+	}
 
 	rx_mode_work->rx_mode = rx_mode;
 
@@ -868,6 +855,9 @@ static const struct net_device_ops hinic_netdev_ops = {
 	.ndo_set_vf_vlan = hinic_ndo_set_vf_vlan,
 	.ndo_get_vf_config = hinic_ndo_get_vf_config,
 	.ndo_set_vf_trust = hinic_ndo_set_vf_trust,
+	.ndo_set_vf_rate = hinic_ndo_set_vf_bw,
+	.ndo_set_vf_spoofchk = hinic_ndo_set_vf_spoofchk,
+	.ndo_set_vf_link_state = hinic_ndo_set_vf_link_state,
 };
 
 static const struct net_device_ops hinicvf_netdev_ops = {
@@ -1037,6 +1027,8 @@ static int nic_dev_init(struct pci_dev *pdev)
 	nic_dev->rxqs = NULL;
 	nic_dev->tx_weight = tx_weight;
 	nic_dev->rx_weight = rx_weight;
+	nic_dev->sq_depth = HINIC_SQ_DEPTH;
+	nic_dev->rq_depth = HINIC_RQ_DEPTH;
 	nic_dev->sriov_info.hwdev = hwdev;
 	nic_dev->sriov_info.pdev = pdev;
 
@@ -1231,6 +1223,8 @@ static void hinic_remove(struct pci_dev *pdev)
 	}
 
 	unregister_netdev(netdev);
+
+	hinic_port_del_mac(nic_dev, netdev->dev_addr, 0);
 
 	hinic_hwdev_cb_unregister(nic_dev->hwdev,
 				  HINIC_MGMT_MSG_CMD_LINK_STATUS);
