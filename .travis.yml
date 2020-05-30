@@ -12,7 +12,7 @@ matrix:
   include:
     # Ubuntu 20.04 GCC 9.3.0
     - os:   linux
-      arch: ppc64le
+      arch: amd64
       env:  TARGET=kernel SUBARCH=ppc64le IMAGE=ubuntu-20.04 DEFCONFIG=ppc64le_defconfig
       name: "kernel: ppc64le (PPC_BOOK3S_64 && LITTLE_ENDIAN)"
     - os:   linux
