@@ -75,10 +75,6 @@ matrix:
       arch: amd64
       env:  TARGET=selftests SUBARCH=ppc64 IMAGE=ubuntu-20.04
       name: "selftests: ppc64"
-    - os:   linux
-      arch: amd64
-      env:  TARGET=docs SUBARCH=ppc64le IMAGE=docs-20.04
-      name: "docs"
 
 install:
   - docker pull linuxppc/build:$IMAGE-$(uname -m)
