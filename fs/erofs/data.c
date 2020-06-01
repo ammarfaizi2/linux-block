@@ -280,7 +280,7 @@ static int erofs_raw_access_readpage(struct file *file, struct page *page)
 	return 0;
 }
 
-static int erofs_raw_access_readpages(struct file *filp,
+static int erofs_raw_access_readpages(struct kiocb *kiocb,
 				      struct address_space *mapping,
 				      struct list_head *pages,
 				      unsigned int nr_pages)

@@ -153,7 +153,7 @@ static int nilfs_readpage(struct file *file, struct page *page)
  * @pages - the pages to be read
  * @nr_pages - number of pages to be read
  */
-static int nilfs_readpages(struct file *file, struct address_space *mapping,
+static int nilfs_readpages(struct kiocb *kiocb, struct address_space *mapping,
 			   struct list_head *pages, unsigned int nr_pages)
 {
 	return mpage_readpages(mapping, pages, nr_pages, nilfs_get_block);

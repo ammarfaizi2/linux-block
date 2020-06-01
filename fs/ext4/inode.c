@@ -3231,7 +3231,7 @@ static int ext4_readpage(struct file *file, struct page *page)
 }
 
 static int
-ext4_readpages(struct file *file, struct address_space *mapping,
+ext4_readpages(struct kiocb *kiocb, struct address_space *mapping,
 		struct list_head *pages, unsigned nr_pages)
 {
 	struct inode *inode = mapping->host;

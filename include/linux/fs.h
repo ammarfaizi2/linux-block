@@ -381,7 +381,7 @@ struct address_space_operations {
 	 * Reads in the requested pages. Unlike ->readpage(), this is
 	 * PURELY used for read-ahead!.
 	 */
-	int (*readpages)(struct file *filp, struct address_space *mapping,
+	int (*readpages)(struct kiocb *kiocb, struct address_space *mapping,
 			struct list_head *pages, unsigned nr_pages);
 
 	int (*write_begin)(struct file *, struct address_space *mapping,

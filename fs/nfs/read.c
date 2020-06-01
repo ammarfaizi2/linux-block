@@ -402,9 +402,10 @@ out:
 	return error;
 }
 
-int nfs_readpages(struct file *filp, struct address_space *mapping,
+int nfs_readpages(struct kiocb *kiocb, struct address_space *mapping,
 		struct list_head *pages, unsigned nr_pages)
 {
+	struct file *filp = kiocb->ki_filp;
 	struct nfs_pageio_descriptor pgio;
 	struct nfs_pgio_mirror *pgm;
 	struct nfs_readdesc desc = {

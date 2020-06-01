@@ -95,9 +95,10 @@ static int v9fs_vfs_readpage(struct file *filp, struct page *page)
  *
  */
 
-static int v9fs_vfs_readpages(struct file *filp, struct address_space *mapping,
+static int v9fs_vfs_readpages(struct kiocb *kiocb, struct address_space *mapping,
 			     struct list_head *pages, unsigned nr_pages)
 {
+	struct file *filp = kiocb->ki_filp;
 	int ret = 0;
 	struct inode *inode;
 

@@ -99,7 +99,7 @@ static int qnx6_readpage(struct file *file, struct page *page)
 	return mpage_readpage(page, qnx6_get_block);
 }
 
-static int qnx6_readpages(struct file *file, struct address_space *mapping,
+static int qnx6_readpages(struct kiocb *kiocb, struct address_space *mapping,
 		   struct list_head *pages, unsigned nr_pages)
 {
 	return mpage_readpages(mapping, pages, nr_pages, qnx6_get_block);

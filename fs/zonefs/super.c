@@ -79,7 +79,7 @@ static int zonefs_readpage(struct file *unused, struct page *page)
 	return iomap_readpage(page, &zonefs_iomap_ops);
 }
 
-static int zonefs_readpages(struct file *unused, struct address_space *mapping,
+static int zonefs_readpages(struct kiocb *unused, struct address_space *mapping,
 			    struct list_head *pages, unsigned int nr_pages)
 {
 	return iomap_readpages(mapping, pages, nr_pages, &zonefs_iomap_ops);

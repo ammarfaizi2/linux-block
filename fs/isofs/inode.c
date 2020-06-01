@@ -1183,7 +1183,7 @@ static int isofs_readpage(struct file *file, struct page *page)
 	return mpage_readpage(page, isofs_get_block);
 }
 
-static int isofs_readpages(struct file *file, struct address_space *mapping,
+static int isofs_readpages(struct kiocb *kiocb, struct address_space *mapping,
 			struct list_head *pages, unsigned nr_pages)
 {
 	return mpage_readpages(mapping, pages, nr_pages, isofs_get_block);

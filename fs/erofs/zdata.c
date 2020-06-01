@@ -1305,7 +1305,7 @@ static bool should_decompress_synchronously(struct erofs_sb_info *sbi,
 	return nr <= sbi->max_sync_decompress_pages;
 }
 
-static int z_erofs_readpages(struct file *filp, struct address_space *mapping,
+static int z_erofs_readpages(struct kiocb *kiocb, struct address_space *mapping,
 			     struct list_head *pages, unsigned int nr_pages)
 {
 	struct inode *const inode = mapping->host;

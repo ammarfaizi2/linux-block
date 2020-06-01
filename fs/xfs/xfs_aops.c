@@ -623,7 +623,7 @@ xfs_vm_readpage(
 
 STATIC int
 xfs_vm_readpages(
-	struct file		*unused,
+	struct kiocb		*kiocb,
 	struct address_space	*mapping,
 	struct list_head	*pages,
 	unsigned		nr_pages)

@@ -594,7 +594,7 @@ int gfs2_internal_read(struct gfs2_inode *ip, char *buf, loff_t *pos,
  * 4. gfs2_block_map() is relied upon to set BH_Boundary in the right places.
  */
 
-static int gfs2_readpages(struct file *file, struct address_space *mapping,
+static int gfs2_readpages(struct kiocb *kiocb, struct address_space *mapping,
 			  struct list_head *pages, unsigned nr_pages)
 {
 	struct inode *inode = mapping->host;

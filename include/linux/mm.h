@@ -2604,18 +2604,18 @@ void task_dirty_inc(struct task_struct *tsk);
 /* readahead.c */
 #define VM_READAHEAD_PAGES	(SZ_128K / PAGE_SIZE)
 
-int force_page_cache_readahead(struct address_space *mapping, struct file *filp,
+int force_page_cache_readahead(struct address_space *mapping, struct kiocb *kiocb,
 			pgoff_t offset, unsigned long nr_to_read);
 
 void page_cache_sync_readahead(struct address_space *mapping,
 			       struct file_ra_state *ra,
-			       struct file *filp,
+			       struct file *file,
 			       pgoff_t offset,
 			       unsigned long size);
 
 void page_cache_async_readahead(struct address_space *mapping,
 				struct file_ra_state *ra,
-				struct file *filp,
+				struct file *file,
 				struct page *pg,
 				pgoff_t offset,
 				unsigned long size);

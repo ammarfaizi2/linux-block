@@ -1161,7 +1161,7 @@ failure:
 }
 
 static int
-reiserfs_readpages(struct file *file, struct address_space *mapping,
+reiserfs_readpages(struct kiocb *kiocb, struct address_space *mapping,
 		   struct list_head *pages, unsigned nr_pages)
 {
 	return mpage_readpages(mapping, pages, nr_pages, reiserfs_get_block);

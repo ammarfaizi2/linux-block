@@ -125,7 +125,7 @@ static int hpfs_writepage(struct page *page, struct writeback_control *wbc)
 	return block_write_full_page(page, hpfs_get_block, wbc);
 }
 
-static int hpfs_readpages(struct file *file, struct address_space *mapping,
+static int hpfs_readpages(struct kiocb *kiocb, struct address_space *mapping,
 			  struct list_head *pages, unsigned nr_pages)
 {
 	return mpage_readpages(mapping, pages, nr_pages, hpfs_get_block);

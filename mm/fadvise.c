@@ -92,7 +92,9 @@ int generic_fadvise(struct file *file, loff_t offset, loff_t len, int advice)
 		file->f_mode &= ~FMODE_RANDOM;
 		spin_unlock(&file->f_lock);
 		break;
-	case POSIX_FADV_WILLNEED:
+	case POSIX_FADV_WILLNEED: {
+		struct kiocb kiocb = { .ki_filp = file, };
+
 		/* First and last PARTIAL page! */
 		start_index = offset >> PAGE_SHIFT;
 		end_index = endbyte >> PAGE_SHIFT;
@@ -106,8 +108,9 @@ int generic_fadvise(struct file *file, loff_t offset, loff_t len, int advice)
 		 * Ignore return value because fadvise() shall return
 		 * success even if filesystem can't retrieve a hint,
 		 */
-		force_page_cache_readahead(mapping, file, start_index, nrpages);
+		force_page_cache_readahead(mapping, &kiocb, start_index, nrpages);
 		break;
+		}
 	case POSIX_FADV_NOREUSE:
 		break;
 	case POSIX_FADV_DONTNEED:

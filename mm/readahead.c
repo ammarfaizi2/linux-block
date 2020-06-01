@@ -113,7 +113,7 @@ int read_cache_pages(struct address_space *mapping, struct list_head *pages,
 
 EXPORT_SYMBOL(read_cache_pages);
 
-static int read_pages(struct address_space *mapping, struct file *filp,
+static int read_pages(struct address_space *mapping, struct kiocb *kiocb,
 		struct list_head *pages, unsigned int nr_pages, gfp_t gfp)
 {
 	struct blk_plug plug;
@@ -123,7 +123,7 @@ static int read_pages(struct address_space *mapping, struct file *filp,
 	blk_start_plug(&plug);
 
 	if (mapping->a_ops->readpages) {
-		ret = mapping->a_ops->readpages(filp, mapping, pages, nr_pages);
+		ret = mapping->a_ops->readpages(kiocb, mapping, pages, nr_pages);
 		/* Clean up the remaining pages */
 		put_pages_list(pages);
 		goto out;
@@ -133,7 +133,7 @@ static int read_pages(struct address_space *mapping, struct file *filp,
 		struct page *page = lru_to_page(pages);
 		list_del(&page->lru);
 		if (!add_to_page_cache_lru(page, mapping, page->index, gfp))
-			mapping->a_ops->readpage(filp, page);
+			mapping->a_ops->readpage(kiocb->ki_filp, page);
 		put_page(page);
 	}
 	ret = 0;
@@ -153,7 +153,7 @@ out:
  * Returns the number of pages requested, or the maximum amount of I/O allowed.
  */
 unsigned int __do_page_cache_readahead(struct address_space *mapping,
-		struct file *filp, pgoff_t offset, unsigned long nr_to_read,
+		struct kiocb *kiocb, pgoff_t offset, unsigned long nr_to_read,
 		unsigned long lookahead_size)
 {
 	struct inode *inode = mapping->host;
@@ -187,7 +187,7 @@ unsigned int __do_page_cache_readahead(struct address_space *mapping,
 			 * batch.
 			 */
 			if (nr_pages)
-				read_pages(mapping, filp, &page_pool, nr_pages,
+				read_pages(mapping, kiocb, &page_pool, nr_pages,
 						gfp_mask);
 			nr_pages = 0;
 			continue;
@@ -209,7 +209,7 @@ unsigned int __do_page_cache_readahead(struct address_space *mapping,
 	 * will then handle the error.
 	 */
 	if (nr_pages)
-		read_pages(mapping, filp, &page_pool, nr_pages, gfp_mask);
+		read_pages(mapping, kiocb, &page_pool, nr_pages, gfp_mask);
 	BUG_ON(!list_empty(&page_pool));
 out:
 	return nr_pages;
@@ -219,11 +219,12 @@ out:
  * Chunk the readahead into 2 megabyte units, so that we don't pin too much
  * memory at once.
  */
-int force_page_cache_readahead(struct address_space *mapping, struct file *filp,
-			       pgoff_t offset, unsigned long nr_to_read)
+int force_page_cache_readahead(struct address_space *mapping,
+			       struct kiocb *kiocb, pgoff_t offset,
+			       unsigned long nr_to_read)
 {
 	struct backing_dev_info *bdi = inode_to_bdi(mapping->host);
-	struct file_ra_state *ra = &filp->f_ra;
+	struct file_ra_state *ra = &kiocb->ki_filp->f_ra;
 	unsigned long max_pages;
 
 	if (unlikely(!mapping->a_ops->readpage && !mapping->a_ops->readpages))
@@ -240,7 +241,7 @@ int force_page_cache_readahead(struct address_space *mapping, struct file *filp,
 
 		if (this_chunk > nr_to_read)
 			this_chunk = nr_to_read;
-		__do_page_cache_readahead(mapping, filp, offset, this_chunk, 0);
+		__do_page_cache_readahead(mapping, kiocb, offset, this_chunk, 0);
 
 		offset += this_chunk;
 		nr_to_read -= this_chunk;
@@ -380,7 +381,7 @@ static int try_context_readahead(struct address_space *mapping,
  */
 static unsigned long
 ondemand_readahead(struct address_space *mapping,
-		   struct file_ra_state *ra, struct file *filp,
+		   struct file_ra_state *ra, struct kiocb *kiocb,
 		   bool hit_readahead_marker, pgoff_t offset,
 		   unsigned long req_size)
 {
@@ -464,7 +465,7 @@ ondemand_readahead(struct address_space *mapping,
 	 * standalone, small random read
 	 * Read as is, and do not pollute the readahead state.
 	 */
-	return __do_page_cache_readahead(mapping, filp, offset, req_size, 0);
+	return __do_page_cache_readahead(mapping, kiocb, offset, req_size, 0);
 
 initial_readahead:
 	ra->start = offset;
@@ -489,14 +490,14 @@ readit:
 		}
 	}
 
-	return ra_submit(ra, mapping, filp);
+	return ra_submit(ra, mapping, kiocb);
 }
 
 /**
  * page_cache_sync_readahead - generic file readahead
  * @mapping: address_space which holds the pagecache and I/O vectors
  * @ra: file_ra_state which holds the readahead state
- * @filp: passed on to ->readpage() and ->readpages()
+ * @kiocb: passed on to ->readpage() and ->readpages()
  * @offset: start offset into @mapping, in pagecache page-sized units
  * @req_size: hint: total size of the read which the caller is performing in
  *            pagecache pages
@@ -510,6 +511,8 @@ void page_cache_sync_readahead(struct address_space *mapping,
 			       struct file_ra_state *ra, struct file *filp,
 			       pgoff_t offset, unsigned long req_size)
 {
+	struct kiocb kiocb = { .ki_filp = filp, };
+
 	/* no read-ahead */
 	if (!ra->ra_pages)
 		return;
@@ -519,12 +522,12 @@ void page_cache_sync_readahead(struct address_space *mapping,
 
 	/* be dumb */
 	if (filp && (filp->f_mode & FMODE_RANDOM)) {
-		force_page_cache_readahead(mapping, filp, offset, req_size);
+		force_page_cache_readahead(mapping, &kiocb, offset, req_size);
 		return;
 	}
 
 	/* do read-ahead */
-	ondemand_readahead(mapping, ra, filp, false, offset, req_size);
+	ondemand_readahead(mapping, ra, &kiocb, false, offset, req_size);
 }
 EXPORT_SYMBOL_GPL(page_cache_sync_readahead);
 
@@ -549,6 +552,8 @@ page_cache_async_readahead(struct address_space *mapping,
 			   struct page *page, pgoff_t offset,
 			   unsigned long req_size)
 {
+	struct kiocb kiocb = { .ki_filp = filp, };
+
 	/* no read-ahead */
 	if (!ra->ra_pages)
 		return;
@@ -571,7 +576,7 @@ page_cache_async_readahead(struct address_space *mapping,
 		return;
 
 	/* do read-ahead */
-	ondemand_readahead(mapping, ra, filp, true, offset, req_size);
+	ondemand_readahead(mapping, ra, &kiocb, true, offset, req_size);
 }
 EXPORT_SYMBOL_GPL(page_cache_async_readahead);
 

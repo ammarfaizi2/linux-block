@@ -962,7 +962,7 @@ static int fuse_readpages_fill(void *_data, struct page *page)
 	return 0;
 }
 
-static int fuse_readpages(struct file *file, struct address_space *mapping,
+static int fuse_readpages(struct kiocb *kiocb, struct address_space *mapping,
 			  struct list_head *pages, unsigned nr_pages)
 {
 	struct inode *inode = mapping->host;
@@ -974,7 +974,7 @@ static int fuse_readpages(struct file *file, struct address_space *mapping,
 	if (is_bad_inode(inode))
 		goto out;
 
-	data.file = file;
+	data.file = kiocb->ki_filp;
 	data.inode = inode;
 	data.nr_pages = nr_pages;
 	data.max_pages = min_t(unsigned int, nr_pages, fc->max_pages);
@@ -987,7 +987,7 @@ static int fuse_readpages(struct file *file, struct address_space *mapping,
 	err = read_cache_pages(mapping, pages, fuse_readpages_fill, &data);
 	if (!err) {
 		if (data.ia->ap.num_pages)
-			fuse_send_readpages(data.ia, file);
+			fuse_send_readpages(data.ia, kiocb->ki_filp);
 		else
 			fuse_io_free(data.ia);
 	}

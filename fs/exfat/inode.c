@@ -372,7 +372,7 @@ static int exfat_readpage(struct file *file, struct page *page)
 	return mpage_readpage(page, exfat_get_block);
 }
 
-static int exfat_readpages(struct file *file, struct address_space *mapping,
+static int exfat_readpages(struct kiocb *kiocb, struct address_space *mapping,
 		struct list_head *pages, unsigned int nr_pages)
 {
 	return mpage_readpages(mapping, pages, nr_pages, exfat_get_block);

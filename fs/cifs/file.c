@@ -4344,11 +4344,12 @@ readpages_get_pages(struct address_space *mapping, struct list_head *page_list,
 	return rc;
 }
 
-static int cifs_readpages(struct file *file, struct address_space *mapping,
+static int cifs_readpages(struct kiocb *kiocb, struct address_space *mapping,
 	struct list_head *page_list, unsigned num_pages)
 {
 	int rc;
 	struct list_head tmplist;
+	struct file *file = kiocb->ki_filp;
 	struct cifsFileInfo *open_file = file->private_data;
 	struct cifs_sb_info *cifs_sb = CIFS_FILE_SB(file);
 	struct TCP_Server_Info *server;

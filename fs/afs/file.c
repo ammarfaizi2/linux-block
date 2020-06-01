@@ -22,7 +22,7 @@ static void afs_invalidatepage(struct page *page, unsigned int offset,
 			       unsigned int length);
 static int afs_releasepage(struct page *page, gfp_t gfp_flags);
 
-static int afs_readpages(struct file *filp, struct address_space *mapping,
+static int afs_readpages(struct kiocb *kiocb, struct address_space *mapping,
 			 struct list_head *pages, unsigned nr_pages);
 
 const struct file_operations afs_file_operations = {
@@ -538,10 +538,10 @@ error:
 /*
  * read a set of pages
  */
-static int afs_readpages(struct file *file, struct address_space *mapping,
+static int afs_readpages(struct kiocb *kiocb, struct address_space *mapping,
 			 struct list_head *pages, unsigned nr_pages)
 {
-	struct key *key = afs_file_key(file);
+	struct key *key = afs_file_key(kiocb->ki_filp);
 	struct afs_vnode *vnode;
 	int ret = 0;
 
@@ -589,7 +589,7 @@ static int afs_readpages(struct file *file, struct address_space *mapping,
 	}
 
 	while (!list_empty(pages)) {
-		ret = afs_readpages_one(file, mapping, pages);
+		ret = afs_readpages_one(kiocb->ki_filp, mapping, pages);
 		if (ret < 0)
 			break;
 	}

@@ -2304,7 +2304,7 @@ static int f2fs_read_data_page(struct file *file, struct page *page)
 	return ret;
 }
 
-static int f2fs_read_data_pages(struct file *file,
+static int f2fs_read_data_pages(struct kiocb *kiocb,
 			struct address_space *mapping,
 			struct list_head *pages, unsigned nr_pages)
 {

@@ -477,9 +477,10 @@ out:
  * Read multiple pages.  Leave pages we don't read + unlock in page_list;
  * the caller (VM) cleans them up.
  */
-static int ceph_readpages(struct file *file, struct address_space *mapping,
+static int ceph_readpages(struct kiocb *kiocb, struct address_space *mapping,
 			  struct list_head *page_list, unsigned nr_pages)
 {
+	struct file *file = kiocb->ki_filp;
 	struct inode *inode = file_inode(file);
 	struct ceph_fs_client *fsc = ceph_inode_to_client(inode);
 	struct ceph_file_info *fi = file->private_data;

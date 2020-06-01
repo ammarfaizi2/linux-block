@@ -350,7 +350,7 @@ out:
  * grow out to a tree. If need be, detecting boundary extents could
  * trivially be added in a future version of ocfs2_get_block().
  */
-static int ocfs2_readpages(struct file *filp, struct address_space *mapping,
+static int ocfs2_readpages(struct kiocb *kiocb, struct address_space *mapping,
 			   struct list_head *pages, unsigned nr_pages)
 {
 	int ret, err = -EIO;
