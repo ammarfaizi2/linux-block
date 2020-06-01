@@ -63,6 +63,16 @@ static inline unsigned long ra_submit(struct file_ra_state *ra,
 					ra->start, ra->size, ra->async_size);
 }
 
+void __page_cache_sync_readahead(struct address_space *mapping,
+				 struct file_ra_state *ra,
+				 struct kiocb *kiocb,  pgoff_t offset,
+				 unsigned long req_size);
+
+void __page_cache_async_readahead(struct address_space *mapping,
+				  struct file_ra_state *ra, struct kiocb *kiocb,
+				  struct page *page, pgoff_t offset,
+				  unsigned long req_size);
+
 /**
  * page_evictable - test whether a page is evictable
  * @page: the page to test

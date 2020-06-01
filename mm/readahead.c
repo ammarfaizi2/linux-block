@@ -493,6 +493,29 @@ readit:
 	return ra_submit(ra, mapping, kiocb);
 }
 
+void __page_cache_sync_readahead(struct address_space *mapping,
+				 struct file_ra_state *ra, struct kiocb *kiocb,
+				 pgoff_t offset, unsigned long req_size)
+{
+	struct file *filp = kiocb->ki_filp;
+
+	/* no read-ahead */
+	if (!ra->ra_pages)
+		return;
+
+	if (blk_cgroup_congested())
+		return;
+
+	/* be dumb */
+	if (filp && (filp->f_mode & FMODE_RANDOM)) {
+		force_page_cache_readahead(mapping, kiocb, offset, req_size);
+		return;
+	}
+
+	/* do read-ahead */
+	ondemand_readahead(mapping, ra, kiocb, false, offset, req_size);
+}
+
 /**
  * page_cache_sync_readahead - generic file readahead
  * @mapping: address_space which holds the pagecache and I/O vectors
@@ -513,23 +536,40 @@ void page_cache_sync_readahead(struct address_space *mapping,
 {
 	struct kiocb kiocb = { .ki_filp = filp, };
 
+	__page_cache_sync_readahead(mapping, ra, &kiocb, offset, req_size);
+}
+EXPORT_SYMBOL_GPL(page_cache_sync_readahead);
+
+void
+__page_cache_async_readahead(struct address_space *mapping,
+			     struct file_ra_state *ra, struct kiocb *kiocb,
+			     struct page *page, pgoff_t offset,
+			     unsigned long req_size)
+{
 	/* no read-ahead */
 	if (!ra->ra_pages)
+		return;
+
+	/*
+	 * Same bit is used for PG_readahead and PG_reclaim.
+	 */
+	if (PageWriteback(page))
+		return;
+
+	ClearPageReadahead(page);
+
+	/*
+	 * Defer asynchronous read-ahead on IO congestion.
+	 */
+	if (inode_read_congested(mapping->host))
 		return;
 
 	if (blk_cgroup_congested())
 		return;
 
-	/* be dumb */
-	if (filp && (filp->f_mode & FMODE_RANDOM)) {
-		force_page_cache_readahead(mapping, &kiocb, offset, req_size);
-		return;
-	}
-
 	/* do read-ahead */
-	ondemand_readahead(mapping, ra, &kiocb, false, offset, req_size);
+	ondemand_readahead(mapping, ra, kiocb, true, offset, req_size);
 }
-EXPORT_SYMBOL_GPL(page_cache_sync_readahead);
 
 /**
  * page_cache_async_readahead - file readahead for marked pages
@@ -554,29 +594,8 @@ page_cache_async_readahead(struct address_space *mapping,
 {
 	struct kiocb kiocb = { .ki_filp = filp, };
 
-	/* no read-ahead */
-	if (!ra->ra_pages)
-		return;
-
-	/*
-	 * Same bit is used for PG_readahead and PG_reclaim.
-	 */
-	if (PageWriteback(page))
-		return;
-
-	ClearPageReadahead(page);
-
-	/*
-	 * Defer asynchronous read-ahead on IO congestion.
-	 */
-	if (inode_read_congested(mapping->host))
-		return;
-
-	if (blk_cgroup_congested())
-		return;
-
-	/* do read-ahead */
-	ondemand_readahead(mapping, ra, &kiocb, true, offset, req_size);
+	__page_cache_async_readahead(mapping, ra, &kiocb, page, offset,
+					req_size);
 }
 EXPORT_SYMBOL_GPL(page_cache_async_readahead);
 
