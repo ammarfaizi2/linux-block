@@ -138,6 +138,7 @@ struct mpage_readpage_args {
 	struct page *page;
 	unsigned int nr_pages;
 	bool is_readahead;
+	bool nowait;
 	sector_t last_block_in_bio;
 	struct buffer_head map_bh;
 	unsigned long first_logical_block;
@@ -182,6 +183,8 @@ static struct bio *do_mpage_readpage(struct mpage_readpage_args *args)
 		op_flags = 0;
 		gfp = mapping_gfp_constraint(page->mapping, GFP_KERNEL);
 	}
+	if (args->nowait)
+		op_flags |= REQ_NOWAIT;
 
 	if (page_has_buffers(page))
 		goto confused;
@@ -339,6 +342,7 @@ confused:
 
 /**
  * mpage_readpages - populate an address space with some pages & start reads against them
+ * @kiocb: the kiocb related to the IO
  * @mapping: the address_space
  * @pages: The address of a list_head which contains the target pages.  These
  *   pages have their ->index populated and are otherwise uninitialised.
@@ -382,12 +386,14 @@ confused:
  * This all causes the disk requests to be issued in the correct order.
  */
 int
-mpage_readpages(struct address_space *mapping, struct list_head *pages,
-				unsigned nr_pages, get_block_t get_block)
+mpage_readpages(struct kiocb *kiocb, struct address_space *mapping,
+		struct list_head *pages, unsigned nr_pages,
+		get_block_t get_block)
 {
 	struct mpage_readpage_args args = {
 		.get_block = get_block,
 		.is_readahead = true,
+		.nowait = kiocb->ki_flags & IOCB_NOWAIT,
 	};
 	unsigned page_idx;
 
@@ -406,8 +412,12 @@ mpage_readpages(struct address_space *mapping, struct list_head *pages,
 		put_page(page);
 	}
 	BUG_ON(!list_empty(pages));
-	if (args.bio)
-		mpage_bio_submit(REQ_OP_READ, REQ_RAHEAD, args.bio);
+	if (args.bio) {
+		int op = REQ_RAHEAD;
+		if (args.nowait)
+			op |= REQ_NOWAIT;
+		mpage_bio_submit(REQ_OP_READ, op, args.bio);
+	}
 	return 0;
 }
 EXPORT_SYMBOL(mpage_readpages);

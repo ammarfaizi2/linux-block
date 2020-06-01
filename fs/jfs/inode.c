@@ -299,7 +299,7 @@ static int jfs_readpage(struct file *file, struct page *page)
 static int jfs_readpages(struct kiocb *kiocb, struct address_space *mapping,
 		struct list_head *pages, unsigned nr_pages)
 {
-	return mpage_readpages(mapping, pages, nr_pages, jfs_get_block);
+	return mpage_readpages(kiocb, mapping, pages, nr_pages, jfs_get_block);
 }
 
 static void jfs_write_failed(struct address_space *mapping, loff_t to)

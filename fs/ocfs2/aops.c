@@ -388,7 +388,7 @@ static int ocfs2_readpages(struct kiocb *kiocb, struct address_space *mapping,
 	if (start >= i_size_read(inode))
 		goto out_unlock;
 
-	err = mpage_readpages(mapping, pages, nr_pages, ocfs2_get_block);
+	err = mpage_readpages(kiocb, mapping, pages, nr_pages, ocfs2_get_block);
 
 out_unlock:
 	up_read(&oi->ip_alloc_sem);

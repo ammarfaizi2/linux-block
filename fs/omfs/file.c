@@ -292,7 +292,7 @@ static int omfs_readpage(struct file *file, struct page *page)
 static int omfs_readpages(struct kiocb *kiocb, struct address_space *mapping,
 		struct list_head *pages, unsigned nr_pages)
 {
-	return mpage_readpages(mapping, pages, nr_pages, omfs_get_block);
+	return mpage_readpages(kiocb, mapping, pages, nr_pages, omfs_get_block);
 }
 
 static int omfs_writepage(struct page *page, struct writeback_control *wbc)

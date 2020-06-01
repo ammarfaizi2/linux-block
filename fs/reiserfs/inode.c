@@ -1164,7 +1164,7 @@ static int
 reiserfs_readpages(struct kiocb *kiocb, struct address_space *mapping,
 		   struct list_head *pages, unsigned nr_pages)
 {
-	return mpage_readpages(mapping, pages, nr_pages, reiserfs_get_block);
+	return mpage_readpages(kiocb, mapping, pages, nr_pages, reiserfs_get_block);
 }
 
 /*

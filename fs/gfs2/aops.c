@@ -608,7 +608,7 @@ static int gfs2_readpages(struct kiocb *kiocb, struct address_space *mapping,
 	if (unlikely(ret))
 		goto out_uninit;
 	if (!gfs2_is_stuffed(ip))
-		ret = mpage_readpages(mapping, pages, nr_pages, gfs2_block_map);
+		ret = mpage_readpages(kiocb, mapping, pages, nr_pages, gfs2_block_map);
 	gfs2_glock_dq(&gh);
 out_uninit:
 	gfs2_holder_uninit(&gh);

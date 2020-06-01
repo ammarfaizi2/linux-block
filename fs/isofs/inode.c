@@ -1186,7 +1186,7 @@ static int isofs_readpage(struct file *file, struct page *page)
 static int isofs_readpages(struct kiocb *kiocb, struct address_space *mapping,
 			struct list_head *pages, unsigned nr_pages)
 {
-	return mpage_readpages(mapping, pages, nr_pages, isofs_get_block);
+	return mpage_readpages(kiocb, mapping, pages, nr_pages, isofs_get_block);
 }
 
 static sector_t _isofs_bmap(struct address_space *mapping, sector_t block)
