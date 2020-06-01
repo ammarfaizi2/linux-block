@@ -215,6 +215,7 @@ struct iomap_readpage_ctx {
 	struct page		*cur_page;
 	bool			cur_page_in_bio;
 	bool			is_readahead;
+	bool			nowait;
 	struct bio		*bio;
 	struct list_head	*pages;
 };
@@ -321,6 +322,8 @@ iomap_readpage_actor(struct inode *inode, loff_t pos, loff_t length, void *data,
 		ctx->bio->bi_opf = REQ_OP_READ;
 		if (ctx->is_readahead)
 			ctx->bio->bi_opf |= REQ_RAHEAD;
+		if (ctx->nowait)
+			ctx->bio->bi_opf |= REQ_NOWAIT;
 		ctx->bio->bi_iter.bi_sector = sector;
 		bio_set_dev(ctx->bio, iomap->bdev);
 		ctx->bio->bi_end_io = iomap_read_end_io;
@@ -432,12 +435,14 @@ iomap_readpages_actor(struct inode *inode, loff_t pos, loff_t length,
 }
 
 int
-iomap_readpages(struct address_space *mapping, struct list_head *pages,
-		unsigned nr_pages, const struct iomap_ops *ops)
+iomap_readpages(struct address_space *mapping, struct kiocb *kiocb,
+		struct list_head *pages, unsigned nr_pages,
+		const struct iomap_ops *ops)
 {
 	struct iomap_readpage_ctx ctx = {
 		.pages		= pages,
 		.is_readahead	= true,
+		.nowait		= kiocb->ki_flags & IOCB_NOWAIT,
 	};
 	loff_t pos = page_offset(list_entry(pages->prev, struct page, lru));
 	loff_t last = page_offset(list_entry(pages->next, struct page, lru));

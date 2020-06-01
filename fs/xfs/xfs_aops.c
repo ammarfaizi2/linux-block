@@ -628,7 +628,8 @@ xfs_vm_readpages(
 	struct list_head	*pages,
 	unsigned		nr_pages)
 {
-	return iomap_readpages(mapping, pages, nr_pages, &xfs_read_iomap_ops);
+	return iomap_readpages(mapping, kiocb, pages, nr_pages,
+				&xfs_read_iomap_ops);
 }
 
 static int
