@@ -2053,17 +2053,16 @@ find_page:
 
 		page = find_get_page(mapping, index);
 		if (!page) {
-			page_cache_sync_readahead(mapping,
-					ra, filp,
-					index, last_index - index);
+			__page_cache_sync_readahead(mapping, ra, iocb, index,
+							last_index - index);
 			page = find_get_page(mapping, index);
 			if (unlikely(page == NULL))
 				goto no_cached_page;
 		}
 		if (PageReadahead(page)) {
-			page_cache_async_readahead(mapping,
-					ra, filp, page,
-					index, last_index - index);
+			__page_cache_async_readahead(mapping, ra, iocb, page,
+							index,
+							last_index - index);
 		}
 		if (!PageUptodate(page)) {
 			/*
