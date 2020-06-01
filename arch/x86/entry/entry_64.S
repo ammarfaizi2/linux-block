@@ -968,41 +968,32 @@ SYM_CODE_START(asm_exc_nmi)
 	UNWIND_HINT_IRET_REGS
 
 	/*
-	 * We allow breakpoints in NMIs. If a breakpoint occurs, then
-	 * the iretq it performs will take us out of NMI context.
-	 * This means that we can have nested NMIs where the next
-	 * NMI is using the top of the stack of the previous NMI. We
-	 * can't let it execute because the nested NMI will corrupt the
-	 * stack of the previous NMI. NMI handlers are not re-entrant
-	 * anyway.
+	 * We allow various faults to nest inside NMIs. If a nested
+	 * entry of any sort occurs, then the IRET it performs will
+	 * clear the hardware NMI masking bit.  This means that we can
+	 * have nested NMIs where the next NMI is using the top of the
+	 * stack of the previous NMI. We can't let it call C code because
+	 * it will corrupt the outer NMI's stack.
 	 *
 	 * To handle this case we do the following:
-	 *  Check the a special location on the stack that contains
-	 *  a variable that is set when NMIs are executing.
-	 *  The interrupted task's stack is also checked to see if it
-	 *  is an NMI stack.
-	 *  If the variable is not set and the stack is not the NMI
-	 *  stack then:
-	 *    o Set the special variable on the stack
-	 *    o Copy the interrupt frame into an "outermost" location on the
-	 *      stack
-	 *    o Copy the interrupt frame into an "iret" location on the stack
-	 *    o Continue processing the NMI
-	 *  If the variable is set or the previous stack is the NMI stack:
-	 *    o Modify the "iret" location to jump to the repeat_nmi
-	 *    o return back to the first NMI
 	 *
-	 * Now on exit of the first NMI, we first clear the stack variable
-	 * The NMI stack will tell any nested NMIs at that point that it is
-	 * nested. Then we pop the stack normally with iret, and if there was
-	 * a nested NMI that updated the copy interrupt stack frame, a
-	 * jump will be made to the repeat_nmi code that will handle the second
-	 * NMI.
+	 * If an NMI came from user mode, then we know that it can't
+	 * be nested inside another NMI, and we switch to the thread
+	 * stack.  An NMI that nests inside an NMI from user mode can
+	 * safely call C code because the inner NMI uses the IST
+	 * stack, so the C NMI code handles this case.  We do this because
+	 * ESPFIX prevents an NMI from user mode from freeing its stack
+	 * and returning with a single instruction, so the NMI-from-kernel
+	 * trickery we do wouldn't be reliable.
 	 *
-	 * However, espfix prevents us from directly returning to userspace
-	 * with a single IRET instruction.  Similarly, IRET to user mode
-	 * can fault.  We therefore handle NMIs from user space like
-	 * other IST entries.
+	 * If an NMI came from kernel mode, we use a complicated scheme to
+	 * detect and handle nesting.  A second NMI that nests inside the
+	 * first one will do one of two things depending on the outer
+	 * NMI's state.  If it can tell that the outer NMI hasn't called
+	 * exc_nmi() yet, it does nothing -- we're about to handle the NMI
+	 * anyway.  Otherwise it carefully modifies the outer NMI's stack
+	 * so that the outer NMI's IRET will loop back and re-run the
+	 * NMI handler.  See below for the gory details.
 	 */
 
 	ASM_CLAC
