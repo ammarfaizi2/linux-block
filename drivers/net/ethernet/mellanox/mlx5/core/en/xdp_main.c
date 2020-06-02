@@ -31,19 +31,23 @@
 /* struct xdp_md_desc {
  *	u32 flow_mark;
  *	u32 hash32;
+ *	u16 vlan;
  * };
  */
-#define MLX5_MD_NUM_MMBRS 2
-static const char names_str[] = "\0xdp_md_desc\0flow_mark\0hash32\0";
+#define MLX5_MD_NUM_MMBRS 3
+static const char names_str[] = "\0xdp_md_desc\0flow_mark\0hash32\0vlan\0";
 
 /* Must match struct mlx5_md_desc */
 static const u32 mlx5_md_raw_types[] = {
 	/* #define u32 */
 	BTF_TYPE_INT_ENC(0, 0, 0, 32, 4),         /* type [1] */
-	/* struct md_desc { */                    /* type [2] */
-	BTF_STRUCT_ENC(1, MLX5_MD_NUM_MMBRS, MLX5_MD_NUM_MMBRS * 4),
+	/* #define u16 */
+	BTF_TYPE_INT_ENC(0, 0, 0, 16, 2),         /* type [2] */
+	/* struct md_desc { */                    /* type [3] */
+	BTF_STRUCT_ENC(1, MLX5_MD_NUM_MMBRS, 4 + 4 + 2),
 		BTF_MEMBER_ENC(13, 1, 0),    /* u32 flow_mark;    */
 		BTF_MEMBER_ENC(23, 1, 32),  /* u32 hash32;       */
+		BTF_MEMBER_ENC(30, 2, 64),  /* u16 vlan;         */
 	/* } */
 };
 
