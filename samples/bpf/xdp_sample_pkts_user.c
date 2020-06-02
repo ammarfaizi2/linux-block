@@ -108,7 +108,7 @@ static void print_bpf_output_md(void *ctx, int cpu, void *data, __u32 size)
 	} __packed *e = data;
 	int i;
 
-	printf("Flwo mark: 0x%x, hash32: 0x%x, Ethernet hdr: ", e->md.flow_mark, e->md.hash32);
+	printf("Flow mark: 0x%x, hash32: 0x%x, vlan=%d, Ethernet hdr: ", e->md.flow_mark, e->md.hash32, e->md.vlan);
 	for (i = 0; i < 14 && i < pktsize; i++)
 		printf("%02x ", e->pkt_data[i]);
 	printf("\n");
