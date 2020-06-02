@@ -1357,10 +1357,10 @@ SYM_CODE_START(entry_SYSENTER_compat)
 	pushq	%rbp			/* pt_regs->sp (stashed in bp) */
 
 	/*
-	 * Push flags.  This is nasty.  First, interrupts are currently
-	 * off, but we need pt_regs->flags to have IF set.  Second, even
-	 * if TF was set when SYSENTER started, it's clear by now.  We fix
-	 * that later using TIF_SINGLESTEP.
+	 * Push flags.  This is nasty: interrupts are currently off,
+	 * but we need pt_regs->flags to have IF set.  (Also, if TF was
+	 * set in userspace, it's still set and this entire code path
+	 * gets single-stepped.)
 	 */
 	pushfq				/* pt_regs->flags (except IF = 0) */
 	orl	$X86_EFLAGS_IF, (%rsp)	/* Fix saved flags */
