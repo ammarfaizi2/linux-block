@@ -19,6 +19,6 @@ obj-y				+= common.o
 obj-y				+= vdso/
 obj-y				+= vsyscall/
 
-obj-$(CONFIG_IA32_EMULATION)	+= entry_64_compat.o syscall_32.o
+obj-$(CONFIG_IA32_EMULATION)	+= syscall_32.o
 obj-$(CONFIG_X86_X32_ABI)	+= syscall_x32.o
 
