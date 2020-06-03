@@ -328,7 +328,6 @@ SYM_CODE_END(ret_from_fork)
 
 	.if \has_error_code == 1
 		movq	ORIG_RAX(%rsp), %rsi	/* get error code into 2nd argument*/
-		movq	$-1, ORIG_RAX(%rsp)	/* no syscall to restart */
 	.endif
 
 	call	\cfunc
@@ -352,7 +351,7 @@ SYM_CODE_START(\asmsym)
 	ASM_CLAC
 
 	.if \has_error_code == 0
-		pushq	$-1			/* ORIG_RAX: no syscall to restart */
+		pushq	$-1			/* ORIG_RAX: no error code
 	.endif
 
 	.if \vector == X86_TRAP_BP
@@ -418,7 +417,7 @@ SYM_CODE_START(\asmsym)
 	UNWIND_HINT_IRET_REGS
 	ASM_CLAC
 
-	pushq	$-1			/* ORIG_RAX: no syscall to restart */
+	pushq	$-1			/* ORIG_RAX: no error code */
 
 	/*
 	 * If the entry is from userspace, switch stacks and treat it as
@@ -468,7 +467,6 @@ SYM_CODE_START(\asmsym)
 
 	movq	%rsp, %rdi		/* pt_regs pointer into first argument */
 	movq	ORIG_RAX(%rsp), %rsi	/* get error code into 2nd argument*/
-	movq	$-1, ORIG_RAX(%rsp)	/* no syscall to restart */
 	call	\cfunc
 
 	jmp	paranoid_exit
@@ -1239,7 +1237,7 @@ end_repeat_nmi:
 	 * If this happens, then the inner NMI will change the "iret"
 	 * frame to point back to repeat_nmi.
 	 */
-	pushq	$-1				/* ORIG_RAX: no syscall to restart */
+	pushq	$-1				/* ORIG_RAX: no error code */
 
 	/*
 	 * Use paranoid_entry to handle SWAPGS, but no need to use paranoid_exit

@@ -38,6 +38,12 @@ extern const sys_call_ptr_t x32_sys_call_table[];
  */
 static inline int syscall_get_nr(struct task_struct *task, struct pt_regs *regs)
 {
+	int entry_type = regs_entry_type(regs);
+
+	if (entry_type < CS_ENTRY_FIRST_SYSCALL ||
+	    entry_type > CS_ENTRY_LAST_SYSCALL)
+		return -1;
+
 	return regs->orig_ax;
 }
 
