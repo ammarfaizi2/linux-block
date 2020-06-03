@@ -20,7 +20,8 @@ struct __call_single_data {
 	struct llist_node llist;
 	smp_call_func_t func;
 	void *info;
-	unsigned int flags;
+	unsigned short flags;
+	short cpu;
 };
 
 /* Use __aligned() to avoid to use 2 cache lines for 1 csd */
