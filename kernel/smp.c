@@ -20,6 +20,9 @@
 #include <linux/sched.h>
 #include <linux/sched/idle.h>
 #include <linux/hypervisor.h>
+#include <linux/sched/clock.h>
+#include <linux/nmi.h>
+#include <linux/sched/debug.h>
 
 #include "smpboot.h"
 
@@ -37,6 +40,8 @@ struct call_function_data {
 static DEFINE_PER_CPU_ALIGNED(struct call_function_data, cfd_data);
 
 static DEFINE_PER_CPU_SHARED_ALIGNED(struct llist_head, call_single_queue);
+
+static DEFINE_PER_CPU(call_single_data_t *, cur_csd);
 
 static void flush_smp_call_function_queue(bool warn_cpu_offline);
 
@@ -97,6 +102,9 @@ void __init call_function_init(void)
 	smpcfd_prepare_cpu(smp_processor_id());
 }
 
+#define CSD_LOCK_TIMEOUT (5 * 1000ULL)
+atomic_t csd_bug_count = ATOMIC_INIT(1);
+
 /*
  * csd_lock/csd_unlock used to serialize access to per-cpu csd resources
  *
@@ -106,7 +114,47 @@ void __init call_function_init(void)
  */
 static __always_inline void csd_lock_wait(call_single_data_t *csd)
 {
-	smp_cond_load_acquire(&csd->flags, !(VAL & CSD_FLAG_LOCK));
+	int bug_id = 0;
+	int cpu;
+	call_single_data_t *cpu_cur_csd;
+	u64 ts0, ts1, ts2, ts_delta;
+
+	ts1 = ts0 = sched_clock() / 1000 / 1000;
+	for (;;) {
+		unsigned long flags = READ_ONCE(csd->flags);
+
+		if (!(flags & CSD_FLAG_LOCK))
+			break;
+		ts2 = sched_clock() / 1000 / 1000;
+		ts_delta = ts2 - ts1;
+		if (unlikely(ts_delta > CSD_LOCK_TIMEOUT)) {
+			bug_id = atomic_inc_return(&csd_bug_count);
+			cpu = csd->cpu;
+			smp_mb(); // No stale cur_csd values!
+			cpu_cur_csd = per_cpu(cur_csd, cpu);
+			smp_mb(); // No refetching cur_csd values!
+			printk("csd: Detected non-responsive CSD lock (#%d) on CPU#%d, waiting %Ld.%03Ld secs for CPU#%02d %pf(%ps), currently %s.\n",
+			       bug_id, raw_smp_processor_id(),
+			       ts_delta/1000ULL, ts_delta % 1000ULL, cpu,
+			       csd->func, csd->info,
+			       !cpu_cur_csd ? "unresponsive"
+					: csd == cpu_cur_csd
+						? "handling this request"
+						: "handling prior request");
+			if (!trigger_single_cpu_backtrace(cpu))
+				dump_cpu_task(cpu);
+			if (!cpu_cur_csd) {
+				printk("csd: Re-sending CSD lock (#%d) IPI from CPU#%02d to CPU#%02d\n", bug_id, raw_smp_processor_id(), cpu);
+				arch_send_call_function_single_ipi(cpu);
+			}
+			dump_stack();
+			ts1 = ts2;
+		}
+		cpu_relax();
+	}
+	smp_acquire__after_ctrl_dep();
+	if (unlikely(bug_id))
+		printk("csd: CSD lock (#%d) got unstuck on CPU#%02d, CPU#%02d released the lock after all. Phew!\n", bug_id, raw_smp_processor_id(), cpu);
 }
 
 static __always_inline void csd_lock(call_single_data_t *csd)
@@ -151,7 +199,11 @@ static int generic_exec_single(int cpu, call_single_data_t *csd,
 		 */
 		csd_unlock(csd);
 		local_irq_save(flags);
+		__this_cpu_write(cur_csd, csd);
+		smp_mb(); // Update cur_csd before function call.
 		func(info);
+		smp_mb(); // NULL cur_csd after function call.
+		__this_cpu_write(cur_csd, NULL);
 		local_irq_restore(flags);
 		return 0;
 	}
@@ -164,6 +216,7 @@ static int generic_exec_single(int cpu, call_single_data_t *csd,
 
 	csd->func = func;
 	csd->info = info;
+	csd->cpu = cpu;
 
 	/*
 	 * The list addition should be visible before sending the IPI
@@ -239,6 +292,8 @@ static void flush_smp_call_function_queue(bool warn_cpu_offline)
 		smp_call_func_t func = csd->func;
 		void *info = csd->info;
 
+		__this_cpu_write(cur_csd, csd);
+		smp_mb(); // Update cur_csd before function call.
 		/* Do we wait until *after* callback? */
 		if (csd->flags & CSD_FLAG_SYNCHRONOUS) {
 			func(info);
@@ -247,6 +302,8 @@ static void flush_smp_call_function_queue(bool warn_cpu_offline)
 			csd_unlock(csd);
 			func(info);
 		}
+		smp_mb(); // NULL cur_csd after function call.
+		__this_cpu_write(cur_csd, NULL);
 	}
 
 	/*
@@ -469,6 +526,7 @@ static void smp_call_function_many_cond(const struct cpumask *mask,
 			csd->flags |= CSD_FLAG_SYNCHRONOUS;
 		csd->func = func;
 		csd->info = info;
+		csd->cpu = cpu;
 		if (llist_add(&csd->llist, &per_cpu(call_single_queue, cpu)))
 			__cpumask_set_cpu(cpu, cfd->cpumask_ipi);
 	}
