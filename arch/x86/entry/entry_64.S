@@ -38,6 +38,7 @@
 #include <asm/frame.h>
 #include <asm/trapnr.h>
 #include <asm/nospec-branch.h>
+#include <asm/ptrace.h>
 #include <linux/err.h>
 
 #include "calling.h"
@@ -104,7 +105,7 @@ SYM_CODE_START(entry_SYSCALL_64)
 	pushq	$__USER_DS				/* pt_regs->ss */
 	pushq	PER_CPU_VAR(cpu_tss_rw + TSS_sp2)	/* pt_regs->sp */
 	pushq	%r11					/* pt_regs->flags */
-	pushq	$__USER_CS				/* pt_regs->cs */
+	pushq	$(__USER_CS | CS_ENTRY_SYSCALL64)	/* pt_regs->cs */
 	pushq	%rcx					/* pt_regs->ip */
 SYM_INNER_LABEL(entry_SYSCALL_64_after_hwframe, SYM_L_GLOBAL)
 	pushq	%rax					/* pt_regs->orig_ax */
@@ -1364,7 +1365,7 @@ SYM_CODE_START(entry_SYSENTER_compat)
 	 */
 	pushfq				/* pt_regs->flags (except IF = 0) */
 	orl	$X86_EFLAGS_IF, (%rsp)	/* Fix saved flags */
-	pushq	$__USER32_CS		/* pt_regs->cs */
+	pushq	$(__USER32_CS | CS_ENTRY_SYSENTER)	/* pt_regs->cs */
 	pushq	$0			/* pt_regs->ip = 0 (placeholder) */
 	pushq	%rax			/* pt_regs->orig_ax */
 	pushq	%rdi			/* pt_regs->di */

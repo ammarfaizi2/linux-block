@@ -2,11 +2,12 @@
 #ifndef _ASM_X86_PTRACE_H
 #define _ASM_X86_PTRACE_H
 
+#ifndef __ASSEMBLY__
+
 #include <asm/segment.h>
 #include <asm/page_types.h>
 #include <uapi/asm/ptrace.h>
 
-#ifndef __ASSEMBLY__
 #ifdef __i386__
 
 struct pt_regs {
@@ -43,8 +44,15 @@ struct pt_regs {
 	/* On interrupt, this is the error code. */
 	unsigned long orig_ax;
 	unsigned long ip;
-	unsigned short cs;
-	unsigned short __csh;
+
+	union {
+		struct {
+			unsigned short cs;
+			unsigned short __csh;
+		};
+		unsigned long __cs32;
+	};
+
 	unsigned long flags;
 	unsigned long sp;
 	unsigned short ss;
@@ -81,7 +89,17 @@ struct pt_regs {
 	unsigned long orig_ax;
 /* Return frame for iretq */
 	unsigned long ip;
-	unsigned long cs;
+
+/* CS is split into three fields.  __cshh is unused. */
+	union {
+		struct {
+			unsigned short cs;
+			unsigned short __csh;
+		};
+		unsigned int __cs32;
+	};
+	unsigned int  __cshh;
+
 	unsigned long flags;
 	unsigned long sp;
 	unsigned long ss;
@@ -89,6 +107,40 @@ struct pt_regs {
 };
 
 #endif /* !__i386__ */
+
+#endif /* !__ASSEMBLY__ */
+
+/*
+ * We use __csh to store some extra state for the entry code.  The top few
+ * bits of __csh are reserved for the internal nefarious purposes of
+ * entry_32.S and entry_64.S and are different between the two variants.  The
+ * lower bits are defined here.
+ *
+ * SYSCALL64 and SYSCALL32 are different because the return code is different,
+ * and using ptrace to switch CS during SYSCALL64 and SYSCALL32 doesn't
+ * magically switch from one return path to the other.
+ *
+ * SYSENTER could come from 64-bit mode, and the CPU would ggive no indication
+ * that this has happened.
+ */
+
+#define CS_ENTRY_OTHER		(0 << 16)	/* not any of the types below */
+#define CS_ENTRY_SYSCALL64	(1 << 16)	/* SYSCALL from long mode */
+#define CS_ENTRY_SYSCALL32	(2 << 16)	/* SYSCALL from 32-bit/compat mode */
+#define CS_ENTRY_SYSENTER	(3 << 16)	/* SYSENTER, probably 32-bit */
+#define CS_ENTRY_INT80		(4 << 16)	/* INT $0x80 */
+
+#define CS_ENTRY_TYPE_MASK	(0x7 << 16)
+
+#define CS_ENTRY_FIRST_SYSCALL CS_ENTRY_SYSCALL64
+#define CS_ENTRY_LAST_SYSCALL CS_ENTRY_INT80
+
+#ifndef __ASSEMBLY__
+
+static __always_inline int regs_entry_type(const struct pt_regs *regs)
+{
+	return regs->__cs32 & CS_ENTRY_TYPE_MASK;
+}
 
 #ifdef CONFIG_PARAVIRT
 #include <asm/paravirt_types.h>

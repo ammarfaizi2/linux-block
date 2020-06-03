@@ -46,6 +46,7 @@
 #include <asm/frame.h>
 #include <asm/trapnr.h>
 #include <asm/nospec-branch.h>
+#include <asm/ptrace.h>
 
 #include "calling.h"
 
@@ -940,6 +941,13 @@ SYM_FUNC_START(entry_SYSENTER_32)
 	pushl	$0			/* pt_regs->ip = 0 (placeholder) */
 	pushl	%eax			/* pt_regs->orig_ax */
 	SAVE_ALL pt_regs_ax=$-ENOSYS	/* save rest, stack already switched */
+
+	/*
+	 * SAVE_ALL clobbers __csh, so write the entry type after SAVE_ALL.
+	 * It's not worth the added complexity fold this into the push and
+	 * save one cycle.
+	 */
+	orl	$CS_ENTRY_SYSENTER, PT_CS(%esp)
 
 	/*
 	 * SYSENTER doesn't filter flags, so we need to clear NT, AC

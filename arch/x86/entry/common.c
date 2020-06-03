@@ -350,6 +350,10 @@ __visible noinstr void do_syscall_64(unsigned long nr, struct pt_regs *regs)
 	instrumentation_begin();
 
 	local_irq_enable();
+
+	if (IS_ENABLED(CONFIG_DEBUG_ENTRY))
+		WARN_ON_ONCE(regs_entry_type(regs) != CS_ENTRY_SYSCALL64);
+
 	ti = current_thread_info();
 	if (READ_ONCE(ti->flags) & _TIF_WORK_SYSCALL_ENTRY)
 		nr = syscall_trace_enter(regs);
@@ -409,6 +413,8 @@ static void do_syscall_32_irqs_on(struct pt_regs *regs)
 /* Handles int $0x80 */
 __visible noinstr void do_int80_syscall_32(struct pt_regs *regs)
 {
+	regs->__cs32 |= CS_ENTRY_INT80;
+
 	enter_from_user_mode();
 	instrumentation_begin();
 
@@ -422,6 +428,12 @@ __visible noinstr void do_int80_syscall_32(struct pt_regs *regs)
 static bool __do_fast_syscall_32(struct pt_regs *regs)
 {
 	int res;
+
+	if (IS_ENABLED(CONFIG_DEBUG_ENTRY)) {
+		int entry_type = regs_entry_type(regs);
+		WARN_ON_ONCE(entry_type != CS_ENTRY_SYSCALL32 &&
+			     entry_type != CS_ENTRY_SYSENTER);
+	}
 
 	/* Fetch EBP from where the vDSO stashed it. */
 	if (IS_ENABLED(CONFIG_X86_64)) {

@@ -13,6 +13,7 @@
 #include <asm/asm-offsets.h>
 #include <asm/thread_info.h>
 #include <asm/asm.h>
+#include <asm/ptrace.h>
 
 #include <xen/interface/xen.h>
 
@@ -136,7 +137,7 @@ SYM_FUNC_START(xen_syscall_target)
 	 * report those values even though Xen will guess its own values.
 	 */
 	movq $__USER_DS, 4*8(%rsp)
-	movq $__USER_CS, 1*8(%rsp)
+	movq $(__USER_CS | CS_ENTRY_SYSCALL64), 1*8(%rsp)
 
 	jmp entry_SYSCALL_64_after_hwframe
 SYM_FUNC_END(xen_syscall_target)
@@ -154,7 +155,7 @@ SYM_FUNC_START(xen_syscall32_target)
 	 * report those values even though Xen will guess its own values.
 	 */
 	movq $__USER32_DS, 4*8(%rsp)
-	movq $__USER32_CS, 1*8(%rsp)
+	movq $(__USER32_CS | CS_ENTRY_SYSCALL32), 1*8(%rsp)
 
 	jmp entry_SYSCALL_compat_after_hwframe
 SYM_FUNC_END(xen_syscall32_target)
