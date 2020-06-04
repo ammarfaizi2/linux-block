@@ -939,7 +939,7 @@ static void insert_bpts(void)
 		}
 
 		patch_instruction(bp->instr, instr);
-		patch_instruction((void *)bp->instr + ppc_inst_len(instr),
+		patch_instruction(ppc_inst_next(bp->instr, &instr),
 				  ppc_inst(bpinstr));
 		if (bp->enabled & BP_CIABR)
 			continue;
@@ -3185,8 +3185,8 @@ static void show_task(struct task_struct *tsk)
 		(tsk->exit_state & EXIT_DEAD) ? 'E' :
 		(tsk->state & TASK_INTERRUPTIBLE) ? 'S' : '?';
 
-	printf("%px %016lx %6d %6d %c %2d %s\n", tsk,
-		tsk->thread.ksp,
+	printf("%16px %16lx %16px %6d %6d %c %2d %s\n", tsk,
+		tsk->thread.ksp, tsk->thread.regs,
 		tsk->pid, rcu_dereference(tsk->parent)->pid,
 		state, task_cpu(tsk),
 		tsk->comm);
@@ -3309,7 +3309,7 @@ static void show_tasks(void)
 	unsigned long tskv;
 	struct task_struct *tsk = NULL;
 
-	printf("     task_struct     ->thread.ksp    PID   PPID S  P CMD\n");
+	printf("     task_struct     ->thread.ksp    ->thread.regs    PID   PPID S  P CMD\n");
 
 	if (scanhex(&tskv))
 		tsk = (struct task_struct *)tskv;
