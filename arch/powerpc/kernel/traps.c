@@ -441,18 +441,12 @@ nonrecoverable:
 void system_reset_exception(struct pt_regs *regs)
 {
 	unsigned long hsrr0, hsrr1;
-	bool nested = in_nmi();
 	bool saved_hsrrs = false;
 	u8 ftrace_enabled = this_cpu_get_ftrace_enabled();
 
 	this_cpu_set_ftrace_enabled(0);
 
-	/*
-	 * Avoid crashes in case of nested NMI exceptions. Recoverability
-	 * is determined by RI and in_nmi
-	 */
-	if (!nested)
-		nmi_enter();
+	nmi_enter();
 
 	/*
 	 * System reset can interrupt code where HSRRs are live and MSR[RI]=1.
@@ -524,8 +518,7 @@ out:
 		mtspr(SPRN_HSRR1, hsrr1);
 	}
 
-	if (!nested)
-		nmi_exit();
+	nmi_exit();
 
 	this_cpu_set_ftrace_enabled(ftrace_enabled);
 
@@ -834,20 +827,14 @@ int machine_check_generic(struct pt_regs *regs)
 void machine_check_exception(struct pt_regs *regs)
 {
 	int recover = 0;
-	bool nested;
 
 	/*
 	 * BOOK3S_64 does not call this handler as a non-maskable interrupt
 	 * (it uses its own early real-mode handler to handle the MCE proper
 	 * and then raises irq_work to call this handler when interrupts are
-	 * enabled). Set nested = true for this case, which just makes it avoid
-	 * the nmi_enter/exit.
+	 * enabled).
 	 */
-	if (IS_ENABLED(CONFIG_PPC_BOOK3S_64) || in_nmi())
-		nested = true;
-	else
-		nested = false;
-	if (!nested)
+	if (!IS_ENABLED(CONFIG_PPC_BOOK3S_64))
 		nmi_enter();
 
 	__this_cpu_inc(irq_stat.mce_exceptions);
@@ -874,7 +861,7 @@ void machine_check_exception(struct pt_regs *regs)
 	if (check_io_access(regs))
 		goto bail;
 
-	if (!nested)
+	if (!IS_ENABLED(CONFIG_PPC_BOOK3S_64))
 		nmi_exit();
 
 	die("Machine check", regs, SIGBUS);
@@ -886,7 +873,7 @@ void machine_check_exception(struct pt_regs *regs)
 	return;
 
 bail:
-	if (!nested)
+	if (!IS_ENABLED(CONFIG_PPC_BOOK3S_64))
 		nmi_exit();
 }
 
