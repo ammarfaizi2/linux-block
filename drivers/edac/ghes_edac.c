@@ -179,17 +179,17 @@ static void assign_dmi_dimm_info(struct dimm_info *dimm, struct memdev_dmi_entry
 
 	dimm_setup_label(dimm, entry->handle);
 
-	if (dimm->nr_pages) {
-		edac_dbg(1, "DIMM%i: %s size = %d MB%s\n",
-			dimm->idx, edac_mem_types[dimm->mtype],
-			PAGES_TO_MiB(dimm->nr_pages),
-			(dimm->edac_mode != EDAC_NONE) ? "(ECC)" : "");
-		edac_dbg(2, "\ttype %d, detail 0x%02x, width %d(total %d)\n",
-			entry->memory_type, entry->type_detail,
-			entry->total_width, entry->data_width);
-	}
-
 	dimm->smbios_handle = entry->handle;
+
+	edac_printk(KERN_INFO, "ghes", "DIMM%i, handle: 0x%x: %s size = %d MB%s\n",
+		dimm->idx, dimm->smbios_handle, edac_mem_types[dimm->mtype],
+		PAGES_TO_MiB(dimm->nr_pages),
+		(dimm->edac_mode != EDAC_NONE) ? "(ECC)" : "");
+	edac_printk(KERN_INFO, "ghes", "\ttype %d, detail 0x%02x, width %d(total %d)\n",
+		entry->memory_type, entry->type_detail,
+		entry->total_width, entry->data_width);
+	edac_printk(KERN_INFO, "ghes", "\tlabel: %s\n",
+		    dimm->label);
 }
 
 static void enumerate_dimms(const struct dmi_header *dh, void *arg)
@@ -205,6 +205,9 @@ static void enumerate_dimms(const struct dmi_header *dh, void *arg)
 	if (!hw->num_dimms || !(hw->num_dimms % 16)) {
 		struct dimm_info *new;
 
+		pr_info("%s: krealloc, num_dimms: %d\n",
+			__func__, hw->num_dimms);
+
 		new = krealloc(hw->dimms, (hw->num_dimms + 16) * sizeof(struct dimm_info),
 			        GFP_KERNEL);
 		if (!new) {
@@ -216,6 +219,7 @@ static void enumerate_dimms(const struct dmi_header *dh, void *arg)
 	}
 
 	d = &hw->dimms[hw->num_dimms];
+	d->idx = hw->num_dimms;
 
 	assign_dmi_dimm_info(d, entry);
 
@@ -225,6 +229,8 @@ static void enumerate_dimms(const struct dmi_header *dh, void *arg)
 static void ghes_scan_system(void)
 {
 	static bool scanned;
+
+	pr_info("%s: scanned: %d\n", __func__, scanned);
 
 	if (scanned)
 		return;
