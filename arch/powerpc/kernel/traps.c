@@ -833,9 +833,14 @@ void machine_check_exception(struct pt_regs *regs)
 	 * (it uses its own early real-mode handler to handle the MCE proper
 	 * and then raises irq_work to call this handler when interrupts are
 	 * enabled).
+	 *
+	 * This is silly. The BOOK3S_64 should just call a different function
+	 * rather than expecting semantics to magically change. Something
+	 * like 'non_nmi_machine_check_exception()', perhaps?
 	 */
-	if (!IS_ENABLED(CONFIG_PPC_BOOK3S_64))
-		nmi_enter();
+	const bool nmi = !IS_ENABLED(CONFIG_PPC_BOOK3S_64);
+
+	if (nmi) nmi_enter();
 
 	__this_cpu_inc(irq_stat.mce_exceptions);
 
@@ -861,8 +866,7 @@ void machine_check_exception(struct pt_regs *regs)
 	if (check_io_access(regs))
 		goto bail;
 
-	if (!IS_ENABLED(CONFIG_PPC_BOOK3S_64))
-		nmi_exit();
+	if (nmi) nmi_exit();
 
 	die("Machine check", regs, SIGBUS);
 
@@ -873,8 +877,7 @@ void machine_check_exception(struct pt_regs *regs)
 	return;
 
 bail:
-	if (!IS_ENABLED(CONFIG_PPC_BOOK3S_64))
-		nmi_exit();
+	if (nmi) nmi_exit();
 }
 
 void SMIException(struct pt_regs *regs)
