@@ -128,15 +128,18 @@ static __always_inline void csd_lock_wait(call_single_data_t *csd)
 		ts2 = sched_clock() / 1000 / 1000;
 		ts_delta = ts2 - ts1;
 		if (unlikely(ts_delta > CSD_LOCK_TIMEOUT)) {
+			u64 quo;
+			u32 rem;
+
 			bug_id = atomic_inc_return(&csd_bug_count);
 			cpu = csd->cpu;
 			smp_mb(); // No stale cur_csd values!
 			cpu_cur_csd = per_cpu(cur_csd, cpu);
 			smp_mb(); // No refetching cur_csd values!
-			printk("csd: Detected non-responsive CSD lock (#%d) on CPU#%d, waiting %Ld.%03Ld secs for CPU#%02d %pf(%ps), currently %s.\n",
-			       bug_id, raw_smp_processor_id(),
-			       ts_delta/1000ULL, ts_delta % 1000ULL, cpu,
-			       csd->func, csd->info,
+			quo = div_u64_rem(ts_delta, 1000, &rem);
+			printk("csd: Detected non-responsive CSD lock (#%d) on CPU#%d, waiting %llu.%03u secs for CPU#%02d %pf(%ps), currently %s.\n",
+			       bug_id, raw_smp_processor_id(), quo, rem,
+			       cpu, csd->func, csd->info,
 			       !cpu_cur_csd ? "unresponsive"
 					: csd == cpu_cur_csd
 						? "handling this request"
