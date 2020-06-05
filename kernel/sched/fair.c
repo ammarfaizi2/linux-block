@@ -416,7 +416,9 @@ static inline struct sched_entity *parent_entity(struct sched_entity *se)
 static void
 find_matching_se(struct sched_entity **se, struct sched_entity **pse)
 {
-	int se_depth, pse_depth;
+	trace_printk("S: se: %px (%d:%px) -> %px   pse: %px (%d:%px) -> %px\n",
+			*se, (*se)->depth, (*se)->cfs_rq, parent_entity(*se),
+			*pse, (*pse)->depth, (*pse)->cfs_rq, parent_entity(*pse));
 
 	/*
 	 * preemption test can be made between sibling entities who are in the
@@ -425,23 +427,26 @@ find_matching_se(struct sched_entity **se, struct sched_entity **pse)
 	 * parent.
 	 */
 
-	/* First walk up until both entities are at same depth */
-	se_depth = (*se)->depth;
-	pse_depth = (*pse)->depth;
-
-	while (se_depth > pse_depth) {
-		se_depth--;
-		*se = parent_entity(*se);
-	}
-
-	while (pse_depth > se_depth) {
-		pse_depth--;
-		*pse = parent_entity(*pse);
-	}
-
 	while (!is_same_group(*se, *pse)) {
-		*se = parent_entity(*se);
-		*pse = parent_entity(*pse);
+		int se_depth = (*se)->depth;
+		int pse_depth = (*pse)->depth;
+
+		if (se_depth <= pse_depth) {
+			struct sched_entity *parent = parent_entity(*pse);
+			if (WARN_ON_ONCE(!parent))
+				return;
+			*pse = parent;
+		}
+		if (se_depth >= pse_depth) {
+			struct sched_entity *parent = parent_entity(*se);
+			if (WARN_ON_ONCE(!parent))
+				return;
+			*se = parent_entity(*se);
+		}
+
+	trace_printk("i: se: %px (%d:%px) -> %px   pse: %px (%d:%px) -> %px\n",
+			*se, (*se)->depth, (*se)->cfs_rq, parent_entity(*se),
+			*pse, (*pse)->depth, (*pse)->cfs_rq, parent_entity(*pse));
 	}
 }
 
