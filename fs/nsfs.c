@@ -8,6 +8,7 @@
 #include <linux/magic.h>
 #include <linux/ktime.h>
 #include <linux/seq_file.h>
+#include <linux/pid_namespace.h>
 #include <linux/user_namespace.h>
 #include <linux/nsfs.h>
 #include <linux/uaccess.h>
@@ -189,9 +190,12 @@ static long ns_ioctl(struct file *filp, unsigned int ioctl,
 			unsigned long arg)
 {
 	struct user_namespace *user_ns;
+	struct pid_namespace *pid_ns;
+	struct task_struct *tsk;
 	struct ns_common *ns = get_proc_ns(file_inode(filp));
 	uid_t __user *argp;
 	uid_t uid;
+	pid_t pid_nr;
 
 	switch (ioctl) {
 	case NS_GET_USERNS:
@@ -209,6 +213,36 @@ static long ns_ioctl(struct file *filp, unsigned int ioctl,
 		argp = (uid_t __user *) arg;
 		uid = from_kuid_munged(current_user_ns(), user_ns->owner);
 		return put_user(uid, argp);
+	case NS_GET_PID_FROM_PIDNS:
+		fallthrough;
+	case NS_GET_PID_IN_PIDNS:
+		if (ns->ops->type != CLONE_NEWPID)
+			return -EINVAL;
+
+		pid_ns = container_of(ns, struct pid_namespace, ns);
+
+		/* Require the same privilege as for setns(). */
+		if (!ns_capable(pid_ns->user_ns, CAP_SYS_ADMIN))
+			return -EPERM;
+
+		argp = (pid_t __user *)arg;
+		if (get_user(pid_nr, argp))
+			return -EFAULT;
+
+		pid_nr = -ESRCH;
+		rcu_read_lock();
+		if (ioctl == NS_GET_PID_IN_PIDNS) {
+			tsk = find_task_by_vpid(pid_nr);
+			if (tsk)
+				pid_nr = task_pid_nr_ns(tsk, pid_ns);
+		} else {
+			tsk = find_task_by_pid_ns(pid_nr, pid_ns);
+			if (tsk)
+				pid_nr = task_pid_vnr(tsk);
+		}
+		rcu_read_unlock();
+
+		return pid_nr;
 	default:
 		return -ENOTTY;
 	}
