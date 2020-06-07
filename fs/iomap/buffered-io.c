@@ -616,14 +616,14 @@ iomap_read_page_sync(loff_t block_start, struct page *page, unsigned poff,
 	return submit_bio_wait(&bio);
 }
 
-static int
-__iomap_write_begin(struct inode *inode, loff_t pos, unsigned len, int flags,
-		struct page *page, struct iomap *srcmap)
+static ssize_t __iomap_write_begin(struct inode *inode, loff_t pos,
+		size_t len, int flags, struct page *page, struct iomap *srcmap)
 {
 	loff_t block_size = i_blocksize(inode);
 	loff_t block_start = round_down(pos, block_size);
 	loff_t block_end = round_up(pos + len, block_size);
-	unsigned from = offset_in_page(pos), to = from + len;
+	size_t from = offset_in_thp(page, pos);
+	size_t to = from + len;
 	size_t poff, plen;
 
 	if (PageUptodate(page))
@@ -658,12 +658,13 @@ __iomap_write_begin(struct inode *inode, loff_t pos, unsigned len, int flags,
 	return 0;
 }
 
-static int
-iomap_write_begin(struct inode *inode, loff_t pos, unsigned len, unsigned flags,
-		struct page **pagep, struct iomap *iomap, struct iomap *srcmap)
+static ssize_t iomap_write_begin(struct inode *inode, loff_t pos, size_t len,
+		unsigned flags, struct page **pagep, struct iomap *iomap,
+		struct iomap *srcmap)
 {
 	const struct iomap_page_ops *page_ops = iomap->page_ops;
 	struct page *page;
+	size_t offset;
 	int status = 0;
 
 	BUG_ON(pos + len > iomap->offset + iomap->length);
@@ -685,6 +686,9 @@ iomap_write_begin(struct inode *inode, loff_t pos, unsigned len, unsigned flags,
 		status = -ENOMEM;
 		goto out_no_page;
 	}
+	offset = offset_in_thp(page, pos);
+	if (len > thp_size(page) - offset)
+		len = thp_size(page) - offset;
 
 	if (srcmap->type == IOMAP_INLINE)
 		iomap_read_inline_data(inode, page, srcmap);
@@ -694,11 +698,11 @@ iomap_write_begin(struct inode *inode, loff_t pos, unsigned len, unsigned flags,
 		status = __iomap_write_begin(inode, pos, len, flags, page,
 				srcmap);
 
-	if (unlikely(status))
+	if (status < 0)
 		goto out_unlock;
 
 	*pagep = page;
-	return 0;
+	return len;
 
 out_unlock:
 	unlock_page(page);
@@ -826,8 +830,8 @@ iomap_write_actor(struct inode *inode, loff_t pos, loff_t length, void *data,
 
 	do {
 		struct page *page;
-		unsigned long offset;	/* Offset into pagecache page */
-		unsigned long bytes;	/* Bytes to write to page */
+		size_t offset;		/* Offset into pagecache page */
+		size_t bytes;		/* Bytes to write to page */
 		size_t copied;		/* Bytes copied from user */
 
 		offset = offset_in_page(pos);
@@ -854,8 +858,10 @@ again:
 
 		status = iomap_write_begin(inode, pos, bytes, 0, &page, iomap,
 				srcmap);
-		if (unlikely(status))
+		if (status < 0)
 			break;
+		/* We may be partway through a THP */
+		offset = offset_in_thp(page, pos);
 
 		if (mapping_writably_mapped(inode->i_mapping))
 			flush_dcache_page(page);
@@ -915,7 +921,6 @@ static loff_t
 iomap_unshare_actor(struct inode *inode, loff_t pos, loff_t length, void *data,
 		struct iomap *iomap, struct iomap *srcmap)
 {
-	long status = 0;
 	loff_t written = 0;
 
 	/* don't bother with blocks that are not shared to start with */
@@ -926,25 +931,24 @@ iomap_unshare_actor(struct inode *inode, loff_t pos, loff_t length, void *data,
 		return length;
 
 	do {
-		unsigned long offset = offset_in_page(pos);
-		unsigned long bytes = min_t(loff_t, PAGE_SIZE - offset, length);
 		struct page *page;
+		ssize_t bytes;
 
-		status = iomap_write_begin(inode, pos, bytes,
+		bytes = iomap_write_begin(inode, pos, length,
 				IOMAP_WRITE_F_UNSHARE, &page, iomap, srcmap);
-		if (unlikely(status))
-			return status;
+		if (bytes < 0)
+			return bytes;
 
-		status = iomap_write_end(inode, pos, bytes, bytes, page, iomap,
+		bytes = iomap_write_end(inode, pos, bytes, bytes, page, iomap,
 				srcmap);
-		if (WARN_ON_ONCE(status == 0))
+		if (WARN_ON_ONCE(bytes == 0))
 			return -EIO;
 
 		cond_resched();
 
-		pos += status;
-		written += status;
-		length -= status;
+		pos += bytes;
+		written += bytes;
+		length -= bytes;
 
 		balance_dirty_pages_ratelimited(inode->i_mapping);
 	} while (length);
@@ -975,15 +979,13 @@ static s64 iomap_zero(struct inode *inode, loff_t pos, u64 length,
 		struct iomap *iomap, struct iomap *srcmap)
 {
 	struct page *page;
-	int status;
-	unsigned offset = offset_in_page(pos);
-	unsigned bytes = min_t(u64, PAGE_SIZE - offset, length);
+	ssize_t bytes;
 
-	status = iomap_write_begin(inode, pos, bytes, 0, &page, iomap, srcmap);
-	if (status)
-		return status;
+	bytes = iomap_write_begin(inode, pos, length, 0, &page, iomap, srcmap);
+	if (bytes < 0)
+		return bytes;
 
-	zero_user(page, offset, bytes);
+	zero_user(page, offset_in_thp(page, pos), bytes);
 	mark_page_accessed(page);
 
 	return iomap_write_end(inode, pos, bytes, bytes, page, iomap, srcmap);
