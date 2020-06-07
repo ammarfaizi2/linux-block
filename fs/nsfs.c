@@ -8,6 +8,7 @@
 #include <linux/magic.h>
 #include <linux/ktime.h>
 #include <linux/seq_file.h>
+#include <linux/pid_namespace.h>
 #include <linux/user_namespace.h>
 #include <linux/nsfs.h>
 #include <linux/uaccess.h>
@@ -189,6 +190,10 @@ static long ns_ioctl(struct file *filp, unsigned int ioctl,
 			unsigned long arg)
 {
 	struct user_namespace *user_ns;
+	struct pid_namespace *pid_ns;
+	struct task_struct *child_reaper;
+	struct pid *pid_struct;
+	pid_t pid;
 	struct ns_common *ns = get_proc_ns(file_inode(filp));
 	uid_t __user *argp;
 	uid_t uid;
@@ -209,6 +214,30 @@ static long ns_ioctl(struct file *filp, unsigned int ioctl,
 		argp = (uid_t __user *) arg;
 		uid = from_kuid_munged(current_user_ns(), user_ns->owner);
 		return put_user(uid, argp);
+	case NS_GET_INIT_PID:
+		if (ns->ops->type != CLONE_NEWPID)
+			return -EINVAL;
+
+		pid_ns = container_of(ns, struct pid_namespace, ns);
+
+		/*
+		 * If we're asking for the init pid of our own pid namespace
+		 * that's of course silly but no need to fail this since we can
+		 * both infer or find out our own pid namespaces's init pid
+		 * trivially. In all other cases, we require the same
+		 * privileges as for setns().
+		 */
+		if (task_active_pid_ns(current) != pid_ns &&
+		    !ns_capable(pid_ns->user_ns, CAP_SYS_ADMIN))
+			return -EPERM;
+
+		pid = -ESRCH;
+		read_lock(&tasklist_lock);
+		if (likely(pid_ns->child_reaper))
+			pid = task_pid_vnr(pid_ns->child_reaper);
+		read_unlock(&tasklist_lock);
+
+		return pid;
 	default:
 		return -ENOTTY;
 	}
