@@ -42,52 +42,71 @@
 		#address-cells = <2>;
 		#size-cells = <0>;
 
-		cpu0: cpu@0 {
+		cpu-map {
+			cluster0 {
+				core0 {
+					cpu = <&A57_0>;
+				};
+				core1 {
+					cpu = <&A57_1>;
+				};
+			};
+
+			cluster1 {
+				core0 {
+					cpu = <&A53_0>;
+				};
+				core1 {
+					cpu = <&A53_1>;
+				};
+				core2 {
+					cpu = <&A53_2>;
+				};
+				core3 {
+					cpu = <&A53_3>;
+				};
+			};
+		};
+
+		A57_0: cpu@0 {
+			compatible = "arm,cortex-a57";
+			reg = <0x0 0x0>;
 			device_type = "cpu";
-			compatible = "arm,armv8";
-			reg = <0x0 0x000>;
 			enable-method = "psci";
 		};
-		cpu1: cpu@100 {
+
+		A57_1: cpu@1 {
+			compatible = "arm,cortex-a57";
+			reg = <0x0 0x1>;
 			device_type = "cpu";
-			compatible = "arm,armv8";
+			enable-method = "psci";
+		};
+
+		A53_0: cpu@100 {
+			compatible = "arm,cortex-a53";
 			reg = <0x0 0x100>;
+			device_type = "cpu";
 			enable-method = "psci";
 		};
-		cpu2: cpu@200 {
+
+		A53_1: cpu@101 {
+			compatible = "arm,cortex-a53";
+			reg = <0x0 0x101>;
 			device_type = "cpu";
-			compatible = "arm,armv8";
-			reg = <0x0 0x200>;
 			enable-method = "psci";
 		};
-		cpu3: cpu@300 {
+
+		A53_2: cpu@102 {
+			compatible = "arm,cortex-a53";
+			reg = <0x0 0x102>;
 			device_type = "cpu";
-			compatible = "arm,armv8";
-			reg = <0x0 0x300>;
 			enable-method = "psci";
 		};
-		cpu4: cpu@10000 {
+
+		A53_3: cpu@103 {
+			compatible = "arm,cortex-a53";
+			reg = <0x0 0x103>;
 			device_type = "cpu";
-			compatible = "arm,armv8";
-			reg = <0x0 0x10000>;
-			enable-method = "psci";
-		};
-		cpu5: cpu@10100 {
-			device_type = "cpu";
-			compatible = "arm,armv8";
-			reg = <0x0 0x10100>;
-			enable-method = "psci";
-		};
-		cpu6: cpu@10200 {
-			device_type = "cpu";
-			compatible = "arm,armv8";
-			reg = <0x0 0x10200>;
-			enable-method = "psci";
-		};
-		cpu7: cpu@10300 {
-			device_type = "cpu";
-			compatible = "arm,armv8";
-			reg = <0x0 0x10300>;
 			enable-method = "psci";
 		};
 	};
@@ -142,47 +161,29 @@
 			     <GIC_PPI 10 IRQ_TYPE_LEVEL_LOW>;
 	};
 
-	pmu {
-		compatible = "arm,armv8-pmuv3";
-		interrupts = <GIC_PPI 7 IRQ_TYPE_LEVEL_HIGH>;
+	pmu-a57 {
+		compatible = "arm,cortex-a57-pmu";
+		interrupts = <GIC_SPI 60 IRQ_TYPE_LEVEL_HIGH>,
+			     <GIC_SPI 61 IRQ_TYPE_LEVEL_HIGH>;
+		interrupt-affinity = <&A57_0>,
+				     <&A57_1>;
+	};
+
+	pmu-a53 {
+		compatible = "arm,cortex-a53-pmu";
+		interrupts = <GIC_SPI 64 IRQ_TYPE_LEVEL_HIGH>,
+			     <GIC_SPI 65 IRQ_TYPE_LEVEL_HIGH>,
+			     <GIC_SPI 66 IRQ_TYPE_LEVEL_HIGH>,
+			     <GIC_SPI 67 IRQ_TYPE_LEVEL_HIGH>;
+		interrupt-affinity = <&A53_0>,
+				     <&A53_1>,
+				     <&A53_2>,
+				     <&A53_3>;
 	};
 
 	spe-pmu {
 		compatible = "arm,statistical-profiling-extension-v1";
 		interrupts = <GIC_PPI 5 IRQ_TYPE_LEVEL_HIGH>;
-	};
-
-	pci: pci@40000000 {
-		#address-cells = <0x3>;
-		#size-cells = <0x2>;
-		#interrupt-cells = <0x1>;
-		compatible = "pci-host-ecam-generic";
-		device_type = "pci";
-		bus-range = <0x0 0x1>;
-		reg = <0x0 0x40000000 0x0 0x10000000>;
-		ranges = <0x2000000 0x0 0x50000000 0x0 0x50000000 0x0 0x10000000>;
-		interrupt-map = <0 0 0 1 &gic 0 0 GIC_SPI 168 IRQ_TYPE_LEVEL_HIGH>,
-				<0 0 0 2 &gic 0 0 GIC_SPI 169 IRQ_TYPE_LEVEL_HIGH>,
-				<0 0 0 3 &gic 0 0 GIC_SPI 170 IRQ_TYPE_LEVEL_HIGH>,
-				<0 0 0 4 &gic 0 0 GIC_SPI 171 IRQ_TYPE_LEVEL_HIGH>;
-		interrupt-map-mask = <0x0 0x0 0x0 0x7>;
-		msi-map = <0x0 &its 0x0 0x10000>;
-		iommu-map = <0x0 &smmu 0x0 0x10000>;
-
-		dma-coherent;
-	};
-
-	smmu: iommu@2b400000 {
-		compatible = "arm,smmu-v3";
-		reg = <0x0 0x2b400000 0x0 0x100000>;
-		interrupts = <GIC_SPI 74 IRQ_TYPE_EDGE_RISING>,
-			     <GIC_SPI 79 IRQ_TYPE_EDGE_RISING>,
-			     <GIC_SPI 75 IRQ_TYPE_EDGE_RISING>,
-			     <GIC_SPI 77 IRQ_TYPE_EDGE_RISING>;
-		interrupt-names = "eventq", "gerror", "priq", "cmdq-sync";
-		dma-coherent;
-		#iommu-cells = <1>;
-		msi-parent = <&its 0x10000>;
 	};
 
 	panel {
