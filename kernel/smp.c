@@ -117,19 +117,19 @@ static __always_inline void csd_lock_wait(call_single_data_t *csd)
 	int bug_id = 0;
 	int cpu;
 	call_single_data_t *cpu_cur_csd;
+	u32 rem;
 	u64 ts0, ts1, ts2, ts_delta;
 
-	ts1 = ts0 = sched_clock() / 1000 / 1000;
+	ts1 = ts0 = div_u64_rem(sched_clock(), 1000 * 1000, &rem);
 	for (;;) {
 		unsigned long flags = READ_ONCE(csd->flags);
 
 		if (!(flags & CSD_FLAG_LOCK))
 			break;
-		ts2 = sched_clock() / 1000 / 1000;
+		ts2 = div_u64_rem(sched_clock(), 1000 * 1000, &rem);
 		ts_delta = ts2 - ts1;
 		if (unlikely(ts_delta > CSD_LOCK_TIMEOUT)) {
 			u64 quo;
-			u32 rem;
 
 			bug_id = atomic_inc_return(&csd_bug_count);
 			cpu = csd->cpu;
