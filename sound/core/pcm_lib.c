@@ -1947,6 +1947,96 @@ static int default_write_copy_kernel(struct snd_pcm_substream *substream,
 	return 0;
 }
 
+/* Special copy ops for SG-buffer that has no runtime->dma_area */
+#ifdef CONFIG_SND_DMA_SGBUF
+enum copy_sg_mode {
+	WRITE_KERNEL,
+	WRITE_USER,
+	READ_KERNEL,
+	READ_USER,
+	FILL_SILENCE,
+};
+
+static int sg_ops(struct snd_pcm_substream *substream,
+		  int channel, unsigned long hwoff,
+		  void *_buf, unsigned long bytes,
+		  enum copy_sg_mode mode)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct snd_sg_buf *sgbuf = snd_pcm_substream_sgbuf(substream);
+	struct snd_sg_page *sg = sgbuf->table;
+	unsigned long size;
+	char *buf, *sbuf;
+
+	buf = _buf;
+	hwoff += channel * (runtime->dma_bytes / runtime->channels);
+	sg += hwoff >> PAGE_SHIFT;
+	hwoff &= PAGE_SIZE - 1;
+	for (; bytes > 0; buf += size, bytes -= size, sg++) {
+		size = PAGE_SIZE - hwoff;
+		if (size > bytes)
+			size = bytes;
+		sbuf = sg->buf + hwoff;
+		hwoff = 0;
+		switch (mode) {
+		case FILL_SILENCE:
+			snd_pcm_format_set_silence(runtime->format, sbuf,
+						   bytes_to_samples(runtime, size));
+			break;
+		case WRITE_KERNEL:
+			memcpy(sbuf, buf, size);
+			break;
+		case WRITE_USER:
+			if (copy_from_user(sbuf, (void __user *)buf, size))
+				return -EFAULT;
+			break;
+		case READ_KERNEL:
+			memcpy(buf, sbuf, size);
+			break;
+		case READ_USER:
+			if (copy_to_user((void __user *)buf, sbuf, size))
+				return -EFAULT;
+			break;
+		}
+	}
+	return 0;
+}
+
+static int sg_write_copy_kernel(struct snd_pcm_substream *substream,
+				int channel, unsigned long hwoff,
+				void *buf, unsigned long bytes)
+{
+	return sg_ops(substream, channel, hwoff, buf, bytes, WRITE_KERNEL);
+}
+
+static int sg_write_copy(struct snd_pcm_substream *substream,
+			 int channel, unsigned long hwoff,
+			 void *buf, unsigned long bytes)
+{
+	return sg_ops(substream, channel, hwoff, buf, bytes, WRITE_USER);
+}
+
+static int sg_read_copy_kernel(struct snd_pcm_substream *substream,
+			       int channel, unsigned long hwoff,
+			       void *buf, unsigned long bytes)
+{
+	return sg_ops(substream, channel, hwoff, buf, bytes, READ_KERNEL);
+}
+
+static int sg_read_copy(struct snd_pcm_substream *substream,
+			int channel, unsigned long hwoff,
+			void *buf, unsigned long bytes)
+{
+	return sg_ops(substream, channel, hwoff, buf, bytes, READ_USER);
+}
+
+static int sg_fill_silence(struct snd_pcm_substream *substream, int channel,
+			   unsigned long hwoff, void *buf, unsigned long bytes)
+{
+	return sg_ops(substream, channel, hwoff, NULL, bytes, FILL_SILENCE);
+}
+#endif
+
 /* fill silence instead of copy data; called as a transfer helper
  * from __snd_pcm_lib_write() or directly from noninterleaved_copy() when
  * a NULL buffer is passed
@@ -1962,6 +2052,10 @@ static int fill_silence(struct snd_pcm_substream *substream, int channel,
 		return substream->ops->fill_silence(substream, channel,
 						    hwoff, bytes);
 
+#ifdef CONFIG_SND_DMA_SGBUF
+	if (!runtime->dma_area)
+		return sg_fill_silence(substream, channel, hwoff, buf, bytes);
+#endif
 	snd_pcm_format_set_silence(runtime->format,
 				   get_dma_ptr(runtime, channel, hwoff),
 				   bytes_to_samples(runtime, bytes));
@@ -2062,8 +2156,6 @@ static int pcm_sanity_check(struct snd_pcm_substream *substream)
 	if (PCM_RUNTIME_CHECK(substream))
 		return -ENXIO;
 	runtime = substream->runtime;
-	if (snd_BUG_ON(!substream->ops->copy_user && !runtime->dma_area))
-		return -EINVAL;
 	if (runtime->status->state == SNDRV_PCM_STATE_OPEN)
 		return -EBADFD;
 	return 0;
@@ -2151,12 +2243,22 @@ snd_pcm_sframes_t __snd_pcm_lib_xfer(struct snd_pcm_substream *substream,
 	} else if (in_kernel) {
 		if (substream->ops->copy_kernel)
 			transfer = substream->ops->copy_kernel;
+#ifdef CONFIG_SND_DMA_SGBUF
+		else if (!runtime->dma_area)
+			transfer = is_playback ?
+				sg_write_copy_kernel : sg_read_copy_kernel;
+#endif
 		else
 			transfer = is_playback ?
 				default_write_copy_kernel : default_read_copy_kernel;
 	} else {
 		if (substream->ops->copy_user)
 			transfer = (pcm_transfer_f)substream->ops->copy_user;
+#ifdef CONFIG_SND_DMA_SGBUF
+		else if (!runtime->dma_area)
+			transfer = is_playback ?
+				sg_write_copy : sg_read_copy;
+#endif
 		else
 			transfer = is_playback ?
 				default_write_copy : default_read_copy;

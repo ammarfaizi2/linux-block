@@ -50,7 +50,7 @@ static int do_alloc_pages(struct snd_card *card, int type, struct device *dev,
 
 static void do_free_pages(struct snd_card *card, struct snd_dma_buffer *dmab)
 {
-	if (!dmab->area)
+	if (!dmab->area && !dmab->addr)
 		return;
 	mutex_lock(&card->memory_mutex);
 	WARN_ON(card->total_pcm_alloc_bytes < dmab->bytes);
@@ -58,6 +58,7 @@ static void do_free_pages(struct snd_card *card, struct snd_dma_buffer *dmab)
 	mutex_unlock(&card->memory_mutex);
 	snd_dma_free_pages(dmab);
 	dmab->area = NULL;
+	dmab->addr = 0;
 }
 
 /*
@@ -397,8 +398,7 @@ int snd_pcm_lib_malloc_pages(struct snd_pcm_substream *substream, size_t size)
 		}
 		snd_pcm_lib_free_pages(substream);
 	}
-	if (substream->dma_buffer.area != NULL &&
-	    substream->dma_buffer.bytes >= size) {
+	if (substream->dma_buffer.bytes >= size) {
 		dmab = &substream->dma_buffer; /* use the pre-allocated buffer */
 	} else {
 		dmab = kzalloc(sizeof(*dmab), GFP_KERNEL);
@@ -435,7 +435,7 @@ int snd_pcm_lib_free_pages(struct snd_pcm_substream *substream)
 	if (PCM_RUNTIME_CHECK(substream))
 		return -EINVAL;
 	runtime = substream->runtime;
-	if (runtime->dma_area == NULL)
+	if (!runtime->dma_area && !runtime->dma_addr)
 		return 0;
 	if (runtime->dma_buffer_p != &substream->dma_buffer) {
 		/* it's a newly allocated buffer.  release it now. */

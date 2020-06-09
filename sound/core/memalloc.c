@@ -174,7 +174,7 @@ int snd_dma_alloc_pages(int type, struct device *device, size_t size,
 		pr_err("snd-malloc: invalid device type %d\n", type);
 		return -ENXIO;
 	}
-	if (! dmab->area)
+	if (!dmab->area && !dmab->addr)
 		return -ENOMEM;
 	dmab->bytes = size;
 	return 0;
@@ -209,7 +209,7 @@ int snd_dma_alloc_pages_fallback(int type, struct device *device, size_t size,
 		size >>= 1;
 		size = PAGE_SIZE << get_order(size);
 	}
-	if (! dmab->area)
+	if (!dmab->area && !dmab->addr)
 		return -ENOMEM;
 	return 0;
 }
