@@ -83,7 +83,6 @@ struct snd_sg_buf {
 	int pages;	/* allocated pages */
 	int tblsize;	/* allocated table size */
 	struct snd_sg_page *table;	/* address table */
-	struct page **page_table;	/* page table (for vmap/vunmap) */
 	struct device *dev;
 };
 

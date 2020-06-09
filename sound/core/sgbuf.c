@@ -40,7 +40,6 @@ int snd_free_sgbuf_pages(struct snd_dma_buffer *dmab)
 	}
 
 	kfree(sgbuf->table);
-	kfree(sgbuf->page_table);
 	kfree(sgbuf);
 	dmab->private_data = NULL;
 	dmab->addr = 0;
@@ -58,7 +57,6 @@ int snd_malloc_sgbuf_pages(struct device *device,
 	unsigned int i, pages, chunk, maxpages;
 	struct snd_dma_buffer tmpb;
 	struct snd_sg_page *table;
-	struct page **pgtable;
 	int type = SNDRV_DMA_TYPE_DEV;
 
 	dmab->area = NULL;
@@ -75,10 +73,6 @@ int snd_malloc_sgbuf_pages(struct device *device,
 	if (!table)
 		goto _failed;
 	sgbuf->table = table;
-	pgtable = kcalloc(sgbuf->tblsize, sizeof(*pgtable), GFP_KERNEL);
-	if (!pgtable)
-		goto _failed;
-	sgbuf->page_table = pgtable;
 
 	/* allocate pages */
 	maxpages = MAX_ALLOC_PAGES;
@@ -104,7 +98,6 @@ int snd_malloc_sgbuf_pages(struct device *device,
 			if (!i)
 				table->addr |= chunk; /* mark head */
 			table++;
-			*pgtable++ = virt_to_page(tmpb.area);
 			tmpb.area += PAGE_SIZE;
 			tmpb.addr += PAGE_SIZE;
 		}
