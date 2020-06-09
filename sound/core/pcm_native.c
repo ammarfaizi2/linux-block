@@ -3689,6 +3689,42 @@ static const struct vm_operations_struct snd_pcm_vm_ops_data_fault = {
  * mmap the DMA buffer on RAM
  */
 
+/* hacked mmap helper for SG-buffer with dma-coherent pages */
+#ifdef CONFIG_SND_DMA_SGBUF
+static int snd_pcm_sg_mmap(struct snd_pcm_substream *substream,
+			   struct vm_area_struct *area)
+{
+	struct snd_sg_buf *sgbuf = snd_pcm_substream_sgbuf(substream);
+	unsigned long pgoff = area->vm_pgoff;
+	unsigned long start = area->vm_start;
+	unsigned long end = area->vm_end;
+	unsigned long user_count = vma_pages(area);
+	unsigned long pg;
+	int err = 0;
+
+	for (pg = pgoff; pg < user_count; pg++) {
+		if (pg >= sgbuf->pages) {
+			err = -ENXIO;
+			break;
+		}
+		area->vm_pgoff = 0;
+		area->vm_end = area->vm_start + PAGE_SIZE;
+		err = dma_mmap_coherent(substream->dma_buffer.dev.dev,
+					area, sgbuf->table[pg].buf,
+					sgbuf->table[pg].addr & PAGE_MASK,
+					PAGE_SIZE);
+		if (err < 0)
+			break;
+		area->vm_start += PAGE_SIZE;
+	}
+
+	area->vm_pgoff = pgoff;
+	area->vm_start = start;
+	area->vm_end = end;
+	return err;
+}
+#endif
+
 /**
  * snd_pcm_lib_default_mmap - Default PCM data mmap function
  * @substream: PCM substream
@@ -3709,6 +3745,11 @@ int snd_pcm_lib_default_mmap(struct snd_pcm_substream *substream,
 				area->vm_end - area->vm_start, area->vm_page_prot);
 	}
 #endif /* CONFIG_GENERIC_ALLOCATOR */
+#ifdef CONFIG_SND_DMA_SGBUF
+	if (substream->dma_buffer.dev.type == SNDRV_DMA_TYPE_DEV_SG ||
+	    substream->dma_buffer.dev.type == SNDRV_DMA_TYPE_DEV_UC_SG)
+		return snd_pcm_sg_mmap(substream, area);
+#endif
 	if (IS_ENABLED(CONFIG_HAS_DMA) && !substream->ops->page &&
 	    (substream->dma_buffer.dev.type == SNDRV_DMA_TYPE_DEV ||
 	     substream->dma_buffer.dev.type == SNDRV_DMA_TYPE_DEV_UC))
