@@ -42,8 +42,6 @@
 #define HCLGEVF_CMDQ_RX_DEPTH_REG		0x27020
 #define HCLGEVF_CMDQ_RX_TAIL_REG		0x27024
 #define HCLGEVF_CMDQ_RX_HEAD_REG		0x27028
-#define HCLGEVF_CMDQ_INTR_SRC_REG		0x27100
-#define HCLGEVF_CMDQ_INTR_STS_REG		0x27104
 #define HCLGEVF_CMDQ_INTR_EN_REG		0x27108
 #define HCLGEVF_CMDQ_INTR_GEN_REG		0x2710C
 
@@ -88,7 +86,7 @@
 /* Vector0 interrupt CMDQ event source register(RW) */
 #define HCLGEVF_VECTOR0_CMDQ_SRC_REG	0x27100
 /* Vector0 interrupt CMDQ event status register(RO) */
-#define HCLGEVF_VECTOR0_CMDQ_STAT_REG	0x27104
+#define HCLGEVF_VECTOR0_CMDQ_STATE_REG	0x27104
 /* CMDQ register bits for RX event(=MBX event) */
 #define HCLGEVF_VECTOR0_RX_CMDQ_INT_B	1
 /* RST register bits for RESET event */
@@ -280,7 +278,7 @@ struct hclgevf_dev {
 	struct semaphore reset_sem;	/* protect reset process */
 
 	u32 fw_version;
-	u16 num_tqps;		/* num task queue pairs of this PF */
+	u16 num_tqps;		/* num task queue pairs of this VF */
 
 	u16 alloc_rss_size;	/* allocated RSS task queue */
 	u16 rss_size_max;	/* HW defined max RSS task queue */
