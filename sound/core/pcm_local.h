@@ -66,4 +66,7 @@ void snd_pcm_group_init(struct snd_pcm_group *group);
 
 #define PCM_RUNTIME_CHECK(sub) snd_BUG_ON(!(sub) || !(sub)->runtime)
 
+int snd_pcm_fill_silence_frames(struct snd_pcm_substream *substream,
+				snd_pcm_uframes_t off, snd_pcm_uframes_t frames);
+
 #endif	/* __SOUND_CORE_PCM_LOCAL_H */

@@ -30,9 +30,6 @@
 #define trace_applptr(substream, prev, curr)
 #endif
 
-static int fill_silence_frames(struct snd_pcm_substream *substream,
-			       snd_pcm_uframes_t off, snd_pcm_uframes_t frames);
-
 /*
  * fill ring buffer with silence
  * runtime->silence_start: starting pointer to silence area
@@ -100,7 +97,7 @@ void snd_pcm_playback_silence(struct snd_pcm_substream *substream, snd_pcm_ufram
 	ofs = runtime->silence_start % runtime->buffer_size;
 	while (frames > 0) {
 		transfer = ofs + frames > runtime->buffer_size ? runtime->buffer_size - ofs : frames;
-		err = fill_silence_frames(substream, ofs, transfer);
+		err = snd_pcm_fill_silence_frames(substream, ofs, transfer);
 		snd_BUG_ON(err < 0);
 		runtime->silence_filled += transfer;
 		frames -= transfer;
@@ -2137,8 +2134,8 @@ static int noninterleaved_copy(struct snd_pcm_substream *substream,
 /* fill silence on the given buffer position;
  * called from snd_pcm_playback_silence()
  */
-static int fill_silence_frames(struct snd_pcm_substream *substream,
-			       snd_pcm_uframes_t off, snd_pcm_uframes_t frames)
+int snd_pcm_fill_silence_frames(struct snd_pcm_substream *substream,
+				snd_pcm_uframes_t off, snd_pcm_uframes_t frames)
 {
 	if (substream->runtime->access == SNDRV_PCM_ACCESS_RW_INTERLEAVED ||
 	    substream->runtime->access == SNDRV_PCM_ACCESS_MMAP_INTERLEAVED)
