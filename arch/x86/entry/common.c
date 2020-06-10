@@ -598,6 +598,7 @@ bool noinstr idtentry_enter_cond_rcu(struct pt_regs *regs)
 		 * sequence vs. lockdep and tracing is required
 		 * as in enter_from_user_mode().
 		 */
+		WARN_ON_ONCE(!(regs->flags & X86_EFLAGS_IF));
 		lockdep_hardirqs_off(CALLER_ADDR0);
 		rcu_irq_enter();
 		instrumentation_begin();
@@ -658,6 +659,7 @@ void noinstr idtentry_exit_cond_rcu(struct pt_regs *regs, bool rcu_exit)
 
 	/* Check whether this returns to user mode */
 	if (user_mode(regs)) {
+		WARN_ON_ONCE(rcu_exit);
 		prepare_exit_to_usermode(regs);
 	} else if (regs->flags & X86_EFLAGS_IF) {
 		/*
