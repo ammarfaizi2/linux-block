@@ -353,7 +353,10 @@ struct ath11k_sta {
 #endif
 };
 
-#define ATH11K_NUM_CHANS 41
+#define ATH11K_MIN_5G_FREQ 4150
+#define ATH11K_MIN_6G_FREQ 5945
+#define ATH11K_MAX_6G_FREQ 7115
+#define ATH11K_NUM_CHANS 100
 #define ATH11K_MAX_5G_CHAN 173
 
 enum ath11k_state {
@@ -431,6 +434,7 @@ struct ath11k {
 	u32 vht_cap_info;
 	struct ath11k_he ar_he;
 	enum ath11k_state state;
+	bool supports_6ghz;
 	struct {
 		struct completion started;
 		struct completion completed;
@@ -548,6 +552,7 @@ struct ath11k_band_cap {
 	u32 he_mcs;
 	u32 he_cap_phy_info[PSOC_HOST_MAX_PHY_SIZE];
 	struct ath11k_ppe_threshold he_ppet;
+	u16 he_6ghz_capa;
 };
 
 struct ath11k_pdev_cap {
