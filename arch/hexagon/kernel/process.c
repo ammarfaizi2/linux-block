@@ -50,7 +50,7 @@ void arch_cpu_idle(void)
 /*
  * Copy architecture-specific thread state
  */
-int copy_thread_tls(unsigned long clone_flags, unsigned long usp,
+int copy_thread(unsigned long clone_flags, unsigned long usp,
 		    unsigned long arg, struct task_struct *p, unsigned long tls)
 {
 	struct thread_info *ti = task_thread_info(p);

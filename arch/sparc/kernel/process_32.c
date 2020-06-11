@@ -273,7 +273,7 @@ clone_stackframe(struct sparc_stackf __user *dst,
 extern void ret_from_fork(void);
 extern void ret_from_kernel_thread(void);
 
-int copy_thread_tls(unsigned long clone_flags, unsigned long sp,
+int copy_thread(unsigned long clone_flags, unsigned long sp,
 		    unsigned long arg, struct task_struct *p,
 		    unsigned long tls)
 {

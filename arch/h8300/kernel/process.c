@@ -105,7 +105,7 @@ void flush_thread(void)
 {
 }
 
-int copy_thread_tls(unsigned long clone_flags, unsigned long usp,
+int copy_thread(unsigned long clone_flags, unsigned long usp,
 		    unsigned long topstk, struct task_struct *p,
 		    unsigned long tls)
 {

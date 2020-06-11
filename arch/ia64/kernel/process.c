@@ -311,7 +311,7 @@ ia64_load_extra (struct task_struct *task)
  *	<clone syscall>	        <some kernel call frames>
  *	sys_clone		   :
  *	_do_fork		_do_fork
- *	copy_thread_tls		copy_thread_tls
+ *	copy_thread		copy_thread
  *
  * This means that the stack layout is as follows:
  *
@@ -333,7 +333,7 @@ ia64_load_extra (struct task_struct *task)
  * so there is nothing to worry about.
  */
 int
-copy_thread_tls(unsigned long clone_flags, unsigned long user_stack_base,
+copy_thread(unsigned long clone_flags, unsigned long user_stack_base,
 		    unsigned long user_stack_size, struct task_struct *p,
 		    unsigned long tls)
 {
