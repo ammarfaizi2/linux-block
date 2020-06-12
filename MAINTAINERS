@@ -884,7 +884,7 @@ M:	Joerg Roedel <joro@8bytes.org>
 L:	iommu@lists.linux-foundation.org
 S:	Maintained
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/joro/iommu.git
-F:	drivers/iommu/amd_iommu*.[ch]
+F:	drivers/iommu/amd/
 F:	include/linux/amd-iommu.h
 
 AMD KFD
@@ -8735,8 +8735,7 @@ M:	Lu Baolu <baolu.lu@linux.intel.com>
 L:	iommu@lists.linux-foundation.org
 S:	Supported
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/joro/iommu.git
-F:	drivers/iommu/dmar.c
-F:	drivers/iommu/intel*.[ch]
+F:	drivers/iommu/intel/
 F:	include/linux/intel-iommu.h
 F:	include/linux/intel-svm.h
 
@@ -9304,6 +9303,17 @@ T:	git git://git.kernel.org/pub/scm/linux/kernel/git/masahiroy/linux-kbuild.git 
 F:	Documentation/kbuild/kconfig*
 F:	scripts/Kconfig.include
 F:	scripts/kconfig/
+
+KCSAN
+M:	Marco Elver <elver@google.com>
+R:	Dmitry Vyukov <dvyukov@google.com>
+L:	kasan-dev@googlegroups.com
+S:	Maintained
+F:	Documentation/dev-tools/kcsan.rst
+F:	include/linux/kcsan*.h
+F:	kernel/kcsan/
+F:	lib/Kconfig.kcsan
+F:	scripts/Makefile.kcsan
 
 KDUMP
 M:	Dave Young <dyoung@redhat.com>
@@ -12900,7 +12910,7 @@ F:	include/uapi/linux/ppdev.h
 
 PARAVIRT_OPS INTERFACE
 M:	Juergen Gross <jgross@suse.com>
-M:	Thomas Hellstrom <thellstrom@vmware.com>
+M:	Deep Shah <sdeep@vmware.com>
 M:	"VMware, Inc." <pv-drivers@vmware.com>
 L:	virtualization@lists.linux-foundation.org
 S:	Supported
@@ -13909,6 +13919,7 @@ F:	drivers/media/rc/pwm-ir-tx.c
 PWM SUBSYSTEM
 M:	Thierry Reding <thierry.reding@gmail.com>
 R:	Uwe Kleine-König <u.kleine-koenig@pengutronix.de>
+M:	Lee Jones <lee.jones@linaro.org>
 L:	linux-pwm@vger.kernel.org
 S:	Maintained
 Q:	https://patchwork.ozlabs.org/project/linux-pwm/list/
@@ -14186,6 +14197,14 @@ L:	iommu@lists.linux-foundation.org
 L:	linux-arm-msm@vger.kernel.org
 S:	Maintained
 F:	drivers/iommu/qcom_iommu.c
+
+QUALCOMM IPCC MAILBOX DRIVER
+M:	Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>
+L:	linux-arm-msm@vger.kernel.org
+S:	Supported
+F:	Documentation/devicetree/bindings/mailbox/qcom-ipcc.yaml
+F:	drivers/mailbox/qcom-ipcc.c
+F:	include/dt-bindings/mailbox/qcom-ipcc.h
 
 QUALCOMM RMNET DRIVER
 M:	Subash Abhinov Kasiviswanathan <subashab@codeaurora.org>
@@ -18268,7 +18287,7 @@ S:	Maintained
 F:	drivers/misc/vmw_balloon.c
 
 VMWARE HYPERVISOR INTERFACE
-M:	Thomas Hellstrom <thellstrom@vmware.com>
+M:	Deep Shah <sdeep@vmware.com>
 M:	"VMware, Inc." <pv-drivers@vmware.com>
 L:	virtualization@lists.linux-foundation.org
 S:	Supported
