@@ -6,6 +6,7 @@ out="$2"
 my_abis=`echo "($3)" | tr ',' '|'`
 my_abi="$4"
 offset="$5"
+spu_table="$6"
 
 emit() {
 	t_nxt="$1"
@@ -28,9 +29,16 @@ grep -E "^[0-9A-Fa-fXx]+[[:space:]]+${my_abis}" "$in" | sort -n | (
 	while read nr abi name entry compat ; do
 		if [ "$my_abi" = "c32" ] && [ ! -z "$compat" ]; then
 			emit $((nxt+offset)) $((nr+offset)) $compat
+			nxt=$((nr+1))
+		elif [ "$my_abi" = "spu" ]; then
+			grep -E "^$nr[[:space:]]+$name[[:space:]]+spu[[:space:]]*$" "$spu_table" > /dev/null
+			if [ $? -eq 0 ]; then
+				emit $((nxt+offset)) $((nr+offset)) $entry
+				nxt=$((nr+1))
+			fi
 		else
 			emit $((nxt+offset)) $((nr+offset)) $entry
+			nxt=$((nr+1))
 		fi
-		nxt=$((nr+1))
 	done
 ) > "$out"
