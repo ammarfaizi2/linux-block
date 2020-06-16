@@ -3357,7 +3357,7 @@ static ssize_t blocked_fl_read(struct file *filp, char __user *ubuf,
 		       adap->sge.egr_sz, adap->sge.blocked_fl);
 	len += sprintf(buf + len, "\n");
 	size = simple_read_from_buffer(ubuf, count, ppos, buf, len);
-	kvfree(buf);
+	kfree(buf);
 	return size;
 }
 
@@ -3374,12 +3374,12 @@ static ssize_t blocked_fl_write(struct file *filp, const char __user *ubuf,
 
 	err = bitmap_parse_user(ubuf, count, t, adap->sge.egr_sz);
 	if (err) {
-		kvfree(t);
+		kfree(t);
 		return err;
 	}
 
 	bitmap_copy(adap->sge.blocked_fl, t, adap->sge.egr_sz);
-	kvfree(t);
+	kfree(t);
 	return count;
 }
 
@@ -3491,6 +3491,8 @@ static int chcr_stats_show(struct seq_file *seq, void *v)
 		   atomic_read(&adap->chcr_stats.tls_key));
 #ifdef CONFIG_CHELSIO_TLS_DEVICE
 	seq_puts(seq, "\nChelsio KTLS Crypto Accelerator Stats\n");
+	seq_printf(seq, "Tx TLS offload refcount:          %20u\n",
+		   refcount_read(&adap->chcr_ktls.ktls_refcount));
 	seq_printf(seq, "Tx HW offload contexts added:     %20llu\n",
 		   atomic64_read(&adap->chcr_stats.ktls_tx_ctx));
 	seq_printf(seq, "Tx connection created:            %20llu\n",

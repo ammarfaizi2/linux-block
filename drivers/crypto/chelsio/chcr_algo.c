@@ -44,7 +44,6 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/crypto.h>
-#include <linux/cryptohash.h>
 #include <linux/skbuff.h>
 #include <linux/rtnetlink.h>
 #include <linux/highmem.h>
@@ -256,7 +255,7 @@ static void get_aes_decrypt_key(unsigned char *dec_key,
 		return;
 	}
 	for (i = 0; i < nk; i++)
-		w_ring[i] = be32_to_cpu(*(u32 *)&key[4 * i]);
+		w_ring[i] = get_unaligned_be32(&key[i * 4]);
 
 	i = 0;
 	temp = w_ring[nk - 1];
@@ -275,7 +274,7 @@ static void get_aes_decrypt_key(unsigned char *dec_key,
 	}
 	i--;
 	for (k = 0, j = i % nk; k < nk; k++) {
-		*((u32 *)dec_key + k) = htonl(w_ring[j]);
+		put_unaligned_be32(w_ring[j], &dec_key[k * 4]);
 		j--;
 		if (j < 0)
 			j += nk;
@@ -1464,6 +1463,7 @@ static int chcr_device_init(struct chcr_context *ctx)
 	if (!ctx->dev) {
 		u_ctx = assign_chcr_device();
 		if (!u_ctx) {
+			err = -ENXIO;
 			pr_err("chcr device assignment fails\n");
 			goto out;
 		}
@@ -1778,7 +1778,7 @@ static int chcr_ahash_final(struct ahash_request *req)
 	struct uld_ctx *u_ctx = ULD_CTX(h_ctx(rtfm));
 	struct chcr_context *ctx = h_ctx(rtfm);
 	u8 bs = crypto_tfm_alg_blocksize(crypto_ahash_tfm(rtfm));
-	int error = -EINVAL;
+	int error;
 	unsigned int cpu;
 
 	cpu = get_cpu();
@@ -2590,11 +2590,22 @@ int chcr_aead_dma_map(struct device *dev,
 	struct chcr_aead_reqctx  *reqctx = aead_request_ctx(req);
 	struct crypto_aead *tfm = crypto_aead_reqtfm(req);
 	unsigned int authsize = crypto_aead_authsize(tfm);
-	int dst_size;
+	int src_len, dst_len;
 
-	dst_size = req->assoclen + req->cryptlen + (op_type ?
-				0 : authsize);
-	if (!req->cryptlen || !dst_size)
+	/* calculate and handle src and dst sg length separately
+	 * for inplace and out-of place operations
+	 */
+	if (req->src == req->dst) {
+		src_len = req->assoclen + req->cryptlen + (op_type ?
+							0 : authsize);
+		dst_len = src_len;
+	} else {
+		src_len = req->assoclen + req->cryptlen;
+		dst_len = req->assoclen + req->cryptlen + (op_type ?
+							-authsize : authsize);
+	}
+
+	if (!req->cryptlen || !src_len || !dst_len)
 		return 0;
 	reqctx->iv_dma = dma_map_single(dev, reqctx->iv, (IV + reqctx->b0_len),
 					DMA_BIDIRECTIONAL);
@@ -2606,20 +2617,23 @@ int chcr_aead_dma_map(struct device *dev,
 		reqctx->b0_dma = 0;
 	if (req->src == req->dst) {
 		error = dma_map_sg(dev, req->src,
-				sg_nents_for_len(req->src, dst_size),
+				sg_nents_for_len(req->src, src_len),
 					DMA_BIDIRECTIONAL);
 		if (!error)
 			goto err;
 	} else {
-		error = dma_map_sg(dev, req->src, sg_nents(req->src),
+		error = dma_map_sg(dev, req->src,
+				   sg_nents_for_len(req->src, src_len),
 				   DMA_TO_DEVICE);
 		if (!error)
 			goto err;
-		error = dma_map_sg(dev, req->dst, sg_nents(req->dst),
+		error = dma_map_sg(dev, req->dst,
+				   sg_nents_for_len(req->dst, dst_len),
 				   DMA_FROM_DEVICE);
 		if (!error) {
-			dma_unmap_sg(dev, req->src, sg_nents(req->src),
-				   DMA_TO_DEVICE);
+			dma_unmap_sg(dev, req->src,
+				     sg_nents_for_len(req->src, src_len),
+				     DMA_TO_DEVICE);
 			goto err;
 		}
 	}
@@ -2637,24 +2651,37 @@ void chcr_aead_dma_unmap(struct device *dev,
 	struct chcr_aead_reqctx  *reqctx = aead_request_ctx(req);
 	struct crypto_aead *tfm = crypto_aead_reqtfm(req);
 	unsigned int authsize = crypto_aead_authsize(tfm);
-	int dst_size;
+	int src_len, dst_len;
 
-	dst_size = req->assoclen + req->cryptlen + (op_type ?
-					0 : authsize);
-	if (!req->cryptlen || !dst_size)
+	/* calculate and handle src and dst sg length separately
+	 * for inplace and out-of place operations
+	 */
+	if (req->src == req->dst) {
+		src_len = req->assoclen + req->cryptlen + (op_type ?
+							0 : authsize);
+		dst_len = src_len;
+	} else {
+		src_len = req->assoclen + req->cryptlen;
+		dst_len = req->assoclen + req->cryptlen + (op_type ?
+						-authsize : authsize);
+	}
+
+	if (!req->cryptlen || !src_len || !dst_len)
 		return;
 
 	dma_unmap_single(dev, reqctx->iv_dma, (IV + reqctx->b0_len),
 					DMA_BIDIRECTIONAL);
 	if (req->src == req->dst) {
 		dma_unmap_sg(dev, req->src,
-			     sg_nents_for_len(req->src, dst_size),
+			     sg_nents_for_len(req->src, src_len),
 			     DMA_BIDIRECTIONAL);
 	} else {
-		dma_unmap_sg(dev, req->src, sg_nents(req->src),
-				   DMA_TO_DEVICE);
-		dma_unmap_sg(dev, req->dst, sg_nents(req->dst),
-				   DMA_FROM_DEVICE);
+		dma_unmap_sg(dev, req->src,
+			     sg_nents_for_len(req->src, src_len),
+			     DMA_TO_DEVICE);
+		dma_unmap_sg(dev, req->dst,
+			     sg_nents_for_len(req->dst, dst_len),
+			     DMA_FROM_DEVICE);
 	}
 }
 
@@ -2926,8 +2953,7 @@ static int ccm_format_packet(struct aead_request *req,
 		memcpy(ivptr, req->iv, 16);
 	}
 	if (assoclen)
-		*((unsigned short *)(reqctx->scratch_pad + 16)) =
-				htons(assoclen);
+		put_unaligned_be16(assoclen, &reqctx->scratch_pad[16]);
 
 	rc = generate_b0(req, ivptr, op_type);
 	/* zero the ctr value */
@@ -3201,8 +3227,7 @@ static struct sk_buff *create_gcm_wr(struct aead_request *req,
 	} else {
 		memcpy(ivptr, req->iv, GCM_AES_IV_SIZE);
 	}
-	*((unsigned int *)(ivptr + 12)) = htonl(0x01);
-
+	put_unaligned_be32(0x01, &ivptr[12]);
 	ulptx = (struct ulptx_sgl *)(ivptr + 16);
 
 	chcr_add_aead_dst_ent(req, phys_cpl, qid);
@@ -4366,22 +4391,32 @@ static int chcr_unregister_alg(void)
 	for (i = 0; i < ARRAY_SIZE(driver_algs); i++) {
 		switch (driver_algs[i].type & CRYPTO_ALG_TYPE_MASK) {
 		case CRYPTO_ALG_TYPE_SKCIPHER:
-			if (driver_algs[i].is_registered)
+			if (driver_algs[i].is_registered && refcount_read(
+			    &driver_algs[i].alg.skcipher.base.cra_refcnt)
+			    == 1) {
 				crypto_unregister_skcipher(
 						&driver_algs[i].alg.skcipher);
+				driver_algs[i].is_registered = 0;
+			}
 			break;
 		case CRYPTO_ALG_TYPE_AEAD:
-			if (driver_algs[i].is_registered)
+			if (driver_algs[i].is_registered && refcount_read(
+			    &driver_algs[i].alg.aead.base.cra_refcnt) == 1) {
 				crypto_unregister_aead(
 						&driver_algs[i].alg.aead);
+				driver_algs[i].is_registered = 0;
+			}
 			break;
 		case CRYPTO_ALG_TYPE_AHASH:
-			if (driver_algs[i].is_registered)
+			if (driver_algs[i].is_registered && refcount_read(
+			    &driver_algs[i].alg.hash.halg.base.cra_refcnt)
+			    == 1) {
 				crypto_unregister_ahash(
 						&driver_algs[i].alg.hash);
+				driver_algs[i].is_registered = 0;
+			}
 			break;
 		}
-		driver_algs[i].is_registered = 0;
 	}
 	return 0;
 }

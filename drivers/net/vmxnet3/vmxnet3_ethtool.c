@@ -899,6 +899,12 @@ vmxnet3_get_rxnfc(struct net_device *netdev, struct ethtool_rxnfc *info,
 			err = -EOPNOTSUPP;
 			break;
 		}
+#ifdef VMXNET3_RSS
+		if (!adapter->rss) {
+			err = -EOPNOTSUPP;
+			break;
+		}
+#endif
 		err = vmxnet3_get_rss_hash_opts(adapter, info);
 		break;
 	default:
@@ -919,6 +925,12 @@ vmxnet3_set_rxnfc(struct net_device *netdev, struct ethtool_rxnfc *info)
 		err = -EOPNOTSUPP;
 		goto done;
 	}
+#ifdef VMXNET3_RSS
+	if (!adapter->rss) {
+		err = -EOPNOTSUPP;
+		goto done;
+	}
+#endif
 
 	switch (info->cmd) {
 	case ETHTOOL_SRXFH:
@@ -953,6 +965,8 @@ vmxnet3_get_rss(struct net_device *netdev, u32 *p, u8 *key, u8 *hfunc)
 	if (hfunc)
 		*hfunc = ETH_RSS_HASH_TOP;
 	if (!p)
+		return 0;
+	if (n > UPT1_RSS_MAX_IND_TABLE_SIZE)
 		return 0;
 	while (n--)
 		p[n] = rssConf->indTable[n];

@@ -857,7 +857,6 @@ static int vxlan_fdb_nh_update(struct vxlan_dev *vxlan, struct vxlan_fdb *fdb,
 			       u32 nhid, struct netlink_ext_ack *extack)
 {
 	struct nexthop *old_nh = rtnl_dereference(fdb->nh);
-	struct nh_group *nhg;
 	struct nexthop *nh;
 	int err = -EINVAL;
 
@@ -876,28 +875,27 @@ static int vxlan_fdb_nh_update(struct vxlan_dev *vxlan, struct vxlan_fdb *fdb,
 			nh = NULL;
 			goto err_inval;
 		}
-		if (!nh->is_fdb_nh) {
+		if (!nexthop_is_fdb(nh)) {
 			NL_SET_ERR_MSG(extack, "Nexthop is not a fdb nexthop");
 			goto err_inval;
 		}
 
-		if (!nh->is_group || !nh->nh_grp->mpath) {
+		if (!nexthop_is_multipath(nh)) {
 			NL_SET_ERR_MSG(extack, "Nexthop is not a multipath group");
 			goto err_inval;
 		}
 
 		/* check nexthop group family */
-		nhg = rtnl_dereference(nh->nh_grp);
 		switch (vxlan->default_dst.remote_ip.sa.sa_family) {
 		case AF_INET:
-			if (!nhg->has_v4) {
+			if (!nexthop_has_v4(nh)) {
 				err = -EAFNOSUPPORT;
 				NL_SET_ERR_MSG(extack, "Nexthop group family not supported");
 				goto err_inval;
 			}
 			break;
 		case AF_INET6:
-			if (nhg->has_v4) {
+			if (nexthop_has_v4(nh)) {
 				err = -EAFNOSUPPORT;
 				NL_SET_ERR_MSG(extack, "Nexthop group family not supported");
 				goto err_inval;
@@ -2092,6 +2090,10 @@ static struct sk_buff *vxlan_na_create(struct sk_buff *request,
 	ns_olen = request->len - skb_network_offset(request) -
 		sizeof(struct ipv6hdr) - sizeof(*ns);
 	for (i = 0; i < ns_olen-1; i += (ns->opt[i+1]<<3)) {
+		if (!ns->opt[i + 1]) {
+			kfree_skb(reply);
+			return NULL;
+		}
 		if (ns->opt[i] == ND_OPT_SOURCE_LL_ADDR) {
 			daddr = ns->opt + i + sizeof(struct nd_opt_hdr);
 			break;
@@ -4241,10 +4243,8 @@ static int vxlan_changelink(struct net_device *dev, struct nlattr *tb[],
 		mod_timer(&vxlan->age_timer, jiffies);
 
 	netdev_adjacent_change_commit(dst->remote_dev, lowerdev, dev);
-	if (lowerdev && lowerdev != dst->remote_dev) {
+	if (lowerdev && lowerdev != dst->remote_dev)
 		dst->remote_dev = lowerdev;
-		netdev_update_lockdep_key(lowerdev);
-	}
 	vxlan_config_apply(dev, &conf, lowerdev, vxlan->net, true);
 	return 0;
 }
