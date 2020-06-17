@@ -4050,6 +4050,47 @@ void snd_hda_gen_fixup_micmute_led(struct hda_codec *codec,
 }
 EXPORT_SYMBOL_GPL(snd_hda_gen_fixup_micmute_led);
 
+/**
+ * snd_dha_gen_add_micmute_led_cdev - Create a LED classdev and enable as mic-mute LED
+ * @codec: the HDA codec
+ * @callback: the callback for LED classdev brightness_set_blocking
+ *
+ * Called from the codec drivers for offering the mic mute LED controls.
+ * This creates a LED classdev and sets up the cap_sync_hook that is called at
+ * each time when the capture mixer switch changes.
+ *
+ * Returns 0 or a negative error.
+ */
+int snd_hda_gen_add_micmute_led_cdev(struct hda_codec *codec,
+				     int (*callback)(struct led_classdev *,
+						     enum led_brightness))
+{
+	int err = 0;
+#if IS_REACHABLE(CONFIG_LEDS_TRIGGER_AUDIO)
+	struct led_classdev *cdev;
+
+	cdev = devm_kzalloc(&codec->core.dev, sizeof(*cdev), GFP_KERNEL);
+	if (!cdev)
+		return -ENOMEM;
+
+	cdev->name = "hda::micmute";
+	cdev->max_brightness = 1;
+	cdev->default_trigger = "audio-micmute";
+	cdev->brightness_set_blocking = callback;
+	cdev->brightness = ledtrig_audio_get(LED_AUDIO_MICMUTE);
+
+	err = devm_led_classdev_register(&codec->core.dev, cdev);
+	if (err) {
+		codec_warn(codec, "failed to create a mic-mute LED cdev\n");
+		return err;
+	}
+
+	err = snd_hda_gen_add_micmute_led(codec, NULL);
+#endif /* CONFIG_LEDS_TRIGGER_AUDIO */
+	return err;
+}
+EXPORT_SYMBOL_GPL(snd_hda_gen_add_micmute_led_cdev);
+
 /*
  * parse digital I/Os and set up NIDs in BIOS auto-parse mode
  */
