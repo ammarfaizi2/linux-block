@@ -139,13 +139,12 @@ static struct page *find_timens_vvar_page(struct vm_area_struct *vma)
  * corresponding layout.
  * See also the comment near timens_setup_vdso_data() for details.
  */
-int vdso_join_timens(struct task_struct *task, struct time_namespace *ns)
+void vdso_join_timens(struct task_struct *task, struct time_namespace *ns)
 {
 	struct mm_struct *mm = task->mm;
 	struct vm_area_struct *vma;
 
-	if (mmap_write_lock_killable(mm))
-		return -EINTR;
+	mmap_write_lock(mm);
 
 	for (vma = mm->mmap; vma; vma = vma->vm_next) {
 		unsigned long size = vma->vm_end - vma->vm_start;
@@ -155,7 +154,6 @@ int vdso_join_timens(struct task_struct *task, struct time_namespace *ns)
 	}
 
 	mmap_write_unlock(mm);
-	return 0;
 }
 #else
 static inline struct page *find_timens_vvar_page(struct vm_area_struct *vma)
