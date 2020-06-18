@@ -6,6 +6,7 @@ _dummy := $(shell [ -d '$(uapi)' ] || mkdir -p '$(uapi)')	\
 	  $(shell [ -d '$(kapi)' ] || mkdir -p '$(kapi)')
 
 syscall := $(srctree)/$(src)/syscall.tbl
+sputbl := $(srctree)/$(src)/spu.tbl
 syshdr := $(srctree)/$(src)/syscallhdr.sh
 systbl := $(srctree)/$(src)/syscalltbl.sh
 
@@ -19,32 +20,33 @@ quiet_cmd_systbl = SYSTBL  $@
       cmd_systbl = $(CONFIG_SHELL) '$(systbl)' '$<' '$@'	\
 		   '$(systbl_abis_$(basetarget))'		\
 		   '$(systbl_abi_$(basetarget))'		\
-		   '$(systbl_offset_$(basetarget))'
+		   '$(systbl_offset_$(basetarget))'		\
+		    $(sputbl)
 
-syshdr_abis_unistd_32 := common,nospu,32
+syshdr_abis_unistd_32 := common,32
 $(uapi)/unistd_32.h: $(syscall) $(syshdr)
 	$(call if_changed,syshdr)
 
-syshdr_abis_unistd_64 := common,nospu,64
+syshdr_abis_unistd_64 := common,64
 $(uapi)/unistd_64.h: $(syscall) $(syshdr)
 	$(call if_changed,syshdr)
 
-systbl_abis_syscall_table_32 := common,nospu,32
+systbl_abis_syscall_table_32 := common,32
 systbl_abi_syscall_table_32 := 32
 $(kapi)/syscall_table_32.h: $(syscall) $(systbl)
 	$(call if_changed,systbl)
 
-systbl_abis_syscall_table_64 := common,nospu,64
+systbl_abis_syscall_table_64 := common,64
 systbl_abi_syscall_table_64 := 64
 $(kapi)/syscall_table_64.h: $(syscall) $(systbl)
 	$(call if_changed,systbl)
 
-systbl_abis_syscall_table_c32 := common,nospu,32
+systbl_abis_syscall_table_c32 := common,32
 systbl_abi_syscall_table_c32 := c32
 $(kapi)/syscall_table_c32.h: $(syscall) $(systbl)
 	$(call if_changed,systbl)
 
-systbl_abis_syscall_table_spu := common,spu
+systbl_abis_syscall_table_spu := common,64
 systbl_abi_syscall_table_spu := spu
 $(kapi)/syscall_table_spu.h: $(syscall) $(systbl)
 	$(call if_changed,systbl)
