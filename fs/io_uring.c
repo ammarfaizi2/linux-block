@@ -226,7 +226,7 @@ struct io_ring_ctx {
 	struct {
 		unsigned int		flags;
 		unsigned int		compat: 1;
-		unsigned int		account_mem: 1;
+		unsigned int		limit_mem: 1;
 		unsigned int		cq_overflow_flushed: 1;
 		unsigned int		drain_next: 1;
 		unsigned int		eventfd_async: 1;
@@ -878,6 +878,11 @@ static const struct io_op_def io_op_defs[] = {
 		.hash_reg_file		= 1,
 		.unbound_nonreg_file	= 1,
 	},
+};
+
+enum io_mem_account {
+	ACCT_LOCKED,
+	ACCT_PINNED,
 };
 
 static void io_wq_submit_work(struct io_wq_work **workptr);
@@ -4245,7 +4250,11 @@ static void __io_queue_proc(struct io_poll_iocb *poll, struct io_poll_table *pt,
 
 	pt->error = 0;
 	poll->head = head;
-	add_wait_queue(head, &poll->wait);
+
+	if (poll->events & EPOLLEXCLUSIVE)
+		add_wait_queue_exclusive(head, &poll->wait);
+	else
+		add_wait_queue(head, &poll->wait);
 }
 
 static void io_async_queue_proc(struct file *file, struct wait_queue_head *head,
@@ -4589,7 +4598,7 @@ static void io_poll_queue_proc(struct file *file, struct wait_queue_head *head,
 static int io_poll_add_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 {
 	struct io_poll_iocb *poll = &req->poll;
-	u16 events;
+	u32 events;
 
 	if (unlikely(req->ctx->flags & IORING_SETUP_IOPOLL))
 		return -EINVAL;
@@ -4598,8 +4607,12 @@ static int io_poll_add_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe
 	if (!poll->file)
 		return -EBADF;
 
-	events = READ_ONCE(sqe->poll_events);
-	poll->events = demangle_poll(events) | EPOLLERR | EPOLLHUP;
+	events = READ_ONCE(sqe->poll32_events);
+#ifdef __BIG_ENDIAN
+	events = swahw32(events);
+#endif
+	poll->events = demangle_poll(events) | EPOLLERR | EPOLLHUP |
+		       (events & EPOLLEXCLUSIVE);
 
 	io_get_req_task(req);
 	return 0;
@@ -6960,12 +6973,14 @@ err:
 	return ret;
 }
 
-static void io_unaccount_mem(struct user_struct *user, unsigned long nr_pages)
+static inline void __io_unaccount_mem(struct user_struct *user,
+				      unsigned long nr_pages)
 {
 	atomic_long_sub(nr_pages, &user->locked_vm);
 }
 
-static int io_account_mem(struct user_struct *user, unsigned long nr_pages)
+static inline int __io_account_mem(struct user_struct *user,
+				   unsigned long nr_pages)
 {
 	unsigned long page_limit, cur_pages, new_pages;
 
@@ -6979,6 +6994,41 @@ static int io_account_mem(struct user_struct *user, unsigned long nr_pages)
 			return -ENOMEM;
 	} while (atomic_long_cmpxchg(&user->locked_vm, cur_pages,
 					new_pages) != cur_pages);
+
+	return 0;
+}
+
+static void io_unaccount_mem(struct io_ring_ctx *ctx, unsigned long nr_pages,
+			     enum io_mem_account acct)
+{
+	if (ctx->limit_mem)
+		__io_unaccount_mem(ctx->user, nr_pages);
+
+	if (ctx->sqo_mm) {
+		if (acct == ACCT_LOCKED)
+			ctx->sqo_mm->locked_vm -= nr_pages;
+		else if (acct == ACCT_PINNED)
+			atomic64_sub(nr_pages, &ctx->sqo_mm->pinned_vm);
+	}
+}
+
+static int io_account_mem(struct io_ring_ctx *ctx, unsigned long nr_pages,
+			  enum io_mem_account acct)
+{
+	int ret;
+
+	if (ctx->limit_mem) {
+		ret = __io_account_mem(ctx->user, nr_pages);
+		if (ret)
+			return ret;
+	}
+
+	if (ctx->sqo_mm) {
+		if (acct == ACCT_LOCKED)
+			ctx->sqo_mm->locked_vm += nr_pages;
+		else if (acct == ACCT_PINNED)
+			atomic64_add(nr_pages, &ctx->sqo_mm->pinned_vm);
+	}
 
 	return 0;
 }
@@ -7057,8 +7107,7 @@ static int io_sqe_buffer_unregister(struct io_ring_ctx *ctx)
 		for (j = 0; j < imu->nr_bvecs; j++)
 			unpin_user_page(imu->bvec[j].bv_page);
 
-		if (ctx->account_mem)
-			io_unaccount_mem(ctx->user, imu->nr_bvecs);
+		io_unaccount_mem(ctx, imu->nr_bvecs, ACCT_PINNED);
 		kvfree(imu->bvec);
 		imu->nr_bvecs = 0;
 	}
@@ -7141,11 +7190,9 @@ static int io_sqe_buffer_register(struct io_ring_ctx *ctx, void __user *arg,
 		start = ubuf >> PAGE_SHIFT;
 		nr_pages = end - start;
 
-		if (ctx->account_mem) {
-			ret = io_account_mem(ctx->user, nr_pages);
-			if (ret)
-				goto err;
-		}
+		ret = io_account_mem(ctx, nr_pages, ACCT_PINNED);
+		if (ret)
+			goto err;
 
 		ret = 0;
 		if (!pages || nr_pages > got_pages) {
@@ -7158,8 +7205,7 @@ static int io_sqe_buffer_register(struct io_ring_ctx *ctx, void __user *arg,
 					GFP_KERNEL);
 			if (!pages || !vmas) {
 				ret = -ENOMEM;
-				if (ctx->account_mem)
-					io_unaccount_mem(ctx->user, nr_pages);
+				io_unaccount_mem(ctx, nr_pages, ACCT_PINNED);
 				goto err;
 			}
 			got_pages = nr_pages;
@@ -7169,8 +7215,7 @@ static int io_sqe_buffer_register(struct io_ring_ctx *ctx, void __user *arg,
 						GFP_KERNEL);
 		ret = -ENOMEM;
 		if (!imu->bvec) {
-			if (ctx->account_mem)
-				io_unaccount_mem(ctx->user, nr_pages);
+			io_unaccount_mem(ctx, nr_pages, ACCT_PINNED);
 			goto err;
 		}
 
@@ -7201,8 +7246,7 @@ static int io_sqe_buffer_register(struct io_ring_ctx *ctx, void __user *arg,
 			 */
 			if (pret > 0)
 				unpin_user_pages(pages, pret);
-			if (ctx->account_mem)
-				io_unaccount_mem(ctx->user, nr_pages);
+			io_unaccount_mem(ctx, nr_pages, ACCT_PINNED);
 			kvfree(imu->bvec);
 			goto err;
 		}
@@ -7286,8 +7330,10 @@ static void io_destroy_buffers(struct io_ring_ctx *ctx)
 static void io_ring_ctx_free(struct io_ring_ctx *ctx)
 {
 	io_finish_async(ctx);
-	if (ctx->sqo_mm)
+	if (ctx->sqo_mm) {
 		mmdrop(ctx->sqo_mm);
+		ctx->sqo_mm = NULL;
+	}
 
 	io_iopoll_reap_events(ctx);
 	io_sqe_buffer_unregister(ctx);
@@ -7307,9 +7353,8 @@ static void io_ring_ctx_free(struct io_ring_ctx *ctx)
 	io_mem_free(ctx->sq_sqes);
 
 	percpu_ref_exit(&ctx->refs);
-	if (ctx->account_mem)
-		io_unaccount_mem(ctx->user,
-				ring_pages(ctx->sq_entries, ctx->cq_entries));
+	io_unaccount_mem(ctx, ring_pages(ctx->sq_entries, ctx->cq_entries),
+			 ACCT_LOCKED);
 	free_uid(ctx->user);
 	put_cred(ctx->creds);
 	kfree(ctx->cancel_hash);
@@ -7837,7 +7882,7 @@ static int io_uring_create(unsigned entries, struct io_uring_params *p,
 {
 	struct user_struct *user = NULL;
 	struct io_ring_ctx *ctx;
-	bool account_mem;
+	bool limit_mem;
 	int ret;
 
 	if (!entries)
@@ -7876,10 +7921,10 @@ static int io_uring_create(unsigned entries, struct io_uring_params *p,
 	}
 
 	user = get_uid(current_user());
-	account_mem = !capable(CAP_IPC_LOCK);
+	limit_mem = !capable(CAP_IPC_LOCK);
 
-	if (account_mem) {
-		ret = io_account_mem(user,
+	if (limit_mem) {
+		ret = __io_account_mem(user,
 				ring_pages(p->sq_entries, p->cq_entries));
 		if (ret) {
 			free_uid(user);
@@ -7889,14 +7934,13 @@ static int io_uring_create(unsigned entries, struct io_uring_params *p,
 
 	ctx = io_ring_ctx_alloc(p);
 	if (!ctx) {
-		if (account_mem)
-			io_unaccount_mem(user, ring_pages(p->sq_entries,
+		if (limit_mem)
+			__io_unaccount_mem(user, ring_pages(p->sq_entries,
 								p->cq_entries));
 		free_uid(user);
 		return -ENOMEM;
 	}
 	ctx->compat = in_compat_syscall();
-	ctx->account_mem = account_mem;
 	ctx->user = user;
 	ctx->creds = get_current_cred();
 
@@ -7928,7 +7972,8 @@ static int io_uring_create(unsigned entries, struct io_uring_params *p,
 
 	p->features = IORING_FEAT_SINGLE_MMAP | IORING_FEAT_NODROP |
 			IORING_FEAT_SUBMIT_STABLE | IORING_FEAT_RW_CUR_POS |
-			IORING_FEAT_CUR_PERSONALITY | IORING_FEAT_FAST_POLL;
+			IORING_FEAT_CUR_PERSONALITY | IORING_FEAT_FAST_POLL |
+			IORING_FEAT_POLL_32BITS;
 
 	if (copy_to_user(params, p, sizeof(*p))) {
 		ret = -EFAULT;
@@ -7943,6 +7988,9 @@ static int io_uring_create(unsigned entries, struct io_uring_params *p,
 		goto err;
 
 	trace_io_uring_create(ret, ctx, p->sq_entries, p->cq_entries, p->flags);
+	io_account_mem(ctx, ring_pages(p->sq_entries, p->cq_entries),
+		       ACCT_LOCKED);
+	ctx->limit_mem = limit_mem;
 	return ret;
 err:
 	io_ring_ctx_wait_and_kill(ctx);
@@ -8217,7 +8265,8 @@ static int __init io_uring_init(void)
 	BUILD_BUG_SQE_ELEM(28, /* compat */   int, rw_flags);
 	BUILD_BUG_SQE_ELEM(28, /* compat */ __u32, rw_flags);
 	BUILD_BUG_SQE_ELEM(28, __u32,  fsync_flags);
-	BUILD_BUG_SQE_ELEM(28, __u16,  poll_events);
+	BUILD_BUG_SQE_ELEM(28, /* compat */ __u16,  poll_events);
+	BUILD_BUG_SQE_ELEM(28, __u32,  poll32_events);
 	BUILD_BUG_SQE_ELEM(28, __u32,  sync_range_flags);
 	BUILD_BUG_SQE_ELEM(28, __u32,  msg_flags);
 	BUILD_BUG_SQE_ELEM(28, __u32,  timeout_flags);
