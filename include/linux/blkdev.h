@@ -1840,7 +1840,6 @@ struct block_device;
 /*
  * stubs for when the block layer is configured out
  */
-#define buffer_heads_over_limit 0
 
 static inline long nr_blockdev_pages(void)
 {
