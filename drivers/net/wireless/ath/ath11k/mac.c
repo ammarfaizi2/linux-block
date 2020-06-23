@@ -3039,10 +3039,6 @@ static int ath11k_mac_op_sta_state(struct ieee80211_hw *hw,
 		if (ret)
 			ath11k_warn(ar->ab, "Failed to associate station: %pM\n",
 				    sta->addr);
-		else
-			ath11k_info(ar->ab,
-				    "Station %pM moved to assoc state\n",
-				    sta->addr);
 	} else if (old_state == IEEE80211_STA_ASSOC &&
 		   new_state == IEEE80211_STA_AUTH &&
 		   (vif->type == NL80211_IFTYPE_AP ||
@@ -3051,10 +3047,6 @@ static int ath11k_mac_op_sta_state(struct ieee80211_hw *hw,
 		ret = ath11k_station_disassoc(ar, vif, sta);
 		if (ret)
 			ath11k_warn(ar->ab, "Failed to disassociate station: %pM\n",
-				    sta->addr);
-		else
-			ath11k_info(ar->ab,
-				    "Station %pM moved to disassociated state\n",
 				    sta->addr);
 	}
 
@@ -6194,7 +6186,7 @@ int ath11k_mac_allocate(struct ath11k_base *ab)
 		ar->ab = ab;
 		ar->pdev = pdev;
 		ar->pdev_idx = i;
-		ar->lmac_id = ath11k_core_get_hw_mac_id(ab, i);
+		ar->lmac_id = ath11k_hw_get_mac_from_pdev_id(&ab->hw_params, i);
 
 		ar->wmi = &ab->wmi_ab.wmi[i];
 		/* FIXME wmi[0] is already initialized during attach,

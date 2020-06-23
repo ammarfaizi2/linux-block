@@ -1681,8 +1681,8 @@ static int ath11k_qmi_alloc_target_mem_chunk(struct ath11k_base *ab)
 	for (i = 0, idx = 0; i < ab->qmi.mem_seg_count; i++) {
 		switch (ab->qmi.target_mem[i].type) {
 		case BDF_MEM_REGION_TYPE:
-			ab->qmi.target_mem[idx].paddr = ATH11K_QMI_BDF_ADDRESS;
-			ab->qmi.target_mem[idx].vaddr = ATH11K_QMI_BDF_ADDRESS;
+			ab->qmi.target_mem[idx].paddr = ab->hw_params.bdf_addr;
+			ab->qmi.target_mem[idx].vaddr = ab->hw_params.bdf_addr;
 			ab->qmi.target_mem[idx].size = ab->qmi.target_mem[i].size;
 			ab->qmi.target_mem[idx].type = ab->qmi.target_mem[i].type;
 			idx++;
@@ -1772,11 +1772,11 @@ static int ath11k_qmi_request_target_cap(struct ath11k_base *ab)
 		strlcpy(ab->qmi.target.fw_build_id, resp.fw_build_id,
 			sizeof(ab->qmi.target.fw_build_id));
 
-	ath11k_info(ab, "qmi target: chip_id: 0x%x, chip_family: 0x%x, board_id: 0x%x, soc_id: 0x%x\n",
+	ath11k_info(ab, "chip_id 0x%x chip_family 0x%x board_id 0x%x soc_id 0x%x\n",
 		    ab->qmi.target.chip_id, ab->qmi.target.chip_family,
 		    ab->qmi.target.board_id, ab->qmi.target.soc_id);
 
-	ath11k_info(ab, "qmi fw_version: 0x%x fw_build_timestamp: %s fw_build_id: %s",
+	ath11k_info(ab, "fw_version 0x%x fw_build_timestamp %s fw_build_id %s",
 		    ab->qmi.target.fw_version,
 		    ab->qmi.target.fw_build_timestamp,
 		    ab->qmi.target.fw_build_id);
@@ -1790,8 +1790,6 @@ ath11k_qmi_prepare_bdf_download(struct ath11k_base *ab, int type,
 				struct qmi_wlanfw_bdf_download_req_msg_v01 *req,
 				void __iomem *bdf_addr)
 {
-	struct device *dev = ab->dev;
-	char filename[ATH11K_QMI_MAX_BDF_FILE_NAME_SIZE];
 	const struct firmware *fw_entry;
 	struct ath11k_board_data bd;
 	u32 fw_size;
@@ -1812,11 +1810,10 @@ ath11k_qmi_prepare_bdf_download(struct ath11k_base *ab, int type,
 		ath11k_core_free_bdf(ab, &bd);
 		break;
 	case ATH11K_QMI_FILE_TYPE_CALDATA:
-		snprintf(filename, sizeof(filename),
-			 "%s/%s", ab->hw_params.fw.dir, ATH11K_QMI_DEFAULT_CAL_FILE_NAME);
-		ret = request_firmware(&fw_entry, filename, dev);
+		fw_entry = ath11k_core_firmware_request(ab, ATH11K_DEFAULT_CAL_FILE);
 		if (ret) {
-			ath11k_warn(ab, "qmi failed to load CAL: %s\n", filename);
+			ath11k_warn(ab, "failed to load %s: %d\n",
+				    ATH11K_DEFAULT_CAL_FILE, ret);
 			goto out;
 		}
 
@@ -1825,8 +1822,6 @@ ath11k_qmi_prepare_bdf_download(struct ath11k_base *ab, int type,
 
 		memcpy_toio(bdf_addr + ATH11K_QMI_CALDATA_OFFSET,
 			    fw_entry->data, fw_size);
-		ath11k_info(ab, "qmi downloading BDF: %s, size: %zu\n",
-			    filename, fw_entry->size);
 
 		release_firmware(fw_entry);
 		break;
@@ -1854,7 +1849,7 @@ static int ath11k_qmi_load_bdf(struct ath11k_base *ab)
 		return -ENOMEM;
 	memset(&resp, 0, sizeof(resp));
 
-	bdf_addr = ioremap(ATH11K_QMI_BDF_ADDRESS, ATH11K_QMI_BDF_MAX_SIZE);
+	bdf_addr = ioremap(ab->hw_params.bdf_addr, ATH11K_QMI_BDF_MAX_SIZE);
 	if (!bdf_addr) {
 		ath11k_warn(ab, "qmi ioremap error for BDF\n");
 		ret = -EIO;
@@ -1905,7 +1900,6 @@ static int ath11k_qmi_load_bdf(struct ath11k_base *ab)
 			goto out_qmi_bdf;
 		}
 	}
-	ath11k_info(ab, "qmi BDF downloaded\n");
 
 out_qmi_bdf:
 	iounmap(bdf_addr);
