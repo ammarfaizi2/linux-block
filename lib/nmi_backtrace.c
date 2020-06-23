@@ -90,16 +90,11 @@ bool nmi_cpu_backtrace(struct pt_regs *regs)
 	int cpu = smp_processor_id();
 
 	if (cpumask_test_cpu(cpu, to_cpumask(backtrace_mask))) {
-		if (regs && cpu_in_idle(instruction_pointer(regs))) {
-			pr_warn("NMI backtrace for cpu %d skipped: idling at %pS\n",
-				cpu, (void *)instruction_pointer(regs));
-		} else {
-			pr_warn("NMI backtrace for cpu %d\n", cpu);
-			if (regs)
-				show_regs(regs);
-			else
-				dump_stack();
-		}
+		pr_warn("NMI backtrace for cpu %d\n", cpu);
+		if (regs)
+			show_regs(regs);
+		else
+			dump_stack();
 		cpumask_clear_cpu(cpu, to_cpumask(backtrace_mask));
 		return true;
 	}

@@ -34,7 +34,8 @@ enum {
  */
 struct __call_single_data {
 	struct llist_node llist;
-	unsigned int flags;
+	unsigned short flags;
+	unsigned short dst; /* Destination CPU. */
 	smp_call_func_t func;
 	void *info;
 };
