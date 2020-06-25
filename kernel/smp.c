@@ -38,6 +38,8 @@ struct call_function_data {
 static DEFINE_PER_CPU_ALIGNED(struct call_function_data, cfd_data);
 
 static DEFINE_PER_CPU(call_single_data_t *, cur_csd);
+static DEFINE_PER_CPU(smp_call_func_t, cur_csd_func);
+static DEFINE_PER_CPU(void *, cur_csd_info);
 
 static DEFINE_PER_CPU_SHARED_ALIGNED(struct llist_head, call_single_queue);
 
@@ -103,6 +105,16 @@ void __init call_function_init(void)
 
 #define CSD_LOCK_TIMEOUT (5 * 1000ULL) /* Milliseconds. */
 atomic_t csd_bug_count = ATOMIC_INIT(1);
+
+/* Record current CSD work for current CPU, NULL to erase. */
+static void csd_lock_record(call_single_data_t *csd)
+{
+	__this_cpu_write(cur_csd, csd);
+	if (!csd)
+		return;
+	__this_cpu_write(cur_csd_func, csd->func);
+	__this_cpu_write(cur_csd_info, csd->info);
+}
 
 /*
  * csd_lock/csd_unlock used to serialize access to per-cpu csd resources
@@ -226,11 +238,11 @@ static int generic_exec_single(int cpu, call_single_data_t *csd)
 		 */
 		csd_unlock(csd);
 		local_irq_save(flags);
-		__this_cpu_write(cur_csd, csd);
+		csd_lock_record(csd);
 		smp_mb(); // Update cur_csd before function call.
 		func(info);
 		smp_mb(); // NULL cur_csd after function call.
-		__this_cpu_write(cur_csd, NULL);
+		csd_lock_record(NULL);
 		local_irq_restore(flags);
 		return 0;
 	}
@@ -330,12 +342,12 @@ static void flush_smp_call_function_queue(bool warn_cpu_offline)
 				entry = &csd_next->llist;
 			}
 
-			__this_cpu_write(cur_csd, csd);
+			csd_lock_record(csd);
 			smp_mb(); // Update cur_csd before function call.
 			func(info);
 			csd_unlock(csd);
 			smp_mb(); // NULL cur_csd after unlock.
-			__this_cpu_write(cur_csd, NULL);
+			csd_lock_record(NULL);
 		} else {
 			prev = &csd->llist;
 		}
@@ -362,12 +374,12 @@ static void flush_smp_call_function_queue(bool warn_cpu_offline)
 				smp_call_func_t func = csd->func;
 				void *info = csd->info;
 
-				__this_cpu_write(cur_csd, csd);
+				csd_lock_record(csd);
 				smp_mb(); // Update cur_csd before unlock.
 				csd_unlock(csd);
 				func(info);
 				smp_mb(); // NULL cur_csd after function call.
-				__this_cpu_write(cur_csd, NULL);
+				csd_lock_record(NULL);
 			} else if (type == CSD_TYPE_IRQ_WORK) {
 				irq_work_single(csd);
 			}
