@@ -136,21 +136,24 @@ static __always_inline void csd_lock_wait(call_single_data_t *csd)
 				bug_id = atomic_inc_return(&csd_bug_count);
 			cpu = csd->dst;
 			smp_mb(); // No stale cur_csd values!
-			cpu_cur_csd = per_cpu(cur_csd, cpu);
+			cpu_cur_csd = READ_ONCE(per_cpu(cur_csd, cpu));
 			smp_mb(); // No refetching cur_csd values!
 			quo = div_u64_rem(ts2 - ts0, 1000, &rem);
-			printk("csd: %s non-responsive CSD lock (#%d) on CPU#%d, waiting %llu.%03u secs for CPU#%02d %pS(%ps), currently %s.\n",
-			       firsttime ? "Detected" : "Continued",
-			       bug_id, raw_smp_processor_id(), quo, rem,
-			       cpu, csd->func, csd->info,
-			       !cpu_cur_csd ? "unresponsive"
-					: csd == cpu_cur_csd
-						? "handling this request"
-						: "handling prior request");
+#define CSD_FORMAT_PREFIX "csd: %s non-responsive CSD lock (#%d) on CPU#%d, waiting %llu.%03u secs for CPU#%02d %pS(%ps), currently"
+#define CSD_ARGS_PREFIX firsttime ? "Detected" : "Continued", bug_id, raw_smp_processor_id(), \
+			quo, rem, cpu, csd->func, csd->info
+			if (cpu_cur_csd && csd != cpu_cur_csd)
+				pr_alert(CSD_FORMAT_PREFIX " handling prior %pS(%ps) request.\n",
+					 CSD_ARGS_PREFIX, cpu_cur_csd->func, cpu_cur_csd->info);
+			else
+				pr_alert(CSD_FORMAT_PREFIX " %s.\n", CSD_ARGS_PREFIX,
+					 !cpu_cur_csd ? "unresponsive" : "handling this request");
+#undef CSD_FORMAT_PREFIX
+#undef CSD_ARGS_PREFIX
 			if (!trigger_single_cpu_backtrace(cpu))
 				dump_cpu_task(cpu);
 			if (!cpu_cur_csd) {
-				printk("csd: Re-sending CSD lock (#%d) IPI from CPU#%02d to CPU#%02d\n", bug_id, raw_smp_processor_id(), cpu);
+				pr_alert("csd: Re-sending CSD lock (#%d) IPI from CPU#%02d to CPU#%02d\n", bug_id, raw_smp_processor_id(), cpu);
 				arch_send_call_function_single_ipi(cpu);
 			}
 			dump_stack();
@@ -160,7 +163,7 @@ static __always_inline void csd_lock_wait(call_single_data_t *csd)
 	}
 	smp_acquire__after_ctrl_dep();
 	if (unlikely(bug_id))
-		printk("csd: CSD lock (#%d) got unstuck on CPU#%02d, CPU#%02d released the lock after all. Phew!\n", bug_id, raw_smp_processor_id(), cpu);
+		pr_alert("csd: CSD lock (#%d) got unstuck on CPU#%02d, CPU#%02d released the lock after all. Phew!\n", bug_id, raw_smp_processor_id(), cpu);
 }
 
 static __always_inline void csd_lock(call_single_data_t *csd)
