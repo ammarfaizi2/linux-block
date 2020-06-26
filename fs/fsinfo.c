@@ -274,6 +274,16 @@ static int fsinfo_generic_seq_read(struct path *path, struct fsinfo_context *ctx
 	return m.count + 1;
 }
 
+static int fsinfo_generic_error_state(struct path *path,
+				      struct fsinfo_context *ctx)
+{
+	struct fsinfo_error_state *es = ctx->buffer;
+
+	es->wb_error_cookie = errseq_scrape(&path->dentry->d_sb->s_wb_err);
+	es->wb_error_last = es->wb_error_cookie & MAX_ERRNO;
+	return sizeof(*es);
+}
+
 static const struct fsinfo_attribute fsinfo_common_attributes[] = {
 	FSINFO_VSTRUCT	(FSINFO_ATTR_STATFS,		fsinfo_generic_statfs),
 	FSINFO_VSTRUCT	(FSINFO_ATTR_IDS,		fsinfo_generic_ids),
@@ -286,6 +296,7 @@ static const struct fsinfo_attribute fsinfo_common_attributes[] = {
 	FSINFO_STRING	(FSINFO_ATTR_SOURCE,		fsinfo_generic_mount_source),
 	FSINFO_STRING	(FSINFO_ATTR_CONFIGURATION,	fsinfo_generic_seq_read),
 	FSINFO_STRING	(FSINFO_ATTR_FS_STATISTICS,	fsinfo_generic_seq_read),
+	FSINFO_VSTRUCT	(FSINFO_ATTR_ERROR_STATE,	fsinfo_generic_error_state),
 
 	FSINFO_LIST	(FSINFO_ATTR_FSINFO_ATTRIBUTES,	(void *)123UL),
 	FSINFO_VSTRUCT_N(FSINFO_ATTR_FSINFO_ATTRIBUTE_INFO, (void *)123UL),

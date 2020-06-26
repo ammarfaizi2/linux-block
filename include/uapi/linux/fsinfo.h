@@ -27,6 +27,7 @@
 #define FSINFO_ATTR_SOURCE		0x09	/* Superblock source/device name (string) */
 #define FSINFO_ATTR_CONFIGURATION	0x0a	/* Superblock configuration/options (string) */
 #define FSINFO_ATTR_FS_STATISTICS	0x0b	/* Superblock filesystem statistics (string) */
+#define FSINFO_ATTR_ERROR_STATE		0x0c	/* Superblock writeback error state */
 
 #define FSINFO_ATTR_FSINFO_ATTRIBUTE_INFO 0x100	/* Information about attr N (for path) */
 #define FSINFO_ATTR_FSINFO_ATTRIBUTES	0x101	/* List of supported attrs (for path) */
@@ -327,5 +328,17 @@ struct fsinfo_afs_server_address {
 };
 
 #define FSINFO_ATTR_AFS_SERVER_ADDRESSES__STRUCT struct fsinfo_afs_server_address
+
+/*
+ * Information struct for fsinfo(FSINFO_ATTR_ERROR_STATE).
+ *
+ * Retrieve the error state for a filesystem.
+ */
+struct fsinfo_error_state {
+	__u32		wb_error_cookie;	/* writeback error cookie */
+	__u32		wb_error_last;		/* latest writeback error */
+};
+
+#define FSINFO_ATTR_ERROR_STATE__STRUCT struct fsinfo_error_state
 
 #endif /* _UAPI_LINUX_FSINFO_H */
