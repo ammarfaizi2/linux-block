@@ -430,6 +430,15 @@ static void dump_afs_fsinfo_server_address(void *reply, unsigned int size)
 	printf("family=%u\n", ss->ss_family);
 }
 
+static void dump_fsinfo_generic_error_state(void *reply, unsigned int size)
+{
+	struct fsinfo_error_state *es = reply;
+
+	printf("\n");
+	printf("\tlatest error : %d (%s)\n", es->wb_error_last, strerror(es->wb_error_last));
+	printf("\tcookie       : 0x%x\n", es->wb_error_cookie);
+}
+
 static void dump_string(void *reply, unsigned int size)
 {
 	char *s = reply, *p;
@@ -518,6 +527,7 @@ static const struct fsinfo_attribute fsinfo_attributes[] = {
 	FSINFO_STRING	(FSINFO_ATTR_AFS_CELL_NAME,	string),
 	FSINFO_STRING	(FSINFO_ATTR_AFS_SERVER_NAME,	string),
 	FSINFO_LIST_N	(FSINFO_ATTR_AFS_SERVER_ADDRESSES, afs_fsinfo_server_address),
+	FSINFO_VSTRUCT  (FSINFO_ATTR_ERROR_STATE,       fsinfo_generic_error_state),
 	{}
 };
 
