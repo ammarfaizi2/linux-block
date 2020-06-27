@@ -921,6 +921,7 @@ static bool can_stop_idle_tick(int cpu, struct tick_sched *ts)
 		    (local_softirq_pending() & SOFTIRQ_STOP_IDLE_MASK)) {
 			pr_warn("NOHZ: local_softirq_pending %02x\n",
 				(unsigned int) local_softirq_pending());
+			WARN_ON_ONCE(1);
 			ratelimit++;
 		}
 		return false;

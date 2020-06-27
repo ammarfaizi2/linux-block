@@ -218,7 +218,7 @@ static inline void handle_invalid_op(struct pt_regs *regs)
 
 DEFINE_IDTENTRY_RAW(exc_invalid_op)
 {
-	bool rcu_exit;
+	idtentry_state_t state;
 
 	/*
 	 * Handle BUG/WARN like NMIs instead of like normal idtentries:
@@ -251,11 +251,11 @@ DEFINE_IDTENTRY_RAW(exc_invalid_op)
 		 */
 	}
 
-	rcu_exit = idtentry_enter_cond_rcu(regs);
+	state = idtentry_enter(regs);
 	instrumentation_begin();
 	handle_invalid_op(regs);
 	instrumentation_end();
-	idtentry_exit_cond_rcu(regs, rcu_exit);
+	idtentry_exit(regs, state);
 }
 
 DEFINE_IDTENTRY(exc_coproc_segment_overrun)
