@@ -127,13 +127,12 @@ static void page_cache_delete(struct address_space *mapping,
 
 	/* hugetlb pages are represented by a single entry in the xarray */
 	if (!PageHuge(page)) {
-		xas_set_order(&xas, page->index, compound_order(page));
-		nr = compound_nr(page);
+		xas_set_order(&xas, page->index, thp_order(page));
+		nr = thp_nr_pages(page);
 	}
 
 	VM_BUG_ON_PAGE(!PageLocked(page), page);
 	VM_BUG_ON_PAGE(PageTail(page), page);
-	VM_BUG_ON_PAGE(nr != 1 && shadow, page);
 
 	xas_store(&xas, shadow);
 	xas_init_marks(&xas);
@@ -311,19 +310,12 @@ static void page_cache_delete_batch(struct address_space *mapping,
 
 		WARN_ON_ONCE(!PageLocked(page));
 
-		if (page->index == xas.xa_index)
-			page->mapping = NULL;
+		page->mapping = NULL;
 		/* Leave page->index set: truncation lookup relies on it */
 
-		/*
-		 * Move to the next page in the vector if this is a regular
-		 * page or the index is of the last sub-page of this compound
-		 * page.
-		 */
-		if (page->index + compound_nr(page) - 1 == xas.xa_index)
-			i++;
+		i++;
 		xas_store(&xas, NULL);
-		total_pages++;
+		total_pages += thp_nr_pages(page);
 	}
 	mapping->nrpages -= total_pages;
 }
@@ -1956,18 +1948,22 @@ unsigned find_lock_entries(struct address_space *mapping, pgoff_t start,
 		indices[pvec->nr] = xas.xa_index;
 		if (!pagevec_add(pvec, page))
 			break;
-		goto next;
+		continue;
 unlock:
 		unlock_page(page);
 put:
 		put_page(page);
-next:
-		if (!xa_is_value(page) && PageTransHuge(page))
-			xas_set(&xas, page->index + thp_nr_pages(page));
 	}
 	rcu_read_unlock();
 
 	return pagevec_count(pvec);
+}
+
+static inline bool thp_last_tail(struct page *head, pgoff_t index)
+{
+	if (!PageTransCompound(head) || PageHuge(head))
+		return true;
+	return index == head->index + thp_nr_pages(head) - 1;
 }
 
 /**
@@ -2008,10 +2004,16 @@ unsigned find_get_pages_range(struct address_space *mapping, pgoff_t *start,
 		if (xa_is_value(page))
 			continue;
 
+again:
 		pages[ret] = find_subpage(page, xas.xa_index);
 		if (++ret == nr_pages) {
 			*start = xas.xa_index + 1;
 			goto out;
+		}
+		if (!thp_last_tail(page, xas.xa_index)) {
+			xas.xa_index++;
+			page_ref_inc(page);
+			goto again;
 		}
 	}
 
@@ -2071,9 +2073,15 @@ unsigned find_get_pages_contig(struct address_space *mapping, pgoff_t index,
 		if (unlikely(page != xas_reload(&xas)))
 			goto put_page;
 
+again:
 		pages[ret] = find_subpage(page, xas.xa_index);
 		if (++ret == nr_pages)
 			break;
+		if (!thp_last_tail(page, xas.xa_index)) {
+			xas.xa_index++;
+			page_ref_inc(page);
+			goto again;
+		}
 		continue;
 put_page:
 		put_page(page);
@@ -2905,6 +2913,12 @@ void filemap_map_pages(struct vm_fault *vmf,
 	struct page *head, *page;
 	unsigned int mmap_miss = READ_ONCE(file->f_ra.mmap_miss);
 
+	max_idx = DIV_ROUND_UP(i_size_read(mapping->host), PAGE_SIZE);
+	if (max_idx == 0)
+		return;
+	if (end_pgoff >= max_idx)
+		end_pgoff = max_idx - 1;
+
 	rcu_read_lock();
 	xas_for_each(&xas, head, end_pgoff) {
 		if (xas_retry(&xas, head))
@@ -2924,20 +2938,16 @@ void filemap_map_pages(struct vm_fault *vmf,
 		/* Has the page moved or been split? */
 		if (unlikely(head != xas_reload(&xas)))
 			goto skip;
-		page = find_subpage(head, xas.xa_index);
-
-		if (!PageUptodate(head) ||
-				PageReadahead(page) ||
-				PageHWPoison(page))
+		if (!PageUptodate(head) || PageReadahead(head))
 			goto skip;
 		if (!trylock_page(head))
 			goto skip;
-
 		if (head->mapping != mapping || !PageUptodate(head))
 			goto unlock;
 
-		max_idx = DIV_ROUND_UP(i_size_read(mapping->host), PAGE_SIZE);
-		if (xas.xa_index >= max_idx)
+		page = find_subpage(head, xas.xa_index);
+again:
+		if (PageHWPoison(page))
 			goto unlock;
 
 		if (mmap_miss > 0)
@@ -2949,6 +2959,14 @@ void filemap_map_pages(struct vm_fault *vmf,
 		last_pgoff = xas.xa_index;
 		if (alloc_set_pte(vmf, page))
 			goto unlock;
+		if (!thp_last_tail(head, xas.xa_index)) {
+			xas.xa_index++;
+			page++;
+			page_ref_inc(head);
+			if (xas.xa_index >= end_pgoff)
+				goto unlock;
+			goto again;
+		}
 		unlock_page(head);
 		goto next;
 unlock:

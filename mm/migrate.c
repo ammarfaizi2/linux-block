@@ -460,14 +460,6 @@ int migrate_page_move_mapping(struct address_space *mapping,
 	}
 
 	xas_store(&xas, newpage);
-	if (PageTransHuge(page)) {
-		int i;
-
-		for (i = 1; i < HPAGE_PMD_NR; i++) {
-			xas_next(&xas);
-			xas_store(&xas, newpage);
-		}
-	}
 
 	/*
 	 * Drop cache reference from old page by unfreezing

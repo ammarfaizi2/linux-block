@@ -35,10 +35,12 @@ static inline void __clear_shadow_entry(struct address_space *mapping,
 				pgoff_t index, void *entry)
 {
 	XA_STATE(xas, &mapping->i_pages, index);
+	unsigned int order;
 
 	xas_set_update(&xas, workingset_update_node);
 	if (xas_load(&xas) != entry)
 		return;
+	order = xa_get_order(&mapping->i_pages, index);
 	xas_store(&xas, NULL);
 }
 
