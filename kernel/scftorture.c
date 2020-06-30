@@ -120,6 +120,7 @@ static unsigned long scf_sel_totweight;
 // Use to wait for all threads to start.
 static atomic_t n_started;
 static atomic_t n_errs;
+static bool scfdone;
 
 DEFINE_TORTURE_RANDOM_PERCPU(scf_torture_rand);
 
@@ -128,10 +129,12 @@ static void scf_torture_stats_print(void)
 {
 	int cpu;
 	long long invoked_count = 0;
+	bool isdone = READ_ONCE(scfdone);
 
 	for_each_possible_cpu(cpu)
 		invoked_count += data_race(per_cpu(scf_invoked_count, cpu));
-	pr_alert("%s scf_invoked_count ver: %lld ", SCFTORT_FLAG, invoked_count);
+	pr_alert("%s scf_invoked_count %s: %lld ",
+		 SCFTORT_FLAG, isdone ? "VER" : "ver", invoked_count);
 	torture_onoff_stats();
 	pr_cont("\n");
 }
@@ -343,6 +346,7 @@ static void scf_torture_cleanup(void)
 	if (torture_cleanup_begin())
 		return;
 
+	WRITE_ONCE(scfdone, true);
 	if (nthreads)
 		for (i = 0; i < nthreads; i++)
 			torture_stop_kthread("scftorture_invoker", scf_stats_p[i].task);
