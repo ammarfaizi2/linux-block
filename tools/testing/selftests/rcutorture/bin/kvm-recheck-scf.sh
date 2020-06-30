@@ -20,7 +20,7 @@ fi
 . functions.sh
 
 configfile=`echo $i | sed -e 's/^.*\///'`
-nscfs="`grep scf_invoked_count: $i/console.log 2> /dev/null | tail -1 | sed -e 's/^.* scf_invoked_count: //' -e 's/ .*$//' | tr -d '\015'`"
+nscfs="`grep 'scf_invoked_count ver:' $i/console.log 2> /dev/null | tail -1 | sed -e 's/^.* scf_invoked_count ver: //' -e 's/ .*$//' | tr -d '\015'`"
 if test -z "$nscfs"
 then
 	echo "$configfile ------- "
