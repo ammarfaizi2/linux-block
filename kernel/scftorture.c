@@ -131,7 +131,9 @@ static void scf_torture_stats_print(void)
 
 	for_each_possible_cpu(cpu)
 		invoked_count += data_race(per_cpu(scf_invoked_count, cpu));
-	pr_alert("%s scf_invoked_count: %lld\n", SCFTORT_FLAG, invoked_count);
+	pr_alert("%s scf_invoked_count ver: %lld ", SCFTORT_FLAG, invoked_count);
+	torture_onoff_stats();
+	pr_cont("\n");
 }
 
 // Periodically prints torture statistics, if periodic statistics printing
