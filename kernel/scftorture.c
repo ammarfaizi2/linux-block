@@ -352,11 +352,28 @@ static void scftorture_invoke_one(struct scf_statistics *scfp, struct torture_ra
 		}
 		break;
 	case SCF_PRIM_ALL:
+		if (scfsp->scfs_wait) {
+			scfcp = kmalloc(sizeof(*scfcp), GFP_KERNEL);
+			if (WARN_ON_ONCE(!scfcp))
+				atomic_inc(&n_alloc_errs);
+		}
 		if (scfsp->scfs_wait)
 			scfp->n_all_wait++;
 		else
 			scfp->n_all++;
-		smp_call_function(scf_handler, NULL, scfsp->scfs_wait);
+		if (scfcp) {
+			scfcp->scfc_cpu = -1;
+			scfcp->scfc_wait = true;
+			scfcp->scfc_out = false;
+			scfcp->scfc_in = true;
+		}
+		smp_call_function(scf_handler, scfcp, scfsp->scfs_wait);
+		if (scfcp) {
+			if (WARN_ON_ONCE(!scfcp->scfc_out))
+				atomic_inc(&n_mb_out_errs);  // Leak rather than trash!
+			else
+				kfree(scfcp);
+		}
 		break;
 	}
 	if (use_cpus_read_lock)
