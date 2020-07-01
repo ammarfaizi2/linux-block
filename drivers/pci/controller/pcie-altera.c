@@ -57,11 +57,11 @@
 #define TLP_WRITE_TAG			0x10
 #define RP_DEVFN			0
 #define TLP_REQ_ID(bus, devfn)		(((bus) << 8) | (devfn))
-#define TLP_CFG_DW0(pcie, cfg)		\
+#define TLP_CFG_DW0(bus, cfg)		\
 		(((cfg) << 24) |	\
 		  TLP_PAYLOAD_SIZE)
-#define TLP_CFG_DW1(pcie, tag, be)	\
-	(((TLP_REQ_ID(pcie->root_bus_nr,  RP_DEVFN)) << 16) | (tag << 8) | (be))
+#define TLP_CFG_DW1(bus, tag, be)	\
+	(((TLP_REQ_ID(bus, RP_DEVFN)) << 16) | (tag << 8) | (be))
 #define TLP_CFG_DW2(bus, devfn, offset)	\
 				(((bus) << 24) | ((devfn) << 16) | (offset))
 #define TLP_COMP_STATUS(s)		(((s) >> 13) & 7)
@@ -89,7 +89,6 @@ struct altera_pcie {
 	void __iomem		*cra_base;
 	void __iomem		*hip_base;
 	int			irq;
-	u8			root_bus_nr;
 	struct irq_domain	*irq_domain;
 	struct resource		bus_range;
 	const struct altera_pcie_data	*pcie_data;
@@ -181,7 +180,7 @@ static bool altera_pcie_valid_device(struct altera_pcie *pcie,
 				     struct pci_bus *bus, int dev)
 {
 	/* If there is no link, then there is no device */
-	if (bus->number != pcie->root_bus_nr) {
+	if (!pci_is_root_bus(bus)) {
 		if (!pcie->pcie_data->ops->get_link_status(pcie))
 			return false;
 	}
@@ -318,14 +317,15 @@ static void get_tlp_header(struct altera_pcie *pcie, u8 bus, u32 devfn,
 	u8 cfg0 = read ? pcie->pcie_data->cfgrd0 : pcie->pcie_data->cfgwr0;
 	u8 cfg1 = read ? pcie->pcie_data->cfgrd1 : pcie->pcie_data->cfgwr1;
 	u8 tag = read ? TLP_READ_TAG : TLP_WRITE_TAG;
+	struct pci_host_bridge *bridge = pci_host_bridge_from_priv(pcie);
 
 	if (pcie->pcie_data->version == ALTERA_PCIE_V1)
-		cfg = (bus == pcie->root_bus_nr) ? cfg0 : cfg1;
+		cfg = bus == bridge->busnr ? cfg0 : cfg1;
 	else
 		cfg = (bus > S10_RP_SECONDARY(pcie)) ? cfg0 : cfg1;
 
-	headers[0] = TLP_CFG_DW0(pcie, cfg);
-	headers[1] = TLP_CFG_DW1(pcie, tag, byte_en);
+	headers[0] = TLP_CFG_DW0(bus, cfg);
+	headers[1] = TLP_CFG_DW1(bridge->busnr, tag, byte_en);
 	headers[2] = TLP_CFG_DW2(bus, devfn, where);
 }
 
