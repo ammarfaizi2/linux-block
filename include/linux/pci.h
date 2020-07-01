@@ -1114,6 +1114,14 @@ int pci_generic_config_read32(struct pci_bus *bus, unsigned int devfn,
 int pci_generic_config_write32(struct pci_bus *bus, unsigned int devfn,
 			       int where, int size, u32 val);
 
+static inline u32 pci_config_read_shift(u32 val, int where, int size)
+{
+	if (size <= 2)
+		return (val >> (8 * (where & 3))) & ((1 << (size * 8)) - 1);
+	else
+		return val;
+}
+
 struct pci_ops *pci_bus_set_ops(struct pci_bus *bus, struct pci_ops *ops);
 
 int pci_read_config_byte(const struct pci_dev *dev, int where, u8 *val);

@@ -120,18 +120,9 @@ static int thunder_pem_bridge_read(struct pci_bus *bus, unsigned int devfn,
 	default:
 		break;
 	}
-	read_val >>= (8 * (where & 3));
-	switch (size) {
-	case 1:
-		read_val &= 0xff;
-		break;
-	case 2:
-		read_val &= 0xffff;
-		break;
-	default:
-		break;
-	}
-	*val = read_val;
+
+	*val = pci_config_read_shift(read_val, where, size);
+
 	return PCIBIOS_SUCCESSFUL;
 }
 

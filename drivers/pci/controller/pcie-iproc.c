@@ -593,9 +593,7 @@ static int iproc_pcie_config_read(struct pci_bus *bus, unsigned int devfn,
 
 	data = iproc_pcie_cfg_retry(pcie, cfg_data_p);
 
-	*val = data;
-	if (size <= 2)
-		*val = (data >> (8 * (where & 3))) & ((1 << (size * 8)) - 1);
+	*val = pci_config_read_shift(data, where, size);
 
 	/*
 	 * For PAXC and PAXCv2, the total number of PFs that one can enumerate
@@ -664,9 +662,7 @@ static int iproc_pci_raw_config_read32(struct iproc_pcie *pcie,
 	}
 
 	*val = readl(addr);
-
-	if (size <= 2)
-		*val = (*val >> (8 * (where & 3))) & ((1 << (size * 8)) - 1);
+	*val = pci_config_read_shift(*val, where, size);
 
 	return PCIBIOS_SUCCESSFUL;
 }

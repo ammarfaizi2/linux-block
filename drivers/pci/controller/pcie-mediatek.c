@@ -298,11 +298,7 @@ static int mtk_pcie_hw_rd_cfg(struct mtk_pcie_port *port, u32 bus, u32 devfn,
 
 	/* Read cpld payload of Cfgrd */
 	*val = readl(port->base + PCIE_CFG_RDATA);
-
-	if (size == 1)
-		*val = (*val >> (8 * (where & 3))) & 0xff;
-	else if (size == 2)
-		*val = (*val >> (8 * (where & 3))) & 0xffff;
+	*val = pci_config_read_shift(*val, where, size);
 
 	return PCIBIOS_SUCCESSFUL;
 }

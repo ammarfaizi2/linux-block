@@ -198,11 +198,7 @@ static int faraday_raw_pci_read_config(struct faraday_pci *p, int bus_number,
 			p->base + PCI_CONFIG);
 
 	*value = readl(p->base + PCI_DATA);
-
-	if (size == 1)
-		*value = (*value >> (8 * (config & 3))) & 0xFF;
-	else if (size == 2)
-		*value = (*value >> (8 * (config & 3))) & 0xFFFF;
+	*value = pci_config_read_shift(*value, config, size);
 
 	return PCIBIOS_SUCCESSFUL;
 }

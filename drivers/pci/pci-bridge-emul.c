@@ -363,13 +363,7 @@ int pci_bridge_emul_conf_read(struct pci_bridge_emul *bridge, int where,
 	 */
 	*value &= behavior[reg / 4].ro | behavior[reg / 4].rw |
 		  behavior[reg / 4].w1c;
-
-	if (size == 1)
-		*value = (*value >> (8 * (where & 3))) & 0xff;
-	else if (size == 2)
-		*value = (*value >> (8 * (where & 3))) & 0xffff;
-	else if (size != 4)
-		return PCIBIOS_BAD_REGISTER_NUMBER;
+	*value = pci_config_read_shift(*value, where, size);
 
 	return PCIBIOS_SUCCESSFUL;
 }
