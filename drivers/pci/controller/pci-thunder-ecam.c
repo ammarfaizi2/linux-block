@@ -13,42 +13,28 @@
 
 #if defined(CONFIG_PCI_HOST_THUNDER_ECAM) || (defined(CONFIG_ACPI) && defined(CONFIG_PCI_QUIRKS))
 
-static void set_val(u32 v, int where, int size, u32 *val)
-{
-	int shift = (where & 3) * 8;
-
-	pr_debug("set_val %04x: %08x\n", (unsigned)(where & ~3), v);
-	v >>= shift;
-	if (size == 1)
-		v &= 0xff;
-	else if (size == 2)
-		v &= 0xffff;
-	*val = v;
-}
-
 static int handle_ea_bar(u32 e0, int bar, struct pci_bus *bus,
 			 unsigned int devfn, int where, int size, u32 *val)
 {
 	void __iomem *addr;
 	u32 v;
+	int ret;
 
 	/* Entries are 16-byte aligned; bits[2,3] select word in entry */
 	int where_a = where & 0xc;
 
 	if (where_a == 0) {
-		set_val(e0, where, size, val);
+		*val = pci_config_read_shift(e0, where, size);
 		return PCIBIOS_SUCCESSFUL;
 	}
 	if (where_a == 0x4) {
-		addr = bus->ops->map_bus(bus, devfn, bar); /* BAR 0 */
-		if (!addr) {
-			*val = ~0;
-			return PCIBIOS_DEVICE_NOT_FOUND;
-		}
-		v = readl(addr);
+		pci_generic_config_read32(bus, devfn, bar, 4, &v); /* BAR 0 */
+		if (ret)
+			return ret;
+
 		v &= ~0xf;
 		v |= 2; /* EA entry-1. Base-L */
-		set_val(v, where, size, val);
+		*val = pci_config_read_shift(v, where, size);
 		return PCIBIOS_SUCCESSFUL;
 	}
 	if (where_a == 0x8) {
@@ -67,18 +53,12 @@ static int handle_ea_bar(u32 e0, int bar, struct pci_bus *bus,
 		/* zeros in unsettable bits */
 		v = ~barl_rb & ~3;
 		v |= 0xc; /* EA entry-2. Offset-L */
-		set_val(v, where, size, val);
+		*val = pci_config_read_shift(v, where, size);
 		return PCIBIOS_SUCCESSFUL;
 	}
 	if (where_a == 0xc) {
-		addr = bus->ops->map_bus(bus, devfn, bar + 4); /* BAR 1 */
-		if (!addr) {
-			*val = ~0;
-			return PCIBIOS_DEVICE_NOT_FOUND;
-		}
-		v = readl(addr); /* EA entry-3. Base-H */
-		set_val(v, where, size, val);
-		return PCIBIOS_SUCCESSFUL;
+		/* EA entry-3. Base-H */
+		return pci_generic_config_read32(bus, devfn, bar + 4, size, &v);
 	}
 	return PCIBIOS_DEVICE_NOT_FOUND;
 }
@@ -88,9 +68,8 @@ static int thunder_ecam_p2_config_read(struct pci_bus *bus, unsigned int devfn,
 {
 	struct pci_config_window *cfg = bus->sysdata;
 	int where_a = where & ~3;
-	void __iomem *addr;
 	u32 node_bits;
-	u32 v;
+	int ret;
 
 	/* EA Base[63:32] may be missing some bits ... */
 	switch (where_a) {
@@ -103,13 +82,9 @@ static int thunder_ecam_p2_config_read(struct pci_bus *bus, unsigned int devfn,
 		return pci_generic_config_read(bus, devfn, where, size, val);
 	}
 
-	addr = bus->ops->map_bus(bus, devfn, where_a);
-	if (!addr) {
-		*val = ~0;
-		return PCIBIOS_DEVICE_NOT_FOUND;
-	}
-
-	v = readl(addr);
+	pci_generic_config_read32(bus, devfn, where_a, 4, val);
+	if (ret)
+		return ret;
 
 	/*
 	 * Bit 44 of the 64-bit Base must match the same bit in
@@ -117,9 +92,7 @@ static int thunder_ecam_p2_config_read(struct pci_bus *bus, unsigned int devfn,
 	 * the high-order 32 bits, shift everything down by 32 bits.
 	 */
 	node_bits = (cfg->res.start >> 32) & (1 << 12);
-
-	v |= node_bits;
-	set_val(v, where, size, val);
+	*val = pci_config_read_shift(*val | node_bits, where, size);
 
 	return PCIBIOS_SUCCESSFUL;
 }
@@ -130,28 +103,20 @@ static int thunder_ecam_config_read(struct pci_bus *bus, unsigned int devfn,
 	u32 v;
 	u32 vendor_device;
 	u32 class_rev;
-	void __iomem *addr;
-	int cfg_type;
+	int cfg_type, ret;
 	int where_a = where & ~3;
 
-	addr = bus->ops->map_bus(bus, devfn, 0xc);
-	if (!addr) {
-		*val = ~0;
-		return PCIBIOS_DEVICE_NOT_FOUND;
-	}
-
-	v = readl(addr);
+	ret = pci_generic_config_read32(bus, devfn, 0xc, 4, &v);
+	if (ret)
+		return ret;
 
 	/* Check for non type-00 header */
 	cfg_type = (v >> 16) & 0x7f;
 
-	addr = bus->ops->map_bus(bus, devfn, 8);
-	if (!addr) {
-		*val = ~0;
-		return PCIBIOS_DEVICE_NOT_FOUND;
-	}
+	ret = pci_generic_config_read32(bus, devfn, 8, 4, &class_rev);
+	if (ret)
+		return ret;
 
-	class_rev = readl(addr);
 	if (class_rev == 0xffffffff)
 		goto no_emulation;
 
@@ -175,13 +140,10 @@ static int thunder_ecam_config_read(struct pci_bus *bus, unsigned int devfn,
 		return PCIBIOS_SUCCESSFUL;
 	}
 
-	addr = bus->ops->map_bus(bus, devfn, 0);
-	if (!addr) {
-		*val = ~0;
-		return PCIBIOS_DEVICE_NOT_FOUND;
-	}
+	ret = pci_generic_config_read32(bus, devfn, 0, 4, &vendor_device);
+	if (ret)
+		return ret;
 
-	vendor_device = readl(addr);
 	if (vendor_device == 0xffffffff)
 		goto no_emulation;
 
@@ -195,31 +157,26 @@ static int thunder_ecam_config_read(struct pci_bus *bus, unsigned int devfn,
 		bool is_nic = (vendor_device == 0xa01e177d);
 		bool is_tns = (vendor_device == 0xa01f177d);
 
-		addr = bus->ops->map_bus(bus, devfn, 0x70);
-		if (!addr) {
-			*val = ~0;
-			return PCIBIOS_DEVICE_NOT_FOUND;
-		}
-		/* E_CAP */
-		v = readl(addr);
+		ret = pci_generic_config_read32(bus, devfn, 0x70, 4, &v);
+		if (ret)
+			return ret;
+
 		has_msix = (v & 0xff00) != 0;
 
 		if (!has_msix && where_a == 0x70) {
 			v |= 0xbc00; /* next capability is EA at 0xbc */
-			set_val(v, where, size, val);
+			*val = pci_config_read_shift(v, where, size);
 			return PCIBIOS_SUCCESSFUL;
 		}
 		if (where_a == 0xb0) {
-			addr = bus->ops->map_bus(bus, devfn, where_a);
-			if (!addr) {
-				*val = ~0;
-				return PCIBIOS_DEVICE_NOT_FOUND;
-			}
-			v = readl(addr);
+			ret = pci_generic_config_read32(bus, devfn, where_a, 4, &v);
+			if (ret)
+				return ret;
+
 			if (v & 0xff00)
 				pr_err("Bad MSIX cap header: %08x\n", v);
 			v |= 0xbc00; /* next capability is EA at 0xbc */
-			set_val(v, where, size, val);
+			*val = pci_config_read_shift(v, where, size);
 			return PCIBIOS_SUCCESSFUL;
 		}
 		if (where_a == 0xbc) {
@@ -231,7 +188,7 @@ static int thunder_ecam_config_read(struct pci_bus *bus, unsigned int devfn,
 				v = 0x20014; /* EA last in chain, 2 entries */
 			else
 				v = 0x10014; /* EA last in chain, 1 entry */
-			set_val(v, where, size, val);
+			*val = pci_config_read_shift(v, where, size);
 			return PCIBIOS_SUCCESSFUL;
 		}
 		if (where_a >= 0xc0 && where_a < 0xd0)
@@ -267,16 +224,14 @@ static int thunder_ecam_config_read(struct pci_bus *bus, unsigned int devfn,
 		bool is_nic_bridge = devfn == 0x10;
 
 		if (where_a == 0x70) {
-			addr = bus->ops->map_bus(bus, devfn, where_a);
-			if (!addr) {
-				*val = ~0;
-				return PCIBIOS_DEVICE_NOT_FOUND;
-			}
-			v = readl(addr);
+			ret = pci_generic_config_read32(bus, devfn, where_a, 4, &v);
+			if (ret)
+				return ret;
+
 			if (v & 0xff00)
 				pr_err("Bad PCIe cap header: %08x\n", v);
 			v |= 0xbc00; /* next capability is EA at 0xbc */
-			set_val(v, where, size, val);
+			*val = pci_config_read_shift(v, where, size);
 			return PCIBIOS_SUCCESSFUL;
 		}
 		if (where_a == 0xbc) {
@@ -284,7 +239,7 @@ static int thunder_ecam_config_read(struct pci_bus *bus, unsigned int devfn,
 				v = 0x10014; /* EA last in chain, 1 entry */
 			else
 				v = 0x00014; /* EA last in chain, no entries */
-			set_val(v, where, size, val);
+			*val = pci_config_read_shift(v, where, size);
 			return PCIBIOS_SUCCESSFUL;
 		}
 		if (where_a == 0xc0) {
@@ -296,33 +251,33 @@ static int thunder_ecam_config_read(struct pci_bus *bus, unsigned int devfn,
 				v = 0x0303; /* subordinate:secondary = 3:3 */
 			else if (is_dfa_bridge)
 				v = 0x0404; /* subordinate:secondary = 4:4 */
-			set_val(v, where, size, val);
+			*val = pci_config_read_shift(v, where, size);
 			return PCIBIOS_SUCCESSFUL;
 		}
 		if (where_a == 0xc4 && is_nic_bridge) {
 			/* Enabled, not-Write, SP=ff, PP=05, BEI=6, ES=4 */
 			v = 0x80ff0564;
-			set_val(v, where, size, val);
+			*val = pci_config_read_shift(v, where, size);
 			return PCIBIOS_SUCCESSFUL;
 		}
 		if (where_a == 0xc8 && is_nic_bridge) {
 			v = 0x00000002; /* Base-L 64-bit */
-			set_val(v, where, size, val);
+			*val = pci_config_read_shift(v, where, size);
 			return PCIBIOS_SUCCESSFUL;
 		}
 		if (where_a == 0xcc && is_nic_bridge) {
 			v = 0xfffffffe; /* MaxOffset-L 64-bit */
-			set_val(v, where, size, val);
+			*val = pci_config_read_shift(v, where, size);
 			return PCIBIOS_SUCCESSFUL;
 		}
 		if (where_a == 0xd0 && is_nic_bridge) {
 			v = 0x00008430; /* NIC Base-H */
-			set_val(v, where, size, val);
+			*val = pci_config_read_shift(v, where, size);
 			return PCIBIOS_SUCCESSFUL;
 		}
 		if (where_a == 0xd4 && is_nic_bridge) {
 			v = 0x0000000f; /* MaxOffset-H */
-			set_val(v, where, size, val);
+			*val = pci_config_read_shift(v, where, size);
 			return PCIBIOS_SUCCESSFUL;
 		}
 	}
