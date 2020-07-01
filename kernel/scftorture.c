@@ -297,11 +297,13 @@ static void scftorture_invoke_one(struct scf_statistics *scfp, struct torture_ra
 		cpus_read_lock();
 	else
 		preempt_disable();
-	switch (scfsp->scfs_prim) {
-	case SCF_PRIM_SINGLE:
+	if (scfsp->scfs_prim == SCF_PRIM_SINGLE || scfsp->scfs_wait) {
 		scfcp = kmalloc(sizeof(*scfcp), GFP_KERNEL);
 		if (WARN_ON_ONCE(!scfcp))
 			atomic_inc(&n_alloc_errs);
+	}
+	switch (scfsp->scfs_prim) {
+	case SCF_PRIM_SINGLE:
 		cpu = torture_random(trsp) % nr_cpu_ids;
 		if (scfsp->scfs_wait)
 			scfp->n_single_wait++;
@@ -328,11 +330,6 @@ static void scftorture_invoke_one(struct scf_statistics *scfp, struct torture_ra
 		}
 		break;
 	case SCF_PRIM_MANY:
-		if (scfsp->scfs_wait) {
-			scfcp = kmalloc(sizeof(*scfcp), GFP_KERNEL);
-			if (WARN_ON_ONCE(!scfcp))
-				atomic_inc(&n_alloc_errs);
-		}
 		if (scfsp->scfs_wait)
 			scfp->n_many_wait++;
 		else
@@ -352,11 +349,6 @@ static void scftorture_invoke_one(struct scf_statistics *scfp, struct torture_ra
 		}
 		break;
 	case SCF_PRIM_ALL:
-		if (scfsp->scfs_wait) {
-			scfcp = kmalloc(sizeof(*scfcp), GFP_KERNEL);
-			if (WARN_ON_ONCE(!scfcp))
-				atomic_inc(&n_alloc_errs);
-		}
 		if (scfsp->scfs_wait)
 			scfp->n_all_wait++;
 		else
