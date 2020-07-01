@@ -524,45 +524,18 @@ static int altera_pcie_cfg_write(struct pci_bus *bus, unsigned int devfn,
 				     value);
 }
 
-static struct pci_ops altera_pcie_ops = {
-	.read = altera_pcie_cfg_read,
-	.write = altera_pcie_cfg_write,
-};
-
-static int altera_read_cap_word(struct altera_pcie *pcie, u8 busno,
-				unsigned int devfn, int offset, u16 *value)
+static void altera_wait_link_retrain(struct pci_bus *bus)
 {
-	u32 data;
-	int ret;
-
-	ret = _altera_pcie_cfg_read(pcie, busno, devfn,
-				    pcie->pcie_data->cap_offset + offset,
-				    sizeof(*value),
-				    &data);
-	*value = data;
-	return ret;
-}
-
-static int altera_write_cap_word(struct altera_pcie *pcie, u8 busno,
-				 unsigned int devfn, int offset, u16 value)
-{
-	return _altera_pcie_cfg_write(pcie, busno, devfn,
-				      pcie->pcie_data->cap_offset + offset,
-				      sizeof(value),
-				      value);
-}
-
-static void altera_wait_link_retrain(struct altera_pcie *pcie)
-{
+	struct altera_pcie *pcie = bus->sysdata;
 	struct device *dev = &pcie->pdev->dev;
 	u16 reg16;
+	int cap_off = pcie->pcie_data->cap_offset;
 	unsigned long start_jiffies;
 
 	/* Wait for link training end. */
 	start_jiffies = jiffies;
 	for (;;) {
-		altera_read_cap_word(pcie, pcie->root_bus_nr, RP_DEVFN,
-				     PCI_EXP_LNKSTA, &reg16);
+		pci_bus_read_config_word(bus, 0, cap_off + PCI_EXP_LNKSTA, &reg16);
 		if (!(reg16 & PCI_EXP_LNKSTA_LT))
 			break;
 
@@ -587,34 +560,39 @@ static void altera_wait_link_retrain(struct altera_pcie *pcie)
 	}
 }
 
-static void altera_pcie_retrain(struct altera_pcie *pcie)
+static int altera_pcie_add_bus(struct pci_bus *bus)
 {
+	struct altera_pcie *pcie = bus->sysdata;
+	int cap_off = pcie->pcie_data->cap_offset;
 	u16 linkcap, linkstat, linkctl;
 
-	if (!pcie->pcie_data->ops->get_link_status(pcie))
-		return;
+	if (!pci_is_root_bus(bus) || !pcie->pcie_data->ops->get_link_status(pcie))
+		return 0;
 
 	/*
 	 * Set the retrain bit if the PCIe rootport support > 2.5GB/s, but
 	 * current speed is 2.5 GB/s.
 	 */
-	altera_read_cap_word(pcie, pcie->root_bus_nr, RP_DEVFN, PCI_EXP_LNKCAP,
-			     &linkcap);
+	pci_bus_read_config_word(bus, 0, cap_off + PCI_EXP_LNKCAP, &linkcap);
 	if ((linkcap & PCI_EXP_LNKCAP_SLS) <= PCI_EXP_LNKCAP_SLS_2_5GB)
-		return;
+		return 0;
 
-	altera_read_cap_word(pcie, pcie->root_bus_nr, RP_DEVFN, PCI_EXP_LNKSTA,
-			     &linkstat);
+	pci_bus_read_config_word(bus, 0, cap_off + PCI_EXP_LNKSTA, &linkstat);
 	if ((linkstat & PCI_EXP_LNKSTA_CLS) == PCI_EXP_LNKSTA_CLS_2_5GB) {
-		altera_read_cap_word(pcie, pcie->root_bus_nr, RP_DEVFN,
-				     PCI_EXP_LNKCTL, &linkctl);
+		pci_bus_read_config_word(bus, 0, cap_off + PCI_EXP_LNKCTL, &linkctl);
 		linkctl |= PCI_EXP_LNKCTL_RL;
-		altera_write_cap_word(pcie, pcie->root_bus_nr, RP_DEVFN,
-				      PCI_EXP_LNKCTL, linkctl);
+		pci_bus_write_config_word(bus, 0, cap_off + PCI_EXP_LNKCTL, linkctl);
 
-		altera_wait_link_retrain(pcie);
+		altera_wait_link_retrain(bus);
 	}
+	return 0;
 }
+
+static struct pci_ops altera_pcie_ops = {
+	.add_bus = altera_pcie_add_bus,
+	.read = altera_pcie_cfg_read,
+	.write = altera_pcie_cfg_write,
+};
 
 static int altera_pcie_intx_map(struct irq_domain *domain, unsigned int irq,
 				irq_hw_number_t hwirq)
@@ -706,11 +684,6 @@ static int altera_pcie_parse_dt(struct altera_pcie *pcie)
 	return 0;
 }
 
-static void altera_pcie_host_init(struct altera_pcie *pcie)
-{
-	altera_pcie_retrain(pcie);
-}
-
 static const struct altera_pcie_ops altera_pcie_ops_1_0 = {
 	.tlp_read_pkt = tlp_read_packet,
 	.tlp_write_pkt = tlp_write_packet,
@@ -791,7 +764,6 @@ static int altera_pcie_probe(struct platform_device *pdev)
 	cra_writel(pcie, P2A_INT_STS_ALL, P2A_INT_STATUS);
 	/* enable all interrupts */
 	cra_writel(pcie, P2A_INT_ENA_ALL, P2A_INT_ENABLE);
-	altera_pcie_host_init(pcie);
 
 	bridge->sysdata = pcie;
 	bridge->busnr = pcie->root_bus_nr;
