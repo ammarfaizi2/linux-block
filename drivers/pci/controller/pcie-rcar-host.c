@@ -64,18 +64,12 @@ static u32 rcar_read_conf(struct rcar_pcie *pcie, int where)
 	return val >> shift;
 }
 
-/* Serialization is provided by 'pci_lock' in drivers/pci/access.c */
-static int rcar_pcie_config_access(struct rcar_pcie_host *host,
-		unsigned char access_type, struct pci_bus *bus,
-		unsigned int devfn, int where, u32 *data)
+static void __iomem *rcar_pcie_map_root_bus(struct pci_bus *bus,
+					    unsigned int devfn, int where)
 {
+	struct rcar_pcie_host *host = bus->sysdata;
 	struct rcar_pcie *pcie = &host->pcie;
-	unsigned int dev, func, reg, index;
-
-	dev = PCI_SLOT(devfn);
-	func = PCI_FUNC(devfn);
-	reg = where & ~3;
-	index = reg / 4;
+	unsigned int index = (where & ~3) / 4;
 
 	/*
 	 * While each channel has its own memory-mapped extended config
@@ -92,17 +86,25 @@ static int rcar_pcie_config_access(struct rcar_pcie_host *host,
 	 * case the regular ECAR/ECDR path is sidelined and the mangled
 	 * config access itself is initiated as an internal bus transaction.
 	 */
-	if (pci_is_root_bus(bus)) {
-		if (dev != 0)
-			return PCIBIOS_DEVICE_NOT_FOUND;
+	return pcie->base + PCICONF(index);
+}
 
-		if (access_type == RCAR_PCI_ACCESS_READ)
-			*data = rcar_pci_read_reg(pcie, PCICONF(index));
-		else
-			rcar_pci_write_reg(pcie, *data, PCICONF(index));
+static struct pci_ops rcar_pcie_ops = {
+	.map_bus = rcar_pcie_map_root_bus,
+	.read	= pci_generic_config_read32,
+	.write	= pci_generic_config_write32,
+};
 
-		return PCIBIOS_SUCCESSFUL;
-	}
+static void __iomem *rcar_pcie_map_bus(struct pci_bus *bus,
+					unsigned int devfn, int where)
+{
+	struct rcar_pcie_host *host = bus->sysdata;
+	struct rcar_pcie *pcie = &host->pcie;
+	unsigned int dev, func, reg;
+
+	dev = PCI_SLOT(devfn);
+	func = PCI_FUNC(devfn);
+	reg = where & ~3;
 
 	/* Clear errors */
 	rcar_pci_write_reg(pcie, rcar_pci_read_reg(pcie, PCIEERRFR), PCIEERRFR);
@@ -119,44 +121,29 @@ static int rcar_pcie_config_access(struct rcar_pcie_host *host,
 
 	/* Check for errors */
 	if (rcar_pci_read_reg(pcie, PCIEERRFR) & UNSUPPORTED_REQUEST)
-		return PCIBIOS_DEVICE_NOT_FOUND;
+		return NULL;
 
 	/* Check for master and target aborts */
 	if (rcar_read_conf(pcie, RCONF(PCI_STATUS)) &
 		(PCI_STATUS_REC_MASTER_ABORT | PCI_STATUS_REC_TARGET_ABORT))
-		return PCIBIOS_DEVICE_NOT_FOUND;
+		return NULL;
 
-	if (access_type == RCAR_PCI_ACCESS_READ)
-		*data = rcar_pci_read_reg(pcie, PCIECDR);
-	else
-		rcar_pci_write_reg(pcie, *data, PCIECDR);
-
-	/* Disable the configuration access */
-	rcar_pci_write_reg(pcie, 0, PCIECCTLR);
-
-	return PCIBIOS_SUCCESSFUL;
+	return pcie->base + PCIECDR;
 }
 
 static int rcar_pcie_read_conf(struct pci_bus *bus, unsigned int devfn,
 			       int where, int size, u32 *val)
 {
 	struct rcar_pcie_host *host = bus->sysdata;
+	struct rcar_pcie *pcie = &host->pcie;
 	int ret;
 
-	ret = rcar_pcie_config_access(host, RCAR_PCI_ACCESS_READ,
-				      bus, devfn, where, val);
-	if (ret != PCIBIOS_SUCCESSFUL) {
-		*val = 0xffffffff;
+	ret = pci_generic_config_read32(bus, devfn, where, size, val);
+	if (ret)
 		return ret;
-	}
 
-	if (size == 1)
-		*val = (*val >> (BITS_PER_BYTE * (where & 3))) & 0xff;
-	else if (size == 2)
-		*val = (*val >> (BITS_PER_BYTE * (where & 2))) & 0xffff;
-
-	dev_dbg(&bus->dev, "pcie-config-read: bus=%3d devfn=0x%04x where=0x%04x size=%d val=0x%08x\n",
-		bus->number, devfn, where, size, *val);
+	/* Disable the configuration access */
+	rcar_pci_write_reg(pcie, 0, PCIECCTLR);
 
 	return ret;
 }
@@ -166,36 +153,41 @@ static int rcar_pcie_write_conf(struct pci_bus *bus, unsigned int devfn,
 				int where, int size, u32 val)
 {
 	struct rcar_pcie_host *host = bus->sysdata;
-	unsigned int shift;
+	struct rcar_pcie *pcie = &host->pcie;
+	unsigned int shift, mask;
 	u32 data;
 	int ret;
 
-	ret = rcar_pcie_config_access(host, RCAR_PCI_ACCESS_READ,
-				      bus, devfn, where, &data);
+	ret = pci_generic_config_read32(bus, devfn, where & ~0x3, 4, &data);
 	if (ret != PCIBIOS_SUCCESSFUL)
 		return ret;
+
+	/* Disable the configuration access */
+	rcar_pci_write_reg(pcie, 0, PCIECCTLR);
 
 	dev_dbg(&bus->dev, "pcie-config-write: bus=%3d devfn=0x%04x where=0x%04x size=%d val=0x%08x\n",
 		bus->number, devfn, where, size, val);
 
-	if (size == 1) {
+	if (size <= 2) {
 		shift = BITS_PER_BYTE * (where & 3);
-		data &= ~(0xff << shift);
-		data |= ((val & 0xff) << shift);
-	} else if (size == 2) {
-		shift = BITS_PER_BYTE * (where & 2);
-		data &= ~(0xffff << shift);
-		data |= ((val & 0xffff) << shift);
+		mask = (size * BITS_PER_BYTE) - 1;
+		data &= ~(mask << shift);
+		data |= (val & mask) << shift;
 	} else
 		data = val;
 
-	ret = rcar_pcie_config_access(host, RCAR_PCI_ACCESS_WRITE,
-				      bus, devfn, where, &data);
+	ret = pci_generic_config_write32(bus, devfn, where & ~0x3, 4, data);
+	if (ret)
+		return ret;
+
+	/* Disable the configuration access */
+	rcar_pci_write_reg(pcie, 0, PCIECCTLR);
 
 	return ret;
 }
 
-static struct pci_ops rcar_pcie_ops = {
+static struct pci_ops rcar_pcie_child_ops = {
+	.map_bus = rcar_pcie_map_bus,
 	.read	= rcar_pcie_read_conf,
 	.write	= rcar_pcie_write_conf,
 };
