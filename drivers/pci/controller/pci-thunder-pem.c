@@ -209,8 +209,6 @@ static int thunder_pem_bridge_write(struct pci_bus *bus, unsigned int devfn,
 	struct thunder_pem_pci *pem_pci = (struct thunder_pem_pci *)cfg->priv;
 	u64 write_val, read_val;
 	u64 where_aligned = where & ~3ull;
-	u32 mask = 0;
-
 
 	if (devfn != 0 || where >= 2048)
 		return PCIBIOS_DEVICE_NOT_FOUND;
@@ -221,42 +219,27 @@ static int thunder_pem_bridge_write(struct pci_bus *bus, unsigned int devfn,
 	 * in the desired bits and then write the whole 32-bits back
 	 * out.
 	 */
-	switch (size) {
-	case 1:
+	if (size <= 2) {
+		u32 mask = (1 << (size * 8)) - 1;
+
+		val &= mask;
+
 		writeq(where_aligned, pem_pci->pem_reg_base + PEM_CFG_RD);
 		read_val = readq(pem_pci->pem_reg_base + PEM_CFG_RD);
 		read_val >>= 32;
-		mask = ~(0xff << (8 * (where & 3)));
-		read_val &= mask;
-		val = (val & 0xff) << (8 * (where & 3));
-		val |= (u32)read_val;
-		break;
-	case 2:
-		writeq(where_aligned, pem_pci->pem_reg_base + PEM_CFG_RD);
-		read_val = readq(pem_pci->pem_reg_base + PEM_CFG_RD);
-		read_val >>= 32;
-		mask = ~(0xffff << (8 * (where & 3)));
-		read_val &= mask;
-		val = (val & 0xffff) << (8 * (where & 3));
-		val |= (u32)read_val;
-		break;
-	default:
-		break;
-	}
 
-	/*
-	 * By expanding the write width to 32 bits, we may
-	 * inadvertently hit some W1C bits that were not intended to
-	 * be written.  Calculate the mask that must be applied to the
-	 * data to be written to avoid these cases.
-	 */
-	if (mask) {
-		u32 w1c_bits = thunder_pem_bridge_w1c_bits(where);
+		mask <<= 8 * (where & 3);
+		val <<= 8 * (where & 3);
 
-		if (w1c_bits) {
-			mask &= w1c_bits;
-			val &= ~mask;
-		}
+		/*
+		 * By expanding the write width to 32 bits, we may
+		 * inadvertently hit some W1C bits that were not intended to
+		 * be written.  Calculate the mask that must be applied to the
+		 * data to be written to avoid these cases.
+		 */
+		mask |= thunder_pem_bridge_w1c_bits(where);
+
+		val |= (u32)read_val & ~mask;
 	}
 
 	/*
