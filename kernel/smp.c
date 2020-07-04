@@ -285,9 +285,9 @@ static int generic_exec_single(int cpu, call_single_data_t *csd)
 		 * We can unlock early even for the synchronous on-stack case,
 		 * since we're doing this from the same CPU..
 		 */
+		csd_lock_record(csd);
 		csd_unlock(csd);
 		local_irq_save(flags);
-		csd_lock_record(csd);
 		func(info);
 		csd_lock_record(NULL);
 		local_irq_restore(flags);
