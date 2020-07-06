@@ -123,10 +123,10 @@ static void csd_lock_record(call_single_data_t *csd)
 
 static __always_inline int csd_lock_wait_getcpu(call_single_data_t *csd)
 {
+#ifdef CONFIG_64BIT
 	unsigned int csd_type;
 
 	csd_type = CSD_TYPE(csd);
-#ifdef CONFIG_64BIT
 	if (csd_type == CSD_TYPE_ASYNC || csd_type == CSD_TYPE_SYNC)
 		return csd->dst; // Other CSD_TYPE_ values might not have ->dst.
 #endif
