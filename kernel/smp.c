@@ -104,7 +104,7 @@ void __init call_function_init(void)
 }
 
 #define CSD_LOCK_TIMEOUT (5 * 1000ULL) /* Milliseconds. */
-atomic_t csd_bug_count = ATOMIC_INIT(0);
+static atomic_t csd_bug_count = ATOMIC_INIT(0);
 
 /* Record current CSD work for current CPU, NULL to erase. */
 static void csd_lock_record(call_single_data_t *csd)
