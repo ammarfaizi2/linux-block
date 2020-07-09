@@ -83,7 +83,7 @@ int pci_host_common_probe(struct platform_device *pdev)
 	bridge->map_irq = of_irq_parse_and_map_pci;
 	bridge->swizzle_irq = pci_common_swizzle;
 
-	platform_set_drvdata(pdev, bridge->bus);
+	platform_set_drvdata(pdev, bridge);
 
 	return pci_host_probe(bridge);
 }
@@ -91,11 +91,11 @@ EXPORT_SYMBOL_GPL(pci_host_common_probe);
 
 int pci_host_common_remove(struct platform_device *pdev)
 {
-	struct pci_bus *bus = platform_get_drvdata(pdev);
+	struct pci_host_bridge *bridge = platform_get_drvdata(pdev);
 
 	pci_lock_rescan_remove();
-	pci_stop_root_bus(bus);
-	pci_remove_root_bus(bus);
+	pci_stop_root_bus(bridge->bus);
+	pci_remove_root_bus(bridge->bus);
 	pci_unlock_rescan_remove();
 
 	return 0;
