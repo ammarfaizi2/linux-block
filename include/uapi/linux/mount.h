@@ -117,4 +117,12 @@ enum fsconfig_command {
 #define MOUNT_ATTR_STRICTATIME	0x00000020 /* - Always perform atime updates */
 #define MOUNT_ATTR_NODIRATIME	0x00000080 /* Do not update directory access times */
 
+/* Mount topology */
+enum propagation_type {
+	MOUNT_PROPAGATION_UNBINDABLE	= 1, /* Make unbindable. */
+	MOUNT_PROPAGATION_PRIVATE	= 2, /* Do not receive or send mount events. */
+	MOUNT_PROPAGATION_DEPENDENT	= 3, /* Only receive mount events. */
+	MOUNT_PROPAGATION_SHARED	= 4, /* Send and receive mount events. */
+};
+
 #endif /* _UAPI_LINUX_MOUNT_H */

@@ -75,6 +75,13 @@ int do_linkat(int olddfd, const char __user *oldname, int newdfd,
 /*
  * namespace.c
  */
+struct mount_kattr {
+	unsigned int attr_set;
+	unsigned int attr_clr;
+	unsigned int propagation;
+	unsigned int lookup_flags;
+	bool recurse;
+};
 extern void *copy_mount_options(const void __user *);
 extern char *copy_mount_string(const void __user *);
 
