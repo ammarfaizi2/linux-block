@@ -304,7 +304,7 @@ static void scftorture_invoke_one(struct scf_statistics *scfp, struct torture_ra
 	else
 		preempt_disable();
 	if (scfsp->scfs_prim == SCF_PRIM_SINGLE || scfsp->scfs_wait) {
-		scfcp = kmalloc(sizeof(*scfcp), GFP_KERNEL);
+		scfcp = kmalloc(sizeof(*scfcp), GFP_ATOMIC);
 		if (WARN_ON_ONCE(!scfcp)) {
 			atomic_inc(&n_alloc_errs);
 		} else {
