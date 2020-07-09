@@ -117,4 +117,35 @@ enum fsconfig_command {
 #define MOUNT_ATTR_STRICTATIME	0x00000020 /* - Always perform atime updates */
 #define MOUNT_ATTR_NODIRATIME	0x00000080 /* Do not update directory access times */
 
+/*
+ * mount_setattr()
+ */
+struct mount_attr {
+	__u64 attr_set;
+	__u64 attr_clr;
+	__u32 propagation;
+	__u32 atime;
+};
+
+/* Change propagation through mount_setattr(). */
+enum propagation_type {
+	MAKE_PROPAGATION_UNCHANGED	= 0, /* Don't change mount propagation (default). */
+	MAKE_PROPAGATION_UNBINDABLE	= 1, /* Make unbindable. */
+	MAKE_PROPAGATION_PRIVATE	= 2, /* Do not receive or send mount events. */
+	MAKE_PROPAGATION_DEPENDENT	= 3, /* Only receive mount events. */
+	MAKE_PROPAGATION_SHARED		= 4, /* Send and receive mount events. */
+};
+
+/* Change atime settings through mount_setattr() */
+enum atime_type {
+	MAKE_ATIME_UNCHANGED	= 0, /* Don't change atime settings. */
+	MAKE_ATIME_RELATIVE	= 1, /* Update atime relative to mtime/ctime. */
+	MAKE_ATIME_NONE		= 2, /* Do not update access times. */
+	MAKE_ATIME_STRICT	= 3, /* Always perform atime updates. */
+};
+
+/* List of all mount_attr versions. */
+#define MOUNT_ATTR_SIZE_VER0	24 /* sizeof first published struct */
+#define MOUNT_ATTR_SIZE_LATEST	MOUNT_ATTR_SIZE_VER0
+
 #endif /* _UAPI_LINUX_MOUNT_H */
