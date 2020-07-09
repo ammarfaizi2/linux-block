@@ -171,7 +171,7 @@ static __always_inline bool csd_lock_wait_toolong(call_single_data_t *csd, u64 t
 		*bug_id = atomic_inc_return(&csd_bug_count);
 	cpu = csd_lock_wait_getcpu(csd);
 	smp_mb(); // No stale cur_csd values!
-	if (WARN_ONCE(cpu < 0 || cpu > nr_cpu_ids, "%s: cpu = %d\n", __func__, cpu))
+	if (WARN_ONCE(cpu < 0 || cpu >= nr_cpu_ids, "%s: cpu = %d\n", __func__, cpu))
 		cpu_cur_csd = READ_ONCE(per_cpu(cur_csd, 0));
 	else
 		cpu_cur_csd = READ_ONCE(per_cpu(cur_csd, cpu));
