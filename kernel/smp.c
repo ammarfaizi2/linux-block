@@ -107,7 +107,7 @@ void __init call_function_init(void)
 
 #ifdef CONFIG_CSD_LOCK_WAIT_DEBUG
 
-#define CSD_LOCK_TIMEOUT (5 * 1000ULL) /* Milliseconds. */
+#define CSD_LOCK_TIMEOUT (5 * 1000ULL * 1000ULL * 1000ULL) /* Nanoseconds. */
 static atomic_t csd_bug_count = ATOMIC_INIT(0);
 
 /* Record current CSD work for current CPU, NULL to erase. */
@@ -148,8 +148,6 @@ static __always_inline bool csd_lock_wait_toolong(call_single_data_t *csd, u64 t
 	call_single_data_t *cpu_cur_csd;
 	bool firsttime;
 	unsigned int flags = READ_ONCE(csd->flags);
-	u64 quo;
-	u32 rem;
 	u64 ts2, ts_delta;
 
 	if (!(flags & CSD_FLAG_LOCK)) {
@@ -163,7 +161,7 @@ static __always_inline bool csd_lock_wait_toolong(call_single_data_t *csd, u64 t
 		return true;
 	}
 
-	ts2 = div_u64_rem(sched_clock(), 1000 * 1000, &rem);
+	ts2 = sched_clock();
 	ts_delta = ts2 - *ts1;
 	if (likely(ts_delta <= CSD_LOCK_TIMEOUT)) {
 		cpu_relax();
@@ -180,10 +178,9 @@ static __always_inline bool csd_lock_wait_toolong(call_single_data_t *csd, u64 t
 	else
 		cpu_cur_csd = READ_ONCE(per_cpu(cur_csd, cpu));
 	smp_mb(); // No refetching cur_csd values!
-	quo = div_u64_rem(ts2 - ts0, 1000, &rem);
-#define CSD_FORMAT_PREFIX "csd: %s non-responsive CSD lock (#%d) on CPU#%d, waiting %llu.%03u secs for CPU#%02d %pS(%ps), currently"
+#define CSD_FORMAT_PREFIX "csd: %s non-responsive CSD lock (#%d) on CPU#%d, waiting %llu ns for CPU#%02d %pS(%ps), currently"
 #define CSD_ARGS_PREFIX firsttime ? "Detected" : "Continued", *bug_id, raw_smp_processor_id(), \
-	quo, rem, cpu, csd->func, csd->info
+	ts2 - ts0, cpu, csd->func, csd->info
 	if (cpu_cur_csd && csd != cpu_cur_csd)
 		pr_alert(CSD_FORMAT_PREFIX " handling prior %pS(%ps) request.\n",
 			 CSD_ARGS_PREFIX, cpu_cur_csd->func, cpu_cur_csd->info);
@@ -217,10 +214,9 @@ static __always_inline bool csd_lock_wait_toolong(call_single_data_t *csd, u64 t
 static __always_inline void csd_lock_wait(call_single_data_t *csd)
 {
 	int bug_id = 0;
-	u32 rem;
 	u64 ts0, ts1;
 
-	ts1 = ts0 = div_u64_rem(sched_clock(), 1000 * 1000, &rem);
+	ts1 = ts0 = sched_clock();
 	for (;;)
 		if (csd_lock_wait_toolong(csd, ts0, &ts1, &bug_id))
 			break;
