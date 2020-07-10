@@ -127,7 +127,7 @@ static void csd_lock_record(call_single_data_t *csd)
 
 static __always_inline int csd_lock_wait_getcpu(call_single_data_t *csd)
 {
-#ifdef CONFIG_64BIT
+#ifdef CONFIG_CSD_LOCK_WAIT_DEBUG
 	unsigned int csd_type;
 
 	csd_type = CSD_TYPE(csd);
@@ -507,7 +507,7 @@ int smp_call_function_single(int cpu, smp_call_func_t func, void *info,
 
 	csd->func = func;
 	csd->info = info;
-#ifdef CONFIG_64BIT
+#ifdef CONFIG_CSD_LOCK_WAIT_DEBUG
 	csd->src = smp_processor_id();
 	csd->dst = cpu;
 #endif
@@ -676,7 +676,7 @@ static void smp_call_function_many_cond(const struct cpumask *mask,
 			csd->flags |= CSD_TYPE_SYNC;
 		csd->func = func;
 		csd->info = info;
-#ifdef CONFIG_64BIT
+#ifdef CONFIG_CSD_LOCK_WAIT_DEBUG
 		csd->src = smp_processor_id();
 		csd->dst = cpu;
 #endif
