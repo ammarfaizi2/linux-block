@@ -37,9 +37,11 @@ struct call_function_data {
 
 static DEFINE_PER_CPU_ALIGNED(struct call_function_data, cfd_data);
 
+#ifdef CONFIG_CSD_LOCK_WAIT_DEBUG
 static DEFINE_PER_CPU(call_single_data_t *, cur_csd);
 static DEFINE_PER_CPU(smp_call_func_t, cur_csd_func);
 static DEFINE_PER_CPU(void *, cur_csd_info);
+#endif
 
 static DEFINE_PER_CPU_SHARED_ALIGNED(struct llist_head, call_single_queue);
 
@@ -102,6 +104,8 @@ void __init call_function_init(void)
 
 	smpcfd_prepare_cpu(smp_processor_id());
 }
+
+#ifdef CONFIG_CSD_LOCK_WAIT_DEBUG
 
 #define CSD_LOCK_TIMEOUT (5 * 1000ULL) /* Milliseconds. */
 static atomic_t csd_bug_count = ATOMIC_INIT(0);
@@ -216,16 +220,23 @@ static __always_inline void csd_lock_wait(call_single_data_t *csd)
 	u32 rem;
 	u64 ts0, ts1;
 
-	if (!IS_ENABLED(CONFIG_CSD_LOCK_WAIT_DEBUG)) {
-		smp_cond_load_acquire(&csd->flags, !(VAL & CSD_FLAG_LOCK));
-		return;
-	}
 	ts1 = ts0 = div_u64_rem(sched_clock(), 1000 * 1000, &rem);
 	for (;;)
 		if (csd_lock_wait_toolong(csd, ts0, &ts1, &bug_id))
 			break;
 	smp_acquire__after_ctrl_dep();
 }
+
+#else
+static void csd_lock_record(call_single_data_t *csd)
+{
+}
+
+static __always_inline void csd_lock_wait(call_single_data_t *csd)
+{
+	smp_cond_load_acquire(&csd->flags, !(VAL & CSD_FLAG_LOCK));
+}
+#endif
 
 static __always_inline void csd_lock(call_single_data_t *csd)
 {
