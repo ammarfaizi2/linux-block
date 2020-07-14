@@ -641,37 +641,10 @@ static int advk_sw_pci_bridge_init(struct advk_pcie *pcie)
 	return pci_bridge_emul_init(bridge, 0);
 }
 
-static bool advk_pcie_valid_device(struct advk_pcie *pcie, struct pci_bus *bus,
-				  int devfn)
-{
-	if (pci_is_root_bus(bus) && PCI_SLOT(devfn) != 0)
-		return false;
-
-	/*
-	 * If the link goes down after we check for link-up, nothing bad
-	 * happens but the config access times out.
-	 */
-	if (!pci_is_root_bus(bus) && !advk_pcie_link_up(pcie))
-		return false;
-
-	return true;
-}
-
-static int advk_pcie_rd_conf(struct pci_bus *bus, u32 devfn,
-			     int where, int size, u32 *val)
+static void advk_pcie_map_bus(struct pci_bus *bus, u32 devfn, int where)
 {
 	struct advk_pcie *pcie = bus->sysdata;
 	u32 reg;
-	int ret;
-
-	if (!advk_pcie_valid_device(pcie, bus, devfn)) {
-		*val = 0xffffffff;
-		return PCIBIOS_DEVICE_NOT_FOUND;
-	}
-
-	if (pci_is_root_bus(bus))
-		return pci_bridge_emul_conf_read(&pcie->bridge, where,
-						 size, val);
 
 	/* Start PIO */
 	advk_writel(pcie, 0, PIO_START);
@@ -690,6 +663,15 @@ static int advk_pcie_rd_conf(struct pci_bus *bus, u32 devfn,
 	reg = ALIGN_DOWN(PCIE_ECAM_OFFSET(bus->number, devfn, where), 4);
 	advk_writel(pcie, reg, PIO_ADDR_LS);
 	advk_writel(pcie, 0, PIO_ADDR_MS);
+}
+
+static int advk_pcie_rd_conf(struct pci_bus *bus, u32 devfn,
+			     int where, int size, u32 *val)
+{
+	struct advk_pcie *pcie = bus->sysdata;
+	int ret;
+
+	advk_pcie_map_bus(bus, devfn, where);
 
 	/* Program the data strobe */
 	advk_writel(pcie, 0xf, PIO_WR_DATA_STRB);
@@ -721,33 +703,7 @@ static int advk_pcie_wr_conf(struct pci_bus *bus, u32 devfn,
 	int offset;
 	int ret;
 
-	if (!advk_pcie_valid_device(pcie, bus, devfn))
-		return PCIBIOS_DEVICE_NOT_FOUND;
-
-	if (pci_is_root_bus(bus))
-		return pci_bridge_emul_conf_write(&pcie->bridge, where,
-						  size, val);
-
-	if (where % size)
-		return PCIBIOS_SET_FAILED;
-
-	/* Start PIO */
-	advk_writel(pcie, 0, PIO_START);
-	advk_writel(pcie, 1, PIO_ISR);
-
-	/* Program the control register */
-	reg = advk_readl(pcie, PIO_CTRL);
-	reg &= ~PIO_CTRL_TYPE_MASK;
-	if (pci_is_root_bus(bus->parent))
-		reg |= PCIE_CONFIG_WR_TYPE0;
-	else
-		reg |= PCIE_CONFIG_WR_TYPE1;
-	advk_writel(pcie, reg, PIO_CTRL);
-
-	/* Program the address registers */
-	reg = ALIGN_DOWN(PCIE_ECAM_OFFSET(bus->number, devfn, where), 4);
-	advk_writel(pcie, reg, PIO_ADDR_LS);
-	advk_writel(pcie, 0, PIO_ADDR_MS);
+	advk_pcie_map_bus(bus, devfn, where);
 
 	/* Calculate the write strobe */
 	offset      = where & 0x3;
@@ -775,6 +731,35 @@ static int advk_pcie_wr_conf(struct pci_bus *bus, u32 devfn,
 static struct pci_ops advk_pcie_ops = {
 	.read = advk_pcie_rd_conf,
 	.write = advk_pcie_wr_conf,
+};
+
+static int advk_pcie_rd_root_conf(struct pci_bus *bus, u32 devfn,
+			     int where, int size, u32 *val)
+{
+	struct advk_pcie *pcie = bus->sysdata;
+
+	if (PCI_SLOT(devfn)) {
+		*val = 0xffffffff;
+		return PCIBIOS_DEVICE_NOT_FOUND;
+	}
+
+	return pci_bridge_emul_conf_read(&pcie->bridge, where, size, val);
+}
+
+static int advk_pcie_wr_root_conf(struct pci_bus *bus, u32 devfn,
+				  int where, int size, u32 val)
+{
+	struct advk_pcie *pcie = bus->sysdata;
+
+	if (PCI_SLOT(devfn))
+		return PCIBIOS_DEVICE_NOT_FOUND;
+
+	return pci_bridge_emul_conf_write(&pcie->bridge, where, size, val);
+}
+
+static struct pci_ops advk_root_pcie_ops = {
+	.read = advk_pcie_rd_root_conf,
+	.write = advk_pcie_wr_root_conf,
 };
 
 static void advk_msi_irq_compose_msi_msg(struct irq_data *data,
@@ -1191,7 +1176,9 @@ static int advk_pcie_probe(struct platform_device *pdev)
 	}
 
 	bridge->sysdata = pcie;
-	bridge->ops = &advk_pcie_ops;
+	bridge->ops = &advk_root_pcie_ops;
+	bridge->child_ops = &advk_pcie_ops;
+	bridge->single_root_dev = 1;
 
 	ret = pci_host_probe(bridge);
 	if (ret < 0) {
