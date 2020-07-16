@@ -259,10 +259,7 @@ _ASM_NOKPROBE_SYMBOL(save_nvgprs);
 
 #define FLUSH_COUNT_CACHE	\
 1:	nop;			\
-	patch_site 1b, patch__call_flush_count_cache
-
-
-#define BCCTR_FLUSH	.long 0x4c400420
+	patch_site 1b, patch__call_flush_branch_caches
 
 .macro nops number
 	.rept \number
@@ -271,8 +268,8 @@ _ASM_NOKPROBE_SYMBOL(save_nvgprs);
 .endm
 
 .balign 32
-.global flush_count_cache
-flush_count_cache:
+.global flush_branch_caches
+flush_branch_caches:
 	/* Save LR into r9 */
 	mflr	r9
 
@@ -294,7 +291,7 @@ flush_count_cache:
 	li	r9,0x7fff
 	mtctr	r9
 
-	BCCTR_FLUSH
+	PPC_BCCTR_FLUSH
 
 2:	nop
 	patch_site 2b patch__flush_count_cache_return
@@ -303,7 +300,7 @@ flush_count_cache:
 
 	.rept 278
 	.balign 32
-	BCCTR_FLUSH
+	PPC_BCCTR_FLUSH
 	nops	7
 	.endr
 
