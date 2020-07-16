@@ -176,17 +176,15 @@ static __always_inline bool csd_lock_wait_toolong(call_single_data_t *csd, u64 t
 	else
 		cpu_cur_csd = READ_ONCE(per_cpu(cur_csd, cpu));
 	smp_mb(); // No refetching cur_csd values!
-#define CSD_FORMAT_PREFIX "csd: %s non-responsive CSD lock (#%d) on CPU#%d, waiting %llu ns for CPU#%02d %pS(%ps), currently"
-#define CSD_ARGS_PREFIX firsttime ? "Detected" : "Continued", *bug_id, raw_smp_processor_id(), \
-	ts2 - ts0, cpu, csd->func, csd->info
+	pr_alert("csd: %s non-responsive CSD lock (#%d) on CPU#%d, waiting %llu ns for CPU#%02d %pS(%ps).\n",
+		 firsttime ? "Detected" : "Continued", *bug_id, raw_smp_processor_id(), ts2 - ts0,
+		 cpu, csd->func, csd->info);
 	if (cpu_cur_csd && csd != cpu_cur_csd)
-		pr_alert(CSD_FORMAT_PREFIX " handling prior %pS(%ps) request.\n",
-			 CSD_ARGS_PREFIX, cpu_cur_csd->func, cpu_cur_csd->info);
+		pr_alert("\tcsd: CSD lock (#%d) handling prior %pS(%ps) request.\n",
+			 *bug_id, cpu_cur_csd->func, cpu_cur_csd->info);
 	else
-		pr_alert(CSD_FORMAT_PREFIX " %s.\n", CSD_ARGS_PREFIX,
-			 !cpu_cur_csd ? "unresponsive" : "handling this request");
-#undef CSD_FORMAT_PREFIX
-#undef CSD_ARGS_PREFIX
+		pr_alert("\tcsd: CSD lock (#%d) %s.\n",
+			 *bug_id, !cpu_cur_csd ? "unresponsive" : "handling this request");
 	if (cpu >= 0) {
 		if (!trigger_single_cpu_backtrace(cpu))
 			dump_cpu_task(cpu);
