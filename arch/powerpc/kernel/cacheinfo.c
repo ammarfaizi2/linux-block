@@ -647,12 +647,13 @@ static const struct cpumask *get_big_core_shared_cpu_map(int cpu, struct cache *
 	return &cache->shared_cpu_map;
 }
 
-static ssize_t shared_cpu_map_show(struct kobject *k, struct kobj_attribute *attr, char *buf)
+static ssize_t
+show_shared_cpumap(struct kobject *k, struct kobj_attribute *attr, char *buf, bool list)
 {
 	struct cache_index_dir *index;
 	struct cache *cache;
 	const struct cpumask *mask;
-	int ret, cpu;
+	int cpu;
 
 	index = kobj_to_cache_index_dir(k);
 	cache = index->cache;
@@ -664,15 +665,24 @@ static ssize_t shared_cpu_map_show(struct kobject *k, struct kobj_attribute *att
 		mask  = &cache->shared_cpu_map;
 	}
 
-	ret = scnprintf(buf, PAGE_SIZE - 1, "%*pb\n",
-			cpumask_pr_args(mask));
-	buf[ret++] = '\n';
-	buf[ret] = '\0';
-	return ret;
+	return cpumap_print_to_pagebuf(list, buf, mask);
+}
+
+static ssize_t shared_cpu_map_show(struct kobject *k, struct kobj_attribute *attr, char *buf)
+{
+	return show_shared_cpumap(k, attr, buf, false);
+}
+
+static ssize_t shared_cpu_list_show(struct kobject *k, struct kobj_attribute *attr, char *buf)
+{
+	return show_shared_cpumap(k, attr, buf, true);
 }
 
 static struct kobj_attribute cache_shared_cpu_map_attr =
 	__ATTR(shared_cpu_map, 0444, shared_cpu_map_show, NULL);
+
+static struct kobj_attribute cache_shared_cpu_list_attr =
+	__ATTR(shared_cpu_list, 0444, shared_cpu_list_show, NULL);
 
 /* Attributes which should always be created -- the kobject/sysfs core
  * does this automatically via kobj_type->default_attrs.  This is the
@@ -682,6 +692,7 @@ static struct attribute *cache_index_default_attrs[] = {
 	&cache_type_attr.attr,
 	&cache_level_attr.attr,
 	&cache_shared_cpu_map_attr.attr,
+	&cache_shared_cpu_list_attr.attr,
 	NULL,
 };
 
