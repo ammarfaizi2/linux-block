@@ -21,6 +21,10 @@
 #include <linux/security.h>
 #include <linux/uio.h>
 #include <linux/uaccess.h>
+#include <linux/file.h>
+#include <linux/proc_fs.h>
+#include <linux/proc_ns.h>
+#include <linux/user_namespace.h>
 #include <keys/request_key_auth-type.h>
 #include "internal.h"
 
@@ -40,7 +44,8 @@ static const unsigned char keyrings_capabilities[2] = {
 	       KEYCTL_CAPS1_NS_KEY_TAG |
 	       (IS_ENABLED(CONFIG_KEY_NOTIFICATIONS)	? KEYCTL_CAPS1_NOTIFICATIONS : 0) |
 	       KEYCTL_CAPS1_ACL |
-	       KEYCTL_CAPS1_GRANT_PERMISSION
+	       KEYCTL_CAPS1_GRANT_PERMISSION |
+	       (IS_ENABLED(CONFIG_CONTAINER_KEYRINGS)	? KEYCTL_CAPS1_CONTAINER_KEYRINGS : 0)
 	       ),
 };
 
@@ -1758,6 +1763,124 @@ err_key:
 }
 #endif /* CONFIG_KEY_NOTIFICATIONS */
 
+#ifdef CONFIG_CONTAINER_KEYRINGS
+/*
+ * Create a container keyring for a user namespace and add it.
+ */
+static struct key *key_create_container_keyring(struct user_namespace *user_ns)
+{
+	struct key_tag *tag;
+	struct key_acl *acl;
+	struct key *keyring;
+
+	keyring = key_get(user_ns->container_keyring);
+	if (keyring)
+		return keyring;
+
+	/* We're going to need a subject tag... */
+	tag = user_ns->container_subj;
+	if (!tag) {
+		tag = kzalloc(sizeof(struct key_tag), GFP_KERNEL);
+		if (!tag)
+			return ERR_PTR(-ENOMEM);
+		refcount_set(&tag->usage, 1);
+		user_ns->container_subj = tag;
+	}
+
+	/* ...  so that we can grant the container denizens search permission
+	 * on the keyring.
+	 */
+	acl = kzalloc(struct_size(acl, aces, 3), GFP_KERNEL);
+	if (!acl)
+		return ERR_PTR(-ENOMEM);
+
+	refcount_set(&acl->usage, 1);
+	acl->possessor_viewable = true;
+	acl->nr_ace		= 3;
+
+	acl->aces[0] = KEY_POSSESSOR_ACE(KEY_ACE_VIEW | KEY_ACE_READ | KEY_ACE_WRITE |
+					 KEY_ACE_CLEAR | KEY_ACE_SEARCH);
+	acl->aces[1] = KEY_OWNER_ACE(KEY_ACE_VIEW | KEY_ACE_READ);
+
+	acl->aces[2].type = KEY_ACE_SUBJ_CONTAINER;
+	acl->aces[2].subject_tag = key_get_tag(tag);
+	acl->aces[2].perm = KEY_ACE_SEARCH;
+
+	keyring = keyring_alloc(".container", user_ns->owner, INVALID_GID,
+				current_cred(), acl, 0, NULL, NULL);
+	key_put_acl(acl);
+	if (IS_ERR(keyring))
+		return keyring;
+
+	smp_store_release(&user_ns->container_keyring, key_get(keyring));
+	return keyring;
+}
+
+/*
+ * Get the container keyring attached to a container.  The container is
+ * referenced by a file descriptor referring to, say, a user_namespace.
+ */
+long keyctl_get_container_keyring(int container_fd, key_serial_t destringid)
+{
+	struct user_namespace *user_ns;
+	struct ns_common *ns;
+	struct file *f;
+	struct key *keyring;
+	key_ref_t dest_ref;
+	int ret = -EINVAL;
+
+	f = fget(container_fd);
+	if (!f)
+		return -EBADF;
+
+	if (!proc_ns_file(f))
+		goto error_file;
+	ns = get_proc_ns(file_inode(f));
+	if (ns->ops->type != CLONE_NEWUSER)
+		goto error_file;
+	user_ns = container_of(ns, struct user_namespace, ns);
+
+	keyring = key_get(READ_ONCE(user_ns->container_keyring));
+	if (!keyring) {
+		down_write(&user_ns->keyring_sem);
+		keyring = key_create_container_keyring(user_ns);
+		up_write(&user_ns->keyring_sem);
+		if (IS_ERR(keyring)) {
+			ret = PTR_ERR(keyring);
+			goto error_file;
+		}
+	}
+
+	/* Get the destination keyring if specified.  We don't need LINK
+	 * permission on the container keyring as having the container fd is
+	 * sufficient to grant us that.
+	 */
+	dest_ref = NULL;
+	if (destringid) {
+		dest_ref = lookup_user_key(destringid, KEY_LOOKUP_CREATE,
+					   KEY_NEED_KEYRING_ADD);
+		if (IS_ERR(dest_ref)) {
+			ret = PTR_ERR(dest_ref);
+			goto error_keyring;
+		}
+
+		ret = key_link(key_ref_to_ptr(dest_ref), keyring);
+		if (ret < 0)
+			goto error_dest;
+	}
+
+	ret = key_serial(keyring);
+
+error_dest:
+	key_ref_put(dest_ref);
+error_keyring:
+	key_put(keyring);
+error_file:
+	fput(f);
+	return ret;
+}
+#endif
+
 /*
  * Get keyrings subsystem capabilities.
  */
@@ -1934,6 +2057,9 @@ SYSCALL_DEFINE5(keyctl, int, option, unsigned long, arg2, unsigned long, arg3,
 
 	case KEYCTL_WATCH_KEY:
 		return keyctl_watch_key((key_serial_t)arg2, (int)arg3, (int)arg4);
+
+	case KEYCTL_GET_CONTAINER_KEYRING:
+		return keyctl_get_container_keyring((int)arg2, (key_serial_t)arg3);
 
 	default:
 		return -EOPNOTSUPP;

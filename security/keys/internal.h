@@ -144,6 +144,7 @@ struct keyring_search_context {
 	int (*iterator)(const void *object, void *iterator_data);
 
 	/* Internal stuff */
+	const struct key_tag	*container_subj; /* The ACE container subject or NULL */
 	int			skipped_ret;
 	bool			possessed;
 	key_ref_t		result;
@@ -380,6 +381,15 @@ extern long keyctl_grant_permission(key_serial_t keyid,
 				    enum key_ace_subject_type type,
 				    unsigned int subject,
 				    unsigned int perm);
+
+#ifdef CONFIG_KEY_NOTIFICATIONS
+extern long keyctl_get_container_keyring(int container_fd, key_serial_t destringid);
+#else
+static inline long keyctl_get_container_keyring(int container_fd, key_serial_t destringid)
+{
+	return -EOPNOTSUPP;
+}
+#endif
 
 /*
  * Debugging key validation

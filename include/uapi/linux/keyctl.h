@@ -20,6 +20,7 @@
  */
 enum key_ace_subject_type {
 	KEY_ACE_SUBJ_STANDARD	= 0,	/* subject is one of key_ace_standard_subject */
+	KEY_ACE_SUBJ_CONTAINER	= 1,	/* Subject is an fd referring to a container (eg. userns) */
 	nr__key_ace_subject_type
 };
 
@@ -134,6 +135,7 @@ enum key_ace_standard_subject {
 #define KEYCTL_CAPABILITIES		31	/* Find capabilities of keyrings subsystem */
 #define KEYCTL_WATCH_KEY		32	/* Watch a key or ring of keys for changes */
 #define KEYCTL_GRANT_PERMISSION		33	/* Grant a permit to a key */
+#define KEYCTL_GET_CONTAINER_KEYRING	34	/* Get a container keyring */
 
 /* keyctl structures */
 struct keyctl_dh_params {
@@ -198,5 +200,6 @@ struct keyctl_pkey_params {
 #define KEYCTL_CAPS1_NOTIFICATIONS	0x04 /* Keys generate watchable notifications */
 #define KEYCTL_CAPS1_ACL		0x08 /* Keys have ACLs rather than a p-u-g-o bitmask */
 #define KEYCTL_CAPS1_GRANT_PERMISSION	0x10 /* KEYCTL_GRANT_PERMISSION is supported */
+#define KEYCTL_CAPS1_CONTAINER_KEYRINGS	0x20 /* Container keyrings are supported */
 
 #endif /*  _LINUX_KEYCTL_H */

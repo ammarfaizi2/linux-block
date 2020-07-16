@@ -64,6 +64,13 @@ void key_free_user_ns(struct user_namespace *ns)
 #ifdef CONFIG_PERSISTENT_KEYRINGS
 	key_put(ns->persistent_keyring_register);
 #endif
+#ifdef CONFIG_CONTAINER_KEYRINGS
+	if (ns->container_subj) {
+		ns->container_subj->removed = true;
+		key_put_tag(ns->container_subj);
+	}
+	key_put(ns->container_keyring);
+#endif
 }
 
 /*

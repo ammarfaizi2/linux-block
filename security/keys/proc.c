@@ -183,7 +183,7 @@ static int proc_keys_show(struct seq_file *m, void *v)
 	check_pos = acl->possessor_viewable;
 
 	/* determine if the key is possessed by this process (a test we can
-	 * skip if the key does not indicate the possessor can view it
+	 * skip if the key does not indicate the possessor can view it)
 	 */
 	key_ref = make_key_ref(key, 0);
 	if (check_pos) {

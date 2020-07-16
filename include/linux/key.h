@@ -112,7 +112,8 @@ struct key_ace {
 	union {
 		kuid_t		uid;
 		kgid_t		gid;
-		unsigned int	subject_id;
+		unsigned long	subject_id;
+		struct key_tag	*subject_tag;
 	};
 };
 
@@ -124,13 +125,13 @@ struct key_acl {
 	struct key_ace		aces[];
 };
 
-#define KEY_POSSESSOR_ACE(perms) {			\
+#define KEY_POSSESSOR_ACE(perms) (struct key_ace){	\
 		.type = KEY_ACE_SUBJ_STANDARD,		\
 		.perm = perms,				\
 		.subject_id = KEY_ACE_POSSESSOR		\
 	}
 
-#define KEY_OWNER_ACE(perms) {				\
+#define KEY_OWNER_ACE(perms) (struct key_ace){		\
 		.type = KEY_ACE_SUBJ_STANDARD,		\
 		.perm = perms,				\
 		.subject_id = KEY_ACE_OWNER		\
@@ -319,6 +320,12 @@ static inline struct key *key_get(struct key *key)
 static inline void key_ref_put(key_ref_t key_ref)
 {
 	key_put(key_ref_to_ptr(key_ref));
+}
+
+static inline struct key_tag *key_get_tag(struct key_tag *tag)
+{
+	refcount_inc(&tag->usage);
+	return tag;
 }
 
 extern struct key *request_key_tag(struct key_type *type,

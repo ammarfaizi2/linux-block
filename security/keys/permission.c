@@ -7,6 +7,10 @@
 
 #include <linux/export.h>
 #include <linux/security.h>
+#include <linux/file.h>
+#include <linux/proc_fs.h>
+#include <linux/proc_ns.h>
+#include <linux/user_namespace.h>
 #include <keys/request_key_auth-type.h>
 #include "internal.h"
 
@@ -177,7 +181,9 @@ check_sysadmin_override:
 /*
  * Resolve an ACL to a mask.
  */
-static unsigned int key_resolve_acl(const key_ref_t key_ref, const struct cred *cred)
+static unsigned int key_resolve_acl(const key_ref_t key_ref,
+				    const struct cred *cred,
+				    const struct key_tag *tag)
 {
 	const struct key *key = key_ref_to_ptr(key_ref);
 	const struct key_acl *acl;
@@ -215,6 +221,11 @@ static unsigned int key_resolve_acl(const key_ref_t key_ref, const struct cred *
 				break;
 			}
 			break;
+
+		case KEY_ACE_SUBJ_CONTAINER:
+			if (ace->subject_tag == tag)
+				allow |= ace->perm;
+			break;
 		}
 	}
 
@@ -242,7 +253,7 @@ int key_task_permission(const key_ref_t key_ref, const struct cred *cred,
 	int ret;
 
 	rcu_read_lock();
-	allow = key_resolve_acl(key_ref, cred);
+	allow = key_resolve_acl(key_ref, cred, NULL);
 	rcu_read_unlock();
 
 	ret = check_key_permission(key_ref, cred, allow, need_perm, &notes);
@@ -274,7 +285,7 @@ int key_search_permission(const key_ref_t key_ref,
 	unsigned int allow, notes = 0;
 	int ret;
 
-	allow = key_resolve_acl(key_ref, ctx->cred);
+	allow = key_resolve_acl(key_ref, ctx->cred, ctx->container_subj);
 
 	ret = check_key_permission(key_ref, ctx->cred, allow, need_perm, &notes);
 	if (ret < 0)
@@ -374,13 +385,24 @@ unsigned int key_acl_to_perm(const struct key_acl *acl)
 	return perm;
 }
 
+static void key_free_acl(struct rcu_head *rcu)
+{
+	struct key_acl *acl = container_of(rcu, struct key_acl, rcu);
+	unsigned int i;
+
+	for (i = 0; i < acl->nr_ace; i++)
+		if (acl->aces[i].type == KEY_ACE_SUBJ_CONTAINER)
+			key_put_tag(acl->aces[i].subject_tag);
+	kfree(acl);
+}
+
 /*
  * Destroy a key's ACL.
  */
 void key_put_acl(struct key_acl *acl)
 {
 	if (acl && refcount_dec_and_test(&acl->usage))
-		kfree_rcu(acl, rcu);
+		call_rcu(&acl->rcu, key_free_acl);
 }
 
 /*
@@ -440,7 +462,8 @@ static struct key_acl *key_alloc_acl(const struct key_acl *old_acl, int nr, int 
 }
 
 /*
- * Generate the revised ACL.
+ * Generate the revised ACL.  If the new ACE contains a key_tag and we don't
+ * have the tag in ACL yet, we steal the tag and clear the caller's pointer.
  */
 static long key_change_acl(struct key *key, struct key_ace *new_ace)
 {
@@ -461,6 +484,7 @@ static long key_change_acl(struct key *key, struct key_ace *new_ace)
 	if (IS_ERR(acl))
 		return PTR_ERR(acl);
 	acl->aces[i] = *new_ace;
+	new_ace->subject_tag = NULL; /* Stole the tag */
 	goto change;
 
 found_match:
@@ -485,6 +509,49 @@ change:
 }
 
 /*
+ * Look up the user namespace tag associated with a fd.
+ */
+static struct key_tag *key_get_ns_tag(int fd)
+{
+#ifdef CONFIG_CONTAINER_KEYRINGS
+	struct user_namespace *userns;
+	struct ns_common *ns;
+	struct key_tag *tag = ERR_PTR(-EINVAL), *candidate;
+	struct file *f;
+
+	f = fget(fd);
+	if (!f)
+		return ERR_PTR(-EBADF);
+
+	if (!proc_ns_file(f))
+		goto error;
+	ns = get_proc_ns(file_inode(f));
+	if (ns->ops->type != CLONE_NEWUSER)
+		goto error;
+
+	userns = container_of(ns, struct user_namespace, ns);
+	if (!userns->container_subj) {
+		candidate = kzalloc(sizeof(struct key_tag), GFP_KERNEL);
+		refcount_set(&candidate->usage, 1);
+		down_write(&userns->keyring_sem);
+		if (!userns->container_subj) {
+			userns->container_subj = candidate;
+			candidate = NULL;
+		}
+		up_write(&userns->keyring_sem);
+		kfree(candidate);
+	}
+
+	tag = key_get_tag(userns->container_subj);
+error:
+	fput(f);
+	return tag;
+#else
+	return ERR_PTR(-EOPNOTSUPP);
+#endif
+}
+
+/*
  * Add, alter or remove (if perm == 0) an ACE in a key's ACL.
  */
 long keyctl_grant_permission(key_serial_t keyid,
@@ -492,19 +559,28 @@ long keyctl_grant_permission(key_serial_t keyid,
 			     unsigned int subject,
 			     unsigned int perm)
 {
-	struct key_ace new_ace;
+	struct key_tag *tag;
 	struct key *key;
 	key_ref_t key_ref;
 	long ret;
 
-	new_ace.type = type;
-	new_ace.perm = perm;
+	struct key_ace new_ace = {
+		.type = type,
+		.perm = perm,
+	};
 
 	switch (type) {
 	case KEY_ACE_SUBJ_STANDARD:
 		if (subject >= nr__key_ace_standard_subject)
 			return -ENOENT;
 		new_ace.subject_id = subject;
+		break;
+
+	case KEY_ACE_SUBJ_CONTAINER:
+		tag = key_get_ns_tag(subject);
+		if (IS_ERR(tag))
+			return PTR_ERR(tag);
+		new_ace.subject_tag = tag;
 		break;
 
 	default:
@@ -529,5 +605,7 @@ long keyctl_grant_permission(key_serial_t keyid,
 	up_write(&key->sem);
 	key_put(key);
 error:
+	if (new_ace.type == KEY_ACE_SUBJ_CONTAINER && new_ace.subject_tag)
+		key_put_tag(new_ace.subject_tag);
 	return ret;
 }

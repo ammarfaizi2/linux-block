@@ -458,6 +458,7 @@ void key_fsgid_changed(struct cred *new_cred)
  */
 key_ref_t search_cred_keyrings_rcu(struct keyring_search_context *ctx)
 {
+	struct user_namespace *userns;
 	struct key *user_session;
 	key_ref_t key_ref, ret, err;
 	const struct cred *cred = ctx->cred;
@@ -555,6 +556,41 @@ key_ref_t search_cred_keyrings_rcu(struct keyring_search_context *ctx)
 			break;
 		}
 	}
+
+#ifdef CONFIG_CONTAINER_KEYRINGS
+	for (userns = cred->user_ns; userns; userns = userns->parent) {
+		if (!userns->container_keyring || !userns->container_subj)
+			continue;
+
+		/* The denizens of the container don't possess the key
+		 * and have a special subject to match.
+		 */
+		ctx->container_subj = userns->container_subj;
+		key_ref = keyring_search_rcu(make_key_ref(userns->container_keyring,
+							  false), ctx);
+		ctx->container_subj = NULL;
+
+		if (!IS_ERR(key_ref))
+			goto found;
+
+		switch (PTR_ERR(key_ref)) {
+		case -EAGAIN: /* no key */
+			if (ret)
+				break;
+			/* fall through */
+		case -ENOKEY: /* negative key */
+			ret = key_ref;
+			break;
+		default:
+			/* Hmmm...  should we admit to the denizens of
+			 * the container that a key exists?
+			 */
+			err = key_ref;
+			break;
+		}
+	}
+
+#endif
 
 	/* no key - decide on the error we're going to go for */
 	key_ref = ret ? ret : err;

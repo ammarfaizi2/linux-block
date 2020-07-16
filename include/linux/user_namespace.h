@@ -79,6 +79,13 @@ struct user_namespace {
 #ifdef CONFIG_PERSISTENT_KEYRINGS
 	struct key		*persistent_keyring_register;
 #endif
+	/* Ring of keys that the namespace owner can insert into the
+	 * namespace for transparent access by the denizens.
+	 */
+#ifdef CONFIG_CONTAINER_KEYRINGS
+	struct key		*container_keyring;
+	struct key_tag		*container_subj;	/* The ACE subject to match */
+#endif
 	struct work_struct	work;
 #ifdef CONFIG_SYSCTL
 	struct ctl_table_set	set;

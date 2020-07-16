@@ -128,6 +128,9 @@ COMPAT_SYSCALL_DEFINE5(keyctl, u32, option,
 	case KEYCTL_WATCH_KEY:
 		return keyctl_watch_key(arg2, arg3, arg4);
 
+	case KEYCTL_GET_CONTAINER_KEYRING:
+		return keyctl_get_container_keyring(arg2, arg3);
+
 	default:
 		return -EOPNOTSUPP;
 	}

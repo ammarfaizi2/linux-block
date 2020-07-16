@@ -123,3 +123,14 @@ config KEY_NOTIFICATIONS
 	  on keys and keyrings on which the caller has View permission.
 	  This makes use of pipes to handle the notification buffer and
 	  provides KEYCTL_WATCH_KEY to enable/disable watches.
+
+config CONTAINER_KEYRINGS
+	bool "Provide per-container keyrings"
+	depends on KEYS && USER_NS
+	help
+	  This option provides a keyring on each user_namespace that is
+	  searched by request_key() after it has searched the normal process
+	  keyrings.  This is a place that the container manager can insert
+	  filesystem authentication keys into a container so that the denizens
+	  can use authenticated storage without having to do anything for
+	  themselves - the manager can take care of that.
