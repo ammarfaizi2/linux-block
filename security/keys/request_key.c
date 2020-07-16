@@ -567,6 +567,7 @@ struct key *request_key_and_link(struct key_type *type,
 		.match_data.cmp		= key_default_cmp,
 		.match_data.raw_data	= description,
 		.match_data.lookup_type	= KEYRING_SEARCH_LOOKUP_DIRECT,
+		.need_perm		= KEY_NEED_USE,
 		.flags			= (KEYRING_SEARCH_DO_STATE_CHECK |
 					   KEYRING_SEARCH_SKIP_EXPIRED |
 					   KEYRING_SEARCH_RECURSE),
@@ -578,6 +579,9 @@ struct key *request_key_and_link(struct key_type *type,
 	kenter("%s,%s,%p,%zu,%p,%p,%lx",
 	       ctx.index_key.type->name, ctx.index_key.description,
 	       callout_info, callout_len, aux, dest_keyring, flags);
+
+	if (flags & KEY_ALLOC_USERSPACE_REQUEST)
+		ctx.need_perm = KEY_NEED_SEARCH;
 
 	if (type->match_preparse) {
 		ret = type->match_preparse(&ctx.match_data);
@@ -774,6 +778,7 @@ struct key *request_key_rcu(struct key_type *type,
 		.match_data.cmp		= key_default_cmp,
 		.match_data.raw_data	= description,
 		.match_data.lookup_type	= KEYRING_SEARCH_LOOKUP_DIRECT,
+		.need_perm		= KEY_NEED_USE,
 		.flags			= (KEYRING_SEARCH_DO_STATE_CHECK |
 					   KEYRING_SEARCH_SKIP_EXPIRED),
 	};

@@ -621,8 +621,8 @@ static int keyring_search_iterator(const void *object, void *iterator_data)
 
 	/* key must have search permissions */
 	if (!(ctx->flags & KEYRING_SEARCH_NO_CHECK_PERM) &&
-	    key_task_permission(make_key_ref(key, ctx->possessed),
-				ctx->cred, KEY_NEED_SEARCH) < 0) {
+	    key_search_permission(make_key_ref(key, ctx->possessed),
+				  ctx, ctx->need_perm) < 0) {
 		ctx->result = ERR_PTR(-EACCES);
 		kleave(" = %d [!perm]", ctx->skipped_ret);
 		goto skipped;
@@ -798,8 +798,8 @@ ascend_to_node:
 
 		/* Search a nested keyring */
 		if (!(ctx->flags & KEYRING_SEARCH_NO_CHECK_PERM) &&
-		    key_task_permission(make_key_ref(key, ctx->possessed),
-					ctx->cred, KEY_NEED_SEARCH) < 0)
+		    key_search_permission(make_key_ref(key, ctx->possessed),
+					  ctx, KEY_NEED_SEARCH) < 0)
 			continue;
 
 		/* stack the current position */
@@ -921,7 +921,7 @@ key_ref_t keyring_search_rcu(key_ref_t keyring_ref,
 		return ERR_PTR(-ENOTDIR);
 
 	if (!(ctx->flags & KEYRING_SEARCH_NO_CHECK_PERM)) {
-		err = key_task_permission(keyring_ref, ctx->cred, KEY_NEED_SEARCH);
+		err = key_search_permission(keyring_ref, ctx, ctx->need_perm);
 		if (err < 0)
 			return ERR_PTR(err);
 	}
@@ -937,6 +937,7 @@ key_ref_t keyring_search_rcu(key_ref_t keyring_ref,
  * @keyring: The root of the keyring tree to be searched.
  * @type: The type of keyring we want to find.
  * @description: The name of the keyring we want to find.
+ * @need_perm: The permission required of the target key.
  * @recurse: True to search the children of @keyring also
  *
  * As keyring_search_rcu() above, but using the current task's credentials and
@@ -945,6 +946,7 @@ key_ref_t keyring_search_rcu(key_ref_t keyring_ref,
 key_ref_t keyring_search(key_ref_t keyring,
 			 struct key_type *type,
 			 const char *description,
+			 enum key_need_perm need_perm,
 			 bool recurse)
 {
 	struct keyring_search_context ctx = {
@@ -955,6 +957,7 @@ key_ref_t keyring_search(key_ref_t keyring,
 		.match_data.cmp		= key_default_cmp,
 		.match_data.raw_data	= description,
 		.match_data.lookup_type	= KEYRING_SEARCH_LOOKUP_DIRECT,
+		.need_perm		= need_perm,
 		.flags			= KEYRING_SEARCH_DO_STATE_CHECK,
 	};
 	key_ref_t key;

@@ -135,7 +135,8 @@ int look_up_user_keyrings(struct key **_user_keyring,
 	 */
 	snprintf(buf, sizeof(buf), "_uid.%u", uid);
 	uid_keyring_r = keyring_search(make_key_ref(reg_keyring, true),
-				       &key_type_keyring, buf, false);
+				       &key_type_keyring, buf, KEY_NEED_SEARCH,
+				       false);
 	kdebug("_uid %p", uid_keyring_r);
 	if (uid_keyring_r == ERR_PTR(-EAGAIN)) {
 		uid_keyring = keyring_alloc(buf, cred->user->uid, INVALID_GID,
@@ -157,7 +158,8 @@ int look_up_user_keyrings(struct key **_user_keyring,
 	/* Get a default session keyring (which might also exist already) */
 	snprintf(buf, sizeof(buf), "_uid_ses.%u", uid);
 	session_keyring_r = keyring_search(make_key_ref(reg_keyring, true),
-					   &key_type_keyring, buf, false);
+					   &key_type_keyring, buf, KEY_NEED_SEARCH,
+					   false);
 	kdebug("_uid_ses %p", session_keyring_r);
 	if (session_keyring_r == ERR_PTR(-EAGAIN)) {
 		session_keyring = keyring_alloc(buf, cred->user->uid, INVALID_GID,
@@ -230,6 +232,7 @@ struct key *get_user_session_keyring_rcu(const struct cred *cred)
 		.match_data.cmp		= key_default_cmp,
 		.match_data.raw_data	= buf,
 		.match_data.lookup_type	= KEYRING_SEARCH_LOOKUP_DIRECT,
+		.need_perm		= KEY_NEED_SEARCH,
 		.flags			= KEYRING_SEARCH_DO_STATE_CHECK,
 	};
 
@@ -648,6 +651,7 @@ key_ref_t lookup_user_key(key_serial_t id, unsigned long lflags,
 	struct keyring_search_context ctx = {
 		.match_data.cmp		= lookup_user_key_possessed,
 		.match_data.lookup_type	= KEYRING_SEARCH_LOOKUP_DIRECT,
+		.need_perm		= KEY_NEED_SEARCH,
 		.flags			= (KEYRING_SEARCH_NO_STATE_CHECK |
 					   KEYRING_SEARCH_RECURSE),
 	};

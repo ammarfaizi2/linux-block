@@ -225,7 +225,8 @@ SYSCALL_DEFINE4(request_key, const char __user *, _type,
 	key = request_key_and_link(ktype, description, NULL, callout_info,
 				   callout_len, NULL, NULL,
 				   key_ref_to_ptr(dest_ref),
-				   KEY_ALLOC_IN_QUOTA);
+				   KEY_ALLOC_IN_QUOTA |
+				   KEY_ALLOC_USERSPACE_REQUEST);
 	if (IS_ERR(key)) {
 		ret = PTR_ERR(key);
 		goto error5;
@@ -685,7 +686,8 @@ long keyctl_keyring_search(key_serial_t ringid,
 	}
 
 	/* do the search */
-	key_ref = keyring_search(keyring_ref, ktype, description, true);
+	key_ref = keyring_search(keyring_ref, ktype, description,
+				 KEY_NEED_SEARCH, true);
 	if (IS_ERR(key_ref)) {
 		ret = PTR_ERR(key_ref);
 

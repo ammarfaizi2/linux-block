@@ -131,6 +131,7 @@ struct keyring_search_context {
 	struct keyring_index_key index_key;
 	const struct cred	*cred;
 	struct key_match_data	match_data;
+	enum key_need_perm	need_perm;	/* Permission required for search */
 	unsigned		flags;
 #define KEYRING_SEARCH_NO_STATE_CHECK	0x0001	/* Skip state checks */
 #define KEYRING_SEARCH_DO_STATE_CHECK	0x0002	/* Override NO_STATE_CHECK */
@@ -196,6 +197,9 @@ extern void key_gc_keytype(struct key_type *ktype);
 extern int key_task_permission(const key_ref_t key_ref,
 			       const struct cred *cred,
 			       enum key_need_perm need_perm);
+extern int key_search_permission(const key_ref_t key_ref,
+				 struct keyring_search_context *ctx,
+				 enum key_need_perm need_perm);
 extern unsigned int key_acl_to_perm(const struct key_acl *acl);
 extern long key_set_acl(struct key *key, struct key_acl *acl);
 extern void key_put_acl(struct key_acl *acl);

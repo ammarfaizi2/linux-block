@@ -254,6 +254,37 @@ int key_task_permission(const key_ref_t key_ref, const struct cred *cred,
 }
 
 /**
+ * key_search_permission - Check a key can be searched for
+ * @key_ref: The key to check.
+ * @cred: The credentials to use.
+ * @need_perm: The permission required.
+ *
+ * Check to see whether permission is granted to use a key in the desired way,
+ * but permit the security modules to override.
+ *
+ * The caller must hold the RCU readlock.
+ *
+ * Returns 0 if successful, -EACCES if access is denied based on the
+ * permissions bits or the LSM check.
+ */
+int key_search_permission(const key_ref_t key_ref,
+			  struct keyring_search_context *ctx,
+			  enum key_need_perm need_perm)
+{
+	unsigned int allow, notes = 0;
+	int ret;
+
+	allow = key_resolve_acl(key_ref, ctx->cred);
+
+	ret = check_key_permission(key_ref, ctx->cred, allow, need_perm, &notes);
+	if (ret < 0)
+		return ret;
+
+	/* Let the LSMs be the final arbiter */
+	return security_key_permission(key_ref, ctx->cred, need_perm, notes);
+}
+
+/**
  * key_validate - Validate a key.
  * @key: The key to be validated.
  *

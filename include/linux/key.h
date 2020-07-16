@@ -297,6 +297,7 @@ extern struct key *key_alloc(struct key_type *type,
 #define KEY_ALLOC_BYPASS_RESTRICTION	0x0008	/* Override the check on restricted keyrings */
 #define KEY_ALLOC_UID_KEYRING		0x0010	/* allocating a user or user session keyring */
 #define KEY_ALLOC_SET_KEEP		0x0020	/* Set the KEEP flag on the key/keyring */
+#define KEY_ALLOC_USERSPACE_REQUEST	0x0040	/* Userspace requested the key */
 
 extern void key_revoke(struct key *key);
 extern void key_invalidate(struct key *key);
@@ -433,6 +434,7 @@ extern int keyring_clear(struct key *keyring);
 extern key_ref_t keyring_search(key_ref_t keyring,
 				struct key_type *type,
 				const char *description,
+				enum key_need_perm need_perm,
 				bool recurse);
 
 extern int keyring_add_key(struct key *keyring,

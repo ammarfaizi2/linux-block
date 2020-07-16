@@ -264,6 +264,7 @@ struct key *key_get_instantiation_authkey(key_serial_t target_id)
 		.match_data.cmp		= key_default_cmp,
 		.match_data.raw_data	= description,
 		.match_data.lookup_type	= KEYRING_SEARCH_LOOKUP_DIRECT,
+		.need_perm		= KEY_NEED_USE,
 		.flags			= (KEYRING_SEARCH_DO_STATE_CHECK |
 					   KEYRING_SEARCH_RECURSE),
 	};

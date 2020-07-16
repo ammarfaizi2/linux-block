@@ -169,7 +169,7 @@ struct key *rxrpc_look_up_server_security(struct rxrpc_connection *conn,
 
 	/* look through the service's keyring */
 	kref = keyring_search(make_key_ref(rx->securities, 1UL),
-			      &key_type_rxrpc_s, kdesc, true);
+			      &key_type_rxrpc_s, kdesc, KEY_NEED_USE, true);
 	if (IS_ERR(kref)) {
 		key = ERR_CAST(kref);
 		goto out;
