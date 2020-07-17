@@ -44,7 +44,10 @@ task_work_add(struct task_struct *task, struct callback_head *work, int notify)
 	case TWA_SIGNAL:
 		if (lock_task_sighand(task, &flags)) {
 			task->jobctl |= JOBCTL_TASK_WORK;
-			signal_wake_up(task, 0);
+			if (likely(!(task->ptrace & PT_SEIZED)))
+				signal_wake_up(task, 0);
+			else
+				ptrace_trap_notify(task);
 			unlock_task_sighand(task, &flags);
 		}
 		break;
