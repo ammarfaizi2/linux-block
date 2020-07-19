@@ -73,7 +73,7 @@ static inline void INIT_LIST_HEAD_RCU(struct list_head *list)
 #define __list_check_rcu(dummy, cond, extra...)				\
 	({ check_arg_count_one(extra); })
 
-#define __list_check_srcu(cond) true
+#define __list_check_srcu(cond) ({ })
 #endif
 
 /*
