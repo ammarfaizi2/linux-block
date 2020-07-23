@@ -157,10 +157,8 @@ static __always_inline bool csd_lock_wait_toolong(call_single_data_t *csd, u64 t
 
 	ts2 = sched_clock();
 	ts_delta = ts2 - *ts1;
-	if (likely(ts_delta <= CSD_LOCK_TIMEOUT)) {
-		cpu_relax();
+	if (likely(ts_delta <= CSD_LOCK_TIMEOUT))
 		return false;
-	}
 
 	firsttime = !*bug_id;
 	if (firsttime)
