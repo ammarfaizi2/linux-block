@@ -37,12 +37,6 @@ struct call_function_data {
 
 static DEFINE_PER_CPU_ALIGNED(struct call_function_data, cfd_data);
 
-#ifdef CONFIG_CSD_LOCK_WAIT_DEBUG
-static DEFINE_PER_CPU(call_single_data_t *, cur_csd);
-static DEFINE_PER_CPU(smp_call_func_t, cur_csd_func);
-static DEFINE_PER_CPU(void *, cur_csd_info);
-#endif
-
 static DEFINE_PER_CPU_SHARED_ALIGNED(struct llist_head, call_single_queue);
 
 static void flush_smp_call_function_queue(bool warn_cpu_offline);
@@ -107,7 +101,11 @@ void __init call_function_init(void)
 
 #ifdef CONFIG_CSD_LOCK_WAIT_DEBUG
 
-#define CSD_LOCK_TIMEOUT (5 * 1000ULL * 1000ULL * 1000ULL) /* Nanoseconds. */
+static DEFINE_PER_CPU(call_single_data_t *, cur_csd);
+static DEFINE_PER_CPU(smp_call_func_t, cur_csd_func);
+static DEFINE_PER_CPU(void *, cur_csd_info);
+
+#define CSD_LOCK_TIMEOUT (5ULL * NSEC_PER_SEC)
 static atomic_t csd_bug_count = ATOMIC_INIT(0);
 
 /* Record current CSD work for current CPU, NULL to erase. */
