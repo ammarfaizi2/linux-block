@@ -141,10 +141,10 @@ static __always_inline int csd_lock_wait_getcpu(call_single_data_t *csd)
 static __always_inline bool csd_lock_wait_toolong(call_single_data_t *csd, u64 ts0, u64 *ts1, int *bug_id)
 {
 	int cpu = -1;
-	call_single_data_t *cpu_cur_csd;
 	bool firsttime;
-	unsigned int flags = READ_ONCE(csd->flags);
 	u64 ts2, ts_delta;
+	call_single_data_t *cpu_cur_csd;
+	unsigned int flags = READ_ONCE(csd->flags);
 
 	if (!(flags & CSD_FLAG_LOCK)) {
 		if (!unlikely(*bug_id))
