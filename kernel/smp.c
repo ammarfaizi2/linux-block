@@ -192,7 +192,6 @@ static __always_inline bool csd_lock_wait_toolong(call_single_data_t *csd, u64 t
 	}
 	dump_stack();
 	*ts1 = ts2;
-	cpu_relax();
 
 	return false;
 }
@@ -210,9 +209,11 @@ static __always_inline void csd_lock_wait(call_single_data_t *csd)
 	u64 ts0, ts1;
 
 	ts1 = ts0 = sched_clock();
-	for (;;)
+	for (;;) {
 		if (csd_lock_wait_toolong(csd, ts0, &ts1, &bug_id))
 			break;
+		cpu_relax();
+	}
 	smp_acquire__after_ctrl_dep();
 }
 
