@@ -150,10 +150,8 @@ static __always_inline bool csd_lock_wait_toolong(call_single_data_t *csd, u64 t
 		if (!unlikely(*bug_id))
 			return true;
 		cpu = csd_lock_wait_getcpu(csd);
-		if (cpu >= 0)
-			pr_alert("csd: CSD lock (#%d) got unstuck on CPU#%02d, CPU#%02d released the lock after all. Phew!\n", *bug_id, raw_smp_processor_id(), cpu);
-		else
-			pr_alert("csd: CSD lock (#%d) got unstuck on CPU#%02d, the lock was released after all. Phew!\n", *bug_id, raw_smp_processor_id());
+		pr_alert("csd: CSD lock (#%d) got unstuck on CPU#%02d, CPU#%02d released the lock.\n",
+			 *bug_id, raw_smp_processor_id(), cpu);
 		return true;
 	}
 
@@ -177,12 +175,13 @@ static __always_inline bool csd_lock_wait_toolong(call_single_data_t *csd, u64 t
 	pr_alert("csd: %s non-responsive CSD lock (#%d) on CPU#%d, waiting %llu ns for CPU#%02d %pS(%ps).\n",
 		 firsttime ? "Detected" : "Continued", *bug_id, raw_smp_processor_id(), ts2 - ts0,
 		 cpu, csd->func, csd->info);
-	if (cpu_cur_csd && csd != cpu_cur_csd)
+	if (cpu_cur_csd && csd != cpu_cur_csd) {
 		pr_alert("\tcsd: CSD lock (#%d) handling prior %pS(%ps) request.\n",
 			 *bug_id, cpu_cur_csd->func, cpu_cur_csd->info);
-	else
+	} else {
 		pr_alert("\tcsd: CSD lock (#%d) %s.\n",
 			 *bug_id, !cpu_cur_csd ? "unresponsive" : "handling this request");
+	}
 	if (cpu >= 0) {
 		if (!trigger_single_cpu_backtrace(cpu))
 			dump_cpu_task(cpu);
