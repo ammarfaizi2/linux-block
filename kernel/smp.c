@@ -141,6 +141,7 @@ static __always_inline int csd_lock_wait_getcpu(call_single_data_t *csd)
 static __always_inline bool csd_lock_wait_toolong(call_single_data_t *csd, u64 ts0, u64 *ts1, int *bug_id)
 {
 	int cpu = -1;
+	int cpux;
 	bool firsttime;
 	u64 ts2, ts_delta;
 	call_single_data_t *cpu_cur_csd;
@@ -166,16 +167,18 @@ static __always_inline bool csd_lock_wait_toolong(call_single_data_t *csd, u64 t
 	cpu = csd_lock_wait_getcpu(csd);
 	smp_mb(); /* No stale cur_csd values! */
 	if (WARN_ONCE(cpu < 0 || cpu >= nr_cpu_ids, "%s: cpu = %d\n", __func__, cpu))
-		cpu_cur_csd = READ_ONCE(per_cpu(cur_csd, 0));
+		cpux = 0;
 	else
-		cpu_cur_csd = READ_ONCE(per_cpu(cur_csd, cpu));
+		cpux = cpu;
+	cpu_cur_csd = READ_ONCE(per_cpu(cur_csd, cpux));
 	smp_mb(); /* No refetching cur_csd values! */
 	pr_alert("csd: %s non-responsive CSD lock (#%d) on CPU#%d, waiting %llu ns for CPU#%02d %pS(%ps).\n",
 		 firsttime ? "Detected" : "Continued", *bug_id, raw_smp_processor_id(), ts2 - ts0,
 		 cpu, csd->func, csd->info);
 	if (cpu_cur_csd && csd != cpu_cur_csd) {
 		pr_alert("\tcsd: CSD lock (#%d) handling prior %pS(%ps) request.\n",
-			 *bug_id, cpu_cur_csd->func, cpu_cur_csd->info);
+			 *bug_id, READ_ONCE(per_cpu(cur_csd_func, cpux)),
+			 READ_ONCE(per_cpu(cur_csd_info, cpux)));
 	} else {
 		pr_alert("\tcsd: CSD lock (#%d) %s.\n",
 			 *bug_id, !cpu_cur_csd ? "unresponsive" : "handling this request");
