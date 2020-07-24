@@ -116,9 +116,10 @@ static void csd_lock_record(call_single_data_t *csd)
 		__this_cpu_write(cur_csd, NULL);
 		return;
 	}
-	__this_cpu_write(cur_csd, csd);
 	__this_cpu_write(cur_csd_func, csd->func);
 	__this_cpu_write(cur_csd_info, csd->info);
+	smp_wmb(); /* func and info before csd. */
+	__this_cpu_write(cur_csd, csd);
 	smp_mb(); /* Update cur_csd before function call. */
 		  /* Or before unlock, as the case may be. */
 }
@@ -165,13 +166,11 @@ static __always_inline bool csd_lock_wait_toolong(call_single_data_t *csd, u64 t
 	if (firsttime)
 		*bug_id = atomic_inc_return(&csd_bug_count);
 	cpu = csd_lock_wait_getcpu(csd);
-	smp_mb(); /* No stale cur_csd values! */
 	if (WARN_ONCE(cpu < 0 || cpu >= nr_cpu_ids, "%s: cpu = %d\n", __func__, cpu))
 		cpux = 0;
 	else
 		cpux = cpu;
-	cpu_cur_csd = READ_ONCE(per_cpu(cur_csd, cpux));
-	smp_mb(); /* No refetching cur_csd values! */
+	cpu_cur_csd = smp_load_acquire(&per_cpu(cur_csd, cpux)); /* Before func and info. */
 	pr_alert("csd: %s non-responsive CSD lock (#%d) on CPU#%d, waiting %llu ns for CPU#%02d %pS(%ps).\n",
 		 firsttime ? "Detected" : "Continued", *bug_id, raw_smp_processor_id(), ts2 - ts0,
 		 cpu, csd->func, csd->info);
