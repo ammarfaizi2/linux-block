@@ -387,6 +387,7 @@ struct rxrpc_call *rxrpc_new_client_call(struct rxrpc_sock *rx,
 	rb_link_node(&call->sock_node, parent, pp);
 	rb_insert_color(&call->sock_node, &rx->calls);
 	list_add(&call->sock_link, &rx->sock_calls);
+	rx->nr_sock_calls++;
 
 	write_unlock(&rx->call_lock);
 
@@ -589,6 +590,7 @@ void rxrpc_release_call(struct rxrpc_sock *rx, struct rxrpc_call *call)
 	}
 
 	list_del(&call->sock_link);
+	rx->nr_sock_calls--;
 	write_unlock(&rx->call_lock);
 
 	_debug("RELEASE CALL %p (%d CONN %p)", call, call->debug_id, conn);

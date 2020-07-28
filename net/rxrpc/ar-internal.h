@@ -78,8 +78,9 @@ struct rxrpc_net {
 
 	atomic_t		nr_client_conns;
 
+	struct hlist_head	sockets;	/* List of sockets */
 	struct hlist_head	local_endpoints;
-	struct mutex		local_mutex;	/* Lock for ->local_endpoints */
+	struct mutex		local_mutex;	/* Lock for ->local_endpoints, ->sockets */
 
 	DECLARE_HASHTABLE	(peer_hash, 10);
 	spinlock_t		peer_hash_lock;	/* Lock for ->peer_hash */
@@ -149,7 +150,10 @@ struct rxrpc_sock {
 	struct list_head	sock_calls;	/* List of calls owned by this socket */
 	struct list_head	to_be_accepted;	/* calls awaiting acceptance */
 	struct list_head	recvmsg_q;	/* Calls awaiting recvmsg's attention  */
+	struct hlist_node	ns_link;	/* Link in net->sockets */
 	spinlock_t		recvmsg_lock;	/* Lock for recvmsg_q */
+	unsigned int		nr_recvmsg;	/* Number of calls waiting on recvmsg_q */
+	unsigned int		nr_sock_calls;	/* Number of calls in sock_calls */
 	struct key		*key;		/* security for this socket */
 	struct key		*securities;	/* list of server security descriptors */
 	struct rb_root		calls;		/* User ID -> call mapping */
@@ -1171,6 +1175,7 @@ extern const struct seq_operations rxrpc_call_seq_ops;
 extern const struct seq_operations rxrpc_connection_seq_ops;
 extern const struct seq_operations rxrpc_peer_seq_ops;
 extern const struct seq_operations rxrpc_local_seq_ops;
+extern const struct seq_operations rxrpc_socket_seq_ops;
 
 /*
  * recvmsg.c

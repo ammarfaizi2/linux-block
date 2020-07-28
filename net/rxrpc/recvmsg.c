@@ -44,6 +44,7 @@ void rxrpc_notify_socket(struct rxrpc_call *call)
 			if (list_empty(&call->recvmsg_link)) {
 				rxrpc_get_call(call, rxrpc_call_get_notify_socket);
 				list_add_tail(&call->recvmsg_link, &rx->recvmsg_q);
+				rx->nr_recvmsg++;
 			}
 			spin_unlock(&rx->recvmsg_lock);
 
@@ -344,6 +345,7 @@ try_again:
 	if (!rxrpc_call_is_complete(call) &&
 	    skb_queue_empty(&call->recvmsg_queue)) {
 		list_del_init(&call->recvmsg_link);
+		rx->nr_recvmsg--;
 		spin_unlock(&rx->recvmsg_lock);
 		release_sock(&rx->sk);
 		trace_rxrpc_recvmsg(call->debug_id, rxrpc_recvmsg_unqueue, 0);
@@ -351,10 +353,12 @@ try_again:
 		goto try_again;
 	}
 
-	if (!(flags & MSG_PEEK))
+	if (!(flags & MSG_PEEK)) {
 		list_del_init(&call->recvmsg_link);
-	else
+		rx->nr_recvmsg--;
+	} else {
 		rxrpc_get_call(call, rxrpc_call_get_recvmsg);
+	}
 	spin_unlock(&rx->recvmsg_lock);
 
 	call_debug_id = call->debug_id;
@@ -447,6 +451,7 @@ error_requeue_call:
 	if (!(flags & MSG_PEEK)) {
 		spin_lock(&rx->recvmsg_lock);
 		list_add(&call->recvmsg_link, &rx->recvmsg_q);
+		rx->nr_recvmsg++;
 		spin_unlock(&rx->recvmsg_lock);
 		trace_rxrpc_recvmsg(call_debug_id, rxrpc_recvmsg_requeue, 0);
 	} else {

@@ -134,6 +134,7 @@ static int rxrpc_service_prealloc_one(struct rxrpc_sock *rx,
 	set_bit(RXRPC_CALL_HAS_USERID, &call->flags);
 
 	list_add(&call->sock_link, &rx->sock_calls);
+	rx->nr_sock_calls++;
 
 	write_unlock(&rx->call_lock);
 
