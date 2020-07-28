@@ -787,6 +787,10 @@ static int rxrpc_create(struct net *net, struct socket *sock, int protocol,
 	memset(&rx->srx, 0, sizeof(rx->srx));
 
 	rxnet = rxrpc_net(sock_net(&rx->sk));
+	mutex_lock(&rxnet->local_mutex);
+	hlist_add_head_rcu(&rx->ns_link, &rxnet->sockets);
+	mutex_unlock(&rxnet->local_mutex);
+
 	timer_reduce(&rxnet->peer_keepalive_timer, jiffies + 1);
 
 	_leave(" = 0 [%p]", rx);
@@ -851,6 +855,7 @@ static void rxrpc_sock_destructor(struct sock *sk)
 static int rxrpc_release_sock(struct sock *sk)
 {
 	struct rxrpc_sock *rx = rxrpc_sk(sk);
+	struct rxrpc_net *rxnet = rxrpc_net(sock_net(&rx->sk));
 
 	_enter("%p{%d,%d}", sk, sk->sk_state, refcount_read(&sk->sk_refcnt));
 
@@ -886,6 +891,10 @@ static int rxrpc_release_sock(struct sock *sk)
 	rxrpc_release_calls_on_socket(rx);
 	flush_workqueue(rxrpc_workqueue);
 	rxrpc_purge_queue(&sk->sk_receive_queue);
+
+	mutex_lock(&rxnet->local_mutex);
+	hlist_del_rcu(&rx->ns_link);
+	mutex_unlock(&rxnet->local_mutex);
 
 	rxrpc_unuse_local(rx->local);
 	rxrpc_put_local(rx->local);

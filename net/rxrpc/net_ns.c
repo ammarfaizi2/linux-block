@@ -72,6 +72,7 @@ static __net_init int rxrpc_init_net(struct net *net)
 	timer_setup(&rxnet->client_conn_reap_timer,
 		    rxrpc_client_conn_reap_timeout, 0);
 
+	INIT_HLIST_HEAD(&rxnet->sockets);
 	INIT_HLIST_HEAD(&rxnet->local_endpoints);
 	mutex_init(&rxnet->local_mutex);
 
@@ -100,6 +101,9 @@ static __net_init int rxrpc_init_net(struct net *net)
 			sizeof(struct seq_net_private));
 	proc_create_net("locals", 0444, rxnet->proc_net,
 			&rxrpc_local_seq_ops,
+			sizeof(struct seq_net_private));
+	proc_create_net("sockets", 0444, rxnet->proc_net,
+			&rxrpc_socket_seq_ops,
 			sizeof(struct seq_net_private));
 	return 0;
 

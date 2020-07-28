@@ -397,3 +397,95 @@ const struct seq_operations rxrpc_local_seq_ops = {
 	.stop   = rxrpc_local_seq_stop,
 	.show   = rxrpc_local_seq_show,
 };
+
+/*
+ * Generate a list of extant sockets in /proc/net/rxrpc/sockets
+ */
+static int rxrpc_socket_seq_show(struct seq_file *seq, void *v)
+{
+	struct rxrpc_local *local;
+	struct rxrpc_sock *rx;
+	struct list_head *p;
+	char lbuff[50];
+	unsigned int nr_calls = 0, nr_acc = 0, nr_attend = 0;
+
+	if (v == SEQ_START_TOKEN) {
+		seq_puts(seq,
+			 "Proto Local                                          "
+			 " Use Svc1 Svc2 nCal nAcc nAtn\n");
+		return 0;
+	}
+
+	rx = hlist_entry(v, struct rxrpc_sock, ns_link);
+	local = rx->local;
+
+	if (local)
+		sprintf(lbuff, "%pISpc", &local->srx.transport);
+	else
+		sprintf(lbuff, "-");
+
+	read_lock(&rx->call_lock);
+	list_for_each(p, &rx->sock_calls) {
+		nr_calls++;
+	}
+	list_for_each(p, &rx->to_be_accepted) {
+		nr_acc++;
+	}
+	read_unlock(&rx->call_lock);
+
+	read_lock_bh(&rx->recvmsg_lock);
+	list_for_each(p, &rx->recvmsg_q) {
+		nr_attend++;
+	}
+	read_unlock_bh(&rx->recvmsg_lock);
+
+	seq_printf(seq,
+		   "UDP   %-47.47s %3d %4x %4x %4u %4u %4u\n",
+		   lbuff,
+		   refcount_read(&rx->sk.sk_refcnt),
+		   rx->srx.srx_service, rx->second_service,
+		   nr_calls, nr_acc, nr_attend);
+
+	return 0;
+}
+
+static void *rxrpc_socket_seq_start(struct seq_file *seq, loff_t *_pos)
+	__acquires(rcu)
+{
+	struct rxrpc_net *rxnet = rxrpc_net(seq_file_net(seq));
+	unsigned int n;
+
+	rcu_read_lock();
+
+	if (*_pos >= UINT_MAX)
+		return NULL;
+
+	n = *_pos;
+	if (n == 0)
+		return SEQ_START_TOKEN;
+
+	return seq_hlist_start_rcu(&rxnet->sockets, n - 1);
+}
+
+static void *rxrpc_socket_seq_next(struct seq_file *seq, void *v, loff_t *_pos)
+{
+	struct rxrpc_net *rxnet = rxrpc_net(seq_file_net(seq));
+
+	if (*_pos >= UINT_MAX)
+		return NULL;
+
+	return seq_hlist_next_rcu(v, &rxnet->sockets, _pos);
+}
+
+static void rxrpc_socket_seq_stop(struct seq_file *seq, void *v)
+	__releases(rcu)
+{
+	rcu_read_unlock();
+}
+
+const struct seq_operations rxrpc_socket_seq_ops = {
+	.start  = rxrpc_socket_seq_start,
+	.next   = rxrpc_socket_seq_next,
+	.stop   = rxrpc_socket_seq_stop,
+	.show   = rxrpc_socket_seq_show,
+};
