@@ -495,6 +495,22 @@ static struct task_struct *find_alive_thread(struct task_struct *p)
 	return NULL;
 }
 
+/**
+ * find_child_reaper - find the current child reaper
+ * @father:	current reaper of the process
+ * @dead:	list of tasks to release
+ *
+ * Find a new reaper for the children of the dead @father. First, we try to
+ * reparent them to the child reaper of @father's pid namespace. If @father
+ * is not the child reaper of this pid namespace the search is over. If
+ * @father is the child reaper of this pid namespace we try to find a live
+ * thread in @father's thread-group. If we find one, it will be the new
+ * reaper and will also become the new child reaper of the pid namespace.
+ * If not, we cleanup all task on the @dead list and kill the pid
+ * namespace.
+ *
+ * Return: New reaper or @father.
+ */
 static struct task_struct *find_child_reaper(struct task_struct *father,
 						struct list_head *dead)
 	__releases(&tasklist_lock)
