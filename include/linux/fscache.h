@@ -370,7 +370,7 @@ void fscache_update_cookie(struct fscache_cookie *cookie, const void *aux_data,
 static inline
 void fscache_resize_cookie(struct fscache_cookie *cookie, loff_t new_size)
 {
-	if (fscache_cookie_valid(cookie))
+	if (fscache_cookie_enabled(cookie))
 		__fscache_resize_cookie(cookie, new_size);
 }
 
