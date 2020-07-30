@@ -428,8 +428,11 @@ void __fscache_unuse_cookie(struct fscache_cookie *cookie,
 {
 	if (aux_data || object_size)
 		__fscache_update_cookie(cookie, aux_data, object_size);
-	if (atomic_dec_and_test(&cookie->n_active))
+	if (atomic_dec_and_test(&cookie->n_active)) {
+		clear_bit(FSCACHE_COOKIE_DISABLED, &cookie->flags);
+		smp_mb__after_atomic();
 		wake_up_var(&cookie->n_active);
+	}
 }
 EXPORT_SYMBOL(__fscache_unuse_cookie);
 
@@ -554,6 +557,10 @@ void __fscache_invalidate(struct fscache_cookie *cookie,
 	 * cookie.
 	 */
 	ASSERTCMP(cookie->type, !=, FSCACHE_COOKIE_TYPE_INDEX);
+
+	if ((flags & FSCACHE_INVAL_DIO_WRITE) &&
+	    test_and_set_bit(FSCACHE_COOKIE_DISABLED, &cookie->flags))
+		return;
 
 	spin_lock(&cookie->lock);
 	fscache_update_aux(cookie, aux_data, &new_size);
