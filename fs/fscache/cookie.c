@@ -518,6 +518,7 @@ void __fscache_unuse_cookie(struct fscache_cookie *cookie,
 		__fscache_update_cookie(cookie, aux_data, object_size);
 	cookie->unused_at = jiffies;
 	if (atomic_dec_return(&cookie->n_active) == 0) {
+		clear_bit(FSCACHE_COOKIE_DISABLED, &cookie->flags);
 		if (test_bit(FSCACHE_COOKIE_IS_CACHING, &cookie->flags)) {
 			spin_lock(&fscache_cookie_lru_lock);
 			if (list_empty(&cookie->commit_link)) {
@@ -685,6 +686,10 @@ void __fscache_invalidate(struct fscache_cookie *cookie,
 
 	if (WARN(test_bit(FSCACHE_COOKIE_RELINQUISHED, &cookie->flags),
 		 "Trying to invalidate relinquished cookie\n"))
+		return;
+
+	if ((flags & FSCACHE_INVAL_DIO_WRITE) &&
+	    test_and_set_bit(FSCACHE_COOKIE_DISABLED, &cookie->flags))
 		return;
 
 	spin_lock(&cookie->lock);
