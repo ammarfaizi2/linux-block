@@ -26,11 +26,13 @@
 #define fscache_available() (1)
 #define fscache_cookie_valid(cookie) (cookie)
 #define fscache_object_valid(object) (object)
+#define fscache_cookie_enabled(cookie) (cookie && !test_bit(FSCACHE_COOKIE_DISABLED, &cookie->flags))
 #else
 #define __fscache_available (0)
 #define fscache_available() (0)
 #define fscache_cookie_valid(cookie) (0)
 #define fscache_object_valid(object) (NULL)
+#define fscache_cookie_enabled(cookie) (0)
 #endif
 
 
@@ -127,6 +129,7 @@ struct fscache_cookie {
 
 	unsigned long			flags;
 #define FSCACHE_COOKIE_RELINQUISHED	6		/* T if cookie has been relinquished */
+#define FSCACHE_COOKIE_DISABLED		7		/* T if cookie has been disabled */
 
 	enum fscache_cookie_stage	stage;
 	enum fscache_cookie_type	type:8;
@@ -410,7 +413,7 @@ static inline
 void fscache_update_cookie(struct fscache_cookie *cookie, const void *aux_data,
 			   const loff_t *object_size)
 {
-	if (fscache_cookie_valid(cookie))
+	if (fscache_cookie_enabled(cookie))
 		__fscache_update_cookie(cookie, aux_data, object_size);
 }
 
@@ -468,7 +471,7 @@ static inline
 void fscache_invalidate(struct fscache_cookie *cookie,
 			const void *aux_data, loff_t size, unsigned int flags)
 {
-	if (fscache_cookie_valid(cookie))
+	if (fscache_cookie_enabled(cookie))
 		__fscache_invalidate(cookie, aux_data, size, flags);
 }
 
@@ -492,7 +495,7 @@ int fscache_begin_operation(struct fscache_cookie *cookie,
 			    struct fscache_op_resources *opr,
 			    enum fscache_want_stage want_stage)
 {
-	if (fscache_cookie_valid(cookie))
+	if (fscache_cookie_enabled(cookie))
 		return __fscache_begin_operation(cookie, opr, want_stage);
 	return -ENOBUFS;
 }
