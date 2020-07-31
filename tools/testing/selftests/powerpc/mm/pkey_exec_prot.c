@@ -14,82 +14,12 @@
 #include <signal.h>
 
 #include <unistd.h>
-#include <sys/mman.h>
 
-#include "reg.h"
-#include "utils.h"
-
-/*
- * Older versions of libc use the Intel-specific access rights.
- * Hence, override the definitions as they might be incorrect.
- */
-#undef PKEY_DISABLE_ACCESS
-#define PKEY_DISABLE_ACCESS	0x3
-
-#undef PKEY_DISABLE_WRITE
-#define PKEY_DISABLE_WRITE	0x2
-
-#undef PKEY_DISABLE_EXECUTE
-#define PKEY_DISABLE_EXECUTE	0x4
-
-/* Older versions of libc do not not define this */
-#ifndef SEGV_PKUERR
-#define SEGV_PKUERR	4
-#endif
-
-#define SI_PKEY_OFFSET	0x20
-
-#define SYS_pkey_mprotect	386
-#define SYS_pkey_alloc		384
-#define SYS_pkey_free		385
-
-#define PKEY_BITS_PER_PKEY	2
-#define NR_PKEYS		32
-#define PKEY_BITS_MASK		((1UL << PKEY_BITS_PER_PKEY) - 1)
+#include "pkeys.h"
 
 #define PPC_INST_NOP	0x60000000
 #define PPC_INST_TRAP	0x7fe00008
 #define PPC_INST_BLR	0x4e800020
-
-#define sigsafe_err(msg)	({ \
-		ssize_t nbytes __attribute__((unused)); \
-		nbytes = write(STDERR_FILENO, msg, strlen(msg)); })
-
-static inline unsigned long pkeyreg_get(void)
-{
-	return mfspr(SPRN_AMR);
-}
-
-static inline void pkeyreg_set(unsigned long amr)
-{
-	set_amr(amr);
-}
-
-static void pkey_set_rights(int pkey, unsigned long rights)
-{
-	unsigned long amr, shift;
-
-	shift = (NR_PKEYS - pkey - 1) * PKEY_BITS_PER_PKEY;
-	amr = pkeyreg_get();
-	amr &= ~(PKEY_BITS_MASK << shift);
-	amr |= (rights & PKEY_BITS_MASK) << shift;
-	pkeyreg_set(amr);
-}
-
-static int sys_pkey_mprotect(void *addr, size_t len, int prot, int pkey)
-{
-	return syscall(SYS_pkey_mprotect, addr, len, prot, pkey);
-}
-
-static int sys_pkey_alloc(unsigned long flags, unsigned long rights)
-{
-	return syscall(SYS_pkey_alloc, flags, rights);
-}
-
-static int sys_pkey_free(int pkey)
-{
-	return syscall(SYS_pkey_free, pkey);
-}
 
 static volatile sig_atomic_t fault_pkey, fault_code, fault_type;
 static volatile sig_atomic_t remaining_faults;
@@ -110,16 +40,7 @@ static void segv_handler(int signum, siginfo_t *sinfo, void *ctx)
 {
 	int signal_pkey;
 
-	/*
-	 * In older versions of libc, siginfo_t does not have si_pkey as
-	 * a member.
-	 */
-#ifdef si_pkey
-	signal_pkey = sinfo->si_pkey;
-#else
-	signal_pkey = *((int *)(((char *) sinfo) + SI_PKEY_OFFSET));
-#endif
-
+	signal_pkey = siginfo_pkey(sinfo);
 	fault_code = sinfo->si_code;
 
 	/* Check if this fault originated from the expected address */
@@ -178,26 +99,10 @@ static void segv_handler(int signum, siginfo_t *sinfo, void *ctx)
 	remaining_faults--;
 }
 
-static int pkeys_unsupported(void)
-{
-	bool hash_mmu = false;
-	int pkey;
-
-	/* Protection keys are currently supported on Hash MMU only */
-	FAIL_IF(using_hash_mmu(&hash_mmu));
-	SKIP_IF(!hash_mmu);
-
-	/* Check if the system call is supported */
-	pkey = sys_pkey_alloc(0, 0);
-	SKIP_IF(pkey < 0);
-	sys_pkey_free(pkey);
-
-	return 0;
-}
-
 static int test(void)
 {
 	struct sigaction segv_act, trap_act;
+	unsigned long rights;
 	int pkey, ret, i;
 
 	ret = pkeys_unsupported();
@@ -246,7 +151,8 @@ static int test(void)
 	insns[numinsns - 1] = PPC_INST_BLR;
 
 	/* Allocate a pkey that restricts execution */
-	pkey = sys_pkey_alloc(0, PKEY_DISABLE_EXECUTE);
+	rights = PKEY_DISABLE_EXECUTE;
+	pkey = sys_pkey_alloc(0, rights);
 	FAIL_IF(pkey < 0);
 
 	/*
@@ -271,8 +177,8 @@ static int test(void)
 	 */
 	remaining_faults = 0;
 	FAIL_IF(sys_pkey_mprotect(insns, pgsize, PROT_EXEC, pkey) != 0);
-	printf("read from %p, pkey is execute-disabled, access-enabled\n",
-	       (void *) fault_addr);
+	printf("read from %p, pkey permissions are %s\n", fault_addr,
+	       pkey_rights(rights));
 	i = *fault_addr;
 	FAIL_IF(remaining_faults != 0);
 
@@ -288,12 +194,13 @@ static int test(void)
 	 */
 	remaining_faults = 1;
 	FAIL_IF(sys_pkey_mprotect(insns, pgsize, PROT_EXEC, pkey) != 0);
-	printf("write to %p, pkey is execute-disabled, access-enabled\n",
-	       (void *) fault_addr);
+	printf("write to %p, pkey permissions are %s\n", fault_addr,
+	       pkey_rights(rights));
 	*fault_addr = PPC_INST_TRAP;
 	FAIL_IF(remaining_faults != 0 || fault_code != SEGV_ACCERR);
 
 	/* The following three cases will generate SEGV_PKUERR */
+	rights |= PKEY_DISABLE_ACCESS;
 	fault_type = PKEY_DISABLE_ACCESS;
 	fault_pkey = pkey;
 
@@ -307,9 +214,9 @@ static int test(void)
 	 */
 	remaining_faults = 1;
 	FAIL_IF(sys_pkey_mprotect(insns, pgsize, PROT_EXEC, pkey) != 0);
-	printf("read from %p, pkey is execute-disabled, access-disabled\n",
-	       (void *) fault_addr);
-	pkey_set_rights(pkey, PKEY_DISABLE_ACCESS);
+	pkey_set_rights(pkey, rights);
+	printf("read from %p, pkey permissions are %s\n", fault_addr,
+	       pkey_rights(rights));
 	i = *fault_addr;
 	FAIL_IF(remaining_faults != 0 || fault_code != SEGV_PKUERR);
 
@@ -324,60 +231,59 @@ static int test(void)
 	 */
 	remaining_faults = 2;
 	FAIL_IF(sys_pkey_mprotect(insns, pgsize, PROT_EXEC, pkey) != 0);
-	printf("write to %p, pkey is execute-disabled, access-disabled\n",
-	       (void *) fault_addr);
-	pkey_set_rights(pkey, PKEY_DISABLE_ACCESS);
+	pkey_set_rights(pkey, rights);
+	printf("write to %p, pkey permissions are %s\n", fault_addr,
+	       pkey_rights(rights));
 	*fault_addr = PPC_INST_NOP;
 	FAIL_IF(remaining_faults != 0 || fault_code != SEGV_ACCERR);
 
-	/*
-	 * Jump to the executable region when AMR bits are set i.e.
-	 * the pkey permits neither read nor write access.
-	 *
-	 * This should generate a pkey fault based on IAMR bits which
-	 * are set to not permit execution. AMR bits should not affect
-	 * execution.
-	 *
-	 * This also checks if the overwrite of the first instruction
-	 * word from a trap to a no-op succeeded.
-	 */
-	fault_addr = insns;
-	fault_type = PKEY_DISABLE_EXECUTE;
-	fault_pkey = pkey;
-	remaining_faults = 1;
-	FAIL_IF(sys_pkey_mprotect(insns, pgsize, PROT_EXEC, pkey) != 0);
-	pkey_set_rights(pkey, PKEY_DISABLE_ACCESS);
-	printf("execute at %p, pkey is execute-disabled, access-disabled\n",
-	       (void *) fault_addr);
-	asm volatile("mtctr	%0; bctrl" : : "r"(insns));
-	FAIL_IF(remaining_faults != 0 || fault_code != SEGV_PKUERR);
-
-	/*
-	 * Free the current pkey and allocate a new one that is
-	 * fully permissive.
-	 */
+	/* Free the current pkey */
 	sys_pkey_free(pkey);
-	pkey = sys_pkey_alloc(0, 0);
 
-	/*
-	 * Jump to the executable region when AMR bits are not set
-	 * i.e. the pkey permits read and write access.
-	 *
-	 * This should not generate any faults as the IAMR bits are
-	 * also not set and hence will the pkey will not restrict
-	 * execution.
-	 */
-	fault_pkey = pkey;
-	remaining_faults = 0;
-	FAIL_IF(sys_pkey_mprotect(insns, pgsize, PROT_EXEC, pkey) != 0);
-	printf("execute at %p, pkey is execute-enabled, access-enabled\n",
-	       (void *) fault_addr);
-	asm volatile("mtctr	%0; bctrl" : : "r"(insns));
-	FAIL_IF(remaining_faults != 0);
+	rights = 0;
+	do {
+		/*
+		 * Allocate pkeys with all valid combinations of read,
+		 * write and execute restrictions.
+		 */
+		pkey = sys_pkey_alloc(0, rights);
+		FAIL_IF(pkey < 0);
+
+		/*
+		 * Jump to the executable region. AMR bits may or may not
+		 * be set but they should not affect execution.
+		 *
+		 * This should generate pkey faults based on IAMR bits which
+		 * may be set to restrict execution.
+		 *
+		 * The first iteration also checks if the overwrite of the
+		 * first instruction word from a trap to a no-op succeeded.
+		 */
+		fault_pkey = pkey;
+		fault_type = -1;
+		remaining_faults = 0;
+		if (rights & PKEY_DISABLE_EXECUTE) {
+			fault_type = PKEY_DISABLE_EXECUTE;
+			remaining_faults = 1;
+		}
+
+		FAIL_IF(sys_pkey_mprotect(insns, pgsize, PROT_EXEC, pkey) != 0);
+		printf("execute at %p, pkey permissions are %s\n", fault_addr,
+		       pkey_rights(rights));
+		asm volatile("mtctr	%0; bctrl" : : "r"(insns));
+		FAIL_IF(remaining_faults != 0);
+		if (rights & PKEY_DISABLE_EXECUTE)
+			FAIL_IF(fault_code != SEGV_PKUERR);
+
+		/* Free the current pkey */
+		sys_pkey_free(pkey);
+
+		/* Find next valid combination of pkey rights */
+		rights = next_pkey_rights(rights);
+	} while (rights);
 
 	/* Cleanup */
 	munmap((void *) insns, pgsize);
-	sys_pkey_free(pkey);
 
 	return 0;
 }

@@ -1869,7 +1869,7 @@ static void cacheflush(void)
 		catch_memory_errors = 1;
 		sync();
 
-		if (cmd != 'i') {
+		if (cmd != 'i' || IS_ENABLED(CONFIG_PPC_BOOK3S_64)) {
 			for (; nflush > 0; --nflush, adrs += L1_CACHE_BYTES)
 				cflush((void *) adrs);
 		} else {
@@ -4278,7 +4278,7 @@ static int do_spu_cmd(void)
 		subcmd = inchar();
 		if (isxdigit(subcmd) || subcmd == '\n')
 			termch = subcmd;
-		/* fall through */
+		fallthrough;
 	case 'f':
 		scanhex(&num);
 		if (num >= XMON_NUM_SPUS || !spu_info[num].spu) {

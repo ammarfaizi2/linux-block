@@ -42,6 +42,16 @@ int perf_event_enable(int fd);
 int perf_event_disable(int fd);
 int perf_event_reset(int fd);
 
+#if !defined(__GLIBC_PREREQ) || !__GLIBC_PREREQ(2, 30)
+#include <unistd.h>
+#include <sys/syscall.h>
+
+static inline pid_t gettid(void)
+{
+	return syscall(SYS_gettid);
+}
+#endif
+
 static inline bool have_hwcap(unsigned long ftr)
 {
 	return ((unsigned long)get_auxv_entry(AT_HWCAP) & ftr) == ftr;
@@ -72,6 +82,15 @@ do {								\
 	}							\
 } while (0)
 
+#define FAIL_IF_EXIT(x)						\
+do {								\
+	if ((x)) {						\
+		fprintf(stderr,					\
+		"[FAIL] Test FAILED on line %d\n", __LINE__);	\
+		_exit(1);					\
+	}							\
+} while (0)
+
 /* The test harness uses this, yes it's gross */
 #define MAGIC_SKIP_RETURN_VALUE	99
 
@@ -96,6 +115,10 @@ do {								\
 
 #define _str(s) #s
 #define str(s) _str(s)
+
+#define sigsafe_err(msg)	({ \
+		ssize_t nbytes __attribute__((unused)); \
+		nbytes = write(STDERR_FILENO, msg, strlen(msg)); })
 
 /* POWER9 feature */
 #ifndef PPC_FEATURE2_ARCH_3_00
