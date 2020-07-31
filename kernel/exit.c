@@ -542,12 +542,22 @@ static struct task_struct *find_child_reaper(struct task_struct *father,
 	return father;
 }
 
-/*
- * When we die, we re-parent all our children, and try to:
- * 1. give them to another thread in our thread group, if such a member exists
- * 2. give it to the first ancestor process which prctl'd itself as a
- *    child_subreaper for its children (like a service manager)
- * 3. give it to the init process (PID 1) in our pid namespace
+/**
+ * find_new_reaper - find new reaper
+ * @father:		current reaper
+ * @child_reaper:	current child reaper
+ *
+ * Find a new reaper for the children of dying @father. We try in the
+ * following order:
+ * 1. reparent them to another thread in @father's thread-group
+ * 2. reparent them to the first ancestor which marked itself as a child
+ *    subreaper
+ * 3. reparent it to pid 1 in @father's pid namespace
+ *
+ * Note that if @father equals @child_reaper we will have already killed
+ * all other taks in the pid namespace in find_child_reaper().
+ *
+ * Return: New reaper or @child_reaper.
  */
 static struct task_struct *find_new_reaper(struct task_struct *father,
 					   struct task_struct *child_reaper)
