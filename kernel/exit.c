@@ -618,13 +618,25 @@ static void reparent_leader(struct task_struct *father, struct task_struct *p,
 	kill_orphaned_pgrp(p, father);
 }
 
-/*
- * This does two things:
+/**
+ * forget_original_parent - handle child processes of exiting task
+ * @father:	current reaper
+ * @dead:	list of already dead tasks
  *
- * A.  Make init inherit all the child processes
- * B.  Check to see if any process groups have become orphaned
- *	as a result of our exiting, and if they have any stopped
- *	jobs, send them a SIGHUP and then a SIGCONT.  (POSIX 3.2.2.2)
+ * Ensure that @father detaches from all tasks it used ptrace on abusing
+ * the ptrace_entry list to keep track of all traced tasks it needs to
+ * clean up.
+ * It then finds the child reaper of @father which is either another thread
+ * in it's thread-group if any are still alive or pid 1 in @father's pid
+ * namespace.
+ * If there are any children of @father it will reparent them to either
+ * another thread in @father's thread-group if any are still alive or to
+ * the closest ancestor of @father that is marked as a subreaper, or to pid
+ * 1 in @father's pid namespace. If none of these options are available it
+ * means @father was the child reaper of its pid namespace. In this case
+ * all remaining tasks in the pid namespace are killed.
+ *
+ * All remaining child tasks will be reparented to the new child reaper.
  */
 static void forget_original_parent(struct task_struct *father,
 					struct list_head *dead)
