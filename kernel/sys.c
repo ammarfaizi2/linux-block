@@ -2426,6 +2426,9 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
 	case PR_GET_TID_ADDRESS:
 		error = prctl_get_tid_address(me, (int __user **)arg2);
 		break;
+	case PR_SET_AUTOREAP_REPARENTED:
+		me->signal->autoreap_reparented = !!arg2;
+		break;
 	case PR_SET_CHILD_SUBREAPER:
 		me->signal->is_child_subreaper = !!arg2;
 		if (!arg2)

@@ -238,4 +238,6 @@ struct prctl_mm_map {
 #define PR_SET_IO_FLUSHER		57
 #define PR_GET_IO_FLUSHER		58
 
+#define PR_SET_AUTOREAP_REPARENTED	59
+
 #endif /* _LINUX_PRCTL_H */

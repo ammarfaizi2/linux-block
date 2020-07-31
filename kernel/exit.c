@@ -642,6 +642,8 @@ static void forget_original_parent(struct task_struct *father,
 					struct list_head *dead)
 {
 	struct task_struct *p, *t, *reaper;
+	bool threaded_reparent;
+	bool autoreap;
 
 	if (unlikely(!list_empty(&father->ptraced)))
 		exit_ptrace(father, dead);
@@ -652,7 +654,26 @@ static void forget_original_parent(struct task_struct *father,
 		return;
 
 	reaper = find_new_reaper(father, reaper);
+	threaded_reparent = same_thread_group(father, reaper);
+	autoreap = reaper->signal->autoreap_reparented;
 	list_for_each_entry(p, &father->children, sibling) {
+		unsigned long flags;
+
+		/*
+		 * Align child exit with the expectations of the new reaper:
+		 * either it doesn't care about reparented children and wants
+		 * us to autoreap them or it wants the default behavior. The
+		 * latter case is only interesting when we reparent children
+		 * from a subreaper that doesn't care about reparented children
+		 * to a reaper that wants the default behavior.
+		 *
+		 * Note, since autoreap is only set and read when we hold the
+		 * write lock on tasklist_lock there's no need to grab siglock
+		 * here.
+		 */
+		if (!threaded_reparent)
+			p->signal->autoreap = autoreap;
+
 		for_each_thread(p, t) {
 			RCU_INIT_POINTER(t->real_parent, reaper);
 			BUG_ON((!t->ptrace) != (rcu_access_pointer(t->parent) == father));
@@ -667,7 +688,7 @@ static void forget_original_parent(struct task_struct *father,
 		 * If this is a threaded reparent there is no need to
 		 * notify anyone anything has happened.
 		 */
-		if (!same_thread_group(reaper, father))
+		if (!threaded_reparent)
 			reparent_leader(father, p, dead);
 	}
 	list_splice_tail_init(&father->children, &reaper->children);
