@@ -178,6 +178,8 @@ static struct page *vfs_dedupe_get_page(struct inode *inode, loff_t offset)
  */
 static void vfs_lock_two_pages(struct page *page1, struct page *page2)
 {
+	page1 = thp_head(page1);
+	page2 = thp_head(page2);
 	/* Always lock in order of increasing index. */
 	if (page1->index > page2->index)
 		swap(page1, page2);
@@ -190,6 +192,8 @@ static void vfs_lock_two_pages(struct page *page1, struct page *page2)
 /* Unlock two pages, being careful not to unlock the same page twice. */
 static void vfs_unlock_two_pages(struct page *page1, struct page *page2)
 {
+	page1 = thp_head(page1);
+	page2 = thp_head(page2);
 	unlock_page(page1);
 	if (page1 != page2)
 		unlock_page(page2);
@@ -244,8 +248,8 @@ static int vfs_dedupe_file_range_compare(struct inode *src, loff_t srcoff,
 		 * someone is invalidating pages on us and we lose.
 		 */
 		if (!PageUptodate(src_page) || !PageUptodate(dest_page) ||
-		    src_page->mapping != src->i_mapping ||
-		    dest_page->mapping != dest->i_mapping) {
+		    page_mapping(src_page) != src->i_mapping ||
+		    page_mapping(dest_page) != dest->i_mapping) {
 			same = false;
 			goto unlock;
 		}
