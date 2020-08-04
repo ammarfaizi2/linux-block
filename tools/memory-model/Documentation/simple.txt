@@ -148,6 +148,8 @@ cases involving combining sequence locking with other synchronization
 primitives.  (LKMM does not yet know about sequence locking, so it is
 currently necessary to open-code it in your litmus tests.)
 
+Additional information may be found in include/linux/seqlock.h.
+
 Packaged primitives: RCU
 ========================
 
@@ -158,7 +160,9 @@ and "do not update anything that is visible to and accessed by readers",
 and "protect updates with locking".
 
 These rules are illustrated by the functions foo_update_a() and
-foo_get_a() shown in Documentation/RCU/whatisRCU.rst.
+foo_get_a() shown in Documentation/RCU/whatisRCU.rst.  Additional
+RCU usage patterns maybe found in Documentation/RCU and in the
+source code.
 
 
 Packaged primitives: Atomic operations
@@ -180,6 +184,15 @@ More recent kernels have operations that return a value but do not
 provide full ordering.  These are flagged with either a _relaxed()
 suffix (providing no ordering), or an _acquire() or _release() suffix
 (providing limited ordering).
+
+Additional information may be found in these files:
+
+Documentation/atomic_t.txt
+Documentation/atomic_bitops.txt
+Documentation/core-api/atomic_ops.rst
+Documentation/core-api/refcount-vs-atomic.rst
+
+Reading code using these primitives is often also quite helpful.
 
 
 Lockless, fully ordered
