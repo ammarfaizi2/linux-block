@@ -31,11 +31,12 @@ no external data references.
 
 In the general case, you will need to take explicit steps to ensure that
 your code really is executed within a single thread that does not access
-shared variables.  A simple way to achieve this is to define a global
-lock that you acquire at the beginning of your code and release at the
-end, taking care to ensure that all references to your code's shared
-data are also carried out under that same lock.  This approach is called
-"code locking".
+shared variables.  A simple way to achieve this is to define a global lock
+that you acquire at the beginning of your code and release at the end,
+taking care to ensure that all references to your code's shared data are
+also carried out under that same lock.  Because only on thread can hold
+this lock at a given time, your code will be executed single-threaded.
+This approach is called "code locking".
 
 Code locking can severely limit both performance and scalability, so it
 should be used with caution, and only on code paths that execute rarely.
@@ -50,22 +51,21 @@ the formerly feared deadlock scenarios.
 
 Please use the standard locking primitives provided by the kernel rather
 than rolling your own.  For one thing, the standard primitives interact
-properly with lockdep.  For another, they have been tuned to deal better
-with high contention.  Finally, it is surprisingly hard to correctly
-code the lock acquisition and release functions, especially if you are
-trying to deal gracefully with high contention.  Even if you don't care
-about high contention, locking functions must carefully prevent both
-the CPU and the compiler from moving code in either direction across
-the locking function.
+properly with lockdep.  For another thing, these primitives have been
+tuned to deal better with high contention.  And for one final thing, it is
+surprisingly hard to correctly code production-quality lock acquisition
+and release functions.  After all, even simple non-production-quality
+locking functions must carefully prevent both the CPU and the compiler
+from moving code in either direction across the locking function.
 
-Despite its scalability limitations, RCU takes this single-threaded
-approach for much of its grace-period processing and also for early-boot
-operation.  The reason RCU is able to scale despite single-threaded
-grace-period processing is use of batching, where all updates that
-accumulated during one grace period are handled by the next one.  In other
-words, slowing down grace-period processing makes it more efficient.
-Nor is RCU unique:  Similar batching optimizations are used in many
-I/O operations.
+Despite the scalability limitations of single-threaded code, RCU
+takes this approach for much of its grace-period processing and also
+for early-boot operation.  The reason RCU is able to scale despite
+single-threaded grace-period processing is use of batching, where all
+updates that accumulated during one grace period are handled by the
+next one.  In other words, slowing down grace-period processing makes
+it more efficient.  Nor is RCU unique:  Similar batching optimizations
+are used in many I/O operations.
 
 
 Packaged code
@@ -74,8 +74,7 @@ Packaged code
 Even if performance and scalability concerns prevent your code from
 being completely single-threaded, it is often possible to use library
 functions that handle the concurrency nearly or entirely on their own.
-This approach does rely on LKMM, but delegates the corresponding LKMM
-worries to the library maintainer.
+This approach does delegates any LKMM worries to the library maintainer.
 
 In the kernel, what is the "library"?  Quite a bit.  It includes the
 contents of the lib/ directory, much of the include/linux/ directory along
