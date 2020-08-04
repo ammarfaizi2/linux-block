@@ -17,9 +17,9 @@ smp_mb__before_atomic()       CP        Y  Y    Y        a  a   a   a    Y
 smp_mb__after_atomic()        CP        a  a    Y        Y  Y   Y   Y    Y
 
 
-Key:	Relaxed:  Either a *_relaxed() RMW operation, an unsuccessful RMW
-		  operation, or one of the atomic_read() and atomic_set()
-		  family of operations.
+Key:	Relaxed:  A relaxed operation is either a *_relaxed() RMW
+		  operation, an unsuccessful RMW operation, or one of
+		  the atomic_read() and atomic_set() family of operations.
 	C:	  Ordering is cumulative
 	P:	  Ordering propagates
 	R:	  Read, for example, READ_ONCE(), or read portion of RMW
