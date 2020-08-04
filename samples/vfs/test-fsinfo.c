@@ -383,7 +383,7 @@ static void dump_fsinfo_generic_mount_all(void *reply, unsigned int size)
 
 	printf("%5x %5x %12llx %10llu %s\n",
 	       r->mnt_id, r->parent_id, (unsigned long long)r->mnt_unique_id,
-	       r->mnt_notify_sum, mp);
+	       (unsigned long long)r->mnt_notify_sum, mp);
 }
 
 static void dump_afs_fsinfo_server_address(void *reply, unsigned int size)

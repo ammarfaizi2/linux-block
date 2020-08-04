@@ -145,9 +145,9 @@ static void display_mount(unsigned int mnt_id, unsigned int depth, char *path)
 	sprintf(dev, "%x:%x", ids.f_dev_major, ids.f_dev_minor);
 	printf("%10u %8llx %2x %x %5s %s",
 	       info.mnt_id,
-	       (info.mnt_attr_changes +
-		info.mnt_topology_changes +
-		info.mnt_subtree_notifications),
+	       (unsigned long long)(info.mnt_attr_changes +
+				    info.mnt_topology_changes +
+				    info.mnt_subtree_notifications),
 	       info.attr, top.propagation_type,
 	       dev, ids.f_fs_name);
 	putchar('\n');
