@@ -163,8 +163,9 @@ flag ("y") set but the buffer ("x") as not yet filled in, that is, if P1()
 loaded a value from "x" that was equal to 1 but loaded a value from "y"
 that was still equal to zero.
 
-This example can be checked by running the following command from the
-tools/memory-model directory:
+This example can be checked by running the following command, which
+absolutely must be run from the tools/memory-model directory and from
+this directory only:
 
 herd7 -conf linux-kernel.cfg litmus-tests/MP+pooncerelease+poacquireonce.litmus
 
@@ -179,15 +180,46 @@ search, and is as follows:
  6 No
  7 Witnesses
  8 Positive: 0 Negative: 3
- 9 Condition exists (1:z=1 /\ 1:r1=0)
+ 9 Condition exists (1:r0=1 /\ 1:r1=0)
 10 Observation MP+pooncerelease+poacquireonce Never 0 3
-11 Time MP+pooncerelease+poacquireonce 0.00
-12 Hash=714be076a9b2688fbed9198951a58810
+11 Time MP+pooncerelease+poacquireonce 0.02
+12 Hash=579aaa14d8c35a39429b02e698241d09
 
 The most pertinent line is line 10, which contains "Never", which
 indicates that the bad result flagged by the "exists" clause never
-happens.  Lines 3-5 list all the states that can happen, and these are
-all but the bad one.
+happens.  This line might instead say "Sometimes" to indicate that the
+bad result happened in some but not all executions, or it might say
+"Always" to indicate that the bad result happened in all executions.
+(The herd7 tool doesn't judge, so it is only an LKMM convention that the
+"exists" clause indicates a bad result.  To see this, invert the "exists"
+clause's condition and run the test.)  The numbers indicate the number
+of end states satisfying the "exists" clause (0) and the number not not
+satisfying that clause (3).
+
+Another important part of this output is shown in lines 2-5.  Line 2
+gives the total number of end states, and each of lines 3-5 list one
+of these states.  As expected, given the "Never" on line 10, the state
+flagged by the "exists" clause is not listed.
+
+The rest of the output is not normally needed, either due to irrelevance
+or due to being redundant with the lines discussed above.  However, the
+following paragraph lists them for the benefit of readers possessed of
+an insatiable curiosity.  Other readers should feel free to skip ahead.
+
+Line 1 echos the test name, along with the "Test" and "Allowed".  Line 6's
+"No" says that the "exists" clause was not satisfied by any execution,
+and as such it has the same meaning as line 10's "Never".  Line 7 is a
+lead-in to line 8, which lists the number of end states satisfying and
+not satisfying the "exists" clause, just like the two numbers at the
+end of line 10.  Line 9 repeats the "exists" clause so that you don't
+have to look it up in the litmus-test file.  The number at the end of
+line 11 gives the time in seconds required to analyze the litmus test.
+Small tests such as this one complete in a few milliseconds, so "0.00"
+is quite common.  Line 12 gives a hash of the contents for the litmus-test
+file, and is used by tooling that manages litmus tests and their output.
+This tooling is used by people modifying LKMM itself, and among other
+things lets such people know which of the several thousand relevant
+litmus tests were affected by a given change to LKMM.
 
 
 Initialization
@@ -253,7 +285,14 @@ about what really happens and why it is useful.
 Control Structures
 ------------------
 
-LKMM supports the C-language "if" statement, as shown below:
+LKMM supports the C-language "if" statement, which allows modeling of
+conditional branches.  In LKMM, conditional branches can affect ordering,
+but only if you are *very* careful (compilers are surprisingly able
+to optimize away conditional branches).  The following example shows
+the "load buffering" (LB) use case that is used in the Linux kernel to
+synchronize between ring-buffer producers and consumers.  In the example
+below, P0() is one side checking to see if an operation may proceed and
+P1() is the other side completing its update.
 
  1 C LB+fencembonceonce+ctrlonceonce
  2
