@@ -16,6 +16,8 @@ This document presents information in decreasing order of applicability,
 so that, where possible, the information that has proven more commonly
 useful is shown near the beginning.
 
+For information on installing LKMM, please see tools/memory-model/README.
+
 
 Copy-Pasta
 ==========
@@ -93,7 +95,11 @@ in the Linux-kernel source tree.
 
 Mechanically generated litmus tests will often have a double-quoted
 comment string on the second line.  Such strings are ignored when
-running the test.
+running the test.  Yes, you can add your own comments to litmus tests,
+but this is a bit involved due to the use of multiple parsers.  For now,
+you can use C-language comments in the C code, and these comments may
+be in either the "/* */" or the "//" style.  A later section will cover
+the full litmus-test commenting story.
 
 Line 3 is the initialization section.  Because the default initialization
 to zero suffices for this test, the "{}" syntax is used, which is an empty
@@ -136,7 +142,7 @@ functions may be found in the linux-kernel.def file.
 The P0() process does a WRITE_ONCE() to "x" on line 7.  Because "x" is in
 P0()'s parameter list, this stores to global variable "x".  Line 8 does
 an smp_store_release() to "y" on line 8, which is also in P0()'s parameter
-lits, so this also stores to a global variable, but in this case "y".
+list, so this also stores to a global variable, but in this case "y".
 
 The P1() process declares two local variables on lines 13 and 14.
 Line 16 does an smp_load_acquire() from "y" into local variable "r0",
@@ -155,7 +161,7 @@ written in the litmus-test language rather than in C.  For example, single
 combination means "and".  Similarly, "\/" stands for "or".  Both of these
 are ASCII-art representations of the corresponding mathematical symbols.
 Finally, "~" stands for "logical not", which is "!"  in C, and not to
-be confused with the C-language "~" operator with instead stands for
+be confused with the C-language "~" operator which instead stands for
 "bitwise not".  Parentheses may be used to override precedence.
 
 The "exists" assertion on line 20 is satisfied if the consumer sees the
@@ -522,8 +528,8 @@ single global spinlock named "sl".  This spinlock is held by whichever
 process changes the value of "sl" from zero to one, and is released when
 that process sets "sl" back to zero.  P0()'s lock acquisition is emulated
 on line 11 using xchg_acquire(), which unconditionally stores the value
-"1" to "sl" and stores either 0 or 1 to r2, depending on whether the
-lock acquisition was successful or unsuccessful (due to "sl" already
+"1" to "sl" and stores either "0" or "1" to "r2", depending on whether
+the lock acquisition was successful or unsuccessful (due to "sl" already
 having the value "1"), respectively.  P1() operates in a similar manner.
 
 Rather unconventionally, execution appears to proceed to the critical
@@ -531,12 +537,15 @@ section on lines 12 and 13 in either case.  Line 14 then uses an
 smp_store_release() to store zero to "sl", thus emulating lock release.
 
 The case where xchg_acquire() fails to acquire the lock is handled by
-the "filter" clause on line 28, which tells herd7 to pay attention
-only to those executions in which both "0:r2" and "1:r2" are zero,
-that is to pay attention only to those executions in which both locks
-are actually acquired.  Thus, the bogus executions that would execute
-the critical sections are discarded and any effects that they might have
-had are ignored.
+the "filter" clause on line 28, which tells herd7 to keep only those
+executions in which both "0:r2" and "1:r2" are zero, that is to pay
+attention only to those executions in which both locks are actually
+acquired.  Thus, the bogus executions that would execute the critical
+sections are discarded and any effects that they might have had are
+ignored.  Note well that the "filter" clause keeps those executions
+for which its expression is satisified, that is, for which the expression
+evaluates to true.  In other words, the "filter" clause says what to
+keep, not what to discard.
 
 The key insight behind this litmus test is that spin loops have no
 effect on the possible "exists"-clause outcomes of program execution
@@ -552,7 +561,7 @@ Why not just add the logical inverse of the "filter" clause to the
 "exists" clause, thus avoiding the "filter" clause entirely?  This does
 work, but is slower.  The reason that the "filter" clause is faster is
 that (in the common case) herd7 knows to abandon an execution as soon
-as the "filter" expression fails to be satisfied.  In constrast, the
+as the "filter" expression fails to be satisfied.  In contrast, the
 "exists" clause is evaluated only at the end of time, thus requiring
 herd7 to waste time on bogus executions in which both critical sections
 proceed concurrently.
@@ -858,7 +867,7 @@ https://github.com/paulmckrcu/litmus/blob/master/auto/C-RW-R+RW-R+RW-G+RW-G+RW-G
 One way to make herd7 run faster is to use the "-speedcheck true" option.
 This option prevents herd7 from generating all possible end states,
 instead causing it to focus solely on whether or not the "exists"
-clause can be satisified.  With this option, herd7 evaluates the above
+clause can be satisfied.  With this option, herd7 evaluates the above
 litmus test in about 300 milliseconds, for more than an order of magnitude
 improvement in performance.
 
@@ -871,8 +880,8 @@ https://github.com/paulmckrcu/litmus/blob/master/auto/C-RW-R+RW-R+RW-G+RW-G+RW-G
 
 Nevertheless, litmus-test analysis really is of exponential complexity,
 whether with or without "-speedcheck true".  Increasing by just three
-processes to a 19-process litmus test requires two hours and 40 minutes
-without, and about eight minutes with "-speedcheck true".  Each of these
+processes to a 19-process litmus test requires 2 hours and 40 minutes
+without, and about 8 minutes with "-speedcheck true".  Each of these
 results represent roughly an order of magnitude slowdown compared to the
 16-process litmus test.  Again, to be fair, the multi-hour run explores
 no fewer than 524,287 additional states compared to the shorter one.
@@ -882,6 +891,9 @@ https://github.com/paulmckrcu/litmus/blob/master/auto/C-RW-R+RW-R+RW-G+RW-G+RW-G
 If you don't like command-line arguments, you can obtain a similar speedup
 by adding a "filter" clause with exactly the same expression as your
 "exists" clause.
+
+However, please note that seeing the full set of states can be extremely
+helpful when developing and debugging litmus tests.
 
 
 LIMITATIONS
@@ -1004,9 +1016,11 @@ limited and in some ways non-standard:
 	code duplication.  Some uses of "goto" can be emulated by "if",
 	and some others by unrolling.
 
-6.	Only int and pointer types are supported.  Thus there is no
-	support for floating-point types, enumerations, characters,
-	strings, arrays, or structures.
+6.	Although you can use a wide variety of types in litmus-test
+	variable declarations, and especially in global-variable
+	declarations, the "herd7" tool understands only int and
+	pointer types.	There is no support for floating-point types,
+	enumerations, characters, strings, arrays, or structures.
 
 7.	Parsing of variable declarations is very loose, with almost no
 	type checking.
