@@ -1003,9 +1003,14 @@ static void __extract_crng(struct crng_state *crng, __u8 out[CHACHA_BLOCK_SIZE])
 	 * state[14] is the middle 32 bits of the nonce.  Scramble it with
 	 * 32 bits of arch randm output to help protect against attackers
 	 * who are able to learn the ChaCha20 state, e.g. by a side channel.
+	 * If we're on a 64-bit architecture, do the same with the high 32
+	 * bits of nonce in state[15].
 	 */
-	if (arch_get_random_long(&v))
-		crng->state[14] ^= v;
+	if (arch_get_random_long(&v)) {
+		crng->state[14] ^= (u32)v;
+		if (BITS_PER_LONG > 4)
+			crng->state[15] ^= (v >> 32);
+	}
 
 	chacha20_block(&crng->state[0], out);
 
