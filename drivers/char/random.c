@@ -995,21 +995,42 @@ static void crng_reseed(struct crng_state *crng, struct entropy_store *r)
 	}
 }
 
+static void __extract_crng(struct crng_state *crng, __u8 out[CHACHA_BLOCK_SIZE])
+{
+	unsigned long v;
+
+	/*
+	 * state[14] is the middle 32 bits of the nonce.  Scramble it with
+	 * 32 bits of arch randm output to help protect against attackers
+	 * who are able to learn the ChaCha20 state, e.g. by a side channel.
+	 */
+	if (arch_get_random_long(&v))
+		crng->state[14] ^= v;
+
+	chacha20_block(&crng->state[0], out);
+
+	/*
+	 * chacha20_block() increments state[12], which is the ChaCha20
+	 * block counter.  This counter is 32 bits.  To prevent a possible
+	 * failure mode in which we repeat the output after 256 GiB without
+	 * reseeding, increment the low 32 bits of the nonce (state[13])
+	 * if the block counter wraps.
+	 */
+	if (crng->state[12] == 0)
+		crng->state[13]++;
+}
+
 static void _extract_crng(struct crng_state *crng,
 			  __u8 out[CHACHA_BLOCK_SIZE])
 {
-	unsigned long v, flags;
+	unsigned long flags;
 
 	if (crng_ready() &&
 	    (time_after(crng_global_init_time, crng->init_time) ||
 	     time_after(jiffies, crng->init_time + CRNG_RESEED_INTERVAL)))
 		crng_reseed(crng, crng == &primary_crng ? &input_pool : NULL);
 	spin_lock_irqsave(&crng->lock, flags);
-	if (arch_get_random_long(&v))
-		crng->state[14] ^= v;
-	chacha20_block(&crng->state[0], out);
-	if (crng->state[12] == 0)
-		crng->state[13]++;
+	__extract_crng(crng, out);
 	spin_unlock_irqrestore(&crng->lock, flags);
 }
 
