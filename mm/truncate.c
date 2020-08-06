@@ -652,6 +652,7 @@ int invalidate_inode_pages2_range(struct address_space *mapping,
 	while (find_get_entries(mapping, index, end, &pvec, indices)) {
 		for (i = 0; i < pagevec_count(&pvec); i++) {
 			struct page *page = pvec.pages[i];
+			pgoff_t count;
 
 			/* We rely upon deletion not changing page->index */
 			index = indices[i];
@@ -664,27 +665,22 @@ int invalidate_inode_pages2_range(struct address_space *mapping,
 			}
 
 			lock_page(page);
-			WARN_ON(page_to_index(page) != index);
 			if (page->mapping != mapping) {
 				unlock_page(page);
 				continue;
 			}
 			wait_on_page_writeback(page);
+			count = thp_nr_pages(page);
+			index = page->index + count - 1;
 			if (page_mapped(page)) {
 				if (!did_range_unmap) {
-					/*
-					 * Zap the rest of the file in one hit.
-					 */
-					unmap_mapping_pages(mapping, index,
-						(1 + end - index), false);
+					/* Zap the rest of the file */
+					count = max(count,
+							end - page->index + 1);
 					did_range_unmap = 1;
-				} else {
-					/*
-					 * Just zap this page
-					 */
-					unmap_mapping_pages(mapping, index,
-								1, false);
 				}
+				unmap_mapping_pages(mapping, page->index,
+						count, false);
 			}
 			BUG_ON(page_mapped(page));
 			ret2 = do_launder_page(mapping, page);
