@@ -9,6 +9,7 @@
 
 struct perf_cpu_map;
 struct perf_thread_map;
+struct perf_mmap;
 struct xyarray;
 
 /*
@@ -40,6 +41,7 @@ struct perf_evsel {
 	struct perf_cpu_map	*cpus;
 	struct perf_cpu_map	*own_cpus;
 	struct perf_thread_map	*threads;
+	struct perf_mmap	*mmap;
 	struct xyarray		*fd;
 	struct xyarray		*sample_id;
 	u64			*id;
