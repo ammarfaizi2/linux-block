@@ -11,10 +11,12 @@
 #include <stdlib.h>
 #include <internal/xyarray.h>
 #include <internal/cpumap.h>
+#include <internal/mmap.h>
 #include <internal/threadmap.h>
 #include <internal/lib.h>
 #include <linux/string.h>
 #include <sys/ioctl.h>
+#include <sys/mman.h>
 
 void perf_evsel__init(struct perf_evsel *evsel, struct perf_event_attr *attr)
 {
@@ -37,11 +39,17 @@ void perf_evsel__delete(struct perf_evsel *evsel)
 	free(evsel);
 }
 
-#define FD(e, x, y) (*(int *) xyarray__entry(e->fd, x, y))
+struct evsel_fd {
+	int fd;
+	struct perf_mmap mmap;
+};
+
+#define FD(e, x, y) ((struct evsel_fd *) xyarray__entry(e->fd, x, y))->fd
+#define MMAP(e, x, y) (&(((struct evsel_fd *) xyarray__entry(e->fd, x, y))->mmap))
 
 int perf_evsel__alloc_fd(struct perf_evsel *evsel, int ncpus, int nthreads)
 {
-	evsel->fd = xyarray__new(ncpus, nthreads, sizeof(int));
+	evsel->fd = xyarray__new(ncpus, nthreads, sizeof(struct evsel_fd));
 
 	if (evsel->fd) {
 		int cpu, thread;
@@ -154,6 +162,41 @@ void perf_evsel__close_cpu(struct perf_evsel *evsel, int cpu)
 		return;
 
 	perf_evsel__close_fd_cpu(evsel, cpu);
+}
+
+int perf_evsel__mmap(struct perf_evsel *evsel, int pages)
+{
+	int ret, cpu, thread;
+	struct perf_mmap_param mp = {
+		.prot = PROT_READ | PROT_WRITE,
+		.mask = (pages * page_size) - 1,
+	};
+
+	for (cpu = 0; cpu < xyarray__max_x(evsel->fd); cpu++) {
+		for (thread = 0; thread < xyarray__max_y(evsel->fd); thread++) {
+			int fd = FD(evsel, cpu, thread);
+			struct perf_mmap *map = MMAP(evsel, cpu, thread);
+
+			if (fd < 0)
+				continue;
+
+			perf_mmap__init(map, NULL, false, NULL);
+
+			ret = perf_mmap__mmap(map, &mp, fd, cpu);
+			if (ret)
+				return -1;
+		}
+	}
+
+	return 0;
+}
+
+void *perf_evsel__mmap_base(struct perf_evsel *evsel, int cpu, int thread)
+{
+	if (FD(evsel, cpu, thread) < 0)
+		return NULL;
+
+	return MMAP(evsel, cpu, thread)->base;
 }
 
 int perf_evsel__read_size(struct perf_evsel *evsel)
