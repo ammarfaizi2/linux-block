@@ -3,6 +3,7 @@
 #define __LIBPERF_EVSEL_H
 
 #include <stdint.h>
+#include <stddef.h>
 #include <perf/core.h>
 
 struct perf_evsel;
@@ -27,6 +28,7 @@ LIBPERF_API int perf_evsel__open(struct perf_evsel *evsel, struct perf_cpu_map *
 				 struct perf_thread_map *threads);
 LIBPERF_API void perf_evsel__close(struct perf_evsel *evsel);
 LIBPERF_API void perf_evsel__close_cpu(struct perf_evsel *evsel, int cpu);
+LIBPERF_API void *perf_evsel__mmap(struct perf_evsel *evsel, int pages);
 LIBPERF_API int perf_evsel__read(struct perf_evsel *evsel, int cpu, int thread,
 				 struct perf_counts_values *count);
 LIBPERF_API int perf_evsel__enable(struct perf_evsel *evsel);
