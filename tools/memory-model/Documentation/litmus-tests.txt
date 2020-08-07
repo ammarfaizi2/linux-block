@@ -16,7 +16,8 @@ This document presents information in decreasing order of applicability,
 so that, where possible, the information that has proven more commonly
 useful is shown near the beginning.
 
-For information on installing LKMM, please see tools/memory-model/README.
+For information on installing LKMM, including the underlying "herd7"
+tool, please see tools/memory-model/README.
 
 
 Copy-Pasta
@@ -543,7 +544,7 @@ attention only to those executions in which both locks are actually
 acquired.  Thus, the bogus executions that would execute the critical
 sections are discarded and any effects that they might have had are
 ignored.  Note well that the "filter" clause keeps those executions
-for which its expression is satisified, that is, for which the expression
+for which its expression is satisfied, that is, for which the expression
 evaluates to true.  In other words, the "filter" clause says what to
 keep, not what to discard.
 
