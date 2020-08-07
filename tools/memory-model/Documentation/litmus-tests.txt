@@ -46,10 +46,10 @@ good understanding of the litmus-test format.
 Examples and Format
 ===================
 
-This section describes a small message-passing litmus test.  This
-description starts with default initialization, moves to explicit
-initialization, and ends with LKMM's minimalistic set of control
-structures.
+This section describes the overall format of litmus tests, starting
+with a small example of the message-passing pattern and moving on to
+more complex examples that illustrate explicit initialization and LKMM's
+minimalistic set of flow-control statements.
 
 
 Message-Passing Example
@@ -86,44 +86,46 @@ suffices to avoid this bad outcome:
 19
 20 exists (1:r0=1 /\ 1:r1=0)
 
-Line 1 starts with "C", which identifies this file to herd7 as
-being in the LKMM C-language format (which, as we will see, is a
-small fragment of the full C language).  The remainder of line 1 is
-the name of the test, which by convention is the filename with the
-".litmus" suffix stripped.  In this case, the actual test may be found
-in tools/memory-model/litmus-tests/MP+pooncerelease+poacquireonce.litmus
+Line 1 starts with "C", which identifies this file as being in the
+LKMM C-language format (which, as we will see, is a small fragment
+of the full C language).  The remainder of line 1 is the name of
+the test, which by convention is the filename with the ".litmus"
+suffix stripped.  In this case, the actual test may be found in
+tools/memory-model/litmus-tests/MP+pooncerelease+poacquireonce.litmus
 in the Linux-kernel source tree.
 
-Mechanically generated litmus tests will often have a double-quoted
-comment string on the second line.  Such strings are ignored when
-running the test.  Yes, you can add your own comments to litmus tests,
-but this is a bit involved due to the use of multiple parsers.  For now,
-you can use C-language comments in the C code, and these comments may
-be in either the "/* */" or the "//" style.  A later section will cover
-the full litmus-test commenting story.
+Mechanically generated litmus tests will often have an optional
+double-quoted comment string on the second line.  Such strings are ignored
+when running the test.  Yes, you can add your own comments to litmus
+tests, but this is a bit involved due to the use of multiple parsers.
+For now, you can use C-language comments in the C code, and these comments
+may be in either the "/* */" or the "//" style.  A later section will
+cover the full litmus-test commenting story.
 
 Line 3 is the initialization section.  Because the default initialization
-to zero suffices for this test, the "{}" syntax is used, which is an empty
-initialization section.  Litmus tests requiring non-default initialization
-require non-empty initialization sections, as in the example that will
-be presented later in this document.
+to zero suffices for this test, the "{}" syntax is used, which mean the
+initialization section is empty.  Litmus tests requiring non-default
+initialization must have non-empty initialization sections, as in the
+example that will be presented later in this document.
 
-Lines 5-9 provide the first process and lines 11-18 the second process.
-Each process corresponds to a Linux-kernel task (or kthread, workqueue,
-thread, and so on).  The name of the first process is "P0" and that of
-the second "P1".  You can name your processes anything you like as long
-as the names consist of a single "P" followed by a number, and as long
-as the numbers are consecutive starting with zero.  This can actually
-be quite helpful, for example, a .litmus file matching "^P1(" but not
-matching "^P2(" must contain a two-process litmus test.
+Lines 5-9 show the first process and lines 11-18 the second process.  Each
+process corresponds to a Linux-kernel task (or kthread, workqueue, thread,
+and so on; LKMM discussions often use these terms interchangeably).
+The name of the first process is "P0" and that of the second "P1".
+You can name your processes anything you like as long as the names consist
+of a single "P" followed by a number, and as long as the numbers are
+consecutive starting with zero.  This can actually be quite helpful,
+for example, a .litmus file matching "^P1(" but not matching "^P2("
+must contain a two-process litmus test.
 
 The argument list for each function are pointers to the global variables
-used by that function.  Unlike normal C-language function parameters,
-the names are significant.  The fact that both P0() and P1() have a
-formal parameter named "x" means that these two processes are working
-with the same global variable, also named "x".  So the int *x, int *y"
-on P0() and P1() mean that both processes are working with two shared
-global variables, "x" and "y".
+used by that function.  Unlike normal C-language function parameters, the
+names are significant.  The fact that both P0() and P1() have a formal
+parameter named "x" means that these two processes are working with the
+same global variable, also named "x".  So the "int *x, int *y" on P0()
+and P1() mean that both processes are working with two shared global
+variables, "x" and "y".  Global variables are always passed to processes
+by reference, hence "P0(int *x, int *y)", but *never* "P0(int x, int y)".
 
 P0() has no local variables, but P1() has two of them named "r0" and "r1".
 These names may be freely chosen, but for historical reasons stemming from
@@ -140,30 +142,33 @@ operations, some of its exclusive-lock functions, and some of its RCU
 and SRCU functions.  An approximate list of the currently supported
 functions may be found in the linux-kernel.def file.
 
-The P0() process does a WRITE_ONCE() to "x" on line 7.  Because "x" is in
-P0()'s parameter list, this stores to global variable "x".  Line 8 does
-an smp_store_release() to "y" on line 8, which is also in P0()'s parameter
-list, so this also stores to a global variable, but in this case "y".
+The P0() process does a WRITE_ONCE() to "*x" on line 7.  Because "x" is
+a pointer in P0()'s parameter list, this stores to global variable "x".
+Line 8 does an smp_store_release() to "y" on line 8, which is also in
+P0()'s parameter list, so this also stores to a global variable, but in
+this case "y".
 
 The P1() process declares two local variables on lines 13 and 14.
 Line 16 does an smp_load_acquire() from "y" into local variable "r0",
-and line 17 does a READ_ONCE() from "x" into local variable "r1".
+and line 17 does a READ_ONCE() from "*x" into local variable "r1".
 Both "x" and "y" are in P1()'s parameter list, so both reference the
-same global variables used in P0().
+same global variables that are used by P0().
 
 Line 20 is the "exists" assertion expression to evaluate the final state.
 This final state is evaluated after the dust has settled: both processes
 have completed and all of their memory references and memory barriers
 have propagated to all parts of the system.  The references to the local
 variables "r0" and "r1" in line 24 must be prefixed with "1:" to specify
-which process they are local to.  Note that the assertion expression is
-written in the litmus-test language rather than in C.  For example, single
-"=" is an equality operator rather than an assignment.  The "/\" character
-combination means "and".  Similarly, "\/" stands for "or".  Both of these
-are ASCII-art representations of the corresponding mathematical symbols.
-Finally, "~" stands for "logical not", which is "!"  in C, and not to
-be confused with the C-language "~" operator which instead stands for
-"bitwise not".  Parentheses may be used to override precedence.
+which process they are local to.
+
+Note that the assertion expression is written in the litmus-test
+language rather than in C.  For example, single "=" is an equality
+operator rather than an assignment.  The "/\" character combination means
+"and".  Similarly, "\/" stands for "or".  Both of these are ASCII-art
+representations of the corresponding mathematical symbols.  Finally,
+"~" stands for "logical not", which is "!" in C, and not to be confused
+with the C-language "~" operator which instead stands for "bitwise not".
+Parentheses may be used to override precedence.
 
 The "exists" assertion on line 20 is satisfied if the consumer sees the
 flag ("y") set but the buffer ("x") as not yet filled in, that is, if P1()
@@ -282,11 +287,10 @@ value 42 appearing in place of the value zero:
 
 It is tempting to avoid the open-coded repetitions of the value "42"
 by defining another global variable "initval=42" and replacing all
-occurrences of "42" with "initval".  This will not, repeat *not*, do
-what you expect based on your experience with the C language (try it!).
-You should instead use something like the C preprocessor to get the
-desired effect.  See the section below on linked lists to learn more
-about what really happens and why it is useful.
+occurrences of "42" with "initval".  This will not, repeat *not*,
+initialize "x" and "y" to 42, but instead to the address of "initval"
+(try it!).  See the section below on linked lists to learn more about
+why this approach to initialization can be useful.
 
 
 Control Structures
@@ -524,10 +528,10 @@ This litmus test may be found here:
 
 https://git.kernel.org/pub/scm/linux/kernel/git/paulmck/perfbook.git/tree/CodeSamples/formal/herd/C-SB+l-o-o-u+l-o-o-u-X.litmus
 
-This test uses two global variables, "x1" and "x2", and also emulates
+This test uses two global variables, "x1" and "x2", and also emulates a
 single global spinlock named "sl".  This spinlock is held by whichever
-process changes the value of "sl" from zero to one, and is released when
-that process sets "sl" back to zero.  P0()'s lock acquisition is emulated
+process changes the value of "sl" from "0" to "1", and is released when
+that process sets "sl" back to "0".  P0()'s lock acquisition is emulated
 on line 11 using xchg_acquire(), which unconditionally stores the value
 "1" to "sl" and stores either "0" or "1" to "r2", depending on whether
 the lock acquisition was successful or unsuccessful (due to "sl" already
@@ -548,15 +552,16 @@ for which its expression is satisfied, that is, for which the expression
 evaluates to true.  In other words, the "filter" clause says what to
 keep, not what to discard.
 
-The key insight behind this litmus test is that spin loops have no
-effect on the possible "exists"-clause outcomes of program execution
-in the absence of deadlock.  In other words, given a high-quality
-lock-acquisition primitive in a deadlock-free program running on
-high-quality hardware, each lock acquisition will eventually succeed.
-Because herd7 is already exploring the full state space, the length of
-time required to actually acquire the lock does not matter.  After all,
-herd7 is already modeling all possible durations of the xchg_acquire()
-statements.
+Why doesn't the litmus test include a spin loop to handle failed spinlock
+acquisitions, like the kernel does?  The key insight behind this litmus
+test is that spin loops have no effect on the possible "exists"-clause
+outcomes of program execution in the absence of deadlock.  In other
+words, given a high-quality lock-acquisition primitive in a deadlock-free
+program running on high-quality hardware, each lock acquisition will
+eventually succeed.  Because herd7 already explores the full state
+space, the length of time required to actually acquire the lock does
+not matter.  After all, herd7 already models all possible durations of
+the xchg_acquire() statements.
 
 Why not just add the logical inverse of the "filter" clause to the
 "exists" clause, thus avoiding the "filter" clause entirely?  This does
@@ -684,13 +689,6 @@ The "exists" clause works the same way, with the "1:r0=x" comparing P1()'s
 "r0" not to the value of "x", but again to its address.  This term of the
 "exists" clause therefore tests whether line 20's load from "y" saw the
 value stored by line 11, which is in fact what is required in this case.
-
-And this is why you should instead use something like the C preprocessor
-to give names to "magic numbers" instead of trying to load from global
-variables that are themselves initialized to the desired value.  Unlike
-the C language, in litmus-test initialization expresssions and in the
-"exists" clause, mentions of global variable evaluate to that variable's
-address, not to its value.
 
 P0()'s line 10 initializes "x" to the value 1 then line 11 links to "x"
 from "y", replacing "z".
@@ -900,7 +898,7 @@ helpful when developing and debugging litmus tests.
 LIMITATIONS
 ===========
 
-Limitations of the Linux-kernel memory model (LKMM) litmus tests include:
+Limitations of the Linux-kernel memory model (LKMM) include:
 
 1.	Compiler optimizations are not accurately modeled.  Of course,
 	the use of READ_ONCE() and WRITE_ONCE() limits the compiler's
