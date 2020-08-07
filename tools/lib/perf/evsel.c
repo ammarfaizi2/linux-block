@@ -11,10 +11,12 @@
 #include <stdlib.h>
 #include <internal/xyarray.h>
 #include <internal/cpumap.h>
+#include <internal/mmap.h>
 #include <internal/threadmap.h>
 #include <internal/lib.h>
 #include <linux/string.h>
 #include <sys/ioctl.h>
+#include <sys/mman.h>
 
 void perf_evsel__init(struct perf_evsel *evsel, struct perf_event_attr *attr)
 {
@@ -156,6 +158,34 @@ void perf_evsel__close_cpu(struct perf_evsel *evsel, int cpu)
 	perf_evsel__close_fd_cpu(evsel, cpu);
 }
 
+void *perf_evsel__mmap(struct perf_evsel *evsel)
+{
+	int ret;
+	struct perf_mmap *map;
+	struct perf_mmap_param mp = {
+		.mask = -1,
+		.prot = PROT_READ | PROT_WRITE,
+	};
+
+	if (FD(evsel, 0, 0) < 0)
+		return NULL;
+
+	map = zalloc(sizeof(*map));
+	if (!map)
+		return NULL;
+
+	perf_mmap__init(map, NULL, false, NULL);
+
+	ret = perf_mmap__mmap(map, &mp, FD(evsel, 0, 0), 0);
+	if (ret) {
+		free(map);
+		return NULL;
+	}
+
+	evsel->mmap = map;
+	return map->base;
+}
+
 int perf_evsel__read_size(struct perf_evsel *evsel)
 {
 	u64 read_format = evsel->attr.read_format;
@@ -190,6 +220,9 @@ int perf_evsel__read(struct perf_evsel *evsel, int cpu, int thread,
 
 	if (FD(evsel, cpu, thread) < 0)
 		return -EINVAL;
+
+	if (evsel->mmap && !perf_mmap__read_self(evsel->mmap, count))
+		return 0;
 
 	if (readn(FD(evsel, cpu, thread), count->values, size) <= 0)
 		return -errno;
