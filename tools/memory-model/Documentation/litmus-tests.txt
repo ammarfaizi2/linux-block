@@ -472,8 +472,11 @@ What if you would like to know the value of a particular global variable
 at some particular point in a given process's execution?  One approach
 is to use a READ_ONCE() to load that global variable into a new local
 variable, then add that local variable to the "locations" clause.
-But be careful:  in many litmus tests, adding a READ_ONCE() will change
-the outcome!
+But be careful:  In some litmus tests, adding a READ_ONCE() will change
+the outcome!  For one example, please see the C-READ_ONCE.litmus and
+C-READ_ONCE-omitted.litmus tests located here:
+
+	https://github.com/paulmckrcu/litmus/blob/master/manual/kernel/
 
 
 Spin Loops
