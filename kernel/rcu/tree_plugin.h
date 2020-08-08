@@ -431,8 +431,8 @@ static bool rcu_preempt_has_tasks(struct rcu_node *rnp)
 }
 
 // Add delay to rcu_read_unlock() for strict grace periods.
-#ifdef CONFIG_RCU_STRICT_GRACE_PERIOD
 static int rcu_unlock_delay;
+#ifdef CONFIG_RCU_STRICT_GRACE_PERIOD
 module_param(rcu_unlock_delay, int, 0444);
 #endif
 
