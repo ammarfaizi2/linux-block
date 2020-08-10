@@ -144,9 +144,9 @@ functions may be found in the linux-kernel.def file.
 
 The P0() process does "WRITE_ONCE(*x, 1)" on line 7.  Because "x" is a
 pointer in P0()'s parameter list, this does an unordered store to global
-variable "x".  Line 8 does "smp_store_release(y, 1)" " on line 8, and
-because "y" is also in P0()'s parameter list, this does a release store
-to global variable "y".
+variable "x".  Line 8 does "smp_store_release(y, 1)", and because "y"
+is also in P0()'s parameter list, this does a release store to global
+variable "y".
 
 The P1() process declares two local variables on lines 13 and 14.
 Line 16 does "r0 = smp_load_acquire(y)" which does an acquire load
@@ -209,12 +209,19 @@ clause's condition and run the test.)  The numbers ("0 3") at the end
 of this line indicate the number of end states satisfying the "exists"
 clause (0) and the number not not satisfying that clause (3).
 
-Another important part of this output is shown in lines 2-5.  Line 2's
-"States 3" gives the total number of end states, and each of lines 3-5
-list one of these states, with the first ("1:r0=0; 1:r1=0;") indicating
-that both of P1()'s loads return the value "0".  As expected, given
-the "Never" on line 10, the state flagged by the "exists" clause is
-not listed.
+Another important part of this output is shown in lines 2-5, repeated here:
+
+ 2 States 3
+ 3 1:r0=0; 1:r1=0;
+ 4 1:r0=0; 1:r1=1;
+ 5 1:r0=1; 1:r1=1;
+
+Line 2 gives the total number of end states, and each of lines 3-5 list
+one of these states, with the first ("1:r0=0; 1:r1=0;") indicating that
+both of P1()'s loads returned the value "0".  As expected, given the
+"Never" on line 10, the state flagged by the "exists" clause is not
+listed.  This full list of states can be helpful when debugging a new
+litmus test.
 
 The rest of the output is not normally needed, either due to irrelevance
 or due to being redundant with the lines discussed above.  However, the
@@ -593,7 +600,9 @@ The reason that the "filter" clause is faster is that (in the common case)
 herd7 knows to abandon an execution as soon as the "filter" expression
 fails to be satisfied.  In contrast, the "exists" clause is evaluated
 only at the end of time, thus requiring herd7 to waste time on bogus
-executions in which both critical sections proceed concurrently.
+executions in which both critical sections proceed concurrently.  In
+addition, some LKMM users like the separation of concerns provided by
+using the both the "filter" and "exists" clauses.
 
 Readers lacking a pathological interest in odd corner cases should feel
 free to skip the remainder of this section.
