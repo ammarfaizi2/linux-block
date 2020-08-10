@@ -55,6 +55,8 @@ void __rcu_read_unlock(void);
 
 #else /* #ifdef CONFIG_PREEMPT_RCU */
 
+void rcu_read_unlock_strict(void);
+
 static inline void __rcu_read_lock(void)
 {
 	preempt_disable();
@@ -63,6 +65,7 @@ static inline void __rcu_read_lock(void)
 static inline void __rcu_read_unlock(void)
 {
 	preempt_enable();
+	rcu_read_unlock_strict();
 }
 
 static inline int rcu_preempt_depth(void)
