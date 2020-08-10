@@ -34,7 +34,7 @@ your code really is executed within a single thread that does not access
 shared variables.  A simple way to achieve this is to define a global lock
 that you acquire at the beginning of your code and release at the end,
 taking care to ensure that all references to your code's shared data are
-also carried out under that same lock.  Because only on thread can hold
+also carried out under that same lock.  Because only one thread can hold
 this lock at a given time, your code will be executed single-threaded.
 This approach is called "code locking".
 
@@ -74,7 +74,7 @@ Packaged code
 Even if performance and scalability concerns prevent your code from
 being completely single-threaded, it is often possible to use library
 functions that handle the concurrency nearly or entirely on their own.
-This approach does delegates any LKMM worries to the library maintainer.
+This approach delegates any LKMM worries to the library maintainer.
 
 In the kernel, what is the "library"?  Quite a bit.  It includes the
 contents of the lib/ directory, much of the include/linux/ directory along
