@@ -471,7 +471,7 @@ static long qlowmark = DEFAULT_RCU_QLOMARK;
 #define DEFAULT_RCU_QOVLD_MULT 2
 #define DEFAULT_RCU_QOVLD (DEFAULT_RCU_QOVLD_MULT * DEFAULT_RCU_QHIMARK)
 static long qovld = DEFAULT_RCU_QOVLD; // If this many pending, hammer QS.
-static long qovld_calc = -1;	  // No pre-initialization lock acquisitions! */
+static long qovld_calc = -1;	  // No pre-initialization lock acquisitions!
 
 module_param(blimit, long, 0444);
 module_param(qhimark, long, 0444);
