@@ -55,7 +55,11 @@ void __rcu_read_unlock(void);
 
 #else /* #ifdef CONFIG_PREEMPT_RCU */
 
+#ifdef CONFIG_TINY_RCU
+#define rcu_read_unlock_strict() do { } while (0)
+#else
 void rcu_read_unlock_strict(void);
+#endif
 
 static inline void __rcu_read_lock(void)
 {
