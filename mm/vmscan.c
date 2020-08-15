@@ -1300,7 +1300,8 @@ static unsigned int shrink_page_list(struct list_head *page_list,
 			enum ttu_flags flags = ttu_flags | TTU_BATCH_FLUSH;
 			bool was_swapbacked = PageSwapBacked(page);
 
-			if (unlikely(PageTransHuge(page)))
+			if (PageTransHuge(page) &&
+					thp_order(page) >= HPAGE_PMD_ORDER)
 				flags |= TTU_SPLIT_HUGE_PMD;
 
 			if (!try_to_unmap(page, flags)) {
