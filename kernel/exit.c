@@ -934,6 +934,7 @@ struct wait_opts {
 
 	wait_queue_entry_t		child_wait;
 	int			notask_error;
+	int			eagain_error;
 };
 
 static int eligible_pid(struct wait_opts *wo, struct task_struct *p)
@@ -1461,6 +1462,8 @@ repeat:
 
 notask:
 	retval = wo->notask_error;
+	if (!retval)
+		retval = wo->eagain_error;
 	if (!retval && !(wo->wo_flags & WNOHANG)) {
 		retval = -ERESTARTSYS;
 		if (!signal_pending(current)) {
@@ -1474,7 +1477,7 @@ end:
 	return retval;
 }
 
-static struct pid *pidfd_get_pid(unsigned int fd)
+static struct pid *pidfd_get_pid(unsigned int fd, unsigned int *flags)
 {
 	struct fd f;
 	struct pid *pid;
@@ -1484,8 +1487,10 @@ static struct pid *pidfd_get_pid(unsigned int fd)
 		return ERR_PTR(-EBADF);
 
 	pid = pidfd_pid(f.file);
-	if (!IS_ERR(pid))
+	if (!IS_ERR(pid)) {
 		get_pid(pid);
+		*flags = f.file->f_flags;
+	}
 
 	fdput(f);
 	return pid;
@@ -1498,6 +1503,7 @@ static long kernel_waitid(int which, pid_t upid, struct waitid_info *infop,
 	struct pid *pid = NULL;
 	enum pid_type type;
 	long ret;
+	unsigned int f_flags = 0;
 
 	if (options & ~(WNOHANG|WNOWAIT|WEXITED|WSTOPPED|WCONTINUED|
 			__WNOTHREAD|__WCLONE|__WALL))
@@ -1531,9 +1537,10 @@ static long kernel_waitid(int which, pid_t upid, struct waitid_info *infop,
 		if (upid < 0)
 			return -EINVAL;
 
-		pid = pidfd_get_pid(upid);
+		pid = pidfd_get_pid(upid, &f_flags);
 		if (IS_ERR(pid))
 			return PTR_ERR(pid);
+
 		break;
 	default:
 		return -EINVAL;
@@ -1544,6 +1551,11 @@ static long kernel_waitid(int which, pid_t upid, struct waitid_info *infop,
 	wo.wo_flags	= options;
 	wo.wo_info	= infop;
 	wo.wo_rusage	= ru;
+	wo.eagain_error = 0;
+	if (f_flags & O_NONBLOCK) {
+		wo.wo_flags	|= WNOHANG;
+		wo.eagain_error	= -EAGAIN;
+	}
 	ret = do_wait(&wo);
 
 	put_pid(pid);
@@ -1618,6 +1630,7 @@ long kernel_wait4(pid_t upid, int __user *stat_addr, int options,
 	wo.wo_info	= NULL;
 	wo.wo_stat	= 0;
 	wo.wo_rusage	= ru;
+	wo.eagain_error	= 0;
 	ret = do_wait(&wo);
 	put_pid(pid);
 	if (ret > 0 && stat_addr && put_user(wo.wo_stat, stat_addr))
