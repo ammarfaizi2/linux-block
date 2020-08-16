@@ -623,4 +623,5 @@ struct migration_target_control {
 };
 
 bool truncate_inode_partial_page(struct page *page, loff_t start, loff_t end);
+void page_cache_free_page(struct address_space *mapping, struct page *page);
 #endif	/* __MM_INTERNAL_H */

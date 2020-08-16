@@ -228,8 +228,7 @@ void __delete_from_page_cache(struct page *page, void *shadow)
 	page_cache_delete(mapping, page, shadow);
 }
 
-static void page_cache_free_page(struct address_space *mapping,
-				struct page *page)
+void page_cache_free_page(struct address_space *mapping, struct page *page)
 {
 	void (*freepage)(struct page *);
 

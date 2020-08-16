@@ -603,10 +603,7 @@ invalidate_complete_page2(struct address_space *mapping, struct page *page)
 	__delete_from_page_cache(page, NULL);
 	xa_unlock_irqrestore(&mapping->i_pages, flags);
 
-	if (mapping->a_ops->freepage)
-		mapping->a_ops->freepage(page);
-
-	put_page(page);	/* pagecache ref */
+	page_cache_free_page(mapping, page);
 	return 1;
 failed:
 	xa_unlock_irqrestore(&mapping->i_pages, flags);
