@@ -14,6 +14,7 @@
 #include "hif.h"
 
 unsigned int ath11k_debug_mask;
+EXPORT_SYMBOL(ath11k_debug_mask);
 module_param_named(debug_mask, ath11k_debug_mask, uint, 0644);
 MODULE_PARM_DESC(debug_mask, "Debugging mask");
 
@@ -29,17 +30,31 @@ static const struct ath11k_hw_params ath11k_hw_params[] = {
 		.max_radios = 3,
 		.bdf_addr = 0x4B0C0000,
 		.hw_ops = &ipq8074_ops,
+		.ring_mask = &ath11k_hw_ring_mask_ipq8074,
+		.internal_sleep_clock = false,
+	},
+	{
+		.name = "qca6390 hw2.0",
+		.hw_rev = ATH11K_HW_QCA6390_HW20,
+		.fw = {
+			.dir = "QCA6390/hw2.0",
+			.board_size = 256 * 1024,
+			.cal_size = 256 * 1024,
+		},
+		.max_radios = 3,
+		.bdf_addr = 0x4B0C0000,
+		.hw_ops = &qca6390_ops,
+		.ring_mask = &ath11k_hw_ring_mask_ipq8074,
+		.internal_sleep_clock = true,
 	},
 };
 
 static int ath11k_core_create_board_name(struct ath11k_base *ab, char *name,
 					 size_t name_len)
 {
-	/* Note: bus is fixed to ahb. When other bus type supported,
-	 * make it to dynamic.
-	 */
 	scnprintf(name, name_len,
-		  "bus=ahb,qmi-chip-id=%d,qmi-board-id=%d",
+		  "bus=%s,qmi-chip-id=%d,qmi-board-id=%d",
+		  ath11k_bus_str(ab->hif.bus),
 		  ab->qmi.target.chip_id,
 		  ab->qmi.target.board_id);
 
@@ -727,12 +742,28 @@ static int ath11k_init_hw_params(struct ath11k_base *ab)
 	return 0;
 }
 
-int ath11k_core_init(struct ath11k_base *ab)
+int ath11k_core_pre_init(struct ath11k_base *ab)
+{
+	int ret;
+
+	ret = ath11k_init_hw_params(ab);
+	if (ret) {
+		ath11k_err(ab, "failed to get hw params: %d\n", ret);
+		return ret;
+	}
+
+	return 0;
+}
+EXPORT_SYMBOL(ath11k_core_pre_init);
+
+static int ath11k_core_get_rproc(struct ath11k_base *ab)
 {
 	struct device *dev = ab->dev;
 	struct rproc *prproc;
 	phandle rproc_phandle;
-	int ret;
+
+	if (ab->bus_params.mhi_support)
+		return 0;
 
 	if (of_property_read_u32(dev->of_node, "qcom,rproc", &rproc_phandle)) {
 		ath11k_err(ab, "failed to get q6_rproc handle\n");
@@ -745,6 +776,19 @@ int ath11k_core_init(struct ath11k_base *ab)
 		return -EINVAL;
 	}
 	ab->tgt_rproc = prproc;
+
+	return 0;
+}
+
+int ath11k_core_init(struct ath11k_base *ab)
+{
+	int ret;
+
+	ret = ath11k_core_get_rproc(ab);
+	if (ret) {
+		ath11k_err(ab, "failed to get rproc: %d\n", ret);
+		return ret;
+	}
 
 	ret = ath11k_init_hw_params(ab);
 	if (ret) {
@@ -760,6 +804,7 @@ int ath11k_core_init(struct ath11k_base *ab)
 
 	return 0;
 }
+EXPORT_SYMBOL(ath11k_core_init);
 
 void ath11k_core_deinit(struct ath11k_base *ab)
 {
@@ -774,14 +819,17 @@ void ath11k_core_deinit(struct ath11k_base *ab)
 	ath11k_mac_destroy(ab);
 	ath11k_core_soc_destroy(ab);
 }
+EXPORT_SYMBOL(ath11k_core_deinit);
 
 void ath11k_core_free(struct ath11k_base *ab)
 {
 	kfree(ab);
 }
+EXPORT_SYMBOL(ath11k_core_free);
 
 struct ath11k_base *ath11k_core_alloc(struct device *dev, size_t priv_size,
-				      enum ath11k_bus bus)
+				      enum ath11k_bus bus,
+				      const struct ath11k_bus_params *bus_params)
 {
 	struct ath11k_base *ab;
 
@@ -804,6 +852,8 @@ struct ath11k_base *ath11k_core_alloc(struct device *dev, size_t priv_size,
 	INIT_WORK(&ab->restart_work, ath11k_core_restart);
 	timer_setup(&ab->rx_replenish_retry, ath11k_ce_rx_replenish_retry, 0);
 	ab->dev = dev;
+	ab->bus_params = *bus_params;
+	ab->hif.bus = bus;
 
 	return ab;
 
@@ -811,3 +861,7 @@ err_sc_free:
 	kfree(ab);
 	return NULL;
 }
+EXPORT_SYMBOL(ath11k_core_alloc);
+
+MODULE_DESCRIPTION("Core module for Qualcomm Atheros 802.11ax wireless LAN cards.");
+MODULE_LICENSE("Dual BSD/GPL");

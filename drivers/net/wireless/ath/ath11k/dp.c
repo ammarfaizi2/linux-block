@@ -7,6 +7,7 @@
 #include "core.h"
 #include "dp_tx.h"
 #include "hal_tx.h"
+#include "hif.h"
 #include "debug.h"
 #include "dp_rx.h"
 #include "peer.h"
@@ -111,8 +112,8 @@ int ath11k_dp_srng_setup(struct ath11k_base *ab, struct dp_srng *ring,
 			 int mac_id, int num_entries)
 {
 	struct hal_srng_params params = { 0 };
-	int entry_sz = ath11k_hal_srng_get_entrysize(type);
-	int max_entries = ath11k_hal_srng_get_max_entries(type);
+	int entry_sz = ath11k_hal_srng_get_entrysize(ab, type);
+	int max_entries = ath11k_hal_srng_get_max_entries(ab, type);
 	int ret;
 
 	if (max_entries < 0 || entry_sz < 0)
@@ -367,7 +368,7 @@ static int ath11k_dp_scatter_idle_link_desc_setup(struct ath11k_base *ab,
 	u32 end_offset;
 
 	n_entries_per_buf = HAL_WBM_IDLE_SCATTER_BUF_SIZE /
-			    ath11k_hal_srng_get_entrysize(HAL_WBM_IDLE_LINK);
+		ath11k_hal_srng_get_entrysize(ab, HAL_WBM_IDLE_LINK);
 	num_scatter_buf = DIV_ROUND_UP(size, HAL_WBM_IDLE_SCATTER_BUF_SIZE);
 
 	if (num_scatter_buf > DP_IDLE_SCATTER_BUFS_MAX)
@@ -565,7 +566,7 @@ int ath11k_dp_link_desc_setup(struct ath11k_base *ab,
 		return ret;
 
 	/* Setup link desc idle list for HW internal usage */
-	entry_sz = ath11k_hal_srng_get_entrysize(ring_type);
+	entry_sz = ath11k_hal_srng_get_entrysize(ab, ring_type);
 	tot_mem_sz = entry_sz * n_link_desc;
 
 	/* Setup scatter desc list when the total memory requirement is more */
@@ -625,13 +626,13 @@ int ath11k_dp_service_srng(struct ath11k_base *ab,
 	int i = 0;
 	int tot_work_done = 0;
 
-	while (ath11k_tx_ring_mask[grp_id] >> i) {
-		if (ath11k_tx_ring_mask[grp_id] & BIT(i))
+	while (ab->hw_params.ring_mask->tx[grp_id] >> i) {
+		if (ab->hw_params.ring_mask->tx[grp_id] & BIT(i))
 			ath11k_dp_tx_completion_handler(ab, i);
 		i++;
 	}
 
-	if (ath11k_rx_err_ring_mask[grp_id]) {
+	if (ab->hw_params.ring_mask->rx_err[grp_id]) {
 		work_done = ath11k_dp_process_rx_err(ab, napi, budget);
 		budget -= work_done;
 		tot_work_done += work_done;
@@ -639,7 +640,7 @@ int ath11k_dp_service_srng(struct ath11k_base *ab,
 			goto done;
 	}
 
-	if (ath11k_rx_wbm_rel_ring_mask[grp_id]) {
+	if (ab->hw_params.ring_mask->rx_wbm_rel[grp_id]) {
 		work_done = ath11k_dp_rx_process_wbm_err(ab,
 							 napi,
 							 budget);
@@ -650,8 +651,8 @@ int ath11k_dp_service_srng(struct ath11k_base *ab,
 			goto done;
 	}
 
-	if (ath11k_rx_ring_mask[grp_id]) {
-		i =  fls(ath11k_rx_ring_mask[grp_id]) - 1;
+	if (ab->hw_params.ring_mask->rx[grp_id]) {
+		i =  fls(ab->hw_params.ring_mask->rx[grp_id]) - 1;
 		work_done = ath11k_dp_process_rx(ab, i, napi,
 						 budget);
 		budget -= work_done;
@@ -660,9 +661,9 @@ int ath11k_dp_service_srng(struct ath11k_base *ab,
 			goto done;
 	}
 
-	if (rx_mon_status_ring_mask[grp_id]) {
+	if (ab->hw_params.ring_mask->rx_mon_status[grp_id]) {
 		for (i = 0; i <  ab->num_radios; i++) {
-			if (rx_mon_status_ring_mask[grp_id] & BIT(i)) {
+			if (ab->hw_params.ring_mask->rx_mon_status[grp_id] & BIT(i)) {
 				work_done =
 				ath11k_dp_rx_process_mon_rings(ab,
 							       i, napi,
@@ -675,11 +676,11 @@ int ath11k_dp_service_srng(struct ath11k_base *ab,
 		}
 	}
 
-	if (ath11k_reo_status_ring_mask[grp_id])
+	if (ab->hw_params.ring_mask->reo_status[grp_id])
 		ath11k_dp_process_reo_status(ab);
 
 	for (i = 0; i < ab->num_radios; i++) {
-		if (ath11k_rxdma2host_ring_mask[grp_id] & BIT(i)) {
+		if (ab->hw_params.ring_mask->rxdma2host[grp_id] & BIT(i)) {
 			work_done = ath11k_dp_process_rxdma_err(ab, i, budget);
 			budget -= work_done;
 			tot_work_done += work_done;
@@ -688,7 +689,7 @@ int ath11k_dp_service_srng(struct ath11k_base *ab,
 		if (budget <= 0)
 			goto done;
 
-		if (ath11k_host2rxdma_ring_mask[grp_id] & BIT(i)) {
+		if (ab->hw_params.ring_mask->host2rxdma[grp_id] & BIT(i)) {
 			struct ath11k_pdev_dp *dp = &ab->pdevs[i].ar->dp;
 			struct dp_rxdma_ring *rx_ring = &dp->rx_refill_buf_ring;
 

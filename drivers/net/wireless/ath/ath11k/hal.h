@@ -458,6 +458,8 @@ struct hal_srng_params {
 	u32 flags;
 	u32 max_buffer_len;
 	u32 low_threshold;
+	dma_addr_t msi_addr;
+	u32 msi_data;
 
 	/* Add more params as needed */
 };
@@ -839,7 +841,7 @@ struct ath11k_hal {
 	struct hal_srng srng_list[HAL_SRNG_RING_ID_MAX];
 
 	/* SRNG configuration table */
-	const struct hal_srng_config *srng_config;
+	struct hal_srng_config *srng_config;
 
 	/* Remote pointer memory for HW/FW updates */
 	struct {
@@ -885,8 +887,8 @@ void ath11k_hal_ce_src_set_desc(void *buf, dma_addr_t paddr, u32 len, u32 id,
 				u8 byte_swap_data);
 void ath11k_hal_ce_dst_set_desc(void *buf, dma_addr_t paddr);
 u32 ath11k_hal_ce_dst_status_get_length(void *buf);
-int ath11k_hal_srng_get_entrysize(u32 ring_type);
-int ath11k_hal_srng_get_max_entries(u32 ring_type);
+int ath11k_hal_srng_get_entrysize(struct ath11k_base *ab, u32 ring_type);
+int ath11k_hal_srng_get_max_entries(struct ath11k_base *ab, u32 ring_type);
 void ath11k_hal_srng_get_params(struct ath11k_base *ab, struct hal_srng *srng,
 				struct hal_srng_params *params);
 u32 *ath11k_hal_srng_dst_get_next_entry(struct ath11k_base *ab,

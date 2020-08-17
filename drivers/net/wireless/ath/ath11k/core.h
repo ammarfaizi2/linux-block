@@ -90,6 +90,7 @@ struct ath11k_skb_rxcb {
 
 enum ath11k_hw_rev {
 	ATH11K_HW_IPQ8074,
+	ATH11K_HW_QCA6390_HW20,
 };
 
 enum ath11k_firmware_mode {
@@ -101,17 +102,7 @@ enum ath11k_firmware_mode {
 };
 
 #define ATH11K_IRQ_NUM_MAX 52
-#define ATH11K_EXT_IRQ_GRP_NUM_MAX 11
 #define ATH11K_EXT_IRQ_NUM_MAX	16
-
-extern const u8 ath11k_reo_status_ring_mask[ATH11K_EXT_IRQ_GRP_NUM_MAX];
-extern const u8 ath11k_tx_ring_mask[ATH11K_EXT_IRQ_GRP_NUM_MAX];
-extern const u8 ath11k_rx_ring_mask[ATH11K_EXT_IRQ_GRP_NUM_MAX];
-extern const u8 ath11k_rx_err_ring_mask[ATH11K_EXT_IRQ_GRP_NUM_MAX];
-extern const u8 ath11k_rx_wbm_rel_ring_mask[ATH11K_EXT_IRQ_GRP_NUM_MAX];
-extern const u8 ath11k_rxdma2host_ring_mask[ATH11K_EXT_IRQ_GRP_NUM_MAX];
-extern const u8 ath11k_host2rxdma_ring_mask[ATH11K_EXT_IRQ_GRP_NUM_MAX];
-extern const u8 rx_mon_status_ring_mask[ATH11K_EXT_IRQ_GRP_NUM_MAX];
 
 struct ath11k_ext_irq_grp {
 	struct ath11k_base *ab;
@@ -589,6 +580,13 @@ struct ath11k_board_data {
 	size_t len;
 };
 
+struct ath11k_bus_params {
+	bool mhi_support;
+	bool m3_fw_support;
+	bool fixed_bdf_addr;
+	bool fixed_mem_region;
+};
+
 /* IPQ8074 HW channel counters frequency value in hertz */
 #define IPQ8074_CC_FREQ_HERTZ 320000
 
@@ -651,6 +649,7 @@ struct ath11k_base {
 	unsigned long mem_len;
 
 	struct {
+		enum ath11k_bus bus;
 		const struct ath11k_hif_ops *ops;
 	} hif;
 
@@ -677,7 +676,10 @@ struct ath11k_base {
 	u32 ext_service_bitmap[WMI_SERVICE_EXT_BM_SIZE];
 	bool pdevs_macaddr_valid;
 	int bd_api;
+
 	struct ath11k_hw_params hw_params;
+	struct ath11k_bus_params bus_params;
+
 	const struct firmware *cal_file;
 
 	/* Below regd's are protected by ab->data_lock */
@@ -850,10 +852,12 @@ struct ath11k_peer *ath11k_peer_find_by_addr(struct ath11k_base *ab,
 					     const u8 *addr);
 struct ath11k_peer *ath11k_peer_find_by_id(struct ath11k_base *ab, int peer_id);
 int ath11k_core_qmi_firmware_ready(struct ath11k_base *ab);
+int ath11k_core_pre_init(struct ath11k_base *ab);
 int ath11k_core_init(struct ath11k_base *ath11k);
 void ath11k_core_deinit(struct ath11k_base *ath11k);
 struct ath11k_base *ath11k_core_alloc(struct device *dev, size_t priv_size,
-				      enum ath11k_bus bus);
+				      enum ath11k_bus bus,
+				      const struct ath11k_bus_params *bus_params);
 void ath11k_core_free(struct ath11k_base *ath11k);
 int ath11k_core_fetch_bdf(struct ath11k_base *ath11k,
 			  struct ath11k_board_data *bd);
@@ -902,6 +906,18 @@ static inline void ath11k_core_create_firmware_path(struct ath11k_base *ab,
 {
 	snprintf(buf, buf_len, "%s/%s/%s", ATH11K_FW_DIR,
 		 ab->hw_params.fw.dir, filename);
+}
+
+static inline const char *ath11k_bus_str(enum ath11k_bus bus)
+{
+	switch (bus) {
+	case ATH11K_BUS_PCI:
+		return "pci";
+	case ATH11K_BUS_AHB:
+		return "ahb";
+	}
+
+	return "unknown";
 }
 
 #endif /* _CORE_H_ */
