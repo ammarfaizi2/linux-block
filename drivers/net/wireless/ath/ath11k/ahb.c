@@ -384,10 +384,10 @@ static void ath11k_ahb_kill_tasklets(struct ath11k_base *ab)
 {
 	int i;
 
-	for (i = 0; i < CE_COUNT; i++) {
+	for (i = 0; i < ab->hw_params.ce_count; i++) {
 		struct ath11k_ce_pipe *ce_pipe = &ab->ce.ce_pipe[i];
 
-		if (ath11k_ce_get_attr_flags(i) & CE_ATTR_DIS_INTR)
+		if (ath11k_ce_get_attr_flags(ab, i) & CE_ATTR_DIS_INTR)
 			continue;
 
 		tasklet_kill(&ce_pipe->intr_tq);
@@ -475,8 +475,8 @@ static void ath11k_ahb_sync_ce_irqs(struct ath11k_base *ab)
 	int i;
 	int irq_idx;
 
-	for (i = 0; i < CE_COUNT; i++) {
-		if (ath11k_ce_get_attr_flags(i) & CE_ATTR_DIS_INTR)
+	for (i = 0; i < ab->hw_params.ce_count; i++) {
+		if (ath11k_ce_get_attr_flags(ab, i) & CE_ATTR_DIS_INTR)
 			continue;
 
 		irq_idx = ATH11K_IRQ_CE0_OFFSET + i;
@@ -503,8 +503,8 @@ static void ath11k_ahb_ce_irqs_enable(struct ath11k_base *ab)
 {
 	int i;
 
-	for (i = 0; i < CE_COUNT; i++) {
-		if (ath11k_ce_get_attr_flags(i) & CE_ATTR_DIS_INTR)
+	for (i = 0; i < ab->hw_params.ce_count; i++) {
+		if (ath11k_ce_get_attr_flags(ab, i) & CE_ATTR_DIS_INTR)
 			continue;
 		ath11k_ahb_ce_irq_enable(ab, i);
 	}
@@ -514,8 +514,8 @@ static void ath11k_ahb_ce_irqs_disable(struct ath11k_base *ab)
 {
 	int i;
 
-	for (i = 0; i < CE_COUNT; i++) {
-		if (ath11k_ce_get_attr_flags(i) & CE_ATTR_DIS_INTR)
+	for (i = 0; i < ab->hw_params.ce_count; i++) {
+		if (ath11k_ce_get_attr_flags(ab, i) & CE_ATTR_DIS_INTR)
 			continue;
 		ath11k_ahb_ce_irq_disable(ab, i);
 	}
@@ -601,8 +601,8 @@ static void ath11k_ahb_free_irq(struct ath11k_base *ab)
 	int irq_idx;
 	int i;
 
-	for (i = 0; i < CE_COUNT; i++) {
-		if (ath11k_ce_get_attr_flags(i) & CE_ATTR_DIS_INTR)
+	for (i = 0; i < ab->hw_params.ce_count; i++) {
+		if (ath11k_ce_get_attr_flags(ab, i) & CE_ATTR_DIS_INTR)
 			continue;
 		irq_idx = ATH11K_IRQ_CE0_OFFSET + i;
 		free_irq(ab->irq_num[irq_idx], &ab->ce.ce_pipe[i]);
@@ -756,10 +756,10 @@ static int ath11k_ahb_config_irq(struct ath11k_base *ab)
 	int ret;
 
 	/* Configure CE irqs */
-	for (i = 0; i < CE_COUNT; i++) {
+	for (i = 0; i < ab->hw_params.ce_count; i++) {
 		struct ath11k_ce_pipe *ce_pipe = &ab->ce.ce_pipe[i];
 
-		if (ath11k_ce_get_attr_flags(i) & CE_ATTR_DIS_INTR)
+		if (ath11k_ce_get_attr_flags(ab, i) & CE_ATTR_DIS_INTR)
 			continue;
 
 		irq_idx = ATH11K_IRQ_CE0_OFFSET + i;

@@ -217,6 +217,7 @@ struct ath11k_vif {
 	int txpower;
 	bool rsnie_present;
 	bool wpaie_present;
+	struct ieee80211_chanctx_conf chanctx;
 };
 
 struct ath11k_vif_iter {
@@ -545,6 +546,7 @@ struct ath11k {
 };
 
 struct ath11k_band_cap {
+	u32 phy_id;
 	u32 max_bw_supported;
 	u32 ht_cap_info;
 	u32 he_cap_info[2];
@@ -898,6 +900,12 @@ static inline struct ath11k_skb_rxcb *ATH11K_SKB_RXCB(struct sk_buff *skb)
 static inline struct ath11k_vif *ath11k_vif_to_arvif(struct ieee80211_vif *vif)
 {
 	return (struct ath11k_vif *)vif->drv_priv;
+}
+
+static inline struct ath11k *ath11k_ab_to_ar(struct ath11k_base *ab,
+					     int mac_id)
+{
+	return ab->pdevs[ath11k_hw_mac_id_to_pdev_id(&ab->hw_params, mac_id)].ar;
 }
 
 static inline void ath11k_core_create_firmware_path(struct ath11k_base *ab,

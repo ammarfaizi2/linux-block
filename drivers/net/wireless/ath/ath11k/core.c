@@ -32,6 +32,17 @@ static const struct ath11k_hw_params ath11k_hw_params[] = {
 		.hw_ops = &ipq8074_ops,
 		.ring_mask = &ath11k_hw_ring_mask_ipq8074,
 		.internal_sleep_clock = false,
+		.regs = &ipq8074_regs,
+		.host_ce_config = ath11k_host_ce_config_ipq8074,
+		.ce_count = 12,
+		.single_pdev_only = false,
+		.needs_band_to_mac = true,
+		.rxdma1_enable = true,
+		.num_rxmda_per_pdev = 1,
+		.rx_mac_buf_ring = false,
+		.vdev_start_delay = false,
+		.htt_peer_map_v2 = true,
+		.tcl_0_only = false,
 	},
 	{
 		.name = "qca6390 hw2.0",
@@ -44,8 +55,19 @@ static const struct ath11k_hw_params ath11k_hw_params[] = {
 		.max_radios = 3,
 		.bdf_addr = 0x4B0C0000,
 		.hw_ops = &qca6390_ops,
-		.ring_mask = &ath11k_hw_ring_mask_ipq8074,
+		.ring_mask = &ath11k_hw_ring_mask_qca6390,
 		.internal_sleep_clock = true,
+		.regs = &qca6390_regs,
+		.host_ce_config = ath11k_host_ce_config_qca6390,
+		.ce_count = 9,
+		.single_pdev_only = true,
+		.needs_band_to_mac = false,
+		.rxdma1_enable = false,
+		.num_rxmda_per_pdev = 2,
+		.rx_mac_buf_ring = true,
+		.vdev_start_delay = true,
+		.htt_peer_map_v2 = false,
+		.tcl_0_only = true,
 	},
 };
 
@@ -707,7 +729,7 @@ static void ath11k_core_restart(struct work_struct *work)
 			break;
 		case ATH11K_STATE_RESTARTED:
 			ar->state = ATH11K_STATE_WEDGED;
-			/* fall through */
+			fallthrough;
 		case ATH11K_STATE_WEDGED:
 			ath11k_warn(ab,
 				    "device is wedged, will not restart radio %d\n", i);
