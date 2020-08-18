@@ -487,6 +487,7 @@ struct io_async_rw {
 	struct iovec			fast_iov[UIO_FASTIOV];
 	const struct iovec		*free_iovec;
 	struct iov_iter			iter;
+	size_t				bytes_done;
 };
 
 struct io_async_ctx {
@@ -2172,6 +2173,14 @@ static void kiocb_done(struct kiocb *kiocb, ssize_t ret)
 {
 	struct io_kiocb *req = container_of(kiocb, struct io_kiocb, rw.kiocb);
 
+	/* add previously done IO, if any */
+	if (req->io && req->io->rw.bytes_done > 0) {
+		if (ret < 0)
+			ret = req->io->rw.bytes_done;
+		else
+			ret += req->io->rw.bytes_done;
+	}
+
 	if (req->flags & REQ_F_CUR_POS)
 		req->file->f_pos = kiocb->ki_pos;
 	if (ret >= 0 && kiocb->ki_complete == io_complete_rw)
@@ -2519,6 +2528,7 @@ static void io_req_map_rw(struct io_kiocb *req, const struct iovec *iovec,
 
 	memcpy(&rw->iter, iter, sizeof(*iter));
 	rw->free_iovec = NULL;
+	rw->bytes_done = 0;
 	/* can only be fixed buffers, no need to do anything */
 	if (iter->type == ITER_BVEC)
 		return;
@@ -2555,9 +2565,9 @@ static int io_alloc_async_ctx(struct io_kiocb *req)
 
 static int io_setup_async_rw(struct io_kiocb *req, const struct iovec *iovec,
 			     const struct iovec *fast_iov,
-			     struct iov_iter *iter)
+			     struct iov_iter *iter, bool force)
 {
-	if (!io_op_defs[req->opcode].async_ctx)
+	if (!force && !io_op_defs[req->opcode].async_ctx)
 		return 0;
 	if (!req->io) {
 		if (__io_alloc_async_ctx(req))
@@ -2604,8 +2614,8 @@ static int io_read(struct io_kiocb *req, bool force_nonblock)
 	struct iovec inline_vecs[UIO_FASTIOV], *iovec = inline_vecs;
 	struct kiocb *kiocb = &req->rw.kiocb;
 	struct iov_iter __iter, *iter = &__iter;
+	ssize_t io_size, ret, ret2 = 0;
 	size_t iov_count;
-	ssize_t io_size, ret;
 
 	if (req->io)
 		iter = &req->io->rw.iter;
@@ -2620,6 +2630,7 @@ static int io_read(struct io_kiocb *req, bool force_nonblock)
 
 	req->result = 0;
 	io_size = ret;
+	ret = 0;
 	if (req->flags & REQ_F_LINK_HEAD)
 		req->result = io_size;
 
@@ -2633,8 +2644,6 @@ static int io_read(struct io_kiocb *req, bool force_nonblock)
 	iov_count = iov_iter_count(iter);
 	ret = rw_verify_area(READ, req->file, &kiocb->ki_pos, iov_count);
 	if (!ret) {
-		ssize_t ret2;
-
 		if (req->file->f_op->read_iter)
 			ret2 = call_read_iter(req->file, kiocb, iter);
 		else if (req->file->f_op->read)
@@ -2642,21 +2651,39 @@ static int io_read(struct io_kiocb *req, bool force_nonblock)
 		else
 			ret2 = -EINVAL;
 
-		/* Catch -EAGAIN return for forced non-blocking submission */
-		if (!force_nonblock || ret2 != -EAGAIN) {
-			kiocb_done(kiocb, ret2);
-		} else {
-copy_iov:
-			ret = io_setup_async_rw(req, iovec, inline_vecs, iter);
-			if (ret)
-				goto out_free;
-			/* any defer here is final, must blocking retry */
-			if (!(req->flags & REQ_F_NOWAIT) &&
-			    !file_can_poll(req->file))
-				req->flags |= REQ_F_MUST_PUNT;
-			return -EAGAIN;
+		if (!ret2) {
+			goto done;
+		} else if (ret2 == -EIOCBQUEUED) {
+			ret = 0;
+			goto out_free;
+		} else if (ret2 == -EAGAIN) {
+			ret2 = 0;
+			goto copy_iov;
+		} else if (ret2 < 0) {
+			ret = ret2;
+			goto out_free;
 		}
+
+		/* read it all, or we did blocking attempt. no retry. */
+		if (!iov_iter_count(iter) || !force_nonblock) {
+			ret = ret2;
+			goto done;
+		}
+
+copy_iov:
+		ret = io_setup_async_rw(req, iovec, inline_vecs, iter, true);
+		if (ret)
+			goto out_free;
+		req->io->rw.bytes_done += ret2;
+		/* any defer here is final, must blocking retry */
+		if (!(req->flags & REQ_F_NOWAIT) &&
+		    !file_can_poll(req->file))
+			req->flags |= REQ_F_MUST_PUNT;
+		return -EAGAIN;
 	}
+done:
+	kiocb_done(kiocb, ret);
+	ret = 0;
 out_free:
 	if (!(req->flags & REQ_F_NEED_CLEANUP))
 		kfree(iovec);
@@ -2774,7 +2801,7 @@ static int io_write(struct io_kiocb *req, bool force_nonblock)
 			kiocb_done(kiocb, ret2);
 		} else {
 copy_iov:
-			ret = io_setup_async_rw(req, iovec, inline_vecs, iter);
+			ret = io_setup_async_rw(req, iovec, inline_vecs, iter, false);
 			if (ret)
 				goto out_free;
 			/* any defer here is final, must blocking retry */
