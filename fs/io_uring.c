@@ -2657,6 +2657,10 @@ static int io_read(struct io_kiocb *req, bool force_nonblock)
 			ret = 0;
 			goto out_free;
 		} else if (ret2 == -EAGAIN) {
+			if (!force_nonblock) {
+				ret = ret2;
+				goto done;
+			}
 			ret2 = 0;
 			goto copy_iov;
 		} else if (ret2 < 0) {
@@ -2665,7 +2669,8 @@ static int io_read(struct io_kiocb *req, bool force_nonblock)
 		}
 
 		/* read it all, or we did blocking attempt. no retry. */
-		if (!iov_iter_count(iter) || !force_nonblock) {
+		if (!iov_iter_count(iter) || !force_nonblock ||
+		    (req->file->f_flags & O_NONBLOCK)) {
 			ret = ret2;
 			goto done;
 		}
