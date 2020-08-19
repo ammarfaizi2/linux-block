@@ -162,6 +162,7 @@ void topology_set_cpu_scale(unsigned int cpu, unsigned long capacity)
 }
 
 DEFINE_PER_CPU(unsigned long, thermal_pressure);
+EXPORT_PER_CPU_SYMBOL_GPL(thermal_pressure);
 
 /**
  * topology_update_thermal_pressure() - Update thermal pressure for CPUs
@@ -246,6 +247,8 @@ static int register_cpu_capacity_sysctl(void)
 subsys_initcall(register_cpu_capacity_sysctl);
 
 static int update_topology;
+bool topology_update_done;
+EXPORT_SYMBOL_GPL(topology_update_done);
 
 int topology_update_cpu_topology(void)
 {
@@ -260,6 +263,7 @@ static void update_topology_flags_workfn(struct work_struct *work)
 {
 	update_topology = 1;
 	rebuild_sched_domains();
+	topology_update_done = true;
 	trace_android_vh_update_topology_flags_workfn(NULL);
 	pr_debug("sched_domain hierarchy rebuilt, flags updated\n");
 	update_topology = 0;
