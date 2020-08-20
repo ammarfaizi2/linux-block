@@ -26,6 +26,7 @@
 #include <linux/syscore_ops.h>
 
 #include <asm/cpuidle.h>
+#include <trace/hooks/cpuidle_psci.h>
 
 #include "cpuidle-psci.h"
 #include "dt_idle_states.h"
@@ -68,8 +69,12 @@ static int __psci_enter_domain_idle_state(struct cpuidle_device *dev,
 	if (ret)
 		return -1;
 
+
 	/* Do runtime PM to manage a hierarchical CPU toplogy. */
 	ct_irq_enter_irqson();
+
+	trace_android_vh_cpuidle_psci_enter(dev, s2idle);
+
 	if (s2idle)
 		dev_pm_genpd_suspend(pd_dev);
 	else
@@ -87,6 +92,9 @@ static int __psci_enter_domain_idle_state(struct cpuidle_device *dev,
 		dev_pm_genpd_resume(pd_dev);
 	else
 		pm_runtime_get_sync(pd_dev);
+
+	trace_android_vh_cpuidle_psci_exit(dev, s2idle);
+
 	ct_irq_exit_irqson();
 
 	cpu_pm_exit();
