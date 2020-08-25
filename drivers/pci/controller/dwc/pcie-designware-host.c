@@ -507,6 +507,7 @@ void __iomem *dw_pcie_own_conf_map_bus(struct pci_bus *bus, unsigned int devfn, 
 
 	return pci->dbi_base + where;
 }
+EXPORT_SYMBOL_GPL(dw_pcie_own_conf_map_bus);
 
 static struct pci_ops dw_pcie_ops = {
 	.map_bus = dw_pcie_own_conf_map_bus,

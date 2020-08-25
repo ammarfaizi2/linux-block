@@ -381,6 +381,12 @@ static inline int dw_pcie_allocate_domains(struct pcie_port *pp)
 {
 	return 0;
 }
+static inline void __iomem *dw_pcie_own_conf_map_bus(struct pci_bus *bus,
+						     unsigned int devfn,
+						     int where)
+{
+	return NULL;
+}
 #endif
 
 #ifdef CONFIG_PCIE_DW_EP
