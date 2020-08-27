@@ -1063,7 +1063,12 @@ static inline void io_prep_async_work(struct io_kiocb *req,
 	const struct io_op_def *def = &io_op_defs[req->opcode];
 
 	if (req->flags & REQ_F_ISREG) {
-		if (def->hash_reg_file)
+		/*
+		 * Hash IOPOLL retries as well, as otherwise we're just
+		 * hammering on the device with tons of threads which is
+		 * counterproductive.
+		 */
+		if (def->hash_reg_file || (req->ctx->flags & IORING_SETUP_IOPOLL))
 			io_wq_hash_work(&req->work, file_inode(req->file));
 	} else {
 		if (def->unbound_nonreg_file)
@@ -2624,6 +2629,7 @@ static int io_read(struct io_kiocb *req, bool force_nonblock)
 	ret = io_import_iovec(READ, req, &iovec, iter, !force_nonblock);
 	if (ret < 0)
 		return ret;
+	iov_count = iov_iter_count(iter);
 
 	/* Ensure we clear previously set non-block flag */
 	if (!force_nonblock)
@@ -2642,7 +2648,6 @@ static int io_read(struct io_kiocb *req, bool force_nonblock)
 	if (force_nonblock && !io_file_supports_async(req->file, READ))
 		goto copy_iov;
 
-	iov_count = iov_iter_count(iter);
 	ret = rw_verify_area(READ, req->file, &kiocb->ki_pos, iov_count);
 	if (!ret) {
 		if (req->file->f_op->read_iter)
@@ -2658,7 +2663,7 @@ static int io_read(struct io_kiocb *req, bool force_nonblock)
 			ret = 0;
 			goto out_free;
 		} else if (ret2 == -EAGAIN) {
-			if (!force_nonblock) {
+			if (!force_nonblock && !(req->ctx->flags & IORING_SETUP_IOPOLL)) {
 				ret = ret2;
 				goto done;
 			}
@@ -2744,6 +2749,7 @@ static int io_write(struct io_kiocb *req, bool force_nonblock)
 	ret = io_import_iovec(WRITE, req, &iovec, iter, !force_nonblock);
 	if (ret < 0)
 		return ret;
+	iov_count = iov_iter_count(iter);
 
 	/* Ensure we clear previously set non-block flag */
 	if (!force_nonblock)
@@ -2766,7 +2772,6 @@ static int io_write(struct io_kiocb *req, bool force_nonblock)
 	    (req->flags & REQ_F_ISREG))
 		goto copy_iov;
 
-	iov_count = iov_iter_count(iter);
 	ret = rw_verify_area(WRITE, req->file, &kiocb->ki_pos, iov_count);
 	if (!ret) {
 		ssize_t ret2;
@@ -2806,11 +2811,13 @@ static int io_write(struct io_kiocb *req, bool force_nonblock)
 		if (ret2 == -EOPNOTSUPP && (kiocb->ki_flags & IOCB_NOWAIT))
 			ret2 = -EAGAIN;
 		if (!force_nonblock || ret2 != -EAGAIN) {
+			if ((req->ctx->flags & IORING_SETUP_IOPOLL) && ret2 == -EAGAIN)
+				goto copy_iov;
 			kiocb_done(kiocb, ret2);
 		} else {
+copy_iov:
 			/* some cases will consume bytes even on error returns */
 			iov_iter_revert(iter, iov_count - iov_iter_count(iter));
-copy_iov:
 			ret = io_setup_async_rw(req, iovec, inline_vecs, iter, false);
 			if (ret)
 				goto out_free;
