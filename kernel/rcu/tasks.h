@@ -591,8 +591,8 @@ void exit_tasks_rcu_finish(void) __releases(&tasks_rcu_exit_srcu)
 
 #else /* #ifdef CONFIG_TASKS_RCU */
 static inline void show_rcu_tasks_classic_gp_kthread(void) { }
-static inline void exit_tasks_rcu_start(void) { }
-static inline void exit_tasks_rcu_finish(void) { exit_tasks_rcu_finish_trace(current); }
+void exit_tasks_rcu_start(void) { }
+void exit_tasks_rcu_finish(void) { exit_tasks_rcu_finish_trace(current); }
 #endif /* #else #ifdef CONFIG_TASKS_RCU */
 
 #ifdef CONFIG_TASKS_RUDE_RCU
