@@ -269,9 +269,10 @@ __s64 btf__resolve_size(const struct btf *btf, __u32 type_id)
 		t = btf__type_by_id(btf, type_id);
 	}
 
-done:
 	if (size < 0)
 		return -EINVAL;
+
+done:
 	if (nelems && size > UINT32_MAX / nelems)
 		return -E2BIG;
 

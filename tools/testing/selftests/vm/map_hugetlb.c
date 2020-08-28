@@ -45,20 +45,20 @@ static void check_bytes(char *addr)
 	printf("First hex is %x\n", *((unsigned int *)addr));
 }
 
-static void write_bytes(char *addr, size_t length)
+static void write_bytes(char *addr)
 {
 	unsigned long i;
 
-	for (i = 0; i < length; i++)
+	for (i = 0; i < LENGTH; i++)
 		*(addr + i) = (char)i;
 }
 
-static int read_bytes(char *addr, size_t length)
+static int read_bytes(char *addr)
 {
 	unsigned long i;
 
 	check_bytes(addr);
-	for (i = 0; i < length; i++)
+	for (i = 0; i < LENGTH; i++)
 		if (*(addr + i) != (char)i) {
 			printf("Mismatch at %lu\n", i);
 			return 1;
@@ -96,11 +96,11 @@ int main(int argc, char **argv)
 
 	printf("Returned address is %p\n", addr);
 	check_bytes(addr);
-	write_bytes(addr, length);
-	ret = read_bytes(addr, length);
+	write_bytes(addr);
+	ret = read_bytes(addr);
 
 	/* munmap() length of MAP_HUGETLB memory must be hugepage aligned */
-	if (munmap(addr, length)) {
+	if (munmap(addr, LENGTH)) {
 		perror("munmap");
 		exit(1);
 	}

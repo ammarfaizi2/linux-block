@@ -62,10 +62,6 @@ struct padded_a_lot {
  *	long: 64;
  *	long: 64;
  *	int b;
- *	long: 32;
- *	long: 64;
- *	long: 64;
- *	long: 64;
  *};
  *
  */
@@ -99,6 +95,7 @@ struct zone_padding {
 struct zone {
 	int a;
 	short b;
+	short: 16;
 	struct zone_padding __pad__;
 };
 

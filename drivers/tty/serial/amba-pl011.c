@@ -813,8 +813,10 @@ __acquires(&uap->port.lock)
 	if (!uap->using_tx_dma)
 		return;
 
-	dmaengine_terminate_async(uap->dmatx.chan);
-
+	/* Avoid deadlock with the DMA engine callback */
+	spin_unlock(&uap->port.lock);
+	dmaengine_terminate_all(uap->dmatx.chan);
+	spin_lock(&uap->port.lock);
 	if (uap->dmatx.queued) {
 		dma_unmap_sg(uap->dmatx.chan->device->dev, &uap->dmatx.sg, 1,
 			     DMA_TO_DEVICE);
@@ -2585,7 +2587,6 @@ static int pl011_setup_port(struct device *dev, struct uart_amba_port *uap,
 	uap->port.fifosize = uap->fifosize;
 	uap->port.flags = UPF_BOOT_AUTOCONF;
 	uap->port.line = index;
-	spin_lock_init(&uap->port.lock);
 
 	amba_ports[index] = uap;
 

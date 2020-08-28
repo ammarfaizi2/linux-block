@@ -23,14 +23,6 @@
 #include <asm/page.h>
 
 /*
- * We assign some test results to these globals to make sure the tests
- * are not eliminated as dead code.
- */
-
-int kasan_int_result;
-void *kasan_ptr_result;
-
-/*
  * Note: test functions are marked noinline so that their names appear in
  * reports.
  */
@@ -165,7 +157,6 @@ static noinline void __init kmalloc_oob_krealloc_more(void)
 	if (!ptr1 || !ptr2) {
 		pr_err("Allocation failed\n");
 		kfree(ptr1);
-		kfree(ptr2);
 		return;
 	}
 
@@ -611,7 +602,7 @@ static noinline void __init kasan_memchr(void)
 	if (!ptr)
 		return;
 
-	kasan_ptr_result = memchr(ptr, '1', size + 1);
+	memchr(ptr, '1', size + 1);
 	kfree(ptr);
 }
 
@@ -627,7 +618,7 @@ static noinline void __init kasan_memcmp(void)
 		return;
 
 	memset(arr, 0, sizeof(arr));
-	kasan_int_result = memcmp(ptr, arr, size + 1);
+	memcmp(ptr, arr, size+1);
 	kfree(ptr);
 }
 
@@ -650,22 +641,22 @@ static noinline void __init kasan_strings(void)
 	 * will likely point to zeroed byte.
 	 */
 	ptr += 16;
-	kasan_ptr_result = strchr(ptr, '1');
+	strchr(ptr, '1');
 
 	pr_info("use-after-free in strrchr\n");
-	kasan_ptr_result = strrchr(ptr, '1');
+	strrchr(ptr, '1');
 
 	pr_info("use-after-free in strcmp\n");
-	kasan_int_result = strcmp(ptr, "2");
+	strcmp(ptr, "2");
 
 	pr_info("use-after-free in strncmp\n");
-	kasan_int_result = strncmp(ptr, "2", 1);
+	strncmp(ptr, "2", 1);
 
 	pr_info("use-after-free in strlen\n");
-	kasan_int_result = strlen(ptr);
+	strlen(ptr);
 
 	pr_info("use-after-free in strnlen\n");
-	kasan_int_result = strnlen(ptr, 1);
+	strnlen(ptr, 1);
 }
 
 static noinline void __init kasan_bitops(void)
@@ -732,12 +723,11 @@ static noinline void __init kasan_bitops(void)
 	__test_and_change_bit(BITS_PER_LONG + BITS_PER_BYTE, bits);
 
 	pr_info("out-of-bounds in test_bit\n");
-	kasan_int_result = test_bit(BITS_PER_LONG + BITS_PER_BYTE, bits);
+	(void)test_bit(BITS_PER_LONG + BITS_PER_BYTE, bits);
 
 #if defined(clear_bit_unlock_is_negative_byte)
 	pr_info("out-of-bounds in clear_bit_unlock_is_negative_byte\n");
-	kasan_int_result = clear_bit_unlock_is_negative_byte(BITS_PER_LONG +
-		BITS_PER_BYTE, bits);
+	clear_bit_unlock_is_negative_byte(BITS_PER_LONG + BITS_PER_BYTE, bits);
 #endif
 	kfree(bits);
 }

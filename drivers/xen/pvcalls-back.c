@@ -1087,8 +1087,7 @@ static void set_backend_state(struct xenbus_device *dev,
 		case XenbusStateInitialised:
 			switch (state) {
 			case XenbusStateConnected:
-				if (backend_connect(dev))
-					return;
+				backend_connect(dev);
 				xenbus_switch_state(dev, XenbusStateConnected);
 				break;
 			case XenbusStateClosing:

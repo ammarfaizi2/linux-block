@@ -103,7 +103,8 @@ static void write_to_ucd_unit(struct nitrox_device *ndev, u32 ucode_size,
 	offset = UCD_UCODE_LOAD_BLOCK_NUM;
 	nitrox_write_csr(ndev, offset, block_num);
 
-	code_size = roundup(ucode_size, 16);
+	code_size = ucode_size;
+	code_size = roundup(code_size, 8);
 	while (code_size) {
 		data = ucode_data[i];
 		/* write 8 bytes at a time */
@@ -219,11 +220,11 @@ static int nitrox_load_fw(struct nitrox_device *ndev)
 
 	/* write block number and firmware length
 	 * bit:<2:0> block number
-	 * bit:3 is set AE uses 32KB microcode
-	 * bit:3 is clear AE uses 64KB microcode
+	 * bit:3 is set SE uses 32KB microcode
+	 * bit:3 is clear SE uses 64KB microcode
 	 */
 	core_2_eid_val.value = 0ULL;
-	core_2_eid_val.ucode_blk = 2;
+	core_2_eid_val.ucode_blk = 0;
 	if (ucode_size <= CNN55XX_UCD_BLOCK_SIZE)
 		core_2_eid_val.ucode_len = 1;
 	else
@@ -278,7 +279,7 @@ static void nitrox_remove_from_devlist(struct nitrox_device *ndev)
 
 struct nitrox_device *nitrox_get_first_device(void)
 {
-	struct nitrox_device *ndev;
+	struct nitrox_device *ndev = NULL;
 
 	mutex_lock(&devlist_lock);
 	list_for_each_entry(ndev, &ndevlist, list) {
@@ -286,7 +287,7 @@ struct nitrox_device *nitrox_get_first_device(void)
 			break;
 	}
 	mutex_unlock(&devlist_lock);
-	if (&ndev->list == &ndevlist)
+	if (!ndev)
 		return NULL;
 
 	refcount_inc(&ndev->refcnt);

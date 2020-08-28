@@ -80,7 +80,7 @@ static struct sk_buff *stmmac_test_get_udp_skb(struct stmmac_priv *priv,
 	if (attr->max_size && (attr->max_size > size))
 		size = attr->max_size;
 
-	skb = netdev_alloc_skb(priv->dev, size);
+	skb = netdev_alloc_skb_ip_align(priv->dev, size);
 	if (!skb)
 		return NULL;
 
@@ -244,8 +244,6 @@ static int stmmac_test_loopback_validate(struct sk_buff *skb,
 					 struct net_device *orig_ndev)
 {
 	struct stmmac_test_priv *tpriv = pt->af_packet_priv;
-	unsigned char *src = tpriv->packet->src;
-	unsigned char *dst = tpriv->packet->dst;
 	struct stmmachdr *shdr;
 	struct ethhdr *ehdr;
 	struct udphdr *uhdr;
@@ -262,15 +260,15 @@ static int stmmac_test_loopback_validate(struct sk_buff *skb,
 		goto out;
 
 	ehdr = (struct ethhdr *)skb_mac_header(skb);
-	if (dst) {
-		if (!ether_addr_equal_unaligned(ehdr->h_dest, dst))
+	if (tpriv->packet->dst) {
+		if (!ether_addr_equal(ehdr->h_dest, tpriv->packet->dst))
 			goto out;
 	}
 	if (tpriv->packet->sarc) {
-		if (!ether_addr_equal_unaligned(ehdr->h_source, ehdr->h_dest))
+		if (!ether_addr_equal(ehdr->h_source, ehdr->h_dest))
 			goto out;
-	} else if (src) {
-		if (!ether_addr_equal_unaligned(ehdr->h_source, src))
+	} else if (tpriv->packet->src) {
+		if (!ether_addr_equal(ehdr->h_source, tpriv->packet->src))
 			goto out;
 	}
 
@@ -626,8 +624,6 @@ static int stmmac_test_mcfilt(struct stmmac_priv *priv)
 		return -EOPNOTSUPP;
 	if (netdev_uc_count(priv->dev) >= priv->hw->unicast_filter_entries)
 		return -EOPNOTSUPP;
-	if (netdev_mc_count(priv->dev) >= priv->hw->multicast_filter_bins)
-		return -EOPNOTSUPP;
 
 	while (--tries) {
 		/* We only need to check the mc_addr for collisions */
@@ -669,8 +665,6 @@ static int stmmac_test_ucfilt(struct stmmac_priv *priv)
 	int ret, tries = 256;
 
 	if (stmmac_filter_check(priv))
-		return -EOPNOTSUPP;
-	if (netdev_uc_count(priv->dev) >= priv->hw->unicast_filter_entries)
 		return -EOPNOTSUPP;
 	if (netdev_mc_count(priv->dev) >= priv->hw->multicast_filter_bins)
 		return -EOPNOTSUPP;
@@ -716,7 +710,7 @@ static int stmmac_test_flowctrl_validate(struct sk_buff *skb,
 	struct ethhdr *ehdr;
 
 	ehdr = (struct ethhdr *)skb_mac_header(skb);
-	if (!ether_addr_equal_unaligned(ehdr->h_source, orig_ndev->dev_addr))
+	if (!ether_addr_equal(ehdr->h_source, orig_ndev->dev_addr))
 		goto out;
 	if (ehdr->h_proto != htons(ETH_P_PAUSE))
 		goto out;
@@ -853,16 +847,12 @@ static int stmmac_test_vlan_validate(struct sk_buff *skb,
 	if (tpriv->vlan_id) {
 		if (skb->vlan_proto != htons(proto))
 			goto out;
-		if (skb->vlan_tci != tpriv->vlan_id) {
-			/* Means filter did not work. */
-			tpriv->ok = false;
-			complete(&tpriv->comp);
+		if (skb->vlan_tci != tpriv->vlan_id)
 			goto out;
-		}
 	}
 
 	ehdr = (struct ethhdr *)skb_mac_header(skb);
-	if (!ether_addr_equal_unaligned(ehdr->h_dest, tpriv->packet->dst))
+	if (!ether_addr_equal(ehdr->h_dest, tpriv->packet->dst))
 		goto out;
 
 	ihdr = ip_hdr(skb);
@@ -1297,19 +1287,16 @@ static int __stmmac_test_l3filt(struct stmmac_priv *priv, u32 dst, u32 src,
 	struct stmmac_packet_attrs attr = { };
 	struct flow_dissector *dissector;
 	struct flow_cls_offload *cls;
-	int ret, old_enable = 0;
 	struct flow_rule *rule;
+	int ret;
 
 	if (!tc_can_offload(priv->dev))
 		return -EOPNOTSUPP;
 	if (!priv->dma_cap.l3l4fnum)
 		return -EOPNOTSUPP;
-	if (priv->rss.enable) {
-		old_enable = priv->rss.enable;
-		priv->rss.enable = false;
+	if (priv->rss.enable)
 		stmmac_rss_configure(priv, priv->hw, NULL,
 				     priv->plat->rx_queues_to_use);
-	}
 
 	dissector = kzalloc(sizeof(*dissector), GFP_KERNEL);
 	if (!dissector) {
@@ -1376,8 +1363,7 @@ cleanup_cls:
 cleanup_dissector:
 	kfree(dissector);
 cleanup_rss:
-	if (old_enable) {
-		priv->rss.enable = old_enable;
+	if (priv->rss.enable) {
 		stmmac_rss_configure(priv, priv->hw, &priv->rss,
 				     priv->plat->rx_queues_to_use);
 	}
@@ -1422,19 +1408,16 @@ static int __stmmac_test_l4filt(struct stmmac_priv *priv, u32 dst, u32 src,
 	struct stmmac_packet_attrs attr = { };
 	struct flow_dissector *dissector;
 	struct flow_cls_offload *cls;
-	int ret, old_enable = 0;
 	struct flow_rule *rule;
+	int ret;
 
 	if (!tc_can_offload(priv->dev))
 		return -EOPNOTSUPP;
 	if (!priv->dma_cap.l3l4fnum)
 		return -EOPNOTSUPP;
-	if (priv->rss.enable) {
-		old_enable = priv->rss.enable;
-		priv->rss.enable = false;
+	if (priv->rss.enable)
 		stmmac_rss_configure(priv, priv->hw, NULL,
 				     priv->plat->rx_queues_to_use);
-	}
 
 	dissector = kzalloc(sizeof(*dissector), GFP_KERNEL);
 	if (!dissector) {
@@ -1506,8 +1489,7 @@ cleanup_cls:
 cleanup_dissector:
 	kfree(dissector);
 cleanup_rss:
-	if (old_enable) {
-		priv->rss.enable = old_enable;
+	if (priv->rss.enable) {
 		stmmac_rss_configure(priv, priv->hw, &priv->rss,
 				     priv->plat->rx_queues_to_use);
 	}
@@ -1560,7 +1542,7 @@ static int stmmac_test_arp_validate(struct sk_buff *skb,
 	struct arphdr *ahdr;
 
 	ehdr = (struct ethhdr *)skb_mac_header(skb);
-	if (!ether_addr_equal_unaligned(ehdr->h_dest, tpriv->packet->src))
+	if (!ether_addr_equal(ehdr->h_dest, tpriv->packet->src))
 		goto out;
 
 	ahdr = arp_hdr(skb);

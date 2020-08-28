@@ -106,10 +106,8 @@ static int ufs_bsg_request(struct bsg_job *job)
 		desc_op = bsg_request->upiu_req.qr.opcode;
 		ret = ufs_bsg_alloc_desc_buffer(hba, job, &desc_buff,
 						&desc_len, desc_op);
-		if (ret) {
-			pm_runtime_put_sync(hba->dev);
+		if (ret)
 			goto out;
-		}
 
 		/* fall through */
 	case UPIU_TRANSACTION_NOP_OUT:
@@ -204,7 +202,7 @@ int ufs_bsg_probe(struct ufs_hba *hba)
 	bsg_dev->parent = get_device(parent);
 	bsg_dev->release = ufs_bsg_node_release;
 
-	dev_set_name(bsg_dev, "ufs-bsg%u", shost->host_no);
+	dev_set_name(bsg_dev, "ufs-bsg");
 
 	ret = device_add(bsg_dev);
 	if (ret)

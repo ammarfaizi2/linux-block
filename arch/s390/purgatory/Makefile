@@ -15,10 +15,8 @@ CFLAGS_sha256.o := -D__DISABLE_EXPORTS
 $(obj)/mem.o: $(srctree)/arch/s390/lib/mem.S FORCE
 	$(call if_changed_rule,as_o_S)
 
-KCOV_INSTRUMENT := n
-GCOV_PROFILE := n
-UBSAN_SANITIZE := n
-KASAN_SANITIZE := n
+$(obj)/string.o: $(srctree)/arch/s390/lib/string.c FORCE
+	$(call if_changed_rule,cc_o_c)
 
 KBUILD_CFLAGS := -fno-strict-aliasing -Wall -Wstrict-prototypes
 KBUILD_CFLAGS += -Wno-pointer-sign -Wno-sign-compare

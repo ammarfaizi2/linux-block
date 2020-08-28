@@ -32,10 +32,17 @@ static void afs_dec_servers_outstanding(struct afs_net *net)
 struct afs_server *afs_find_server(struct afs_net *net,
 				   const struct sockaddr_rxrpc *srx)
 {
+	const struct sockaddr_in6 *a = &srx->transport.sin6, *b;
 	const struct afs_addr_list *alist;
 	struct afs_server *server = NULL;
 	unsigned int i;
+	bool ipv6 = true;
 	int seq = 0, diff;
+
+	if (srx->transport.sin6.sin6_addr.s6_addr32[0] == 0 ||
+	    srx->transport.sin6.sin6_addr.s6_addr32[1] == 0 ||
+	    srx->transport.sin6.sin6_addr.s6_addr32[2] == htonl(0xffff))
+		ipv6 = false;
 
 	rcu_read_lock();
 
@@ -45,8 +52,7 @@ struct afs_server *afs_find_server(struct afs_net *net,
 		server = NULL;
 		read_seqbegin_or_lock(&net->fs_addr_lock, &seq);
 
-		if (srx->transport.family == AF_INET6) {
-			const struct sockaddr_in6 *a = &srx->transport.sin6, *b;
+		if (ipv6) {
 			hlist_for_each_entry_rcu(server, &net->fs_addresses6, addr6_link) {
 				alist = rcu_dereference(server->addresses);
 				for (i = alist->nr_ipv4; i < alist->nr_addrs; i++) {
@@ -62,16 +68,15 @@ struct afs_server *afs_find_server(struct afs_net *net,
 				}
 			}
 		} else {
-			const struct sockaddr_in *a = &srx->transport.sin, *b;
 			hlist_for_each_entry_rcu(server, &net->fs_addresses4, addr4_link) {
 				alist = rcu_dereference(server->addresses);
 				for (i = 0; i < alist->nr_ipv4; i++) {
-					b = &alist->addrs[i].transport.sin;
-					diff = ((u16 __force)a->sin_port -
-						(u16 __force)b->sin_port);
+					b = &alist->addrs[i].transport.sin6;
+					diff = ((u16 __force)a->sin6_port -
+						(u16 __force)b->sin6_port);
 					if (diff == 0)
-						diff = ((u32 __force)a->sin_addr.s_addr -
-							(u32 __force)b->sin_addr.s_addr);
+						diff = ((u32 __force)a->sin6_addr.s6_addr32[3] -
+							(u32 __force)b->sin6_addr.s6_addr32[3]);
 					if (diff == 0)
 						goto found;
 				}
@@ -595,9 +600,12 @@ retry:
 	}
 
 	ret = wait_on_bit(&server->flags, AFS_SERVER_FL_UPDATING,
-			  (fc->flags & AFS_FS_CURSOR_INTR) ?
-			  TASK_INTERRUPTIBLE : TASK_UNINTERRUPTIBLE);
+			  TASK_INTERRUPTIBLE);
 	if (ret == -ERESTARTSYS) {
+		if (!(fc->flags & AFS_FS_CURSOR_INTR) && server->addresses) {
+			_leave(" = t [intr]");
+			return true;
+		}
 		fc->error = ret;
 		_leave(" = f [intr]");
 		return false;

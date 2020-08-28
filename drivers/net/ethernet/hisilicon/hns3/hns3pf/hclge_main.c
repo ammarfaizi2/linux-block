@@ -2417,12 +2417,10 @@ static int hclge_cfg_mac_speed_dup_hw(struct hclge_dev *hdev, int speed,
 
 int hclge_cfg_mac_speed_dup(struct hclge_dev *hdev, int speed, u8 duplex)
 {
-	struct hclge_mac *mac = &hdev->hw.mac;
 	int ret;
 
 	duplex = hclge_check_speed_dup(duplex, speed);
-	if (!mac->support_autoneg && mac->speed == speed &&
-	    mac->duplex == duplex)
+	if (hdev->hw.mac.speed == speed && hdev->hw.mac.duplex == duplex)
 		return 0;
 
 	ret = hclge_cfg_mac_speed_dup_hw(hdev, speed, duplex);
@@ -5627,9 +5625,9 @@ static int hclge_add_fd_entry(struct hnae3_handle *handle,
 	/* to avoid rule conflict, when user configure rule by ethtool,
 	 * we need to clear all arfs rules
 	 */
-	spin_lock_bh(&hdev->fd_rule_lock);
 	hclge_clear_arfs_rules(handle);
 
+	spin_lock_bh(&hdev->fd_rule_lock);
 	ret = hclge_fd_config_rule(hdev, rule);
 
 	spin_unlock_bh(&hdev->fd_rule_lock);
@@ -5672,7 +5670,6 @@ static int hclge_del_fd_entry(struct hnae3_handle *handle,
 	return ret;
 }
 
-/* make sure being called after lock up with fd_rule_lock */
 static void hclge_del_all_fd_entries(struct hnae3_handle *handle,
 				     bool clear_list)
 {
@@ -5685,6 +5682,7 @@ static void hclge_del_all_fd_entries(struct hnae3_handle *handle,
 	if (!hnae3_dev_fd_supported(hdev))
 		return;
 
+	spin_lock_bh(&hdev->fd_rule_lock);
 	for_each_set_bit(location, hdev->fd_bmap,
 			 hdev->fd_cfg.rule_num[HCLGE_FD_STAGE_1])
 		hclge_fd_tcam_config(hdev, HCLGE_FD_STAGE_1, true, location,
@@ -5701,6 +5699,8 @@ static void hclge_del_all_fd_entries(struct hnae3_handle *handle,
 		bitmap_zero(hdev->fd_bmap,
 			    hdev->fd_cfg.rule_num[HCLGE_FD_STAGE_1]);
 	}
+
+	spin_unlock_bh(&hdev->fd_rule_lock);
 }
 
 static int hclge_restore_fd_entries(struct hnae3_handle *handle)
@@ -6003,9 +6003,6 @@ static int hclge_get_all_rules(struct hnae3_handle *handle,
 static void hclge_fd_get_flow_tuples(const struct flow_keys *fkeys,
 				     struct hclge_fd_rule_tuples *tuples)
 {
-#define flow_ip6_src fkeys->addrs.v6addrs.src.in6_u.u6_addr32
-#define flow_ip6_dst fkeys->addrs.v6addrs.dst.in6_u.u6_addr32
-
 	tuples->ether_proto = be16_to_cpu(fkeys->basic.n_proto);
 	tuples->ip_proto = fkeys->basic.ip_proto;
 	tuples->dst_port = be16_to_cpu(fkeys->ports.dst);
@@ -6014,12 +6011,12 @@ static void hclge_fd_get_flow_tuples(const struct flow_keys *fkeys,
 		tuples->src_ip[3] = be32_to_cpu(fkeys->addrs.v4addrs.src);
 		tuples->dst_ip[3] = be32_to_cpu(fkeys->addrs.v4addrs.dst);
 	} else {
-		int i;
-
-		for (i = 0; i < IPV6_SIZE; i++) {
-			tuples->src_ip[i] = be32_to_cpu(flow_ip6_src[i]);
-			tuples->dst_ip[i] = be32_to_cpu(flow_ip6_dst[i]);
-		}
+		memcpy(tuples->src_ip,
+		       fkeys->addrs.v6addrs.src.in6_u.u6_addr32,
+		       sizeof(tuples->src_ip));
+		memcpy(tuples->dst_ip,
+		       fkeys->addrs.v6addrs.dst.in6_u.u6_addr32,
+		       sizeof(tuples->dst_ip));
 	}
 }
 
@@ -6067,7 +6064,7 @@ static int hclge_add_fd_entry_by_arfs(struct hnae3_handle *handle, u16 queue_id,
 				      u16 flow_id, struct flow_keys *fkeys)
 {
 	struct hclge_vport *vport = hclge_get_vport(handle);
-	struct hclge_fd_rule_tuples new_tuples = {};
+	struct hclge_fd_rule_tuples new_tuples;
 	struct hclge_dev *hdev = vport->back;
 	struct hclge_fd_rule *rule;
 	u16 tmp_queue_id;
@@ -6077,17 +6074,19 @@ static int hclge_add_fd_entry_by_arfs(struct hnae3_handle *handle, u16 queue_id,
 	if (!hnae3_dev_fd_supported(hdev))
 		return -EOPNOTSUPP;
 
+	memset(&new_tuples, 0, sizeof(new_tuples));
+	hclge_fd_get_flow_tuples(fkeys, &new_tuples);
+
+	spin_lock_bh(&hdev->fd_rule_lock);
+
 	/* when there is already fd rule existed add by user,
 	 * arfs should not work
 	 */
-	spin_lock_bh(&hdev->fd_rule_lock);
 	if (hdev->fd_active_type == HCLGE_FD_EP_ACTIVE) {
 		spin_unlock_bh(&hdev->fd_rule_lock);
 
 		return -EOPNOTSUPP;
 	}
-
-	hclge_fd_get_flow_tuples(fkeys, &new_tuples);
 
 	/* check is there flow director filter existed for this flow,
 	 * if not, create a new filter for it;
@@ -6173,7 +6172,6 @@ static void hclge_rfs_filter_expire(struct hclge_dev *hdev)
 #endif
 }
 
-/* make sure being called after lock up with fd_rule_lock */
 static void hclge_clear_arfs_rules(struct hnae3_handle *handle)
 {
 #ifdef CONFIG_RFS_ACCEL
@@ -6218,14 +6216,10 @@ static void hclge_enable_fd(struct hnae3_handle *handle, bool enable)
 
 	hdev->fd_en = enable;
 	clear = hdev->fd_active_type == HCLGE_FD_ARFS_ACTIVE;
-
-	if (!enable) {
-		spin_lock_bh(&hdev->fd_rule_lock);
+	if (!enable)
 		hclge_del_all_fd_entries(handle, clear);
-		spin_unlock_bh(&hdev->fd_rule_lock);
-	} else {
+	else
 		hclge_restore_fd_entries(handle);
-	}
 }
 
 static void hclge_cfg_mac_mode(struct hclge_dev *hdev, bool enable)
@@ -6679,9 +6673,8 @@ static void hclge_ae_stop(struct hnae3_handle *handle)
 	int i;
 
 	set_bit(HCLGE_STATE_DOWN, &hdev->state);
-	spin_lock_bh(&hdev->fd_rule_lock);
+
 	hclge_clear_arfs_rules(handle);
-	spin_unlock_bh(&hdev->fd_rule_lock);
 
 	/* If it is not PF reset, the firmware will disable the MAC,
 	 * so it only need to stop phy here.
@@ -9444,21 +9437,11 @@ static int hclge_reset_ae_dev(struct hnae3_ae_dev *ae_dev)
 		return ret;
 	}
 
-	ret = init_mgr_tbl(hdev);
-	if (ret) {
-		dev_err(&pdev->dev,
-			"failed to reinit manager table, ret = %d\n", ret);
-		return ret;
-	}
-
 	ret = hclge_init_fd_config(hdev);
 	if (ret) {
 		dev_err(&pdev->dev, "fd table init fail, ret=%d\n", ret);
 		return ret;
 	}
-
-	/* Log and clear the hw errors those already occurred */
-	hclge_handle_all_hns_hw_errors(ae_dev);
 
 	/* Re-enable the hw error interrupts because
 	 * the interrupts get disabled on global reset.

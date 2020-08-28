@@ -14,7 +14,7 @@
 #include <linux/of.h>
 #include <linux/phy.h>
 
-#ifdef CONFIG_CAVIUM_OCTEON_SOC
+#ifdef CONFIG_MIPS
 
 #include <asm/octeon/octeon.h>
 

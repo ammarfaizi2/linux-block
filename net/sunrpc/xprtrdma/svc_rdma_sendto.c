@@ -306,17 +306,15 @@ int svc_rdma_send(struct svcxprt_rdma *rdma, struct ib_send_wr *wr)
 		}
 
 		svc_xprt_get(&rdma->sc_xprt);
-		trace_svcrdma_post_send(wr);
 		ret = ib_post_send(rdma->sc_qp, wr, NULL);
-		if (ret)
-			break;
-		return 0;
+		trace_svcrdma_post_send(wr, ret);
+		if (ret) {
+			set_bit(XPT_CLOSE, &rdma->sc_xprt.xpt_flags);
+			svc_xprt_put(&rdma->sc_xprt);
+			wake_up(&rdma->sc_send_wait);
+		}
+		break;
 	}
-
-	trace_svcrdma_sq_post_err(rdma, ret);
-	set_bit(XPT_CLOSE, &rdma->sc_xprt.xpt_flags);
-	svc_xprt_put(&rdma->sc_xprt);
-	wake_up(&rdma->sc_send_wait);
 	return ret;
 }
 
@@ -856,18 +854,7 @@ int svc_rdma_sendto(struct svc_rqst *rqstp)
 
 	if (wr_lst) {
 		/* XXX: Presume the client sent only one Write chunk */
-		unsigned long offset;
-		unsigned int length;
-
-		if (rctxt->rc_read_payload_length) {
-			offset = rctxt->rc_read_payload_offset;
-			length = rctxt->rc_read_payload_length;
-		} else {
-			offset = xdr->head[0].iov_len;
-			length = xdr->page_len;
-		}
-		ret = svc_rdma_send_write_chunk(rdma, wr_lst, xdr, offset,
-						length);
+		ret = svc_rdma_send_write_chunk(rdma, wr_lst, xdr);
 		if (ret < 0)
 			goto err2;
 		svc_rdma_xdr_encode_write_list(rdma_resp, wr_lst, ret);
@@ -884,7 +871,12 @@ int svc_rdma_sendto(struct svc_rqst *rqstp)
 				      wr_lst, rp_ch);
 	if (ret < 0)
 		goto err1;
-	return 0;
+	ret = 0;
+
+out:
+	rqstp->rq_xprt_ctxt = NULL;
+	svc_rdma_recv_ctxt_put(rdma, rctxt);
+	return ret;
 
  err2:
 	if (ret != -E2BIG && ret != -EINVAL)
@@ -893,39 +885,14 @@ int svc_rdma_sendto(struct svc_rqst *rqstp)
 	ret = svc_rdma_send_error_msg(rdma, sctxt, rqstp);
 	if (ret < 0)
 		goto err1;
-	return 0;
+	ret = 0;
+	goto out;
 
  err1:
 	svc_rdma_send_ctxt_put(rdma, sctxt);
  err0:
 	trace_svcrdma_send_failed(rqstp, ret);
 	set_bit(XPT_CLOSE, &xprt->xpt_flags);
-	return -ENOTCONN;
-}
-
-/**
- * svc_rdma_read_payload - special processing for a READ payload
- * @rqstp: svc_rqst to operate on
- * @offset: payload's byte offset in @xdr
- * @length: size of payload, in bytes
- *
- * Returns zero on success.
- *
- * For the moment, just record the xdr_buf location of the READ
- * payload. svc_rdma_sendto will use that location later when
- * we actually send the payload.
- */
-int svc_rdma_read_payload(struct svc_rqst *rqstp, unsigned int offset,
-			  unsigned int length)
-{
-	struct svc_rdma_recv_ctxt *rctxt = rqstp->rq_xprt_ctxt;
-
-	/* XXX: Just one READ payload slot for now, since our
-	 * transport implementation currently supports only one
-	 * Write chunk.
-	 */
-	rctxt->rc_read_payload_offset = offset;
-	rctxt->rc_read_payload_length = length;
-
-	return 0;
+	ret = -ENOTCONN;
+	goto out;
 }

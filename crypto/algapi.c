@@ -257,7 +257,6 @@ void crypto_alg_tested(const char *name, int err)
 	struct crypto_alg *alg;
 	struct crypto_alg *q;
 	LIST_HEAD(list);
-	bool best;
 
 	down_write(&crypto_alg_sem);
 	list_for_each_entry(q, &crypto_alg_list, cra_list) {
@@ -280,21 +279,6 @@ found:
 		goto complete;
 
 	alg->cra_flags |= CRYPTO_ALG_TESTED;
-
-	/* Only satisfy larval waiters if we are the best. */
-	best = true;
-	list_for_each_entry(q, &crypto_alg_list, cra_list) {
-		if (crypto_is_moribund(q) || !crypto_is_larval(q))
-			continue;
-
-		if (strcmp(alg->cra_name, q->cra_name))
-			continue;
-
-		if (q->cra_priority > alg->cra_priority) {
-			best = false;
-			break;
-		}
-	}
 
 	list_for_each_entry(q, &crypto_alg_list, cra_list) {
 		if (q == alg)
@@ -319,12 +303,10 @@ found:
 				continue;
 			if ((q->cra_flags ^ alg->cra_flags) & larval->mask)
 				continue;
+			if (!crypto_mod_get(alg))
+				continue;
 
-			if (best && crypto_mod_get(alg))
-				larval->adult = alg;
-			else
-				larval->adult = ERR_PTR(-EAGAIN);
-
+			larval->adult = alg;
 			continue;
 		}
 
@@ -374,7 +356,7 @@ static void crypto_wait_for_test(struct crypto_larval *larval)
 	err = wait_for_completion_killable(&larval->completion);
 	WARN_ON(err);
 	if (!err)
-		crypto_notify(CRYPTO_MSG_ALG_LOADED, larval);
+		crypto_probing_notify(CRYPTO_MSG_ALG_LOADED, larval);
 
 out:
 	crypto_larval_kill(&larval->alg);
@@ -687,9 +669,11 @@ EXPORT_SYMBOL_GPL(crypto_grab_spawn);
 
 void crypto_drop_spawn(struct crypto_spawn *spawn)
 {
+	if (!spawn->alg)
+		return;
+
 	down_write(&crypto_alg_sem);
-	if (spawn->alg)
-		list_del(&spawn->list);
+	list_del(&spawn->list);
 	up_write(&crypto_alg_sem);
 }
 EXPORT_SYMBOL_GPL(crypto_drop_spawn);
@@ -697,16 +681,22 @@ EXPORT_SYMBOL_GPL(crypto_drop_spawn);
 static struct crypto_alg *crypto_spawn_alg(struct crypto_spawn *spawn)
 {
 	struct crypto_alg *alg;
+	struct crypto_alg *alg2;
 
 	down_read(&crypto_alg_sem);
 	alg = spawn->alg;
-	if (alg && !crypto_mod_get(alg)) {
-		alg->cra_flags |= CRYPTO_ALG_DYING;
-		alg = NULL;
-	}
+	alg2 = alg;
+	if (alg2)
+		alg2 = crypto_mod_get(alg2);
 	up_read(&crypto_alg_sem);
 
-	return alg ?: ERR_PTR(-EAGAIN);
+	if (!alg2) {
+		if (alg)
+			crypto_shoot_alg(alg);
+		return ERR_PTR(-EAGAIN);
+	}
+
+	return alg;
 }
 
 struct crypto_tfm *crypto_spawn_tfm(struct crypto_spawn *spawn, u32 type,

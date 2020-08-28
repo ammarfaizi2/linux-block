@@ -1270,9 +1270,6 @@ static int fimc_md_get_pinctrl(struct fimc_md *fmd)
 
 	pctl->state_idle = pinctrl_lookup_state(pctl->pinctrl,
 					PINCTRL_STATE_IDLE);
-	if (IS_ERR(pctl->state_idle))
-		return PTR_ERR(pctl->state_idle);
-
 	return 0;
 }
 
@@ -1460,12 +1457,12 @@ static int fimc_md_probe(struct platform_device *pdev)
 	ret = v4l2_device_register(dev, &fmd->v4l2_dev);
 	if (ret < 0) {
 		v4l2_err(v4l2_dev, "Failed to register v4l2_device: %d\n", ret);
-		goto err_md;
+		return ret;
 	}
 
 	ret = fimc_md_get_clocks(fmd);
 	if (ret)
-		goto err_v4l2dev;
+		goto err_md;
 
 	ret = fimc_md_get_pinctrl(fmd);
 	if (ret < 0) {
@@ -1522,10 +1519,9 @@ err_m_ent:
 	fimc_md_unregister_entities(fmd);
 err_clk:
 	fimc_md_put_clocks(fmd);
-err_v4l2dev:
-	v4l2_device_unregister(&fmd->v4l2_dev);
 err_md:
 	media_device_cleanup(&fmd->media_dev);
+	v4l2_device_unregister(&fmd->v4l2_dev);
 	return ret;
 }
 

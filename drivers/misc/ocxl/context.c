@@ -10,9 +10,11 @@ int ocxl_context_alloc(struct ocxl_context **context, struct ocxl_afu *afu,
 	int pasid;
 	struct ocxl_context *ctx;
 
-	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
-	if (!ctx)
+	*context = kzalloc(sizeof(struct ocxl_context), GFP_KERNEL);
+	if (!*context)
 		return -ENOMEM;
+
+	ctx = *context;
 
 	ctx->afu = afu;
 	mutex_lock(&afu->contexts_lock);
@@ -20,7 +22,6 @@ int ocxl_context_alloc(struct ocxl_context **context, struct ocxl_afu *afu,
 			afu->pasid_base + afu->pasid_max, GFP_KERNEL);
 	if (pasid < 0) {
 		mutex_unlock(&afu->contexts_lock);
-		kfree(ctx);
 		return pasid;
 	}
 	afu->pasid_count++;
@@ -42,7 +43,6 @@ int ocxl_context_alloc(struct ocxl_context **context, struct ocxl_afu *afu,
 	 * duration of the life of the context
 	 */
 	ocxl_afu_get(afu);
-	*context = ctx;
 	return 0;
 }
 EXPORT_SYMBOL_GPL(ocxl_context_alloc);

@@ -292,14 +292,8 @@ static int prio_graft(struct Qdisc *sch, unsigned long arg, struct Qdisc *new,
 	struct tc_prio_qopt_offload graft_offload;
 	unsigned long band = arg - 1;
 
-	if (!new) {
-		new = qdisc_create_dflt(sch->dev_queue, &pfifo_qdisc_ops,
-					TC_H_MAKE(sch->handle, arg), extack);
-		if (!new)
-			new = &noop_qdisc;
-		else
-			qdisc_hash_add(new, true);
-	}
+	if (new == NULL)
+		new = &noop_qdisc;
 
 	*old = qdisc_replace(sch, new, &q->queues[band]);
 
@@ -362,7 +356,7 @@ static int prio_dump_class_stats(struct Qdisc *sch, unsigned long cl,
 
 	cl_q = q->queues[cl - 1];
 	if (gnet_stats_copy_basic(qdisc_root_sleeping_running(sch),
-				  d, cl_q->cpu_bstats, &cl_q->bstats) < 0 ||
+				  d, NULL, &cl_q->bstats) < 0 ||
 	    qdisc_qstats_copy(d, cl_q) < 0)
 		return -1;
 

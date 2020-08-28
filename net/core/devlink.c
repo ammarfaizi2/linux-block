@@ -3222,41 +3222,34 @@ devlink_param_value_get_from_info(const struct devlink_param *param,
 				  struct genl_info *info,
 				  union devlink_param_value *value)
 {
-	struct nlattr *param_data;
 	int len;
 
-	param_data = info->attrs[DEVLINK_ATTR_PARAM_VALUE_DATA];
-
-	if (param->type != DEVLINK_PARAM_TYPE_BOOL && !param_data)
+	if (param->type != DEVLINK_PARAM_TYPE_BOOL &&
+	    !info->attrs[DEVLINK_ATTR_PARAM_VALUE_DATA])
 		return -EINVAL;
 
 	switch (param->type) {
 	case DEVLINK_PARAM_TYPE_U8:
-		if (nla_len(param_data) != sizeof(u8))
-			return -EINVAL;
-		value->vu8 = nla_get_u8(param_data);
+		value->vu8 = nla_get_u8(info->attrs[DEVLINK_ATTR_PARAM_VALUE_DATA]);
 		break;
 	case DEVLINK_PARAM_TYPE_U16:
-		if (nla_len(param_data) != sizeof(u16))
-			return -EINVAL;
-		value->vu16 = nla_get_u16(param_data);
+		value->vu16 = nla_get_u16(info->attrs[DEVLINK_ATTR_PARAM_VALUE_DATA]);
 		break;
 	case DEVLINK_PARAM_TYPE_U32:
-		if (nla_len(param_data) != sizeof(u32))
-			return -EINVAL;
-		value->vu32 = nla_get_u32(param_data);
+		value->vu32 = nla_get_u32(info->attrs[DEVLINK_ATTR_PARAM_VALUE_DATA]);
 		break;
 	case DEVLINK_PARAM_TYPE_STRING:
-		len = strnlen(nla_data(param_data), nla_len(param_data));
-		if (len == nla_len(param_data) ||
+		len = strnlen(nla_data(info->attrs[DEVLINK_ATTR_PARAM_VALUE_DATA]),
+			      nla_len(info->attrs[DEVLINK_ATTR_PARAM_VALUE_DATA]));
+		if (len == nla_len(info->attrs[DEVLINK_ATTR_PARAM_VALUE_DATA]) ||
 		    len >= __DEVLINK_PARAM_MAX_STRING_VALUE)
 			return -EINVAL;
-		strcpy(value->vstr, nla_data(param_data));
+		strcpy(value->vstr,
+		       nla_data(info->attrs[DEVLINK_ATTR_PARAM_VALUE_DATA]));
 		break;
 	case DEVLINK_PARAM_TYPE_BOOL:
-		if (param_data && nla_len(param_data))
-			return -EINVAL;
-		value->vbool = nla_get_flag(param_data);
+		value->vbool = info->attrs[DEVLINK_ATTR_PARAM_VALUE_DATA] ?
+			       true : false;
 		break;
 	}
 	return 0;
@@ -3870,12 +3863,6 @@ static int devlink_nl_cmd_region_read_dumpit(struct sk_buff *skb,
 		goto out_unlock;
 	}
 
-	/* return 0 if there is no further data to read */
-	if (start_offset >= region->size) {
-		err = 0;
-		goto out_unlock;
-	}
-
 	hdr = genlmsg_put(skb, NETLINK_CB(cb->skb).portid, cb->nlh->nlmsg_seq,
 			  &devlink_nl_family, NLM_F_ACK | NLM_F_MULTI,
 			  DEVLINK_CMD_REGION_READ);
@@ -3907,11 +3894,6 @@ static int devlink_nl_cmd_region_read_dumpit(struct sk_buff *skb,
 		end_offset = nla_get_u64(attrs[DEVLINK_ATTR_REGION_CHUNK_ADDR]);
 		end_offset += nla_get_u64(attrs[DEVLINK_ATTR_REGION_CHUNK_LEN]);
 		dump = false;
-
-		if (start_offset == end_offset) {
-			err = 0;
-			goto nla_put_failure;
-		}
 	}
 
 	err = devlink_nl_region_read_snapshot_fill(skb, devlink,
@@ -5809,8 +5791,6 @@ static const struct nla_policy devlink_nl_policy[DEVLINK_ATTR_MAX + 1] = {
 	[DEVLINK_ATTR_PARAM_VALUE_CMODE] = { .type = NLA_U8 },
 	[DEVLINK_ATTR_REGION_NAME] = { .type = NLA_NUL_STRING },
 	[DEVLINK_ATTR_REGION_SNAPSHOT_ID] = { .type = NLA_U32 },
-	[DEVLINK_ATTR_REGION_CHUNK_ADDR] = { .type = NLA_U64 },
-	[DEVLINK_ATTR_REGION_CHUNK_LEN] = { .type = NLA_U64 },
 	[DEVLINK_ATTR_HEALTH_REPORTER_NAME] = { .type = NLA_NUL_STRING },
 	[DEVLINK_ATTR_HEALTH_REPORTER_GRACEFUL_PERIOD] = { .type = NLA_U64 },
 	[DEVLINK_ATTR_HEALTH_REPORTER_AUTO_RECOVER] = { .type = NLA_U8 },
@@ -6300,7 +6280,7 @@ static bool devlink_port_type_should_warn(struct devlink_port *devlink_port)
 	       devlink_port->attrs.flavour != DEVLINK_PORT_FLAVOUR_DSA;
 }
 
-#define DEVLINK_PORT_TYPE_WARN_TIMEOUT (HZ * 3600)
+#define DEVLINK_PORT_TYPE_WARN_TIMEOUT (HZ * 30)
 
 static void devlink_port_type_warn_schedule(struct devlink_port *devlink_port)
 {

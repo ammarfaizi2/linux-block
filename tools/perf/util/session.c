@@ -1954,8 +1954,8 @@ out_err:
 }
 
 static union perf_event *
-prefetch_event(char *buf, u64 head, size_t mmap_size,
-	       bool needs_swap, union perf_event *error)
+fetch_mmaped_event(struct perf_session *session,
+		   u64 head, size_t mmap_size, char *buf)
 {
 	union perf_event *event;
 
@@ -1967,32 +1967,20 @@ prefetch_event(char *buf, u64 head, size_t mmap_size,
 		return NULL;
 
 	event = (union perf_event *)(buf + head);
-	if (needs_swap)
+
+	if (session->header.needs_swap)
 		perf_event_header__bswap(&event->header);
 
-	if (head + event->header.size <= mmap_size)
-		return event;
+	if (head + event->header.size > mmap_size) {
+		/* We're not fetching the event so swap back again */
+		if (session->header.needs_swap)
+			perf_event_header__bswap(&event->header);
+		pr_debug("%s: head=%#" PRIx64 " event->header_size=%#x, mmap_size=%#zx: fuzzed perf.data?\n",
+			 __func__, head, event->header.size, mmap_size);
+		return ERR_PTR(-EINVAL);
+	}
 
-	/* We're not fetching the event so swap back again */
-	if (needs_swap)
-		perf_event_header__bswap(&event->header);
-
-	pr_debug("%s: head=%#" PRIx64 " event->header_size=%#x, mmap_size=%#zx:"
-		 " fuzzed or compressed perf.data?\n",__func__, head, event->header.size, mmap_size);
-
-	return error;
-}
-
-static union perf_event *
-fetch_mmaped_event(u64 head, size_t mmap_size, char *buf, bool needs_swap)
-{
-	return prefetch_event(buf, head, mmap_size, needs_swap, ERR_PTR(-EINVAL));
-}
-
-static union perf_event *
-fetch_decomp_event(u64 head, size_t mmap_size, char *buf, bool needs_swap)
-{
-	return prefetch_event(buf, head, mmap_size, needs_swap, NULL);
+	return event;
 }
 
 static int __perf_session__process_decomp_events(struct perf_session *session)
@@ -2005,8 +1993,10 @@ static int __perf_session__process_decomp_events(struct perf_session *session)
 		return 0;
 
 	while (decomp->head < decomp->size && !session_done()) {
-		union perf_event *event = fetch_decomp_event(decomp->head, decomp->size, decomp->data,
-							     session->header.needs_swap);
+		union perf_event *event = fetch_mmaped_event(session, decomp->head, decomp->size, decomp->data);
+
+		if (IS_ERR(event))
+			return PTR_ERR(event);
 
 		if (!event)
 			break;
@@ -2106,7 +2096,7 @@ remap:
 	}
 
 more:
-	event = fetch_mmaped_event(head, mmap_size, buf, session->header.needs_swap);
+	event = fetch_mmaped_event(session, head, mmap_size, buf);
 	if (IS_ERR(event))
 		return PTR_ERR(event);
 

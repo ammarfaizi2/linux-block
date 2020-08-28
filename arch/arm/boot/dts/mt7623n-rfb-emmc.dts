@@ -138,7 +138,6 @@
 	mac@1 {
 		compatible = "mediatek,eth-mac";
 		reg = <1>;
-		phy-mode = "rgmii";
 		phy-handle = <&phy5>;
 	};
 

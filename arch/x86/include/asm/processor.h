@@ -334,7 +334,7 @@ struct x86_hw_tss {
 #define INVALID_IO_BITMAP_OFFSET	0x8000
 
 struct entry_stack {
-	char	stack[PAGE_SIZE];
+	unsigned long		words[64];
 };
 
 struct entry_stack_page {

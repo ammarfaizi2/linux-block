@@ -17,9 +17,6 @@
 
 bool enable_evmcs;
 
-struct hv_enlightened_vmcs *current_evmcs;
-struct hv_vp_assist_page *current_vp_assist;
-
 struct eptPageTableEntry {
 	uint64_t readable:1;
 	uint64_t writable:1;

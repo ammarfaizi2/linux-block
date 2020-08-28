@@ -778,18 +778,6 @@ _ctl_do_mpt_command(struct MPT3SAS_ADAPTER *ioc, struct mpt3_ioctl_command karg,
 	case MPI2_FUNCTION_NVME_ENCAPSULATED:
 	{
 		nvme_encap_request = (Mpi26NVMeEncapsulatedRequest_t *)request;
-		if (!ioc->pcie_sg_lookup) {
-			dtmprintk(ioc, ioc_info(ioc,
-			    "HBA doesn't support NVMe. Rejecting NVMe Encapsulated request.\n"
-			    ));
-
-			if (ioc->logging_level & MPT_DEBUG_TM)
-				_debug_dump_mf(nvme_encap_request,
-				    ioc->request_sz/4);
-			mpt3sas_base_free_smid(ioc, smid);
-			ret = -EINVAL;
-			goto out;
-		}
 		/*
 		 * Get the Physical Address of the sense buffer.
 		 * Use Error Response buffer address field to hold the sense
@@ -1596,8 +1584,7 @@ _ctl_diag_register_2(struct MPT3SAS_ADAPTER *ioc,
 			ioc_err(ioc, "%s: failed allocating memory for diag buffers, requested size(%d)\n",
 				__func__, request_data_sz);
 			mpt3sas_base_free_smid(ioc, smid);
-			rc = -ENOMEM;
-			goto out;
+			return -ENOMEM;
 		}
 		ioc->diag_buffer[buffer_type] = request_data;
 		ioc->diag_buffer_sz[buffer_type] = request_data_sz;
@@ -2921,18 +2908,19 @@ BRM_status_show(struct device *cdev, struct device_attribute *attr,
 	if (!ioc->is_warpdrive) {
 		ioc_err(ioc, "%s: BRM attribute is only for warpdrive\n",
 			__func__);
-		return 0;
+		goto out;
 	}
 	/* pci_access_mutex lock acquired by sysfs show path */
 	mutex_lock(&ioc->pci_access_mutex);
-	if (ioc->pci_error_recovery || ioc->remove_host)
-		goto out;
+	if (ioc->pci_error_recovery || ioc->remove_host) {
+		mutex_unlock(&ioc->pci_access_mutex);
+		return 0;
+	}
 
 	/* allocate upto GPIOVal 36 entries */
 	sz = offsetof(Mpi2IOUnitPage3_t, GPIOVal) + (sizeof(u16) * 36);
 	io_unit_pg3 = kzalloc(sz, GFP_KERNEL);
 	if (!io_unit_pg3) {
-		rc = -ENOMEM;
 		ioc_err(ioc, "%s: failed allocating memory for iounit_pg3: (%d) bytes\n",
 			__func__, sz);
 		goto out;
@@ -2942,7 +2930,6 @@ BRM_status_show(struct device *cdev, struct device_attribute *attr,
 	    0) {
 		ioc_err(ioc, "%s: failed reading iounit_pg3\n",
 			__func__);
-		rc = -EINVAL;
 		goto out;
 	}
 
@@ -2950,14 +2937,12 @@ BRM_status_show(struct device *cdev, struct device_attribute *attr,
 	if (ioc_status != MPI2_IOCSTATUS_SUCCESS) {
 		ioc_err(ioc, "%s: iounit_pg3 failed with ioc_status(0x%04x)\n",
 			__func__, ioc_status);
-		rc = -EINVAL;
 		goto out;
 	}
 
 	if (io_unit_pg3->GPIOCount < 25) {
 		ioc_err(ioc, "%s: iounit_pg3->GPIOCount less than 25 entries, detected (%d) entries\n",
 			__func__, io_unit_pg3->GPIOCount);
-		rc = -EINVAL;
 		goto out;
 	}
 

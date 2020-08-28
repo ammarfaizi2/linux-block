@@ -323,8 +323,6 @@ static int meson_ee_pwrc_init_domain(struct platform_device *pdev,
 				     struct meson_ee_pwrc *pwrc,
 				     struct meson_ee_pwrc_domain *dom)
 {
-	int ret;
-
 	dom->pwrc = pwrc;
 	dom->num_rstc = dom->desc.reset_names_count;
 	dom->num_clks = dom->desc.clk_names_count;
@@ -370,21 +368,15 @@ static int meson_ee_pwrc_init_domain(struct platform_device *pdev,
          * prepare/enable counters won't be in sync.
          */
 	if (dom->num_clks && dom->desc.get_power && !dom->desc.get_power(dom)) {
-		ret = clk_bulk_prepare_enable(dom->num_clks, dom->clks);
+		int ret = clk_bulk_prepare_enable(dom->num_clks, dom->clks);
 		if (ret)
 			return ret;
 
-		ret = pm_genpd_init(&dom->base, &pm_domain_always_on_gov,
-				    false);
-		if (ret)
-			return ret;
-	} else {
-		ret = pm_genpd_init(&dom->base, NULL,
-				    (dom->desc.get_power ?
-				     dom->desc.get_power(dom) : true));
-		if (ret)
-			return ret;
-	}
+		pm_genpd_init(&dom->base, &pm_domain_always_on_gov, false);
+	} else
+		pm_genpd_init(&dom->base, NULL,
+			      (dom->desc.get_power ?
+			       dom->desc.get_power(dom) : true));
 
 	return 0;
 }
@@ -449,7 +441,9 @@ static int meson_ee_pwrc_probe(struct platform_device *pdev)
 		pwrc->xlate.domains[i] = &dom->base;
 	}
 
-	return of_genpd_add_provider_onecell(pdev->dev.of_node, &pwrc->xlate);
+	of_genpd_add_provider_onecell(pdev->dev.of_node, &pwrc->xlate);
+
+	return 0;
 }
 
 static void meson_ee_pwrc_shutdown(struct platform_device *pdev)

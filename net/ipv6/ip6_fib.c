@@ -613,7 +613,7 @@ static int inet6_dump_fib(struct sk_buff *skb, struct netlink_callback *cb)
 	if (arg.filter.table_id) {
 		tb = fib6_get_table(net, arg.filter.table_id);
 		if (!tb) {
-			if (rtnl_msg_family(cb->nlh) != PF_INET6)
+			if (arg.filter.dump_all_families)
 				goto out;
 
 			NL_SET_ERR_MSG_MOD(cb->extack, "FIB table does not exist");
@@ -1050,7 +1050,8 @@ static int fib6_add_rt2node(struct fib6_node *fn, struct fib6_info *rt,
 					found++;
 					break;
 				}
-				fallback_ins = fallback_ins ?: ins;
+				if (rt_can_ecmp)
+					fallback_ins = fallback_ins ?: ins;
 				goto next_iter;
 			}
 
@@ -1093,9 +1094,7 @@ next_iter:
 	}
 
 	if (fallback_ins && !found) {
-		/* No matching route with same ecmp-able-ness found, replace
-		 * first matching route
-		 */
+		/* No ECMP-able route found, replace first non-ECMP one */
 		ins = fallback_ins;
 		iter = rcu_dereference_protected(*ins,
 				    lockdep_is_held(&rt->fib6_table->tb6_lock));

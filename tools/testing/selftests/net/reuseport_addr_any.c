@@ -21,10 +21,6 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#ifndef SOL_DCCP
-#define SOL_DCCP 269
-#endif
-
 static const char *IP4_ADDR = "127.0.0.1";
 static const char *IP6_ADDR = "::1";
 static const char *IP4_MAPPED6 = "::ffff:127.0.0.1";

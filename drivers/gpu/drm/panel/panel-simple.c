@@ -1935,7 +1935,7 @@ static const struct drm_display_mode lg_lb070wv8_mode = {
 static const struct panel_desc lg_lb070wv8 = {
 	.modes = &lg_lb070wv8_mode,
 	.num_modes = 1,
-	.bpc = 8,
+	.bpc = 16,
 	.size = {
 		.width = 151,
 		.height = 91,
@@ -2046,40 +2046,6 @@ static const struct drm_display_mode mitsubishi_aa070mc01_mode = {
 	.vtotal = 480 + 48 + 1 + 0,
 	.vrefresh = 60,
 	.flags = DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC,
-};
-
-static const struct drm_display_mode logicpd_type_28_mode = {
-	.clock = 9000,
-	.hdisplay = 480,
-	.hsync_start = 480 + 3,
-	.hsync_end = 480 + 3 + 42,
-	.htotal = 480 + 3 + 42 + 2,
-
-	.vdisplay = 272,
-	.vsync_start = 272 + 2,
-	.vsync_end = 272 + 2 + 11,
-	.vtotal = 272 + 2 + 11 + 3,
-	.vrefresh = 60,
-	.flags = DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_PVSYNC,
-};
-
-static const struct panel_desc logicpd_type_28 = {
-	.modes = &logicpd_type_28_mode,
-	.num_modes = 1,
-	.bpc = 8,
-	.size = {
-		.width = 105,
-		.height = 67,
-	},
-	.delay = {
-		.prepare = 200,
-		.enable = 200,
-		.unprepare = 200,
-		.disable = 200,
-	},
-	.bus_format = MEDIA_BUS_FMT_RGB888_1X24,
-	.bus_flags = DRM_BUS_FLAG_DE_HIGH | DRM_BUS_FLAG_PIXDATA_DRIVE_POSEDGE |
-		     DRM_BUS_FLAG_SYNC_DRIVE_NEGEDGE,
 };
 
 static const struct panel_desc mitsubishi_aa070mc01 = {
@@ -3298,9 +3264,6 @@ static const struct of_device_id platform_of_match[] = {
 	}, {
 		.compatible = "lg,lp129qe",
 		.data = &lg_lp129qe,
-	}, {
-		.compatible = "logicpd,type28",
-		.data = &logicpd_type_28,
 	}, {
 		.compatible = "mitsubishi,aa070mc01-ca1",
 		.data = &mitsubishi_aa070mc01,

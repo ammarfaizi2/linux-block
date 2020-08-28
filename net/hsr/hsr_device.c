@@ -227,13 +227,8 @@ static int hsr_dev_xmit(struct sk_buff *skb, struct net_device *dev)
 	struct hsr_port *master;
 
 	master = hsr_port_get_hsr(hsr, HSR_PT_MASTER);
-	if (master) {
-		skb->dev = master->dev;
-		hsr_forward_skb(skb, master);
-	} else {
-		atomic_long_inc(&dev->tx_dropped);
-		dev_kfree_skb_any(skb);
-	}
+	skb->dev = master->dev;
+	hsr_forward_skb(skb, master);
 	return NETDEV_TX_OK;
 }
 
@@ -272,8 +267,6 @@ static void send_hsr_supervision_frame(struct hsr_port *master,
 			    skb->dev->dev_addr, skb->len) <= 0)
 		goto out;
 	skb_reset_mac_header(skb);
-	skb_reset_network_header(skb);
-	skb_reset_transport_header(skb);
 
 	if (hsr_ver > 0) {
 		hsr_tag = skb_put(skb, sizeof(struct hsr_tag));
@@ -370,7 +363,7 @@ static void hsr_dev_destroy(struct net_device *hsr_dev)
 	del_timer_sync(&hsr->prune_timer);
 	del_timer_sync(&hsr->announce_timer);
 
-	hsr_del_self_node(hsr);
+	hsr_del_self_node(&hsr->self_node_db);
 	hsr_del_nodes(&hsr->node_db);
 }
 
@@ -442,12 +435,11 @@ int hsr_dev_finalize(struct net_device *hsr_dev, struct net_device *slave[2],
 	INIT_LIST_HEAD(&hsr->ports);
 	INIT_LIST_HEAD(&hsr->node_db);
 	INIT_LIST_HEAD(&hsr->self_node_db);
-	spin_lock_init(&hsr->list_lock);
 
 	ether_addr_copy(hsr_dev->dev_addr, slave[0]->dev_addr);
 
 	/* Make sure we recognize frames from ourselves in hsr_rcv() */
-	res = hsr_create_self_node(hsr, hsr_dev->dev_addr,
+	res = hsr_create_self_node(&hsr->self_node_db, hsr_dev->dev_addr,
 				   slave[1]->dev_addr);
 	if (res < 0)
 		return res;
@@ -480,32 +472,31 @@ int hsr_dev_finalize(struct net_device *hsr_dev, struct net_device *slave[2],
 
 	res = hsr_add_port(hsr, hsr_dev, HSR_PT_MASTER);
 	if (res)
-		goto err_add_master;
+		goto err_add_port;
 
 	res = register_netdevice(hsr_dev);
 	if (res)
-		goto err_unregister;
+		goto fail;
 
 	res = hsr_add_port(hsr, slave[0], HSR_PT_SLAVE_A);
 	if (res)
-		goto err_add_slaves;
-
+		goto fail;
 	res = hsr_add_port(hsr, slave[1], HSR_PT_SLAVE_B);
 	if (res)
-		goto err_add_slaves;
+		goto fail;
 
-	hsr_debugfs_init(hsr, hsr_dev);
 	mod_timer(&hsr->prune_timer, jiffies + msecs_to_jiffies(PRUNE_PERIOD));
+	res = hsr_debugfs_init(hsr, hsr_dev);
+	if (res)
+		goto fail;
 
 	return 0;
 
-err_add_slaves:
-	unregister_netdevice(hsr_dev);
-err_unregister:
+fail:
 	list_for_each_entry_safe(port, tmp, &hsr->ports, port_list)
 		hsr_del_port(port);
-err_add_master:
-	hsr_del_self_node(hsr);
+err_add_port:
+	hsr_del_self_node(&hsr->self_node_db);
 
 	return res;
 }

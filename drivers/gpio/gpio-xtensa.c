@@ -44,14 +44,15 @@ static inline unsigned long enable_cp(unsigned long *cpenable)
 	unsigned long flags;
 
 	local_irq_save(flags);
-	*cpenable = xtensa_get_sr(cpenable);
-	xtensa_set_sr(*cpenable | BIT(XCHAL_CP_ID_XTIOP), cpenable);
+	RSR_CPENABLE(*cpenable);
+	WSR_CPENABLE(*cpenable | BIT(XCHAL_CP_ID_XTIOP));
+
 	return flags;
 }
 
 static inline void disable_cp(unsigned long flags, unsigned long cpenable)
 {
-	xtensa_set_sr(cpenable, cpenable);
+	WSR_CPENABLE(cpenable);
 	local_irq_restore(flags);
 }
 

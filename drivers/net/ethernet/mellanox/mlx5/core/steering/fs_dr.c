@@ -247,9 +247,29 @@ static int mlx5_cmd_dr_create_fte(struct mlx5_flow_root_namespace *ns,
 
 	/* The order of the actions are must to be keep, only the following
 	 * order is supported by SW steering:
-	 * TX: modify header -> push vlan -> encap
+	 * TX: push vlan -> modify header -> encap
 	 * RX: decap -> pop vlan -> modify header
 	 */
+	if (fte->action.action & MLX5_FLOW_CONTEXT_ACTION_VLAN_PUSH) {
+		tmp_action = create_action_push_vlan(domain, &fte->action.vlan[0]);
+		if (!tmp_action) {
+			err = -ENOMEM;
+			goto free_actions;
+		}
+		fs_dr_actions[fs_dr_num_actions++] = tmp_action;
+		actions[num_actions++] = tmp_action;
+	}
+
+	if (fte->action.action & MLX5_FLOW_CONTEXT_ACTION_VLAN_PUSH_2) {
+		tmp_action = create_action_push_vlan(domain, &fte->action.vlan[1]);
+		if (!tmp_action) {
+			err = -ENOMEM;
+			goto free_actions;
+		}
+		fs_dr_actions[fs_dr_num_actions++] = tmp_action;
+		actions[num_actions++] = tmp_action;
+	}
+
 	if (fte->action.action & MLX5_FLOW_CONTEXT_ACTION_DECAP) {
 		enum mlx5dr_action_reformat_type decap_type =
 			DR_ACTION_REFORMAT_TYP_TNL_L2_TO_L2;
@@ -302,26 +322,6 @@ static int mlx5_cmd_dr_create_fte(struct mlx5_flow_root_namespace *ns,
 		actions[num_actions++] =
 			fte->action.modify_hdr->action.dr_action;
 
-	if (fte->action.action & MLX5_FLOW_CONTEXT_ACTION_VLAN_PUSH) {
-		tmp_action = create_action_push_vlan(domain, &fte->action.vlan[0]);
-		if (!tmp_action) {
-			err = -ENOMEM;
-			goto free_actions;
-		}
-		fs_dr_actions[fs_dr_num_actions++] = tmp_action;
-		actions[num_actions++] = tmp_action;
-	}
-
-	if (fte->action.action & MLX5_FLOW_CONTEXT_ACTION_VLAN_PUSH_2) {
-		tmp_action = create_action_push_vlan(domain, &fte->action.vlan[1]);
-		if (!tmp_action) {
-			err = -ENOMEM;
-			goto free_actions;
-		}
-		fs_dr_actions[fs_dr_num_actions++] = tmp_action;
-		actions[num_actions++] = tmp_action;
-	}
-
 	if (delay_encap_set)
 		actions[num_actions++] =
 			fte->action.pkt_reformat->action.dr_action;
@@ -352,16 +352,26 @@ static int mlx5_cmd_dr_create_fte(struct mlx5_flow_root_namespace *ns,
 	if (fte->action.action & MLX5_FLOW_CONTEXT_ACTION_FWD_DEST) {
 		list_for_each_entry(dst, &fte->node.children, node.list) {
 			enum mlx5_flow_destination_type type = dst->dest_attr.type;
+			u32 id;
 
 			if (num_actions == MLX5_FLOW_CONTEXT_ACTION_MAX) {
 				err = -ENOSPC;
 				goto free_actions;
 			}
 
-			if (type == MLX5_FLOW_DESTINATION_TYPE_COUNTER)
-				continue;
-
 			switch (type) {
+			case MLX5_FLOW_DESTINATION_TYPE_COUNTER:
+				id = dst->dest_attr.counter_id;
+
+				tmp_action =
+					mlx5dr_action_create_flow_counter(id);
+				if (!tmp_action) {
+					err = -ENOMEM;
+					goto free_actions;
+				}
+				fs_dr_actions[fs_dr_num_actions++] = tmp_action;
+				actions[num_actions++] = tmp_action;
+				break;
 			case MLX5_FLOW_DESTINATION_TYPE_FLOW_TABLE:
 				tmp_action = create_ft_action(dev, dst);
 				if (!tmp_action) {
@@ -384,32 +394,6 @@ static int mlx5_cmd_dr_create_fte(struct mlx5_flow_root_namespace *ns,
 				err = -EOPNOTSUPP;
 				goto free_actions;
 			}
-		}
-	}
-
-	if (fte->action.action & MLX5_FLOW_CONTEXT_ACTION_COUNT) {
-		list_for_each_entry(dst, &fte->node.children, node.list) {
-			u32 id;
-
-			if (dst->dest_attr.type !=
-			    MLX5_FLOW_DESTINATION_TYPE_COUNTER)
-				continue;
-
-			if (num_actions == MLX5_FLOW_CONTEXT_ACTION_MAX) {
-				err = -ENOSPC;
-				goto free_actions;
-			}
-
-			id = dst->dest_attr.counter_id;
-			tmp_action =
-				mlx5dr_action_create_flow_counter(id);
-			if (!tmp_action) {
-				err = -ENOMEM;
-				goto free_actions;
-			}
-
-			fs_dr_actions[fs_dr_num_actions++] = tmp_action;
-			actions[num_actions++] = tmp_action;
 		}
 	}
 

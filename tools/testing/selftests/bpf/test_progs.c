@@ -7,8 +7,6 @@
 #include <argp.h>
 #include <string.h>
 
-#define EXIT_NO_TEST		2
-
 /* defined in test_progs.h */
 struct test_env env;
 
@@ -22,7 +20,7 @@ struct prog_test_def {
 	bool tested;
 	bool need_cgroup_cleanup;
 
-	char *subtest_name;
+	const char *subtest_name;
 	int subtest_num;
 
 	/* store counts before subtest started */
@@ -83,17 +81,16 @@ void test__end_subtest()
 	fprintf(env.stdout, "#%d/%d %s:%s\n",
 	       test->test_num, test->subtest_num,
 	       test->subtest_name, sub_error_cnt ? "FAIL" : "OK");
-
-	free(test->subtest_name);
-	test->subtest_name = NULL;
 }
 
 bool test__start_subtest(const char *name)
 {
 	struct prog_test_def *test = env.test;
 
-	if (test->subtest_name)
+	if (test->subtest_name) {
 		test__end_subtest();
+		test->subtest_name = NULL;
+	}
 
 	test->subtest_num++;
 
@@ -107,13 +104,7 @@ bool test__start_subtest(const char *name)
 	if (!should_run(&env.subtest_selector, test->subtest_num, name))
 		return false;
 
-	test->subtest_name = strdup(name);
-	if (!test->subtest_name) {
-		fprintf(env.stderr,
-			"Subtest #%d: failed to copy subtest name!\n",
-			test->subtest_num);
-		return false;
-	}
+	test->subtest_name = name;
 	env.test->old_error_cnt = env.test->error_cnt;
 
 	return true;
@@ -295,7 +286,6 @@ int extract_build_id(char *build_id, size_t size)
 		len = size;
 	memcpy(build_id, line, len);
 	build_id[len] = '\0';
-	free(line);
 	return 0;
 err:
 	fclose(fp);
@@ -585,9 +575,6 @@ int main(int argc, char **argv)
 
 	free(env.test_selector.num_set);
 	free(env.subtest_selector.num_set);
-
-	if (env.succ_cnt + env.fail_cnt + env.skip_cnt == 0)
-		return EXIT_NO_TEST;
 
 	return env.fail_cnt ? EXIT_FAILURE : EXIT_SUCCESS;
 }

@@ -454,7 +454,7 @@ static int viommu_add_resv_mem(struct viommu_endpoint *vdev,
 	if (!region)
 		return -ENOMEM;
 
-	list_add(&region->list, &vdev->resv_regions);
+	list_add(&vdev->resv_regions, &region->list);
 	return 0;
 }
 
@@ -614,20 +614,18 @@ static int viommu_domain_finalise(struct viommu_dev *viommu,
 	int ret;
 	struct viommu_domain *vdomain = to_viommu_domain(domain);
 
-	ret = ida_alloc_range(&viommu->domain_ids, viommu->first_domain,
-			      viommu->last_domain, GFP_KERNEL);
-	if (ret < 0)
-		return ret;
-
-	vdomain->id		= (unsigned int)ret;
+	vdomain->viommu		= viommu;
+	vdomain->map_flags	= viommu->map_flags;
 
 	domain->pgsize_bitmap	= viommu->pgsize_bitmap;
 	domain->geometry	= viommu->geometry;
 
-	vdomain->map_flags	= viommu->map_flags;
-	vdomain->viommu		= viommu;
+	ret = ida_alloc_range(&viommu->domain_ids, viommu->first_domain,
+			      viommu->last_domain, GFP_KERNEL);
+	if (ret >= 0)
+		vdomain->id = (unsigned int)ret;
 
-	return 0;
+	return ret > 0 ? 0 : ret;
 }
 
 static void viommu_domain_free(struct iommu_domain *domain)

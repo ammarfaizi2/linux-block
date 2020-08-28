@@ -5,9 +5,10 @@
  *
  * GPL LICENSE SUMMARY
  *
+ * Copyright(c) 2012 - 2014 Intel Corporation. All rights reserved.
  * Copyright(c) 2013 - 2015 Intel Mobile Communications GmbH
  * Copyright(c) 2016 - 2017 Intel Deutschland GmbH
- * Copyright(c) 2012 - 2014, 2018 - 2020 Intel Corporation
+ * Copyright(c) 2018 - 2019 Intel Corporation
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of version 2 of the GNU General Public License as
@@ -27,9 +28,10 @@
  *
  * BSD LICENSE
  *
+ * Copyright(c) 2012 - 2014 Intel Corporation. All rights reserved.
  * Copyright(c) 2013 - 2015 Intel Mobile Communications GmbH
  * Copyright(c) 2016 - 2017 Intel Deutschland GmbH
- * Copyright(c) 2012 - 2014, 2018 - 2020 Intel Corporation
+ * Copyright(c) 2018 - 2019 Intel Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -254,8 +256,7 @@ struct ieee80211_regdomain *iwl_mvm_get_regdomain(struct wiphy *wiphy,
 				      __le32_to_cpu(resp->n_channels),
 				      resp->channels,
 				      __le16_to_cpu(resp->mcc),
-				      __le16_to_cpu(resp->geo_info),
-				      __le16_to_cpu(resp->cap));
+				      __le16_to_cpu(resp->geo_info));
 	/* Store the return source id */
 	src_id = resp->source_id;
 	kfree(resp);
@@ -741,20 +742,6 @@ int iwl_mvm_mac_setup_register(struct iwl_mvm *mvm)
 	return ret;
 }
 
-static void iwl_mvm_tx_skb(struct iwl_mvm *mvm, struct sk_buff *skb,
-			   struct ieee80211_sta *sta)
-{
-	if (likely(sta)) {
-		if (likely(iwl_mvm_tx_skb_sta(mvm, skb, sta) == 0))
-			return;
-	} else {
-		if (likely(iwl_mvm_tx_skb_non_sta(mvm, skb) == 0))
-			return;
-	}
-
-	ieee80211_free_txskb(mvm->hw, skb);
-}
-
 static void iwl_mvm_mac_tx(struct ieee80211_hw *hw,
 			   struct ieee80211_tx_control *control,
 			   struct sk_buff *skb)
@@ -798,7 +785,14 @@ static void iwl_mvm_mac_tx(struct ieee80211_hw *hw,
 		}
 	}
 
-	iwl_mvm_tx_skb(mvm, skb, sta);
+	if (sta) {
+		if (iwl_mvm_tx_skb(mvm, skb, sta))
+			goto drop;
+		return;
+	}
+
+	if (iwl_mvm_tx_skb_non_sta(mvm, skb))
+		goto drop;
 	return;
  drop:
 	ieee80211_free_txskb(hw, skb);
@@ -848,7 +842,10 @@ void iwl_mvm_mac_itxq_xmit(struct ieee80211_hw *hw, struct ieee80211_txq *txq)
 				break;
 			}
 
-			iwl_mvm_tx_skb(mvm, skb, txq->sta);
+			if (!txq->sta)
+				iwl_mvm_tx_skb_non_sta(mvm, skb);
+			else
+				iwl_mvm_tx_skb(mvm, skb, txq->sta);
 		}
 	} while (atomic_dec_return(&mvmtxq->tx_request));
 	rcu_read_unlock();
@@ -1193,12 +1190,13 @@ void __iwl_mvm_mac_stop(struct iwl_mvm *mvm)
 	 */
 	flush_work(&mvm->roc_done_wk);
 
-	iwl_mvm_rm_aux_sta(mvm);
-
 	iwl_mvm_stop_device(mvm);
 
 	iwl_mvm_async_handlers_purge(mvm);
 	/* async_handlers_list is empty and will stay empty: HW is stopped */
+
+	/* the fw is stopped, the aux sta is dead: clean up driver state */
+	iwl_mvm_del_aux_sta(mvm);
 
 	/*
 	 * Clear IN_HW_RESTART and HW_RESTART_REQUESTED flag when stopping the
@@ -2022,7 +2020,7 @@ static void iwl_mvm_cfg_he_sta(struct iwl_mvm *mvm,
 	rcu_read_lock();
 
 	sta = rcu_dereference(mvm->fw_id_to_mac_id[sta_ctxt_cmd.sta_id]);
-	if (IS_ERR_OR_NULL(sta)) {
+	if (IS_ERR(sta)) {
 		rcu_read_unlock();
 		WARN(1, "Can't find STA to configure HE\n");
 		return;

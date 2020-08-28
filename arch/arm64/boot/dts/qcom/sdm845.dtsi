@@ -2824,7 +2824,7 @@
 
 			qcom,gmu = <&gmu>;
 
-			zap_shader: zap-shader {
+			zap-shader {
 				memory-region = <&gpu_mem>;
 			};
 

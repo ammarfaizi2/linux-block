@@ -83,7 +83,6 @@ static int qtnf_cmd_send_with_reply(struct qtnf_bus *bus,
 	struct qlink_cmd *cmd;
 	struct qlink_resp *resp = NULL;
 	struct sk_buff *resp_skb = NULL;
-	int resp_res = 0;
 	u16 cmd_id;
 	u8 mac_id;
 	u8 vif_id;
@@ -114,7 +113,6 @@ static int qtnf_cmd_send_with_reply(struct qtnf_bus *bus,
 	}
 
 	resp = (struct qlink_resp *)resp_skb->data;
-	resp_res = le16_to_cpu(resp->result);
 	ret = qtnf_cmd_check_reply_header(resp, cmd_id, mac_id, vif_id,
 					  const_resp_size);
 	if (ret)
@@ -130,8 +128,8 @@ out:
 	else
 		consume_skb(resp_skb);
 
-	if (!ret)
-		return qtnf_cmd_resp_result_decode(resp_res);
+	if (!ret && resp)
+		return qtnf_cmd_resp_result_decode(le16_to_cpu(resp->result));
 
 	pr_warn("VIF%u.%u: cmd 0x%.4X failed: %d\n",
 		mac_id, vif_id, cmd_id, ret);

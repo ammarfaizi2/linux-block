@@ -464,8 +464,7 @@ static struct clk * __init cpg_rpc_clk_register(const char *name,
 
 	clk = clk_register_composite(NULL, name, &parent_name, 1, NULL, NULL,
 				     &rpc->div.hw,  &clk_divider_ops,
-				     &rpc->gate.hw, &clk_gate_ops,
-				     CLK_SET_RATE_PARENT);
+				     &rpc->gate.hw, &clk_gate_ops, 0);
 	if (IS_ERR(clk)) {
 		kfree(rpc);
 		return clk;
@@ -501,8 +500,7 @@ static struct clk * __init cpg_rpcd2_clk_register(const char *name,
 
 	clk = clk_register_composite(NULL, name, &parent_name, 1, NULL, NULL,
 				     &rpcd2->fixed.hw, &clk_fixed_factor_ops,
-				     &rpcd2->gate.hw, &clk_gate_ops,
-				     CLK_SET_RATE_PARENT);
+				     &rpcd2->gate.hw, &clk_gate_ops, 0);
 	if (IS_ERR(clk))
 		kfree(rpcd2);
 

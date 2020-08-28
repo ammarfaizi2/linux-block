@@ -288,13 +288,8 @@ static int mdio_mux_iproc_suspend(struct device *dev)
 static int mdio_mux_iproc_resume(struct device *dev)
 {
 	struct iproc_mdiomux_desc *md = dev_get_drvdata(dev);
-	int rc;
 
-	rc = clk_prepare_enable(md->core_clk);
-	if (rc) {
-		dev_err(md->dev, "failed to enable core clk\n");
-		return rc;
-	}
+	clk_prepare_enable(md->core_clk);
 	mdio_mux_iproc_config(md);
 
 	return 0;

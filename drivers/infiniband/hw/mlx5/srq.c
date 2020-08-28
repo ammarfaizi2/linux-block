@@ -310,18 +310,12 @@ int mlx5_ib_create_srq(struct ib_srq *ib_srq,
 	srq->msrq.event = mlx5_ib_srq_event;
 	srq->ibsrq.ext.xrc.srq_num = srq->msrq.srqn;
 
-	if (udata) {
-		struct mlx5_ib_create_srq_resp resp = {
-			.srqn = srq->msrq.srqn,
-		};
-
-		if (ib_copy_to_udata(udata, &resp, min(udata->outlen,
-				     sizeof(resp)))) {
+	if (udata)
+		if (ib_copy_to_udata(udata, &srq->msrq.srqn, sizeof(__u32))) {
 			mlx5_ib_dbg(dev, "copy to user failed\n");
 			err = -EFAULT;
 			goto err_core;
 		}
-	}
 
 	init_attr->attr.max_wr = srq->msrq.max - 1;
 

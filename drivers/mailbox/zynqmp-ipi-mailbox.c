@@ -504,9 +504,10 @@ static int zynqmp_ipi_mbox_probe(struct zynqmp_ipi_mbox *ipi_mbox,
 		mchan->req_buf_size = resource_size(&res);
 		mchan->req_buf = devm_ioremap(mdev, res.start,
 					      mchan->req_buf_size);
-		if (!mchan->req_buf) {
+		if (IS_ERR(mchan->req_buf)) {
 			dev_err(mdev, "Unable to map IPI buffer I/O memory\n");
-			return -ENOMEM;
+			ret = PTR_ERR(mchan->req_buf);
+			return ret;
 		}
 	} else if (ret != -ENODEV) {
 		dev_err(mdev, "Unmatched resource %s, %d.\n", name, ret);
@@ -519,9 +520,10 @@ static int zynqmp_ipi_mbox_probe(struct zynqmp_ipi_mbox *ipi_mbox,
 		mchan->resp_buf_size = resource_size(&res);
 		mchan->resp_buf = devm_ioremap(mdev, res.start,
 					       mchan->resp_buf_size);
-		if (!mchan->resp_buf) {
+		if (IS_ERR(mchan->resp_buf)) {
 			dev_err(mdev, "Unable to map IPI buffer I/O memory\n");
-			return -ENOMEM;
+			ret = PTR_ERR(mchan->resp_buf);
+			return ret;
 		}
 	} else if (ret != -ENODEV) {
 		dev_err(mdev, "Unmatched resource %s.\n", name);
@@ -541,9 +543,10 @@ static int zynqmp_ipi_mbox_probe(struct zynqmp_ipi_mbox *ipi_mbox,
 		mchan->req_buf_size = resource_size(&res);
 		mchan->req_buf = devm_ioremap(mdev, res.start,
 					      mchan->req_buf_size);
-		if (!mchan->req_buf) {
+		if (IS_ERR(mchan->req_buf)) {
 			dev_err(mdev, "Unable to map IPI buffer I/O memory\n");
-			return -ENOMEM;
+			ret = PTR_ERR(mchan->req_buf);
+			return ret;
 		}
 	} else if (ret != -ENODEV) {
 		dev_err(mdev, "Unmatched resource %s.\n", name);
@@ -556,9 +559,10 @@ static int zynqmp_ipi_mbox_probe(struct zynqmp_ipi_mbox *ipi_mbox,
 		mchan->resp_buf_size = resource_size(&res);
 		mchan->resp_buf = devm_ioremap(mdev, res.start,
 					       mchan->resp_buf_size);
-		if (!mchan->resp_buf) {
+		if (IS_ERR(mchan->resp_buf)) {
 			dev_err(mdev, "Unable to map IPI buffer I/O memory\n");
-			return -ENOMEM;
+			ret = PTR_ERR(mchan->resp_buf);
+			return ret;
 		}
 	} else if (ret != -ENODEV) {
 		dev_err(mdev, "Unmatched resource %s.\n", name);

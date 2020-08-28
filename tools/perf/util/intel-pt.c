@@ -1707,7 +1707,6 @@ static int intel_pt_synth_pebs_sample(struct intel_pt_queue *ptq)
 	u64 sample_type = evsel->core.attr.sample_type;
 	u64 id = evsel->core.id[0];
 	u8 cpumode;
-	u64 regs[8 * sizeof(sample.intr_regs.mask)];
 
 	if (intel_pt_skip_event(pt))
 		return 0;
@@ -1757,8 +1756,8 @@ static int intel_pt_synth_pebs_sample(struct intel_pt_queue *ptq)
 	}
 
 	if (sample_type & PERF_SAMPLE_REGS_INTR &&
-	    (items->mask[INTEL_PT_GP_REGS_POS] ||
-	     items->mask[INTEL_PT_XMM_POS])) {
+	    items->mask[INTEL_PT_GP_REGS_POS]) {
+		u64 regs[sizeof(sample.intr_regs.mask)];
 		u64 regs_mask = evsel->core.attr.sample_regs_intr;
 		u64 *pos;
 

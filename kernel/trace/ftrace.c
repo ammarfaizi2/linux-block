@@ -524,7 +524,8 @@ static int function_stat_show(struct seq_file *m, void *v)
 	}
 
 #ifdef CONFIG_FUNCTION_GRAPH_TRACER
-	avg = div64_ul(rec->time, rec->counter);
+	avg = rec->time;
+	do_div(avg, rec->counter);
 	if (tracing_thresh && (avg < tracing_thresh))
 		goto out;
 #endif
@@ -550,8 +551,7 @@ static int function_stat_show(struct seq_file *m, void *v)
 		 * Divide only 1000 for ns^2 -> us^2 conversion.
 		 * trace_print_graph_duration will divide 1000 again.
 		 */
-		stddev = div64_ul(stddev,
-				  rec->counter * (rec->counter - 1) * 1000);
+		do_div(stddev, rec->counter * (rec->counter - 1) * 1000);
 	}
 
 	trace_seq_init(&s);
@@ -5102,8 +5102,8 @@ static const struct file_operations ftrace_notrace_fops = {
 
 static DEFINE_MUTEX(graph_lock);
 
-struct ftrace_hash __rcu *ftrace_graph_hash = EMPTY_HASH;
-struct ftrace_hash __rcu *ftrace_graph_notrace_hash = EMPTY_HASH;
+struct ftrace_hash *ftrace_graph_hash = EMPTY_HASH;
+struct ftrace_hash *ftrace_graph_notrace_hash = EMPTY_HASH;
 
 enum graph_filter_type {
 	GRAPH_FILTER_NOTRACE	= 0,
@@ -5378,15 +5378,8 @@ ftrace_graph_release(struct inode *inode, struct file *file)
 
 		mutex_unlock(&graph_lock);
 
-		/*
-		 * We need to do a hard force of sched synchronization.
-		 * This is because we use preempt_disable() to do RCU, but
-		 * the function tracers can be called where RCU is not watching
-		 * (like before user_exit()). We can not rely on the RCU
-		 * infrastructure to do the synchronization, thus we must do it
-		 * ourselves.
-		 */
-		schedule_on_each_cpu(ftrace_sync);
+		/* Wait till all users are no longer using the old hash */
+		synchronize_rcu();
 
 		free_ftrace_hash(old_hash);
 	}
@@ -5699,11 +5692,8 @@ static int referenced_filters(struct dyn_ftrace *rec)
 	int cnt = 0;
 
 	for (ops = ftrace_ops_list; ops != &ftrace_list_end; ops = ops->next) {
-		if (ops_references_rec(ops, rec)) {
-			cnt++;
-			if (ops->flags & FTRACE_OPS_FL_SAVE_REGS)
-				rec->flags |= FTRACE_FL_REGS;
-		}
+		if (ops_references_rec(ops, rec))
+		    cnt++;
 	}
 
 	return cnt;
@@ -5880,8 +5870,8 @@ void ftrace_module_enable(struct module *mod)
 		if (ftrace_start_up)
 			cnt += referenced_filters(rec);
 
-		rec->flags &= ~FTRACE_FL_DISABLED;
-		rec->flags += cnt;
+		/* This clears FTRACE_FL_DISABLED */
+		rec->flags = cnt;
 
 		if (ftrace_start_up && cnt) {
 			int failed = __ftrace_replace_code(rec, 1);
@@ -6462,12 +6452,12 @@ void ftrace_pid_follow_fork(struct trace_array *tr, bool enable)
 	if (enable) {
 		register_trace_sched_process_fork(ftrace_pid_follow_sched_process_fork,
 						  tr);
-		register_trace_sched_process_free(ftrace_pid_follow_sched_process_exit,
+		register_trace_sched_process_exit(ftrace_pid_follow_sched_process_exit,
 						  tr);
 	} else {
 		unregister_trace_sched_process_fork(ftrace_pid_follow_sched_process_fork,
 						    tr);
-		unregister_trace_sched_process_free(ftrace_pid_follow_sched_process_exit,
+		unregister_trace_sched_process_exit(ftrace_pid_follow_sched_process_exit,
 						    tr);
 	}
 }
@@ -6540,10 +6530,9 @@ static void *fpid_next(struct seq_file *m, void *v, loff_t *pos)
 	struct trace_array *tr = m->private;
 	struct trace_pid_list *pid_list = rcu_dereference_sched(tr->function_pids);
 
-	if (v == FTRACE_NO_PIDS) {
-		(*pos)++;
+	if (v == FTRACE_NO_PIDS)
 		return NULL;
-	}
+
 	return trace_pid_next(pid_list, v, pos);
 }
 

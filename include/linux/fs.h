@@ -698,7 +698,6 @@ struct inode {
 		struct rcu_head		i_rcu;
 	};
 	atomic64_t		i_version;
-	atomic64_t		i_sequence; /* see futex */
 	atomic_t		i_count;
 	atomic_t		i_dio_count;
 	atomic_t		i_writecount;
@@ -978,7 +977,7 @@ struct file_handle {
 	__u32 handle_bytes;
 	int handle_type;
 	/* file identifier */
-	unsigned char f_handle[];
+	unsigned char f_handle[0];
 };
 
 static inline struct file *get_file(struct file *f)
@@ -1727,13 +1726,6 @@ int vfs_mkobj(struct dentry *, umode_t,
 		void *);
 
 extern long vfs_ioctl(struct file *file, unsigned int cmd, unsigned long arg);
-
-#ifdef CONFIG_COMPAT
-extern long compat_ptr_ioctl(struct file *file, unsigned int cmd,
-					unsigned long arg);
-#else
-#define compat_ptr_ioctl NULL
-#endif
 
 /*
  * VFS file helper functions.

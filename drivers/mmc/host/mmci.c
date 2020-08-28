@@ -168,8 +168,6 @@ static struct variant_data variant_ux500 = {
 	.cmdreg_srsp		= MCI_CPSM_RESPONSE,
 	.datalength_bits	= 24,
 	.datactrl_blocksz	= 11,
-	.datactrl_any_blocksz	= true,
-	.dma_power_of_2		= true,
 	.datactrl_mask_sdio	= MCI_DPSM_ST_SDIOEN,
 	.st_sdio		= true,
 	.st_clkdiv		= true,
@@ -203,8 +201,6 @@ static struct variant_data variant_ux500v2 = {
 	.datactrl_mask_ddrmode	= MCI_DPSM_ST_DDRMODE,
 	.datalength_bits	= 24,
 	.datactrl_blocksz	= 11,
-	.datactrl_any_blocksz	= true,
-	.dma_power_of_2		= true,
 	.datactrl_mask_sdio	= MCI_DPSM_ST_SDIOEN,
 	.st_sdio		= true,
 	.st_clkdiv		= true,
@@ -264,7 +260,6 @@ static struct variant_data variant_stm32_sdmmc = {
 	.datacnt_useless	= true,
 	.datalength_bits	= 25,
 	.datactrl_blocksz	= 14,
-	.datactrl_any_blocksz	= true,
 	.stm32_idmabsize_mask	= GENMASK(12, 5),
 	.init			= sdmmc_variant_init,
 };
@@ -284,7 +279,6 @@ static struct variant_data variant_qcom = {
 	.data_cmd_enable	= MCI_CPSM_QCOM_DATCMD,
 	.datalength_bits	= 24,
 	.datactrl_blocksz	= 11,
-	.datactrl_any_blocksz	= true,
 	.pwrreg_powerup		= MCI_PWR_UP,
 	.f_max			= 208000000,
 	.explicit_mclk_control	= true,
@@ -453,11 +447,10 @@ void mmci_dma_setup(struct mmci_host *host)
 static int mmci_validate_data(struct mmci_host *host,
 			      struct mmc_data *data)
 {
-	struct variant_data *variant = host->variant;
-
 	if (!data)
 		return 0;
-	if (!is_power_of_2(data->blksz) && !variant->datactrl_any_blocksz) {
+
+	if (!is_power_of_2(data->blksz)) {
 		dev_err(mmc_dev(host->mmc),
 			"unsupported block size (%d bytes)\n", data->blksz);
 		return -EINVAL;
@@ -522,9 +515,7 @@ int mmci_dma_start(struct mmci_host *host, unsigned int datactrl)
 		 "Submit MMCI DMA job, sglen %d blksz %04x blks %04x flags %08x\n",
 		 data->sg_len, data->blksz, data->blocks, data->flags);
 
-	ret = host->ops->dma_start(host, &datactrl);
-	if (ret)
-		return ret;
+	host->ops->dma_start(host, &datactrl);
 
 	/* Trigger the DMA transfer */
 	mmci_write_datactrlreg(host, datactrl);
@@ -831,18 +822,6 @@ static int _mmci_dmae_prep_data(struct mmci_host *host, struct mmc_data *data,
 	if (data->blksz * data->blocks <= variant->fifosize)
 		return -EINVAL;
 
-	/*
-	 * This is necessary to get SDIO working on the Ux500. We do not yet
-	 * know if this is a bug in:
-	 * - The Ux500 DMA controller (DMA40)
-	 * - The MMCI DMA interface on the Ux500
-	 * some power of two blocks (such as 64 bytes) are sent regularly
-	 * during SDIO traffic and those work fine so for these we enable DMA
-	 * transfers.
-	 */
-	if (host->variant->dma_power_of_2 && !is_power_of_2(data->blksz))
-		return -EINVAL;
-
 	device = chan->device;
 	nr_sg = dma_map_sg(device->dev, data->sg, data->sg_len,
 			   mmc_get_dma_dir(data));
@@ -893,14 +872,9 @@ int mmci_dmae_prep_data(struct mmci_host *host,
 int mmci_dmae_start(struct mmci_host *host, unsigned int *datactrl)
 {
 	struct mmci_dmae_priv *dmae = host->dma_priv;
-	int ret;
 
 	host->dma_in_progress = true;
-	ret = dma_submit_error(dmaengine_submit(dmae->desc_current));
-	if (ret < 0) {
-		host->dma_in_progress = false;
-		return ret;
-	}
+	dmaengine_submit(dmae->desc_current);
 	dma_async_issue_pending(dmae->cur);
 
 	*datactrl |= MCI_DPSM_DMAENABLE;

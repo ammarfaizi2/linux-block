@@ -66,8 +66,6 @@ int snd_sof_fw_parse_ext_data(struct snd_sof_dev *sdev, u32 bar, u32 offset)
 			ret = get_ext_windows(sdev, ext_hdr);
 			break;
 		default:
-			dev_warn(sdev->dev, "warning: unknown ext header type %d size 0x%x\n",
-				 ext_hdr->type, ext_hdr->hdr.size);
 			break;
 		}
 
@@ -511,6 +509,7 @@ int snd_sof_run_firmware(struct snd_sof_dev *sdev)
 	int init_core_mask;
 
 	init_waitqueue_head(&sdev->boot_wait);
+	sdev->boot_complete = false;
 
 	/* create read-only fw_version debugfs to store boot version info */
 	if (sdev->first_boot) {
@@ -542,27 +541,19 @@ int snd_sof_run_firmware(struct snd_sof_dev *sdev)
 
 	init_core_mask = ret;
 
-	/*
-	 * now wait for the DSP to boot. There are 3 possible outcomes:
-	 * 1. Boot wait times out indicating FW boot failure.
-	 * 2. FW boots successfully and fw_ready op succeeds.
-	 * 3. FW boots but fw_ready op fails.
-	 */
-	ret = wait_event_timeout(sdev->boot_wait,
-				 sdev->fw_state > SOF_FW_BOOT_IN_PROGRESS,
+	/* now wait for the DSP to boot */
+	ret = wait_event_timeout(sdev->boot_wait, sdev->boot_complete,
 				 msecs_to_jiffies(sdev->boot_timeout));
 	if (ret == 0) {
 		dev_err(sdev->dev, "error: firmware boot failure\n");
 		snd_sof_dsp_dbg_dump(sdev, SOF_DBG_REGS | SOF_DBG_MBOX |
 			SOF_DBG_TEXT | SOF_DBG_PCI);
-		sdev->fw_state = SOF_FW_BOOT_FAILED;
+		/* after this point FW_READY msg should be ignored */
+		sdev->boot_complete = true;
 		return -EIO;
 	}
 
-	if (sdev->fw_state == SOF_FW_BOOT_COMPLETE)
-		dev_info(sdev->dev, "firmware boot complete\n");
-	else
-		return -EIO; /* FW boots but fw_ready op failed */
+	dev_info(sdev->dev, "firmware boot complete\n");
 
 	/* perform post fw run operations */
 	ret = snd_sof_dsp_post_fw_run(sdev);

@@ -23,9 +23,9 @@
  */
 
 static const char * const ar100_r_apb2_parents[] = { "osc24M", "osc32k",
-						     "iosc", "pll-periph0" };
+					     "pll-periph0", "iosc" };
 static const struct ccu_mux_var_prediv ar100_r_apb2_predivs[] = {
-	{ .index = 3, .shift = 0, .width = 5 },
+	{ .index = 2, .shift = 0, .width = 5 },
 };
 
 static struct ccu_div ar100_clk = {

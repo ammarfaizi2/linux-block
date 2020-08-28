@@ -1415,13 +1415,9 @@ static ssize_t ceph_write_iter(struct kiocb *iocb, struct iov_iter *from)
 	struct inode *inode = file_inode(file);
 	struct ceph_inode_info *ci = ceph_inode(inode);
 	struct ceph_fs_client *fsc = ceph_inode_to_client(inode);
-	struct ceph_osd_client *osdc = &fsc->client->osdc;
 	struct ceph_cap_flush *prealloc_cf;
 	ssize_t count, written = 0;
 	int err, want, got;
-	bool direct_lock = false;
-	u32 map_flags;
-	u64 pool_flags;
 	loff_t pos;
 	loff_t limit = max(i_size_read(inode), fsc->max_file_size);
 
@@ -1432,11 +1428,8 @@ static ssize_t ceph_write_iter(struct kiocb *iocb, struct iov_iter *from)
 	if (!prealloc_cf)
 		return -ENOMEM;
 
-	if ((iocb->ki_flags & (IOCB_DIRECT | IOCB_APPEND)) == IOCB_DIRECT)
-		direct_lock = true;
-
 retry_snap:
-	if (direct_lock)
+	if (iocb->ki_flags & IOCB_DIRECT)
 		ceph_start_io_direct(inode);
 	else
 		ceph_start_io_write(inode);
@@ -1484,12 +1477,8 @@ retry_snap:
 			goto out;
 	}
 
-	down_read(&osdc->lock);
-	map_flags = osdc->osdmap->flags;
-	pool_flags = ceph_pg_pool_flags(osdc->osdmap, ci->i_layout.pool_id);
-	up_read(&osdc->lock);
-	if ((map_flags & CEPH_OSDMAP_FULL) ||
-	    (pool_flags & CEPH_POOL_FLAG_FULL)) {
+	/* FIXME: not complete since it doesn't account for being at quota */
+	if (ceph_osdmap_flag(&fsc->client->osdc, CEPH_OSDMAP_FULL)) {
 		err = -ENOSPC;
 		goto out;
 	}
@@ -1530,15 +1519,14 @@ retry_snap:
 
 		/* we might need to revert back to that point */
 		data = *from;
-		if (iocb->ki_flags & IOCB_DIRECT)
+		if (iocb->ki_flags & IOCB_DIRECT) {
 			written = ceph_direct_read_write(iocb, &data, snapc,
 							 &prealloc_cf);
-		else
-			written = ceph_sync_write(iocb, &data, pos, snapc);
-		if (direct_lock)
 			ceph_end_io_direct(inode);
-		else
+		} else {
+			written = ceph_sync_write(iocb, &data, pos, snapc);
 			ceph_end_io_write(inode);
+		}
 		if (written > 0)
 			iov_iter_advance(from, written);
 		ceph_put_snap_context(snapc);
@@ -1582,15 +1570,14 @@ retry_snap:
 	}
 
 	if (written >= 0) {
-		if ((map_flags & CEPH_OSDMAP_NEARFULL) ||
-		    (pool_flags & CEPH_POOL_FLAG_NEARFULL))
+		if (ceph_osdmap_flag(&fsc->client->osdc, CEPH_OSDMAP_NEARFULL))
 			iocb->ki_flags |= IOCB_DSYNC;
 		written = generic_write_sync(iocb, written);
 	}
 
 	goto out_unlocked;
 out:
-	if (direct_lock)
+	if (iocb->ki_flags & IOCB_DIRECT)
 		ceph_end_io_direct(inode);
 	else
 		ceph_end_io_write(inode);
@@ -2201,7 +2188,7 @@ const struct file_operations ceph_file_fops = {
 	.splice_read = generic_file_splice_read,
 	.splice_write = iter_file_splice_write,
 	.unlocked_ioctl = ceph_ioctl,
-	.compat_ioctl = compat_ptr_ioctl,
+	.compat_ioctl	= ceph_ioctl,
 	.fallocate	= ceph_fallocate,
 	.copy_file_range = ceph_copy_file_range,
 };

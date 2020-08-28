@@ -20,7 +20,6 @@
 #include <linux/vt_kern.h>
 #include <linux/input.h>
 #include <linux/module.h>
-#include <linux/platform_device.h>
 
 #define MAX_CONFIG_LEN		40
 
@@ -28,7 +27,6 @@ static struct kgdb_io		kgdboc_io_ops;
 
 /* -1 = init not run yet, 0 = unconfigured, 1 = configured. */
 static int configured		= -1;
-static DEFINE_MUTEX(config_mutex);
 
 static char config[MAX_CONFIG_LEN];
 static struct kparam_string kps = {
@@ -39,8 +37,6 @@ static struct kparam_string kps = {
 static int kgdboc_use_kms;  /* 1 if we use kernel mode switching */
 static struct tty_driver	*kgdb_tty_driver;
 static int			kgdb_tty_line;
-
-static struct platform_device *kgdboc_pdev;
 
 #ifdef CONFIG_KDB_KEYBOARD
 static int kgdboc_reset_connect(struct input_handler *handler,
@@ -137,13 +133,11 @@ static void kgdboc_unregister_kbd(void)
 
 static void cleanup_kgdboc(void)
 {
-	if (configured != 1)
-		return;
-
 	if (kgdb_unregister_nmi_console())
 		return;
 	kgdboc_unregister_kbd();
-	kgdb_unregister_io_module(&kgdboc_io_ops);
+	if (configured == 1)
+		kgdb_unregister_io_module(&kgdboc_io_ops);
 }
 
 static int configure_kgdboc(void)
@@ -206,79 +200,20 @@ nmi_con_failed:
 	kgdb_unregister_io_module(&kgdboc_io_ops);
 noconfig:
 	kgdboc_unregister_kbd();
+	config[0] = 0;
 	configured = 0;
+	cleanup_kgdboc();
 
 	return err;
 }
 
-static int kgdboc_probe(struct platform_device *pdev)
-{
-	int ret = 0;
-
-	mutex_lock(&config_mutex);
-	if (configured != 1) {
-		ret = configure_kgdboc();
-
-		/* Convert "no device" to "defer" so we'll keep trying */
-		if (ret == -ENODEV)
-			ret = -EPROBE_DEFER;
-	}
-	mutex_unlock(&config_mutex);
-
-	return ret;
-}
-
-static struct platform_driver kgdboc_platform_driver = {
-	.probe = kgdboc_probe,
-	.driver = {
-		.name = "kgdboc",
-		.suppress_bind_attrs = true,
-	},
-};
-
 static int __init init_kgdboc(void)
 {
-	int ret;
-
-	/*
-	 * kgdboc is a little bit of an odd "platform_driver".  It can be
-	 * up and running long before the platform_driver object is
-	 * created and thus doesn't actually store anything in it.  There's
-	 * only one instance of kgdb so anything is stored as global state.
-	 * The platform_driver is only created so that we can leverage the
-	 * kernel's mechanisms (like -EPROBE_DEFER) to call us when our
-	 * underlying tty is ready.  Here we init our platform driver and
-	 * then create the single kgdboc instance.
-	 */
-	ret = platform_driver_register(&kgdboc_platform_driver);
-	if (ret)
-		return ret;
-
-	kgdboc_pdev = platform_device_alloc("kgdboc", PLATFORM_DEVID_NONE);
-	if (!kgdboc_pdev) {
-		ret = -ENOMEM;
-		goto err_did_register;
-	}
-
-	ret = platform_device_add(kgdboc_pdev);
-	if (!ret)
+	/* Already configured? */
+	if (configured == 1)
 		return 0;
 
-	platform_device_put(kgdboc_pdev);
-
-err_did_register:
-	platform_driver_unregister(&kgdboc_platform_driver);
-	return ret;
-}
-
-static void exit_kgdboc(void)
-{
-	mutex_lock(&config_mutex);
-	cleanup_kgdboc();
-	mutex_unlock(&config_mutex);
-
-	platform_device_unregister(kgdboc_pdev);
-	platform_driver_unregister(&kgdboc_platform_driver);
+	return configure_kgdboc();
 }
 
 static int kgdboc_get_char(void)
@@ -301,19 +236,23 @@ static int param_set_kgdboc_var(const char *kmessage,
 				const struct kernel_param *kp)
 {
 	size_t len = strlen(kmessage);
-	int ret = 0;
 
 	if (len >= MAX_CONFIG_LEN) {
 		pr_err("config string too long\n");
 		return -ENOSPC;
 	}
 
-	if (kgdb_connected) {
-		pr_err("Cannot reconfigure while KGDB is connected.\n");
-		return -EBUSY;
+	/* Only copy in the string if the init function has not run yet */
+	if (configured < 0) {
+		strcpy(config, kmessage);
+		return 0;
 	}
 
-	mutex_lock(&config_mutex);
+	if (kgdb_connected) {
+		pr_err("Cannot reconfigure while KGDB is connected.\n");
+
+		return -EBUSY;
+	}
 
 	strcpy(config, kmessage);
 	/* Chop out \n char as a result of echo */
@@ -323,30 +262,8 @@ static int param_set_kgdboc_var(const char *kmessage,
 	if (configured == 1)
 		cleanup_kgdboc();
 
-	/*
-	 * Configure with the new params as long as init already ran.
-	 * Note that we can get called before init if someone loads us
-	 * with "modprobe kgdboc kgdboc=..." or if they happen to use the
-	 * the odd syntax of "kgdboc.kgdboc=..." on the kernel command.
-	 */
-	if (configured >= 0)
-		ret = configure_kgdboc();
-
-	/*
-	 * If we couldn't configure then clear out the config.  Note that
-	 * specifying an invalid config on the kernel command line vs.
-	 * through sysfs have slightly different behaviors.  If we fail
-	 * to configure what was specified on the kernel command line
-	 * we'll leave it in the 'config' and return -EPROBE_DEFER from
-	 * our probe.  When specified through sysfs userspace is
-	 * responsible for loading the tty driver before setting up.
-	 */
-	if (ret)
-		config[0] = '\0';
-
-	mutex_unlock(&config_mutex);
-
-	return ret;
+	/* Go and configure with the new params. */
+	return configure_kgdboc();
 }
 
 static int dbg_restore_graphics;
@@ -409,8 +326,15 @@ __setup("kgdboc=", kgdboc_option_setup);
 /* This is only available if kgdboc is a built in for early debugging */
 static int __init kgdboc_early_init(char *opt)
 {
+	/* save the first character of the config string because the
+	 * init routine can destroy it.
+	 */
+	char save_ch;
+
 	kgdboc_option_setup(opt);
-	configure_kgdboc();
+	save_ch = config[0];
+	init_kgdboc();
+	config[0] = save_ch;
 	return 0;
 }
 
@@ -418,7 +342,7 @@ early_param("ekgdboc", kgdboc_early_init);
 #endif /* CONFIG_KGDB_SERIAL_CONSOLE */
 
 module_init(init_kgdboc);
-module_exit(exit_kgdboc);
+module_exit(cleanup_kgdboc);
 module_param_call(kgdboc, param_set_kgdboc_var, param_get_string, &kps, 0644);
 MODULE_PARM_DESC(kgdboc, "<serial_device>[,baud]");
 MODULE_DESCRIPTION("KGDB Console TTY Driver");

@@ -919,9 +919,12 @@ static void acpi_bus_init_power_state(struct acpi_device *device, int state)
 
 		if (buffer.length && package
 		    && package->type == ACPI_TYPE_PACKAGE
-		    && package->package.count)
-			acpi_extract_power_resources(package, 0, &ps->resources);
-
+		    && package->package.count) {
+			int err = acpi_extract_power_resources(package, 0,
+							       &ps->resources);
+			if (!err)
+				device->power.flags.power_resources = 1;
+		}
 		ACPI_FREE(buffer.pointer);
 	}
 
@@ -968,26 +971,13 @@ static void acpi_bus_get_power_flags(struct acpi_device *device)
 		acpi_bus_init_power_state(device, i);
 
 	INIT_LIST_HEAD(&device->power.states[ACPI_STATE_D3_COLD].resources);
+	if (!list_empty(&device->power.states[ACPI_STATE_D3_HOT].resources))
+		device->power.states[ACPI_STATE_D3_COLD].flags.valid = 1;
 
-	/* Set the defaults for D0 and D3hot (always supported). */
+	/* Set defaults for D0 and D3hot states (always valid) */
 	device->power.states[ACPI_STATE_D0].flags.valid = 1;
 	device->power.states[ACPI_STATE_D0].power = 100;
 	device->power.states[ACPI_STATE_D3_HOT].flags.valid = 1;
-
-	/*
-	 * Use power resources only if the D0 list of them is populated, because
-	 * some platforms may provide _PR3 only to indicate D3cold support and
-	 * in those cases the power resources list returned by it may be bogus.
-	 */
-	if (!list_empty(&device->power.states[ACPI_STATE_D0].resources)) {
-		device->power.flags.power_resources = 1;
-		/*
-		 * D3cold is supported if the D3hot list of power resources is
-		 * not empty.
-		 */
-		if (!list_empty(&device->power.states[ACPI_STATE_D3_HOT].resources))
-			device->power.states[ACPI_STATE_D3_COLD].flags.valid = 1;
-	}
 
 	if (acpi_bus_init_power(device))
 		device->flags.power_manageable = 0;
@@ -2184,7 +2174,6 @@ int __init acpi_scan_init(void)
 	acpi_pci_root_init();
 	acpi_pci_link_init();
 	acpi_processor_init();
-	acpi_platform_init();
 	acpi_lpss_init();
 	acpi_apd_init();
 	acpi_cmos_rtc_init();

@@ -296,7 +296,7 @@
 };
 
 &usb0_phy {
-	status = "disabled";
+	status = "okay";
 	phy-supply = <&usb_otg_pwr>;
 };
 
@@ -306,7 +306,7 @@
 };
 
 &usb0 {
-	status = "disabled";
+	status = "okay";
 };
 
 &usb1 {

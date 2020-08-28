@@ -44,14 +44,8 @@ static void venus_reset_cpu(struct venus_core *core)
 
 int venus_set_hw_state(struct venus_core *core, bool resume)
 {
-	int ret;
-
-	if (core->use_tz) {
-		ret = qcom_scm_set_remote_state(resume, 0);
-		if (resume && ret == -EINVAL)
-			ret = 0;
-		return ret;
-	}
+	if (core->use_tz)
+		return qcom_scm_set_remote_state(resume, 0);
 
 	if (resume)
 		venus_reset_cpu(core);

@@ -594,8 +594,7 @@ struct tomoyo_domain_info *tomoyo_find_domain(const char *domainname)
 
 	name.name = domainname;
 	tomoyo_fill_path_info(&name);
-	list_for_each_entry_rcu(domain, &tomoyo_domain_list, list,
-				srcu_read_lock_held(&tomoyo_ss)) {
+	list_for_each_entry_rcu(domain, &tomoyo_domain_list, list) {
 		if (!domain->is_deleted &&
 		    !tomoyo_pathcmp(&name, domain->domainname))
 			return domain;
@@ -1029,8 +1028,7 @@ bool tomoyo_domain_quota_is_ok(struct tomoyo_request_info *r)
 		return false;
 	if (!domain)
 		return true;
-	list_for_each_entry_rcu(ptr, &domain->acl_info_list, list,
-				srcu_read_lock_held(&tomoyo_ss)) {
+	list_for_each_entry_rcu(ptr, &domain->acl_info_list, list) {
 		u16 perm;
 		u8 i;
 

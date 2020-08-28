@@ -27,7 +27,7 @@ static bool rtas_hp_event;
 unsigned long pseries_memory_block_size(void)
 {
 	struct device_node *np;
-	u64 memblock_size = MIN_MEMORY_BLOCK_SIZE;
+	unsigned int memblock_size = MIN_MEMORY_BLOCK_SIZE;
 	struct resource r;
 
 	np = of_find_node_by_path("/ibm,dynamic-reconfiguration-memory");
@@ -223,7 +223,7 @@ static int get_lmb_range(u32 drc_index, int n_lmbs,
 			 struct drmem_lmb **end_lmb)
 {
 	struct drmem_lmb *lmb, *start, *end;
-	struct drmem_lmb *limit;
+	struct drmem_lmb *last_lmb;
 
 	start = NULL;
 	for_each_drmem_lmb(lmb) {
@@ -236,10 +236,10 @@ static int get_lmb_range(u32 drc_index, int n_lmbs,
 	if (!start)
 		return -EINVAL;
 
-	end = &start[n_lmbs];
+	end = &start[n_lmbs - 1];
 
-	limit = &drmem_info->lmbs[drmem_info->n_lmbs];
-	if (end > limit)
+	last_lmb = &drmem_info->lmbs[drmem_info->n_lmbs - 1];
+	if (end > last_lmb)
 		return -EINVAL;
 
 	*start_lmb = start;
@@ -360,10 +360,8 @@ static bool lmb_is_removable(struct drmem_lmb *lmb)
 
 	for (i = 0; i < scns_per_block; i++) {
 		pfn = PFN_DOWN(phys_addr);
-		if (!pfn_present(pfn)) {
-			phys_addr += MIN_MEMORY_BLOCK_SIZE;
+		if (!pfn_present(pfn))
 			continue;
-		}
 
 		rc &= is_mem_section_removable(pfn, PAGES_PER_SECTION);
 		phys_addr += MIN_MEMORY_BLOCK_SIZE;

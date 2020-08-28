@@ -2900,7 +2900,7 @@ ice_probe(struct pci_dev *pdev, const struct pci_device_id __always_unused *ent)
 	if (err) {
 		dev_err(dev, "ice_init_interrupt_scheme failed: %d\n", err);
 		err = -EIO;
-		goto err_init_vsi_unroll;
+		goto err_init_interrupt_unroll;
 	}
 
 	/* Driver is mostly up */
@@ -2986,7 +2986,6 @@ err_msix_misc_unroll:
 	ice_free_irq_msix_misc(pf);
 err_init_interrupt_unroll:
 	ice_clear_interrupt_scheme(pf);
-err_init_vsi_unroll:
 	devm_kfree(dev, pf->vsi);
 err_init_pf_unroll:
 	ice_deinit_pf(pf);
@@ -3971,13 +3970,8 @@ int ice_vsi_setup_tx_rings(struct ice_vsi *vsi)
 	}
 
 	ice_for_each_txq(vsi, i) {
-		struct ice_ring *ring = vsi->tx_rings[i];
-
-		if (!ring)
-			return -EINVAL;
-
-		ring->netdev = vsi->netdev;
-		err = ice_setup_tx_ring(ring);
+		vsi->tx_rings[i]->netdev = vsi->netdev;
+		err = ice_setup_tx_ring(vsi->tx_rings[i]);
 		if (err)
 			break;
 	}
@@ -4002,13 +3996,8 @@ int ice_vsi_setup_rx_rings(struct ice_vsi *vsi)
 	}
 
 	ice_for_each_rxq(vsi, i) {
-		struct ice_ring *ring = vsi->rx_rings[i];
-
-		if (!ring)
-			return -EINVAL;
-
-		ring->netdev = vsi->netdev;
-		err = ice_setup_rx_ring(ring);
+		vsi->rx_rings[i]->netdev = vsi->netdev;
+		err = ice_setup_rx_ring(vsi->rx_rings[i]);
 		if (err)
 			break;
 	}

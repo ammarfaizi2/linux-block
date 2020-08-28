@@ -41,8 +41,7 @@ int tomoyo_update_policy(struct tomoyo_acl_head *new_entry, const int size,
 
 	if (mutex_lock_interruptible(&tomoyo_policy_lock))
 		return -ENOMEM;
-	list_for_each_entry_rcu(entry, list, list,
-				srcu_read_lock_held(&tomoyo_ss)) {
+	list_for_each_entry_rcu(entry, list, list) {
 		if (entry->is_deleted == TOMOYO_GC_IN_PROGRESS)
 			continue;
 		if (!check_duplicate(entry, new_entry))
@@ -120,8 +119,7 @@ int tomoyo_update_domain(struct tomoyo_acl_info *new_entry, const int size,
 	}
 	if (mutex_lock_interruptible(&tomoyo_policy_lock))
 		goto out;
-	list_for_each_entry_rcu(entry, list, list,
-				srcu_read_lock_held(&tomoyo_ss)) {
+	list_for_each_entry_rcu(entry, list, list) {
 		if (entry->is_deleted == TOMOYO_GC_IN_PROGRESS)
 			continue;
 		if (!tomoyo_same_acl_head(entry, new_entry) ||
@@ -168,8 +166,7 @@ void tomoyo_check_acl(struct tomoyo_request_info *r,
 	u16 i = 0;
 
 retry:
-	list_for_each_entry_rcu(ptr, list, list,
-				srcu_read_lock_held(&tomoyo_ss)) {
+	list_for_each_entry_rcu(ptr, list, list) {
 		if (ptr->is_deleted || ptr->type != r->param_type)
 			continue;
 		if (!check_entry(r, ptr))
@@ -301,8 +298,7 @@ static inline bool tomoyo_scan_transition
 {
 	const struct tomoyo_transition_control *ptr;
 
-	list_for_each_entry_rcu(ptr, list, head.list,
-				srcu_read_lock_held(&tomoyo_ss)) {
+	list_for_each_entry_rcu(ptr, list, head.list) {
 		if (ptr->head.is_deleted || ptr->type != type)
 			continue;
 		if (ptr->domainname) {
@@ -739,8 +735,7 @@ retry:
 
 		/* Check 'aggregator' directive. */
 		candidate = &exename;
-		list_for_each_entry_rcu(ptr, list, head.list,
-					srcu_read_lock_held(&tomoyo_ss)) {
+		list_for_each_entry_rcu(ptr, list, head.list) {
 			if (ptr->head.is_deleted ||
 			    !tomoyo_path_matches_pattern(&exename,
 							 ptr->original_name))

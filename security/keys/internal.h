@@ -16,8 +16,6 @@
 #include <linux/keyctl.h>
 #include <linux/refcount.h>
 #include <linux/compat.h>
-#include <linux/mm.h>
-#include <linux/vmalloc.h>
 
 struct iovec;
 
@@ -350,4 +348,5 @@ static inline void key_check(const struct key *key)
 #define key_check(key) do {} while(0)
 
 #endif
+
 #endif /* _INTERNAL_H */

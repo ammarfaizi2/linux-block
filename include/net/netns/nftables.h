@@ -7,7 +7,6 @@
 struct netns_nftables {
 	struct list_head	tables;
 	struct list_head	commit_list;
-	struct list_head	module_list;
 	struct mutex		commit_mutex;
 	unsigned int		base_seq;
 	u8			gencursor;

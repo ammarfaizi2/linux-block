@@ -42,25 +42,29 @@ extern void flush_dcache_page(struct page *page);
 #define flush_dcache_mmap_lock(mapping)		do { } while (0)
 #define flush_dcache_mmap_unlock(mapping)	do { } while (0)
 
-void flush_icache_range(unsigned long start, unsigned long stop);
+extern void flush_icache_range(unsigned long, unsigned long);
 extern void flush_icache_user_range(struct vm_area_struct *vma,
 				    struct page *page, unsigned long addr,
 				    int len);
+extern void __flush_dcache_icache(void *page_va);
 extern void flush_dcache_icache_page(struct page *page);
-void __flush_dcache_icache(void *page);
+#if defined(CONFIG_PPC32) && !defined(CONFIG_BOOKE)
+extern void __flush_dcache_icache_phys(unsigned long physaddr);
+#else
+static inline void __flush_dcache_icache_phys(unsigned long physaddr)
+{
+	BUG();
+}
+#endif
 
-/**
- * flush_dcache_range(): Write any modified data cache blocks out to memory and
- * invalidate them. Does not invalidate the corresponding instruction cache
- * blocks.
- *
- * @start: the start address
- * @stop: the stop address (exclusive)
+/*
+ * Write any modified data cache blocks out to memory and invalidate them.
+ * Does not invalidate the corresponding instruction cache blocks.
  */
 static inline void flush_dcache_range(unsigned long start, unsigned long stop)
 {
-	unsigned long shift = l1_dcache_shift();
-	unsigned long bytes = l1_dcache_bytes();
+	unsigned long shift = l1_cache_shift();
+	unsigned long bytes = l1_cache_bytes();
 	void *addr = (void *)(start & ~(bytes - 1));
 	unsigned long size = stop - (unsigned long)addr + (bytes - 1);
 	unsigned long i;
@@ -85,8 +89,8 @@ static inline void flush_dcache_range(unsigned long start, unsigned long stop)
  */
 static inline void clean_dcache_range(unsigned long start, unsigned long stop)
 {
-	unsigned long shift = l1_dcache_shift();
-	unsigned long bytes = l1_dcache_bytes();
+	unsigned long shift = l1_cache_shift();
+	unsigned long bytes = l1_cache_bytes();
 	void *addr = (void *)(start & ~(bytes - 1));
 	unsigned long size = stop - (unsigned long)addr + (bytes - 1);
 	unsigned long i;
@@ -104,8 +108,8 @@ static inline void clean_dcache_range(unsigned long start, unsigned long stop)
 static inline void invalidate_dcache_range(unsigned long start,
 					   unsigned long stop)
 {
-	unsigned long shift = l1_dcache_shift();
-	unsigned long bytes = l1_dcache_bytes();
+	unsigned long shift = l1_cache_shift();
+	unsigned long bytes = l1_cache_bytes();
 	void *addr = (void *)(start & ~(bytes - 1));
 	unsigned long size = stop - (unsigned long)addr + (bytes - 1);
 	unsigned long i;

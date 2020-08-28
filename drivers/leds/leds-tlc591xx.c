@@ -13,7 +13,6 @@
 #include <linux/slab.h>
 
 #define TLC591XX_MAX_LEDS	16
-#define TLC591XX_MAX_BRIGHTNESS	256
 
 #define TLC591XX_REG_MODE1	0x00
 #define MODE1_RESPON_ADDR_MASK	0xF0
@@ -113,11 +112,11 @@ tlc591xx_brightness_set(struct led_classdev *led_cdev,
 	struct tlc591xx_priv *priv = led->priv;
 	int err;
 
-	switch ((int)brightness) {
+	switch (brightness) {
 	case 0:
 		err = tlc591xx_set_ledout(priv, led, LEDOUT_OFF);
 		break;
-	case TLC591XX_MAX_BRIGHTNESS:
+	case LED_FULL:
 		err = tlc591xx_set_ledout(priv, led, LEDOUT_ON);
 		break;
 	default:
@@ -158,7 +157,7 @@ tlc591xx_configure(struct device *dev,
 		led->priv = priv;
 		led->led_no = i;
 		led->ldev.brightness_set_blocking = tlc591xx_brightness_set;
-		led->ldev.max_brightness = TLC591XX_MAX_BRIGHTNESS;
+		led->ldev.max_brightness = LED_FULL;
 		err = led_classdev_register(dev, &led->ldev);
 		if (err < 0) {
 			dev_err(dev, "couldn't register LED %s\n",

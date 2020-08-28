@@ -352,7 +352,7 @@ DECLARE_EVENT_CLASS(nfs4_clientid_event,
 		),
 
 		TP_fast_assign(
-			__entry->error = error < 0 ? -error : 0;
+			__entry->error = error;
 			__assign_str(dstaddr, clp->cl_hostname);
 		),
 
@@ -432,8 +432,7 @@ TRACE_EVENT(nfs4_sequence_done,
 			__entry->target_highest_slotid =
 					res->sr_target_highest_slotid;
 			__entry->status_flags = res->sr_status_flags;
-			__entry->error = res->sr_status < 0 ?
-					-res->sr_status : 0;
+			__entry->error = res->sr_status;
 		),
 		TP_printk(
 			"error=%ld (%s) session=0x%08x slot_nr=%u seq_nr=%u "
@@ -567,7 +566,7 @@ TRACE_EVENT(nfs4_xdr_status,
 		TP_PROTO(
 			const struct xdr_stream *xdr,
 			u32 op,
-			u32 error
+			int error
 		),
 
 		TP_ARGS(xdr, op, error),
@@ -757,7 +756,7 @@ TRACE_EVENT(nfs4_close,
 			__entry->fileid = NFS_FILEID(inode);
 			__entry->fhandle = nfs_fhandle_hash(NFS_FH(inode));
 			__entry->fmode = (__force unsigned int)state->state;
-			__entry->error = error < 0 ? -error : 0;
+			__entry->error = error;
 			__entry->stateid_seq =
 				be32_to_cpu(args->stateid.seqid);
 			__entry->stateid_hash =
@@ -822,7 +821,7 @@ DECLARE_EVENT_CLASS(nfs4_lock_event,
 		TP_fast_assign(
 			const struct inode *inode = state->inode;
 
-			__entry->error = error < 0 ? -error : 0;
+			__entry->error = error;
 			__entry->cmd = cmd;
 			__entry->type = request->fl_type;
 			__entry->start = request->fl_start;
@@ -894,7 +893,7 @@ TRACE_EVENT(nfs4_set_lock,
 		TP_fast_assign(
 			const struct inode *inode = state->inode;
 
-			__entry->error = error < 0 ? -error : 0;
+			__entry->error = error;
 			__entry->cmd = cmd;
 			__entry->type = request->fl_type;
 			__entry->start = request->fl_start;
@@ -990,7 +989,7 @@ TRACE_EVENT(nfs4_delegreturn_exit,
 		TP_fast_assign(
 			__entry->dev = res->server->s_dev;
 			__entry->fhandle = nfs_fhandle_hash(args->fhandle);
-			__entry->error = error < 0 ? -error : 0;
+			__entry->error = error;
 			__entry->stateid_seq =
 				be32_to_cpu(args->stateid->seqid);
 			__entry->stateid_hash =
@@ -1030,7 +1029,7 @@ DECLARE_EVENT_CLASS(nfs4_test_stateid_event,
 		TP_fast_assign(
 			const struct inode *inode = state->inode;
 
-			__entry->error = error < 0 ? -error : 0;
+			__entry->error = error;
 			__entry->dev = inode->i_sb->s_dev;
 			__entry->fileid = NFS_FILEID(inode);
 			__entry->fhandle = nfs_fhandle_hash(NFS_FH(inode));
@@ -1132,7 +1131,7 @@ TRACE_EVENT(nfs4_lookupp,
 		TP_fast_assign(
 			__entry->dev = inode->i_sb->s_dev;
 			__entry->ino = NFS_FILEID(inode);
-			__entry->error = error < 0 ? -error : 0;
+			__entry->error = error;
 		),
 
 		TP_printk(
@@ -1168,7 +1167,7 @@ TRACE_EVENT(nfs4_rename,
 			__entry->dev = olddir->i_sb->s_dev;
 			__entry->olddir = NFS_FILEID(olddir);
 			__entry->newdir = NFS_FILEID(newdir);
-			__entry->error = error < 0 ? -error : 0;
+			__entry->error = error;
 			__assign_str(oldname, oldname->name);
 			__assign_str(newname, newname->name);
 		),
@@ -1259,7 +1258,7 @@ DECLARE_EVENT_CLASS(nfs4_inode_stateid_event,
 			__entry->dev = inode->i_sb->s_dev;
 			__entry->fileid = NFS_FILEID(inode);
 			__entry->fhandle = nfs_fhandle_hash(NFS_FH(inode));
-			__entry->error = error < 0 ? -error : 0;
+			__entry->error = error;
 			__entry->stateid_seq =
 				be32_to_cpu(stateid->seqid);
 			__entry->stateid_hash =
@@ -1315,7 +1314,7 @@ DECLARE_EVENT_CLASS(nfs4_getattr_event,
 			__entry->valid = fattr->valid;
 			__entry->fhandle = nfs_fhandle_hash(fhandle);
 			__entry->fileid = (fattr->valid & NFS_ATTR_FATTR_FILEID) ? fattr->fileid : 0;
-			__entry->error = error < 0 ? -error : 0;
+			__entry->error = error;
 		),
 
 		TP_printk(
@@ -1362,7 +1361,7 @@ DECLARE_EVENT_CLASS(nfs4_inode_callback_event,
 		),
 
 		TP_fast_assign(
-			__entry->error = error < 0 ? -error : 0;
+			__entry->error = error;
 			__entry->fhandle = nfs_fhandle_hash(fhandle);
 			if (!IS_ERR_OR_NULL(inode)) {
 				__entry->fileid = NFS_FILEID(inode);
@@ -1419,7 +1418,7 @@ DECLARE_EVENT_CLASS(nfs4_inode_stateid_callback_event,
 		),
 
 		TP_fast_assign(
-			__entry->error = error < 0 ? -error : 0;
+			__entry->error = error;
 			__entry->fhandle = nfs_fhandle_hash(fhandle);
 			if (!IS_ERR_OR_NULL(inode)) {
 				__entry->fileid = NFS_FILEID(inode);
@@ -1722,7 +1721,7 @@ TRACE_EVENT(nfs4_layoutget,
 			__entry->iomode = args->iomode;
 			__entry->offset = args->offset;
 			__entry->count = args->length;
-			__entry->error = error < 0 ? -error : 0;
+			__entry->error = error;
 			__entry->stateid_seq =
 				be32_to_cpu(state->stateid.seqid);
 			__entry->stateid_hash =

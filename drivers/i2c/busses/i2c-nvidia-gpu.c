@@ -8,7 +8,6 @@
 #include <linux/delay.h>
 #include <linux/i2c.h>
 #include <linux/interrupt.h>
-#include <linux/iopoll.h>
 #include <linux/module.h>
 #include <linux/pci.h>
 #include <linux/platform_device.h>
@@ -76,15 +75,20 @@ static void gpu_enable_i2c_bus(struct gpu_i2c_dev *i2cd)
 
 static int gpu_i2c_check_status(struct gpu_i2c_dev *i2cd)
 {
+	unsigned long target = jiffies + msecs_to_jiffies(1000);
 	u32 val;
-	int ret;
 
-	ret = readl_poll_timeout(i2cd->regs + I2C_MST_CNTL, val,
-				 !(val & I2C_MST_CNTL_CYCLE_TRIGGER) ||
-				 (val & I2C_MST_CNTL_STATUS) != I2C_MST_CNTL_STATUS_BUS_BUSY,
-				 500, 1000 * USEC_PER_MSEC);
+	do {
+		val = readl(i2cd->regs + I2C_MST_CNTL);
+		if (!(val & I2C_MST_CNTL_CYCLE_TRIGGER))
+			break;
+		if ((val & I2C_MST_CNTL_STATUS) !=
+				I2C_MST_CNTL_STATUS_BUS_BUSY)
+			break;
+		usleep_range(500, 600);
+	} while (time_is_after_jiffies(target));
 
-	if (ret) {
+	if (time_is_before_jiffies(target)) {
 		dev_err(i2cd->dev, "i2c timeout error %x\n", val);
 		return -ETIMEDOUT;
 	}

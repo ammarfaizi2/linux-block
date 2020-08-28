@@ -5,17 +5,12 @@ pe_ok() {
 	local dev="$1"
 	local path="/sys/bus/pci/devices/$dev/eeh_pe_state"
 
-	# if a driver doesn't support the error handling callbacks then the
-	# device is recovered by removing and re-probing it. This causes the
-	# sysfs directory to disappear so read the PE state once and squash
-	# any potential error messages
-	local eeh_state="$(cat $path 2>/dev/null)"
-	if [ -z "$eeh_state" ]; then
+	if ! [ -e "$path" ] ; then
 		return 1;
 	fi
 
-	local fw_state="$(echo $eeh_state | cut -d' ' -f1)"
-	local sw_state="$(echo $eeh_state | cut -d' ' -f2)"
+	local fw_state="$(cut -d' ' -f1 < $path)"
+	local sw_state="$(cut -d' ' -f2 < $path)"
 
 	# If EEH_PE_ISOLATED or EEH_PE_RECOVERING are set then the PE is in an
 	# error state or being recovered. Either way, not ok.
@@ -58,13 +53,9 @@ eeh_one_dev() {
 	# is a no-op.
 	echo $dev >/sys/kernel/debug/powerpc/eeh_dev_check
 
-	# Default to a 60s timeout when waiting for a device to recover. This
-	# is an arbitrary default which can be overridden by setting the
-	# EEH_MAX_WAIT environmental variable when required.
-
-	# The current record holder for longest recovery time is:
-	#  "Adaptec Series 8 12G SAS/PCIe 3" at 39 seconds
-	max_wait=${EEH_MAX_WAIT:=60}
+	# Enforce a 30s timeout for recovery. Even the IPR, which is infamously
+	# slow to reset, should recover within 30s.
+	max_wait=30
 
 	for i in `seq 0 ${max_wait}` ; do
 		if pe_ok $dev ; then

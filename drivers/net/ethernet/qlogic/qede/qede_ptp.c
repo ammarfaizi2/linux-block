@@ -411,7 +411,6 @@ void qede_ptp_disable(struct qede_dev *edev)
 	if (ptp->tx_skb) {
 		dev_kfree_skb_any(ptp->tx_skb);
 		ptp->tx_skb = NULL;
-		clear_bit_unlock(QEDE_FLAGS_PTP_TX_IN_PRORGESS, &edev->flags);
 	}
 
 	/* Disable PTP in HW */
@@ -423,7 +422,7 @@ void qede_ptp_disable(struct qede_dev *edev)
 	edev->ptp = NULL;
 }
 
-static int qede_ptp_init(struct qede_dev *edev)
+static int qede_ptp_init(struct qede_dev *edev, bool init_tc)
 {
 	struct qede_ptp *ptp;
 	int rc;
@@ -444,19 +443,25 @@ static int qede_ptp_init(struct qede_dev *edev)
 	/* Init work queue for Tx timestamping */
 	INIT_WORK(&ptp->work, qede_ptp_task);
 
-	/* Init cyclecounter and timecounter */
-	memset(&ptp->cc, 0, sizeof(ptp->cc));
-	ptp->cc.read = qede_ptp_read_cc;
-	ptp->cc.mask = CYCLECOUNTER_MASK(64);
-	ptp->cc.shift = 0;
-	ptp->cc.mult = 1;
+	/* Init cyclecounter and timecounter. This is done only in the first
+	 * load. If done in every load, PTP application will fail when doing
+	 * unload / load (e.g. MTU change) while it is running.
+	 */
+	if (init_tc) {
+		memset(&ptp->cc, 0, sizeof(ptp->cc));
+		ptp->cc.read = qede_ptp_read_cc;
+		ptp->cc.mask = CYCLECOUNTER_MASK(64);
+		ptp->cc.shift = 0;
+		ptp->cc.mult = 1;
 
-	timecounter_init(&ptp->tc, &ptp->cc, ktime_to_ns(ktime_get_real()));
+		timecounter_init(&ptp->tc, &ptp->cc,
+				 ktime_to_ns(ktime_get_real()));
+	}
 
-	return 0;
+	return rc;
 }
 
-int qede_ptp_enable(struct qede_dev *edev)
+int qede_ptp_enable(struct qede_dev *edev, bool init_tc)
 {
 	struct qede_ptp *ptp;
 	int rc;
@@ -477,7 +482,7 @@ int qede_ptp_enable(struct qede_dev *edev)
 
 	edev->ptp = ptp;
 
-	rc = qede_ptp_init(edev);
+	rc = qede_ptp_init(edev, init_tc);
 	if (rc)
 		goto err1;
 

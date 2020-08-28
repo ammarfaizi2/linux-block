@@ -258,7 +258,7 @@ static int kvm_vcpu_enable_ptrauth(struct kvm_vcpu *vcpu)
 int kvm_reset_vcpu(struct kvm_vcpu *vcpu)
 {
 	const struct kvm_regs *cpu_reset;
-	int ret;
+	int ret = -EINVAL;
 	bool loaded;
 
 	/* Reset PMU outside of the non-preemptible section */
@@ -281,19 +281,15 @@ int kvm_reset_vcpu(struct kvm_vcpu *vcpu)
 
 	if (test_bit(KVM_ARM_VCPU_PTRAUTH_ADDRESS, vcpu->arch.features) ||
 	    test_bit(KVM_ARM_VCPU_PTRAUTH_GENERIC, vcpu->arch.features)) {
-		if (kvm_vcpu_enable_ptrauth(vcpu)) {
-			ret = -EINVAL;
+		if (kvm_vcpu_enable_ptrauth(vcpu))
 			goto out;
-		}
 	}
 
 	switch (vcpu->arch.target) {
 	default:
 		if (test_bit(KVM_ARM_VCPU_EL1_32BIT, vcpu->arch.features)) {
-			if (!cpu_has_32bit_el1()) {
-				ret = -EINVAL;
+			if (!cpu_has_32bit_el1())
 				goto out;
-			}
 			cpu_reset = &default_regs_reset32;
 		} else {
 			cpu_reset = &default_regs_reset;

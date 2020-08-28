@@ -79,27 +79,6 @@ qedr_fill_sockaddr6(const struct qed_iwarp_cm_info *cm_info,
 	}
 }
 
-static void qedr_iw_free_qp(struct kref *ref)
-{
-	struct qedr_qp *qp = container_of(ref, struct qedr_qp, refcnt);
-
-	kfree(qp);
-}
-
-static void
-qedr_iw_free_ep(struct kref *ref)
-{
-	struct qedr_iw_ep *ep = container_of(ref, struct qedr_iw_ep, refcnt);
-
-	if (ep->qp)
-		kref_put(&ep->qp->refcnt, qedr_iw_free_qp);
-
-	if (ep->cm_id)
-		ep->cm_id->rem_ref(ep->cm_id);
-
-	kfree(ep);
-}
-
 static void
 qedr_iw_mpa_request(void *context, struct qed_iwarp_cm_event_params *params)
 {
@@ -114,7 +93,6 @@ qedr_iw_mpa_request(void *context, struct qed_iwarp_cm_event_params *params)
 
 	ep->dev = dev;
 	ep->qed_context = params->ep_context;
-	kref_init(&ep->refcnt);
 
 	memset(&event, 0, sizeof(event));
 	event.event = IW_CM_EVENT_CONNECT_REQUEST;
@@ -150,17 +128,8 @@ qedr_iw_issue_event(void *context,
 	if (params->cm_info) {
 		event.ird = params->cm_info->ird;
 		event.ord = params->cm_info->ord;
-		/* Only connect_request and reply have valid private data
-		 * the rest of the events this may be left overs from
-		 * connection establishment. CONNECT_REQUEST is issued via
-		 * qedr_iw_mpa_request
-		 */
-		if (event_type == IW_CM_EVENT_CONNECT_REPLY) {
-			event.private_data_len =
-				params->cm_info->private_data_len;
-			event.private_data =
-				(void *)params->cm_info->private_data;
-		}
+		event.private_data_len = params->cm_info->private_data_len;
+		event.private_data = (void *)params->cm_info->private_data;
 	}
 
 	if (ep->cm_id)
@@ -172,10 +141,12 @@ qedr_iw_close_event(void *context, struct qed_iwarp_cm_event_params *params)
 {
 	struct qedr_iw_ep *ep = (struct qedr_iw_ep *)context;
 
-	if (ep->cm_id)
+	if (ep->cm_id) {
 		qedr_iw_issue_event(context, params, IW_CM_EVENT_CLOSE);
 
-	kref_put(&ep->refcnt, qedr_iw_free_ep);
+		ep->cm_id->rem_ref(ep->cm_id);
+		ep->cm_id = NULL;
+	}
 }
 
 static void
@@ -215,13 +186,11 @@ static void qedr_iw_disconnect_worker(struct work_struct *work)
 	struct qedr_qp *qp = ep->qp;
 	struct iw_cm_event event;
 
-	/* The qp won't be released until we release the ep.
-	 * the ep's refcnt was increased before calling this
-	 * function, therefore it is safe to access qp
-	 */
-	if (test_and_set_bit(QEDR_IWARP_CM_WAIT_FOR_DISCONNECT,
-			     &qp->iwarp_cm_flags))
-		goto out;
+	if (qp->destroyed) {
+		kfree(dwork);
+		qedr_iw_qp_rem_ref(&qp->ibqp);
+		return;
+	}
 
 	memset(&event, 0, sizeof(event));
 	event.status = dwork->status;
@@ -235,6 +204,7 @@ static void qedr_iw_disconnect_worker(struct work_struct *work)
 	else
 		qp_params.new_state = QED_ROCE_QP_STATE_SQD;
 
+	kfree(dwork);
 
 	if (ep->cm_id)
 		ep->cm_id->event_handler(ep->cm_id, &event);
@@ -244,10 +214,7 @@ static void qedr_iw_disconnect_worker(struct work_struct *work)
 
 	dev->ops->rdma_modify_qp(dev->rdma_ctx, qp->qed_qp, &qp_params);
 
-	complete(&ep->qp->iwarp_cm_comp);
-out:
-	kfree(dwork);
-	kref_put(&ep->refcnt, qedr_iw_free_ep);
+	qedr_iw_qp_rem_ref(&qp->ibqp);
 }
 
 static void
@@ -257,17 +224,13 @@ qedr_iw_disconnect_event(void *context,
 	struct qedr_discon_work *work;
 	struct qedr_iw_ep *ep = (struct qedr_iw_ep *)context;
 	struct qedr_dev *dev = ep->dev;
+	struct qedr_qp *qp = ep->qp;
 
 	work = kzalloc(sizeof(*work), GFP_ATOMIC);
 	if (!work)
 		return;
 
-	/* We can't get a close event before disconnect, but since
-	 * we're scheduling a work queue we need to make sure close
-	 * won't delete the ep, so we increase the refcnt
-	 */
-	kref_get(&ep->refcnt);
-
+	qedr_iw_qp_add_ref(&qp->ibqp);
 	work->ep = ep;
 	work->event = params->event;
 	work->status = params->status;
@@ -289,28 +252,14 @@ qedr_iw_passive_complete(void *context,
 	if ((params->status == -ECONNREFUSED) && (!ep->qp)) {
 		DP_DEBUG(dev, QEDR_MSG_IWARP,
 			 "PASSIVE connection refused releasing ep...\n");
-		kref_put(&ep->refcnt, qedr_iw_free_ep);
+		kfree(ep);
 		return;
 	}
 
-	complete(&ep->qp->iwarp_cm_comp);
 	qedr_iw_issue_event(context, params, IW_CM_EVENT_ESTABLISHED);
 
 	if (params->status < 0)
 		qedr_iw_close_event(context, params);
-}
-
-static void
-qedr_iw_active_complete(void *context,
-			struct qed_iwarp_cm_event_params *params)
-{
-	struct qedr_iw_ep *ep = (struct qedr_iw_ep *)context;
-
-	complete(&ep->qp->iwarp_cm_comp);
-	qedr_iw_issue_event(context, params, IW_CM_EVENT_CONNECT_REPLY);
-
-	if (params->status < 0)
-		kref_put(&ep->refcnt, qedr_iw_free_ep);
 }
 
 static int
@@ -339,15 +288,27 @@ qedr_iw_event_handler(void *context, struct qed_iwarp_cm_event_params *params)
 		qedr_iw_mpa_reply(context, params);
 		break;
 	case QED_IWARP_EVENT_PASSIVE_COMPLETE:
+		ep->during_connect = 0;
 		qedr_iw_passive_complete(context, params);
 		break;
+
 	case QED_IWARP_EVENT_ACTIVE_COMPLETE:
-		qedr_iw_active_complete(context, params);
+		ep->during_connect = 0;
+		qedr_iw_issue_event(context,
+				    params,
+				    IW_CM_EVENT_CONNECT_REPLY);
+		if (params->status < 0) {
+			struct qedr_iw_ep *ep = (struct qedr_iw_ep *)context;
+
+			ep->cm_id->rem_ref(ep->cm_id);
+			ep->cm_id = NULL;
+		}
 		break;
 	case QED_IWARP_EVENT_DISCONNECT:
 		qedr_iw_disconnect_event(context, params);
 		break;
 	case QED_IWARP_EVENT_CLOSE:
+		ep->during_connect = 0;
 		qedr_iw_close_event(context, params);
 		break;
 	case QED_IWARP_EVENT_RQ_EMPTY:
@@ -515,19 +476,6 @@ qedr_addr6_resolve(struct qedr_dev *dev,
 	return rc;
 }
 
-struct qedr_qp *qedr_iw_load_qp(struct qedr_dev *dev, u32 qpn)
-{
-	struct qedr_qp *qp;
-
-	xa_lock(&dev->qps);
-	qp = xa_load(&dev->qps, qpn);
-	if (qp)
-		kref_get(&qp->refcnt);
-	xa_unlock(&dev->qps);
-
-	return qp;
-}
-
 int qedr_iw_connect(struct iw_cm_id *cm_id, struct iw_cm_conn_param *conn_param)
 {
 	struct qedr_dev *dev = get_qedr_dev(cm_id->device);
@@ -542,6 +490,10 @@ int qedr_iw_connect(struct iw_cm_id *cm_id, struct iw_cm_conn_param *conn_param)
 	struct qedr_qp *qp;
 	int rc = 0;
 	int i;
+
+	qp = xa_load(&dev->qps, conn_param->qpn);
+	if (unlikely(!qp))
+		return -EINVAL;
 
 	laddr = (struct sockaddr_in *)&cm_id->m_local_addr;
 	raddr = (struct sockaddr_in *)&cm_id->m_remote_addr;
@@ -564,15 +516,8 @@ int qedr_iw_connect(struct iw_cm_id *cm_id, struct iw_cm_conn_param *conn_param)
 		return -ENOMEM;
 
 	ep->dev = dev;
-	kref_init(&ep->refcnt);
-
-	qp = qedr_iw_load_qp(dev, conn_param->qpn);
-	if (!qp) {
-		rc = -EINVAL;
-		goto err;
-	}
-
 	ep->qp = qp;
+	qp->ep = ep;
 	cm_id->add_ref(cm_id);
 	ep->cm_id = cm_id;
 
@@ -635,20 +580,16 @@ int qedr_iw_connect(struct iw_cm_id *cm_id, struct iw_cm_conn_param *conn_param)
 	in_params.qp = qp->qed_qp;
 	memcpy(in_params.local_mac_addr, dev->ndev->dev_addr, ETH_ALEN);
 
-	if (test_and_set_bit(QEDR_IWARP_CM_WAIT_FOR_CONNECT,
-			     &qp->iwarp_cm_flags))
-		goto err; /* QP already being destroyed */
-
+	ep->during_connect = 1;
 	rc = dev->ops->iwarp_connect(dev->rdma_ctx, &in_params, &out_params);
-	if (rc) {
-		complete(&qp->iwarp_cm_comp);
+	if (rc)
 		goto err;
-	}
 
 	return rc;
 
 err:
-	kref_put(&ep->refcnt, qedr_iw_free_ep);
+	cm_id->rem_ref(cm_id);
+	kfree(ep);
 	return rc;
 }
 
@@ -736,17 +677,18 @@ int qedr_iw_accept(struct iw_cm_id *cm_id, struct iw_cm_conn_param *conn_param)
 	struct qedr_dev *dev = ep->dev;
 	struct qedr_qp *qp;
 	struct qed_iwarp_accept_in params;
-	int rc = 0;
+	int rc;
 
 	DP_DEBUG(dev, QEDR_MSG_IWARP, "Accept on qpid=%d\n", conn_param->qpn);
 
-	qp = qedr_iw_load_qp(dev, conn_param->qpn);
+	qp = xa_load(&dev->qps, conn_param->qpn);
 	if (!qp) {
 		DP_ERR(dev, "Invalid QP number %d\n", conn_param->qpn);
 		return -EINVAL;
 	}
 
 	ep->qp = qp;
+	qp->ep = ep;
 	cm_id->add_ref(cm_id);
 	ep->cm_id = cm_id;
 
@@ -758,21 +700,15 @@ int qedr_iw_accept(struct iw_cm_id *cm_id, struct iw_cm_conn_param *conn_param)
 	params.ird = conn_param->ird;
 	params.ord = conn_param->ord;
 
-	if (test_and_set_bit(QEDR_IWARP_CM_WAIT_FOR_CONNECT,
-			     &qp->iwarp_cm_flags))
-		goto err; /* QP already destroyed */
-
+	ep->during_connect = 1;
 	rc = dev->ops->iwarp_accept(dev->rdma_ctx, &params);
-	if (rc) {
-		complete(&qp->iwarp_cm_comp);
+	if (rc)
 		goto err;
-	}
 
 	return rc;
-
 err:
-	kref_put(&ep->refcnt, qedr_iw_free_ep);
-
+	ep->during_connect = 0;
+	cm_id->rem_ref(cm_id);
 	return rc;
 }
 
@@ -795,14 +731,17 @@ void qedr_iw_qp_add_ref(struct ib_qp *ibqp)
 {
 	struct qedr_qp *qp = get_qedr_qp(ibqp);
 
-	kref_get(&qp->refcnt);
+	atomic_inc(&qp->refcnt);
 }
 
 void qedr_iw_qp_rem_ref(struct ib_qp *ibqp)
 {
 	struct qedr_qp *qp = get_qedr_qp(ibqp);
 
-	kref_put(&qp->refcnt, qedr_iw_free_qp);
+	if (atomic_dec_and_test(&qp->refcnt)) {
+		xa_erase_irq(&qp->dev->qps, qp->qp_id);
+		kfree(qp);
+	}
 }
 
 struct ib_qp *qedr_iw_get_qp(struct ib_device *ibdev, int qpn)

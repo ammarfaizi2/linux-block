@@ -382,8 +382,6 @@ ip_set_elem_len(struct ip_set *set, struct nlattr *tb[], size_t len,
 	for (id = 0; id < IPSET_EXT_ID_MAX; id++) {
 		if (!add_extension(id, cadt_flags, tb))
 			continue;
-		if (align < ip_set_extensions[id].align)
-			align = ip_set_extensions[id].align;
 		len = ALIGN(len, ip_set_extensions[id].align);
 		set->offset[id] = len;
 		set->extensions |= ip_set_extensions[id].type;
@@ -559,20 +557,6 @@ ip_set_rcu_get(struct net *net, ip_set_id_t index)
 	return set;
 }
 
-static inline void
-ip_set_lock(struct ip_set *set)
-{
-	if (!set->variant->region_lock)
-		spin_lock_bh(&set->lock);
-}
-
-static inline void
-ip_set_unlock(struct ip_set *set)
-{
-	if (!set->variant->region_lock)
-		spin_unlock_bh(&set->lock);
-}
-
 int
 ip_set_test(ip_set_id_t index, const struct sk_buff *skb,
 	    const struct xt_action_param *par, struct ip_set_adt_opt *opt)
@@ -594,9 +578,9 @@ ip_set_test(ip_set_id_t index, const struct sk_buff *skb,
 	if (ret == -EAGAIN) {
 		/* Type requests element to be completed */
 		pr_debug("element must be completed, ADD is triggered\n");
-		ip_set_lock(set);
+		spin_lock_bh(&set->lock);
 		set->variant->kadt(set, skb, par, IPSET_ADD, opt);
-		ip_set_unlock(set);
+		spin_unlock_bh(&set->lock);
 		ret = 1;
 	} else {
 		/* --return-nomatch: invert matched element */
@@ -625,9 +609,9 @@ ip_set_add(ip_set_id_t index, const struct sk_buff *skb,
 	    !(opt->family == set->family || set->family == NFPROTO_UNSPEC))
 		return -IPSET_ERR_TYPE_MISMATCH;
 
-	ip_set_lock(set);
+	spin_lock_bh(&set->lock);
 	ret = set->variant->kadt(set, skb, par, IPSET_ADD, opt);
-	ip_set_unlock(set);
+	spin_unlock_bh(&set->lock);
 
 	return ret;
 }
@@ -647,9 +631,9 @@ ip_set_del(ip_set_id_t index, const struct sk_buff *skb,
 	    !(opt->family == set->family || set->family == NFPROTO_UNSPEC))
 		return -IPSET_ERR_TYPE_MISMATCH;
 
-	ip_set_lock(set);
+	spin_lock_bh(&set->lock);
 	ret = set->variant->kadt(set, skb, par, IPSET_DEL, opt);
-	ip_set_unlock(set);
+	spin_unlock_bh(&set->lock);
 
 	return ret;
 }
@@ -1114,9 +1098,9 @@ ip_set_flush_set(struct ip_set *set)
 {
 	pr_debug("set: %s\n",  set->name);
 
-	ip_set_lock(set);
+	spin_lock_bh(&set->lock);
 	set->variant->flush(set);
-	ip_set_unlock(set);
+	spin_unlock_bh(&set->lock);
 }
 
 static int ip_set_flush(struct net *net, struct sock *ctnl, struct sk_buff *skb,
@@ -1309,34 +1293,31 @@ ip_set_dump_policy[IPSET_ATTR_CMD_MAX + 1] = {
 };
 
 static int
-ip_set_dump_start(struct netlink_callback *cb)
+dump_init(struct netlink_callback *cb, struct ip_set_net *inst)
 {
 	struct nlmsghdr *nlh = nlmsg_hdr(cb->skb);
 	int min_len = nlmsg_total_size(sizeof(struct nfgenmsg));
 	struct nlattr *cda[IPSET_ATTR_CMD_MAX + 1];
 	struct nlattr *attr = (void *)nlh + min_len;
-	struct sk_buff *skb = cb->skb;
-	struct ip_set_net *inst = ip_set_pernet(sock_net(skb->sk));
 	u32 dump_type;
+	ip_set_id_t index;
 	int ret;
 
 	ret = nla_parse(cda, IPSET_ATTR_CMD_MAX, attr,
 			nlh->nlmsg_len - min_len,
 			ip_set_dump_policy, NULL);
 	if (ret)
-		goto error;
+		return ret;
 
 	cb->args[IPSET_CB_PROTO] = nla_get_u8(cda[IPSET_ATTR_PROTOCOL]);
 	if (cda[IPSET_ATTR_SETNAME]) {
-		ip_set_id_t index;
 		struct ip_set *set;
 
 		set = find_set_and_id(inst, nla_data(cda[IPSET_ATTR_SETNAME]),
 				      &index);
-		if (!set) {
-			ret = -ENOENT;
-			goto error;
-		}
+		if (!set)
+			return -ENOENT;
+
 		dump_type = DUMP_ONE;
 		cb->args[IPSET_CB_INDEX] = index;
 	} else {
@@ -1352,17 +1333,10 @@ ip_set_dump_start(struct netlink_callback *cb)
 	cb->args[IPSET_CB_DUMP] = dump_type;
 
 	return 0;
-
-error:
-	/* We have to create and send the error message manually :-( */
-	if (nlh->nlmsg_flags & NLM_F_ACK) {
-		netlink_ack(cb->skb, nlh, ret, NULL);
-	}
-	return ret;
 }
 
 static int
-ip_set_dump_do(struct sk_buff *skb, struct netlink_callback *cb)
+ip_set_dump_start(struct sk_buff *skb, struct netlink_callback *cb)
 {
 	ip_set_id_t index = IPSET_INVALID_ID, max;
 	struct ip_set *set = NULL;
@@ -1373,8 +1347,18 @@ ip_set_dump_do(struct sk_buff *skb, struct netlink_callback *cb)
 	bool is_destroyed;
 	int ret = 0;
 
-	if (!cb->args[IPSET_CB_DUMP])
-		return -EINVAL;
+	if (!cb->args[IPSET_CB_DUMP]) {
+		ret = dump_init(cb, inst);
+		if (ret < 0) {
+			nlh = nlmsg_hdr(cb->skb);
+			/* We have to create and send the error message
+			 * manually :-(
+			 */
+			if (nlh->nlmsg_flags & NLM_F_ACK)
+				netlink_ack(cb->skb, nlh, ret, NULL);
+			return ret;
+		}
+	}
 
 	if (cb->args[IPSET_CB_INDEX] >= inst->ip_set_max)
 		goto out;
@@ -1510,8 +1494,7 @@ static int ip_set_dump(struct net *net, struct sock *ctnl, struct sk_buff *skb,
 
 	{
 		struct netlink_dump_control c = {
-			.start = ip_set_dump_start,
-			.dump = ip_set_dump_do,
+			.dump = ip_set_dump_start,
 			.done = ip_set_dump_done,
 		};
 		return netlink_dump_start(ctnl, skb, nlh, &c);
@@ -1539,9 +1522,9 @@ call_ad(struct sock *ctnl, struct sk_buff *skb, struct ip_set *set,
 	bool eexist = flags & IPSET_FLAG_EXIST, retried = false;
 
 	do {
-		ip_set_lock(set);
+		spin_lock_bh(&set->lock);
 		ret = set->variant->uadt(set, tb, adt, &lineno, flags, retried);
-		ip_set_unlock(set);
+		spin_unlock_bh(&set->lock);
 		retried = true;
 	} while (ret == -EAGAIN &&
 		 set->variant->resize &&
@@ -1675,7 +1658,6 @@ static int ip_set_utest(struct net *net, struct sock *ctnl, struct sk_buff *skb,
 	struct ip_set *set;
 	struct nlattr *tb[IPSET_ATTR_ADT_MAX + 1] = {};
 	int ret = 0;
-	u32 lineno;
 
 	if (unlikely(protocol_min_failed(attr) ||
 		     !attr[IPSET_ATTR_SETNAME] ||
@@ -1692,7 +1674,7 @@ static int ip_set_utest(struct net *net, struct sock *ctnl, struct sk_buff *skb,
 		return -IPSET_ERR_PROTOCOL;
 
 	rcu_read_lock_bh();
-	ret = set->variant->uadt(set, tb, IPSET_TEST, &lineno, 0, 0);
+	ret = set->variant->uadt(set, tb, IPSET_TEST, NULL, 0, 0);
 	rcu_read_unlock_bh();
 	/* Userspace can't trigger element to be re-added */
 	if (ret == -EAGAIN)

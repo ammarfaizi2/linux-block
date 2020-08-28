@@ -1074,6 +1074,19 @@ int f2fs_preallocate_blocks(struct kiocb *iocb, struct iov_iter *from)
 	int err = 0;
 	bool direct_io = iocb->ki_flags & IOCB_DIRECT;
 
+	/* convert inline data for Direct I/O*/
+	if (direct_io) {
+		err = f2fs_convert_inline_inode(inode);
+		if (err)
+			return err;
+	}
+
+	if (direct_io && allow_outplace_dio(inode, iocb, from))
+		return 0;
+
+	if (is_inode_flag_set(inode, FI_NO_PREALLOC))
+		return 0;
+
 	map.m_lblk = F2FS_BLK_ALIGN(iocb->ki_pos);
 	map.m_len = F2FS_BYTES_TO_BLK(iocb->ki_pos + iov_iter_count(from));
 	if (map.m_len > map.m_lblk)
@@ -2085,7 +2098,7 @@ static int __write_data_page(struct page *page, bool *submitted,
 	loff_t i_size = i_size_read(inode);
 	const pgoff_t end_index = ((unsigned long long) i_size)
 							>> PAGE_SHIFT;
-	loff_t psize = (loff_t)(page->index + 1) << PAGE_SHIFT;
+	loff_t psize = (page->index + 1) << PAGE_SHIFT;
 	unsigned offset = 0;
 	bool need_balance_fs = false;
 	int err = 0;
@@ -3030,8 +3043,7 @@ int f2fs_migrate_page(struct address_space *mapping,
 
 #ifdef CONFIG_SWAP
 /* Copied from generic_swapfile_activate() to check any holes */
-static int check_swap_activate(struct swap_info_struct *sis,
-				struct file *swap_file, sector_t *span)
+static int check_swap_activate(struct file *swap_file, unsigned int max)
 {
 	struct address_space *mapping = swap_file->f_mapping;
 	struct inode *inode = mapping->host;
@@ -3042,8 +3054,6 @@ static int check_swap_activate(struct swap_info_struct *sis,
 	sector_t last_block;
 	sector_t lowest_block = -1;
 	sector_t highest_block = 0;
-	int nr_extents = 0;
-	int ret;
 
 	blkbits = inode->i_blkbits;
 	blocks_per_page = PAGE_SIZE >> blkbits;
@@ -3055,8 +3065,7 @@ static int check_swap_activate(struct swap_info_struct *sis,
 	probe_block = 0;
 	page_no = 0;
 	last_block = i_size_read(inode) >> blkbits;
-	while ((probe_block + blocks_per_page) <= last_block &&
-			page_no < sis->max) {
+	while ((probe_block + blocks_per_page) <= last_block && page_no < max) {
 		unsigned block_in_page;
 		sector_t first_block;
 
@@ -3096,27 +3105,13 @@ static int check_swap_activate(struct swap_info_struct *sis,
 				highest_block = first_block;
 		}
 
-		/*
-		 * We found a PAGE_SIZE-length, PAGE_SIZE-aligned run of blocks
-		 */
-		ret = add_swap_extent(sis, page_no, 1, first_block);
-		if (ret < 0)
-			goto out;
-		nr_extents += ret;
 		page_no++;
 		probe_block += blocks_per_page;
 reprobe:
 		continue;
 	}
-	ret = nr_extents;
-	*span = 1 + highest_block - lowest_block;
-	if (page_no == 0)
-		page_no = 1;	/* force Empty message */
-	sis->max = page_no;
-	sis->pages = page_no - 1;
-	sis->highest_bit = page_no - 1;
-out:
-	return ret;
+	return 0;
+
 bad_bmap:
 	pr_err("swapon: swapfile has holes\n");
 	return -EINVAL;
@@ -3138,14 +3133,14 @@ static int f2fs_swap_activate(struct swap_info_struct *sis, struct file *file,
 	if (ret)
 		return ret;
 
-	ret = check_swap_activate(sis, file, span);
-	if (ret < 0)
+	ret = check_swap_activate(file, sis->max);
+	if (ret)
 		return ret;
 
 	set_inode_flag(inode, FI_PIN_FILE);
 	f2fs_precache_extents(inode);
 	f2fs_update_time(F2FS_I_SB(inode), REQ_TIME);
-	return ret;
+	return 0;
 }
 
 static void f2fs_swap_deactivate(struct file *file)

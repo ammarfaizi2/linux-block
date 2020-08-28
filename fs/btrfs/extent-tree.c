@@ -1561,7 +1561,7 @@ static int run_delayed_extent_op(struct btrfs_trans_handle *trans,
 	int err = 0;
 	int metadata = !extent_op->is_data;
 
-	if (TRANS_ABORTED(trans))
+	if (trans->aborted)
 		return 0;
 
 	if (metadata && !btrfs_fs_incompat(fs_info, SKINNY_METADATA))
@@ -1681,7 +1681,7 @@ static int run_one_delayed_ref(struct btrfs_trans_handle *trans,
 {
 	int ret = 0;
 
-	if (TRANS_ABORTED(trans)) {
+	if (trans->aborted) {
 		if (insert_reserved)
 			btrfs_pin_extent(trans->fs_info, node->bytenr,
 					 node->num_bytes, 1);
@@ -1848,8 +1848,8 @@ static int cleanup_ref_head(struct btrfs_trans_handle *trans,
 		btrfs_pin_extent(fs_info, head->bytenr,
 				 head->num_bytes, 1);
 		if (head->is_data) {
-			ret = btrfs_del_csums(trans, fs_info->csum_root,
-					      head->bytenr, head->num_bytes);
+			ret = btrfs_del_csums(trans, fs_info, head->bytenr,
+					      head->num_bytes);
 		}
 	}
 
@@ -2169,7 +2169,7 @@ int btrfs_run_delayed_refs(struct btrfs_trans_handle *trans,
 	int run_all = count == (unsigned long)-1;
 
 	/* We'll clean this up in btrfs_cleanup_transaction */
-	if (TRANS_ABORTED(trans))
+	if (trans->aborted)
 		return 0;
 
 	if (test_bit(BTRFS_FS_CREATING_FREE_SPACE_TREE, &fs_info->flags))
@@ -2892,7 +2892,7 @@ int btrfs_finish_extent_commit(struct btrfs_trans_handle *trans)
 	else
 		unpin = &fs_info->freed_extents[0];
 
-	while (!TRANS_ABORTED(trans)) {
+	while (!trans->aborted) {
 		struct extent_state *cached_state = NULL;
 
 		mutex_lock(&fs_info->unused_bg_unpin_mutex);
@@ -2924,7 +2924,7 @@ int btrfs_finish_extent_commit(struct btrfs_trans_handle *trans)
 		u64 trimmed = 0;
 
 		ret = -EROFS;
-		if (!TRANS_ABORTED(trans))
+		if (!trans->aborted)
 			ret = btrfs_discard_extent(fs_info,
 						   block_group->key.objectid,
 						   block_group->key.offset,
@@ -3155,8 +3155,7 @@ static int __btrfs_free_extent(struct btrfs_trans_handle *trans,
 		btrfs_release_path(path);
 
 		if (is_data) {
-			ret = btrfs_del_csums(trans, info->csum_root, bytenr,
-					      num_bytes);
+			ret = btrfs_del_csums(trans, info, bytenr, num_bytes);
 			if (ret) {
 				btrfs_abort_transaction(trans, ret);
 				goto out;
@@ -3781,7 +3780,6 @@ static noinline int find_free_extent(struct btrfs_fs_info *fs_info,
 				u64 flags, int delalloc)
 {
 	int ret = 0;
-	int cache_block_group_error = 0;
 	struct btrfs_free_cluster *last_ptr = NULL;
 	struct btrfs_block_group_cache *block_group = NULL;
 	struct find_free_extent_ctl ffe_ctl = {0};
@@ -3941,20 +3939,7 @@ have_block_group:
 		if (unlikely(!ffe_ctl.cached)) {
 			ffe_ctl.have_caching_bg = true;
 			ret = btrfs_cache_block_group(block_group, 0);
-
-			/*
-			 * If we get ENOMEM here or something else we want to
-			 * try other block groups, because it may not be fatal.
-			 * However if we can't find anything else we need to
-			 * save our return here so that we return the actual
-			 * error that caused problems, not ENOSPC.
-			 */
-			if (ret < 0) {
-				if (!cache_block_group_error)
-					cache_block_group_error = ret;
-				ret = 0;
-				goto loop;
-			}
+			BUG_ON(ret < 0);
 			ret = 0;
 		}
 
@@ -4041,7 +4026,7 @@ loop:
 	if (ret > 0)
 		goto search;
 
-	if (ret == -ENOSPC && !cache_block_group_error) {
+	if (ret == -ENOSPC) {
 		/*
 		 * Use ffe_ctl->total_free_space as fallback if we can't find
 		 * any contiguous hole.
@@ -4052,8 +4037,6 @@ loop:
 		space_info->max_extent_size = ffe_ctl.max_extent_size;
 		spin_unlock(&space_info->lock);
 		ins->offset = ffe_ctl.max_extent_size;
-	} else if (ret == -ENOSPC) {
-		ret = cache_block_group_error;
 	}
 	return ret;
 }
@@ -4411,8 +4394,6 @@ int btrfs_alloc_logged_file_extent(struct btrfs_trans_handle *trans,
 
 	ret = alloc_reserved_file_extent(trans, 0, root_objectid, 0, owner,
 					 offset, ins, 1);
-	if (ret)
-		btrfs_pin_extent(fs_info, ins->objectid, ins->offset, 1);
 	btrfs_put_block_group(block_group);
 	return ret;
 }
@@ -5221,14 +5202,7 @@ int btrfs_drop_snapshot(struct btrfs_root *root,
 		goto out;
 	}
 
-	/*
-	 * Use join to avoid potential EINTR from transaction start. See
-	 * wait_reserve_ticket and the whole reservation callchain.
-	 */
-	if (for_reloc)
-		trans = btrfs_join_transaction(tree_root);
-	else
-		trans = btrfs_start_transaction(tree_root, 0);
+	trans = btrfs_start_transaction(tree_root, 0);
 	if (IS_ERR(trans)) {
 		err = PTR_ERR(trans);
 		goto out_free;

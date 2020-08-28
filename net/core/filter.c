@@ -1766,27 +1766,25 @@ BPF_CALL_5(bpf_skb_load_bytes_relative, const struct sk_buff *, skb,
 	   u32, offset, void *, to, u32, len, u32, start_header)
 {
 	u8 *end = skb_tail_pointer(skb);
-	u8 *start, *ptr;
+	u8 *net = skb_network_header(skb);
+	u8 *mac = skb_mac_header(skb);
+	u8 *ptr;
 
-	if (unlikely(offset > 0xffff))
+	if (unlikely(offset > 0xffff || len > (end - mac)))
 		goto err_clear;
 
 	switch (start_header) {
 	case BPF_HDR_START_MAC:
-		if (unlikely(!skb_mac_header_was_set(skb)))
-			goto err_clear;
-		start = skb_mac_header(skb);
+		ptr = mac + offset;
 		break;
 	case BPF_HDR_START_NET:
-		start = skb_network_header(skb);
+		ptr = net + offset;
 		break;
 	default:
 		goto err_clear;
 	}
 
-	ptr = start + offset;
-
-	if (likely(ptr + len <= end)) {
+	if (likely(ptr >= mac && ptr + len <= end)) {
 		memcpy(to, ptr, len);
 		return 0;
 	}
@@ -2057,7 +2055,6 @@ static inline int __bpf_tx_skb(struct net_device *dev, struct sk_buff *skb)
 	}
 
 	skb->dev = dev;
-	skb->tstamp = 0;
 
 	dev_xmit_recursion_inc();
 	ret = dev_queue_xmit(skb);
@@ -2233,10 +2230,10 @@ BPF_CALL_4(bpf_msg_pull_data, struct sk_msg *, msg, u32, start,
 	/* First find the starting scatterlist element */
 	i = msg->sg.start;
 	do {
-		offset += len;
 		len = sk_msg_elem(msg, i)->length;
 		if (start < offset + len)
 			break;
+		offset += len;
 		sk_msg_iter_var_next(i);
 	} while (i != msg->sg.end);
 
@@ -2302,7 +2299,7 @@ BPF_CALL_4(bpf_msg_pull_data, struct sk_msg *, msg, u32, start,
 	WARN_ON_ONCE(last_sge == first_sge);
 	shift = last_sge > first_sge ?
 		last_sge - first_sge - 1 :
-		NR_MSG_FRAG_IDS - first_sge + last_sge - 1;
+		MAX_SKB_FRAGS - first_sge + last_sge - 1;
 	if (!shift)
 		goto out;
 
@@ -2311,8 +2308,8 @@ BPF_CALL_4(bpf_msg_pull_data, struct sk_msg *, msg, u32, start,
 	do {
 		u32 move_from;
 
-		if (i + shift >= NR_MSG_FRAG_IDS)
-			move_from = i + shift - NR_MSG_FRAG_IDS;
+		if (i + shift >= MAX_MSG_FRAGS)
+			move_from = i + shift - MAX_MSG_FRAGS;
 		else
 			move_from = i + shift;
 		if (move_from == msg->sg.end)
@@ -2326,7 +2323,7 @@ BPF_CALL_4(bpf_msg_pull_data, struct sk_msg *, msg, u32, start,
 	} while (1);
 
 	msg->sg.end = msg->sg.end - shift > msg->sg.end ?
-		      msg->sg.end - shift + NR_MSG_FRAG_IDS :
+		      msg->sg.end - shift + MAX_MSG_FRAGS :
 		      msg->sg.end - shift;
 out:
 	msg->data = sg_virt(&msg->sg.data[first_sge]) + start - offset;
@@ -2348,7 +2345,7 @@ BPF_CALL_4(bpf_msg_push_data, struct sk_msg *, msg, u32, start,
 	   u32, len, u64, flags)
 {
 	struct scatterlist sge, nsge, nnsge, rsge = {0}, *psge;
-	u32 new, i = 0, l = 0, space, copy = 0, offset = 0;
+	u32 new, i = 0, l, space, copy = 0, offset = 0;
 	u8 *raw, *to, *from;
 	struct page *page;
 
@@ -2358,11 +2355,11 @@ BPF_CALL_4(bpf_msg_push_data, struct sk_msg *, msg, u32, start,
 	/* First find the starting scatterlist element */
 	i = msg->sg.start;
 	do {
-		offset += l;
 		l = sk_msg_elem(msg, i)->length;
 
 		if (start < offset + l)
 			break;
+		offset += l;
 		sk_msg_iter_var_next(i);
 	} while (i != msg->sg.end);
 
@@ -2417,7 +2414,6 @@ BPF_CALL_4(bpf_msg_push_data, struct sk_msg *, msg, u32, start,
 
 		sk_msg_iter_var_next(i);
 		sg_unmark_end(psge);
-		sg_unmark_end(&rsge);
 		sk_msg_iter_next(msg, end);
 	}
 
@@ -2509,7 +2505,7 @@ static void sk_msg_shift_right(struct sk_msg *msg, int i)
 BPF_CALL_4(bpf_msg_pop_data, struct sk_msg *, msg, u32, start,
 	   u32, len, u64, flags)
 {
-	u32 i = 0, l = 0, space, offset = 0;
+	u32 i = 0, l, space, offset = 0;
 	u64 last = start + len;
 	int pop;
 
@@ -2519,11 +2515,11 @@ BPF_CALL_4(bpf_msg_pop_data, struct sk_msg *, msg, u32, start,
 	/* First find the starting scatterlist element */
 	i = msg->sg.start;
 	do {
-		offset += l;
 		l = sk_msg_elem(msg, i)->length;
 
 		if (start < offset + l)
 			break;
+		offset += l;
 		sk_msg_iter_var_next(i);
 	} while (i != msg->sg.end);
 
@@ -2592,8 +2588,8 @@ BPF_CALL_4(bpf_msg_pop_data, struct sk_msg *, msg, u32, start,
 			}
 			pop = 0;
 		} else if (pop >= sge->length - a) {
-			pop -= (sge->length - a);
 			sge->length = a;
+			pop -= (sge->length - a);
 		}
 	}
 
@@ -3545,7 +3541,7 @@ static int __bpf_tx_xdp_map(struct net_device *dev_rx, void *fwd,
 		return err;
 	}
 	default:
-		return -EBADRQC;
+		break;
 	}
 	return 0;
 }
@@ -5308,7 +5304,8 @@ __bpf_sk_lookup(struct sk_buff *skb, struct bpf_sock_tuple *tuple, u32 len,
 	if (sk) {
 		sk = sk_to_full_sk(sk);
 		if (!sk_fullsock(sk)) {
-			sock_gen_put(sk);
+			if (!sock_flag(sk, SOCK_RCU_FREE))
+				sock_gen_put(sk);
 			return NULL;
 		}
 	}
@@ -5345,7 +5342,8 @@ bpf_sk_lookup(struct sk_buff *skb, struct bpf_sock_tuple *tuple, u32 len,
 	if (sk) {
 		sk = sk_to_full_sk(sk);
 		if (!sk_fullsock(sk)) {
-			sock_gen_put(sk);
+			if (!sock_flag(sk, SOCK_RCU_FREE))
+				sock_gen_put(sk);
 			return NULL;
 		}
 	}
@@ -5412,8 +5410,7 @@ static const struct bpf_func_proto bpf_sk_lookup_udp_proto = {
 
 BPF_CALL_1(bpf_sk_release, struct sock *, sk)
 {
-	/* Only full sockets have sk->sk_flags. */
-	if (!sk_fullsock(sk) || !sock_flag(sk, SOCK_RCU_FREE))
+	if (!sock_flag(sk, SOCK_RCU_FREE))
 		sock_gen_put(sk);
 	return 0;
 }
@@ -5730,16 +5727,12 @@ BPF_CALL_1(bpf_skb_ecn_set_ce, struct sk_buff *, skb)
 {
 	unsigned int iphdr_len;
 
-	switch (skb_protocol(skb, true)) {
-	case cpu_to_be16(ETH_P_IP):
+	if (skb->protocol == cpu_to_be16(ETH_P_IP))
 		iphdr_len = sizeof(struct iphdr);
-		break;
-	case cpu_to_be16(ETH_P_IPV6):
+	else if (skb->protocol == cpu_to_be16(ETH_P_IPV6))
 		iphdr_len = sizeof(struct ipv6hdr);
-		break;
-	default:
+	else
 		return 0;
-	}
 
 	if (skb_headlen(skb) < iphdr_len)
 		return 0;
@@ -8010,43 +8003,6 @@ static u32 sock_ops_convert_ctx_access(enum bpf_access_type type,
 				      offsetof(OBJ, OBJ_FIELD));	      \
 	} while (0)
 
-#define SOCK_OPS_GET_SK()							      \
-	do {								      \
-		int fullsock_reg = si->dst_reg, reg = BPF_REG_9, jmp = 1;     \
-		if (si->dst_reg == reg || si->src_reg == reg)		      \
-			reg--;						      \
-		if (si->dst_reg == reg || si->src_reg == reg)		      \
-			reg--;						      \
-		if (si->dst_reg == si->src_reg) {			      \
-			*insn++ = BPF_STX_MEM(BPF_DW, si->src_reg, reg,	      \
-					  offsetof(struct bpf_sock_ops_kern,  \
-					  temp));			      \
-			fullsock_reg = reg;				      \
-			jmp += 2;					      \
-		}							      \
-		*insn++ = BPF_LDX_MEM(BPF_FIELD_SIZEOF(			      \
-						struct bpf_sock_ops_kern,     \
-						is_fullsock),		      \
-				      fullsock_reg, si->src_reg,	      \
-				      offsetof(struct bpf_sock_ops_kern,      \
-					       is_fullsock));		      \
-		*insn++ = BPF_JMP_IMM(BPF_JEQ, fullsock_reg, 0, jmp);	      \
-		if (si->dst_reg == si->src_reg)				      \
-			*insn++ = BPF_LDX_MEM(BPF_DW, reg, si->src_reg,	      \
-				      offsetof(struct bpf_sock_ops_kern,      \
-				      temp));				      \
-		*insn++ = BPF_LDX_MEM(BPF_FIELD_SIZEOF(			      \
-						struct bpf_sock_ops_kern, sk),\
-				      si->dst_reg, si->src_reg,		      \
-				      offsetof(struct bpf_sock_ops_kern, sk));\
-		if (si->dst_reg == si->src_reg)	{			      \
-			*insn++ = BPF_JMP_A(1);				      \
-			*insn++ = BPF_LDX_MEM(BPF_DW, reg, si->src_reg,	      \
-				      offsetof(struct bpf_sock_ops_kern,      \
-				      temp));				      \
-		}							      \
-	} while (0)
-
 #define SOCK_OPS_GET_TCP_SOCK_FIELD(FIELD) \
 		SOCK_OPS_GET_FIELD(FIELD, FIELD, struct tcp_sock)
 
@@ -8331,7 +8287,17 @@ static u32 sock_ops_convert_ctx_access(enum bpf_access_type type,
 		SOCK_OPS_GET_TCP_SOCK_FIELD(bytes_acked);
 		break;
 	case offsetof(struct bpf_sock_ops, sk):
-		SOCK_OPS_GET_SK();
+		*insn++ = BPF_LDX_MEM(BPF_FIELD_SIZEOF(
+						struct bpf_sock_ops_kern,
+						is_fullsock),
+				      si->dst_reg, si->src_reg,
+				      offsetof(struct bpf_sock_ops_kern,
+					       is_fullsock));
+		*insn++ = BPF_JMP_IMM(BPF_JEQ, si->dst_reg, 0, 1);
+		*insn++ = BPF_LDX_MEM(BPF_FIELD_SIZEOF(
+						struct bpf_sock_ops_kern, sk),
+				      si->dst_reg, si->src_reg,
+				      offsetof(struct bpf_sock_ops_kern, sk));
 		break;
 	}
 	return insn - insn_buf;

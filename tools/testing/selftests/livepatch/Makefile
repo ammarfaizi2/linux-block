@@ -6,6 +6,4 @@ TEST_PROGS := \
 	test-callbacks.sh \
 	test-shadow-vars.sh
 
-TEST_FILES := settings
-
 include ../lib.mk

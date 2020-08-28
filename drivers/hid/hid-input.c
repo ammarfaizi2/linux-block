@@ -350,13 +350,13 @@ static int hidinput_query_battery_capacity(struct hid_device *dev)
 	u8 *buf;
 	int ret;
 
-	buf = kmalloc(4, GFP_KERNEL);
+	buf = kmalloc(2, GFP_KERNEL);
 	if (!buf)
 		return -ENOMEM;
 
-	ret = hid_hw_raw_request(dev, dev->battery_report_id, buf, 4,
+	ret = hid_hw_raw_request(dev, dev->battery_report_id, buf, 2,
 				 dev->battery_report_type, HID_REQ_GET_REPORT);
-	if (ret < 2) {
+	if (ret != 2) {
 		kfree(buf);
 		return -ENODATA;
 	}
@@ -1132,15 +1132,9 @@ static void hidinput_configure_usage(struct hid_input *hidinput, struct hid_fiel
 	}
 
 mapped:
-	if (device->driver->input_mapped &&
-	    device->driver->input_mapped(device, hidinput, field, usage,
-					 &bit, &max) < 0) {
-		/*
-		 * The driver indicated that no further generic handling
-		 * of the usage is desired.
-		 */
-		return;
-	}
+	if (device->driver->input_mapped && device->driver->input_mapped(device,
+				hidinput, field, usage, &bit, &max) < 0)
+		goto ignore;
 
 	set_bit(usage->type, input->evbit);
 
@@ -1221,11 +1215,9 @@ mapped:
 		set_bit(MSC_SCAN, input->mscbit);
 	}
 
+ignore:
 	return;
 
-ignore:
-	usage->type = 0;
-	usage->code = 0;
 }
 
 static void hidinput_handle_scroll(struct hid_usage *usage,

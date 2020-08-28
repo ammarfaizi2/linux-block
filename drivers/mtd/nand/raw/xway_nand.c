@@ -210,7 +210,7 @@ static int xway_nand_probe(struct platform_device *pdev)
 
 	err = mtd_device_register(mtd, NULL, 0);
 	if (err)
-		nand_cleanup(&data->chip);
+		nand_release(&data->chip);
 
 	return err;
 }

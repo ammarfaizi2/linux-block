@@ -761,8 +761,7 @@ static struct ccu_mp outa_clk = {
 		.reg		= 0x1f0,
 		.features	= CCU_FEATURE_FIXED_PREDIV,
 		.hw.init	= CLK_HW_INIT_PARENTS("outa", out_parents,
-						      &ccu_mp_ops,
-						      CLK_SET_RATE_PARENT),
+						      &ccu_mp_ops, 0),
 	}
 };
 
@@ -780,8 +779,7 @@ static struct ccu_mp outb_clk = {
 		.reg		= 0x1f4,
 		.features	= CCU_FEATURE_FIXED_PREDIV,
 		.hw.init	= CLK_HW_INIT_PARENTS("outb", out_parents,
-						      &ccu_mp_ops,
-						      CLK_SET_RATE_PARENT),
+						      &ccu_mp_ops, 0),
 	}
 };
 

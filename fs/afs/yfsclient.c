@@ -165,23 +165,23 @@ static void xdr_dump_bad(const __be32 *bp)
 	int i;
 
 	pr_notice("YFS XDR: Bad status record\n");
-	for (i = 0; i < 6 * 4 * 4; i += 16) {
+	for (i = 0; i < 5 * 4 * 4; i += 16) {
 		memcpy(x, bp, 16);
 		bp += 4;
 		pr_notice("%03x: %08x %08x %08x %08x\n",
 			  i, ntohl(x[0]), ntohl(x[1]), ntohl(x[2]), ntohl(x[3]));
 	}
 
-	memcpy(x, bp, 8);
-	pr_notice("0x60: %08x %08x\n", ntohl(x[0]), ntohl(x[1]));
+	memcpy(x, bp, 4);
+	pr_notice("0x50: %08x\n", ntohl(x[0]));
 }
 
 /*
  * Decode a YFSFetchStatus block
  */
-static void xdr_decode_YFSFetchStatus(const __be32 **_bp,
-				      struct afs_call *call,
-				      struct afs_status_cb *scb)
+static int xdr_decode_YFSFetchStatus(const __be32 **_bp,
+				     struct afs_call *call,
+				     struct afs_status_cb *scb)
 {
 	const struct yfs_xdr_YFSFetchStatus *xdr = (const void *)*_bp;
 	struct afs_file_status *status = &scb->status;
@@ -192,7 +192,7 @@ static void xdr_decode_YFSFetchStatus(const __be32 **_bp,
 		if (status->abort_code == VNOVNODE)
 			status->nlink = 0;
 		scb->have_error = true;
-		goto advance;
+		return 0;
 	}
 
 	type = ntohl(xdr->type);
@@ -220,14 +220,13 @@ static void xdr_decode_YFSFetchStatus(const __be32 **_bp,
 	status->size		= xdr_to_u64(xdr->size);
 	status->data_version	= xdr_to_u64(xdr->data_version);
 	scb->have_status	= true;
-advance:
+
 	*_bp += xdr_size(xdr);
-	return;
+	return 0;
 
 bad:
 	xdr_dump_bad(*_bp);
-	afs_protocol_error(call, -EBADMSG, afs_eproto_bad_status);
-	goto advance;
+	return afs_protocol_error(call, -EBADMSG, afs_eproto_bad_status);
 }
 
 /*
@@ -345,7 +344,9 @@ static int yfs_deliver_fs_status_cb_and_volsync(struct afs_call *call)
 
 	/* unmarshall the reply once we've received all of it */
 	bp = call->buffer;
-	xdr_decode_YFSFetchStatus(&bp, call, call->out_scb);
+	ret = xdr_decode_YFSFetchStatus(&bp, call, call->out_scb);
+	if (ret < 0)
+		return ret;
 	xdr_decode_YFSCallBack(&bp, call, call->out_scb);
 	xdr_decode_YFSVolSync(&bp, call->out_volsync);
 
@@ -367,7 +368,9 @@ static int yfs_deliver_status_and_volsync(struct afs_call *call)
 		return ret;
 
 	bp = call->buffer;
-	xdr_decode_YFSFetchStatus(&bp, call, call->out_scb);
+	ret = xdr_decode_YFSFetchStatus(&bp, call, call->out_scb);
+	if (ret < 0)
+		return ret;
 	xdr_decode_YFSVolSync(&bp, call->out_volsync);
 
 	_leave(" = 0 [done]");
@@ -490,6 +493,8 @@ static int yfs_deliver_fs_fetch_data64(struct afs_call *call)
 		ASSERTCMP(req->offset, <=, PAGE_SIZE);
 		if (req->offset == PAGE_SIZE) {
 			req->offset = 0;
+			if (req->page_done)
+				req->page_done(req);
 			req->index++;
 			if (req->remain > 0)
 				goto begin_page;
@@ -527,7 +532,9 @@ static int yfs_deliver_fs_fetch_data64(struct afs_call *call)
 			return ret;
 
 		bp = call->buffer;
-		xdr_decode_YFSFetchStatus(&bp, call, call->out_scb);
+		ret = xdr_decode_YFSFetchStatus(&bp, call, call->out_scb);
+		if (ret < 0)
+			return ret;
 		xdr_decode_YFSCallBack(&bp, call, call->out_scb);
 		xdr_decode_YFSVolSync(&bp, call->out_volsync);
 
@@ -545,12 +552,10 @@ static int yfs_deliver_fs_fetch_data64(struct afs_call *call)
 		if (req->offset < PAGE_SIZE)
 			zero_user_segment(req->pages[req->index],
 					  req->offset, PAGE_SIZE);
+		if (req->page_done)
+			req->page_done(req);
 		req->offset = 0;
 	}
-
-	if (req->page_done)
-		for (req->index = 0; req->index < req->nr_pages; req->index++)
-			req->page_done(req);
 
 	_leave(" = 0 [done]");
 	return 0;
@@ -636,8 +641,12 @@ static int yfs_deliver_fs_create_vnode(struct afs_call *call)
 	/* unmarshall the reply once we've received all of it */
 	bp = call->buffer;
 	xdr_decode_YFSFid(&bp, call->out_fid);
-	xdr_decode_YFSFetchStatus(&bp, call, call->out_scb);
-	xdr_decode_YFSFetchStatus(&bp, call, call->out_dir_scb);
+	ret = xdr_decode_YFSFetchStatus(&bp, call, call->out_scb);
+	if (ret < 0)
+		return ret;
+	ret = xdr_decode_YFSFetchStatus(&bp, call, call->out_dir_scb);
+	if (ret < 0)
+		return ret;
 	xdr_decode_YFSCallBack(&bp, call, call->out_scb);
 	xdr_decode_YFSVolSync(&bp, call->out_volsync);
 
@@ -790,9 +799,14 @@ static int yfs_deliver_fs_remove_file2(struct afs_call *call)
 		return ret;
 
 	bp = call->buffer;
-	xdr_decode_YFSFetchStatus(&bp, call, call->out_dir_scb);
+	ret = xdr_decode_YFSFetchStatus(&bp, call, call->out_dir_scb);
+	if (ret < 0)
+		return ret;
+
 	xdr_decode_YFSFid(&bp, &fid);
-	xdr_decode_YFSFetchStatus(&bp, call, call->out_scb);
+	ret = xdr_decode_YFSFetchStatus(&bp, call, call->out_scb);
+	if (ret < 0)
+		return ret;
 	/* Was deleted if vnode->status.abort_code == VNOVNODE. */
 
 	xdr_decode_YFSVolSync(&bp, call->out_volsync);
@@ -872,7 +886,10 @@ static int yfs_deliver_fs_remove(struct afs_call *call)
 		return ret;
 
 	bp = call->buffer;
-	xdr_decode_YFSFetchStatus(&bp, call, call->out_dir_scb);
+	ret = xdr_decode_YFSFetchStatus(&bp, call, call->out_dir_scb);
+	if (ret < 0)
+		return ret;
+
 	xdr_decode_YFSVolSync(&bp, call->out_volsync);
 	return 0;
 }
@@ -954,8 +971,12 @@ static int yfs_deliver_fs_link(struct afs_call *call)
 		return ret;
 
 	bp = call->buffer;
-	xdr_decode_YFSFetchStatus(&bp, call, call->out_scb);
-	xdr_decode_YFSFetchStatus(&bp, call, call->out_dir_scb);
+	ret = xdr_decode_YFSFetchStatus(&bp, call, call->out_scb);
+	if (ret < 0)
+		return ret;
+	ret = xdr_decode_YFSFetchStatus(&bp, call, call->out_dir_scb);
+	if (ret < 0)
+		return ret;
 	xdr_decode_YFSVolSync(&bp, call->out_volsync);
 	_leave(" = 0 [done]");
 	return 0;
@@ -1037,8 +1058,12 @@ static int yfs_deliver_fs_symlink(struct afs_call *call)
 	/* unmarshall the reply once we've received all of it */
 	bp = call->buffer;
 	xdr_decode_YFSFid(&bp, call->out_fid);
-	xdr_decode_YFSFetchStatus(&bp, call, call->out_scb);
-	xdr_decode_YFSFetchStatus(&bp, call, call->out_dir_scb);
+	ret = xdr_decode_YFSFetchStatus(&bp, call, call->out_scb);
+	if (ret < 0)
+		return ret;
+	ret = xdr_decode_YFSFetchStatus(&bp, call, call->out_dir_scb);
+	if (ret < 0)
+		return ret;
 	xdr_decode_YFSVolSync(&bp, call->out_volsync);
 
 	_leave(" = 0 [done]");
@@ -1126,11 +1151,15 @@ static int yfs_deliver_fs_rename(struct afs_call *call)
 		return ret;
 
 	bp = call->buffer;
-	/* If the two dirs are the same, we have two copies of the same status
-	 * report, so we just decode it twice.
-	 */
-	xdr_decode_YFSFetchStatus(&bp, call, call->out_dir_scb);
-	xdr_decode_YFSFetchStatus(&bp, call, call->out_scb);
+	ret = xdr_decode_YFSFetchStatus(&bp, call, call->out_dir_scb);
+	if (ret < 0)
+		return ret;
+	if (call->out_dir_scb != call->out_scb) {
+		ret = xdr_decode_YFSFetchStatus(&bp, call, call->out_scb);
+		if (ret < 0)
+			return ret;
+	}
+
 	xdr_decode_YFSVolSync(&bp, call->out_volsync);
 	_leave(" = 0 [done]");
 	return 0;
@@ -1815,7 +1844,9 @@ static int yfs_deliver_fs_inline_bulk_status(struct afs_call *call)
 
 		bp = call->buffer;
 		scb = &call->out_scb[call->count];
-		xdr_decode_YFSFetchStatus(&bp, call, scb);
+		ret = xdr_decode_YFSFetchStatus(&bp, call, scb);
+		if (ret < 0)
+			return ret;
 
 		call->count++;
 		if (call->count < call->count2)
@@ -2035,7 +2066,9 @@ static int yfs_deliver_fs_fetch_opaque_acl(struct afs_call *call)
 		bp = call->buffer;
 		yacl->inherit_flag = ntohl(*bp++);
 		yacl->num_cleaned = ntohl(*bp++);
-		xdr_decode_YFSFetchStatus(&bp, call, call->out_scb);
+		ret = xdr_decode_YFSFetchStatus(&bp, call, call->out_scb);
+		if (ret < 0)
+			return ret;
 		xdr_decode_YFSVolSync(&bp, call->out_volsync);
 
 		call->unmarshall++;

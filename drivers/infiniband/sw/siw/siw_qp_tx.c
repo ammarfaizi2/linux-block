@@ -920,27 +920,20 @@ static int siw_fastreg_mr(struct ib_pd *pd, struct siw_sqe *sqe)
 {
 	struct ib_mr *base_mr = (struct ib_mr *)(uintptr_t)sqe->base_mr;
 	struct siw_device *sdev = to_siw_dev(pd->device);
-	struct siw_mem *mem;
+	struct siw_mem *mem = siw_mem_id2obj(sdev, sqe->rkey  >> 8);
 	int rv = 0;
 
 	siw_dbg_pd(pd, "STag 0x%08x\n", sqe->rkey);
 
-	if (unlikely(!base_mr)) {
+	if (unlikely(!mem || !base_mr)) {
 		pr_warn("siw: fastreg: STag 0x%08x unknown\n", sqe->rkey);
 		return -EINVAL;
 	}
-
 	if (unlikely(base_mr->rkey >> 8 != sqe->rkey  >> 8)) {
 		pr_warn("siw: fastreg: STag 0x%08x: bad MR\n", sqe->rkey);
-		return -EINVAL;
+		rv = -EINVAL;
+		goto out;
 	}
-
-	mem = siw_mem_id2obj(sdev, sqe->rkey  >> 8);
-	if (unlikely(!mem)) {
-		pr_warn("siw: fastreg: STag 0x%08x unknown\n", sqe->rkey);
-		return -EINVAL;
-	}
-
 	if (unlikely(mem->pd != pd)) {
 		pr_warn("siw: fastreg: PD mismatch\n");
 		rv = -EINVAL;

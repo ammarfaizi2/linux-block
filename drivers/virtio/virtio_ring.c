@@ -1960,9 +1960,6 @@ bool virtqueue_poll(struct virtqueue *_vq, unsigned last_used_idx)
 {
 	struct vring_virtqueue *vq = to_vvq(_vq);
 
-	if (unlikely(vq->broken))
-		return false;
-
 	virtio_mb(vq->weak_barriers);
 	return vq->packed_ring ? virtqueue_poll_packed(_vq, last_used_idx) :
 				 virtqueue_poll_split(_vq, last_used_idx);
@@ -2206,10 +2203,10 @@ void vring_del_virtqueue(struct virtqueue *_vq)
 					 vq->split.queue_size_in_bytes,
 					 vq->split.vring.desc,
 					 vq->split.queue_dma_addr);
+
+			kfree(vq->split.desc_state);
 		}
 	}
-	if (!vq->packed_ring)
-		kfree(vq->split.desc_state);
 	list_del(&_vq->list);
 	kfree(vq);
 }

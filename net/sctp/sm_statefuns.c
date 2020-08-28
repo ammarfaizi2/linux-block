@@ -170,16 +170,6 @@ static inline bool sctp_chunk_length_valid(struct sctp_chunk *chunk,
 	return true;
 }
 
-/* Check for format error in an ABORT chunk */
-static inline bool sctp_err_chunk_valid(struct sctp_chunk *chunk)
-{
-	struct sctp_errhdr *err;
-
-	sctp_walk_errors(err, chunk->chunk_hdr);
-
-	return (void *)err == (void *)chunk->chunk_end;
-}
-
 /**********************************************************
  * These are the state functions for handling chunk events.
  **********************************************************/
@@ -1856,17 +1846,16 @@ static enum sctp_disposition sctp_sf_do_dupcook_a(
 	/* Update the content of current association. */
 	sctp_add_cmd_sf(commands, SCTP_CMD_UPDATE_ASSOC, SCTP_ASOC(new_asoc));
 	sctp_add_cmd_sf(commands, SCTP_CMD_EVENT_ULP, SCTP_ULPEVENT(ev));
-	if ((sctp_state(asoc, SHUTDOWN_PENDING) ||
-	     sctp_state(asoc, SHUTDOWN_SENT)) &&
+	if (sctp_state(asoc, SHUTDOWN_PENDING) &&
 	    (sctp_sstate(asoc->base.sk, CLOSING) ||
 	     sock_flag(asoc->base.sk, SOCK_DEAD))) {
-		/* If the socket has been closed by user, don't
-		 * transition to ESTABLISHED. Instead trigger SHUTDOWN
-		 * bundled with COOKIE_ACK.
+		/* if were currently in SHUTDOWN_PENDING, but the socket
+		 * has been closed by user, don't transition to ESTABLISHED.
+		 * Instead trigger SHUTDOWN bundled with COOKIE_ACK.
 		 */
 		sctp_add_cmd_sf(commands, SCTP_CMD_REPLY, SCTP_CHUNK(repl));
 		return sctp_sf_do_9_2_start_shutdown(net, ep, asoc,
-						     SCTP_ST_CHUNK(0), repl,
+						     SCTP_ST_CHUNK(0), NULL,
 						     commands);
 	} else {
 		sctp_add_cmd_sf(commands, SCTP_CMD_NEW_STATE,
@@ -2171,10 +2160,8 @@ enum sctp_disposition sctp_sf_do_5_2_4_dupcook(
 
 	/* Update socket peer label if first association. */
 	if (security_sctp_assoc_request((struct sctp_endpoint *)ep,
-					chunk->skb)) {
-		sctp_association_free(new_asoc);
+					chunk->skb))
 		return sctp_sf_pdiscard(net, ep, asoc, type, arg, commands);
-	}
 
 	/* Set temp so that it won't be added into hashtable */
 	new_asoc->temp = 1;
@@ -2266,9 +2253,6 @@ enum sctp_disposition sctp_sf_shutdown_pending_abort(
 		    sctp_bind_addr_state(&asoc->base.bind_addr, &chunk->dest))
 		return sctp_sf_discard_chunk(net, ep, asoc, type, arg, commands);
 
-	if (!sctp_err_chunk_valid(chunk))
-		return sctp_sf_pdiscard(net, ep, asoc, type, arg, commands);
-
 	return __sctp_sf_do_9_1_abort(net, ep, asoc, type, arg, commands);
 }
 
@@ -2311,9 +2295,6 @@ enum sctp_disposition sctp_sf_shutdown_sent_abort(
 	if (SCTP_ADDR_DEL ==
 		    sctp_bind_addr_state(&asoc->base.bind_addr, &chunk->dest))
 		return sctp_sf_discard_chunk(net, ep, asoc, type, arg, commands);
-
-	if (!sctp_err_chunk_valid(chunk))
-		return sctp_sf_pdiscard(net, ep, asoc, type, arg, commands);
 
 	/* Stop the T2-shutdown timer. */
 	sctp_add_cmd_sf(commands, SCTP_CMD_TIMER_STOP,
@@ -2582,9 +2563,6 @@ enum sctp_disposition sctp_sf_do_9_1_abort(
 		    sctp_bind_addr_state(&asoc->base.bind_addr, &chunk->dest))
 		return sctp_sf_discard_chunk(net, ep, asoc, type, arg, commands);
 
-	if (!sctp_err_chunk_valid(chunk))
-		return sctp_sf_pdiscard(net, ep, asoc, type, arg, commands);
-
 	return __sctp_sf_do_9_1_abort(net, ep, asoc, type, arg, commands);
 }
 
@@ -2602,8 +2580,16 @@ static enum sctp_disposition __sctp_sf_do_9_1_abort(
 
 	/* See if we have an error cause code in the chunk.  */
 	len = ntohs(chunk->chunk_hdr->length);
-	if (len >= sizeof(struct sctp_chunkhdr) + sizeof(struct sctp_errhdr))
+	if (len >= sizeof(struct sctp_chunkhdr) + sizeof(struct sctp_errhdr)) {
+		struct sctp_errhdr *err;
+
+		sctp_walk_errors(err, chunk->chunk_hdr);
+		if ((void *)err != (void *)chunk->chunk_end)
+			return sctp_sf_pdiscard(net, ep, asoc, type, arg,
+						commands);
+
 		error = ((struct sctp_errhdr *)chunk->skb->data)->cause;
+	}
 
 	sctp_add_cmd_sf(commands, SCTP_CMD_SET_SK_ERR, SCTP_ERROR(ECONNRESET));
 	/* ASSOC_FAILED will DELETE_TCB. */
@@ -5471,7 +5457,7 @@ enum sctp_disposition sctp_sf_do_9_2_start_shutdown(
 	 * in the Cumulative TSN Ack field the last sequential TSN it
 	 * has received from the peer.
 	 */
-	reply = sctp_make_shutdown(asoc, arg);
+	reply = sctp_make_shutdown(asoc, NULL);
 	if (!reply)
 		goto nomem;
 
@@ -6069,7 +6055,7 @@ enum sctp_disposition sctp_sf_autoclose_timer_expire(
 	disposition = SCTP_DISPOSITION_CONSUME;
 	if (sctp_outq_is_empty(&asoc->outqueue)) {
 		disposition = sctp_sf_do_9_2_start_shutdown(net, ep, asoc, type,
-							    NULL, commands);
+							    arg, commands);
 	}
 
 	return disposition;

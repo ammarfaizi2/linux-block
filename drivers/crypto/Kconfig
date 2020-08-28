@@ -287,7 +287,6 @@ config CRYPTO_DEV_TALITOS
 	select CRYPTO_AUTHENC
 	select CRYPTO_BLKCIPHER
 	select CRYPTO_HASH
-	select CRYPTO_LIB_DES
 	select HW_RANDOM
 	depends on FSL_SOC
 	help
@@ -333,7 +332,6 @@ config CRYPTO_DEV_PPC4XX
 	depends on PPC && 4xx
 	select CRYPTO_HASH
 	select CRYPTO_AEAD
-	select CRYPTO_AES
 	select CRYPTO_LIB_AES
 	select CRYPTO_CCM
 	select CRYPTO_CTR
@@ -491,9 +489,11 @@ if CRYPTO_DEV_UX500
 endif # if CRYPTO_DEV_UX500
 
 config CRYPTO_DEV_ATMEL_AUTHENC
-	bool "Support for Atmel IPSEC/SSL hw accelerator"
+	tristate "Support for Atmel IPSEC/SSL hw accelerator"
 	depends on ARCH_AT91 || COMPILE_TEST
-	depends on CRYPTO_DEV_ATMEL_AES
+	select CRYPTO_AUTHENC
+	select CRYPTO_DEV_ATMEL_AES
+	select CRYPTO_DEV_ATMEL_SHA
 	help
 	  Some Atmel processors can combine the AES and SHA hw accelerators
 	  to enhance support of IPSEC/SSL.
@@ -506,8 +506,6 @@ config CRYPTO_DEV_ATMEL_AES
 	select CRYPTO_AES
 	select CRYPTO_AEAD
 	select CRYPTO_BLKCIPHER
-	select CRYPTO_AUTHENC if CRYPTO_DEV_ATMEL_AUTHENC
-	select CRYPTO_DEV_ATMEL_SHA if CRYPTO_DEV_ATMEL_AUTHENC
 	help
 	  Some Atmel processors have AES hw accelerator.
 	  Select this if you want to use the Atmel module for
@@ -739,7 +737,7 @@ source "drivers/crypto/stm32/Kconfig"
 
 config CRYPTO_DEV_SAFEXCEL
 	tristate "Inside Secure's SafeXcel cryptographic engine driver"
-	depends on (OF || PCI || COMPILE_TEST) && HAS_IOMEM
+	depends on OF || PCI || COMPILE_TEST
 	select CRYPTO_LIB_AES
 	select CRYPTO_AUTHENC
 	select CRYPTO_BLKCIPHER

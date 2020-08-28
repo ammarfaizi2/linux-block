@@ -26,7 +26,6 @@ static int __gup_benchmark_ioctl(unsigned int cmd,
 	unsigned long i, nr_pages, addr, next;
 	int nr;
 	struct page **pages;
-	int ret = 0;
 
 	if (gup->size > ULONG_MAX)
 		return -EINVAL;
@@ -64,9 +63,7 @@ static int __gup_benchmark_ioctl(unsigned int cmd,
 					    NULL);
 			break;
 		default:
-			kvfree(pages);
-			ret = -EINVAL;
-			goto out;
+			return -1;
 		}
 
 		if (nr <= 0)
@@ -88,8 +85,7 @@ static int __gup_benchmark_ioctl(unsigned int cmd,
 	gup->put_delta_usec = ktime_us_delta(end_time, start_time);
 
 	kvfree(pages);
-out:
-	return ret;
+	return 0;
 }
 
 static long gup_benchmark_ioctl(struct file *filep, unsigned int cmd,

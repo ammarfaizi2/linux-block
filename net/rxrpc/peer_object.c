@@ -224,8 +224,6 @@ struct rxrpc_peer *rxrpc_alloc_peer(struct rxrpc_local *local, gfp_t gfp)
 		spin_lock_init(&peer->rtt_input_lock);
 		peer->debug_id = atomic_inc_return(&rxrpc_debug_id);
 
-		rxrpc_peer_init_rtt(peer);
-
 		if (RXRPC_TX_SMSS > 2190)
 			peer->cong_cwnd = 2;
 		else if (RXRPC_TX_SMSS > 1095)
@@ -497,14 +495,14 @@ void rxrpc_kernel_get_peer(struct socket *sock, struct rxrpc_call *call,
 EXPORT_SYMBOL(rxrpc_kernel_get_peer);
 
 /**
- * rxrpc_kernel_get_srtt - Get a call's peer smoothed RTT
+ * rxrpc_kernel_get_rtt - Get a call's peer RTT
  * @sock: The socket on which the call is in progress.
  * @call: The call to query
  *
- * Get the call's peer smoothed RTT.
+ * Get the call's peer RTT.
  */
-u32 rxrpc_kernel_get_srtt(struct socket *sock, struct rxrpc_call *call)
+u64 rxrpc_kernel_get_rtt(struct socket *sock, struct rxrpc_call *call)
 {
-	return call->peer->srtt_us >> 3;
+	return call->peer->rtt;
 }
-EXPORT_SYMBOL(rxrpc_kernel_get_srtt);
+EXPORT_SYMBOL(rxrpc_kernel_get_rtt);

@@ -376,11 +376,6 @@ static blk_qc_t md_make_request(struct request_queue *q, struct bio *bio)
 	struct mddev *mddev = q->queuedata;
 	unsigned int sectors;
 
-	if (mddev == NULL || mddev->pers == NULL) {
-		bio_io_error(bio);
-		return BLK_QC_T_NONE;
-	}
-
 	if (unlikely(test_bit(MD_BROKEN, &mddev->flags)) && (rw == WRITE)) {
 		bio_io_error(bio);
 		return BLK_QC_T_NONE;
@@ -388,6 +383,10 @@ static blk_qc_t md_make_request(struct request_queue *q, struct bio *bio)
 
 	blk_queue_split(q, &bio);
 
+	if (mddev == NULL || mddev->pers == NULL) {
+		bio_io_error(bio);
+		return BLK_QC_T_NONE;
+	}
 	if (mddev->ro == 1 && unlikely(rw == WRITE)) {
 		if (bio_sectors(bio) != 0)
 			bio->bi_status = BLK_STS_IOERR;
@@ -551,13 +550,7 @@ static void md_submit_flush_data(struct work_struct *ws)
 	}
 }
 
-/*
- * Manages consolidation of flushes and submitting any flushes needed for
- * a bio with REQ_PREFLUSH.  Returns true if the bio is finished or is
- * being finished in another context.  Returns false if the flushing is
- * complete but still needs the I/O portion of the bio to be processed.
- */
-bool md_flush_request(struct mddev *mddev, struct bio *bio)
+void md_flush_request(struct mddev *mddev, struct bio *bio)
 {
 	ktime_t start = ktime_get_boottime();
 	spin_lock_irq(&mddev->lock);
@@ -582,10 +575,9 @@ bool md_flush_request(struct mddev *mddev, struct bio *bio)
 			bio_endio(bio);
 		else {
 			bio->bi_opf &= ~REQ_PREFLUSH;
-			return false;
+			mddev->pers->make_request(mddev, bio);
 		}
 	}
-	return true;
 }
 EXPORT_SYMBOL(md_flush_request);
 
@@ -1106,7 +1098,6 @@ static int super_90_load(struct md_rdev *rdev, struct md_rdev *refdev, int minor
 	char b[BDEVNAME_SIZE], b2[BDEVNAME_SIZE];
 	mdp_super_t *sb;
 	int ret;
-	bool spare_disk = true;
 
 	/*
 	 * Calculate the position of the superblock (512byte sectors),
@@ -1157,19 +1148,8 @@ static int super_90_load(struct md_rdev *rdev, struct md_rdev *refdev, int minor
 	else
 		rdev->desc_nr = sb->this_disk.number;
 
-	/* not spare disk, or LEVEL_MULTIPATH */
-	if (sb->level == LEVEL_MULTIPATH ||
-		(rdev->desc_nr >= 0 &&
-		 rdev->desc_nr < MD_SB_DISKS &&
-		 sb->disks[rdev->desc_nr].state &
-		 ((1<<MD_DISK_SYNC) | (1 << MD_DISK_ACTIVE))))
-		spare_disk = false;
-
 	if (!refdev) {
-		if (!spare_disk)
-			ret = 1;
-		else
-			ret = 0;
+		ret = 1;
 	} else {
 		__u64 ev1, ev2;
 		mdp_super_t *refsb = page_address(refdev->sb_page);
@@ -1185,8 +1165,7 @@ static int super_90_load(struct md_rdev *rdev, struct md_rdev *refdev, int minor
 		}
 		ev1 = md_event(sb);
 		ev2 = md_event(refsb);
-
-		if (!spare_disk && ev1 > ev2)
+		if (ev1 > ev2)
 			ret = 1;
 		else
 			ret = 0;
@@ -1546,7 +1525,6 @@ static int super_1_load(struct md_rdev *rdev, struct md_rdev *refdev, int minor_
 	sector_t sectors;
 	char b[BDEVNAME_SIZE], b2[BDEVNAME_SIZE];
 	int bmask;
-	bool spare_disk = true;
 
 	/*
 	 * Calculate the position of the superblock in 512byte sectors.
@@ -1680,19 +1658,8 @@ static int super_1_load(struct md_rdev *rdev, struct md_rdev *refdev, int minor_
 	    sb->level != 0)
 		return -EINVAL;
 
-	/* not spare disk, or LEVEL_MULTIPATH */
-	if (sb->level == cpu_to_le32(LEVEL_MULTIPATH) ||
-		(rdev->desc_nr >= 0 &&
-		rdev->desc_nr < le32_to_cpu(sb->max_dev) &&
-		(le16_to_cpu(sb->dev_roles[rdev->desc_nr]) < MD_DISK_ROLE_MAX ||
-		 le16_to_cpu(sb->dev_roles[rdev->desc_nr]) == MD_DISK_ROLE_JOURNAL)))
-		spare_disk = false;
-
 	if (!refdev) {
-		if (!spare_disk)
-			ret = 1;
-		else
-			ret = 0;
+		ret = 1;
 	} else {
 		__u64 ev1, ev2;
 		struct mdp_superblock_1 *refsb = page_address(refdev->sb_page);
@@ -1709,7 +1676,7 @@ static int super_1_load(struct md_rdev *rdev, struct md_rdev *refdev, int minor_
 		ev1 = le64_to_cpu(sb->events);
 		ev2 = le64_to_cpu(refsb->events);
 
-		if (!spare_disk && ev1 > ev2)
+		if (ev1 > ev2)
 			ret = 1;
 		else
 			ret = 0;
@@ -3630,7 +3597,7 @@ abort_free:
  * Check a full RAID array for plausibility
  */
 
-static int analyze_sbs(struct mddev *mddev)
+static void analyze_sbs(struct mddev *mddev)
 {
 	int i;
 	struct md_rdev *rdev, *freshest, *tmp;
@@ -3650,12 +3617,6 @@ static int analyze_sbs(struct mddev *mddev)
 				bdevname(rdev->bdev,b));
 			md_kick_rdev_from_array(rdev);
 		}
-
-	/* Cannot find a valid fresh disk */
-	if (!freshest) {
-		pr_warn("md: cannot find a valid disk\n");
-		return -EINVAL;
-	}
 
 	super_types[mddev->major_version].
 		validate_super(mddev, freshest);
@@ -3691,8 +3652,6 @@ static int analyze_sbs(struct mddev *mddev)
 			clear_bit(In_sync, &rdev->flags);
 		}
 	}
-
-	return 0;
 }
 
 /* Read a fixed-point number.
@@ -5611,9 +5570,7 @@ int md_run(struct mddev *mddev)
 	if (!mddev->raid_disks) {
 		if (!mddev->persistent)
 			return -EINVAL;
-		err = analyze_sbs(mddev);
-		if (err)
-			return -EINVAL;
+		analyze_sbs(mddev);
 	}
 
 	if (mddev->level != LEVEL_NONE)
@@ -6041,7 +5998,7 @@ EXPORT_SYMBOL_GPL(md_stop_writes);
 static void mddev_detach(struct mddev *mddev)
 {
 	md_bitmap_wait_behind_writes(mddev);
-	if (mddev->pers && mddev->pers->quiesce && !mddev->suspended) {
+	if (mddev->pers && mddev->pers->quiesce) {
 		mddev->pers->quiesce(mddev, 1);
 		mddev->pers->quiesce(mddev, 0);
 	}
@@ -7608,8 +7565,7 @@ static int md_open(struct block_device *bdev, fmode_t mode)
 		 */
 		mddev_put(mddev);
 		/* Wait until bdev->bd_disk is definitely gone */
-		if (work_pending(&mddev->del_work))
-			flush_workqueue(md_misc_wq);
+		flush_workqueue(md_misc_wq);
 		/* Then retry the open from the top */
 		return -ERESTARTSYS;
 	}

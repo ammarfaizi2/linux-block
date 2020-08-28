@@ -349,11 +349,11 @@ static inline void rht_unlock(struct bucket_table *tbl,
 	local_bh_enable();
 }
 
-static inline struct rhash_head *__rht_ptr(
-	struct rhash_lock_head *p, struct rhash_lock_head __rcu *const *bkt)
+static inline struct rhash_head __rcu *__rht_ptr(
+	struct rhash_lock_head *const *bkt)
 {
-	return (struct rhash_head *)
-		((unsigned long)p & ~BIT(0) ?:
+	return (struct rhash_head __rcu *)
+		((unsigned long)*bkt & ~BIT(0) ?:
 		 (unsigned long)RHT_NULLS_MARKER(bkt));
 }
 
@@ -365,26 +365,25 @@ static inline struct rhash_head *__rht_ptr(
  *            access is guaranteed, such as when destroying the table.
  */
 static inline struct rhash_head *rht_ptr_rcu(
-	struct rhash_lock_head *const *p)
+	struct rhash_lock_head *const *bkt)
 {
-	struct rhash_lock_head __rcu *const *bkt = (void *)p;
-	return __rht_ptr(rcu_dereference(*bkt), bkt);
+	struct rhash_head __rcu *p = __rht_ptr(bkt);
+
+	return rcu_dereference(p);
 }
 
 static inline struct rhash_head *rht_ptr(
-	struct rhash_lock_head *const *p,
+	struct rhash_lock_head *const *bkt,
 	struct bucket_table *tbl,
 	unsigned int hash)
 {
-	struct rhash_lock_head __rcu *const *bkt = (void *)p;
-	return __rht_ptr(rht_dereference_bucket(*bkt, tbl, hash), bkt);
+	return rht_dereference_bucket(__rht_ptr(bkt), tbl, hash);
 }
 
 static inline struct rhash_head *rht_ptr_exclusive(
-	struct rhash_lock_head *const *p)
+	struct rhash_lock_head *const *bkt)
 {
-	struct rhash_lock_head __rcu *const *bkt = (void *)p;
-	return __rht_ptr(rcu_dereference_protected(*bkt, 1), bkt);
+	return rcu_dereference_protected(__rht_ptr(bkt), 1);
 }
 
 static inline void rht_assign_locked(struct rhash_lock_head **bkt,

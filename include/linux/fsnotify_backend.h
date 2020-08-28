@@ -133,7 +133,8 @@ struct fsnotify_ops {
  */
 struct fsnotify_event {
 	struct list_head list;
-	unsigned long objectid;	/* identifier for queue merges */
+	/* inode may ONLY be dereferenced during handle_event(). */
+	struct inode *inode;	/* either the inode the event happened to or its parent */
 };
 
 /*
@@ -499,10 +500,10 @@ extern void fsnotify_finish_user_wait(struct fsnotify_iter_info *iter_info);
 extern bool fsnotify_prepare_user_wait(struct fsnotify_iter_info *iter_info);
 
 static inline void fsnotify_init_event(struct fsnotify_event *event,
-				       unsigned long objectid)
+				       struct inode *inode)
 {
 	INIT_LIST_HEAD(&event->list);
-	event->objectid = objectid;
+	event->inode = inode;
 }
 
 #else

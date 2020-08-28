@@ -161,11 +161,9 @@ static int tipc_udp_xmit(struct net *net, struct sk_buff *skb,
 			 struct udp_bearer *ub, struct udp_media_addr *src,
 			 struct udp_media_addr *dst, struct dst_cache *cache)
 {
-	struct dst_entry *ndst;
+	struct dst_entry *ndst = dst_cache_get(cache);
 	int ttl, err = 0;
 
-	local_bh_disable();
-	ndst = dst_cache_get(cache);
 	if (dst->proto == htons(ETH_P_IP)) {
 		struct rtable *rt = (struct rtable *)ndst;
 
@@ -197,13 +195,10 @@ static int tipc_udp_xmit(struct net *net, struct sk_buff *skb,
 				.saddr = src->ipv6,
 				.flowi6_proto = IPPROTO_UDP
 			};
-			ndst = ipv6_stub->ipv6_dst_lookup_flow(net,
-							       ub->ubsock->sk,
-							       &fl6, NULL);
-			if (IS_ERR(ndst)) {
-				err = PTR_ERR(ndst);
+			err = ipv6_stub->ipv6_dst_lookup(net, ub->ubsock->sk,
+							 &ndst, &fl6);
+			if (err)
 				goto tx_error;
-			}
 			dst_cache_set_ip6(cache, ndst, &fl6.saddr);
 		}
 		ttl = ip6_dst_hoplimit(ndst);
@@ -212,11 +207,9 @@ static int tipc_udp_xmit(struct net *net, struct sk_buff *skb,
 					   src->port, dst->port, false);
 #endif
 	}
-	local_bh_enable();
 	return err;
 
 tx_error:
-	local_bh_enable();
 	kfree_skb(skb);
 	return err;
 }

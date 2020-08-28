@@ -24,18 +24,19 @@
 #define IDISP_VID_INTEL	0x80860000
 
 /* load the legacy HDA codec driver */
-static int hda_codec_load_module(struct hda_codec *codec)
-{
 #ifdef MODULE
+static void hda_codec_load_module(struct hda_codec *codec)
+{
 	char alias[MODULE_NAME_LEN];
 	const char *module = alias;
 
 	snd_hdac_codec_modalias(&codec->core, alias, sizeof(alias));
 	dev_dbg(&codec->core.dev, "loading codec module: %s\n", module);
 	request_module(module);
-#endif
-	return device_attach(hda_codec_dev(codec));
 }
+#else
+static void hda_codec_load_module(struct hda_codec *codec) {}
+#endif
 
 /* enable controller wake up event for all codecs with jack connectors */
 void hda_codec_jack_wake_enable(struct snd_sof_dev *sdev)
@@ -115,16 +116,10 @@ static int hda_codec_probe(struct snd_sof_dev *sdev, int address)
 	/* use legacy bus only for HDA codecs, idisp uses ext bus */
 	if ((resp & 0xFFFF0000) != IDISP_VID_INTEL) {
 		hdev->type = HDA_DEV_LEGACY;
-		ret = hda_codec_load_module(&hda_priv->codec);
-		/*
-		 * handle ret==0 (no driver bound) as an error, but pass
-		 * other return codes without modification
-		 */
-		if (ret == 0)
-			ret = -ENOENT;
+		hda_codec_load_module(&hda_priv->codec);
 	}
 
-	return ret;
+	return 0;
 #else
 	hdev = devm_kzalloc(sdev->dev, sizeof(*hdev), GFP_KERNEL);
 	if (!hdev)

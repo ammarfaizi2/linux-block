@@ -167,11 +167,8 @@ static int btrfs_ioctl_getflags(struct file *file, void __user *arg)
 	return 0;
 }
 
-/*
- * Check if @flags are a supported and valid set of FS_*_FL flags and that
- * the old and new flags are not conflicting
- */
-static int check_fsflags(unsigned int old_flags, unsigned int flags)
+/* Check if @flags are a supported and valid set of FS_*_FL flags */
+static int check_fsflags(unsigned int flags)
 {
 	if (flags & ~(FS_IMMUTABLE_FL | FS_APPEND_FL | \
 		      FS_NOATIME_FL | FS_NODUMP_FL | \
@@ -180,17 +177,7 @@ static int check_fsflags(unsigned int old_flags, unsigned int flags)
 		      FS_NOCOW_FL))
 		return -EOPNOTSUPP;
 
-	/* COMPR and NOCOMP on new/old are valid */
 	if ((flags & FS_NOCOMP_FL) && (flags & FS_COMPR_FL))
-		return -EINVAL;
-
-	if ((flags & FS_COMPR_FL) && (flags & FS_NOCOW_FL))
-		return -EINVAL;
-
-	/* NOCOW and compression options are mutually exclusive */
-	if ((old_flags & FS_NOCOW_FL) && (flags & (FS_COMPR_FL | FS_NOCOMP_FL)))
-		return -EINVAL;
-	if ((flags & FS_NOCOW_FL) && (old_flags & (FS_COMPR_FL | FS_NOCOMP_FL)))
 		return -EINVAL;
 
 	return 0;
@@ -206,7 +193,7 @@ static int btrfs_ioctl_setflags(struct file *file, void __user *arg)
 	unsigned int fsflags, old_fsflags;
 	int ret;
 	const char *comp = NULL;
-	u32 binode_flags;
+	u32 binode_flags = binode->flags;
 
 	if (!inode_owner_or_capable(inode))
 		return -EPERM;
@@ -217,23 +204,22 @@ static int btrfs_ioctl_setflags(struct file *file, void __user *arg)
 	if (copy_from_user(&fsflags, arg, sizeof(fsflags)))
 		return -EFAULT;
 
+	ret = check_fsflags(fsflags);
+	if (ret)
+		return ret;
+
 	ret = mnt_want_write_file(file);
 	if (ret)
 		return ret;
 
 	inode_lock(inode);
+
 	fsflags = btrfs_mask_fsflags_for_type(inode, fsflags);
 	old_fsflags = btrfs_inode_flags_to_fsflags(binode->flags);
-
 	ret = vfs_ioc_setflags_prepare(inode, old_fsflags, fsflags);
 	if (ret)
 		goto out_unlock;
 
-	ret = check_fsflags(old_fsflags, fsflags);
-	if (ret)
-		goto out_unlock;
-
-	binode_flags = binode->flags;
 	if (fsflags & FS_SYNC_FL)
 		binode_flags |= BTRFS_INODE_SYNC;
 	else
@@ -719,17 +705,11 @@ static noinline int create_subvol(struct inode *dir,
 
 	btrfs_i_size_write(BTRFS_I(dir), dir->i_size + namelen * 2);
 	ret = btrfs_update_inode(trans, root, dir);
-	if (ret) {
-		btrfs_abort_transaction(trans, ret);
-		goto fail;
-	}
+	BUG_ON(ret);
 
 	ret = btrfs_add_root_ref(trans, objectid, root->root_key.objectid,
 				 btrfs_ino(BTRFS_I(dir)), index, name, namelen);
-	if (ret) {
-		btrfs_abort_transaction(trans, ret);
-		goto fail;
-	}
+	BUG_ON(ret);
 
 	ret = btrfs_uuid_tree_add(trans, root_item->uuid,
 				  BTRFS_UUID_KEY_SUBVOL, objectid);
@@ -3258,7 +3238,6 @@ static void btrfs_double_extent_lock(struct inode *inode1, u64 loff1,
 static int btrfs_extent_same_range(struct inode *src, u64 loff, u64 len,
 				   struct inode *dst, u64 dst_loff)
 {
-	const u64 bs = BTRFS_I(src)->root->fs_info->sb->s_blocksize;
 	int ret;
 
 	/*
@@ -3266,7 +3245,7 @@ static int btrfs_extent_same_range(struct inode *src, u64 loff, u64 len,
 	 * source range to serialize with relocation.
 	 */
 	btrfs_double_extent_lock(src, loff, dst, dst_loff, len);
-	ret = btrfs_clone(src, dst, loff, len, ALIGN(len, bs), dst_loff, 1);
+	ret = btrfs_clone(src, dst, loff, len, len, dst_loff, 1);
 	btrfs_double_extent_unlock(src, loff, dst, dst_loff, len);
 
 	return ret;
@@ -3742,18 +3721,24 @@ process_slot:
 	ret = 0;
 
 	if (last_dest_end < destoff + len) {
+		struct btrfs_clone_extent_info clone_info = { 0 };
 		/*
-		 * We have an implicit hole that fully or partially overlaps our
-		 * cloning range at its end. This means that we either have the
-		 * NO_HOLES feature enabled or the implicit hole happened due to
-		 * mixing buffered and direct IO writes against this file.
+		 * We have an implicit hole (NO_HOLES feature is enabled) that
+		 * fully or partially overlaps our cloning range at its end.
 		 */
 		btrfs_release_path(path);
 		path->leave_spinning = 0;
 
+		/*
+		 * We are dealing with a hole and our clone_info already has a
+		 * disk_offset of 0, we only need to fill the data length and
+		 * file offset.
+		 */
+		clone_info.data_len = destoff + len - last_dest_end;
+		clone_info.file_offset = last_dest_end;
 		ret = btrfs_punch_hole_range(inode, path,
 					     last_dest_end, destoff + len - 1,
-					     NULL, &trans);
+					     &clone_info, &trans);
 		if (ret)
 			goto out;
 
@@ -4269,19 +4254,7 @@ static long btrfs_ioctl_scrub(struct file *file, void __user *arg)
 			      &sa->progress, sa->flags & BTRFS_SCRUB_READONLY,
 			      0);
 
-	/*
-	 * Copy scrub args to user space even if btrfs_scrub_dev() returned an
-	 * error. This is important as it allows user space to know how much
-	 * progress scrub has done. For example, if scrub is canceled we get
-	 * -ECANCELED from btrfs_scrub_dev() and return that error back to user
-	 * space. Later user space can inspect the progress from the structure
-	 * btrfs_ioctl_scrub_args and resume scrub from where it left off
-	 * previously (btrfs-progs does this).
-	 * If we fail to copy the btrfs_ioctl_scrub_args structure to user space
-	 * then return -EFAULT to signal the structure was not copied or it may
-	 * be corrupt and unreliable due to a partial copy.
-	 */
-	if (copy_to_user(arg, sa, sizeof(*sa)))
+	if (ret == 0 && copy_to_user(arg, sa, sizeof(*sa)))
 		ret = -EFAULT;
 
 	if (!(sa->flags & BTRFS_SCRUB_READONLY))

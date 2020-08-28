@@ -47,11 +47,7 @@ static void fail(const char *fmt, unsigned long a, unsigned long b)
 int main(void)
 {
 	const int PAGE_SIZE = sysconf(_SC_PAGESIZE);
-	/*
-	 * va_max must be enough bigger than vm.mmap_min_addr, which is
-	 * 64KB/32KB by default. (depends on CONFIG_LSM_MMAP_MIN_ADDR)
-	 */
-	const unsigned long va_max = 1UL << 20;
+	const unsigned long va_max = 1UL << 32;
 	unsigned long va;
 	void *p;
 	int fd;

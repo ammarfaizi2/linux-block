@@ -384,7 +384,7 @@ static int __xts_crypt(struct skcipher_request *req, bool encrypt,
 			goto xts_tail;
 
 		kernel_neon_end();
-		err = skcipher_walk_done(&walk, nbytes);
+		skcipher_walk_done(&walk, nbytes);
 	}
 
 	if (err || likely(!tail))

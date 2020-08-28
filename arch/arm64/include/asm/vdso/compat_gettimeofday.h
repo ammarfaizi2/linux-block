@@ -10,7 +10,6 @@
 #include <asm/unistd.h>
 #include <uapi/linux/time.h>
 
-#include <asm/vdso/clocksource.h>
 #include <asm/vdso/compat_barrier.h>
 
 #define __VDSO_USE_SYSCALL		ULLONG_MAX
@@ -118,10 +117,10 @@ static __always_inline u64 __arch_get_hw_counter(s32 clock_mode)
 	u64 res;
 
 	/*
-	 * clock_mode == ARCHTIMER implies that vDSO are enabled otherwise
+	 * clock_mode == 0 implies that vDSO are enabled otherwise
 	 * fallback on syscall.
 	 */
-	if (clock_mode != VDSO_CLOCKMODE_ARCHTIMER)
+	if (clock_mode)
 		return __VDSO_USE_SYSCALL;
 
 	/*

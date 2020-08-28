@@ -175,10 +175,9 @@ struct ceph_msg_data {
 #endif /* CONFIG_BLOCK */
 		struct ceph_bvec_iter	bvec_pos;
 		struct {
-			struct page	**pages;
+			struct page	**pages;	/* NOT OWNER. */
 			size_t		length;		/* total # bytes */
 			unsigned int	alignment;	/* first page */
-			bool		own_pages;
 		};
 		struct ceph_pagelist	*pagelist;
 	};
@@ -357,8 +356,8 @@ extern void ceph_con_keepalive(struct ceph_connection *con);
 extern bool ceph_con_keepalive_expired(struct ceph_connection *con,
 				       unsigned long interval);
 
-void ceph_msg_data_add_pages(struct ceph_msg *msg, struct page **pages,
-			     size_t length, size_t alignment, bool own_pages);
+extern void ceph_msg_data_add_pages(struct ceph_msg *msg, struct page **pages,
+				size_t length, size_t alignment);
 extern void ceph_msg_data_add_pagelist(struct ceph_msg *msg,
 				struct ceph_pagelist *pagelist);
 #ifdef CONFIG_BLOCK

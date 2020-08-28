@@ -905,7 +905,7 @@ static int sata_rcar_probe(struct platform_device *pdev)
 	pm_runtime_enable(dev);
 	ret = pm_runtime_get_sync(dev);
 	if (ret < 0)
-		goto err_pm_put;
+		goto err_pm_disable;
 
 	host = ata_host_alloc(dev, 1);
 	if (!host) {
@@ -935,6 +935,7 @@ static int sata_rcar_probe(struct platform_device *pdev)
 
 err_pm_put:
 	pm_runtime_put(dev);
+err_pm_disable:
 	pm_runtime_disable(dev);
 	return ret;
 }
@@ -988,10 +989,8 @@ static int sata_rcar_resume(struct device *dev)
 	int ret;
 
 	ret = pm_runtime_get_sync(dev);
-	if (ret < 0) {
-		pm_runtime_put(dev);
+	if (ret < 0)
 		return ret;
-	}
 
 	if (priv->type == RCAR_GEN3_SATA) {
 		sata_rcar_init_module(priv);
@@ -1016,10 +1015,8 @@ static int sata_rcar_restore(struct device *dev)
 	int ret;
 
 	ret = pm_runtime_get_sync(dev);
-	if (ret < 0) {
-		pm_runtime_put(dev);
+	if (ret < 0)
 		return ret;
-	}
 
 	sata_rcar_setup_port(host);
 

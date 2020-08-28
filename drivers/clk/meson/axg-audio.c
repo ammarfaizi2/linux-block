@@ -1001,7 +1001,7 @@ static const struct regmap_config axg_audio_regmap_cfg = {
 	.reg_bits	= 32,
 	.val_bits	= 32,
 	.reg_stride	= 4,
-	.max_register	= AUDIO_CLK_SPDIFOUT_B_CTRL,
+	.max_register	= AUDIO_CLK_PDMIN_CTRL1,
 };
 
 struct audioclk_data {

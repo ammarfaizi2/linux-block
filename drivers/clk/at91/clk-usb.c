@@ -75,9 +75,6 @@ static int at91sam9x5_clk_usb_determine_rate(struct clk_hw *hw,
 			tmp_parent_rate = req->rate * div;
 			tmp_parent_rate = clk_hw_round_rate(parent,
 							   tmp_parent_rate);
-			if (!tmp_parent_rate)
-				continue;
-
 			tmp_rate = DIV_ROUND_CLOSEST(tmp_parent_rate, div);
 			if (tmp_rate < req->rate)
 				tmp_diff = req->rate - tmp_rate;
@@ -214,7 +211,7 @@ _at91sam9x5_clk_register_usb(struct regmap *regmap, const char *name,
 
 	usb->hw.init = &init;
 	usb->regmap = regmap;
-	usb->usbs_mask = usbs_mask;
+	usb->usbs_mask = SAM9X5_USBS_MASK;
 
 	hw = &usb->hw;
 	ret = clk_hw_register(NULL, &usb->hw);

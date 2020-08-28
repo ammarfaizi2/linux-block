@@ -63,17 +63,9 @@ struct bts_buffer {
 
 static struct pmu bts_pmu;
 
-static int buf_nr_pages(struct page *page)
-{
-	if (!PagePrivate(page))
-		return 1;
-
-	return 1 << page_private(page);
-}
-
 static size_t buf_size(struct page *page)
 {
-	return buf_nr_pages(page) * PAGE_SIZE;
+	return 1 << (PAGE_SHIFT + page_private(page));
 }
 
 static void *
@@ -91,7 +83,9 @@ bts_buffer_setup_aux(struct perf_event *event, void **pages,
 	/* count all the high order buffers */
 	for (pg = 0, nbuf = 0; pg < nr_pages;) {
 		page = virt_to_page(pages[pg]);
-		pg += buf_nr_pages(page);
+		if (WARN_ON_ONCE(!PagePrivate(page) && nr_pages > 1))
+			return NULL;
+		pg += 1 << page_private(page);
 		nbuf++;
 	}
 
@@ -115,7 +109,7 @@ bts_buffer_setup_aux(struct perf_event *event, void **pages,
 		unsigned int __nr_pages;
 
 		page = virt_to_page(pages[pg]);
-		__nr_pages = buf_nr_pages(page);
+		__nr_pages = PagePrivate(page) ? 1 << page_private(page) : 1;
 		buf->buf[nbuf].page = page;
 		buf->buf[nbuf].offset = offset;
 		buf->buf[nbuf].displacement = (pad ? BTS_RECORD_SIZE - pad : 0);

@@ -680,11 +680,10 @@ static int fsl_sai_dai_probe(struct snd_soc_dai *cpu_dai)
 	regmap_write(sai->regmap, FSL_SAI_RCSR(ofs), 0);
 
 	regmap_update_bits(sai->regmap, FSL_SAI_TCR1(ofs),
-			   FSL_SAI_CR1_RFW_MASK(sai->soc_data->fifo_depth),
+			   FSL_SAI_CR1_RFW_MASK,
 			   sai->soc_data->fifo_depth - FSL_SAI_MAXBURST_TX);
 	regmap_update_bits(sai->regmap, FSL_SAI_RCR1(ofs),
-			   FSL_SAI_CR1_RFW_MASK(sai->soc_data->fifo_depth),
-			   FSL_SAI_MAXBURST_RX - 1);
+			   FSL_SAI_CR1_RFW_MASK, FSL_SAI_MAXBURST_RX - 1);
 
 	snd_soc_dai_init_dma_data(cpu_dai, &sai->dma_params_tx,
 				&sai->dma_params_rx);
@@ -1020,24 +1019,12 @@ static int fsl_sai_probe(struct platform_device *pdev)
 	ret = devm_snd_soc_register_component(&pdev->dev, &fsl_component,
 			&fsl_sai_dai, 1);
 	if (ret)
-		goto err_pm_disable;
+		return ret;
 
-	if (sai->soc_data->use_imx_pcm) {
-		ret = imx_pcm_dma_init(pdev, IMX_SAI_DMABUF_SIZE);
-		if (ret)
-			goto err_pm_disable;
-	} else {
-		ret = devm_snd_dmaengine_pcm_register(&pdev->dev, NULL, 0);
-		if (ret)
-			goto err_pm_disable;
-	}
-
-	return ret;
-
-err_pm_disable:
-	pm_runtime_disable(&pdev->dev);
-
-	return ret;
+	if (sai->soc_data->use_imx_pcm)
+		return imx_pcm_dma_init(pdev, IMX_SAI_DMABUF_SIZE);
+	else
+		return devm_snd_dmaengine_pcm_register(&pdev->dev, NULL, 0);
 }
 
 static int fsl_sai_remove(struct platform_device *pdev)

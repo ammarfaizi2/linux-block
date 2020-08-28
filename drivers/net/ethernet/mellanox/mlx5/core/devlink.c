@@ -23,10 +23,7 @@ static int mlx5_devlink_flash_update(struct devlink *devlink,
 	if (err)
 		return err;
 
-	err = mlx5_firmware_flash(dev, fw, extack);
-	release_firmware(fw);
-
-	return err;
+	return mlx5_firmware_flash(dev, fw, extack);
 }
 
 static u8 mlx5_fw_ver_major(u32 version)

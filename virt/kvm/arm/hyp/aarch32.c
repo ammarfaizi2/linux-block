@@ -125,16 +125,12 @@ static void __hyp_text kvm_adjust_itstate(struct kvm_vcpu *vcpu)
  */
 void __hyp_text kvm_skip_instr32(struct kvm_vcpu *vcpu, bool is_wide_instr)
 {
-	u32 pc = *vcpu_pc(vcpu);
 	bool is_thumb;
 
 	is_thumb = !!(*vcpu_cpsr(vcpu) & PSR_AA32_T_BIT);
 	if (is_thumb && !is_wide_instr)
-		pc += 2;
+		*vcpu_pc(vcpu) += 2;
 	else
-		pc += 4;
-
-	*vcpu_pc(vcpu) = pc;
-
+		*vcpu_pc(vcpu) += 4;
 	kvm_adjust_itstate(vcpu);
 }

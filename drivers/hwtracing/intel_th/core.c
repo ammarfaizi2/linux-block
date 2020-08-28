@@ -649,8 +649,10 @@ intel_th_subdevice_alloc(struct intel_th *th,
 	}
 
 	err = intel_th_device_add_resources(thdev, res, subdev->nres);
-	if (err)
+	if (err) {
+		put_device(&thdev->dev);
 		goto fail_put_device;
+	}
 
 	if (subdev->type == INTEL_TH_OUTPUT) {
 		if (subdev->mknode)
@@ -665,8 +667,10 @@ intel_th_subdevice_alloc(struct intel_th *th,
 	}
 
 	err = device_add(&thdev->dev);
-	if (err)
+	if (err) {
+		put_device(&thdev->dev);
 		goto fail_free_res;
+	}
 
 	/* need switch driver to be loaded to enumerate the rest */
 	if (subdev->type == INTEL_TH_SWITCH && !req) {
@@ -834,6 +838,9 @@ static irqreturn_t intel_th_irq(int irq, void *data)
 			ret |= d->irq(th->thdev[i]);
 	}
 
+	if (ret == IRQ_NONE)
+		pr_warn_ratelimited("nobody cared for irq\n");
+
 	return ret;
 }
 
@@ -884,7 +891,6 @@ intel_th_alloc(struct device *dev, struct intel_th_drvdata *drvdata,
 
 			if (th->irq == -1)
 				th->irq = devres[r].start;
-			th->num_irqs++;
 			break;
 		default:
 			dev_warn(dev, "Unknown resource type %lx\n",
@@ -937,9 +943,6 @@ void intel_th_free(struct intel_th *th)
 	}
 
 	th->num_thdevs = 0;
-
-	for (i = 0; i < th->num_irqs; i++)
-		devm_free_irq(th->dev, th->irq + i, th);
 
 	pm_runtime_get_sync(th->dev);
 	pm_runtime_forbid(th->dev);
@@ -1021,30 +1024,15 @@ int intel_th_set_output(struct intel_th_device *thdev,
 {
 	struct intel_th_device *hub = to_intel_th_hub(thdev);
 	struct intel_th_driver *hubdrv = to_intel_th_driver(hub->dev.driver);
-	int ret;
 
 	/* In host mode, this is up to the external debugger, do nothing. */
 	if (hub->host_mode)
 		return 0;
 
-	/*
-	 * hub is instantiated together with the source device that
-	 * calls here, so guaranteed to be present.
-	 */
-	hubdrv = to_intel_th_driver(hub->dev.driver);
-	if (!hubdrv || !try_module_get(hubdrv->driver.owner))
-		return -EINVAL;
+	if (!hubdrv->set_output)
+		return -ENOTSUPP;
 
-	if (!hubdrv->set_output) {
-		ret = -ENOTSUPP;
-		goto out;
-	}
-
-	ret = hubdrv->set_output(hub, master);
-
-out:
-	module_put(hubdrv->driver.owner);
-	return ret;
+	return hubdrv->set_output(hub, master);
 }
 EXPORT_SYMBOL_GPL(intel_th_set_output);
 

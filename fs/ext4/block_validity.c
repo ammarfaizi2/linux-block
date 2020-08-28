@@ -68,7 +68,7 @@ static int add_system_zone(struct ext4_system_blocks *system_blks,
 			   ext4_fsblk_t start_blk,
 			   unsigned int count)
 {
-	struct ext4_system_zone *new_entry, *entry;
+	struct ext4_system_zone *new_entry = NULL, *entry;
 	struct rb_node **n = &system_blks->root.rb_node, *node;
 	struct rb_node *parent = NULL, *new_node = NULL;
 
@@ -79,20 +79,30 @@ static int add_system_zone(struct ext4_system_blocks *system_blks,
 			n = &(*n)->rb_left;
 		else if (start_blk >= (entry->start_blk + entry->count))
 			n = &(*n)->rb_right;
-		else	/* Unexpected overlap of system zones. */
-			return -EFSCORRUPTED;
+		else {
+			if (start_blk + count > (entry->start_blk +
+						 entry->count))
+				entry->count = (start_blk + count -
+						entry->start_blk);
+			new_node = *n;
+			new_entry = rb_entry(new_node, struct ext4_system_zone,
+					     node);
+			break;
+		}
 	}
 
-	new_entry = kmem_cache_alloc(ext4_system_zone_cachep,
-				     GFP_KERNEL);
-	if (!new_entry)
-		return -ENOMEM;
-	new_entry->start_blk = start_blk;
-	new_entry->count = count;
-	new_node = &new_entry->node;
+	if (!new_entry) {
+		new_entry = kmem_cache_alloc(ext4_system_zone_cachep,
+					     GFP_KERNEL);
+		if (!new_entry)
+			return -ENOMEM;
+		new_entry->start_blk = start_blk;
+		new_entry->count = count;
+		new_node = &new_entry->node;
 
-	rb_link_node(new_node, parent, n);
-	rb_insert_color(new_node, &system_blks->root);
+		rb_link_node(new_node, parent, n);
+		rb_insert_color(new_node, &system_blks->root);
+	}
 
 	/* Can we merge to the left? */
 	node = rb_prev(new_node);
@@ -193,7 +203,6 @@ static int ext4_protect_reserved_inode(struct super_block *sb,
 		return PTR_ERR(inode);
 	num = (inode->i_size + sb->s_blocksize - 1) >> sb->s_blocksize_bits;
 	while (i < num) {
-		cond_resched();
 		map.m_lblk = i;
 		map.m_len = num - i;
 		n = ext4_map_blocks(NULL, inode, &map, 0);

@@ -307,16 +307,24 @@ static int proc_tcp_fastopen_key(struct ctl_table *table, int write,
 	struct ctl_table tbl = { .maxlen = ((TCP_FASTOPEN_KEY_LENGTH *
 					    2 * TCP_FASTOPEN_KEY_MAX) +
 					    (TCP_FASTOPEN_KEY_MAX * 5)) };
-	u32 user_key[TCP_FASTOPEN_KEY_BUF_LENGTH / sizeof(u32)];
-	__le32 key[TCP_FASTOPEN_KEY_BUF_LENGTH / sizeof(__le32)];
+	struct tcp_fastopen_context *ctx;
+	u32 user_key[TCP_FASTOPEN_KEY_MAX * 4];
+	__le32 key[TCP_FASTOPEN_KEY_MAX * 4];
 	char *backup_data;
-	int ret, i = 0, off = 0, n_keys;
+	int ret, i = 0, off = 0, n_keys = 0;
 
 	tbl.data = kmalloc(tbl.maxlen, GFP_KERNEL);
 	if (!tbl.data)
 		return -ENOMEM;
 
-	n_keys = tcp_fastopen_get_cipher(net, NULL, (u64 *)key);
+	rcu_read_lock();
+	ctx = rcu_dereference(net->ipv4.tcp_fastopen_ctx);
+	if (ctx) {
+		n_keys = tcp_fastopen_context_len(ctx);
+		memcpy(&key[0], &ctx->key[0], TCP_FASTOPEN_KEY_LENGTH * n_keys);
+	}
+	rcu_read_unlock();
+
 	if (!n_keys) {
 		memset(&key[0], 0, TCP_FASTOPEN_KEY_LENGTH);
 		n_keys = 1;

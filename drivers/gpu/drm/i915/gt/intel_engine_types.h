@@ -107,7 +107,6 @@ struct intel_ring {
 
 	u32 space;
 	u32 size;
-	u32 wrap;
 	u32 effective_size;
 };
 
@@ -301,8 +300,8 @@ struct intel_engine_cs {
 	u8 class;
 	u8 instance;
 
-	u16 uabi_class;
-	u16 uabi_instance;
+	u8 uabi_class;
+	u8 uabi_instance;
 
 	u32 context_size;
 	u32 mmio_base;

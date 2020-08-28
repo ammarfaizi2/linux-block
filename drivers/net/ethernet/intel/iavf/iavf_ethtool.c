@@ -278,18 +278,7 @@ static int iavf_get_link_ksettings(struct net_device *netdev,
 	ethtool_link_ksettings_zero_link_mode(cmd, supported);
 	cmd->base.autoneg = AUTONEG_DISABLE;
 	cmd->base.port = PORT_NONE;
-	cmd->base.duplex = DUPLEX_FULL;
-
-	if (ADV_LINK_SUPPORT(adapter)) {
-		if (adapter->link_speed_mbps &&
-		    adapter->link_speed_mbps < U32_MAX)
-			cmd->base.speed = adapter->link_speed_mbps;
-		else
-			cmd->base.speed = SPEED_UNKNOWN;
-
-		return 0;
-	}
-
+	/* Set speed and duplex */
 	switch (adapter->link_speed) {
 	case IAVF_LINK_SPEED_40GB:
 		cmd->base.speed = SPEED_40000;
@@ -317,6 +306,7 @@ static int iavf_get_link_ksettings(struct net_device *netdev,
 	default:
 		break;
 	}
+	cmd->base.duplex = DUPLEX_FULL;
 
 	return 0;
 }

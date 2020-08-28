@@ -1,8 +1,5 @@
 #define CONFIG_CAVIUM_OCTEON_CVMSEG_SIZE	512
-
-#ifndef XKPHYS_TO_PHYS
-# define XKPHYS_TO_PHYS(p)			(p)
-#endif
+#define XKPHYS_TO_PHYS(p)			(p)
 
 #define OCTEON_IRQ_WORKQ0 0
 #define OCTEON_IRQ_RML 0

@@ -719,7 +719,7 @@ end:
  */
 int vnt_radio_power_on(struct vnt_private *priv)
 {
-	int ret = 0;
+	int ret = true;
 
 	vnt_exit_deep_sleep(priv);
 

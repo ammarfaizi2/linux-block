@@ -8,7 +8,6 @@
 #include <linux/string.h>
 #include <linux/rhashtable.h>
 #include <linux/netdevice.h>
-#include <linux/mutex.h>
 #include <net/net_namespace.h>
 #include <net/tc_act/tc_vlan.h>
 
@@ -26,7 +25,6 @@ struct mlxsw_sp_acl {
 	struct mlxsw_sp_fid *dummy_fid;
 	struct rhashtable ruleset_ht;
 	struct list_head rules;
-	struct mutex rules_lock; /* Protects rules list */
 	struct {
 		struct delayed_work dw;
 		unsigned long interval;	/* ms */
@@ -444,7 +442,7 @@ mlxsw_sp_acl_rulei_create(struct mlxsw_sp_acl *acl,
 
 	rulei = kzalloc(sizeof(*rulei), GFP_KERNEL);
 	if (!rulei)
-		return ERR_PTR(-ENOMEM);
+		return NULL;
 
 	if (afa_block) {
 		rulei->act_block = afa_block;
@@ -703,9 +701,7 @@ int mlxsw_sp_acl_rule_add(struct mlxsw_sp *mlxsw_sp,
 			goto err_ruleset_block_bind;
 	}
 
-	mutex_lock(&mlxsw_sp->acl->rules_lock);
 	list_add_tail(&rule->list, &mlxsw_sp->acl->rules);
-	mutex_unlock(&mlxsw_sp->acl->rules_lock);
 	block->rule_count++;
 	block->egress_blocker_rule_count += rule->rulei->egress_bind_blocker;
 	return 0;
@@ -727,9 +723,7 @@ void mlxsw_sp_acl_rule_del(struct mlxsw_sp *mlxsw_sp,
 
 	block->egress_blocker_rule_count -= rule->rulei->egress_bind_blocker;
 	ruleset->ht_key.block->rule_count--;
-	mutex_lock(&mlxsw_sp->acl->rules_lock);
 	list_del(&rule->list);
-	mutex_unlock(&mlxsw_sp->acl->rules_lock);
 	if (!ruleset->ht_key.chain_index &&
 	    mlxsw_sp_acl_ruleset_is_singular(ruleset))
 		mlxsw_sp_acl_ruleset_block_unbind(mlxsw_sp, ruleset,
@@ -789,18 +783,19 @@ static int mlxsw_sp_acl_rules_activity_update(struct mlxsw_sp_acl *acl)
 	struct mlxsw_sp_acl_rule *rule;
 	int err;
 
-	mutex_lock(&acl->rules_lock);
+	/* Protect internal structures from changes */
+	rtnl_lock();
 	list_for_each_entry(rule, &acl->rules, list) {
 		err = mlxsw_sp_acl_rule_activity_update(acl->mlxsw_sp,
 							rule);
 		if (err)
 			goto err_rule_update;
 	}
-	mutex_unlock(&acl->rules_lock);
+	rtnl_unlock();
 	return 0;
 
 err_rule_update:
-	mutex_unlock(&acl->rules_lock);
+	rtnl_unlock();
 	return err;
 }
 
@@ -885,7 +880,6 @@ int mlxsw_sp_acl_init(struct mlxsw_sp *mlxsw_sp)
 	acl->dummy_fid = fid;
 
 	INIT_LIST_HEAD(&acl->rules);
-	mutex_init(&acl->rules_lock);
 	err = mlxsw_sp_acl_tcam_init(mlxsw_sp, &acl->tcam);
 	if (err)
 		goto err_acl_ops_init;
@@ -898,7 +892,6 @@ int mlxsw_sp_acl_init(struct mlxsw_sp *mlxsw_sp)
 	return 0;
 
 err_acl_ops_init:
-	mutex_destroy(&acl->rules_lock);
 	mlxsw_sp_fid_put(fid);
 err_fid_get:
 	rhashtable_destroy(&acl->ruleset_ht);
@@ -915,7 +908,6 @@ void mlxsw_sp_acl_fini(struct mlxsw_sp *mlxsw_sp)
 
 	cancel_delayed_work_sync(&mlxsw_sp->acl->rule_activity_update.dw);
 	mlxsw_sp_acl_tcam_fini(mlxsw_sp, &acl->tcam);
-	mutex_destroy(&acl->rules_lock);
 	WARN_ON(!list_empty(&acl->rules));
 	mlxsw_sp_fid_put(acl->dummy_fid);
 	rhashtable_destroy(&acl->ruleset_ht);

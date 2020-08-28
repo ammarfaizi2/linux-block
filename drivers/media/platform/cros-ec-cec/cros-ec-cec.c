@@ -278,7 +278,11 @@ static int cros_ec_cec_probe(struct platform_device *pdev)
 	platform_set_drvdata(pdev, cros_ec_cec);
 	cros_ec_cec->cros_ec = cros_ec;
 
-	device_init_wakeup(&pdev->dev, 1);
+	ret = device_init_wakeup(&pdev->dev, 1);
+	if (ret) {
+		dev_err(&pdev->dev, "failed to initialize wakeup\n");
+		return ret;
+	}
 
 	cros_ec_cec->adap = cec_allocate_adapter(&cros_ec_cec_ops, cros_ec_cec,
 						 DRV_NAME,

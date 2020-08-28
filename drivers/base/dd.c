@@ -516,10 +516,7 @@ static int really_probe(struct device *dev, struct device_driver *drv)
 	atomic_inc(&probe_count);
 	pr_debug("bus: '%s': %s: probing driver %s with device %s\n",
 		 drv->bus->name, __func__, drv->name, dev_name(dev));
-	if (!list_empty(&dev->devres_head)) {
-		dev_crit(dev, "Resources present before probing\n");
-		return -EBUSY;
-	}
+	WARN_ON(!list_empty(&dev->devres_head));
 
 re_probe:
 	dev->driver = drv;
@@ -872,9 +869,7 @@ static int __device_attach(struct device *dev, bool allow_async)
 	int ret = 0;
 
 	device_lock(dev);
-	if (dev->p->dead) {
-		goto out_unlock;
-	} else if (dev->driver) {
+	if (dev->driver) {
 		if (device_is_bound(dev)) {
 			ret = 1;
 			goto out_unlock;

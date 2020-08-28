@@ -261,7 +261,6 @@ enum th_mmio_idx {
  * @num_thdevs:	number of devices in the @thdev array
  * @num_resources:	number of resources in the @resource array
  * @irq:	irq number
- * @num_irqs:	number of IRQs is use
  * @id:		this Intel TH controller's device ID in the system
  * @major:	device node major for output devices
  */
@@ -278,7 +277,6 @@ struct intel_th {
 	unsigned int		num_thdevs;
 	unsigned int		num_resources;
 	int			irq;
-	int			num_irqs;
 
 	int			id;
 	int			major;

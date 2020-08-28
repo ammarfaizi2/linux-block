@@ -172,16 +172,9 @@ struct inode *ceph_lookup_inode(struct super_block *sb, u64 ino)
 static struct dentry *__fh_to_dentry(struct super_block *sb, u64 ino)
 {
 	struct inode *inode = __lookup_inode(sb, ino);
-	int err;
-
 	if (IS_ERR(inode))
 		return ERR_CAST(inode);
-	/* We need LINK caps to reliably check i_nlink */
-	err = ceph_do_getattr(inode, CEPH_CAP_LINK_SHARED, false);
-	if (err)
-		return ERR_PTR(err);
-	/* -ESTALE if inode as been unlinked and no file is open */
-	if ((inode->i_nlink == 0) && (atomic_read(&inode->i_count) == 1)) {
+	if (inode->i_nlink == 0) {
 		iput(inode);
 		return ERR_PTR(-ESTALE);
 	}
@@ -322,11 +315,6 @@ static struct dentry *__get_parent(struct super_block *sb,
 
 	req->r_num_caps = 1;
 	err = ceph_mdsc_do_request(mdsc, NULL, req);
-	if (err) {
-		ceph_mdsc_put_request(req);
-		return ERR_PTR(err);
-	}
-
 	inode = req->r_target_inode;
 	if (inode)
 		ihold(inode);

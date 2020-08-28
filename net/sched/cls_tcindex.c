@@ -11,7 +11,6 @@
 #include <linux/skbuff.h>
 #include <linux/errno.h>
 #include <linux/slab.h>
-#include <linux/refcount.h>
 #include <net/act_api.h>
 #include <net/netlink.h>
 #include <net/pkt_cls.h>
@@ -27,12 +26,9 @@
 #define DEFAULT_HASH_SIZE	64	/* optimized for diffserv */
 
 
-struct tcindex_data;
-
 struct tcindex_filter_result {
 	struct tcf_exts		exts;
 	struct tcf_result	res;
-	struct tcindex_data	*p;
 	struct rcu_work		rwork;
 };
 
@@ -53,27 +49,12 @@ struct tcindex_data {
 	u32 hash;		/* hash table size; 0 if undefined */
 	u32 alloc_hash;		/* allocated size */
 	u32 fall_through;	/* 0: only classify if explicit match */
-	refcount_t refcnt;	/* a temporary refcnt for perfect hash */
 	struct rcu_work rwork;
 };
 
 static inline int tcindex_filter_is_set(struct tcindex_filter_result *r)
 {
 	return tcf_exts_has_actions(&r->exts) || r->res.classid;
-}
-
-static void tcindex_data_get(struct tcindex_data *p)
-{
-	refcount_inc(&p->refcnt);
-}
-
-static void tcindex_data_put(struct tcindex_data *p)
-{
-	if (refcount_dec_and_test(&p->refcnt)) {
-		kfree(p->perfect);
-		kfree(p->h);
-		kfree(p);
-	}
 }
 
 static struct tcindex_filter_result *tcindex_lookup(struct tcindex_data *p,
@@ -151,7 +132,6 @@ static int tcindex_init(struct tcf_proto *tp)
 	p->mask = 0xffff;
 	p->hash = DEFAULT_HASH_SIZE;
 	p->fall_through = 1;
-	refcount_set(&p->refcnt, 1); /* Paired with tcindex_destroy_work() */
 
 	rcu_assign_pointer(tp->root, p);
 	return 0;
@@ -161,7 +141,6 @@ static void __tcindex_destroy_rexts(struct tcindex_filter_result *r)
 {
 	tcf_exts_destroy(&r->exts);
 	tcf_exts_put_net(&r->exts);
-	tcindex_data_put(r->p);
 }
 
 static void tcindex_destroy_rexts_work(struct work_struct *work)
@@ -233,8 +212,6 @@ found:
 		else
 			__tcindex_destroy_fexts(f);
 	} else {
-		tcindex_data_get(p);
-
 		if (tcf_exts_get_net(&r->exts))
 			tcf_queue_work(&r->rwork, tcindex_destroy_rexts_work);
 		else
@@ -251,7 +228,9 @@ static void tcindex_destroy_work(struct work_struct *work)
 					      struct tcindex_data,
 					      rwork);
 
-	tcindex_data_put(p);
+	kfree(p->perfect);
+	kfree(p->h);
+	kfree(p);
 }
 
 static inline int
@@ -269,11 +248,9 @@ static const struct nla_policy tcindex_policy[TCA_TCINDEX_MAX + 1] = {
 };
 
 static int tcindex_filter_result_init(struct tcindex_filter_result *r,
-				      struct tcindex_data *p,
 				      struct net *net)
 {
 	memset(r, 0, sizeof(*r));
-	r->p = p;
 	return tcf_exts_init(&r->exts, net, TCA_TCINDEX_ACT,
 			     TCA_TCINDEX_POLICE);
 }
@@ -284,10 +261,8 @@ static void tcindex_partial_destroy_work(struct work_struct *work)
 					      struct tcindex_data,
 					      rwork);
 
-	rtnl_lock();
 	kfree(p->perfect);
 	kfree(p);
-	rtnl_unlock();
 }
 
 static void tcindex_free_perfect_hash(struct tcindex_data *cp)
@@ -313,7 +288,6 @@ static int tcindex_alloc_perfect_hash(struct net *net, struct tcindex_data *cp)
 				    TCA_TCINDEX_ACT, TCA_TCINDEX_POLICE);
 		if (err < 0)
 			goto errout;
-		cp->perfect[i].p = cp;
 	}
 
 	return 0;
@@ -358,7 +332,23 @@ tcindex_set_parms(struct net *net, struct tcf_proto *tp, unsigned long base,
 	cp->alloc_hash = p->alloc_hash;
 	cp->fall_through = p->fall_through;
 	cp->tp = tp;
-	refcount_set(&cp->refcnt, 1); /* Paired with tcindex_destroy_work() */
+
+	if (p->perfect) {
+		int i;
+
+		if (tcindex_alloc_perfect_hash(net, cp) < 0)
+			goto errout;
+		for (i = 0; i < cp->hash; i++)
+			cp->perfect[i].res = p->perfect[i].res;
+		balloc = 1;
+	}
+	cp->h = p->h;
+
+	err = tcindex_filter_result_init(&new_filter_result, net);
+	if (err < 0)
+		goto errout1;
+	if (old_r)
+		cr = r->res;
 
 	if (tb[TCA_TCINDEX_HASH])
 		cp->hash = nla_get_u32(tb[TCA_TCINDEX_HASH]);
@@ -368,34 +358,6 @@ tcindex_set_parms(struct net *net, struct tcf_proto *tp, unsigned long base,
 
 	if (tb[TCA_TCINDEX_SHIFT])
 		cp->shift = nla_get_u32(tb[TCA_TCINDEX_SHIFT]);
-
-	if (!cp->hash) {
-		/* Hash not specified, use perfect hash if the upper limit
-		 * of the hashing index is below the threshold.
-		 */
-		if ((cp->mask >> cp->shift) < PERFECT_HASH_THRESHOLD)
-			cp->hash = (cp->mask >> cp->shift) + 1;
-		else
-			cp->hash = DEFAULT_HASH_SIZE;
-	}
-
-	if (p->perfect) {
-		int i;
-
-		if (tcindex_alloc_perfect_hash(net, cp) < 0)
-			goto errout;
-		cp->alloc_hash = cp->hash;
-		for (i = 0; i < min(cp->hash, p->hash); i++)
-			cp->perfect[i].res = p->perfect[i].res;
-		balloc = 1;
-	}
-	cp->h = p->h;
-
-	err = tcindex_filter_result_init(&new_filter_result, cp, net);
-	if (err < 0)
-		goto errout_alloc;
-	if (old_r)
-		cr = r->res;
 
 	err = -EBUSY;
 
@@ -413,6 +375,16 @@ tcindex_set_parms(struct net *net, struct tcf_proto *tp, unsigned long base,
 	err = -EINVAL;
 	if (tb[TCA_TCINDEX_FALL_THROUGH])
 		cp->fall_through = nla_get_u32(tb[TCA_TCINDEX_FALL_THROUGH]);
+
+	if (!cp->hash) {
+		/* Hash not specified, use perfect hash if the upper limit
+		 * of the hashing index is below the threshold.
+		 */
+		if ((cp->mask >> cp->shift) < PERFECT_HASH_THRESHOLD)
+			cp->hash = (cp->mask >> cp->shift) + 1;
+		else
+			cp->hash = DEFAULT_HASH_SIZE;
+	}
 
 	if (!cp->perfect && !cp->h)
 		cp->alloc_hash = cp->hash;
@@ -459,7 +431,7 @@ tcindex_set_parms(struct net *net, struct tcf_proto *tp, unsigned long base,
 			goto errout_alloc;
 		f->key = handle;
 		f->next = NULL;
-		err = tcindex_filter_result_init(&f->result, cp, net);
+		err = tcindex_filter_result_init(&f->result, net);
 		if (err < 0) {
 			kfree(f);
 			goto errout_alloc;
@@ -472,7 +444,7 @@ tcindex_set_parms(struct net *net, struct tcf_proto *tp, unsigned long base,
 	}
 
 	if (old_r && old_r != r) {
-		err = tcindex_filter_result_init(old_r, cp, net);
+		err = tcindex_filter_result_init(old_r, net);
 		if (err < 0) {
 			kfree(f);
 			goto errout_alloc;
@@ -512,6 +484,7 @@ errout_alloc:
 		tcindex_free_perfect_hash(cp);
 	else if (balloc == 2)
 		kfree(cp->h);
+errout1:
 	tcf_exts_destroy(&new_filter_result.exts);
 errout:
 	kfree(cp);
@@ -595,14 +568,6 @@ static void tcindex_destroy(struct tcf_proto *tp, bool rtnl_held,
 	if (p->perfect) {
 		for (i = 0; i < p->hash; i++) {
 			struct tcindex_filter_result *r = p->perfect + i;
-
-			/* tcf_queue_work() does not guarantee the ordering we
-			 * want, so we have to take this refcnt temporarily to
-			 * ensure 'p' is freed after all tcindex_filter_result
-			 * here. Imperfect hash does not need this, because it
-			 * uses linked lists rather than an array.
-			 */
-			tcindex_data_get(p);
 
 			tcf_unbind_filter(tp, &r->res);
 			if (tcf_exts_get_net(&r->exts))
@@ -689,17 +654,12 @@ nla_put_failure:
 	return -1;
 }
 
-static void tcindex_bind_class(void *fh, u32 classid, unsigned long cl,
-			       void *q, unsigned long base)
+static void tcindex_bind_class(void *fh, u32 classid, unsigned long cl)
 {
 	struct tcindex_filter_result *r = fh;
 
-	if (r && r->res.classid == classid) {
-		if (cl)
-			__tcf_bind_filter(q, &r->res, base);
-		else
-			__tcf_unbind_filter(q, &r->res);
-	}
+	if (r && r->res.classid == classid)
+		r->res.class = cl;
 }
 
 static struct tcf_proto_ops cls_tcindex_ops __read_mostly = {

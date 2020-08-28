@@ -334,12 +334,7 @@ static int ili210x_i2c_probe(struct i2c_client *client,
 	input_set_abs_params(input, ABS_MT_POSITION_X, 0, 0xffff, 0, 0);
 	input_set_abs_params(input, ABS_MT_POSITION_Y, 0, 0xffff, 0, 0);
 	touchscreen_parse_properties(input, true, &priv->prop);
-
-	error = input_mt_init_slots(input, priv->max_touches, INPUT_MT_DIRECT);
-	if (error) {
-		dev_err(dev, "Unable to set up slots, err: %d\n", error);
-		return error;
-	}
+	input_mt_init_slots(input, priv->max_touches, INPUT_MT_DIRECT);
 
 	error = devm_add_action(dev, ili210x_cancel_work, priv);
 	if (error)

@@ -3257,7 +3257,6 @@ failed_platform_init:
 
 static int vchiq_remove(struct platform_device *pdev)
 {
-	platform_device_unregister(bcm2835_audio);
 	platform_device_unregister(bcm2835_camera);
 	vchiq_debugfs_deinit();
 	device_destroy(vchiq_class, vchiq_devid);
@@ -3300,7 +3299,7 @@ static int __init vchiq_driver_init(void)
 	return 0;
 
 region_unregister:
-	unregister_chrdev_region(vchiq_devid, 1);
+	platform_driver_unregister(&vchiq_driver);
 
 class_destroy:
 	class_destroy(vchiq_class);

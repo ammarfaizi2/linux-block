@@ -35,6 +35,7 @@
 
 static unsigned int nthreads = 0;
 static unsigned int nsecs    = 8;
+struct timeval start, end, runtime;
 static bool done, __verbose, randomize;
 
 /*
@@ -93,8 +94,8 @@ static void toggle_done(int sig __maybe_unused,
 {
 	/* inform all threads that we're done for the day */
 	done = true;
-	gettimeofday(&bench__end, NULL);
-	timersub(&bench__end, &bench__start, &bench__runtime);
+	gettimeofday(&end, NULL);
+	timersub(&end, &start, &runtime);
 }
 
 static void nest_epollfd(void)
@@ -360,7 +361,7 @@ int bench_epoll_ctl(int argc, const char **argv)
 
 	threads_starting = nthreads;
 
-	gettimeofday(&bench__start, NULL);
+	gettimeofday(&start, NULL);
 
 	do_threads(worker, cpu);
 

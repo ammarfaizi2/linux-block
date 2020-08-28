@@ -277,8 +277,7 @@ void dp_retrain_link_dp_test(struct dc_link *link,
 		if (pipes[i].stream != NULL &&
 			!pipes[i].top_pipe && !pipes[i].prev_odm_pipe &&
 			pipes[i].stream->link != NULL &&
-			pipes[i].stream_res.stream_enc != NULL &&
-			pipes[i].stream->link == link) {
+			pipes[i].stream_res.stream_enc != NULL) {
 			udelay(100);
 
 			pipes[i].stream_res.stream_enc->funcs->dp_blank(

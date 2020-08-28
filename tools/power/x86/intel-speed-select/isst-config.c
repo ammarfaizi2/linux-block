@@ -169,7 +169,7 @@ int get_topo_max_cpus(void)
 static void set_cpu_online_offline(int cpu, int state)
 {
 	char buffer[128];
-	int fd, ret;
+	int fd;
 
 	snprintf(buffer, sizeof(buffer),
 		 "/sys/devices/system/cpu/cpu%d/online", cpu);
@@ -179,12 +179,9 @@ static void set_cpu_online_offline(int cpu, int state)
 		err(-1, "%s open failed", buffer);
 
 	if (state)
-		ret = write(fd, "1\n", 2);
+		write(fd, "1\n", 2);
 	else
-		ret = write(fd, "0\n", 2);
-
-	if (ret == -1)
-		perror("Online/Offline: Operation failed\n");
+		write(fd, "0\n", 2);
 
 	close(fd);
 }

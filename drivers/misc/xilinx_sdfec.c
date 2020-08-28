@@ -602,10 +602,10 @@ static int xsdfec_table_write(struct xsdfec_dev *xsdfec, u32 offset,
 			      const u32 depth)
 {
 	u32 reg = 0;
-	int res, i, nr_pages;
-	u32 n;
+	u32 res;
+	u32 n, i;
 	u32 *addr = NULL;
-	struct page *pages[MAX_NUM_PAGES];
+	struct page *page[MAX_NUM_PAGES];
 
 	/*
 	 * Writes that go beyond the length of
@@ -622,22 +622,15 @@ static int xsdfec_table_write(struct xsdfec_dev *xsdfec, u32 offset,
 	if ((len * XSDFEC_REG_WIDTH_JUMP) % PAGE_SIZE)
 		n += 1;
 
-	if (WARN_ON_ONCE(n > INT_MAX))
-		return -EINVAL;
-
-	nr_pages = n;
-
-	res = get_user_pages_fast((unsigned long)src_ptr, nr_pages, 0, pages);
-	if (res < nr_pages) {
-		if (res > 0) {
-			for (i = 0; i < res; i++)
-				put_page(pages[i]);
-		}
+	res = get_user_pages_fast((unsigned long)src_ptr, n, 0, page);
+	if (res < n) {
+		for (i = 0; i < res; i++)
+			put_page(page[i]);
 		return -EINVAL;
 	}
 
-	for (i = 0; i < nr_pages; i++) {
-		addr = kmap(pages[i]);
+	for (i = 0; i < n; i++) {
+		addr = kmap(page[i]);
 		do {
 			xsdfec_regwrite(xsdfec,
 					base_addr + ((offset + reg) *
@@ -646,7 +639,7 @@ static int xsdfec_table_write(struct xsdfec_dev *xsdfec, u32 offset,
 			reg++;
 		} while ((reg < len) &&
 			 ((reg * XSDFEC_REG_WIDTH_JUMP) % PAGE_SIZE));
-		put_page(pages[i]);
+		put_page(page[i]);
 	}
 	return reg;
 }
@@ -1032,25 +1025,25 @@ static long xsdfec_dev_compat_ioctl(struct file *file, unsigned int cmd,
 }
 #endif
 
-static __poll_t xsdfec_poll(struct file *file, poll_table *wait)
+static unsigned int xsdfec_poll(struct file *file, poll_table *wait)
 {
-	__poll_t mask = 0;
+	unsigned int mask = 0;
 	struct xsdfec_dev *xsdfec;
 
 	xsdfec = container_of(file->private_data, struct xsdfec_dev, miscdev);
 
 	if (!xsdfec)
-		return EPOLLNVAL | EPOLLHUP;
+		return POLLNVAL | POLLHUP;
 
 	poll_wait(file, &xsdfec->waitq, wait);
 
 	/* XSDFEC ISR detected an error */
 	spin_lock_irqsave(&xsdfec->error_data_lock, xsdfec->flags);
 	if (xsdfec->state_updated)
-		mask |= EPOLLIN | EPOLLPRI;
+		mask |= POLLIN | POLLPRI;
 
 	if (xsdfec->stats_updated)
-		mask |= EPOLLIN | EPOLLRDNORM;
+		mask |= POLLIN | POLLRDNORM;
 	spin_unlock_irqrestore(&xsdfec->error_data_lock, xsdfec->flags);
 
 	return mask;

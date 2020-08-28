@@ -26,8 +26,6 @@
 #include <media/imx.h>
 #include "imx-media.h"
 
-#define IMX_CAPTURE_NAME "imx-capture"
-
 struct capture_priv {
 	struct imx_media_video_dev vdev;
 
@@ -71,8 +69,8 @@ static int vidioc_querycap(struct file *file, void *fh,
 {
 	struct capture_priv *priv = video_drvdata(file);
 
-	strscpy(cap->driver, IMX_CAPTURE_NAME, sizeof(cap->driver));
-	strscpy(cap->card, IMX_CAPTURE_NAME, sizeof(cap->card));
+	strscpy(cap->driver, "imx-media-capture", sizeof(cap->driver));
+	strscpy(cap->card, "imx-media-capture", sizeof(cap->card));
 	snprintf(cap->bus_info, sizeof(cap->bus_info),
 		 "platform:%s", priv->src_sd->name);
 

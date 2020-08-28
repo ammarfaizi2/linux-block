@@ -2,7 +2,6 @@
 #ifndef _ASM_POWERPC_BOOK3S_32_KUP_H
 #define _ASM_POWERPC_BOOK3S_32_KUP_H
 
-#include <asm/bug.h>
 #include <asm/book3s/32/mmu-hash.h>
 
 #ifdef __ASSEMBLY__
@@ -76,7 +75,7 @@
 
 .macro kuap_check	current, gpr
 #ifdef CONFIG_PPC_KUAP_DEBUG
-	lwz	\gpr, THREAD + KUAP(\current)
+	lwz	\gpr2, KUAP(thread)
 999:	twnei	\gpr, 0
 	EMIT_BUG_ENTRY 999b, __FILE__, __LINE__, (BUGFLAG_WARNING | BUGFLAG_ONCE)
 #endif
@@ -103,13 +102,11 @@ static inline void kuap_update_sr(u32 sr, u32 addr, u32 end)
 	isync();	/* Context sync required after mtsrin() */
 }
 
-static __always_inline void allow_user_access(void __user *to, const void __user *from,
-					      u32 size, unsigned long dir)
+static inline void allow_user_access(void __user *to, const void __user *from, u32 size)
 {
 	u32 addr, end;
 
-	BUILD_BUG_ON(!__builtin_constant_p(dir));
-	if (!(dir & KUAP_WRITE))
+	if (__builtin_constant_p(to) && to == NULL)
 		return;
 
 	addr = (__force u32)to;
@@ -122,15 +119,10 @@ static __always_inline void allow_user_access(void __user *to, const void __user
 	kuap_update_sr(mfsrin(addr) & ~SR_KS, addr, end);	/* Clear Ks */
 }
 
-static __always_inline void prevent_user_access(void __user *to, const void __user *from,
-						u32 size, unsigned long dir)
+static inline void prevent_user_access(void __user *to, const void __user *from, u32 size)
 {
 	u32 addr = (__force u32)to;
 	u32 end = min(addr + size, TASK_SIZE);
-
-	BUILD_BUG_ON(!__builtin_constant_p(dir));
-	if (!(dir & KUAP_WRITE))
-		return;
 
 	if (!addr || addr >= TASK_SIZE || !size)
 		return;
@@ -139,17 +131,12 @@ static __always_inline void prevent_user_access(void __user *to, const void __us
 	kuap_update_sr(mfsrin(addr) | SR_KS, addr, end);	/* set Ks */
 }
 
-static inline bool
-bad_kuap_fault(struct pt_regs *regs, unsigned long address, bool is_write)
+static inline bool bad_kuap_fault(struct pt_regs *regs, bool is_write)
 {
-	unsigned long begin = regs->kuap & 0xf0000000;
-	unsigned long end = regs->kuap << 28;
-
 	if (!is_write)
 		return false;
 
-	return WARN(address < begin || address >= end,
-		    "Bug: write fault blocked by segment registers !");
+	return WARN(!regs->kuap, "Bug: write fault blocked by segment registers !");
 }
 
 #endif /* CONFIG_PPC_KUAP */

@@ -31,7 +31,6 @@
 #include <linux/uaccess.h>
 #include <linux/vga_switcheroo.h>
 
-#include <drm/drm_agpsupport.h>
 #include <drm/drm_fb_helper.h>
 #include <drm/drm_file.h>
 #include <drm/drm_ioctl.h>
@@ -77,11 +76,6 @@ void radeon_driver_unload_kms(struct drm_device *dev)
 	
 	radeon_modeset_fini(rdev);
 	radeon_device_fini(rdev);
-
-	if (dev->agp)
-		arch_phys_wc_del(dev->agp->agp_mtrr);
-	kfree(dev->agp);
-	dev->agp = NULL;
 
 done_free:
 	kfree(rdev);
@@ -638,10 +632,8 @@ int radeon_driver_open_kms(struct drm_device *dev, struct drm_file *file_priv)
 	file_priv->driver_priv = NULL;
 
 	r = pm_runtime_get_sync(dev->dev);
-	if (r < 0) {
-		pm_runtime_put_autosuspend(dev->dev);
+	if (r < 0)
 		return r;
-	}
 
 	/* new gpu have virtual address space support */
 	if (rdev->family >= CHIP_CAYMAN) {

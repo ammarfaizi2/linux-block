@@ -603,8 +603,6 @@ static long inno_hdmi_phy_rk3228_clk_round_rate(struct clk_hw *hw,
 {
 	const struct pre_pll_config *cfg = pre_pll_cfg_table;
 
-	rate = (rate / 1000) * 1000;
-
 	for (; cfg->pixclock != 0; cfg++)
 		if (cfg->pixclock == rate && !cfg->fracdiv)
 			break;
@@ -756,8 +754,6 @@ static long inno_hdmi_phy_rk3328_clk_round_rate(struct clk_hw *hw,
 						unsigned long *parent_rate)
 {
 	const struct pre_pll_config *cfg = pre_pll_cfg_table;
-
-	rate = (rate / 1000) * 1000;
 
 	for (; cfg->pixclock != 0; cfg++)
 		if (cfg->pixclock == rate)

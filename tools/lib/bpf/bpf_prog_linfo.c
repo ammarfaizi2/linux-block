@@ -101,7 +101,6 @@ struct bpf_prog_linfo *bpf_prog_linfo__new(const struct bpf_prog_info *info)
 {
 	struct bpf_prog_linfo *prog_linfo;
 	__u32 nr_linfo, nr_jited_func;
-	__u64 data_sz;
 
 	nr_linfo = info->nr_line_info;
 
@@ -123,11 +122,11 @@ struct bpf_prog_linfo *bpf_prog_linfo__new(const struct bpf_prog_info *info)
 	/* Copy xlated line_info */
 	prog_linfo->nr_linfo = nr_linfo;
 	prog_linfo->rec_size = info->line_info_rec_size;
-	data_sz = (__u64)nr_linfo * prog_linfo->rec_size;
-	prog_linfo->raw_linfo = malloc(data_sz);
+	prog_linfo->raw_linfo = malloc(nr_linfo * prog_linfo->rec_size);
 	if (!prog_linfo->raw_linfo)
 		goto err_free;
-	memcpy(prog_linfo->raw_linfo, (void *)(long)info->line_info, data_sz);
+	memcpy(prog_linfo->raw_linfo, (void *)(long)info->line_info,
+	       nr_linfo * prog_linfo->rec_size);
 
 	nr_jited_func = info->nr_jited_ksyms;
 	if (!nr_jited_func ||
@@ -143,12 +142,13 @@ struct bpf_prog_linfo *bpf_prog_linfo__new(const struct bpf_prog_info *info)
 	/* Copy jited_line_info */
 	prog_linfo->nr_jited_func = nr_jited_func;
 	prog_linfo->jited_rec_size = info->jited_line_info_rec_size;
-	data_sz = (__u64)nr_linfo * prog_linfo->jited_rec_size;
-	prog_linfo->raw_jited_linfo = malloc(data_sz);
+	prog_linfo->raw_jited_linfo = malloc(nr_linfo *
+					     prog_linfo->jited_rec_size);
 	if (!prog_linfo->raw_jited_linfo)
 		goto err_free;
 	memcpy(prog_linfo->raw_jited_linfo,
-	       (void *)(long)info->jited_line_info, data_sz);
+	       (void *)(long)info->jited_line_info,
+	       nr_linfo * prog_linfo->jited_rec_size);
 
 	/* Number of jited_line_info per jited func */
 	prog_linfo->nr_jited_linfo_per_func = malloc(nr_jited_func *

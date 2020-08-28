@@ -62,10 +62,6 @@ cleanup() {
 	if [[ -f "${infile}" ]]; then
 		rm "${infile}"
 	fi
-
-	if [[ -n $server_pid ]]; then
-		kill $server_pid 2> /dev/null
-	fi
 }
 
 server_listen() {
@@ -81,7 +77,6 @@ client_connect() {
 
 verify_data() {
 	wait "${server_pid}"
-	server_pid=
 	# sha1sum returns two fields [sha1] [filepath]
 	# convert to bash array and access first elem
 	insum=($(sha1sum ${infile}))

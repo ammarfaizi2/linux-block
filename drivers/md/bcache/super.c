@@ -529,28 +529,11 @@ static void prio_io(struct cache *ca, uint64_t bucket, int op,
 	closure_sync(cl);
 }
 
-int bch_prio_write(struct cache *ca, bool wait)
+void bch_prio_write(struct cache *ca)
 {
 	int i;
 	struct bucket *b;
 	struct closure cl;
-
-	pr_debug("free_prio=%zu, free_none=%zu, free_inc=%zu",
-		 fifo_used(&ca->free[RESERVE_PRIO]),
-		 fifo_used(&ca->free[RESERVE_NONE]),
-		 fifo_used(&ca->free_inc));
-
-	/*
-	 * Pre-check if there are enough free buckets. In the non-blocking
-	 * scenario it's better to fail early rather than starting to allocate
-	 * buckets and do a cleanup later in case of failure.
-	 */
-	if (!wait) {
-		size_t avail = fifo_used(&ca->free[RESERVE_PRIO]) +
-			       fifo_used(&ca->free[RESERVE_NONE]);
-		if (prio_buckets(ca) > avail)
-			return -ENOMEM;
-	}
 
 	closure_init_stack(&cl);
 
@@ -560,6 +543,9 @@ int bch_prio_write(struct cache *ca, bool wait)
 
 	atomic_long_add(ca->sb.bucket_size * prio_buckets(ca),
 			&ca->meta_sectors_written);
+
+	//pr_debug("free %zu, free_inc %zu, unused %zu", fifo_used(&ca->free),
+	//	 fifo_used(&ca->free_inc), fifo_used(&ca->unused));
 
 	for (i = prio_buckets(ca) - 1; i >= 0; --i) {
 		long bucket;
@@ -578,7 +564,7 @@ int bch_prio_write(struct cache *ca, bool wait)
 		p->magic	= pset_magic(&ca->sb);
 		p->csum		= bch_crc64(&p->magic, bucket_bytes(ca) - 8);
 
-		bucket = bch_bucket_alloc(ca, RESERVE_PRIO, wait);
+		bucket = bch_bucket_alloc(ca, RESERVE_PRIO, true);
 		BUG_ON(bucket == -1);
 
 		mutex_unlock(&ca->set->bucket_lock);
@@ -607,7 +593,6 @@ int bch_prio_write(struct cache *ca, bool wait)
 
 		ca->prio_last_buckets[i] = ca->prio_buckets[i];
 	}
-	return 0;
 }
 
 static void prio_read(struct cache *ca, uint64_t bucket)
@@ -776,31 +761,20 @@ static inline int idx_to_first_minor(int idx)
 
 static void bcache_device_free(struct bcache_device *d)
 {
-	struct gendisk *disk = d->disk;
-
 	lockdep_assert_held(&bch_register_lock);
 
-	if (disk)
-		pr_info("%s stopped", disk->disk_name);
-	else
-		pr_err("bcache device (NULL gendisk) stopped");
+	pr_info("%s stopped", d->disk->disk_name);
 
 	if (d->c)
 		bcache_device_detach(d);
-
-	if (disk) {
-		bool disk_added = (disk->flags & GENHD_FL_UP) != 0;
-
-		if (disk_added)
-			del_gendisk(disk);
-
-		if (disk->queue)
-			blk_cleanup_queue(disk->queue);
-
+	if (d->disk && d->disk->flags & GENHD_FL_UP)
+		del_gendisk(d->disk);
+	if (d->disk && d->disk->queue)
+		blk_cleanup_queue(d->disk->queue);
+	if (d->disk) {
 		ida_simple_remove(&bcache_device_idx,
-				  first_minor_to_idx(disk->first_minor));
-		if (disk_added)
-			put_disk(disk);
+				  first_minor_to_idx(d->disk->first_minor));
+		put_disk(d->disk);
 	}
 
 	bioset_exit(&d->bio_split);
@@ -816,19 +790,19 @@ static int bcache_device_init(struct bcache_device *d, unsigned int block_size,
 	struct request_queue *q;
 	const size_t max_stripes = min_t(size_t, INT_MAX,
 					 SIZE_MAX / sizeof(atomic_t));
-	uint64_t n;
+	size_t n;
 	int idx;
 
 	if (!d->stripe_size)
 		d->stripe_size = 1 << 31;
 
-	n = DIV_ROUND_UP_ULL(sectors, d->stripe_size);
-	if (!n || n > max_stripes) {
-		pr_err("nr_stripes too large or invalid: %llu (start sector beyond end of disk?)\n",
-			n);
+	d->nr_stripes = DIV_ROUND_UP_ULL(sectors, d->stripe_size);
+
+	if (!d->nr_stripes || d->nr_stripes > max_stripes) {
+		pr_err("nr_stripes too large or invalid: %u (start sector beyond end of disk?)",
+			(unsigned int)d->nr_stripes);
 		return -ENOMEM;
 	}
-	d->nr_stripes = n;
 
 	n = d->nr_stripes * sizeof(atomic_t);
 	d->stripe_sectors_dirty = kvzalloc(n, GFP_KERNEL);
@@ -1276,9 +1250,6 @@ static void cached_dev_free(struct closure *cl)
 	list_del(&dc->list);
 
 	mutex_unlock(&bch_register_lock);
-
-	if (dc->sb_bio.bi_inline_vecs[0].bv_page)
-		put_page(bio_first_page_all(&dc->sb_bio));
 
 	if (!IS_ERR_OR_NULL(dc->bdev))
 		blkdev_put(dc->bdev, FMODE_READ|FMODE_WRITE|FMODE_EXCL);
@@ -1754,7 +1725,7 @@ void bch_cache_set_unregister(struct cache_set *c)
 }
 
 #define alloc_bucket_pages(gfp, c)			\
-	((void *) __get_free_pages(__GFP_ZERO|__GFP_COMP|gfp, ilog2(bucket_pages(c))))
+	((void *) __get_free_pages(__GFP_ZERO|gfp, ilog2(bucket_pages(c))))
 
 struct cache_set *bch_cache_set_alloc(struct cache_sb *sb)
 {
@@ -1983,7 +1954,7 @@ static int run_cache_set(struct cache_set *c)
 
 		mutex_lock(&c->bucket_lock);
 		for_each_cache(ca, c, i)
-			bch_prio_write(ca, true);
+			bch_prio_write(ca);
 		mutex_unlock(&c->bucket_lock);
 
 		err = "cannot allocate new UUID bucket";
@@ -2091,14 +2062,7 @@ found:
 	    sysfs_create_link(&c->kobj, &ca->kobj, buf))
 		goto err;
 
-	/*
-	 * A special case is both ca->sb.seq and c->sb.seq are 0,
-	 * such condition happens on a new created cache device whose
-	 * super block is never flushed yet. In this case c->sb.version
-	 * and other members should be updated too, otherwise we will
-	 * have a mistaken super block version in cache set.
-	 */
-	if (ca->sb.seq > c->sb.seq || c->sb.seq == 0) {
+	if (ca->sb.seq > c->sb.seq) {
 		c->sb.version		= ca->sb.version;
 		memcpy(c->sb.set_uuid, ca->sb.set_uuid, 16);
 		c->sb.flags             = ca->sb.flags;
@@ -2382,35 +2346,29 @@ static bool bch_is_open(struct block_device *bdev)
 static ssize_t register_bcache(struct kobject *k, struct kobj_attribute *attr,
 			       const char *buffer, size_t size)
 {
-	const char *err;
+	ssize_t ret = -EINVAL;
+	const char *err = "cannot allocate memory";
 	char *path = NULL;
-	struct cache_sb *sb;
+	struct cache_sb *sb = NULL;
 	struct block_device *bdev = NULL;
-	struct page *sb_page;
-	ssize_t ret;
+	struct page *sb_page = NULL;
 
-	ret = -EBUSY;
-	err = "failed to reference bcache module";
 	if (!try_module_get(THIS_MODULE))
-		goto out;
+		return -EBUSY;
 
 	/* For latest state of bcache_is_reboot */
 	smp_mb();
-	err = "bcache is in reboot";
 	if (bcache_is_reboot)
-		goto out_module_put;
+		return -EBUSY;
 
-	ret = -ENOMEM;
-	err = "cannot allocate memory";
 	path = kstrndup(buffer, size, GFP_KERNEL);
 	if (!path)
-		goto out_module_put;
+		goto err;
 
 	sb = kmalloc(sizeof(struct cache_sb), GFP_KERNEL);
 	if (!sb)
-		goto out_free_path;
+		goto err;
 
-	ret = -EINVAL;
 	err = "failed to open device";
 	bdev = blkdev_get_by_path(strim(path),
 				  FMODE_READ|FMODE_WRITE|FMODE_EXCL,
@@ -2427,69 +2385,57 @@ static ssize_t register_bcache(struct kobject *k, struct kobj_attribute *attr,
 			if (!IS_ERR(bdev))
 				bdput(bdev);
 			if (attr == &ksysfs_register_quiet)
-				goto done;
+				goto quiet_out;
 		}
-		goto out_free_sb;
+		goto err;
 	}
 
 	err = "failed to set blocksize";
 	if (set_blocksize(bdev, 4096))
-		goto out_blkdev_put;
+		goto err_close;
 
 	err = read_super(sb, bdev, &sb_page);
 	if (err)
-		goto out_blkdev_put;
+		goto err_close;
 
 	err = "failed to register device";
 	if (SB_IS_BDEV(sb)) {
 		struct cached_dev *dc = kzalloc(sizeof(*dc), GFP_KERNEL);
 
 		if (!dc)
-			goto out_put_sb_page;
+			goto err_close;
 
 		mutex_lock(&bch_register_lock);
 		ret = register_bdev(sb, sb_page, bdev, dc);
 		mutex_unlock(&bch_register_lock);
 		/* blkdev_put() will be called in cached_dev_free() */
-		if (ret < 0) {
-			bdev = NULL;
-			goto out_put_sb_page;
-		}
+		if (ret < 0)
+			goto err;
 	} else {
 		struct cache *ca = kzalloc(sizeof(*ca), GFP_KERNEL);
 
 		if (!ca)
-			goto out_put_sb_page;
+			goto err_close;
 
 		/* blkdev_put() will be called in bch_cache_release() */
-		if (register_cache(sb, sb_page, bdev, ca) != 0) {
-			bdev = NULL;
-			goto out_put_sb_page;
-		}
+		if (register_cache(sb, sb_page, bdev, ca) != 0)
+			goto err;
 	}
-
-	put_page(sb_page);
-done:
-	kfree(sb);
-	kfree(path);
-	module_put(THIS_MODULE);
-	return size;
-
-out_put_sb_page:
-	put_page(sb_page);
-out_blkdev_put:
-	if (bdev)
-		blkdev_put(bdev, FMODE_READ | FMODE_WRITE | FMODE_EXCL);
-out_free_sb:
-	kfree(sb);
-out_free_path:
-	kfree(path);
-	path = NULL;
-out_module_put:
-	module_put(THIS_MODULE);
+quiet_out:
+	ret = size;
 out:
-	pr_info("error %s: %s", path?path:"", err);
+	if (sb_page)
+		put_page(sb_page);
+	kfree(sb);
+	kfree(path);
+	module_put(THIS_MODULE);
 	return ret;
+
+err_close:
+	blkdev_put(bdev, FMODE_READ|FMODE_WRITE|FMODE_EXCL);
+err:
+	pr_info("error %s: %s", path, err);
+	goto out;
 }
 
 

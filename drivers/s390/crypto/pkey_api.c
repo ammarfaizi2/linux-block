@@ -740,10 +740,8 @@ static void *_copy_apqns_from_user(void __user *uapqns, size_t nr_apqns)
 		kapqns = kmalloc(nbytes, GFP_KERNEL);
 		if (!kapqns)
 			return ERR_PTR(-ENOMEM);
-		if (copy_from_user(kapqns, uapqns, nbytes)) {
-			kfree(kapqns);
+		if (copy_from_user(kapqns, uapqns, nbytes))
 			return ERR_PTR(-EFAULT);
-		}
 	}
 
 	return kapqns;
@@ -794,7 +792,7 @@ static long pkey_unlocked_ioctl(struct file *filp, unsigned int cmd,
 			return -EFAULT;
 		rc = cca_sec2protkey(ksp.cardnr, ksp.domain,
 				     ksp.seckey.seckey, ksp.protkey.protkey,
-				     &ksp.protkey.len, &ksp.protkey.type);
+				     NULL, &ksp.protkey.type);
 		DEBUG_DBG("%s cca_sec2protkey()=%d\n", __func__, rc);
 		if (rc)
 			break;

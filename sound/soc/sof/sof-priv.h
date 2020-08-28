@@ -356,15 +356,6 @@ struct snd_sof_dai {
 	struct list_head list;	/* list in sdev dai list */
 };
 
-enum snd_sof_fw_state {
-	SOF_FW_BOOT_NOT_STARTED = 0,
-	SOF_FW_BOOT_PREPARE,
-	SOF_FW_BOOT_IN_PROGRESS,
-	SOF_FW_BOOT_FAILED,
-	SOF_FW_BOOT_READY_FAILED, /* firmware booted but fw_ready op failed */
-	SOF_FW_BOOT_COMPLETE,
-};
-
 /*
  * SOF Device Level.
  */
@@ -381,7 +372,7 @@ struct snd_sof_dev {
 
 	/* DSP firmware boot */
 	wait_queue_head_t boot_wait;
-	enum snd_sof_fw_state fw_state;
+	u32 boot_complete;
 	u32 first_boot;
 
 	/* work queue in case the probe is implemented in two steps */

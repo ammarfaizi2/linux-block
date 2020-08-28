@@ -51,4 +51,6 @@
 
 #define CLK_PLL_DDR1		74
 
+#define CLK_NUMBER		(CLK_I2S0 + 1)
+
 #endif /* _CCU_SUN8I_H3_H_ */

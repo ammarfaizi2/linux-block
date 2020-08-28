@@ -29,20 +29,19 @@ struct ads8344 {
 	struct mutex lock;
 
 	u8 tx_buf ____cacheline_aligned;
-	u8 rx_buf[3];
+	u16 rx_buf;
 };
 
-#define ADS8344_VOLTAGE_CHANNEL(chan, addr)				\
+#define ADS8344_VOLTAGE_CHANNEL(chan, si)				\
 	{								\
 		.type = IIO_VOLTAGE,					\
 		.indexed = 1,						\
 		.channel = chan,					\
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),		\
 		.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE),	\
-		.address = addr,					\
 	}
 
-#define ADS8344_VOLTAGE_CHANNEL_DIFF(chan1, chan2, addr)		\
+#define ADS8344_VOLTAGE_CHANNEL_DIFF(chan1, chan2, si)			\
 	{								\
 		.type = IIO_VOLTAGE,					\
 		.indexed = 1,						\
@@ -51,7 +50,6 @@ struct ads8344 {
 		.differential = 1,					\
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),		\
 		.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE),	\
-		.address = addr,					\
 	}
 
 static const struct iio_chan_spec ads8344_channels[] = {
@@ -91,11 +89,11 @@ static int ads8344_adc_conversion(struct ads8344 *adc, int channel,
 
 	udelay(9);
 
-	ret = spi_read(spi, adc->rx_buf, sizeof(adc->rx_buf));
+	ret = spi_read(spi, &adc->rx_buf, 2);
 	if (ret)
 		return ret;
 
-	return adc->rx_buf[0] << 9 | adc->rx_buf[1] << 1 | adc->rx_buf[2] >> 7;
+	return adc->rx_buf;
 }
 
 static int ads8344_read_raw(struct iio_dev *iio,
@@ -107,7 +105,7 @@ static int ads8344_read_raw(struct iio_dev *iio,
 	switch (mask) {
 	case IIO_CHAN_INFO_RAW:
 		mutex_lock(&adc->lock);
-		*value = ads8344_adc_conversion(adc, channel->address,
+		*value = ads8344_adc_conversion(adc, channel->scan_index,
 						channel->differential);
 		mutex_unlock(&adc->lock);
 		if (*value < 0)

@@ -1294,10 +1294,8 @@ static inline int drbg_alloc_state(struct drbg_state *drbg)
 	if (IS_ENABLED(CONFIG_CRYPTO_FIPS)) {
 		drbg->prev = kzalloc(drbg_sec_strength(drbg->core->flags),
 				     GFP_KERNEL);
-		if (!drbg->prev) {
-			ret = -ENOMEM;
+		if (!drbg->prev)
 			goto fini;
-		}
 		drbg->fips_primed = false;
 	}
 

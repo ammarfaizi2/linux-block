@@ -151,12 +151,7 @@ u32 panfrost_mmu_as_get(struct panfrost_device *pfdev, struct panfrost_mmu *mmu)
 	as = mmu->as;
 	if (as >= 0) {
 		int en = atomic_inc_return(&mmu->as_count);
-
-		/*
-		 * AS can be retained by active jobs or a perfcnt context,
-		 * hence the '+ 1' here.
-		 */
-		WARN_ON(en >= (NUM_JOB_SLOTS + 1));
+		WARN_ON(en >= NUM_JOB_SLOTS);
 
 		list_move(&mmu->list, &pfdev->as_lru_list);
 		goto out;
@@ -274,15 +269,14 @@ static int mmu_map_sg(struct panfrost_device *pfdev, struct panfrost_mmu *mmu,
 	return 0;
 }
 
-int panfrost_mmu_map(struct panfrost_gem_mapping *mapping)
+int panfrost_mmu_map(struct panfrost_gem_object *bo)
 {
-	struct panfrost_gem_object *bo = mapping->obj;
 	struct drm_gem_object *obj = &bo->base.base;
 	struct panfrost_device *pfdev = to_panfrost_device(obj->dev);
 	struct sg_table *sgt;
 	int prot = IOMMU_READ | IOMMU_WRITE;
 
-	if (WARN_ON(mapping->active))
+	if (WARN_ON(bo->is_mapped))
 		return 0;
 
 	if (bo->noexec)
@@ -292,28 +286,25 @@ int panfrost_mmu_map(struct panfrost_gem_mapping *mapping)
 	if (WARN_ON(IS_ERR(sgt)))
 		return PTR_ERR(sgt);
 
-	mmu_map_sg(pfdev, mapping->mmu, mapping->mmnode.start << PAGE_SHIFT,
-		   prot, sgt);
-	mapping->active = true;
+	mmu_map_sg(pfdev, bo->mmu, bo->node.start << PAGE_SHIFT, prot, sgt);
+	bo->is_mapped = true;
 
 	return 0;
 }
 
-void panfrost_mmu_unmap(struct panfrost_gem_mapping *mapping)
+void panfrost_mmu_unmap(struct panfrost_gem_object *bo)
 {
-	struct panfrost_gem_object *bo = mapping->obj;
 	struct drm_gem_object *obj = &bo->base.base;
 	struct panfrost_device *pfdev = to_panfrost_device(obj->dev);
-	struct io_pgtable_ops *ops = mapping->mmu->pgtbl_ops;
-	u64 iova = mapping->mmnode.start << PAGE_SHIFT;
-	size_t len = mapping->mmnode.size << PAGE_SHIFT;
+	struct io_pgtable_ops *ops = bo->mmu->pgtbl_ops;
+	u64 iova = bo->node.start << PAGE_SHIFT;
+	size_t len = bo->node.size << PAGE_SHIFT;
 	size_t unmapped_len = 0;
 
-	if (WARN_ON(!mapping->active))
+	if (WARN_ON(!bo->is_mapped))
 		return;
 
-	dev_dbg(pfdev->dev, "unmap: as=%d, iova=%llx, len=%zx",
-		mapping->mmu->as, iova, len);
+	dev_dbg(pfdev->dev, "unmap: as=%d, iova=%llx, len=%zx", bo->mmu->as, iova, len);
 
 	while (unmapped_len < len) {
 		size_t unmapped_page;
@@ -327,9 +318,8 @@ void panfrost_mmu_unmap(struct panfrost_gem_mapping *mapping)
 		unmapped_len += pgsize;
 	}
 
-	panfrost_mmu_flush_range(pfdev, mapping->mmu,
-				 mapping->mmnode.start << PAGE_SHIFT, len);
-	mapping->active = false;
+	panfrost_mmu_flush_range(pfdev, bo->mmu, bo->node.start << PAGE_SHIFT, len);
+	bo->is_mapped = false;
 }
 
 static void mmu_tlb_inv_context_s1(void *cookie)
@@ -404,10 +394,10 @@ void panfrost_mmu_pgtable_free(struct panfrost_file_priv *priv)
 	free_io_pgtable_ops(mmu->pgtbl_ops);
 }
 
-static struct panfrost_gem_mapping *
-addr_to_mapping(struct panfrost_device *pfdev, int as, u64 addr)
+static struct panfrost_gem_object *
+addr_to_drm_mm_node(struct panfrost_device *pfdev, int as, u64 addr)
 {
-	struct panfrost_gem_mapping *mapping = NULL;
+	struct panfrost_gem_object *bo = NULL;
 	struct panfrost_file_priv *priv;
 	struct drm_mm_node *node;
 	u64 offset = addr >> PAGE_SHIFT;
@@ -428,9 +418,8 @@ found_mmu:
 	drm_mm_for_each_node(node, &priv->mm) {
 		if (offset >= node->start &&
 		    offset < (node->start + node->size)) {
-			mapping = drm_mm_node_to_panfrost_mapping(node);
-
-			kref_get(&mapping->refcount);
+			bo = drm_mm_node_to_panfrost_bo(node);
+			drm_gem_object_get(&bo->base.base);
 			break;
 		}
 	}
@@ -438,7 +427,7 @@ found_mmu:
 	spin_unlock(&priv->mm_lock);
 out:
 	spin_unlock(&pfdev->as_lock);
-	return mapping;
+	return bo;
 }
 
 #define NUM_FAULT_PAGES (SZ_2M / PAGE_SIZE)
@@ -447,30 +436,28 @@ static int panfrost_mmu_map_fault_addr(struct panfrost_device *pfdev, int as,
 				       u64 addr)
 {
 	int ret, i;
-	struct panfrost_gem_mapping *bomapping;
 	struct panfrost_gem_object *bo;
 	struct address_space *mapping;
 	pgoff_t page_offset;
 	struct sg_table *sgt;
 	struct page **pages;
 
-	bomapping = addr_to_mapping(pfdev, as, addr);
-	if (!bomapping)
+	bo = addr_to_drm_mm_node(pfdev, as, addr);
+	if (!bo)
 		return -ENOENT;
 
-	bo = bomapping->obj;
 	if (!bo->is_heap) {
 		dev_WARN(pfdev->dev, "matching BO is not heap type (GPU VA = %llx)",
-			 bomapping->mmnode.start << PAGE_SHIFT);
+			 bo->node.start << PAGE_SHIFT);
 		ret = -EINVAL;
 		goto err_bo;
 	}
-	WARN_ON(bomapping->mmu->as != as);
+	WARN_ON(bo->mmu->as != as);
 
 	/* Assume 2MB alignment and size multiple */
 	addr &= ~((u64)SZ_2M - 1);
 	page_offset = addr >> PAGE_SHIFT;
-	page_offset -= bomapping->mmnode.start;
+	page_offset -= bo->node.start;
 
 	mutex_lock(&bo->base.pages_lock);
 
@@ -486,7 +473,7 @@ static int panfrost_mmu_map_fault_addr(struct panfrost_device *pfdev, int as,
 		pages = kvmalloc_array(bo->base.base.size >> PAGE_SHIFT,
 				       sizeof(struct page *), GFP_KERNEL | __GFP_ZERO);
 		if (!pages) {
-			kvfree(bo->sgts);
+			kfree(bo->sgts);
 			bo->sgts = NULL;
 			mutex_unlock(&bo->base.pages_lock);
 			ret = -ENOMEM;
@@ -522,14 +509,13 @@ static int panfrost_mmu_map_fault_addr(struct panfrost_device *pfdev, int as,
 		goto err_map;
 	}
 
-	mmu_map_sg(pfdev, bomapping->mmu, addr,
-		   IOMMU_WRITE | IOMMU_READ | IOMMU_NOEXEC, sgt);
+	mmu_map_sg(pfdev, bo->mmu, addr, IOMMU_WRITE | IOMMU_READ | IOMMU_NOEXEC, sgt);
 
-	bomapping->active = true;
+	bo->is_mapped = true;
 
 	dev_dbg(pfdev->dev, "mapped page fault @ AS%d %llx", as, addr);
 
-	panfrost_gem_mapping_put(bomapping);
+	drm_gem_object_put_unlocked(&bo->base.base);
 
 	return 0;
 
@@ -601,27 +587,33 @@ static irqreturn_t panfrost_mmu_irq_handler_thread(int irq, void *data)
 		source_id = (fault_status >> 16);
 
 		/* Page fault only */
-		ret = -1;
-		if ((status & mask) == BIT(i) && (exception_type & 0xF8) == 0xC0)
-			ret = panfrost_mmu_map_fault_addr(pfdev, i, addr);
+		if ((status & mask) == BIT(i)) {
+			WARN_ON(exception_type < 0xC1 || exception_type > 0xC4);
 
-		if (ret)
-			/* terminal fault, print info about the fault */
-			dev_err(pfdev->dev,
-				"Unhandled Page fault in AS%d at VA 0x%016llX\n"
-				"Reason: %s\n"
-				"raw fault status: 0x%X\n"
-				"decoded fault status: %s\n"
-				"exception type 0x%X: %s\n"
-				"access type 0x%X: %s\n"
-				"source id 0x%X\n",
-				i, addr,
-				"TODO",
-				fault_status,
-				(fault_status & (1 << 10) ? "DECODER FAULT" : "SLAVE FAULT"),
-				exception_type, panfrost_exception_name(pfdev, exception_type),
-				access_type, access_type_name(pfdev, fault_status),
-				source_id);
+			ret = panfrost_mmu_map_fault_addr(pfdev, i, addr);
+			if (!ret) {
+				mmu_write(pfdev, MMU_INT_CLEAR, BIT(i));
+				status &= ~mask;
+				continue;
+			}
+		}
+
+		/* terminal fault, print info about the fault */
+		dev_err(pfdev->dev,
+			"Unhandled Page fault in AS%d at VA 0x%016llX\n"
+			"Reason: %s\n"
+			"raw fault status: 0x%X\n"
+			"decoded fault status: %s\n"
+			"exception type 0x%X: %s\n"
+			"access type 0x%X: %s\n"
+			"source id 0x%X\n",
+			i, addr,
+			"TODO",
+			fault_status,
+			(fault_status & (1 << 10) ? "DECODER FAULT" : "SLAVE FAULT"),
+			exception_type, panfrost_exception_name(pfdev, exception_type),
+			access_type, access_type_name(pfdev, fault_status),
+			source_id);
 
 		mmu_write(pfdev, MMU_INT_CLEAR, mask);
 

@@ -127,11 +127,7 @@ static DEFINE_SPINLOCK(func_buf_lock); /* guard 'func_buf'  and friends */
 static unsigned long key_down[BITS_TO_LONGS(KEY_CNT)];	/* keyboard key bitmap */
 static unsigned char shift_down[NR_SHIFT];		/* shift state counters.. */
 static bool dead_key_next;
-
-/* Handles a number being assembled on the number pad */
-static bool npadch_active;
-static unsigned int npadch_value;
-
+static int npadch = -1;					/* -1 or number assembled on pad */
 static unsigned int diacr;
 static char rep;					/* flag telling character repeat */
 
@@ -849,12 +845,12 @@ static void k_shift(struct vc_data *vc, unsigned char value, char up_flag)
 		shift_state &= ~(1 << value);
 
 	/* kludge */
-	if (up_flag && shift_state != old_state && npadch_active) {
+	if (up_flag && shift_state != old_state && npadch != -1) {
 		if (kbd->kbdmode == VC_UNICODE)
-			to_utf8(vc, npadch_value);
+			to_utf8(vc, npadch);
 		else
-			put_queue(vc, npadch_value & 0xff);
-		npadch_active = false;
+			put_queue(vc, npadch & 0xff);
+		npadch = -1;
 	}
 }
 
@@ -872,7 +868,7 @@ static void k_meta(struct vc_data *vc, unsigned char value, char up_flag)
 
 static void k_ascii(struct vc_data *vc, unsigned char value, char up_flag)
 {
-	unsigned int base;
+	int base;
 
 	if (up_flag)
 		return;
@@ -886,12 +882,10 @@ static void k_ascii(struct vc_data *vc, unsigned char value, char up_flag)
 		base = 16;
 	}
 
-	if (!npadch_active) {
-		npadch_value = 0;
-		npadch_active = true;
-	}
-
-	npadch_value = npadch_value * base + value;
+	if (npadch == -1)
+		npadch = value;
+	else
+		npadch = npadch * base + value;
 }
 
 static void k_lock(struct vc_data *vc, unsigned char value, char up_flag)
@@ -1497,7 +1491,7 @@ static void kbd_event(struct input_handle *handle, unsigned int event_type,
 
 	if (event_type == EV_MSC && event_code == MSC_RAW && HW_RAW(handle->dev))
 		kbd_rawcode(value);
-	if (event_type == EV_KEY && event_code <= KEY_MAX)
+	if (event_type == EV_KEY)
 		kbd_keycode(event_code, value, HW_RAW(handle->dev));
 
 	spin_unlock(&kbd_event_lock);

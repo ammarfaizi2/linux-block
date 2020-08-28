@@ -171,9 +171,8 @@ qtnf_event_handle_bss_join(struct qtnf_vif *vif,
 		return -EPROTO;
 	}
 
-	pr_debug("VIF%u.%u: BSSID:%pM chan:%u status:%u\n",
-		 vif->mac->macid, vif->vifid, join_info->bssid,
-		 le16_to_cpu(join_info->chan.chan.center_freq), status);
+	pr_debug("VIF%u.%u: BSSID:%pM status:%u\n",
+		 vif->mac->macid, vif->vifid, join_info->bssid, status);
 
 	if (status != WLAN_STATUS_SUCCESS)
 		goto done;
@@ -182,7 +181,7 @@ qtnf_event_handle_bss_join(struct qtnf_vif *vif,
 	if (!cfg80211_chandef_valid(&chandef)) {
 		pr_warn("MAC%u.%u: bad channel freq=%u cf1=%u cf2=%u bw=%u\n",
 			vif->mac->macid, vif->vifid,
-			chandef.chan ? chandef.chan->center_freq : 0,
+			chandef.chan->center_freq,
 			chandef.center_freq1,
 			chandef.center_freq2,
 			chandef.width);

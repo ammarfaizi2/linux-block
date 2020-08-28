@@ -1277,7 +1277,7 @@ static int cx8800_initdev(struct pci_dev *pci_dev,
 	core = cx88_core_get(dev->pci);
 	if (!core) {
 		err = -EINVAL;
-		goto fail_disable;
+		goto fail_free;
 	}
 	dev->core = core;
 
@@ -1323,7 +1323,7 @@ static int cx8800_initdev(struct pci_dev *pci_dev,
 				       cc->step, cc->default_value);
 		if (!vc) {
 			err = core->audio_hdl.error;
-			goto fail_irq;
+			goto fail_core;
 		}
 		vc->priv = (void *)cc;
 	}
@@ -1337,7 +1337,7 @@ static int cx8800_initdev(struct pci_dev *pci_dev,
 				       cc->step, cc->default_value);
 		if (!vc) {
 			err = core->video_hdl.error;
-			goto fail_irq;
+			goto fail_core;
 		}
 		vc->priv = (void *)cc;
 		if (vc->id == V4L2_CID_CHROMA_AGC)
@@ -1509,14 +1509,11 @@ static int cx8800_initdev(struct pci_dev *pci_dev,
 
 fail_unreg:
 	cx8800_unregister_video(dev);
-	mutex_unlock(&core->lock);
-fail_irq:
 	free_irq(pci_dev->irq, dev);
+	mutex_unlock(&core->lock);
 fail_core:
 	core->v4ldev = NULL;
 	cx88_core_put(core, dev->pci);
-fail_disable:
-	pci_disable_device(pci_dev);
 fail_free:
 	kfree(dev);
 	return err;

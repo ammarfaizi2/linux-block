@@ -97,6 +97,7 @@ do { \
                __LINE__, __FILE__, #x, jiffies); \
     {do} \
     printk("\n"); \
+    BUG(); \
     panic("DLM:  Record message above and reboot.\n"); \
   } \
 }
