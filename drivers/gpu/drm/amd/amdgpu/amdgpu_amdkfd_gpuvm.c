@@ -1304,7 +1304,7 @@ int amdgpu_amdkfd_gpuvm_free_memory_of_gpu(
 	}
 
 	/* Free the BO*/
-	drm_gem_object_put_unlocked(&mem->bo->tbo.base);
+	amdgpu_bo_unref(&mem->bo);
 	mutex_destroy(&mem->lock);
 	kfree(mem);
 
@@ -1647,8 +1647,7 @@ int amdgpu_amdkfd_gpuvm_import_dmabuf(struct kgd_dev *kgd,
 		 ALLOC_MEM_FLAGS_VRAM : ALLOC_MEM_FLAGS_GTT) |
 		ALLOC_MEM_FLAGS_WRITABLE | ALLOC_MEM_FLAGS_EXECUTABLE;
 
-	drm_gem_object_get(&bo->tbo.base);
-	(*mem)->bo = bo;
+	(*mem)->bo = amdgpu_bo_ref(bo);
 	(*mem)->va = va;
 	(*mem)->domain = (bo->preferred_domains & AMDGPU_GEM_DOMAIN_VRAM) ?
 		AMDGPU_GEM_DOMAIN_VRAM : AMDGPU_GEM_DOMAIN_GTT;

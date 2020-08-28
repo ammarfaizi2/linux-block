@@ -740,9 +740,8 @@ int bitmap_parse(const char *start, unsigned int buflen,
 	int chunks = BITS_TO_U32(nmaskbits);
 	u32 *bitmap = (u32 *)maskp;
 	int unset_bit;
-	int chunk;
 
-	for (chunk = 0; ; chunk++) {
+	while (1) {
 		end = bitmap_find_region_reverse(start, end);
 		if (start > end)
 			break;
@@ -750,11 +749,7 @@ int bitmap_parse(const char *start, unsigned int buflen,
 		if (!chunks--)
 			return -EOVERFLOW;
 
-#if defined(CONFIG_64BIT) && defined(__BIG_ENDIAN)
-		end = bitmap_get_x32_reverse(start, end, &bitmap[chunk ^ 1]);
-#else
-		end = bitmap_get_x32_reverse(start, end, &bitmap[chunk]);
-#endif
+		end = bitmap_get_x32_reverse(start, end, bitmap++);
 		if (IS_ERR(end))
 			return PTR_ERR(end);
 	}

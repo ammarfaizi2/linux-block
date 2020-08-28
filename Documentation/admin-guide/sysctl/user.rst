@@ -65,12 +65,6 @@ max_pid_namespaces
   The maximum number of pid namespaces that any user in the current
   user namespace may create.
 
-max_time_namespaces
-===================
-
-  The maximum number of time namespaces that any user in the current
-  user namespace may create.
-
 max_user_namespaces
 ===================
 

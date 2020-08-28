@@ -167,12 +167,15 @@
 	 *   BA     Reserved  C   D   V
 	 */
 	cprcr	r6, cpcr30
-	lsri	r6, 29
-	lsli	r6, 29
+	lsri	r6, 28
+	lsli	r6, 28
 	addi	r6, 0xe
 	cpwcr	r6, cpcr30
 
-	movi	r6, 0
+	lsri	r6, 28
+	addi	r6, 2
+	lsli	r6, 28
+	addi	r6, 0xe
 	cpwcr	r6, cpcr31
 .endm
 

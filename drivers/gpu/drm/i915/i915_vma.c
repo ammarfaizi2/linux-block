@@ -158,18 +158,16 @@ vma_create(struct drm_i915_gem_object *obj,
 
 	GEM_BUG_ON(!IS_ALIGNED(vma->size, I915_GTT_PAGE_SIZE));
 
-	spin_lock(&obj->vma.lock);
-
 	if (i915_is_ggtt(vm)) {
 		if (unlikely(overflows_type(vma->size, u32)))
-			goto err_unlock;
+			goto err_vma;
 
 		vma->fence_size = i915_gem_fence_size(vm->i915, vma->size,
 						      i915_gem_object_get_tiling(obj),
 						      i915_gem_object_get_stride(obj));
 		if (unlikely(vma->fence_size < vma->size || /* overflow */
 			     vma->fence_size > vm->total))
-			goto err_unlock;
+			goto err_vma;
 
 		GEM_BUG_ON(!IS_ALIGNED(vma->fence_size, I915_GTT_MIN_ALIGNMENT));
 
@@ -180,6 +178,8 @@ vma_create(struct drm_i915_gem_object *obj,
 
 		__set_bit(I915_VMA_GGTT_BIT, __i915_vma_flags(vma));
 	}
+
+	spin_lock(&obj->vma.lock);
 
 	rb = NULL;
 	p = &obj->vma.tree.rb_node;
@@ -225,8 +225,6 @@ vma_create(struct drm_i915_gem_object *obj,
 
 	return vma;
 
-err_unlock:
-	spin_unlock(&obj->vma.lock);
 err_vma:
 	i915_vma_free(vma);
 	return ERR_PTR(-E2BIG);

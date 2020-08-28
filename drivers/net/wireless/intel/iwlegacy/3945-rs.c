@@ -374,7 +374,7 @@ out:
 }
 
 static void *
-il3945_rs_alloc(struct ieee80211_hw *hw)
+il3945_rs_alloc(struct ieee80211_hw *hw, struct dentry *debugfsdir)
 {
 	return hw->priv;
 }

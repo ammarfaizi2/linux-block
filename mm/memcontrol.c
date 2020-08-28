@@ -2324,9 +2324,6 @@ static unsigned long calculate_high_delay(struct mem_cgroup *memcg,
 		usage = page_counter_read(&memcg->memory);
 		high = READ_ONCE(memcg->high);
 
-		if (usage <= high)
-			continue;
-
 		/*
 		 * Prevent division by 0 in overage calculation by acting as if
 		 * it was a threshold of 1 page
@@ -4977,22 +4974,19 @@ static struct mem_cgroup *mem_cgroup_alloc(void)
 	unsigned int size;
 	int node;
 	int __maybe_unused i;
-	long error = -ENOMEM;
 
 	size = sizeof(struct mem_cgroup);
 	size += nr_node_ids * sizeof(struct mem_cgroup_per_node *);
 
 	memcg = kzalloc(size, GFP_KERNEL);
 	if (!memcg)
-		return ERR_PTR(error);
+		return NULL;
 
 	memcg->id.id = idr_alloc(&mem_cgroup_idr, NULL,
 				 1, MEM_CGROUP_ID_MAX,
 				 GFP_KERNEL);
-	if (memcg->id.id < 0) {
-		error = memcg->id.id;
+	if (memcg->id.id < 0)
 		goto fail;
-	}
 
 	memcg->vmstats_local = alloc_percpu(struct memcg_vmstats_percpu);
 	if (!memcg->vmstats_local)
@@ -5036,7 +5030,7 @@ static struct mem_cgroup *mem_cgroup_alloc(void)
 fail:
 	mem_cgroup_id_remove(memcg);
 	__mem_cgroup_free(memcg);
-	return ERR_PTR(error);
+	return NULL;
 }
 
 static struct cgroup_subsys_state * __ref
@@ -5047,8 +5041,8 @@ mem_cgroup_css_alloc(struct cgroup_subsys_state *parent_css)
 	long error = -ENOMEM;
 
 	memcg = mem_cgroup_alloc();
-	if (IS_ERR(memcg))
-		return ERR_CAST(memcg);
+	if (!memcg)
+		return ERR_PTR(error);
 
 	memcg->high = PAGE_COUNTER_MAX;
 	memcg->soft_limit = PAGE_COUNTER_MAX;
@@ -5098,7 +5092,7 @@ mem_cgroup_css_alloc(struct cgroup_subsys_state *parent_css)
 fail:
 	mem_cgroup_id_remove(memcg);
 	mem_cgroup_free(memcg);
-	return ERR_PTR(error);
+	return ERR_PTR(-ENOMEM);
 }
 
 static int mem_cgroup_css_online(struct cgroup_subsys_state *css)

@@ -1065,7 +1065,7 @@ static void tipc_link_update_cwin(struct tipc_link *l, int released,
 	/* Enter fast recovery */
 	if (unlikely(retransmitted)) {
 		l->ssthresh = max_t(u16, l->window / 2, 300);
-		l->window = min_t(u16, l->ssthresh, l->window);
+		l->window = l->ssthresh;
 		return;
 	}
 	/* Enter slow start */

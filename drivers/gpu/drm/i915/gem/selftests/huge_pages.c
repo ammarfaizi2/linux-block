@@ -1578,10 +1578,8 @@ static int igt_ppgtt_pin_update(void *arg)
 		unsigned int page_size = BIT(first);
 
 		obj = i915_gem_object_create_internal(dev_priv, page_size);
-		if (IS_ERR(obj)) {
-			err = PTR_ERR(obj);
-			goto out_vm;
-		}
+		if (IS_ERR(obj))
+			return PTR_ERR(obj);
 
 		vma = i915_vma_instance(obj, vm, NULL);
 		if (IS_ERR(vma)) {
@@ -1634,10 +1632,8 @@ static int igt_ppgtt_pin_update(void *arg)
 	}
 
 	obj = i915_gem_object_create_internal(dev_priv, PAGE_SIZE);
-	if (IS_ERR(obj)) {
-		err = PTR_ERR(obj);
-		goto out_vm;
-	}
+	if (IS_ERR(obj))
+		return PTR_ERR(obj);
 
 	vma = i915_vma_instance(obj, vm, NULL);
 	if (IS_ERR(vma)) {

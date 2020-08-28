@@ -130,13 +130,6 @@ search_again:
 	active = NULL;
 	INIT_LIST_HEAD(&eviction_list);
 	list_for_each_entry_safe(vma, next, &vm->bound_list, vm_link) {
-		if (vma == active) { /* now seen this vma twice */
-			if (flags & PIN_NONBLOCK)
-				break;
-
-			active = ERR_PTR(-EAGAIN);
-		}
-
 		/*
 		 * We keep this list in a rough least-recently scanned order
 		 * of active elements (inactive elements are cheap to reap).
@@ -152,12 +145,21 @@ search_again:
 		 * To notice when we complete one full cycle, we record the
 		 * first active element seen, before moving it to the tail.
 		 */
-		if (active != ERR_PTR(-EAGAIN) && i915_vma_is_active(vma)) {
-			if (!active)
-				active = vma;
+		if (i915_vma_is_active(vma)) {
+			if (vma == active) {
+				if (flags & PIN_NONBLOCK)
+					break;
 
-			list_move_tail(&vma->vm_link, &vm->bound_list);
-			continue;
+				active = ERR_PTR(-EAGAIN);
+			}
+
+			if (active != ERR_PTR(-EAGAIN)) {
+				if (!active)
+					active = vma;
+
+				list_move_tail(&vma->vm_link, &vm->bound_list);
+				continue;
+			}
 		}
 
 		if (mark_free(&scan, vma, flags, &eviction_list))

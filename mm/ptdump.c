@@ -36,9 +36,6 @@ static int ptdump_pgd_entry(pgd_t *pgd, unsigned long addr,
 		return note_kasan_page_table(walk, addr);
 #endif
 
-	if (st->effective_prot)
-		st->effective_prot(st, 0, pgd_val(val));
-
 	if (pgd_leaf(val))
 		st->note_page(st, addr, 0, pgd_val(val));
 
@@ -55,9 +52,6 @@ static int ptdump_p4d_entry(p4d_t *p4d, unsigned long addr,
 	if (p4d_page(val) == virt_to_page(lm_alias(kasan_early_shadow_pud)))
 		return note_kasan_page_table(walk, addr);
 #endif
-
-	if (st->effective_prot)
-		st->effective_prot(st, 1, p4d_val(val));
 
 	if (p4d_leaf(val))
 		st->note_page(st, addr, 1, p4d_val(val));
@@ -76,9 +70,6 @@ static int ptdump_pud_entry(pud_t *pud, unsigned long addr,
 		return note_kasan_page_table(walk, addr);
 #endif
 
-	if (st->effective_prot)
-		st->effective_prot(st, 2, pud_val(val));
-
 	if (pud_leaf(val))
 		st->note_page(st, addr, 2, pud_val(val));
 
@@ -96,8 +87,6 @@ static int ptdump_pmd_entry(pmd_t *pmd, unsigned long addr,
 		return note_kasan_page_table(walk, addr);
 #endif
 
-	if (st->effective_prot)
-		st->effective_prot(st, 3, pmd_val(val));
 	if (pmd_leaf(val))
 		st->note_page(st, addr, 3, pmd_val(val));
 
@@ -108,12 +97,8 @@ static int ptdump_pte_entry(pte_t *pte, unsigned long addr,
 			    unsigned long next, struct mm_walk *walk)
 {
 	struct ptdump_state *st = walk->private;
-	pte_t val = READ_ONCE(*pte);
 
-	if (st->effective_prot)
-		st->effective_prot(st, 4, pte_val(val));
-
-	st->note_page(st, addr, 4, pte_val(val));
+	st->note_page(st, addr, 4, pte_val(READ_ONCE(*pte)));
 
 	return 0;
 }

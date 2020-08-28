@@ -490,9 +490,9 @@ int cpsw_init_common(struct cpsw_common *cpsw, void __iomem *ss_regs,
 	ale_params.ale_ports		= CPSW_ALE_PORTS_NUM;
 
 	cpsw->ale = cpsw_ale_create(&ale_params);
-	if (IS_ERR(cpsw->ale)) {
+	if (!cpsw->ale) {
 		dev_err(dev, "error initializing ale engine\n");
-		return PTR_ERR(cpsw->ale);
+		return -ENODEV;
 	}
 
 	dma_params.dev		= dev;

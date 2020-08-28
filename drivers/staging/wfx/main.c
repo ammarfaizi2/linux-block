@@ -262,16 +262,6 @@ static int wfx_send_pdata_pds(struct wfx_dev *wdev)
 	return ret;
 }
 
-static void wfx_free_common(void *data)
-{
-	struct wfx_dev *wdev = data;
-
-	mutex_destroy(&wdev->rx_stats_lock);
-	mutex_destroy(&wdev->conf_mutex);
-	wfx_tx_queues_deinit(wdev);
-	ieee80211_free_hw(wdev->hw);
-}
-
 struct wfx_dev *wfx_init_common(struct device *dev,
 				const struct wfx_platform_data *pdata,
 				const struct hwbus_ops *hwbus_ops,
@@ -342,10 +332,15 @@ struct wfx_dev *wfx_init_common(struct device *dev,
 	wfx_init_hif_cmd(&wdev->hif_cmd);
 	wfx_tx_queues_init(wdev);
 
-	if (devm_add_action_or_reset(dev, wfx_free_common, wdev))
-		return NULL;
-
 	return wdev;
+}
+
+void wfx_free_common(struct wfx_dev *wdev)
+{
+	mutex_destroy(&wdev->rx_stats_lock);
+	mutex_destroy(&wdev->conf_mutex);
+	wfx_tx_queues_deinit(wdev);
+	ieee80211_free_hw(wdev->hw);
 }
 
 int wfx_probe(struct wfx_dev *wdev)
@@ -466,6 +461,7 @@ int wfx_probe(struct wfx_dev *wdev)
 
 err2:
 	ieee80211_unregister_hw(wdev->hw);
+	ieee80211_free_hw(wdev->hw);
 err1:
 	wfx_bh_unregister(wdev);
 	return err;

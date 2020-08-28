@@ -154,17 +154,9 @@ void chacha_crypt_arch(u32 *state, u8 *dst, const u8 *src, unsigned int bytes,
 	    bytes <= CHACHA_BLOCK_SIZE)
 		return chacha_crypt_generic(state, dst, src, bytes, nrounds);
 
-	do {
-		unsigned int todo = min_t(unsigned int, bytes, SZ_4K);
-
-		kernel_fpu_begin();
-		chacha_dosimd(state, dst, src, todo, nrounds);
-		kernel_fpu_end();
-
-		bytes -= todo;
-		src += todo;
-		dst += todo;
-	} while (bytes);
+	kernel_fpu_begin();
+	chacha_dosimd(state, dst, src, bytes, nrounds);
+	kernel_fpu_end();
 }
 EXPORT_SYMBOL(chacha_crypt_arch);
 

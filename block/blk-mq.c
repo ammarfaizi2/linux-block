@@ -1205,10 +1205,8 @@ bool blk_mq_dispatch_rq_list(struct request_queue *q, struct list_head *list,
 		rq = list_first_entry(list, struct request, queuelist);
 
 		hctx = rq->mq_hctx;
-		if (!got_budget && !blk_mq_get_dispatch_budget(hctx)) {
-			blk_mq_put_driver_tag(rq);
+		if (!got_budget && !blk_mq_get_dispatch_budget(hctx))
 			break;
-		}
 
 		if (!blk_mq_get_driver_tag(rq)) {
 			/*
@@ -2826,6 +2824,7 @@ static void blk_mq_realloc_hw_ctxs(struct blk_mq_tag_set *set,
 			memcpy(new_hctxs, hctxs, q->nr_hw_queues *
 			       sizeof(*hctxs));
 		q->queue_hw_ctx = new_hctxs;
+		q->nr_hw_queues = set->nr_hw_queues;
 		kfree(hctxs);
 		hctxs = new_hctxs;
 	}
@@ -3024,14 +3023,6 @@ static int blk_mq_alloc_rq_maps(struct blk_mq_tag_set *set)
 
 static int blk_mq_update_queue_map(struct blk_mq_tag_set *set)
 {
-	/*
-	 * blk_mq_map_queues() and multiple .map_queues() implementations
-	 * expect that set->map[HCTX_TYPE_DEFAULT].nr_queues is set to the
-	 * number of hardware queues.
-	 */
-	if (set->nr_maps == 1)
-		set->map[HCTX_TYPE_DEFAULT].nr_queues = set->nr_hw_queues;
-
 	if (set->ops->map_queues && !is_kdump_kernel()) {
 		int i;
 

@@ -113,13 +113,10 @@ void hdcp_update_display(struct hdcp_workqueue *hdcp_work,
 
 		if (enable_encryption) {
 			display->adjust.disable = 0;
-			if (content_type == DRM_MODE_HDCP_CONTENT_TYPE0) {
-				hdcp_w->link.adjust.hdcp1.disable = 0;
+			if (content_type == DRM_MODE_HDCP_CONTENT_TYPE0)
 				hdcp_w->link.adjust.hdcp2.force_type = MOD_HDCP_FORCE_TYPE_0;
-			} else if (content_type == DRM_MODE_HDCP_CONTENT_TYPE1) {
-				hdcp_w->link.adjust.hdcp1.disable = 1;
+			else if (content_type == DRM_MODE_HDCP_CONTENT_TYPE1)
 				hdcp_w->link.adjust.hdcp2.force_type = MOD_HDCP_FORCE_TYPE_1;
-			}
 
 			schedule_delayed_work(&hdcp_w->property_validate_dwork,
 					      msecs_to_jiffies(DRM_HDCP_CHECK_PERIOD_MS));
@@ -316,15 +313,15 @@ static void update_config(void *handle, struct cp_psp_stream_config *config)
 	struct mod_hdcp_display *display = &hdcp_work[link_index].display;
 	struct mod_hdcp_link *link = &hdcp_work[link_index].link;
 
-	if (config->dpms_off) {
-		hdcp_remove_display(hdcp_work, link_index, aconnector);
-		return;
-	}
-
 	memset(display, 0, sizeof(*display));
 	memset(link, 0, sizeof(*link));
 
 	display->index = aconnector->base.index;
+
+	if (config->dpms_off) {
+		hdcp_remove_display(hdcp_work, link_index, aconnector);
+		return;
+	}
 	display->state = MOD_HDCP_DISPLAY_ACTIVE;
 
 	if (aconnector->dc_sink != NULL)
@@ -337,7 +334,6 @@ static void update_config(void *handle, struct cp_psp_stream_config *config)
 	link->dp.rev = aconnector->dc_link->dpcd_caps.dpcd_rev.raw;
 	display->adjust.disable = 1;
 	link->adjust.auth_delay = 2;
-	link->adjust.hdcp1.disable = 0;
 
 	hdcp_update_display(hdcp_work, link_index, aconnector, DRM_MODE_HDCP_CONTENT_TYPE0, false);
 }

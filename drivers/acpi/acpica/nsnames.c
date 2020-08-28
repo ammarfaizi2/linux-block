@@ -13,6 +13,9 @@
 #define _COMPONENT          ACPI_NAMESPACE
 ACPI_MODULE_NAME("nsnames")
 
+/* Local Prototypes */
+static void acpi_ns_normalize_pathname(char *original_path);
+
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ns_get_external_pathname
@@ -27,6 +30,7 @@ ACPI_MODULE_NAME("nsnames")
  *              for error and debug statements.
  *
  ******************************************************************************/
+
 char *acpi_ns_get_external_pathname(struct acpi_namespace_node *node)
 {
 	char *name_buffer;
@@ -407,7 +411,7 @@ cleanup:
  *
  ******************************************************************************/
 
-void acpi_ns_normalize_pathname(char *original_path)
+static void acpi_ns_normalize_pathname(char *original_path)
 {
 	char *input_path = original_path;
 	char *new_path_buffer;

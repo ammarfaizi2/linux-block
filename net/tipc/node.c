@@ -1586,8 +1586,7 @@ static void tipc_lxc_xmit(struct net *peer_net, struct sk_buff_head *list)
 	case TIPC_MEDIUM_IMPORTANCE:
 	case TIPC_HIGH_IMPORTANCE:
 	case TIPC_CRITICAL_IMPORTANCE:
-		if (msg_connected(hdr) || msg_named(hdr) ||
-		    msg_direct(hdr)) {
+		if (msg_connected(hdr) || msg_named(hdr)) {
 			tipc_loopback_trace(peer_net, list);
 			spin_lock_init(&list->lock);
 			tipc_sk_rcv(peer_net, list);
@@ -2038,7 +2037,6 @@ void tipc_rcv(struct net *net, struct sk_buff *skb, struct tipc_bearer *b)
 		n = tipc_node_find_by_id(net, ehdr->id);
 	}
 	tipc_crypto_rcv(net, (n) ? n->crypto_rx : NULL, &skb, b);
-	tipc_node_put(n);
 	if (!skb)
 		return;
 
@@ -2091,7 +2089,7 @@ rcv:
 	/* Check/update node state before receiving */
 	if (unlikely(skb)) {
 		if (unlikely(skb_linearize(skb)))
-			goto out_node_put;
+			goto discard;
 		tipc_node_write_lock(n);
 		if (tipc_node_check_state(n, skb, bearer_id, &xmitq)) {
 			if (le->link) {
@@ -2120,7 +2118,6 @@ rcv:
 	if (!skb_queue_empty(&xmitq))
 		tipc_bearer_xmit(net, bearer_id, &xmitq, &le->maddr, n);
 
-out_node_put:
 	tipc_node_put(n);
 discard:
 	kfree_skb(skb);

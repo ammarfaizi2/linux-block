@@ -31,7 +31,6 @@
 #include <linux/kdebug.h>
 #include <linux/efi.h>
 #include <linux/random.h>
-#include <linux/kernel.h>
 #include <linux/syscore_ops.h>
 #include <clocksource/hyperv_timer.h>
 #include "hyperv_vmbus.h"
@@ -49,35 +48,14 @@ static int hyperv_cpuhp_online;
 
 static void *hv_panic_page;
 
-/*
- * Boolean to control whether to report panic messages over Hyper-V.
- *
- * It can be set via /proc/sys/kernel/hyperv/record_panic_msg
- */
-static int sysctl_record_panic_msg = 1;
-
-static int hyperv_report_reg(void)
-{
-	return !sysctl_record_panic_msg || !hv_panic_page;
-}
-
 static int hyperv_panic_event(struct notifier_block *nb, unsigned long val,
 			      void *args)
 {
 	struct pt_regs *regs;
 
-	vmbus_initiate_unload(true);
+	regs = current_pt_regs();
 
-	/*
-	 * Hyper-V should be notified only once about a panic.  If we will be
-	 * doing hyperv_report_panic_msg() later with kmsg data, don't do
-	 * the notification here.
-	 */
-	if (ms_hyperv.misc_features & HV_FEATURE_GUEST_CRASH_MSR_AVAILABLE
-	    && hyperv_report_reg()) {
-		regs = current_pt_regs();
-		hyperv_report_panic(regs, val, false);
-	}
+	hyperv_report_panic(regs, val);
 	return NOTIFY_DONE;
 }
 
@@ -87,13 +65,7 @@ static int hyperv_die_event(struct notifier_block *nb, unsigned long val,
 	struct die_args *die = (struct die_args *)args;
 	struct pt_regs *regs = die->regs;
 
-	/*
-	 * Hyper-V should be notified only once about a panic.  If we will be
-	 * doing hyperv_report_panic_msg() later with kmsg data, don't do
-	 * the notification here.
-	 */
-	if (hyperv_report_reg())
-		hyperv_report_panic(regs, val, true);
+	hyperv_report_panic(regs, val);
 	return NOTIFY_DONE;
 }
 
@@ -978,9 +950,6 @@ static int vmbus_resume(struct device *child_device)
 
 	return drv->resume(dev);
 }
-#else
-#define vmbus_suspend NULL
-#define vmbus_resume NULL
 #endif /* CONFIG_PM_SLEEP */
 
 /*
@@ -1000,22 +969,11 @@ static void vmbus_device_release(struct device *device)
 }
 
 /*
- * Note: we must use the "noirq" ops: see the comment before vmbus_bus_pm.
- *
- * suspend_noirq/resume_noirq are set to NULL to support Suspend-to-Idle: we
- * shouldn't suspend the vmbus devices upon Suspend-to-Idle, otherwise there
- * is no way to wake up a Generation-2 VM.
- *
- * The other 4 ops are for hibernation.
+ * Note: we must use SET_NOIRQ_SYSTEM_SLEEP_PM_OPS rather than
+ * SET_SYSTEM_SLEEP_PM_OPS: see the comment before vmbus_bus_pm.
  */
-
 static const struct dev_pm_ops vmbus_pm = {
-	.suspend_noirq	= NULL,
-	.resume_noirq	= NULL,
-	.freeze_noirq	= vmbus_suspend,
-	.thaw_noirq	= vmbus_resume,
-	.poweroff_noirq	= vmbus_suspend,
-	.restore_noirq	= vmbus_resume,
+	SET_NOIRQ_SYSTEM_SLEEP_PM_OPS(vmbus_suspend, vmbus_resume)
 };
 
 /* The one and only one */
@@ -1295,6 +1253,13 @@ static void vmbus_isr(void)
 }
 
 /*
+ * Boolean to control whether to report panic messages over Hyper-V.
+ *
+ * It can be set via /proc/sys/kernel/hyperv/record_panic_msg
+ */
+static int sysctl_record_panic_msg = 1;
+
+/*
  * Callback from kmsg_dump. Grab as much as possible from the end of the kmsg
  * buffer and call into Hyper-V to transfer the data.
  */
@@ -1417,28 +1382,18 @@ static int vmbus_bus_init(void)
 			hv_panic_page = (void *)hv_alloc_hyperv_zeroed_page();
 			if (hv_panic_page) {
 				ret = kmsg_dump_register(&hv_kmsg_dumper);
-				if (ret) {
+				if (ret)
 					pr_err("Hyper-V: kmsg dump register "
 						"error 0x%x\n", ret);
-					hv_free_hyperv_page(
-					    (unsigned long)hv_panic_page);
-					hv_panic_page = NULL;
-				}
 			} else
 				pr_err("Hyper-V: panic message page memory "
 					"allocation failed");
 		}
 
 		register_die_notifier(&hyperv_die_block);
+		atomic_notifier_chain_register(&panic_notifier_list,
+					       &hyperv_panic_block);
 	}
-
-	/*
-	 * Always register the panic notifier because we need to unload
-	 * the VMbus channel connection to prevent any VMbus
-	 * activity after the VM panics.
-	 */
-	atomic_notifier_chain_register(&panic_notifier_list,
-			       &hyperv_panic_block);
 
 	vmbus_request_offers();
 
@@ -1452,6 +1407,7 @@ err_alloc:
 	hv_remove_vmbus_irq();
 
 	bus_unregister(&hv_bus);
+	hv_free_hyperv_page((unsigned long)hv_panic_page);
 	unregister_sysctl_table(hv_ctl_table_hdr);
 	hv_ctl_table_hdr = NULL;
 	return ret;
@@ -2248,6 +2204,8 @@ static int vmbus_bus_suspend(struct device *dev)
 
 	vmbus_initiate_unload(false);
 
+	vmbus_connection.conn_state = DISCONNECTED;
+
 	/* Reset the event for the next resume. */
 	reinit_completion(&vmbus_connection.ready_for_resume_event);
 
@@ -2295,9 +2253,6 @@ static int vmbus_bus_resume(struct device *dev)
 
 	return 0;
 }
-#else
-#define vmbus_bus_suspend NULL
-#define vmbus_bus_resume NULL
 #endif /* CONFIG_PM_SLEEP */
 
 static const struct acpi_device_id vmbus_acpi_device_ids[] = {
@@ -2308,24 +2263,16 @@ static const struct acpi_device_id vmbus_acpi_device_ids[] = {
 MODULE_DEVICE_TABLE(acpi, vmbus_acpi_device_ids);
 
 /*
- * Note: we must use the "no_irq" ops, otherwise hibernation can not work with
- * PCI device assignment, because "pci_dev_pm_ops" uses the "noirq" ops: in
- * the resume path, the pci "noirq" restore op runs before "non-noirq" op (see
+ * Note: we must use SET_NOIRQ_SYSTEM_SLEEP_PM_OPS rather than
+ * SET_SYSTEM_SLEEP_PM_OPS, otherwise NIC SR-IOV can not work, because the
+ * "pci_dev_pm_ops" uses the "noirq" callbacks: in the resume path, the
+ * pci "noirq" restore callback runs before "non-noirq" callbacks (see
  * resume_target_kernel() -> dpm_resume_start(), and hibernation_restore() ->
  * dpm_resume_end()). This means vmbus_bus_resume() and the pci-hyperv's
- * resume callback must also run via the "noirq" ops.
- *
- * Set suspend_noirq/resume_noirq to NULL for Suspend-to-Idle: see the comment
- * earlier in this file before vmbus_pm.
+ * resume callback must also run via the "noirq" callbacks.
  */
-
 static const struct dev_pm_ops vmbus_bus_pm = {
-	.suspend_noirq	= NULL,
-	.resume_noirq	= NULL,
-	.freeze_noirq	= vmbus_bus_suspend,
-	.thaw_noirq	= vmbus_bus_resume,
-	.poweroff_noirq	= vmbus_bus_suspend,
-	.restore_noirq	= vmbus_bus_resume
+	SET_NOIRQ_SYSTEM_SLEEP_PM_OPS(vmbus_bus_suspend, vmbus_bus_resume)
 };
 
 static struct acpi_driver vmbus_acpi_driver = {
@@ -2342,6 +2289,7 @@ static void hv_kexec_handler(void)
 {
 	hv_stimer_global_cleanup();
 	vmbus_initiate_unload(false);
+	vmbus_connection.conn_state = DISCONNECTED;
 	/* Make sure conn_state is set as hv_synic_cleanup checks for it */
 	mb();
 	cpuhp_remove_state(hyperv_cpuhp_online);
@@ -2358,6 +2306,7 @@ static void hv_crash_handler(struct pt_regs *regs)
 	 * doing the cleanup for current CPU only. This should be sufficient
 	 * for kdump.
 	 */
+	vmbus_connection.conn_state = DISCONNECTED;
 	cpu = smp_processor_id();
 	hv_stimer_cleanup(cpu);
 	hv_synic_disable_regs(cpu);

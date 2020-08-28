@@ -69,7 +69,7 @@
  * 16kB.
  */
 #if PAGE_SIZE > SZ_16K
-#define ENA_PAGE_SIZE (_AC(SZ_16K, UL))
+#define ENA_PAGE_SIZE SZ_16K
 #else
 #define ENA_PAGE_SIZE PAGE_SIZE
 #endif

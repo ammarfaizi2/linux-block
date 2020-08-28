@@ -865,14 +865,14 @@ static int ioc3eth_probe(struct platform_device *pdev)
 	ip = netdev_priv(dev);
 	ip->dma_dev = pdev->dev.parent;
 	ip->regs = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(ip->regs)) {
-		err = PTR_ERR(ip->regs);
+	if (!ip->regs) {
+		err = -ENOMEM;
 		goto out_free;
 	}
 
 	ip->ssram = devm_platform_ioremap_resource(pdev, 1);
-	if (IS_ERR(ip->ssram)) {
-		err = PTR_ERR(ip->ssram);
+	if (!ip->ssram) {
+		err = -ENOMEM;
 		goto out_free;
 	}
 

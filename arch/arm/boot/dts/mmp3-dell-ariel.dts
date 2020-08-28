@@ -98,19 +98,19 @@
 	status = "okay";
 };
 
-&ssp1 {
+&ssp3 {
 	status = "okay";
-	cs-gpios = <&gpio 46 GPIO_ACTIVE_LOW>;
+	cs-gpios = <&gpio 46 GPIO_ACTIVE_HIGH>;
 
 	firmware-flash@0 {
-		compatible = "winbond,w25q32", "jedec,spi-nor";
+		compatible = "st,m25p80", "jedec,spi-nor";
 		reg = <0>;
-		spi-max-frequency = <104000000>;
+		spi-max-frequency = <40000000>;
 		m25p,fast-read;
 	};
 };
 
-&ssp2 {
-	cs-gpios = <&gpio 56 GPIO_ACTIVE_LOW>;
+&ssp4 {
+	cs-gpios = <&gpio 56 GPIO_ACTIVE_HIGH>;
 	status = "okay";
 };

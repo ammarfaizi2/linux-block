@@ -485,9 +485,6 @@ static int anx6345_get_modes(struct drm_connector *connector)
 
 	num_modes += drm_add_edid_modes(connector, anx6345->edid);
 
-	/* Driver currently supports only 6bpc */
-	connector->display_info.bpc = 6;
-
 unlock:
 	if (power_off)
 		anx6345_poweroff(anx6345);
@@ -714,14 +711,14 @@ static int anx6345_i2c_probe(struct i2c_client *client,
 		DRM_DEBUG("No panel found\n");
 
 	/* 1.2V digital core power regulator  */
-	anx6345->dvdd12 = devm_regulator_get(dev, "dvdd12");
+	anx6345->dvdd12 = devm_regulator_get(dev, "dvdd12-supply");
 	if (IS_ERR(anx6345->dvdd12)) {
 		DRM_ERROR("dvdd12-supply not found\n");
 		return PTR_ERR(anx6345->dvdd12);
 	}
 
 	/* 2.5V digital core power regulator  */
-	anx6345->dvdd25 = devm_regulator_get(dev, "dvdd25");
+	anx6345->dvdd25 = devm_regulator_get(dev, "dvdd25-supply");
 	if (IS_ERR(anx6345->dvdd25)) {
 		DRM_ERROR("dvdd25-supply not found\n");
 		return PTR_ERR(anx6345->dvdd25);

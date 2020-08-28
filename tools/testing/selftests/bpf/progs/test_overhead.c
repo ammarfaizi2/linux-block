@@ -33,13 +33,13 @@ int prog3(struct bpf_raw_tracepoint_args *ctx)
 SEC("fentry/__set_task_comm")
 int BPF_PROG(prog4, struct task_struct *tsk, const char *buf, bool exec)
 {
-	return 0;
+	return !tsk;
 }
 
 SEC("fexit/__set_task_comm")
 int BPF_PROG(prog5, struct task_struct *tsk, const char *buf, bool exec)
 {
-	return 0;
+	return !tsk;
 }
 
 char _license[] SEC("license") = "GPL";

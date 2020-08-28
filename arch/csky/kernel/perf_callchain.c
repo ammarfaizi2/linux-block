@@ -12,17 +12,12 @@ struct stackframe {
 
 static int unwind_frame_kernel(struct stackframe *frame)
 {
-	unsigned long low = (unsigned long)task_stack_page(current);
-	unsigned long high = low + THREAD_SIZE;
-
-	if (unlikely(frame->fp < low || frame->fp > high))
+	if (kstack_end((void *)frame->fp))
 		return -EPERM;
-
-	if (kstack_end((void *)frame->fp) || frame->fp & 0x3)
+	if (frame->fp & 0x3 || frame->fp < TASK_SIZE)
 		return -EPERM;
 
 	*frame = *(struct stackframe *)frame->fp;
-
 	if (__kernel_text_address(frame->lr)) {
 		int graph = 0;
 

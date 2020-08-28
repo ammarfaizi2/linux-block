@@ -61,8 +61,7 @@ static int net_failover_open(struct net_device *dev)
 	return 0;
 
 err_standby_open:
-	if (primary_dev)
-		dev_close(primary_dev);
+	dev_close(primary_dev);
 err_primary_open:
 	netif_tx_disable(dev);
 	return err;

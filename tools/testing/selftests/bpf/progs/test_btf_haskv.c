@@ -20,11 +20,19 @@ struct bpf_map_def SEC("maps") btf_map = {
 
 BPF_ANNOTATE_KV_PAIR(btf_map, int, struct ipv_counts);
 
+struct dummy_tracepoint_args {
+	unsigned long long pad;
+	struct sock *sock;
+};
+
 __attribute__((noinline))
-int test_long_fname_2(void)
+int test_long_fname_2(struct dummy_tracepoint_args *arg)
 {
 	struct ipv_counts *counts;
 	int key = 0;
+
+	if (!arg->sock)
+		return 0;
 
 	counts = bpf_map_lookup_elem(&btf_map, &key);
 	if (!counts)
@@ -36,15 +44,15 @@ int test_long_fname_2(void)
 }
 
 __attribute__((noinline))
-int test_long_fname_1(void)
+int test_long_fname_1(struct dummy_tracepoint_args *arg)
 {
-	return test_long_fname_2();
+	return test_long_fname_2(arg);
 }
 
 SEC("dummy_tracepoint")
-int _dummy_tracepoint(void *arg)
+int _dummy_tracepoint(struct dummy_tracepoint_args *arg)
 {
-	return test_long_fname_1();
+	return test_long_fname_1(arg);
 }
 
 char _license[] SEC("license") = "GPL";

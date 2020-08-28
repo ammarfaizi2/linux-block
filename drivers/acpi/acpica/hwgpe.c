@@ -444,19 +444,12 @@ acpi_hw_enable_wakeup_gpe_block(struct acpi_gpe_xrupt_info *gpe_xrupt_info,
 	return (AE_OK);
 }
 
-struct acpi_gpe_block_status_context {
-	struct acpi_gpe_register_info *gpe_skip_register_info;
-	u8 gpe_skip_mask;
-	u8 retval;
-};
-
 /******************************************************************************
  *
  * FUNCTION:    acpi_hw_get_gpe_block_status
  *
  * PARAMETERS:  gpe_xrupt_info      - GPE Interrupt info
  *              gpe_block           - Gpe Block info
- *              context             - GPE list walk context data
  *
  * RETURN:      Success
  *
@@ -467,13 +460,12 @@ struct acpi_gpe_block_status_context {
 static acpi_status
 acpi_hw_get_gpe_block_status(struct acpi_gpe_xrupt_info *gpe_xrupt_info,
 			     struct acpi_gpe_block_info *gpe_block,
-			     void *context)
+			     void *ret_ptr)
 {
-	struct acpi_gpe_block_status_context *c = context;
 	struct acpi_gpe_register_info *gpe_register_info;
 	u64 in_enable, in_status;
 	acpi_status status;
-	u8 ret_mask;
+	u8 *ret = ret_ptr;
 	u32 i;
 
 	/* Examine each GPE Register within the block */
@@ -493,11 +485,7 @@ acpi_hw_get_gpe_block_status(struct acpi_gpe_xrupt_info *gpe_xrupt_info,
 			continue;
 		}
 
-		ret_mask = in_enable & in_status;
-		if (ret_mask && c->gpe_skip_register_info == gpe_register_info) {
-			ret_mask &= ~c->gpe_skip_mask;
-		}
-		c->retval |= ret_mask;
+		*ret |= in_enable & in_status;
 	}
 
 	return (AE_OK);
@@ -573,41 +561,24 @@ acpi_status acpi_hw_enable_all_wakeup_gpes(void)
  *
  * FUNCTION:    acpi_hw_check_all_gpes
  *
- * PARAMETERS:  gpe_skip_device      - GPE devoce of the GPE to skip
- *              gpe_skip_number      - Number of the GPE to skip
+ * PARAMETERS:  None
  *
  * RETURN:      Combined status of all GPEs
  *
- * DESCRIPTION: Check all enabled GPEs in all GPE blocks, except for the one
- *              represented by the "skip" arguments, and return TRUE if the
+ * DESCRIPTION: Check all enabled GPEs in all GPE blocks and return TRUE if the
  *              status bit is set for at least one of them of FALSE otherwise.
  *
  ******************************************************************************/
 
-u8 acpi_hw_check_all_gpes(acpi_handle gpe_skip_device, u32 gpe_skip_number)
+u8 acpi_hw_check_all_gpes(void)
 {
-	struct acpi_gpe_block_status_context context = {
-		.gpe_skip_register_info = NULL,
-		.retval = 0,
-	};
-	struct acpi_gpe_event_info *gpe_event_info;
-	acpi_cpu_flags flags;
+	u8 ret = 0;
 
 	ACPI_FUNCTION_TRACE(acpi_hw_check_all_gpes);
 
-	flags = acpi_os_acquire_lock(acpi_gbl_gpe_lock);
+	(void)acpi_ev_walk_gpe_list(acpi_hw_get_gpe_block_status, &ret);
 
-	gpe_event_info = acpi_ev_get_gpe_event_info(gpe_skip_device,
-						    gpe_skip_number);
-	if (gpe_event_info) {
-		context.gpe_skip_register_info = gpe_event_info->register_info;
-		context.gpe_skip_mask = acpi_hw_get_gpe_register_bit(gpe_event_info);
-	}
-
-	acpi_os_release_lock(acpi_gbl_gpe_lock, flags);
-
-	(void)acpi_ev_walk_gpe_list(acpi_hw_get_gpe_block_status, &context);
-	return (context.retval != 0);
+	return (ret != 0);
 }
 
 #endif				/* !ACPI_REDUCED_HARDWARE */

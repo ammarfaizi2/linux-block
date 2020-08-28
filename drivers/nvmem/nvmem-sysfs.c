@@ -56,9 +56,6 @@ static ssize_t bin_attr_nvmem_read(struct file *filp, struct kobject *kobj,
 
 	count = round_down(count, nvmem->word_size);
 
-	if (!nvmem->reg_read)
-		return -EPERM;
-
 	rc = nvmem->reg_read(nvmem->priv, pos, buf, count);
 
 	if (rc)
@@ -92,9 +89,6 @@ static ssize_t bin_attr_nvmem_write(struct file *filp, struct kobject *kobj,
 		count = nvmem->size - pos;
 
 	count = round_down(count, nvmem->word_size);
-
-	if (!nvmem->reg_write)
-		return -EPERM;
 
 	rc = nvmem->reg_write(nvmem->priv, pos, buf, count);
 

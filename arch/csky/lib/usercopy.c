@@ -7,7 +7,10 @@
 unsigned long raw_copy_from_user(void *to, const void *from,
 			unsigned long n)
 {
-	___copy_from_user(to, from, n);
+	if (access_ok(from, n))
+		__copy_user_zeroing(to, from, n);
+	else
+		memset(to, 0, n);
 	return n;
 }
 EXPORT_SYMBOL(raw_copy_from_user);
@@ -15,7 +18,8 @@ EXPORT_SYMBOL(raw_copy_from_user);
 unsigned long raw_copy_to_user(void *to, const void *from,
 			unsigned long n)
 {
-	___copy_to_user(to, from, n);
+	if (access_ok(to, n))
+		__copy_user(to, from, n);
 	return n;
 }
 EXPORT_SYMBOL(raw_copy_to_user);

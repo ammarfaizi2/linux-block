@@ -382,15 +382,13 @@ lpfc_nvme_remoteport_delete(struct nvme_fc_remote_port *remoteport)
 	if (ndlp->upcall_flags & NLP_WAIT_FOR_UNREG) {
 		ndlp->nrport = NULL;
 		ndlp->upcall_flags &= ~NLP_WAIT_FOR_UNREG;
-		spin_unlock_irq(&vport->phba->hbalock);
-
-		/* Remove original register reference. The host transport
-		 * won't reference this rport/remoteport any further.
-		 */
-		lpfc_nlp_put(ndlp);
-	} else {
-		spin_unlock_irq(&vport->phba->hbalock);
 	}
+	spin_unlock_irq(&vport->phba->hbalock);
+
+	/* Remove original register reference. The host transport
+	 * won't reference this rport/remoteport any further.
+	 */
+	lpfc_nlp_put(ndlp);
 
  rport_err:
 	return;
@@ -1012,9 +1010,6 @@ lpfc_nvme_io_cmd_wqe_cmpl(struct lpfc_hba *phba, struct lpfc_iocbq *pwqeIn,
 	uint32_t code, status, idx;
 	uint16_t cid, sqhd, data;
 	uint32_t *ptr;
-#ifdef CONFIG_SCSI_LPFC_DEBUG_FS
-	int cpu;
-#endif
 
 	/* Sanity check on return of outstanding command */
 	if (!lpfc_ncmd) {
@@ -1187,15 +1182,19 @@ out_err:
 		phba->ktime_last_cmd = lpfc_ncmd->ts_data_nvme;
 		lpfc_nvme_ktime(phba, lpfc_ncmd);
 	}
-	if (unlikely(phba->hdwqstat_on & LPFC_CHECK_NVME_IO)) {
+	if (unlikely(phba->cpucheck_on & LPFC_CHECK_NVME_IO)) {
+		uint32_t cpu;
+		idx = lpfc_ncmd->cur_iocbq.hba_wqidx;
 		cpu = raw_smp_processor_id();
-		this_cpu_inc(phba->sli4_hba.c_stat->cmpl_io);
-		if (lpfc_ncmd->cpu != cpu)
-			lpfc_printf_vlog(vport,
-					 KERN_INFO, LOG_NVME_IOERR,
-					 "6701 CPU Check cmpl: "
-					 "cpu %d expect %d\n",
-					 cpu, lpfc_ncmd->cpu);
+		if (cpu < LPFC_CHECK_CPU_CNT) {
+			if (lpfc_ncmd->cpu != cpu)
+				lpfc_printf_vlog(vport,
+						 KERN_INFO, LOG_NVME_IOERR,
+						 "6701 CPU Check cmpl: "
+						 "cpu %d expect %d\n",
+						 cpu, lpfc_ncmd->cpu);
+			phba->sli4_hba.hdwq[idx].cpucheck_cmpl_io[cpu]++;
+		}
 	}
 #endif
 
@@ -1744,17 +1743,19 @@ lpfc_nvme_fcp_io_submit(struct nvme_fc_local_port *pnvme_lport,
 	if (lpfc_ncmd->ts_cmd_start)
 		lpfc_ncmd->ts_cmd_wqput = ktime_get_ns();
 
-	if (phba->hdwqstat_on & LPFC_CHECK_NVME_IO) {
+	if (phba->cpucheck_on & LPFC_CHECK_NVME_IO) {
 		cpu = raw_smp_processor_id();
-		this_cpu_inc(phba->sli4_hba.c_stat->xmt_io);
-		lpfc_ncmd->cpu = cpu;
-		if (idx != cpu)
-			lpfc_printf_vlog(vport,
-					 KERN_INFO, LOG_NVME_IOERR,
-					"6702 CPU Check cmd: "
-					"cpu %d wq %d\n",
-					lpfc_ncmd->cpu,
-					lpfc_queue_info->index);
+		if (cpu < LPFC_CHECK_CPU_CNT) {
+			lpfc_ncmd->cpu = cpu;
+			if (idx != cpu)
+				lpfc_printf_vlog(vport,
+						 KERN_INFO, LOG_NVME_IOERR,
+						"6702 CPU Check cmd: "
+						"cpu %d wq %d\n",
+						lpfc_ncmd->cpu,
+						lpfc_queue_info->index);
+			phba->sli4_hba.hdwq[idx].cpucheck_xmt_io[cpu]++;
+		}
 	}
 #endif
 	return 0;
@@ -1984,6 +1985,8 @@ out_unlock:
 
 /* Declare and initialization an instance of the FC NVME template. */
 static struct nvme_fc_port_template lpfc_nvme_template = {
+	.module	= THIS_MODULE,
+
 	/* initiator-based functions */
 	.localport_delete  = lpfc_nvme_localport_delete,
 	.remoteport_delete = lpfc_nvme_remoteport_delete,

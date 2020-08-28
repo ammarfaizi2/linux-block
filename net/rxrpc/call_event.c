@@ -111,8 +111,8 @@ static void __rxrpc_propose_ACK(struct rxrpc_call *call, u8 ack_reason,
 	} else {
 		unsigned long now = jiffies, ack_at;
 
-		if (call->peer->srtt_us != 0)
-			ack_at = usecs_to_jiffies(call->peer->srtt_us >> 3);
+		if (call->peer->rtt_usage > 0)
+			ack_at = nsecs_to_jiffies(call->peer->rtt);
 		else
 			ack_at = expiry;
 
@@ -157,18 +157,24 @@ static void rxrpc_congestion_timeout(struct rxrpc_call *call)
 static void rxrpc_resend(struct rxrpc_call *call, unsigned long now_j)
 {
 	struct sk_buff *skb;
-	unsigned long resend_at, rto_j;
+	unsigned long resend_at;
 	rxrpc_seq_t cursor, seq, top;
-	ktime_t now, max_age, oldest, ack_ts;
+	ktime_t now, max_age, oldest, ack_ts, timeout, min_timeo;
 	int ix;
 	u8 annotation, anno_type, retrans = 0, unacked = 0;
 
 	_enter("{%d,%d}", call->tx_hard_ack, call->tx_top);
 
-	rto_j = call->peer->rto_j;
+	if (call->peer->rtt_usage > 1)
+		timeout = ns_to_ktime(call->peer->rtt * 3 / 2);
+	else
+		timeout = ms_to_ktime(rxrpc_resend_timeout);
+	min_timeo = ns_to_ktime((1000000000 / HZ) * 4);
+	if (ktime_before(timeout, min_timeo))
+		timeout = min_timeo;
 
 	now = ktime_get_real();
-	max_age = ktime_sub(now, jiffies_to_usecs(rto_j));
+	max_age = ktime_sub(now, timeout);
 
 	spin_lock_bh(&call->lock);
 
@@ -213,7 +219,7 @@ static void rxrpc_resend(struct rxrpc_call *call, unsigned long now_j)
 	}
 
 	resend_at = nsecs_to_jiffies(ktime_to_ns(ktime_sub(now, oldest)));
-	resend_at += jiffies + rto_j;
+	resend_at += jiffies + rxrpc_resend_timeout;
 	WRITE_ONCE(call->resend_at, resend_at);
 
 	if (unacked)
@@ -228,7 +234,7 @@ static void rxrpc_resend(struct rxrpc_call *call, unsigned long now_j)
 					rxrpc_timer_set_for_resend);
 		spin_unlock_bh(&call->lock);
 		ack_ts = ktime_sub(now, call->acks_latest_ts);
-		if (ktime_to_us(ack_ts) < (call->peer->srtt_us >> 3))
+		if (ktime_to_ns(ack_ts) < call->peer->rtt)
 			goto out;
 		rxrpc_propose_ACK(call, RXRPC_ACK_PING, 0, true, false,
 				  rxrpc_propose_ack_ping_for_lost_ack);

@@ -362,7 +362,7 @@ static int soc_tplg_add_kcontrol(struct soc_tplg *tplg,
 	struct snd_soc_component *comp = tplg->comp;
 
 	return soc_tplg_add_dcontrol(comp->card->snd_card,
-				comp->dev, k, comp->name_prefix, comp, kcontrol);
+				comp->dev, k, NULL, comp, kcontrol);
 }
 
 /* remove a mixer kcontrol */
@@ -894,13 +894,7 @@ static int soc_tplg_dmixer_create(struct soc_tplg *tplg, unsigned int count,
 		}
 
 		/* create any TLV data */
-		err = soc_tplg_create_tlv(tplg, &kc, &mc->hdr);
-		if (err < 0) {
-			dev_err(tplg->dev, "ASoC: failed to create TLV %s\n",
-				mc->hdr.name);
-			kfree(sm);
-			continue;
-		}
+		soc_tplg_create_tlv(tplg, &kc, &mc->hdr);
 
 		/* pass control to driver for optional further init */
 		err = soc_tplg_init_kcontrol(tplg, &kc,
@@ -1124,7 +1118,6 @@ static int soc_tplg_kcontrol_elems_load(struct soc_tplg *tplg,
 	struct snd_soc_tplg_hdr *hdr)
 {
 	struct snd_soc_tplg_ctl_hdr *control_hdr;
-	int ret;
 	int i;
 
 	if (tplg->pass != SOC_TPLG_PASS_MIXER) {
@@ -1153,30 +1146,25 @@ static int soc_tplg_kcontrol_elems_load(struct soc_tplg *tplg,
 		case SND_SOC_TPLG_CTL_RANGE:
 		case SND_SOC_TPLG_DAPM_CTL_VOLSW:
 		case SND_SOC_TPLG_DAPM_CTL_PIN:
-			ret = soc_tplg_dmixer_create(tplg, 1,
-					le32_to_cpu(hdr->payload_size));
+			soc_tplg_dmixer_create(tplg, 1,
+					       le32_to_cpu(hdr->payload_size));
 			break;
 		case SND_SOC_TPLG_CTL_ENUM:
 		case SND_SOC_TPLG_CTL_ENUM_VALUE:
 		case SND_SOC_TPLG_DAPM_CTL_ENUM_DOUBLE:
 		case SND_SOC_TPLG_DAPM_CTL_ENUM_VIRT:
 		case SND_SOC_TPLG_DAPM_CTL_ENUM_VALUE:
-			ret = soc_tplg_denum_create(tplg, 1,
-					le32_to_cpu(hdr->payload_size));
+			soc_tplg_denum_create(tplg, 1,
+					      le32_to_cpu(hdr->payload_size));
 			break;
 		case SND_SOC_TPLG_CTL_BYTES:
-			ret = soc_tplg_dbytes_create(tplg, 1,
-					le32_to_cpu(hdr->payload_size));
+			soc_tplg_dbytes_create(tplg, 1,
+					       le32_to_cpu(hdr->payload_size));
 			break;
 		default:
 			soc_bind_err(tplg, control_hdr, i);
 			return -EINVAL;
 		}
-		if (ret < 0) {
-			dev_err(tplg->dev, "ASoC: invalid control\n");
-			return ret;
-		}
-
 	}
 
 	return 0;
@@ -1284,9 +1272,7 @@ static int soc_tplg_dapm_graph_elems_load(struct soc_tplg *tplg,
 		routes[i]->dobj.index = tplg->index;
 		list_add(&routes[i]->dobj.list, &tplg->comp->dobj_list);
 
-		ret = soc_tplg_add_route(tplg, routes[i]);
-		if (ret < 0)
-			break;
+		soc_tplg_add_route(tplg, routes[i]);
 
 		/* add route, but keep going if some fail */
 		snd_soc_dapm_add_routes(dapm, routes[i], 1);
@@ -1369,13 +1355,7 @@ static struct snd_kcontrol_new *soc_tplg_dapm_widget_dmixer_create(
 		}
 
 		/* create any TLV data */
-		err = soc_tplg_create_tlv(tplg, &kc[i], &mc->hdr);
-		if (err < 0) {
-			dev_err(tplg->dev, "ASoC: failed to create TLV %s\n",
-				mc->hdr.name);
-			kfree(sm);
-			continue;
-		}
+		soc_tplg_create_tlv(tplg, &kc[i], &mc->hdr);
 
 		/* pass control to driver for optional further init */
 		err = soc_tplg_init_kcontrol(tplg, &kc[i],
@@ -1786,13 +1766,10 @@ static int soc_tplg_dapm_complete(struct soc_tplg *tplg)
 	return 0;
 }
 
-static int set_stream_info(struct snd_soc_pcm_stream *stream,
+static void set_stream_info(struct snd_soc_pcm_stream *stream,
 	struct snd_soc_tplg_stream_caps *caps)
 {
 	stream->stream_name = kstrdup(caps->name, GFP_KERNEL);
-	if (!stream->stream_name)
-		return -ENOMEM;
-
 	stream->channels_min = le32_to_cpu(caps->channels_min);
 	stream->channels_max = le32_to_cpu(caps->channels_max);
 	stream->rates = le32_to_cpu(caps->rates);
@@ -1800,8 +1777,6 @@ static int set_stream_info(struct snd_soc_pcm_stream *stream,
 	stream->rate_max = le32_to_cpu(caps->rate_max);
 	stream->formats = le64_to_cpu(caps->formats);
 	stream->sig_bits = le32_to_cpu(caps->sig_bits);
-
-	return 0;
 }
 
 static void set_dai_flags(struct snd_soc_dai_driver *dai_drv,
@@ -1837,29 +1812,20 @@ static int soc_tplg_dai_create(struct soc_tplg *tplg,
 	if (dai_drv == NULL)
 		return -ENOMEM;
 
-	if (strlen(pcm->dai_name)) {
+	if (strlen(pcm->dai_name))
 		dai_drv->name = kstrdup(pcm->dai_name, GFP_KERNEL);
-		if (!dai_drv->name) {
-			ret = -ENOMEM;
-			goto err;
-		}
-	}
 	dai_drv->id = le32_to_cpu(pcm->dai_id);
 
 	if (pcm->playback) {
 		stream = &dai_drv->playback;
 		caps = &pcm->caps[SND_SOC_TPLG_STREAM_PLAYBACK];
-		ret = set_stream_info(stream, caps);
-		if (ret < 0)
-			goto err;
+		set_stream_info(stream, caps);
 	}
 
 	if (pcm->capture) {
 		stream = &dai_drv->capture;
 		caps = &pcm->caps[SND_SOC_TPLG_STREAM_CAPTURE];
-		ret = set_stream_info(stream, caps);
-		if (ret < 0)
-			goto err;
+		set_stream_info(stream, caps);
 	}
 
 	if (pcm->compress)
@@ -1869,7 +1835,11 @@ static int soc_tplg_dai_create(struct soc_tplg *tplg,
 	ret = soc_tplg_dai_load(tplg, dai_drv, pcm, NULL);
 	if (ret < 0) {
 		dev_err(tplg->comp->dev, "ASoC: DAI loading failed\n");
-		goto err;
+		kfree(dai_drv->playback.stream_name);
+		kfree(dai_drv->capture.stream_name);
+		kfree(dai_drv->name);
+		kfree(dai_drv);
+		return ret;
 	}
 
 	dai_drv->dobj.index = tplg->index;
@@ -1889,14 +1859,6 @@ static int soc_tplg_dai_create(struct soc_tplg *tplg,
 		snd_soc_unregister_dai(dai);
 		return ret;
 	}
-
-	return 0;
-
-err:
-	kfree(dai_drv->playback.stream_name);
-	kfree(dai_drv->capture.stream_name);
-	kfree(dai_drv->name);
-	kfree(dai_drv);
 
 	return ret;
 }
@@ -1954,20 +1916,11 @@ static int soc_tplg_fe_link_create(struct soc_tplg *tplg,
 	if (strlen(pcm->pcm_name)) {
 		link->name = kstrdup(pcm->pcm_name, GFP_KERNEL);
 		link->stream_name = kstrdup(pcm->pcm_name, GFP_KERNEL);
-		if (!link->name || !link->stream_name) {
-			ret = -ENOMEM;
-			goto err;
-		}
 	}
 	link->id = le32_to_cpu(pcm->pcm_id);
 
-	if (strlen(pcm->dai_name)) {
+	if (strlen(pcm->dai_name))
 		link->cpus->dai_name = kstrdup(pcm->dai_name, GFP_KERNEL);
-		if (!link->cpus->dai_name) {
-			ret = -ENOMEM;
-			goto err;
-		}
-	}
 
 	link->codecs->name = "snd-soc-dummy";
 	link->codecs->dai_name = "snd-soc-dummy-dai";
@@ -2135,9 +2088,7 @@ static int soc_tplg_pcm_elems_load(struct soc_tplg *tplg,
 			_pcm = pcm;
 		} else {
 			abi_match = false;
-			ret = pcm_new_ver(tplg, pcm, &_pcm);
-			if (ret < 0)
-				return ret;
+			pcm_new_ver(tplg, pcm, &_pcm);
 		}
 
 		/* create the FE DAIs and DAI links */
@@ -2485,17 +2436,13 @@ static int soc_tplg_dai_config(struct soc_tplg *tplg,
 	if (d->playback) {
 		stream = &dai_drv->playback;
 		caps = &d->caps[SND_SOC_TPLG_STREAM_PLAYBACK];
-		ret = set_stream_info(stream, caps);
-		if (ret < 0)
-			goto err;
+		set_stream_info(stream, caps);
 	}
 
 	if (d->capture) {
 		stream = &dai_drv->capture;
 		caps = &d->caps[SND_SOC_TPLG_STREAM_CAPTURE];
-		ret = set_stream_info(stream, caps);
-		if (ret < 0)
-			goto err;
+		set_stream_info(stream, caps);
 	}
 
 	if (d->flag_mask)
@@ -2507,15 +2454,10 @@ static int soc_tplg_dai_config(struct soc_tplg *tplg,
 	ret = soc_tplg_dai_load(tplg, dai_drv, NULL, dai);
 	if (ret < 0) {
 		dev_err(tplg->comp->dev, "ASoC: DAI loading failed\n");
-		goto err;
+		return ret;
 	}
 
 	return 0;
-
-err:
-	kfree(dai_drv->playback.stream_name);
-	kfree(dai_drv->capture.stream_name);
-	return ret;
 }
 
 /* load physical DAI elements */
@@ -2524,7 +2466,7 @@ static int soc_tplg_dai_elems_load(struct soc_tplg *tplg,
 {
 	struct snd_soc_tplg_dai *dai;
 	int count;
-	int i, ret;
+	int i;
 
 	count = le32_to_cpu(hdr->count);
 
@@ -2539,12 +2481,7 @@ static int soc_tplg_dai_elems_load(struct soc_tplg *tplg,
 			return -EINVAL;
 		}
 
-		ret = soc_tplg_dai_config(tplg, dai);
-		if (ret < 0) {
-			dev_err(tplg->dev, "ASoC: failed to configure DAI\n");
-			return ret;
-		}
-
+		soc_tplg_dai_config(tplg, dai);
 		tplg->pos += (sizeof(*dai) + le32_to_cpu(dai->priv.size));
 	}
 
@@ -2652,7 +2589,7 @@ static int soc_valid_header(struct soc_tplg *tplg,
 	}
 
 	/* big endian firmware objects not supported atm */
-	if (le32_to_cpu(hdr->magic) == SOC_TPLG_MAGIC_BIG_ENDIAN) {
+	if (hdr->magic == SOC_TPLG_MAGIC_BIG_ENDIAN) {
 		dev_err(tplg->dev,
 			"ASoC: pass %d big endian not supported header got %x at offset 0x%lx size 0x%zx.\n",
 			tplg->pass, hdr->magic,

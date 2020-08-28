@@ -8,14 +8,13 @@
 
 /* Platform-specific information */
 struct felix_info {
-	const struct resource		*target_io_res;
-	const struct resource		*port_io_res;
-	const struct resource		*imdio_res;
+	struct resource			*target_io_res;
+	struct resource			*port_io_res;
+	struct resource			*imdio_res;
 	const struct reg_field		*regfields;
 	const u32 *const		*map;
 	const struct ocelot_ops		*ops;
 	int				shared_queue_sz;
-	int				num_mact_rows;
 	const struct ocelot_stat_layout	*stats_layout;
 	unsigned int			num_stats;
 	int				num_ports;

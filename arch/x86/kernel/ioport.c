@@ -32,15 +32,15 @@ void io_bitmap_share(struct task_struct *tsk)
 	set_tsk_thread_flag(tsk, TIF_IO_BITMAP);
 }
 
-static void task_update_io_bitmap(struct task_struct *tsk)
+static void task_update_io_bitmap(void)
 {
-	struct thread_struct *t = &tsk->thread;
+	struct thread_struct *t = &current->thread;
 
 	if (t->iopl_emul == 3 || t->io_bitmap) {
 		/* TSS update is handled on exit to user space */
-		set_tsk_thread_flag(tsk, TIF_IO_BITMAP);
+		set_thread_flag(TIF_IO_BITMAP);
 	} else {
-		clear_tsk_thread_flag(tsk, TIF_IO_BITMAP);
+		clear_thread_flag(TIF_IO_BITMAP);
 		/* Invalidate TSS */
 		preempt_disable();
 		tss_update_io_bitmap();
@@ -48,12 +48,12 @@ static void task_update_io_bitmap(struct task_struct *tsk)
 	}
 }
 
-void io_bitmap_exit(struct task_struct *tsk)
+void io_bitmap_exit(void)
 {
-	struct io_bitmap *iobm = tsk->thread.io_bitmap;
+	struct io_bitmap *iobm = current->thread.io_bitmap;
 
-	tsk->thread.io_bitmap = NULL;
-	task_update_io_bitmap(tsk);
+	current->thread.io_bitmap = NULL;
+	task_update_io_bitmap();
 	if (iobm && refcount_dec_and_test(&iobm->refcnt))
 		kfree(iobm);
 }
@@ -101,7 +101,7 @@ long ksys_ioperm(unsigned long from, unsigned long num, int turn_on)
 		if (!iobm)
 			return -ENOMEM;
 		refcount_set(&iobm->refcnt, 1);
-		io_bitmap_exit(current);
+		io_bitmap_exit();
 	}
 
 	/*
@@ -133,7 +133,7 @@ long ksys_ioperm(unsigned long from, unsigned long num, int turn_on)
 	}
 	/* All permissions dropped? */
 	if (max_long == UINT_MAX) {
-		io_bitmap_exit(current);
+		io_bitmap_exit();
 		return 0;
 	}
 
@@ -191,7 +191,7 @@ SYSCALL_DEFINE1(iopl, unsigned int, level)
 	}
 
 	t->iopl_emul = level;
-	task_update_io_bitmap(current);
+	task_update_io_bitmap();
 
 	return 0;
 }

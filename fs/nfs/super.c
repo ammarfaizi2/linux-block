@@ -1154,6 +1154,7 @@ static void nfs_get_cache_cookie(struct super_block *sb,
 			uniq = ctx->fscache_uniq;
 			ulen = strlen(ctx->fscache_uniq);
 		}
+		return;
 	}
 
 	nfs_fscache_get_super_cookie(sb, uniq, ulen);

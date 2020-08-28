@@ -35,11 +35,7 @@ SYM_CODE_START(startup_xen)
 	rep __ASM_SIZE(stos)
 
 	mov %_ASM_SI, xen_start_info
-#ifdef CONFIG_X86_64
-	mov initial_stack(%rip), %rsp
-#else
-	mov initial_stack, %esp
-#endif
+	mov $init_thread_union+THREAD_SIZE, %_ASM_SP
 
 #ifdef CONFIG_X86_64
 	/* Set up %gs.
@@ -55,7 +51,7 @@ SYM_CODE_START(startup_xen)
 	wrmsr
 #endif
 
-	call xen_start_kernel
+	jmp xen_start_kernel
 SYM_CODE_END(startup_xen)
 	__FINIT
 #endif

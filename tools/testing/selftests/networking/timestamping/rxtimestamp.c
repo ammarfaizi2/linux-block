@@ -115,7 +115,6 @@ static struct option long_options[] = {
 	{ "tcp", no_argument, 0, 't' },
 	{ "udp", no_argument, 0, 'u' },
 	{ "ip", no_argument, 0, 'i' },
-	{ NULL, 0, NULL, 0 },
 };
 
 static int next_port = 19999;

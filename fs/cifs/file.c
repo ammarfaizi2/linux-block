@@ -3841,7 +3841,7 @@ again:
 	if (rc == -ENODATA)
 		rc = 0;
 
-	ctx->rc = (rc == 0) ? (ssize_t)ctx->total_len : rc;
+	ctx->rc = (rc == 0) ? ctx->total_len : rc;
 
 	mutex_unlock(&ctx->aio_mutex);
 
@@ -4060,7 +4060,7 @@ cifs_read(struct file *file, char *read_data, size_t read_size, loff_t *offset)
 			 * than it negotiated since it will refuse the read
 			 * then.
 			 */
-			if (!(tcon->ses->capabilities &
+			if ((tcon->ses) && !(tcon->ses->capabilities &
 				tcon->ses->server->vals->cap_large_files)) {
 				current_read_size = min_t(uint,
 					current_read_size, CIFSMaxBufSize);

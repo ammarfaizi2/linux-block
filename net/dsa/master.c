@@ -289,8 +289,7 @@ static void dsa_master_ndo_teardown(struct net_device *dev)
 {
 	struct dsa_port *cpu_dp = dev->dsa_ptr;
 
-	if (cpu_dp->orig_ndo_ops)
-		dev->netdev_ops = cpu_dp->orig_ndo_ops;
+	dev->netdev_ops = cpu_dp->orig_ndo_ops;
 	cpu_dp->orig_ndo_ops = NULL;
 }
 

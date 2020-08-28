@@ -230,18 +230,15 @@ static irqreturn_t sps30_trigger_handler(int irq, void *p)
 	struct iio_dev *indio_dev = pf->indio_dev;
 	struct sps30_state *state = iio_priv(indio_dev);
 	int ret;
-	struct {
-		s32 data[4]; /* PM1, PM2P5, PM4, PM10 */
-		s64 ts;
-	} scan;
+	s32 data[4 + 2]; /* PM1, PM2P5, PM4, PM10, timestamp */
 
 	mutex_lock(&state->lock);
-	ret = sps30_do_meas(state, scan.data, ARRAY_SIZE(scan.data));
+	ret = sps30_do_meas(state, data, 4);
 	mutex_unlock(&state->lock);
 	if (ret)
 		goto err;
 
-	iio_push_to_buffers_with_timestamp(indio_dev, &scan,
+	iio_push_to_buffers_with_timestamp(indio_dev, data,
 					   iio_get_time_ns(indio_dev));
 err:
 	iio_trigger_notify_done(indio_dev->trig);

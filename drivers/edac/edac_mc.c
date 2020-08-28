@@ -1180,21 +1180,20 @@ void edac_mc_handle_error(const enum hw_event_mc_err_type type,
 		 * channel/memory controller/...  may be affected.
 		 * Also, don't show errors for empty DIMM slots.
 		 */
-		if (!dimm->nr_pages)
+		if (!e->enable_per_layer_report || !dimm->nr_pages)
 			continue;
 
-		n_labels++;
-		if (n_labels > EDAC_MAX_LABELS) {
-			p = e->label;
-			*p = '\0';
-		} else {
-			if (p != e->label) {
-				strcpy(p, OTHER_LABEL);
-				p += strlen(OTHER_LABEL);
-			}
-			strcpy(p, dimm->label);
-			p += strlen(p);
+		if (n_labels >= EDAC_MAX_LABELS) {
+			e->enable_per_layer_report = false;
+			break;
 		}
+		n_labels++;
+		if (p != e->label) {
+			strcpy(p, OTHER_LABEL);
+			p += strlen(OTHER_LABEL);
+		}
+		strcpy(p, dimm->label);
+		p += strlen(p);
 
 		/*
 		 * get csrow/channel of the DIMM, in order to allow

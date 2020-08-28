@@ -25,7 +25,6 @@ struct espintcp_ctx {
 	struct espintcp_msg partial;
 	void (*saved_data_ready)(struct sock *sk);
 	void (*saved_write_space)(struct sock *sk);
-	void (*saved_destruct)(struct sock *sk);
 	struct work_struct work;
 	bool tx_running;
 };

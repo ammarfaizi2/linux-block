@@ -161,11 +161,9 @@ static int tipc_udp_xmit(struct net *net, struct sk_buff *skb,
 			 struct udp_bearer *ub, struct udp_media_addr *src,
 			 struct udp_media_addr *dst, struct dst_cache *cache)
 {
-	struct dst_entry *ndst;
+	struct dst_entry *ndst = dst_cache_get(cache);
 	int ttl, err = 0;
 
-	local_bh_disable();
-	ndst = dst_cache_get(cache);
 	if (dst->proto == htons(ETH_P_IP)) {
 		struct rtable *rt = (struct rtable *)ndst;
 
@@ -212,11 +210,9 @@ static int tipc_udp_xmit(struct net *net, struct sk_buff *skb,
 					   src->port, dst->port, false);
 #endif
 	}
-	local_bh_enable();
 	return err;
 
 tx_error:
-	local_bh_enable();
 	kfree_skb(skb);
 	return err;
 }

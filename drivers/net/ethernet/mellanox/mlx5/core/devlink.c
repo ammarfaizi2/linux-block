@@ -23,10 +23,7 @@ static int mlx5_devlink_flash_update(struct devlink *devlink,
 	if (err)
 		return err;
 
-	err = mlx5_firmware_flash(dev, fw, extack);
-	release_firmware(fw);
-
-	return err;
+	return mlx5_firmware_flash(dev, fw, extack);
 }
 
 static u8 mlx5_fw_ver_major(u32 version)
@@ -256,6 +253,7 @@ int mlx5_devlink_register(struct devlink *devlink, struct device *dev)
 		goto params_reg_err;
 	mlx5_devlink_set_params_init_values(devlink);
 	devlink_params_publish(devlink);
+	devlink_reload_enable(devlink);
 	return 0;
 
 params_reg_err:
@@ -265,6 +263,7 @@ params_reg_err:
 
 void mlx5_devlink_unregister(struct devlink *devlink)
 {
+	devlink_reload_disable(devlink);
 	devlink_params_unregister(devlink, mlx5_devlink_params,
 				  ARRAY_SIZE(mlx5_devlink_params));
 	devlink_unregister(devlink);

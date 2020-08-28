@@ -167,13 +167,6 @@ static void gmch_ggtt_invalidate(struct i915_ggtt *ggtt)
 	intel_gtt_chipset_flush();
 }
 
-static u64 gen8_ggtt_pte_encode(dma_addr_t addr,
-				enum i915_cache_level level,
-				u32 flags)
-{
-	return addr | _PAGE_PRESENT;
-}
-
 static void gen8_set_pte(void __iomem *addr, gen8_pte_t pte)
 {
 	writeq(pte, addr);
@@ -189,7 +182,7 @@ static void gen8_ggtt_insert_page(struct i915_address_space *vm,
 	gen8_pte_t __iomem *pte =
 		(gen8_pte_t __iomem *)ggtt->gsm + offset / I915_GTT_PAGE_SIZE;
 
-	gen8_set_pte(pte, gen8_ggtt_pte_encode(addr, level, 0));
+	gen8_set_pte(pte, gen8_pte_encode(addr, level, 0));
 
 	ggtt->invalidate(ggtt);
 }
@@ -199,11 +192,10 @@ static void gen8_ggtt_insert_entries(struct i915_address_space *vm,
 				     enum i915_cache_level level,
 				     u32 flags)
 {
-	const gen8_pte_t pte_encode = gen8_ggtt_pte_encode(0, level, 0);
 	struct i915_ggtt *ggtt = i915_vm_to_ggtt(vm);
-	gen8_pte_t __iomem *gte;
-	gen8_pte_t __iomem *end;
-	struct sgt_iter iter;
+	struct sgt_iter sgt_iter;
+	gen8_pte_t __iomem *gtt_entries;
+	const gen8_pte_t pte_encode = gen8_pte_encode(0, level, 0);
 	dma_addr_t addr;
 
 	/*
@@ -211,17 +203,10 @@ static void gen8_ggtt_insert_entries(struct i915_address_space *vm,
 	 * not to allow the user to override access to a read only page.
 	 */
 
-	gte = (gen8_pte_t __iomem *)ggtt->gsm;
-	gte += vma->node.start / I915_GTT_PAGE_SIZE;
-	end = gte + vma->node.size / I915_GTT_PAGE_SIZE;
-
-	for_each_sgt_daddr(addr, iter, vma->pages)
-		gen8_set_pte(gte++, pte_encode | addr);
-	GEM_BUG_ON(gte > end);
-
-	/* Fill the allocated but "unused" space beyond the end of the buffer */
-	while (gte < end)
-		gen8_set_pte(gte++, vm->scratch[0].encode);
+	gtt_entries = (gen8_pte_t __iomem *)ggtt->gsm;
+	gtt_entries += vma->node.start / I915_GTT_PAGE_SIZE;
+	for_each_sgt_daddr(addr, sgt_iter, vma->pages)
+		gen8_set_pte(gtt_entries++, pte_encode | addr);
 
 	/*
 	 * We want to flush the TLBs only after we're certain all the PTE
@@ -257,22 +242,13 @@ static void gen6_ggtt_insert_entries(struct i915_address_space *vm,
 				     u32 flags)
 {
 	struct i915_ggtt *ggtt = i915_vm_to_ggtt(vm);
-	gen6_pte_t __iomem *gte;
-	gen6_pte_t __iomem *end;
+	gen6_pte_t __iomem *entries = (gen6_pte_t __iomem *)ggtt->gsm;
+	unsigned int i = vma->node.start / I915_GTT_PAGE_SIZE;
 	struct sgt_iter iter;
 	dma_addr_t addr;
 
-	gte = (gen6_pte_t __iomem *)ggtt->gsm;
-	gte += vma->node.start / I915_GTT_PAGE_SIZE;
-	end = gte + vma->node.size / I915_GTT_PAGE_SIZE;
-
 	for_each_sgt_daddr(addr, iter, vma->pages)
-		iowrite32(vm->pte_encode(addr, level, flags), gte++);
-	GEM_BUG_ON(gte > end);
-
-	/* Fill the allocated but "unused" space beyond the end of the buffer */
-	while (gte < end)
-		iowrite32(vm->scratch[0].encode, gte++);
+		iowrite32(vm->pte_encode(addr, level, flags), &entries[i++]);
 
 	/*
 	 * We want to flush the TLBs only after we're certain all the PTE
@@ -914,7 +890,7 @@ static int gen8_gmch_probe(struct i915_ggtt *ggtt)
 	ggtt->vm.vma_ops.set_pages   = ggtt_set_pages;
 	ggtt->vm.vma_ops.clear_pages = clear_pages;
 
-	ggtt->vm.pte_encode = gen8_ggtt_pte_encode;
+	ggtt->vm.pte_encode = gen8_pte_encode;
 
 	setup_private_pat(ggtt->vm.gt->uncore);
 

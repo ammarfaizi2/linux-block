@@ -183,11 +183,58 @@ static void ocelot_vlan_mode(struct ocelot *ocelot, int port,
 	ocelot_write(ocelot, val, ANA_VLANMASK);
 }
 
+void ocelot_port_vlan_filtering(struct ocelot *ocelot, int port,
+				bool vlan_aware)
+{
+	struct ocelot_port *ocelot_port = ocelot->ports[port];
+	u32 val;
+
+	if (vlan_aware)
+		val = ANA_PORT_VLAN_CFG_VLAN_AWARE_ENA |
+		      ANA_PORT_VLAN_CFG_VLAN_POP_CNT(1);
+	else
+		val = 0;
+	ocelot_rmw_gix(ocelot, val,
+		       ANA_PORT_VLAN_CFG_VLAN_AWARE_ENA |
+		       ANA_PORT_VLAN_CFG_VLAN_POP_CNT_M,
+		       ANA_PORT_VLAN_CFG, port);
+
+	if (vlan_aware && !ocelot_port->vid)
+		/* If port is vlan-aware and tagged, drop untagged and priority
+		 * tagged frames.
+		 */
+		val = ANA_PORT_DROP_CFG_DROP_UNTAGGED_ENA |
+		      ANA_PORT_DROP_CFG_DROP_PRIO_S_TAGGED_ENA |
+		      ANA_PORT_DROP_CFG_DROP_PRIO_C_TAGGED_ENA;
+	else
+		val = 0;
+	ocelot_rmw_gix(ocelot, val,
+		       ANA_PORT_DROP_CFG_DROP_UNTAGGED_ENA |
+		       ANA_PORT_DROP_CFG_DROP_PRIO_S_TAGGED_ENA |
+		       ANA_PORT_DROP_CFG_DROP_PRIO_C_TAGGED_ENA,
+		       ANA_PORT_DROP_CFG, port);
+
+	if (vlan_aware) {
+		if (ocelot_port->vid)
+			/* Tag all frames except when VID == DEFAULT_VLAN */
+			val |= REW_TAG_CFG_TAG_CFG(1);
+		else
+			/* Tag all frames */
+			val |= REW_TAG_CFG_TAG_CFG(3);
+	} else {
+		/* Port tagging disabled. */
+		val = REW_TAG_CFG_TAG_CFG(0);
+	}
+	ocelot_rmw_gix(ocelot, val,
+		       REW_TAG_CFG_TAG_CFG_M,
+		       REW_TAG_CFG, port);
+}
+EXPORT_SYMBOL(ocelot_port_vlan_filtering);
+
 static int ocelot_port_set_native_vlan(struct ocelot *ocelot, int port,
 				       u16 vid)
 {
 	struct ocelot_port *ocelot_port = ocelot->ports[port];
-	u32 val = 0;
 
 	if (ocelot_port->vid != vid) {
 		/* Always permit deleting the native VLAN (vid = 0) */
@@ -204,58 +251,8 @@ static int ocelot_port_set_native_vlan(struct ocelot *ocelot, int port,
 		       REW_PORT_VLAN_CFG_PORT_VID_M,
 		       REW_PORT_VLAN_CFG, port);
 
-	if (ocelot_port->vlan_aware && !ocelot_port->vid)
-		/* If port is vlan-aware and tagged, drop untagged and priority
-		 * tagged frames.
-		 */
-		val = ANA_PORT_DROP_CFG_DROP_UNTAGGED_ENA |
-		      ANA_PORT_DROP_CFG_DROP_PRIO_S_TAGGED_ENA |
-		      ANA_PORT_DROP_CFG_DROP_PRIO_C_TAGGED_ENA;
-	ocelot_rmw_gix(ocelot, val,
-		       ANA_PORT_DROP_CFG_DROP_UNTAGGED_ENA |
-		       ANA_PORT_DROP_CFG_DROP_PRIO_S_TAGGED_ENA |
-		       ANA_PORT_DROP_CFG_DROP_PRIO_C_TAGGED_ENA,
-		       ANA_PORT_DROP_CFG, port);
-
-	if (ocelot_port->vlan_aware) {
-		if (ocelot_port->vid)
-			/* Tag all frames except when VID == DEFAULT_VLAN */
-			val = REW_TAG_CFG_TAG_CFG(1);
-		else
-			/* Tag all frames */
-			val = REW_TAG_CFG_TAG_CFG(3);
-	} else {
-		/* Port tagging disabled. */
-		val = REW_TAG_CFG_TAG_CFG(0);
-	}
-	ocelot_rmw_gix(ocelot, val,
-		       REW_TAG_CFG_TAG_CFG_M,
-		       REW_TAG_CFG, port);
-
 	return 0;
 }
-
-void ocelot_port_vlan_filtering(struct ocelot *ocelot, int port,
-				bool vlan_aware)
-{
-	struct ocelot_port *ocelot_port = ocelot->ports[port];
-	u32 val;
-
-	ocelot_port->vlan_aware = vlan_aware;
-
-	if (vlan_aware)
-		val = ANA_PORT_VLAN_CFG_VLAN_AWARE_ENA |
-		      ANA_PORT_VLAN_CFG_VLAN_POP_CNT(1);
-	else
-		val = 0;
-	ocelot_rmw_gix(ocelot, val,
-		       ANA_PORT_VLAN_CFG_VLAN_AWARE_ENA |
-		       ANA_PORT_VLAN_CFG_VLAN_POP_CNT_M,
-		       ANA_PORT_VLAN_CFG, port);
-
-	ocelot_port_set_native_vlan(ocelot, port, ocelot_port->vid);
-}
-EXPORT_SYMBOL(ocelot_port_vlan_filtering);
 
 /* Default vlan to clasify for untagged frames (may be zero) */
 static void ocelot_port_set_pvid(struct ocelot *ocelot, int port, u16 pvid)
@@ -861,12 +858,12 @@ static void ocelot_get_stats64(struct net_device *dev,
 }
 
 int ocelot_fdb_add(struct ocelot *ocelot, int port,
-		   const unsigned char *addr, u16 vid)
+		   const unsigned char *addr, u16 vid, bool vlan_aware)
 {
 	struct ocelot_port *ocelot_port = ocelot->ports[port];
 
 	if (!vid) {
-		if (!ocelot_port->vlan_aware)
+		if (!vlan_aware)
 			/* If the bridge is not VLAN aware and no VID was
 			 * provided, set it to pvid to ensure the MAC entry
 			 * matches incoming untagged packets
@@ -893,7 +890,7 @@ static int ocelot_port_fdb_add(struct ndmsg *ndm, struct nlattr *tb[],
 	struct ocelot *ocelot = priv->port.ocelot;
 	int port = priv->chip_port;
 
-	return ocelot_fdb_add(ocelot, port, addr, vid);
+	return ocelot_fdb_add(ocelot, port, addr, vid, priv->vlan_aware);
 }
 
 int ocelot_fdb_del(struct ocelot *ocelot, int port,
@@ -1016,8 +1013,10 @@ int ocelot_fdb_dump(struct ocelot *ocelot, int port,
 {
 	int i, j;
 
-	/* Loop through all the mac tables entries. */
-	for (i = 0; i < ocelot->num_mact_rows; i++) {
+	/* Loop through all the mac tables entries. There are 1024 rows of 4
+	 * entries.
+	 */
+	for (i = 0; i < 1024; i++) {
 		for (j = 0; j < 4; j++) {
 			struct ocelot_mact_entry entry;
 			bool is_static;
@@ -1444,15 +1443,8 @@ static void ocelot_port_attr_stp_state_set(struct ocelot *ocelot, int port,
 
 void ocelot_set_ageing_time(struct ocelot *ocelot, unsigned int msecs)
 {
-	unsigned int age_period = ANA_AUTOAGE_AGE_PERIOD(msecs / 2000);
-
-	/* Setting AGE_PERIOD to zero effectively disables automatic aging,
-	 * which is clearly not what our intention is. So avoid that.
-	 */
-	if (!age_period)
-		age_period = 1;
-
-	ocelot_rmw(ocelot, age_period, ANA_AUTOAGE_AGE_PERIOD_M, ANA_AUTOAGE);
+	ocelot_write(ocelot, ANA_AUTOAGE_AGE_PERIOD(msecs / 2),
+		     ANA_AUTOAGE);
 }
 EXPORT_SYMBOL(ocelot_set_ageing_time);
 
@@ -1460,7 +1452,7 @@ static void ocelot_port_attr_ageing_set(struct ocelot *ocelot, int port,
 					unsigned long ageing_clock_t)
 {
 	unsigned long ageing_jiffies = clock_t_to_jiffies(ageing_clock_t);
-	u32 ageing_time = jiffies_to_msecs(ageing_jiffies);
+	u32 ageing_time = jiffies_to_msecs(ageing_jiffies) / 1000;
 
 	ocelot_set_ageing_time(ocelot, ageing_time);
 }
@@ -1497,8 +1489,8 @@ static int ocelot_port_attr_set(struct net_device *dev,
 		ocelot_port_attr_ageing_set(ocelot, port, attr->u.ageing_time);
 		break;
 	case SWITCHDEV_ATTR_ID_BRIDGE_VLAN_FILTERING:
-		ocelot_port_vlan_filtering(ocelot, port,
-					   attr->u.vlan_filtering);
+		priv->vlan_aware = attr->u.vlan_filtering;
+		ocelot_port_vlan_filtering(ocelot, port, priv->vlan_aware);
 		break;
 	case SWITCHDEV_ATTR_ID_BRIDGE_MC_DISABLED:
 		ocelot_port_attr_mc_set(ocelot, port, !attr->u.mc_disabled);
@@ -1869,6 +1861,7 @@ static int ocelot_netdevice_port_event(struct net_device *dev,
 			} else {
 				err = ocelot_port_bridge_leave(ocelot, port,
 							       info->upper_dev);
+				priv->vlan_aware = false;
 			}
 		}
 		if (netif_is_lag_master(info->upper_dev)) {

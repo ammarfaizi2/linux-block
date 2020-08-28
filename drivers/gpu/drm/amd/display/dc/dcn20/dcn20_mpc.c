@@ -545,7 +545,6 @@ const struct mpc_funcs dcn20_mpc_funcs = {
 	.mpc_init = mpc1_mpc_init,
 	.mpc_init_single_inst = mpc1_mpc_init_single_inst,
 	.update_blending = mpc2_update_blending,
-	.cursor_lock = mpc1_cursor_lock,
 	.get_mpcc_for_dpp = mpc2_get_mpcc_for_dpp,
 	.wait_for_idle = mpc2_assert_idle_mpcc,
 	.assert_mpcc_idle_before_connect = mpc2_assert_mpcc_idle_before_connect,

@@ -59,11 +59,7 @@ static struct screen_info *setup_graphics(void)
 		si = alloc_screen_info();
 		if (!si)
 			return NULL;
-		status = efi_setup_gop(si, &gop_proto, size);
-		if (status != EFI_SUCCESS) {
-			free_screen_info(si);
-			return NULL;
-		}
+		efi_setup_gop(si, &gop_proto, size);
 	}
 	return si;
 }

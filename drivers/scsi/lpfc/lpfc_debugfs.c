@@ -1603,50 +1603,42 @@ out:
 }
 
 /**
- * lpfc_debugfs_hdwqstat_data - Dump I/O stats to a buffer
+ * lpfc_debugfs_cpucheck_data - Dump target node list to a buffer
  * @vport: The vport to gather target node info from.
  * @buf: The buffer to dump log into.
  * @size: The maximum amount of data to process.
  *
  * Description:
- * This routine dumps the NVME + SCSI statistics associated with @vport
+ * This routine dumps the NVME statistics associated with @vport
  *
  * Return Value:
  * This routine returns the amount of bytes that were dumped into @buf and will
  * not exceed @size.
  **/
 static int
-lpfc_debugfs_hdwqstat_data(struct lpfc_vport *vport, char *buf, int size)
+lpfc_debugfs_cpucheck_data(struct lpfc_vport *vport, char *buf, int size)
 {
 	struct lpfc_hba   *phba = vport->phba;
 	struct lpfc_sli4_hdw_queue *qp;
-	struct lpfc_hdwq_stat *c_stat;
-	int i, j, len;
+	int i, j, max_cnt;
+	int len = 0;
 	uint32_t tot_xmt;
 	uint32_t tot_rcv;
 	uint32_t tot_cmpl;
-	char tmp[LPFC_MAX_SCSI_INFO_TMP_LEN] = {0};
 
-	scnprintf(tmp, sizeof(tmp), "HDWQ Stats:\n\n");
-	if (strlcat(buf, tmp, size) >= size)
-		goto buffer_done;
-
-	scnprintf(tmp, sizeof(tmp), "(NVME Accounting: %s) ",
-		  (phba->hdwqstat_on &
-		  (LPFC_CHECK_NVME_IO | LPFC_CHECK_NVMET_IO) ?
-		  "Enabled" : "Disabled"));
-	if (strlcat(buf, tmp, size) >= size)
-		goto buffer_done;
-
-	scnprintf(tmp, sizeof(tmp), "(SCSI Accounting: %s) ",
-		  (phba->hdwqstat_on & LPFC_CHECK_SCSI_IO ?
-		  "Enabled" : "Disabled"));
-	if (strlcat(buf, tmp, size) >= size)
-		goto buffer_done;
-
-	scnprintf(tmp, sizeof(tmp), "\n\n");
-	if (strlcat(buf, tmp, size) >= size)
-		goto buffer_done;
+	len += scnprintf(buf + len, PAGE_SIZE - len,
+			"CPUcheck %s ",
+			(phba->cpucheck_on & LPFC_CHECK_NVME_IO ?
+				"Enabled" : "Disabled"));
+	if (phba->nvmet_support) {
+		len += scnprintf(buf + len, PAGE_SIZE - len,
+				"%s\n",
+				(phba->cpucheck_on & LPFC_CHECK_NVMET_RCV ?
+					"Rcv Enabled\n" : "Rcv Disabled\n"));
+	} else {
+		len += scnprintf(buf + len, PAGE_SIZE - len, "\n");
+	}
+	max_cnt = size - LPFC_DEBUG_OUT_LINE_SZ;
 
 	for (i = 0; i < phba->cfg_hdw_queue; i++) {
 		qp = &phba->sli4_hba.hdwq[i];
@@ -1654,76 +1646,46 @@ lpfc_debugfs_hdwqstat_data(struct lpfc_vport *vport, char *buf, int size)
 		tot_rcv = 0;
 		tot_xmt = 0;
 		tot_cmpl = 0;
-
-		for_each_present_cpu(j) {
-			c_stat = per_cpu_ptr(phba->sli4_hba.c_stat, j);
-
-			/* Only display for this HDWQ */
-			if (i != c_stat->hdwq_no)
-				continue;
-
-			/* Only display non-zero counters */
-			if (!c_stat->xmt_io && !c_stat->cmpl_io &&
-			    !c_stat->rcv_io)
-				continue;
-
-			if (!tot_xmt && !tot_cmpl && !tot_rcv) {
-				/* Print HDWQ string only the first time */
-				scnprintf(tmp, sizeof(tmp), "[HDWQ %d]:\t", i);
-				if (strlcat(buf, tmp, size) >= size)
-					goto buffer_done;
-			}
-
-			tot_xmt += c_stat->xmt_io;
-			tot_cmpl += c_stat->cmpl_io;
+		for (j = 0; j < LPFC_CHECK_CPU_CNT; j++) {
+			tot_xmt += qp->cpucheck_xmt_io[j];
+			tot_cmpl += qp->cpucheck_cmpl_io[j];
 			if (phba->nvmet_support)
-				tot_rcv += c_stat->rcv_io;
-
-			scnprintf(tmp, sizeof(tmp), "| [CPU %d]: ", j);
-			if (strlcat(buf, tmp, size) >= size)
-				goto buffer_done;
-
-			if (phba->nvmet_support) {
-				scnprintf(tmp, sizeof(tmp),
-					  "XMT 0x%x CMPL 0x%x RCV 0x%x |",
-					  c_stat->xmt_io, c_stat->cmpl_io,
-					  c_stat->rcv_io);
-				if (strlcat(buf, tmp, size) >= size)
-					goto buffer_done;
-			} else {
-				scnprintf(tmp, sizeof(tmp),
-					  "XMT 0x%x CMPL 0x%x |",
-					  c_stat->xmt_io, c_stat->cmpl_io);
-				if (strlcat(buf, tmp, size) >= size)
-					goto buffer_done;
-			}
+				tot_rcv += qp->cpucheck_rcv_io[j];
 		}
 
-		/* Check if nothing to display */
+		/* Only display Hardware Qs with something */
 		if (!tot_xmt && !tot_cmpl && !tot_rcv)
 			continue;
 
-		scnprintf(tmp, sizeof(tmp), "\t->\t[HDWQ Total: ");
-		if (strlcat(buf, tmp, size) >= size)
-			goto buffer_done;
-
-		if (phba->nvmet_support) {
-			scnprintf(tmp, sizeof(tmp),
-				  "XMT 0x%x CMPL 0x%x RCV 0x%x]\n\n",
-				  tot_xmt, tot_cmpl, tot_rcv);
-			if (strlcat(buf, tmp, size) >= size)
-				goto buffer_done;
-		} else {
-			scnprintf(tmp, sizeof(tmp),
-				  "XMT 0x%x CMPL 0x%x]\n\n",
-				  tot_xmt, tot_cmpl);
-			if (strlcat(buf, tmp, size) >= size)
-				goto buffer_done;
+		len += scnprintf(buf + len, PAGE_SIZE - len,
+				"HDWQ %03d: ", i);
+		for (j = 0; j < LPFC_CHECK_CPU_CNT; j++) {
+			/* Only display non-zero counters */
+			if (!qp->cpucheck_xmt_io[j] &&
+			    !qp->cpucheck_cmpl_io[j] &&
+			    !qp->cpucheck_rcv_io[j])
+				continue;
+			if (phba->nvmet_support) {
+				len += scnprintf(buf + len, PAGE_SIZE - len,
+						"CPU %03d: %x/%x/%x ", j,
+						qp->cpucheck_rcv_io[j],
+						qp->cpucheck_xmt_io[j],
+						qp->cpucheck_cmpl_io[j]);
+			} else {
+				len += scnprintf(buf + len, PAGE_SIZE - len,
+						"CPU %03d: %x/%x ", j,
+						qp->cpucheck_xmt_io[j],
+						qp->cpucheck_cmpl_io[j]);
+			}
+		}
+		len += scnprintf(buf + len, PAGE_SIZE - len,
+				"Total: %x\n", tot_xmt);
+		if (len >= max_cnt) {
+			len += scnprintf(buf + len, PAGE_SIZE - len,
+					"Truncated ...\n");
+			return len;
 		}
 	}
-
-buffer_done:
-	len = strnlen(buf, size);
 	return len;
 }
 
@@ -2959,7 +2921,7 @@ lpfc_debugfs_nvmeio_trc_write(struct file *file, const char __user *buf,
 }
 
 static int
-lpfc_debugfs_hdwqstat_open(struct inode *inode, struct file *file)
+lpfc_debugfs_cpucheck_open(struct inode *inode, struct file *file)
 {
 	struct lpfc_vport *vport = inode->i_private;
 	struct lpfc_debug *debug;
@@ -2970,14 +2932,14 @@ lpfc_debugfs_hdwqstat_open(struct inode *inode, struct file *file)
 		goto out;
 
 	 /* Round to page boundary */
-	debug->buffer = kcalloc(1, LPFC_SCSISTAT_SIZE, GFP_KERNEL);
+	debug->buffer = kmalloc(LPFC_CPUCHECK_SIZE, GFP_KERNEL);
 	if (!debug->buffer) {
 		kfree(debug);
 		goto out;
 	}
 
-	debug->len = lpfc_debugfs_hdwqstat_data(vport, debug->buffer,
-						LPFC_SCSISTAT_SIZE);
+	debug->len = lpfc_debugfs_cpucheck_data(vport, debug->buffer,
+		LPFC_CPUCHECK_SIZE);
 
 	debug->i_private = inode->i_private;
 	file->private_data = debug;
@@ -2988,16 +2950,16 @@ out:
 }
 
 static ssize_t
-lpfc_debugfs_hdwqstat_write(struct file *file, const char __user *buf,
+lpfc_debugfs_cpucheck_write(struct file *file, const char __user *buf,
 			    size_t nbytes, loff_t *ppos)
 {
 	struct lpfc_debug *debug = file->private_data;
 	struct lpfc_vport *vport = (struct lpfc_vport *)debug->i_private;
 	struct lpfc_hba   *phba = vport->phba;
-	struct lpfc_hdwq_stat *c_stat;
+	struct lpfc_sli4_hdw_queue *qp;
 	char mybuf[64];
 	char *pbuf;
-	int i;
+	int i, j;
 
 	if (nbytes > 64)
 		nbytes = 64;
@@ -3010,39 +2972,41 @@ lpfc_debugfs_hdwqstat_write(struct file *file, const char __user *buf,
 
 	if ((strncmp(pbuf, "on", sizeof("on") - 1) == 0)) {
 		if (phba->nvmet_support)
-			phba->hdwqstat_on |= LPFC_CHECK_NVMET_IO;
+			phba->cpucheck_on |= LPFC_CHECK_NVMET_IO;
 		else
-			phba->hdwqstat_on |= (LPFC_CHECK_NVME_IO |
+			phba->cpucheck_on |= (LPFC_CHECK_NVME_IO |
 				LPFC_CHECK_SCSI_IO);
 		return strlen(pbuf);
 	} else if ((strncmp(pbuf, "nvme_on", sizeof("nvme_on") - 1) == 0)) {
 		if (phba->nvmet_support)
-			phba->hdwqstat_on |= LPFC_CHECK_NVMET_IO;
+			phba->cpucheck_on |= LPFC_CHECK_NVMET_IO;
 		else
-			phba->hdwqstat_on |= LPFC_CHECK_NVME_IO;
+			phba->cpucheck_on |= LPFC_CHECK_NVME_IO;
 		return strlen(pbuf);
 	} else if ((strncmp(pbuf, "scsi_on", sizeof("scsi_on") - 1) == 0)) {
-		if (!phba->nvmet_support)
-			phba->hdwqstat_on |= LPFC_CHECK_SCSI_IO;
+		phba->cpucheck_on |= LPFC_CHECK_SCSI_IO;
 		return strlen(pbuf);
-	} else if ((strncmp(pbuf, "nvme_off", sizeof("nvme_off") - 1) == 0)) {
-		phba->hdwqstat_on &= ~(LPFC_CHECK_NVME_IO |
-				       LPFC_CHECK_NVMET_IO);
-		return strlen(pbuf);
-	} else if ((strncmp(pbuf, "scsi_off", sizeof("scsi_off") - 1) == 0)) {
-		phba->hdwqstat_on &= ~LPFC_CHECK_SCSI_IO;
+	} else if ((strncmp(pbuf, "rcv",
+		   sizeof("rcv") - 1) == 0)) {
+		if (phba->nvmet_support)
+			phba->cpucheck_on |= LPFC_CHECK_NVMET_RCV;
+		else
+			return -EINVAL;
 		return strlen(pbuf);
 	} else if ((strncmp(pbuf, "off",
 		   sizeof("off") - 1) == 0)) {
-		phba->hdwqstat_on = LPFC_CHECK_OFF;
+		phba->cpucheck_on = LPFC_CHECK_OFF;
 		return strlen(pbuf);
 	} else if ((strncmp(pbuf, "zero",
 		   sizeof("zero") - 1) == 0)) {
-		for_each_present_cpu(i) {
-			c_stat = per_cpu_ptr(phba->sli4_hba.c_stat, i);
-			c_stat->xmt_io = 0;
-			c_stat->cmpl_io = 0;
-			c_stat->rcv_io = 0;
+		for (i = 0; i < phba->cfg_hdw_queue; i++) {
+			qp = &phba->sli4_hba.hdwq[i];
+
+			for (j = 0; j < LPFC_CHECK_CPU_CNT; j++) {
+				qp->cpucheck_rcv_io[j] = 0;
+				qp->cpucheck_xmt_io[j] = 0;
+				qp->cpucheck_cmpl_io[j] = 0;
+			}
 		}
 		return strlen(pbuf);
 	}
@@ -5487,13 +5451,13 @@ static const struct file_operations lpfc_debugfs_op_nvmeio_trc = {
 	.release =      lpfc_debugfs_release,
 };
 
-#undef lpfc_debugfs_op_hdwqstat
-static const struct file_operations lpfc_debugfs_op_hdwqstat = {
+#undef lpfc_debugfs_op_cpucheck
+static const struct file_operations lpfc_debugfs_op_cpucheck = {
 	.owner =        THIS_MODULE,
-	.open =         lpfc_debugfs_hdwqstat_open,
+	.open =         lpfc_debugfs_cpucheck_open,
 	.llseek =       lpfc_debugfs_lseek,
 	.read =         lpfc_debugfs_read,
-	.write =	lpfc_debugfs_hdwqstat_write,
+	.write =	lpfc_debugfs_cpucheck_write,
 	.release =      lpfc_debugfs_release,
 };
 
@@ -6117,11 +6081,11 @@ nvmeio_off:
 				    vport->vport_debugfs_root,
 				    vport, &lpfc_debugfs_op_nvmektime);
 
-	snprintf(name, sizeof(name), "hdwqstat");
-	vport->debug_hdwqstat =
+	snprintf(name, sizeof(name), "cpucheck");
+	vport->debug_cpucheck =
 		debugfs_create_file(name, 0644,
 				    vport->vport_debugfs_root,
-				    vport, &lpfc_debugfs_op_hdwqstat);
+				    vport, &lpfc_debugfs_op_cpucheck);
 
 	/*
 	 * The following section is for additional directories/files for the
@@ -6255,8 +6219,8 @@ lpfc_debugfs_terminate(struct lpfc_vport *vport)
 	debugfs_remove(vport->debug_nvmektime); /* nvmektime */
 	vport->debug_nvmektime = NULL;
 
-	debugfs_remove(vport->debug_hdwqstat); /* hdwqstat */
-	vport->debug_hdwqstat = NULL;
+	debugfs_remove(vport->debug_cpucheck); /* cpucheck */
+	vport->debug_cpucheck = NULL;
 
 	if (vport->vport_debugfs_root) {
 		debugfs_remove(vport->vport_debugfs_root); /* vportX */

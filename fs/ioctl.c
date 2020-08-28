@@ -55,7 +55,6 @@ EXPORT_SYMBOL(vfs_ioctl);
 static int ioctl_fibmap(struct file *filp, int __user *p)
 {
 	struct inode *inode = file_inode(filp);
-	struct super_block *sb = inode->i_sb;
 	int error, ur_block;
 	sector_t block;
 
@@ -71,13 +70,6 @@ static int ioctl_fibmap(struct file *filp, int __user *p)
 
 	block = ur_block;
 	error = bmap(inode, &block);
-
-	if (block > INT_MAX) {
-		error = -ERANGE;
-		pr_warn_ratelimited("[%s/%d] FS: %s File: %pD4 would truncate fibmap result\n",
-				    current->comm, task_pid_nr(current),
-				    sb->s_id, filp);
-	}
 
 	if (error)
 		ur_block = 0;

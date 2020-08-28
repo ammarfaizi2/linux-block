@@ -1953,24 +1953,8 @@ static void amdgpu_device_fill_reset_magic(struct amdgpu_device *adev)
  */
 static bool amdgpu_device_check_vram_lost(struct amdgpu_device *adev)
 {
-	if (memcmp(adev->gart.ptr, adev->reset_magic,
-			AMDGPU_RESET_MAGIC_NUM))
-		return true;
-
-	if (!adev->in_gpu_reset)
-		return false;
-
-	/*
-	 * For all ASICs with baco/mode1 reset, the VRAM is
-	 * always assumed to be lost.
-	 */
-	switch (amdgpu_asic_reset_method(adev)) {
-	case AMD_RESET_METHOD_BACO:
-	case AMD_RESET_METHOD_MODE1:
-		return true;
-	default:
-		return false;
-	}
+	return !!memcmp(adev->gart.ptr, adev->reset_magic,
+			AMDGPU_RESET_MAGIC_NUM);
 }
 
 /**
@@ -3325,11 +3309,11 @@ int amdgpu_device_suspend(struct drm_device *dev, bool fbcon)
 		}
 	}
 
+	amdgpu_amdkfd_suspend(adev);
+
 	amdgpu_ras_suspend(adev);
 
 	r = amdgpu_device_ip_suspend_phase1(adev);
-
-	amdgpu_amdkfd_suspend(adev);
 
 	/* evict vram memory */
 	amdgpu_bo_evict_vram(adev);

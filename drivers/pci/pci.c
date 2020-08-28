@@ -4616,10 +4616,10 @@ static bool pcie_wait_for_link_delay(struct pci_dev *pdev, bool active,
 
 	/*
 	 * Some controllers might not implement link active reporting. In this
-	 * case, we wait for 1000 ms + any delay requested by the caller.
+	 * case, we wait for 1000 + 100 ms.
 	 */
 	if (!pdev->link_active_reporting) {
-		msleep(timeout + delay);
+		msleep(1100);
 		return true;
 	}
 
