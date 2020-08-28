@@ -520,9 +520,7 @@ static void wfx_do_join(struct wfx_vif *wvif)
 		ssidie = ieee80211_bss_get_ie(bss, WLAN_EID_SSID);
 	if (ssidie) {
 		ssidlen = ssidie[1];
-		if (ssidlen > IEEE80211_MAX_SSID_LEN)
-			ssidlen = IEEE80211_MAX_SSID_LEN;
-		memcpy(ssid, &ssidie[2], ssidlen);
+		memcpy(ssid, &ssidie[2], ssidie[1]);
 	}
 	rcu_read_unlock();
 
@@ -1049,6 +1047,7 @@ int wfx_add_interface(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
 	init_completion(&wvif->scan_complete);
 	INIT_WORK(&wvif->scan_work, wfx_hw_scan_work);
 
+	INIT_WORK(&wvif->tx_policy_upload_work, wfx_tx_policy_upload_work);
 	mutex_unlock(&wdev->conf_mutex);
 
 	hif_set_macaddr(wvif, vif->addr);

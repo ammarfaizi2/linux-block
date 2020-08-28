@@ -1140,7 +1140,6 @@ static journal_t *journal_init_common(struct block_device *bdev,
 	init_waitqueue_head(&journal->j_wait_commit);
 	init_waitqueue_head(&journal->j_wait_updates);
 	init_waitqueue_head(&journal->j_wait_reserved);
-	mutex_init(&journal->j_abort_mutex);
 	mutex_init(&journal->j_barrier);
 	mutex_init(&journal->j_checkpoint_mutex);
 	spin_lock_init(&journal->j_revoke_lock);
@@ -1367,10 +1366,8 @@ static int jbd2_write_superblock(journal_t *journal, int write_flags)
 	int ret;
 
 	/* Buffer got discarded which means block device got invalidated */
-	if (!buffer_mapped(bh)) {
-		unlock_buffer(bh);
+	if (!buffer_mapped(bh))
 		return -EIO;
-	}
 
 	trace_jbd2_write_superblock(journal, write_flags);
 	if (!(journal->j_flags & JBD2_BARRIER))
@@ -1405,8 +1402,7 @@ static int jbd2_write_superblock(journal_t *journal, int write_flags)
 		printk(KERN_ERR "JBD2: Error %d detected when updating "
 		       "journal superblock for %s.\n", ret,
 		       journal->j_devname);
-		if (!is_journal_aborted(journal))
-			jbd2_journal_abort(journal, ret);
+		jbd2_journal_abort(journal, ret);
 	}
 
 	return ret;
@@ -2158,13 +2154,6 @@ void jbd2_journal_abort(journal_t *journal, int errno)
 	transaction_t *transaction;
 
 	/*
-	 * Lock the aborting procedure until everything is done, this avoid
-	 * races between filesystem's error handling flow (e.g. ext4_abort()),
-	 * ensure panic after the error info is written into journal's
-	 * superblock.
-	 */
-	mutex_lock(&journal->j_abort_mutex);
-	/*
 	 * ESHUTDOWN always takes precedence because a file system check
 	 * caused by any other journal abort error is not required after
 	 * a shutdown triggered.
@@ -2178,7 +2167,6 @@ void jbd2_journal_abort(journal_t *journal, int errno)
 			journal->j_errno = errno;
 			jbd2_journal_update_sb_errno(journal);
 		}
-		mutex_unlock(&journal->j_abort_mutex);
 		return;
 	}
 
@@ -2200,7 +2188,10 @@ void jbd2_journal_abort(journal_t *journal, int errno)
 	 * layer could realise that a filesystem check is needed.
 	 */
 	jbd2_journal_update_sb_errno(journal);
-	mutex_unlock(&journal->j_abort_mutex);
+
+	write_lock(&journal->j_state_lock);
+	journal->j_flags |= JBD2_REC_ERR;
+	write_unlock(&journal->j_state_lock);
 }
 
 /**

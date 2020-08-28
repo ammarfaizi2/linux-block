@@ -58,10 +58,6 @@
 
 /* USB 3 and SLIC support needed to be complete */
 
-&dma {
-	status = "okay";
-};
-
 &amac0 {
 	status = "okay";
 };

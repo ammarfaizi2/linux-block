@@ -6,7 +6,6 @@
 #include <linux/timer.h>
 #include <linux/err.h>
 #include <linux/jiffies.h>
-#include <linux/workqueue.h>
 
 /*
  * Any file that uses trace points, must include the header.
@@ -21,16 +20,6 @@ struct trace_array *tr;
 static void mytimer_handler(struct timer_list *unused);
 static struct task_struct *simple_tsk;
 
-static void trace_work_fn(struct work_struct *work)
-{
-	/*
-	 * Disable tracing for event "sample_event".
-	 */
-	trace_array_set_clr_event(tr, "sample-subsystem", "sample_event",
-			false);
-}
-static DECLARE_WORK(trace_work, trace_work_fn);
-
 /*
  * mytimer: Timer setup to disable tracing for event "sample_event". This
  * timer is only for the purposes of the sample module to demonstrate access of
@@ -40,7 +29,11 @@ static DEFINE_TIMER(mytimer, mytimer_handler);
 
 static void mytimer_handler(struct timer_list *unused)
 {
-	schedule_work(&trace_work);
+	/*
+	 * Disable tracing for event "sample_event".
+	 */
+	trace_array_set_clr_event(tr, "sample-subsystem", "sample_event",
+			false);
 }
 
 static void simple_thread_func(int count)
@@ -83,7 +76,6 @@ static int simple_thread(void *arg)
 		simple_thread_func(count++);
 
 	del_timer(&mytimer);
-	cancel_work_sync(&trace_work);
 
 	/*
 	 * trace_array_put() decrements the reference counter associated with
@@ -115,12 +107,8 @@ static int __init sample_trace_array_init(void)
 	trace_printk_init_buffers();
 
 	simple_tsk = kthread_run(simple_thread, NULL, "sample-instance");
-	if (IS_ERR(simple_tsk)) {
-		trace_array_put(tr);
-		trace_array_destroy(tr);
+	if (IS_ERR(simple_tsk))
 		return -1;
-	}
-
 	return 0;
 }
 

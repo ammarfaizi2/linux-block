@@ -113,17 +113,19 @@ static int tegra_wm9712_driver_probe(struct platform_device *pdev)
 
 	ret = tegra_asoc_utils_set_ac97_rate(&machine->util_data);
 	if (ret)
-		goto codec_unregister;
+		goto asoc_utils_fini;
 
 	ret = snd_soc_register_card(card);
 	if (ret) {
 		dev_err(&pdev->dev, "snd_soc_register_card failed (%d)\n",
 			ret);
-		goto codec_unregister;
+		goto asoc_utils_fini;
 	}
 
 	return 0;
 
+asoc_utils_fini:
+	tegra_asoc_utils_fini(&machine->util_data);
 codec_unregister:
 	platform_device_del(machine->codec);
 codec_put:
@@ -137,6 +139,8 @@ static int tegra_wm9712_driver_remove(struct platform_device *pdev)
 	struct tegra_wm9712 *machine = snd_soc_card_get_drvdata(card);
 
 	snd_soc_unregister_card(card);
+
+	tegra_asoc_utils_fini(&machine->util_data);
 
 	platform_device_unregister(machine->codec);
 

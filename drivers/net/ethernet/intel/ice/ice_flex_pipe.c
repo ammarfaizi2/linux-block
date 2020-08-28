@@ -2291,8 +2291,6 @@ static void ice_free_flow_profs(struct ice_hw *hw, u8 blk_idx)
 	mutex_lock(&hw->fl_profs_locks[blk_idx]);
 	list_for_each_entry_safe(p, tmp, &hw->fl_profs[blk_idx], l_entry) {
 		list_del(&p->l_entry);
-
-		mutex_destroy(&p->entries_lock);
 		devm_kfree(ice_hw_to_dev(hw), p);
 	}
 	mutex_unlock(&hw->fl_profs_locks[blk_idx]);
@@ -2410,7 +2408,7 @@ void ice_clear_hw_tbls(struct ice_hw *hw)
 		memset(prof_redir->t, 0,
 		       prof_redir->count * sizeof(*prof_redir->t));
 
-		memset(es->t, 0, es->count * sizeof(*es->t) * es->fvw);
+		memset(es->t, 0, es->count * sizeof(*es->t));
 		memset(es->ref_count, 0, es->count * sizeof(*es->ref_count));
 		memset(es->written, 0, es->count * sizeof(*es->written));
 	}
@@ -2521,12 +2519,10 @@ enum ice_status ice_init_hw_tbls(struct ice_hw *hw)
 		es->ref_count = devm_kcalloc(ice_hw_to_dev(hw), es->count,
 					     sizeof(*es->ref_count),
 					     GFP_KERNEL);
-		if (!es->ref_count)
-			goto err;
 
 		es->written = devm_kcalloc(ice_hw_to_dev(hw), es->count,
 					   sizeof(*es->written), GFP_KERNEL);
-		if (!es->written)
+		if (!es->ref_count)
 			goto err;
 	}
 	return 0;
@@ -2966,10 +2962,8 @@ ice_add_prof(struct ice_hw *hw, enum ice_block blk, u64 id, u8 ptypes[],
 
 	/* add profile info */
 	prof = devm_kzalloc(ice_hw_to_dev(hw), sizeof(*prof), GFP_KERNEL);
-	if (!prof) {
-		status = ICE_ERR_NO_MEMORY;
+	if (!prof)
 		goto err_ice_add_prof;
-	}
 
 	prof->profile_cookie = id;
 	prof->prof_id = prof_id;
@@ -3709,10 +3703,8 @@ ice_add_prof_id_vsig(struct ice_hw *hw, enum ice_block blk, u16 vsig, u64 hdl,
 					      t->tcam[i].prof_id,
 					      t->tcam[i].ptg, vsig, 0, 0,
 					      vl_msk, dc_msk, nm_msk);
-		if (status) {
-			devm_kfree(ice_hw_to_dev(hw), p);
+		if (status)
 			goto err_ice_add_prof_id_vsig;
-		}
 
 		/* log change */
 		list_add(&p->list_entry, chg);

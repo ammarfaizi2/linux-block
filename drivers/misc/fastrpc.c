@@ -904,7 +904,6 @@ static int fastrpc_invoke_send(struct fastrpc_session_ctx *sctx,
 	struct fastrpc_channel_ctx *cctx;
 	struct fastrpc_user *fl = ctx->fl;
 	struct fastrpc_msg *msg = &ctx->msg;
-	int ret;
 
 	cctx = fl->cctx;
 	msg->pid = fl->tgid;
@@ -920,13 +919,7 @@ static int fastrpc_invoke_send(struct fastrpc_session_ctx *sctx,
 	msg->size = roundup(ctx->msg_sz, PAGE_SIZE);
 	fastrpc_context_get(ctx);
 
-	ret = rpmsg_send(cctx->rpdev->ept, (void *)msg, sizeof(*msg));
-
-	if (ret)
-		fastrpc_context_put(ctx);
-
-	return ret;
-
+	return rpmsg_send(cctx->rpdev->ept, (void *)msg, sizeof(*msg));
 }
 
 static int fastrpc_internal_invoke(struct fastrpc_user *fl,  u32 kernel,
@@ -1620,10 +1613,8 @@ static int fastrpc_rpmsg_probe(struct rpmsg_device *rpdev)
 					    domains[domain_id]);
 	data->miscdev.fops = &fastrpc_fops;
 	err = misc_register(&data->miscdev);
-	if (err) {
-		kfree(data);
+	if (err)
 		return err;
-	}
 
 	kref_init(&data->refcount);
 

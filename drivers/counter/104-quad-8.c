@@ -1274,25 +1274,17 @@ static ssize_t quad8_signal_cable_fault_read(struct counter_device *counter,
 					     struct counter_signal *signal,
 					     void *private, char *buf)
 {
-	struct quad8_iio *const priv = counter->priv;
+	const struct quad8_iio *const priv = counter->priv;
 	const size_t channel_id = signal->id / 2;
-	bool disabled;
+	const bool disabled = !(priv->cable_fault_enable & BIT(channel_id));
 	unsigned int status;
 	unsigned int fault;
 
-	mutex_lock(&priv->lock);
-
-	disabled = !(priv->cable_fault_enable & BIT(channel_id));
-
-	if (disabled) {
-		mutex_unlock(&priv->lock);
+	if (disabled)
 		return -EINVAL;
-	}
 
 	/* Logic 0 = cable fault */
 	status = inb(priv->base + QUAD8_DIFF_ENCODER_CABLE_STATUS);
-
-	mutex_unlock(&priv->lock);
 
 	/* Mask respective channel and invert logic */
 	fault = !(status & BIT(channel_id));
@@ -1325,8 +1317,6 @@ static ssize_t quad8_signal_cable_fault_enable_write(
 	if (ret)
 		return ret;
 
-	mutex_lock(&priv->lock);
-
 	if (enable)
 		priv->cable_fault_enable |= BIT(channel_id);
 	else
@@ -1336,8 +1326,6 @@ static ssize_t quad8_signal_cable_fault_enable_write(
 	cable_fault_enable = ~priv->cable_fault_enable;
 
 	outb(cable_fault_enable, priv->base + QUAD8_DIFF_ENCODER_CABLE_STATUS);
-
-	mutex_unlock(&priv->lock);
 
 	return len;
 }
@@ -1365,8 +1353,6 @@ static ssize_t quad8_signal_fck_prescaler_write(struct counter_device *counter,
 	if (ret)
 		return ret;
 
-	mutex_lock(&priv->lock);
-
 	priv->fck_prescaler[channel_id] = prescaler;
 
 	/* Reset Byte Pointer */
@@ -1376,8 +1362,6 @@ static ssize_t quad8_signal_fck_prescaler_write(struct counter_device *counter,
 	outb(prescaler, base_offset);
 	outb(QUAD8_CTR_RLD | QUAD8_RLD_RESET_BP | QUAD8_RLD_PRESET_PSC,
 	     base_offset + 1);
-
-	mutex_unlock(&priv->lock);
 
 	return len;
 }

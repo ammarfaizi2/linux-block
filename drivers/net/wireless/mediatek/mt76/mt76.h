@@ -241,8 +241,8 @@ struct mt76_rx_tid {
 	struct delayed_work reorder_work;
 
 	u16 head;
-	u16 size;
-	u16 nframes;
+	u8 size;
+	u8 nframes;
 
 	u8 num;
 
@@ -275,7 +275,6 @@ enum {
 	MT76_STATE_RUNNING,
 	MT76_STATE_MCU_RUNNING,
 	MT76_SCANNING,
-	MT76_RESTART,
 	MT76_RESET,
 	MT76_MCU_RESET,
 	MT76_REMOVED,
@@ -789,7 +788,7 @@ int mt76_get_survey(struct ieee80211_hw *hw, int idx,
 void mt76_set_stream_caps(struct mt76_dev *dev, bool vht);
 
 int mt76_rx_aggr_start(struct mt76_dev *dev, struct mt76_wcid *wcid, u8 tid,
-		       u16 ssn, u16 size);
+		       u16 ssn, u8 size);
 void mt76_rx_aggr_stop(struct mt76_dev *dev, struct mt76_wcid *wcid, u8 tid);
 
 void mt76_wcid_key_setup(struct mt76_dev *dev, struct mt76_wcid *wcid,

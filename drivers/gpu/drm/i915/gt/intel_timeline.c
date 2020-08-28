@@ -119,15 +119,6 @@ static void __idle_hwsp_free(struct intel_timeline_hwsp *hwsp, int cacheline)
 	spin_unlock_irqrestore(&gt->hwsp_lock, flags);
 }
 
-static void __rcu_cacheline_free(struct rcu_head *rcu)
-{
-	struct intel_timeline_cacheline *cl =
-		container_of(rcu, typeof(*cl), rcu);
-
-	i915_active_fini(&cl->active);
-	kfree(cl);
-}
-
 static void __idle_cacheline_free(struct intel_timeline_cacheline *cl)
 {
 	GEM_BUG_ON(!i915_active_is_idle(&cl->active));
@@ -136,7 +127,8 @@ static void __idle_cacheline_free(struct intel_timeline_cacheline *cl)
 	i915_vma_put(cl->hwsp->vma);
 	__idle_hwsp_free(cl->hwsp, ptr_unmask_bits(cl->vaddr, CACHELINE_BITS));
 
-	call_rcu(&cl->rcu, __rcu_cacheline_free);
+	i915_active_fini(&cl->active);
+	kfree_rcu(cl, rcu);
 }
 
 __i915_active_call

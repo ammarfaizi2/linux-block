@@ -1079,7 +1079,8 @@ qca8k_sw_probe(struct mdio_device *mdiodev)
 	if (id != QCA8K_ID_QCA8337)
 		return -ENODEV;
 
-	priv->ds = devm_kzalloc(&mdiodev->dev, sizeof(*priv->ds), GFP_KERNEL);
+	priv->ds = devm_kzalloc(&mdiodev->dev, sizeof(*priv->ds),
+				QCA8K_NUM_PORTS);
 	if (!priv->ds)
 		return -ENOMEM;
 

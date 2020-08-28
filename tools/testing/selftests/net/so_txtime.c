@@ -15,9 +15,8 @@
 #include <inttypes.h>
 #include <linux/net_tstamp.h>
 #include <linux/errqueue.h>
-#include <linux/if_ether.h>
 #include <linux/ipv6.h>
-#include <linux/udp.h>
+#include <linux/tcp.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -121,7 +120,7 @@ static bool do_recv_one(int fdr, struct timed_send *ts)
 	if (rbuf[0] != ts->data)
 		error(1, 0, "payload mismatch. expected %c", ts->data);
 
-	if (llabs(tstop - texpect) > cfg_variance_us)
+	if (labs(tstop - texpect) > cfg_variance_us)
 		error(1, 0, "exceeds variance (%d us)", cfg_variance_us);
 
 	return false;
@@ -141,8 +140,8 @@ static void do_recv_errqueue_timeout(int fdt)
 {
 	char control[CMSG_SPACE(sizeof(struct sock_extended_err)) +
 		     CMSG_SPACE(sizeof(struct sockaddr_in6))] = {0};
-	char data[sizeof(struct ethhdr) + sizeof(struct ipv6hdr) +
-		  sizeof(struct udphdr) + 1];
+	char data[sizeof(struct ipv6hdr) +
+		  sizeof(struct tcphdr) + 1];
 	struct sock_extended_err *err;
 	struct msghdr msg = {0};
 	struct iovec iov = {0};
@@ -160,8 +159,6 @@ static void do_recv_errqueue_timeout(int fdt)
 	msg.msg_controllen = sizeof(control);
 
 	while (1) {
-		const char *reason;
-
 		ret = recvmsg(fdt, &msg, MSG_ERRQUEUE);
 		if (ret == -1 && errno == EAGAIN)
 			break;
@@ -179,30 +176,14 @@ static void do_recv_errqueue_timeout(int fdt)
 		err = (struct sock_extended_err *)CMSG_DATA(cm);
 		if (err->ee_origin != SO_EE_ORIGIN_TXTIME)
 			error(1, 0, "errqueue: origin 0x%x\n", err->ee_origin);
-
-		switch (err->ee_errno) {
-		case ECANCELED:
-			if (err->ee_code != SO_EE_CODE_TXTIME_MISSED)
-				error(1, 0, "errqueue: unknown ECANCELED %u\n",
-				      err->ee_code);
-			reason = "missed txtime";
-		break;
-		case EINVAL:
-			if (err->ee_code != SO_EE_CODE_TXTIME_INVALID_PARAM)
-				error(1, 0, "errqueue: unknown EINVAL %u\n",
-				      err->ee_code);
-			reason = "invalid txtime";
-		break;
-		default:
-			error(1, 0, "errqueue: errno %u code %u\n",
-			      err->ee_errno, err->ee_code);
-		};
+		if (err->ee_code != ECANCELED)
+			error(1, 0, "errqueue: code 0x%x\n", err->ee_code);
 
 		tstamp = ((int64_t) err->ee_data) << 32 | err->ee_info;
 		tstamp -= (int64_t) glob_tstart;
 		tstamp /= 1000 * 1000;
-		fprintf(stderr, "send: pkt %c at %" PRId64 "ms dropped: %s\n",
-			data[ret - 1], tstamp, reason);
+		fprintf(stderr, "send: pkt %c at %" PRId64 "ms dropped\n",
+				data[ret - 1], tstamp);
 
 		msg.msg_flags = 0;
 		msg.msg_controllen = sizeof(control);

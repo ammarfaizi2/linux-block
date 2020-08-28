@@ -27,9 +27,6 @@ static int cond_evaluate_expr(struct policydb *p, struct cond_expr *expr)
 	int s[COND_EXPR_MAXDEPTH];
 	int sp = -1;
 
-	if (expr->len == 0)
-		return -1;
-
 	for (i = 0; i < expr->len; i++) {
 		struct cond_expr_node *node = &expr->nodes[i];
 
@@ -395,19 +392,27 @@ static int cond_read_node(struct policydb *p, struct cond_node *node, void *fp)
 
 		rc = next_entry(buf, fp, sizeof(u32) * 2);
 		if (rc)
-			return rc;
+			goto err;
 
 		expr->expr_type = le32_to_cpu(buf[0]);
 		expr->bool = le32_to_cpu(buf[1]);
 
-		if (!expr_node_isvalid(p, expr))
-			return -EINVAL;
+		if (!expr_node_isvalid(p, expr)) {
+			rc = -EINVAL;
+			goto err;
+		}
 	}
 
 	rc = cond_read_av_list(p, fp, &node->true_list, NULL);
 	if (rc)
-		return rc;
-	return cond_read_av_list(p, fp, &node->false_list, &node->true_list);
+		goto err;
+	rc = cond_read_av_list(p, fp, &node->false_list, &node->true_list);
+	if (rc)
+		goto err;
+	return 0;
+err:
+	cond_node_destroy(node);
+	return rc;
 }
 
 int cond_read_list(struct policydb *p, void *fp)

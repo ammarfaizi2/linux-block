@@ -587,7 +587,7 @@ static int tcf_csum_act(struct sk_buff *skb, const struct tc_action *a,
 		goto drop;
 
 	update_flags = params->update_flags;
-	protocol = skb_protocol(skb, false);
+	protocol = tc_skb_protocol(skb);
 again:
 	switch (protocol) {
 	case cpu_to_be16(ETH_P_IP):

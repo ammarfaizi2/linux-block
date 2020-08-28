@@ -1501,7 +1501,7 @@ out:
 }
 
 #ifdef pte_index
-static int insert_page_in_batch_locked(struct mm_struct *mm, pte_t *pte,
+static int insert_page_in_batch_locked(struct mm_struct *mm, pmd_t *pmd,
 			unsigned long addr, struct page *page, pgprot_t prot)
 {
 	int err;
@@ -1509,9 +1509,8 @@ static int insert_page_in_batch_locked(struct mm_struct *mm, pte_t *pte,
 	if (!page_count(page))
 		return -EINVAL;
 	err = validate_page_before_insert(page);
-	if (err)
-		return err;
-	return insert_page_into_pte_locked(mm, pte, addr, page, prot);
+	return err ? err : insert_page_into_pte_locked(
+		mm, pte_offset_map(pmd, addr), addr, page, prot);
 }
 
 /* insert_pages() amortizes the cost of spinlock operations
@@ -1521,8 +1520,7 @@ static int insert_pages(struct vm_area_struct *vma, unsigned long addr,
 			struct page **pages, unsigned long *num, pgprot_t prot)
 {
 	pmd_t *pmd = NULL;
-	pte_t *start_pte, *pte;
-	spinlock_t *pte_lock;
+	spinlock_t *pte_lock = NULL;
 	struct mm_struct *const mm = vma->vm_mm;
 	unsigned long curr_page_idx = 0;
 	unsigned long remaining_pages_total = *num;
@@ -1541,17 +1539,18 @@ more:
 	ret = -ENOMEM;
 	if (pte_alloc(mm, pmd))
 		goto out;
+	pte_lock = pte_lockptr(mm, pmd);
 
 	while (pages_to_write_in_pmd) {
 		int pte_idx = 0;
 		const int batch_size = min_t(int, pages_to_write_in_pmd, 8);
 
-		start_pte = pte_offset_map_lock(mm, pmd, addr, &pte_lock);
-		for (pte = start_pte; pte_idx < batch_size; ++pte, ++pte_idx) {
-			int err = insert_page_in_batch_locked(mm, pte,
+		spin_lock(pte_lock);
+		for (; pte_idx < batch_size; ++pte_idx) {
+			int err = insert_page_in_batch_locked(mm, pmd,
 				addr, pages[curr_page_idx], prot);
 			if (unlikely(err)) {
-				pte_unmap_unlock(start_pte, pte_lock);
+				spin_unlock(pte_lock);
 				ret = err;
 				remaining_pages_total -= pte_idx;
 				goto out;
@@ -1559,7 +1558,7 @@ more:
 			addr += PAGE_SIZE;
 			++curr_page_idx;
 		}
-		pte_unmap_unlock(start_pte, pte_lock);
+		spin_unlock(pte_lock);
 		pages_to_write_in_pmd -= batch_size;
 		remaining_pages_total -= batch_size;
 	}
@@ -4237,9 +4236,6 @@ static vm_fault_t handle_pte_fault(struct vm_fault *vmf)
 				vmf->flags & FAULT_FLAG_WRITE)) {
 		update_mmu_cache(vmf->vma, vmf->address, vmf->pte);
 	} else {
-		/* Skip spurious TLB flush for retried page fault */
-		if (vmf->flags & FAULT_FLAG_TRIED)
-			goto unlock;
 		/*
 		 * This is needed only for protection faults but the arch code
 		 * is not yet telling us if this is a protection fault or not.

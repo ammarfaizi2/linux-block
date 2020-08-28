@@ -3337,8 +3337,7 @@ replay:
 		 */
 		if (err < 0) {
 			/* If device is not registered at all, free it now */
-			if (dev->reg_state == NETREG_UNINITIALIZED ||
-			    dev->reg_state == NETREG_UNREGISTERED)
+			if (dev->reg_state == NETREG_UNINITIALIZED)
 				free_netdev(dev);
 			goto out;
 		}

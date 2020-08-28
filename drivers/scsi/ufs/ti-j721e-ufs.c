@@ -32,15 +32,14 @@ static int ti_j721e_ufs_probe(struct platform_device *pdev)
 	ret = pm_runtime_get_sync(dev);
 	if (ret < 0) {
 		pm_runtime_put_noidle(dev);
-		goto disable_pm;
+		return ret;
 	}
 
 	/* Select MPHY refclk frequency */
 	clk = devm_clk_get(dev, NULL);
 	if (IS_ERR(clk)) {
-		ret = PTR_ERR(clk);
 		dev_err(dev, "Cannot claim MPHY clock.\n");
-		goto clk_err;
+		return PTR_ERR(clk);
 	}
 	clk_rate = clk_get_rate(clk);
 	if (clk_rate == 26000000)
@@ -55,15 +54,9 @@ static int ti_j721e_ufs_probe(struct platform_device *pdev)
 				   dev);
 	if (ret) {
 		dev_err(dev, "failed to populate child nodes %d\n", ret);
-		goto clk_err;
+		pm_runtime_put_sync(dev);
 	}
 
-	return ret;
-
-clk_err:
-	pm_runtime_put_sync(dev);
-disable_pm:
-	pm_runtime_disable(dev);
 	return ret;
 }
 
@@ -71,7 +64,6 @@ static int ti_j721e_ufs_remove(struct platform_device *pdev)
 {
 	of_platform_depopulate(&pdev->dev);
 	pm_runtime_put_sync(&pdev->dev);
-	pm_runtime_disable(&pdev->dev);
 
 	return 0;
 }

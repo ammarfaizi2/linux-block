@@ -3046,8 +3046,7 @@ out:
 static noinline_for_stack int scrub_stripe(struct scrub_ctx *sctx,
 					   struct map_lookup *map,
 					   struct btrfs_device *scrub_dev,
-					   int num, u64 base, u64 length,
-					   struct btrfs_block_group *cache)
+					   int num, u64 base, u64 length)
 {
 	struct btrfs_path *path, *ppath;
 	struct btrfs_fs_info *fs_info = sctx->fs_info;
@@ -3285,20 +3284,6 @@ static noinline_for_stack int scrub_stripe(struct scrub_ctx *sctx,
 				break;
 			}
 
-			/*
-			 * If our block group was removed in the meanwhile, just
-			 * stop scrubbing since there is no point in continuing.
-			 * Continuing would prevent reusing its device extents
-			 * for new block groups for a long time.
-			 */
-			spin_lock(&cache->lock);
-			if (cache->removed) {
-				spin_unlock(&cache->lock);
-				ret = 0;
-				goto out;
-			}
-			spin_unlock(&cache->lock);
-
 			extent = btrfs_item_ptr(l, slot,
 						struct btrfs_extent_item);
 			flags = btrfs_extent_flags(l, extent);
@@ -3472,7 +3457,7 @@ static noinline_for_stack int scrub_chunk(struct scrub_ctx *sctx,
 		if (map->stripes[i].dev->bdev == scrub_dev->bdev &&
 		    map->stripes[i].physical == dev_offset) {
 			ret = scrub_stripe(sctx, map, scrub_dev, i,
-					   chunk_offset, length, cache);
+					   chunk_offset, length);
 			if (ret)
 				goto out;
 		}
@@ -3570,23 +3555,6 @@ int scrub_enumerate_chunks(struct scrub_ctx *sctx,
 			goto skip;
 
 		/*
-		 * Make sure that while we are scrubbing the corresponding block
-		 * group doesn't get its logical address and its device extents
-		 * reused for another block group, which can possibly be of a
-		 * different type and different profile. We do this to prevent
-		 * false error detections and crashes due to bogus attempts to
-		 * repair extents.
-		 */
-		spin_lock(&cache->lock);
-		if (cache->removed) {
-			spin_unlock(&cache->lock);
-			btrfs_put_block_group(cache);
-			goto skip;
-		}
-		btrfs_get_block_group_trimming(cache);
-		spin_unlock(&cache->lock);
-
-		/*
 		 * we need call btrfs_inc_block_group_ro() with scrubs_paused,
 		 * to avoid deadlock caused by:
 		 * btrfs_inc_block_group_ro()
@@ -3641,7 +3609,6 @@ int scrub_enumerate_chunks(struct scrub_ctx *sctx,
 		} else {
 			btrfs_warn(fs_info,
 				   "failed setting block group ro: %d", ret);
-			btrfs_put_block_group_trimming(cache);
 			btrfs_put_block_group(cache);
 			scrub_pause_off(fs_info);
 			break;
@@ -3728,7 +3695,6 @@ int scrub_enumerate_chunks(struct scrub_ctx *sctx,
 			spin_unlock(&cache->lock);
 		}
 
-		btrfs_put_block_group_trimming(cache);
 		btrfs_put_block_group(cache);
 		if (ret)
 			break;
@@ -3761,7 +3727,7 @@ static noinline_for_stack int scrub_supers(struct scrub_ctx *sctx,
 	struct btrfs_fs_info *fs_info = sctx->fs_info;
 
 	if (test_bit(BTRFS_FS_STATE_ERROR, &fs_info->fs_state))
-		return -EROFS;
+		return -EIO;
 
 	/* Seed devices of a new filesystem has their own generation. */
 	if (scrub_dev->fs_devices != fs_info->fs_devices)

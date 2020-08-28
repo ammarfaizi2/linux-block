@@ -18,20 +18,6 @@ struct live_mocs {
 	void *vaddr;
 };
 
-static struct intel_context *mocs_context_create(struct intel_engine_cs *engine)
-{
-	struct intel_context *ce;
-
-	ce = intel_context_create(engine);
-	if (IS_ERR(ce))
-		return ce;
-
-	/* We build large requests to read the registers from the ring */
-	ce->ring = __intel_context_ring_size(SZ_16K);
-
-	return ce;
-}
-
 static int request_add_sync(struct i915_request *rq, int err)
 {
 	i915_request_get(rq);
@@ -315,7 +301,7 @@ static int live_mocs_clean(void *arg)
 	for_each_engine(engine, gt, id) {
 		struct intel_context *ce;
 
-		ce = mocs_context_create(engine);
+		ce = intel_context_create(engine);
 		if (IS_ERR(ce)) {
 			err = PTR_ERR(ce);
 			break;
@@ -409,7 +395,7 @@ static int live_mocs_reset(void *arg)
 	for_each_engine(engine, gt, id) {
 		struct intel_context *ce;
 
-		ce = mocs_context_create(engine);
+		ce = intel_context_create(engine);
 		if (IS_ERR(ce)) {
 			err = PTR_ERR(ce);
 			break;

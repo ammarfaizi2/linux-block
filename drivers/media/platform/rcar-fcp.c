@@ -8,7 +8,6 @@
  */
 
 #include <linux/device.h>
-#include <linux/dma-mapping.h>
 #include <linux/list.h>
 #include <linux/module.h>
 #include <linux/mod_devicetable.h>
@@ -22,7 +21,6 @@
 struct rcar_fcp_device {
 	struct list_head list;
 	struct device *dev;
-	struct device_dma_parameters dma_parms;
 };
 
 static LIST_HEAD(fcp_devices);
@@ -137,9 +135,6 @@ static int rcar_fcp_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	fcp->dev = &pdev->dev;
-
-	fcp->dev->dma_parms = &fcp->dma_parms;
-	dma_set_max_seg_size(fcp->dev, DMA_BIT_MASK(32));
 
 	pm_runtime_enable(&pdev->dev);
 

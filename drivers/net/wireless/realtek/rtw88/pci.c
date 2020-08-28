@@ -14,11 +14,8 @@
 #include "debug.h"
 
 static bool rtw_disable_msi;
-static bool rtw_pci_disable_aspm;
 module_param_named(disable_msi, rtw_disable_msi, bool, 0644);
-module_param_named(disable_aspm, rtw_pci_disable_aspm, bool, 0644);
 MODULE_PARM_DESC(disable_msi, "Set Y to disable MSI interrupt support");
-MODULE_PARM_DESC(disable_aspm, "Set Y to disable PCI ASPM support");
 
 static u32 rtw_pci_tx_queue_idx_addr[] = {
 	[RTW_TX_QUEUE_BK]	= RTK_PCI_TXBD_IDX_BKQ,
@@ -1094,7 +1091,6 @@ static int rtw_pci_io_mapping(struct rtw_dev *rtwdev,
 	len = pci_resource_len(pdev, bar_id);
 	rtwpci->mmap = pci_iomap(pdev, bar_id, len);
 	if (!rtwpci->mmap) {
-		pci_release_regions(pdev);
 		rtw_err(rtwdev, "failed to map pci memory\n");
 		return -ENOMEM;
 	}
@@ -1192,9 +1188,6 @@ static void rtw_pci_clkreq_set(struct rtw_dev *rtwdev, bool enable)
 	u8 value;
 	int ret;
 
-	if (rtw_pci_disable_aspm)
-		return;
-
 	ret = rtw_dbi_read8(rtwdev, RTK_PCIE_LINK_CFG, &value);
 	if (ret) {
 		rtw_err(rtwdev, "failed to read CLKREQ_L1, ret=%d", ret);
@@ -1213,9 +1206,6 @@ static void rtw_pci_aspm_set(struct rtw_dev *rtwdev, bool enable)
 {
 	u8 value;
 	int ret;
-
-	if (rtw_pci_disable_aspm)
-		return;
 
 	ret = rtw_dbi_read8(rtwdev, RTK_PCIE_LINK_CFG, &value);
 	if (ret) {

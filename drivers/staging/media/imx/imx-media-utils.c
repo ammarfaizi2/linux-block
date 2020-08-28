@@ -9,9 +9,12 @@
 
 /*
  * List of supported pixel formats for the subdevs.
+ *
+ * In all of these tables, the non-mbus formats (with no
+ * mbus codes) must all fall at the end of the table.
  */
-static const struct imx_media_pixfmt pixel_formats[] = {
-	/*** YUV formats start here ***/
+
+static const struct imx_media_pixfmt yuv_formats[] = {
 	{
 		.fourcc	= V4L2_PIX_FMT_UYVY,
 		.codes  = {
@@ -28,7 +31,12 @@ static const struct imx_media_pixfmt pixel_formats[] = {
 		},
 		.cs     = IPUV3_COLORSPACE_YUV,
 		.bpp    = 16,
-	}, {
+	},
+	/***
+	 * non-mbus YUV formats start here. NOTE! when adding non-mbus
+	 * formats, NUM_NON_MBUS_YUV_FORMATS must be updated below.
+	 ***/
+	{
 		.fourcc	= V4L2_PIX_FMT_YUV420,
 		.cs     = IPUV3_COLORSPACE_YUV,
 		.bpp    = 12,
@@ -54,7 +62,13 @@ static const struct imx_media_pixfmt pixel_formats[] = {
 		.bpp    = 16,
 		.planar = true,
 	},
-	/*** RGB formats start here ***/
+};
+
+#define NUM_NON_MBUS_YUV_FORMATS 5
+#define NUM_YUV_FORMATS ARRAY_SIZE(yuv_formats)
+#define NUM_MBUS_YUV_FORMATS (NUM_YUV_FORMATS - NUM_NON_MBUS_YUV_FORMATS)
+
+static const struct imx_media_pixfmt rgb_formats[] = {
 	{
 		.fourcc	= V4L2_PIX_FMT_RGB565,
 		.codes  = {MEDIA_BUS_FMT_RGB565_2X8_LE},
@@ -70,27 +84,11 @@ static const struct imx_media_pixfmt pixel_formats[] = {
 		.cs     = IPUV3_COLORSPACE_RGB,
 		.bpp    = 24,
 	}, {
-		.fourcc	= V4L2_PIX_FMT_BGR24,
-		.cs     = IPUV3_COLORSPACE_RGB,
-		.bpp    = 24,
-	}, {
 		.fourcc	= V4L2_PIX_FMT_XRGB32,
 		.codes  = {MEDIA_BUS_FMT_ARGB8888_1X32},
 		.cs     = IPUV3_COLORSPACE_RGB,
 		.bpp    = 32,
 		.ipufmt = true,
-	}, {
-		.fourcc	= V4L2_PIX_FMT_XBGR32,
-		.cs     = IPUV3_COLORSPACE_RGB,
-		.bpp    = 32,
-	}, {
-		.fourcc	= V4L2_PIX_FMT_BGRX32,
-		.cs     = IPUV3_COLORSPACE_RGB,
-		.bpp    = 32,
-	}, {
-		.fourcc	= V4L2_PIX_FMT_RGBX32,
-		.cs     = IPUV3_COLORSPACE_RGB,
-		.bpp    = 32,
 	},
 	/*** raw bayer and grayscale formats start here ***/
 	{
@@ -184,7 +182,32 @@ static const struct imx_media_pixfmt pixel_formats[] = {
 		.bpp    = 16,
 		.bayer  = true,
 	},
+	/***
+	 * non-mbus RGB formats start here. NOTE! when adding non-mbus
+	 * formats, NUM_NON_MBUS_RGB_FORMATS must be updated below.
+	 ***/
+	{
+		.fourcc	= V4L2_PIX_FMT_BGR24,
+		.cs     = IPUV3_COLORSPACE_RGB,
+		.bpp    = 24,
+	}, {
+		.fourcc	= V4L2_PIX_FMT_XBGR32,
+		.cs     = IPUV3_COLORSPACE_RGB,
+		.bpp    = 32,
+	}, {
+		.fourcc	= V4L2_PIX_FMT_BGRX32,
+		.cs     = IPUV3_COLORSPACE_RGB,
+		.bpp    = 32,
+	}, {
+		.fourcc	= V4L2_PIX_FMT_RGBX32,
+		.cs     = IPUV3_COLORSPACE_RGB,
+		.bpp    = 32,
+	},
 };
+
+#define NUM_NON_MBUS_RGB_FORMATS 2
+#define NUM_RGB_FORMATS ARRAY_SIZE(rgb_formats)
+#define NUM_MBUS_RGB_FORMATS (NUM_RGB_FORMATS - NUM_NON_MBUS_RGB_FORMATS)
 
 static const struct imx_media_pixfmt ipu_yuv_formats[] = {
 	{
@@ -223,24 +246,21 @@ static void init_mbus_colorimetry(struct v4l2_mbus_framefmt *mbus,
 					      mbus->ycbcr_enc);
 }
 
-static const struct imx_media_pixfmt *find_format(u32 fourcc,
-						  u32 code,
-						  enum codespace_sel cs_sel,
-						  bool allow_non_mbus,
-						  bool allow_bayer)
+static const
+struct imx_media_pixfmt *__find_format(u32 fourcc,
+				       u32 code,
+				       bool allow_non_mbus,
+				       bool allow_bayer,
+				       const struct imx_media_pixfmt *array,
+				       u32 array_size)
 {
-	unsigned int i;
+	const struct imx_media_pixfmt *fmt;
+	int i, j;
 
-	for (i = 0; i < ARRAY_SIZE(pixel_formats); i++) {
-		const struct imx_media_pixfmt *fmt = &pixel_formats[i];
-		enum codespace_sel fmt_cs_sel;
-		unsigned int j;
+	for (i = 0; i < array_size; i++) {
+		fmt = &array[i];
 
-		fmt_cs_sel = (fmt->cs == IPUV3_COLORSPACE_YUV) ?
-			CS_SEL_YUV : CS_SEL_RGB;
-
-		if ((cs_sel != CS_SEL_ANY && fmt_cs_sel != cs_sel) ||
-		    (!allow_non_mbus && !fmt->codes[0]) ||
+		if ((!allow_non_mbus && !fmt->codes[0]) ||
 		    (!allow_bayer && fmt->bayer))
 			continue;
 
@@ -250,13 +270,39 @@ static const struct imx_media_pixfmt *find_format(u32 fourcc,
 		if (!code)
 			continue;
 
-		for (j = 0; j < ARRAY_SIZE(fmt->codes) && fmt->codes[j]; j++) {
+		for (j = 0; fmt->codes[j]; j++) {
 			if (code == fmt->codes[j])
 				return fmt;
 		}
 	}
-
 	return NULL;
+}
+
+static const struct imx_media_pixfmt *find_format(u32 fourcc,
+						  u32 code,
+						  enum codespace_sel cs_sel,
+						  bool allow_non_mbus,
+						  bool allow_bayer)
+{
+	const struct imx_media_pixfmt *ret;
+
+	switch (cs_sel) {
+	case CS_SEL_YUV:
+		return __find_format(fourcc, code, allow_non_mbus, allow_bayer,
+				     yuv_formats, NUM_YUV_FORMATS);
+	case CS_SEL_RGB:
+		return __find_format(fourcc, code, allow_non_mbus, allow_bayer,
+				     rgb_formats, NUM_RGB_FORMATS);
+	case CS_SEL_ANY:
+		ret = __find_format(fourcc, code, allow_non_mbus, allow_bayer,
+				    yuv_formats, NUM_YUV_FORMATS);
+		if (ret)
+			return ret;
+		return __find_format(fourcc, code, allow_non_mbus, allow_bayer,
+				     rgb_formats, NUM_RGB_FORMATS);
+	default:
+		return NULL;
+	}
 }
 
 static int enum_format(u32 *fourcc, u32 *code, u32 index,
@@ -264,42 +310,61 @@ static int enum_format(u32 *fourcc, u32 *code, u32 index,
 		       bool allow_non_mbus,
 		       bool allow_bayer)
 {
-	unsigned int i;
+	const struct imx_media_pixfmt *fmt;
+	u32 mbus_yuv_sz = NUM_MBUS_YUV_FORMATS;
+	u32 mbus_rgb_sz = NUM_MBUS_RGB_FORMATS;
+	u32 yuv_sz = NUM_YUV_FORMATS;
+	u32 rgb_sz = NUM_RGB_FORMATS;
 
-	for (i = 0; i < ARRAY_SIZE(pixel_formats); i++) {
-		const struct imx_media_pixfmt *fmt = &pixel_formats[i];
-		enum codespace_sel fmt_cs_sel;
-		unsigned int j;
-
-		fmt_cs_sel = (fmt->cs == IPUV3_COLORSPACE_YUV) ?
-			CS_SEL_YUV : CS_SEL_RGB;
-
-		if ((cs_sel != CS_SEL_ANY && fmt_cs_sel != cs_sel) ||
-		    (!allow_non_mbus && !fmt->codes[0]) ||
-		    (!allow_bayer && fmt->bayer))
-			continue;
-
-		if (fourcc && index == 0) {
-			*fourcc = fmt->fourcc;
-			return 0;
-		}
-
-		if (!code) {
-			index--;
-			continue;
-		}
-
-		for (j = 0; j < ARRAY_SIZE(fmt->codes) && fmt->codes[j]; j++) {
-			if (index == 0) {
-				*code = fmt->codes[j];
-				return 0;
+	switch (cs_sel) {
+	case CS_SEL_YUV:
+		if (index >= yuv_sz ||
+		    (!allow_non_mbus && index >= mbus_yuv_sz))
+			return -EINVAL;
+		fmt = &yuv_formats[index];
+		break;
+	case CS_SEL_RGB:
+		if (index >= rgb_sz ||
+		    (!allow_non_mbus && index >= mbus_rgb_sz))
+			return -EINVAL;
+		fmt = &rgb_formats[index];
+		if (!allow_bayer && fmt->bayer)
+			return -EINVAL;
+		break;
+	case CS_SEL_ANY:
+		if (!allow_non_mbus) {
+			if (index >= mbus_yuv_sz) {
+				index -= mbus_yuv_sz;
+				if (index >= mbus_rgb_sz)
+					return -EINVAL;
+				fmt = &rgb_formats[index];
+				if (!allow_bayer && fmt->bayer)
+					return -EINVAL;
+			} else {
+				fmt = &yuv_formats[index];
 			}
-
-			index--;
+		} else {
+			if (index >= yuv_sz + rgb_sz)
+				return -EINVAL;
+			if (index >= yuv_sz) {
+				fmt = &rgb_formats[index - yuv_sz];
+				if (!allow_bayer && fmt->bayer)
+					return -EINVAL;
+			} else {
+				fmt = &yuv_formats[index];
+			}
 		}
+		break;
+	default:
+		return -EINVAL;
 	}
 
-	return -EINVAL;
+	if (fourcc)
+		*fourcc = fmt->fourcc;
+	if (code)
+		*code = fmt->codes[0];
+
+	return 0;
 }
 
 const struct imx_media_pixfmt *

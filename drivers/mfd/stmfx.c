@@ -287,21 +287,14 @@ static int stmfx_irq_init(struct i2c_client *client)
 
 	ret = regmap_write(stmfx->map, STMFX_REG_IRQ_OUT_PIN, irqoutpin);
 	if (ret)
-		goto irq_exit;
+		return ret;
 
 	ret = devm_request_threaded_irq(stmfx->dev, client->irq,
 					NULL, stmfx_irq_handler,
 					irqtrigger | IRQF_ONESHOT,
 					"stmfx", stmfx);
 	if (ret)
-		goto irq_exit;
-
-	stmfx->irq = client->irq;
-
-	return 0;
-
-irq_exit:
-	stmfx_irq_exit(client);
+		stmfx_irq_exit(client);
 
 	return ret;
 }
@@ -488,8 +481,6 @@ static int stmfx_suspend(struct device *dev)
 	if (ret)
 		return ret;
 
-	disable_irq(stmfx->irq);
-
 	if (stmfx->vdd)
 		return regulator_disable(stmfx->vdd);
 
@@ -510,13 +501,6 @@ static int stmfx_resume(struct device *dev)
 		}
 	}
 
-	/* Reset STMFX - supply has been stopped during suspend */
-	ret = stmfx_chip_reset(stmfx);
-	if (ret) {
-		dev_err(stmfx->dev, "Failed to reset chip: %d\n", ret);
-		return ret;
-	}
-
 	ret = regmap_raw_write(stmfx->map, STMFX_REG_SYS_CTRL,
 			       &stmfx->bkp_sysctrl, sizeof(stmfx->bkp_sysctrl));
 	if (ret)
@@ -532,8 +516,6 @@ static int stmfx_resume(struct device *dev)
 			       &stmfx->irq_src, sizeof(stmfx->irq_src));
 	if (ret)
 		return ret;
-
-	enable_irq(stmfx->irq);
 
 	return 0;
 }

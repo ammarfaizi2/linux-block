@@ -505,7 +505,7 @@ static int dwc3_meson_g12a_probe(struct platform_device *pdev)
 	if (IS_ERR(priv->reset)) {
 		ret = PTR_ERR(priv->reset);
 		dev_err(dev, "failed to get device reset, err=%d\n", ret);
-		goto err_disable_clks;
+		return ret;
 	}
 
 	ret = reset_control_reset(priv->reset);
@@ -525,9 +525,7 @@ static int dwc3_meson_g12a_probe(struct platform_device *pdev)
 	/* Get dr_mode */
 	priv->otg_mode = usb_get_dr_mode(dev);
 
-	ret = dwc3_meson_g12a_usb_init(priv);
-	if (ret)
-		goto err_disable_clks;
+	dwc3_meson_g12a_usb_init(priv);
 
 	/* Init PHYs */
 	for (i = 0 ; i < PHY_COUNT ; ++i) {

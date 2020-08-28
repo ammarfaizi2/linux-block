@@ -90,10 +90,7 @@ static int sof_resume(struct device *dev, bool runtime_resume)
 	int ret;
 
 	/* do nothing if dsp resume callbacks are not set */
-	if (!runtime_resume && !sof_ops(sdev)->resume)
-		return 0;
-
-	if (runtime_resume && !sof_ops(sdev)->runtime_resume)
+	if (!sof_ops(sdev)->resume || !sof_ops(sdev)->runtime_resume)
 		return 0;
 
 	/* DSP was never successfully started, nothing to resume */
@@ -178,10 +175,7 @@ static int sof_suspend(struct device *dev, bool runtime_suspend)
 	int ret;
 
 	/* do nothing if dsp suspend callback is not set */
-	if (!runtime_suspend && !sof_ops(sdev)->suspend)
-		return 0;
-
-	if (runtime_suspend && !sof_ops(sdev)->runtime_suspend)
+	if (!sof_ops(sdev)->suspend)
 		return 0;
 
 	if (sdev->fw_state != SOF_FW_BOOT_COMPLETE)

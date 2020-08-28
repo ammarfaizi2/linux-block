@@ -509,8 +509,11 @@ static void *alloc_rec_per_cpu(int record_size)
 {
 	unsigned int nr_cpus = bpf_num_possible_cpus();
 	void *array;
+	size_t size;
 
-	array = calloc(nr_cpus, record_size);
+	size = record_size * nr_cpus;
+	array = malloc(size);
+	memset(array, 0, size);
 	if (!array) {
 		fprintf(stderr, "Mem alloc error (nr_cpus:%u)\n", nr_cpus);
 		exit(EXIT_FAIL_MEM);
@@ -525,7 +528,8 @@ static struct stats_record *alloc_stats_record(void)
 	int i;
 
 	/* Alloc main stats_record structure */
-	rec = calloc(1, sizeof(*rec));
+	rec = malloc(sizeof(*rec));
+	memset(rec, 0, sizeof(*rec));
 	if (!rec) {
 		fprintf(stderr, "Mem alloc error\n");
 		exit(EXIT_FAIL_MEM);

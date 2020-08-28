@@ -1540,8 +1540,8 @@ lock_and_cleanup_extent_if_need(struct btrfs_inode *inode, struct page **pages,
 	return ret;
 }
 
-int btrfs_check_can_nocow(struct btrfs_inode *inode, loff_t pos,
-			  size_t *write_bytes, bool nowait)
+static noinline int check_can_nocow(struct btrfs_inode *inode, loff_t pos,
+				    size_t *write_bytes)
 {
 	struct btrfs_fs_info *fs_info = inode->root->fs_info;
 	struct btrfs_root *root = inode->root;
@@ -1549,43 +1549,27 @@ int btrfs_check_can_nocow(struct btrfs_inode *inode, loff_t pos,
 	u64 num_bytes;
 	int ret;
 
-	if (!nowait && !btrfs_drew_try_write_lock(&root->snapshot_lock))
+	if (!btrfs_drew_try_write_lock(&root->snapshot_lock))
 		return -EAGAIN;
 
 	lockstart = round_down(pos, fs_info->sectorsize);
 	lockend = round_up(pos + *write_bytes,
 			   fs_info->sectorsize) - 1;
+
+	btrfs_lock_and_flush_ordered_range(inode, lockstart,
+					   lockend, NULL);
+
 	num_bytes = lockend - lockstart + 1;
-
-	if (nowait) {
-		struct btrfs_ordered_extent *ordered;
-
-		if (!try_lock_extent(&inode->io_tree, lockstart, lockend))
-			return -EAGAIN;
-
-		ordered = btrfs_lookup_ordered_range(inode, lockstart,
-						     num_bytes);
-		if (ordered) {
-			btrfs_put_ordered_extent(ordered);
-			ret = -EAGAIN;
-			goto out_unlock;
-		}
-	} else {
-		btrfs_lock_and_flush_ordered_range(inode, lockstart,
-						   lockend, NULL);
-	}
-
 	ret = can_nocow_extent(&inode->vfs_inode, lockstart, &num_bytes,
 			NULL, NULL, NULL);
 	if (ret <= 0) {
 		ret = 0;
-		if (!nowait)
-			btrfs_drew_write_unlock(&root->snapshot_lock);
+		btrfs_drew_write_unlock(&root->snapshot_lock);
 	} else {
 		*write_bytes = min_t(size_t, *write_bytes ,
 				     num_bytes - pos + lockstart);
 	}
-out_unlock:
+
 	unlock_extent(&inode->io_tree, lockstart, lockend);
 
 	return ret;
@@ -1656,8 +1640,8 @@ static noinline ssize_t btrfs_buffered_write(struct kiocb *iocb,
 		if (ret < 0) {
 			if ((BTRFS_I(inode)->flags & (BTRFS_INODE_NODATACOW |
 						      BTRFS_INODE_PREALLOC)) &&
-			    btrfs_check_can_nocow(BTRFS_I(inode), pos,
-						  &write_bytes, false) > 0) {
+			    check_can_nocow(BTRFS_I(inode), pos,
+					&write_bytes) > 0) {
 				/*
 				 * For nodata cow case, no need to reserve
 				 * data space.
@@ -1928,25 +1912,13 @@ static ssize_t btrfs_file_write_iter(struct kiocb *iocb,
 	pos = iocb->ki_pos;
 	count = iov_iter_count(from);
 	if (iocb->ki_flags & IOCB_NOWAIT) {
-		size_t nocow_bytes = count;
-
 		/*
 		 * We will allocate space in case nodatacow is not set,
 		 * so bail
 		 */
 		if (!(BTRFS_I(inode)->flags & (BTRFS_INODE_NODATACOW |
 					      BTRFS_INODE_PREALLOC)) ||
-		    btrfs_check_can_nocow(BTRFS_I(inode), pos, &nocow_bytes,
-					  true) <= 0) {
-			inode_unlock(inode);
-			return -EAGAIN;
-		}
-		/*
-		 * There are holes in the range or parts of the range that must
-		 * be COWed (shared extents, RO block groups, etc), so just bail
-		 * out.
-		 */
-		if (nocow_bytes < count) {
+		    check_can_nocow(BTRFS_I(inode), pos, &count) <= 0) {
 			inode_unlock(inode);
 			return -EAGAIN;
 		}

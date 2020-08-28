@@ -1861,17 +1861,31 @@ static int mmci_get_cd(struct mmc_host *mmc)
 static int mmci_sig_volt_switch(struct mmc_host *mmc, struct mmc_ios *ios)
 {
 	struct mmci_host *host = mmc_priv(mmc);
-	int ret;
+	int ret = 0;
 
-	ret = mmc_regulator_set_vqmmc(mmc, ios);
+	if (!IS_ERR(mmc->supply.vqmmc)) {
 
-	if (!ret && host->ops && host->ops->post_sig_volt_switch)
-		ret = host->ops->post_sig_volt_switch(host, ios);
-	else if (ret)
-		ret = 0;
+		switch (ios->signal_voltage) {
+		case MMC_SIGNAL_VOLTAGE_330:
+			ret = regulator_set_voltage(mmc->supply.vqmmc,
+						2700000, 3600000);
+			break;
+		case MMC_SIGNAL_VOLTAGE_180:
+			ret = regulator_set_voltage(mmc->supply.vqmmc,
+						1700000, 1950000);
+			break;
+		case MMC_SIGNAL_VOLTAGE_120:
+			ret = regulator_set_voltage(mmc->supply.vqmmc,
+						1100000, 1300000);
+			break;
+		}
 
-	if (ret < 0)
-		dev_warn(mmc_dev(mmc), "Voltage switch failed\n");
+		if (!ret && host->ops && host->ops->post_sig_volt_switch)
+			ret = host->ops->post_sig_volt_switch(host, ios);
+
+		if (ret)
+			dev_warn(mmc_dev(mmc), "Voltage switch failed\n");
+	}
 
 	return ret;
 }

@@ -1871,11 +1871,8 @@ drop:
 		skb->dev = tun->dev;
 		break;
 	case IFF_TAP:
-		if (frags && !pskb_may_pull(skb, ETH_HLEN)) {
-			err = -ENOMEM;
-			goto drop;
-		}
-		skb->protocol = eth_type_trans(skb, tun->dev);
+		if (!frags)
+			skb->protocol = eth_type_trans(skb, tun->dev);
 		break;
 	}
 
@@ -1932,12 +1929,9 @@ drop:
 	}
 
 	if (frags) {
-		u32 headlen;
-
 		/* Exercise flow dissector code path. */
-		skb_push(skb, ETH_HLEN);
-		headlen = eth_get_headlen(tun->dev, skb->data,
-					  skb_headlen(skb));
+		u32 headlen = eth_get_headlen(tun->dev, skb->data,
+					      skb_headlen(skb));
 
 		if (unlikely(headlen > skb_headlen(skb))) {
 			this_cpu_inc(tun->pcpu_stats->rx_dropped);

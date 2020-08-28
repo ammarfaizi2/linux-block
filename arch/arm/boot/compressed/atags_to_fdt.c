@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0
-#include <linux/libfdt_env.h>
 #include <asm/setup.h>
 #include <libfdt.h>
 

@@ -43,7 +43,6 @@
 #include <linux/i2c.h>
 #include <linux/i2c-algo-pcf.h>
 
-#include <asm/amigahw.h>
 #include <asm/amigaints.h>
 #include <linux/zorro.h>
 

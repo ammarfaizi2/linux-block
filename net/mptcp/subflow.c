@@ -393,7 +393,6 @@ static void mptcp_sock_destruct(struct sock *sk)
 		sock_orphan(sk);
 	}
 
-	mptcp_token_destroy(mptcp_sk(sk)->token);
 	inet_sock_destruct(sk);
 }
 
@@ -424,25 +423,22 @@ static struct sock *subflow_syn_recv_sock(const struct sock *sk,
 	struct mptcp_subflow_context *listener = mptcp_subflow_ctx(sk);
 	struct mptcp_subflow_request_sock *subflow_req;
 	struct mptcp_options_received mp_opt;
-	bool fallback, fallback_is_fatal;
+	bool fallback_is_fatal = false;
 	struct sock *new_msk = NULL;
+	bool fallback = false;
 	struct sock *child;
 
 	pr_debug("listener=%p, req=%p, conn=%p", listener, req, listener->conn);
 
-	/* After child creation we must look for 'mp_capable' even when options
-	 * are not parsed
+	/* we need later a valid 'mp_capable' value even when options are not
+	 * parsed
 	 */
 	mp_opt.mp_capable = 0;
-
-	/* hopefully temporary handling for MP_JOIN+syncookie */
-	subflow_req = mptcp_subflow_rsk(req);
-	fallback_is_fatal = subflow_req->mp_join;
-	fallback = !tcp_rsk(req)->is_mptcp;
-	if (fallback)
+	if (tcp_rsk(req)->is_mptcp == 0)
 		goto create_child;
 
 	/* if the sk is MP_CAPABLE, we try to fetch the client key */
+	subflow_req = mptcp_subflow_rsk(req);
 	if (subflow_req->mp_capable) {
 		if (TCP_SKB_CB(skb)->seq != subflow_req->ssn_offset + 1) {
 			/* here we can receive and accept an in-window,
@@ -463,11 +459,12 @@ create_msk:
 		if (!new_msk)
 			fallback = true;
 	} else if (subflow_req->mp_join) {
+		fallback_is_fatal = true;
 		mptcp_get_options(skb, &mp_opt);
 		if (!mp_opt.mp_join ||
 		    !subflow_hmac_valid(req, &mp_opt)) {
 			SUBFLOW_REQ_INC_STATS(req, MPTCP_MIB_JOINACKMAC);
-			fallback = true;
+			return NULL;
 		}
 	}
 
@@ -999,12 +996,6 @@ int mptcp_subflow_create_socket(struct sock *sk, struct socket **new_sock)
 	struct socket *sf;
 	int err;
 
-	/* un-accepted server sockets can reach here - on bad configuration
-	 * bail early to avoid greater trouble later
-	 */
-	if (unlikely(!sk->sk_socket))
-		return -EINVAL;
-
 	err = sock_create_kern(net, sk->sk_family, SOCK_STREAM, IPPROTO_TCP,
 			       &sf);
 	if (err)
@@ -1023,10 +1014,8 @@ int mptcp_subflow_create_socket(struct sock *sk, struct socket **new_sock)
 	err = tcp_set_ulp(sf->sk, "mptcp");
 	release_sock(sf->sk);
 
-	if (err) {
-		sock_release(sf);
+	if (err)
 		return err;
-	}
 
 	/* the newly created socket really belongs to the owning MPTCP master
 	 * socket, even if for additional subflows the allocation is performed

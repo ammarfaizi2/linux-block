@@ -236,12 +236,7 @@ static int lz4_init_compress_ctx(struct compress_ctx *cc)
 	if (!cc->private)
 		return -ENOMEM;
 
-	/*
-	 * we do not change cc->clen to LZ4_compressBound(inputsize) to
-	 * adapt worst compress case, because lz4 compressor can handle
-	 * output budget properly.
-	 */
-	cc->clen = cc->rlen - PAGE_SIZE - COMPRESS_HEADER_SIZE;
+	cc->clen = LZ4_compressBound(PAGE_SIZE << cc->log_cluster_size);
 	return 0;
 }
 
@@ -257,9 +252,11 @@ static int lz4_compress_pages(struct compress_ctx *cc)
 
 	len = LZ4_compress_default(cc->rbuf, cc->cbuf->cdata, cc->rlen,
 						cc->clen, cc->private);
-	if (!len)
-		return -EAGAIN;
-
+	if (!len) {
+		printk_ratelimited("%sF2FS-fs (%s): lz4 compress failed\n",
+				KERN_ERR, F2FS_I_SB(cc->inode)->sb->s_id);
+		return -EIO;
+	}
 	cc->clen = len;
 	return 0;
 }
@@ -368,13 +365,6 @@ static int zstd_compress_pages(struct compress_ctx *cc)
 				__func__, ZSTD_getErrorCode(ret));
 		return -EIO;
 	}
-
-	/*
-	 * there is compressed data remained in intermediate buffer due to
-	 * no more space in cbuf.cdata
-	 */
-	if (ret)
-		return -EAGAIN;
 
 	cc->clen = outbuf.pos;
 	return 0;
@@ -1207,12 +1197,6 @@ retry_write:
 				congestion_wait(BLK_RW_ASYNC,
 						DEFAULT_IO_TIMEOUT);
 				lock_page(cc->rpages[i]);
-
-				if (!PageDirty(cc->rpages[i])) {
-					unlock_page(cc->rpages[i]);
-					continue;
-				}
-
 				clear_page_dirty_for_io(cc->rpages[i]);
 				goto retry_write;
 			}
@@ -1256,8 +1240,6 @@ int f2fs_write_multi_pages(struct compress_ctx *cc,
 		err = f2fs_write_compressed_pages(cc, submitted,
 							wbc, io_type);
 		cops->destroy_compress_ctx(cc);
-		kfree(cc->cpages);
-		cc->cpages = NULL;
 		if (!err)
 			return 0;
 		f2fs_bug_on(F2FS_I_SB(cc->inode), err != -EAGAIN);

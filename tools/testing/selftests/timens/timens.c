@@ -155,7 +155,7 @@ int main(int argc, char *argv[])
 
 	nscheck();
 
-	check_supported_timers();
+	check_config_posix_timers();
 
 	ksft_set_plan(ARRAY_SIZE(clocks) * 2);
 

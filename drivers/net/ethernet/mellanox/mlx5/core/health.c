@@ -193,23 +193,15 @@ static bool reset_fw_if_needed(struct mlx5_core_dev *dev)
 
 void mlx5_enter_error_state(struct mlx5_core_dev *dev, bool force)
 {
-	bool err_detected = false;
-
-	/* Mark the device as fatal in order to abort FW commands */
-	if ((check_fatal_sensors(dev) || force) &&
-	    dev->state == MLX5_DEVICE_STATE_UP) {
-		dev->state = MLX5_DEVICE_STATE_INTERNAL_ERROR;
-		err_detected = true;
-	}
 	mutex_lock(&dev->intf_state_mutex);
-	if (!err_detected && dev->state == MLX5_DEVICE_STATE_INTERNAL_ERROR)
-		goto unlock;/* a previous error is still being handled */
+	if (dev->state == MLX5_DEVICE_STATE_INTERNAL_ERROR)
+		goto unlock;
 	if (dev->state == MLX5_DEVICE_STATE_UNINITIALIZED) {
 		dev->state = MLX5_DEVICE_STATE_INTERNAL_ERROR;
 		goto unlock;
 	}
 
-	if (check_fatal_sensors(dev) || force) { /* protected state setting */
+	if (check_fatal_sensors(dev) || force) {
 		dev->state = MLX5_DEVICE_STATE_INTERNAL_ERROR;
 		mlx5_cmd_flush(dev);
 	}

@@ -44,6 +44,7 @@ static const struct ipa_gsi_endpoint_data ipa_gsi_endpoint_data[] = {
 		.endpoint = {
 			.seq_type	= IPA_SEQ_INVALID,
 			.config = {
+				.checksum	= true,
 				.aggregation	= true,
 				.status_enable	= true,
 				.rx = {

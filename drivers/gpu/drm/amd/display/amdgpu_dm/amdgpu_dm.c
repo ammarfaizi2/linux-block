@@ -956,9 +956,6 @@ static int amdgpu_dm_init(struct amdgpu_device *adev)
 	/* Update the actual used number of crtc */
 	adev->mode_info.num_crtc = adev->dm.display_indexes_num;
 
-	/* create fake encoders for MST */
-	dm_dp_create_fake_mst_encoders(adev);
-
 	/* TODO: Add_display_info? */
 
 	/* TODO use dynamic cursor width */
@@ -982,12 +979,6 @@ error:
 
 static void amdgpu_dm_fini(struct amdgpu_device *adev)
 {
-	int i;
-
-	for (i = 0; i < adev->dm.display_indexes_num; i++) {
-		drm_encoder_cleanup(&adev->dm.mst_encoders[i].base);
-	}
-
 	amdgpu_dm_audio_fini(adev);
 
 	amdgpu_dm_destroy_drm_device(&adev->dm);
@@ -1342,13 +1333,8 @@ static int dm_late_init(void *handle)
 	struct dmcu_iram_parameters params;
 	unsigned int linear_lut[16];
 	int i;
-	struct dmcu *dmcu = NULL;
-	bool ret;
-
-	if (!adev->dm.fw_dmcu && !adev->dm.dmub_fw)
-		return detect_mst_link_for_all_connectors(adev->ddev);
-
-	dmcu = adev->dm.dc->res_pool->dmcu;
+	struct dmcu *dmcu = adev->dm.dc->res_pool->dmcu;
+	bool ret = false;
 
 	for (i = 0; i < 16; i++)
 		linear_lut[i] = 0xFFFF * i / 15;
@@ -1364,10 +1350,13 @@ static int dm_late_init(void *handle)
 	 */
 	params.min_abm_backlight = 0x28F;
 
-	ret = dmcu_load_iram(dmcu, params);
+	/* todo will enable for navi10 */
+	if (adev->asic_type <= CHIP_RAVEN) {
+		ret = dmcu_load_iram(dmcu, params);
 
-	if (!ret)
-		return -EINVAL;
+		if (!ret)
+			return -EINVAL;
+	}
 
 	return detect_mst_link_for_all_connectors(adev->ddev);
 }
@@ -1818,16 +1807,11 @@ static void update_connector_ext_caps(struct amdgpu_dm_connector *aconnector)
 	struct amdgpu_display_manager *dm;
 	struct drm_connector *conn_base;
 	struct amdgpu_device *adev;
-	struct dc_link *link = NULL;
 	static const u8 pre_computed_values[] = {
 		50, 51, 52, 53, 55, 56, 57, 58, 59, 61, 62, 63, 65, 66, 68, 69,
 		71, 72, 74, 75, 77, 79, 81, 82, 84, 86, 88, 90, 92, 94, 96, 98};
 
 	if (!aconnector || !aconnector->dc_link)
-		return;
-
-	link = aconnector->dc_link;
-	if (link->connector_signal != SIGNAL_TYPE_EDP)
 		return;
 
 	conn_base = &aconnector->base;
@@ -1983,7 +1967,6 @@ void amdgpu_dm_update_connector_after_detect(
 
 			drm_connector_update_edid_property(connector,
 							   aconnector->edid);
-			drm_add_edid_modes(connector, aconnector->edid);
 
 			if (aconnector->dc_link->aux_mode)
 				drm_dp_cec_set_edid(&aconnector->dm_dp_aux.aux,
@@ -3817,7 +3800,8 @@ static void update_stream_scaling_settings(const struct drm_display_mode *mode,
 
 static enum dc_color_depth
 convert_color_depth_from_display_info(const struct drm_connector *connector,
-				      bool is_y420, int requested_bpc)
+				      const struct drm_connector_state *state,
+				      bool is_y420)
 {
 	uint8_t bpc;
 
@@ -3837,7 +3821,10 @@ convert_color_depth_from_display_info(const struct drm_connector *connector,
 		bpc = bpc ? bpc : 8;
 	}
 
-	if (requested_bpc > 0) {
+	if (!state)
+		state = connector->state;
+
+	if (state) {
 		/*
 		 * Cap display bpc based on the user requested value.
 		 *
@@ -3846,7 +3833,7 @@ convert_color_depth_from_display_info(const struct drm_connector *connector,
 		 * or if this was called outside of atomic check, so it
 		 * can't be used directly.
 		 */
-		bpc = min_t(u8, bpc, requested_bpc);
+		bpc = min(bpc, state->max_requested_bpc);
 
 		/* Round down to the nearest even number. */
 		bpc = bpc - (bpc & 1);
@@ -3968,8 +3955,7 @@ static void fill_stream_properties_from_drm_display_mode(
 	const struct drm_display_mode *mode_in,
 	const struct drm_connector *connector,
 	const struct drm_connector_state *connector_state,
-	const struct dc_stream_state *old_stream,
-	int requested_bpc)
+	const struct dc_stream_state *old_stream)
 {
 	struct dc_crtc_timing *timing_out = &stream->timing;
 	const struct drm_display_info *info = &connector->display_info;
@@ -3999,9 +3985,8 @@ static void fill_stream_properties_from_drm_display_mode(
 
 	timing_out->timing_3d_format = TIMING_3D_FORMAT_NONE;
 	timing_out->display_color_depth = convert_color_depth_from_display_info(
-		connector,
-		(timing_out->pixel_encoding == PIXEL_ENCODING_YCBCR420),
-		requested_bpc);
+		connector, connector_state,
+		(timing_out->pixel_encoding == PIXEL_ENCODING_YCBCR420));
 	timing_out->scan_type = SCANNING_TYPE_NODATA;
 	timing_out->hdmi_vic = 0;
 
@@ -4207,8 +4192,7 @@ static struct dc_stream_state *
 create_stream_for_sink(struct amdgpu_dm_connector *aconnector,
 		       const struct drm_display_mode *drm_mode,
 		       const struct dm_connector_state *dm_state,
-		       const struct dc_stream_state *old_stream,
-		       int requested_bpc)
+		       const struct dc_stream_state *old_stream)
 {
 	struct drm_display_mode *preferred_mode = NULL;
 	struct drm_connector *drm_connector;
@@ -4293,10 +4277,10 @@ create_stream_for_sink(struct amdgpu_dm_connector *aconnector,
 	*/
 	if (!scale || mode_refresh != preferred_refresh)
 		fill_stream_properties_from_drm_display_mode(stream,
-			&mode, &aconnector->base, con_state, NULL, requested_bpc);
+			&mode, &aconnector->base, con_state, NULL);
 	else
 		fill_stream_properties_from_drm_display_mode(stream,
-			&mode, &aconnector->base, con_state, old_stream, requested_bpc);
+			&mode, &aconnector->base, con_state, old_stream);
 
 	stream->timing.flags.DSC = 0;
 
@@ -4819,55 +4803,16 @@ static void handle_edid_mgmt(struct amdgpu_dm_connector *aconnector)
 	create_eml_sink(aconnector);
 }
 
-static struct dc_stream_state *
-create_validate_stream_for_sink(struct amdgpu_dm_connector *aconnector,
-				const struct drm_display_mode *drm_mode,
-				const struct dm_connector_state *dm_state,
-				const struct dc_stream_state *old_stream)
-{
-	struct drm_connector *connector = &aconnector->base;
-	struct amdgpu_device *adev = connector->dev->dev_private;
-	struct dc_stream_state *stream;
-	const struct drm_connector_state *drm_state = dm_state ? &dm_state->base : NULL;
-	int requested_bpc = drm_state ? drm_state->max_requested_bpc : 8;
-	enum dc_status dc_result = DC_OK;
-
-	do {
-		stream = create_stream_for_sink(aconnector, drm_mode,
-						dm_state, old_stream,
-						requested_bpc);
-		if (stream == NULL) {
-			DRM_ERROR("Failed to create stream for sink!\n");
-			break;
-		}
-
-		dc_result = dc_validate_stream(adev->dm.dc, stream);
-
-		if (dc_result != DC_OK) {
-			DRM_DEBUG_KMS("Mode %dx%d (clk %d) failed DC validation with error %d\n",
-				      drm_mode->hdisplay,
-				      drm_mode->vdisplay,
-				      drm_mode->clock,
-				      dc_result);
-
-			dc_stream_release(stream);
-			stream = NULL;
-			requested_bpc -= 2; /* lower bpc to retry validation */
-		}
-
-	} while (stream == NULL && requested_bpc >= 6);
-
-	return stream;
-}
-
 enum drm_mode_status amdgpu_dm_connector_mode_valid(struct drm_connector *connector,
 				   struct drm_display_mode *mode)
 {
 	int result = MODE_ERROR;
 	struct dc_sink *dc_sink;
+	struct amdgpu_device *adev = connector->dev->dev_private;
 	/* TODO: Unhardcode stream count */
 	struct dc_stream_state *stream;
 	struct amdgpu_dm_connector *aconnector = to_amdgpu_dm_connector(connector);
+	enum dc_status dc_result = DC_OK;
 
 	if ((mode->flags & DRM_MODE_FLAG_INTERLACE) ||
 			(mode->flags & DRM_MODE_FLAG_DBLSCAN))
@@ -4888,11 +4833,24 @@ enum drm_mode_status amdgpu_dm_connector_mode_valid(struct drm_connector *connec
 		goto fail;
 	}
 
-	stream = create_validate_stream_for_sink(aconnector, mode, NULL, NULL);
-	if (stream) {
-		dc_stream_release(stream);
-		result = MODE_OK;
+	stream = create_stream_for_sink(aconnector, mode, NULL, NULL);
+	if (stream == NULL) {
+		DRM_ERROR("Failed to create stream for sink!\n");
+		goto fail;
 	}
+
+	dc_result = dc_validate_stream(adev->dm.dc, stream);
+
+	if (dc_result == DC_OK)
+		result = MODE_OK;
+	else
+		DRM_DEBUG_KMS("Mode %dx%d (clk %d) failed DC validation with error %d\n",
+			      mode->hdisplay,
+			      mode->vdisplay,
+			      mode->clock,
+			      dc_result);
+
+	dc_stream_release(stream);
 
 fail:
 	/* TODO: error handling*/
@@ -5215,12 +5173,10 @@ static int dm_encoder_helper_atomic_check(struct drm_encoder *encoder,
 		return 0;
 
 	if (!state->duplicated) {
-		int max_bpc = conn_state->max_requested_bpc;
 		is_y420 = drm_mode_is_420_also(&connector->display_info, adjusted_mode) &&
 				aconnector->force_yuv420_output;
-		color_depth = convert_color_depth_from_display_info(connector,
-								    is_y420,
-								    max_bpc);
+		color_depth = convert_color_depth_from_display_info(connector, conn_state,
+								    is_y420);
 		bpp = convert_dc_color_depth_into_bpc(color_depth) * 3;
 		clock = adjusted_mode->clock;
 		dm_new_connector_state->pbn = drm_dp_calc_pbn_mode(clock, bpp, false);
@@ -7636,10 +7592,10 @@ static int dm_update_crtc_state(struct amdgpu_display_manager *dm,
 		if (!drm_atomic_crtc_needs_modeset(new_crtc_state))
 			goto skip_modeset;
 
-		new_stream = create_validate_stream_for_sink(aconnector,
-							     &new_crtc_state->mode,
-							     dm_new_conn_state,
-							     dm_old_crtc_state->stream);
+		new_stream = create_stream_for_sink(aconnector,
+						     &new_crtc_state->mode,
+						    dm_new_conn_state,
+						    dm_old_crtc_state->stream);
 
 		/*
 		 * we can have no stream on ACTION_SET if a display
@@ -8459,29 +8415,6 @@ static int amdgpu_dm_atomic_check(struct drm_device *dev,
 		if (ret)
 			goto fail;
 
-	/* Check connector changes */
-	for_each_oldnew_connector_in_state(state, connector, old_con_state, new_con_state, i) {
-		struct dm_connector_state *dm_old_con_state = to_dm_connector_state(old_con_state);
-		struct dm_connector_state *dm_new_con_state = to_dm_connector_state(new_con_state);
-
-		/* Skip connectors that are disabled or part of modeset already. */
-		if (!old_con_state->crtc && !new_con_state->crtc)
-			continue;
-
-		if (!new_con_state->crtc)
-			continue;
-
-		new_crtc_state = drm_atomic_get_crtc_state(state, new_con_state->crtc);
-		if (IS_ERR(new_crtc_state)) {
-			ret = PTR_ERR(new_crtc_state);
-			goto fail;
-		}
-
-		if (dm_old_con_state->abm_level !=
-		    dm_new_con_state->abm_level)
-			new_crtc_state->connectors_changed = true;
-	}
-
 #if defined(CONFIG_DRM_AMD_DC_DCN)
 		if (!compute_mst_dsc_configs_for_state(state, dm_state->context))
 			goto fail;
@@ -8513,38 +8446,20 @@ static int amdgpu_dm_atomic_check(struct drm_device *dev,
 		 * the same resource. If we have a new DC context as part of
 		 * the DM atomic state from validation we need to free it and
 		 * retain the existing one instead.
-		 *
-		 * Furthermore, since the DM atomic state only contains the DC
-		 * context and can safely be annulled, we can free the state
-		 * and clear the associated private object now to free
-		 * some memory and avoid a possible use-after-free later.
 		 */
+		struct dm_atomic_state *new_dm_state, *old_dm_state;
 
-		for (i = 0; i < state->num_private_objs; i++) {
-			struct drm_private_obj *obj = state->private_objs[i].ptr;
+		new_dm_state = dm_atomic_get_new_state(state);
+		old_dm_state = dm_atomic_get_old_state(state);
 
-			if (obj->funcs == adev->dm.atomic_obj.funcs) {
-				int j = state->num_private_objs-1;
+		if (new_dm_state && old_dm_state) {
+			if (new_dm_state->context)
+				dc_release_state(new_dm_state->context);
 
-				dm_atomic_destroy_state(obj,
-						state->private_objs[i].state);
+			new_dm_state->context = old_dm_state->context;
 
-				/* If i is not at the end of the array then the
-				 * last element needs to be moved to where i was
-				 * before the array can safely be truncated.
-				 */
-				if (i != j)
-					state->private_objs[i] =
-						state->private_objs[j];
-
-				state->private_objs[j].ptr = NULL;
-				state->private_objs[j].state = NULL;
-				state->private_objs[j].old_state = NULL;
-				state->private_objs[j].new_state = NULL;
-
-				state->num_private_objs = j;
-				break;
-			}
+			if (old_dm_state->context)
+				dc_retain_state(old_dm_state->context);
 		}
 	}
 

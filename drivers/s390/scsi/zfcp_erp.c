@@ -576,10 +576,7 @@ static void zfcp_erp_strategy_check_fsfreq(struct zfcp_erp_action *act)
 				   ZFCP_STATUS_ERP_TIMEDOUT)) {
 			req->status |= ZFCP_STATUS_FSFREQ_DISMISSED;
 			zfcp_dbf_rec_run("erscf_1", act);
-			/* lock-free concurrent access with
-			 * zfcp_erp_timeout_handler()
-			 */
-			WRITE_ONCE(req->erp_action, NULL);
+			req->erp_action = NULL;
 		}
 		if (act->status & ZFCP_STATUS_ERP_TIMEDOUT)
 			zfcp_dbf_rec_run("erscf_2", act);
@@ -615,14 +612,8 @@ void zfcp_erp_notify(struct zfcp_erp_action *erp_action, unsigned long set_mask)
 void zfcp_erp_timeout_handler(struct timer_list *t)
 {
 	struct zfcp_fsf_req *fsf_req = from_timer(fsf_req, t, timer);
-	struct zfcp_erp_action *act;
+	struct zfcp_erp_action *act = fsf_req->erp_action;
 
-	if (fsf_req->status & ZFCP_STATUS_FSFREQ_DISMISSED)
-		return;
-	/* lock-free concurrent access with zfcp_erp_strategy_check_fsfreq() */
-	act = READ_ONCE(fsf_req->erp_action);
-	if (!act)
-		return;
 	zfcp_erp_notify(act, ZFCP_STATUS_ERP_TIMEDOUT);
 }
 

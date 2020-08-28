@@ -355,7 +355,7 @@ error_unmap_dma:
 	ena_unmap_tx_buff(xdp_ring, tx_info);
 	tx_info->xdpf = NULL;
 error_drop_packet:
-	__free_page(tx_info->xdp_rx_page);
+
 	return NETDEV_TX_OK;
 }
 
@@ -1638,9 +1638,11 @@ static int ena_clean_rx_irq(struct ena_ring *rx_ring, struct napi_struct *napi,
 					 &next_to_clean);
 
 		if (unlikely(!skb)) {
-			if (xdp_verdict == XDP_TX)
+			if (xdp_verdict == XDP_TX) {
 				ena_free_rx_page(rx_ring,
 						 &rx_ring->rx_buffer_info[rx_ring->ena_bufs[0].req_id]);
+				res_budget--;
+			}
 			for (i = 0; i < ena_rx_ctx.descs; i++) {
 				rx_ring->free_ids[next_to_clean] =
 					rx_ring->ena_bufs[i].req_id;
@@ -1648,10 +1650,8 @@ static int ena_clean_rx_irq(struct ena_ring *rx_ring, struct napi_struct *napi,
 					ENA_RX_RING_IDX_NEXT(next_to_clean,
 							     rx_ring->ring_size);
 			}
-			if (xdp_verdict != XDP_PASS) {
-				res_budget--;
+			if (xdp_verdict == XDP_TX || xdp_verdict == XDP_DROP)
 				continue;
-			}
 			break;
 		}
 
@@ -2166,10 +2166,13 @@ static void ena_del_napi_in_range(struct ena_adapter *adapter,
 	int i;
 
 	for (i = first_index; i < first_index + count; i++) {
-		netif_napi_del(&adapter->ena_napi[i].napi);
-
-		WARN_ON(!ENA_IS_XDP_INDEX(adapter, i) &&
-			adapter->ena_napi[i].xdp_ring);
+		/* Check if napi was initialized before */
+		if (!ENA_IS_XDP_INDEX(adapter, i) ||
+		    adapter->ena_napi[i].xdp_ring)
+			netif_napi_del(&adapter->ena_napi[i].napi);
+		else
+			WARN_ON(ENA_IS_XDP_INDEX(adapter, i) &&
+				adapter->ena_napi[i].xdp_ring);
 	}
 }
 
@@ -3505,14 +3508,16 @@ static void ena_fw_reset_device(struct work_struct *work)
 {
 	struct ena_adapter *adapter =
 		container_of(work, struct ena_adapter, reset_task);
+	struct pci_dev *pdev = adapter->pdev;
 
-	rtnl_lock();
-
-	if (likely(test_bit(ENA_FLAG_TRIGGER_RESET, &adapter->flags))) {
-		ena_destroy_device(adapter, false);
-		ena_restore_device(adapter);
+	if (unlikely(!test_bit(ENA_FLAG_TRIGGER_RESET, &adapter->flags))) {
+		dev_err(&pdev->dev,
+			"device reset schedule while reset bit is off\n");
+		return;
 	}
-
+	rtnl_lock();
+	ena_destroy_device(adapter, false);
+	ena_restore_device(adapter);
 	rtnl_unlock();
 }
 
@@ -3594,7 +3599,7 @@ static int check_missing_comp_in_tx_queue(struct ena_adapter *adapter,
 	}
 
 	u64_stats_update_begin(&tx_ring->syncp);
-	tx_ring->tx_stats.missed_tx += missed_tx;
+	tx_ring->tx_stats.missed_tx = missed_tx;
 	u64_stats_update_end(&tx_ring->syncp);
 
 	return rc;
@@ -4346,11 +4351,8 @@ static void __ena_shutoff(struct pci_dev *pdev, bool shutdown)
 		netdev->rx_cpu_rmap = NULL;
 	}
 #endif /* CONFIG_RFS_ACCEL */
-
-	/* Make sure timer and reset routine won't be called after
-	 * freeing device resources.
-	 */
 	del_timer_sync(&adapter->timer_service);
+
 	cancel_work_sync(&adapter->reset_task);
 
 	rtnl_lock(); /* lock released inside the below if-else block */
@@ -4519,9 +4521,6 @@ static void ena_keep_alive_wd(void *adapter_data,
 	rx_drops = ((u64)desc->rx_drops_high << 32) | desc->rx_drops_low;
 
 	u64_stats_update_begin(&adapter->syncp);
-	/* These stats are accumulated by the device, so the counters indicate
-	 * all drops since last reset.
-	 */
 	adapter->dev_stats.rx_drops = rx_drops;
 	u64_stats_update_end(&adapter->syncp);
 }

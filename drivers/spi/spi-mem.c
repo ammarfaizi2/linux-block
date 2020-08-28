@@ -108,17 +108,15 @@ static int spi_check_buswidth_req(struct spi_mem *mem, u8 buswidth, bool tx)
 		return 0;
 
 	case 2:
-		if ((tx &&
-		     (mode & (SPI_TX_DUAL | SPI_TX_QUAD | SPI_TX_OCTAL))) ||
-		    (!tx &&
-		     (mode & (SPI_RX_DUAL | SPI_RX_QUAD | SPI_RX_OCTAL))))
+		if ((tx && (mode & (SPI_TX_DUAL | SPI_TX_QUAD))) ||
+		    (!tx && (mode & (SPI_RX_DUAL | SPI_RX_QUAD))))
 			return 0;
 
 		break;
 
 	case 4:
-		if ((tx && (mode & (SPI_TX_QUAD | SPI_TX_OCTAL))) ||
-		    (!tx && (mode & (SPI_RX_QUAD | SPI_RX_OCTAL))))
+		if ((tx && (mode & SPI_TX_QUAD)) ||
+		    (!tx && (mode & SPI_RX_QUAD)))
 			return 0;
 
 		break;

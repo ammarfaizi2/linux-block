@@ -480,6 +480,7 @@ int qdio_setup_irq(struct qdio_irq *irq_ptr, struct qdio_initialize *init_data)
 	}
 
 	setup_qib(irq_ptr, init_data);
+	qdio_setup_thinint(irq_ptr);
 	set_impl_params(irq_ptr, init_data->qib_param_field_format,
 			init_data->qib_param_field,
 			init_data->input_slib_elements,
@@ -489,12 +490,6 @@ int qdio_setup_irq(struct qdio_irq *irq_ptr, struct qdio_initialize *init_data)
 	setup_qdr(irq_ptr, init_data);
 
 	/* qdr, qib, sls, slsbs, slibs, sbales are filled now */
-
-	/* set our IRQ handler */
-	spin_lock_irq(get_ccwdev_lock(cdev));
-	irq_ptr->orig_handler = cdev->handler;
-	cdev->handler = qdio_int_handler;
-	spin_unlock_irq(get_ccwdev_lock(cdev));
 
 	/* get qdio commands */
 	ciw = ccw_device_get_ciw(cdev, CIW_TYPE_EQUEUE);
@@ -511,18 +506,12 @@ int qdio_setup_irq(struct qdio_irq *irq_ptr, struct qdio_initialize *init_data)
 	}
 	irq_ptr->aqueue = *ciw;
 
-	return 0;
-}
-
-void qdio_shutdown_irq(struct qdio_irq *irq)
-{
-	struct ccw_device *cdev = irq->cdev;
-
-	/* restore IRQ handler */
+	/* set new interrupt handler */
 	spin_lock_irq(get_ccwdev_lock(cdev));
-	cdev->handler = irq->orig_handler;
-	cdev->private->intparm = 0;
+	irq_ptr->orig_handler = cdev->handler;
+	cdev->handler = qdio_int_handler;
 	spin_unlock_irq(get_ccwdev_lock(cdev));
+	return 0;
 }
 
 void qdio_print_subchannel_info(struct qdio_irq *irq_ptr)

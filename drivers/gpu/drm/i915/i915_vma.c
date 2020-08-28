@@ -104,7 +104,6 @@ vma_create(struct drm_i915_gem_object *obj,
 	   struct i915_address_space *vm,
 	   const struct i915_ggtt_view *view)
 {
-	struct i915_vma *pos = ERR_PTR(-E2BIG);
 	struct i915_vma *vma;
 	struct rb_node *rb, **p;
 
@@ -185,6 +184,7 @@ vma_create(struct drm_i915_gem_object *obj,
 	rb = NULL;
 	p = &obj->vma.tree.rb_node;
 	while (*p) {
+		struct i915_vma *pos;
 		long cmp;
 
 		rb = *p;
@@ -196,12 +196,16 @@ vma_create(struct drm_i915_gem_object *obj,
 		 * and dispose of ours.
 		 */
 		cmp = i915_vma_compare(pos, vm, view);
+		if (cmp == 0) {
+			spin_unlock(&obj->vma.lock);
+			i915_vma_free(vma);
+			return pos;
+		}
+
 		if (cmp < 0)
 			p = &rb->rb_right;
-		else if (cmp > 0)
-			p = &rb->rb_left;
 		else
-			goto err_unlock;
+			p = &rb->rb_left;
 	}
 	rb_link_node(&vma->obj_node, rb, p);
 	rb_insert_color(&vma->obj_node, &obj->vma.tree);
@@ -224,9 +228,8 @@ vma_create(struct drm_i915_gem_object *obj,
 err_unlock:
 	spin_unlock(&obj->vma.lock);
 err_vma:
-	i915_vm_put(vm);
 	i915_vma_free(vma);
-	return pos;
+	return ERR_PTR(-E2BIG);
 }
 
 static struct i915_vma *

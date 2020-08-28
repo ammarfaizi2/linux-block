@@ -2130,16 +2130,16 @@ submit_and_realloc:
 					page->index, for_write);
 			if (IS_ERR(bio)) {
 				ret = PTR_ERR(bio);
+				bio = NULL;
 				dic->failed = true;
 				if (refcount_sub_and_test(dic->nr_cpages - i,
-							&dic->ref)) {
+							&dic->ref))
 					f2fs_decompress_end_io(dic->rpages,
 							cc->cluster_size, true,
 							false);
-					f2fs_free_dic(dic);
-				}
+				f2fs_free_dic(dic);
 				f2fs_put_dnode(&dn);
-				*bio_ret = NULL;
+				*bio_ret = bio;
 				return ret;
 			}
 		}
@@ -3353,10 +3353,6 @@ static int f2fs_write_end(struct file *file,
 	if (f2fs_compressed_file(inode) && fsdata) {
 		f2fs_compress_write_end(inode, fsdata, page->index, copied);
 		f2fs_update_time(F2FS_I_SB(inode), REQ_TIME);
-
-		if (pos + copied > i_size_read(inode) &&
-				!f2fs_verity_in_progress(inode))
-			f2fs_i_size_write(inode, pos + copied);
 		return copied;
 	}
 #endif

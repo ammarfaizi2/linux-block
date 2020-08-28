@@ -2114,19 +2114,16 @@ static int vicodec_probe(struct platform_device *pdev)
 
 	platform_set_drvdata(pdev, dev);
 
-	ret = register_instance(dev, &dev->stateful_enc, "stateful-encoder",
-				true);
-	if (ret)
+	if (register_instance(dev, &dev->stateful_enc,
+			      "stateful-encoder", true))
 		goto unreg_dev;
 
-	ret = register_instance(dev, &dev->stateful_dec, "stateful-decoder",
-				false);
-	if (ret)
+	if (register_instance(dev, &dev->stateful_dec,
+			      "stateful-decoder", false))
 		goto unreg_sf_enc;
 
-	ret = register_instance(dev, &dev->stateless_dec, "stateless-decoder",
-				false);
-	if (ret)
+	if (register_instance(dev, &dev->stateless_dec,
+			      "stateless-decoder", false))
 		goto unreg_sf_dec;
 
 #ifdef CONFIG_MEDIA_CONTROLLER

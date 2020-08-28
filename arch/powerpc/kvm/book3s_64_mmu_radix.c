@@ -40,8 +40,7 @@ unsigned long __kvmhv_copy_tofrom_guest_radix(int lpid, int pid,
 	/* Can't access quadrants 1 or 2 in non-HV mode, call the HV to do it */
 	if (kvmhv_on_pseries())
 		return plpar_hcall_norets(H_COPY_TOFROM_GUEST, lpid, pid, eaddr,
-					  (to != NULL) ? __pa(to): 0,
-					  (from != NULL) ? __pa(from): 0, n);
+					  __pa(to), __pa(from), n);
 
 	quadrant = 1;
 	if (!pid)
@@ -354,13 +353,7 @@ static struct kmem_cache *kvm_pmd_cache;
 
 static pte_t *kvmppc_pte_alloc(void)
 {
-	pte_t *pte;
-
-	pte = kmem_cache_alloc(kvm_pte_cache, GFP_KERNEL);
-	/* pmd_populate() will only reference _pa(pte). */
-	kmemleak_ignore(pte);
-
-	return pte;
+	return kmem_cache_alloc(kvm_pte_cache, GFP_KERNEL);
 }
 
 static void kvmppc_pte_free(pte_t *ptep)
@@ -370,13 +363,7 @@ static void kvmppc_pte_free(pte_t *ptep)
 
 static pmd_t *kvmppc_pmd_alloc(void)
 {
-	pmd_t *pmd;
-
-	pmd = kmem_cache_alloc(kvm_pmd_cache, GFP_KERNEL);
-	/* pud_populate() will only reference _pa(pmd). */
-	kmemleak_ignore(pmd);
-
-	return pmd;
+	return kmem_cache_alloc(kvm_pmd_cache, GFP_KERNEL);
 }
 
 static void kvmppc_pmd_free(pmd_t *pmdp)
@@ -994,11 +981,11 @@ int kvm_unmap_radix(struct kvm *kvm, struct kvm_memory_slot *memslot,
 		return 0;
 	}
 
-	ptep = find_kvm_secondary_pte(kvm, gpa, &shift);
+	ptep = __find_linux_pte(kvm->arch.pgtable, gpa, NULL, &shift);
 	if (ptep && pte_present(*ptep))
 		kvmppc_unmap_pte(kvm, ptep, gpa, shift, memslot,
 				 kvm->arch.lpid);
-	return 0;
+	return 0;				
 }
 
 /* Called with kvm->mmu_lock held */
@@ -1014,7 +1001,7 @@ int kvm_age_radix(struct kvm *kvm, struct kvm_memory_slot *memslot,
 	if (kvm->arch.secure_guest & KVMPPC_SECURE_INIT_DONE)
 		return ref;
 
-	ptep = find_kvm_secondary_pte(kvm, gpa, &shift);
+	ptep = __find_linux_pte(kvm->arch.pgtable, gpa, NULL, &shift);
 	if (ptep && pte_present(*ptep) && pte_young(*ptep)) {
 		old = kvmppc_radix_update_pte(kvm, ptep, _PAGE_ACCESSED, 0,
 					      gpa, shift);
@@ -1041,7 +1028,7 @@ int kvm_test_age_radix(struct kvm *kvm, struct kvm_memory_slot *memslot,
 	if (kvm->arch.secure_guest & KVMPPC_SECURE_INIT_DONE)
 		return ref;
 
-	ptep = find_kvm_secondary_pte(kvm, gpa, &shift);
+	ptep = __find_linux_pte(kvm->arch.pgtable, gpa, NULL, &shift);
 	if (ptep && pte_present(*ptep) && pte_young(*ptep))
 		ref = 1;
 	return ref;
@@ -1053,7 +1040,7 @@ static int kvm_radix_test_clear_dirty(struct kvm *kvm,
 {
 	unsigned long gfn = memslot->base_gfn + pagenum;
 	unsigned long gpa = gfn << PAGE_SHIFT;
-	pte_t *ptep, pte;
+	pte_t *ptep;
 	unsigned int shift;
 	int ret = 0;
 	unsigned long old, *rmapp;
@@ -1061,35 +1048,12 @@ static int kvm_radix_test_clear_dirty(struct kvm *kvm,
 	if (kvm->arch.secure_guest & KVMPPC_SECURE_INIT_DONE)
 		return ret;
 
-	/*
-	 * For performance reasons we don't hold kvm->mmu_lock while walking the
-	 * partition scoped table.
-	 */
-	ptep = find_kvm_secondary_pte_unlocked(kvm, gpa, &shift);
-	if (!ptep)
-		return 0;
-
-	pte = READ_ONCE(*ptep);
-	if (pte_present(pte) && pte_dirty(pte)) {
-		spin_lock(&kvm->mmu_lock);
-		/*
-		 * Recheck the pte again
-		 */
-		if (pte_val(pte) != pte_val(*ptep)) {
-			/*
-			 * We have KVM_MEM_LOG_DIRTY_PAGES enabled. Hence we can
-			 * only find PAGE_SIZE pte entries here. We can continue
-			 * to use the pte addr returned by above page table
-			 * walk.
-			 */
-			if (!pte_present(*ptep) || !pte_dirty(*ptep)) {
-				spin_unlock(&kvm->mmu_lock);
-				return 0;
-			}
-		}
-
+	ptep = __find_linux_pte(kvm->arch.pgtable, gpa, NULL, &shift);
+	if (ptep && pte_present(*ptep) && pte_dirty(*ptep)) {
 		ret = 1;
-		VM_BUG_ON(shift);
+		if (shift)
+			ret = 1 << (shift - PAGE_SHIFT);
+		spin_lock(&kvm->mmu_lock);
 		old = kvmppc_radix_update_pte(kvm, ptep, _PAGE_DIRTY, 0,
 					      gpa, shift);
 		kvmppc_radix_tlbie_page(kvm, gpa, shift, kvm->arch.lpid);
@@ -1145,7 +1109,7 @@ void kvmppc_radix_flush_memslot(struct kvm *kvm,
 	gpa = memslot->base_gfn << PAGE_SHIFT;
 	spin_lock(&kvm->mmu_lock);
 	for (n = memslot->npages; n; --n) {
-		ptep = find_kvm_secondary_pte(kvm, gpa, &shift);
+		ptep = __find_linux_pte(kvm->arch.pgtable, gpa, NULL, &shift);
 		if (ptep && pte_present(*ptep))
 			kvmppc_unmap_pte(kvm, ptep, gpa, shift, memslot,
 					 kvm->arch.lpid);

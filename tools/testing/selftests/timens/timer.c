@@ -22,9 +22,6 @@ int run_test(int clockid, struct timespec now)
 	timer_t fd;
 	int i;
 
-	if (check_skip(clockid))
-		return 0;
-
 	for (i = 0; i < 2; i++) {
 		struct sigevent sevp = {.sigev_notify = SIGEV_NONE};
 		int flags = 0;
@@ -76,8 +73,6 @@ int main(int argc, char *argv[])
 	struct timespec btime_now, mtime_now;
 
 	nscheck();
-
-	check_supported_timers();
 
 	ksft_set_plan(3);
 

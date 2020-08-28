@@ -468,12 +468,11 @@ static int host1x_probe(struct platform_device *pdev)
 
 	err = host1x_register(host);
 	if (err < 0)
-		goto deinit_debugfs;
+		goto deinit_intr;
 
 	return 0;
 
-deinit_debugfs:
-	host1x_debug_deinit(host);
+deinit_intr:
 	host1x_intr_deinit(host);
 deinit_syncpt:
 	host1x_syncpt_deinit(host);

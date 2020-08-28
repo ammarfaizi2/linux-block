@@ -176,13 +176,11 @@ static struct efivar_operations generic_ops;
 static int generic_ops_register(void)
 {
 	generic_ops.get_variable = efi.get_variable;
+	generic_ops.set_variable = efi.set_variable;
+	generic_ops.set_variable_nonblocking = efi.set_variable_nonblocking;
 	generic_ops.get_next_variable = efi.get_next_variable;
 	generic_ops.query_variable_store = efi_query_variable_store;
 
-	if (efi_rt_services_supported(EFI_RT_SUPPORTED_SET_VARIABLE)) {
-		generic_ops.set_variable = efi.set_variable;
-		generic_ops.set_variable_nonblocking = efi.set_variable_nonblocking;
-	}
 	return efivars_register(&generic_efivars, &generic_ops, efi_kobj);
 }
 
@@ -191,7 +189,7 @@ static void generic_ops_unregister(void)
 	efivars_unregister(&generic_efivars);
 }
 
-#ifdef CONFIG_EFI_CUSTOM_SSDT_OVERLAYS
+#if IS_ENABLED(CONFIG_ACPI)
 #define EFIVAR_SSDT_NAME_MAX	16
 static char efivar_ssdt[EFIVAR_SSDT_NAME_MAX] __initdata;
 static int __init efivar_ssdt_setup(char *str)
@@ -381,12 +379,10 @@ static int __init efisubsys_init(void)
 	efi_kobj = kobject_create_and_add("efi", firmware_kobj);
 	if (!efi_kobj) {
 		pr_err("efi: Firmware registration failed.\n");
-		destroy_workqueue(efi_rts_wq);
 		return -ENOMEM;
 	}
 
-	if (efi_rt_services_supported(EFI_RT_SUPPORTED_GET_VARIABLE |
-				      EFI_RT_SUPPORTED_GET_NEXT_VARIABLE_NAME)) {
+	if (efi_rt_services_supported(EFI_RT_SUPPORTED_VARIABLE_SERVICES)) {
 		efivar_ssdt_load();
 		error = generic_ops_register();
 		if (error)
@@ -420,12 +416,10 @@ static int __init efisubsys_init(void)
 err_remove_group:
 	sysfs_remove_group(efi_kobj, &efi_subsys_attr_group);
 err_unregister:
-	if (efi_rt_services_supported(EFI_RT_SUPPORTED_GET_VARIABLE |
-				      EFI_RT_SUPPORTED_GET_NEXT_VARIABLE_NAME))
+	if (efi_rt_services_supported(EFI_RT_SUPPORTED_VARIABLE_SERVICES))
 		generic_ops_unregister();
 err_put:
 	kobject_put(efi_kobj);
-	destroy_workqueue(efi_rts_wq);
 	return error;
 }
 

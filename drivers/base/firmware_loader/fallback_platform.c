@@ -25,10 +25,7 @@ int firmware_fallback_platform(struct fw_priv *fw_priv, enum fw_opt opt_flags)
 	if (rc)
 		return rc; /* rc == -ENOENT when the fw was not found */
 
-	if (fw_priv->data && size > fw_priv->allocated_size)
-		return -ENOMEM;
-	if (!fw_priv->data)
-		fw_priv->data = vmalloc(size);
+	fw_priv->data = vmalloc(size);
 	if (!fw_priv->data)
 		return -ENOMEM;
 

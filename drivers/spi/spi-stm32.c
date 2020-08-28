@@ -13,7 +13,6 @@
 #include <linux/iopoll.h>
 #include <linux/module.h>
 #include <linux/of_platform.h>
-#include <linux/pinctrl/consumer.h>
 #include <linux/pm_runtime.h>
 #include <linux/reset.h>
 #include <linux/spi/spi.h>
@@ -1986,8 +1985,6 @@ static int stm32_spi_remove(struct platform_device *pdev)
 
 	pm_runtime_disable(&pdev->dev);
 
-	pinctrl_pm_select_sleep_state(&pdev->dev);
-
 	return 0;
 }
 
@@ -1999,18 +1996,13 @@ static int stm32_spi_runtime_suspend(struct device *dev)
 
 	clk_disable_unprepare(spi->clk);
 
-	return pinctrl_pm_select_sleep_state(dev);
+	return 0;
 }
 
 static int stm32_spi_runtime_resume(struct device *dev)
 {
 	struct spi_master *master = dev_get_drvdata(dev);
 	struct stm32_spi *spi = spi_master_get_devdata(master);
-	int ret;
-
-	ret = pinctrl_pm_select_default_state(dev);
-	if (ret)
-		return ret;
 
 	return clk_prepare_enable(spi->clk);
 }
@@ -2040,23 +2032,10 @@ static int stm32_spi_resume(struct device *dev)
 		return ret;
 
 	ret = spi_master_resume(master);
-	if (ret) {
+	if (ret)
 		clk_disable_unprepare(spi->clk);
-		return ret;
-	}
 
-	ret = pm_runtime_get_sync(dev);
-	if (ret) {
-		dev_err(dev, "Unable to power device:%d\n", ret);
-		return ret;
-	}
-
-	spi->cfg->config(spi);
-
-	pm_runtime_mark_last_busy(dev);
-	pm_runtime_put_autosuspend(dev);
-
-	return 0;
+	return ret;
 }
 #endif
 

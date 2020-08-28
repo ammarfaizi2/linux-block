@@ -56,10 +56,10 @@ static int send_scan_req(struct wfx_vif *wvif,
 	wfx_tx_lock_flush(wvif->wdev);
 	wvif->scan_abort = false;
 	reinit_completion(&wvif->scan_complete);
-	ret = hif_scan(wvif, req, start_idx, i - start_idx, &timeout);
-	if (ret) {
+	timeout = hif_scan(wvif, req, start_idx, i - start_idx);
+	if (timeout < 0) {
 		wfx_tx_unlock(wvif->wdev);
-		return -EIO;
+		return timeout;
 	}
 	ret = wait_for_completion_timeout(&wvif->scan_complete, timeout);
 	if (req->channels[start_idx]->max_power != wvif->vif->bss_conf.txpower)

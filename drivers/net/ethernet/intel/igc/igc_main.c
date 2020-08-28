@@ -2325,9 +2325,7 @@ static void igc_configure(struct igc_adapter *adapter)
 	igc_setup_mrqc(adapter);
 	igc_setup_rctl(adapter);
 
-	igc_set_default_mac_filter(adapter);
 	igc_nfc_filter_restore(adapter);
-
 	igc_configure_tx(adapter);
 	igc_configure_rx(adapter);
 
@@ -4801,8 +4799,6 @@ static int igc_probe(struct pci_dev *pdev,
 	device_set_wakeup_enable(&adapter->pdev->dev,
 				 adapter->flags & IGC_FLAG_WOL_SUPPORTED);
 
-	igc_ptp_init(adapter);
-
 	/* reset the hardware with the new settings */
 	igc_reset(adapter);
 
@@ -4818,6 +4814,9 @@ static int igc_probe(struct pci_dev *pdev,
 
 	 /* carrier off reporting is important to ethtool even BEFORE open */
 	netif_carrier_off(netdev);
+
+	/* do hw tstamp init after resetting */
+	igc_ptp_init(adapter);
 
 	/* Check if Media Autosense is enabled */
 	adapter->ei = *ei;

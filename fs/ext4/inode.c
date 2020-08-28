@@ -384,7 +384,8 @@ static int __check_block_validity(struct inode *inode, const char *func,
 	    (inode->i_ino ==
 	     le32_to_cpu(EXT4_SB(inode->i_sb)->s_es->s_journal_inum)))
 		return 0;
-	if (!ext4_inode_block_valid(inode, map->m_pblk, map->m_len)) {
+	if (!ext4_data_block_valid(EXT4_SB(inode->i_sb), map->m_pblk,
+				   map->m_len)) {
 		ext4_error_inode(inode, func, line, map->m_pblk,
 				 "lblock %lu mapped to illegal pblock %llu "
 				 "(length %d)", (unsigned long) map->m_lblk,
@@ -1295,7 +1296,7 @@ static int ext4_write_end(struct file *file,
 	 * filesystems.
 	 */
 	if (i_size_changed || inline_data)
-		ret = ext4_mark_inode_dirty(handle, inode);
+		ext4_mark_inode_dirty(handle, inode);
 
 	if (pos + len > inode->i_size && !verity && ext4_can_truncate(inode))
 		/* if we have allocated more blocks and copied
@@ -3076,7 +3077,7 @@ static int ext4_da_write_end(struct file *file,
 			 * new_i_size is less that inode->i_size
 			 * bu greater than i_disksize.(hint delalloc)
 			 */
-			ret = ext4_mark_inode_dirty(handle, inode);
+			ext4_mark_inode_dirty(handle, inode);
 		}
 	}
 
@@ -3093,7 +3094,7 @@ static int ext4_da_write_end(struct file *file,
 	if (ret2 < 0)
 		ret = ret2;
 	ret2 = ext4_journal_stop(handle);
-	if (unlikely(ret2 && !ret))
+	if (!ret)
 		ret = ret2;
 
 	return ret ? ret : copied;
@@ -3885,8 +3886,6 @@ int ext4_update_disksize_before_punch(struct inode *inode, loff_t offset,
 				      loff_t len)
 {
 	handle_t *handle;
-	int ret;
-
 	loff_t size = i_size_read(inode);
 
 	WARN_ON(!inode_is_locked(inode));
@@ -3900,10 +3899,10 @@ int ext4_update_disksize_before_punch(struct inode *inode, loff_t offset,
 	if (IS_ERR(handle))
 		return PTR_ERR(handle);
 	ext4_update_i_disksize(inode, size);
-	ret = ext4_mark_inode_dirty(handle, inode);
+	ext4_mark_inode_dirty(handle, inode);
 	ext4_journal_stop(handle);
 
-	return ret;
+	return 0;
 }
 
 static void ext4_wait_dax_page(struct ext4_inode_info *ei)
@@ -3955,7 +3954,7 @@ int ext4_punch_hole(struct inode *inode, loff_t offset, loff_t length)
 	loff_t first_block_offset, last_block_offset;
 	handle_t *handle;
 	unsigned int credits;
-	int ret = 0, ret2 = 0;
+	int ret = 0;
 
 	trace_ext4_punch_hole(inode, offset, length, 0);
 
@@ -4078,9 +4077,7 @@ int ext4_punch_hole(struct inode *inode, loff_t offset, loff_t length)
 		ext4_handle_sync(handle);
 
 	inode->i_mtime = inode->i_ctime = current_time(inode);
-	ret2 = ext4_mark_inode_dirty(handle, inode);
-	if (unlikely(ret2))
-		ret = ret2;
+	ext4_mark_inode_dirty(handle, inode);
 	if (ret >= 0)
 		ext4_update_inode_fsync_trans(handle, inode, 1);
 out_stop:
@@ -4149,7 +4146,7 @@ int ext4_truncate(struct inode *inode)
 {
 	struct ext4_inode_info *ei = EXT4_I(inode);
 	unsigned int credits;
-	int err = 0, err2;
+	int err = 0;
 	handle_t *handle;
 	struct address_space *mapping = inode->i_mapping;
 
@@ -4237,9 +4234,7 @@ out_stop:
 		ext4_orphan_del(handle, inode);
 
 	inode->i_mtime = inode->i_ctime = current_time(inode);
-	err2 = ext4_mark_inode_dirty(handle, inode);
-	if (unlikely(err2 && !err))
-		err = err2;
+	ext4_mark_inode_dirty(handle, inode);
 	ext4_journal_stop(handle);
 
 	trace_ext4_truncate_exit(inode);
@@ -4746,7 +4741,7 @@ struct inode *__ext4_iget(struct super_block *sb, unsigned long ino,
 
 	ret = 0;
 	if (ei->i_file_acl &&
-	    !ext4_inode_block_valid(inode, ei->i_file_acl, 1)) {
+	    !ext4_data_block_valid(EXT4_SB(sb), ei->i_file_acl, 1)) {
 		ext4_error_inode(inode, function, line, 0,
 				 "iget: bad extended attribute block %llu",
 				 ei->i_file_acl);
@@ -5297,8 +5292,6 @@ int ext4_setattr(struct dentry *dentry, struct iattr *attr)
 			inode->i_gid = attr->ia_gid;
 		error = ext4_mark_inode_dirty(handle, inode);
 		ext4_journal_stop(handle);
-		if (unlikely(error))
-			return error;
 	}
 
 	if (attr->ia_valid & ATTR_SIZE) {
@@ -5784,8 +5777,7 @@ out_unlock:
  * Whenever the user wants stuff synced (sys_sync, sys_msync, sys_fsync)
  * we start and wait on commits.
  */
-int __ext4_mark_inode_dirty(handle_t *handle, struct inode *inode,
-				const char *func, unsigned int line)
+int ext4_mark_inode_dirty(handle_t *handle, struct inode *inode)
 {
 	struct ext4_iloc iloc;
 	struct ext4_sb_info *sbi = EXT4_SB(inode->i_sb);
@@ -5795,18 +5787,13 @@ int __ext4_mark_inode_dirty(handle_t *handle, struct inode *inode,
 	trace_ext4_mark_inode_dirty(inode, _RET_IP_);
 	err = ext4_reserve_inode_write(handle, inode, &iloc);
 	if (err)
-		goto out;
+		return err;
 
 	if (EXT4_I(inode)->i_extra_isize < sbi->s_want_extra_isize)
 		ext4_try_to_expand_extra_isize(inode, sbi->s_want_extra_isize,
 					       iloc, handle);
 
-	err = ext4_mark_iloc_dirty(handle, inode, &iloc);
-out:
-	if (unlikely(err))
-		ext4_error_inode_err(inode, func, line, 0, err,
-					"mark_inode_dirty error");
-	return err;
+	return ext4_mark_iloc_dirty(handle, inode, &iloc);
 }
 
 /*

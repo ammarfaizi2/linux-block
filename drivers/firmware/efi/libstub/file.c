@@ -104,20 +104,12 @@ static int find_file_option(const efi_char16_t *cmdline, int cmdline_len,
 	if (!found)
 		return 0;
 
-	/* Skip any leading slashes */
-	while (cmdline[i] == L'/' || cmdline[i] == L'\\')
-		i++;
-
 	while (--result_len > 0 && i < cmdline_len) {
-		efi_char16_t c = cmdline[i++];
-
-		if (c == L'\0' || c == L'\n' || c == L' ')
+		if (cmdline[i] == L'\0' ||
+		    cmdline[i] == L'\n' ||
+		    cmdline[i] == L' ')
 			break;
-		else if (c == L'/')
-			/* Replace UNIX dir separators with EFI standard ones */
-			*result++ = L'\\';
-		else
-			*result++ = c;
+		*result++ = cmdline[i++];
 	}
 	*result = L'\0';
 	return i;

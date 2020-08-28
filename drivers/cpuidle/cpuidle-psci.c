@@ -58,10 +58,6 @@ static int psci_enter_domain_idle_state(struct cpuidle_device *dev,
 	u32 state;
 	int ret;
 
-	ret = cpu_pm_enter();
-	if (ret)
-		return -1;
-
 	/* Do runtime PM to manage a hierarchical CPU toplogy. */
 	pm_runtime_put_sync_suspend(pd_dev);
 
@@ -69,11 +65,9 @@ static int psci_enter_domain_idle_state(struct cpuidle_device *dev,
 	if (!state)
 		state = states[idx];
 
-	ret = psci_cpu_suspend_enter(state) ? -1 : idx;
+	ret = psci_enter_state(idx, state);
 
 	pm_runtime_get_sync(pd_dev);
-
-	cpu_pm_exit();
 
 	/* Clear the domain state to start fresh when back from idle. */
 	psci_set_domain_state(0);

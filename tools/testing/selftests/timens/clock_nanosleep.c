@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
 
 	ksft_set_plan(4);
 
-	check_supported_timers();
+	check_config_posix_timers();
 
 	if (unshare_timens())
 		return 1;

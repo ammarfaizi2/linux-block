@@ -252,7 +252,6 @@ static void common_default_data(struct plat_stmmacenet_data *plat)
 static int intel_mgbe_common_data(struct pci_dev *pdev,
 				  struct plat_stmmacenet_data *plat)
 {
-	int ret;
 	int i;
 
 	plat->clk_csr = 5;
@@ -325,12 +324,7 @@ static int intel_mgbe_common_data(struct pci_dev *pdev,
 		dev_warn(&pdev->dev, "Fail to register stmmac-clk\n");
 		plat->stmmac_clk = NULL;
 	}
-
-	ret = clk_prepare_enable(plat->stmmac_clk);
-	if (ret) {
-		clk_unregister_fixed_rate(plat->stmmac_clk);
-		return ret;
-	}
+	clk_prepare_enable(plat->stmmac_clk);
 
 	/* Set default value for multicast hash bins */
 	plat->multicast_filter_bins = HASH_TABLE_SIZE;
@@ -663,13 +657,7 @@ static int intel_eth_pci_probe(struct pci_dev *pdev,
 	res.wol_irq = pdev->irq;
 	res.irq = pdev->irq;
 
-	ret = stmmac_dvr_probe(&pdev->dev, plat, &res);
-	if (ret) {
-		clk_disable_unprepare(plat->stmmac_clk);
-		clk_unregister_fixed_rate(plat->stmmac_clk);
-	}
-
-	return ret;
+	return stmmac_dvr_probe(&pdev->dev, plat, &res);
 }
 
 /**
@@ -687,8 +675,8 @@ static void intel_eth_pci_remove(struct pci_dev *pdev)
 
 	stmmac_dvr_remove(&pdev->dev);
 
-	clk_disable_unprepare(priv->plat->stmmac_clk);
-	clk_unregister_fixed_rate(priv->plat->stmmac_clk);
+	if (priv->plat->stmmac_clk)
+		clk_unregister_fixed_rate(priv->plat->stmmac_clk);
 
 	for (i = 0; i < PCI_STD_NUM_BARS; i++) {
 		if (pci_resource_len(pdev, i) == 0)

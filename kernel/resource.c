@@ -1126,7 +1126,6 @@ struct resource * __request_region(struct resource *parent,
 {
 	DECLARE_WAITQUEUE(wait, current);
 	struct resource *res = alloc_resource(GFP_KERNEL);
-	struct resource *orig_parent = parent;
 
 	if (!res)
 		return NULL;
@@ -1177,10 +1176,6 @@ struct resource * __request_region(struct resource *parent,
 		break;
 	}
 	write_unlock(&resource_lock);
-
-	if (res && orig_parent == &iomem_resource)
-		revoke_devmem(res);
-
 	return res;
 }
 EXPORT_SYMBOL(__request_region);

@@ -840,6 +840,7 @@ static int __init dra7xx_pcie_probe(struct platform_device *pdev)
 	struct phy **phy;
 	struct device_link **link;
 	void __iomem *base;
+	struct resource *res;
 	struct dw_pcie *pci;
 	struct dra7xx_pcie *dra7xx;
 	struct device *dev = &pdev->dev;
@@ -876,9 +877,10 @@ static int __init dra7xx_pcie_probe(struct platform_device *pdev)
 		return irq;
 	}
 
-	base = devm_platform_ioremap_resource_byname(pdev, "ti_conf");
-	if (IS_ERR(base))
-		return PTR_ERR(base);
+	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "ti_conf");
+	base = devm_ioremap(dev, res->start, resource_size(res));
+	if (!base)
+		return -ENOMEM;
 
 	phy_count = of_property_count_strings(np, "phy-names");
 	if (phy_count < 0) {

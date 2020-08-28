@@ -26,9 +26,8 @@ static int boot_config_proc_show(struct seq_file *m, void *v)
 static int __init copy_xbc_key_value_list(char *dst, size_t size)
 {
 	struct xbc_node *leaf, *vnode;
-	char *key, *end = dst + size;
 	const char *val;
-	char q;
+	char *key, *end = dst + size;
 	int ret = 0;
 
 	key = kzalloc(XBC_KEYLEN_MAX, GFP_KERNEL);
@@ -42,20 +41,16 @@ static int __init copy_xbc_key_value_list(char *dst, size_t size)
 			break;
 		dst += ret;
 		vnode = xbc_node_get_child(leaf);
-		if (vnode) {
+		if (vnode && xbc_node_is_array(vnode)) {
 			xbc_array_for_each_value(vnode, val) {
-				if (strchr(val, '"'))
-					q = '\'';
-				else
-					q = '"';
-				ret = snprintf(dst, rest(dst, end), "%c%s%c%s",
-					q, val, q, vnode->next ? ", " : "\n");
+				ret = snprintf(dst, rest(dst, end), "\"%s\"%s",
+					val, vnode->next ? ", " : "\n");
 				if (ret < 0)
 					goto out;
 				dst += ret;
 			}
 		} else {
-			ret = snprintf(dst, rest(dst, end), "\"\"\n");
+			ret = snprintf(dst, rest(dst, end), "\"%s\"\n", val);
 			if (ret < 0)
 				break;
 			dst += ret;

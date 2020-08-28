@@ -634,13 +634,9 @@ static int sdhci_pre_dma_transfer(struct sdhci_host *host,
 		}
 		if (mmc_get_dma_dir(data) == DMA_TO_DEVICE) {
 			/* Copy the data to the bounce buffer */
-			if (host->ops->copy_to_bounce_buffer) {
-				host->ops->copy_to_bounce_buffer(host,
-								 data, length);
-			} else {
-				sg_copy_to_buffer(data->sg, data->sg_len,
-						  host->bounce_buffer, length);
-			}
+			sg_copy_to_buffer(data->sg, data->sg_len,
+					  host->bounce_buffer,
+					  length);
 		}
 		/* Switch ownership to the DMA */
 		dma_sync_single_for_device(host->mmc->parent,

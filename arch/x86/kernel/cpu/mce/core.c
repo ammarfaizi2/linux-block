@@ -529,13 +529,6 @@ bool mce_is_memory_error(struct mce *m)
 }
 EXPORT_SYMBOL_GPL(mce_is_memory_error);
 
-static bool whole_page(struct mce *m)
-{
-	if (!mca_cfg.ser || !(m->status & MCI_STATUS_MISCV))
-		return true;
-	return MCI_MISC_ADDR_LSB(m->misc) >= PAGE_SHIFT;
-}
-
 bool mce_is_correctable(struct mce *m)
 {
 	if (m->cpuvendor == X86_VENDOR_AMD && m->status & MCI_STATUS_DEFERRED)
@@ -607,7 +600,7 @@ static int uc_decode_notifier(struct notifier_block *nb, unsigned long val,
 
 	pfn = mce->addr >> PAGE_SHIFT;
 	if (!memory_failure(pfn, 0))
-		set_mce_nospec(pfn, whole_page(mce));
+		set_mce_nospec(pfn);
 
 	return NOTIFY_OK;
 }
@@ -1105,7 +1098,7 @@ static int do_memory_failure(struct mce *m)
 	if (ret)
 		pr_err("Memory error not recovered");
 	else
-		set_mce_nospec(m->addr >> PAGE_SHIFT, whole_page(m));
+		set_mce_nospec(m->addr >> PAGE_SHIFT);
 	return ret;
 }
 

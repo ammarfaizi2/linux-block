@@ -771,8 +771,7 @@ static int fuse_check_page(struct page *page)
 	       1 << PG_uptodate |
 	       1 << PG_lru |
 	       1 << PG_active |
-	       1 << PG_reclaim |
-	       1 << PG_waiters))) {
+	       1 << PG_reclaim))) {
 		pr_warn("trying to steal weird page\n");
 		pr_warn("  page=%p index=%li flags=%08lx, count=%i, mapcount=%i, mapping=%p\n", page, page->index, page->flags, page_count(page), page_mapcount(page), page->mapping);
 		return 1;
@@ -1978,9 +1977,8 @@ static ssize_t fuse_dev_splice_write(struct pipe_inode_info *pipe,
 		struct pipe_buffer *ibuf;
 		struct pipe_buffer *obuf;
 
-		if (WARN_ON(nbuf >= count || tail == head))
-			goto out_free;
-
+		BUG_ON(nbuf >= pipe->ring_size);
+		BUG_ON(tail == head);
 		ibuf = &pipe->bufs[tail & mask];
 		obuf = &bufs[nbuf];
 

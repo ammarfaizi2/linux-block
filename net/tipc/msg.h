@@ -321,19 +321,9 @@ static inline int msg_ack_required(struct tipc_msg *m)
 	return msg_bits(m, 0, 18, 1);
 }
 
-static inline void msg_set_ack_required(struct tipc_msg *m)
+static inline void msg_set_ack_required(struct tipc_msg *m, u32 d)
 {
-	msg_set_bits(m, 0, 18, 1, 1);
-}
-
-static inline int msg_nagle_ack(struct tipc_msg *m)
-{
-	return msg_bits(m, 0, 18, 1);
-}
-
-static inline void msg_set_nagle_ack(struct tipc_msg *m)
-{
-	msg_set_bits(m, 0, 18, 1, 1);
+	msg_set_bits(m, 0, 18, 1, d);
 }
 
 static inline bool msg_is_rcast(struct tipc_msg *m)

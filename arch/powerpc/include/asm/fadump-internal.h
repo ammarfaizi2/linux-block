@@ -64,14 +64,12 @@ struct fadump_memory_range {
 };
 
 /* fadump memory ranges info */
-#define RNG_NAME_SZ			16
 struct fadump_mrange_info {
-	char				name[RNG_NAME_SZ];
+	char				name[16];
 	struct fadump_memory_range	*mem_ranges;
 	u32				mem_ranges_sz;
 	u32				mem_range_cnt;
 	u32				max_mem_ranges;
-	bool				is_static;
 };
 
 /* Platform specific callback functions */

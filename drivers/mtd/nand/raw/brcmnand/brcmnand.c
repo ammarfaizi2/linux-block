@@ -606,9 +606,8 @@ static int brcmnand_revision_init(struct brcmnand_controller *ctrl)
 	} else {
 		ctrl->cs_offsets = brcmnand_cs_offsets;
 
-		/* v3.3-5.0 have a different CS0 offset layout */
-		if (ctrl->nand_version >= 0x0303 &&
-		    ctrl->nand_version <= 0x0500)
+		/* v5.0 and earlier has a different CS0 offset layout */
+		if (ctrl->nand_version <= 0x0500)
 			ctrl->cs0_offsets = brcmnand_cs_offsets_cs0;
 	}
 
@@ -1117,14 +1116,11 @@ static int brcmnand_hamming_ooblayout_free(struct mtd_info *mtd, int section,
 		if (!section) {
 			/*
 			 * Small-page NAND use byte 6 for BBI while large-page
-			 * NAND use bytes 0 and 1.
+			 * NAND use byte 0.
 			 */
-			if (cfg->page_size > 512) {
-				oobregion->offset += 2;
-				oobregion->length -= 2;
-			} else {
-				oobregion->length--;
-			}
+			if (cfg->page_size > 512)
+				oobregion->offset++;
+			oobregion->length--;
 		}
 	}
 
@@ -1859,22 +1855,6 @@ static int brcmnand_edu_trans(struct brcmnand_host *host, u64 addr, u32 *buf,
 	edu_writel(ctrl, EDU_STOP, 0); /* force stop */
 	edu_readl(ctrl, EDU_STOP);
 
-	if (!ret && edu_cmd == EDU_CMD_READ) {
-		u64 err_addr = 0;
-
-		/*
-		 * check for ECC errors here, subpage ECC errors are
-		 * retained in ECC error address register
-		 */
-		err_addr = brcmnand_get_uncorrecc_addr(ctrl);
-		if (!err_addr) {
-			err_addr = brcmnand_get_correcc_addr(ctrl);
-			if (err_addr)
-				ret = -EUCLEAN;
-		} else
-			ret = -EBADMSG;
-	}
-
 	return ret;
 }
 
@@ -2038,31 +2018,28 @@ static int brcmnand_read_by_pio(struct mtd_info *mtd, struct nand_chip *chip,
 static int brcmstb_nand_verify_erased_page(struct mtd_info *mtd,
 		  struct nand_chip *chip, void *buf, u64 addr)
 {
-	struct mtd_oob_region ecc;
-	int i;
+	int i, sas;
+	void *oob = chip->oob_poi;
 	int bitflips = 0;
 	int page = addr >> chip->page_shift;
 	int ret;
-	void *ecc_bytes;
 	void *ecc_chunk;
 
 	if (!buf)
 		buf = nand_get_data_buf(chip);
+
+	sas = mtd->oobsize / chip->ecc.steps;
 
 	/* read without ecc for verification */
 	ret = chip->ecc.read_page_raw(chip, buf, true, page);
 	if (ret)
 		return ret;
 
-	for (i = 0; i < chip->ecc.steps; i++) {
+	for (i = 0; i < chip->ecc.steps; i++, oob += sas) {
 		ecc_chunk = buf + chip->ecc.size * i;
-
-		mtd_ooblayout_ecc(mtd, i, &ecc);
-		ecc_bytes = chip->oob_poi + ecc.offset;
-
-		ret = nand_check_erased_ecc_chunk(ecc_chunk, chip->ecc.size,
-						  ecc_bytes, ecc.length,
-						  NULL, 0,
+		ret = nand_check_erased_ecc_chunk(ecc_chunk,
+						  chip->ecc.size,
+						  oob, sas, NULL, 0,
 						  chip->ecc.strength);
 		if (ret < 0)
 			return ret;
@@ -2081,7 +2058,6 @@ static int brcmnand_read(struct mtd_info *mtd, struct nand_chip *chip,
 	u64 err_addr = 0;
 	int err;
 	bool retry = true;
-	bool edu_err = false;
 
 	dev_dbg(ctrl->dev, "read %llx -> %p\n", (unsigned long long)addr, buf);
 
@@ -2099,10 +2075,6 @@ try_dmaread:
 			else
 				return -EIO;
 		}
-
-		if (has_edu(ctrl) && err_addr)
-			edu_err = true;
-
 	} else {
 		if (oob)
 			memset(oob, 0x99, mtd->oobsize);
@@ -2149,11 +2121,6 @@ try_dmaread:
 
 	if (mtd_is_bitflip(err)) {
 		unsigned int corrected = brcmnand_count_corrected(ctrl);
-
-		/* in case of EDU correctable error we read again using PIO */
-		if (edu_err)
-			err = brcmnand_read_by_pio(mtd, chip, addr, trans, buf,
-						   oob, &err_addr);
 
 		dev_dbg(ctrl->dev, "corrected error at 0x%llx\n",
 			(unsigned long long)err_addr);
@@ -2986,9 +2953,8 @@ int brcmnand_probe(struct platform_device *pdev, struct brcmnand_soc *soc)
 		if (ret < 0)
 			goto err;
 
-		if (has_edu(ctrl))
-			/* set edu transfer function to call */
-			ctrl->dma_trans = brcmnand_edu_trans;
+		/* set edu transfer function to call */
+		ctrl->dma_trans = brcmnand_edu_trans;
 	}
 
 	/* Disable automatic device ID config, direct addressing */

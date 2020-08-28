@@ -110,8 +110,8 @@ static int mlxbf2_gpio_get_lock_res(struct platform_device *pdev)
 	}
 
 	yu_arm_gpio_lock_param.io = devm_ioremap(dev, res->start, size);
-	if (!yu_arm_gpio_lock_param.io)
-		ret = -ENOMEM;
+	if (IS_ERR(yu_arm_gpio_lock_param.io))
+		ret = PTR_ERR(yu_arm_gpio_lock_param.io);
 
 exit:
 	mutex_unlock(yu_arm_gpio_lock_param.lock);

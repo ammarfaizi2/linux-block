@@ -201,25 +201,25 @@ static int __ring_active(struct intel_ring *ring)
 {
 	int err;
 
-	err = intel_ring_pin(ring);
+	err = i915_active_acquire(&ring->vma->active);
 	if (err)
 		return err;
 
-	err = i915_active_acquire(&ring->vma->active);
+	err = intel_ring_pin(ring);
 	if (err)
-		goto err_pin;
+		goto err_active;
 
 	return 0;
 
-err_pin:
-	intel_ring_unpin(ring);
+err_active:
+	i915_active_release(&ring->vma->active);
 	return err;
 }
 
 static void __ring_retire(struct intel_ring *ring)
 {
-	i915_active_release(&ring->vma->active);
 	intel_ring_unpin(ring);
+	i915_active_release(&ring->vma->active);
 }
 
 __i915_active_call

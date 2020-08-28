@@ -217,9 +217,6 @@ static int am65_cpsw_nuss_ndo_slave_add_vid(struct net_device *ndev,
 	u32 port_mask, unreg_mcast = 0;
 	int ret;
 
-	if (!netif_running(ndev) || !vid)
-		return 0;
-
 	ret = pm_runtime_get_sync(common->dev);
 	if (ret < 0) {
 		pm_runtime_put_noidle(common->dev);
@@ -242,9 +239,6 @@ static int am65_cpsw_nuss_ndo_slave_kill_vid(struct net_device *ndev,
 {
 	struct am65_cpsw_common *common = am65_ndev_to_common(ndev);
 	int ret;
-
-	if (!netif_running(ndev) || !vid)
-		return 0;
 
 	ret = pm_runtime_get_sync(common->dev);
 	if (ret < 0) {
@@ -571,16 +565,6 @@ static int am65_cpsw_nuss_ndo_slave_stop(struct net_device *ndev)
 	return 0;
 }
 
-static int cpsw_restore_vlans(struct net_device *vdev, int vid, void *arg)
-{
-	struct am65_cpsw_port *port = arg;
-
-	if (!vdev)
-		return 0;
-
-	return am65_cpsw_nuss_ndo_slave_add_vid(port->ndev, 0, vid);
-}
-
 static int am65_cpsw_nuss_ndo_slave_open(struct net_device *ndev)
 {
 	struct am65_cpsw_common *common = am65_ndev_to_common(ndev);
@@ -653,9 +637,6 @@ static int am65_cpsw_nuss_ndo_slave_open(struct net_device *ndev)
 			goto error_cleanup;
 		}
 	}
-
-	/* restore vlan configurations */
-	vlan_for_each(ndev, cpsw_restore_vlans, port);
 
 	phy_attached_info(port->slave.phy);
 	phy_start(port->slave.phy);
@@ -1823,7 +1804,7 @@ MODULE_DEVICE_TABLE(of, am65_cpsw_nuss_of_mtable);
 
 static int am65_cpsw_nuss_probe(struct platform_device *pdev)
 {
-	struct cpsw_ale_params ale_params = { 0 };
+	struct cpsw_ale_params ale_params;
 	const struct of_device_id *of_id;
 	struct device *dev = &pdev->dev;
 	struct am65_cpsw_common *common;

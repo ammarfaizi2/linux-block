@@ -314,8 +314,7 @@ static int pca_xfer(struct i2c_adapter *i2c_adap,
 			DEB2("BUS ERROR - SDA Stuck low\n");
 			pca_reset(adap);
 			goto out;
-		case 0x78: /* Bus error - SCL stuck low (PCA9665) */
-		case 0x90: /* Bus error - SCL stuck low (PCA9564) */
+		case 0x90: /* Bus error - SCL stuck low */
 			DEB2("BUS ERROR - SCL Stuck low\n");
 			pca_reset(adap);
 			goto out;

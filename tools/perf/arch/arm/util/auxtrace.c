@@ -56,7 +56,7 @@ struct auxtrace_record
 	struct perf_pmu	*cs_etm_pmu;
 	struct evsel *evsel;
 	bool found_etm = false;
-	struct perf_pmu *found_spe = NULL;
+	bool found_spe = false;
 	static struct perf_pmu **arm_spe_pmus = NULL;
 	static int nr_spes = 0;
 	int i = 0;
@@ -74,12 +74,12 @@ struct auxtrace_record
 		    evsel->core.attr.type == cs_etm_pmu->type)
 			found_etm = true;
 
-		if (!nr_spes || found_spe)
+		if (!nr_spes)
 			continue;
 
 		for (i = 0; i < nr_spes; i++) {
 			if (evsel->core.attr.type == arm_spe_pmus[i]->type) {
-				found_spe = arm_spe_pmus[i];
+				found_spe = true;
 				break;
 			}
 		}
@@ -96,7 +96,7 @@ struct auxtrace_record
 
 #if defined(__aarch64__)
 	if (found_spe)
-		return arm_spe_recording_init(err, found_spe);
+		return arm_spe_recording_init(err, arm_spe_pmus[i]);
 #endif
 
 	/*

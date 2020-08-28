@@ -343,8 +343,7 @@ struct paravirt_patch_template pv_ops = {
 	.cpu.swapgs		= native_swapgs,
 
 #ifdef CONFIG_X86_IOPL_IOPERM
-	.cpu.invalidate_io_bitmap	= native_tss_invalidate_io_bitmap,
-	.cpu.update_io_bitmap		= native_tss_update_io_bitmap,
+	.cpu.update_io_bitmap	= native_tss_update_io_bitmap,
 #endif
 
 	.cpu.start_context_switch	= paravirt_nop,
