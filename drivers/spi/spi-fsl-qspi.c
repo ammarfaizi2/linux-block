@@ -410,7 +410,7 @@ static bool fsl_qspi_supports_op(struct spi_mem *mem,
 	    op->data.nbytes > q->devtype_data->txfifo)
 		return false;
 
-	return spi_mem_default_supports_op(mem, op);
+	return true;
 }
 
 static void fsl_qspi_prepare_lut(struct fsl_qspi *q,

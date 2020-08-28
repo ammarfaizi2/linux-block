@@ -132,12 +132,8 @@ int bcmgenet_wol_power_down_cfg(struct bcmgenet_priv *priv,
 		return -EINVAL;
 	}
 
-	/* Can't suspend with WoL if MAC is still in reset */
-	reg = bcmgenet_umac_readl(priv, UMAC_CMD);
-	if (reg & CMD_SW_RESET)
-		reg &= ~CMD_SW_RESET;
-
 	/* disable RX */
+	reg = bcmgenet_umac_readl(priv, UMAC_CMD);
 	reg &= ~CMD_RX_EN;
 	bcmgenet_umac_writel(priv, reg, UMAC_CMD);
 	mdelay(10);

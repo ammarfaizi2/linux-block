@@ -8,6 +8,4 @@ TEST_PROGS := \
 	test-state.sh \
 	test-ftrace.sh
 
-TEST_FILES := settings
-
 include ../lib.mk

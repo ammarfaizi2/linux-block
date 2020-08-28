@@ -16,7 +16,6 @@
 #include <linux/slab.h>
 #include <linux/kthread.h>
 #include <linux/rculist_nulls.h>
-#include <linux/fs_struct.h>
 
 #include "io-wq.h"
 
@@ -59,7 +58,6 @@ struct io_worker {
 	struct mm_struct *mm;
 	const struct cred *creds;
 	struct files_struct *restore_files;
-	struct fs_struct *restore_fs;
 };
 
 #if BITS_PER_LONG == 64
@@ -151,9 +149,6 @@ static bool __io_worker_unuse(struct io_wqe *wqe, struct io_worker *worker)
 		current->files = worker->restore_files;
 		task_unlock(current);
 	}
-
-	if (current->fs != worker->restore_fs)
-		current->fs = worker->restore_fs;
 
 	/*
 	 * If we have an active mm, we need to drop the wq lock before unusing
@@ -315,7 +310,6 @@ static void io_worker_start(struct io_wqe *wqe, struct io_worker *worker)
 
 	worker->flags |= (IO_WORKER_F_UP | IO_WORKER_F_RUNNING);
 	worker->restore_files = current->files;
-	worker->restore_fs = current->fs;
 	io_wqe_inc_running(wqe, worker);
 }
 
@@ -462,8 +456,6 @@ next:
 		}
 		if (!worker->creds)
 			worker->creds = override_creds(wq->creds);
-		if (work->fs && current->fs != work->fs)
-			current->fs = work->fs;
 		if (test_bit(IO_WQ_BIT_CANCEL, &wq->state))
 			work->flags |= IO_WQ_WORK_CANCEL;
 		if (worker->mm)
@@ -666,15 +658,10 @@ static int io_wq_manager(void *data)
 	/* create fixed workers */
 	refcount_set(&wq->refs, workers_to_create);
 	for_each_node(node) {
-		if (!node_online(node))
-			continue;
 		if (!create_io_worker(wq, wq->wqes[node], IO_WQ_ACCT_BOUND))
 			goto err;
 		workers_to_create--;
 	}
-
-	while (workers_to_create--)
-		refcount_dec(&wq->refs);
 
 	complete(&wq->done);
 
@@ -682,9 +669,6 @@ static int io_wq_manager(void *data)
 		for_each_node(node) {
 			struct io_wqe *wqe = wq->wqes[node];
 			bool fork_worker[2] = { false, false };
-
-			if (!node_online(node))
-				continue;
 
 			spin_lock_irq(&wqe->lock);
 			if (io_wqe_need_worker(wqe, IO_WQ_ACCT_BOUND))
@@ -733,17 +717,6 @@ static bool io_wq_can_queue(struct io_wqe *wqe, struct io_wqe_acct *acct,
 	return true;
 }
 
-static void io_run_cancel(struct io_wq_work *work)
-{
-	do {
-		struct io_wq_work *old_work = work;
-
-		work->flags |= IO_WQ_WORK_CANCEL;
-		work->func(&work);
-		work = (work == old_work) ? NULL : work;
-	} while (work);
-}
-
 static void io_wqe_enqueue(struct io_wqe *wqe, struct io_wq_work *work)
 {
 	struct io_wqe_acct *acct = io_work_get_acct(wqe, work);
@@ -756,7 +729,8 @@ static void io_wqe_enqueue(struct io_wqe *wqe, struct io_wq_work *work)
 	 * It's close enough to not be an issue, fork() has the same delay.
 	 */
 	if (unlikely(!io_wq_can_queue(wqe, acct, work))) {
-		io_run_cancel(work);
+		work->flags |= IO_WQ_WORK_CANCEL;
+		work->func(&work);
 		return;
 	}
 
@@ -811,9 +785,7 @@ static bool io_wq_for_each_worker(struct io_wqe *wqe,
 
 	list_for_each_entry_rcu(worker, &wqe->all_list, all_list) {
 		if (io_worker_get(worker)) {
-			/* no task if node is/was offline */
-			if (worker->task)
-				ret = func(worker, data);
+			ret = func(worker, data);
 			io_worker_release(worker);
 			if (ret)
 				break;
@@ -892,7 +864,8 @@ static enum io_wq_cancel io_wqe_cancel_cb_work(struct io_wqe *wqe,
 	spin_unlock_irqrestore(&wqe->lock, flags);
 
 	if (found) {
-		io_run_cancel(work);
+		work->flags |= IO_WQ_WORK_CANCEL;
+		work->func(&work);
 		return IO_WQ_CANCEL_OK;
 	}
 
@@ -966,7 +939,8 @@ static enum io_wq_cancel io_wqe_cancel_work(struct io_wqe *wqe,
 	spin_unlock_irqrestore(&wqe->lock, flags);
 
 	if (found) {
-		io_run_cancel(work);
+		work->flags |= IO_WQ_WORK_CANCEL;
+		work->func(&work);
 		return IO_WQ_CANCEL_OK;
 	}
 
@@ -1024,8 +998,6 @@ void io_wq_flush(struct io_wq *wq)
 	for_each_node(node) {
 		struct io_wqe *wqe = wq->wqes[node];
 
-		if (!node_online(node))
-			continue;
 		init_completion(&data.done);
 		INIT_IO_WORK(&data.work, io_wq_flush_func);
 		data.work.flags |= IO_WQ_WORK_INTERNAL;
@@ -1058,15 +1030,12 @@ struct io_wq *io_wq_create(unsigned bounded, struct io_wq_data *data)
 
 	for_each_node(node) {
 		struct io_wqe *wqe;
-		int alloc_node = node;
 
-		if (!node_online(alloc_node))
-			alloc_node = NUMA_NO_NODE;
-		wqe = kzalloc_node(sizeof(struct io_wqe), GFP_KERNEL, alloc_node);
+		wqe = kzalloc_node(sizeof(struct io_wqe), GFP_KERNEL, node);
 		if (!wqe)
 			goto err;
 		wq->wqes[node] = wqe;
-		wqe->node = alloc_node;
+		wqe->node = node;
 		wqe->acct[IO_WQ_ACCT_BOUND].max_workers = bounded;
 		atomic_set(&wqe->acct[IO_WQ_ACCT_BOUND].nr_running, 0);
 		if (wq->user) {
@@ -1074,6 +1043,7 @@ struct io_wq *io_wq_create(unsigned bounded, struct io_wq_data *data)
 					task_rlimit(current, RLIMIT_NPROC);
 		}
 		atomic_set(&wqe->acct[IO_WQ_ACCT_UNBOUND].nr_running, 0);
+		wqe->node = node;
 		wqe->wq = wq;
 		spin_lock_init(&wqe->lock);
 		INIT_WQ_LIST(&wqe->work_list);

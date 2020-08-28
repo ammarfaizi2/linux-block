@@ -110,10 +110,10 @@ static ssize_t cpld_reconfigure(struct device *dev,
 				const char *buf, size_t count)
 {
 	struct kp2000_device *pcard = dev_get_drvdata(dev);
-	unsigned long wr_val;
+	long wr_val;
 	int rv;
 
-	rv = kstrtoul(buf, 0, &wr_val);
+	rv = kstrtol(buf, 0, &wr_val);
 	if (rv < 0)
 		return rv;
 	if (wr_val > 7)

@@ -145,7 +145,6 @@ static int afs_do_probe_fileserver(struct afs_net *net,
 	read_lock(&server->fs_lock);
 	ac.alist = rcu_dereference_protected(server->addresses,
 					     lockdep_is_held(&server->fs_lock));
-	afs_get_addrlist(ac.alist);
 	read_unlock(&server->fs_lock);
 
 	atomic_set(&server->probe_outstanding, ac.alist->nr_addrs);
@@ -164,7 +163,6 @@ static int afs_do_probe_fileserver(struct afs_net *net,
 
 	if (!in_progress)
 		afs_fs_probe_done(server);
-	afs_put_addrlist(ac.alist);
 	return in_progress;
 }
 

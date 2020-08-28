@@ -935,19 +935,25 @@ perf_cgroup_set_shadow_time(struct perf_event *event, u64 now)
 	event->shadow_ctx_time = now - t->timestamp;
 }
 
+/*
+ * Update cpuctx->cgrp so that it is set when first cgroup event is added and
+ * cleared when last cgroup event is removed.
+ */
 static inline void
-perf_cgroup_event_enable(struct perf_event *event, struct perf_event_context *ctx)
+list_update_cgroup_event(struct perf_event *event,
+			 struct perf_event_context *ctx, bool add)
 {
 	struct perf_cpu_context *cpuctx;
+	struct list_head *cpuctx_entry;
 
 	if (!is_cgroup_event(event))
 		return;
 
 	/*
 	 * Because cgroup events are always per-cpu events,
-	 * @ctx == &cpuctx->ctx.
+	 * this will always be called from the right CPU.
 	 */
-	cpuctx = container_of(ctx, struct perf_cpu_context, ctx);
+	cpuctx = __get_cpu_context(ctx);
 
 	/*
 	 * Since setting cpuctx->cgrp is conditional on the current @cgrp
@@ -955,41 +961,27 @@ perf_cgroup_event_enable(struct perf_event *event, struct perf_event_context *ct
 	 * because if the first would mismatch, the second would not try again
 	 * and we would leave cpuctx->cgrp unset.
 	 */
-	if (ctx->is_active && !cpuctx->cgrp) {
+	if (add && !cpuctx->cgrp) {
 		struct perf_cgroup *cgrp = perf_cgroup_from_task(current, ctx);
 
 		if (cgroup_is_descendant(cgrp->css.cgroup, event->cgrp->css.cgroup))
 			cpuctx->cgrp = cgrp;
 	}
 
-	if (ctx->nr_cgroups++)
+	if (add && ctx->nr_cgroups++)
+		return;
+	else if (!add && --ctx->nr_cgroups)
 		return;
 
-	list_add(&cpuctx->cgrp_cpuctx_entry,
-			per_cpu_ptr(&cgrp_cpuctx_list, event->cpu));
-}
-
-static inline void
-perf_cgroup_event_disable(struct perf_event *event, struct perf_event_context *ctx)
-{
-	struct perf_cpu_context *cpuctx;
-
-	if (!is_cgroup_event(event))
-		return;
-
-	/*
-	 * Because cgroup events are always per-cpu events,
-	 * @ctx == &cpuctx->ctx.
-	 */
-	cpuctx = container_of(ctx, struct perf_cpu_context, ctx);
-
-	if (--ctx->nr_cgroups)
-		return;
-
-	if (ctx->is_active && cpuctx->cgrp)
+	/* no cgroup running */
+	if (!add)
 		cpuctx->cgrp = NULL;
 
-	list_del(&cpuctx->cgrp_cpuctx_entry);
+	cpuctx_entry = &cpuctx->cgrp_cpuctx_entry;
+	if (add)
+		list_add(cpuctx_entry, this_cpu_ptr(&cgrp_cpuctx_list));
+	else
+		list_del(cpuctx_entry);
 }
 
 #else /* !CONFIG_CGROUP_PERF */
@@ -1055,14 +1047,11 @@ static inline u64 perf_cgroup_event_time(struct perf_event *event)
 }
 
 static inline void
-perf_cgroup_event_enable(struct perf_event *event, struct perf_event_context *ctx)
+list_update_cgroup_event(struct perf_event *event,
+			 struct perf_event_context *ctx, bool add)
 {
 }
 
-static inline void
-perf_cgroup_event_disable(struct perf_event *event, struct perf_event_context *ctx)
-{
-}
 #endif
 
 /*
@@ -1692,13 +1681,12 @@ list_add_event(struct perf_event *event, struct perf_event_context *ctx)
 		add_event_to_groups(event, ctx);
 	}
 
+	list_update_cgroup_event(event, ctx, true);
+
 	list_add_rcu(&event->event_entry, &ctx->event_list);
 	ctx->nr_events++;
 	if (event->attr.inherit_stat)
 		ctx->nr_stat++;
-
-	if (event->state > PERF_EVENT_STATE_OFF)
-		perf_cgroup_event_enable(event, ctx);
 
 	ctx->generation++;
 }
@@ -1875,6 +1863,8 @@ list_del_event(struct perf_event *event, struct perf_event_context *ctx)
 
 	event->attach_state &= ~PERF_ATTACH_CONTEXT;
 
+	list_update_cgroup_event(event, ctx, false);
+
 	ctx->nr_events--;
 	if (event->attr.inherit_stat)
 		ctx->nr_stat--;
@@ -1891,10 +1881,8 @@ list_del_event(struct perf_event *event, struct perf_event_context *ctx)
 	 * of error state is by explicit re-enabling
 	 * of the event
 	 */
-	if (event->state > PERF_EVENT_STATE_OFF) {
-		perf_cgroup_event_disable(event, ctx);
+	if (event->state > PERF_EVENT_STATE_OFF)
 		perf_event_set_state(event, PERF_EVENT_STATE_OFF);
-	}
 
 	ctx->generation++;
 }
@@ -1997,12 +1985,6 @@ static int perf_get_aux_event(struct perf_event *event,
 	return 1;
 }
 
-static inline struct list_head *get_event_list(struct perf_event *event)
-{
-	struct perf_event_context *ctx = event->ctx;
-	return event->attr.pinned ? &ctx->pinned_active : &ctx->flexible_active;
-}
-
 static void perf_group_detach(struct perf_event *event)
 {
 	struct perf_event *sibling, *tmp;
@@ -2045,8 +2027,12 @@ static void perf_group_detach(struct perf_event *event)
 		if (!RB_EMPTY_NODE(&event->group_node)) {
 			add_event_to_groups(sibling, event->ctx);
 
-			if (sibling->state == PERF_EVENT_STATE_ACTIVE)
-				list_add_tail(&sibling->active_list, get_event_list(sibling));
+			if (sibling->state == PERF_EVENT_STATE_ACTIVE) {
+				struct list_head *list = sibling->attr.pinned ?
+					&ctx->pinned_active : &ctx->flexible_active;
+
+				list_add_tail(&sibling->active_list, list);
+			}
 		}
 
 		WARN_ON_ONCE(sibling->ctx != event->ctx);
@@ -2125,7 +2111,6 @@ event_sched_out(struct perf_event *event,
 
 	if (READ_ONCE(event->pending_disable) >= 0) {
 		WRITE_ONCE(event->pending_disable, -1);
-		perf_cgroup_event_disable(event, ctx);
 		state = PERF_EVENT_STATE_OFF;
 	}
 	perf_event_set_state(event, state);
@@ -2262,7 +2247,6 @@ static void __perf_event_disable(struct perf_event *event,
 		event_sched_out(event, cpuctx, ctx);
 
 	perf_event_set_state(event, PERF_EVENT_STATE_OFF);
-	perf_cgroup_event_disable(event, ctx);
 }
 
 /*
@@ -2364,8 +2348,6 @@ event_sched_in(struct perf_event *event,
 		 struct perf_event_context *ctx)
 {
 	int ret = 0;
-
-	WARN_ON_ONCE(event->ctx != ctx);
 
 	lockdep_assert_held(&ctx->lock);
 
@@ -2646,7 +2628,7 @@ static int  __perf_install_in_context(void *info)
 	}
 
 #ifdef CONFIG_CGROUP_PERF
-	if (event->state > PERF_EVENT_STATE_OFF && is_cgroup_event(event)) {
+	if (is_cgroup_event(event)) {
 		/*
 		 * If the current cgroup doesn't match the event's
 		 * cgroup, we should not try to schedule it.
@@ -2806,7 +2788,6 @@ static void __perf_event_enable(struct perf_event *event,
 		ctx_sched_out(ctx, cpuctx, EVENT_TIME);
 
 	perf_event_set_state(event, PERF_EVENT_STATE_INACTIVE);
-	perf_cgroup_event_enable(event, ctx);
 
 	if (!ctx->is_active)
 		return;
@@ -3437,11 +3418,15 @@ static int visit_groups_merge(struct perf_event_groups *groups, int cpu,
 	return 0;
 }
 
-static int merge_sched_in(struct perf_event *event, void *data)
+struct sched_in_data {
+	struct perf_event_context *ctx;
+	struct perf_cpu_context *cpuctx;
+	int can_add_hw;
+};
+
+static int pinned_sched_in(struct perf_event *event, void *data)
 {
-	struct perf_event_context *ctx = event->ctx;
-	struct perf_cpu_context *cpuctx = __get_cpu_context(ctx);
-	int *can_add_hw = data;
+	struct sched_in_data *sid = data;
 
 	if (event->state <= PERF_EVENT_STATE_OFF)
 		return 0;
@@ -3449,19 +3434,39 @@ static int merge_sched_in(struct perf_event *event, void *data)
 	if (!event_filter_match(event))
 		return 0;
 
-	if (group_can_go_on(event, cpuctx, *can_add_hw)) {
-		if (!group_sched_in(event, cpuctx, ctx))
-			list_add_tail(&event->active_list, get_event_list(event));
+	if (group_can_go_on(event, sid->cpuctx, sid->can_add_hw)) {
+		if (!group_sched_in(event, sid->cpuctx, sid->ctx))
+			list_add_tail(&event->active_list, &sid->ctx->pinned_active);
 	}
 
-	if (event->state == PERF_EVENT_STATE_INACTIVE) {
-		if (event->attr.pinned) {
-			perf_cgroup_event_disable(event, ctx);
-			perf_event_set_state(event, PERF_EVENT_STATE_ERROR);
-		}
+	/*
+	 * If this pinned group hasn't been scheduled,
+	 * put it in error state.
+	 */
+	if (event->state == PERF_EVENT_STATE_INACTIVE)
+		perf_event_set_state(event, PERF_EVENT_STATE_ERROR);
 
-		*can_add_hw = 0;
-		ctx->rotate_necessary = 1;
+	return 0;
+}
+
+static int flexible_sched_in(struct perf_event *event, void *data)
+{
+	struct sched_in_data *sid = data;
+
+	if (event->state <= PERF_EVENT_STATE_OFF)
+		return 0;
+
+	if (!event_filter_match(event))
+		return 0;
+
+	if (group_can_go_on(event, sid->cpuctx, sid->can_add_hw)) {
+		int ret = group_sched_in(event, sid->cpuctx, sid->ctx);
+		if (ret) {
+			sid->can_add_hw = 0;
+			sid->ctx->rotate_necessary = 1;
+			return 0;
+		}
+		list_add_tail(&event->active_list, &sid->ctx->flexible_active);
 	}
 
 	return 0;
@@ -3471,22 +3476,30 @@ static void
 ctx_pinned_sched_in(struct perf_event_context *ctx,
 		    struct perf_cpu_context *cpuctx)
 {
-	int can_add_hw = 1;
+	struct sched_in_data sid = {
+		.ctx = ctx,
+		.cpuctx = cpuctx,
+		.can_add_hw = 1,
+	};
 
 	visit_groups_merge(&ctx->pinned_groups,
 			   smp_processor_id(),
-			   merge_sched_in, &can_add_hw);
+			   pinned_sched_in, &sid);
 }
 
 static void
 ctx_flexible_sched_in(struct perf_event_context *ctx,
 		      struct perf_cpu_context *cpuctx)
 {
-	int can_add_hw = 1;
+	struct sched_in_data sid = {
+		.ctx = ctx,
+		.cpuctx = cpuctx,
+		.can_add_hw = 1,
+	};
 
 	visit_groups_merge(&ctx->flexible_groups,
 			   smp_processor_id(),
-			   merge_sched_in, &can_add_hw);
+			   flexible_sched_in, &sid);
 }
 
 static void
@@ -5903,15 +5916,7 @@ accounting:
 	 */
 	user_lock_limit *= num_online_cpus();
 
-	user_locked = atomic_long_read(&user->locked_vm);
-
-	/*
-	 * sysctl_perf_event_mlock may have changed, so that
-	 *     user->locked_vm > user_lock_limit
-	 */
-	if (user_locked > user_lock_limit)
-		user_locked = user_lock_limit;
-	user_locked += user_extra;
+	user_locked = atomic_long_read(&user->locked_vm) + user_extra;
 
 	if (user_locked > user_lock_limit) {
 		/*

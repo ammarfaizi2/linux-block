@@ -3242,9 +3242,6 @@ int amdgpu_device_suspend(struct drm_device *dev, bool suspend, bool fbcon)
 		}
 	}
 
-	amdgpu_device_set_pg_state(adev, AMD_PG_STATE_UNGATE);
-	amdgpu_device_set_cg_state(adev, AMD_CG_STATE_UNGATE);
-
 	amdgpu_amdkfd_suspend(adev);
 
 	amdgpu_ras_suspend(adev);
@@ -3642,6 +3639,8 @@ static int amdgpu_device_reset_sriov(struct amdgpu_device *adev,
 	if (r)
 		return r;
 
+	amdgpu_amdkfd_pre_reset(adev);
+
 	/* Resume IP prior to SMC */
 	r = amdgpu_device_ip_reinit_early_sriov(adev);
 	if (r)
@@ -3857,8 +3856,6 @@ static int amdgpu_do_asic_reset(struct amdgpu_hive_info *hive,
 				if (r)
 					goto out;
 
-				amdgpu_fbdev_set_suspend(tmp_adev, 0);
-
 				/* must succeed. */
 				amdgpu_ras_resume(tmp_adev);
 
@@ -4027,8 +4024,6 @@ int amdgpu_device_gpu_recover(struct amdgpu_device *adev,
 		 * And add them back after reset completed
 		 */
 		amdgpu_unregister_gpu_instance(tmp_adev);
-
-		amdgpu_fbdev_set_suspend(adev, 1);
 
 		/* disable ras on ALL IPs */
 		if (!in_ras_intr && amdgpu_device_ip_need_full_reset(tmp_adev))

@@ -1806,12 +1806,10 @@ static struct kvm_vcpu *kvmppc_core_vcpu_create_pr(struct kvm *kvm,
 
 	err = kvmppc_mmu_init(vcpu);
 	if (err < 0)
-		goto free_shared_page;
+		goto uninit_vcpu;
 
 	return vcpu;
 
-free_shared_page:
-	free_page((unsigned long)vcpu->arch.shared);
 uninit_vcpu:
 	kvm_vcpu_uninit(vcpu);
 free_shadow_vcpu:
@@ -2032,7 +2030,6 @@ static int kvm_vm_ioctl_get_smmu_info_pr(struct kvm *kvm,
 {
 	/* We should not get called */
 	BUG();
-	return 0;
 }
 #endif /* CONFIG_PPC64 */
 

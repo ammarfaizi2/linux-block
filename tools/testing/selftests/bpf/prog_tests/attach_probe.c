@@ -20,7 +20,7 @@ extern char NAME##_data[];						    \
 extern int NAME##_size;
 
 ssize_t get_base_addr() {
-	size_t start, offset;
+	size_t start;
 	char buf[256];
 	FILE *f;
 
@@ -28,11 +28,10 @@ ssize_t get_base_addr() {
 	if (!f)
 		return -errno;
 
-	while (fscanf(f, "%zx-%*x %s %zx %*[^\n]\n",
-		      &start, buf, &offset) == 3) {
+	while (fscanf(f, "%zx-%*x %s %*s\n", &start, buf) == 2) {
 		if (strcmp(buf, "r-xp") == 0) {
 			fclose(f);
-			return start - offset;
+			return start;
 		}
 	}
 

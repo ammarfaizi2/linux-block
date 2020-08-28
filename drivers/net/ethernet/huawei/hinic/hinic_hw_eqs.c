@@ -188,7 +188,7 @@ static u8 eq_cons_idx_checksum_set(u32 val)
  * eq_update_ci - update the HW cons idx of event queue
  * @eq: the event queue to update the cons idx for
  **/
-static void eq_update_ci(struct hinic_eq *eq, u32 arm_state)
+static void eq_update_ci(struct hinic_eq *eq)
 {
 	u32 val, addr = EQ_CONS_IDX_REG_ADDR(eq);
 
@@ -202,7 +202,7 @@ static void eq_update_ci(struct hinic_eq *eq, u32 arm_state)
 
 	val |= HINIC_EQ_CI_SET(eq->cons_idx, IDX)    |
 	       HINIC_EQ_CI_SET(eq->wrapped, WRAPPED) |
-	       HINIC_EQ_CI_SET(arm_state, INT_ARMED);
+	       HINIC_EQ_CI_SET(EQ_ARMED, INT_ARMED);
 
 	val |= HINIC_EQ_CI_SET(eq_cons_idx_checksum_set(val), XOR_CHKSUM);
 
@@ -234,8 +234,6 @@ static void aeq_irq_handler(struct hinic_eq *eq)
 		/* HW toggles the wrapped bit, when it adds eq element */
 		if (HINIC_EQ_ELEM_DESC_GET(aeqe_desc, WRAPPED) == eq->wrapped)
 			break;
-
-		dma_rmb();
 
 		event = HINIC_EQ_ELEM_DESC_GET(aeqe_desc, TYPE);
 		if (event >= HINIC_MAX_AEQ_EVENTS) {
@@ -349,7 +347,7 @@ static void eq_irq_handler(void *data)
 	else if (eq->type == HINIC_CEQ)
 		ceq_irq_handler(eq);
 
-	eq_update_ci(eq, EQ_ARMED);
+	eq_update_ci(eq);
 }
 
 /**
@@ -704,7 +702,7 @@ static int init_eq(struct hinic_eq *eq, struct hinic_hwif *hwif,
 	}
 
 	set_eq_ctrls(eq);
-	eq_update_ci(eq, EQ_ARMED);
+	eq_update_ci(eq);
 
 	err = alloc_eq_pages(eq);
 	if (err) {
@@ -754,27 +752,17 @@ err_req_irq:
  **/
 static void remove_eq(struct hinic_eq *eq)
 {
-	hinic_set_msix_state(eq->hwif, eq->msix_entry.entry,
-			     HINIC_MSIX_DISABLE);
-	free_irq(eq->msix_entry.vector, eq);
+	struct msix_entry *entry = &eq->msix_entry;
+
+	free_irq(entry->vector, eq);
 
 	if (eq->type == HINIC_AEQ) {
 		struct hinic_eq_work *aeq_work = &eq->aeq_work;
 
 		cancel_work_sync(&aeq_work->work);
-		/* clear aeq_len to avoid hw access host memory */
-		hinic_hwif_write_reg(eq->hwif,
-				     HINIC_CSR_AEQ_CTRL_1_ADDR(eq->q_id), 0);
 	} else if (eq->type == HINIC_CEQ) {
 		tasklet_kill(&eq->ceq_tasklet);
-		/* clear ceq_len to avoid hw access host memory */
-		hinic_hwif_write_reg(eq->hwif,
-				     HINIC_CSR_CEQ_CTRL_1_ADDR(eq->q_id), 0);
 	}
-
-	/* update cons_idx to avoid invalid interrupt */
-	eq->cons_idx = hinic_hwif_read_reg(eq->hwif, EQ_PROD_IDX_REG_ADDR(eq));
-	eq_update_ci(eq, EQ_NOT_ARMED);
 
 	free_eq_pages(eq);
 }

@@ -185,22 +185,23 @@ static int hist_iter__branch_callback(struct hist_entry_iter *iter,
 {
 	struct hist_entry *he = iter->he;
 	struct report *rep = arg;
-	struct branch_info *bi = he->branch_info;
+	struct branch_info *bi;
 	struct perf_sample *sample = iter->sample;
 	struct evsel *evsel = iter->evsel;
 	int err;
 
-	branch_type_count(&rep->brtype_stat, &bi->flags,
-			  bi->from.addr, bi->to.addr);
-
 	if (!ui__has_annotation() && !rep->symbol_ipc)
 		return 0;
 
+	bi = he->branch_info;
 	err = addr_map_symbol__inc_samples(&bi->from, sample, evsel);
 	if (err)
 		goto out;
 
 	err = addr_map_symbol__inc_samples(&bi->to, sample, evsel);
+
+	branch_type_count(&rep->brtype_stat, &bi->flags,
+			  bi->from.addr, bi->to.addr);
 
 out:
 	return err;
@@ -411,10 +412,10 @@ static int report__setup_sample_type(struct report *rep)
 				PERF_SAMPLE_BRANCH_ANY))
 		rep->nonany_branch_mode = true;
 
-#if !defined(HAVE_LIBUNWIND_SUPPORT) && !defined(HAVE_DWARF_SUPPORT)
+#ifndef HAVE_LIBUNWIND_SUPPORT
 	if (dwarf_callchain_users) {
-		ui__warning("Please install libunwind or libdw "
-			    "development packages during the perf build.\n");
+		ui__warning("Please install libunwind development packages "
+			    "during the perf build.\n");
 	}
 #endif
 

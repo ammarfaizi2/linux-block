@@ -241,15 +241,12 @@ static int sof_card_late_probe(struct snd_soc_card *card)
 	struct hdmi_pcm *pcm;
 	int ret, i = 0;
 
-	if (list_empty(&ctx->hdmi_pcm_list))
-		return -EINVAL;
+	pcm = list_first_entry(&ctx->hdmi_pcm_list, struct hdmi_pcm,
+			       head);
+	component = pcm->codec_dai->component;
 
-	if (ctx->common_hdmi_codec_drv) {
-		pcm = list_first_entry(&ctx->hdmi_pcm_list, struct hdmi_pcm,
-				       head);
-		component = pcm->codec_dai->component;
+	if (ctx->common_hdmi_codec_drv)
 		return hda_dsp_hdmi_build_controls(card, component);
-	}
 
 	list_for_each_entry(pcm, &ctx->hdmi_pcm_list, head) {
 		component = pcm->codec_dai->component;
@@ -268,6 +265,8 @@ static int sof_card_late_probe(struct snd_soc_card *card)
 
 		i++;
 	}
+	if (!component)
+		return -EINVAL;
 
 	return hdac_hdmi_jack_port_init(component, &card->dapm);
 }

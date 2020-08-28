@@ -702,8 +702,7 @@ static irqreturn_t phy_interrupt(int irq, void *phy_dat)
 		phy_trigger_machine(phydev);
 	}
 
-	/* did_interrupt() may have cleared the interrupt already */
-	if (!phydev->drv->did_interrupt && phy_clear_interrupt(phydev))
+	if (phy_clear_interrupt(phydev))
 		goto phy_err;
 	return IRQ_HANDLED;
 

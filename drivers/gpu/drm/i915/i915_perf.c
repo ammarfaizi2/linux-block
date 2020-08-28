@@ -1950,10 +1950,9 @@ out:
 	return i915_vma_get(oa_bo->vma);
 }
 
-static struct i915_request *
-emit_oa_config(struct i915_perf_stream *stream,
-	       struct i915_oa_config *oa_config,
-	       struct intel_context *ce)
+static int emit_oa_config(struct i915_perf_stream *stream,
+			  struct i915_oa_config *oa_config,
+			  struct intel_context *ce)
 {
 	struct i915_request *rq;
 	struct i915_vma *vma;
@@ -1961,7 +1960,7 @@ emit_oa_config(struct i915_perf_stream *stream,
 
 	vma = get_oa_vma(stream, oa_config);
 	if (IS_ERR(vma))
-		return ERR_CAST(vma);
+		return PTR_ERR(vma);
 
 	err = i915_vma_pin(vma, 0, 0, PIN_GLOBAL | PIN_HIGH);
 	if (err)
@@ -1984,17 +1983,13 @@ emit_oa_config(struct i915_perf_stream *stream,
 	err = rq->engine->emit_bb_start(rq,
 					vma->node.start, 0,
 					I915_DISPATCH_SECURE);
-	if (err)
-		goto err_add_request;
-
-	i915_request_get(rq);
 err_add_request:
 	i915_request_add(rq);
 err_vma_unpin:
 	i915_vma_unpin(vma);
 err_vma_put:
 	i915_vma_put(vma);
-	return err ? ERR_PTR(err) : rq;
+	return err;
 }
 
 static struct intel_context *oa_context(struct i915_perf_stream *stream)
@@ -2002,8 +1997,7 @@ static struct intel_context *oa_context(struct i915_perf_stream *stream)
 	return stream->pinned_ctx ?: stream->engine->kernel_context;
 }
 
-static struct i915_request *
-hsw_enable_metric_set(struct i915_perf_stream *stream)
+static int hsw_enable_metric_set(struct i915_perf_stream *stream)
 {
 	struct intel_uncore *uncore = stream->uncore;
 
@@ -2414,8 +2408,7 @@ static int lrc_configure_all_contexts(struct i915_perf_stream *stream,
 	return oa_configure_all_contexts(stream, regs, ARRAY_SIZE(regs));
 }
 
-static struct i915_request *
-gen8_enable_metric_set(struct i915_perf_stream *stream)
+static int gen8_enable_metric_set(struct i915_perf_stream *stream)
 {
 	struct intel_uncore *uncore = stream->uncore;
 	struct i915_oa_config *oa_config = stream->oa_config;
@@ -2457,13 +2450,12 @@ gen8_enable_metric_set(struct i915_perf_stream *stream)
 	 */
 	ret = lrc_configure_all_contexts(stream, oa_config);
 	if (ret)
-		return ERR_PTR(ret);
+		return ret;
 
 	return emit_oa_config(stream, oa_config, oa_context(stream));
 }
 
-static struct i915_request *
-gen12_enable_metric_set(struct i915_perf_stream *stream)
+static int gen12_enable_metric_set(struct i915_perf_stream *stream)
 {
 	struct intel_uncore *uncore = stream->uncore;
 	struct i915_oa_config *oa_config = stream->oa_config;
@@ -2496,7 +2488,7 @@ gen12_enable_metric_set(struct i915_perf_stream *stream)
 	 */
 	ret = gen12_configure_all_contexts(stream, oa_config);
 	if (ret)
-		return ERR_PTR(ret);
+		return ret;
 
 	/*
 	 * For Gen12, performance counters are context
@@ -2506,7 +2498,7 @@ gen12_enable_metric_set(struct i915_perf_stream *stream)
 	if (stream->ctx) {
 		ret = gen12_configure_oar_context(stream, true);
 		if (ret)
-			return ERR_PTR(ret);
+			return ret;
 	}
 
 	return emit_oa_config(stream, oa_config, oa_context(stream));
@@ -2701,20 +2693,6 @@ static const struct i915_perf_stream_ops i915_oa_stream_ops = {
 	.read = i915_oa_read,
 };
 
-static int i915_perf_stream_enable_sync(struct i915_perf_stream *stream)
-{
-	struct i915_request *rq;
-
-	rq = stream->perf->ops.enable_metric_set(stream);
-	if (IS_ERR(rq))
-		return PTR_ERR(rq);
-
-	i915_request_wait(rq, 0, MAX_SCHEDULE_TIMEOUT);
-	i915_request_put(rq);
-
-	return 0;
-}
-
 /**
  * i915_oa_stream_init - validate combined props for OA stream and init
  * @stream: An i915 perf stream
@@ -2848,7 +2826,7 @@ static int i915_oa_stream_init(struct i915_perf_stream *stream,
 	stream->ops = &i915_oa_stream_ops;
 	perf->exclusive_stream = stream;
 
-	ret = i915_perf_stream_enable_sync(stream);
+	ret = perf->ops.enable_metric_set(stream);
 	if (ret) {
 		DRM_DEBUG("Unable to enable metric set\n");
 		goto err_enable;
@@ -2907,6 +2885,49 @@ void i915_oa_init_reg_state(const struct intel_context *ce,
 }
 
 /**
+ * i915_perf_read_locked - &i915_perf_stream_ops->read with error normalisation
+ * @stream: An i915 perf stream
+ * @file: An i915 perf stream file
+ * @buf: destination buffer given by userspace
+ * @count: the number of bytes userspace wants to read
+ * @ppos: (inout) file seek position (unused)
+ *
+ * Besides wrapping &i915_perf_stream_ops->read this provides a common place to
+ * ensure that if we've successfully copied any data then reporting that takes
+ * precedence over any internal error status, so the data isn't lost.
+ *
+ * For example ret will be -ENOSPC whenever there is more buffered data than
+ * can be copied to userspace, but that's only interesting if we weren't able
+ * to copy some data because it implies the userspace buffer is too small to
+ * receive a single record (and we never split records).
+ *
+ * Another case with ret == -EFAULT is more of a grey area since it would seem
+ * like bad form for userspace to ask us to overrun its buffer, but the user
+ * knows best:
+ *
+ *   http://yarchive.net/comp/linux/partial_reads_writes.html
+ *
+ * Returns: The number of bytes copied or a negative error code on failure.
+ */
+static ssize_t i915_perf_read_locked(struct i915_perf_stream *stream,
+				     struct file *file,
+				     char __user *buf,
+				     size_t count,
+				     loff_t *ppos)
+{
+	/* Note we keep the offset (aka bytes read) separate from any
+	 * error status so that the final check for whether we return
+	 * the bytes read with a higher precedence than any error (see
+	 * comment below) doesn't need to be handled/duplicated in
+	 * stream->ops->read() implementations.
+	 */
+	size_t offset = 0;
+	int ret = stream->ops->read(stream, buf, count, &offset);
+
+	return offset ?: (ret ?: -EAGAIN);
+}
+
+/**
  * i915_perf_read - handles read() FOP for i915 perf stream FDs
  * @file: An i915 perf stream file
  * @buf: destination buffer given by userspace
@@ -2931,8 +2952,7 @@ static ssize_t i915_perf_read(struct file *file,
 {
 	struct i915_perf_stream *stream = file->private_data;
 	struct i915_perf *perf = stream->perf;
-	size_t offset = 0;
-	int ret;
+	ssize_t ret;
 
 	/* To ensure it's handled consistently we simply treat all reads of a
 	 * disabled stream as an error. In particular it might otherwise lead
@@ -2955,12 +2975,13 @@ static ssize_t i915_perf_read(struct file *file,
 				return ret;
 
 			mutex_lock(&perf->lock);
-			ret = stream->ops->read(stream, buf, count, &offset);
+			ret = i915_perf_read_locked(stream, file,
+						    buf, count, ppos);
 			mutex_unlock(&perf->lock);
-		} while (!offset && !ret);
+		} while (ret == -EAGAIN);
 	} else {
 		mutex_lock(&perf->lock);
-		ret = stream->ops->read(stream, buf, count, &offset);
+		ret = i915_perf_read_locked(stream, file, buf, count, ppos);
 		mutex_unlock(&perf->lock);
 	}
 
@@ -2971,15 +2992,15 @@ static ssize_t i915_perf_read(struct file *file,
 	 * and read() returning -EAGAIN. Clearing the oa.pollin state here
 	 * effectively ensures we back off until the next hrtimer callback
 	 * before reporting another EPOLLIN event.
-	 * The exception to this is if ops->read() returned -ENOSPC which means
-	 * that more OA data is available than could fit in the user provided
-	 * buffer. In this case we want the next poll() call to not block.
 	 */
-	if (ret != -ENOSPC)
+	if (ret >= 0 || ret == -EAGAIN) {
+		/* Maybe make ->pollin per-stream state if we support multiple
+		 * concurrent streams in the future.
+		 */
 		stream->pollin = false;
+	}
 
-	/* Possible values for ret are 0, -EFAULT, -ENOSPC, -EIO, ... */
-	return offset ?: (ret ?: -EAGAIN);
+	return ret;
 }
 
 static enum hrtimer_restart oa_poll_check_timer_cb(struct hrtimer *hrtimer)
@@ -3123,7 +3144,7 @@ static long i915_perf_config_locked(struct i915_perf_stream *stream,
 		return -EINVAL;
 
 	if (config != stream->oa_config) {
-		struct i915_request *rq;
+		int err;
 
 		/*
 		 * If OA is bound to a specific context, emit the
@@ -3134,13 +3155,11 @@ static long i915_perf_config_locked(struct i915_perf_stream *stream,
 		 * When set globally, we use a low priority kernel context,
 		 * so it will effectively take effect when idle.
 		 */
-		rq = emit_oa_config(stream, config, oa_context(stream));
-		if (!IS_ERR(rq)) {
+		err = emit_oa_config(stream, config, oa_context(stream));
+		if (err == 0)
 			config = xchg(&stream->oa_config, config);
-			i915_request_put(rq);
-		} else {
-			ret = PTR_ERR(rq);
-		}
+		else
+			ret = err;
 	}
 
 	i915_oa_config_put(config);

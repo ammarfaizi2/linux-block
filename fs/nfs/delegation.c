@@ -25,27 +25,11 @@
 #include "internal.h"
 #include "nfs4trace.h"
 
-static atomic_long_t nfs_active_delegations;
-
-static void __nfs_free_delegation(struct nfs_delegation *delegation)
+static void nfs_free_delegation(struct nfs_delegation *delegation)
 {
 	put_cred(delegation->cred);
 	delegation->cred = NULL;
 	kfree_rcu(delegation, rcu);
-}
-
-static void nfs_mark_delegation_revoked(struct nfs_delegation *delegation)
-{
-	if (!test_and_set_bit(NFS_DELEGATION_REVOKED, &delegation->flags)) {
-		delegation->stateid.type = NFS4_INVALID_STATEID_TYPE;
-		atomic_long_dec(&nfs_active_delegations);
-	}
-}
-
-static void nfs_free_delegation(struct nfs_delegation *delegation)
-{
-	nfs_mark_delegation_revoked(delegation);
-	__nfs_free_delegation(delegation);
 }
 
 /**
@@ -238,18 +222,13 @@ void nfs_inode_reclaim_delegation(struct inode *inode, const struct cred *cred,
 
 static int nfs_do_return_delegation(struct inode *inode, struct nfs_delegation *delegation, int issync)
 {
-	const struct cred *cred;
 	int res = 0;
 
-	if (!test_bit(NFS_DELEGATION_REVOKED, &delegation->flags)) {
-		spin_lock(&delegation->lock);
-		cred = get_cred(delegation->cred);
-		spin_unlock(&delegation->lock);
-		res = nfs4_proc_delegreturn(inode, cred,
+	if (!test_bit(NFS_DELEGATION_REVOKED, &delegation->flags))
+		res = nfs4_proc_delegreturn(inode,
+				delegation->cred,
 				&delegation->stateid,
 				issync);
-		put_cred(cred);
-	}
 	return res;
 }
 
@@ -364,8 +343,7 @@ nfs_update_inplace_delegation(struct nfs_delegation *delegation,
 		delegation->stateid.seqid = update->stateid.seqid;
 		smp_wmb();
 		delegation->type = update->type;
-		if (test_and_clear_bit(NFS_DELEGATION_REVOKED, &delegation->flags))
-			atomic_long_inc(&nfs_active_delegations);
+		clear_bit(NFS_DELEGATION_REVOKED, &delegation->flags);
 	}
 }
 
@@ -445,8 +423,6 @@ add_new:
 	rcu_assign_pointer(nfsi->delegation, delegation);
 	delegation = NULL;
 
-	atomic_long_inc(&nfs_active_delegations);
-
 	trace_nfs4_set_delegation(inode, type);
 
 	spin_lock(&inode->i_lock);
@@ -456,7 +432,7 @@ add_new:
 out:
 	spin_unlock(&clp->cl_lock);
 	if (delegation != NULL)
-		__nfs_free_delegation(delegation);
+		nfs_free_delegation(delegation);
 	if (freeme != NULL) {
 		nfs_do_return_delegation(inode, freeme, 0);
 		nfs_free_delegation(freeme);
@@ -784,6 +760,13 @@ static void nfs_client_mark_return_unused_delegation_types(struct nfs_client *cl
 	rcu_read_unlock();
 }
 
+static void nfs_mark_delegation_revoked(struct nfs_server *server,
+		struct nfs_delegation *delegation)
+{
+	set_bit(NFS_DELEGATION_REVOKED, &delegation->flags);
+	delegation->stateid.type = NFS4_INVALID_STATEID_TYPE;
+}
+
 static void nfs_revoke_delegation(struct inode *inode,
 		const nfs4_stateid *stateid)
 {
@@ -811,7 +794,7 @@ static void nfs_revoke_delegation(struct inode *inode,
 		}
 		spin_unlock(&delegation->lock);
 	}
-	nfs_mark_delegation_revoked(delegation);
+	nfs_mark_delegation_revoked(NFS_SERVER(inode), delegation);
 	ret = true;
 out:
 	rcu_read_unlock();
@@ -850,7 +833,7 @@ void nfs_delegation_mark_returned(struct inode *inode,
 			delegation->stateid.seqid = stateid->seqid;
 	}
 
-	nfs_mark_delegation_revoked(delegation);
+	nfs_mark_delegation_revoked(NFS_SERVER(inode), delegation);
 
 out_clear_returning:
 	clear_bit(NFS_DELEGATION_RETURNING, &delegation->flags);

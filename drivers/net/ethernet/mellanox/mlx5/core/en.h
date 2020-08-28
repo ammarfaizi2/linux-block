@@ -371,7 +371,6 @@ enum {
 
 struct mlx5e_sq_wqe_info {
 	u8  opcode;
-	u8 num_wqebbs;
 
 	/* Auxiliary data for different opcodes. */
 	union {
@@ -1035,15 +1034,14 @@ int mlx5e_open_channels(struct mlx5e_priv *priv,
 			struct mlx5e_channels *chs);
 void mlx5e_close_channels(struct mlx5e_channels *chs);
 
-/* Function pointer to be used to modify HW or kernel settings while
+/* Function pointer to be used to modify WH settings while
  * switching channels
  */
-typedef int (*mlx5e_fp_preactivate)(struct mlx5e_priv *priv);
+typedef int (*mlx5e_fp_hw_modify)(struct mlx5e_priv *priv);
 int mlx5e_safe_reopen_channels(struct mlx5e_priv *priv);
 int mlx5e_safe_switch_channels(struct mlx5e_priv *priv,
 			       struct mlx5e_channels *new_chs,
-			       mlx5e_fp_preactivate preactivate);
-int mlx5e_num_channels_changed(struct mlx5e_priv *priv);
+			       mlx5e_fp_hw_modify hw_modify);
 void mlx5e_activate_priv_channels(struct mlx5e_priv *priv);
 void mlx5e_deactivate_priv_channels(struct mlx5e_priv *priv);
 
@@ -1060,7 +1058,6 @@ int mlx5e_modify_rq_state(struct mlx5e_rq *rq, int curr_state, int next_state);
 void mlx5e_activate_rq(struct mlx5e_rq *rq);
 void mlx5e_deactivate_rq(struct mlx5e_rq *rq);
 void mlx5e_free_rx_descs(struct mlx5e_rq *rq);
-void mlx5e_free_rx_in_progress_descs(struct mlx5e_rq *rq);
 void mlx5e_activate_icosq(struct mlx5e_icosq *icosq);
 void mlx5e_deactivate_icosq(struct mlx5e_icosq *icosq);
 

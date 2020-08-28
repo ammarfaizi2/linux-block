@@ -274,8 +274,7 @@ found:
 		csum += count * csum_size;
 		nblocks -= count;
 next:
-		while (count > 0) {
-			count--;
+		while (count--) {
 			disk_bytenr += fs_info->sectorsize;
 			offset += fs_info->sectorsize;
 			page_bytes_left -= fs_info->sectorsize;

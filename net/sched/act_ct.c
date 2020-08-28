@@ -739,7 +739,7 @@ static int tcf_ct_init(struct net *net, struct nlattr *nla,
 	if (goto_ch)
 		tcf_chain_put_by_act(goto_ch);
 	if (params)
-		call_rcu(&params->rcu, tcf_ct_params_free);
+		kfree_rcu(params, rcu);
 	if (res == ACT_P_CREATED)
 		tcf_idr_insert(tn, *a);
 

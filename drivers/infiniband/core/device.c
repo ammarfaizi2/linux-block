@@ -588,7 +588,6 @@ struct ib_device *_ib_alloc_device(size_t size)
 
 	INIT_LIST_HEAD(&device->event_handler_list);
 	spin_lock_init(&device->event_handler_lock);
-	init_rwsem(&device->event_handler_rwsem);
 	mutex_init(&device->unregistration_lock);
 	/*
 	 * client_data needs to be alloc because we don't want our mark to be
@@ -896,9 +895,7 @@ static int add_one_compat_dev(struct ib_device *device,
 	cdev->dev.parent = device->dev.parent;
 	rdma_init_coredev(cdev, device, read_pnet(&rnet->net));
 	cdev->dev.release = compatdev_release;
-	ret = dev_set_name(&cdev->dev, "%s", dev_name(&device->dev));
-	if (ret)
-		goto add_err;
+	dev_set_name(&cdev->dev, "%s", dev_name(&device->dev));
 
 	ret = device_add(&cdev->dev);
 	if (ret)
@@ -1934,15 +1931,17 @@ EXPORT_SYMBOL(ib_set_client_data);
  *
  * ib_register_event_handler() registers an event handler that will be
  * called back when asynchronous IB events occur (as defined in
- * chapter 11 of the InfiniBand Architecture Specification). This
- * callback occurs in workqueue context.
+ * chapter 11 of the InfiniBand Architecture Specification).  This
+ * callback may occur in interrupt context.
  */
 void ib_register_event_handler(struct ib_event_handler *event_handler)
 {
-	down_write(&event_handler->device->event_handler_rwsem);
+	unsigned long flags;
+
+	spin_lock_irqsave(&event_handler->device->event_handler_lock, flags);
 	list_add_tail(&event_handler->list,
 		      &event_handler->device->event_handler_list);
-	up_write(&event_handler->device->event_handler_rwsem);
+	spin_unlock_irqrestore(&event_handler->device->event_handler_lock, flags);
 }
 EXPORT_SYMBOL(ib_register_event_handler);
 
@@ -1955,23 +1954,35 @@ EXPORT_SYMBOL(ib_register_event_handler);
  */
 void ib_unregister_event_handler(struct ib_event_handler *event_handler)
 {
-	down_write(&event_handler->device->event_handler_rwsem);
+	unsigned long flags;
+
+	spin_lock_irqsave(&event_handler->device->event_handler_lock, flags);
 	list_del(&event_handler->list);
-	up_write(&event_handler->device->event_handler_rwsem);
+	spin_unlock_irqrestore(&event_handler->device->event_handler_lock, flags);
 }
 EXPORT_SYMBOL(ib_unregister_event_handler);
 
-void ib_dispatch_event_clients(struct ib_event *event)
+/**
+ * ib_dispatch_event - Dispatch an asynchronous event
+ * @event:Event to dispatch
+ *
+ * Low-level drivers must call ib_dispatch_event() to dispatch the
+ * event to all registered event handlers when an asynchronous event
+ * occurs.
+ */
+void ib_dispatch_event(struct ib_event *event)
 {
+	unsigned long flags;
 	struct ib_event_handler *handler;
 
-	down_read(&event->device->event_handler_rwsem);
+	spin_lock_irqsave(&event->device->event_handler_lock, flags);
 
 	list_for_each_entry(handler, &event->device->event_handler_list, list)
 		handler->handler(handler, event);
 
-	up_read(&event->device->event_handler_rwsem);
+	spin_unlock_irqrestore(&event->device->event_handler_lock, flags);
 }
+EXPORT_SYMBOL(ib_dispatch_event);
 
 static int iw_query_port(struct ib_device *device,
 			   u8 port_num,

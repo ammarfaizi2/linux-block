@@ -332,7 +332,7 @@ static void bfqg_put(struct bfq_group *bfqg)
 		kfree(bfqg);
 }
 
-void bfqg_and_blkg_get(struct bfq_group *bfqg)
+static void bfqg_and_blkg_get(struct bfq_group *bfqg)
 {
 	/* see comments in bfq_bic_update_cgroup for why refcounting bfqg */
 	bfqg_get(bfqg);
@@ -641,12 +641,6 @@ void bfq_bfqq_move(struct bfq_data *bfqd, struct bfq_queue *bfqq,
 {
 	struct bfq_entity *entity = &bfqq->entity;
 
-	/*
-	 * Get extra reference to prevent bfqq from being freed in
-	 * next possible expire or deactivate.
-	 */
-	bfqq->ref++;
-
 	/* If bfqq is empty, then bfq_bfqq_expire also invokes
 	 * bfq_del_bfqq_busy, thereby removing bfqq and its entity
 	 * from data structures related to current group. Otherwise we
@@ -676,8 +670,6 @@ void bfq_bfqq_move(struct bfq_data *bfqd, struct bfq_queue *bfqq,
 
 	if (!bfqd->in_service_queue && !bfqd->rq_in_driver)
 		bfq_schedule_dispatch(bfqd);
-	/* release extra ref taken above, bfqq may happen to be freed now */
-	bfq_put_queue(bfqq);
 }
 
 /**
@@ -1405,10 +1397,6 @@ struct bfq_group *bfqq_group(struct bfq_queue *bfqq)
 {
 	return bfqq->bfqd->root_group;
 }
-
-void bfqg_and_blkg_get(struct bfq_group *bfqg) {}
-
-void bfqg_and_blkg_put(struct bfq_group *bfqg) {}
 
 struct bfq_group *bfq_create_group_hierarchy(struct bfq_data *bfqd, int node)
 {

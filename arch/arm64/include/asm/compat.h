@@ -4,9 +4,6 @@
  */
 #ifndef __ASM_COMPAT_H
 #define __ASM_COMPAT_H
-
-#include <asm-generic/compat.h>
-
 #ifdef CONFIG_COMPAT
 
 /*
@@ -15,6 +12,8 @@
 #include <linux/types.h>
 #include <linux/sched.h>
 #include <linux/sched/task_stack.h>
+
+#include <asm-generic/compat.h>
 
 #define COMPAT_USER_HZ		100
 #ifdef __AARCH64EB__

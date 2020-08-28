@@ -987,46 +987,21 @@ static void acpi_s2idle_sync(void)
 	acpi_os_wait_events_complete(); /* synchronize Notify handling */
 }
 
-static bool acpi_s2idle_wake(void)
+static void acpi_s2idle_wake(void)
 {
-	if (!acpi_sci_irq_valid())
-		return pm_wakeup_pending();
+	/*
+	 * If IRQD_WAKEUP_ARMED is set for the SCI at this point, the SCI has
+	 * not triggered while suspended, so bail out.
+	 */
+	if (!acpi_sci_irq_valid() ||
+	    irqd_is_wakeup_armed(irq_get_irq_data(acpi_sci_irq)))
+		return;
 
-	while (pm_wakeup_pending()) {
-		/*
-		 * If IRQD_WAKEUP_ARMED is set for the SCI at this point, the
-		 * SCI has not triggered while suspended, so bail out (the
-		 * wakeup is pending anyway and the SCI is not the source of
-		 * it).
-		 */
-		if (irqd_is_wakeup_armed(irq_get_irq_data(acpi_sci_irq)))
-			return true;
-
-		/*
-		 * If the status bit of any enabled fixed event is set, the
-		 * wakeup is regarded as valid.
-		 */
-		if (acpi_any_fixed_event_status_set())
-			return true;
-
-		/* Check wakeups from drivers sharing the SCI. */
-		if (acpi_check_wakeup_handlers())
-			return true;
-
-		/*
-		 * If the status bit is set for any enabled GPE other than the
-		 * EC one, the wakeup is regarded as a genuine one.
-		 */
-		if (acpi_ec_other_gpes_active())
-			return true;
-
-		/*
-		 * If the EC GPE status bit has not been set, the wakeup is
-		 * regarded as a spurious one.
-		 */
-		if (!acpi_ec_dispatch_gpe())
-			return false;
-
+	/*
+	 * If there are EC events to process, the wakeup may be a spurious one
+	 * coming from the EC.
+	 */
+	if (acpi_ec_dispatch_gpe()) {
 		/*
 		 * Cancel the wakeup and process all pending events in case
 		 * there are any wakeup ones in there.
@@ -1039,19 +1014,8 @@ static bool acpi_s2idle_wake(void)
 
 		acpi_s2idle_sync();
 
-		/*
-		 * The SCI is in the "suspended" state now and it cannot produce
-		 * new wakeup events till the rearming below, so if any of them
-		 * are pending here, they must be resulting from the processing
-		 * of EC events above or coming from somewhere else.
-		 */
-		if (pm_wakeup_pending())
-			return true;
-
 		rearm_wake_irq(acpi_sci_irq);
 	}
-
-	return false;
 }
 
 static void acpi_s2idle_restore_early(void)

@@ -1860,9 +1860,9 @@ fetch_events:
 		waiter = true;
 		init_waitqueue_entry(&wait, current);
 
-		write_lock_irq(&ep->lock);
+		spin_lock_irq(&ep->wq.lock);
 		__add_wait_queue_exclusive(&ep->wq, &wait);
-		write_unlock_irq(&ep->lock);
+		spin_unlock_irq(&ep->wq.lock);
 	}
 
 	for (;;) {
@@ -1910,9 +1910,9 @@ send_events:
 		goto fetch_events;
 
 	if (waiter) {
-		write_lock_irq(&ep->lock);
+		spin_lock_irq(&ep->wq.lock);
 		__remove_wait_queue(&ep->wq, &wait);
-		write_unlock_irq(&ep->lock);
+		spin_unlock_irq(&ep->wq.lock);
 	}
 
 	return res;

@@ -346,12 +346,19 @@ void snd_sof_ipc_msgs_rx(struct snd_sof_dev *sdev)
 		break;
 	case SOF_IPC_FW_READY:
 		/* check for FW boot completion */
-		if (sdev->fw_state == SOF_FW_BOOT_IN_PROGRESS) {
+		if (!sdev->boot_complete) {
 			err = sof_ops(sdev)->fw_ready(sdev, cmd);
-			if (err < 0)
-				sdev->fw_state = SOF_FW_BOOT_READY_FAILED;
-			else
-				sdev->fw_state = SOF_FW_BOOT_COMPLETE;
+			if (err < 0) {
+				/*
+				 * this indicates a mismatch in ABI
+				 * between the driver and fw
+				 */
+				dev_err(sdev->dev, "error: ABI mismatch %d\n",
+					err);
+			} else {
+				/* firmware boot completed OK */
+				sdev->boot_complete = true;
+			}
 
 			/* wake up firmware loader */
 			wake_up(&sdev->boot_wait);
@@ -495,7 +502,7 @@ int snd_sof_ipc_stream_posn(struct snd_sof_dev *sdev,
 
 	/* send IPC to the DSP */
 	err = sof_ipc_tx_message(sdev->ipc,
-				 stream.hdr.cmd, &stream, sizeof(stream), posn,
+				 stream.hdr.cmd, &stream, sizeof(stream), &posn,
 				 sizeof(*posn));
 	if (err < 0) {
 		dev_err(sdev->dev, "error: failed to get stream %d position\n",

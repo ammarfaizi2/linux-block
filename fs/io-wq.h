@@ -72,7 +72,6 @@ struct io_wq_work {
 	};
 	void (*func)(struct io_wq_work **);
 	struct files_struct *files;
-	struct fs_struct *fs;
 	unsigned flags;
 };
 
@@ -80,9 +79,8 @@ struct io_wq_work {
 	do {						\
 		(work)->list.next = NULL;		\
 		(work)->func = _func;			\
-		(work)->files = NULL;			\
-		(work)->fs = NULL;			\
 		(work)->flags = 0;			\
+		(work)->files = NULL;			\
 	} while (0)					\
 
 typedef void (get_work_fn)(struct io_wq_work *);

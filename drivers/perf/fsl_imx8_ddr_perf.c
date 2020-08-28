@@ -388,10 +388,9 @@ static void ddr_perf_counter_enable(struct ddr_pmu *pmu, int config,
 
 	if (enable) {
 		/*
-		 * cycle counter is special which should firstly write 0 then
-		 * write 1 into CLEAR bit to clear it. Other counters only
-		 * need write 0 into CLEAR bit and it turns out to be 1 by
-		 * hardware. Below enable flow is harmless for all counters.
+		 * must disable first, then enable again
+		 * otherwise, cycle counter will not work
+		 * if previous state is enabled.
 		 */
 		writel(0, pmu->base + reg);
 		val = CNTL_EN | CNTL_CLEAR;
@@ -399,8 +398,7 @@ static void ddr_perf_counter_enable(struct ddr_pmu *pmu, int config,
 		writel(val, pmu->base + reg);
 	} else {
 		/* Disable counter */
-		val = readl_relaxed(pmu->base + reg) & CNTL_EN_MASK;
-		writel(val, pmu->base + reg);
+		writel(0, pmu->base + reg);
 	}
 }
 
@@ -635,17 +633,13 @@ static int ddr_perf_probe(struct platform_device *pdev)
 
 	if (ret < 0) {
 		dev_err(&pdev->dev, "cpuhp_setup_state_multi failed\n");
-		goto cpuhp_state_err;
+		goto ddr_perf_err;
 	}
 
 	pmu->cpuhp_state = ret;
 
 	/* Register the pmu instance for cpu hotplug */
-	ret = cpuhp_state_add_instance_nocalls(pmu->cpuhp_state, &pmu->node);
-	if (ret) {
-		dev_err(&pdev->dev, "Error %d registering hotplug\n", ret);
-		goto cpuhp_instance_err;
-	}
+	cpuhp_state_add_instance_nocalls(pmu->cpuhp_state, &pmu->node);
 
 	/* Request irq */
 	irq = of_irq_get(np, 0);
@@ -679,10 +673,9 @@ static int ddr_perf_probe(struct platform_device *pdev)
 	return 0;
 
 ddr_perf_err:
-	cpuhp_state_remove_instance_nocalls(pmu->cpuhp_state, &pmu->node);
-cpuhp_instance_err:
-	cpuhp_remove_multi_state(pmu->cpuhp_state);
-cpuhp_state_err:
+	if (pmu->cpuhp_state)
+		cpuhp_state_remove_instance_nocalls(pmu->cpuhp_state, &pmu->node);
+
 	ida_simple_remove(&ddr_ida, pmu->id);
 	dev_warn(&pdev->dev, "i.MX8 DDR Perf PMU failed (%d), disabled\n", ret);
 	return ret;
@@ -693,7 +686,6 @@ static int ddr_perf_remove(struct platform_device *pdev)
 	struct ddr_pmu *pmu = platform_get_drvdata(pdev);
 
 	cpuhp_state_remove_instance_nocalls(pmu->cpuhp_state, &pmu->node);
-	cpuhp_remove_multi_state(pmu->cpuhp_state);
 	irq_set_affinity_hint(pmu->irq, NULL);
 
 	perf_pmu_unregister(&pmu->pmu);

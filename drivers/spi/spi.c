@@ -2615,7 +2615,7 @@ int spi_register_controller(struct spi_controller *ctlr)
 		if (ctlr->use_gpio_descriptors) {
 			status = spi_get_gpio_descs(ctlr);
 			if (status)
-				goto free_bus_id;
+				return status;
 			/*
 			 * A controller using GPIO descriptors always
 			 * supports SPI_CS_HIGH if need be.
@@ -2625,7 +2625,7 @@ int spi_register_controller(struct spi_controller *ctlr)
 			/* Legacy code path for GPIOs from DT */
 			status = of_spi_get_gpio_numbers(ctlr);
 			if (status)
-				goto free_bus_id;
+				return status;
 		}
 	}
 
@@ -2633,14 +2633,17 @@ int spi_register_controller(struct spi_controller *ctlr)
 	 * Even if it's just one always-selected device, there must
 	 * be at least one chipselect.
 	 */
-	if (!ctlr->num_chipselect) {
-		status = -EINVAL;
-		goto free_bus_id;
-	}
+	if (!ctlr->num_chipselect)
+		return -EINVAL;
 
 	status = device_add(&ctlr->dev);
-	if (status < 0)
-		goto free_bus_id;
+	if (status < 0) {
+		/* free bus id */
+		mutex_lock(&board_lock);
+		idr_remove(&spi_master_idr, ctlr->bus_num);
+		mutex_unlock(&board_lock);
+		goto done;
+	}
 	dev_dbg(dev, "registered %s %s\n",
 			spi_controller_is_slave(ctlr) ? "slave" : "master",
 			dev_name(&ctlr->dev));
@@ -2656,7 +2659,11 @@ int spi_register_controller(struct spi_controller *ctlr)
 		status = spi_controller_initialize_queue(ctlr);
 		if (status) {
 			device_del(&ctlr->dev);
-			goto free_bus_id;
+			/* free bus id */
+			mutex_lock(&board_lock);
+			idr_remove(&spi_master_idr, ctlr->bus_num);
+			mutex_unlock(&board_lock);
+			goto done;
 		}
 	}
 	/* add statistics */
@@ -2671,12 +2678,7 @@ int spi_register_controller(struct spi_controller *ctlr)
 	/* Register devices from the device tree and ACPI */
 	of_register_spi_devices(ctlr);
 	acpi_register_spi_devices(ctlr);
-	return status;
-
-free_bus_id:
-	mutex_lock(&board_lock);
-	idr_remove(&spi_master_idr, ctlr->bus_num);
-	mutex_unlock(&board_lock);
+done:
 	return status;
 }
 EXPORT_SYMBOL_GPL(spi_register_controller);

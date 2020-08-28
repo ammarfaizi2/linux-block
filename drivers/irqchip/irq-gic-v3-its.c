@@ -598,7 +598,7 @@ static struct its_collection *its_build_invall_cmd(struct its_node *its,
 						   struct its_cmd_desc *desc)
 {
 	its_encode_cmd(cmd, GITS_CMD_INVALL);
-	its_encode_collection(cmd, desc->its_invall_cmd.col->col_id);
+	its_encode_collection(cmd, desc->its_mapc_cmd.col->col_id);
 
 	its_fixup_cmd(cmd);
 
@@ -1170,14 +1170,13 @@ static void its_send_vclear(struct its_device *dev, u32 event_id)
  */
 static struct its_vlpi_map *get_vlpi_map(struct irq_data *d)
 {
-	if (irqd_is_forwarded_to_vcpu(d)) {
-		struct its_device *its_dev = irq_data_get_irq_chip_data(d);
-		u32 event = its_get_event_id(d);
+	struct its_device *its_dev = irq_data_get_irq_chip_data(d);
+	u32 event = its_get_event_id(d);
 
-		return dev_event_to_vlpi_map(its_dev, event);
-	}
+	if (!irqd_is_forwarded_to_vcpu(d))
+		return NULL;
 
-	return NULL;
+	return dev_event_to_vlpi_map(its_dev, event);
 }
 
 static void lpi_write_config(struct irq_data *d, u8 clr, u8 set)
@@ -3142,18 +3141,12 @@ static int its_vpe_set_irqchip_state(struct irq_data *d,
 	return 0;
 }
 
-static int its_vpe_retrigger(struct irq_data *d)
-{
-	return !its_vpe_set_irqchip_state(d, IRQCHIP_STATE_PENDING, true);
-}
-
 static struct irq_chip its_vpe_irq_chip = {
 	.name			= "GICv4-vpe",
 	.irq_mask		= its_vpe_mask_irq,
 	.irq_unmask		= its_vpe_unmask_irq,
 	.irq_eoi		= irq_chip_eoi_parent,
 	.irq_set_affinity	= its_vpe_set_affinity,
-	.irq_retrigger		= its_vpe_retrigger,
 	.irq_set_irqchip_state	= its_vpe_set_irqchip_state,
 	.irq_set_vcpu_affinity	= its_vpe_set_vcpu_affinity,
 };

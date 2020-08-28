@@ -187,28 +187,14 @@ ib_umem_odp_alloc_child(struct ib_umem_odp *root, unsigned long addr,
 	odp_data->page_shift = PAGE_SHIFT;
 	odp_data->notifier.ops = ops;
 
-	/*
-	 * A mmget must be held when registering a notifier, the owming_mm only
-	 * has a mm_grab at this point.
-	 */
-	if (!mmget_not_zero(umem->owning_mm)) {
-		ret = -EFAULT;
-		goto out_free;
-	}
-
 	odp_data->tgid = get_pid(root->tgid);
 	ret = ib_init_umem_odp(odp_data, ops);
-	if (ret)
-		goto out_tgid;
-	mmput(umem->owning_mm);
+	if (ret) {
+		put_pid(odp_data->tgid);
+		kfree(odp_data);
+		return ERR_PTR(ret);
+	}
 	return odp_data;
-
-out_tgid:
-	put_pid(odp_data->tgid);
-	mmput(umem->owning_mm);
-out_free:
-	kfree(odp_data);
-	return ERR_PTR(ret);
 }
 EXPORT_SYMBOL(ib_umem_odp_alloc_child);
 
@@ -256,10 +242,21 @@ struct ib_umem_odp *ib_umem_odp_get(struct ib_udata *udata, unsigned long addr,
 	umem_odp->notifier.ops = ops;
 
 	umem_odp->page_shift = PAGE_SHIFT;
-#ifdef CONFIG_HUGETLB_PAGE
-	if (access & IB_ACCESS_HUGETLB)
-		umem_odp->page_shift = HPAGE_SHIFT;
-#endif
+	if (access & IB_ACCESS_HUGETLB) {
+		struct vm_area_struct *vma;
+		struct hstate *h;
+
+		down_read(&mm->mmap_sem);
+		vma = find_vma(mm, ib_umem_start(umem_odp));
+		if (!vma || !is_vm_hugetlb_page(vma)) {
+			up_read(&mm->mmap_sem);
+			ret = -EINVAL;
+			goto err_free;
+		}
+		h = hstate_vma(vma);
+		umem_odp->page_shift = huge_page_shift(h);
+		up_read(&mm->mmap_sem);
+	}
 
 	umem_odp->tgid = get_task_pid(current->group_leader, PIDTYPE_PID);
 	ret = ib_init_umem_odp(umem_odp, ops);
@@ -269,6 +266,7 @@ struct ib_umem_odp *ib_umem_odp_get(struct ib_udata *udata, unsigned long addr,
 
 err_put_pid:
 	put_pid(umem_odp->tgid);
+err_free:
 	kfree(umem_odp);
 	return ERR_PTR(ret);
 }
@@ -290,8 +288,8 @@ void ib_umem_odp_release(struct ib_umem_odp *umem_odp)
 		mmu_interval_notifier_remove(&umem_odp->notifier);
 		kvfree(umem_odp->dma_list);
 		kvfree(umem_odp->page_list);
+		put_pid(umem_odp->tgid);
 	}
-	put_pid(umem_odp->tgid);
 	kfree(umem_odp);
 }
 EXPORT_SYMBOL(ib_umem_odp_release);
@@ -442,7 +440,7 @@ int ib_umem_odp_map_dma_pages(struct ib_umem_odp *umem_odp, u64 user_virt,
 
 	while (bcnt > 0) {
 		const size_t gup_num_pages = min_t(size_t,
-				ALIGN(bcnt, PAGE_SIZE) / PAGE_SIZE,
+				(bcnt + BIT(page_shift) - 1) >> page_shift,
 				PAGE_SIZE / sizeof(struct page *));
 
 		down_read(&owning_mm->mmap_sem);
