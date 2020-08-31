@@ -317,4 +317,4 @@ showing zero executions matching the "filter" criteria.
 
 And this is why Linux-kernel lock and unlock primitives must prevent
 code from entering critical sections.  It is not sufficient to only
-prevnt code from leaving them.
+prevent code from leaving them.
