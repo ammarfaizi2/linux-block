@@ -602,6 +602,7 @@ static int stutter_gap;
  */
 bool stutter_wait(const char *title)
 {
+	unsigned i = 0;
 	int spt;
 	bool ret = false;
 
@@ -612,8 +613,13 @@ bool stutter_wait(const char *title)
 		if (spt == 1) {
 			schedule_timeout_interruptible(1);
 		} else if (spt == 2) {
-			while (READ_ONCE(stutter_pause_test))
+			while (READ_ONCE(stutter_pause_test)) {
+				if (!(++i & 0xffff))
+					schedule_timeout_interruptible(1);
+				else if (!(i & 0xfff))
+					udelay(1);
 				cond_resched();
+			}
 		} else {
 			schedule_timeout_interruptible(round_jiffies_relative(HZ));
 		}
