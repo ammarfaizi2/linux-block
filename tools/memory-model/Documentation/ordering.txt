@@ -42,15 +42,14 @@ its own subsection below:
 	a.	Release operations.  This category includes
 		smp_store_release(), atomic_set_release(),
 		rcu_assign_pointer(), and value-returning RMW operations
-		whose names end in _release.  These operations order
-		their own store against all of the CPU's subsequent
-		memory accesses.
+		whose names end in _release.  These operations order their
+		own store against all of the CPU's prior memory accesses.
 
 	b.	Acquire operations.  This category includes
 		smp_load_acquire(), atomic_read_acquire(), and
 		value-returning RMW operations whose names end in
 		_acquire.  These operations order their own load against
-		all of the CPU's prior memory accesses.
+		all of the CPU's subsequent memory accesses.
 
 	c.	RCU read-side ordering.  This category includes
 		rcu_dereference() and srcu_dereference().  These
