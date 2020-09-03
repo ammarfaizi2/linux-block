@@ -190,3 +190,9 @@ size_t rxgk_krb5_how_much_buffer(const struct rxgk_krb5_enctype *,
 				 enum krb5_crypto_mode, bool, size_t, size_t *);
 size_t rxgk_krb5_how_much_data(const struct rxgk_krb5_enctype *,
 			       enum krb5_crypto_mode, bool, size_t *, size_t *);
+
+/*
+ * rxgk_rfc3962.c
+ */
+extern const struct rxgk_krb5_enctype rxgk_aes128_cts_hmac_sha1_96;
+extern const struct rxgk_krb5_enctype rxgk_aes256_cts_hmac_sha1_96;

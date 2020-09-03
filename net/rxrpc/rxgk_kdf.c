@@ -21,6 +21,8 @@
 #include "rxgk_common.h"
 
 static const struct rxgk_krb5_enctype *const rxgk_supported_krb5_enctypes[] = {
+	&rxgk_aes128_cts_hmac_sha1_96,
+	&rxgk_aes256_cts_hmac_sha1_96,
 };
 
 /*
