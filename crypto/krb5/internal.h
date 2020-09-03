@@ -5,6 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/scatterlist.h>
 #include <crypto/krb5.h>
 
 /*
@@ -87,3 +88,8 @@ struct krb5_crypto_profile {
 #define krb5_sync_skcipher_ivsize(TFM) \
 	crypto_roundup(crypto_sync_skcipher_ivsize(TFM))
 #define round16(x) (((x) + 15) & ~15)
+
+/*
+ * rfc3961_simplified.c
+ */
+extern const struct krb5_crypto_profile rfc3961_simplified_profile;

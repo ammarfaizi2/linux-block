@@ -5,6 +5,7 @@
 
 krb5-y += \
 	kdf.o \
-	main.o
+	main.o \
+	rfc3961_simplified.o
 
 obj-$(CONFIG_CRYPTO_KRB5) += krb5.o
