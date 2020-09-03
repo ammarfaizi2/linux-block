@@ -157,9 +157,15 @@ struct rxgk_context {
  * rxgk_kdf.c
  */
 const struct rxgk_krb5_enctype *rxgk_find_enctype(u32);
+void rxgk_free_enc_keys(struct rxgk_enc_keys *);
 struct rxgk_context *rxgk_generate_transport_key(struct rxrpc_connection *,
 						 const struct rxgk_key *, unsigned int, gfp_t);
 int rxgk_set_up_token_cipher(const struct rxgk_buffer *, struct rxgk_enc_keys *,
 			     unsigned int, const struct rxgk_krb5_enctype **,
 			     gfp_t);
 void rxgk_put(struct rxgk_context *);
+
+/*
+ * rxgk_rfc3961.c
+ */
+extern const struct rxgk_crypto_scheme rfc3961_crypto_scheme;

@@ -43,7 +43,7 @@ const struct rxgk_krb5_enctype *rxgk_find_enctype(u32 enctype)
 	return NULL;
 }
 
-static void rxgk_free_enc_keys(struct rxgk_enc_keys *e)
+void rxgk_free_enc_keys(struct rxgk_enc_keys *e)
 {
 	if (e->Ke)
 		crypto_free_sync_skcipher(e->Ke);

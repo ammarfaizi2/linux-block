@@ -37,4 +37,5 @@ rxrpc-$(CONFIG_RXKAD) += rxkad.o
 rxrpc-$(CONFIG_SYSCTL) += sysctl.o
 
 rxrpc-$(CONFIG_RXGK) += \
-	rxgk_kdf.o
+	rxgk_kdf.o \
+	rxgk_rfc3961.o
