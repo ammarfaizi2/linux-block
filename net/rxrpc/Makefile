@@ -35,3 +35,6 @@ rxrpc-y := \
 rxrpc-$(CONFIG_PROC_FS) += proc.o
 rxrpc-$(CONFIG_RXKAD) += rxkad.o
 rxrpc-$(CONFIG_SYSCTL) += sysctl.o
+
+rxrpc-$(CONFIG_RXGK) += \
+	rxgk_kdf.o
