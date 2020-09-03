@@ -3,9 +3,9 @@
                                C  Self  R  W  RMW  Self  R  W  DR  DW  RMW  SV
                               --  ----  -  -  ---  ----  -  -  --  --  ---  --
 
-Store, e.g., WRITE_ONCE()            Y                                       Y
-Load, e.g., READ_ONCE()              Y                          Y   Y        Y
-Relaxed operation                    Y                          Y   Y        Y
+Relaxed store                        Y                                       Y
+Relaxed load                         Y                          Y   Y        Y
+Relaxed RMW operation                Y                          Y   Y        Y
 rcu_dereference()                    Y                          Y   Y        Y
 Successful *_acquire()               R                   Y  Y   Y   Y    Y   Y
 Successful *_release()         C        Y  Y    Y     W                      Y
@@ -18,8 +18,9 @@ smp_mb__after_atomic()        CP        a  a    Y        Y  Y   Y   Y    Y
 
 
 Key:	Relaxed:  A relaxed operation is either a *_relaxed() RMW
-		  operation, an unsuccessful RMW operation, or one of
-		  the atomic_read() and atomic_set() family of operations.
+		  operation, an unsuccessful RMW operation, READ_ONCE(),
+		  WRITE_ONCE(), or one of the atomic_read() and
+		  atomic_set() family of operations.
 	C:	  Ordering is cumulative
 	P:	  Ordering propagates
 	R:	  Read, for example, READ_ONCE(), or read portion of RMW
