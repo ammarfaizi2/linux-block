@@ -28,14 +28,14 @@ static inline int is_kernel_text(unsigned long addr)
 {
 	if (__is_kernel_text(addr))
 		return 1;
-	return in_gate_area_no_mm(addr);
+	return 0;
 }
 
 static inline int is_kernel(unsigned long addr)
 {
 	if (__is_kernel(addr))
 		return 1;
-	return in_gate_area_no_mm(addr);
+	return 0;
 }
 
 static inline int is_ksym_addr(unsigned long addr)
