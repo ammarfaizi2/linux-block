@@ -70,9 +70,16 @@ Baseline extensibility: adding a flag argument
 
 For simpler system calls that only take a couple of arguments, the preferred
 way to allow for future extensibility is to include a flags argument to the
-system call.  To make sure that userspace programs can safely use flags
-between kernel versions, check whether the flags value holds any unknown
-flags, and reject the system call (with ``EINVAL``) if it does::
+system call.  As such, flag arguments function as a baseline for extensibility.
+
+Different types such as ``int`` or ``unsigned long`` have been used for flag
+arguments.  Since this is not just inconsistent but can also lead to issues
+with sign- and zero extension all new system calls are expected to use
+``unsigned int`` as type for flag arguments.
+
+To make sure that userspace programs can safely use flags between kernel
+versions, check whether the flags value holds any unknown flags, and reject the
+system call (with ``EINVAL``) if it does::
 
     if (flags & ~(THING_FLAG1 | THING_FLAG2 | THING_FLAG3))
         return -EINVAL;
