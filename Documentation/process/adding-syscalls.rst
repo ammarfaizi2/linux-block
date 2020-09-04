@@ -168,6 +168,28 @@ flag-only system calls, the system call needs to verify any unknown values for
 flag-like fields in the passed struct are zeroed.
 
 
+Designing the API: Revisions of syscalls
+-----------------------------------------------
+
+System calls that were not designed to be extensible or system calls that use
+a flag argument for extensions running out of bits (e.g. :manpage:`clone(2)`)
+sometimes need to be replaced.
+
+If the revised system call provides a superset (or a reasonably large subset,
+such as when a feature that turned out to be a design mistake is dropped) of
+the features of the old system call, it is common practice to give it the same
+name with a number appended.  Examples for this include ``dup2``/``dup3``,
+``epoll_create``/``epoll_create1`` and others.
+
+For some syscalls the appended number indicates the number of arguments
+(``accept``/``accept4``) for others the number of the revision
+(``clone``/``clone3``, ``epoll_create``/``epoll_create1``).  New system calls
+that are a revision of an earlier system call should treat the appended number
+as the number of the revision.  For example, if you were to add a revised
+version of ``readlinkat`` with an additional flag argument it should be named
+``readlinkat2``.
+
+
 Designing the API: Other Considerations
 ---------------------------------------
 
