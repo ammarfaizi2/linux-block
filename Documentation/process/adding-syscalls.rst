@@ -65,6 +65,7 @@ together with the corresponding follow-up system calls --
 ``pipe``/``pipe2``, ``renameat``/``renameat2`` -- so
 learn from the history of the kernel and plan for extensions from the start.)
 
+
 Baseline extensibility: adding a flag argument
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -90,34 +91,81 @@ unknown flag values are present and return ``EINVAL`` if there are::
     if (flags & ~(THING_FLAG1 | THING_FLAG2 | THING_FLAG3))
         return -EINVAL;
 
+
 Advanced extensibility: extensible structs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For more sophisticated system calls that involve a larger number of arguments,
-it's preferred to encapsulate the majority of the arguments into a structure
-that is passed in by pointer.  Such a structure can cope with future extension
-by including a size argument in the structure::
+it's preferred to encapsulate the majority of the arguments into an extensible
+structure that is passed in by pointer.
 
-    struct xyzzy_params {
-        u32 size; /* userspace sets p->size = sizeof(struct xyzzy_params) */
-        u32 param_1;
-        u64 param_2;
-        u64 param_3;
+Extensible structs are versioned by their size.  For any new non-flag based
+extension a new field has to be added to the end of the extensible struct.  The
+zero value of the new field must not have any meaning so the system call can
+continue to display the old behavior.
+
+Extensible struct system calls can and should use the dedicated
+``copy_struct_from_user`` API which enforces the following behavior:
+
+ - The kernel will reject any size that is smaller than the initially supported
+   size of the extensible struct.
+ - If the extensible struct size the kernel knows about is equal to the size
+   passed in from userspace then ``copy_struct_from_user`` will copy the struct
+   verbatim.
+ - If the extensible struct size the kernel knows about is larger than the size
+   passed in from userspace the kernel will copy the size userspace indicated
+   and treat all additional extensions it knows about as zero.
+ - If the extensible struct size the kernel knows about is smaller than the
+   size passed in from userspace the kernel will copy the number of bytes it
+   knows about and verify that all trailing bytes are zero.  If non-zero bytes
+   are present the kernel returns ``E2BIG``.  While not an intuitive error code
+   at first, ``E2BIG`` means that the argument list is too long.
+
+Early examples for extensible struct system calls include
+:manpage:`perf_event_open(2)` and :manpage:`sched_setattr(2)`.  These system
+calls implement mostly similar behavior even before the introduction of
+``copy_struct_from_user`` but have since been switched over to it.  Newer
+examples include :manpage:`clone3(2)` and :manpage:`openat2(2)`.
+
+The size associated with an extensible struct can either be passed as
+a separate argument in the system call as is e.g. done for :manpage:`clone3(2)`
+and :manpage:`openat2(2)`.  Alternatively, the size can be passed as the first
+field in the extensible struct as is e.g. done for :manpage:`sched_setattr(2)`.
+
+Any struct passed from userspace to the kernel and especially extensible
+structs must ensure that they are correctly padded.  This ensures that no data
+can be leaked on accident or on purpose by an attacker from the kernel.  The
+easiest way to ensure that a struct is correctly padded is to always use 64 bit
+fields::
+
+    struct sys_foo_args {
+        __aligned_u64 arg1;
+        __aligned_u64 arg2;
+        __aligned_u64 arg3;
+        __aligned_u64 arg4;
+        __aligned_u64 arg5;
     };
 
-As long as any subsequently added field, say ``param_4``, is designed so that a
-zero value gives the previous behaviour, then this allows both directions of
-version mismatch:
+System calls that need to worry about the size of their extensible structs or
+need fields to be of a specific size can rely on careful manual struct
+packing::
 
- - To cope with a later userspace program calling an older kernel, the kernel
-   code should check that any memory beyond the size of the structure that it
-   expects is zero (effectively checking that ``param_4 == 0``).
- - To cope with an older userspace program calling a newer kernel, the kernel
-   code can zero-extend a smaller instance of the structure (effectively
-   setting ``param_4 = 0``).
+    struct sys_foo_args {
+        __u32 arg1;
+        __u16 arg2;
+        __u16 arg3;
+        __u32 arg4;
+        __u32 arg5;
+        __u64 arg6;
+    };
 
-See :manpage:`perf_event_open(2)` and the ``perf_copy_attr()`` function (in
-``kernel/events/core.c``) for an example of this approach.
+(There are tools such as ``pahole`` available that allow to check whether
+a struct is correctly padded!)
+
+Note that in contrast to flag arguments passed as register arguments flag
+arguments in extensible structures can be 64 bit wide.  As with simple
+flag-only system calls, the system call needs to verify any unknown values for
+flag-like fields in the passed struct are zeroed.
 
 
 Designing the API: Other Considerations
