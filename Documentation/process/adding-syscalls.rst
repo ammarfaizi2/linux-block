@@ -77,14 +77,18 @@ arguments.  Since this is not just inconsistent but can also lead to issues
 with sign- and zero extension all new system calls are expected to use
 ``unsigned int`` as type for flag arguments.
 
-To make sure that userspace programs can safely use flags between kernel
-versions, check whether the flags value holds any unknown flags, and reject the
-system call (with ``EINVAL``) if it does::
+A system call doesn't need to support any flags right away to justify adding
+a flag argument.  If no flags are supported yet, the new system call needs
+to check that the flag argument is zero and to return ``EINVAL`` if it is not::
+
+    if (flags)
+        return -EINVAL;
+
+Similarly, if flags are supported the system call needs to check that no
+unknown flag values are present and return ``EINVAL`` if there are::
 
     if (flags & ~(THING_FLAG1 | THING_FLAG2 | THING_FLAG3))
         return -EINVAL;
-
-(If no flags values are used yet, check that the flags argument is zero.)
 
 Advanced extensibility: extensible structs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
