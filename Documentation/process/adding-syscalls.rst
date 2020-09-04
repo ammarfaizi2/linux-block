@@ -65,6 +65,9 @@ together with the corresponding follow-up system calls --
 ``pipe``/``pipe2``, ``renameat``/``renameat2`` -- so
 learn from the history of the kernel and plan for extensions from the start.)
 
+Baseline extensibility: adding a flag argument
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 For simpler system calls that only take a couple of arguments, the preferred
 way to allow for future extensibility is to include a flags argument to the
 system call.  To make sure that userspace programs can safely use flags
@@ -75,6 +78,9 @@ flags, and reject the system call (with ``EINVAL``) if it does::
         return -EINVAL;
 
 (If no flags values are used yet, check that the flags argument is zero.)
+
+Advanced extensibility: extensible structs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For more sophisticated system calls that involve a larger number of arguments,
 it's preferred to encapsulate the majority of the arguments into a structure
