@@ -51,6 +51,45 @@ interface.
    getting/setting a simple flag related to a process.
 
 
+Designing the API: No more multiplexers
+---------------------------------------
+
+New system calls are not allowed to be multiplexers.  The kernel strongly
+encourages simple system call designs.
+
+The kernel has historically supported multiplexing system calls but both the
+kernel and userspace have learned the hard way that this is usually
+a significant design mistake.  The list of actively supported multiplexing
+system calls ranges from domain specific multiplexers such as
+:manpage:`seccomp(2)` or :manpage:`keyctl(2)` to more generic multiplexers such
+as :manpage:`prctl(2)` and :manpage:`ptrace(2)`, up to ``ioctl``, a generic
+multiplexer not bound to any specific API or functionality.  In essence,
+a multiplexing system call often implements the functionality of multiple
+simple system calls.
+
+Multiplexers are especially problematic when they are type-polymorph. This
+includes all multiplexers that pass different types through a void pointer,
+a ``long``, or a union using a specific argument to differentiate the type or
+the member of the union to look at.  The ``ioctl`` multiplexer is a prime
+example of a type-polymorph multiplexer.  Depending on the second argument
+passed to ``ioctl`` different types can be passed as the third argument.  Some
+multiplexers, including ``ioctl``, :manpage:`prctl(2)`, or :manpage:`fcntl(2)`
+even pass a different number of arguments depending on the command that is
+executed.
+
+Multiplexers also pose significant problems for userspace libraries:
+
+ - Type safety is lost for the most part.
+ - There are no real advantages in terms of useability.  In fact, userspace
+   libraries do consider exposing the commands implemented by a system call as
+   separate library calls.
+ - Multiplexers provide problems for 32 bit systems on 64 bit kernels.  They
+   can for example cause breakage with ILP32 (i.e. I-ntegers, L-ongs, and
+   P-ointers are 32 bit wide) targets when types are not promoted correctly for
+   use with the kernel/userspace ABI.  Getting this wrong is easier than
+   getting it right.
+
+
 Designing the API: Planning for Extension
 -----------------------------------------
 
