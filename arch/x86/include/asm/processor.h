@@ -184,6 +184,7 @@ DECLARE_PER_CPU_READ_MOSTLY(struct cpuinfo_x86, cpu_info);
 #endif
 
 extern const struct seq_operations cpuinfo_op;
+extern const struct seq_operations cpuinfo_local_op;
 
 #define cache_line_size()	(boot_cpu_data.x86_cache_alignment)
 

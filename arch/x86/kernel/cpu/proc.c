@@ -58,9 +58,8 @@ static void show_cpuinfo_misc(struct seq_file *m, struct cpuinfo_x86 *c)
 }
 #endif
 
-static int show_cpuinfo(struct seq_file *m, void *v)
+static void show_cpuinfo_common(struct seq_file *m, struct cpuinfo_x86 *c, bool khz)
 {
-	struct cpuinfo_x86 *c = v;
 	unsigned int cpu;
 	int i;
 
@@ -84,10 +83,13 @@ static int show_cpuinfo(struct seq_file *m, void *v)
 		seq_printf(m, "microcode\t: 0x%x\n", c->microcode);
 
 	if (cpu_has(c, X86_FEATURE_TSC)) {
-		unsigned int freq = aperfmperf_get_khz(cpu);
+		unsigned int freq = 0;
 
-		if (!freq)
-			freq = cpufreq_quick_get(cpu);
+		if (khz) {
+			freq = aperfmperf_get_khz(cpu);
+			if (!freq)
+				freq = cpufreq_quick_get(cpu);
+		}
 		if (!freq)
 			freq = cpu_khz;
 		seq_printf(m, "cpu MHz\t\t: %u.%03u\n",
@@ -152,7 +154,21 @@ static int show_cpuinfo(struct seq_file *m, void *v)
 	}
 
 	seq_puts(m, "\n\n");
+}
 
+static int show_cpuinfo(struct seq_file *m, void *v)
+{
+	struct cpuinfo_x86 *c = v;
+
+	show_cpuinfo_common(m, c, true);
+	return 0;
+}
+
+static int show_cpuinfo_local(struct seq_file *m, void *v)
+{
+	struct cpuinfo_x86 *c = v;
+
+	show_cpuinfo_common(m, c, false);
 	return 0;
 }
 
@@ -179,4 +195,11 @@ const struct seq_operations cpuinfo_op = {
 	.next	= c_next,
 	.stop	= c_stop,
 	.show	= show_cpuinfo,
+};
+
+const struct seq_operations cpuinfo_local_op = {
+	.start	= c_start,
+	.next	= c_next,
+	.stop	= c_stop,
+	.show	= show_cpuinfo_local,
 };

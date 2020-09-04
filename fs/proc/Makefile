@@ -15,6 +15,7 @@ proc-$(CONFIG_TTY)      += proc_tty.o
 proc-y	+= cmdline.o
 proc-y	+= consoles.o
 proc-y	+= cpuinfo.o
+proc-y	+= cpuinfo_local.o
 proc-y	+= devices.o
 proc-y	+= interrupts.o
 proc-y	+= loadavg.o
