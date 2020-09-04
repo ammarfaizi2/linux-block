@@ -9,7 +9,7 @@ static void devm_clk_release(struct device *dev, void *res)
 	clk_put(*(struct clk **)res);
 }
 
-struct clk *devm_clk_get(struct device *dev, const char *id)
+static struct clk *_devm_clk_get(struct device *dev, const char *id)
 {
 	struct clk **ptr, *clk;
 
@@ -27,14 +27,27 @@ struct clk *devm_clk_get(struct device *dev, const char *id)
 
 	return clk;
 }
+
+struct clk *devm_clk_get(struct device *dev, const char *id)
+{
+	struct clk *clk = _devm_clk_get(dev, id);
+
+	if (IS_ERR(clk) && clk != ERR_PTR(-EPROBE_DEFER))
+		dev_err(dev, "Failed to get clock '%s' (err = %ld)", id, PTR_ERR(clk));
+
+	return clk;
+}
 EXPORT_SYMBOL(devm_clk_get);
 
 struct clk *devm_clk_get_optional(struct device *dev, const char *id)
 {
-	struct clk *clk = devm_clk_get(dev, id);
+	struct clk *clk = _devm_clk_get(dev, id);
 
 	if (clk == ERR_PTR(-ENOENT))
 		return NULL;
+
+	if (IS_ERR(clk) && clk != ERR_PTR(-EPROBE_DEFER))
+		dev_err(dev, "Failed to get clock '%s' (err = %ld)", id, PTR_ERR(clk));
 
 	return clk;
 }
