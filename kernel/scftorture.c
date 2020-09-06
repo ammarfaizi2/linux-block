@@ -323,9 +323,11 @@ static void scftorture_invoke_one(struct scf_statistics *scfp, struct torture_ra
 	}
 	switch (scfsp->scfs_prim) {
 	case SCF_PRIM_RESCHED:
-		cpu = torture_random(trsp) % nr_cpu_ids;
-		scfp->n_resched++;
-		resched_cpu(cpu);
+		if (IS_BUILTIN(CONFIG_SCF_TORTURE_TEST)) {
+			cpu = torture_random(trsp) % nr_cpu_ids;
+			scfp->n_resched++;
+			resched_cpu(cpu);
+		}
 		break;
 	case SCF_PRIM_SINGLE:
 		cpu = torture_random(trsp) % nr_cpu_ids;
@@ -534,7 +536,10 @@ static int __init scf_torture_init(void)
 		firsterr = -EINVAL;
 		goto unwind;
 	}
-	scf_sel_add(weight_resched1, SCF_PRIM_RESCHED, false);
+	if (IS_BUILTIN(CONFIG_SCF_TORTURE_TEST))
+		scf_sel_add(weight_resched1, SCF_PRIM_RESCHED, false);
+	else if (weight_resched1)
+		VERBOSE_SCFTORTOUT_ERRSTRING("built as module, weight_resched ignored");
 	scf_sel_add(weight_single1, SCF_PRIM_SINGLE, false);
 	scf_sel_add(weight_single_wait1, SCF_PRIM_SINGLE, true);
 	scf_sel_add(weight_many1, SCF_PRIM_MANY, false);
