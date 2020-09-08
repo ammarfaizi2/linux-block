@@ -37,6 +37,7 @@ struct rxrpc_crypt {
 
 struct key_preparsed_payload;
 struct rxrpc_connection;
+struct rxgk_context;
 
 /*
  * Mark applied to socket buffers in skb->mark.  skb->priority is used
@@ -269,6 +270,10 @@ struct rxrpc_security {
 
 	/* clear connection security */
 	void (*clear)(struct rxrpc_connection *);
+
+	/* Default ticket -> key decoder */
+	int (*default_decode_ticket)(struct sk_buff *, unsigned int, unsigned int,
+				     u32 *, struct key **);
 };
 
 /*
@@ -462,7 +467,10 @@ struct rxrpc_connection {
 			u32	nonce;		/* response re-use preventer */
 		} rxkad;
 		struct {
+			struct rxgk_context *keys[1];
 			u64	start_time;	/* The start time for TK derivation */
+			u8	nonce[20];	/* Response re-use preventer */
+			u8	data_offset;	/* Offset of data in packet */
 		} rxgk;
 	};
 	unsigned long		flags;
@@ -1057,6 +1065,11 @@ void rxrpc_peer_add_rtt(struct rxrpc_call *, enum rxrpc_rtt_rx_trace, int,
 			rxrpc_serial_t, rxrpc_serial_t, ktime_t, ktime_t);
 unsigned long rxrpc_get_rto_backoff(struct rxrpc_peer *, bool);
 void rxrpc_peer_init_rtt(struct rxrpc_peer *);
+
+/*
+ * rxgk.c
+ */
+extern const struct rxrpc_security rxgk_yfs;
 
 /*
  * rxkad.c

@@ -210,6 +210,8 @@ enum rxrpc_tx_point {
 	rxrpc_tx_point_call_data_nofrag,
 	rxrpc_tx_point_call_final_resend,
 	rxrpc_tx_point_conn_abort,
+	rxrpc_tx_point_rxgk_challenge,
+	rxrpc_tx_point_rxgk_response,
 	rxrpc_tx_point_rxkad_challenge,
 	rxrpc_tx_point_rxkad_response,
 	rxrpc_tx_point_reject,
@@ -440,6 +442,8 @@ enum rxrpc_tx_point {
 	EM(rxrpc_tx_point_call_final_resend,	"CallFinalResend") \
 	EM(rxrpc_tx_point_conn_abort,		"ConnAbort") \
 	EM(rxrpc_tx_point_reject,		"Reject") \
+	EM(rxrpc_tx_point_rxgk_challenge,	"RxGKChall") \
+	EM(rxrpc_tx_point_rxgk_response,	"RxGKResp") \
 	EM(rxrpc_tx_point_rxkad_challenge,	"RxkadChall") \
 	EM(rxrpc_tx_point_rxkad_response,	"RxkadResp") \
 	EM(rxrpc_tx_point_version_keepalive,	"VerKeepalive") \

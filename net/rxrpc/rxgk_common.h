@@ -158,6 +158,17 @@ struct rxgk_context {
 
 #define round16(x) (((x) + 15) & ~15)
 
+#define xdr_round_up(x) (round_up((x), sizeof(__be32)))
+
+/*
+ * rxgk_app.c
+ */
+int rxgk_yfs_decode_ticket(struct sk_buff *, unsigned int, unsigned int,
+			   u32 *, struct key **);
+int rxgk_extract_token(struct rxrpc_connection *,
+		       struct sk_buff *, unsigned int, unsigned int,
+		       struct key **, u32 *, const char **);
+
 /*
  * rxgk_kdf.c
  */
