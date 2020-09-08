@@ -30,6 +30,7 @@ struct rxrpc_crypt {
 struct key_preparsed_payload;
 struct rxrpc_connection;
 struct rxrpc_txbuf;
+struct rxgk_context;
 
 /*
  * Mark applied to socket buffers in skb->mark.  skb->priority is used
@@ -266,6 +267,11 @@ struct rxrpc_security {
 
 	/* clear connection security */
 	void (*clear)(struct rxrpc_connection *);
+
+	/* Default ticket -> key decoder */
+	int (*default_decode_ticket)(struct rxrpc_connection *conn, struct sk_buff *skb,
+				     unsigned int ticket_offset, unsigned int ticket_len,
+				     struct key **_key);
 };
 
 /*
@@ -498,7 +504,9 @@ struct rxrpc_connection {
 			u32	nonce;		/* response re-use preventer */
 		} rxkad;
 		struct {
+			struct rxgk_context *keys[1];
 			u64	start_time;	/* The start time for TK derivation */
+			u8	nonce[20];	/* Response re-use preventer */
 		} rxgk;
 	};
 	unsigned long		flags;
@@ -788,6 +796,7 @@ struct rxrpc_txbuf {
 	unsigned int		len;		/* Amount of data in buffer */
 	unsigned int		space;		/* Remaining data space */
 	unsigned int		offset;		/* Offset of fill point */
+	unsigned int		sec_header;	/* Size of security header */
 	unsigned long		flags;
 #define RXRPC_TXBUF_LAST	0		/* Set if last packet in Tx phase */
 #define RXRPC_TXBUF_RESENT	1		/* Set if has been resent */
@@ -1200,6 +1209,11 @@ unsigned long rxrpc_get_rto_backoff(struct rxrpc_peer *, bool);
 void rxrpc_peer_init_rtt(struct rxrpc_peer *);
 
 /*
+ * rxgk.c
+ */
+extern const struct rxrpc_security rxgk_yfs;
+
+/*
  * rxkad.c
  */
 #ifdef CONFIG_RXKAD
@@ -1270,6 +1284,8 @@ static inline void rxrpc_sysctl_exit(void) {}
 extern atomic_t rxrpc_nr_txbuf;
 struct rxrpc_txbuf *rxrpc_alloc_txbuf(struct rxrpc_call *call, u8 packet_type,
 				      gfp_t gfp);
+struct rxrpc_txbuf *rxrpc_alloc_response_txbuf(struct rxrpc_connection *conn,
+					       struct sk_buff *challenge);
 void rxrpc_get_txbuf(struct rxrpc_txbuf *txb, enum rxrpc_txbuf_trace what);
 void rxrpc_see_txbuf(struct rxrpc_txbuf *txb, enum rxrpc_txbuf_trace what);
 void rxrpc_put_txbuf(struct rxrpc_txbuf *txb, enum rxrpc_txbuf_trace what);

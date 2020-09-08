@@ -57,7 +57,7 @@ int rxrpc_abort_conn(struct rxrpc_connection *conn, struct sk_buff *skb,
 				  sp->hdr.seq, abort_code, err);
 		rxrpc_poke_conn(conn, rxrpc_conn_get_poke_abort);
 	}
-	return -EPROTO;
+	return err;
 }
 
 /*

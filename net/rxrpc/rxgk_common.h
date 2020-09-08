@@ -33,6 +33,16 @@ struct rxgk_context {
 	struct krb5_enc_keys	resp_enc;	/* Response packet enc key */
 };
 
+#define xdr_round_up(x) (round_up((x), sizeof(__be32)))
+
+/*
+ * rxgk_app.c
+ */
+int rxgk_yfs_decode_ticket(struct rxrpc_connection *, struct sk_buff *,
+			   unsigned int, unsigned int, struct key **);
+int rxgk_extract_token(struct rxrpc_connection *, struct sk_buff *,
+		       unsigned int, unsigned int, struct key **);
+
 /*
  * rxgk_kdf.c
  */
@@ -46,3 +56,115 @@ int rxgk_set_up_token_cipher(const struct krb5_buffer *server_key,
 			     unsigned int enctype,
 			     const struct krb5_enctype **_krb5,
 			     gfp_t gfp);
+
+/*
+ * Apply encryption and checksumming functions to part of a transmission
+ * buffer.
+ */
+static inline
+int rxgk_encrypt_txb(const struct krb5_enctype *krb5,
+		     struct krb5_enc_keys *keys,
+		     struct rxrpc_txbuf *txb,
+		     u16 secure_offset, u16 secure_maxlen,
+		     u16 data_offset, u16 data_len,
+		     bool preconfounded)
+{
+	struct scatterlist sg[1];
+
+	sg_init_table(sg, 1);
+	sg_set_buf(&sg[0], txb->data + secure_offset, secure_maxlen);
+
+	data_offset -= secure_offset;
+	return crypto_krb5_encrypt(krb5, keys, sg, 1, secure_maxlen,
+				   data_offset, data_len, preconfounded);
+}
+
+/*
+ * Apply decryption and checksumming functions to part of an skbuff.  The
+ * offset and length are updated to reflect the actual content of the encrypted
+ * region.
+ */
+static inline
+int rxgk_decrypt_skb(const struct krb5_enctype *krb5,
+		     struct krb5_enc_keys *keys,
+		     struct sk_buff *skb,
+		     unsigned int *_offset, unsigned int *_len,
+		     int *_error_code)
+{
+	struct scatterlist sg[16];
+	size_t offset = 0, len = *_len;
+	int nr_sg, ret;
+
+	sg_init_table(sg, ARRAY_SIZE(sg));
+	nr_sg = skb_to_sgvec(skb, sg, *_offset, len);
+	if (unlikely(nr_sg < 0))
+		return nr_sg;
+
+	ret = crypto_krb5_decrypt(krb5, keys, sg, nr_sg,
+				  &offset, &len, _error_code);
+
+	*_offset += offset;
+	*_len = len;
+	return ret;
+}
+
+/*
+ * Generate a checksum over some metadata and part of a transmission buffer and
+ * insert the MIC into the buffer immediately prior to the data.
+ */
+static inline
+int rxgk_get_mic_txb(const struct krb5_enctype *krb5,
+		     struct crypto_shash *shash,
+		     const struct krb5_buffer *metadata,
+		     struct rxrpc_txbuf *txb,
+		     u16 secure_offset, u16 secure_maxlen,
+		     u16 data_offset, u16 data_len)
+{
+	struct scatterlist sg[1];
+
+	sg_init_table(sg, ARRAY_SIZE(sg));
+	sg_set_buf(&sg[0], txb->data + secure_offset, secure_maxlen);
+
+	data_offset -= secure_offset;
+	return crypto_krb5_get_mic(krb5, shash, metadata, sg, 1, secure_maxlen,
+				   data_offset, data_len);
+}
+
+/*
+ * Check the MIC on a region of an skbuff.  The offset and length are updated
+ * to reflect the actual content of the secure region.
+ */
+static inline
+int rxgk_verify_mic_skb(const struct krb5_enctype *krb5,
+			struct crypto_shash *shash,
+			const struct krb5_buffer *metadata,
+			struct sk_buff *skb,
+			unsigned int *_offset, unsigned int *_len,
+			u32 *_error_code)
+{
+	struct scatterlist sg[16];
+	size_t offset = 0, len = *_len;
+	int nr_sg, ret;
+
+	sg_init_table(sg, ARRAY_SIZE(sg));
+	nr_sg = skb_to_sgvec(skb, sg, *_offset, len);
+	if (unlikely(nr_sg < 0))
+		return nr_sg;
+
+	ret = crypto_krb5_verify_mic(krb5, shash, metadata, sg, nr_sg,
+				     &offset, &len, _error_code);
+
+	*_offset += offset;
+	*_len = len;
+	return ret;
+}
+
+/*
+ * Find the size and offset of the data in an integrity message.
+ */
+static inline
+size_t rxgk_where_is_the_data(const struct krb5_enctype *krb5,
+			      size_t *_offset, size_t len)
+{
+	return crypto_krb5_where_is_the_data(krb5, _offset, len);
+}

@@ -56,6 +56,48 @@ struct rxrpc_txbuf *rxrpc_alloc_txbuf(struct rxrpc_call *call, u8 packet_type,
 	return txb;
 }
 
+/*
+ * Allocate and partially initialise a response transmission buffer.
+ */
+struct rxrpc_txbuf *rxrpc_alloc_response_txbuf(struct rxrpc_connection *conn,
+					       struct sk_buff *challenge)
+{
+	struct rxrpc_skb_priv *csp = rxrpc_skb(challenge);
+	struct rxrpc_txbuf *txb;
+
+	txb = kmalloc(sizeof(*txb), GFP_NOFS);
+	if (txb) {
+		INIT_LIST_HEAD(&txb->call_link);
+		INIT_LIST_HEAD(&txb->tx_link);
+		refcount_set(&txb->ref, 1);
+		txb->call_debug_id	= 0;
+		txb->debug_id		= atomic_inc_return(&rxrpc_txbuf_debug_ids);
+		txb->space		= sizeof(txb->data);
+		txb->len		= 0;
+		txb->offset		= 0;
+		txb->flags		= 0;
+		txb->ack_why		= 0;
+		txb->seq		= 0;
+		txb->wire.epoch		= htonl(csp->hdr.epoch);
+		txb->wire.cid		= htonl(csp->hdr.cid);
+		txb->wire.callNumber	= 0;
+		txb->wire.seq		= 0;
+		txb->wire.type		= RXRPC_PACKET_TYPE_RESPONSE;
+		txb->wire.flags		= conn->out_clientflag;
+		txb->wire.userStatus	= 0;
+		txb->wire.securityIndex	= csp->hdr.securityIndex;
+		txb->wire._rsvd		= 0;
+		txb->wire.serviceId	= csp->hdr.serviceId;
+
+		trace_rxrpc_txbuf(txb->debug_id,
+				  txb->call_debug_id, txb->seq, 1,
+				  rxrpc_txbuf_alloc_response);
+		atomic_inc(&rxrpc_nr_txbuf);
+	}
+
+	return txb;
+}
+
 void rxrpc_get_txbuf(struct rxrpc_txbuf *txb, enum rxrpc_txbuf_trace what)
 {
 	int r;

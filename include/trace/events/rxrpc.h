@@ -68,6 +68,38 @@
 	EM(rxkad_abort_resp_tkt_sname,		"rxkad-resp-tk-sname")	\
 	EM(rxkad_abort_resp_unknown_tkt,	"rxkad-resp-unknown-tkt") \
 	EM(rxkad_abort_resp_version,		"rxkad-resp-version")	\
+	/* RxGK security errors */					\
+	EM(rxgk_abort_1_verify_mic_eproto,	"rxgk1-vfy-mic-eproto")	\
+	EM(rxgk_abort_2_decrypt_eproto,		"rxgk2-dec-eproto")	\
+	EM(rxgk_abort_2_short_data,		"rxgk2-short-data")	\
+	EM(rxgk_abort_2_short_encdata,		"rxgk2-short-encdata")	\
+	EM(rxgk_abort_2_short_header,		"rxgk2-short-hdr")	\
+	EM(rxgk_abort_bad_key_number,		"rxgk-bad-key-num")	\
+	EM(rxgk_abort_chall_key_expired,	"rxgk-chall-key-exp")	\
+	EM(rxgk_abort_chall_no_key,		"rxgk-chall-nokey")	\
+	EM(rxgk_abort_chall_short,		"rxgk-chall-short")	\
+	EM(rxgk_abort_resp_auth_dec,		"rxgk-resp-auth-dec")	\
+	EM(rxgk_abort_resp_bad_callid,		"rxgk-resp-bad-callid")	\
+	EM(rxgk_abort_resp_bad_nonce,		"rxgk-resp-bad-nonce")	\
+	EM(rxgk_abort_resp_bad_param,		"rxgk-resp-bad-param")	\
+	EM(rxgk_abort_resp_call_ctr,		"rxgk-resp-call-ctr")	\
+	EM(rxgk_abort_resp_call_state,		"rxgk-resp-call-state")	\
+	EM(rxgk_abort_resp_internal_error,	"rxgk-resp-int-error")	\
+	EM(rxgk_abort_resp_nopkg,		"rxgk-resp-nopkg")	\
+	EM(rxgk_abort_resp_short_applen,	"rxgk-resp-short-applen") \
+	EM(rxgk_abort_resp_short_auth,		"rxgk-resp-short-auth") \
+	EM(rxgk_abort_resp_short_call_list,	"rxgk-resp-short-callls") \
+	EM(rxgk_abort_resp_short_packet,	"rxgk-resp-short-packet") \
+	EM(rxgk_abort_resp_short_yfs_klen,	"rxgk-resp-short-yfs-klen") \
+	EM(rxgk_abort_resp_short_yfs_key,	"rxgk-resp-short-yfs-key") \
+	EM(rxgk_abort_resp_short_yfs_tkt,	"rxgk-resp-short-yfs-tkt") \
+	EM(rxgk_abort_resp_tok_dec,		"rxgk-resp-tok-dec")	\
+	EM(rxgk_abort_resp_tok_internal_error,	"rxgk-resp-tok-int-err") \
+	EM(rxgk_abort_resp_tok_keyerr,		"rxgk-resp-tok-keyerr")	\
+	EM(rxgk_abort_resp_tok_nokey,		"rxgk-resp-tok-nokey")	\
+	EM(rxgk_abort_resp_tok_nopkg,		"rxgk-resp-tok-nopkg")	\
+	EM(rxgk_abort_resp_tok_short,		"rxgk-resp-tok-short")	\
+	EM(rxgk_abort_resp_xdr_align,		"rxgk-resp-xdr-align")	\
 	/* rxrpc errors */						\
 	EM(rxrpc_abort_call_improper_term,	"call-improper-term")	\
 	EM(rxrpc_abort_call_reset,		"call-reset")		\
@@ -445,6 +477,8 @@
 	EM(rxrpc_tx_point_call_final_resend,	"CallFinalResend") \
 	EM(rxrpc_tx_point_conn_abort,		"ConnAbort") \
 	EM(rxrpc_tx_point_reject,		"Reject") \
+	EM(rxrpc_tx_point_rxgk_challenge,	"RxGKChall") \
+	EM(rxrpc_tx_point_rxgk_response,	"RxGKResp") \
 	EM(rxrpc_tx_point_rxkad_challenge,	"RxkadChall") \
 	EM(rxrpc_tx_point_rxkad_response,	"RxkadResp") \
 	EM(rxrpc_tx_point_version_keepalive,	"VerKeepalive") \
@@ -464,6 +498,7 @@
 #define rxrpc_txbuf_traces \
 	EM(rxrpc_txbuf_alloc_ack,		"ALLOC ACK  ")	\
 	EM(rxrpc_txbuf_alloc_data,		"ALLOC DATA ")	\
+	EM(rxrpc_txbuf_alloc_response,		"ALLOC RESP ")	\
 	EM(rxrpc_txbuf_free,			"FREE       ")	\
 	EM(rxrpc_txbuf_get_buffer,		"GET BUFFER ")	\
 	EM(rxrpc_txbuf_get_trans,		"GET TRANS  ")	\
@@ -472,6 +507,7 @@
 	EM(rxrpc_txbuf_put_cleaned,		"PUT CLEANED")	\
 	EM(rxrpc_txbuf_put_nomem,		"PUT NOMEM  ")	\
 	EM(rxrpc_txbuf_put_rotated,		"PUT ROTATED")	\
+	EM(rxrpc_txbuf_put_response_tx,		"PUT RESP TX")	\
 	EM(rxrpc_txbuf_put_send_aborted,	"PUT SEND-X ")	\
 	EM(rxrpc_txbuf_put_trans,		"PUT TRANS  ")	\
 	EM(rxrpc_txbuf_see_out_of_step,		"OUT-OF-STEP")	\

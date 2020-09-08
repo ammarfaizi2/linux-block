@@ -366,6 +366,7 @@ reload:
 			if (!txb)
 				goto maybe_error;
 
+			txb->sec_header = offset;
 			txb->offset = offset;
 			txb->space -= offset;
 			txb->space = min_t(size_t, chunk, txb->space);
