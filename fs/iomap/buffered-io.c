@@ -680,11 +680,19 @@ static ssize_t iomap_write_begin(struct inode *inode, loff_t pos, size_t len,
 			return status;
 	}
 
+retry:
 	page = grab_cache_page_write_begin(inode->i_mapping, pos >> PAGE_SHIFT,
 			AOP_FLAG_NOFS);
 	if (!page) {
 		status = -ENOMEM;
 		goto out_no_page;
+	}
+	if (PageTransCompound(page) && !PageUptodate(page)) {
+		page = find_subpage(page, pos >> PAGE_SHIFT);
+		if (iomap_split_page(inode, page) == AOP_TRUNCATED_PAGE) {
+			put_page(page);
+			goto retry;
+		}
 	}
 	offset = offset_in_thp(page, pos);
 	if (len > thp_size(page) - offset)
@@ -721,6 +729,7 @@ iomap_set_page_dirty(struct page *page)
 	struct address_space *mapping = page_mapping(page);
 	int newly_dirty;
 
+	VM_BUG_ON_PGFLAGS(PageTail(page), page);
 	if (unlikely(!mapping))
 		return !TestSetPageDirty(page);
 
@@ -743,7 +752,9 @@ EXPORT_SYMBOL_GPL(iomap_set_page_dirty);
 static size_t __iomap_write_end(struct inode *inode, loff_t pos, size_t len,
 		size_t copied, struct page *page)
 {
-	flush_dcache_page(page);
+	size_t offset = offset_in_thp(page, pos);
+
+	flush_dcache_page(page + offset / PAGE_SIZE);
 
 	/*
 	 * The blocks that were entirely written will now be uptodate, so we
@@ -758,7 +769,7 @@ static size_t __iomap_write_end(struct inode *inode, loff_t pos, size_t len,
 	 */
 	if (unlikely(copied < len && !PageUptodate(page)))
 		return 0;
-	iomap_set_range_uptodate(page, offset_in_page(pos), len);
+	iomap_set_range_uptodate(page, offset, len);
 	iomap_set_page_dirty(page);
 	return copied;
 }
@@ -834,6 +845,10 @@ iomap_write_actor(struct inode *inode, loff_t pos, loff_t length, void *data,
 		size_t bytes;		/* Bytes to write to page */
 		size_t copied;		/* Bytes copied from user */
 
+		/*
+		 * XXX: We don't know what size page we'll find in the
+		 * page cache, so only copy up to a regular page boundary.
+		 */
 		offset = offset_in_page(pos);
 		bytes = min_t(unsigned long, PAGE_SIZE - offset,
 						iov_iter_count(i));
@@ -864,7 +879,7 @@ again:
 		offset = offset_in_thp(page, pos);
 
 		if (mapping_writably_mapped(inode->i_mapping))
-			flush_dcache_page(page);
+			flush_dcache_page(page + offset / PAGE_SIZE);
 
 		copied = iov_iter_copy_from_user_atomic(page, i, offset, bytes);
 
