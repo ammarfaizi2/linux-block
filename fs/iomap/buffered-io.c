@@ -141,6 +141,24 @@ static void iomap_adjust_read_range(struct inode *inode, struct page *page,
 	*lenp = plen;
 }
 
+static bool iomap_range_uptodate(struct inode *inode, struct page *page,
+		size_t start, size_t len)
+{
+	struct iomap_page *iop = to_iomap_page(page);
+	size_t first = start >> inode->i_blkbits;
+	size_t last = (start + len - 1) >> inode->i_blkbits;
+	size_t i;
+
+	VM_BUG_ON_PGFLAGS(!PageLocked(page), page);
+	if (!iop)
+		return false;
+
+	for (i = first; i <= last; i++)
+		if (!test_bit(i, iop->uptodate))
+			return false;
+	return true;
+}
+
 static void
 iomap_iop_set_range_uptodate(struct page *page, unsigned off, unsigned len)
 {
@@ -446,26 +464,15 @@ int
 iomap_is_partially_uptodate(struct page *page, unsigned long from,
 		unsigned long count)
 {
-	struct iomap_page *iop = to_iomap_page(page);
-	struct inode *inode = page->mapping->host;
-	unsigned len, first, last;
-	unsigned i;
+	struct page *head = thp_head(page);
+	size_t len;
 
-	/* Limit range to one page */
-	len = min_t(unsigned, PAGE_SIZE - from, count);
+	/* 'from' is relative to page, but the bitmap is relative to head */
+	from += (page - head) * PAGE_SIZE;
+	/* Limit range to this page */
+	len = min(thp_size(head) - from, count);
 
-	/* First and last blocks in range within page */
-	first = from >> inode->i_blkbits;
-	last = (from + len - 1) >> inode->i_blkbits;
-
-	if (iop) {
-		for (i = first; i <= last; i++)
-			if (!test_bit(i, iop->uptodate))
-				return 0;
-		return 1;
-	}
-
-	return 0;
+	return iomap_range_uptodate(head->mapping->host, head, from, len);
 }
 EXPORT_SYMBOL_GPL(iomap_is_partially_uptodate);
 
