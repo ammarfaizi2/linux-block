@@ -169,32 +169,45 @@ iomap_set_range_uptodate(struct page *page, unsigned off, unsigned len)
 		SetPageUptodate(page);
 }
 
-static void
-iomap_read_page_end_io(struct bio_vec *bvec, int error)
+static void iomap_finish_page_read(struct page *page, size_t offset,
+		size_t length, int error)
 {
-	struct page *page = bvec->bv_page;
 	struct iomap_page *iop = to_iomap_page(page);
 
 	if (unlikely(error)) {
 		ClearPageUptodate(page);
 		SetPageError(page);
 	} else {
-		iomap_set_range_uptodate(page, bvec->bv_offset, bvec->bv_len);
+		iomap_set_range_uptodate(page, offset, length);
 	}
 
-	if (!iop || atomic_sub_and_test(bvec->bv_len, &iop->read_bytes_pending))
+	if (!iop || atomic_sub_and_test(length, &iop->read_bytes_pending))
 		unlock_page(page);
 }
 
-static void
-iomap_read_end_io(struct bio *bio)
+static void iomap_finish_bvec_read(struct page *page, size_t offset,
+		size_t length, int error)
 {
-	int error = blk_status_to_errno(bio->bi_status);
-	struct bio_vec *bvec;
-	struct bvec_iter_all iter_all;
+	while (length > 0) {
+		size_t count = min(thp_size(page) - offset, length);
 
-	bio_for_each_segment_all(bvec, bio, iter_all)
-		iomap_read_page_end_io(bvec, error);
+		iomap_finish_page_read(page, offset, count, error);
+
+		page += (offset + count) / PAGE_SIZE;
+		offset = 0;
+		length -= count;
+	}
+}
+
+static void iomap_read_end_io(struct bio *bio)
+{
+	int i, error = blk_status_to_errno(bio->bi_status);
+	struct bio_vec *bvec;
+
+	bio_for_each_bvec_all(bvec, bio, i)
+		iomap_finish_bvec_read(bvec->bv_page, bvec->bv_offset,
+				bvec->bv_len, error);
+
 	bio_put(bio);
 }
 
@@ -1037,9 +1050,8 @@ out_unlock:
 }
 EXPORT_SYMBOL_GPL(iomap_page_mkwrite);
 
-static void
-iomap_finish_page_writeback(struct inode *inode, struct page *page,
-		int error, unsigned int len)
+static void iomap_finish_page_write(struct inode *inode, struct page *page,
+		unsigned int len, int error)
 {
 	struct iomap_page *iop = to_iomap_page(page);
 
@@ -1053,6 +1065,20 @@ iomap_finish_page_writeback(struct inode *inode, struct page *page,
 
 	if (!iop || atomic_sub_and_test(len, &iop->write_bytes_pending))
 		end_page_writeback(page);
+}
+
+static void iomap_finish_bvec_write(struct inode *inode, struct page *page,
+		size_t offset, size_t length, int error)
+{
+	while (length > 0) {
+		size_t count = min(thp_size(page) - offset, length);
+
+		iomap_finish_page_write(inode, page, count, error);
+
+		page += (offset + count) / PAGE_SIZE;
+		offset = 0;
+		length -= count;
+	}
 }
 
 /*
@@ -1072,7 +1098,7 @@ iomap_finish_ioend(struct iomap_ioend *ioend, int error)
 
 	for (bio = &ioend->io_inline_bio; bio; bio = next) {
 		struct bio_vec *bv;
-		struct bvec_iter_all iter_all;
+		int i;
 
 		/*
 		 * For the last bio, bi_private points to the ioend, so we
@@ -1084,9 +1110,9 @@ iomap_finish_ioend(struct iomap_ioend *ioend, int error)
 			next = bio->bi_private;
 
 		/* walk each page on bio, ending page IO on them */
-		bio_for_each_segment_all(bv, bio, iter_all)
-			iomap_finish_page_writeback(inode, bv->bv_page, error,
-					bv->bv_len);
+		bio_for_each_bvec_all(bv, bio, i)
+			iomap_finish_bvec_write(inode, bv->bv_page,
+					bv->bv_offset, bv->bv_len, error);
 		bio_put(bio);
 	}
 	/* The ioend has been freed by bio_put() */
