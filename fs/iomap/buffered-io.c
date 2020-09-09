@@ -343,15 +343,50 @@ done:
 	return pos - orig_pos + plen;
 }
 
+/*
+ * The page that was passed in has become Uptodate.  This may be due to
+ * the storage being synchronous or due to a page split finding the page
+ * is actually uptodate.  The page is still locked.
+ * Lift this into the VFS at some point.
+ */
+#define AOP_UPDATED_PAGE       (AOP_TRUNCATED_PAGE + 1)
+
+static int iomap_split_page(struct inode *inode, struct page *page)
+{
+	struct page *head = thp_head(page);
+	bool uptodate = iomap_range_uptodate(inode, head,
+				(page - head) * PAGE_SIZE, PAGE_SIZE);
+
+	iomap_page_release(head);
+	if (split_huge_page(page) < 0) {
+		unlock_page(page);
+		return AOP_TRUNCATED_PAGE;
+	}
+	if (!uptodate)
+		return 0;
+	SetPageUptodate(page);
+	return AOP_UPDATED_PAGE;
+}
+
 int
 iomap_readpage(struct page *page, const struct iomap_ops *ops)
 {
 	struct iomap_readpage_ctx ctx = { .cur_page = page };
-	struct inode *inode = page->mapping->host;
+	struct inode *inode = thp_head(page)->mapping->host;
 	unsigned poff;
 	loff_t ret;
 
-	trace_iomap_readpage(page->mapping->host, 1);
+	trace_iomap_readpage(inode, 1);
+
+	if (PageTransCompound(page)) {
+		int status = iomap_split_page(inode, page);
+		if (status == AOP_UPDATED_PAGE) {
+			unlock_page(page);
+			return 0;
+		}
+		if (status)
+			return status;
+	}
 
 	for (poff = 0; poff < PAGE_SIZE; poff += ret) {
 		ret = iomap_apply(inode, page_offset(page) + poff,
