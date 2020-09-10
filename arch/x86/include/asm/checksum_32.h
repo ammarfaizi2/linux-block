@@ -49,7 +49,8 @@ static inline __wsum csum_and_copy_from_user(const void __user *src,
 	might_sleep();
 	if (!user_access_begin(src, len))
 		return 0;
-	ret = csum_partial_copy_generic((__force void *)src, dst, len);
+	ret = csum_partial_copy_generic((__force void *)force_user_ptr(src),
+					dst, len);
 	user_access_end();
 
 	return ret;
@@ -177,8 +178,7 @@ static inline __wsum csum_and_copy_to_user(const void *src,
 	might_sleep();
 	if (!user_access_begin(dst, len))
 		return 0;
-
-	ret = csum_partial_copy_generic(src, (__force void *)dst, len);
+	ret = csum_partial_copy_generic(src, (__force void *)force_user_ptr(dst), len);
 	user_access_end();
 	return ret;
 }

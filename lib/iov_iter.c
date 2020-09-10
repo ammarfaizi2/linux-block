@@ -642,7 +642,7 @@ static int copyout_mcsafe(void __user *to, const void *from, size_t n)
 {
 	if (access_ok(to, n)) {
 		instrument_copy_to_user(to, from, n);
-		n = copy_to_user_mcsafe((__force void *) to, from, n);
+		n = copy_to_user_mcsafe(to, from, n);
 	}
 	return n;
 }

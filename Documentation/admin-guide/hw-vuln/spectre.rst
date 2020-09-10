@@ -426,9 +426,9 @@ Spectre variant 1
    <spec_ref2>` to avoid any usable disclosure gadgets. However, it may
    not cover all attack vectors for Spectre variant 1.
 
-   Copy-from-user code has an LFENCE barrier to prevent the access_ok()
-   check from being mis-speculated.  The barrier is done by the
-   barrier_nospec() macro.
+   Usercopy code uses user pointer masking to prevent the access_ok()
+   check from being mis-speculated in the success path with a kernel
+   address.  The masking is done by the force_user_ptr() macro.
 
    For the swapgs variant of Spectre variant 1, LFENCE barriers are
    added to interrupt, exception and NMI entry where needed.  These
