@@ -308,8 +308,11 @@ struct io_ring_ctx {
 	 */
 	struct fixed_file_data	*file_data;
 	unsigned		nr_user_files;
-	int 			ring_fd;
-	struct file 		*ring_file;
+
+	/* incremented when ->flush() is called */
+	atomic64_t		files_seq;
+	/* assigned when ->files are grabbed */
+	s64			cur_files_seq;
 
 	/* if used, fixed mapped user buffers */
 	unsigned		nr_user_bufs;
@@ -394,6 +397,7 @@ struct io_close {
 	struct file			*file;
 	struct file			*put_file;
 	int				fd;
+	s64				files_seq;
 };
 
 struct io_timeout_data {
@@ -409,6 +413,7 @@ struct io_accept {
 	int __user			*addr_len;
 	int				flags;
 	unsigned long			nofile;
+	s64				files_seq;
 };
 
 struct io_sync {
@@ -464,6 +469,7 @@ struct io_open {
 	struct filename			*filename;
 	struct open_how			how;
 	unsigned long			nofile;
+	s64				files_seq;
 };
 
 struct io_files_update {
@@ -471,6 +477,7 @@ struct io_files_update {
 	u64				arg;
 	u32				nr_args;
 	u32				offset;
+	s64				files_seq;
 };
 
 struct io_fadvise {
@@ -493,6 +500,7 @@ struct io_epoll {
 	int				op;
 	int				fd;
 	struct epoll_event		event;
+	s64				files_seq;
 };
 
 struct io_splice {
@@ -520,6 +528,7 @@ struct io_statx {
 	unsigned int			flags;
 	const char __user		*filename;
 	struct statx __user		*buffer;
+	s64				files_seq;
 };
 
 struct io_shutdown {
@@ -3602,6 +3611,28 @@ static int io_fallocate(struct io_kiocb *req, bool force_nonblock)
 	return 0;
 }
 
+/*
+ * Check that our ->files sequence matches. If files isn't assigned yet,
+ * just store the current sequence. If they are assigned, check against
+ * the sequence from when they got assigned. If we get a mismatch, we fail
+ * the request. This is only applicable to requests that sets ->file_table
+ * in io_op_defs[], indicating that they need access to the file_struct
+ * when executed async.
+ */
+static int io_check_files_seq(struct io_kiocb *req, s64 *seq)
+{
+	struct io_ring_ctx *ctx = req->ctx;
+
+	if (!req->work.files) {
+		*seq = ctx->cur_files_seq;
+		return 0;
+	} else if (*seq == atomic64_read(&ctx->files_seq)) {
+		return 0;
+	}
+
+	return -EBADF;
+}
+
 static int __io_openat_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 {
 	const char __user *fname;
@@ -3627,6 +3658,7 @@ static int __io_openat_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe
 		return ret;
 	}
 	req->open.nofile = rlimit(RLIMIT_NOFILE);
+	req->open.files_seq = req->ctx->cur_files_seq;
 	req->flags |= REQ_F_NEED_CLEANUP;
 	return 0;
 }
@@ -3670,6 +3702,10 @@ static int io_openat2(struct io_kiocb *req, bool force_nonblock)
 	struct file *file;
 	int ret;
 
+	ret = io_check_files_seq(req, &req->open.files_seq);
+	if (ret)
+		goto done;
+
 	if (force_nonblock)
 		return -EAGAIN;
 
@@ -3692,6 +3728,7 @@ static int io_openat2(struct io_kiocb *req, bool force_nonblock)
 err:
 	putname(req->open.filename);
 	req->flags &= ~REQ_F_NEED_CLEANUP;
+done:
 	if (ret < 0)
 		req_set_fail_links(req);
 	io_req_complete(req, ret);
@@ -3881,6 +3918,7 @@ static int io_epoll_ctl_prep(struct io_kiocb *req,
 			return -EFAULT;
 	}
 
+	req->epoll.files_seq = req->ctx->cur_files_seq;
 	return 0;
 #else
 	return -EOPNOTSUPP;
@@ -3894,10 +3932,15 @@ static int io_epoll_ctl(struct io_kiocb *req, bool force_nonblock,
 	struct io_epoll *ie = &req->epoll;
 	int ret;
 
+	ret = io_check_files_seq(req, &ie->files_seq);
+	if (ret)
+		goto done;
+
 	ret = do_epoll_ctl(ie->epfd, ie->op, ie->fd, &ie->event, force_nonblock);
 	if (force_nonblock && ret == -EAGAIN)
 		return -EAGAIN;
 
+done:
 	if (ret < 0)
 		req_set_fail_links(req);
 	__io_req_complete(req, ret, 0, cs);
@@ -3993,6 +4036,7 @@ static int io_statx_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 	req->statx.filename = u64_to_user_ptr(READ_ONCE(sqe->addr));
 	req->statx.buffer = u64_to_user_ptr(READ_ONCE(sqe->addr2));
 	req->statx.flags = READ_ONCE(sqe->statx_flags);
+	req->statx.files_seq = req->ctx->cur_files_seq;
 
 	return 0;
 }
@@ -4001,6 +4045,10 @@ static int io_statx(struct io_kiocb *req, bool force_nonblock)
 {
 	struct io_statx *ctx = &req->statx;
 	int ret;
+
+	ret = io_check_files_seq(req, &ctx->files_seq);
+	if (ret)
+		goto done;
 
 	if (force_nonblock) {
 		/* only need file table for an actual valid fd */
@@ -4012,6 +4060,7 @@ static int io_statx(struct io_kiocb *req, bool force_nonblock)
 	ret = do_statx(ctx->dfd, ctx->filename, ctx->flags, ctx->mask,
 		       ctx->buffer);
 
+done:
 	if (ret < 0)
 		req_set_fail_links(req);
 	io_req_complete(req, ret);
@@ -4037,11 +4086,11 @@ static int io_close_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 		return -EBADF;
 
 	req->close.fd = READ_ONCE(sqe->fd);
-	if ((req->file && req->file->f_op == &io_uring_fops) ||
-	    req->close.fd == req->ctx->ring_fd)
+	if (req->file && req->file->f_op == &io_uring_fops)
 		return -EBADF;
 
 	req->close.put_file = NULL;
+	req->close.files_seq = req->ctx->cur_files_seq;
 	return 0;
 }
 
@@ -4050,6 +4099,10 @@ static int io_close(struct io_kiocb *req, bool force_nonblock,
 {
 	struct io_close *close = &req->close;
 	int ret;
+
+	ret = io_check_files_seq(req, &close->files_seq);
+	if (ret)
+		goto done;
 
 	/* might be already done during nonblock submission */
 	if (!close->put_file) {
@@ -4069,10 +4122,11 @@ static int io_close(struct io_kiocb *req, bool force_nonblock,
 
 	/* No ->flush() or already async, safely close from here */
 	ret = filp_close(close->put_file, req->work.files);
-	if (ret < 0)
-		req_set_fail_links(req);
 	fput(close->put_file);
 	close->put_file = NULL;
+done:
+	if (ret < 0)
+		req_set_fail_links(req);
 	__io_req_complete(req, ret, 0, cs);
 	return 0;
 }
@@ -4526,6 +4580,7 @@ static int io_accept_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 	accept->addr_len = u64_to_user_ptr(READ_ONCE(sqe->addr2));
 	accept->flags = READ_ONCE(sqe->accept_flags);
 	accept->nofile = rlimit(RLIMIT_NOFILE);
+	accept->files_seq = req->ctx->cur_files_seq;
 	return 0;
 }
 
@@ -4536,6 +4591,10 @@ static int io_accept(struct io_kiocb *req, bool force_nonblock,
 	unsigned int file_flags = force_nonblock ? O_NONBLOCK : 0;
 	int ret;
 
+	ret = io_check_files_seq(req, &accept->files_seq);
+	if (ret)
+		goto done;
+
 	if (req->file->f_flags & O_NONBLOCK)
 		req->flags |= REQ_F_NOWAIT;
 
@@ -4544,6 +4603,7 @@ static int io_accept(struct io_kiocb *req, bool force_nonblock,
 					accept->nofile);
 	if (ret == -EAGAIN && force_nonblock)
 		return -EAGAIN;
+done:
 	if (ret < 0) {
 		if (ret == -ERESTARTSYS)
 			ret = -EINTR;
@@ -5513,6 +5573,7 @@ static int io_files_update_prep(struct io_kiocb *req,
 	if (!req->files_update.nr_args)
 		return -EINVAL;
 	req->files_update.arg = READ_ONCE(sqe->addr);
+	req->files_update.files_seq = req->ctx->cur_files_seq;
 	return 0;
 }
 
@@ -5523,6 +5584,10 @@ static int io_files_update(struct io_kiocb *req, bool force_nonblock,
 	struct io_uring_files_update up;
 	int ret;
 
+	ret = io_check_files_seq(req, &req->files_update.files_seq);
+	if (ret)
+		goto done;
+
 	if (force_nonblock)
 		return -EAGAIN;
 
@@ -5532,7 +5597,7 @@ static int io_files_update(struct io_kiocb *req, bool force_nonblock,
 	mutex_lock(&ctx->uring_lock);
 	ret = __io_sqe_files_update(ctx, &up, req->files_update.nr_args);
 	mutex_unlock(&ctx->uring_lock);
-
+done:
 	if (ret < 0)
 		req_set_fail_links(req);
 	__io_req_complete(req, ret, 0, cs);
@@ -6118,34 +6183,21 @@ static int io_req_set_file(struct io_submit_state *state, struct io_kiocb *req,
 
 static int io_grab_files(struct io_kiocb *req)
 {
-	int ret = -EBADF;
 	struct io_ring_ctx *ctx = req->ctx;
 
 	io_req_init_async(req);
 
 	if (req->work.files || (req->flags & REQ_F_NO_FILE_TABLE))
 		return 0;
-	if (!ctx->ring_file)
-		return -EBADF;
 
-	rcu_read_lock();
 	spin_lock_irq(&ctx->inflight_lock);
-	/*
-	 * We use the f_ops->flush() handler to ensure that we can flush
-	 * out work accessing these files if the fd is closed. Check if
-	 * the fd has changed since we started down this path, and disallow
-	 * this operation if it has.
-	 */
-	if (fcheck(ctx->ring_fd) == ctx->ring_file) {
-		list_add(&req->inflight_entry, &ctx->inflight_list);
-		req->flags |= REQ_F_INFLIGHT;
-		req->work.files = current->files;
-		ret = 0;
-	}
+	list_add(&req->inflight_entry, &ctx->inflight_list);
+	req->flags |= REQ_F_INFLIGHT;
+	ctx->cur_files_seq = atomic64_read(&ctx->files_seq);
+	req->work.files = current->files;
 	spin_unlock_irq(&ctx->inflight_lock);
-	rcu_read_unlock();
 
-	return ret;
+	return 0;
 }
 
 static inline int io_prep_work_files(struct io_kiocb *req)
@@ -6705,14 +6757,7 @@ again:
 		mutex_unlock(&ctx->uring_lock);
 	}
 
-	/*
-	 * If ->ring_file is NULL, we're waiting on new fd/file assigment.
-	 * Don't submit anything new until that happens.
-	 */
-	if (ctx->ring_file)
-		to_submit = io_sqring_entries(ctx);
-	else
-		to_submit = 0;
+	to_submit = io_sqring_entries(ctx);
 
 	/*
 	 * If submit got -EBUSY, flag us as needing the application
@@ -6756,7 +6801,7 @@ again:
 		}
 
 		to_submit = io_sqring_entries(ctx);
-		if (!to_submit || ret == -EBUSY || !ctx->ring_file)
+		if (!to_submit || ret == -EBUSY)
 			return SQT_IDLE;
 
 		finish_wait(&sqd->wait, &ctx->sqo_wait_entry);
@@ -8557,6 +8602,9 @@ static int io_uring_flush(struct file *file, void *data)
 {
 	struct io_ring_ctx *ctx = file->private_data;
 
+	/* assume current files sequence is no longer valid */
+	atomic64_inc(&ctx->files_seq);
+
 	io_uring_cancel_files(ctx, data);
 
 	/*
@@ -8568,13 +8616,8 @@ static int io_uring_flush(struct file *file, void *data)
 	} else if (ctx->flags & IORING_SETUP_SQPOLL) {
 		struct io_sq_data *sqd = ctx->sq_data;
 
-		/* Ring is being closed, mark us as neding new assignment */
+		/* quiesce sqpoll thread */
 		io_sq_thread_park(sqd);
-		mutex_lock(&ctx->uring_lock);
-		ctx->ring_fd = -1;
-		ctx->ring_file = NULL;
-		mutex_unlock(&ctx->uring_lock);
-		io_ring_set_wakeup_flag(ctx);
 		io_sq_thread_unpark(sqd);
 	}
 
@@ -8711,18 +8754,6 @@ SYSCALL_DEFINE6(io_uring_enter, unsigned int, fd, u32, to_submit,
 	if (ctx->flags & IORING_SETUP_SQPOLL) {
 		if (!list_empty_careful(&ctx->cq_overflow_list))
 			io_cqring_overflow_flush(ctx, false);
-		if (fd != ctx->ring_fd) {
-			struct io_sq_data *sqd = ctx->sq_data;
-
-			io_sq_thread_park(sqd);
-
-			mutex_lock(&ctx->uring_lock);
-			ctx->ring_fd = fd;
-			ctx->ring_file = f.file;
-			mutex_unlock(&ctx->uring_lock);
-
-			io_sq_thread_unpark(sqd);
-		}
 		if (flags & IORING_ENTER_SQ_WAKEUP)
 			wake_up(&ctx->sq_data->wait);
 		if (flags & IORING_ENTER_SQ_WAIT)
@@ -8730,8 +8761,6 @@ SYSCALL_DEFINE6(io_uring_enter, unsigned int, fd, u32, to_submit,
 		submitted = to_submit;
 	} else if (to_submit) {
 		mutex_lock(&ctx->uring_lock);
-		ctx->ring_fd = fd;
-		ctx->ring_file = f.file;
 		submitted = io_submit_sqes(ctx, to_submit);
 		mutex_unlock(&ctx->uring_lock);
 
