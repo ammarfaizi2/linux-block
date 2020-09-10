@@ -1871,9 +1871,10 @@ struct regulator *_regulator_get(struct device *dev, const char *id,
 		 * If regulator_dev_lookup() fails with error other
 		 * than -ENODEV our job here is done, we simply return it.
 		 */
-		if (ret != -ENODEV)
-			return ERR_PTR(ret);
-
+		if (ret != -ENODEV) {
+			regulator = ERR_PTR(ret);
+			goto err;
+		}
 		if (!have_full_constraints()) {
 			dev_warn(dev,
 				 "incomplete constraints, dummy supplies not allowed\n");
@@ -1905,13 +1906,13 @@ struct regulator *_regulator_get(struct device *dev, const char *id,
 	if (rdev->exclusive) {
 		regulator = ERR_PTR(-EPERM);
 		put_device(&rdev->dev);
-		return regulator;
+		goto err;
 	}
 
 	if (get_type == EXCLUSIVE_GET && rdev->open_count) {
 		regulator = ERR_PTR(-EBUSY);
 		put_device(&rdev->dev);
-		return regulator;
+		goto err;
 	}
 
 	mutex_lock(&regulator_list_mutex);
@@ -1921,20 +1922,20 @@ struct regulator *_regulator_get(struct device *dev, const char *id,
 	if (ret != 0) {
 		regulator = ERR_PTR(-EPROBE_DEFER);
 		put_device(&rdev->dev);
-		return regulator;
+		goto err;
 	}
 
 	ret = regulator_resolve_supply(rdev);
 	if (ret < 0) {
 		regulator = ERR_PTR(ret);
 		put_device(&rdev->dev);
-		return regulator;
+		goto err;
 	}
 
 	if (!try_module_get(rdev->owner)) {
 		regulator = ERR_PTR(-EPROBE_DEFER);
 		put_device(&rdev->dev);
-		return regulator;
+		goto err;
 	}
 
 	regulator = create_regulator(rdev, dev, id);
@@ -1942,7 +1943,7 @@ struct regulator *_regulator_get(struct device *dev, const char *id,
 		regulator = ERR_PTR(-ENOMEM);
 		module_put(rdev->owner);
 		put_device(&rdev->dev);
-		return regulator;
+		goto err;
 	}
 
 	rdev->open_count++;
@@ -1960,6 +1961,9 @@ struct regulator *_regulator_get(struct device *dev, const char *id,
 	if (!IS_ERR_OR_NULL(link))
 		regulator->device_link = true;
 
+err:
+	if (IS_ERR(regulator) && (regulator != ERR_PTR(-EPROBE_DEFER)))
+		dev_err(dev, "Failed to get supply '%s' (err = %ld)", id, PTR_ERR(regulator));
 	return regulator;
 }
 
@@ -4513,10 +4517,7 @@ int regulator_bulk_get(struct device *dev, int num_consumers,
 	return 0;
 
 err:
-	if (ret != -EPROBE_DEFER)
-		dev_err(dev, "Failed to get supply '%s': %d\n",
-			consumers[i].supply, ret);
-	else
+	if (ret == -EPROBE_DEFER)
 		dev_dbg(dev, "Failed to get supply '%s', deferring\n",
 			consumers[i].supply);
 
