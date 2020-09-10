@@ -329,8 +329,8 @@ static void rcu_tasks_wait_gp(struct rcu_tasks *rtp)
 	 */
 	lastreport = jiffies;
 
-	/* Start off with HZ/10 wait and slowly back off to 1 HZ wait. */
-	fract = 10;
+	/* @@@ Start off with HZ/10 wait and slowly back off to 1 HZ wait. */
+	fract = 1000;
 
 	for (;;) {
 		bool firstreport;
@@ -749,6 +749,34 @@ static unsigned long n_heavy_reader_attempts;
 static unsigned long n_heavy_reader_updates;
 static unsigned long n_heavy_reader_ofl_updates;
 
+// Grace-period statistics
+static atomic_long_t n_rtt_wake; // Wake up GP kthread.
+static atomic_long_t n_rtt_ipi_migrate; // Task migrated before IPI arrived.
+static atomic_long_t n_rtt_ipi_noreader; // IPI found no reader.
+static atomic_long_t n_rtt_ipi_reader; // IPI found a reader.
+static atomic_long_t n_rtt_inspect_n; // Number of tasks inspected
+static atomic_long_t n_rtt_inspect_onrq; // Number of tasks inspected on runqueue.
+static atomic_long_t n_rtt_inspect_iscurr; // Inspecting running task.
+static atomic_long_t n_rtt_inspect_notcurr; // Inspecting runnable/blocked task.
+static atomic_long_t n_rtt_inspect_inqs; // Inspected task in QS.
+static atomic_long_t n_rtt_wait; // Waiting on current task.
+static atomic_long_t n_rtt_wait_self; // Waiting on current task.
+static atomic_long_t n_rtt_wait_pendipi; // Waiting task with pending IPI.
+static atomic_long_t n_rtt_wait_locksuccess; // Task lockdown found QS.
+static atomic_long_t n_rtt_wait_pendipi2; // Waiting task with pending IPI #2.
+static atomic_long_t n_rtt_wait_sendipi; // Send an IPI to the task.
+static atomic_long_t n_rtt_wait_sendipifail; // IPI send failed.
+static atomic_long_t n_rtt_wait_missedcurr; // Couldn't lock down, but not running.
+static atomic_long_t n_rtt_wait_notyet; // Couldn't lock down, but not yet time to IPI.
+static atomic_long_t n_rtt_check_notchecked; // Task has not yet been checked.
+
+atomic_long_t n_rtt_sched; // try_invoke_on_locked_down_task() invocations
+atomic_long_t n_rtt_sched_offrq; // Task transitioned to !on_rq
+atomic_long_t n_rtt_sched_running; // Task transitioned to TASK_RUNNING
+atomic_long_t n_rtt_sched_waking; // TASK_WAKING
+atomic_long_t n_rtt_sched_onrq; // Task transitioned to on_rq
+atomic_long_t n_rtt_sched_fail; // try_invoke_on_locked_down_task() failure reports
+
 void call_rcu_tasks_trace(struct rcu_head *rhp, rcu_callback_t func);
 DEFINE_RCU_TASKS(rcu_tasks_trace, rcu_tasks_wait_gp, call_rcu_tasks_trace,
 		 "RCU Tasks Trace");
@@ -759,6 +787,7 @@ DEFINE_RCU_TASKS(rcu_tasks_trace, rcu_tasks_wait_gp, call_rcu_tasks_trace,
  */
 static void rcu_read_unlock_iw(struct irq_work *iwp)
 {
+	atomic_long_inc(&n_rtt_wake);
 	wake_up(&trc_wait);
 }
 static DEFINE_IRQ_WORK(rcu_tasks_trace_iw, rcu_read_unlock_iw);
@@ -806,6 +835,7 @@ static void trc_read_check_handler(void *t_in)
 
 	// If the task is no longer running on this CPU, leave.
 	if (unlikely(texp != t)) {
+		atomic_long_inc(&n_rtt_ipi_migrate);
 		if (WARN_ON_ONCE(atomic_dec_and_test(&trc_n_readers_need_end)))
 			wake_up(&trc_wait);
 		goto reset_ipi; // Already on holdout list, so will check later.
@@ -814,6 +844,7 @@ static void trc_read_check_handler(void *t_in)
 	// If the task is not in a read-side critical section, and
 	// if this is the last reader, awaken the grace-period kthread.
 	if (likely(!t->trc_reader_nesting)) {
+		atomic_long_inc(&n_rtt_ipi_noreader);
 		if (WARN_ON_ONCE(atomic_dec_and_test(&trc_n_readers_need_end)))
 			wake_up(&trc_wait);
 		// Mark as checked after decrement to avoid false
@@ -821,6 +852,7 @@ static void trc_read_check_handler(void *t_in)
 		WRITE_ONCE(t->trc_reader_checked, true);
 		goto reset_ipi;
 	}
+	atomic_long_inc(&n_rtt_ipi_reader);
 	WRITE_ONCE(t->trc_reader_checked, true);
 
 	// Get here if the task is in a read-side critical section.  Set
@@ -828,6 +860,7 @@ static void trc_read_check_handler(void *t_in)
 	// exit from that critical section.
 	WARN_ON_ONCE(t->trc_reader_special.b.need_qs);
 	WRITE_ONCE(t->trc_reader_special.b.need_qs, true);
+	WARN_ON_ONCE(!t->trc_reader_nesting);
 
 reset_ipi:
 	// Allow future IPIs to be sent on CPU and for task.
@@ -844,7 +877,11 @@ static bool trc_inspect_reader(struct task_struct *t, void *arg)
 	bool in_qs = false;
 	bool ofl = cpu_is_offline(cpu);
 
+	atomic_long_inc(&n_rtt_inspect_n);
+	if (t->on_rq)
+		atomic_long_inc(&n_rtt_inspect_onrq);
 	if (task_curr(t)) {
+		atomic_long_inc(&n_rtt_inspect_iscurr);
 		WARN_ON_ONCE(ofl && !is_idle_task(t));
 
 		// If no chance of heavyweight readers, do it the hard way.
@@ -863,6 +900,7 @@ static bool trc_inspect_reader(struct task_struct *t, void *arg)
 			n_heavy_reader_ofl_updates++;
 		in_qs = true;
 	} else {
+		atomic_long_inc(&n_rtt_inspect_notcurr);
 		in_qs = likely(!t->trc_reader_nesting);
 	}
 
@@ -871,8 +909,10 @@ static bool trc_inspect_reader(struct task_struct *t, void *arg)
 	t->trc_reader_checked = true;
 	trc_del_holdout(t);
 
-	if (in_qs)
+	if (in_qs) {
+		atomic_long_inc(&n_rtt_inspect_inqs);
 		return true;  // Already in quiescent state, done!!!
+	}
 
 	// The task is in a read-side critical section, so set up its
 	// state so that it will awaken the grace-period kthread upon exit
@@ -888,13 +928,19 @@ static void trc_wait_for_one_reader(struct task_struct *t,
 				    struct list_head *bhp)
 {
 	int cpu;
+	bool curr;
+	bool istime;
 
 	// If a previous IPI is still in flight, let it complete.
-	if (smp_load_acquire(&t->trc_ipi_to_cpu) != -1) // Order IPI
+	atomic_long_inc(&n_rtt_wait);
+	if (smp_load_acquire(&t->trc_ipi_to_cpu) != -1) { // Order IPI
+		atomic_long_inc(&n_rtt_wait_self);
 		return;
+	}
 
 	// The current task had better be in a quiescent state.
 	if (t == current) {
+		atomic_long_inc(&n_rtt_wait_pendipi);
 		t->trc_reader_checked = true;
 		trc_del_holdout(t);
 		WARN_ON_ONCE(t->trc_reader_nesting);
@@ -904,6 +950,7 @@ static void trc_wait_for_one_reader(struct task_struct *t,
 	// Attempt to nail down the task for inspection.
 	get_task_struct(t);
 	if (try_invoke_on_locked_down_task(t, trc_inspect_reader, NULL)) {
+		atomic_long_inc(&n_rtt_wait_locksuccess);
 		put_task_struct(t);
 		return;
 	}
@@ -911,14 +958,19 @@ static void trc_wait_for_one_reader(struct task_struct *t,
 
 	// If currently running, send an IPI, either way, add to list.
 	trc_add_holdout(t, bhp);
-	if (task_curr(t) && time_after(jiffies, rcu_tasks_trace.gp_start + rcu_task_ipi_delay)) {
+	curr = task_curr(t);
+	istime = time_after(jiffies + 1, rcu_tasks_trace.gp_start + rcu_task_ipi_delay);
+	if (curr && istime) {
 		// The task is currently running, so try IPIing it.
 		cpu = task_cpu(t);
 
 		// If there is already an IPI outstanding, let it happen.
-		if (per_cpu(trc_ipi_to_cpu, cpu) || t->trc_ipi_to_cpu >= 0)
+		if (per_cpu(trc_ipi_to_cpu, cpu) || t->trc_ipi_to_cpu >= 0) {
+			atomic_long_inc(&n_rtt_wait_pendipi2);
 			return;
+		}
 
+		atomic_long_inc(&n_rtt_wait_sendipi);
 		atomic_inc(&trc_n_readers_need_end);
 		per_cpu(trc_ipi_to_cpu, cpu) = true;
 		t->trc_ipi_to_cpu = cpu;
@@ -927,6 +979,7 @@ static void trc_wait_for_one_reader(struct task_struct *t,
 					     trc_read_check_handler, t, 0)) {
 			// Just in case there is some other reason for
 			// failure than the target CPU being offline.
+			atomic_long_inc(&n_rtt_wait_sendipifail);
 			rcu_tasks_trace.n_ipis_fails++;
 			per_cpu(trc_ipi_to_cpu, cpu) = false;
 			t->trc_ipi_to_cpu = cpu;
@@ -935,6 +988,10 @@ static void trc_wait_for_one_reader(struct task_struct *t,
 				wake_up(&trc_wait);
 			}
 		}
+	} else if (!curr) {
+		atomic_long_inc(&n_rtt_wait_missedcurr);
+	} else if (!istime) {
+		atomic_long_inc(&n_rtt_wait_notyet);
 	}
 }
 
@@ -1037,6 +1094,8 @@ static void check_all_holdout_tasks_trace(struct list_head *hop,
 			trc_del_holdout(t);
 		else if (needreport)
 			show_stalled_task_trace(t, firstreport);
+		else
+			atomic_long_inc(&n_rtt_check_notchecked);
 	}
 
 	// Re-enable CPU hotplug now that the holdout list scan has completed.
@@ -1183,6 +1242,32 @@ static void show_rcu_tasks_trace_gp_kthread(void)
 		data_race(n_heavy_reader_updates),
 		data_race(n_heavy_reader_attempts));
 	show_rcu_tasks_generic_gp_kthread(&rcu_tasks_trace, buf);
+	/*@@@@*/pr_alert("n_rtt_wake: %ld\n", atomic_long_read(&n_rtt_wake));
+	/*@@@@*/pr_alert("n_rtt_ipi_migrate: %ld\n", atomic_long_read(&n_rtt_ipi_migrate));
+	/*@@@@*/pr_alert("n_rtt_ipi_noreader: %ld\n", atomic_long_read(&n_rtt_ipi_noreader));
+	/*@@@@*/pr_alert("n_rtt_ipi_reader: %ld\n", atomic_long_read(&n_rtt_ipi_reader));
+	/*@@@@*/pr_alert("n_rtt_inspect_n: %ld\n", atomic_long_read(&n_rtt_inspect_n));
+	/*@@@@*/pr_alert("n_rtt_inspect_onrq: %ld\n", atomic_long_read(&n_rtt_inspect_onrq));
+	/*@@@@*/pr_alert("n_rtt_inspect_iscurr: %ld\n", atomic_long_read(&n_rtt_inspect_iscurr));
+	/*@@@@*/pr_alert("n_rtt_inspect_notcurr: %ld\n", atomic_long_read(&n_rtt_inspect_notcurr));
+	/*@@@@*/pr_alert("n_rtt_inspect_inqs: %ld\n", atomic_long_read(&n_rtt_inspect_inqs));
+	/*@@@@*/pr_alert("n_rtt_wait: %ld\n", atomic_long_read(&n_rtt_wait));
+	/*@@@@*/pr_alert("n_rtt_wait_self: %ld\n", atomic_long_read(&n_rtt_wait_self));
+	/*@@@@*/pr_alert("n_rtt_wait_pendipi: %ld\n", atomic_long_read(&n_rtt_wait_pendipi));
+	/*@@@@*/pr_alert("n_rtt_wait_locksuccess: %ld\n", atomic_long_read(&n_rtt_wait_locksuccess));
+	/*@@@@*/pr_alert("n_rtt_wait_pendipi2: %ld\n", atomic_long_read(&n_rtt_wait_pendipi2));
+	/*@@@@*/pr_alert("n_rtt_wait_sendipi: %ld\n", atomic_long_read(&n_rtt_wait_sendipi));
+	/*@@@@*/pr_alert("n_rtt_wait_sendipifail: %ld\n", atomic_long_read(&n_rtt_wait_sendipifail));
+	/*@@@@*/pr_alert("n_rtt_wait_missedcurr: %ld\n", atomic_long_read(&n_rtt_wait_missedcurr));
+	/*@@@@*/pr_alert("n_rtt_wait_notyet: %ld\n", atomic_long_read(&n_rtt_wait_notyet));
+	/*@@@@*/pr_alert("n_rtt_check_notchecked: %ld\n", atomic_long_read(&n_rtt_check_notchecked));
+
+	/*@@@@*/pr_alert("n_rtt_sched: %ld\n", atomic_long_read(&n_rtt_sched));
+	/*@@@@*/pr_alert("n_rtt_sched_offrq: %ld\n", atomic_long_read(&n_rtt_sched_offrq));
+	/*@@@@*/pr_alert("n_rtt_sched_running: %ld\n", atomic_long_read(&n_rtt_sched_running));
+	/*@@@@*/pr_alert("n_rtt_sched_waking: %ld\n", atomic_long_read(&n_rtt_sched_waking));
+	/*@@@@*/pr_alert("n_rtt_sched_onrq: %ld\n", atomic_long_read(&n_rtt_sched_onrq));
+	/*@@@@*/pr_alert("n_rtt_sched_fail: %ld\n", atomic_long_read(&n_rtt_sched_fail));
 }
 #endif /* #ifndef CONFIG_TINY_RCU */
 
@@ -1198,6 +1283,7 @@ void show_rcu_tasks_gp_kthreads(void)
 	show_rcu_tasks_rude_gp_kthread();
 	show_rcu_tasks_trace_gp_kthread();
 }
+EXPORT_SYMBOL_GPL(show_rcu_tasks_gp_kthreads);
 #endif /* #ifndef CONFIG_TINY_RCU */
 
 #else /* #ifdef CONFIG_TASKS_RCU_GENERIC */

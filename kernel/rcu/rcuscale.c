@@ -500,6 +500,8 @@ rcu_scale_print_module_parms(struct rcu_scale_ops *cur_ops, const char *tag)
 		 scale_type, tag, nrealreaders, nrealwriters, verbose, shutdown);
 }
 
+/*@@@@*/extern void show_rcu_tasks_gp_kthreads(void);
+
 static void
 rcu_scale_cleanup(void)
 {
@@ -508,6 +510,8 @@ rcu_scale_cleanup(void)
 	int ngps = 0;
 	u64 *wdp;
 	u64 *wdpp;
+
+	/*@@@@*/show_rcu_tasks_gp_kthreads();
 
 	/*
 	 * Would like warning at start, but everything is expedited

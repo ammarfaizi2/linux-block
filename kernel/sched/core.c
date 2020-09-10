@@ -3004,30 +3004,46 @@ out:
  *	@true if the task was locked onto a runqueue or is sleeping.
  *		However, @func can override this by returning @false.
  */
+extern atomic_long_t n_rtt_sched;
+extern atomic_long_t n_rtt_sched_offrq;
+extern atomic_long_t n_rtt_sched_running;
+extern atomic_long_t n_rtt_sched_waking;
+extern atomic_long_t n_rtt_sched_onrq;
+extern atomic_long_t n_rtt_sched_fail;
 bool try_invoke_on_locked_down_task(struct task_struct *p, bool (*func)(struct task_struct *t, void *arg), void *arg)
 {
 	struct rq_flags rf;
 	bool ret = false;
 	struct rq *rq;
 
+	atomic_long_inc(&n_rtt_sched);
 	raw_spin_lock_irqsave(&p->pi_lock, rf.flags);
 	if (p->on_rq) {
 		rq = __task_rq_lock(p, &rf);
 		if (task_rq(p) == rq)
 			ret = func(p, arg);
+		else
+			atomic_long_inc(&n_rtt_sched_offrq);
 		rq_unlock(rq, &rf);
 	} else {
 		switch (p->state) {
 		case TASK_RUNNING:
+			atomic_long_inc(&n_rtt_sched_running);
+			break;
 		case TASK_WAKING:
+			atomic_long_inc(&n_rtt_sched_waking);
 			break;
 		default:
 			smp_rmb(); // See smp_rmb() comment in try_to_wake_up().
 			if (!p->on_rq)
 				ret = func(p, arg);
+			else
+				atomic_long_inc(&n_rtt_sched_onrq);
 		}
 	}
 	raw_spin_unlock_irqrestore(&p->pi_lock, rf.flags);
+	if (!ret)
+		atomic_long_inc(&n_rtt_sched_fail);
 	return ret;
 }
 
