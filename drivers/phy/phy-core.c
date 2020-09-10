@@ -651,17 +651,7 @@ struct phy *of_phy_simple_xlate(struct device *dev, struct of_phandle_args
 }
 EXPORT_SYMBOL_GPL(of_phy_simple_xlate);
 
-/**
- * phy_get() - lookup and obtain a reference to a phy.
- * @dev: device that requests this phy
- * @string: the phy name as given in the dt data or the name of the controller
- * port for non-dt case
- *
- * Returns the phy driver, after getting a refcount to it; or
- * -ENODEV if there is no such phy.  The caller is responsible for
- * calling phy_put() to release that count.
- */
-struct phy *phy_get(struct device *dev, const char *string)
+static struct phy *_phy_get(struct device *dev, const char *string)
 {
 	int index = 0;
 	struct phy *phy;
@@ -694,6 +684,26 @@ struct phy *phy_get(struct device *dev, const char *string)
 
 	return phy;
 }
+
+/**
+ * phy_get() - lookup and obtain a reference to a phy.
+ * @dev: device that requests this phy
+ * @string: the phy name as given in the dt data or the name of the controller
+ * port for non-dt case
+ *
+ * Returns the phy driver, after getting a refcount to it; or
+ * -ENODEV if there is no such phy.  The caller is responsible for
+ * calling phy_put() to release that count.
+ */
+struct phy *phy_get(struct device *dev, const char *string)
+{
+	struct phy *phy = _phy_get(dev, string);
+
+	if (IS_ERR(phy) && phy != ERR_PTR(-EPROBE_DEFER))
+		dev_err(dev, "Failed to get phy '%s' (err = %ld)", string, PTR_ERR(phy));
+
+	return phy;
+}
 EXPORT_SYMBOL_GPL(phy_get);
 
 /**
@@ -708,10 +718,13 @@ EXPORT_SYMBOL_GPL(phy_get);
  */
 struct phy *phy_optional_get(struct device *dev, const char *string)
 {
-	struct phy *phy = phy_get(dev, string);
+	struct phy *phy = _phy_get(dev, string);
 
 	if (PTR_ERR(phy) == -ENODEV)
 		phy = NULL;
+
+	if (IS_ERR(phy) && phy != ERR_PTR(-EPROBE_DEFER))
+		dev_err(dev, "Failed to get phy '%s' (err = %ld)", string, PTR_ERR(phy));
 
 	return phy;
 }
@@ -762,10 +775,19 @@ EXPORT_SYMBOL_GPL(devm_phy_get);
  */
 struct phy *devm_phy_optional_get(struct device *dev, const char *string)
 {
-	struct phy *phy = devm_phy_get(dev, string);
+	struct phy **ptr, *phy;
 
-	if (PTR_ERR(phy) == -ENODEV)
-		phy = NULL;
+	ptr = devres_alloc(devm_phy_release, sizeof(*ptr), GFP_KERNEL);
+	if (!ptr)
+		return ERR_PTR(-ENOMEM);
+
+	phy = phy_optional_get(dev, string);
+	if (!IS_ERR_OR_NULL(phy)) {
+		*ptr = phy;
+		devres_add(dev, ptr);
+	} else {
+		devres_free(ptr);
+	}
 
 	return phy;
 }
