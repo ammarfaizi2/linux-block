@@ -980,22 +980,7 @@ void pwm_remove_table(struct pwm_lookup *table, size_t num)
 	mutex_unlock(&pwm_lookup_lock);
 }
 
-/**
- * pwm_get() - look up and request a PWM device
- * @dev: device for PWM consumer
- * @con_id: consumer name
- *
- * Lookup is first attempted using DT. If the device was not instantiated from
- * a device tree, a PWM chip and a relative index is looked up via a table
- * supplied by board setup code (see pwm_add_table()).
- *
- * Once a PWM chip has been found the specified PWM device will be requested
- * and is ready to be used.
- *
- * Returns: A pointer to the requested PWM device or an ERR_PTR()-encoded
- * error code on failure.
- */
-struct pwm_device *pwm_get(struct device *dev, const char *con_id)
+static struct pwm_device *_pwm_get(struct device *dev, const char *con_id)
 {
 	const char *dev_id = dev ? dev_name(dev) : NULL;
 	struct pwm_device *pwm;
@@ -1101,6 +1086,30 @@ struct pwm_device *pwm_get(struct device *dev, const char *con_id)
 	pwm->args.period = chosen->period;
 	pwm->args.polarity = chosen->polarity;
 
+	return pwm;
+}
+
+/**
+ * pwm_get() - look up and request a PWM device
+ * @dev: device for PWM consumer
+ * @con_id: consumer name
+ *
+ * Lookup is first attempted using DT. If the device was not instantiated from
+ * a device tree, a PWM chip and a relative index is looked up via a table
+ * supplied by board setup code (see pwm_add_table()).
+ *
+ * Once a PWM chip has been found the specified PWM device will be requested
+ * and is ready to be used.
+ *
+ * Returns: A pointer to the requested PWM device or an ERR_PTR()-encoded
+ * error code on failure.
+ */
+struct pwm_device *pwm_get(struct device *dev, const char *con_id)
+{
+	struct pwm_device *pwm = _pwm_get(dev, con_id);
+
+	if (IS_ERR(pwm) && (pwm != ERR_PTR(-EPROBE_DEFER)))
+		dev_err(dev, "Failed to get PWM '%s' (err = %ld)", con_id, PTR_ERR(pwm));
 	return pwm;
 }
 EXPORT_SYMBOL_GPL(pwm_get);
