@@ -2447,6 +2447,8 @@ no_cached_page:
 		 * Ok, it wasn't cached, so we need to create a new
 		 * page..
 		 */
+		if ((index << PAGE_SHIFT) >= i_size_read(inode))
+			goto out;
 		page = page_cache_alloc(mapping);
 		if (!page) {
 			error = -ENOMEM;
