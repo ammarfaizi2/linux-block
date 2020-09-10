@@ -3845,24 +3845,10 @@ int gpiod_configure_flags(struct gpio_desc *desc, const char *con_id,
 	return ret;
 }
 
-/**
- * gpiod_get_index - obtain a GPIO from a multi-index GPIO function
- * @dev:	GPIO consumer, can be NULL for system-global GPIOs
- * @con_id:	function within the GPIO consumer
- * @idx:	index of the GPIO to obtain in the consumer
- * @flags:	optional GPIO initialization flags
- *
- * This variant of gpiod_get() allows to access GPIOs other than the first
- * defined one for functions that define several GPIOs.
- *
- * Return a valid GPIO descriptor, -ENOENT if no GPIO has been assigned to the
- * requested function and/or index, or another IS_ERR() code if an error
- * occurred while trying to acquire the GPIO.
- */
-struct gpio_desc *__must_check gpiod_get_index(struct device *dev,
-					       const char *con_id,
-					       unsigned int idx,
-					       enum gpiod_flags flags)
+static struct gpio_desc *__must_check _gpiod_get_index(struct device *dev,
+						       const char *con_id,
+						       unsigned int idx,
+						       enum gpiod_flags flags)
 {
 	unsigned long lookupflags = GPIO_LOOKUP_FLAGS_DEFAULT;
 	struct gpio_desc *desc = NULL;
@@ -3929,6 +3915,33 @@ struct gpio_desc *__must_check gpiod_get_index(struct device *dev,
 
 	blocking_notifier_call_chain(&desc->gdev->notifier,
 				     GPIOLINE_CHANGED_REQUESTED, desc);
+
+	return desc;
+}
+
+/**
+ * gpiod_get_index - obtain a GPIO from a multi-index GPIO function
+ * @dev:	GPIO consumer, can be NULL for system-global GPIOs
+ * @con_id:	function within the GPIO consumer
+ * @idx:	index of the GPIO to obtain in the consumer
+ * @flags:	optional GPIO initialization flags
+ *
+ * This variant of gpiod_get() allows to access GPIOs other than the first
+ * defined one for functions that define several GPIOs.
+ *
+ * Return a valid GPIO descriptor, -ENOENT if no GPIO has been assigned to the
+ * requested function and/or index, or another IS_ERR() code if an error
+ * occurred while trying to acquire the GPIO.
+ */
+struct gpio_desc *__must_check gpiod_get_index(struct device *dev,
+					       const char *con_id,
+					       unsigned int idx,
+					       enum gpiod_flags flags)
+{
+	struct gpio_desc *desc = _gpiod_get_index(dev, con_id, idx, flags);
+
+	if (IS_ERR(desc) && desc != ERR_PTR(-EPROBE_DEFER))
+		dev_err(dev, "Failed to get gpio '%s', index=%d (err = %ld)", con_id, idx, PTR_ERR(desc));
 
 	return desc;
 }
@@ -4021,10 +4034,12 @@ struct gpio_desc *__must_check gpiod_get_index_optional(struct device *dev,
 {
 	struct gpio_desc *desc;
 
-	desc = gpiod_get_index(dev, con_id, index, flags);
+	desc = _gpiod_get_index(dev, con_id, index, flags);
 	if (IS_ERR(desc)) {
 		if (PTR_ERR(desc) == -ENOENT)
 			return NULL;
+		if (PTR_ERR(desc) != -EPROBE_DEFER)
+			dev_err(dev, "Failed to get gpio '%s', index=%d (err = %ld)", con_id, index, PTR_ERR(desc));
 	}
 
 	return desc;
