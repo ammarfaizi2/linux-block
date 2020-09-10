@@ -1180,7 +1180,9 @@ static int __init rcu_spawn_tasks_trace_kthread(void)
 		rcu_tasks_trace.gp_sleep = HZ / 200;
 		if (rcu_tasks_trace.gp_sleep <= 0)
 			rcu_tasks_trace.gp_sleep = 1;
-		rcu_tasks_trace.init_fract = HZ;
+		rcu_tasks_trace.init_fract = HZ / 5;
+		if (rcu_tasks_trace.init_fract <= 0)
+			rcu_tasks_trace.init_fract = 1;
 	}
 	rcu_tasks_trace.pregp_func = rcu_tasks_trace_pregp_step;
 	rcu_tasks_trace.pertask_func = rcu_tasks_trace_pertask;
