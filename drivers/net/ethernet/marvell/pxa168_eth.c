@@ -1399,10 +1399,8 @@ static int pxa168_eth_probe(struct platform_device *pdev)
 	printk(KERN_NOTICE "PXA168 10/100 Ethernet Driver\n");
 
 	clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(clk)) {
-		dev_err(&pdev->dev, "Fast Ethernet failed to get clock\n");
+	if (IS_ERR(clk))
 		return -ENODEV;
-	}
 	clk_prepare_enable(clk);
 
 	dev = alloc_etherdev(sizeof(struct pxa168_eth_private));

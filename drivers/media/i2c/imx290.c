@@ -997,7 +997,6 @@ static int imx290_probe(struct i2c_client *client)
 	/* get system clock (xclk) */
 	imx290->xclk = devm_clk_get(dev, "xclk");
 	if (IS_ERR(imx290->xclk)) {
-		dev_err(dev, "Could not get xclk");
 		ret = PTR_ERR(imx290->xclk);
 		goto free_err;
 	}
@@ -1032,7 +1031,6 @@ static int imx290_probe(struct i2c_client *client)
 	imx290->rst_gpio = devm_gpiod_get_optional(dev, "reset",
 						   GPIOD_OUT_HIGH);
 	if (IS_ERR(imx290->rst_gpio)) {
-		dev_err(dev, "Cannot get reset gpio\n");
 		ret = PTR_ERR(imx290->rst_gpio);
 		goto free_err;
 	}

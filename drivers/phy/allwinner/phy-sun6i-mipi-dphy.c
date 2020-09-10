@@ -275,16 +275,12 @@ static int sun6i_dphy_probe(struct platform_device *pdev)
 	}
 
 	dphy->reset = devm_reset_control_get_shared(&pdev->dev, NULL);
-	if (IS_ERR(dphy->reset)) {
-		dev_err(&pdev->dev, "Couldn't get our reset line\n");
+	if (IS_ERR(dphy->reset))
 		return PTR_ERR(dphy->reset);
-	}
 
 	dphy->mod_clk = devm_clk_get(&pdev->dev, "mod");
-	if (IS_ERR(dphy->mod_clk)) {
-		dev_err(&pdev->dev, "Couldn't get the DPHY mod clock\n");
+	if (IS_ERR(dphy->mod_clk))
 		return PTR_ERR(dphy->mod_clk);
-	}
 
 	dphy->phy = devm_phy_create(&pdev->dev, NULL, &sun6i_dphy_ops);
 	if (IS_ERR(dphy->phy)) {

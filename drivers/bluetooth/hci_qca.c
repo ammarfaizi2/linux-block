@@ -1968,10 +1968,8 @@ static int qca_serdev_probe(struct serdev_device *serdev)
 		qcadev->bt_power->vregs_on = false;
 
 		qcadev->susclk = devm_clk_get_optional(&serdev->dev, NULL);
-		if (IS_ERR(qcadev->susclk)) {
-			dev_err(&serdev->dev, "failed to acquire clk\n");
+		if (IS_ERR(qcadev->susclk))
 			return PTR_ERR(qcadev->susclk);
-		}
 
 		err = hci_uart_register_device(&qcadev->serdev_hu, &qca_proto);
 		if (err) {

@@ -1275,10 +1275,8 @@ static int wm8400_component_probe(struct snd_soc_component *component)
 
 	ret = devm_regulator_bulk_get(wm8400->dev,
 				 ARRAY_SIZE(power), &power[0]);
-	if (ret != 0) {
-		dev_err(component->dev, "Failed to get regulators: %d\n", ret);
+	if (ret != 0)
 		return ret;
-	}
 
 	wm8400_component_reset(component);
 

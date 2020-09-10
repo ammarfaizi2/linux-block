@@ -1008,7 +1008,6 @@ static int jz4740_mmc_probe(struct platform_device* pdev)
 	host->clk = devm_clk_get(&pdev->dev, "mmc");
 	if (IS_ERR(host->clk)) {
 		ret = PTR_ERR(host->clk);
-		dev_err(&pdev->dev, "Failed to get mmc clock\n");
 		goto err_free_host;
 	}
 

@@ -441,7 +441,6 @@ static int ti_abb_init_timings(struct device *dev, struct ti_abb *abb)
 	abb->clk = devm_clk_get(dev, NULL);
 	if (IS_ERR(abb->clk)) {
 		ret = PTR_ERR(abb->clk);
-		dev_err(dev, "%s: Unable to get clk(%d)\n", __func__, ret);
 		return ret;
 	}
 

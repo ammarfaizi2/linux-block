@@ -206,30 +206,22 @@ static int sun4i_csi_probe(struct platform_device *pdev)
 		return irq;
 
 	csi->bus_clk = devm_clk_get(&pdev->dev, "bus");
-	if (IS_ERR(csi->bus_clk)) {
-		dev_err(&pdev->dev, "Couldn't get our bus clock\n");
+	if (IS_ERR(csi->bus_clk))
 		return PTR_ERR(csi->bus_clk);
-	}
 
 	if (csi->traits->has_isp) {
 		csi->isp_clk = devm_clk_get(&pdev->dev, "isp");
-		if (IS_ERR(csi->isp_clk)) {
-			dev_err(&pdev->dev, "Couldn't get our ISP clock\n");
+		if (IS_ERR(csi->isp_clk))
 			return PTR_ERR(csi->isp_clk);
-		}
 	}
 
 	csi->ram_clk = devm_clk_get(&pdev->dev, "ram");
-	if (IS_ERR(csi->ram_clk)) {
-		dev_err(&pdev->dev, "Couldn't get our ram clock\n");
+	if (IS_ERR(csi->ram_clk))
 		return PTR_ERR(csi->ram_clk);
-	}
 
 	csi->rst = devm_reset_control_get(&pdev->dev, NULL);
-	if (IS_ERR(csi->rst)) {
-		dev_err(&pdev->dev, "Couldn't get our reset line\n");
+	if (IS_ERR(csi->rst))
 		return PTR_ERR(csi->rst);
-	}
 
 	/* Initialize subdev */
 	v4l2_subdev_init(subdev, &sun4i_csi_subdev_ops);

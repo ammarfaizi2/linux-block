@@ -246,10 +246,8 @@ static int imx_rngc_probe(struct platform_device *pdev)
 		return PTR_ERR(rngc->base);
 
 	rngc->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(rngc->clk)) {
-		dev_err(&pdev->dev, "Can not get rng_clk\n");
+	if (IS_ERR(rngc->clk))
 		return PTR_ERR(rngc->clk);
-	}
 
 	irq = platform_get_irq(pdev, 0);
 	if (irq <= 0) {

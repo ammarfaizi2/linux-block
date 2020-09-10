@@ -1692,7 +1692,6 @@ static int ux500_hash_probe(struct platform_device *pdev)
 	/* Enable the clock for HASH1 hardware block */
 	device_data->clk = devm_clk_get(dev, NULL);
 	if (IS_ERR(device_data->clk)) {
-		dev_err(dev, "%s: clk_get() failed!\n", __func__);
 		ret = PTR_ERR(device_data->clk);
 		goto out_regulator;
 	}

@@ -1737,10 +1737,8 @@ static int cdns_torrent_phy_probe(struct platform_device *pdev)
 	}
 
 	cdns_phy->clk = devm_clk_get(dev, "refclk");
-	if (IS_ERR(cdns_phy->clk)) {
-		dev_err(dev, "phy ref clock not found\n");
+	if (IS_ERR(cdns_phy->clk))
 		return PTR_ERR(cdns_phy->clk);
-	}
 
 	regs = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	cdns_phy->sd_base = devm_ioremap_resource(&pdev->dev, regs);

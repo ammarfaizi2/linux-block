@@ -53,8 +53,6 @@ static int gpio_ir_recv_probe(struct platform_device *pdev)
 	if (IS_ERR(gpio_dev->gpiod)) {
 		rc = PTR_ERR(gpio_dev->gpiod);
 		/* Just try again if this happens */
-		if (rc != -EPROBE_DEFER)
-			dev_err(dev, "error getting gpio (%d)\n", rc);
 		return rc;
 	}
 	gpio_dev->irq = gpiod_to_irq(gpio_dev->gpiod);

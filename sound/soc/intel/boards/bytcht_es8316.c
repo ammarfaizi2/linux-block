@@ -538,7 +538,6 @@ static int snd_byt_cht_es8316_mc_probe(struct platform_device *pdev)
 	priv->mclk = devm_clk_get(dev, "pmc_plt_clk_3");
 	if (IS_ERR(priv->mclk)) {
 		ret = PTR_ERR(priv->mclk);
-		dev_err(dev, "clk_get pmc_plt_clk_3 failed: %d\n", ret);
 		return ret;
 	}
 

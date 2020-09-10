@@ -587,28 +587,20 @@ static int sun4i_frontend_bind(struct device *dev, struct device *master,
 	}
 
 	frontend->reset = devm_reset_control_get(dev, NULL);
-	if (IS_ERR(frontend->reset)) {
-		dev_err(dev, "Couldn't get our reset line\n");
+	if (IS_ERR(frontend->reset))
 		return PTR_ERR(frontend->reset);
-	}
 
 	frontend->bus_clk = devm_clk_get(dev, "ahb");
-	if (IS_ERR(frontend->bus_clk)) {
-		dev_err(dev, "Couldn't get our bus clock\n");
+	if (IS_ERR(frontend->bus_clk))
 		return PTR_ERR(frontend->bus_clk);
-	}
 
 	frontend->mod_clk = devm_clk_get(dev, "mod");
-	if (IS_ERR(frontend->mod_clk)) {
-		dev_err(dev, "Couldn't get our mod clock\n");
+	if (IS_ERR(frontend->mod_clk))
 		return PTR_ERR(frontend->mod_clk);
-	}
 
 	frontend->ram_clk = devm_clk_get(dev, "ram");
-	if (IS_ERR(frontend->ram_clk)) {
-		dev_err(dev, "Couldn't get our ram clock\n");
+	if (IS_ERR(frontend->ram_clk))
 		return PTR_ERR(frontend->ram_clk);
-	}
 
 	list_add_tail(&frontend->list, &drv->frontend_list);
 	pm_runtime_enable(dev);

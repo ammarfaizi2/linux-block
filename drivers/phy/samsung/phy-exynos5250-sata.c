@@ -196,10 +196,8 @@ static int exynos_sata_phy_probe(struct platform_device *pdev)
 	dev_set_drvdata(dev, sata_phy);
 
 	sata_phy->phyclk = devm_clk_get(dev, "sata_phyctrl");
-	if (IS_ERR(sata_phy->phyclk)) {
-		dev_err(dev, "failed to get clk for PHY\n");
+	if (IS_ERR(sata_phy->phyclk))
 		return PTR_ERR(sata_phy->phyclk);
-	}
 
 	ret = clk_prepare_enable(sata_phy->phyclk);
 	if (ret < 0) {

@@ -484,14 +484,12 @@ int tsc200x_probe(struct device *dev, int irq, const struct input_id *tsc_id,
 	ts->reset_gpio = devm_gpiod_get_optional(dev, "reset", GPIOD_OUT_HIGH);
 	if (IS_ERR(ts->reset_gpio)) {
 		error = PTR_ERR(ts->reset_gpio);
-		dev_err(dev, "error acquiring reset gpio: %d\n", error);
 		return error;
 	}
 
 	ts->vio = devm_regulator_get(dev, "vio");
 	if (IS_ERR(ts->vio)) {
 		error = PTR_ERR(ts->vio);
-		dev_err(dev, "error acquiring vio regulator: %d", error);
 		return error;
 	}
 

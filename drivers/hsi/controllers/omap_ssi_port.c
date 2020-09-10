@@ -1163,7 +1163,6 @@ static int ssi_port_probe(struct platform_device *pd)
 	cawake_gpio = devm_gpiod_get(&pd->dev, "ti,ssi-cawake", GPIOD_IN);
 	if (IS_ERR(cawake_gpio)) {
 		err = PTR_ERR(cawake_gpio);
-		dev_err(&pd->dev, "couldn't get cawake gpio (err=%d)!\n", err);
 		goto error;
 	}
 

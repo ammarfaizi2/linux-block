@@ -236,9 +236,6 @@ static int sof_wm8804_probe(struct platform_device *pdev)
 					      GPIOD_OUT_LOW);
 		if (IS_ERR(ctx->gpio_44)) {
 			ret = PTR_ERR(ctx->gpio_44);
-			dev_err(&pdev->dev,
-				"could not get BCM-GPIO5: %d\n",
-				ret);
 			return ret;
 		}
 
@@ -246,9 +243,6 @@ static int sof_wm8804_probe(struct platform_device *pdev)
 					      GPIOD_OUT_LOW);
 		if (IS_ERR(ctx->gpio_48)) {
 			ret = PTR_ERR(ctx->gpio_48);
-			dev_err(&pdev->dev,
-				"could not get BCM-GPIO6: %d\n",
-				ret);
 			return ret;
 		}
 	}

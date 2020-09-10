@@ -1874,7 +1874,6 @@ static int cpsw_probe(struct platform_device *pdev)
 	clk = devm_clk_get(dev, "fck");
 	if (IS_ERR(clk)) {
 		ret = PTR_ERR(clk);
-		dev_err(dev, "fck is not found %d\n", ret);
 		return ret;
 	}
 	cpsw->bus_freq_mhz = clk_get_rate(clk) / 1000000;

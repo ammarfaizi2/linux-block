@@ -346,23 +346,16 @@ static int rockchip_saradc_probe(struct platform_device *pdev)
 	}
 
 	info->pclk = devm_clk_get(&pdev->dev, "apb_pclk");
-	if (IS_ERR(info->pclk)) {
-		dev_err(&pdev->dev, "failed to get pclk\n");
+	if (IS_ERR(info->pclk))
 		return PTR_ERR(info->pclk);
-	}
 
 	info->clk = devm_clk_get(&pdev->dev, "saradc");
-	if (IS_ERR(info->clk)) {
-		dev_err(&pdev->dev, "failed to get adc clock\n");
+	if (IS_ERR(info->clk))
 		return PTR_ERR(info->clk);
-	}
 
 	info->vref = devm_regulator_get(&pdev->dev, "vref");
-	if (IS_ERR(info->vref)) {
-		dev_err(&pdev->dev, "failed to get regulator, %ld\n",
-			PTR_ERR(info->vref));
+	if (IS_ERR(info->vref))
 		return PTR_ERR(info->vref);
-	}
 
 	if (info->reset)
 		rockchip_saradc_reset_controller(info->reset);

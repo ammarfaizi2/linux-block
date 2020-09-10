@@ -300,10 +300,8 @@ static int ssd1307fb_init(struct ssd1307fb_par *par)
 
 	if (par->device_info->need_pwm) {
 		par->pwm = pwm_get(&par->client->dev, NULL);
-		if (IS_ERR(par->pwm)) {
-			dev_err(&par->client->dev, "Could not get PWM from device tree!\n");
+		if (IS_ERR(par->pwm))
 			return PTR_ERR(par->pwm);
-		}
 
 		pwm_init_state(par->pwm, &pwmstate);
 		pwm_set_relative_duty_cycle(&pwmstate, 50, 100);
@@ -600,8 +598,6 @@ static int ssd1307fb_probe(struct i2c_client *client)
 
 	par->reset = devm_gpiod_get_optional(dev, "reset", GPIOD_OUT_LOW);
 	if (IS_ERR(par->reset)) {
-		dev_err(dev, "failed to get reset gpio: %ld\n",
-			PTR_ERR(par->reset));
 		ret = PTR_ERR(par->reset);
 		goto fb_alloc_error;
 	}

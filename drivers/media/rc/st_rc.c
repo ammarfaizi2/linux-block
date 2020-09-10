@@ -255,7 +255,6 @@ static int st_rc_probe(struct platform_device *pdev)
 
 	rc_dev->sys_clock = devm_clk_get(dev, NULL);
 	if (IS_ERR(rc_dev->sys_clock)) {
-		dev_err(dev, "System clock not found\n");
 		ret = PTR_ERR(rc_dev->sys_clock);
 		goto err;
 	}

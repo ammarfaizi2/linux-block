@@ -286,10 +286,8 @@ static int mtk_i2c_probe(struct platform_device *pdev)
 		return PTR_ERR(i2c->base);
 
 	i2c->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(i2c->clk)) {
-		dev_err(&pdev->dev, "no clock defined\n");
+	if (IS_ERR(i2c->clk))
 		return PTR_ERR(i2c->clk);
-	}
 	ret = clk_prepare_enable(i2c->clk);
 	if (ret) {
 		dev_err(&pdev->dev, "Unable to enable clock\n");

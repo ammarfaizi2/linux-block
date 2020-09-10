@@ -929,7 +929,6 @@ static int __init dra7xx_pcie_probe(struct platform_device *pdev)
 	reset = devm_gpiod_get_optional(dev, NULL, GPIOD_OUT_HIGH);
 	if (IS_ERR(reset)) {
 		ret = PTR_ERR(reset);
-		dev_err(&pdev->dev, "gpio request failed, ret %d\n", ret);
 		goto err_gpio;
 	}
 

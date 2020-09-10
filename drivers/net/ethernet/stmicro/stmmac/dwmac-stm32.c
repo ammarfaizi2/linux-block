@@ -268,16 +268,12 @@ static int stm32_dwmac_parse_data(struct stm32_dwmac *dwmac,
 
 	/*  Get TX/RX clocks */
 	dwmac->clk_tx = devm_clk_get(dev, "mac-clk-tx");
-	if (IS_ERR(dwmac->clk_tx)) {
-		dev_err(dev, "No ETH Tx clock provided...\n");
+	if (IS_ERR(dwmac->clk_tx))
 		return PTR_ERR(dwmac->clk_tx);
-	}
 
 	dwmac->clk_rx = devm_clk_get(dev, "mac-clk-rx");
-	if (IS_ERR(dwmac->clk_rx)) {
-		dev_err(dev, "No ETH Rx clock provided...\n");
+	if (IS_ERR(dwmac->clk_rx))
 		return PTR_ERR(dwmac->clk_rx);
-	}
 
 	if (dwmac->ops->parse_data) {
 		err = dwmac->ops->parse_data(dwmac, dev);
@@ -323,11 +319,8 @@ static int stm32mp1_parse_data(struct stm32_dwmac *dwmac,
 
 	/*  Clock used for low power mode */
 	dwmac->clk_ethstp = devm_clk_get(dev, "ethstp");
-	if (IS_ERR(dwmac->clk_ethstp)) {
-		dev_err(dev,
-			"No ETH peripheral clock provided for CStop mode ...\n");
+	if (IS_ERR(dwmac->clk_ethstp))
 		return PTR_ERR(dwmac->clk_ethstp);
-	}
 
 	/*  Optional Clock for sysconfig */
 	dwmac->syscfg_clk = devm_clk_get(dev, "syscfg-clk");

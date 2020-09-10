@@ -514,10 +514,8 @@ static int zx2967_i2c_probe(struct platform_device *pdev)
 		return PTR_ERR(reg_base);
 
 	clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(clk)) {
-		dev_err(&pdev->dev, "missing controller clock");
+	if (IS_ERR(clk))
 		return PTR_ERR(clk);
-	}
 
 	ret = clk_prepare_enable(clk);
 	if (ret) {

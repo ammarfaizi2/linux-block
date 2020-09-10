@@ -181,7 +181,6 @@ static int ohci_hcd_nxp_probe(struct platform_device *pdev)
 	/* Enable USB host clock */
 	usb_host_clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(usb_host_clk)) {
-		dev_err(&pdev->dev, "failed to acquire USB OHCI clock\n");
 		ret = PTR_ERR(usb_host_clk);
 		goto fail_disable;
 	}

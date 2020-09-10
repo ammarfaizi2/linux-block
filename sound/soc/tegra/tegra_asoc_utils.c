@@ -149,22 +149,16 @@ int tegra_asoc_utils_init(struct tegra_asoc_utils_data *data,
 	}
 
 	data->clk_pll_a = devm_clk_get(dev, "pll_a");
-	if (IS_ERR(data->clk_pll_a)) {
-		dev_err(data->dev, "Can't retrieve clk pll_a\n");
+	if (IS_ERR(data->clk_pll_a))
 		return PTR_ERR(data->clk_pll_a);
-	}
 
 	data->clk_pll_a_out0 = devm_clk_get(dev, "pll_a_out0");
-	if (IS_ERR(data->clk_pll_a_out0)) {
-		dev_err(data->dev, "Can't retrieve clk pll_a_out0\n");
+	if (IS_ERR(data->clk_pll_a_out0))
 		return PTR_ERR(data->clk_pll_a_out0);
-	}
 
 	data->clk_cdev1 = devm_clk_get(dev, "mclk");
-	if (IS_ERR(data->clk_cdev1)) {
-		dev_err(data->dev, "Can't retrieve clk cdev1\n");
+	if (IS_ERR(data->clk_cdev1))
 		return PTR_ERR(data->clk_cdev1);
-	}
 
 	/*
 	 * If clock parents are not set in DT, configure here to use clk_out_1
@@ -177,10 +171,8 @@ int tegra_asoc_utils_init(struct tegra_asoc_utils_data *data,
 		dev_warn(data->dev,
 			 "Please update DT to use assigned-clock-parents\n");
 		clk_extern1 = devm_clk_get(dev, "extern1");
-		if (IS_ERR(clk_extern1)) {
-			dev_err(data->dev, "Can't retrieve clk extern1\n");
+		if (IS_ERR(clk_extern1))
 			return PTR_ERR(clk_extern1);
-		}
 
 		ret = clk_set_parent(clk_extern1, data->clk_pll_a_out0);
 		if (ret < 0) {
@@ -190,10 +182,8 @@ int tegra_asoc_utils_init(struct tegra_asoc_utils_data *data,
 		}
 
 		clk_out_1 = devm_clk_get(dev, "pmc_clk_out_1");
-		if (IS_ERR(clk_out_1)) {
-			dev_err(data->dev, "Can't retrieve pmc_clk_out_1\n");
+		if (IS_ERR(clk_out_1))
 			return PTR_ERR(clk_out_1);
-		}
 
 		ret = clk_set_parent(clk_out_1, clk_extern1);
 		if (ret < 0) {

@@ -1175,16 +1175,12 @@ static int fimd_probe(struct platform_device *pdev)
 	}
 
 	ctx->bus_clk = devm_clk_get(dev, "fimd");
-	if (IS_ERR(ctx->bus_clk)) {
-		dev_err(dev, "failed to get bus clock\n");
+	if (IS_ERR(ctx->bus_clk))
 		return PTR_ERR(ctx->bus_clk);
-	}
 
 	ctx->lcd_clk = devm_clk_get(dev, "sclk_fimd");
-	if (IS_ERR(ctx->lcd_clk)) {
-		dev_err(dev, "failed to get lcd clock\n");
+	if (IS_ERR(ctx->lcd_clk))
 		return PTR_ERR(ctx->lcd_clk);
-	}
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 

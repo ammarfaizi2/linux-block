@@ -272,16 +272,12 @@ static int sprd_wdt_probe(struct platform_device *pdev)
 		return PTR_ERR(wdt->base);
 
 	wdt->enable = devm_clk_get(dev, "enable");
-	if (IS_ERR(wdt->enable)) {
-		dev_err(dev, "can't get the enable clock\n");
+	if (IS_ERR(wdt->enable))
 		return PTR_ERR(wdt->enable);
-	}
 
 	wdt->rtc_enable = devm_clk_get(dev, "rtc_enable");
-	if (IS_ERR(wdt->rtc_enable)) {
-		dev_err(dev, "can't get the rtc enable clock\n");
+	if (IS_ERR(wdt->rtc_enable))
 		return PTR_ERR(wdt->rtc_enable);
-	}
 
 	wdt->irq = platform_get_irq(pdev, 0);
 	if (wdt->irq < 0)

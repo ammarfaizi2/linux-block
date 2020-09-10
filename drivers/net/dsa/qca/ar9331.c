@@ -796,10 +796,8 @@ static int ar9331_sw_probe(struct mdio_device *mdiodev)
 	}
 
 	priv->sw_reset = devm_reset_control_get(&mdiodev->dev, "switch");
-	if (IS_ERR(priv->sw_reset)) {
-		dev_err(&mdiodev->dev, "missing switch reset\n");
+	if (IS_ERR(priv->sw_reset))
 		return PTR_ERR(priv->sw_reset);
-	}
 
 	priv->sbus = mdiodev->bus;
 	priv->dev = &mdiodev->dev;

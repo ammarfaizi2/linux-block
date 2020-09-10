@@ -533,8 +533,6 @@ static int iproc_adc_probe(struct platform_device *pdev)
 
 	adc_priv->adc_clk = devm_clk_get(&pdev->dev, "tsc_clk");
 	if (IS_ERR(adc_priv->adc_clk)) {
-		dev_err(&pdev->dev,
-			"failed getting clock tsc_clk\n");
 		ret = PTR_ERR(adc_priv->adc_clk);
 		return ret;
 	}

@@ -1216,10 +1216,8 @@ static int sun4i_i2s_probe(struct platform_device *pdev)
 	}
 
 	i2s->bus_clk = devm_clk_get(&pdev->dev, "apb");
-	if (IS_ERR(i2s->bus_clk)) {
-		dev_err(&pdev->dev, "Can't get our bus clock\n");
+	if (IS_ERR(i2s->bus_clk))
 		return PTR_ERR(i2s->bus_clk);
-	}
 
 	i2s->regmap = devm_regmap_init_mmio(&pdev->dev, regs,
 					    i2s->variant->sun4i_i2s_regmap);
@@ -1229,17 +1227,13 @@ static int sun4i_i2s_probe(struct platform_device *pdev)
 	}
 
 	i2s->mod_clk = devm_clk_get(&pdev->dev, "mod");
-	if (IS_ERR(i2s->mod_clk)) {
-		dev_err(&pdev->dev, "Can't get our mod clock\n");
+	if (IS_ERR(i2s->mod_clk))
 		return PTR_ERR(i2s->mod_clk);
-	}
 
 	if (i2s->variant->has_reset) {
 		i2s->rst = devm_reset_control_get_exclusive(&pdev->dev, NULL);
-		if (IS_ERR(i2s->rst)) {
-			dev_err(&pdev->dev, "Failed to get reset control\n");
+		if (IS_ERR(i2s->rst))
 			return PTR_ERR(i2s->rst);
-		}
 	}
 
 	if (!IS_ERR(i2s->rst)) {

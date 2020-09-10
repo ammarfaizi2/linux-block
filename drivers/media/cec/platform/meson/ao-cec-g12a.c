@@ -697,7 +697,6 @@ static int meson_ao_cec_g12a_probe(struct platform_device *pdev)
 
 	ao_cec->oscin = devm_clk_get(&pdev->dev, "oscin");
 	if (IS_ERR(ao_cec->oscin)) {
-		dev_err(&pdev->dev, "oscin clock request failed\n");
 		ret = PTR_ERR(ao_cec->oscin);
 		goto out_probe_adapter;
 	}

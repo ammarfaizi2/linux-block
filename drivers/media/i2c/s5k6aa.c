@@ -1594,7 +1594,6 @@ static int s5k6aa_probe(struct i2c_client *client,
 	ret = devm_regulator_bulk_get(&client->dev, S5K6AA_NUM_SUPPLIES,
 				 s5k6aa->supplies);
 	if (ret) {
-		dev_err(&client->dev, "Failed to get regulators\n");
 		goto out_err;
 	}
 

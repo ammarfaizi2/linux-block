@@ -1748,11 +1748,8 @@ atmel_nand_controller_legacy_add_nands(struct atmel_nand_controller *nc)
 
 	/* R/B GPIO. */
 	gpio = devm_gpiod_get_index_optional(dev, NULL, 0,  GPIOD_IN);
-	if (IS_ERR(gpio)) {
-		dev_err(dev, "Failed to get R/B gpio (err = %ld)\n",
-			PTR_ERR(gpio));
+	if (IS_ERR(gpio))
 		return PTR_ERR(gpio);
-	}
 
 	if (gpio) {
 		nand->cs[0].rb.type = ATMEL_NAND_GPIO_RB;
@@ -1761,22 +1758,15 @@ atmel_nand_controller_legacy_add_nands(struct atmel_nand_controller *nc)
 
 	/* CS GPIO. */
 	gpio = devm_gpiod_get_index_optional(dev, NULL, 1, GPIOD_OUT_HIGH);
-	if (IS_ERR(gpio)) {
-		dev_err(dev, "Failed to get CS gpio (err = %ld)\n",
-			PTR_ERR(gpio));
+	if (IS_ERR(gpio))
 		return PTR_ERR(gpio);
-	}
 
 	nand->cs[0].csgpio = gpio;
 
 	/* Card detect GPIO. */
 	gpio = devm_gpiod_get_index_optional(nc->dev, NULL, 2, GPIOD_IN);
-	if (IS_ERR(gpio)) {
-		dev_err(dev,
-			"Failed to get detect gpio (err = %ld)\n",
-			PTR_ERR(gpio));
+	if (IS_ERR(gpio))
 		return PTR_ERR(gpio);
-	}
 
 	nand->cdgpio = gpio;
 

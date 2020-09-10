@@ -53,34 +53,24 @@ static int ts_nbus_init_pdata(struct platform_device *pdev, struct ts_nbus
 	}
 
 	ts_nbus->csn = devm_gpiod_get(&pdev->dev, "ts,csn", GPIOD_OUT_HIGH);
-	if (IS_ERR(ts_nbus->csn)) {
-		dev_err(&pdev->dev, "failed to retrieve ts,csn-gpio from dts\n");
+	if (IS_ERR(ts_nbus->csn))
 		return PTR_ERR(ts_nbus->csn);
-	}
 
 	ts_nbus->txrx = devm_gpiod_get(&pdev->dev, "ts,txrx", GPIOD_OUT_HIGH);
-	if (IS_ERR(ts_nbus->txrx)) {
-		dev_err(&pdev->dev, "failed to retrieve ts,txrx-gpio from dts\n");
+	if (IS_ERR(ts_nbus->txrx))
 		return PTR_ERR(ts_nbus->txrx);
-	}
 
 	ts_nbus->strobe = devm_gpiod_get(&pdev->dev, "ts,strobe", GPIOD_OUT_HIGH);
-	if (IS_ERR(ts_nbus->strobe)) {
-		dev_err(&pdev->dev, "failed to retrieve ts,strobe-gpio from dts\n");
+	if (IS_ERR(ts_nbus->strobe))
 		return PTR_ERR(ts_nbus->strobe);
-	}
 
 	ts_nbus->ale = devm_gpiod_get(&pdev->dev, "ts,ale", GPIOD_OUT_HIGH);
-	if (IS_ERR(ts_nbus->ale)) {
-		dev_err(&pdev->dev, "failed to retrieve ts,ale-gpio from dts\n");
+	if (IS_ERR(ts_nbus->ale))
 		return PTR_ERR(ts_nbus->ale);
-	}
 
 	ts_nbus->rdy = devm_gpiod_get(&pdev->dev, "ts,rdy", GPIOD_IN);
-	if (IS_ERR(ts_nbus->rdy)) {
-		dev_err(&pdev->dev, "failed to retrieve ts,rdy-gpio from dts\n");
+	if (IS_ERR(ts_nbus->rdy))
 		return PTR_ERR(ts_nbus->rdy);
-	}
 
 	return 0;
 }
@@ -292,12 +282,8 @@ static int ts_nbus_probe(struct platform_device *pdev)
 		return ret;
 
 	pwm = devm_pwm_get(dev, NULL);
-	if (IS_ERR(pwm)) {
-		ret = PTR_ERR(pwm);
-		if (ret != -EPROBE_DEFER)
-			dev_err(dev, "unable to request PWM\n");
-		return ret;
-	}
+	if (IS_ERR(pwm))
+		return PTR_ERR(pwm);
 
 	pwm_get_args(pwm, &pargs);
 	if (!pargs.period) {

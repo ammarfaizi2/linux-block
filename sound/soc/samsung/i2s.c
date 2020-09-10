@@ -1451,10 +1451,8 @@ static int samsung_i2s_probe(struct platform_device *pdev)
 	regs_base = res->start;
 
 	priv->clk = devm_clk_get(&pdev->dev, "iis");
-	if (IS_ERR(priv->clk)) {
-		dev_err(&pdev->dev, "Failed to get iis clock\n");
+	if (IS_ERR(priv->clk))
 		return PTR_ERR(priv->clk);
-	}
 
 	ret = clk_prepare_enable(priv->clk);
 	if (ret != 0) {

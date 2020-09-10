@@ -2165,7 +2165,6 @@ static int pic32_pinctrl_probe(struct platform_device *pdev)
 	pctl->clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(pctl->clk)) {
 		ret = PTR_ERR(pctl->clk);
-		dev_err(&pdev->dev, "clk get failed\n");
 		return ret;
 	}
 
@@ -2230,7 +2229,6 @@ static int pic32_gpio_probe(struct platform_device *pdev)
 	bank->clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(bank->clk)) {
 		ret = PTR_ERR(bank->clk);
-		dev_err(&pdev->dev, "clk get failed\n");
 		return ret;
 	}
 

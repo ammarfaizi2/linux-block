@@ -676,11 +676,8 @@ static int olpc_xo175_ec_probe(struct spi_device *spi)
 		return -ENOMEM;
 
 	priv->gpio_cmd = devm_gpiod_get(&spi->dev, "cmd", GPIOD_OUT_LOW);
-	if (IS_ERR(priv->gpio_cmd)) {
-		dev_err(&spi->dev, "failed to get cmd gpio: %ld\n",
-					PTR_ERR(priv->gpio_cmd));
+	if (IS_ERR(priv->gpio_cmd))
 		return PTR_ERR(priv->gpio_cmd);
-	}
 
 	priv->spi = spi;
 

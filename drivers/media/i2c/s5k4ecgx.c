@@ -972,7 +972,6 @@ static int s5k4ecgx_probe(struct i2c_client *client,
 	ret = devm_regulator_bulk_get(&client->dev, S5K4ECGX_NUM_SUPPLIES,
 				 priv->supplies);
 	if (ret) {
-		dev_err(&client->dev, "Failed to get regulators\n");
 		goto out_err2;
 	}
 	ret = s5k4ecgx_init_v4l2_ctrls(priv);

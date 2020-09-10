@@ -785,10 +785,8 @@ static int stm32f4_i2c_probe(struct platform_device *pdev)
 	}
 
 	i2c_dev->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(i2c_dev->clk)) {
-		dev_err(&pdev->dev, "Error: Missing controller clock\n");
+	if (IS_ERR(i2c_dev->clk))
 		return PTR_ERR(i2c_dev->clk);
-	}
 	ret = clk_prepare_enable(i2c_dev->clk);
 	if (ret) {
 		dev_err(i2c_dev->dev, "Failed to prepare_enable clock\n");
@@ -798,8 +796,6 @@ static int stm32f4_i2c_probe(struct platform_device *pdev)
 	rst = devm_reset_control_get_exclusive(&pdev->dev, NULL);
 	if (IS_ERR(rst)) {
 		ret = PTR_ERR(rst);
-		if (ret != -EPROBE_DEFER)
-			dev_err(&pdev->dev, "Error: Missing reset ctrl\n");
 
 		goto clk_free;
 	}

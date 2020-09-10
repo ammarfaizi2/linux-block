@@ -431,16 +431,12 @@ static int td043mtea1_probe(struct spi_device *spi)
 	memcpy(lcd->gamma, td043mtea1_def_gamma, sizeof(lcd->gamma));
 
 	lcd->vcc_reg = devm_regulator_get(&spi->dev, "vcc");
-	if (IS_ERR(lcd->vcc_reg)) {
-		dev_err(&spi->dev, "failed to get VCC regulator\n");
+	if (IS_ERR(lcd->vcc_reg))
 		return PTR_ERR(lcd->vcc_reg);
-	}
 
 	lcd->reset_gpio = devm_gpiod_get(&spi->dev, "reset", GPIOD_OUT_HIGH);
-	if (IS_ERR(lcd->reset_gpio)) {
-		dev_err(&spi->dev, "failed to get reset GPIO\n");
+	if (IS_ERR(lcd->reset_gpio))
 		return PTR_ERR(lcd->reset_gpio);
-	}
 
 	spi->bits_per_word = 16;
 	spi->mode = SPI_MODE_0;

@@ -3513,10 +3513,8 @@ static int rt5663_i2c_probe(struct i2c_client *i2c,
 	ret = devm_regulator_bulk_get(&i2c->dev,
 				      ARRAY_SIZE(rt5663->supplies),
 				      rt5663->supplies);
-	if (ret) {
-		dev_err(&i2c->dev, "Failed to request supplies: %d\n", ret);
+	if (ret)
 		return ret;
-	}
 
 	/* Set load for regulator. */
 	for (i = 0; i < ARRAY_SIZE(rt5663->supplies); i++) {

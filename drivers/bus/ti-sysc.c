@@ -348,12 +348,8 @@ static int sysc_get_one_clock(struct sysc *ddata, const char *name)
 	}
 
 	ddata->clocks[index] = devm_clk_get(ddata->dev, name);
-	if (IS_ERR(ddata->clocks[index])) {
-		dev_err(ddata->dev, "clock get error for %s: %li\n",
-			name, PTR_ERR(ddata->clocks[index]));
-
+	if (IS_ERR(ddata->clocks[index]))
 		return PTR_ERR(ddata->clocks[index]);
-	}
 
 	error = clk_prepare(ddata->clocks[index]);
 	if (error) {

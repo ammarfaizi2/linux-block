@@ -304,10 +304,8 @@ static int rotator_probe(struct platform_device *pdev)
 	}
 
 	rot->clock = devm_clk_get(dev, "rotator");
-	if (IS_ERR(rot->clock)) {
-		dev_err(dev, "failed to get clock\n");
+	if (IS_ERR(rot->clock))
 		return PTR_ERR(rot->clock);
-	}
 
 	pm_runtime_use_autosuspend(dev);
 	pm_runtime_set_autosuspend_delay(dev, ROTATOR_AUTOSUSPEND_DELAY);

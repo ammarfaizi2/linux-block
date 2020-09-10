@@ -352,9 +352,6 @@ static int pwm_imx_tpm_probe(struct platform_device *pdev)
 	tpm->clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(tpm->clk)) {
 		ret = PTR_ERR(tpm->clk);
-		if (ret != -EPROBE_DEFER)
-			dev_err(&pdev->dev,
-				"failed to get PWM clock: %d\n", ret);
 		return ret;
 	}
 

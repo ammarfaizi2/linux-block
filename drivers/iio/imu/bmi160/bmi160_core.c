@@ -849,10 +849,8 @@ int bmi160_core_probe(struct device *dev, struct regmap *regmap,
 	ret = devm_regulator_bulk_get(dev,
 				      ARRAY_SIZE(data->supplies),
 				      data->supplies);
-	if (ret) {
-		dev_err(dev, "Failed to get regulators: %d\n", ret);
+	if (ret)
 		return ret;
-	}
 
 	ret = iio_read_mount_matrix(dev, "mount-matrix",
 				    &data->orientation);

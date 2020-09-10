@@ -1618,10 +1618,8 @@ mt7530_probe(struct mdio_device *mdiodev)
 		dev_info(&mdiodev->dev, "MT7530 adapts as multi-chip module\n");
 
 		priv->rstc = devm_reset_control_get(&mdiodev->dev, "mcm");
-		if (IS_ERR(priv->rstc)) {
-			dev_err(&mdiodev->dev, "Couldn't get our reset line\n");
+		if (IS_ERR(priv->rstc))
 			return PTR_ERR(priv->rstc);
-		}
 	}
 
 	/* Get the hardware identifier from the devicetree node.
@@ -1648,10 +1646,8 @@ mt7530_probe(struct mdio_device *mdiodev)
 	if (!priv->mcm) {
 		priv->reset = devm_gpiod_get_optional(&mdiodev->dev, "reset",
 						      GPIOD_OUT_LOW);
-		if (IS_ERR(priv->reset)) {
-			dev_err(&mdiodev->dev, "Couldn't get our reset line\n");
+		if (IS_ERR(priv->reset))
 			return PTR_ERR(priv->reset);
-		}
 	}
 
 	priv->bus = mdiodev->bus;

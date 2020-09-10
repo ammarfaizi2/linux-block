@@ -447,7 +447,6 @@ static int lm3530_probe(struct i2c_client *client,
 
 	drvdata->regulator = devm_regulator_get(&client->dev, "vin");
 	if (IS_ERR(drvdata->regulator)) {
-		dev_err(&client->dev, "regulator get failed\n");
 		err = PTR_ERR(drvdata->regulator);
 		drvdata->regulator = NULL;
 		return err;

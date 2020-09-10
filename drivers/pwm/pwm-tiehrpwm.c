@@ -462,10 +462,8 @@ static int ehrpwm_pwm_probe(struct platform_device *pdev)
 
 	/* Acquire tbclk for Time Base EHRPWM submodule */
 	pc->tbclk = devm_clk_get(&pdev->dev, "tbclk");
-	if (IS_ERR(pc->tbclk)) {
-		dev_err(&pdev->dev, "Failed to get tbclk\n");
+	if (IS_ERR(pc->tbclk))
 		return PTR_ERR(pc->tbclk);
-	}
 
 	ret = clk_prepare(pc->tbclk);
 	if (ret < 0) {

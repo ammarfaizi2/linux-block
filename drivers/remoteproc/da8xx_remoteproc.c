@@ -271,20 +271,12 @@ static int da8xx_rproc_probe(struct platform_device *pdev)
 		return PTR_ERR(chipsig);
 
 	dsp_clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(dsp_clk)) {
-		dev_err(dev, "clk_get error: %ld\n", PTR_ERR(dsp_clk));
-
+	if (IS_ERR(dsp_clk))
 		return PTR_ERR(dsp_clk);
-	}
 
 	dsp_reset = devm_reset_control_get_exclusive(dev, NULL);
-	if (IS_ERR(dsp_reset)) {
-		if (PTR_ERR(dsp_reset) != -EPROBE_DEFER)
-			dev_err(dev, "unable to get reset control: %ld\n",
-				PTR_ERR(dsp_reset));
-
+	if (IS_ERR(dsp_reset))
 		return PTR_ERR(dsp_reset);
-	}
 
 	if (dev->of_node) {
 		ret = of_reserved_mem_device_init(dev);

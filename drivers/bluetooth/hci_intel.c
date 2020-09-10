@@ -1161,10 +1161,8 @@ static int intel_probe(struct platform_device *pdev)
 		dev_dbg(&pdev->dev, "Unable to add GPIO mapping table\n");
 
 	idev->reset = devm_gpiod_get(&pdev->dev, "reset", GPIOD_OUT_LOW);
-	if (IS_ERR(idev->reset)) {
-		dev_err(&pdev->dev, "Unable to retrieve gpio\n");
+	if (IS_ERR(idev->reset))
 		return PTR_ERR(idev->reset);
-	}
 
 	idev->irq = platform_get_irq(pdev, 0);
 	if (idev->irq < 0) {
@@ -1174,7 +1172,6 @@ static int intel_probe(struct platform_device *pdev)
 
 		host_wake = devm_gpiod_get(&pdev->dev, "host-wake", GPIOD_IN);
 		if (IS_ERR(host_wake)) {
-			dev_err(&pdev->dev, "Unable to retrieve IRQ\n");
 			goto no_irq;
 		}
 

@@ -203,7 +203,6 @@ static int mtk_cec_probe(struct platform_device *pdev)
 	cec->clk = devm_clk_get(dev, NULL);
 	if (IS_ERR(cec->clk)) {
 		ret = PTR_ERR(cec->clk);
-		dev_err(dev, "Failed to get cec clock: %d\n", ret);
 		return ret;
 	}
 

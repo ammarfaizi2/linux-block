@@ -386,16 +386,12 @@ static int zx_tdm_probe(struct platform_device *pdev)
 	zx_tdm->dev = &pdev->dev;
 
 	zx_tdm->dai_wclk = devm_clk_get(&pdev->dev, "wclk");
-	if (IS_ERR(zx_tdm->dai_wclk)) {
-		dev_err(&pdev->dev, "Fail to get wclk\n");
+	if (IS_ERR(zx_tdm->dai_wclk))
 		return PTR_ERR(zx_tdm->dai_wclk);
-	}
 
 	zx_tdm->dai_pclk = devm_clk_get(&pdev->dev, "pclk");
-	if (IS_ERR(zx_tdm->dai_pclk)) {
-		dev_err(&pdev->dev, "Fail to get pclk\n");
+	if (IS_ERR(zx_tdm->dai_pclk))
 		return PTR_ERR(zx_tdm->dai_pclk);
-	}
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	zx_tdm->phy_addr = res->start;

@@ -1287,10 +1287,8 @@ static int ov7251_probe(struct i2c_client *client)
 
 	/* get system clock (xclk) */
 	ov7251->xclk = devm_clk_get(dev, "xclk");
-	if (IS_ERR(ov7251->xclk)) {
-		dev_err(dev, "could not get xclk");
+	if (IS_ERR(ov7251->xclk))
 		return PTR_ERR(ov7251->xclk);
-	}
 
 	ret = fwnode_property_read_u32(dev_fwnode(dev), "clock-frequency",
 				       &ov7251->xclk_freq);
@@ -1313,28 +1311,20 @@ static int ov7251_probe(struct i2c_client *client)
 	}
 
 	ov7251->io_regulator = devm_regulator_get(dev, "vdddo");
-	if (IS_ERR(ov7251->io_regulator)) {
-		dev_err(dev, "cannot get io regulator\n");
+	if (IS_ERR(ov7251->io_regulator))
 		return PTR_ERR(ov7251->io_regulator);
-	}
 
 	ov7251->core_regulator = devm_regulator_get(dev, "vddd");
-	if (IS_ERR(ov7251->core_regulator)) {
-		dev_err(dev, "cannot get core regulator\n");
+	if (IS_ERR(ov7251->core_regulator))
 		return PTR_ERR(ov7251->core_regulator);
-	}
 
 	ov7251->analog_regulator = devm_regulator_get(dev, "vdda");
-	if (IS_ERR(ov7251->analog_regulator)) {
-		dev_err(dev, "cannot get analog regulator\n");
+	if (IS_ERR(ov7251->analog_regulator))
 		return PTR_ERR(ov7251->analog_regulator);
-	}
 
 	ov7251->enable_gpio = devm_gpiod_get(dev, "enable", GPIOD_OUT_HIGH);
-	if (IS_ERR(ov7251->enable_gpio)) {
-		dev_err(dev, "cannot get enable gpio\n");
+	if (IS_ERR(ov7251->enable_gpio))
 		return PTR_ERR(ov7251->enable_gpio);
-	}
 
 	mutex_init(&ov7251->lock);
 

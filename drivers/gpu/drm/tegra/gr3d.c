@@ -297,30 +297,22 @@ static int gr3d_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	gr3d->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(gr3d->clk)) {
-		dev_err(&pdev->dev, "cannot get clock\n");
+	if (IS_ERR(gr3d->clk))
 		return PTR_ERR(gr3d->clk);
-	}
 
 	gr3d->rst = devm_reset_control_get(&pdev->dev, "3d");
-	if (IS_ERR(gr3d->rst)) {
-		dev_err(&pdev->dev, "cannot get reset\n");
+	if (IS_ERR(gr3d->rst))
 		return PTR_ERR(gr3d->rst);
-	}
 
 	if (of_device_is_compatible(np, "nvidia,tegra30-gr3d")) {
 		gr3d->clk_secondary = devm_clk_get(&pdev->dev, "3d2");
-		if (IS_ERR(gr3d->clk_secondary)) {
-			dev_err(&pdev->dev, "cannot get secondary clock\n");
+		if (IS_ERR(gr3d->clk_secondary))
 			return PTR_ERR(gr3d->clk_secondary);
-		}
 
 		gr3d->rst_secondary = devm_reset_control_get(&pdev->dev,
 								"3d2");
-		if (IS_ERR(gr3d->rst_secondary)) {
-			dev_err(&pdev->dev, "cannot get secondary reset\n");
+		if (IS_ERR(gr3d->rst_secondary))
 			return PTR_ERR(gr3d->rst_secondary);
-		}
 	}
 
 	err = tegra_powergate_sequence_power_up(TEGRA_POWERGATE_3D, gr3d->clk,

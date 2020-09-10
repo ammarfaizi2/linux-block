@@ -232,12 +232,8 @@ static int ds4424_probe(struct i2c_client *client,
 	indio_dev->name = id->name;
 
 	data->vcc_reg = devm_regulator_get(&client->dev, "vcc");
-	if (IS_ERR(data->vcc_reg)) {
-		dev_err(&client->dev,
-			"Failed to get vcc-supply regulator. err: %ld\n",
-				PTR_ERR(data->vcc_reg));
+	if (IS_ERR(data->vcc_reg))
 		return PTR_ERR(data->vcc_reg);
-	}
 
 	mutex_init(&data->lock);
 	ret = regulator_enable(data->vcc_reg);

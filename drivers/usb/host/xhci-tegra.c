@@ -1346,63 +1346,54 @@ static int tegra_xusb_probe(struct platform_device *pdev)
 	tegra->host_clk = devm_clk_get(&pdev->dev, "xusb_host");
 	if (IS_ERR(tegra->host_clk)) {
 		err = PTR_ERR(tegra->host_clk);
-		dev_err(&pdev->dev, "failed to get xusb_host: %d\n", err);
 		goto put_padctl;
 	}
 
 	tegra->falcon_clk = devm_clk_get(&pdev->dev, "xusb_falcon_src");
 	if (IS_ERR(tegra->falcon_clk)) {
 		err = PTR_ERR(tegra->falcon_clk);
-		dev_err(&pdev->dev, "failed to get xusb_falcon_src: %d\n", err);
 		goto put_padctl;
 	}
 
 	tegra->ss_clk = devm_clk_get(&pdev->dev, "xusb_ss");
 	if (IS_ERR(tegra->ss_clk)) {
 		err = PTR_ERR(tegra->ss_clk);
-		dev_err(&pdev->dev, "failed to get xusb_ss: %d\n", err);
 		goto put_padctl;
 	}
 
 	tegra->ss_src_clk = devm_clk_get(&pdev->dev, "xusb_ss_src");
 	if (IS_ERR(tegra->ss_src_clk)) {
 		err = PTR_ERR(tegra->ss_src_clk);
-		dev_err(&pdev->dev, "failed to get xusb_ss_src: %d\n", err);
 		goto put_padctl;
 	}
 
 	tegra->hs_src_clk = devm_clk_get(&pdev->dev, "xusb_hs_src");
 	if (IS_ERR(tegra->hs_src_clk)) {
 		err = PTR_ERR(tegra->hs_src_clk);
-		dev_err(&pdev->dev, "failed to get xusb_hs_src: %d\n", err);
 		goto put_padctl;
 	}
 
 	tegra->fs_src_clk = devm_clk_get(&pdev->dev, "xusb_fs_src");
 	if (IS_ERR(tegra->fs_src_clk)) {
 		err = PTR_ERR(tegra->fs_src_clk);
-		dev_err(&pdev->dev, "failed to get xusb_fs_src: %d\n", err);
 		goto put_padctl;
 	}
 
 	tegra->pll_u_480m = devm_clk_get(&pdev->dev, "pll_u_480m");
 	if (IS_ERR(tegra->pll_u_480m)) {
 		err = PTR_ERR(tegra->pll_u_480m);
-		dev_err(&pdev->dev, "failed to get pll_u_480m: %d\n", err);
 		goto put_padctl;
 	}
 
 	tegra->clk_m = devm_clk_get(&pdev->dev, "clk_m");
 	if (IS_ERR(tegra->clk_m)) {
 		err = PTR_ERR(tegra->clk_m);
-		dev_err(&pdev->dev, "failed to get clk_m: %d\n", err);
 		goto put_padctl;
 	}
 
 	tegra->pll_e = devm_clk_get(&pdev->dev, "pll_e");
 	if (IS_ERR(tegra->pll_e)) {
 		err = PTR_ERR(tegra->pll_e);
-		dev_err(&pdev->dev, "failed to get pll_e: %d\n", err);
 		goto put_padctl;
 	}
 
@@ -1411,16 +1402,12 @@ static int tegra_xusb_probe(struct platform_device *pdev)
 							 "xusb_host");
 		if (IS_ERR(tegra->host_rst)) {
 			err = PTR_ERR(tegra->host_rst);
-			dev_err(&pdev->dev,
-				"failed to get xusb_host reset: %d\n", err);
 			goto put_padctl;
 		}
 
 		tegra->ss_rst = devm_reset_control_get(&pdev->dev, "xusb_ss");
 		if (IS_ERR(tegra->ss_rst)) {
 			err = PTR_ERR(tegra->ss_rst);
-			dev_err(&pdev->dev, "failed to get xusb_ss reset: %d\n",
-				err);
 			goto put_padctl;
 		}
 
@@ -1462,7 +1449,6 @@ static int tegra_xusb_probe(struct platform_device *pdev)
 	err = devm_regulator_bulk_get(&pdev->dev, tegra->soc->num_supplies,
 				      tegra->supplies);
 	if (err) {
-		dev_err(&pdev->dev, "failed to get regulators: %d\n", err);
 		goto put_powerdomains;
 	}
 
@@ -1488,9 +1474,6 @@ static int tegra_xusb_probe(struct platform_device *pdev)
 
 			phy = devm_phy_optional_get(&pdev->dev, prop);
 			if (IS_ERR(phy)) {
-				dev_err(&pdev->dev,
-					"failed to get PHY %s: %ld\n", prop,
-					PTR_ERR(phy));
 				err = PTR_ERR(phy);
 				goto put_powerdomains;
 			}

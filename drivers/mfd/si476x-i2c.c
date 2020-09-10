@@ -747,7 +747,6 @@ static int si476x_core_probe(struct i2c_client *client,
 				       ARRAY_SIZE(core->supplies),
 				       core->supplies);
 	if (rval) {
-		dev_err(&client->dev, "Failed to get all of the regulators\n");
 		goto free_gpio;
 	}
 

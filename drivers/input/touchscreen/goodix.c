@@ -876,18 +876,12 @@ static int goodix_get_gpio_config(struct goodix_ts_data *ts)
 	ts->avdd28 = devm_regulator_get(dev, "AVDD28");
 	if (IS_ERR(ts->avdd28)) {
 		error = PTR_ERR(ts->avdd28);
-		if (error != -EPROBE_DEFER)
-			dev_err(dev,
-				"Failed to get AVDD28 regulator: %d\n", error);
 		return error;
 	}
 
 	ts->vddio = devm_regulator_get(dev, "VDDIO");
 	if (IS_ERR(ts->vddio)) {
 		error = PTR_ERR(ts->vddio);
-		if (error != -EPROBE_DEFER)
-			dev_err(dev,
-				"Failed to get VDDIO regulator: %d\n", error);
 		return error;
 	}
 

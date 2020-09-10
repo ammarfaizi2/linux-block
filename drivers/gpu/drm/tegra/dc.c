@@ -2543,16 +2543,12 @@ static int tegra_dc_probe(struct platform_device *pdev)
 		return err;
 
 	dc->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(dc->clk)) {
-		dev_err(&pdev->dev, "failed to get clock\n");
+	if (IS_ERR(dc->clk))
 		return PTR_ERR(dc->clk);
-	}
 
 	dc->rst = devm_reset_control_get(&pdev->dev, "dc");
-	if (IS_ERR(dc->rst)) {
-		dev_err(&pdev->dev, "failed to get reset\n");
+	if (IS_ERR(dc->rst))
 		return PTR_ERR(dc->rst);
-	}
 
 	/* assert reset and disable clock */
 	err = clk_prepare_enable(dc->clk);

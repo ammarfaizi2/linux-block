@@ -170,7 +170,6 @@ static int sdhci_pxav2_probe(struct platform_device *pdev)
 
 	clk = devm_clk_get(dev, "PXA-SDHCLK");
 	if (IS_ERR(clk)) {
-		dev_err(dev, "failed to get io clock\n");
 		ret = PTR_ERR(clk);
 		goto free;
 	}

@@ -46,7 +46,6 @@ static int emac_arc_probe(struct platform_device *pdev)
 
 	priv->clk = devm_clk_get(dev, "hclk");
 	if (IS_ERR(priv->clk)) {
-		dev_err(dev, "failed to retrieve host clock from device tree\n");
 		err = -EINVAL;
 		goto out_netdev;
 	}

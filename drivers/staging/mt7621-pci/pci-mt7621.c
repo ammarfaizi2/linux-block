@@ -378,10 +378,8 @@ static int mt7621_pcie_parse_port(struct mt7621_pcie *pcie,
 
 	port->gpio_rst = devm_gpiod_get_index_optional(dev, "reset", slot,
 						       GPIOD_OUT_LOW);
-	if (IS_ERR(port->gpio_rst)) {
-		dev_err(dev, "Failed to get GPIO for PCIe%d\n", slot);
+	if (IS_ERR(port->gpio_rst))
 		return PTR_ERR(port->gpio_rst);
-	}
 
 	port->slot = slot;
 	port->pcie = pcie;

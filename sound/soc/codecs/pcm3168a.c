@@ -720,8 +720,6 @@ int pcm3168a_probe(struct device *dev, struct regmap *regmap)
 						GPIOD_FLAGS_BIT_NONEXCLUSIVE);
 	if (IS_ERR(pcm3168a->gpio_rst)) {
 		ret = PTR_ERR(pcm3168a->gpio_rst);
-		if (ret != -EPROBE_DEFER )
-			dev_err(dev, "failed to acquire RST gpio: %d\n", ret);
 
 		return ret;
 	}
@@ -729,8 +727,6 @@ int pcm3168a_probe(struct device *dev, struct regmap *regmap)
 	pcm3168a->scki = devm_clk_get(dev, "scki");
 	if (IS_ERR(pcm3168a->scki)) {
 		ret = PTR_ERR(pcm3168a->scki);
-		if (ret != -EPROBE_DEFER)
-			dev_err(dev, "failed to acquire clock 'scki': %d\n", ret);
 		return ret;
 	}
 
@@ -748,8 +744,6 @@ int pcm3168a_probe(struct device *dev, struct regmap *regmap)
 	ret = devm_regulator_bulk_get(dev,
 			ARRAY_SIZE(pcm3168a->supplies), pcm3168a->supplies);
 	if (ret) {
-		if (ret != -EPROBE_DEFER)
-			dev_err(dev, "failed to request supplies: %d\n", ret);
 		goto err_clk;
 	}
 

@@ -386,8 +386,6 @@ static int lm3692x_probe_dt(struct lm3692x_led *led)
 						   "enable", GPIOD_OUT_LOW);
 	if (IS_ERR(led->enable_gpio)) {
 		ret = PTR_ERR(led->enable_gpio);
-		dev_err(&led->client->dev, "Failed to get enable gpio: %d\n",
-			ret);
 		return ret;
 	}
 

@@ -325,9 +325,6 @@ static int sx8654_probe(struct i2c_client *client,
 						     GPIOD_OUT_HIGH);
 	if (IS_ERR(sx8654->gpio_reset)) {
 		error = PTR_ERR(sx8654->gpio_reset);
-		if (error != -EPROBE_DEFER)
-			dev_err(&client->dev, "unable to get reset-gpio: %d\n",
-				error);
 		return error;
 	}
 	dev_dbg(&client->dev, "got GPIO reset pin\n");

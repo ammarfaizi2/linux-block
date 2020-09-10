@@ -303,11 +303,8 @@ static int ad5764_probe(struct spi_device *spi)
 
 		ret = devm_regulator_bulk_get(&st->spi->dev,
 			ARRAY_SIZE(st->vref_reg), st->vref_reg);
-		if (ret) {
-			dev_err(&spi->dev, "Failed to request vref regulators: %d\n",
-				ret);
+		if (ret)
 			return ret;
-		}
 
 		ret = regulator_bulk_enable(ARRAY_SIZE(st->vref_reg),
 			st->vref_reg);

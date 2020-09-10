@@ -183,10 +183,8 @@ static int lpc18xx_eeprom_probe(struct platform_device *pdev)
 		return PTR_ERR(eeprom->mem_base);
 
 	eeprom->clk = devm_clk_get(&pdev->dev, "eeprom");
-	if (IS_ERR(eeprom->clk)) {
-		dev_err(&pdev->dev, "failed to get eeprom clock\n");
+	if (IS_ERR(eeprom->clk))
 		return PTR_ERR(eeprom->clk);
-	}
 
 	ret = clk_prepare_enable(eeprom->clk);
 	if (ret < 0) {
@@ -196,7 +194,6 @@ static int lpc18xx_eeprom_probe(struct platform_device *pdev)
 
 	rst = devm_reset_control_get_exclusive(dev, NULL);
 	if (IS_ERR(rst)) {
-		dev_err(dev, "failed to get reset: %ld\n", PTR_ERR(rst));
 		ret = PTR_ERR(rst);
 		goto err_clk;
 	}

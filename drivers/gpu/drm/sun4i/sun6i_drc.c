@@ -31,10 +31,8 @@ static int sun6i_drc_bind(struct device *dev, struct device *master,
 	dev_set_drvdata(dev, drc);
 
 	drc->reset = devm_reset_control_get(dev, NULL);
-	if (IS_ERR(drc->reset)) {
-		dev_err(dev, "Couldn't get our reset line\n");
+	if (IS_ERR(drc->reset))
 		return PTR_ERR(drc->reset);
-	}
 
 	ret = reset_control_deassert(drc->reset);
 	if (ret) {
@@ -44,7 +42,6 @@ static int sun6i_drc_bind(struct device *dev, struct device *master,
 
 	drc->bus_clk = devm_clk_get(dev, "ahb");
 	if (IS_ERR(drc->bus_clk)) {
-		dev_err(dev, "Couldn't get our bus clock\n");
 		ret = PTR_ERR(drc->bus_clk);
 		goto err_assert_reset;
 	}
@@ -52,7 +49,6 @@ static int sun6i_drc_bind(struct device *dev, struct device *master,
 
 	drc->mod_clk = devm_clk_get(dev, "mod");
 	if (IS_ERR(drc->mod_clk)) {
-		dev_err(dev, "Couldn't get our mod clock\n");
 		ret = PTR_ERR(drc->mod_clk);
 		goto err_disable_bus_clk;
 	}

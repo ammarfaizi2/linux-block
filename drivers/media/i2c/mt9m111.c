@@ -1270,11 +1270,8 @@ static int mt9m111_probe(struct i2c_client *client)
 		return PTR_ERR(mt9m111->clk);
 
 	mt9m111->regulator = devm_regulator_get(&client->dev, "vdd");
-	if (IS_ERR(mt9m111->regulator)) {
-		dev_err(&client->dev, "regulator not found: %ld\n",
-			PTR_ERR(mt9m111->regulator));
+	if (IS_ERR(mt9m111->regulator))
 		return PTR_ERR(mt9m111->regulator);
-	}
 
 	/* Default HIGHPOWER context */
 	mt9m111->ctx = &context_b;

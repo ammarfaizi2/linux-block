@@ -80,8 +80,6 @@ static int simple_amp_probe(struct platform_device *pdev)
 						     GPIOD_OUT_LOW);
 	if (IS_ERR(priv->gpiod_enable)) {
 		err = PTR_ERR(priv->gpiod_enable);
-		if (err != -EPROBE_DEFER)
-			dev_err(dev, "Failed to get 'enable' gpio: %d", err);
 		return err;
 	}
 

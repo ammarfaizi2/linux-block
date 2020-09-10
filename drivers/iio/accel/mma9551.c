@@ -409,10 +409,8 @@ static int mma9551_gpio_probe(struct iio_dev *indio_dev)
 
 	for (i = 0; i < MMA9551_GPIO_COUNT; i++) {
 		gpio = devm_gpiod_get_index(dev, NULL, i, GPIOD_IN);
-		if (IS_ERR(gpio)) {
-			dev_err(dev, "acpi gpio get index failed\n");
+		if (IS_ERR(gpio))
 			return PTR_ERR(gpio);
-		}
 
 		ret = gpiod_to_irq(gpio);
 		if (ret < 0)

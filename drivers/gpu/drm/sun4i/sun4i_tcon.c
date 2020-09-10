@@ -773,27 +773,21 @@ static int sun4i_tcon_init_clocks(struct device *dev,
 				  struct sun4i_tcon *tcon)
 {
 	tcon->clk = devm_clk_get(dev, "ahb");
-	if (IS_ERR(tcon->clk)) {
-		dev_err(dev, "Couldn't get the TCON bus clock\n");
+	if (IS_ERR(tcon->clk))
 		return PTR_ERR(tcon->clk);
-	}
 	clk_prepare_enable(tcon->clk);
 
 	if (tcon->quirks->has_channel_0) {
 		tcon->sclk0 = devm_clk_get(dev, "tcon-ch0");
-		if (IS_ERR(tcon->sclk0)) {
-			dev_err(dev, "Couldn't get the TCON channel 0 clock\n");
+		if (IS_ERR(tcon->sclk0))
 			return PTR_ERR(tcon->sclk0);
-		}
 	}
 	clk_prepare_enable(tcon->sclk0);
 
 	if (tcon->quirks->has_channel_1) {
 		tcon->sclk1 = devm_clk_get(dev, "tcon-ch1");
-		if (IS_ERR(tcon->sclk1)) {
-			dev_err(dev, "Couldn't get the TCON channel 1 clock\n");
+		if (IS_ERR(tcon->sclk1))
 			return PTR_ERR(tcon->sclk1);
-		}
 	}
 
 	return 0;
@@ -1132,17 +1126,13 @@ static int sun4i_tcon_bind(struct device *dev, struct device *master,
 	tcon->quirks = of_device_get_match_data(dev);
 
 	tcon->lcd_rst = devm_reset_control_get(dev, "lcd");
-	if (IS_ERR(tcon->lcd_rst)) {
-		dev_err(dev, "Couldn't get our reset line\n");
+	if (IS_ERR(tcon->lcd_rst))
 		return PTR_ERR(tcon->lcd_rst);
-	}
 
 	if (tcon->quirks->needs_edp_reset) {
 		edp_rstc = devm_reset_control_get_shared(dev, "edp");
-		if (IS_ERR(edp_rstc)) {
-			dev_err(dev, "Couldn't get edp reset line\n");
+		if (IS_ERR(edp_rstc))
 			return PTR_ERR(edp_rstc);
-		}
 
 		ret = reset_control_deassert(edp_rstc);
 		if (ret) {

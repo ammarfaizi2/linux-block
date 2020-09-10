@@ -1017,18 +1017,12 @@ static int raydium_i2c_probe(struct i2c_client *client,
 	ts->avdd = devm_regulator_get(&client->dev, "avdd");
 	if (IS_ERR(ts->avdd)) {
 		error = PTR_ERR(ts->avdd);
-		if (error != -EPROBE_DEFER)
-			dev_err(&client->dev,
-				"Failed to get 'avdd' regulator: %d\n", error);
 		return error;
 	}
 
 	ts->vccio = devm_regulator_get(&client->dev, "vccio");
 	if (IS_ERR(ts->vccio)) {
 		error = PTR_ERR(ts->vccio);
-		if (error != -EPROBE_DEFER)
-			dev_err(&client->dev,
-				"Failed to get 'vccio' regulator: %d\n", error);
 		return error;
 	}
 
@@ -1036,9 +1030,6 @@ static int raydium_i2c_probe(struct i2c_client *client,
 						 GPIOD_OUT_LOW);
 	if (IS_ERR(ts->reset_gpio)) {
 		error = PTR_ERR(ts->reset_gpio);
-		if (error != -EPROBE_DEFER)
-			dev_err(&client->dev,
-				"failed to get reset gpio: %d\n", error);
 		return error;
 	}
 

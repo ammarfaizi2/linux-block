@@ -4627,10 +4627,8 @@ static int wm8994_probe(struct platform_device *pdev)
 
 	ret = devm_clk_bulk_get_optional(pdev->dev.parent, ARRAY_SIZE(wm8994->mclk),
 					 wm8994->mclk);
-	if (ret < 0) {
-		dev_err(&pdev->dev, "Failed to get clocks: %d\n", ret);
+	if (ret < 0)
 		return ret;
-	}
 
 	pm_runtime_enable(&pdev->dev);
 	pm_runtime_idle(&pdev->dev);

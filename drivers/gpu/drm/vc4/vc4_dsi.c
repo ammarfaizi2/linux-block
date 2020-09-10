@@ -1550,24 +1550,18 @@ static int vc4_dsi_bind(struct device *dev, struct device *master, void *data)
 	dsi->escape_clock = devm_clk_get(dev, "escape");
 	if (IS_ERR(dsi->escape_clock)) {
 		ret = PTR_ERR(dsi->escape_clock);
-		if (ret != -EPROBE_DEFER)
-			dev_err(dev, "Failed to get escape clock: %d\n", ret);
 		return ret;
 	}
 
 	dsi->pll_phy_clock = devm_clk_get(dev, "phy");
 	if (IS_ERR(dsi->pll_phy_clock)) {
 		ret = PTR_ERR(dsi->pll_phy_clock);
-		if (ret != -EPROBE_DEFER)
-			dev_err(dev, "Failed to get phy clock: %d\n", ret);
 		return ret;
 	}
 
 	dsi->pixel_clock = devm_clk_get(dev, "pixel");
 	if (IS_ERR(dsi->pixel_clock)) {
 		ret = PTR_ERR(dsi->pixel_clock);
-		if (ret != -EPROBE_DEFER)
-			dev_err(dev, "Failed to get pixel clock: %d\n", ret);
 		return ret;
 	}
 

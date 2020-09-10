@@ -214,10 +214,8 @@ static int vt8500_pwm_probe(struct platform_device *pdev)
 	chip->chip.npwm = VT8500_NR_PWMS;
 
 	chip->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(chip->clk)) {
-		dev_err(&pdev->dev, "clock source not specified\n");
+	if (IS_ERR(chip->clk))
 		return PTR_ERR(chip->clk);
-	}
 
 	r = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	chip->base = devm_ioremap_resource(&pdev->dev, r);

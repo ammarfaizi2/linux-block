@@ -825,10 +825,8 @@ static int sh_mobile_i2c_probe(struct platform_device *dev)
 		return -ENOMEM;
 
 	pd->clk = devm_clk_get(&dev->dev, NULL);
-	if (IS_ERR(pd->clk)) {
-		dev_err(&dev->dev, "cannot get clock\n");
+	if (IS_ERR(pd->clk))
 		return PTR_ERR(pd->clk);
-	}
 
 	ret = sh_mobile_i2c_hook_irqs(dev, pd);
 	if (ret)

@@ -869,10 +869,8 @@ static int stu300_probe(struct platform_device *pdev)
 
 	bus_nr = pdev->id;
 	dev->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(dev->clk)) {
-		dev_err(&pdev->dev, "could not retrieve i2c bus clock\n");
+	if (IS_ERR(dev->clk))
 		return PTR_ERR(dev->clk);
-	}
 
 	dev->pdev = pdev;
 	dev->virtbase = devm_platform_ioremap_resource(pdev, 0);

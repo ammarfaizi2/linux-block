@@ -258,10 +258,8 @@ static int mt6577_auxadc_probe(struct platform_device *pdev)
 	}
 
 	adc_dev->adc_clk = devm_clk_get(&pdev->dev, "main");
-	if (IS_ERR(adc_dev->adc_clk)) {
-		dev_err(&pdev->dev, "failed to get auxadc clock\n");
+	if (IS_ERR(adc_dev->adc_clk))
 		return PTR_ERR(adc_dev->adc_clk);
-	}
 
 	ret = clk_prepare_enable(adc_dev->adc_clk);
 	if (ret) {

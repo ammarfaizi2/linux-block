@@ -1582,8 +1582,6 @@ static int stm32_mdma_probe(struct platform_device *pdev)
 	dmadev->clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(dmadev->clk)) {
 		ret = PTR_ERR(dmadev->clk);
-		if (ret != -EPROBE_DEFER)
-			dev_err(&pdev->dev, "Missing clock controller\n");
 		return ret;
 	}
 

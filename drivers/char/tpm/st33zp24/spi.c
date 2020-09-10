@@ -241,7 +241,6 @@ static int st33zp24_spi_acpi_request_resources(struct spi_device *spi_dev)
 	/* Get LPCPD GPIO from ACPI */
 	gpiod_lpcpd = devm_gpiod_get(dev, "lpcpd", GPIOD_OUT_HIGH);
 	if (IS_ERR(gpiod_lpcpd)) {
-		dev_err(dev, "Failed to retrieve lpcpd-gpios from acpi.\n");
 		phy->io_lpcpd = -1;
 		/*
 		 * lpcpd pin is not specified. This is not an issue as

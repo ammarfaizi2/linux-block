@@ -1778,10 +1778,8 @@ static int davinci_emac_probe(struct platform_device *pdev)
 
 	/* obtain emac clock from kernel */
 	emac_clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(emac_clk)) {
-		dev_err(&pdev->dev, "failed to get EMAC clock\n");
+	if (IS_ERR(emac_clk))
 		return -EBUSY;
-	}
 	emac_bus_frequency = clk_get_rate(emac_clk);
 	devm_clk_put(&pdev->dev, emac_clk);
 

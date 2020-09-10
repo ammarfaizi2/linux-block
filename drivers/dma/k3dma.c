@@ -872,10 +872,8 @@ static int k3_dma_probe(struct platform_device *op)
 
 	if (!(soc_data->flags & K3_FLAG_NOCLK)) {
 		d->clk = devm_clk_get(&op->dev, NULL);
-		if (IS_ERR(d->clk)) {
-			dev_err(&op->dev, "no dma clk\n");
+		if (IS_ERR(d->clk))
 			return PTR_ERR(d->clk);
-		}
 	}
 
 	irq = platform_get_irq(op, 0);

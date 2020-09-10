@@ -73,7 +73,6 @@ static int tegra_udc_probe(struct platform_device *pdev)
 	udc->clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(udc->clk)) {
 		err = PTR_ERR(udc->clk);
-		dev_err(&pdev->dev, "failed to get clock: %d\n", err);
 		return err;
 	}
 

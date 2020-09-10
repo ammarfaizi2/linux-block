@@ -486,7 +486,6 @@ static int act8945a_charger_config(struct device *dev,
 						    GPIOD_IN);
 	if (IS_ERR(charger->lbo_gpio)) {
 		err = PTR_ERR(charger->lbo_gpio);
-		dev_err(dev, "unable to claim gpio \"lbo\": %d\n", err);
 		return err;
 	}
 
@@ -502,7 +501,6 @@ static int act8945a_charger_config(struct device *dev,
 						       GPIOD_IN);
 	if (IS_ERR(charger->chglev_gpio)) {
 		err = PTR_ERR(charger->chglev_gpio);
-		dev_err(dev, "unable to claim gpio \"chglev\": %d\n", err);
 		return err;
 	}
 

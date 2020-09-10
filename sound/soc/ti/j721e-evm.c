@@ -457,9 +457,6 @@ static int j721e_get_clocks(struct device *dev,
 	clocks->target = devm_clk_get(dev, prefix);
 	if (IS_ERR(clocks->target)) {
 		ret = PTR_ERR(clocks->target);
-		if (ret != -EPROBE_DEFER)
-			dev_err(dev, "failed to acquire %s: %d\n",
-				prefix, ret);
 		return ret;
 	}
 

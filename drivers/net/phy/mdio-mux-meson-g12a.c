@@ -233,11 +233,8 @@ static int g12a_ephy_glue_clk_register(struct device *dev)
 
 		snprintf(in_name, sizeof(in_name), "clkin%d", i);
 		clk = devm_clk_get(dev, in_name);
-		if (IS_ERR(clk)) {
-			if (PTR_ERR(clk) != -EPROBE_DEFER)
-				dev_err(dev, "Missing clock %s\n", in_name);
+		if (IS_ERR(clk))
 			return PTR_ERR(clk);
-		}
 
 		parent_names[i] = __clk_get_name(clk);
 	}
@@ -319,8 +316,6 @@ static int g12a_mdio_mux_probe(struct platform_device *pdev)
 	priv->pclk = devm_clk_get(dev, "pclk");
 	if (IS_ERR(priv->pclk)) {
 		ret = PTR_ERR(priv->pclk);
-		if (ret != -EPROBE_DEFER)
-			dev_err(dev, "failed to get peripheral clock\n");
 		return ret;
 	}
 

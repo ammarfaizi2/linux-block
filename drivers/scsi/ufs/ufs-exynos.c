@@ -980,7 +980,6 @@ static int exynos_ufs_init(struct ufs_hba *hba)
 	ufs->phy = devm_phy_get(dev, "ufs-phy");
 	if (IS_ERR(ufs->phy)) {
 		ret = PTR_ERR(ufs->phy);
-		dev_err(dev, "failed to get ufs-phy\n");
 		goto out;
 	}
 

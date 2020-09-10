@@ -149,7 +149,6 @@ static int bd6107_probe(struct i2c_client *client,
 	 */
 	bd->reset = devm_gpiod_get(&client->dev, "reset", GPIOD_OUT_HIGH);
 	if (IS_ERR(bd->reset)) {
-		dev_err(&client->dev, "unable to request reset GPIO\n");
 		ret = PTR_ERR(bd->reset);
 		return ret;
 	}

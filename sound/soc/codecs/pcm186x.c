@@ -660,10 +660,8 @@ int pcm186x_probe(struct device *dev, enum pcm186x_type type, int irq,
 
 	ret = devm_regulator_bulk_get(dev, ARRAY_SIZE(priv->supplies),
 				      priv->supplies);
-	if (ret) {
-		dev_err(dev, "failed to request supplies: %d\n", ret);
+	if (ret)
 		return ret;
-	}
 
 	ret = regulator_bulk_enable(ARRAY_SIZE(priv->supplies),
 				    priv->supplies);

@@ -225,17 +225,12 @@ static int fsl_mqs_probe(struct platform_device *pdev)
 		}
 
 		mqs_priv->ipg = devm_clk_get(&pdev->dev, "core");
-		if (IS_ERR(mqs_priv->ipg)) {
-			dev_err(&pdev->dev, "failed to get the clock: %ld\n",
-				PTR_ERR(mqs_priv->ipg));
+		if (IS_ERR(mqs_priv->ipg))
 			return PTR_ERR(mqs_priv->ipg);
-		}
 	}
 
 	mqs_priv->mclk = devm_clk_get(&pdev->dev, "mclk");
 	if (IS_ERR(mqs_priv->mclk)) {
-		dev_err(&pdev->dev, "failed to get the clock: %ld\n",
-			PTR_ERR(mqs_priv->mclk));
 		ret = PTR_ERR(mqs_priv->mclk);
 		goto err_free_gpr_np;
 	}

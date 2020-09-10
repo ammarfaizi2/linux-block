@@ -1370,7 +1370,6 @@ static int dspi_probe(struct platform_device *pdev)
 	dspi->clk = devm_clk_get(&pdev->dev, "dspi");
 	if (IS_ERR(dspi->clk)) {
 		ret = PTR_ERR(dspi->clk);
-		dev_err(&pdev->dev, "unable to get clock\n");
 		goto out_ctlr_put;
 	}
 	ret = clk_prepare_enable(dspi->clk);

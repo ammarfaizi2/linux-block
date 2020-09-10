@@ -135,22 +135,16 @@ static int samsung_ufs_phy_symbol_clk_init(struct samsung_ufs_phy *phy)
 	int ret;
 
 	phy->tx0_symbol_clk = devm_clk_get(phy->dev, "tx0_symbol_clk");
-	if (IS_ERR(phy->tx0_symbol_clk)) {
-		dev_err(phy->dev, "failed to get tx0_symbol_clk clock\n");
+	if (IS_ERR(phy->tx0_symbol_clk))
 		return PTR_ERR(phy->tx0_symbol_clk);
-	}
 
 	phy->rx0_symbol_clk = devm_clk_get(phy->dev, "rx0_symbol_clk");
-	if (IS_ERR(phy->rx0_symbol_clk)) {
-		dev_err(phy->dev, "failed to get rx0_symbol_clk clock\n");
+	if (IS_ERR(phy->rx0_symbol_clk))
 		return PTR_ERR(phy->rx0_symbol_clk);
-	}
 
 	phy->rx1_symbol_clk = devm_clk_get(phy->dev, "rx1_symbol_clk");
-	if (IS_ERR(phy->rx1_symbol_clk)) {
-		dev_err(phy->dev, "failed to get rx1_symbol_clk clock\n");
+	if (IS_ERR(phy->rx1_symbol_clk))
 		return PTR_ERR(phy->rx1_symbol_clk);
-	}
 
 	ret = clk_prepare_enable(phy->tx0_symbol_clk);
 	if (ret) {

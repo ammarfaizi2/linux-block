@@ -71,9 +71,6 @@ static int ssm2305_probe(struct platform_device *pdev)
 					      GPIOD_OUT_LOW);
 	if (IS_ERR(priv->gpiod_shutdown)) {
 		err = PTR_ERR(priv->gpiod_shutdown);
-		if (err != -EPROBE_DEFER)
-			dev_err(dev, "Failed to get 'shutdown' gpio: %d\n",
-				err);
 		return err;
 	}
 

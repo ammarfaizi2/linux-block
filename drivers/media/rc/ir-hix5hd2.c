@@ -289,7 +289,6 @@ static int hix5hd2_ir_probe(struct platform_device *pdev)
 
 	priv->clock = devm_clk_get(dev, NULL);
 	if (IS_ERR(priv->clock)) {
-		dev_err(dev, "clock not found\n");
 		ret = PTR_ERR(priv->clock);
 		goto err;
 	}

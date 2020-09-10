@@ -508,7 +508,6 @@ static int davinci_probe(struct platform_device *pdev)
 
 	clk = devm_clk_get(&pdev->dev, "usb");
 	if (IS_ERR(clk)) {
-		dev_err(&pdev->dev, "failed to get clock\n");
 		ret = PTR_ERR(clk);
 		goto err0;
 	}

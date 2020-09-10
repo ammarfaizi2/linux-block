@@ -2708,11 +2708,8 @@ int dispc_init(struct tidss_device *tidss)
 			return r;
 
 		clk = devm_clk_get(dev, dispc->feat->vpclk_name[i]);
-		if (IS_ERR(clk)) {
-			dev_err(dev, "%s: Failed to get clk %s:%ld\n", __func__,
-				dispc->feat->vpclk_name[i], PTR_ERR(clk));
+		if (IS_ERR(clk))
 			return PTR_ERR(clk);
-		}
 		dispc->vp_clk[i] = clk;
 
 		gamma_table = devm_kmalloc_array(dev, gamma_size,
@@ -2730,11 +2727,8 @@ int dispc_init(struct tidss_device *tidss)
 	}
 
 	dispc->fclk = devm_clk_get(dev, "fck");
-	if (IS_ERR(dispc->fclk)) {
-		dev_err(dev, "%s: Failed to get fclk: %ld\n",
-			__func__, PTR_ERR(dispc->fclk));
+	if (IS_ERR(dispc->fclk))
 		return PTR_ERR(dispc->fclk);
-	}
 	dev_dbg(dev, "DSS fclk %lu Hz\n", clk_get_rate(dispc->fclk));
 
 	of_property_read_u32(dispc->dev->of_node, "max-memory-bandwidth",

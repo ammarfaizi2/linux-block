@@ -696,28 +696,24 @@ static int decon_probe(struct platform_device *pdev)
 
 	ctx->pclk = devm_clk_get(dev, "pclk_decon0");
 	if (IS_ERR(ctx->pclk)) {
-		dev_err(dev, "failed to get bus clock pclk\n");
 		ret = PTR_ERR(ctx->pclk);
 		goto err_iounmap;
 	}
 
 	ctx->aclk = devm_clk_get(dev, "aclk_decon0");
 	if (IS_ERR(ctx->aclk)) {
-		dev_err(dev, "failed to get bus clock aclk\n");
 		ret = PTR_ERR(ctx->aclk);
 		goto err_iounmap;
 	}
 
 	ctx->eclk = devm_clk_get(dev, "decon0_eclk");
 	if (IS_ERR(ctx->eclk)) {
-		dev_err(dev, "failed to get eclock\n");
 		ret = PTR_ERR(ctx->eclk);
 		goto err_iounmap;
 	}
 
 	ctx->vclk = devm_clk_get(dev, "decon0_vclk");
 	if (IS_ERR(ctx->vclk)) {
-		dev_err(dev, "failed to get vclock\n");
 		ret = PTR_ERR(ctx->vclk);
 		goto err_iounmap;
 	}

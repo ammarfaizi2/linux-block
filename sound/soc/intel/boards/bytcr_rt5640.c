@@ -1290,10 +1290,6 @@ static int snd_byt_rt5640_mc_probe(struct platform_device *pdev)
 		if (IS_ERR(priv->mclk)) {
 			ret_val = PTR_ERR(priv->mclk);
 
-			dev_err(&pdev->dev,
-				"Failed to get MCLK from pmc_plt_clk_3: %d\n",
-				ret_val);
-
 			/*
 			 * Fall back to bit clock usage for -ENOENT (clock not
 			 * available likely due to missing dependencies), bail

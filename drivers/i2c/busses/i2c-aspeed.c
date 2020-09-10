@@ -988,11 +988,8 @@ static int aspeed_i2c_probe_bus(struct platform_device *pdev)
 	devm_clk_put(&pdev->dev, parent_clk);
 
 	bus->rst = devm_reset_control_get_shared(&pdev->dev, NULL);
-	if (IS_ERR(bus->rst)) {
-		dev_err(&pdev->dev,
-			"missing or invalid reset controller device tree entry\n");
+	if (IS_ERR(bus->rst))
 		return PTR_ERR(bus->rst);
-	}
 	reset_control_deassert(bus->rst);
 
 	ret = of_property_read_u32(pdev->dev.of_node,

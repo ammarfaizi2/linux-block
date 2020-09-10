@@ -76,16 +76,12 @@ static int ufs_mtk_phy_clk_init(struct ufs_mtk_phy *phy)
 	struct device *dev = phy->dev;
 
 	phy->unipro_clk = devm_clk_get(dev, "unipro");
-	if (IS_ERR(phy->unipro_clk)) {
-		dev_err(dev, "failed to get clock: unipro");
+	if (IS_ERR(phy->unipro_clk))
 		return PTR_ERR(phy->unipro_clk);
-	}
 
 	phy->mp_clk = devm_clk_get(dev, "mp");
-	if (IS_ERR(phy->mp_clk)) {
-		dev_err(dev, "failed to get clock: mp");
+	if (IS_ERR(phy->mp_clk))
 		return PTR_ERR(phy->mp_clk);
-	}
 
 	return 0;
 }

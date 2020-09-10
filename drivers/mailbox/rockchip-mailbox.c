@@ -210,8 +210,6 @@ static int rockchip_mbox_probe(struct platform_device *pdev)
 	mb->pclk = devm_clk_get(&pdev->dev, "pclk_mailbox");
 	if (IS_ERR(mb->pclk)) {
 		ret = PTR_ERR(mb->pclk);
-		dev_err(&pdev->dev, "failed to get pclk_mailbox clock: %d\n",
-			ret);
 		return ret;
 	}
 

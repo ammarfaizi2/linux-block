@@ -126,10 +126,8 @@ static void *dwc_qos_probe(struct platform_device *pdev,
 	int err;
 
 	plat_dat->stmmac_clk = devm_clk_get(&pdev->dev, "apb_pclk");
-	if (IS_ERR(plat_dat->stmmac_clk)) {
-		dev_err(&pdev->dev, "apb_pclk clock not found.\n");
+	if (IS_ERR(plat_dat->stmmac_clk))
 		return ERR_CAST(plat_dat->stmmac_clk);
-	}
 
 	err = clk_prepare_enable(plat_dat->stmmac_clk);
 	if (err < 0) {
@@ -140,7 +138,6 @@ static void *dwc_qos_probe(struct platform_device *pdev,
 
 	plat_dat->pclk = devm_clk_get(&pdev->dev, "phy_ref_clk");
 	if (IS_ERR(plat_dat->pclk)) {
-		dev_err(&pdev->dev, "phy_ref_clk clock not found.\n");
 		err = PTR_ERR(plat_dat->pclk);
 		goto disable;
 	}

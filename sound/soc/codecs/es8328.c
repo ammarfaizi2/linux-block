@@ -784,7 +784,6 @@ static int es8328_component_probe(struct snd_soc_component *component)
 	/* Setup clocks */
 	es8328->clk = devm_clk_get(component->dev, NULL);
 	if (IS_ERR(es8328->clk)) {
-		dev_err(component->dev, "codec clock missing or invalid\n");
 		ret = PTR_ERR(es8328->clk);
 		goto clk_fail;
 	}
@@ -865,10 +864,8 @@ int es8328_probe(struct device *dev, struct regmap *regmap)
 
 	ret = devm_regulator_bulk_get(dev, ARRAY_SIZE(es8328->supplies),
 				es8328->supplies);
-	if (ret) {
-		dev_err(dev, "unable to get regulators\n");
+	if (ret)
 		return ret;
-	}
 
 	dev_set_drvdata(dev, es8328);
 

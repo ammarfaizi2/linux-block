@@ -1229,11 +1229,8 @@ static int cs42l56_i2c_probe(struct i2c_client *i2c_client,
 	ret = devm_regulator_bulk_get(&i2c_client->dev,
 				      ARRAY_SIZE(cs42l56->supplies),
 				      cs42l56->supplies);
-	if (ret != 0) {
-		dev_err(&i2c_client->dev,
-			"Failed to request supplies: %d\n", ret);
+	if (ret != 0)
 		return ret;
-	}
 
 	ret = regulator_bulk_enable(ARRAY_SIZE(cs42l56->supplies),
 				    cs42l56->supplies);

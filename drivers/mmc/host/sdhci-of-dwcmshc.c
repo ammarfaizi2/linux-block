@@ -116,7 +116,6 @@ static int dwcmshc_probe(struct platform_device *pdev)
 	pltfm_host->clk = devm_clk_get(&pdev->dev, "core");
 	if (IS_ERR(pltfm_host->clk)) {
 		err = PTR_ERR(pltfm_host->clk);
-		dev_err(&pdev->dev, "failed to get core clk: %d\n", err);
 		goto free_pltfm;
 	}
 	err = clk_prepare_enable(pltfm_host->clk);

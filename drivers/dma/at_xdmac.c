@@ -1987,10 +1987,8 @@ static int at_xdmac_probe(struct platform_device *pdev)
 	atxdmac->irq = irq;
 
 	atxdmac->clk = devm_clk_get(&pdev->dev, "dma_clk");
-	if (IS_ERR(atxdmac->clk)) {
-		dev_err(&pdev->dev, "can't get dma_clk\n");
+	if (IS_ERR(atxdmac->clk))
 		return PTR_ERR(atxdmac->clk);
-	}
 
 	/* Do not use dev res to prevent races with tasklet */
 	ret = request_irq(atxdmac->irq, at_xdmac_interrupt, 0, "at_xdmac", atxdmac);

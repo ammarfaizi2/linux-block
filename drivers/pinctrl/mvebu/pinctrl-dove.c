@@ -778,10 +778,8 @@ static int dove_pinctrl_probe(struct platform_device *pdev)
 	 * grab clk to make sure it is ticking.
 	 */
 	clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(clk)) {
-		dev_err(&pdev->dev, "Unable to get pdma clock");
+	if (IS_ERR(clk))
 		return PTR_ERR(clk);
-	}
 	clk_prepare_enable(clk);
 
 	mpp_res = platform_get_resource(pdev, IORESOURCE_MEM, 0);

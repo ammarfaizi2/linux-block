@@ -137,10 +137,8 @@ static int omap3_rom_rng_probe(struct platform_device *pdev)
 	}
 
 	ddata->clk = devm_clk_get(ddata->dev, "ick");
-	if (IS_ERR(ddata->clk)) {
-		dev_err(ddata->dev, "unable to get RNG clock\n");
+	if (IS_ERR(ddata->clk))
 		return PTR_ERR(ddata->clk);
-	}
 
 	pm_runtime_enable(&pdev->dev);
 	pm_runtime_set_autosuspend_delay(&pdev->dev, 500);

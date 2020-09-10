@@ -354,10 +354,8 @@ static int lpc18xx_gpio_probe(struct platform_device *pdev)
 		return PTR_ERR(gc->base);
 
 	gc->clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(gc->clk)) {
-		dev_err(dev, "input clock not found\n");
+	if (IS_ERR(gc->clk))
 		return PTR_ERR(gc->clk);
-	}
 
 	ret = clk_prepare_enable(gc->clk);
 	if (ret) {

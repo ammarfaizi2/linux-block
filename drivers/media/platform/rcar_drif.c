@@ -1403,7 +1403,6 @@ static int rcar_drif_probe(struct platform_device *pdev)
 	ch->clk = devm_clk_get(&pdev->dev, "fck");
 	if (IS_ERR(ch->clk)) {
 		ret = PTR_ERR(ch->clk);
-		dev_err(&pdev->dev, "clk get failed (%d)\n", ret);
 		return ret;
 	}
 

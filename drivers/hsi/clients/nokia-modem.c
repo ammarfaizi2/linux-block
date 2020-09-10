@@ -99,10 +99,8 @@ static int nokia_modem_gpio_probe(struct device *dev)
 	for (i = 0; i < gpio_count; i++) {
 		modem->gpios[i].gpio = devm_gpiod_get_index(dev, NULL, i,
 							    GPIOD_OUT_LOW);
-		if (IS_ERR(modem->gpios[i].gpio)) {
-			dev_err(dev, "Could not get gpio %d\n", i);
+		if (IS_ERR(modem->gpios[i].gpio))
 			return PTR_ERR(modem->gpios[i].gpio);
-		}
 
 		err = of_property_read_string_index(np, "gpio-names", i,
 						&(modem->gpios[i].name));

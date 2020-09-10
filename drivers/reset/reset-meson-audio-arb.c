@@ -151,11 +151,8 @@ static int meson_audio_arb_probe(struct platform_device *pdev)
 	platform_set_drvdata(pdev, arb);
 
 	arb->clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(arb->clk)) {
-		if (PTR_ERR(arb->clk) != -EPROBE_DEFER)
-			dev_err(dev, "failed to get clock\n");
+	if (IS_ERR(arb->clk))
 		return PTR_ERR(arb->clk);
-	}
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	arb->regs = devm_ioremap_resource(dev, res);

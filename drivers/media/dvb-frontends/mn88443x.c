@@ -699,11 +699,8 @@ static int mn88443x_probe(struct i2c_client *client,
 
 	chip->reset_gpio = devm_gpiod_get_optional(dev, "reset",
 						   GPIOD_OUT_HIGH);
-	if (IS_ERR(chip->reset_gpio)) {
-		dev_err(dev, "Failed to request reset_gpio: %ld\n",
-			PTR_ERR(chip->reset_gpio));
+	if (IS_ERR(chip->reset_gpio))
 		return PTR_ERR(chip->reset_gpio);
-	}
 
 	if (conf) {
 		chip->mclk = conf->mclk;

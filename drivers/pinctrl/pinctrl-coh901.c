@@ -639,7 +639,6 @@ static int __init u300_gpio_probe(struct platform_device *pdev)
 	gpio->clk = devm_clk_get(gpio->dev, NULL);
 	if (IS_ERR(gpio->clk)) {
 		err = PTR_ERR(gpio->clk);
-		dev_err(gpio->dev, "could not get GPIO clock\n");
 		return err;
 	}
 

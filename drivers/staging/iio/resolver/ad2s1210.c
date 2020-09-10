@@ -638,9 +638,6 @@ static int ad2s1210_setup_gpios(struct ad2s1210_state *st)
 					      gpios[i].flags);
 		if (IS_ERR(st->gpios[i])) {
 			ret = PTR_ERR(st->gpios[i]);
-			dev_err(&spi->dev,
-				"ad2s1210: failed to request %s GPIO: %d\n",
-				gpios[i].name, ret);
 			return ret;
 		}
 	}

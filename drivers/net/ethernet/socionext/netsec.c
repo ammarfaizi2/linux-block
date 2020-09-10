@@ -1842,10 +1842,8 @@ static int netsec_of_probe(struct platform_device *pdev,
 	*phy_addr = of_mdio_parse_addr(&pdev->dev, priv->phy_np);
 
 	priv->clk = devm_clk_get(&pdev->dev, NULL); /* get by 'phy_ref_clk' */
-	if (IS_ERR(priv->clk)) {
-		dev_err(&pdev->dev, "phy_ref_clk not found\n");
+	if (IS_ERR(priv->clk))
 		return PTR_ERR(priv->clk);
-	}
 	priv->freq = clk_get_rate(priv->clk);
 
 	return 0;

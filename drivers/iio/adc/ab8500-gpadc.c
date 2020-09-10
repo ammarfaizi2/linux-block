@@ -1142,7 +1142,6 @@ static int ab8500_gpadc_probe(struct platform_device *pdev)
 	gpadc->vddadc = devm_regulator_get(dev, "vddadc");
 	if (IS_ERR(gpadc->vddadc)) {
 		ret = PTR_ERR(gpadc->vddadc);
-		dev_err(dev, "failed to get vddadc\n");
 		return ret;
 	}
 

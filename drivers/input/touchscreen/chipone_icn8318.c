@@ -196,8 +196,6 @@ static int icn8318_probe(struct i2c_client *client,
 	data->wake_gpio = devm_gpiod_get(dev, "wake", GPIOD_OUT_LOW);
 	if (IS_ERR(data->wake_gpio)) {
 		error = PTR_ERR(data->wake_gpio);
-		if (error != -EPROBE_DEFER)
-			dev_err(dev, "Error getting wake gpio: %d\n", error);
 		return error;
 	}
 

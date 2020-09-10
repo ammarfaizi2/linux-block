@@ -960,10 +960,8 @@ static int rcar_h2_enable(struct platform_device *pdev)
 	int ret;
 
 	dev->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(dev->clk)) {
-		dev_err(&pdev->dev, "cannot get clock\n");
+	if (IS_ERR(dev->clk))
 		return PTR_ERR(dev->clk);
-	}
 
 	ret = clk_prepare_enable(dev->clk);
 	if (ret) {
@@ -1006,10 +1004,8 @@ static int rcar_m3_enable(struct platform_device *pdev)
 	int ret;
 
 	dev->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(dev->clk)) {
-		dev_err(&pdev->dev, "cannot get clock\n");
+	if (IS_ERR(dev->clk))
 		return PTR_ERR(dev->clk);
-	}
 
 	ret = clk_prepare_enable(dev->clk);
 	if (ret) {

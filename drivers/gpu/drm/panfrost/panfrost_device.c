@@ -44,10 +44,8 @@ static int panfrost_clk_init(struct panfrost_device *pfdev)
 	unsigned long rate;
 
 	pfdev->clock = devm_clk_get(pfdev->dev, NULL);
-	if (IS_ERR(pfdev->clock)) {
-		dev_err(pfdev->dev, "get clock failed %ld\n", PTR_ERR(pfdev->clock));
+	if (IS_ERR(pfdev->clock))
 		return PTR_ERR(pfdev->clock);
-	}
 
 	rate = clk_get_rate(pfdev->clock);
 	dev_info(pfdev->dev, "clock rate = %lu\n", rate);
@@ -57,11 +55,8 @@ static int panfrost_clk_init(struct panfrost_device *pfdev)
 		return err;
 
 	pfdev->bus_clock = devm_clk_get_optional(pfdev->dev, "bus");
-	if (IS_ERR(pfdev->bus_clock)) {
-		dev_err(pfdev->dev, "get bus_clock failed %ld\n",
-			PTR_ERR(pfdev->bus_clock));
+	if (IS_ERR(pfdev->bus_clock))
 		return PTR_ERR(pfdev->bus_clock);
-	}
 
 	if (pfdev->bus_clock) {
 		rate = clk_get_rate(pfdev->bus_clock);
@@ -100,12 +95,8 @@ static int panfrost_regulator_init(struct panfrost_device *pfdev)
 	ret = devm_regulator_bulk_get(pfdev->dev,
 				      pfdev->comp->num_supplies,
 				      pfdev->regulators);
-	if (ret < 0) {
-		if (ret != -EPROBE_DEFER)
-			dev_err(pfdev->dev, "failed to get regulators: %d\n",
-				ret);
+	if (ret < 0)
 		return ret;
-	}
 
 	ret = regulator_bulk_enable(pfdev->comp->num_supplies,
 				    pfdev->regulators);

@@ -148,11 +148,8 @@ static int qcom_ssphy_init_regulator(struct ssphy_priv *priv)
 	priv->regs[0].supply = "vdd";
 	priv->regs[1].supply = "vdda1p8";
 	ret = devm_regulator_bulk_get(priv->dev, NUM_BULK_REGS, priv->regs);
-	if (ret) {
-		if (ret != -EPROBE_DEFER)
-			dev_err(priv->dev, "Failed to get regulators\n");
+	if (ret)
 		return ret;
-	}
 
 	return ret;
 }
@@ -160,18 +157,14 @@ static int qcom_ssphy_init_regulator(struct ssphy_priv *priv)
 static int qcom_ssphy_init_reset(struct ssphy_priv *priv)
 {
 	priv->reset_com = devm_reset_control_get_optional_exclusive(priv->dev, "com");
-	if (IS_ERR(priv->reset_com)) {
-		dev_err(priv->dev, "Failed to get reset control com\n");
+	if (IS_ERR(priv->reset_com))
 		return PTR_ERR(priv->reset_com);
-	}
 
 	if (priv->reset_com) {
 		/* if reset_com is present, reset_phy is no longer optional */
 		priv->reset_phy = devm_reset_control_get_exclusive(priv->dev, "phy");
-		if (IS_ERR(priv->reset_phy)) {
-			dev_err(priv->dev, "Failed to get reset control phy\n");
+		if (IS_ERR(priv->reset_phy))
 			return PTR_ERR(priv->reset_phy);
-		}
 	}
 
 	return 0;

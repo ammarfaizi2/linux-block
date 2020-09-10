@@ -211,10 +211,8 @@ static int xhci_mtk_clks_get(struct xhci_hcd_mtk *mtk)
 	struct device *dev = mtk->dev;
 
 	mtk->sys_clk = devm_clk_get(dev, "sys_ck");
-	if (IS_ERR(mtk->sys_clk)) {
-		dev_err(dev, "fail to get sys_ck\n");
+	if (IS_ERR(mtk->sys_clk))
 		return PTR_ERR(mtk->sys_clk);
-	}
 
 	mtk->xhci_clk = devm_clk_get_optional(dev, "xhci_ck");
 	if (IS_ERR(mtk->xhci_clk))
@@ -444,16 +442,12 @@ static int xhci_mtk_probe(struct platform_device *pdev)
 
 	mtk->dev = dev;
 	mtk->vbus = devm_regulator_get(dev, "vbus");
-	if (IS_ERR(mtk->vbus)) {
-		dev_err(dev, "fail to get vbus\n");
+	if (IS_ERR(mtk->vbus))
 		return PTR_ERR(mtk->vbus);
-	}
 
 	mtk->vusb33 = devm_regulator_get(dev, "vusb33");
-	if (IS_ERR(mtk->vusb33)) {
-		dev_err(dev, "fail to get vusb33\n");
+	if (IS_ERR(mtk->vusb33))
 		return PTR_ERR(mtk->vusb33);
-	}
 
 	ret = xhci_mtk_clks_get(mtk);
 	if (ret)

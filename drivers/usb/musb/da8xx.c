@@ -518,17 +518,12 @@ static int da8xx_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(clk)) {
-		dev_err(&pdev->dev, "failed to get clock\n");
+	if (IS_ERR(clk))
 		return PTR_ERR(clk);
-	}
 
 	glue->phy = devm_phy_get(&pdev->dev, "usb-phy");
-	if (IS_ERR(glue->phy)) {
-		if (PTR_ERR(glue->phy) != -EPROBE_DEFER)
-			dev_err(&pdev->dev, "failed to get phy\n");
+	if (IS_ERR(glue->phy))
 		return PTR_ERR(glue->phy);
-	}
 
 	glue->dev			= &pdev->dev;
 	glue->clk			= clk;

@@ -230,25 +230,16 @@ static int img_prl_out_probe(struct platform_device *pdev)
 	prl->base = base;
 
 	prl->rst = devm_reset_control_get_exclusive(&pdev->dev, "rst");
-	if (IS_ERR(prl->rst)) {
-		if (PTR_ERR(prl->rst) != -EPROBE_DEFER)
-			dev_err(&pdev->dev, "No top level reset found\n");
+	if (IS_ERR(prl->rst))
 		return PTR_ERR(prl->rst);
-	}
 
 	prl->clk_sys = devm_clk_get(&pdev->dev, "sys");
-	if (IS_ERR(prl->clk_sys)) {
-		if (PTR_ERR(prl->clk_sys) != -EPROBE_DEFER)
-			dev_err(dev, "Failed to acquire clock 'sys'\n");
+	if (IS_ERR(prl->clk_sys))
 		return PTR_ERR(prl->clk_sys);
-	}
 
 	prl->clk_ref = devm_clk_get(&pdev->dev, "ref");
-	if (IS_ERR(prl->clk_ref)) {
-		if (PTR_ERR(prl->clk_ref) != -EPROBE_DEFER)
-			dev_err(dev, "Failed to acquire clock 'ref'\n");
+	if (IS_ERR(prl->clk_ref))
 		return PTR_ERR(prl->clk_ref);
-	}
 
 	ret = clk_prepare_enable(prl->clk_sys);
 	if (ret)

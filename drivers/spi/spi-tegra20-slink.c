@@ -1061,7 +1061,6 @@ static int tegra_slink_probe(struct platform_device *pdev)
 	tspi->clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(tspi->clk)) {
 		ret = PTR_ERR(tspi->clk);
-		dev_err(&pdev->dev, "Can not get clock %d\n", ret);
 		goto exit_free_master;
 	}
 	ret = clk_prepare(tspi->clk);
@@ -1088,7 +1087,6 @@ static int tegra_slink_probe(struct platform_device *pdev)
 
 	tspi->rst = devm_reset_control_get_exclusive(&pdev->dev, "spi");
 	if (IS_ERR(tspi->rst)) {
-		dev_err(&pdev->dev, "can not get reset\n");
 		ret = PTR_ERR(tspi->rst);
 		goto exit_free_irq;
 	}

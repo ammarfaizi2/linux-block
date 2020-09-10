@@ -180,14 +180,12 @@ static int ltc2952_poweroff_init(struct platform_device *pdev)
 					     GPIOD_OUT_LOW);
 	if (IS_ERR(data->gpio_watchdog)) {
 		ret = PTR_ERR(data->gpio_watchdog);
-		dev_err(&pdev->dev, "unable to claim gpio \"watchdog\"\n");
 		return ret;
 	}
 
 	data->gpio_kill = devm_gpiod_get(&pdev->dev, "kill", GPIOD_OUT_LOW);
 	if (IS_ERR(data->gpio_kill)) {
 		ret = PTR_ERR(data->gpio_kill);
-		dev_err(&pdev->dev, "unable to claim gpio \"kill\"\n");
 		return ret;
 	}
 
@@ -199,7 +197,6 @@ static int ltc2952_poweroff_init(struct platform_device *pdev)
 		 * it is worth a warning if its use was defined in the device
 		 * tree.
 		 */
-		dev_err(&pdev->dev, "unable to claim gpio \"trigger\"\n");
 		data->gpio_trigger = NULL;
 	}
 

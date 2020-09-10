@@ -242,7 +242,6 @@ static int p2wi_probe(struct platform_device *pdev)
 	p2wi->clk = devm_clk_get(dev, NULL);
 	if (IS_ERR(p2wi->clk)) {
 		ret = PTR_ERR(p2wi->clk);
-		dev_err(dev, "failed to retrieve clk: %d\n", ret);
 		return ret;
 	}
 
@@ -257,7 +256,6 @@ static int p2wi_probe(struct platform_device *pdev)
 	p2wi->rstc = devm_reset_control_get_exclusive(dev, NULL);
 	if (IS_ERR(p2wi->rstc)) {
 		ret = PTR_ERR(p2wi->rstc);
-		dev_err(dev, "failed to retrieve reset controller: %d\n", ret);
 		goto err_clk_disable;
 	}
 

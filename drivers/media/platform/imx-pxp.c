@@ -1648,7 +1648,6 @@ static int pxp_probe(struct platform_device *pdev)
 	dev->clk = devm_clk_get(&pdev->dev, "axi");
 	if (IS_ERR(dev->clk)) {
 		ret = PTR_ERR(dev->clk);
-		dev_err(&pdev->dev, "Failed to get clk: %d\n", ret);
 		return ret;
 	}
 

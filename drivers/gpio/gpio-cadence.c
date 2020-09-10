@@ -202,8 +202,6 @@ static int cdns_gpio_probe(struct platform_device *pdev)
 	cgpio->pclk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(cgpio->pclk)) {
 		ret = PTR_ERR(cgpio->pclk);
-		dev_err(&pdev->dev,
-			"Failed to retrieve peripheral clock, %d\n", ret);
 		goto err_revert_dir;
 	}
 

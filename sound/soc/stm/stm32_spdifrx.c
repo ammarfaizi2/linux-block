@@ -930,12 +930,8 @@ static int stm32_spdifrx_parse_of(struct platform_device *pdev,
 	spdifrx->phys_addr = res->start;
 
 	spdifrx->kclk = devm_clk_get(&pdev->dev, "kclk");
-	if (IS_ERR(spdifrx->kclk)) {
-		if (PTR_ERR(spdifrx->kclk) != -EPROBE_DEFER)
-			dev_err(&pdev->dev, "Could not get kclk: %ld\n",
-				PTR_ERR(spdifrx->kclk));
+	if (IS_ERR(spdifrx->kclk))
 		return PTR_ERR(spdifrx->kclk);
-	}
 
 	spdifrx->irq = platform_get_irq(pdev, 0);
 	if (spdifrx->irq < 0)
@@ -1001,12 +997,8 @@ static int stm32_spdifrx_probe(struct platform_device *pdev)
 	}
 
 	rst = devm_reset_control_get_optional_exclusive(&pdev->dev, NULL);
-	if (IS_ERR(rst)) {
-		if (PTR_ERR(rst) != -EPROBE_DEFER)
-			dev_err(&pdev->dev, "Reset controller error %ld\n",
-				PTR_ERR(rst));
+	if (IS_ERR(rst))
 		return PTR_ERR(rst);
-	}
 	reset_control_assert(rst);
 	udelay(2);
 	reset_control_deassert(rst);

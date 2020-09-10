@@ -451,8 +451,6 @@ static int sun8i_ce_get_clks(struct sun8i_ce_dev *ce)
 		ce->ceclks[i] = devm_clk_get(ce->dev, ce->variant->ce_clks[i].name);
 		if (IS_ERR(ce->ceclks[i])) {
 			err = PTR_ERR(ce->ceclks[i]);
-			dev_err(ce->dev, "Cannot get %s CE clock err=%d\n",
-				ce->variant->ce_clks[i].name, err);
 			return err;
 		}
 		cr = clk_get_rate(ce->ceclks[i]);
@@ -576,7 +574,6 @@ static int sun8i_ce_probe(struct platform_device *pdev)
 	if (IS_ERR(ce->reset)) {
 		if (PTR_ERR(ce->reset) == -EPROBE_DEFER)
 			return PTR_ERR(ce->reset);
-		dev_err(&pdev->dev, "No reset control found\n");
 		return PTR_ERR(ce->reset);
 	}
 

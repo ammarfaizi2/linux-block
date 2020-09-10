@@ -1179,10 +1179,8 @@ int msm_csid_subdev_init(struct camss *camss, struct csid_device *csid,
 	/* Regulator */
 
 	csid->vdda = devm_regulator_get(dev, res->regulator[0]);
-	if (IS_ERR(csid->vdda)) {
-		dev_err(dev, "could not get regulator\n");
+	if (IS_ERR(csid->vdda))
 		return PTR_ERR(csid->vdda);
-	}
 
 	init_completion(&csid->reset_complete);
 

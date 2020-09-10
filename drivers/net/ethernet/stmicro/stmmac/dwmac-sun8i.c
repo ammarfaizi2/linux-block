@@ -1149,10 +1149,8 @@ static int sun8i_dwmac_probe(struct platform_device *pdev)
 	}
 
 	gmac->tx_clk = devm_clk_get(dev, "stmmaceth");
-	if (IS_ERR(gmac->tx_clk)) {
-		dev_err(dev, "Could not get TX clock\n");
+	if (IS_ERR(gmac->tx_clk))
 		return PTR_ERR(gmac->tx_clk);
-	}
 
 	/* Optional regulator for PHY */
 	gmac->regulator = devm_regulator_get_optional(dev, "phy");

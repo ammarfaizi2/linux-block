@@ -661,10 +661,8 @@ static int sun4i_backend_init_sat(struct device *dev) {
 	int ret;
 
 	backend->sat_reset = devm_reset_control_get(dev, "sat");
-	if (IS_ERR(backend->sat_reset)) {
-		dev_err(dev, "Couldn't get the SAT reset line\n");
+	if (IS_ERR(backend->sat_reset))
 		return PTR_ERR(backend->sat_reset);
-	}
 
 	ret = reset_control_deassert(backend->sat_reset);
 	if (ret) {
@@ -674,7 +672,6 @@ static int sun4i_backend_init_sat(struct device *dev) {
 
 	backend->sat_clk = devm_clk_get(dev, "sat");
 	if (IS_ERR(backend->sat_clk)) {
-		dev_err(dev, "Couldn't get our SAT clock\n");
 		ret = PTR_ERR(backend->sat_clk);
 		goto err_assert_reset;
 	}
@@ -831,10 +828,8 @@ static int sun4i_backend_bind(struct device *dev, struct device *master,
 		return PTR_ERR(regs);
 
 	backend->reset = devm_reset_control_get(dev, NULL);
-	if (IS_ERR(backend->reset)) {
-		dev_err(dev, "Couldn't get our reset line\n");
+	if (IS_ERR(backend->reset))
 		return PTR_ERR(backend->reset);
-	}
 
 	ret = reset_control_deassert(backend->reset);
 	if (ret) {
@@ -844,7 +839,6 @@ static int sun4i_backend_bind(struct device *dev, struct device *master,
 
 	backend->bus_clk = devm_clk_get(dev, "ahb");
 	if (IS_ERR(backend->bus_clk)) {
-		dev_err(dev, "Couldn't get the backend bus clock\n");
 		ret = PTR_ERR(backend->bus_clk);
 		goto err_assert_reset;
 	}
@@ -852,7 +846,6 @@ static int sun4i_backend_bind(struct device *dev, struct device *master,
 
 	backend->mod_clk = devm_clk_get(dev, "mod");
 	if (IS_ERR(backend->mod_clk)) {
-		dev_err(dev, "Couldn't get the backend module clock\n");
 		ret = PTR_ERR(backend->mod_clk);
 		goto err_disable_bus_clk;
 	}
@@ -867,7 +860,6 @@ static int sun4i_backend_bind(struct device *dev, struct device *master,
 
 	backend->ram_clk = devm_clk_get(dev, "ram");
 	if (IS_ERR(backend->ram_clk)) {
-		dev_err(dev, "Couldn't get the backend RAM clock\n");
 		ret = PTR_ERR(backend->ram_clk);
 		goto err_disable_mod_clk;
 	}

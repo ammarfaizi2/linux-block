@@ -228,8 +228,6 @@ static int imx_intmux_probe(struct platform_device *pdev)
 	data->ipg_clk = devm_clk_get(&pdev->dev, "ipg");
 	if (IS_ERR(data->ipg_clk)) {
 		ret = PTR_ERR(data->ipg_clk);
-		if (ret != -EPROBE_DEFER)
-			dev_err(&pdev->dev, "failed to get ipg clk: %d\n", ret);
 		return ret;
 	}
 

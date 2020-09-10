@@ -1255,10 +1255,6 @@ static int max9286_probe(struct i2c_client *client)
 
 	priv->regulator = devm_regulator_get(&client->dev, "poc");
 	if (IS_ERR(priv->regulator)) {
-		if (PTR_ERR(priv->regulator) != -EPROBE_DEFER)
-			dev_err(&client->dev,
-				"Unable to get PoC regulator (%ld)\n",
-				PTR_ERR(priv->regulator));
 		ret = PTR_ERR(priv->regulator);
 		goto err_powerdown;
 	}

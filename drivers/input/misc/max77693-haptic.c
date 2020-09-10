@@ -325,10 +325,8 @@ static int max77693_haptic_probe(struct platform_device *pdev)
 
 	/* Get pwm and regulatot for haptic device */
 	haptic->pwm_dev = devm_pwm_get(&pdev->dev, NULL);
-	if (IS_ERR(haptic->pwm_dev)) {
-		dev_err(&pdev->dev, "failed to get pwm device\n");
+	if (IS_ERR(haptic->pwm_dev))
 		return PTR_ERR(haptic->pwm_dev);
-	}
 
 	/*
 	 * FIXME: pwm_apply_args() should be removed when switching to the
@@ -337,10 +335,8 @@ static int max77693_haptic_probe(struct platform_device *pdev)
 	pwm_apply_args(haptic->pwm_dev);
 
 	haptic->motor_reg = devm_regulator_get(&pdev->dev, "haptic");
-	if (IS_ERR(haptic->motor_reg)) {
-		dev_err(&pdev->dev, "failed to get regulator\n");
+	if (IS_ERR(haptic->motor_reg))
 		return PTR_ERR(haptic->motor_reg);
-	}
 
 	/* Initialize input device for haptic device */
 	haptic->input_dev = devm_input_allocate_device(&pdev->dev);

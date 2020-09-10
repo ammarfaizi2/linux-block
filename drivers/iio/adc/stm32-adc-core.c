@@ -671,16 +671,12 @@ static int stm32_adc_probe(struct platform_device *pdev)
 	priv->vdda = devm_regulator_get(&pdev->dev, "vdda");
 	if (IS_ERR(priv->vdda)) {
 		ret = PTR_ERR(priv->vdda);
-		if (ret != -EPROBE_DEFER)
-			dev_err(&pdev->dev, "vdda get failed, %d\n", ret);
 		return ret;
 	}
 
 	priv->vref = devm_regulator_get(&pdev->dev, "vref");
 	if (IS_ERR(priv->vref)) {
 		ret = PTR_ERR(priv->vref);
-		if (ret != -EPROBE_DEFER)
-			dev_err(&pdev->dev, "vref get failed, %d\n", ret);
 		return ret;
 	}
 

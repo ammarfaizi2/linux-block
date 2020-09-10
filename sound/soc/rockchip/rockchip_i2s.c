@@ -602,10 +602,8 @@ static int rockchip_i2s_probe(struct platform_device *pdev)
 
 	/* try to prepare related clocks */
 	i2s->hclk = devm_clk_get(&pdev->dev, "i2s_hclk");
-	if (IS_ERR(i2s->hclk)) {
-		dev_err(&pdev->dev, "Can't retrieve i2s bus clock\n");
+	if (IS_ERR(i2s->hclk))
 		return PTR_ERR(i2s->hclk);
-	}
 	ret = clk_prepare_enable(i2s->hclk);
 	if (ret) {
 		dev_err(i2s->dev, "hclock enable failed %d\n", ret);
@@ -613,10 +611,8 @@ static int rockchip_i2s_probe(struct platform_device *pdev)
 	}
 
 	i2s->mclk = devm_clk_get(&pdev->dev, "i2s_clk");
-	if (IS_ERR(i2s->mclk)) {
-		dev_err(&pdev->dev, "Can't retrieve i2s master clock\n");
+	if (IS_ERR(i2s->mclk))
 		return PTR_ERR(i2s->mclk);
-	}
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	regs = devm_ioremap_resource(&pdev->dev, res);

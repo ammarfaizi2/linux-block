@@ -279,7 +279,6 @@ static int tegra_pwm_probe(struct platform_device *pdev)
 	pwm->rst = devm_reset_control_get_exclusive(&pdev->dev, "pwm");
 	if (IS_ERR(pwm->rst)) {
 		ret = PTR_ERR(pwm->rst);
-		dev_err(&pdev->dev, "Reset control is not found: %d\n", ret);
 		return ret;
 	}
 

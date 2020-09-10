@@ -1448,7 +1448,6 @@ static int si4713_probe(struct i2c_client *client)
 						   GPIOD_OUT_LOW);
 	if (IS_ERR(sdev->gpio_reset)) {
 		rval = PTR_ERR(sdev->gpio_reset);
-		dev_err(&client->dev, "Failed to request gpio: %d\n", rval);
 		goto exit;
 	}
 

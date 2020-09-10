@@ -153,16 +153,12 @@ static int lpc18xx_rgu_probe(struct platform_device *pdev)
 		return PTR_ERR(rc->base);
 
 	rc->clk_reg = devm_clk_get(&pdev->dev, "reg");
-	if (IS_ERR(rc->clk_reg)) {
-		dev_err(&pdev->dev, "reg clock not found\n");
+	if (IS_ERR(rc->clk_reg))
 		return PTR_ERR(rc->clk_reg);
-	}
 
 	rc->clk_delay = devm_clk_get(&pdev->dev, "delay");
-	if (IS_ERR(rc->clk_delay)) {
-		dev_err(&pdev->dev, "delay clock not found\n");
+	if (IS_ERR(rc->clk_delay))
 		return PTR_ERR(rc->clk_delay);
-	}
 
 	ret = clk_prepare_enable(rc->clk_reg);
 	if (ret) {

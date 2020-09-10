@@ -1058,16 +1058,12 @@ static int fsl_asrc_probe(struct platform_device *pdev)
 	}
 
 	asrc->mem_clk = devm_clk_get(&pdev->dev, "mem");
-	if (IS_ERR(asrc->mem_clk)) {
-		dev_err(&pdev->dev, "failed to get mem clock\n");
+	if (IS_ERR(asrc->mem_clk))
 		return PTR_ERR(asrc->mem_clk);
-	}
 
 	asrc->ipg_clk = devm_clk_get(&pdev->dev, "ipg");
-	if (IS_ERR(asrc->ipg_clk)) {
-		dev_err(&pdev->dev, "failed to get ipg clock\n");
+	if (IS_ERR(asrc->ipg_clk))
 		return PTR_ERR(asrc->ipg_clk);
-	}
 
 	asrc->spba_clk = devm_clk_get_optional(&pdev->dev, "spba");
 	if (IS_ERR(asrc->spba_clk))
@@ -1076,10 +1072,8 @@ static int fsl_asrc_probe(struct platform_device *pdev)
 	for (i = 0; i < ASRC_CLK_MAX_NUM; i++) {
 		sprintf(tmp, "asrck_%x", i);
 		asrc_priv->asrck_clk[i] = devm_clk_get(&pdev->dev, tmp);
-		if (IS_ERR(asrc_priv->asrck_clk[i])) {
-			dev_err(&pdev->dev, "failed to get %s clock\n", tmp);
+		if (IS_ERR(asrc_priv->asrck_clk[i]))
 			return PTR_ERR(asrc_priv->asrck_clk[i]);
-		}
 	}
 
 	asrc_priv->soc = of_device_get_match_data(&pdev->dev);

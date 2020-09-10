@@ -1548,14 +1548,12 @@ static int mtk_nfc_probe(struct platform_device *pdev)
 
 	nfc->clk.nfi_clk = devm_clk_get(dev, "nfi_clk");
 	if (IS_ERR(nfc->clk.nfi_clk)) {
-		dev_err(dev, "no clk\n");
 		ret = PTR_ERR(nfc->clk.nfi_clk);
 		goto release_ecc;
 	}
 
 	nfc->clk.pad_clk = devm_clk_get(dev, "pad_clk");
 	if (IS_ERR(nfc->clk.pad_clk)) {
-		dev_err(dev, "no pad clk\n");
 		ret = PTR_ERR(nfc->clk.pad_clk);
 		goto release_ecc;
 	}

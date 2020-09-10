@@ -1230,16 +1230,12 @@ static int xsdfec_clk_init(struct platform_device *pdev,
 	int err;
 
 	clks->core_clk = devm_clk_get(&pdev->dev, "core_clk");
-	if (IS_ERR(clks->core_clk)) {
-		dev_err(&pdev->dev, "failed to get core_clk");
+	if (IS_ERR(clks->core_clk))
 		return PTR_ERR(clks->core_clk);
-	}
 
 	clks->axi_clk = devm_clk_get(&pdev->dev, "s_axi_aclk");
-	if (IS_ERR(clks->axi_clk)) {
-		dev_err(&pdev->dev, "failed to get axi_clk");
+	if (IS_ERR(clks->axi_clk))
 		return PTR_ERR(clks->axi_clk);
-	}
 
 	clks->din_words_clk = devm_clk_get(&pdev->dev, "s_axis_din_words_aclk");
 	if (IS_ERR(clks->din_words_clk)) {

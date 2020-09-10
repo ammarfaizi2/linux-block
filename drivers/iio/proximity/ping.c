@@ -295,11 +295,8 @@ static int ping_probe(struct platform_device *pdev)
 	init_completion(&data->falling);
 
 	data->gpiod_ping = devm_gpiod_get(dev, "ping", GPIOD_OUT_LOW);
-	if (IS_ERR(data->gpiod_ping)) {
-		dev_err(dev, "failed to get ping-gpios: err=%ld\n",
-						PTR_ERR(data->gpiod_ping));
+	if (IS_ERR(data->gpiod_ping))
 		return PTR_ERR(data->gpiod_ping);
-	}
 
 	if (gpiod_cansleep(data->gpiod_ping)) {
 		dev_err(data->dev, "cansleep-GPIOs not supported\n");

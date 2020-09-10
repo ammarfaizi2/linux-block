@@ -316,7 +316,6 @@ static int pic32_rtc_probe(struct platform_device *pdev)
 
 	pdata->clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(pdata->clk)) {
-		dev_err(&pdev->dev, "failed to find rtc clock source\n");
 		ret = PTR_ERR(pdata->clk);
 		pdata->clk = NULL;
 		return ret;

@@ -1061,10 +1061,8 @@ static int mt9p031_probe(struct i2c_client *client,
 	mt9p031->regulators[2].supply = "vaa";
 
 	ret = devm_regulator_bulk_get(&client->dev, 3, mt9p031->regulators);
-	if (ret < 0) {
-		dev_err(&client->dev, "Unable to get regulators\n");
+	if (ret < 0)
 		return ret;
-	}
 
 	mutex_init(&mt9p031->power_lock);
 

@@ -542,16 +542,12 @@ static int sun8i_codec_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	scodec->clk_module = devm_clk_get(&pdev->dev, "mod");
-	if (IS_ERR(scodec->clk_module)) {
-		dev_err(&pdev->dev, "Failed to get the module clock\n");
+	if (IS_ERR(scodec->clk_module))
 		return PTR_ERR(scodec->clk_module);
-	}
 
 	scodec->clk_bus = devm_clk_get(&pdev->dev, "bus");
-	if (IS_ERR(scodec->clk_bus)) {
-		dev_err(&pdev->dev, "Failed to get the bus clock\n");
+	if (IS_ERR(scodec->clk_bus))
 		return PTR_ERR(scodec->clk_bus);
-	}
 
 	base = devm_platform_ioremap_resource(pdev, 0);
 	if (IS_ERR(base)) {

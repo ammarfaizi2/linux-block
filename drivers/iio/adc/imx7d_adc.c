@@ -498,15 +498,12 @@ static int imx7d_adc_probe(struct platform_device *pdev)
 	info->clk = devm_clk_get(dev, "adc");
 	if (IS_ERR(info->clk)) {
 		ret = PTR_ERR(info->clk);
-		dev_err(dev, "Failed getting clock, err = %d\n", ret);
 		return ret;
 	}
 
 	info->vref = devm_regulator_get(dev, "vref");
 	if (IS_ERR(info->vref)) {
 		ret = PTR_ERR(info->vref);
-		dev_err(dev,
-			"Failed getting reference voltage, err = %d\n", ret);
 		return ret;
 	}
 

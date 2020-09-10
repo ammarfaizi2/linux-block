@@ -645,7 +645,6 @@ static int meson_ao_cec_probe(struct platform_device *pdev)
 
 	ao_cec->core = devm_clk_get(&pdev->dev, "core");
 	if (IS_ERR(ao_cec->core)) {
-		dev_err(&pdev->dev, "core clock request failed\n");
 		ret = PTR_ERR(ao_cec->core);
 		goto out_probe_adapter;
 	}

@@ -1396,16 +1396,12 @@ static int sahara_probe(struct platform_device *pdev)
 
 	/* clocks */
 	dev->clk_ipg = devm_clk_get(&pdev->dev, "ipg");
-	if (IS_ERR(dev->clk_ipg)) {
-		dev_err(&pdev->dev, "Could not get ipg clock\n");
+	if (IS_ERR(dev->clk_ipg))
 		return PTR_ERR(dev->clk_ipg);
-	}
 
 	dev->clk_ahb = devm_clk_get(&pdev->dev, "ahb");
-	if (IS_ERR(dev->clk_ahb)) {
-		dev_err(&pdev->dev, "Could not get ahb clock\n");
+	if (IS_ERR(dev->clk_ahb))
 		return PTR_ERR(dev->clk_ahb);
-	}
 
 	/* Allocate HW descriptors */
 	dev->hw_desc[0] = dmam_alloc_coherent(&pdev->dev,

@@ -1688,7 +1688,6 @@ analogix_dp_probe(struct device *dev, struct analogix_dp_plat_data *plat_data)
 
 	dp->phy = devm_phy_get(dp->dev, "dp");
 	if (IS_ERR(dp->phy)) {
-		dev_err(dp->dev, "no DP phy configured\n");
 		ret = PTR_ERR(dp->phy);
 		if (ret) {
 			/*
@@ -1703,10 +1702,8 @@ analogix_dp_probe(struct device *dev, struct analogix_dp_plat_data *plat_data)
 	}
 
 	dp->clock = devm_clk_get(&pdev->dev, "dp");
-	if (IS_ERR(dp->clock)) {
-		dev_err(&pdev->dev, "failed to get clock\n");
+	if (IS_ERR(dp->clock))
 		return ERR_CAST(dp->clock);
-	}
 
 	clk_prepare_enable(dp->clock);
 

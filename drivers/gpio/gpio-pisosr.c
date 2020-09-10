@@ -150,8 +150,6 @@ static int pisosr_gpio_probe(struct spi_device *spi)
 	gpio->load_gpio = devm_gpiod_get_optional(dev, "load", GPIOD_OUT_LOW);
 	if (IS_ERR(gpio->load_gpio)) {
 		ret = PTR_ERR(gpio->load_gpio);
-		if (ret != -EPROBE_DEFER)
-			dev_err(dev, "Unable to allocate load GPIO\n");
 		return ret;
 	}
 

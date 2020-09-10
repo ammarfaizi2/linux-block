@@ -368,16 +368,12 @@ static int pl353_smc_probe(struct amba_device *adev, const struct amba_id *id)
 		return PTR_ERR(pl353_smc_base);
 
 	pl353_smc->aclk = devm_clk_get(&adev->dev, "apb_pclk");
-	if (IS_ERR(pl353_smc->aclk)) {
-		dev_err(&adev->dev, "aclk clock not found.\n");
+	if (IS_ERR(pl353_smc->aclk))
 		return PTR_ERR(pl353_smc->aclk);
-	}
 
 	pl353_smc->memclk = devm_clk_get(&adev->dev, "memclk");
-	if (IS_ERR(pl353_smc->memclk)) {
-		dev_err(&adev->dev, "memclk clock not found.\n");
+	if (IS_ERR(pl353_smc->memclk))
 		return PTR_ERR(pl353_smc->memclk);
-	}
 
 	err = clk_prepare_enable(pl353_smc->aclk);
 	if (err) {

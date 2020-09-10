@@ -863,16 +863,12 @@ static int qusb2_phy_probe(struct platform_device *pdev)
 	qphy->cfg_ahb_clk = devm_clk_get(dev, "cfg_ahb");
 	if (IS_ERR(qphy->cfg_ahb_clk)) {
 		ret = PTR_ERR(qphy->cfg_ahb_clk);
-		if (ret != -EPROBE_DEFER)
-			dev_err(dev, "failed to get cfg ahb clk, %d\n", ret);
 		return ret;
 	}
 
 	qphy->ref_clk = devm_clk_get(dev, "ref");
 	if (IS_ERR(qphy->ref_clk)) {
 		ret = PTR_ERR(qphy->ref_clk);
-		if (ret != -EPROBE_DEFER)
-			dev_err(dev, "failed to get ref clk, %d\n", ret);
 		return ret;
 	}
 
@@ -881,22 +877,16 @@ static int qusb2_phy_probe(struct platform_device *pdev)
 		return PTR_ERR(qphy->iface_clk);
 
 	qphy->phy_reset = devm_reset_control_get_by_index(&pdev->dev, 0);
-	if (IS_ERR(qphy->phy_reset)) {
-		dev_err(dev, "failed to get phy core reset\n");
+	if (IS_ERR(qphy->phy_reset))
 		return PTR_ERR(qphy->phy_reset);
-	}
 
 	num = ARRAY_SIZE(qphy->vregs);
 	for (i = 0; i < num; i++)
 		qphy->vregs[i].supply = qusb2_phy_vreg_names[i];
 
 	ret = devm_regulator_bulk_get(dev, num, qphy->vregs);
-	if (ret) {
-		if (ret != -EPROBE_DEFER)
-			dev_err(dev, "failed to get regulator supplies: %d\n",
-				ret);
+	if (ret)
 		return ret;
-	}
 
 	/* Get the specific init parameters of QMP phy */
 	qphy->cfg = of_device_get_match_data(dev);

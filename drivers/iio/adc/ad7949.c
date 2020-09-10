@@ -258,10 +258,8 @@ static int ad7949_spi_probe(struct spi_device *spi)
 	ad7949_adc->resolution = spec->resolution;
 
 	ad7949_adc->vref = devm_regulator_get(dev, "vref");
-	if (IS_ERR(ad7949_adc->vref)) {
-		dev_err(dev, "fail to request regulator\n");
+	if (IS_ERR(ad7949_adc->vref))
 		return PTR_ERR(ad7949_adc->vref);
-	}
 
 	ret = regulator_enable(ad7949_adc->vref);
 	if (ret < 0) {

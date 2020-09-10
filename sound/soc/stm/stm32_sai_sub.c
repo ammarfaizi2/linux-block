@@ -1472,12 +1472,8 @@ static int stm32_sai_sub_parse_of(struct platform_device *pdev,
 
 	of_node_put(args.np);
 	sai->sai_ck = devm_clk_get(&pdev->dev, "sai_ck");
-	if (IS_ERR(sai->sai_ck)) {
-		if (PTR_ERR(sai->sai_ck) != -EPROBE_DEFER)
-			dev_err(&pdev->dev, "Missing kernel clock sai_ck: %ld\n",
-				PTR_ERR(sai->sai_ck));
+	if (IS_ERR(sai->sai_ck))
 		return PTR_ERR(sai->sai_ck);
-	}
 
 	ret = clk_prepare(sai->pdata->pclk);
 	if (ret < 0)

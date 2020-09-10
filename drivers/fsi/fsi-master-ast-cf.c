@@ -1244,7 +1244,6 @@ static int fsi_master_acf_probe(struct platform_device *pdev)
 	/* Grab all the GPIOs we need */
 	gpio = devm_gpiod_get(&pdev->dev, "clock", 0);
 	if (IS_ERR(gpio)) {
-		dev_err(&pdev->dev, "failed to get clock gpio\n");
 		rc = PTR_ERR(gpio);
 		goto err_free;
 	}
@@ -1252,7 +1251,6 @@ static int fsi_master_acf_probe(struct platform_device *pdev)
 
 	gpio = devm_gpiod_get(&pdev->dev, "data", 0);
 	if (IS_ERR(gpio)) {
-		dev_err(&pdev->dev, "failed to get data gpio\n");
 		rc = PTR_ERR(gpio);
 		goto err_free;
 	}
@@ -1261,7 +1259,6 @@ static int fsi_master_acf_probe(struct platform_device *pdev)
 	/* Optional GPIOs */
 	gpio = devm_gpiod_get_optional(&pdev->dev, "trans", 0);
 	if (IS_ERR(gpio)) {
-		dev_err(&pdev->dev, "failed to get trans gpio\n");
 		rc = PTR_ERR(gpio);
 		goto err_free;
 	}
@@ -1269,7 +1266,6 @@ static int fsi_master_acf_probe(struct platform_device *pdev)
 
 	gpio = devm_gpiod_get_optional(&pdev->dev, "enable", 0);
 	if (IS_ERR(gpio)) {
-		dev_err(&pdev->dev, "failed to get enable gpio\n");
 		rc = PTR_ERR(gpio);
 		goto err_free;
 	}
@@ -1277,7 +1273,6 @@ static int fsi_master_acf_probe(struct platform_device *pdev)
 
 	gpio = devm_gpiod_get_optional(&pdev->dev, "mux", 0);
 	if (IS_ERR(gpio)) {
-		dev_err(&pdev->dev, "failed to get mux gpio\n");
 		rc = PTR_ERR(gpio);
 		goto err_free;
 	}

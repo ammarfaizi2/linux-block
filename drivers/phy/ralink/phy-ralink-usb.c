@@ -203,16 +203,12 @@ static int ralink_usb_phy_probe(struct platform_device *pdev)
 	}
 
 	phy->rsthost = devm_reset_control_get(&pdev->dev, "host");
-	if (IS_ERR(phy->rsthost)) {
-		dev_err(dev, "host reset is missing\n");
+	if (IS_ERR(phy->rsthost))
 		return PTR_ERR(phy->rsthost);
-	}
 
 	phy->rstdev = devm_reset_control_get(&pdev->dev, "device");
-	if (IS_ERR(phy->rstdev)) {
-		dev_err(dev, "device reset is missing\n");
+	if (IS_ERR(phy->rstdev))
 		return PTR_ERR(phy->rstdev);
-	}
 
 	phy->phy = devm_phy_create(dev, NULL, &ralink_usb_phy_ops);
 	if (IS_ERR(phy->phy)) {

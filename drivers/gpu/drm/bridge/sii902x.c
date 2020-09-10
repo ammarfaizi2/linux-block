@@ -784,11 +784,8 @@ static int sii902x_audio_codec_init(struct sii902x *sii902x,
 			i2s_lane_id[lanes[i]] |	SII902X_TPI_I2S_FIFO_ENABLE;
 
 	sii902x->audio.mclk = devm_clk_get_optional(dev, "mclk");
-	if (IS_ERR(sii902x->audio.mclk)) {
-		dev_err(dev, "%s: No clock (audio mclk) found: %ld\n",
-			__func__, PTR_ERR(sii902x->audio.mclk));
+	if (IS_ERR(sii902x->audio.mclk))
 		return PTR_ERR(sii902x->audio.mclk);
-	}
 
 	sii902x->audio.pdev = platform_device_register_data(
 		dev, HDMI_CODEC_DRV_NAME, PLATFORM_DEVID_AUTO,
@@ -981,11 +978,8 @@ static int sii902x_probe(struct i2c_client *client,
 
 	sii902x->reset_gpio = devm_gpiod_get_optional(dev, "reset",
 						      GPIOD_OUT_LOW);
-	if (IS_ERR(sii902x->reset_gpio)) {
-		dev_err(dev, "Failed to retrieve/request reset gpio: %ld\n",
-			PTR_ERR(sii902x->reset_gpio));
+	if (IS_ERR(sii902x->reset_gpio))
 		return PTR_ERR(sii902x->reset_gpio);
-	}
 
 	mutex_init(&sii902x->mutex);
 

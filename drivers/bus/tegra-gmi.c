@@ -221,16 +221,12 @@ static int tegra_gmi_probe(struct platform_device *pdev)
 		return PTR_ERR(gmi->base);
 
 	gmi->clk = devm_clk_get(dev, "gmi");
-	if (IS_ERR(gmi->clk)) {
-		dev_err(dev, "can not get clock\n");
+	if (IS_ERR(gmi->clk))
 		return PTR_ERR(gmi->clk);
-	}
 
 	gmi->rst = devm_reset_control_get(dev, "gmi");
-	if (IS_ERR(gmi->rst)) {
-		dev_err(dev, "can not get reset\n");
+	if (IS_ERR(gmi->rst))
 		return PTR_ERR(gmi->rst);
-	}
 
 	err = tegra_gmi_parse_dt(gmi);
 	if (err)

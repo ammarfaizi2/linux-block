@@ -1191,10 +1191,8 @@ static int sc27xx_fgu_probe(struct platform_device *pdev)
 	}
 
 	data->gpiod = devm_gpiod_get(dev, "bat-detect", GPIOD_IN);
-	if (IS_ERR(data->gpiod)) {
-		dev_err(dev, "failed to get battery detection GPIO\n");
+	if (IS_ERR(data->gpiod))
 		return PTR_ERR(data->gpiod);
-	}
 
 	ret = gpiod_get_value_cansleep(data->gpiod);
 	if (ret < 0) {

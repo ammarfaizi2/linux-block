@@ -141,7 +141,6 @@ static int exynos_trng_probe(struct platform_device *pdev)
 	trng->clk = devm_clk_get(&pdev->dev, "secss");
 	if (IS_ERR(trng->clk)) {
 		ret = PTR_ERR(trng->clk);
-		dev_err(&pdev->dev, "Could not get clock.\n");
 		goto err_clock;
 	}
 

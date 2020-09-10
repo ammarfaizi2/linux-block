@@ -306,10 +306,8 @@ static int mv_usb2_phy_probe(struct platform_device *pdev)
 	mv_phy->pdev = pdev;
 
 	mv_phy->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(mv_phy->clk)) {
-		dev_err(&pdev->dev, "failed to get clock.\n");
+	if (IS_ERR(mv_phy->clk))
 		return PTR_ERR(mv_phy->clk);
-	}
 
 	r = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	mv_phy->base = devm_ioremap_resource(&pdev->dev, r);

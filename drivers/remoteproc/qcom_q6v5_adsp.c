@@ -315,8 +315,6 @@ static int adsp_init_clock(struct qcom_adsp *adsp, const char **clk_ids)
 	adsp->xo = devm_clk_get(adsp->dev, "xo");
 	if (IS_ERR(adsp->xo)) {
 		ret = PTR_ERR(adsp->xo);
-		if (ret != -EPROBE_DEFER)
-			dev_err(adsp->dev, "failed to get xo clock");
 		return ret;
 	}
 
@@ -339,10 +337,8 @@ static int adsp_init_reset(struct qcom_adsp *adsp)
 {
 	adsp->pdc_sync_reset = devm_reset_control_get_optional_exclusive(adsp->dev,
 			"pdc_sync");
-	if (IS_ERR(adsp->pdc_sync_reset)) {
-		dev_err(adsp->dev, "failed to acquire pdc_sync reset\n");
+	if (IS_ERR(adsp->pdc_sync_reset))
 		return PTR_ERR(adsp->pdc_sync_reset);
-	}
 
 	adsp->restart = devm_reset_control_get_optional_exclusive(adsp->dev, "restart");
 

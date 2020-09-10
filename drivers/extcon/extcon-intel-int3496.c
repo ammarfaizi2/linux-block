@@ -106,7 +106,6 @@ static int int3496_probe(struct platform_device *pdev)
 	data->gpio_usb_id = devm_gpiod_get(dev, "id", GPIOD_IN);
 	if (IS_ERR(data->gpio_usb_id)) {
 		ret = PTR_ERR(data->gpio_usb_id);
-		dev_err(dev, "can't request USB ID GPIO: %d\n", ret);
 		return ret;
 	}
 

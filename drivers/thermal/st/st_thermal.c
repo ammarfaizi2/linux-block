@@ -217,10 +217,8 @@ int st_thermal_register(struct platform_device *pdev,
 		return ret;
 
 	sensor->clk = devm_clk_get(dev, "thermal");
-	if (IS_ERR(sensor->clk)) {
-		dev_err(dev, "failed to fetch clock\n");
+	if (IS_ERR(sensor->clk))
 		return PTR_ERR(sensor->clk);
-	}
 
 	if (sensor->ops->register_enable_irq) {
 		ret = sensor->ops->register_enable_irq(sensor);

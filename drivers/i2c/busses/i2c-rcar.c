@@ -937,10 +937,8 @@ static int rcar_i2c_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	priv->clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(priv->clk)) {
-		dev_err(dev, "cannot get clock\n");
+	if (IS_ERR(priv->clk))
 		return PTR_ERR(priv->clk);
-	}
 
 	priv->io = devm_platform_get_and_ioremap_resource(pdev, 0, &priv->res);
 	if (IS_ERR(priv->io))

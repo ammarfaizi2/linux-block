@@ -106,7 +106,6 @@ static int sun8i_a23_r_pinctrl_probe(struct platform_device *pdev)
 		ret = PTR_ERR(rstc);
 		if (ret == -EPROBE_DEFER)
 			return ret;
-		dev_err(&pdev->dev, "Reset controller missing err=%d\n", ret);
 		return ret;
 	}
 

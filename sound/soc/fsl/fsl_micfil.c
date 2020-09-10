@@ -661,11 +661,8 @@ static int fsl_micfil_probe(struct platform_device *pdev)
 	 * ipg_clk_app is used to operate the filter
 	 */
 	micfil->mclk = devm_clk_get(&pdev->dev, "ipg_clk_app");
-	if (IS_ERR(micfil->mclk)) {
-		dev_err(&pdev->dev, "failed to get core clock: %ld\n",
-			PTR_ERR(micfil->mclk));
+	if (IS_ERR(micfil->mclk))
 		return PTR_ERR(micfil->mclk);
-	}
 
 	/* init regmap */
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);

@@ -362,9 +362,6 @@ static int bu21029_probe(struct i2c_client *client,
 	bu21029->vdd = devm_regulator_get(&client->dev, "vdd");
 	if (IS_ERR(bu21029->vdd)) {
 		error = PTR_ERR(bu21029->vdd);
-		if (error != -EPROBE_DEFER)
-			dev_err(&client->dev,
-				"failed to acquire 'vdd' supply: %d\n", error);
 		return error;
 	}
 
@@ -372,9 +369,6 @@ static int bu21029_probe(struct i2c_client *client,
 						       "reset", GPIOD_OUT_HIGH);
 	if (IS_ERR(bu21029->reset_gpios)) {
 		error = PTR_ERR(bu21029->reset_gpios);
-		if (error != -EPROBE_DEFER)
-			dev_err(&client->dev,
-				"failed to acquire 'reset' gpio: %d\n", error);
 		return error;
 	}
 

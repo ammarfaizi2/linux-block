@@ -148,10 +148,8 @@ static int jz4740_wdt_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	drvdata->clk = devm_clk_get(&pdev->dev, "wdt");
-	if (IS_ERR(drvdata->clk)) {
-		dev_err(&pdev->dev, "cannot find WDT clock\n");
+	if (IS_ERR(drvdata->clk))
 		return PTR_ERR(drvdata->clk);
-	}
 
 	/* Set smallest clock possible */
 	rate = clk_round_rate(drvdata->clk, 1);

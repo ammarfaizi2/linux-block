@@ -231,10 +231,8 @@ static int qcom_apq8064_sata_phy_probe(struct platform_device *pdev)
 	platform_set_drvdata(pdev, phy);
 
 	phy->cfg_clk = devm_clk_get(dev, "cfg");
-	if (IS_ERR(phy->cfg_clk)) {
-		dev_err(dev, "Failed to get sata cfg clock\n");
+	if (IS_ERR(phy->cfg_clk))
 		return PTR_ERR(phy->cfg_clk);
-	}
 
 	ret = clk_prepare_enable(phy->cfg_clk);
 	if (ret)

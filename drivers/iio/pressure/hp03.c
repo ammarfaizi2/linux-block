@@ -232,7 +232,6 @@ static int hp03_probe(struct i2c_client *client,
 
 	priv->xclr_gpio = devm_gpiod_get_index(dev, "xclr", 0, GPIOD_OUT_HIGH);
 	if (IS_ERR(priv->xclr_gpio)) {
-		dev_err(dev, "Failed to claim XCLR GPIO\n");
 		ret = PTR_ERR(priv->xclr_gpio);
 		return ret;
 	}

@@ -123,18 +123,12 @@ static int i2c_arbitrator_probe(struct platform_device *pdev)
 
 	/* Request GPIOs, our GPIO as unclaimed to begin with */
 	arb->our_gpio = devm_gpiod_get(dev, "our-claim", GPIOD_OUT_LOW);
-	if (IS_ERR(arb->our_gpio)) {
-		dev_err(dev, "could not get \"our-claim\" GPIO (%ld)\n",
-			PTR_ERR(arb->our_gpio));
+	if (IS_ERR(arb->our_gpio))
 		return PTR_ERR(arb->our_gpio);
-	}
 
 	arb->their_gpio = devm_gpiod_get(dev, "their-claim", GPIOD_IN);
-	if (IS_ERR(arb->their_gpio)) {
-		dev_err(dev, "could not get \"their-claim\" GPIO (%ld)\n",
-			PTR_ERR(arb->their_gpio));
+	if (IS_ERR(arb->their_gpio))
 		return PTR_ERR(arb->their_gpio);
-	}
 
 	/* At the moment we only support a single two master (us + 1 other) */
 	dummy = devm_gpiod_get_index(dev, "their-claim", 1, GPIOD_IN);

@@ -121,10 +121,8 @@ static int rb532_pata_driver_probe(struct platform_device *pdev)
 	}
 
 	gpiod = devm_gpiod_get(&pdev->dev, NULL, GPIOD_IN);
-	if (IS_ERR(gpiod)) {
-		dev_err(&pdev->dev, "no GPIO found for irq%d\n", irq);
+	if (IS_ERR(gpiod))
 		return PTR_ERR(gpiod);
-	}
 	gpiod_set_consumer_name(gpiod, DRV_NAME);
 
 	/* allocate host */

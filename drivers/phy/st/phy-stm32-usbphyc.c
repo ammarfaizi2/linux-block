@@ -330,7 +330,6 @@ static int stm32_usbphyc_probe(struct platform_device *pdev)
 	usbphyc->clk = devm_clk_get(dev, NULL);
 	if (IS_ERR(usbphyc->clk)) {
 		ret = PTR_ERR(usbphyc->clk);
-		dev_err(dev, "clk get failed: %d\n", ret);
 		return ret;
 	}
 
@@ -384,9 +383,6 @@ static int stm32_usbphyc_probe(struct platform_device *pdev)
 		ret = devm_regulator_bulk_get(&phy->dev, NUM_SUPPLIES,
 					      usbphyc_phy->supplies);
 		if (ret) {
-			if (ret != -EPROBE_DEFER)
-				dev_err(&phy->dev,
-					"failed to get regulators: %d\n", ret);
 			goto put_child;
 		}
 

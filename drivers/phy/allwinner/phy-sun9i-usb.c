@@ -126,34 +126,24 @@ static int sun9i_usb_phy_probe(struct platform_device *pdev)
 	phy->type = of_usb_get_phy_mode(np);
 	if (phy->type == USBPHY_INTERFACE_MODE_HSIC) {
 		phy->clk = devm_clk_get(dev, "hsic_480M");
-		if (IS_ERR(phy->clk)) {
-			dev_err(dev, "failed to get hsic_480M clock\n");
+		if (IS_ERR(phy->clk))
 			return PTR_ERR(phy->clk);
-		}
 
 		phy->hsic_clk = devm_clk_get(dev, "hsic_12M");
-		if (IS_ERR(phy->hsic_clk)) {
-			dev_err(dev, "failed to get hsic_12M clock\n");
+		if (IS_ERR(phy->hsic_clk))
 			return PTR_ERR(phy->hsic_clk);
-		}
 
 		phy->reset = devm_reset_control_get(dev, "hsic");
-		if (IS_ERR(phy->reset)) {
-			dev_err(dev, "failed to get reset control\n");
+		if (IS_ERR(phy->reset))
 			return PTR_ERR(phy->reset);
-		}
 	} else {
 		phy->clk = devm_clk_get(dev, "phy");
-		if (IS_ERR(phy->clk)) {
-			dev_err(dev, "failed to get phy clock\n");
+		if (IS_ERR(phy->clk))
 			return PTR_ERR(phy->clk);
-		}
 
 		phy->reset = devm_reset_control_get(dev, "phy");
-		if (IS_ERR(phy->reset)) {
-			dev_err(dev, "failed to get reset control\n");
+		if (IS_ERR(phy->reset))
 			return PTR_ERR(phy->reset);
-		}
 	}
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);

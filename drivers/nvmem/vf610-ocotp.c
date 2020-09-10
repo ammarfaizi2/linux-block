@@ -225,11 +225,8 @@ static int vf610_ocotp_probe(struct platform_device *pdev)
 		return PTR_ERR(ocotp_dev->base);
 
 	ocotp_dev->clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(ocotp_dev->clk)) {
-		dev_err(dev, "failed getting clock, err = %ld\n",
-			PTR_ERR(ocotp_dev->clk));
+	if (IS_ERR(ocotp_dev->clk))
 		return PTR_ERR(ocotp_dev->clk);
-	}
 	ocotp_dev->dev = dev;
 	ocotp_dev->timing = vf610_ocotp_calculate_timing(ocotp_dev);
 

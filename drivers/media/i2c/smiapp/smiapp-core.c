@@ -2859,10 +2859,8 @@ static int smiapp_probe(struct i2c_client *client)
 	sensor->src->sd.internal_ops = &smiapp_internal_src_ops;
 
 	sensor->vana = devm_regulator_get(&client->dev, "vana");
-	if (IS_ERR(sensor->vana)) {
-		dev_err(&client->dev, "could not get regulator for vana\n");
+	if (IS_ERR(sensor->vana))
 		return PTR_ERR(sensor->vana);
-	}
 
 	sensor->ext_clk = devm_clk_get(&client->dev, NULL);
 	if (PTR_ERR(sensor->ext_clk) == -ENOENT) {

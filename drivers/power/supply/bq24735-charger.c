@@ -410,7 +410,6 @@ static int bq24735_charger_probe(struct i2c_client *client,
 						       GPIOD_IN);
 	if (IS_ERR(charger->status_gpio)) {
 		ret = PTR_ERR(charger->status_gpio);
-		dev_err(&client->dev, "Getting gpio failed: %d\n", ret);
 		return ret;
 	}
 

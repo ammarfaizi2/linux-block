@@ -495,7 +495,6 @@ static int ad5360_probe(struct spi_device *spi)
 	ret = devm_regulator_bulk_get(&st->spi->dev, st->chip_info->num_vrefs,
 		st->vref_reg);
 	if (ret) {
-		dev_err(&spi->dev, "Failed to request vref regulators: %d\n", ret);
 		goto error_free_channels;
 	}
 

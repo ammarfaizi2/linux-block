@@ -585,21 +585,13 @@ int asoc_qcom_lpass_cpu_platform_probe(struct platform_device *pdev)
 
 		drvdata->mi2s_bit_clk[dai_id] = devm_clk_get(dev,
 						variant->dai_bit_clk_names[i]);
-		if (IS_ERR(drvdata->mi2s_bit_clk[dai_id])) {
-			dev_err(dev,
-				"error getting %s: %ld\n",
-				variant->dai_bit_clk_names[i],
-				PTR_ERR(drvdata->mi2s_bit_clk[dai_id]));
+		if (IS_ERR(drvdata->mi2s_bit_clk[dai_id]))
 			return PTR_ERR(drvdata->mi2s_bit_clk[dai_id]);
-		}
 	}
 
 	drvdata->ahbix_clk = devm_clk_get(dev, "ahbix-clk");
-	if (IS_ERR(drvdata->ahbix_clk)) {
-		dev_err(dev, "error getting ahbix-clk: %ld\n",
-			PTR_ERR(drvdata->ahbix_clk));
+	if (IS_ERR(drvdata->ahbix_clk))
 		return PTR_ERR(drvdata->ahbix_clk);
-	}
 
 	ret = clk_set_rate(drvdata->ahbix_clk, LPASS_AHBIX_CLOCK_FREQUENCY);
 	if (ret) {

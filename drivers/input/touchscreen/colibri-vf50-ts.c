@@ -244,7 +244,6 @@ static int vf50_ts_get_gpiod(struct device *dev, struct gpio_desc **gpio_d,
 	*gpio_d = devm_gpiod_get(dev, con_id, flags);
 	if (IS_ERR(*gpio_d)) {
 		error = PTR_ERR(*gpio_d);
-		dev_err(dev, "Could not get gpio_%s %d\n", con_id, error);
 		return error;
 	}
 

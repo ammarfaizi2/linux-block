@@ -201,11 +201,8 @@ static int simple_bridge_probe(struct platform_device *pdev)
 
 	sbridge->enable = devm_gpiod_get_optional(&pdev->dev, "enable",
 						  GPIOD_OUT_LOW);
-	if (IS_ERR(sbridge->enable)) {
-		if (PTR_ERR(sbridge->enable) != -EPROBE_DEFER)
-			dev_err(&pdev->dev, "Unable to retrieve enable GPIO\n");
+	if (IS_ERR(sbridge->enable))
 		return PTR_ERR(sbridge->enable);
-	}
 
 	/* Register the bridge. */
 	sbridge->bridge.funcs = &simple_bridge_bridge_funcs;

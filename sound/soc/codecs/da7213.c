@@ -1964,10 +1964,8 @@ static int da7213_i2c_probe(struct i2c_client *i2c,
 
 	ret = devm_regulator_bulk_get(&i2c->dev, DA7213_NUM_SUPPLIES,
 				      da7213->supplies);
-	if (ret) {
-		dev_err(&i2c->dev, "Failed to get supplies: %d\n", ret);
+	if (ret)
 		return ret;
-	}
 
 	ret = regulator_bulk_enable(DA7213_NUM_SUPPLIES, da7213->supplies);
 	if (ret < 0)

@@ -167,10 +167,8 @@ static int ar934x_spi_probe(struct platform_device *pdev)
 		return PTR_ERR(base);
 
 	clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(clk)) {
-		dev_err(&pdev->dev, "failed to get clock\n");
+	if (IS_ERR(clk))
 		return PTR_ERR(clk);
-	}
 
 	ret = clk_prepare_enable(clk);
 	if (ret)

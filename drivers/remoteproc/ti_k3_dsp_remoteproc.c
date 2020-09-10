@@ -642,7 +642,6 @@ static int k3_dsp_rproc_probe(struct platform_device *pdev)
 	kproc->reset = devm_reset_control_get_exclusive(dev, NULL);
 	if (IS_ERR(kproc->reset)) {
 		ret = PTR_ERR(kproc->reset);
-		dev_err(dev, "failed to get reset, status = %d\n", ret);
 		goto put_sci;
 	}
 

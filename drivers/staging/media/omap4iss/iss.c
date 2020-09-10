@@ -827,16 +827,12 @@ static void iss_disable_clocks(struct iss_device *iss)
 static int iss_get_clocks(struct iss_device *iss)
 {
 	iss->iss_fck = devm_clk_get(iss->dev, "iss_fck");
-	if (IS_ERR(iss->iss_fck)) {
-		dev_err(iss->dev, "Unable to get iss_fck clock info\n");
+	if (IS_ERR(iss->iss_fck))
 		return PTR_ERR(iss->iss_fck);
-	}
 
 	iss->iss_ctrlclk = devm_clk_get(iss->dev, "iss_ctrlclk");
-	if (IS_ERR(iss->iss_ctrlclk)) {
-		dev_err(iss->dev, "Unable to get iss_ctrlclk clock info\n");
+	if (IS_ERR(iss->iss_ctrlclk))
 		return PTR_ERR(iss->iss_ctrlclk);
-	}
 
 	return 0;
 }

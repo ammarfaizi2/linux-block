@@ -584,10 +584,8 @@ static int kmb_plat_dai_probe(struct platform_device *pdev)
 
 	/* Prepare the related clocks */
 	kmb_i2s->clk_apb = devm_clk_get(dev, "apb_clk");
-	if (IS_ERR(kmb_i2s->clk_apb)) {
-		dev_err(dev, "Failed to get apb clock\n");
+	if (IS_ERR(kmb_i2s->clk_apb))
 		return PTR_ERR(kmb_i2s->clk_apb);
-	}
 
 	ret = clk_prepare_enable(kmb_i2s->clk_apb);
 	if (ret < 0)
@@ -600,10 +598,8 @@ static int kmb_plat_dai_probe(struct platform_device *pdev)
 	}
 
 	kmb_i2s->clk_i2s = devm_clk_get(dev, "osc");
-	if (IS_ERR(kmb_i2s->clk_i2s)) {
-		dev_err(dev, "Failed to get osc clock\n");
+	if (IS_ERR(kmb_i2s->clk_i2s))
 		return PTR_ERR(kmb_i2s->clk_i2s);
-	}
 
 	kmb_i2s->i2s_base = devm_platform_ioremap_resource(pdev, 0);
 	if (IS_ERR(kmb_i2s->i2s_base))

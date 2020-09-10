@@ -1140,10 +1140,8 @@ static int sta32x_i2c_probe(struct i2c_client *i2c,
 
 	ret = devm_regulator_bulk_get(&i2c->dev, ARRAY_SIZE(sta32x->supplies),
 				      sta32x->supplies);
-	if (ret != 0) {
-		dev_err(&i2c->dev, "Failed to request supplies: %d\n", ret);
+	if (ret != 0)
 		return ret;
-	}
 
 	sta32x->regmap = devm_regmap_init_i2c(i2c, &sta32x_regmap);
 	if (IS_ERR(sta32x->regmap)) {

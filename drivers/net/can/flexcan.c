@@ -1577,16 +1577,12 @@ static int flexcan_probe(struct platform_device *pdev)
 
 	if (!clock_freq) {
 		clk_ipg = devm_clk_get(&pdev->dev, "ipg");
-		if (IS_ERR(clk_ipg)) {
-			dev_err(&pdev->dev, "no ipg clock defined\n");
+		if (IS_ERR(clk_ipg))
 			return PTR_ERR(clk_ipg);
-		}
 
 		clk_per = devm_clk_get(&pdev->dev, "per");
-		if (IS_ERR(clk_per)) {
-			dev_err(&pdev->dev, "no per clock defined\n");
+		if (IS_ERR(clk_per))
 			return PTR_ERR(clk_per);
-		}
 		clock_freq = clk_get_rate(clk_per);
 	}
 

@@ -346,7 +346,6 @@ static int cc10001_adc_probe(struct platform_device *pdev)
 
 	adc_dev->adc_clk = devm_clk_get(&pdev->dev, "adc");
 	if (IS_ERR(adc_dev->adc_clk)) {
-		dev_err(&pdev->dev, "failed to get the clock\n");
 		ret = PTR_ERR(adc_dev->adc_clk);
 		goto err_disable_reg;
 	}

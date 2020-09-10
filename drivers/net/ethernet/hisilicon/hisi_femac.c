@@ -800,7 +800,6 @@ static int hisi_femac_drv_probe(struct platform_device *pdev)
 
 	priv->clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(priv->clk)) {
-		dev_err(dev, "failed to get clk\n");
 		ret = -ENODEV;
 		goto out_free_netdev;
 	}

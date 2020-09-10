@@ -894,7 +894,6 @@ static int jz4780_dma_probe(struct platform_device *pdev)
 
 	jzdma->clk = devm_clk_get(dev, NULL);
 	if (IS_ERR(jzdma->clk)) {
-		dev_err(dev, "failed to get clock\n");
 		ret = PTR_ERR(jzdma->clk);
 		goto err_free_irq;
 	}

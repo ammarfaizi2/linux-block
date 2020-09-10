@@ -1495,7 +1495,6 @@ static int viu_of_probe(struct platform_device *op)
 	/* enable VIU clock */
 	clk = devm_clk_get(&op->dev, "ipg");
 	if (IS_ERR(clk)) {
-		dev_err(&op->dev, "failed to lookup the clock!\n");
 		ret = PTR_ERR(clk);
 		goto err_vdev;
 	}

@@ -239,8 +239,6 @@ static int ektf2127_probe(struct i2c_client *client,
 	ts->power_gpios = devm_gpiod_get(dev, "power", GPIOD_OUT_HIGH);
 	if (IS_ERR(ts->power_gpios)) {
 		error = PTR_ERR(ts->power_gpios);
-		if (error != -EPROBE_DEFER)
-			dev_err(dev, "Error getting power gpio: %d\n", error);
 		return error;
 	}
 

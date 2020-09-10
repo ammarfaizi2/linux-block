@@ -376,10 +376,8 @@ static int sirf_usp_pcm_probe(struct platform_device *pdev)
 		return PTR_ERR(usp->regmap);
 
 	usp->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(usp->clk)) {
-		dev_err(&pdev->dev, "Get clock failed.\n");
+	if (IS_ERR(usp->clk))
 		return PTR_ERR(usp->clk);
-	}
 
 	pm_runtime_enable(&pdev->dev);
 	if (!pm_runtime_enabled(&pdev->dev)) {

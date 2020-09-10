@@ -422,10 +422,8 @@ static int owl_i2c_probe(struct platform_device *pdev)
 	}
 
 	i2c_dev->clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(i2c_dev->clk)) {
-		dev_err(dev, "failed to get clock\n");
+	if (IS_ERR(i2c_dev->clk))
 		return PTR_ERR(i2c_dev->clk);
-	}
 
 	ret = clk_prepare_enable(i2c_dev->clk);
 	if (ret)

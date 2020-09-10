@@ -1309,7 +1309,6 @@ static int max2175_probe(struct i2c_client *client)
 	clk = devm_clk_get(&client->dev, NULL);
 	if (IS_ERR(clk)) {
 		ret = PTR_ERR(clk);
-		dev_err(&client->dev, "cannot get clock %d\n", ret);
 		return ret;
 	}
 

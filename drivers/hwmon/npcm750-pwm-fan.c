@@ -935,10 +935,8 @@ static int npcm7xx_pwm_fan_probe(struct platform_device *pdev)
 		return PTR_ERR(data->pwm_base);
 
 	data->pwm_clk = devm_clk_get(dev, "pwm");
-	if (IS_ERR(data->pwm_clk)) {
-		dev_err(dev, "couldn't get pwm clock\n");
+	if (IS_ERR(data->pwm_clk))
 		return PTR_ERR(data->pwm_clk);
-	}
 
 	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "fan");
 	if (!res) {
@@ -952,10 +950,8 @@ static int npcm7xx_pwm_fan_probe(struct platform_device *pdev)
 		return PTR_ERR(data->fan_base);
 
 	data->fan_clk = devm_clk_get(dev, "fan");
-	if (IS_ERR(data->fan_clk)) {
-		dev_err(dev, "couldn't get fan clock\n");
+	if (IS_ERR(data->fan_clk))
 		return PTR_ERR(data->fan_clk);
-	}
 
 	output_freq = npcm7xx_pwm_init(data);
 	npcm7xx_fan_init(data);

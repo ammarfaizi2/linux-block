@@ -125,19 +125,13 @@ static int aspeed_gfx_load(struct drm_device *drm)
 	}
 
 	priv->rst = devm_reset_control_get_exclusive(&pdev->dev, NULL);
-	if (IS_ERR(priv->rst)) {
-		dev_err(&pdev->dev,
-			"missing or invalid reset controller device tree entry");
+	if (IS_ERR(priv->rst))
 		return PTR_ERR(priv->rst);
-	}
 	reset_control_deassert(priv->rst);
 
 	priv->clk = devm_clk_get(drm->dev, NULL);
-	if (IS_ERR(priv->clk)) {
-		dev_err(&pdev->dev,
-			"missing or invalid clk device tree entry");
+	if (IS_ERR(priv->clk))
 		return PTR_ERR(priv->clk);
-	}
 	clk_prepare_enable(priv->clk);
 
 	/* Sanitize control registers */

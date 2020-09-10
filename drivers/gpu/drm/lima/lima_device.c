@@ -126,8 +126,6 @@ static int lima_clk_init(struct lima_device *dev)
 	dev->clk_bus = devm_clk_get(dev->dev, "bus");
 	if (IS_ERR(dev->clk_bus)) {
 		err = PTR_ERR(dev->clk_bus);
-		if (err != -EPROBE_DEFER)
-			dev_err(dev->dev, "get bus clk failed %d\n", err);
 		dev->clk_bus = NULL;
 		return err;
 	}
@@ -135,8 +133,6 @@ static int lima_clk_init(struct lima_device *dev)
 	dev->clk_gpu = devm_clk_get(dev->dev, "core");
 	if (IS_ERR(dev->clk_gpu)) {
 		err = PTR_ERR(dev->clk_gpu);
-		if (err != -EPROBE_DEFER)
-			dev_err(dev->dev, "get core clk failed %d\n", err);
 		dev->clk_gpu = NULL;
 		return err;
 	}
@@ -191,8 +187,6 @@ static int lima_regulator_init(struct lima_device *dev)
 		dev->regulator = NULL;
 		if (ret == -ENODEV)
 			return 0;
-		if (ret != -EPROBE_DEFER)
-			dev_err(dev->dev, "failed to get regulator: %d\n", ret);
 		return ret;
 	}
 

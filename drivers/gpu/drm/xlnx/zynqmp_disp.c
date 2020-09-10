@@ -1670,10 +1670,8 @@ int zynqmp_disp_probe(struct zynqmp_dpsub *dpsub, struct drm_device *drm)
 	/* If the live PL video clock is not valid, fall back to PS clock */
 	if (IS_ERR_OR_NULL(disp->pclk)) {
 		disp->pclk = devm_clk_get(disp->dev, "dp_vtc_pixel_clk_in");
-		if (IS_ERR(disp->pclk)) {
-			dev_err(disp->dev, "failed to init any video clock\n");
+		if (IS_ERR(disp->pclk))
 			return PTR_ERR(disp->pclk);
-		}
 		disp->pclk_from_ps = true;
 	}
 

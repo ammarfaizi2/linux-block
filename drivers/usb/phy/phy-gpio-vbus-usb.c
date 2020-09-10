@@ -261,7 +261,6 @@ static int gpio_vbus_probe(struct platform_device *pdev)
 	gpio_vbus->vbus_gpiod = devm_gpiod_get(dev, "vbus", GPIOD_IN);
 	if (IS_ERR(gpio_vbus->vbus_gpiod)) {
 		err = PTR_ERR(gpio_vbus->vbus_gpiod);
-		dev_err(&pdev->dev, "can't request vbus gpio, err: %d\n", err);
 		return err;
 	}
 	gpiod_set_consumer_name(gpio_vbus->vbus_gpiod, "vbus_detect");
@@ -288,8 +287,6 @@ static int gpio_vbus_probe(struct platform_device *pdev)
 							  GPIOD_OUT_LOW);
 	if (IS_ERR(gpio_vbus->pullup_gpiod)) {
 		err = PTR_ERR(gpio_vbus->pullup_gpiod);
-		dev_err(&pdev->dev, "can't request pullup gpio, err: %d\n",
-			err);
 		return err;
 	}
 	if (gpio_vbus->pullup_gpiod)

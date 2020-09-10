@@ -3066,10 +3066,8 @@ static int lpc32xx_udc_probe(struct platform_device *pdev)
 
 	/* Get USB device clock */
 	udc->usb_slv_clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(udc->usb_slv_clk)) {
-		dev_err(udc->dev, "failed to acquire USB device clock\n");
+	if (IS_ERR(udc->usb_slv_clk))
 		return PTR_ERR(udc->usb_slv_clk);
-	}
 
 	/* Enable USB device clock */
 	retval = clk_prepare_enable(udc->usb_slv_clk);

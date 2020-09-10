@@ -138,16 +138,12 @@ static int emac_rockchip_probe(struct platform_device *pdev)
 
 	priv->emac.clk = devm_clk_get(dev, "hclk");
 	if (IS_ERR(priv->emac.clk)) {
-		dev_err(dev, "failed to retrieve host clock (%ld)\n",
-			PTR_ERR(priv->emac.clk));
 		err = PTR_ERR(priv->emac.clk);
 		goto out_netdev;
 	}
 
 	priv->refclk = devm_clk_get(dev, "macref");
 	if (IS_ERR(priv->refclk)) {
-		dev_err(dev, "failed to retrieve reference clock (%ld)\n",
-			PTR_ERR(priv->refclk));
 		err = PTR_ERR(priv->refclk);
 		goto out_netdev;
 	}
@@ -165,7 +161,6 @@ static int emac_rockchip_probe(struct platform_device *pdev)
 			err = -EPROBE_DEFER;
 			goto out_clk_disable;
 		}
-		dev_err(dev, "no regulator found\n");
 		priv->regulator = NULL;
 	}
 
@@ -202,8 +197,6 @@ static int emac_rockchip_probe(struct platform_device *pdev)
 	if (priv->soc_data->need_div_macclk) {
 		priv->macclk = devm_clk_get(dev, "macclk");
 		if (IS_ERR(priv->macclk)) {
-			dev_err(dev, "failed to retrieve mac clock (%ld)\n",
-				PTR_ERR(priv->macclk));
 			err = PTR_ERR(priv->macclk);
 			goto out_regulator_disable;
 		}

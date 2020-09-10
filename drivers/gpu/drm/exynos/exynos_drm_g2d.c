@@ -1477,7 +1477,6 @@ static int g2d_probe(struct platform_device *pdev)
 
 	g2d->gate_clk = devm_clk_get(dev, "fimg2d");
 	if (IS_ERR(g2d->gate_clk)) {
-		dev_err(dev, "failed to get gate clock\n");
 		ret = PTR_ERR(g2d->gate_clk);
 		goto err_destroy_workqueue;
 	}

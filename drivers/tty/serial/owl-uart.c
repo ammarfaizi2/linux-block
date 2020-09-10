@@ -675,10 +675,8 @@ static int owl_uart_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	owl_port->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(owl_port->clk)) {
-		dev_err(&pdev->dev, "could not get clk\n");
+	if (IS_ERR(owl_port->clk))
 		return PTR_ERR(owl_port->clk);
-	}
 
 	ret = clk_prepare_enable(owl_port->clk);
 	if (ret) {

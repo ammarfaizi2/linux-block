@@ -783,10 +783,8 @@ static int rcar_pcie_get_resources(struct rcar_pcie_host *host)
 		return PTR_ERR(pcie->base);
 
 	host->bus_clk = devm_clk_get(dev, "pcie_bus");
-	if (IS_ERR(host->bus_clk)) {
-		dev_err(dev, "cannot get pcie bus clock\n");
+	if (IS_ERR(host->bus_clk))
 		return PTR_ERR(host->bus_clk);
-	}
 
 	i = irq_of_parse_and_map(dev->of_node, 0);
 	if (!i) {

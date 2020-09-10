@@ -808,10 +808,8 @@ static int tas571x_i2c_probe(struct i2c_client *client,
 
 	ret = devm_regulator_bulk_get(dev, priv->chip->num_supply_names,
 				      priv->supplies);
-	if (ret) {
-		dev_err(dev, "Failed to get supplies: %d\n", ret);
+	if (ret)
 		return ret;
-	}
 	ret = regulator_bulk_enable(priv->chip->num_supply_names,
 				    priv->supplies);
 	if (ret) {
@@ -827,11 +825,8 @@ static int tas571x_i2c_probe(struct i2c_client *client,
 	}
 
 	priv->pdn_gpio = devm_gpiod_get_optional(dev, "pdn", GPIOD_OUT_LOW);
-	if (IS_ERR(priv->pdn_gpio)) {
-		dev_err(dev, "error requesting pdn_gpio: %ld\n",
-			PTR_ERR(priv->pdn_gpio));
+	if (IS_ERR(priv->pdn_gpio))
 		return PTR_ERR(priv->pdn_gpio);
-	}
 
 	priv->reset_gpio = devm_gpiod_get_optional(dev, "reset",
 						   GPIOD_OUT_HIGH);

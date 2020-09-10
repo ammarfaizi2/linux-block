@@ -869,10 +869,8 @@ static int geni_se_probe(struct platform_device *pdev)
 		wrapper->ahb_clks[0].id = "m-ahb";
 		wrapper->ahb_clks[1].id = "s-ahb";
 		ret = devm_clk_bulk_get(dev, NUM_AHB_CLKS, wrapper->ahb_clks);
-		if (ret) {
-			dev_err(dev, "Err getting AHB clks %d\n", ret);
+		if (ret)
 			return ret;
-		}
 	}
 
 #ifdef CONFIG_SERIAL_EARLYCON

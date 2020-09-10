@@ -220,16 +220,12 @@ static int get_ssusb_rscs(struct platform_device *pdev, struct ssusb_mtk *ssusb)
 	int ret;
 
 	ssusb->vusb33 = devm_regulator_get(dev, "vusb33");
-	if (IS_ERR(ssusb->vusb33)) {
-		dev_err(dev, "failed to get vusb33\n");
+	if (IS_ERR(ssusb->vusb33))
 		return PTR_ERR(ssusb->vusb33);
-	}
 
 	ssusb->sys_clk = devm_clk_get(dev, "sys_ck");
-	if (IS_ERR(ssusb->sys_clk)) {
-		dev_err(dev, "failed to get sys clock\n");
+	if (IS_ERR(ssusb->sys_clk))
 		return PTR_ERR(ssusb->sys_clk);
-	}
 
 	ssusb->ref_clk = devm_clk_get_optional(dev, "ref_ck");
 	if (IS_ERR(ssusb->ref_clk))
@@ -285,10 +281,8 @@ static int get_ssusb_rscs(struct platform_device *pdev, struct ssusb_mtk *ssusb)
 			     &ssusb->u3p_dis_msk);
 
 	otg_sx->vbus = devm_regulator_get(dev, "vbus");
-	if (IS_ERR(otg_sx->vbus)) {
-		dev_err(dev, "failed to get vbus\n");
+	if (IS_ERR(otg_sx->vbus))
 		return PTR_ERR(otg_sx->vbus);
-	}
 
 	if (ssusb->dr_mode == USB_DR_MODE_HOST)
 		goto out;

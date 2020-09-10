@@ -1100,9 +1100,6 @@ static int edt_ft5x06_ts_probe(struct i2c_client *client,
 	tsdata->vcc = devm_regulator_get(&client->dev, "vcc");
 	if (IS_ERR(tsdata->vcc)) {
 		error = PTR_ERR(tsdata->vcc);
-		if (error != -EPROBE_DEFER)
-			dev_err(&client->dev,
-				"failed to request regulator: %d\n", error);
 		return error;
 	}
 
@@ -1122,8 +1119,6 @@ static int edt_ft5x06_ts_probe(struct i2c_client *client,
 						     "reset", GPIOD_OUT_HIGH);
 	if (IS_ERR(tsdata->reset_gpio)) {
 		error = PTR_ERR(tsdata->reset_gpio);
-		dev_err(&client->dev,
-			"Failed to request GPIO reset pin, error %d\n", error);
 		return error;
 	}
 
@@ -1131,8 +1126,6 @@ static int edt_ft5x06_ts_probe(struct i2c_client *client,
 						    "wake", GPIOD_OUT_LOW);
 	if (IS_ERR(tsdata->wake_gpio)) {
 		error = PTR_ERR(tsdata->wake_gpio);
-		dev_err(&client->dev,
-			"Failed to request GPIO wake pin, error %d\n", error);
 		return error;
 	}
 

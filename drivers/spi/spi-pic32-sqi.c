@@ -596,14 +596,12 @@ static int pic32_sqi_probe(struct platform_device *pdev)
 	sqi->sys_clk = devm_clk_get(&pdev->dev, "reg_ck");
 	if (IS_ERR(sqi->sys_clk)) {
 		ret = PTR_ERR(sqi->sys_clk);
-		dev_err(&pdev->dev, "no sys_clk ?\n");
 		goto err_free_master;
 	}
 
 	sqi->base_clk = devm_clk_get(&pdev->dev, "spi_ck");
 	if (IS_ERR(sqi->base_clk)) {
 		ret = PTR_ERR(sqi->base_clk);
-		dev_err(&pdev->dev, "no base clk ?\n");
 		goto err_free_master;
 	}
 

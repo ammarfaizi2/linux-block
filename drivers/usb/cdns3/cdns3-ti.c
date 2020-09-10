@@ -109,16 +109,12 @@ static int cdns_ti_probe(struct platform_device *pdev)
 	}
 
 	data->usb2_refclk = devm_clk_get(dev, "ref");
-	if (IS_ERR(data->usb2_refclk)) {
-		dev_err(dev, "can't get usb2_refclk\n");
+	if (IS_ERR(data->usb2_refclk))
 		return PTR_ERR(data->usb2_refclk);
-	}
 
 	data->lpm_clk = devm_clk_get(dev, "lpm");
-	if (IS_ERR(data->lpm_clk)) {
-		dev_err(dev, "can't get lpm_clk\n");
+	if (IS_ERR(data->lpm_clk))
 		return PTR_ERR(data->lpm_clk);
-	}
 
 	rate = clk_get_rate(data->usb2_refclk);
 	rate /= 1000;	/* To KHz */

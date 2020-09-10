@@ -266,26 +266,17 @@ static int srf04_probe(struct platform_device *pdev)
 	init_completion(&data->falling);
 
 	data->gpiod_trig = devm_gpiod_get(dev, "trig", GPIOD_OUT_LOW);
-	if (IS_ERR(data->gpiod_trig)) {
-		dev_err(dev, "failed to get trig-gpios: err=%ld\n",
-					PTR_ERR(data->gpiod_trig));
+	if (IS_ERR(data->gpiod_trig))
 		return PTR_ERR(data->gpiod_trig);
-	}
 
 	data->gpiod_echo = devm_gpiod_get(dev, "echo", GPIOD_IN);
-	if (IS_ERR(data->gpiod_echo)) {
-		dev_err(dev, "failed to get echo-gpios: err=%ld\n",
-					PTR_ERR(data->gpiod_echo));
+	if (IS_ERR(data->gpiod_echo))
 		return PTR_ERR(data->gpiod_echo);
-	}
 
 	data->gpiod_power = devm_gpiod_get_optional(dev, "power",
 								GPIOD_OUT_LOW);
-	if (IS_ERR(data->gpiod_power)) {
-		dev_err(dev, "failed to get power-gpios: err=%ld\n",
-						PTR_ERR(data->gpiod_power));
+	if (IS_ERR(data->gpiod_power))
 		return PTR_ERR(data->gpiod_power);
-	}
 	if (data->gpiod_power) {
 
 		if (of_property_read_u32(dev->of_node, "startup-time-ms",

@@ -341,14 +341,12 @@ static int sdhci_at91_probe(struct platform_device *pdev)
 
 	priv->hclock = devm_clk_get(&pdev->dev, "hclock");
 	if (IS_ERR(priv->hclock)) {
-		dev_err(&pdev->dev, "failed to get hclock\n");
 		ret = PTR_ERR(priv->hclock);
 		goto sdhci_pltfm_free;
 	}
 
 	priv->gck = devm_clk_get(&pdev->dev, "multclk");
 	if (IS_ERR(priv->gck)) {
-		dev_err(&pdev->dev, "failed to get multclk\n");
 		ret = PTR_ERR(priv->gck);
 		goto sdhci_pltfm_free;
 	}

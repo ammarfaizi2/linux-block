@@ -167,10 +167,8 @@ static int lpc32xx_adc_probe(struct platform_device *pdev)
 	}
 
 	st->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(st->clk)) {
-		dev_err(&pdev->dev, "failed getting clock\n");
+	if (IS_ERR(st->clk))
 		return PTR_ERR(st->clk);
-	}
 
 	irq = platform_get_irq(pdev, 0);
 	if (irq <= 0)

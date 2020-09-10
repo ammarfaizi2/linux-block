@@ -556,7 +556,6 @@ static int s3c24xx_spi_probe(struct platform_device *pdev)
 
 	hw->clk = devm_clk_get(&pdev->dev, "spi");
 	if (IS_ERR(hw->clk)) {
-		dev_err(&pdev->dev, "No clock for device\n");
 		err = PTR_ERR(hw->clk);
 		goto err_no_pdata;
 	}

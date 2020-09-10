@@ -860,7 +860,6 @@ static int lpc32xx_nand_probe(struct platform_device *pdev)
 	/* Get NAND clock */
 	host->clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(host->clk)) {
-		dev_err(&pdev->dev, "Clock failure\n");
 		res = -ENOENT;
 		goto enable_wp;
 	}

@@ -319,8 +319,6 @@ static int max5821_probe(struct i2c_client *client,
 	data->vref_reg = devm_regulator_get(&client->dev, "vref");
 	if (IS_ERR(data->vref_reg)) {
 		ret = PTR_ERR(data->vref_reg);
-		dev_err(&client->dev,
-			"Failed to get vref regulator: %d\n", ret);
 		goto error_free_reg;
 	}
 

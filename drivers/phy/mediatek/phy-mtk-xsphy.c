@@ -571,7 +571,6 @@ static int mtk_xsphy_probe(struct platform_device *pdev)
 
 		inst->ref_clk = devm_clk_get(&phy->dev, "ref");
 		if (IS_ERR(inst->ref_clk)) {
-			dev_err(dev, "failed to get ref_clk(id-%d)\n", port);
 			retval = PTR_ERR(inst->ref_clk);
 			goto put_child;
 		}

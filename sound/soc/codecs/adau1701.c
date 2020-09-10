@@ -801,10 +801,8 @@ static int adau1701_i2c_probe(struct i2c_client *client,
 
 	ret = devm_regulator_bulk_get(dev, ARRAY_SIZE(adau1701->supplies),
 			adau1701->supplies);
-	if (ret < 0) {
-		dev_err(dev, "Failed to get regulators: %d\n", ret);
+	if (ret < 0)
 		return ret;
-	}
 
 	ret = regulator_bulk_enable(ARRAY_SIZE(adau1701->supplies),
 			adau1701->supplies);

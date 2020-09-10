@@ -992,14 +992,12 @@ static int img_hash_probe(struct platform_device *pdev)
 
 	hdev->hash_clk = devm_clk_get(&pdev->dev, "hash");
 	if (IS_ERR(hdev->hash_clk)) {
-		dev_err(dev, "clock initialization failed.\n");
 		err = PTR_ERR(hdev->hash_clk);
 		goto res_err;
 	}
 
 	hdev->sys_clk = devm_clk_get(&pdev->dev, "sys");
 	if (IS_ERR(hdev->sys_clk)) {
-		dev_err(dev, "clock initialization failed.\n");
 		err = PTR_ERR(hdev->sys_clk);
 		goto res_err;
 	}

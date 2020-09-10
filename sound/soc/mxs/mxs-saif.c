@@ -777,8 +777,6 @@ static int mxs_saif_probe(struct platform_device *pdev)
 	saif->clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(saif->clk)) {
 		ret = PTR_ERR(saif->clk);
-		dev_err(&pdev->dev, "Cannot get the clock: %d\n",
-			ret);
 		return ret;
 	}
 

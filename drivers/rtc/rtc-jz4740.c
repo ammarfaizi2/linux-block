@@ -330,10 +330,8 @@ static int jz4740_rtc_probe(struct platform_device *pdev)
 		return PTR_ERR(rtc->base);
 
 	clk = devm_clk_get(dev, "rtc");
-	if (IS_ERR(clk)) {
-		dev_err(dev, "Failed to get RTC clock\n");
+	if (IS_ERR(clk))
 		return PTR_ERR(clk);
-	}
 
 	ret = clk_prepare_enable(clk);
 	if (ret) {

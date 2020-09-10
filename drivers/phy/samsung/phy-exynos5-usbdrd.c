@@ -734,16 +734,12 @@ static int exynos5_usbdrd_phy_clk_handle(struct exynos5_usbdrd_phy *phy_drd)
 	int ret;
 
 	phy_drd->clk = devm_clk_get(phy_drd->dev, "phy");
-	if (IS_ERR(phy_drd->clk)) {
-		dev_err(phy_drd->dev, "Failed to get phy clock\n");
+	if (IS_ERR(phy_drd->clk))
 		return PTR_ERR(phy_drd->clk);
-	}
 
 	phy_drd->ref_clk = devm_clk_get(phy_drd->dev, "ref");
-	if (IS_ERR(phy_drd->ref_clk)) {
-		dev_err(phy_drd->dev, "Failed to get phy reference clock\n");
+	if (IS_ERR(phy_drd->ref_clk))
 		return PTR_ERR(phy_drd->ref_clk);
-	}
 	ref_rate = clk_get_rate(phy_drd->ref_clk);
 
 	ret = exynos5_rate_to_clk(ref_rate, &phy_drd->extrefclk);

@@ -752,10 +752,8 @@ static int exynos5_i2c_probe(struct platform_device *pdev)
 
 	i2c->dev = &pdev->dev;
 	i2c->clk = devm_clk_get(&pdev->dev, "hsi2c");
-	if (IS_ERR(i2c->clk)) {
-		dev_err(&pdev->dev, "cannot get clock\n");
+	if (IS_ERR(i2c->clk))
 		return -ENOENT;
-	}
 
 	ret = clk_prepare_enable(i2c->clk);
 	if (ret)

@@ -273,16 +273,12 @@ static int cdns_rtc_probe(struct platform_device *pdev)
 	crtc->pclk = devm_clk_get(&pdev->dev, "pclk");
 	if (IS_ERR(crtc->pclk)) {
 		ret = PTR_ERR(crtc->pclk);
-		dev_err(&pdev->dev,
-			"Failed to retrieve the peripheral clock, %d\n", ret);
 		return ret;
 	}
 
 	crtc->ref_clk = devm_clk_get(&pdev->dev, "ref_clk");
 	if (IS_ERR(crtc->ref_clk)) {
 		ret = PTR_ERR(crtc->ref_clk);
-		dev_err(&pdev->dev,
-			"Failed to retrieve the reference clock, %d\n", ret);
 		return ret;
 	}
 

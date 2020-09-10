@@ -962,12 +962,8 @@ static int tc358768_get_regulators(struct tc358768_priv *priv)
 	for (i = 0; i < ARRAY_SIZE(priv->supplies); ++i)
 		priv->supplies[i].supply = tc358768_supplies[i];
 
-	ret = devm_regulator_bulk_get(priv->dev, ARRAY_SIZE(priv->supplies),
+	return devm_regulator_bulk_get(priv->dev, ARRAY_SIZE(priv->supplies),
 				      priv->supplies);
-	if (ret < 0)
-		dev_err(priv->dev, "failed to get regulators: %d\n", ret);
-
-	return ret;
 }
 
 static int tc358768_i2c_probe(struct i2c_client *client,

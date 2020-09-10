@@ -265,8 +265,6 @@ static int adsp_init_clock(struct qcom_adsp *adsp)
 	adsp->xo = devm_clk_get(adsp->dev, "xo");
 	if (IS_ERR(adsp->xo)) {
 		ret = PTR_ERR(adsp->xo);
-		if (ret != -EPROBE_DEFER)
-			dev_err(adsp->dev, "failed to get xo clock");
 		return ret;
 	}
 
@@ -274,9 +272,6 @@ static int adsp_init_clock(struct qcom_adsp *adsp)
 		adsp->aggre2_clk = devm_clk_get(adsp->dev, "aggre2");
 		if (IS_ERR(adsp->aggre2_clk)) {
 			ret = PTR_ERR(adsp->aggre2_clk);
-			if (ret != -EPROBE_DEFER)
-				dev_err(adsp->dev,
-					"failed to get aggre2 clock");
 			return ret;
 		}
 	}

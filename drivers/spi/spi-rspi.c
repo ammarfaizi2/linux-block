@@ -1282,7 +1282,6 @@ static int rspi_probe(struct platform_device *pdev)
 
 	rspi->clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(rspi->clk)) {
-		dev_err(&pdev->dev, "cannot get clock\n");
 		ret = PTR_ERR(rspi->clk);
 		goto error1;
 	}

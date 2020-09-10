@@ -1234,7 +1234,6 @@ static int imx7_csi_probe(struct platform_device *pdev)
 	csi->mclk = devm_clk_get(&pdev->dev, "mclk");
 	if (IS_ERR(csi->mclk)) {
 		ret = PTR_ERR(csi->mclk);
-		dev_err(dev, "Failed to get mclk: %d", ret);
 		return ret;
 	}
 

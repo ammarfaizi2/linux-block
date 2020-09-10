@@ -457,10 +457,8 @@ static int imx_keypad_probe(struct platform_device *pdev)
 		return PTR_ERR(keypad->mmio_base);
 
 	keypad->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(keypad->clk)) {
-		dev_err(&pdev->dev, "failed to get keypad clock\n");
+	if (IS_ERR(keypad->clk))
 		return PTR_ERR(keypad->clk);
-	}
 
 	/* Init the Input device */
 	input_dev->name = pdev->name;

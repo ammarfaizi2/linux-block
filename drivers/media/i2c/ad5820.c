@@ -305,8 +305,6 @@ static int ad5820_probe(struct i2c_client *client,
 	coil->vana = devm_regulator_get(&client->dev, "VANA");
 	if (IS_ERR(coil->vana)) {
 		ret = PTR_ERR(coil->vana);
-		if (ret != -EPROBE_DEFER)
-			dev_err(&client->dev, "could not get regulator for vana\n");
 		return ret;
 	}
 
@@ -314,8 +312,6 @@ static int ad5820_probe(struct i2c_client *client,
 						    GPIOD_OUT_LOW);
 	if (IS_ERR(coil->enable_gpio)) {
 		ret = PTR_ERR(coil->enable_gpio);
-		if (ret != -EPROBE_DEFER)
-			dev_err(&client->dev, "could not get enable gpio\n");
 		return ret;
 	}
 

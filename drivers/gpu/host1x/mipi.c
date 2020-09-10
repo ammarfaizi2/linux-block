@@ -525,10 +525,8 @@ static int tegra_mipi_probe(struct platform_device *pdev)
 	mutex_init(&mipi->lock);
 
 	mipi->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(mipi->clk)) {
-		dev_err(&pdev->dev, "failed to get clock\n");
+	if (IS_ERR(mipi->clk))
 		return PTR_ERR(mipi->clk);
-	}
 
 	err = clk_prepare(mipi->clk);
 	if (err < 0)

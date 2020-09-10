@@ -95,10 +95,8 @@ static int imx8mq_usb_phy_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	imx_phy->clk = devm_clk_get(dev, "phy");
-	if (IS_ERR(imx_phy->clk)) {
-		dev_err(dev, "failed to get imx8mq usb phy clock\n");
+	if (IS_ERR(imx_phy->clk))
 		return PTR_ERR(imx_phy->clk);
-	}
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	imx_phy->base = devm_ioremap_resource(dev, res);

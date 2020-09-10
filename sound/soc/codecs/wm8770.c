@@ -653,10 +653,8 @@ static int wm8770_spi_probe(struct spi_device *spi)
 
 	ret = devm_regulator_bulk_get(&spi->dev, ARRAY_SIZE(wm8770->supplies),
 				      wm8770->supplies);
-	if (ret) {
-		dev_err(&spi->dev, "Failed to request supplies: %d\n", ret);
+	if (ret)
 		return ret;
-	}
 
 	wm8770->disable_nb[0].notifier_call = wm8770_regulator_event_0;
 	wm8770->disable_nb[1].notifier_call = wm8770_regulator_event_1;

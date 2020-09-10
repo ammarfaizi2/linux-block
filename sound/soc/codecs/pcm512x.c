@@ -1523,10 +1523,8 @@ int pcm512x_probe(struct device *dev, struct regmap *regmap)
 
 	ret = devm_regulator_bulk_get(dev, ARRAY_SIZE(pcm512x->supplies),
 				      pcm512x->supplies);
-	if (ret != 0) {
-		dev_err(dev, "Failed to get supplies: %d\n", ret);
+	if (ret != 0)
 		return ret;
-	}
 
 	pcm512x->supply_nb[0].notifier_call = pcm512x_regulator_event_0;
 	pcm512x->supply_nb[1].notifier_call = pcm512x_regulator_event_1;

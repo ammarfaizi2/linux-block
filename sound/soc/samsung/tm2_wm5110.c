@@ -513,10 +513,8 @@ static int tm2_probe(struct platform_device *pdev)
 	card->dev = dev;
 
 	priv->gpio_mic_bias = devm_gpiod_get(dev, "mic-bias", GPIOD_OUT_HIGH);
-	if (IS_ERR(priv->gpio_mic_bias)) {
-		dev_err(dev, "Failed to get mic bias gpio\n");
+	if (IS_ERR(priv->gpio_mic_bias))
 		return PTR_ERR(priv->gpio_mic_bias);
-	}
 
 	ret = snd_soc_of_parse_card_name(card, "model");
 	if (ret < 0) {

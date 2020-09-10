@@ -438,10 +438,8 @@ static int fsi_master_aspeed_probe(struct platform_device *pdev)
 		return PTR_ERR(aspeed->base);
 
 	aspeed->clk = devm_clk_get(aspeed->dev, NULL);
-	if (IS_ERR(aspeed->clk)) {
-		dev_err(aspeed->dev, "couldn't get clock\n");
+	if (IS_ERR(aspeed->clk))
 		return PTR_ERR(aspeed->clk);
-	}
 	rc = clk_prepare_enable(aspeed->clk);
 	if (rc) {
 		dev_err(aspeed->dev, "couldn't enable clock\n");

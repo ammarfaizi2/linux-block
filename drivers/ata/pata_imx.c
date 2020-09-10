@@ -142,10 +142,8 @@ static int pata_imx_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	priv->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(priv->clk)) {
-		dev_err(&pdev->dev, "Failed to get clock\n");
+	if (IS_ERR(priv->clk))
 		return PTR_ERR(priv->clk);
-	}
 
 	ret = clk_prepare_enable(priv->clk);
 	if (ret)

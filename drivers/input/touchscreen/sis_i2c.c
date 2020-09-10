@@ -313,9 +313,6 @@ static int sis_ts_probe(struct i2c_client *client,
 						"attn", GPIOD_IN);
 	if (IS_ERR(ts->attn_gpio)) {
 		error = PTR_ERR(ts->attn_gpio);
-		if (error != -EPROBE_DEFER)
-			dev_err(&client->dev,
-				"Failed to get attention GPIO: %d\n", error);
 		return error;
 	}
 
@@ -323,9 +320,6 @@ static int sis_ts_probe(struct i2c_client *client,
 						 "reset", GPIOD_OUT_LOW);
 	if (IS_ERR(ts->reset_gpio)) {
 		error = PTR_ERR(ts->reset_gpio);
-		if (error != -EPROBE_DEFER)
-			dev_err(&client->dev,
-				"Failed to get reset GPIO: %d\n", error);
 		return error;
 	}
 

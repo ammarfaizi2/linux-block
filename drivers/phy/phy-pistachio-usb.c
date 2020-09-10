@@ -151,11 +151,8 @@ static int pistachio_usb_phy_probe(struct platform_device *pdev)
 	}
 
 	p_phy->phy_clk = devm_clk_get(p_phy->dev, "usb_phy");
-	if (IS_ERR(p_phy->phy_clk)) {
-		dev_err(p_phy->dev, "Failed to get usb_phy clock: %ld\n",
-			PTR_ERR(p_phy->phy_clk));
+	if (IS_ERR(p_phy->phy_clk))
 		return PTR_ERR(p_phy->phy_clk);
-	}
 
 	ret = of_property_read_u32(p_phy->dev->of_node, "img,refclk",
 				   &p_phy->refclk);

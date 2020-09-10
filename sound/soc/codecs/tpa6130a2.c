@@ -273,7 +273,6 @@ static int tpa6130a2_probe(struct i2c_client *client,
 	data->supply = devm_regulator_get(dev, regulator);
 	if (IS_ERR(data->supply)) {
 		ret = PTR_ERR(data->supply);
-		dev_err(dev, "Failed to request supply: %d\n", ret);
 		return ret;
 	}
 

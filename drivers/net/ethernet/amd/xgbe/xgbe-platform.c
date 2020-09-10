@@ -202,18 +202,14 @@ static int xgbe_of_support(struct xgbe_prv_data *pdata)
 
 	/* Obtain the system clock setting */
 	pdata->sysclk = devm_clk_get(dev, XGBE_DMA_CLOCK);
-	if (IS_ERR(pdata->sysclk)) {
-		dev_err(dev, "dma devm_clk_get failed\n");
+	if (IS_ERR(pdata->sysclk))
 		return PTR_ERR(pdata->sysclk);
-	}
 	pdata->sysclk_rate = clk_get_rate(pdata->sysclk);
 
 	/* Obtain the PTP clock setting */
 	pdata->ptpclk = devm_clk_get(dev, XGBE_PTP_CLOCK);
-	if (IS_ERR(pdata->ptpclk)) {
-		dev_err(dev, "ptp devm_clk_get failed\n");
+	if (IS_ERR(pdata->ptpclk))
 		return PTR_ERR(pdata->ptpclk);
-	}
 	pdata->ptpclk_rate = clk_get_rate(pdata->ptpclk);
 
 	return 0;

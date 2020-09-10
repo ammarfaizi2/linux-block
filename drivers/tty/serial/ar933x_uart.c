@@ -744,10 +744,8 @@ static int ar933x_uart_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	up->clk = devm_clk_get(&pdev->dev, "uart");
-	if (IS_ERR(up->clk)) {
-		dev_err(&pdev->dev, "unable to get UART clock\n");
+	if (IS_ERR(up->clk))
 		return PTR_ERR(up->clk);
-	}
 
 	port = &up->port;
 

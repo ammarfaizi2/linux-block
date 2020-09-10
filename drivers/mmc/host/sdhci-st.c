@@ -352,10 +352,8 @@ static int sdhci_st_probe(struct platform_device *pdev)
 	struct reset_control *rstc;
 
 	clk =  devm_clk_get(&pdev->dev, "mmc");
-	if (IS_ERR(clk)) {
-		dev_err(&pdev->dev, "Peripheral clk not found\n");
+	if (IS_ERR(clk))
 		return PTR_ERR(clk);
-	}
 
 	/* ICN clock isn't compulsory, but use it if it's provided. */
 	icnclk = devm_clk_get(&pdev->dev, "icn");

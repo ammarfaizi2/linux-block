@@ -917,10 +917,8 @@ static int pm8xxx_xoadc_probe(struct platform_device *pdev)
 
 	/* Bring up regulator */
 	adc->vref = devm_regulator_get(dev, "xoadc-ref");
-	if (IS_ERR(adc->vref)) {
-		dev_err(dev, "failed to get XOADC VREF regulator\n");
+	if (IS_ERR(adc->vref))
 		return PTR_ERR(adc->vref);
-	}
 	ret = regulator_enable(adc->vref);
 	if (ret) {
 		dev_err(dev, "failed to enable XOADC VREF regulator\n");

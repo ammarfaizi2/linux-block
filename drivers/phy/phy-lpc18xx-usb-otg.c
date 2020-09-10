@@ -106,10 +106,8 @@ static int lpc18xx_usb_otg_phy_probe(struct platform_device *pdev)
 	}
 
 	lpc->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(lpc->clk)) {
-		dev_err(&pdev->dev, "failed to get clock\n");
+	if (IS_ERR(lpc->clk))
 		return PTR_ERR(lpc->clk);
-	}
 
 	lpc->phy = devm_phy_create(&pdev->dev, NULL, &lpc18xx_usb_otg_phy_ops);
 	if (IS_ERR(lpc->phy)) {

@@ -29,10 +29,8 @@ int mt2701_init_clock(struct mtk_base_afe *afe)
 
 	for (i = 0; i < MT2701_BASE_CLK_NUM; i++) {
 		afe_priv->base_ck[i] = devm_clk_get(afe->dev, base_clks[i]);
-		if (IS_ERR(afe_priv->base_ck[i])) {
-			dev_err(afe->dev, "failed to get %s\n", base_clks[i]);
+		if (IS_ERR(afe_priv->base_ck[i]))
 			return PTR_ERR(afe_priv->base_ck[i]);
-		}
 	}
 
 	/* Get I2S related clocks */
@@ -43,47 +41,35 @@ int mt2701_init_clock(struct mtk_base_afe *afe)
 
 		snprintf(name, sizeof(name), "i2s%d_src_sel", i);
 		i2s_path->sel_ck = devm_clk_get(afe->dev, name);
-		if (IS_ERR(i2s_path->sel_ck)) {
-			dev_err(afe->dev, "failed to get %s\n", name);
+		if (IS_ERR(i2s_path->sel_ck))
 			return PTR_ERR(i2s_path->sel_ck);
-		}
 
 		snprintf(name, sizeof(name), "i2s%d_src_div", i);
 		i2s_path->div_ck = devm_clk_get(afe->dev, name);
-		if (IS_ERR(i2s_path->div_ck)) {
-			dev_err(afe->dev, "failed to get %s\n", name);
+		if (IS_ERR(i2s_path->div_ck))
 			return PTR_ERR(i2s_path->div_ck);
-		}
 
 		snprintf(name, sizeof(name), "i2s%d_mclk_en", i);
 		i2s_path->mclk_ck = devm_clk_get(afe->dev, name);
-		if (IS_ERR(i2s_path->mclk_ck)) {
-			dev_err(afe->dev, "failed to get %s\n", name);
+		if (IS_ERR(i2s_path->mclk_ck))
 			return PTR_ERR(i2s_path->mclk_ck);
-		}
 
 		snprintf(name, sizeof(name), "i2so%d_hop_ck", i);
 		i2s_ck = devm_clk_get(afe->dev, name);
-		if (IS_ERR(i2s_ck)) {
-			dev_err(afe->dev, "failed to get %s\n", name);
+		if (IS_ERR(i2s_ck))
 			return PTR_ERR(i2s_ck);
-		}
 		i2s_path->hop_ck[SNDRV_PCM_STREAM_PLAYBACK] = i2s_ck;
 
 		snprintf(name, sizeof(name), "i2si%d_hop_ck", i);
 		i2s_ck = devm_clk_get(afe->dev, name);
-		if (IS_ERR(i2s_ck)) {
-			dev_err(afe->dev, "failed to get %s\n", name);
+		if (IS_ERR(i2s_ck))
 			return PTR_ERR(i2s_ck);
-		}
 		i2s_path->hop_ck[SNDRV_PCM_STREAM_CAPTURE] = i2s_ck;
 
 		snprintf(name, sizeof(name), "asrc%d_out_ck", i);
 		i2s_path->asrco_ck = devm_clk_get(afe->dev, name);
-		if (IS_ERR(i2s_path->asrco_ck)) {
-			dev_err(afe->dev, "failed to get %s\n", name);
+		if (IS_ERR(i2s_path->asrco_ck))
 			return PTR_ERR(i2s_path->asrco_ck);
-		}
 	}
 
 	/* Some platforms may support BT path */

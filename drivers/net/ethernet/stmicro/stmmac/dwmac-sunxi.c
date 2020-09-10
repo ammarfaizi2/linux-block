@@ -126,7 +126,6 @@ static int sun7i_gmac_probe(struct platform_device *pdev)
 
 	gmac->tx_clk = devm_clk_get(dev, "allwinner_gmac_tx");
 	if (IS_ERR(gmac->tx_clk)) {
-		dev_err(dev, "could not get tx clock\n");
 		ret = PTR_ERR(gmac->tx_clk);
 		goto err_remove_config_dt;
 	}

@@ -68,11 +68,8 @@ static int dwc3_exynos_probe(struct platform_device *pdev)
 
 	for (i = 0; i < exynos->num_clks; i++) {
 		exynos->clks[i] = devm_clk_get(dev, exynos->clk_names[i]);
-		if (IS_ERR(exynos->clks[i])) {
-			dev_err(dev, "failed to get clock: %s\n",
-				exynos->clk_names[i]);
+		if (IS_ERR(exynos->clks[i]))
 			return PTR_ERR(exynos->clks[i]);
-		}
 	}
 
 	for (i = 0; i < exynos->num_clks; i++) {

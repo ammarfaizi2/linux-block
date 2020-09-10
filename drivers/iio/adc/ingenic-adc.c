@@ -763,10 +763,8 @@ static int ingenic_adc_probe(struct platform_device *pdev)
 		return PTR_ERR(adc->base);
 
 	adc->clk = devm_clk_get(dev, "adc");
-	if (IS_ERR(adc->clk)) {
-		dev_err(dev, "Unable to get clock\n");
+	if (IS_ERR(adc->clk))
 		return PTR_ERR(adc->clk);
-	}
 
 	ret = clk_prepare_enable(adc->clk);
 	if (ret) {

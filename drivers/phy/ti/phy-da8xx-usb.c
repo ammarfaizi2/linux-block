@@ -158,16 +158,12 @@ static int da8xx_usb_phy_probe(struct platform_device *pdev)
 	}
 
 	d_phy->usb11_clk = devm_clk_get(dev, "usb1_clk48");
-	if (IS_ERR(d_phy->usb11_clk)) {
-		dev_err(dev, "Failed to get usb1_clk48\n");
+	if (IS_ERR(d_phy->usb11_clk))
 		return PTR_ERR(d_phy->usb11_clk);
-	}
 
 	d_phy->usb20_clk = devm_clk_get(dev, "usb0_clk48");
-	if (IS_ERR(d_phy->usb20_clk)) {
-		dev_err(dev, "Failed to get usb0_clk48\n");
+	if (IS_ERR(d_phy->usb20_clk))
 		return PTR_ERR(d_phy->usb20_clk);
-	}
 
 	d_phy->usb11_phy = devm_phy_create(dev, node, &da8xx_usb11_phy_ops);
 	if (IS_ERR(d_phy->usb11_phy)) {

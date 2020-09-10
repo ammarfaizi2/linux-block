@@ -798,16 +798,12 @@ static int tegra_nvec_probe(struct platform_device *pdev)
 		return -ENODEV;
 
 	i2c_clk = devm_clk_get(dev, "div-clk");
-	if (IS_ERR(i2c_clk)) {
-		dev_err(dev, "failed to get controller clock\n");
+	if (IS_ERR(i2c_clk))
 		return -ENODEV;
-	}
 
 	nvec->rst = devm_reset_control_get_exclusive(dev, "i2c");
-	if (IS_ERR(nvec->rst)) {
-		dev_err(dev, "failed to get controller reset\n");
+	if (IS_ERR(nvec->rst))
 		return PTR_ERR(nvec->rst);
-	}
 
 	nvec->base = base;
 	nvec->i2c_clk = i2c_clk;
@@ -826,10 +822,8 @@ static int tegra_nvec_probe(struct platform_device *pdev)
 	INIT_WORK(&nvec->tx_work, nvec_request_master);
 
 	nvec->gpiod = devm_gpiod_get(dev, "request", GPIOD_OUT_HIGH);
-	if (IS_ERR(nvec->gpiod)) {
-		dev_err(dev, "couldn't request gpio\n");
+	if (IS_ERR(nvec->gpiod))
 		return PTR_ERR(nvec->gpiod);
-	}
 
 	err = devm_request_irq(dev, nvec->irq, nvec_interrupt, 0,
 			       "nvec", nvec);

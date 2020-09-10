@@ -2007,10 +2007,8 @@ static int wm8995_probe(struct snd_soc_component *component)
 	ret = devm_regulator_bulk_get(component->dev,
 				      ARRAY_SIZE(wm8995->supplies),
 				      wm8995->supplies);
-	if (ret) {
-		dev_err(component->dev, "Failed to request supplies: %d\n", ret);
+	if (ret)
 		return ret;
-	}
 
 	wm8995->disable_nb[0].notifier_call = wm8995_regulator_event_0;
 	wm8995->disable_nb[1].notifier_call = wm8995_regulator_event_1;

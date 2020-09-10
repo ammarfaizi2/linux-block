@@ -2449,8 +2449,6 @@ static int wm5100_i2c_probe(struct i2c_client *i2c,
 				      ARRAY_SIZE(wm5100->core_supplies),
 				      wm5100->core_supplies);
 	if (ret != 0) {
-		dev_err(&i2c->dev, "Failed to request core supplies: %d\n",
-			ret);
 		goto err;
 	}
 

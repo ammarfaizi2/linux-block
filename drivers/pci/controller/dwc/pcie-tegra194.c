@@ -2102,18 +2102,12 @@ static int tegra_pcie_dw_probe(struct platform_device *pdev)
 	pcie->pex_ctl_supply = devm_regulator_get(dev, "vddio-pex-ctl");
 	if (IS_ERR(pcie->pex_ctl_supply)) {
 		ret = PTR_ERR(pcie->pex_ctl_supply);
-		if (ret != -EPROBE_DEFER)
-			dev_err(dev, "Failed to get regulator: %ld\n",
-				PTR_ERR(pcie->pex_ctl_supply));
 		return ret;
 	}
 
 	pcie->core_clk = devm_clk_get(dev, "core");
-	if (IS_ERR(pcie->core_clk)) {
-		dev_err(dev, "Failed to get core clock: %ld\n",
-			PTR_ERR(pcie->core_clk));
+	if (IS_ERR(pcie->core_clk))
 		return PTR_ERR(pcie->core_clk);
-	}
 
 	pcie->appl_res = platform_get_resource_byname(pdev, IORESOURCE_MEM,
 						      "appl");
@@ -2127,11 +2121,8 @@ static int tegra_pcie_dw_probe(struct platform_device *pdev)
 		return PTR_ERR(pcie->appl_base);
 
 	pcie->core_apb_rst = devm_reset_control_get(dev, "apb");
-	if (IS_ERR(pcie->core_apb_rst)) {
-		dev_err(dev, "Failed to get APB reset: %ld\n",
-			PTR_ERR(pcie->core_apb_rst));
+	if (IS_ERR(pcie->core_apb_rst))
 		return PTR_ERR(pcie->core_apb_rst);
-	}
 
 	phys = devm_kcalloc(dev, pcie->phy_count, sizeof(*phys), GFP_KERNEL);
 	if (!phys)
@@ -2182,11 +2173,8 @@ static int tegra_pcie_dw_probe(struct platform_device *pdev)
 		return PTR_ERR(pci->atu_base);
 
 	pcie->core_rst = devm_reset_control_get(dev, "core");
-	if (IS_ERR(pcie->core_rst)) {
-		dev_err(dev, "Failed to get core reset: %ld\n",
-			PTR_ERR(pcie->core_rst));
+	if (IS_ERR(pcie->core_rst))
 		return PTR_ERR(pcie->core_rst);
-	}
 
 	pp->irq = platform_get_irq_byname(pdev, "intr");
 	if (pp->irq < 0)

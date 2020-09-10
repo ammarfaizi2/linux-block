@@ -1281,7 +1281,6 @@ static int cyapa_probe(struct i2c_client *client,
 	cyapa->vcc = devm_regulator_get(dev, "vcc");
 	if (IS_ERR(cyapa->vcc)) {
 		error = PTR_ERR(cyapa->vcc);
-		dev_err(dev, "failed to get vcc regulator: %d\n", error);
 		return error;
 	}
 

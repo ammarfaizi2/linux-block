@@ -515,10 +515,8 @@ static int scaler_probe(struct platform_device *pdev)
 	for (i = 0; i < scaler->scaler_data->num_clk; ++i) {
 		scaler->clock[i] = devm_clk_get(dev,
 					      scaler->scaler_data->clk_name[i]);
-		if (IS_ERR(scaler->clock[i])) {
-			dev_err(dev, "failed to get clock\n");
+		if (IS_ERR(scaler->clock[i]))
 			return PTR_ERR(scaler->clock[i]);
-		}
 	}
 
 	pm_runtime_use_autosuspend(dev);

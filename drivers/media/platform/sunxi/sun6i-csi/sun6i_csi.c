@@ -850,22 +850,16 @@ static int sun6i_csi_resource_request(struct sun6i_csi_dev *sdev,
 	}
 
 	sdev->clk_mod = devm_clk_get(&pdev->dev, "mod");
-	if (IS_ERR(sdev->clk_mod)) {
-		dev_err(&pdev->dev, "Unable to acquire csi clock\n");
+	if (IS_ERR(sdev->clk_mod))
 		return PTR_ERR(sdev->clk_mod);
-	}
 
 	sdev->clk_ram = devm_clk_get(&pdev->dev, "ram");
-	if (IS_ERR(sdev->clk_ram)) {
-		dev_err(&pdev->dev, "Unable to acquire dram-csi clock\n");
+	if (IS_ERR(sdev->clk_ram))
 		return PTR_ERR(sdev->clk_ram);
-	}
 
 	sdev->rstc_bus = devm_reset_control_get_shared(&pdev->dev, NULL);
-	if (IS_ERR(sdev->rstc_bus)) {
-		dev_err(&pdev->dev, "Cannot get reset controller\n");
+	if (IS_ERR(sdev->rstc_bus))
 		return PTR_ERR(sdev->rstc_bus);
-	}
 
 	irq = platform_get_irq(pdev, 0);
 	if (irq < 0)

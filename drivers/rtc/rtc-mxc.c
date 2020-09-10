@@ -363,10 +363,8 @@ static int mxc_rtc_probe(struct platform_device *pdev)
 	}
 
 	pdata->clk_ipg = devm_clk_get(&pdev->dev, "ipg");
-	if (IS_ERR(pdata->clk_ipg)) {
-		dev_err(&pdev->dev, "unable to get ipg clock!\n");
+	if (IS_ERR(pdata->clk_ipg))
 		return PTR_ERR(pdata->clk_ipg);
-	}
 
 	ret = clk_prepare_enable(pdata->clk_ipg);
 	if (ret)
@@ -375,7 +373,6 @@ static int mxc_rtc_probe(struct platform_device *pdev)
 	pdata->clk_ref = devm_clk_get(&pdev->dev, "ref");
 	if (IS_ERR(pdata->clk_ref)) {
 		clk_disable_unprepare(pdata->clk_ipg);
-		dev_err(&pdev->dev, "unable to get ref clock!\n");
 		return PTR_ERR(pdata->clk_ref);
 	}
 

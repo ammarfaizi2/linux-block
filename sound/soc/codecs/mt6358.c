@@ -2409,10 +2409,8 @@ static int mt6358_codec_probe(struct snd_soc_component *cmpnt)
 	mt6358_codec_init_reg(priv);
 
 	priv->avdd_reg = devm_regulator_get(priv->dev, "Avdd");
-	if (IS_ERR(priv->avdd_reg)) {
-		dev_err(priv->dev, "%s() have no Avdd supply", __func__);
+	if (IS_ERR(priv->avdd_reg))
 		return PTR_ERR(priv->avdd_reg);
-	}
 
 	ret = regulator_enable(priv->avdd_reg);
 	if (ret)

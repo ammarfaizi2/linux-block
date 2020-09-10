@@ -166,7 +166,6 @@ static int pic32_sdhci_probe(struct platform_device *pdev)
 	sdhci_pdata->sys_clk = devm_clk_get(&pdev->dev, "sys_clk");
 	if (IS_ERR(sdhci_pdata->sys_clk)) {
 		ret = PTR_ERR(sdhci_pdata->sys_clk);
-		dev_err(&pdev->dev, "Error getting clock\n");
 		goto err_host;
 	}
 
@@ -179,7 +178,6 @@ static int pic32_sdhci_probe(struct platform_device *pdev)
 	sdhci_pdata->base_clk = devm_clk_get(&pdev->dev, "base_clk");
 	if (IS_ERR(sdhci_pdata->base_clk)) {
 		ret = PTR_ERR(sdhci_pdata->base_clk);
-		dev_err(&pdev->dev, "Error getting clock\n");
 		goto err_sys_clk;
 	}
 

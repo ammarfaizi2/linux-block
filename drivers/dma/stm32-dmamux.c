@@ -254,8 +254,6 @@ static int stm32_dmamux_probe(struct platform_device *pdev)
 	stm32_dmamux->clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(stm32_dmamux->clk)) {
 		ret = PTR_ERR(stm32_dmamux->clk);
-		if (ret != -EPROBE_DEFER)
-			dev_err(&pdev->dev, "Missing clock controller\n");
 		return ret;
 	}
 

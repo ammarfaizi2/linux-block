@@ -1230,10 +1230,8 @@ static struct rk_priv_data *rk_gmac_setup(struct platform_device *pdev,
 	bsp_priv->regulator = devm_regulator_get_optional(dev, "phy");
 	if (IS_ERR(bsp_priv->regulator)) {
 		if (PTR_ERR(bsp_priv->regulator) == -EPROBE_DEFER) {
-			dev_err(dev, "phy regulator is not available yet, deferred probing\n");
 			return ERR_PTR(-EPROBE_DEFER);
 		}
-		dev_err(dev, "no regulator found\n");
 		bsp_priv->regulator = NULL;
 	}
 

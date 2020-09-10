@@ -402,8 +402,6 @@ static int hi6220_thermal_probe(struct hisi_thermal_data *data)
 	data->clk = devm_clk_get(dev, "thermal_clk");
 	if (IS_ERR(data->clk)) {
 		ret = PTR_ERR(data->clk);
-		if (ret != -EPROBE_DEFER)
-			dev_err(dev, "failed to get thermal clk: %d\n", ret);
 		return ret;
 	}
 

@@ -283,7 +283,6 @@ static int ak4104_spi_probe(struct spi_device *spi)
 	ak4104->regulator = devm_regulator_get(&spi->dev, "vdd");
 	if (IS_ERR(ak4104->regulator)) {
 		ret = PTR_ERR(ak4104->regulator);
-		dev_err(&spi->dev, "Unable to get Vdd regulator: %d\n", ret);
 		return ret;
 	}
 

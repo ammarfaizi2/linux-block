@@ -459,10 +459,8 @@ static int dw9768_probe(struct i2c_client *client)
 
 	ret = devm_regulator_bulk_get(dev, ARRAY_SIZE(dw9768_supply_names),
 				      dw9768->supplies);
-	if (ret) {
-		dev_err(dev, "failed to get regulators\n");
+	if (ret)
 		return ret;
-	}
 
 	/* Initialize controls */
 	ret = dw9768_init_controls(dw9768);

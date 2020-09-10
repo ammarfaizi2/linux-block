@@ -56,22 +56,16 @@ static int mtk_musb_clks_get(struct mtk_glue *glue)
 	struct device *dev = glue->dev;
 
 	glue->main = devm_clk_get(dev, "main");
-	if (IS_ERR(glue->main)) {
-		dev_err(dev, "fail to get main clock\n");
+	if (IS_ERR(glue->main))
 		return PTR_ERR(glue->main);
-	}
 
 	glue->mcu = devm_clk_get(dev, "mcu");
-	if (IS_ERR(glue->mcu)) {
-		dev_err(dev, "fail to get mcu clock\n");
+	if (IS_ERR(glue->mcu))
 		return PTR_ERR(glue->mcu);
-	}
 
 	glue->univpll = devm_clk_get(dev, "univpll");
-	if (IS_ERR(glue->univpll)) {
-		dev_err(dev, "fail to get univpll clock\n");
+	if (IS_ERR(glue->univpll))
 		return PTR_ERR(glue->univpll);
-	}
 
 	return 0;
 }

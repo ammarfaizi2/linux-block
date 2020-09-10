@@ -735,17 +735,13 @@ static int ingenic_drm_bind(struct device *dev)
 
 	if (soc_info->needs_dev_clk) {
 		priv->lcd_clk = devm_clk_get(dev, "lcd");
-		if (IS_ERR(priv->lcd_clk)) {
-			dev_err(dev, "Failed to get lcd clock\n");
+		if (IS_ERR(priv->lcd_clk))
 			return PTR_ERR(priv->lcd_clk);
-		}
 	}
 
 	priv->pix_clk = devm_clk_get(dev, "lcd_pclk");
-	if (IS_ERR(priv->pix_clk)) {
-		dev_err(dev, "Failed to get pixel clock\n");
+	if (IS_ERR(priv->pix_clk))
 		return PTR_ERR(priv->pix_clk);
-	}
 
 	priv->dma_hwdesc_f1 = dmam_alloc_coherent(dev, sizeof(*priv->dma_hwdesc_f1),
 						  &priv->dma_hwdesc_phys_f1,

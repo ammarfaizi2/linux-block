@@ -206,17 +206,13 @@ static int asm9260_wdt_get_dt_clks(struct asm9260_wdt_priv *priv)
 	unsigned long clk;
 
 	priv->clk = devm_clk_get(priv->dev, "mod");
-	if (IS_ERR(priv->clk)) {
-		dev_err(priv->dev, "Failed to get \"mod\" clk\n");
+	if (IS_ERR(priv->clk))
 		return PTR_ERR(priv->clk);
-	}
 
 	/* configure AHB clock */
 	priv->clk_ahb = devm_clk_get(priv->dev, "ahb");
-	if (IS_ERR(priv->clk_ahb)) {
-		dev_err(priv->dev, "Failed to get \"ahb\" clk\n");
+	if (IS_ERR(priv->clk_ahb))
 		return PTR_ERR(priv->clk_ahb);
-	}
 
 	err = clk_prepare_enable(priv->clk_ahb);
 	if (err) {

@@ -417,7 +417,6 @@ static int da9052_hwmon_probe(struct platform_device *pdev)
 		hwmon->tsiref = devm_regulator_get(pdev->dev.parent, "tsiref");
 		if (IS_ERR(hwmon->tsiref)) {
 			err = PTR_ERR(hwmon->tsiref);
-			dev_err(&pdev->dev, "failed to get tsiref: %d", err);
 			return err;
 		}
 

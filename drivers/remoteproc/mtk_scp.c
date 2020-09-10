@@ -565,7 +565,6 @@ static int scp_probe(struct platform_device *pdev)
 
 	scp->clk = devm_clk_get(dev, "main");
 	if (IS_ERR(scp->clk)) {
-		dev_err(dev, "Failed to get clock\n");
 		ret = PTR_ERR(scp->clk);
 		goto release_dev_mem;
 	}

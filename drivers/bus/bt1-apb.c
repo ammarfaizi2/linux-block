@@ -199,10 +199,8 @@ static int bt1_apb_request_clk(struct bt1_apb *apb)
 	int ret;
 
 	apb->pclk = devm_clk_get(apb->dev, "pclk");
-	if (IS_ERR(apb->pclk)) {
-		dev_err(apb->dev, "Couldn't get APB clock descriptor\n");
+	if (IS_ERR(apb->pclk))
 		return PTR_ERR(apb->pclk);
-	}
 
 	ret = clk_prepare_enable(apb->pclk);
 	if (ret) {

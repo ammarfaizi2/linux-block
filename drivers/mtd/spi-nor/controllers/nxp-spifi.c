@@ -399,16 +399,12 @@ static int nxp_spifi_probe(struct platform_device *pdev)
 		return PTR_ERR(spifi->flash_base);
 
 	spifi->clk_spifi = devm_clk_get(&pdev->dev, "spifi");
-	if (IS_ERR(spifi->clk_spifi)) {
-		dev_err(&pdev->dev, "spifi clock not found\n");
+	if (IS_ERR(spifi->clk_spifi))
 		return PTR_ERR(spifi->clk_spifi);
-	}
 
 	spifi->clk_reg = devm_clk_get(&pdev->dev, "reg");
-	if (IS_ERR(spifi->clk_reg)) {
-		dev_err(&pdev->dev, "reg clock not found\n");
+	if (IS_ERR(spifi->clk_reg))
 		return PTR_ERR(spifi->clk_reg);
-	}
 
 	ret = clk_prepare_enable(spifi->clk_reg);
 	if (ret) {

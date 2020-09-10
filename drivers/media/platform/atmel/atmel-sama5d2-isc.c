@@ -178,7 +178,6 @@ static int atmel_isc_probe(struct platform_device *pdev)
 	isc->hclock = devm_clk_get(dev, "hclock");
 	if (IS_ERR(isc->hclock)) {
 		ret = PTR_ERR(isc->hclock);
-		dev_err(dev, "failed to get hclock: %d\n", ret);
 		return ret;
 	}
 

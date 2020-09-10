@@ -556,11 +556,8 @@ int cs42xx8_probe(struct device *dev, struct regmap *regmap)
 	gpiod_set_value_cansleep(cs42xx8->gpiod_reset, 0);
 
 	cs42xx8->clk = devm_clk_get(dev, "mclk");
-	if (IS_ERR(cs42xx8->clk)) {
-		dev_err(dev, "failed to get the clock: %ld\n",
-				PTR_ERR(cs42xx8->clk));
+	if (IS_ERR(cs42xx8->clk))
 		return -EINVAL;
-	}
 
 	cs42xx8->sysclk = clk_get_rate(cs42xx8->clk);
 
@@ -569,10 +566,8 @@ int cs42xx8_probe(struct device *dev, struct regmap *regmap)
 
 	ret = devm_regulator_bulk_get(dev,
 			ARRAY_SIZE(cs42xx8->supplies), cs42xx8->supplies);
-	if (ret) {
-		dev_err(dev, "failed to request supplies: %d\n", ret);
+	if (ret)
 		return ret;
-	}
 
 	ret = regulator_bulk_enable(ARRAY_SIZE(cs42xx8->supplies),
 				    cs42xx8->supplies);

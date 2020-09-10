@@ -1150,11 +1150,8 @@ static int gsc_probe(struct platform_device *pdev)
 
 	for (i = 0; i < gsc->num_clocks; i++) {
 		gsc->clock[i] = devm_clk_get(dev, drv_data->clk_names[i]);
-		if (IS_ERR(gsc->clock[i])) {
-			dev_err(dev, "failed to get clock: %s\n",
-				drv_data->clk_names[i]);
+		if (IS_ERR(gsc->clock[i]))
 			return PTR_ERR(gsc->clock[i]);
-		}
 	}
 
 	for (i = 0; i < gsc->num_clocks; i++) {

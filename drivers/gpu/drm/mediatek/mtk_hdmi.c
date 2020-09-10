@@ -1731,7 +1731,6 @@ static int mtk_drm_hdmi_probe(struct platform_device *pdev)
 	hdmi->phy = devm_phy_get(dev, "hdmi");
 	if (IS_ERR(hdmi->phy)) {
 		ret = PTR_ERR(hdmi->phy);
-		dev_err(dev, "Failed to get HDMI PHY: %d\n", ret);
 		return ret;
 	}
 

@@ -86,28 +86,20 @@ static int xhci_histb_clks_get(struct xhci_hcd_histb *histb)
 	struct device *dev = histb->dev;
 
 	histb->bus_clk = devm_clk_get(dev, "bus");
-	if (IS_ERR(histb->bus_clk)) {
-		dev_err(dev, "fail to get bus clk\n");
+	if (IS_ERR(histb->bus_clk))
 		return PTR_ERR(histb->bus_clk);
-	}
 
 	histb->utmi_clk = devm_clk_get(dev, "utmi");
-	if (IS_ERR(histb->utmi_clk)) {
-		dev_err(dev, "fail to get utmi clk\n");
+	if (IS_ERR(histb->utmi_clk))
 		return PTR_ERR(histb->utmi_clk);
-	}
 
 	histb->pipe_clk = devm_clk_get(dev, "pipe");
-	if (IS_ERR(histb->pipe_clk)) {
-		dev_err(dev, "fail to get pipe clk\n");
+	if (IS_ERR(histb->pipe_clk))
 		return PTR_ERR(histb->pipe_clk);
-	}
 
 	histb->suspend_clk = devm_clk_get(dev, "suspend");
-	if (IS_ERR(histb->suspend_clk)) {
-		dev_err(dev, "fail to get suspend clk\n");
+	if (IS_ERR(histb->suspend_clk))
 		return PTR_ERR(histb->suspend_clk);
-	}
 
 	return 0;
 }
@@ -228,10 +220,8 @@ static int xhci_histb_probe(struct platform_device *pdev)
 		return ret;
 
 	histb->soft_reset = devm_reset_control_get(dev, "soft");
-	if (IS_ERR(histb->soft_reset)) {
-		dev_err(dev, "failed to get soft reset\n");
+	if (IS_ERR(histb->soft_reset))
 		return PTR_ERR(histb->soft_reset);
-	}
 
 	pm_runtime_enable(dev);
 	pm_runtime_get_sync(dev);

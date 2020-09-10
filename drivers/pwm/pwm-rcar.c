@@ -217,10 +217,8 @@ static int rcar_pwm_probe(struct platform_device *pdev)
 		return PTR_ERR(rcar_pwm->base);
 
 	rcar_pwm->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(rcar_pwm->clk)) {
-		dev_err(&pdev->dev, "cannot get clock\n");
+	if (IS_ERR(rcar_pwm->clk))
 		return PTR_ERR(rcar_pwm->clk);
-	}
 
 	platform_set_drvdata(pdev, rcar_pwm);
 

@@ -146,43 +146,31 @@ static int ls037v7dw01_probe(struct platform_device *pdev)
 	lcd->pdev = pdev;
 
 	lcd->vdd = devm_regulator_get(&pdev->dev, "envdd");
-	if (IS_ERR(lcd->vdd)) {
-		dev_err(&pdev->dev, "failed to get regulator\n");
+	if (IS_ERR(lcd->vdd))
 		return PTR_ERR(lcd->vdd);
-	}
 
 	lcd->ini_gpio = devm_gpiod_get(&pdev->dev, "enable", GPIOD_OUT_LOW);
-	if (IS_ERR(lcd->ini_gpio)) {
-		dev_err(&pdev->dev, "failed to get enable gpio\n");
+	if (IS_ERR(lcd->ini_gpio))
 		return PTR_ERR(lcd->ini_gpio);
-	}
 
 	lcd->resb_gpio = devm_gpiod_get(&pdev->dev, "reset", GPIOD_OUT_LOW);
-	if (IS_ERR(lcd->resb_gpio)) {
-		dev_err(&pdev->dev, "failed to get reset gpio\n");
+	if (IS_ERR(lcd->resb_gpio))
 		return PTR_ERR(lcd->resb_gpio);
-	}
 
 	lcd->mo_gpio = devm_gpiod_get_index(&pdev->dev, "mode", 0,
 					    GPIOD_OUT_LOW);
-	if (IS_ERR(lcd->mo_gpio)) {
-		dev_err(&pdev->dev, "failed to get mode[0] gpio\n");
+	if (IS_ERR(lcd->mo_gpio))
 		return PTR_ERR(lcd->mo_gpio);
-	}
 
 	lcd->lr_gpio = devm_gpiod_get_index(&pdev->dev, "mode", 1,
 					    GPIOD_OUT_LOW);
-	if (IS_ERR(lcd->lr_gpio)) {
-		dev_err(&pdev->dev, "failed to get mode[1] gpio\n");
+	if (IS_ERR(lcd->lr_gpio))
 		return PTR_ERR(lcd->lr_gpio);
-	}
 
 	lcd->ud_gpio = devm_gpiod_get_index(&pdev->dev, "mode", 2,
 					    GPIOD_OUT_LOW);
-	if (IS_ERR(lcd->ud_gpio)) {
-		dev_err(&pdev->dev, "failed to get mode[2] gpio\n");
+	if (IS_ERR(lcd->ud_gpio))
 		return PTR_ERR(lcd->ud_gpio);
-	}
 
 	drm_panel_init(&lcd->panel, &pdev->dev, &ls037v7dw01_funcs,
 		       DRM_MODE_CONNECTOR_DPI);

@@ -1507,16 +1507,12 @@ static int mxs_get_clks(struct mxs_auart_port *s,
 	}
 
 	s->clk = devm_clk_get(s->dev, "mod");
-	if (IS_ERR(s->clk)) {
-		dev_err(s->dev, "Failed to get \"mod\" clk\n");
+	if (IS_ERR(s->clk))
 		return PTR_ERR(s->clk);
-	}
 
 	s->clk_ahb = devm_clk_get(s->dev, "ahb");
-	if (IS_ERR(s->clk_ahb)) {
-		dev_err(s->dev, "Failed to get \"ahb\" clk\n");
+	if (IS_ERR(s->clk_ahb))
 		return PTR_ERR(s->clk_ahb);
-	}
 
 	err = clk_prepare_enable(s->clk_ahb);
 	if (err) {

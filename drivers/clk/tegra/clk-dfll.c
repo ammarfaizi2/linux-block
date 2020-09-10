@@ -1423,22 +1423,16 @@ static void dfll_set_default_params(struct tegra_dfll *td)
 static int dfll_init_clks(struct tegra_dfll *td)
 {
 	td->ref_clk = devm_clk_get(td->dev, "ref");
-	if (IS_ERR(td->ref_clk)) {
-		dev_err(td->dev, "missing ref clock\n");
+	if (IS_ERR(td->ref_clk))
 		return PTR_ERR(td->ref_clk);
-	}
 
 	td->soc_clk = devm_clk_get(td->dev, "soc");
-	if (IS_ERR(td->soc_clk)) {
-		dev_err(td->dev, "missing soc clock\n");
+	if (IS_ERR(td->soc_clk))
 		return PTR_ERR(td->soc_clk);
-	}
 
 	td->i2c_clk = devm_clk_get(td->dev, "i2c");
-	if (IS_ERR(td->i2c_clk)) {
-		dev_err(td->dev, "missing i2c clock\n");
+	if (IS_ERR(td->i2c_clk))
 		return PTR_ERR(td->i2c_clk);
-	}
 	td->i2c_clk_rate = clk_get_rate(td->i2c_clk);
 
 	return 0;
@@ -1952,10 +1946,8 @@ int tegra_dfll_register(struct platform_device *pdev,
 	td->soc = soc;
 
 	td->dvco_rst = devm_reset_control_get(td->dev, "dvco");
-	if (IS_ERR(td->dvco_rst)) {
-		dev_err(td->dev, "couldn't get dvco reset\n");
+	if (IS_ERR(td->dvco_rst))
 		return PTR_ERR(td->dvco_rst);
-	}
 
 	ret = dfll_fetch_common_params(td);
 	if (ret) {
@@ -1968,10 +1960,8 @@ int tegra_dfll_register(struct platform_device *pdev,
 		ret = dfll_fetch_pwm_params(td);
 	} else  {
 		td->vdd_reg = devm_regulator_get(td->dev, "vdd-cpu");
-		if (IS_ERR(td->vdd_reg)) {
-			dev_err(td->dev, "couldn't get vdd_cpu regulator\n");
+		if (IS_ERR(td->vdd_reg))
 			return PTR_ERR(td->vdd_reg);
-		}
 		td->pmu_if = TEGRA_DFLL_PMU_I2C;
 		ret = dfll_fetch_i2c_params(td);
 	}

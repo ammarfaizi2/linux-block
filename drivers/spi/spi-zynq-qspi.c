@@ -650,7 +650,6 @@ static int zynq_qspi_probe(struct platform_device *pdev)
 
 	xqspi->pclk = devm_clk_get(&pdev->dev, "pclk");
 	if (IS_ERR(xqspi->pclk)) {
-		dev_err(&pdev->dev, "pclk clock not found.\n");
 		ret = PTR_ERR(xqspi->pclk);
 		goto remove_master;
 	}
@@ -659,7 +658,6 @@ static int zynq_qspi_probe(struct platform_device *pdev)
 
 	xqspi->refclk = devm_clk_get(&pdev->dev, "ref_clk");
 	if (IS_ERR(xqspi->refclk)) {
-		dev_err(&pdev->dev, "ref_clk clock not found.\n");
 		ret = PTR_ERR(xqspi->refclk);
 		goto remove_master;
 	}

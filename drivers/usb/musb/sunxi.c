@@ -727,19 +727,14 @@ static int sunxi_musb_probe(struct platform_device *pdev)
 	}
 
 	glue->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(glue->clk)) {
-		dev_err(&pdev->dev, "Error getting clock: %ld\n",
-			PTR_ERR(glue->clk));
+	if (IS_ERR(glue->clk))
 		return PTR_ERR(glue->clk);
-	}
 
 	if (test_bit(SUNXI_MUSB_FL_HAS_RESET, &glue->flags)) {
 		glue->rst = devm_reset_control_get(&pdev->dev, NULL);
 		if (IS_ERR(glue->rst)) {
 			if (PTR_ERR(glue->rst) == -EPROBE_DEFER)
 				return -EPROBE_DEFER;
-			dev_err(&pdev->dev, "Error getting reset %ld\n",
-				PTR_ERR(glue->rst));
 			return PTR_ERR(glue->rst);
 		}
 	}
@@ -756,8 +751,6 @@ static int sunxi_musb_probe(struct platform_device *pdev)
 	if (IS_ERR(glue->phy)) {
 		if (PTR_ERR(glue->phy) == -EPROBE_DEFER)
 			return -EPROBE_DEFER;
-		dev_err(&pdev->dev, "Error getting phy %ld\n",
-			PTR_ERR(glue->phy));
 		return PTR_ERR(glue->phy);
 	}
 

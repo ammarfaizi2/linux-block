@@ -343,25 +343,16 @@ static int img_spdif_out_probe(struct platform_device *pdev)
 	spdif->base = base;
 
 	spdif->rst = devm_reset_control_get_exclusive(&pdev->dev, "rst");
-	if (IS_ERR(spdif->rst)) {
-		if (PTR_ERR(spdif->rst) != -EPROBE_DEFER)
-			dev_err(&pdev->dev, "No top level reset found\n");
+	if (IS_ERR(spdif->rst))
 		return PTR_ERR(spdif->rst);
-	}
 
 	spdif->clk_sys = devm_clk_get(&pdev->dev, "sys");
-	if (IS_ERR(spdif->clk_sys)) {
-		if (PTR_ERR(spdif->clk_sys) != -EPROBE_DEFER)
-			dev_err(dev, "Failed to acquire clock 'sys'\n");
+	if (IS_ERR(spdif->clk_sys))
 		return PTR_ERR(spdif->clk_sys);
-	}
 
 	spdif->clk_ref = devm_clk_get(&pdev->dev, "ref");
-	if (IS_ERR(spdif->clk_ref)) {
-		if (PTR_ERR(spdif->clk_ref) != -EPROBE_DEFER)
-			dev_err(dev, "Failed to acquire clock 'ref'\n");
+	if (IS_ERR(spdif->clk_ref))
 		return PTR_ERR(spdif->clk_ref);
-	}
 
 	pm_runtime_enable(&pdev->dev);
 	if (!pm_runtime_enabled(&pdev->dev)) {

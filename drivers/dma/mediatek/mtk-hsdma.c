@@ -917,11 +917,8 @@ static int mtk_hsdma_probe(struct platform_device *pdev)
 	}
 
 	hsdma->clk = devm_clk_get(&pdev->dev, "hsdma");
-	if (IS_ERR(hsdma->clk)) {
-		dev_err(&pdev->dev, "No clock for %s\n",
-			dev_name(&pdev->dev));
+	if (IS_ERR(hsdma->clk))
 		return PTR_ERR(hsdma->clk);
-	}
 
 	res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
 	if (!res) {

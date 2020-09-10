@@ -1600,16 +1600,12 @@ static int tegra_uart_probe(struct platform_device *pdev)
 		return PTR_ERR(u->membase);
 
 	tup->uart_clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(tup->uart_clk)) {
-		dev_err(&pdev->dev, "Couldn't get the clock\n");
+	if (IS_ERR(tup->uart_clk))
 		return PTR_ERR(tup->uart_clk);
-	}
 
 	tup->rst = devm_reset_control_get_exclusive(&pdev->dev, "serial");
-	if (IS_ERR(tup->rst)) {
-		dev_err(&pdev->dev, "Couldn't get the reset\n");
+	if (IS_ERR(tup->rst))
 		return PTR_ERR(tup->rst);
-	}
 
 	u->iotype = UPIO_MEM32;
 	ret = platform_get_irq(pdev, 0);

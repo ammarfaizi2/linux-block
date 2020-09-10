@@ -995,21 +995,18 @@ static int tegra_vde_probe(struct platform_device *pdev)
 	vde->clk = devm_clk_get(dev, NULL);
 	if (IS_ERR(vde->clk)) {
 		err = PTR_ERR(vde->clk);
-		dev_err(dev, "Could not get VDE clk %d\n", err);
 		return err;
 	}
 
 	vde->rst = devm_reset_control_get(dev, NULL);
 	if (IS_ERR(vde->rst)) {
 		err = PTR_ERR(vde->rst);
-		dev_err(dev, "Could not get VDE reset %d\n", err);
 		return err;
 	}
 
 	vde->rst_mc = devm_reset_control_get_optional(dev, "mc");
 	if (IS_ERR(vde->rst_mc)) {
 		err = PTR_ERR(vde->rst_mc);
-		dev_err(dev, "Could not get MC reset %d\n", err);
 		return err;
 	}
 

@@ -231,10 +231,8 @@ static int qcom_wdt_probe(struct platform_device *pdev)
 		return PTR_ERR(wdt->base);
 
 	clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(clk)) {
-		dev_err(dev, "failed to get input clock\n");
+	if (IS_ERR(clk))
 		return PTR_ERR(clk);
-	}
 
 	ret = clk_prepare_enable(clk);
 	if (ret) {

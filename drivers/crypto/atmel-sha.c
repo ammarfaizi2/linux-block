@@ -2603,7 +2603,6 @@ static int atmel_sha_probe(struct platform_device *pdev)
 	/* Initializing the clock */
 	sha_dd->iclk = devm_clk_get(&pdev->dev, "sha_clk");
 	if (IS_ERR(sha_dd->iclk)) {
-		dev_err(dev, "clock initialization failed.\n");
 		err = PTR_ERR(sha_dd->iclk);
 		goto err_tasklet_kill;
 	}

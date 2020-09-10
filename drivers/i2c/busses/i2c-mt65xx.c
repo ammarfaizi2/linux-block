@@ -1207,16 +1207,12 @@ static int mtk_i2c_probe(struct platform_device *pdev)
 		return -EINVAL;
 
 	i2c->clk_main = devm_clk_get(&pdev->dev, "main");
-	if (IS_ERR(i2c->clk_main)) {
-		dev_err(&pdev->dev, "cannot get main clock\n");
+	if (IS_ERR(i2c->clk_main))
 		return PTR_ERR(i2c->clk_main);
-	}
 
 	i2c->clk_dma = devm_clk_get(&pdev->dev, "dma");
-	if (IS_ERR(i2c->clk_dma)) {
-		dev_err(&pdev->dev, "cannot get dma clock\n");
+	if (IS_ERR(i2c->clk_dma))
 		return PTR_ERR(i2c->clk_dma);
-	}
 
 	i2c->clk_arb = devm_clk_get(&pdev->dev, "arb");
 	if (IS_ERR(i2c->clk_arb))
@@ -1225,10 +1221,8 @@ static int mtk_i2c_probe(struct platform_device *pdev)
 	clk = i2c->clk_main;
 	if (i2c->have_pmic) {
 		i2c->clk_pmic = devm_clk_get(&pdev->dev, "pmic");
-		if (IS_ERR(i2c->clk_pmic)) {
-			dev_err(&pdev->dev, "cannot get pmic clock\n");
+		if (IS_ERR(i2c->clk_pmic))
 			return PTR_ERR(i2c->clk_pmic);
-		}
 		clk = i2c->clk_pmic;
 	}
 

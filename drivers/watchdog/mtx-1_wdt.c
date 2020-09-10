@@ -201,10 +201,8 @@ static int mtx1_wdt_probe(struct platform_device *pdev)
 
 	mtx1_wdt_device.gpiod = devm_gpiod_get(&pdev->dev,
 					       NULL, GPIOD_OUT_HIGH);
-	if (IS_ERR(mtx1_wdt_device.gpiod)) {
-		dev_err(&pdev->dev, "failed to request gpio");
+	if (IS_ERR(mtx1_wdt_device.gpiod))
 		return PTR_ERR(mtx1_wdt_device.gpiod);
-	}
 
 	spin_lock_init(&mtx1_wdt_device.lock);
 	init_completion(&mtx1_wdt_device.stop);

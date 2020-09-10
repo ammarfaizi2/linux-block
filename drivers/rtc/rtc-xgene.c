@@ -163,10 +163,8 @@ static int xgene_rtc_probe(struct platform_device *pdev)
 	}
 
 	pdata->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(pdata->clk)) {
-		dev_err(&pdev->dev, "Couldn't get the clock for RTC\n");
+	if (IS_ERR(pdata->clk))
 		return -ENODEV;
-	}
 	ret = clk_prepare_enable(pdata->clk);
 	if (ret)
 		return ret;

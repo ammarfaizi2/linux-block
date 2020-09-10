@@ -392,10 +392,8 @@ static int xlp_spi_probe(struct platform_device *pdev)
 	}
 
 	clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(clk)) {
-		dev_err(&pdev->dev, "could not get spi clock\n");
+	if (IS_ERR(clk))
 		return PTR_ERR(clk);
-	}
 
 	xspi->spi_clk = clk_get_rate(clk);
 

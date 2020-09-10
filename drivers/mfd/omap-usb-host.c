@@ -656,8 +656,6 @@ static int usbhs_omap_probe(struct platform_device *pdev)
 							    "usbhost_120m_fck");
 			if (IS_ERR(omap->ehci_logic_fck)) {
 				ret = PTR_ERR(omap->ehci_logic_fck);
-				dev_err(dev, "usbhost_120m_fck failed:%d\n",
-					ret);
 				goto err_mem;
 			}
 		}
@@ -668,35 +666,30 @@ static int usbhs_omap_probe(struct platform_device *pdev)
 	omap->utmi_p1_gfclk = devm_clk_get(dev, "utmi_p1_gfclk");
 	if (IS_ERR(omap->utmi_p1_gfclk)) {
 		ret = PTR_ERR(omap->utmi_p1_gfclk);
-		dev_err(dev, "utmi_p1_gfclk failed error:%d\n", ret);
 		goto err_mem;
 	}
 
 	omap->utmi_p2_gfclk = devm_clk_get(dev, "utmi_p2_gfclk");
 	if (IS_ERR(omap->utmi_p2_gfclk)) {
 		ret = PTR_ERR(omap->utmi_p2_gfclk);
-		dev_err(dev, "utmi_p2_gfclk failed error:%d\n", ret);
 		goto err_mem;
 	}
 
 	omap->xclk60mhsp1_ck = devm_clk_get(dev, "refclk_60m_ext_p1");
 	if (IS_ERR(omap->xclk60mhsp1_ck)) {
 		ret = PTR_ERR(omap->xclk60mhsp1_ck);
-		dev_err(dev, "refclk_60m_ext_p1 failed error:%d\n", ret);
 		goto err_mem;
 	}
 
 	omap->xclk60mhsp2_ck = devm_clk_get(dev, "refclk_60m_ext_p2");
 	if (IS_ERR(omap->xclk60mhsp2_ck)) {
 		ret = PTR_ERR(omap->xclk60mhsp2_ck);
-		dev_err(dev, "refclk_60m_ext_p2 failed error:%d\n", ret);
 		goto err_mem;
 	}
 
 	omap->init_60m_fclk = devm_clk_get(dev, "refclk_60m_int");
 	if (IS_ERR(omap->init_60m_fclk)) {
 		ret = PTR_ERR(omap->init_60m_fclk);
-		dev_err(dev, "refclk_60m_int failed error:%d\n", ret);
 		goto err_mem;
 	}
 
@@ -714,8 +707,6 @@ static int usbhs_omap_probe(struct platform_device *pdev)
 		omap->utmi_clk[i] = devm_clk_get(dev, clkname);
 		if (IS_ERR(omap->utmi_clk[i])) {
 			ret = PTR_ERR(omap->utmi_clk[i]);
-			dev_err(dev, "Failed to get clock : %s : %d\n",
-				clkname, ret);
 			goto err_mem;
 		}
 
@@ -724,8 +715,6 @@ static int usbhs_omap_probe(struct platform_device *pdev)
 		omap->hsic480m_clk[i] = devm_clk_get(dev, clkname);
 		if (IS_ERR(omap->hsic480m_clk[i])) {
 			ret = PTR_ERR(omap->hsic480m_clk[i]);
-			dev_err(dev, "Failed to get clock : %s : %d\n",
-				clkname, ret);
 			goto err_mem;
 		}
 
@@ -734,8 +723,6 @@ static int usbhs_omap_probe(struct platform_device *pdev)
 		omap->hsic60m_clk[i] = devm_clk_get(dev, clkname);
 		if (IS_ERR(omap->hsic60m_clk[i])) {
 			ret = PTR_ERR(omap->hsic60m_clk[i]);
-			dev_err(dev, "Failed to get clock : %s : %d\n",
-				clkname, ret);
 			goto err_mem;
 		}
 	}

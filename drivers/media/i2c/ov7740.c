@@ -1082,8 +1082,6 @@ static int ov7740_probe(struct i2c_client *client)
 	ov7740->xvclk = devm_clk_get(&client->dev, "xvclk");
 	if (IS_ERR(ov7740->xvclk)) {
 		ret = PTR_ERR(ov7740->xvclk);
-		dev_err(&client->dev,
-			"OV7740: fail to get xvclk: %d\n", ret);
 		return ret;
 	}
 

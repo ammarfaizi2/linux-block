@@ -371,7 +371,6 @@ static int ingenic_nand_init_chip(struct platform_device *pdev,
 
 	if (IS_ERR(nand->busy_gpio)) {
 		ret = PTR_ERR(nand->busy_gpio);
-		dev_err(dev, "failed to request busy GPIO: %d\n", ret);
 		return ret;
 	}
 
@@ -391,7 +390,6 @@ static int ingenic_nand_init_chip(struct platform_device *pdev,
 
 	if (IS_ERR(nand->wp_gpio)) {
 		ret = PTR_ERR(nand->wp_gpio);
-		dev_err(dev, "failed to request WP GPIO: %d\n", ret);
 		return ret;
 	}
 

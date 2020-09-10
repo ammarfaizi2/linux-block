@@ -185,10 +185,8 @@ static int pic32_dmt_probe(struct platform_device *pdev)
 		return PTR_ERR(dmt->regs);
 
 	dmt->clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(dmt->clk)) {
-		dev_err(dev, "clk not found\n");
+	if (IS_ERR(dmt->clk))
 		return PTR_ERR(dmt->clk);
-	}
 
 	ret = clk_prepare_enable(dmt->clk);
 	if (ret)

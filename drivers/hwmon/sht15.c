@@ -966,13 +966,11 @@ static int sht15_probe(struct platform_device *pdev)
 	data->sck = devm_gpiod_get(&pdev->dev, "clk", GPIOD_OUT_LOW);
 	if (IS_ERR(data->sck)) {
 		ret = PTR_ERR(data->sck);
-		dev_err(&pdev->dev, "clock line GPIO request failed\n");
 		goto err_release_reg;
 	}
 	data->data = devm_gpiod_get(&pdev->dev, "data", GPIOD_IN);
 	if (IS_ERR(data->data)) {
 		ret = PTR_ERR(data->data);
-		dev_err(&pdev->dev, "data line GPIO request failed\n");
 		goto err_release_reg;
 	}
 

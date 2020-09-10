@@ -340,10 +340,9 @@ static int s3c24xx_i2s_probe(struct snd_soc_dai *dai)
 					&s3c24xx_i2s_pcm_stereo_in);
 
 	s3c24xx_i2s.iis_clk = devm_clk_get(dai->dev, "iis");
-	if (IS_ERR(s3c24xx_i2s.iis_clk)) {
-		pr_err("failed to get iis_clock\n");
+	if (IS_ERR(s3c24xx_i2s.iis_clk))
 		return PTR_ERR(s3c24xx_i2s.iis_clk);
-	}
+
 	ret = clk_prepare_enable(s3c24xx_i2s.iis_clk);
 	if (ret)
 		return ret;

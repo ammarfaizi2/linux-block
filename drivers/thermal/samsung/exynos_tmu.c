@@ -1041,7 +1041,6 @@ static int exynos_tmu_probe(struct platform_device *pdev)
 
 	data->clk = devm_clk_get(&pdev->dev, "tmu_apbif");
 	if (IS_ERR(data->clk)) {
-		dev_err(&pdev->dev, "Failed to get clock\n");
 		ret = PTR_ERR(data->clk);
 		goto err_sensor;
 	}

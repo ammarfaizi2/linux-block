@@ -110,10 +110,8 @@ static int spear_thermal_probe(struct platform_device *pdev)
 		return PTR_ERR(stdev->thermal_base);
 
 	stdev->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(stdev->clk)) {
-		dev_err(&pdev->dev, "Can't get clock\n");
+	if (IS_ERR(stdev->clk))
 		return PTR_ERR(stdev->clk);
-	}
 
 	ret = clk_enable(stdev->clk);
 	if (ret) {

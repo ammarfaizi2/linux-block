@@ -713,10 +713,8 @@ static int tas2552_probe(struct i2c_client *client,
 
 	ret = devm_regulator_bulk_get(dev, ARRAY_SIZE(data->supplies),
 				      data->supplies);
-	if (ret != 0) {
-		dev_err(dev, "Failed to request supplies: %d\n", ret);
+	if (ret != 0)
 		return ret;
-	}
 
 	pm_runtime_set_active(&client->dev);
 	pm_runtime_set_autosuspend_delay(&client->dev, 1000);

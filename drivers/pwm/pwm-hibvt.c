@@ -199,11 +199,8 @@ static int hibvt_pwm_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	pwm_chip->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(pwm_chip->clk)) {
-		dev_err(&pdev->dev, "getting clock failed with %ld\n",
-				PTR_ERR(pwm_chip->clk));
+	if (IS_ERR(pwm_chip->clk))
 		return PTR_ERR(pwm_chip->clk);
-	}
 
 	pwm_chip->chip.ops = &hibvt_pwm_ops;
 	pwm_chip->chip.dev = &pdev->dev;

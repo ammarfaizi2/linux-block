@@ -173,10 +173,8 @@ static int keyscan_probe(struct platform_device *pdev)
 		return PTR_ERR(keypad_data->base);
 
 	keypad_data->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(keypad_data->clk)) {
-		dev_err(&pdev->dev, "cannot get clock\n");
+	if (IS_ERR(keypad_data->clk))
 		return PTR_ERR(keypad_data->clk);
-	}
 
 	error = clk_enable(keypad_data->clk);
 	if (error) {

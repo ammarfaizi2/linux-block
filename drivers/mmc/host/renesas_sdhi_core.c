@@ -797,7 +797,6 @@ int renesas_sdhi_probe(struct platform_device *pdev,
 	priv->clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(priv->clk)) {
 		ret = PTR_ERR(priv->clk);
-		dev_err(&pdev->dev, "cannot get clock: %d\n", ret);
 		return ret;
 	}
 

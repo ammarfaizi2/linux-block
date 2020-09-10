@@ -178,18 +178,14 @@ imx_dwmac_parse_dt(struct imx_priv_data *dwmac, struct device *dev)
 		dwmac->rmii_refclk_ext = true;
 
 	dwmac->clk_tx = devm_clk_get(dev, "tx");
-	if (IS_ERR(dwmac->clk_tx)) {
-		dev_err(dev, "failed to get tx clock\n");
+	if (IS_ERR(dwmac->clk_tx))
 		return PTR_ERR(dwmac->clk_tx);
-	}
 
 	dwmac->clk_mem = NULL;
 	if (of_machine_is_compatible("fsl,imx8dxl")) {
 		dwmac->clk_mem = devm_clk_get(dev, "mem");
-		if (IS_ERR(dwmac->clk_mem)) {
-			dev_err(dev, "failed to get mem clock\n");
+		if (IS_ERR(dwmac->clk_mem))
 			return PTR_ERR(dwmac->clk_mem);
-		}
 	}
 
 	if (of_machine_is_compatible("fsl,imx8mp")) {

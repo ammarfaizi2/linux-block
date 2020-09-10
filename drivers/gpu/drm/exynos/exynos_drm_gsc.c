@@ -1259,11 +1259,8 @@ static int gsc_probe(struct platform_device *pdev)
 	/* clock control */
 	for (i = 0; i < ctx->num_clocks; i++) {
 		ctx->clocks[i] = devm_clk_get(dev, ctx->clk_names[i]);
-		if (IS_ERR(ctx->clocks[i])) {
-			dev_err(dev, "failed to get clock: %s\n",
-				ctx->clk_names[i]);
+		if (IS_ERR(ctx->clocks[i]))
 			return PTR_ERR(ctx->clocks[i]);
-		}
 	}
 
 	/* resource memory */

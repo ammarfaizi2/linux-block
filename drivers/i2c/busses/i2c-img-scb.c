@@ -1346,16 +1346,12 @@ static int img_i2c_probe(struct platform_device *pdev)
 		return irq;
 
 	i2c->sys_clk = devm_clk_get(&pdev->dev, "sys");
-	if (IS_ERR(i2c->sys_clk)) {
-		dev_err(&pdev->dev, "can't get system clock\n");
+	if (IS_ERR(i2c->sys_clk))
 		return PTR_ERR(i2c->sys_clk);
-	}
 
 	i2c->scb_clk = devm_clk_get(&pdev->dev, "scb");
-	if (IS_ERR(i2c->scb_clk)) {
-		dev_err(&pdev->dev, "can't get core clock\n");
+	if (IS_ERR(i2c->scb_clk))
 		return PTR_ERR(i2c->scb_clk);
-	}
 
 	ret = devm_request_irq(&pdev->dev, irq, img_i2c_isr, 0,
 			       pdev->name, i2c);

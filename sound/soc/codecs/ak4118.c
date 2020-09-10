@@ -378,16 +378,12 @@ static int ak4118_i2c_probe(struct i2c_client *i2c,
 	ak4118->reset = devm_gpiod_get(&i2c->dev, "reset", GPIOD_OUT_HIGH);
 	if (IS_ERR(ak4118->reset)) {
 		ret = PTR_ERR(ak4118->reset);
-		if (ret != -EPROBE_DEFER)
-			dev_err(&i2c->dev, "Failed to get reset: %d\n", ret);
 		return ret;
 	}
 
 	ak4118->irq = devm_gpiod_get(&i2c->dev, "irq", GPIOD_IN);
 	if (IS_ERR(ak4118->irq)) {
 		ret = PTR_ERR(ak4118->irq);
-		if (ret != -EPROBE_DEFER)
-			dev_err(&i2c->dev, "Failed to get IRQ: %d\n", ret);
 		return ret;
 	}
 

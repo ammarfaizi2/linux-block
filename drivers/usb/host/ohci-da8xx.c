@@ -388,16 +388,12 @@ static int ohci_da8xx_probe(struct platform_device *pdev)
 	da8xx_ohci->usb11_clk = devm_clk_get(dev, NULL);
 	if (IS_ERR(da8xx_ohci->usb11_clk)) {
 		error = PTR_ERR(da8xx_ohci->usb11_clk);
-		if (error != -EPROBE_DEFER)
-			dev_err(dev, "Failed to get clock.\n");
 		goto err;
 	}
 
 	da8xx_ohci->usb11_phy = devm_phy_get(dev, "usb-phy");
 	if (IS_ERR(da8xx_ohci->usb11_phy)) {
 		error = PTR_ERR(da8xx_ohci->usb11_phy);
-		if (error != -EPROBE_DEFER)
-			dev_err(dev, "Failed to get phy.\n");
 		goto err;
 	}
 

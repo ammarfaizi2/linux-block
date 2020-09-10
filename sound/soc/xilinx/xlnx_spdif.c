@@ -251,7 +251,6 @@ static int xlnx_spdif_probe(struct platform_device *pdev)
 	ctx->axi_clk = devm_clk_get(dev, "s_axi_aclk");
 	if (IS_ERR(ctx->axi_clk)) {
 		ret = PTR_ERR(ctx->axi_clk);
-		dev_err(dev, "failed to get s_axi_aclk(%d)\n", ret);
 		return ret;
 	}
 	ret = clk_prepare_enable(ctx->axi_clk);

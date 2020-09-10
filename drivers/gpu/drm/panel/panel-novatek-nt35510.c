@@ -923,10 +923,8 @@ static int nt35510_probe(struct mipi_dsi_device *dsi)
 		return ret;
 
 	nt->reset_gpio = devm_gpiod_get_optional(dev, "reset", GPIOD_ASIS);
-	if (IS_ERR(nt->reset_gpio)) {
-		dev_err(dev, "error getting RESET GPIO\n");
+	if (IS_ERR(nt->reset_gpio))
 		return PTR_ERR(nt->reset_gpio);
-	}
 
 	drm_panel_init(&nt->panel, dev, &nt35510_drm_funcs,
 		       DRM_MODE_CONNECTOR_DSI);

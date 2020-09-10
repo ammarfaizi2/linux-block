@@ -377,9 +377,6 @@ static int madera_get_reset_gpio(struct madera *madera)
 	reset = devm_gpiod_get_optional(madera->dev, "reset", GPIOD_OUT_LOW);
 	if (IS_ERR(reset)) {
 		ret = PTR_ERR(reset);
-		if (ret != -EPROBE_DEFER)
-			dev_err(madera->dev, "Failed to request /RESET: %d\n",
-				ret);
 		return ret;
 	}
 
@@ -466,10 +463,8 @@ int madera_dev_init(struct madera *madera)
 
 	ret = devm_clk_bulk_get_optional(madera->dev, ARRAY_SIZE(madera->mclk),
 					 madera->mclk);
-	if (ret) {
-		dev_err(madera->dev, "Failed to get clocks: %d\n", ret);
+	if (ret)
 		return ret;
-	}
 
 	/* Not using devm_clk_get to prevent breakage of existing DTs */
 	if (!madera->mclk[MADERA_MCLK2].clk)
@@ -521,7 +516,6 @@ int madera_dev_init(struct madera *madera)
 	ret = devm_regulator_bulk_get(dev, madera->num_core_supplies,
 				      madera->core_supplies);
 	if (ret) {
-		dev_err(dev, "Failed to request core supplies: %d\n", ret);
 		goto err_devs;
 	}
 

@@ -2451,10 +2451,8 @@ static int cs43130_i2c_probe(struct i2c_client *client,
 	ret = devm_regulator_bulk_get(&client->dev,
 				      ARRAY_SIZE(cs43130->supplies),
 				      cs43130->supplies);
-	if (ret != 0) {
-		dev_err(&client->dev, "Failed to request supplies: %d\n", ret);
+	if (ret != 0)
 		return ret;
-	}
 	ret = regulator_bulk_enable(ARRAY_SIZE(cs43130->supplies),
 				    cs43130->supplies);
 	if (ret != 0) {

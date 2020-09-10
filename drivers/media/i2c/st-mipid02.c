@@ -956,10 +956,8 @@ static int mipid02_probe(struct i2c_client *client)
 
 	/* got and check clock */
 	bridge->xclk = devm_clk_get(dev, "xclk");
-	if (IS_ERR(bridge->xclk)) {
-		dev_err(dev, "failed to get xclk\n");
+	if (IS_ERR(bridge->xclk))
 		return PTR_ERR(bridge->xclk);
-	}
 
 	clk_freq = clk_get_rate(bridge->xclk);
 	if (clk_freq < 6000000 || clk_freq > 27000000) {
@@ -971,10 +969,8 @@ static int mipid02_probe(struct i2c_client *client)
 	bridge->reset_gpio = devm_gpiod_get_optional(dev, "reset",
 						     GPIOD_OUT_HIGH);
 
-	if (IS_ERR(bridge->reset_gpio)) {
-		dev_err(dev, "failed to get reset GPIO\n");
+	if (IS_ERR(bridge->reset_gpio))
 		return PTR_ERR(bridge->reset_gpio);
-	}
 
 	ret = mipid02_get_regulators(bridge);
 	if (ret) {

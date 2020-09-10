@@ -965,10 +965,8 @@ static int imx214_probe(struct i2c_client *client)
 	imx214->dev = dev;
 
 	imx214->xclk = devm_clk_get(dev, NULL);
-	if (IS_ERR(imx214->xclk)) {
-		dev_err(dev, "could not get xclk");
+	if (IS_ERR(imx214->xclk))
 		return PTR_ERR(imx214->xclk);
-	}
 
 	ret = clk_set_rate(imx214->xclk, IMX214_DEFAULT_CLK_FREQ);
 	if (ret) {
@@ -983,10 +981,8 @@ static int imx214_probe(struct i2c_client *client)
 	}
 
 	imx214->enable_gpio = devm_gpiod_get(dev, "enable", GPIOD_OUT_LOW);
-	if (IS_ERR(imx214->enable_gpio)) {
-		dev_err(dev, "cannot get enable gpio\n");
+	if (IS_ERR(imx214->enable_gpio))
 		return PTR_ERR(imx214->enable_gpio);
-	}
 
 	imx214->regmap = devm_regmap_init_i2c(client, &sensor_regmap_config);
 	if (IS_ERR(imx214->regmap)) {

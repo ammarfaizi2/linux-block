@@ -1968,11 +1968,8 @@ static int stm32f7_i2c_probe(struct platform_device *pdev)
 						    "wakeup-source");
 
 	i2c_dev->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(i2c_dev->clk)) {
-		if (PTR_ERR(i2c_dev->clk) != -EPROBE_DEFER)
-			dev_err(&pdev->dev, "Failed to get controller clock\n");
+	if (IS_ERR(i2c_dev->clk))
 		return PTR_ERR(i2c_dev->clk);
-	}
 
 	ret = clk_prepare_enable(i2c_dev->clk);
 	if (ret) {
@@ -1983,8 +1980,6 @@ static int stm32f7_i2c_probe(struct platform_device *pdev)
 	rst = devm_reset_control_get(&pdev->dev, NULL);
 	if (IS_ERR(rst)) {
 		ret = PTR_ERR(rst);
-		if (ret != -EPROBE_DEFER)
-			dev_err(&pdev->dev, "Error: Missing reset ctrl\n");
 
 		goto clk_free;
 	}

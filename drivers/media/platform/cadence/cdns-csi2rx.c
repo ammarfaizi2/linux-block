@@ -290,22 +290,16 @@ static int csi2rx_get_resources(struct csi2rx_priv *csi2rx,
 		return PTR_ERR(csi2rx->base);
 
 	csi2rx->sys_clk = devm_clk_get(&pdev->dev, "sys_clk");
-	if (IS_ERR(csi2rx->sys_clk)) {
-		dev_err(&pdev->dev, "Couldn't get sys clock\n");
+	if (IS_ERR(csi2rx->sys_clk))
 		return PTR_ERR(csi2rx->sys_clk);
-	}
 
 	csi2rx->p_clk = devm_clk_get(&pdev->dev, "p_clk");
-	if (IS_ERR(csi2rx->p_clk)) {
-		dev_err(&pdev->dev, "Couldn't get P clock\n");
+	if (IS_ERR(csi2rx->p_clk))
 		return PTR_ERR(csi2rx->p_clk);
-	}
 
 	csi2rx->dphy = devm_phy_optional_get(&pdev->dev, "dphy");
-	if (IS_ERR(csi2rx->dphy)) {
-		dev_err(&pdev->dev, "Couldn't get external D-PHY\n");
+	if (IS_ERR(csi2rx->dphy))
 		return PTR_ERR(csi2rx->dphy);
-	}
 
 	/*
 	 * FIXME: Once we'll have external D-PHY support, the check
@@ -350,10 +344,8 @@ static int csi2rx_get_resources(struct csi2rx_priv *csi2rx,
 
 		snprintf(clk_name, sizeof(clk_name), "pixel_if%u_clk", i);
 		csi2rx->pixel_clk[i] = devm_clk_get(&pdev->dev, clk_name);
-		if (IS_ERR(csi2rx->pixel_clk[i])) {
-			dev_err(&pdev->dev, "Couldn't get clock %s\n", clk_name);
+		if (IS_ERR(csi2rx->pixel_clk[i]))
 			return PTR_ERR(csi2rx->pixel_clk[i]);
-		}
 	}
 
 	return 0;

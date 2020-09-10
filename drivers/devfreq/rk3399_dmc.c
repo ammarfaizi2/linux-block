@@ -328,7 +328,6 @@ static int rk3399_dmcfreq_probe(struct platform_device *pdev)
 		if (PTR_ERR(data->vdd_center) == -EPROBE_DEFER)
 			return -EPROBE_DEFER;
 
-		dev_err(dev, "Cannot get the regulator \"center\"\n");
 		return PTR_ERR(data->vdd_center);
 	}
 
@@ -337,7 +336,6 @@ static int rk3399_dmcfreq_probe(struct platform_device *pdev)
 		if (PTR_ERR(data->dmc_clk) == -EPROBE_DEFER)
 			return -EPROBE_DEFER;
 
-		dev_err(dev, "Cannot get the clk dmc_clk\n");
 		return PTR_ERR(data->dmc_clk);
 	}
 

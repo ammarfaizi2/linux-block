@@ -150,10 +150,8 @@ static int max1241_probe(struct spi_device *spi)
 	spi_set_drvdata(spi, indio_dev);
 
 	adc->vdd = devm_regulator_get(dev, "vdd");
-	if (IS_ERR(adc->vdd)) {
-		dev_err(dev, "failed to get vdd regulator\n");
+	if (IS_ERR(adc->vdd))
 		return PTR_ERR(adc->vdd);
-	}
 
 	ret = regulator_enable(adc->vdd);
 	if (ret)
@@ -166,10 +164,8 @@ static int max1241_probe(struct spi_device *spi)
 	}
 
 	adc->vref = devm_regulator_get(dev, "vref");
-	if (IS_ERR(adc->vref)) {
-		dev_err(dev, "failed to get vref regulator\n");
+	if (IS_ERR(adc->vref))
 		return PTR_ERR(adc->vref);
-	}
 
 	ret = regulator_enable(adc->vref);
 	if (ret)

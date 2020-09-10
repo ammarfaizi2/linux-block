@@ -219,10 +219,8 @@ static int zx2967_wdt_probe(struct platform_device *pdev)
 	zx2967_wdt_reset_sysctrl(dev);
 
 	wdt->clock = devm_clk_get(dev, NULL);
-	if (IS_ERR(wdt->clock)) {
-		dev_err(dev, "failed to find watchdog clock source\n");
+	if (IS_ERR(wdt->clock))
 		return PTR_ERR(wdt->clock);
-	}
 
 	ret = clk_prepare_enable(wdt->clock);
 	if (ret < 0) {
@@ -236,10 +234,8 @@ static int zx2967_wdt_probe(struct platform_device *pdev)
 	clk_set_rate(wdt->clock, ZX2967_WDT_CLK_FREQ);
 
 	rstc = devm_reset_control_get_exclusive(dev, NULL);
-	if (IS_ERR(rstc)) {
-		dev_err(dev, "failed to get rstc");
+	if (IS_ERR(rstc))
 		return PTR_ERR(rstc);
-	}
 
 	reset_control_assert(rstc);
 	reset_control_deassert(rstc);

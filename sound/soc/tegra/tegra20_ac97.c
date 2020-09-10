@@ -315,7 +315,6 @@ static int tegra20_ac97_platform_probe(struct platform_device *pdev)
 
 	ac97->clk_ac97 = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(ac97->clk_ac97)) {
-		dev_err(&pdev->dev, "Can't retrieve ac97 clock\n");
 		ret = PTR_ERR(ac97->clk_ac97);
 		goto err;
 	}

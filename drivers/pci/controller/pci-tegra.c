@@ -1322,7 +1322,6 @@ static int tegra_pcie_phys_get_legacy(struct tegra_pcie *pcie)
 	pcie->phy = devm_phy_optional_get(dev, "pcie");
 	if (IS_ERR(pcie->phy)) {
 		err = PTR_ERR(pcie->phy);
-		dev_err(dev, "failed to get PHY: %d\n", err);
 		return err;
 	}
 

@@ -356,46 +356,32 @@ static int histb_pcie_probe(struct platform_device *pdev)
 	}
 
 	hipcie->aux_clk = devm_clk_get(dev, "aux");
-	if (IS_ERR(hipcie->aux_clk)) {
-		dev_err(dev, "Failed to get PCIe aux clk\n");
+	if (IS_ERR(hipcie->aux_clk))
 		return PTR_ERR(hipcie->aux_clk);
-	}
 
 	hipcie->pipe_clk = devm_clk_get(dev, "pipe");
-	if (IS_ERR(hipcie->pipe_clk)) {
-		dev_err(dev, "Failed to get PCIe pipe clk\n");
+	if (IS_ERR(hipcie->pipe_clk))
 		return PTR_ERR(hipcie->pipe_clk);
-	}
 
 	hipcie->sys_clk = devm_clk_get(dev, "sys");
-	if (IS_ERR(hipcie->sys_clk)) {
-		dev_err(dev, "Failed to get PCIEe sys clk\n");
+	if (IS_ERR(hipcie->sys_clk))
 		return PTR_ERR(hipcie->sys_clk);
-	}
 
 	hipcie->bus_clk = devm_clk_get(dev, "bus");
-	if (IS_ERR(hipcie->bus_clk)) {
-		dev_err(dev, "Failed to get PCIe bus clk\n");
+	if (IS_ERR(hipcie->bus_clk))
 		return PTR_ERR(hipcie->bus_clk);
-	}
 
 	hipcie->soft_reset = devm_reset_control_get(dev, "soft");
-	if (IS_ERR(hipcie->soft_reset)) {
-		dev_err(dev, "couldn't get soft reset\n");
+	if (IS_ERR(hipcie->soft_reset))
 		return PTR_ERR(hipcie->soft_reset);
-	}
 
 	hipcie->sys_reset = devm_reset_control_get(dev, "sys");
-	if (IS_ERR(hipcie->sys_reset)) {
-		dev_err(dev, "couldn't get sys reset\n");
+	if (IS_ERR(hipcie->sys_reset))
 		return PTR_ERR(hipcie->sys_reset);
-	}
 
 	hipcie->bus_reset = devm_reset_control_get(dev, "bus");
-	if (IS_ERR(hipcie->bus_reset)) {
-		dev_err(dev, "couldn't get bus reset\n");
+	if (IS_ERR(hipcie->bus_reset))
 		return PTR_ERR(hipcie->bus_reset);
-	}
 
 	if (IS_ENABLED(CONFIG_PCI_MSI)) {
 		pp->msi_irq = platform_get_irq_byname(pdev, "msi");

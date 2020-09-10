@@ -1063,7 +1063,6 @@ static int iqs5xx_probe(struct i2c_client *client,
 					    "reset", GPIOD_OUT_LOW);
 	if (IS_ERR(iqs5xx->reset_gpio)) {
 		error = PTR_ERR(iqs5xx->reset_gpio);
-		dev_err(&client->dev, "Failed to request GPIO: %d\n", error);
 		return error;
 	}
 

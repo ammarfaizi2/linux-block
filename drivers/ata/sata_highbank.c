@@ -188,7 +188,6 @@ static void highbank_set_em_messages(struct device *dev,
 		gpiod = devm_gpiod_get_index(dev, "calxeda,sgpio", i,
 					     GPIOD_OUT_HIGH);
 		if (IS_ERR(gpiod)) {
-			dev_err(dev, "failed to get GPIO %d\n", i);
 			continue;
 		}
 		gpiod_set_consumer_name(gpiod, "CX SGPIO");

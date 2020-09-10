@@ -93,10 +93,8 @@ static int tegra_uart_probe(struct platform_device *pdev)
 	if (device_property_read_u32(&pdev->dev, "clock-frequency",
 				     &port->uartclk)) {
 		uart->clk = devm_clk_get(&pdev->dev, NULL);
-		if (IS_ERR(uart->clk)) {
-			dev_err(&pdev->dev, "failed to get clock!\n");
+		if (IS_ERR(uart->clk))
 			return -ENODEV;
-		}
 
 		ret = clk_prepare_enable(uart->clk);
 		if (ret < 0)

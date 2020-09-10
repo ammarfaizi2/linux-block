@@ -717,10 +717,8 @@ static int es8316_probe(struct snd_soc_component *component)
 	es8316->component = component;
 
 	es8316->mclk = devm_clk_get_optional(component->dev, "mclk");
-	if (IS_ERR(es8316->mclk)) {
-		dev_err(component->dev, "unable to get mclk\n");
+	if (IS_ERR(es8316->mclk))
 		return PTR_ERR(es8316->mclk);
-	}
 	if (!es8316->mclk)
 		dev_warn(component->dev, "assuming static mclk\n");
 

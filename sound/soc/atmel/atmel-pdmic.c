@@ -600,14 +600,12 @@ static int atmel_pdmic_probe(struct platform_device *pdev)
 	dd->pclk = devm_clk_get(dev, "pclk");
 	if (IS_ERR(dd->pclk)) {
 		ret = PTR_ERR(dd->pclk);
-		dev_err(dev, "failed to get peripheral clock: %d\n", ret);
 		return ret;
 	}
 
 	dd->gclk = devm_clk_get(dev, "gclk");
 	if (IS_ERR(dd->gclk)) {
 		ret = PTR_ERR(dd->gclk);
-		dev_err(dev, "failed to get GCK: %d\n", ret);
 		return ret;
 	}
 

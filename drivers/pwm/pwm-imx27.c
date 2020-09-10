@@ -318,21 +318,12 @@ static int pwm_imx27_probe(struct platform_device *pdev)
 	if (IS_ERR(imx->clk_ipg)) {
 		int ret = PTR_ERR(imx->clk_ipg);
 
-		if (ret != -EPROBE_DEFER)
-			dev_err(&pdev->dev,
-				"getting ipg clock failed with %d\n",
-				ret);
 		return ret;
 	}
 
 	imx->clk_per = devm_clk_get(&pdev->dev, "per");
 	if (IS_ERR(imx->clk_per)) {
 		int ret = PTR_ERR(imx->clk_per);
-
-		if (ret != -EPROBE_DEFER)
-			dev_err(&pdev->dev,
-				"failed to get peripheral clock: %d\n",
-				ret);
 
 		return ret;
 	}

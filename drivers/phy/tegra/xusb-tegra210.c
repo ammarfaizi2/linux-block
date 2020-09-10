@@ -1294,7 +1294,6 @@ tegra210_usb2_pad_probe(struct tegra_xusb_padctl *padctl,
 	usb2->clk = devm_clk_get(&pad->dev, "trk");
 	if (IS_ERR(usb2->clk)) {
 		err = PTR_ERR(usb2->clk);
-		dev_err(&pad->dev, "failed to get trk clock: %d\n", err);
 		goto unregister;
 	}
 
@@ -1545,7 +1544,6 @@ tegra210_hsic_pad_probe(struct tegra_xusb_padctl *padctl,
 	hsic->clk = devm_clk_get(&pad->dev, "trk");
 	if (IS_ERR(hsic->clk)) {
 		err = PTR_ERR(hsic->clk);
-		dev_err(&pad->dev, "failed to get trk clock: %d\n", err);
 		goto unregister;
 	}
 
@@ -1722,14 +1720,12 @@ tegra210_pcie_pad_probe(struct tegra_xusb_padctl *padctl,
 	pcie->pll = devm_clk_get(&pad->dev, "pll");
 	if (IS_ERR(pcie->pll)) {
 		err = PTR_ERR(pcie->pll);
-		dev_err(&pad->dev, "failed to get PLL: %d\n", err);
 		goto unregister;
 	}
 
 	pcie->rst = devm_reset_control_get(&pad->dev, "phy");
 	if (IS_ERR(pcie->rst)) {
 		err = PTR_ERR(pcie->rst);
-		dev_err(&pad->dev, "failed to get PCIe pad reset: %d\n", err);
 		goto unregister;
 	}
 
@@ -1893,7 +1889,6 @@ tegra210_sata_pad_probe(struct tegra_xusb_padctl *padctl,
 	sata->rst = devm_reset_control_get(&pad->dev, "phy");
 	if (IS_ERR(sata->rst)) {
 		err = PTR_ERR(sata->rst);
-		dev_err(&pad->dev, "failed to get SATA pad reset: %d\n", err);
 		goto unregister;
 	}
 

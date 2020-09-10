@@ -844,10 +844,8 @@ static int tegra_adma_probe(struct platform_device *pdev)
 		return PTR_ERR(tdma->base_addr);
 
 	tdma->ahub_clk = devm_clk_get(&pdev->dev, "d_audio");
-	if (IS_ERR(tdma->ahub_clk)) {
-		dev_err(&pdev->dev, "Error: Missing ahub controller clock\n");
+	if (IS_ERR(tdma->ahub_clk))
 		return PTR_ERR(tdma->ahub_clk);
-	}
 
 	INIT_LIST_HEAD(&tdma->dma_dev.channels);
 	for (i = 0; i < tdma->nr_channels; i++) {

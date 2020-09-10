@@ -1443,7 +1443,6 @@ static int sh_mmcif_probe(struct platform_device *pdev)
 	host->clk = devm_clk_get(dev, NULL);
 	if (IS_ERR(host->clk)) {
 		ret = PTR_ERR(host->clk);
-		dev_err(dev, "cannot get clock: %d\n", ret);
 		goto err_host;
 	}
 

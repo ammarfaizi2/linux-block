@@ -1407,8 +1407,6 @@ static int bcm2835_probe(struct platform_device *pdev)
 	clk = devm_clk_get(dev, NULL);
 	if (IS_ERR(clk)) {
 		ret = PTR_ERR(clk);
-		if (ret != -EPROBE_DEFER)
-			dev_err(dev, "could not get clk: %d\n", ret);
 		goto err;
 	}
 

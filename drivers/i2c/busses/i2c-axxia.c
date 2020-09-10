@@ -750,10 +750,8 @@ static int axxia_i2c_probe(struct platform_device *pdev)
 		return idev->irq;
 
 	idev->i2c_clk = devm_clk_get(&pdev->dev, "i2c");
-	if (IS_ERR(idev->i2c_clk)) {
-		dev_err(&pdev->dev, "missing clock\n");
+	if (IS_ERR(idev->i2c_clk))
 		return PTR_ERR(idev->i2c_clk);
-	}
 
 	idev->base = base;
 	idev->dev = &pdev->dev;

@@ -167,14 +167,12 @@ static int ice40_fpga_probe(struct spi_device *spi)
 	priv->cdone = devm_gpiod_get(dev, "cdone", GPIOD_IN);
 	if (IS_ERR(priv->cdone)) {
 		ret = PTR_ERR(priv->cdone);
-		dev_err(dev, "Failed to get CDONE GPIO: %d\n", ret);
 		return ret;
 	}
 
 	priv->reset = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
 	if (IS_ERR(priv->reset)) {
 		ret = PTR_ERR(priv->reset);
-		dev_err(dev, "Failed to get CRESET_B GPIO: %d\n", ret);
 		return ret;
 	}
 

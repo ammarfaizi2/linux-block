@@ -419,10 +419,8 @@ static int realtek_smi_probe(struct platform_device *pdev)
 
 	/* Assert then deassert RESET */
 	smi->reset = devm_gpiod_get_optional(dev, "reset", GPIOD_OUT_HIGH);
-	if (IS_ERR(smi->reset)) {
-		dev_err(dev, "failed to get RESET GPIO\n");
+	if (IS_ERR(smi->reset))
 		return PTR_ERR(smi->reset);
-	}
 	msleep(REALTEK_SMI_HW_STOP_DELAY);
 	gpiod_set_value(smi->reset, 0);
 	msleep(REALTEK_SMI_HW_START_DELAY);

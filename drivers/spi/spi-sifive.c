@@ -314,7 +314,6 @@ static int sifive_spi_probe(struct platform_device *pdev)
 
 	spi->clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(spi->clk)) {
-		dev_err(&pdev->dev, "Unable to find bus clock\n");
 		ret = PTR_ERR(spi->clk);
 		goto put_master;
 	}

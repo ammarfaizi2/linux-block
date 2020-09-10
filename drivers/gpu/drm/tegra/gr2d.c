@@ -204,10 +204,8 @@ static int gr2d_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	gr2d->clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(gr2d->clk)) {
-		dev_err(dev, "cannot get clock\n");
+	if (IS_ERR(gr2d->clk))
 		return PTR_ERR(gr2d->clk);
-	}
 
 	err = clk_prepare_enable(gr2d->clk);
 	if (err) {

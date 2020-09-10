@@ -180,9 +180,6 @@ static int imx_get_clks(struct device *dev)
 		data->clk = devm_clk_get(dev, NULL);
 		if (IS_ERR(data->clk)) {
 			ret = PTR_ERR(data->clk);
-			dev_err(dev,
-				"Failed to get clks, err=%ld,%ld\n",
-				PTR_ERR(data->clk), PTR_ERR(data->clk_ipg));
 			return ret;
 		}
 		return ret;
@@ -191,16 +188,12 @@ static int imx_get_clks(struct device *dev)
 	data->clk_ahb = devm_clk_get(dev, "ahb");
 	if (IS_ERR(data->clk_ahb)) {
 		ret = PTR_ERR(data->clk_ahb);
-		dev_err(dev,
-			"Failed to get ahb clock, err=%d\n", ret);
 		return ret;
 	}
 
 	data->clk_per = devm_clk_get(dev, "per");
 	if (IS_ERR(data->clk_per)) {
 		ret = PTR_ERR(data->clk_per);
-		dev_err(dev,
-			"Failed to get per clock, err=%d\n", ret);
 		return ret;
 	}
 

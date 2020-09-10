@@ -248,10 +248,8 @@ static int exynos_bus_parse_of(struct device_node *np,
 
 	/* Get the clock to provide each bus with source clock */
 	bus->clk = devm_clk_get(dev, "bus");
-	if (IS_ERR(bus->clk)) {
-		dev_err(dev, "failed to get bus clock\n");
+	if (IS_ERR(bus->clk))
 		return PTR_ERR(bus->clk);
-	}
 
 	ret = clk_prepare_enable(bus->clk);
 	if (ret < 0) {

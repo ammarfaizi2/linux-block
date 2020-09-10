@@ -193,11 +193,8 @@ static int rkisp1_subdev_notifier_bound(struct v4l2_async_notifier *notifier,
 						V4L2_CID_PIXEL_RATE);
 	s_asd->sd = sd;
 	s_asd->dphy = devm_phy_get(rkisp1->dev, "dphy");
-	if (IS_ERR(s_asd->dphy)) {
-		if (PTR_ERR(s_asd->dphy) != -EPROBE_DEFER)
-			dev_err(rkisp1->dev, "Couldn't get the MIPI D-PHY\n");
+	if (IS_ERR(s_asd->dphy))
 		return PTR_ERR(s_asd->dphy);
-	}
 
 	phy_init(s_asd->dphy);
 

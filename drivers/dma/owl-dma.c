@@ -1147,10 +1147,8 @@ static int owl_dma_probe(struct platform_device *pdev)
 	INIT_LIST_HEAD(&od->dma.channels);
 
 	od->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(od->clk)) {
-		dev_err(&pdev->dev, "unable to get clock\n");
+	if (IS_ERR(od->clk))
 		return PTR_ERR(od->clk);
-	}
 
 	/*
 	 * Eventhough the DMA controller is capable of generating 4

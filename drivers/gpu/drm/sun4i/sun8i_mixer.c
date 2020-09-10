@@ -403,10 +403,8 @@ static int sun8i_mixer_bind(struct device *dev, struct device *master,
 	}
 
 	mixer->reset = devm_reset_control_get(dev, NULL);
-	if (IS_ERR(mixer->reset)) {
-		dev_err(dev, "Couldn't get our reset line\n");
+	if (IS_ERR(mixer->reset))
 		return PTR_ERR(mixer->reset);
-	}
 
 	ret = reset_control_deassert(mixer->reset);
 	if (ret) {
@@ -416,7 +414,6 @@ static int sun8i_mixer_bind(struct device *dev, struct device *master,
 
 	mixer->bus_clk = devm_clk_get(dev, "bus");
 	if (IS_ERR(mixer->bus_clk)) {
-		dev_err(dev, "Couldn't get the mixer bus clock\n");
 		ret = PTR_ERR(mixer->bus_clk);
 		goto err_assert_reset;
 	}
@@ -424,7 +421,6 @@ static int sun8i_mixer_bind(struct device *dev, struct device *master,
 
 	mixer->mod_clk = devm_clk_get(dev, "mod");
 	if (IS_ERR(mixer->mod_clk)) {
-		dev_err(dev, "Couldn't get the mixer module clock\n");
 		ret = PTR_ERR(mixer->mod_clk);
 		goto err_disable_bus_clk;
 	}

@@ -230,9 +230,6 @@ static int q6v5_regulator_init(struct device *dev, struct reg_info *regs,
 		regs[i].reg = devm_regulator_get(dev, reg_res[i].supply);
 		if (IS_ERR(regs[i].reg)) {
 			rc = PTR_ERR(regs[i].reg);
-			if (rc != -EPROBE_DEFER)
-				dev_err(dev, "Failed to get %s\n regulator",
-					reg_res[i].supply);
 			return rc;
 		}
 
@@ -1481,9 +1478,6 @@ static int q6v5_init_clocks(struct device *dev, struct clk **clks,
 		if (IS_ERR(clks[i])) {
 			int rc = PTR_ERR(clks[i]);
 
-			if (rc != -EPROBE_DEFER)
-				dev_err(dev, "Failed to get %s clock\n",
-					clk_names[i]);
 			return rc;
 		}
 	}
@@ -1534,18 +1528,14 @@ static int q6v5_init_reset(struct q6v5 *qproc)
 {
 	qproc->mss_restart = devm_reset_control_get_exclusive(qproc->dev,
 							      "mss_restart");
-	if (IS_ERR(qproc->mss_restart)) {
-		dev_err(qproc->dev, "failed to acquire mss restart\n");
+	if (IS_ERR(qproc->mss_restart))
 		return PTR_ERR(qproc->mss_restart);
-	}
 
 	if (qproc->has_alt_reset || qproc->has_spare_reg) {
 		qproc->pdc_reset = devm_reset_control_get_exclusive(qproc->dev,
 								    "pdc_reset");
-		if (IS_ERR(qproc->pdc_reset)) {
-			dev_err(qproc->dev, "failed to acquire pdc reset\n");
+		if (IS_ERR(qproc->pdc_reset))
 			return PTR_ERR(qproc->pdc_reset);
-		}
 	}
 
 	return 0;

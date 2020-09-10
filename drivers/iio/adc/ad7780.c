@@ -271,7 +271,6 @@ static int ad7780_init_gpios(struct device *dev, struct ad7780_state *st)
 						     GPIOD_OUT_LOW);
 	if (IS_ERR(st->powerdown_gpio)) {
 		ret = PTR_ERR(st->powerdown_gpio);
-		dev_err(dev, "Failed to request powerdown GPIO: %d\n", ret);
 		return ret;
 	}
 
@@ -284,7 +283,6 @@ static int ad7780_init_gpios(struct device *dev, struct ad7780_state *st)
 						GPIOD_OUT_HIGH);
 	if (IS_ERR(st->gain_gpio)) {
 		ret = PTR_ERR(st->gain_gpio);
-		dev_err(dev, "Failed to request gain GPIO: %d\n", ret);
 		return ret;
 	}
 
@@ -293,7 +291,6 @@ static int ad7780_init_gpios(struct device *dev, struct ad7780_state *st)
 						  GPIOD_OUT_HIGH);
 	if (IS_ERR(st->filter_gpio)) {
 		ret = PTR_ERR(st->filter_gpio);
-		dev_err(dev, "Failed to request filter GPIO: %d\n", ret);
 		return ret;
 	}
 

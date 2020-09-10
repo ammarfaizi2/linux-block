@@ -270,7 +270,6 @@ static int gpio_nand_probe(struct platform_device *pdev)
 						  GPIOD_OUT_HIGH);
 	if (IS_ERR(priv->gpiod_nwp)) {
 		err = PTR_ERR(priv->gpiod_nwp);
-		dev_err(&pdev->dev, "NWP GPIO request failed (%d)\n", err);
 		return err;
 	}
 
@@ -278,7 +277,6 @@ static int gpio_nand_probe(struct platform_device *pdev)
 						  GPIOD_OUT_LOW);
 	if (IS_ERR(priv->gpiod_nce)) {
 		err = PTR_ERR(priv->gpiod_nce);
-		dev_err(&pdev->dev, "NCE GPIO request failed (%d)\n", err);
 		return err;
 	}
 
@@ -286,7 +284,6 @@ static int gpio_nand_probe(struct platform_device *pdev)
 						  GPIOD_OUT_LOW);
 	if (IS_ERR(priv->gpiod_nre)) {
 		err = PTR_ERR(priv->gpiod_nre);
-		dev_err(&pdev->dev, "NRE GPIO request failed (%d)\n", err);
 		return err;
 	}
 
@@ -294,21 +291,18 @@ static int gpio_nand_probe(struct platform_device *pdev)
 						  GPIOD_OUT_LOW);
 	if (IS_ERR(priv->gpiod_nwe)) {
 		err = PTR_ERR(priv->gpiod_nwe);
-		dev_err(&pdev->dev, "NWE GPIO request failed (%d)\n", err);
 		return err;
 	}
 
 	priv->gpiod_ale = devm_gpiod_get(&pdev->dev, "ale", GPIOD_OUT_LOW);
 	if (IS_ERR(priv->gpiod_ale)) {
 		err = PTR_ERR(priv->gpiod_ale);
-		dev_err(&pdev->dev, "ALE GPIO request failed (%d)\n", err);
 		return err;
 	}
 
 	priv->gpiod_cle = devm_gpiod_get(&pdev->dev, "cle", GPIOD_OUT_LOW);
 	if (IS_ERR(priv->gpiod_cle)) {
 		err = PTR_ERR(priv->gpiod_cle);
-		dev_err(&pdev->dev, "CLE GPIO request failed (%d)\n", err);
 		return err;
 	}
 

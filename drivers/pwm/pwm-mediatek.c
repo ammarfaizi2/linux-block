@@ -229,18 +229,12 @@ static int pwm_mediatek_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	pc->clk_top = devm_clk_get(&pdev->dev, "top");
-	if (IS_ERR(pc->clk_top)) {
-		dev_err(&pdev->dev, "clock: top fail: %ld\n",
-			PTR_ERR(pc->clk_top));
+	if (IS_ERR(pc->clk_top))
 		return PTR_ERR(pc->clk_top);
-	}
 
 	pc->clk_main = devm_clk_get(&pdev->dev, "main");
-	if (IS_ERR(pc->clk_main)) {
-		dev_err(&pdev->dev, "clock: main fail: %ld\n",
-			PTR_ERR(pc->clk_main));
+	if (IS_ERR(pc->clk_main))
 		return PTR_ERR(pc->clk_main);
-	}
 
 	for (i = 0; i < pc->soc->num_pwms; i++) {
 		char name[8];
@@ -248,11 +242,8 @@ static int pwm_mediatek_probe(struct platform_device *pdev)
 		snprintf(name, sizeof(name), "pwm%d", i + 1);
 
 		pc->clk_pwms[i] = devm_clk_get(&pdev->dev, name);
-		if (IS_ERR(pc->clk_pwms[i])) {
-			dev_err(&pdev->dev, "clock: %s fail: %ld\n",
-				name, PTR_ERR(pc->clk_pwms[i]));
+		if (IS_ERR(pc->clk_pwms[i]))
 			return PTR_ERR(pc->clk_pwms[i]);
-		}
 	}
 
 	platform_set_drvdata(pdev, pc);

@@ -234,10 +234,8 @@ static int wcd934x_slim_probe(struct slim_device *sdev)
 	}
 
 	ddata->extclk = devm_clk_get(dev, "extclk");
-	if (IS_ERR(ddata->extclk)) {
-		dev_err(dev, "Failed to get extclk");
+	if (IS_ERR(ddata->extclk))
 		return PTR_ERR(ddata->extclk);
-	}
 
 	ddata->supplies[0].supply = "vdd-buck";
 	ddata->supplies[1].supply = "vdd-buck-sido";

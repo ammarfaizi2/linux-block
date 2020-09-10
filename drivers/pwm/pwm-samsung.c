@@ -547,10 +547,8 @@ static int pwm_samsung_probe(struct platform_device *pdev)
 		return PTR_ERR(chip->base);
 
 	chip->base_clk = devm_clk_get(&pdev->dev, "timers");
-	if (IS_ERR(chip->base_clk)) {
-		dev_err(dev, "failed to get timer base clk\n");
+	if (IS_ERR(chip->base_clk))
 		return PTR_ERR(chip->base_clk);
-	}
 
 	ret = clk_prepare_enable(chip->base_clk);
 	if (ret < 0) {

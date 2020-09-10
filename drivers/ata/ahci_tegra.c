@@ -513,28 +513,20 @@ static int tegra_ahci_probe(struct platform_device *pdev)
 	}
 
 	tegra->sata_rst = devm_reset_control_get(&pdev->dev, "sata");
-	if (IS_ERR(tegra->sata_rst)) {
-		dev_err(&pdev->dev, "Failed to get sata reset\n");
+	if (IS_ERR(tegra->sata_rst))
 		return PTR_ERR(tegra->sata_rst);
-	}
 
 	tegra->sata_oob_rst = devm_reset_control_get(&pdev->dev, "sata-oob");
-	if (IS_ERR(tegra->sata_oob_rst)) {
-		dev_err(&pdev->dev, "Failed to get sata-oob reset\n");
+	if (IS_ERR(tegra->sata_oob_rst))
 		return PTR_ERR(tegra->sata_oob_rst);
-	}
 
 	tegra->sata_cold_rst = devm_reset_control_get(&pdev->dev, "sata-cold");
-	if (IS_ERR(tegra->sata_cold_rst)) {
-		dev_err(&pdev->dev, "Failed to get sata-cold reset\n");
+	if (IS_ERR(tegra->sata_cold_rst))
 		return PTR_ERR(tegra->sata_cold_rst);
-	}
 
 	tegra->sata_clk = devm_clk_get(&pdev->dev, "sata");
-	if (IS_ERR(tegra->sata_clk)) {
-		dev_err(&pdev->dev, "Failed to get sata clock\n");
+	if (IS_ERR(tegra->sata_clk))
 		return PTR_ERR(tegra->sata_clk);
-	}
 
 	tegra->supplies = devm_kcalloc(&pdev->dev,
 				       tegra->soc->num_supplies,
@@ -549,10 +541,8 @@ static int tegra_ahci_probe(struct platform_device *pdev)
 	ret = devm_regulator_bulk_get(&pdev->dev,
 				      tegra->soc->num_supplies,
 				      tegra->supplies);
-	if (ret) {
-		dev_err(&pdev->dev, "Failed to get regulators\n");
+	if (ret)
 		return ret;
-	}
 
 	ret = tegra_ahci_controller_init(hpriv);
 	if (ret)

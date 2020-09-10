@@ -109,11 +109,8 @@ static int qcom_iris_probe(struct platform_device *pdev)
 	wcnss = dev_get_drvdata(pdev->dev.parent);
 
 	iris->xo_clk = devm_clk_get(&pdev->dev, "xo");
-	if (IS_ERR(iris->xo_clk)) {
-		if (PTR_ERR(iris->xo_clk) != -EPROBE_DEFER)
-			dev_err(&pdev->dev, "failed to acquire xo clk\n");
+	if (IS_ERR(iris->xo_clk))
 		return PTR_ERR(iris->xo_clk);
-	}
 
 	iris->num_vregs = data->num_vregs;
 	iris->vregs = devm_kcalloc(&pdev->dev,
@@ -127,10 +124,8 @@ static int qcom_iris_probe(struct platform_device *pdev)
 		iris->vregs[i].supply = data->vregs[i].name;
 
 	ret = devm_regulator_bulk_get(&pdev->dev, iris->num_vregs, iris->vregs);
-	if (ret) {
-		dev_err(&pdev->dev, "failed to get regulators\n");
+	if (ret)
 		return ret;
-	}
 
 	for (i = 0; i < iris->num_vregs; i++) {
 		if (data->vregs[i].max_voltage)

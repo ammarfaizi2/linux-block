@@ -468,14 +468,12 @@ static int tegra_sflash_probe(struct platform_device *pdev)
 
 	tsd->clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(tsd->clk)) {
-		dev_err(&pdev->dev, "can not get clock\n");
 		ret = PTR_ERR(tsd->clk);
 		goto exit_free_irq;
 	}
 
 	tsd->rst = devm_reset_control_get_exclusive(&pdev->dev, "spi");
 	if (IS_ERR(tsd->rst)) {
-		dev_err(&pdev->dev, "can not get reset\n");
 		ret = PTR_ERR(tsd->rst);
 		goto exit_free_irq;
 	}

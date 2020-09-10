@@ -106,16 +106,12 @@ static int exynos5440_pcie_get_clk_resources(struct exynos_pcie *ep)
 		return -ENOMEM;
 
 	ep->clk_res->clk = devm_clk_get(dev, "pcie");
-	if (IS_ERR(ep->clk_res->clk)) {
-		dev_err(dev, "Failed to get pcie rc clock\n");
+	if (IS_ERR(ep->clk_res->clk))
 		return PTR_ERR(ep->clk_res->clk);
-	}
 
 	ep->clk_res->bus_clk = devm_clk_get(dev, "pcie_bus");
-	if (IS_ERR(ep->clk_res->bus_clk)) {
-		dev_err(dev, "Failed to get pcie bus clock\n");
+	if (IS_ERR(ep->clk_res->bus_clk))
 		return PTR_ERR(ep->clk_res->bus_clk);
-	}
 
 	return 0;
 }

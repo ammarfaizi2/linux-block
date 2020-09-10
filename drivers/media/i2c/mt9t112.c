@@ -1090,10 +1090,8 @@ static int mt9t112_probe(struct i2c_client *client,
 
 	priv->standby_gpio = devm_gpiod_get_optional(&client->dev, "standby",
 						     GPIOD_OUT_HIGH);
-	if (IS_ERR(priv->standby_gpio)) {
-		dev_err(&client->dev, "Unable to get gpio \"standby\"\n");
+	if (IS_ERR(priv->standby_gpio))
 		return PTR_ERR(priv->standby_gpio);
-	}
 
 	ret = mt9t112_camera_probe(client);
 	if (ret)

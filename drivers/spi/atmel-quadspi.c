@@ -601,7 +601,6 @@ static int atmel_qspi_probe(struct platform_device *pdev)
 		/* Get the QSPI system clock */
 		aq->qspick = devm_clk_get(&pdev->dev, "qspick");
 		if (IS_ERR(aq->qspick)) {
-			dev_err(&pdev->dev, "missing system clock\n");
 			err = PTR_ERR(aq->qspick);
 			goto disable_pclk;
 		}

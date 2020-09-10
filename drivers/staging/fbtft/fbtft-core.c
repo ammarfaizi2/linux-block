@@ -82,8 +82,6 @@ static int fbtft_request_one_gpio(struct fbtft_par *par,
 					       GPIOD_OUT_HIGH);
 	if (IS_ERR(*gpiop)) {
 		ret = PTR_ERR(*gpiop);
-		dev_err(dev,
-			"Failed to request %s GPIO: %d\n", name, ret);
 		return ret;
 	}
 	fbtft_par_dbg(DEBUG_REQUEST_GPIOS, par, "%s: '%s' GPIO\n",

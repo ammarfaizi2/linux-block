@@ -1216,10 +1216,8 @@ static int fsl_spdif_probe_txclk(struct fsl_spdif_priv *spdif_priv,
 	for (i = 0; i < STC_TXCLK_SRC_MAX; i++) {
 		sprintf(tmp, "rxtx%d", i);
 		clk = devm_clk_get(&pdev->dev, tmp);
-		if (IS_ERR(clk)) {
-			dev_err(dev, "no rxtx%d clock in devicetree\n", i);
+		if (IS_ERR(clk))
 			return PTR_ERR(clk);
-		}
 		if (!clk_get_rate(clk))
 			continue;
 
@@ -1304,17 +1302,13 @@ static int fsl_spdif_probe(struct platform_device *pdev)
 
 	/* Get system clock for rx clock rate calculation */
 	spdif_priv->sysclk = devm_clk_get(&pdev->dev, "rxtx5");
-	if (IS_ERR(spdif_priv->sysclk)) {
-		dev_err(&pdev->dev, "no sys clock (rxtx5) in devicetree\n");
+	if (IS_ERR(spdif_priv->sysclk))
 		return PTR_ERR(spdif_priv->sysclk);
-	}
 
 	/* Get core clock for data register access via DMA */
 	spdif_priv->coreclk = devm_clk_get(&pdev->dev, "core");
-	if (IS_ERR(spdif_priv->coreclk)) {
-		dev_err(&pdev->dev, "no core clock in devicetree\n");
+	if (IS_ERR(spdif_priv->coreclk))
 		return PTR_ERR(spdif_priv->coreclk);
-	}
 
 	spdif_priv->spbaclk = devm_clk_get_optional(&pdev->dev, "spba");
 	if (IS_ERR(spdif_priv->spbaclk))
@@ -1322,10 +1316,8 @@ static int fsl_spdif_probe(struct platform_device *pdev)
 
 	/* Select clock source for rx/tx clock */
 	spdif_priv->rxclk = devm_clk_get(&pdev->dev, "rxtx1");
-	if (IS_ERR(spdif_priv->rxclk)) {
-		dev_err(&pdev->dev, "no rxtx1 clock in devicetree\n");
+	if (IS_ERR(spdif_priv->rxclk))
 		return PTR_ERR(spdif_priv->rxclk);
-	}
 	spdif_priv->rxclk_src = DEFAULT_RXCLK_SRC;
 
 	for (i = 0; i < SPDIF_TXRATE_MAX; i++) {

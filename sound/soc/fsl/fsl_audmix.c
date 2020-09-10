@@ -485,10 +485,8 @@ static int fsl_audmix_probe(struct platform_device *pdev)
 	}
 
 	priv->ipg_clk = devm_clk_get(dev, "ipg");
-	if (IS_ERR(priv->ipg_clk)) {
-		dev_err(dev, "failed to get ipg clock\n");
+	if (IS_ERR(priv->ipg_clk))
 		return PTR_ERR(priv->ipg_clk);
-	}
 
 	spin_lock_init(&priv->lock);
 	platform_set_drvdata(pdev, priv);

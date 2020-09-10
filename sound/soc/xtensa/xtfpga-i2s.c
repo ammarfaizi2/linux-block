@@ -556,7 +556,6 @@ static int xtfpga_i2s_probe(struct platform_device *pdev)
 
 	i2s->clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(i2s->clk)) {
-		dev_err(&pdev->dev, "couldn't get clock\n");
 		err = PTR_ERR(i2s->clk);
 		goto err;
 	}

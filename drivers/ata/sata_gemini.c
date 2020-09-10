@@ -241,15 +241,11 @@ static int gemini_sata_bridge_init(struct sata_gemini *sg)
 	int ret;
 
 	sg->sata0_pclk = devm_clk_get(dev, "SATA0_PCLK");
-	if (IS_ERR(sg->sata0_pclk)) {
-		dev_err(dev, "no SATA0 PCLK");
+	if (IS_ERR(sg->sata0_pclk))
 		return -ENODEV;
-	}
 	sg->sata1_pclk = devm_clk_get(dev, "SATA1_PCLK");
-	if (IS_ERR(sg->sata1_pclk)) {
-		dev_err(dev, "no SATA1 PCLK");
+	if (IS_ERR(sg->sata1_pclk))
 		return -ENODEV;
-	}
 
 	ret = clk_prepare_enable(sg->sata0_pclk);
 	if (ret) {
@@ -265,14 +261,12 @@ static int gemini_sata_bridge_init(struct sata_gemini *sg)
 
 	sg->sata0_reset = devm_reset_control_get_exclusive(dev, "sata0");
 	if (IS_ERR(sg->sata0_reset)) {
-		dev_err(dev, "no SATA0 reset controller\n");
 		clk_disable_unprepare(sg->sata1_pclk);
 		clk_disable_unprepare(sg->sata0_pclk);
 		return PTR_ERR(sg->sata0_reset);
 	}
 	sg->sata1_reset = devm_reset_control_get_exclusive(dev, "sata1");
 	if (IS_ERR(sg->sata1_reset)) {
-		dev_err(dev, "no SATA1 reset controller\n");
 		clk_disable_unprepare(sg->sata1_pclk);
 		clk_disable_unprepare(sg->sata0_pclk);
 		return PTR_ERR(sg->sata1_reset);

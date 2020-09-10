@@ -388,10 +388,8 @@ static int davinci_mdio_probe(struct platform_device *pdev)
 	data->bus->priv		= data;
 
 	data->clk = devm_clk_get(dev, "fck");
-	if (IS_ERR(data->clk)) {
-		dev_err(dev, "failed to get device clock\n");
+	if (IS_ERR(data->clk))
 		return PTR_ERR(data->clk);
-	}
 
 	dev_set_drvdata(dev, data);
 	data->dev = dev;

@@ -3035,10 +3035,8 @@ static int ov5640_probe(struct i2c_client *client)
 
 	/* get system clock (xclk) */
 	sensor->xclk = devm_clk_get(dev, "xclk");
-	if (IS_ERR(sensor->xclk)) {
-		dev_err(dev, "failed to get xclk\n");
+	if (IS_ERR(sensor->xclk))
 		return PTR_ERR(sensor->xclk);
-	}
 
 	sensor->xclk_freq = clk_get_rate(sensor->xclk);
 	if (sensor->xclk_freq < OV5640_XCLK_MIN ||

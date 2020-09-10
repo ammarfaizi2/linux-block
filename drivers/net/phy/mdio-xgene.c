@@ -366,10 +366,8 @@ static int xgene_mdio_probe(struct platform_device *pdev)
 
 	if (dev->of_node) {
 		pdata->clk = devm_clk_get(dev, NULL);
-		if (IS_ERR(pdata->clk)) {
-			dev_err(dev, "Unable to retrieve clk\n");
+		if (IS_ERR(pdata->clk))
 			return PTR_ERR(pdata->clk);
-		}
 	}
 
 	ret = xgene_mdio_reset(pdata);

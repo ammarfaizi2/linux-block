@@ -105,22 +105,16 @@ static int atmel_hlcdc_probe(struct platform_device *pdev)
 		return hlcdc->irq;
 
 	hlcdc->periph_clk = devm_clk_get(dev, "periph_clk");
-	if (IS_ERR(hlcdc->periph_clk)) {
-		dev_err(dev, "failed to get peripheral clock\n");
+	if (IS_ERR(hlcdc->periph_clk))
 		return PTR_ERR(hlcdc->periph_clk);
-	}
 
 	hlcdc->sys_clk = devm_clk_get(dev, "sys_clk");
-	if (IS_ERR(hlcdc->sys_clk)) {
-		dev_err(dev, "failed to get system clock\n");
+	if (IS_ERR(hlcdc->sys_clk))
 		return PTR_ERR(hlcdc->sys_clk);
-	}
 
 	hlcdc->slow_clk = devm_clk_get(dev, "slow_clk");
-	if (IS_ERR(hlcdc->slow_clk)) {
-		dev_err(dev, "failed to get slow clock\n");
+	if (IS_ERR(hlcdc->slow_clk))
 		return PTR_ERR(hlcdc->slow_clk);
-	}
 
 	hlcdc->regmap = devm_regmap_init(dev, NULL, hregmap,
 					 &atmel_hlcdc_regmap_config);

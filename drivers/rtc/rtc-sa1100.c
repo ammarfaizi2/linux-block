@@ -178,10 +178,8 @@ int sa1100_rtc_init(struct platform_device *pdev, struct sa1100_rtc *info)
 	spin_lock_init(&info->lock);
 
 	info->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(info->clk)) {
-		dev_err(&pdev->dev, "failed to find rtc clock source\n");
+	if (IS_ERR(info->clk))
 		return PTR_ERR(info->clk);
-	}
 
 	ret = clk_prepare_enable(info->clk);
 	if (ret)

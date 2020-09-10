@@ -147,12 +147,8 @@ static int ir_rx51_open(struct rc_dev *dev)
 		return -EBUSY;
 
 	ir_rx51->pwm = pwm_get(ir_rx51->dev, NULL);
-	if (IS_ERR(ir_rx51->pwm)) {
-		int res = PTR_ERR(ir_rx51->pwm);
-
-		dev_err(ir_rx51->dev, "pwm_get failed: %d\n", res);
-		return res;
-	}
+	if (IS_ERR(ir_rx51->pwm))
+		return PTR_ERR(ir_rx51->pwm);
 
 	return 0;
 }

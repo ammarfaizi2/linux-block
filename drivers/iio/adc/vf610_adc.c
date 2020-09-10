@@ -826,11 +826,8 @@ static int vf610_adc_probe(struct platform_device *pdev)
 	}
 
 	info->clk = devm_clk_get(&pdev->dev, "adc");
-	if (IS_ERR(info->clk)) {
-		dev_err(&pdev->dev, "failed getting clock, err = %ld\n",
-						PTR_ERR(info->clk));
+	if (IS_ERR(info->clk))
 		return PTR_ERR(info->clk);
-	}
 
 	info->vref = devm_regulator_get(&pdev->dev, "vref");
 	if (IS_ERR(info->vref))

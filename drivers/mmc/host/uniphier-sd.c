@@ -563,24 +563,18 @@ static int uniphier_sd_probe(struct platform_device *pdev)
 	priv->caps = (unsigned long)of_device_get_match_data(dev);
 
 	priv->clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(priv->clk)) {
-		dev_err(dev, "failed to get clock\n");
+	if (IS_ERR(priv->clk))
 		return PTR_ERR(priv->clk);
-	}
 
 	priv->rst = devm_reset_control_get_shared(dev, "host");
-	if (IS_ERR(priv->rst)) {
-		dev_err(dev, "failed to get host reset\n");
+	if (IS_ERR(priv->rst))
 		return PTR_ERR(priv->rst);
-	}
 
 	/* old version has one more reset */
 	if (!(priv->caps & UNIPHIER_SD_CAP_EXTENDED_IP)) {
 		priv->rst_br = devm_reset_control_get_shared(dev, "bridge");
-		if (IS_ERR(priv->rst_br)) {
-			dev_err(dev, "failed to get bridge reset\n");
+		if (IS_ERR(priv->rst_br))
 			return PTR_ERR(priv->rst_br);
-		}
 	}
 
 	tmio_data = &priv->tmio_data;
@@ -593,7 +587,6 @@ static int uniphier_sd_probe(struct platform_device *pdev)
 	if (host->mmc->caps & MMC_CAP_HW_RESET) {
 		priv->rst_hw = devm_reset_control_get_exclusive(dev, "hw");
 		if (IS_ERR(priv->rst_hw)) {
-			dev_err(dev, "failed to get hw reset\n");
 			ret = PTR_ERR(priv->rst_hw);
 			goto free_host;
 		}

@@ -728,10 +728,8 @@ static int v3_pci_probe(struct platform_device *pdev)
 
 	/* Get and enable host clock */
 	clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(clk)) {
-		dev_err(dev, "clock not found\n");
+	if (IS_ERR(clk))
 		return PTR_ERR(clk);
-	}
 	ret = clk_prepare_enable(clk);
 	if (ret) {
 		dev_err(dev, "unable to enable clock\n");

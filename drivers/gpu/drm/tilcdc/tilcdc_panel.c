@@ -329,7 +329,6 @@ static int panel_probe(struct platform_device *pdev)
 							 GPIOD_OUT_LOW);
 	if (IS_ERR(panel_mod->enable_gpio)) {
 		ret = PTR_ERR(panel_mod->enable_gpio);
-		dev_err(&pdev->dev, "failed to request enable GPIO\n");
 		goto fail_backlight;
 	}
 

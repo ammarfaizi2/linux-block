@@ -364,10 +364,8 @@ static int samsung_keypad_probe(struct platform_device *pdev)
 		return -EBUSY;
 
 	keypad->clk = devm_clk_get(&pdev->dev, "keypad");
-	if (IS_ERR(keypad->clk)) {
-		dev_err(&pdev->dev, "failed to get keypad clk\n");
+	if (IS_ERR(keypad->clk))
 		return PTR_ERR(keypad->clk);
-	}
 
 	error = clk_prepare(keypad->clk);
 	if (error) {

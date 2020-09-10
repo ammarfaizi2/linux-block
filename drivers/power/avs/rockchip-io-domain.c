@@ -534,9 +534,7 @@ static int rockchip_iodomain_probe(struct platform_device *pdev)
 			/* If a supply wasn't specified, that's OK */
 			if (ret == -ENODEV)
 				continue;
-			else if (ret != -EPROBE_DEFER)
-				dev_err(iod->dev, "couldn't get regulator %s\n",
-					supply_name);
+			else {}
 			goto unreg_notify;
 		}
 

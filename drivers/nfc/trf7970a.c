@@ -2021,10 +2021,8 @@ static int trf7970a_probe(struct spi_device *spi)
 	/* There are two enable pins - only EN must be present in the DT */
 	trf->en_gpiod = devm_gpiod_get_index(trf->dev, "ti,enable", 0,
 					     GPIOD_OUT_LOW);
-	if (IS_ERR(trf->en_gpiod)) {
-		dev_err(trf->dev, "No EN GPIO property\n");
+	if (IS_ERR(trf->en_gpiod))
 		return PTR_ERR(trf->en_gpiod);
-	}
 
 	trf->en2_gpiod = devm_gpiod_get_index_optional(trf->dev, "ti,enable", 1,
 						       GPIOD_OUT_LOW);
@@ -2068,7 +2066,6 @@ static int trf7970a_probe(struct spi_device *spi)
 	trf->regulator = devm_regulator_get(&spi->dev, "vin");
 	if (IS_ERR(trf->regulator)) {
 		ret = PTR_ERR(trf->regulator);
-		dev_err(trf->dev, "Can't get VIN regulator: %d\n", ret);
 		goto err_destroy_lock;
 	}
 
@@ -2085,7 +2082,6 @@ static int trf7970a_probe(struct spi_device *spi)
 	trf->regulator = devm_regulator_get(&spi->dev, "vdd-io");
 	if (IS_ERR(trf->regulator)) {
 		ret = PTR_ERR(trf->regulator);
-		dev_err(trf->dev, "Can't get VDD_IO regulator: %d\n", ret);
 		goto err_destroy_lock;
 	}
 

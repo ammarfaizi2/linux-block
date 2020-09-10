@@ -1166,22 +1166,18 @@ static int inno_hdmi_phy_probe(struct platform_device *pdev)
 	inno->sysclk = devm_clk_get(inno->dev, "sysclk");
 	if (IS_ERR(inno->sysclk)) {
 		ret = PTR_ERR(inno->sysclk);
-		dev_err(inno->dev, "failed to get sysclk: %d\n", ret);
 		return ret;
 	}
 
 	inno->refpclk = devm_clk_get(inno->dev, "refpclk");
 	if (IS_ERR(inno->refpclk)) {
 		ret = PTR_ERR(inno->refpclk);
-		dev_err(inno->dev, "failed to get ref clock: %d\n", ret);
 		return ret;
 	}
 
 	inno->refoclk = devm_clk_get(inno->dev, "refoclk");
 	if (IS_ERR(inno->refoclk)) {
 		ret = PTR_ERR(inno->refoclk);
-		dev_err(inno->dev, "failed to get oscillator-ref clock: %d\n",
-			ret);
 		return ret;
 	}
 

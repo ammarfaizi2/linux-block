@@ -709,7 +709,6 @@ int scd30_probe(struct device *dev, int irq, const char *name, void *priv,
 		if (PTR_ERR(state->vdd) == -EPROBE_DEFER)
 			return -EPROBE_DEFER;
 
-		dev_err(dev, "failed to get regulator\n");
 		return PTR_ERR(state->vdd);
 	}
 

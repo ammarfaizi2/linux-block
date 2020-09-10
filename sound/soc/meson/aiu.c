@@ -218,18 +218,12 @@ static int aiu_clk_get(struct device *dev)
 	int ret;
 
 	aiu->pclk = devm_clk_get(dev, "pclk");
-	if (IS_ERR(aiu->pclk)) {
-		if (PTR_ERR(aiu->pclk) != -EPROBE_DEFER)
-			dev_err(dev, "Can't get the aiu pclk\n");
+	if (IS_ERR(aiu->pclk))
 		return PTR_ERR(aiu->pclk);
-	}
 
 	aiu->spdif_mclk = devm_clk_get(dev, "spdif_mclk");
-	if (IS_ERR(aiu->spdif_mclk)) {
-		if (PTR_ERR(aiu->spdif_mclk) != -EPROBE_DEFER)
-			dev_err(dev, "Can't get the aiu spdif master clock\n");
+	if (IS_ERR(aiu->spdif_mclk))
 		return PTR_ERR(aiu->spdif_mclk);
-	}
 
 	ret = aiu_clk_bulk_get(dev, aiu_i2s_ids, ARRAY_SIZE(aiu_i2s_ids),
 			       &aiu->i2s);

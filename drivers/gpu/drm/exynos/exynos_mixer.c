@@ -780,22 +780,16 @@ static int mixer_resources_init(struct mixer_context *mixer_ctx)
 	spin_lock_init(&mixer_ctx->reg_slock);
 
 	mixer_ctx->mixer = devm_clk_get(dev, "mixer");
-	if (IS_ERR(mixer_ctx->mixer)) {
-		dev_err(dev, "failed to get clock 'mixer'\n");
+	if (IS_ERR(mixer_ctx->mixer))
 		return -ENODEV;
-	}
 
 	mixer_ctx->hdmi = devm_clk_get(dev, "hdmi");
-	if (IS_ERR(mixer_ctx->hdmi)) {
-		dev_err(dev, "failed to get clock 'hdmi'\n");
+	if (IS_ERR(mixer_ctx->hdmi))
 		return PTR_ERR(mixer_ctx->hdmi);
-	}
 
 	mixer_ctx->sclk_hdmi = devm_clk_get(dev, "sclk_hdmi");
-	if (IS_ERR(mixer_ctx->sclk_hdmi)) {
-		dev_err(dev, "failed to get clock 'sclk_hdmi'\n");
+	if (IS_ERR(mixer_ctx->sclk_hdmi))
 		return -ENODEV;
-	}
 	res = platform_get_resource(mixer_ctx->pdev, IORESOURCE_MEM, 0);
 	if (res == NULL) {
 		dev_err(dev, "get memory resource failed.\n");
@@ -832,22 +826,16 @@ static int vp_resources_init(struct mixer_context *mixer_ctx)
 	struct resource *res;
 
 	mixer_ctx->vp = devm_clk_get(dev, "vp");
-	if (IS_ERR(mixer_ctx->vp)) {
-		dev_err(dev, "failed to get clock 'vp'\n");
+	if (IS_ERR(mixer_ctx->vp))
 		return -ENODEV;
-	}
 
 	if (test_bit(MXR_BIT_HAS_SCLK, &mixer_ctx->flags)) {
 		mixer_ctx->sclk_mixer = devm_clk_get(dev, "sclk_mixer");
-		if (IS_ERR(mixer_ctx->sclk_mixer)) {
-			dev_err(dev, "failed to get clock 'sclk_mixer'\n");
+		if (IS_ERR(mixer_ctx->sclk_mixer))
 			return -ENODEV;
-		}
 		mixer_ctx->mout_mixer = devm_clk_get(dev, "mout_mixer");
-		if (IS_ERR(mixer_ctx->mout_mixer)) {
-			dev_err(dev, "failed to get clock 'mout_mixer'\n");
+		if (IS_ERR(mixer_ctx->mout_mixer))
 			return -ENODEV;
-		}
 
 		if (mixer_ctx->sclk_hdmi && mixer_ctx->mout_mixer)
 			clk_set_parent(mixer_ctx->mout_mixer,

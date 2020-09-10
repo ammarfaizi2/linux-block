@@ -763,10 +763,8 @@ static int cal_probe(struct platform_device *pdev)
 
 	/* Acquire resources: clocks, CAMERARX regmap, I/O memory and IRQ. */
 	cal->fclk = devm_clk_get(&pdev->dev, "fck");
-	if (IS_ERR(cal->fclk)) {
-		dev_err(&pdev->dev, "cannot get CAL fclk\n");
+	if (IS_ERR(cal->fclk))
 		return PTR_ERR(cal->fclk);
-	}
 
 	ret = cal_init_camerarx_regmap(cal);
 	if (ret < 0)

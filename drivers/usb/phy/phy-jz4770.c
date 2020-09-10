@@ -322,16 +322,12 @@ static int jz4770_phy_probe(struct platform_device *pdev)
 	priv->clk = devm_clk_get(dev, NULL);
 	if (IS_ERR(priv->clk)) {
 		err = PTR_ERR(priv->clk);
-		if (err != -EPROBE_DEFER)
-			dev_err(dev, "Failed to get clock\n");
 		return err;
 	}
 
 	priv->vcc_supply = devm_regulator_get(dev, "vcc");
 	if (IS_ERR(priv->vcc_supply)) {
 		err = PTR_ERR(priv->vcc_supply);
-		if (err != -EPROBE_DEFER)
-			dev_err(dev, "Failed to get regulator\n");
 		return err;
 	}
 

@@ -198,8 +198,6 @@ static int panel_lvds_probe(struct platform_device *pdev)
 						     GPIOD_OUT_LOW);
 	if (IS_ERR(lvds->enable_gpio)) {
 		ret = PTR_ERR(lvds->enable_gpio);
-		dev_err(lvds->dev, "failed to request %s GPIO: %d\n",
-			"enable", ret);
 		return ret;
 	}
 
@@ -207,8 +205,6 @@ static int panel_lvds_probe(struct platform_device *pdev)
 						     GPIOD_OUT_HIGH);
 	if (IS_ERR(lvds->reset_gpio)) {
 		ret = PTR_ERR(lvds->reset_gpio);
-		dev_err(lvds->dev, "failed to request %s GPIO: %d\n",
-			"reset", ret);
 		return ret;
 	}
 

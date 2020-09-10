@@ -928,10 +928,8 @@ static int tas5086_i2c_probe(struct i2c_client *i2c,
 
 	ret = devm_regulator_bulk_get(dev, ARRAY_SIZE(priv->supplies),
 				      priv->supplies);
-	if (ret < 0) {
-		dev_err(dev, "Failed to get regulators: %d\n", ret);
+	if (ret < 0)
 		return ret;
-	}
 
 	priv->regmap = devm_regmap_init(dev, NULL, i2c, &tas5086_regmap);
 	if (IS_ERR(priv->regmap)) {

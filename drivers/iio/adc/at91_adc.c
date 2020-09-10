@@ -1204,7 +1204,6 @@ static int at91_adc_probe(struct platform_device *pdev)
 
 	st->clk = devm_clk_get(&pdev->dev, "adc_clk");
 	if (IS_ERR(st->clk)) {
-		dev_err(&pdev->dev, "Failed to get the clock.\n");
 		ret = PTR_ERR(st->clk);
 		goto error_free_irq;
 	}
@@ -1218,7 +1217,6 @@ static int at91_adc_probe(struct platform_device *pdev)
 
 	st->adc_clk = devm_clk_get(&pdev->dev, "adc_op_clk");
 	if (IS_ERR(st->adc_clk)) {
-		dev_err(&pdev->dev, "Failed to get the ADC clock.\n");
 		ret = PTR_ERR(st->adc_clk);
 		goto error_disable_clk;
 	}

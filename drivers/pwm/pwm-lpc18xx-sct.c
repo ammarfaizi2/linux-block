@@ -342,10 +342,8 @@ static int lpc18xx_pwm_probe(struct platform_device *pdev)
 		return PTR_ERR(lpc18xx_pwm->base);
 
 	lpc18xx_pwm->pwm_clk = devm_clk_get(&pdev->dev, "pwm");
-	if (IS_ERR(lpc18xx_pwm->pwm_clk)) {
-		dev_err(&pdev->dev, "failed to get pwm clock\n");
+	if (IS_ERR(lpc18xx_pwm->pwm_clk))
 		return PTR_ERR(lpc18xx_pwm->pwm_clk);
-	}
 
 	ret = clk_prepare_enable(lpc18xx_pwm->pwm_clk);
 	if (ret < 0) {

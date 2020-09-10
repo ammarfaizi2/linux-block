@@ -954,10 +954,8 @@ static int sifive_serial_probe(struct platform_device *pdev)
 	}
 
 	clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(clk)) {
-		dev_err(&pdev->dev, "unable to find controller clock\n");
+	if (IS_ERR(clk))
 		return PTR_ERR(clk);
-	}
 
 	id = of_alias_get_id(pdev->dev.of_node, "serial");
 	if (id < 0) {

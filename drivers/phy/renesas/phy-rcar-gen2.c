@@ -352,10 +352,8 @@ static int rcar_gen2_phy_probe(struct platform_device *pdev)
 	}
 
 	clk = devm_clk_get(dev, "usbhs");
-	if (IS_ERR(clk)) {
-		dev_err(dev, "Can't get USBHS clock\n");
+	if (IS_ERR(clk))
 		return PTR_ERR(clk);
-	}
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	base = devm_ioremap_resource(dev, res);

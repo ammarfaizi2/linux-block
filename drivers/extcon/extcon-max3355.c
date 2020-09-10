@@ -64,17 +64,13 @@ static int max3355_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	gpiod = devm_gpiod_get(&pdev->dev, "id", GPIOD_IN);
-	if (IS_ERR(gpiod)) {
-		dev_err(&pdev->dev, "failed to get ID_OUT GPIO\n");
+	if (IS_ERR(gpiod))
 		return PTR_ERR(gpiod);
-	}
 	data->id_gpiod = gpiod;
 
 	gpiod = devm_gpiod_get(&pdev->dev, "maxim,shdn", GPIOD_OUT_HIGH);
-	if (IS_ERR(gpiod)) {
-		dev_err(&pdev->dev, "failed to get SHDN# GPIO\n");
+	if (IS_ERR(gpiod))
 		return PTR_ERR(gpiod);
-	}
 	data->shdn_gpiod = gpiod;
 
 	data->edev = devm_extcon_dev_allocate(&pdev->dev, max3355_cable);

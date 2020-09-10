@@ -215,7 +215,6 @@ static int sun6i_msgbox_probe(struct platform_device *pdev)
 	mbox->clk = devm_clk_get(dev, NULL);
 	if (IS_ERR(mbox->clk)) {
 		ret = PTR_ERR(mbox->clk);
-		dev_err(dev, "Failed to get clock: %d\n", ret);
 		return ret;
 	}
 
@@ -228,7 +227,6 @@ static int sun6i_msgbox_probe(struct platform_device *pdev)
 	reset = devm_reset_control_get_exclusive(dev, NULL);
 	if (IS_ERR(reset)) {
 		ret = PTR_ERR(reset);
-		dev_err(dev, "Failed to get reset control: %d\n", ret);
 		goto err_disable_unprepare;
 	}
 

@@ -168,10 +168,8 @@ static int sdhci_sirf_probe(struct platform_device *pdev)
 	int ret;
 
 	clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(clk)) {
-		dev_err(&pdev->dev, "unable to get clock");
+	if (IS_ERR(clk))
 		return PTR_ERR(clk);
-	}
 
 	host = sdhci_pltfm_init(pdev, &sdhci_sirf_pdata, 0);
 	if (IS_ERR(host))

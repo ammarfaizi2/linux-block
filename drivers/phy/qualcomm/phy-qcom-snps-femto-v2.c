@@ -306,28 +306,20 @@ static int qcom_snps_hsphy_probe(struct platform_device *pdev)
 	hsphy->ref_clk = devm_clk_get(dev, "ref");
 	if (IS_ERR(hsphy->ref_clk)) {
 		ret = PTR_ERR(hsphy->ref_clk);
-		if (ret != -EPROBE_DEFER)
-			dev_err(dev, "failed to get ref clk, %d\n", ret);
 		return ret;
 	}
 
 	hsphy->phy_reset = devm_reset_control_get_exclusive(&pdev->dev, NULL);
-	if (IS_ERR(hsphy->phy_reset)) {
-		dev_err(dev, "failed to get phy core reset\n");
+	if (IS_ERR(hsphy->phy_reset))
 		return PTR_ERR(hsphy->phy_reset);
-	}
 
 	num = ARRAY_SIZE(hsphy->vregs);
 	for (i = 0; i < num; i++)
 		hsphy->vregs[i].supply = qcom_snps_hsphy_vreg_names[i];
 
 	ret = devm_regulator_bulk_get(dev, num, hsphy->vregs);
-	if (ret) {
-		if (ret != -EPROBE_DEFER)
-			dev_err(dev, "failed to get regulator supplies: %d\n",
-				ret);
+	if (ret)
 		return ret;
-	}
 
 	pm_runtime_set_active(dev);
 	pm_runtime_enable(dev);

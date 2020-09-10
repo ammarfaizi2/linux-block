@@ -338,11 +338,8 @@ static int ld9040_probe(struct spi_device *spi)
 		return ret;
 
 	ctx->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
-	if (IS_ERR(ctx->reset_gpio)) {
-		dev_err(dev, "cannot get reset-gpios %ld\n",
-			PTR_ERR(ctx->reset_gpio));
+	if (IS_ERR(ctx->reset_gpio))
 		return PTR_ERR(ctx->reset_gpio);
-	}
 
 	spi->bits_per_word = 9;
 	ret = spi_setup(spi);

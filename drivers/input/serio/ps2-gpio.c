@@ -323,18 +323,12 @@ static int ps2_gpio_get_props(struct device *dev,
 				 struct ps2_gpio_data *drvdata)
 {
 	drvdata->gpio_data = devm_gpiod_get(dev, "data", GPIOD_IN);
-	if (IS_ERR(drvdata->gpio_data)) {
-		dev_err(dev, "failed to request data gpio: %ld",
-			PTR_ERR(drvdata->gpio_data));
+	if (IS_ERR(drvdata->gpio_data))
 		return PTR_ERR(drvdata->gpio_data);
-	}
 
 	drvdata->gpio_clk = devm_gpiod_get(dev, "clk", GPIOD_IN);
-	if (IS_ERR(drvdata->gpio_clk)) {
-		dev_err(dev, "failed to request clock gpio: %ld",
-			PTR_ERR(drvdata->gpio_clk));
+	if (IS_ERR(drvdata->gpio_clk))
 		return PTR_ERR(drvdata->gpio_clk);
-	}
 
 	drvdata->write_enable = device_property_read_bool(dev,
 				"write-enable");

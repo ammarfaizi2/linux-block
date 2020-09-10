@@ -1175,7 +1175,6 @@ static int mtk_tphy_probe(struct platform_device *pdev)
 
 		instance->ref_clk = devm_clk_get_optional(&phy->dev, "ref");
 		if (IS_ERR(instance->ref_clk)) {
-			dev_err(dev, "failed to get ref_clk(id-%d)\n", port);
 			retval = PTR_ERR(instance->ref_clk);
 			goto put_child;
 		}
@@ -1183,7 +1182,6 @@ static int mtk_tphy_probe(struct platform_device *pdev)
 		instance->da_ref_clk =
 			devm_clk_get_optional(&phy->dev, "da_ref");
 		if (IS_ERR(instance->da_ref_clk)) {
-			dev_err(dev, "failed to get da_ref_clk(id-%d)\n", port);
 			retval = PTR_ERR(instance->da_ref_clk);
 			goto put_child;
 		}

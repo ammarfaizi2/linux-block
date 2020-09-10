@@ -185,7 +185,6 @@ static int cpcap_led_probe(struct platform_device *pdev)
 	led->vdd = devm_regulator_get(&pdev->dev, "vdd");
 	if (IS_ERR(led->vdd)) {
 		err = PTR_ERR(led->vdd);
-		dev_err(led->dev, "Couldn't get regulator: %d", err);
 		return err;
 	}
 

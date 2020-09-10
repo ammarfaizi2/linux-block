@@ -664,7 +664,6 @@ static int mpc512x_psc_alloc_clock(struct uart_port *port)
 
 	clk = devm_clk_get(port->dev, "mclk");
 	if (IS_ERR(clk)) {
-		dev_err(port->dev, "Failed to get MCLK!\n");
 		err = PTR_ERR(clk);
 		goto out_err;
 	}
@@ -677,7 +676,6 @@ static int mpc512x_psc_alloc_clock(struct uart_port *port)
 
 	clk = devm_clk_get(port->dev, "ipg");
 	if (IS_ERR(clk)) {
-		dev_err(port->dev, "Failed to get IPG clock!\n");
 		err = PTR_ERR(clk);
 		goto out_err;
 	}

@@ -2892,11 +2892,8 @@ static int s5p_jpeg_probe(struct platform_device *pdev)
 	for (i = 0; i < jpeg->variant->num_clocks; i++) {
 		jpeg->clocks[i] = devm_clk_get(&pdev->dev,
 					      jpeg->variant->clk_names[i]);
-		if (IS_ERR(jpeg->clocks[i])) {
-			dev_err(&pdev->dev, "failed to get clock: %s\n",
-				jpeg->variant->clk_names[i]);
+		if (IS_ERR(jpeg->clocks[i]))
 			return PTR_ERR(jpeg->clocks[i]);
-		}
 	}
 
 	/* v4l2 device */

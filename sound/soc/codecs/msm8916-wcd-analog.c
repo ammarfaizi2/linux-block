@@ -1199,20 +1199,16 @@ static int pm8916_wcd_analog_spmi_probe(struct platform_device *pdev)
 		return ret;
 
 	priv->mclk = devm_clk_get(dev, "mclk");
-	if (IS_ERR(priv->mclk)) {
-		dev_err(dev, "failed to get mclk\n");
+	if (IS_ERR(priv->mclk))
 		return PTR_ERR(priv->mclk);
-	}
 
 	for (i = 0; i < ARRAY_SIZE(supply_names); i++)
 		priv->supplies[i].supply = supply_names[i];
 
 	ret = devm_regulator_bulk_get(dev, ARRAY_SIZE(priv->supplies),
 				    priv->supplies);
-	if (ret) {
-		dev_err(dev, "Failed to get regulator supplies %d\n", ret);
+	if (ret)
 		return ret;
-	}
 
 	ret = clk_prepare_enable(priv->mclk);
 	if (ret < 0) {

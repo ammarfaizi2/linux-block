@@ -1255,24 +1255,18 @@ static int sun6i_dma_probe(struct platform_device *pdev)
 		return sdc->irq;
 
 	sdc->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(sdc->clk)) {
-		dev_err(&pdev->dev, "No clock specified\n");
+	if (IS_ERR(sdc->clk))
 		return PTR_ERR(sdc->clk);
-	}
 
 	if (sdc->cfg->has_mbus_clk) {
 		sdc->clk_mbus = devm_clk_get(&pdev->dev, "mbus");
-		if (IS_ERR(sdc->clk_mbus)) {
-			dev_err(&pdev->dev, "No mbus clock specified\n");
+		if (IS_ERR(sdc->clk_mbus))
 			return PTR_ERR(sdc->clk_mbus);
-		}
 	}
 
 	sdc->rstc = devm_reset_control_get(&pdev->dev, NULL);
-	if (IS_ERR(sdc->rstc)) {
-		dev_err(&pdev->dev, "No reset controller specified\n");
+	if (IS_ERR(sdc->rstc))
 		return PTR_ERR(sdc->rstc);
-	}
 
 	sdc->pool = dmam_pool_create(dev_name(&pdev->dev), &pdev->dev,
 				     sizeof(struct sun6i_dma_lli), 4, 0);

@@ -1285,8 +1285,6 @@ static int s3c_hsudc_probe(struct platform_device *pdev)
 	ret = devm_regulator_bulk_get(dev, ARRAY_SIZE(hsudc->supplies),
 				 hsudc->supplies);
 	if (ret != 0) {
-		if (ret != -EPROBE_DEFER)
-			dev_err(dev, "failed to request supplies: %d\n", ret);
 		goto err_supplies;
 	}
 
@@ -1322,7 +1320,6 @@ static int s3c_hsudc_probe(struct platform_device *pdev)
 
 	hsudc->uclk = devm_clk_get(&pdev->dev, "usb-device");
 	if (IS_ERR(hsudc->uclk)) {
-		dev_err(dev, "failed to find usb-device clock source\n");
 		ret = PTR_ERR(hsudc->uclk);
 		goto err_res;
 	}

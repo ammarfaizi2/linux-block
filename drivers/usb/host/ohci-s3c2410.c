@@ -376,14 +376,12 @@ static int ohci_hcd_s3c2410_probe(struct platform_device *dev)
 
 	clk = devm_clk_get(&dev->dev, "usb-host");
 	if (IS_ERR(clk)) {
-		dev_err(&dev->dev, "cannot get usb-host clock\n");
 		retval = PTR_ERR(clk);
 		goto err_put;
 	}
 
 	usb_clk = devm_clk_get(&dev->dev, "usb-bus-host");
 	if (IS_ERR(usb_clk)) {
-		dev_err(&dev->dev, "cannot get usb-bus-host clock\n");
 		retval = PTR_ERR(usb_clk);
 		goto err_put;
 	}

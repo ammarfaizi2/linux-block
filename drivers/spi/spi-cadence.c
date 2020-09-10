@@ -492,14 +492,12 @@ static int cdns_spi_probe(struct platform_device *pdev)
 
 	xspi->pclk = devm_clk_get(&pdev->dev, "pclk");
 	if (IS_ERR(xspi->pclk)) {
-		dev_err(&pdev->dev, "pclk clock not found.\n");
 		ret = PTR_ERR(xspi->pclk);
 		goto remove_master;
 	}
 
 	xspi->ref_clk = devm_clk_get(&pdev->dev, "ref_clk");
 	if (IS_ERR(xspi->ref_clk)) {
-		dev_err(&pdev->dev, "ref_clk clock not found.\n");
 		ret = PTR_ERR(xspi->ref_clk);
 		goto remove_master;
 	}

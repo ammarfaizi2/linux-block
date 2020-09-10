@@ -182,7 +182,6 @@ static int __init coh901331_probe(struct platform_device *pdev)
 	rtap->clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(rtap->clk)) {
 		ret = PTR_ERR(rtap->clk);
-		dev_err(&pdev->dev, "could not get clock\n");
 		return ret;
 	}
 

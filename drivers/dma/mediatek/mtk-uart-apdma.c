@@ -485,7 +485,6 @@ static int mtk_uart_apdma_probe(struct platform_device *pdev)
 
 	mtkd->clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(mtkd->clk)) {
-		dev_err(&pdev->dev, "No clock specified\n");
 		rc = PTR_ERR(mtkd->clk);
 		return rc;
 	}

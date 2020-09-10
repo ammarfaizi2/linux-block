@@ -1622,10 +1622,8 @@ static int init_gpio(struct fusb302_chip *chip)
 	int ret = 0;
 
 	chip->gpio_int_n = devm_gpiod_get(dev, "fcs,int_n", GPIOD_IN);
-	if (IS_ERR(chip->gpio_int_n)) {
-		dev_err(dev, "failed to request gpio_int_n\n");
+	if (IS_ERR(chip->gpio_int_n))
 		return PTR_ERR(chip->gpio_int_n);
-	}
 	ret = gpiod_to_irq(chip->gpio_int_n);
 	if (ret < 0) {
 		dev_err(dev,

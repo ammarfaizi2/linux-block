@@ -789,22 +789,16 @@ static int tegra_devfreq_probe(struct platform_device *pdev)
 		return PTR_ERR(tegra->regs);
 
 	tegra->reset = devm_reset_control_get(&pdev->dev, "actmon");
-	if (IS_ERR(tegra->reset)) {
-		dev_err(&pdev->dev, "Failed to get reset\n");
+	if (IS_ERR(tegra->reset))
 		return PTR_ERR(tegra->reset);
-	}
 
 	tegra->clock = devm_clk_get(&pdev->dev, "actmon");
-	if (IS_ERR(tegra->clock)) {
-		dev_err(&pdev->dev, "Failed to get actmon clock\n");
+	if (IS_ERR(tegra->clock))
 		return PTR_ERR(tegra->clock);
-	}
 
 	tegra->emc_clock = devm_clk_get(&pdev->dev, "emc");
-	if (IS_ERR(tegra->emc_clock)) {
-		dev_err(&pdev->dev, "Failed to get emc clock\n");
+	if (IS_ERR(tegra->emc_clock))
 		return PTR_ERR(tegra->emc_clock);
-	}
 
 	err = platform_get_irq(pdev, 0);
 	if (err < 0)

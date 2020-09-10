@@ -131,14 +131,12 @@ static int ehci_atmel_drv_probe(struct platform_device *pdev)
 
 	atmel_ehci->iclk = devm_clk_get(&pdev->dev, "ehci_clk");
 	if (IS_ERR(atmel_ehci->iclk)) {
-		dev_err(&pdev->dev, "Error getting interface clock\n");
 		retval = -ENOENT;
 		goto fail_request_resource;
 	}
 
 	atmel_ehci->uclk = devm_clk_get(&pdev->dev, "usb_clk");
 	if (IS_ERR(atmel_ehci->uclk)) {
-		dev_err(&pdev->dev, "failed to get uclk\n");
 		retval = PTR_ERR(atmel_ehci->uclk);
 		goto fail_request_resource;
 	}

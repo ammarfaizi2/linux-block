@@ -1098,7 +1098,6 @@ static int tegra_nand_chips_init(struct device *dev,
 
 	if (IS_ERR(nand->wp_gpio)) {
 		ret = PTR_ERR(nand->wp_gpio);
-		dev_err(dev, "Failed to request WP GPIO: %d\n", ret);
 		return ret;
 	}
 

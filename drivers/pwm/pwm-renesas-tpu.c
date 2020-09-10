@@ -400,10 +400,8 @@ static int tpu_probe(struct platform_device *pdev)
 		return PTR_ERR(tpu->base);
 
 	tpu->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(tpu->clk)) {
-		dev_err(&pdev->dev, "cannot get clock\n");
+	if (IS_ERR(tpu->clk))
 		return PTR_ERR(tpu->clk);
-	}
 
 	/* Initialize and register the device. */
 	platform_set_drvdata(pdev, tpu);

@@ -259,10 +259,8 @@ static int spear13xx_pcie_probe(struct platform_device *pdev)
 	phy_init(spear13xx_pcie->phy);
 
 	spear13xx_pcie->clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(spear13xx_pcie->clk)) {
-		dev_err(dev, "couldn't get clk for pcie\n");
+	if (IS_ERR(spear13xx_pcie->clk))
 		return PTR_ERR(spear13xx_pcie->clk);
-	}
 	ret = clk_prepare_enable(spear13xx_pcie->clk);
 	if (ret) {
 		dev_err(dev, "couldn't enable clk for pcie\n");

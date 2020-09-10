@@ -608,8 +608,6 @@ static int max9860_probe(struct i2c_client *i2c)
 	max9860->dvddio = devm_regulator_get(dev, "DVDDIO");
 	if (IS_ERR(max9860->dvddio)) {
 		ret = PTR_ERR(max9860->dvddio);
-		if (ret != -EPROBE_DEFER)
-			dev_err(dev, "Failed to get DVDDIO supply: %d\n", ret);
 		return ret;
 	}
 

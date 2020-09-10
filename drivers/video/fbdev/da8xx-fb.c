@@ -1354,10 +1354,8 @@ static int fb_probe(struct platform_device *device)
 		return PTR_ERR(da8xx_fb_reg_base);
 
 	tmp_lcdc_clk = devm_clk_get(&device->dev, "fck");
-	if (IS_ERR(tmp_lcdc_clk)) {
-		dev_err(&device->dev, "Can not get device clock\n");
+	if (IS_ERR(tmp_lcdc_clk))
 		return PTR_ERR(tmp_lcdc_clk);
-	}
 
 	pm_runtime_enable(&device->dev);
 	pm_runtime_get_sync(&device->dev);

@@ -1265,22 +1265,18 @@ static int rockchip_thermal_probe(struct platform_device *pdev)
 	thermal->reset = devm_reset_control_get(&pdev->dev, "tsadc-apb");
 	if (IS_ERR(thermal->reset)) {
 		error = PTR_ERR(thermal->reset);
-		dev_err(&pdev->dev, "failed to get tsadc reset: %d\n", error);
 		return error;
 	}
 
 	thermal->clk = devm_clk_get(&pdev->dev, "tsadc");
 	if (IS_ERR(thermal->clk)) {
 		error = PTR_ERR(thermal->clk);
-		dev_err(&pdev->dev, "failed to get tsadc clock: %d\n", error);
 		return error;
 	}
 
 	thermal->pclk = devm_clk_get(&pdev->dev, "apb_pclk");
 	if (IS_ERR(thermal->pclk)) {
 		error = PTR_ERR(thermal->pclk);
-		dev_err(&pdev->dev, "failed to get apb_pclk clock: %d\n",
-			error);
 		return error;
 	}
 

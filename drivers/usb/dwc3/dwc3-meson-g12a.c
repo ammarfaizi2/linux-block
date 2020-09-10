@@ -733,7 +733,6 @@ static int dwc3_meson_g12a_probe(struct platform_device *pdev)
 	priv->reset = devm_reset_control_get_shared(dev, NULL);
 	if (IS_ERR(priv->reset)) {
 		ret = PTR_ERR(priv->reset);
-		dev_err(dev, "failed to get device reset, err=%d\n", ret);
 		goto err_disable_clks;
 	}
 

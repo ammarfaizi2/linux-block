@@ -120,14 +120,12 @@ static int stm32_dac_probe(struct platform_device *pdev)
 	priv->pclk = devm_clk_get(dev, "pclk");
 	if (IS_ERR(priv->pclk)) {
 		ret = PTR_ERR(priv->pclk);
-		dev_err(dev, "pclk get failed\n");
 		return ret;
 	}
 
 	priv->vref = devm_regulator_get(dev, "vref");
 	if (IS_ERR(priv->vref)) {
 		ret = PTR_ERR(priv->vref);
-		dev_err(dev, "vref get failed, %d\n", ret);
 		return ret;
 	}
 

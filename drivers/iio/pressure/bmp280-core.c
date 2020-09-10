@@ -1043,10 +1043,8 @@ int bmp280_common_probe(struct device *dev,
 
 	ret = devm_regulator_bulk_get(dev,
 				      BMP280_NUM_SUPPLIES, data->supplies);
-	if (ret) {
-		dev_err(dev, "failed to get regulators\n");
+	if (ret)
 		return ret;
-	}
 
 	ret = regulator_bulk_enable(BMP280_NUM_SUPPLIES, data->supplies);
 	if (ret) {

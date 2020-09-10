@@ -477,10 +477,8 @@ static int milbeaut_hdmac_probe(struct platform_device *pdev)
 		return PTR_ERR(mdev->reg_base);
 
 	mdev->clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(mdev->clk)) {
-		dev_err(dev, "failed to get clock\n");
+	if (IS_ERR(mdev->clk))
 		return PTR_ERR(mdev->clk);
-	}
 
 	ret = clk_prepare_enable(mdev->clk);
 	if (ret)

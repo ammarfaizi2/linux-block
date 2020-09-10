@@ -836,10 +836,8 @@ static int hi3110_can_probe(struct spi_device *spi)
 	int freq, ret;
 
 	clk = devm_clk_get(&spi->dev, NULL);
-	if (IS_ERR(clk)) {
-		dev_err(&spi->dev, "no CAN clock source defined\n");
+	if (IS_ERR(clk))
 		return PTR_ERR(clk);
-	}
 	freq = clk_get_rate(clk);
 
 	/* Sanity check */

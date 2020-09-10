@@ -987,11 +987,8 @@ static int fsl_esai_probe(struct platform_device *pdev)
 	}
 
 	esai_priv->coreclk = devm_clk_get(&pdev->dev, "core");
-	if (IS_ERR(esai_priv->coreclk)) {
-		dev_err(&pdev->dev, "failed to get core clock: %ld\n",
-				PTR_ERR(esai_priv->coreclk));
+	if (IS_ERR(esai_priv->coreclk))
 		return PTR_ERR(esai_priv->coreclk);
-	}
 
 	esai_priv->extalclk = devm_clk_get_optional(&pdev->dev, "extal");
 	if (IS_ERR(esai_priv->extalclk))

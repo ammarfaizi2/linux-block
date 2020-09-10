@@ -323,16 +323,12 @@ static int meson_rtc_probe(struct platform_device *pdev)
 	}
 
 	rtc->reset = devm_reset_control_get(dev, NULL);
-	if (IS_ERR(rtc->reset)) {
-		dev_err(dev, "missing reset line\n");
+	if (IS_ERR(rtc->reset))
 		return PTR_ERR(rtc->reset);
-	}
 
 	rtc->vdd = devm_regulator_get(dev, "vdd");
-	if (IS_ERR(rtc->vdd)) {
-		dev_err(dev, "failed to get the vdd-supply\n");
+	if (IS_ERR(rtc->vdd))
 		return PTR_ERR(rtc->vdd);
-	}
 
 	ret = regulator_enable(rtc->vdd);
 	if (ret) {

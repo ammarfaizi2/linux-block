@@ -283,10 +283,8 @@ static int exynos_rng_probe(struct platform_device *pdev)
 
 	rng->dev = &pdev->dev;
 	rng->clk = devm_clk_get(&pdev->dev, "secss");
-	if (IS_ERR(rng->clk)) {
-		dev_err(&pdev->dev, "Couldn't get clock.\n");
+	if (IS_ERR(rng->clk))
 		return PTR_ERR(rng->clk);
-	}
 
 	rng->mem = devm_platform_ioremap_resource(pdev, 0);
 	if (IS_ERR(rng->mem))

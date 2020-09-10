@@ -307,10 +307,8 @@ static int em_sti_probe(struct platform_device *pdev)
 
 	/* get hold of clock */
 	p->clk = devm_clk_get(&pdev->dev, "sclk");
-	if (IS_ERR(p->clk)) {
-		dev_err(&pdev->dev, "cannot get clock\n");
+	if (IS_ERR(p->clk))
 		return PTR_ERR(p->clk);
-	}
 
 	ret = clk_prepare(p->clk);
 	if (ret < 0) {

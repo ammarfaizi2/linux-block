@@ -462,10 +462,8 @@ static int mixel_dphy_probe(struct platform_device *pdev)
 	}
 
 	priv->phy_ref_clk = devm_clk_get(&pdev->dev, "phy_ref");
-	if (IS_ERR(priv->phy_ref_clk)) {
-		dev_err(dev, "No phy_ref clock found\n");
+	if (IS_ERR(priv->phy_ref_clk))
 		return PTR_ERR(priv->phy_ref_clk);
-	}
 	dev_dbg(dev, "phy_ref clock rate: %lu\n",
 		clk_get_rate(priv->phy_ref_clk));
 

@@ -2947,11 +2947,8 @@ static int tegra_sor_hdmi_probe(struct tegra_sor *sor)
 	int err;
 
 	sor->avdd_io_supply = devm_regulator_get(sor->dev, "avdd-io-hdmi-dp");
-	if (IS_ERR(sor->avdd_io_supply)) {
-		dev_err(sor->dev, "cannot get AVDD I/O supply: %ld\n",
-			PTR_ERR(sor->avdd_io_supply));
+	if (IS_ERR(sor->avdd_io_supply))
 		return PTR_ERR(sor->avdd_io_supply);
-	}
 
 	err = regulator_enable(sor->avdd_io_supply);
 	if (err < 0) {
@@ -2961,11 +2958,8 @@ static int tegra_sor_hdmi_probe(struct tegra_sor *sor)
 	}
 
 	sor->vdd_pll_supply = devm_regulator_get(sor->dev, "vdd-hdmi-dp-pll");
-	if (IS_ERR(sor->vdd_pll_supply)) {
-		dev_err(sor->dev, "cannot get VDD PLL supply: %ld\n",
-			PTR_ERR(sor->vdd_pll_supply));
+	if (IS_ERR(sor->vdd_pll_supply))
 		return PTR_ERR(sor->vdd_pll_supply);
-	}
 
 	err = regulator_enable(sor->vdd_pll_supply);
 	if (err < 0) {
@@ -2975,11 +2969,8 @@ static int tegra_sor_hdmi_probe(struct tegra_sor *sor)
 	}
 
 	sor->hdmi_supply = devm_regulator_get(sor->dev, "hdmi");
-	if (IS_ERR(sor->hdmi_supply)) {
-		dev_err(sor->dev, "cannot get HDMI supply: %ld\n",
-			PTR_ERR(sor->hdmi_supply));
+	if (IS_ERR(sor->hdmi_supply))
 		return PTR_ERR(sor->hdmi_supply);
-	}
 
 	err = regulator_enable(sor->hdmi_supply);
 	if (err < 0) {
@@ -3817,7 +3808,6 @@ static int tegra_sor_probe(struct platform_device *pdev)
 	sor->clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(sor->clk)) {
 		err = PTR_ERR(sor->clk);
-		dev_err(&pdev->dev, "failed to get module clock: %d\n", err);
 		goto remove;
 	}
 
@@ -3838,8 +3828,6 @@ static int tegra_sor_probe(struct platform_device *pdev)
 		sor->clk_out = devm_clk_get(&pdev->dev, name);
 		if (IS_ERR(sor->clk_out)) {
 			err = PTR_ERR(sor->clk_out);
-			dev_err(sor->dev, "failed to get %s clock: %d\n",
-				name, err);
 			goto remove;
 		}
 	} else {
@@ -3850,21 +3838,18 @@ static int tegra_sor_probe(struct platform_device *pdev)
 	sor->clk_parent = devm_clk_get(&pdev->dev, "parent");
 	if (IS_ERR(sor->clk_parent)) {
 		err = PTR_ERR(sor->clk_parent);
-		dev_err(&pdev->dev, "failed to get parent clock: %d\n", err);
 		goto remove;
 	}
 
 	sor->clk_safe = devm_clk_get(&pdev->dev, "safe");
 	if (IS_ERR(sor->clk_safe)) {
 		err = PTR_ERR(sor->clk_safe);
-		dev_err(&pdev->dev, "failed to get safe clock: %d\n", err);
 		goto remove;
 	}
 
 	sor->clk_dp = devm_clk_get(&pdev->dev, "dp");
 	if (IS_ERR(sor->clk_dp)) {
 		err = PTR_ERR(sor->clk_dp);
-		dev_err(&pdev->dev, "failed to get DP clock: %d\n", err);
 		goto remove;
 	}
 

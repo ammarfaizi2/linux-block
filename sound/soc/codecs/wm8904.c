@@ -2177,7 +2177,6 @@ static int wm8904_i2c_probe(struct i2c_client *i2c,
 	wm8904->mclk = devm_clk_get(&i2c->dev, "mclk");
 	if (IS_ERR(wm8904->mclk)) {
 		ret = PTR_ERR(wm8904->mclk);
-		dev_err(&i2c->dev, "Failed to get MCLK\n");
 		return ret;
 	}
 
@@ -2208,10 +2207,8 @@ static int wm8904_i2c_probe(struct i2c_client *i2c,
 
 	ret = devm_regulator_bulk_get(&i2c->dev, ARRAY_SIZE(wm8904->supplies),
 				      wm8904->supplies);
-	if (ret != 0) {
-		dev_err(&i2c->dev, "Failed to request supplies: %d\n", ret);
+	if (ret != 0)
 		return ret;
-	}
 
 	ret = regulator_bulk_enable(ARRAY_SIZE(wm8904->supplies),
 				    wm8904->supplies);

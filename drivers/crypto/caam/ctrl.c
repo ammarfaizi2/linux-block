@@ -566,11 +566,8 @@ static int init_clocks(struct device *dev, const struct caam_imx_data *data)
 		return -ENOMEM;
 
 	ret = devm_clk_bulk_get(dev, ctrlpriv->num_clks, ctrlpriv->clks);
-	if (ret) {
-		dev_err(dev,
-			"Failed to request all necessary clocks\n");
+	if (ret)
 		return ret;
-	}
 
 	ret = clk_bulk_prepare_enable(ctrlpriv->num_clks, ctrlpriv->clks);
 	if (ret) {

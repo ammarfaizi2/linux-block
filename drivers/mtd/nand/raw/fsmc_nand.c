@@ -1020,10 +1020,8 @@ static int __init fsmc_nand_probe(struct platform_device *pdev)
 		(host->bank * FSMC_NAND_BANK_SZ);
 
 	host->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(host->clk)) {
-		dev_err(&pdev->dev, "failed to fetch block clock\n");
+	if (IS_ERR(host->clk))
 		return PTR_ERR(host->clk);
-	}
 
 	ret = clk_prepare_enable(host->clk);
 	if (ret)

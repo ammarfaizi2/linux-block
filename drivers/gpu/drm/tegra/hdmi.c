@@ -1652,16 +1652,12 @@ static int tegra_hdmi_probe(struct platform_device *pdev)
 	hdmi->dvi = false;
 
 	hdmi->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(hdmi->clk)) {
-		dev_err(&pdev->dev, "failed to get clock\n");
+	if (IS_ERR(hdmi->clk))
 		return PTR_ERR(hdmi->clk);
-	}
 
 	hdmi->rst = devm_reset_control_get(&pdev->dev, "hdmi");
-	if (IS_ERR(hdmi->rst)) {
-		dev_err(&pdev->dev, "failed to get reset\n");
+	if (IS_ERR(hdmi->rst))
 		return PTR_ERR(hdmi->rst);
-	}
 
 	hdmi->clk_parent = devm_clk_get(&pdev->dev, "parent");
 	if (IS_ERR(hdmi->clk_parent))

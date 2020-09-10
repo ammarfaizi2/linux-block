@@ -2176,10 +2176,8 @@ static int arm_smmu_device_probe(struct platform_device *pdev)
 	}
 
 	err = devm_clk_bulk_get_all(dev, &smmu->clks);
-	if (err < 0) {
-		dev_err(dev, "failed to get clocks %d\n", err);
+	if (err < 0)
 		return err;
-	}
 	smmu->num_clks = err;
 
 	err = clk_bulk_prepare_enable(smmu->num_clks, smmu->clks);

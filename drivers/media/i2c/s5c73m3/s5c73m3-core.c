@@ -1715,7 +1715,6 @@ static int s5c73m3_probe(struct i2c_client *client)
 	ret = devm_regulator_bulk_get(dev, S5C73M3_MAX_SUPPLIES,
 			       state->supplies);
 	if (ret) {
-		dev_err(dev, "failed to get regulators\n");
 		goto out_err;
 	}
 

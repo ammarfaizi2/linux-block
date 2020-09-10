@@ -625,7 +625,6 @@ static int gmin_subdev_add(struct gmin_subdev *gs)
 	gs->pmc_clk = devm_clk_get(dev, gmin_pmc_clk_name);
 	if (IS_ERR(gs->pmc_clk)) {
 		ret = PTR_ERR(gs->pmc_clk);
-		dev_err(dev, "Failed to get clk from %s: %d\n", gmin_pmc_clk_name, ret);
 		return ret;
 	}
 	dev_info(dev, "Will use CLK%d (%s)\n", clock_num, gmin_pmc_clk_name);

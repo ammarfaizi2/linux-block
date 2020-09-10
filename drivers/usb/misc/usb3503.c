@@ -195,11 +195,8 @@ static int usb3503_probe(struct usb3503 *hub)
 		}
 
 		hub->clk = devm_clk_get_optional(dev, "refclk");
-		if (IS_ERR(hub->clk)) {
-			dev_err(dev, "unable to request refclk (%ld)\n",
-					PTR_ERR(hub->clk));
+		if (IS_ERR(hub->clk))
 			return PTR_ERR(hub->clk);
-		}
 
 		if (rate != 0) {
 			err = clk_set_rate(hub->clk, rate);

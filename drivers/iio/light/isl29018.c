@@ -748,8 +748,6 @@ static int isl29018_probe(struct i2c_client *client,
 	chip->vcc_reg = devm_regulator_get(&client->dev, "vcc");
 	if (IS_ERR(chip->vcc_reg)) {
 		err = PTR_ERR(chip->vcc_reg);
-		if (err != -EPROBE_DEFER)
-			dev_err(&client->dev, "failed to get VCC regulator!\n");
 		return err;
 	}
 

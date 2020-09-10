@@ -424,10 +424,8 @@ int kxsd9_common_probe(struct device *dev,
 	ret = devm_regulator_bulk_get(dev,
 				      ARRAY_SIZE(st->regs),
 				      st->regs);
-	if (ret) {
-		dev_err(dev, "Cannot get regulators\n");
+	if (ret)
 		return ret;
-	}
 	/* Default scaling */
 	st->scale = KXSD9_CTRL_C_FS_2G;
 

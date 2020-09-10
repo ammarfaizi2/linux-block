@@ -484,8 +484,6 @@ static int sun8i_ss_get_clks(struct sun8i_ss_dev *ss)
 		ss->ssclks[i] = devm_clk_get(ss->dev, ss->variant->ss_clks[i].name);
 		if (IS_ERR(ss->ssclks[i])) {
 			err = PTR_ERR(ss->ssclks[i]);
-			dev_err(ss->dev, "Cannot get %s SS clock err=%d\n",
-				ss->variant->ss_clks[i].name, err);
 			return err;
 		}
 		cr = clk_get_rate(ss->ssclks[i]);
@@ -548,7 +546,6 @@ static int sun8i_ss_probe(struct platform_device *pdev)
 	if (IS_ERR(ss->reset)) {
 		if (PTR_ERR(ss->reset) == -EPROBE_DEFER)
 			return PTR_ERR(ss->reset);
-		dev_err(&pdev->dev, "No reset control found\n");
 		return PTR_ERR(ss->reset);
 	}
 

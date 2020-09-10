@@ -173,7 +173,6 @@ static int tve200_probe(struct platform_device *pdev)
 	/* Clock the silicon so we can access the registers */
 	priv->pclk = devm_clk_get(dev, "PCLK");
 	if (IS_ERR(priv->pclk)) {
-		dev_err(dev, "unable to get PCLK\n");
 		ret = PTR_ERR(priv->pclk);
 		goto dev_unref;
 	}
@@ -186,7 +185,6 @@ static int tve200_probe(struct platform_device *pdev)
 	/* This clock is for the pixels (27MHz) */
 	priv->clk = devm_clk_get(dev, "TVE");
 	if (IS_ERR(priv->clk)) {
-		dev_err(dev, "unable to get TVE clock\n");
 		ret = PTR_ERR(priv->clk);
 		goto clk_disable;
 	}

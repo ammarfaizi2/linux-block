@@ -140,10 +140,8 @@ int ingenic_ecc_probe(struct platform_device *pdev)
 	ecc->ops->disable(ecc);
 
 	ecc->clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(ecc->clk)) {
-		dev_err(dev, "failed to get clock: %ld\n", PTR_ERR(ecc->clk));
+	if (IS_ERR(ecc->clk))
 		return PTR_ERR(ecc->clk);
-	}
 
 	mutex_init(&ecc->lock);
 

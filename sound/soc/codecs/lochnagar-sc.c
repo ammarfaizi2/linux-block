@@ -232,7 +232,6 @@ static int lochnagar_sc_probe(struct platform_device *pdev)
 	priv->mclk = devm_clk_get(&pdev->dev, "mclk");
 	if (IS_ERR(priv->mclk)) {
 		ret = PTR_ERR(priv->mclk);
-		dev_err(&pdev->dev, "Failed to get MCLK: %d\n", ret);
 		return ret;
 	}
 

@@ -266,16 +266,12 @@ static int img_pwm_probe(struct platform_device *pdev)
 		return PTR_ERR(pwm->periph_regs);
 
 	pwm->sys_clk = devm_clk_get(&pdev->dev, "sys");
-	if (IS_ERR(pwm->sys_clk)) {
-		dev_err(&pdev->dev, "failed to get system clock\n");
+	if (IS_ERR(pwm->sys_clk))
 		return PTR_ERR(pwm->sys_clk);
-	}
 
 	pwm->pwm_clk = devm_clk_get(&pdev->dev, "pwm");
-	if (IS_ERR(pwm->pwm_clk)) {
-		dev_err(&pdev->dev, "failed to get pwm clock\n");
+	if (IS_ERR(pwm->pwm_clk))
 		return PTR_ERR(pwm->pwm_clk);
-	}
 
 	pm_runtime_set_autosuspend_delay(&pdev->dev, IMG_PWM_PM_TIMEOUT);
 	pm_runtime_use_autosuspend(&pdev->dev);

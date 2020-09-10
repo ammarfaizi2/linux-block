@@ -197,16 +197,12 @@ static int pdc_wdt_probe(struct platform_device *pdev)
 		return PTR_ERR(pdc_wdt->base);
 
 	pdc_wdt->sys_clk = devm_clk_get(dev, "sys");
-	if (IS_ERR(pdc_wdt->sys_clk)) {
-		dev_err(dev, "failed to get the sys clock\n");
+	if (IS_ERR(pdc_wdt->sys_clk))
 		return PTR_ERR(pdc_wdt->sys_clk);
-	}
 
 	pdc_wdt->wdt_clk = devm_clk_get(dev, "wdt");
-	if (IS_ERR(pdc_wdt->wdt_clk)) {
-		dev_err(dev, "failed to get the wdt clock\n");
+	if (IS_ERR(pdc_wdt->wdt_clk))
 		return PTR_ERR(pdc_wdt->wdt_clk);
-	}
 
 	ret = clk_prepare_enable(pdc_wdt->sys_clk);
 	if (ret) {

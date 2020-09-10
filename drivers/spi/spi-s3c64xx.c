@@ -1118,7 +1118,6 @@ static int s3c64xx_spi_probe(struct platform_device *pdev)
 	/* Setup clocks */
 	sdd->clk = devm_clk_get(&pdev->dev, "spi");
 	if (IS_ERR(sdd->clk)) {
-		dev_err(&pdev->dev, "Unable to acquire clock 'spi'\n");
 		ret = PTR_ERR(sdd->clk);
 		goto err_deref_master;
 	}
@@ -1132,8 +1131,6 @@ static int s3c64xx_spi_probe(struct platform_device *pdev)
 	sprintf(clk_name, "spi_busclk%d", sci->src_clk_nr);
 	sdd->src_clk = devm_clk_get(&pdev->dev, clk_name);
 	if (IS_ERR(sdd->src_clk)) {
-		dev_err(&pdev->dev,
-			"Unable to acquire clock '%s'\n", clk_name);
 		ret = PTR_ERR(sdd->src_clk);
 		goto err_disable_clk;
 	}
@@ -1147,7 +1144,6 @@ static int s3c64xx_spi_probe(struct platform_device *pdev)
 	if (sdd->port_conf->clk_ioclk) {
 		sdd->ioclk = devm_clk_get(&pdev->dev, "spi_ioclk");
 		if (IS_ERR(sdd->ioclk)) {
-			dev_err(&pdev->dev, "Unable to acquire 'ioclk'\n");
 			ret = PTR_ERR(sdd->ioclk);
 			goto err_disable_src_clk;
 		}

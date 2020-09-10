@@ -748,10 +748,8 @@ static int rda_uart_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	rda_port->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(rda_port->clk)) {
-		dev_err(&pdev->dev, "could not get clk\n");
+	if (IS_ERR(rda_port->clk))
 		return PTR_ERR(rda_port->clk);
-	}
 
 	rda_port->port.dev = &pdev->dev;
 	rda_port->port.regshift = 0;

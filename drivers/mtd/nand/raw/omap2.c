@@ -2227,10 +2227,8 @@ static int omap_nand_probe(struct platform_device *pdev)
 
 	info->ready_gpiod = devm_gpiod_get_optional(&pdev->dev, "rb",
 						    GPIOD_IN);
-	if (IS_ERR(info->ready_gpiod)) {
-		dev_err(dev, "failed to get ready gpio\n");
+	if (IS_ERR(info->ready_gpiod))
 		return PTR_ERR(info->ready_gpiod);
-	}
 
 	/*
 	 * If RDY/BSY line is connected to OMAP then use the omap ready

@@ -419,14 +419,12 @@ static int tegra_ehci_probe(struct platform_device *pdev)
 
 	tegra->clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(tegra->clk)) {
-		dev_err(&pdev->dev, "Can't get ehci clock\n");
 		err = PTR_ERR(tegra->clk);
 		goto cleanup_hcd_create;
 	}
 
 	tegra->rst = devm_reset_control_get_shared(&pdev->dev, "usb");
 	if (IS_ERR(tegra->rst)) {
-		dev_err(&pdev->dev, "Can't get ehci reset\n");
 		err = PTR_ERR(tegra->rst);
 		goto cleanup_hcd_create;
 	}

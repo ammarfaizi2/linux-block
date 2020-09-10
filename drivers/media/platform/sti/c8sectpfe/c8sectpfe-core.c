@@ -703,10 +703,8 @@ static int c8sectpfe_probe(struct platform_device *pdev)
 	platform_set_drvdata(pdev, fei);
 
 	fei->c8sectpfeclk = devm_clk_get(dev, "c8sectpfe");
-	if (IS_ERR(fei->c8sectpfeclk)) {
-		dev_err(dev, "c8sectpfe clk not found\n");
+	if (IS_ERR(fei->c8sectpfeclk))
 		return PTR_ERR(fei->c8sectpfeclk);
-	}
 
 	ret = clk_prepare_enable(fei->c8sectpfeclk);
 	if (ret) {

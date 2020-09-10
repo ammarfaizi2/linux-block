@@ -622,10 +622,8 @@ static int wm8737_i2c_probe(struct i2c_client *i2c,
 
 	ret = devm_regulator_bulk_get(&i2c->dev, ARRAY_SIZE(wm8737->supplies),
 				      wm8737->supplies);
-	if (ret != 0) {
-		dev_err(&i2c->dev, "Failed to request supplies: %d\n", ret);
+	if (ret != 0)
 		return ret;
-	}
 
 	wm8737->regmap = devm_regmap_init_i2c(i2c, &wm8737_regmap);
 	if (IS_ERR(wm8737->regmap))
@@ -672,10 +670,8 @@ static int wm8737_spi_probe(struct spi_device *spi)
 
 	ret = devm_regulator_bulk_get(&spi->dev, ARRAY_SIZE(wm8737->supplies),
 				      wm8737->supplies);
-	if (ret != 0) {
-		dev_err(&spi->dev, "Failed to request supplies: %d\n", ret);
+	if (ret != 0)
 		return ret;
-	}
 
 	wm8737->regmap = devm_regmap_init_spi(spi, &wm8737_regmap);
 	if (IS_ERR(wm8737->regmap))

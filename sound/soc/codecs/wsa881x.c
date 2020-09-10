@@ -1097,10 +1097,8 @@ static int wsa881x_probe(struct sdw_slave *pdev,
 
 	wsa881x->sd_n = devm_gpiod_get_optional(&pdev->dev, "powerdown",
 						GPIOD_FLAGS_BIT_NONEXCLUSIVE);
-	if (IS_ERR(wsa881x->sd_n)) {
-		dev_err(&pdev->dev, "Shutdown Control GPIO not found\n");
+	if (IS_ERR(wsa881x->sd_n))
 		return PTR_ERR(wsa881x->sd_n);
-	}
 
 	dev_set_drvdata(&pdev->dev, wsa881x);
 	wsa881x->slave = pdev;

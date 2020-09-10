@@ -338,7 +338,6 @@ static int efm32_spi_probe(struct platform_device *pdev)
 	ddata->clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(ddata->clk)) {
 		ret = PTR_ERR(ddata->clk);
-		dev_err(&pdev->dev, "failed to get clock: %d\n", ret);
 		goto err;
 	}
 

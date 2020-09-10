@@ -831,7 +831,6 @@ static int ti_qspi_probe(struct platform_device *pdev)
 	qspi->fclk = devm_clk_get(&pdev->dev, "fck");
 	if (IS_ERR(qspi->fclk)) {
 		ret = PTR_ERR(qspi->fclk);
-		dev_err(&pdev->dev, "could not get clk: %d\n", ret);
 	}
 
 	pm_runtime_use_autosuspend(&pdev->dev);

@@ -395,16 +395,12 @@ static int zx_i2s_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	zx_i2s->dai_wclk = devm_clk_get(&pdev->dev, "wclk");
-	if (IS_ERR(zx_i2s->dai_wclk)) {
-		dev_err(&pdev->dev, "Fail to get wclk\n");
+	if (IS_ERR(zx_i2s->dai_wclk))
 		return PTR_ERR(zx_i2s->dai_wclk);
-	}
 
 	zx_i2s->dai_pclk = devm_clk_get(&pdev->dev, "pclk");
-	if (IS_ERR(zx_i2s->dai_pclk)) {
-		dev_err(&pdev->dev, "Fail to get pclk\n");
+	if (IS_ERR(zx_i2s->dai_pclk))
 		return PTR_ERR(zx_i2s->dai_pclk);
-	}
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	zx_i2s->mapbase = res->start;

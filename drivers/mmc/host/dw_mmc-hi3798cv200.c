@@ -134,16 +134,12 @@ static int dw_mci_hi3798cv200_init(struct dw_mci *host)
 		return -ENOMEM;
 
 	priv->sample_clk = devm_clk_get(host->dev, "ciu-sample");
-	if (IS_ERR(priv->sample_clk)) {
-		dev_err(host->dev, "failed to get ciu-sample clock\n");
+	if (IS_ERR(priv->sample_clk))
 		return PTR_ERR(priv->sample_clk);
-	}
 
 	priv->drive_clk = devm_clk_get(host->dev, "ciu-drive");
-	if (IS_ERR(priv->drive_clk)) {
-		dev_err(host->dev, "failed to get ciu-drive clock\n");
+	if (IS_ERR(priv->drive_clk))
 		return PTR_ERR(priv->drive_clk);
-	}
 
 	ret = clk_prepare_enable(priv->sample_clk);
 	if (ret) {

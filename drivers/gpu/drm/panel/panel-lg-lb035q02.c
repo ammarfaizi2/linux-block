@@ -186,10 +186,8 @@ static int lb035q02_probe(struct spi_device *spi)
 	lcd->spi = spi;
 
 	lcd->enable_gpio = devm_gpiod_get(&spi->dev, "enable", GPIOD_OUT_LOW);
-	if (IS_ERR(lcd->enable_gpio)) {
-		dev_err(&spi->dev, "failed to parse enable gpio\n");
+	if (IS_ERR(lcd->enable_gpio))
 		return PTR_ERR(lcd->enable_gpio);
-	}
 
 	ret = lb035q02_init(lcd);
 	if (ret < 0)

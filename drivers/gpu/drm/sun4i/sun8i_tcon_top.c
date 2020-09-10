@@ -147,16 +147,12 @@ static int sun8i_tcon_top_bind(struct device *dev, struct device *master,
 	spin_lock_init(&tcon_top->reg_lock);
 
 	tcon_top->rst = devm_reset_control_get(dev, NULL);
-	if (IS_ERR(tcon_top->rst)) {
-		dev_err(dev, "Couldn't get our reset line\n");
+	if (IS_ERR(tcon_top->rst))
 		return PTR_ERR(tcon_top->rst);
-	}
 
 	tcon_top->bus = devm_clk_get(dev, "bus");
-	if (IS_ERR(tcon_top->bus)) {
-		dev_err(dev, "Couldn't get the bus clock\n");
+	if (IS_ERR(tcon_top->bus))
 		return PTR_ERR(tcon_top->bus);
-	}
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	regs = devm_ioremap_resource(dev, res);

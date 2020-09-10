@@ -581,7 +581,6 @@ int wm8804_probe(struct device *dev, struct regmap *regmap)
 						GPIOD_OUT_LOW);
 	if (IS_ERR(wm8804->reset)) {
 		ret = PTR_ERR(wm8804->reset);
-		dev_err(dev, "Failed to get reset line: %d\n", ret);
 		return ret;
 	}
 
@@ -590,10 +589,8 @@ int wm8804_probe(struct device *dev, struct regmap *regmap)
 
 	ret = devm_regulator_bulk_get(dev, ARRAY_SIZE(wm8804->supplies),
 				      wm8804->supplies);
-	if (ret) {
-		dev_err(dev, "Failed to request supplies: %d\n", ret);
+	if (ret)
 		return ret;
-	}
 
 	wm8804->disable_nb[0].notifier_call = wm8804_regulator_event_0;
 	wm8804->disable_nb[1].notifier_call = wm8804_regulator_event_1;

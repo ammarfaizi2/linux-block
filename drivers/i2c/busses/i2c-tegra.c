@@ -1667,12 +1667,8 @@ static int tegra_i2c_probe(struct platform_device *pdev)
 	irq = res->start;
 
 	div_clk = devm_clk_get(&pdev->dev, "div-clk");
-	if (IS_ERR(div_clk)) {
-		if (PTR_ERR(div_clk) != -EPROBE_DEFER)
-			dev_err(&pdev->dev, "missing controller clock\n");
-
+	if (IS_ERR(div_clk))
 		return PTR_ERR(div_clk);
-	}
 
 	i2c_dev = devm_kzalloc(&pdev->dev, sizeof(*i2c_dev), GFP_KERNEL);
 	if (!i2c_dev)
@@ -1689,10 +1685,8 @@ static int tegra_i2c_probe(struct platform_device *pdev)
 	i2c_dev->dev = &pdev->dev;
 
 	i2c_dev->rst = devm_reset_control_get_exclusive(&pdev->dev, "i2c");
-	if (IS_ERR(i2c_dev->rst)) {
-		dev_err(&pdev->dev, "missing controller reset\n");
+	if (IS_ERR(i2c_dev->rst))
 		return PTR_ERR(i2c_dev->rst);
-	}
 
 	tegra_i2c_parse_dt(i2c_dev);
 
@@ -1709,22 +1703,15 @@ static int tegra_i2c_probe(struct platform_device *pdev)
 
 	if (!i2c_dev->hw->has_single_clk_source) {
 		fast_clk = devm_clk_get(&pdev->dev, "fast-clk");
-		if (IS_ERR(fast_clk)) {
-			dev_err(&pdev->dev, "missing fast clock\n");
+		if (IS_ERR(fast_clk))
 			return PTR_ERR(fast_clk);
-		}
 		i2c_dev->fast_clk = fast_clk;
 	}
 
 	if (i2c_dev->is_vi) {
 		i2c_dev->slow_clk = devm_clk_get(dev, "slow");
-		if (IS_ERR(i2c_dev->slow_clk)) {
-			if (PTR_ERR(i2c_dev->slow_clk) != -EPROBE_DEFER)
-				dev_err(dev, "failed to get slow clock: %ld\n",
-					PTR_ERR(i2c_dev->slow_clk));
-
+		if (IS_ERR(i2c_dev->slow_clk))
 			return PTR_ERR(i2c_dev->slow_clk);
-		}
 	}
 
 	platform_set_drvdata(pdev, i2c_dev);

@@ -95,11 +95,8 @@ static struct regulator *mpr121_vdd_supply_init(struct device *dev)
 	int err;
 
 	vdd_supply = devm_regulator_get(dev, "vdd");
-	if (IS_ERR(vdd_supply)) {
-		dev_err(dev, "failed to get vdd regulator: %ld\n",
-			PTR_ERR(vdd_supply));
+	if (IS_ERR(vdd_supply))
 		return vdd_supply;
-	}
 
 	err = regulator_enable(vdd_supply);
 	if (err) {

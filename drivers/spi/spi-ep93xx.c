@@ -693,7 +693,6 @@ static int ep93xx_spi_probe(struct platform_device *pdev)
 
 	espi->clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(espi->clk)) {
-		dev_err(&pdev->dev, "unable to get spi clock\n");
 		error = PTR_ERR(espi->clk);
 		goto fail_release_master;
 	}

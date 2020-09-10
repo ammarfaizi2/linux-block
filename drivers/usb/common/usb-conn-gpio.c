@@ -186,11 +186,8 @@ static int usb_conn_probe(struct platform_device *pdev)
 	INIT_DELAYED_WORK(&info->dw_det, usb_conn_detect_cable);
 
 	info->vbus = devm_regulator_get(dev, "vbus");
-	if (IS_ERR(info->vbus)) {
-		if (PTR_ERR(info->vbus) != -EPROBE_DEFER)
-			dev_err(dev, "failed to get vbus\n");
+	if (IS_ERR(info->vbus))
 		return PTR_ERR(info->vbus);
-	}
 
 	info->role_sw = usb_role_switch_get(dev);
 	if (IS_ERR(info->role_sw)) {

@@ -516,16 +516,12 @@ static int mms114_probe(struct i2c_client *client,
 	data->core_reg = devm_regulator_get(&client->dev, "avdd");
 	if (IS_ERR(data->core_reg)) {
 		error = PTR_ERR(data->core_reg);
-		dev_err(&client->dev,
-			"Unable to get the Core regulator (%d)\n", error);
 		return error;
 	}
 
 	data->io_reg = devm_regulator_get(&client->dev, "vdd");
 	if (IS_ERR(data->io_reg)) {
 		error = PTR_ERR(data->io_reg);
-		dev_err(&client->dev,
-			"Unable to get the IO regulator (%d)\n", error);
 		return error;
 	}
 

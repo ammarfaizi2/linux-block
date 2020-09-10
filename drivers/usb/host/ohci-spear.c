@@ -58,7 +58,6 @@ static int spear_ohci_hcd_drv_probe(struct platform_device *pdev)
 
 	usbh_clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(usbh_clk)) {
-		dev_err(&pdev->dev, "Error getting interface clock\n");
 		retval = PTR_ERR(usbh_clk);
 		goto fail;
 	}

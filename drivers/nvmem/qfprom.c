@@ -337,8 +337,6 @@ static int qfprom_probe(struct platform_device *pdev)
 		priv->secclk = devm_clk_get(dev, "core");
 		if (IS_ERR(priv->secclk)) {
 			ret = PTR_ERR(priv->secclk);
-			if (ret != -EPROBE_DEFER)
-				dev_err(dev, "Error getting clock: %d\n", ret);
 			return ret;
 		}
 

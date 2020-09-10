@@ -293,10 +293,8 @@ static int mxc_rtc_probe(struct platform_device *pdev)
 	ioaddr = pdata->ioaddr;
 
 	pdata->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(pdata->clk)) {
-		dev_err(&pdev->dev, "unable to get rtc clock!\n");
+	if (IS_ERR(pdata->clk))
 		return PTR_ERR(pdata->clk);
-	}
 
 	spin_lock_init(&pdata->lock);
 	pdata->irq = platform_get_irq(pdev, 0);

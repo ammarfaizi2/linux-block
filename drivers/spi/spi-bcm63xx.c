@@ -526,10 +526,8 @@ static int bcm63xx_spi_probe(struct platform_device *pdev)
 		return irq;
 
 	clk = devm_clk_get(dev, "spi");
-	if (IS_ERR(clk)) {
-		dev_err(dev, "no clock for device\n");
+	if (IS_ERR(clk))
 		return PTR_ERR(clk);
-	}
 
 	reset = devm_reset_control_get_optional_exclusive(dev, NULL);
 	if (IS_ERR(reset))

@@ -559,14 +559,12 @@ static int tegra30_ahub_probe(struct platform_device *pdev)
 
 	ahub->clk_d_audio = devm_clk_get(&pdev->dev, "d_audio");
 	if (IS_ERR(ahub->clk_d_audio)) {
-		dev_err(&pdev->dev, "Can't retrieve ahub d_audio clock\n");
 		ret = PTR_ERR(ahub->clk_d_audio);
 		return ret;
 	}
 
 	ahub->clk_apbif = devm_clk_get(&pdev->dev, "apbif");
 	if (IS_ERR(ahub->clk_apbif)) {
-		dev_err(&pdev->dev, "Can't retrieve ahub apbif clock\n");
 		ret = PTR_ERR(ahub->clk_apbif);
 		return ret;
 	}

@@ -683,10 +683,8 @@ static int twl6040_probe(struct i2c_client *client,
 	twl6040->supplies[1].supply = "v2v1";
 	ret = devm_regulator_bulk_get(&client->dev, TWL6040_NUM_SUPPLIES,
 				      twl6040->supplies);
-	if (ret != 0) {
-		dev_err(&client->dev, "Failed to get supplies: %d\n", ret);
+	if (ret != 0)
 		return ret;
-	}
 
 	ret = regulator_bulk_enable(TWL6040_NUM_SUPPLIES, twl6040->supplies);
 	if (ret != 0) {

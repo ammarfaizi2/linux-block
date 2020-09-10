@@ -819,25 +819,19 @@ static int ti_adpll_init_inputs(struct ti_adpll_data *d)
 	of_clk_parent_fill(d->np, d->parent_names, nr_inputs);
 
 	clock = devm_clk_get(d->dev, d->parent_names[0]);
-	if (IS_ERR(clock)) {
-		dev_err(d->dev, "could not get clkinp\n");
+	if (IS_ERR(clock))
 		return PTR_ERR(clock);
-	}
 	d->parent_clocks[TI_ADPLL_CLKINP] = clock;
 
 	clock = devm_clk_get(d->dev, d->parent_names[1]);
-	if (IS_ERR(clock)) {
-		dev_err(d->dev, "could not get clkinpulow clock\n");
+	if (IS_ERR(clock))
 		return PTR_ERR(clock);
-	}
 	d->parent_clocks[TI_ADPLL_CLKINPULOW] = clock;
 
 	if (d->c->is_type_s) {
 		clock =  devm_clk_get(d->dev, d->parent_names[2]);
-		if (IS_ERR(clock)) {
-			dev_err(d->dev, "could not get clkinphif clock\n");
+		if (IS_ERR(clock))
 			return PTR_ERR(clock);
-		}
 		d->parent_clocks[TI_ADPLL_CLKINPHIF] = clock;
 	}
 

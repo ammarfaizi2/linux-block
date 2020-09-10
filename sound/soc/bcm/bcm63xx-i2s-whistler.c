@@ -234,11 +234,8 @@ static int bcm63xx_i2s_dev_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	i2s_clk = devm_clk_get(&pdev->dev, "i2sclk");
-	if (IS_ERR(i2s_clk)) {
-		dev_err(&pdev->dev, "%s: cannot get a brcm clock: %ld\n",
-					__func__, PTR_ERR(i2s_clk));
+	if (IS_ERR(i2s_clk))
 		return PTR_ERR(i2s_clk);
-	}
 
 	r_mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (!r_mem) {

@@ -222,8 +222,6 @@ static int st1232_ts_probe(struct i2c_client *client,
 						 GPIOD_OUT_HIGH);
 	if (IS_ERR(ts->reset_gpio)) {
 		error = PTR_ERR(ts->reset_gpio);
-		dev_err(&client->dev, "Unable to request GPIO pin: %d.\n",
-			error);
 		return error;
 	}
 

@@ -356,7 +356,6 @@ static int imx_rproc_probe(struct platform_device *pdev)
 
 	priv->clk = devm_clk_get(dev, NULL);
 	if (IS_ERR(priv->clk)) {
-		dev_err(dev, "Failed to get clock\n");
 		ret = PTR_ERR(priv->clk);
 		goto err_put_rproc;
 	}

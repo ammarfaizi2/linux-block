@@ -976,10 +976,8 @@ static int m5mols_probe(struct i2c_client *client,
 
 	ret = devm_regulator_bulk_get(&client->dev, ARRAY_SIZE(supplies),
 				      supplies);
-	if (ret) {
-		dev_err(&client->dev, "Failed to get regulators: %d\n", ret);
+	if (ret)
 		return ret;
-	}
 
 	sd = &info->sd;
 	v4l2_i2c_subdev_init(sd, client, &m5mols_ops);

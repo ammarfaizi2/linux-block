@@ -2047,10 +2047,8 @@ static int stfsm_probe(struct platform_device *pdev)
 	}
 
 	fsm->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(fsm->clk)) {
-		dev_err(fsm->dev, "Couldn't find EMI clock.\n");
+	if (IS_ERR(fsm->clk))
 		return PTR_ERR(fsm->clk);
-	}
 
 	ret = clk_prepare_enable(fsm->clk);
 	if (ret) {

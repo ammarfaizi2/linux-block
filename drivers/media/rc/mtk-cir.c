@@ -309,10 +309,8 @@ static int mtk_ir_probe(struct platform_device *pdev)
 	ir->data = of_device_get_match_data(dev);
 
 	ir->clk = devm_clk_get(dev, "clk");
-	if (IS_ERR(ir->clk)) {
-		dev_err(dev, "failed to get a ir clock.\n");
+	if (IS_ERR(ir->clk))
 		return PTR_ERR(ir->clk);
-	}
 
 	ir->bus = devm_clk_get(dev, "bus");
 	if (IS_ERR(ir->bus)) {

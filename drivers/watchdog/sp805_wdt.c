@@ -245,10 +245,8 @@ sp805_wdt_probe(struct amba_device *adev, const struct amba_id *id)
 
 	if (adev->dev.of_node) {
 		wdt->clk = devm_clk_get(&adev->dev, NULL);
-		if (IS_ERR(wdt->clk)) {
-			dev_err(&adev->dev, "Clock not found\n");
+		if (IS_ERR(wdt->clk))
 			return PTR_ERR(wdt->clk);
-		}
 		wdt->rate = clk_get_rate(wdt->clk);
 	} else if (has_acpi_companion(&adev->dev)) {
 		/*

@@ -7703,8 +7703,6 @@ static int ufshcd_get_vreg(struct device *dev, struct ufs_vreg *vreg)
 	vreg->reg = devm_regulator_get(dev, vreg->name);
 	if (IS_ERR(vreg->reg)) {
 		ret = PTR_ERR(vreg->reg);
-		dev_err(dev, "%s: %s get failed, err=%d\n",
-				__func__, vreg->name, ret);
 	}
 out:
 	return ret;
@@ -7825,8 +7823,6 @@ static int ufshcd_init_clocks(struct ufs_hba *hba)
 		clki->clk = devm_clk_get(dev, clki->name);
 		if (IS_ERR(clki->clk)) {
 			ret = PTR_ERR(clki->clk);
-			dev_err(dev, "%s: %s clk get failed, %d\n",
-					__func__, clki->name, ret);
 			goto out;
 		}
 

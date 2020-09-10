@@ -387,8 +387,6 @@ static int j721e_pcie_probe(struct platform_device *pdev)
 		gpiod = devm_gpiod_get_optional(dev, "reset", GPIOD_OUT_LOW);
 		if (IS_ERR(gpiod)) {
 			ret = PTR_ERR(gpiod);
-			if (ret != -EPROBE_DEFER)
-				dev_err(dev, "Failed to get reset GPIO\n");
 			goto err_get_sync;
 		}
 

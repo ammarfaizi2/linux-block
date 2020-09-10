@@ -1131,16 +1131,12 @@ static int sun6i_dsi_probe(struct platform_device *pdev)
 	}
 
 	dsi->regulator = devm_regulator_get(dev, "vcc-dsi");
-	if (IS_ERR(dsi->regulator)) {
-		dev_err(dev, "Couldn't get VCC-DSI supply\n");
+	if (IS_ERR(dsi->regulator))
 		return PTR_ERR(dsi->regulator);
-	}
 
 	dsi->reset = devm_reset_control_get_shared(dev, NULL);
-	if (IS_ERR(dsi->reset)) {
-		dev_err(dev, "Couldn't get our reset line\n");
+	if (IS_ERR(dsi->reset))
 		return PTR_ERR(dsi->reset);
-	}
 
 	dsi->regs = devm_regmap_init_mmio(dev, base, &sun6i_dsi_regmap_config);
 	if (IS_ERR(dsi->regs)) {
@@ -1149,10 +1145,8 @@ static int sun6i_dsi_probe(struct platform_device *pdev)
 	}
 
 	dsi->bus_clk = devm_clk_get(dev, bus_clk_name);
-	if (IS_ERR(dsi->bus_clk)) {
-		dev_err(dev, "Couldn't get the DSI bus clock\n");
+	if (IS_ERR(dsi->bus_clk))
 		return PTR_ERR(dsi->bus_clk);
-	}
 
 	ret = regmap_mmio_attach_clk(dsi->regs, dsi->bus_clk);
 	if (ret)
@@ -1162,7 +1156,6 @@ static int sun6i_dsi_probe(struct platform_device *pdev)
 				    "allwinner,sun6i-a31-mipi-dsi")) {
 		dsi->mod_clk = devm_clk_get(dev, "mod");
 		if (IS_ERR(dsi->mod_clk)) {
-			dev_err(dev, "Couldn't get the DSI mod clock\n");
 			ret = PTR_ERR(dsi->mod_clk);
 			goto err_attach_clk;
 		}
@@ -1176,7 +1169,6 @@ static int sun6i_dsi_probe(struct platform_device *pdev)
 
 	dsi->dphy = devm_phy_get(dev, "dphy");
 	if (IS_ERR(dsi->dphy)) {
-		dev_err(dev, "Couldn't get the MIPI D-PHY\n");
 		ret = PTR_ERR(dsi->dphy);
 		goto err_unprotect_clk;
 	}

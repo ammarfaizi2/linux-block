@@ -311,16 +311,12 @@ static int meson_gx_pwrc_vpu_probe(struct platform_device *pdev)
 	}
 
 	vpu_clk = devm_clk_get(&pdev->dev, "vpu");
-	if (IS_ERR(vpu_clk)) {
-		dev_err(&pdev->dev, "vpu clock request failed\n");
+	if (IS_ERR(vpu_clk))
 		return PTR_ERR(vpu_clk);
-	}
 
 	vapb_clk = devm_clk_get(&pdev->dev, "vapb");
-	if (IS_ERR(vapb_clk)) {
-		dev_err(&pdev->dev, "vapb clock request failed\n");
+	if (IS_ERR(vapb_clk))
 		return PTR_ERR(vapb_clk);
-	}
 
 	vpu_pd->regmap_ao = regmap_ao;
 	vpu_pd->regmap_hhi = regmap_hhi;

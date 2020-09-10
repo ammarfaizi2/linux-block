@@ -386,7 +386,6 @@ static int si470x_i2c_probe(struct i2c_client *client)
 						    GPIOD_OUT_LOW);
 	if (IS_ERR(radio->gpio_reset)) {
 		retval = PTR_ERR(radio->gpio_reset);
-		dev_err(&client->dev, "Failed to request gpio: %d\n", retval);
 		goto err_all;
 	}
 

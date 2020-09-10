@@ -725,7 +725,6 @@ static int mvsd_probe(struct platform_device *pdev)
 	 */
 	host->clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(host->clk)) {
-		dev_err(&pdev->dev, "no clock associated\n");
 		ret = -EINVAL;
 		goto out;
 	}

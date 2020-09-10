@@ -1617,9 +1617,6 @@ static int sdhci_tegra_probe(struct platform_device *pdev)
 	if (IS_ERR(clk)) {
 		rc = PTR_ERR(clk);
 
-		if (rc != -EPROBE_DEFER)
-			dev_err(&pdev->dev, "failed to get clock: %d\n", rc);
-
 		goto err_clk_get;
 	}
 	clk_prepare_enable(clk);
@@ -1629,7 +1626,6 @@ static int sdhci_tegra_probe(struct platform_device *pdev)
 							   "sdhci");
 	if (IS_ERR(tegra_host->rst)) {
 		rc = PTR_ERR(tegra_host->rst);
-		dev_err(&pdev->dev, "failed to get reset control: %d\n", rc);
 		goto err_rst_get;
 	}
 

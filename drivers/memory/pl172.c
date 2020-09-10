@@ -217,10 +217,8 @@ static int pl172_probe(struct amba_device *adev, const struct amba_id *id)
 		return -ENOMEM;
 
 	pl172->clk = devm_clk_get(dev, "mpmcclk");
-	if (IS_ERR(pl172->clk)) {
-		dev_err(dev, "no mpmcclk provided clock\n");
+	if (IS_ERR(pl172->clk))
 		return PTR_ERR(pl172->clk);
-	}
 
 	ret = clk_prepare_enable(pl172->clk);
 	if (ret) {

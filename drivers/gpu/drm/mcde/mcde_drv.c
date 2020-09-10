@@ -312,7 +312,6 @@ static int mcde_probe(struct platform_device *pdev)
 	mcde->epod = devm_regulator_get(dev, "epod");
 	if (IS_ERR(mcde->epod)) {
 		ret = PTR_ERR(mcde->epod);
-		dev_err(dev, "can't get EPOD regulator\n");
 		return ret;
 	}
 	ret = regulator_enable(mcde->epod);
@@ -323,7 +322,6 @@ static int mcde_probe(struct platform_device *pdev)
 	mcde->vana = devm_regulator_get(dev, "vana");
 	if (IS_ERR(mcde->vana)) {
 		ret = PTR_ERR(mcde->vana);
-		dev_err(dev, "can't get VANA regulator\n");
 		goto regulator_epod_off;
 	}
 	ret = regulator_enable(mcde->vana);
@@ -339,7 +337,6 @@ static int mcde_probe(struct platform_device *pdev)
 	/* Clock the silicon so we can access the registers */
 	mcde->mcde_clk = devm_clk_get(dev, "mcde");
 	if (IS_ERR(mcde->mcde_clk)) {
-		dev_err(dev, "unable to get MCDE main clock\n");
 		ret = PTR_ERR(mcde->mcde_clk);
 		goto regulator_off;
 	}
@@ -352,13 +349,11 @@ static int mcde_probe(struct platform_device *pdev)
 
 	mcde->lcd_clk = devm_clk_get(dev, "lcd");
 	if (IS_ERR(mcde->lcd_clk)) {
-		dev_err(dev, "unable to get LCD clock\n");
 		ret = PTR_ERR(mcde->lcd_clk);
 		goto clk_disable;
 	}
 	mcde->hdmi_clk = devm_clk_get(dev, "hdmi");
 	if (IS_ERR(mcde->hdmi_clk)) {
-		dev_err(dev, "unable to get HDMI clock\n");
 		ret = PTR_ERR(mcde->hdmi_clk);
 		goto clk_disable;
 	}

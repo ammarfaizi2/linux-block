@@ -187,10 +187,8 @@ static int pic32_wdt_drv_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	wdt->clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(wdt->clk)) {
-		dev_err(dev, "clk not found\n");
+	if (IS_ERR(wdt->clk))
 		return PTR_ERR(wdt->clk);
-	}
 
 	ret = clk_prepare_enable(wdt->clk);
 	if (ret) {

@@ -221,10 +221,8 @@ static int meson_mx_efuse_probe(struct platform_device *pdev)
 	efuse->config.reg_read = meson_mx_efuse_read;
 
 	efuse->core_clk = devm_clk_get(&pdev->dev, "core");
-	if (IS_ERR(efuse->core_clk)) {
-		dev_err(&pdev->dev, "Failed to get core clock\n");
+	if (IS_ERR(efuse->core_clk))
 		return PTR_ERR(efuse->core_clk);
-	}
 
 	efuse->nvmem = devm_nvmem_register(&pdev->dev, &efuse->config);
 

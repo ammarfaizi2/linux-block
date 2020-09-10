@@ -497,8 +497,6 @@ static int rcar_gyroadc_probe(struct platform_device *pdev)
 	priv->clk = devm_clk_get(dev, "fck");
 	if (IS_ERR(priv->clk)) {
 		ret = PTR_ERR(priv->clk);
-		if (ret != -EPROBE_DEFER)
-			dev_err(dev, "Failed to get IF clock (ret=%i)\n", ret);
 		return ret;
 	}
 

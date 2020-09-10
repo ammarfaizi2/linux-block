@@ -103,28 +103,24 @@ static int siox_gpio_probe(struct platform_device *pdev)
 	ddata->din = devm_gpiod_get(dev, "din", GPIOD_IN);
 	if (IS_ERR(ddata->din)) {
 		ret = PTR_ERR(ddata->din);
-		dev_err(dev, "Failed to get %s GPIO: %d\n", "din", ret);
 		goto err;
 	}
 
 	ddata->dout = devm_gpiod_get(dev, "dout", GPIOD_OUT_LOW);
 	if (IS_ERR(ddata->dout)) {
 		ret = PTR_ERR(ddata->dout);
-		dev_err(dev, "Failed to get %s GPIO: %d\n", "dout", ret);
 		goto err;
 	}
 
 	ddata->dclk = devm_gpiod_get(dev, "dclk", GPIOD_OUT_LOW);
 	if (IS_ERR(ddata->dclk)) {
 		ret = PTR_ERR(ddata->dclk);
-		dev_err(dev, "Failed to get %s GPIO: %d\n", "dclk", ret);
 		goto err;
 	}
 
 	ddata->dld = devm_gpiod_get(dev, "dld", GPIOD_OUT_LOW);
 	if (IS_ERR(ddata->dld)) {
 		ret = PTR_ERR(ddata->dld);
-		dev_err(dev, "Failed to get %s GPIO: %d\n", "dld", ret);
 		goto err;
 	}
 

@@ -443,8 +443,6 @@ static int iproc_ts_probe(struct platform_device *pdev)
 	priv->tsc_clk = devm_clk_get(&pdev->dev, "tsc_clk");
 	if (IS_ERR(priv->tsc_clk)) {
 		error = PTR_ERR(priv->tsc_clk);
-		dev_err(&pdev->dev,
-			"failed getting clock tsc_clk: %d\n", error);
 		return error;
 	}
 

@@ -697,14 +697,12 @@ static int nokia_bluetooth_serdev_probe(struct serdev_device *serdev)
 	btdev->reset = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
 	if (IS_ERR(btdev->reset)) {
 		err = PTR_ERR(btdev->reset);
-		dev_err(dev, "could not get reset gpio: %d", err);
 		return err;
 	}
 
 	btdev->wakeup_host = devm_gpiod_get(dev, "host-wakeup", GPIOD_IN);
 	if (IS_ERR(btdev->wakeup_host)) {
 		err = PTR_ERR(btdev->wakeup_host);
-		dev_err(dev, "could not get host wakeup gpio: %d", err);
 		return err;
 	}
 
@@ -723,14 +721,12 @@ static int nokia_bluetooth_serdev_probe(struct serdev_device *serdev)
 					   GPIOD_OUT_LOW);
 	if (IS_ERR(btdev->wakeup_bt)) {
 		err = PTR_ERR(btdev->wakeup_bt);
-		dev_err(dev, "could not get BT wakeup gpio: %d", err);
 		return err;
 	}
 
 	sysclk = devm_clk_get(dev, "sysclk");
 	if (IS_ERR(sysclk)) {
 		err = PTR_ERR(sysclk);
-		dev_err(dev, "could not get sysclk: %d", err);
 		return err;
 	}
 

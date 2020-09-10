@@ -631,7 +631,6 @@ static int wiz_clock_init(struct wiz *wiz, struct device_node *node)
 
 	clk = devm_clk_get(dev, "core_ref_clk");
 	if (IS_ERR(clk)) {
-		dev_err(dev, "core_ref_clk clock not found\n");
 		ret = PTR_ERR(clk);
 		return ret;
 	}
@@ -644,7 +643,6 @@ static int wiz_clock_init(struct wiz *wiz, struct device_node *node)
 
 	clk = devm_clk_get(dev, "ext_ref_clk");
 	if (IS_ERR(clk)) {
-		dev_err(dev, "ext_ref_clk clock not found\n");
 		ret = PTR_ERR(clk);
 		return ret;
 	}
@@ -869,9 +867,6 @@ static int wiz_probe(struct platform_device *pdev)
 						      GPIOD_IN);
 	if (IS_ERR(wiz->gpio_typec_dir)) {
 		ret = PTR_ERR(wiz->gpio_typec_dir);
-		if (ret != -EPROBE_DEFER)
-			dev_err(dev, "Failed to request typec-dir gpio: %d\n",
-				ret);
 		goto err_addr_to_resource;
 	}
 

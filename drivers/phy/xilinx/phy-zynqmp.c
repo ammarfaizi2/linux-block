@@ -874,13 +874,8 @@ static int xpsgtr_get_ref_clocks(struct xpsgtr_dev *gtr_dev)
 
 		snprintf(name, sizeof(name), "ref%u", refclk);
 		clk = devm_clk_get_optional(gtr_dev->dev, name);
-		if (IS_ERR(clk)) {
-			if (PTR_ERR(clk) != -EPROBE_DEFER)
-				dev_err(gtr_dev->dev,
-					"Failed to get reference clock %u: %ld\n",
-					refclk, PTR_ERR(clk));
+		if (IS_ERR(clk))
 			return PTR_ERR(clk);
-		}
 
 		if (!clk)
 			continue;

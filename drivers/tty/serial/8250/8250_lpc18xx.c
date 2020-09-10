@@ -127,16 +127,12 @@ static int lpc18xx_serial_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	data->clk_uart = devm_clk_get(&pdev->dev, "uartclk");
-	if (IS_ERR(data->clk_uart)) {
-		dev_err(&pdev->dev, "uart clock not found\n");
+	if (IS_ERR(data->clk_uart))
 		return PTR_ERR(data->clk_uart);
-	}
 
 	data->clk_reg = devm_clk_get(&pdev->dev, "reg");
-	if (IS_ERR(data->clk_reg)) {
-		dev_err(&pdev->dev, "reg clock not found\n");
+	if (IS_ERR(data->clk_reg))
 		return PTR_ERR(data->clk_reg);
-	}
 
 	ret = clk_prepare_enable(data->clk_reg);
 	if (ret) {

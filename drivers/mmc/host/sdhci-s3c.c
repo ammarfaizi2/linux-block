@@ -527,7 +527,6 @@ static int sdhci_s3c_probe(struct platform_device *pdev)
 
 	sc->clk_io = devm_clk_get(dev, "hsmmc");
 	if (IS_ERR(sc->clk_io)) {
-		dev_err(dev, "failed to get io clock\n");
 		ret = PTR_ERR(sc->clk_io);
 		goto err_pdata_io_clk;
 	}

@@ -316,10 +316,8 @@ static int mtk_rtc_probe(struct platform_device *pdev)
 		return PTR_ERR(hw->base);
 
 	hw->clk = devm_clk_get(&pdev->dev, "rtc");
-	if (IS_ERR(hw->clk)) {
-		dev_err(&pdev->dev, "No clock\n");
+	if (IS_ERR(hw->clk))
 		return PTR_ERR(hw->clk);
-	}
 
 	ret = clk_prepare_enable(hw->clk);
 	if (ret)

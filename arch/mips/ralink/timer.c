@@ -114,10 +114,8 @@ static int rt_timer_probe(struct platform_device *pdev)
 		return PTR_ERR(rt->membase);
 
 	clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(clk)) {
-		dev_err(&pdev->dev, "failed get clock rate\n");
+	if (IS_ERR(clk))
 		return PTR_ERR(clk);
-	}
 
 	rt->timer_freq = clk_get_rate(clk) / TMR0CTL_PRESCALE_DIV;
 	if (!rt->timer_freq)

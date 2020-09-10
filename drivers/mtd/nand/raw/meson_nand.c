@@ -991,28 +991,20 @@ static int meson_nfc_clk_init(struct meson_nfc *nfc)
 
 	/* request core clock */
 	nfc->core_clk = devm_clk_get(nfc->dev, "core");
-	if (IS_ERR(nfc->core_clk)) {
-		dev_err(nfc->dev, "failed to get core clock\n");
+	if (IS_ERR(nfc->core_clk))
 		return PTR_ERR(nfc->core_clk);
-	}
 
 	nfc->device_clk = devm_clk_get(nfc->dev, "device");
-	if (IS_ERR(nfc->device_clk)) {
-		dev_err(nfc->dev, "failed to get device clock\n");
+	if (IS_ERR(nfc->device_clk))
 		return PTR_ERR(nfc->device_clk);
-	}
 
 	nfc->phase_tx = devm_clk_get(nfc->dev, "tx");
-	if (IS_ERR(nfc->phase_tx)) {
-		dev_err(nfc->dev, "failed to get TX clk\n");
+	if (IS_ERR(nfc->phase_tx))
 		return PTR_ERR(nfc->phase_tx);
-	}
 
 	nfc->phase_rx = devm_clk_get(nfc->dev, "rx");
-	if (IS_ERR(nfc->phase_rx)) {
-		dev_err(nfc->dev, "failed to get RX clk\n");
+	if (IS_ERR(nfc->phase_rx))
 		return PTR_ERR(nfc->phase_rx);
-	}
 
 	/* init SD_EMMC_CLOCK to sane defaults w/min clock rate */
 	regmap_update_bits(nfc->reg_clk,

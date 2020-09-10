@@ -191,8 +191,6 @@ static int intel_pcie_ep_rst_init(struct intel_pcie_port *lpp)
 	lpp->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_LOW);
 	if (IS_ERR(lpp->reset_gpio)) {
 		ret = PTR_ERR(lpp->reset_gpio);
-		if (ret != -EPROBE_DEFER)
-			dev_err(dev, "Failed to request PCIe GPIO: %d\n", ret);
 		return ret;
 	}
 
@@ -262,16 +260,12 @@ static int intel_pcie_get_resources(struct platform_device *pdev)
 	lpp->core_clk = devm_clk_get(dev, NULL);
 	if (IS_ERR(lpp->core_clk)) {
 		ret = PTR_ERR(lpp->core_clk);
-		if (ret != -EPROBE_DEFER)
-			dev_err(dev, "Failed to get clks: %d\n", ret);
 		return ret;
 	}
 
 	lpp->core_rst = devm_reset_control_get(dev, NULL);
 	if (IS_ERR(lpp->core_rst)) {
 		ret = PTR_ERR(lpp->core_rst);
-		if (ret != -EPROBE_DEFER)
-			dev_err(dev, "Failed to get resets: %d\n", ret);
 		return ret;
 	}
 
@@ -296,8 +290,6 @@ static int intel_pcie_get_resources(struct platform_device *pdev)
 	lpp->phy = devm_phy_get(dev, "pcie");
 	if (IS_ERR(lpp->phy)) {
 		ret = PTR_ERR(lpp->phy);
-		if (ret != -EPROBE_DEFER)
-			dev_err(dev, "Couldn't get pcie-phy: %d\n", ret);
 		return ret;
 	}
 

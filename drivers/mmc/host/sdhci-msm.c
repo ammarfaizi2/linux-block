@@ -2258,7 +2258,6 @@ static int sdhci_msm_probe(struct platform_device *pdev)
 	clk = devm_clk_get(&pdev->dev, "iface");
 	if (IS_ERR(clk)) {
 		ret = PTR_ERR(clk);
-		dev_err(&pdev->dev, "Peripheral clk setup failed (%d)\n", ret);
 		goto bus_clk_disable;
 	}
 	msm_host->bulk_clks[1].clk = clk;
@@ -2267,7 +2266,6 @@ static int sdhci_msm_probe(struct platform_device *pdev)
 	clk = devm_clk_get(&pdev->dev, "core");
 	if (IS_ERR(clk)) {
 		ret = PTR_ERR(clk);
-		dev_err(&pdev->dev, "SDC MMC clk setup failed (%d)\n", ret);
 		goto bus_clk_disable;
 	}
 	msm_host->bulk_clks[0].clk = clk;

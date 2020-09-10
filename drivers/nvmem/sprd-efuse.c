@@ -394,10 +394,8 @@ static int sprd_efuse_probe(struct platform_device *pdev)
 	}
 
 	efuse->clk = devm_clk_get(&pdev->dev, "enable");
-	if (IS_ERR(efuse->clk)) {
-		dev_err(&pdev->dev, "failed to get enable clock\n");
+	if (IS_ERR(efuse->clk))
 		return PTR_ERR(efuse->clk);
-	}
 
 	mutex_init(&efuse->mutex);
 	efuse->dev = &pdev->dev;

@@ -293,10 +293,8 @@ static int twl6040_vibra_probe(struct platform_device *pdev)
 	error = devm_regulator_bulk_get(twl6040_core_dev,
 					ARRAY_SIZE(info->supplies),
 					info->supplies);
-	if (error) {
-		dev_err(info->dev, "couldn't get regulators %d\n", error);
+	if (error)
 		return error;
-	}
 
 	if (vddvibl_uV) {
 		error = regulator_set_voltage(info->supplies[0].consumer,

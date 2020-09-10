@@ -106,10 +106,8 @@ static int sprd_hwspinlock_probe(struct platform_device *pdev)
 		return PTR_ERR(sprd_hwlock->base);
 
 	sprd_hwlock->clk = devm_clk_get(&pdev->dev, "enable");
-	if (IS_ERR(sprd_hwlock->clk)) {
-		dev_err(&pdev->dev, "get hwspinlock clock failed!\n");
+	if (IS_ERR(sprd_hwlock->clk))
 		return PTR_ERR(sprd_hwlock->clk);
-	}
 
 	ret = clk_prepare_enable(sprd_hwlock->clk);
 	if (ret)

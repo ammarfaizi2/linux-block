@@ -223,7 +223,6 @@ static int lp3952_probe(struct i2c_client *client,
 					   GPIOD_OUT_HIGH);
 	if (IS_ERR(priv->enable_gpio)) {
 		status = PTR_ERR(priv->enable_gpio);
-		dev_err(&client->dev, "Failed to enable gpio: %d\n", status);
 		return status;
 	}
 

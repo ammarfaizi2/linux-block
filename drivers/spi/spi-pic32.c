@@ -736,7 +736,6 @@ static int pic32_spi_hw_probe(struct platform_device *pdev,
 	/* get clock */
 	pic32s->clk = devm_clk_get(&pdev->dev, "mck0");
 	if (IS_ERR(pic32s->clk)) {
-		dev_err(&pdev->dev, "clk not found\n");
 		ret = PTR_ERR(pic32s->clk);
 		goto err_unmap_mem;
 	}

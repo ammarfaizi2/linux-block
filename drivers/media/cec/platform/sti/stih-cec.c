@@ -331,10 +331,8 @@ static int stih_cec_probe(struct platform_device *pdev)
 		return ret;
 
 	cec->clk = devm_clk_get(dev, "cec-clk");
-	if (IS_ERR(cec->clk)) {
-		dev_err(dev, "Cannot get cec clock\n");
+	if (IS_ERR(cec->clk))
 		return PTR_ERR(cec->clk);
-	}
 
 	cec->adap = cec_allocate_adapter(&sti_cec_adap_ops, cec, CEC_NAME,
 					 CEC_CAP_DEFAULTS |

@@ -239,7 +239,6 @@ static int sdhci_brcmstb_probe(struct platform_device *pdev)
 	if (IS_ERR(clk)) {
 		if (PTR_ERR(clk) == -EPROBE_DEFER)
 			return -EPROBE_DEFER;
-		dev_err(&pdev->dev, "Clock not found in Device Tree\n");
 		clk = NULL;
 	}
 	res = clk_prepare_enable(clk);

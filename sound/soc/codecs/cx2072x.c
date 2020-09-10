@@ -1656,10 +1656,8 @@ static int cx2072x_i2c_probe(struct i2c_client *i2c,
 	cx2072x->bclk_ratio = 0;
 
 	cx2072x->mclk = devm_clk_get(cx2072x->dev, "mclk");
-	if (IS_ERR(cx2072x->mclk)) {
-		dev_err(cx2072x->dev, "Failed to get MCLK\n");
+	if (IS_ERR(cx2072x->mclk))
 		return PTR_ERR(cx2072x->mclk);
-	}
 
 	regmap_read(cx2072x->regmap, CX2072X_VENDOR_ID, &ven_id);
 	regmap_read(cx2072x->regmap, CX2072X_REVISION_ID, &rev_id);

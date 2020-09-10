@@ -431,29 +431,21 @@ static int midas_probe(struct platform_device *pdev)
 	card->dev = dev;
 
 	priv->reg_mic_bias = devm_regulator_get(dev, "mic-bias");
-	if (IS_ERR(priv->reg_mic_bias)) {
-		dev_err(dev, "Failed to get mic bias regulator\n");
+	if (IS_ERR(priv->reg_mic_bias))
 		return PTR_ERR(priv->reg_mic_bias);
-	}
 
 	priv->reg_submic_bias = devm_regulator_get(dev, "submic-bias");
-	if (IS_ERR(priv->reg_submic_bias)) {
-		dev_err(dev, "Failed to get submic bias regulator\n");
+	if (IS_ERR(priv->reg_submic_bias))
 		return PTR_ERR(priv->reg_submic_bias);
-	}
 
 	priv->gpio_fm_sel = devm_gpiod_get_optional(dev, "fm-sel", GPIOD_OUT_HIGH);
-	if (IS_ERR(priv->gpio_fm_sel)) {
-		dev_err(dev, "Failed to get FM selection GPIO\n");
+	if (IS_ERR(priv->gpio_fm_sel))
 		return PTR_ERR(priv->gpio_fm_sel);
-	}
 
 	priv->gpio_lineout_sel = devm_gpiod_get_optional(dev, "lineout-sel",
 						    GPIOD_OUT_HIGH);
-	if (IS_ERR(priv->gpio_lineout_sel)) {
-		dev_err(dev, "Failed to get line out selection GPIO\n");
+	if (IS_ERR(priv->gpio_lineout_sel))
 		return PTR_ERR(priv->gpio_lineout_sel);
-	}
 
 	ret = snd_soc_of_parse_card_name(card, "model");
 	if (ret < 0) {

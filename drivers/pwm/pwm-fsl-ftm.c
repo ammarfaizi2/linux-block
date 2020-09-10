@@ -425,10 +425,8 @@ static int fsl_pwm_probe(struct platform_device *pdev)
 	}
 
 	fpc->clk[FSL_PWM_CLK_SYS] = devm_clk_get(&pdev->dev, "ftm_sys");
-	if (IS_ERR(fpc->clk[FSL_PWM_CLK_SYS])) {
-		dev_err(&pdev->dev, "failed to get \"ftm_sys\" clock\n");
+	if (IS_ERR(fpc->clk[FSL_PWM_CLK_SYS]))
 		return PTR_ERR(fpc->clk[FSL_PWM_CLK_SYS]);
-	}
 
 	fpc->clk[FSL_PWM_CLK_FIX] = devm_clk_get(fpc->chip.dev, "ftm_fix");
 	if (IS_ERR(fpc->clk[FSL_PWM_CLK_FIX]))

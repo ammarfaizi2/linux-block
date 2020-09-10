@@ -194,10 +194,8 @@ static int nspire_keypad_probe(struct platform_device *pdev)
 	keypad->active_low = of_property_read_bool(of_node, "active-low");
 
 	keypad->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(keypad->clk)) {
-		dev_err(&pdev->dev, "unable to get clock\n");
+	if (IS_ERR(keypad->clk))
 		return PTR_ERR(keypad->clk);
-	}
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	keypad->reg_base = devm_ioremap_resource(&pdev->dev, res);

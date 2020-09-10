@@ -159,10 +159,8 @@ static int bt1_axi_request_clk(struct bt1_axi *axi)
 	int ret;
 
 	axi->aclk = devm_clk_get(axi->dev, "aclk");
-	if (IS_ERR(axi->aclk)) {
-		dev_err(axi->dev, "Couldn't get AXI Interconnect clock\n");
+	if (IS_ERR(axi->aclk))
 		return PTR_ERR(axi->aclk);
-	}
 
 	ret = clk_prepare_enable(axi->aclk);
 	if (ret) {

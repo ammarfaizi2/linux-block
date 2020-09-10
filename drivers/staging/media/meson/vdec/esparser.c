@@ -445,10 +445,8 @@ int esparser_init(struct platform_device *pdev, struct amvdec_core *core)
 
 	core->esparser_reset =
 		devm_reset_control_get_exclusive(dev, "esparser");
-	if (IS_ERR(core->esparser_reset)) {
-		dev_err(dev, "Failed to get esparser_reset\n");
+	if (IS_ERR(core->esparser_reset))
 		return PTR_ERR(core->esparser_reset);
-	}
 
 	return 0;
 }

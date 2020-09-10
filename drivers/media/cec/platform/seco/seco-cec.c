@@ -552,10 +552,8 @@ static int secocec_acpi_probe(struct secocec_data *sdev)
 	int irq = 0;
 
 	gpio = devm_gpiod_get(dev, NULL, GPIOF_IN);
-	if (IS_ERR(gpio)) {
-		dev_err(dev, "Cannot request interrupt gpio");
+	if (IS_ERR(gpio))
 		return PTR_ERR(gpio);
-	}
 
 	irq = gpiod_to_irq(gpio);
 	if (irq < 0) {

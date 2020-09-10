@@ -554,7 +554,6 @@ static int ps8622_probe(struct i2c_client *client,
 	ps8622->gpio_slp = devm_gpiod_get(dev, "sleep", GPIOD_OUT_HIGH);
 	if (IS_ERR(ps8622->gpio_slp)) {
 		ret = PTR_ERR(ps8622->gpio_slp);
-		dev_err(dev, "cannot get gpio_slp %d\n", ret);
 		return ret;
 	}
 
@@ -565,7 +564,6 @@ static int ps8622_probe(struct i2c_client *client,
 	ps8622->gpio_rst = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
 	if (IS_ERR(ps8622->gpio_rst)) {
 		ret = PTR_ERR(ps8622->gpio_rst);
-		dev_err(dev, "cannot get gpio_rst %d\n", ret);
 		return ret;
 	}
 

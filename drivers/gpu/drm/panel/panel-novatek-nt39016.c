@@ -267,16 +267,12 @@ static int nt39016_probe(struct spi_device *spi)
 		return -EINVAL;
 
 	panel->supply = devm_regulator_get(dev, "power");
-	if (IS_ERR(panel->supply)) {
-		dev_err(dev, "Failed to get power supply");
+	if (IS_ERR(panel->supply))
 		return PTR_ERR(panel->supply);
-	}
 
 	panel->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
-	if (IS_ERR(panel->reset_gpio)) {
-		dev_err(dev, "Failed to get reset GPIO");
+	if (IS_ERR(panel->reset_gpio))
 		return PTR_ERR(panel->reset_gpio);
-	}
 
 	spi->bits_per_word = 8;
 	spi->mode = SPI_MODE_3 | SPI_3WIRE;

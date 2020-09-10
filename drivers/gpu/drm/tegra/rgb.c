@@ -231,16 +231,12 @@ int tegra_dc_rgb_probe(struct tegra_dc *dc)
 		return err;
 
 	rgb->clk = devm_clk_get(dc->dev, NULL);
-	if (IS_ERR(rgb->clk)) {
-		dev_err(dc->dev, "failed to get clock\n");
+	if (IS_ERR(rgb->clk))
 		return PTR_ERR(rgb->clk);
-	}
 
 	rgb->clk_parent = devm_clk_get(dc->dev, "parent");
-	if (IS_ERR(rgb->clk_parent)) {
-		dev_err(dc->dev, "failed to get parent clock\n");
+	if (IS_ERR(rgb->clk_parent))
 		return PTR_ERR(rgb->clk_parent);
-	}
 
 	err = clk_set_parent(rgb->clk, rgb->clk_parent);
 	if (err < 0) {

@@ -1730,10 +1730,8 @@ static int cs35l36_i2c_probe(struct i2c_client *i2c_client,
 
 	ret = devm_regulator_bulk_get(dev, cs35l36->num_supplies,
 				      cs35l36->supplies);
-	if (ret != 0) {
-		dev_err(dev, "Failed to request core supplies: %d\n", ret);
+	if (ret != 0)
 		return ret;
-	}
 
 	if (pdata) {
 		cs35l36->pdata = *pdata;

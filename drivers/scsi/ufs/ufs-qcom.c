@@ -1259,8 +1259,6 @@ static int ufs_qcom_init(struct ufs_hba *hba)
 						     GPIOD_OUT_HIGH);
 	if (IS_ERR(host->device_reset)) {
 		err = PTR_ERR(host->device_reset);
-		if (err != -EPROBE_DEFER)
-			dev_err(dev, "failed to acquire reset gpio: %d\n", err);
 		goto out_variant_clear;
 	}
 

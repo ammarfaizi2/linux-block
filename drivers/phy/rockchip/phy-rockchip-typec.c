@@ -1049,34 +1049,24 @@ static int tcphy_parse_dt(struct rockchip_typec_phy *tcphy,
 	}
 
 	tcphy->clk_core = devm_clk_get(dev, "tcpdcore");
-	if (IS_ERR(tcphy->clk_core)) {
-		dev_err(dev, "could not get uphy core clock\n");
+	if (IS_ERR(tcphy->clk_core))
 		return PTR_ERR(tcphy->clk_core);
-	}
 
 	tcphy->clk_ref = devm_clk_get(dev, "tcpdphy-ref");
-	if (IS_ERR(tcphy->clk_ref)) {
-		dev_err(dev, "could not get uphy ref clock\n");
+	if (IS_ERR(tcphy->clk_ref))
 		return PTR_ERR(tcphy->clk_ref);
-	}
 
 	tcphy->uphy_rst = devm_reset_control_get(dev, "uphy");
-	if (IS_ERR(tcphy->uphy_rst)) {
-		dev_err(dev, "no uphy_rst reset control found\n");
+	if (IS_ERR(tcphy->uphy_rst))
 		return PTR_ERR(tcphy->uphy_rst);
-	}
 
 	tcphy->pipe_rst = devm_reset_control_get(dev, "uphy-pipe");
-	if (IS_ERR(tcphy->pipe_rst)) {
-		dev_err(dev, "no pipe_rst reset control found\n");
+	if (IS_ERR(tcphy->pipe_rst))
 		return PTR_ERR(tcphy->pipe_rst);
-	}
 
 	tcphy->tcphy_rst = devm_reset_control_get(dev, "uphy-tcphy");
-	if (IS_ERR(tcphy->tcphy_rst)) {
-		dev_err(dev, "no tcphy_rst reset control found\n");
+	if (IS_ERR(tcphy->tcphy_rst))
 		return PTR_ERR(tcphy->tcphy_rst);
-	}
 
 	return 0;
 }

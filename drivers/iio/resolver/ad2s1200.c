@@ -144,18 +144,12 @@ static int ad2s1200_probe(struct spi_device *spi)
 	st->sdev = spi;
 
 	st->sample = devm_gpiod_get(&spi->dev, "adi,sample", GPIOD_OUT_LOW);
-	if (IS_ERR(st->sample)) {
-		dev_err(&spi->dev, "Failed to claim SAMPLE gpio: err=%ld\n",
-			PTR_ERR(st->sample));
+	if (IS_ERR(st->sample))
 		return PTR_ERR(st->sample);
-	}
 
 	st->rdvel = devm_gpiod_get(&spi->dev, "adi,rdvel", GPIOD_OUT_LOW);
-	if (IS_ERR(st->rdvel)) {
-		dev_err(&spi->dev, "Failed to claim RDVEL gpio: err=%ld\n",
-			PTR_ERR(st->rdvel));
+	if (IS_ERR(st->rdvel))
 		return PTR_ERR(st->rdvel);
-	}
 
 	indio_dev->info = &ad2s1200_info;
 	indio_dev->modes = INDIO_DIRECT_MODE;

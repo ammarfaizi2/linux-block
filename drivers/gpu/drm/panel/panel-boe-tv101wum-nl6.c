@@ -769,11 +769,8 @@ static int boe_panel_add(struct boe_panel *boe)
 		return PTR_ERR(boe->pp1800);
 
 	boe->enable_gpio = devm_gpiod_get(dev, "enable", GPIOD_OUT_LOW);
-	if (IS_ERR(boe->enable_gpio)) {
-		dev_err(dev, "cannot get reset-gpios %ld\n",
-			PTR_ERR(boe->enable_gpio));
+	if (IS_ERR(boe->enable_gpio))
 		return PTR_ERR(boe->enable_gpio);
-	}
 
 	gpiod_set_value(boe->enable_gpio, 0);
 

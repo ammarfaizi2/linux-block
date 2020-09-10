@@ -288,26 +288,20 @@ static int st_rproc_parse_dt(struct platform_device *pdev)
 	if (ddata->config->sw_reset) {
 		ddata->sw_reset = devm_reset_control_get_exclusive(dev,
 								   "sw_reset");
-		if (IS_ERR(ddata->sw_reset)) {
-			dev_err(dev, "Failed to get S/W Reset\n");
+		if (IS_ERR(ddata->sw_reset))
 			return PTR_ERR(ddata->sw_reset);
-		}
 	}
 
 	if (ddata->config->pwr_reset) {
 		ddata->pwr_reset = devm_reset_control_get_exclusive(dev,
 								    "pwr_reset");
-		if (IS_ERR(ddata->pwr_reset)) {
-			dev_err(dev, "Failed to get Power Reset\n");
+		if (IS_ERR(ddata->pwr_reset))
 			return PTR_ERR(ddata->pwr_reset);
-		}
 	}
 
 	ddata->clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(ddata->clk)) {
-		dev_err(dev, "Failed to get clock\n");
+	if (IS_ERR(ddata->clk))
 		return PTR_ERR(ddata->clk);
-	}
 
 	err = of_property_read_u32(np, "clock-frequency", &ddata->clk_rate);
 	if (err) {

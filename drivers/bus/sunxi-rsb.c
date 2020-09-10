@@ -657,7 +657,6 @@ static int sunxi_rsb_probe(struct platform_device *pdev)
 	rsb->clk = devm_clk_get(dev, NULL);
 	if (IS_ERR(rsb->clk)) {
 		ret = PTR_ERR(rsb->clk);
-		dev_err(dev, "failed to retrieve clk: %d\n", ret);
 		return ret;
 	}
 
@@ -672,7 +671,6 @@ static int sunxi_rsb_probe(struct platform_device *pdev)
 	rsb->rstc = devm_reset_control_get(dev, NULL);
 	if (IS_ERR(rsb->rstc)) {
 		ret = PTR_ERR(rsb->rstc);
-		dev_err(dev, "failed to retrieve reset controller: %d\n", ret);
 		goto err_clk_disable;
 	}
 

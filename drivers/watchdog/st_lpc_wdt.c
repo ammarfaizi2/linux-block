@@ -191,10 +191,8 @@ static int st_wdog_probe(struct platform_device *pdev)
 	}
 
 	clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(clk)) {
-		dev_err(dev, "Unable to request clock\n");
+	if (IS_ERR(clk))
 		return PTR_ERR(clk);
-	}
 
 	st_wdog->dev		= dev;
 	st_wdog->base		= base;

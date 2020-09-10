@@ -283,11 +283,8 @@ static int kona_pwmc_probe(struct platform_device *pdev)
 		return PTR_ERR(kp->base);
 
 	kp->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(kp->clk)) {
-		dev_err(&pdev->dev, "failed to get clock: %ld\n",
-			PTR_ERR(kp->clk));
+	if (IS_ERR(kp->clk))
 		return PTR_ERR(kp->clk);
-	}
 
 	ret = clk_prepare_enable(kp->clk);
 	if (ret < 0) {

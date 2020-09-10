@@ -477,10 +477,8 @@ static int bu21013_probe(struct i2c_client *client,
 	}
 
 	ts->regulator = devm_regulator_get(&client->dev, "avdd");
-	if (IS_ERR(ts->regulator)) {
-		dev_err(&client->dev, "regulator_get failed\n");
+	if (IS_ERR(ts->regulator))
 		return PTR_ERR(ts->regulator);
-	}
 
 	error = regulator_enable(ts->regulator);
 	if (error) {

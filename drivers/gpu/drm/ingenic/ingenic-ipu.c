@@ -714,10 +714,8 @@ static int ingenic_ipu_bind(struct device *dev, struct device *master, void *d)
 		return irq;
 
 	ipu->clk = devm_clk_get(dev, "ipu");
-	if (IS_ERR(ipu->clk)) {
-		dev_err(dev, "Failed to get pixel clock\n");
+	if (IS_ERR(ipu->clk))
 		return PTR_ERR(ipu->clk);
-	}
 
 	err = devm_request_irq(dev, irq, ingenic_ipu_irq_handler, 0,
 			       dev_name(dev), ipu);

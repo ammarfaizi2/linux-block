@@ -341,7 +341,6 @@ static int sun4i_ss_probe(struct platform_device *pdev)
 	ss->ssclk = devm_clk_get(&pdev->dev, "mod");
 	if (IS_ERR(ss->ssclk)) {
 		err = PTR_ERR(ss->ssclk);
-		dev_err(&pdev->dev, "Cannot get SS clock err=%d\n", err);
 		return err;
 	}
 	dev_dbg(&pdev->dev, "clock ss acquired\n");
@@ -349,7 +348,6 @@ static int sun4i_ss_probe(struct platform_device *pdev)
 	ss->busclk = devm_clk_get(&pdev->dev, "ahb");
 	if (IS_ERR(ss->busclk)) {
 		err = PTR_ERR(ss->busclk);
-		dev_err(&pdev->dev, "Cannot get AHB SS clock err=%d\n", err);
 		return err;
 	}
 	dev_dbg(&pdev->dev, "clock ahb_ss acquired\n");

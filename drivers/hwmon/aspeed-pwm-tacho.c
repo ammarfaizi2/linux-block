@@ -910,11 +910,8 @@ static int aspeed_pwm_tacho_probe(struct platform_device *pdev)
 		return PTR_ERR(priv->regmap);
 
 	priv->rst = devm_reset_control_get_exclusive(dev, NULL);
-	if (IS_ERR(priv->rst)) {
-		dev_err(dev,
-			"missing or invalid reset controller device tree entry");
+	if (IS_ERR(priv->rst))
 		return PTR_ERR(priv->rst);
-	}
 	reset_control_deassert(priv->rst);
 
 	ret = devm_add_action_or_reset(dev, aspeed_pwm_tacho_remove, priv);

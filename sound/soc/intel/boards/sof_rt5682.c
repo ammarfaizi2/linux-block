@@ -763,9 +763,6 @@ static int sof_audio_probe(struct platform_device *pdev)
 		if (IS_ERR(ctx->mclk)) {
 			ret = PTR_ERR(ctx->mclk);
 
-			dev_err(&pdev->dev,
-				"Failed to get MCLK from pmc_plt_clk_3: %d\n",
-				ret);
 			return ret;
 		}
 

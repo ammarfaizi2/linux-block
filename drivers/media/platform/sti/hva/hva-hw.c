@@ -327,10 +327,8 @@ int hva_hw_probe(struct platform_device *pdev, struct hva_dev *hva)
 
 	/* get clock resource */
 	hva->clk = devm_clk_get(dev, "clk_hva");
-	if (IS_ERR(hva->clk)) {
-		dev_err(dev, "%s     failed to get clock\n", HVA_PREFIX);
+	if (IS_ERR(hva->clk))
 		return PTR_ERR(hva->clk);
-	}
 
 	ret = clk_prepare(hva->clk);
 	if (ret < 0) {

@@ -480,10 +480,8 @@ static int dwc3_omap_probe(struct platform_device *pdev)
 
 	if (of_property_read_bool(node, "vbus-supply")) {
 		vbus_reg = devm_regulator_get(dev, "vbus");
-		if (IS_ERR(vbus_reg)) {
-			dev_err(dev, "vbus init failed\n");
+		if (IS_ERR(vbus_reg))
 			return PTR_ERR(vbus_reg);
-		}
 	}
 
 	omap->dev	= dev;

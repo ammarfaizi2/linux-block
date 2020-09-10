@@ -221,11 +221,8 @@ static int iproc_pwmc_probe(struct platform_device *pdev)
 		return PTR_ERR(ip->base);
 
 	ip->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(ip->clk)) {
-		dev_err(&pdev->dev, "failed to get clock: %ld\n",
-			PTR_ERR(ip->clk));
+	if (IS_ERR(ip->clk))
 		return PTR_ERR(ip->clk);
-	}
 
 	ret = clk_prepare_enable(ip->clk);
 	if (ret < 0) {

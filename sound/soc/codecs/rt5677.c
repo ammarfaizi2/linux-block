@@ -5600,14 +5600,12 @@ static int rt5677_i2c_probe(struct i2c_client *i2c)
 			"realtek,pow-ldo2", GPIOD_OUT_HIGH);
 	if (IS_ERR(rt5677->pow_ldo2)) {
 		ret = PTR_ERR(rt5677->pow_ldo2);
-		dev_err(&i2c->dev, "Failed to request POW_LDO2: %d\n", ret);
 		return ret;
 	}
 	rt5677->reset_pin = devm_gpiod_get_optional(&i2c->dev,
 			"realtek,reset", GPIOD_OUT_LOW);
 	if (IS_ERR(rt5677->reset_pin)) {
 		ret = PTR_ERR(rt5677->reset_pin);
-		dev_err(&i2c->dev, "Failed to request RESET: %d\n", ret);
 		return ret;
 	}
 

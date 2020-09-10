@@ -276,18 +276,12 @@ static int altera_ps_probe(struct spi_device *spi)
 
 	conf->spi = spi;
 	conf->config = devm_gpiod_get(&spi->dev, "nconfig", GPIOD_OUT_LOW);
-	if (IS_ERR(conf->config)) {
-		dev_err(&spi->dev, "Failed to get config gpio: %ld\n",
-			PTR_ERR(conf->config));
+	if (IS_ERR(conf->config))
 		return PTR_ERR(conf->config);
-	}
 
 	conf->status = devm_gpiod_get(&spi->dev, "nstat", GPIOD_IN);
-	if (IS_ERR(conf->status)) {
-		dev_err(&spi->dev, "Failed to get status gpio: %ld\n",
-			PTR_ERR(conf->status));
+	if (IS_ERR(conf->status))
 		return PTR_ERR(conf->status);
-	}
 
 	conf->confd = devm_gpiod_get_optional(&spi->dev, "confd", GPIOD_IN);
 	if (IS_ERR(conf->confd)) {

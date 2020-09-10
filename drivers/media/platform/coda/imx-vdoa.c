@@ -296,10 +296,8 @@ static int vdoa_probe(struct platform_device *pdev)
 	vdoa->dev = &pdev->dev;
 
 	vdoa->vdoa_clk = devm_clk_get(vdoa->dev, NULL);
-	if (IS_ERR(vdoa->vdoa_clk)) {
-		dev_err(vdoa->dev, "Failed to get clock\n");
+	if (IS_ERR(vdoa->vdoa_clk))
 		return PTR_ERR(vdoa->vdoa_clk);
-	}
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	vdoa->regs = devm_ioremap_resource(vdoa->dev, res);

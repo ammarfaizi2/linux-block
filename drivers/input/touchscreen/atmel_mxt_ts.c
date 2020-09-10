@@ -3138,7 +3138,6 @@ static int mxt_probe(struct i2c_client *client, const struct i2c_device_id *id)
 						   "reset", GPIOD_OUT_LOW);
 	if (IS_ERR(data->reset_gpio)) {
 		error = PTR_ERR(data->reset_gpio);
-		dev_err(&client->dev, "Failed to get reset gpio: %d\n", error);
 		return error;
 	}
 

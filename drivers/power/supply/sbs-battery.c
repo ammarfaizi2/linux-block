@@ -1122,11 +1122,8 @@ static int sbs_probe(struct i2c_client *client)
 
 	chip->gpio_detect = devm_gpiod_get_optional(&client->dev,
 			"sbs,battery-detect", GPIOD_IN);
-	if (IS_ERR(chip->gpio_detect)) {
-		dev_err(&client->dev, "Failed to get gpio: %ld\n",
-			PTR_ERR(chip->gpio_detect));
+	if (IS_ERR(chip->gpio_detect))
 		return PTR_ERR(chip->gpio_detect);
-	}
 
 	i2c_set_clientdata(client, chip);
 

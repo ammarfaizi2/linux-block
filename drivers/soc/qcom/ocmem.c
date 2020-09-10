@@ -308,12 +308,8 @@ static int ocmem_dev_probe(struct platform_device *pdev)
 	ocmem->config = device_get_match_data(dev);
 
 	ret = devm_clk_bulk_get(dev, ARRAY_SIZE(ocmem_clks), ocmem_clks);
-	if (ret) {
-		if (ret != -EPROBE_DEFER)
-			dev_err(dev, "Unable to get clocks\n");
-
+	if (ret)
 		return ret;
-	}
 
 	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "ctrl");
 	ocmem->mmio = devm_ioremap_resource(&pdev->dev, res);

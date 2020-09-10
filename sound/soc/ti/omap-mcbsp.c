@@ -686,7 +686,6 @@ static int omap_mcbsp_init(struct platform_device *pdev)
 	mcbsp->fclk = devm_clk_get(&pdev->dev, "fck");
 	if (IS_ERR(mcbsp->fclk)) {
 		ret = PTR_ERR(mcbsp->fclk);
-		dev_err(mcbsp->dev, "unable to get fck: %d\n", ret);
 		return ret;
 	}
 

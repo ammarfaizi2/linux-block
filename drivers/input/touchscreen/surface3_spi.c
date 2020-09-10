@@ -235,11 +235,6 @@ static int surface3_spi_get_gpio_config(struct surface3_ts_data *data)
 		gpiod = devm_gpiod_get_index(dev, NULL, i, GPIOD_OUT_LOW);
 		if (IS_ERR(gpiod)) {
 			error = PTR_ERR(gpiod);
-			if (error != -EPROBE_DEFER)
-				dev_err(dev,
-					"Failed to get power GPIO %d: %d\n",
-					i,
-					error);
 			return error;
 		}
 

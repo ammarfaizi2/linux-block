@@ -580,12 +580,8 @@ static int snd_cht_mc_probe(struct platform_device *pdev)
 		mclk_name = "pmc_plt_clk_3";
 
 	drv->mclk = devm_clk_get(&pdev->dev, mclk_name);
-	if (IS_ERR(drv->mclk)) {
-		dev_err(&pdev->dev,
-			"Failed to get MCLK from %s: %ld\n",
-			mclk_name, PTR_ERR(drv->mclk));
+	if (IS_ERR(drv->mclk))
 		return PTR_ERR(drv->mclk);
-	}
 
 	/*
 	 * Boards which have the MAX98090's clk connected to clk_0 do not seem

@@ -845,10 +845,8 @@ static struct ti_bandgap *ti_bandgap_build(struct platform_device *pdev)
 
 	if (TI_BANDGAP_HAS(bgp, TSHUT)) {
 		bgp->tshut_gpiod = devm_gpiod_get(&pdev->dev, NULL, GPIOD_IN);
-		if (IS_ERR(bgp->tshut_gpiod)) {
-			dev_err(&pdev->dev, "invalid gpio for tshut\n");
+		if (IS_ERR(bgp->tshut_gpiod))
 			return ERR_CAST(bgp->tshut_gpiod);
-		}
 	}
 
 	return bgp;

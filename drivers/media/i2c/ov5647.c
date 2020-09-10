@@ -570,10 +570,8 @@ static int ov5647_probe(struct i2c_client *client)
 
 	/* get system clock (xclk) */
 	sensor->xclk = devm_clk_get(dev, NULL);
-	if (IS_ERR(sensor->xclk)) {
-		dev_err(dev, "could not get xclk");
+	if (IS_ERR(sensor->xclk))
 		return PTR_ERR(sensor->xclk);
-	}
 
 	xclk_freq = clk_get_rate(sensor->xclk);
 	if (xclk_freq != 25000000) {

@@ -553,7 +553,6 @@ static int xlnx_formatter_pcm_probe(struct platform_device *pdev)
 	aud_drv_data->axi_clk = devm_clk_get(dev, "s_axi_lite_aclk");
 	if (IS_ERR(aud_drv_data->axi_clk)) {
 		ret = PTR_ERR(aud_drv_data->axi_clk);
-		dev_err(dev, "failed to get s_axi_lite_aclk(%d)\n", ret);
 		return ret;
 	}
 	ret = clk_prepare_enable(aud_drv_data->axi_clk);

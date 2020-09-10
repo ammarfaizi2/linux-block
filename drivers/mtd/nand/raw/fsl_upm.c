@@ -217,10 +217,8 @@ static int fun_probe(struct platform_device *ofdev)
 		fun->rnb_gpio[i] = devm_gpiod_get_index_optional(&ofdev->dev,
 								 NULL, i,
 								 GPIOD_IN);
-		if (IS_ERR(fun->rnb_gpio[i])) {
-			dev_err(&ofdev->dev, "RNB gpio #%d is invalid\n", i);
+		if (IS_ERR(fun->rnb_gpio[i]))
 			return PTR_ERR(fun->rnb_gpio[i]);
-		}
 	}
 
 	nand_controller_init(&fun->base);

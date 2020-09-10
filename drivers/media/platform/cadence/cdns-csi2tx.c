@@ -443,16 +443,12 @@ static int csi2tx_get_resources(struct csi2tx_priv *csi2tx,
 		return PTR_ERR(csi2tx->base);
 
 	csi2tx->p_clk = devm_clk_get(&pdev->dev, "p_clk");
-	if (IS_ERR(csi2tx->p_clk)) {
-		dev_err(&pdev->dev, "Couldn't get p_clk\n");
+	if (IS_ERR(csi2tx->p_clk))
 		return PTR_ERR(csi2tx->p_clk);
-	}
 
 	csi2tx->esc_clk = devm_clk_get(&pdev->dev, "esc_clk");
-	if (IS_ERR(csi2tx->esc_clk)) {
-		dev_err(&pdev->dev, "Couldn't get the esc_clk\n");
+	if (IS_ERR(csi2tx->esc_clk))
 		return PTR_ERR(csi2tx->esc_clk);
-	}
 
 	clk_prepare_enable(csi2tx->p_clk);
 	dev_cfg = readl(csi2tx->base + CSI2TX_DEVICE_CONFIG_REG);
@@ -479,11 +475,8 @@ static int csi2tx_get_resources(struct csi2tx_priv *csi2tx,
 
 		snprintf(clk_name, sizeof(clk_name), "pixel_if%u_clk", i);
 		csi2tx->pixel_clk[i] = devm_clk_get(&pdev->dev, clk_name);
-		if (IS_ERR(csi2tx->pixel_clk[i])) {
-			dev_err(&pdev->dev, "Couldn't get clock %s\n",
-				clk_name);
+		if (IS_ERR(csi2tx->pixel_clk[i]))
 			return PTR_ERR(csi2tx->pixel_clk[i]);
-		}
 	}
 
 	return 0;

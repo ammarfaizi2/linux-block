@@ -3529,7 +3529,6 @@ static int ab8500_charger_probe(struct platform_device *pdev)
 	di->regu = devm_regulator_get(di->dev, "vddadc");
 	if (IS_ERR(di->regu)) {
 		ret = PTR_ERR(di->regu);
-		dev_err(di->dev, "failed to get vddadc regulator\n");
 		goto free_charger_wq;
 	}
 

@@ -209,16 +209,12 @@ static int lpc24xx_rtc_probe(struct platform_device *pdev)
 		return irq;
 
 	rtc->clk_rtc = devm_clk_get(&pdev->dev, "rtc");
-	if (IS_ERR(rtc->clk_rtc)) {
-		dev_err(&pdev->dev, "error getting rtc clock\n");
+	if (IS_ERR(rtc->clk_rtc))
 		return PTR_ERR(rtc->clk_rtc);
-	}
 
 	rtc->clk_reg = devm_clk_get(&pdev->dev, "reg");
-	if (IS_ERR(rtc->clk_reg)) {
-		dev_err(&pdev->dev, "error getting reg clock\n");
+	if (IS_ERR(rtc->clk_reg))
 		return PTR_ERR(rtc->clk_reg);
-	}
 
 	ret = clk_prepare_enable(rtc->clk_rtc);
 	if (ret) {

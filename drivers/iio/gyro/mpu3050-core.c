@@ -1158,10 +1158,8 @@ int mpu3050_common_probe(struct device *dev,
 	mpu3050->regs[1].supply = mpu3050_reg_vlogic;
 	ret = devm_regulator_bulk_get(dev, ARRAY_SIZE(mpu3050->regs),
 				      mpu3050->regs);
-	if (ret) {
-		dev_err(dev, "Cannot get regulators\n");
+	if (ret)
 		return ret;
-	}
 
 	ret = mpu3050_power_up(mpu3050);
 	if (ret)

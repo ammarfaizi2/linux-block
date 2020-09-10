@@ -1438,10 +1438,8 @@ static int imx219_probe(struct i2c_client *client)
 
 	/* Get system clock (xclk) */
 	imx219->xclk = devm_clk_get(dev, NULL);
-	if (IS_ERR(imx219->xclk)) {
-		dev_err(dev, "failed to get xclk\n");
+	if (IS_ERR(imx219->xclk))
 		return PTR_ERR(imx219->xclk);
-	}
 
 	imx219->xclk_freq = clk_get_rate(imx219->xclk);
 	if (imx219->xclk_freq != IMX219_XCLK_FREQ) {

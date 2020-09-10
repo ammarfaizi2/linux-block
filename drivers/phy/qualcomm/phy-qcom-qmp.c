@@ -2657,9 +2657,6 @@ static int qcom_qmp_phy_enable(struct phy *phy)
 
 			if (IS_ERR(qmp->ufs_reset)) {
 				ret = PTR_ERR(qmp->ufs_reset);
-				dev_err(qmp->dev,
-					"failed to get UFS reset: %d\n",
-					ret);
 
 				qmp->ufs_reset = NULL;
 				return ret;
@@ -2949,10 +2946,8 @@ static int qcom_qmp_phy_reset_init(struct device *dev)
 		const char *name = qmp->cfg->reset_list[i];
 
 		rst = devm_reset_control_get(dev, name);
-		if (IS_ERR(rst)) {
-			dev_err(dev, "failed to get %s reset\n", name);
+		if (IS_ERR(rst))
 			return PTR_ERR(rst);
-		}
 		qmp->resets[i] = rst;
 	}
 

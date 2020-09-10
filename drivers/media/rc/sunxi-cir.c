@@ -172,15 +172,11 @@ static int sunxi_ir_probe(struct platform_device *pdev)
 
 	/* Clock */
 	ir->apb_clk = devm_clk_get(dev, "apb");
-	if (IS_ERR(ir->apb_clk)) {
-		dev_err(dev, "failed to get a apb clock.\n");
+	if (IS_ERR(ir->apb_clk))
 		return PTR_ERR(ir->apb_clk);
-	}
 	ir->clk = devm_clk_get(dev, "ir");
-	if (IS_ERR(ir->clk)) {
-		dev_err(dev, "failed to get a ir clock.\n");
+	if (IS_ERR(ir->clk))
 		return PTR_ERR(ir->clk);
-	}
 
 	/* Base clock frequency (optional) */
 	of_property_read_u32(dn, "clock-frequency", &b_clk_freq);

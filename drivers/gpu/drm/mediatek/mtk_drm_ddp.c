@@ -371,11 +371,8 @@ static int mtk_ddp_probe(struct platform_device *pdev)
 
 	if (!ddp->data->no_clk) {
 		ddp->clk = devm_clk_get(dev, NULL);
-		if (IS_ERR(ddp->clk)) {
-			if (PTR_ERR(ddp->clk) != -EPROBE_DEFER)
-				dev_err(dev, "Failed to get clock\n");
+		if (IS_ERR(ddp->clk))
 			return PTR_ERR(ddp->clk);
-		}
 	}
 
 	regs = platform_get_resource(pdev, IORESOURCE_MEM, 0);

@@ -89,10 +89,8 @@ static int shmob_drm_setup_clocks(struct shmob_drm_device *sdev,
 	}
 
 	clk = devm_clk_get(sdev->dev, clkname);
-	if (IS_ERR(clk)) {
-		dev_err(sdev->dev, "cannot get dot clock %s\n", clkname);
+	if (IS_ERR(clk))
 		return PTR_ERR(clk);
-	}
 
 	sdev->clock = clk;
 	return 0;

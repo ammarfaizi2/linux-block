@@ -758,9 +758,6 @@ static int imx_thermal_probe(struct platform_device *pdev)
 	data->thermal_clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(data->thermal_clk)) {
 		ret = PTR_ERR(data->thermal_clk);
-		if (ret != -EPROBE_DEFER)
-			dev_err(&pdev->dev,
-				"failed to get thermal clk: %d\n", ret);
 		goto legacy_cleanup;
 	}
 

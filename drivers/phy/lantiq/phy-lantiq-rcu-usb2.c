@@ -179,17 +179,12 @@ static int ltq_rcu_usb2_of_parse(struct ltq_rcu_usb2_priv *priv,
 	}
 
 	priv->phy_gate_clk = devm_clk_get(dev, "phy");
-	if (IS_ERR(priv->phy_gate_clk)) {
-		dev_err(dev, "Unable to get USB phy gate clk\n");
+	if (IS_ERR(priv->phy_gate_clk))
 		return PTR_ERR(priv->phy_gate_clk);
-	}
 
 	priv->ctrl_reset = devm_reset_control_get_shared(dev, "ctrl");
-	if (IS_ERR(priv->ctrl_reset)) {
-		if (PTR_ERR(priv->ctrl_reset) != -EPROBE_DEFER)
-			dev_err(dev, "failed to get 'ctrl' reset\n");
+	if (IS_ERR(priv->ctrl_reset))
 		return PTR_ERR(priv->ctrl_reset);
-	}
 
 	priv->phy_reset = devm_reset_control_get_optional(dev, "phy");
 

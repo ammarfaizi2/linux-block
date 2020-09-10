@@ -121,16 +121,12 @@ static int lpc18xx_dac_probe(struct platform_device *pdev)
 		return PTR_ERR(dac->base);
 
 	dac->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(dac->clk)) {
-		dev_err(&pdev->dev, "error getting clock\n");
+	if (IS_ERR(dac->clk))
 		return PTR_ERR(dac->clk);
-	}
 
 	dac->vref = devm_regulator_get(&pdev->dev, "vref");
-	if (IS_ERR(dac->vref)) {
-		dev_err(&pdev->dev, "error getting regulator\n");
+	if (IS_ERR(dac->vref))
 		return PTR_ERR(dac->vref);
-	}
 
 	indio_dev->name = dev_name(&pdev->dev);
 	indio_dev->info = &lpc18xx_dac_info;

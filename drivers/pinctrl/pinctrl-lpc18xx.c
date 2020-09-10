@@ -1335,10 +1335,8 @@ static int lpc18xx_scu_probe(struct platform_device *pdev)
 		return PTR_ERR(scu->base);
 
 	scu->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(scu->clk)) {
-		dev_err(&pdev->dev, "Input clock not found.\n");
+	if (IS_ERR(scu->clk))
 		return PTR_ERR(scu->clk);
-	}
 
 	ret = lpc18xx_create_group_func_map(&pdev->dev, scu);
 	if (ret) {

@@ -535,16 +535,12 @@ static int sun4i_spdif_probe(struct platform_device *pdev)
 
 	/* Clocks */
 	host->apb_clk = devm_clk_get(&pdev->dev, "apb");
-	if (IS_ERR(host->apb_clk)) {
-		dev_err(&pdev->dev, "failed to get a apb clock.\n");
+	if (IS_ERR(host->apb_clk))
 		return PTR_ERR(host->apb_clk);
-	}
 
 	host->spdif_clk = devm_clk_get(&pdev->dev, "spdif");
-	if (IS_ERR(host->spdif_clk)) {
-		dev_err(&pdev->dev, "failed to get a spdif clock.\n");
+	if (IS_ERR(host->spdif_clk))
 		return PTR_ERR(host->spdif_clk);
-	}
 
 	host->dma_params_tx.addr = res->start + quirks->reg_dac_txdata;
 	host->dma_params_tx.maxburst = 8;

@@ -88,22 +88,16 @@ static int s5pv210_audss_clk_probe(struct platform_device *pdev)
 	clk_table = clk_data->hws;
 
 	hclk = devm_clk_get(&pdev->dev, "hclk");
-	if (IS_ERR(hclk)) {
-		dev_err(&pdev->dev, "failed to get hclk clock\n");
+	if (IS_ERR(hclk))
 		return PTR_ERR(hclk);
-	}
 
 	pll_in = devm_clk_get(&pdev->dev, "fout_epll");
-	if (IS_ERR(pll_in)) {
-		dev_err(&pdev->dev, "failed to get fout_epll clock\n");
+	if (IS_ERR(pll_in))
 		return PTR_ERR(pll_in);
-	}
 
 	sclk_audio = devm_clk_get(&pdev->dev, "sclk_audio0");
-	if (IS_ERR(sclk_audio)) {
-		dev_err(&pdev->dev, "failed to get sclk_audio0 clock\n");
+	if (IS_ERR(sclk_audio))
 		return PTR_ERR(sclk_audio);
-	}
 
 	/* iiscdclk0 is an optional external I2S codec clock */
 	cdclk = devm_clk_get(&pdev->dev, "iiscdclk0");

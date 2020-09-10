@@ -634,8 +634,6 @@ static int atmel_i2s_probe(struct platform_device *pdev)
 	dev->pclk = devm_clk_get(&pdev->dev, "pclk");
 	if (IS_ERR(dev->pclk)) {
 		err = PTR_ERR(dev->pclk);
-		dev_err(&pdev->dev,
-			"failed to get the peripheral clock: %d\n", err);
 		return err;
 	}
 

@@ -391,7 +391,6 @@ static int isp1704_charger_probe(struct platform_device *pdev)
 					  GPIOD_OUT_HIGH);
 	if (IS_ERR(isp->enable_gpio)) {
 		ret = PTR_ERR(isp->enable_gpio);
-		dev_err(&pdev->dev, "Could not get reset gpio: %d\n", ret);
 		return ret;
 	}
 

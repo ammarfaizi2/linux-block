@@ -735,10 +735,8 @@ static int stm32_rtc_probe(struct platform_device *pdev)
 		rtc->rtc_ck = devm_clk_get(&pdev->dev, NULL);
 	} else {
 		rtc->pclk = devm_clk_get(&pdev->dev, "pclk");
-		if (IS_ERR(rtc->pclk)) {
-			dev_err(&pdev->dev, "no pclk clock");
+		if (IS_ERR(rtc->pclk))
 			return PTR_ERR(rtc->pclk);
-		}
 		rtc->rtc_ck = devm_clk_get(&pdev->dev, "rtc_ck");
 	}
 	if (IS_ERR(rtc->rtc_ck)) {

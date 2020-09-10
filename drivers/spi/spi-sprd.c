@@ -881,10 +881,8 @@ static int sprd_spi_clk_init(struct platform_device *pdev, struct sprd_spi *ss)
 	}
 
 	ss->clk = devm_clk_get(&pdev->dev, "enable");
-	if (IS_ERR(ss->clk)) {
-		dev_err(&pdev->dev, "can't get the enable clock\n");
+	if (IS_ERR(ss->clk))
 		return PTR_ERR(ss->clk);
-	}
 
 	if (!clk_set_parent(clk_spi, clk_parent))
 		ss->src_clk = clk_get_rate(clk_spi);

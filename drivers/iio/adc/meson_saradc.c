@@ -1230,16 +1230,12 @@ static int meson_sar_adc_probe(struct platform_device *pdev)
 		return ret;
 
 	priv->clkin = devm_clk_get(&pdev->dev, "clkin");
-	if (IS_ERR(priv->clkin)) {
-		dev_err(&pdev->dev, "failed to get clkin\n");
+	if (IS_ERR(priv->clkin))
 		return PTR_ERR(priv->clkin);
-	}
 
 	priv->core_clk = devm_clk_get(&pdev->dev, "core");
-	if (IS_ERR(priv->core_clk)) {
-		dev_err(&pdev->dev, "failed to get core clk\n");
+	if (IS_ERR(priv->core_clk))
 		return PTR_ERR(priv->core_clk);
-	}
 
 	priv->adc_clk = devm_clk_get(&pdev->dev, "adc_clk");
 	if (IS_ERR(priv->adc_clk)) {
@@ -1269,10 +1265,8 @@ static int meson_sar_adc_probe(struct platform_device *pdev)
 	}
 
 	priv->vref = devm_regulator_get(&pdev->dev, "vref");
-	if (IS_ERR(priv->vref)) {
-		dev_err(&pdev->dev, "failed to get vref regulator\n");
+	if (IS_ERR(priv->vref))
 		return PTR_ERR(priv->vref);
-	}
 
 	priv->calibscale = MILLION;
 

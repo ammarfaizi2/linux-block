@@ -589,14 +589,12 @@ static int owl_mmc_probe(struct platform_device *pdev)
 
 	owl_host->clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(owl_host->clk)) {
-		dev_err(&pdev->dev, "No clock defined\n");
 		ret = PTR_ERR(owl_host->clk);
 		goto err_free_host;
 	}
 
 	owl_host->reset = devm_reset_control_get_exclusive(&pdev->dev, NULL);
 	if (IS_ERR(owl_host->reset)) {
-		dev_err(&pdev->dev, "Could not get reset control\n");
 		ret = PTR_ERR(owl_host->reset);
 		goto err_free_host;
 	}

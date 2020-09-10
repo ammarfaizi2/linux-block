@@ -1146,12 +1146,8 @@ static int cs35l33_i2c_probe(struct i2c_client *i2c_client,
 	ret = devm_regulator_bulk_get(&i2c_client->dev,
 			cs35l33->num_core_supplies,
 			cs35l33->core_supplies);
-	if (ret != 0) {
-		dev_err(&i2c_client->dev,
-			"Failed to request core supplies: %d\n",
-			ret);
+	if (ret != 0)
 		return ret;
-	}
 
 	if (pdata) {
 		cs35l33->pdata = *pdata;
@@ -1169,11 +1165,8 @@ static int cs35l33_i2c_probe(struct i2c_client *i2c_client,
 	/* We could issue !RST or skip it based on AMP topology */
 	cs35l33->reset_gpio = devm_gpiod_get_optional(&i2c_client->dev,
 			"reset-gpios", GPIOD_OUT_HIGH);
-	if (IS_ERR(cs35l33->reset_gpio)) {
-		dev_err(&i2c_client->dev, "%s ERROR: Can't get reset GPIO\n",
-			__func__);
+	if (IS_ERR(cs35l33->reset_gpio))
 		return PTR_ERR(cs35l33->reset_gpio);
-	}
 
 	ret = regulator_bulk_enable(cs35l33->num_core_supplies,
 					cs35l33->core_supplies);

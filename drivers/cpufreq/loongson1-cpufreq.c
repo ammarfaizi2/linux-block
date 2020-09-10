@@ -153,11 +153,8 @@ static int ls1x_cpufreq_probe(struct platform_device *pdev)
 	cpufreq->dev = &pdev->dev;
 
 	clk = devm_clk_get(&pdev->dev, pdata->clk_name);
-	if (IS_ERR(clk)) {
-		dev_err(&pdev->dev, "unable to get %s clock\n",
-			pdata->clk_name);
+	if (IS_ERR(clk))
 		return PTR_ERR(clk);
-	}
 	cpufreq->clk = clk;
 
 	clk = clk_get_parent(clk);
@@ -177,11 +174,8 @@ static int ls1x_cpufreq_probe(struct platform_device *pdev)
 	cpufreq->pll_clk = clk;
 
 	clk = devm_clk_get(&pdev->dev, pdata->osc_clk_name);
-	if (IS_ERR(clk)) {
-		dev_err(&pdev->dev, "unable to get %s clock\n",
-			pdata->osc_clk_name);
+	if (IS_ERR(clk))
 		return PTR_ERR(clk);
-	}
 	cpufreq->osc_clk = clk;
 
 	cpufreq->max_freq = pdata->max_freq;

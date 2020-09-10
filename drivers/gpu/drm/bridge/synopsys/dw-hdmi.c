@@ -3268,7 +3268,6 @@ struct dw_hdmi *dw_hdmi_probe(struct platform_device *pdev,
 	hdmi->isfr_clk = devm_clk_get(hdmi->dev, "isfr");
 	if (IS_ERR(hdmi->isfr_clk)) {
 		ret = PTR_ERR(hdmi->isfr_clk);
-		dev_err(hdmi->dev, "Unable to get HDMI isfr clk: %d\n", ret);
 		goto err_res;
 	}
 
@@ -3281,7 +3280,6 @@ struct dw_hdmi *dw_hdmi_probe(struct platform_device *pdev,
 	hdmi->iahb_clk = devm_clk_get(hdmi->dev, "iahb");
 	if (IS_ERR(hdmi->iahb_clk)) {
 		ret = PTR_ERR(hdmi->iahb_clk);
-		dev_err(hdmi->dev, "Unable to get HDMI iahb clk: %d\n", ret);
 		goto err_isfr;
 	}
 

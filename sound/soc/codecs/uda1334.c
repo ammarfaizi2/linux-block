@@ -260,14 +260,12 @@ static int uda1334_codec_probe(struct platform_device *pdev)
 	uda1334->mute = devm_gpiod_get(&pdev->dev, "nxp,mute", GPIOD_OUT_LOW);
 	if (IS_ERR(uda1334->mute)) {
 		ret = PTR_ERR(uda1334->mute);
-		dev_err(&pdev->dev, "Failed to get mute line: %d\n", ret);
 		return ret;
 	}
 
 	uda1334->deemph = devm_gpiod_get(&pdev->dev, "nxp,deemph", GPIOD_OUT_LOW);
 	if (IS_ERR(uda1334->deemph)) {
 		ret = PTR_ERR(uda1334->deemph);
-		dev_err(&pdev->dev, "Failed to get deemph line: %d\n", ret);
 		return ret;
 	}
 

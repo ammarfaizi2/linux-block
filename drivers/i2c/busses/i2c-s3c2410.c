@@ -955,10 +955,8 @@ static int s3c24xx_i2c_parse_dt_gpio(struct s3c24xx_i2c *i2c)
 	for (i = 0; i < 2; i++) {
 		i2c->gpios[i] = devm_gpiod_get_index(i2c->dev, NULL,
 						     i, GPIOD_ASIS);
-		if (IS_ERR(i2c->gpios[i])) {
-			dev_err(i2c->dev, "i2c gpio invalid at index %d\n", i);
+		if (IS_ERR(i2c->gpios[i]))
 			return -EINVAL;
-		}
 	}
 	return 0;
 }
@@ -1088,10 +1086,8 @@ static int s3c24xx_i2c_probe(struct platform_device *pdev)
 	/* find the clock and enable it */
 	i2c->dev = &pdev->dev;
 	i2c->clk = devm_clk_get(&pdev->dev, "i2c");
-	if (IS_ERR(i2c->clk)) {
-		dev_err(&pdev->dev, "cannot get clock\n");
+	if (IS_ERR(i2c->clk))
 		return -ENOENT;
-	}
 
 	dev_dbg(&pdev->dev, "clock source %p\n", i2c->clk);
 

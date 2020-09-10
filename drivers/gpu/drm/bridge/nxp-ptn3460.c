@@ -303,7 +303,6 @@ static int ptn3460_probe(struct i2c_client *client,
 					       GPIOD_OUT_HIGH);
 	if (IS_ERR(ptn_bridge->gpio_pd_n)) {
 		ret = PTR_ERR(ptn_bridge->gpio_pd_n);
-		dev_err(dev, "cannot get gpio_pd_n %d\n", ret);
 		return ret;
 	}
 

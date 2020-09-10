@@ -392,18 +392,7 @@ static int dsi_phy_regulator_init(struct msm_dsi_phy *phy)
 	for (i = 0; i < num; i++)
 		s[i].supply = regs[i].name;
 
-	ret = devm_regulator_bulk_get(dev, num, s);
-	if (ret < 0) {
-		if (ret != -EPROBE_DEFER) {
-			DRM_DEV_ERROR(dev,
-				      "%s: failed to init regulator, ret=%d\n",
-				      __func__, ret);
-		}
-
-		return ret;
-	}
-
-	return 0;
+	return devm_regulator_bulk_get(dev, num, s);
 }
 
 static void dsi_phy_regulator_disable(struct msm_dsi_phy *phy)

@@ -124,10 +124,8 @@ static int regulator_userspace_consumer_probe(struct platform_device *pdev)
 
 	ret = devm_regulator_bulk_get(&pdev->dev, drvdata->num_supplies,
 				      drvdata->supplies);
-	if (ret) {
-		dev_err(&pdev->dev, "Failed to get supplies: %d\n", ret);
+	if (ret)
 		return ret;
-	}
 
 	ret = sysfs_create_group(&pdev->dev.kobj, &attr_group);
 	if (ret != 0)

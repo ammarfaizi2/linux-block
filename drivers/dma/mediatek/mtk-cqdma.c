@@ -762,11 +762,8 @@ static int mtk_cqdma_probe(struct platform_device *pdev)
 	dd = &cqdma->ddev;
 
 	cqdma->clk = devm_clk_get(&pdev->dev, "cqdma");
-	if (IS_ERR(cqdma->clk)) {
-		dev_err(&pdev->dev, "No clock for %s\n",
-			dev_name(&pdev->dev));
+	if (IS_ERR(cqdma->clk))
 		return PTR_ERR(cqdma->clk);
-	}
 
 	dma_cap_set(DMA_MEMCPY, dd->cap_mask);
 

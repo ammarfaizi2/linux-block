@@ -399,10 +399,8 @@ static int altr_i2c_probe(struct platform_device *pdev)
 		return irq;
 
 	idev->i2c_clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(idev->i2c_clk)) {
-		dev_err(&pdev->dev, "missing clock\n");
+	if (IS_ERR(idev->i2c_clk))
 		return PTR_ERR(idev->i2c_clk);
-	}
 
 	idev->dev = &pdev->dev;
 	init_completion(&idev->msg_complete);

@@ -95,10 +95,8 @@ static int qnap_power_off_probe(struct platform_device *pdev)
 
 	/* We need to know tclk in order to calculate the UART divisor */
 	clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(clk)) {
-		dev_err(&pdev->dev, "Clk missing");
+	if (IS_ERR(clk))
 		return PTR_ERR(clk);
-	}
 
 	tclk = clk_get_rate(clk);
 

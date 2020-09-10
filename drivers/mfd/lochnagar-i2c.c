@@ -296,14 +296,12 @@ static int lochnagar_i2c_probe(struct i2c_client *i2c)
 	reset = devm_gpiod_get(dev, "reset", GPIOD_OUT_LOW);
 	if (IS_ERR(reset)) {
 		ret = PTR_ERR(reset);
-		dev_err(dev, "Failed to get reset GPIO: %d\n", ret);
 		return ret;
 	}
 
 	present = devm_gpiod_get_optional(dev, "present", GPIOD_OUT_HIGH);
 	if (IS_ERR(present)) {
 		ret = PTR_ERR(present);
-		dev_err(dev, "Failed to get present GPIO: %d\n", ret);
 		return ret;
 	}
 

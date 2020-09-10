@@ -464,10 +464,8 @@ static int tegra_csi_probe(struct platform_device *pdev)
 		csi->clks[i].id = csi->soc->clk_names[i];
 
 	ret = devm_clk_bulk_get(&pdev->dev, csi->soc->num_clks, csi->clks);
-	if (ret) {
-		dev_err(&pdev->dev, "failed to get the clocks: %d\n", ret);
+	if (ret)
 		return ret;
-	}
 
 	if (!pdev->dev.pm_domain) {
 		ret = -ENOENT;

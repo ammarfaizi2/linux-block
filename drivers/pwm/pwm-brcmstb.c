@@ -244,10 +244,8 @@ static int brcmstb_pwm_probe(struct platform_device *pdev)
 	spin_lock_init(&p->lock);
 
 	p->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(p->clk)) {
-		dev_err(&pdev->dev, "failed to obtain clock\n");
+	if (IS_ERR(p->clk))
 		return PTR_ERR(p->clk);
-	}
 
 	ret = clk_prepare_enable(p->clk);
 	if (ret < 0) {

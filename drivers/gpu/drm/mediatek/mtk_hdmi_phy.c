@@ -126,8 +126,6 @@ static int mtk_hdmi_phy_probe(struct platform_device *pdev)
 	ref_clk = devm_clk_get(dev, "pll_ref");
 	if (IS_ERR(ref_clk)) {
 		ret = PTR_ERR(ref_clk);
-		dev_err(&pdev->dev, "Failed to get PLL reference clock: %d\n",
-			ret);
 		return ret;
 	}
 	ref_clk_name = __clk_get_name(ref_clk);

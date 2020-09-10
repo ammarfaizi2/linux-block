@@ -740,10 +740,8 @@ static int tas6424_i2c_probe(struct i2c_client *client,
 		tas6424->supplies[i].supply = tas6424_supply_names[i];
 	ret = devm_regulator_bulk_get(dev, ARRAY_SIZE(tas6424->supplies),
 				      tas6424->supplies);
-	if (ret) {
-		dev_err(dev, "unable to request supplies: %d\n", ret);
+	if (ret)
 		return ret;
-	}
 
 	ret = regulator_bulk_enable(ARRAY_SIZE(tas6424->supplies),
 				    tas6424->supplies);

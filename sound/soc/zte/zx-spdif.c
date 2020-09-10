@@ -313,10 +313,8 @@ static int zx_spdif_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	zx_spdif->dai_clk = devm_clk_get(&pdev->dev, "tx");
-	if (IS_ERR(zx_spdif->dai_clk)) {
-		dev_err(&pdev->dev, "Fail to get clk\n");
+	if (IS_ERR(zx_spdif->dai_clk))
 		return PTR_ERR(zx_spdif->dai_clk);
-	}
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	zx_spdif->mapbase = res->start;

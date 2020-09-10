@@ -563,10 +563,8 @@ static int sun4i_tv_bind(struct device *dev, struct device *master,
 	}
 
 	tv->reset = devm_reset_control_get(dev, NULL);
-	if (IS_ERR(tv->reset)) {
-		dev_err(dev, "Couldn't get our reset line\n");
+	if (IS_ERR(tv->reset))
 		return PTR_ERR(tv->reset);
-	}
 
 	ret = reset_control_deassert(tv->reset);
 	if (ret) {
@@ -576,7 +574,6 @@ static int sun4i_tv_bind(struct device *dev, struct device *master,
 
 	tv->clk = devm_clk_get(dev, NULL);
 	if (IS_ERR(tv->clk)) {
-		dev_err(dev, "Couldn't get the TV encoder clock\n");
 		ret = PTR_ERR(tv->clk);
 		goto err_assert_reset;
 	}

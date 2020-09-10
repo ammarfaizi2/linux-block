@@ -419,10 +419,8 @@ static int hix5hd2_i2c_probe(struct platform_device *pdev)
 	}
 
 	priv->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(priv->clk)) {
-		dev_err(&pdev->dev, "cannot get clock\n");
+	if (IS_ERR(priv->clk))
 		return PTR_ERR(priv->clk);
-	}
 	clk_prepare_enable(priv->clk);
 
 	strlcpy(priv->adap.name, "hix5hd2-i2c", sizeof(priv->adap.name));

@@ -165,11 +165,8 @@ static int apq8016_lpass_init(struct platform_device *pdev)
 	int ret;
 
 	drvdata->pcnoc_mport_clk = devm_clk_get(dev, "pcnoc-mport-clk");
-	if (IS_ERR(drvdata->pcnoc_mport_clk)) {
-		dev_err(dev, "error getting pcnoc-mport-clk: %ld\n",
-			PTR_ERR(drvdata->pcnoc_mport_clk));
+	if (IS_ERR(drvdata->pcnoc_mport_clk))
 		return PTR_ERR(drvdata->pcnoc_mport_clk);
-	}
 
 	ret = clk_prepare_enable(drvdata->pcnoc_mport_clk);
 	if (ret) {
@@ -178,11 +175,8 @@ static int apq8016_lpass_init(struct platform_device *pdev)
 	}
 
 	drvdata->pcnoc_sway_clk = devm_clk_get(dev, "pcnoc-sway-clk");
-	if (IS_ERR(drvdata->pcnoc_sway_clk)) {
-		dev_err(dev, "error getting pcnoc-sway-clk: %ld\n",
-			PTR_ERR(drvdata->pcnoc_sway_clk));
+	if (IS_ERR(drvdata->pcnoc_sway_clk))
 		return PTR_ERR(drvdata->pcnoc_sway_clk);
-	}
 
 	ret = clk_prepare_enable(drvdata->pcnoc_sway_clk);
 	if (ret) {

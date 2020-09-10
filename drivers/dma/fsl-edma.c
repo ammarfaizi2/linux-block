@@ -307,10 +307,8 @@ static int fsl_edma_probe(struct platform_device *pdev)
 
 	if (drvdata->has_dmaclk) {
 		fsl_edma->dmaclk = devm_clk_get(&pdev->dev, "dma");
-		if (IS_ERR(fsl_edma->dmaclk)) {
-			dev_err(&pdev->dev, "Missing DMA block clock.\n");
+		if (IS_ERR(fsl_edma->dmaclk))
 			return PTR_ERR(fsl_edma->dmaclk);
-		}
 
 		ret = clk_prepare_enable(fsl_edma->dmaclk);
 		if (ret) {
@@ -333,7 +331,6 @@ static int fsl_edma_probe(struct platform_device *pdev)
 		sprintf(clkname, "dmamux%d", i);
 		fsl_edma->muxclk[i] = devm_clk_get(&pdev->dev, clkname);
 		if (IS_ERR(fsl_edma->muxclk[i])) {
-			dev_err(&pdev->dev, "Missing DMAMUX block clock.\n");
 			/* on error: disable all previously enabled clks */
 			fsl_disable_clocks(fsl_edma, i);
 			return PTR_ERR(fsl_edma->muxclk[i]);

@@ -2167,22 +2167,16 @@ static int tegra_soctherm_probe(struct platform_device *pdev)
 	}
 
 	tegra->reset = devm_reset_control_get(&pdev->dev, "soctherm");
-	if (IS_ERR(tegra->reset)) {
-		dev_err(&pdev->dev, "can't get soctherm reset\n");
+	if (IS_ERR(tegra->reset))
 		return PTR_ERR(tegra->reset);
-	}
 
 	tegra->clock_tsensor = devm_clk_get(&pdev->dev, "tsensor");
-	if (IS_ERR(tegra->clock_tsensor)) {
-		dev_err(&pdev->dev, "can't get tsensor clock\n");
+	if (IS_ERR(tegra->clock_tsensor))
 		return PTR_ERR(tegra->clock_tsensor);
-	}
 
 	tegra->clock_soctherm = devm_clk_get(&pdev->dev, "soctherm");
-	if (IS_ERR(tegra->clock_soctherm)) {
-		dev_err(&pdev->dev, "can't get soctherm clock\n");
+	if (IS_ERR(tegra->clock_soctherm))
 		return PTR_ERR(tegra->clock_soctherm);
-	}
 
 	tegra->calib = devm_kcalloc(&pdev->dev,
 				    soc->num_tsensors, sizeof(u32),

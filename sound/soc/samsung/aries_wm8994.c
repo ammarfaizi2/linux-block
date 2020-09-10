@@ -565,23 +565,17 @@ static int aries_audio_probe(struct platform_device *pdev)
 		card->num_dapm_widgets--;
 
 	priv->reg_main_micbias = devm_regulator_get(dev, "main-micbias");
-	if (IS_ERR(priv->reg_main_micbias)) {
-		dev_err(dev, "Failed to get main micbias regulator\n");
+	if (IS_ERR(priv->reg_main_micbias))
 		return PTR_ERR(priv->reg_main_micbias);
-	}
 
 	priv->reg_headset_micbias = devm_regulator_get(dev, "headset-micbias");
-	if (IS_ERR(priv->reg_headset_micbias)) {
-		dev_err(dev, "Failed to get headset micbias regulator\n");
+	if (IS_ERR(priv->reg_headset_micbias))
 		return PTR_ERR(priv->reg_headset_micbias);
-	}
 
 	priv->gpio_earpath_sel = devm_gpiod_get(dev, "earpath-sel",
 			GPIOD_OUT_LOW);
-	if (IS_ERR(priv->gpio_earpath_sel)) {
-		dev_err(dev, "Failed to get earpath selector gpio");
+	if (IS_ERR(priv->gpio_earpath_sel))
 		return PTR_ERR(priv->gpio_earpath_sel);
-	}
 
 	extcon_np = of_parse_phandle(np, "extcon", 0);
 	priv->usb_extcon = extcon_find_edev_by_node(extcon_np);
@@ -603,17 +597,13 @@ static int aries_audio_probe(struct platform_device *pdev)
 
 	priv->gpio_headset_key = devm_gpiod_get(dev, "headset-key",
 			GPIOD_IN);
-	if (IS_ERR(priv->gpio_headset_key)) {
-		dev_err(dev, "Failed to get headset key gpio");
+	if (IS_ERR(priv->gpio_headset_key))
 		return PTR_ERR(priv->gpio_headset_key);
-	}
 
 	priv->gpio_headset_detect = devm_gpiod_get(dev,
 			"headset-detect", GPIOD_IN);
-	if (IS_ERR(priv->gpio_headset_detect)) {
-		dev_err(dev, "Failed to get headset detect gpio");
+	if (IS_ERR(priv->gpio_headset_detect))
 		return PTR_ERR(priv->gpio_headset_detect);
-	}
 
 	/* Update card-name if provided through DT, else use default name */
 	snd_soc_of_parse_card_name(card, "model");

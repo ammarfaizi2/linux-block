@@ -46,10 +46,8 @@ static int fimc_is_i2c_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	isp_i2c->clock = devm_clk_get(&pdev->dev, "i2c_isp");
-	if (IS_ERR(isp_i2c->clock)) {
-		dev_err(&pdev->dev, "failed to get the clock\n");
+	if (IS_ERR(isp_i2c->clock))
 		return PTR_ERR(isp_i2c->clock);
-	}
 
 	i2c_adap = &isp_i2c->adapter;
 	i2c_adap->dev.of_node = node;

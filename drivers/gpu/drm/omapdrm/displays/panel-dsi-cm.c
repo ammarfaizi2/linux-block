@@ -1171,7 +1171,6 @@ static int dsicm_probe_of(struct platform_device *pdev)
 	ddata->reset_gpio = devm_gpiod_get(&pdev->dev, "reset", GPIOD_OUT_LOW);
 	if (IS_ERR(ddata->reset_gpio)) {
 		err = PTR_ERR(ddata->reset_gpio);
-		dev_err(&pdev->dev, "reset gpio request failed: %d", err);
 		return err;
 	}
 
@@ -1179,7 +1178,6 @@ static int dsicm_probe_of(struct platform_device *pdev)
 						     GPIOD_IN);
 	if (IS_ERR(ddata->ext_te_gpio)) {
 		err = PTR_ERR(ddata->ext_te_gpio);
-		dev_err(&pdev->dev, "TE gpio request failed: %d", err);
 		return err;
 	}
 

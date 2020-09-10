@@ -524,16 +524,12 @@ static int meson_pcie_probe(struct platform_device *pdev)
 	pci->ops = &dw_pcie_ops;
 
 	mp->phy = devm_phy_get(dev, "pcie");
-	if (IS_ERR(mp->phy)) {
-		dev_err(dev, "get phy failed, %ld\n", PTR_ERR(mp->phy));
+	if (IS_ERR(mp->phy))
 		return PTR_ERR(mp->phy);
-	}
 
 	mp->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_LOW);
-	if (IS_ERR(mp->reset_gpio)) {
-		dev_err(dev, "get reset gpio failed\n");
+	if (IS_ERR(mp->reset_gpio))
 		return PTR_ERR(mp->reset_gpio);
-	}
 
 	ret = meson_pcie_get_resets(mp);
 	if (ret) {

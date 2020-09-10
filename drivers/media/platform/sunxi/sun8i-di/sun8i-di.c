@@ -835,32 +835,20 @@ static int deinterlace_probe(struct platform_device *pdev)
 		return PTR_ERR(dev->base);
 
 	dev->bus_clk = devm_clk_get(dev->dev, "bus");
-	if (IS_ERR(dev->bus_clk)) {
-		dev_err(dev->dev, "Failed to get bus clock\n");
-
+	if (IS_ERR(dev->bus_clk))
 		return PTR_ERR(dev->bus_clk);
-	}
 
 	dev->mod_clk = devm_clk_get(dev->dev, "mod");
-	if (IS_ERR(dev->mod_clk)) {
-		dev_err(dev->dev, "Failed to get mod clock\n");
-
+	if (IS_ERR(dev->mod_clk))
 		return PTR_ERR(dev->mod_clk);
-	}
 
 	dev->ram_clk = devm_clk_get(dev->dev, "ram");
-	if (IS_ERR(dev->ram_clk)) {
-		dev_err(dev->dev, "Failed to get ram clock\n");
-
+	if (IS_ERR(dev->ram_clk))
 		return PTR_ERR(dev->ram_clk);
-	}
 
 	dev->rstc = devm_reset_control_get(dev->dev, NULL);
-	if (IS_ERR(dev->rstc)) {
-		dev_err(dev->dev, "Failed to get reset control\n");
-
+	if (IS_ERR(dev->rstc))
 		return PTR_ERR(dev->rstc);
-	}
 
 	mutex_init(&dev->dev_mutex);
 

@@ -411,7 +411,6 @@ static int socfpga_dwmac_probe(struct platform_device *pdev)
 	dwmac->stmmac_ocp_rst = devm_reset_control_get_optional(dev, "stmmaceth-ocp");
 	if (IS_ERR(dwmac->stmmac_ocp_rst)) {
 		ret = PTR_ERR(dwmac->stmmac_ocp_rst);
-		dev_err(dev, "error getting reset control of ocp %d\n", ret);
 		goto err_remove_config_dt;
 	}
 

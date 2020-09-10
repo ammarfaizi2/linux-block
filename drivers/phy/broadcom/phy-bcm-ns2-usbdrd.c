@@ -334,15 +334,11 @@ static int ns2_drd_phy_probe(struct platform_device *pdev)
 
 	 /* create extcon */
 	driver->id_gpiod = devm_gpiod_get(&pdev->dev, "id", GPIOD_IN);
-	if (IS_ERR(driver->id_gpiod)) {
-		dev_err(dev, "failed to get ID GPIO\n");
+	if (IS_ERR(driver->id_gpiod))
 		return PTR_ERR(driver->id_gpiod);
-	}
 	driver->vbus_gpiod = devm_gpiod_get(&pdev->dev, "vbus", GPIOD_IN);
-	if (IS_ERR(driver->vbus_gpiod)) {
-		dev_err(dev, "failed to get VBUS GPIO\n");
+	if (IS_ERR(driver->vbus_gpiod))
 		return PTR_ERR(driver->vbus_gpiod);
-	}
 
 	driver->edev = devm_extcon_dev_allocate(dev, usb_extcon_cable);
 	if (IS_ERR(driver->edev)) {

@@ -110,11 +110,8 @@ static int pps_gpio_setup(struct platform_device *pdev)
 	data->gpio_pin = devm_gpiod_get(&pdev->dev,
 		NULL,	/* request "gpios" */
 		GPIOD_IN);
-	if (IS_ERR(data->gpio_pin)) {
-		dev_err(&pdev->dev,
-			"failed to request PPS GPIO\n");
+	if (IS_ERR(data->gpio_pin))
 		return PTR_ERR(data->gpio_pin);
-	}
 
 	data->echo_pin = devm_gpiod_get_optional(&pdev->dev,
 			"echo",

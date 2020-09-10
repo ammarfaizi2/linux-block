@@ -373,10 +373,8 @@ static int st7789v_probe(struct spi_device *spi)
 		return PTR_ERR(ctx->power);
 
 	ctx->reset = devm_gpiod_get(&spi->dev, "reset", GPIOD_OUT_LOW);
-	if (IS_ERR(ctx->reset)) {
-		dev_err(&spi->dev, "Couldn't get our reset line\n");
+	if (IS_ERR(ctx->reset))
 		return PTR_ERR(ctx->reset);
-	}
 
 	ret = drm_panel_of_backlight(&ctx->panel);
 	if (ret)

@@ -799,24 +799,18 @@ static int qcom_iommu_device_probe(struct platform_device *pdev)
 	}
 
 	clk = devm_clk_get(dev, "iface");
-	if (IS_ERR(clk)) {
-		dev_err(dev, "failed to get iface clock\n");
+	if (IS_ERR(clk))
 		return PTR_ERR(clk);
-	}
 	qcom_iommu->clks[CLK_IFACE].clk = clk;
 
 	clk = devm_clk_get(dev, "bus");
-	if (IS_ERR(clk)) {
-		dev_err(dev, "failed to get bus clock\n");
+	if (IS_ERR(clk))
 		return PTR_ERR(clk);
-	}
 	qcom_iommu->clks[CLK_BUS].clk = clk;
 
 	clk = devm_clk_get_optional(dev, "tbu");
-	if (IS_ERR(clk)) {
-		dev_err(dev, "failed to get tbu clock\n");
+	if (IS_ERR(clk))
 		return PTR_ERR(clk);
-	}
 	qcom_iommu->clks[CLK_TBU].clk = clk;
 
 	if (of_property_read_u32(dev->of_node, "qcom,iommu-secure-id",

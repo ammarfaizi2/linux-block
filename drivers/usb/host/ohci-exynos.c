@@ -152,7 +152,6 @@ static int exynos_ohci_probe(struct platform_device *pdev)
 	exynos_ohci->clk = devm_clk_get(&pdev->dev, "usbhost");
 
 	if (IS_ERR(exynos_ohci->clk)) {
-		dev_err(&pdev->dev, "Failed to get usbhost clock\n");
 		err = PTR_ERR(exynos_ohci->clk);
 		goto fail_clk;
 	}

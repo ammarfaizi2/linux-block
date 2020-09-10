@@ -405,10 +405,8 @@ static int tc358764_parse_dt(struct tc358764 *ctx)
 	int ret;
 
 	ctx->gpio_reset = devm_gpiod_get(dev, "reset", GPIOD_OUT_LOW);
-	if (IS_ERR(ctx->gpio_reset)) {
-		dev_err(dev, "no reset GPIO pin provided\n");
+	if (IS_ERR(ctx->gpio_reset))
 		return PTR_ERR(ctx->gpio_reset);
-	}
 
 	ret = drm_of_find_panel_or_bridge(ctx->dev->of_node, 1, 0, &ctx->panel,
 					  NULL);
@@ -425,12 +423,8 @@ static int tc358764_configure_regulators(struct tc358764 *ctx)
 	for (i = 0; i < ARRAY_SIZE(ctx->supplies); ++i)
 		ctx->supplies[i].supply = tc358764_supplies[i];
 
-	ret = devm_regulator_bulk_get(ctx->dev, ARRAY_SIZE(ctx->supplies),
+	return devm_regulator_bulk_get(ctx->dev, ARRAY_SIZE(ctx->supplies),
 				      ctx->supplies);
-	if (ret < 0)
-		dev_err(ctx->dev, "failed to get regulators: %d\n", ret);
-
-	return ret;
 }
 
 static int tc358764_probe(struct mipi_dsi_device *dsi)

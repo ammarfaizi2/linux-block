@@ -1708,10 +1708,8 @@ static int gswip_gphy_fw_probe(struct gswip_priv *priv,
 	snprintf(gphyname, sizeof(gphyname), "gphy%d", i);
 
 	gphy_fw->clk_gate = devm_clk_get(dev, gphyname);
-	if (IS_ERR(gphy_fw->clk_gate)) {
-		dev_err(dev, "Failed to lookup gate clock\n");
+	if (IS_ERR(gphy_fw->clk_gate))
 		return PTR_ERR(gphy_fw->clk_gate);
-	}
 
 	ret = of_property_read_u32(gphy_fw_np, "reg", &gphy_fw->fw_addr_offset);
 	if (ret)

@@ -174,10 +174,8 @@ static int imx7ulp_wdt_probe(struct platform_device *pdev)
 		return PTR_ERR(imx7ulp_wdt->base);
 
 	imx7ulp_wdt->clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(imx7ulp_wdt->clk)) {
-		dev_err(dev, "Failed to get watchdog clock\n");
+	if (IS_ERR(imx7ulp_wdt->clk))
 		return PTR_ERR(imx7ulp_wdt->clk);
-	}
 
 	ret = clk_prepare_enable(imx7ulp_wdt->clk);
 	if (ret)

@@ -312,7 +312,6 @@ static int imx_audmix_probe(struct platform_device *pdev)
 	priv->cpu_mclk = devm_clk_get(&cpu_pdev->dev, "mclk1");
 	if (IS_ERR(priv->cpu_mclk)) {
 		ret = PTR_ERR(priv->cpu_mclk);
-		dev_err(&cpu_pdev->dev, "failed to get DAI mclk1: %d\n", ret);
 		return -EINVAL;
 	}
 

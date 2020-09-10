@@ -3133,16 +3133,12 @@ static int coda_probe(struct platform_device *pdev)
 
 	dev->dev = &pdev->dev;
 	dev->clk_per = devm_clk_get(&pdev->dev, "per");
-	if (IS_ERR(dev->clk_per)) {
-		dev_err(&pdev->dev, "Could not get per clock\n");
+	if (IS_ERR(dev->clk_per))
 		return PTR_ERR(dev->clk_per);
-	}
 
 	dev->clk_ahb = devm_clk_get(&pdev->dev, "ahb");
-	if (IS_ERR(dev->clk_ahb)) {
-		dev_err(&pdev->dev, "Could not get ahb clock\n");
+	if (IS_ERR(dev->clk_ahb))
 		return PTR_ERR(dev->clk_ahb);
-	}
 
 	/* Get  memory for physical registers */
 	dev->regs_base = devm_platform_ioremap_resource(pdev, 0);
@@ -3183,7 +3179,6 @@ static int coda_probe(struct platform_device *pdev)
 							      NULL);
 	if (IS_ERR(dev->rstc)) {
 		ret = PTR_ERR(dev->rstc);
-		dev_err(&pdev->dev, "failed get reset control: %d\n", ret);
 		return ret;
 	}
 

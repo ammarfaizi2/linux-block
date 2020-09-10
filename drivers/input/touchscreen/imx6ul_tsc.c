@@ -396,8 +396,6 @@ static int imx6ul_tsc_probe(struct platform_device *pdev)
 	tsc->xnur_gpio = devm_gpiod_get(&pdev->dev, "xnur", GPIOD_IN);
 	if (IS_ERR(tsc->xnur_gpio)) {
 		err = PTR_ERR(tsc->xnur_gpio);
-		dev_err(&pdev->dev,
-			"failed to request GPIO tsc_X- (xnur): %d\n", err);
 		return err;
 	}
 
@@ -418,14 +416,12 @@ static int imx6ul_tsc_probe(struct platform_device *pdev)
 	tsc->tsc_clk = devm_clk_get(&pdev->dev, "tsc");
 	if (IS_ERR(tsc->tsc_clk)) {
 		err = PTR_ERR(tsc->tsc_clk);
-		dev_err(&pdev->dev, "failed getting tsc clock: %d\n", err);
 		return err;
 	}
 
 	tsc->adc_clk = devm_clk_get(&pdev->dev, "adc");
 	if (IS_ERR(tsc->adc_clk)) {
 		err = PTR_ERR(tsc->adc_clk);
-		dev_err(&pdev->dev, "failed getting adc clock: %d\n", err);
 		return err;
 	}
 

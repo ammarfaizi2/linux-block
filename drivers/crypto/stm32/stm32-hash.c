@@ -1463,14 +1463,8 @@ static int stm32_hash_probe(struct platform_device *pdev)
 	}
 
 	hdev->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(hdev->clk)) {
-		if (PTR_ERR(hdev->clk) != -EPROBE_DEFER) {
-			dev_err(dev, "failed to get clock for hash (%lu)\n",
-				PTR_ERR(hdev->clk));
-		}
-
+	if (IS_ERR(hdev->clk))
 		return PTR_ERR(hdev->clk);
-	}
 
 	ret = clk_prepare_enable(hdev->clk);
 	if (ret) {

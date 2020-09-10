@@ -516,7 +516,6 @@ static int __init pata_s3c_probe(struct platform_device *pdev)
 
 	info->clk = devm_clk_get(&pdev->dev, "cfcon");
 	if (IS_ERR(info->clk)) {
-		dev_err(dev, "failed to get access to cf controller clock\n");
 		ret = PTR_ERR(info->clk);
 		info->clk = NULL;
 		return ret;

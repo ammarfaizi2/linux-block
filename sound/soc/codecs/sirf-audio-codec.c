@@ -477,10 +477,8 @@ static int sirf_audio_codec_driver_probe(struct platform_device *pdev)
 		return PTR_ERR(sirf_audio_codec->regmap);
 
 	sirf_audio_codec->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(sirf_audio_codec->clk)) {
-		dev_err(&pdev->dev, "Get clock failed.\n");
+	if (IS_ERR(sirf_audio_codec->clk))
 		return PTR_ERR(sirf_audio_codec->clk);
-	}
 
 	ret = clk_prepare_enable(sirf_audio_codec->clk);
 	if (ret) {

@@ -871,10 +871,8 @@ static int sirfsoc_dma_probe(struct platform_device *op)
 	}
 
 	sdma->clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(sdma->clk)) {
-		dev_err(dev, "failed to get a clock.\n");
+	if (IS_ERR(sdma->clk))
 		return PTR_ERR(sdma->clk);
-	}
 
 	ret = of_address_to_resource(dn, 0, &res);
 	if (ret) {

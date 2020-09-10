@@ -151,16 +151,12 @@ static int max9759_probe(struct platform_device *pdev)
 	priv->gpiod_shutdown = devm_gpiod_get(dev, "shutdown", GPIOD_OUT_HIGH);
 	if (IS_ERR(priv->gpiod_shutdown)) {
 		err = PTR_ERR(priv->gpiod_shutdown);
-		if (err != -EPROBE_DEFER)
-			dev_err(dev, "Failed to get 'shutdown' gpio: %d", err);
 		return err;
 	}
 
 	priv->gpiod_mute = devm_gpiod_get(dev, "mute", GPIOD_OUT_HIGH);
 	if (IS_ERR(priv->gpiod_mute)) {
 		err = PTR_ERR(priv->gpiod_mute);
-		if (err != -EPROBE_DEFER)
-			dev_err(dev, "Failed to get 'mute' gpio: %d", err);
 		return err;
 	}
 	priv->is_mute = true;

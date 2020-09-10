@@ -211,10 +211,8 @@ static int cm3605_probe(struct platform_device *pdev)
 	}
 
 	cm3605->vdd = devm_regulator_get(dev, "vdd");
-	if (IS_ERR(cm3605->vdd)) {
-		dev_err(dev, "failed to get VDD regulator\n");
+	if (IS_ERR(cm3605->vdd))
 		return PTR_ERR(cm3605->vdd);
-	}
 	ret = regulator_enable(cm3605->vdd);
 	if (ret) {
 		dev_err(dev, "failed to enable VDD regulator\n");
@@ -223,7 +221,6 @@ static int cm3605_probe(struct platform_device *pdev)
 
 	cm3605->aset = devm_gpiod_get(dev, "aset", GPIOD_OUT_HIGH);
 	if (IS_ERR(cm3605->aset)) {
-		dev_err(dev, "no ASET GPIO\n");
 		ret = PTR_ERR(cm3605->aset);
 		goto out_disable_vdd;
 	}

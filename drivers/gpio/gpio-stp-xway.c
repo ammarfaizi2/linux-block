@@ -254,10 +254,8 @@ static int xway_stp_probe(struct platform_device *pdev)
 		chip->edge = XWAY_STP_FALLING;
 
 	clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(clk)) {
-		dev_err(&pdev->dev, "Failed to get clock\n");
+	if (IS_ERR(clk))
 		return PTR_ERR(clk);
-	}
 
 	ret = clk_prepare_enable(clk);
 	if (ret)

@@ -1628,10 +1628,8 @@ static int aspeed_video_init(struct aspeed_video *video)
 	}
 
 	video->eclk = devm_clk_get(dev, "eclk");
-	if (IS_ERR(video->eclk)) {
-		dev_err(dev, "Unable to get ECLK\n");
+	if (IS_ERR(video->eclk))
 		return PTR_ERR(video->eclk);
-	}
 
 	rc = clk_prepare(video->eclk);
 	if (rc)
@@ -1639,7 +1637,6 @@ static int aspeed_video_init(struct aspeed_video *video)
 
 	video->vclk = devm_clk_get(dev, "vclk");
 	if (IS_ERR(video->vclk)) {
-		dev_err(dev, "Unable to get VCLK\n");
 		rc = PTR_ERR(video->vclk);
 		goto err_unprepare_eclk;
 	}

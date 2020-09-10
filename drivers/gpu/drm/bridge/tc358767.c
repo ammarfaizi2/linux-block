@@ -1584,7 +1584,6 @@ static int tc_probe(struct i2c_client *client, const struct i2c_device_id *id)
 	tc->refclk = devm_clk_get(dev, "ref");
 	if (IS_ERR(tc->refclk)) {
 		ret = PTR_ERR(tc->refclk);
-		dev_err(dev, "Failed to get refclk: %d\n", ret);
 		return ret;
 	}
 

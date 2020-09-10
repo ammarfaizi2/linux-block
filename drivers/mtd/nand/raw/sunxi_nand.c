@@ -2081,10 +2081,8 @@ static int sunxi_nfc_probe(struct platform_device *pdev)
 		return irq;
 
 	nfc->ahb_clk = devm_clk_get(dev, "ahb");
-	if (IS_ERR(nfc->ahb_clk)) {
-		dev_err(dev, "failed to retrieve ahb clk\n");
+	if (IS_ERR(nfc->ahb_clk))
 		return PTR_ERR(nfc->ahb_clk);
-	}
 
 	ret = clk_prepare_enable(nfc->ahb_clk);
 	if (ret)
@@ -2092,7 +2090,6 @@ static int sunxi_nfc_probe(struct platform_device *pdev)
 
 	nfc->mod_clk = devm_clk_get(dev, "mod");
 	if (IS_ERR(nfc->mod_clk)) {
-		dev_err(dev, "failed to retrieve mod clk\n");
 		ret = PTR_ERR(nfc->mod_clk);
 		goto out_ahb_clk_unprepare;
 	}

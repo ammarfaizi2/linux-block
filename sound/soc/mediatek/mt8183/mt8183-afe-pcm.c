@@ -1130,7 +1130,6 @@ static int mt8183_afe_pcm_dev_probe(struct platform_device *pdev)
 	rstc = devm_reset_control_get(dev, "audiosys");
 	if (IS_ERR(rstc)) {
 		ret = PTR_ERR(rstc);
-		dev_err(dev, "could not get audiosys reset:%d\n", ret);
 		return ret;
 	}
 

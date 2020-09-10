@@ -465,10 +465,8 @@ static int __init aspeed_sgpio_probe(struct platform_device *pdev)
 	}
 
 	gpio->pclk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(gpio->pclk)) {
-		dev_err(&pdev->dev, "devm_clk_get failed\n");
+	if (IS_ERR(gpio->pclk))
 		return PTR_ERR(gpio->pclk);
-	}
 
 	apb_freq = clk_get_rate(gpio->pclk);
 

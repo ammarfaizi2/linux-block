@@ -133,7 +133,6 @@ static int zx2967_thermal_probe(struct platform_device *pdev)
 	priv->clk_topcrm = devm_clk_get(&pdev->dev, "topcrm");
 	if (IS_ERR(priv->clk_topcrm)) {
 		ret = PTR_ERR(priv->clk_topcrm);
-		dev_err(&pdev->dev, "failed to get topcrm clock: %d\n", ret);
 		return ret;
 	}
 
@@ -147,7 +146,6 @@ static int zx2967_thermal_probe(struct platform_device *pdev)
 	priv->clk_apb = devm_clk_get(&pdev->dev, "apb");
 	if (IS_ERR(priv->clk_apb)) {
 		ret = PTR_ERR(priv->clk_apb);
-		dev_err(&pdev->dev, "failed to get apb clock: %d\n", ret);
 		goto disable_clk_topcrm;
 	}
 

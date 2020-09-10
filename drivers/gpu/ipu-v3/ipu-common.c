@@ -1461,7 +1461,6 @@ static int ipu_probe(struct platform_device *pdev)
 	ipu->clk = devm_clk_get(&pdev->dev, "bus");
 	if (IS_ERR(ipu->clk)) {
 		ret = PTR_ERR(ipu->clk);
-		dev_err(&pdev->dev, "clk_get failed with %d", ret);
 		return ret;
 	}
 

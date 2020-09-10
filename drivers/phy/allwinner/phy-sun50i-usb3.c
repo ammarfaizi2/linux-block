@@ -141,17 +141,12 @@ static int sun50i_usb3_phy_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	phy->clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(phy->clk)) {
-		if (PTR_ERR(phy->clk) != -EPROBE_DEFER)
-			dev_err(dev, "failed to get phy clock\n");
+	if (IS_ERR(phy->clk))
 		return PTR_ERR(phy->clk);
-	}
 
 	phy->reset = devm_reset_control_get(dev, NULL);
-	if (IS_ERR(phy->reset)) {
-		dev_err(dev, "failed to get reset control\n");
+	if (IS_ERR(phy->reset))
 		return PTR_ERR(phy->reset);
-	}
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	phy->regs = devm_ioremap_resource(dev, res);

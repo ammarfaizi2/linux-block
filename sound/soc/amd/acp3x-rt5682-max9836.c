@@ -464,11 +464,8 @@ static int acp3x_probe(struct platform_device *pdev)
 	snd_soc_card_set_drvdata(card, machine);
 
 	dmic_sel = devm_gpiod_get(&pdev->dev, "dmic", GPIOD_OUT_LOW);
-	if (IS_ERR(dmic_sel)) {
-		dev_err(&pdev->dev, "DMIC gpio failed err=%ld\n",
-			PTR_ERR(dmic_sel));
+	if (IS_ERR(dmic_sel))
 		return PTR_ERR(dmic_sel);
-	}
 
 	ret = devm_snd_soc_register_card(&pdev->dev, card);
 	if (ret) {

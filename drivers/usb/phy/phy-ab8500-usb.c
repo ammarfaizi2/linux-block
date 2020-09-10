@@ -712,21 +712,18 @@ static int ab8500_usb_regulator_get(struct ab8500_usb *ab)
 
 	ab->v_ape = devm_regulator_get(ab->dev, "v-ape");
 	if (IS_ERR(ab->v_ape)) {
-		dev_err(ab->dev, "Could not get v-ape supply\n");
 		err = PTR_ERR(ab->v_ape);
 		return err;
 	}
 
 	ab->v_ulpi = devm_regulator_get(ab->dev, "vddulpivio18");
 	if (IS_ERR(ab->v_ulpi)) {
-		dev_err(ab->dev, "Could not get vddulpivio18 supply\n");
 		err = PTR_ERR(ab->v_ulpi);
 		return err;
 	}
 
 	ab->v_musb = devm_regulator_get(ab->dev, "musb_1v8");
 	if (IS_ERR(ab->v_musb)) {
-		dev_err(ab->dev, "Could not get musb_1v8 supply\n");
 		err = PTR_ERR(ab->v_musb);
 		return err;
 	}
@@ -927,10 +924,8 @@ static int ab8500_usb_probe(struct platform_device *pdev)
 		return err;
 
 	ab->sysclk = devm_clk_get(ab->dev, "sysclk");
-	if (IS_ERR(ab->sysclk)) {
-		dev_err(ab->dev, "Could not get sysclk.\n");
+	if (IS_ERR(ab->sysclk))
 		return PTR_ERR(ab->sysclk);
-	}
 
 	err = ab8500_usb_irq_setup(pdev, ab);
 	if (err < 0)

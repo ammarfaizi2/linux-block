@@ -1034,10 +1034,8 @@ static int ov2680_parse_dt(struct ov2680_dev *sensor)
 	}
 
 	sensor->xvclk = devm_clk_get(dev, "xvclk");
-	if (IS_ERR(sensor->xvclk)) {
-		dev_err(dev, "xvclk clock missing or invalid\n");
+	if (IS_ERR(sensor->xvclk))
 		return PTR_ERR(sensor->xvclk);
-	}
 
 	sensor->xvclk_freq = clk_get_rate(sensor->xvclk);
 	if (sensor->xvclk_freq != OV2680_XVCLK_VALUE) {

@@ -172,10 +172,8 @@ static int ltc1660_probe(struct spi_device *spi)
 	}
 
 	priv->vref_reg = devm_regulator_get(&spi->dev, "vref");
-	if (IS_ERR(priv->vref_reg)) {
-		dev_err(&spi->dev, "vref regulator not specified\n");
+	if (IS_ERR(priv->vref_reg))
 		return PTR_ERR(priv->vref_reg);
-	}
 
 	ret = regulator_enable(priv->vref_reg);
 	if (ret) {

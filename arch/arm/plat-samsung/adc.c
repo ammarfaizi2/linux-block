@@ -347,10 +347,8 @@ static int s3c_adc_probe(struct platform_device *pdev)
 	adc->prescale = S3C2410_ADCCON_PRSCVL(49);
 
 	adc->vdd = devm_regulator_get(dev, "vdd");
-	if (IS_ERR(adc->vdd)) {
-		dev_err(dev, "operating without regulator \"vdd\" .\n");
+	if (IS_ERR(adc->vdd))
 		return PTR_ERR(adc->vdd);
-	}
 
 	adc->irq = platform_get_irq(pdev, 1);
 	if (adc->irq <= 0)
@@ -364,10 +362,8 @@ static int s3c_adc_probe(struct platform_device *pdev)
 	}
 
 	adc->clk = devm_clk_get(dev, "adc");
-	if (IS_ERR(adc->clk)) {
-		dev_err(dev, "failed to get adc clock\n");
+	if (IS_ERR(adc->clk))
 		return PTR_ERR(adc->clk);
-	}
 
 	adc->regs = devm_platform_ioremap_resource(pdev, 0);
 	if (IS_ERR(adc->regs))

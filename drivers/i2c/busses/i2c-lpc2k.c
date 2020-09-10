@@ -366,10 +366,8 @@ static int i2c_lpc2k_probe(struct platform_device *pdev)
 	init_waitqueue_head(&i2c->wait);
 
 	i2c->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(i2c->clk)) {
-		dev_err(&pdev->dev, "error getting clock\n");
+	if (IS_ERR(i2c->clk))
 		return PTR_ERR(i2c->clk);
-	}
 
 	ret = clk_prepare_enable(i2c->clk);
 	if (ret) {

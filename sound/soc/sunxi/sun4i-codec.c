@@ -1726,32 +1726,24 @@ static int sun4i_codec_probe(struct platform_device *pdev)
 
 	/* Get the clocks from the DT */
 	scodec->clk_apb = devm_clk_get(&pdev->dev, "apb");
-	if (IS_ERR(scodec->clk_apb)) {
-		dev_err(&pdev->dev, "Failed to get the APB clock\n");
+	if (IS_ERR(scodec->clk_apb))
 		return PTR_ERR(scodec->clk_apb);
-	}
 
 	scodec->clk_module = devm_clk_get(&pdev->dev, "codec");
-	if (IS_ERR(scodec->clk_module)) {
-		dev_err(&pdev->dev, "Failed to get the module clock\n");
+	if (IS_ERR(scodec->clk_module))
 		return PTR_ERR(scodec->clk_module);
-	}
 
 	if (quirks->has_reset) {
 		scodec->rst = devm_reset_control_get_exclusive(&pdev->dev,
 							       NULL);
-		if (IS_ERR(scodec->rst)) {
-			dev_err(&pdev->dev, "Failed to get reset control\n");
+		if (IS_ERR(scodec->rst))
 			return PTR_ERR(scodec->rst);
-		}
 	}
 
 	scodec->gpio_pa = devm_gpiod_get_optional(&pdev->dev, "allwinner,pa",
 						  GPIOD_OUT_LOW);
 	if (IS_ERR(scodec->gpio_pa)) {
 		ret = PTR_ERR(scodec->gpio_pa);
-		if (ret != -EPROBE_DEFER)
-			dev_err(&pdev->dev, "Failed to get pa gpio: %d\n", ret);
 		return ret;
 	}
 

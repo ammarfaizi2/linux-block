@@ -892,16 +892,12 @@ static int wm0010_spi_probe(struct spi_device *spi)
 	wm0010->core_supplies[1].supply = "DCVDD";
 	ret = devm_regulator_bulk_get(wm0010->dev, ARRAY_SIZE(wm0010->core_supplies),
 				      wm0010->core_supplies);
-	if (ret != 0) {
-		dev_err(wm0010->dev, "Failed to obtain core supplies: %d\n",
-			ret);
+	if (ret != 0)
 		return ret;
-	}
 
 	wm0010->dbvdd = devm_regulator_get(wm0010->dev, "DBVDD");
 	if (IS_ERR(wm0010->dbvdd)) {
 		ret = PTR_ERR(wm0010->dbvdd);
-		dev_err(wm0010->dev, "Failed to obtain DBVDD: %d\n", ret);
 		return ret;
 	}
 

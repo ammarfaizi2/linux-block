@@ -1282,29 +1282,21 @@ static int sunxi_mmc_resource_request(struct sunxi_mmc_host *host,
 		return PTR_ERR(host->reg_base);
 
 	host->clk_ahb = devm_clk_get(&pdev->dev, "ahb");
-	if (IS_ERR(host->clk_ahb)) {
-		dev_err(&pdev->dev, "Could not get ahb clock\n");
+	if (IS_ERR(host->clk_ahb))
 		return PTR_ERR(host->clk_ahb);
-	}
 
 	host->clk_mmc = devm_clk_get(&pdev->dev, "mmc");
-	if (IS_ERR(host->clk_mmc)) {
-		dev_err(&pdev->dev, "Could not get mmc clock\n");
+	if (IS_ERR(host->clk_mmc))
 		return PTR_ERR(host->clk_mmc);
-	}
 
 	if (host->cfg->clk_delays) {
 		host->clk_output = devm_clk_get(&pdev->dev, "output");
-		if (IS_ERR(host->clk_output)) {
-			dev_err(&pdev->dev, "Could not get output clock\n");
+		if (IS_ERR(host->clk_output))
 			return PTR_ERR(host->clk_output);
-		}
 
 		host->clk_sample = devm_clk_get(&pdev->dev, "sample");
-		if (IS_ERR(host->clk_sample)) {
-			dev_err(&pdev->dev, "Could not get sample clock\n");
+		if (IS_ERR(host->clk_sample))
 			return PTR_ERR(host->clk_sample);
-		}
 	}
 
 	host->reset = devm_reset_control_get_optional_exclusive(&pdev->dev,

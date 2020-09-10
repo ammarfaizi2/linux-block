@@ -558,10 +558,8 @@ static int lm3630a_probe(struct i2c_client *client,
 	/* pwm */
 	if (pdata->pwm_ctrl != LM3630A_PWM_DISABLE) {
 		pchip->pwmd = devm_pwm_get(pchip->dev, "lm3630a-pwm");
-		if (IS_ERR(pchip->pwmd)) {
-			dev_err(&client->dev, "fail : get pwm device\n");
+		if (IS_ERR(pchip->pwmd))
 			return PTR_ERR(pchip->pwmd);
-		}
 
 		/*
 		 * FIXME: pwm_apply_args() should be removed when switching to

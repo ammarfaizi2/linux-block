@@ -1413,16 +1413,12 @@ static int et8ek8_probe(struct i2c_client *client)
 	}
 
 	sensor->vana = devm_regulator_get(dev, "vana");
-	if (IS_ERR(sensor->vana)) {
-		dev_err(&client->dev, "could not get regulator for vana\n");
+	if (IS_ERR(sensor->vana))
 		return PTR_ERR(sensor->vana);
-	}
 
 	sensor->ext_clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(sensor->ext_clk)) {
-		dev_err(&client->dev, "could not get clock\n");
+	if (IS_ERR(sensor->ext_clk))
 		return PTR_ERR(sensor->ext_clk);
-	}
 
 	ret = of_property_read_u32(dev->of_node, "clock-frequency",
 				   &sensor->xclk_freq);

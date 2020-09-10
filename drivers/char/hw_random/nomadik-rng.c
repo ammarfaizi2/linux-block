@@ -41,7 +41,6 @@ static int nmk_rng_probe(struct amba_device *dev, const struct amba_id *id)
 
 	rng_clk = devm_clk_get(&dev->dev, NULL);
 	if (IS_ERR(rng_clk)) {
-		dev_err(&dev->dev, "could not get rng clock\n");
 		ret = PTR_ERR(rng_clk);
 		return ret;
 	}

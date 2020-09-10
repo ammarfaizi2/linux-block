@@ -414,7 +414,6 @@ static int mtk_spi_slave_probe(struct platform_device *pdev)
 	mdata->spi_clk = devm_clk_get(&pdev->dev, "spi");
 	if (IS_ERR(mdata->spi_clk)) {
 		ret = PTR_ERR(mdata->spi_clk);
-		dev_err(&pdev->dev, "failed to get spi-clk: %d\n", ret);
 		goto err_put_ctlr;
 	}
 

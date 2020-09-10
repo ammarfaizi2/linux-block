@@ -625,11 +625,8 @@ static int tegra_mc_probe(struct platform_device *pdev)
 		return PTR_ERR(mc->regs);
 
 	mc->clk = devm_clk_get(&pdev->dev, "mc");
-	if (IS_ERR(mc->clk)) {
-		dev_err(&pdev->dev, "failed to get MC clock: %ld\n",
-			PTR_ERR(mc->clk));
+	if (IS_ERR(mc->clk))
 		return PTR_ERR(mc->clk);
-	}
 
 #ifdef CONFIG_ARCH_TEGRA_2x_SOC
 	if (mc->soc == &tegra20_mc_soc) {

@@ -416,10 +416,8 @@ static int meson_i2c_probe(struct platform_device *pdev)
 		of_device_get_match_data(&pdev->dev);
 
 	i2c->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(i2c->clk)) {
-		dev_err(&pdev->dev, "can't get device clock\n");
+	if (IS_ERR(i2c->clk))
 		return PTR_ERR(i2c->clk);
-	}
 
 	i2c->regs = devm_platform_ioremap_resource(pdev, 0);
 	if (IS_ERR(i2c->regs))

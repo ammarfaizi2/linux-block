@@ -336,8 +336,6 @@ static int cdns_wdt_probe(struct platform_device *pdev)
 	wdt->clk = devm_clk_get(dev, NULL);
 	if (IS_ERR(wdt->clk)) {
 		ret = PTR_ERR(wdt->clk);
-		if (ret != -EPROBE_DEFER)
-			dev_err(dev, "input clock not found\n");
 		return ret;
 	}
 

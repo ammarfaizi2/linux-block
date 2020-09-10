@@ -173,19 +173,13 @@ static int thc63_parse_dt(struct thc63_dev *thc63)
 static int thc63_gpio_init(struct thc63_dev *thc63)
 {
 	thc63->oe = devm_gpiod_get_optional(thc63->dev, "oe", GPIOD_OUT_LOW);
-	if (IS_ERR(thc63->oe)) {
-		dev_err(thc63->dev, "Unable to get \"oe-gpios\": %ld\n",
-			PTR_ERR(thc63->oe));
+	if (IS_ERR(thc63->oe))
 		return PTR_ERR(thc63->oe);
-	}
 
 	thc63->pdwn = devm_gpiod_get_optional(thc63->dev, "powerdown",
 					      GPIOD_OUT_HIGH);
-	if (IS_ERR(thc63->pdwn)) {
-		dev_err(thc63->dev, "Unable to get \"powerdown-gpios\": %ld\n",
-			PTR_ERR(thc63->pdwn));
+	if (IS_ERR(thc63->pdwn))
 		return PTR_ERR(thc63->pdwn);
-	}
 
 	return 0;
 }
@@ -207,8 +201,6 @@ static int thc63_probe(struct platform_device *pdev)
 		if (PTR_ERR(thc63->vcc) == -EPROBE_DEFER)
 			return -EPROBE_DEFER;
 
-		dev_err(thc63->dev, "Unable to get \"vcc\" supply: %ld\n",
-			PTR_ERR(thc63->vcc));
 		return PTR_ERR(thc63->vcc);
 	}
 

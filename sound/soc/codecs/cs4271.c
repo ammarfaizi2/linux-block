@@ -676,10 +676,8 @@ static int cs4271_common_probe(struct device *dev,
 	ret = devm_regulator_bulk_get(dev, ARRAY_SIZE(cs4271->supplies),
 					cs4271->supplies);
 
-	if (ret < 0) {
-		dev_err(dev, "Failed to get regulators: %d\n", ret);
+	if (ret < 0)
 		return ret;
-	}
 
 	*c = cs4271;
 	return 0;

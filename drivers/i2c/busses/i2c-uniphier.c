@@ -336,10 +336,8 @@ static int uniphier_i2c_probe(struct platform_device *pdev)
 	}
 
 	priv->clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(priv->clk)) {
-		dev_err(dev, "failed to get clock\n");
+	if (IS_ERR(priv->clk))
 		return PTR_ERR(priv->clk);
-	}
 
 	ret = clk_prepare_enable(priv->clk);
 	if (ret)

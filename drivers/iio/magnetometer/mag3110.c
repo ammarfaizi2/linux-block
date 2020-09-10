@@ -480,7 +480,6 @@ static int mag3110_probe(struct i2c_client *client,
 		if (PTR_ERR(data->vdd_reg) == -EPROBE_DEFER)
 			return -EPROBE_DEFER;
 
-		dev_err(&client->dev, "failed to get VDD regulator!\n");
 		return PTR_ERR(data->vdd_reg);
 	}
 
@@ -489,7 +488,6 @@ static int mag3110_probe(struct i2c_client *client,
 		if (PTR_ERR(data->vddio_reg) == -EPROBE_DEFER)
 			return -EPROBE_DEFER;
 
-		dev_err(&client->dev, "failed to get VDDIO regulator!\n");
 		return PTR_ERR(data->vddio_reg);
 	}
 

@@ -932,10 +932,8 @@ int owl_pinctrl_probe(struct platform_device *pdev,
 
 	/* enable GPIO/MFP clock */
 	pctrl->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(pctrl->clk)) {
-		dev_err(&pdev->dev, "no clock defined\n");
+	if (IS_ERR(pctrl->clk))
 		return PTR_ERR(pctrl->clk);
-	}
 
 	ret = clk_prepare_enable(pctrl->clk);
 	if (ret) {

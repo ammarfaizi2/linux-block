@@ -772,10 +772,8 @@ static int zx_dma_probe(struct platform_device *op)
 		return -EINVAL;
 
 	d->clk = devm_clk_get(&op->dev, NULL);
-	if (IS_ERR(d->clk)) {
-		dev_err(&op->dev, "no dma clk\n");
+	if (IS_ERR(d->clk))
 		return PTR_ERR(d->clk);
-	}
 
 	d->irq = platform_get_irq(op, 0);
 	ret = devm_request_irq(&op->dev, d->irq, zx_dma_int_handler,

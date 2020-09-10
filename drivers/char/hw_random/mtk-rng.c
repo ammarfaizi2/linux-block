@@ -124,7 +124,6 @@ static int mtk_rng_probe(struct platform_device *pdev)
 	priv->clk = devm_clk_get(&pdev->dev, "rng");
 	if (IS_ERR(priv->clk)) {
 		ret = PTR_ERR(priv->clk);
-		dev_err(&pdev->dev, "no clock for device: %d\n", ret);
 		return ret;
 	}
 

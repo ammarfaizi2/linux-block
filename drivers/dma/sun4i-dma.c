@@ -1142,10 +1142,8 @@ static int sun4i_dma_probe(struct platform_device *pdev)
 		return priv->irq;
 
 	priv->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(priv->clk)) {
-		dev_err(&pdev->dev, "No clock specified\n");
+	if (IS_ERR(priv->clk))
 		return PTR_ERR(priv->clk);
-	}
 
 	platform_set_drvdata(pdev, priv);
 	spin_lock_init(&priv->lock);

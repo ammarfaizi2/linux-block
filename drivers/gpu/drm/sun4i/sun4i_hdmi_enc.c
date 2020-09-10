@@ -513,10 +513,8 @@ static int sun4i_hdmi_bind(struct device *dev, struct device *master,
 
 	if (hdmi->variant->has_reset_control) {
 		hdmi->reset = devm_reset_control_get(dev, NULL);
-		if (IS_ERR(hdmi->reset)) {
-			dev_err(dev, "Couldn't get the HDMI reset control\n");
+		if (IS_ERR(hdmi->reset))
 			return PTR_ERR(hdmi->reset);
-		}
 
 		ret = reset_control_deassert(hdmi->reset);
 		if (ret) {
@@ -527,7 +525,6 @@ static int sun4i_hdmi_bind(struct device *dev, struct device *master,
 
 	hdmi->bus_clk = devm_clk_get(dev, "ahb");
 	if (IS_ERR(hdmi->bus_clk)) {
-		dev_err(dev, "Couldn't get the HDMI bus clock\n");
 		ret = PTR_ERR(hdmi->bus_clk);
 		goto err_assert_reset;
 	}
@@ -535,7 +532,6 @@ static int sun4i_hdmi_bind(struct device *dev, struct device *master,
 
 	hdmi->mod_clk = devm_clk_get(dev, "mod");
 	if (IS_ERR(hdmi->mod_clk)) {
-		dev_err(dev, "Couldn't get the HDMI mod clock\n");
 		ret = PTR_ERR(hdmi->mod_clk);
 		goto err_disable_bus_clk;
 	}
@@ -543,14 +539,12 @@ static int sun4i_hdmi_bind(struct device *dev, struct device *master,
 
 	hdmi->pll0_clk = devm_clk_get(dev, "pll-0");
 	if (IS_ERR(hdmi->pll0_clk)) {
-		dev_err(dev, "Couldn't get the HDMI PLL 0 clock\n");
 		ret = PTR_ERR(hdmi->pll0_clk);
 		goto err_disable_mod_clk;
 	}
 
 	hdmi->pll1_clk = devm_clk_get(dev, "pll-1");
 	if (IS_ERR(hdmi->pll1_clk)) {
-		dev_err(dev, "Couldn't get the HDMI PLL 1 clock\n");
 		ret = PTR_ERR(hdmi->pll1_clk);
 		goto err_disable_mod_clk;
 	}
@@ -572,7 +566,6 @@ static int sun4i_hdmi_bind(struct device *dev, struct device *master,
 	if (hdmi->variant->has_ddc_parent_clk) {
 		hdmi->ddc_parent_clk = devm_clk_get(dev, "ddc");
 		if (IS_ERR(hdmi->ddc_parent_clk)) {
-			dev_err(dev, "Couldn't get the HDMI DDC clock\n");
 			ret = PTR_ERR(hdmi->ddc_parent_clk);
 			goto err_disable_mod_clk;
 		}

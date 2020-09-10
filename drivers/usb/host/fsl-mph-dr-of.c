@@ -293,10 +293,8 @@ int fsl_usb2_mpc5121_init(struct platform_device *pdev)
 	int err;
 
 	clk = devm_clk_get(pdev->dev.parent, "ipg");
-	if (IS_ERR(clk)) {
-		dev_err(&pdev->dev, "failed to get clk\n");
+	if (IS_ERR(clk))
 		return PTR_ERR(clk);
-	}
 	err = clk_prepare_enable(clk);
 	if (err) {
 		dev_err(&pdev->dev, "failed to enable clk\n");

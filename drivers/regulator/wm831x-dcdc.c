@@ -347,11 +347,8 @@ static void wm831x_buckv_dvs_init(struct platform_device *pdev,
 
 	dcdc->dvs_gpiod = devm_gpiod_get(&pdev->dev, "dvs",
 			dcdc->dvs_gpio_state ? GPIOD_OUT_HIGH : GPIOD_OUT_LOW);
-	if (IS_ERR(dcdc->dvs_gpiod)) {
-		dev_err(wm831x->dev, "Failed to get %s DVS GPIO: %ld\n",
-			dcdc->name, PTR_ERR(dcdc->dvs_gpiod));
+	if (IS_ERR(dcdc->dvs_gpiod))
 		return;
-	}
 
 	switch (pdata->dvs_control_src) {
 	case 1:

@@ -844,10 +844,8 @@ static int ili9322_probe(struct spi_device *spi)
 		return ret;
 
 	ili->reset_gpio = devm_gpiod_get_optional(dev, "reset", GPIOD_OUT_HIGH);
-	if (IS_ERR(ili->reset_gpio)) {
-		dev_err(dev, "failed to get RESET GPIO\n");
+	if (IS_ERR(ili->reset_gpio))
 		return PTR_ERR(ili->reset_gpio);
-	}
 
 	spi->bits_per_word = 8;
 	ret = spi_setup(spi);

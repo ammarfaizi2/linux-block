@@ -1006,30 +1006,20 @@ static int imx8_sata_probe(struct device *dev, struct imx_ahci_priv *imxpriv)
 	}
 
 	imxpriv->epcs_tx_clk = devm_clk_get(dev, "epcs_tx");
-	if (IS_ERR(imxpriv->epcs_tx_clk)) {
-		dev_err(dev, "can't get epcs_tx_clk clock.\n");
+	if (IS_ERR(imxpriv->epcs_tx_clk))
 		return PTR_ERR(imxpriv->epcs_tx_clk);
-	}
 	imxpriv->epcs_rx_clk = devm_clk_get(dev, "epcs_rx");
-	if (IS_ERR(imxpriv->epcs_rx_clk)) {
-		dev_err(dev, "can't get epcs_rx_clk clock.\n");
+	if (IS_ERR(imxpriv->epcs_rx_clk))
 		return PTR_ERR(imxpriv->epcs_rx_clk);
-	}
 	imxpriv->phy_pclk0 = devm_clk_get(dev, "phy_pclk0");
-	if (IS_ERR(imxpriv->phy_pclk0)) {
-		dev_err(dev, "can't get phy_pclk0 clock.\n");
+	if (IS_ERR(imxpriv->phy_pclk0))
 		return PTR_ERR(imxpriv->phy_pclk0);
-	}
 	imxpriv->phy_pclk1 = devm_clk_get(dev, "phy_pclk1");
-	if (IS_ERR(imxpriv->phy_pclk1)) {
-		dev_err(dev, "can't get phy_pclk1 clock.\n");
+	if (IS_ERR(imxpriv->phy_pclk1))
 		return PTR_ERR(imxpriv->phy_pclk1);
-	}
 	imxpriv->phy_apbclk = devm_clk_get(dev, "phy_apbclk");
-	if (IS_ERR(imxpriv->phy_apbclk)) {
-		dev_err(dev, "can't get phy_apbclk clock.\n");
+	if (IS_ERR(imxpriv->phy_apbclk))
 		return PTR_ERR(imxpriv->phy_apbclk);
-	}
 
 	/* Fetch GPIO, then enable the external OSC */
 	imxpriv->clkreq_gpiod = devm_gpiod_get_optional(dev, "clkreq",
@@ -1065,22 +1055,16 @@ static int imx_ahci_probe(struct platform_device *pdev)
 	imxpriv->type = (enum ahci_imx_type)of_id->data;
 
 	imxpriv->sata_clk = devm_clk_get(dev, "sata");
-	if (IS_ERR(imxpriv->sata_clk)) {
-		dev_err(dev, "can't get sata clock.\n");
+	if (IS_ERR(imxpriv->sata_clk))
 		return PTR_ERR(imxpriv->sata_clk);
-	}
 
 	imxpriv->sata_ref_clk = devm_clk_get(dev, "sata_ref");
-	if (IS_ERR(imxpriv->sata_ref_clk)) {
-		dev_err(dev, "can't get sata_ref clock.\n");
+	if (IS_ERR(imxpriv->sata_ref_clk))
 		return PTR_ERR(imxpriv->sata_ref_clk);
-	}
 
 	imxpriv->ahb_clk = devm_clk_get(dev, "ahb");
-	if (IS_ERR(imxpriv->ahb_clk)) {
-		dev_err(dev, "can't get ahb clock.\n");
+	if (IS_ERR(imxpriv->ahb_clk))
 		return PTR_ERR(imxpriv->ahb_clk);
-	}
 
 	if (imxpriv->type == AHCI_IMX6Q || imxpriv->type == AHCI_IMX6QP) {
 		u32 reg_value;

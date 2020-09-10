@@ -407,10 +407,8 @@ static int riic_i2c_probe(struct platform_device *pdev)
 		return PTR_ERR(riic->base);
 
 	riic->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(riic->clk)) {
-		dev_err(&pdev->dev, "missing controller clock");
+	if (IS_ERR(riic->clk))
 		return PTR_ERR(riic->clk);
-	}
 
 	for (i = 0; i < ARRAY_SIZE(riic_irqs); i++) {
 		res = platform_get_resource(pdev, IORESOURCE_IRQ, riic_irqs[i].res_num);

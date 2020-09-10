@@ -1013,7 +1013,6 @@ static int bq2515x_read_properties(struct bq2515x_device *bq2515x)
 						   "ac-detect", GPIOD_IN);
 	if (IS_ERR(bq2515x->ac_detect_gpio)) {
 		ret = PTR_ERR(bq2515x->ac_detect_gpio);
-		dev_err(bq2515x->dev, "Failed to get ac detect");
 		return ret;
 	}
 
@@ -1021,7 +1020,6 @@ static int bq2515x_read_properties(struct bq2515x_device *bq2515x)
 						   "reset", GPIOD_OUT_LOW);
 	if (IS_ERR(bq2515x->reset_gpio)) {
 		ret = PTR_ERR(bq2515x->reset_gpio);
-		dev_err(bq2515x->dev, "Failed to get reset");
 		return ret;
 	}
 
@@ -1029,7 +1027,6 @@ static int bq2515x_read_properties(struct bq2515x_device *bq2515x)
 						"powerdown", GPIOD_OUT_LOW);
 	if (IS_ERR(bq2515x->powerdown_gpio)) {
 		ret = PTR_ERR(bq2515x->powerdown_gpio);
-		dev_err(bq2515x->dev, "Failed to get powerdown");
 		return ret;
 	}
 
@@ -1038,7 +1035,6 @@ static int bq2515x_read_properties(struct bq2515x_device *bq2515x)
 						   GPIOD_OUT_LOW);
 	if (IS_ERR(bq2515x->ce_gpio)) {
 		ret = PTR_ERR(bq2515x->ce_gpio);
-		dev_err(bq2515x->dev, "Failed to get ce");
 		return ret;
 	}
 

@@ -879,16 +879,12 @@ static int mt9t001_probe(struct i2c_client *client,
 	mt9t001->regulators[1].supply = "vaa";
 
 	ret = devm_regulator_bulk_get(&client->dev, 2, mt9t001->regulators);
-	if (ret < 0) {
-		dev_err(&client->dev, "Unable to get regulators\n");
+	if (ret < 0)
 		return ret;
-	}
 
 	mt9t001->clk = devm_clk_get(&client->dev, NULL);
-	if (IS_ERR(mt9t001->clk)) {
-		dev_err(&client->dev, "Unable to get clock\n");
+	if (IS_ERR(mt9t001->clk))
 		return PTR_ERR(mt9t001->clk);
-	}
 
 	v4l2_ctrl_handler_init(&mt9t001->ctrls, ARRAY_SIZE(mt9t001_ctrls) +
 						ARRAY_SIZE(mt9t001_gains) + 4);

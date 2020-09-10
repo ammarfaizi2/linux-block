@@ -273,24 +273,18 @@ static int es7241_probe(struct platform_device *pdev)
 	priv->reset = devm_gpiod_get_optional(dev, "reset", GPIOD_OUT_LOW);
 	if (IS_ERR(priv->reset)) {
 		err = PTR_ERR(priv->reset);
-		if (err != -EPROBE_DEFER)
-			dev_err(dev, "Failed to get 'reset' gpio: %d", err);
 		return err;
 	}
 
 	priv->m0 = devm_gpiod_get_optional(dev, "m0", GPIOD_OUT_LOW);
 	if (IS_ERR(priv->m0)) {
 		err = PTR_ERR(priv->m0);
-		if (err != -EPROBE_DEFER)
-			dev_err(dev, "Failed to get 'm0' gpio: %d", err);
 		return err;
 	}
 
 	priv->m1 = devm_gpiod_get_optional(dev, "m1", GPIOD_OUT_LOW);
 	if (IS_ERR(priv->m1)) {
 		err = PTR_ERR(priv->m1);
-		if (err != -EPROBE_DEFER)
-			dev_err(dev, "Failed to get 'm1' gpio: %d", err);
 		return err;
 	}
 

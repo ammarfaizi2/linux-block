@@ -606,7 +606,6 @@ static int ti_pipe3_get_clk(struct ti_pipe3 *phy)
 
 	phy->refclk = devm_clk_get(dev, "refclk");
 	if (IS_ERR(phy->refclk)) {
-		dev_err(dev, "unable to get refclk\n");
 		/* older DTBs have missing refclk in SATA PHY
 		 * so don't bail out in case of SATA PHY.
 		 */
@@ -616,49 +615,37 @@ static int ti_pipe3_get_clk(struct ti_pipe3 *phy)
 
 	if (phy->mode != PIPE3_MODE_SATA) {
 		phy->wkupclk = devm_clk_get(dev, "wkupclk");
-		if (IS_ERR(phy->wkupclk)) {
-			dev_err(dev, "unable to get wkupclk\n");
+		if (IS_ERR(phy->wkupclk))
 			return PTR_ERR(phy->wkupclk);
-		}
 	} else {
 		phy->wkupclk = ERR_PTR(-ENODEV);
 	}
 
 	if (phy->mode != PIPE3_MODE_PCIE || phy->phy_power_syscon) {
 		phy->sys_clk = devm_clk_get(dev, "sysclk");
-		if (IS_ERR(phy->sys_clk)) {
-			dev_err(dev, "unable to get sysclk\n");
+		if (IS_ERR(phy->sys_clk))
 			return -EINVAL;
-		}
 	}
 
 	if (phy->mode == PIPE3_MODE_PCIE) {
 		clk = devm_clk_get(dev, "dpll_ref");
-		if (IS_ERR(clk)) {
-			dev_err(dev, "unable to get dpll ref clk\n");
+		if (IS_ERR(clk))
 			return PTR_ERR(clk);
-		}
 		clk_set_rate(clk, 1500000000);
 
 		clk = devm_clk_get(dev, "dpll_ref_m2");
-		if (IS_ERR(clk)) {
-			dev_err(dev, "unable to get dpll ref m2 clk\n");
+		if (IS_ERR(clk))
 			return PTR_ERR(clk);
-		}
 		clk_set_rate(clk, 100000000);
 
 		clk = devm_clk_get(dev, "phy-div");
-		if (IS_ERR(clk)) {
-			dev_err(dev, "unable to get phy-div clk\n");
+		if (IS_ERR(clk))
 			return PTR_ERR(clk);
-		}
 		clk_set_rate(clk, 100000000);
 
 		phy->div_clk = devm_clk_get(dev, "div-clk");
-		if (IS_ERR(phy->div_clk)) {
-			dev_err(dev, "unable to get div-clk\n");
+		if (IS_ERR(phy->div_clk))
 			return PTR_ERR(phy->div_clk);
-		}
 	} else {
 		phy->div_clk = ERR_PTR(-ENODEV);
 	}

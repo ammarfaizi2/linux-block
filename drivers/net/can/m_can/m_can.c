@@ -1759,7 +1759,6 @@ int m_can_class_get_clocks(struct m_can_classdev *m_can_dev)
 	m_can_dev->cclk = devm_clk_get(m_can_dev->dev, "cclk");
 
 	if (IS_ERR(m_can_dev->cclk)) {
-		dev_err(m_can_dev->dev, "no clock found\n");
 		ret = -ENODEV;
 	}
 

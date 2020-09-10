@@ -207,10 +207,8 @@ static int tm2_touchkey_probe(struct i2c_client *client,
 	error = devm_regulator_bulk_get(&client->dev,
 					ARRAY_SIZE(touchkey->regulators),
 					touchkey->regulators);
-	if (error) {
-		dev_err(&client->dev, "failed to get regulators: %d\n", error);
+	if (error)
 		return error;
-	}
 
 	/* Save VDD for easy access */
 	touchkey->vdd = touchkey->regulators[1].consumer;

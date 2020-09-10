@@ -993,24 +993,18 @@ static int meson_dw_hdmi_bind(struct device *dev, struct device *master,
 
 	meson_dw_hdmi->hdmitx_apb = devm_reset_control_get_exclusive(dev,
 						"hdmitx_apb");
-	if (IS_ERR(meson_dw_hdmi->hdmitx_apb)) {
-		dev_err(dev, "Failed to get hdmitx_apb reset\n");
+	if (IS_ERR(meson_dw_hdmi->hdmitx_apb))
 		return PTR_ERR(meson_dw_hdmi->hdmitx_apb);
-	}
 
 	meson_dw_hdmi->hdmitx_ctrl = devm_reset_control_get_exclusive(dev,
 						"hdmitx");
-	if (IS_ERR(meson_dw_hdmi->hdmitx_ctrl)) {
-		dev_err(dev, "Failed to get hdmitx reset\n");
+	if (IS_ERR(meson_dw_hdmi->hdmitx_ctrl))
 		return PTR_ERR(meson_dw_hdmi->hdmitx_ctrl);
-	}
 
 	meson_dw_hdmi->hdmitx_phy = devm_reset_control_get_exclusive(dev,
 						"hdmitx_phy");
-	if (IS_ERR(meson_dw_hdmi->hdmitx_phy)) {
-		dev_err(dev, "Failed to get hdmitx_phy reset\n");
+	if (IS_ERR(meson_dw_hdmi->hdmitx_phy))
 		return PTR_ERR(meson_dw_hdmi->hdmitx_phy);
-	}
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	meson_dw_hdmi->hdmitx = devm_ioremap_resource(dev, res);
@@ -1018,17 +1012,13 @@ static int meson_dw_hdmi_bind(struct device *dev, struct device *master,
 		return PTR_ERR(meson_dw_hdmi->hdmitx);
 
 	meson_dw_hdmi->hdmi_pclk = devm_clk_get(dev, "isfr");
-	if (IS_ERR(meson_dw_hdmi->hdmi_pclk)) {
-		dev_err(dev, "Unable to get HDMI pclk\n");
+	if (IS_ERR(meson_dw_hdmi->hdmi_pclk))
 		return PTR_ERR(meson_dw_hdmi->hdmi_pclk);
-	}
 	clk_prepare_enable(meson_dw_hdmi->hdmi_pclk);
 
 	meson_dw_hdmi->venci_clk = devm_clk_get(dev, "venci");
-	if (IS_ERR(meson_dw_hdmi->venci_clk)) {
-		dev_err(dev, "Unable to get venci clk\n");
+	if (IS_ERR(meson_dw_hdmi->venci_clk))
 		return PTR_ERR(meson_dw_hdmi->venci_clk);
-	}
 	clk_prepare_enable(meson_dw_hdmi->venci_clk);
 
 	dw_plat_data->regm = devm_regmap_init(dev, NULL, meson_dw_hdmi,

@@ -105,8 +105,6 @@ static int sun9i_a80_usb_clk_probe(struct platform_device *pdev)
 	bus_clk = devm_clk_get(&pdev->dev, "bus");
 	if (IS_ERR(bus_clk)) {
 		ret = PTR_ERR(bus_clk);
-		if (ret != -EPROBE_DEFER)
-			dev_err(&pdev->dev, "Couldn't get bus clk: %d\n", ret);
 		return ret;
 	}
 

@@ -1466,16 +1466,12 @@ static int tegra_dma_probe(struct platform_device *pdev)
 		return PTR_ERR(tdma->base_addr);
 
 	tdma->dma_clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(tdma->dma_clk)) {
-		dev_err(&pdev->dev, "Error: Missing controller clock\n");
+	if (IS_ERR(tdma->dma_clk))
 		return PTR_ERR(tdma->dma_clk);
-	}
 
 	tdma->rst = devm_reset_control_get(&pdev->dev, "dma");
-	if (IS_ERR(tdma->rst)) {
-		dev_err(&pdev->dev, "Error: Missing reset\n");
+	if (IS_ERR(tdma->rst))
 		return PTR_ERR(tdma->rst);
-	}
 
 	spin_lock_init(&tdma->global_lock);
 

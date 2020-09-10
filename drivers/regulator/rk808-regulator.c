@@ -1277,7 +1277,6 @@ static int rk808_regulator_dt_parse_pdata(struct device *dev,
 						      GPIOD_OUT_LOW);
 		if (IS_ERR(pdata->dvs_gpio[i])) {
 			ret = PTR_ERR(pdata->dvs_gpio[i]);
-			dev_err(dev, "failed to get dvs%d gpio (%d)\n", i, ret);
 			goto dt_parse_end;
 		}
 

@@ -145,10 +145,8 @@ static int mx25_tsadc_probe(struct platform_device *pdev)
 	}
 
 	tsadc->clk = devm_clk_get(dev, "ipg");
-	if (IS_ERR(tsadc->clk)) {
-		dev_err(dev, "Failed to get ipg clock\n");
+	if (IS_ERR(tsadc->clk))
 		return PTR_ERR(tsadc->clk);
-	}
 
 	/* setup clock according to the datasheet */
 	mx25_tsadc_setup_clk(pdev, tsadc);

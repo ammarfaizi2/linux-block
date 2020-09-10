@@ -702,7 +702,6 @@ static int meson_spicc_probe(struct platform_device *pdev)
 
 	spicc->core = devm_clk_get(&pdev->dev, "core");
 	if (IS_ERR(spicc->core)) {
-		dev_err(&pdev->dev, "core clock request failed\n");
 		ret = PTR_ERR(spicc->core);
 		goto out_master;
 	}
@@ -710,7 +709,6 @@ static int meson_spicc_probe(struct platform_device *pdev)
 	if (spicc->data->has_pclk) {
 		spicc->pclk = devm_clk_get(&pdev->dev, "pclk");
 		if (IS_ERR(spicc->pclk)) {
-			dev_err(&pdev->dev, "pclk clock request failed\n");
 			ret = PTR_ERR(spicc->pclk);
 			goto out_master;
 		}

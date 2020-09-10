@@ -767,10 +767,8 @@ static int bcm_kona_i2c_probe(struct platform_device *pdev)
 
 	/* Get and enable external clock */
 	dev->external_clk = devm_clk_get(dev->device, NULL);
-	if (IS_ERR(dev->external_clk)) {
-		dev_err(dev->device, "couldn't get clock\n");
+	if (IS_ERR(dev->external_clk))
 		return -ENODEV;
-	}
 
 	rc = clk_set_rate(dev->external_clk, STD_EXT_CLK_FREQ);
 	if (rc) {

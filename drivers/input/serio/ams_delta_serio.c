@@ -122,7 +122,6 @@ static int ams_delta_serio_init(struct platform_device *pdev)
 	priv->vcc = devm_regulator_get(&pdev->dev, "vcc");
 	if (IS_ERR(priv->vcc)) {
 		err = PTR_ERR(priv->vcc);
-		dev_err(&pdev->dev, "regulator request failed (%d)\n", err);
 		/*
 		 * When running on a non-dt platform and requested regulator
 		 * is not available, devm_regulator_get() never returns

@@ -452,10 +452,8 @@ static int adp1653_of_init(struct i2c_client *client,
 	of_node_put(child);
 
 	pd->enable_gpio = devm_gpiod_get(&client->dev, "enable", GPIOD_OUT_LOW);
-	if (IS_ERR(pd->enable_gpio)) {
-		dev_err(&client->dev, "Error getting GPIO\n");
+	if (IS_ERR(pd->enable_gpio))
 		return PTR_ERR(pd->enable_gpio);
-	}
 
 	return 0;
 err:

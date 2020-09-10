@@ -202,10 +202,8 @@ static int ingenic_rproc_probe(struct platform_device *pdev)
 	vpu->clks[1].id = "aux";
 
 	ret = devm_clk_bulk_get(dev, ARRAY_SIZE(vpu->clks), vpu->clks);
-	if (ret) {
-		dev_err(dev, "Failed to get clocks\n");
+	if (ret)
 		return ret;
-	}
 
 	vpu->irq = platform_get_irq(pdev, 0);
 	if (vpu->irq < 0)

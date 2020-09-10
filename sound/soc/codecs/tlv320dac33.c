@@ -1523,7 +1523,6 @@ static int dac33_i2c_probe(struct i2c_client *client,
 				 dac33->supplies);
 
 	if (ret != 0) {
-		dev_err(&client->dev, "Failed to request supplies: %d\n", ret);
 		goto err_get;
 	}
 

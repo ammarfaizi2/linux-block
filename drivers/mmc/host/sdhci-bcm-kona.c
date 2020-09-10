@@ -246,7 +246,6 @@ static int sdhci_bcm_kona_probe(struct platform_device *pdev)
 	/* Get and enable the core clock */
 	pltfm_priv->clk = devm_clk_get(dev, NULL);
 	if (IS_ERR(pltfm_priv->clk)) {
-		dev_err(dev, "Failed to get core clock\n");
 		ret = PTR_ERR(pltfm_priv->clk);
 		goto err_pltfm_free;
 	}

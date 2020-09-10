@@ -145,10 +145,8 @@ static int mxs_lradc_probe(struct platform_device *pdev)
 	lradc->soc = (enum mxs_lradc_id)of_id->data;
 
 	lradc->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(lradc->clk)) {
-		dev_err(dev, "Failed to get the delay unit clock\n");
+	if (IS_ERR(lradc->clk))
 		return PTR_ERR(lradc->clk);
-	}
 
 	ret = clk_prepare_enable(lradc->clk);
 	if (ret) {

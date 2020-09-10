@@ -35,22 +35,16 @@ int fsl_udc_clk_init(struct platform_device *pdev)
 	pdata = dev_get_platdata(&pdev->dev);
 
 	mxc_ipg_clk = devm_clk_get(&pdev->dev, "ipg");
-	if (IS_ERR(mxc_ipg_clk)) {
-		dev_err(&pdev->dev, "clk_get(\"ipg\") failed\n");
+	if (IS_ERR(mxc_ipg_clk))
 		return PTR_ERR(mxc_ipg_clk);
-	}
 
 	mxc_ahb_clk = devm_clk_get(&pdev->dev, "ahb");
-	if (IS_ERR(mxc_ahb_clk)) {
-		dev_err(&pdev->dev, "clk_get(\"ahb\") failed\n");
+	if (IS_ERR(mxc_ahb_clk))
 		return PTR_ERR(mxc_ahb_clk);
-	}
 
 	mxc_per_clk = devm_clk_get(&pdev->dev, "per");
-	if (IS_ERR(mxc_per_clk)) {
-		dev_err(&pdev->dev, "clk_get(\"per\") failed\n");
+	if (IS_ERR(mxc_per_clk))
 		return PTR_ERR(mxc_per_clk);
-	}
 
 	clk_prepare_enable(mxc_ipg_clk);
 	clk_prepare_enable(mxc_ahb_clk);

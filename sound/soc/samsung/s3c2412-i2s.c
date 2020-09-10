@@ -58,7 +58,6 @@ static int s3c2412_i2s_probe(struct snd_soc_dai *dai)
 
 	s3c2412_i2s.iis_cclk = devm_clk_get(dai->dev, "i2sclk");
 	if (IS_ERR(s3c2412_i2s.iis_cclk)) {
-		pr_err("failed to get i2sclk clock\n");
 		ret = PTR_ERR(s3c2412_i2s.iis_cclk);
 		goto err;
 	}

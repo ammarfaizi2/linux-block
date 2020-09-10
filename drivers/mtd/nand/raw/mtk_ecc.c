@@ -521,10 +521,8 @@ static int mtk_ecc_probe(struct platform_device *pdev)
 	}
 
 	ecc->clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(ecc->clk)) {
-		dev_err(dev, "failed to get clock: %ld\n", PTR_ERR(ecc->clk));
+	if (IS_ERR(ecc->clk))
 		return PTR_ERR(ecc->clk);
-	}
 
 	irq = platform_get_irq(pdev, 0);
 	if (irq < 0)

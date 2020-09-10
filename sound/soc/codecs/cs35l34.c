@@ -1020,11 +1020,8 @@ static int cs35l34_i2c_probe(struct i2c_client *i2c_client,
 	ret = devm_regulator_bulk_get(&i2c_client->dev,
 		cs35l34->num_core_supplies,
 		cs35l34->core_supplies);
-	if (ret != 0) {
-		dev_err(&i2c_client->dev,
-			"Failed to request core supplies %d\n", ret);
+	if (ret != 0)
 		return ret;
-	}
 
 	ret = regulator_bulk_enable(cs35l34->num_core_supplies,
 					cs35l34->core_supplies);

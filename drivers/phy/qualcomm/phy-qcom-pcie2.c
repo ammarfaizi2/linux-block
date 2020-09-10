@@ -279,22 +279,16 @@ static int qcom_pcie2_phy_probe(struct platform_device *pdev)
 		return ret;
 
 	qphy->pipe_clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(qphy->pipe_clk)) {
-		dev_err(dev, "failed to acquire pipe clock\n");
+	if (IS_ERR(qphy->pipe_clk))
 		return PTR_ERR(qphy->pipe_clk);
-	}
 
 	qphy->phy_reset = devm_reset_control_get_exclusive(dev, "phy");
-	if (IS_ERR(qphy->phy_reset)) {
-		dev_err(dev, "failed to acquire phy reset\n");
+	if (IS_ERR(qphy->phy_reset))
 		return PTR_ERR(qphy->phy_reset);
-	}
 
 	qphy->pipe_reset = devm_reset_control_get_exclusive(dev, "pipe");
-	if (IS_ERR(qphy->pipe_reset)) {
-		dev_err(dev, "failed to acquire pipe reset\n");
+	if (IS_ERR(qphy->pipe_reset))
 		return PTR_ERR(qphy->pipe_reset);
-	}
 
 	phy = devm_phy_create(dev, dev->of_node, &qcom_pcie2_ops);
 	if (IS_ERR(phy)) {

@@ -131,14 +131,11 @@ static int mv_ehci_probe(struct platform_device *pdev)
 	ehci_mv->phy = devm_phy_optional_get(&pdev->dev, "usb");
 	if (IS_ERR(ehci_mv->phy)) {
 		retval = PTR_ERR(ehci_mv->phy);
-		if (retval != -EPROBE_DEFER)
-			dev_err(&pdev->dev, "Failed to get phy.\n");
 		goto err_put_hcd;
 	}
 
 	ehci_mv->clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(ehci_mv->clk)) {
-		dev_err(&pdev->dev, "error getting clock\n");
 		retval = PTR_ERR(ehci_mv->clk);
 		goto err_put_hcd;
 	}

@@ -1226,10 +1226,8 @@ static int sta350_i2c_probe(struct i2c_client *i2c,
 
 	ret = devm_regulator_bulk_get(dev, ARRAY_SIZE(sta350->supplies),
 				      sta350->supplies);
-	if (ret < 0) {
-		dev_err(dev, "Failed to request supplies: %d\n", ret);
+	if (ret < 0)
 		return ret;
-	}
 
 	sta350->regmap = devm_regmap_init_i2c(i2c, &sta350_regmap);
 	if (IS_ERR(sta350->regmap)) {

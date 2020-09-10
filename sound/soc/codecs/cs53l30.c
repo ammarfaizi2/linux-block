@@ -934,10 +934,8 @@ static int cs53l30_i2c_probe(struct i2c_client *client,
 
 	ret = devm_regulator_bulk_get(dev, ARRAY_SIZE(cs53l30->supplies),
 				      cs53l30->supplies);
-	if (ret) {
-		dev_err(dev, "failed to get supplies: %d\n", ret);
+	if (ret)
 		return ret;
-	}
 
 	ret = regulator_bulk_enable(ARRAY_SIZE(cs53l30->supplies),
 				    cs53l30->supplies);

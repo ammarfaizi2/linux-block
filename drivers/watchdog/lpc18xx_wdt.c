@@ -217,16 +217,12 @@ static int lpc18xx_wdt_probe(struct platform_device *pdev)
 		return PTR_ERR(lpc18xx_wdt->base);
 
 	lpc18xx_wdt->reg_clk = devm_clk_get(dev, "reg");
-	if (IS_ERR(lpc18xx_wdt->reg_clk)) {
-		dev_err(dev, "failed to get the reg clock\n");
+	if (IS_ERR(lpc18xx_wdt->reg_clk))
 		return PTR_ERR(lpc18xx_wdt->reg_clk);
-	}
 
 	lpc18xx_wdt->wdt_clk = devm_clk_get(dev, "wdtclk");
-	if (IS_ERR(lpc18xx_wdt->wdt_clk)) {
-		dev_err(dev, "failed to get the wdt clock\n");
+	if (IS_ERR(lpc18xx_wdt->wdt_clk))
 		return PTR_ERR(lpc18xx_wdt->wdt_clk);
-	}
 
 	ret = clk_prepare_enable(lpc18xx_wdt->reg_clk);
 	if (ret) {

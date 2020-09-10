@@ -276,10 +276,8 @@ static int mtk_hdmi_ddc_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	ddc->clk = devm_clk_get(dev, "ddc-i2c");
-	if (IS_ERR(ddc->clk)) {
-		dev_err(dev, "get ddc_clk failed: %p ,\n", ddc->clk);
+	if (IS_ERR(ddc->clk))
 		return PTR_ERR(ddc->clk);
-	}
 
 	mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	ddc->regs = devm_ioremap_resource(&pdev->dev, mem);

@@ -194,25 +194,16 @@ static int xilinx_spi_probe(struct spi_device *spi)
 
 	/* PROGRAM_B is active low */
 	conf->prog_b = devm_gpiod_get(&spi->dev, "prog_b", GPIOD_OUT_LOW);
-	if (IS_ERR(conf->prog_b)) {
-		dev_err(&spi->dev, "Failed to get PROGRAM_B gpio: %ld\n",
-			PTR_ERR(conf->prog_b));
+	if (IS_ERR(conf->prog_b))
 		return PTR_ERR(conf->prog_b);
-	}
 
 	conf->init_b = devm_gpiod_get_optional(&spi->dev, "init-b", GPIOD_IN);
-	if (IS_ERR(conf->init_b)) {
-		dev_err(&spi->dev, "Failed to get INIT_B gpio: %ld\n",
-			PTR_ERR(conf->init_b));
+	if (IS_ERR(conf->init_b))
 		return PTR_ERR(conf->init_b);
-	}
 
 	conf->done = devm_gpiod_get(&spi->dev, "done", GPIOD_IN);
-	if (IS_ERR(conf->done)) {
-		dev_err(&spi->dev, "Failed to get DONE gpio: %ld\n",
-			PTR_ERR(conf->done));
+	if (IS_ERR(conf->done))
 		return PTR_ERR(conf->done);
-	}
 
 	mgr = devm_fpga_mgr_create(&spi->dev,
 				   "Xilinx Slave Serial FPGA Manager",

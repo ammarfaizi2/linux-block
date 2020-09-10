@@ -204,8 +204,6 @@ static int lm3697_probe_dt(struct lm3697 *priv)
 						   "enable", GPIOD_OUT_LOW);
 	if (IS_ERR(priv->enable_gpio)) {
 		ret = PTR_ERR(priv->enable_gpio);
-		dev_err(&priv->client->dev, "Failed to get enable gpio: %d\n",
-			ret);
 		return ret;
 	}
 

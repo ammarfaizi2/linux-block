@@ -707,17 +707,13 @@ static int sun4i_usb_phy_probe(struct platform_device *pdev)
 
 	data->id_det_gpio = devm_gpiod_get_optional(dev, "usb0_id_det",
 						    GPIOD_IN);
-	if (IS_ERR(data->id_det_gpio)) {
-		dev_err(dev, "Couldn't request ID GPIO\n");
+	if (IS_ERR(data->id_det_gpio))
 		return PTR_ERR(data->id_det_gpio);
-	}
 
 	data->vbus_det_gpio = devm_gpiod_get_optional(dev, "usb0_vbus_det",
 						      GPIOD_IN);
-	if (IS_ERR(data->vbus_det_gpio)) {
-		dev_err(dev, "Couldn't request VBUS detect GPIO\n");
+	if (IS_ERR(data->vbus_det_gpio))
 		return PTR_ERR(data->vbus_det_gpio);
-	}
 
 	if (of_find_property(np, "usb0_vbus_power-supply", NULL)) {
 		data->vbus_power_supply = devm_power_supply_get_by_phandle(dev,
@@ -771,28 +767,22 @@ static int sun4i_usb_phy_probe(struct platform_device *pdev)
 			strlcpy(name, "usb_phy", sizeof(name));
 
 		phy->clk = devm_clk_get(dev, name);
-		if (IS_ERR(phy->clk)) {
-			dev_err(dev, "failed to get clock %s\n", name);
+		if (IS_ERR(phy->clk))
 			return PTR_ERR(phy->clk);
-		}
 
 		/* The first PHY is always tied to OTG, and never HSIC */
 		if (data->cfg->hsic_index && i == data->cfg->hsic_index) {
 			/* HSIC needs secondary clock */
 			snprintf(name, sizeof(name), "usb%d_hsic_12M", i);
 			phy->clk2 = devm_clk_get(dev, name);
-			if (IS_ERR(phy->clk2)) {
-				dev_err(dev, "failed to get clock %s\n", name);
+			if (IS_ERR(phy->clk2))
 				return PTR_ERR(phy->clk2);
-			}
 		}
 
 		snprintf(name, sizeof(name), "usb%d_reset", i);
 		phy->reset = devm_reset_control_get(dev, name);
-		if (IS_ERR(phy->reset)) {
-			dev_err(dev, "failed to get reset %s\n", name);
+		if (IS_ERR(phy->reset))
 			return PTR_ERR(phy->reset);
-		}
 
 		if (i || data->cfg->phy0_dual_route) { /* No pmu for musb */
 			snprintf(name, sizeof(name), "pmu%d", i);

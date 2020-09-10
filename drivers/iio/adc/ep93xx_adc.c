@@ -182,10 +182,8 @@ static int ep93xx_adc_probe(struct platform_device *pdev)
 	platform_set_drvdata(pdev, iiodev);
 
 	priv->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(priv->clk)) {
-		dev_err(&pdev->dev, "Cannot obtain clock\n");
+	if (IS_ERR(priv->clk))
 		return PTR_ERR(priv->clk);
-	}
 
 	pclk = clk_get_parent(priv->clk);
 	if (!pclk) {

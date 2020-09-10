@@ -1210,7 +1210,6 @@ static int atmel_tdes_probe(struct platform_device *pdev)
 	/* Initializing the clock */
 	tdes_dd->iclk = devm_clk_get(&pdev->dev, "tdes_clk");
 	if (IS_ERR(tdes_dd->iclk)) {
-		dev_err(dev, "clock initialization failed.\n");
 		err = PTR_ERR(tdes_dd->iclk);
 		goto err_tasklet_kill;
 	}

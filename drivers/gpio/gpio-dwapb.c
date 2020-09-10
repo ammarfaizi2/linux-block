@@ -674,10 +674,8 @@ static int dwapb_gpio_probe(struct platform_device *pdev)
 	gpio->clks[1].id = "db";
 	err = devm_clk_bulk_get_optional(&pdev->dev, DWAPB_NR_CLOCKS,
 					 gpio->clks);
-	if (err) {
-		dev_err(&pdev->dev, "Cannot get APB/Debounce clocks\n");
+	if (err)
 		return err;
-	}
 
 	err = clk_bulk_prepare_enable(DWAPB_NR_CLOCKS, gpio->clks);
 	if (err) {

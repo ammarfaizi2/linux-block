@@ -431,17 +431,13 @@ static int vic_probe(struct platform_device *pdev)
 		return PTR_ERR(vic->regs);
 
 	vic->clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(vic->clk)) {
-		dev_err(&pdev->dev, "failed to get clock\n");
+	if (IS_ERR(vic->clk))
 		return PTR_ERR(vic->clk);
-	}
 
 	if (!dev->pm_domain) {
 		vic->rst = devm_reset_control_get(dev, "vic");
-		if (IS_ERR(vic->rst)) {
-			dev_err(&pdev->dev, "failed to get reset\n");
+		if (IS_ERR(vic->rst))
 			return PTR_ERR(vic->rst);
-		}
 	}
 
 	vic->falcon.dev = dev;

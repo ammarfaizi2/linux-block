@@ -400,7 +400,6 @@ static int lp8860_probe(struct i2c_client *client,
 						   "enable", GPIOD_OUT_LOW);
 	if (IS_ERR(led->enable_gpio)) {
 		ret = PTR_ERR(led->enable_gpio);
-		dev_err(&client->dev, "Failed to get enable gpio: %d\n", ret);
 		return ret;
 	}
 

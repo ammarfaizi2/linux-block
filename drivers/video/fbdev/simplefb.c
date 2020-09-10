@@ -350,8 +350,6 @@ static int simplefb_regulators_get(struct simplefb_par *par,
 		if (IS_ERR(regulator)) {
 			if (PTR_ERR(regulator) == -EPROBE_DEFER)
 				return -EPROBE_DEFER;
-			dev_err(&pdev->dev, "regulator %s not found: %ld\n",
-				name, PTR_ERR(regulator));
 			continue;
 		}
 		par->regulators[i++] = regulator;

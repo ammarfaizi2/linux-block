@@ -100,11 +100,8 @@ static int xlnx_pr_decoupler_probe(struct platform_device *pdev)
 		return PTR_ERR(priv->io_base);
 
 	priv->clk = devm_clk_get(&pdev->dev, "aclk");
-	if (IS_ERR(priv->clk)) {
-		if (PTR_ERR(priv->clk) != -EPROBE_DEFER)
-			dev_err(&pdev->dev, "input clock not found\n");
+	if (IS_ERR(priv->clk))
 		return PTR_ERR(priv->clk);
-	}
 
 	err = clk_prepare_enable(priv->clk);
 	if (err) {

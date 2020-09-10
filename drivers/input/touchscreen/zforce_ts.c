@@ -754,8 +754,6 @@ static int zforce_probe(struct i2c_client *client,
 					       GPIOD_OUT_HIGH);
 	if (IS_ERR(ts->gpio_rst)) {
 		ret = PTR_ERR(ts->gpio_rst);
-		dev_err(&client->dev,
-			"failed to request reset GPIO: %d\n", ret);
 		return ret;
 	}
 
@@ -764,8 +762,6 @@ static int zforce_probe(struct i2c_client *client,
 						       GPIOD_IN);
 		if (IS_ERR(ts->gpio_int)) {
 			ret = PTR_ERR(ts->gpio_int);
-			dev_err(&client->dev,
-				"failed to request interrupt GPIO: %d\n", ret);
 			return ret;
 		}
 	} else {
@@ -779,8 +775,6 @@ static int zforce_probe(struct i2c_client *client,
 						    GPIOD_IN);
 		if (IS_ERR(ts->gpio_int)) {
 			ret = PTR_ERR(ts->gpio_int);
-			dev_err(&client->dev,
-				"failed to request interrupt GPIO: %d\n", ret);
 			return ret;
 		}
 
@@ -789,8 +783,6 @@ static int zforce_probe(struct i2c_client *client,
 					    GPIOD_OUT_HIGH);
 		if (IS_ERR(ts->gpio_rst)) {
 			ret = PTR_ERR(ts->gpio_rst);
-			dev_err(&client->dev,
-				"failed to request reset GPIO: %d\n", ret);
 			return ret;
 		}
 	}

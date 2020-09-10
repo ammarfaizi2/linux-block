@@ -217,17 +217,12 @@ static int sun9i_a80_de_clk_probe(struct platform_device *pdev)
 	bus_clk = devm_clk_get(&pdev->dev, "bus");
 	if (IS_ERR(bus_clk)) {
 		ret = PTR_ERR(bus_clk);
-		if (ret != -EPROBE_DEFER)
-			dev_err(&pdev->dev, "Couldn't get bus clk: %d\n", ret);
 		return ret;
 	}
 
 	rstc = devm_reset_control_get_exclusive(&pdev->dev, NULL);
 	if (IS_ERR(rstc)) {
 		ret = PTR_ERR(rstc);
-		if (ret != -EPROBE_DEFER)
-			dev_err(&pdev->dev,
-				"Couldn't get reset control: %d\n", ret);
 		return ret;
 	}
 

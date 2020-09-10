@@ -1318,7 +1318,6 @@ static int ux500_cryp_probe(struct platform_device *pdev)
 	/* Enable the clk for CRYP hardware block */
 	device_data->clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(device_data->clk)) {
-		dev_err(dev, "[%s]: clk_get() failed!", __func__);
 		ret = PTR_ERR(device_data->clk);
 		goto out_regulator;
 	}

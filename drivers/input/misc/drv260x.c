@@ -519,7 +519,6 @@ static int drv260x_probe(struct i2c_client *client,
 	haptics->regulator = devm_regulator_get(dev, "vbat");
 	if (IS_ERR(haptics->regulator)) {
 		error = PTR_ERR(haptics->regulator);
-		dev_err(dev, "unable to get regulator, error: %d\n", error);
 		return error;
 	}
 

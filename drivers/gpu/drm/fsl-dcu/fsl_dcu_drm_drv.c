@@ -272,10 +272,8 @@ static int fsl_dcu_drm_probe(struct platform_device *pdev)
 	}
 
 	fsl_dev->clk = devm_clk_get(dev, "dcu");
-	if (IS_ERR(fsl_dev->clk)) {
-		dev_err(dev, "failed to get dcu clock\n");
+	if (IS_ERR(fsl_dev->clk))
 		return PTR_ERR(fsl_dev->clk);
-	}
 	ret = clk_prepare_enable(fsl_dev->clk);
 	if (ret < 0) {
 		dev_err(dev, "failed to enable dcu clk\n");

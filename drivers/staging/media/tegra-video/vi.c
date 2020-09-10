@@ -986,14 +986,12 @@ static int tegra_vi_probe(struct platform_device *pdev)
 	vi->clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(vi->clk)) {
 		ret = PTR_ERR(vi->clk);
-		dev_err(&pdev->dev, "failed to get vi clock: %d\n", ret);
 		return ret;
 	}
 
 	vi->vdd = devm_regulator_get(&pdev->dev, "avdd-dsi-csi");
 	if (IS_ERR(vi->vdd)) {
 		ret = PTR_ERR(vi->vdd);
-		dev_err(&pdev->dev, "failed to get VDD supply: %d\n", ret);
 		return ret;
 	}
 

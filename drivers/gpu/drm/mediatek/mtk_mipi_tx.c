@@ -159,7 +159,6 @@ static int mtk_mipi_tx_probe(struct platform_device *pdev)
 	ref_clk = devm_clk_get(dev, NULL);
 	if (IS_ERR(ref_clk)) {
 		ret = PTR_ERR(ref_clk);
-		dev_err(dev, "Failed to get reference clock: %d\n", ret);
 		return ret;
 	}
 

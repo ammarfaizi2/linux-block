@@ -532,16 +532,12 @@ static int xvcu_probe(struct platform_device *pdev)
 	}
 
 	xvcu->aclk = devm_clk_get(&pdev->dev, "aclk");
-	if (IS_ERR(xvcu->aclk)) {
-		dev_err(&pdev->dev, "Could not get aclk clock\n");
+	if (IS_ERR(xvcu->aclk))
 		return PTR_ERR(xvcu->aclk);
-	}
 
 	xvcu->pll_ref = devm_clk_get(&pdev->dev, "pll_ref");
-	if (IS_ERR(xvcu->pll_ref)) {
-		dev_err(&pdev->dev, "Could not get pll_ref clock\n");
+	if (IS_ERR(xvcu->pll_ref))
 		return PTR_ERR(xvcu->pll_ref);
-	}
 
 	ret = clk_prepare_enable(xvcu->aclk);
 	if (ret) {

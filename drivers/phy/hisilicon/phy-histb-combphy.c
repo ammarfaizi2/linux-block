@@ -241,16 +241,12 @@ static int histb_combphy_probe(struct platform_device *pdev)
 	}
 
 	priv->ref_clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(priv->ref_clk)) {
-		dev_err(dev, "failed to find ref clock\n");
+	if (IS_ERR(priv->ref_clk))
 		return PTR_ERR(priv->ref_clk);
-	}
 
 	priv->por_rst = devm_reset_control_get(dev, NULL);
-	if (IS_ERR(priv->por_rst)) {
-		dev_err(dev, "failed to get poweron reset\n");
+	if (IS_ERR(priv->por_rst))
 		return PTR_ERR(priv->por_rst);
-	}
 
 	priv->phy = devm_phy_create(dev, NULL, &histb_combphy_ops);
 	if (IS_ERR(priv->phy)) {

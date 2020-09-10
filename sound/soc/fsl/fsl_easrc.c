@@ -1917,10 +1917,8 @@ static int fsl_easrc_probe(struct platform_device *pdev)
 	}
 
 	easrc->mem_clk = devm_clk_get(dev, "mem");
-	if (IS_ERR(easrc->mem_clk)) {
-		dev_err(dev, "failed to get mem clock\n");
+	if (IS_ERR(easrc->mem_clk))
 		return PTR_ERR(easrc->mem_clk);
-	}
 
 	/* Set default value */
 	easrc->channel_avail = 32;

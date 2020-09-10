@@ -360,10 +360,8 @@ static int sprd_thm_probe(struct platform_device *pdev)
 	}
 
 	thm->clk = devm_clk_get(&pdev->dev, "enable");
-	if (IS_ERR(thm->clk)) {
-		dev_err(&pdev->dev, "failed to get enable clock\n");
+	if (IS_ERR(thm->clk))
 		return PTR_ERR(thm->clk);
-	}
 
 	ret = clk_prepare_enable(thm->clk);
 	if (ret)

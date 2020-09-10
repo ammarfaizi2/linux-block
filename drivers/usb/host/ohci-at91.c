@@ -195,19 +195,16 @@ static int usb_hcd_at91_probe(const struct hc_driver *driver,
 
 	ohci_at91->iclk = devm_clk_get(dev, "ohci_clk");
 	if (IS_ERR(ohci_at91->iclk)) {
-		dev_err(dev, "failed to get ohci_clk\n");
 		retval = PTR_ERR(ohci_at91->iclk);
 		goto err;
 	}
 	ohci_at91->fclk = devm_clk_get(dev, "uhpck");
 	if (IS_ERR(ohci_at91->fclk)) {
-		dev_err(dev, "failed to get uhpck\n");
 		retval = PTR_ERR(ohci_at91->fclk);
 		goto err;
 	}
 	ohci_at91->hclk = devm_clk_get(dev, "hclk");
 	if (IS_ERR(ohci_at91->hclk)) {
-		dev_err(dev, "failed to get hclk\n");
 		retval = PTR_ERR(ohci_at91->hclk);
 		goto err;
 	}
@@ -540,7 +537,6 @@ static int ohci_hcd_at91_drv_probe(struct platform_device *pdev)
 						      i, GPIOD_OUT_HIGH);
 		if (IS_ERR(pdata->vbus_pin[i])) {
 			err = PTR_ERR(pdata->vbus_pin[i]);
-			dev_err(&pdev->dev, "unable to claim gpio \"vbus\": %d\n", err);
 			continue;
 		}
 	}

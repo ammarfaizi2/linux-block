@@ -2643,10 +2643,8 @@ static int da7218_handle_supplies(struct snd_soc_component *component)
 
 	ret = devm_regulator_bulk_get(component->dev, DA7218_NUM_SUPPLIES,
 				      da7218->supplies);
-	if (ret) {
-		dev_err(component->dev, "Failed to get supplies\n");
+	if (ret)
 		return ret;
-	}
 
 	/* Determine VDDIO voltage provided */
 	vddio = da7218->supplies[DA7218_SUPPLY_VDDIO].consumer;

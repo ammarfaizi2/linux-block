@@ -467,10 +467,8 @@ static int xrx200_probe(struct platform_device *pdev)
 
 	/* get the clock */
 	priv->clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(priv->clk)) {
-		dev_err(dev, "failed to get clock\n");
+	if (IS_ERR(priv->clk))
 		return PTR_ERR(priv->clk);
-	}
 
 	mac = of_get_mac_address(np);
 	if (!IS_ERR(mac))

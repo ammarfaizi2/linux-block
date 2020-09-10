@@ -1904,8 +1904,6 @@ static int pwm_setup_backlight(struct intel_connector *connector,
 	}
 
 	if (IS_ERR(panel->backlight.pwm)) {
-		drm_err(&dev_priv->drm, "Failed to get the %s PWM chip\n",
-			desc);
 		panel->backlight.pwm = NULL;
 		return -ENODEV;
 	}

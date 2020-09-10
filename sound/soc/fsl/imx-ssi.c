@@ -525,8 +525,6 @@ static int imx_ssi_probe(struct platform_device *pdev)
 	ssi->clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(ssi->clk)) {
 		ret = PTR_ERR(ssi->clk);
-		dev_err(&pdev->dev, "Cannot get the clock: %d\n",
-			ret);
 		goto failed_clk;
 	}
 	ret = clk_prepare_enable(ssi->clk);

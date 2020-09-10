@@ -613,21 +613,18 @@ static int inno_dsidphy_probe(struct platform_device *pdev)
 	inno->ref_clk = devm_clk_get(dev, "ref");
 	if (IS_ERR(inno->ref_clk)) {
 		ret = PTR_ERR(inno->ref_clk);
-		dev_err(dev, "failed to get ref clock: %d\n", ret);
 		return ret;
 	}
 
 	inno->pclk_phy = devm_clk_get(dev, "pclk");
 	if (IS_ERR(inno->pclk_phy)) {
 		ret = PTR_ERR(inno->pclk_phy);
-		dev_err(dev, "failed to get phy pclk: %d\n", ret);
 		return ret;
 	}
 
 	inno->rst = devm_reset_control_get(dev, "apb");
 	if (IS_ERR(inno->rst)) {
 		ret = PTR_ERR(inno->rst);
-		dev_err(dev, "failed to get system reset control: %d\n", ret);
 		return ret;
 	}
 

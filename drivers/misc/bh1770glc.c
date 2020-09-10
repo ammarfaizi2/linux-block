@@ -1208,10 +1208,8 @@ static int bh1770_probe(struct i2c_client *client,
 
 	err = devm_regulator_bulk_get(&client->dev,
 				      ARRAY_SIZE(chip->regs), chip->regs);
-	if (err < 0) {
-		dev_err(&client->dev, "Cannot get regulators\n");
+	if (err < 0)
 		return err;
-	}
 
 	err = regulator_bulk_enable(ARRAY_SIZE(chip->regs),
 				chip->regs);

@@ -464,18 +464,12 @@ static void adau7118_regulator_disable(void *data)
 static int adau7118_regulator_setup(struct adau7118_data *st)
 {
 	st->iovdd = devm_regulator_get(st->dev, "iovdd");
-	if (IS_ERR(st->iovdd)) {
-		dev_err(st->dev, "Could not get iovdd: %ld\n",
-			PTR_ERR(st->iovdd));
+	if (IS_ERR(st->iovdd))
 		return PTR_ERR(st->iovdd);
-	}
 
 	st->dvdd = devm_regulator_get(st->dev, "dvdd");
-	if (IS_ERR(st->dvdd)) {
-		dev_err(st->dev, "Could not get dvdd: %ld\n",
-			PTR_ERR(st->dvdd));
+	if (IS_ERR(st->dvdd))
 		return PTR_ERR(st->dvdd);
-	}
 	/* just assume the device is in reset */
 	if (!st->hw_mode) {
 		regcache_mark_dirty(st->map);

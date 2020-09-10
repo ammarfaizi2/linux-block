@@ -183,11 +183,8 @@ static int dpot_dac_probe(struct platform_device *pdev)
 	indio_dev->num_channels = 1;
 
 	dac->vref = devm_regulator_get(dev, "vref");
-	if (IS_ERR(dac->vref)) {
-		if (PTR_ERR(dac->vref) != -EPROBE_DEFER)
-			dev_err(&pdev->dev, "failed to get vref regulator\n");
+	if (IS_ERR(dac->vref))
 		return PTR_ERR(dac->vref);
-	}
 
 	dac->dpot = devm_iio_channel_get(dev, "dpot");
 	if (IS_ERR(dac->dpot)) {

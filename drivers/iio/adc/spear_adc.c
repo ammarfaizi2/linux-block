@@ -286,10 +286,8 @@ static int spear_adc_probe(struct platform_device *pdev)
 		(struct adc_regs_spear3xx __iomem *)st->adc_base_spear6xx;
 
 	st->clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(st->clk)) {
-		dev_err(dev, "failed getting clock\n");
+	if (IS_ERR(st->clk))
 		return PTR_ERR(st->clk);
-	}
 
 	ret = clk_prepare_enable(st->clk);
 	if (ret) {

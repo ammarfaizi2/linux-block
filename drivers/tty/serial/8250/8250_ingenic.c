@@ -261,18 +261,12 @@ static int ingenic_uart_probe(struct platform_device *pdev)
 	data->clk_module = devm_clk_get(&pdev->dev, "module");
 	if (IS_ERR(data->clk_module)) {
 		err = PTR_ERR(data->clk_module);
-		if (err != -EPROBE_DEFER)
-			dev_err(&pdev->dev,
-				"unable to get module clock: %d\n", err);
 		return err;
 	}
 
 	data->clk_baud = devm_clk_get(&pdev->dev, "baud");
 	if (IS_ERR(data->clk_baud)) {
 		err = PTR_ERR(data->clk_baud);
-		if (err != -EPROBE_DEFER)
-			dev_err(&pdev->dev,
-				"unable to get baud clock: %d\n", err);
 		return err;
 	}
 

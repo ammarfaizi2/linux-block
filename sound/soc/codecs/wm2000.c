@@ -839,10 +839,8 @@ static int wm2000_i2c_probe(struct i2c_client *i2c,
 
 	ret = devm_regulator_bulk_get(&i2c->dev, WM2000_NUM_SUPPLIES,
 				      wm2000->supplies);
-	if (ret != 0) {
-		dev_err(&i2c->dev, "Failed to get supplies: %d\n", ret);
+	if (ret != 0)
 		return ret;
-	}
 
 	ret = regulator_bulk_enable(WM2000_NUM_SUPPLIES, wm2000->supplies);
 	if (ret != 0) {
@@ -880,7 +878,6 @@ static int wm2000_i2c_probe(struct i2c_client *i2c,
 	wm2000->mclk = devm_clk_get(&i2c->dev, "MCLK");
 	if (IS_ERR(wm2000->mclk)) {
 		ret = PTR_ERR(wm2000->mclk);
-		dev_err(&i2c->dev, "Failed to get MCLK: %d\n", ret);
 		goto err_supplies;
 	}
 

@@ -1037,16 +1037,12 @@ static int mcde_dsi_bind(struct device *dev, struct device *master,
 
 	/* Obtain the clocks */
 	d->hs_clk = devm_clk_get(dev, "hs");
-	if (IS_ERR(d->hs_clk)) {
-		dev_err(dev, "unable to get HS clock\n");
+	if (IS_ERR(d->hs_clk))
 		return PTR_ERR(d->hs_clk);
-	}
 
 	d->lp_clk = devm_clk_get(dev, "lp");
-	if (IS_ERR(d->lp_clk)) {
-		dev_err(dev, "unable to get LP clock\n");
+	if (IS_ERR(d->lp_clk))
 		return PTR_ERR(d->lp_clk);
-	}
 
 	/* Assert RESET through the PRCMU, active low */
 	/* FIXME: which DSI block? */

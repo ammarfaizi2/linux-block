@@ -809,8 +809,6 @@ static int kabylake_audio_probe(struct platform_device *pdev)
 			return -EPROBE_DEFER;
 		}
 
-		dev_err(&pdev->dev, "Failed to get ssp1_mclk with err:%d\n",
-								ret);
 		return ret;
 	}
 
@@ -823,8 +821,6 @@ static int kabylake_audio_probe(struct platform_device *pdev)
 			return -EPROBE_DEFER;
 		}
 
-		dev_err(&pdev->dev, "Failed to get ssp1_sclk with err:%d\n",
-								ret);
 		return ret;
 	}
 

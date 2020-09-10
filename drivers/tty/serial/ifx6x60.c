@@ -1081,42 +1081,36 @@ static int ifx_spi_spi_probe(struct spi_device *spi)
 
 	ifx_dev->gpio.reset = devm_gpiod_get(dev, "reset", GPIOD_OUT_LOW);
 	if (IS_ERR(ifx_dev->gpio.reset)) {
-		dev_err(dev, "could not obtain reset GPIO\n");
 		ret = PTR_ERR(ifx_dev->gpio.reset);
 		goto error_ret;
 	}
 	gpiod_set_consumer_name(ifx_dev->gpio.reset, "ifxModem reset");
 	ifx_dev->gpio.po = devm_gpiod_get(dev, "power", GPIOD_OUT_LOW);
 	if (IS_ERR(ifx_dev->gpio.po)) {
-		dev_err(dev, "could not obtain power GPIO\n");
 		ret = PTR_ERR(ifx_dev->gpio.po);
 		goto error_ret;
 	}
 	gpiod_set_consumer_name(ifx_dev->gpio.po, "ifxModem power");
 	ifx_dev->gpio.mrdy = devm_gpiod_get(dev, "mrdy", GPIOD_OUT_LOW);
 	if (IS_ERR(ifx_dev->gpio.mrdy)) {
-		dev_err(dev, "could not obtain mrdy GPIO\n");
 		ret = PTR_ERR(ifx_dev->gpio.mrdy);
 		goto error_ret;
 	}
 	gpiod_set_consumer_name(ifx_dev->gpio.mrdy, "ifxModem mrdy");
 	ifx_dev->gpio.srdy = devm_gpiod_get(dev, "srdy", GPIOD_IN);
 	if (IS_ERR(ifx_dev->gpio.srdy)) {
-		dev_err(dev, "could not obtain srdy GPIO\n");
 		ret = PTR_ERR(ifx_dev->gpio.srdy);
 		goto error_ret;
 	}
 	gpiod_set_consumer_name(ifx_dev->gpio.srdy, "ifxModem srdy");
 	ifx_dev->gpio.reset_out = devm_gpiod_get(dev, "rst_out", GPIOD_IN);
 	if (IS_ERR(ifx_dev->gpio.reset_out)) {
-		dev_err(dev, "could not obtain rst_out GPIO\n");
 		ret = PTR_ERR(ifx_dev->gpio.reset_out);
 		goto error_ret;
 	}
 	gpiod_set_consumer_name(ifx_dev->gpio.reset_out, "ifxModem reset out");
 	ifx_dev->gpio.pmu_reset = devm_gpiod_get(dev, "pmu_reset", GPIOD_ASIS);
 	if (IS_ERR(ifx_dev->gpio.pmu_reset)) {
-		dev_err(dev, "could not obtain pmu_reset GPIO\n");
 		ret = PTR_ERR(ifx_dev->gpio.pmu_reset);
 		goto error_ret;
 	}

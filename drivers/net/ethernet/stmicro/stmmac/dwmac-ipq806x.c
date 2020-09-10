@@ -212,10 +212,8 @@ static int ipq806x_gmac_of_parse(struct ipq806x_gmac *gmac)
 	}
 
 	gmac->core_clk = devm_clk_get(dev, "stmmaceth");
-	if (IS_ERR(gmac->core_clk)) {
-		dev_err(dev, "missing stmmaceth clk property\n");
+	if (IS_ERR(gmac->core_clk))
 		return PTR_ERR(gmac->core_clk);
-	}
 	clk_set_rate(gmac->core_clk, 266000000);
 
 	/* Setup the register map for the nss common registers */

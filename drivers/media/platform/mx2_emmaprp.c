@@ -814,9 +814,8 @@ static int emmaprp_probe(struct platform_device *pdev)
 	spin_lock_init(&pcdev->irqlock);
 
 	pcdev->clk_emma_ipg = devm_clk_get(&pdev->dev, "ipg");
-	if (IS_ERR(pcdev->clk_emma_ipg)) {
+	if (IS_ERR(pcdev->clk_emma_ipg))
 		return PTR_ERR(pcdev->clk_emma_ipg);
-	}
 
 	pcdev->clk_emma_ahb = devm_clk_get(&pdev->dev, "ahb");
 	if (IS_ERR(pcdev->clk_emma_ahb))

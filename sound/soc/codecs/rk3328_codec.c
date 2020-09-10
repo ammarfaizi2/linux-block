@@ -472,10 +472,8 @@ static int rk3328_platform_probe(struct platform_device *pdev)
 	clk_set_rate(rk3328->mclk, INITIAL_FREQ);
 
 	rk3328->pclk = devm_clk_get(&pdev->dev, "pclk");
-	if (IS_ERR(rk3328->pclk)) {
-		dev_err(&pdev->dev, "can't get acodec pclk\n");
+	if (IS_ERR(rk3328->pclk))
 		return PTR_ERR(rk3328->pclk);
-	}
 
 	ret = clk_prepare_enable(rk3328->pclk);
 	if (ret < 0) {

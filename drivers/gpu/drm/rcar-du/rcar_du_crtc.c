@@ -1216,10 +1216,8 @@ int rcar_du_crtc_create(struct rcar_du_group *rgrp, unsigned int swindex,
 	}
 
 	rcrtc->clock = devm_clk_get(rcdu->dev, name);
-	if (IS_ERR(rcrtc->clock)) {
-		dev_err(rcdu->dev, "no clock for DU channel %u\n", hwindex);
+	if (IS_ERR(rcrtc->clock))
 		return PTR_ERR(rcrtc->clock);
-	}
 
 	sprintf(clk_name, "dclkin.%u", hwindex);
 	clk = devm_clk_get(rcdu->dev, clk_name);

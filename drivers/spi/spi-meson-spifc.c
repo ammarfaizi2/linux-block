@@ -314,7 +314,6 @@ static int meson_spifc_probe(struct platform_device *pdev)
 
 	spifc->clk = devm_clk_get(spifc->dev, NULL);
 	if (IS_ERR(spifc->clk)) {
-		dev_err(spifc->dev, "missing clock\n");
 		ret = PTR_ERR(spifc->clk);
 		goto out_err;
 	}

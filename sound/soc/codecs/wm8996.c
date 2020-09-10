@@ -2790,7 +2790,6 @@ static int wm8996_i2c_probe(struct i2c_client *i2c,
 	ret = devm_regulator_bulk_get(&i2c->dev, ARRAY_SIZE(wm8996->supplies),
 				      wm8996->supplies);
 	if (ret != 0) {
-		dev_err(&i2c->dev, "Failed to request supplies: %d\n", ret);
 		goto err_gpio;
 	}
 

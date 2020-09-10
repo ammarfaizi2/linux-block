@@ -163,8 +163,6 @@ static int pistachio_internal_dac_probe(struct platform_device *pdev)
 	dac->supply = devm_regulator_get(dev, "VDD");
 	if (IS_ERR(dac->supply)) {
 		ret = PTR_ERR(dac->supply);
-		if (ret != -EPROBE_DEFER)
-			dev_err(dev, "failed to acquire supply 'VDD-supply': %d\n", ret);
 		return ret;
 	}
 

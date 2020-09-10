@@ -148,9 +148,6 @@ static int imx8mm_tmu_probe(struct platform_device *pdev)
 	tmu->clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(tmu->clk)) {
 		ret = PTR_ERR(tmu->clk);
-		if (ret != -EPROBE_DEFER)
-			dev_err(&pdev->dev,
-				"failed to get tmu clock: %d\n", ret);
 		return ret;
 	}
 

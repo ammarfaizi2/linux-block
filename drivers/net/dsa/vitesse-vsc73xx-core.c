@@ -1147,10 +1147,8 @@ int vsc73xx_probe(struct vsc73xx *vsc)
 
 	/* Release reset, if any */
 	vsc->reset = devm_gpiod_get_optional(dev, "reset", GPIOD_OUT_LOW);
-	if (IS_ERR(vsc->reset)) {
-		dev_err(dev, "failed to get RESET GPIO\n");
+	if (IS_ERR(vsc->reset))
 		return PTR_ERR(vsc->reset);
-	}
 	if (vsc->reset)
 		/* Wait 20ms according to datasheet table 245 */
 		msleep(20);

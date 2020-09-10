@@ -1628,10 +1628,8 @@ static int jpu_probe(struct platform_device *pdev)
 
 	/* clocks */
 	jpu->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(jpu->clk)) {
-		dev_err(&pdev->dev, "cannot get clock\n");
+	if (IS_ERR(jpu->clk))
 		return PTR_ERR(jpu->clk);
-	}
 
 	/* v4l2 device */
 	ret = v4l2_device_register(&pdev->dev, &jpu->v4l2_dev);

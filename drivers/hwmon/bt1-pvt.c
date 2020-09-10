@@ -962,10 +962,8 @@ static int pvt_request_clks(struct pvt_hwmon *pvt)
 	pvt->clks[PVT_CLOCK_REF].id = "ref";
 
 	ret = devm_clk_bulk_get(pvt->dev, PVT_CLOCK_NUM, pvt->clks);
-	if (ret) {
-		dev_err(pvt->dev, "Couldn't get PVT clocks descriptors\n");
+	if (ret)
 		return ret;
-	}
 
 	ret = clk_bulk_prepare_enable(PVT_CLOCK_NUM, pvt->clks);
 	if (ret) {

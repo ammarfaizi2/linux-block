@@ -330,10 +330,8 @@ static int tfp410_init(struct device *dev, bool i2c)
 	/* Get the powerdown GPIO. */
 	dvi->powerdown = devm_gpiod_get_optional(dev, "powerdown",
 						 GPIOD_OUT_HIGH);
-	if (IS_ERR(dvi->powerdown)) {
-		dev_err(dev, "failed to parse powerdown gpio\n");
+	if (IS_ERR(dvi->powerdown))
 		return PTR_ERR(dvi->powerdown);
-	}
 
 	/*  Register the DRM bridge. */
 	drm_bridge_add(&dvi->bridge);

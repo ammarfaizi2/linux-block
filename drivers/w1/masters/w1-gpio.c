@@ -107,18 +107,13 @@ static int w1_gpio_probe(struct platform_device *pdev)
 	}
 
 	pdata->gpiod = devm_gpiod_get_index(dev, NULL, 0, gflags);
-	if (IS_ERR(pdata->gpiod)) {
-		dev_err(dev, "gpio_request (pin) failed\n");
+	if (IS_ERR(pdata->gpiod))
 		return PTR_ERR(pdata->gpiod);
-	}
 
 	pdata->pullup_gpiod =
 		devm_gpiod_get_index_optional(dev, NULL, 1, GPIOD_OUT_LOW);
-	if (IS_ERR(pdata->pullup_gpiod)) {
-		dev_err(dev, "gpio_request_one "
-			"(ext_pullup_enable_pin) failed\n");
+	if (IS_ERR(pdata->pullup_gpiod))
 		return PTR_ERR(pdata->pullup_gpiod);
-	}
 
 	master->data = pdata;
 	master->read_bit = w1_gpio_read_bit;

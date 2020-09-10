@@ -711,10 +711,8 @@ int cs42l51_probe(struct device *dev, struct regmap *regmap)
 
 	ret = devm_regulator_bulk_get(dev, ARRAY_SIZE(cs42l51->supplies),
 				      cs42l51->supplies);
-	if (ret != 0) {
-		dev_err(dev, "Failed to request supplies: %d\n", ret);
+	if (ret != 0)
 		return ret;
-	}
 
 	ret = regulator_bulk_enable(ARRAY_SIZE(cs42l51->supplies),
 				    cs42l51->supplies);

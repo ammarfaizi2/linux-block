@@ -1036,10 +1036,8 @@ static int wm8985_probe(struct snd_soc_component *component)
 
 	ret = devm_regulator_bulk_get(component->dev, ARRAY_SIZE(wm8985->supplies),
 				 wm8985->supplies);
-	if (ret) {
-		dev_err(component->dev, "Failed to request supplies: %d\n", ret);
+	if (ret)
 		return ret;
-	}
 
 	ret = regulator_bulk_enable(ARRAY_SIZE(wm8985->supplies),
 				    wm8985->supplies);

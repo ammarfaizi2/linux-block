@@ -392,8 +392,6 @@ static int ssi_add_controller(struct hsi_controller *ssi,
 
 	omap_ssi->fck = devm_clk_get(&ssi->device, "ssi_ssr_fck");
 	if (IS_ERR(omap_ssi->fck)) {
-		dev_err(&pd->dev, "Could not acquire clock \"ssi_ssr_fck\": %li\n",
-			PTR_ERR(omap_ssi->fck));
 		err = -ENODEV;
 		goto out_err;
 	}

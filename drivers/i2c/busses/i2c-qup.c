@@ -1772,16 +1772,12 @@ nodma:
 		ACPI_COMPANION_SET(&qup->adap.dev, ACPI_COMPANION(qup->dev));
 	} else {
 		qup->clk = devm_clk_get(qup->dev, "core");
-		if (IS_ERR(qup->clk)) {
-			dev_err(qup->dev, "Could not get core clock\n");
+		if (IS_ERR(qup->clk))
 			return PTR_ERR(qup->clk);
-		}
 
 		qup->pclk = devm_clk_get(qup->dev, "iface");
-		if (IS_ERR(qup->pclk)) {
-			dev_err(qup->dev, "Could not get iface clock\n");
+		if (IS_ERR(qup->pclk))
 			return PTR_ERR(qup->pclk);
-		}
 		qup_i2c_enable_clocks(qup);
 		src_clk_freq = clk_get_rate(qup->clk);
 	}

@@ -248,7 +248,6 @@ static int meson_crypto_probe(struct platform_device *pdev)
 	mc->busclk = devm_clk_get(&pdev->dev, "blkmv");
 	if (IS_ERR(mc->busclk)) {
 		err = PTR_ERR(mc->busclk);
-		dev_err(&pdev->dev, "Cannot get core clock err=%d\n", err);
 		return err;
 	}
 

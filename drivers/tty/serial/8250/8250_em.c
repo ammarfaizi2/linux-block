@@ -98,10 +98,8 @@ static int serial8250_em_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	priv->sclk = devm_clk_get(&pdev->dev, "sclk");
-	if (IS_ERR(priv->sclk)) {
-		dev_err(&pdev->dev, "unable to get clock\n");
+	if (IS_ERR(priv->sclk))
 		return PTR_ERR(priv->sclk);
-	}
 
 	memset(&up, 0, sizeof(up));
 	up.port.mapbase = regs->start;

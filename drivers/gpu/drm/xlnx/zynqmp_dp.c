@@ -1675,12 +1675,8 @@ int zynqmp_dp_probe(struct zynqmp_dpsub *dpsub, struct drm_device *drm)
 		return dp->irq;
 
 	dp->reset = devm_reset_control_get(dp->dev, NULL);
-	if (IS_ERR(dp->reset)) {
-		if (PTR_ERR(dp->reset) != -EPROBE_DEFER)
-			dev_err(dp->dev, "failed to get reset: %ld\n",
-				PTR_ERR(dp->reset));
+	if (IS_ERR(dp->reset))
 		return PTR_ERR(dp->reset);
-	}
 
 	ret = zynqmp_dp_phy_probe(dp);
 	if (ret)

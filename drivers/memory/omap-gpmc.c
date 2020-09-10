@@ -2367,10 +2367,8 @@ static int gpmc_probe(struct platform_device *pdev)
 	gpmc->irq = res->start;
 
 	gpmc_l3_clk = devm_clk_get(&pdev->dev, "fck");
-	if (IS_ERR(gpmc_l3_clk)) {
-		dev_err(&pdev->dev, "Failed to get GPMC fck\n");
+	if (IS_ERR(gpmc_l3_clk))
 		return PTR_ERR(gpmc_l3_clk);
-	}
 
 	if (!clk_get_rate(gpmc_l3_clk)) {
 		dev_err(&pdev->dev, "Invalid GPMC fck clock rate\n");

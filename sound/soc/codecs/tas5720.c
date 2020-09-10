@@ -672,10 +672,8 @@ static int tas5720_probe(struct i2c_client *client,
 
 	ret = devm_regulator_bulk_get(dev, ARRAY_SIZE(data->supplies),
 				      data->supplies);
-	if (ret != 0) {
-		dev_err(dev, "failed to request supplies: %d\n", ret);
+	if (ret != 0)
 		return ret;
-	}
 
 	dev_set_drvdata(dev, data);
 

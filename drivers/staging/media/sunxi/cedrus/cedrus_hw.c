@@ -250,32 +250,24 @@ int cedrus_hw_probe(struct cedrus_dev *dev)
 
 	dev->ahb_clk = devm_clk_get(dev->dev, "ahb");
 	if (IS_ERR(dev->ahb_clk)) {
-		dev_err(dev->dev, "Failed to get AHB clock\n");
-
 		ret = PTR_ERR(dev->ahb_clk);
 		goto err_sram;
 	}
 
 	dev->mod_clk = devm_clk_get(dev->dev, "mod");
 	if (IS_ERR(dev->mod_clk)) {
-		dev_err(dev->dev, "Failed to get MOD clock\n");
-
 		ret = PTR_ERR(dev->mod_clk);
 		goto err_sram;
 	}
 
 	dev->ram_clk = devm_clk_get(dev->dev, "ram");
 	if (IS_ERR(dev->ram_clk)) {
-		dev_err(dev->dev, "Failed to get RAM clock\n");
-
 		ret = PTR_ERR(dev->ram_clk);
 		goto err_sram;
 	}
 
 	dev->rstc = devm_reset_control_get(dev->dev, NULL);
 	if (IS_ERR(dev->rstc)) {
-		dev_err(dev->dev, "Failed to get reset control\n");
-
 		ret = PTR_ERR(dev->rstc);
 		goto err_sram;
 	}

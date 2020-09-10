@@ -1133,10 +1133,8 @@ static int sprd_dma_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	sdev->clk = devm_clk_get(&pdev->dev, "enable");
-	if (IS_ERR(sdev->clk)) {
-		dev_err(&pdev->dev, "get enable clock failed\n");
+	if (IS_ERR(sdev->clk))
 		return PTR_ERR(sdev->clk);
-	}
 
 	/* ashb clock is optional for AGCP DMA */
 	sdev->ashb_clk = devm_clk_get(&pdev->dev, "ashb_eb");

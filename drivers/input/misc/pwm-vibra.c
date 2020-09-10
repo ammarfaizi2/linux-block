@@ -144,12 +144,8 @@ static int pwm_vibrator_probe(struct platform_device *pdev)
 
 	vibrator->pwm = devm_pwm_get(&pdev->dev, "enable");
 	err = PTR_ERR_OR_ZERO(vibrator->pwm);
-	if (err) {
-		if (err != -EPROBE_DEFER)
-			dev_err(&pdev->dev, "Failed to request main pwm: %d",
-				err);
+	if (err)
 		return err;
-	}
 
 	INIT_WORK(&vibrator->play_work, pwm_vibrator_play_work);
 

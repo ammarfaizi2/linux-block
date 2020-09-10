@@ -3782,10 +3782,8 @@ static int tegra_xudc_probe(struct platform_device *pdev)
 
 	err = devm_clk_bulk_get(&pdev->dev, xudc->soc->num_clks,
 				      xudc->clks);
-	if (err) {
-		dev_err(xudc->dev, "failed to request clks %d\n", err);
+	if (err)
 		return err;
-	}
 
 	xudc->supplies = devm_kcalloc(&pdev->dev, xudc->soc->num_supplies,
 				      sizeof(*xudc->supplies), GFP_KERNEL);
@@ -3797,10 +3795,8 @@ static int tegra_xudc_probe(struct platform_device *pdev)
 
 	err = devm_regulator_bulk_get(&pdev->dev, xudc->soc->num_supplies,
 				      xudc->supplies);
-	if (err) {
-		dev_err(xudc->dev, "failed to request regulators %d\n", err);
+	if (err)
 		return err;
-	}
 
 	xudc->padctl = tegra_xusb_padctl_get(&pdev->dev);
 	if (IS_ERR(xudc->padctl))

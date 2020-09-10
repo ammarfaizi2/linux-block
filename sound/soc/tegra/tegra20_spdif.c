@@ -263,11 +263,8 @@ static int tegra20_spdif_platform_probe(struct platform_device *pdev)
 	dev_set_drvdata(&pdev->dev, spdif);
 
 	spdif->clk_spdif_out = devm_clk_get(&pdev->dev, "spdif_out");
-	if (IS_ERR(spdif->clk_spdif_out)) {
-		pr_err("Can't retrieve spdif clock\n");
-		ret = PTR_ERR(spdif->clk_spdif_out);
-		return ret;
-	}
+	if (IS_ERR(spdif->clk_spdif_out))
+		return PTR_ERR(spdif->clk_spdif_out);
 
 	mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	regs = devm_ioremap_resource(&pdev->dev, mem);

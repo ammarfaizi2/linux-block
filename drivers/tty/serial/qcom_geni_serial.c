@@ -1376,7 +1376,6 @@ static int qcom_geni_serial_probe(struct platform_device *pdev)
 	port->se.clk = devm_clk_get(&pdev->dev, "se");
 	if (IS_ERR(port->se.clk)) {
 		ret = PTR_ERR(port->se.clk);
-		dev_err(&pdev->dev, "Err getting SE Core clk %d\n", ret);
 		return ret;
 	}
 

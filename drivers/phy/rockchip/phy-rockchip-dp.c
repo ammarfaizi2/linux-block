@@ -93,10 +93,8 @@ static int rockchip_dp_phy_probe(struct platform_device *pdev)
 	dp->dev = dev;
 
 	dp->phy_24m = devm_clk_get(dev, "24m");
-	if (IS_ERR(dp->phy_24m)) {
-		dev_err(dev, "cannot get clock 24m\n");
+	if (IS_ERR(dp->phy_24m))
 		return PTR_ERR(dp->phy_24m);
-	}
 
 	ret = clk_set_rate(dp->phy_24m, 24000000);
 	if (ret < 0) {

@@ -340,11 +340,8 @@ static int mt7621_spi_probe(struct platform_device *pdev)
 		return PTR_ERR(base);
 
 	clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(clk)) {
-		dev_err(&pdev->dev, "unable to get SYS clock, err=%d\n",
-			status);
+	if (IS_ERR(clk))
 		return PTR_ERR(clk);
-	}
 
 	status = clk_prepare_enable(clk);
 	if (status)

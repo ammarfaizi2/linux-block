@@ -195,7 +195,6 @@ static int smartq_probe(struct platform_device *pdev)
 	gpio = devm_gpiod_get(&pdev->dev, "amplifiers shutdown",
 			      GPIOD_OUT_HIGH);
 	if (IS_ERR(gpio)) {
-		dev_err(&pdev->dev, "Failed to register GPK12\n");
 		ret = PTR_ERR(gpio);
 		goto out;
 	}

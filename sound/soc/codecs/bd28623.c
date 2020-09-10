@@ -194,26 +194,18 @@ static int bd28623_probe(struct platform_device *pdev)
 
 	ret = devm_regulator_bulk_get(dev, ARRAY_SIZE(bd->supplies),
 				      bd->supplies);
-	if (ret) {
-		dev_err(dev, "Failed to get supplies: %d\n", ret);
+	if (ret)
 		return ret;
-	}
 
 	bd->reset_gpio = devm_gpiod_get_optional(dev, "reset",
 						 GPIOD_OUT_HIGH);
-	if (IS_ERR(bd->reset_gpio)) {
-		dev_err(dev, "Failed to request reset_gpio: %ld\n",
-			PTR_ERR(bd->reset_gpio));
+	if (IS_ERR(bd->reset_gpio))
 		return PTR_ERR(bd->reset_gpio);
-	}
 
 	bd->mute_gpio = devm_gpiod_get_optional(dev, "mute",
 						GPIOD_OUT_HIGH);
-	if (IS_ERR(bd->mute_gpio)) {
-		dev_err(dev, "Failed to request mute_gpio: %ld\n",
-			PTR_ERR(bd->mute_gpio));
+	if (IS_ERR(bd->mute_gpio))
 		return PTR_ERR(bd->mute_gpio);
-	}
 
 	platform_set_drvdata(pdev, bd);
 	bd->dev = dev;

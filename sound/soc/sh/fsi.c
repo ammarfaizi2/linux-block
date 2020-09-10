@@ -749,10 +749,8 @@ static int fsi_clk_init(struct device *dev,
 	/* external clock */
 	if (xck) {
 		clock->xck = devm_clk_get(dev, is_porta ? "xcka" : "xckb");
-		if (IS_ERR(clock->xck)) {
-			dev_err(dev, "can't get xck clock\n");
+		if (IS_ERR(clock->xck))
 			return -EINVAL;
-		}
 		if (clock->xck == clock->own) {
 			dev_err(dev, "cpu doesn't support xck clock\n");
 			return -EINVAL;
@@ -762,10 +760,8 @@ static int fsi_clk_init(struct device *dev,
 	/* FSIACLK/FSIBCLK */
 	if (ick) {
 		clock->ick = devm_clk_get(dev,  is_porta ? "icka" : "ickb");
-		if (IS_ERR(clock->ick)) {
-			dev_err(dev, "can't get ick clock\n");
+		if (IS_ERR(clock->ick))
 			return -EINVAL;
-		}
 		if (clock->ick == clock->own) {
 			dev_err(dev, "cpu doesn't support ick clock\n");
 			return -EINVAL;
@@ -775,10 +771,8 @@ static int fsi_clk_init(struct device *dev,
 	/* FSI-DIV */
 	if (div) {
 		clock->div = devm_clk_get(dev,  is_porta ? "diva" : "divb");
-		if (IS_ERR(clock->div)) {
-			dev_err(dev, "can't get div clock\n");
+		if (IS_ERR(clock->div))
 			return -EINVAL;
-		}
 		if (clock->div == clock->own) {
 			dev_err(dev, "cpu doesn't support div clock\n");
 			return -EINVAL;
