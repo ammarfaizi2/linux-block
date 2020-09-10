@@ -290,11 +290,10 @@ struct io_ring_ctx {
 	struct io_wq		*io_wq;
 	struct mm_struct	*sqo_mm;
 	/*
-	 * For SQPOLL usage - no reference is held to this file table, we
-	 * rely on fops->flush() and our callback there waiting for the users
-	 * to finish.
+	 * For SQPOLL usage - we hold a reference to the parent task, so we
+	 * have access to the ->files
 	 */
-	struct files_struct	*sqo_files;
+	struct task_struct	*sqo_task;
 
 	struct wait_queue_entry	sqo_wait_entry;
 	struct list_head	sqd_list;
@@ -6824,10 +6823,12 @@ static int io_sq_thread(void *data)
 				old_cred = override_creds(ctx->creds);
 			}
 
-			if (current->files != ctx->sqo_files) {
+			if (current->files != ctx->sqo_task->files) {
+				task_lock(ctx->sqo_task);
 				task_lock(current);
-				current->files = ctx->sqo_files;
+				current->files = ctx->sqo_task->files;
 				task_unlock(current);
+				task_unlock(ctx->sqo_task);
 			}
 
 			ret |= __io_sq_thread(ctx, start_jiffies, cap_entries);
@@ -7154,6 +7155,11 @@ static void io_finish_async(struct io_ring_ctx *ctx)
 	if (ctx->io_wq) {
 		io_wq_destroy(ctx->io_wq);
 		ctx->io_wq = NULL;
+	}
+
+	if (ctx->sqo_task) {
+		put_task_struct(ctx->sqo_task);
+		ctx->sqo_task = NULL;
 	}
 }
 
@@ -7804,11 +7810,11 @@ static int io_sq_offload_create(struct io_ring_ctx *ctx,
 		io_sq_thread_unpark(sqd);
 
 		/*
-		 * We will exit the sqthread before current exits, so we can
-		 * avoid taking a reference here and introducing weird
-		 * circular dependencies on the files table.
+		 * Grab task reference for SQPOLL usage. This doesn't
+		 * introduce a circular reference, as the task reference is
+		 * just to ensure that the struct itself stays valid.
 		 */
-		ctx->sqo_files = current->files;
+		ctx->sqo_task = get_task_struct(current);
 
 		ctx->sq_thread_idle = msecs_to_jiffies(p->sq_thread_idle);
 		if (!ctx->sq_thread_idle)
@@ -7850,7 +7856,10 @@ done:
 
 	return 0;
 err:
-	ctx->sqo_files = NULL;
+	if (ctx->sqo_task) {
+		put_task_struct(ctx->sqo_task);
+		ctx->sqo_task = NULL;
+	}
 	io_finish_async(ctx);
 	return ret;
 }
@@ -8564,7 +8573,6 @@ static int io_uring_flush(struct file *file, void *data)
 		mutex_lock(&ctx->uring_lock);
 		ctx->ring_fd = -1;
 		ctx->ring_file = NULL;
-		ctx->sqo_files = NULL;
 		mutex_unlock(&ctx->uring_lock);
 		io_ring_set_wakeup_flag(ctx);
 		io_sq_thread_unpark(sqd);
@@ -8711,7 +8719,6 @@ SYSCALL_DEFINE6(io_uring_enter, unsigned int, fd, u32, to_submit,
 			mutex_lock(&ctx->uring_lock);
 			ctx->ring_fd = fd;
 			ctx->ring_file = f.file;
-			ctx->sqo_files = current->files;
 			mutex_unlock(&ctx->uring_lock);
 
 			io_sq_thread_unpark(sqd);
