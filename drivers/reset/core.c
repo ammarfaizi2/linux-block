@@ -728,15 +728,21 @@ struct reset_control *__reset_control_get(struct device *dev, const char *id,
 					  int index, bool shared, bool optional,
 					  bool acquired)
 {
+	struct reset_control *rstc;
 	if (WARN_ON(shared && acquired))
 		return ERR_PTR(-EINVAL);
 
 	if (dev->of_node)
-		return __of_reset_control_get(dev->of_node, id, index, shared,
+		rstc = __of_reset_control_get(dev->of_node, id, index, shared,
 					      optional, acquired);
+	else
+		rstc = __reset_control_get_from_lookup(dev, id, shared, optional,
+						       acquired);
 
-	return __reset_control_get_from_lookup(dev, id, shared, optional,
-					       acquired);
+	if (IS_ERR(rstc) && rstc != ERR_PTR(-EPROBE_DEFER))
+		dev_err(dev, "Failed to get reset '%s' (err = %ld)", id, PTR_ERR(rstc));
+
+	return rstc;
 }
 EXPORT_SYMBOL_GPL(__reset_control_get);
 
