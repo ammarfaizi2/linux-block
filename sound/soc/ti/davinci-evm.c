@@ -415,13 +415,9 @@ static int davinci_evm_probe(struct platform_device *pdev)
 	if (ret)
 		return ret;
 
-	mclk = devm_clk_get(&pdev->dev, "mclk");
-	if (PTR_ERR(mclk) == -EPROBE_DEFER) {
-		return -EPROBE_DEFER;
-	} else if (IS_ERR(mclk)) {
-		dev_dbg(&pdev->dev, "mclk not found.\n");
-		mclk = NULL;
-	}
+	mclk = devm_clk_get_optional(&pdev->dev, "mclk");
+	if ((IS_ERR(mclk))
+		return PTR_ERR(mclk);
 
 	drvdata = devm_kzalloc(&pdev->dev, sizeof(*drvdata), GFP_KERNEL);
 	if (!drvdata)

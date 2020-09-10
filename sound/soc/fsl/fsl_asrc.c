@@ -1069,9 +1069,9 @@ static int fsl_asrc_probe(struct platform_device *pdev)
 		return PTR_ERR(asrc->ipg_clk);
 	}
 
-	asrc->spba_clk = devm_clk_get(&pdev->dev, "spba");
+	asrc->spba_clk = devm_clk_get_optional(&pdev->dev, "spba");
 	if (IS_ERR(asrc->spba_clk))
-		dev_warn(&pdev->dev, "failed to get spba clock\n");
+		return PTR_ERR(asrc->spba_clk);
 
 	for (i = 0; i < ASRC_CLK_MAX_NUM; i++) {
 		sprintf(tmp, "asrck_%x", i);
@@ -1194,11 +1194,11 @@ static int fsl_asrc_runtime_resume(struct device *dev)
 	ret = clk_prepare_enable(asrc->ipg_clk);
 	if (ret)
 		goto disable_mem_clk;
-	if (!IS_ERR(asrc->spba_clk)) {
-		ret = clk_prepare_enable(asrc->spba_clk);
-		if (ret)
-			goto disable_ipg_clk;
-	}
+
+	ret = clk_prepare_enable(asrc->spba_clk);
+	if (ret)
+		goto disable_ipg_clk;
+
 	for (i = 0; i < ASRC_CLK_MAX_NUM; i++) {
 		ret = clk_prepare_enable(asrc_priv->asrck_clk[i]);
 		if (ret)
@@ -1228,8 +1228,7 @@ static int fsl_asrc_runtime_resume(struct device *dev)
 disable_asrck_clk:
 	for (i--; i >= 0; i--)
 		clk_disable_unprepare(asrc_priv->asrck_clk[i]);
-	if (!IS_ERR(asrc->spba_clk))
-		clk_disable_unprepare(asrc->spba_clk);
+	clk_disable_unprepare(asrc->spba_clk);
 disable_ipg_clk:
 	clk_disable_unprepare(asrc->ipg_clk);
 disable_mem_clk:
@@ -1250,8 +1249,7 @@ static int fsl_asrc_runtime_suspend(struct device *dev)
 
 	for (i = 0; i < ASRC_CLK_MAX_NUM; i++)
 		clk_disable_unprepare(asrc_priv->asrck_clk[i]);
-	if (!IS_ERR(asrc->spba_clk))
-		clk_disable_unprepare(asrc->spba_clk);
+	clk_disable_unprepare(asrc->spba_clk);
 	clk_disable_unprepare(asrc->ipg_clk);
 	clk_disable_unprepare(asrc->mem_clk);
 

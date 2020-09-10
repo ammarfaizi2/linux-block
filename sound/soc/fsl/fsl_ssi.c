@@ -703,7 +703,7 @@ static int fsl_ssi_set_bclk(struct snd_pcm_substream *substream,
 	freq = slots * slot_width * params_rate(hw_params);
 
 	/* Don't apply it to any non-baudclk circumstance */
-	if (IS_ERR(ssi->baudclk))
+	if (!ssi->baudclk)
 		return -EINVAL;
 
 	/*
@@ -893,7 +893,7 @@ static int _fsl_ssi_set_dai_fmt(struct fsl_ssi *ssi, unsigned int fmt)
 	case SND_SOC_DAIFMT_I2S:
 		switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
 		case SND_SOC_DAIFMT_CBS_CFS:
-			if (IS_ERR(ssi->baudclk)) {
+			if (!ssi->baudclk) {
 				dev_err(ssi->dev,
 					"missing baudclk for master mode\n");
 				return -EINVAL;
@@ -1325,11 +1325,8 @@ static int fsl_ssi_imx_probe(struct platform_device *pdev,
 		ssi->clk = devm_clk_get(dev, "ipg");
 	else
 		ssi->clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(ssi->clk)) {
-		ret = PTR_ERR(ssi->clk);
-		dev_err(dev, "failed to get clock: %d\n", ret);
-		return ret;
-	}
+	if (IS_ERR(ssi->clk))
+		return PTR_ERR(ssi->clk);
 
 	/* Enable the clock since regmap will not handle it in this case */
 	if (!ssi->has_ipg_clk_name) {
@@ -1341,10 +1338,9 @@ static int fsl_ssi_imx_probe(struct platform_device *pdev,
 	}
 
 	/* Do not error out for slave cases that live without a baud clock */
-	ssi->baudclk = devm_clk_get(dev, "baud");
+	ssi->baudclk = devm_clk_get_optional(dev, "baud");
 	if (IS_ERR(ssi->baudclk))
-		dev_dbg(dev, "failed to get baud clock: %ld\n",
-			 PTR_ERR(ssi->baudclk));
+		return PTR_ERR(ssi->baudclk);
 
 	ssi->dma_params_tx.maxburst = ssi->dma_maxburst;
 	ssi->dma_params_rx.maxburst = ssi->dma_maxburst;

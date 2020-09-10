@@ -64,19 +64,17 @@ static int tegra210_i2s_set_clock_rate(struct device *dev,
 		return err;
 	}
 
-	if (!IS_ERR(i2s->clk_sync_input)) {
-		/*
-		 * Other I/O modules in AHUB can use i2s bclk as reference
-		 * clock. Below sets sync input clock rate as per bclk,
-		 * which can be used as input to other I/O modules.
-		 */
-		err = clk_set_rate(i2s->clk_sync_input, clock_rate);
-		if (err) {
-			dev_err(dev,
-				"can't set I2S sync input rate %u, err = %d\n",
-				clock_rate, err);
-			return err;
-		}
+	/*
+	 * Other I/O modules in AHUB can use i2s bclk as reference
+	 * clock. Below sets sync input clock rate as per bclk,
+	 * which can be used as input to other I/O modules.
+	 */
+	err = clk_set_rate(i2s->clk_sync_input, clock_rate);
+	if (err) {
+		dev_err(dev,
+			"can't set I2S sync input rate %u, err = %d\n",
+			clock_rate, err);
+		return err;
 	}
 
 	return 0;
@@ -746,7 +744,7 @@ static int tegra210_i2s_probe(struct platform_device *pdev)
 	 * requires input clock from current I2S instance, which is
 	 * configurable from DT.
 	 */
-	i2s->clk_sync_input = devm_clk_get(dev, "sync_input");
+	i2s->clk_sync_input = devm_clk_get_optional(dev, "sync_input");
 	if (IS_ERR(i2s->clk_sync_input))
 		dev_dbg(dev, "can't retrieve I2S sync input clock\n");
 

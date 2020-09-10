@@ -307,10 +307,10 @@ static int fsl_esai_set_dai_sysclk(struct snd_soc_dai *dai, int clk_id,
 		return -EINVAL;
 	}
 
-	if (IS_ERR(clksrc)) {
+	if (!clksrc) {
 		dev_err(dai->dev, "no assigned %s clock\n",
 				clk_id % 2 ? "extal" : "fsys");
-		return PTR_ERR(clksrc);
+		return -ENOENT;
 	}
 	clk_rate = clk_get_rate(clksrc);
 
@@ -993,20 +993,17 @@ static int fsl_esai_probe(struct platform_device *pdev)
 		return PTR_ERR(esai_priv->coreclk);
 	}
 
-	esai_priv->extalclk = devm_clk_get(&pdev->dev, "extal");
+	esai_priv->extalclk = devm_clk_get_optional(&pdev->dev, "extal");
 	if (IS_ERR(esai_priv->extalclk))
-		dev_warn(&pdev->dev, "failed to get extal clock: %ld\n",
-				PTR_ERR(esai_priv->extalclk));
+		return PTR_ERR(esai_priv->extalclk);
 
-	esai_priv->fsysclk = devm_clk_get(&pdev->dev, "fsys");
+	esai_priv->fsysclk = devm_clk_get_optional(&pdev->dev, "fsys");
 	if (IS_ERR(esai_priv->fsysclk))
-		dev_warn(&pdev->dev, "failed to get fsys clock: %ld\n",
-				PTR_ERR(esai_priv->fsysclk));
+		return PTR_ERR(esai_priv->fsysclk);
 
-	esai_priv->spbaclk = devm_clk_get(&pdev->dev, "spba");
+	esai_priv->spbaclk = devm_clk_get_optional(&pdev->dev, "spba");
 	if (IS_ERR(esai_priv->spbaclk))
-		dev_warn(&pdev->dev, "failed to get spba clock: %ld\n",
-				PTR_ERR(esai_priv->spbaclk));
+		return PTR_ERR(esai_priv->spbaclk);
 
 	irq = platform_get_irq(pdev, 0);
 	if (irq < 0)
@@ -1115,21 +1112,18 @@ static int fsl_esai_runtime_resume(struct device *dev)
 	ret = clk_prepare_enable(esai->coreclk);
 	if (ret)
 		return ret;
-	if (!IS_ERR(esai->spbaclk)) {
-		ret = clk_prepare_enable(esai->spbaclk);
-		if (ret)
-			goto err_spbaclk;
-	}
-	if (!IS_ERR(esai->extalclk)) {
-		ret = clk_prepare_enable(esai->extalclk);
-		if (ret)
-			goto err_extalclk;
-	}
-	if (!IS_ERR(esai->fsysclk)) {
-		ret = clk_prepare_enable(esai->fsysclk);
-		if (ret)
-			goto err_fsysclk;
-	}
+
+	ret = clk_prepare_enable(esai->spbaclk);
+	if (ret)
+		goto err_spbaclk;
+
+	ret = clk_prepare_enable(esai->extalclk);
+	if (ret)
+		goto err_extalclk;
+
+	ret = clk_prepare_enable(esai->fsysclk);
+	if (ret)
+		goto err_fsysclk;
 
 	regcache_cache_only(esai->regmap, false);
 
@@ -1140,14 +1134,11 @@ static int fsl_esai_runtime_resume(struct device *dev)
 	return 0;
 
 err_regcache_sync:
-	if (!IS_ERR(esai->fsysclk))
-		clk_disable_unprepare(esai->fsysclk);
+	clk_disable_unprepare(esai->fsysclk);
 err_fsysclk:
-	if (!IS_ERR(esai->extalclk))
-		clk_disable_unprepare(esai->extalclk);
+	clk_disable_unprepare(esai->extalclk);
 err_extalclk:
-	if (!IS_ERR(esai->spbaclk))
-		clk_disable_unprepare(esai->spbaclk);
+	clk_disable_unprepare(esai->spbaclk);
 err_spbaclk:
 	clk_disable_unprepare(esai->coreclk);
 
@@ -1160,12 +1151,9 @@ static int fsl_esai_runtime_suspend(struct device *dev)
 
 	regcache_cache_only(esai->regmap, true);
 
-	if (!IS_ERR(esai->fsysclk))
-		clk_disable_unprepare(esai->fsysclk);
-	if (!IS_ERR(esai->extalclk))
-		clk_disable_unprepare(esai->extalclk);
-	if (!IS_ERR(esai->spbaclk))
-		clk_disable_unprepare(esai->spbaclk);
+	clk_disable_unprepare(esai->fsysclk);
+	clk_disable_unprepare(esai->extalclk);
+	clk_disable_unprepare(esai->spbaclk);
 	clk_disable_unprepare(esai->coreclk);
 
 	return 0;

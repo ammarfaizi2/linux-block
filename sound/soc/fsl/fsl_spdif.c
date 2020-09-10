@@ -1316,9 +1316,9 @@ static int fsl_spdif_probe(struct platform_device *pdev)
 		return PTR_ERR(spdif_priv->coreclk);
 	}
 
-	spdif_priv->spbaclk = devm_clk_get(&pdev->dev, "spba");
+	spdif_priv->spbaclk = devm_clk_get_optional(&pdev->dev, "spba");
 	if (IS_ERR(spdif_priv->spbaclk))
-		dev_warn(&pdev->dev, "no spba clock in devicetree\n");
+		return PTR_ERR(spdif_priv->spbaclk);
 
 	/* Select clock source for rx/tx clock */
 	spdif_priv->rxclk = devm_clk_get(&pdev->dev, "rxtx1");

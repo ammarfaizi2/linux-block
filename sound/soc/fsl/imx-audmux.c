@@ -307,12 +307,9 @@ static int imx_audmux_probe(struct platform_device *pdev)
 	if (IS_ERR(audmux_base))
 		return PTR_ERR(audmux_base);
 
-	audmux_clk = devm_clk_get(&pdev->dev, "audmux");
-	if (IS_ERR(audmux_clk)) {
-		dev_dbg(&pdev->dev, "cannot get clock: %ld\n",
-				PTR_ERR(audmux_clk));
-		audmux_clk = NULL;
-	}
+	audmux_clk = devm_clk_get_optional(&pdev->dev, "audmux");
+	if (IS_ERR(audmux_clk))
+		return PTR_ERR(audmux_clk);
 
 	if (of_id)
 		pdev->id_entry = of_id->data;
