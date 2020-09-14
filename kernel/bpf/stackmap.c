@@ -213,11 +213,13 @@ static int stack_map_get_build_id_32(void *page_addr,
 
 	phdr = (Elf32_Phdr *)(page_addr + sizeof(Elf32_Ehdr));
 
-	for (i = 0; i < ehdr->e_phnum; ++i)
-		if (phdr[i].p_type == PT_NOTE)
-			return stack_map_parse_build_id(page_addr, build_id,
-					page_addr + phdr[i].p_offset,
-					phdr[i].p_filesz);
+	for (i = 0; i < ehdr->e_phnum; ++i) {
+		if (phdr[i].p_type == PT_NOTE &&
+		    !stack_map_parse_build_id(page_addr, build_id,
+					      page_addr + phdr[i].p_offset,
+					      phdr[i].p_filesz))
+			return 0;
+	}
 	return -EINVAL;
 }
 
@@ -236,11 +238,13 @@ static int stack_map_get_build_id_64(void *page_addr,
 
 	phdr = (Elf64_Phdr *)(page_addr + sizeof(Elf64_Ehdr));
 
-	for (i = 0; i < ehdr->e_phnum; ++i)
-		if (phdr[i].p_type == PT_NOTE)
-			return stack_map_parse_build_id(page_addr, build_id,
-					page_addr + phdr[i].p_offset,
-					phdr[i].p_filesz);
+	for (i = 0; i < ehdr->e_phnum; ++i) {
+		if (phdr[i].p_type == PT_NOTE &&
+		    !stack_map_parse_build_id(page_addr, build_id,
+					      page_addr + phdr[i].p_offset,
+					      phdr[i].p_filesz))
+			return 0;
+	}
 	return -EINVAL;
 }
 
@@ -835,6 +839,7 @@ static void stack_map_free(struct bpf_map *map)
 
 static int stack_trace_map_btf_id;
 const struct bpf_map_ops stack_trace_map_ops = {
+	.map_meta_equal = bpf_map_meta_equal,
 	.map_alloc = stack_map_alloc,
 	.map_free = stack_map_free,
 	.map_get_next_key = stack_map_get_next_key,

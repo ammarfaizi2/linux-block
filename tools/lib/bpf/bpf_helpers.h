@@ -32,6 +32,9 @@
 #ifndef __always_inline
 #define __always_inline __attribute__((always_inline))
 #endif
+#ifndef __noinline
+#define __noinline __attribute__((noinline))
+#endif
 #ifndef __weak
 #define __weak __attribute__((weak))
 #endif
@@ -40,7 +43,7 @@
  * Helper macro to manipulate data structures
  */
 #ifndef offsetof
-#define offsetof(TYPE, MEMBER)  __builtin_offsetof(TYPE, MEMBER)
+#define offsetof(TYPE, MEMBER)	((unsigned long)&((TYPE *)0)->MEMBER)
 #endif
 #ifndef container_of
 #define container_of(ptr, type, member)				\

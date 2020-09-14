@@ -21,9 +21,6 @@
 #include "libbpf_internal.h"
 #include "hashmap.h"
 
-/* make sure libbpf doesn't use kernel-only integer typedefs */
-#pragma GCC poison u8 u16 u32 u64 s8 s16 s32 s64
-
 #define BTF_MAX_NR_TYPES 0x7fffffffU
 #define BTF_MAX_STR_OFFSET 0x7fffffffU
 
@@ -41,6 +38,7 @@ struct btf {
 	__u32 types_size;
 	__u32 data_size;
 	int fd;
+	int ptr_sz;
 };
 
 static inline __u64 ptr_to_u64(const void *ptr)
@@ -60,7 +58,7 @@ static int btf_add_type(struct btf *btf, struct btf_type *t)
 		expand_by = max(btf->types_size >> 2, 16U);
 		new_size = min(BTF_MAX_NR_TYPES, btf->types_size + expand_by);
 
-		new_types = realloc(btf->types, sizeof(*new_types) * new_size);
+		new_types = libbpf_reallocarray(btf->types, new_size, sizeof(*new_types));
 		if (!new_types)
 			return -ENOMEM;
 
@@ -221,6 +219,70 @@ const struct btf_type *btf__type_by_id(const struct btf *btf, __u32 type_id)
 	return btf->types[type_id];
 }
 
+static int determine_ptr_size(const struct btf *btf)
+{
+	const struct btf_type *t;
+	const char *name;
+	int i;
+
+	for (i = 1; i <= btf->nr_types; i++) {
+		t = btf__type_by_id(btf, i);
+		if (!btf_is_int(t))
+			continue;
+
+		name = btf__name_by_offset(btf, t->name_off);
+		if (!name)
+			continue;
+
+		if (strcmp(name, "long int") == 0 ||
+		    strcmp(name, "long unsigned int") == 0) {
+			if (t->size != 4 && t->size != 8)
+				continue;
+			return t->size;
+		}
+	}
+
+	return -1;
+}
+
+static size_t btf_ptr_sz(const struct btf *btf)
+{
+	if (!btf->ptr_sz)
+		((struct btf *)btf)->ptr_sz = determine_ptr_size(btf);
+	return btf->ptr_sz < 0 ? sizeof(void *) : btf->ptr_sz;
+}
+
+/* Return pointer size this BTF instance assumes. The size is heuristically
+ * determined by looking for 'long' or 'unsigned long' integer type and
+ * recording its size in bytes. If BTF type information doesn't have any such
+ * type, this function returns 0. In the latter case, native architecture's
+ * pointer size is assumed, so will be either 4 or 8, depending on
+ * architecture that libbpf was compiled for. It's possible to override
+ * guessed value by using btf__set_pointer_size() API.
+ */
+size_t btf__pointer_size(const struct btf *btf)
+{
+	if (!btf->ptr_sz)
+		((struct btf *)btf)->ptr_sz = determine_ptr_size(btf);
+
+	if (btf->ptr_sz < 0)
+		/* not enough BTF type info to guess */
+		return 0;
+
+	return btf->ptr_sz;
+}
+
+/* Override or set pointer size in bytes. Only values of 4 and 8 are
+ * supported.
+ */
+int btf__set_pointer_size(struct btf *btf, size_t ptr_sz)
+{
+	if (ptr_sz != 4 && ptr_sz != 8)
+		return -EINVAL;
+	btf->ptr_sz = ptr_sz;
+	return 0;
+}
+
 static bool btf_type_is_void(const struct btf_type *t)
 {
 	return t == &btf_void || btf_is_fwd(t);
@@ -253,7 +315,7 @@ __s64 btf__resolve_size(const struct btf *btf, __u32 type_id)
 			size = t->size;
 			goto done;
 		case BTF_KIND_PTR:
-			size = sizeof(void *);
+			size = btf_ptr_sz(btf);
 			goto done;
 		case BTF_KIND_TYPEDEF:
 		case BTF_KIND_VOLATILE:
@@ -293,9 +355,9 @@ int btf__align_of(const struct btf *btf, __u32 id)
 	switch (kind) {
 	case BTF_KIND_INT:
 	case BTF_KIND_ENUM:
-		return min(sizeof(void *), (size_t)t->size);
+		return min(btf_ptr_sz(btf), (size_t)t->size);
 	case BTF_KIND_PTR:
-		return sizeof(void *);
+		return btf_ptr_sz(btf);
 	case BTF_KIND_TYPEDEF:
 	case BTF_KIND_VOLATILE:
 	case BTF_KIND_CONST:
@@ -532,6 +594,18 @@ struct btf *btf__parse_elf(const char *path, struct btf_ext **btf_ext)
 	btf = btf__new(btf_data->d_buf, btf_data->d_size);
 	if (IS_ERR(btf))
 		goto done;
+
+	switch (gelf_getclass(elf)) {
+	case ELFCLASS32:
+		btf__set_pointer_size(btf, 4);
+		break;
+	case ELFCLASS64:
+		btf__set_pointer_size(btf, 8);
+		break;
+	default:
+		pr_warn("failed to get ELF class (bitness) for %s\n", path);
+		break;
+	}
 
 	if (btf_ext && btf_ext_data) {
 		*btf_ext = btf_ext__new(btf_ext_data->d_buf,
@@ -1054,14 +1128,14 @@ static int btf_ext_setup_line_info(struct btf_ext *btf_ext)
 	return btf_ext_setup_info(btf_ext, &param);
 }
 
-static int btf_ext_setup_field_reloc(struct btf_ext *btf_ext)
+static int btf_ext_setup_core_relos(struct btf_ext *btf_ext)
 {
 	struct btf_ext_sec_setup_param param = {
-		.off = btf_ext->hdr->field_reloc_off,
-		.len = btf_ext->hdr->field_reloc_len,
-		.min_rec_size = sizeof(struct bpf_field_reloc),
-		.ext_info = &btf_ext->field_reloc_info,
-		.desc = "field_reloc",
+		.off = btf_ext->hdr->core_relo_off,
+		.len = btf_ext->hdr->core_relo_len,
+		.min_rec_size = sizeof(struct bpf_core_relo),
+		.ext_info = &btf_ext->core_relo_info,
+		.desc = "core_relo",
 	};
 
 	return btf_ext_setup_info(btf_ext, &param);
@@ -1140,10 +1214,9 @@ struct btf_ext *btf_ext__new(__u8 *data, __u32 size)
 	if (err)
 		goto done;
 
-	if (btf_ext->hdr->hdr_len <
-	    offsetofend(struct btf_ext_header, field_reloc_len))
+	if (btf_ext->hdr->hdr_len < offsetofend(struct btf_ext_header, core_relo_len))
 		goto done;
-	err = btf_ext_setup_field_reloc(btf_ext);
+	err = btf_ext_setup_core_relos(btf_ext);
 	if (err)
 		goto done;
 
@@ -1498,7 +1571,7 @@ static int btf_dedup_hypot_map_add(struct btf_dedup *d,
 		__u32 *new_list;
 
 		d->hypot_cap += max((size_t)16, d->hypot_cap / 2);
-		new_list = realloc(d->hypot_list, sizeof(__u32) * d->hypot_cap);
+		new_list = libbpf_reallocarray(d->hypot_list, d->hypot_cap, sizeof(__u32));
 		if (!new_list)
 			return -ENOMEM;
 		d->hypot_list = new_list;
@@ -1794,8 +1867,7 @@ static int btf_dedup_strings(struct btf_dedup *d)
 			struct btf_str_ptr *new_ptrs;
 
 			strs.cap += max(strs.cnt / 2, 16U);
-			new_ptrs = realloc(strs.ptrs,
-					   sizeof(strs.ptrs[0]) * strs.cap);
+			new_ptrs = libbpf_reallocarray(strs.ptrs, strs.cap, sizeof(strs.ptrs[0]));
 			if (!new_ptrs) {
 				err = -ENOMEM;
 				goto done;
@@ -2880,8 +2952,8 @@ static int btf_dedup_compact_types(struct btf_dedup *d)
 	d->btf->nr_types = next_type_id - 1;
 	d->btf->types_size = d->btf->nr_types;
 	d->btf->hdr->type_len = p - types_start;
-	new_types = realloc(d->btf->types,
-			    (1 + d->btf->nr_types) * sizeof(struct btf_type *));
+	new_types = libbpf_reallocarray(d->btf->types, (1 + d->btf->nr_types),
+					sizeof(struct btf_type *));
 	if (!new_types)
 		return -ENOMEM;
 	d->btf->types = new_types;

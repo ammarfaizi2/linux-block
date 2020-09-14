@@ -314,7 +314,8 @@ static int qeth_l3_setdelip_cb(struct qeth_card *card, struct qeth_reply *reply,
 }
 
 static int qeth_l3_send_setdelmc(struct qeth_card *card,
-			struct qeth_ipaddr *addr, int ipacmd)
+				 struct qeth_ipaddr *addr,
+				 enum qeth_ipa_cmds ipacmd)
 {
 	struct qeth_cmd_buffer *iob;
 	struct qeth_ipa_cmd *cmd;
@@ -1235,7 +1236,7 @@ static void qeth_l3_rx_mode_work(struct work_struct *work)
 					break;
 				}
 				addr->ref_counter = 1;
-				/* fall through */
+				fallthrough;
 			default:
 				/* for next call to set_rx_mode(): */
 				addr->disp_flag = QETH_DISP_ADDR_DELETE;

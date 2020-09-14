@@ -243,8 +243,6 @@ static void x25_asy_encaps(struct x25_asy *sl, unsigned char *icp, int len)
 	actual = sl->tty->ops->write(sl->tty, sl->xbuff, count);
 	sl->xleft = count - actual;
 	sl->xhead = sl->xbuff + actual;
-	/* VSV */
-	clear_bit(SLF_OUTWAIT, &sl->flags);	/* reset outfill flag */
 }
 
 /*
@@ -330,7 +328,7 @@ static netdev_tx_t x25_asy_xmit(struct sk_buff *skb,
 		if (err != LAPB_OK)
 			netdev_err(dev, "lapb_disconnect_request error: %d\n",
 				   err);
-		/* fall through */
+		fallthrough;
 	default:
 		kfree_skb(skb);
 		return NETDEV_TX_OK;

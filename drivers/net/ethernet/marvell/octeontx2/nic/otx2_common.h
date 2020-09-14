@@ -13,6 +13,9 @@
 
 #include <linux/pci.h>
 #include <linux/iommu.h>
+#include <linux/net_tstamp.h>
+#include <linux/ptp_clock_kernel.h>
+#include <linux/timecounter.h>
 
 #include <mbox.h>
 #include "otx2_reg.h"
@@ -174,9 +177,11 @@ struct otx2_hw {
 	u16			rq_skid;
 	u8			cq_time_wait;
 
-	/* For TSO segmentation */
+	/* Segmentation */
 	u8			lso_tsov4_idx;
 	u8			lso_tsov6_idx;
+	u8			lso_udpv4_idx;
+	u8			lso_udpv6_idx;
 	u8			hw_tso;
 
 	/* MSI-X */
@@ -209,6 +214,17 @@ struct refill_work {
 	struct otx2_nic *pf;
 };
 
+struct otx2_ptp {
+	struct ptp_clock_info ptp_info;
+	struct ptp_clock *ptp_clock;
+	struct otx2_nic *nic;
+
+	struct cyclecounter cycle_counter;
+	struct timecounter time_counter;
+};
+
+#define OTX2_HW_TIMESTAMP_LEN	8
+
 struct otx2_nic {
 	void __iomem		*reg_base;
 	struct net_device	*netdev;
@@ -216,6 +232,8 @@ struct otx2_nic {
 	u16			max_frs;
 	u16			rbsize; /* Receive buffer size */
 
+#define OTX2_FLAG_RX_TSTAMP_ENABLED		BIT_ULL(0)
+#define OTX2_FLAG_TX_TSTAMP_ENABLED		BIT_ULL(1)
 #define OTX2_FLAG_INTF_DOWN			BIT_ULL(2)
 #define OTX2_FLAG_RX_PAUSE_ENABLED		BIT_ULL(9)
 #define OTX2_FLAG_TX_PAUSE_ENABLED		BIT_ULL(10)
@@ -251,6 +269,9 @@ struct otx2_nic {
 
 	/* Block address of NIX either BLKADDR_NIX0 or BLKADDR_NIX1 */
 	int			nix_blkaddr;
+
+	struct otx2_ptp		*ptp;
+	struct hwtstamp_config	tstamp;
 };
 
 static inline bool is_otx2_lbkvf(struct pci_dev *pdev)
@@ -561,6 +582,7 @@ void otx2_tx_timeout(struct net_device *netdev, unsigned int txq);
 void otx2_get_mac_from_af(struct net_device *netdev);
 void otx2_config_irq_coalescing(struct otx2_nic *pfvf, int qidx);
 int otx2_config_pause_frm(struct otx2_nic *pfvf);
+void otx2_setup_segmentation(struct otx2_nic *pfvf);
 
 /* RVU block related APIs */
 int otx2_attach_npa_nix(struct otx2_nic *pfvf);

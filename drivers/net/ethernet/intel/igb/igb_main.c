@@ -718,7 +718,6 @@ static void igb_cache_ring_register(struct igb_adapter *adapter)
 	case e1000_i354:
 	case e1000_i210:
 	case e1000_i211:
-		fallthrough;
 	default:
 		for (; i < adapter->num_rx_queues; i++)
 			adapter->rx_ring[i]->reg_idx = rbase_offset + i;
@@ -8047,10 +8046,7 @@ static struct sk_buff *igb_construct_skb(struct igb_ring *rx_ring,
 	struct sk_buff *skb;
 
 	/* prefetch first cache line of first page */
-	prefetch(va);
-#if L1_CACHE_BYTES < 128
-	prefetch(va + L1_CACHE_BYTES);
-#endif
+	net_prefetch(va);
 
 	/* allocate a skb to store the frags */
 	skb = napi_alloc_skb(&rx_ring->q_vector->napi, IGB_RX_HDR_LEN);
@@ -8104,10 +8100,7 @@ static struct sk_buff *igb_build_skb(struct igb_ring *rx_ring,
 	struct sk_buff *skb;
 
 	/* prefetch first cache line of first page */
-	prefetch(va);
-#if L1_CACHE_BYTES < 128
-	prefetch(va + L1_CACHE_BYTES);
-#endif
+	net_prefetch(va);
 
 	/* build an skb around the page buffer */
 	skb = build_skb(va - IGB_SKB_PAD, truesize);
