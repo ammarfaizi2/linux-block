@@ -271,9 +271,7 @@ static inline bool folio_ref_try_add_rcu(struct folio *folio, int count)
 	 * context, so (on !SMP) we only need preemption to be disabled
 	 * and TINY_RCU does that for us.
 	 */
-# ifdef CONFIG_PREEMPT_COUNT
-	VM_BUG_ON(!in_atomic() && !irqs_disabled());
-# endif
+	VM_BUG_ON(preemptible());
 	VM_BUG_ON_FOLIO(folio_ref_count(folio) == 0, folio);
 	folio_ref_add(folio, count);
 #else
