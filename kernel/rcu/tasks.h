@@ -830,6 +830,9 @@ static void trc_read_check_handler(void *t_in)
 		WRITE_ONCE(t->trc_reader_checked, true);
 		goto reset_ipi;
 	}
+	// If we are racing with an rcu_read_unlock_trace(), try again later.
+	if (unlikely(t->trc_reader_nesting < 0))
+		goto reset_ipi;
 	WRITE_ONCE(t->trc_reader_checked, true);
 
 	// Get here if the task is in a read-side critical section.  Set
