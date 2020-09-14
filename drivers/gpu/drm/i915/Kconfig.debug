@@ -22,7 +22,6 @@ config DRM_I915_DEBUG
 	depends on EXPERT # only for developers
 	depends on !COMPILE_TEST # never built by robots
 	select DEBUG_FS
-	select PREEMPT_COUNT
 	select I2C_CHARDEV
 	select STACKDEPOT
 	select DRM_DP_AUX_CHARDEV
