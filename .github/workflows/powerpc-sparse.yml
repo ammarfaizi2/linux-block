@@ -1,0 +1,59 @@
+name: powerpc/sparse
+
+# Controls when the action will run.
+on:
+  # This allows the build to be triggered manually via the github UI.
+  workflow_dispatch:
+
+  push:
+    # This triggers the build on a push to any branch named ci/powerpc/<something>
+    branches:
+    - '**'
+    # As long as one of these paths matches
+    paths:
+      - '!tools/**'		   	# ignore tools
+      - '!samples/**'		   	# ignore samples
+      - '!Documentation/**'		# ignore Documentation
+      - '!arch/**'			# ignore arch changes
+      - 'arch/powerpc/**'		# but not arch/powerpc
+      - 'arch/Kconfig'			# or common bits in arch
+      - '**'				# anything else triggers a build
+
+jobs:
+  sparse:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        defconfig: [ppc64, pmac32, mpc885_ads_defconfig]
+        image: [ubuntu-20.04]
+        subarch: [ppc64]
+        include:
+          - subarch: ppc64le
+            defconfig: ppc64le
+            image: ubuntu-20.04
+
+    env:
+      ARCH: powerpc
+      TARGET: kernel
+      SPARSE: 1
+      SUBARCH: ${{ matrix.subarch }}
+      IMAGE: ${{ matrix.image }}
+      DEFCONFIG: ${{ matrix.defconfig }}
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Build
+      run: ./arch/powerpc/tools/ci-build.sh
+
+    - name: powerpc sparse errors
+      run: grep /linux/arch/powerpc ~/output/sparse.log
+
+    - name: Archive artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: sparse-${{ matrix.defconfig }}-${{ matrix.image }}.log
+        path: |
+          ~/output/sparse.log

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [[ -z "$TRAVIS_BUILD_DIR" || -z "$TARGET" || -z "$IMAGE" || -z "$SUBARCH" ]]; then
+if [[ -z "$TARGET" || -z "$IMAGE" || -z "$SUBARCH" ]]; then
     echo "Error: required environment variables not set!"
     exit 1
 fi
@@ -8,12 +8,27 @@ fi
 cmd="docker run --rm "
 cmd+="--network none "
 cmd+="-w /linux "
-cmd+="-v $TRAVIS_BUILD_DIR:/linux:ro "
+
+linux_dir=$(realpath $(dirname $0))/../../../
+cmd+="-v $linux_dir:/linux:ro "
 
 cmd+="-e ARCH "
-cmd+="-e DEFCONFIG=$DEFCONFIG "
 cmd+="-e JFACTOR=$(nproc) "
 cmd+="-e KBUILD_BUILD_TIMESTAMP=$(date +%Y-%m-%d) "
+cmd+="-e CLANG "
+cmd+="-e SPARSE "
+
+if [[ -n "$MODULES" ]]; then
+    cmd+="-e MODULES=$MODULES "
+fi
+
+if [[ -n "$DEFCONFIG" ]]; then
+    if [[ $DEFCONFIG != *config ]]; then
+	DEFCONFIG=${DEFCONFIG}_defconfig
+    fi
+
+    cmd+="-e DEFCONFIG=${DEFCONFIG} "
+fi
 
 if [[ "$SUBARCH" == "ppc64" ]]; then
     cross="powerpc-linux-gnu-"
@@ -28,9 +43,19 @@ cmd+="-v $HOME/output:/output:rw "
 user=$(stat -c "%u:%g" $HOME/output)
 cmd+="-u $user "
 
-cmd+="-v $HOME/.ccache:/ccache:rw "
-cmd+="-e CCACHE_DIR=/ccache "
-cmd+="-e CCACHE=1 "
+if [[ -n "$CCACHE" ]]; then
+    cmd+="-v $HOME/.ccache:/ccache:rw "
+    cmd+="-e CCACHE_DIR=/ccache "
+    cmd+="-e CCACHE=1 "
+fi
+
+if [[ -n "$TARGETS" ]]; then
+    cmd+="-e TARGETS=$TARGETS "
+fi
+
+if [[ -n "$INSTALL" ]]; then
+    cmd+="-e INSTALL=$INSTALL "
+fi
 
 if [[ "$TARGET" == "kernel" ]]; then
     cmd+="-e QUIET=1 "
@@ -41,4 +66,10 @@ cmd+="/bin/container-build.sh $TARGET"
 
 (set -x; $cmd)
 
-exit $?
+rc=$?
+
+if [[ -n "$SPARSE" ]]; then
+    cat $HOME/output/sparse.log
+fi
+
+exit $rc

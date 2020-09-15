@@ -1,0 +1,49 @@
+name: powerpc/selftests
+
+# Controls when the action will run.
+on:
+  # This allows the build to be triggered manually via the github UI.
+  workflow_dispatch:
+
+  push:
+    # This triggers the build on a push to any branch
+    branches:
+    - '**'
+    # As long as one of these paths matches
+    paths:
+      # Generic selftests changes might affect us so match all of selftests
+      - 'tools/testing/selftests/**'
+      # Some files in arch are symlinked by selftests
+      - 'arch/powerpc/**'
+
+jobs:
+  selftests:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        image: [ubuntu-20.04, ubuntu-18.04, ubuntu-16.04]
+        subarch: [ppc64, ppc64le]
+
+    env:
+      ARCH: powerpc
+      TARGET: selftests
+      INSTALL: 1
+      SUBARCH: ${{ matrix.subarch }}
+      IMAGE: ${{ matrix.image }}
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Register gcc problem matcher
+      run: echo "::add-matcher::.github/problem-matchers/gcc.json"
+
+    - name: build
+      run: ./arch/powerpc/tools/ci-build.sh
+
+    - name: Archive artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{ matrix.subarch }}-${{ matrix.image }}
+        path: |
+          ~/output/install

@@ -1,0 +1,65 @@
+name: powerpc/kernel
+
+# Controls when the action will run.
+on:
+  # This allows the build to be triggered manually via the github UI.
+  workflow_dispatch:
+
+  push:
+    # This triggers the build on a push to any branch
+    branches:
+    - '**'
+    # As long as one of these paths matches
+    paths:
+      - '!tools/**'		   	# ignore tools
+      - '!samples/**'		   	# ignore samples
+      - '!Documentation/**'		# ignore Documentation
+      - '!arch/**'			# ignore arch changes
+      - 'arch/powerpc/**'		# but not arch/powerpc
+      - 'arch/Kconfig'			# or common bits in arch
+      - '**'				# anything else triggers a build
+
+jobs:
+  kernel:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        defconfig: [ppc64, corenet64_smp, pmac32, ppc40x, ppc44x, mpc885_ads, corenet32_smp]
+        image: [fedora-32, korg-4.9.4]
+        subarch: [ppc64]
+        include:
+          - subarch: ppc64le
+            defconfig: ppc64le
+            image: korg-5.5.0
+          - subarch: ppc64le
+            defconfig: ppc64le
+            image: fedora-32
+
+    env:
+      ARCH: powerpc
+      TARGET: kernel
+      SUBARCH: ${{ matrix.subarch }}
+      IMAGE: ${{ matrix.image }}
+      DEFCONFIG: ${{ matrix.defconfig }}
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Register gcc problem matcher
+      run: echo "::add-matcher::.github/problem-matchers/gcc.json"
+
+    - name: build
+      run: ./arch/powerpc/tools/ci-build.sh
+
+    - name: Archive artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{ matrix.defconfig }}-${{ matrix.image }}
+        path: |
+          ~/output/vmlinux
+          ~/output/.config
+          ~/output/System.map
+          ~/output/modules.tar.bz2
+          ~/output/arch/powerpc/boot/zImage
+          ~/output/arch/powerpc/boot/uImage
