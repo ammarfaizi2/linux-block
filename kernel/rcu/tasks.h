@@ -568,12 +568,13 @@ static int __init rcu_spawn_tasks_kthread(void)
 }
 core_initcall(rcu_spawn_tasks_kthread);
 
-#ifndef CONFIG_TINY_RCU
-static void show_rcu_tasks_classic_gp_kthread(void)
+#if !defined(CONFIG_TINY_RCU) || defined(CONFIG_TORTURE_TEST)
+void show_rcu_tasks_classic_gp_kthread(void)
 {
 	show_rcu_tasks_generic_gp_kthread(&rcu_tasks, "");
 }
-#endif /* #ifndef CONFIG_TINY_RCU */
+EXPORT_SYMBOL_GPL(show_rcu_tasks_classic_gp_kthread);
+#endif // !defined(CONFIG_TINY_RCU) || defined(CONFIG_TORTURE_TEST)
 
 /* Do the srcu_read_lock() for the above synchronize_srcu().  */
 void exit_tasks_rcu_start(void) __acquires(&tasks_rcu_exit_srcu)
@@ -696,12 +697,12 @@ static int __init rcu_spawn_tasks_rude_kthread(void)
 }
 core_initcall(rcu_spawn_tasks_rude_kthread);
 
-#ifndef CONFIG_TINY_RCU
-static void show_rcu_tasks_rude_gp_kthread(void)
+#if !defined(CONFIG_TINY_RCU) || defined(CONFIG_TORTURE_TEST)
+void show_rcu_tasks_rude_gp_kthread(void)
 {
 	show_rcu_tasks_generic_gp_kthread(&rcu_tasks_rude, "");
 }
-#endif /* #ifndef CONFIG_TINY_RCU */
+#endif // !defined(CONFIG_TINY_RCU) || defined(CONFIG_TORTURE_TEST)
 
 #else /* #ifdef CONFIG_TASKS_RUDE_RCU */
 static void show_rcu_tasks_rude_gp_kthread(void) {}
@@ -1199,8 +1200,8 @@ static int __init rcu_spawn_tasks_trace_kthread(void)
 }
 core_initcall(rcu_spawn_tasks_trace_kthread);
 
-#ifndef CONFIG_TINY_RCU
-static void show_rcu_tasks_trace_gp_kthread(void)
+#if !defined(CONFIG_TINY_RCU) || defined(CONFIG_TORTURE_TEST)
+void show_rcu_tasks_trace_gp_kthread(void)
 {
 	char buf[64];
 
@@ -1210,7 +1211,7 @@ static void show_rcu_tasks_trace_gp_kthread(void)
 		data_race(n_heavy_reader_attempts));
 	show_rcu_tasks_generic_gp_kthread(&rcu_tasks_trace, buf);
 }
-#endif /* #ifndef CONFIG_TINY_RCU */
+#endif // !defined(CONFIG_TINY_RCU) || defined(CONFIG_TORTURE_TEST)
 
 #else /* #ifdef CONFIG_TASKS_TRACE_RCU */
 static void exit_tasks_rcu_finish_trace(struct task_struct *t) { }
