@@ -702,6 +702,7 @@ void show_rcu_tasks_rude_gp_kthread(void)
 {
 	show_rcu_tasks_generic_gp_kthread(&rcu_tasks_rude, "");
 }
+EXPORT_SYMBOL_GPL(show_rcu_tasks_rude_gp_kthread);
 #endif // !defined(CONFIG_TINY_RCU) || defined(CONFIG_TORTURE_TEST)
 
 #else /* #ifdef CONFIG_TASKS_RUDE_RCU */
@@ -1211,6 +1212,7 @@ void show_rcu_tasks_trace_gp_kthread(void)
 		data_race(n_heavy_reader_attempts));
 	show_rcu_tasks_generic_gp_kthread(&rcu_tasks_trace, buf);
 }
+EXPORT_SYMBOL_GPL(show_rcu_tasks_trace_gp_kthread);
 #endif // !defined(CONFIG_TINY_RCU) || defined(CONFIG_TORTURE_TEST)
 
 #else /* #ifdef CONFIG_TASKS_TRACE_RCU */
