@@ -290,9 +290,7 @@ static void show_rcu_tasks_generic_gp_kthread(struct rcu_tasks *rtp, char *s)
 		".C"[!!data_race(rtp->cbs_head)],
 		s);
 }
-#elif defined(CONFIG_TORTURE_TEST) // #ifndef CONFIG_TINY_RCU
-static void show_rcu_tasks_generic_gp_kthread(struct rcu_tasks *rtp, char *s) { }
-#endif // #elif defined(CONFIG_TORTURE_TEST) // #ifndef CONFIG_TINY_RCU
+#endif // #ifndef CONFIG_TINY_RCU
 
 static void exit_tasks_rcu_finish_trace(struct task_struct *t);
 
