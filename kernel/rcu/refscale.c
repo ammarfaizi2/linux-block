@@ -718,6 +718,8 @@ ref_scale_init(void)
 unwind:
 	torture_init_end();
 	ref_scale_cleanup();
+	if (shutdown)
+		kernel_power_off();
 	return firsterr;
 }
 
