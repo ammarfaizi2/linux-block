@@ -130,6 +130,12 @@ unknown flag values are present and return ``EINVAL`` if there are::
     if (flags & ~(THING_FLAG1 | THING_FLAG2 | THING_FLAG3))
         return -EINVAL;
 
+It is strongly recommended that all flag values be architecture-non-specific
+(assuming your new syscall is not itself architecture-specific). While this may
+seem obvious, several very prominent syscalls do not obey tihs rule (such as
+:manpage:`open(2)`). As a result, any syscall which re-uses flags values such
+as ``O_CLOEXEC`` implicitly has architecture-specific flag values.
+
 
 Advanced extensibility: extensible structs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
