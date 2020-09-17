@@ -212,9 +212,14 @@ arguments in extensible structures can be 64 bit wide.  As with simple
 flag-only system calls, the system call needs to verify any unknown values for
 flag-like fields in the passed struct are zeroed.
 
+It is strongly suggested that any pointers in the structure are represented
+with ``__aligned_u64``, to avoid having different struct layouts on different
+architectures and needing compatibility conversions for 32-bit programs running
+on 64-bit kernels.
+
 
 Designing the API: Revisions of syscalls
------------------------------------------------
+----------------------------------------
 
 System calls that were not designed to be extensible or system calls that use
 a flag argument for extensions running out of bits (e.g. :manpage:`clone(2)`)
