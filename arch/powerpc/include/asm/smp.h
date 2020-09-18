@@ -30,7 +30,6 @@ extern int spinning_secondaries;
 extern u32 *cpu_to_phys_id;
 extern bool coregroup_enabled;
 
-extern void cpu_die(void);
 extern int cpu_to_chip_id(int cpu);
 
 #ifdef CONFIG_SMP
@@ -51,6 +50,9 @@ struct smp_ops_t {
 	int   (*cpu_disable)(void);
 	void  (*cpu_die)(unsigned int nr);
 	int   (*cpu_bootable)(unsigned int nr);
+#ifdef CONFIG_HOTPLUG_CPU
+	void  (*cpu_offline_self)(void);
+#endif
 };
 
 extern int smp_send_nmi_ipi(int cpu, void (*fn)(struct pt_regs *), u64 delay_us);

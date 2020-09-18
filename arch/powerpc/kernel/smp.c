@@ -1489,16 +1489,18 @@ void __cpu_die(unsigned int cpu)
 		smp_ops->cpu_die(cpu);
 }
 
-void cpu_die(void)
+void arch_cpu_idle_dead(void)
 {
+	sched_preempt_enable_no_resched();
+
 	/*
 	 * Disable on the down path. This will be re-enabled by
 	 * start_secondary() via start_secondary_resume() below
 	 */
 	this_cpu_disable_ftrace();
 
-	if (ppc_md.cpu_die)
-		ppc_md.cpu_die();
+	if (smp_ops->cpu_offline_self)
+		smp_ops->cpu_offline_self();
 
 	/* If we return, we re-enter start_secondary */
 	start_secondary_resume();
