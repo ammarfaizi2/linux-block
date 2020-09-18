@@ -2822,6 +2822,8 @@ rcu_torture_init(void)
 unwind:
 	torture_init_end();
 	rcu_torture_cleanup();
+	if (WARN_ON(shutdown_secs))
+		kernel_power_off();
 	return firsterr;
 }
 
