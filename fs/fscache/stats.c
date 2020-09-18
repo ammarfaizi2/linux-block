@@ -115,3 +115,11 @@ int fscache_stats_show(struct seq_file *m, void *v)
 		   atomic_read(&fscache_n_cache_culled_objects));
 	return 0;
 }
+
+int __init fscache_proc_stats_init(void)
+{
+	if (!proc_create_single("fs/fscache/stats", S_IFREG | 0444, NULL,
+			fscache_stats_show))
+		return -ENOMEM;
+	return 0;
+}

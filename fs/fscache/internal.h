@@ -57,6 +57,12 @@ static inline void fscache_put_cache_tag(struct fscache_cache_tag *tag)
 }
 
 /*
+ * cache_init.c
+ */
+extern int __init fscache_init_caching(void);
+extern void __exit fscache_exit_caching(void);
+
+/*
  * cookie.c
  */
 extern void fscache_print_cookie(struct fscache_cookie *cookie, char prefix);
@@ -164,11 +170,9 @@ extern void fscache_objlist_remove(struct fscache_object *);
  * proc.c
  */
 #ifdef CONFIG_PROC_FS
-extern int __init fscache_proc_init(void);
-extern void fscache_proc_cleanup(void);
+extern int __init fscache_proc_caching_init(void);
 #else
 #define fscache_proc_init()	(0)
-#define fscache_proc_cleanup()	do {} while (0)
 #endif
 
 /*
@@ -230,11 +234,13 @@ static inline void fscache_stat_d(atomic_t *stat)
 #define __fscache_stat(stat) (stat)
 
 int fscache_stats_show(struct seq_file *m, void *v);
+extern int __init fscache_proc_stats_init(void);
 #else
 
 #define __fscache_stat(stat) (NULL)
 #define fscache_stat(stat) do {} while (0)
 #define fscache_stat_d(stat) do {} while (0)
+#define fscache_proc_stats_init(void) 0
 #endif
 
 static inline
