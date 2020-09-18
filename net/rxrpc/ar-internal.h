@@ -467,12 +467,16 @@ struct rxrpc_connection {
 			u32	nonce;		/* response re-use preventer */
 		} rxkad;
 		struct {
-			struct rxgk_context *keys[1];
+			struct rxgk_context *keys[4]; /* (Re-)keying buffer */
 			u64	start_time;	/* The start time for TK derivation */
 			u8	nonce[20];	/* Response re-use preventer */
 			u8	data_offset;	/* Offset of data in packet */
+			u32	key_number;	/* Current key number */
 		} rxgk;
 	};
+	rwlock_t		security_lock;	/* Lock allowing modification of security */
+	struct mutex		rekeying_lock;	/* Lock allowing rekeying */
+
 	unsigned long		flags;
 	unsigned long		events;
 	unsigned long		idle_timestamp;	/* Time at which last became idle */
