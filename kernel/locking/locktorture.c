@@ -1042,8 +1042,10 @@ static int __init lock_torture_init(void)
 unwind:
 	torture_init_end();
 	lock_torture_cleanup();
-	if (WARN_ON(shutdown_secs))
+	if (shutdown_secs) {
+		WARN_ON(!IS_MODULE(CONFIG_LOCK_TORTURE_TEST));
 		kernel_power_off();
+	}
 	return firsterr;
 }
 
