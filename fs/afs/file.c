@@ -350,7 +350,7 @@ static bool afs_is_cache_enabled(struct inode *inode)
 {
 	struct fscache_cookie *cookie = afs_vnode_cache(AFS_FS_I(inode));
 
-	return fscache_cookie_valid(cookie) && !hlist_empty(&cookie->backing_objects);
+	return fscache_cookie_enabled(cookie) && !hlist_empty(&cookie->backing_objects);
 }
 
 static int afs_begin_cache_operation(struct netfs_read_request *rreq)
