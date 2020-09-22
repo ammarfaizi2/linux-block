@@ -145,6 +145,8 @@ extern void cachefiles_mark_content_map(struct cachefiles_object *object,
 					loff_t start, loff_t len, unsigned int inval_counter);
 extern void cachefiles_expand_content_map(struct cachefiles_object *object, loff_t size);
 extern void cachefiles_shorten_content_map(struct cachefiles_object *object, loff_t new_size);
+extern int cachefiles_prepare_write(struct netfs_cache_resources *cres,
+				    loff_t *_start, size_t *_len, loff_t i_size);
 extern bool cachefiles_load_content_map(struct cachefiles_object *object);
 extern void cachefiles_save_content_map(struct cachefiles_object *object);
 extern int cachefiles_display_object(struct seq_file *m, struct fscache_object *object);

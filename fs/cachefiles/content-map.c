@@ -208,6 +208,43 @@ in_cache:
 }
 
 /*
+ * Prepare for a write to occur.
+ */
+int cachefiles_prepare_write(struct netfs_cache_resources *cres,
+			     loff_t *_start, size_t *_len, loff_t i_size)
+{
+	struct cachefiles_object *object = cachefiles_cres_object(cres);
+	loff_t start = *_start, map_limit;
+	size_t len = *_len, down;
+	long granule = start / CACHEFILES_GRAN_SIZE;
+
+	if (start >= CACHEFILES_SIZE_LIMIT)
+		return -ENOBUFS;
+
+	if (granule / 8 >= object->content_map_size) {
+		cachefiles_expand_content_map(object, i_size);
+		if (granule / 8 >= object->content_map_size)
+			return -ENOBUFS;
+	}
+
+	map_limit = object->content_map_size * 8 * CACHEFILES_GRAN_SIZE;
+	if (start >= map_limit)
+		return -ENOBUFS;
+	if (len > map_limit - start)
+		len = map_limit - start;
+
+	/* Assume that the preparation to write involved preloading any
+	 * bits of the cache that weren't to be written and filling any
+	 * gaps that didn't end up being written.
+	 */
+
+	down = start - round_down(start, CACHEFILES_DIO_BLOCK_SIZE);
+	*_start = start - down;
+	*_len = round_up(down + len, CACHEFILES_DIO_BLOCK_SIZE);
+	return 0;
+}
+
+/*
  * Allocate a new content map.
  */
 u8 *cachefiles_new_content_map(struct cachefiles_object *object,
