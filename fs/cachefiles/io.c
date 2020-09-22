@@ -295,22 +295,6 @@ presubmission_error:
 }
 
 /*
- * Prepare for a write to occur.
- */
-static int cachefiles_prepare_write(struct netfs_cache_resources *cres,
-				    loff_t *_start, size_t *_len, loff_t i_size)
-{
-	loff_t start = *_start;
-	size_t len = *_len, down;
-
-	/* Round to DIO size */
-	down = start - round_down(start, PAGE_SIZE);
-	*_start = start - down;
-	*_len = round_up(down + len, PAGE_SIZE);
-	return 0;
-}
-
-/*
  * Prepare for a write to occur from the fallback I/O API.
  */
 static int cachefiles_prepare_fallback_write(struct netfs_cache_resources *cres,
