@@ -192,6 +192,12 @@ struct fscache_op_ops {
 	 */
 	enum netfs_read_source (*prepare_read)(struct netfs_read_subrequest *subreq,
 					       loff_t i_size);
+
+	/* Prepare a write operation, working out what part of the write we can
+	 * actually do.
+	 */
+	int (*prepare_write)(struct fscache_op_resources *opr,
+			     loff_t *_start, size_t *_len, loff_t i_size);
 };
 
 /*
@@ -225,6 +231,10 @@ extern void __fscache_resize_cookie(struct fscache_cookie *, loff_t);
 extern void __fscache_invalidate(struct fscache_cookie *, const void *, loff_t, unsigned int);
 extern void fscache_put_super(struct super_block *,
 			      struct fscache_cookie *(*get_cookie)(struct inode *));
+
+extern void __fscache_write_to_cache(struct fscache_cookie *, struct address_space *,
+				     loff_t, size_t, loff_t, fscache_io_terminated_t, void *);
+extern void __fscache_clear_page_bits(struct address_space *, loff_t, size_t);
 
 /**
  * fscache_register_netfs - Register a filesystem as desiring caching services
@@ -625,6 +635,30 @@ int fscache_write(struct fscache_op_resources *opr,
 {
 	const struct fscache_op_ops *ops = fscache_operation_valid(opr);
 	return ops->write(opr, start_pos, iter, term_func, term_func_priv);
+}
+
+static inline void fscache_clear_page_bits(struct address_space *mapping,
+					   loff_t start, size_t len)
+{
+	if (fscache_available())
+		__fscache_clear_page_bits(mapping, start, len);
+}
+
+static inline void fscache_write_to_cache(struct fscache_cookie *cookie,
+					  struct address_space *mapping,
+					  loff_t start, size_t len, loff_t i_size,
+					  fscache_io_terminated_t term_func,
+					  void *term_func_priv)
+{
+	if (fscache_available()) {
+		__fscache_write_to_cache(cookie, mapping, start, len, i_size,
+					 term_func, term_func_priv);
+	} else {
+		fscache_clear_page_bits(mapping, start, len);
+		if (term_func)
+			term_func(term_func_priv, -ENOBUFS);
+	}
+
 }
 
 #if __fscache_available
