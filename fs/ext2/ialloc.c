@@ -551,7 +551,7 @@ got:
 		inode->i_uid = current_fsuid();
 		inode->i_gid = dir->i_gid;
 	} else
-		inode_init_owner(inode, dir, mode);
+		inode_init_owner(inode, &init_user_ns, dir, mode);
 
 	inode->i_ino = ino;
 	inode->i_blocks = 0;

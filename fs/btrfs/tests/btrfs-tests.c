@@ -56,7 +56,7 @@ struct inode *btrfs_new_test_inode(void)
 
 	inode = new_inode(test_mnt->mnt_sb);
 	if (inode)
-		inode_init_owner(inode, NULL, S_IFREG);
+		inode_init_owner(inode, &init_user_ns, NULL, S_IFREG);
 
 	return inode;
 }

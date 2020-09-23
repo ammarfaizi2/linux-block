@@ -46,7 +46,7 @@ static struct inode *f2fs_new_inode(struct inode *dir, umode_t mode)
 
 	nid_free = true;
 
-	inode_init_owner(inode, dir, mode);
+	inode_init_owner(inode, &init_user_ns, dir, mode);
 
 	inode->i_ino = ino;
 	inode->i_blocks = 0;
