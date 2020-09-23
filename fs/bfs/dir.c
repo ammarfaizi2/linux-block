@@ -96,7 +96,7 @@ static int bfs_create(struct inode *dir, struct dentry *dentry, umode_t mode,
 	}
 	set_bit(ino, info->si_imap);
 	info->si_freei--;
-	inode_init_owner(inode, dir, mode);
+	inode_init_owner(inode, &init_user_ns, dir, mode);
 	inode->i_mtime = inode->i_atime = inode->i_ctime = current_time(inode);
 	inode->i_blocks = 0;
 	inode->i_op = &bfs_file_inops;
