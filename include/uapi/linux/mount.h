@@ -117,6 +117,7 @@ enum fsconfig_command {
 #define MOUNT_ATTR_NOATIME	0x00000010 /* - Do not update access times. */
 #define MOUNT_ATTR_STRICTATIME	0x00000020 /* - Always perform atime updates */
 #define MOUNT_ATTR_NODIRATIME	0x00000080 /* Do not update directory access times */
+#define MOUNT_ATTR_IDMAP	0x00100000 /* Idmap this mount to @userns in mount_attr. */
 
 /*
  * mount_setattr()
@@ -125,6 +126,8 @@ struct mount_attr {
 	__u64 attr_set;
 	__u64 attr_clr;
 	__u64 propagation;
+	__u32 userns;
+	__u32 reserved[0];
 };
 
 /* Change propagation through mount_setattr(). */
@@ -138,6 +141,7 @@ enum propagation_type {
 
 /* List of all mount_attr versions. */
 #define MOUNT_ATTR_SIZE_VER0	24 /* sizeof first published struct */
-#define MOUNT_ATTR_SIZE_LATEST	MOUNT_ATTR_SIZE_VER0
+#define MOUNT_ATTR_SIZE_VER1	32 /* sizeof second published struct */
+#define MOUNT_ATTR_SIZE_LATEST	MOUNT_ATTR_SIZE_VER1
 
 #endif /* _UAPI_LINUX_MOUNT_H */

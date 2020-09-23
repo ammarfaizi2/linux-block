@@ -15,6 +15,12 @@ config VALIDATE_FS_PARSER
 	  Enable this to perform validation of the parameter description for a
 	  filesystem when it is registered.
 
+config IDMAP_MOUNTS
+	bool "Support id mappings per mount"
+	default n
+	help
+	  This allows the vfs to create idmappings per vfsmount.
+
 if BLOCK
 
 config FS_IOMAP

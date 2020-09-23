@@ -25,6 +25,7 @@
 #include <linux/proc_ns.h>
 #include <linux/magic.h>
 #include <linux/memblock.h>
+#include <linux/proc_fs.h>
 #include <linux/task_work.h>
 #include <linux/sched/task.h>
 #include <uapi/linux/mount.h>
@@ -210,6 +211,9 @@ static struct mount *alloc_vfsmnt(const char *name)
 		INIT_HLIST_NODE(&mnt->mnt_mp_list);
 		INIT_LIST_HEAD(&mnt->mnt_umounting);
 		INIT_HLIST_HEAD(&mnt->mnt_stuck_children);
+#ifdef CONFIG_IDMAP_MOUNTS
+		mnt->mnt.mnt_user_ns = &init_user_ns;
+#endif
 	}
 	return mnt;
 
@@ -555,6 +559,13 @@ int sb_prepare_remount_readonly(struct super_block *sb)
 
 static void free_vfsmnt(struct mount *mnt)
 {
+#ifdef CONFIG_IDMAP_MOUNTS
+	if ((mnt->mnt.mnt_flags & MNT_IDMAPPED) &&
+	    mnt_user_ns(&mnt->mnt) != &init_user_ns) {
+		put_user_ns(mnt->mnt.mnt_user_ns);
+		mnt->mnt.mnt_user_ns = NULL;
+	}
+#endif
 	kfree_const(mnt->mnt_devname);
 #ifdef CONFIG_SMP
 	free_percpu(mnt->mnt_pcp);
@@ -1063,6 +1074,11 @@ static struct mount *clone_mnt(struct mount *old, struct dentry *root,
 	mnt->mnt.mnt_flags &= ~(MNT_WRITE_HOLD|MNT_MARKED|MNT_INTERNAL);
 
 	atomic_inc(&sb->s_active);
+#ifdef CONFIG_IDMAP_MOUNTS
+	mnt->mnt.mnt_user_ns = old->mnt.mnt_user_ns;
+	if (mnt_user_ns(&old->mnt) != &init_user_ns)
+		mnt->mnt.mnt_user_ns = get_user_ns(mnt->mnt.mnt_user_ns);
+#endif
 	mnt->mnt.mnt_sb = sb;
 	mnt->mnt.mnt_root = dget(root);
 	mnt->mnt_mountpoint = mnt->mnt.mnt_root;
@@ -3454,7 +3470,8 @@ static int build_attr_flags(unsigned int attr_flags, unsigned int *flags)
 			   MOUNT_ATTR_NODEV |
 			   MOUNT_ATTR_NOEXEC |
 			   MOUNT_ATTR__ATIME |
-			   MOUNT_ATTR_NODIRATIME))
+			   MOUNT_ATTR_NODIRATIME |
+			   MOUNT_ATTR_IDMAP))
 		return -EINVAL;
 
 	if (attr_flags & MOUNT_ATTR_RDONLY)
@@ -3467,6 +3484,8 @@ static int build_attr_flags(unsigned int attr_flags, unsigned int *flags)
 		aflags |= MNT_NOEXEC;
 	if (attr_flags & MOUNT_ATTR_NODIRATIME)
 		aflags |= MNT_NODIRATIME;
+	if (attr_flags & MOUNT_ATTR_IDMAP)
+		aflags |= MNT_IDMAPPED;
 
 	*flags = aflags;
 	return 0;
@@ -3492,6 +3511,14 @@ SYSCALL_DEFINE3(fsmount, int, fs_fd, unsigned int, flags,
 		return -EPERM;
 
 	if ((flags & ~(FSMOUNT_CLOEXEC)) != 0)
+		return -EINVAL;
+
+	if (attr_flags & ~(MOUNT_ATTR_RDONLY |
+			   MOUNT_ATTR_NOSUID |
+			   MOUNT_ATTR_NODEV |
+			   MOUNT_ATTR_NOEXEC |
+			   MOUNT_ATTR__ATIME |
+			   MOUNT_ATTR_NODIRATIME))
 		return -EINVAL;
 
 	ret = build_attr_flags(attr_flags, &mnt_flags);
@@ -3836,6 +3863,7 @@ static int do_mount_setattr(struct path *path, struct mount_kattr *kattr)
 	 */
 	m = mnt;
 	do {
+		unsigned int old_flags;
 		last = m;
 
 		if (!can_change_locked_flags(m, all_raised)) {
@@ -3843,11 +3871,61 @@ static int do_mount_setattr(struct path *path, struct mount_kattr *kattr)
 			break;
 		}
 
-		if (rdonly_set && !(m->mnt.mnt_flags & MNT_READONLY)) {
+		old_flags = READ_ONCE(m->mnt.mnt_flags);
+		if (rdonly_set && !(old_flags & MNT_READONLY)) {
 			err = mnt_hold_writers(m);
 			if (err)
 				break;
 		}
+
+#ifdef CONFIG_IDMAP_MOUNTS
+		if (kattr->attr_set & MNT_IDMAPPED) {
+			struct user_namespace *user_ns;
+			struct vfsmount *vmnt;
+
+			/*
+			 * Once a mount has been idmapped we don't allow it to
+			 * change its mapping. It makes things simpler and
+			 * callers can just create a detached mount they can
+			 * idmap. So make sure that this mount is the root of
+			 * an anon namespace.
+			 */
+			if ((old_flags & MNT_IDMAPPED) && !is_anon_ns(m->mnt_ns)) {
+				err = -EPERM;
+				break;
+			}
+
+			/*
+			 * The underlying filesystem doesn't support idmapped
+			 * mounts yet.
+			 */
+			vmnt = &m->mnt;
+			if (!(vmnt->mnt_sb->s_type->fs_flags & FS_ALLOW_IDMAP)) {
+				err = -EINVAL;
+				break;
+			}
+
+			/* We're controlling the superblock. */
+			if (ns_capable(vmnt->mnt_sb->s_user_ns, CAP_SYS_ADMIN)) {
+				err = 0;
+				continue;
+			}
+
+			/*
+			 * The mount is already shifted to a user namespace
+			 * that we have control over. (We already verified that
+			 * this is the root of an anon namespace above.)
+			 */
+			user_ns = READ_ONCE(vmnt->mnt_user_ns);
+			if ((old_flags & MNT_IDMAPPED) && ns_capable(user_ns, CAP_SYS_ADMIN)) {
+				err = 0;
+				continue;
+			}
+
+			err = -EPERM;
+			break;
+		}
+#endif
 	} while (kattr->recurse && (m = next_mnt(m, mnt)));
 
 	m = mnt;
@@ -3860,6 +3938,20 @@ static int do_mount_setattr(struct path *path, struct mount_kattr *kattr)
 			new_flags &= ~kattr->attr_clr;
 			/* Raise flags user wants us to set. */
 			new_flags |= kattr->attr_set;
+
+			/*
+			 * The MNT_IDMAPPED flag should be seen _after_ the
+			 * user_ns pointer in struct vfsmount is valid.
+			 */
+#ifdef CONFIG_IDMAP_MOUNTS
+			if (kattr->attr_set & MNT_IDMAPPED) {
+				struct user_namespace *user_ns = READ_ONCE(m->mnt.mnt_user_ns);
+				WRITE_ONCE(m->mnt.mnt_user_ns, get_user_ns(kattr->userns));
+				if (user_ns != &init_user_ns)
+					put_user_ns(user_ns);
+			}
+			smp_wmb();
+#endif
 			WRITE_ONCE(m->mnt.mnt_flags, new_flags);
 		}
 
@@ -3893,12 +3985,20 @@ static int do_mount_setattr(struct path *path, struct mount_kattr *kattr)
 			cleanup_group_ids(mnt, NULL);
 	}
 
+#ifdef CONFIG_IDMAP_MOUNTS
+	if (kattr->attr_set & MNT_IDMAPPED) {
+		put_user_ns(kattr->userns);
+		kattr->userns = NULL;
+	}
+#endif
+
 	return err;
 }
 
 static int build_mount_kattr(const struct mount_attr *attr,
 			     struct mount_kattr *kattr, unsigned int flags)
 {
+	int err = 0;
 	unsigned int lookup_flags = LOOKUP_AUTOMOUNT | LOOKUP_FOLLOW;
 
 	if (flags & AT_NO_AUTOMOUNT)
@@ -3975,7 +4075,58 @@ static int build_mount_kattr(const struct mount_attr *attr,
 		}
 	}
 
-	return 0;
+#ifndef CONFIG_IDMAP_MOUNTS
+	if ((attr->attr_set | attr->attr_clr) & MOUNT_ATTR_IDMAP)
+		return -EINVAL;
+#else
+	if ((attr->attr_set & MOUNT_ATTR_IDMAP) && (attr->userns > INT_MAX))
+		return -EINVAL;
+
+	/* TODO: Implement MNT_IDMAPPED clearing. */
+	if (attr->attr_clr & MNT_IDMAPPED)
+		return -EINVAL;
+
+	if (attr->attr_set & MOUNT_ATTR_IDMAP) {
+		struct ns_common *ns;
+		struct user_namespace *user_ns;
+		struct file *file;
+
+		file = fget(attr->userns);
+		if (!file)
+			return -EBADF;
+
+		if (!proc_ns_file(file)) {
+			err = -EINVAL;
+			goto out_fput;
+		}
+
+		ns = get_proc_ns(file_inode(file));
+		if (ns->ops->type != CLONE_NEWUSER) {
+			err = -EINVAL;
+			goto out_fput;
+		}
+		user_ns = container_of(ns, struct user_namespace, ns);
+
+		/*
+		 * The init_user_ns is used to indicate that a vfsmount is not
+		 * idmapped. This is simpler than just having to treat NULL as
+		 * unmapped. Users wanting to idmap a mount to init_user_ns can
+		 * just use a namespace with an identity mapping.
+		 */
+		if (user_ns == &init_user_ns) {
+			err = -EPERM;
+			goto out_fput;
+		}
+
+		kattr->userns = get_user_ns(user_ns);
+		err = 0;
+	out_fput:
+		fput(file);
+	}
+
+#endif /* CONFIG_IDMAP_MOUNTS */
+
+	return err;
 }
 
 SYSCALL_DEFINE5(mount_setattr, int, dfd, const char __user *, path, unsigned int, flags,
