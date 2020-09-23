@@ -39,6 +39,7 @@
 #include <linux/fs_types.h>
 #include <linux/build_bug.h>
 #include <linux/stddef.h>
+#include <linux/cred.h>
 
 #include <asm/byteorder.h>
 #include <uapi/linux/fs.h>
@@ -1572,6 +1573,48 @@ static inline void i_uid_write(struct inode *inode, uid_t uid)
 static inline void i_gid_write(struct inode *inode, gid_t gid)
 {
 	inode->i_gid = make_kgid(inode->i_sb->s_user_ns, gid);
+}
+
+static inline kuid_t kuid_into_mnt(struct user_namespace *to, kuid_t kuid)
+{
+	return make_kuid(to, __kuid_val(kuid));
+}
+
+static inline kgid_t kgid_into_mnt(struct user_namespace *to, kgid_t kgid)
+{
+	return make_kgid(to, __kgid_val(kgid));
+}
+
+static inline kuid_t i_uid_into_mnt(struct user_namespace *to,
+				    const struct inode *inode)
+{
+	return kuid_into_mnt(to, inode->i_uid);
+}
+
+static inline kgid_t i_gid_into_mnt(struct user_namespace *to,
+				    const struct inode *inode)
+{
+	return kgid_into_mnt(to, inode->i_gid);
+}
+
+static inline kuid_t kuid_from_mnt(struct user_namespace *to, kuid_t kuid)
+{
+	return KUIDT_INIT(from_kuid(to, kuid));
+}
+
+static inline kgid_t kgid_from_mnt(struct user_namespace *to, kgid_t kgid)
+{
+	return KGIDT_INIT(from_kgid(to, kgid));
+}
+
+static inline kuid_t fsuid_into_mnt(struct user_namespace *to)
+{
+	return kuid_from_mnt(to, current_fsuid());
+}
+
+static inline kgid_t fsgid_into_mnt(struct user_namespace *to)
+{
+	return kgid_from_mnt(to, current_fsgid());
 }
 
 extern struct timespec64 current_time(struct inode *inode);
