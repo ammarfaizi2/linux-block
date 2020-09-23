@@ -18,34 +18,39 @@
 #include <linux/evm.h>
 #include <linux/ima.h>
 
-static bool chown_ok(const struct inode *inode, kuid_t uid)
+static bool chown_ok(struct user_namespace *user_ns,
+		     const struct inode *inode,
+		     kuid_t uid)
 {
-	if (uid_eq(current_fsuid(), inode->i_uid) &&
-	    uid_eq(uid, inode->i_uid))
+	kuid_t kuid = i_uid_into_mnt(user_ns, inode);
+	if (uid_eq(current_fsuid(), kuid) && uid_eq(uid, kuid))
 		return true;
-	if (capable_wrt_inode_uidgid(inode, CAP_CHOWN))
+	if (capable_wrt_mapped_inode_uidgid(user_ns, inode, CAP_CHOWN))
 		return true;
-	if (uid_eq(inode->i_uid, INVALID_UID) &&
+	if (uid_eq(kuid, INVALID_UID) &&
 	    ns_capable(inode->i_sb->s_user_ns, CAP_CHOWN))
 		return true;
 	return false;
 }
 
-static bool chgrp_ok(const struct inode *inode, kgid_t gid)
+static bool chgrp_ok(struct user_namespace *user_ns,
+		     const struct inode *inode, kgid_t gid)
 {
-	if (uid_eq(current_fsuid(), inode->i_uid) &&
-	    (in_group_p(gid) || gid_eq(gid, inode->i_gid)))
+	kgid_t kgid = i_gid_into_mnt(user_ns, inode);
+	if (uid_eq(current_fsuid(), i_uid_into_mnt(user_ns, inode)) &&
+	    (in_group_p(gid) || gid_eq(gid, kgid)))
 		return true;
-	if (capable_wrt_inode_uidgid(inode, CAP_CHOWN))
+	if (capable_wrt_mapped_inode_uidgid(user_ns, inode, CAP_CHOWN))
 		return true;
-	if (gid_eq(inode->i_gid, INVALID_GID) &&
+	if (gid_eq(kgid, INVALID_GID) &&
 	    ns_capable(inode->i_sb->s_user_ns, CAP_CHOWN))
 		return true;
 	return false;
 }
 
 /**
- * setattr_prepare - check if attribute changes to a dentry are allowed
+ * setattr_mapped_prepare - check if attribute changes to a dentry are allowed
+ * @user_ns:	user namespace of the mount
  * @dentry:	dentry to check
  * @attr:	attributes to change
  *
@@ -58,7 +63,8 @@ static bool chgrp_ok(const struct inode *inode, kgid_t gid)
  * Should be called as the first thing in ->setattr implementations,
  * possibly after taking additional locks.
  */
-int setattr_prepare(struct dentry *dentry, struct iattr *attr)
+int setattr_mapped_prepare(struct user_namespace *user_ns,
+			   struct dentry *dentry, struct iattr *attr)
 {
 	struct inode *inode = d_inode(dentry);
 	unsigned int ia_valid = attr->ia_valid;
@@ -78,27 +84,27 @@ int setattr_prepare(struct dentry *dentry, struct iattr *attr)
 		goto kill_priv;
 
 	/* Make sure a caller can chown. */
-	if ((ia_valid & ATTR_UID) && !chown_ok(inode, attr->ia_uid))
+	if ((ia_valid & ATTR_UID) && !chown_ok(user_ns, inode, attr->ia_uid))
 		return -EPERM;
 
 	/* Make sure caller can chgrp. */
-	if ((ia_valid & ATTR_GID) && !chgrp_ok(inode, attr->ia_gid))
+	if ((ia_valid & ATTR_GID) && !chgrp_ok(user_ns, inode, attr->ia_gid))
 		return -EPERM;
 
 	/* Make sure a caller can chmod. */
 	if (ia_valid & ATTR_MODE) {
-		if (!inode_owner_or_capable(inode))
+		if (!mapped_inode_owner_or_capable(user_ns, inode))
 			return -EPERM;
 		/* Also check the setgid bit! */
-		if (!in_group_p((ia_valid & ATTR_GID) ? attr->ia_gid :
-				inode->i_gid) &&
-		    !capable_wrt_inode_uidgid(inode, CAP_FSETID))
+               if (!in_group_p((ia_valid & ATTR_GID) ? attr->ia_gid :
+                                i_gid_into_mnt(user_ns, inode)) &&
+                    !capable_wrt_inode_uidgid(inode, CAP_FSETID))
 			attr->ia_mode &= ~S_ISGID;
 	}
 
 	/* Check for setting the inode time. */
 	if (ia_valid & (ATTR_MTIME_SET | ATTR_ATIME_SET | ATTR_TIMES_SET)) {
-		if (!inode_owner_or_capable(inode))
+		if (!mapped_inode_owner_or_capable(user_ns, inode))
 			return -EPERM;
 	}
 
@@ -113,6 +119,12 @@ kill_priv:
 	}
 
 	return 0;
+}
+EXPORT_SYMBOL(setattr_mapped_prepare);
+
+int setattr_prepare(struct dentry *dentry, struct iattr *attr)
+{
+	return setattr_mapped_prepare(&init_user_ns, dentry, attr);
 }
 EXPORT_SYMBOL(setattr_prepare);
 
@@ -161,6 +173,53 @@ out_big:
 EXPORT_SYMBOL(inode_newsize_ok);
 
 /**
+ * setattr_mappedcopy - copy simple metadata updates into the generic inode on idmapped mounts
+ * @user_ns:	the user namespace the inode is accessed from
+ * @inode:	the inode to be updated
+ * @attr:	the new attributes
+ *
+ * setattr_mapped_copy must be called with i_mutex held.
+ *
+ * setattr_mapped_copy updates the inode's metadata with that specified
+ * in attr on idmapped mounts. If file ownership is changed setattr_mapped_copy
+ * doesn't map ia_uid and ia_gid. It will asssume the caller has already
+ * provided the intended values. Necessary permission checks to determine
+ * whether or not the S_ISGID property needs to be removed are performed with
+ * the correct idmapped mount permission helpers.
+ * Noticeably missing is inode size update, which is more complex
+ * as it requires pagecache updates.
+ *
+ * The inode is not marked as dirty after this operation. The rationale is
+ * that for "simple" filesystems, the struct inode is the inode storage.
+ * The caller is free to mark the inode dirty afterwards if needed.
+ */
+void setattr_mapped_copy(struct user_namespace *user_ns, struct inode *inode,
+			 const struct iattr *attr)
+{
+	unsigned int ia_valid = attr->ia_valid;
+
+	if (ia_valid & ATTR_UID)
+		inode->i_uid = attr->ia_uid;
+	if (ia_valid & ATTR_GID)
+		inode->i_gid = attr->ia_gid;
+	if (ia_valid & ATTR_ATIME)
+		inode->i_atime = attr->ia_atime;
+	if (ia_valid & ATTR_MTIME)
+		inode->i_mtime = attr->ia_mtime;
+	if (ia_valid & ATTR_CTIME)
+		inode->i_ctime = attr->ia_ctime;
+	if (ia_valid & ATTR_MODE) {
+		umode_t mode = attr->ia_mode;
+		kgid_t kgid = i_gid_into_mnt(user_ns, inode);
+		if (!in_group_p(kgid) &&
+		    !capable_wrt_mapped_inode_uidgid(user_ns, inode, CAP_FSETID))
+			mode &= ~S_ISGID;
+		inode->i_mode = mode;
+	}
+}
+EXPORT_SYMBOL(setattr_mapped_copy);
+
+/**
  * setattr_copy - copy simple metadata updates into the generic inode
  * @inode:	the inode to be updated
  * @attr:	the new attributes
@@ -177,42 +236,27 @@ EXPORT_SYMBOL(inode_newsize_ok);
  */
 void setattr_copy(struct inode *inode, const struct iattr *attr)
 {
-	unsigned int ia_valid = attr->ia_valid;
-
-	if (ia_valid & ATTR_UID)
-		inode->i_uid = attr->ia_uid;
-	if (ia_valid & ATTR_GID)
-		inode->i_gid = attr->ia_gid;
-	if (ia_valid & ATTR_ATIME)
-		inode->i_atime = attr->ia_atime;
-	if (ia_valid & ATTR_MTIME)
-		inode->i_mtime = attr->ia_mtime;
-	if (ia_valid & ATTR_CTIME)
-		inode->i_ctime = attr->ia_ctime;
-	if (ia_valid & ATTR_MODE) {
-		umode_t mode = attr->ia_mode;
-
-		if (!in_group_p(inode->i_gid) &&
-		    !capable_wrt_inode_uidgid(inode, CAP_FSETID))
-			mode &= ~S_ISGID;
-		inode->i_mode = mode;
-	}
+	return setattr_mapped_copy(&init_user_ns, inode, attr);
 }
 EXPORT_SYMBOL(setattr_copy);
 
 /**
- * notify_change - modify attributes of a filesytem object
+ * notify_mapped_change - modify attributes of a filesytem object on idmapped mounts
+ * @user_ns:	the user namespace of the mount
  * @dentry:	object affected
  * @attr:	new attributes
  * @delegated_inode: returns inode, if the inode is delegated
  *
  * The caller must hold the i_mutex on the affected object.
  *
- * If notify_change discovers a delegation in need of breaking,
+ * If notify_mapped_change discovers a delegation in need of breaking,
  * it will return -EWOULDBLOCK and return a reference to the inode in
  * delegated_inode.  The caller should then break the delegation and
  * retry.  Because breaking a delegation may take a long time, the
  * caller should drop the i_mutex before doing so.
+ *
+ * If file ownership is changed notify_mapped_change() doesn't map ia_uid and
+ * ia_gid. It will asssume the caller has already provided the intended values.
  *
  * Alternatively, a caller may pass NULL for delegated_inode.  This may
  * be appropriate for callers that expect the underlying filesystem not
@@ -220,7 +264,8 @@ EXPORT_SYMBOL(setattr_copy);
  * the file open for write, as there can be no conflicting delegation in
  * that case.
  */
-int notify_change(struct dentry * dentry, struct iattr * attr, struct inode **delegated_inode)
+int notify_mapped_change(struct user_namespace *user_ns, struct dentry *dentry,
+			 struct iattr *attr, struct inode **delegated_inode)
 {
 	struct inode *inode = dentry->d_inode;
 	umode_t mode = inode->i_mode;
@@ -243,8 +288,8 @@ int notify_change(struct dentry * dentry, struct iattr * attr, struct inode **de
 		if (IS_IMMUTABLE(inode))
 			return -EPERM;
 
-		if (!inode_owner_or_capable(inode)) {
-			error = inode_permission(inode, MAY_WRITE);
+		if (!mapped_inode_owner_or_capable(user_ns, inode)) {
+			error = mapped_inode_permission(user_ns, inode, MAY_WRITE);
 			if (error)
 				return error;
 		}
@@ -344,5 +389,32 @@ int notify_change(struct dentry * dentry, struct iattr * attr, struct inode **de
 	}
 
 	return error;
+}
+EXPORT_SYMBOL(notify_mapped_change);
+
+/**
+ * notify_change - modify attributes of a filesytem object
+ * @dentry:	object affected
+ * @attr:	new attributes
+ * @delegated_inode: returns inode, if the inode is delegated
+ *
+ * The caller must hold the i_mutex on the affected object.
+ *
+ * If notify_change discovers a delegation in need of breaking,
+ * it will return -EWOULDBLOCK and return a reference to the inode in
+ * delegated_inode.  The caller should then break the delegation and
+ * retry.  Because breaking a delegation may take a long time, the
+ * caller should drop the i_mutex before doing so.
+ *
+ * Alternatively, a caller may pass NULL for delegated_inode.  This may
+ * be appropriate for callers that expect the underlying filesystem not
+ * to be NFS exported.  Also, passing NULL is fine for callers holding
+ * the file open for write, as there can be no conflicting delegation in
+ * that case.
+ */
+int notify_change(struct dentry *dentry, struct iattr *attr,
+		  struct inode **delegated_inode)
+{
+	return notify_mapped_change(&init_user_ns, dentry, attr, delegated_inode);
 }
 EXPORT_SYMBOL(notify_change);
