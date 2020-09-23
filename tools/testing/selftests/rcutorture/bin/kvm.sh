@@ -58,7 +58,7 @@ usage () {
 	echo "       --datestamp string"
 	echo "       --defconfig string"
 	echo "       --dryrun sched|script"
-	echo "       --duration minutes | hours[Hh]"
+	echo "       --duration minutes | <seconds>s | <hours>h | <days>d"
 	echo "       --gdb"
 	echo "       --help"
 	echo "       --interactive"
@@ -128,13 +128,19 @@ do
 		shift
 		;;
 	--duration)
-		checkarg --duration "(minutes)" $# "$2" '^[0-9][0-9]*\(h\|H\|\)$' '^error'
+		checkarg --duration "(minutes)" $# "$2" '^[0-9][0-9]*\(s\|m\|h\|d\|\)$' '^error'
 		mult=60
-		if echo "$2" | grep -q '[Hh]$'
+		if echo "$2" | grep -q 's$'
+		then
+			mult=1
+		elif echo "$2" | grep -q 'h$'
 		then
 			mult=3600
+		elif echo "$2" | grep -q 'd$'
+		then
+			mult=86400
 		fi
-		ts=`echo $2 | sed -e 's/[hH]$//'`
+		ts=`echo $2 | sed -e 's/[smhd]$//'`
 		dur=$(($ts*mult))
 		shift
 		;;
