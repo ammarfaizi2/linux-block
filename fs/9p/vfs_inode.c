@@ -1040,7 +1040,7 @@ static int v9fs_vfs_setattr(struct dentry *dentry, struct iattr *iattr)
 	struct p9_wstat wstat;
 
 	p9_debug(P9_DEBUG_VFS, "\n");
-	retval = setattr_prepare(dentry, iattr);
+	retval = setattr_prepare(&init_user_ns, dentry, iattr);
 	if (retval)
 		return retval;
 
@@ -1090,7 +1090,7 @@ static int v9fs_vfs_setattr(struct dentry *dentry, struct iattr *iattr)
 
 	v9fs_invalidate_inode_attr(d_inode(dentry));
 
-	setattr_copy(d_inode(dentry), iattr);
+	setattr_copy(&init_user_ns, d_inode(dentry), iattr);
 	mark_inode_dirty(d_inode(dentry));
 	return 0;
 }
