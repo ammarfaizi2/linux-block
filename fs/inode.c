@@ -2130,6 +2130,34 @@ void init_special_inode(struct inode *inode, umode_t mode, dev_t rdev)
 EXPORT_SYMBOL(init_special_inode);
 
 /**
+ * mapped_inode_init_owner - Init uid,gid,mode for new inode according to posix
+ *                           standards on idmapped mounts
+ * @inode: New inode
+ * @user_ns: User namespace the inode is accessed from
+ * @dir: Directory inode
+ * @mode: mode of the new inode
+ */
+void mapped_inode_init_owner(struct inode *inode, struct user_namespace *user_ns,
+			 const struct inode *dir, umode_t mode)
+{
+	inode->i_uid = fsuid_into_mnt(user_ns);
+	if (dir && dir->i_mode & S_ISGID) {
+		inode->i_gid = dir->i_gid;
+
+		/* Directories are special, and always inherit S_ISGID */
+		if (S_ISDIR(mode))
+			mode |= S_ISGID;
+		else if ((mode & (S_ISGID | S_IXGRP)) == (S_ISGID | S_IXGRP) &&
+			 !in_group_p(i_gid_into_mnt(user_ns, inode)) &&
+			 !capable_wrt_mapped_inode_uidgid(user_ns, dir, CAP_FSETID))
+			mode &= ~S_ISGID;
+	} else
+		inode->i_gid = fsgid_into_mnt(user_ns);
+	inode->i_mode = mode;
+}
+EXPORT_SYMBOL(mapped_inode_init_owner);
+
+/**
  * inode_init_owner - Init uid,gid,mode for new inode according to posix standards
  * @inode: New inode
  * @dir: Directory inode
@@ -2138,22 +2166,33 @@ EXPORT_SYMBOL(init_special_inode);
 void inode_init_owner(struct inode *inode, const struct inode *dir,
 			umode_t mode)
 {
-	inode->i_uid = current_fsuid();
-	if (dir && dir->i_mode & S_ISGID) {
-		inode->i_gid = dir->i_gid;
-
-		/* Directories are special, and always inherit S_ISGID */
-		if (S_ISDIR(mode))
-			mode |= S_ISGID;
-		else if ((mode & (S_ISGID | S_IXGRP)) == (S_ISGID | S_IXGRP) &&
-			 !in_group_p(inode->i_gid) &&
-			 !capable_wrt_inode_uidgid(dir, CAP_FSETID))
-			mode &= ~S_ISGID;
-	} else
-		inode->i_gid = current_fsgid();
-	inode->i_mode = mode;
+	return mapped_inode_init_owner(inode, &init_user_ns, dir, mode);
 }
 EXPORT_SYMBOL(inode_init_owner);
+
+/**
+ * mapped_inode_owner_or_capable - check current task permissions to inode on idmapped mounts
+ * @user_ns: User namespace the inode is accessed from
+ * @inode: inode being checked
+ *
+ * Return true if current either has CAP_FOWNER in a namespace with the
+ * inode owner uid mapped, or owns the file.
+ */
+bool mapped_inode_owner_or_capable(struct user_namespace *user_ns, const struct inode *inode)
+{
+	kuid_t i_uid;
+	struct user_namespace *ns;
+
+	i_uid = i_uid_into_mnt(user_ns, inode);
+	if (uid_eq(current_fsuid(), i_uid))
+		return true;
+
+	ns = current_user_ns();
+	if (kuid_has_mapping(ns, i_uid) && ns_capable(ns, CAP_FOWNER))
+		return true;
+	return false;
+}
+EXPORT_SYMBOL(mapped_inode_owner_or_capable);
 
 /**
  * inode_owner_or_capable - check current task permissions to inode
@@ -2164,15 +2203,7 @@ EXPORT_SYMBOL(inode_init_owner);
  */
 bool inode_owner_or_capable(const struct inode *inode)
 {
-	struct user_namespace *ns;
-
-	if (uid_eq(current_fsuid(), inode->i_uid))
-		return true;
-
-	ns = current_user_ns();
-	if (kuid_has_mapping(ns, inode->i_uid) && ns_capable(ns, CAP_FOWNER))
-		return true;
-	return false;
+	return mapped_inode_owner_or_capable(&init_user_ns, inode);
 }
 EXPORT_SYMBOL(inode_owner_or_capable);
 
