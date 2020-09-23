@@ -98,7 +98,7 @@ xattr_permission(struct user_namespace *user_ns, struct inode *inode,
 		 * to be writen back improperly if their true value is
 		 * unknown to the vfs.
 		 */
-		if (HAS_UNMAPPED_ID(inode))
+		if (HAS_UNMAPPED_ID(user_ns, inode))
 			return -EPERM;
 	}
 
