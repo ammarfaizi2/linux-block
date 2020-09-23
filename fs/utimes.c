@@ -22,6 +22,7 @@ int vfs_utimes(const struct path *path, struct timespec64 *times)
 	struct iattr newattrs;
 	struct inode *inode = path->dentry->d_inode;
 	struct inode *delegated_inode = NULL;
+	struct user_namespace *user_ns;
 
 	if (times) {
 		if (!nsec_valid(times[0].tv_nsec) ||
@@ -61,8 +62,9 @@ int vfs_utimes(const struct path *path, struct timespec64 *times)
 		newattrs.ia_valid |= ATTR_TOUCH;
 	}
 retry_deleg:
+	user_ns = mnt_user_ns(path->mnt);
 	inode_lock(inode);
-	error = notify_change(path->dentry, &newattrs, &delegated_inode);
+	error = notify_mapped_change(user_ns, path->dentry, &newattrs, &delegated_inode);
 	inode_unlock(inode);
 	if (delegated_inode) {
 		error = break_deleg_wait(&delegated_inode);
