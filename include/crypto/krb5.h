@@ -112,6 +112,37 @@ int crypto_krb5_decrypt(const struct krb5_enctype *krb5,
 			struct scatterlist *sg, unsigned int nr_sg,
 			size_t *_offset, size_t *_len,
 			int *_error_code);
+ssize_t crypto_krb5_get_mic(const struct krb5_enctype *krb5,
+			    struct crypto_shash *shash,
+			    const struct krb5_buffer *metadata,
+			    struct scatterlist *sg, unsigned int nr_sg,
+			    size_t sg_len,
+			    size_t data_offset, size_t data_len);
+int crypto_krb5_verify_mic(const struct krb5_enctype *krb5,
+			   struct crypto_shash *shash,
+			   const struct krb5_buffer *metadata,
+			   struct scatterlist *sg, unsigned int nr_sg,
+			   size_t *_offset, size_t *_len,
+			   int *_error_code);
+
+/**
+ * crypto_krb5_where_is_the_data - Find the data in an integrity message
+ * @krb5: The encoding to use.
+ * @_offset: Offset of the secure blob in the buffer; updated to data offset.
+ * @len: The length of the secure blob.
+ *
+ * Update and return the offset and size of the data in an integrity message so
+ * that this information can be used in the metadata buffer which will get
+ * added to the digest by crypto_krb5_verify_mic().
+ *
+ * @_offset may be NULL if the offset isn't of interest.
+ */
+static inline size_t crypto_krb5_where_is_the_data(const struct krb5_enctype *krb5,
+						   size_t *_offset, size_t len)
+{
+	return len - krb5->cksum_len;
+}
+
 /*
  * kdf.c
  */
