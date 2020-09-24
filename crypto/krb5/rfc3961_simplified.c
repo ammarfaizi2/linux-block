@@ -65,6 +65,8 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/random.h>
+#include <linux/skbuff.h>
 #include <linux/slab.h>
 #include <linux/lcm.h>
 #include <crypto/skcipher.h>
@@ -390,9 +392,211 @@ err:
 	return ret;
 }
 
+/*
+ * Apply encryption and checksumming functions to part of a scatterlist.
+ */
+ssize_t rfc3961_encrypt(const struct krb5_enctype *krb5,
+			struct krb5_enc_keys *keys,
+			struct scatterlist *sg, unsigned int nr_sg, size_t sg_len,
+			size_t data_offset, size_t data_len,
+			bool preconfounded)
+{
+	struct skcipher_request	*req;
+	struct shash_desc *desc;
+	ssize_t ret, done;
+	size_t bsize, base_len, secure_offset, secure_len, pad_len, cksum_offset;
+	void *buffer;
+	u8 *cksum, *iv;
+
+	if (WARN_ON(data_offset != krb5->conf_len))
+		return -EINVAL; /* Can't set offset on skcipher */
+
+	secure_offset = 0;
+	base_len = krb5->conf_len + data_len;
+	if (krb5->pad) {
+		secure_len = round_up(base_len, krb5->block_len);
+		pad_len    = secure_len - base_len;
+	} else {
+		secure_len = base_len;
+		pad_len    = 0;
+	}
+	cksum_offset = secure_len;
+	if (WARN_ON(cksum_offset + krb5->cksum_len > sg_len))
+		return -EFAULT;
+
+	bsize = krb5_shash_size(keys->Ki) +
+		krb5_digest_size(keys->Ki) +
+		krb5_sync_skcipher_size(keys->Ke) +
+		krb5_sync_skcipher_ivsize(keys->Ke);
+	bsize = max_t(size_t, bsize, krb5->conf_len);
+	bsize = max_t(size_t, bsize, krb5->block_len);
+	buffer = kzalloc(bsize, GFP_NOFS);
+	if (!buffer)
+		return -ENOMEM;
+
+	/* Insert the confounder into the skb */
+	ret = -EFAULT;
+	if (!preconfounded) {
+		get_random_bytes(buffer, krb5->conf_len);
+		done = sg_pcopy_from_buffer(sg, nr_sg, buffer, krb5->conf_len,
+					    secure_offset);
+		if (done != krb5->conf_len)
+			goto error;
+	}
+
+	/* We need to pad out to the crypto blocksize. */
+	if (pad_len) {
+		done = sg_zero_buffer(sg, nr_sg, pad_len, data_offset + data_len);
+		if (done != pad_len)
+			goto error;
+	}
+
+	/* Calculate the checksum using key Ki */
+	cksum = buffer + krb5_shash_size(keys->Ki);
+
+	desc = buffer;
+	desc->tfm = keys->Ki;
+	ret = crypto_shash_init(desc);
+	if (ret < 0)
+		goto error;
+
+	ret = crypto_shash_update_sg(desc, sg, secure_offset, secure_len);
+	if (ret < 0)
+		goto error;
+
+	ret = crypto_shash_final(desc, cksum);
+	if (ret < 0)
+		goto error;
+
+	/* Append the checksum into the buffer. */
+	ret = -EFAULT;
+	done = sg_pcopy_from_buffer(sg, nr_sg, cksum, krb5->cksum_len, cksum_offset);
+	if (done != krb5->cksum_len)
+		goto error;
+
+	/* Encrypt the secure region with key Ke. */
+	req = buffer +
+		krb5_shash_size(keys->Ki) +
+		krb5_digest_size(keys->Ki);
+	iv = buffer +
+		krb5_shash_size(keys->Ki) +
+		krb5_digest_size(keys->Ki) +
+		krb5_sync_skcipher_size(keys->Ke);
+
+	skcipher_request_set_sync_tfm(req, keys->Ke);
+	skcipher_request_set_callback(req, 0, NULL, NULL);
+	skcipher_request_set_crypt(req, sg, sg, secure_len, iv);
+	ret = crypto_skcipher_encrypt(req);
+	if (ret < 0)
+		goto error;
+
+	ret = secure_len + krb5->cksum_len;
+
+error:
+	kfree_sensitive(buffer);
+	return ret;
+}
+
+/*
+ * Apply decryption and checksumming functions to part of an skbuff.  The
+ * offset and length are updated to reflect the actual content of the encrypted
+ * region.
+ */
+int rfc3961_decrypt(const struct krb5_enctype *krb5,
+		    struct krb5_enc_keys *keys,
+		    struct scatterlist *sg, unsigned int nr_sg,
+		    size_t *_offset, size_t *_len,
+		    int *_error_code)
+{
+	struct skcipher_request	*req;
+	struct shash_desc *desc;
+	ssize_t done;
+	size_t bsize, secure_len, offset = *_offset, len = *_len;
+	void *buffer = NULL;
+	int ret;
+	u8 *cksum, *cksum2, *iv;
+
+	if (WARN_ON(*_offset != 0))
+		return -EINVAL; /* Can't set offset on skcipher */
+
+	if (len < krb5->conf_len + krb5->cksum_len) {
+		*_error_code = 1; //RXGK_SEALED_INCON;
+		return -EPROTO;
+	}
+	secure_len = len - krb5->cksum_len;
+
+	bsize = krb5_shash_size(keys->Ki) +
+		krb5_digest_size(keys->Ki) * 2 +
+		krb5_sync_skcipher_size(keys->Ke) +
+		krb5_sync_skcipher_ivsize(keys->Ke);
+	buffer = kzalloc(bsize, GFP_NOFS);
+	if (!buffer)
+		return -ENOMEM;
+
+	/* Decrypt the secure region with key Ke. */
+	req = buffer +
+		krb5_shash_size(keys->Ki) +
+		krb5_digest_size(keys->Ki) * 2;
+	iv = buffer +
+		krb5_shash_size(keys->Ki) +
+		krb5_digest_size(keys->Ki) * 2 +
+		krb5_sync_skcipher_size(keys->Ke);
+
+	skcipher_request_set_sync_tfm(req, keys->Ke);
+	skcipher_request_set_callback(req, 0, NULL, NULL);
+	skcipher_request_set_crypt(req, sg, sg, secure_len, iv);
+	ret = crypto_skcipher_decrypt(req);
+	if (ret < 0)
+		goto error;
+
+	/* Calculate the checksum using key Ki */
+	cksum = buffer +
+		krb5_shash_size(keys->Ki);
+	cksum2 = buffer +
+		krb5_shash_size(keys->Ki) +
+		krb5_digest_size(keys->Ki);
+
+	desc = buffer;
+	desc->tfm = keys->Ki;
+	ret = crypto_shash_init(desc);
+	if (ret < 0)
+		goto error;
+
+	ret = crypto_shash_update_sg(desc, sg, 0, secure_len);
+	if (ret < 0)
+		goto error;
+
+	ret = crypto_shash_final(desc, cksum);
+	if (ret < 0)
+		goto error;
+
+	/* Get the checksum from the buffer. */
+	ret = -EFAULT;
+	done = sg_pcopy_to_buffer(sg, nr_sg, cksum2, krb5->cksum_len,
+				  offset + len - krb5->cksum_len);
+	if (done != krb5->cksum_len)
+		goto error;
+
+	if (memcmp(cksum, cksum2, krb5->cksum_len) != 0) {
+		*_error_code = 1; //RXGK_SEALED_INCON;
+		ret = -EPROTO;
+		goto error;
+	}
+
+	*_offset += krb5->conf_len;
+	*_len -= krb5->conf_len + krb5->cksum_len;
+	ret = 0;
+
+error:
+	kfree_sensitive(buffer);
+	return ret;
+}
+
 const struct krb5_crypto_profile rfc3961_simplified_profile = {
 	.calc_PRF	= rfc3961_calc_PRF,
 	.calc_Kc	= rfc3961_calc_DK,
 	.calc_Ke	= rfc3961_calc_DK,
 	.calc_Ki	= rfc3961_calc_DK,
+	.encrypt	= rfc3961_encrypt,
+	.decrypt	= rfc3961_decrypt,
 };
