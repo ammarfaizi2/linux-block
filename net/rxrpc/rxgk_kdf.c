@@ -71,6 +71,24 @@ void rxgk_put(struct rxgk_context *gk)
 		rxgk_free(gk);
 }
 
+int crypto_shash_update_sg(struct shash_desc *desc, struct scatterlist *sg)
+{
+	for (;; sg++) {
+		struct page *page = sg_page(sg);
+		void *p = kmap_atomic(page);
+		int ret;
+
+		ret = crypto_shash_update(desc, p + sg->offset, sg->length);
+		kunmap_atomic(p);
+		if (ret < 0)
+			return ret;
+		if (sg_is_last(sg))
+			break;
+	}
+
+	return 0;
+}
+
 /*
  * Calculate the kerberos pseudo-random function, PRF+()
  *

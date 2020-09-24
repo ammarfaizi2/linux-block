@@ -164,8 +164,15 @@ int rxgk_set_up_token_cipher(const struct rxgk_buffer *, struct rxgk_enc_keys *,
 			     unsigned int, const struct rxgk_krb5_enctype **,
 			     gfp_t);
 void rxgk_put(struct rxgk_context *);
+int crypto_shash_update_sg(struct shash_desc *desc, struct scatterlist *sg);
 
 /*
  * rxgk_rfc3961.c
  */
 extern const struct rxgk_crypto_scheme rfc3961_crypto_scheme;
+
+int rfc3961_encrypt_skb(const struct rxgk_krb5_enctype *, struct rxgk_enc_keys *,
+			struct sk_buff *, u16, u16, bool);
+int rfc3961_decrypt_skb(struct rxrpc_call *, const struct rxgk_krb5_enctype *,
+			struct rxgk_enc_keys *, struct sk_buff *,
+			unsigned int *, unsigned int *, u32 *);
