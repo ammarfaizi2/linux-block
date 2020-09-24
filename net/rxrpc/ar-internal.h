@@ -1076,6 +1076,11 @@ void rxrpc_peer_init_rtt(struct rxrpc_peer *);
 extern const struct rxrpc_security rxgk_yfs;
 
 /*
+ * rxgk_selftest.c
+ */
+void rxgk_selftest(void);
+
+/*
  * rxkad.c
  */
 #ifdef CONFIG_RXKAD

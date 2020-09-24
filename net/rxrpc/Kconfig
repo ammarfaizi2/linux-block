@@ -74,3 +74,7 @@ config RXGK
 	  with add_key().
 
 	  See Documentation/networking/rxrpc.rst.
+
+config RXGK_SELFTESTS
+	bool "RxRPC GSSAPI security selftests"
+	depends on RXGK

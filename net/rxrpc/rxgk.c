@@ -1175,6 +1175,7 @@ static void rxgk_clear(struct rxrpc_connection *conn)
  */
 static int rxgk_init(void)
 {
+	rxgk_selftest();
 	return 0;
 }
 

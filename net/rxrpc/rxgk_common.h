@@ -143,6 +143,40 @@ struct rxgk_context {
 	struct rxgk_enc_keys	resp_enc;	/* Response packet enc key */
 };
 
+/*
+ * Self-testing data.
+ */
+struct rxgk_prf_test {
+	const struct rxgk_krb5_enctype *gk5e;
+	const char *name, *key, *octet, *prf;
+};
+
+struct rxgk_key_test_one {
+	const char *lab, *key;
+};
+
+struct rxgk_key_test {
+	const struct rxgk_krb5_enctype *gk5e;
+	const char *name, *key;
+	struct rxgk_key_test_one Kc, Ke, Ki;
+};
+
+struct rxgk_enc_test {
+	const struct rxgk_krb5_enctype *gk5e;
+	const char *name, *plain, *conf, *K0, *Ke, *Ki, *ct;
+	__be32 usage;
+};
+
+struct rxgk_mic_test {
+	const struct rxgk_krb5_enctype *gk5e;
+	const char *name, *plain, *K0, *Kc, *mic;
+	__be32 usage;
+};
+
+
+/*
+ * Crypto size/alignment rounding macros.
+ */
 #define crypto_roundup(X) round_up((X), CRYPTO_MINALIGN)
 
 #define rxgk_shash_size(TFM) \
@@ -207,3 +241,11 @@ size_t rxgk_krb5_how_much_data(const struct rxgk_krb5_enctype *,
  */
 extern const struct rxgk_krb5_enctype rxgk_aes128_cts_hmac_sha1_96;
 extern const struct rxgk_krb5_enctype rxgk_aes256_cts_hmac_sha1_96;
+
+/*
+ * rxgk_test_data.c
+ */
+extern const struct rxgk_prf_test rxgk_prf_tests[];
+extern const struct rxgk_key_test rxgk_key_tests[];
+extern const struct rxgk_enc_test rxgk_enc_tests[];
+extern const struct rxgk_mic_test rxgk_mic_tests[];
