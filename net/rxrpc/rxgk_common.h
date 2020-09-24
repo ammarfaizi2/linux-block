@@ -176,3 +176,8 @@ int rfc3961_encrypt_skb(const struct rxgk_krb5_enctype *, struct rxgk_enc_keys *
 int rfc3961_decrypt_skb(struct rxrpc_call *, const struct rxgk_krb5_enctype *,
 			struct rxgk_enc_keys *, struct sk_buff *,
 			unsigned int *, unsigned int *, u32 *);
+int rfc3961_get_mic_skb(const struct rxgk_krb5_enctype *, struct crypto_shash *,
+			const struct rxgk_buffer *, struct sk_buff *, u16, u16);
+int rfc3961_verify_mic_skb(struct rxrpc_call *, const struct rxgk_krb5_enctype *,
+			   struct crypto_shash *, const struct rxgk_buffer *,
+			   struct sk_buff *, unsigned int *, unsigned int *, u32 *);

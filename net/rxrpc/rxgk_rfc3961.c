@@ -637,6 +637,157 @@ error:
 	return ret;
 }
 
+/*
+ * Generate a checksum over some metadata and part of an skbuff and insert the
+ * MIC into the skbuff immediately prior to the data.
+ */
+int rfc3961_get_mic_skb(const struct rxgk_krb5_enctype *gk5e,
+			struct crypto_shash *shash,
+			const struct rxgk_buffer *metadata,
+			struct sk_buff *skb,
+			u16 data_offset, u16 data_len)
+{
+	struct scatterlist sg[16];
+	struct shash_desc *desc;
+	size_t bsize;
+	void *buffer, *digest;
+	int ret = -ENOMEM;
+
+	_enter("");
+
+	if (WARN_ON(data_offset < gk5e->cksumlength))
+		return -EINVAL;
+
+	bsize = rxgk_shash_size(shash) +
+		rxgk_digest_size(shash);
+	buffer = kzalloc(bsize, GFP_NOFS);
+	if (!buffer)
+		return -ENOMEM;
+
+	/* Calculate the MIC with key Kc and store it into the skb */
+	desc = buffer;
+	desc->tfm = shash;
+	ret = crypto_shash_init(desc);
+	if (ret < 0)
+		goto error;
+
+	if (metadata) {
+		ret = crypto_shash_update(desc, metadata->data, metadata->len);
+		if (ret < 0)
+			goto error;
+	}
+
+	sg_init_table(sg, ARRAY_SIZE(sg));
+	ret = skb_to_sgvec(skb, sg, gk5e->cksumlength, data_len);
+	if (unlikely(ret < 0))
+		goto error;
+
+	ret = crypto_shash_update_sg(desc, sg);
+	if (ret < 0)
+		goto error;
+
+	digest = buffer + rxgk_shash_size(shash);
+	ret = crypto_shash_final(desc, digest);
+	if (ret < 0)
+		goto error;
+
+	ret = skb_store_bits(skb, data_offset - gk5e->cksumlength,
+			     digest, gk5e->cksumlength);
+	if (ret < 0)
+		goto error;
+
+	ret = data_len;
+
+error:
+	kfree_sensitive(buffer);
+	_leave(" = %d", ret);
+	return ret;
+}
+
+/*
+ * Check the MIC on a region of an skbuff.  The offset and length are updated
+ * to reflect the actual content of the secure region.
+ */
+int rfc3961_verify_mic_skb(struct rxrpc_call *call,
+			   const struct rxgk_krb5_enctype *gk5e,
+			   struct crypto_shash *shash,
+			   const struct rxgk_buffer *metadata,
+			   struct sk_buff *skb,
+			   unsigned int *_offset, unsigned int *_len,
+			   u32 *_abort_code)
+{
+	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
+	struct scatterlist sg[16];
+	struct shash_desc *desc;
+	unsigned int offset = *_offset, len = *_len;
+	size_t bsize;
+	void *buffer = NULL;
+	int ret;
+	u8 *cksum, *cksum2;
+
+	_enter("");
+
+	if (len < gk5e->cksumlength) {
+		trace_rxrpc_rx_eproto(call, sp->hdr.serial, "rxgk_1_len");
+		*_abort_code = RXGK_SEALED_INCON;
+		return -EPROTO;
+	}
+
+	bsize = rxgk_shash_size(shash) +
+		rxgk_digest_size(shash) * 2;
+	buffer = kzalloc(bsize, GFP_NOFS);
+	if (!buffer)
+		return -ENOMEM;
+
+	cksum = buffer +
+		rxgk_shash_size(shash);
+	cksum2 = buffer +
+		rxgk_shash_size(shash) +
+		rxgk_digest_size(shash);
+
+	/* Calculate the MIC */
+	desc = buffer;
+	desc->tfm = shash;
+	ret = crypto_shash_init(desc);
+	if (ret < 0)
+		goto error;
+
+	if (metadata) {
+		ret = crypto_shash_update(desc, metadata->data, metadata->len);
+		if (ret < 0)
+			goto error;
+	}
+
+	sg_init_table(sg, ARRAY_SIZE(sg));
+	ret = skb_to_sgvec(skb, sg, offset + gk5e->cksumlength,
+			   len - gk5e->cksumlength);
+	if (unlikely(ret < 0))
+		goto error;
+
+	crypto_shash_update_sg(desc, sg);
+	crypto_shash_final(desc, cksum);
+
+	ret = skb_copy_bits(skb, offset, cksum2, gk5e->cksumlength);
+	if (ret < 0)
+		goto error;
+
+	if (memcmp(cksum, cksum2, gk5e->cksumlength) != 0) {
+		trace_rxrpc_rx_eproto(call, sp->hdr.serial, "rxgk_1_mic");
+		*_abort_code = RXGK_SEALED_INCON;
+		ret = -EPROTO;
+		goto error;
+	}
+
+	*_offset += gk5e->cksumlength;
+	*_len -= gk5e->cksumlength;
+	ret = 0;
+
+error:
+	kfree_sensitive(buffer);
+	_leave(" = %d", ret);
+	return ret;
+}
+
 const struct rxgk_crypto_scheme rfc3961_crypto_scheme = {
 	.calc_PRF	= rfc3961_calc_PRF,
 	.calc_Kc	= rfc3961_calc_DK,
@@ -644,4 +795,6 @@ const struct rxgk_crypto_scheme rfc3961_crypto_scheme = {
 	.calc_Ki	= rfc3961_calc_DK,
 	.encrypt_skb	= rfc3961_encrypt_skb,
 	.decrypt_skb	= rfc3961_decrypt_skb,
+	.get_mic_skb	= rfc3961_get_mic_skb,
+	.verify_mic_skb	= rfc3961_verify_mic_skb,
 };
