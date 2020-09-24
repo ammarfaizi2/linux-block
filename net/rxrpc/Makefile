@@ -42,5 +42,6 @@ rxrpc-$(CONFIG_RXGK) += \
 	rxgk_kdf.o \
 	rxgk_rfc3961.o \
 	rxgk_rfc3962.o \
+	rxgk_rfc8009.o \
 	rxgk_selftest.o \
 	rxgk_test_data.o
