@@ -302,3 +302,14 @@ int crypto_krb5_verify_mic(const struct krb5_enctype *krb5,
 					 _offset, _len, _error_code);
 }
 EXPORT_SYMBOL(crypto_krb5_verify_mic);
+
+static int __init crypto_krb5_init(void)
+{
+	return krb5_selftest();
+}
+module_init(crypto_krb5_init);
+
+static void __exit crypto_krb5_exit(void)
+{
+}
+module_exit(crypto_krb5_exit);

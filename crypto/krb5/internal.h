@@ -92,6 +92,37 @@ struct krb5_crypto_profile {
 #define round16(x) (((x) + 15) & ~15)
 
 /*
+ * Self-testing data.
+ */
+struct krb5_prf_test {
+	const struct krb5_enctype *krb5;
+	const char *name, *key, *octet, *prf;
+};
+
+struct krb5_key_test_one {
+	u32 use;
+	const char *key;
+};
+
+struct krb5_key_test {
+	const struct krb5_enctype *krb5;
+	const char *name, *key;
+	struct krb5_key_test_one Kc, Ke, Ki;
+};
+
+struct krb5_enc_test {
+	const struct krb5_enctype *krb5;
+	const char *name, *plain, *conf, *K0, *Ke, *Ki, *ct;
+	__be32 usage;
+};
+
+struct krb5_mic_test {
+	const struct krb5_enctype *krb5;
+	const char *name, *plain, *K0, *Kc, *mic;
+	__be32 usage;
+};
+
+/*
  * main.c
  */
 int crypto_shash_update_sg(struct shash_desc *desc, struct scatterlist *sg,
@@ -129,3 +160,20 @@ int rfc3961_verify_mic(const struct krb5_enctype *krb5,
  */
 extern const struct krb5_enctype krb5_aes128_cts_hmac_sha1_96;
 extern const struct krb5_enctype krb5_aes256_cts_hmac_sha1_96;
+
+/*
+ * selftest.c
+ */
+#ifdef CONFIG_CRYPTO_KRB5_SELFTESTS
+int krb5_selftest(void);
+#else
+static inline int krb5_selftest(void) { return 0; }
+#endif
+
+/*
+ * selftest_data.c
+ */
+extern const struct krb5_prf_test krb5_prf_tests[];
+extern const struct krb5_key_test krb5_key_tests[];
+extern const struct krb5_enc_test krb5_enc_tests[];
+extern const struct krb5_mic_test krb5_mic_tests[];
