@@ -202,13 +202,229 @@ static int rfc8009_random_to_key(const struct rxgk_krb5_enctype *gk5e,
 	return 0;
 }
 
+/*
+ * Apply encryption and checksumming functions to part of an skbuff.
+ */
+static int rfc8009_encrypt_skb(const struct rxgk_krb5_enctype *gk5e,
+			       struct rxgk_enc_keys *keys,
+			       struct sk_buff *skb,
+			       u16 data_offset, u16 data_len,
+			       bool preconfounded)
+{
+	struct skcipher_request	*req;
+	struct scatterlist sg[16];
+	struct shash_desc *desc;
+	unsigned short base_len, secure_offset, secure_len, pad_len, cksum_offset;
+	size_t bsize;
+	void *buffer;
+	int ret;
+	u8 *cksum, *iv;
+
+	_enter("{%x},%x,%x", skb->len, data_offset, data_len);
+
+	if (WARN_ON(data_offset < gk5e->conflen))
+		return -EMSGSIZE;
+
+	base_len   = gk5e->conflen + data_len;
+	secure_len = base_len;
+	pad_len    = secure_len - base_len;
+	secure_offset = data_offset - gk5e->conflen;
+	cksum_offset = secure_offset + secure_len;
+
+	bsize = rxgk_shash_size(keys->Ki) +
+		rxgk_digest_size(keys->Ki) +
+		rxgk_sync_skcipher_size(keys->Ke) +
+		rxgk_sync_skcipher_ivsize(keys->Ke);
+	bsize = max_t(size_t, bsize, gk5e->conflen);
+	bsize = max_t(size_t, bsize, gk5e->blocksize);
+	buffer = kzalloc(bsize, GFP_NOFS);
+	if (!buffer)
+		return -ENOMEM;
+
+	/* Insert the confounder into the skb */
+	if (!preconfounded) {
+		get_random_bytes(buffer, gk5e->conflen);
+		ret = skb_store_bits(skb, secure_offset, buffer, gk5e->conflen);
+		if (ret < 0)
+			goto error;
+	}
+
+	/* We need to pad out to the crypto blocksize. */
+	if (pad_len) {
+		memset(buffer, 0, pad_len);
+		ret = skb_store_bits(skb, data_offset + data_len, buffer, pad_len);
+		if (ret < 0)
+			goto error;
+	}
+
+	/* Set up an s-g list to cover the encryptable region. */
+	sg_init_table(sg, ARRAY_SIZE(sg));
+	ret = skb_to_sgvec(skb, sg, secure_offset, secure_len);
+	if (unlikely(ret < 0))
+		goto error;
+
+	/* Encrypt the secure region with key Ke. */
+	req = buffer +
+		rxgk_shash_size(keys->Ki) +
+		rxgk_digest_size(keys->Ki);
+	iv = buffer +
+		rxgk_shash_size(keys->Ki) +
+		rxgk_digest_size(keys->Ki) +
+		rxgk_sync_skcipher_size(keys->Ke);
+
+	skcipher_request_set_sync_tfm(req, keys->Ke);
+	skcipher_request_set_callback(req, 0, NULL, NULL);
+	skcipher_request_set_crypt(req, sg, sg, secure_len, iv);
+	ret = crypto_skcipher_encrypt(req);
+	if (ret < 0)
+		goto error;
+
+	/* Calculate the checksum using key Ki */
+	cksum = buffer + rxgk_shash_size(keys->Ki);
+
+	desc = buffer;
+	desc->tfm = keys->Ki;
+	ret = crypto_shash_init(desc);
+	if (ret < 0)
+		goto error;
+
+	memset(iv, 0, crypto_sync_skcipher_ivsize(keys->Ke));
+	ret = crypto_shash_update(desc, iv, crypto_sync_skcipher_ivsize(keys->Ke));
+	if (ret < 0)
+		goto error;
+
+	ret = crypto_shash_update_sg(desc, sg);
+	if (ret < 0)
+		goto error;
+
+	ret = crypto_shash_final(desc, cksum);
+	if (ret < 0)
+		goto error;
+
+	/* Append the checksum into the buffer. */
+	ret = skb_store_bits(skb, cksum_offset, cksum, gk5e->cksumlength);
+	if (ret < 0)
+		goto error;
+
+	ret = secure_len;
+
+error:
+	kfree_sensitive(buffer);
+	_leave(" = %d", ret);
+	return ret;
+}
+
+/*
+ * Apply decryption and checksumming functions to part of an skbuff.  The
+ * offset and length are updated to reflect the actual content of the encrypted
+ * region.
+ */
+static int rfc8009_decrypt_skb(struct rxrpc_call *call,
+			       const struct rxgk_krb5_enctype *gk5e,
+			       struct rxgk_enc_keys *keys,
+			       struct sk_buff *skb,
+			       unsigned int *_offset, unsigned int *_len,
+			       u32 *_abort_code)
+{
+	struct skcipher_request	*req;
+	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
+	struct scatterlist sg[16];
+	struct shash_desc *desc;
+	unsigned int offset = *_offset, len = *_len;
+	size_t bsize;
+	void *buffer = NULL;
+	int ret;
+	u8 *cksum, *cksum2, *iv;
+
+	_enter("");
+
+	if (len < gk5e->conflen + gk5e->cksumlength) {
+		trace_rxrpc_rx_eproto(call, sp->hdr.serial, "rxgk_len");
+		*_abort_code = RXGK_SEALED_INCON;
+		return -EPROTO;
+	}
+
+	bsize = rxgk_shash_size(keys->Ki) +
+		rxgk_digest_size(keys->Ki) * 2 +
+		rxgk_sync_skcipher_size(keys->Ke) +
+		rxgk_sync_skcipher_ivsize(keys->Ke);
+	buffer = kzalloc(bsize, GFP_NOFS);
+	if (!buffer)
+		return -ENOMEM;
+
+	cksum = buffer +
+		rxgk_shash_size(keys->Ki);
+	cksum2 = buffer +
+		rxgk_shash_size(keys->Ki) +
+		rxgk_digest_size(keys->Ki);
+	req = buffer +
+		rxgk_shash_size(keys->Ki) +
+		rxgk_digest_size(keys->Ki) * 2;
+	iv = buffer +
+		rxgk_shash_size(keys->Ki) +
+		rxgk_digest_size(keys->Ki) * 2 +
+		rxgk_sync_skcipher_size(keys->Ke);
+
+	/* Set up an s-g list to cover the encrypted region. */
+	sg_init_table(sg, ARRAY_SIZE(sg));
+	ret = skb_to_sgvec(skb, sg, offset, len - gk5e->cksumlength);
+	if (unlikely(ret < 0))
+		goto error;
+
+	/* Calculate the checksum using key Ki */
+	desc = buffer;
+	desc->tfm = keys->Ki;
+	ret = crypto_shash_init(desc);
+	if (ret < 0)
+		goto error;
+
+	ret = crypto_shash_update(desc, iv, crypto_sync_skcipher_ivsize(keys->Ke));
+	if (ret < 0)
+		goto error;
+
+	ret = crypto_shash_update_sg(desc, sg);
+	if (ret < 0)
+		goto error;
+
+	ret = crypto_shash_final(desc, cksum);
+	if (ret < 0)
+		goto error;
+
+	/* Get the checksum from the buffer. */
+	ret = skb_copy_bits(skb, offset + len - gk5e->cksumlength, cksum2, gk5e->cksumlength);
+	if (ret < 0)
+		goto error;
+
+	if (memcmp(cksum, cksum2, gk5e->cksumlength) != 0) {
+		trace_rxrpc_rx_eproto(call, sp->hdr.serial, "rxgk_cksum");
+		*_abort_code = RXGK_SEALED_INCON;
+		ret = -EPROTO;
+		goto error;
+	}
+
+	/* Decrypt the secure region with key Ke. */
+	skcipher_request_set_sync_tfm(req, keys->Ke);
+	skcipher_request_set_callback(req, 0, NULL, NULL);
+	skcipher_request_set_crypt(req, sg, sg, len - gk5e->cksumlength, iv);
+	ret = crypto_skcipher_decrypt(req);
+
+	*_offset += gk5e->conflen;
+	*_len -= gk5e->conflen + gk5e->cksumlength;
+	ret = 0;
+
+error:
+	kfree_sensitive(buffer);
+	_leave(" = %d", ret);
+	return ret;
+}
+
 static const struct rxgk_crypto_scheme rfc8009_crypto_scheme = {
 	.calc_PRF	= rfc8009_calc_PRF,
 	.calc_Kc	= rfc8009_calc_Ki,
 	.calc_Ke	= rfc8009_calc_Ke,
 	.calc_Ki	= rfc8009_calc_Ki,
-	.encrypt_skb	= NULL, //rfc8009_encrypt_skb,
-	.decrypt_skb	= NULL, //rfc8009_decrypt_skb,
+	.encrypt_skb	= rfc8009_encrypt_skb,
+	.decrypt_skb	= rfc8009_decrypt_skb,
 	.get_mic_skb	= rfc3961_get_mic_skb,
 	.verify_mic_skb	= rfc3961_verify_mic_skb,
 };
