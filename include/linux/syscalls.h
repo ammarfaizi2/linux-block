@@ -250,6 +250,23 @@ static inline int is_syscall_trace_event(struct trace_event_call *tp_event)
 	__diag_pop();							\
 	static inline long __do_sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))
 #endif /* __SYSCALL_DEFINEx */
+ 
+#ifndef SYSCALL_DECLARE0
+#define SYSCALL_DECLARE0(sname)					\
+	asmlinkage long sys_##sname(void)
+#endif /* SYSCALL_DECLARE0 */
+
+#define SYSCALL_DECLARE1(name, ...) SYSCALL_DECLAREx(1, _##name, __VA_ARGS__)
+#define SYSCALL_DECLARE2(name, ...) SYSCALL_DECLAREx(2, _##name, __VA_ARGS__)
+#define SYSCALL_DECLARE3(name, ...) SYSCALL_DECLAREx(3, _##name, __VA_ARGS__)
+#define SYSCALL_DECLARE4(name, ...) SYSCALL_DECLAREx(4, _##name, __VA_ARGS__)
+#define SYSCALL_DECLARE5(name, ...) SYSCALL_DECLAREx(5, _##name, __VA_ARGS__)
+#define SYSCALL_DECLARE6(name, ...) SYSCALL_DECLAREx(6, _##name, __VA_ARGS__)
+ 
+#ifndef SYSCALL_DECLAREx
+#define SYSCALL_DECLAREx(x, name, ...)				\
+	asmlinkage long sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))
+#endif /* SYSCALL_DECLAREx */
 
 #ifndef __SC_DELOUSE
 #define __SC_DELOUSE(t,v) ((__force t)(unsigned long)(v))
@@ -300,6 +317,29 @@ static inline int is_syscall_trace_event(struct trace_event_call *tp_event)
 	__diag_pop();								\
 	static inline long __do_compat_sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))
 #endif /* COMPAT_SYSCALL_DEFINEx */
+
+#ifndef COMPAT_SYSCALL_DECLARE0
+#define COMPAT_SYSCALL_DECLARE0(name) \
+	asmlinkage long compat_sys_##name(void)
+#endif /* COMPAT_SYSCALL_DECLARE0 */
+ 
+#define COMPAT_SYSCALL_DECLARE1(name, ...) \
+	COMPAT_SYSCALL_DECLAREx(1, _##name, __VA_ARGS__)
+#define COMPAT_SYSCALL_DECLARE2(name, ...) \
+	COMPAT_SYSCALL_DECLAREx(2, _##name, __VA_ARGS__)
+#define COMPAT_SYSCALL_DECLARE3(name, ...) \
+	COMPAT_SYSCALL_DECLAREx(3, _##name, __VA_ARGS__)
+#define COMPAT_SYSCALL_DECLARE4(name, ...) \
+	COMPAT_SYSCALL_DECLAREx(4, _##name, __VA_ARGS__)
+#define COMPAT_SYSCALL_DECLARE5(name, ...) \
+	COMPAT_SYSCALL_DECLAREx(5, _##name, __VA_ARGS__)
+#define COMPAT_SYSCALL_DECLARE6(name, ...) \
+	COMPAT_SYSCALL_DECLAREx(6, _##name, __VA_ARGS__)
+ 
+#ifndef COMPAT_SYSCALL_DECLAREx
+#define COMPAT_SYSCALL_DECLAREx(x, name, ...)					\
+	asmlinkage long compat_sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))
+#endif /* COMPAT_SYSCALL_DECLAREx */
 
 /*
  * Called before coming back to user-mode. Returning to user-mode with an

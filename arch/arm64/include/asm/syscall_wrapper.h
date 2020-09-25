@@ -21,6 +21,7 @@ struct pt_regs;
 	asmlinkage long __arm64_compat_sys##name(const struct pt_regs *regs);		\
 	ALLOW_ERROR_INJECTION(__arm64_compat_sys##name, ERRNO);				\
 	static long __se_compat_sys##name(__MAP(x,__SC_LONG,__VA_ARGS__));		\
+	long __typecheck_compat_sys##name(__MAP(x,__SC_DECL,__VA_ARGS__));		\
 	static inline long __do_compat_sys##name(__MAP(x,__SC_DECL,__VA_ARGS__));	\
 	asmlinkage long __arm64_compat_sys##name(const struct pt_regs *regs)		\
 	{										\
@@ -35,6 +36,13 @@ struct pt_regs;
 #define COMPAT_SYSCALL_DEFINE0(sname)							\
 	asmlinkage long __arm64_compat_sys_##sname(const struct pt_regs *__unused);	\
 	ALLOW_ERROR_INJECTION(__arm64_compat_sys_##sname, ERRNO);			\
+	asmlinkage long __arm64_compat_sys_##sname(const struct pt_regs *__unused)
+
+#define COMPAT_SYSCALL_DECLAREx(x, name, ...)						\
+	asmlinkage long __arm64_compat_sys##name(const struct pt_regs *regs);		\
+	long __typecheck_compat_sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))
+
+#define COMPAT_SYSCALL_DECLARE0(sname)							\
 	asmlinkage long __arm64_compat_sys_##sname(const struct pt_regs *__unused)
 
 #define COND_SYSCALL_COMPAT(name) 							\
@@ -52,6 +60,7 @@ struct pt_regs;
 	asmlinkage long __arm64_sys##name(const struct pt_regs *regs);		\
 	ALLOW_ERROR_INJECTION(__arm64_sys##name, ERRNO);			\
 	static long __se_sys##name(__MAP(x,__SC_LONG,__VA_ARGS__));		\
+	long __typecheck_sys##name(__MAP(x,__SC_DECL,__VA_ARGS__));		\
 	static inline long __do_sys##name(__MAP(x,__SC_DECL,__VA_ARGS__));	\
 	asmlinkage long __arm64_sys##name(const struct pt_regs *regs)		\
 	{									\
@@ -70,6 +79,13 @@ struct pt_regs;
 	SYSCALL_METADATA(_##sname, 0);						\
 	asmlinkage long __arm64_sys_##sname(const struct pt_regs *__unused);	\
 	ALLOW_ERROR_INJECTION(__arm64_sys_##sname, ERRNO);			\
+	asmlinkage long __arm64_sys_##sname(const struct pt_regs *__unused)
+
+#define SYSCALL_DECLAREx(x, name, ...)						\
+	asmlinkage long __arm64_sys##name(const struct pt_regs *regs);		\
+	long __typecheck_sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))
+
+#define SYSCALL_DECLARE0(sname)							\
 	asmlinkage long __arm64_sys_##sname(const struct pt_regs *__unused)
 
 #define COND_SYSCALL(name)							\

@@ -57,6 +57,9 @@
 		__attribute__((alias(__stringify(__s390x_sys_##sname)))); \
 	asmlinkage long __s390x_sys_##sname(void)
 
+#define COMPAT_SYSCALL_DECLARE0(sname)					\
+	asmlinkage long __s390_compat_sys_##sname(void)
+
 #define COND_SYSCALL(name)						\
 	cond_syscall(__s390x_sys_##name);				\
 	cond_syscall(__s390_sys_##name)
@@ -84,6 +87,16 @@
 	__diag_pop();								\
 	static inline long __do_compat_sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))
 
+#define COMPAT_SYSCALL_DECLAREx(x, name, ...)					\
+	asmlinkage long __s390_compat_sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))
+
+#define SYSCALL_DECLARE0(sname)						\
+	asmlinkage long __s390x_sys_##sname(void)
+
+#define SYSCALL_DECLAREx(x, name, ...)						\
+	asmlinkage long __s390x_sys##name(__MAP(x,__SC_DECL,__VA_ARGS__));	\
+	asmlinkage long __s390_sys##name(__MAP(x,__SC_LONG,__VA_ARGS__))
+
 /*
  * As some compat syscalls may not be implemented, we need to expand
  * COND_SYSCALL_COMPAT in kernel/sys_ni.c and COMPAT_SYS_NI in
@@ -104,6 +117,12 @@
 	asmlinkage long __s390x_sys_##sname(void);			\
 	ALLOW_ERROR_INJECTION(__s390x_sys_##sname, ERRNO);		\
 	asmlinkage long __s390x_sys_##sname(void)
+
+#define SYSCALL_DECLARE0(sname)						\
+	asmlinkage long __s390x_sys_##sname(void)
+
+#define SYSCALL_DECLAREx(x, name, ...)						\
+	asmlinkage long __s390x_sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))
 
 #define COND_SYSCALL(name)						\
 	cond_syscall(__s390x_sys_##name)
