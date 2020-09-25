@@ -8,7 +8,8 @@ krb5-y += \
 	main.o \
 	rfc3961_simplified.o \
 	rfc3962_aes.o \
-	rfc8009_aes2.o
+	rfc8009_aes2.o \
+	rfc6803_camellia.o
 
 krb5-$(CONFIG_CRYPTO_KRB5_SELFTESTS) += \
 	selftest.o \
