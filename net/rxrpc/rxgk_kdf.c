@@ -25,6 +25,8 @@ static const struct rxgk_krb5_enctype *const rxgk_supported_krb5_enctypes[] = {
 	&rxgk_aes256_cts_hmac_sha1_96,
 	&rxgk_aes128_cts_hmac_sha256_128,
 	&rxgk_aes256_cts_hmac_sha384_192,
+	&rxgk_camellia128_cts_cmac,
+	&rxgk_camellia256_cts_cmac,
 };
 
 /*

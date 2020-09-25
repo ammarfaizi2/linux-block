@@ -243,6 +243,12 @@ extern const struct rxgk_krb5_enctype rxgk_aes128_cts_hmac_sha1_96;
 extern const struct rxgk_krb5_enctype rxgk_aes256_cts_hmac_sha1_96;
 
 /*
+ * rxgk_rfc6803.c
+ */
+extern const struct rxgk_krb5_enctype rxgk_camellia128_cts_cmac;
+extern const struct rxgk_krb5_enctype rxgk_camellia256_cts_cmac;
+
+/*
  * rxgk_rfc8009.c
  */
 extern const struct rxgk_krb5_enctype rxgk_aes128_cts_hmac_sha256_128;
