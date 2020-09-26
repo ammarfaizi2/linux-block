@@ -3292,10 +3292,11 @@ static void kfree_rcu_monitor(struct work_struct *work)
 
 static inline bool
 add_ptr_to_bulk_krc_lock(struct kfree_rcu_cpu **krcp,
-	unsigned long *flags, void *ptr)
+	unsigned long *flags, void *ptr, bool can_sleep)
 {
 	struct kvfree_rcu_bulk_data *bnode;
 	bool can_alloc_page = preemptible();
+	int gfp = can_sleep ? GFP_NOWAIT | __GFP_NOWARN : GFP_ATOMIC;
 	int idx;
 
 	*krcp = krc_this_cpu_lock(flags);
@@ -3311,10 +3312,7 @@ add_ptr_to_bulk_krc_lock(struct kfree_rcu_cpu **krcp,
 		if (!bnode && can_alloc_page) {
 			migrate_disable();
 			krc_this_cpu_unlock(*krcp, *flags);
-
-			bnode = (struct kvfree_rcu_bulk_data *)
-				__get_free_page(GFP_NOWAIT | __GFP_NOWARN);
-
+			bnode = (struct kvfree_rcu_bulk_data *)__get_free_page(gfp);
 			*krcp = krc_this_cpu_lock(flags);
 			migrate_enable();
 		}
@@ -3384,7 +3382,7 @@ void kvfree_call_rcu(struct rcu_head *head, rcu_callback_t func)
 	 * Under high memory pressure GFP_NOWAIT can fail,
 	 * in that case the emergency path is maintained.
 	 */
-	success = add_ptr_to_bulk_krc_lock(&krcp, &flags, ptr);
+	success = add_ptr_to_bulk_krc_lock(&krcp, &flags, ptr, !head);
 	if (!success) {
 		if (head == NULL)
 			// Inline if kvfree_rcu(one_arg) call.
