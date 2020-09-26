@@ -3166,7 +3166,7 @@ static void kfree_rcu_work(struct work_struct *work)
 			krc_this_cpu_unlock(krcp, flags);
 
 			if (bkvhead[i])
-				free_page((unsigned long) bkvhead[i]);
+				kfree(bkvhead[i]);
 
 			cond_resched_tasks_rcu_qs();
 		}
@@ -3312,7 +3312,7 @@ add_ptr_to_bulk_krc_lock(struct kfree_rcu_cpu **krcp,
 		if (!bnode && can_alloc_page) {
 			migrate_disable();
 			krc_this_cpu_unlock(*krcp, *flags);
-			bnode = (struct kvfree_rcu_bulk_data *)__get_free_page(gfp);
+			bnode = kmalloc(PAGE_SIZE, gfp);
 			*krcp = krc_this_cpu_lock(flags);
 			migrate_enable();
 		}
