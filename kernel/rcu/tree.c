@@ -3295,7 +3295,6 @@ add_ptr_to_bulk_krc_lock(struct kfree_rcu_cpu **krcp,
 	unsigned long *flags, void *ptr)
 {
 	struct kvfree_rcu_bulk_data *bnode;
-	struct kfree_rcu_cpu **krcp;
 	bool can_alloc_page = preemptible();
 	int idx;
 
