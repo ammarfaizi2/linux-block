@@ -3165,8 +3165,7 @@ static void kfree_rcu_work(struct work_struct *work)
 				bkvhead[i] = NULL;
 			krc_this_cpu_unlock(krcp, flags);
 
-			if (bkvhead[i])
-				kfree(bkvhead[i]);
+			kfree(bkvhead[i]);
 
 			cond_resched_tasks_rcu_qs();
 		}
