@@ -374,35 +374,43 @@ static inline void addr_limit_user_check(void)
  * for architectures overriding the syscall calling convention, do not
  * include the prototypes if CONFIG_ARCH_HAS_SYSCALL_WRAPPER is enabled.
  */
+SYSCALL_DECLARE2(io_setup, unsigned, nr_events, aio_context_t __user *, ctxp);
+SYSCALL_DECLARE1(io_destroy, aio_context_t, ctx);
+SYSCALL_DECLARE3(io_submit, aio_context_t, ctx_id, long, nr,
+		struct iocb __user * __user *, iocbpp);
+SYSCALL_DECLARE3(io_cancel, aio_context_t, ctx_id, struct iocb __user *, iocb,
+		struct io_event __user *, result);
+#ifdef CONFIG_64BIT
+SYSCALL_DECLARE5(io_getevents, aio_context_t, ctx_id,
+		long, min_nr,
+		long, nr,
+		struct io_event __user *, events,
+		struct __kernel_timespec __user *, timeout);
+#endif
+#if defined(CONFIG_COMPAT_32BIT_TIME)
+SYSCALL_DECLARE5(io_getevents_time32, __u32, ctx_id,
+		__s32, min_nr,
+		__s32, nr,
+		struct io_event __user *, events,
+		struct old_timespec32 __user *, timeout);
+#endif
+SYSCALL_DECLARE6(io_pgetevents,
+		aio_context_t, ctx_id,
+		long, min_nr,
+		long, nr,
+		struct io_event __user *, events,
+		struct __kernel_timespec __user *, timeout,
+		const struct __aio_sigset __user *, usig);
+#if defined(CONFIG_COMPAT_32BIT_TIME) && !defined(CONFIG_64BIT)
+SYSCALL_DECLARE6(io_pgetevents_time32,
+		aio_context_t, ctx_id,
+		long, min_nr,
+		long, nr,
+		struct io_event __user *, events,
+		struct old_timespec32 __user *, timeout,
+		const struct __aio_sigset __user *, usig);
+#endif
 #ifndef CONFIG_ARCH_HAS_SYSCALL_WRAPPER
-asmlinkage long sys_io_setup(unsigned nr_reqs, aio_context_t __user *ctx);
-asmlinkage long sys_io_destroy(aio_context_t ctx);
-asmlinkage long sys_io_submit(aio_context_t, long,
-			struct iocb __user * __user *);
-asmlinkage long sys_io_cancel(aio_context_t ctx_id, struct iocb __user *iocb,
-			      struct io_event __user *result);
-asmlinkage long sys_io_getevents(aio_context_t ctx_id,
-				long min_nr,
-				long nr,
-				struct io_event __user *events,
-				struct __kernel_timespec __user *timeout);
-asmlinkage long sys_io_getevents_time32(__u32 ctx_id,
-				__s32 min_nr,
-				__s32 nr,
-				struct io_event __user *events,
-				struct old_timespec32 __user *timeout);
-asmlinkage long sys_io_pgetevents(aio_context_t ctx_id,
-				long min_nr,
-				long nr,
-				struct io_event __user *events,
-				struct __kernel_timespec __user *timeout,
-				const struct __aio_sigset *sig);
-asmlinkage long sys_io_pgetevents_time32(aio_context_t ctx_id,
-				long min_nr,
-				long nr,
-				struct io_event __user *events,
-				struct old_timespec32 __user *timeout,
-				const struct __aio_sigset *sig);
 asmlinkage long sys_io_uring_setup(u32 entries,
 				struct io_uring_params __user *p);
 asmlinkage long sys_io_uring_enter(unsigned int fd, u32 to_submit,
