@@ -1784,21 +1784,47 @@ extern bool mapped_inode_owner_or_capable(struct user_namespace *ns,
  * VFS helper functions..
  */
 extern int vfs_create(struct inode *, struct dentry *, umode_t, bool);
+extern int vfs_mapped_create(struct user_namespace *, struct inode *, struct dentry *, umode_t, bool);
 extern int vfs_mkdir(struct inode *, struct dentry *, umode_t);
+extern int vfs_mapped_mkdir(struct user_namespace *, struct inode *, struct dentry *, umode_t);
 extern int vfs_mknod(struct inode *, struct dentry *, umode_t, dev_t);
+extern int vfs_mapped_mknod(struct user_namespace *, struct inode *, struct dentry *, umode_t, dev_t);
 extern int vfs_symlink(struct inode *, struct dentry *, const char *);
+extern int vfs_mapped_symlink(struct user_namespace *, struct inode *, struct dentry *, const char *);
 extern int vfs_link(struct dentry *, struct inode *, struct dentry *, struct inode **);
+extern int vfs_mapped_link(struct dentry *, struct user_namespace *, struct inode *,
+		       struct dentry *, struct inode **);
 extern int vfs_rmdir(struct inode *, struct dentry *);
+extern int vfs_mapped_rmdir(struct user_namespace *, struct inode *, struct dentry *);
 extern int vfs_unlink(struct inode *, struct dentry *, struct inode **);
-extern int vfs_rename(struct inode *, struct dentry *, struct inode *, struct dentry *, struct inode **, unsigned int);
+extern int vfs_mapped_unlink(struct user_namespace *, struct inode *, struct dentry *, struct inode **);
 
-static inline int vfs_whiteout(struct inode *dir, struct dentry *dentry)
+struct renamedata {
+	struct user_namespace *old_user_ns;
+	struct inode *old_dir;
+	struct dentry *old_dentry;
+	struct user_namespace *new_user_ns;
+	struct inode *new_dir;
+	struct dentry *new_dentry;
+	struct inode **delegated_inode;
+	unsigned int flags;
+} __randomize_layout;
+
+extern int vfs_rename(struct inode *, struct dentry *, struct inode *,
+		      struct dentry *, struct inode **, unsigned int);
+extern int vfs_mapped_rename(struct renamedata *);
+
+static inline int vfs_whiteout(struct user_namespace *user_ns,
+			       struct inode *dir, struct dentry *dentry)
 {
-	return vfs_mknod(dir, dentry, S_IFCHR | WHITEOUT_MODE, WHITEOUT_DEV);
+	return vfs_mapped_mknod(user_ns, dir, dentry, S_IFCHR | WHITEOUT_MODE, WHITEOUT_DEV);
 }
 
 extern struct dentry *vfs_tmpfile(struct dentry *dentry, umode_t mode,
 				  int open_flag);
+extern struct dentry *vfs_mapped_tmpfile(struct user_namespace *user_ns,
+				     struct dentry *dentry, umode_t mode,
+				     int open_flag);
 
 int vfs_mkobj(struct dentry *, umode_t,
 		int (*f)(struct dentry *, umode_t, void *),
