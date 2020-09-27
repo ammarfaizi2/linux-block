@@ -3296,7 +3296,7 @@ add_ptr_to_bulk_krc_lock(struct kfree_rcu_cpu **krcp,
 {
 	struct kvfree_rcu_bulk_data *bnode;
 	bool can_alloc_page = preemptible();
-	int gfp = can_sleep ? GFP_NOWAIT | __GFP_NOWARN : GFP_ATOMIC;
+	gfp_t gfp = can_sleep ? GFP_NOWAIT | __GFP_NOWARN : GFP_ATOMIC;
 	int idx;
 
 	*krcp = krc_this_cpu_lock(flags);
