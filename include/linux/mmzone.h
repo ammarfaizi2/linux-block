@@ -193,7 +193,7 @@ enum node_stat_item {
 	NR_SHMEM,		/* shmem pages (included tmpfs/GEM pages) */
 	NR_SHMEM_THPS,
 	NR_SHMEM_PMDMAPPED,
-	NR_FILE_THPS,
+	NR_FILE_THPS,		/* Accounted in base pages */
 	NR_FILE_PMDMAPPED,
 	NR_ANON_THPS,
 	NR_VMSCAN_WRITE,

@@ -1844,7 +1844,8 @@ out_unlock:
 	if (is_shmem)
 		__inc_node_page_state(new_page, NR_SHMEM_THPS);
 	else {
-		__inc_node_page_state(new_page, NR_FILE_THPS);
+		__mod_node_page_state(page_pgdat(new_page), NR_FILE_THPS,
+				thp_nr_pages(new_page));
 		filemap_nr_thps_inc(mapping);
 	}
 

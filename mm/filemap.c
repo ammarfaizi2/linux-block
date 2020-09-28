@@ -193,8 +193,8 @@ static void unaccount_page_cache_page(struct address_space *mapping,
 		__mod_lruvec_page_state(page, NR_SHMEM, -nr);
 		if (PageTransHuge(page))
 			__dec_node_page_state(page, NR_SHMEM_THPS);
-	} else if (PageTransHuge(page)) {
-		__dec_node_page_state(page, NR_FILE_THPS);
+	} else if (nr > 1) {
+		__mod_node_page_state(page_pgdat(page), NR_FILE_THPS, -nr);
 		filemap_nr_thps_dec(mapping);
 	}
 
