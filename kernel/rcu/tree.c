@@ -3309,11 +3309,9 @@ add_ptr_to_bulk_krc_lock(struct kfree_rcu_cpu **krcp,
 			(*krcp)->bkvhead[idx]->nr_records == KVFREE_BULK_MAX_ENTR) {
 		bnode = get_cached_bnode(*krcp);
 		if (!bnode && can_alloc_page) {
-			migrate_disable();
 			krc_this_cpu_unlock(*krcp, *flags);
 			bnode = kmalloc(PAGE_SIZE, gfp);
 			*krcp = krc_this_cpu_lock(flags);
-			migrate_enable();
 		}
 
 		/* Switch to emergency path. */
