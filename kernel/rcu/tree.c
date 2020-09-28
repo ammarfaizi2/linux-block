@@ -3093,8 +3093,7 @@ get_cached_bnode(struct kfree_rcu_cpu *krcp)
 }
 
 static inline bool
-put_cached_bnode(struct kfree_rcu_cpu *krcp,
-	struct kvfree_rcu_bulk_data *bnode)
+put_cached_bnode(struct kfree_rcu_cpu *krcp, struct kvfree_rcu_bulk_data *bnode)
 {
 	// Check the limit.
 	if (krcp->nr_bkv_objs >= rcu_min_cached_objs)
@@ -3298,6 +3297,7 @@ add_ptr_to_bulk_krc_lock(struct kfree_rcu_cpu **krcp,
 	gfp_t gfp = (can_sleep ? GFP_KERNEL | __GFP_RETRY_MAYFAIL : GFP_ATOMIC) | __GFP_NOWARN;
 	int idx;
 
+retry:
 	*krcp = krc_this_cpu_lock(flags);
 	if (unlikely(!(*krcp)->initialized))
 		return false;
@@ -3309,11 +3309,11 @@ add_ptr_to_bulk_krc_lock(struct kfree_rcu_cpu **krcp,
 			(*krcp)->bkvhead[idx]->nr_records == KVFREE_BULK_MAX_ENTR) {
 		bnode = get_cached_bnode(*krcp);
 		if (!bnode && can_alloc_page) {
-			migrate_disable();
 			krc_this_cpu_unlock(*krcp, *flags);
 			bnode = kmalloc(PAGE_SIZE, gfp);
-			*krcp = krc_this_cpu_lock(flags);
-			migrate_enable();
+			if (!put_cached_bnode(*krcp, bnode))
+				kfree(bnode); // If migrated.
+			goto retry;
 		}
 
 		/* Switch to emergency path. */
