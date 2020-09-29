@@ -296,15 +296,15 @@ static const u32 vsc9959_sys_regmap[] = {
 };
 
 static const u32 vsc9959_ptp_regmap[] = {
-	REG(PTP_PIN_CFG,                   0x000000),
-	REG(PTP_PIN_TOD_SEC_MSB,           0x000004),
-	REG(PTP_PIN_TOD_SEC_LSB,           0x000008),
-	REG(PTP_PIN_TOD_NSEC,              0x00000c),
-	REG(PTP_PIN_WF_HIGH_PERIOD,        0x000014),
-	REG(PTP_PIN_WF_LOW_PERIOD,         0x000018),
-	REG(PTP_CFG_MISC,                  0x0000a0),
-	REG(PTP_CLK_CFG_ADJ_CFG,           0x0000a4),
-	REG(PTP_CLK_CFG_ADJ_FREQ,          0x0000a8),
+	REG(PTP_PIN_CFG,			0x000000),
+	REG(PTP_PIN_TOD_SEC_MSB,		0x000004),
+	REG(PTP_PIN_TOD_SEC_LSB,		0x000008),
+	REG(PTP_PIN_TOD_NSEC,			0x00000c),
+	REG(PTP_PIN_WF_HIGH_PERIOD,		0x000014),
+	REG(PTP_PIN_WF_LOW_PERIOD,		0x000018),
+	REG(PTP_CFG_MISC,			0x0000a0),
+	REG(PTP_CLK_CFG_ADJ_CFG,		0x0000a4),
+	REG(PTP_CLK_CFG_ADJ_FREQ,		0x0000a8),
 };
 
 static const u32 vsc9959_gcb_regmap[] = {
@@ -646,17 +646,17 @@ static struct vcap_field vsc9959_vcap_is2_keys[] = {
 	[VCAP_IS2_HK_DIP_EQ_SIP]		= {118,   1},
 	/* IP4_TCP_UDP (TYPE=100) */
 	[VCAP_IS2_HK_TCP]			= {119,   1},
-	[VCAP_IS2_HK_L4_SPORT]			= {120,  16},
-	[VCAP_IS2_HK_L4_DPORT]			= {136,  16},
+	[VCAP_IS2_HK_L4_DPORT]			= {120,  16},
+	[VCAP_IS2_HK_L4_SPORT]			= {136,  16},
 	[VCAP_IS2_HK_L4_RNG]			= {152,   8},
 	[VCAP_IS2_HK_L4_SPORT_EQ_DPORT]		= {160,   1},
 	[VCAP_IS2_HK_L4_SEQUENCE_EQ0]		= {161,   1},
-	[VCAP_IS2_HK_L4_URG]			= {162,   1},
-	[VCAP_IS2_HK_L4_ACK]			= {163,   1},
-	[VCAP_IS2_HK_L4_PSH]			= {164,   1},
-	[VCAP_IS2_HK_L4_RST]			= {165,   1},
-	[VCAP_IS2_HK_L4_SYN]			= {166,   1},
-	[VCAP_IS2_HK_L4_FIN]			= {167,   1},
+	[VCAP_IS2_HK_L4_FIN]			= {162,   1},
+	[VCAP_IS2_HK_L4_SYN]			= {163,   1},
+	[VCAP_IS2_HK_L4_RST]			= {164,   1},
+	[VCAP_IS2_HK_L4_PSH]			= {165,   1},
+	[VCAP_IS2_HK_L4_ACK]			= {166,   1},
+	[VCAP_IS2_HK_L4_URG]			= {167,   1},
 	[VCAP_IS2_HK_L4_1588_DOM]		= {168,   8},
 	[VCAP_IS2_HK_L4_1588_VER]		= {176,   4},
 	/* IP4_OTHER (TYPE=101) */
@@ -719,6 +719,23 @@ static const struct vcap_props vsc9959_vcap_props[] = {
 	},
 };
 
+static const struct ptp_clock_info vsc9959_ptp_caps = {
+	.owner		= THIS_MODULE,
+	.name		= "felix ptp",
+	.max_adj	= 0x7fffffff,
+	.n_alarm	= 0,
+	.n_ext_ts	= 0,
+	.n_per_out	= OCELOT_PTP_PINS_NUM,
+	.n_pins		= OCELOT_PTP_PINS_NUM,
+	.pps		= 0,
+	.gettime64	= ocelot_ptp_gettime64,
+	.settime64	= ocelot_ptp_settime64,
+	.adjtime	= ocelot_ptp_adjtime,
+	.adjfine	= ocelot_ptp_adjfine,
+	.verify		= ocelot_ptp_verify,
+	.enable		= ocelot_ptp_enable,
+};
+
 #define VSC9959_INIT_TIMEOUT			50000
 #define VSC9959_GCB_RST_SLEEP			100
 #define VSC9959_SYS_RAMINIT_SLEEP		80
@@ -727,7 +744,7 @@ static int vsc9959_gcb_soft_rst_status(struct ocelot *ocelot)
 {
 	int val;
 
-	regmap_field_read(ocelot->regfields[GCB_SOFT_RST_SWC_RST], &val);
+	ocelot_field_read(ocelot, GCB_SOFT_RST_SWC_RST, &val);
 
 	return val;
 }
@@ -737,12 +754,15 @@ static int vsc9959_sys_ram_init_status(struct ocelot *ocelot)
 	return ocelot_read(ocelot, SYS_RAM_INIT);
 }
 
+/* CORE_ENA is in SYS:SYSTEM:RESET_CFG
+ * RAM_INIT is in SYS:RAM_CTRL:RAM_INIT
+ */
 static int vsc9959_reset(struct ocelot *ocelot)
 {
 	int val, err;
 
 	/* soft-reset the switch core */
-	regmap_field_write(ocelot->regfields[GCB_SOFT_RST_SWC_RST], 1);
+	ocelot_field_write(ocelot, GCB_SOFT_RST_SWC_RST, 1);
 
 	err = readx_poll_timeout(vsc9959_gcb_soft_rst_status, ocelot, val, !val,
 				 VSC9959_GCB_RST_SLEEP, VSC9959_INIT_TIMEOUT);
@@ -762,7 +782,7 @@ static int vsc9959_reset(struct ocelot *ocelot)
 	}
 
 	/* enable switch core */
-	regmap_field_write(ocelot->regfields[SYS_RESET_CFG_CORE_ENA], 1);
+	ocelot_field_write(ocelot, SYS_RESET_CFG_CORE_ENA, 1);
 
 	return 0;
 }
@@ -933,7 +953,7 @@ static int vsc9959_mdio_bus_alloc(struct ocelot *ocelot)
 	return 0;
 }
 
-void vsc9959_mdio_bus_free(struct ocelot *ocelot)
+static void vsc9959_mdio_bus_free(struct ocelot *ocelot)
 {
 	struct felix *felix = ocelot_to_felix(ocelot);
 	int port;
@@ -1135,6 +1155,8 @@ static void vsc9959_xmit_template_populate(struct ocelot *ocelot, int port)
 	struct ocelot_port *ocelot_port = ocelot->ports[port];
 	u8 *template = ocelot_port->xmit_template;
 	u64 bypass, dest, src;
+	__be32 *prefix;
+	u8 *injection;
 
 	/* Set the source port as the CPU port module and not the
 	 * NPI port
@@ -1143,9 +1165,14 @@ static void vsc9959_xmit_template_populate(struct ocelot *ocelot, int port)
 	dest = BIT(port);
 	bypass = true;
 
-	packing(template, &bypass, 127, 127, OCELOT_TAG_LEN, PACK, 0);
-	packing(template, &dest,    68,  56, OCELOT_TAG_LEN, PACK, 0);
-	packing(template, &src,     46,  43, OCELOT_TAG_LEN, PACK, 0);
+	injection = template + OCELOT_SHORT_PREFIX_LEN;
+	prefix = (__be32 *)template;
+
+	packing(injection, &bypass, 127, 127, OCELOT_TAG_LEN, PACK, 0);
+	packing(injection, &dest,    68,  56, OCELOT_TAG_LEN, PACK, 0);
+	packing(injection, &src,     46,  43, OCELOT_TAG_LEN, PACK, 0);
+
+	*prefix = cpu_to_be32(0x8880000a);
 }
 
 static const struct felix_info felix_info_vsc9959 = {
@@ -1166,12 +1193,13 @@ static const struct felix_info felix_info_vsc9959 = {
 	.num_tx_queues		= FELIX_NUM_TC,
 	.switch_pci_bar		= 4,
 	.imdio_pci_bar		= 0,
+	.ptp_caps		= &vsc9959_ptp_caps,
 	.mdio_bus_alloc		= vsc9959_mdio_bus_alloc,
 	.mdio_bus_free		= vsc9959_mdio_bus_free,
 	.phylink_validate	= vsc9959_phylink_validate,
 	.prevalidate_phy_mode	= vsc9959_prevalidate_phy_mode,
-	.port_setup_tc          = vsc9959_port_setup_tc,
-	.port_sched_speed_set   = vsc9959_sched_speed_set,
+	.port_setup_tc		= vsc9959_port_setup_tc,
+	.port_sched_speed_set	= vsc9959_sched_speed_set,
 	.xmit_template_populate	= vsc9959_xmit_template_populate,
 };
 
@@ -1307,9 +1335,13 @@ static struct pci_device_id felix_ids[] = {
 };
 MODULE_DEVICE_TABLE(pci, felix_ids);
 
-struct pci_driver felix_vsc9959_pci_driver = {
+static struct pci_driver felix_vsc9959_pci_driver = {
 	.name		= "mscc_felix",
 	.id_table	= felix_ids,
 	.probe		= felix_pci_probe,
 	.remove		= felix_pci_remove,
 };
+module_pci_driver(felix_vsc9959_pci_driver);
+
+MODULE_DESCRIPTION("Felix Switch driver");
+MODULE_LICENSE("GPL v2");

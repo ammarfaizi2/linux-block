@@ -564,7 +564,7 @@ __poll_t tcp_poll(struct file *file, struct socket *sock, poll_table *wait)
 			mask |= EPOLLIN | EPOLLRDNORM;
 
 		if (!(sk->sk_shutdown & SEND_SHUTDOWN)) {
-			if (sk_stream_is_writeable(sk)) {
+			if (__sk_stream_is_writeable(sk, 1)) {
 				mask |= EPOLLOUT | EPOLLWRNORM;
 			} else {  /* send SIGIO later */
 				sk_set_bit(SOCKWQ_ASYNC_NOSPACE, sk);
@@ -576,7 +576,7 @@ __poll_t tcp_poll(struct file *file, struct socket *sock, poll_table *wait)
 				 * pairs with the input side.
 				 */
 				smp_mb__after_atomic();
-				if (sk_stream_is_writeable(sk))
+				if (__sk_stream_is_writeable(sk, 1))
 					mask |= EPOLLOUT | EPOLLWRNORM;
 			}
 		} else
@@ -1004,12 +1004,12 @@ ssize_t do_tcp_sendpages(struct sock *sk, struct page *page, int offset,
 		    !tcp_skb_can_collapse_to(skb)) {
 new_segment:
 			if (!sk_stream_memory_free(sk))
-				goto wait_for_sndbuf;
+				goto wait_for_space;
 
 			skb = sk_stream_alloc_skb(sk, 0, sk->sk_allocation,
 					tcp_rtx_and_write_queues_empty(sk));
 			if (!skb)
-				goto wait_for_memory;
+				goto wait_for_space;
 
 #ifdef CONFIG_TLS_DEVICE
 			skb->decrypted = !!(flags & MSG_SENDPAGE_DECRYPTED);
@@ -1028,7 +1028,7 @@ new_segment:
 			goto new_segment;
 		}
 		if (!sk_wmem_schedule(sk, copy))
-			goto wait_for_memory;
+			goto wait_for_space;
 
 		if (can_coalesce) {
 			skb_frag_size_add(&skb_shinfo(skb)->frags[i - 1], copy);
@@ -1069,9 +1069,8 @@ new_segment:
 			tcp_push_one(sk, mss_now);
 		continue;
 
-wait_for_sndbuf:
+wait_for_space:
 		set_bit(SOCK_NOSPACE, &sk->sk_socket->flags);
-wait_for_memory:
 		tcp_push(sk, flags & ~MSG_MORE, mss_now,
 			 TCP_NAGLE_PUSH, size_goal);
 
@@ -1282,7 +1281,7 @@ restart:
 
 new_segment:
 			if (!sk_stream_memory_free(sk))
-				goto wait_for_sndbuf;
+				goto wait_for_space;
 
 			if (unlikely(process_backlog >= 16)) {
 				process_backlog = 0;
@@ -1293,7 +1292,7 @@ new_segment:
 			skb = sk_stream_alloc_skb(sk, 0, sk->sk_allocation,
 						  first_skb);
 			if (!skb)
-				goto wait_for_memory;
+				goto wait_for_space;
 
 			process_backlog++;
 			skb->ip_summed = CHECKSUM_PARTIAL;
@@ -1326,7 +1325,7 @@ new_segment:
 			struct page_frag *pfrag = sk_page_frag(sk);
 
 			if (!sk_page_frag_refill(sk, pfrag))
-				goto wait_for_memory;
+				goto wait_for_space;
 
 			if (!skb_can_coalesce(skb, i, pfrag->page,
 					      pfrag->offset)) {
@@ -1340,7 +1339,7 @@ new_segment:
 			copy = min_t(int, copy, pfrag->size - pfrag->offset);
 
 			if (!sk_wmem_schedule(sk, copy))
-				goto wait_for_memory;
+				goto wait_for_space;
 
 			err = skb_copy_to_page_nocache(sk, &msg->msg_iter, skb,
 						       pfrag->page,
@@ -1393,9 +1392,8 @@ new_segment:
 			tcp_push_one(sk, mss_now);
 		continue;
 
-wait_for_sndbuf:
+wait_for_space:
 		set_bit(SOCK_NOSPACE, &sk->sk_socket->flags);
-wait_for_memory:
 		if (copied)
 			tcp_push(sk, flags & ~MSG_MORE, mss_now,
 				 TCP_NAGLE_PUSH, size_goal);
@@ -1527,7 +1525,7 @@ static int tcp_peek_sndq(struct sock *sk, struct msghdr *msg, int len)
  * calculation of whether or not we must ACK for the sake of
  * a window update.
  */
-static void tcp_cleanup_rbuf(struct sock *sk, int copied)
+void tcp_cleanup_rbuf(struct sock *sk, int copied)
 {
 	struct tcp_sock *tp = tcp_sk(sk);
 	bool time_to_ack = false;
@@ -2698,6 +2696,7 @@ int tcp_disconnect(struct sock *sk, int flags)
 	if (icsk->icsk_ca_ops->release)
 		icsk->icsk_ca_ops->release(sk);
 	memset(icsk->icsk_ca_priv, 0, sizeof(icsk->icsk_ca_priv));
+	icsk->icsk_ca_initialized = 0;
 	tcp_set_ca_state(sk, TCP_CA_Open);
 	tp->is_sack_reneg = 0;
 	tcp_clear_retrans(tp);
@@ -3049,7 +3048,7 @@ static int do_tcp_setsockopt(struct sock *sk, int level, int optname,
 		name[val] = 0;
 
 		lock_sock(sk);
-		err = tcp_set_congestion_control(sk, name, true, true,
+		err = tcp_set_congestion_control(sk, name, true,
 						 ns_capable(sock_net(sk)->user_ns,
 							    CAP_NET_ADMIN));
 		release_sock(sk);

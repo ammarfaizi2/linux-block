@@ -344,10 +344,28 @@ static int ocelot_port_xmit(struct sk_buff *skb, struct net_device *dev)
 	info.vid = skb_vlan_tag_get(skb);
 
 	/* Check if timestamping is needed */
+	if (ocelot->ptp && (shinfo->tx_flags & SKBTX_HW_TSTAMP)) {
+		info.rew_op = ocelot_port->ptp_cmd;
+
+		if (ocelot_port->ptp_cmd == IFH_REW_OP_TWO_STEP_PTP) {
+			struct sk_buff *clone;
+
+			clone = skb_clone_sk(skb);
+			if (!clone) {
+				kfree_skb(skb);
+				return NETDEV_TX_OK;
+			}
+
+			ocelot_port_add_txtstamp_skb(ocelot, port, clone);
+
+			info.rew_op |= clone->cb[0] << 3;
+		}
+	}
+
 	if (ocelot->ptp && shinfo->tx_flags & SKBTX_HW_TSTAMP) {
 		info.rew_op = ocelot_port->ptp_cmd;
 		if (ocelot_port->ptp_cmd == IFH_REW_OP_TWO_STEP_PTP)
-			info.rew_op |= (ocelot_port->ts_id  % 4) << 3;
+			info.rew_op |= skb->cb[0] << 3;
 	}
 
 	ocelot_gen_ifh(ifh, &info);
@@ -380,12 +398,8 @@ static int ocelot_port_xmit(struct sk_buff *skb, struct net_device *dev)
 	dev->stats.tx_packets++;
 	dev->stats.tx_bytes += skb->len;
 
-	if (!ocelot_port_add_txtstamp_skb(ocelot_port, skb)) {
-		ocelot_port->ts_id++;
-		return NETDEV_TX_OK;
-	}
+	kfree_skb(skb);
 
-	dev_kfree_skb_any(skb);
 	return NETDEV_TX_OK;
 }
 

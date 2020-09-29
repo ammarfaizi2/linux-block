@@ -191,6 +191,24 @@ err_init_txq:
 	return err;
 }
 
+static void enable_txqs_napi(struct hinic_dev *nic_dev)
+{
+	int num_txqs = hinic_hwdev_num_qps(nic_dev->hwdev);
+	int i;
+
+	for (i = 0; i < num_txqs; i++)
+		napi_enable(&nic_dev->txqs[i].napi);
+}
+
+static void disable_txqs_napi(struct hinic_dev *nic_dev)
+{
+	int num_txqs = hinic_hwdev_num_qps(nic_dev->hwdev);
+	int i;
+
+	for (i = 0; i < num_txqs; i++)
+		napi_disable(&nic_dev->txqs[i].napi);
+}
+
 /**
  * free_txqs - Free the Logical Tx Queues of specific NIC device
  * @nic_dev: the specific NIC device
@@ -440,6 +458,8 @@ int hinic_open(struct net_device *netdev)
 		goto err_create_txqs;
 	}
 
+	enable_txqs_napi(nic_dev);
+
 	err = create_rxqs(nic_dev);
 	if (err) {
 		netif_err(nic_dev, drv, netdev,
@@ -524,6 +544,7 @@ err_port_state:
 	}
 
 err_create_rxqs:
+	disable_txqs_napi(nic_dev);
 	free_txqs(nic_dev);
 
 err_create_txqs:
@@ -536,6 +557,9 @@ int hinic_close(struct net_device *netdev)
 {
 	struct hinic_dev *nic_dev = netdev_priv(netdev);
 	unsigned int flags;
+
+	/* Disable txq napi firstly to aviod rewaking txq in free_tx_poll */
+	disable_txqs_napi(nic_dev);
 
 	down(&nic_dev->mgmt_lock);
 
@@ -929,11 +953,16 @@ static void netdev_features_init(struct net_device *netdev)
 	netdev->hw_features = NETIF_F_SG | NETIF_F_HIGHDMA | NETIF_F_IP_CSUM |
 			      NETIF_F_IPV6_CSUM | NETIF_F_TSO | NETIF_F_TSO6 |
 			      NETIF_F_RXCSUM | NETIF_F_LRO |
-			      NETIF_F_HW_VLAN_CTAG_TX | NETIF_F_HW_VLAN_CTAG_RX;
+			      NETIF_F_HW_VLAN_CTAG_TX | NETIF_F_HW_VLAN_CTAG_RX |
+			      NETIF_F_GSO_UDP_TUNNEL | NETIF_F_GSO_UDP_TUNNEL_CSUM;
 
 	netdev->vlan_features = netdev->hw_features;
 
 	netdev->features = netdev->hw_features | NETIF_F_HW_VLAN_CTAG_FILTER;
+
+	netdev->hw_enc_features = NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM | NETIF_F_SCTP_CRC |
+				  NETIF_F_SG | NETIF_F_TSO | NETIF_F_TSO6 | NETIF_F_TSO_ECN |
+				  NETIF_F_GSO_UDP_TUNNEL_CSUM | NETIF_F_GSO_UDP_TUNNEL;
 }
 
 static void hinic_refresh_nic_cfg(struct hinic_dev *nic_dev)
@@ -961,7 +990,7 @@ static void hinic_refresh_nic_cfg(struct hinic_dev *nic_dev)
  * @handle: nic device for the handler
  * @buf_in: input buffer
  * @in_size: input size
- * @buf_in: output buffer
+ * @buf_out: output buffer
  * @out_size: returned output size
  *
  * Return 0 - Success, negative - Failure

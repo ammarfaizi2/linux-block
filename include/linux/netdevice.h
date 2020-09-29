@@ -634,8 +634,9 @@ extern int sysctl_devconf_inherit_init_net;
  */
 static inline bool net_has_fallback_tunnels(const struct net *net)
 {
-	return (net == &init_net && sysctl_fb_tunnels_only_for_init_net == 1) ||
-	       !sysctl_fb_tunnels_only_for_init_net;
+	return !IS_ENABLED(CONFIG_SYSCTL) ||
+	       !sysctl_fb_tunnels_only_for_init_net ||
+	       (net == &init_net && sysctl_fb_tunnels_only_for_init_net == 1);
 }
 
 static inline int netdev_queue_numa_node_read(const struct netdev_queue *q)
@@ -1775,6 +1776,7 @@ enum netdev_priv_flags {
  *				the watchdog (see dev_watchdog())
  *	@watchdog_timer:	List of timers
  *
+ *	@proto_down_reason:	reason a netdev interface is held down
  *	@pcpu_refcnt:		Number of references to this device
  *	@todo_list:		Delayed register/unregister
  *	@link_watch_list:	XXX: need comments on this one
@@ -1839,6 +1841,7 @@ enum netdev_priv_flags {
  *	@udp_tunnel_nic_info:	static structure describing the UDP tunnel
  *				offload capabilities of the device
  *	@udp_tunnel_nic:	UDP tunnel offload state
+ *	@xdp_state:		stores info on attached XDP BPF programs
  *
  *	FIXME: cleanup struct net_device such that network protocol info
  *	moves out.
@@ -4676,16 +4679,6 @@ int netdev_class_create_file_ns(const struct class_attribute *class_attr,
 				const void *ns);
 void netdev_class_remove_file_ns(const struct class_attribute *class_attr,
 				 const void *ns);
-
-static inline int netdev_class_create_file(const struct class_attribute *class_attr)
-{
-	return netdev_class_create_file_ns(class_attr, NULL);
-}
-
-static inline void netdev_class_remove_file(const struct class_attribute *class_attr)
-{
-	netdev_class_remove_file_ns(class_attr, NULL);
-}
 
 extern const struct kobj_ns_type_operations net_ns_type_operations;
 

@@ -2634,7 +2634,7 @@ static int sja1105_vlan_prepare(struct dsa_switch *ds, int port,
  * which can only be partially reconfigured at runtime (and not the TPID).
  * So a switch reset is required.
  */
-static int sja1105_vlan_filtering(struct dsa_switch *ds, int port, bool enabled)
+int sja1105_vlan_filtering(struct dsa_switch *ds, int port, bool enabled)
 {
 	struct sja1105_l2_lookup_params_entry *l2_lookup_params;
 	struct sja1105_general_params_entry *general_params;
@@ -2864,105 +2864,6 @@ static const struct dsa_8021q_ops sja1105_dsa_8021q_ops = {
 	.vlan_del	= sja1105_dsa_8021q_vlan_del,
 };
 
-static int sja1105_best_effort_vlan_filtering_get(struct sja1105_private *priv,
-						  bool *be_vlan)
-{
-	*be_vlan = priv->best_effort_vlan_filtering;
-
-	return 0;
-}
-
-static int sja1105_best_effort_vlan_filtering_set(struct sja1105_private *priv,
-						  bool be_vlan)
-{
-	struct dsa_switch *ds = priv->ds;
-	bool vlan_filtering;
-	int port;
-	int rc;
-
-	priv->best_effort_vlan_filtering = be_vlan;
-
-	rtnl_lock();
-	for (port = 0; port < ds->num_ports; port++) {
-		struct dsa_port *dp;
-
-		if (!dsa_is_user_port(ds, port))
-			continue;
-
-		dp = dsa_to_port(ds, port);
-		vlan_filtering = dsa_port_is_vlan_filtering(dp);
-
-		rc = sja1105_vlan_filtering(ds, port, vlan_filtering);
-		if (rc)
-			break;
-	}
-	rtnl_unlock();
-
-	return rc;
-}
-
-enum sja1105_devlink_param_id {
-	SJA1105_DEVLINK_PARAM_ID_BASE = DEVLINK_PARAM_GENERIC_ID_MAX,
-	SJA1105_DEVLINK_PARAM_ID_BEST_EFFORT_VLAN_FILTERING,
-};
-
-static int sja1105_devlink_param_get(struct dsa_switch *ds, u32 id,
-				     struct devlink_param_gset_ctx *ctx)
-{
-	struct sja1105_private *priv = ds->priv;
-	int err;
-
-	switch (id) {
-	case SJA1105_DEVLINK_PARAM_ID_BEST_EFFORT_VLAN_FILTERING:
-		err = sja1105_best_effort_vlan_filtering_get(priv,
-							     &ctx->val.vbool);
-		break;
-	default:
-		err = -EOPNOTSUPP;
-		break;
-	}
-
-	return err;
-}
-
-static int sja1105_devlink_param_set(struct dsa_switch *ds, u32 id,
-				     struct devlink_param_gset_ctx *ctx)
-{
-	struct sja1105_private *priv = ds->priv;
-	int err;
-
-	switch (id) {
-	case SJA1105_DEVLINK_PARAM_ID_BEST_EFFORT_VLAN_FILTERING:
-		err = sja1105_best_effort_vlan_filtering_set(priv,
-							     ctx->val.vbool);
-		break;
-	default:
-		err = -EOPNOTSUPP;
-		break;
-	}
-
-	return err;
-}
-
-static const struct devlink_param sja1105_devlink_params[] = {
-	DSA_DEVLINK_PARAM_DRIVER(SJA1105_DEVLINK_PARAM_ID_BEST_EFFORT_VLAN_FILTERING,
-				 "best_effort_vlan_filtering",
-				 DEVLINK_PARAM_TYPE_BOOL,
-				 BIT(DEVLINK_PARAM_CMODE_RUNTIME)),
-};
-
-static int sja1105_setup_devlink_params(struct dsa_switch *ds)
-{
-	return dsa_devlink_params_register(ds, sja1105_devlink_params,
-					   ARRAY_SIZE(sja1105_devlink_params));
-}
-
-static void sja1105_teardown_devlink_params(struct dsa_switch *ds)
-{
-	dsa_devlink_params_unregister(ds, sja1105_devlink_params,
-				      ARRAY_SIZE(sja1105_devlink_params));
-}
-
 /* The programming model for the SJA1105 switch is "all-at-once" via static
  * configuration tables. Some of these can be dynamically modified at runtime,
  * but not the xMII mode parameters table.
@@ -3030,7 +2931,7 @@ static int sja1105_setup(struct dsa_switch *ds)
 
 	ds->configure_vlan_while_not_filtering = true;
 
-	rc = sja1105_setup_devlink_params(ds);
+	rc = sja1105_devlink_setup(ds);
 	if (rc < 0)
 		return rc;
 
@@ -3038,7 +2939,11 @@ static int sja1105_setup(struct dsa_switch *ds)
 	 * default, and that means vlan_filtering is 0 since they're not under
 	 * a bridge, so it's safe to set up switch tagging at this time.
 	 */
-	return sja1105_setup_8021q_tagging(ds, true);
+	rtnl_lock();
+	rc = sja1105_setup_8021q_tagging(ds, true);
+	rtnl_unlock();
+
+	return rc;
 }
 
 static void sja1105_teardown(struct dsa_switch *ds)
@@ -3057,7 +2962,7 @@ static void sja1105_teardown(struct dsa_switch *ds)
 			kthread_destroy_worker(sp->xmit_worker);
 	}
 
-	sja1105_teardown_devlink_params(ds);
+	sja1105_devlink_teardown(ds);
 	sja1105_flower_teardown(ds);
 	sja1105_tas_teardown(ds);
 	sja1105_ptp_clock_unregister(ds);
@@ -3411,6 +3316,7 @@ static const struct dsa_switch_ops sja1105_switch_ops = {
 	.crosschip_bridge_leave	= sja1105_crosschip_bridge_leave,
 	.devlink_param_get	= sja1105_devlink_param_get,
 	.devlink_param_set	= sja1105_devlink_param_set,
+	.devlink_info_get	= sja1105_devlink_info_get,
 };
 
 static const struct of_device_id sja1105_dt_ids[];
@@ -3532,6 +3438,7 @@ static int sja1105_probe(struct spi_device *spi)
 		return -ENOMEM;
 
 	priv->dsa_8021q_ctx->ops = &sja1105_dsa_8021q_ops;
+	priv->dsa_8021q_ctx->proto = htons(ETH_P_8021Q);
 	priv->dsa_8021q_ctx->ds = ds;
 
 	INIT_LIST_HEAD(&priv->dsa_8021q_ctx->crosschip_links);

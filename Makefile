@@ -2,7 +2,7 @@
 VERSION = 5
 PATCHLEVEL = 9
 SUBLEVEL = 0
-EXTRAVERSION = -rc3
+EXTRAVERSION = -rc6
 NAME = Kleptomaniac Octopus
 
 # *DOCUMENTATION*
@@ -882,10 +882,6 @@ KBUILD_CFLAGS_KERNEL += -ffunction-sections -fdata-sections
 LDFLAGS_vmlinux += --gc-sections
 endif
 
-ifdef CONFIG_LIVEPATCH
-KBUILD_CFLAGS += $(call cc-option, -flive-patching=inline-clone)
-endif
-
 ifdef CONFIG_SHADOW_CALL_STACK
 CC_FLAGS_SCS	:= -fsanitize=shadow-call-stack
 KBUILD_CFLAGS	+= $(CC_FLAGS_SCS)
@@ -1084,13 +1080,15 @@ ifdef CONFIG_STACK_VALIDATION
   endif
 endif
 
+ifdef CONFIG_BPF
 ifdef CONFIG_DEBUG_INFO_BTF
   ifeq ($(has_libelf),1)
     resolve_btfids_target := tools/bpf/resolve_btfids FORCE
   else
     ERROR_RESOLVE_BTFIDS := 1
   endif
-endif
+endif # CONFIG_DEBUG_INFO_BTF
+endif # CONFIG_BPF
 
 PHONY += prepare0
 

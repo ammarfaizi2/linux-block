@@ -413,21 +413,20 @@ void ocelot_port_disable(struct ocelot *ocelot, int port)
 }
 EXPORT_SYMBOL(ocelot_port_disable);
 
-int ocelot_port_add_txtstamp_skb(struct ocelot_port *ocelot_port,
-				 struct sk_buff *skb)
+void ocelot_port_add_txtstamp_skb(struct ocelot *ocelot, int port,
+				  struct sk_buff *clone)
 {
-	struct skb_shared_info *shinfo = skb_shinfo(skb);
-	struct ocelot *ocelot = ocelot_port->ocelot;
+	struct ocelot_port *ocelot_port = ocelot->ports[port];
 
-	if (ocelot->ptp && shinfo->tx_flags & SKBTX_HW_TSTAMP &&
-	    ocelot_port->ptp_cmd == IFH_REW_OP_TWO_STEP_PTP) {
-		shinfo->tx_flags |= SKBTX_IN_PROGRESS;
-		/* Store timestamp ID in cb[0] of sk_buff */
-		skb->cb[0] = ocelot_port->ts_id % 4;
-		skb_queue_tail(&ocelot_port->tx_skbs, skb);
-		return 0;
-	}
-	return -ENODATA;
+	spin_lock(&ocelot_port->ts_id_lock);
+
+	skb_shinfo(clone)->tx_flags |= SKBTX_IN_PROGRESS;
+	/* Store timestamp ID in cb[0] of sk_buff */
+	clone->cb[0] = ocelot_port->ts_id;
+	ocelot_port->ts_id = (ocelot_port->ts_id + 1) % 4;
+	skb_queue_tail(&ocelot_port->tx_skbs, clone);
+
+	spin_unlock(&ocelot_port->ts_id_lock);
 }
 EXPORT_SYMBOL(ocelot_port_add_txtstamp_skb);
 
@@ -506,9 +505,7 @@ void ocelot_get_txtstamp(struct ocelot *ocelot)
 		/* Set the timestamp into the skb */
 		memset(&shhwtstamps, 0, sizeof(shhwtstamps));
 		shhwtstamps.hwtstamp = ktime_set(ts.tv_sec, ts.tv_nsec);
-		skb_tstamp_tx(skb_match, &shhwtstamps);
-
-		dev_kfree_skb_any(skb_match);
+		skb_complete_tx_timestamp(skb_match, &shhwtstamps);
 
 		/* Next ts */
 		ocelot_write(ocelot, SYS_PTP_NXT_PTP_NXT, SYS_PTP_NXT);
@@ -1300,6 +1297,7 @@ void ocelot_init_port(struct ocelot *ocelot, int port)
 	struct ocelot_port *ocelot_port = ocelot->ports[port];
 
 	skb_queue_head_init(&ocelot_port->tx_skbs);
+	spin_lock_init(&ocelot_port->ts_id_lock);
 
 	/* Basic L2 initialization */
 
@@ -1348,21 +1346,13 @@ void ocelot_init_port(struct ocelot *ocelot, int port)
 }
 EXPORT_SYMBOL(ocelot_init_port);
 
-/* Configure and enable the CPU port module, which is a set of queues.
- * If @npi contains a valid port index, the CPU port module is connected
- * to the Node Processor Interface (NPI). This is the mode through which
- * frames can be injected from and extracted to an external CPU,
- * over Ethernet.
+/* Configure and enable the CPU port module, which is a set of queues
+ * accessible through register MMIO, frame DMA or Ethernet (in case
+ * NPI mode is used).
  */
-void ocelot_configure_cpu(struct ocelot *ocelot, int npi,
-			  enum ocelot_tag_prefix injection,
-			  enum ocelot_tag_prefix extraction)
+static void ocelot_cpu_port_init(struct ocelot *ocelot)
 {
 	int cpu = ocelot->num_phys_ports;
-
-	ocelot->npi = npi;
-	ocelot->inj_prefix = injection;
-	ocelot->xtr_prefix = extraction;
 
 	/* The unicast destination PGID for the CPU port module is unused */
 	ocelot_write_rix(ocelot, 0, ANA_PGID_PGID, cpu);
@@ -1375,31 +1365,13 @@ void ocelot_configure_cpu(struct ocelot *ocelot, int npi,
 			 ANA_PORT_PORT_CFG_PORTID_VAL(cpu),
 			 ANA_PORT_PORT_CFG, cpu);
 
-	if (npi >= 0 && npi < ocelot->num_phys_ports) {
-		ocelot_write(ocelot, QSYS_EXT_CPU_CFG_EXT_CPUQ_MSK_M |
-			     QSYS_EXT_CPU_CFG_EXT_CPU_PORT(npi),
-			     QSYS_EXT_CPU_CFG);
-
-		/* Enable NPI port */
-		ocelot_fields_write(ocelot, npi,
-				    QSYS_SWITCH_PORT_MODE_PORT_ENA, 1);
-		/* NPI port Injection/Extraction configuration */
-		ocelot_fields_write(ocelot, npi, SYS_PORT_MODE_INCL_XTR_HDR,
-				    extraction);
-		ocelot_fields_write(ocelot, npi, SYS_PORT_MODE_INCL_INJ_HDR,
-				    injection);
-
-		/* Disable transmission of pause frames */
-		ocelot_fields_write(ocelot, npi, SYS_PAUSE_CFG_PAUSE_ENA, 0);
-	}
-
 	/* Enable CPU port module */
 	ocelot_fields_write(ocelot, cpu, QSYS_SWITCH_PORT_MODE_PORT_ENA, 1);
 	/* CPU port Injection/Extraction configuration */
 	ocelot_fields_write(ocelot, cpu, SYS_PORT_MODE_INCL_XTR_HDR,
-			    extraction);
+			    ocelot->xtr_prefix);
 	ocelot_fields_write(ocelot, cpu, SYS_PORT_MODE_INCL_INJ_HDR,
-			    injection);
+			    ocelot->inj_prefix);
 
 	/* Configure the CPU port to be VLAN aware */
 	ocelot_write_gix(ocelot, ANA_PORT_VLAN_CFG_VLAN_VID(0) |
@@ -1407,7 +1379,6 @@ void ocelot_configure_cpu(struct ocelot *ocelot, int npi,
 				 ANA_PORT_VLAN_CFG_VLAN_POP_CNT(1),
 			 ANA_PORT_VLAN_CFG, cpu);
 }
-EXPORT_SYMBOL(ocelot_configure_cpu);
 
 int ocelot_init(struct ocelot *ocelot)
 {
@@ -1447,6 +1418,7 @@ int ocelot_init(struct ocelot *ocelot)
 	ocelot_mact_init(ocelot);
 	ocelot_vlan_init(ocelot);
 	ocelot_vcap_init(ocelot);
+	ocelot_cpu_port_init(ocelot);
 
 	for (port = 0; port < ocelot->num_phys_ports; port++) {
 		/* Clear all counters (5 groups) */
@@ -1544,18 +1516,18 @@ EXPORT_SYMBOL(ocelot_init);
 
 void ocelot_deinit(struct ocelot *ocelot)
 {
-	struct ocelot_port *port;
-	int i;
-
 	cancel_delayed_work(&ocelot->stats_work);
 	destroy_workqueue(ocelot->stats_queue);
 	mutex_destroy(&ocelot->stats_lock);
-
-	for (i = 0; i < ocelot->num_phys_ports; i++) {
-		port = ocelot->ports[i];
-		skb_queue_purge(&port->tx_skbs);
-	}
 }
 EXPORT_SYMBOL(ocelot_deinit);
+
+void ocelot_deinit_port(struct ocelot *ocelot, int port)
+{
+	struct ocelot_port *ocelot_port = ocelot->ports[port];
+
+	skb_queue_purge(&ocelot_port->tx_skbs);
+}
+EXPORT_SYMBOL(ocelot_deinit_port);
 
 MODULE_LICENSE("Dual MIT/GPL");

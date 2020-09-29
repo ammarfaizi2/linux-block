@@ -52,6 +52,7 @@
 #include "en/xsk/rx.h"
 #include "en/health.h"
 #include "en/params.h"
+#include "en/txrx.h"
 
 static struct sk_buff *
 mlx5e_skb_from_cqe_mpwrq_linear(struct mlx5e_rq *rq, struct mlx5e_mpw_info *wi,
@@ -137,8 +138,17 @@ static inline void mlx5e_decompress_cqe(struct mlx5e_rq *rq,
 	title->check_sum    = mini_cqe->checksum;
 	title->op_own      &= 0xf0;
 	title->op_own      |= 0x01 & (cqcc >> wq->fbc.log_sz);
-	title->wqe_counter  = cpu_to_be16(cqd->wqe_counter);
 
+	/* state bit set implies linked-list striding RQ wq type and
+	 * HW stride index capability supported
+	 */
+	if (test_bit(MLX5E_RQ_STATE_MINI_CQE_HW_STRIDX, &rq->state)) {
+		title->wqe_counter = mini_cqe->stridx;
+		return;
+	}
+
+	/* HW stride index capability not supported */
+	title->wqe_counter = cpu_to_be16(cqd->wqe_counter);
 	if (rq->wq_type == MLX5_WQ_TYPE_LINKED_LIST_STRIDING_RQ)
 		cqd->wqe_counter += mpwrq_get_cqe_consumed_strides(title);
 	else
@@ -1079,6 +1089,9 @@ static inline void mlx5e_build_rx_skb(struct mlx5_cqe64 *cqe,
 		mlx5e_enable_ecn(rq, skb);
 
 	skb->protocol = eth_type_trans(skb, netdev);
+
+	if (unlikely(mlx5e_skb_is_multicast(skb)))
+		stats->mcast_packets++;
 }
 
 static inline void mlx5e_complete_rx_cqe(struct mlx5e_rq *rq,
@@ -1131,7 +1144,6 @@ mlx5e_skb_from_cqe_linear(struct mlx5e_rq *rq, struct mlx5_cqe64 *cqe,
 	struct xdp_buff xdp;
 	struct sk_buff *skb;
 	void *va, *data;
-	bool consumed;
 	u32 frag_size;
 
 	va             = page_address(di->page) + wi->offset;
@@ -1143,11 +1155,8 @@ mlx5e_skb_from_cqe_linear(struct mlx5e_rq *rq, struct mlx5_cqe64 *cqe,
 	net_prefetchw(va); /* xdp_frame data area */
 	net_prefetch(data);
 
-	rcu_read_lock();
 	mlx5e_fill_xdp_buff(rq, va, rx_headroom, cqe_bcnt, &xdp);
-	consumed = mlx5e_xdp_handle(rq, di, &cqe_bcnt, &xdp);
-	rcu_read_unlock();
-	if (consumed)
+	if (mlx5e_xdp_handle(rq, di, &cqe_bcnt, &xdp))
 		return NULL; /* page/packet was consumed by XDP */
 
 	rx_headroom = xdp.data - xdp.data_hard_start;
@@ -1251,6 +1260,11 @@ static void mlx5e_handle_rx_cqe(struct mlx5e_rq *rq, struct mlx5_cqe64 *cqe)
 	}
 
 	mlx5e_complete_rx_cqe(rq, cqe, cqe_bcnt, skb);
+
+	if (mlx5e_cqe_regb_chain(cqe))
+		if (!mlx5e_tc_update_skb(cqe, skb))
+			goto free_wqe;
+
 	napi_gro_receive(rq->cq.napi, skb);
 
 free_wqe:
@@ -1437,7 +1451,6 @@ mlx5e_skb_from_cqe_mpwrq_linear(struct mlx5e_rq *rq, struct mlx5e_mpw_info *wi,
 	struct sk_buff *skb;
 	void *va, *data;
 	u32 frag_size;
-	bool consumed;
 
 	/* Check packet size. Note LRO doesn't use linear SKB */
 	if (unlikely(cqe_bcnt > rq->hw_mtu)) {
@@ -1454,11 +1467,8 @@ mlx5e_skb_from_cqe_mpwrq_linear(struct mlx5e_rq *rq, struct mlx5e_mpw_info *wi,
 	net_prefetchw(va); /* xdp_frame data area */
 	net_prefetch(data);
 
-	rcu_read_lock();
 	mlx5e_fill_xdp_buff(rq, va, rx_headroom, cqe_bcnt32, &xdp);
-	consumed = mlx5e_xdp_handle(rq, di, &cqe_bcnt32, &xdp);
-	rcu_read_unlock();
-	if (consumed) {
+	if (mlx5e_xdp_handle(rq, di, &cqe_bcnt32, &xdp)) {
 		if (__test_and_clear_bit(MLX5E_RQ_FLAG_XDP_XMIT, rq->flags))
 			__set_bit(page_idx, wi->xdp_xmit_bitmap); /* non-atomic */
 		return NULL; /* page/packet was consumed by XDP */
@@ -1516,6 +1526,11 @@ static void mlx5e_handle_rx_cqe_mpwrq(struct mlx5e_rq *rq, struct mlx5_cqe64 *cq
 		goto mpwrq_cqe_out;
 
 	mlx5e_complete_rx_cqe(rq, cqe, cqe_bcnt, skb);
+
+	if (mlx5e_cqe_regb_chain(cqe))
+		if (!mlx5e_tc_update_skb(cqe, skb))
+			goto mpwrq_cqe_out;
+
 	napi_gro_receive(rq->cq.napi, skb);
 
 mpwrq_cqe_out:
