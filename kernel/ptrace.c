@@ -773,7 +773,7 @@ static int ptrace_peek_siginfo(struct task_struct *child,
 		data += sizeof(siginfo_t);
 		i++;
 
-		if (signal_pending(current))
+		if (task_sigpending(current))
 			break;
 
 		cond_resched();
