@@ -21,6 +21,9 @@ static const struct rxrpc_security *rxrpc_security_types[] = {
 	[RXRPC_SECURITY_RXKAD]	= &rxkad,
 #endif
 #ifdef CONFIG_RXGK
+	[RXRPC_SECURITY_RXGK]	= &rxgk_openafs,
+#endif
+#ifdef CONFIG_RXGK
 	[RXRPC_SECURITY_YFS_RXGK] = &rxgk_yfs,
 #endif
 };

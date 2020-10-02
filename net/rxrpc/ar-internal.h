@@ -1214,6 +1214,7 @@ void rxrpc_peer_init_rtt(struct rxrpc_peer *);
 /*
  * rxgk.c
  */
+extern const struct rxrpc_security rxgk_openafs;
 extern const struct rxrpc_security rxgk_yfs;
 
 /*

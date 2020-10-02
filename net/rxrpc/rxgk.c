@@ -1072,6 +1072,31 @@ static void rxgk_exit(void)
 }
 
 /*
+ * RxRPC OpenAFS GSSAPI-based security
+ */
+const struct rxrpc_security rxgk_openafs = {
+	.name				= "rxgk",
+	.security_index			= RXRPC_SECURITY_RXGK,
+	.no_key_abort			= RXGK_NOTAUTH,
+	.init				= rxgk_init,
+	.exit				= rxgk_exit,
+	.preparse_server_key		= rxgk_preparse_server_key,
+	.free_preparse_server_key	= rxgk_free_preparse_server_key,
+	.destroy_server_key		= rxgk_destroy_server_key,
+	.describe_server_key		= rxgk_describe_server_key,
+	.init_connection_security	= rxgk_init_connection_security,
+	.how_much_data			= rxgk_how_much_data,
+	.secure_packet			= rxgk_secure_packet,
+	.verify_packet			= rxgk_verify_packet,
+	.free_call_crypto		= rxgk_free_call_crypto,
+	.issue_challenge		= rxgk_issue_challenge,
+	.respond_to_challenge		= rxgk_respond_to_challenge,
+	.verify_response		= rxgk_verify_response,
+	.clear				= rxgk_clear,
+	.default_decode_ticket		= rxgk_openafs_decode_ticket,
+};
+
+/*
  * RxRPC YFS GSSAPI-based security
  */
 const struct rxrpc_security rxgk_yfs = {

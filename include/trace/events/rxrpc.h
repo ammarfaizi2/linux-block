@@ -90,6 +90,9 @@
 	EM(rxgk_abort_resp_short_auth,		"rxgk-resp-short-auth") \
 	EM(rxgk_abort_resp_short_call_list,	"rxgk-resp-short-callls") \
 	EM(rxgk_abort_resp_short_packet,	"rxgk-resp-short-packet") \
+	EM(rxgk_abort_resp_short_openafs_klen,	"rxgk-resp-short-openafs-klen") \
+	EM(rxgk_abort_resp_short_openafs_key,	"rxgk-resp-short-openafs-key") \
+	EM(rxgk_abort_resp_short_openafs_tkt,	"rxgk-resp-short-openafs-tkt") \
 	EM(rxgk_abort_resp_short_yfs_klen,	"rxgk-resp-short-yfs-klen") \
 	EM(rxgk_abort_resp_short_yfs_key,	"rxgk-resp-short-yfs-key") \
 	EM(rxgk_abort_resp_short_yfs_tkt,	"rxgk-resp-short-yfs-tkt") \

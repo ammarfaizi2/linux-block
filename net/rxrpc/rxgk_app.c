@@ -15,6 +15,141 @@
 #include "rxgk_common.h"
 
 /*
+ * Decode a default-style OpenAFS ticket in a response and turn it into an
+ * rxrpc-type key.
+ *
+ * struct RXGK_Token {
+ *	afs_int32		enctype;
+ *	opaque			K0<>;
+ *	RXGK_Level		level;
+ *	afs_int32		lifetime;
+ *	afs_int32		bytelife;
+ *	rxgkTime		expirationtime;
+ *	struct RXGK_PrAuthName	identities<>;
+ * };
+ */
+int rxgk_openafs_decode_ticket(struct rxrpc_connection *conn, struct sk_buff *skb,
+			       unsigned int ticket_offset, unsigned int ticket_len,
+			       struct key **_key)
+{
+	struct rxrpc_key_token *token;
+	const struct cred *cred = current_cred(); // TODO - use socket creds
+	struct key *key;
+	size_t pre_ticket_len, payload_len;
+	unsigned int klen, enctype;
+	void *payload, *ticket;
+	__be32 *t, *p, *q, tmp[2];
+	int ret;
+
+	_enter("");
+
+	/* Get the session key length */
+	ret = skb_copy_bits(skb, ticket_offset, tmp, sizeof(tmp));
+	if (ret < 0)
+		return rxrpc_abort_conn(conn, skb, RXGK_INCONSISTENCY, -EPROTO,
+					rxgk_abort_resp_short_openafs_klen);
+	enctype = ntohl(tmp[0]);
+	klen = ntohl(tmp[1]);
+
+	if (klen > ticket_len - 8 * sizeof(__be32))
+		return rxrpc_abort_conn(conn, skb, RXGK_INCONSISTENCY, -EPROTO,
+					rxgk_abort_resp_short_openafs_key);
+
+	pre_ticket_len = ((5 + 10) * sizeof(__be32));
+	payload_len = pre_ticket_len + xdr_round_up(ticket_len) +
+		sizeof(__be32) + xdr_round_up(klen);
+
+	payload = kzalloc(payload_len, GFP_NOFS);
+	if (!payload)
+		return -ENOMEM;
+
+	/* We need to fill out the XDR form for a key payload that we can pass
+	 * to add_key().  Start by copying in the ticket so that we can parse
+	 * it.
+	 */
+	ticket = payload + pre_ticket_len;
+	ret = skb_copy_bits(skb, ticket_offset, ticket, ticket_len);
+	if (ret < 0) {
+		ret = rxrpc_abort_conn(conn, skb, RXGK_INCONSISTENCY, -EPROTO,
+				       rxgk_abort_resp_short_openafs_tkt);
+		goto error;
+	}
+
+	/* Fill out the form header. */
+	p = payload;
+	p[0] = htonl(0); /* Flags */
+	p[1] = htonl(1); /* len(cellname) */
+	p[2] = htonl(0x20000000); /* Cellname " " */
+	p[3] = htonl(1); /* #tokens */
+	p[4] = htonl(11 * sizeof(__be32) +
+		     xdr_round_up(klen) + xdr_round_up(ticket_len)); /* Token len */
+
+	/* Now fill in the body.  Most of this we can just scrape directly from
+	 * the ticket.
+	 */
+	t = ticket + sizeof(__be32) * 2 + xdr_round_up(klen);
+	q = payload + 5 * sizeof(__be32);
+	q[ 0] = htonl(RXRPC_SECURITY_RXGK);
+	q[ 1] = 0;		/* gk_viceid - msw */
+	q[ 2] = 0;		/* - lsw */
+	q[ 3] = htonl(enctype);	/* gkenctype - msw */
+	q[ 4] = t[0];		/* gk_level */
+	q[ 5] = t[1];		/* gk_lifetime */
+	q[ 6] = t[2];		/* gk_bytelife */
+	q[ 7] = t[3];		/* gk_expiration - msw */
+	q[ 8] = t[4];		/* - lsw */
+	q[ 9] = htonl(ticket_len); /* gk_token.length */
+
+	q += 10;
+	if (WARN_ON((unsigned long)q != (unsigned long)ticket)) {
+		ret = -EIO;
+		goto error;
+	}
+
+	/* Ticket read in with skb_copy_bits above */
+	q += xdr_round_up(ticket_len) / 4;
+	q[0] = htonl(klen);
+	q++;
+
+	memcpy(q, ticket + sizeof(__be32) * 2, klen);
+
+	q += xdr_round_up(klen) / 4;
+	if (WARN_ON((unsigned long)q - (unsigned long)payload != payload_len)) {
+		ret = -EIO;
+		goto error;
+	}
+
+	/* Now turn that into a key. */
+	key = key_alloc(&key_type_rxrpc, "x",
+			GLOBAL_ROOT_UID, GLOBAL_ROOT_GID, cred, 0, // TODO: Use socket owner
+			KEY_ALLOC_NOT_IN_QUOTA, NULL);
+	if (IS_ERR(key)) {
+		_leave(" = -ENOMEM [alloc %ld]", PTR_ERR(key));
+		goto error;
+	}
+
+	_debug("key %d", key_serial(key));
+
+	ret = key_instantiate_and_link(key, payload, payload_len, NULL, NULL);
+	if (ret < 0)
+		goto error_key;
+
+	token = key->payload.data[0];
+	token->no_leak_key = true;
+	*_key = key;
+	key = NULL;
+	ret = 0;
+	goto error;
+
+error_key:
+	key_put(key);
+error:
+	kfree_sensitive(payload);
+	_leave(" = %d", ret);
+	return ret;
+}
+
+/*
  * Decode a default-style YFS ticket in a response and turn it into an
  * rxrpc-type key.
  *

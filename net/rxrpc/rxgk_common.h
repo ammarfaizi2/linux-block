@@ -38,6 +38,9 @@ struct rxgk_context {
 /*
  * rxgk_app.c
  */
+int rxgk_openafs_decode_ticket(struct rxrpc_connection *conn, struct sk_buff *skb,
+			       unsigned int ticket_offset, unsigned int ticket_len,
+			       struct key **_key);
 int rxgk_yfs_decode_ticket(struct rxrpc_connection *, struct sk_buff *,
 			   unsigned int, unsigned int, struct key **);
 int rxgk_extract_token(struct rxrpc_connection *, struct sk_buff *,
