@@ -148,6 +148,135 @@ static time64_t rxrpc_s64_to_time64(s64 time_in_100ns)
 }
 
 /*
+ * Parse an OpenAFS RxGK type XDR format token
+ * - the caller guarantees we have at least 4 words
+ *
+ * struct token_rxgk {
+ *	afs_int64	0 gk_viceid;
+ *	afs_int32	2 gk_enctype;
+ *	afs_int32	3 gk_level;
+ *	afs_uint32	4 gk_lifetime;
+ *	afs_uint32	5 gk_bytelife;
+ *	afs_int64	6 gk_expiration;
+ *	opaque		8 gk_token<AFSTOKEN_GK_TOK_MAX>;
+ *	opaque		9 gk_k0<AFSTOKEN_GK_TOK_MAX>;
+ * };
+ */
+static int rxrpc_preparse_xdr_rxgk(struct key_preparsed_payload *prep,
+				   size_t datalen,
+				   const __be32 *xdr, unsigned int toklen)
+{
+	struct rxrpc_key_token *token, **pptoken;
+	time64_t expiry;
+	size_t plen;
+	const __be32 *ticket, *key;
+	u32 tktlen, keylen;
+
+	_enter(",{%x,%x,%x,%x},%x",
+	       ntohl(xdr[0]), ntohl(xdr[1]), ntohl(xdr[2]), ntohl(xdr[3]),
+	       toklen);
+
+	if (toklen / 4 < 10)
+		goto reject;
+
+	ticket = xdr + 9;
+	tktlen = ntohl(ticket[-1]);
+	_debug("tktlen: %x", tktlen);
+	tktlen = round_up(tktlen, 4);
+	if (toklen < 10 * 4 + tktlen)
+		goto reject;
+
+	key = ticket + (tktlen / 4) + 1;
+	keylen = ntohl(key[-1]);
+	_debug("keylen: %x", keylen);
+	keylen = round_up(keylen, 4);
+	if (10 * 4 + tktlen + keylen != toklen) {
+		kleave(" = -EKEYREJECTED [%x!=%x, %x,%x]",
+		       10 * 4 + tktlen + keylen, toklen, tktlen, keylen);
+		goto reject;
+	}
+
+	plen = sizeof(*token) + sizeof(*token->rxgk) + tktlen + keylen;
+	prep->quotalen = datalen + plen;
+
+	plen -= sizeof(*token);
+	token = kzalloc(sizeof(*token), GFP_KERNEL);
+	if (!token)
+		goto nomem;
+
+	token->rxgk = kzalloc(sizeof(struct rxgk_key) + keylen, GFP_KERNEL);
+	if (!token->rxgk)
+		goto nomem_token;
+
+	token->security_index	= RXRPC_SECURITY_RXGK;
+	token->rxgk->begintime	= 0;
+	token->rxgk->endtime	= xdr_dec64(xdr + 6);
+	token->rxgk->level	= ntohl(xdr[3]);
+	if (token->rxgk->level > RXRPC_SECURITY_ENCRYPT)
+		goto reject_token;
+	token->rxgk->lifetime	= ntohl(xdr[4]);
+	token->rxgk->bytelife	= ntohl(xdr[5]);
+	token->rxgk->enctype	= ntohl(xdr[2]);
+	token->rxgk->key.len	= ntohl(key[-1]);
+	token->rxgk->key.data	= token->rxgk->_key;
+	token->rxgk->ticket.len = ntohl(ticket[-1]);
+
+	expiry = rxrpc_s64_to_time64(token->rxgk->endtime);
+	if (expiry < 0)
+		goto expired;
+	if (expiry < prep->expiry)
+		prep->expiry = expiry;
+
+	memcpy(token->rxgk->key.data, key, token->rxgk->key.len);
+
+	/* Pad the ticket so that we can use it directly in XDR */
+	token->rxgk->ticket.data = kzalloc(round_up(token->rxgk->ticket.len, 4),
+					   GFP_KERNEL);
+	if (!token->rxgk->ticket.data)
+		goto nomem_yrxgk;
+	memcpy(token->rxgk->ticket.data, ticket, token->rxgk->ticket.len);
+
+	_debug("SCIX: %u",	token->security_index);
+	_debug("LIFE: %llx",	token->rxgk->lifetime);
+	_debug("BYTE: %llx",	token->rxgk->bytelife);
+	_debug("ENC : %u",	token->rxgk->enctype);
+	_debug("LEVL: %u",	token->rxgk->level);
+	_debug("KLEN: %u",	token->rxgk->key.len);
+	_debug("TLEN: %u",	token->rxgk->ticket.len);
+	_debug("KEY0: %*phN",	token->rxgk->key.len, token->rxgk->key.data);
+	_debug("TICK: %*phN",
+	       min_t(u32, token->rxgk->ticket.len, 32), token->rxgk->ticket.data);
+
+	/* count the number of tokens attached */
+	prep->payload.data[1] = (void *)((unsigned long)prep->payload.data[1] + 1);
+
+	/* attach the data */
+	for (pptoken = (struct rxrpc_key_token **)&prep->payload.data[0];
+	     *pptoken;
+	     pptoken = &(*pptoken)->next)
+		continue;
+	*pptoken = token;
+
+	_leave(" = 0");
+	return 0;
+
+nomem_yrxgk:
+	kfree(token->rxgk);
+nomem_token:
+	kfree(token);
+nomem:
+	return -ENOMEM;
+reject_token:
+	kfree(token);
+reject:
+	return -EKEYREJECTED;
+expired:
+	kfree(token->rxgk);
+	kfree(token);
+	return -EKEYEXPIRED;
+}
+
+/*
  * Parse a YFS-RxGK type XDR format token
  * - the caller guarantees we have at least 4 words
  *
@@ -380,6 +509,9 @@ static int rxrpc_preparse_xdr(struct key_preparsed_payload *prep)
 		case RXRPC_SECURITY_RXKAD:
 			ret2 = rxrpc_preparse_xdr_rxkad(prep, datalen, token, toklen);
 			break;
+		case RXRPC_SECURITY_RXGK:
+			ret2 = rxrpc_preparse_xdr_rxgk(prep, datalen, token, toklen);
+			break;
 		case RXRPC_SECURITY_YFS_RXGK:
 			ret2 = rxrpc_preparse_xdr_yfs_rxgk(prep, datalen, token, toklen);
 			break;
@@ -545,6 +677,7 @@ static void rxrpc_free_token_list(struct rxrpc_key_token *token)
 		case RXRPC_SECURITY_RXKAD:
 			kfree(token->kad);
 			break;
+		case RXRPC_SECURITY_RXGK:
 		case RXRPC_SECURITY_YFS_RXGK:
 			kfree(token->rxgk->ticket.data);
 			kfree(token->rxgk);
@@ -591,6 +724,9 @@ static void rxrpc_describe(const struct key *key, struct seq_file *m)
 		switch (token->security_index) {
 		case RXRPC_SECURITY_RXKAD:
 			seq_puts(m, "ka");
+			break;
+		case RXRPC_SECURITY_RXGK:
+			seq_puts(m, "ogk");
 			break;
 		case RXRPC_SECURITY_YFS_RXGK:
 			seq_puts(m, "ygk");

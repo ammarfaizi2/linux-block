@@ -197,6 +197,8 @@ struct rxgk_mic_test {
 /*
  * rxgk_app.c
  */
+int rxgk_openafs_decode_ticket(struct sk_buff *, unsigned int, unsigned int,
+			       u32 *, struct key **);
 int rxgk_yfs_decode_ticket(struct sk_buff *, unsigned int, unsigned int,
 			   u32 *, struct key **);
 int rxgk_extract_token(struct rxrpc_connection *,
