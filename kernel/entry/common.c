@@ -140,7 +140,7 @@ bool __weak arch_do_signal(struct pt_regs *regs) { return true; }
 static unsigned long exit_to_user_mode_loop(struct pt_regs *regs,
 					    unsigned long ti_work)
 {
-	bool restart_sys = ti_work & _TIF_SIGPENDING;
+	bool restart_sys = ti_work & (_TIF_SIGPENDING | _TIF_NOTIFY_SIGNAL);
 
 	/*
 	 * Before returning to user space ensure that all pending work
@@ -158,6 +158,9 @@ static unsigned long exit_to_user_mode_loop(struct pt_regs *regs,
 
 		if (ti_work & _TIF_PATCH_PENDING)
 			klp_update_patch_state(current);
+
+		if (ti_work & _TIF_NOTIFY_SIGNAL)
+			tracehook_notify_signal();
 
 		if ((ti_work & _TIF_SIGPENDING) && arch_do_signal(regs))
 			restart_sys = false;
