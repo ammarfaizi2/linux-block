@@ -262,9 +262,19 @@ static __always_inline void arch_exit_to_user_mode(void) { }
  * arch_do_signal -  Architecture specific signal delivery function
  * @regs:	Pointer to currents pt_regs
  *
- * Invoked from exit_to_user_mode_loop().
+ * Invoked from exit_to_user_mode_loop(). Returns true if a signal was
+ * handled.
  */
-void arch_do_signal(struct pt_regs *regs);
+bool arch_do_signal(struct pt_regs *regs);
+
+/**
+ * arch_restart_syscall -  Architecture specific syscall restarting
+ * @regs:	Pointer to currents pt_regs
+ *
+ * Invoked from exit_to_user_mode_loop(), if we need to restart the current
+ * system call.
+ */
+void arch_restart_syscall(struct pt_regs *regs);
 
 /**
  * arch_syscall_exit_tracehook - Wrapper around tracehook_report_syscall_exit()

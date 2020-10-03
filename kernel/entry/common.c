@@ -135,11 +135,13 @@ static __always_inline void exit_to_user_mode(void)
 }
 
 /* Workaround to allow gradual conversion of architecture code */
-void __weak arch_do_signal(struct pt_regs *regs) { }
+bool __weak arch_do_signal(struct pt_regs *regs) { return true; }
 
 static unsigned long exit_to_user_mode_loop(struct pt_regs *regs,
 					    unsigned long ti_work)
 {
+	bool restart_sys = ti_work & _TIF_SIGPENDING;
+
 	/*
 	 * Before returning to user space ensure that all pending work
 	 * items have been completed.
@@ -157,8 +159,8 @@ static unsigned long exit_to_user_mode_loop(struct pt_regs *regs,
 		if (ti_work & _TIF_PATCH_PENDING)
 			klp_update_patch_state(current);
 
-		if (ti_work & _TIF_SIGPENDING)
-			arch_do_signal(regs);
+		if ((ti_work & _TIF_SIGPENDING) && arch_do_signal(regs))
+			restart_sys = false;
 
 		if (ti_work & _TIF_NOTIFY_RESUME) {
 			tracehook_notify_resume(regs);
@@ -176,6 +178,9 @@ static unsigned long exit_to_user_mode_loop(struct pt_regs *regs,
 		local_irq_disable_exit_to_user();
 		ti_work = READ_ONCE(current_thread_info()->flags);
 	}
+
+	if (restart_sys)
+		arch_restart_syscall(regs);
 
 	/* Return the latest work state for arch_exit_to_user_mode() */
 	return ti_work;
