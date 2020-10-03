@@ -6755,6 +6755,11 @@ static int io_cqring_wait(struct io_ring_ctx *ctx, int min_events,
 		if (io_run_task_work())
 			continue;
 		if (signal_pending(current)) {
+			/* avoid restart, if we can */
+#ifdef TIF_NOTIFY_SIGNAL
+			if (test_and_clear_thread_flag(TIF_NOTIFY_SIGNAL))
+				continue;
+#endif
 			if (current->jobctl & JOBCTL_TASK_WORK) {
 				spin_lock_irq(&current->sighand->siglock);
 				current->jobctl &= ~JOBCTL_TASK_WORK;
