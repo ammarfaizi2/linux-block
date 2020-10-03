@@ -32,14 +32,11 @@ DECLARE_PER_CPU(struct vmcs *, current_vmcs);
 struct vmcs_host_state {
 	unsigned long cr3;	/* May not match real cr3 */
 	unsigned long cr4;	/* May not match real cr4 */
+#ifdef CONFIG_X86_64
 	unsigned long gs_base;
+#endif
 	unsigned long fs_base;
 	unsigned long rsp;
-
-	u16           fs_sel, gs_sel, ldt_sel;
-#ifdef CONFIG_X86_64
-	u16           ds_sel, es_sel;
-#endif
 };
 
 struct vmcs_controls_shadow {

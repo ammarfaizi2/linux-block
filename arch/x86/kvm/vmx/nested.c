@@ -288,11 +288,16 @@ static void vmx_sync_vmcs_host_state(struct vcpu_vmx *vmx,
 	src = &prev->host_state;
 	dest = &vmx->loaded_vmcs->host_state;
 
-	vmx_set_host_fs_gs(dest, src->fs_sel, src->gs_sel, src->fs_base, src->gs_base);
-	dest->ldt_sel = src->ldt_sel;
+	if (src->fs_base != dest->fs_base) {
+		dest->fs_base = src->fs_base;
+		vmcs_writel(HOST_FS_BASE, dest->fs_base);
+	}
+
 #ifdef CONFIG_X86_64
-	dest->ds_sel = src->ds_sel;
-	dest->es_sel = src->es_sel;
+	if (src->gs_base != dest->gs_base) {
+		dest->gs_base = src->gs_base;
+		vmcs_writel(HOST_GS_BASE, dest->gs_base);
+	}
 #endif
 }
 

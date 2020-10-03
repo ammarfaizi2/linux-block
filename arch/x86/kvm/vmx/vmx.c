@@ -1111,43 +1111,19 @@ static void pt_guest_exit(struct vcpu_vmx *vmx)
 	wrmsrl(MSR_IA32_RTIT_CTL, vmx->pt_desc.host.ctl);
 }
 
-void vmx_set_host_fs_gs(struct vmcs_host_state *host, u16 fs_sel, u16 gs_sel,
-			unsigned long fs_base, unsigned long gs_base)
+void vmx_set_host_fs_gs(struct vmcs_host_state *host_state)
 {
-	if (unlikely(fs_sel != host->fs_sel)) {
-		if (!(fs_sel & 7))
-			vmcs_write16(HOST_FS_SELECTOR, fs_sel);
-		else
-			vmcs_write16(HOST_FS_SELECTOR, 0);
-		host->fs_sel = fs_sel;
-	}
-	if (unlikely(gs_sel != host->gs_sel)) {
-		if (!(gs_sel & 7))
-			vmcs_write16(HOST_GS_SELECTOR, gs_sel);
-		else
-			vmcs_write16(HOST_GS_SELECTOR, 0);
-		host->gs_sel = gs_sel;
-	}
-	if (unlikely(fs_base != host->fs_base)) {
-		vmcs_writel(HOST_FS_BASE, fs_base);
-		host->fs_base = fs_base;
-	}
-	if (unlikely(gs_base != host->gs_base)) {
-		vmcs_writel(HOST_GS_BASE, gs_base);
-		host->gs_base = gs_base;
-	}
 }
 
 void vmx_prepare_switch_to_guest(struct kvm_vcpu *vcpu)
 {
 	struct vcpu_vmx *vmx = to_vmx(vcpu);
 	struct vmcs_host_state *host_state;
-#ifdef CONFIG_X86_64
-	int cpu = raw_smp_processor_id();
-#endif
-	unsigned long fs_base, gs_base;
-	u16 fs_sel, gs_sel;
 	int i;
+	unsigned long fs_base;
+#if defined(CONFIG_X86_64)
+	unsigned long gs_base;
+#endif
 
 	vmx->req_immediate_exit = false;
 
@@ -1165,7 +1141,7 @@ void vmx_prepare_switch_to_guest(struct kvm_vcpu *vcpu)
 
 	}
 
-    	if (vmx->nested.need_vmcs12_to_shadow_sync)
+	if (vmx->nested.need_vmcs12_to_shadow_sync)
 		nested_sync_vmcs12_to_shadow(vcpu);
 
 	if (vmx->guest_state_loaded)
@@ -1173,40 +1149,124 @@ void vmx_prepare_switch_to_guest(struct kvm_vcpu *vcpu)
 
 	host_state = &vmx->loaded_vmcs->host_state;
 
+	vmx->host_ldt_sel = kvm_read_ldt();
+
 	/*
-	 * Set host fs and gs selectors.  Unfortunately, 22.2.3 does not
-	 * allow segment selectors with cpl > 0 or ti == 1.
+	 * Set host fs and gs selectors.  Unfortunately, 26.2.3 does not
+	 * allow segment selectors with RPL > 0 or TI == 1.  Additionally,
+	 * VM exit cannot restore segment attributes other than the base.
+	 * This means that the only user selector that can be usefully
+	 * restored by VM exit is 0.
+	 *
+	 * Fortunately, the common case is that userspace is a normal
+	 * 64-bit program with all selectors except CS and SS set to 0.
 	 */
-	host_state->ldt_sel = kvm_read_ldt();
 
 #ifdef CONFIG_X86_64
-	savesegment(ds, host_state->ds_sel);
-	savesegment(es, host_state->es_sel);
+	/*
+	 * On 64-bit kernels, DS, ES, FS, and GS contain their userspace
+	 * values.  Save them.
+	 */
+	savesegment(ds, vmx->host_ds_sel);
+	savesegment(es, vmx->host_es_sel);
+	savesegment(fs, vmx->host_fs_sel);
+	savesegment(gs, vmx->host_gs_sel);
 
-	gs_base = cpu_kernelmode_gs_base(cpu);
-	if (likely(is_64bit_mm(current->mm))) {
-		current_save_fsgs();
-		fs_sel = current->thread.fsindex;
-		gs_sel = current->thread.gsindex;
-		fs_base = current->thread.fsbase;
-		vmx->msr_host_kernel_gs_base = current->thread.gsbase;
-	} else {
-		savesegment(fs, fs_sel);
-		savesegment(gs, gs_sel);
-		fs_base = read_msr(MSR_FS_BASE);
-		vmx->msr_host_kernel_gs_base = read_msr(MSR_KERNEL_GS_BASE);
+	gs_base = cpu_kernelmode_gs_base(smp_processor_id());
+	if (unlikely(gs_base != vmx->host_gs_base)) {
+		vmcs_writel(HOST_GS_BASE, gs_base);
+		vmx->host_gs_base = gs_base;
 	}
 
-	wrmsrl(MSR_KERNEL_GS_BASE, vmx->msr_guest_kernel_gs_base);
+	if (cpu_feature_enabled(X86_FEATURE_FSGSBASE)) {
+		fs_base = __rdfsbase();
+		vmx->msr_host_kernel_gs_base = __rdgsbase_inactive();
+		__wrgsbase_inactive(vmx->msr_guest_kernel_gs_base);
+	} else {
+		fs_base = read_msr(MSR_FS_BASE);
+		vmx->msr_host_kernel_gs_base = read_msr(MSR_KERNEL_GS_BASE);
+		wrmsrl(MSR_KERNEL_GS_BASE, vmx->msr_guest_kernel_gs_base);
+	}
 #else
-	savesegment(fs, fs_sel);
-	savesegment(gs, gs_sel);
-	fs_base = segment_base(fs_sel);
-	gs_base = segment_base(gs_sel);
+	fs_base = segment_base(__KERNEL_PERCPU);
+	savesegment(gs, vmx->host_gs_sel);
 #endif
 
-	vmx_set_host_fs_gs(host_state, fs_sel, gs_sel, fs_base, gs_base);
+	if (unlikely(fs_base != host_state->fs_base)) {
+		vmcs_writel(HOST_FS_BASE, fs_base);
+		host_state->fs_base = fs_base;
+	}
+
 	vmx->guest_state_loaded = true;
+}
+
+static void vmx_switch_to_host_segments(struct vcpu_vmx *vmx)
+{
+	/*
+	 * Restore host GDT, LDT, and segments.  On x86_64, this can
+	 * be done in the vcpu_put() path.  On x86_32, it can't -- vcpu_put()
+	 * can happen in an interrupt, and the interrupt entry/exit code
+	 * saves and reloads segments, so some of the state we load here
+	 * would be lost.
+	 */
+	struct vmcs_host_state *host_state;
+
+	host_state = &vmx->loaded_vmcs->host_state;
+
+#ifdef CONFIG_X86_64
+	vmx->msr_guest_kernel_gs_base = x86_gsbase_read_cpu_inactive();
+#endif
+
+	/*
+	 * Load the host descriptor tables before any segments loads
+	 * that might try to read them.
+	 */
+	load_fixmap_gdt(smp_processor_id());
+	if (vmx->host_ldt_sel)
+		kvm_load_ldt(vmx->host_ldt_sel);
+
+	/*
+	 * After VM exit, GS == 0, and we need to restore the userspace
+	 * GS selector on all kernels.
+	 */
+	if (unlikely(vmx->host_gs_sel))
+		load_gs_index(vmx->host_gs_sel);
+
+#ifdef CONFIG_X86_64
+	/* VMX can't restore the inactive GSBASE for us. */
+	x86_gsbase_write_cpu_inactive(vmx->msr_host_kernel_gs_base);
+
+	/*
+	 * On 64-bit, userspace DS, ES, and FS belong in the CPU registers.
+	 */
+	if (unlikely(vmx->host_ds_sel))
+		loadsegment(ds, vmx->host_ds_sel);
+	if (unlikely(vmx->host_es_sel))
+		loadsegment(es, vmx->host_es_sel);
+
+	if (unlikely(vmx->host_fs_sel)) {
+		loadsegment(fs, vmx->host_fs_sel);
+		/*
+		 * FSBASE was correct, but loadsegment() clobbers it.
+		 * Load it again.
+		 */
+		x86_fsbase_write_cpu(host_state->fs_base);
+	}
+#else
+	/*
+	 * On 32-bit, DS and ES will be restored on the way back to usermode,
+	 * unless we use SYSEXIT.  In the latter case, we need to have
+	 * __USER_DS loaded first.  FS will be restored on the way back to
+	 * usermode regardless.
+	 *
+	 * There are no useful optimizations to be done here.  VM exit
+	 * can't restore DS.RPL or ES.RPL, and there's a very good change
+	 * that we're going to use the SYSEXIT path to return to usermode.
+	 */
+	loadsegment(ds, __USER_DS);
+	loadsegment(es, __USER_DS);
+#endif
+
 }
 
 static void vmx_prepare_switch_to_host(struct vcpu_vmx *vmx)
@@ -1221,29 +1281,13 @@ static void vmx_prepare_switch_to_host(struct vcpu_vmx *vmx)
 	++vmx->vcpu.stat.host_state_reload;
 
 #ifdef CONFIG_X86_64
-	rdmsrl(MSR_KERNEL_GS_BASE, vmx->msr_guest_kernel_gs_base);
+	/*
+	 * On x86_64, we can switch back to host segments in interrupt
+	 * context.
+	 */
+	vmx_switch_to_host_segments(vmx);
 #endif
-	if (host_state->ldt_sel || (host_state->gs_sel & 7)) {
-		kvm_load_ldt(host_state->ldt_sel);
-#ifdef CONFIG_X86_64
-		load_gs_index(host_state->gs_sel);
-#else
-		loadsegment(gs, host_state->gs_sel);
-#endif
-	}
-	if (host_state->fs_sel & 7)
-		loadsegment(fs, host_state->fs_sel);
-#ifdef CONFIG_X86_64
-	if (unlikely(host_state->ds_sel | host_state->es_sel)) {
-		loadsegment(ds, host_state->ds_sel);
-		loadsegment(es, host_state->es_sel);
-	}
-#endif
-	invalidate_tss_limit();
-#ifdef CONFIG_X86_64
-	wrmsrl(MSR_KERNEL_GS_BASE, vmx->msr_host_kernel_gs_base);
-#endif
-	load_fixmap_gdt(raw_smp_processor_id());
+
 	vmx->guest_state_loaded = false;
 	vmx->guest_msrs_ready = false;
 }
@@ -4016,14 +4060,20 @@ void vmx_set_constant_host_state(struct vcpu_vmx *vmx)
 	 */
 	vmcs_write16(HOST_DS_SELECTOR, 0);
 	vmcs_write16(HOST_ES_SELECTOR, 0);
+	vmcs_write16(HOST_FS_SELECTOR, 0);
+	vmcs_write16(HOST_GS_SELECTOR, 0);
 #else
-	vmcs_write16(HOST_DS_SELECTOR, __KERNEL_DS);  /* 22.2.4 */
-	vmcs_write16(HOST_ES_SELECTOR, __KERNEL_DS);  /* 22.2.4 */
+	vmcs_write16(HOST_DS_SELECTOR, __KERNEL_DS);           /* 26.2.3 */
+	vmcs_write16(HOST_ES_SELECTOR, __KERNEL_DS);           /* 26.2.3 */
+	vmcs_write16(HOST_FS_SELECTOR, __KERNEL_PERCPU);       /* 26.2.3 */
+	vmcs_write16(HOST_GS_SELECTOR, 0); /* 26.2.3 */
 #endif
-	vmcs_write16(HOST_SS_SELECTOR, __KERNEL_DS);  /* 22.2.4 */
-	vmcs_write16(HOST_TR_SELECTOR, GDT_ENTRY_TSS*8);  /* 22.2.4 */
+	vmcs_write16(HOST_SS_SELECTOR, __KERNEL_DS);           /* 26.2.3 */
+	vmcs_write16(HOST_TR_SELECTOR, GDT_ENTRY_TSS*8);       /* 26.2.3 */
+	vmcs_writel(HOST_FS_BASE, 0);                          /* 26.2.3 */
+	vmcs_writel(HOST_GS_BASE, 0);                          /* 26.2.3 */
 
-	vmcs_writel(HOST_IDTR_BASE, host_idt_base);   /* 22.2.4 */
+	vmcs_writel(HOST_IDTR_BASE, host_idt_base);   /* 26.2.3 */
 
 	vmcs_writel(HOST_RIP, (unsigned long)vmx_vmexit); /* 22.2.5 */
 
@@ -4319,11 +4369,7 @@ static void init_vmcs(struct vcpu_vmx *vmx)
 	vmcs_write32(PAGE_FAULT_ERROR_CODE_MATCH, 0);
 	vmcs_write32(CR3_TARGET_COUNT, 0);           /* 22.2.1 */
 
-	vmcs_write16(HOST_FS_SELECTOR, 0);            /* 22.2.4 */
-	vmcs_write16(HOST_GS_SELECTOR, 0);            /* 22.2.4 */
 	vmx_set_constant_host_state(vmx);
-	vmcs_writel(HOST_FS_BASE, 0); /* 22.2.4 */
-	vmcs_writel(HOST_GS_BASE, 0); /* 22.2.4 */
 
 	if (cpu_has_vmx_vmfunc())
 		vmcs_write64(VM_FUNCTION_CONTROL, 0);
@@ -6855,15 +6901,10 @@ reenter_guest:
 
 #ifndef CONFIG_X86_64
 	/*
-	 * The sysexit path does not restore ds/es, so we must set them to
-	 * a reasonable value ourselves.
-	 *
-	 * We can't defer this to vmx_prepare_switch_to_host() since that
-	 * function may be executed in interrupt context, which saves and
-	 * restore segments around it, nullifying its effect.
+	 * On x86_32, we can't switch back to host segments in interrupt
+	 * context -- do it here instead.
 	 */
-	loadsegment(ds, __USER_DS);
-	loadsegment(es, __USER_DS);
+	vmx_switch_to_host_segments(vmx);
 #endif
 
 	vmx_register_cache_reset(vcpu);

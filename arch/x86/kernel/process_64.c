@@ -276,9 +276,6 @@ void current_save_fsgs(void)
 	save_fsgs(current);
 	local_irq_restore(flags);
 }
-#if IS_ENABLED(CONFIG_KVM)
-EXPORT_SYMBOL_GPL(current_save_fsgs);
-#endif
 
 static __always_inline void loadseg(enum which_selector which,
 				    unsigned short sel)
