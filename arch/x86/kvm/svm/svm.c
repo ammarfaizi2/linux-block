@@ -1467,12 +1467,8 @@ static void svm_vcpu_put(struct kvm_vcpu *vcpu)
 #ifdef CONFIG_X86_64
 		loadsegment(fs, svm->host.fs);
 		wrmsrl(MSR_KERNEL_GS_BASE, current->thread.gsbase);
+#endif
 		load_gs_index(svm->host.gs);
-#else
-#ifdef CONFIG_X86_32_LAZY_GS
-		loadsegment(gs, svm->host.gs);
-#endif
-#endif
 
 		for (i = 0; i < NR_HOST_SAVE_USER_MSRS; i++)
 			wrmsrl(host_save_user_msrs[i].index,
@@ -3705,13 +3701,11 @@ static noinstr void svm_vcpu_enter_exit(struct kvm_vcpu *vcpu,
 	} else {
 		__svm_vcpu_run(svm->vmcb_pa, (unsigned long *)&svm->vcpu.arch.regs);
 
+		/* Restore the percpu segment immediately. */
 #ifdef CONFIG_X86_64
 		native_wrmsrl(MSR_GS_BASE, svm->host.gs_base);
 #else
 		loadsegment(fs, svm->host.fs);
-#ifndef CONFIG_X86_32_LAZY_GS
-		loadsegment(gs, svm->host.gs);
-#endif
 #endif
 	}
 
