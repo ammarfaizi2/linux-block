@@ -499,7 +499,7 @@ int nfsd4_is_junction(struct dentry *dentry)
 		return 0;
 	if (!(inode->i_mode & S_ISVTX))
 		return 0;
-	if (vfs_getxattr(dentry, NFSD_JUNCTION_XATTR_NAME, NULL, 0) <= 0)
+	if (vfs_getxattr(&init_user_ns, dentry, NFSD_JUNCTION_XATTR_NAME, NULL, 0) <= 0)
 		return 0;
 	return 1;
 }
@@ -2138,7 +2138,7 @@ nfsd_getxattr(struct svc_rqst *rqstp, struct svc_fh *fhp, char *name,
 
 	inode_lock_shared(inode);
 
-	len = vfs_getxattr(dentry, name, NULL, 0);
+	len = vfs_getxattr(&init_user_ns, dentry, name, NULL, 0);
 
 	/*
 	 * Zero-length attribute, just return.
@@ -2165,7 +2165,7 @@ nfsd_getxattr(struct svc_rqst *rqstp, struct svc_fh *fhp, char *name,
 		goto out;
 	}
 
-	len = vfs_getxattr(dentry, name, buf, len);
+	len = vfs_getxattr(&init_user_ns, dentry, name, buf, len);
 	if (len <= 0) {
 		kvfree(buf);
 		buf = NULL;
@@ -2272,7 +2272,7 @@ nfsd_removexattr(struct svc_rqst *rqstp, struct svc_fh *fhp, char *name)
 
 	fh_lock(fhp);
 
-	ret = __vfs_removexattr_locked(fhp->fh_dentry, name, NULL);
+	ret = __vfs_removexattr_locked(&init_user_ns, fhp->fh_dentry, name, NULL);
 
 	fh_unlock(fhp);
 	fh_drop_write(fhp);
@@ -2296,8 +2296,8 @@ nfsd_setxattr(struct svc_rqst *rqstp, struct svc_fh *fhp, char *name,
 		return nfserrno(ret);
 	fh_lock(fhp);
 
-	ret = __vfs_setxattr_locked(fhp->fh_dentry, name, buf, len, flags,
-				    NULL);
+	ret = __vfs_setxattr_locked(&init_user_ns, fhp->fh_dentry, name, buf,
+				    len, flags, NULL);
 
 	fh_unlock(fhp);
 	fh_drop_write(fhp);
