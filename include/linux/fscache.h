@@ -154,6 +154,8 @@ extern void __fscache_relinquish_cookie(struct fscache_cookie *, bool);
 extern void __fscache_update_cookie(struct fscache_cookie *, const void *, const loff_t *);
 extern void __fscache_invalidate(struct fscache_cookie *, loff_t);
 extern int __fscache_begin_read_operation(struct netfs_read_request *, struct fscache_cookie *);
+extern void fscache_put_super(struct super_block *,
+			      struct fscache_cookie *(*get_cookie)(struct inode *));
 
 /**
  * fscache_register_netfs - Register a filesystem as desiring caching services

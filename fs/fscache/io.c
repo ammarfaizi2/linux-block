@@ -188,3 +188,53 @@ int fscache_set_page_dirty(struct page *page, struct fscache_cookie *cookie)
 	return 1;
 }
 EXPORT_SYMBOL(fscache_set_page_dirty);
+
+/**
+ * fscache_put_super - Wait for outstanding ops to complete
+ * @sb: The superblock to wait on
+ * @get_cookie: Function to get the cookie on an inode
+ *
+ * Wait for outstanding cache operations on the inodes of a superblock to
+ * complete as they might be pinning an inode.  This is designed to be called
+ * from ->put_super(), right before the "VFS: Busy inodes" check.
+ */
+void fscache_put_super(struct super_block *sb,
+		       struct fscache_cookie *(*get_cookie)(struct inode *inode))
+{
+	struct fscache_cookie *cookie;
+	struct inode *inode, *p;
+
+	while (!list_empty(&sb->s_inodes)) {
+		/* Find the first inode that we need to wait on */
+		inode = NULL;
+		cookie = NULL;
+		spin_lock(&sb->s_inode_list_lock);
+		list_for_each_entry(p, &sb->s_inodes, i_sb_list) {
+			if (atomic_inc_not_zero(&p->i_count)) {
+				inode = p;
+				cookie = get_cookie(inode);
+				if (!cookie) {
+					iput(inode);
+					inode = NULL;
+					cookie = NULL;
+					continue;
+				}
+				break;
+			}
+		}
+		spin_unlock(&sb->s_inode_list_lock);
+
+		if (inode) {
+			/* n_ops is kept artificially raised to stop wakeups */
+			atomic_dec(&cookie->n_ops);
+			wait_var_event(&cookie->n_ops, atomic_read(&cookie->n_ops) == 0);
+			atomic_inc(&cookie->n_ops);
+			iput(inode);
+		}
+
+		evict_inodes(sb);
+		if (!inode)
+			break;
+	}
+}
+EXPORT_SYMBOL(fscache_put_super);
