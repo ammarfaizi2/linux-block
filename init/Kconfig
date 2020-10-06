@@ -1714,6 +1714,80 @@ config BPF_JIT_DEFAULT_ON
 
 source "kernel/bpf/preload/Kconfig"
 
+config BPF_SIG_FORMAT
+	def_bool n
+	select SYSTEM_DATA_VERIFICATION
+	select MODULE_SIG_FORMAT
+
+config BPF_SIG
+	bool "BPF signature verification"
+	select BPF_SIG_FORMAT
+	help
+	  Check BPF bytecode for valid signatures upon load: the signature
+	  is in the bpf_attr structure passed to sys_bpf(BPF_PROG_LOAD).
+          This is similar to kernel module signing, most of what is in
+	  <file:Documentation/admin-guide/module-signing.rst> applies.
+
+	  Note that this option adds the OpenSSL development packages as a
+	  kernel build dependency so that the signing tool can use its crypto
+	  library.
+
+	  You should enable this option if you wish to use either
+	  CONFIG_SECURITY_LOCKDOWN_LSM or lockdown functionality imposed via
+	  another LSM - otherwise unsigned BPF bytecode will be loadable
+          regardless of the lockdown policy.
+
+config BPF_SIG_FORCE
+	bool "Require BPF bytecode to be validly signed"
+	depends on BPF_SIG
+	help
+	  Reject unsigned BPF bytecode or signed BPF bytecode for which we don't
+          have a key.  Without this, such BPF bytecode will simply taint the kernel.
+
+comment "Do not forget to sign required BPF objects with scripts/bpfsign"
+	depends on BPF_SIG_FORCE
+
+choice
+	prompt "Which hash algorithm should BPF bytecode be signed with?"
+	depends on BPF_SIG
+	help
+	  This determines which sort of hashing algorithm will be used during
+	  signature generation.  This algorithm _must_ be built into the kernel
+	  directly so that signature verification can take place.  It is not
+	  possible to load a signed BPF bytecode containing the algorithm to check
+	  the signature on that BPF bytecode.
+
+config BPF_SIG_SHA1
+	bool "Sign BPF bytecode with SHA-1"
+	select CRYPTO_SHA1
+
+config BPF_SIG_SHA224
+	bool "Sign BPF bytecode with SHA-224"
+	select CRYPTO_SHA256
+
+config BPF_SIG_SHA256
+	bool "Sign BPF bytecode with SHA-256"
+	select CRYPTO_SHA256
+
+config BPF_SIG_SHA384
+	bool "Sign BPF bytecode with SHA-384"
+	select CRYPTO_SHA512
+
+config BPF_SIG_SHA512
+	bool "Sign BPF bytecode with SHA-512"
+	select CRYPTO_SHA512
+
+endchoice
+
+config BPF_SIG_HASH
+	string
+	depends on BPF_SIG
+	default "sha1" if BPF_SIG_SHA1
+	default "sha224" if BPF_SIG_SHA224
+	default "sha256" if BPF_SIG_SHA256
+	default "sha384" if BPF_SIG_SHA384
+	default "sha512" if BPF_SIG_SHA512
+
 config USERFAULTFD
 	bool "Enable userfaultfd() system call"
 	depends on MMU
