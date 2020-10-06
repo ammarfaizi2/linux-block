@@ -449,6 +449,12 @@
 
 			See Documentation/admin-guide/bootconfig.rst
 
+	bpf.sig_enforce
+			[KNL] When CONFIG_BPF_SIG is set, this means that BPF
+			progs without (valid) signatures will fail to load.
+			Note that if CONFIG_BPF_SIG_FORCE is set, that is always
+			true, so this option does nothing.
+
 	bert_disable	[ACPI]
 			Disable BERT OS support on buggy BIOSes.
 

@@ -444,6 +444,16 @@ int pkcs7_verify(struct pkcs7_message *pkcs7,
 			return -EKEYREJECTED;
 		}
 		break;
+	case VERIFYING_BPF_SIGNATURE:
+		if (pkcs7->data_type != OID_data) {
+			pr_warn("Invalid BPF sig (not pkcs7-data)\n");
+			return -EKEYREJECTED;
+		}
+		if (pkcs7->have_authattrs) {
+			pr_warn("Invalid BPF sig (has authattrs)\n");
+			return -EKEYREJECTED;
+		}
+		break;
 	default:
 		return -EINVAL;
 	}

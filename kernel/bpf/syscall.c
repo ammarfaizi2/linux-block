@@ -2094,8 +2094,80 @@ static bool is_perfmon_prog_type(enum bpf_prog_type prog_type)
 	}
 }
 
+#ifdef CONFIG_BPF_SIG
+static bool sig_enforce = IS_ENABLED(CONFIG_BPF_SIG_FORCE);
+module_param(sig_enforce, bool_enable_only, 0644);
+
+/*
+ * Export sig_enforce kernel cmdline parameter to allow other subsystems rely
+ * on that instead of directly to CONFIG_MODULE_SIG_FORCE config.
+ */
+bool is_bpf_sig_enforced(void)
+{
+	return sig_enforce;
+}
+EXPORT_SYMBOL(is_bpf_sig_enforced);
+
+void set_bpf_sig_enforced(void)
+{
+	sig_enforce = true;
+}
+
+static int bpf_sig_check(struct bpf_prog *prog, union bpf_attr *attr)
+{
+	int err = -ENODATA;
+	const char *reason;
+
+	if (attr->prog_sig_len > 0)
+		err = bpf_verify_sig(prog, attr);
+
+	switch (err) {
+	case 0:
+		return 0;
+
+		/* We don't permit BPF bytecodes to be loaded into trusted
+		 * kernels without a valid signature on them, but if we're not
+		 * enforcing, certain errors are non-fatal.
+		 */
+	case -ENODATA:
+		/*
+		 * XXX: Allow for unsigned capability queries, largest one is for
+		 *	probe_kern_probe_read_kernel in libbpf.
+		 */
+		if (attr->insn_cnt <= 6)
+			return 0;
+		reason = "Loading of unsigned BPF bytecode";
+		goto decide;
+	case -ENOPKG:
+		reason = "Loading of BPF bytecode with unsupported crypto";
+		goto decide;
+	case -ENOKEY:
+		reason = "Loading of BPF bytecode with unavailable key";
+	decide:
+		if (is_bpf_sig_enforced()) {
+			pr_notice("%s: %s is rejected\n", prog->aux->name, reason);
+			return -EKEYREJECTED;
+		}
+
+		return security_locked_down(LOCKDOWN_BPF_SIGNATURE);
+
+		/* All other errors are fatal, including nomem, unparseable
+		 * signatures and signature check failures - even if signatures
+		 * aren't required.
+		 */
+	default:
+		return err;
+	}
+}
+#else /* !CONFIG_BPF_SIG */
+static int bpf_sig_check(union bpf_attr *attr)
+{
+	return 0;
+}
+#endif /* !CONFIG_BPF_SIG */
+
 /* last field in 'union bpf_attr' used by this command */
-#define	BPF_PROG_LOAD_LAST_FIELD attach_prog_fd
+#define	BPF_PROG_LOAD_LAST_FIELD prog_sig
 
 static int bpf_prog_load(union bpf_attr *attr, union bpf_attr __user *uattr)
 {
@@ -2205,6 +2277,10 @@ static int bpf_prog_load(union bpf_attr *attr, union bpf_attr __user *uattr)
 	err = bpf_obj_name_cpy(prog->aux->name, attr->prog_name,
 			       sizeof(attr->prog_name));
 	if (err < 0)
+		goto free_prog;
+
+	err = bpf_sig_check(prog, attr);
+	if (err)
 		goto free_prog;
 
 	/* run eBPF verifier */
