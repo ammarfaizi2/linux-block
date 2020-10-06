@@ -39,13 +39,8 @@ static inline void *ldt_slot_va(int slot)
 	return (void *)(LDT_BASE_ADDR + LDT_SLOT_STRIDE * slot);
 }
 
-void load_mm_ldt(struct mm_struct *mm)
+void load_ldt_struct(struct ldt_struct *ldt)
 {
-	struct ldt_struct *ldt;
-
-	/* READ_ONCE synchronizes with smp_store_release */
-	ldt = READ_ONCE(mm->context.ldt);
-
 	/*
 	 * Any change to mm->context.ldt is followed by an IPI to all
 	 * CPUs with the mm active.  The LDT will not be freed until
@@ -60,32 +55,31 @@ void load_mm_ldt(struct mm_struct *mm)
 	 * that we can see.
 	 */
 
-	if (unlikely(ldt)) {
-		if (static_cpu_has(X86_FEATURE_PTI)) {
-			if (WARN_ON_ONCE((unsigned long)ldt->slot > 1)) {
-				/*
-				 * Whoops -- either the new LDT isn't mapped
-				 * (if slot == -1) or is mapped into a bogus
-				 * slot (if slot > 1).
-				 */
-				clear_LDT();
-				return;
-			}
-
+	if (static_cpu_has(X86_FEATURE_PTI)) {
+		if (WARN_ON_ONCE((unsigned long)ldt->slot > 1)) {
 			/*
-			 * If page table isolation is enabled, ldt->entries
-			 * will not be mapped in the userspace pagetables.
-			 * Tell the CPU to access the LDT through the alias
-			 * at ldt_slot_va(ldt->slot).
+			 * Whoops -- either the new LDT isn't mapped
+			 * (if slot == -1) or is mapped into a bogus
+			 * slot (if slot > 1).
 			 */
-			set_ldt(ldt_slot_va(ldt->slot), ldt->nr_entries);
-		} else {
-			set_ldt(ldt->entries, ldt->nr_entries);
+			clear_LDT();
+			return;
 		}
+
+		/*
+		 * If page table isolation is enabled, ldt->entries
+		 * will not be mapped in the userspace pagetables.
+		 * Tell the CPU to access the LDT through the alias
+		 * at ldt_slot_va(ldt->slot).
+		 */
+		set_ldt(ldt_slot_va(ldt->slot), ldt->nr_entries);
 	} else {
-		clear_LDT();
+		set_ldt(ldt->entries, ldt->nr_entries);
 	}
 }
+#ifdef CONFIG_KVM
+EXPORT_SYMBOL_GPL(load_ldt_struct);
+#endif
 
 void switch_ldt(struct mm_struct *prev, struct mm_struct *next)
 {
@@ -106,9 +100,15 @@ void switch_ldt(struct mm_struct *prev, struct mm_struct *next)
 	 *
 	 * This uses | instead of || because it generates better code.
 	 */
-	if (unlikely((unsigned long)prev->context.ldt |
-		     (unsigned long)next->context.ldt))
-		load_mm_ldt(next);
+	struct ldt_struct *next_ldt = smp_load_acquire(&next->context.ldt);
+
+	if (unlikely((unsigned long)smp_load_acquire(&prev->context.ldt) |
+		     (unsigned long)next_ldt)) {
+		if (next_ldt)
+			load_ldt_struct(next_ldt);
+		else
+			clear_LDT();
+	}
 
 	DEBUG_LOCKS_WARN_ON(preemptible());
 }
@@ -140,7 +140,8 @@ static void flush_ldt(void *__mm)
 	if (this_cpu_read(cpu_tlbstate.loaded_mm) != mm)
 		return;
 
-	load_mm_ldt(mm);
+	/* The new LDT is definitely non-NULL here. */
+	load_ldt_struct(smp_load_acquire(&mm->context.ldt));
 
 	refresh_ldt_segments();
 }
@@ -414,7 +415,7 @@ static void install_ldt(struct mm_struct *mm, struct ldt_struct *ldt)
 {
 	mutex_lock(&mm->context.lock);
 
-	/* Synchronizes with READ_ONCE in load_mm_ldt. */
+	/* Synchronizes with READ_ONCE in load_ldt_struct(). */
 	smp_store_release(&mm->context.ldt, ldt);
 
 	/* Activate the LDT for all CPUs using currents mm. */

@@ -1926,7 +1926,7 @@ void cpu_init(void)
 	 */
 	load_sp0((unsigned long)(cpu_entry_stack(cpu) + 1));
 
-	load_mm_ldt(&init_mm);
+	clear_LDT();
 
 	clear_all_debug_regs();
 	dbg_restore_debug_regs();

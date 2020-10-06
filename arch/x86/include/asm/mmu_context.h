@@ -78,18 +78,36 @@ static inline void ldt_arch_exit_mmap(struct mm_struct *mm) { }
 #endif
 
 #ifdef CONFIG_MODIFY_LDT_SYSCALL
-extern void load_mm_ldt(struct mm_struct *mm);
+extern void load_ldt_struct(struct ldt_struct *ldt);
 extern void switch_ldt(struct mm_struct *prev, struct mm_struct *next);
-#else
-static inline void load_mm_ldt(struct mm_struct *mm)
+static inline bool load_mm_ldt_if_present(struct mm_struct *mm)
 {
-	clear_LDT();
+	struct ldt_struct *ldt = smp_load_acquire(&mm->context.ldt);
+
+	if (likely(!ldt))
+		return false;
+
+	load_ldt_struct(ldt);
+	return true;
 }
+static inline bool load_ldt_if_present(void)
+{
+	return load_mm_ldt_if_present(this_cpu_read(cpu_tlbstate.loaded_mm));
+}
+#else
+static inline bool load_mm_ldt_if_present(struct mm_struct *mm) { return false; }
+static inline bool load_ldt_if_present(void) { return false; }
 static inline void switch_ldt(struct mm_struct *prev, struct mm_struct *next)
 {
 	DEBUG_LOCKS_WARN_ON(preemptible());
 }
 #endif
+
+static inline void load_ldt_unconditionally(void)
+{
+	if (!load_ldt_if_present())
+		clear_LDT();
+}
 
 extern void enter_lazy_tlb(struct mm_struct *mm, struct task_struct *tsk);
 

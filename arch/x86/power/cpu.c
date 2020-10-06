@@ -174,7 +174,10 @@ static void fix_processor_context(void)
 		enable_sep_cpu();
 #endif
 	load_TR_desc();				/* This does ltr */
-	load_mm_ldt(current->active_mm);	/* This does lldt */
+
+	/* Don't trust LDTR. */
+	load_ldt_unconditionally();
+
 	initialize_tlbstate_and_flush();
 
 	fpu__resume_cpu();
