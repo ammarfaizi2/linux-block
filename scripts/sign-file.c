@@ -1,12 +1,13 @@
 /* Sign a module file using the given key.
  *
- * Copyright © 2014-2016 Red Hat, Inc. All Rights Reserved.
+ * Copyright © 2014-2020 Red Hat, Inc. All Rights Reserved.
  * Copyright © 2015      Intel Corporation.
  * Copyright © 2016      Hewlett Packard Enterprise Development LP
  *
  * Authors: David Howells <dhowells@redhat.com>
  *          David Woodhouse <dwmw2@infradead.org>
  *          Juerg Haefliger <juerg.haefliger@hpe.com>
+ *          Arnaldo Carvalho de Melo <acme@redhat.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -70,7 +71,7 @@ static __attribute__((noreturn))
 void format(void)
 {
 	fprintf(stderr,
-		"Usage: scripts/sign-file [-dp] <hash algo> <key> <x509> <module> [<dest>]\n");
+		"Usage: scripts/sign-file [-bdp] <hash algo> <key> <x509> <module> [<dest>]\n");
 	fprintf(stderr,
 		"       scripts/sign-file -s <raw sig> <hash algo> <x509> <module> [<dest>]\n");
 	exit(2);
@@ -214,6 +215,7 @@ int main(int argc, char **argv)
 	char *x509_name, *module_name, *dest_name;
 	bool save_sig = false, replace_orig;
 	bool sign_only = false;
+	bool bpf_sign = false;
 	bool raw_sig = false;
 	unsigned char buf[4096];
 	unsigned long module_size, sig_size;
@@ -242,8 +244,9 @@ int main(int argc, char **argv)
 #endif
 
 	do {
-		opt = getopt(argc, argv, "sdpk");
+		opt = getopt(argc, argv, "bsdpk");
 		switch (opt) {
+		case 'b': bpf_sign = true; break;
 		case 's': raw_sig = true; break;
 		case 'p': save_sig = true; break;
 		case 'd': sign_only = true; save_sig = true; break;
@@ -355,15 +358,20 @@ int main(int argc, char **argv)
 	bd = BIO_new_file(dest_name, "wb");
 	ERR(!bd, "%s", dest_name);
 
-	/* Append the marker and the PKCS#7 message to the destination file */
-	ERR(BIO_reset(bm) < 0, "%s", module_name);
-	while ((n = BIO_read(bm, buf, sizeof(buf))),
-	       n > 0) {
-		ERR(BIO_write(bd, buf, n) < 0, "%s", dest_name);
+	if (bpf_sign) {
+		module_size = 0;
+	} else {
+		/* Append the marker and the PKCS#7 message to the destination file */
+		ERR(BIO_reset(bm) < 0, "%s", module_name);
+		while ((n = BIO_read(bm, buf, sizeof(buf))),
+		       n > 0) {
+			ERR(BIO_write(bd, buf, n) < 0, "%s", dest_name);
+		}
+		ERR(n < 0, "%s", module_name);
+		module_size = BIO_number_written(bd);
 	}
+
 	BIO_free(bm);
-	ERR(n < 0, "%s", module_name);
-	module_size = BIO_number_written(bd);
 
 	if (!raw_sig) {
 #ifndef USE_PKCS7
@@ -387,7 +395,9 @@ int main(int argc, char **argv)
 	sig_size = BIO_number_written(bd) - module_size;
 	sig_info.sig_len = htonl(sig_size);
 	ERR(BIO_write(bd, &sig_info, sizeof(sig_info)) < 0, "%s", dest_name);
-	ERR(BIO_write(bd, magic_number, sizeof(magic_number) - 1) < 0, "%s", dest_name);
+
+	if (!bpf_sign)
+		ERR(BIO_write(bd, magic_number, sizeof(magic_number) - 1) < 0, "%s", dest_name);
 
 	ERR(BIO_free(bd) < 0, "%s", dest_name);
 
