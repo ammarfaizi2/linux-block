@@ -303,17 +303,18 @@ int cap_inode_need_killpriv(struct dentry *dentry)
 
 /**
  * cap_inode_killpriv - Erase the security markings on an inode
+ * @user_ns: The user namespace of the mount
  * @dentry: The inode/dentry to alter
  *
  * Erase the privilege-enhancing security markings on an inode.
  *
  * Returns 0 if successful, -ve on error.
  */
-int cap_inode_killpriv(struct dentry *dentry)
+int cap_inode_killpriv(struct user_namespace *user_ns, struct dentry *dentry)
 {
 	int error;
 
-	error = __vfs_removexattr(dentry, XATTR_NAME_CAPS);
+	error = __vfs_mapped_removexattr(user_ns, dentry, XATTR_NAME_CAPS);
 	if (error == -EOPNOTSUPP)
 		error = 0;
 	return error;
@@ -366,8 +367,8 @@ static bool is_v3header(size_t size, const struct vfs_cap_data *cap)
  * by the integrity subsystem, which really wants the unconverted values -
  * so that's good.
  */
-int cap_inode_getsecurity(struct inode *inode, const char *name, void **buffer,
-			  bool alloc)
+int cap_inode_getsecurity(struct user_namespace *user_ns, struct inode *inode,
+			  const char *name, void **buffer, bool alloc)
 {
 	int size, ret;
 	kuid_t kroot;
@@ -386,8 +387,8 @@ int cap_inode_getsecurity(struct inode *inode, const char *name, void **buffer,
 		return -EINVAL;
 
 	size = sizeof(struct vfs_ns_cap_data);
-	ret = (int) vfs_getxattr_alloc(dentry, XATTR_NAME_CAPS,
-				 &tmpbuf, size, GFP_NOFS);
+	ret = (int)vfs_mapped_getxattr_alloc(user_ns, dentry, XATTR_NAME_CAPS,
+					 &tmpbuf, size, GFP_NOFS);
 	dput(dentry);
 
 	if (ret < 0)
@@ -411,6 +412,9 @@ int cap_inode_getsecurity(struct inode *inode, const char *name, void **buffer,
 	nscap = (struct vfs_ns_cap_data *) tmpbuf;
 	root = le32_to_cpu(nscap->rootid);
 	kroot = make_kuid(fs_ns, root);
+
+	/* If this is an idmapped mount shift the kuid. */
+	kroot = kuid_into_mnt(user_ns, kroot);
 
 	/* If the root kuid maps to a valid uid in current ns, then return
 	 * this as a nscap. */
@@ -573,7 +577,9 @@ static inline int bprm_caps_from_vfs_caps(struct cpu_vfs_cap_data *caps,
 /*
  * Extract the on-exec-apply capability sets for an executable file.
  */
-int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data *cpu_caps)
+int get_mapped_vfs_caps_from_disk(struct user_namespace *user_ns,
+			      const struct dentry *dentry,
+			      struct cpu_vfs_cap_data *cpu_caps)
 {
 	struct inode *inode = d_backing_inode(dentry);
 	__u32 magic_etc;
@@ -629,6 +635,7 @@ int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data 
 	/* Limit the caps to the mounter of the filesystem
 	 * or the more limited uid specified in the xattr.
 	 */
+	rootkuid = kuid_into_mnt(user_ns, rootkuid);
 	if (!rootid_owns_currentns(rootkuid))
 		return -ENODATA;
 
@@ -645,6 +652,12 @@ int get_vfs_caps_from_disk(const struct dentry *dentry, struct cpu_vfs_cap_data 
 	cpu_caps->rootid = rootkuid;
 
 	return 0;
+}
+
+int get_vfs_caps_from_disk(const struct dentry *dentry,
+			   struct cpu_vfs_cap_data *cpu_caps)
+{
+	return get_mapped_vfs_caps_from_disk(&init_user_ns, dentry, cpu_caps);
 }
 
 /*
@@ -674,7 +687,7 @@ static int get_file_caps(struct linux_binprm *bprm, struct file *file,
 	if (!current_in_userns(file->f_path.mnt->mnt_sb->s_user_ns))
 		return 0;
 
-	rc = get_vfs_caps_from_disk(file->f_path.dentry, &vcaps);
+	rc = get_mapped_vfs_caps_from_disk(mnt_user_ns(file->f_path.mnt), file->f_path.dentry, &vcaps);
 	if (rc < 0) {
 		if (rc == -EINVAL)
 			printk(KERN_NOTICE "Invalid argument reading file caps for %s\n",
@@ -939,6 +952,7 @@ int cap_inode_setxattr(struct dentry *dentry, const char *name,
 
 /**
  * cap_inode_removexattr - Determine whether an xattr may be removed
+ * @user_ns: The user namespace of the vfsmount
  * @dentry: The inode/dentry being altered
  * @name: The name of the xattr to be changed
  *
@@ -948,7 +962,8 @@ int cap_inode_setxattr(struct dentry *dentry, const char *name,
  * This is used to make sure security xattrs don't get removed by those who
  * aren't privileged to remove them.
  */
-int cap_inode_removexattr(struct dentry *dentry, const char *name)
+int cap_inode_removexattr(struct user_namespace *mnt_user_ns,
+			  struct dentry *dentry, const char *name)
 {
 	struct user_namespace *user_ns = dentry->d_sb->s_user_ns;
 
@@ -962,7 +977,7 @@ int cap_inode_removexattr(struct dentry *dentry, const char *name)
 		struct inode *inode = d_backing_inode(dentry);
 		if (!inode)
 			return -EINVAL;
-		if (!capable_wrt_inode_uidgid(inode, CAP_SETFCAP))
+		if (!capable_wrt_mapped_inode_uidgid(mnt_user_ns, inode, CAP_SETFCAP))
 			return -EPERM;
 		return 0;
 	}
