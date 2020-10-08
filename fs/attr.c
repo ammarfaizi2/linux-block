@@ -113,7 +113,7 @@ kill_priv:
 	if (ia_valid & ATTR_KILL_PRIV) {
 		int error;
 
-		error = security_inode_killpriv(dentry);
+		error = security_inode_killpriv(user_ns, dentry);
 		if (error)
 			return error;
 	}
