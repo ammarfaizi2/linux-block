@@ -259,7 +259,7 @@ __vfs_setxattr_locked(struct user_namespace *user_ns, struct dentry *dentry,
 	if (error)
 		return error;
 
-	error = security_inode_setxattr(dentry, name, value, size, flags);
+	error = security_inode_setxattr(user_ns, dentry, name, value, size, flags);
 	if (error)
 		goto out;
 
@@ -298,18 +298,18 @@ retry_deleg:
 EXPORT_SYMBOL_GPL(vfs_setxattr);
 
 static ssize_t
-xattr_getsecurity(struct inode *inode, const char *name, void *value,
-			size_t size)
+xattr_getsecurity(struct user_namespace *user_ns, struct inode *inode,
+		  const char *name, void *value, size_t size)
 {
 	void *buffer = NULL;
 	ssize_t len;
 
 	if (!value || !size) {
-		len = security_inode_getsecurity(inode, name, &buffer, false);
+		len = security_inode_getsecurity(user_ns, inode, name, &buffer, false);
 		goto out_noalloc;
 	}
 
-	len = security_inode_getsecurity(inode, name, &buffer, true);
+	len = security_inode_getsecurity(user_ns, inode, name, &buffer, true);
 	if (len < 0)
 		return len;
 	if (size < len) {
@@ -399,7 +399,7 @@ vfs_getxattr(struct user_namespace *user_ns, struct dentry *dentry,
 	if (!strncmp(name, XATTR_SECURITY_PREFIX,
 				XATTR_SECURITY_PREFIX_LEN)) {
 		const char *suffix = name + XATTR_SECURITY_PREFIX_LEN;
-		int ret = xattr_getsecurity(inode, suffix, value, size);
+		int ret = xattr_getsecurity(user_ns, inode, suffix, value, size);
 		/*
 		 * Only overwrite the return value if a security module
 		 * is actually active.
@@ -468,7 +468,7 @@ __vfs_removexattr_locked(struct user_namespace *user_ns, struct dentry *dentry,
 	if (error)
 		return error;
 
-	error = security_inode_removexattr(dentry, name);
+	error = security_inode_removexattr(user_ns, dentry, name);
 	if (error)
 		goto out;
 
