@@ -293,8 +293,8 @@ extern void __audit_syscall_exit(int ret_success, long ret_value);
 extern struct filename *__audit_reusename(const __user char *uptr);
 extern void __audit_getname(struct filename *name);
 extern void __audit_getcwd(void);
-extern void __audit_inode(struct filename *name, const struct dentry *dentry,
-				unsigned int flags);
+extern void __audit_inode(struct filename *name, struct user_namespace *user_ns,
+			  const struct dentry *dentry, unsigned int flags);
 extern void __audit_file(const struct file *);
 extern void __audit_inode_child(struct inode *parent,
 				const struct dentry *dentry,
@@ -357,10 +357,11 @@ static inline void audit_getcwd(void)
 		__audit_getcwd();
 }
 static inline void audit_inode(struct filename *name,
+				struct user_namespace *user_ns,
 				const struct dentry *dentry,
 				unsigned int aflags) {
 	if (unlikely(!audit_dummy_context()))
-		__audit_inode(name, dentry, aflags);
+		__audit_inode(name, user_ns, dentry, aflags);
 }
 static inline void audit_file(struct file *file)
 {
@@ -371,7 +372,7 @@ static inline void audit_inode_parent_hidden(struct filename *name,
 						const struct dentry *dentry)
 {
 	if (unlikely(!audit_dummy_context()))
-		__audit_inode(name, dentry,
+		__audit_inode(name, &init_user_ns, dentry,
 				AUDIT_INODE_PARENT | AUDIT_INODE_HIDDEN);
 }
 static inline void audit_inode_child(struct inode *parent,
@@ -587,6 +588,7 @@ static inline void audit_getname(struct filename *name)
 static inline void audit_getcwd(void)
 { }
 static inline void audit_inode(struct filename *name,
+				struct user_namespace *user_ns,
 				const struct dentry *dentry,
 				unsigned int aflags)
 { }
