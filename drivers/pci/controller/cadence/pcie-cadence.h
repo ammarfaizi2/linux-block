@@ -482,16 +482,16 @@ static inline bool cdns_pcie_link_up(struct cdns_pcie *pcie)
 
 #ifdef CONFIG_PCIE_CADENCE_HOST
 int cdns_pcie_host_setup(struct cdns_pcie_rc *rc);
-void __iomem *cdns_pci_map_bus(struct pci_bus *bus, unsigned int devfn,
-			       int where);
+void __iomem *cdns_pci_own_map_bus(struct pci_bus *bus, unsigned int devfn,
+				   int where);
 #else
 static inline int cdns_pcie_host_setup(struct cdns_pcie_rc *rc)
 {
 	return 0;
 }
 
-static inline void __iomem *cdns_pci_map_bus(struct pci_bus *bus, unsigned int devfn,
-					     int where)
+static inline void __iomem *cdns_pci_own_map_bus(struct pci_bus *bus, unsigned int devfn,
+						 int where)
 {
 	return NULL;
 }

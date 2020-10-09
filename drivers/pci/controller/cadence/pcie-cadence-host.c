@@ -23,6 +23,22 @@ static u8 bar_aperture_mask[] = {
 	[RP_BAR1] = 0xF,
 };
 
+void __iomem *cdns_pci_map_root_bus(struct pci_bus *bus, unsigned int devfn,
+				    int where)
+{
+	struct pci_host_bridge *bridge = pci_find_host_bridge(bus);
+	struct cdns_pcie_rc *rc = pci_host_bridge_priv(bridge);
+	struct cdns_pcie *pcie = &rc->pcie;
+
+	return pcie->reg_base + (where & 0xfff);
+}
+
+static struct pci_ops cdns_pcie_host_ops = {
+	.map_bus	= cdns_pci_map_root_bus,
+	.read		= pci_generic_config_read,
+	.write		= pci_generic_config_write,
+};
+
 void __iomem *cdns_pci_map_bus(struct pci_bus *bus, unsigned int devfn,
 			       int where)
 {
@@ -32,17 +48,6 @@ void __iomem *cdns_pci_map_bus(struct pci_bus *bus, unsigned int devfn,
 	unsigned int busn = bus->number;
 	u32 addr0, desc0;
 
-	if (pci_is_root_bus(bus)) {
-		/*
-		 * Only the root port (devfn == 0) is connected to this bus.
-		 * All other PCI devices are behind some bridge hence on another
-		 * bus.
-		 */
-		if (devfn)
-			return NULL;
-
-		return pcie->reg_base + (where & 0xfff);
-	}
 	/* Check that the link is up */
 	if (!(cdns_pcie_readl(pcie, CDNS_PCIE_LM_BASE) & 0x1))
 		return NULL;
@@ -62,7 +67,7 @@ void __iomem *cdns_pci_map_bus(struct pci_bus *bus, unsigned int devfn,
 	 * The bus number was already set once for all in desc1 by
 	 * cdns_pcie_host_init_address_translation().
 	 */
-	if (busn == bridge->busnr + 1)
+	if (pci_is_root_bus(bus->parent))
 		desc0 |= CDNS_PCIE_AT_OB_REGION_DESC0_TYPE_CONF_TYPE0;
 	else
 		desc0 |= CDNS_PCIE_AT_OB_REGION_DESC0_TYPE_CONF_TYPE1;
@@ -71,7 +76,7 @@ void __iomem *cdns_pci_map_bus(struct pci_bus *bus, unsigned int devfn,
 	return rc->cfg_base + (where & 0xfff);
 }
 
-static struct pci_ops cdns_pcie_host_ops = {
+static struct pci_ops cdns_pcie_child_ops = {
 	.map_bus	= cdns_pci_map_bus,
 	.read		= pci_generic_config_read,
 	.write		= pci_generic_config_write,
@@ -514,8 +519,12 @@ int cdns_pcie_host_setup(struct cdns_pcie_rc *rc)
 	if (ret)
 		return ret;
 
+	bridge->single_root_dev = 1;
 	if (!bridge->ops)
 		bridge->ops = &cdns_pcie_host_ops;
+
+	if (!bridge->child_ops)
+		bridge->child_ops = &cdns_pcie_child_ops;
 
 	ret = pci_host_probe(bridge);
 	if (ret < 0)

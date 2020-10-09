@@ -253,30 +253,10 @@ static int j721e_pcie_ctrl_init(struct j721e_pcie *pcie)
 	return 0;
 }
 
-static int cdns_ti_pcie_config_read(struct pci_bus *bus, unsigned int devfn,
-				    int where, int size, u32 *value)
-{
-	if (pci_is_root_bus(bus))
-		return pci_generic_config_read32(bus, devfn, where, size,
-						 value);
-
-	return pci_generic_config_read(bus, devfn, where, size, value);
-}
-
-static int cdns_ti_pcie_config_write(struct pci_bus *bus, unsigned int devfn,
-				     int where, int size, u32 value)
-{
-	if (pci_is_root_bus(bus))
-		return pci_generic_config_write32(bus, devfn, where, size,
-						  value);
-
-	return pci_generic_config_write(bus, devfn, where, size, value);
-}
-
 static struct pci_ops cdns_ti_pcie_host_ops = {
-	.map_bus	= cdns_pci_map_bus,
-	.read		= cdns_ti_pcie_config_read,
-	.write		= cdns_ti_pcie_config_write,
+	.map_bus	= cdns_pci_own_map_bus,
+	.read		= pci_generic_config_read32,
+	.write		= pci_generic_config_write32,
 };
 
 static const struct j721e_pcie_data j721e_pcie_rc_data = {
