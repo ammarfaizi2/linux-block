@@ -357,7 +357,7 @@ int notify_change(struct user_namespace *user_ns, struct dentry *dentry,
 
 	if (!error) {
 		fsnotify_change(dentry, ia_valid);
-		ima_inode_post_setattr(dentry);
+		ima_inode_post_setattr(user_ns, dentry);
 		evm_inode_post_setattr(dentry, ia_valid);
 	}
 
