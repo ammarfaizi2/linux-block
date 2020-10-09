@@ -3379,7 +3379,7 @@ struct dentry *vfs_mapped_tmpfile(struct user_namespace *user_ns,
 		inode->i_state |= I_LINKABLE;
 		spin_unlock(&inode->i_lock);
 	}
-	ima_post_create_tmpfile(inode);
+	ima_post_create_tmpfile(user_ns, inode);
 	return child;
 
 out_err:
@@ -3703,7 +3703,7 @@ retry:
 			error = vfs_mapped_create(user_ns, path.dentry->d_inode,
 						  dentry, mode, true);
 			if (!error)
-				ima_post_path_mknod(dentry);
+				ima_post_path_mknod(user_ns, dentry);
 			break;
 		case S_IFCHR: case S_IFBLK:
 			error = vfs_mapped_mknod(user_ns, path.dentry->d_inode,
