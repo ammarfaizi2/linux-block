@@ -1006,7 +1006,7 @@ static inline int may_follow_link(struct nameidata *nd, const struct inode *inod
 	if (nd->flags & LOOKUP_RCU)
 		return -ECHILD;
 
-	audit_inode(nd->name, nd->stack[0].link.dentry, 0);
+	audit_inode(nd->name, user_ns, nd->stack[0].link.dentry, 0);
 	audit_log_path_denied(AUDIT_ANOM_LINK, "follow_link");
 	return -EACCES;
 }
@@ -2413,7 +2413,7 @@ int filename_lookup(int dfd, struct filename *name, unsigned flags,
 		retval = path_lookupat(&nd, flags | LOOKUP_REVAL, path);
 
 	if (likely(!retval))
-		audit_inode(name, path->dentry,
+		audit_inode(name, mnt_user_ns(path->mnt), path->dentry,
 			    flags & LOOKUP_MOUNTPOINT ? AUDIT_INODE_NOEVAL : 0);
 	restore_nameidata();
 	putname(name);
@@ -2455,7 +2455,7 @@ static struct filename *filename_parentat(int dfd, struct filename *name,
 	if (likely(!retval)) {
 		*last = nd.last;
 		*type = nd.last_type;
-		audit_inode(name, parent->dentry, AUDIT_INODE_PARENT);
+		audit_inode(name, mnt_user_ns(parent->mnt), parent->dentry, AUDIT_INODE_PARENT);
 	} else {
 		putname(name);
 		name = ERR_PTR(retval);
@@ -3239,7 +3239,7 @@ static const char *open_last_lookups(struct nameidata *nd,
 			if (unlikely(error))
 				return ERR_PTR(error);
 		}
-		audit_inode(nd->name, dir, AUDIT_INODE_PARENT);
+		audit_inode(nd->name, mnt_user_ns(nd->path.mnt), dir, AUDIT_INODE_PARENT);
 		/* trailing slashes? */
 		if (unlikely(nd->last.name[nd->last.len]))
 			return ERR_PTR(-EISDIR);
@@ -3305,7 +3305,7 @@ static int do_open(struct nameidata *nd,
 			return error;
 	}
 	if (!(file->f_mode & FMODE_CREATED))
-		audit_inode(nd->name, nd->path.dentry, 0);
+		audit_inode(nd->name, mnt_user_ns(nd->path.mnt), nd->path.dentry, 0);
 	if (open_flag & O_CREAT) {
 		if ((open_flag & O_EXCL) && !(file->f_mode & FMODE_CREATED))
 			return -EEXIST;
@@ -3414,7 +3414,7 @@ static int do_tmpfile(struct nameidata *nd, unsigned flags,
 		goto out2;
 	dput(path.dentry);
 	path.dentry = child;
-	audit_inode(nd->name, child, 0);
+	audit_inode(nd->name, user_ns, child, 0);
 	/* Don't check for other permissions, the inode was just created */
 	error = may_open(&path, 0, op->open_flag);
 	if (error)
@@ -3433,7 +3433,7 @@ static int do_o_path(struct nameidata *nd, unsigned flags, struct file *file)
 	struct path path;
 	int error = path_lookupat(nd, flags, &path);
 	if (!error) {
-		audit_inode(nd->name, path.dentry, 0);
+		audit_inode(nd->name, mnt_user_ns(path.mnt), path.dentry, 0);
 		error = vfs_open(&path, file);
 		path_put(&path);
 	}

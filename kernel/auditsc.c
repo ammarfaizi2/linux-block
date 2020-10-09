@@ -1936,6 +1936,7 @@ void __audit_getname(struct filename *name)
 }
 
 static inline int audit_copy_fcaps(struct audit_names *name,
+				   struct user_namespace *user_ns,
 				   const struct dentry *dentry)
 {
 	struct cpu_vfs_cap_data caps;
@@ -1944,7 +1945,7 @@ static inline int audit_copy_fcaps(struct audit_names *name,
 	if (!dentry)
 		return 0;
 
-	rc = get_vfs_caps_from_disk(dentry, &caps);
+	rc = get_mapped_vfs_caps_from_disk(user_ns, dentry, &caps);
 	if (rc)
 		return rc;
 
@@ -1960,21 +1961,22 @@ static inline int audit_copy_fcaps(struct audit_names *name,
 
 /* Copy inode data into an audit_names. */
 static void audit_copy_inode(struct audit_names *name,
-			     const struct dentry *dentry,
-			     struct inode *inode, unsigned int flags)
+			     struct user_namespace *user_ns,
+			     const struct dentry *dentry, struct inode *inode,
+			     unsigned int flags)
 {
 	name->ino   = inode->i_ino;
 	name->dev   = inode->i_sb->s_dev;
 	name->mode  = inode->i_mode;
-	name->uid   = inode->i_uid;
-	name->gid   = inode->i_gid;
+	name->uid   = i_uid_into_mnt(user_ns, inode);
+	name->gid   = i_gid_into_mnt(user_ns, inode);
 	name->rdev  = inode->i_rdev;
 	security_inode_getsecid(inode, &name->osid);
 	if (flags & AUDIT_INODE_NOEVAL) {
 		name->fcap_ver = -1;
 		return;
 	}
-	audit_copy_fcaps(name, dentry);
+	audit_copy_fcaps(name, user_ns, dentry);
 }
 
 /**
@@ -1983,8 +1985,8 @@ static void audit_copy_inode(struct audit_names *name,
  * @dentry: dentry being audited
  * @flags: attributes for this particular entry
  */
-void __audit_inode(struct filename *name, const struct dentry *dentry,
-		   unsigned int flags)
+void __audit_inode(struct filename *name, struct user_namespace *user_ns,
+		   const struct dentry *dentry, unsigned int flags)
 {
 	struct audit_context *context = audit_context();
 	struct inode *inode = d_backing_inode(dentry);
@@ -2078,12 +2080,12 @@ out:
 		n->type = AUDIT_TYPE_NORMAL;
 	}
 	handle_path(dentry);
-	audit_copy_inode(n, dentry, inode, flags & AUDIT_INODE_NOEVAL);
+	audit_copy_inode(n, user_ns, dentry, inode, flags & AUDIT_INODE_NOEVAL);
 }
 
 void __audit_file(const struct file *file)
 {
-	__audit_inode(NULL, file->f_path.dentry, 0);
+	__audit_inode(NULL, mnt_user_ns(file->f_path.mnt), file->f_path.dentry, 0);
 }
 
 /**
@@ -2175,7 +2177,7 @@ void __audit_inode_child(struct inode *parent,
 		n = audit_alloc_name(context, AUDIT_TYPE_PARENT);
 		if (!n)
 			return;
-		audit_copy_inode(n, NULL, parent, 0);
+		audit_copy_inode(n, &init_user_ns, NULL, parent, 0);
 	}
 
 	if (!found_child) {
@@ -2194,7 +2196,7 @@ void __audit_inode_child(struct inode *parent,
 	}
 
 	if (inode)
-		audit_copy_inode(found_child, dentry, inode, 0);
+		audit_copy_inode(found_child, &init_user_ns, dentry, inode, 0);
 	else
 		found_child->ino = AUDIT_INO_UNSET;
 }
