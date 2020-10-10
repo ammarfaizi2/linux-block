@@ -3280,7 +3280,7 @@ void mem_cgroup_split_huge_fixup(struct page *head)
 	if (mem_cgroup_disabled())
 		return;
 
-	for (i = 1; i < HPAGE_PMD_NR; i++) {
+	for (i = 1; i < thp_nr_pages(head); i++) {
 		css_get(&memcg->css);
 		head[i].mem_cgroup = memcg;
 	}
