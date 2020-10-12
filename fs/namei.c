@@ -2517,8 +2517,9 @@ int vfs_path_lookup(struct dentry *dentry, struct vfsmount *mnt,
 }
 EXPORT_SYMBOL(vfs_path_lookup);
 
-static int lookup_one_len_common(const char *name, struct dentry *base,
-				 int len, struct qstr *this)
+static int lookup_one_len_common(const char *name, struct dentry *base, int len,
+				 struct qstr *this,
+				 struct user_namespace *mnt_user_ns)
 {
 	this->name = name;
 	this->len = len;
@@ -2546,7 +2547,7 @@ static int lookup_one_len_common(const char *name, struct dentry *base,
 			return err;
 	}
 
-	return inode_permission(base->d_inode, MAY_EXEC);
+	return mapped_inode_permission(mnt_user_ns, base->d_inode, MAY_EXEC);
 }
 
 /**
@@ -2570,7 +2571,7 @@ struct dentry *try_lookup_one_len(const char *name, struct dentry *base, int len
 
 	WARN_ON_ONCE(!inode_is_locked(base->d_inode));
 
-	err = lookup_one_len_common(name, base, len, &this);
+	err = lookup_one_len_common(name, base, len, &this, &init_user_ns);
 	if (err)
 		return ERR_PTR(err);
 
@@ -2589,7 +2590,8 @@ EXPORT_SYMBOL(try_lookup_one_len);
  *
  * The caller must hold base->i_mutex.
  */
-struct dentry *lookup_one_len(const char *name, struct dentry *base, int len)
+struct dentry *lookup_one_len_mapped(const char *name, struct dentry *base, int len,
+				 struct user_namespace *mnt_user_ns)
 {
 	struct dentry *dentry;
 	struct qstr this;
@@ -2597,12 +2599,18 @@ struct dentry *lookup_one_len(const char *name, struct dentry *base, int len)
 
 	WARN_ON_ONCE(!inode_is_locked(base->d_inode));
 
-	err = lookup_one_len_common(name, base, len, &this);
+	err = lookup_one_len_common(name, base, len, &this, mnt_user_ns);
 	if (err)
 		return ERR_PTR(err);
 
 	dentry = lookup_dcache(&this, base, 0);
 	return dentry ? dentry : __lookup_slow(&this, base, 0);
+}
+EXPORT_SYMBOL(lookup_one_len_mapped);
+
+struct dentry *lookup_one_len(const char *name, struct dentry *base, int len)
+{
+	return lookup_one_len_mapped(name, base, len, &init_user_ns);
 }
 EXPORT_SYMBOL(lookup_one_len);
 
@@ -2618,14 +2626,14 @@ EXPORT_SYMBOL(lookup_one_len);
  * Unlike lookup_one_len, it should be called without the parent
  * i_mutex held, and will take the i_mutex itself if necessary.
  */
-struct dentry *lookup_one_len_unlocked(const char *name,
-				       struct dentry *base, int len)
+struct dentry *lookup_one_len_mapped_unlocked(const char *name, struct dentry *base,
+					  int len, struct user_namespace *mnt_user_ns)
 {
 	struct qstr this;
 	int err;
 	struct dentry *ret;
 
-	err = lookup_one_len_common(name, base, len, &this);
+	err = lookup_one_len_common(name, base, len, &this, mnt_user_ns);
 	if (err)
 		return ERR_PTR(err);
 
@@ -2633,6 +2641,13 @@ struct dentry *lookup_one_len_unlocked(const char *name,
 	if (!ret)
 		ret = lookup_slow(&this, base, 0);
 	return ret;
+}
+EXPORT_SYMBOL(lookup_one_len_mapped_unlocked);
+
+struct dentry *lookup_one_len_unlocked(const char *name,
+				       struct dentry *base, int len)
+{
+	return lookup_one_len_mapped_unlocked(name, base, len, &init_user_ns);
 }
 EXPORT_SYMBOL(lookup_one_len_unlocked);
 
@@ -2644,15 +2659,23 @@ EXPORT_SYMBOL(lookup_one_len_unlocked);
  * need to be very careful; pinned positives have ->d_inode stable, so
  * this one avoids such problems.
  */
-struct dentry *lookup_positive_unlocked(const char *name,
-				       struct dentry *base, int len)
+struct dentry *lookup_positive_mapped_unlocked(const char *name,
+					   struct dentry *base, int len,
+					   struct user_namespace *mnt_user_ns)
 {
-	struct dentry *ret = lookup_one_len_unlocked(name, base, len);
+	struct dentry *ret = lookup_one_len_mapped_unlocked(name, base, len, mnt_user_ns);
 	if (!IS_ERR(ret) && d_flags_negative(smp_load_acquire(&ret->d_flags))) {
 		dput(ret);
 		ret = ERR_PTR(-ENOENT);
 	}
 	return ret;
+}
+EXPORT_SYMBOL(lookup_positive_mapped_unlocked);
+
+struct dentry *lookup_positive_unlocked(const char *name,
+				       struct dentry *base, int len)
+{
+	return lookup_positive_mapped_unlocked(name, base, len, &init_user_ns);
 }
 EXPORT_SYMBOL(lookup_positive_unlocked);
 

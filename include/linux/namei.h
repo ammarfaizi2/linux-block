@@ -68,8 +68,14 @@ extern struct dentry *kern_path_locked(const char *, struct path *);
 
 extern struct dentry *try_lookup_one_len(const char *, struct dentry *, int);
 extern struct dentry *lookup_one_len(const char *, struct dentry *, int);
+extern struct dentry *lookup_one_len_mapped(const char *, struct dentry *, int,
+					struct user_namespace *);
 extern struct dentry *lookup_one_len_unlocked(const char *, struct dentry *, int);
+extern struct dentry *lookup_one_len_mapped_unlocked(const char *, struct dentry *,
+						 int, struct user_namespace *);
 extern struct dentry *lookup_positive_unlocked(const char *, struct dentry *, int);
+extern struct dentry *lookup_positive_mapped_unlocked(const char *, struct dentry *,
+						  int, struct user_namespace *);
 
 extern int follow_down_one(struct path *);
 extern int follow_down(struct path *);
