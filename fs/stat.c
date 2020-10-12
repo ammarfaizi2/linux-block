@@ -25,7 +25,8 @@
 #include "mount.h"
 
 /**
- * generic_fillattr - Fill in the basic attributes from the inode struct
+ * mapped_generic_fillattr - Fill in the basic attributes from the inode struct on idmapped mounts
+ * @user_ns: the user namespace from which we access this inode
  * @inode: Inode to use as the source
  * @stat: Where to fill in the attributes
  *
@@ -33,14 +34,15 @@
  * found on the VFS inode structure.  This is the default if no getattr inode
  * operation is supplied.
  */
-void generic_fillattr(struct inode *inode, struct kstat *stat)
+void mapped_generic_fillattr(struct user_namespace *mnt_user_ns,
+			 struct inode *inode, struct kstat *stat)
 {
 	stat->dev = inode->i_sb->s_dev;
 	stat->ino = inode->i_ino;
 	stat->mode = inode->i_mode;
 	stat->nlink = inode->i_nlink;
-	stat->uid = inode->i_uid;
-	stat->gid = inode->i_gid;
+	stat->uid = i_uid_into_mnt(mnt_user_ns, inode);
+	stat->gid = i_gid_into_mnt(mnt_user_ns, inode);
 	stat->rdev = inode->i_rdev;
 	stat->size = i_size_read(inode);
 	stat->atime = inode->i_atime;
@@ -48,6 +50,12 @@ void generic_fillattr(struct inode *inode, struct kstat *stat)
 	stat->ctime = inode->i_ctime;
 	stat->blksize = i_blocksize(inode);
 	stat->blocks = inode->i_blocks;
+}
+EXPORT_SYMBOL(mapped_generic_fillattr);
+
+void generic_fillattr(struct inode *inode, struct kstat *stat)
+{
+	mapped_generic_fillattr(&init_user_ns, inode, stat);
 }
 EXPORT_SYMBOL(generic_fillattr);
 
@@ -87,7 +95,7 @@ int vfs_getattr_nosec(const struct path *path, struct kstat *stat,
 		return inode->i_op->getattr(path, stat, request_mask,
 					    query_flags);
 
-	generic_fillattr(inode, stat);
+	mapped_generic_fillattr(mnt_user_ns(path->mnt), inode, stat);
 	return 0;
 }
 EXPORT_SYMBOL(vfs_getattr_nosec);
