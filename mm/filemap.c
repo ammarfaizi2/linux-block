@@ -1358,14 +1358,6 @@ static int __wait_on_page_locked_async(struct page *page,
 	return ret;
 }
 
-static int wait_on_page_locked_async(struct page *page,
-				     struct wait_page_queue *wait)
-{
-	if (!PageLocked(page))
-		return 0;
-	return __wait_on_page_locked_async(compound_head(page), wait, false);
-}
-
 /**
  * put_and_wait_on_page_locked - Drop a reference and wait for it to be unlocked
  * @page: The page to wait for.
@@ -2279,34 +2271,37 @@ find_page:
 					put_page(page);
 					goto out;
 				}
-				error = wait_on_page_locked_async(page,
-								iocb->ki_waitq);
+				error = lock_page_async(page, iocb->ki_waitq);
+				if (error)
+					goto readpage_error;
+			} else if (iocb->ki_flags & IOCB_NOWAIT) {
+				put_page(page);
+				goto would_block;
 			} else {
-				if (iocb->ki_flags & IOCB_NOWAIT) {
-					put_page(page);
-					goto would_block;
+				if (!trylock_page(page)) {
+					put_and_wait_on_page_locked(page,
+							TASK_KILLABLE);
+					continue;
 				}
-				error = wait_on_page_locked_killable(page);
 			}
-			if (unlikely(error))
-				goto readpage_error;
 			if (PageUptodate(page))
-				goto page_ok;
+				goto uptodate;
+			if (!page->mapping) {
+				unlock_page(page);
+				put_page(page);
+				continue;
+			}
 
 			if (inode->i_blkbits == PAGE_SHIFT ||
 					!mapping->a_ops->is_partially_uptodate)
-				goto page_not_up_to_date;
+				goto readpage;
 			/* pipes can't handle partially uptodate pages */
 			if (unlikely(iov_iter_is_pipe(iter)))
-				goto page_not_up_to_date;
-			if (!trylock_page(page))
-				goto page_not_up_to_date;
-			/* Did it get truncated before we got the lock? */
-			if (!page->mapping)
-				goto page_not_up_to_date_locked;
+				goto readpage;
 			if (!mapping->a_ops->is_partially_uptodate(page,
 							offset, iter->count))
-				goto page_not_up_to_date_locked;
+				goto readpage;
+uptodate:
 			unlock_page(page);
 		}
 page_ok:
@@ -2372,30 +2367,6 @@ page_ok:
 			goto out;
 		}
 		continue;
-
-page_not_up_to_date:
-		/* Get exclusive access to the page ... */
-		if (iocb->ki_flags & IOCB_WAITQ)
-			error = lock_page_async(page, iocb->ki_waitq);
-		else
-			error = lock_page_killable(page);
-		if (unlikely(error))
-			goto readpage_error;
-
-page_not_up_to_date_locked:
-		/* Did it get truncated before we got the lock? */
-		if (!page->mapping) {
-			unlock_page(page);
-			put_page(page);
-			continue;
-		}
-
-		/* Did somebody else fill it already? */
-		if (PageUptodate(page)) {
-			unlock_page(page);
-			goto page_ok;
-		}
-
 readpage:
 		if (iocb->ki_flags & (IOCB_NOIO | IOCB_NOWAIT)) {
 			unlock_page(page);
