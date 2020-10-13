@@ -57,6 +57,7 @@ struct rcu_node {
 				/*  beginning of each grace period. */
 	unsigned long qsmaskinitnext;
 				/* Online CPUs for next grace period. */
+	unsigned long ofl_seq;	/* CPU-hotplug operation sequence count. */
 	unsigned long expmask;	/* CPUs or groups that need to check in */
 				/*  to allow the current expedited GP */
 				/*  to complete. */
