@@ -1152,13 +1152,15 @@ bool rcu_lockdep_current_cpu_online(void)
 	struct rcu_data *rdp;
 	struct rcu_node *rnp;
 	bool ret = false;
+	unsigned long seq;
 
 	if (in_nmi() || !rcu_scheduler_fully_active)
 		return true;
 	preempt_disable_notrace();
 	rdp = this_cpu_ptr(&rcu_data);
 	rnp = rdp->mynode;
-	if (rdp->grpmask & rcu_rnp_online_cpus(rnp))
+	seq = READ_ONCE(rdp->ofl_seq) & ~0x1;
+	if (rdp->grpmask & rcu_rnp_online_cpus(rnp) || seq != READ_ONCE(rdp->ofl_seq))
 		ret = true;
 	preempt_enable_notrace();
 	return ret;
@@ -4065,6 +4067,8 @@ void rcu_cpu_starting(unsigned int cpu)
 
 	rnp = rdp->mynode;
 	mask = rdp->grpmask;
+	WRITE_ONCE(rdp->ofl_seq, rdp->ofl_seq + 1);
+	WARN_ON_ONCE(!(rdp->ofl_seq & 0x1));
 	raw_spin_lock_irqsave_rcu_node(rnp, flags);
 	WRITE_ONCE(rnp->qsmaskinitnext, rnp->qsmaskinitnext | mask);
 	newcpu = !(rnp->expmaskinitnext & mask);
@@ -4084,6 +4088,8 @@ void rcu_cpu_starting(unsigned int cpu)
 	} else {
 		raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
 	}
+	WRITE_ONCE(rdp->ofl_seq, rdp->ofl_seq + 1);
+	WARN_ON_ONCE(rdp->ofl_seq & 0x1);
 	smp_mb(); /* Ensure RCU read-side usage follows above initialization. */
 }
 
@@ -4111,6 +4117,8 @@ void rcu_report_dead(unsigned int cpu)
 
 	/* Remove outgoing CPU from mask in the leaf rcu_node structure. */
 	mask = rdp->grpmask;
+	WRITE_ONCE(rdp->ofl_seq, rdp->ofl_seq + 1);
+	WARN_ON_ONCE(!(rdp->ofl_seq & 0x1));
 	raw_spin_lock(&rcu_state.ofl_lock);
 	raw_spin_lock_irqsave_rcu_node(rnp, flags); /* Enforce GP memory-order guarantee. */
 	rdp->rcu_ofl_gp_seq = READ_ONCE(rcu_state.gp_seq);
@@ -4123,6 +4131,8 @@ void rcu_report_dead(unsigned int cpu)
 	WRITE_ONCE(rnp->qsmaskinitnext, rnp->qsmaskinitnext & ~mask);
 	raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
 	raw_spin_unlock(&rcu_state.ofl_lock);
+	WRITE_ONCE(rdp->ofl_seq, rdp->ofl_seq + 1);
+	WARN_ON_ONCE(rdp->ofl_seq & 0x1);
 
 	rdp->cpu_started = false;
 }
