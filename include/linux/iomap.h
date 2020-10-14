@@ -107,9 +107,9 @@ iomap_sector(struct iomap *iomap, loff_t pos)
  * associated page could not be obtained.
  */
 struct iomap_page_ops {
-	int (*page_prepare)(struct inode *inode, loff_t pos, unsigned len,
+	int (*page_prepare)(struct inode *inode, loff_t pos, size_t len,
 			struct iomap *iomap);
-	void (*page_done)(struct inode *inode, loff_t pos, unsigned copied,
+	void (*page_done)(struct inode *inode, loff_t pos, size_t copied,
 			struct page *page, struct iomap *iomap);
 };
 
