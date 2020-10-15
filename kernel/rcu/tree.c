@@ -1152,15 +1152,13 @@ bool rcu_lockdep_current_cpu_online(void)
 	struct rcu_data *rdp;
 	struct rcu_node *rnp;
 	bool ret = false;
-	unsigned long seq;
 
 	if (in_nmi() || !rcu_scheduler_fully_active)
 		return true;
 	preempt_disable_notrace();
 	rdp = this_cpu_ptr(&rcu_data);
 	rnp = rdp->mynode;
-	seq = READ_ONCE(rnp->ofl_seq) & ~0x1;
-	if (rdp->grpmask & rcu_rnp_online_cpus(rnp) || seq != READ_ONCE(rnp->ofl_seq))
+	if (rdp->grpmask & rcu_rnp_online_cpus(rnp) || READ_ONCE(rnp->ofl_seq) & 0x1)
 		ret = true;
 	preempt_enable_notrace();
 	return ret;
@@ -1772,7 +1770,7 @@ static bool rcu_gp_init(void)
 		smp_mb(); // Pair with barriers used when updating ->ofl_seq to odd values.
 		firstseq = READ_ONCE(rnp->ofl_seq);
 		if (firstseq & 0x1)
-			while (firstseq == smp_load_acquire(&rnp->ofl_seq))
+			while (firstseq == READ_ONCE(rnp->ofl_seq))
 				schedule_timeout_idle(1);  // Can't wake unless RCU is watching.
 		smp_mb(); // Pair with barriers used when updating ->ofl_seq to even values.
 		raw_spin_lock(&rcu_state.ofl_lock);
