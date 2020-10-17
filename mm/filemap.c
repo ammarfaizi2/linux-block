@@ -3327,15 +3327,23 @@ out:
 }
 EXPORT_SYMBOL(generic_file_direct_write);
 
-/*
+/**
+ * grab_cache_page_write_begin - Find or create a page for buffered writes.
+ * @mapping: The address space we're writing to.
+ * @index: The index we're writing to.
+ * @flags: %AOP_FLAG_NOFS to prevent memory reclaim calling the filesystem.
+ *
  * Find or create a page at the given pagecache position. Return the locked
  * page. This function is specifically for buffered writes.
+ *
+ * Return: The head page found in the cache, or NULL if no page could be
+ * created (due to lack of memory).
  */
 struct page *grab_cache_page_write_begin(struct address_space *mapping,
 					pgoff_t index, unsigned flags)
 {
 	struct page *page;
-	int fgp_flags = FGP_LOCK|FGP_WRITE|FGP_CREAT;
+	int fgp_flags = FGP_LOCK|FGP_WRITE|FGP_CREAT|FGP_HEAD;
 
 	if (flags & AOP_FLAG_NOFS)
 		fgp_flags |= FGP_NOFS;
