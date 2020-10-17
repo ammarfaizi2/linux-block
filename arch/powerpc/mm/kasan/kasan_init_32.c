@@ -140,6 +140,7 @@ void __init kasan_init(void)
 	phys_addr_t base, end;
 	int ret;
 	u64 i;
+	int ret;
 
 	for_each_mem_range(i, &base, &end) {
 		phys_addr_t top = min(end, total_lowmem);
