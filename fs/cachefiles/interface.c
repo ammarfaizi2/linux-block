@@ -27,7 +27,7 @@ static struct fscache_object *cachefiles_alloc_object(
 
 	cache = container_of(_cache, struct cachefiles_cache, cache);
 
-	_enter("{%s},%p,", cache->cache.identifier, cookie);
+	_enter("{%s},%x,", cache->cache.identifier, cookie->debug_id);
 
 	/* create a new object record and a temporary leaf image */
 	object = kmem_cache_alloc(cachefiles_object_jar, cachefiles_gfp);
@@ -68,7 +68,7 @@ static struct fscache_object *cachefiles_alloc_object(
 
 	object->lookup_key = key;
 
-	_leave(" = %p [%s]", &object->fscache, key);
+	_leave(" = %x [%s]", object->fscache.debug_id, key);
 	return &object->fscache;
 
 nomem_key:
@@ -301,7 +301,7 @@ static void cachefiles_sync_cache(struct fscache_cache *_cache)
 	const struct cred *saved_cred;
 	int ret;
 
-	_enter("%p", _cache);
+	_enter("%s", _cache->tag->name);
 
 	cache = container_of(_cache, struct cachefiles_cache, cache);
 
