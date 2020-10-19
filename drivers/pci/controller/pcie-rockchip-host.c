@@ -73,10 +73,8 @@ static int rockchip_pcie_valid_device(struct rockchip_pcie *rockchip,
 {
 	/*
 	 * Access only one slot on each root port.
-	 * Do not read more than one device on the bus directly attached
-	 * to RC's downstream side.
 	 */
-	if (pci_is_root_bus(bus) || pci_is_root_bus(bus->parent))
+	if (pci_is_root_bus(bus))
 		return dev == 0;
 
 	return 1;

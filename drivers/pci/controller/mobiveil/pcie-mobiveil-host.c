@@ -33,13 +33,6 @@ static bool mobiveil_pcie_valid_device(struct pci_bus *bus, unsigned int devfn)
 	if (pci_is_root_bus(bus) && (devfn > 0))
 		return false;
 
-	/*
-	 * Do not read more than one device on the bus directly
-	 * attached to RC
-	 */
-	if ((bus->primary == to_pci_host_bridge(bus->bridge)->busnr) && (PCI_SLOT(devfn) > 0))
-		return false;
-
 	return true;
 }
 
