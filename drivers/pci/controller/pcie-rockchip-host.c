@@ -68,18 +68,6 @@ static void rockchip_pcie_update_txcredit_mui(struct rockchip_pcie *rockchip)
 	rockchip_pcie_write(rockchip, val, PCIE_CORE_TXCREDIT_CFG1);
 }
 
-static int rockchip_pcie_valid_device(struct rockchip_pcie *rockchip,
-				      struct pci_bus *bus, int dev)
-{
-	/*
-	 * Access only one slot on each root port.
-	 */
-	if (pci_is_root_bus(bus))
-		return dev == 0;
-
-	return 1;
-}
-
 static u8 rockchip_pcie_lane_map(struct rockchip_pcie *rockchip)
 {
 	u32 val;
@@ -219,11 +207,6 @@ static int rockchip_pcie_rd_conf(struct pci_bus *bus, u32 devfn, int where,
 {
 	struct rockchip_pcie *rockchip = bus->sysdata;
 
-	if (!rockchip_pcie_valid_device(rockchip, bus, PCI_SLOT(devfn))) {
-		*val = 0xffffffff;
-		return PCIBIOS_DEVICE_NOT_FOUND;
-	}
-
 	if (pci_is_root_bus(bus))
 		return rockchip_pcie_rd_own_conf(rockchip, where, size, val);
 
@@ -235,9 +218,6 @@ static int rockchip_pcie_wr_conf(struct pci_bus *bus, u32 devfn,
 				 int where, int size, u32 val)
 {
 	struct rockchip_pcie *rockchip = bus->sysdata;
-
-	if (!rockchip_pcie_valid_device(rockchip, bus, PCI_SLOT(devfn)))
-		return PCIBIOS_DEVICE_NOT_FOUND;
 
 	if (pci_is_root_bus(bus))
 		return rockchip_pcie_wr_own_conf(rockchip, where, size, val);
@@ -989,6 +969,7 @@ static int rockchip_pcie_probe(struct platform_device *pdev)
 
 	bridge->sysdata = rockchip;
 	bridge->ops = &rockchip_pcie_ops;
+	bridge->single_root_dev = 1;
 
 	err = pci_host_probe(bridge);
 	if (err < 0)

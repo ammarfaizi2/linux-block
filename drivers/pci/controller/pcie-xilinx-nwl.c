@@ -210,21 +210,6 @@ static int nwl_wait_for_link(struct nwl_pcie *pcie)
 	return -ETIMEDOUT;
 }
 
-static bool nwl_pcie_valid_device(struct pci_bus *bus, unsigned int devfn)
-{
-	struct nwl_pcie *pcie = bus->sysdata;
-
-	/* Check link before accessing downstream ports */
-	if (!pci_is_root_bus(bus)) {
-		if (!nwl_pcie_link_up(pcie))
-			return false;
-	} else if (devfn > 0)
-		/* Only one device down on each root port */
-		return false;
-
-	return true;
-}
-
 /**
  * nwl_pcie_map_bus - Get configuration base
  *
@@ -240,7 +225,8 @@ static void __iomem *nwl_pcie_map_bus(struct pci_bus *bus, unsigned int devfn,
 {
 	struct nwl_pcie *pcie = bus->sysdata;
 
-	if (!nwl_pcie_valid_device(bus, devfn))
+	/* Check link before accessing downstream ports */
+	if (!pci_is_root_bus(bus) && !nwl_pcie_link_up(pcie))
 		return NULL;
 
 	return pcie->ecam_base + PCIE_ECAM_OFFSET(bus->number, devfn, where);
@@ -830,6 +816,7 @@ static int nwl_pcie_probe(struct platform_device *pdev)
 
 	bridge->sysdata = pcie;
 	bridge->ops = &nwl_pcie_ops;
+	bridge->single_root_dev = 1;
 
 	if (IS_ENABLED(CONFIG_PCI_MSI)) {
 		err = nwl_pcie_enable_msi(pcie);

@@ -711,7 +711,7 @@ static void __iomem *brcm_pcie_map_conf(struct pci_bus *bus, unsigned int devfn,
 
 	/* Accesses to the RC go right to the RC registers if slot==0 */
 	if (pci_is_root_bus(bus))
-		return PCI_SLOT(devfn) ? NULL : base + where;
+		return base + where;
 
 	/* For devices, write to the config space index register */
 	idx = PCIE_ECAM_OFFSET(bus->number, devfn, 0);
@@ -1310,6 +1310,7 @@ static int brcm_pcie_probe(struct platform_device *pdev)
 
 	bridge->ops = &brcm_pcie_ops;
 	bridge->sysdata = pcie;
+	bridge->single_root_dev = 1;
 
 	platform_set_drvdata(pdev, pcie);
 

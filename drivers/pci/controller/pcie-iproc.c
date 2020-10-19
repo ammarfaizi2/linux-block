@@ -631,9 +631,6 @@ static void __iomem *iproc_pcie_map_cfg_bus(struct iproc_pcie *pcie,
 
 	/* root complex access */
 	if (busno == 0) {
-		if (PCIE_ECAM_DEVFN(devfn) > 0)
-			return NULL;
-
 		iproc_pcie_write_reg(pcie, IPROC_PCIE_CFG_IND_ADDR,
 				     where & CFG_IND_ADDR_MASK);
 		offset = iproc_pcie_reg_offset(pcie, IPROC_PCIE_CFG_IND_DATA);
@@ -1521,6 +1518,7 @@ int iproc_pcie_setup(struct iproc_pcie *pcie, struct list_head *res)
 	host->ops = &iproc_pcie_ops;
 	host->sysdata = pcie;
 	host->map_irq = pcie->map_irq;
+	host->single_root_dev = 1;
 
 	ret = pci_host_probe(host);
 	if (ret < 0) {

@@ -330,11 +330,6 @@ static int kirin_pcie_rd_own_conf(struct pci_bus *bus, unsigned int devfn,
 {
 	struct dw_pcie *pci = to_dw_pcie_from_pp(bus->sysdata);
 
-	if (PCI_SLOT(devfn)) {
-		*val = ~0;
-		return PCIBIOS_DEVICE_NOT_FOUND;
-	}
-
 	*val = dw_pcie_read_dbi(pci, where, size);
 	return PCIBIOS_SUCCESSFUL;
 }
@@ -343,9 +338,6 @@ static int kirin_pcie_wr_own_conf(struct pci_bus *bus, unsigned int devfn,
 				  int where, int size, u32 val)
 {
 	struct dw_pcie *pci = to_dw_pcie_from_pp(bus->sysdata);
-
-	if (PCI_SLOT(devfn))
-		return PCIBIOS_DEVICE_NOT_FOUND;
 
 	dw_pcie_write_dbi(pci, where, size, val);
 	return PCIBIOS_SUCCESSFUL;

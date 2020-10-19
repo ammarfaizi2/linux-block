@@ -324,6 +324,7 @@ int dw_pcie_host_init(struct pcie_port *pp)
 		return -ENOMEM;
 
 	pp->bridge = bridge;
+	bridge->single_root_dev = 1;
 
 	/* Get the I/O range from DT */
 	win = resource_list_first_type(&bridge->windows, IORESOURCE_IO);
@@ -508,9 +509,6 @@ void __iomem *dw_pcie_own_conf_map_bus(struct pci_bus *bus, unsigned int devfn, 
 {
 	struct pcie_port *pp = bus->sysdata;
 	struct dw_pcie *pci = to_dw_pcie_from_pp(pp);
-
-	if (PCI_SLOT(devfn) > 0)
-		return NULL;
 
 	return pci->dbi_base + where;
 }

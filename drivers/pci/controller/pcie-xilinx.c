@@ -146,28 +146,6 @@ static void xilinx_pcie_clear_err_interrupts(struct xilinx_pcie_port *port)
 }
 
 /**
- * xilinx_pcie_valid_device - Check if a valid device is present on bus
- * @bus: PCI Bus structure
- * @devfn: device/function
- *
- * Return: 'true' on success and 'false' if invalid device is found
- */
-static bool xilinx_pcie_valid_device(struct pci_bus *bus, unsigned int devfn)
-{
-	struct xilinx_pcie_port *port = bus->sysdata;
-
-	/* Check if link is up when trying to access downstream ports */
-	if (!pci_is_root_bus(bus)) {
-		if (!xilinx_pcie_link_up(port))
-			return false;
-	} else if (devfn > 0) {
-		/* Only one device down on each root port */
-		return false;
-	}
-	return true;
-}
-
-/**
  * xilinx_pcie_map_bus - Get configuration base
  * @bus: PCI Bus structure
  * @devfn: Device/function
@@ -181,7 +159,8 @@ static void __iomem *xilinx_pcie_map_bus(struct pci_bus *bus,
 {
 	struct xilinx_pcie_port *port = bus->sysdata;
 
-	if (!xilinx_pcie_valid_device(bus, devfn))
+	/* Check if link is up when trying to access downstream ports */
+	if (!pci_is_root_bus(bus) && !xilinx_pcie_link_up(port))
 		return NULL;
 
 	return port->reg_base + PCIE_ECAM_OFFSET(bus->number, devfn, where);
@@ -636,6 +615,7 @@ static int xilinx_pcie_probe(struct platform_device *pdev)
 
 	bridge->sysdata = port;
 	bridge->ops = &xilinx_pcie_ops;
+	bridge->single_root_dev = 1;
 
 #ifdef CONFIG_PCI_MSI
 	xilinx_pcie_msi_chip.dev = dev;
