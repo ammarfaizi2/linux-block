@@ -27,12 +27,12 @@ jobs:
       fail-fast: false
       matrix:
         defconfig: [ppc64]
-        image: [ubuntu-20.04]
+        image: [ubuntu-devel]
         subarch: [ppc64]
         include:
           - subarch: ppc64le
             defconfig: ppc64le
-            image: ubuntu-20.04
+            image: ubuntu-devel
 
     env:
       CLANG: 1
