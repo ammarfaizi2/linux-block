@@ -52,7 +52,7 @@ struct file_system_type afs_fs_type = {
 	.init_fs_context	= afs_init_fs_context,
 	.parameters		= afs_fs_parameters,
 	.kill_sb		= afs_kill_super,
-	.fs_flags		= FS_RENAME_DOES_D_MOVE,
+	.fs_flags		= FS_RENAME_DOES_D_MOVE | FS_THP_SUPPORT,
 };
 MODULE_ALIAS_FS("afs");
 
