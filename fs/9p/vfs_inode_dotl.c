@@ -33,8 +33,8 @@
 #include "acl.h"
 
 static int
-v9fs_vfs_mknod_dotl(struct inode *dir, struct dentry *dentry, umode_t omode,
-		    dev_t rdev);
+v9fs_vfs_mknod_dotl(struct user_namespace *user_ns, struct inode *dir,
+		    struct dentry *dentry, umode_t omode, dev_t rdev);
 
 /**
  * v9fs_get_fsgid_for_create - Helper function to get the gid for creating a
@@ -218,10 +218,10 @@ int v9fs_open_to_dotl_flags(int flags)
  */
 
 static int
-v9fs_vfs_create_dotl(struct inode *dir, struct dentry *dentry, umode_t omode,
-		bool excl)
+v9fs_vfs_create_dotl(struct user_namespace *user_ns, struct inode *dir,
+		     struct dentry *dentry, umode_t omode, bool excl)
 {
-	return v9fs_vfs_mknod_dotl(dir, dentry, omode, 0);
+	return v9fs_vfs_mknod_dotl(user_ns, dir, dentry, omode, 0);
 }
 
 static int
@@ -365,8 +365,9 @@ err_clunk_old_fid:
  *
  */
 
-static int v9fs_vfs_mkdir_dotl(struct inode *dir,
-			       struct dentry *dentry, umode_t omode)
+static int v9fs_vfs_mkdir_dotl(struct user_namespace *user_ns,
+			       struct inode *dir, struct dentry *dentry,
+			       umode_t omode)
 {
 	int err;
 	struct v9fs_session_info *v9ses;
@@ -537,7 +538,8 @@ static int v9fs_mapped_iattr_valid(int iattr_valid)
  *
  */
 
-int v9fs_vfs_setattr_dotl(struct dentry *dentry, struct iattr *iattr)
+int v9fs_vfs_setattr_dotl(struct user_namespace *user_ns, struct dentry *dentry,
+			  struct iattr *iattr)
 {
 	int retval;
 	struct p9_fid *fid = NULL;
@@ -670,8 +672,8 @@ v9fs_stat2inode_dotl(struct p9_stat_dotl *stat, struct inode *inode,
 }
 
 static int
-v9fs_vfs_symlink_dotl(struct inode *dir, struct dentry *dentry,
-		const char *symname)
+v9fs_vfs_symlink_dotl(struct user_namespace *user_ns, struct inode *dir,
+		      struct dentry *dentry, const char *symname)
 {
 	int err;
 	kgid_t gid;
@@ -804,8 +806,8 @@ v9fs_vfs_link_dotl(struct dentry *old_dentry, struct inode *dir,
  *
  */
 static int
-v9fs_vfs_mknod_dotl(struct inode *dir, struct dentry *dentry, umode_t omode,
-		dev_t rdev)
+v9fs_vfs_mknod_dotl(struct user_namespace *user_ns, struct inode *dir,
+		    struct dentry *dentry, umode_t omode, dev_t rdev)
 {
 	int err;
 	kgid_t gid;

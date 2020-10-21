@@ -107,7 +107,8 @@ out:
 	return ret;
 }
 
-int btrfs_set_acl(struct inode *inode, struct posix_acl *acl, int type)
+int btrfs_set_acl(struct user_namespace *user_ns, struct inode *inode,
+		  struct posix_acl *acl, int type)
 {
 	int ret;
 	umode_t old_mode = inode->i_mode;

@@ -1851,7 +1851,8 @@ posix_mkdir_get_info:
 	goto posix_mkdir_out;
 }
 
-int cifs_mkdir(struct inode *inode, struct dentry *direntry, umode_t mode)
+int cifs_mkdir(struct user_namespace *user_ns, struct inode *inode,
+	       struct dentry *direntry, umode_t mode)
 {
 	int rc = 0;
 	unsigned int xid;
@@ -2061,9 +2062,9 @@ do_rename_exit:
 }
 
 int
-cifs_rename2(struct inode *source_dir, struct dentry *source_dentry,
-	     struct inode *target_dir, struct dentry *target_dentry,
-	     unsigned int flags)
+cifs_rename2(struct user_namespace *user_ns, struct inode *source_dir,
+	     struct dentry *source_dentry, struct inode *target_dir,
+	     struct dentry *target_dentry, unsigned int flags)
 {
 	char *from_name = NULL;
 	char *to_name = NULL;
@@ -2907,7 +2908,8 @@ cifs_setattr_exit:
 }
 
 int
-cifs_setattr(struct dentry *direntry, struct iattr *attrs)
+cifs_setattr(struct user_namespace *user_ns, struct dentry *direntry,
+	     struct iattr *attrs)
 {
 	struct cifs_sb_info *cifs_sb = CIFS_SB(direntry->d_sb);
 	struct cifs_tcon *pTcon = cifs_sb_master_tcon(cifs_sb);

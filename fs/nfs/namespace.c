@@ -218,10 +218,11 @@ nfs_namespace_getattr(const struct path *path, struct kstat *stat,
 }
 
 static int
-nfs_namespace_setattr(struct dentry *dentry, struct iattr *attr)
+nfs_namespace_setattr(struct user_namespace *user_ns, struct dentry *dentry,
+		      struct iattr *attr)
 {
 	if (NFS_FH(d_inode(dentry))->size != 0)
-		return nfs_setattr(dentry, attr);
+		return nfs_setattr(user_ns, dentry, attr);
 	return -EACCES;
 }
 
