@@ -1211,7 +1211,8 @@ out:
 	return err;
 }
 
-int ufs_setattr(struct dentry *dentry, struct iattr *attr)
+int ufs_setattr(struct user_namespace *user_ns, struct dentry *dentry,
+		struct iattr *attr)
 {
 	struct inode *inode = d_inode(dentry);
 	unsigned int ia_valid = attr->ia_valid;

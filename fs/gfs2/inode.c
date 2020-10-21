@@ -321,7 +321,7 @@ struct inode *gfs2_lookupi(struct inode *dir, const struct qstr *name,
 	}
 
 	if (!is_root) {
-		error = gfs2_permission(dir, MAY_EXEC);
+		error = gfs2_permission(&init_user_ns, dir, MAY_EXEC);
 		if (error)
 			goto out;
 	}
@@ -351,7 +351,8 @@ static int create_ok(struct gfs2_inode *dip, const struct qstr *name,
 {
 	int error;
 
-	error = gfs2_permission(&dip->i_inode, MAY_WRITE | MAY_EXEC);
+	error = gfs2_permission(&init_user_ns, &dip->i_inode,
+				MAY_WRITE | MAY_EXEC);
 	if (error)
 		return error;
 
@@ -842,8 +843,8 @@ fail:
  * Returns: errno
  */
 
-static int gfs2_create(struct inode *dir, struct dentry *dentry,
-		       umode_t mode, bool excl)
+static int gfs2_create(struct user_namespace *user_ns, struct inode *dir,
+		       struct dentry *dentry, umode_t mode, bool excl)
 {
 	return gfs2_create_inode(dir, dentry, NULL, S_IFREG | mode, 0, NULL, 0, excl);
 }
@@ -950,7 +951,7 @@ static int gfs2_link(struct dentry *old_dentry, struct inode *dir,
 	if (inode->i_nlink == 0)
 		goto out_gunlock;
 
-	error = gfs2_permission(dir, MAY_WRITE | MAY_EXEC);
+	error = gfs2_permission(&init_user_ns, dir, MAY_WRITE | MAY_EXEC);
 	if (error)
 		goto out_gunlock;
 
@@ -1067,7 +1068,8 @@ static int gfs2_unlink_ok(struct gfs2_inode *dip, const struct qstr *name,
 	if (IS_APPEND(&dip->i_inode))
 		return -EPERM;
 
-	error = gfs2_permission(&dip->i_inode, MAY_WRITE | MAY_EXEC);
+	error = gfs2_permission(&init_user_ns, &dip->i_inode,
+				MAY_WRITE | MAY_EXEC);
 	if (error)
 		return error;
 
@@ -1203,8 +1205,8 @@ out_inodes:
  * Returns: errno
  */
 
-static int gfs2_symlink(struct inode *dir, struct dentry *dentry,
-			const char *symname)
+static int gfs2_symlink(struct user_namespace *user_ns, struct inode *dir,
+			struct dentry *dentry, const char *symname)
 {
 	unsigned int size;
 
@@ -1224,7 +1226,8 @@ static int gfs2_symlink(struct inode *dir, struct dentry *dentry,
  * Returns: errno
  */
 
-static int gfs2_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode)
+static int gfs2_mkdir(struct user_namespace *user_ns, struct inode *dir,
+		      struct dentry *dentry, umode_t mode)
 {
 	unsigned dsize = gfs2_max_stuffed_size(GFS2_I(dir));
 	return gfs2_create_inode(dir, dentry, NULL, S_IFDIR | mode, 0, NULL, dsize, 0);
@@ -1239,8 +1242,8 @@ static int gfs2_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode)
  *
  */
 
-static int gfs2_mknod(struct inode *dir, struct dentry *dentry, umode_t mode,
-		      dev_t dev)
+static int gfs2_mknod(struct user_namespace *user_ns, struct inode *dir,
+		      struct dentry *dentry, umode_t mode, dev_t dev)
 {
 	return gfs2_create_inode(dir, dentry, NULL, mode, dev, NULL, 0, 0);
 }
@@ -1489,7 +1492,7 @@ static int gfs2_rename(struct inode *odir, struct dentry *odentry,
 			}
 		}
 	} else {
-		error = gfs2_permission(ndir, MAY_WRITE | MAY_EXEC);
+		error = gfs2_permission(&init_user_ns, ndir, MAY_WRITE | MAY_EXEC);
 		if (error)
 			goto out_gunlock;
 
@@ -1524,7 +1527,7 @@ static int gfs2_rename(struct inode *odir, struct dentry *odentry,
 	/* Check out the dir to be renamed */
 
 	if (dir_rename) {
-		error = gfs2_permission(d_inode(odentry), MAY_WRITE);
+		error = gfs2_permission(&init_user_ns, d_inode(odentry), MAY_WRITE);
 		if (error)
 			goto out_gunlock;
 	}
@@ -1687,12 +1690,12 @@ static int gfs2_exchange(struct inode *odir, struct dentry *odentry,
 		goto out_gunlock;
 
 	if (S_ISDIR(old_mode)) {
-		error = gfs2_permission(odentry->d_inode, MAY_WRITE);
+		error = gfs2_permission(&init_user_ns, odentry->d_inode, MAY_WRITE);
 		if (error)
 			goto out_gunlock;
 	}
 	if (S_ISDIR(new_mode)) {
-		error = gfs2_permission(ndentry->d_inode, MAY_WRITE);
+		error = gfs2_permission(&init_user_ns, ndentry->d_inode, MAY_WRITE);
 		if (error)
 			goto out_gunlock;
 	}
@@ -1746,9 +1749,9 @@ out:
 	return error;
 }
 
-static int gfs2_rename2(struct inode *odir, struct dentry *odentry,
-			struct inode *ndir, struct dentry *ndentry,
-			unsigned int flags)
+static int gfs2_rename2(struct user_namespace *user_ns, struct inode *odir,
+			struct dentry *odentry, struct inode *ndir,
+			struct dentry *ndentry, unsigned int flags)
 {
 	flags &= ~RENAME_NOREPLACE;
 
@@ -1832,7 +1835,7 @@ out:
  * Returns: errno
  */
 
-int gfs2_permission(struct inode *inode, int mask)
+int gfs2_permission(struct user_namespace *user_ns, struct inode *inode, int mask)
 {
 	struct gfs2_inode *ip;
 	struct gfs2_holder i_gh;
@@ -1962,7 +1965,8 @@ out:
  * Returns: errno
  */
 
-static int gfs2_setattr(struct dentry *dentry, struct iattr *attr)
+static int gfs2_setattr(struct user_namespace *user_ns, struct dentry *dentry,
+			struct iattr *attr)
 {
 	struct inode *inode = d_inode(dentry);
 	struct gfs2_inode *ip = GFS2_I(inode);

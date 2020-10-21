@@ -237,7 +237,8 @@ int vboxsf_getattr(const struct path *path, struct kstat *kstat,
 	return 0;
 }
 
-int vboxsf_setattr(struct dentry *dentry, struct iattr *iattr)
+int vboxsf_setattr(struct user_namespace *user_ns, struct dentry *dentry,
+		   struct iattr *iattr)
 {
 	struct vboxsf_inode *sf_i = VBOXSF_I(d_inode(dentry));
 	struct vboxsf_sbi *sbi = VBOXSF_SBI(dentry->d_sb);

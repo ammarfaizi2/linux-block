@@ -871,7 +871,8 @@ out:
 /*
  * Change attributes of an object referenced by dentry.
  */
-int orangefs_setattr(struct dentry *dentry, struct iattr *iattr)
+int orangefs_setattr(struct user_namespace *user_ns, struct dentry *dentry,
+		     struct iattr *iattr)
 {
 	int ret;
 	gossip_debug(GOSSIP_INODE_DEBUG, "__orangefs_setattr: called on %pd\n",
@@ -919,7 +920,7 @@ int orangefs_getattr(const struct path *path, struct kstat *stat,
 	return ret;
 }
 
-int orangefs_permission(struct inode *inode, int mask)
+int orangefs_permission(struct user_namespace *user_ns, struct inode *inode, int mask)
 {
 	int ret;
 

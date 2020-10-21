@@ -5306,7 +5306,8 @@ static void ext4_wait_for_tail_page_commit(struct inode *inode)
  *
  * Called with inode->i_mutex down.
  */
-int ext4_setattr(struct dentry *dentry, struct iattr *attr)
+int ext4_setattr(struct user_namespace *user_ns, struct dentry *dentry,
+		 struct iattr *attr)
 {
 	struct inode *inode = d_inode(dentry);
 	int error, rc = 0;

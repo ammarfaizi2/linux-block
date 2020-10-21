@@ -301,7 +301,7 @@ static long cifs_fallocate(struct file *file, int mode, loff_t off, loff_t len)
 	return -EOPNOTSUPP;
 }
 
-static int cifs_permission(struct inode *inode, int mask)
+static int cifs_permission(struct user_namespace *user_ns, struct inode *inode, int mask)
 {
 	struct cifs_sb_info *cifs_sb;
 

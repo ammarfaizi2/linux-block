@@ -685,7 +685,8 @@ static int proc_fd_access_allowed(struct inode *inode)
 	return allowed;
 }
 
-int proc_setattr(struct dentry *dentry, struct iattr *attr)
+int proc_setattr(struct user_namespace *user_ns, struct dentry *dentry,
+		 struct iattr *attr)
 {
 	int error;
 	struct inode *inode = d_inode(dentry);
@@ -726,7 +727,7 @@ static bool has_pid_permissions(struct proc_fs_info *fs_info,
 }
 
 
-static int proc_pid_permission(struct inode *inode, int mask)
+static int proc_pid_permission(struct user_namespace *user_ns, struct inode *inode, int mask)
 {
 	struct proc_fs_info *fs_info = proc_sb_info(inode->i_sb);
 	struct task_struct *task;
@@ -3470,7 +3471,8 @@ int proc_pid_readdir(struct file *file, struct dir_context *ctx)
  * This function makes sure that the node is always accessible for members of
  * same thread group.
  */
-static int proc_tid_comm_permission(struct inode *inode, int mask)
+static int proc_tid_comm_permission(struct user_namespace *user_ns,
+				    struct inode *inode, int mask)
 {
 	bool is_same_tgroup;
 	struct task_struct *task;

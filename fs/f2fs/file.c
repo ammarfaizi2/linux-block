@@ -853,7 +853,8 @@ static void __setattr_copy(struct user_namespace *user_ns, struct inode *inode,
 #define __setattr_copy setattr_copy
 #endif
 
-int f2fs_setattr(struct dentry *dentry, struct iattr *attr)
+int f2fs_setattr(struct user_namespace *user_ns, struct dentry *dentry,
+		 struct iattr *attr)
 {
 	struct inode *inode = d_inode(dentry);
 	int err;

@@ -253,7 +253,8 @@ const struct file_operations udf_file_operations = {
 	.llseek			= generic_file_llseek,
 };
 
-static int udf_setattr(struct dentry *dentry, struct iattr *attr)
+static int udf_setattr(struct user_namespace *user_ns, struct dentry *dentry,
+		       struct iattr *attr)
 {
 	struct inode *inode = d_inode(dentry);
 	struct super_block *sb = inode->i_sb;

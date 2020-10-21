@@ -2602,8 +2602,8 @@ static int ext4_add_nondir(handle_t *handle,
  * If the create succeeds, we fill in the inode information
  * with d_instantiate().
  */
-static int ext4_create(struct inode *dir, struct dentry *dentry, umode_t mode,
-		       bool excl)
+static int ext4_create(struct user_namespace *user_ns, struct inode *dir,
+		       struct dentry *dentry, umode_t mode, bool excl)
 {
 	handle_t *handle;
 	struct inode *inode;
@@ -2637,8 +2637,8 @@ retry:
 	return err;
 }
 
-static int ext4_mknod(struct inode *dir, struct dentry *dentry,
-		      umode_t mode, dev_t rdev)
+static int ext4_mknod(struct user_namespace *user_ns, struct inode *dir,
+		      struct dentry *dentry, umode_t mode, dev_t rdev)
 {
 	handle_t *handle;
 	struct inode *inode;
@@ -2671,7 +2671,8 @@ retry:
 	return err;
 }
 
-static int ext4_tmpfile(struct inode *dir, struct dentry *dentry, umode_t mode)
+static int ext4_tmpfile(struct user_namespace *user_ns, struct inode *dir,
+			struct dentry *dentry, umode_t mode)
 {
 	handle_t *handle;
 	struct inode *inode;
@@ -2780,7 +2781,8 @@ out:
 	return err;
 }
 
-static int ext4_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode)
+static int ext4_mkdir(struct user_namespace *user_ns, struct inode *dir,
+		      struct dentry *dentry, umode_t mode)
 {
 	handle_t *handle;
 	struct inode *inode;
@@ -3292,7 +3294,7 @@ out_trace:
 	return retval;
 }
 
-static int ext4_symlink(struct inode *dir,
+static int ext4_symlink(struct user_namespace *user_ns, struct inode *dir,
 			struct dentry *dentry, const char *symname)
 {
 	handle_t *handle;
@@ -4084,9 +4086,9 @@ end_rename:
 	return retval;
 }
 
-static int ext4_rename2(struct inode *old_dir, struct dentry *old_dentry,
-			struct inode *new_dir, struct dentry *new_dentry,
-			unsigned int flags)
+static int ext4_rename2(struct user_namespace *user_ns, struct inode *old_dir,
+			struct dentry *old_dentry, struct inode *new_dir,
+			struct dentry *new_dentry, unsigned int flags)
 {
 	int err;
 
