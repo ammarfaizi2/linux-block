@@ -1,0 +1,118 @@
+#!/bin/bash
+# bpfsign
+# ADD extra ELF sections with signatures for eBPF ELF AX PROGBITS sections
+# (C) 2020 Arnaldo Carvalho de Melo <acme@redhat.com>, Red Hat Inc.
+# GPLv2
+
+set -uo pipefail
+
+usage() {
+	printf "Usage: bpfsign COMMAND ARGS\n\n"
+	printf "  help:                          this command\n"
+	printf "  progs FILE:                    lists eBPF ELF sections to be signed\n" 
+	printf "  sign HASH_ALGO KEY X509 FILE:  sign eBPF ELF sections\n" 
+	printf "  zsign FILE:                    sign eBPF ELF sections with zeroed signature, for testing the kernel error path\n" 
+	printf "\nWhen used with just one argument it defaults, for now to 'bpfsign progs FILE'\n" 
+	exit 0
+}
+
+show_progs() {
+	signatures=$(mktemp)
+	llvm-readelf -SW $obj | egrep '\..*\.sign[[:space:]]+.*' > $signatures
+
+	for prog in $progs ; do
+		echo -n $prog
+		egrep -q "\.${prog}\.sign[[:space:]]+.*" $signatures && echo -n " [signed]"
+		echo
+	done
+	rm $signatures
+}
+
+# To test the kernel invalid signature code path
+zsign() {
+        # sign-file -p sha256 ~/build/v5.9-rc6+/certs/signing_key.pem ~/build/v5.9-rc6+/certs/signing_key.x509 e1000e.ko
+        # -rw-r--r--. 1 root root 681 Sep 23 16:15 e1000e.ko.p7s
+	zeroed_sign=$(mktemp)
+	zeroed_sign_size=681
+	dd if=/dev/zero of=${zeroed_sign} count=1 bs=${zeroed_sign_size} 2> /dev/null
+
+	for prog in $progs ; do
+		sign_elf_section=".${prog}.sign"
+		llvm-objcopy --remove-section=${sign_elf_section} $obj
+		llvm-objcopy --add-section=${sign_elf_section}=${zeroed_sign} $obj
+	done
+
+	rm $zeroed_sign
+}
+
+sign_prog() {
+	prog=$1
+	bytecode=$(mktemp)
+	p7s_signed_hash=$(mktemp)
+
+	llvm-objcopy --dump-section=${prog}=${bytecode} ${obj}
+	# openssl cms -sign -nocerts -noattr -nosmimecap -partial_chain -md sha256 -in ${bytecode} -outform DER -binary -signer ${signing_key} -out ${p7s_signed_hash}
+	# sign-file -bdp <hash algo> <key> <x509> <module> [<dest>]
+	# Does the same as the following command modulo the 'struct module_signature' header
+	sign-file -b ${hash_algo} ${signing_key} ${x509} ${bytecode} ${p7s_signed_hash}
+	sign_elf_section=".${prog}.sign"
+	llvm-objcopy --remove-section=${sign_elf_section} $obj
+	llvm-objcopy --add-section=${sign_elf_section}=${p7s_signed_hash} $obj
+
+	rm $bytecode $p7s_signed_hash
+}
+
+sign() {
+	for prog in $progs ; do
+		sign_prog $prog
+	done
+}
+
+if [ $# -eq 0 ] ; then
+	printf "bpfsign: missing operands\n"
+	printf "Try 'bpfsign help' for more information\n"
+	exit 1
+fi
+
+cmd=$1
+
+if [ "$cmd" == "help" ] ; then
+	usage
+fi
+
+if [ $# -eq 1 ] ; then
+	obj=$cmd
+	cmd="progs"
+else
+        # last argument, bash/ksh
+	obj=${@: -1}
+fi
+
+if [ ! -f "$obj" ] ; then
+	printf "bpfsign: %s not found!\n" $obj
+	exit 1
+fi
+
+progs=$(llvm-readelf -SW $obj | grep -w PROGBITS | grep -w AX |
+	sed -r 's/[[:space:]]+\[[[:space:]]+[[:digit:]]+\][[:space:]]+(.*)[[:space:]]+PROGBITS[[:space:]]+[[:xdigit:]]+[[:space:]]+[[:xdigit:]]+[[:space:]]+([[:xdigit:]]+)[[:space:]]+.*/\1 \2/g' |
+	egrep -v '.* +0+$' | cut -d' ' -f1)
+
+if [ "$cmd" == "progs" ] ; then
+	show_progs
+elif [ "$cmd" == "zsign" ] ; then
+	zsign
+elif [ "$cmd" == "sign" ] ; then
+	if [ $# -lt 4 ] ; then
+		usage
+	fi
+
+	hash_algo=$2
+	signing_key=$3
+	x509=$4
+	sign
+else
+	usage
+	exit 1
+fi
+
+exit 0
