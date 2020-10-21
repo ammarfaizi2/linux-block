@@ -1597,7 +1597,7 @@ static void bprm_fill_uid(struct linux_binprm *bprm, struct file *file)
 	if (!(mode & (S_ISUID|S_ISGID)))
 		return;
 
-	mnt_userns = mnt_user_ns(file->f_path.mnt);
+	mnt_userns = file_user_ns(file);
 
 	/* Be careful if suid/sgid is set */
 	inode_lock(inode);

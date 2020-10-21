@@ -447,7 +447,7 @@ static inline int do_inode_permission(struct user_namespace *mnt_userns,
 {
 	if (unlikely(!(inode->i_opflags & IOP_FASTPERM))) {
 		if (likely(inode->i_op->permission))
-			return inode->i_op->permission(inode, mask);
+			return inode->i_op->permission(mnt_userns, inode, mask);
 
 		/* This gets set once for the inode lifetime */
 		spin_lock(&inode->i_lock);
@@ -2203,11 +2203,13 @@ static int link_path_walk(const char *name, struct nameidata *nd)
 
 	/* At this point we know we have a real path component. */
 	for(;;) {
+		struct user_namespace *mnt_userns;
 		const char *link;
 		u64 hash_len;
 		int type;
 
-		err = may_lookup(&init_user_ns, nd);
+		mnt_userns = mnt_user_ns(nd->path.mnt);
+		err = may_lookup(mnt_userns, nd);
 		if (err)
 			return err;
 
@@ -2255,7 +2257,7 @@ static int link_path_walk(const char *name, struct nameidata *nd)
 OK:
 			/* pathname or trailing symlink, done */
 			if (!depth) {
-				nd->dir_uid = i_uid_into_mnt(&init_user_ns, nd->inode);
+				nd->dir_uid = i_uid_into_mnt(mnt_userns, nd->inode);
 				nd->dir_mode = nd->inode->i_mode;
 				nd->flags &= ~LOOKUP_PARENT;
 				return 0;
@@ -2908,7 +2910,7 @@ int vfs_create(struct user_namespace *mnt_userns, struct inode *dir,
 	error = security_inode_create(dir, dentry, mode);
 	if (error)
 		return error;
-	error = dir->i_op->create(dir, dentry, mode, want_excl);
+	error = dir->i_op->create(mnt_userns, dir, dentry, mode, want_excl);
 	if (!error)
 		fsnotify_create(dir, dentry);
 	return error;
@@ -2999,7 +3001,7 @@ static int may_open(struct user_namespace *mnt_userns, const struct path *path,
 	return 0;
 }
 
-static int handle_truncate(struct file *filp)
+static int handle_truncate(struct user_namespace *mnt_userns, struct file *filp)
 {
 	const struct path *path = &filp->f_path;
 	struct inode *inode = path->dentry->d_inode;
@@ -3013,8 +3015,7 @@ static int handle_truncate(struct file *filp)
 	if (!error)
 		error = security_path_truncate(path);
 	if (!error) {
-		error = do_truncate(file_user_ns(filp),
-				    path->dentry, 0,
+		error = do_truncate(mnt_userns, path->dentry, 0,
 				    ATTR_MTIME | ATTR_CTIME | ATTR_OPEN, filp);
 	}
 	put_write_access(inode);
@@ -3122,6 +3123,7 @@ static struct dentry *lookup_open(struct nameidata *nd, struct file *file,
 				  const struct open_flags *op,
 				  bool got_write)
 {
+	struct user_namespace *mnt_userns;
 	struct dentry *dir = nd->path.dentry;
 	struct inode *dir_inode = dir->d_inode;
 	int open_flag = op->open_flag;
@@ -3169,13 +3171,14 @@ static struct dentry *lookup_open(struct nameidata *nd, struct file *file,
 	 */
 	if (unlikely(!got_write))
 		open_flag &= ~O_TRUNC;
+	mnt_userns = mnt_user_ns(nd->path.mnt);
 	if (open_flag & O_CREAT) {
 		if (open_flag & O_EXCL)
 			open_flag &= ~O_TRUNC;
 		if (!IS_POSIXACL(dir->d_inode))
 			mode &= ~current_umask();
 		if (likely(got_write))
-			create_error = may_o_create(&init_user_ns, &nd->path,
+			create_error = may_o_create(mnt_userns, &nd->path,
 						    dentry, mode);
 		else
 			create_error = -EROFS;
@@ -3211,8 +3214,9 @@ static struct dentry *lookup_open(struct nameidata *nd, struct file *file,
 			error = -EACCES;
 			goto out_dput;
 		}
-		error = dir_inode->i_op->create(dir_inode, dentry, mode,
-						open_flag & O_EXCL);
+
+		error = dir_inode->i_op->create(mnt_userns, dir_inode, dentry,
+						mode, open_flag & O_EXCL);
 		if (error)
 			goto out_dput;
 	}
@@ -3320,6 +3324,7 @@ finish_lookup:
 static int do_open(struct nameidata *nd,
 		   struct file *file, const struct open_flags *op)
 {
+	struct user_namespace *mnt_userns;
 	int open_flag = op->open_flag;
 	bool do_truncate;
 	int acc_mode;
@@ -3332,12 +3337,13 @@ static int do_open(struct nameidata *nd,
 	}
 	if (!(file->f_mode & FMODE_CREATED))
 		audit_inode(nd->name, nd->path.dentry, 0);
+	mnt_userns = mnt_user_ns(nd->path.mnt);
 	if (open_flag & O_CREAT) {
 		if ((open_flag & O_EXCL) && !(file->f_mode & FMODE_CREATED))
 			return -EEXIST;
 		if (d_is_dir(nd->path.dentry))
 			return -EISDIR;
-		error = may_create_in_sticky(&init_user_ns, nd,
+		error = may_create_in_sticky(mnt_userns, nd,
 					     d_backing_inode(nd->path.dentry));
 		if (unlikely(error))
 			return error;
@@ -3357,13 +3363,13 @@ static int do_open(struct nameidata *nd,
 			return error;
 		do_truncate = true;
 	}
-	error = may_open(&init_user_ns, &nd->path, acc_mode, open_flag);
+	error = may_open(mnt_userns, &nd->path, acc_mode, open_flag);
 	if (!error && !(file->f_mode & FMODE_OPENED))
 		error = vfs_open(&nd->path, file);
 	if (!error)
 		error = ima_file_check(file, op->acc_mode);
 	if (!error && do_truncate)
-		error = handle_truncate(file);
+		error = handle_truncate(mnt_userns, file);
 	if (unlikely(error > 0)) {
 		WARN_ON(1);
 		error = -EINVAL;
@@ -3407,7 +3413,7 @@ struct dentry *vfs_tmpfile(struct user_namespace *mnt_userns,
 	child = d_alloc(dentry, &slash_name);
 	if (unlikely(!child))
 		goto out_err;
-	error = dir->i_op->tmpfile(dir, child, mode);
+	error = dir->i_op->tmpfile(mnt_userns, dir, child, mode);
 	if (error)
 		goto out_err;
 	error = -ENOENT;
@@ -3450,7 +3456,7 @@ static int do_tmpfile(struct nameidata *nd, unsigned flags,
 	path.dentry = child;
 	audit_inode(nd->name, child, 0);
 	/* Don't check for other permissions, the inode was just created */
-	error = may_open(&init_user_ns, &path, 0, op->open_flag);
+	error = may_open(mnt_userns, &path, 0, op->open_flag);
 	if (error)
 		goto out2;
 	file->f_path.mnt = path.mnt;
@@ -3694,7 +3700,7 @@ int vfs_mknod(struct user_namespace *mnt_userns, struct inode *dir,
 	if (error)
 		return error;
 
-	error = dir->i_op->mknod(dir, dentry, mode, dev);
+	error = dir->i_op->mknod(mnt_userns, dir, dentry, mode, dev);
 	if (!error)
 		fsnotify_create(dir, dentry);
 	return error;
@@ -3813,7 +3819,7 @@ int vfs_mkdir(struct user_namespace *mnt_userns, struct inode *dir,
 	if (max_links && dir->i_nlink >= max_links)
 		return -EMLINK;
 
-	error = dir->i_op->mkdir(dir, dentry, mode);
+	error = dir->i_op->mkdir(mnt_userns, dir, dentry, mode);
 	if (!error)
 		fsnotify_mkdir(dir, dentry);
 	return error;
@@ -4170,7 +4176,7 @@ int vfs_symlink(struct user_namespace *mnt_userns, struct inode *dir,
 	if (error)
 		return error;
 
-	error = dir->i_op->symlink(dir, dentry, oldname);
+	error = dir->i_op->symlink(mnt_userns, dir, dentry, oldname);
 	if (!error)
 		fsnotify_create(dir, dentry);
 	return error;
@@ -4361,13 +4367,13 @@ retry:
 	error = -EXDEV;
 	if (old_path.mnt != new_path.mnt)
 		goto out_dput;
-	error = may_linkat(&init_user_ns, &old_path);
+	mnt_userns = mnt_user_ns(new_path.mnt);
+	error = may_linkat(mnt_userns, &old_path);
 	if (unlikely(error))
 		goto out_dput;
 	error = security_path_link(old_path.dentry, &new_path, new_dentry);
 	if (error)
 		goto out_dput;
-	mnt_userns = mnt_user_ns(new_path.mnt);
 	error = vfs_link(old_path.dentry, mnt_userns, new_path.dentry->d_inode,
 			 new_dentry, &delegated_inode);
 out_dput:
@@ -4456,7 +4462,6 @@ SYSCALL_DEFINE2(link, const char __user *, oldname, const char __user *, newname
 int vfs_rename(struct renamedata *rd)
 {
 	int error;
-	struct user_namespace *mnt_userns = &init_user_ns;
 	struct inode *old_dir = rd->old_dir, *new_dir = rd->new_dir;
 	struct dentry *old_dentry = rd->old_dentry;
 	struct dentry *new_dentry = rd->new_dentry;
@@ -4543,8 +4548,8 @@ int vfs_rename(struct renamedata *rd)
 		if (error)
 			goto out;
 	}
-	error = old_dir->i_op->rename(old_dir, old_dentry,
-				       new_dir, new_dentry, flags);
+	error = old_dir->i_op->rename(rd->new_mnt_userns, old_dir, old_dentry,
+				      new_dir, new_dentry, flags);
 	if (error)
 		goto out;
 
