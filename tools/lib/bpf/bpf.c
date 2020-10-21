@@ -268,6 +268,9 @@ int bpf_load_program_xattr(const struct bpf_load_program_attr *load_attr,
 		       min(strlen(load_attr->name), BPF_OBJ_NAME_LEN - 1));
 	attr.prog_flags = load_attr->prog_flags;
 
+	attr.prog_sig_len = load_attr->prog_sig_len;
+	attr.prog_sig = ptr_to_u64(load_attr->prog_sig);
+
 	fd = sys_bpf_prog_load(&attr, sizeof(attr));
 	if (fd >= 0)
 		return fd;

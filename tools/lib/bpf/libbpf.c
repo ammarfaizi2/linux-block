@@ -176,6 +176,8 @@ enum kern_feature_id {
 	FEAT_PROBE_READ_KERN,
 	/* BPF_PROG_BIND_MAP is supported */
 	FEAT_PROG_BIND_MAP,
+	/* kernel support for prog_sig in BPF_PROG_LOAD */
+	FEAT_PROG_SIG,
 	__FEAT_CNT,
 };
 
@@ -3957,6 +3959,35 @@ static int probe_prog_bind_map(void)
 	return ret >= 0;
 }
 
+static int probe_prog_sig(void)
+{
+	struct bpf_load_program_attr attr;
+	struct bpf_insn insns[] = {
+		BPF_MOV64_IMM(BPF_REG_0, 0),
+		BPF_EXIT_INSN(),
+	};
+
+	memset(&attr, 0, sizeof(attr));
+
+	/* use any valid combination of program type and an invalid signature
+	 * to see if kernel supports a non-zero prog_sig_len field for
+	 * BPF_PROG_LOAD command that is less than sizeof(struct
+	 * module_signature) which will make it return -EBADMSG instead of
+	 * -EINVAL, indicating that the field is supported but the signature is
+	 * invalid, which will not allocate anything.
+	 */
+	attr.prog_type = BPF_PROG_TYPE_CGROUP_SOCK;
+	attr.prog_sig_len = 1;
+	attr.insns = insns;
+	attr.insns_cnt = ARRAY_SIZE(insns);
+	attr.license = "GPL";
+
+	/* It'll always fail, either because we don't have the feature or because
+	 * we provided a short sig, so no need to close the fd with probe_fd() */
+	bpf_load_program_xattr(&attr, NULL, 0);
+	return errno == EBADMSG;
+}
+
 enum kern_feature_result {
 	FEAT_UNKNOWN = 0,
 	FEAT_SUPPORTED = 1,
@@ -4000,7 +4031,10 @@ static struct kern_feature_desc {
 	},
 	[FEAT_PROG_BIND_MAP] = {
 		"BPF_PROG_BIND_MAP support", probe_prog_bind_map,
-	}
+	},
+	[FEAT_PROG_SIG] = {
+		"BPF_PROG_LOAD prog_sig support", probe_prog_sig,
+	},
 };
 
 static bool kernel_supports(enum kern_feature_id feat_id)

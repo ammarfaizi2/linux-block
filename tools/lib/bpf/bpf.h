@@ -95,6 +95,8 @@ struct bpf_load_program_attr {
 	__u32 line_info_cnt;
 	__u32 log_level;
 	__u32 prog_flags;
+	__u32 prog_sig_len;
+	const void *prog_sig;
 };
 
 /* Flags to direct loading requirements */
