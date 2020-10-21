@@ -378,7 +378,7 @@ int notify_mapped_change(struct user_namespace *user_ns, struct dentry *dentry,
 		return error;
 
 	if (inode->i_op->setattr)
-		error = inode->i_op->setattr(dentry, attr);
+		error = iop_setattr(inode, user_ns, dentry, attr);
 	else
 		error = simple_setattr(dentry, attr);
 

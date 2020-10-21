@@ -578,7 +578,7 @@ posix_mapped_acl_chmod(struct user_namespace *user_ns, struct inode *inode, umod
 	ret = __posix_acl_chmod(&acl, GFP_KERNEL, mode);
 	if (ret)
 		return ret;
-	ret = inode->i_op->set_acl(inode, acl, ACL_TYPE_ACCESS);
+	ret = iop_set_acl(inode, user_ns, inode, acl, ACL_TYPE_ACCESS);
 	posix_acl_release(acl);
 	return ret;
 }
@@ -925,7 +925,7 @@ set_posix_mapped_acl(struct user_namespace *user_ns, struct inode *inode,
 		if (ret)
 			return ret;
 	}
-	return inode->i_op->set_acl(inode, acl, type);
+	return iop_set_acl(inode, user_ns, inode, acl, type);
 }
 
 int

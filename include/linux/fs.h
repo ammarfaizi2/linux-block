@@ -1978,7 +1978,136 @@ struct inode_operations {
 			   umode_t create_mode);
 	int (*tmpfile) (struct inode *, struct dentry *, umode_t);
 	int (*set_acl)(struct inode *, struct posix_acl *, int);
+#ifdef CONFIG_IDMAP_MOUNTS
+	int (*permission_mapped) (struct user_namespace *, struct inode *, int);
+	int (*create_mapped) (struct user_namespace *, struct inode *,
+			      struct dentry *, umode_t, bool);
+	int (*mknod_mapped) (struct user_namespace *, struct inode *,
+			     struct dentry *, umode_t, dev_t);
+	int (*mkdir_mapped) (struct user_namespace *, struct inode *,
+			     struct dentry *, umode_t);
+	int (*tmpfile_mapped) (struct user_namespace *, struct inode *,
+			       struct dentry *, umode_t);
+	int (*symlink_mapped) (struct user_namespace *, struct inode *,
+			       struct dentry *, const char *);
+	int (*rename_mapped) (struct user_namespace *, struct inode *,
+			      struct dentry *, struct inode *, struct dentry *,
+			      unsigned int);
+	int (*setattr_mapped) (struct user_namespace *, struct dentry *,
+			       struct iattr *);
+	int (*set_acl_mapped)(struct user_namespace *, struct inode *,
+			      struct posix_acl *, int);
+#endif
 } ____cacheline_aligned;
+
+static inline int iop_permission(struct inode *caller,
+				 struct user_namespace *user_ns,
+				 struct inode *inode, int mask)
+{
+#ifdef CONFIG_IDMAP_MOUNTS
+	if (caller->i_op->permission_mapped)
+		return caller->i_op->permission_mapped(user_ns, inode, mask);
+#endif
+	return caller->i_op->permission(inode, mask);
+}
+
+static inline int iop_create(struct inode *caller,
+			     struct user_namespace *user_ns,
+			     struct inode *inode, struct dentry *dentry,
+			     umode_t mode, bool excl)
+{
+#ifdef CONFIG_IDMAP_MOUNTS
+	if (caller->i_op->create_mapped)
+		return caller->i_op->create_mapped(user_ns, inode, dentry,
+						    mode, excl);
+#endif
+	return caller->i_op->create(inode, dentry, mode, excl);
+}
+
+static inline int iop_mknod(struct inode *caller,
+			    struct user_namespace *user_ns, struct inode *inode,
+			    struct dentry *dentry, umode_t mode, dev_t dev)
+{
+#ifdef CONFIG_IDMAP_MOUNTS
+	if (caller->i_op->mknod_mapped)
+		return caller->i_op->mknod_mapped(user_ns, inode, dentry, mode, dev);
+#endif
+	return caller->i_op->mknod(inode, dentry, mode, dev);
+}
+
+static inline int iop_mkdir(struct inode *caller,
+			    struct user_namespace *user_ns, struct inode *inode,
+			    struct dentry *dentry, umode_t mode)
+{
+#ifdef CONFIG_IDMAP_MOUNTS
+	if (caller->i_op->mkdir_mapped)
+		return caller->i_op->mkdir_mapped(user_ns, inode, dentry, mode);
+#endif
+	return caller->i_op->mkdir(inode, dentry, mode);
+}
+
+static inline int iop_tmpfile(struct inode *caller,
+			      struct user_namespace *user_ns,
+			      struct inode *inode, struct dentry *dentry,
+			      umode_t mode)
+{
+#ifdef CONFIG_IDMAP_MOUNTS
+	if (caller->i_op->tmpfile_mapped)
+		return caller->i_op->tmpfile_mapped(user_ns, inode, dentry, mode);
+#endif
+	return caller->i_op->tmpfile(inode, dentry, mode);
+}
+
+static inline int iop_symlink(struct inode *caller,
+			      struct user_namespace *user_ns,
+			      struct inode *inode, struct dentry *dentry,
+			      const char *name)
+{
+#ifdef CONFIG_IDMAP_MOUNTS
+	if (caller->i_op->symlink_mapped)
+		return caller->i_op->symlink_mapped(user_ns, inode, dentry, name);
+#endif
+	return caller->i_op->symlink(inode, dentry, name);
+}
+
+static inline int iop_rename(struct inode *caller,
+			     struct user_namespace *user_ns,
+			     struct inode *old_inode, struct dentry *old_dentry,
+			     struct inode *new_inode, struct dentry *new_dentry,
+			     unsigned int flags)
+{
+#ifdef CONFIG_IDMAP_MOUNTS
+	if (caller->i_op->rename_mapped)
+		return caller->i_op->rename_mapped(user_ns, old_inode,
+						   old_dentry, new_inode,
+						   new_dentry, flags);
+#endif
+	return caller->i_op->rename(old_inode, old_dentry, new_inode,
+				    new_dentry, flags);
+}
+
+static inline int iop_setattr(struct inode *caller,
+			      struct user_namespace *user_ns,
+			      struct dentry *dentry, struct iattr *attr)
+{
+#ifdef CONFIG_IDMAP_MOUNTS
+	if (caller->i_op->setattr_mapped)
+		return caller->i_op->setattr_mapped(user_ns, dentry, attr);
+#endif
+	return caller->i_op->setattr(dentry, attr);
+}
+
+static inline int iop_set_acl(struct inode *caller,
+			      struct user_namespace *user_ns,
+			      struct inode *inode, struct posix_acl *acl,
+			      int type)
+{
+#ifdef CONFIG_IDMAP_MOUNTS
+	if (caller->i_op->set_acl_mapped)
+		return caller->i_op->set_acl_mapped(user_ns, inode, acl, type);
+#endif
+	return caller->i_op->set_acl(inode, acl, type);
+}
 
 static inline ssize_t call_read_iter(struct file *file, struct kiocb *kio,
 				     struct iov_iter *iter)
