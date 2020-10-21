@@ -1637,8 +1637,8 @@ int ext2_write_inode(struct inode *inode, struct writeback_control *wbc)
 	return __ext2_write_inode(inode, wbc->sync_mode == WB_SYNC_ALL);
 }
 
-int ext2_getattr(const struct path *path, struct kstat *stat,
-		u32 request_mask, unsigned int query_flags)
+int ext2_getattr(struct user_namespace *mnt_userns, const struct path *path,
+		 struct kstat *stat, u32 request_mask, unsigned int query_flags)
 {
 	struct inode *inode = d_inode(path->dentry);
 	struct ext2_inode_info *ei = EXT2_I(inode);
@@ -1663,7 +1663,8 @@ int ext2_getattr(const struct path *path, struct kstat *stat,
 	return 0;
 }
 
-int ext2_setattr(struct dentry *dentry, struct iattr *iattr)
+int ext2_setattr(struct user_namespace *mnt_userns, struct dentry *dentry,
+		 struct iattr *iattr)
 {
 	struct inode *inode = d_inode(dentry);
 	int error;
