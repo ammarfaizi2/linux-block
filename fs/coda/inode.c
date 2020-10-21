@@ -260,7 +260,8 @@ int coda_getattr(const struct path *path, struct kstat *stat,
 	return err;
 }
 
-int coda_setattr(struct dentry *de, struct iattr *iattr)
+int coda_setattr(struct user_namespace *user_ns, struct dentry *de,
+		 struct iattr *iattr)
 {
 	struct inode *inode = d_inode(de);
 	struct coda_vattr vattr;

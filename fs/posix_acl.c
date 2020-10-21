@@ -579,7 +579,7 @@ posix_acl_chmod(struct user_namespace *user_ns, struct inode *inode, umode_t mod
 	ret = __posix_acl_chmod(&acl, GFP_KERNEL, mode);
 	if (ret)
 		return ret;
-	ret = inode->i_op->set_acl(inode, acl, ACL_TYPE_ACCESS);
+	ret = inode->i_op->set_acl(user_ns, inode, acl, ACL_TYPE_ACCESS);
 	posix_acl_release(acl);
 	return ret;
 }
@@ -897,7 +897,7 @@ set_posix_acl(struct user_namespace *user_ns, struct inode *inode,
 		if (ret)
 			return ret;
 	}
-	return inode->i_op->set_acl(inode, acl, type);
+	return inode->i_op->set_acl(user_ns, inode, acl, type);
 }
 EXPORT_SYMBOL(set_posix_acl);
 
@@ -945,12 +945,13 @@ const struct xattr_handler posix_acl_default_xattr_handler = {
 };
 EXPORT_SYMBOL_GPL(posix_acl_default_xattr_handler);
 
-int simple_set_acl(struct inode *inode, struct posix_acl *acl, int type)
+int simple_set_acl(struct user_namespace *user_ns, struct inode *inode,
+		   struct posix_acl *acl, int type)
 {
 	int error;
 
 	if (type == ACL_TYPE_ACCESS) {
-		error = posix_acl_update_mode(&init_user_ns, inode,
+		error = posix_acl_update_mode(user_ns, inode,
 				&inode->i_mode, &acl);
 		if (error)
 			return error;

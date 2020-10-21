@@ -270,8 +270,8 @@ done:
 	return d_splice_alias(inode, dentry);
 }
 
-static int ubifs_create(struct inode *dir, struct dentry *dentry, umode_t mode,
-			bool excl)
+static int ubifs_create(struct user_namespace *user_ns, struct inode *dir,
+			struct dentry *dentry, umode_t mode, bool excl)
 {
 	struct inode *inode;
 	struct ubifs_info *c = dir->i_sb->s_fs_info;
@@ -431,8 +431,8 @@ out_budg:
 	return err;
 }
 
-static int ubifs_tmpfile(struct inode *dir, struct dentry *dentry,
-			 umode_t mode)
+static int ubifs_tmpfile(struct user_namespace *user_ns, struct inode *dir,
+			 struct dentry *dentry, umode_t mode)
 {
 	return do_tmpfile(dir, dentry, mode, NULL);
 }
@@ -932,7 +932,8 @@ out_fname:
 	return err;
 }
 
-static int ubifs_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode)
+static int ubifs_mkdir(struct user_namespace *user_ns, struct inode *dir,
+		       struct dentry *dentry, umode_t mode)
 {
 	struct inode *inode;
 	struct ubifs_inode *dir_ui = ubifs_inode(dir);
@@ -1003,8 +1004,8 @@ out_budg:
 	return err;
 }
 
-static int ubifs_mknod(struct inode *dir, struct dentry *dentry,
-		       umode_t mode, dev_t rdev)
+static int ubifs_mknod(struct user_namespace *user_ns, struct inode *dir,
+		       struct dentry *dentry, umode_t mode, dev_t rdev)
 {
 	struct inode *inode;
 	struct ubifs_inode *ui;
@@ -1092,8 +1093,8 @@ out_budg:
 	return err;
 }
 
-static int ubifs_symlink(struct inode *dir, struct dentry *dentry,
-			 const char *symname)
+static int ubifs_symlink(struct user_namespace *user_ns, struct inode *dir,
+			 struct dentry *dentry, const char *symname)
 {
 	struct inode *inode;
 	struct ubifs_inode *ui;
@@ -1532,9 +1533,9 @@ static int ubifs_xrename(struct inode *old_dir, struct dentry *old_dentry,
 	return err;
 }
 
-static int ubifs_rename(struct inode *old_dir, struct dentry *old_dentry,
-			struct inode *new_dir, struct dentry *new_dentry,
-			unsigned int flags)
+static int ubifs_rename(struct user_namespace *user_ns, struct inode *old_dir,
+			struct dentry *old_dentry, struct inode *new_dir,
+			struct dentry *new_dentry, unsigned int flags)
 {
 	int err;
 	struct ubifs_info *c = old_dir->i_sb->s_fs_info;

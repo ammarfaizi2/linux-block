@@ -298,7 +298,7 @@ static int v9fs_xattr_set_acl(const struct xattr_handler *handler,
 			 * What is the following setxattr update the
 			 * mode ?
 			 */
-			v9fs_vfs_setattr_dotl(dentry, &iattr);
+			v9fs_vfs_setattr_dotl(user_ns, dentry, &iattr);
 		}
 		break;
 	case ACL_TYPE_DEFAULT:
