@@ -946,6 +946,14 @@ xfs_free_file_space(
 	startoffset_fsb = XFS_B_TO_FSB(mp, offset);
 	endoffset_fsb = XFS_B_TO_FSBT(mp, offset + len);
 
+	/* We can only free complete realtime extents. */
+	if (XFS_IS_REALTIME_INODE(ip)) {
+		xfs_extlen_t	extsz = xfs_get_extsz_hint(ip);
+
+		if ((startoffset_fsb | endoffset_fsb) & (extsz - 1))
+			return -EINVAL;
+	}
+
 	/*
 	 * Need to zero the stuff we're not freeing, on disk.
 	 */
@@ -1139,6 +1147,14 @@ xfs_insert_file_space(
 
 	trace_xfs_insert_file_space(ip);
 
+	/* We can only insert complete realtime extents. */
+	if (XFS_IS_REALTIME_INODE(ip)) {
+		xfs_extlen_t	extsz = xfs_get_extsz_hint(ip);
+
+		if ((stop_fsb | shift_fsb) & (extsz - 1))
+			return -EINVAL;
+	}
+
 	error = xfs_bmap_can_insert_extents(ip, stop_fsb, shift_fsb);
 	if (error)
 		return error;
@@ -1165,7 +1181,7 @@ xfs_insert_file_space(
 		goto out_trans_cancel;
 
 	do {
-		error = xfs_trans_roll_inode(&tp, ip);
+		error = xfs_defer_finish(&tp);
 		if (error)
 			goto out_trans_cancel;
 
