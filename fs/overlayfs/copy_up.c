@@ -268,8 +268,8 @@ int ovl_set_attr(struct user_namespace *user_ns, struct dentry *upperdentry,
 	if (!err) {
 		struct iattr attr = {
 			.ia_valid = ATTR_UID | ATTR_GID,
-			.ia_uid = stat->uid,
-			.ia_gid = stat->gid,
+			.ia_uid = kuid_from_mnt(user_ns, stat->uid),
+			.ia_gid = kgid_from_mnt(user_ns, stat->gid),
 		};
 		err = notify_mapped_change(user_ns, upperdentry, &attr, NULL);
 	}

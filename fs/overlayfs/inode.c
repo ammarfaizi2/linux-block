@@ -14,15 +14,15 @@
 #include <linux/fiemap.h>
 #include "overlayfs.h"
 
-
-int ovl_setattr(struct dentry *dentry, struct iattr *attr)
+int ovl_setattr_mapped(struct user_namespace *user_ns, struct dentry *dentry,
+		       struct iattr *attr)
 {
 	int err;
 	bool full_copy_up = false;
 	struct dentry *upperdentry;
 	const struct cred *old_cred;
 
-	err = setattr_prepare(dentry, attr);
+	err = setattr_mapped_prepare(user_ns, dentry, attr);
 	if (err)
 		return err;
 
@@ -104,6 +104,11 @@ out:
 	return err;
 }
 
+int ovl_setattr(struct dentry *dentry, struct iattr *attr)
+{
+	return ovl_setattr_mapped(&init_user_ns, dentry, attr);
+}
+
 static int ovl_map_dev_ino(struct dentry *dentry, struct kstat *stat, int fsid)
 {
 	bool samefs = ovl_same_fs(dentry->d_sb);
@@ -167,6 +172,7 @@ static int ovl_map_dev_ino(struct dentry *dentry, struct kstat *stat, int fsid)
 int ovl_getattr(const struct path *path, struct kstat *stat,
 		u32 request_mask, unsigned int flags)
 {
+	struct user_namespace *user_ns;
 	struct dentry *dentry = path->dentry;
 	enum ovl_path_type type;
 	struct path realpath;
@@ -284,14 +290,19 @@ int ovl_getattr(const struct path *path, struct kstat *stat,
 out:
 	revert_creds(old_cred);
 
+	user_ns = mnt_user_ns(path->mnt);
+	stat->uid = kuid_into_mnt(user_ns, stat->uid);
+	stat->gid = kgid_into_mnt(user_ns, stat->gid);
+
 	return err;
 }
 
-int ovl_permission(struct inode *inode, int mask)
+int ovl_permission_mapped(struct user_namespace *user_ns,
+			  struct inode *inode, int mask)
 {
 	struct inode *upperinode = ovl_inode_upper(inode);
 	struct inode *realinode = upperinode ?: ovl_inode_lower(inode);
-	struct user_namespace *user_ns;
+	struct user_namespace *real_user_ns;
 	const struct cred *old_cred;
 	int err;
 
@@ -302,15 +313,15 @@ int ovl_permission(struct inode *inode, int mask)
 	}
 
 	if (upperinode)
-		user_ns = ovl_upper_mnt_user_ns(OVL_FS(inode->i_sb));
+		real_user_ns = ovl_upper_mnt_user_ns(OVL_FS(inode->i_sb));
 	else
-		user_ns = OVL_I(inode)->lower_user_ns;
+		real_user_ns = OVL_I(inode)->lower_user_ns;
 
 	/*
 	 * Check overlay inode with the creds of task and underlying inode
 	 * with creds of mounter
 	 */
-	err = generic_permission(inode, mask);
+	err = mapped_generic_permission(user_ns, inode, mask);
 	if (err)
 		return err;
 
@@ -322,7 +333,7 @@ int ovl_permission(struct inode *inode, int mask)
 		/* Make sure mounter can read file for copy up later */
 		mask |= MAY_READ;
 	}
-	err = mapped_inode_permission(user_ns, realinode, mask);
+	err = mapped_inode_permission(real_user_ns, realinode, mask);
 	revert_creds(old_cred);
 
 	return err;
@@ -547,6 +558,10 @@ static const struct inode_operations ovl_file_inode_operations = {
 	.get_acl	= ovl_get_acl,
 	.update_time	= ovl_update_time,
 	.fiemap		= ovl_fiemap,
+#ifdef CONFIG_IDMAP_MOUNTS
+	.permission_mapped	= ovl_permission_mapped,
+	.setattr_mapped		= ovl_setattr_mapped,
+#endif
 };
 
 static const struct inode_operations ovl_symlink_inode_operations = {
@@ -555,6 +570,9 @@ static const struct inode_operations ovl_symlink_inode_operations = {
 	.getattr	= ovl_getattr,
 	.listxattr	= ovl_listxattr,
 	.update_time	= ovl_update_time,
+#ifdef CONFIG_IDMAP_MOUNTS
+	.setattr_mapped	= ovl_setattr_mapped,
+#endif
 };
 
 static const struct inode_operations ovl_special_inode_operations = {
@@ -564,6 +582,10 @@ static const struct inode_operations ovl_special_inode_operations = {
 	.listxattr	= ovl_listxattr,
 	.get_acl	= ovl_get_acl,
 	.update_time	= ovl_update_time,
+#ifdef CONFIG_IDMAP_MOUNTS
+	.permission_mapped	= ovl_permission_mapped,
+	.setattr_mapped		= ovl_setattr_mapped,
+#endif
 };
 
 static const struct address_space_operations ovl_aops = {

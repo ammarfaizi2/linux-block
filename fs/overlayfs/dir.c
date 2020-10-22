@@ -625,7 +625,8 @@ out_revert_creds:
 	return err;
 }
 
-static int ovl_create_object(struct dentry *dentry, int mode, dev_t rdev,
+static int ovl_create_object(struct user_namespace *user_ns,
+			     struct dentry *dentry, int mode, dev_t rdev,
 			     const char *link)
 {
 	int err;
@@ -649,7 +650,7 @@ static int ovl_create_object(struct dentry *dentry, int mode, dev_t rdev,
 	inode->i_state |= I_CREATING;
 	spin_unlock(&inode->i_lock);
 
-	inode_init_owner(inode, dentry->d_parent->d_inode, mode);
+	mapped_inode_init_owner(inode, user_ns, dentry->d_parent->d_inode, mode);
 	attr.mode = inode->i_mode;
 
 	err = ovl_create_or_link(dentry, inode, &attr, false);
@@ -663,31 +664,55 @@ out:
 	return err;
 }
 
-static int ovl_create(struct inode *dir, struct dentry *dentry, umode_t mode,
-		      bool excl)
+static int ovl_create_mapped(struct user_namespace *user_ns, struct inode *dir,
+			     struct dentry *dentry, umode_t mode, bool excl)
 {
-	return ovl_create_object(dentry, (mode & 07777) | S_IFREG, 0, NULL);
+	return ovl_create_object(user_ns, dentry, (mode & 07777) | S_IFREG, 0, NULL);
+}
+
+static int ovl_create(struct inode *dir, struct dentry *dentry, umode_t mode, bool excl)
+{
+	return ovl_create_mapped(&init_user_ns, dir, dentry, mode, excl);
+}
+
+static int ovl_mkdir_mapped(struct user_namespace *user_ns, struct inode *dir,
+			    struct dentry *dentry, umode_t mode)
+{
+	return ovl_create_object(user_ns, dentry,
+				 (mode & 07777) | S_IFDIR, 0, NULL);
 }
 
 static int ovl_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode)
 {
-	return ovl_create_object(dentry, (mode & 07777) | S_IFDIR, 0, NULL);
+	return ovl_mkdir_mapped(&init_user_ns, dir, dentry, mode);
 }
 
-static int ovl_mknod(struct inode *dir, struct dentry *dentry, umode_t mode,
-		     dev_t rdev)
+static int ovl_mknod_mapped(struct user_namespace *user_ns, struct inode *dir,
+			    struct dentry *dentry, umode_t mode, dev_t rdev)
 {
 	/* Don't allow creation of "whiteout" on overlay */
 	if (S_ISCHR(mode) && rdev == WHITEOUT_DEV)
 		return -EPERM;
 
-	return ovl_create_object(dentry, mode, rdev, NULL);
+	return ovl_create_object(user_ns, dentry, mode, rdev, NULL);
+}
+
+static int ovl_mknod(struct inode *dir, struct dentry *dentry, umode_t mode,
+		     dev_t rdev)
+{
+	return ovl_mknod_mapped(&init_user_ns, dir, dentry, mode, rdev);
+}
+
+static int ovl_symlink_mapped(struct user_namespace *user_ns, struct inode *dir,
+			      struct dentry *dentry, const char *link)
+{
+	return ovl_create_object(user_ns, dentry, S_IFLNK, 0, link);
 }
 
 static int ovl_symlink(struct inode *dir, struct dentry *dentry,
 		       const char *link)
 {
-	return ovl_create_object(dentry, S_IFLNK, 0, link);
+	return ovl_symlink_mapped(&init_user_ns, dir, dentry, link);
 }
 
 static int ovl_set_link_redirect(struct dentry *dentry)
@@ -1085,9 +1110,10 @@ static int ovl_set_redirect(struct dentry *dentry, bool samedir)
 	return err;
 }
 
-static int ovl_rename(struct inode *olddir, struct dentry *old,
-		      struct inode *newdir, struct dentry *new,
-		      unsigned int flags)
+static int ovl_rename_mapped(struct user_namespace *user_ns,
+			     struct inode *olddir, struct dentry *old,
+			     struct inode *newdir, struct dentry *new,
+			     unsigned int flags)
 {
 	int err;
 	struct dentry *old_upperdir;
@@ -1303,6 +1329,13 @@ out:
 	return err;
 }
 
+static int ovl_rename(struct inode *olddir, struct dentry *old,
+		      struct inode *newdir, struct dentry *new,
+		      unsigned int flags)
+{
+	return ovl_rename_mapped(&init_user_ns, olddir, old, newdir, new, flags);
+}
+
 const struct inode_operations ovl_dir_inode_operations = {
 	.lookup		= ovl_lookup,
 	.mkdir		= ovl_mkdir,
@@ -1319,4 +1352,13 @@ const struct inode_operations ovl_dir_inode_operations = {
 	.listxattr	= ovl_listxattr,
 	.get_acl	= ovl_get_acl,
 	.update_time	= ovl_update_time,
+#ifdef CONFIG_IDMAP_MOUNTS
+	.permission_mapped	= ovl_permission_mapped,
+	.mkdir_mapped		= ovl_mkdir_mapped,
+	.create_mapped		= ovl_create_mapped,
+	.mknod_mapped		= ovl_mknod_mapped,
+	.symlink_mapped		= ovl_symlink_mapped,
+	.setattr_mapped		= ovl_setattr_mapped,
+	.rename_mapped		= ovl_rename_mapped,
+#endif
 };
