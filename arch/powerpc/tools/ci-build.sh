@@ -30,6 +30,10 @@ if [[ -n "$DEFCONFIG" ]]; then
     cmd+="-e DEFCONFIG=${DEFCONFIG} "
 fi
 
+if [[ -n "$MERGE_CONFIG" ]]; then
+    cmd+="-e MERGE_CONFIG=$MERGE_CONFIG "
+fi
+
 if [[ "$SUBARCH" == "ppc64" ]]; then
     cross="powerpc-linux-gnu-"
 else
