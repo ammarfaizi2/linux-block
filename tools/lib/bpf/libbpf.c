@@ -288,6 +288,9 @@ struct bpf_program {
 	__u32 line_info_rec_size;
 	__u32 line_info_cnt;
 	__u32 prog_flags;
+
+	__u32 sig_len;
+	void *sig;
 };
 
 struct bpf_struct_ops {
@@ -530,10 +533,23 @@ static void bpf_program__exit(struct bpf_program *prog)
 	zfree(&prog->pin_name);
 	zfree(&prog->insns);
 	zfree(&prog->reloc_desc);
+	zfree(&prog->sig);
 
 	prog->nr_reloc = 0;
 	prog->insns_cnt = 0;
 	prog->sec_idx = -1;
+	prog->sig_len = 0;
+}
+
+static int bpf_program__init_sig(struct bpf_program *prog, void *data, size_t size)
+{
+	free(prog->sig);
+	prog->sig = malloc(size);
+	if (prog->sig == NULL)
+		return -ENOMEM;
+	memcpy(prog->sig, data, size);
+	prog->sig_len = size;
+	return 0;
 }
 
 static char *__bpf_program__pin_name(struct bpf_program *prog)
@@ -2814,10 +2830,10 @@ static int bpf_object__elf_collect(struct bpf_object *obj)
 	Elf *elf = obj->efile.elf;
 	Elf_Data *btf_ext_data = NULL;
 	Elf_Data *btf_data = NULL;
-	int idx = 0, err = 0;
+	int idx = 0, err = 0, nr_prog_sigs = 0, first_sig_scn_idx;
 	const char *name;
 	Elf_Data *data;
-	Elf_Scn *scn;
+	Elf_Scn *scn, *first_sig_scn = NULL;
 	GElf_Shdr sh;
 
 	/* a bunch of ELF parsing functionality depends on processing symbols,
@@ -2886,6 +2902,8 @@ static int bpf_object__elf_collect(struct bpf_object *obj)
 		} else if (sh.sh_type == SHT_SYMTAB) {
 			/* already processed during the first pass above */
 		} else if (sh.sh_type == SHT_PROGBITS && data->d_size > 0) {
+			char *s;
+
 			if (sh.sh_flags & SHF_EXECINSTR) {
 				if (strcmp(name, ".text") == 0)
 					obj->efile.text_shndx = idx;
@@ -2901,6 +2919,13 @@ static int bpf_object__elf_collect(struct bpf_object *obj)
 			} else if (strcmp(name, STRUCT_OPS_SEC) == 0) {
 				obj->efile.st_ops_data = data;
 				obj->efile.st_ops_shndx = idx;
+			} else if (name[0] == '.' && (s = strstr(name, ".sign")) != NULL && s[sizeof(".sign") - 1] == '\0') {
+				++nr_prog_sigs;
+				pr_info("elf: section(%d) %s: nr_prog_sigs: %d\n", idx, name, nr_prog_sigs);
+				if (first_sig_scn == NULL) {
+					first_sig_scn = scn;
+					first_sig_scn_idx = idx;
+				}
 			} else {
 				pr_info("elf: skipping unrecognized data section(%d) %s\n",
 					idx, name);
@@ -2948,6 +2973,76 @@ static int bpf_object__elf_collect(struct bpf_object *obj)
 	 * for faster search */
 	qsort(obj->programs, obj->nr_programs, sizeof(*obj->programs), cmp_progs);
 
+	if (nr_prog_sigs == 0)
+		goto out;
+
+	scn = first_sig_scn;
+	idx = first_sig_scn_idx - 1;
+	do {
+		struct bpf_program *prog;
+		char *signed_section;
+		char *sign_ext;
+
+		++idx;
+
+		if (elf_sec_hdr(obj, scn, &sh)) {
+			pr_warn("elf: elf_sec_hdr() %d failed\n", idx);
+			return -LIBBPF_ERRNO__FORMAT;
+		}
+
+		name = elf_sec_str(obj, sh.sh_name);
+		if (!name) {
+			pr_warn("elf: elf_sec_str() %d failed\n", idx);
+			return -LIBBPF_ERRNO__FORMAT;
+		}
+
+		if (ignore_elf_section(&sh, name)) {
+			pr_warn("elf: ignore_elf_section %d\n", idx);
+			continue;
+		}
+
+		data = elf_sec_data(obj, scn);
+		if (!data) {
+			pr_warn("elf: elf_sec_data %d failed\n", idx);
+			return -LIBBPF_ERRNO__FORMAT;
+		}
+
+		if (sh.sh_type != SHT_PROGBITS || data->d_size == 0 || name[0] != '.')
+		       continue;
+
+		sign_ext = strstr(name, ".sign");
+
+		if (sign_ext == NULL || sign_ext[sizeof(".sign") - 1] != '\0')
+			continue;
+
+		pr_warn("elf: signature %d from %s\n", idx, name);
+
+		--nr_prog_sigs;
+
+		signed_section = strndup(name + 1, sign_ext - (name + 1));
+		if (signed_section == NULL)
+			return -ENOMEM;
+
+		pr_warn("elf: LOOKING for %s\n", signed_section);
+		prog = bpf_object__find_program_by_title(obj, signed_section);
+		if (prog != NULL) {
+			err = bpf_program__init_sig(prog, data->d_buf, data->d_size);
+			if (err) {
+				pr_warn("elf: bpf_program__init_sig(%d, d_size=%zd) failed\n", idx, data->d_size);
+				free(signed_section);
+				return err;
+			}
+
+			pr_warn("elf: found signature for section %s (size %zu)\n", signed_section,
+				(size_t)sh.sh_size);
+		} else {
+			pr_warn("elf: skipping section(%d) %s (size %zu)\n", idx, signed_section,
+				(size_t)sh.sh_size);
+		}
+
+		free(signed_section);
+	} while (nr_prog_sigs != 0 && (scn = elf_nextscn(elf, scn)) != NULL);
+out:
 	return bpf_object__init_btf(obj, btf_data, btf_ext_data);
 }
 
@@ -6703,6 +6798,9 @@ load_program(struct bpf_program *prog, struct bpf_insn *insns, int insns_cnt,
 	}
 	load_attr.log_level = prog->log_level;
 	load_attr.prog_flags = prog->prog_flags;
+
+	load_attr.prog_sig_len = prog->sig_len;
+	load_attr.prog_sig = prog->sig;
 
 retry_load:
 	if (log_buf_size) {
