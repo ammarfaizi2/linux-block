@@ -26,7 +26,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        defconfig: [ppc64]
+        defconfig: [ppc64, corenet64_smp, pmac32, ppc40x, ppc44x, mpc885_ads, corenet32_smp]
         image: [ubuntu-devel]
         subarch: [ppc64]
         include:
