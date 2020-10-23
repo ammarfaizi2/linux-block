@@ -41,6 +41,7 @@ jobs:
       SUBARCH: ${{ matrix.subarch }}
       IMAGE: ${{ matrix.image }}
       DEFCONFIG: ${{ matrix.defconfig }}
+      MERGE_CONFIG: /linux/arch/powerpc/configs/disable-werror.config
 
     steps:
     - uses: actions/checkout@v2
