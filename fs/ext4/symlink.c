@@ -57,6 +57,9 @@ const struct inode_operations ext4_encrypted_symlink_inode_operations = {
 	.setattr	= ext4_setattr,
 	.getattr	= ext4_getattr,
 	.listxattr	= ext4_listxattr,
+#ifdef CONFIG_IDMAP_MOUNTS
+	.setattr_mapped	= ext4_setattr_mapped,
+#endif
 };
 
 const struct inode_operations ext4_symlink_inode_operations = {
@@ -64,6 +67,9 @@ const struct inode_operations ext4_symlink_inode_operations = {
 	.setattr	= ext4_setattr,
 	.getattr	= ext4_getattr,
 	.listxattr	= ext4_listxattr,
+#ifdef CONFIG_IDMAP_MOUNTS
+	.setattr_mapped	= ext4_setattr_mapped,
+#endif
 };
 
 const struct inode_operations ext4_fast_symlink_inode_operations = {
@@ -71,4 +77,7 @@ const struct inode_operations ext4_fast_symlink_inode_operations = {
 	.setattr	= ext4_setattr,
 	.getattr	= ext4_getattr,
 	.listxattr	= ext4_listxattr,
+#ifdef CONFIG_IDMAP_MOUNTS
+	.setattr_mapped	= ext4_setattr_mapped,
+#endif
 };

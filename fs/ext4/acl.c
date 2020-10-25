@@ -222,7 +222,8 @@ __ext4_set_acl(handle_t *handle, struct inode *inode, int type,
 }
 
 int
-ext4_set_acl(struct inode *inode, struct posix_acl *acl, int type)
+ext4_set_acl_mapped(struct user_namespace *user_ns,
+		    struct inode *inode, struct posix_acl *acl, int type)
 {
 	handle_t *handle;
 	int error, credits, retries = 0;
@@ -245,7 +246,7 @@ retry:
 	ext4_fc_start_update(inode);
 
 	if ((type == ACL_TYPE_ACCESS) && acl) {
-		error = posix_acl_update_mode(inode, &mode, &acl);
+		error = posix_mapped_acl_update_mode(user_ns, inode, &mode, &acl);
 		if (error)
 			goto out_stop;
 		if (mode != inode->i_mode)
@@ -264,6 +265,12 @@ out_stop:
 	if (error == -ENOSPC && ext4_should_retry_alloc(inode->i_sb, &retries))
 		goto retry;
 	return error;
+}
+
+int
+ext4_set_acl(struct inode *inode, struct posix_acl *acl, int type)
+{
+	return ext4_set_acl_mapped(&init_user_ns, inode, acl, type);
 }
 
 /*

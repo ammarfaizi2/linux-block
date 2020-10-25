@@ -22,13 +22,24 @@ ext4_xattr_security_get(const struct xattr_handler *handler,
 }
 
 static int
+ext4_xattr_security_set_mapped(const struct xattr_handler *handler,
+			       struct user_namespace *user_ns,
+			       struct dentry *unused, struct inode *inode,
+			       const char *name, const void *value,
+			       size_t size, int flags)
+{
+	return ext4_xattr_set(inode, EXT4_XATTR_INDEX_SECURITY,
+			      name, value, size, flags);
+}
+
+static int
 ext4_xattr_security_set(const struct xattr_handler *handler,
 			struct dentry *unused, struct inode *inode,
 			const char *name, const void *value,
 			size_t size, int flags)
 {
-	return ext4_xattr_set(inode, EXT4_XATTR_INDEX_SECURITY,
-			      name, value, size, flags);
+	return ext4_xattr_security_set_mapped(handler, &init_user_ns, unused,
+					      inode, name, value, size, flags);
 }
 
 static int
@@ -62,4 +73,7 @@ const struct xattr_handler ext4_xattr_security_handler = {
 	.prefix	= XATTR_SECURITY_PREFIX,
 	.get	= ext4_xattr_security_get,
 	.set	= ext4_xattr_security_set,
+#ifdef CONFIG_IDMAP_MOUNTS
+	.set_mapped = ext4_xattr_security_set_mapped,
+#endif
 };

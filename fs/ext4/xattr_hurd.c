@@ -31,10 +31,11 @@ ext4_xattr_hurd_get(const struct xattr_handler *handler,
 }
 
 static int
-ext4_xattr_hurd_set(const struct xattr_handler *handler,
-		    struct dentry *unused, struct inode *inode,
-		    const char *name, const void *value,
-		    size_t size, int flags)
+ext4_xattr_hurd_set_mapped(const struct xattr_handler *handler,
+			   struct user_namespace *user_ns,
+			   struct dentry *unused, struct inode *inode,
+			   const char *name, const void *value,
+			   size_t size, int flags)
 {
 	if (!test_opt(inode->i_sb, XATTR_USER))
 		return -EOPNOTSUPP;
@@ -43,9 +44,22 @@ ext4_xattr_hurd_set(const struct xattr_handler *handler,
 			      name, value, size, flags);
 }
 
+static int
+ext4_xattr_hurd_set(const struct xattr_handler *handler,
+		    struct dentry *unused, struct inode *inode,
+		    const char *name, const void *value,
+		    size_t size, int flags)
+{
+	return ext4_xattr_hurd_set_mapped(handler, &init_user_ns, unused, inode,
+					  name, value, size, flags);
+}
+
 const struct xattr_handler ext4_xattr_hurd_handler = {
 	.prefix	= XATTR_HURD_PREFIX,
 	.list	= ext4_xattr_hurd_list,
 	.get	= ext4_xattr_hurd_get,
 	.set	= ext4_xattr_hurd_set,
+#ifdef CONFIG_IDMAP_MOUNTS
+	.set_mapped = ext4_xattr_hurd_set_mapped,
+#endif
 };
