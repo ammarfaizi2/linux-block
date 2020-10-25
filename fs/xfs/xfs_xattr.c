@@ -38,7 +38,8 @@ xfs_xattr_get(const struct xattr_handler *handler, struct dentry *unused,
 }
 
 static int
-xfs_xattr_set(const struct xattr_handler *handler, struct dentry *unused,
+xfs_xattr_set(const struct xattr_handler *handler, struct user_namespace *user_ns,
+		struct dentry *unused,
 		struct inode *inode, const char *name, const void *value,
 		size_t size, int flags)
 {
