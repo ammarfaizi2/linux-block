@@ -37,6 +37,12 @@ struct xattr_handler {
 	int (*set)(const struct xattr_handler *, struct dentry *dentry,
 		   struct inode *inode, const char *name, const void *buffer,
 		   size_t size, int flags);
+#ifdef CONFIG_IDMAP_MOUNTS
+	int (*set_mapped)(const struct xattr_handler *,
+			  struct user_namespace *user_ns, struct dentry *dentry,
+			  struct inode *inode, const char *name,
+			  const void *buffer, size_t size, int flags);
+#endif
 };
 
 const char *xattr_full_name(const struct xattr_handler *, const char *);
