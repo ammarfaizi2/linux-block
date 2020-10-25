@@ -118,3 +118,12 @@ config EXT4_KUNIT_TESTS
 	  to the KUnit documentation in Documentation/dev-tools/kunit/.
 
 	  If unsure, say N.
+
+config EXT4_IDMAP_MOUNTS
+	bool "Support vfs idmapped mounts in ext4"
+	depends on EXT4_FS
+	default n
+	help
+	  The vfs allows to expose a filesystem at different mountpoints with
+	  differnet idmappings. Allow ext4 to be exposed through idmapped
+	  mounts.

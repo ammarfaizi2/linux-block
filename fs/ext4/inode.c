@@ -20,6 +20,7 @@
  */
 
 #include <linux/fs.h>
+#include <linux/mount.h>
 #include <linux/time.h>
 #include <linux/highuid.h>
 #include <linux/pagemap.h>
@@ -5325,7 +5326,7 @@ int ext4_setattr(struct user_namespace *user_ns, struct dentry *dentry,
 				  ATTR_GID | ATTR_TIMES_SET))))
 		return -EPERM;
 
-	error = setattr_prepare(&init_user_ns, dentry, attr);
+	error = setattr_prepare(user_ns, dentry, attr);
 	if (error)
 		return error;
 
@@ -5500,7 +5501,7 @@ out_mmap_sem:
 	}
 
 	if (!error) {
-		setattr_copy(&init_user_ns, inode, attr);
+		setattr_copy(user_ns, inode, attr);
 		mark_inode_dirty(inode);
 	}
 
@@ -5512,7 +5513,7 @@ out_mmap_sem:
 		ext4_orphan_del(NULL, inode);
 
 	if (!error && (ia_valid & ATTR_MODE))
-		rc = posix_acl_chmod(&init_user_ns, inode, inode->i_mode);
+		rc = posix_acl_chmod(user_ns, inode, inode->i_mode);
 
 err_out:
 	if  (error)
@@ -5526,6 +5527,7 @@ err_out:
 int ext4_getattr(const struct path *path, struct kstat *stat,
 		 u32 request_mask, unsigned int query_flags)
 {
+	struct user_namespace *user_ns;
 	struct inode *inode = d_inode(path->dentry);
 	struct ext4_inode *raw_inode;
 	struct ext4_inode_info *ei = EXT4_I(inode);
@@ -5559,7 +5561,8 @@ int ext4_getattr(const struct path *path, struct kstat *stat,
 				  STATX_ATTR_NODUMP |
 				  STATX_ATTR_VERITY);
 
-	generic_fillattr(&init_user_ns, inode, stat);
+	user_ns = mnt_user_ns(path->mnt);
+	generic_fillattr(user_ns, inode, stat);
 	return 0;
 }
 
