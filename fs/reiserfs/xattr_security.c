@@ -21,7 +21,8 @@ security_get(const struct xattr_handler *handler, struct dentry *unused,
 }
 
 static int
-security_set(const struct xattr_handler *handler, struct dentry *unused,
+security_set(const struct xattr_handler *handler, struct user_namespace *user_ns,
+	     struct dentry *unused,
 	     struct inode *inode, const char *name, const void *buffer,
 	     size_t size, int flags)
 {

@@ -99,6 +99,7 @@ static int cifs_creation_time_set(unsigned int xid, struct cifs_tcon *pTcon,
 }
 
 static int cifs_xattr_set(const struct xattr_handler *handler,
+			  struct user_namespace *user_ns,
 			  struct dentry *dentry, struct inode *inode,
 			  const char *name, const void *value,
 			  size_t size, int flags)

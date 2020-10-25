@@ -182,6 +182,7 @@ static int fuse_xattr_get(const struct xattr_handler *handler,
 }
 
 static int fuse_xattr_set(const struct xattr_handler *handler,
+			  struct user_namespace *user_ns,
 			  struct dentry *dentry, struct inode *inode,
 			  const char *name, const void *value, size_t size,
 			  int flags)
@@ -205,6 +206,7 @@ static int no_xattr_get(const struct xattr_handler *handler,
 }
 
 static int no_xattr_set(const struct xattr_handler *handler,
+			struct user_namespace *user_ns,
 			struct dentry *dentry, struct inode *nodee,
 			const char *name, const void *value,
 			size_t size, int flags)
