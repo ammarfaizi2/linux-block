@@ -25,14 +25,15 @@ struct ovl_lookup_data {
 	bool metacopy;
 };
 
-static int ovl_check_redirect(struct dentry *dentry, struct ovl_lookup_data *d,
+static int ovl_check_redirect(struct user_namespace *mnt_user_ns,
+			      struct dentry *dentry, struct ovl_lookup_data *d,
 			      size_t prelen, const char *post)
 {
 	int res;
 	char *buf;
 	struct ovl_fs *ofs = OVL_FS(d->sb);
 
-	buf = ovl_get_redirect_xattr(ofs, dentry, prelen + strlen(post));
+	buf = ovl_get_redirect_xattr(ofs, mnt_user_ns, dentry, prelen + strlen(post));
 	if (IS_ERR_OR_NULL(buf))
 		return PTR_ERR(buf);
 
@@ -110,8 +111,9 @@ static struct ovl_fh *ovl_get_fh(struct ovl_fs *ofs, struct dentry *dentry,
 {
 	int res, err;
 	struct ovl_fh *fh = NULL;
+	struct user_namespace *user_ns = ovl_upper_mnt_user_ns(ofs);
 
-	res = ovl_do_getxattr(ofs, dentry, ox, NULL, 0);
+	res = ovl_do_getxattr(ofs, user_ns, dentry, ox, NULL, 0);
 	if (res < 0) {
 		if (res == -ENODATA || res == -EOPNOTSUPP)
 			return NULL;
@@ -125,7 +127,7 @@ static struct ovl_fh *ovl_get_fh(struct ovl_fs *ofs, struct dentry *dentry,
 	if (!fh)
 		return ERR_PTR(-ENOMEM);
 
-	res = ovl_do_getxattr(ofs, dentry, ox, fh->buf, res);
+	res = ovl_do_getxattr(ofs, user_ns, dentry, ox, fh->buf, res);
 	if (res < 0)
 		goto fail;
 
@@ -188,16 +190,19 @@ struct dentry *ovl_decode_real_fh(struct ovl_fh *fh, struct vfsmount *mnt,
 	return real;
 }
 
-static bool ovl_is_opaquedir(struct super_block *sb, struct dentry *dentry)
+static bool ovl_is_opaquedir(struct super_block *sb,
+			     struct user_namespace *user_ns,
+			     struct dentry *dentry)
 {
-	return ovl_check_dir_xattr(sb, dentry, OVL_XATTR_OPAQUE);
+	return ovl_check_dir_xattr(sb, user_ns, dentry, OVL_XATTR_OPAQUE);
 }
 
 static struct dentry *ovl_lookup_positive_unlocked(const char *name,
 						   struct dentry *base, int len,
-						   bool drop_negative)
+						   bool drop_negative,
+						   struct user_namespace *mnt_user_ns)
 {
-	struct dentry *ret = lookup_one_len_unlocked(name, base, len);
+	struct dentry *ret = lookup_one_len_mapped_unlocked(name, base, len, mnt_user_ns);
 
 	if (!IS_ERR(ret) && d_flags_negative(smp_load_acquire(&ret->d_flags))) {
 		if (drop_negative && ret->d_lockref.count == 1) {
@@ -216,13 +221,14 @@ static struct dentry *ovl_lookup_positive_unlocked(const char *name,
 static int ovl_lookup_single(struct dentry *base, struct ovl_lookup_data *d,
 			     const char *name, unsigned int namelen,
 			     size_t prelen, const char *post,
-			     struct dentry **ret, bool drop_negative)
+			     struct dentry **ret, bool drop_negative,
+			     struct user_namespace *mnt_user_ns)
 {
 	struct dentry *this;
 	int err;
 	bool last_element = !post[0];
 
-	this = ovl_lookup_positive_unlocked(name, base, namelen, drop_negative);
+	this = ovl_lookup_positive_unlocked(name, base, namelen, drop_negative, mnt_user_ns);
 	if (IS_ERR(this)) {
 		err = PTR_ERR(this);
 		this = NULL;
@@ -253,7 +259,7 @@ static int ovl_lookup_single(struct dentry *base, struct ovl_lookup_data *d,
 			d->stop = true;
 			goto put_and_out;
 		}
-		err = ovl_check_metacopy_xattr(OVL_FS(d->sb), this);
+		err = ovl_check_metacopy_xattr(OVL_FS(d->sb), mnt_user_ns, this);
 		if (err < 0)
 			goto out_err;
 
@@ -273,14 +279,14 @@ static int ovl_lookup_single(struct dentry *base, struct ovl_lookup_data *d,
 		if (d->last)
 			goto out;
 
-		if (ovl_is_opaquedir(d->sb, this)) {
+		if (ovl_is_opaquedir(d->sb, mnt_user_ns, this)) {
 			d->stop = true;
 			if (last_element)
 				d->opaque = true;
 			goto out;
 		}
 	}
-	err = ovl_check_redirect(this, d, prelen, post);
+	err = ovl_check_redirect(mnt_user_ns, this, d, prelen, post);
 	if (err)
 		goto out_err;
 out:
@@ -298,7 +304,8 @@ out_err:
 }
 
 static int ovl_lookup_layer(struct dentry *base, struct ovl_lookup_data *d,
-			    struct dentry **ret, bool drop_negative)
+			    struct dentry **ret, bool drop_negative,
+			    struct user_namespace *mnt_user_ns)
 {
 	/* Counting down from the end, since the prefix can change */
 	size_t rem = d->name.len - 1;
@@ -307,7 +314,7 @@ static int ovl_lookup_layer(struct dentry *base, struct ovl_lookup_data *d,
 
 	if (d->name.name[0] != '/')
 		return ovl_lookup_single(base, d, d->name.name, d->name.len,
-					 0, "", ret, drop_negative);
+					 0, "", ret, drop_negative, mnt_user_ns);
 
 	while (!IS_ERR_OR_NULL(base) && d_can_lookup(base)) {
 		const char *s = d->name.name + d->name.len - rem;
@@ -321,7 +328,7 @@ static int ovl_lookup_layer(struct dentry *base, struct ovl_lookup_data *d,
 
 		err = ovl_lookup_single(base, d, s, thislen,
 					d->name.len - rem, next, &base,
-					drop_negative);
+					drop_negative, mnt_user_ns);
 		dput(dentry);
 		if (err)
 			return err;
@@ -666,7 +673,8 @@ struct dentry *ovl_get_index_fh(struct ovl_fs *ofs, struct ovl_fh *fh)
 	if (err)
 		return ERR_PTR(err);
 
-	index = lookup_positive_unlocked(name.name, ofs->indexdir, name.len);
+	index = lookup_positive_mapped_unlocked(name.name, ofs->indexdir, name.len,
+					    ovl_upper_mnt_user_ns(ofs));
 	kfree(name.name);
 	if (IS_ERR(index)) {
 		if (PTR_ERR(index) == -ENOENT)
@@ -698,7 +706,8 @@ struct dentry *ovl_lookup_index(struct ovl_fs *ofs, struct dentry *upper,
 	if (err)
 		return ERR_PTR(err);
 
-	index = lookup_positive_unlocked(name.name, ofs->indexdir, name.len);
+	index = lookup_positive_mapped_unlocked(name.name, ofs->indexdir, name.len,
+					    ovl_upper_mnt_user_ns(ofs));
 	if (IS_ERR(index)) {
 		err = PTR_ERR(index);
 		if (err == -ENOENT) {
@@ -798,7 +807,7 @@ static int ovl_fix_origin(struct ovl_fs *ofs, struct dentry *dentry,
 {
 	int err;
 
-	if (ovl_check_origin_xattr(ofs, upper))
+	if (ovl_check_origin_xattr(ofs, ovl_upper_mnt_user_ns(ofs), upper))
 		return 0;
 
 	err = ovl_want_write(dentry);
@@ -818,6 +827,7 @@ struct dentry *ovl_lookup(struct inode *dir, struct dentry *dentry,
 {
 	struct ovl_entry *oe;
 	const struct cred *old_cred;
+	struct user_namespace *user_ns;
 	struct ovl_fs *ofs = dentry->d_sb->s_fs_info;
 	struct ovl_entry *poe = dentry->d_parent->d_fsdata;
 	struct ovl_entry *roe = dentry->d_sb->s_root->d_fsdata;
@@ -850,7 +860,8 @@ struct dentry *ovl_lookup(struct inode *dir, struct dentry *dentry,
 	old_cred = ovl_override_creds(dentry->d_sb);
 	upperdir = ovl_dentry_upper(dentry->d_parent);
 	if (upperdir) {
-		err = ovl_lookup_layer(upperdir, &d, &upperdentry, true);
+		user_ns = ovl_upper_mnt_user_ns(ofs);
+		err = ovl_lookup_layer(upperdir, &d, &upperdentry, true, user_ns);
 		if (err)
 			goto out;
 
@@ -905,7 +916,8 @@ struct dentry *ovl_lookup(struct inode *dir, struct dentry *dentry,
 		else
 			d.last = lower.layer->idx == roe->numlower;
 
-		err = ovl_lookup_layer(lower.dentry, &d, &this, false);
+		user_ns = mnt_user_ns(lower.layer->mnt);
+		err = ovl_lookup_layer(lower.dentry, &d, &this, false, user_ns);
 		if (err)
 			goto out_put;
 
@@ -1062,14 +1074,15 @@ struct dentry *ovl_lookup(struct inode *dir, struct dentry *dentry,
 	if (upperdentry)
 		ovl_dentry_set_upper_alias(dentry);
 	else if (index) {
+		struct user_namespace *upper_user_ns = ovl_upper_mnt_user_ns(ofs);
 		upperdentry = dget(index);
-		upperredirect = ovl_get_redirect_xattr(ofs, upperdentry, 0);
+		upperredirect = ovl_get_redirect_xattr(ofs, upper_user_ns, upperdentry, 0);
 		if (IS_ERR(upperredirect)) {
 			err = PTR_ERR(upperredirect);
 			upperredirect = NULL;
 			goto out_free_oe;
 		}
-		err = ovl_check_metacopy_xattr(ofs, upperdentry);
+		err = ovl_check_metacopy_xattr(ofs, upper_user_ns, upperdentry);
 		if (err < 0)
 			goto out_free_oe;
 		uppermetacopy = err;
@@ -1153,9 +1166,10 @@ bool ovl_lower_positive(struct dentry *dentry)
 	for (i = 0; !done && !positive && i < poe->numlower; i++) {
 		struct dentry *this;
 		struct dentry *lowerdir = poe->lowerstack[i].dentry;
+		struct user_namespace *user_ns = mnt_user_ns(poe->lowerstack[i].layer->mnt);
 
-		this = lookup_positive_unlocked(name->name, lowerdir,
-					       name->len);
+		this = lookup_positive_mapped_unlocked(name->name, lowerdir,
+						   name->len, user_ns);
 		if (IS_ERR(this)) {
 			switch (PTR_ERR(this)) {
 			case -ENOENT:

@@ -40,6 +40,8 @@ static struct file *ovl_open_realfile(const struct file *file,
 				      struct inode *realinode)
 {
 	struct inode *inode = file_inode(file);
+	struct path realpath;
+	struct user_namespace *user_ns;
 	struct file *realfile;
 	const struct cred *old_cred;
 	int flags = file->f_flags | OVL_OPEN_FLAGS;
@@ -49,11 +51,13 @@ static struct file *ovl_open_realfile(const struct file *file,
 	if (flags & O_APPEND)
 		acc_mode |= MAY_APPEND;
 
+	ovl_path_real(file_dentry(file), &realpath);
+	user_ns = mnt_user_ns(realpath.mnt);
 	old_cred = ovl_override_creds(inode->i_sb);
-	err = inode_permission(realinode, MAY_OPEN | acc_mode);
+	err = mapped_inode_permission(user_ns, realinode, MAY_OPEN | acc_mode);
 	if (err) {
 		realfile = ERR_PTR(err);
-	} else if (!inode_owner_or_capable(realinode)) {
+	} else if (!mapped_inode_owner_or_capable(user_ns, realinode)) {
 		realfile = ERR_PTR(-EPERM);
 	} else {
 		realfile = open_with_fake_path(&file->f_path, flags, realinode,
@@ -269,7 +273,8 @@ static void ovl_aio_cleanup_handler(struct ovl_aio_req *aio_req)
 		__sb_writers_acquired(file_inode(iocb->ki_filp)->i_sb,
 				      SB_FREEZE_WRITE);
 		file_end_write(iocb->ki_filp);
-		ovl_copyattr(ovl_inode_real(inode), inode);
+		ovl_copyattr(ovl_inode_real_user_ns(inode),
+			     ovl_inode_real(inode), inode);
 	}
 
 	orig_iocb->ki_pos = iocb->ki_pos;
@@ -345,7 +350,7 @@ static ssize_t ovl_write_iter(struct kiocb *iocb, struct iov_iter *iter)
 
 	inode_lock(inode);
 	/* Update mode */
-	ovl_copyattr(ovl_inode_real(inode), inode);
+	ovl_copyattr(ovl_inode_real_user_ns(inode), ovl_inode_real(inode), inode);
 	ret = file_remove_privs(file);
 	if (ret)
 		goto out_unlock;
@@ -364,7 +369,8 @@ static ssize_t ovl_write_iter(struct kiocb *iocb, struct iov_iter *iter)
 				     ovl_iocb_to_rwf(ifl));
 		file_end_write(real.file);
 		/* Update size */
-		ovl_copyattr(ovl_inode_real(inode), inode);
+		ovl_copyattr(ovl_inode_real_user_ns(inode),
+			     ovl_inode_real(inode), inode);
 	} else {
 		struct ovl_aio_req *aio_req;
 
@@ -511,7 +517,7 @@ static long ovl_fallocate(struct file *file, int mode, loff_t offset, loff_t len
 	revert_creds(old_cred);
 
 	/* Update size */
-	ovl_copyattr(ovl_inode_real(inode), inode);
+	ovl_copyattr(ovl_inode_real_user_ns(inode), ovl_inode_real(inode), inode);
 
 	fdput(real);
 
@@ -582,7 +588,7 @@ static long ovl_ioctl_set_flags(struct file *file, unsigned int cmd,
 	struct inode *inode = file_inode(file);
 	unsigned int oldflags;
 
-	if (!inode_owner_or_capable(inode))
+	if (!mapped_inode_owner_or_capable(mnt_user_ns(file->f_path.mnt), inode))
 		return -EACCES;
 
 	ret = mnt_want_write_file(file);
@@ -744,7 +750,8 @@ static loff_t ovl_copyfile(struct file *file_in, loff_t pos_in,
 	revert_creds(old_cred);
 
 	/* Update size */
-	ovl_copyattr(ovl_inode_real(inode_out), inode_out);
+	ovl_copyattr(ovl_inode_real_user_ns(inode_out),
+		     ovl_inode_real(inode_out), inode_out);
 
 	fdput(real_in);
 	fdput(real_out);

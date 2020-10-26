@@ -264,7 +264,8 @@ static int ovl_fill_merge(struct dir_context *ctx, const char *name,
 		return ovl_fill_lowest(rdd, name, namelen, offset, ino, d_type);
 }
 
-static int ovl_check_whiteouts(struct dentry *dir, struct ovl_readdir_data *rdd)
+static int ovl_check_whiteouts(struct user_namespace *user_ns,
+			       struct dentry *dir, struct ovl_readdir_data *rdd)
 {
 	int err;
 	struct ovl_cache_entry *p;
@@ -278,7 +279,7 @@ static int ovl_check_whiteouts(struct dentry *dir, struct ovl_readdir_data *rdd)
 		while (rdd->first_maybe_whiteout) {
 			p = rdd->first_maybe_whiteout;
 			rdd->first_maybe_whiteout = p->next_maybe_whiteout;
-			dentry = lookup_one_len(p->name, dir, p->len);
+			dentry = lookup_one_len_mapped(p->name, dir, p->len, user_ns);
 			if (!IS_ERR(dentry)) {
 				p->is_whiteout = ovl_is_whiteout(dentry);
 				dput(dentry);
@@ -312,7 +313,8 @@ static inline int ovl_dir_read(struct path *realpath,
 	} while (!err && rdd->count);
 
 	if (!err && rdd->first_maybe_whiteout && rdd->dentry)
-		err = ovl_check_whiteouts(realpath->dentry, rdd);
+		err = ovl_check_whiteouts(mnt_user_ns(realpath->mnt),
+					  realpath->dentry, rdd);
 
 	fput(realfile);
 
@@ -491,7 +493,7 @@ static int ovl_cache_update_ino(struct path *path, struct ovl_cache_entry *p)
 			goto get;
 		}
 	}
-	this = lookup_one_len(p->name, dir, p->len);
+	this = lookup_one_len_mapped(p->name, dir, p->len, mnt_user_ns(path->mnt));
 	if (IS_ERR_OR_NULL(this) || !this->d_inode) {
 		if (IS_ERR(this)) {
 			err = PTR_ERR(this);
@@ -1020,7 +1022,8 @@ del_entry:
 	return err;
 }
 
-void ovl_cleanup_whiteouts(struct dentry *upper, struct list_head *list)
+void ovl_cleanup_whiteouts(struct user_namespace *user_ns, struct dentry *upper,
+			   struct list_head *list)
 {
 	struct ovl_cache_entry *p;
 
@@ -1031,7 +1034,7 @@ void ovl_cleanup_whiteouts(struct dentry *upper, struct list_head *list)
 		if (WARN_ON(!p->is_whiteout || !p->is_upper))
 			continue;
 
-		dentry = lookup_one_len(p->name, upper, p->len);
+		dentry = lookup_one_len_mapped(p->name, upper, p->len, user_ns);
 		if (IS_ERR(dentry)) {
 			pr_err("lookup '%s/%.*s' failed (%i)\n",
 			       upper->d_name.name, p->len, p->name,
@@ -1039,7 +1042,7 @@ void ovl_cleanup_whiteouts(struct dentry *upper, struct list_head *list)
 			continue;
 		}
 		if (dentry->d_inode)
-			ovl_cleanup(upper->d_inode, dentry);
+			ovl_cleanup(user_ns, upper->d_inode, dentry);
 		dput(dentry);
 	}
 	inode_unlock(upper->d_inode);
@@ -1130,7 +1133,8 @@ static int ovl_workdir_cleanup_recurse(struct path *path, int level)
 			err = -EINVAL;
 			break;
 		}
-		dentry = lookup_one_len(p->name, path->dentry, p->len);
+		dentry = lookup_one_len_mapped(p->name, path->dentry, p->len,
+					   mnt_user_ns(path->mnt));
 		if (IS_ERR(dentry))
 			continue;
 		if (dentry->d_inode)
@@ -1149,12 +1153,13 @@ int ovl_workdir_cleanup(struct inode *dir, struct vfsmount *mnt,
 			 struct dentry *dentry, int level)
 {
 	int err;
+	struct user_namespace *user_ns = mnt_user_ns(mnt);
 
 	if (!d_is_dir(dentry) || level > 1) {
-		return ovl_cleanup(dir, dentry);
+		return ovl_cleanup(user_ns, dir, dentry);
 	}
 
-	err = ovl_do_rmdir(dir, dentry);
+	err = ovl_do_rmdir(user_ns, dir, dentry);
 	if (err) {
 		struct path path = { .mnt = mnt, .dentry = dentry };
 
@@ -1162,7 +1167,7 @@ int ovl_workdir_cleanup(struct inode *dir, struct vfsmount *mnt,
 		err = ovl_workdir_cleanup_recurse(&path, level + 1);
 		inode_lock_nested(dir, I_MUTEX_PARENT);
 		if (!err)
-			err = ovl_cleanup(dir, dentry);
+			err = ovl_cleanup(user_ns, dir, dentry);
 	}
 
 	return err;
@@ -1175,6 +1180,7 @@ int ovl_indexdir_cleanup(struct ovl_fs *ofs)
 	struct dentry *index = NULL;
 	struct inode *dir = indexdir->d_inode;
 	struct path path = { .mnt = ovl_upper_mnt(ofs), .dentry = indexdir };
+	struct user_namespace *user_ns = mnt_user_ns(path.mnt);
 	LIST_HEAD(list);
 	struct rb_root root = RB_ROOT;
 	struct ovl_cache_entry *p;
@@ -1198,7 +1204,7 @@ int ovl_indexdir_cleanup(struct ovl_fs *ofs)
 			if (p->len == 2 && p->name[1] == '.')
 				continue;
 		}
-		index = lookup_one_len(p->name, indexdir, p->len);
+		index = lookup_one_len_mapped(p->name, indexdir, p->len, user_ns);
 		if (IS_ERR(index)) {
 			err = PTR_ERR(index);
 			index = NULL;
@@ -1216,7 +1222,7 @@ int ovl_indexdir_cleanup(struct ovl_fs *ofs)
 			goto next;
 		} else if (err == -ESTALE) {
 			/* Cleanup stale index entries */
-			err = ovl_cleanup(dir, index);
+			err = ovl_cleanup(user_ns, dir, index);
 		} else if (err != -ENOENT) {
 			/*
 			 * Abort mount to avoid corrupting the index if
@@ -1232,7 +1238,7 @@ int ovl_indexdir_cleanup(struct ovl_fs *ofs)
 			err = ovl_cleanup_and_whiteout(ofs, dir, index);
 		} else {
 			/* Cleanup orphan index entries */
-			err = ovl_cleanup(dir, index);
+			err = ovl_cleanup(user_ns, dir, index);
 		}
 
 		if (err)

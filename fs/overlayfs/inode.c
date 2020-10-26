@@ -9,6 +9,7 @@
 #include <linux/cred.h>
 #include <linux/xattr.h>
 #include <linux/posix_acl.h>
+#include <linux/posix_acl_xattr.h>
 #include <linux/ratelimit.h>
 #include <linux/fiemap.h>
 #include "overlayfs.h"
@@ -46,6 +47,7 @@ int ovl_setattr(struct dentry *dentry, struct iattr *attr)
 		err = ovl_copy_up_with_data(dentry);
 	if (!err) {
 		struct inode *winode = NULL;
+		struct user_namespace *upper_user_ns;
 
 		upperdentry = ovl_dentry_upper(dentry);
 
@@ -77,12 +79,20 @@ int ovl_setattr(struct dentry *dentry, struct iattr *attr)
 		 */
 		attr->ia_valid &= ~ATTR_OPEN;
 
+		upper_user_ns = ovl_upper_mnt_user_ns(OVL_FS(dentry->d_sb));
+
+		if (attr->ia_valid & ATTR_UID)
+			attr->ia_uid = kuid_from_mnt(upper_user_ns, attr->ia_uid);
+		if (attr->ia_valid & ATTR_GID)
+			attr->ia_gid = kgid_from_mnt(upper_user_ns, attr->ia_gid);
+
 		inode_lock(upperdentry->d_inode);
 		old_cred = ovl_override_creds(dentry->d_sb);
-		err = notify_change(upperdentry, attr, NULL);
+		err = notify_mapped_change(upper_user_ns, upperdentry, attr, NULL);
 		revert_creds(old_cred);
 		if (!err)
-			ovl_copyattr(upperdentry->d_inode, dentry->d_inode);
+			ovl_copyattr(upper_user_ns, upperdentry->d_inode,
+				     dentry->d_inode);
 		inode_unlock(upperdentry->d_inode);
 
 		if (winode)
@@ -281,6 +291,7 @@ int ovl_permission(struct inode *inode, int mask)
 {
 	struct inode *upperinode = ovl_inode_upper(inode);
 	struct inode *realinode = upperinode ?: ovl_inode_lower(inode);
+	struct user_namespace *user_ns;
 	const struct cred *old_cred;
 	int err;
 
@@ -290,6 +301,11 @@ int ovl_permission(struct inode *inode, int mask)
 		return -ECHILD;
 	}
 
+	if (upperinode)
+		user_ns = ovl_upper_mnt_user_ns(OVL_FS(inode->i_sb));
+	else
+		user_ns = OVL_I(inode)->lower_user_ns;
+
 	/*
 	 * Check overlay inode with the creds of task and underlying inode
 	 * with creds of mounter
@@ -298,6 +314,7 @@ int ovl_permission(struct inode *inode, int mask)
 	if (err)
 		return err;
 
+	/* Handle idmapped lower mounts. */
 	old_cred = ovl_override_creds(inode->i_sb);
 	if (!upperinode &&
 	    !special_file(realinode->i_mode) && mask & MAY_WRITE) {
@@ -305,7 +322,7 @@ int ovl_permission(struct inode *inode, int mask)
 		/* Make sure mounter can read file for copy up later */
 		mask |= MAY_READ;
 	}
-	err = inode_permission(realinode, mask);
+	err = mapped_inode_permission(user_ns, realinode, mask);
 	revert_creds(old_cred);
 
 	return err;
@@ -337,16 +354,23 @@ int ovl_xattr_set(struct dentry *dentry, struct inode *inode, const char *name,
 		  const void *value, size_t size, int flags)
 {
 	int err;
+	void *val = NULL;
 	struct dentry *upperdentry = ovl_i_dentry_upper(inode);
 	struct dentry *realdentry = upperdentry ?: ovl_dentry_lower(dentry);
+	struct user_namespace *user_ns;
 	const struct cred *old_cred;
 
 	err = ovl_want_write(dentry);
 	if (err)
 		goto out;
 
+	if (upperdentry)
+		user_ns = ovl_upper_mnt_user_ns(OVL_FS(inode->i_sb));
+	else
+		user_ns = OVL_I(inode)->lower_user_ns;
+
 	if (!value && !upperdentry) {
-		err = vfs_getxattr(realdentry, name, NULL, 0);
+		err = vfs_mapped_getxattr(user_ns, realdentry, name, NULL, 0);
 		if (err < 0)
 			goto out_drop_write;
 	}
@@ -360,19 +384,34 @@ int ovl_xattr_set(struct dentry *dentry, struct inode *inode, const char *name,
 	}
 
 	old_cred = ovl_override_creds(dentry->d_sb);
-	if (value)
-		err = vfs_setxattr(realdentry, name, value, size, flags);
-	else {
+	if (value) {
+		val = kmalloc(size, GFP_KERNEL);
+		if (!val)
+			goto out_drop_write;
+		memcpy(val, value, size);
+
+		if ((strcmp(name, XATTR_NAME_POSIX_ACL_ACCESS) == 0) ||
+		    (strcmp(name, XATTR_NAME_POSIX_ACL_DEFAULT) == 0))
+			posix_acl_fix_xattr_from_user(user_ns, val, size);
+		else if (strcmp(name, XATTR_NAME_CAPS) == 0) {
+			err = cap_convert_nscap(user_ns, realdentry, &val, size);
+			if (err < 0)
+				goto out_drop_write;
+			size = err;
+		}
+		err = vfs_mapped_setxattr(user_ns, realdentry, name, val, size, flags);
+	} else {
 		WARN_ON(flags != XATTR_REPLACE);
-		err = vfs_removexattr(realdentry, name);
+		err = vfs_mapped_removexattr(user_ns, realdentry, name);
 	}
 	revert_creds(old_cred);
 
 	/* copy c/mtime */
-	ovl_copyattr(d_inode(realdentry), inode);
+	ovl_copyattr(user_ns, d_inode(realdentry), inode);
 
 out_drop_write:
 	ovl_drop_write(dentry);
+	kfree(val);
 out:
 	return err;
 }
@@ -382,11 +421,22 @@ int ovl_xattr_get(struct dentry *dentry, struct inode *inode, const char *name,
 {
 	ssize_t res;
 	const struct cred *old_cred;
-	struct dentry *realdentry =
-		ovl_i_dentry_upper(inode) ?: ovl_dentry_lower(dentry);
+	struct dentry *realdentry = ovl_i_dentry_upper(inode);
+	struct user_namespace *user_ns;
+
+
+	if (realdentry) {
+		user_ns = ovl_upper_mnt_user_ns(OVL_FS(inode->i_sb));
+	} else {
+		realdentry = ovl_dentry_lower(dentry);
+		user_ns = OVL_I(inode)->lower_user_ns;
+	}
 
 	old_cred = ovl_override_creds(dentry->d_sb);
-	res = vfs_getxattr(realdentry, name, value, size);
+	res = vfs_mapped_getxattr(user_ns, realdentry, name, value, size);
+	if ((strcmp(name, XATTR_NAME_POSIX_ACL_ACCESS) == 0) ||
+	    (strcmp(name, XATTR_NAME_POSIX_ACL_DEFAULT) == 0))
+		posix_acl_fix_xattr_to_user(user_ns, value, size);
 	revert_creds(old_cred);
 	return res;
 }
@@ -634,13 +684,15 @@ void ovl_inode_init(struct inode *inode, struct ovl_inode_params *oip,
 
 	if (oip->upperdentry)
 		OVL_I(inode)->__upperdentry = oip->upperdentry;
-	if (oip->lowerpath && oip->lowerpath->dentry)
+	if (oip->lowerpath && oip->lowerpath->dentry) {
 		OVL_I(inode)->lower = igrab(d_inode(oip->lowerpath->dentry));
+		OVL_I(inode)->lower_user_ns = get_user_ns(mnt_user_ns(oip->lowerpath->layer->mnt));
+	}
 	if (oip->lowerdata)
 		OVL_I(inode)->lowerdata = igrab(d_inode(oip->lowerdata));
 
 	realinode = ovl_inode_real(inode);
-	ovl_copyattr(realinode, inode);
+	ovl_copyattr(ovl_inode_real_user_ns(inode), realinode, inode);
 	ovl_copyflags(realinode, inode);
 	ovl_map_ino(inode, ino, fsid);
 }
@@ -751,8 +803,8 @@ unsigned int ovl_get_nlink(struct ovl_fs *ofs, struct dentry *lowerdentry,
 	if (!lowerdentry || !upperdentry || d_inode(lowerdentry)->i_nlink == 1)
 		return fallback;
 
-	err = ovl_do_getxattr(ofs, upperdentry, OVL_XATTR_NLINK,
-			      &buf, sizeof(buf) - 1);
+	err = ovl_do_getxattr(ofs, ovl_upper_mnt_user_ns(ofs), upperdentry,
+			      OVL_XATTR_NLINK, &buf, sizeof(buf) - 1);
 	if (err < 0)
 		goto fail;
 
@@ -956,6 +1008,7 @@ struct inode *ovl_get_inode(struct super_block *sb,
 	struct inode *realinode = upperdentry ? d_inode(upperdentry) : NULL;
 	struct inode *inode;
 	struct dentry *lowerdentry = lowerpath ? lowerpath->dentry : NULL;
+	struct user_namespace *user_ns = ovl_upper_mnt_user_ns(OVL_FS(sb));
 	bool bylower = ovl_hash_bylower(sb, upperdentry, lowerdentry,
 					oip->index);
 	int fsid = bylower ? lowerpath->layer->fsid : 0;
@@ -1028,8 +1081,10 @@ struct inode *ovl_get_inode(struct super_block *sb,
 
 	/* Check for non-merge dir that may have whiteouts */
 	if (is_dir) {
+		if (!upperdentry)
+			user_ns = mnt_user_ns(lowerpath->layer->mnt);
 		if (((upperdentry && lowerdentry) || oip->numlower > 1) ||
-		    ovl_check_origin_xattr(ofs, upperdentry ?: lowerdentry)) {
+		    ovl_check_origin_xattr(ofs, user_ns, upperdentry ?: lowerdentry)) {
 			ovl_set_flag(OVL_WHITEOUTS, inode);
 		}
 	}

@@ -43,7 +43,8 @@ static bool ovl_must_copy_xattr(const char *name)
 	       !strncmp(name, XATTR_SECURITY_PREFIX, XATTR_SECURITY_PREFIX_LEN);
 }
 
-int ovl_copy_xattr(struct super_block *sb, struct dentry *old,
+int ovl_copy_xattr(struct super_block *sb, struct user_namespace *old_user_ns,
+		   struct dentry *old, struct user_namespace *new_user_ns,
 		   struct dentry *new)
 {
 	ssize_t list_size, size, value_size = 0;
@@ -85,9 +86,9 @@ int ovl_copy_xattr(struct super_block *sb, struct dentry *old,
 		if (ovl_is_private_xattr(sb, name))
 			continue;
 retry:
-		size = vfs_getxattr(old, name, value, value_size);
+		size = vfs_mapped_getxattr(old_user_ns, old, name, value, value_size);
 		if (size == -ERANGE)
-			size = vfs_getxattr(old, name, NULL, 0);
+			size = vfs_mapped_getxattr(old_user_ns, old, name, NULL, 0);
 
 		if (size < 0) {
 			error = size;
@@ -114,7 +115,7 @@ retry:
 			error = 0;
 			continue; /* Discard */
 		}
-		error = vfs_setxattr(new, name, value, size, 0);
+		error = vfs_mapped_setxattr(new_user_ns, new, name, value, size, 0);
 		if (error) {
 			if (error != -EOPNOTSUPP || ovl_must_copy_xattr(name))
 				break;
@@ -228,17 +229,19 @@ out_fput:
 	return error;
 }
 
-static int ovl_set_size(struct dentry *upperdentry, struct kstat *stat)
+static int ovl_set_size(struct user_namespace *user_ns,
+			struct dentry *upperdentry, struct kstat *stat)
 {
 	struct iattr attr = {
 		.ia_valid = ATTR_SIZE,
 		.ia_size = stat->size,
 	};
 
-	return notify_change(upperdentry, &attr, NULL);
+	return notify_mapped_change(user_ns, upperdentry, &attr, NULL);
 }
 
-static int ovl_set_timestamps(struct dentry *upperdentry, struct kstat *stat)
+static int ovl_set_timestamps(struct user_namespace *user_ns,
+			      struct dentry *upperdentry, struct kstat *stat)
 {
 	struct iattr attr = {
 		.ia_valid =
@@ -247,10 +250,11 @@ static int ovl_set_timestamps(struct dentry *upperdentry, struct kstat *stat)
 		.ia_mtime = stat->mtime,
 	};
 
-	return notify_change(upperdentry, &attr, NULL);
+	return notify_mapped_change(user_ns, upperdentry, &attr, NULL);
 }
 
-int ovl_set_attr(struct dentry *upperdentry, struct kstat *stat)
+int ovl_set_attr(struct user_namespace *user_ns, struct dentry *upperdentry,
+		 struct kstat *stat)
 {
 	int err = 0;
 
@@ -259,7 +263,7 @@ int ovl_set_attr(struct dentry *upperdentry, struct kstat *stat)
 			.ia_valid = ATTR_MODE,
 			.ia_mode = stat->mode,
 		};
-		err = notify_change(upperdentry, &attr, NULL);
+		err = notify_mapped_change(user_ns, upperdentry, &attr, NULL);
 	}
 	if (!err) {
 		struct iattr attr = {
@@ -267,10 +271,10 @@ int ovl_set_attr(struct dentry *upperdentry, struct kstat *stat)
 			.ia_uid = stat->uid,
 			.ia_gid = stat->gid,
 		};
-		err = notify_change(upperdentry, &attr, NULL);
+		err = notify_mapped_change(user_ns, upperdentry, &attr, NULL);
 	}
 	if (!err)
-		ovl_set_timestamps(upperdentry, stat);
+		ovl_set_timestamps(user_ns, upperdentry, stat);
 
 	return err;
 }
@@ -356,8 +360,8 @@ int ovl_set_origin(struct dentry *dentry, struct dentry *lower,
 }
 
 /* Store file handle of @upper dir in @index dir entry */
-static int ovl_set_upper_fh(struct ovl_fs *ofs, struct dentry *upper,
-			    struct dentry *index)
+static int ovl_set_upper_fh(struct ovl_fs *ofs, struct user_namespace *user_ns,
+			    struct dentry *upper, struct dentry *index)
 {
 	const struct ovl_fh *fh;
 	int err;
@@ -377,7 +381,8 @@ static int ovl_set_upper_fh(struct ovl_fs *ofs, struct dentry *upper,
  *
  * Caller must hold i_mutex on indexdir.
  */
-static int ovl_create_index(struct dentry *dentry, struct dentry *origin,
+static int ovl_create_index(struct user_namespace *user_ns,
+			    struct dentry *dentry, struct dentry *origin,
 			    struct dentry *upper)
 {
 	struct dentry *indexdir = ovl_indexdir(dentry->d_sb);
@@ -406,25 +411,25 @@ static int ovl_create_index(struct dentry *dentry, struct dentry *origin,
 	if (err)
 		return err;
 
-	temp = ovl_create_temp(indexdir, OVL_CATTR(S_IFDIR | 0));
+	temp = ovl_create_temp(user_ns, indexdir, OVL_CATTR(S_IFDIR | 0));
 	err = PTR_ERR(temp);
 	if (IS_ERR(temp))
 		goto free_name;
 
-	err = ovl_set_upper_fh(OVL_FS(dentry->d_sb), upper, temp);
+	err = ovl_set_upper_fh(OVL_FS(dentry->d_sb), user_ns, upper, temp);
 	if (err)
 		goto out;
 
-	index = lookup_one_len(name.name, indexdir, name.len);
+	index = lookup_one_len_mapped(name.name, indexdir, name.len, user_ns);
 	if (IS_ERR(index)) {
 		err = PTR_ERR(index);
 	} else {
-		err = ovl_do_rename(dir, temp, dir, index, 0);
+		err = ovl_do_rename(dir, user_ns, temp, dir, user_ns, index, 0);
 		dput(index);
 	}
 out:
 	if (err)
-		ovl_cleanup(dir, temp);
+		ovl_cleanup(user_ns, dir, temp);
 	dput(temp);
 free_name:
 	kfree(name.name);
@@ -441,6 +446,7 @@ struct ovl_copy_up_ctx {
 	struct dentry *destdir;
 	struct qstr destname;
 	struct dentry *workdir;
+	struct user_namespace *user_ns;
 	bool origin;
 	bool indexed;
 	bool metacopy;
@@ -463,16 +469,17 @@ static int ovl_link_up(struct ovl_copy_up_ctx *c)
 		return err;
 
 	inode_lock_nested(udir, I_MUTEX_PARENT);
-	upper = lookup_one_len(c->dentry->d_name.name, upperdir,
-			       c->dentry->d_name.len);
+	upper = lookup_one_len_mapped(c->dentry->d_name.name, upperdir,
+				  c->dentry->d_name.len,
+				  c->user_ns);
 	err = PTR_ERR(upper);
 	if (!IS_ERR(upper)) {
-		err = ovl_do_link(ovl_dentry_upper(c->dentry), udir, upper);
+		err = ovl_do_link(c->user_ns, ovl_dentry_upper(c->dentry), udir, upper);
 		dput(upper);
 
 		if (!err) {
 			/* Restore timestamps on parent (best effort) */
-			ovl_set_timestamps(upperdir, &c->pstat);
+			ovl_set_timestamps(c->user_ns, upperdir, &c->pstat);
 			ovl_dentry_set_upper_alias(c->dentry);
 		}
 	}
@@ -509,7 +516,8 @@ static int ovl_copy_up_inode(struct ovl_copy_up_ctx *c, struct dentry *temp)
 			return err;
 	}
 
-	err = ovl_copy_xattr(c->dentry->d_sb, c->lowerpath.dentry, temp);
+	err = ovl_copy_xattr(c->dentry->d_sb, mnt_user_ns(c->lowerpath.mnt),
+			     c->lowerpath.dentry, c->user_ns, temp);
 	if (err)
 		return err;
 
@@ -535,9 +543,9 @@ static int ovl_copy_up_inode(struct ovl_copy_up_ctx *c, struct dentry *temp)
 
 	inode_lock(temp->d_inode);
 	if (S_ISREG(c->stat.mode))
-		err = ovl_set_size(temp, &c->stat);
+		err = ovl_set_size(c->user_ns, temp, &c->stat);
 	if (!err)
-		err = ovl_set_attr(temp, &c->stat);
+		err = ovl_set_attr(c->user_ns, temp, &c->stat);
 	inode_unlock(temp->d_inode);
 
 	return err;
@@ -598,7 +606,7 @@ static int ovl_copy_up_workdir(struct ovl_copy_up_ctx *c)
 	if (err)
 		goto unlock;
 
-	temp = ovl_create_temp(c->workdir, &cattr);
+	temp = ovl_create_temp(c->user_ns, c->workdir, &cattr);
 	ovl_revert_cu_creds(&cc);
 
 	err = PTR_ERR(temp);
@@ -610,17 +618,18 @@ static int ovl_copy_up_workdir(struct ovl_copy_up_ctx *c)
 		goto cleanup;
 
 	if (S_ISDIR(c->stat.mode) && c->indexed) {
-		err = ovl_create_index(c->dentry, c->lowerpath.dentry, temp);
+		err = ovl_create_index(c->user_ns, c->dentry, c->lowerpath.dentry, temp);
 		if (err)
 			goto cleanup;
 	}
 
-	upper = lookup_one_len(c->destname.name, c->destdir, c->destname.len);
+	upper = lookup_one_len_mapped(c->destname.name, c->destdir, c->destname.len,
+				  c->user_ns);
 	err = PTR_ERR(upper);
 	if (IS_ERR(upper))
 		goto cleanup;
 
-	err = ovl_do_rename(wdir, temp, udir, upper, 0);
+	err = ovl_do_rename(wdir, c->user_ns, temp, udir, c->user_ns, upper, 0);
 	dput(upper);
 	if (err)
 		goto cleanup;
@@ -637,7 +646,7 @@ unlock:
 	return err;
 
 cleanup:
-	ovl_cleanup(wdir, temp);
+	ovl_cleanup(c->user_ns, wdir, temp);
 	dput(temp);
 	goto unlock;
 }
@@ -654,7 +663,7 @@ static int ovl_copy_up_tmpfile(struct ovl_copy_up_ctx *c)
 	if (err)
 		return err;
 
-	temp = ovl_do_tmpfile(c->workdir, c->stat.mode);
+	temp = ovl_do_tmpfile(c->user_ns, c->workdir, c->stat.mode);
 	ovl_revert_cu_creds(&cc);
 
 	if (IS_ERR(temp))
@@ -666,10 +675,11 @@ static int ovl_copy_up_tmpfile(struct ovl_copy_up_ctx *c)
 
 	inode_lock_nested(udir, I_MUTEX_PARENT);
 
-	upper = lookup_one_len(c->destname.name, c->destdir, c->destname.len);
+	upper = lookup_one_len_mapped(c->destname.name, c->destdir, c->destname.len,
+				  c->user_ns);
 	err = PTR_ERR(upper);
 	if (!IS_ERR(upper)) {
-		err = ovl_do_link(temp, udir, upper);
+		err = ovl_do_link(c->user_ns, temp, udir, upper);
 		dput(upper);
 	}
 	inode_unlock(udir);
@@ -757,7 +767,7 @@ static int ovl_do_copy_up(struct ovl_copy_up_ctx *c)
 
 		/* Restore timestamps on parent (best effort) */
 		inode_lock(udir);
-		ovl_set_timestamps(c->destdir, &c->pstat);
+		ovl_set_timestamps(c->user_ns, c->destdir, &c->pstat);
 		inode_unlock(udir);
 
 		ovl_dentry_set_upper_alias(c->dentry);
@@ -786,12 +796,13 @@ static bool ovl_need_meta_copy_up(struct dentry *dentry, umode_t mode,
 	return true;
 }
 
-static ssize_t ovl_getxattr(struct dentry *dentry, char *name, char **value)
+static ssize_t ovl_getxattr(struct user_namespace *user_ns,
+			    struct dentry *dentry, char *name, char **value)
 {
 	ssize_t res;
 	char *buf;
 
-	res = vfs_getxattr(dentry, name, NULL, 0);
+	res = vfs_mapped_getxattr(user_ns, dentry, name, NULL, 0);
 	if (res == -ENODATA || res == -EOPNOTSUPP)
 		res = 0;
 
@@ -800,7 +811,7 @@ static ssize_t ovl_getxattr(struct dentry *dentry, char *name, char **value)
 		if (!buf)
 			return -ENOMEM;
 
-		res = vfs_getxattr(dentry, name, buf, res);
+		res = vfs_mapped_getxattr(user_ns, dentry, name, buf, res);
 		if (res < 0)
 			kfree(buf);
 		else
@@ -814,6 +825,7 @@ static int ovl_copy_up_meta_inode_data(struct ovl_copy_up_ctx *c)
 {
 	struct ovl_fs *ofs = OVL_FS(c->dentry->d_sb);
 	struct path upperpath, datapath;
+	struct user_namespace *user_ns;
 	int err;
 	char *capability = NULL;
 	ssize_t cap_size;
@@ -827,8 +839,8 @@ static int ovl_copy_up_meta_inode_data(struct ovl_copy_up_ctx *c)
 		return -EIO;
 
 	if (c->stat.size) {
-		err = cap_size = ovl_getxattr(upperpath.dentry, XATTR_NAME_CAPS,
-					      &capability);
+		err = cap_size = ovl_getxattr(c->user_ns, upperpath.dentry,
+					      XATTR_NAME_CAPS, &capability);
 		if (cap_size < 0)
 			goto out;
 	}
@@ -841,9 +853,10 @@ static int ovl_copy_up_meta_inode_data(struct ovl_copy_up_ctx *c)
 	 * Writing to upper file will clear security.capability xattr. We
 	 * don't want that to happen for normal copy-up operation.
 	 */
+	user_ns = mnt_user_ns(upperpath.mnt);
 	if (capability) {
-		err = vfs_setxattr(upperpath.dentry, XATTR_NAME_CAPS,
-				   capability, cap_size, 0);
+		err = vfs_mapped_setxattr(user_ns, upperpath.dentry,
+				      XATTR_NAME_CAPS, capability, cap_size, 0);
 		if (err)
 			goto out_free;
 	}
@@ -887,6 +900,7 @@ static int ovl_copy_up_one(struct dentry *parent, struct dentry *dentry,
 		ovl_path_upper(parent, &parentpath);
 		ctx.destdir = parentpath.dentry;
 		ctx.destname = dentry->d_name;
+		ctx.user_ns = mnt_user_ns(parentpath.mnt);
 
 		err = vfs_getattr(&parentpath, &ctx.pstat,
 				  STATX_ATIME | STATX_MTIME,

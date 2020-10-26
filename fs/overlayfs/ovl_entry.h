@@ -126,6 +126,7 @@ struct ovl_inode {
 	struct inode vfs_inode;
 	struct dentry *__upperdentry;
 	struct inode *lower;
+	struct user_namespace *lower_user_ns;
 
 	/* synchronize copy up and more */
 	struct mutex lock;

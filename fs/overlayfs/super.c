@@ -203,6 +203,7 @@ static void ovl_destroy_inode(struct inode *inode)
 
 	dput(oi->__upperdentry);
 	iput(oi->lower);
+	put_user_ns(oi->lower_user_ns);
 	if (S_ISDIR(inode->i_mode))
 		ovl_dir_cache_free(inode);
 	else
@@ -699,13 +700,14 @@ static struct dentry *ovl_workdir_create(struct ovl_fs *ofs,
 {
 	struct inode *dir =  ofs->workbasedir->d_inode;
 	struct vfsmount *mnt = ovl_upper_mnt(ofs);
+	struct user_namespace *user_ns = mnt_user_ns(mnt);
 	struct dentry *work;
 	int err;
 	bool retried = false;
 
 	inode_lock_nested(dir, I_MUTEX_PARENT);
 retry:
-	work = lookup_one_len(name, ofs->workbasedir, strlen(name));
+	work = lookup_one_len_mapped(name, ofs->workbasedir, strlen(name), user_ns);
 
 	if (!IS_ERR(work)) {
 		struct iattr attr = {
@@ -731,7 +733,7 @@ retry:
 			goto retry;
 		}
 
-		work = ovl_create_real(dir, work, OVL_CATTR(attr.ia_mode));
+		work = ovl_create_real(user_ns, dir, work, OVL_CATTR(attr.ia_mode));
 		err = PTR_ERR(work);
 		if (IS_ERR(work))
 			goto out_err;
@@ -749,17 +751,17 @@ retry:
 		 * allowed as upper are limited to "normal" ones, where checking
 		 * for the above two errors is sufficient.
 		 */
-		err = vfs_removexattr(work, XATTR_NAME_POSIX_ACL_DEFAULT);
+		err = vfs_mapped_removexattr(user_ns, work, XATTR_NAME_POSIX_ACL_DEFAULT);
 		if (err && err != -ENODATA && err != -EOPNOTSUPP)
 			goto out_dput;
 
-		err = vfs_removexattr(work, XATTR_NAME_POSIX_ACL_ACCESS);
+		err = vfs_mapped_removexattr(user_ns, work, XATTR_NAME_POSIX_ACL_ACCESS);
 		if (err && err != -ENODATA && err != -EOPNOTSUPP)
 			goto out_dput;
 
 		/* Clear any inherited mode bits */
 		inode_lock(work->d_inode);
-		err = notify_change(work, &attr, NULL);
+		err = notify_mapped_change(user_ns, work, &attr, NULL);
 		inode_unlock(work->d_inode);
 		if (err)
 			goto out_dput;
@@ -934,10 +936,11 @@ ovl_posix_acl_xattr_get(const struct xattr_handler *handler,
 }
 
 static int __maybe_unused
-ovl_posix_acl_xattr_set(const struct xattr_handler *handler,
-			struct dentry *dentry, struct inode *inode,
-			const char *name, const void *value,
-			size_t size, int flags)
+ovl_posix_acl_xattr_set_mapped(const struct xattr_handler *handler,
+			       struct user_namespace *user_ns,
+			       struct dentry *dentry, struct inode *inode,
+			       const char *name, const void *value,
+			       size_t size, int flags)
 {
 	struct dentry *workdir = ovl_workdir(dentry);
 	struct inode *realinode = ovl_inode_real(inode);
@@ -960,7 +963,7 @@ ovl_posix_acl_xattr_set(const struct xattr_handler *handler,
 		goto out_acl_release;
 	}
 	err = -EPERM;
-	if (!inode_owner_or_capable(inode))
+	if (!mapped_inode_owner_or_capable(user_ns, inode))
 		goto out_acl_release;
 
 	posix_acl_release(acl);
@@ -971,8 +974,8 @@ ovl_posix_acl_xattr_set(const struct xattr_handler *handler,
 	 */
 	if (unlikely(inode->i_mode & S_ISGID) &&
 	    handler->flags == ACL_TYPE_ACCESS &&
-	    !in_group_p(inode->i_gid) &&
-	    !capable_wrt_inode_uidgid(inode, CAP_FSETID)) {
+	    !in_group_p(i_gid_into_mnt(user_ns, inode)) &&
+	    !capable_wrt_mapped_inode_uidgid(user_ns, inode, CAP_FSETID)) {
 		struct iattr iattr = { .ia_valid = ATTR_KILL_SGID };
 
 		err = ovl_setattr(dentry, &iattr);
@@ -982,7 +985,7 @@ ovl_posix_acl_xattr_set(const struct xattr_handler *handler,
 
 	err = ovl_xattr_set(dentry, inode, handler->name, value, size, flags);
 	if (!err)
-		ovl_copyattr(ovl_inode_real(inode), inode);
+		ovl_copyattr(ovl_inode_real_user_ns(inode), realinode, inode);
 
 	return err;
 
@@ -991,12 +994,33 @@ out_acl_release:
 	return err;
 }
 
+static int __maybe_unused
+ovl_posix_acl_xattr_set(const struct xattr_handler *handler,
+			struct dentry *dentry, struct inode *inode,
+			const char *name, const void *value,
+			size_t size, int flags)
+{
+	return ovl_posix_acl_xattr_set_mapped(handler, &init_user_ns, dentry,
+					      inode, name, value, size, flags);
+}
+
 static int ovl_own_xattr_get(const struct xattr_handler *handler,
 			     struct dentry *dentry, struct inode *inode,
 			     const char *name, void *buffer, size_t size)
 {
 	return -EOPNOTSUPP;
 }
+
+#ifdef CONFIG_IDMAP_MOUNTS
+static int ovl_own_xattr_set_mapped(const struct xattr_handler *handler,
+				    struct user_namespace *user_ns,
+				    struct dentry *dentry, struct inode *inode,
+				    const char *name, const void *value,
+				    size_t size, int flags)
+{
+	return -EOPNOTSUPP;
+}
+#endif
 
 static int ovl_own_xattr_set(const struct xattr_handler *handler,
 			     struct dentry *dentry, struct inode *inode,
@@ -1013,6 +1037,17 @@ static int ovl_other_xattr_get(const struct xattr_handler *handler,
 	return ovl_xattr_get(dentry, inode, name, buffer, size);
 }
 
+#ifdef CONFIG_IDMAP_MOUNTS
+static int ovl_other_xattr_set_mapped(const struct xattr_handler *handler,
+				      struct user_namespace *user_ns,
+				      struct dentry *dentry,
+				      struct inode *inode, const char *name,
+				      const void *value, size_t size, int flags)
+{
+	return ovl_xattr_set(dentry, inode, name, value, size, flags);
+}
+#endif
+
 static int ovl_other_xattr_set(const struct xattr_handler *handler,
 			       struct dentry *dentry, struct inode *inode,
 			       const char *name, const void *value,
@@ -1027,6 +1062,9 @@ ovl_posix_acl_access_xattr_handler = {
 	.flags = ACL_TYPE_ACCESS,
 	.get = ovl_posix_acl_xattr_get,
 	.set = ovl_posix_acl_xattr_set,
+#ifdef CONFIG_IDMAP_MOUNTS
+	.set_mapped = ovl_posix_acl_xattr_set_mapped,
+#endif
 };
 
 static const struct xattr_handler __maybe_unused
@@ -1035,18 +1073,27 @@ ovl_posix_acl_default_xattr_handler = {
 	.flags = ACL_TYPE_DEFAULT,
 	.get = ovl_posix_acl_xattr_get,
 	.set = ovl_posix_acl_xattr_set,
+#ifdef CONFIG_IDMAP_MOUNTS
+	.set_mapped = ovl_posix_acl_xattr_set_mapped,
+#endif
 };
 
 static const struct xattr_handler ovl_own_xattr_handler = {
 	.prefix	= OVL_XATTR_PREFIX,
 	.get = ovl_own_xattr_get,
 	.set = ovl_own_xattr_set,
+#ifdef CONFIG_IDMAP_MOUNTS
+	.set_mapped = ovl_own_xattr_set_mapped,
+#endif
 };
 
 static const struct xattr_handler ovl_other_xattr_handler = {
 	.prefix	= "", /* catch all */
 	.get = ovl_other_xattr_get,
 	.set = ovl_other_xattr_set,
+#ifdef CONFIG_IDMAP_MOUNTS
+	.set_mapped = ovl_other_xattr_set_mapped,
+#endif
 };
 
 static const struct xattr_handler *ovl_xattr_handlers[] = {
@@ -1164,7 +1211,8 @@ out:
  * Returns 1 if RENAME_WHITEOUT is supported, 0 if not supported and
  * negative values if error is encountered.
  */
-static int ovl_check_rename_whiteout(struct dentry *workdir)
+static int ovl_check_rename_whiteout(struct user_namespace *user_ns,
+				     struct dentry *workdir)
 {
 	struct inode *dir = d_inode(workdir);
 	struct dentry *temp;
@@ -1175,12 +1223,12 @@ static int ovl_check_rename_whiteout(struct dentry *workdir)
 
 	inode_lock_nested(dir, I_MUTEX_PARENT);
 
-	temp = ovl_create_temp(workdir, OVL_CATTR(S_IFREG | 0));
+	temp = ovl_create_temp(user_ns, workdir, OVL_CATTR(S_IFREG | 0));
 	err = PTR_ERR(temp);
 	if (IS_ERR(temp))
 		goto out_unlock;
 
-	dest = ovl_lookup_temp(workdir);
+	dest = ovl_lookup_temp(user_ns, workdir);
 	err = PTR_ERR(dest);
 	if (IS_ERR(dest)) {
 		dput(temp);
@@ -1189,14 +1237,14 @@ static int ovl_check_rename_whiteout(struct dentry *workdir)
 
 	/* Name is inline and stable - using snapshot as a copy helper */
 	take_dentry_name_snapshot(&name, temp);
-	err = ovl_do_rename(dir, temp, dir, dest, RENAME_WHITEOUT);
+	err = ovl_do_rename(dir, user_ns, temp, dir, user_ns, dest, RENAME_WHITEOUT);
 	if (err) {
 		if (err == -EINVAL)
 			err = 0;
 		goto cleanup_temp;
 	}
 
-	whiteout = lookup_one_len(name.name.name, workdir, name.name.len);
+	whiteout = lookup_one_len_mapped(name.name.name, workdir, name.name.len, user_ns);
 	err = PTR_ERR(whiteout);
 	if (IS_ERR(whiteout))
 		goto cleanup_temp;
@@ -1205,11 +1253,11 @@ static int ovl_check_rename_whiteout(struct dentry *workdir)
 
 	/* Best effort cleanup of whiteout and temp file */
 	if (err)
-		ovl_cleanup(dir, whiteout);
+		ovl_cleanup(user_ns, dir, whiteout);
 	dput(whiteout);
 
 cleanup_temp:
-	ovl_cleanup(dir, temp);
+	ovl_cleanup(user_ns, dir, temp);
 	release_dentry_name_snapshot(&name);
 	dput(temp);
 	dput(dest);
@@ -1220,16 +1268,17 @@ out_unlock:
 	return err;
 }
 
-static struct dentry *ovl_lookup_or_create(struct dentry *parent,
+static struct dentry *ovl_lookup_or_create(struct user_namespace *user_ns,
+					   struct dentry *parent,
 					   const char *name, umode_t mode)
 {
 	size_t len = strlen(name);
 	struct dentry *child;
 
 	inode_lock_nested(parent->d_inode, I_MUTEX_PARENT);
-	child = lookup_one_len(name, parent, len);
+	child = lookup_one_len_mapped(name, parent, len, user_ns);
 	if (!IS_ERR(child) && !child->d_inode)
-		child = ovl_create_real(parent->d_inode, child,
+		child = ovl_create_real(user_ns, parent->d_inode, child,
 					OVL_CATTR(mode));
 	inode_unlock(parent->d_inode);
 	dput(parent);
@@ -1251,7 +1300,8 @@ static int ovl_create_volatile_dirty(struct ovl_fs *ofs)
 	const char *const *name = volatile_path;
 
 	for (ctr = ARRAY_SIZE(volatile_path); ctr; ctr--, name++) {
-		d = ovl_lookup_or_create(d, *name, ctr > 1 ? S_IFDIR : S_IFREG);
+		d = ovl_lookup_or_create(ovl_upper_mnt_user_ns(ofs), d, *name,
+					 ctr > 1 ? S_IFDIR : S_IFREG);
 		if (IS_ERR(d))
 			return PTR_ERR(d);
 	}
@@ -1264,6 +1314,7 @@ static int ovl_make_workdir(struct super_block *sb, struct ovl_fs *ofs,
 {
 	struct vfsmount *mnt = ovl_upper_mnt(ofs);
 	struct dentry *temp, *workdir;
+	struct user_namespace *user_ns = mnt_user_ns(mnt);
 	bool rename_whiteout;
 	bool d_type;
 	int fh_type;
@@ -1299,7 +1350,7 @@ static int ovl_make_workdir(struct super_block *sb, struct ovl_fs *ofs,
 		pr_warn("upper fs needs to support d_type.\n");
 
 	/* Check if upper/work fs supports O_TMPFILE */
-	temp = ovl_do_tmpfile(ofs->workdir, S_IFREG | 0);
+	temp = ovl_do_tmpfile(user_ns, ofs->workdir, S_IFREG | 0);
 	ofs->tmpfile = !IS_ERR(temp);
 	if (ofs->tmpfile)
 		dput(temp);
@@ -1308,7 +1359,7 @@ static int ovl_make_workdir(struct super_block *sb, struct ovl_fs *ofs,
 
 
 	/* Check if upper/work fs supports RENAME_WHITEOUT */
-	err = ovl_check_rename_whiteout(ofs->workdir);
+	err = ovl_check_rename_whiteout(user_ns, ofs->workdir);
 	if (err < 0)
 		goto out;
 
@@ -1423,6 +1474,7 @@ static int ovl_get_indexdir(struct super_block *sb, struct ovl_fs *ofs,
 {
 	struct vfsmount *mnt = ovl_upper_mnt(ofs);
 	struct dentry *indexdir;
+	struct user_namespace *user_ns = mnt_user_ns(mnt);
 	int err;
 
 	err = mnt_want_write(mnt);
@@ -1462,7 +1514,7 @@ static int ovl_get_indexdir(struct super_block *sb, struct ovl_fs *ofs,
 		 * "trusted.overlay.upper" to indicate that index may have
 		 * directory entries.
 		 */
-		if (ovl_check_origin_xattr(ofs, ofs->indexdir)) {
+		if (ovl_check_origin_xattr(ofs, user_ns, ofs->indexdir)) {
 			err = ovl_verify_set_fh(ofs, ofs->indexdir,
 						OVL_XATTR_ORIGIN,
 						upperpath->dentry, true, false);
