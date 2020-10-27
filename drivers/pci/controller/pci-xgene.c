@@ -99,20 +99,6 @@ static inline struct xgene_pcie_port *pcie_bus_to_port(struct pci_bus *bus)
 }
 
 /*
- * When the address bit [17:16] is 2'b01, the Configuration access will be
- * treated as Type 1 and it will be forwarded to external PCIe device.
- */
-static void __iomem *xgene_pcie_get_cfg_base(struct pci_bus *bus)
-{
-	struct xgene_pcie_port *port = pcie_bus_to_port(bus);
-
-	if (bus->number >= (bus->primary + 1))
-		return port->cfg_base + AXI_EP_CFG_ACCESS;
-
-	return port->cfg_base;
-}
-
-/*
  * For Configuration request, RTDID register is used as Bus Number,
  * Device Number and Function number of the header fields.
  */
@@ -134,32 +120,34 @@ static void xgene_pcie_set_rtdid_reg(struct pci_bus *bus, uint devfn)
 	xgene_pcie_readl(port, RTDID);
 }
 
-/*
- * X-Gene PCIe port uses BAR0-BAR1 of RC's configuration space as
- * the translation from PCI bus to native BUS.  Entire DDR region
- * is mapped into PCIe space using these registers, so it can be
- * reached by DMA from EP devices.  The BAR0/1 of bridge should be
- * hidden during enumeration to avoid the sizing and resource allocation
- * by PCIe core.
- */
-static bool xgene_pcie_hide_rc_bars(struct pci_bus *bus, int offset)
+static void __iomem *xgene_pcie_root_map_bus(struct pci_bus *bus, unsigned int devfn,
+					     int offset)
 {
-	if (pci_is_root_bus(bus) && ((offset == PCI_BASE_ADDRESS_0) ||
-				     (offset == PCI_BASE_ADDRESS_1)))
-		return true;
+	struct xgene_pcie_port *port = pcie_bus_to_port(bus);
 
-	return false;
+	/*
+	 * X-Gene PCIe port uses BAR0-BAR1 of RC's configuration space as
+	 * the translation from PCI bus to native BUS.  Entire DDR region
+	 * is mapped into PCIe space using these registers, so it can be
+	 * reached by DMA from EP devices.  The BAR0/1 of bridge should be
+	 * hidden during enumeration to avoid the sizing and resource allocation
+	 * by PCIe core.
+	 */
+	if ((offset == PCI_BASE_ADDRESS_0) || (offset == PCI_BASE_ADDRESS_1))
+		return NULL;
+
+	xgene_pcie_set_rtdid_reg(bus, devfn);
+	return port->cfg_base;
 }
+
 
 static void __iomem *xgene_pcie_map_bus(struct pci_bus *bus, unsigned int devfn,
 					int offset)
 {
-	if ((pci_is_root_bus(bus) && devfn != 0) ||
-	    xgene_pcie_hide_rc_bars(bus, offset))
-		return NULL;
+	struct xgene_pcie_port *port = pcie_bus_to_port(bus);
 
 	xgene_pcie_set_rtdid_reg(bus, devfn);
-	return xgene_pcie_get_cfg_base(bus) + offset;
+	return port->cfg_base + AXI_EP_CFG_ACCESS;
 }
 
 static int xgene_pcie_config_read32(struct pci_bus *bus, unsigned int devfn,
@@ -273,7 +261,7 @@ const struct pci_ecam_ops xgene_v2_pcie_ecam_ops = {
 	.init		= xgene_v2_pcie_ecam_init,
 	.pci_ops	= {
 		.map_bus	= xgene_pcie_map_bus,
-		.read		= xgene_pcie_config_read32,
+		.read		= pci_generic_config_read32,
 		.write		= pci_generic_config_write,
 	}
 };
@@ -617,6 +605,7 @@ static int xgene_pcie_probe(struct platform_device *pdev)
 
 	bridge->sysdata = port;
 	bridge->ops = &xgene_pcie_ops;
+	bridge->single_root_dev = 1;
 
 	return pci_host_probe(bridge);
 }
