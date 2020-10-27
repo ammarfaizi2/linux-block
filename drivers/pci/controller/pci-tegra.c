@@ -441,64 +441,51 @@ static unsigned int tegra_pcie_conf_offset(u8 bus, unsigned int devfn,
 	       (PCI_FUNC(devfn) << 8) | (where & 0xff);
 }
 
+static void __iomem *tegra_pcie_map_root_bus(struct pci_bus *bus,
+					     unsigned int devfn, int where)
+{
+	struct tegra_pcie *pcie = bus->sysdata;
+	void __iomem *addr = NULL;
+	struct tegra_pcie_port *port;
+
+	list_for_each_entry(port, &pcie->ports, list) {
+		unsigned int slot = PCI_SLOT(devfn);
+		if (port->index + 1 == slot) {
+			addr = port->base + (where & ~3);
+			break;
+		}
+	}
+	return addr;
+}
+
+static struct pci_ops tegra_pcie_ops = {
+	.map_bus = tegra_pcie_map_root_bus,
+	.read = pci_generic_config_read32,
+	.write = pci_generic_config_write32,
+};
+
 static void __iomem *tegra_pcie_map_bus(struct pci_bus *bus,
 					unsigned int devfn,
 					int where)
 {
 	struct tegra_pcie *pcie = bus->sysdata;
-	void __iomem *addr = NULL;
+	unsigned int offset;
+	u32 base;
 
-	if (bus->number == 0) {
-		unsigned int slot = PCI_SLOT(devfn);
-		struct tegra_pcie_port *port;
+	offset = tegra_pcie_conf_offset(bus->number, devfn, where);
 
-		list_for_each_entry(port, &pcie->ports, list) {
-			if (port->index + 1 == slot) {
-				addr = port->base + (where & ~3);
-				break;
-			}
-		}
-	} else {
-		unsigned int offset;
-		u32 base;
+	/* move 4 KiB window to offset within the FPCI region */
+	base = 0xfe100000 + ((offset & ~(SZ_4K - 1)) >> 8);
+	afi_writel(pcie, base, AFI_FPCI_BAR0);
 
-		offset = tegra_pcie_conf_offset(bus->number, devfn, where);
-
-		/* move 4 KiB window to offset within the FPCI region */
-		base = 0xfe100000 + ((offset & ~(SZ_4K - 1)) >> 8);
-		afi_writel(pcie, base, AFI_FPCI_BAR0);
-
-		/* move to correct offset within the 4 KiB page */
-		addr = pcie->cfg + (offset & (SZ_4K - 1));
-	}
-
-	return addr;
+	/* move to correct offset within the 4 KiB page */
+	return pcie->cfg + (offset & (SZ_4K - 1));
 }
 
-static int tegra_pcie_config_read(struct pci_bus *bus, unsigned int devfn,
-				  int where, int size, u32 *value)
-{
-	if (bus->number == 0)
-		return pci_generic_config_read32(bus, devfn, where, size,
-						 value);
-
-	return pci_generic_config_read(bus, devfn, where, size, value);
-}
-
-static int tegra_pcie_config_write(struct pci_bus *bus, unsigned int devfn,
-				   int where, int size, u32 value)
-{
-	if (bus->number == 0)
-		return pci_generic_config_write32(bus, devfn, where, size,
-						  value);
-
-	return pci_generic_config_write(bus, devfn, where, size, value);
-}
-
-static struct pci_ops tegra_pcie_ops = {
+static struct pci_ops tegra_pcie_child_ops = {
 	.map_bus = tegra_pcie_map_bus,
-	.read = tegra_pcie_config_read,
-	.write = tegra_pcie_config_write,
+	.read = pci_generic_config_read,
+	.write = pci_generic_config_write,
 };
 
 static unsigned long tegra_pcie_port_get_pex_ctrl(struct tegra_pcie_port *port)
@@ -2630,6 +2617,7 @@ static int tegra_pcie_probe(struct platform_device *pdev)
 	}
 
 	host->ops = &tegra_pcie_ops;
+	host->child_ops = &tegra_pcie_child_ops;
 	host->map_irq = tegra_pcie_map_irq;
 
 	err = pci_host_probe(host);
