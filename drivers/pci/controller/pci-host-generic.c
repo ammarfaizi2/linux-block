@@ -23,34 +23,23 @@ static const struct pci_ecam_ops gen_pci_cfg_cam_bus_ops = {
 	}
 };
 
-static bool pci_dw_valid_device(struct pci_bus *bus, unsigned int devfn)
+static int pci_dw_add_bus(struct pci_bus *bus)
 {
-	struct pci_config_window *cfg = bus->sysdata;
+	struct pci_host_bridge *host;
 
-	/*
-	 * The Synopsys DesignWare PCIe controller in ECAM mode will not filter
-	 * type 0 config TLPs sent to devices 1 and up on its downstream port,
-	 * resulting in devices appearing multiple times on bus 0 unless we
-	 * filter out those accesses here.
-	 */
-	if (bus->number == cfg->busr.start && PCI_SLOT(devfn) > 0)
-		return false;
+	if (!pci_is_root_bus(bus))
+		return 0;
 
-	return true;
-}
+	host = pci_find_host_bridge(bus);
+	host->single_root_dev = 1;
 
-static void __iomem *pci_dw_ecam_map_bus(struct pci_bus *bus,
-					 unsigned int devfn, int where)
-{
-	if (!pci_dw_valid_device(bus, devfn))
-		return NULL;
-
-	return pci_ecam_map_bus(bus, devfn, where);
+	return 0;
 }
 
 static const struct pci_ecam_ops pci_dw_ecam_bus_ops = {
 	.pci_ops	= {
-		.map_bus	= pci_dw_ecam_map_bus,
+		.add_bus	= pci_dw_add_bus,
+		.map_bus	= pci_ecam_map_bus,
 		.read		= pci_generic_config_read,
 		.write		= pci_generic_config_write,
 	}
