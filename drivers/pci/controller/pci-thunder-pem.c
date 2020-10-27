@@ -40,7 +40,7 @@ static int thunder_pem_bridge_read(struct pci_bus *bus, unsigned int devfn,
 	struct pci_config_window *cfg = bus->sysdata;
 	struct thunder_pem_pci *pem_pci = (struct thunder_pem_pci *)cfg->priv;
 
-	if (devfn != 0 || where >= 2048) {
+	if (where >= 2048) {
 		*val = ~0;
 		return PCIBIOS_DEVICE_NOT_FOUND;
 	}
@@ -126,25 +126,6 @@ static int thunder_pem_bridge_read(struct pci_bus *bus, unsigned int devfn,
 	return PCIBIOS_SUCCESSFUL;
 }
 
-static int thunder_pem_config_read(struct pci_bus *bus, unsigned int devfn,
-				   int where, int size, u32 *val)
-{
-	struct pci_config_window *cfg = bus->sysdata;
-
-	if (bus->number < cfg->busr.start ||
-	    bus->number > cfg->busr.end)
-		return PCIBIOS_DEVICE_NOT_FOUND;
-
-	/*
-	 * The first device on the bus is the PEM PCIe bridge.
-	 * Special case its config access.
-	 */
-	if (bus->number == cfg->busr.start)
-		return thunder_pem_bridge_read(bus, devfn, where, size, val);
-
-	return pci_generic_config_read(bus, devfn, where, size, val);
-}
-
 /*
  * Some of the w1c_bits below also include read-only or non-writable
  * reserved bits, this makes the code simpler and is OK as the bits
@@ -210,7 +191,7 @@ static int thunder_pem_bridge_write(struct pci_bus *bus, unsigned int devfn,
 	u64 write_val, read_val;
 	u64 where_aligned = where & ~3ull;
 
-	if (devfn != 0 || where >= 2048)
+	if (where >= 2048)
 		return PCIBIOS_DEVICE_NOT_FOUND;
 
 	/*
@@ -258,25 +239,6 @@ static int thunder_pem_bridge_write(struct pci_bus *bus, unsigned int devfn,
 	return PCIBIOS_SUCCESSFUL;
 }
 
-static int thunder_pem_config_write(struct pci_bus *bus, unsigned int devfn,
-				    int where, int size, u32 val)
-{
-	struct pci_config_window *cfg = bus->sysdata;
-
-	if (bus->number < cfg->busr.start ||
-	    bus->number > cfg->busr.end)
-		return PCIBIOS_DEVICE_NOT_FOUND;
-	/*
-	 * The first device on the bus is the PEM PCIe bridge.
-	 * Special case its config access.
-	 */
-	if (bus->number == cfg->busr.start)
-		return thunder_pem_bridge_write(bus, devfn, where, size, val);
-
-
-	return pci_generic_config_write(bus, devfn, where, size, val);
-}
-
 static int thunder_pem_init(struct device *dev, struct pci_config_window *cfg,
 			    struct resource *res_pem)
 {
@@ -303,6 +265,16 @@ static int thunder_pem_init(struct device *dev, struct pci_config_window *cfg,
 	pem_pci->ea_entry[2] = (u32)(bar4_start >> 32);
 
 	cfg->priv = pem_pci;
+	return 0;
+}
+
+static int thunder_pem_add_bus(struct pci_bus *bus)
+{
+	struct pci_host_bridge *host = pci_find_host_bridge(bus);
+
+	host->single_root_dev = 1;
+	host->child_ops = (struct pci_ops *)&pci_generic_ecam_ops.pci_ops;
+
 	return 0;
 }
 
@@ -390,9 +362,10 @@ const struct pci_ecam_ops thunder_pem_ecam_ops = {
 	.bus_shift	= THUNDER_PCIE_ECAM_BUS_SHIFT,
 	.init		= thunder_pem_acpi_init,
 	.pci_ops	= {
+		.add_bus	= thunder_pem_add_bus,
 		.map_bus	= pci_ecam_map_bus,
-		.read		= thunder_pem_config_read,
-		.write		= thunder_pem_config_write,
+		.read		= thunder_pem_bridge_read,
+		.write		= thunder_pem_bridge_write,
 	}
 };
 
@@ -427,9 +400,10 @@ static const struct pci_ecam_ops pci_thunder_pem_ops = {
 	.bus_shift	= THUNDER_PCIE_ECAM_BUS_SHIFT,
 	.init		= thunder_pem_platform_init,
 	.pci_ops	= {
+		.add_bus	= thunder_pem_add_bus,
 		.map_bus	= pci_ecam_map_bus,
-		.read		= thunder_pem_config_read,
-		.write		= thunder_pem_config_write,
+		.read		= thunder_pem_bridge_read,
+		.write		= thunder_pem_bridge_write,
 	}
 };
 
