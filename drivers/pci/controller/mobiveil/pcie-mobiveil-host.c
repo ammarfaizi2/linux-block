@@ -27,18 +27,25 @@
 
 #include "pcie-mobiveil.h"
 
-static bool mobiveil_pcie_valid_device(struct pci_bus *bus, unsigned int devfn)
+/*
+ * mobiveil_pcie_map_root_bus - routine to get the configuration base of root port
+ */
+static void __iomem *mobiveil_pcie_map_root_bus(struct pci_bus *bus,
+					   unsigned int devfn, int where)
 {
-	/* Only one device down on each root port */
-	if (pci_is_root_bus(bus) && (devfn > 0))
-		return false;
+	struct mobiveil_pcie *pcie = bus->sysdata;
 
-	return true;
+	return pcie->csr_axi_slave_base + where;
 }
 
+static struct pci_ops mobiveil_pcie_ops = {
+	.map_bus = mobiveil_pcie_map_root_bus,
+	.read = pci_generic_config_read,
+	.write = pci_generic_config_write,
+};
+
 /*
- * mobiveil_pcie_map_bus - routine to get the configuration base of either
- * root port or endpoint
+ * mobiveil_pcie_map_bus - routine to get the configuration base of endpoint
  */
 static void __iomem *mobiveil_pcie_map_bus(struct pci_bus *bus,
 					   unsigned int devfn, int where)
@@ -46,13 +53,6 @@ static void __iomem *mobiveil_pcie_map_bus(struct pci_bus *bus,
 	struct mobiveil_pcie *pcie = bus->sysdata;
 	struct mobiveil_root_port *rp = &pcie->rp;
 	u32 value;
-
-	if (!mobiveil_pcie_valid_device(bus, devfn))
-		return NULL;
-
-	/* RC config access */
-	if (pci_is_root_bus(bus))
-		return pcie->csr_axi_slave_base + where;
 
 	/*
 	 * EP config access (in Config/APIO space)
@@ -69,7 +69,7 @@ static void __iomem *mobiveil_pcie_map_bus(struct pci_bus *bus,
 	return rp->config_axi_slave_base + where;
 }
 
-static struct pci_ops mobiveil_pcie_ops = {
+static struct pci_ops mobiveil_pcie_child_ops = {
 	.map_bus = mobiveil_pcie_map_bus,
 	.read = pci_generic_config_read,
 	.write = pci_generic_config_write,
@@ -578,6 +578,8 @@ int mobiveil_pcie_host_probe(struct mobiveil_pcie *pcie)
 	/* Initialize bridge */
 	bridge->sysdata = pcie;
 	bridge->ops = &mobiveil_pcie_ops;
+	bridge->child_ops = &mobiveil_pcie_child_ops;
+	bridge->single_root_dev = 1;
 
 	ret = mobiveil_bringup_link(pcie);
 	if (ret) {
