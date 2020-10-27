@@ -19,25 +19,23 @@ struct al_pcie_acpi  {
 	void __iomem *dbi_base;
 };
 
+static int al_pcie_add_bus(struct pci_bus *bus)
+{
+	struct pci_host_bridge *host = pci_find_host_bridge(bus);
+
+	host->single_root_dev = 1;
+	host->child_ops = (struct pci_ops *)&pci_generic_ecam_ops.pci_ops;
+
+	return 0;
+}
+
 static void __iomem *al_pcie_map_bus(struct pci_bus *bus, unsigned int devfn,
 				     int where)
 {
 	struct pci_config_window *cfg = bus->sysdata;
 	struct al_pcie_acpi *pcie = cfg->priv;
-	void __iomem *dbi_base = pcie->dbi_base;
 
-	if (bus->number == cfg->busr.start) {
-		/*
-		 * The DW PCIe core doesn't filter out transactions to other
-		 * devices/functions on the root bus num, so we do this here.
-		 */
-		if (PCI_SLOT(devfn) > 0)
-			return NULL;
-		else
-			return dbi_base + where;
-	}
-
-	return pci_ecam_map_bus(bus, devfn, where);
+	return pcie->dbi_base + where;
 }
 
 static int al_pcie_init(struct pci_config_window *cfg)
@@ -78,6 +76,7 @@ static int al_pcie_init(struct pci_config_window *cfg)
 const struct pci_ecam_ops al_pcie_ops = {
 	.init         =  al_pcie_init,
 	.pci_ops      = {
+		.add_bus    = al_pcie_add_bus,
 		.map_bus    = al_pcie_map_bus,
 		.read       = pci_generic_config_read,
 		.write      = pci_generic_config_write,
