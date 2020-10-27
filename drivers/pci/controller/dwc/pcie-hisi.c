@@ -18,40 +18,14 @@
 
 #if defined(CONFIG_PCI_HISI) || (defined(CONFIG_ACPI) && defined(CONFIG_PCI_QUIRKS))
 
-static int hisi_pcie_rd_conf(struct pci_bus *bus, u32 devfn, int where,
-			     int size, u32 *val)
+static int hisi_pcie_add_bus(struct pci_bus *bus)
 {
-	struct pci_config_window *cfg = bus->sysdata;
-	int dev = PCI_SLOT(devfn);
+	struct pci_host_bridge *host = pci_find_host_bridge(bus);
 
-	if (bus->number == cfg->busr.start) {
-		/* access only one slot on each root port */
-		if (dev > 0)
-			return PCIBIOS_DEVICE_NOT_FOUND;
-		else
-			return pci_generic_config_read32(bus, devfn, where,
-							 size, val);
-	}
+	host->single_root_dev = 1;
+	host->child_ops = (struct pci_ops *)&pci_generic_ecam_ops.pci_ops;
 
-	return pci_generic_config_read(bus, devfn, where, size, val);
-}
-
-static int hisi_pcie_wr_conf(struct pci_bus *bus, u32 devfn,
-			     int where, int size, u32 val)
-{
-	struct pci_config_window *cfg = bus->sysdata;
-	int dev = PCI_SLOT(devfn);
-
-	if (bus->number == cfg->busr.start) {
-		/* access only one slot on each root port */
-		if (dev > 0)
-			return PCIBIOS_DEVICE_NOT_FOUND;
-		else
-			return pci_generic_config_write32(bus, devfn, where,
-							  size, val);
-	}
-
-	return pci_generic_config_write(bus, devfn, where, size, val);
+	return 0;
 }
 
 static void __iomem *hisi_pcie_map_bus(struct pci_bus *bus, unsigned int devfn,
@@ -60,10 +34,7 @@ static void __iomem *hisi_pcie_map_bus(struct pci_bus *bus, unsigned int devfn,
 	struct pci_config_window *cfg = bus->sysdata;
 	void __iomem *reg_base = cfg->priv;
 
-	if (bus->number == cfg->busr.start)
-		return reg_base + where;
-	else
-		return pci_ecam_map_bus(bus, devfn, where);
+	return reg_base + where;
 }
 
 #if defined(CONFIG_ACPI) && defined(CONFIG_PCI_QUIRKS)
@@ -102,9 +73,10 @@ static int hisi_pcie_init(struct pci_config_window *cfg)
 const struct pci_ecam_ops hisi_pcie_ops = {
 	.init         =  hisi_pcie_init,
 	.pci_ops      = {
+		.add_bus    = hisi_pcie_add_bus,
 		.map_bus    = hisi_pcie_map_bus,
-		.read       = hisi_pcie_rd_conf,
-		.write      = hisi_pcie_wr_conf,
+		.read       = pci_generic_config_read32,
+		.write      = pci_generic_config_write32,
 	}
 };
 
@@ -136,9 +108,10 @@ static int hisi_pcie_platform_init(struct pci_config_window *cfg)
 static const struct pci_ecam_ops hisi_pcie_platform_ops = {
 	.init         =  hisi_pcie_platform_init,
 	.pci_ops      = {
+		.add_bus    = hisi_pcie_add_bus,
 		.map_bus    = hisi_pcie_map_bus,
-		.read       = hisi_pcie_rd_conf,
-		.write      = hisi_pcie_wr_conf,
+		.read       = pci_generic_config_read32,
+		.write      = pci_generic_config_write32,
 	}
 };
 
