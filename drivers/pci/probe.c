@@ -2549,6 +2549,7 @@ static unsigned next_fn(struct pci_bus *bus, struct pci_dev *dev, unsigned fn)
 static int only_one_child(struct pci_bus *bus)
 {
 	struct pci_dev *bridge = bus->self;
+	struct pci_host_bridge *host = to_pci_host_bridge(bus->bridge);
 
 	/*
 	 * Systems with unusual topologies set PCI_SCAN_ALL_PCIE_DEVS so
@@ -2562,6 +2563,8 @@ static int only_one_child(struct pci_bus *bus)
 	 * 0 on it (PCIe spec r3.1, sec 7.3.1).  As an optimization, scan
 	 * only for Device 0 in that situation.
 	 */
+	if (!bridge && host->single_root_dev)
+		return 1;
 	if (bridge && pci_is_pcie(bridge) && pcie_downstream_port(bridge))
 		return 1;
 
