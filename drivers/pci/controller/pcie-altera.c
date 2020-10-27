@@ -100,14 +100,12 @@ struct altera_pcie_ops {
 	void (*tlp_write_pkt)(struct altera_pcie *pcie, u32 *headers,
 			      u32 data, bool align);
 	bool (*get_link_status)(struct altera_pcie *pcie);
-	int (*rp_read_cfg)(struct altera_pcie *pcie, int where,
-			   int size, u32 *value);
-	int (*rp_write_cfg)(struct altera_pcie *pcie, u8 busno,
-			    int where, int size, u32 value);
 };
 
 struct altera_pcie_data {
 	const struct altera_pcie_ops *ops;
+	struct pci_ops *bus_ops;
+	struct pci_ops *child_ops;
 	enum altera_pcie_version version;
 	u32 cap_offset;		/* PCIe capability structure register offset */
 	u32 cfgrd0;
@@ -159,8 +157,7 @@ static bool s10_altera_pcie_link_up(struct altera_pcie *pcie)
 static bool altera_pcie_hide_rc_bar(struct pci_bus *bus, unsigned int  devfn,
 				    int offset)
 {
-	if (pci_is_root_bus(bus) && (devfn == 0) &&
-	    (offset == PCI_BASE_ADDRESS_0))
+	if (pci_is_root_bus(bus) && (offset == PCI_BASE_ADDRESS_0))
 		return true;
 
 	return false;
@@ -188,10 +185,6 @@ static bool altera_pcie_valid_device(struct altera_pcie *pcie,
 		if (!pcie->pcie_data->ops->get_link_status(pcie))
 			return false;
 	}
-
-	/* access only one slot on each root port */
-	if (bus->number == pcie->root_bus_nr && dev > 0)
-		return false;
 
 	return true;
 }
@@ -336,160 +329,52 @@ static void get_tlp_header(struct altera_pcie *pcie, u8 bus, u32 devfn,
 	headers[2] = TLP_CFG_DW2(bus, devfn, where);
 }
 
-static int tlp_cfg_dword_read(struct altera_pcie *pcie, u8 bus, u32 devfn,
-			      int where, u8 byte_en, u32 *value)
+static int tlp_cfg_dword_read(struct pci_bus *bus, u32 devfn,
+			      int where, int size, u32 *value)
 {
+	struct altera_pcie *pcie = bus->sysdata;
+	int ret;
 	u32 headers[TLP_HDR_SIZE];
+	u8 byte_en = ((1 << size) - 1) << (where & 3);
 
-	get_tlp_header(pcie, bus, devfn, where, byte_en, true,
-		       headers);
+	get_tlp_header(pcie, bus->number, devfn, (where & ~DWORD_MASK), byte_en,
+		       true, headers);
 
 	pcie->pcie_data->ops->tlp_write_pkt(pcie, headers, 0, false);
 
-	return pcie->pcie_data->ops->tlp_read_pkt(pcie, value);
+	ret = pcie->pcie_data->ops->tlp_read_pkt(pcie, value);
+
+	if (size <= 2)
+		*value = (*value >> (8 * (where & 3))) & ((1 << (size * 8)) - 1);
+
+	return ret;
 }
 
-static int tlp_cfg_dword_write(struct altera_pcie *pcie, u8 bus, u32 devfn,
-			       int where, u8 byte_en, u32 value)
+static int tlp_cfg_dword_write(struct pci_bus *bus, u32 devfn,
+			       int where, int size, u32 value)
 {
+	struct altera_pcie *pcie = bus->sysdata;
 	u32 headers[TLP_HDR_SIZE];
-	int ret;
+	u8 byte_en = ((1 << size) - 1) << (where & 3);
 
-	get_tlp_header(pcie, bus, devfn, where, byte_en, false,
-		       headers);
+	get_tlp_header(pcie, bus->number, devfn, (where & ~DWORD_MASK), byte_en,
+		       false, headers);
 
-	/* check alignment to Qword */
-	if ((where & 0x7) == 0)
-		pcie->pcie_data->ops->tlp_write_pkt(pcie, headers,
-						    value, true);
-	else
-		pcie->pcie_data->ops->tlp_write_pkt(pcie, headers,
-						    value, false);
+	pcie->pcie_data->ops->tlp_write_pkt(pcie, headers,
+					    value, !((where & ~DWORD_MASK) & 0x7));
 
-	ret = pcie->pcie_data->ops->tlp_read_pkt(pcie, NULL);
-	if (ret != PCIBIOS_SUCCESSFUL)
-		return ret;
-
-	/*
-	 * Monitor changes to PCI_PRIMARY_BUS register on root port
-	 * and update local copy of root bus number accordingly.
-	 */
-	if ((bus == pcie->root_bus_nr) && (where == PCI_PRIMARY_BUS))
-		pcie->root_bus_nr = (u8)(value);
-
-	return PCIBIOS_SUCCESSFUL;
+	return pcie->pcie_data->ops->tlp_read_pkt(pcie, NULL);
 }
 
-static int s10_rp_read_cfg(struct altera_pcie *pcie, int where,
-			   int size, u32 *value)
+static void __iomem *s10_map_bus(struct pci_bus *bus, unsigned int devfn,
+				 int where)
 {
-	void __iomem *addr = S10_RP_CFG_ADDR(pcie, where);
+	struct altera_pcie *pcie = bus->sysdata;
 
-	switch (size) {
-	case 1:
-		*value = readb(addr);
-		break;
-	case 2:
-		*value = readw(addr);
-		break;
-	default:
-		*value = readl(addr);
-		break;
-	}
+	if (altera_pcie_hide_rc_bar(bus, devfn, where))
+		return NULL;
 
-	return PCIBIOS_SUCCESSFUL;
-}
-
-static int s10_rp_write_cfg(struct altera_pcie *pcie, u8 busno,
-			    int where, int size, u32 value)
-{
-	void __iomem *addr = S10_RP_CFG_ADDR(pcie, where);
-
-	switch (size) {
-	case 1:
-		writeb(value, addr);
-		break;
-	case 2:
-		writew(value, addr);
-		break;
-	default:
-		writel(value, addr);
-		break;
-	}
-
-	/*
-	 * Monitor changes to PCI_PRIMARY_BUS register on root port
-	 * and update local copy of root bus number accordingly.
-	 */
-	if (busno == pcie->root_bus_nr && where == PCI_PRIMARY_BUS)
-		pcie->root_bus_nr = value & 0xff;
-
-	return PCIBIOS_SUCCESSFUL;
-}
-
-static int _altera_pcie_cfg_read(struct altera_pcie *pcie, u8 busno,
-				 unsigned int devfn, int where, int size,
-				 u32 *value)
-{
-	int ret;
-	u32 data;
-	u8 byte_en;
-
-	if (busno == pcie->root_bus_nr && pcie->pcie_data->ops->rp_read_cfg)
-		return pcie->pcie_data->ops->rp_read_cfg(pcie, where,
-							 size, value);
-
-	switch (size) {
-	case 1:
-		byte_en = 1 << (where & 3);
-		break;
-	case 2:
-		byte_en = 3 << (where & 3);
-		break;
-	default:
-		byte_en = 0xf;
-		break;
-	}
-
-	ret = tlp_cfg_dword_read(pcie, busno, devfn,
-				 (where & ~DWORD_MASK), byte_en, &data);
-	if (ret != PCIBIOS_SUCCESSFUL)
-		return ret;
-
-	*value = pci_config_read_shift(data, where, size);
-
-	return PCIBIOS_SUCCESSFUL;
-}
-
-static int _altera_pcie_cfg_write(struct altera_pcie *pcie, u8 busno,
-				  unsigned int devfn, int where, int size,
-				  u32 value)
-{
-	u32 data32;
-	u32 shift = 8 * (where & 3);
-	u8 byte_en;
-
-	if (busno == pcie->root_bus_nr && pcie->pcie_data->ops->rp_write_cfg)
-		return pcie->pcie_data->ops->rp_write_cfg(pcie, busno,
-						     where, size, value);
-
-	switch (size) {
-	case 1:
-		data32 = (value & 0xff) << shift;
-		byte_en = 1 << (where & 3);
-		break;
-	case 2:
-		data32 = (value & 0xffff) << shift;
-		byte_en = 3 << (where & 3);
-		break;
-	default:
-		data32 = value;
-		byte_en = 0xf;
-		break;
-	}
-
-	return tlp_cfg_dword_write(pcie, busno, devfn, (where & ~DWORD_MASK),
-				   byte_en, data32);
+	return S10_RP_CFG_ADDR(pcie, where);
 }
 
 static int altera_pcie_cfg_read(struct pci_bus *bus, unsigned int devfn,
@@ -505,8 +390,7 @@ static int altera_pcie_cfg_read(struct pci_bus *bus, unsigned int devfn,
 		return PCIBIOS_DEVICE_NOT_FOUND;
 	}
 
-	return _altera_pcie_cfg_read(pcie, bus->number, devfn, where, size,
-				     value);
+	return tlp_cfg_dword_read(bus, devfn, where, size, value);
 }
 
 static int altera_pcie_cfg_write(struct pci_bus *bus, unsigned int devfn,
@@ -520,8 +404,7 @@ static int altera_pcie_cfg_write(struct pci_bus *bus, unsigned int devfn,
 	if (!altera_pcie_valid_device(pcie, bus, PCI_SLOT(devfn)))
 		return PCIBIOS_DEVICE_NOT_FOUND;
 
-	return _altera_pcie_cfg_write(pcie, bus->number, devfn, where, size,
-				     value);
+	return tlp_cfg_dword_write(bus, devfn, where, size, value);
 }
 
 static void altera_wait_link_retrain(struct pci_bus *bus)
@@ -588,8 +471,20 @@ static int altera_pcie_add_bus(struct pci_bus *bus)
 	return 0;
 }
 
-static struct pci_ops altera_pcie_ops = {
+static struct pci_ops altera_pcie_1_0_bus_ops = {
 	.add_bus = altera_pcie_add_bus,
+	.read = altera_pcie_cfg_read,
+	.write = altera_pcie_cfg_write,
+};
+
+static struct pci_ops altera_pcie_2_0_bus_ops = {
+	.add_bus = altera_pcie_add_bus,
+	.map_bus = s10_map_bus,
+	.read = pci_generic_config_read,
+	.write = pci_generic_config_write,
+};
+
+static struct pci_ops altera_pcie_2_0_child_ops = {
 	.read = altera_pcie_cfg_read,
 	.write = altera_pcie_cfg_write,
 };
@@ -694,12 +589,11 @@ static const struct altera_pcie_ops altera_pcie_ops_2_0 = {
 	.tlp_read_pkt = s10_tlp_read_packet,
 	.tlp_write_pkt = s10_tlp_write_packet,
 	.get_link_status = s10_altera_pcie_link_up,
-	.rp_read_cfg = s10_rp_read_cfg,
-	.rp_write_cfg = s10_rp_write_cfg,
 };
 
 static const struct altera_pcie_data altera_pcie_1_0_data = {
 	.ops = &altera_pcie_ops_1_0,
+	.bus_ops = &altera_pcie_1_0_bus_ops,
 	.cap_offset = 0x80,
 	.version = ALTERA_PCIE_V1,
 	.cfgrd0 = TLP_FMTTYPE_CFGRD0,
@@ -710,6 +604,8 @@ static const struct altera_pcie_data altera_pcie_1_0_data = {
 
 static const struct altera_pcie_data altera_pcie_2_0_data = {
 	.ops = &altera_pcie_ops_2_0,
+	.bus_ops = &altera_pcie_2_0_bus_ops,
+	.child_ops = &altera_pcie_2_0_child_ops,
 	.version = ALTERA_PCIE_V2,
 	.cap_offset = 0x70,
 	.cfgrd0 = S10_TLP_FMTTYPE_CFGRD0,
@@ -766,8 +662,9 @@ static int altera_pcie_probe(struct platform_device *pdev)
 	cra_writel(pcie, P2A_INT_ENA_ALL, P2A_INT_ENABLE);
 
 	bridge->sysdata = pcie;
-	bridge->busnr = pcie->root_bus_nr;
-	bridge->ops = &altera_pcie_ops;
+	bridge->ops = pcie->pcie_data->bus_ops;
+	bridge->child_ops = pcie->pcie_data->child_ops;
+	bridge->single_root_dev = 1;
 
 	return pci_host_probe(bridge);
 }
