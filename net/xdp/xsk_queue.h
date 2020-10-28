@@ -15,6 +15,10 @@
 
 struct xdp_ring {
 	u32 producer ____cacheline_aligned_in_smp;
+	/* Hinder the adjacent cache prefetcher to prefetch the consumer
+	 * pointer if the producer pointer is touched and vice versa.
+	 */
+	u32 pad ____cacheline_aligned_in_smp;
 	u32 consumer ____cacheline_aligned_in_smp;
 	u32 flags;
 };
@@ -96,7 +100,7 @@ struct xsk_queue {
  * seen and read by the consumer.
  *
  * The consumer peeks into the ring to see if the producer has written
- * any new entries. If so, the producer can then read these entries
+ * any new entries. If so, the consumer can then read these entries
  * and when it is done reading them release them back to the producer
  * so that the producer can use these slots to fill in new entries.
  *

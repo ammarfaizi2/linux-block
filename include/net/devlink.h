@@ -20,6 +20,14 @@
 #include <uapi/linux/devlink.h>
 #include <linux/xarray.h>
 
+#define DEVLINK_RELOAD_STATS_ARRAY_SIZE \
+	(__DEVLINK_RELOAD_LIMIT_MAX * __DEVLINK_RELOAD_ACTION_MAX)
+
+struct devlink_dev_stats {
+	u32 reload_stats[DEVLINK_RELOAD_STATS_ARRAY_SIZE];
+	u32 remote_reload_stats[DEVLINK_RELOAD_STATS_ARRAY_SIZE];
+};
+
 struct devlink_ops;
 
 struct devlink {
@@ -38,6 +46,7 @@ struct devlink {
 	struct list_head trap_policer_list;
 	const struct devlink_ops *ops;
 	struct xarray snapshot_ids;
+	struct devlink_dev_stats stats;
 	struct device *dev;
 	possible_net_t _net;
 	struct mutex lock; /* Serializes access to devlink instance specific objects such as
@@ -110,6 +119,7 @@ struct devlink_port_attrs {
 struct devlink_port {
 	struct list_head list;
 	struct list_head param_list;
+	struct list_head region_list;
 	struct devlink *devlink;
 	unsigned int index;
 	bool registered;
@@ -459,6 +469,7 @@ enum devlink_param_generic_id {
 	DEVLINK_PARAM_GENERIC_ID_FW_LOAD_POLICY,
 	DEVLINK_PARAM_GENERIC_ID_RESET_DEV_ON_DRV_PROBE,
 	DEVLINK_PARAM_GENERIC_ID_ENABLE_ROCE,
+	DEVLINK_PARAM_GENERIC_ID_ENABLE_REMOTE_DEV_RESET,
 
 	/* add new param generic ids above here*/
 	__DEVLINK_PARAM_GENERIC_ID_MAX,
@@ -495,6 +506,9 @@ enum devlink_param_generic_id {
 
 #define DEVLINK_PARAM_GENERIC_ENABLE_ROCE_NAME "enable_roce"
 #define DEVLINK_PARAM_GENERIC_ENABLE_ROCE_TYPE DEVLINK_PARAM_TYPE_BOOL
+
+#define DEVLINK_PARAM_GENERIC_ENABLE_REMOTE_DEV_RESET_NAME "enable_remote_dev_reset"
+#define DEVLINK_PARAM_GENERIC_ENABLE_REMOTE_DEV_RESET_TYPE DEVLINK_PARAM_TYPE_BOOL
 
 #define DEVLINK_PARAM_GENERIC(_id, _cmodes, _get, _set, _validate)	\
 {									\
@@ -591,6 +605,26 @@ struct devlink_region_ops {
 	void *priv;
 };
 
+/**
+ * struct devlink_port_region_ops - Region operations for a port
+ * @name: region name
+ * @destructor: callback used to free snapshot memory when deleting
+ * @snapshot: callback to request an immediate snapshot. On success,
+ *            the data variable must be updated to point to the snapshot data.
+ *            The function will be called while the devlink instance lock is
+ *            held.
+ * @priv: Pointer to driver private data for the region operation
+ */
+struct devlink_port_region_ops {
+	const char *name;
+	void (*destructor)(const void *data);
+	int (*snapshot)(struct devlink_port *port,
+			const struct devlink_port_region_ops *ops,
+			struct netlink_ext_ack *extack,
+			u8 **data);
+	void *priv;
+};
+
 struct devlink_fmsg;
 struct devlink_health_reporter;
 
@@ -622,6 +656,22 @@ struct devlink_health_reporter_ops {
 			struct netlink_ext_ack *extack);
 	int (*test)(struct devlink_health_reporter *reporter,
 		    struct netlink_ext_ack *extack);
+};
+
+/**
+ * struct devlink_trap_metadata - Packet trap metadata.
+ * @trap_name: Trap name.
+ * @trap_group_name: Trap group name.
+ * @input_dev: Input netdevice.
+ * @fa_cookie: Flow action user cookie.
+ * @trap_type: Trap type.
+ */
+struct devlink_trap_metadata {
+	const char *trap_name;
+	const char *trap_group_name;
+	struct net_device *input_dev;
+	const struct flow_action_cookie *fa_cookie;
+	enum devlink_trap_type trap_type;
 };
 
 /**
@@ -768,6 +818,22 @@ enum devlink_trap_generic_id {
 	DEVLINK_TRAP_GENERIC_ID_FLOW_ACTION_SAMPLE,
 	DEVLINK_TRAP_GENERIC_ID_FLOW_ACTION_TRAP,
 	DEVLINK_TRAP_GENERIC_ID_EARLY_DROP,
+	DEVLINK_TRAP_GENERIC_ID_VXLAN_PARSING,
+	DEVLINK_TRAP_GENERIC_ID_LLC_SNAP_PARSING,
+	DEVLINK_TRAP_GENERIC_ID_VLAN_PARSING,
+	DEVLINK_TRAP_GENERIC_ID_PPPOE_PPP_PARSING,
+	DEVLINK_TRAP_GENERIC_ID_MPLS_PARSING,
+	DEVLINK_TRAP_GENERIC_ID_ARP_PARSING,
+	DEVLINK_TRAP_GENERIC_ID_IP_1_PARSING,
+	DEVLINK_TRAP_GENERIC_ID_IP_N_PARSING,
+	DEVLINK_TRAP_GENERIC_ID_GRE_PARSING,
+	DEVLINK_TRAP_GENERIC_ID_UDP_PARSING,
+	DEVLINK_TRAP_GENERIC_ID_TCP_PARSING,
+	DEVLINK_TRAP_GENERIC_ID_IPSEC_PARSING,
+	DEVLINK_TRAP_GENERIC_ID_SCTP_PARSING,
+	DEVLINK_TRAP_GENERIC_ID_DCCP_PARSING,
+	DEVLINK_TRAP_GENERIC_ID_GTP_PARSING,
+	DEVLINK_TRAP_GENERIC_ID_ESP_PARSING,
 
 	/* Add new generic trap IDs above */
 	__DEVLINK_TRAP_GENERIC_ID_MAX,
@@ -803,6 +869,7 @@ enum devlink_trap_group_generic_id {
 	DEVLINK_TRAP_GROUP_GENERIC_ID_PTP_GENERAL,
 	DEVLINK_TRAP_GROUP_GENERIC_ID_ACL_SAMPLE,
 	DEVLINK_TRAP_GROUP_GENERIC_ID_ACL_TRAP,
+	DEVLINK_TRAP_GROUP_GENERIC_ID_PARSER_ERROR_DROPS,
 
 	/* Add new generic trap group IDs above */
 	__DEVLINK_TRAP_GROUP_GENERIC_ID_MAX,
@@ -958,6 +1025,39 @@ enum devlink_trap_group_generic_id {
 	"flow_action_trap"
 #define DEVLINK_TRAP_GENERIC_NAME_EARLY_DROP \
 	"early_drop"
+#define DEVLINK_TRAP_GENERIC_NAME_VXLAN_PARSING \
+	"vxlan_parsing"
+#define DEVLINK_TRAP_GENERIC_NAME_LLC_SNAP_PARSING \
+	"llc_snap_parsing"
+#define DEVLINK_TRAP_GENERIC_NAME_VLAN_PARSING \
+	"vlan_parsing"
+#define DEVLINK_TRAP_GENERIC_NAME_PPPOE_PPP_PARSING \
+	"pppoe_ppp_parsing"
+#define DEVLINK_TRAP_GENERIC_NAME_MPLS_PARSING \
+	"mpls_parsing"
+#define DEVLINK_TRAP_GENERIC_NAME_ARP_PARSING \
+	"arp_parsing"
+#define DEVLINK_TRAP_GENERIC_NAME_IP_1_PARSING \
+	"ip_1_parsing"
+#define DEVLINK_TRAP_GENERIC_NAME_IP_N_PARSING \
+	"ip_n_parsing"
+#define DEVLINK_TRAP_GENERIC_NAME_GRE_PARSING \
+	"gre_parsing"
+#define DEVLINK_TRAP_GENERIC_NAME_UDP_PARSING \
+	"udp_parsing"
+#define DEVLINK_TRAP_GENERIC_NAME_TCP_PARSING \
+	"tcp_parsing"
+#define DEVLINK_TRAP_GENERIC_NAME_IPSEC_PARSING \
+	"ipsec_parsing"
+#define DEVLINK_TRAP_GENERIC_NAME_SCTP_PARSING \
+	"sctp_parsing"
+#define DEVLINK_TRAP_GENERIC_NAME_DCCP_PARSING \
+	"dccp_parsing"
+#define DEVLINK_TRAP_GENERIC_NAME_GTP_PARSING \
+	"gtp_parsing"
+#define DEVLINK_TRAP_GENERIC_NAME_ESP_PARSING \
+	"esp_parsing"
+
 
 #define DEVLINK_TRAP_GROUP_GENERIC_NAME_L2_DROPS \
 	"l2_drops"
@@ -1009,6 +1109,8 @@ enum devlink_trap_group_generic_id {
 	"acl_sample"
 #define DEVLINK_TRAP_GROUP_GENERIC_NAME_ACL_TRAP \
 	"acl_trap"
+#define DEVLINK_TRAP_GROUP_GENERIC_NAME_PARSER_ERROR_DROPS \
+	"parser_error_drops"
 
 #define DEVLINK_TRAP_GENERIC(_type, _init_action, _id, _group_id,	      \
 			     _metadata_cap)				      \
@@ -1061,9 +1163,14 @@ struct devlink_ops {
 	 * implemementation.
 	 */
 	u32 supported_flash_update_params;
+	unsigned long reload_actions;
+	unsigned long reload_limits;
 	int (*reload_down)(struct devlink *devlink, bool netns_change,
+			   enum devlink_reload_action action,
+			   enum devlink_reload_limit limit,
 			   struct netlink_ext_ack *extack);
-	int (*reload_up)(struct devlink *devlink,
+	int (*reload_up)(struct devlink *devlink, enum devlink_reload_action action,
+			 enum devlink_reload_limit limit, u32 *actions_performed,
 			 struct netlink_ext_ack *extack);
 	int (*port_type_set)(struct devlink_port *devlink_port,
 			     enum devlink_port_type port_type);
@@ -1174,6 +1281,16 @@ struct devlink_ops {
 			      const struct devlink_trap_group *group,
 			      const struct devlink_trap_policer *policer,
 			      struct netlink_ext_ack *extack);
+	/**
+	 * @trap_group_action_set: Trap group action set function.
+	 *
+	 * If this callback is populated, it will take precedence over looping
+	 * over all traps in a group and calling .trap_action_set().
+	 */
+	int (*trap_group_action_set)(struct devlink *devlink,
+				     const struct devlink_trap_group *group,
+				     enum devlink_trap_action action,
+				     struct netlink_ext_ack *extack);
 	/**
 	 * @trap_policer_init: Trap policer initialization function.
 	 *
@@ -1367,7 +1484,13 @@ struct devlink_region *
 devlink_region_create(struct devlink *devlink,
 		      const struct devlink_region_ops *ops,
 		      u32 region_max_snapshots, u64 region_size);
+struct devlink_region *
+devlink_port_region_create(struct devlink_port *port,
+			   const struct devlink_port_region_ops *ops,
+			   u32 region_max_snapshots, u64 region_size);
 void devlink_region_destroy(struct devlink_region *region);
+void devlink_port_region_destroy(struct devlink_region *region);
+
 int devlink_region_snapshot_id_get(struct devlink *devlink, u32 *id);
 void devlink_region_snapshot_id_put(struct devlink *devlink, u32 id);
 int devlink_region_snapshot_create(struct devlink_region *region,
@@ -1449,6 +1572,9 @@ void
 devlink_health_reporter_recovery_done(struct devlink_health_reporter *reporter);
 
 bool devlink_is_reload_failed(const struct devlink *devlink);
+void devlink_remote_reload_actions_performed(struct devlink *devlink,
+					     enum devlink_reload_limit limit,
+					     u32 actions_performed);
 
 void devlink_flash_update_begin_notify(struct devlink *devlink);
 void devlink_flash_update_end_notify(struct devlink *devlink);

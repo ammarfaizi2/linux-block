@@ -215,6 +215,7 @@ struct dsa_port {
 	u8			stp_state;
 	struct net_device	*bridge_dev;
 	struct devlink_port	devlink_port;
+	bool			devlink_port_setup;
 	struct phylink		*pl;
 	struct phylink_config	pl_config;
 
@@ -307,6 +308,14 @@ struct dsa_switch {
 	 * would break things or not.
 	 */
 	bool			configure_vlan_while_not_filtering;
+
+	/* If the switch driver always programs the CPU port as egress tagged
+	 * despite the VLAN configuration indicating otherwise, then setting
+	 * @untag_bridge_pvid will force the DSA receive path to pop the bridge's
+	 * default_pvid VLAN tagged frames to offer a consistent behavior
+	 * between a vlan_filtering=0 and vlan_filtering=1 bridge device.
+	 */
+	bool			untag_bridge_pvid;
 
 	/* In case vlan_filtering_is_global is set, the VLAN awareness state
 	 * should be retrieved from here and not from the per-port settings.
@@ -543,7 +552,8 @@ struct dsa_switch_ops {
 	 * VLAN support
 	 */
 	int	(*port_vlan_filtering)(struct dsa_switch *ds, int port,
-				       bool vlan_filtering);
+				       bool vlan_filtering,
+				       struct switchdev_trans *trans);
 	int (*port_vlan_prepare)(struct dsa_switch *ds, int port,
 				 const struct switchdev_obj_port_vlan *vlan);
 	void (*port_vlan_add)(struct dsa_switch *ds, int port,
@@ -672,6 +682,11 @@ struct devlink_region *
 dsa_devlink_region_create(struct dsa_switch *ds,
 			  const struct devlink_region_ops *ops,
 			  u32 region_max_snapshots, u64 region_size);
+struct devlink_region *
+dsa_devlink_port_region_create(struct dsa_switch *ds,
+			       int port,
+			       const struct devlink_port_region_ops *ops,
+			       u32 region_max_snapshots, u64 region_size);
 void dsa_devlink_region_destroy(struct devlink_region *region);
 
 struct dsa_port *dsa_port_from_netdev(struct net_device *netdev);
@@ -685,6 +700,20 @@ static inline struct dsa_switch *dsa_devlink_to_ds(struct devlink *dl)
 	struct dsa_devlink_priv *dl_priv = devlink_priv(dl);
 
 	return dl_priv->ds;
+}
+
+static inline
+struct dsa_switch *dsa_devlink_port_to_ds(struct devlink_port *port)
+{
+	struct devlink *dl = port->devlink;
+	struct dsa_devlink_priv *dl_priv = devlink_priv(dl);
+
+	return dl_priv->ds;
+}
+
+static inline int dsa_devlink_port_to_port(struct devlink_port *port)
+{
+	return port->index;
 }
 
 struct dsa_switch_driver {

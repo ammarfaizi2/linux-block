@@ -5,6 +5,7 @@
  * Copyright (c) 2017 Microsemi Corporation
  */
 #include <linux/if_bridge.h>
+#include <soc/mscc/ocelot_vcap.h>
 #include "ocelot.h"
 #include "ocelot_vcap.h"
 
@@ -107,6 +108,13 @@ static void ocelot_vcap_enable(struct ocelot *ocelot, int port)
 	ocelot_write_gix(ocelot, ANA_PORT_VCAP_S2_CFG_S2_ENA |
 			 ANA_PORT_VCAP_S2_CFG_S2_IP6_CFG(0xa),
 			 ANA_PORT_VCAP_S2_CFG, port);
+
+	ocelot_write_gix(ocelot, ANA_PORT_VCAP_CFG_S1_ENA,
+			 ANA_PORT_VCAP_CFG, port);
+
+	ocelot_rmw_gix(ocelot, REW_PORT_CFG_ES0_EN,
+		       REW_PORT_CFG_ES0_EN,
+		       REW_PORT_CFG, port);
 }
 
 static inline u32 ocelot_vlant_read_vlanaccess(struct ocelot *ocelot)
@@ -191,11 +199,27 @@ static int ocelot_port_set_native_vlan(struct ocelot *ocelot, int port,
 	return 0;
 }
 
-void ocelot_port_vlan_filtering(struct ocelot *ocelot, int port,
-				bool vlan_aware)
+int ocelot_port_vlan_filtering(struct ocelot *ocelot, int port,
+			       bool vlan_aware, struct switchdev_trans *trans)
 {
 	struct ocelot_port *ocelot_port = ocelot->ports[port];
 	u32 val;
+
+	if (switchdev_trans_ph_prepare(trans)) {
+		struct ocelot_vcap_block *block = &ocelot->block[VCAP_IS1];
+		struct ocelot_vcap_filter *filter;
+
+		list_for_each_entry(filter, &block->rules, list) {
+			if (filter->ingress_port_mask & BIT(port) &&
+			    filter->action.vid_replace_ena) {
+				dev_err(ocelot->dev,
+					"Cannot change VLAN state with vlan modify rules active\n");
+				return -EBUSY;
+			}
+		}
+
+		return 0;
+	}
 
 	ocelot_port->vlan_aware = vlan_aware;
 
@@ -210,6 +234,8 @@ void ocelot_port_vlan_filtering(struct ocelot *ocelot, int port,
 		       ANA_PORT_VLAN_CFG, port);
 
 	ocelot_port_set_native_vlan(ocelot, port, ocelot_port->vid);
+
+	return 0;
 }
 EXPORT_SYMBOL(ocelot_port_vlan_filtering);
 
@@ -1094,12 +1120,24 @@ EXPORT_SYMBOL(ocelot_port_bridge_join);
 int ocelot_port_bridge_leave(struct ocelot *ocelot, int port,
 			     struct net_device *bridge)
 {
+	struct switchdev_trans trans;
+	int ret;
+
 	ocelot->bridge_mask &= ~BIT(port);
 
 	if (!ocelot->bridge_mask)
 		ocelot->hw_bridge_dev = NULL;
 
-	ocelot_port_vlan_filtering(ocelot, port, 0);
+	trans.ph_prepare = true;
+	ret = ocelot_port_vlan_filtering(ocelot, port, false, &trans);
+	if (ret)
+		return ret;
+
+	trans.ph_prepare = false;
+	ret = ocelot_port_vlan_filtering(ocelot, port, false, &trans);
+	if (ret)
+		return ret;
+
 	ocelot_port_set_pvid(ocelot, port, 0);
 	return ocelot_port_set_native_vlan(ocelot, port, 0);
 }
@@ -1245,7 +1283,7 @@ void ocelot_port_set_maxlen(struct ocelot *ocelot, int port, size_t sdu)
 	struct ocelot_port *ocelot_port = ocelot->ports[port];
 	int maxlen = sdu + ETH_HLEN + ETH_FCS_LEN;
 	int pause_start, pause_stop;
-	int atop_wm;
+	int atop, atop_tot;
 
 	if (port == ocelot->npi) {
 		maxlen += OCELOT_TAG_LEN;
@@ -1266,12 +1304,12 @@ void ocelot_port_set_maxlen(struct ocelot *ocelot, int port, size_t sdu)
 	ocelot_fields_write(ocelot, port, SYS_PAUSE_CFG_PAUSE_STOP,
 			    pause_stop);
 
-	/* Tail dropping watermark */
-	atop_wm = (ocelot->shared_queue_sz - 9 * maxlen) /
+	/* Tail dropping watermarks */
+	atop_tot = (ocelot->shared_queue_sz - 9 * maxlen) /
 		   OCELOT_BUFFER_CELL_SZ;
-	ocelot_write_rix(ocelot, ocelot->ops->wm_enc(9 * maxlen),
-			 SYS_ATOP, port);
-	ocelot_write(ocelot, ocelot->ops->wm_enc(atop_wm), SYS_ATOP_TOT_CFG);
+	atop = (9 * maxlen) / OCELOT_BUFFER_CELL_SZ;
+	ocelot_write_rix(ocelot, ocelot->ops->wm_enc(atop), SYS_ATOP, port);
+	ocelot_write(ocelot, ocelot->ops->wm_enc(atop_tot), SYS_ATOP_TOT_CFG);
 }
 EXPORT_SYMBOL(ocelot_port_set_maxlen);
 

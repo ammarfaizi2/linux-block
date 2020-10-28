@@ -225,6 +225,15 @@ static int dsa_switch_rcv(struct sk_buff *skb, struct net_device *dev,
 	skb->pkt_type = PACKET_HOST;
 	skb->protocol = eth_type_trans(skb, skb->dev);
 
+	if (unlikely(cpu_dp->ds->untag_bridge_pvid)) {
+		nskb = dsa_untag_bridge_pvid(skb);
+		if (!nskb) {
+			kfree_skb(skb);
+			return 0;
+		}
+		skb = nskb;
+	}
+
 	s = this_cpu_ptr(p->stats64);
 	u64_stats_update_begin(&s->syncp);
 	s->rx_packets++;
@@ -413,6 +422,20 @@ dsa_devlink_region_create(struct dsa_switch *ds,
 				     region_size);
 }
 EXPORT_SYMBOL_GPL(dsa_devlink_region_create);
+
+struct devlink_region *
+dsa_devlink_port_region_create(struct dsa_switch *ds,
+			       int port,
+			       const struct devlink_port_region_ops *ops,
+			       u32 region_max_snapshots, u64 region_size)
+{
+	struct dsa_port *dp = dsa_to_port(ds, port);
+
+	return devlink_port_region_create(&dp->devlink_port, ops,
+					  region_max_snapshots,
+					  region_size);
+}
+EXPORT_SYMBOL_GPL(dsa_devlink_port_region_create);
 
 void dsa_devlink_region_destroy(struct devlink_region *region)
 {

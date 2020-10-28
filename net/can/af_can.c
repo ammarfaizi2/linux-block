@@ -338,7 +338,7 @@ static unsigned int effhash(canid_t can_id)
  * can_rcv_list_find - determine optimal filterlist inside device filter struct
  * @can_id: pointer to CAN identifier of a given can_filter
  * @mask: pointer to CAN mask of a given can_filter
- * @d: pointer to the device filter struct
+ * @dev_rcv_lists: pointer to the device filter struct
  *
  * Description:
  *  Returns the optimal filterlist to reduce the filter handling in the
@@ -875,7 +875,7 @@ static __init int can_init(void)
 		     offsetof(struct can_frame, data) !=
 		     offsetof(struct canfd_frame, data));
 
-	pr_info("can: controller area network core (" CAN_VERSION_STRING ")\n");
+	pr_info("can: controller area network core\n");
 
 	rcv_cache = kmem_cache_create("can_receiver", sizeof(struct receiver),
 				      0, 0, NULL);

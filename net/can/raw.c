@@ -55,8 +55,6 @@
 #include <net/sock.h>
 #include <net/net_namespace.h>
 
-#define CAN_RAW_VERSION CAN_VERSION
-
 MODULE_DESCRIPTION("PF_CAN raw protocol");
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_AUTHOR("Urs Thuermann <urs.thuermann@volkswagen.de>");
@@ -804,6 +802,10 @@ static int raw_recvmsg(struct socket *sock, struct msghdr *msg, size_t size,
 	noblock = flags & MSG_DONTWAIT;
 	flags &= ~MSG_DONTWAIT;
 
+	if (flags & MSG_ERRQUEUE)
+		return sock_recv_errqueue(sk, msg, size,
+					  SOL_CAN_RAW, SCM_CAN_RAW_ERRQUEUE);
+
 	skb = skb_recv_datagram(sk, flags, noblock, &err);
 	if (!skb)
 		return err;
@@ -881,7 +883,7 @@ static __init int raw_module_init(void)
 {
 	int err;
 
-	pr_info("can: raw protocol (rev " CAN_RAW_VERSION ")\n");
+	pr_info("can: raw protocol\n");
 
 	err = can_proto_register(&raw_can_proto);
 	if (err < 0)

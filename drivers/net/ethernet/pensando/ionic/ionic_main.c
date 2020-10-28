@@ -64,6 +64,8 @@ static const char *ionic_error_to_str(enum ionic_status_code code)
 		return "IONIC_RC_ERROR";
 	case IONIC_RC_ERDMA:
 		return "IONIC_RC_ERDMA";
+	case IONIC_RC_EBAD_FW:
+		return "IONIC_RC_EBAD_FW";
 	default:
 		return "IONIC_RC_UNKNOWN";
 	}
@@ -255,8 +257,6 @@ static int ionic_adminq_post(struct ionic_lif *lif, struct ionic_admin_ctx *ctx)
 	struct ionic_queue *q;
 	int err = 0;
 
-	WARN_ON(in_interrupt());
-
 	if (!lif->adminqcq)
 		return -EIO;
 
@@ -327,8 +327,6 @@ int ionic_dev_cmd_wait(struct ionic *ionic, unsigned long max_seconds)
 	int hb = 0;
 	int done;
 	int err;
-
-	WARN_ON(in_interrupt());
 
 	/* Wait for dev cmd to complete, retrying if we get EAGAIN,
 	 * but don't wait any longer than max_seconds.
@@ -433,17 +431,23 @@ int ionic_identify(struct ionic *ionic)
 		sz = min(sizeof(ident->dev), sizeof(idev->dev_cmd_regs->data));
 		memcpy_fromio(&ident->dev, &idev->dev_cmd_regs->data, sz);
 	}
-
 	mutex_unlock(&ionic->dev_cmd_lock);
 
-	if (err)
-		goto err_out_unmap;
+	if (err) {
+		dev_err(ionic->dev, "Cannot identify ionic: %dn", err);
+		goto err_out;
+	}
 
-	ionic_debugfs_add_ident(ionic);
+	err = ionic_lif_identify(ionic, IONIC_LIF_TYPE_CLASSIC,
+				 &ionic->ident.lif);
+	if (err) {
+		dev_err(ionic->dev, "Cannot identify LIFs: %d\n", err);
+		goto err_out;
+	}
 
 	return 0;
 
-err_out_unmap:
+err_out:
 	return err;
 }
 

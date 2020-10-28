@@ -656,6 +656,37 @@ static const struct net_device_ops ocelot_port_netdev_ops = {
 	.ndo_do_ioctl			= ocelot_ioctl,
 };
 
+struct net_device *ocelot_port_to_netdev(struct ocelot *ocelot, int port)
+{
+	struct ocelot_port *ocelot_port = ocelot->ports[port];
+	struct ocelot_port_private *priv;
+
+	if (!ocelot_port)
+		return NULL;
+
+	priv = container_of(ocelot_port, struct ocelot_port_private, port);
+
+	return priv->dev;
+}
+
+/* Checks if the net_device instance given to us originates from our driver */
+static bool ocelot_netdevice_dev_check(const struct net_device *dev)
+{
+	return dev->netdev_ops == &ocelot_port_netdev_ops;
+}
+
+int ocelot_netdev_to_port(struct net_device *dev)
+{
+	struct ocelot_port_private *priv;
+
+	if (!dev || !ocelot_netdevice_dev_check(dev))
+		return -EINVAL;
+
+	priv = netdev_priv(dev);
+
+	return priv->chip_port;
+}
+
 static void ocelot_port_get_strings(struct net_device *netdev, u32 sset,
 				    u8 *data)
 {
@@ -760,7 +791,7 @@ static int ocelot_port_attr_set(struct net_device *dev,
 		break;
 	case SWITCHDEV_ATTR_ID_BRIDGE_VLAN_FILTERING:
 		ocelot_port_vlan_filtering(ocelot, port,
-					   attr->u.vlan_filtering);
+					   attr->u.vlan_filtering, trans);
 		break;
 	case SWITCHDEV_ATTR_ID_BRIDGE_MC_DISABLED:
 		ocelot_port_attr_mc_set(ocelot, port, !attr->u.mc_disabled);
@@ -875,12 +906,6 @@ static int ocelot_port_obj_del(struct net_device *dev,
 	}
 
 	return ret;
-}
-
-/* Checks if the net_device instance given to us originate from our driver. */
-static bool ocelot_netdevice_dev_check(const struct net_device *dev)
-{
-	return dev->netdev_ops == &ocelot_port_netdev_ops;
 }
 
 static int ocelot_netdevice_port_event(struct net_device *dev,

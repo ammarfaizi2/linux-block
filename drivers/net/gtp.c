@@ -182,8 +182,6 @@ static bool gtp_check_ms(struct sk_buff *skb, struct pdp_ctx *pctx,
 static int gtp_rx(struct pdp_ctx *pctx, struct sk_buff *skb,
 			unsigned int hdrlen, unsigned int role)
 {
-	struct pcpu_sw_netstats *stats;
-
 	if (!gtp_check_ms(skb, pctx, hdrlen, role)) {
 		netdev_dbg(pctx->dev, "No PDP ctx for this MS\n");
 		return 1;
@@ -204,11 +202,7 @@ static int gtp_rx(struct pdp_ctx *pctx, struct sk_buff *skb,
 
 	skb->dev = pctx->dev;
 
-	stats = this_cpu_ptr(pctx->dev->tstats);
-	u64_stats_update_begin(&stats->syncp);
-	stats->rx_packets++;
-	stats->rx_bytes += skb->len;
-	u64_stats_update_end(&stats->syncp);
+	dev_sw_netstats_rx_add(pctx->dev, skb->len);
 
 	netif_rx(skb);
 	return 0;
@@ -1339,7 +1333,7 @@ static const struct nla_policy gtp_genl_policy[GTPA_MAX + 1] = {
 	[GTPA_O_TEI]		= { .type = NLA_U32, },
 };
 
-static const struct genl_ops gtp_genl_ops[] = {
+static const struct genl_small_ops gtp_genl_ops[] = {
 	{
 		.cmd = GTP_CMD_NEWPDP,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
@@ -1369,8 +1363,8 @@ static struct genl_family gtp_genl_family __ro_after_init = {
 	.policy = gtp_genl_policy,
 	.netnsok	= true,
 	.module		= THIS_MODULE,
-	.ops		= gtp_genl_ops,
-	.n_ops		= ARRAY_SIZE(gtp_genl_ops),
+	.small_ops	= gtp_genl_ops,
+	.n_small_ops	= ARRAY_SIZE(gtp_genl_ops),
 	.mcgrps		= gtp_genl_mcgrps,
 	.n_mcgrps	= ARRAY_SIZE(gtp_genl_mcgrps),
 };

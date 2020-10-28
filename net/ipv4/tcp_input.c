@@ -948,21 +948,34 @@ struct tcp_sacktag_state {
 	struct rate_sample *rate;
 };
 
-/* Take a notice that peer is sending D-SACKs */
+/* Take a notice that peer is sending D-SACKs. Skip update of data delivery
+ * and spurious retransmission information if this DSACK is unlikely caused by
+ * sender's action:
+ * - DSACKed sequence range is larger than maximum receiver's window.
+ * - Total no. of DSACKed segments exceed the total no. of retransmitted segs.
+ */
 static u32 tcp_dsack_seen(struct tcp_sock *tp, u32 start_seq,
 			  u32 end_seq, struct tcp_sacktag_state *state)
 {
 	u32 seq_len, dup_segs = 1;
 
-	if (before(start_seq, end_seq)) {
-		seq_len = end_seq - start_seq;
-		if (seq_len > tp->mss_cache)
-			dup_segs = DIV_ROUND_UP(seq_len, tp->mss_cache);
-	}
+	if (!before(start_seq, end_seq))
+		return 0;
+
+	seq_len = end_seq - start_seq;
+	/* Dubious DSACK: DSACKed range greater than maximum advertised rwnd */
+	if (seq_len > tp->max_window)
+		return 0;
+	if (seq_len > tp->mss_cache)
+		dup_segs = DIV_ROUND_UP(seq_len, tp->mss_cache);
+
+	tp->dsack_dups += dup_segs;
+	/* Skip the DSACK if dup segs weren't retransmitted by sender */
+	if (tp->dsack_dups > tp->total_retrans)
+		return 0;
 
 	tp->rx_opt.sack_ok |= TCP_DSACK_SEEN;
 	tp->rack.dsack_seen = 1;
-	tp->dsack_dups += dup_segs;
 
 	state->flag |= FLAG_DSACKING_ACK;
 	/* A spurious retransmission is delivered */
@@ -1020,6 +1033,14 @@ static void tcp_verify_retransmit_hint(struct tcp_sock *tp, struct sk_buff *skb)
 		tp->retransmit_skb_hint = skb;
 }
 
+/* Sum the number of packets on the wire we have marked as lost, and
+ * notify the congestion control module that the given skb was marked lost.
+ */
+static void tcp_notify_skb_loss_event(struct tcp_sock *tp, const struct sk_buff *skb)
+{
+	tp->lost += tcp_skb_pcount(skb);
+}
+
 void tcp_mark_skb_lost(struct sock *sk, struct sk_buff *skb)
 {
 	__u8 sacked = TCP_SKB_CB(skb)->sacked;
@@ -1036,10 +1057,12 @@ void tcp_mark_skb_lost(struct sock *sk, struct sk_buff *skb)
 			tp->retrans_out -= tcp_skb_pcount(skb);
 			NET_ADD_STATS(sock_net(sk), LINUX_MIB_TCPLOSTRETRANSMIT,
 				      tcp_skb_pcount(skb));
+			tcp_notify_skb_loss_event(tp, skb);
 		}
 	} else {
 		tp->lost_out += tcp_skb_pcount(skb);
 		TCP_SKB_CB(skb)->sacked |= TCPCB_LOST;
+		tcp_notify_skb_loss_event(tp, skb);
 	}
 }
 
@@ -1205,6 +1228,11 @@ static bool tcp_check_dsack(struct sock *sk, const struct sk_buff *ack_skb,
 	}
 
 	dup_segs = tcp_dsack_seen(tp, start_seq_0, end_seq_0, state);
+	if (!dup_segs) {	/* Skip dubious DSACK */
+		NET_INC_STATS(sock_net(sk), LINUX_MIB_TCPDSACKIGNOREDDUBIOUS);
+		return false;
+	}
+
 	NET_ADD_STATS(sock_net(sk), LINUX_MIB_TCPDSACKRECVSEGS, dup_segs);
 
 	/* D-SACK for already forgotten data... Do dumb counting. */
@@ -4402,7 +4430,8 @@ static void tcp_sack_maybe_coalesce(struct tcp_sock *tp)
 				sp[i] = sp[i + 1];
 			continue;
 		}
-		this_sack++, swalk++;
+		this_sack++;
+		swalk++;
 	}
 }
 
@@ -5798,6 +5827,8 @@ void tcp_rcv_established(struct sock *sk, struct sk_buff *skb)
 				tcp_data_snd_check(sk);
 				if (!inet_csk_ack_scheduled(sk))
 					goto no_ack;
+			} else {
+				tcp_update_wl(tp, TCP_SKB_CB(skb)->seq);
 			}
 
 			__tcp_ack_snd_check(sk, 0);

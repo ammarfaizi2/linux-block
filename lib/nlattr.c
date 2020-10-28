@@ -96,8 +96,8 @@ static int nla_validate_array(const struct nlattr *head, int len, int maxtype,
 			continue;
 
 		if (nla_len(entry) < NLA_HDRLEN) {
-			NL_SET_ERR_MSG_ATTR(extack, entry,
-					    "Array element too short");
+			NL_SET_ERR_MSG_ATTR_POL(extack, entry, policy,
+						"Array element too short");
 			return -ERANGE;
 		}
 
@@ -195,8 +195,8 @@ static int nla_validate_range_unsigned(const struct nla_policy *pt,
 		pr_warn_ratelimited("netlink: '%s': attribute type %d has an invalid length.\n",
 				    current->comm, pt->type);
 		if (validate & NL_VALIDATE_STRICT_ATTRS) {
-			NL_SET_ERR_MSG_ATTR(extack, nla,
-					    "invalid attribute length");
+			NL_SET_ERR_MSG_ATTR_POL(extack, nla, pt,
+						"invalid attribute length");
 			return -EINVAL;
 		}
 
@@ -208,11 +208,11 @@ static int nla_validate_range_unsigned(const struct nla_policy *pt,
 		bool binary = pt->type == NLA_BINARY;
 
 		if (binary)
-			NL_SET_ERR_MSG_ATTR(extack, nla,
-					    "binary attribute size out of range");
+			NL_SET_ERR_MSG_ATTR_POL(extack, nla, pt,
+						"binary attribute size out of range");
 		else
-			NL_SET_ERR_MSG_ATTR(extack, nla,
-					    "integer out of range");
+			NL_SET_ERR_MSG_ATTR_POL(extack, nla, pt,
+						"integer out of range");
 
 		return -ERANGE;
 	}
@@ -291,8 +291,8 @@ static int nla_validate_int_range_signed(const struct nla_policy *pt,
 	nla_get_range_signed(pt, &range);
 
 	if (value < range.min || value > range.max) {
-		NL_SET_ERR_MSG_ATTR(extack, nla,
-				    "integer out of range");
+		NL_SET_ERR_MSG_ATTR_POL(extack, nla, pt,
+					"integer out of range");
 		return -ERANGE;
 	}
 
@@ -323,6 +323,37 @@ static int nla_validate_int_range(const struct nla_policy *pt,
 	}
 }
 
+static int nla_validate_mask(const struct nla_policy *pt,
+			     const struct nlattr *nla,
+			     struct netlink_ext_ack *extack)
+{
+	u64 value;
+
+	switch (pt->type) {
+	case NLA_U8:
+		value = nla_get_u8(nla);
+		break;
+	case NLA_U16:
+		value = nla_get_u16(nla);
+		break;
+	case NLA_U32:
+		value = nla_get_u32(nla);
+		break;
+	case NLA_U64:
+		value = nla_get_u64(nla);
+		break;
+	default:
+		return -EINVAL;
+	}
+
+	if (value & ~(u64)pt->mask) {
+		NL_SET_ERR_MSG_ATTR(extack, nla, "reserved bit set");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
 static int validate_nla(const struct nlattr *nla, int maxtype,
 			const struct nla_policy *policy, unsigned int validate,
 			struct netlink_ext_ack *extack, unsigned int depth)
@@ -346,8 +377,8 @@ static int validate_nla(const struct nlattr *nla, int maxtype,
 		pr_warn_ratelimited("netlink: '%s': attribute type %d has an invalid length.\n",
 				    current->comm, type);
 		if (validate & NL_VALIDATE_STRICT_ATTRS) {
-			NL_SET_ERR_MSG_ATTR(extack, nla,
-					    "invalid attribute length");
+			NL_SET_ERR_MSG_ATTR_POL(extack, nla, pt,
+						"invalid attribute length");
 			return -EINVAL;
 		}
 	}
@@ -355,14 +386,14 @@ static int validate_nla(const struct nlattr *nla, int maxtype,
 	if (validate & NL_VALIDATE_NESTED) {
 		if ((pt->type == NLA_NESTED || pt->type == NLA_NESTED_ARRAY) &&
 		    !(nla->nla_type & NLA_F_NESTED)) {
-			NL_SET_ERR_MSG_ATTR(extack, nla,
-					    "NLA_F_NESTED is missing");
+			NL_SET_ERR_MSG_ATTR_POL(extack, nla, pt,
+						"NLA_F_NESTED is missing");
 			return -EINVAL;
 		}
 		if (pt->type != NLA_NESTED && pt->type != NLA_NESTED_ARRAY &&
 		    pt->type != NLA_UNSPEC && (nla->nla_type & NLA_F_NESTED)) {
-			NL_SET_ERR_MSG_ATTR(extack, nla,
-					    "NLA_F_NESTED not expected");
+			NL_SET_ERR_MSG_ATTR_POL(extack, nla, pt,
+						"NLA_F_NESTED not expected");
 			return -EINVAL;
 		}
 	}
@@ -503,6 +534,11 @@ static int validate_nla(const struct nlattr *nla, int maxtype,
 		if (err)
 			return err;
 		break;
+	case NLA_VALIDATE_MASK:
+		err = nla_validate_mask(pt, nla, extack);
+		if (err)
+			return err;
+		break;
 	case NLA_VALIDATE_FUNCTION:
 		if (pt->validate) {
 			err = pt->validate(nla, extack);
@@ -514,7 +550,8 @@ static int validate_nla(const struct nlattr *nla, int maxtype,
 
 	return 0;
 out_err:
-	NL_SET_ERR_MSG_ATTR(extack, nla, "Attribute failed policy validation");
+	NL_SET_ERR_MSG_ATTR_POL(extack, nla, pt,
+				"Attribute failed policy validation");
 	return err;
 }
 

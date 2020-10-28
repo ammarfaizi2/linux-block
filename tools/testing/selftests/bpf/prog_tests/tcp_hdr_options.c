@@ -15,7 +15,7 @@
 #include "test_tcp_hdr_options.skel.h"
 #include "test_misc_tcp_hdr_options.skel.h"
 
-#define LO_ADDR6 "::eB9F"
+#define LO_ADDR6 "::1"
 #define CG_NAME "/tcpbpf-hdr-opt-test"
 
 struct bpf_test_option exp_passive_estab_in;
@@ -40,27 +40,6 @@ struct sk_fds {
 	int active_lport;
 };
 
-static int add_lo_addr(void)
-{
-	char ip_addr_cmd[256];
-	int cmdlen;
-
-	cmdlen = snprintf(ip_addr_cmd, sizeof(ip_addr_cmd),
-			  "ip -6 addr add %s/128 dev lo scope host",
-			  LO_ADDR6);
-
-	if (CHECK(cmdlen >= sizeof(ip_addr_cmd), "compile ip cmd",
-		  "failed to add host addr %s to lo. ip cmdlen is too long\n",
-		  LO_ADDR6))
-		return -1;
-
-	if (CHECK(system(ip_addr_cmd), "run ip cmd",
-		  "failed to add host addr %s to lo\n", LO_ADDR6))
-		return -1;
-
-	return 0;
-}
-
 static int create_netns(void)
 {
 	if (CHECK(unshare(CLONE_NEWNET), "create netns",
@@ -70,9 +49,6 @@ static int create_netns(void)
 
 	if (CHECK(system("ip link set dev lo up"), "run ip cmd",
 		  "failed to bring lo link up\n"))
-		return -1;
-
-	if (add_lo_addr())
 		return -1;
 
 	return 0;
@@ -264,7 +240,17 @@ static int check_error_linum(const struct sk_fds *sk_fds)
 
 static void check_hdr_and_close_fds(struct sk_fds *sk_fds)
 {
+	const __u32 expected_inherit_cb_flags =
+		BPF_SOCK_OPS_PARSE_UNKNOWN_HDR_OPT_CB_FLAG |
+		BPF_SOCK_OPS_WRITE_HDR_OPT_CB_FLAG |
+		BPF_SOCK_OPS_STATE_CB_FLAG;
+
 	if (sk_fds_shutdown(sk_fds))
+		goto check_linum;
+
+	if (CHECK(expected_inherit_cb_flags != skel->bss->inherit_cb_flags,
+		  "Unexpected inherit_cb_flags", "0x%x != 0x%x\n",
+		  skel->bss->inherit_cb_flags, expected_inherit_cb_flags))
 		goto check_linum;
 
 	if (check_hdr_stg(&exp_passive_hdr_stg, sk_fds->passive_fd,
@@ -320,6 +306,8 @@ static void reset_test(void)
 
 	memset(&skel->bss->active_estab_in, 0, optsize);
 	memset(&skel->bss->active_fin_in, 0, optsize);
+
+	skel->bss->inherit_cb_flags = 0;
 
 	skel->data->test_kind = TCPOPT_EXP;
 	skel->data->test_magic = 0xeB9F;

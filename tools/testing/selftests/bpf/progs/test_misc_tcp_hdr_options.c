@@ -16,7 +16,7 @@
 #define BPF_PROG_TEST_TCP_HDR_OPTIONS
 #include "test_tcp_hdr_options.h"
 
-__u16 last_addr16_n = __bpf_htons(0xeB9F);
+__u16 last_addr16_n = __bpf_htons(1);
 __u16 active_lport_n = 0;
 __u16 active_lport_h = 0;
 __u16 passive_lport_n = 0;
@@ -304,10 +304,10 @@ int misc_estab(struct bpf_sock_ops *skops)
 		passive_lport_n = __bpf_htons(passive_lport_h);
 		bpf_setsockopt(skops, SOL_TCP, TCP_SAVE_SYN,
 			       &true_val, sizeof(true_val));
-		set_hdr_cb_flags(skops);
+		set_hdr_cb_flags(skops, 0);
 		break;
 	case BPF_SOCK_OPS_TCP_CONNECT_CB:
-		set_hdr_cb_flags(skops);
+		set_hdr_cb_flags(skops, 0);
 		break;
 	case BPF_SOCK_OPS_PARSE_HDR_OPT_CB:
 		return handle_parse_hdr(skops);
