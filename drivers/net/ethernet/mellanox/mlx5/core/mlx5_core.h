@@ -257,6 +257,6 @@ enum {
 u8 mlx5_get_nic_state(struct mlx5_core_dev *dev);
 void mlx5_set_nic_state(struct mlx5_core_dev *dev, u8 state);
 
-void mlx5_unload_one(struct mlx5_core_dev *dev, bool cleanup);
-int mlx5_load_one(struct mlx5_core_dev *dev, bool boot);
+void mlx5_unload_one(struct mlx5_core_dev *dev);
+int mlx5_load_one(struct mlx5_core_dev *dev);
 #endif /* __MLX5_CORE_H__ */
