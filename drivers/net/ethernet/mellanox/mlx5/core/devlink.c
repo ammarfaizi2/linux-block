@@ -139,7 +139,9 @@ static int mlx5_devlink_reload_down(struct devlink *devlink, bool netns_change,
 
 	switch (action) {
 	case DEVLINK_RELOAD_ACTION_DRIVER_REINIT:
+		device_lock(dev->device);
 		mlx5_unload_one(dev);
+		device_unlock(dev->device);
 		return 0;
 	case DEVLINK_RELOAD_ACTION_FW_ACTIVATE:
 		if (limit == DEVLINK_RELOAD_LIMIT_NO_RESET)
@@ -157,24 +159,29 @@ static int mlx5_devlink_reload_up(struct devlink *devlink, enum devlink_reload_a
 				  struct netlink_ext_ack *extack)
 {
 	struct mlx5_core_dev *dev = devlink_priv(devlink);
+	int ret = 0;
 
 	*actions_performed = BIT(action);
+	device_lock(dev->device);
 	switch (action) {
 	case DEVLINK_RELOAD_ACTION_DRIVER_REINIT:
-		return mlx5_load_one(dev);
+		ret = mlx5_load_one(dev);
+		break;
 	case DEVLINK_RELOAD_ACTION_FW_ACTIVATE:
 		if (limit == DEVLINK_RELOAD_LIMIT_NO_RESET)
 			break;
 		/* On fw_activate action, also driver is reloaded and reinit performed */
 		*actions_performed |= BIT(DEVLINK_RELOAD_ACTION_DRIVER_REINIT);
-		return mlx5_load_one(dev);
+		ret = mlx5_load_one(dev);
+		break;
 	default:
 		/* Unsupported action should not get to this function */
 		WARN_ON(1);
-		return -EOPNOTSUPP;
+		ret = -EOPNOTSUPP;
 	}
+	device_unlock(dev->device);
 
-	return 0;
+	return ret;
 }
 
 static const struct devlink_ops mlx5_devlink_ops = {

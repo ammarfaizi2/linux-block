@@ -194,18 +194,22 @@ void mlx5_enter_error_state(struct mlx5_core_dev *dev, bool force)
 {
 	bool err_detected = false;
 
+	device_lock_assert(dev->device);
+
 	/* Mark the device as fatal in order to abort FW commands */
 	if ((mlx5_health_check_fatal_sensors(dev) || force) &&
 	    dev->state == MLX5_DEVICE_STATE_UP) {
 		dev->state = MLX5_DEVICE_STATE_INTERNAL_ERROR;
 		err_detected = true;
 	}
-	mutex_lock(&dev->intf_state_mutex);
+
 	if (!err_detected && dev->state == MLX5_DEVICE_STATE_INTERNAL_ERROR)
-		goto unlock;/* a previous error is still being handled */
+		/* a previous error is still being handled */
+		return;
+
 	if (dev->state == MLX5_DEVICE_STATE_UNINITIALIZED) {
 		dev->state = MLX5_DEVICE_STATE_INTERNAL_ERROR;
-		goto unlock;
+		return;
 	}
 
 	if (mlx5_health_check_fatal_sensors(dev) || force) { /* protected state setting */
@@ -214,8 +218,6 @@ void mlx5_enter_error_state(struct mlx5_core_dev *dev, bool force)
 	}
 
 	mlx5_notifier_call_chain(dev->priv.events, MLX5_DEV_EVENT_SYS_ERROR, (void *)1);
-unlock:
-	mutex_unlock(&dev->intf_state_mutex);
 }
 
 #define MLX5_CRDUMP_WAIT_MS	60000
@@ -225,9 +227,8 @@ void mlx5_error_sw_reset(struct mlx5_core_dev *dev)
 	unsigned long end, delay_ms = MLX5_FW_RESET_WAIT_MS;
 	int lock = -EBUSY;
 
-	mutex_lock(&dev->intf_state_mutex);
 	if (dev->state != MLX5_DEVICE_STATE_INTERNAL_ERROR)
-		goto unlock;
+		return;
 
 	mlx5_core_err(dev, "start\n");
 
@@ -263,9 +264,6 @@ recover_from_sw_reset:
 		lock_sem_sw_reset(dev, false);
 
 	mlx5_core_err(dev, "end\n");
-
-unlock:
-	mutex_unlock(&dev->intf_state_mutex);
 }
 
 static void mlx5_handle_bad_state(struct mlx5_core_dev *dev)
@@ -303,7 +301,10 @@ static void mlx5_handle_bad_state(struct mlx5_core_dev *dev)
 			       nic_interface);
 	}
 
-	mlx5_disable_device(dev);
+	device_lock(dev->device);
+	mlx5_error_sw_reset(dev);
+	mlx5_unload_one(dev);
+	device_unlock(dev->device);
 }
 
 /* How much time to wait until health resetting the driver (in msecs) */
@@ -613,7 +614,9 @@ static void mlx5_fw_fatal_reporter_err_work(struct work_struct *work)
 	priv = container_of(health, struct mlx5_priv, health);
 	dev = container_of(priv, struct mlx5_core_dev, priv);
 
+	device_lock(dev->device);
 	mlx5_enter_error_state(dev, false);
+	device_unlock(dev->device);
 	if (IS_ERR_OR_NULL(health->fw_fatal_reporter)) {
 		if (mlx5_health_try_recover(dev))
 			mlx5_core_err(dev, "health recovery failed\n");

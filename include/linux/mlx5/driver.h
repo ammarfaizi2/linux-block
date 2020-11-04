@@ -611,10 +611,6 @@ enum mlx5_device_state {
 	MLX5_DEVICE_STATE_INTERNAL_ERROR,
 };
 
-enum mlx5_interface_state {
-	MLX5_INTERFACE_STATE_UP = BIT(0),
-};
-
 enum mlx5_pci_status {
 	MLX5_PCI_STATUS_DISABLED,
 	MLX5_PCI_STATUS_ENABLED,
@@ -710,7 +706,6 @@ struct mlx5_core_dev {
 	phys_addr_t             bar_addr;
 	enum mlx5_device_state	state;
 	/* sync interface state */
-	struct mutex		intf_state_mutex;
 	unsigned long		intf_state;
 	struct mlx5_priv	priv;
 	struct mlx5_profile	*profile;

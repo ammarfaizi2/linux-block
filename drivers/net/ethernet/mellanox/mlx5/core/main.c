@@ -90,6 +90,10 @@ MODULE_PARM_DESC(prof_sel, "profile selector. Valid range 0 - 2");
 static u32 sw_owner_id[4];
 
 enum {
+	MLX5_INTERFACE_STATE_UP = BIT(0),
+};
+
+enum {
 	MLX5_ATOMIC_REQ_MODE_BE = 0x0,
 	MLX5_ATOMIC_REQ_MODE_HOST_ENDIANNESS = 0x1,
 };
@@ -1192,10 +1196,9 @@ static int mlx5_init_one(struct mlx5_core_dev *dev)
 {
 	int err = 0;
 
-	mutex_lock(&dev->intf_state_mutex);
 	if (test_bit(MLX5_INTERFACE_STATE_UP, &dev->intf_state)) {
 		mlx5_core_warn(dev, "interface is up, NOP\n");
-		goto out;
+		return 0;
 	}
 	/* remove any previous indication of internal error */
 	dev->state = MLX5_DEVICE_STATE_UP;
@@ -1214,8 +1217,6 @@ static int mlx5_init_one(struct mlx5_core_dev *dev)
 	if (err)
 		goto err_load;
 
-	set_bit(MLX5_INTERFACE_STATE_UP, &dev->intf_state);
-
 	err = mlx5_devlink_register(priv_to_devlink(dev), dev->device);
 	if (err)
 		goto err_devlink_reg;
@@ -1224,13 +1225,12 @@ static int mlx5_init_one(struct mlx5_core_dev *dev)
 	if (err)
 		goto err_register;
 
-	mutex_unlock(&dev->intf_state_mutex);
+	set_bit(MLX5_INTERFACE_STATE_UP, &dev->intf_state);
 	return 0;
 
 err_register:
 	mlx5_devlink_unregister(priv_to_devlink(dev));
 err_devlink_reg:
-	clear_bit(MLX5_INTERFACE_STATE_UP, &dev->intf_state);
 	mlx5_unload(dev);
 err_load:
 	mlx5_cleanup_once(dev);
@@ -1238,41 +1238,32 @@ function_teardown:
 	mlx5_function_teardown(dev, true);
 err_function:
 	dev->state = MLX5_DEVICE_STATE_INTERNAL_ERROR;
-out:
-	mutex_unlock(&dev->intf_state_mutex);
 	return err;
 }
 
 static void mlx5_uninit_one(struct mlx5_core_dev *dev)
 {
-	mutex_lock(&dev->intf_state_mutex);
+	if (!test_bit(MLX5_INTERFACE_STATE_UP, &dev->intf_state)) {
+		mlx5_core_warn(dev, "%s: interface is down, NOP\n", __func__);
+		return;
+	}
+	clear_bit(MLX5_INTERFACE_STATE_UP, &dev->intf_state);
 
 	mlx5_unregister_device(dev);
 	mlx5_devlink_unregister(priv_to_devlink(dev));
-
-	if (!test_bit(MLX5_INTERFACE_STATE_UP, &dev->intf_state)) {
-		mlx5_core_warn(dev, "%s: interface is down, NOP\n",
-			       __func__);
-		mlx5_cleanup_once(dev);
-		goto out;
-	}
-
-	clear_bit(MLX5_INTERFACE_STATE_UP, &dev->intf_state);
 	mlx5_unload(dev);
 	mlx5_cleanup_once(dev);
 	mlx5_function_teardown(dev, true);
-out:
-	mutex_unlock(&dev->intf_state_mutex);
 }
 
 int mlx5_load_one(struct mlx5_core_dev *dev)
 {
-	int err = 0;
+	int err;
 
-	mutex_lock(&dev->intf_state_mutex);
+	device_lock_assert(dev->device);
 	if (test_bit(MLX5_INTERFACE_STATE_UP, &dev->intf_state)) {
 		mlx5_core_warn(dev, "interface is up, NOP\n");
-		goto out;
+		return 0;
 	}
 	/* remove any previous indication of internal error */
 	dev->state = MLX5_DEVICE_STATE_UP;
@@ -1285,44 +1276,36 @@ int mlx5_load_one(struct mlx5_core_dev *dev)
 	if (err)
 		goto err_load;
 
-	set_bit(MLX5_INTERFACE_STATE_UP, &dev->intf_state);
-
 	err = mlx5_attach_device(dev);
 	if (err)
 		goto err_attach;
 
-	mutex_unlock(&dev->intf_state_mutex);
+	set_bit(MLX5_INTERFACE_STATE_UP, &dev->intf_state);
 	return 0;
 
 err_attach:
-	clear_bit(MLX5_INTERFACE_STATE_UP, &dev->intf_state);
 	mlx5_unload(dev);
 err_load:
 	mlx5_function_teardown(dev, false);
 err_function:
 	dev->state = MLX5_DEVICE_STATE_INTERNAL_ERROR;
-out:
-	mutex_unlock(&dev->intf_state_mutex);
 	return err;
 }
 
 void mlx5_unload_one(struct mlx5_core_dev *dev)
 {
-	mutex_lock(&dev->intf_state_mutex);
-
+	device_lock_assert(dev->device);
 	mlx5_detach_device(dev);
 
 	if (!test_bit(MLX5_INTERFACE_STATE_UP, &dev->intf_state)) {
 		mlx5_core_warn(dev, "%s: interface is down, NOP\n",
 			       __func__);
-		goto out;
+		return;
 	}
-
 	clear_bit(MLX5_INTERFACE_STATE_UP, &dev->intf_state);
+
 	mlx5_unload(dev);
 	mlx5_function_teardown(dev, false);
-out:
-	mutex_unlock(&dev->intf_state_mutex);
 }
 
 static int mlx5_mdev_init(struct mlx5_core_dev *dev, int profile_idx)
@@ -1334,7 +1317,6 @@ static int mlx5_mdev_init(struct mlx5_core_dev *dev, int profile_idx)
 
 	INIT_LIST_HEAD(&priv->ctx_list);
 	spin_lock_init(&priv->ctx_lock);
-	mutex_init(&dev->intf_state_mutex);
 
 	mutex_init(&priv->bfregs.reg_head.lock);
 	mutex_init(&priv->bfregs.wc_head.lock);
@@ -1371,7 +1353,6 @@ err_health_init:
 	mutex_destroy(&priv->alloc_mutex);
 	mutex_destroy(&priv->bfregs.wc_head.lock);
 	mutex_destroy(&priv->bfregs.reg_head.lock);
-	mutex_destroy(&dev->intf_state_mutex);
 	return err;
 }
 
@@ -1387,7 +1368,6 @@ static void mlx5_mdev_uninit(struct mlx5_core_dev *dev)
 	mutex_destroy(&priv->alloc_mutex);
 	mutex_destroy(&priv->bfregs.wc_head.lock);
 	mutex_destroy(&priv->bfregs.reg_head.lock);
-	mutex_destroy(&dev->intf_state_mutex);
 }
 
 static int probe_one(struct pci_dev *pdev, const struct pci_device_id *id)
@@ -1546,7 +1526,8 @@ static void mlx5_pci_resume(struct pci_dev *pdev)
 
 	err = mlx5_load_one(dev);
 	if (err)
-		mlx5_core_err(dev, "%s: mlx5_load_one failed with error code: %d\n",
+		mlx5_core_err(dev,
+			      "%s: mlx5_load_one failed with error code: %d\n",
 			      __func__, err);
 	else
 		mlx5_core_info(dev, "%s: device recovered\n", __func__);
@@ -1662,19 +1643,16 @@ static const struct pci_device_id mlx5_core_pci_table[] = {
 
 MODULE_DEVICE_TABLE(pci, mlx5_core_pci_table);
 
-void mlx5_disable_device(struct mlx5_core_dev *dev)
-{
-	mlx5_error_sw_reset(dev);
-	mlx5_unload_one(dev);
-}
-
 int mlx5_recover_device(struct mlx5_core_dev *dev)
 {
 	int ret = -EIO;
 
 	mlx5_pci_disable_device(dev);
-	if (mlx5_pci_slot_reset(dev->pdev) == PCI_ERS_RESULT_RECOVERED)
+	if (mlx5_pci_slot_reset(dev->pdev) == PCI_ERS_RESULT_RECOVERED) {
+		device_lock(dev->device);
 		ret = mlx5_load_one(dev);
+		device_unlock(dev->device);
+	}
 	return ret;
 }
 
