@@ -2976,6 +2976,11 @@ static int bpf_object__elf_collect(struct bpf_object *obj)
 	if (nr_prog_sigs == 0)
 		goto out;
 
+	if (!kernel_supports(FEAT_PROG_SIG)) {
+		pr_info("elf: found %d sigs but the kernel doesn't support signed BPF, ignoring signatures\n", nr_prog_sigs);
+		goto out;
+	}
+
 	scn = first_sig_scn;
 	idx = first_sig_scn_idx - 1;
 	do {
