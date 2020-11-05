@@ -1278,13 +1278,15 @@ static void rcu_torture_reader_do_mbchk(long myid, struct rcu_torture *rtp,
 	rdrchker = torture_random(trsp) % nrealreaders;
 	rtrcp_chker = &rcu_torture_reader_mbchk[rdrchker];
 	if (rdrchked != myid && rdrchked != rdrchker && noc >= rdrchked && noc >= rdrchker &&
-	    smp_load_acquire(&rtrcp->rtc_chkrdr) < 0 &&
-	    !READ_ONCE(rtp->rtort_chkp) && !smp_load_acquire(&rtrcp_chker->rtc_assigner)) {
+	    smp_load_acquire(&rtrcp->rtc_chkrdr) < 0 && // Pairs with smp_store_release below.
+	    !READ_ONCE(rtp->rtort_chkp) &&
+	    !smp_load_acquire(&rtrcp_chker->rtc_assigner)) { // Pairs with smp_store_release below.
 		rtrcp->rtc_chkloops = READ_ONCE(rtrcp_chked->rtc_myloops);
+		WARN_ON_ONCE(rtrcp->rtc_chkrdr >= 0);
 		rtrcp->rtc_chkrdr = rdrchked;
-		rtrcp->rtc_ready = 0; // This gets set after the grace period ends.
-		if (cmpxchg_release(&rtrcp_chker->rtc_assigner, NULL, rtrcp) ||
-		    cmpxchg_release(&rtp->rtort_chkp, NULL, rtrcp))
+		WARN_ON_ONCE(rtrcp->rtc_ready); // This gets set after the grace period ends.
+		if (cmpxchg_relaxed(&rtrcp_chker->rtc_assigner, NULL, rtrcp) ||
+		    cmpxchg_relaxed(&rtp->rtort_chkp, NULL, rtrcp))
 			(void)cmpxchg_relaxed(&rtrcp_chker->rtc_assigner, rtrcp, NULL); // Back out.
 	}
 
@@ -1300,6 +1302,8 @@ static void rcu_torture_reader_do_mbchk(long myid, struct rcu_torture *rtp,
 	atomic_inc(&n_rcu_torture_mbchk_tries);
 	if (ULONG_CMP_LT(loops, rtrcp_assigner->rtc_chkloops))
 		atomic_inc(&n_rcu_torture_mbchk_fail);
+	rtrcp_assigner->rtc_chkloops = loops + ULONG_MAX / 2;
+	rtrcp_assigner->rtc_ready = 0;
 	smp_store_release(&rtrcp->rtc_assigner, NULL); // Someone else can assign us work.
 	smp_store_release(&rtrcp_assigner->rtc_chkrdr, -1); // Assigner can again assign.
 }
