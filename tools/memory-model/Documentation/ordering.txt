@@ -495,7 +495,7 @@ the operations called out earlier in this document.
 Unmarked C-Language Accesses
 ----------------------------
 
-Unmarked C-language accesses are normal variable accesses to to normal
+Unmarked C-language accesses are normal variable accesses to normal
 variables, that is, to variables that are not "volatile" and are not
 C11 atomic variables.  These operations provide no ordering guarantees,
 and further do not guarantee "atomic" access.  For example, the compiler
@@ -520,8 +520,7 @@ a single store into multiple smaller stores.
 But there are some ways of using unmarked C-language accesses for shared
 variables without such worries:
 
-o	
-	Guard all accesses to a given variable by a particular lock,
+o	Guard all accesses to a given variable by a particular lock,
 	so that there are never concurrent conflicting accesses to
 	that variable.	(There are "conflicting accesses" when
 	(1) at least one of the concurrent accesses to a variable is an
