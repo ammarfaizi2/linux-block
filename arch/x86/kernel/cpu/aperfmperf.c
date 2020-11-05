@@ -144,7 +144,7 @@ unsigned int arch_freq_get_on_cpu(int cpu)
 
 	msleep(APERFMPERF_REFRESH_DELAY_MS);
 	atomic_set(&s->scfpending, 1);
-	smp_mb();
+	smp_mb(); /* ->scfpending before smp_call_function_single(). */
 	smp_call_function_single(cpu, aperfmperf_snapshot_khz, NULL, 1);
 
 	return per_cpu(samples.khz, cpu);
