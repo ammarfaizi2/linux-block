@@ -71,7 +71,7 @@ Cycle:	Memory-barrier pairing is restricted to a pair of CPUs, as the
 	extended to additional CPUs, and the result is called a "cycle".
 	In a cycle, each CPU's ordering interacts with that of the next:
 
-	CPU 0                CPU 1                CPU 2                      
+	CPU 0                CPU 1                CPU 2
 	WRITE_ONCE(x, 1);    WRITE_ONCE(y, 1);    WRITE_ONCE(z, 1);
 	smp_mb();            smp_mb();            smp_mb();
 	r0 = READ_ONCE(y);   r1 = READ_ONCE(z);   r2 = READ_ONCE(x);
