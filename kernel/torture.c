@@ -603,7 +603,7 @@ static int stutter_gap;
 bool stutter_wait(const char *title)
 {
 	ktime_t delay;
-	unsigned i = 0;
+	unsigned int i = 0;
 	bool ret = false;
 	int spt;
 
