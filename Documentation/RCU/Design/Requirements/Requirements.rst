@@ -1947,7 +1947,7 @@ notifier.
 Finally, RCU must avoid deadlocks due to interaction between hotplug,
 timers and grace period processing. It does so by maintaining its own set
 of books that duplicate the centrally maintained ``cpu_online_mask``,
-and also by reporting quiescent states explictly when a CPU goes
+and also by reporting quiescent states explicitly when a CPU goes
 offline.  This explicit reporting of quiescent states avoids any need
 for the force-quiescent-state loop (FQS) to report quiescent states for
 offline CPUs.  However, as a debugging measure, the FQS loop does splat
