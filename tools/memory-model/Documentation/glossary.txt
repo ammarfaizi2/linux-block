@@ -22,7 +22,7 @@ Address Dependency:  When the address of a later memory access is computed
 	 dependencies.	Please see Documentation/RCU/rcu_dereference.txt
 	 for more information.
 
-	 See also "Control Dependency".
+	 See also "Control Dependency" and "Data Dependency".
 
 Acquire:  With respect to a lock, acquiring that lock, for example,
 	using spin_lock().  With respect to a non-lock shared variable,
@@ -109,7 +109,7 @@ Happens-Before (hb): A relation between two accesses in which LKMM
 	section of explanation.txt.
 
 Marked Access:  An access to a variable that uses an special function or
-	macro such as "r1 = READ_ONCE()" or "smp_store_release(&a, 1)".
+	macro such as "r1 = READ_ONCE(x)" or "smp_store_release(&a, 1)".
 
 	See also "Unmarked Access".
 
