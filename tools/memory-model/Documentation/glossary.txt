@@ -64,7 +64,7 @@ Control Dependency:  When a later store's execution depends on a test
 	 fragile, and can be easily destroyed by optimizing compilers.
 	 Please see control-dependencies.txt for more information.
 
-	 See also "Address Dependency".
+	 See also "Address Dependency" and "Data Dependency".
 
 Cycle:	Memory-barrier pairing is restricted to a pair of CPUs, as the
 	name suggests.	And in a great many cases, a pair of CPUs is all
@@ -84,6 +84,23 @@ Cycle:	Memory-barrier pairing is restricted to a pair of CPUs, as the
 	are all equal to zero is forbidden by LKMM.
 
 	See also "Pairing".
+
+Data Dependency:  When the data written by a later store is computed based
+	on the value returned by an earlier load, a "data dependency"
+	extends from that load to that later store.  For example:
+
+	 1 r1 = READ_ONCE(x);
+	 2 WRITE_ONCE(y, r1 + 1);
+
+	In this case, the data dependency extends from the READ_ONCE()
+	on line 1 to the WRITE_ONCE() on line 2.  Data dependencies are
+	fragile and can be easily destroyed by optimizing compilers.
+	Because optimizing compilers put a great deal of effort into
+	working out what values integer variables might have, this is
+	especially true in cases where the dependency is carried through
+	an integer.
+
+	See also "Address Dependency" and "Control Dependency".
 
 From-Reads (fr):  When one CPU's store to a given variable happened
 	too late to affect the value returned by another CPU's
