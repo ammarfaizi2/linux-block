@@ -55,7 +55,7 @@ control-dependencies.txt
 	your control dependencies.
 
 explanation.txt
-	Detailed description of the memory model in detail.
+	Detailed description of the memory model.
 
 litmus-tests.txt
 	The format, features, capabilities, and limitations of the litmus
