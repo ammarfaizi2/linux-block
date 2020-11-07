@@ -1950,6 +1950,11 @@ void ath11k_wmi_start_scan_init(struct ath11k *ar,
 				  WMI_SCAN_EVENT_DEQUEUED;
 	arg->scan_flags |= WMI_SCAN_CHAN_STAT_EVENT;
 	arg->num_bssid = 1;
+
+	/* fill bssid_list[0] with 0xff, otherwise bssid and RA will be
+	 * ZEROs in probe request
+	 */
+	eth_broadcast_addr(arg->bssid_list[0].addr);
 }
 
 static inline void
@@ -3485,9 +3490,6 @@ int ath11k_wmi_cmd_init(struct ath11k_base *ab)
 	init_param.num_mem_chunks = wmi_sc->num_mem_chunks;
 	init_param.hw_mode_id = wmi_sc->preferred_hw_mode;
 	init_param.mem_chunks = wmi_sc->mem_chunks;
-
-	if (wmi_sc->preferred_hw_mode == WMI_HOST_HW_MODE_SINGLE)
-		init_param.hw_mode_id = WMI_HOST_HW_MODE_MAX;
 
 	if (ab->hw_params.needs_band_to_mac) {
 		init_param.num_band_to_mac = ab->num_radios;
