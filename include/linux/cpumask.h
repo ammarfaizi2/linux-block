@@ -673,17 +673,7 @@ static inline int cpumask_parse(const char *buf, struct cpumask *dstp)
 	return bitmap_parse(buf, UINT_MAX, cpumask_bits(dstp), nr_cpumask_bits);
 }
 
-/**
- * cpulist_parse - extract a cpumask from a user string of ranges
- * @buf: the buffer to extract from
- * @dstp: the cpumask to set.
- *
- * Returns -errno, or 0 for success.
- */
-static inline int cpulist_parse(const char *buf, struct cpumask *dstp)
-{
-	return bitmap_parselist(buf, cpumask_bits(dstp), nr_cpumask_bits);
-}
+int cpulist_parse(const char *buf, struct cpumask *dstp);
 
 /**
  * cpumask_size - size to allocate for a 'struct cpumask' in bytes
