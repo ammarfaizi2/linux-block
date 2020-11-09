@@ -88,6 +88,7 @@ struct mount_kattr {
 	unsigned int propagation;
 	unsigned int lookup_flags;
 	bool recurse;
+	struct user_namespace *mnt_user_ns;
 };
 
 extern struct vfsmount *lookup_mnt(const struct path *);

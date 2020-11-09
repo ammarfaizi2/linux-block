@@ -71,6 +71,7 @@ static void show_mnt_opts(struct seq_file *m, struct vfsmount *mnt)
 		{ MNT_NODIRATIME, ",nodiratime" },
 		{ MNT_RELATIME, ",relatime" },
 		{ MNT_NOSYMFOLLOW, ",nosymfollow" },
+		{ MNT_IDMAPPED, ",idmapped" },
 		{ 0, NULL }
 	};
 	const struct proc_fs_opts *fs_infop;
