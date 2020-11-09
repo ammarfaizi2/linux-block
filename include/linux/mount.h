@@ -77,7 +77,8 @@ struct vfsmount {
 
 static inline struct user_namespace *mnt_user_ns(const struct vfsmount *mnt)
 {
-	return READ_ONCE(mnt->mnt_user_ns);
+	/* Pairs with smp_store_release() in do_idmap_mount(). */
+	return smp_load_acquire(&mnt->mnt_user_ns);
 }
 
 struct file; /* forward dec */

@@ -25,6 +25,7 @@
 #include <linux/proc_ns.h>
 #include <linux/magic.h>
 #include <linux/memblock.h>
+#include <linux/proc_fs.h>
 #include <linux/task_work.h>
 #include <linux/sched/task.h>
 #include <uapi/linux/mount.h>
@@ -3465,7 +3466,8 @@ static int build_attr_flags(unsigned int attr_flags, unsigned int *flags)
 			   MOUNT_ATTR_NODEV |
 			   MOUNT_ATTR_NOEXEC |
 			   MOUNT_ATTR__ATIME |
-			   MOUNT_ATTR_NODIRATIME))
+			   MOUNT_ATTR_NODIRATIME |
+			   MOUNT_ATTR_IDMAP))
 		return -EINVAL;
 
 	if (attr_flags & MOUNT_ATTR_RDONLY)
@@ -3503,6 +3505,14 @@ SYSCALL_DEFINE3(fsmount, int, fs_fd, unsigned int, flags,
 		return -EPERM;
 
 	if ((flags & ~(FSMOUNT_CLOEXEC)) != 0)
+		return -EINVAL;
+
+	if (attr_flags & ~(MOUNT_ATTR_RDONLY |
+			   MOUNT_ATTR_NOSUID |
+			   MOUNT_ATTR_NODEV |
+			   MOUNT_ATTR_NOEXEC |
+			   MOUNT_ATTR__ATIME |
+			   MOUNT_ATTR_NODIRATIME))
 		return -EINVAL;
 
 	ret = build_attr_flags(attr_flags, &mnt_flags);
@@ -3827,6 +3837,32 @@ static unsigned int recalc_flags(struct mount_kattr *kattr, struct mount *mnt)
 	return flags;
 }
 
+static int can_idmap_mount(const struct mount_kattr *kattr, struct mount *mnt)
+{
+	struct vfsmount *m = &mnt->mnt;
+
+	if (!kattr->mnt_user_ns)
+		return 0;
+
+	/*
+	 * Once a mount has been idmapped we don't allow it to change its
+	 * mapping. It makes things simpler and callers can just create
+	 * another bind-mount they can idmap if they want to.
+	 */
+	if (mnt_user_ns(m) != &init_user_ns)
+		return -EPERM;
+
+	/* The underlying filesystem doesn't support idmapped mounts yet. */
+	if (!(m->mnt_sb->s_type->fs_flags & FS_ALLOW_IDMAP))
+		return -EINVAL;
+
+	/* We're controlling the superblock. */
+	if (!ns_capable(m->mnt_sb->s_user_ns, CAP_SYS_ADMIN))
+		return -EPERM;
+
+	return 0;
+}
+
 static struct mount *mount_setattr_prepare(struct mount_kattr *kattr,
 					   struct mount *mnt, int *err)
 {
@@ -3851,6 +3887,10 @@ static struct mount *mount_setattr_prepare(struct mount_kattr *kattr,
 			goto out;
 		}
 
+		*err = can_idmap_mount(kattr, m);
+		if (*err)
+			goto out;
+
 		last = m;
 
 		if ((kattr->attr_set & MNT_READONLY) &&
@@ -3865,6 +3905,18 @@ out:
 	return last;
 }
 
+static void do_idmap_mount(const struct mount_kattr *kattr, struct mount *mnt)
+{
+	struct user_namespace *user_ns;
+
+	if (!kattr->mnt_user_ns)
+		return;
+
+	user_ns = get_user_ns(kattr->mnt_user_ns);
+	/* Pairs with smp_load_acquire() in mnt_user_ns(). */
+	smp_store_release(&mnt->mnt.mnt_user_ns, user_ns);
+}
+
 static void mount_setattr_commit(struct mount_kattr *kattr, struct mount *mnt,
 				 struct mount *last, int err)
 {
@@ -3874,6 +3926,7 @@ static void mount_setattr_commit(struct mount_kattr *kattr, struct mount *mnt,
 		if (!err) {
 			unsigned int flags;
 
+			do_idmap_mount(kattr, m);
 			flags = recalc_flags(kattr, m);
 			WRITE_ONCE(m->mnt.mnt_flags, flags);
 		}
@@ -3943,6 +3996,61 @@ static int do_mount_setattr(struct path *path, struct mount_kattr *kattr)
 			cleanup_group_ids(mnt, NULL);
 	}
 
+	return err;
+}
+
+static int build_mount_idmapped(const struct mount_attr *attr,
+				struct mount_kattr *kattr, unsigned int flags)
+{
+	int err = 0;
+	struct ns_common *ns;
+	struct user_namespace *user_ns;
+	struct file *file;
+
+	if (!((attr->attr_set | attr->attr_clr) & MOUNT_ATTR_IDMAP))
+		return 0;
+
+	/*
+	 * We currently do not support clearing an idmapped mount. If this ever
+	 * is a use-case we can revisit this but for now let's keep it simple
+	 * and not allow it.
+	 */
+	if (attr->attr_clr & MOUNT_ATTR_IDMAP)
+		return -EINVAL;
+
+	if (attr->userns_fd > INT_MAX)
+		return -EINVAL;
+
+	file = fget(attr->userns_fd);
+	if (!file)
+		return -EBADF;
+
+	if (!proc_ns_file(file)) {
+		err = -EINVAL;
+		goto out_fput;
+	}
+
+	ns = get_proc_ns(file_inode(file));
+	if (ns->ops->type != CLONE_NEWUSER) {
+		err = -EINVAL;
+		goto out_fput;
+	}
+
+	/*
+	 * The init_user_ns is used to indicate that a vfsmount is not idmapped.
+	 * This is simpler than just having to treat NULL as unmapped. Users
+	 * wanting to idmap a mount to init_user_ns can just use a namespace
+	 * with an identity mapping.
+	 */
+	user_ns = container_of(ns, struct user_namespace, ns);
+	if (user_ns == &init_user_ns) {
+		err = -EPERM;
+		goto out_fput;
+	}
+	kattr->mnt_user_ns = get_user_ns(user_ns);
+
+out_fput:
+	fput(file);
 	return err;
 }
 
@@ -4025,7 +4133,13 @@ static int build_mount_kattr(const struct mount_attr *attr,
 		}
 	}
 
-	return 0;
+	return build_mount_idmapped(attr, kattr, flags);
+}
+
+static void finish_mount_kattr(struct mount_kattr *kattr)
+{
+	put_user_ns(kattr->mnt_user_ns);
+	kattr->mnt_user_ns = NULL;
 }
 
 SYSCALL_DEFINE5(mount_setattr, int, dfd, const char __user *, path, unsigned int, flags,
@@ -4064,6 +4178,7 @@ SYSCALL_DEFINE5(mount_setattr, int, dfd, const char __user *, path, unsigned int
 		return err;
 
 	err = do_mount_setattr(&target, &kattr);
+	finish_mount_kattr(&kattr);
 	path_put(&target);
 	return err;
 }
