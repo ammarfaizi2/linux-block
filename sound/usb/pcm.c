@@ -447,6 +447,33 @@ add_sync_ep:
 	return 1;
 }
 
+static int audioformat_capture_quirk(struct snd_usb_audio *chip,
+				     struct audioformat *fmt,
+				     struct usb_host_interface *alts)
+{
+	struct usb_device *dev = chip->dev;
+	struct usb_interface *iface;
+
+	switch (chip->usb_id) {
+	case USB_ID(0x0582, 0x01e5): /* BOSS GT-001 */
+		iface = usb_ifnum_to_if(dev, 0x01);
+		if (!iface || iface->num_altsetting < 1)
+			return 0;
+		alts = &iface->altsetting[0];
+		fmt->sync_ep = 0x0d;
+		fmt->sync_iface = 0x01;
+		fmt->sync_altsetting = alts->desc.bAlternateSetting;
+		fmt->sync_ep_idx = 0;
+		fmt->implicit_fb = 1;
+		dev_dbg(&dev->dev, "%d:%d: added fake capture sync sync_ep=%x, iface=%d, alt=%d\n",
+			fmt->iface, fmt->altsetting, fmt->sync_ep, fmt->sync_iface,
+			fmt->sync_altsetting);
+		return 1;
+	}
+	return 0;
+
+}
+
 int snd_usb_audioformat_set_sync_ep(struct snd_usb_audio *chip,
 				    struct audioformat *fmt)
 {
@@ -465,6 +492,10 @@ int snd_usb_audioformat_set_sync_ep(struct snd_usb_audio *chip,
 	is_playback = !(get_endpoint(alts, 0)->bEndpointAddress & USB_DIR_IN);
 	if (is_playback) {
 		err = audioformat_implicit_fb_quirk(chip, fmt, alts);
+		if (err > 0)
+			return 0;
+	} else {
+		err = audioformat_capture_quirk(chip, fmt, alts);
 		if (err > 0)
 			return 0;
 	}
