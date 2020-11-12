@@ -613,7 +613,6 @@ int snd_usb_set_sample_rate_v2v3(struct snd_usb_audio *chip,
 static int set_sample_rate_v2v3(struct snd_usb_audio *chip,
 				struct audioformat *fmt, int rate)
 {
-	struct usb_device *dev = chip->dev;
 	int cur_rate, prev_rate;
 	int clock;
 
@@ -654,15 +653,6 @@ static int set_sample_rate_v2v3(struct snd_usb_audio *chip,
 			       "%d:%d: freq mismatch (RO clock): req %d, clock runs @%d\n",
 			       fmt->iface, fmt->altsetting, rate, cur_rate);
 		return -ENXIO;
-	}
-
-	/* Some devices doesn't respond to sample rate changes while the
-	 * interface is active. */
-	if (rate != prev_rate) {
-		usb_set_interface(dev, fmt->iface, 0);
-		snd_usb_set_interface_quirk(chip);
-		usb_set_interface(dev, fmt->iface, fmt->altsetting);
-		snd_usb_set_interface_quirk(chip);
 	}
 
 validation:
