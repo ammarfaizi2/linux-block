@@ -1708,6 +1708,12 @@ static struct ovl_entry *ovl_get_lowerstack(struct super_block *sb,
 		if (err)
 			goto out_err;
 
+		if (mnt_idmapped(stack[i].mnt)) {
+			err = -EINVAL;
+			pr_err("idmapped lower layers are currently unsupported\n");
+			goto out_err;
+		}
+
 		lower = strchr(lower, '\0') + 1;
 	}
 
@@ -1938,6 +1944,12 @@ static int ovl_fill_super(struct super_block *sb, void *data, int silent)
 		err = ovl_get_upper(sb, ofs, &layers[0], &upperpath);
 		if (err)
 			goto out_err;
+
+		if (mnt_idmapped(upperpath.mnt)) {
+			err = -EINVAL;
+			pr_err("idmapped lower layers are currently unsupported\n");
+			goto out_err;
+		}
 
 		err = ovl_get_workdir(sb, ofs, &upperpath);
 		if (err)
