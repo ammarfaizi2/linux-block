@@ -71,7 +71,6 @@ sigjmp_buf jmpbuf;
 static void sigtrap(int sig, siginfo_t *info, void *ctx_void)
 {
 	ucontext_t *ctx = (ucontext_t*)ctx_void;
-	unsigned long dr6 = info->si_code;
 
 	if (get_eflags() & X86_EFLAGS_TF) {
 		set_eflags(get_eflags() & ~X86_EFLAGS_TF);
@@ -88,7 +87,10 @@ static void sigtrap(int sig, siginfo_t *info, void *ctx_void)
 		       (unsigned long)ctx->uc_mcontext.gregs[REG_IP]);
 	}
 
-	printf("DR6 = 0x%lx\n", dr6);
+	if (info->si_code != TRAP_TRACE) {
+		printf("[FAIL]\tsi_code was 0x%lx; should have been TRAP_TRACE (0x%lx)\n", (unsigned long)info->si_code, (unsigned long)TRAP_TRACE);
+		_exit(1);
+	}
 }
 
 static char const * const signames[] = {
