@@ -227,9 +227,9 @@ unsigned long start_poll_synchronize_srcu(struct srcu_struct *ssp)
 /*
  * poll_state_synchronize_srcu - Has cookie's grace period ended?
  */
-bool poll_state_synchronize_srcu(struct srcu_struct *ssp, unsigned long oldstate)
+bool poll_state_synchronize_srcu(struct srcu_struct *ssp, unsigned long cookie)
 {
-	bool ret = USHORT_CMP_GE(READ_ONCE(ssp->srcu_idx), oldstate);
+	bool ret = USHORT_CMP_GE(READ_ONCE(ssp->srcu_idx), cookie);
 
 	barrier();
 	return ret;
