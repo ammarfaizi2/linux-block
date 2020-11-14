@@ -332,6 +332,8 @@ struct rcu_torture_ops {
 	void (*sync)(void);
 	void (*exp_sync)(void);
 	unsigned long (*get_gp_state)(void);
+	unsigned long (*start_gp_poll)(void);
+	bool (*poll_gp_state)(unsigned long oldstate);
 	void (*cond_sync)(unsigned long oldstate);
 	call_rcu_func_t call;
 	void (*cb_barrier)(void);
@@ -595,6 +597,21 @@ static void srcu_torture_synchronize(void)
 	synchronize_srcu(srcu_ctlp);
 }
 
+static unsigned long srcu_torture_get_gp_state(void)
+{
+	return get_state_synchronize_srcu(srcu_ctlp);
+}
+
+static unsigned long srcu_torture_start_gp_poll(void)
+{
+	return start_poll_synchronize_srcu(srcu_ctlp);
+}
+
+static bool srcu_torture_poll_gp_state(unsigned long oldstate)
+{
+	return poll_state_synchronize_srcu(srcu_ctlp, oldstate);
+}
+
 static void srcu_torture_call(struct rcu_head *head,
 			      rcu_callback_t func)
 {
@@ -626,6 +643,9 @@ static struct rcu_torture_ops srcu_ops = {
 	.deferred_free	= srcu_torture_deferred_free,
 	.sync		= srcu_torture_synchronize,
 	.exp_sync	= srcu_torture_synchronize_expedited,
+	.get_gp_state	= srcu_torture_get_gp_state,
+	.start_gp_poll	= srcu_torture_start_gp_poll,
+	.poll_gp_state	= srcu_torture_poll_gp_state,
 	.call		= srcu_torture_call,
 	.cb_barrier	= srcu_torture_barrier,
 	.stats		= srcu_torture_stats,
@@ -1052,11 +1072,13 @@ static int
 rcu_torture_writer(void *arg)
 {
 	bool can_expedite = !rcu_gp_is_expedited() && !rcu_gp_is_normal();
+	unsigned long cookie;
 	int expediting = 0;
 	unsigned long gp_snap;
 	bool gp_cond1 = gp_cond, gp_exp1 = gp_exp, gp_normal1 = gp_normal;
 	bool gp_sync1 = gp_sync;
 	int i;
+	int idx;
 	int oldnice = task_nice(current);
 	struct rcu_torture *rp;
 	struct rcu_torture *old_rp;
@@ -1132,6 +1154,12 @@ rcu_torture_writer(void *arg)
 			atomic_inc(&rcu_torture_wcount[i]);
 			WRITE_ONCE(old_rp->rtort_pipe_count,
 				   old_rp->rtort_pipe_count + 1);
+			if (cur_ops->get_gp_state && cur_ops->poll_gp_state) {
+				idx = cur_ops->readlock();
+				cookie = cur_ops->get_gp_state();
+				WARN_ON_ONCE(cur_ops->poll_gp_state(cookie));
+				cur_ops->readunlock(idx);
+			}
 			switch (synctype[torture_random(&rand) % nsynctypes]) {
 			case RTWS_DEF_FREE:
 				rcu_torture_writer_state = RTWS_DEF_FREE;
@@ -1162,6 +1190,8 @@ rcu_torture_writer(void *arg)
 				WARN_ON_ONCE(1);
 				break;
 			}
+			if (cur_ops->get_gp_state && cur_ops->poll_gp_state)
+				WARN_ON_ONCE(!cur_ops->poll_gp_state(cookie));
 		}
 		WRITE_ONCE(rcu_torture_current_version,
 			   rcu_torture_current_version + 1);
