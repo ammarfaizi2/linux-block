@@ -1214,7 +1214,8 @@ rcu_torture_writer(void *arg)
 				break;
 			}
 			if (cur_ops->get_gp_state && cur_ops->poll_gp_state)
-				WARN_ONCE(!cur_ops->poll_gp_state(cookie),
+				WARN_ONCE(rcu_torture_writer_state != RTWS_DEF_FREE &&
+					  !cur_ops->poll_gp_state(cookie),
 					  "%s: Cookie check failed %s(%d) %lu->%lu\n",
 					  __func__,
 					  rcu_torture_writer_state_getname(),
