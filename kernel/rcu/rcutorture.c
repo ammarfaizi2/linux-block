@@ -85,6 +85,7 @@ torture_param(bool, gp_cond, false, "Use conditional/async GP wait primitives");
 torture_param(bool, gp_exp, false, "Use expedited GP wait primitives");
 torture_param(bool, gp_normal, false,
 	     "Use normal (non-expedited) GP wait primitives");
+torture_param(bool, gp_poll, false, "Use polling GP wait primitives");
 torture_param(bool, gp_sync, false, "Use synchronous GP wait primitives");
 torture_param(int, irqreader, 1, "Allow RCU readers from irq handlers");
 torture_param(int, leakpointer, 0, "Leak pointer dereferences from readers");
@@ -203,9 +204,11 @@ static int rcu_torture_writer_state;
 #define RTWS_EXP_SYNC		4
 #define RTWS_COND_GET		5
 #define RTWS_COND_SYNC		6
-#define RTWS_SYNC		7
-#define RTWS_STUTTER		8
-#define RTWS_STOPPING		9
+#define RTWS_POLL_GET		7
+#define RTWS_POLL_WAIT		8
+#define RTWS_SYNC		9
+#define RTWS_STUTTER		10
+#define RTWS_STOPPING		11
 static const char * const rcu_torture_writer_state_names[] = {
 	"RTWS_FIXED_DELAY",
 	"RTWS_DELAY",
@@ -214,6 +217,8 @@ static const char * const rcu_torture_writer_state_names[] = {
 	"RTWS_EXP_SYNC",
 	"RTWS_COND_GET",
 	"RTWS_COND_SYNC",
+	"RTWS_POLL_GET",
+	"RTWS_POLL_WAIT",
 	"RTWS_SYNC",
 	"RTWS_STUTTER",
 	"RTWS_STOPPING",
@@ -1076,7 +1081,7 @@ rcu_torture_writer(void *arg)
 	int expediting = 0;
 	unsigned long gp_snap;
 	bool gp_cond1 = gp_cond, gp_exp1 = gp_exp, gp_normal1 = gp_normal;
-	bool gp_sync1 = gp_sync;
+	bool gp_poll1 = gp_poll, gp_sync1 = gp_sync;
 	int i;
 	int idx;
 	int oldnice = task_nice(current);
@@ -1085,7 +1090,7 @@ rcu_torture_writer(void *arg)
 	static DEFINE_TORTURE_RANDOM(rand);
 	bool stutter_waited;
 	int synctype[] = { RTWS_DEF_FREE, RTWS_EXP_SYNC,
-			   RTWS_COND_GET, RTWS_SYNC };
+			   RTWS_COND_GET, RTWS_POLL_GET, RTWS_SYNC };
 	int nsynctypes = 0;
 
 	VERBOSE_TOROUT_STRING("rcu_torture_writer task started");
@@ -1095,8 +1100,8 @@ rcu_torture_writer(void *arg)
 			 torture_type, cur_ops->name);
 
 	/* Initialize synctype[] array.  If none set, take default. */
-	if (!gp_cond1 && !gp_exp1 && !gp_normal1 && !gp_sync1)
-		gp_cond1 = gp_exp1 = gp_normal1 = gp_sync1 = true;
+	if (!gp_cond1 && !gp_exp1 && !gp_normal1 && !gp_poll1 && !gp_sync1)
+		gp_cond1 = gp_exp1 = gp_normal1 = gp_poll1 = gp_sync1 = true;
 	if (gp_cond1 && cur_ops->get_gp_state && cur_ops->cond_sync) {
 		synctype[nsynctypes++] = RTWS_COND_GET;
 		pr_info("%s: Testing conditional GPs.\n", __func__);
@@ -1114,6 +1119,12 @@ rcu_torture_writer(void *arg)
 		pr_info("%s: Testing asynchronous GPs.\n", __func__);
 	} else if (gp_normal && !cur_ops->deferred_free) {
 		pr_alert("%s: gp_normal without primitives.\n", __func__);
+	}
+	if (gp_poll1 && cur_ops->start_gp_poll && cur_ops->poll_gp_state) {
+		synctype[nsynctypes++] = RTWS_POLL_GET;
+		pr_info("%s: Testing polling GPs.\n", __func__);
+	} else if (gp_poll && (!cur_ops->start_gp_poll || !cur_ops->poll_gp_state)) {
+		pr_alert("%s: gp_poll without primitives.\n", __func__);
 	}
 	if (gp_sync1 && cur_ops->sync) {
 		synctype[nsynctypes++] = RTWS_SYNC;
@@ -1181,6 +1192,18 @@ rcu_torture_writer(void *arg)
 				cur_ops->cond_sync(gp_snap);
 				rcu_torture_pipe_update(old_rp);
 				break;
+			case RTWS_POLL_GET:
+				rcu_torture_writer_state = RTWS_POLL_GET;
+				gp_snap = cur_ops->start_gp_poll();
+				rcu_torture_writer_state = RTWS_POLL_WAIT;
+				while (!cur_ops->poll_gp_state(gp_snap)) {
+					i = torture_random(&rand) % 16;
+					if (i != 0)
+						schedule_timeout_interruptible(i);
+					udelay(torture_random(&rand) % 1000);
+				}
+				rcu_torture_pipe_update(old_rp);
+				break;
 			case RTWS_SYNC:
 				rcu_torture_writer_state = RTWS_SYNC;
 				cur_ops->sync();
@@ -1191,7 +1214,12 @@ rcu_torture_writer(void *arg)
 				break;
 			}
 			if (cur_ops->get_gp_state && cur_ops->poll_gp_state)
-				WARN_ON_ONCE(!cur_ops->poll_gp_state(cookie));
+				WARN_ONCE(!cur_ops->poll_gp_state(cookie),
+					  "%s: Cookie check failed %s(%d) %lu->%lu\n",
+					  __func__,
+					  rcu_torture_writer_state_getname(),
+					  rcu_torture_writer_state,
+					  cookie, cur_ops->get_gp_state());
 		}
 		WRITE_ONCE(rcu_torture_current_version,
 			   rcu_torture_current_version + 1);
