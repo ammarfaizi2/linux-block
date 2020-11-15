@@ -810,7 +810,8 @@ static void srcu_leak_callback(struct rcu_head *rhp)
 /*
  * Start an SRCU grace period, and also queue the callback if non-NULL.
  */
-static void srcu_gp_start_if_needed(struct srcu_struct *ssp, struct rcu_head *rhp, bool do_norm)
+static unsigned long srcu_gp_start_if_needed(struct srcu_struct *ssp,
+					     struct rcu_head *rhp, bool do_norm)
 {
 	unsigned long flags;
 	int idx;
@@ -842,6 +843,7 @@ static void srcu_gp_start_if_needed(struct srcu_struct *ssp, struct rcu_head *rh
 	else if (needexp)
 		srcu_funnel_exp_start(ssp, sdp->mynode, s);
 	srcu_read_unlock(ssp, idx);
+	return s;
 }
 
 /*
@@ -883,7 +885,7 @@ static void __call_srcu(struct srcu_struct *ssp, struct rcu_head *rhp,
 		return;
 	}
 	rhp->func = func;
-	srcu_gp_start_if_needed(ssp, rhp, do_norm);
+	(void)srcu_gp_start_if_needed(ssp, rhp, do_norm);
 }
 
 /**
@@ -1042,25 +1044,22 @@ unsigned long get_state_synchronize_srcu(struct srcu_struct *ssp)
  */
 unsigned long start_poll_synchronize_srcu(struct srcu_struct *ssp)
 {
-	unsigned long ret = get_state_synchronize_srcu(ssp);
-
-	srcu_gp_start_if_needed(ssp, NULL, true);
-	return ret;
+	return srcu_gp_start_if_needed(ssp, NULL, true);
 }
 
 /**
  * poll_state_synchronize_srcu - Has cookie's grace period ended?
  * @ssp: srcu_struct to provide cookie for.
- * @oldstate: Cookie.
+ * @cookie: Return value from get_state_synchronize_srcu() or start_poll_synchronize_srcu().
  *
  * This function takes the cookie that was returned from either
  * get_state_synchronize_srcu() or start_poll_synchronize_srcu(), and
  * returns @true if an SRCU grace period elapsed since the time that the
  * cookie was created.
  */
-bool poll_state_synchronize_srcu(struct srcu_struct *ssp, unsigned long oldstate)
+bool poll_state_synchronize_srcu(struct srcu_struct *ssp, unsigned long cookie)
 {
-	if (!rcu_seq_done(&ssp->srcu_gp_seq, oldstate))
+	if (!rcu_seq_done(&ssp->srcu_gp_seq, cookie))
 		return false;
 	smp_mb(); // ^^^
 	return true;
