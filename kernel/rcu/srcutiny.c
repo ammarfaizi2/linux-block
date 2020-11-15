@@ -114,7 +114,8 @@ void srcu_drive_gp(struct work_struct *wp)
 	struct srcu_struct *ssp;
 
 	ssp = container_of(wp, struct srcu_struct, srcu_work);
-	if (ssp->srcu_gp_running || !READ_ONCE(ssp->srcu_cb_head))
+	// if (ssp->srcu_gp_running || !READ_ONCE(ssp->srcu_cb_head))
+	if (ssp->srcu_gp_running)
 		return; /* Already running or nothing to do. */
 
 	/* Remove recently arrived callbacks and wait for readers. */
@@ -206,7 +207,7 @@ unsigned long get_state_synchronize_srcu(struct srcu_struct *ssp)
 	barrier();
 	ret = (READ_ONCE(ssp->srcu_idx) + 3) & ~0x1;
 	barrier();
-	return ret;
+	return ret & USHRT_MAX;
 }
 
 /*
