@@ -1168,7 +1168,13 @@ rcu_torture_writer(void *arg)
 			if (cur_ops->get_gp_state && cur_ops->poll_gp_state) {
 				idx = cur_ops->readlock();
 				cookie = cur_ops->get_gp_state();
-				WARN_ON_ONCE(cur_ops->poll_gp_state(cookie));
+				WARN_ONCE(rcu_torture_writer_state != RTWS_DEF_FREE &&
+					  cur_ops->poll_gp_state(cookie),
+					  "%s: Cookie check 1 failed %s(%d) %lu->%lu\n",
+					  __func__,
+					  rcu_torture_writer_state_getname(),
+					  rcu_torture_writer_state,
+					  cookie, cur_ops->get_gp_state());
 				cur_ops->readunlock(idx);
 			}
 			switch (synctype[torture_random(&rand) % nsynctypes]) {
@@ -1216,7 +1222,7 @@ rcu_torture_writer(void *arg)
 			if (cur_ops->get_gp_state && cur_ops->poll_gp_state)
 				WARN_ONCE(rcu_torture_writer_state != RTWS_DEF_FREE &&
 					  !cur_ops->poll_gp_state(cookie),
-					  "%s: Cookie check failed %s(%d) %lu->%lu\n",
+					  "%s: Cookie check 2 failed %s(%d) %lu->%lu\n",
 					  __func__,
 					  rcu_torture_writer_state_getname(),
 					  rcu_torture_writer_state,
