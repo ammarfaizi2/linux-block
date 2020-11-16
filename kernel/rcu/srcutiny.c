@@ -214,6 +214,7 @@ unsigned long get_state_synchronize_srcu(struct srcu_struct *ssp)
 	barrier();
 	return ret & USHRT_MAX;
 }
+EXPORT_SYMBOL_GPL(get_state_synchronize_srcu);
 
 /*
  * start_poll_synchronize_srcu - Provide cookie and start grace period
@@ -229,6 +230,7 @@ unsigned long start_poll_synchronize_srcu(struct srcu_struct *ssp)
 	srcu_gp_start_if_needed(ssp);
 	return ret;
 }
+EXPORT_SYMBOL_GPL(start_poll_synchronize_srcu);
 
 /*
  * poll_state_synchronize_srcu - Has cookie's grace period ended?
@@ -240,6 +242,7 @@ bool poll_state_synchronize_srcu(struct srcu_struct *ssp, unsigned long cookie)
 	barrier();
 	return ret;
 }
+EXPORT_SYMBOL_GPL(poll_state_synchronize_srcu);
 
 /* Lockdep diagnostics.  */
 void __init rcu_scheduler_starting(void)
