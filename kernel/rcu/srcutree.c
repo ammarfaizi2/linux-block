@@ -1027,7 +1027,7 @@ EXPORT_SYMBOL_GPL(synchronize_srcu);
 unsigned long get_state_synchronize_srcu(struct srcu_struct *ssp)
 {
 	// Any prior manipulation of SRCU-protected data must happen
-        // before the load from ->srcu_gp_seq.
+	// before the load from ->srcu_gp_seq.
 	smp_mb();
 	return rcu_seq_snap(&ssp->srcu_gp_seq);
 }
