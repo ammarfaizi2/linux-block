@@ -1155,7 +1155,7 @@ rcu_torture_writer(void *arg)
 
 	do {
 		rcu_torture_writer_state = RTWS_FIXED_DELAY;
-		torture_hrtimeout_us(500, 1000, &rand);
+		schedule_timeout_uninterruptible(1);
 		rp = rcu_torture_alloc();
 		if (rp == NULL)
 			continue;
@@ -1296,7 +1296,8 @@ rcu_torture_fakewriter(void *arg)
 	set_user_nice(current, MAX_NICE);
 
 	do {
-		torture_hrtimeout_jiffies(torture_random(&rand) % 10, &rand);
+		schedule_timeout_uninterruptible(1 + torture_random(&rand)%10);
+		udelay(torture_random(&rand) & 0x3ff);
 		if (cur_ops->cb_barrier != NULL &&
 		    torture_random(&rand) % (nfakewriters * 8) == 0) {
 			cur_ops->cb_barrier();
@@ -1661,7 +1662,7 @@ rcu_torture_reader(void *arg)
 		if (!rcu_torture_one_read(&rand, myid) && !torture_must_stop())
 			schedule_timeout_interruptible(HZ);
 		if (time_after(jiffies, lastsleep) && !torture_must_stop()) {
-			torture_hrtimeout_us(500, 1000, &rand);
+			schedule_timeout_interruptible(1);
 			lastsleep = jiffies + 10;
 		}
 		while (num_online_cpus() < mynumonline && !torture_must_stop())
