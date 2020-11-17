@@ -632,7 +632,18 @@ int cifs_open(struct inode *inode, struct file *file)
 		goto out;
 	}
 
-	cifs_fscache_set_inode_cookie(inode, file);
+
+	fscache_use_cookie(cifs_inode_cookie(file_inode(file)),
+			   file->f_mode & FMODE_WRITE);
+	if (file->f_flags & O_DIRECT &&
+	    (!((file->f_flags & O_ACCMODE) != O_RDONLY) ||
+	     file->f_flags & O_APPEND)) {
+		struct cifs_fscache_inode_auxdata auxdata;
+		cifs_fscache_fill_auxdata(file_inode(file), &auxdata);
+		fscache_invalidate(cifs_inode_cookie(file_inode(file)),
+				   &auxdata, i_size_read(file_inode(file)),
+				   FSCACHE_INVAL_DIO_WRITE);
+	}
 
 	if ((oplock & CIFS_CREATE_ACTION) && !posix_open_ok && tcon->unix_ext) {
 		/*
@@ -876,6 +887,8 @@ int cifs_close(struct inode *inode, struct file *file)
 	struct cifs_sb_info *cifs_sb = CIFS_SB(inode->i_sb);
 	struct cifs_deferred_close *dclose;
 
+	cifs_fscache_unuse_inode_cookie(inode, file->f_mode & FMODE_WRITE);
+
 	if (file->private_data != NULL) {
 		cfile = file->private_data;
 		file->private_data = NULL;
@@ -886,7 +899,6 @@ int cifs_close(struct inode *inode, struct file *file)
 		    dclose) {
 			if (test_and_clear_bit(CIFS_INO_MODIFIED_ATTR, &cinode->flags)) {
 				inode->i_ctime = inode->i_mtime = current_time(inode);
-				cifs_fscache_update_inode_cookie(inode);
 			}
 			spin_lock(&cinode->deferred_lock);
 			cifs_add_deferred_close(cfile, dclose);
@@ -4787,14 +4799,14 @@ static int cifs_release_page(struct page *page, gfp_t gfp)
 			return false;
 		wait_on_page_fscache(page);
 	}
+	fscache_note_page_release(cifs_inode_cookie(page->mapping->host));
 	return true;
 }
 
 static void cifs_invalidate_page(struct page *page, unsigned int offset,
 				 unsigned int length)
 {
-	if (offset == 0 && length == PAGE_SIZE)
-		wait_on_page_fscache(page);
+	wait_on_page_fscache(page);
 }
 
 static int cifs_launder_page(struct page *page)
@@ -4971,6 +4983,19 @@ static void cifs_swap_deactivate(struct file *file)
 	/* do we need to unpin (or unlock) the file */
 }
 
+/*
+ * Mark a page as having been made dirty and thus needing writeback.  We also
+ * need to pin the cache object to write back to.
+ */
+#ifdef CONFIG_CIFS_FSCACHE
+static int cifs_set_page_dirty(struct page *page)
+{
+	return fscache_set_page_dirty(page, cifs_inode_cookie(page->mapping->host));
+}
+#else
+#define cifs_set_page_dirty __set_page_dirty_nobuffers
+#endif
+
 const struct address_space_operations cifs_addr_ops = {
 	.readpage = cifs_readpage,
 	.readpages = cifs_readpages,
@@ -4978,7 +5003,7 @@ const struct address_space_operations cifs_addr_ops = {
 	.writepages = cifs_writepages,
 	.write_begin = cifs_write_begin,
 	.write_end = cifs_write_end,
-	.set_page_dirty = __set_page_dirty_nobuffers,
+	.set_page_dirty = cifs_set_page_dirty,
 	.releasepage = cifs_release_page,
 	.direct_IO = cifs_direct_io,
 	.invalidatepage = cifs_invalidate_page,
@@ -5003,7 +5028,7 @@ const struct address_space_operations cifs_addr_ops_smallbuf = {
 	.writepages = cifs_writepages,
 	.write_begin = cifs_write_begin,
 	.write_end = cifs_write_end,
-	.set_page_dirty = __set_page_dirty_nobuffers,
+	.set_page_dirty = cifs_set_page_dirty,
 	.releasepage = cifs_release_page,
 	.invalidatepage = cifs_invalidate_page,
 	.launder_page = cifs_launder_page,
