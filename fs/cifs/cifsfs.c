@@ -973,7 +973,7 @@ cifs_loose_read_iter(struct kiocb *iocb, struct iov_iter *iter)
 	struct inode *inode = file_inode(iocb->ki_filp);
 
 	if (iocb->ki_flags & IOCB_DIRECT)
-		return cifs_user_readv(iocb, iter);
+		return netfs_direct_read_iter(iocb, iter);
 
 	rc = cifs_revalidate_mapping(inode);
 	if (rc)
@@ -1384,7 +1384,7 @@ const struct file_operations cifs_file_strict_ops = {
 };
 
 const struct file_operations cifs_file_direct_ops = {
-	.read_iter = cifs_direct_readv,
+	.read_iter = netfs_direct_read_iter,
 	.write_iter = cifs_direct_writev,
 	.open = cifs_open,
 	.release = cifs_close,
@@ -1440,7 +1440,7 @@ const struct file_operations cifs_file_strict_nobrl_ops = {
 };
 
 const struct file_operations cifs_file_direct_nobrl_ops = {
-	.read_iter = cifs_direct_readv,
+	.read_iter = netfs_direct_read_iter,
 	.write_iter = cifs_direct_writev,
 	.open = cifs_open,
 	.release = cifs_close,

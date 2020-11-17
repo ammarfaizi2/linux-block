@@ -1435,18 +1435,14 @@ struct cifs_aio_ctx {
 
 /* asynchronous read support */
 struct cifs_readdata {
+	struct netfs_io_subrequest	*subreq;
 	struct kref			refcount;
-	struct list_head		list;
-	struct completion		done;
 	struct cifsFileInfo		*cfile;
-	struct address_space		*mapping;
-	struct cifs_aio_ctx		*ctx;
 	__u64				offset;
 	ssize_t				got_bytes;
 	unsigned int			bytes;
 	pid_t				pid;
 	int				result;
-	struct work_struct		work;
 	struct iov_iter			iter;
 	struct kvec			iov[2];
 	struct TCP_Server_Info		*server;
