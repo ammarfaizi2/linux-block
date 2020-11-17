@@ -73,52 +73,6 @@ static inline void cifs_invalidate_cache(struct inode *inode, unsigned int flags
 			   i_size_read(inode), flags);
 }
 
-extern int __cifs_fscache_query_occupancy(struct inode *inode,
-					  pgoff_t first, unsigned int nr_pages,
-					  pgoff_t *_data_first,
-					  unsigned int *_data_nr_pages);
-
-static inline int cifs_fscache_query_occupancy(struct inode *inode,
-					       pgoff_t first, unsigned int nr_pages,
-					       pgoff_t *_data_first,
-					       unsigned int *_data_nr_pages)
-{
-	if (!cifs_inode_cookie(inode))
-		return -ENOBUFS;
-	return __cifs_fscache_query_occupancy(inode, first, nr_pages,
-					      _data_first, _data_nr_pages);
-}
-
-extern int __cifs_readpage_from_fscache(struct inode *pinode, struct page *ppage);
-extern void __cifs_readpage_to_fscache(struct inode *pinode, struct page *ppage);
-
-
-static inline int cifs_readpage_from_fscache(struct inode *inode,
-					     struct page *page)
-{
-	if (cifs_inode_cookie(inode))
-		return __cifs_readpage_from_fscache(inode, page);
-	return -ENOBUFS;
-}
-
-static inline void cifs_readpage_to_fscache(struct inode *inode,
-					    struct page *page)
-{
-	if (cifs_inode_cookie(inode))
-		__cifs_readpage_to_fscache(inode, page);
-}
-
-static inline int cifs_fscache_release_page(struct page *page, gfp_t gfp)
-{
-	if (PageFsCache(page)) {
-		if (current_is_kswapd() || !(gfp & __GFP_FS))
-			return false;
-		wait_on_page_fscache(page);
-		fscache_note_page_release(cifs_inode_cookie(page->mapping->host));
-	}
-	return true;
-}
-
 #else /* CONFIG_CIFS_FSCACHE */
 static inline
 void cifs_fscache_fill_coherency(struct inode *inode,
@@ -134,30 +88,6 @@ static inline void cifs_fscache_release_inode_cookie(struct inode *inode) {}
 static inline void cifs_fscache_unuse_inode_cookie(struct inode *inode, bool update) {}
 static inline struct fscache_cookie *cifs_inode_cookie(struct inode *inode) { return NULL; }
 static inline void cifs_invalidate_cache(struct inode *inode, unsigned int flags) {}
-
-static inline int cifs_fscache_query_occupancy(struct inode *inode,
-					       pgoff_t first, unsigned int nr_pages,
-					       pgoff_t *_data_first,
-					       unsigned int *_data_nr_pages)
-{
-	*_data_first = ULONG_MAX;
-	*_data_nr_pages = 0;
-	return -ENOBUFS;
-}
-
-static inline int
-cifs_readpage_from_fscache(struct inode *inode, struct page *page)
-{
-	return -ENOBUFS;
-}
-
-static inline
-void cifs_readpage_to_fscache(struct inode *inode, struct page *page) {}
-
-static inline int nfs_fscache_release_page(struct page *page, gfp_t gfp)
-{
-	return true; /* May release page */
-}
 
 #endif /* CONFIG_CIFS_FSCACHE */
 
