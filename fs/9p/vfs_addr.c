@@ -80,7 +80,7 @@ static bool v9fs_is_cache_enabled(struct inode *inode)
 {
 	struct fscache_cookie *cookie = v9fs_inode_cookie(V9FS_I(inode));
 
-	return fscache_cookie_enabled(cookie) && !hlist_empty(&cookie->backing_objects);
+	return fscache_cookie_enabled(cookie) && cookie->cache_priv;
 }
 
 /**
