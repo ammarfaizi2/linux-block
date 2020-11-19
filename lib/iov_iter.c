@@ -1542,25 +1542,43 @@ static unsigned long no_alignment(const struct iov_iter *i)
 	return 0;
 }
 
-static unsigned long xxx_gap_alignment(const struct iov_iter *i)
+static unsigned long iovec_gap_alignment(const struct iov_iter *i)
 {
 	unsigned long res = 0;
 	size_t size = i->count;
 
-	if (unlikely(iov_iter_is_pipe(i) || iov_iter_is_discard(i))) {
-		WARN_ON(1);
-		return ~0U;
-	}
-
-	iterate_all_kinds(i, size, v,
+	iterate_over_iovec(i, size, v,
 		(res |= (!res ? 0 : (unsigned long)v.iov_base) |
-			(size != v.iov_len ? size : 0), 0),
-		(res |= (!res ? 0 : (unsigned long)v.bv_offset) |
-			(size != v.bv_len ? size : 0)),
-		(res |= (!res ? 0 : (unsigned long)v.iov_base) |
-			(size != v.iov_len ? size : 0))
-		);
+			(size != v.iov_len ? size : 0), 0));
 	return res;
+}
+
+static unsigned long bvec_gap_alignment(const struct iov_iter *i)
+{
+	unsigned long res = 0;
+	size_t size = i->count;
+
+	iterate_over_bvec(i, size, v,
+		(res |= (!res ? 0 : (unsigned long)v.bv_offset) |
+			(size != v.bv_len ? size : 0)));
+	return res;
+}
+
+static unsigned long kvec_gap_alignment(const struct iov_iter *i)
+{
+	unsigned long res = 0;
+	size_t size = i->count;
+
+	iterate_over_kvec(i, size, v,
+		(res |= (!res ? 0 : (unsigned long)v.iov_base) |
+			(size != v.iov_len ? size : 0)));
+	return res;
+}
+
+static unsigned long no_gap_alignment(const struct iov_iter *i)
+{
+	WARN_ON(1);
+	return ~0U;
 }
 
 static inline ssize_t __pipe_get_pages(struct iov_iter *i,
@@ -2160,7 +2178,7 @@ static const struct iov_iter_ops iovec_iter_ops = {
 
 	.zero				= iovec_zero,
 	.alignment			= iovec_alignment,
-	.gap_alignment			= xxx_gap_alignment,
+	.gap_alignment			= iovec_gap_alignment,
 	.get_pages			= xxx_get_pages,
 	.get_pages_alloc		= xxx_get_pages_alloc,
 	.npages				= xxx_npages,
@@ -2194,7 +2212,7 @@ static const struct iov_iter_ops kvec_iter_ops = {
 
 	.zero				= kvec_zero,
 	.alignment			= kvec_alignment,
-	.gap_alignment			= xxx_gap_alignment,
+	.gap_alignment			= kvec_gap_alignment,
 	.get_pages			= xxx_get_pages,
 	.get_pages_alloc		= xxx_get_pages_alloc,
 	.npages				= xxx_npages,
@@ -2228,7 +2246,7 @@ static const struct iov_iter_ops bvec_iter_ops = {
 
 	.zero				= bvec_zero,
 	.alignment			= bvec_alignment,
-	.gap_alignment			= xxx_gap_alignment,
+	.gap_alignment			= bvec_gap_alignment,
 	.get_pages			= xxx_get_pages,
 	.get_pages_alloc		= xxx_get_pages_alloc,
 	.npages				= xxx_npages,
@@ -2262,7 +2280,7 @@ static const struct iov_iter_ops pipe_iter_ops = {
 
 	.zero				= pipe_zero,
 	.alignment			= pipe_alignment,
-	.gap_alignment			= xxx_gap_alignment,
+	.gap_alignment			= no_gap_alignment,
 	.get_pages			= xxx_get_pages,
 	.get_pages_alloc		= xxx_get_pages_alloc,
 	.npages				= xxx_npages,
@@ -2296,7 +2314,7 @@ static const struct iov_iter_ops discard_iter_ops = {
 
 	.zero				= discard_zero,
 	.alignment			= no_alignment,
-	.gap_alignment			= xxx_gap_alignment,
+	.gap_alignment			= no_gap_alignment,
 	.get_pages			= xxx_get_pages,
 	.get_pages_alloc		= xxx_get_pages_alloc,
 	.npages				= xxx_npages,
