@@ -1690,6 +1690,8 @@ static ssize_t pipe_get_pages_alloc(struct iov_iter *i,
 	unsigned int iter_head, npages;
 	ssize_t n;
 
+	if (maxsize > i->count)
+		maxsize = i->count;
 	if (!maxsize)
 		return 0;
 
@@ -1715,7 +1717,7 @@ static ssize_t pipe_get_pages_alloc(struct iov_iter *i,
 	return n;
 }
 
-static ssize_t xxx_get_pages_alloc(struct iov_iter *i,
+static ssize_t iovec_get_pages_alloc(struct iov_iter *i,
 		   struct page ***pages, size_t maxsize,
 		   size_t *start)
 {
@@ -1724,12 +1726,7 @@ static ssize_t xxx_get_pages_alloc(struct iov_iter *i,
 	if (maxsize > i->count)
 		maxsize = i->count;
 
-	if (unlikely(iov_iter_is_pipe(i)))
-		return pipe_get_pages_alloc(i, pages, maxsize, start);
-	if (unlikely(iov_iter_is_discard(i)))
-		return -EFAULT;
-
-	iterate_all_kinds(i, maxsize, v, ({
+	iterate_over_iovec(i, maxsize, v, ({
 		unsigned long addr = (unsigned long)v.iov_base;
 		size_t len = v.iov_len + (*start = addr & (PAGE_SIZE - 1));
 		int n;
@@ -1748,7 +1745,20 @@ static ssize_t xxx_get_pages_alloc(struct iov_iter *i,
 		}
 		*pages = p;
 		return (res == n ? len : res * PAGE_SIZE) - *start;
-	0;}),({
+	0;}));
+	return 0;
+}
+
+static ssize_t bvec_get_pages_alloc(struct iov_iter *i,
+		   struct page ***pages, size_t maxsize,
+		   size_t *start)
+{
+	struct page **p;
+
+	if (maxsize > i->count)
+		maxsize = i->count;
+
+	iterate_over_bvec(i, maxsize, v, ({
 		/* can't be more than PAGE_SIZE */
 		*start = v.bv_offset;
 		*pages = p = get_pages_array(1);
@@ -1756,11 +1766,15 @@ static ssize_t xxx_get_pages_alloc(struct iov_iter *i,
 			return -ENOMEM;
 		get_page(*p = v.bv_page);
 		return v.bv_len;
-	}),({
-		return -EFAULT;
-	})
-	)
+	}));
 	return 0;
+}
+
+static ssize_t no_get_pages_alloc(struct iov_iter *i,
+		   struct page ***pages, size_t maxsize,
+		   size_t *start)
+{
+	return -EFAULT;
 }
 
 static size_t xxx_csum_and_copy_from_iter(void *addr, size_t bytes, __wsum *csum,
@@ -2192,7 +2206,7 @@ static const struct iov_iter_ops iovec_iter_ops = {
 	.alignment			= iovec_alignment,
 	.gap_alignment			= iovec_gap_alignment,
 	.get_pages			= iovec_get_pages,
-	.get_pages_alloc		= xxx_get_pages_alloc,
+	.get_pages_alloc		= iovec_get_pages_alloc,
 	.npages				= xxx_npages,
 	.dup_iter			= xxx_dup_iter,
 	.for_each_range			= xxx_for_each_range,
@@ -2226,7 +2240,7 @@ static const struct iov_iter_ops kvec_iter_ops = {
 	.alignment			= kvec_alignment,
 	.gap_alignment			= kvec_gap_alignment,
 	.get_pages			= no_get_pages,
-	.get_pages_alloc		= xxx_get_pages_alloc,
+	.get_pages_alloc		= no_get_pages_alloc,
 	.npages				= xxx_npages,
 	.dup_iter			= xxx_dup_iter,
 	.for_each_range			= xxx_for_each_range,
@@ -2260,7 +2274,7 @@ static const struct iov_iter_ops bvec_iter_ops = {
 	.alignment			= bvec_alignment,
 	.gap_alignment			= bvec_gap_alignment,
 	.get_pages			= bvec_get_pages,
-	.get_pages_alloc		= xxx_get_pages_alloc,
+	.get_pages_alloc		= bvec_get_pages_alloc,
 	.npages				= xxx_npages,
 	.dup_iter			= xxx_dup_iter,
 	.for_each_range			= xxx_for_each_range,
@@ -2294,7 +2308,7 @@ static const struct iov_iter_ops pipe_iter_ops = {
 	.alignment			= pipe_alignment,
 	.gap_alignment			= no_gap_alignment,
 	.get_pages			= pipe_get_pages,
-	.get_pages_alloc		= xxx_get_pages_alloc,
+	.get_pages_alloc		= pipe_get_pages_alloc,
 	.npages				= xxx_npages,
 	.dup_iter			= xxx_dup_iter,
 	.for_each_range			= xxx_for_each_range,
@@ -2328,7 +2342,7 @@ static const struct iov_iter_ops discard_iter_ops = {
 	.alignment			= no_alignment,
 	.gap_alignment			= no_gap_alignment,
 	.get_pages			= no_get_pages,
-	.get_pages_alloc		= xxx_get_pages_alloc,
+	.get_pages_alloc		= no_get_pages_alloc,
 	.npages				= xxx_npages,
 	.dup_iter			= xxx_dup_iter,
 	.for_each_range			= xxx_for_each_range,
