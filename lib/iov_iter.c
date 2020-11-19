@@ -1195,7 +1195,7 @@ static size_t discard_zero(size_t bytes, struct iov_iter *i)
 	return bytes;
 }
 
-static size_t xxx_copy_from_user_atomic(struct page *page,
+static size_t iovec_copy_from_user_atomic(struct page *page,
 		struct iov_iter *i, unsigned long offset, size_t bytes)
 {
 	char *kaddr = kmap_atomic(page), *p = kaddr + offset;
@@ -1203,19 +1203,46 @@ static size_t xxx_copy_from_user_atomic(struct page *page,
 		kunmap_atomic(kaddr);
 		return 0;
 	}
-	if (unlikely(iov_iter_is_pipe(i) || iov_iter_is_discard(i))) {
-		kunmap_atomic(kaddr);
-		WARN_ON(1);
-		return 0;
-	}
-	iterate_all_kinds(i, bytes, v,
-		copyin((p += v.iov_len) - v.iov_len, v.iov_base, v.iov_len),
-		memcpy_from_page((p += v.bv_len) - v.bv_len, v.bv_page,
-				 v.bv_offset, v.bv_len),
-		memcpy((p += v.iov_len) - v.iov_len, v.iov_base, v.iov_len)
-	)
+	iterate_over_iovec(i, bytes, v,
+		copyin((p += v.iov_len) - v.iov_len, v.iov_base, v.iov_len));
 	kunmap_atomic(kaddr);
 	return bytes;
+}
+
+static size_t bvec_copy_from_user_atomic(struct page *page,
+		struct iov_iter *i, unsigned long offset, size_t bytes)
+{
+	char *kaddr = kmap_atomic(page), *p = kaddr + offset;
+	if (unlikely(!page_copy_sane(page, offset, bytes))) {
+		kunmap_atomic(kaddr);
+		return 0;
+	}
+	iterate_over_bvec(i, bytes, v,
+		memcpy_from_page((p += v.bv_len) - v.bv_len, v.bv_page,
+				 v.bv_offset, v.bv_len));
+	kunmap_atomic(kaddr);
+	return bytes;
+}
+
+static size_t kvec_copy_from_user_atomic(struct page *page,
+		struct iov_iter *i, unsigned long offset, size_t bytes)
+{
+	char *kaddr = kmap_atomic(page), *p = kaddr + offset;
+	if (unlikely(!page_copy_sane(page, offset, bytes))) {
+		kunmap_atomic(kaddr);
+		return 0;
+	}
+	iterate_over_kvec(i, bytes, v,
+		memcpy((p += v.iov_len) - v.iov_len, v.iov_base, v.iov_len));
+	kunmap_atomic(kaddr);
+	return bytes;
+}
+
+static size_t no_copy_from_user_atomic(struct page *page,
+		struct iov_iter *i, unsigned long offset, size_t bytes)
+{
+	WARN_ON(1);
+	return 0;
 }
 
 static inline void pipe_truncate(struct iov_iter *i)
@@ -2046,7 +2073,7 @@ static int xxx_for_each_range(struct iov_iter *i, size_t bytes,
 
 static const struct iov_iter_ops iovec_iter_ops = {
 	.type				= ITER_IOVEC,
-	.copy_from_user_atomic		= xxx_copy_from_user_atomic,
+	.copy_from_user_atomic		= iovec_copy_from_user_atomic,
 	.advance			= xxx_advance,
 	.revert				= xxx_revert,
 	.fault_in_readable		= iovec_fault_in_readable,
@@ -2080,7 +2107,7 @@ static const struct iov_iter_ops iovec_iter_ops = {
 
 static const struct iov_iter_ops kvec_iter_ops = {
 	.type				= ITER_KVEC,
-	.copy_from_user_atomic		= xxx_copy_from_user_atomic,
+	.copy_from_user_atomic		= kvec_copy_from_user_atomic,
 	.advance			= xxx_advance,
 	.revert				= xxx_revert,
 	.fault_in_readable		= no_fault_in_readable,
@@ -2114,7 +2141,7 @@ static const struct iov_iter_ops kvec_iter_ops = {
 
 static const struct iov_iter_ops bvec_iter_ops = {
 	.type				= ITER_BVEC,
-	.copy_from_user_atomic		= xxx_copy_from_user_atomic,
+	.copy_from_user_atomic		= bvec_copy_from_user_atomic,
 	.advance			= xxx_advance,
 	.revert				= xxx_revert,
 	.fault_in_readable		= no_fault_in_readable,
@@ -2148,7 +2175,7 @@ static const struct iov_iter_ops bvec_iter_ops = {
 
 static const struct iov_iter_ops pipe_iter_ops = {
 	.type				= ITER_PIPE,
-	.copy_from_user_atomic		= xxx_copy_from_user_atomic,
+	.copy_from_user_atomic		= no_copy_from_user_atomic,
 	.advance			= xxx_advance,
 	.revert				= xxx_revert,
 	.fault_in_readable		= no_fault_in_readable,
@@ -2182,7 +2209,7 @@ static const struct iov_iter_ops pipe_iter_ops = {
 
 static const struct iov_iter_ops discard_iter_ops = {
 	.type				= ITER_DISCARD,
-	.copy_from_user_atomic		= xxx_copy_from_user_atomic,
+	.copy_from_user_atomic		= no_copy_from_user_atomic,
 	.advance			= xxx_advance,
 	.revert				= xxx_revert,
 	.fault_in_readable		= no_fault_in_readable,
