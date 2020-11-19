@@ -2004,48 +2004,78 @@ size_t hash_and_copy_to_iter(const void *addr, size_t bytes, void *hashp,
 }
 EXPORT_SYMBOL(hash_and_copy_to_iter);
 
-static int xxx_npages(const struct iov_iter *i, int maxpages)
+static int iovec_npages(const struct iov_iter *i, int maxpages)
 {
 	size_t size = i->count;
 	int npages = 0;
 
 	if (!size)
 		return 0;
-	if (unlikely(iov_iter_is_discard(i)))
-		return 0;
-
-	if (unlikely(iov_iter_is_pipe(i))) {
-		struct pipe_inode_info *pipe = i->pipe;
-		unsigned int iter_head;
-		size_t off;
-
-		if (!sanity(i))
-			return 0;
-
-		data_start(i, &iter_head, &off);
-		/* some of this one + all after this one */
-		npages = pipe_space_for_user(iter_head, pipe->tail, pipe);
-		if (npages >= maxpages)
-			return maxpages;
-	} else iterate_all_kinds(i, size, v, ({
+	iterate_over_iovec(i, size, v, ({
 		unsigned long p = (unsigned long)v.iov_base;
 		npages += DIV_ROUND_UP(p + v.iov_len, PAGE_SIZE)
 			- p / PAGE_SIZE;
 		if (npages >= maxpages)
 			return maxpages;
-	0;}),({
+	0;}));
+	return npages;
+}
+
+static int bvec_npages(const struct iov_iter *i, int maxpages)
+{
+	size_t size = i->count;
+	int npages = 0;
+
+	if (!size)
+		return 0;
+	iterate_over_bvec(i, size, v, ({
 		npages++;
 		if (npages >= maxpages)
 			return maxpages;
-	}),({
+	}));
+	return npages;
+}
+
+static int kvec_npages(const struct iov_iter *i, int maxpages)
+{
+	size_t size = i->count;
+	int npages = 0;
+
+	if (!size)
+		return 0;
+	iterate_over_kvec(i, size, v, ({
 		unsigned long p = (unsigned long)v.iov_base;
 		npages += DIV_ROUND_UP(p + v.iov_len, PAGE_SIZE)
 			- p / PAGE_SIZE;
 		if (npages >= maxpages)
 			return maxpages;
-	})
-	)
+	}));
 	return npages;
+}
+
+static int pipe_npages(const struct iov_iter *i, int maxpages)
+{
+	struct pipe_inode_info *pipe = i->pipe;
+	size_t size = i->count, off;
+	unsigned int iter_head;
+	int npages = 0;
+
+	if (!size)
+		return 0;
+	if (!sanity(i))
+		return 0;
+
+	data_start(i, &iter_head, &off);
+	/* some of this one + all after this one */
+	npages = pipe_space_for_user(iter_head, pipe->tail, pipe);
+	if (npages >= maxpages)
+		return maxpages;
+	return npages;
+}
+
+static int discard_npages(const struct iov_iter *i, int maxpages)
+{
+	return 0;
 }
 
 static const void *xxx_dup_iter(struct iov_iter *new, struct iov_iter *old, gfp_t flags)
@@ -2293,7 +2323,7 @@ static const struct iov_iter_ops iovec_iter_ops = {
 	.gap_alignment			= iovec_gap_alignment,
 	.get_pages			= iovec_get_pages,
 	.get_pages_alloc		= iovec_get_pages_alloc,
-	.npages				= xxx_npages,
+	.npages				= iovec_npages,
 	.dup_iter			= xxx_dup_iter,
 	.for_each_range			= xxx_for_each_range,
 };
@@ -2327,7 +2357,7 @@ static const struct iov_iter_ops kvec_iter_ops = {
 	.gap_alignment			= kvec_gap_alignment,
 	.get_pages			= no_get_pages,
 	.get_pages_alloc		= no_get_pages_alloc,
-	.npages				= xxx_npages,
+	.npages				= kvec_npages,
 	.dup_iter			= xxx_dup_iter,
 	.for_each_range			= xxx_for_each_range,
 };
@@ -2361,7 +2391,7 @@ static const struct iov_iter_ops bvec_iter_ops = {
 	.gap_alignment			= bvec_gap_alignment,
 	.get_pages			= bvec_get_pages,
 	.get_pages_alloc		= bvec_get_pages_alloc,
-	.npages				= xxx_npages,
+	.npages				= bvec_npages,
 	.dup_iter			= xxx_dup_iter,
 	.for_each_range			= xxx_for_each_range,
 };
@@ -2395,7 +2425,7 @@ static const struct iov_iter_ops pipe_iter_ops = {
 	.gap_alignment			= no_gap_alignment,
 	.get_pages			= pipe_get_pages,
 	.get_pages_alloc		= pipe_get_pages_alloc,
-	.npages				= xxx_npages,
+	.npages				= pipe_npages,
 	.dup_iter			= xxx_dup_iter,
 	.for_each_range			= xxx_for_each_range,
 };
@@ -2429,7 +2459,7 @@ static const struct iov_iter_ops discard_iter_ops = {
 	.gap_alignment			= no_gap_alignment,
 	.get_pages			= no_get_pages,
 	.get_pages_alloc		= no_get_pages_alloc,
-	.npages				= xxx_npages,
+	.npages				= discard_npages,
 	.dup_iter			= xxx_dup_iter,
 	.for_each_range			= xxx_for_each_range,
 };
