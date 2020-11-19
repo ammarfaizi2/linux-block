@@ -9,6 +9,11 @@ struct crypto_shash;
 struct rxgk_crypto_scheme;
 struct rxgk_enc_keys;
 
+enum krb5_crypto_mode {
+	KRB5_CHECKSUM_MODE,
+	KRB5_ENCRYPT_MODE,
+};
+
 /*
  * Kerberos encoding type definition.
  */
@@ -181,3 +186,7 @@ int rfc3961_get_mic_skb(const struct rxgk_krb5_enctype *, struct crypto_shash *,
 int rfc3961_verify_mic_skb(struct rxrpc_call *, const struct rxgk_krb5_enctype *,
 			   struct crypto_shash *, const struct rxgk_buffer *,
 			   struct sk_buff *, unsigned int *, unsigned int *, u32 *);
+size_t rxgk_krb5_how_much_buffer(const struct rxgk_krb5_enctype *,
+				 enum krb5_crypto_mode, bool, size_t, size_t *);
+size_t rxgk_krb5_how_much_data(const struct rxgk_krb5_enctype *,
+			       enum krb5_crypto_mode, bool, size_t *, size_t *);

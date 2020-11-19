@@ -798,3 +798,89 @@ const struct rxgk_crypto_scheme rfc3961_crypto_scheme = {
 	.get_mic_skb	= rfc3961_get_mic_skb,
 	.verify_mic_skb	= rfc3961_verify_mic_skb,
 };
+
+/**
+ * crypto_krb5_how_much_buffer - Work out how much buffer is required for an amount of data
+ * @krb5: The encoding to use.
+ * @mode: The mode in which to operated (checksum/encrypt)
+ * @pad: True if the data should be padded anyway
+ * @data_size: How much data we want to allow for
+ * @_offset: Where to place the offset into the buffer
+ *
+ * Calculate how much buffer space is required to wrap a given amount of data.
+ * This allows for a confounder, padding and checksum as appropriate.  The
+ * amount of buffer required is returned and the offset into the buffer at
+ * which the data will start is placed in *_offset.
+ */
+size_t rxgk_krb5_how_much_buffer(const struct rxgk_krb5_enctype *gk5e,
+				 enum krb5_crypto_mode mode, bool pad,
+				 size_t data_size, size_t *_offset)
+{
+	switch (mode) {
+	case KRB5_CHECKSUM_MODE:
+		*_offset = 0;
+		return gk5e->cksumlength + data_size;
+
+	case KRB5_ENCRYPT_MODE:
+		data_size += gk5e->conflen;
+		if (pad || gk5e->pad)
+			data_size = round_up(data_size, gk5e->blocksize);
+		*_offset = gk5e->conflen;
+		return gk5e->cksumlength + data_size;
+
+	default:
+		WARN_ON(1);
+		*_offset = 0;
+		return 0;
+	}
+}
+
+/**
+ * crypto_krb5_how_much_data - Work out how much data can fit in an amount of buffer
+ * @krb5: The encoding to use.
+ * @mode: The mode in which to operated (checksum/encrypt)
+ * @pad: True if the data should be padded anyway
+ * @_buffer_size: How much buffer we want to allow for (may be reduced)
+ * @_offset: Where to place the offset into the buffer
+ *
+ * Calculate how much data can be fitted into given amount of buffer.  This
+ * allows for a confounder, padding and checksum as appropriate.  The amount of
+ * data that will fit is returned, the amount of buffer required is shrunk to
+ * allow for alignment and the offset into the buffer at which the data will
+ * start is placed in *_offset.
+ */
+size_t rxgk_krb5_how_much_data(const struct rxgk_krb5_enctype *gk5e,
+			       enum krb5_crypto_mode mode, bool pad,
+			       size_t *_buffer_size, size_t *_offset)
+{
+	size_t buffer_size = *_buffer_size, data_size, aligned_size;
+
+	switch (mode) {
+	case KRB5_CHECKSUM_MODE:
+		if (WARN_ON(buffer_size < gk5e->cksumlength + 1))
+			goto bad;
+		*_offset = 0;
+		return buffer_size - gk5e->cksumlength;
+
+	case KRB5_ENCRYPT_MODE:
+		if (WARN_ON(buffer_size < gk5e->conflen + 1 + gk5e->cksumlength))
+			goto bad;
+		data_size = buffer_size - gk5e->cksumlength;
+		if (pad || gk5e->pad) {
+			aligned_size = round_down(data_size, gk5e->blocksize);
+			*_buffer_size -= data_size - aligned_size;
+			data_size = aligned_size;
+		}
+
+		*_offset = gk5e->conflen;
+		return data_size - gk5e->conflen;
+
+	default:
+		WARN_ON(1);
+		goto bad;
+	}
+
+bad:
+	*_offset = 0;
+	return 0;
+}
