@@ -1415,18 +1415,23 @@ static void discard_revert(struct iov_iter *i, size_t unroll)
 /*
  * Return the count of just the current iov_iter segment.
  */
-static size_t xxx_single_seg_count(const struct iov_iter *i)
+static size_t iovec_kvec_single_seg_count(const struct iov_iter *i)
 {
-	if (unlikely(iov_iter_is_pipe(i)))
-		return i->count;	// it is a silly place, anyway
 	if (i->nr_segs == 1)
 		return i->count;
-	if (unlikely(iov_iter_is_discard(i)))
+	return min(i->count, i->iov->iov_len - i->iov_offset);
+}
+
+static size_t bvec_single_seg_count(const struct iov_iter *i)
+{
+	if (i->nr_segs == 1)
 		return i->count;
-	else if (iov_iter_is_bvec(i))
-		return min(i->count, i->bvec->bv_len - i->iov_offset);
-	else
-		return min(i->count, i->iov->iov_len - i->iov_offset);
+	return min(i->count, i->bvec->bv_len - i->iov_offset);
+}
+
+static size_t simple_single_seg_count(const struct iov_iter *i)
+{
+	return i->count;
 }
 
 void iov_iter_kvec(struct iov_iter *i, unsigned int direction,
@@ -2110,7 +2115,7 @@ static const struct iov_iter_ops iovec_iter_ops = {
 	.advance			= iovec_advance,
 	.revert				= iovec_kvec_revert,
 	.fault_in_readable		= iovec_fault_in_readable,
-	.single_seg_count		= xxx_single_seg_count,
+	.single_seg_count		= iovec_kvec_single_seg_count,
 	.copy_page_to_iter		= iovec_copy_page_to_iter,
 	.copy_page_from_iter		= iovec_copy_page_from_iter,
 	.copy_to_iter			= iovec_copy_to_iter,
@@ -2144,7 +2149,7 @@ static const struct iov_iter_ops kvec_iter_ops = {
 	.advance			= kvec_advance,
 	.revert				= iovec_kvec_revert,
 	.fault_in_readable		= no_fault_in_readable,
-	.single_seg_count		= xxx_single_seg_count,
+	.single_seg_count		= iovec_kvec_single_seg_count,
 	.copy_page_to_iter		= bkvec_copy_page_to_iter,
 	.copy_page_from_iter		= bkvec_copy_page_from_iter,
 	.copy_to_iter			= kvec_copy_to_iter,
@@ -2178,7 +2183,7 @@ static const struct iov_iter_ops bvec_iter_ops = {
 	.advance			= bvec_iov_advance,
 	.revert				= bvec_revert,
 	.fault_in_readable		= no_fault_in_readable,
-	.single_seg_count		= xxx_single_seg_count,
+	.single_seg_count		= bvec_single_seg_count,
 	.copy_page_to_iter		= bkvec_copy_page_to_iter,
 	.copy_page_from_iter		= bkvec_copy_page_from_iter,
 	.copy_to_iter			= bvec_copy_to_iter,
@@ -2212,7 +2217,7 @@ static const struct iov_iter_ops pipe_iter_ops = {
 	.advance			= pipe_advance,
 	.revert				= pipe_revert,
 	.fault_in_readable		= no_fault_in_readable,
-	.single_seg_count		= xxx_single_seg_count,
+	.single_seg_count		= simple_single_seg_count,
 	.copy_page_to_iter		= pipe_copy_page_to_iter,
 	.copy_page_from_iter		= no_copy_page_from_iter,
 	.copy_to_iter			= pipe_copy_to_iter,
@@ -2246,7 +2251,7 @@ static const struct iov_iter_ops discard_iter_ops = {
 	.advance			= discard_advance,
 	.revert				= discard_revert,
 	.fault_in_readable		= no_fault_in_readable,
-	.single_seg_count		= xxx_single_seg_count,
+	.single_seg_count		= simple_single_seg_count,
 	.copy_page_to_iter		= discard_copy_page_to_iter,
 	.copy_page_from_iter		= no_copy_page_from_iter,
 	.copy_to_iter			= discard_copy_to_iter,
