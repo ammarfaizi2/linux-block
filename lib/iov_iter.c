@@ -2078,24 +2078,33 @@ static int discard_npages(const struct iov_iter *i, int maxpages)
 	return 0;
 }
 
-static const void *xxx_dup_iter(struct iov_iter *new, struct iov_iter *old, gfp_t flags)
+static const void *iovec_kvec_dup_iter(struct iov_iter *new, struct iov_iter *old, gfp_t flags)
 {
 	*new = *old;
-	if (unlikely(iov_iter_is_pipe(new))) {
-		WARN_ON(1);
-		return NULL;
-	}
-	if (unlikely(iov_iter_is_discard(new)))
-		return NULL;
-	if (iov_iter_is_bvec(new))
-		return new->bvec = kmemdup(new->bvec,
-				    new->nr_segs * sizeof(struct bio_vec),
-				    flags);
-	else
-		/* iovec and kvec have identical layout */
-		return new->iov = kmemdup(new->iov,
-				   new->nr_segs * sizeof(struct iovec),
+	/* iovec and kvec have identical layout */
+	return new->iov = kmemdup(new->iov,
+				  new->nr_segs * sizeof(struct iovec),
+				  flags);
+}
+
+static const void *bvec_dup_iter(struct iov_iter *new, struct iov_iter *old, gfp_t flags)
+{
+	*new = *old;
+	return new->bvec = kmemdup(new->bvec,
+				   new->nr_segs * sizeof(struct bio_vec),
 				   flags);
+}
+
+static const void *discard_dup_iter(struct iov_iter *new, struct iov_iter *old, gfp_t flags)
+{
+	*new = *old;
+	return NULL;
+}
+
+static const void *no_dup_iter(struct iov_iter *new, struct iov_iter *old, gfp_t flags)
+{
+	WARN_ON(1);
+	return NULL;
 }
 
 static int copy_compat_iovec_from_user(struct iovec *iov,
@@ -2324,7 +2333,7 @@ static const struct iov_iter_ops iovec_iter_ops = {
 	.get_pages			= iovec_get_pages,
 	.get_pages_alloc		= iovec_get_pages_alloc,
 	.npages				= iovec_npages,
-	.dup_iter			= xxx_dup_iter,
+	.dup_iter			= iovec_kvec_dup_iter,
 	.for_each_range			= xxx_for_each_range,
 };
 
@@ -2358,7 +2367,7 @@ static const struct iov_iter_ops kvec_iter_ops = {
 	.get_pages			= no_get_pages,
 	.get_pages_alloc		= no_get_pages_alloc,
 	.npages				= kvec_npages,
-	.dup_iter			= xxx_dup_iter,
+	.dup_iter			= iovec_kvec_dup_iter,
 	.for_each_range			= xxx_for_each_range,
 };
 
@@ -2392,7 +2401,7 @@ static const struct iov_iter_ops bvec_iter_ops = {
 	.get_pages			= bvec_get_pages,
 	.get_pages_alloc		= bvec_get_pages_alloc,
 	.npages				= bvec_npages,
-	.dup_iter			= xxx_dup_iter,
+	.dup_iter			= bvec_dup_iter,
 	.for_each_range			= xxx_for_each_range,
 };
 
@@ -2426,7 +2435,7 @@ static const struct iov_iter_ops pipe_iter_ops = {
 	.get_pages			= pipe_get_pages,
 	.get_pages_alloc		= pipe_get_pages_alloc,
 	.npages				= pipe_npages,
-	.dup_iter			= xxx_dup_iter,
+	.dup_iter			= no_dup_iter,
 	.for_each_range			= xxx_for_each_range,
 };
 
@@ -2460,6 +2469,6 @@ static const struct iov_iter_ops discard_iter_ops = {
 	.get_pages			= no_get_pages,
 	.get_pages_alloc		= no_get_pages_alloc,
 	.npages				= discard_npages,
-	.dup_iter			= xxx_dup_iter,
+	.dup_iter			= discard_dup_iter,
 	.for_each_range			= xxx_for_each_range,
 };
