@@ -863,22 +863,36 @@ static size_t kvec_copy_mc_to_iter(const void *addr, size_t bytes, struct iov_it
 }
 #endif /* CONFIG_ARCH_HAS_COPY_MC */
 
-static size_t xxx_copy_from_iter(void *addr, size_t bytes, struct iov_iter *i)
+static size_t iovec_copy_from_iter(void *addr, size_t bytes, struct iov_iter *i)
 {
 	char *to = addr;
-	if (unlikely(iov_iter_is_pipe(i))) {
-		WARN_ON(1);
-		return 0;
-	}
-	if (iter_is_iovec(i))
-		might_fault();
-	iterate_and_advance(i, bytes, v,
-		copyin((to += v.iov_len) - v.iov_len, v.iov_base, v.iov_len),
-		memcpy_from_page((to += v.bv_len) - v.bv_len, v.bv_page,
-				 v.bv_offset, v.bv_len),
-		memcpy((to += v.iov_len) - v.iov_len, v.iov_base, v.iov_len)
-	)
+	might_fault();
+	iterate_and_advance_iovec(i, bytes, v,
+		copyin((to += v.iov_len) - v.iov_len, v.iov_base, v.iov_len));
 
+	return bytes;
+}
+
+static size_t bvec_copy_from_iter(void *addr, size_t bytes, struct iov_iter *i)
+{
+	char *to = addr;
+	iterate_and_advance_bvec(i, bytes, v,
+		memcpy_from_page((to += v.bv_len) - v.bv_len, v.bv_page,
+				 v.bv_offset, v.bv_len));
+	return bytes;
+}
+
+static size_t kvec_copy_from_iter(void *addr, size_t bytes, struct iov_iter *i)
+{
+	char *to = addr;
+	iterate_and_advance_kvec(i, bytes, v,
+		memcpy((to += v.iov_len) - v.iov_len, v.iov_base, v.iov_len));
+	return bytes;
+}
+
+static size_t no_copy_from_iter(void *addr, size_t bytes, struct iov_iter *i)
+{
+	WARN_ON(1);
 	return bytes;
 }
 
@@ -1037,7 +1051,7 @@ static size_t xxx_copy_page_from_iter(struct page *page, size_t offset, size_t b
 	}
 	if (iov_iter_type(i) & (ITER_BVEC|ITER_KVEC)) {
 		void *kaddr = kmap_atomic(page);
-		size_t wanted = xxx_copy_from_iter(kaddr + offset, bytes, i);
+		size_t wanted = copy_from_iter(kaddr + offset, bytes, i);
 		kunmap_atomic(kaddr);
 		return wanted;
 	} else
@@ -1943,7 +1957,7 @@ static const struct iov_iter_ops iovec_iter_ops = {
 	.copy_page_to_iter		= iovec_copy_page_to_iter,
 	.copy_page_from_iter		= xxx_copy_page_from_iter,
 	.copy_to_iter			= iovec_copy_to_iter,
-	.copy_from_iter			= xxx_copy_from_iter,
+	.copy_from_iter			= iovec_copy_from_iter,
 	.copy_from_iter_full		= xxx_copy_from_iter_full,
 	.copy_from_iter_nocache		= xxx_copy_from_iter_nocache,
 	.copy_from_iter_full_nocache	= xxx_copy_from_iter_full_nocache,
@@ -1977,7 +1991,7 @@ static const struct iov_iter_ops kvec_iter_ops = {
 	.copy_page_to_iter		= bkvec_copy_page_to_iter,
 	.copy_page_from_iter		= xxx_copy_page_from_iter,
 	.copy_to_iter			= kvec_copy_to_iter,
-	.copy_from_iter			= xxx_copy_from_iter,
+	.copy_from_iter			= kvec_copy_from_iter,
 	.copy_from_iter_full		= xxx_copy_from_iter_full,
 	.copy_from_iter_nocache		= xxx_copy_from_iter_nocache,
 	.copy_from_iter_full_nocache	= xxx_copy_from_iter_full_nocache,
@@ -2011,7 +2025,7 @@ static const struct iov_iter_ops bvec_iter_ops = {
 	.copy_page_to_iter		= bkvec_copy_page_to_iter,
 	.copy_page_from_iter		= xxx_copy_page_from_iter,
 	.copy_to_iter			= bvec_copy_to_iter,
-	.copy_from_iter			= xxx_copy_from_iter,
+	.copy_from_iter			= bvec_copy_from_iter,
 	.copy_from_iter_full		= xxx_copy_from_iter_full,
 	.copy_from_iter_nocache		= xxx_copy_from_iter_nocache,
 	.copy_from_iter_full_nocache	= xxx_copy_from_iter_full_nocache,
@@ -2045,7 +2059,7 @@ static const struct iov_iter_ops pipe_iter_ops = {
 	.copy_page_to_iter		= pipe_copy_page_to_iter,
 	.copy_page_from_iter		= xxx_copy_page_from_iter,
 	.copy_to_iter			= pipe_copy_to_iter,
-	.copy_from_iter			= xxx_copy_from_iter,
+	.copy_from_iter			= no_copy_from_iter,
 	.copy_from_iter_full		= xxx_copy_from_iter_full,
 	.copy_from_iter_nocache		= xxx_copy_from_iter_nocache,
 	.copy_from_iter_full_nocache	= xxx_copy_from_iter_full_nocache,
@@ -2079,7 +2093,7 @@ static const struct iov_iter_ops discard_iter_ops = {
 	.copy_page_to_iter		= discard_copy_page_to_iter,
 	.copy_page_from_iter		= xxx_copy_page_from_iter,
 	.copy_to_iter			= discard_copy_to_iter,
-	.copy_from_iter			= xxx_copy_from_iter,
+	.copy_from_iter			= no_copy_from_iter,
 	.copy_from_iter_full		= xxx_copy_from_iter_full,
 	.copy_from_iter_nocache		= xxx_copy_from_iter_nocache,
 	.copy_from_iter_full_nocache	= xxx_copy_from_iter_full_nocache,
