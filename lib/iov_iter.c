@@ -106,6 +106,33 @@ static inline bool page_copy_sane(struct page *page, size_t offset, size_t n);
 	}							\
 }
 
+#define iterate_over_iovec(i, n, v, CMD) {			\
+	if (likely(n)) {					\
+		size_t skip = i->iov_offset;			\
+		const struct iovec *iov;			\
+		struct iovec v;					\
+		iterate_iovec(i, n, v, iov, skip, (CMD))	\
+	}							\
+}
+
+#define iterate_over_bvec(i, n, v, CMD) {			\
+	if (likely(n)) {					\
+		size_t skip = i->iov_offset;			\
+		struct bio_vec v;				\
+		struct bvec_iter __bi;				\
+		iterate_bvec(i, n, v, __bi, skip, (CMD))	\
+	}							\
+}
+
+#define iterate_over_kvec(i, n, v, CMD) {			\
+	if (likely(n)) {					\
+		size_t skip = i->iov_offset;			\
+		const struct kvec *kvec;			\
+		struct kvec v;					\
+		iterate_kvec(i, n, v, kvec, skip, (CMD))	\
+	}							\
+}
+
 #define iterate_and_advance(i, n, v, I, B, K) {			\
 	if (unlikely(i->count < n))				\
 		n = i->count;					\
