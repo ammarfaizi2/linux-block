@@ -1299,17 +1299,24 @@ static void pipe_advance(struct iov_iter *i, size_t size)
 	pipe_truncate(i);
 }
 
-static void xxx_advance(struct iov_iter *i, size_t size)
+static void iovec_advance(struct iov_iter *i, size_t size)
 {
-	if (unlikely(iov_iter_is_pipe(i))) {
-		pipe_advance(i, size);
-		return;
-	}
-	if (unlikely(iov_iter_is_discard(i))) {
-		i->count -= size;
-		return;
-	}
-	iterate_and_advance(i, size, v, 0, 0, 0)
+	iterate_and_advance_iovec(i, size, v, 0)
+}
+
+static void bvec_iov_advance(struct iov_iter *i, size_t size)
+{
+	iterate_and_advance_bvec(i, size, v, 0)
+}
+
+static void kvec_advance(struct iov_iter *i, size_t size)
+{
+	iterate_and_advance_kvec(i, size, v, 0)
+}
+
+static void discard_advance(struct iov_iter *i, size_t size)
+{
+	i->count -= size;
 }
 
 static void xxx_revert(struct iov_iter *i, size_t unroll)
@@ -2074,7 +2081,7 @@ static int xxx_for_each_range(struct iov_iter *i, size_t bytes,
 static const struct iov_iter_ops iovec_iter_ops = {
 	.type				= ITER_IOVEC,
 	.copy_from_user_atomic		= iovec_copy_from_user_atomic,
-	.advance			= xxx_advance,
+	.advance			= iovec_advance,
 	.revert				= xxx_revert,
 	.fault_in_readable		= iovec_fault_in_readable,
 	.single_seg_count		= xxx_single_seg_count,
@@ -2108,7 +2115,7 @@ static const struct iov_iter_ops iovec_iter_ops = {
 static const struct iov_iter_ops kvec_iter_ops = {
 	.type				= ITER_KVEC,
 	.copy_from_user_atomic		= kvec_copy_from_user_atomic,
-	.advance			= xxx_advance,
+	.advance			= kvec_advance,
 	.revert				= xxx_revert,
 	.fault_in_readable		= no_fault_in_readable,
 	.single_seg_count		= xxx_single_seg_count,
@@ -2142,7 +2149,7 @@ static const struct iov_iter_ops kvec_iter_ops = {
 static const struct iov_iter_ops bvec_iter_ops = {
 	.type				= ITER_BVEC,
 	.copy_from_user_atomic		= bvec_copy_from_user_atomic,
-	.advance			= xxx_advance,
+	.advance			= bvec_iov_advance,
 	.revert				= xxx_revert,
 	.fault_in_readable		= no_fault_in_readable,
 	.single_seg_count		= xxx_single_seg_count,
@@ -2176,7 +2183,7 @@ static const struct iov_iter_ops bvec_iter_ops = {
 static const struct iov_iter_ops pipe_iter_ops = {
 	.type				= ITER_PIPE,
 	.copy_from_user_atomic		= no_copy_from_user_atomic,
-	.advance			= xxx_advance,
+	.advance			= pipe_advance,
 	.revert				= xxx_revert,
 	.fault_in_readable		= no_fault_in_readable,
 	.single_seg_count		= xxx_single_seg_count,
@@ -2210,7 +2217,7 @@ static const struct iov_iter_ops pipe_iter_ops = {
 static const struct iov_iter_ops discard_iter_ops = {
 	.type				= ITER_DISCARD,
 	.copy_from_user_atomic		= no_copy_from_user_atomic,
-	.advance			= xxx_advance,
+	.advance			= discard_advance,
 	.revert				= xxx_revert,
 	.fault_in_readable		= no_fault_in_readable,
 	.single_seg_count		= xxx_single_seg_count,
