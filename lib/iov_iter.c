@@ -698,14 +698,15 @@ static __wsum csum_and_memcpy(void *to, const void *from, size_t len,
 	return csum_block_add(sum, next, off);
 }
 
-static size_t csum_and_copy_to_pipe_iter(const void *addr, size_t bytes,
-				__wsum *csum, struct iov_iter *i)
+static size_t pipe_csum_and_copy_to_iter(const void *addr, size_t bytes,
+				void *csump, struct iov_iter *i)
 {
 	struct pipe_inode_info *pipe = i->pipe;
 	unsigned int p_mask = pipe->ring_size - 1;
 	unsigned int i_head;
 	size_t n, r;
 	size_t off = 0;
+	__wsum *csum = csump;
 	__wsum sum = *csum;
 
 	if (!sanity(i))
@@ -1914,7 +1915,7 @@ static bool no_csum_and_copy_from_iter_full(void *addr, size_t bytes, __wsum *cs
 	return false;
 }
 
-static size_t xxx_csum_and_copy_to_iter(const void *addr, size_t bytes, void *csump,
+static size_t iovec_csum_and_copy_to_iter(const void *addr, size_t bytes, void *csump,
 			     struct iov_iter *i)
 {
 	const char *from = addr;
@@ -1922,15 +1923,8 @@ static size_t xxx_csum_and_copy_to_iter(const void *addr, size_t bytes, void *cs
 	__wsum sum, next;
 	size_t off = 0;
 
-	if (unlikely(iov_iter_is_pipe(i)))
-		return csum_and_copy_to_pipe_iter(addr, bytes, csum, i);
-
 	sum = *csum;
-	if (unlikely(iov_iter_is_discard(i))) {
-		WARN_ON(1);	/* for now */
-		return 0;
-	}
-	iterate_and_advance(i, bytes, v, ({
+	iterate_and_advance_iovec(i, bytes, v, ({
 		next = csum_and_copy_to_user((from += v.iov_len) - v.iov_len,
 					     v.iov_base,
 					     v.iov_len);
@@ -1939,22 +1933,56 @@ static size_t xxx_csum_and_copy_to_iter(const void *addr, size_t bytes, void *cs
 			off += v.iov_len;
 		}
 		next ? 0 : v.iov_len;
-	}), ({
+	}));
+	*csum = sum;
+	return bytes;
+}
+
+static size_t bvec_csum_and_copy_to_iter(const void *addr, size_t bytes, void *csump,
+			     struct iov_iter *i)
+{
+	const char *from = addr;
+	__wsum *csum = csump;
+	__wsum sum;
+	size_t off = 0;
+
+	sum = *csum;
+	iterate_and_advance_bvec(i, bytes, v, ({
 		char *p = kmap_atomic(v.bv_page);
 		sum = csum_and_memcpy(p + v.bv_offset,
 				      (from += v.bv_len) - v.bv_len,
 				      v.bv_len, sum, off);
 		kunmap_atomic(p);
 		off += v.bv_len;
-	}),({
+	}));
+	*csum = sum;
+	return bytes;
+}
+
+static size_t kvec_csum_and_copy_to_iter(const void *addr, size_t bytes, void *csump,
+			     struct iov_iter *i)
+{
+	const char *from = addr;
+	__wsum *csum = csump;
+	__wsum sum;
+	size_t off = 0;
+
+	sum = *csum;
+	iterate_and_advance_kvec(i, bytes, v, ({
 		sum = csum_and_memcpy(v.iov_base,
 				     (from += v.iov_len) - v.iov_len,
 				     v.iov_len, sum, off);
 		off += v.iov_len;
-	})
-	)
+	}));
 	*csum = sum;
 	return bytes;
+}
+
+static size_t discard_csum_and_copy_to_iter(const void *addr, size_t bytes, void *csump,
+			     struct iov_iter *i)
+{
+	WARN_ON(1);	/* for now */
+	return 0;
 }
 
 size_t hash_and_copy_to_iter(const void *addr, size_t bytes, void *hashp,
@@ -2256,7 +2284,7 @@ static const struct iov_iter_ops iovec_iter_ops = {
 #ifdef CONFIG_ARCH_HAS_COPY_MC
 	.copy_mc_to_iter		= iovec_copy_mc_to_iter,
 #endif
-	.csum_and_copy_to_iter		= xxx_csum_and_copy_to_iter,
+	.csum_and_copy_to_iter		= iovec_csum_and_copy_to_iter,
 	.csum_and_copy_from_iter	= iovec_csum_and_copy_from_iter,
 	.csum_and_copy_from_iter_full	= iovec_csum_and_copy_from_iter_full,
 
@@ -2290,7 +2318,7 @@ static const struct iov_iter_ops kvec_iter_ops = {
 #ifdef CONFIG_ARCH_HAS_COPY_MC
 	.copy_mc_to_iter		= kvec_copy_mc_to_iter,
 #endif
-	.csum_and_copy_to_iter		= xxx_csum_and_copy_to_iter,
+	.csum_and_copy_to_iter		= kvec_csum_and_copy_to_iter,
 	.csum_and_copy_from_iter	= kvec_csum_and_copy_from_iter,
 	.csum_and_copy_from_iter_full	= kvec_csum_and_copy_from_iter_full,
 
@@ -2324,7 +2352,7 @@ static const struct iov_iter_ops bvec_iter_ops = {
 #ifdef CONFIG_ARCH_HAS_COPY_MC
 	.copy_mc_to_iter		= bvec_copy_mc_to_iter,
 #endif
-	.csum_and_copy_to_iter		= xxx_csum_and_copy_to_iter,
+	.csum_and_copy_to_iter		= bvec_csum_and_copy_to_iter,
 	.csum_and_copy_from_iter	= bvec_csum_and_copy_from_iter,
 	.csum_and_copy_from_iter_full	= bvec_csum_and_copy_from_iter_full,
 
@@ -2358,7 +2386,7 @@ static const struct iov_iter_ops pipe_iter_ops = {
 #ifdef CONFIG_ARCH_HAS_COPY_MC
 	.copy_mc_to_iter		= pipe_copy_mc_to_iter,
 #endif
-	.csum_and_copy_to_iter		= xxx_csum_and_copy_to_iter,
+	.csum_and_copy_to_iter		= pipe_csum_and_copy_to_iter,
 	.csum_and_copy_from_iter	= no_csum_and_copy_from_iter,
 	.csum_and_copy_from_iter_full	= no_csum_and_copy_from_iter_full,
 
@@ -2392,7 +2420,7 @@ static const struct iov_iter_ops discard_iter_ops = {
 #ifdef CONFIG_ARCH_HAS_COPY_MC
 	.copy_mc_to_iter		= discard_copy_to_iter,
 #endif
-	.csum_and_copy_to_iter		= xxx_csum_and_copy_to_iter,
+	.csum_and_copy_to_iter		= discard_csum_and_copy_to_iter,
 	.csum_and_copy_from_iter	= no_csum_and_copy_from_iter,
 	.csum_and_copy_from_iter_full	= no_csum_and_copy_from_iter_full,
 
