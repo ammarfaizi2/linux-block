@@ -32,9 +32,10 @@ struct iov_iter {
 	 * Bit 1 is the BVEC_FLAG_NO_REF bit, set if type is a bvec and
 	 * the caller isn't expecting to drop a page reference when done.
 	 */
-	unsigned int type;
+	unsigned int flags;
 	size_t iov_offset;
 	size_t count;
+	const struct iov_iter_ops *ops;
 	union {
 		const struct iovec *iov;
 		const struct kvec *kvec;
@@ -50,9 +51,63 @@ struct iov_iter {
 	};
 };
 
+void iov_iter_init(struct iov_iter *i, unsigned int direction, const struct iovec *iov,
+			unsigned long nr_segs, size_t count);
+void iov_iter_kvec(struct iov_iter *i, unsigned int direction, const struct kvec *kvec,
+			unsigned long nr_segs, size_t count);
+void iov_iter_bvec(struct iov_iter *i, unsigned int direction, const struct bio_vec *bvec,
+			unsigned long nr_segs, size_t count);
+void iov_iter_pipe(struct iov_iter *i, unsigned int direction, struct pipe_inode_info *pipe,
+			size_t count);
+void iov_iter_discard(struct iov_iter *i, unsigned int direction, size_t count);
+
+struct iov_iter_ops {
+	enum iter_type type;
+	size_t (*copy_from_user_atomic)(struct page *page, struct iov_iter *i,
+					unsigned long offset, size_t bytes);
+	void (*advance)(struct iov_iter *i, size_t bytes);
+	void (*revert)(struct iov_iter *i, size_t bytes);
+	int (*fault_in_readable)(struct iov_iter *i, size_t bytes);
+	size_t (*single_seg_count)(const struct iov_iter *i);
+	size_t (*copy_page_to_iter)(struct page *page, size_t offset, size_t bytes,
+				    struct iov_iter *i);
+	size_t (*copy_page_from_iter)(struct page *page, size_t offset, size_t bytes,
+				      struct iov_iter *i);
+	size_t (*copy_to_iter)(const void *addr, size_t bytes, struct iov_iter *i);
+	size_t (*copy_from_iter)(void *addr, size_t bytes, struct iov_iter *i);
+	bool (*copy_from_iter_full)(void *addr, size_t bytes, struct iov_iter *i);
+	size_t (*copy_from_iter_nocache)(void *addr, size_t bytes, struct iov_iter *i);
+	bool (*copy_from_iter_full_nocache)(void *addr, size_t bytes, struct iov_iter *i);
+#ifdef CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE
+	size_t (*copy_from_iter_flushcache)(void *addr, size_t bytes, struct iov_iter *i);
+#endif
+#ifdef CONFIG_ARCH_HAS_COPY_MC
+	size_t (*copy_mc_to_iter)(const void *addr, size_t bytes, struct iov_iter *i);
+#endif
+	size_t (*csum_and_copy_to_iter)(const void *addr, size_t bytes, void *csump,
+					struct iov_iter *i);
+	size_t (*csum_and_copy_from_iter)(void *addr, size_t bytes, __wsum *csum,
+					  struct iov_iter *i);
+	bool (*csum_and_copy_from_iter_full)(void *addr, size_t bytes, __wsum *csum,
+					     struct iov_iter *i);
+
+	size_t (*zero)(size_t bytes, struct iov_iter *i);
+	unsigned long (*alignment)(const struct iov_iter *i);
+	unsigned long (*gap_alignment)(const struct iov_iter *i);
+	ssize_t (*get_pages)(struct iov_iter *i, struct page **pages,
+			     size_t maxsize, unsigned maxpages, size_t *start);
+	ssize_t (*get_pages_alloc)(struct iov_iter *i, struct page ***pages,
+				   size_t maxsize, size_t *start);
+	int (*npages)(const struct iov_iter *i, int maxpages);
+	const void *(*dup_iter)(struct iov_iter *new, struct iov_iter *old, gfp_t flags);
+	int (*for_each_range)(struct iov_iter *i, size_t bytes,
+			      int (*f)(struct kvec *vec, void *context),
+			      void *context);
+};
+
 static inline enum iter_type iov_iter_type(const struct iov_iter *i)
 {
-	return i->type & ~(READ | WRITE);
+	return i->ops->type;
 }
 
 static inline bool iter_is_iovec(const struct iov_iter *i)
@@ -82,7 +137,7 @@ static inline bool iov_iter_is_discard(const struct iov_iter *i)
 
 static inline unsigned char iov_iter_rw(const struct iov_iter *i)
 {
-	return i->type & (READ | WRITE);
+	return i->flags & (READ | WRITE);
 }
 
 /*
@@ -111,22 +166,71 @@ static inline struct iovec iov_iter_iovec(const struct iov_iter *iter)
 	};
 }
 
-size_t iov_iter_copy_from_user_atomic(struct page *page,
-		struct iov_iter *i, unsigned long offset, size_t bytes);
-void iov_iter_advance(struct iov_iter *i, size_t bytes);
-void iov_iter_revert(struct iov_iter *i, size_t bytes);
-int iov_iter_fault_in_readable(struct iov_iter *i, size_t bytes);
-size_t iov_iter_single_seg_count(const struct iov_iter *i);
-size_t copy_page_to_iter(struct page *page, size_t offset, size_t bytes,
-			 struct iov_iter *i);
-size_t copy_page_from_iter(struct page *page, size_t offset, size_t bytes,
-			 struct iov_iter *i);
+static inline
+size_t iov_iter_copy_from_user_atomic(struct page *page, struct iov_iter *i,
+				      unsigned long offset, size_t bytes)
+{
+	return i->ops->copy_from_user_atomic(page, i, offset, bytes);
+}
+static inline
+void iov_iter_advance(struct iov_iter *i, size_t bytes)
+{
+	return i->ops->advance(i, bytes);
+}
+static inline
+void iov_iter_revert(struct iov_iter *i, size_t bytes)
+{
+	return i->ops->revert(i, bytes);
+}
+static inline
+int iov_iter_fault_in_readable(struct iov_iter *i, size_t bytes)
+{
+	return i->ops->fault_in_readable(i, bytes);
+}
+static inline
+size_t iov_iter_single_seg_count(const struct iov_iter *i)
+{
+	return i->ops->single_seg_count(i);
+}
 
-size_t _copy_to_iter(const void *addr, size_t bytes, struct iov_iter *i);
-size_t _copy_from_iter(void *addr, size_t bytes, struct iov_iter *i);
-bool _copy_from_iter_full(void *addr, size_t bytes, struct iov_iter *i);
-size_t _copy_from_iter_nocache(void *addr, size_t bytes, struct iov_iter *i);
-bool _copy_from_iter_full_nocache(void *addr, size_t bytes, struct iov_iter *i);
+static inline
+size_t copy_page_to_iter(struct page *page, size_t offset, size_t bytes,
+				       struct iov_iter *i)
+{
+	return i->ops->copy_page_to_iter(page, offset, bytes, i);
+}
+static inline
+size_t copy_page_from_iter(struct page *page, size_t offset, size_t bytes,
+					 struct iov_iter *i)
+{
+	return i->ops->copy_page_from_iter(page, offset, bytes, i);
+}
+
+static __always_inline __must_check
+size_t _copy_to_iter(const void *addr, size_t bytes, struct iov_iter *i)
+{
+	return i->ops->copy_to_iter(addr, bytes, i);
+}
+static __always_inline __must_check
+size_t _copy_from_iter(void *addr, size_t bytes, struct iov_iter *i)
+{
+	return i->ops->copy_from_iter(addr, bytes, i);
+}
+static __always_inline __must_check
+bool _copy_from_iter_full(void *addr, size_t bytes, struct iov_iter *i)
+{
+	return i->ops->copy_from_iter_full(addr, bytes, i);
+}
+static __always_inline __must_check
+size_t _copy_from_iter_nocache(void *addr, size_t bytes, struct iov_iter *i)
+{
+	return i->ops->copy_from_iter_nocache(addr, bytes, i);
+}
+static __always_inline __must_check
+bool _copy_from_iter_full_nocache(void *addr, size_t bytes, struct iov_iter *i)
+{
+	return i->ops->copy_from_iter_full_nocache(addr, bytes, i);
+}
 
 static __always_inline __must_check
 size_t copy_to_iter(const void *addr, size_t bytes, struct iov_iter *i)
@@ -173,23 +277,21 @@ bool copy_from_iter_full_nocache(void *addr, size_t bytes, struct iov_iter *i)
 		return _copy_from_iter_full_nocache(addr, bytes, i);
 }
 
-#ifdef CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE
 /*
  * Note, users like pmem that depend on the stricter semantics of
  * copy_from_iter_flushcache() than copy_from_iter_nocache() must check for
  * IS_ENABLED(CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE) before assuming that the
  * destination is flushed from the cache on return.
  */
-size_t _copy_from_iter_flushcache(void *addr, size_t bytes, struct iov_iter *i);
+static __always_inline __must_check
+size_t _copy_from_iter_flushcache(void *addr, size_t bytes, struct iov_iter *i)
+{
+#ifdef CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE
+	return i->ops->copy_from_iter_flushcache(addr, bytes, i);
 #else
-#define _copy_from_iter_flushcache _copy_from_iter_nocache
+	return i->ops->copy_from_iter_nocache(addr, bytes, i);
 #endif
-
-#ifdef CONFIG_ARCH_HAS_COPY_MC
-size_t _copy_mc_to_iter(const void *addr, size_t bytes, struct iov_iter *i);
-#else
-#define _copy_mc_to_iter _copy_to_iter
-#endif
+}
 
 static __always_inline __must_check
 size_t copy_from_iter_flushcache(void *addr, size_t bytes, struct iov_iter *i)
@@ -201,6 +303,16 @@ size_t copy_from_iter_flushcache(void *addr, size_t bytes, struct iov_iter *i)
 }
 
 static __always_inline __must_check
+size_t _copy_mc_to_iter(void *addr, size_t bytes, struct iov_iter *i)
+{
+#ifdef CONFIG_ARCH_HAS_COPY_MC
+	return i->ops->copy_mc_to_iter(addr, bytes, i);
+#else
+	return i->ops->copy_to_iter(addr, bytes, i);
+#endif
+}
+
+static __always_inline __must_check
 size_t copy_mc_to_iter(void *addr, size_t bytes, struct iov_iter *i)
 {
 	if (unlikely(!check_copy_size(addr, bytes, true)))
@@ -209,25 +321,47 @@ size_t copy_mc_to_iter(void *addr, size_t bytes, struct iov_iter *i)
 		return _copy_mc_to_iter(addr, bytes, i);
 }
 
-size_t iov_iter_zero(size_t bytes, struct iov_iter *);
-unsigned long iov_iter_alignment(const struct iov_iter *i);
-unsigned long iov_iter_gap_alignment(const struct iov_iter *i);
-void iov_iter_init(struct iov_iter *i, unsigned int direction, const struct iovec *iov,
-			unsigned long nr_segs, size_t count);
-void iov_iter_kvec(struct iov_iter *i, unsigned int direction, const struct kvec *kvec,
-			unsigned long nr_segs, size_t count);
-void iov_iter_bvec(struct iov_iter *i, unsigned int direction, const struct bio_vec *bvec,
-			unsigned long nr_segs, size_t count);
-void iov_iter_pipe(struct iov_iter *i, unsigned int direction, struct pipe_inode_info *pipe,
-			size_t count);
-void iov_iter_discard(struct iov_iter *i, unsigned int direction, size_t count);
-ssize_t iov_iter_get_pages(struct iov_iter *i, struct page **pages,
-			size_t maxsize, unsigned maxpages, size_t *start);
-ssize_t iov_iter_get_pages_alloc(struct iov_iter *i, struct page ***pages,
-			size_t maxsize, size_t *start);
-int iov_iter_npages(const struct iov_iter *i, int maxpages);
+static inline
+size_t iov_iter_zero(size_t bytes, struct iov_iter *i)
+{
+	return i->ops->zero(bytes, i);
+}
+static inline
+unsigned long iov_iter_alignment(const struct iov_iter *i)
+{
+	return i->ops->alignment(i);
+}
+static inline
+unsigned long iov_iter_gap_alignment(const struct iov_iter *i)
+{
+	return i->ops->gap_alignment(i);
+}
 
-const void *dup_iter(struct iov_iter *new, struct iov_iter *old, gfp_t flags);
+static inline
+ssize_t iov_iter_get_pages(struct iov_iter *i, struct page **pages,
+			size_t maxsize, unsigned maxpages, size_t *start)
+{
+	return i->ops->get_pages(i, pages, maxsize, maxpages, start);
+}
+
+static inline
+ssize_t iov_iter_get_pages_alloc(struct iov_iter *i, struct page ***pages,
+			size_t maxsize, size_t *start)
+{
+	return i->ops->get_pages_alloc(i, pages, maxsize, start);
+}
+
+static inline
+int iov_iter_npages(const struct iov_iter *i, int maxpages)
+{
+	return i->ops->npages(i, maxpages);
+}
+
+static inline
+const void *dup_iter(struct iov_iter *new, struct iov_iter *old, gfp_t flags)
+{
+	return old->ops->dup_iter(new, old, flags);
+}
 
 static inline size_t iov_iter_count(const struct iov_iter *i)
 {
@@ -260,9 +394,22 @@ static inline void iov_iter_reexpand(struct iov_iter *i, size_t count)
 {
 	i->count = count;
 }
-size_t csum_and_copy_to_iter(const void *addr, size_t bytes, void *csump, struct iov_iter *i);
-size_t csum_and_copy_from_iter(void *addr, size_t bytes, __wsum *csum, struct iov_iter *i);
-bool csum_and_copy_from_iter_full(void *addr, size_t bytes, __wsum *csum, struct iov_iter *i);
+
+static inline
+size_t csum_and_copy_to_iter(const void *addr, size_t bytes, void *csump, struct iov_iter *i)
+{
+	return i->ops->csum_and_copy_to_iter(addr, bytes, csump, i);
+}
+static inline
+size_t csum_and_copy_from_iter(void *addr, size_t bytes, __wsum *csum, struct iov_iter *i)
+{
+	return i->ops->csum_and_copy_from_iter(addr, bytes, csum, i);
+}
+static inline
+bool csum_and_copy_from_iter_full(void *addr, size_t bytes, __wsum *csum, struct iov_iter *i)
+{
+	return i->ops->csum_and_copy_from_iter_full(addr, bytes, csum, i);
+}
 size_t hash_and_copy_to_iter(const void *addr, size_t bytes, void *hashp,
 		struct iov_iter *i);
 
@@ -278,8 +425,12 @@ ssize_t __import_iovec(int type, const struct iovec __user *uvec,
 int import_single_range(int type, void __user *buf, size_t len,
 		 struct iovec *iov, struct iov_iter *i);
 
+static inline
 int iov_iter_for_each_range(struct iov_iter *i, size_t bytes,
 			    int (*f)(struct kvec *vec, void *context),
-			    void *context);
+			    void *context)
+{
+	return i->ops->for_each_range(i, bytes, f, context);
+}
 
 #endif
