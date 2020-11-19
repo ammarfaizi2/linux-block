@@ -758,7 +758,7 @@ static unsigned long copy_mc_to_page(struct page *page, size_t offset,
 	return ret;
 }
 
-static size_t copy_mc_pipe_to_iter(const void *addr, size_t bytes,
+static size_t pipe_copy_mc_to_iter(const void *addr, size_t bytes,
 				struct iov_iter *i)
 {
 	struct pipe_inode_info *pipe = i->pipe;
@@ -815,18 +815,23 @@ static size_t copy_mc_pipe_to_iter(const void *addr, size_t bytes,
  *   Compare to copy_to_iter() where only ITER_IOVEC attempts might return
  *   a short copy.
  */
-static size_t xxx_copy_mc_to_iter(const void *addr, size_t bytes, struct iov_iter *i)
+static size_t iovec_copy_mc_to_iter(const void *addr, size_t bytes, struct iov_iter *i)
+{
+	const char *from = addr;
+
+	might_fault();
+	iterate_and_advance_iovec(i, bytes, v,
+		copyout_mc(v.iov_base, (from += v.iov_len) - v.iov_len,
+			   v.iov_len));
+	return bytes;
+}
+
+static size_t bvec_copy_mc_to_iter(const void *addr, size_t bytes, struct iov_iter *i)
 {
 	const char *from = addr;
 	unsigned long rem, curr_addr, s_addr = (unsigned long) addr;
 
-	if (unlikely(iov_iter_is_pipe(i)))
-		return copy_mc_pipe_to_iter(addr, bytes, i);
-	if (iter_is_iovec(i))
-		might_fault();
-	iterate_and_advance(i, bytes, v,
-		copyout_mc(v.iov_base, (from += v.iov_len) - v.iov_len,
-			   v.iov_len),
+	iterate_and_advance_bvec(i, bytes, v,
 		({
 		rem = copy_mc_to_page(v.bv_page, v.bv_offset,
 				      (from += v.bv_len) - v.bv_len, v.bv_len);
@@ -835,18 +840,25 @@ static size_t xxx_copy_mc_to_iter(const void *addr, size_t bytes, struct iov_ite
 			bytes = curr_addr - s_addr - rem;
 			return bytes;
 		}
-		}),
-		({
-		rem = copy_mc_to_kernel(v.iov_base, (from += v.iov_len)
-					- v.iov_len, v.iov_len);
+		}))
+	return bytes;
+}
+
+static size_t kvec_copy_mc_to_iter(const void *addr, size_t bytes, struct iov_iter *i)
+{
+	const char *from = addr;
+	unsigned long rem, curr_addr, s_addr = (unsigned long) addr;
+
+	iterate_and_advance_kvec(i, bytes, v, ({
+		rem = copy_mc_to_kernel(v.iov_base,
+					(from += v.iov_len) - v.iov_len,
+					v.iov_len);
 		if (rem) {
 			curr_addr = (unsigned long) from;
 			bytes = curr_addr - s_addr - rem;
 			return bytes;
 		}
-		})
-	)
-
+		}));
 	return bytes;
 }
 #endif /* CONFIG_ARCH_HAS_COPY_MC */
@@ -1939,7 +1951,7 @@ static const struct iov_iter_ops iovec_iter_ops = {
 	.copy_from_iter_flushcache	= xxx_copy_from_iter_flushcache,
 #endif
 #ifdef CONFIG_ARCH_HAS_COPY_MC
-	.copy_mc_to_iter		= xxx_copy_mc_to_iter,
+	.copy_mc_to_iter		= iovec_copy_mc_to_iter,
 #endif
 	.csum_and_copy_to_iter		= xxx_csum_and_copy_to_iter,
 	.csum_and_copy_from_iter	= xxx_csum_and_copy_from_iter,
@@ -1973,7 +1985,7 @@ static const struct iov_iter_ops kvec_iter_ops = {
 	.copy_from_iter_flushcache	= xxx_copy_from_iter_flushcache,
 #endif
 #ifdef CONFIG_ARCH_HAS_COPY_MC
-	.copy_mc_to_iter		= xxx_copy_mc_to_iter,
+	.copy_mc_to_iter		= kvec_copy_mc_to_iter,
 #endif
 	.csum_and_copy_to_iter		= xxx_csum_and_copy_to_iter,
 	.csum_and_copy_from_iter	= xxx_csum_and_copy_from_iter,
@@ -2007,7 +2019,7 @@ static const struct iov_iter_ops bvec_iter_ops = {
 	.copy_from_iter_flushcache	= xxx_copy_from_iter_flushcache,
 #endif
 #ifdef CONFIG_ARCH_HAS_COPY_MC
-	.copy_mc_to_iter		= xxx_copy_mc_to_iter,
+	.copy_mc_to_iter		= bvec_copy_mc_to_iter,
 #endif
 	.csum_and_copy_to_iter		= xxx_csum_and_copy_to_iter,
 	.csum_and_copy_from_iter	= xxx_csum_and_copy_from_iter,
@@ -2041,7 +2053,7 @@ static const struct iov_iter_ops pipe_iter_ops = {
 	.copy_from_iter_flushcache	= xxx_copy_from_iter_flushcache,
 #endif
 #ifdef CONFIG_ARCH_HAS_COPY_MC
-	.copy_mc_to_iter		= xxx_copy_mc_to_iter,
+	.copy_mc_to_iter		= pipe_copy_mc_to_iter,
 #endif
 	.csum_and_copy_to_iter		= xxx_csum_and_copy_to_iter,
 	.csum_and_copy_from_iter	= xxx_csum_and_copy_from_iter,
@@ -2075,7 +2087,7 @@ static const struct iov_iter_ops discard_iter_ops = {
 	.copy_from_iter_flushcache	= xxx_copy_from_iter_flushcache,
 #endif
 #ifdef CONFIG_ARCH_HAS_COPY_MC
-	.copy_mc_to_iter		= xxx_copy_mc_to_iter,
+	.copy_mc_to_iter		= discard_copy_to_iter,
 #endif
 	.csum_and_copy_to_iter		= xxx_csum_and_copy_to_iter,
 	.csum_and_copy_from_iter	= xxx_csum_and_copy_from_iter,
