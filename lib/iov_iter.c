@@ -344,7 +344,7 @@ done:
 	return wanted - bytes;
 }
 
-static size_t copy_page_from_iter_iovec(struct page *page, size_t offset, size_t bytes,
+static size_t iovec_copy_page_from_iter(struct page *page, size_t offset, size_t bytes,
 			 struct iov_iter *i)
 {
 	size_t skip, copy, left, wanted;
@@ -352,6 +352,8 @@ static size_t copy_page_from_iter_iovec(struct page *page, size_t offset, size_t
 	char __user *buf;
 	void *kaddr, *to;
 
+	if (unlikely(!page_copy_sane(page, offset, bytes)))
+		return 0;
 	if (unlikely(bytes > i->count))
 		bytes = i->count;
 
@@ -1120,22 +1122,23 @@ static size_t discard_copy_page_to_iter(struct page *page, size_t offset, size_t
 	return bytes;
 }
 
-static size_t xxx_copy_page_from_iter(struct page *page, size_t offset, size_t bytes,
+static size_t bkvec_copy_page_from_iter(struct page *page, size_t offset, size_t bytes,
 			 struct iov_iter *i)
 {
-	if (unlikely(!page_copy_sane(page, offset, bytes)))
-		return 0;
-	if (unlikely(iov_iter_is_pipe(i) || iov_iter_is_discard(i))) {
-		WARN_ON(1);
-		return 0;
-	}
-	if (iov_iter_type(i) & (ITER_BVEC|ITER_KVEC)) {
+	size_t wanted = 0;
+	if (likely(page_copy_sane(page, offset, bytes))) {
 		void *kaddr = kmap_atomic(page);
-		size_t wanted = copy_from_iter(kaddr + offset, bytes, i);
+		wanted = copy_from_iter(kaddr + offset, bytes, i);
 		kunmap_atomic(kaddr);
-		return wanted;
-	} else
-		return copy_page_from_iter_iovec(page, offset, bytes, i);
+	}
+	return wanted;
+}
+
+static size_t no_copy_page_from_iter(struct page *page, size_t offset, size_t bytes,
+				     struct iov_iter *i)
+{
+	WARN_ON(1);
+	return 0;
 }
 
 static size_t pipe_zero(size_t bytes, struct iov_iter *i)
@@ -2035,7 +2038,7 @@ static const struct iov_iter_ops iovec_iter_ops = {
 	.fault_in_readable		= iovec_fault_in_readable,
 	.single_seg_count		= xxx_single_seg_count,
 	.copy_page_to_iter		= iovec_copy_page_to_iter,
-	.copy_page_from_iter		= xxx_copy_page_from_iter,
+	.copy_page_from_iter		= iovec_copy_page_from_iter,
 	.copy_to_iter			= iovec_copy_to_iter,
 	.copy_from_iter			= iovec_copy_from_iter,
 	.copy_from_iter_full		= iovec_copy_from_iter_full,
@@ -2069,7 +2072,7 @@ static const struct iov_iter_ops kvec_iter_ops = {
 	.fault_in_readable		= no_fault_in_readable,
 	.single_seg_count		= xxx_single_seg_count,
 	.copy_page_to_iter		= bkvec_copy_page_to_iter,
-	.copy_page_from_iter		= xxx_copy_page_from_iter,
+	.copy_page_from_iter		= bkvec_copy_page_from_iter,
 	.copy_to_iter			= kvec_copy_to_iter,
 	.copy_from_iter			= kvec_copy_from_iter,
 	.copy_from_iter_full		= kvec_copy_from_iter_full,
@@ -2103,7 +2106,7 @@ static const struct iov_iter_ops bvec_iter_ops = {
 	.fault_in_readable		= no_fault_in_readable,
 	.single_seg_count		= xxx_single_seg_count,
 	.copy_page_to_iter		= bkvec_copy_page_to_iter,
-	.copy_page_from_iter		= xxx_copy_page_from_iter,
+	.copy_page_from_iter		= bkvec_copy_page_from_iter,
 	.copy_to_iter			= bvec_copy_to_iter,
 	.copy_from_iter			= bvec_copy_from_iter,
 	.copy_from_iter_full		= bvec_copy_from_iter_full,
@@ -2137,7 +2140,7 @@ static const struct iov_iter_ops pipe_iter_ops = {
 	.fault_in_readable		= no_fault_in_readable,
 	.single_seg_count		= xxx_single_seg_count,
 	.copy_page_to_iter		= pipe_copy_page_to_iter,
-	.copy_page_from_iter		= xxx_copy_page_from_iter,
+	.copy_page_from_iter		= no_copy_page_from_iter,
 	.copy_to_iter			= pipe_copy_to_iter,
 	.copy_from_iter			= no_copy_from_iter,
 	.copy_from_iter_full		= no_copy_from_iter_full,
@@ -2171,7 +2174,7 @@ static const struct iov_iter_ops discard_iter_ops = {
 	.fault_in_readable		= no_fault_in_readable,
 	.single_seg_count		= xxx_single_seg_count,
 	.copy_page_to_iter		= discard_copy_page_to_iter,
-	.copy_page_from_iter		= xxx_copy_page_from_iter,
+	.copy_page_from_iter		= no_copy_page_from_iter,
 	.copy_to_iter			= discard_copy_to_iter,
 	.copy_from_iter			= no_copy_from_iter,
 	.copy_from_iter_full		= no_copy_from_iter_full,
