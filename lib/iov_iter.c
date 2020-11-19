@@ -1168,16 +1168,30 @@ static size_t pipe_zero(size_t bytes, struct iov_iter *i)
 	return bytes;
 }
 
-static size_t xxx_zero(size_t bytes, struct iov_iter *i)
+static size_t iovec_zero(size_t bytes, struct iov_iter *i)
 {
-	if (unlikely(iov_iter_is_pipe(i)))
-		return pipe_zero(bytes, i);
-	iterate_and_advance(i, bytes, v,
-		clear_user(v.iov_base, v.iov_len),
-		memzero_page(v.bv_page, v.bv_offset, v.bv_len),
-		memset(v.iov_base, 0, v.iov_len)
-	)
+	iterate_and_advance_iovec(i, bytes, v,
+		clear_user(v.iov_base, v.iov_len));
+	return bytes;
+}
 
+static size_t bvec_zero(size_t bytes, struct iov_iter *i)
+{
+	iterate_and_advance_bvec(i, bytes, v,
+		memzero_page(v.bv_page, v.bv_offset, v.bv_len));
+	return bytes;
+}
+
+static size_t kvec_zero(size_t bytes, struct iov_iter *i)
+{
+	iterate_and_advance_kvec(i, bytes, v,
+		memset(v.iov_base, 0, v.iov_len));
+	return bytes;
+}
+
+static size_t discard_zero(size_t bytes, struct iov_iter *i)
+{
+	iterate_and_advance_discard(i, bytes);
 	return bytes;
 }
 
@@ -2054,7 +2068,7 @@ static const struct iov_iter_ops iovec_iter_ops = {
 	.csum_and_copy_from_iter	= xxx_csum_and_copy_from_iter,
 	.csum_and_copy_from_iter_full	= xxx_csum_and_copy_from_iter_full,
 
-	.zero				= xxx_zero,
+	.zero				= iovec_zero,
 	.alignment			= xxx_alignment,
 	.gap_alignment			= xxx_gap_alignment,
 	.get_pages			= xxx_get_pages,
@@ -2088,7 +2102,7 @@ static const struct iov_iter_ops kvec_iter_ops = {
 	.csum_and_copy_from_iter	= xxx_csum_and_copy_from_iter,
 	.csum_and_copy_from_iter_full	= xxx_csum_and_copy_from_iter_full,
 
-	.zero				= xxx_zero,
+	.zero				= kvec_zero,
 	.alignment			= xxx_alignment,
 	.gap_alignment			= xxx_gap_alignment,
 	.get_pages			= xxx_get_pages,
@@ -2122,7 +2136,7 @@ static const struct iov_iter_ops bvec_iter_ops = {
 	.csum_and_copy_from_iter	= xxx_csum_and_copy_from_iter,
 	.csum_and_copy_from_iter_full	= xxx_csum_and_copy_from_iter_full,
 
-	.zero				= xxx_zero,
+	.zero				= bvec_zero,
 	.alignment			= xxx_alignment,
 	.gap_alignment			= xxx_gap_alignment,
 	.get_pages			= xxx_get_pages,
@@ -2156,7 +2170,7 @@ static const struct iov_iter_ops pipe_iter_ops = {
 	.csum_and_copy_from_iter	= xxx_csum_and_copy_from_iter,
 	.csum_and_copy_from_iter_full	= xxx_csum_and_copy_from_iter_full,
 
-	.zero				= xxx_zero,
+	.zero				= pipe_zero,
 	.alignment			= xxx_alignment,
 	.gap_alignment			= xxx_gap_alignment,
 	.get_pages			= xxx_get_pages,
@@ -2190,7 +2204,7 @@ static const struct iov_iter_ops discard_iter_ops = {
 	.csum_and_copy_from_iter	= xxx_csum_and_copy_from_iter,
 	.csum_and_copy_from_iter_full	= xxx_csum_and_copy_from_iter_full,
 
-	.zero				= xxx_zero,
+	.zero				= discard_zero,
 	.alignment			= xxx_alignment,
 	.gap_alignment			= xxx_gap_alignment,
 	.get_pages			= xxx_get_pages,
