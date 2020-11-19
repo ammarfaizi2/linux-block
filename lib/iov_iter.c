@@ -634,7 +634,7 @@ static size_t push_pipe(struct iov_iter *i, size_t size,
 	return size - left;
 }
 
-static size_t copy_pipe_to_iter(const void *addr, size_t bytes,
+static size_t pipe_copy_to_iter(const void *addr, size_t bytes,
 				struct iov_iter *i)
 {
 	struct pipe_inode_info *pipe = i->pipe;
@@ -703,20 +703,35 @@ static size_t csum_and_copy_to_pipe_iter(const void *addr, size_t bytes,
 	return bytes;
 }
 
-static size_t xxx_copy_to_iter(const void *addr, size_t bytes, struct iov_iter *i)
+static size_t iovec_copy_to_iter(const void *addr, size_t bytes, struct iov_iter *i)
 {
 	const char *from = addr;
-	if (unlikely(iov_iter_is_pipe(i)))
-		return copy_pipe_to_iter(addr, bytes, i);
-	if (iter_is_iovec(i))
-		might_fault();
-	iterate_and_advance(i, bytes, v,
-		copyout(v.iov_base, (from += v.iov_len) - v.iov_len, v.iov_len),
-		memcpy_to_page(v.bv_page, v.bv_offset,
-			       (from += v.bv_len) - v.bv_len, v.bv_len),
-		memcpy(v.iov_base, (from += v.iov_len) - v.iov_len, v.iov_len)
-	)
+	might_fault();
+	iterate_and_advance_iovec(i, bytes, v,
+		copyout(v.iov_base, (from += v.iov_len) - v.iov_len, v.iov_len));
+	return bytes;
+}
 
+static size_t bvec_copy_to_iter(const void *addr, size_t bytes, struct iov_iter *i)
+{
+	const char *from = addr;
+	iterate_and_advance_bvec(i, bytes, v,
+		memcpy_to_page(v.bv_page, v.bv_offset,
+			       (from += v.bv_len) - v.bv_len, v.bv_len));
+	return bytes;
+}
+
+static size_t kvec_copy_to_iter(const void *addr, size_t bytes, struct iov_iter *i)
+{
+	const char *from = addr;
+	iterate_and_advance_kvec(i, bytes, v,
+		memcpy(v.iov_base, (from += v.iov_len) - v.iov_len, v.iov_len));
+	return bytes;
+}
+
+static size_t discard_copy_to_iter(const void *addr, size_t bytes, struct iov_iter *i)
+{
+	iterate_and_advance_discard(i, bytes);
 	return bytes;
 }
 
@@ -1915,7 +1930,7 @@ static const struct iov_iter_ops iovec_iter_ops = {
 	.single_seg_count		= xxx_single_seg_count,
 	.copy_page_to_iter		= iovec_copy_page_to_iter,
 	.copy_page_from_iter		= xxx_copy_page_from_iter,
-	.copy_to_iter			= xxx_copy_to_iter,
+	.copy_to_iter			= iovec_copy_to_iter,
 	.copy_from_iter			= xxx_copy_from_iter,
 	.copy_from_iter_full		= xxx_copy_from_iter_full,
 	.copy_from_iter_nocache		= xxx_copy_from_iter_nocache,
@@ -1949,7 +1964,7 @@ static const struct iov_iter_ops kvec_iter_ops = {
 	.single_seg_count		= xxx_single_seg_count,
 	.copy_page_to_iter		= bkvec_copy_page_to_iter,
 	.copy_page_from_iter		= xxx_copy_page_from_iter,
-	.copy_to_iter			= xxx_copy_to_iter,
+	.copy_to_iter			= kvec_copy_to_iter,
 	.copy_from_iter			= xxx_copy_from_iter,
 	.copy_from_iter_full		= xxx_copy_from_iter_full,
 	.copy_from_iter_nocache		= xxx_copy_from_iter_nocache,
@@ -1983,7 +1998,7 @@ static const struct iov_iter_ops bvec_iter_ops = {
 	.single_seg_count		= xxx_single_seg_count,
 	.copy_page_to_iter		= bkvec_copy_page_to_iter,
 	.copy_page_from_iter		= xxx_copy_page_from_iter,
-	.copy_to_iter			= xxx_copy_to_iter,
+	.copy_to_iter			= bvec_copy_to_iter,
 	.copy_from_iter			= xxx_copy_from_iter,
 	.copy_from_iter_full		= xxx_copy_from_iter_full,
 	.copy_from_iter_nocache		= xxx_copy_from_iter_nocache,
@@ -2017,7 +2032,7 @@ static const struct iov_iter_ops pipe_iter_ops = {
 	.single_seg_count		= xxx_single_seg_count,
 	.copy_page_to_iter		= pipe_copy_page_to_iter,
 	.copy_page_from_iter		= xxx_copy_page_from_iter,
-	.copy_to_iter			= xxx_copy_to_iter,
+	.copy_to_iter			= pipe_copy_to_iter,
 	.copy_from_iter			= xxx_copy_from_iter,
 	.copy_from_iter_full		= xxx_copy_from_iter_full,
 	.copy_from_iter_nocache		= xxx_copy_from_iter_nocache,
@@ -2051,7 +2066,7 @@ static const struct iov_iter_ops discard_iter_ops = {
 	.single_seg_count		= xxx_single_seg_count,
 	.copy_page_to_iter		= discard_copy_page_to_iter,
 	.copy_page_from_iter		= xxx_copy_page_from_iter,
-	.copy_to_iter			= xxx_copy_to_iter,
+	.copy_to_iter			= discard_copy_to_iter,
 	.copy_from_iter			= xxx_copy_from_iter,
 	.copy_from_iter_full		= xxx_copy_from_iter_full,
 	.copy_from_iter_nocache		= xxx_copy_from_iter_nocache,
