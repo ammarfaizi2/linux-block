@@ -439,20 +439,23 @@ out:
  * Return 0 on success, or non-zero if the memory could not be accessed (i.e.
  * because it is an invalid address).
  */
-static int xxx_fault_in_readable(struct iov_iter *i, size_t bytes)
+static int iovec_fault_in_readable(struct iov_iter *i, size_t bytes)
 {
 	size_t skip = i->iov_offset;
 	const struct iovec *iov;
 	int err;
 	struct iovec v;
 
-	if (!(iov_iter_type(i) & (ITER_BVEC|ITER_KVEC))) {
-		iterate_iovec(i, bytes, v, iov, skip, ({
-			err = fault_in_pages_readable(v.iov_base, v.iov_len);
-			if (unlikely(err))
-			return err;
-		0;}))
-	}
+	iterate_iovec(i, bytes, v, iov, skip, ({
+		err = fault_in_pages_readable(v.iov_base, v.iov_len);
+		if (unlikely(err))
+		return err;
+	0;}))
+	return 0;
+}
+
+static int no_fault_in_readable(struct iov_iter *i, size_t bytes)
+{
 	return 0;
 }
 
@@ -1846,7 +1849,7 @@ static const struct iov_iter_ops iovec_iter_ops = {
 	.copy_from_user_atomic		= xxx_copy_from_user_atomic,
 	.advance			= xxx_advance,
 	.revert				= xxx_revert,
-	.fault_in_readable		= xxx_fault_in_readable,
+	.fault_in_readable		= iovec_fault_in_readable,
 	.single_seg_count		= xxx_single_seg_count,
 	.copy_page_to_iter		= iovec_copy_page_to_iter,
 	.copy_page_from_iter		= xxx_copy_page_from_iter,
@@ -1880,7 +1883,7 @@ static const struct iov_iter_ops kvec_iter_ops = {
 	.copy_from_user_atomic		= xxx_copy_from_user_atomic,
 	.advance			= xxx_advance,
 	.revert				= xxx_revert,
-	.fault_in_readable		= xxx_fault_in_readable,
+	.fault_in_readable		= no_fault_in_readable,
 	.single_seg_count		= xxx_single_seg_count,
 	.copy_page_to_iter		= bkvec_copy_page_to_iter,
 	.copy_page_from_iter		= xxx_copy_page_from_iter,
@@ -1914,7 +1917,7 @@ static const struct iov_iter_ops bvec_iter_ops = {
 	.copy_from_user_atomic		= xxx_copy_from_user_atomic,
 	.advance			= xxx_advance,
 	.revert				= xxx_revert,
-	.fault_in_readable		= xxx_fault_in_readable,
+	.fault_in_readable		= no_fault_in_readable,
 	.single_seg_count		= xxx_single_seg_count,
 	.copy_page_to_iter		= bkvec_copy_page_to_iter,
 	.copy_page_from_iter		= xxx_copy_page_from_iter,
@@ -1948,7 +1951,7 @@ static const struct iov_iter_ops pipe_iter_ops = {
 	.copy_from_user_atomic		= xxx_copy_from_user_atomic,
 	.advance			= xxx_advance,
 	.revert				= xxx_revert,
-	.fault_in_readable		= xxx_fault_in_readable,
+	.fault_in_readable		= no_fault_in_readable,
 	.single_seg_count		= xxx_single_seg_count,
 	.copy_page_to_iter		= pipe_copy_page_to_iter,
 	.copy_page_from_iter		= xxx_copy_page_from_iter,
@@ -1982,7 +1985,7 @@ static const struct iov_iter_ops discard_iter_ops = {
 	.copy_from_user_atomic		= xxx_copy_from_user_atomic,
 	.advance			= xxx_advance,
 	.revert				= xxx_revert,
-	.fault_in_readable		= xxx_fault_in_readable,
+	.fault_in_readable		= no_fault_in_readable,
 	.single_seg_count		= xxx_single_seg_count,
 	.copy_page_to_iter		= discard_copy_page_to_iter,
 	.copy_page_from_iter		= xxx_copy_page_from_iter,
