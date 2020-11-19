@@ -1319,71 +1319,97 @@ static void discard_advance(struct iov_iter *i, size_t size)
 	i->count -= size;
 }
 
-static void xxx_revert(struct iov_iter *i, size_t unroll)
+static void iovec_kvec_revert(struct iov_iter *i, size_t unroll)
+{
+	const struct iovec *iov = i->iov;
+	if (!unroll)
+		return;
+	if (WARN_ON(unroll > MAX_RW_COUNT))
+		return;
+	i->count += unroll;
+	if (unroll <= i->iov_offset) {
+		i->iov_offset -= unroll;
+		return;
+	}
+	unroll -= i->iov_offset;
+	while (1) {
+		size_t n = (--iov)->iov_len;
+		i->nr_segs++;
+		if (unroll <= n) {
+			i->iov = iov;
+			i->iov_offset = n - unroll;
+			return;
+		}
+		unroll -= n;
+	}
+}
+
+static void bvec_revert(struct iov_iter *i, size_t unroll)
+{
+	const struct bio_vec *bvec = i->bvec;
+
+	if (!unroll)
+		return;
+	if (WARN_ON(unroll > MAX_RW_COUNT))
+		return;
+	i->count += unroll;
+	if (unroll <= i->iov_offset) {
+		i->iov_offset -= unroll;
+		return;
+	}
+	unroll -= i->iov_offset;
+	while (1) {
+		size_t n = (--bvec)->bv_len;
+		i->nr_segs++;
+		if (unroll <= n) {
+			i->bvec = bvec;
+			i->iov_offset = n - unroll;
+			return;
+		}
+		unroll -= n;
+	}
+}
+
+static void pipe_revert(struct iov_iter *i, size_t unroll)
+{
+	struct pipe_inode_info *pipe = i->pipe;
+	unsigned int p_mask = pipe->ring_size - 1;
+	unsigned int i_head = i->head;
+	size_t off = i->iov_offset;
+
+	if (!unroll)
+		return;
+	if (WARN_ON(unroll > MAX_RW_COUNT))
+		return;
+
+	while (1) {
+		struct pipe_buffer *b = &pipe->bufs[i_head & p_mask];
+		size_t n = off - b->offset;
+		if (unroll < n) {
+			off -= unroll;
+			break;
+		}
+		unroll -= n;
+		if (!unroll && i_head == i->start_head) {
+			off = 0;
+			break;
+		}
+		i_head--;
+		b = &pipe->bufs[i_head & p_mask];
+		off = b->offset + b->len;
+	}
+	i->iov_offset = off;
+	i->head = i_head;
+	pipe_truncate(i);
+}
+
+static void discard_revert(struct iov_iter *i, size_t unroll)
 {
 	if (!unroll)
 		return;
 	if (WARN_ON(unroll > MAX_RW_COUNT))
 		return;
 	i->count += unroll;
-	if (unlikely(iov_iter_is_pipe(i))) {
-		struct pipe_inode_info *pipe = i->pipe;
-		unsigned int p_mask = pipe->ring_size - 1;
-		unsigned int i_head = i->head;
-		size_t off = i->iov_offset;
-		while (1) {
-			struct pipe_buffer *b = &pipe->bufs[i_head & p_mask];
-			size_t n = off - b->offset;
-			if (unroll < n) {
-				off -= unroll;
-				break;
-			}
-			unroll -= n;
-			if (!unroll && i_head == i->start_head) {
-				off = 0;
-				break;
-			}
-			i_head--;
-			b = &pipe->bufs[i_head & p_mask];
-			off = b->offset + b->len;
-		}
-		i->iov_offset = off;
-		i->head = i_head;
-		pipe_truncate(i);
-		return;
-	}
-	if (unlikely(iov_iter_is_discard(i)))
-		return;
-	if (unroll <= i->iov_offset) {
-		i->iov_offset -= unroll;
-		return;
-	}
-	unroll -= i->iov_offset;
-	if (iov_iter_is_bvec(i)) {
-		const struct bio_vec *bvec = i->bvec;
-		while (1) {
-			size_t n = (--bvec)->bv_len;
-			i->nr_segs++;
-			if (unroll <= n) {
-				i->bvec = bvec;
-				i->iov_offset = n - unroll;
-				return;
-			}
-			unroll -= n;
-		}
-	} else { /* same logics for iovec and kvec */
-		const struct iovec *iov = i->iov;
-		while (1) {
-			size_t n = (--iov)->iov_len;
-			i->nr_segs++;
-			if (unroll <= n) {
-				i->iov = iov;
-				i->iov_offset = n - unroll;
-				return;
-			}
-			unroll -= n;
-		}
-	}
 }
 
 /*
@@ -2082,7 +2108,7 @@ static const struct iov_iter_ops iovec_iter_ops = {
 	.type				= ITER_IOVEC,
 	.copy_from_user_atomic		= iovec_copy_from_user_atomic,
 	.advance			= iovec_advance,
-	.revert				= xxx_revert,
+	.revert				= iovec_kvec_revert,
 	.fault_in_readable		= iovec_fault_in_readable,
 	.single_seg_count		= xxx_single_seg_count,
 	.copy_page_to_iter		= iovec_copy_page_to_iter,
@@ -2116,7 +2142,7 @@ static const struct iov_iter_ops kvec_iter_ops = {
 	.type				= ITER_KVEC,
 	.copy_from_user_atomic		= kvec_copy_from_user_atomic,
 	.advance			= kvec_advance,
-	.revert				= xxx_revert,
+	.revert				= iovec_kvec_revert,
 	.fault_in_readable		= no_fault_in_readable,
 	.single_seg_count		= xxx_single_seg_count,
 	.copy_page_to_iter		= bkvec_copy_page_to_iter,
@@ -2150,7 +2176,7 @@ static const struct iov_iter_ops bvec_iter_ops = {
 	.type				= ITER_BVEC,
 	.copy_from_user_atomic		= bvec_copy_from_user_atomic,
 	.advance			= bvec_iov_advance,
-	.revert				= xxx_revert,
+	.revert				= bvec_revert,
 	.fault_in_readable		= no_fault_in_readable,
 	.single_seg_count		= xxx_single_seg_count,
 	.copy_page_to_iter		= bkvec_copy_page_to_iter,
@@ -2184,7 +2210,7 @@ static const struct iov_iter_ops pipe_iter_ops = {
 	.type				= ITER_PIPE,
 	.copy_from_user_atomic		= no_copy_from_user_atomic,
 	.advance			= pipe_advance,
-	.revert				= xxx_revert,
+	.revert				= pipe_revert,
 	.fault_in_readable		= no_fault_in_readable,
 	.single_seg_count		= xxx_single_seg_count,
 	.copy_page_to_iter		= pipe_copy_page_to_iter,
@@ -2218,7 +2244,7 @@ static const struct iov_iter_ops discard_iter_ops = {
 	.type				= ITER_DISCARD,
 	.copy_from_user_atomic		= no_copy_from_user_atomic,
 	.advance			= discard_advance,
-	.revert				= xxx_revert,
+	.revert				= discard_revert,
 	.fault_in_readable		= no_fault_in_readable,
 	.single_seg_count		= xxx_single_seg_count,
 	.copy_page_to_iter		= discard_copy_page_to_iter,
