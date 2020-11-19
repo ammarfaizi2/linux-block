@@ -2282,7 +2282,7 @@ int import_single_range(int rw, void __user *buf, size_t len,
 }
 EXPORT_SYMBOL(import_single_range);
 
-static int xxx_for_each_range(struct iov_iter *i, size_t bytes,
+static int bvec_for_each_range(struct iov_iter *i, size_t bytes,
 			    int (*f)(struct kvec *vec, void *context),
 			    void *context)
 {
@@ -2291,16 +2291,37 @@ static int xxx_for_each_range(struct iov_iter *i, size_t bytes,
 	if (!bytes)
 		return 0;
 
-	iterate_all_kinds(i, bytes, v, -EINVAL, ({
+	iterate_over_bvec(i, bytes, v, ({
 		w.iov_base = kmap(v.bv_page) + v.bv_offset;
 		w.iov_len = v.bv_len;
 		err = f(&w, context);
 		kunmap(v.bv_page);
-		err;}), ({
-		w = v;
-		err = f(&w, context);})
-	)
+		err;
+	}));
 	return err;
+}
+
+static int kvec_for_each_range(struct iov_iter *i, size_t bytes,
+			    int (*f)(struct kvec *vec, void *context),
+			    void *context)
+{
+	struct kvec w;
+	int err = -EINVAL;
+	if (!bytes)
+		return 0;
+
+	iterate_over_kvec(i, bytes, v, ({
+		w = v;
+		err = f(&w, context);
+	}));
+	return err;
+}
+
+static int no_for_each_range(struct iov_iter *i, size_t bytes,
+			    int (*f)(struct kvec *vec, void *context),
+			    void *context)
+{
+	return !bytes ? 0 : -EINVAL;
 }
 
 static const struct iov_iter_ops iovec_iter_ops = {
@@ -2334,7 +2355,7 @@ static const struct iov_iter_ops iovec_iter_ops = {
 	.get_pages_alloc		= iovec_get_pages_alloc,
 	.npages				= iovec_npages,
 	.dup_iter			= iovec_kvec_dup_iter,
-	.for_each_range			= xxx_for_each_range,
+	.for_each_range			= no_for_each_range,
 };
 
 static const struct iov_iter_ops kvec_iter_ops = {
@@ -2368,7 +2389,7 @@ static const struct iov_iter_ops kvec_iter_ops = {
 	.get_pages_alloc		= no_get_pages_alloc,
 	.npages				= kvec_npages,
 	.dup_iter			= iovec_kvec_dup_iter,
-	.for_each_range			= xxx_for_each_range,
+	.for_each_range			= kvec_for_each_range,
 };
 
 static const struct iov_iter_ops bvec_iter_ops = {
@@ -2402,7 +2423,7 @@ static const struct iov_iter_ops bvec_iter_ops = {
 	.get_pages_alloc		= bvec_get_pages_alloc,
 	.npages				= bvec_npages,
 	.dup_iter			= bvec_dup_iter,
-	.for_each_range			= xxx_for_each_range,
+	.for_each_range			= bvec_for_each_range,
 };
 
 static const struct iov_iter_ops pipe_iter_ops = {
@@ -2436,7 +2457,7 @@ static const struct iov_iter_ops pipe_iter_ops = {
 	.get_pages_alloc		= pipe_get_pages_alloc,
 	.npages				= pipe_npages,
 	.dup_iter			= no_dup_iter,
-	.for_each_range			= xxx_for_each_range,
+	.for_each_range			= no_for_each_range,
 };
 
 static const struct iov_iter_ops discard_iter_ops = {
@@ -2470,5 +2491,5 @@ static const struct iov_iter_ops discard_iter_ops = {
 	.get_pages_alloc		= no_get_pages_alloc,
 	.npages				= discard_npages,
 	.dup_iter			= discard_dup_iter,
-	.for_each_range			= xxx_for_each_range,
+	.for_each_range			= no_for_each_range,
 };
