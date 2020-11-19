@@ -1777,18 +1777,14 @@ static ssize_t no_get_pages_alloc(struct iov_iter *i,
 	return -EFAULT;
 }
 
-static size_t xxx_csum_and_copy_from_iter(void *addr, size_t bytes, __wsum *csum,
+static size_t iovec_csum_and_copy_from_iter(void *addr, size_t bytes, __wsum *csum,
 			       struct iov_iter *i)
 {
 	char *to = addr;
 	__wsum sum, next;
 	size_t off = 0;
 	sum = *csum;
-	if (unlikely(iov_iter_is_pipe(i) || iov_iter_is_discard(i))) {
-		WARN_ON(1);
-		return 0;
-	}
-	iterate_and_advance(i, bytes, v, ({
+	iterate_and_advance_iovec(i, bytes, v, ({
 		next = csum_and_copy_from_user(v.iov_base,
 					       (to += v.iov_len) - v.iov_len,
 					       v.iov_len);
@@ -1797,22 +1793,52 @@ static size_t xxx_csum_and_copy_from_iter(void *addr, size_t bytes, __wsum *csum
 			off += v.iov_len;
 		}
 		next ? 0 : v.iov_len;
-	}), ({
+	}));
+	*csum = sum;
+	return bytes;
+}
+
+static size_t bvec_csum_and_copy_from_iter(void *addr, size_t bytes, __wsum *csum,
+			       struct iov_iter *i)
+{
+	char *to = addr;
+	__wsum sum;
+	size_t off = 0;
+	sum = *csum;
+	iterate_and_advance_bvec(i, bytes, v, ({
 		char *p = kmap_atomic(v.bv_page);
 		sum = csum_and_memcpy((to += v.bv_len) - v.bv_len,
 				      p + v.bv_offset, v.bv_len,
 				      sum, off);
 		kunmap_atomic(p);
 		off += v.bv_len;
-	}),({
+	}));
+	*csum = sum;
+	return bytes;
+}
+
+static size_t kvec_csum_and_copy_from_iter(void *addr, size_t bytes, __wsum *csum,
+			       struct iov_iter *i)
+{
+	char *to = addr;
+	__wsum sum;
+	size_t off = 0;
+	sum = *csum;
+	iterate_and_advance_kvec(i, bytes, v, ({
 		sum = csum_and_memcpy((to += v.iov_len) - v.iov_len,
 				      v.iov_base, v.iov_len,
 				      sum, off);
 		off += v.iov_len;
-	})
-	)
+	}));
 	*csum = sum;
 	return bytes;
+}
+
+static size_t no_csum_and_copy_from_iter(void *addr, size_t bytes, __wsum *csum,
+			       struct iov_iter *i)
+{
+	WARN_ON(1);
+	return 0;
 }
 
 static bool xxx_csum_and_copy_from_iter_full(void *addr, size_t bytes, __wsum *csum,
@@ -2199,7 +2225,7 @@ static const struct iov_iter_ops iovec_iter_ops = {
 	.copy_mc_to_iter		= iovec_copy_mc_to_iter,
 #endif
 	.csum_and_copy_to_iter		= xxx_csum_and_copy_to_iter,
-	.csum_and_copy_from_iter	= xxx_csum_and_copy_from_iter,
+	.csum_and_copy_from_iter	= iovec_csum_and_copy_from_iter,
 	.csum_and_copy_from_iter_full	= xxx_csum_and_copy_from_iter_full,
 
 	.zero				= iovec_zero,
@@ -2233,7 +2259,7 @@ static const struct iov_iter_ops kvec_iter_ops = {
 	.copy_mc_to_iter		= kvec_copy_mc_to_iter,
 #endif
 	.csum_and_copy_to_iter		= xxx_csum_and_copy_to_iter,
-	.csum_and_copy_from_iter	= xxx_csum_and_copy_from_iter,
+	.csum_and_copy_from_iter	= kvec_csum_and_copy_from_iter,
 	.csum_and_copy_from_iter_full	= xxx_csum_and_copy_from_iter_full,
 
 	.zero				= kvec_zero,
@@ -2267,7 +2293,7 @@ static const struct iov_iter_ops bvec_iter_ops = {
 	.copy_mc_to_iter		= bvec_copy_mc_to_iter,
 #endif
 	.csum_and_copy_to_iter		= xxx_csum_and_copy_to_iter,
-	.csum_and_copy_from_iter	= xxx_csum_and_copy_from_iter,
+	.csum_and_copy_from_iter	= bvec_csum_and_copy_from_iter,
 	.csum_and_copy_from_iter_full	= xxx_csum_and_copy_from_iter_full,
 
 	.zero				= bvec_zero,
@@ -2301,7 +2327,7 @@ static const struct iov_iter_ops pipe_iter_ops = {
 	.copy_mc_to_iter		= pipe_copy_mc_to_iter,
 #endif
 	.csum_and_copy_to_iter		= xxx_csum_and_copy_to_iter,
-	.csum_and_copy_from_iter	= xxx_csum_and_copy_from_iter,
+	.csum_and_copy_from_iter	= no_csum_and_copy_from_iter,
 	.csum_and_copy_from_iter_full	= xxx_csum_and_copy_from_iter_full,
 
 	.zero				= pipe_zero,
@@ -2335,7 +2361,7 @@ static const struct iov_iter_ops discard_iter_ops = {
 	.copy_mc_to_iter		= discard_copy_to_iter,
 #endif
 	.csum_and_copy_to_iter		= xxx_csum_and_copy_to_iter,
-	.csum_and_copy_from_iter	= xxx_csum_and_copy_from_iter,
+	.csum_and_copy_from_iter	= no_csum_and_copy_from_iter,
 	.csum_and_copy_from_iter_full	= xxx_csum_and_copy_from_iter_full,
 
 	.zero				= discard_zero,
