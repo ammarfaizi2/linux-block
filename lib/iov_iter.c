@@ -972,21 +972,29 @@ static bool no_copy_from_iter_full(void *addr, size_t bytes, struct iov_iter *i)
 	return false;
 }
 
-static size_t xxx_copy_from_iter_nocache(void *addr, size_t bytes, struct iov_iter *i)
+static size_t iovec_copy_from_iter_nocache(void *addr, size_t bytes, struct iov_iter *i)
 {
 	char *to = addr;
-	if (unlikely(iov_iter_is_pipe(i))) {
-		WARN_ON(1);
-		return 0;
-	}
-	iterate_and_advance(i, bytes, v,
+	iterate_and_advance_iovec(i, bytes, v,
 		__copy_from_user_inatomic_nocache((to += v.iov_len) - v.iov_len,
-					 v.iov_base, v.iov_len),
-		memcpy_from_page((to += v.bv_len) - v.bv_len, v.bv_page,
-				 v.bv_offset, v.bv_len),
-		memcpy((to += v.iov_len) - v.iov_len, v.iov_base, v.iov_len)
-	)
+						  v.iov_base, v.iov_len));
+	return bytes;
+}
 
+static size_t bvec_copy_from_iter_nocache(void *addr, size_t bytes, struct iov_iter *i)
+{
+	char *to = addr;
+	iterate_and_advance_bvec(i, bytes, v,
+		memcpy_from_page((to += v.bv_len) - v.bv_len, v.bv_page,
+				 v.bv_offset, v.bv_len));
+	return bytes;
+}
+
+static size_t kvec_copy_from_iter_nocache(void *addr, size_t bytes, struct iov_iter *i)
+{
+	char *to = addr;
+	iterate_and_advance_kvec(i, bytes, v,
+		memcpy((to += v.iov_len) - v.iov_len, v.iov_base, v.iov_len));
 	return bytes;
 }
 
@@ -2009,7 +2017,7 @@ static const struct iov_iter_ops iovec_iter_ops = {
 	.copy_to_iter			= iovec_copy_to_iter,
 	.copy_from_iter			= iovec_copy_from_iter,
 	.copy_from_iter_full		= iovec_copy_from_iter_full,
-	.copy_from_iter_nocache		= xxx_copy_from_iter_nocache,
+	.copy_from_iter_nocache		= iovec_copy_from_iter_nocache,
 	.copy_from_iter_full_nocache	= xxx_copy_from_iter_full_nocache,
 #ifdef CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE
 	.copy_from_iter_flushcache	= xxx_copy_from_iter_flushcache,
@@ -2043,7 +2051,7 @@ static const struct iov_iter_ops kvec_iter_ops = {
 	.copy_to_iter			= kvec_copy_to_iter,
 	.copy_from_iter			= kvec_copy_from_iter,
 	.copy_from_iter_full		= kvec_copy_from_iter_full,
-	.copy_from_iter_nocache		= xxx_copy_from_iter_nocache,
+	.copy_from_iter_nocache		= kvec_copy_from_iter_nocache,
 	.copy_from_iter_full_nocache	= xxx_copy_from_iter_full_nocache,
 #ifdef CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE
 	.copy_from_iter_flushcache	= xxx_copy_from_iter_flushcache,
@@ -2077,7 +2085,7 @@ static const struct iov_iter_ops bvec_iter_ops = {
 	.copy_to_iter			= bvec_copy_to_iter,
 	.copy_from_iter			= bvec_copy_from_iter,
 	.copy_from_iter_full		= bvec_copy_from_iter_full,
-	.copy_from_iter_nocache		= xxx_copy_from_iter_nocache,
+	.copy_from_iter_nocache		= bvec_copy_from_iter_nocache,
 	.copy_from_iter_full_nocache	= xxx_copy_from_iter_full_nocache,
 #ifdef CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE
 	.copy_from_iter_flushcache	= xxx_copy_from_iter_flushcache,
@@ -2111,7 +2119,7 @@ static const struct iov_iter_ops pipe_iter_ops = {
 	.copy_to_iter			= pipe_copy_to_iter,
 	.copy_from_iter			= no_copy_from_iter,
 	.copy_from_iter_full		= no_copy_from_iter_full,
-	.copy_from_iter_nocache		= xxx_copy_from_iter_nocache,
+	.copy_from_iter_nocache		= no_copy_from_iter,
 	.copy_from_iter_full_nocache	= xxx_copy_from_iter_full_nocache,
 #ifdef CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE
 	.copy_from_iter_flushcache	= xxx_copy_from_iter_flushcache,
@@ -2145,7 +2153,7 @@ static const struct iov_iter_ops discard_iter_ops = {
 	.copy_to_iter			= discard_copy_to_iter,
 	.copy_from_iter			= no_copy_from_iter,
 	.copy_from_iter_full		= no_copy_from_iter_full,
-	.copy_from_iter_nocache		= xxx_copy_from_iter_nocache,
+	.copy_from_iter_nocache		= no_copy_from_iter,
 	.copy_from_iter_full_nocache	= xxx_copy_from_iter_full_nocache,
 #ifdef CONFIG_ARCH_HAS_UACCESS_FLUSHCACHE
 	.copy_from_iter_flushcache	= xxx_copy_from_iter_flushcache,
