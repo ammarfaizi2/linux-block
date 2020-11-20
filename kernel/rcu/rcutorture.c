@@ -3018,11 +3018,15 @@ rcu_torture_init(void)
 		nrealnocbers = 1;
 	if (WARN_ON(nocbs_toggle < 0))
 		nocbs_toggle = HZ;
-	nocb_tasks = kcalloc(nrealnocbers, sizeof(nocb_tasks[0]), GFP_KERNEL);
-	if (nocb_tasks == NULL) {
-		VERBOSE_TOROUT_ERRSTRING("out of memory");
-		firsterr = -ENOMEM;
-		goto unwind;
+	if (nrealnocbers > 0) {
+		nocb_tasks = kcalloc(nrealnocbers, sizeof(nocb_tasks[0]), GFP_KERNEL);
+		if (nocb_tasks == NULL) {
+			VERBOSE_TOROUT_ERRSTRING("out of memory");
+			firsterr = -ENOMEM;
+			goto unwind;
+		}
+	} else {
+		nocb_tasks = NULL;
 	}
 	for (i = 0; i < nrealnocbers; i++) {
 		firsterr = torture_create_kthread(rcu_nocb_toggle, NULL, nocb_tasks[i]);
