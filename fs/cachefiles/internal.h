@@ -19,6 +19,11 @@
 #include <linux/workqueue.h>
 #include <linux/security.h>
 
+/* Cachefile granularity */
+#define CACHEFILES_GRAN_SIZE	(256 * 1024)
+#define CACHEFILES_DIO_BLOCK_SIZE 4096
+#define CACHEFILES_SIZE_LIMIT	(512 * 8 * CACHEFILES_GRAN_SIZE)
+
 struct cachefiles_cache;
 struct cachefiles_object;
 
@@ -29,22 +34,37 @@ extern unsigned cachefiles_debug;
 
 #define cachefiles_gfp (__GFP_RECLAIM | __GFP_NORETRY | __GFP_NOMEMALLOC)
 
+enum cachefiles_content {
+	/* These values are saved on disk */
+	CACHEFILES_CONTENT_NO_DATA	= 0, /* No content stored */
+	CACHEFILES_CONTENT_SINGLE	= 1, /* Content is monolithic, all is present */
+	CACHEFILES_CONTENT_ALL		= 2, /* Content is all present, no map */
+	CACHEFILES_CONTENT_MAP		= 3, /* Content is piecemeal, map in use */
+	CACHEFILES_CONTENT_DIRTY	= 4, /* Content is dirty (only seen on disk) */
+	nr__cachefiles_content
+};
+
 /*
  * node records
  */
 struct cachefiles_object {
 	struct fscache_object		fscache;	/* fscache handle */
-	struct cachefiles_lookup_data	*lookup_data;	/* cached lookup data */
 	struct dentry			*dentry;	/* the file/dir representing this object */
-	struct dentry			*backer;	/* backing file */
+	struct dentry			*old;		/* backing file */
+	struct file			*backing_file;	/* File open on backing storage */
 	loff_t				i_size;		/* object size */
-	unsigned long			flags;
-#define CACHEFILES_OBJECT_ACTIVE	0		/* T if marked active */
 	atomic_t			usage;		/* object usage count */
+	unsigned long			flags;
+#define CACHEFILES_OBJECT_USING_TMPFILE	0		/* Object has a tmpfile that need linking */
 	uint8_t				type;		/* object type */
-	uint8_t				new;		/* T if object new */
-	spinlock_t			work_lock;
-	struct rb_node			active_node;	/* link in active tree (dentry is key) */
+	bool				new;		/* T if object new */
+
+	/* Map of the content blocks in the object */
+	enum cachefiles_content		content_info:8;	/* Info about content presence */
+	bool				content_map_changed;
+	u8				*content_map;		/* Content present bitmap */
+	unsigned int			content_map_size;	/* Size of buffer */
+	rwlock_t			content_map_lock;
 };
 
 extern struct kmem_cache *cachefiles_object_jar;
@@ -60,8 +80,6 @@ struct cachefiles_cache {
 	const struct cred		*cache_cred;	/* security override for accessing cache */
 	struct mutex			daemon_mutex;	/* command serialisation mutex */
 	wait_queue_head_t		daemon_pollwq;	/* poll waitqueue for daemon */
-	struct rb_root			active_nodes;	/* active nodes (can't be culled) */
-	rwlock_t			active_lock;	/* lock for active_nodes */
 	atomic_t			gravecounter;	/* graveyard uniquifier */
 	atomic_t			f_released;	/* number of objects released lately */
 	atomic_long_t			b_released;	/* number of blocks released lately */
@@ -89,37 +107,6 @@ struct cachefiles_cache {
 	char				*tag;		/* cache binding tag */
 };
 
-/*
- * backing file read tracking
- */
-struct cachefiles_one_read {
-	wait_queue_entry_t			monitor;	/* link into monitored waitqueue */
-	struct page			*back_page;	/* backing file page we're waiting for */
-	struct page			*netfs_page;	/* netfs page we're going to fill */
-	struct fscache_retrieval	*op;		/* retrieval op covering this */
-	struct list_head		op_link;	/* link in op's todo list */
-};
-
-/*
- * backing file write tracking
- */
-struct cachefiles_one_write {
-	struct page			*netfs_page;	/* netfs page to copy */
-	struct cachefiles_object	*object;
-	struct list_head		obj_link;	/* link in object's lists */
-	fscache_rw_complete_t		end_io_func;
-	void				*context;
-};
-
-/*
- * auxiliary data xattr buffer
- */
-struct cachefiles_xattr {
-	uint16_t			len;
-	uint8_t				type;
-	uint8_t				data[];
-};
-
 #include <trace/events/cachefiles.h>
 
 /*
@@ -138,6 +125,25 @@ extern int cachefiles_daemon_bind(struct cachefiles_cache *cache, char *args);
 extern void cachefiles_daemon_unbind(struct cachefiles_cache *cache);
 
 /*
+ * content-map.c
+ */
+extern void cachefiles_expand_readahead(struct fscache_op_resources *opr,
+					loff_t *_start, size_t *_len, loff_t i_size);
+extern enum netfs_read_source cachefiles_prepare_read(struct netfs_read_subrequest *subreq,
+						      loff_t i_size);
+extern u8 *cachefiles_new_content_map(struct cachefiles_object *object,
+				      unsigned int *_size);
+extern void cachefiles_mark_content_map(struct cachefiles_object *object,
+					loff_t start, loff_t len, unsigned int inval_counter);
+extern void cachefiles_expand_content_map(struct cachefiles_object *object, loff_t size);
+extern void cachefiles_shorten_content_map(struct cachefiles_object *object, loff_t new_size);
+extern int cachefiles_prepare_write(struct fscache_op_resources *opr,
+				    loff_t *_start, size_t *_len, loff_t i_size);
+extern bool cachefiles_load_content_map(struct cachefiles_object *object);
+extern void cachefiles_save_content_map(struct cachefiles_object *object);
+extern int cachefiles_display_object(struct seq_file *m, struct fscache_object *object);
+
+/*
  * daemon.c
  */
 extern const struct file_operations cachefiles_daemon_fops;
@@ -149,6 +155,26 @@ extern int cachefiles_has_space(struct cachefiles_cache *cache,
  * interface.c
  */
 extern const struct fscache_cache_ops cachefiles_cache_ops;
+extern struct fscache_object *cachefiles_grab_object(struct fscache_object *_object,
+						     enum fscache_obj_ref_trace why);
+extern void cachefiles_put_object(struct fscache_object *_object,
+				  enum fscache_obj_ref_trace why);
+
+/*
+ * io.c
+ */
+extern int cachefiles_read(struct fscache_op_resources *opr,
+			   loff_t start_pos,
+			   struct iov_iter *iter,
+			   bool seek_data,
+			   fscache_io_terminated_t term_func,
+			   void *term_func_priv);
+extern int cachefiles_write(struct fscache_op_resources *opr,
+			    loff_t start_pos,
+			    struct iov_iter *iter,
+			    fscache_io_terminated_t term_func,
+			    void *term_func_priv);
+extern bool cachefiles_open_object(struct cachefiles_object *obj);
 
 /*
  * key.c
@@ -158,15 +184,13 @@ extern char *cachefiles_cook_key(const u8 *raw, int keylen, uint8_t type);
 /*
  * namei.c
  */
-extern void cachefiles_mark_object_inactive(struct cachefiles_cache *cache,
-					    struct cachefiles_object *object,
-					    blkcnt_t i_blocks);
+extern void cachefiles_unmark_inode_in_use(struct cachefiles_object *object,
+				    struct dentry *dentry);
 extern int cachefiles_delete_object(struct cachefiles_cache *cache,
 				    struct cachefiles_object *object);
-extern int cachefiles_walk_to_object(struct cachefiles_object *parent,
-				     struct cachefiles_object *object,
-				     const char *key,
-				     struct cachefiles_xattr *auxdata);
+extern bool cachefiles_walk_to_object(struct cachefiles_object *parent,
+				      struct cachefiles_object *object,
+				      const char *key);
 extern struct dentry *cachefiles_get_directory(struct cachefiles_cache *cache,
 					       struct dentry *dir,
 					       const char *name);
@@ -177,14 +201,17 @@ extern int cachefiles_cull(struct cachefiles_cache *cache, struct dentry *dir,
 extern int cachefiles_check_in_use(struct cachefiles_cache *cache,
 				   struct dentry *dir, char *filename);
 
+extern bool cachefiles_commit_tmpfile(struct cachefiles_cache *cache,
+				      struct cachefiles_object *object);
+
 /*
  * proc.c
  */
-#ifdef CONFIG_CACHEFILES_HISTOGRAM
 extern atomic_t cachefiles_lookup_histogram[HZ];
 extern atomic_t cachefiles_mkdir_histogram[HZ];
 extern atomic_t cachefiles_create_histogram[HZ];
 
+#ifdef CONFIG_CACHEFILES_HISTOGRAM
 extern int __init cachefiles_proc_init(void);
 extern void cachefiles_proc_cleanup(void);
 static inline
@@ -199,23 +226,11 @@ void cachefiles_hist(atomic_t histogram[], unsigned long start_jif)
 #else
 #define cachefiles_proc_init()		(0)
 #define cachefiles_proc_cleanup()	do {} while (0)
-#define cachefiles_hist(hist, start_jif) do {} while (0)
+static inline
+void cachefiles_hist(atomic_t histogram[], unsigned long start_jif)
+{
+}
 #endif
-
-/*
- * rdwr.c
- */
-extern int cachefiles_read_or_alloc_page(struct fscache_retrieval *,
-					 struct page *, gfp_t);
-extern int cachefiles_read_or_alloc_pages(struct fscache_retrieval *,
-					  struct list_head *, unsigned *,
-					  gfp_t);
-extern int cachefiles_allocate_page(struct fscache_retrieval *, struct page *,
-				    gfp_t);
-extern int cachefiles_allocate_pages(struct fscache_retrieval *,
-				     struct list_head *, unsigned *, gfp_t);
-extern int cachefiles_write_page(struct fscache_storage *, struct page *);
-extern void cachefiles_uncache_page(struct fscache_object *, struct page *);
 
 /*
  * security.c
@@ -241,16 +256,11 @@ static inline void cachefiles_end_secure(struct cachefiles_cache *cache,
  * xattr.c
  */
 extern int cachefiles_check_object_type(struct cachefiles_object *object);
-extern int cachefiles_set_object_xattr(struct cachefiles_object *object,
-				       struct cachefiles_xattr *auxdata);
-extern int cachefiles_update_object_xattr(struct cachefiles_object *object,
-					  struct cachefiles_xattr *auxdata);
+extern int cachefiles_set_object_xattr(struct cachefiles_object *object);
 extern int cachefiles_check_auxdata(struct cachefiles_object *object);
-extern int cachefiles_check_object_xattr(struct cachefiles_object *object,
-					 struct cachefiles_xattr *auxdata);
 extern int cachefiles_remove_object_xattr(struct cachefiles_cache *cache,
 					  struct dentry *dentry);
-
+extern int cachefiles_prepare_to_write(struct fscache_object *object);
 
 /*
  * error handling
@@ -269,7 +279,8 @@ do {									\
 									\
 	___cache = container_of((object)->fscache.cache,		\
 				struct cachefiles_cache, cache);	\
-	cachefiles_io_error(___cache, FMT, ##__VA_ARGS__);		\
+	cachefiles_io_error(___cache, FMT " [o=%08x]", ##__VA_ARGS__,	\
+			    object->fscache.debug_id);			\
 } while (0)
 
 

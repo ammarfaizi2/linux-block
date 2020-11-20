@@ -106,7 +106,7 @@ enum fscache_checkaux nfs_fscache_inode_check_aux(void *cookie_netfs_data,
  *   cache fails with EIO - in which case the server must be contacted to
  *   retrieve the data, which requires the read context for security.
  */
-static void nfs_fh_get_context(void *cookie_netfs_data, void *context)
+static void nfs_fh_get_context(void *context)
 {
 	get_nfs_open_context(context);
 }
@@ -116,7 +116,7 @@ static void nfs_fh_get_context(void *cookie_netfs_data, void *context)
  * - This function can be absent if the completion function doesn't require a
  *   context.
  */
-static void nfs_fh_put_context(void *cookie_netfs_data, void *context)
+static void nfs_fh_put_context(void *context)
 {
 	if (context)
 		put_nfs_open_context(context);

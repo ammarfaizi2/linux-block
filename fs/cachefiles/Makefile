@@ -5,12 +5,13 @@
 
 cachefiles-y := \
 	bind.o \
+	content-map.o \
 	daemon.o \
 	interface.o \
+	io.o \
 	key.o \
 	main.o \
 	namei.o \
-	rdwr.o \
 	security.o \
 	xattr.o
 

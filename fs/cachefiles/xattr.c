@@ -15,6 +15,14 @@
 #include <linux/slab.h>
 #include "internal.h"
 
+struct cachefiles_xattr {
+	__be64	object_size;	/* Actual size of the object */
+	__be64	zero_point;	/* Size after which server has no data not written by us */
+	__u8	type;		/* Type of object */
+	__u8	content;	/* Content presence (enum cachefiles_content) */
+	__u8	data[];		/* netfs coherency data */
+} __packed;
+
 static const char cachefiles_xattr_cache[] =
 	XATTR_USER_PREFIX "CacheFiles.cache";
 
@@ -34,9 +42,9 @@ int cachefiles_check_object_type(struct cachefiles_object *object)
 	if (!object->fscache.cookie)
 		strcpy(type, "C3");
 	else
-		snprintf(type, 3, "%02x", object->fscache.cookie->def->type);
+		snprintf(type, 3, "%02x", object->fscache.cookie->type);
 
-	_enter("%p{%s}", object, type);
+	_enter("%x{%s}", object->fscache.debug_id, type);
 
 	/* attempt to install a type label directly */
 	ret = vfs_setxattr(dentry, cachefiles_xattr_cache, type, 2,
@@ -96,58 +104,48 @@ bad_type:
 /*
  * set the state xattr on a cache file
  */
-int cachefiles_set_object_xattr(struct cachefiles_object *object,
-				struct cachefiles_xattr *auxdata)
+int cachefiles_set_object_xattr(struct cachefiles_object *object)
 {
+	struct cachefiles_xattr *buf;
 	struct dentry *dentry = object->dentry;
-	int ret;
-
-	ASSERT(dentry);
-
-	_enter("%p,#%d", object, auxdata->len);
-
-	/* attempt to install the cache metadata directly */
-	_debug("SET #%u", auxdata->len);
-
-	clear_bit(FSCACHE_COOKIE_AUX_UPDATED, &object->fscache.cookie->flags);
-	ret = vfs_setxattr(dentry, cachefiles_xattr_cache,
-			   &auxdata->type, auxdata->len,
-			   XATTR_CREATE);
-	if (ret < 0 && ret != -ENOMEM)
-		cachefiles_io_error_obj(
-			object,
-			"Failed to set xattr with error %d", ret);
-
-	_leave(" = %d", ret);
-	return ret;
-}
-
-/*
- * update the state xattr on a cache file
- */
-int cachefiles_update_object_xattr(struct cachefiles_object *object,
-				   struct cachefiles_xattr *auxdata)
-{
-	struct dentry *dentry = object->dentry;
+	unsigned int len = object->fscache.cookie->aux_len;
 	int ret;
 
 	if (!dentry)
 		return -ESTALE;
 
-	_enter("%p,#%d", object, auxdata->len);
+	_enter("%x,#%d", object->fscache.debug_id, len);
 
-	/* attempt to install the cache metadata directly */
-	_debug("SET #%u", auxdata->len);
+	buf = kmalloc(sizeof(struct cachefiles_xattr) + len, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 
-	clear_bit(FSCACHE_COOKIE_AUX_UPDATED, &object->fscache.cookie->flags);
+	buf->object_size	= cpu_to_be64(object->fscache.cookie->object_size);
+	buf->zero_point		= cpu_to_be64(object->fscache.cookie->zero_point);
+	buf->type		= object->fscache.cookie->type;
+	buf->content		= object->content_info;
+	if (test_bit(FSCACHE_OBJECT_LOCAL_WRITE, &object->fscache.flags))
+		buf->content	= CACHEFILES_CONTENT_DIRTY;
+	if (len > 0)
+		memcpy(buf->data, fscache_get_aux(object->fscache.cookie), len);
+
 	ret = vfs_setxattr(dentry, cachefiles_xattr_cache,
-			   &auxdata->type, auxdata->len,
-			   XATTR_REPLACE);
-	if (ret < 0 && ret != -ENOMEM)
-		cachefiles_io_error_obj(
-			object,
-			"Failed to update xattr with error %d", ret);
+			   buf, sizeof(struct cachefiles_xattr) + len, 0);
+	if (ret < 0) {
+		trace_cachefiles_coherency(object, d_inode(dentry)->i_ino,
+					   buf->content,
+					   cachefiles_coherency_set_fail);
+		if (ret != -ENOMEM)
+			cachefiles_io_error_obj(
+				object,
+				"Failed to set xattr with error %d", ret);
+	} else {
+		trace_cachefiles_coherency(object, d_inode(dentry)->i_ino,
+					   buf->content,
+					   cachefiles_coherency_set_ok);
+	}
 
+	kfree(buf);
 	_leave(" = %d", ret);
 	return ret;
 }
@@ -157,148 +155,52 @@ int cachefiles_update_object_xattr(struct cachefiles_object *object,
  */
 int cachefiles_check_auxdata(struct cachefiles_object *object)
 {
-	struct cachefiles_xattr *auxbuf;
-	enum fscache_checkaux validity;
+	struct cachefiles_xattr *buf;
 	struct dentry *dentry = object->dentry;
+	unsigned int len = object->fscache.cookie->aux_len, tlen;
+	const void *p = fscache_get_aux(object->fscache.cookie);
+	enum cachefiles_coherency_trace why;
 	ssize_t xlen;
-	int ret;
-
-	ASSERT(dentry);
-	ASSERT(d_backing_inode(dentry));
-	ASSERT(object->fscache.cookie->def->check_aux);
-
-	auxbuf = kmalloc(sizeof(struct cachefiles_xattr) + 512, GFP_KERNEL);
-	if (!auxbuf)
-		return -ENOMEM;
-
-	xlen = vfs_getxattr(dentry, cachefiles_xattr_cache,
-			    &auxbuf->type, 512 + 1);
-	ret = -ESTALE;
-	if (xlen < 1 ||
-	    auxbuf->type != object->fscache.cookie->def->type)
-		goto error;
-
-	xlen--;
-	validity = fscache_check_aux(&object->fscache, &auxbuf->data, xlen,
-				     i_size_read(d_backing_inode(dentry)));
-	if (validity != FSCACHE_CHECKAUX_OKAY)
-		goto error;
-
-	ret = 0;
-error:
-	kfree(auxbuf);
-	return ret;
-}
-
-/*
- * check the state xattr on a cache file
- * - return -ESTALE if the object should be deleted
- */
-int cachefiles_check_object_xattr(struct cachefiles_object *object,
-				  struct cachefiles_xattr *auxdata)
-{
-	struct cachefiles_xattr *auxbuf;
-	struct dentry *dentry = object->dentry;
-	int ret;
-
-	_enter("%p,#%d", object, auxdata->len);
+	int ret = -ESTALE;
 
 	ASSERT(dentry);
 	ASSERT(d_backing_inode(dentry));
 
-	auxbuf = kmalloc(sizeof(struct cachefiles_xattr) + 512, cachefiles_gfp);
-	if (!auxbuf) {
-		_leave(" = -ENOMEM");
+	tlen = sizeof(struct cachefiles_xattr) + len;
+	buf = kmalloc(tlen, GFP_KERNEL);
+	if (!buf)
 		return -ENOMEM;
+
+	xlen = vfs_getxattr(dentry, cachefiles_xattr_cache, buf, tlen);
+	if (xlen != tlen) {
+		if (xlen == -EIO)
+			cachefiles_io_error_obj(
+				object,
+				"Failed to read aux with error %zd", xlen);
+		why = cachefiles_coherency_check_xattr;
+	} else if (buf->type != object->fscache.cookie->type) {
+		why = cachefiles_coherency_check_type;
+	} else if (buf->content >= nr__cachefiles_content) {
+		why = cachefiles_coherency_check_content;
+	} else if (memcmp(buf->data, p, len) != 0) {
+		why = cachefiles_coherency_check_aux;
+	} else if (be64_to_cpu(buf->object_size) != object->fscache.cookie->object_size) {
+		why = cachefiles_coherency_check_objsize;
+	} else if (buf->content == CACHEFILES_CONTENT_DIRTY) {
+		// TODO: Begin conflict resolution
+		pr_warn("Dirty object in cache\n");
+		why = cachefiles_coherency_check_dirty;
+	} else {
+		object->fscache.cookie->zero_point = be64_to_cpu(buf->zero_point);
+		object->content_info = buf->content;
+		why = cachefiles_coherency_check_ok;
+		ret = 0;
 	}
 
-	/* read the current type label */
-	ret = vfs_getxattr(dentry, cachefiles_xattr_cache,
-			   &auxbuf->type, 512 + 1);
-	if (ret < 0) {
-		if (ret == -ENODATA)
-			goto stale; /* no attribute - power went off
-				     * mid-cull? */
-
-		if (ret == -ERANGE)
-			goto bad_type_length;
-
-		cachefiles_io_error_obj(object,
-					"Can't read xattr on %lu (err %d)",
-					d_backing_inode(dentry)->i_ino, -ret);
-		goto error;
-	}
-
-	/* check the on-disk object */
-	if (ret < 1)
-		goto bad_type_length;
-
-	if (auxbuf->type != auxdata->type)
-		goto stale;
-
-	auxbuf->len = ret;
-
-	/* consult the netfs */
-	if (object->fscache.cookie->def->check_aux) {
-		enum fscache_checkaux result;
-		unsigned int dlen;
-
-		dlen = auxbuf->len - 1;
-
-		_debug("checkaux %s #%u",
-		       object->fscache.cookie->def->name, dlen);
-
-		result = fscache_check_aux(&object->fscache,
-					   &auxbuf->data, dlen,
-					   i_size_read(d_backing_inode(dentry)));
-
-		switch (result) {
-			/* entry okay as is */
-		case FSCACHE_CHECKAUX_OKAY:
-			goto okay;
-
-			/* entry requires update */
-		case FSCACHE_CHECKAUX_NEEDS_UPDATE:
-			break;
-
-			/* entry requires deletion */
-		case FSCACHE_CHECKAUX_OBSOLETE:
-			goto stale;
-
-		default:
-			BUG();
-		}
-
-		/* update the current label */
-		ret = vfs_setxattr(dentry, cachefiles_xattr_cache,
-				   &auxdata->type, auxdata->len,
-				   XATTR_REPLACE);
-		if (ret < 0) {
-			cachefiles_io_error_obj(object,
-						"Can't update xattr on %lu"
-						" (error %d)",
-						d_backing_inode(dentry)->i_ino, -ret);
-			goto error;
-		}
-	}
-
-okay:
-	ret = 0;
-
-error:
-	kfree(auxbuf);
-	_leave(" = %d", ret);
+	trace_cachefiles_coherency(object, d_inode(dentry)->i_ino,
+				   buf->content, why);
+	kfree(buf);
 	return ret;
-
-bad_type_length:
-	pr_err("Cache object %lu xattr length incorrect\n",
-	       d_backing_inode(dentry)->i_ino);
-	ret = -EIO;
-	goto error;
-
-stale:
-	ret = -ESTALE;
-	goto error;
 }
 
 /*
@@ -321,5 +223,26 @@ int cachefiles_remove_object_xattr(struct cachefiles_cache *cache,
 	}
 
 	_leave(" = %d", ret);
+	return ret;
+}
+
+/*
+ * Stick a marker on the cache object to indicate that it's dirty.
+ */
+int cachefiles_prepare_to_write(struct fscache_object *_object)
+{
+	int ret;
+	const struct cred *saved_cred;
+	struct cachefiles_object *object =
+		container_of(_object, struct cachefiles_object, fscache);
+	struct cachefiles_cache *cache =
+		container_of(_object->cache, struct cachefiles_cache, cache);
+
+	_enter("c=%08x", object->fscache.cookie->debug_id);
+
+	cachefiles_begin_secure(cache, &saved_cred);
+	ret = cachefiles_set_object_xattr(object);
+	cachefiles_end_secure(cache, saved_cred);
+
 	return ret;
 }

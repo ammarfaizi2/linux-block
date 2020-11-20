@@ -589,7 +589,7 @@ struct afs_cell *afs_use_cell(struct afs_cell *cell, enum afs_cell_trace reason)
  */
 void afs_unuse_cell(struct afs_net *net, struct afs_cell *cell, enum afs_cell_trace reason)
 {
-	unsigned int debug_id = cell->debug_id;
+	unsigned int debug_id;
 	time64_t now, expire_delay;
 	int u, a;
 
@@ -604,6 +604,7 @@ void afs_unuse_cell(struct afs_net *net, struct afs_cell *cell, enum afs_cell_tr
 	if (cell->vl_servers->nr_servers)
 		expire_delay = afs_cell_gc_delay;
 
+	debug_id = cell->debug_id;
 	u = atomic_read(&cell->ref);
 	a = atomic_dec_return(&cell->active);
 	trace_afs_cell(debug_id, u, a, reason);
@@ -679,10 +680,13 @@ static int afs_activate_cell(struct afs_net *net, struct afs_cell *cell)
 
 #ifdef CONFIG_AFS_FSCACHE
 	cell->cache = fscache_acquire_cookie(afs_cache_netfs.primary_index,
-					     &afs_cell_cache_index_def,
+					     FSCACHE_COOKIE_TYPE_INDEX,
+					     "AFS.cell",
+					     0,
+					     NULL,
 					     cell->name, strlen(cell->name),
 					     NULL, 0,
-					     cell, 0, true);
+					     0);
 #endif
 	ret = afs_proc_cell_setup(cell);
 	if (ret < 0)
@@ -721,7 +725,7 @@ static void afs_deactivate_cell(struct afs_net *net, struct afs_cell *cell)
 	mutex_unlock(&net->proc_cells_lock);
 
 #ifdef CONFIG_AFS_FSCACHE
-	fscache_relinquish_cookie(cell->cache, NULL, false);
+	fscache_relinquish_cookie(cell->cache, false);
 	cell->cache = NULL;
 #endif
 

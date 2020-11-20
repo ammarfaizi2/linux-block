@@ -37,14 +37,6 @@ static struct miscdevice cachefiles_dev = {
 	.fops	= &cachefiles_daemon_fops,
 };
 
-static void cachefiles_object_init_once(void *_object)
-{
-	struct cachefiles_object *object = _object;
-
-	memset(object, 0, sizeof(*object));
-	spin_lock_init(&object->work_lock);
-}
-
 /*
  * initialise the fs caching module
  */
@@ -61,9 +53,7 @@ static int __init cachefiles_init(void)
 	cachefiles_object_jar =
 		kmem_cache_create("cachefiles_object_jar",
 				  sizeof(struct cachefiles_object),
-				  0,
-				  SLAB_HWCACHE_ALIGN,
-				  cachefiles_object_init_once);
+				  0, SLAB_HWCACHE_ALIGN, NULL);
 	if (!cachefiles_object_jar) {
 		pr_notice("Failed to allocate an object jar\n");
 		goto error_object_jar;

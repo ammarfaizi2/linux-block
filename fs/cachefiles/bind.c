@@ -36,13 +36,11 @@ int cachefiles_daemon_bind(struct cachefiles_cache *cache, char *args)
 	       args);
 
 	/* start by checking things over */
-	ASSERT(cache->fstop_percent >= 0 &&
-	       cache->fstop_percent < cache->fcull_percent &&
+	ASSERT(cache->fstop_percent < cache->fcull_percent &&
 	       cache->fcull_percent < cache->frun_percent &&
 	       cache->frun_percent  < 100);
 
-	ASSERT(cache->bstop_percent >= 0 &&
-	       cache->bstop_percent < cache->bcull_percent &&
+	ASSERT(cache->bstop_percent < cache->bcull_percent &&
 	       cache->bcull_percent < cache->brun_percent &&
 	       cache->brun_percent  < 100);
 
@@ -99,16 +97,13 @@ static int cachefiles_daemon_add_cache(struct cachefiles_cache *cache)
 	/* allocate the root index object */
 	ret = -ENOMEM;
 
-	fsdef = kmem_cache_alloc(cachefiles_object_jar, GFP_KERNEL);
+	fsdef = kmem_cache_zalloc(cachefiles_object_jar, GFP_KERNEL);
 	if (!fsdef)
 		goto error_root_object;
 
-	ASSERTCMP(fsdef->backer, ==, NULL);
-
 	atomic_set(&fsdef->usage, 1);
+	rwlock_init(&fsdef->content_map_lock);
 	fsdef->type = FSCACHE_COOKIE_TYPE_INDEX;
-
-	_debug("- fsdef %p", fsdef);
 
 	/* look up the directory at the root of the cache */
 	ret = kern_path(cache->rootdirname, LOOKUP_DIRECTORY, &path);

@@ -21,16 +21,18 @@ int __fscache_register_netfs(struct fscache_netfs *netfs)
 
 	/* allocate a cookie for the primary index */
 	candidate = fscache_alloc_cookie(&fscache_fsdef_index,
-					 &fscache_fsdef_netfs_def,
+					 FSCACHE_COOKIE_TYPE_INDEX,
+					 ".netfs",
+					 0, NULL,
 					 netfs->name, strlen(netfs->name),
 					 &netfs->version, sizeof(netfs->version),
-					 netfs, 0);
+					 0);
 	if (!candidate) {
 		_leave(" = -ENOMEM");
 		return -ENOMEM;
 	}
 
-	candidate->flags = 1 << FSCACHE_COOKIE_ENABLED;
+	trace_fscache_cookie(candidate, fscache_cookie_new_netfs, 1);
 
 	/* check the netfs type is not already present */
 	cookie = fscache_hash_cookie(candidate);
@@ -66,7 +68,7 @@ void __fscache_unregister_netfs(struct fscache_netfs *netfs)
 {
 	_enter("{%s.%u}", netfs->name, netfs->version);
 
-	fscache_relinquish_cookie(netfs->primary_index, NULL, false);
+	fscache_relinquish_cookie(netfs->primary_index, false);
 	pr_notice("Netfs '%s' unregistered from caching\n", netfs->name);
 
 	_leave("");
