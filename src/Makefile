@@ -70,6 +70,11 @@ ifeq ($(HAVE_URING), true)
 LLDLIBS += -luring
 endif
 
+SUBDIRS += idmapped-mounts
+ifeq ($(HAVE_LIBCAP), true)
+LLDLIBS += -lcap
+endif
+
 CFILES = $(TARGETS:=.c)
 LDIRT = $(TARGETS) fssum
 
