@@ -147,6 +147,68 @@ static inline bool page_copy_sane(struct page *page, size_t offset, size_t n);
 	}							\
 }
 
+#define iterate_and_advance_iovec(i, n, v, CMD) {		\
+	if (unlikely(i->count < n))				\
+		n = i->count;					\
+	if (i->count) {						\
+		size_t skip = i->iov_offset;			\
+		const struct iovec *iov;			\
+		struct iovec v;					\
+		iterate_iovec(i, n, v, iov, skip, (CMD))	\
+			if (skip == iov->iov_len) {		\
+				iov++;				\
+				skip = 0;			\
+			}					\
+		i->nr_segs -= iov - i->iov;			\
+		i->iov = iov;					\
+		i->count -= n;					\
+		i->iov_offset = skip;				\
+	}							\
+}
+
+#define iterate_and_advance_bvec(i, n, v, CMD) {		\
+	if (unlikely(i->count < n))				\
+		n = i->count;					\
+	if (i->count) {						\
+		size_t skip = i->iov_offset;				\
+		const struct bio_vec *bvec = i->bvec;			\
+		struct bio_vec v;					\
+		struct bvec_iter __bi;					\
+		iterate_bvec(i, n, v, __bi, skip, (CMD))		\
+			i->bvec = __bvec_iter_bvec(i->bvec, __bi);	\
+		i->nr_segs -= i->bvec - bvec;				\
+		skip = __bi.bi_bvec_done;				\
+		i->count -= n;						\
+		i->iov_offset = skip;					\
+	}								\
+}
+
+#define iterate_and_advance_kvec(i, n, v, CMD) {		\
+	if (unlikely(i->count < n))				\
+		n = i->count;					\
+	if (i->count) {						\
+		size_t skip = i->iov_offset;			\
+		const struct kvec *kvec;			\
+		struct kvec v;					\
+		iterate_kvec(i, n, v, kvec, skip, (CMD))	\
+			if (skip == kvec->iov_len) {		\
+				kvec++;				\
+				skip = 0;			\
+			}					\
+		i->nr_segs -= kvec - i->kvec;			\
+		i->kvec = kvec;					\
+		i->count -= n;					\
+		i->iov_offset = skip;				\
+	}							\
+}
+
+#define iterate_and_advance_discard(i, n) {			\
+	if (unlikely(i->count < n))				\
+		n = i->count;					\
+	i->count -= n;						\
+	i->iov_offset += n;					\
+}
+
 static int copyout(void __user *to, const void *from, size_t n)
 {
 	if (should_fail_usercopy())
