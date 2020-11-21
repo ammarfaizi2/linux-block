@@ -1078,6 +1078,8 @@ bool poll_state_synchronize_srcu(struct srcu_struct *ssp, unsigned long cookie)
 {
 	if (!rcu_seq_done(&ssp->srcu_gp_seq, cookie))
 		return false;
+	// Ensure that the end of the SRCU grace period happens before
+	// any subsequent code that the caller might execute.
 	smp_mb(); // ^^^
 	return true;
 }
