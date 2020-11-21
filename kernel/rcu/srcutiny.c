@@ -157,10 +157,10 @@ static void srcu_gp_start_if_needed(struct srcu_struct *ssp)
 {
 	unsigned short cookie;
 
+	cookie = get_state_synchronize_srcu(ssp);
+	if (USHORT_CMP_LT(READ_ONCE(ssp->srcu_idx_max), cookie))
+		WRITE_ONCE(ssp->srcu_idx_max, cookie);
 	if (!READ_ONCE(ssp->srcu_gp_running)) {
-		cookie = get_state_synchronize_srcu(ssp);
-		if (USHORT_CMP_LT(READ_ONCE(ssp->srcu_idx_max), cookie))
-			WRITE_ONCE(ssp->srcu_idx_max, cookie);
 		if (likely(srcu_init_done))
 			schedule_work(&ssp->srcu_work);
 		else if (list_empty(&ssp->srcu_work.entry))
