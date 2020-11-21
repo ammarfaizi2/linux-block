@@ -1611,6 +1611,27 @@ void snd_usb_endpoint_start_quirk(struct snd_usb_endpoint *ep)
 		ep->tenor_fb_quirk = 1;
 }
 
+
+/*
+ * Return whether the interface needs to be set up before the endpoint
+ * parameter setup
+ *
+ * The "interface setup before parameter" is the behavior of the earlier
+ * version of snd-usb-audio driver.  Some device (e.g. Yamahas THR10) seem
+ * requiring this behavior, and this function determines it.
+ */
+bool snd_usb_set_interface_pre_quirk(struct snd_usb_audio *chip,
+				     struct snd_usb_endpoint *ep)
+{
+	if (ep->cur_audiofmt->protocol == UAC_VERSION_1) {
+		if (USB_ID_VENDOR(chip->usb_id) == 0x0499) /* Yamaha */
+			return true;
+	}
+
+	return false;
+}
+
+/* additional quirks for post usb_set_interface() calls */
 void snd_usb_set_interface_quirk(struct snd_usb_audio *chip)
 {
 	if (!chip)

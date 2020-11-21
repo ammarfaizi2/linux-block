@@ -1139,6 +1139,7 @@ static int snd_usb_endpoint_set_params(struct snd_usb_audio *chip,
 int snd_usb_endpoint_configure(struct snd_usb_audio *chip,
 			       struct snd_usb_endpoint *ep)
 {
+	bool iface_first;
 	int err = 0;
 
 	mutex_lock(&chip->mutex);
@@ -1156,6 +1157,13 @@ int snd_usb_endpoint_configure(struct snd_usb_audio *chip,
 	/* Need to deselect altsetting at first */
 	endpoint_set_interface(chip, ep, false);
 
+	iface_first = snd_usb_set_interface_pre_quirk(chip, ep);
+	if (iface_first) {
+		err = endpoint_set_interface(chip, ep, true);
+		if (err < 0)
+			goto unlock;
+	}
+
 	err = snd_usb_init_pitch(chip, ep->cur_audiofmt);
 	if (err < 0)
 		goto unlock;
@@ -1172,9 +1180,11 @@ int snd_usb_endpoint_configure(struct snd_usb_audio *chip,
 	if (err < 0)
 		goto unlock;
 
-	err = endpoint_set_interface(chip, ep, true);
-	if (err < 0)
-		goto unlock;
+	if (!iface_first) {
+		err = endpoint_set_interface(chip, ep, true);
+		if (err < 0)
+			goto unlock;
+	}
 
  done:
 	ep->need_setup = false;
