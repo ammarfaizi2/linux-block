@@ -85,6 +85,8 @@ void cleanup_srcu_struct(struct srcu_struct *ssp)
 	WARN_ON(ssp->srcu_gp_waiting);
 	WARN_ON(ssp->srcu_cb_head);
 	WARN_ON(&ssp->srcu_cb_head != ssp->srcu_cb_tail);
+	WARN_ON(ssp->srcu_idx != ssp->srcu_idx_max);
+	WARN_ON(ssp->srcu_idx & 0x1);
 }
 EXPORT_SYMBOL_GPL(cleanup_srcu_struct);
 
@@ -158,8 +160,9 @@ static void srcu_gp_start_if_needed(struct srcu_struct *ssp)
 	unsigned short cookie;
 
 	cookie = get_state_synchronize_srcu(ssp);
-	if (USHORT_CMP_LT(READ_ONCE(ssp->srcu_idx_max), cookie))
-		WRITE_ONCE(ssp->srcu_idx_max, cookie);
+	if (USHORT_CMP_GE(READ_ONCE(ssp->srcu_idx_max), cookie))
+		return;
+	WRITE_ONCE(ssp->srcu_idx_max, cookie);
 	if (!READ_ONCE(ssp->srcu_gp_running)) {
 		if (likely(srcu_init_done))
 			schedule_work(&ssp->srcu_work);
