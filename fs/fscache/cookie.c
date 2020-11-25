@@ -720,24 +720,6 @@ void __fscache_invalidate(struct fscache_cookie *cookie)
 EXPORT_SYMBOL(__fscache_invalidate);
  
 /*
- * Update the index entries backing a cookie.  The writeback is done lazily.
- */
-void __fscache_update_cookie(struct fscache_cookie *cookie,
-			     const void *aux_data, const loff_t *object_size)
-{
-	fscache_stat(&fscache_n_updates);
-
-	spin_lock(&cookie->lock);
-
-	fscache_update_aux(cookie, aux_data, object_size);
-	set_bit(FSCACHE_COOKIE_NEEDS_UPDATE, &cookie->flags);
-
-	spin_unlock(&cookie->lock);
-	_leave("");
-}
-EXPORT_SYMBOL(__fscache_update_cookie);
-
-/*
  * Remove a cookie from the hash table.
  */
 static void fscache_unhash_cookie(struct fscache_cookie *cookie)

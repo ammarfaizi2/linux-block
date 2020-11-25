@@ -30,8 +30,7 @@ atomic_t fscache_n_invalidates;
 atomic_t fscache_n_invalidates_run;
 
 atomic_t fscache_n_updates;
-atomic_t fscache_n_updates_null;
-atomic_t fscache_n_updates_run;
+EXPORT_SYMBOL(fscache_n_updates);
 
 atomic_t fscache_n_relinquishes;
 atomic_t fscache_n_relinquishes_null;
@@ -72,10 +71,8 @@ int fscache_stats_show(struct seq_file *m, void *v)
 		   atomic_read(&fscache_n_invalidates),
 		   atomic_read(&fscache_n_invalidates_run));
 
-	seq_printf(m, "Updates: n=%u nul=%u run=%u\n",
-		   atomic_read(&fscache_n_updates),
-		   atomic_read(&fscache_n_updates_null),
-		   atomic_read(&fscache_n_updates_run));
+	seq_printf(m, "Updates: n=%u\n",
+		   atomic_read(&fscache_n_updates));
 
 	seq_printf(m, "Relinqs: n=%u rtr=%u drop=%u\n",
 		   atomic_read(&fscache_n_relinquishes),
