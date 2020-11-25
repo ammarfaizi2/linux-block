@@ -615,30 +615,6 @@ void __fscache_invalidate(struct fscache_cookie *cookie,
 EXPORT_SYMBOL(__fscache_invalidate);
 
 /*
- * Update the index entries backing a cookie.  The writeback is done lazily.
- */
-void __fscache_update_cookie(struct fscache_cookie *cookie,
-			     const void *aux_data, const loff_t *object_size)
-{
-	struct fscache_object *object;
-
-	fscache_stat(&fscache_n_updates);
-
-	_enter("{%s}", cookie->type_name);
-
-	spin_lock(&cookie->lock);
-
-	fscache_update_aux(cookie, aux_data, object_size);
-	hlist_for_each_entry(object, &cookie->backing_objects, cookie_link) {
-		set_bit(FSCACHE_OBJECT_NEEDS_UPDATE, &object->flags);
-	}
-
-	spin_unlock(&cookie->lock);
-	_leave("");
-}
-EXPORT_SYMBOL(__fscache_update_cookie);
-
-/*
  * release a cookie back to the cache
  * - the object will be marked as recyclable on disk if retire is true
  * - all dependents of this cookie must have already been unregistered

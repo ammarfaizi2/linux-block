@@ -176,7 +176,6 @@ struct fscache_object {
 	unsigned long		flags;
 #define FSCACHE_OBJECT_LOCAL_WRITE	1	/* T if the object is being modified locally */
 #define FSCACHE_OBJECT_NEEDS_INVAL	8	/* T if object needs invalidation */
-#define FSCACHE_OBJECT_NEEDS_UPDATE	9	/* T if object attrs need writing to disk */
 
 	struct list_head	cache_link;	/* link in cache->object_list */
 	struct hlist_node	cookie_link;	/* link in cookie->backing_objects */
@@ -239,17 +238,6 @@ static inline void *fscache_get_key(struct fscache_cookie *cookie)
 		return cookie->inline_key;
 	else
 		return cookie->key;
-}
-
-/*
- * Find the auxiliary data on a cookie.
- */
-static inline void *fscache_get_aux(struct fscache_cookie *cookie)
-{
-	if (cookie->aux_len <= sizeof(cookie->inline_aux))
-		return cookie->inline_aux;
-	else
-		return cookie->aux;
 }
 
 /*

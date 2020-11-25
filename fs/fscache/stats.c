@@ -23,6 +23,7 @@ atomic_t fscache_n_acquires_oom;
 atomic_t fscache_n_invalidates;
 
 atomic_t fscache_n_updates;
+EXPORT_SYMBOL(fscache_n_updates);
 atomic_t fscache_n_updates_run;
 
 atomic_t fscache_n_relinquishes;

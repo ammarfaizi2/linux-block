@@ -255,7 +255,7 @@ void __fscache_resize_cookie(struct fscache_cookie *cookie, loff_t new_size)
 		struct fscache_object *object = fscache_cres_object(&cres);
 
 		fscache_stat(&fscache_n_resizes);
-		set_bit(FSCACHE_OBJECT_NEEDS_UPDATE, &object->flags);
+		set_bit(FSCACHE_COOKIE_OBJ_NEEDS_UPDATE, &cookie->flags);
 
 		/* We cannot defer a resize as we need to do it inside the
 		 * netfs's inode lock so that we're serialised with respect to

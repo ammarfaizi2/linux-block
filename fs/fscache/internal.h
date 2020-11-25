@@ -184,8 +184,6 @@ extern atomic_t fscache_n_acquires_oom;
 
 extern atomic_t fscache_n_invalidates;
 
-extern atomic_t fscache_n_updates;
-
 extern atomic_t fscache_n_relinquishes;
 extern atomic_t fscache_n_relinquishes_retire;
 
@@ -249,21 +247,6 @@ static inline void fscache_see_cookie(struct fscache_cookie *cookie,
 {
 	trace_fscache_cookie(cookie->debug_id, refcount_read(&cookie->ref),
 			     where);
-}
-
-/*
- * Update the auxiliary data on a cookie.
- */
-static inline
-void fscache_update_aux(struct fscache_cookie *cookie,
-			const void *aux_data, const loff_t *object_size)
-{
-	void *p = fscache_get_aux(cookie);
-
-	if (aux_data && p)
-		memcpy(p, aux_data, cookie->aux_len);
-	if (object_size)
-		cookie->object_size = *object_size;
 }
 
 /*****************************************************************************/

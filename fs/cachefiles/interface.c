@@ -249,7 +249,7 @@ static bool cachefiles_commit_object(struct cachefiles_object *object,
 		cachefiles_save_content_map(object);
 	if (test_and_clear_bit(FSCACHE_OBJECT_LOCAL_WRITE, &object->fscache.flags))
 		update = true;
-	if (test_and_clear_bit(FSCACHE_OBJECT_NEEDS_UPDATE, &object->fscache.flags))
+	if (test_and_clear_bit(FSCACHE_COOKIE_OBJ_NEEDS_UPDATE, &object->fscache.cookie->flags))
 		update = true;
 	if (update) {
 		if (cachefiles_trim_object(object))
@@ -573,7 +573,7 @@ static bool cachefiles_invalidate_object(struct fscache_object *_object,
 		object->content_map_size = map_size;
 		object->content_map_changed = true;
 		set_bit(CACHEFILES_OBJECT_USING_TMPFILE, &object->flags);
-		set_bit(FSCACHE_OBJECT_NEEDS_UPDATE, &object->fscache.flags);
+		set_bit(FSCACHE_COOKIE_OBJ_NEEDS_UPDATE, &object->fscache.cookie->flags);
 
 		write_unlock_bh(&object->content_map_lock);
 		spin_unlock(&object->fscache.lock);

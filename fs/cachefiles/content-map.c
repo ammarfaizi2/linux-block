@@ -303,7 +303,8 @@ void cachefiles_mark_content_map(struct cachefiles_object *object,
 
 		if (object->content_info != CACHEFILES_CONTENT_MAP) {
 			object->content_info = CACHEFILES_CONTENT_MAP;
-			set_bit(FSCACHE_OBJECT_NEEDS_UPDATE, &object->fscache.flags);
+			set_bit(FSCACHE_COOKIE_OBJ_NEEDS_UPDATE,
+				&object->fscache.cookie->flags);
 		}
 	}
 
