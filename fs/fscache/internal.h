@@ -107,10 +107,6 @@ extern atomic_t fscache_n_acquires_oom;
 extern atomic_t fscache_n_invalidates;
 extern atomic_t fscache_n_invalidates_run;
 
-extern atomic_t fscache_n_updates;
-extern atomic_t fscache_n_updates_null;
-extern atomic_t fscache_n_updates_run;
-
 extern atomic_t fscache_n_relinquishes;
 extern atomic_t fscache_n_relinquishes_null;
 extern atomic_t fscache_n_relinquishes_retire;
@@ -152,20 +148,6 @@ bool fscache_begin_volume_access(struct fscache_volume *volume,
 				 enum fscache_access_trace why);
 void fscache_create_volume(struct fscache_volume *volume, bool wait);
 
-/*
- * Update the auxiliary data on a cookie.
- */
-static inline
-void fscache_update_aux(struct fscache_cookie *cookie,
-			const void *aux_data, const loff_t *object_size)
-{
-	void *p = fscache_get_aux(cookie);
-
-	if (aux_data && p)
-		memcpy(p, aux_data, cookie->aux_len);
-	if (object_size)
-		cookie->object_size = *object_size;
-}
 
 /*****************************************************************************/
 /*

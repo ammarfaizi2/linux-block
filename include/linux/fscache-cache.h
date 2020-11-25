@@ -139,17 +139,6 @@ static inline void *fscache_get_key(struct fscache_cookie *cookie)
 		return cookie->key;
 }
 
-/*
- * Find the auxiliary data on a cookie.
- */
-static inline void *fscache_get_aux(struct fscache_cookie *cookie)
-{
-	if (cookie->aux_len <= sizeof(cookie->inline_aux))
-		return cookie->inline_aux;
-	else
-		return cookie->aux;
-}
-
 /**
  * fscache_cookie_lookup_negative - Note negative lookup
  * @cookie: The cookie that was being looked up
