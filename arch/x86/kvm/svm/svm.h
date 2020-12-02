@@ -117,7 +117,6 @@ struct vcpu_svm {
 	struct {
 		u16 fs;
 		u16 gs;
-		u16 ldt;
 		u64 gs_base;
 	} host;
 

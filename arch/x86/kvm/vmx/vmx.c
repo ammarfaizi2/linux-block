@@ -1177,8 +1177,6 @@ void vmx_prepare_switch_to_guest(struct kvm_vcpu *vcpu)
 	 * Set host fs and gs selectors.  Unfortunately, 22.2.3 does not
 	 * allow segment selectors with cpl > 0 or ti == 1.
 	 */
-	host_state->ldt_sel = kvm_read_ldt();
-
 #ifdef CONFIG_X86_64
 	savesegment(ds, host_state->ds_sel);
 	savesegment(es, host_state->es_sel);
@@ -1220,11 +1218,16 @@ static void vmx_prepare_switch_to_host(struct vcpu_vmx *vmx)
 
 	++vmx->vcpu.stat.host_state_reload;
 
+	/*
+	 * VM exit writes NULL to LDTR.  Reload it if the host wants a
+	 * non-NULL value.
+	 */
+	load_ldt_if_present();
+
 #ifdef CONFIG_X86_64
 	rdmsrl(MSR_KERNEL_GS_BASE, vmx->msr_guest_kernel_gs_base);
 #endif
-	if (host_state->ldt_sel || (host_state->gs_sel & 7)) {
-		kvm_load_ldt(host_state->ldt_sel);
+	if (host_state->gs_sel & 7) {
 #ifdef CONFIG_X86_64
 		load_gs_index(host_state->gs_sel);
 #else

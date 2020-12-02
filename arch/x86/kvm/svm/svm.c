@@ -36,6 +36,7 @@
 #include <asm/mce.h>
 #include <asm/spec-ctrl.h>
 #include <asm/cpu_device_id.h>
+#include <asm/mmu_context.h>
 
 #include <asm/virtext.h>
 #include "trace.h"
@@ -1280,7 +1281,6 @@ static void svm_vcpu_load(struct kvm_vcpu *vcpu, int cpu)
 #endif
 	savesegment(fs, svm->host.fs);
 	savesegment(gs, svm->host.gs);
-	svm->host.ldt = kvm_read_ldt();
 
 	for (i = 0; i < NR_HOST_SAVE_USER_MSRS; i++)
 		rdmsrl(host_save_user_msrs[i], svm->host_user_msrs[i]);
@@ -1311,7 +1311,9 @@ static void svm_vcpu_put(struct kvm_vcpu *vcpu)
 	avic_vcpu_put(vcpu);
 
 	++vcpu->stat.host_state_reload;
-	kvm_load_ldt(svm->host.ldt);
+	/* The guest LDTR is still loaded.  Switch to host. */
+	load_ldt_unconditionally();
+
 #ifdef CONFIG_X86_64
 	loadsegment(fs, svm->host.fs);
 	wrmsrl(MSR_KERNEL_GS_BASE, current->thread.gsbase);

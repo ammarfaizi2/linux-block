@@ -289,7 +289,6 @@ static void vmx_sync_vmcs_host_state(struct vcpu_vmx *vmx,
 	dest = &vmx->loaded_vmcs->host_state;
 
 	vmx_set_host_fs_gs(dest, src->fs_sel, src->gs_sel, src->fs_base, src->gs_base);
-	dest->ldt_sel = src->ldt_sel;
 #ifdef CONFIG_X86_64
 	dest->ds_sel = src->ds_sel;
 	dest->es_sel = src->es_sel;
