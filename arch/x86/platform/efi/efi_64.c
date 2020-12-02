@@ -462,20 +462,6 @@ void __init efi_dump_pagetable(void)
 #endif
 }
 
-/*
- * Makes the calling thread switch to/from efi_mm context. Can be used
- * in a kernel thread and user context. Preemption needs to remain disabled
- * while the EFI-mm is borrowed. mmgrab()/mmdrop() is not used because the mm
- * can not change under us.
- * It should be ensured that there are no concurent calls to this function.
- */
-void efi_switch_mm(struct mm_struct *mm)
-{
-	efi_scratch.prev_mm = current->active_mm;
-	current->active_mm = mm;
-	switch_mm(efi_scratch.prev_mm, mm, NULL);
-}
-
 static DEFINE_SPINLOCK(efi_runtime_lock);
 
 /*
@@ -515,11 +501,14 @@ static DEFINE_SPINLOCK(efi_runtime_lock);
 #define efi_thunk(func...)						\
 ({									\
 	efi_status_t __s;						\
+	temp_mm_state_t mm_state;					\
 									\
 	arch_efi_call_virt_setup();					\
+	mm_state = use_temporary_mm(&efi_mm);				\
 									\
 	__s = __efi_thunk(func);					\
 									\
+	unuse_temporary_mm(mm_state);					\
 	arch_efi_call_virt_teardown();					\
 									\
 	__s;								\
@@ -533,16 +522,16 @@ efi_thunk_set_virtual_address_map(unsigned long memory_map_size,
 {
 	efi_status_t status;
 	unsigned long flags;
+	temp_mm_state_t mm_state;
 
 	efi_sync_low_kernel_mappings();
 	local_irq_save(flags);
-
-	efi_switch_mm(&efi_mm);
+	mm_state = use_temporary_mm(&efi_mm);
 
 	status = __efi_thunk(set_virtual_address_map, memory_map_size,
 			     descriptor_size, descriptor_version, virtual_map);
 
-	efi_switch_mm(efi_scratch.prev_mm);
+	unuse_temporary_mm(mm_state);
 	local_irq_restore(flags);
 
 	return status;
@@ -830,29 +819,30 @@ efi_set_virtual_address_map(unsigned long memory_map_size,
 	const efi_system_table_t *systab = (efi_system_table_t *)systab_phys;
 	efi_status_t status;
 	unsigned long flags;
+	temp_mm_state_t mm_state;
 
 	if (efi_is_mixed())
 		return efi_thunk_set_virtual_address_map(memory_map_size,
 							 descriptor_size,
 							 descriptor_version,
 							 virtual_map);
-	efi_switch_mm(&efi_mm);
-
 	kernel_fpu_begin();
 
 	/* Disable interrupts around EFI calls: */
 	local_irq_save(flags);
+	mm_state = use_temporary_mm(&efi_mm);
+
 	status = efi_call(efi.runtime->set_virtual_address_map,
 			  memory_map_size, descriptor_size,
 			  descriptor_version, virtual_map);
-	local_irq_restore(flags);
-
-	kernel_fpu_end();
 
 	/* grab the virtually remapped EFI runtime services table pointer */
 	efi.runtime = READ_ONCE(systab->runtime);
 
-	efi_switch_mm(efi_scratch.prev_mm);
+	unuse_temporary_mm(mm_state);
+	local_irq_restore(flags);
+
+	kernel_fpu_end();
 
 	return status;
 }
