@@ -37,6 +37,12 @@ enum cachefiles_coherency_trace {
 	cachefiles_coherency_set_ok,
 };
 
+enum cachefiles_trunc_trace {
+	cachefiles_trunc_clear,
+	cachefiles_trunc_expand_tmpfile,
+	cachefiles_trunc_shrink,
+};
+
 #endif
 
 /*
@@ -81,6 +87,11 @@ enum cachefiles_coherency_trace {
 	EM(cachefiles_coherency_set_fail,	"SET fail")		\
 	E_(cachefiles_coherency_set_ok,		"SET ok  ")
 
+#define cachefiles_trunc_traces						\
+	EM(cachefiles_trunc_clear,		"CLEAR ")		\
+	EM(cachefiles_trunc_expand_tmpfile,	"PREEXP")		\
+	E_(cachefiles_trunc_shrink,		"SHRINK")
+
 /*
  * Export enum symbols via userspace.
  */
@@ -92,6 +103,7 @@ enum cachefiles_coherency_trace {
 cachefiles_obj_kill_traces;
 cachefiles_obj_ref_traces;
 cachefiles_coherency_traces;
+cachefiles_trunc_traces;
 
 /*
  * Now redefine the EM() and E_() macros to map the enums to the strings that
@@ -411,13 +423,14 @@ TRACE_EVENT(cachefiles_write,
 
 TRACE_EVENT(cachefiles_trunc,
 	    TP_PROTO(struct cachefiles_object *obj, struct inode *backer,
-		     loff_t from, loff_t to),
+		     loff_t from, loff_t to, enum cachefiles_trunc_trace why),
 
-	    TP_ARGS(obj, backer, from, to),
+	    TP_ARGS(obj, backer, from, to, why),
 
 	    TP_STRUCT__entry(
 		    __field(unsigned int,			obj	)
 		    __field(unsigned int,			backer	)
+		    __field(enum cachefiles_trunc_trace,	why	)
 		    __field(loff_t,				from	)
 		    __field(loff_t,				to	)
 			     ),
@@ -427,11 +440,13 @@ TRACE_EVENT(cachefiles_trunc,
 		    __entry->backer	= backer->i_ino;
 		    __entry->from	= from;
 		    __entry->to		= to;
+		    __entry->why	= why;
 			   ),
 
-	    TP_printk("o=%08x b=%08x l=%llx->%llx",
+	    TP_printk("o=%08x b=%08x %s l=%llx->%llx",
 		      __entry->obj,
 		      __entry->backer,
+		      __print_symbolic(__entry->why, cachefiles_trunc_traces),
 		      __entry->from,
 		      __entry->to)
 	    );

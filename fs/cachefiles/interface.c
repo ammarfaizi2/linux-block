@@ -9,6 +9,7 @@
 #include <linux/mount.h>
 #include <linux/xattr.h>
 #include <linux/file.h>
+#include <linux/falloc.h>
 #include "internal.h"
 
 static int cachefiles_attr_changed(struct cachefiles_object *object);
@@ -157,30 +158,32 @@ struct fscache_object *cachefiles_grab_object(struct fscache_object *_object,
 static bool cachefiles_shorten_object(struct cachefiles_object *object, loff_t new_size)
 {
 	struct cachefiles_cache *cache;
-	struct inode *inode;
+	struct inode *inode = d_inode(object->dentry);
 	struct path path;
-	loff_t i_size;
+	loff_t i_size, dio_size;
 	int ret;
+
+	dio_size = round_up(new_size, CACHEFILES_DIO_BLOCK_SIZE);
+	i_size = i_size_read(inode);
 
 	cache = container_of(object->fscache.cache,
 			     struct cachefiles_cache, cache);
 	path.mnt = cache->mnt;
 	path.dentry = object->dentry;
 
-	inode = d_inode(object->dentry);
-	trace_cachefiles_trunc(object, inode, i_size_read(inode), new_size);
-	ret = vfs_truncate(&path, new_size);
+	trace_cachefiles_trunc(object, inode, i_size, dio_size, cachefiles_trunc_shrink);
+	ret = vfs_truncate(&path, dio_size);
 	if (ret < 0) {
 		cachefiles_io_error_obj(object, "Trunc-to-size failed %d", ret);
 		cachefiles_remove_object_xattr(cache, object->dentry);
 		return false;
 	}
 
-	new_size = round_up(new_size, CACHEFILES_DIO_BLOCK_SIZE);
-	i_size = i_size_read(inode);
-	if (i_size < new_size) {
-		trace_cachefiles_trunc(object, inode, i_size, new_size);
-		ret = vfs_truncate(&path, new_size);
+	if (new_size < dio_size) {
+		trace_cachefiles_trunc(object, inode, dio_size, new_size,
+				       cachefiles_trunc_clear);
+		ret = vfs_fallocate(object->backing_file, FALLOC_FL_ZERO_RANGE,
+				    new_size, dio_size);
 		if (ret < 0) {
 			cachefiles_io_error_obj(object, "Trunc-to-dio-size failed %d", ret);
 			cachefiles_remove_object_xattr(cache, object->dentry);
@@ -222,22 +225,6 @@ static void cachefiles_resize_object(struct fscache_object *_object, loff_t new_
 }
 
 /*
- * Trim excess stored data off of an object.
- */
-static bool cachefiles_trim_object(struct cachefiles_object *object)
-{
-	loff_t object_size;
-
-	_enter("{OBJ%x}", object->fscache.debug_id);
-
-	object_size = object->fscache.cookie->object_size;
-	if (i_size_read(d_inode(object->dentry)) <= object_size)
-		return true;
-
-	return cachefiles_shorten_object(object, object_size);
-}
-
-/*
  * Commit changes to the object as we drop it.
  */
 static bool cachefiles_commit_object(struct cachefiles_object *object,
@@ -251,10 +238,8 @@ static bool cachefiles_commit_object(struct cachefiles_object *object,
 		update = true;
 	if (test_and_clear_bit(FSCACHE_COOKIE_OBJ_NEEDS_UPDATE, &object->fscache.cookie->flags))
 		update = true;
-	if (update) {
-		if (cachefiles_trim_object(object))
-			cachefiles_set_object_xattr(object);
-	}
+	if (update)
+		cachefiles_set_object_xattr(object);
 
 	if (test_bit(CACHEFILES_OBJECT_USING_TMPFILE, &object->flags))
 		return cachefiles_commit_tmpfile(cache, object);
@@ -497,7 +482,8 @@ static struct file *cachefiles_create_tmpfile(struct cachefiles_object *object)
 	trace_cachefiles_tmpfile(object, d_inode(path.dentry));
 
 	if (ni_size > 0) {
-		trace_cachefiles_trunc(object, d_inode(path.dentry), 0, ni_size);
+		trace_cachefiles_trunc(object, d_inode(path.dentry), 0, ni_size,
+				       cachefiles_trunc_expand_tmpfile);
 		ret = vfs_truncate(&path, ni_size);
 		if (ret < 0) {
 			file = ERR_PTR(ret);
