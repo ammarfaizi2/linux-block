@@ -220,4 +220,11 @@ unsigned long __get_current_cr3_fast(void);
 
 #include <asm-generic/mmu_context.h>
 
+typedef struct {
+	struct mm_struct *mm;
+} temp_mm_state_t;
+
+extern temp_mm_state_t use_temporary_mm(struct mm_struct *mm);
+extern void unuse_temporary_mm(temp_mm_state_t prev_state);
+
 #endif /* _ASM_X86_MMU_CONTEXT_H */
