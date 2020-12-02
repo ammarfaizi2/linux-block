@@ -577,18 +577,26 @@ static bool get_desc(struct desc_struct *out, unsigned short sel)
 	if ((sel & SEGMENT_TI_MASK) == SEGMENT_LDT) {
 		bool success = false;
 		struct ldt_struct *ldt;
+		unsigned long flags;
 
 		/* Bits [15:3] contain the index of the desired entry. */
 		sel >>= 3;
 
-		mutex_lock(&current->active_mm->context.lock);
-		ldt = current->active_mm->context.ldt;
+		local_irq_save(flags);
+
+		/*
+		 * When an LDT is changed, first the pointer is updated (with
+		 * smp_store_release), then an IPI is sent, and then the LDT
+		 * is freed.  By turning off interrupts, we prevent an LDT
+		 * from being freed while we're reading it.
+		 */
+		ldt = smp_load_acquire(&this_cpu_read(cpu_tlbstate.loaded_mm)->context.ldt);
 		if (ldt && sel < ldt->nr_entries) {
 			*out = ldt->entries[sel];
 			success = true;
 		}
 
-		mutex_unlock(&current->active_mm->context.lock);
+		local_irq_restore(flags);
 
 		return success;
 	}

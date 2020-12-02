@@ -2468,8 +2468,13 @@ static unsigned long get_segment_base(unsigned int segment)
 #ifdef CONFIG_MODIFY_LDT_SYSCALL
 		struct ldt_struct *ldt;
 
-		/* IRQs are off, so this synchronizes with smp_store_release */
-		ldt = READ_ONCE(current->active_mm->context.ldt);
+		/*
+		 * When an LDT is changed, first the pointer is updated (with
+		 * smp_store_release), then an IPI is sent, and then the LDT
+		 * is freed.  Interrupts are off, so an LDT from being freed
+		 * while we're reading it.
+		 */
+		ldt = smp_load_acquire(&this_cpu_read(cpu_tlbstate.loaded_mm)->context.ldt);
 		if (!ldt || idx >= ldt->nr_entries)
 			return 0;
 
