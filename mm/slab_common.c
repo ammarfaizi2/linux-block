@@ -558,6 +558,7 @@ const char *kmem_last_alloc_errstring(void *lastalloc)
 		return "kmem_last_alloc error out of range";
 	return es[klaerrno];
 }
+EXPORT_SYMBOL_GPL(kmem_last_alloc_errstring);
 
 /*
  * If the pointer references a slab-allocated object and if sufficient
