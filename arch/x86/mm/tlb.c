@@ -9,6 +9,7 @@
 #include <linux/cpu.h>
 #include <linux/debugfs.h>
 #include <linux/sched/smt.h>
+#include <linux/sched/mm.h>
 
 #include <asm/tlbflush.h>
 #include <asm/mmu_context.h>
@@ -485,6 +486,15 @@ void cr4_update_pce(void *ignored)
 static inline void cr4_update_pce_mm(struct mm_struct *mm) { }
 #endif
 
+static void sync_core_if_membarrier_enabled(struct mm_struct *next)
+{
+#ifdef CONFIG_MEMBARRIER
+	if (unlikely(atomic_read(&next->membarrier_state) &
+		     MEMBARRIER_STATE_PRIVATE_EXPEDITED_SYNC_CORE))
+		sync_core_before_usermode();
+#endif
+}
+
 void switch_mm_irqs_off(struct mm_struct *prev, struct mm_struct *next,
 			struct task_struct *tsk)
 {
@@ -539,16 +549,24 @@ void switch_mm_irqs_off(struct mm_struct *prev, struct mm_struct *next,
 		this_cpu_write(cpu_tlbstate_shared.is_lazy, false);
 
 	/*
-	 * The membarrier system call requires a full memory barrier and
-	 * core serialization before returning to user-space, after
-	 * storing to rq->curr, when changing mm.  This is because
-	 * membarrier() sends IPIs to all CPUs that are in the target mm
-	 * to make them issue memory barriers.  However, if another CPU
-	 * switches to/from the target mm concurrently with
-	 * membarrier(), it can cause that CPU not to receive an IPI
-	 * when it really should issue a memory barrier.  Writing to CR3
-	 * provides that full memory barrier and core serializing
-	 * instruction.
+	 * membarrier() support requires that, when we change rq->curr->mm:
+	 *
+	 *  - If next->mm has membarrier registered, a full memory barrier
+	 *    after writing rq->curr (or rq->curr->mm if we switched the mm
+	 *    without switching tasks) and before returning to user mode.
+	 *
+	 *  - If next->mm has SYNC_CORE registered, then we sync core before
+	 *    returning to user mode.
+	 *
+	 * In the case where prev->mm == next->mm, membarrier() uses an IPI
+	 * instead, and no particular barriers are needed while context
+	 * switching.
+	 *
+	 * x86 gets all of this as a side-effect of writing to CR3 except
+	 * in the case where we unlazy without flushing.
+	 *
+	 * All other architectures are civilized and do all of this implicitly
+	 * when transitioning from kernel to user mode.
 	 */
 	if (real_prev == next) {
 		VM_WARN_ON(this_cpu_read(cpu_tlbstate.ctxs[prev_asid].ctx_id) !=
@@ -566,7 +584,8 @@ void switch_mm_irqs_off(struct mm_struct *prev, struct mm_struct *next,
 		/*
 		 * If the CPU is not in lazy TLB mode, we are just switching
 		 * from one thread in a process to another thread in the same
-		 * process. No TLB flush required.
+		 * process. No TLB flush or membarrier() synchronization
+		 * is required.
 		 */
 		if (!was_lazy)
 			return;
@@ -576,16 +595,31 @@ void switch_mm_irqs_off(struct mm_struct *prev, struct mm_struct *next,
 		 * If the TLB is up to date, just use it.
 		 * The barrier synchronizes with the tlb_gen increment in
 		 * the TLB shootdown code.
+		 *
+		 * As a future optimization opportunity, it's plausible
+		 * that the x86 memory model is strong enough that this
+		 * smp_mb() isn't needed.
 		 */
 		smp_mb();
 		next_tlb_gen = atomic64_read(&next->context.tlb_gen);
 		if (this_cpu_read(cpu_tlbstate.ctxs[prev_asid].tlb_gen) ==
-				next_tlb_gen)
+		    next_tlb_gen) {
+			/*
+			 * We switched logical mm but we're not going to
+			 * write to CR3.  We already did smp_mb() above,
+			 * but membarrier() might require a sync_core()
+			 * as well.
+			 */
+			sync_core_if_membarrier_enabled(next);
+
 			return;
+		}
 
 		/*
 		 * TLB contents went out of date while we were in lazy
 		 * mode. Fall through to the TLB switching code below.
+		 * No need for an explicit membarrier invocation -- the CR3
+		 * write will serialize.
 		 */
 		new_asid = prev_asid;
 		need_flush = true;
