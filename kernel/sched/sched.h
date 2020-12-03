@@ -950,7 +950,16 @@ struct rq {
 	struct task_struct	*idle;
 	struct task_struct	*stop;
 	unsigned long		next_balance;
-	struct mm_struct	*prev_mm;
+
+	/*
+	 * Hazard pointer for an mm that we might be using lazily.
+	 */
+	struct mm_struct	*lazy_mm;
+
+	/*
+	 * An mm that needs mmdrop()ing.
+	 */
+	atomic_long_t		mm_to_mmdrop;
 
 	unsigned int		clock_update_flags;
 	u64			clock;

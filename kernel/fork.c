@@ -1066,6 +1066,8 @@ struct mm_struct *mm_alloc(void)
 	return mm_init(mm, current, current_user_ns());
 }
 
+extern void mm_fixup_lazy_refs(struct mm_struct *mm);
+
 static inline void __mmput(struct mm_struct *mm)
 {
 	VM_BUG_ON(atomic_read(&mm->mm_users));
@@ -1084,6 +1086,8 @@ static inline void __mmput(struct mm_struct *mm)
 	}
 	if (mm->binfmt)
 		module_put(mm->binfmt->module);
+
+	mm_fixup_lazy_refs(mm);
 	mmdrop(mm);
 }
 
