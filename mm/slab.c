@@ -3615,6 +3615,8 @@ void *kmem_cache_last_alloc(struct kmem_cache *cachep, void *object, void **stac
 	page = virt_to_head_page(objp);
 	objnr = obj_to_index(cachep, page, objp);
 	objp = index_to_obj(cachep, page, objnr);
+	if (stackp && nstackp)
+		stackp[0] = NULL;
 	return *dbg_userword(cachep, objp);
 #else
 	return NULL;
