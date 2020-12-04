@@ -3602,7 +3602,7 @@ void *kmem_cache_alloc_node_trace(struct kmem_cache *cachep,
 EXPORT_SYMBOL(kmem_cache_alloc_node_trace);
 #endif
 
-void *kmem_cache_last_alloc(struct kmem_cache *cachep, void *object)
+void *kmem_cache_last_alloc(struct kmem_cache *cachep, void *object, void **stackp, int nstackp)
 {
 #ifdef DEBUG
 	unsigned int objnr;
