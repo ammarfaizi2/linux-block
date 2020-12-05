@@ -2975,11 +2975,11 @@ __call_rcu(struct rcu_head *head, rcu_callback_t func)
 		allocaddr = kmem_last_alloc(head);
 		allocerr = kmem_last_alloc_errstring(allocaddr);
 		if (allocerr)
-			WARN_ONCE(1, "__call_rcu(): Double-freed CB %p->%pS()!!! (%s)\n",
-				  head, head->func, allocerr);
+			WARN_ONCE(1, "%s(): Double-freed CB %p->%pS()!!! (%s)\n",
+				  __func__, head, head->func, allocerr);
 		else
-			WARN_ONCE(1, "__call_rcu(): Double-freed CB %p->%pS()!!! (Allocated at %pS)\n",
-				  head, head->func, allocaddr);
+			WARN_ONCE(1, "%s(): Double-freed CB %p->%pS()!!! (Allocated at %pS)\n",
+				  __func__, head, head->func, allocaddr);
 		WRITE_ONCE(head->func, rcu_leak_callback);
 		return;
 	}
