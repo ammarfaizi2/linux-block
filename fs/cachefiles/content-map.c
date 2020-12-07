@@ -360,7 +360,8 @@ void cachefiles_shorten_content_map(struct cachefiles_object *object,
 
 	write_lock_bh(&object->content_map_lock);
 
-	if (object->content_info == CACHEFILES_CONTENT_MAP) {
+	if (object->content_info == CACHEFILES_CONTENT_MAP &&
+	    new_size <= CACHEFILES_SIZE_LIMIT) {
 		if (cookie->zero_point > new_size)
 			cookie->zero_point = new_size;
 
