@@ -547,7 +547,7 @@ struct mlx5_priv {
 	atomic_t		reg_pages;
 	struct list_head	free_list;
 	int			vfs_pages;
-	int			peer_pf_pages;
+	int			host_pf_pages;
 
 	struct mlx5_core_health health;
 
@@ -888,10 +888,6 @@ enum {
 	CMD_ALLOWED_OPCODE_ALL,
 };
 
-int mlx5_cmd_init(struct mlx5_core_dev *dev);
-void mlx5_cmd_cleanup(struct mlx5_core_dev *dev);
-void mlx5_cmd_set_state(struct mlx5_core_dev *dev,
-			enum mlx5_cmdif_state cmdif_state);
 void mlx5_cmd_use_events(struct mlx5_core_dev *dev);
 void mlx5_cmd_use_polling(struct mlx5_core_dev *dev);
 void mlx5_cmd_allowed_opcode(struct mlx5_core_dev *dev, u16 opcode);
@@ -1137,7 +1133,7 @@ static inline bool mlx5_core_is_vf(const struct mlx5_core_dev *dev)
 	return dev->coredev_type == MLX5_COREDEV_VF;
 }
 
-static inline bool mlx5_core_is_ecpf(struct mlx5_core_dev *dev)
+static inline bool mlx5_core_is_ecpf(const struct mlx5_core_dev *dev)
 {
 	return dev->caps.embedded_cpu;
 }
@@ -1211,6 +1207,24 @@ static inline bool mlx5_is_roce_enabled(struct mlx5_core_dev *dev)
 					   DEVLINK_PARAM_GENERIC_ID_ENABLE_ROCE,
 					   &val);
 	return val.vbool;
+}
+
+/**
+ * mlx5_core_net - Provide net namespace of the mlx5_core_dev
+ * @dev: mlx5 core device
+ *
+ * mlx5_core_net() returns the net namespace of mlx5 core device.
+ * This can be called only in below described limited context.
+ * (a) When a devlink instance for mlx5_core is registered and
+ *     when devlink reload operation is disabled.
+ *     or
+ * (b) during devlink reload reload_down() and reload_up callbacks
+ *     where it is ensured that devlink instance's net namespace is
+ *     stable.
+ */
+static inline struct net *mlx5_core_net(struct mlx5_core_dev *dev)
+{
+	return devlink_net(priv_to_devlink(dev));
 }
 
 #endif /* MLX5_DRIVER_H */

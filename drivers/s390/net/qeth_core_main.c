@@ -33,6 +33,7 @@
 
 #include <net/iucv/af_iucv.h>
 #include <net/dsfield.h>
+#include <net/sock.h>
 
 #include <asm/ebcdic.h>
 #include <asm/chpid.h>
@@ -499,17 +500,12 @@ static void qeth_cleanup_handled_pending(struct qeth_qdio_out_q *q, int bidx,
 
 		}
 	}
-	if (forced_cleanup && (atomic_read(&(q->bufs[bidx]->state)) ==
-					QETH_QDIO_BUF_HANDLED_DELAYED)) {
-		/* for recovery situations */
-		qeth_init_qdio_out_buf(q, bidx);
-		QETH_CARD_TEXT(q->card, 2, "clprecov");
-	}
 }
 
 static void qeth_qdio_handle_aob(struct qeth_card *card,
 				 unsigned long phys_aob_addr)
 {
+	enum qeth_qdio_out_buffer_state new_state = QETH_QDIO_BUF_QAOB_OK;
 	struct qaob *aob;
 	struct qeth_qdio_out_buffer *buffer;
 	enum iucv_tx_notify notification;
@@ -520,22 +516,6 @@ static void qeth_qdio_handle_aob(struct qeth_card *card,
 	QETH_CARD_TEXT_(card, 5, "%lx", phys_aob_addr);
 	buffer = (struct qeth_qdio_out_buffer *) aob->user1;
 	QETH_CARD_TEXT_(card, 5, "%lx", aob->user1);
-
-	if (atomic_cmpxchg(&buffer->state, QETH_QDIO_BUF_PRIMED,
-			   QETH_QDIO_BUF_IN_CQ) == QETH_QDIO_BUF_PRIMED) {
-		notification = TX_NOTIFY_OK;
-	} else {
-		WARN_ON_ONCE(atomic_read(&buffer->state) !=
-							QETH_QDIO_BUF_PENDING);
-		atomic_set(&buffer->state, QETH_QDIO_BUF_IN_CQ);
-		notification = TX_NOTIFY_DELAYED_OK;
-	}
-
-	if (aob->aorc != 0)  {
-		QETH_CARD_TEXT_(card, 2, "aorc%02X", aob->aorc);
-		notification = qeth_compute_cq_notification(aob->aorc, 1);
-	}
-	qeth_notify_skbs(buffer->q, buffer, notification);
 
 	/* Free dangling allocations. The attached skbs are handled by
 	 * qeth_cleanup_handled_pending().
@@ -548,7 +528,33 @@ static void qeth_qdio_handle_aob(struct qeth_card *card,
 		if (data && buffer->is_header[i])
 			kmem_cache_free(qeth_core_header_cache, data);
 	}
-	atomic_set(&buffer->state, QETH_QDIO_BUF_HANDLED_DELAYED);
+
+	if (aob->aorc) {
+		QETH_CARD_TEXT_(card, 2, "aorc%02X", aob->aorc);
+		new_state = QETH_QDIO_BUF_QAOB_ERROR;
+	}
+
+	switch (atomic_xchg(&buffer->state, new_state)) {
+	case QETH_QDIO_BUF_PRIMED:
+		/* Faster than TX completion code. */
+		notification = qeth_compute_cq_notification(aob->aorc, 0);
+		qeth_notify_skbs(buffer->q, buffer, notification);
+		atomic_set(&buffer->state, QETH_QDIO_BUF_HANDLED_DELAYED);
+		break;
+	case QETH_QDIO_BUF_PENDING:
+		/* TX completion code is active and will handle the async
+		 * completion for us.
+		 */
+		break;
+	case QETH_QDIO_BUF_NEED_QAOB:
+		/* TX completion code is already finished. */
+		notification = qeth_compute_cq_notification(aob->aorc, 1);
+		qeth_notify_skbs(buffer->q, buffer, notification);
+		atomic_set(&buffer->state, QETH_QDIO_BUF_HANDLED_DELAYED);
+		break;
+	default:
+		WARN_ON_ONCE(1);
+	}
 
 	qdio_release_aob(aob);
 }
@@ -1405,7 +1411,7 @@ static void qeth_notify_skbs(struct qeth_qdio_out_q *q,
 	skb_queue_walk(&buf->skb_list, skb) {
 		QETH_CARD_TEXT_(q->card, 5, "skbn%d", notification);
 		QETH_CARD_TEXT_(q->card, 5, "%lx", (long) skb);
-		if (skb->protocol == htons(ETH_P_AF_IUCV) && skb->sk)
+		if (skb->sk && skb->sk->sk_family == PF_IUCV)
 			iucv_sk(skb->sk)->sk_txnotify(skb, notification);
 	}
 }
@@ -1415,9 +1421,6 @@ static void qeth_tx_complete_buf(struct qeth_qdio_out_buffer *buf, bool error,
 {
 	struct qeth_qdio_out_q *queue = buf->q;
 	struct sk_buff *skb;
-
-	/* release may never happen from within CQ tasklet scope */
-	WARN_ON_ONCE(atomic_read(&buf->state) == QETH_QDIO_BUF_IN_CQ);
 
 	if (atomic_read(&buf->state) == QETH_QDIO_BUF_PENDING)
 		qeth_notify_skbs(queue, buf, TX_NOTIFY_GENERALERROR);
@@ -4868,8 +4871,8 @@ out_free:
 static int qeth_query_card_info_cb(struct qeth_card *card,
 				   struct qeth_reply *reply, unsigned long data)
 {
-	struct carrier_info *carrier_info = (struct carrier_info *)reply->param;
 	struct qeth_ipa_cmd *cmd = (struct qeth_ipa_cmd *)data;
+	struct qeth_link_info *link_info = reply->param;
 	struct qeth_query_card_info *card_info;
 
 	QETH_CARD_TEXT(card, 2, "qcrdincb");
@@ -4877,14 +4880,67 @@ static int qeth_query_card_info_cb(struct qeth_card *card,
 		return -EIO;
 
 	card_info = &cmd->data.setadapterparms.data.card_info;
-	carrier_info->card_type = card_info->card_type;
-	carrier_info->port_mode = card_info->port_mode;
-	carrier_info->port_speed = card_info->port_speed;
+	netdev_dbg(card->dev,
+		   "card info: card_type=0x%02x, port_mode=0x%04x, port_speed=0x%08x\n",
+		   card_info->card_type, card_info->port_mode,
+		   card_info->port_speed);
+
+	switch (card_info->port_mode) {
+	case CARD_INFO_PORTM_FULLDUPLEX:
+		link_info->duplex = DUPLEX_FULL;
+		break;
+	case CARD_INFO_PORTM_HALFDUPLEX:
+		link_info->duplex = DUPLEX_HALF;
+		break;
+	default:
+		link_info->duplex = DUPLEX_UNKNOWN;
+	}
+
+	switch (card_info->card_type) {
+	case CARD_INFO_TYPE_1G_COPPER_A:
+	case CARD_INFO_TYPE_1G_COPPER_B:
+		link_info->speed = SPEED_1000;
+		link_info->port = PORT_TP;
+		break;
+	case CARD_INFO_TYPE_1G_FIBRE_A:
+	case CARD_INFO_TYPE_1G_FIBRE_B:
+		link_info->speed = SPEED_1000;
+		link_info->port = PORT_FIBRE;
+		break;
+	case CARD_INFO_TYPE_10G_FIBRE_A:
+	case CARD_INFO_TYPE_10G_FIBRE_B:
+		link_info->speed = SPEED_10000;
+		link_info->port = PORT_FIBRE;
+		break;
+	default:
+		switch (card_info->port_speed) {
+		case CARD_INFO_PORTS_10M:
+			link_info->speed = SPEED_10;
+			break;
+		case CARD_INFO_PORTS_100M:
+			link_info->speed = SPEED_100;
+			break;
+		case CARD_INFO_PORTS_1G:
+			link_info->speed = SPEED_1000;
+			break;
+		case CARD_INFO_PORTS_10G:
+			link_info->speed = SPEED_10000;
+			break;
+		case CARD_INFO_PORTS_25G:
+			link_info->speed = SPEED_25000;
+			break;
+		default:
+			link_info->speed = SPEED_UNKNOWN;
+		}
+
+		link_info->port = PORT_OTHER;
+	}
+
 	return 0;
 }
 
 int qeth_query_card_info(struct qeth_card *card,
-			 struct carrier_info *carrier_info)
+			 struct qeth_link_info *link_info)
 {
 	struct qeth_cmd_buffer *iob;
 
@@ -4894,8 +4950,162 @@ int qeth_query_card_info(struct qeth_card *card,
 	iob = qeth_get_adapter_cmd(card, IPA_SETADP_QUERY_CARD_INFO, 0);
 	if (!iob)
 		return -ENOMEM;
-	return qeth_send_ipa_cmd(card, iob, qeth_query_card_info_cb,
-					(void *)carrier_info);
+
+	return qeth_send_ipa_cmd(card, iob, qeth_query_card_info_cb, link_info);
+}
+
+static int qeth_init_link_info_oat_cb(struct qeth_card *card,
+				      struct qeth_reply *reply_priv,
+				      unsigned long data)
+{
+	struct qeth_ipa_cmd *cmd = (struct qeth_ipa_cmd *)data;
+	struct qeth_link_info *link_info = reply_priv->param;
+	struct qeth_query_oat_physical_if *phys_if;
+	struct qeth_query_oat_reply *reply;
+
+	if (qeth_setadpparms_inspect_rc(cmd))
+		return -EIO;
+
+	/* Multi-part reply is unexpected, don't bother: */
+	if (cmd->data.setadapterparms.hdr.used_total > 1)
+		return -EINVAL;
+
+	/* Expect the reply to start with phys_if data: */
+	reply = &cmd->data.setadapterparms.data.query_oat.reply[0];
+	if (reply->type != QETH_QOAT_REPLY_TYPE_PHYS_IF ||
+	    reply->length < sizeof(*reply))
+		return -EINVAL;
+
+	phys_if = &reply->phys_if;
+
+	switch (phys_if->speed_duplex) {
+	case QETH_QOAT_PHYS_SPEED_10M_HALF:
+		link_info->speed = SPEED_10;
+		link_info->duplex = DUPLEX_HALF;
+		break;
+	case QETH_QOAT_PHYS_SPEED_10M_FULL:
+		link_info->speed = SPEED_10;
+		link_info->duplex = DUPLEX_FULL;
+		break;
+	case QETH_QOAT_PHYS_SPEED_100M_HALF:
+		link_info->speed = SPEED_100;
+		link_info->duplex = DUPLEX_HALF;
+		break;
+	case QETH_QOAT_PHYS_SPEED_100M_FULL:
+		link_info->speed = SPEED_100;
+		link_info->duplex = DUPLEX_FULL;
+		break;
+	case QETH_QOAT_PHYS_SPEED_1000M_HALF:
+		link_info->speed = SPEED_1000;
+		link_info->duplex = DUPLEX_HALF;
+		break;
+	case QETH_QOAT_PHYS_SPEED_1000M_FULL:
+		link_info->speed = SPEED_1000;
+		link_info->duplex = DUPLEX_FULL;
+		break;
+	case QETH_QOAT_PHYS_SPEED_10G_FULL:
+		link_info->speed = SPEED_10000;
+		link_info->duplex = DUPLEX_FULL;
+		break;
+	case QETH_QOAT_PHYS_SPEED_25G_FULL:
+		link_info->speed = SPEED_25000;
+		link_info->duplex = DUPLEX_FULL;
+		break;
+	case QETH_QOAT_PHYS_SPEED_UNKNOWN:
+	default:
+		link_info->speed = SPEED_UNKNOWN;
+		link_info->duplex = DUPLEX_UNKNOWN;
+		break;
+	}
+
+	switch (phys_if->media_type) {
+	case QETH_QOAT_PHYS_MEDIA_COPPER:
+		link_info->port = PORT_TP;
+		link_info->link_mode = QETH_LINK_MODE_UNKNOWN;
+		break;
+	case QETH_QOAT_PHYS_MEDIA_FIBRE_SHORT:
+		link_info->port = PORT_FIBRE;
+		link_info->link_mode = QETH_LINK_MODE_FIBRE_SHORT;
+		break;
+	case QETH_QOAT_PHYS_MEDIA_FIBRE_LONG:
+		link_info->port = PORT_FIBRE;
+		link_info->link_mode = QETH_LINK_MODE_FIBRE_LONG;
+		break;
+	default:
+		link_info->port = PORT_OTHER;
+		link_info->link_mode = QETH_LINK_MODE_UNKNOWN;
+		break;
+	}
+
+	return 0;
+}
+
+static void qeth_init_link_info(struct qeth_card *card)
+{
+	card->info.link_info.duplex = DUPLEX_FULL;
+
+	if (IS_IQD(card) || IS_VM_NIC(card)) {
+		card->info.link_info.speed = SPEED_10000;
+		card->info.link_info.port = PORT_FIBRE;
+		card->info.link_info.link_mode = QETH_LINK_MODE_FIBRE_SHORT;
+	} else {
+		switch (card->info.link_type) {
+		case QETH_LINK_TYPE_FAST_ETH:
+		case QETH_LINK_TYPE_LANE_ETH100:
+			card->info.link_info.speed = SPEED_100;
+			card->info.link_info.port = PORT_TP;
+			break;
+		case QETH_LINK_TYPE_GBIT_ETH:
+		case QETH_LINK_TYPE_LANE_ETH1000:
+			card->info.link_info.speed = SPEED_1000;
+			card->info.link_info.port = PORT_FIBRE;
+			break;
+		case QETH_LINK_TYPE_10GBIT_ETH:
+			card->info.link_info.speed = SPEED_10000;
+			card->info.link_info.port = PORT_FIBRE;
+			break;
+		case QETH_LINK_TYPE_25GBIT_ETH:
+			card->info.link_info.speed = SPEED_25000;
+			card->info.link_info.port = PORT_FIBRE;
+			break;
+		default:
+			dev_info(&card->gdev->dev, "Unknown link type %x\n",
+				 card->info.link_type);
+			card->info.link_info.speed = SPEED_UNKNOWN;
+			card->info.link_info.port = PORT_OTHER;
+		}
+
+		card->info.link_info.link_mode = QETH_LINK_MODE_UNKNOWN;
+	}
+
+	/* Get more accurate data via QUERY OAT: */
+	if (qeth_adp_supported(card, IPA_SETADP_QUERY_OAT)) {
+		struct qeth_link_info link_info;
+		struct qeth_cmd_buffer *iob;
+
+		iob = qeth_get_adapter_cmd(card, IPA_SETADP_QUERY_OAT,
+					   SETADP_DATA_SIZEOF(query_oat));
+		if (iob) {
+			struct qeth_ipa_cmd *cmd = __ipa_cmd(iob);
+			struct qeth_query_oat *oat_req;
+
+			oat_req = &cmd->data.setadapterparms.data.query_oat;
+			oat_req->subcmd_code = QETH_QOAT_SCOPE_INTERFACE;
+
+			if (!qeth_send_ipa_cmd(card, iob,
+					       qeth_init_link_info_oat_cb,
+					       &link_info)) {
+				if (link_info.speed != SPEED_UNKNOWN)
+					card->info.link_info.speed = link_info.speed;
+				if (link_info.duplex != DUPLEX_UNKNOWN)
+					card->info.link_info.duplex = link_info.duplex;
+				if (link_info.port != PORT_OTHER)
+					card->info.link_info.port = link_info.port;
+				if (link_info.link_mode != QETH_LINK_MODE_UNKNOWN)
+					card->info.link_info.link_mode = link_info.link_mode;
+			}
+		}
+	}
 }
 
 /**
@@ -5281,6 +5491,8 @@ retriable:
 		if (rc)
 			goto out;
 	}
+
+	qeth_init_link_info(card);
 
 	rc = qeth_init_qdio_queues(card);
 	if (rc) {
@@ -5869,8 +6081,31 @@ static void qeth_iqd_tx_complete(struct qeth_qdio_out_q *queue,
 
 		if (atomic_cmpxchg(&buffer->state, QETH_QDIO_BUF_PRIMED,
 						   QETH_QDIO_BUF_PENDING) ==
-		    QETH_QDIO_BUF_PRIMED)
+		    QETH_QDIO_BUF_PRIMED) {
 			qeth_notify_skbs(queue, buffer, TX_NOTIFY_PENDING);
+
+			/* Handle race with qeth_qdio_handle_aob(): */
+			switch (atomic_xchg(&buffer->state,
+					    QETH_QDIO_BUF_NEED_QAOB)) {
+			case QETH_QDIO_BUF_PENDING:
+				/* No concurrent QAOB notification. */
+				break;
+			case QETH_QDIO_BUF_QAOB_OK:
+				qeth_notify_skbs(queue, buffer,
+						 TX_NOTIFY_DELAYED_OK);
+				atomic_set(&buffer->state,
+					   QETH_QDIO_BUF_HANDLED_DELAYED);
+				break;
+			case QETH_QDIO_BUF_QAOB_ERROR:
+				qeth_notify_skbs(queue, buffer,
+						 TX_NOTIFY_DELAYED_GENERALERROR);
+				atomic_set(&buffer->state,
+					   QETH_QDIO_BUF_HANDLED_DELAYED);
+				break;
+			default:
+				WARN_ON_ONCE(1);
+			}
+		}
 
 		QETH_CARD_TEXT_(card, 5, "pel%u", bidx);
 

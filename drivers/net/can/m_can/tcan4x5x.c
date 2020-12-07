@@ -123,10 +123,6 @@ struct tcan4x5x_priv {
 	struct gpio_desc *device_wake_gpio;
 	struct gpio_desc *device_state_gpio;
 	struct regulator *power;
-
-	/* Register based ip */
-	int mram_start;
-	int reg_offset;
 };
 
 static struct can_bittiming_const tcan4x5x_bittiming_const = {
@@ -260,7 +256,7 @@ static u32 tcan4x5x_read_reg(struct m_can_classdev *cdev, int reg)
 	struct tcan4x5x_priv *priv = cdev->device_data;
 	u32 val;
 
-	regmap_read(priv->regmap, priv->reg_offset + reg, &val);
+	regmap_read(priv->regmap, TCAN4X5X_MCAN_OFFSET + reg, &val);
 
 	return val;
 }
@@ -270,7 +266,7 @@ static u32 tcan4x5x_read_fifo(struct m_can_classdev *cdev, int addr_offset)
 	struct tcan4x5x_priv *priv = cdev->device_data;
 	u32 val;
 
-	regmap_read(priv->regmap, priv->mram_start + addr_offset, &val);
+	regmap_read(priv->regmap, TCAN4X5X_MRAM_START + addr_offset, &val);
 
 	return val;
 }
@@ -279,7 +275,7 @@ static int tcan4x5x_write_reg(struct m_can_classdev *cdev, int reg, int val)
 {
 	struct tcan4x5x_priv *priv = cdev->device_data;
 
-	return regmap_write(priv->regmap, priv->reg_offset + reg, val);
+	return regmap_write(priv->regmap, TCAN4X5X_MCAN_OFFSET + reg, val);
 }
 
 static int tcan4x5x_write_fifo(struct m_can_classdev *cdev,
@@ -287,7 +283,7 @@ static int tcan4x5x_write_fifo(struct m_can_classdev *cdev,
 {
 	struct tcan4x5x_priv *priv = cdev->device_data;
 
-	return regmap_write(priv->regmap, priv->mram_start + addr_offset, val);
+	return regmap_write(priv->regmap, TCAN4X5X_MRAM_START + addr_offset, val);
 }
 
 static int tcan4x5x_power_enable(struct regulator *reg, int enable)
@@ -328,12 +324,8 @@ static int tcan4x5x_clear_interrupts(struct m_can_classdev *cdev)
 	if (ret)
 		return ret;
 
-	ret = tcan4x5x_write_tcan_reg(cdev, TCAN4X5X_ERROR_STATUS,
-				      TCAN4X5X_CLEAR_ALL_INT);
-	if (ret)
-		return ret;
-
-	return ret;
+	return tcan4x5x_write_tcan_reg(cdev, TCAN4X5X_ERROR_STATUS,
+				       TCAN4X5X_CLEAR_ALL_INT);
 }
 
 static int tcan4x5x_init(struct m_can_classdev *cdev)
@@ -379,7 +371,7 @@ static int tcan4x5x_disable_state(struct m_can_classdev *cdev)
 				  TCAN4X5X_DISABLE_INH_MSK, 0x01);
 }
 
-static int tcan4x5x_parse_config(struct m_can_classdev *cdev)
+static int tcan4x5x_get_gpios(struct m_can_classdev *cdev)
 {
 	struct tcan4x5x_priv *tcan4x5x = cdev->device_data;
 	int ret;
@@ -440,14 +432,18 @@ static int tcan4x5x_can_probe(struct spi_device *spi)
 		return -ENOMEM;
 
 	priv = devm_kzalloc(&spi->dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	if (!priv) {
+		ret = -ENOMEM;
+		goto out_m_can_class_free_dev;
+	}
 
 	priv->power = devm_regulator_get_optional(&spi->dev, "vsup");
-	if (PTR_ERR(priv->power) == -EPROBE_DEFER)
-		return -EPROBE_DEFER;
-	else
+	if (PTR_ERR(priv->power) == -EPROBE_DEFER) {
+		ret = -EPROBE_DEFER;
+		goto out_m_can_class_free_dev;
+	} else {
 		priv->power = NULL;
+	}
 
 	mcan_class->device_data = priv;
 
@@ -460,11 +456,11 @@ static int tcan4x5x_can_probe(struct spi_device *spi)
 	}
 
 	/* Sanity check */
-	if (freq < 20000000 || freq > TCAN4X5X_EXT_CLK_DEF)
-		return -ERANGE;
+	if (freq < 20000000 || freq > TCAN4X5X_EXT_CLK_DEF) {
+		ret = -ERANGE;
+		goto out_m_can_class_free_dev;
+	}
 
-	priv->reg_offset = TCAN4X5X_MCAN_OFFSET;
-	priv->mram_start = TCAN4X5X_MRAM_START;
 	priv->spi = spi;
 	priv->mcan_dev = mcan_class;
 
@@ -483,16 +479,20 @@ static int tcan4x5x_can_probe(struct spi_device *spi)
 	spi->bits_per_word = 32;
 	ret = spi_setup(spi);
 	if (ret)
-		goto out_clk;
+		goto out_m_can_class_free_dev;
 
 	priv->regmap = devm_regmap_init(&spi->dev, &tcan4x5x_bus,
 					&spi->dev, &tcan4x5x_regmap);
+	if (IS_ERR(priv->regmap)) {
+		ret = PTR_ERR(priv->regmap);
+		goto out_m_can_class_free_dev;
+	}
 
 	ret = tcan4x5x_power_enable(priv->power, 1);
 	if (ret)
-		goto out_clk;
+		goto out_m_can_class_free_dev;
 
-	ret = tcan4x5x_parse_config(mcan_class);
+	ret = tcan4x5x_get_gpios(mcan_class);
 	if (ret)
 		goto out_power;
 
@@ -509,13 +509,8 @@ static int tcan4x5x_can_probe(struct spi_device *spi)
 
 out_power:
 	tcan4x5x_power_enable(priv->power, 0);
-out_clk:
-	if (!IS_ERR(mcan_class->cclk)) {
-		clk_disable_unprepare(mcan_class->cclk);
-		clk_disable_unprepare(mcan_class->hclk);
-	}
-
-	dev_err(&spi->dev, "Probe failed, err=%d\n", ret);
+ out_m_can_class_free_dev:
+	m_can_class_free_dev(mcan_class->net);
 	return ret;
 }
 
@@ -523,9 +518,11 @@ static int tcan4x5x_can_remove(struct spi_device *spi)
 {
 	struct tcan4x5x_priv *priv = spi_get_drvdata(spi);
 
+	m_can_class_unregister(priv->mcan_dev);
+
 	tcan4x5x_power_enable(priv->power, 0);
 
-	m_can_class_unregister(priv->mcan_dev);
+	m_can_class_free_dev(priv->mcan_dev->net);
 
 	return 0;
 }

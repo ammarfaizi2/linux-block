@@ -89,7 +89,6 @@ struct m_can_classdev {
 	void *device_data;
 
 	int version;
-	int freq;
 	u32 irqstatus;
 
 	int pm_clock_support;
@@ -99,6 +98,7 @@ struct m_can_classdev {
 };
 
 struct m_can_classdev *m_can_class_allocate_dev(struct device *dev);
+void m_can_class_free_dev(struct net_device *net);
 int m_can_class_register(struct m_can_classdev *cdev);
 void m_can_class_unregister(struct m_can_classdev *cdev);
 int m_can_class_get_clocks(struct m_can_classdev *cdev);

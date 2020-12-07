@@ -581,7 +581,8 @@ struct nft_module_request {
 };
 
 #ifdef CONFIG_MODULES
-static int nft_request_module(struct net *net, const char *fmt, ...)
+static __printf(2, 3) int nft_request_module(struct net *net, const char *fmt,
+					     ...)
 {
 	char module_name[MODULE_NAME_LEN];
 	struct nft_module_request *req;
@@ -619,7 +620,8 @@ static int nft_request_module(struct net *net, const char *fmt, ...)
 static void lockdep_nfnl_nft_mutex_not_held(void)
 {
 #ifdef CONFIG_PROVE_LOCKING
-	WARN_ON_ONCE(lockdep_nfnl_is_held(NFNL_SUBSYS_NFTABLES));
+	if (debug_locks)
+		WARN_ON_ONCE(lockdep_nfnl_is_held(NFNL_SUBSYS_NFTABLES));
 #endif
 }
 
@@ -1281,7 +1283,7 @@ static struct nft_chain *nft_chain_lookup(struct net *net,
 	if (nla == NULL)
 		return ERR_PTR(-EINVAL);
 
-	nla_strlcpy(search, nla, sizeof(search));
+	nla_strscpy(search, nla, sizeof(search));
 
 	WARN_ON(!rcu_read_lock_held() &&
 		!lockdep_commit_lock_is_held(net));
@@ -1721,7 +1723,7 @@ static struct nft_hook *nft_netdev_hook_alloc(struct net *net,
 		goto err_hook_alloc;
 	}
 
-	nla_strlcpy(ifname, attr, IFNAMSIZ);
+	nla_strscpy(ifname, attr, IFNAMSIZ);
 	dev = __dev_get_by_name(net, ifname);
 	if (!dev) {
 		err = -ENOENT;
@@ -5734,7 +5736,7 @@ struct nft_object *nft_obj_lookup(const struct net *net,
 	struct rhlist_head *tmp, *list;
 	struct nft_object *obj;
 
-	nla_strlcpy(search, nla, sizeof(search));
+	nla_strscpy(search, nla, sizeof(search));
 	k.name = search;
 
 	WARN_ON_ONCE(!rcu_read_lock_held() &&
@@ -7137,7 +7139,7 @@ static void nf_tables_flowtable_notify(struct nft_ctx *ctx,
 			GFP_KERNEL);
 	kfree(buf);
 
-	if (ctx->report &&
+	if (!ctx->report &&
 	    !nfnetlink_has_listeners(ctx->net, NFNLGRP_NFTABLES))
 		return;
 
@@ -7259,7 +7261,7 @@ static void nf_tables_gen_notify(struct net *net, struct sk_buff *skb,
 	audit_log_nfcfg("?:0;?:0", 0, net->nft.base_seq,
 			AUDIT_NFT_OP_GEN_REGISTER, GFP_KERNEL);
 
-	if (nlmsg_report(nlh) &&
+	if (!nlmsg_report(nlh) &&
 	    !nfnetlink_has_listeners(net, NFNLGRP_NFTABLES))
 		return;
 
@@ -8053,11 +8055,15 @@ static void nf_tables_abort_release(struct nft_trans *trans)
 	kfree(trans);
 }
 
-static int __nf_tables_abort(struct net *net, bool autoload)
+static int __nf_tables_abort(struct net *net, enum nfnl_abort_action action)
 {
 	struct nft_trans *trans, *next;
 	struct nft_trans_elem *te;
 	struct nft_hook *hook;
+
+	if (action == NFNL_ABORT_VALIDATE &&
+	    nf_tables_validate(net) < 0)
+		return -EAGAIN;
 
 	list_for_each_entry_safe_reverse(trans, next, &net->nft.commit_list,
 					 list) {
@@ -8190,7 +8196,7 @@ static int __nf_tables_abort(struct net *net, bool autoload)
 		nf_tables_abort_release(trans);
 	}
 
-	if (autoload)
+	if (action == NFNL_ABORT_AUTOLOAD)
 		nf_tables_module_autoload(net);
 	else
 		nf_tables_module_autoload_cleanup(net);
@@ -8203,9 +8209,10 @@ static void nf_tables_cleanup(struct net *net)
 	nft_validate_state_update(net, NFT_VALIDATE_SKIP);
 }
 
-static int nf_tables_abort(struct net *net, struct sk_buff *skb, bool autoload)
+static int nf_tables_abort(struct net *net, struct sk_buff *skb,
+			   enum nfnl_abort_action action)
 {
-	int ret = __nf_tables_abort(net, autoload);
+	int ret = __nf_tables_abort(net, action);
 
 	mutex_unlock(&net->nft.commit_mutex);
 
@@ -8836,7 +8843,7 @@ static void __net_exit nf_tables_exit_net(struct net *net)
 {
 	mutex_lock(&net->nft.commit_mutex);
 	if (!list_empty(&net->nft.commit_list))
-		__nf_tables_abort(net, false);
+		__nf_tables_abort(net, NFNL_ABORT_NONE);
 	__nft_release_tables(net);
 	mutex_unlock(&net->nft.commit_mutex);
 	WARN_ON_ONCE(!list_empty(&net->nft.tables));

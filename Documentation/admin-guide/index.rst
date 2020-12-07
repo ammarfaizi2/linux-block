@@ -18,6 +18,8 @@ etc.
    devices
    sysctl/index
 
+   abi
+
 This section describes CPU vulnerabilities and their mitigations.
 
 .. toctree::
@@ -115,7 +117,6 @@ configure specific aspects of kernel behavior to your liking.
    unicode
    vga-softcursor
    video-output
-   wimax/index
    xfs
 
 .. only::  subproject and html

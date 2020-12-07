@@ -737,8 +737,6 @@ static void qeth_l2_dev2br_an_set_cb(void *priv,
  *
  *	On enable, emits a series of address notifications for all
  *	currently registered hosts.
- *
- *	Must be called under rtnl_lock
  */
 static int qeth_l2_dev2br_an_set(struct qeth_card *card, bool enable)
 {
@@ -985,32 +983,19 @@ static void qeth_l2_setup_bridgeport_attrs(struct qeth_card *card)
  *	change notification' and thus can support the learning_sync bridgeport
  *	attribute
  *	@card: qeth_card structure pointer
- *
- *	This is a destructive test and must be called before dev2br or
- *	bridgeport address notification is enabled!
  */
 static void qeth_l2_detect_dev2br_support(struct qeth_card *card)
 {
 	struct qeth_priv *priv = netdev_priv(card->dev);
 	bool dev2br_supported;
-	int rc;
 
 	QETH_CARD_TEXT(card, 2, "d2brsup");
 	if (!IS_IQD(card))
 		return;
 
 	/* dev2br requires valid cssid,iid,chid */
-	if (!card->info.ids_valid) {
-		dev2br_supported = false;
-	} else if (css_general_characteristics.enarf) {
-		dev2br_supported = true;
-	} else {
-		/* Old machines don't have the feature bit:
-		 * Probe by testing whether a disable succeeds
-		 */
-		rc = qeth_l2_pnso(card, PNSO_OC_NET_ADDR_INFO, 0, NULL, NULL);
-		dev2br_supported = !rc;
-	}
+	dev2br_supported = card->info.ids_valid &&
+			   css_general_characteristics.enarf;
 	QETH_CARD_TEXT_(card, 2, "D2Bsup%02x", dev2br_supported);
 
 	if (dev2br_supported)
@@ -1289,16 +1274,19 @@ static void qeth_l2_dev2br_worker(struct work_struct *work)
 	if (READ_ONCE(card->info.pnso_mode) == QETH_PNSO_NONE)
 		goto free;
 
-	/* Potential re-config in progress, try again later: */
-	if (!rtnl_trylock()) {
-		queue_delayed_work(card->event_wq, dwork,
-				   msecs_to_jiffies(100));
-		return;
-	}
-	if (!netif_device_present(card->dev))
-		goto out_unlock;
-
 	if (data->ac_event.lost_event_mask) {
+		/* Potential re-config in progress, try again later: */
+		if (!rtnl_trylock()) {
+			queue_delayed_work(card->event_wq, dwork,
+					   msecs_to_jiffies(100));
+			return;
+		}
+
+		if (!netif_device_present(card->dev)) {
+			rtnl_unlock();
+			goto free;
+		}
+
 		QETH_DBF_MESSAGE(3,
 				 "Address change notification overflow on device %x\n",
 				 CARD_DEVID(card));
@@ -1328,6 +1316,8 @@ static void qeth_l2_dev2br_worker(struct work_struct *work)
 					 "Address Notification resynced on device %x\n",
 					 CARD_DEVID(card));
 		}
+
+		rtnl_unlock();
 	} else {
 		for (i = 0; i < data->ac_event.num_entries; i++) {
 			struct qeth_ipacmd_addr_change_entry *entry =
@@ -1338,9 +1328,6 @@ static void qeth_l2_dev2br_worker(struct work_struct *work)
 						  &entry->addr_lnid);
 		}
 	}
-
-out_unlock:
-	rtnl_unlock();
 
 free:
 	kfree(data);
@@ -2233,7 +2220,6 @@ static int qeth_l2_set_online(struct qeth_card *card, bool carrier_ok)
 	struct net_device *dev = card->dev;
 	int rc = 0;
 
-	/* query before bridgeport_notification may be enabled */
 	qeth_l2_detect_dev2br_support(card);
 
 	mutex_lock(&card->sbp_lock);
@@ -2310,11 +2296,8 @@ static void qeth_l2_set_offline(struct qeth_card *card)
 		card->state = CARD_STATE_DOWN;
 
 	qeth_l2_set_pnso_mode(card, QETH_PNSO_NONE);
-	if (priv->brport_features & BR_LEARNING_SYNC) {
-		rtnl_lock();
+	if (priv->brport_features & BR_LEARNING_SYNC)
 		qeth_l2_dev2br_fdb_flush(card);
-		rtnl_unlock();
-	}
 }
 
 /* Returns zero if the command is successfully "consumed" */

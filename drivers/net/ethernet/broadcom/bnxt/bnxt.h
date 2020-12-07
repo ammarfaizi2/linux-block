@@ -20,6 +20,7 @@
 #define DRV_VER_MIN	10
 #define DRV_VER_UPD	1
 
+#include <linux/ethtool.h>
 #include <linux/interrupt.h>
 #include <linux/rhashtable.h>
 #include <linux/crash_dump.h>
@@ -1781,6 +1782,7 @@ struct bnxt {
 #define BNXT_STATE_ABORT_ERR	5
 #define BNXT_STATE_FW_FATAL_COND	6
 #define BNXT_STATE_DRV_REGISTERED	7
+#define BNXT_STATE_PCI_CHANNEL_IO_FROZEN	8
 
 #define BNXT_NO_FW_ACCESS(bp)					\
 	(test_bit(BNXT_STATE_FW_FATAL_COND, &(bp)->state) ||	\
