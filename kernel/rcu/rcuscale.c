@@ -636,6 +636,11 @@ struct kfree_obj {
 	struct rcu_head rh;
 };
 
+// For testing percpu_ref underflow.
+static void pcr_release(struct percpu_ref *ref)
+{
+}
+
 static int
 kfree_scale_thread(void *arg)
 {
@@ -696,6 +701,7 @@ kfree_scale_thread(void *arg)
 	}
 
 	{
+		struct percpu_ref pcr;
 		struct rcu_head *rhp;
 		struct kmem_cache *kcp;
 		static int z;
@@ -720,6 +726,17 @@ kfree_scale_thread(void *arg)
 		pr_alert("mem_dump_obj(kmalloc %px):\n", &rhp->func);
 		mem_dump_obj(&rhp->func);
 		kfree(rhp);
+
+		if (percpu_ref_init(&pcr, pcr_release, 0, GFP_KERNEL)) {
+			pr_alert("Out of memory, no percpu_ref test.\n");
+		} else {
+			percpu_ref_get(&pcr);
+			percpu_ref_put(&pcr);
+			percpu_ref_put(&pcr); // Intentional bug.
+			percpu_ref_kill(&pcr);
+			rcu_barrier();
+			percpu_ref_exit(&pcr);
+		}
 	}
 
 	torture_kthread_stopping("kfree_scale_thread");
