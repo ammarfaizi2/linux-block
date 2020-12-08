@@ -695,6 +695,33 @@ kfree_scale_thread(void *arg)
 		}
 	}
 
+	{
+		struct rcu_head *rhp;
+		struct kmem_cache *kcp;
+		static int z;
+
+		kcp = kmem_cache_create("rcuscale", 136, 8, SLAB_STORE_USER, NULL);
+		rhp = kmem_cache_alloc(kcp, GFP_KERNEL);
+		pr_alert("kmem_last_alloc() slab test: kfree_scale_thread = %px, &rhp = %px, rhp = %px, &z = %px\n", kfree_scale_thread, &rhp, rhp, &z);
+		pr_alert("kmem_last_alloc(%px):\n", &rhp);
+		kmalloc_debug_print_provenance(&rhp);
+		pr_alert("kmem_last_alloc(%px):\n", rhp);
+		kmalloc_debug_print_provenance(rhp);
+		pr_alert("kmem_last_alloc(%px):\n", &rhp->func);
+		kmalloc_debug_print_provenance(&rhp->func);
+		pr_alert("kmem_last_alloc(%px):\n", &z);
+		kmalloc_debug_print_provenance(&z);
+		kmem_cache_free(kcp, rhp);
+		kmem_cache_destroy(kcp);
+		rhp = kmalloc(sizeof(*rhp), GFP_KERNEL);
+		pr_alert("kmem_last_alloc() kmalloc test: kfree_scale_thread = %px, &rhp = %px, rhp = %px\n", kfree_scale_thread, &rhp, rhp);
+		pr_alert("kmem_last_alloc(kmalloc %px):\n", rhp);
+		kmalloc_debug_print_provenance(rhp);
+		pr_alert("kmem_last_alloc(kmalloc %px):\n", &rhp->func);
+		kmalloc_debug_print_provenance(&rhp->func);
+		kfree(rhp);
+	}
+
 	torture_kthread_stopping("kfree_scale_thread");
 	return 0;
 }
