@@ -461,7 +461,7 @@ out:
 	spin_unlock_irqrestore(&slob_lock, flags);
 }
 
-void kmem_struct_debug_provenance(struct kmem_provenance *kpp)
+void kmem_provenance(struct kmem_provenance *kpp)
 {
 	kpp->kp_ret = NULL;
 	if (kpp->kp_nstack)

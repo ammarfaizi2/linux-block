@@ -3602,7 +3602,7 @@ void *kmem_cache_alloc_node_trace(struct kmem_cache *cachep,
 EXPORT_SYMBOL(kmem_cache_alloc_node_trace);
 #endif
 
-void kmem_struct_debug_provenance(struct kmem_provenance *kpp)
+void kmem_provenance(struct kmem_provenance *kpp)
 {
 #ifdef DEBUG
 	struct kmem_cache *cachep;

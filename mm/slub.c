@@ -3918,7 +3918,7 @@ int __kmem_cache_shutdown(struct kmem_cache *s)
 	return 0;
 }
 
-void kmem_struct_debug_provenance(struct kmem_provenance *kpp)
+void kmem_provenance(struct kmem_provenance *kpp)
 {
 #ifdef CONFIG_SLUB_DEBUG
 	void *base;

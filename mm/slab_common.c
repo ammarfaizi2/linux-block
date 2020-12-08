@@ -580,7 +580,7 @@ void kmem_dump_obj(void *object)
 	kp.kp_page = page;
 	kp.kp_nstack = KS_ADDRS_COUNT;
 	if (PageSlab(page)) {
-		kmem_struct_debug_provenance(&kp);
+		kmem_provenance(&kp);
 		if (page->slab_cache)
 			pr_cont(" slab %s", page->slab_cache->name);
 		if (kp.kp_ret)

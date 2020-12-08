@@ -639,6 +639,6 @@ struct kmem_provenance {
 	void *kp_stack[KS_ADDRS_COUNT];
 	int kp_nstack;
 };
-void kmem_struct_debug_provenance(struct kmem_provenance *kpp);
+void kmem_provenance(struct kmem_provenance *kpp);
 
 #endif /* MM_SLAB_H */
