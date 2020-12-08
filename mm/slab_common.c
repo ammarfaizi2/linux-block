@@ -556,14 +556,19 @@ bool kmem_valid_obj(void *object)
 EXPORT_SYMBOL_GPL(kmem_valid_obj);
 
 /**
- * kmem_dump_obj - Print available provenance information
- * @object: object for which to find provenance information.
+ * kmem_dump_obj - Print available slab provenance information
+ * @object: slab object for which to find provenance information.
  *
  * This function uses pr_cont(), so that the caller is expected to have
  * printed out whatever preamble is appropriate.  The provenance information
  * depends on the type of object and on how much debugging is enabled.
- * For a slab-cache object, the slab name is printed, and, if available,
- * the return address and stack trace from the allocation of that object.
+ * For a slab-cache object, the fact that it is a slab object is printed,
+ * and, if available, the slab name, return address, and stack trace from
+ * the allocation of that object.
+ *
+ * This function will splat if passed a pointer to a non-slab object.
+ * If you are not sure what type of object you have, you should instead
+ * use mem_dump_obj().
  */
 void kmem_dump_obj(void *object)
 {
@@ -571,34 +576,32 @@ void kmem_dump_obj(void *object)
 	struct page *page;
 	struct kmem_provenance kp;
 
-	if (!virt_addr_valid(object)) {
-		pr_cont(" non-paged (local) memory.\n");
+	if (WARN_ON_ONCE(!virt_addr_valid(object)))
+		return;
+	page = virt_to_head_page(object);
+	if (WARN_ON_ONCE(!PageSlab(page))) {
+		pr_cont(" non-slab memory.\n");
 		return;
 	}
-	page = virt_to_head_page(object);
 	kp.kp_ptr = object;
 	kp.kp_page = page;
 	kp.kp_nstack = KS_ADDRS_COUNT;
-	if (PageSlab(page)) {
-		kmem_provenance(&kp);
-		if (page->slab_cache)
-			pr_cont(" slab %s", page->slab_cache->name);
-		else
-			pr_cont(" slab ");
-		if (kp.kp_ret)
-			pr_cont(" allocated at %pS\n", kp.kp_ret);
-		else
-			pr_cont("\n");
-		if (kp.kp_stack[0]) {
-			for (i = 0; i < ARRAY_SIZE(kp.kp_stack); i++) {
-				if (!kp.kp_stack[i])
-					break;
-				pr_info("    %pS\n", kp.kp_stack[i]);
-			}
+	kmem_provenance(&kp);
+	if (page->slab_cache)
+		pr_cont(" slab %s", page->slab_cache->name);
+	else
+		pr_cont(" slab ");
+	if (kp.kp_ret)
+		pr_cont(" allocated at %pS\n", kp.kp_ret);
+	else
+		pr_cont("\n");
+	if (kp.kp_stack[0]) {
+		for (i = 0; i < ARRAY_SIZE(kp.kp_stack); i++) {
+			if (!kp.kp_stack[i])
+				break;
+			pr_info("    %pS\n", kp.kp_stack[i]);
 		}
-		return;
 	}
-	pr_cont(" non-slab memory.\n");
 }
 EXPORT_SYMBOL_GPL(kmem_dump_obj);
 
