@@ -3602,6 +3602,34 @@ void *kmem_cache_alloc_node_trace(struct kmem_cache *cachep,
 EXPORT_SYMBOL(kmem_cache_alloc_node_trace);
 #endif
 
+void kmem_provenance(struct kmem_provenance *kpp)
+{
+#ifdef DEBUG
+	struct kmem_cache *cachep;
+	void *object = kpp->kp_ptr;
+	unsigned int objnr;
+	void *objp;
+	struct page *page = kpp->kp_page;
+
+	cachep = page->slab_cache;
+	if (!(cachep->flags & SLAB_STORE_USER)) {
+		kpp->kp_ret = NULL;
+		goto nodebug;
+	}
+	objp = object - obj_offset(cachep);
+	page = virt_to_head_page(objp);
+	objnr = obj_to_index(cachep, page, objp);
+	objp = index_to_obj(cachep, page, objnr);
+	kpp->kp_objp = objp;
+	kpp->kp_ret = *dbg_userword(cachep, objp);
+nodebug:
+#else
+	kpp->kp_ret = NULL;
+#endif
+	if (kpp->kp_nstack)
+		kpp->kp_stack[0] = NULL;
+}
+
 static __always_inline void *
 __do_kmalloc_node(size_t size, gfp_t flags, int node, unsigned long caller)
 {
