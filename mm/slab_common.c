@@ -583,8 +583,12 @@ void kmem_dump_obj(void *object)
 		kmem_provenance(&kp);
 		if (page->slab_cache)
 			pr_cont(" slab %s", page->slab_cache->name);
+		else
+			pr_cont(" slab ");
 		if (kp.kp_ret)
 			pr_cont(" allocated at %pS\n", kp.kp_ret);
+		else
+			pr_cont("\n");
 		if (kp.kp_stack[0]) {
 			for (i = 0; i < ARRAY_SIZE(kp.kp_stack); i++) {
 				if (!kp.kp_stack[i])
