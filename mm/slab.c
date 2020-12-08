@@ -3633,6 +3633,33 @@ void *__kmalloc_node_track_caller(size_t size, gfp_t flags,
 EXPORT_SYMBOL(__kmalloc_node_track_caller);
 #endif /* CONFIG_NUMA */
 
+void kmem_provenance(struct kmem_provenance *kpp)
+{
+	struct kmem_cache *cachep;
+	void *object = kpp->kp_ptr;
+	unsigned int objnr;
+	void *objp;
+	struct page *page = kpp->kp_page;
+
+	cachep = page->slab_cache;
+	if (!(cachep->flags & SLAB_STORE_USER)) {
+		kpp->kp_ret = NULL;
+		goto nodebug;
+	}
+	objp = object - obj_offset(cachep);
+	page = virt_to_head_page(objp);
+	objnr = obj_to_index(cachep, page, objp);
+	objp = index_to_obj(cachep, page, objnr);
+	kpp->kp_objp = objp;
+	if (DEBUG)
+		kpp->kp_ret = *dbg_userword(cachep, objp);
+	else
+		kpp->kp_ret = NULL;
+nodebug:
+	if (kpp->kp_nstack)
+		kpp->kp_stack[0] = NULL;
+}
+
 /**
  * __do_kmalloc - allocate memory
  * @size: how many bytes of memory are required.

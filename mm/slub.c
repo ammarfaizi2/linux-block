@@ -3918,6 +3918,46 @@ int __kmem_cache_shutdown(struct kmem_cache *s)
 	return 0;
 }
 
+void kmem_provenance(struct kmem_provenance *kpp)
+{
+#ifdef CONFIG_SLUB_DEBUG
+	void *base;
+	int i;
+	void *object = kpp->kp_ptr;
+	unsigned int objnr;
+	void *objp;
+	struct page *page = kpp->kp_page;
+	struct kmem_cache *s = page->slab_cache;
+	struct track *trackp;
+
+	base = page_address(page);
+	objp = kasan_reset_tag(object);
+	objp = restore_red_left(s, objp);
+	objnr = obj_to_index(s, page, objp);
+	objp = base + s->size * objnr;
+	kpp->kp_objp = objp;
+	if (WARN_ON_ONCE(objp < base || objp >= base + page->objects * s->size || (objp - base) % s->size) ||
+	    !(s->flags & SLAB_STORE_USER))
+		goto nodebug;
+	trackp = get_track(s, objp, TRACK_ALLOC);
+	kpp->kp_ret = (void *)trackp->addr;
+#ifdef CONFIG_STACKTRACE
+	for (i = 0; i < kpp->kp_nstack && i < TRACK_ADDRS_COUNT; i++) {
+		kpp->kp_stack[i] = (void *)trackp->addrs[i];
+		if (!kpp->kp_stack[i])
+			break;
+	}
+#endif
+	if (kpp->kp_stack && i < kpp->kp_nstack)
+		kpp->kp_stack[i] = NULL;
+	return;
+nodebug:
+#endif
+	kpp->kp_ret = NULL;
+	if (kpp->kp_nstack)
+		kpp->kp_stack[0] = NULL;
+}
+
 /********************************************************************
  *		Kmalloc subsystem
  *******************************************************************/

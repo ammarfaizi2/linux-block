@@ -461,6 +461,13 @@ out:
 	spin_unlock_irqrestore(&slob_lock, flags);
 }
 
+void kmem_provenance(struct kmem_provenance *kpp)
+{
+	kpp->kp_ret = NULL;
+	if (kpp->kp_nstack)
+		kpp->kp_stack[0] = NULL;
+}
+
 /*
  * End of slob allocator proper. Begin kmem_cache_alloc and kmalloc frontend.
  */
