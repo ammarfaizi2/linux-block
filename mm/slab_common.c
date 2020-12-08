@@ -536,6 +536,68 @@ bool slab_is_available(void)
 	return slab_state >= UP;
 }
 
+/**
+ * kmalloc_valid_obj - does the pointer reference a valid slab object?
+ * @object: pointer to query.
+ *
+ * Return: %true if the pointer is to a not-yet-freed object from
+ * kmalloc() or kmem_cache_alloc(), either %true or %false if the pointer
+ * is to an already-freed object, and %false otherwise.
+ */
+bool kmalloc_valid_obj(void *object)
+{
+	struct page *page;
+
+	if (!virt_addr_valid(object))
+		return false;
+	page = virt_to_head_page(object);
+	return PageSlab(page);
+}
+EXPORT_SYMBOL_GPL(kmalloc_valid_obj);
+
+/**
+ * kmalloc_debug_print_provenance - Print available provenance information
+ * @object: object for which to find provenance information.
+ *
+ * This function uses pr_cont(), so that the caller is expected to have
+ * printed out whatever preamble is appropriate.  The provenance information
+ * depends on the type of object and on how much debugging is enabled.
+ * For a slab-cache object, the slab name is printed, and, if available,
+ * the return address and stack trace from the allocation of that object.
+ */
+void kmalloc_debug_print_provenance(void *object)
+{
+	int i;
+	struct page *page;
+	struct kmem_provenance kp;
+
+	if (!virt_addr_valid(object)) {
+		pr_cont(" non-paged (local) memory.\n");
+		return;
+	}
+	page = virt_to_head_page(object);
+	kp.kp_ptr = object;
+	kp.kp_page = page;
+	kp.kp_nstack = KS_ADDRS_COUNT;
+	if (PageSlab(page)) {
+		kmem_struct_debug_provenance(&kp);
+		if (page->slab_cache)
+			pr_cont(" slab %s", page->slab_cache->name);
+		if (kp.kp_ret)
+			pr_cont(" allocated at %pS\n", kp.kp_ret);
+		if (kp.kp_stack[0]) {
+			for (i = 0; i < ARRAY_SIZE(kp.kp_stack); i++) {
+				if (!kp.kp_stack[i])
+					break;
+				pr_info("    %pS\n", kp.kp_stack[i]);
+			}
+		}
+		return;
+	}
+	pr_cont(" non-slab memory.\n");
+}
+EXPORT_SYMBOL_GPL(kmalloc_debug_print_provenance);
+
 #ifndef CONFIG_SLOB
 /* Create a cache during boot when no slab services are available yet */
 void __init create_boot_cache(struct kmem_cache *s, const char *name,

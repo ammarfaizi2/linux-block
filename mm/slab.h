@@ -630,4 +630,15 @@ static inline bool slab_want_init_on_free(struct kmem_cache *c)
 	return false;
 }
 
+#define KS_ADDRS_COUNT 16
+struct kmem_provenance {
+	void *kp_ptr;
+	struct page *kp_page;
+	void *kp_objp;
+	void *kp_ret;
+	void *kp_stack[KS_ADDRS_COUNT];
+	int kp_nstack;
+};
+void kmem_struct_debug_provenance(struct kmem_provenance *kpp);
+
 #endif /* MM_SLAB_H */
