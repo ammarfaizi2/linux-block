@@ -702,23 +702,23 @@ kfree_scale_thread(void *arg)
 
 		kcp = kmem_cache_create("rcuscale", 136, 8, SLAB_STORE_USER, NULL);
 		rhp = kmem_cache_alloc(kcp, GFP_KERNEL);
-		pr_alert("kmem_dump_obj() slab test: kfree_scale_thread = %px, &rhp = %px, rhp = %px, &z = %px\n", kfree_scale_thread, &rhp, rhp, &z);
-		pr_alert("kmem_dump_obj(%px):\n", &rhp);
-		kmem_dump_obj(&rhp);
-		pr_alert("kmem_dump_obj(%px):\n", rhp);
-		kmem_dump_obj(rhp);
-		pr_alert("kmem_dump_obj(%px):\n", &rhp->func);
-		kmem_dump_obj(&rhp->func);
-		pr_alert("kmem_dump_obj(%px):\n", &z);
-		kmem_dump_obj(&z);
+		pr_alert("mem_dump_obj() slab test: kfree_scale_thread = %px, &rhp = %px, rhp = %px, &z = %px\n", kfree_scale_thread, &rhp, rhp, &z);
+		pr_alert("mem_dump_obj(%px):\n", &rhp);
+		mem_dump_obj(&rhp);
+		pr_alert("mem_dump_obj(%px):\n", rhp);
+		mem_dump_obj(rhp);
+		pr_alert("mem_dump_obj(%px):\n", &rhp->func);
+		mem_dump_obj(&rhp->func);
+		pr_alert("mem_dump_obj(%px):\n", &z);
+		mem_dump_obj(&z);
 		kmem_cache_free(kcp, rhp);
 		kmem_cache_destroy(kcp);
 		rhp = kmalloc(sizeof(*rhp), GFP_KERNEL);
-		pr_alert("kmem_dump_obj() kmalloc test: kfree_scale_thread = %px, &rhp = %px, rhp = %px\n", kfree_scale_thread, &rhp, rhp);
-		pr_alert("kmem_dump_obj(kmalloc %px):\n", rhp);
-		kmem_dump_obj(rhp);
-		pr_alert("kmem_dump_obj(kmalloc %px):\n", &rhp->func);
-		kmem_dump_obj(&rhp->func);
+		pr_alert("mem_dump_obj() kmalloc test: kfree_scale_thread = %px, &rhp = %px, rhp = %px\n", kfree_scale_thread, &rhp, rhp);
+		pr_alert("mem_dump_obj(kmalloc %px):\n", rhp);
+		mem_dump_obj(rhp);
+		pr_alert("mem_dump_obj(kmalloc %px):\n", &rhp->func);
+		mem_dump_obj(&rhp->func);
 		kfree(rhp);
 	}
 
