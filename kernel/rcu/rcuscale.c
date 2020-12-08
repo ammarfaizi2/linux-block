@@ -636,6 +636,11 @@ struct kfree_obj {
 	struct rcu_head rh;
 };
 
+// For testing percpu_ref underflow.
+static void pcr_release(struct percpu_ref *ref)
+{
+}
+
 static int
 kfree_scale_thread(void *arg)
 {
@@ -692,6 +697,56 @@ kfree_scale_thread(void *arg)
 		if (shutdown) {
 			smp_mb(); /* Assign before wake. */
 			wake_up(&shutdown_wq);
+		}
+	}
+
+	{
+		struct percpu_ref pcr;
+		struct rcu_head *rhp;
+		struct kmem_cache *kcp;
+		static int z;
+
+		kcp = kmem_cache_create("rcuscale", 136, 8, SLAB_STORE_USER, NULL);
+		rhp = kmem_cache_alloc(kcp, GFP_KERNEL);
+		pr_alert("mem_dump_obj() slab test: kfree_scale_thread = %px, &rhp = %px, rhp = %px, &z = %px\n", kfree_scale_thread, &rhp, rhp, &z);
+		pr_alert("mem_dump_obj(ZERO_SIZE_PTR):");
+		mem_dump_obj(ZERO_SIZE_PTR);
+		pr_alert("mem_dump_obj(NULL):");
+		mem_dump_obj(NULL);
+		pr_alert("mem_dump_obj(%px):", &rhp);
+		mem_dump_obj(&rhp);
+		pr_alert("mem_dump_obj(%px):", rhp);
+		mem_dump_obj(rhp);
+		pr_alert("mem_dump_obj(%px):", &rhp->func);
+		mem_dump_obj(&rhp->func);
+		pr_alert("mem_dump_obj(%px):", &z);
+		mem_dump_obj(&z);
+		kmem_cache_free(kcp, rhp);
+		kmem_cache_destroy(kcp);
+		rhp = kmalloc(sizeof(*rhp), GFP_KERNEL);
+		pr_alert("mem_dump_obj() kmalloc test: kfree_scale_thread = %px, &rhp = %px, rhp = %px\n", kfree_scale_thread, &rhp, rhp);
+		pr_alert("mem_dump_obj(kmalloc %px):", rhp);
+		mem_dump_obj(rhp);
+		pr_alert("mem_dump_obj(kmalloc %px):", &rhp->func);
+		mem_dump_obj(&rhp->func);
+		kfree(rhp);
+		rhp = vmalloc(4096);
+		pr_alert("mem_dump_obj() vmalloc test: kfree_scale_thread = %px, &rhp = %px, rhp = %px\n", kfree_scale_thread, &rhp, rhp);
+		pr_alert("mem_dump_obj(vmalloc %px):", rhp);
+		mem_dump_obj(rhp);
+		pr_alert("mem_dump_obj(vmalloc %px):", &rhp->func);
+		mem_dump_obj(&rhp->func);
+		vfree(rhp);
+
+		if (percpu_ref_init(&pcr, pcr_release, 0, GFP_KERNEL)) {
+			pr_alert("Out of memory, no percpu_ref test.\n");
+		} else {
+			percpu_ref_get(&pcr);
+			percpu_ref_put(&pcr);
+			percpu_ref_put(&pcr); // Intentional bug.
+			percpu_ref_kill(&pcr);
+			rcu_barrier();
+			percpu_ref_exit(&pcr);
 		}
 	}
 
