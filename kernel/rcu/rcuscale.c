@@ -709,6 +709,10 @@ kfree_scale_thread(void *arg)
 		kcp = kmem_cache_create("rcuscale", 136, 8, SLAB_STORE_USER, NULL);
 		rhp = kmem_cache_alloc(kcp, GFP_KERNEL);
 		pr_alert("mem_dump_obj() slab test: kfree_scale_thread = %px, &rhp = %px, rhp = %px, &z = %px\n", kfree_scale_thread, &rhp, rhp, &z);
+		pr_alert("mem_dump_obj(ZERO_SIZE_PTR):\n");
+		mem_dump_obj(ZERO_SIZE_PTR);
+		pr_alert("mem_dump_obj(NULL):\n");
+		mem_dump_obj(NULL);
 		pr_alert("mem_dump_obj(%px):\n", &rhp);
 		mem_dump_obj(&rhp);
 		pr_alert("mem_dump_obj(%px):\n", rhp);
