@@ -3635,7 +3635,6 @@ EXPORT_SYMBOL(__kmalloc_node_track_caller);
 
 void kmem_provenance(struct kmem_provenance *kpp)
 {
-#ifdef DEBUG
 	struct kmem_cache *cachep;
 	void *object = kpp->kp_ptr;
 	unsigned int objnr;
@@ -3652,11 +3651,11 @@ void kmem_provenance(struct kmem_provenance *kpp)
 	objnr = obj_to_index(cachep, page, objp);
 	objp = index_to_obj(cachep, page, objnr);
 	kpp->kp_objp = objp;
-	kpp->kp_ret = *dbg_userword(cachep, objp);
+	if (DEBUG)
+		kpp->kp_ret = *dbg_userword(cachep, objp);
+	else
+		kpp->kp_ret = NULL;
 nodebug:
-#else
-	kpp->kp_ret = NULL;
-#endif
 	if (kpp->kp_nstack)
 		kpp->kp_stack[0] = NULL;
 }
