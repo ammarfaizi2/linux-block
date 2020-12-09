@@ -572,6 +572,7 @@ EXPORT_SYMBOL_GPL(kmem_valid_obj);
  */
 void kmem_dump_obj(void *object)
 {
+	char *cp = IS_ENABLED(CONFIG_MMU) ? "" : "/vmalloc";
 	int i;
 	struct page *page;
 	struct kmem_provenance kp;
@@ -588,9 +589,9 @@ void kmem_dump_obj(void *object)
 	kp.kp_nstack = KS_ADDRS_COUNT;
 	kmem_provenance(&kp);
 	if (page->slab_cache)
-		pr_cont(" slab %s", page->slab_cache->name);
+		pr_cont(" slab%s %s", cp, page->slab_cache->name);
 	else
-		pr_cont(" slab ");
+		pr_cont(" slab%s ", cp);
 	if (kp.kp_ret)
 		pr_cont(" allocated at %pS\n", kp.kp_ret);
 	else
