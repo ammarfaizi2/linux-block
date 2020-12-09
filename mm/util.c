@@ -984,6 +984,12 @@ int __weak memcmp_pages(struct page *page1, struct page *page2)
  */
 void mem_dump_obj(void *object)
 {
+	if (kmem_valid_obj(object)) {
+		kmem_dump_obj(object);
+		return;
+	}
+	if (vmalloc_dump_obj(object))
+		return;
 	if (!virt_addr_valid(object)) {
 		if (object == NULL)
 			pr_cont(" NULL pointer.\n");
@@ -993,10 +999,6 @@ void mem_dump_obj(void *object)
 			pr_cont(" non-paged (local) memory.\n");
 		return;
 	}
-	if (kmem_valid_obj(object)) {
-		kmem_dump_obj(object);
-		return;
-	}
-	pr_cont(" non-slab memory.\n");
+	pr_cont(" non-slab/vmalloc memory.\n");
 }
 EXPORT_SYMBOL_GPL(mem_dump_obj);
