@@ -996,7 +996,7 @@ void mem_dump_obj(void *object)
 		else if (object == ZERO_SIZE_PTR)
 			pr_cont(" zero-size pointer.\n");
 		else
-			pr_cont(" non-paged (local) memory.\n");
+			pr_cont(" non-paged memory.\n");
 		return;
 	}
 	pr_cont(" non-slab/vmalloc memory.\n");
