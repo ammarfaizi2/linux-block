@@ -1224,6 +1224,16 @@ void show_rcu_tasks_gp_kthreads(void)
 }
 #endif /* #ifndef CONFIG_TINY_RCU */
 
+static struct rcu_head rh;
+static int rcu_executed_test_counter;
+static int rcu_run_test_counter;
+
+static void test_rcu_tasks_callback(struct rcu_head *rhp)
+{
+	pr_info("RCU-tasks test callback executed %d\n",
+		++rcu_executed_test_counter);
+}
+
 void __init rcu_init_tasks_generic(void)
 {
 #ifdef CONFIG_TASKS_RCU
@@ -1237,7 +1247,41 @@ void __init rcu_init_tasks_generic(void)
 #ifdef CONFIG_TASKS_TRACE_RCU
 	rcu_spawn_tasks_trace_kthread();
 #endif
+
+	if (IS_ENABLED(CONFIG_PROVE_RCU)) {
+		pr_info("Running RCU-tasks wait API self tests\n");
+#ifdef CONFIG_TASKS_RCU
+		rcu_run_test_counter++;
+		call_rcu_tasks(&rh, test_rcu_tasks_callback);
+		synchronize_rcu_tasks();
+#endif
+
+#ifdef CONFIG_TASKS_RUDE_RCU
+		rcu_run_test_counter++;
+		call_rcu_tasks_trace(&rh, test_rcu_tasks_callback);
+		synchronize_rcu_tasks_rude();
+#endif
+
+#ifdef CONFIG_TASKS_TRACE_RCU
+		rcu_run_test_counter++;
+		call_rcu_tasks_trace(&rh, test_rcu_tasks_callback);
+		synchronize_rcu_tasks_trace();
+#endif
+	}
 }
+
+static int rcu_tasks_verify_self_tests(void)
+{
+	int ret = 0;
+
+	if (rcu_run_test_counter != rcu_executed_test_counter) {
+		WARN_ON(1);
+		ret = -1;
+	}
+
+	return ret;
+}
+late_initcall(rcu_tasks_verify_self_tests);
 
 #else /* #ifdef CONFIG_TASKS_RCU_GENERIC */
 static inline void rcu_tasks_bootup_oddness(void) {}
