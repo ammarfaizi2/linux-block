@@ -592,13 +592,11 @@ void kmem_dump_obj(void *object)
 	if (kp.kp_ret)
 		pr_cont(" allocated at %pS\n", kp.kp_ret);
 	else
-		pr_cont("\n");
-	if (kp.kp_stack[0]) {
-		for (i = 0; i < ARRAY_SIZE(kp.kp_stack); i++) {
-			if (!kp.kp_stack[i])
-				break;
-			pr_info("    %pS\n", kp.kp_stack[i]);
-		}
+	pr_cont("\n");
+	for (i = 0; i < ARRAY_SIZE(kp.kp_stack); i++) {
+		if (!kp.kp_stack[i])
+			break;
+		pr_info("    %pS\n", kp.kp_stack[i]);
 	}
 }
 EXPORT_SYMBOL_GPL(kmem_dump_obj);
