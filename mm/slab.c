@@ -3633,7 +3633,7 @@ void *__kmalloc_node_track_caller(size_t size, gfp_t flags,
 EXPORT_SYMBOL(__kmalloc_node_track_caller);
 #endif /* CONFIG_NUMA */
 
-void kmem_provenance(struct kmem_provenance *kpp)
+void kmem_obj_info(struct kmem_obj_info *kpp)
 {
 	struct kmem_cache *cachep;
 	void *object = kpp->kp_ptr;

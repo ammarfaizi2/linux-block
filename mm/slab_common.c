@@ -575,7 +575,7 @@ void kmem_dump_obj(void *object)
 	char *cp = IS_ENABLED(CONFIG_MMU) ? "" : "/vmalloc";
 	int i;
 	struct page *page;
-	struct kmem_provenance kp;
+	struct kmem_obj_info kp;
 
 	if (WARN_ON_ONCE(!virt_addr_valid(object)))
 		return;
@@ -587,7 +587,7 @@ void kmem_dump_obj(void *object)
 	kp.kp_ptr = object;
 	kp.kp_page = page;
 	kp.kp_nstack = KS_ADDRS_COUNT;
-	kmem_provenance(&kp);
+	kmem_obj_info(&kp);
 	if (page->slab_cache)
 		pr_cont(" slab%s %s", cp, page->slab_cache->name);
 	else

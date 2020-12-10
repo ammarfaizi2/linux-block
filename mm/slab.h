@@ -631,7 +631,7 @@ static inline bool slab_want_init_on_free(struct kmem_cache *c)
 }
 
 #define KS_ADDRS_COUNT 16
-struct kmem_provenance {
+struct kmem_obj_info {
 	void *kp_ptr;
 	struct page *kp_page;
 	void *kp_objp;
@@ -639,6 +639,6 @@ struct kmem_provenance {
 	void *kp_stack[KS_ADDRS_COUNT];
 	int kp_nstack;
 };
-void kmem_provenance(struct kmem_provenance *kpp);
+void kmem_obj_info(struct kmem_obj_info *kpp);
 
 #endif /* MM_SLAB_H */
