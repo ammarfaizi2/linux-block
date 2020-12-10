@@ -635,6 +635,7 @@ struct kmem_obj_info {
 	void *kp_ptr;
 	struct page *kp_page;
 	void *kp_objp;
+	struct kmem_cache *kp_slab_cache;
 	void *kp_ret;
 	void *kp_stack[KS_ADDRS_COUNT];
 };

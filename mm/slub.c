@@ -3930,6 +3930,7 @@ void kmem_obj_info(struct kmem_obj_info *kpp, void *object, struct page *page)
 
 	kpp->kp_ptr = object;
 	kpp->kp_page = page;
+	kpp->kp_slab_cache = s;
 	base = page_address(page);
 	objp = kasan_reset_tag(object);
 	objp = restore_red_left(s, objp);

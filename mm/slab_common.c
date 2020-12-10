@@ -585,8 +585,8 @@ void kmem_dump_obj(void *object)
 		return;
 	}
 	kmem_obj_info(&kp, object, page);
-	if (page->slab_cache)
-		pr_cont(" slab%s %s", cp, page->slab_cache->name);
+	if (kp.kp_slab_cache)
+		pr_cont(" slab%s %s", cp, kp.kp_slab_cache->name);
 	else
 		pr_cont(" slab%s ", cp);
 	if (kp.kp_ret)

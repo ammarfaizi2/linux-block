@@ -3642,6 +3642,7 @@ void kmem_obj_info(struct kmem_obj_info *kpp, void *object, struct page *page)
 	kpp->kp_ptr = object;
 	kpp->kp_page = page;
 	cachep = page->slab_cache;
+	kpp->kp_slab_cache = cachep;
 	if (!(cachep->flags & SLAB_STORE_USER))
 		return;
 	objp = object - obj_offset(cachep);
