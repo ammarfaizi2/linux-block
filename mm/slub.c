@@ -3942,20 +3942,19 @@ void kmem_obj_info(struct kmem_obj_info *kpp)
 	trackp = get_track(s, objp, TRACK_ALLOC);
 	kpp->kp_ret = (void *)trackp->addr;
 #ifdef CONFIG_STACKTRACE
-	for (i = 0; i < kpp->kp_nstack && i < TRACK_ADDRS_COUNT; i++) {
+	for (i = 0; i < KS_ADDRS_COUNT && i < TRACK_ADDRS_COUNT; i++) {
 		kpp->kp_stack[i] = (void *)trackp->addrs[i];
 		if (!kpp->kp_stack[i])
 			break;
 	}
 #endif
-	if (kpp->kp_stack && i < kpp->kp_nstack)
+	if (kpp->kp_stack && i < KS_ADDRS_COUNT)
 		kpp->kp_stack[i] = NULL;
 	return;
 nodebug:
 #endif
 	kpp->kp_ret = NULL;
-	if (kpp->kp_nstack)
-		kpp->kp_stack[0] = NULL;
+	kpp->kp_stack[0] = NULL;
 }
 
 /********************************************************************

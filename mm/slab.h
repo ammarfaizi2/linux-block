@@ -637,7 +637,6 @@ struct kmem_obj_info {
 	void *kp_objp;
 	void *kp_ret;
 	void *kp_stack[KS_ADDRS_COUNT];
-	int kp_nstack;
 };
 void kmem_obj_info(struct kmem_obj_info *kpp);
 

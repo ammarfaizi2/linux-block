@@ -464,8 +464,7 @@ out:
 void kmem_obj_info(struct kmem_obj_info *kpp)
 {
 	kpp->kp_ret = NULL;
-	if (kpp->kp_nstack)
-		kpp->kp_stack[0] = NULL;
+	kpp->kp_stack[0] = NULL;
 }
 
 /*

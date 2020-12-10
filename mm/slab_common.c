@@ -586,7 +586,6 @@ void kmem_dump_obj(void *object)
 	}
 	kp.kp_ptr = object;
 	kp.kp_page = page;
-	kp.kp_nstack = KS_ADDRS_COUNT;
 	kmem_obj_info(&kp);
 	if (page->slab_cache)
 		pr_cont(" slab%s %s", cp, page->slab_cache->name);
