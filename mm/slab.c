@@ -3633,14 +3633,14 @@ void *__kmalloc_node_track_caller(size_t size, gfp_t flags,
 EXPORT_SYMBOL(__kmalloc_node_track_caller);
 #endif /* CONFIG_NUMA */
 
-void kmem_obj_info(struct kmem_obj_info *kpp)
+void kmem_obj_info(struct kmem_obj_info *kpp, void *object, struct page *page)
 {
 	struct kmem_cache *cachep;
-	void *object = kpp->kp_ptr;
 	unsigned int objnr;
 	void *objp;
-	struct page *page = kpp->kp_page;
 
+	kpp->kp_ptr = object;
+	kpp->kp_page = page;
 	cachep = page->slab_cache;
 	if (!(cachep->flags & SLAB_STORE_USER)) {
 		kpp->kp_ret = NULL;

@@ -584,9 +584,7 @@ void kmem_dump_obj(void *object)
 		pr_cont(" non-slab memory.\n");
 		return;
 	}
-	kp.kp_ptr = object;
-	kp.kp_page = page;
-	kmem_obj_info(&kp);
+	kmem_obj_info(&kp, object, page);
 	if (page->slab_cache)
 		pr_cont(" slab%s %s", cp, page->slab_cache->name);
 	else

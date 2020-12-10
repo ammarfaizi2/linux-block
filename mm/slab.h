@@ -638,6 +638,6 @@ struct kmem_obj_info {
 	void *kp_ret;
 	void *kp_stack[KS_ADDRS_COUNT];
 };
-void kmem_obj_info(struct kmem_obj_info *kpp);
+void kmem_obj_info(struct kmem_obj_info *kpp, void *object, struct page *page);
 
 #endif /* MM_SLAB_H */

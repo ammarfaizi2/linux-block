@@ -3918,18 +3918,18 @@ int __kmem_cache_shutdown(struct kmem_cache *s)
 	return 0;
 }
 
-void kmem_obj_info(struct kmem_obj_info *kpp)
+void kmem_obj_info(struct kmem_obj_info *kpp, void *object, struct page *page)
 {
 #ifdef CONFIG_SLUB_DEBUG
 	void *base;
 	int i;
-	void *object = kpp->kp_ptr;
 	unsigned int objnr;
 	void *objp;
-	struct page *page = kpp->kp_page;
 	struct kmem_cache *s = page->slab_cache;
 	struct track *trackp;
 
+	kpp->kp_ptr = object;
+	kpp->kp_page = page;
 	base = page_address(page);
 	objp = kasan_reset_tag(object);
 	objp = restore_red_left(s, objp);
