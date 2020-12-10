@@ -3938,7 +3938,7 @@ void kmem_obj_info(struct kmem_obj_info *kpp, void *object, struct page *page)
 	kpp->kp_objp = objp;
 	if (WARN_ON_ONCE(objp < base || objp >= base + page->objects * s->size || (objp - base) % s->size) ||
 	    !(s->flags & SLAB_STORE_USER))
-		goto nodebug;
+		return;
 	trackp = get_track(s, objp, TRACK_ALLOC);
 	kpp->kp_ret = (void *)trackp->addr;
 #ifdef CONFIG_STACKTRACE
@@ -3948,13 +3948,7 @@ void kmem_obj_info(struct kmem_obj_info *kpp, void *object, struct page *page)
 			break;
 	}
 #endif
-	if (kpp->kp_stack && i < KS_ADDRS_COUNT)
-		kpp->kp_stack[i] = NULL;
-	return;
-nodebug:
 #endif
-	kpp->kp_ret = NULL;
-	kpp->kp_stack[0] = NULL;
 }
 
 /********************************************************************

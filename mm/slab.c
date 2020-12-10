@@ -3642,10 +3642,8 @@ void kmem_obj_info(struct kmem_obj_info *kpp, void *object, struct page *page)
 	kpp->kp_ptr = object;
 	kpp->kp_page = page;
 	cachep = page->slab_cache;
-	if (!(cachep->flags & SLAB_STORE_USER)) {
-		kpp->kp_ret = NULL;
-		goto nodebug;
-	}
+	if (!(cachep->flags & SLAB_STORE_USER))
+		return;
 	objp = object - obj_offset(cachep);
 	page = virt_to_head_page(objp);
 	objnr = obj_to_index(cachep, page, objp);
@@ -3653,10 +3651,6 @@ void kmem_obj_info(struct kmem_obj_info *kpp, void *object, struct page *page)
 	kpp->kp_objp = objp;
 	if (DEBUG)
 		kpp->kp_ret = *dbg_userword(cachep, objp);
-	else
-		kpp->kp_ret = NULL;
-nodebug:
-	kpp->kp_stack[0] = NULL;
 }
 
 /**

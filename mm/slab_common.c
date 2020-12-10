@@ -575,7 +575,7 @@ void kmem_dump_obj(void *object)
 	char *cp = IS_ENABLED(CONFIG_MMU) ? "" : "/vmalloc";
 	int i;
 	struct page *page;
-	struct kmem_obj_info kp;
+	struct kmem_obj_info kp = { };
 
 	if (WARN_ON_ONCE(!virt_addr_valid(object)))
 		return;
