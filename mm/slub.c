@@ -3925,6 +3925,7 @@ void kmem_obj_info(struct kmem_obj_info *kpp, void *object, struct page *page)
 	int i;
 	unsigned int objnr;
 	void *objp;
+	void *objp0;
 	struct kmem_cache *s = page->slab_cache;
 	struct track *trackp;
 
@@ -3932,9 +3933,10 @@ void kmem_obj_info(struct kmem_obj_info *kpp, void *object, struct page *page)
 	kpp->kp_page = page;
 	kpp->kp_slab_cache = s;
 	base = page_address(page);
-	objp = kasan_reset_tag(object);
-	objp = restore_red_left(s, objp);
+	objp0 = kasan_reset_tag(object);
+	objp = restore_red_left(s, objp0);
 	objnr = obj_to_index(s, page, objp);
+	kpp->kp_data_offset = (unsigned long)((char *)objp0 - (char *)objp);
 	objp = base + s->size * objnr;
 	kpp->kp_objp = objp;
 	if (WARN_ON_ONCE(objp < base || objp >= base + page->objects * s->size || (objp - base) % s->size) ||
