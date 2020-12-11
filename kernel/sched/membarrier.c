@@ -7,8 +7,64 @@
 #include "sched.h"
 
 /*
- * For documentation purposes, here are some membarrier ordering
- * scenarios to keep in mind:
+ * The basic principle behind the regular memory barrier mode of
+ * membarrier() is as follows.  membarrier() is called in one thread.  Tt
+ * iterates over all CPUs, and, for each CPU, it either sends an IPI to
+ * that CPU or it does not. If it sends an IPI, then we have the
+ * following sequence of events:
+ *
+ * 1. membarrier() does smp_mb().
+ * 2. membarrier() does a store (the IPI request payload) that is observed by
+ *    the target CPU.
+ * 3. The target CPU does smp_mb().
+ * 4. The target CPU does a store (the completion indication) that is observed
+ *    by membarrier()'s wait-for-IPIs-to-finish request.
+ * 5. membarrier() does smp_mb().
+ *
+ * So all pre-membarrier() local accesses are visible after the IPI on the
+ * target CPU and all pre-IPI remote accesses are visible after
+ * membarrier(). IOW membarrier() has synchronized both ways with the target
+ * CPU.
+ *
+ * (This has the caveat that membarrier() does not interrupt the CPU that it's
+ * running on at the time it sends the IPIs. However, if that is the CPU on
+ * which membarrier() starts and/or finishes, membarrier() does smp_mb() and,
+ * if not, then the scheduler's migration of membarrier() is a full barrier.)
+ *
+ * membarrier() skips sending an IPI only if membarrier() sees
+ * cpu_rq(cpu)->curr->mm != target mm.  The sequence of events is:
+ *
+ *           membarrier()            |          target CPU
+ * ---------------------------------------------------------------------
+ *                                   | 1. smp_mb()
+ *                                   | 2. set rq->curr->mm = other_mm
+ *                                   |    (by writing to ->curr or to ->mm)
+ * 3. smp_mb()                       |
+ * 4. read rq->curr->mm == other_mm  |
+ * 5. smp_mb()                       |
+ *                                   | 6. rq->curr->mm = target_mm
+ *                                   |    (by writing to ->curr or to ->mm)
+ *                                   | 7. smp_mb()
+ *                                   |
+ *
+ * All memory accesses on the target CPU prior to scheduling are visible
+ * to membarrier()'s caller after membarrier() returns due to steps 1, 2, 4
+ * and 5.
+ *
+ * All memory accesses by membarrier()'s caller prior to membarrier() are
+ * visible to the target CPU after scheduling due to steps 3, 4, 6, and 7.
+ *
+ * Note that, tasks can change their ->mm, e.g. via kthread_use_mm().  So
+ * tasks that switch their ->mm must follow the same rules as the scheduler
+ * changing rq->curr, and the membarrier() code needs to do both dereferences
+ * carefully.
+ *
+ * GLOBAL_EXPEDITED support works the same way except that all references
+ * to rq->curr->mm are replaced with references to rq->membarrier_state.
+ *
+ *
+ * Specific examples of how this produces the documented properties of
+ * membarrier():
  *
  * A) Userspace thread execution after IPI vs membarrier's memory
  *    barrier before sending the IPI
