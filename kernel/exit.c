@@ -491,7 +491,7 @@ static void exit_mm(void)
 	 */
 	smp_mb__after_spinlock();
 	local_irq_disable();
-	current->mm = NULL;
+	WRITE_ONCE(current->mm, NULL);
 	membarrier_update_current_mm(NULL);
 	enter_lazy_tlb(mm, current);
 	local_irq_enable();

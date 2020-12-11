@@ -1006,7 +1006,7 @@ static int exec_mmap(struct mm_struct *mm)
 	local_irq_disable();
 	active_mm = tsk->active_mm;
 	tsk->active_mm = mm;
-	tsk->mm = mm;
+	WRITE_ONCE(tsk->mm, mm);  /* membarrier reads this without locks */
 	/*
 	 * This prevents preemption while active_mm is being loaded and
 	 * it and mm are being updated, which could cause problems for

@@ -411,7 +411,7 @@ static int membarrier_private_expedited(int flags, int cpu_id)
 			goto out;
 		rcu_read_lock();
 		p = rcu_dereference(cpu_rq(cpu_id)->curr);
-		if (!p || p->mm != mm) {
+		if (!p || READ_ONCE(p->mm) != mm) {
 			rcu_read_unlock();
 			goto out;
 		}
@@ -424,7 +424,7 @@ static int membarrier_private_expedited(int flags, int cpu_id)
 			struct task_struct *p;
 
 			p = rcu_dereference(cpu_rq(cpu)->curr);
-			if (p && p->mm == mm)
+			if (p && READ_ONCE(p->mm) == mm)
 				__cpumask_set_cpu(cpu, tmpmask);
 		}
 		rcu_read_unlock();
@@ -522,7 +522,8 @@ static int sync_runqueues_membarrier_state(struct mm_struct *mm)
 		struct task_struct *p;
 
 		p = rcu_dereference(rq->curr);
-		if (p && p->mm == mm)
+		/* exec and kthread_use_mm() write ->mm without locks */
+		if (p && READ_ONCE(p->mm) == mm)
 			__cpumask_set_cpu(cpu, tmpmask);
 	}
 	rcu_read_unlock();

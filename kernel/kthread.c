@@ -1358,7 +1358,7 @@ void kthread_use_mm(struct mm_struct *mm)
 		mmgrab(mm);
 		tsk->active_mm = mm;
 	}
-	tsk->mm = mm;
+	WRITE_ONCE(tsk->mm, mm);  /* membarrier reads this without locks */
 	membarrier_update_current_mm(mm);
 	switch_mm_irqs_off(active_mm, mm, tsk);
 	membarrier_finish_switch_mm(mm);
@@ -1399,7 +1399,7 @@ void kthread_unuse_mm(struct mm_struct *mm)
 	smp_mb__after_spinlock();
 	sync_mm_rss(mm);
 	local_irq_disable();
-	tsk->mm = NULL;
+	WRITE_ONCE(tsk->mm, NULL);  /* membarrier reads this without locks */
 	membarrier_update_current_mm(NULL);
 	/* active_mm is still 'mm' */
 	enter_lazy_tlb(mm, tsk);
