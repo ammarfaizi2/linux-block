@@ -108,7 +108,7 @@ struct kimage_arch {
 	unsigned long backup_start;
 	void *backup_buf;
 
-	unsigned long elfcorehdr_addr;
+	unsigned long elf_headers_mem;
 	unsigned long elf_headers_sz;
 	void *elf_headers;
 
