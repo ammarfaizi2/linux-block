@@ -4824,14 +4824,6 @@ static struct rq *finish_task_switch(struct task_struct *prev)
 	fire_sched_in_preempt_notifiers(current);
 
 	/*
-	 * When switching through a kernel thread, the loop in
-	 * membarrier_{private,global}_expedited() may have observed that
-	 * kernel thread and not issued an IPI. It is therefore possible to
-	 * schedule between user->kernel->user threads without passing though
-	 * switch_mm(). Membarrier requires a barrier after storing to
-	 * rq->curr, before returning to userspace, and mmdrop() provides
-	 * this barrier.
-	 *
 	 * If an architecture needs to take a specific action for
 	 * SYNC_CORE, it can do so in switch_mm_irqs_off().
 	 */
@@ -4915,15 +4907,14 @@ context_switch(struct rq *rq, struct task_struct *prev,
 			prev->active_mm = NULL;
 	} else {                                        // to user
 		membarrier_switch_mm(rq, prev->active_mm, next->mm);
+		switch_mm_irqs_off(prev->active_mm, next->mm, next);
+
 		/*
 		 * sys_membarrier() requires an smp_mb() between setting
-		 * rq->curr / membarrier_switch_mm() and returning to userspace.
-		 *
-		 * The below provides this either through switch_mm(), or in
-		 * case 'prev->active_mm == next->mm' through
-		 * finish_task_switch()'s mmdrop().
+		 * rq->curr->mm to a membarrier-enabled mm and returning
+		 * to userspace.
 		 */
-		switch_mm_irqs_off(prev->active_mm, next->mm, next);
+		membarrier_finish_switch_mm(next->mm);
 
 		if (!prev->mm) {                        // from kernel
 			/* will mmdrop() in finish_task_switch(). */
@@ -6264,17 +6255,10 @@ static void __sched notrace __schedule(unsigned int sched_mode)
 		RCU_INIT_POINTER(rq->curr, next);
 		/*
 		 * The membarrier system call requires each architecture
-		 * to have a full memory barrier after updating
-		 * rq->curr, before returning to user-space.
-		 *
-		 * Here are the schemes providing that barrier on the
-		 * various architectures:
-		 * - mm ? switch_mm() : mmdrop() for x86, s390, sparc, PowerPC.
-		 *   switch_mm() rely on membarrier_arch_switch_mm() on PowerPC.
-		 * - finish_lock_switch() for weakly-ordered
-		 *   architectures where spin_unlock is a full barrier,
-		 * - switch_to() for arm64 (weakly-ordered, spin_unlock
-		 *   is a RELEASE barrier),
+		 * to have a full memory barrier before and after updating
+		 * rq->curr->mm, before returning to userspace.  This
+		 * is provided by membarrier_finish_switch_mm().  Architectures
+		 * that want to optimize this can override that function.
 		 */
 		++*switch_count;
 

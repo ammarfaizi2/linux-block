@@ -1361,25 +1361,15 @@ void kthread_use_mm(struct mm_struct *mm)
 	tsk->mm = mm;
 	membarrier_update_current_mm(mm);
 	switch_mm_irqs_off(active_mm, mm, tsk);
+	membarrier_finish_switch_mm(mm);
 	local_irq_enable();
 	task_unlock(tsk);
 #ifdef finish_arch_post_lock_switch
 	finish_arch_post_lock_switch();
 #endif
 
-	/*
-	 * When a kthread starts operating on an address space, the loop
-	 * in membarrier_{private,global}_expedited() may not observe
-	 * that tsk->mm, and not issue an IPI. Membarrier requires a
-	 * memory barrier after storing to tsk->mm, before accessing
-	 * user-space memory. A full memory barrier for membarrier
-	 * {PRIVATE,GLOBAL}_EXPEDITED is implicitly provided by
-	 * mmdrop(), or explicitly with smp_mb().
-	 */
 	if (active_mm != mm)
 		mmdrop(active_mm);
-	else
-		smp_mb();
 
 	to_kthread(tsk)->oldfs = force_uaccess_begin();
 }

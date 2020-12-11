@@ -349,6 +349,20 @@ extern void membarrier_exec_mmap(struct mm_struct *mm);
 
 extern void membarrier_update_current_mm(struct mm_struct *next_mm);
 
+/*
+ * Called by the core scheduler after calling switch_mm_irqs_off().
+ * Architectures that have implicit barriers when switching mms can
+ * override this as an optimization.
+ */
+#ifndef membarrier_finish_switch_mm
+static inline void membarrier_finish_switch_mm(struct mm_struct *mm)
+{
+	if (atomic_read(&mm->membarrier_state) &
+	    (MEMBARRIER_STATE_GLOBAL_EXPEDITED | MEMBARRIER_STATE_PRIVATE_EXPEDITED))
+		smp_mb();
+}
+#endif
+
 #else
 static inline void membarrier_exec_mmap(struct mm_struct *mm)
 {
@@ -356,6 +370,10 @@ static inline void membarrier_exec_mmap(struct mm_struct *mm)
 static inline void membarrier_update_current_mm(struct mm_struct *next_mm)
 {
 }
+static inline void membarrier_finish_switch_mm(struct mm_struct *mm)
+{
+}
+
 #endif
 
 #endif /* _LINUX_SCHED_MM_H */
