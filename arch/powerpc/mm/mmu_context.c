@@ -84,7 +84,6 @@ void switch_mm_irqs_off(struct mm_struct *prev, struct mm_struct *next,
 		asm volatile ("dssall");
 
 	if (!new_on_cpu)
-		membarrier_arch_switch_mm(prev, next, tsk);
 
 	/*
 	 * The actual HW switching method differs between the various
