@@ -394,16 +394,14 @@ then
 	find "$tdir" -type d -name '*-kasan' -print > $T/xz-todo
 	if test -s $T/xz-todo
 	then
-		echo Starting compression: `date` | tee -a $T/log >> "$tdir/log-xz" 2>&1
-		echo Size before: `du -sh $tdir` >> "$tdir/log-xz" 2>&1
+		echo Size before compressing: `du -sh $tdir | awk '{ print $1 }'` `date` 2>&1 | tee -a "$tdir/log-xz" | tee -a $T/log
 		for i in `cat $T/xz-todo`
 		do
 			echo Compressing vmlinux files in ${i}: `date` >> "$tdir/log-xz" 2>&1
 			xz $i/*/vmlinux >> "$tdir/log-xz" 2>&1
 		done
-		echo Size after: `du -sh $tdir` >> "$tdir/log-xz" 2>&1
-		echo Done with compression: `date` | tee -a $T/log >> "$tdir/log-xz" 2>&1
-		echo Started at $startdate, compression done at `date`, total duration `get_starttime_duration $starttime`. | tee -a $T/log
+		echo Size after compressing: `du -sh $tdir | awk '{ print $1 }'` `date` 2>&1 | tee -a "$tdir/log-xz" | tee -a $T/log
+		echo Total duration `get_starttime_duration $starttime`. | tee -a $T/log
 	else
 		echo No compression needed: `date` >> "$tdir/log-xz" 2>&1
 	fi
