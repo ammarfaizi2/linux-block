@@ -55,12 +55,12 @@ static struct mhi_pm_transitions const dev_state_transitions[] = {
 	},
 	{
 		MHI_PM_M0,
-		MHI_PM_M0 | MHI_PM_M2 | MHI_PM_M3_ENTER |
+		MHI_PM_M0 | MHI_PM_M3_ENTER |
 		MHI_PM_SYS_ERR_DETECT | MHI_PM_SHUTDOWN_PROCESS |
 		MHI_PM_LD_ERR_FATAL_DETECT | MHI_PM_FW_DL_ERR
 	},
 	{
-		MHI_PM_M2,
+		MHI_PM_M0,
 		MHI_PM_M0 | MHI_PM_SYS_ERR_DETECT | MHI_PM_SHUTDOWN_PROCESS |
 		MHI_PM_LD_ERR_FATAL_DETECT
 	},
