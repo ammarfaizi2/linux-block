@@ -1573,7 +1573,12 @@ int ubifs_getattr(const struct path *path, struct kstat *stat,
 	struct inode *inode = d_inode(path->dentry);
 	struct ubifs_inode *ui = ubifs_inode(inode);
 
-	mutex_lock(&ui->ui_mutex);
+	if (flags & AT_STATX_CACHED) {
+		if (!mutex_trylock(&ui->ui_mutex))
+			return -EAGAIN;
+	} else {
+		mutex_lock(&ui->ui_mutex);
+	}
 
 	if (ui->flags & UBIFS_APPEND_FL)
 		stat->attributes |= STATX_ATTR_APPEND;

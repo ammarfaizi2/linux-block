@@ -2032,6 +2032,8 @@ static int gfs2_getattr(const struct path *path, struct kstat *stat,
 
 	gfs2_holder_mark_uninitialized(&gh);
 	if (gfs2_glock_is_locked_by_me(ip->i_gl) == NULL) {
+		if (flags & AT_STATX_CACHED)
+			return -EAGAIN;
 		error = gfs2_glock_nq_init(ip->i_gl, LM_ST_SHARED, LM_FLAG_ANY, &gh);
 		if (error)
 			return error;

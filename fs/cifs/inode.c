@@ -2379,6 +2379,9 @@ int cifs_getattr(const struct path *path, struct kstat *stat,
 	struct inode *inode = d_inode(dentry);
 	int rc;
 
+	if (flags & AT_STATX_CACHED)
+		return -EAGAIN;
+
 	/*
 	 * We need to be sure that all dirty pages are written and the server
 	 * has actual ctime, mtime and file length.

@@ -980,6 +980,9 @@ static int ecryptfs_getattr_link(const struct path *path, struct kstat *stat,
 		char *target;
 		size_t targetsiz;
 
+		if (flags & AT_STATX_CACHED)
+			return -EAGAIN;
+
 		target = ecryptfs_readlink_lower(dentry, &targetsiz);
 		if (!IS_ERR(target)) {
 			kfree(target);

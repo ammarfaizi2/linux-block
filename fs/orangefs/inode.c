@@ -900,6 +900,9 @@ int orangefs_getattr(const struct path *path, struct kstat *stat,
 		     "orangefs_getattr: called on %pd mask %u\n",
 		     path->dentry, request_mask);
 
+	if (flags & AT_STATX_CACHED)
+		return -EAGAIN;
+
 	ret = orangefs_inode_getattr(inode,
 	    request_mask & STATX_SIZE ? ORANGEFS_GETATTR_SIZE : 0);
 	if (ret == 0) {

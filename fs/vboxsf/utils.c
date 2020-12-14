@@ -228,6 +228,10 @@ int vboxsf_getattr(const struct path *path, struct kstat *kstat,
 		sf_i->force_restat = 1;
 		fallthrough;
 	default:
+		if (flags & AT_STATX_CACHED) {
+			err = -EAGAIN;
+			break;
+		}
 		err = vboxsf_inode_revalidate(dentry);
 	}
 	if (err)

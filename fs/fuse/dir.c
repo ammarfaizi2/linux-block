@@ -1084,6 +1084,8 @@ static int fuse_update_get_attr(struct inode *inode, struct file *file,
 		sync = time_before64(fi->i_time, get_jiffies_64());
 
 	if (sync) {
+		if (flags & AT_STATX_CACHED)
+			return -EAGAIN;
 		forget_all_cached_acls(inode);
 		err = fuse_do_getattr(inode, stat, file);
 	} else if (stat) {

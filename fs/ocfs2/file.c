@@ -1306,6 +1306,9 @@ int ocfs2_getattr(const struct path *path, struct kstat *stat,
 	struct ocfs2_super *osb = sb->s_fs_info;
 	int err;
 
+	if (flags & AT_STATX_CACHED)
+		return -EAGAIN;
+
 	err = ocfs2_inode_revalidate(path->dentry);
 	if (err) {
 		if (err != -ENOENT)

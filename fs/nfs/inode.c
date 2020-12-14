@@ -799,6 +799,9 @@ int nfs_getattr(const struct path *path, struct kstat *stat,
 
 	trace_nfs_getattr_enter(inode);
 
+	if (query_flags & AT_STATX_CACHED)
+		return -EAGAIN;
+
 	if ((query_flags & AT_STATX_DONT_SYNC) && !force_sync) {
 		nfs_readdirplus_parent_cache_hit(path->dentry);
 		goto out_no_update;

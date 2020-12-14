@@ -189,7 +189,13 @@ int kernfs_iop_getattr(const struct path *path, struct kstat *stat,
 	struct inode *inode = d_inode(path->dentry);
 	struct kernfs_node *kn = inode->i_private;
 
-	mutex_lock(&kernfs_mutex);
+	if (query_flags & AT_STATX_CACHED) {
+		if (!mutex_trylock(&kernfs_mutex))
+			return -EAGAIN;
+	} else {
+		mutex_lock(&kernfs_mutex);
+	}
+
 	kernfs_refresh_inode(kn, inode);
 	mutex_unlock(&kernfs_mutex);
 

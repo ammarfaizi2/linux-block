@@ -1030,6 +1030,8 @@ v9fs_vfs_getattr(const struct path *path, struct kstat *stat,
 		generic_fillattr(d_inode(dentry), stat);
 		return 0;
 	}
+	if (flags & AT_STATX_CACHED)
+		return -EAGAIN;
 	fid = v9fs_fid_lookup(dentry);
 	if (IS_ERR(fid))
 		return PTR_ERR(fid);
