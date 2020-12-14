@@ -4452,20 +4452,27 @@ static int io_statx_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 static int io_statx(struct io_kiocb *req, bool force_nonblock)
 {
 	struct io_statx *ctx = &req->statx;
+	bool cached_set;
 	int ret;
 
-	if (force_nonblock) {
-		/* only need file table for an actual valid fd */
-		if (ctx->dfd == -1 || ctx->dfd == AT_FDCWD)
-			req->flags |= REQ_F_NO_FILE_TABLE;
-		return -EAGAIN;
-	}
+	cached_set = ctx->flags & AT_STATX_CACHED;
+	if (force_nonblock)
+		ctx->flags |= AT_STATX_CACHED;
 
 	ret = do_statx(ctx->dfd, ctx->filename, ctx->flags, ctx->mask,
 		       ctx->buffer);
 
-	if (ret < 0)
+	if (ret < 0) {
+		/* only retry if nonblock wasn't set */
+		if (ret == -EAGAIN && (!cached_set && force_nonblock)) {
+			/* only need file table for an actual valid fd */
+			if (ctx->dfd == -1 || ctx->dfd == AT_FDCWD)
+				req->flags |= REQ_F_NO_FILE_TABLE;
+			ctx->flags &= ~AT_STATX_CACHED;
+			return -EAGAIN;
+		}
 		req_set_fail_links(req);
+	}
 	io_req_complete(req, ret);
 	return 0;
 }
