@@ -66,7 +66,7 @@ config NEED_PER_CPU_PAGE_FIRST_CHUNK
 
 config NR_IRQS
 	int "Number of virtual interrupt numbers"
-	range 32 32768
+	range 32 1048576
 	default "512"
 	help
 	  This defines the number of virtual interrupt numbers the kernel
@@ -87,7 +87,7 @@ config PPC_WATCHDOG
 	help
 	  This is a placeholder when the powerpc hardlockup detector
 	  watchdog is selected (arch/powerpc/kernel/watchdog.c). It is
-	  seleted via the generic lockup detector menu which is why we
+	  selected via the generic lockup detector menu which is why we
 	  have no standalone config option for it here.
 
 config STACKTRACE_SUPPORT
@@ -809,8 +809,7 @@ config DATA_SHIFT_BOOL
 	bool "Set custom data alignment"
 	depends on ADVANCED_OPTIONS
 	depends on STRICT_KERNEL_RWX || DEBUG_PAGEALLOC
-	depends on PPC_BOOK3S_32 || (PPC_8xx && !PIN_TLB_DATA && \
-				     (!PIN_TLB_TEXT || !STRICT_KERNEL_RWX))
+	depends on PPC_BOOK3S_32 || (PPC_8xx && !PIN_TLB_DATA && !STRICT_KERNEL_RWX)
 	help
 	  This option allows you to set the kernel data alignment. When
 	  RAM is mapped by blocks, the alignment needs to fit the size and

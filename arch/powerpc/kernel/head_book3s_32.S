@@ -155,10 +155,8 @@ __after_mmu_off:
 
 	bl	initial_bats
 	bl	load_segment_registers
-BEGIN_MMU_FTR_SECTION
 	bl	reloc_offset
 	bl	early_hash_table
-END_MMU_FTR_SECTION_IFSET(MMU_FTR_HPTE_TABLE)
 #if defined(CONFIG_BOOTX_TEXT)
 	bl	setup_disp_bat
 #endif
@@ -294,11 +292,7 @@ BEGIN_MMU_FTR_SECTION
 	stw	r11, THR11(r10)
 	mfspr	r10, SPRN_DSISR
 	mfcr	r11
-#ifdef CONFIG_PPC_KUAP
-	andis.	r10, r10, (DSISR_BAD_FAULT_32S | DSISR_DABRMATCH | DSISR_PROTFAULT)@h
-#else
 	andis.	r10, r10, (DSISR_BAD_FAULT_32S | DSISR_DABRMATCH)@h
-#endif
 	mfspr	r10, SPRN_SPRG_THREAD
 	beq	hash_page_dsi
 .Lhash_page_dsi_cont:
@@ -315,11 +309,7 @@ ALT_MMU_FTR_SECTION_END_IFSET(MMU_FTR_HPTE_TABLE)
 	EXCEPTION_PROLOG handle_dar_dsisr=1
 	get_and_save_dar_dsisr_on_stack	r4, r5, r11
 BEGIN_MMU_FTR_SECTION
-#ifdef CONFIG_PPC_KUAP
-	andis.	r0, r5, (DSISR_BAD_FAULT_32S | DSISR_DABRMATCH | DSISR_PROTFAULT)@h
-#else
 	andis.	r0, r5, (DSISR_BAD_FAULT_32S | DSISR_DABRMATCH)@h
-#endif
 	bne	handle_page_fault_tramp_2	/* if not, try to put a PTE */
 	rlwinm	r3, r5, 32 - 15, 21, 21		/* DSISR_STORE -> _PAGE_RW */
 	bl	hash_page
@@ -922,9 +912,6 @@ early_hash_table:
 	lis	r6, early_hash - PAGE_OFFSET@h
 	ori	r6, r6, 3	/* 256kB table */
 	mtspr	SPRN_SDR1, r6
-	lis	r6, early_hash@h
-	addis	r3, r3, Hash@ha
-	stw	r6, Hash@l(r3)
 	blr
 
 load_up_mmu:

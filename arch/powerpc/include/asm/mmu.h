@@ -157,7 +157,7 @@ DECLARE_PER_CPU(int, next_tlbcam_idx);
 
 enum {
 	MMU_FTRS_POSSIBLE =
-#ifdef CONFIG_PPC_BOOK3S
+#if defined(CONFIG_PPC_BOOK3S_64) || defined(CONFIG_PPC_BOOK3S_604)
 		MMU_FTR_HPTE_TABLE |
 #endif
 #ifdef CONFIG_PPC_8xx
@@ -206,8 +206,33 @@ enum {
 		0,
 };
 
+#if defined(CONFIG_PPC_BOOK3S_604) && !defined(CONFIG_PPC_BOOK3S_603)
+#define MMU_FTRS_ALWAYS		MMU_FTR_HPTE_TABLE
+#endif
+#ifdef CONFIG_PPC_8xx
+#define MMU_FTRS_ALWAYS		MMU_FTR_TYPE_8xx
+#endif
+#ifdef CONFIG_40x
+#define MMU_FTRS_ALWAYS		MMU_FTR_TYPE_40x
+#endif
+#ifdef CONFIG_PPC_47x
+#define MMU_FTRS_ALWAYS		MMU_FTR_TYPE_47x
+#elif defined(CONFIG_44x)
+#define MMU_FTRS_ALWAYS		MMU_FTR_TYPE_44x
+#endif
+#if defined(CONFIG_E200) || defined(CONFIG_E500)
+#define MMU_FTRS_ALWAYS		MMU_FTR_TYPE_FSL_E
+#endif
+
+#ifndef MMU_FTRS_ALWAYS
+#define MMU_FTRS_ALWAYS		0
+#endif
+
 static inline bool early_mmu_has_feature(unsigned long feature)
 {
+	if (MMU_FTRS_ALWAYS & feature)
+		return true;
+
 	return !!(MMU_FTRS_POSSIBLE & cur_cpu_spec->mmu_features & feature);
 }
 
@@ -235,6 +260,9 @@ static __always_inline bool mmu_has_feature(unsigned long feature)
 		return early_mmu_has_feature(feature);
 	}
 #endif
+
+	if (MMU_FTRS_ALWAYS & feature)
+		return true;
 
 	if (!(MMU_FTRS_POSSIBLE & feature))
 		return false;

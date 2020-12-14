@@ -82,9 +82,6 @@ static inline void print_system_hash_info(void) {}
 
 #else /* CONFIG_PPC_MMU_NOHASH */
 
-extern void _tlbie(unsigned long address);
-extern void _tlbia(void);
-
 void print_system_hash_info(void);
 
 #endif /* CONFIG_PPC_MMU_NOHASH */
@@ -99,7 +96,6 @@ extern int __map_without_bats;
 extern unsigned int rtas_data, rtas_size;
 
 struct hash_pte;
-extern struct hash_pte *Hash;
 extern u8 early_hash[];
 
 #endif /* CONFIG_PPC32 */

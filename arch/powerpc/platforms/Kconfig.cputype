@@ -11,9 +11,6 @@ config PPC64
 	  This option selects whether a 32-bit or a 64-bit kernel
 	  will be built.
 
-config PPC_BOOK3S_32
-	bool
-
 menu "Processor support"
 choice
 	prompt "Processor Type"
@@ -29,14 +26,13 @@ choice
 
 	  If unsure, select 52xx/6xx/7xx/74xx/82xx/83xx/86xx.
 
-config PPC_BOOK3S_6xx
+config PPC_BOOK3S_32
 	bool "512x/52xx/6xx/7xx/74xx/82xx/83xx/86xx"
-	select PPC_BOOK3S_32
 	imply PPC_FPU
 	select PPC_HAVE_PMU_SUPPORT
 	select PPC_HAVE_KUEP
 	select PPC_HAVE_KUAP
-	select HAVE_ARCH_VMAP_STACK if !ADB_PMU
+	select HAVE_ARCH_VMAP_STACK
 
 config PPC_85xx
 	bool "Freescale 85xx"
@@ -67,6 +63,22 @@ config 44x
 	select PHYS_64BIT
 
 endchoice
+
+config PPC_BOOK3S_603
+	bool "Support for 603 SW loaded TLB"
+	depends on PPC_BOOK3S_32
+	default y
+	help
+	  Provide support for processors based on the 603 cores. Those
+	  processors don't have a HASH MMU and provide SW TLB loading.
+
+config PPC_BOOK3S_604
+	bool "Support for 604+ HASH MMU" if PPC_BOOK3S_603
+	depends on PPC_BOOK3S_32
+	default y
+	help
+	  Provide support for processors not based on the 603 cores.
+	  Those processors have a HASH MMU.
 
 choice
 	prompt "Processor Type"
