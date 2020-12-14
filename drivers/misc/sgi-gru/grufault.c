@@ -20,8 +20,8 @@
 #include <linux/io.h>
 #include <linux/uaccess.h>
 #include <linux/security.h>
-#include <linux/sync_core.h>
 #include <linux/prefetch.h>
+#include <asm/sync_core.h>
 #include "gru.h"
 #include "grutables.h"
 #include "grulib.h"

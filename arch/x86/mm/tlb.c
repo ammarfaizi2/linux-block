@@ -12,6 +12,7 @@
 #include <linux/sched/mm.h>
 
 #include <asm/tlbflush.h>
+#include <asm/membarrier.h>
 #include <asm/mmu_context.h>
 #include <asm/nospec-branch.h>
 #include <asm/cache.h>
@@ -491,7 +492,7 @@ static void sync_core_if_membarrier_enabled(struct mm_struct *next)
 #ifdef CONFIG_MEMBARRIER
 	if (unlikely(atomic_read(&next->membarrier_state) &
 		     MEMBARRIER_STATE_PRIVATE_EXPEDITED_SYNC_CORE))
-		sync_core_before_usermode();
+		membarrier_sync_core_before_usermode();
 #endif
 }
 

@@ -41,12 +41,12 @@
 #include <linux/irq_work.h>
 #include <linux/export.h>
 #include <linux/set_memory.h>
-#include <linux/sync_core.h>
 #include <linux/task_work.h>
 #include <linux/hardirq.h>
 
 #include <asm/intel-family.h>
 #include <asm/processor.h>
+#include <asm/sync_core.h>
 #include <asm/traps.h>
 #include <asm/tlbflush.h>
 #include <asm/mce.h>

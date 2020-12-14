@@ -5,51 +5,26 @@
 #
 # Architecture requirements
 #
-# * arm/arm64/powerpc
 #
-# Rely on implicit context synchronization as a result of exception return
-# when returning from IPI handler, and when returning to user-space.
+# An architecture that wants to support
+# MEMBARRIER_CMD_PRIVATE_EXPEDITED_SYNC_CORE needs to define precisely what it
+# is supposed to do and implement membarrier_sync_core_before_usermode() to
+# make it do that.  Then it can select ARCH_HAS_MEMBARRIER_SYNC_CORE via
+# Kconfig and document what SYNC_CORE does on that architecture in this
+# list.
 #
-# * x86
+# On x86, a program can safely modify code, issue
+# MEMBARRIER_CMD_PRIVATE_EXPEDITED_SYNC_CORE, and then execute that code, via
+# the modified address or an alias, from any thread in the calling process.
 #
-# x86-32 uses IRET as return from interrupt, which takes care of the IPI.
-# However, it uses both IRET and SYSEXIT to go back to user-space. The IRET
-# instruction is core serializing, but not SYSEXIT.
+# On arm and arm64, a program can modify code, flush the icache as needed,
+# and issue MEMBARRIER_CMD_PRIVATE_EXPEDITED_SYNC_CORE to force a "context
+# synchronizing event", aka pipeline flush on all CPUs that might run the
+# calling process.  Then the program can execute the modified code as long
+# as it is executed from an address consistent with the icache flush and
+# the CPU's cache type.  On arm, cacheflush(2) can be used for the icache
+# flushing operation.
 #
-# x86-64 uses IRET as return from interrupt, which takes care of the IPI.
-# However, it can return to user-space through either SYSRETL (compat code),
-# SYSRETQ, or IRET.
-#
-# Given that neither SYSRET{L,Q}, nor SYSEXIT, are core serializing, we rely
-# instead on write_cr3() performed by switch_mm() to provide core serialization
-# after changing the current mm, and deal with the special case of kthread ->
-# uthread (temporarily keeping current mm into active_mm) by issuing a
-# sync_core_before_usermode() in that specific case.
-#
-    -----------------------
-    |         arch |status|
-    -----------------------
-    |       alpha: | TODO |
-    |         arc: | TODO |
-    |         arm: |  ok  |
-    |       arm64: |  ok  |
-    |        csky: | TODO |
-    |       h8300: | TODO |
-    |     hexagon: | TODO |
-    |        ia64: | TODO |
-    |        m68k: | TODO |
-    |  microblaze: | TODO |
-    |        mips: | TODO |
-    |       nds32: | TODO |
-    |       nios2: | TODO |
-    |    openrisc: | TODO |
-    |      parisc: | TODO |
-    |     powerpc: |  ok  |
-    |       riscv: | TODO |
-    |        s390: | TODO |
-    |          sh: | TODO |
-    |       sparc: | TODO |
-    |          um: | TODO |
-    |         x86: |  ok  |
-    |      xtensa: | TODO |
-    -----------------------
+# On powerpc, a program can use MEMBARRIER_CMD_PRIVATE_EXPEDITED_SYNC_CORE
+# similarly to arm64.  It would be nice if the powerpc maintainers could
+# add a more clear explanantion.

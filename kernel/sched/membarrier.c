@@ -5,6 +5,14 @@
  * membarrier system call
  */
 #include "sched.h"
+#ifdef CONFIG_ARCH_HAS_MEMBARRIER_SYNC_CORE
+#include <asm/membarrier.h>
+#else
+static inline void membarrier_sync_core_before_usermode(void)
+{
+	compiletime_assert(0, "architecture does not implement membarrier_sync_core_before_usermode");
+}
+#endif
 
 /*
  * The basic principle behind the regular memory barrier mode of
@@ -231,12 +239,12 @@ static void ipi_sync_core(void *info)
 	 * the big comment at the top of this file.
 	 *
 	 * A sync_core() would provide this guarantee, but
-	 * sync_core_before_usermode() might end up being deferred until
-	 * after membarrier()'s smp_mb().
+	 * membarrier_sync_core_before_usermode() might end up being deferred
+	 * until after membarrier()'s smp_mb().
 	 */
 	smp_mb();	/* IPIs should be serializing but paranoid. */
 
-	sync_core_before_usermode();
+	membarrier_sync_core_before_usermode();
 }
 
 static void ipi_rseq(void *info)
