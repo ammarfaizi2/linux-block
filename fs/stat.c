@@ -171,7 +171,7 @@ static int vfs_statx(int dfd, const char __user *filename, int flags,
 	int error;
 
 	if (flags & ~(AT_SYMLINK_NOFOLLOW | AT_NO_AUTOMOUNT | AT_EMPTY_PATH |
-		      AT_STATX_SYNC_TYPE))
+		      AT_STATX_SYNC_TYPE | AT_STATX_CACHED))
 		return -EINVAL;
 
 	if (!(flags & AT_SYMLINK_NOFOLLOW))
@@ -180,6 +180,8 @@ static int vfs_statx(int dfd, const char __user *filename, int flags,
 		lookup_flags |= LOOKUP_AUTOMOUNT;
 	if (flags & AT_EMPTY_PATH)
 		lookup_flags |= LOOKUP_EMPTY;
+	if (flags & AT_STATX_CACHED)
+		lookup_flags |= LOOKUP_CACHED;
 
 retry:
 	error = user_path_at(dfd, filename, lookup_flags, &path);

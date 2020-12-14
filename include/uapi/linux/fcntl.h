@@ -111,4 +111,6 @@
 
 #define AT_RECURSIVE		0x8000	/* Apply to the entire subtree */
 
+#define AT_STATX_CACHED		0x10000 /* Only succeeds if inode/dentry is already cached */
+
 #endif /* _UAPI_LINUX_FCNTL_H */
