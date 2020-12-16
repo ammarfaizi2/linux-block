@@ -546,17 +546,17 @@ static inline void rcu_bind_current_to_nocb(void) { }
 #if !defined(CONFIG_TINY_RCU) && defined(CONFIG_TASKS_RCU)
 void show_rcu_tasks_classic_gp_kthread(void);
 #else
-static inline void show_rcu_tasks_classic_gp_kthread(void) {}
+#define show_rcu_tasks_classic_gp_kthread NULL
 #endif
 #if !defined(CONFIG_TINY_RCU) && defined(CONFIG_TASKS_RUDE_RCU)
 void show_rcu_tasks_rude_gp_kthread(void);
 #else
-static inline void show_rcu_tasks_rude_gp_kthread(void) {}
+#define show_rcu_tasks_rude_gp_kthread NULL
 #endif
 #if !defined(CONFIG_TINY_RCU) && defined(CONFIG_TASKS_TRACE_RCU)
 void show_rcu_tasks_trace_gp_kthread(void);
 #else
-static inline void show_rcu_tasks_trace_gp_kthread(void) {}
+#define show_rcu_tasks_trace_gp_kthread NULL
 #endif
 
 #endif /* __LINUX_RCU_H */
