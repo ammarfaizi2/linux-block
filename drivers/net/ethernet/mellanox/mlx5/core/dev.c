@@ -167,6 +167,9 @@ static bool is_mp_supported(struct mlx5_core_dev *dev)
 	if (MLX5_CAP_GEN(dev, port_type) != MLX5_CAP_PORT_TYPE_ETH)
 		return false;
 
+	if (is_mdev_switchdev_mode(dev))
+		return false;
+
 	if (!mlx5_core_is_mp_slave(dev))
 		return false;
 
@@ -185,6 +188,9 @@ static bool is_ib_supported(struct mlx5_core_dev *dev)
 		return false;
 
 	if (is_mp_supported(dev))
+		return false;
+
+	if (is_mdev_switchdev_mode(dev))
 		return false;
 
 	return true;
