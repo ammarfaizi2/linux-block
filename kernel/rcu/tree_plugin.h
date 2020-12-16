@@ -2468,7 +2468,7 @@ int rcu_nocb_cpu_offload(int cpu)
 
 	return ret;
 }
-
+EXPORT_SYMBOL_GPL(rcu_nocb_cpu_offload);
 
 void __init rcu_init_nohz(void)
 {
