@@ -639,6 +639,10 @@ static inline void __range_cloexec(struct files_struct *cur_fds,
 
 	spin_lock(&cur_fds->file_lock);
 	fdt = files_fdtable(cur_fds);
+	if (max_fd >= fdt->max_fds) {
+		max_fd = fdt->max_fds;
+		max_fd--; /* cap to last valid index into fdtable */
+	}
 	bitmap_set(fdt->close_on_exec, fd, max_fd - fd + 1);
 	spin_unlock(&cur_fds->file_lock);
 }
