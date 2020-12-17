@@ -14,6 +14,9 @@
 #define HCLGEVF_RESET_MAX_FAIL_CNT	5
 
 static int hclgevf_reset_hdev(struct hclgevf_dev *hdev);
+static void hclgevf_task_schedule(struct hclgevf_dev *hdev,
+				  unsigned long delay);
+
 static struct hnae3_ae_algo ae_algovf;
 
 static struct workqueue_struct *hclgevf_wq;
@@ -430,19 +433,20 @@ static int hclgevf_knic_setup(struct hclgevf_dev *hdev)
 	struct hnae3_knic_private_info *kinfo;
 	u16 new_tqps = hdev->num_tqps;
 	unsigned int i;
+	u8 num_tc = 0;
 
 	kinfo = &nic->kinfo;
-	kinfo->num_tc = 0;
 	kinfo->num_tx_desc = hdev->num_tx_desc;
 	kinfo->num_rx_desc = hdev->num_rx_desc;
 	kinfo->rx_buf_len = hdev->rx_buf_len;
 	for (i = 0; i < HCLGEVF_MAX_TC_NUM; i++)
 		if (hdev->hw_tc_map & BIT(i))
-			kinfo->num_tc++;
+			num_tc++;
 
-	kinfo->rss_size
-		= min_t(u16, hdev->rss_size_max, new_tqps / kinfo->num_tc);
-	new_tqps = kinfo->rss_size * kinfo->num_tc;
+	num_tc = num_tc ? num_tc : 1;
+	kinfo->tc_info.num_tc = num_tc;
+	kinfo->rss_size = min_t(u16, hdev->rss_size_max, new_tqps / num_tc);
+	new_tqps = kinfo->rss_size * num_tc;
 	kinfo->num_tqps = min(new_tqps, hdev->num_tqps);
 
 	kinfo->tqp = devm_kcalloc(&hdev->pdev->dev, kinfo->num_tqps,
@@ -460,7 +464,7 @@ static int hclgevf_knic_setup(struct hclgevf_dev *hdev)
 	 * and rss size with the actual vector numbers
 	 */
 	kinfo->num_tqps = min_t(u16, hdev->num_nic_msix - 1, kinfo->num_tqps);
-	kinfo->rss_size = min_t(u16, kinfo->num_tqps / kinfo->num_tc,
+	kinfo->rss_size = min_t(u16, kinfo->num_tqps / num_tc,
 				kinfo->rss_size);
 
 	return 0;
@@ -1146,6 +1150,7 @@ static int hclgevf_cmd_set_promisc_mode(struct hclgevf_dev *hdev,
 					bool en_uc_pmc, bool en_mc_pmc,
 					bool en_bc_pmc)
 {
+	struct hnae3_handle *handle = &hdev->nic;
 	struct hclge_vf_to_pf_msg send_msg;
 	int ret;
 
@@ -1154,6 +1159,8 @@ static int hclgevf_cmd_set_promisc_mode(struct hclgevf_dev *hdev,
 	send_msg.en_bc = en_bc_pmc ? 1 : 0;
 	send_msg.en_uc = en_uc_pmc ? 1 : 0;
 	send_msg.en_mc = en_mc_pmc ? 1 : 0;
+	send_msg.en_limit_promisc = test_bit(HNAE3_PFLAG_LIMIT_PROMISC,
+					     &handle->priv_flags) ? 1 : 0;
 
 	ret = hclgevf_send_mbx_msg(hdev, &send_msg, false, NULL, 0);
 	if (ret)
@@ -1180,6 +1187,7 @@ static void hclgevf_request_update_promisc_mode(struct hnae3_handle *handle)
 	struct hclgevf_dev *hdev = hclgevf_ae_get_hdev(handle);
 
 	set_bit(HCLGEVF_STATE_PROMISC_CHANGED, &hdev->state);
+	hclgevf_task_schedule(hdev, 0);
 }
 
 static void hclgevf_sync_promisc_mode(struct hclgevf_dev *hdev)
@@ -3353,7 +3361,7 @@ static u32 hclgevf_get_max_channels(struct hclgevf_dev *hdev)
 	struct hnae3_knic_private_info *kinfo = &nic->kinfo;
 
 	return min_t(u32, hdev->rss_size_max,
-		     hdev->num_tqps / kinfo->num_tc);
+		     hdev->num_tqps / kinfo->tc_info.num_tc);
 }
 
 /**
@@ -3396,7 +3404,7 @@ static void hclgevf_update_rss_size(struct hnae3_handle *handle,
 	kinfo->req_rss_size = new_tqps_num;
 
 	max_rss_size = min_t(u16, hdev->rss_size_max,
-			     hdev->num_tqps / kinfo->num_tc);
+			     hdev->num_tqps / kinfo->tc_info.num_tc);
 
 	/* Use the user's configuration when it is not larger than
 	 * max_rss_size, otherwise, use the maximum specification value.
@@ -3408,7 +3416,7 @@ static void hclgevf_update_rss_size(struct hnae3_handle *handle,
 		 (!kinfo->req_rss_size && kinfo->rss_size < max_rss_size))
 		kinfo->rss_size = max_rss_size;
 
-	kinfo->num_tqps = kinfo->num_tc * kinfo->rss_size;
+	kinfo->num_tqps = kinfo->tc_info.num_tc * kinfo->rss_size;
 }
 
 static int hclgevf_set_channels(struct hnae3_handle *handle, u32 new_tqps_num,
@@ -3454,7 +3462,7 @@ out:
 		dev_info(&hdev->pdev->dev,
 			 "Channels changed, rss_size from %u to %u, tqps from %u to %u",
 			 cur_rss_size, kinfo->rss_size,
-			 cur_tqps, kinfo->rss_size * kinfo->num_tc);
+			 cur_tqps, kinfo->rss_size * kinfo->tc_info.num_tc);
 
 	return ret;
 }
