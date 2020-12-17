@@ -68,4 +68,8 @@ USERCOPY_STACK_BEYOND
 USERCOPY_KERNEL
 STACKLEAK_ERASING OK: the rest of the thread stack is properly erased
 CFI_FORWARD_PROTO
+<<<<<<< HEAD
 PPC_SLB_MULTIHIT Recovered
+=======
+FORTIFIED_STRSCPY
+>>>>>>> master
