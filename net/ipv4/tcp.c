@@ -280,6 +280,7 @@
 #include <linux/uaccess.h>
 #include <asm/ioctls.h>
 #include <net/busy_poll.h>
+#include <linux/io_uring.h>
 
 /* Track pending CMSGs. */
 enum {
@@ -600,6 +601,41 @@ __poll_t tcp_poll(struct file *file, struct socket *sock, poll_table *wait)
 	return mask;
 }
 EXPORT_SYMBOL(tcp_poll);
+
+int tcp_uring_cmd(struct sock *sk, struct io_uring_cmd *cmd,
+		  enum io_uring_cmd_flags issue_flags)
+{
+	struct sock_uring_cmd *scmd = (struct sock_uring_cmd *)&cmd->pdu;
+	struct tcp_sock *tp = tcp_sk(sk);
+	bool slow;
+	int ret;
+
+	switch (scmd->op) {
+	case SOCKET_URING_OP_SIOCINQ:
+		if (sk->sk_state == TCP_LISTEN)
+			return -EINVAL;
+
+		slow = lock_sock_fast(sk);
+		ret = tcp_inq(sk);
+		unlock_sock_fast(sk, slow);
+		break;
+	case SOCKET_URING_OP_SIOCOUTQ:
+		if (sk->sk_state == TCP_LISTEN)
+			return -EINVAL;
+
+		if ((1 << sk->sk_state) & (TCPF_SYN_SENT | TCPF_SYN_RECV))
+			ret = 0;
+		else
+			ret = READ_ONCE(tp->write_seq) - tp->snd_una;
+		break;
+	default:
+		ret = -EOPNOTSUPP;
+		break;
+	}
+
+	return ret;
+}
+EXPORT_SYMBOL_GPL(tcp_uring_cmd);
 
 int tcp_ioctl(struct sock *sk, int cmd, unsigned long arg)
 {
