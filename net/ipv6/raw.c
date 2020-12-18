@@ -1235,6 +1235,7 @@ struct proto rawv6_prot = {
 	.connect	   = ip6_datagram_connect_v6_only,
 	.disconnect	   = __udp_disconnect,
 	.ioctl		   = rawv6_ioctl,
+	.uring_cmd	   = raw_uring_cmd,
 	.init		   = rawv6_init_sk,
 	.setsockopt	   = rawv6_setsockopt,
 	.getsockopt	   = rawv6_getsockopt,
