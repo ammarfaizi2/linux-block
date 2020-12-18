@@ -17,15 +17,20 @@
 struct io_uring_sqe {
 	__u8	opcode;		/* type of operation for this sqe */
 	__u8	flags;		/* IOSQE_ flags */
-	__u16	ioprio;		/* ioprio for the request */
+	union {
+		__u16	ioprio;		/* ioprio for the request */
+		__u16	cmd_personality;
+	} __attribute__((packed));
 	__s32	fd;		/* file descriptor to do IO on */
 	union {
 		__u64	off;	/* offset into file */
 		__u64	addr2;
+		__u64	cmd_user_data;	/* user_data for uring_cmd */
 	};
 	union {
 		__u64	addr;	/* pointer to buffer or iovecs */
 		__u64	splice_off_in;
+		__u64	cmd_pdu_start;	/* start of PDU for uring_cmd */
 	};
 	__u32	len;		/* buffer size or number of iovecs */
 	union {
@@ -137,6 +142,7 @@ enum {
 	IORING_OP_SHUTDOWN,
 	IORING_OP_RENAMEAT,
 	IORING_OP_UNLINKAT,
+	IORING_OP_URING_CMD,
 
 	/* this goes last, obviously */
 	IORING_OP_LAST,

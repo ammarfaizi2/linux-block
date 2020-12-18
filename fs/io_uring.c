@@ -770,6 +770,7 @@ struct io_kiocb {
 		struct io_shutdown	shutdown;
 		struct io_rename	rename;
 		struct io_unlink	unlink;
+		struct io_uring_cmd	uring_cmd;
 		/* use only after cleaning per-op data, see io_clean_op() */
 		struct io_completion	compl;
 	};
@@ -983,6 +984,9 @@ static const struct io_op_def io_op_defs[] = {
 	},
 	[IORING_OP_RENAMEAT] = {},
 	[IORING_OP_UNLINKAT] = {},
+	[IORING_OP_URING_CMD] = {
+		.needs_file		= 1,
+	},
 };
 
 static bool io_disarm_next(struct io_kiocb *req);
@@ -3544,6 +3548,49 @@ static int io_unlinkat(struct io_kiocb *req, unsigned int issue_flags)
 	return 0;
 }
 
+/*
+ * Called by consumers of io_uring_cmd, if they originally returned
+ * -EIOCBQUEUED upon receiving the command.
+ */
+void io_uring_cmd_done(struct io_uring_cmd *cmd, ssize_t ret)
+{
+	struct io_kiocb *req = container_of(cmd, struct io_kiocb, uring_cmd);
+
+	if (ret < 0)
+		req_set_fail_links(req);
+	io_req_complete(req, ret);
+}
+EXPORT_SYMBOL(io_uring_cmd_done);
+
+static int io_uring_cmd_prep(struct io_kiocb *req,
+			     const struct io_uring_sqe *sqe)
+{
+	struct io_uring_cmd *cmd = &req->uring_cmd;
+
+	if (!req->file->f_op->uring_cmd)
+		return -EOPNOTSUPP;
+
+	/*
+	 * The payload is the last 48 bytes of an io_uring_sqe, with the
+	 * type being defined by the recipient.
+	 */
+	memcpy(&cmd->pdu, (void *) &sqe->cmd_pdu_start, sizeof(cmd->pdu));
+	return 0;
+}
+
+static int io_uring_cmd(struct io_kiocb *req, unsigned int issue_flags)
+{
+	struct file *file = req->file;
+	int ret;
+
+	ret = file->f_op->uring_cmd(&req->uring_cmd, issue_flags);
+	/* queued async, consumer will call io_uring_cmd_done() when complete */
+	if (ret == -EIOCBQUEUED)
+		return 0;
+	io_uring_cmd_done(&req->uring_cmd, ret);
+	return 0;
+}
+
 static int io_shutdown_prep(struct io_kiocb *req,
 			    const struct io_uring_sqe *sqe)
 {
@@ -5837,6 +5884,8 @@ static int io_req_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 		return io_renameat_prep(req, sqe);
 	case IORING_OP_UNLINKAT:
 		return io_unlinkat_prep(req, sqe);
+	case IORING_OP_URING_CMD:
+		return io_uring_cmd_prep(req, sqe);
 	}
 
 	printk_once(KERN_WARNING "io_uring: unhandled opcode %d\n",
@@ -6092,6 +6141,9 @@ static int io_issue_sqe(struct io_kiocb *req, unsigned int issue_flags)
 		break;
 	case IORING_OP_UNLINKAT:
 		ret = io_unlinkat(req, issue_flags);
+		break;
+	case IORING_OP_URING_CMD:
+		ret = io_uring_cmd(req, issue_flags);
 		break;
 	default:
 		ret = -EINVAL;
@@ -6386,9 +6438,15 @@ static int io_init_req(struct io_ring_ctx *ctx, struct io_kiocb *req,
 	int personality, ret = 0;
 
 	req->opcode = READ_ONCE(sqe->opcode);
+	if (req->opcode != IORING_OP_URING_CMD) {
+		req->user_data = READ_ONCE(sqe->user_data);
+		personality = READ_ONCE(sqe->personality);
+	} else {
+		req->user_data = READ_ONCE(sqe->cmd_user_data);
+		personality = READ_ONCE(sqe->cmd_personality);
+	}
 	/* same numerical values with corresponding REQ_F_*, safe to copy */
 	req->flags = sqe_flags = READ_ONCE(sqe->flags);
-	req->user_data = READ_ONCE(sqe->user_data);
 	req->async_data = NULL;
 	req->file = NULL;
 	req->ctx = ctx;
@@ -6418,7 +6476,6 @@ static int io_init_req(struct io_ring_ctx *ctx, struct io_kiocb *req,
 	    !io_op_defs[req->opcode].buffer_select)
 		return -EOPNOTSUPP;
 
-	personality = READ_ONCE(sqe->personality);
 	if (personality) {
 		req->work.creds = xa_load(&ctx->personalities, personality);
 		if (!req->work.creds)
@@ -9912,11 +9969,14 @@ static int __init io_uring_init(void)
 	BUILD_BUG_SQE_ELEM(0,  __u8,   opcode);
 	BUILD_BUG_SQE_ELEM(1,  __u8,   flags);
 	BUILD_BUG_SQE_ELEM(2,  __u16,  ioprio);
+	BUILD_BUG_SQE_ELEM(2,  __u16,  cmd_personality);
 	BUILD_BUG_SQE_ELEM(4,  __s32,  fd);
 	BUILD_BUG_SQE_ELEM(8,  __u64,  off);
 	BUILD_BUG_SQE_ELEM(8,  __u64,  addr2);
+	BUILD_BUG_SQE_ELEM(8,  __u64,  cmd_user_data);
 	BUILD_BUG_SQE_ELEM(16, __u64,  addr);
 	BUILD_BUG_SQE_ELEM(16, __u64,  splice_off_in);
+	BUILD_BUG_SQE_ELEM(16, __u64,  cmd_pdu_start);
 	BUILD_BUG_SQE_ELEM(24, __u32,  len);
 	BUILD_BUG_SQE_ELEM(28,     __kernel_rwf_t, rw_flags);
 	BUILD_BUG_SQE_ELEM(28, /* compat */   int, rw_flags);
@@ -9937,6 +9997,10 @@ static int __init io_uring_init(void)
 	BUILD_BUG_SQE_ELEM(40, __u16,  buf_index);
 	BUILD_BUG_SQE_ELEM(42, __u16,  personality);
 	BUILD_BUG_SQE_ELEM(44, __s32,  splice_fd_in);
+	BUILD_BUG_ON((sizeof(struct io_uring_cmd) -
+		     offsetof(struct io_uring_cmd, pdu)) !=
+		     (sizeof(struct io_uring_sqe) -
+		      offsetof(struct io_uring_sqe, cmd_pdu_start)));
 
 	BUILD_BUG_ON(ARRAY_SIZE(io_op_defs) != IORING_OP_LAST);
 	BUILD_BUG_ON(__REQ_F_LAST_BIT >= 8 * sizeof(int));

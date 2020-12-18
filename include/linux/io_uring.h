@@ -30,7 +30,17 @@ struct io_uring_task {
 	struct callback_head	task_work;
 };
 
+/*
+ * Note that the first member here must be a struct file, as the
+ * io_uring command layout depends on that.
+ */
+struct io_uring_cmd {
+	struct file *file;
+	__u64 pdu[6];	/* 48 bytes available inline for free use */
+};
+
 #if defined(CONFIG_IO_URING)
+void io_uring_cmd_done(struct io_uring_cmd *cmd, ssize_t ret);
 struct sock *io_uring_get_socket(struct file *file);
 void __io_uring_task_cancel(void);
 void __io_uring_files_cancel(struct files_struct *files);
@@ -52,6 +62,9 @@ static inline void io_uring_free(struct task_struct *tsk)
 		__io_uring_free(tsk);
 }
 #else
+static inline void io_uring_cmd_done(struct io_uring_cmd *cmd, ssize_t ret)
+{
+}
 static inline struct sock *io_uring_get_socket(struct file *file)
 {
 	return NULL;
