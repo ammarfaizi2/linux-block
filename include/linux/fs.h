@@ -1816,6 +1816,11 @@ struct dir_context {
 #define REMAP_FILE_ADVISORY		(REMAP_FILE_CAN_SHORTEN)
 
 struct iov_iter;
+struct io_uring_cmd;
+
+enum io_uring_cmd_flags {
+	IO_URING_F_NONBLOCK	= 1,
+};
 
 struct file_operations {
 	struct module *owner;
@@ -1857,6 +1862,8 @@ struct file_operations {
 				   struct file *file_out, loff_t pos_out,
 				   loff_t len, unsigned int remap_flags);
 	int (*fadvise)(struct file *, loff_t, loff_t, int);
+
+	int (*uring_cmd)(struct io_uring_cmd *, enum io_uring_cmd_flags);
 } __randomize_layout;
 
 struct inode_operations {
