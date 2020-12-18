@@ -104,10 +104,10 @@ void lkdtm_STACKLEAK_ERASING(void);
 /* cfi.c */
 void lkdtm_CFI_FORWARD_PROTO(void);
 
-/* powerpc.c */
-void lkdtm_PPC_SLB_MULTIHIT(void);
-
 /* fortify.c */
 void lkdtm_FORTIFIED_STRSCPY(void);
+
+/* powerpc.c */
+void lkdtm_PPC_SLB_MULTIHIT(void);
 
 #endif
