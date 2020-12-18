@@ -960,6 +960,7 @@ int blk_status_to_errno(blk_status_t status);
 blk_status_t errno_to_blk_status(int errno);
 
 int blk_poll(struct request_queue *q, blk_qc_t cookie, bool spin);
+int blk_uring_cmd(struct block_device *bdev, struct io_uring_cmd *cmd, bool force_nonblock);
 
 static inline struct request_queue *bdev_get_queue(struct block_device *bdev)
 {

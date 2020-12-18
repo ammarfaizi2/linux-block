@@ -34,6 +34,7 @@
 #include <linux/part_stat.h>
 #include <linux/uaccess.h>
 #include <linux/suspend.h>
+#include <linux/io_uring.h>
 #include "internal.h"
 
 struct bdev_inode {
@@ -300,6 +301,14 @@ struct blkdev_dio {
 };
 
 static struct bio_set blkdev_dio_pool;
+
+static int blkdev_uring_cmd(struct io_uring_cmd *cmd,
+			    enum io_uring_cmd_flags flags)
+{
+	struct block_device *bdev = I_BDEV(cmd->file->f_mapping->host);
+
+	return blk_uring_cmd(bdev, cmd, flags);
+}
 
 static int blkdev_iopoll(struct kiocb *kiocb, bool wait)
 {
@@ -1825,6 +1834,7 @@ const struct file_operations def_blk_fops = {
 	.splice_read	= generic_file_splice_read,
 	.splice_write	= iter_file_splice_write,
 	.fallocate	= blkdev_fallocate,
+	.uring_cmd	= blkdev_uring_cmd,
 };
 
 /**

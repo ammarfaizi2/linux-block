@@ -3893,6 +3893,17 @@ int blk_poll(struct request_queue *q, blk_qc_t cookie, bool spin)
 }
 EXPORT_SYMBOL_GPL(blk_poll);
 
+int blk_uring_cmd(struct block_device *bdev, struct io_uring_cmd *cmd,
+		  bool force_nonblock)
+{
+	struct request_queue *q = bdev_get_queue(bdev);
+
+	if (!q->mq_ops || !q->mq_ops->uring_cmd)
+		return -EINVAL;
+
+	return q->mq_ops->uring_cmd(q, cmd, force_nonblock);
+}
+
 unsigned int blk_mq_rq_cpu(struct request *rq)
 {
 	return rq->mq_ctx->cpu;
