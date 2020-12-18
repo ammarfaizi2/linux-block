@@ -82,4 +82,7 @@ static inline bool raw_sk_bound_dev_eq(struct net *net, int bound_dev_if,
 #endif
 }
 
+int raw_uring_cmd(struct sock *sk, struct sock_uring_cmd *scmd,
+		  enum io_uring_cmd_flags flags);
+
 #endif	/* _RAW_H */
