@@ -34,6 +34,18 @@ struct io_uring_task {
 	bool			sqpoll;
 };
 
+struct io_uring_pdu {
+	__u64 data[4];	/* available for free use */
+	__u64 reserved;	/* can't be used by application! */
+	__u64 data2;	/* available or free use */
+};
+
+struct io_uring_cmd {
+	struct file *file;
+	struct io_uring_pdu pdu;
+	void (*done)(struct io_uring_cmd *, ssize_t);
+};
+
 #if defined(CONFIG_IO_URING)
 struct sock *io_uring_get_socket(struct file *file);
 void __io_uring_task_cancel(void);

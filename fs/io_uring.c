@@ -697,6 +697,7 @@ struct io_kiocb {
 		struct io_shutdown	shutdown;
 		struct io_rename	rename;
 		struct io_unlink	unlink;
+		struct io_uring_cmd	uring_cmd;
 		/* use only after cleaning per-op data, see io_clean_op() */
 		struct io_completion	compl;
 	};
@@ -790,6 +791,8 @@ struct io_op_def {
 	unsigned		needs_async_data : 1;
 	/* should block plug */
 	unsigned		plug : 1;
+	/* doesn't support personality */
+	unsigned		no_personality : 1;
 	/* size of async data needed, if any */
 	unsigned short		async_size;
 	unsigned		work_flags;
@@ -984,6 +987,11 @@ static const struct io_op_def io_op_defs[] = {
 	[IORING_OP_UNLINKAT] = {
 		.work_flags		= IO_WQ_WORK_MM | IO_WQ_WORK_FILES |
 						IO_WQ_WORK_FS | IO_WQ_WORK_BLKCG,
+	},
+	[IORING_OP_URING_CMD] = {
+		.needs_file		= 1,
+		.no_personality		= 1,
+		.work_flags		= IO_WQ_WORK_MM | IO_WQ_WORK_BLKCG,
 	},
 };
 
@@ -3742,6 +3750,47 @@ static int io_unlinkat(struct io_kiocb *req, bool force_nonblock)
 	return 0;
 }
 
+static void io_uring_cmd_done(struct io_uring_cmd *cmd, ssize_t ret)
+{
+	struct io_kiocb *req = container_of(cmd, struct io_kiocb, uring_cmd);
+
+	if (ret < 0)
+		req_set_fail_links(req);
+	io_req_complete(req, ret);
+}
+
+static int io_uring_cmd_prep(struct io_kiocb *req,
+			     const struct io_uring_sqe *sqe)
+{
+	struct io_uring_cmd *cmd = &req->uring_cmd;
+
+	if (!req->file->f_op->uring_cmd)
+		return -EOPNOTSUPP;
+
+	memcpy(&cmd->pdu, (void *) &sqe->off, sizeof(cmd->pdu));
+	cmd->done = io_uring_cmd_done;
+	return 0;
+}
+
+static int io_uring_cmd(struct io_kiocb *req, bool force_nonblock)
+{
+	enum io_uring_cmd_flags flags = 0;
+	struct file *file = req->file;
+	int ret;
+
+	if (force_nonblock)
+		flags |= IO_URING_F_NONBLOCK;
+
+	ret = file->f_op->uring_cmd(&req->uring_cmd, flags);
+	/* queued async, consumer will call ->done() when complete */
+	if (ret == -EIOCBQUEUED)
+		return 0;
+	else if (ret < 0)
+		req_set_fail_links(req);
+	io_req_complete(req, ret);
+	return 0;
+}
+
 static int io_shutdown_prep(struct io_kiocb *req,
 			    const struct io_uring_sqe *sqe)
 {
@@ -6019,6 +6068,8 @@ static int io_req_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 		return io_renameat_prep(req, sqe);
 	case IORING_OP_UNLINKAT:
 		return io_unlinkat_prep(req, sqe);
+	case IORING_OP_URING_CMD:
+		return io_uring_cmd_prep(req, sqe);
 	}
 
 	printk_once(KERN_WARNING "io_uring: unhandled opcode %d\n",
@@ -6277,6 +6328,9 @@ static int io_issue_sqe(struct io_kiocb *req, bool force_nonblock,
 		break;
 	case IORING_OP_UNLINKAT:
 		ret = io_unlinkat(req, force_nonblock);
+		break;
+	case IORING_OP_URING_CMD:
+		ret = io_uring_cmd(req, force_nonblock);
 		break;
 	default:
 		ret = -EINVAL;
@@ -6768,6 +6822,9 @@ static int io_init_req(struct io_ring_ctx *ctx, struct io_kiocb *req,
 	id = READ_ONCE(sqe->personality);
 	if (id) {
 		struct io_identity *iod;
+
+		if (io_op_defs[req->opcode].no_personality)
+			return -EINVAL;
 
 		iod = idr_find(&ctx->personality_idr, id);
 		if (unlikely(!iod))
@@ -9997,6 +10054,8 @@ static int __init io_uring_init(void)
 	BUILD_BUG_SQE_ELEM(40, __u16,  buf_index);
 	BUILD_BUG_SQE_ELEM(42, __u16,  personality);
 	BUILD_BUG_SQE_ELEM(44, __s32,  splice_fd_in);
+	BUILD_BUG_ON(offsetof(struct io_uring_sqe, user_data) !=
+		     offsetof(struct io_uring_pdu, reserved));
 
 	BUILD_BUG_ON(ARRAY_SIZE(io_op_defs) != IORING_OP_LAST);
 	BUILD_BUG_ON(__REQ_F_LAST_BIT >= 8 * sizeof(int));
