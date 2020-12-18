@@ -385,6 +385,12 @@ struct blk_mq_ops {
 	 */
 	int (*map_queues)(struct blk_mq_tag_set *set);
 
+	/**
+	 * @uring_cmd: queues requests through io_uring IORING_OP_URING_CMD
+	 */
+	int (*uring_cmd)(struct request_queue *q, struct io_uring_cmd *cmd,
+				enum io_uring_cmd_flags issue_flags);
+
 #ifdef CONFIG_BLK_DEBUG_FS
 	/**
 	 * @show_rq: Used by the debugfs implementation to show driver-specific
