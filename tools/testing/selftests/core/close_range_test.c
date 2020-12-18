@@ -102,7 +102,7 @@ TEST(close_range_unshare)
 	int i, ret, status;
 	pid_t pid;
 	int open_fds[101];
-	struct clone_args args = {
+	struct __clone_args args = {
 		.flags = CLONE_FILES,
 		.exit_signal = SIGCHLD,
 	};
@@ -191,7 +191,7 @@ TEST(close_range_unshare_capped)
 	int i, ret, status;
 	pid_t pid;
 	int open_fds[101];
-	struct clone_args args = {
+	struct __clone_args args = {
 		.flags = CLONE_FILES,
 		.exit_signal = SIGCHLD,
 	};
