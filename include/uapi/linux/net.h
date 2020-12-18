@@ -19,6 +19,7 @@
 #ifndef _UAPI_LINUX_NET_H
 #define _UAPI_LINUX_NET_H
 
+#include <linux/types.h>
 #include <linux/socket.h>
 #include <asm/socket.h>
 
@@ -54,5 +55,21 @@ typedef enum {
 } socket_state;
 
 #define __SO_ACCEPTCON	(1 << 16)	/* performed a listen		*/
+
+enum {
+	SOCKET_URING_OP_SIOCINQ		= 0,
+	SOCKET_URING_OP_SIOCOUTQ,
+
+	/*
+	 * This is reserved for custom sub protocol
+	 */
+	SOCKET_URING_OP_SUBPROTO_CMD	= 0xffff,
+};
+
+struct sock_uring_cmd {
+	__u16	op;
+	__u16	unused[3];
+	__u64	unused2[4];
+};
 
 #endif /* _UAPI_LINUX_NET_H */
