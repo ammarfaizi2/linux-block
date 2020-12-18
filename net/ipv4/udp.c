@@ -1676,6 +1676,19 @@ static int first_packet_length(struct sock *sk)
 	return res;
 }
 
+int udp_uring_cmd(struct sock *sk, struct sock_uring_cmd *scmd,
+		  enum io_uring_cmd_flags flags)
+{
+	switch (scmd->op) {
+	case SIOCOUTQ:
+		return sk_wmem_alloc_get(sk);
+	case SIOCINQ:
+		return max_t(int, 0, first_packet_length(sk));
+	default:
+		return -EOPNOTSUPP;
+	}
+}
+
 /*
  *	IOCTL requests applicable to the UDP protocol
  */
@@ -2831,6 +2844,7 @@ struct proto udp_prot = {
 	.connect		= ip4_datagram_connect,
 	.disconnect		= udp_disconnect,
 	.ioctl			= udp_ioctl,
+	.uring_cmd		= udp_uring_cmd,
 	.init			= udp_init_sock,
 	.destroy		= udp_destroy_sock,
 	.setsockopt		= udp_setsockopt,

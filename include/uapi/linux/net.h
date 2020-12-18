@@ -55,4 +55,16 @@ typedef enum {
 
 #define __SO_ACCEPTCON	(1 << 16)	/* performed a listen		*/
 
+enum {
+	SOCKET_URING_OP_SIOCINQ		= 0,
+	SOCKET_URING_OP_SIOCOUTQ,
+};
+
+struct sock_uring_cmd {
+	__u16	op;
+	__u16	unused[13];
+	__u64	reserved;		/* will be overwritten by core */
+	__u64	unused2;
+};
+
 #endif /* _UAPI_LINUX_NET_H */
