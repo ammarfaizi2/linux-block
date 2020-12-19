@@ -48,6 +48,7 @@ do {										\
 void verbose_torout_sleep(void);
 
 /* Definitions for online/offline exerciser. */
+int torture_num_online_cpus(void);
 typedef void torture_ofl_func(void);
 bool torture_offline(int cpu, long *n_onl_attempts, long *n_onl_successes,
 		     unsigned long *sum_offl, int *min_onl, int *max_onl);
