@@ -44,6 +44,17 @@ struct blk_queue_stats;
 struct blk_stat_callback;
 struct blk_keyslot_manager;
 
+enum {
+	BLOCK_URING_OP_IOCTL = 1,
+};
+
+/* This overlays struct io_uring_cmd pdu (40 bytes) */
+struct block_uring_cmd {
+	__u32	ioctl_cmd;
+	__u32	unused1;
+	__u64	unused2[4];
+};
+
 #define BLKDEV_MIN_RQ	4
 #define BLKDEV_MAX_RQ	128	/* Default maximum */
 
