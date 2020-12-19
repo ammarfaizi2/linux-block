@@ -302,10 +302,29 @@ struct blkdev_dio {
 
 static struct bio_set blkdev_dio_pool;
 
+static int blkdev_uring_ioctl(struct block_device *bdev,
+			      struct block_uring_cmd *bcmd)
+{
+	switch (bcmd->ioctl_cmd) {
+	case BLKBSZGET:
+		return block_size(bdev);
+	default:
+		return -ENOTTY;
+	}
+}
+
 static int blkdev_uring_cmd(struct io_uring_cmd *cmd,
 			    enum io_uring_cmd_flags flags)
 {
 	struct block_device *bdev = I_BDEV(cmd->file->f_mapping->host);
+	struct block_uring_cmd *bcmd = (struct block_uring_cmd *) &cmd->pdu;
+
+	switch (bcmd->op) {
+	case BLOCK_URING_OP_IOCTL:
+		return blkdev_uring_ioctl(bdev, bcmd);
+	default:
+		break;
+	}
 
 	return blk_uring_cmd(bdev, cmd, flags);
 }
