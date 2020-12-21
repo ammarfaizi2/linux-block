@@ -2160,11 +2160,11 @@ static inline bool nocb_cb_wait_cond(struct rcu_data *rdp)
 static void nocb_cb_wait(struct rcu_data *rdp)
 {
 	struct rcu_segcblist *cblist = &rdp->cblist;
-	struct rcu_node *rnp = rdp->mynode;
-	bool needwake_state = false;
-	bool needwake_gp = false;
 	unsigned long cur_gp_seq;
 	unsigned long flags;
+	bool needwake_state = false;
+	bool needwake_gp = false;
+	struct rcu_node *rnp = rdp->mynode;
 
 	local_irq_save(flags);
 	rcu_momentary_dyntick_idle();
@@ -2217,8 +2217,8 @@ static void nocb_cb_wait(struct rcu_data *rdp)
 		swait_event_interruptible_exclusive(rdp->nocb_cb_wq,
 						    nocb_cb_wait_cond(rdp));
 
-		/* ^^^ Ensure CB invocation follows _sleep test. */
-		if (smp_load_acquire(&rdp->nocb_cb_sleep)) {
+		// VVV Ensure CB invocation follows _sleep test.
+		if (smp_load_acquire(&rdp->nocb_cb_sleep)) { // ^^^
 			WARN_ON(signal_pending(current));
 			trace_rcu_nocb_wake(rcu_state.name, rdp->cpu, TPS("WokeEmpty"));
 		}
