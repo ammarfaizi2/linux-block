@@ -560,14 +560,14 @@ elif test "$dryrun" = batches
 then
 	# Extract the tests and their batches from the script.
 	egrep 'Start batch|Starting build\.' $T/script | grep -v ">>" |
-		sed -e 's/:.*$//' -e 's/^echo //' |
+		sed -e 's/:.*$//' -e 's/^echo //' -e 's/-ovf//' |
 		awk '
 		/^----Start/ {
 			batchno = $3;
 			next;
 		}
 		{
-			print batchno, $1
+			print batchno, $1, $2
 		}'
 else
 	# Not a dryrun, so run the script.
