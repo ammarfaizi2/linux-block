@@ -251,10 +251,11 @@ static void clocksource_verify_percpu_wq(struct work_struct *unused)
 		cs->name, smp_processor_id());
 	cpumask_clear(&cpus_ahead);
 	cpumask_clear(&cpus_behind);
-	csnow_begin = cs->read(cs);
+	preempt_disable();
 	for_each_online_cpu(cpu) {
 		if (cpu == smp_processor_id())
 			continue;
+		csnow_begin = cs->read(cs);
 		smp_call_function_single(cpu,clocksource_verify_one_cpu, cs, 1);
 		csnow_end = cs->read(cs);
 		delta = (s64)((csnow_mid - csnow_begin) & cs->mask);
@@ -270,8 +271,8 @@ static void clocksource_verify_percpu_wq(struct work_struct *unused)
 		if (firsttime || cs_nsec < cs_nsec_min)
 			cs_nsec_min = cs_nsec;
 		firsttime = 0;
-		csnow_begin = csnow_end;
 	}
+	preempt_enable();
 	if (!cpumask_empty(&cpus_ahead))
 		pr_warn("        CPUs %*pbl ahead of CPU %d for clocksource %s.\n",
 			cpumask_pr_args(&cpus_ahead),
