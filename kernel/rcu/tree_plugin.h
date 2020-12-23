@@ -2668,6 +2668,19 @@ void rcu_bind_current_to_nocb(void)
 }
 EXPORT_SYMBOL_GPL(rcu_bind_current_to_nocb);
 
+// The ->on_cpu field is available only in CONFIG_SMP=y, so...
+#ifdef CONFIG_SMP
+static char *show_rcu_should_be_on_cpu(struct task_struct *tsp)
+{
+	return tsp && tsp->state == TASK_RUNNING && !tsp->on_cpu ? "!" : "";
+}
+#else // #ifdef CONFIG_SMP
+static char *show_rcu_should_be_on_cpu(struct task_struct *tsp)
+{
+	return "";
+}
+#endif // #else #ifdef CONFIG_SMP
+
 /*
  * Dump out nocb grace-period kthread state for the specified rcu_data
  * structure.
@@ -2693,8 +2706,7 @@ static void show_rcu_nocb_gp_state(struct rcu_data *rdp)
 		rnp->grplo, rnp->grphi, READ_ONCE(rdp->nocb_gp_loops),
 		rdp->nocb_gp_kthread ? task_state_to_char(rdp->nocb_gp_kthread) : '.',
 		rdp->nocb_cb_kthread ? (int)task_cpu(rdp->nocb_gp_kthread) : -1,
-		rdp->nocb_cb_kthread && rdp->nocb_cb_kthread->state == TASK_RUNNING &&
-			!rdp->nocb_cb_kthread->on_cpu ? "!" : "");
+		show_rcu_should_be_on_cpu(rdp->nocb_cb_kthread));
 }
 
 /* Dump out nocb kthread state for the specified rcu_data structure. */
@@ -2734,8 +2746,7 @@ static void show_rcu_nocb_state(struct rcu_data *rdp)
 		rcu_segcblist_n_cbs(&rdp->cblist),
 		rdp->nocb_cb_kthread ? task_state_to_char(rdp->nocb_cb_kthread) : '.',
 		rdp->nocb_cb_kthread ? (int)task_cpu(rdp->nocb_gp_kthread) : -1,
-		rdp->nocb_cb_kthread && rdp->nocb_cb_kthread->state == TASK_RUNNING &&
-			!rdp->nocb_cb_kthread->on_cpu ? "!" : "");
+		show_rcu_should_be_on_cpu(rdp->nocb_cb_kthread));
 
 	/* It is OK for GP kthreads to have GP state. */
 	if (rdp->nocb_gp_rdp == rdp)
