@@ -155,6 +155,8 @@ EXPORT_SYMBOL_GPL(torture_hrtimeout_s);
 
 #ifdef CONFIG_HOTPLUG_CPU
 
+static void torture_shuffle_tasks_offline(int cpu);
+
 /*
  * Variables for online-offline handling.  Only present if CPU hotplug
  * is enabled, otherwise does nothing.
@@ -212,6 +214,7 @@ bool torture_offline(int cpu, long *n_offl_attempts, long *n_offl_successes,
 			 torture_type, cpu);
 	starttime = jiffies;
 	(*n_offl_attempts)++;
+	torture_shuffle_tasks_offline(cpu);
 	ret = remove_cpu(cpu);
 	if (ret) {
 		s = "";
@@ -511,6 +514,20 @@ static void torture_shuffle_task_unregister_all(void)
 	}
 	mutex_unlock(&shuffle_task_mutex);
 }
+
+#ifdef CONFIG_HOTPLUG_CPU
+// Unbind all tasks from a CPU that is to be taken offline.
+static void torture_shuffle_tasks_offline(int cpu)
+{
+	struct shuffle_task *stp;
+
+	mutex_lock(&shuffle_task_mutex);
+	list_for_each_entry(stp, &shuffle_task_list, st_l)
+		if (task_cpu(stp->st_t) == cpu)
+			set_cpus_allowed_ptr(stp->st_t, cpu_online_mask);
+	mutex_unlock(&shuffle_task_mutex);
+}
+#endif // #ifdef CONFIG_HOTPLUG_CPU
 
 /* Shuffle tasks such that we allow shuffle_idle_cpu to become idle.
  * A special case is when shuffle_idle_cpu = -1, in which case we allow
