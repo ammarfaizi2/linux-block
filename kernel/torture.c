@@ -65,6 +65,7 @@ static int fullstop = FULLSTOP_RMMOD;
 static DEFINE_MUTEX(fullstop_mutex);
 
 static atomic_t verbose_sleep_counter;
+static DEFINE_MUTEX(shuffle_task_mutex);
 
 /*
  * Sleep if needed from VERBOSE_TOROUT*().
@@ -153,14 +154,17 @@ int torture_hrtimeout_s(u32 baset_s, u32 fuzzt_ms, struct torture_random_state *
 }
 EXPORT_SYMBOL_GPL(torture_hrtimeout_s);
 
+static struct task_struct *onoff_task;
+
 #ifdef CONFIG_HOTPLUG_CPU
+
+static void torture_shuffle_tasks_offline(int cpu);
 
 /*
  * Variables for online-offline handling.  Only present if CPU hotplug
  * is enabled, otherwise does nothing.
  */
 
-static struct task_struct *onoff_task;
 static long onoff_holdoff;
 static long onoff_interval;
 static torture_ofl_func *onoff_f;
@@ -212,6 +216,8 @@ bool torture_offline(int cpu, long *n_offl_attempts, long *n_offl_successes,
 			 torture_type, cpu);
 	starttime = jiffies;
 	(*n_offl_attempts)++;
+	mutex_lock(&shuffle_task_mutex);
+	torture_shuffle_tasks_offline(cpu);
 	ret = remove_cpu(cpu);
 	if (ret) {
 		s = "";
@@ -245,6 +251,7 @@ bool torture_offline(int cpu, long *n_offl_attempts, long *n_offl_successes,
 		WRITE_ONCE(torture_online_cpus, torture_online_cpus - 1);
 		WARN_ON_ONCE(torture_online_cpus <= 0);
 	}
+	mutex_unlock(&shuffle_task_mutex);
 
 	return true;
 }
@@ -474,7 +481,6 @@ static struct task_struct *shuffler_task;
 static cpumask_var_t shuffle_tmp_mask;
 static int shuffle_idle_cpu;	/* Force all torture tasks off this CPU */
 static struct list_head shuffle_task_list = LIST_HEAD_INIT(shuffle_task_list);
-static DEFINE_MUTEX(shuffle_task_mutex);
 
 /*
  * Register a task to be shuffled.  If there is no memory, just splat
@@ -512,6 +518,19 @@ static void torture_shuffle_task_unregister_all(void)
 	mutex_unlock(&shuffle_task_mutex);
 }
 
+#ifdef CONFIG_HOTPLUG_CPU
+// Unbind all tasks from a CPU that is to be taken offline.
+static void torture_shuffle_tasks_offline(int cpu)
+{
+	struct shuffle_task *stp;
+
+	lockdep_assert_held(&shuffle_task_mutex);
+	list_for_each_entry(stp, &shuffle_task_list, st_l)
+		if (task_cpu(stp->st_t) == cpu)
+			set_cpus_allowed_ptr(stp->st_t, cpu_present_mask);
+}
+#endif // #ifdef CONFIG_HOTPLUG_CPU
+
 /* Shuffle tasks such that we allow shuffle_idle_cpu to become idle.
  * A special case is when shuffle_idle_cpu = -1, in which case we allow
  * the tasks to run on all CPUs.
@@ -521,11 +540,13 @@ static void torture_shuffle_tasks(void)
 	struct shuffle_task *stp;
 
 	cpumask_setall(shuffle_tmp_mask);
-	get_online_cpus();
+	mutex_lock(&shuffle_task_mutex);
+	cpus_read_lock();
 
 	/* No point in shuffling if there is only one online CPU (ex: UP) */
-	if (num_online_cpus() == 1) {
-		put_online_cpus();
+	if (num_online_cpus() == 1 || (onoff_task && num_online_cpus() <= 2)) {
+		cpus_read_unlock();
+		mutex_unlock(&shuffle_task_mutex);
 		return;
 	}
 
@@ -536,12 +557,11 @@ static void torture_shuffle_tasks(void)
 	else
 		cpumask_clear_cpu(shuffle_idle_cpu, shuffle_tmp_mask);
 
-	mutex_lock(&shuffle_task_mutex);
 	list_for_each_entry(stp, &shuffle_task_list, st_l)
 		set_cpus_allowed_ptr(stp->st_t, shuffle_tmp_mask);
-	mutex_unlock(&shuffle_task_mutex);
 
-	put_online_cpus();
+	cpus_read_unlock();
+	mutex_unlock(&shuffle_task_mutex);
 }
 
 /* Shuffle tasks across CPUs, with the intent of allowing each CPU in the
