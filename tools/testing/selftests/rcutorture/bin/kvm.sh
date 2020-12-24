@@ -286,7 +286,7 @@ then
 		exit 1
 	fi
 fi
-for CF1 in $configs_derep
+for CF1 in `echo $configs_derep | tr -s ' ' '\012' | sort -u`
 do
 	if test -f "$CONFIGFRAG/$CF1"
 	then
