@@ -219,7 +219,7 @@ static u64 csnow_mid;
 static cpumask_t cpus_ahead;
 static cpumask_t cpus_behind;
 
-void clocksource_verify_one_cpu(void *csin)
+static void clocksource_verify_one_cpu(void *csin)
 {
 	struct clocksource *cs = (struct clocksource *)csin;
 	s64 delta = 0;
