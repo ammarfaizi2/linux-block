@@ -307,7 +307,7 @@ static void clocksource_watchdog(struct timer_list *unused)
 	u64 csnow, wdnow, wdagain, cslast, wdlast, delta;
 	int64_t wd_nsec, wdagain_nsec, wderr_nsec = 0, cs_nsec;
 	int next_cpu, reset_pending;
-	int nretries = 0;
+	int nretries;
 
 	spin_lock(&watchdog_lock);
 	if (!watchdog_running)
@@ -316,6 +316,7 @@ static void clocksource_watchdog(struct timer_list *unused)
 	reset_pending = atomic_read(&watchdog_reset_pending);
 
 	list_for_each_entry(cs, &watchdog_list, wd_list) {
+		nretries = 0;
 
 		/* Clocksource already marked unstable? */
 		if (cs->flags & CLOCK_SOURCE_UNSTABLE) {
