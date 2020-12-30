@@ -206,7 +206,6 @@ static void clocksource_watchdog_inject_delay(void)
 		injectfail = inject_delay_run;
 	if (!(++injectfail / inject_delay_run % inject_delay_freq)) {
 		printk("%s(): Injecting delay.\n", __func__);
-		injectfail = 0;
 		for (i = 0; i < 2 * WATCHDOG_THRESHOLD / NSEC_PER_MSEC; i++)
 			udelay(1000);
 		printk("%s(): Done injecting delay.\n", __func__);
