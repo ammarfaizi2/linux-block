@@ -710,9 +710,8 @@ static void __insert_vm_struct(struct mm_struct *mm, struct vm_area_struct *vma)
 	struct vm_area_struct *prev;
 	struct rb_node **rb_link, *rb_parent;
 
-	if (find_vma_links(mm, vma->vm_start, vma->vm_end,
-			   &prev, &rb_link, &rb_parent))
-		BUG();
+	BUG_ON(find_vma_links(mm, vma->vm_start, vma->vm_end,
+			   &prev, &rb_link, &rb_parent));
 	__vma_link(mm, vma, prev, rb_link, rb_parent);
 	mm->map_count++;
 }
@@ -3569,9 +3568,8 @@ static void vm_lock_anon_vma(struct mm_struct *mm, struct anon_vma *anon_vma)
 		 * can't change from under us thanks to the
 		 * anon_vma->root->rwsem.
 		 */
-		if (__test_and_set_bit(0, (unsigned long *)
-				       &anon_vma->root->rb_root.rb_root.rb_node))
-			BUG();
+		BUG_ON(__test_and_set_bit(0, (unsigned long *)
+			&anon_vma->root->rb_root.rb_root.rb_node));
 	}
 }
 
@@ -3587,8 +3585,7 @@ static void vm_lock_mapping(struct mm_struct *mm, struct address_space *mapping)
 		 * mm_all_locks_mutex, there may be other cpus
 		 * changing other bitflags in parallel to us.
 		 */
-		if (test_and_set_bit(AS_MM_ALL_LOCKS, &mapping->flags))
-			BUG();
+		BUG_ON(test_and_set_bit(AS_MM_ALL_LOCKS, &mapping->flags));
 		down_write_nest_lock(&mapping->i_mmap_rwsem, &mm->mmap_lock);
 	}
 }
@@ -3685,9 +3682,8 @@ static void vm_unlock_anon_vma(struct anon_vma *anon_vma)
 		 * can't change from under us until we release the
 		 * anon_vma->root->rwsem.
 		 */
-		if (!__test_and_clear_bit(0, (unsigned long *)
-					  &anon_vma->root->rb_root.rb_root.rb_node))
-			BUG();
+		BUG_ON(!__test_and_clear_bit(0, (unsigned long *)
+				&anon_vma->root->rb_root.rb_root.rb_node));
 		anon_vma_unlock_write(anon_vma);
 	}
 }
@@ -3700,9 +3696,7 @@ static void vm_unlock_mapping(struct address_space *mapping)
 		 * because we hold the mm_all_locks_mutex.
 		 */
 		i_mmap_unlock_write(mapping);
-		if (!test_and_clear_bit(AS_MM_ALL_LOCKS,
-					&mapping->flags))
-			BUG();
+		BUG_ON(!test_and_clear_bit(AS_MM_ALL_LOCKS, &mapping->flags));
 	}
 }
 
