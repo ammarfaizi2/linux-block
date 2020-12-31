@@ -587,24 +587,12 @@ static int ext4_errno_to_code(int errno)
 	return EXT4_ERR_UNKNOWN;
 }
 
-<<<<<<< HEAD
-static void __save_error_info(struct super_block *sb, int error,
-			      __u32 ino, __u64 block,
-			      const char *func, unsigned int line)
-{
-	struct ext4_sb_info *sbi = EXT4_SB(sb);
-
-	EXT4_SB(sb)->s_mount_state |= EXT4_ERROR_FS;
-	if (bdev_read_only(sb->s_bdev))
-		return;
-=======
 static void save_error_info(struct super_block *sb, int error,
 			    __u32 ino, __u64 block,
 			    const char *func, unsigned int line)
 {
 	struct ext4_sb_info *sbi = EXT4_SB(sb);
 
->>>>>>> linux-next/akpm-base
 	/* We default to EFSCORRUPTED error... */
 	if (error == 0)
 		error = EFSCORRUPTED;
@@ -628,18 +616,6 @@ static void save_error_info(struct super_block *sb, int error,
 	spin_unlock(&sbi->s_error_lock);
 }
 
-<<<<<<< HEAD
-static void save_error_info(struct super_block *sb, int error,
-			    __u32 ino, __u64 block,
-			    const char *func, unsigned int line)
-{
-	__save_error_info(sb, error, ino, block, func, line);
-	if (!bdev_read_only(sb->s_bdev))
-		ext4_commit_super(sb, 1);
-}
-
-=======
->>>>>>> linux-next/akpm-base
 /* Deal with the reporting of failure conditions on a filesystem such as
  * inconsistencies detected or read IO failures.
  *
@@ -660,21 +636,6 @@ static void save_error_info(struct super_block *sb, int error,
  * used to deal with unrecoverable failures such as journal IO errors or ENOMEM
  * at a critical moment in log management.
  */
-<<<<<<< HEAD
-static void ext4_handle_error(struct super_block *sb, bool force_ro)
-{
-	journal_t *journal = EXT4_SB(sb)->s_journal;
-
-	if (test_opt(sb, WARN_ON_ERROR))
-		WARN_ON_ONCE(1);
-
-	if (sb_rdonly(sb) || (!force_ro && test_opt(sb, ERRORS_CONT)))
-		return;
-
-	ext4_set_mount_flag(sb, EXT4_MF_FS_ABORTED);
-	if (journal)
-		jbd2_journal_abort(journal, -EIO);
-=======
 static void ext4_handle_error(struct super_block *sb, bool force_ro, int error,
 			      __u32 ino, __u64 block,
 			      const char *func, unsigned int line)
@@ -709,7 +670,6 @@ static void ext4_handle_error(struct super_block *sb, bool force_ro, int error,
 	if (sb_rdonly(sb) || continue_fs)
 		return;
 
->>>>>>> linux-next/akpm-base
 	/*
 	 * We force ERRORS_RO behavior when system is rebooting. Otherwise we
 	 * could panic during 'reboot -f' as the underlying device got already
@@ -732,10 +692,6 @@ static void flush_stashed_error_work(struct work_struct *work)
 {
 	struct ext4_sb_info *sbi = container_of(work, struct ext4_sb_info,
 						s_error_work);
-<<<<<<< HEAD
-
-	ext4_commit_super(sbi->s_sb, 1);
-=======
 	journal_t *journal = sbi->s_journal;
 	handle_t *handle;
 
@@ -769,7 +725,6 @@ write_directly:
 	 * out and hope for the best.
 	 */
 	ext4_commit_super(sbi->s_sb);
->>>>>>> linux-next/akpm-base
 }
 
 #define ext4_error_ratelimit(sb)					\
@@ -796,12 +751,7 @@ void __ext4_error(struct super_block *sb, const char *function,
 		       sb->s_id, function, line, current->comm, &vaf);
 		va_end(args);
 	}
-<<<<<<< HEAD
-	save_error_info(sb, error, 0, block, function, line);
-	ext4_handle_error(sb, force_ro);
-=======
 	ext4_handle_error(sb, force_ro, error, 0, block, function, line);
->>>>>>> linux-next/akpm-base
 }
 
 void __ext4_error_inode(struct inode *inode, const char *function,
@@ -831,14 +781,8 @@ void __ext4_error_inode(struct inode *inode, const char *function,
 			       current->comm, &vaf);
 		va_end(args);
 	}
-<<<<<<< HEAD
-	save_error_info(inode->i_sb, error, inode->i_ino, block,
-			function, line);
-	ext4_handle_error(inode->i_sb, false);
-=======
 	ext4_handle_error(inode->i_sb, false, error, inode->i_ino, block,
 			  function, line);
->>>>>>> linux-next/akpm-base
 }
 
 void __ext4_error_file(struct file *file, const char *function,
@@ -875,14 +819,8 @@ void __ext4_error_file(struct file *file, const char *function,
 			       current->comm, path, &vaf);
 		va_end(args);
 	}
-<<<<<<< HEAD
-	save_error_info(inode->i_sb, EFSCORRUPTED, inode->i_ino, block,
-			function, line);
-	ext4_handle_error(inode->i_sb, false);
-=======
 	ext4_handle_error(inode->i_sb, false, EFSCORRUPTED, inode->i_ino, block,
 			  function, line);
->>>>>>> linux-next/akpm-base
 }
 
 const char *ext4_decode_error(struct super_block *sb, int errno,
@@ -949,12 +887,7 @@ void __ext4_std_error(struct super_block *sb, const char *function,
 		       sb->s_id, function, line, errstr);
 	}
 
-<<<<<<< HEAD
-	save_error_info(sb, -errno, 0, 0, function, line);
-	ext4_handle_error(sb, false);
-=======
 	ext4_handle_error(sb, false, -errno, 0, 0, function, line);
->>>>>>> linux-next/akpm-base
 }
 
 void __ext4_msg(struct super_block *sb,
@@ -1048,15 +981,6 @@ __acquires(bitlock)
 	if (test_opt(sb, ERRORS_CONT)) {
 		if (test_opt(sb, WARN_ON_ERROR))
 			WARN_ON_ONCE(1);
-<<<<<<< HEAD
-		__save_error_info(sb, EFSCORRUPTED, ino, block, function, line);
-		schedule_work(&EXT4_SB(sb)->s_error_work);
-		return;
-	}
-	ext4_unlock_group(sb, grp);
-	save_error_info(sb, EFSCORRUPTED, ino, block, function, line);
-	ext4_handle_error(sb, false);
-=======
 		EXT4_SB(sb)->s_mount_state |= EXT4_ERROR_FS;
 		if (!bdev_read_only(sb->s_bdev)) {
 			save_error_info(sb, EFSCORRUPTED, ino, block, function,
@@ -1067,7 +991,6 @@ __acquires(bitlock)
 	}
 	ext4_unlock_group(sb, grp);
 	ext4_handle_error(sb, false, EFSCORRUPTED, ino, block, function, line);
->>>>>>> linux-next/akpm-base
 	/*
 	 * We only get here in the ERRORS_RO case; relocking the group
 	 * may be dangerous, but nothing bad will happen since the
@@ -4262,7 +4185,6 @@ static int ext4_fill_super(struct super_block *sb, void *data, int silent)
 
 	if (le32_to_cpu(es->s_log_block_size) >
 	    (EXT4_MAX_BLOCK_LOG_SIZE - EXT4_MIN_BLOCK_LOG_SIZE)) {
-<<<<<<< HEAD
 		ext4_msg(sb, KERN_ERR,
 			 "Invalid log block size: %u",
 			 le32_to_cpu(es->s_log_block_size));
@@ -4271,16 +4193,6 @@ static int ext4_fill_super(struct super_block *sb, void *data, int silent)
 	if (le32_to_cpu(es->s_log_cluster_size) >
 	    (EXT4_MAX_CLUSTER_LOG_SIZE - EXT4_MIN_BLOCK_LOG_SIZE)) {
 		ext4_msg(sb, KERN_ERR,
-=======
-		ext4_msg(sb, KERN_ERR,
-			 "Invalid log block size: %u",
-			 le32_to_cpu(es->s_log_block_size));
-		goto failed_mount;
-	}
-	if (le32_to_cpu(es->s_log_cluster_size) >
-	    (EXT4_MAX_CLUSTER_LOG_SIZE - EXT4_MIN_BLOCK_LOG_SIZE)) {
-		ext4_msg(sb, KERN_ERR,
->>>>>>> linux-next/akpm-base
 			 "Invalid log cluster size: %u",
 			 le32_to_cpu(es->s_log_cluster_size));
 		goto failed_mount;
@@ -5560,17 +5472,8 @@ err_out:
 static void ext4_update_super(struct super_block *sb)
 {
 	struct ext4_sb_info *sbi = EXT4_SB(sb);
-<<<<<<< HEAD
-	struct ext4_super_block *es = EXT4_SB(sb)->s_es;
-	struct buffer_head *sbh = EXT4_SB(sb)->s_sbh;
-	int error = 0;
-
-	if (!sbh || block_device_ejected(sb))
-		return error;
-=======
 	struct ext4_super_block *es = sbi->s_es;
 	struct buffer_head *sbh = sbi->s_sbh;
->>>>>>> linux-next/akpm-base
 
 	lock_buffer(sbh);
 	/*
@@ -5596,11 +5499,7 @@ static void ext4_update_super(struct super_block *sb)
 	if (percpu_counter_initialized(&sbi->s_freeinodes_counter))
 		es->s_free_inodes_count =
 			cpu_to_le32(percpu_counter_sum_positive(
-<<<<<<< HEAD
-				&EXT4_SB(sb)->s_freeinodes_counter));
-=======
 				&sbi->s_freeinodes_counter));
->>>>>>> linux-next/akpm-base
 	/* Copy error information to the on-disk superblock */
 	spin_lock(&sbi->s_error_lock);
 	if (sbi->s_add_error_count > 0) {
@@ -5641,10 +5540,7 @@ static void ext4_update_super(struct super_block *sb)
 	}
 	spin_unlock(&sbi->s_error_lock);
 
-<<<<<<< HEAD
 	BUFFER_TRACE(sbh, "marking dirty");
-=======
->>>>>>> linux-next/akpm-base
 	ext4_superblock_csum_set(sb);
 	unlock_buffer(sbh);
 }
