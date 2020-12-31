@@ -2873,7 +2873,7 @@ __rmqueue(struct zone *zone, unsigned int order, int migratetype,
 	    zone_page_state(zone, NR_FREE_PAGES) / 2) {
 		page = __rmqueue_cma_fallback(zone, order);
 		if (page)
-			return page;
+			goto out;
 	}
 #endif
 retry:
@@ -2886,8 +2886,9 @@ retry:
 								alloc_flags))
 			goto retry;
 	}
-
-	trace_mm_page_alloc_zone_locked(page, order, migratetype);
+out:
+	if (page)
+		trace_mm_page_alloc_zone_locked(page, order, migratetype);
 	return page;
 }
 
