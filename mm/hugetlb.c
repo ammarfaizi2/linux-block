@@ -5269,11 +5269,16 @@ void adjust_range_if_pmd_sharing_possible(struct vm_area_struct *vma,
 	a_end = ALIGN(*end, PUD_SIZE);
 
 	/*
-	 * Intersect the range with the vma range, since pmd sharing won't be
-	 * across vma after all
+	 * If the PUD aligned address across vma range, then it means the
+	 * vm_start/vm_end is not PUD aligned. In that case, we must don't
+	 * adjust range because pmd sharing is not possbile at the start and/or
+	 * end part of vma.
 	 */
-	*start = max(vma->vm_start, a_start);
-	*end = min(vma->vm_end, a_end);
+	if (a_start >= vma->vm_start)
+		*start = a_start;
+
+	if (a_end <= vma->vm_end)
+		*end = a_end;
 }
 
 /*
