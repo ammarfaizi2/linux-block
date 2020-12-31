@@ -22,7 +22,11 @@ out-of-bounds accesses for global variables is only supported since Clang 11.
 Tag-based KASAN is only supported in Clang.
 
 Currently generic KASAN is supported for the x86_64, arm, arm64, xtensa, s390
+<<<<<<< HEAD
 and riscv architectures, and tag-based KASAN modes are supported only for arm64.
+=======
+and riscv architectures, and tag-based KASAN is supported only for arm64.
+>>>>>>> linux-next/akpm-base
 
 Usage
 -----

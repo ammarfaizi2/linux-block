@@ -214,6 +214,15 @@ static long map_benchmark_ioctl(struct file *file, unsigned int cmd,
 			return -EINVAL;
 		}
 
+<<<<<<< HEAD
+=======
+		if (map->bparam.dma_bits < 20 ||
+		    map->bparam.dma_bits > 64) {
+			pr_err("invalid dma_bits\n");
+			return -EINVAL;
+		}
+
+>>>>>>> linux-next/akpm-base
 		if (map->bparam.node != NUMA_NO_NODE &&
 		    !node_possible(map->bparam.node)) {
 			pr_err("invalid numa node\n");
