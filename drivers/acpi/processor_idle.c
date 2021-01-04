@@ -604,8 +604,14 @@ static int acpi_idle_enter_bm(struct cpuidle_driver *drv,
 	}
 
 	rcu_idle_enter();
-
-	acpi_idle_do_entry(cx);
+	/*
+	 * Last need_resched() check must come after rcu_idle_enter()
+	 * which may wake up RCU internal tasks. mwait_idle_with_hints()
+	 * and acpi_safe_halt() have their own checks but s2idle
+	 * implementation doesn't.
+	 */
+	if (!need_resched())
+		acpi_idle_do_entry(cx);
 
 	rcu_idle_exit();
 
