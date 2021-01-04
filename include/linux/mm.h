@@ -2655,6 +2655,24 @@ extern struct vm_area_struct * find_vma_prev(struct mm_struct * mm, unsigned lon
 extern struct vm_area_struct *find_vma_intersection(struct mm_struct *mm,
 		     unsigned long start_addr, unsigned long end_addr);
 
+static inline struct vm_area_struct *vma_next(struct mm_struct *mm,
+			const struct vm_area_struct *vma)
+{
+	MA_STATE(mas, &mm->mm_mt, 0, 0);
+
+	mas_set(&mas, vma->vm_end);
+	return mas_next(&mas, ULONG_MAX);
+}
+
+static inline struct vm_area_struct *vma_prev(struct mm_struct *mm,
+			const struct vm_area_struct *vma)
+{
+	MA_STATE(mas, &mm->mm_mt, 0, 0);
+
+	mas_set(&mas, vma->vm_start);
+	return mas_prev(&mas, 0);
+}
+
 static inline unsigned long vm_start_gap(struct vm_area_struct *vma)
 {
 	unsigned long vm_start = vma->vm_start;
@@ -2696,6 +2714,21 @@ static inline struct vm_area_struct *find_exact_vma(struct mm_struct *mm,
 	return vma;
 }
 
+static inline struct vm_area_struct *vma_mas_next(struct ma_state *mas)
+{
+	struct ma_state tmp;
+
+	memcpy(&tmp, mas, sizeof(tmp));
+	return mas_next(&tmp, ULONG_MAX);
+}
+
+static inline struct vm_area_struct *vma_mas_prev(struct ma_state *mas)
+{
+	struct ma_state tmp;
+
+	memcpy(&tmp, mas, sizeof(tmp));
+	return mas_prev(&tmp, 0);
+}
 static inline bool range_in_vma(struct vm_area_struct *vma,
 				unsigned long start, unsigned long end)
 {
