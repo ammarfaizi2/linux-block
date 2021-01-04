@@ -523,21 +523,9 @@ static void vma_mas_link(struct mm_struct *mm, struct vm_area_struct *vma,
 
 static void vma_link(struct mm_struct *mm, struct vm_area_struct *vma)
 {
-	struct address_space *mapping = NULL;
+	MA_STATE(mas, &mm->mm_mt, vma->vm_start, vma->vm_end - 1);
 
-	if (vma->vm_file) {
-		mapping = vma->vm_file->f_mapping;
-		i_mmap_lock_write(mapping);
-	}
-
-	vma_mt_store(mm, vma);
-	__vma_link_file(vma);
-
-	if (mapping)
-		i_mmap_unlock_write(mapping);
-
-	mm->map_count++;
-	validate_mm(mm);
+	vma_mas_link(mm, vma, &mas);
 }
 
 /*
@@ -547,8 +535,12 @@ static void vma_link(struct mm_struct *mm, struct vm_area_struct *vma)
 static inline void __insert_vm_struct(struct mm_struct *mm,
 				      struct vm_area_struct *vma)
 {
-	BUG_ON(find_vma_intersection(mm, vma->vm_start, vma->vm_end));
-	vma_mt_store(mm, vma);
+	MA_STATE(mas, &mm->mm_mt, vma->vm_start, vma->vm_end - 1);
+
+	BUG_ON(mas_find(&mas, vma->vm_end - 1));
+
+	mas_set_range(&mas, vma->vm_start, vma->vm_end - 1);
+	vma_mas_store(vma, &mas);
 	mm->map_count++;
 }
 
