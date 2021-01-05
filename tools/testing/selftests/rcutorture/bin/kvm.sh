@@ -300,7 +300,7 @@ do
 		fi
 		cpu_count=`configfrag_boot_cpus "$TORTURE_BOOTARGS" "$CONFIGFRAG/$CF1" "$cpu_count"`
 		cpu_count=`configfrag_boot_maxcpus "$TORTURE_BOOTARGS" "$CONFIGFRAG/$CF1" "$cpu_count"`
-		echo 'scenariocpu['"$CF1"'] = '"$cpu_count"';' >> $T/cfgcpu.awk
+		echo 'scenariocpu["'"$CF1"'"] = '"$cpu_count"';' >> $T/cfgcpu.awk
 	else
 		echo "The --configs file $CF1 does not exist, terminating."
 		exit 1
