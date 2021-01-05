@@ -248,7 +248,7 @@ int cpuidle_enter_state(struct cpuidle_device *dev, struct cpuidle_driver *drv,
 	 * Last need_resched() check must come after rcu_idle_enter()
 	 * which may wake up RCU internal tasks.
 	 */
-	if (!need_resched())
+	if ((target_state->flags & CPUIDLE_FLAG_COUPLED) || !need_resched())
 		entered_state = target_state->enter(dev, drv, index);
 	else
 		entered_state = -EBUSY;
