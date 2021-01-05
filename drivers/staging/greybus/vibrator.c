@@ -13,13 +13,18 @@
 #include <linux/kdev_t.h>
 #include <linux/idr.h>
 #include <linux/pm_runtime.h>
+#include <linux/input.h>
 #include <linux/greybus.h>
 
 struct gb_vibrator_device {
 	struct gb_connection	*connection;
+	struct input_dev	*input;
 	struct device		*dev;
 	int			minor;		/* vibrator minor number */
 	struct delayed_work     delayed_work;
+	bool			running;
+	bool			on;
+	struct work_struct	play_work;
 };
 
 /* Greybus Vibrator operation types */
@@ -36,6 +41,7 @@ static int turn_off(struct gb_vibrator_device *vib)
 
 	gb_pm_runtime_put_autosuspend(bundle);
 
+	vib->on = false;
 	return ret;
 }
 
@@ -59,9 +65,46 @@ static int turn_on(struct gb_vibrator_device *vib, u16 timeout_ms)
 		return ret;
 	}
 
+	vib->on = true;
 	schedule_delayed_work(&vib->delayed_work, msecs_to_jiffies(timeout_ms));
 
 	return 0;
+}
+
+static void gb_vibrator_play_work(struct work_struct *work)
+{
+	struct gb_vibrator_device *vib =
+		container_of(work, struct gb_vibrator_device, play_work);
+
+	if (vib->running)
+		turn_off(vib);
+	else
+		turn_on(vib, 100);
+}
+
+static int gb_vibrator_play_effect(struct input_dev *input, void *data,
+				   struct ff_effect *effect)
+{
+	struct gb_vibrator_device *vib = input_get_drvdata(input);
+	int level;
+
+	level = effect->u.rumble.strong_magnitude;
+	if (!level)
+		level = effect->u.rumble.weak_magnitude;
+
+	vib->running = level;
+	schedule_work(&vib->play_work);
+	return 0;
+}
+
+static void gb_vibrator_close(struct input_dev *input)
+{
+	struct gb_vibrator_device *vib = input_get_drvdata(input);
+
+	cancel_delayed_work_sync(&vib->delayed_work);
+	cancel_work_sync(&vib->play_work);
+	turn_off(vib);
+	vib->running = false;
 }
 
 static void gb_vibrator_worker(struct work_struct *work)
@@ -169,10 +212,26 @@ static int gb_vibrator_probe(struct gb_bundle *bundle,
 
 	INIT_DELAYED_WORK(&vib->delayed_work, gb_vibrator_worker);
 
+	INIT_WORK(&vib->play_work, gb_vibrator_play_work);
+	vib->input->name = "greybus-vibrator";
+	vib->input->close = gb_vibrator_close;
+	vib->input->dev.parent = &bundle->dev;
+	vib->input->id.bustype = BUS_HOST;
+
+	input_set_drvdata(vib->input, vib);
+	input_set_capability(vib->input, EV_FF, FF_RUMBLE);
+
+	retval = input_ff_create_memless(vib->input, NULL,
+					 gb_vibrator_play_effect);
+	if (retval)
+		goto err_device_remove;
+
 	gb_pm_runtime_put_autosuspend(bundle);
 
 	return 0;
 
+err_device_remove:
+	device_unregister(vib->dev);
 err_ida_remove:
 	ida_simple_remove(&minors, vib->minor);
 err_connection_disable:
