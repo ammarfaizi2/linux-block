@@ -901,7 +901,7 @@ static int mce_timed_out(u64 *t, const char *msg)
 		goto out;
 	if ((s64)*t < SPINUNIT) {
 		if (mca_cfg.tolerant <= 1) {
-			if (!cpumask_andnot(&mce_missing_cpus, cpu_online_mask, &mce_present_cpus))
+			if (cpumask_andnot(&mce_missing_cpus, cpu_online_mask, &mce_present_cpus))
 				pr_info("%s: MCE holdout CPUs (may include false positives): %*pbl\n",
 					__func__, cpumask_pr_args(&mce_missing_cpus));
 			mce_panic(msg, NULL, NULL);
