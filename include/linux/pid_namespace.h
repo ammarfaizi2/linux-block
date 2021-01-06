@@ -23,6 +23,7 @@ struct pid_namespace {
 	struct task_struct *child_reaper;
 	struct kmem_cache *pid_cachep;
 	unsigned int level;
+	unsigned int pid_max;
 	struct pid_namespace *parent;
 #ifdef CONFIG_BSD_PROCESS_ACCT
 	struct fs_pin *bacct;
@@ -31,6 +32,11 @@ struct pid_namespace {
 	struct ucounts *ucounts;
 	int reboot;	/* group exit code if this pidns was rebooted */
 	struct ns_common ns;
+	struct work_struct	work;
+#ifdef CONFIG_SYSCTL
+	struct ctl_table_set	set;
+	struct ctl_table_header *sysctls;
+#endif
 } __randomize_layout;
 
 extern struct pid_namespace init_pid_ns;
@@ -85,5 +91,7 @@ static inline int reboot_pid_ns(struct pid_namespace *pid_ns, int cmd)
 extern struct pid_namespace *task_active_pid_ns(struct task_struct *tsk);
 void pidhash_init(void);
 void pid_idr_init(void);
+int register_pidns_sysctls(struct pid_namespace *pidns);
+void unregister_pidns_sysctls(struct pid_namespace *pidns);
 
 #endif /* _LINUX_PID_NS_H */
