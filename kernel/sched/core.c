@@ -7582,7 +7582,25 @@ int sched_cpu_dying(unsigned int cpu)
 	sched_tick_stop(cpu);
 
 	rq_lock_irqsave(rq, &rf);
-	BUG_ON(rq->nr_running != 1 || rq_has_pinned_tasks(rq));
+
+	if (rq->nr_running != 1 || rq_has_pinned_tasks(rq)) {
+		struct task_struct *g, *p;
+
+		pr_crit("CPU%d nr_running=%d\n", cpu, rq->nr_running);
+		rcu_read_lock();
+		for_each_process_thread(g, p) {
+			if (task_cpu(p) != cpu || p == current)
+				continue;
+
+			if (!task_on_rq_queued(p))
+				continue;
+
+			pr_crit("\tp=%s\n", p->comm);
+		}
+		rcu_read_unlock();
+		BUG();
+	}
+
 	rq_unlock_irqrestore(rq, &rf);
 
 	calc_load_migrate(rq);
