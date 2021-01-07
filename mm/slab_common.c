@@ -537,6 +537,7 @@ bool slab_is_available(void)
 	return slab_state >= UP;
 }
 
+#ifdef CONFIG_PRINTK
 /**
  * kmem_valid_obj - does the pointer reference a valid slab object?
  * @object: pointer to query.
@@ -612,6 +613,7 @@ void kmem_dump_obj(void *object)
 	}
 }
 EXPORT_SYMBOL_GPL(kmem_dump_obj);
+#endif
 
 #ifndef CONFIG_SLOB
 /* Create a cache during boot when no slab services are available yet */
