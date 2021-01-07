@@ -880,8 +880,7 @@ static atomic_t mce_callin;
 /*
  * Track which CPUs entered and not in order to print holdouts.
  */
-static cpumask_t mce_present_cpus;
-static cpumask_t mce_missing_cpus;
+static cpumask_t mce_missing_cpus = CPU_MASK_ALL;
 
 /*
  * Check if a timeout waiting for other CPUs happened.
@@ -901,9 +900,9 @@ static int mce_timed_out(u64 *t, const char *msg)
 		goto out;
 	if ((s64)*t < SPINUNIT) {
 		if (mca_cfg.tolerant <= 1) {
-			if (cpumask_andnot(&mce_missing_cpus, cpu_online_mask, &mce_present_cpus))
-				pr_info("%s: MCE holdout CPUs (may include false positives): %*pbl\n",
-					__func__, cpumask_pr_args(&mce_missing_cpus));
+			if (cpumask_and(&mce_missing_cpus, cpu_online_mask, &mce_missing_cpus))
+				pr_info("MCE missing CPUs (may include false positives): %*pbl\n",
+					cpumask_pr_args(&mce_missing_cpus));
 			mce_panic(msg, NULL, NULL);
 		}
 		cpu_missing = 1;
@@ -1016,7 +1015,7 @@ static int mce_start(int *no_way_out)
 	 * is updated before mce_callin.
 	 */
 	order = atomic_inc_return(&mce_callin);
-	cpumask_set_cpu(smp_processor_id(), &mce_present_cpus);
+	cpumask_clear_cpu(smp_processor_id(), &mce_missing_cpus);
 
 	/*
 	 * Wait for everyone.
@@ -1125,7 +1124,7 @@ static int mce_end(int order)
 reset:
 	atomic_set(&global_nwo, 0);
 	atomic_set(&mce_callin, 0);
-	cpumask_clear(&mce_present_cpus);
+	cpumask_setall(&mce_missing_cpus);
 	barrier();
 
 	/*
@@ -2724,7 +2723,7 @@ static void mce_reset(void)
 	atomic_set(&mce_executing, 0);
 	atomic_set(&mce_callin, 0);
 	atomic_set(&global_nwo, 0);
-	cpumask_clear(&mce_present_cpus);
+	cpumask_setall(&mce_missing_cpus);
 }
 
 static int fake_panic_get(void *data, u64 *val)
