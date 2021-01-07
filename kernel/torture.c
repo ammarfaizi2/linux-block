@@ -65,6 +65,7 @@ static int fullstop = FULLSTOP_RMMOD;
 static DEFINE_MUTEX(fullstop_mutex);
 
 static atomic_t verbose_sleep_counter;
+static DEFINE_MUTEX(shuffle_task_mutex);
 
 /*
  * Sleep if needed from VERBOSE_TOROUT*().
@@ -176,7 +177,6 @@ static long n_online_successes;
 static unsigned long sum_online;
 static int min_online = -1;
 static int max_online;
-static DEFINE_MUTEX(shuffle_task_mutex);
 
 static int torture_online_cpus = NR_CPUS;
 
