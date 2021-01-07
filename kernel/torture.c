@@ -176,6 +176,7 @@ static long n_online_successes;
 static unsigned long sum_online;
 static int min_online = -1;
 static int max_online;
+static DEFINE_MUTEX(shuffle_task_mutex);
 
 static int torture_online_cpus = NR_CPUS;
 
@@ -214,6 +215,7 @@ bool torture_offline(int cpu, long *n_offl_attempts, long *n_offl_successes,
 			 torture_type, cpu);
 	starttime = jiffies;
 	(*n_offl_attempts)++;
+	mutex_lock(&shuffle_task_mutex);
 	torture_shuffle_tasks_offline(cpu);
 	ret = remove_cpu(cpu);
 	if (ret) {
@@ -248,6 +250,7 @@ bool torture_offline(int cpu, long *n_offl_attempts, long *n_offl_successes,
 		WRITE_ONCE(torture_online_cpus, torture_online_cpus - 1);
 		WARN_ON_ONCE(torture_online_cpus <= 0);
 	}
+	mutex_unlock(&shuffle_task_mutex);
 
 	return true;
 }
@@ -477,7 +480,6 @@ static struct task_struct *shuffler_task;
 static cpumask_var_t shuffle_tmp_mask;
 static int shuffle_idle_cpu;	/* Force all torture tasks off this CPU */
 static struct list_head shuffle_task_list = LIST_HEAD_INIT(shuffle_task_list);
-static DEFINE_MUTEX(shuffle_task_mutex);
 
 /*
  * Register a task to be shuffled.  If there is no memory, just splat
@@ -521,11 +523,10 @@ static void torture_shuffle_tasks_offline(int cpu)
 {
 	struct shuffle_task *stp;
 
-	mutex_lock(&shuffle_task_mutex);
+	lockdep_assert_held(&shuffle_task_mutex);
 	list_for_each_entry(stp, &shuffle_task_list, st_l)
 		if (task_cpu(stp->st_t) == cpu)
 			set_cpus_allowed_ptr(stp->st_t, cpu_online_mask);
-	mutex_unlock(&shuffle_task_mutex);
 }
 #endif // #ifdef CONFIG_HOTPLUG_CPU
 
@@ -538,11 +539,11 @@ static void torture_shuffle_tasks(void)
 	struct shuffle_task *stp;
 
 	cpumask_setall(shuffle_tmp_mask);
-	get_online_cpus();
+	mutex_lock(&shuffle_task_mutex);
 
 	/* No point in shuffling if there is only one online CPU (ex: UP) */
 	if (num_online_cpus() == 1) {
-		put_online_cpus();
+		mutex_unlock(&shuffle_task_mutex);
 		return;
 	}
 
@@ -553,12 +554,10 @@ static void torture_shuffle_tasks(void)
 	else
 		cpumask_clear_cpu(shuffle_idle_cpu, shuffle_tmp_mask);
 
-	mutex_lock(&shuffle_task_mutex);
 	list_for_each_entry(stp, &shuffle_task_list, st_l)
 		set_cpus_allowed_ptr(stp->st_t, shuffle_tmp_mask);
-	mutex_unlock(&shuffle_task_mutex);
 
-	put_online_cpus();
+	mutex_unlock(&shuffle_task_mutex);
 }
 
 /* Shuffle tasks across CPUs, with the intent of allowing each CPU in the
