@@ -526,7 +526,7 @@ static void torture_shuffle_tasks_offline(int cpu)
 	lockdep_assert_held(&shuffle_task_mutex);
 	list_for_each_entry(stp, &shuffle_task_list, st_l)
 		if (task_cpu(stp->st_t) == cpu)
-			set_cpus_allowed_ptr(stp->st_t, cpu_online_mask);
+			set_cpus_allowed_ptr(stp->st_t, cpu_present_mask);
 }
 #endif // #ifdef CONFIG_HOTPLUG_CPU
 
@@ -540,9 +540,11 @@ static void torture_shuffle_tasks(void)
 
 	cpumask_setall(shuffle_tmp_mask);
 	mutex_lock(&shuffle_task_mutex);
+	cpus_read_lock();
 
 	/* No point in shuffling if there is only one online CPU (ex: UP) */
 	if (num_online_cpus() == 1) {
+		cpus_read_unlock();
 		mutex_unlock(&shuffle_task_mutex);
 		return;
 	}
@@ -557,6 +559,7 @@ static void torture_shuffle_tasks(void)
 	list_for_each_entry(stp, &shuffle_task_list, st_l)
 		set_cpus_allowed_ptr(stp->st_t, shuffle_tmp_mask);
 
+	cpus_read_unlock();
 	mutex_unlock(&shuffle_task_mutex);
 }
 
