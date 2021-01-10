@@ -543,7 +543,7 @@ static void torture_shuffle_tasks(void)
 	cpus_read_lock();
 
 	/* No point in shuffling if there is only one online CPU (ex: UP) */
-	if (num_online_cpus() == 1) {
+	if (num_online_cpus() == 1 || (onoff_task && num_online_cpus() <= 2)) {
 		cpus_read_unlock();
 		mutex_unlock(&shuffle_task_mutex);
 		return;
