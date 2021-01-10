@@ -154,6 +154,8 @@ int torture_hrtimeout_s(u32 baset_s, u32 fuzzt_ms, struct torture_random_state *
 }
 EXPORT_SYMBOL_GPL(torture_hrtimeout_s);
 
+static struct task_struct *onoff_task;
+
 #ifdef CONFIG_HOTPLUG_CPU
 
 static void torture_shuffle_tasks_offline(int cpu);
@@ -163,7 +165,6 @@ static void torture_shuffle_tasks_offline(int cpu);
  * is enabled, otherwise does nothing.
  */
 
-static struct task_struct *onoff_task;
 static long onoff_holdoff;
 static long onoff_interval;
 static torture_ofl_func *onoff_f;
