@@ -259,6 +259,12 @@ void putname(struct filename *name)
 		__putname(name);
 }
 
+struct user_namespace *file_user_ns(struct file *file)
+{
+	return mnt_user_ns(file->f_path.mnt);
+}
+EXPORT_SYMBOL(file_user_ns);
+
 /**
  * check_acl - perform ACL permission checking
  * @mnt_userns:	user namespace of the mount the inode was found from
