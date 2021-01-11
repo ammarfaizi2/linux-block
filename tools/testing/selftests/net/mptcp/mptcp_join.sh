@@ -212,6 +212,7 @@ do_transfer()
 	rm_nr_ns1="$7"
 	rm_nr_ns2="$8"
 	speed="$9"
+	bkup="${10}"
 
 	port=$((10000+$TEST_COUNT))
 	TEST_COUNT=$((TEST_COUNT+1))
@@ -264,26 +265,48 @@ do_transfer()
 	cpid=$!
 
 	if [ $rm_nr_ns1 -gt 0 ]; then
-		counter=1
-		sleep 1
-
-		while [ $counter -le $rm_nr_ns1 ]
-		do
-			ip netns exec ${listener_ns} ./pm_nl_ctl del $counter
+		if [ $rm_nr_ns1 -lt 8 ]; then
+			counter=1
 			sleep 1
-			let counter+=1
-		done
+
+			while [ $counter -le $rm_nr_ns1 ]
+			do
+				ip netns exec ${listener_ns} ./pm_nl_ctl del $counter
+				sleep 1
+				let counter+=1
+			done
+		else
+			sleep 1
+			ip netns exec ${listener_ns} ./pm_nl_ctl flush
+		fi
 	fi
 
 	if [ $rm_nr_ns2 -gt 0 ]; then
-		counter=1
-		sleep 1
-
-		while [ $counter -le $rm_nr_ns2 ]
-		do
-			ip netns exec ${connector_ns} ./pm_nl_ctl del $counter
+		if [ $rm_nr_ns2 -lt 8 ]; then
+			counter=1
 			sleep 1
-			let counter+=1
+
+			while [ $counter -le $rm_nr_ns2 ]
+			do
+				ip netns exec ${connector_ns} ./pm_nl_ctl del $counter
+				sleep 1
+				let counter+=1
+			done
+		else
+			sleep 1
+			ip netns exec ${connector_ns} ./pm_nl_ctl flush
+		fi
+	fi
+
+	if [ ! -z $bkup ]; then
+		sleep 1
+		for netns in "$ns1" "$ns2"; do
+			dump=(`ip netns exec $netns ./pm_nl_ctl dump`)
+			if [ ${#dump[@]} -gt 0 ]; then
+				addr=${dump[${#dump[@]} - 1]}
+				backup="ip netns exec $netns ./pm_nl_ctl set $addr flags $bkup"
+				$backup
+			fi
 		done
 	fi
 
@@ -348,6 +371,7 @@ run_tests()
 	rm_nr_ns1="${5:-0}"
 	rm_nr_ns2="${6:-0}"
 	speed="${7:-fast}"
+	bkup="${8:-""}"
 	lret=0
 	oldin=""
 
@@ -362,7 +386,7 @@ run_tests()
 	fi
 
 	do_transfer ${listener_ns} ${connector_ns} MPTCP MPTCP ${connect_addr} \
-		${test_linkfail} ${rm_nr_ns1} ${rm_nr_ns2} ${speed}
+		${test_linkfail} ${rm_nr_ns1} ${rm_nr_ns2} ${speed} ${bkup}
 	lret=$?
 
 	if [ "$test_linkfail" -eq 1 ];then
@@ -485,6 +509,43 @@ chk_rm_nr()
 	[ -z "$count" ] && count=0
 	if [ "$count" != "$rm_subflow_nr" ]; then
 		echo "[fail] got $count RM_SUBFLOW[s] expected $rm_subflow_nr"
+		ret=1
+		dump_stats=1
+	else
+		echo "[ ok ]"
+	fi
+
+	if [ "${dump_stats}" = 1 ]; then
+		echo Server ns stats
+		ip netns exec $ns1 nstat -as | grep MPTcp
+		echo Client ns stats
+		ip netns exec $ns2 nstat -as | grep MPTcp
+	fi
+}
+
+chk_prio_nr()
+{
+	local mp_prio_nr_tx=$1
+	local mp_prio_nr_rx=$2
+	local count
+	local dump_stats
+
+	printf "%-39s %s" " " "ptx"
+	count=`ip netns exec $ns1 nstat -as | grep MPTcpExtMPPrioTx | awk '{print $2}'`
+	[ -z "$count" ] && count=0
+	if [ "$count" != "$mp_prio_nr_tx" ]; then
+		echo "[fail] got $count MP_PRIO[s] TX expected $mp_prio_nr_tx"
+		ret=1
+		dump_stats=1
+	else
+		echo -n "[ ok ]"
+	fi
+
+	echo -n " - prx   "
+	count=`ip netns exec $ns1 nstat -as | grep MPTcpExtMPPrioRx | awk '{print $2}'`
+	[ -z "$count" ] && count=0
+	if [ "$count" != "$mp_prio_nr_rx" ]; then
+		echo "[fail] got $count MP_PRIO[s] RX expected $mp_prio_nr_rx"
 		ret=1
 		dump_stats=1
 	else
@@ -663,6 +724,18 @@ chk_join_nr "remove subflows and signal" 3 3 3
 chk_add_nr 1 1
 chk_rm_nr 2 2
 
+# subflows and signal, flush
+reset
+ip netns exec $ns1 ./pm_nl_ctl limits 0 3
+ip netns exec $ns1 ./pm_nl_ctl add 10.0.2.1 flags signal
+ip netns exec $ns2 ./pm_nl_ctl limits 1 3
+ip netns exec $ns2 ./pm_nl_ctl add 10.0.3.2 flags subflow
+ip netns exec $ns2 ./pm_nl_ctl add 10.0.4.2 flags subflow
+run_tests $ns1 $ns2 10.0.1.1 0 8 8 slow
+chk_join_nr "flush subflows and signal" 3 3 3
+chk_add_nr 1 1
+chk_rm_nr 2 2
+
 # subflow IPv6
 reset
 ip netns exec $ns1 ./pm_nl_ctl limits 0 1
@@ -716,6 +789,25 @@ run_tests $ns1 $ns2 dead:beef:1::1 0 1 1 slow
 chk_join_nr "remove subflow and signal IPv6" 2 2 2
 chk_add_nr 1 1
 chk_rm_nr 1 1
+
+# single subflow, backup
+reset
+ip netns exec $ns1 ./pm_nl_ctl limits 0 1
+ip netns exec $ns2 ./pm_nl_ctl limits 0 1
+ip netns exec $ns2 ./pm_nl_ctl add 10.0.3.2 flags subflow,backup
+run_tests $ns1 $ns2 10.0.1.1 0 0 0 slow nobackup
+chk_join_nr "single subflow, backup" 1 1 1
+chk_prio_nr 0 1
+
+# single address, backup
+reset
+ip netns exec $ns1 ./pm_nl_ctl limits 0 1
+ip netns exec $ns1 ./pm_nl_ctl add 10.0.2.1 flags signal
+ip netns exec $ns2 ./pm_nl_ctl limits 1 1
+run_tests $ns1 $ns2 10.0.1.1 0 0 0 slow backup
+chk_join_nr "single address, backup" 1 1 1
+chk_add_nr 1 1
+chk_prio_nr 1 0
 
 # single subflow, syncookies
 reset_with_cookies
