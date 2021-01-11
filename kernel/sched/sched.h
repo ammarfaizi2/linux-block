@@ -2700,10 +2700,10 @@ static inline bool is_per_cpu_kthread(struct task_struct *p)
 	if (!(p->flags & PF_KTHREAD))
 		return false;
 
-	if (p->nr_cpus_allowed != 1)
+	if (!(p->flags & PF_NO_SETAFFINITY))
 		return false;
 
-	return true;
+	return kthread_is_per_cpu(p);
 }
 #endif
 
