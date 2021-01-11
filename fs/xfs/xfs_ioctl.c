@@ -693,7 +693,8 @@ xfs_ioc_space(
 
 	iattr.ia_valid = ATTR_SIZE;
 	iattr.ia_size = bf->l_start;
-	error = xfs_vn_setattr_size(file_dentry(filp), &iattr);
+	error = xfs_vn_setattr_size(file_user_ns(filp), file_dentry(filp),
+				    &iattr);
 	if (error)
 		goto out_unlock;
 
@@ -1275,8 +1276,9 @@ xfs_ioctl_setattr_prepare_dax(
  */
 static struct xfs_trans *
 xfs_ioctl_setattr_get_trans(
-	struct xfs_inode	*ip)
+	struct file		*file)
 {
+	struct xfs_inode	*ip = XFS_I(file_inode(file));
 	struct xfs_mount	*mp = ip->i_mount;
 	struct xfs_trans	*tp;
 	int			error = -EROFS;
@@ -1300,7 +1302,7 @@ xfs_ioctl_setattr_get_trans(
 	 * The user ID of the calling process must be equal to the file owner
 	 * ID, except in cases where the CAP_FSETID capability is applicable.
 	 */
-	if (!inode_owner_or_capable(&init_user_ns, VFS_I(ip))) {
+	if (!inode_owner_or_capable(file_user_ns(file), VFS_I(ip))) {
 		error = -EPERM;
 		goto out_cancel;
 	}
@@ -1428,9 +1430,11 @@ xfs_ioctl_setattr_check_projid(
 
 STATIC int
 xfs_ioctl_setattr(
-	xfs_inode_t		*ip,
+	struct file		*file,
 	struct fsxattr		*fa)
 {
+	struct user_namespace	*mnt_userns = file_user_ns(file);
+	struct xfs_inode	*ip = XFS_I(file_inode(file));
 	struct fsxattr		old_fa;
 	struct xfs_mount	*mp = ip->i_mount;
 	struct xfs_trans	*tp;
@@ -1462,7 +1466,7 @@ xfs_ioctl_setattr(
 
 	xfs_ioctl_setattr_prepare_dax(ip, fa);
 
-	tp = xfs_ioctl_setattr_get_trans(ip);
+	tp = xfs_ioctl_setattr_get_trans(file);
 	if (IS_ERR(tp)) {
 		code = PTR_ERR(tp);
 		goto error_free_dquots;
@@ -1502,7 +1506,7 @@ xfs_ioctl_setattr(
 	 */
 
 	if ((VFS_I(ip)->i_mode & (S_ISUID|S_ISGID)) &&
-	    !capable_wrt_inode_uidgid(&init_user_ns, VFS_I(ip), CAP_FSETID))
+	    !capable_wrt_inode_uidgid(mnt_userns, VFS_I(ip), CAP_FSETID))
 		VFS_I(ip)->i_mode &= ~(S_ISUID|S_ISGID);
 
 	/* Change the ownerships and register project quota modifications */
@@ -1549,7 +1553,6 @@ error_free_dquots:
 
 STATIC int
 xfs_ioc_fssetxattr(
-	xfs_inode_t		*ip,
 	struct file		*filp,
 	void			__user *arg)
 {
@@ -1562,7 +1565,7 @@ xfs_ioc_fssetxattr(
 	error = mnt_want_write_file(filp);
 	if (error)
 		return error;
-	error = xfs_ioctl_setattr(ip, &fa);
+	error = xfs_ioctl_setattr(filp, &fa);
 	mnt_drop_write_file(filp);
 	return error;
 }
@@ -1608,7 +1611,7 @@ xfs_ioc_setxflags(
 
 	xfs_ioctl_setattr_prepare_dax(ip, &fa);
 
-	tp = xfs_ioctl_setattr_get_trans(ip);
+	tp = xfs_ioctl_setattr_get_trans(filp);
 	if (IS_ERR(tp)) {
 		error = PTR_ERR(tp);
 		goto out_drop_write;
@@ -2144,7 +2147,7 @@ xfs_file_ioctl(
 	case XFS_IOC_FSGETXATTRA:
 		return xfs_ioc_fsgetxattr(ip, 1, arg);
 	case XFS_IOC_FSSETXATTR:
-		return xfs_ioc_fssetxattr(ip, filp, arg);
+		return xfs_ioc_fssetxattr(filp, arg);
 	case XFS_IOC_GETXFLAGS:
 		return xfs_ioc_getxflags(ip, arg);
 	case XFS_IOC_SETXFLAGS:
