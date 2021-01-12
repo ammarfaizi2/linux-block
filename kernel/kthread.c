@@ -493,9 +493,32 @@ struct task_struct *kthread_create_on_cpu(int (*threadfn)(void *data),
 		return p;
 	kthread_bind(p, cpu);
 	/* CPU hotplug need to bind once again when unparking the thread. */
-	set_bit(KTHREAD_IS_PER_CPU, &to_kthread(p)->flags);
 	to_kthread(p)->cpu = cpu;
 	return p;
+}
+
+void kthread_set_per_cpu(struct task_struct *k, bool set)
+{
+	struct kthread *kthread = to_kthread(k);
+	if (!kthread)
+		return;
+
+	if (set) {
+		WARN_ON_ONCE(!(k->flags & PF_NO_SETAFFINITY));
+		WARN_ON_ONCE(k->nr_cpus_allowed != 1);
+		set_bit(KTHREAD_IS_PER_CPU, &kthread->flags);
+	} else {
+		clear_bit(KTHREAD_IS_PER_CPU, &kthread->flags);
+	}
+}
+
+bool kthread_is_per_cpu(struct task_struct *k)
+{
+	struct kthread *kthread = to_kthread(k);
+	if (!kthread)
+		return false;
+
+	return test_bit(KTHREAD_IS_PER_CPU, &kthread->flags);
 }
 
 /**
