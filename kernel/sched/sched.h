@@ -2695,15 +2695,23 @@ static inline void membarrier_switch_mm(struct rq *rq,
 #endif
 
 #ifdef CONFIG_SMP
+/*
+ * Match geniune per-cpu kthreads; threads that are bound to a single CPU for
+ * correctness, not kernel threads that happen to have a single CPU affinity.
+ *
+ * Such threads will have PF_NO_SETAFFINITY to ensure userspace cannot
+ * accidentally place them elsewhere -- this also filters out 'early' kthreads
+ * that have PF_KTHREAD set but do not have a struct kthread.
+ */
 static inline bool is_per_cpu_kthread(struct task_struct *p)
 {
 	if (!(p->flags & PF_KTHREAD))
 		return false;
 
-	if (p->nr_cpus_allowed != 1)
+	if (!(p->flags & PF_NO_SETAFFINITY))
 		return false;
 
-	return true;
+	return kthread_is_per_cpu(p);
 }
 #endif
 
