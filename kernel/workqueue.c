@@ -1861,6 +1861,8 @@ static void worker_attach_to_pool(struct worker *worker,
 	 */
 	if (pool->flags & POOL_DISASSOCIATED)
 		worker->flags |= WORKER_UNBOUND;
+	else
+		kthread_set_per_cpu(worker->task, pool->cpu);
 
 	list_add_tail(&worker->node, &pool->workers);
 	worker->pool = pool;
@@ -1883,6 +1885,7 @@ static void worker_detach_from_pool(struct worker *worker)
 
 	mutex_lock(&wq_pool_attach_mutex);
 
+	kthread_set_per_cpu(worker->task, -1);
 	list_del(&worker->node);
 	worker->pool = NULL;
 
@@ -2368,6 +2371,7 @@ static int worker_thread(void *__worker)
 	/* tell the scheduler that this is a workqueue worker */
 	set_pf_worker(true);
 woke_up:
+	kthread_parkme();
 	raw_spin_lock_irq(&pool->lock);
 
 	/* am I supposed to die? */
@@ -2425,7 +2429,7 @@ recheck:
 			move_linked_works(work, &worker->scheduled, NULL);
 			process_scheduled_works(worker);
 		}
-	} while (keep_working(pool));
+	} while (keep_working(pool) && !kthread_should_park());
 
 	worker_set_flags(worker, WORKER_PREP);
 sleep:
@@ -2437,9 +2441,12 @@ sleep:
 	 * event.
 	 */
 	worker_enter_idle(worker);
-	__set_current_state(TASK_IDLE);
+	set_current_state(TASK_IDLE);
 	raw_spin_unlock_irq(&pool->lock);
-	schedule();
+
+	if (!kthread_should_park())
+		schedule();
+
 	goto woke_up;
 }
 
@@ -4919,8 +4926,10 @@ static void unbind_workers(int cpu)
 
 		raw_spin_unlock_irq(&pool->lock);
 
-		for_each_pool_worker(worker, pool)
+		for_each_pool_worker(worker, pool) {
+			kthread_set_per_cpu(worker->task, -1);
 			WARN_ON_ONCE(set_cpus_allowed_ptr(worker->task, cpu_possible_mask) < 0);
+		}
 
 		mutex_unlock(&wq_pool_attach_mutex);
 
@@ -4972,9 +4981,11 @@ static void rebind_workers(struct worker_pool *pool)
 	 * of all workers first and then clear UNBOUND.  As we're called
 	 * from CPU_ONLINE, the following shouldn't fail.
 	 */
-	for_each_pool_worker(worker, pool)
-		WARN_ON_ONCE(set_cpus_allowed_ptr(worker->task,
-						  pool->attrs->cpumask) < 0);
+	for_each_pool_worker(worker, pool) {
+		WARN_ON_ONCE(kthread_park(worker->task) < 0);
+		kthread_set_per_cpu(worker->task, pool->cpu);
+		kthread_unpark(worker->task);
+	}
 
 	raw_spin_lock_irq(&pool->lock);
 
