@@ -321,12 +321,14 @@ static int fw_decompress_zstd(struct device *dev, struct fw_priv *fw_priv,
 		out_size = fw_priv->allocated_size;
 		out_buf = fw_priv->data;
 	} else {
-		out_size = zstd_find_frame_compressed_size(in_buffer, in_size);
-		if (out_size == ZSTD_CONTENTSIZE_UNKNOWN ||
-		    out_size == ZSTD_CONTENTSIZE_ERROR) {
-			dev_dbg(dev, "%s: invalid decompression size\n", __func__);
+		zstd_frame_header params;
+
+		if (zstd_get_frame_header(&params, in_buffer, in_size) ||
+		    params.frameContentSize == ZSTD_CONTENTSIZE_UNKNOWN) {
+			dev_dbg(dev, "%s: invalid zstd header\n", __func__);
 			return -EINVAL;
 		}
+		out_size = params.frameContentSize;
 		out_buf = vzalloc(out_size);
 		if (!out_buf)
 			return -ENOMEM;

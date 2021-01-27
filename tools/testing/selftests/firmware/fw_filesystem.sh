@@ -492,6 +492,7 @@ test "$HAS_FW_LOADER_COMPRESS" != "yes" && exit 0
 
 # test with both files present
 xz -9 -C crc32 -k $FW
+xz -9 -C crc32 -k $FW_INTO_BUF
 config_set_name $NAME
 echo
 echo "Testing with both plain and xz files present..."
@@ -499,6 +500,7 @@ do_tests both
 
 # test with only xz file present
 mv "$FW" "${FW}-orig"
+mv "$FW_INTO_BUF" "${FW_INTO_BUF}-orig"
 echo
 echo "Testing with only xz file present..."
 do_tests xzonly
