@@ -2775,7 +2775,14 @@ static int fscaps(void)
 		if (!switch_userns(attr.userns_fd, 0, 0, false))
 			die("failure: switch_userns");
 
-		if (!expected_dummy_vfs_caps_uid(file1_fd, 1000))
+		/*
+		 * On kernels before 5.12 this would succeed and return the
+		 * unconverted caps. Then - for whatever reason - this behavior
+		 * got changed and since 5.12 EOVERFLOW is returned when the
+		 * rootid stored alongside the vfs caps does not map to uid 0 in
+		 * the caller's user namespace.
+		 */
+		if (!expected_dummy_vfs_caps_uid(file1_fd, 1000) && errno != EOVERFLOW)
 			die("failure: expected_dummy_vfs_caps_uid");
 
 		exit(EXIT_SUCCESS);
@@ -3097,7 +3104,7 @@ static int fscaps_idmapped_mounts_in_userns(void)
 		if (!expected_dummy_vfs_caps_uid(file1_fd2, 1000))
 			die("failure: expected_dummy_vfs_caps_uid");
 
-		if (!expected_dummy_vfs_caps_uid(file1_fd, 1000))
+		if (!expected_dummy_vfs_caps_uid(file1_fd, 1000) && errno != EOVERFLOW)
 			die("failure: expected_dummy_vfs_caps_uid");
 
 		exit(EXIT_SUCCESS);
@@ -3203,7 +3210,7 @@ static int fscaps_idmapped_mounts_in_userns_separate_userns(void)
 		if (!expected_dummy_vfs_caps_uid(file1_fd2, 0))
 			die("failure: expected_dummy_vfs_caps_uid");
 
-		if (!expected_dummy_vfs_caps_uid(file1_fd, 20000))
+		if (!expected_dummy_vfs_caps_uid(file1_fd, 20000) && errno != EOVERFLOW)
 			die("failure: expected_dummy_vfs_caps_uid");
 
 		exit(EXIT_SUCCESS);
@@ -3245,7 +3252,7 @@ static int fscaps_idmapped_mounts_in_userns_separate_userns(void)
 		if (!expected_dummy_vfs_caps_uid(file1_fd2, 1000))
 			die("failure: expected_dummy_vfs_caps_uid");
 
-		if (!expected_dummy_vfs_caps_uid(file1_fd, 21000))
+		if (!expected_dummy_vfs_caps_uid(file1_fd, 21000) && errno != EOVERFLOW)
 			die("failure: expected_dummy_vfs_caps_uid");
 
 		exit(EXIT_SUCCESS);
