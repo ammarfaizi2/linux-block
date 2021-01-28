@@ -3062,37 +3062,6 @@ static int fscaps_idmapped_mounts_in_userns(void)
 		if (!switch_userns(attr.userns_fd, 0, 0, false))
 			die("failure: switch_userns");
 
-		if (set_dummy_vfs_caps(file1_fd2, 0, 0))
-			die("failure: set_dummy_vfs_caps");
-
-		if (!expected_dummy_vfs_caps_uid(file1_fd2, 0))
-			die("failure: set_dummy_vfs_caps");
-
-		if (!expected_dummy_vfs_caps_uid(file1_fd, 0))
-			die("failure: set_dummy_vfs_caps");
-
-		exit(EXIT_SUCCESS);
-	}
-
-	if (wait_for_pid(pid))
-		goto out;
-
-	if (!expected_dummy_vfs_caps_uid(file1_fd, 0)) {
-		log_stderr("failure: expected_dummy_vfs_caps_uid");
-		goto out;
-	}
-
-	pid = fork();
-	if (pid < 0) {
-		log_stderr("failure: fork");
-		goto out;
-	}
-	if (pid == 0) {
-		if (!switch_userns(attr.userns_fd, 0, 0, false))
-			die("failure: switch_userns");
-
-		if (fremovexattr(file1_fd2, "security.capability"))
-			die("failure: fremovexattr");
 		if (expected_dummy_vfs_caps_uid(file1_fd2, -1))
 			die("failure: expected_dummy_vfs_caps_uid");
 		if (errno != ENODATA)
