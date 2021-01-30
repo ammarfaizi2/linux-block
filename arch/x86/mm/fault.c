@@ -725,17 +725,10 @@ oops:
 }
 
 static noinline void
-no_context(struct pt_regs *regs, unsigned long error_code,
-	   unsigned long address, int signal, int si_code)
+kernelmode_fixup_or_oops(struct pt_regs *regs, unsigned long error_code,
+			 unsigned long address, int signal, int si_code)
 {
-	if (user_mode(regs)) {
-		/*
-		 * This is an implicit supervisor-mode access from user
-		 * mode.  Bypass all the kernel-mode recovery code and just
-		 * OOPS.
-		 */
-		goto oops;
-	}
+	WARN_ON_ONCE(user_mode(regs));
 
 	/* Are we prepared to handle this kernel fault? */
 	if (fixup_exception(regs, X86_TRAP_PF, error_code, address)) {
@@ -775,7 +768,6 @@ no_context(struct pt_regs *regs, unsigned long error_code,
 	if (is_prefetch(regs, error_code, address))
 		return;
 
-oops:
 	page_fault_oops(regs, error_code, address);
 }
 
@@ -822,7 +814,7 @@ __bad_area_nosemaphore(struct pt_regs *regs, unsigned long error_code,
 	struct task_struct *tsk = current;
 
 	if (!user_mode(regs)) {
-		no_context(regs, error_code, address, pkey, si_code);
+		kernelmode_fixup_or_oops(regs, error_code, address, pkey, si_code);
 		return;
 	}
 
@@ -954,7 +946,7 @@ do_sigbus(struct pt_regs *regs, unsigned long error_code, unsigned long address,
 {
 	/* Kernel mode? Handle exceptions or die: */
 	if (!user_mode(regs)) {
-		no_context(regs, error_code, address, SIGBUS, BUS_ADRERR);
+		kernelmode_fixup_or_oops(regs, error_code, address, SIGBUS, BUS_ADRERR);
 		return;
 	}
 
@@ -1416,8 +1408,8 @@ good_area:
 		 * has unlocked the mm for us if we get here.
 		 */
 		if (!user_mode(regs))
-			no_context(regs, error_code, address, SIGBUS,
-				   BUS_ADRERR);
+			kernelmode_fixup_or_oops(regs, error_code, address,
+						 SIGBUS, BUS_ADRERR);
 		return;
 	}
 
@@ -1437,15 +1429,15 @@ good_area:
 		return;
 
 	if (fatal_signal_pending(current) && !user_mode(regs)) {
-		no_context(regs, error_code, address, 0, 0);
+		kernelmode_fixup_or_oops(regs, error_code, address, 0, 0);
 		return;
 	}
 
 	if (fault & VM_FAULT_OOM) {
 		/* Kernel mode? Handle exceptions or die: */
 		if (!user_mode(regs)) {
-			no_context(regs, error_code, address,
-				   SIGSEGV, SEGV_MAPERR);
+			kernelmode_fixup_or_oops(regs, error_code, address,
+						 SIGSEGV, SEGV_MAPERR);
 			return;
 		}
 
