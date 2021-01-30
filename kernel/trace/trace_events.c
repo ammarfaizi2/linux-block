@@ -2295,7 +2295,7 @@ event_subsystem_dir(struct trace_array *tr, const char *name,
 	} else
 		__get_system(system);
 
-	dir->entry = tracefs_create_dir(name, parent);
+	dir->entry = eventfs_create_dir(name, parent);
 	if (!dir->entry) {
 		pr_warn("Failed to create system directory %s\n", name);
 		__put_system(system);
@@ -2311,7 +2311,7 @@ event_subsystem_dir(struct trace_array *tr, const char *name,
 	/* the ftrace system is special, do not create enable or filter files */
 	if (strcmp(name, "ftrace") != 0) {
 
-		entry = tracefs_create_file("filter", 0644, dir->entry, dir,
+		entry = eventfs_create_top_file("filter", 0644, dir->entry, dir,
 					    &ftrace_subsystem_filter_fops);
 		if (!entry) {
 			kfree(system->filter);
@@ -2382,6 +2382,8 @@ event_create_dir(struct dentry *parent, struct trace_event_file *file)
 	const char *name;
 	int ret;
 
+	name = trace_event_name(call);
+
 	/*
 	 * If the trace point header did not define TRACE_SYSTEM
 	 * then the system would be called "TRACE_SYSTEM".
@@ -2394,19 +2396,19 @@ event_create_dir(struct dentry *parent, struct trace_event_file *file)
 		d_events = parent;
 
 	name = trace_event_name(call);
-	file->dir = tracefs_create_dir(name, d_events);
+	file->dir = eventfs_create_dir(name, d_events);
 	if (!file->dir) {
 		pr_warn("Could not create tracefs '%s' directory\n", name);
 		return -1;
 	}
 
 	if (call->class->reg && !(call->flags & TRACE_EVENT_FL_IGNORE_ENABLE))
-		trace_create_file("enable", 0644, file->dir, file,
-				  &ftrace_enable_fops);
+		eventfs_create_top_file("enable", 0644, file->dir, file,
+				&ftrace_enable_fops);
 
 #ifdef CONFIG_PERF_EVENTS
 	if (call->event.type && call->class->reg)
-		trace_create_file("id", 0444, file->dir,
+		eventfs_create_top_file("id", 0444, file->dir,
 				  (void *)(long)call->event.type,
 				  &ftrace_event_id_fops);
 #endif
@@ -2422,27 +2424,27 @@ event_create_dir(struct dentry *parent, struct trace_event_file *file)
 	 * triggers or filters.
 	 */
 	if (!(call->flags & TRACE_EVENT_FL_IGNORE_ENABLE)) {
-		trace_create_file("filter", 0644, file->dir, file,
+		eventfs_create_top_file("filter", 0644, file->dir, file,
 				  &ftrace_event_filter_fops);
 
-		trace_create_file("trigger", 0644, file->dir, file,
+		eventfs_create_top_file("trigger", 0644, file->dir, file,
 				  &event_trigger_fops);
 	}
 
 #ifdef CONFIG_HIST_TRIGGERS
-	trace_create_file("hist", 0444, file->dir, file,
+	eventfs_create_top_file("hist", 0444, file->dir, file,
 			  &event_hist_fops);
 #endif
 #ifdef CONFIG_HIST_TRIGGERS_DEBUG
-	trace_create_file("hist_debug", 0444, file->dir, file,
+	eventfs_create_top_file("hist_debug", 0444, file->dir, file,
 			  &event_hist_debug_fops);
 #endif
-	trace_create_file("format", 0444, file->dir, call,
+	eventfs_create_top_file("format", 0444, file->dir, call,
 			  &ftrace_event_format_fops);
 
 #ifdef CONFIG_TRACE_EVENT_INJECT
 	if (call->event.type && call->class->reg)
-		trace_create_file("inject", 0200, file->dir, file,
+		eventfs_create_top_file("inject", 0200, file->dir, file,
 				  &event_inject_fops);
 #endif
 
@@ -3433,13 +3435,13 @@ create_event_toplevel_files(struct dentry *parent, struct trace_array *tr)
 		return -ENOMEM;
 	}
 
-	d_events = tracefs_create_dir("events", parent);
+	d_events = eventfs_create_dir("events", parent);
 	if (!d_events) {
 		pr_warn("Could not create tracefs 'events' directory\n");
 		return -ENOMEM;
 	}
 
-	entry = trace_create_file("enable", 0644, d_events,
+	entry = eventfs_create_top_file("enable", 0644, d_events,
 				  tr, &ftrace_tr_enable_fops);
 	if (!entry) {
 		pr_warn("Could not create tracefs 'enable' entry\n");
@@ -3459,13 +3461,13 @@ create_event_toplevel_files(struct dentry *parent, struct trace_array *tr)
 		pr_warn("Could not create tracefs 'set_event_notrace_pid' entry\n");
 
 	/* ring buffer internal formats */
-	entry = trace_create_file("header_page", 0444, d_events,
+	entry = eventfs_create_top_file("header_page", 0444, d_events,
 				  ring_buffer_print_page_header,
 				  &ftrace_show_header_fops);
 	if (!entry)
 		pr_warn("Could not create tracefs 'header_page' entry\n");
 
-	entry = trace_create_file("header_event", 0444, d_events,
+	entry = eventfs_create_top_file("header_event", 0444, d_events,
 				  ring_buffer_print_entry_header,
 				  &ftrace_show_header_fops);
 	if (!entry)

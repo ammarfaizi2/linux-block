@@ -20,6 +20,9 @@
 struct file_operations;
 
 #ifdef CONFIG_TRACING
+struct dentry *eventfs_start_creating(const char *name, struct dentry *parent);
+struct dentry *eventfs_failed_creating(struct dentry *dentry);
+struct dentry *eventfs_end_creating(struct dentry *dentry);
 
 struct dentry *tracefs_create_file(const char *name, umode_t mode,
 				   struct dentry *parent, void *data,
@@ -34,6 +37,11 @@ struct dentry *tracefs_create_instance_dir(const char *name, struct dentry *pare
 					   int (*rmdir)(const char *name));
 
 bool tracefs_initialized(void);
+
+struct dentry *eventfs_create_dir(const char *name, struct dentry *parent);
+int eventfs_create_top_file(const char *name, umode_t mode,
+			   struct dentry *parent, void *data,
+			   const struct file_operations *fops);
 
 #endif /* CONFIG_TRACING */
 
