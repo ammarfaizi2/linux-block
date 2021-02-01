@@ -5156,12 +5156,14 @@ static void mt_destroy_walk(struct rcu_head *head)
 	void **slots;
 	struct maple_node *node = container_of(head, struct maple_node, rcu);
 	struct maple_enode *start;
-	struct maple_tree mt = MTREE_INIT(mt, node->ma_flags);
-	MA_STATE(mas, &mt, 0, 0);
+	struct maple_tree mt;
+	MA_STATE(mas, NULL, 0, 0);
 
 	if (ma_is_leaf(node->type))
 		goto free_leaf;
 
+	mtree_init(&mt, node->ma_flags);
+	mas.tree = &mt;
 	start = mt_mk_node(node, node->type);
 	mas.node = start;
 	slots = mas_destroy_descend(&mas);
