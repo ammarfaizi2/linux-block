@@ -315,8 +315,6 @@ static void validate_mm(struct mm_struct *mm)
 
 	mt_validate(&mm->mm_mt);
 	mas_for_each(&mas, vma, ULONG_MAX) {
-		VM_BUG_ON(mas.index != vma->vm_start);
-		VM_BUG_ON(mas.last != vma->vm_end - 1);
 #ifdef CONFIG_DEBUG_VM_RB
 		struct anon_vma *anon_vma = vma->anon_vma;
 		struct anon_vma_chain *avc;
@@ -327,6 +325,8 @@ static void validate_mm(struct mm_struct *mm)
 			anon_vma_unlock_read(anon_vma);
 		}
 #endif
+		VM_BUG_ON(mas.index != vma->vm_start);
+		VM_BUG_ON(mas.last != vma->vm_end - 1);
 		i++;
 	}
 	if (i != mm->map_count) {
