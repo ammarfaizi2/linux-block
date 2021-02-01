@@ -2360,9 +2360,9 @@ int do_mas_align_munmap(struct ma_state *mas, struct vm_area_struct *vma,
 			unsigned long end, struct list_head *uf, bool downgrade)
 {
 	struct vm_area_struct *prev, *last;
-	struct maple_tree mt_detach = MTREE_INIT(mt_detach, MAPLE_ALLOC_RANGE);
+	struct maple_tree mt_detach;
 	unsigned long max;
-	MA_STATE(dst, &mt_detach, start, start);
+	MA_STATE(dst, NULL, start, start);
 	struct ma_state tmp;
 	/* we have start < vma->vm_end  */
 
@@ -2434,6 +2434,8 @@ int do_mas_align_munmap(struct ma_state *mas, struct vm_area_struct *vma,
 	}
 
 	/* Point of no return */
+	mtree_init(&mt_detach, MAPLE_ALLOC_RANGE);
+	dst.tree = &mt_detach;
 	max = detach_range(mm, mas, &dst, vma, prev, &last);
 
 	/*
