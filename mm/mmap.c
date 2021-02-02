@@ -2418,7 +2418,7 @@ int do_mas_align_munmap(struct ma_state *mas, struct vm_area_struct *vma,
 	}
 
 	if (mas->node == MAS_START)
-		vma = mas_walk(mas);
+		vma = mas_find(mas, end - 1);
 
 	if (unlikely(uf)) {
 		/*
@@ -2458,7 +2458,7 @@ int do_mas_align_munmap(struct ma_state *mas, struct vm_area_struct *vma,
 	/* Unmap the region */
 	mas_set(&dst, start);
 	tmp = dst;
-	vma = mas_walk(&dst);
+	vma = mas_find(&dst, end - 1);
 	unmap_region(mm, vma, &dst, start, end, prev, max);
 
 	/* Statistics and freeing VMAs */
