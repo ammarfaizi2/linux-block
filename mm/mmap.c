@@ -3180,14 +3180,12 @@ void exit_mmap(struct mm_struct *mm)
 	if (!vma)	/* Can happen if dup_mmap() received an OOM */
 		return;
 
-	mas2 = mas;
-	mas_set(&mas, FIRST_USER_ADDRESS);
-
 	lru_add_drain();
 	flush_cache_mm(mm);
 	tlb_gather_mmu(&tlb, mm, 0, -1);
 	/* update_hiwater_rss(mm) here? but nobody should be looking */
 	/* Use 0 here to ensure all VMAs in the mm are unmapped */
+	mas2 = mas;
 	unmap_vmas(&tlb, vma, &mas, 0, -1);
 	free_pgtables(&tlb, &mas2, vma, FIRST_USER_ADDRESS, USER_PGTABLES_CEILING);
 	tlb_finish_mmu(&tlb, 0, -1);
