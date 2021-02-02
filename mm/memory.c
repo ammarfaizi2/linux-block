@@ -1551,9 +1551,9 @@ void zap_page_range(struct vm_area_struct *vma, unsigned long start,
 	tlb_gather_mmu(&tlb, vma->vm_mm, start, end);
 	update_hiwater_rss(vma->vm_mm);
 	mmu_notifier_invalidate_range_start(&range);
-	do {
+	mas_for_each(&mas, vma, end - 1)
 		unmap_single_vma(&tlb, vma, start, end, NULL);
-	} while ((vma = mas_find(&mas, end - 1)) != NULL);
+
 	mmu_notifier_invalidate_range_end(&range);
 	tlb_finish_mmu(&tlb, start, end);
 }
