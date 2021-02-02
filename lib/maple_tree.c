@@ -4496,6 +4496,7 @@ static bool _mas_rev_awalk(struct ma_state *mas, unsigned long size)
 	}
 
 	if (unlikely(ma_is_leaf(type))) {
+		mas->offset = offset;
 		mas->min = min;
 		mas->max = min + gap - 1;
 		return true;
@@ -4519,7 +4520,7 @@ static inline bool _mas_awalk(struct ma_state *mas, unsigned long size)
 {
 	enum maple_type type = mte_node_type(mas->node);
 	unsigned long pivot, min, gap = 0;
-	unsigned char count, offset = 0;
+	unsigned char count, offset;
 	unsigned long *gaps = NULL, *pivots = ma_pivots(mas_mn(mas), type);
 	void **slots = ma_slots(mas_mn(mas), type);
 	bool found = false;
@@ -4529,11 +4530,10 @@ static inline bool _mas_awalk(struct ma_state *mas, unsigned long size)
 		return true;
 	}
 
-	if (!ma_is_leaf(type)) {
-		offset = mas->offset;
+	if (!ma_is_leaf(type))
 		gaps = ma_gaps(mte_to_node(mas->node), type);
-	}
 
+	offset = mas->offset;
 	count = mt_slots[type];
 	min = mas_safe_min(mas, pivots, offset);
 	for (; offset < count; offset++) {
@@ -4640,10 +4640,8 @@ static inline bool mas_rewind_node(struct ma_state *mas)
 	do {
 		if (mte_is_root(mas->node)) {
 			slot = mas->offset;
-			if (!slot) {
-				mas_set_err(mas, -EBUSY);
+			if (!slot)
 				return false;
-			}
 		} else {
 			slot = mte_parent_slot(mas->node);
 			mas_ascend(mas);
@@ -4651,38 +4649,6 @@ static inline bool mas_rewind_node(struct ma_state *mas)
 	} while (!slot);
 
 	mas->offset = --slot;
-	return true;
-}
-
-/*
- * mas_rev_awalk() - Reverse allocation walk for a given size.
- * @mas: The maple state
- * @size: The size of the gap
- *
- * Reverse search from @mas->last to @mas->index for a gap of @size.
- *
- * Return: true if found, false otherwise.
- */
-static bool mas_rev_awalk(struct ma_state *mas, unsigned long size)
-{
-	struct maple_enode *last = NULL;
-
-	mas->offset = mas_data_end(mas);
-
-	/* There are 4 options:
-	 * go to child (descend)
-	 * go back to parent (ascend)
-	 * no gap found. (return, slot == MAPLE_NODE_SLOTS)
-	 * found the gap. (return, slot != MAPLE_NODE_SLOTS)
-	 */
-	while (!_mas_rev_awalk(mas, size)) {
-		if (last == mas->node) {
-			if (!mas_rewind_node(mas))
-				return false;
-		} else {
-			last = mas->node;
-		}
-	}
 	return true;
 }
 
@@ -4737,13 +4703,6 @@ static inline bool mas_skip_node(struct ma_state *mas)
 static inline void mas_awalk(struct ma_state *mas, unsigned long size)
 {
 	struct maple_enode *last = NULL;
-
-	mas_start(mas);
-	if (mas_is_none(mas))
-		return;
-
-	if (mas_is_ptr(mas))
-		return;
 
 	/* There are 4 options:
 	 * go to child (descend)
@@ -4839,7 +4798,14 @@ int mas_empty_area(struct ma_state *mas, unsigned long min,
 	unsigned char offset;
 	unsigned long *pivots;
 	enum maple_type mt;
-	mas_start(mas);
+
+	if (mas_is_start(mas)) {
+		mas_start(mas);
+	} else if (mas->offset >= 2) {
+		mas->offset -= 2;
+	} else if (!mas_skip_node(mas)) {
+		return -EBUSY;
+	}
 
 	// Empty set.
 	if (mas_is_none(mas) || mas_is_ptr(mas)) {
@@ -4885,7 +4851,16 @@ int mas_empty_area(struct ma_state *mas, unsigned long min,
 int mas_empty_area_rev(struct ma_state *mas, unsigned long min,
 		unsigned long max, unsigned long size)
 {
-	mas_start(mas);
+	struct maple_enode *last = mas->node;
+
+	if (mas_is_start(mas)) {
+		mas_start(mas);
+		mas->offset = mas_data_end(mas);
+	} else if (mas->offset >= 2) {
+		mas->offset -= 2;
+	} else if (!mas_rewind_node(mas)) {
+		return -EBUSY;
+	}
 
 	// Empty set.
 	if (mas_is_none(mas) || mas_is_ptr(mas)) {
@@ -4896,8 +4871,15 @@ int mas_empty_area_rev(struct ma_state *mas, unsigned long min,
 	// The start of the window can only be within these values.
 	mas->index = min;
 	mas->last = max;
-	if (unlikely(!mas_rev_awalk(mas, size)))
-		return xa_err(mas->node);
+
+	while (!_mas_rev_awalk(mas, size)) {
+		if (last == mas->node) {
+			if (!mas_rewind_node(mas))
+				return -EBUSY;
+		} else {
+			last = mas->node;
+		}
+	}
 
 	if (unlikely(mas->offset == MAPLE_NODE_SLOTS))
 		return -EBUSY;
