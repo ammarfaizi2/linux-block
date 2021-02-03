@@ -7,15 +7,15 @@
 # Execute this in the source tree.  Do not run it as a background task
 # because qemu does not seem to like that much.
 #
-# Usage: kvm-test-1-run.sh config builddir resdir seconds qemu-args boot_args
+# Usage: kvm-test-1-run.sh config builddir resdir seconds qemu-args boot_args_in
 #
 # qemu-args defaults to "-enable-kvm -nographic", along with arguments
 #			specifying the number of CPUs and other options
 #			generated from the underlying CPU architecture.
-# boot_args defaults to value returned by the per_version_boot_params
+# boot_args_in defaults to value returned by the per_version_boot_params
 #			shell function.
 #
-# Anything you specify for either qemu-args or boot_args is appended to
+# Anything you specify for either qemu-args or boot_args_in is appended to
 # the default values.  The "-smp" value is deduced from the contents of
 # the config fragment.
 #
@@ -134,7 +134,7 @@ do
 done
 seconds=$4
 qemu_args=$5
-boot_args=$6
+boot_args_in=$6
 
 if test -z "$TORTURE_BUILDONLY"
 then
@@ -144,7 +144,7 @@ fi
 # Generate -smp qemu argument.
 qemu_args="-enable-kvm -nographic $qemu_args"
 cpu_count=`configNR_CPUS.sh $resdir/ConfigFragment`
-cpu_count=`configfrag_boot_cpus "$boot_args" "$config_template" "$cpu_count"`
+cpu_count=`configfrag_boot_cpus "$boot_args_in" "$config_template" "$cpu_count"`
 if test "$cpu_count" -gt "$TORTURE_ALLOTED_CPUS"
 then
 	echo CPU count limited from $cpu_count to $TORTURE_ALLOTED_CPUS | tee -a $resdir/Warnings
@@ -160,13 +160,25 @@ qemu_args="$qemu_args `identify_qemu_args "$QEMU" "$resdir/console.log"`"
 qemu_append="`identify_qemu_append "$QEMU"`"
 
 # Pull in Kconfig-fragment boot parameters
-boot_args="`configfrag_boot_params "$boot_args" "$config_template"`"
+boot_args="`configfrag_boot_params "$boot_args_in" "$config_template"`"
 # Generate kernel-version-specific boot parameters
 boot_args="`per_version_boot_params "$boot_args" $resdir/.config $seconds`"
 if test -n "$TORTURE_BOOT_GDB_ARG"
 then
 	boot_args="$boot_args $TORTURE_BOOT_GDB_ARG"
 fi
+
+# Give bare-metal advice
+modprobe_args="`echo $boot_args | tr -s ' ' '\012' | grep "^$TORTURE_MOD\." | sed -e "s/$TORTURE_MOD\.//g"`"
+kboot_args="`echo $boot_args | tr -s ' ' '\012' | grep -v "^$TORTURE_MOD\."`"
+touch $resdir/modprobe
+echo To run this scenario on bare metal: >> $resdir/modprobe
+echo "1." Update your .config based on $resdir/ConfigFragment. >> $resdir/modprobe
+echo "2." 'yes "" | make oldconfig' >> $resdir/modprobe
+echo "3." Build your kernel. >> $resdir/modprobe
+echo "4." Boot with kernel parameters: $kboot_args >> $resdir/modprobe
+echo "5." modprobe $TORTURE_MOD $modprobe_args >> $resdir/modprobe
+
 echo $QEMU $qemu_args -m $TORTURE_QEMU_MEM -kernel $KERNEL -append \"$qemu_append $boot_args\" $TORTURE_QEMU_GDB_ARG > $resdir/qemu-cmd
 echo "# TORTURE_SHUTDOWN_GRACE=$TORTURE_SHUTDOWN_GRACE" >> $resdir/qemu-cmd
 echo "# seconds=$seconds" >> $resdir/qemu-cmd
