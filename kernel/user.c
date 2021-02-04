@@ -20,6 +20,10 @@
 #include <linux/user_namespace.h>
 #include <linux/proc_ns.h>
 
+static struct ns_tag init_user_ns_tag = {
+	.usage	= REFCOUNT_INIT(1),
+};
+
 /*
  * userns count is 1 for root user, 1 for init_uts_ns,
  * and 1 for... ?
@@ -55,6 +59,7 @@ struct user_namespace init_user_ns = {
 			},
 		},
 	},
+	.ns.tag	= &init_user_ns_tag,
 	.ns.count = REFCOUNT_INIT(3),
 	.owner = GLOBAL_ROOT_UID,
 	.group = GLOBAL_ROOT_GID,

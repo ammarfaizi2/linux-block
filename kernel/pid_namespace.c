@@ -93,16 +93,15 @@ static struct pid_namespace *create_pid_namespace(struct user_namespace *user_ns
 
 	idr_init(&ns->idr);
 
-	ns->pid_cachep = create_pid_cachep(level);
-	if (ns->pid_cachep == NULL)
-		goto out_free_idr;
-
-	err = ns_alloc_inum(&ns->ns);
+	err = init_ns_common(&ns->ns, false);
 	if (err)
-		goto out_free_idr;
+		goto out_free;
 	ns->ns.ops = &pidns_operations;
 
-	refcount_set(&ns->ns.count, 1);
+	ns->pid_cachep = create_pid_cachep(level);
+	if (ns->pid_cachep == NULL)
+		goto out_free;
+
 	ns->level = level;
 	ns->parent = get_pid_ns(parent_pid_ns);
 	ns->user_ns = get_user_ns(user_ns);
@@ -111,8 +110,9 @@ static struct pid_namespace *create_pid_namespace(struct user_namespace *user_ns
 
 	return ns;
 
-out_free_idr:
+out_free:
 	idr_destroy(&ns->idr);
+	destroy_ns_common(&ns->ns);
 	kmem_cache_free(pid_ns_cachep, ns);
 out_dec:
 	dec_pid_namespaces(ucounts);
@@ -132,7 +132,7 @@ static void delayed_free_pidns(struct rcu_head *p)
 
 static void destroy_pid_namespace(struct pid_namespace *ns)
 {
-	ns_free_inum(&ns->ns);
+	destroy_ns_common(&ns->ns);
 
 	idr_destroy(&ns->idr);
 	call_rcu(&ns->rcu, delayed_free_pidns);

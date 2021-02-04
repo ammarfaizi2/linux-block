@@ -92,15 +92,13 @@ static struct time_namespace *clone_time_ns(struct user_namespace *user_ns,
 	if (!ns)
 		goto fail_dec;
 
-	refcount_set(&ns->ns.count, 1);
+	err = init_ns_common(&ns->ns, false);
+	if (err)
+		goto fail_free;
 
 	ns->vvar_page = alloc_page(GFP_KERNEL | __GFP_ZERO);
 	if (!ns->vvar_page)
 		goto fail_free;
-
-	err = ns_alloc_inum(&ns->ns);
-	if (err)
-		goto fail_free_page;
 
 	ns->ucounts = ucounts;
 	ns->ns.ops = &timens_operations;
@@ -109,9 +107,8 @@ static struct time_namespace *clone_time_ns(struct user_namespace *user_ns,
 	ns->frozen_offsets = false;
 	return ns;
 
-fail_free_page:
-	__free_page(ns->vvar_page);
 fail_free:
+	destroy_ns_common(&ns->ns);
 	kfree(ns);
 fail_dec:
 	dec_time_namespaces(ucounts);
@@ -230,7 +227,7 @@ void free_time_ns(struct time_namespace *ns)
 {
 	dec_time_namespaces(ns->ucounts);
 	put_user_ns(ns->user_ns);
-	ns_free_inum(&ns->ns);
+	destroy_ns_common(&ns->ns);
 	__free_page(ns->vvar_page);
 	kfree(ns);
 }

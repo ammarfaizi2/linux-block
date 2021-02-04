@@ -24,8 +24,15 @@ extern int version_string(LINUX_VERSION_CODE);
 int version_string(LINUX_VERSION_CODE);
 #endif
 
+static struct ns_tag init_uts_ns_tag = {
+	.usage		= REFCOUNT_INIT(1),
+};
+
 struct uts_namespace init_uts_ns = {
-	.ns.count = REFCOUNT_INIT(2),
+	.ns = {
+		.count		= REFCOUNT_INIT(2),
+		.tag		= &init_uts_ns_tag,
+	},
 	.name = {
 		.sysname	= UTS_SYSNAME,
 		.nodename	= UTS_NODENAME,

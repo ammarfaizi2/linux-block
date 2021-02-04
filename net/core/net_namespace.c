@@ -44,8 +44,14 @@ EXPORT_SYMBOL_GPL(net_rwsem);
 static struct key_tag init_net_key_domain = { .usage = REFCOUNT_INIT(1) };
 #endif
 
+static struct ns_tag init_net_tag = {
+	.usage		= REFCOUNT_INIT(1),
+};
+
 struct net init_net = {
-	.ns.count	= REFCOUNT_INIT(1),
+	.ns.tag		= &init_net_tag,
+	.ns.count	= REFCOUNT_INIT(2),
+	.ns.ops		= &netns_operations,
 	.dev_base_head	= LIST_HEAD_INIT(init_net.dev_base_head),
 #ifdef CONFIG_KEYS
 	.key_domain	= &init_net_key_domain,
@@ -329,7 +335,6 @@ static __net_init int setup_net(struct net *net, struct user_namespace *user_ns)
 	int error = 0;
 	LIST_HEAD(net_exit_list);
 
-	refcount_set(&net->ns.count, 1);
 	refcount_set(&net->passive, 1);
 	get_random_bytes(&net->hash_mix, sizeof(u32));
 	net->dev_base_seq = 1;
@@ -419,6 +424,10 @@ static struct net *net_alloc(void)
 	if (!net)
 		goto out_free;
 
+	if (init_ns_common(&net->ns, false) < 0)
+		goto out_free_2;
+	net->ns.ops = &netns_operations;
+
 #ifdef CONFIG_KEYS
 	net->key_domain = kzalloc(sizeof(struct key_tag), GFP_KERNEL);
 	if (!net->key_domain)
@@ -432,6 +441,7 @@ out:
 
 #ifdef CONFIG_KEYS
 out_free_2:
+	destroy_ns_common(&net->ns);
 	kmem_cache_free(net_cachep, net);
 	net = NULL;
 #endif
@@ -443,6 +453,7 @@ out_free:
 static void net_free(struct net *net)
 {
 	kfree(rcu_access_pointer(net->gen));
+	destroy_ns_common(&net->ns);
 	kmem_cache_free(net_cachep, net);
 }
 
@@ -699,24 +710,6 @@ struct net *get_net_ns_by_pid(pid_t pid)
 	return net;
 }
 EXPORT_SYMBOL_GPL(get_net_ns_by_pid);
-
-static __net_init int net_ns_net_init(struct net *net)
-{
-#ifdef CONFIG_NET_NS
-	net->ns.ops = &netns_operations;
-#endif
-	return ns_alloc_inum(&net->ns);
-}
-
-static __net_exit void net_ns_net_exit(struct net *net)
-{
-	ns_free_inum(&net->ns);
-}
-
-static struct pernet_operations __net_initdata net_ns_ops = {
-	.init = net_ns_net_init,
-	.exit = net_ns_net_exit,
-};
 
 static const struct nla_policy rtnl_net_policy[NETNSA_MAX + 1] = {
 	[NETNSA_NONE]		= { .type = NLA_UNSPEC },
@@ -1097,6 +1090,8 @@ static int __init net_ns_init(void)
 		panic("Could not create netns workq");
 #endif
 
+	proc_alloc_inum(&init_net.ns.inum);
+
 	ng = net_alloc_generic();
 	if (!ng)
 		panic("Could not allocate generic netns");
@@ -1113,9 +1108,6 @@ static int __init net_ns_init(void)
 
 	init_net_initialized = true;
 	up_write(&pernet_ops_rwsem);
-
-	if (register_pernet_subsys(&net_ns_ops))
-		panic("Could not register network namespace subsystems");
 
 	rtnl_register(PF_UNSPEC, RTM_NEWNSID, rtnl_net_newid, NULL,
 		      RTNL_FLAG_DOIT_UNLOCKED);

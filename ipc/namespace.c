@@ -46,12 +46,10 @@ static struct ipc_namespace *create_ipc_ns(struct user_namespace *user_ns,
 	if (ns == NULL)
 		goto fail_dec;
 
-	err = ns_alloc_inum(&ns->ns);
+	err = init_ns_common(&ns->ns, false);
 	if (err)
 		goto fail_free;
 	ns->ns.ops = &ipcns_operations;
-
-	refcount_set(&ns->ns.count, 1);
 	ns->user_ns = get_user_ns(user_ns);
 	ns->ucounts = ucounts;
 
@@ -67,8 +65,8 @@ static struct ipc_namespace *create_ipc_ns(struct user_namespace *user_ns,
 
 fail_put:
 	put_user_ns(ns->user_ns);
-	ns_free_inum(&ns->ns);
 fail_free:
+	destroy_ns_common(&ns->ns);
 	kfree(ns);
 fail_dec:
 	dec_ipc_namespaces(ucounts);
@@ -127,7 +125,7 @@ static void free_ipc_ns(struct ipc_namespace *ns)
 
 	dec_ipc_namespaces(ns->ucounts);
 	put_user_ns(ns->user_ns);
-	ns_free_inum(&ns->ns);
+	destroy_ns_common(&ns->ns);
 	kfree(ns);
 }
 

@@ -197,8 +197,13 @@ static u16 have_exit_callback __read_mostly;
 static u16 have_release_callback __read_mostly;
 static u16 have_canfork_callback __read_mostly;
 
+static struct ns_tag init_cgroup_ns_tag = {
+	.usage		= REFCOUNT_INIT(1),
+};
+
 /* cgroup namespace for init task */
 struct cgroup_namespace init_cgroup_ns = {
+	.ns.tag		= &init_cgroup_ns_tag,
 	.ns.count	= REFCOUNT_INIT(2),
 	.user_ns	= &init_user_ns,
 	.ns.ops		= &cgroupns_operations,

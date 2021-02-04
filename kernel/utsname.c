@@ -30,10 +30,17 @@ static void dec_uts_namespaces(struct ucounts *ucounts)
 static struct uts_namespace *create_uts_ns(void)
 {
 	struct uts_namespace *uts_ns;
+	int err;
 
 	uts_ns = kmem_cache_alloc(uts_ns_cache, GFP_KERNEL);
-	if (uts_ns)
-		refcount_set(&uts_ns->ns.count, 1);
+	if (uts_ns) {
+		err = init_ns_common(&uts_ns->ns, false);
+		if (err < 0) {
+			destroy_ns_common(&uts_ns->ns);
+			kmem_cache_free(uts_ns_cache, uts_ns);
+			return ERR_PTR(err);
+		}
+	}
 	return uts_ns;
 }
 
@@ -54,14 +61,11 @@ static struct uts_namespace *clone_uts_ns(struct user_namespace *user_ns,
 	if (!ucounts)
 		goto fail;
 
-	err = -ENOMEM;
 	ns = create_uts_ns();
-	if (!ns)
+	if (IS_ERR(ns)) {
+		err = PTR_ERR(ns);
 		goto fail_dec;
-
-	err = ns_alloc_inum(&ns->ns);
-	if (err)
-		goto fail_free;
+	}
 
 	ns->ucounts = ucounts;
 	ns->ns.ops = &utsns_operations;
@@ -72,8 +76,6 @@ static struct uts_namespace *clone_uts_ns(struct user_namespace *user_ns,
 	up_read(&uts_sem);
 	return ns;
 
-fail_free:
-	kmem_cache_free(uts_ns_cache, ns);
 fail_dec:
 	dec_uts_namespaces(ucounts);
 fail:
@@ -107,7 +109,7 @@ void free_uts_ns(struct uts_namespace *ns)
 {
 	dec_uts_namespaces(ns->ucounts);
 	put_user_ns(ns->user_ns);
-	ns_free_inum(&ns->ns);
+	destroy_ns_common(&ns->ns);
 	kmem_cache_free(uts_ns_cache, ns);
 }
 

@@ -64,13 +64,45 @@ static inline void proc_free_inum(unsigned int inum) {}
 
 #endif /* CONFIG_PROC_FS */
 
-static inline int ns_alloc_inum(struct ns_common *ns)
+/**
+ * init_ns_common - Initialise the common part of a namespace
+ * @ns: The namespace to initialise
+ * @anon: The namespace will be anonymous
+ *
+ * Set up the common part of a namespace, assigning an inode number and
+ * creating a tag.  Returns 0 on success and a negative error code on failure.
+ * On failure, the caller must call destroy_ns_common().
+ */
+static inline int init_ns_common(struct ns_common *ns, bool anon)
 {
+	struct ns_tag *tag;
+
+	tag = kzalloc(sizeof(*tag), GFP_KERNEL);
+	if (!tag)
+		return -ENOMEM;
+
+	refcount_set(&tag->usage, 1);
+	ns->tag = tag;
+	ns->inum = 0;
 	atomic_long_set(&ns->stashed, 0);
-	return proc_alloc_inum(&ns->inum);
+	refcount_set(&ns->count, 1);
+
+	return anon ? 0 : proc_alloc_inum(&ns->inum);
 }
 
-#define ns_free_inum(ns) proc_free_inum((ns)->inum)
+/**
+ * destroy_ns_common - Clean up the common part of a namespace
+ * @ns: The namespace to clean up
+ */
+static inline void destroy_ns_common(struct ns_common *ns)
+{
+	put_ns_tag(ns->tag);
+	ns->tag = NULL;
+	if (ns->inum) {
+		proc_free_inum(ns->inum);
+		ns->inum = 0;
+	}
+}
 
 extern struct file *proc_ns_fget(int fd);
 #define get_proc_ns(inode) ((struct ns_common *)(inode)->i_private)

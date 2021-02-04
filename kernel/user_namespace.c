@@ -106,12 +106,11 @@ int create_user_ns(struct cred *new)
 	if (!ns)
 		goto fail_dec;
 
-	ret = ns_alloc_inum(&ns->ns);
+	ret = init_ns_common(&ns->ns, false);
 	if (ret)
 		goto fail_free;
 	ns->ns.ops = &userns_operations;
 
-	refcount_set(&ns->ns.count, 1);
 	/* Leave the new->user_ns reference with the new user namespace. */
 	ns->parent = parent_ns;
 	ns->level = parent_ns->level + 1;
@@ -142,8 +141,8 @@ fail_keyring:
 #ifdef CONFIG_PERSISTENT_KEYRINGS
 	key_put(ns->persistent_keyring_register);
 #endif
-	ns_free_inum(&ns->ns);
 fail_free:
+	destroy_ns_common(&ns->ns);
 	kmem_cache_free(user_ns_cachep, ns);
 fail_dec:
 	dec_user_namespaces(ucounts);
@@ -193,7 +192,7 @@ static void free_user_ns(struct work_struct *work)
 		}
 		retire_userns_sysctls(ns);
 		key_free_user_ns(ns);
-		ns_free_inum(&ns->ns);
+		destroy_ns_common(&ns->ns);
 		kmem_cache_free(user_ns_cachep, ns);
 		dec_user_namespaces(ucounts);
 		ns = parent;
