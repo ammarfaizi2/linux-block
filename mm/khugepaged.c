@@ -809,8 +809,10 @@ static bool khugepaged_scan_abort(int nid)
 	for (i = 0; i < MAX_NUMNODES; i++) {
 		if (!khugepaged_node_load[i])
 			continue;
+#ifdef CONFIG_NUMA
 		if (node_distance(nid, i) > node_reclaim_distance)
 			return true;
+#endif
 	}
 	return false;
 }
