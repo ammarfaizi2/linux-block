@@ -171,29 +171,33 @@ fi
 # Give bare-metal advice
 modprobe_args="`echo $boot_args | tr -s ' ' '\012' | grep "^$TORTURE_MOD\." | sed -e "s/$TORTURE_MOD\.//g"`"
 kboot_args="`echo $boot_args | tr -s ' ' '\012' | grep -v "^$TORTURE_MOD\."`"
-touch $resdir/modprobe
-echo To run this scenario on bare metal: >> $resdir/modprobe
-echo >> $resdir/modprobe
-echo " 1." Set your bare-metal build tree to the state shown in this file: >> $resdir/modprobe
-echo "   " `dirname $resdir`/testid.txt >> $resdir/modprobe
-echo " 2." Update your bare-metal build tree"'"s .config based on this file: >> $resdir/modprobe
-echo "   " $resdir/ConfigFragment >> $resdir/modprobe
-echo " 3." Make the bare-metal kernel"'"s build system aware of your .config updates: >> $resdir/modprobe
-echo "   " $ 'yes "" | make oldconfig' >> $resdir/modprobe
-echo " 4." Build your bare-metal kernel. >> $resdir/modprobe
-echo " 5." Boot your bare-metal kernel with the following parameters: >> $resdir/modprobe
-echo "   " $kboot_args >> $resdir/modprobe
-echo " 6." Start the test with the following command: >> $resdir/modprobe
-echo "   " $ modprobe $TORTURE_MOD $modprobe_args >> $resdir/modprobe
-echo " 7." After some time, end the test with the following command: >> $resdir/modprobe
-echo "   " $ rmmod $TORTURE_MOD >> $resdir/modprobe
-echo " 8." Copy your bare-metal kernel"'"s .config file, overwriting this file: >> $resdir/modprobe
-echo "   " $resdir/.config >> $resdir/modprobe
-echo " 9." Copy the console output from just before the modprobe to just after >> $resdir/modprobe
-echo "   " the rmmod into this file: >> $resdir/modprobe
-echo "   " $resdir/console.log >> $resdir/modprobe
-echo "10." Check for runtime errors using the following command: >> $resdir/modprobe
-echo "  " $ tools/testing/selftests/rcutorture/bin/kvm-recheck.sh `dirname $resdir` >> $resdir/modprobe
+testid_txt="`dirname $resdir`/testid.txt"
+touch $resdir/bare-metal
+echo To run this scenario on bare metal: >> $resdir/bare-metal
+echo >> $resdir/bare-metal
+echo " 1." Set your bare-metal build tree to the state shown in this file: >> $resdir/bare-metal
+echo "   " $testid_txt >> $resdir/bare-metal
+echo " 2." Update your bare-metal build tree"'"s .config based on this file: >> $resdir/bare-metal
+echo "   " $resdir/ConfigFragment >> $resdir/bare-metal
+echo " 3." Make the bare-metal kernel"'"s build system aware of your .config updates: >> $resdir/bare-metal
+echo "   " $ 'yes "" | make oldconfig' >> $resdir/bare-metal
+echo " 4." Build your bare-metal kernel. >> $resdir/bare-metal
+echo " 5." Boot your bare-metal kernel with the following parameters: >> $resdir/bare-metal
+echo "   " $kboot_args >> $resdir/bare-metal
+echo " 6." Start the test with the following command: >> $resdir/bare-metal
+echo "   " $ modprobe $TORTURE_MOD $modprobe_args >> $resdir/bare-metal
+echo " 7." After some time, end the test with the following command: >> $resdir/bare-metal
+echo "   " $ rmmod $TORTURE_MOD >> $resdir/bare-metal
+echo " 8." Copy your bare-metal kernel"'"s .config file, overwriting this file: >> $resdir/bare-metal
+echo "   " $resdir/.config >> $resdir/bare-metal
+echo " 9." Copy the console output from just before the modprobe to just after >> $resdir/bare-metal
+echo "   " the rmmod into this file: >> $resdir/bare-metal
+echo "   " $resdir/console.log >> $resdir/bare-metal
+echo "10." Check for runtime errors using the following command: >> $resdir/bare-metal
+echo "   " $ tools/testing/selftests/rcutorture/bin/kvm-recheck.sh `dirname $resdir` >> $resdir/bare-metal
+echo >> $resdir/bare-metal
+echo Some of the above steps may be skipped if you build your bare-metal >> $resdir/bare-metal
+echo kernel here: `head -n 1 $testid_txt | sed -e 's/^Build directory: //'`  >> $resdir/bare-metal
 
 echo $QEMU $qemu_args -m $TORTURE_QEMU_MEM -kernel $KERNEL -append \"$qemu_append $boot_args\" $TORTURE_QEMU_GDB_ARG > $resdir/qemu-cmd
 echo "# TORTURE_SHUTDOWN_GRACE=$TORTURE_SHUTDOWN_GRACE" >> $resdir/qemu-cmd
