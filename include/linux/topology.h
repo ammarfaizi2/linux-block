@@ -72,7 +72,9 @@ int arch_update_cpu_topology(void);
  * *improves* if allowed to reclaim memory and load balance tasks
  * between NUMA nodes 2-hops apart.
  */
+#ifdef CONFIG_NUMA
 extern int __read_mostly node_reclaim_distance;
+#endif
 
 #ifndef PENALTY_FOR_NODE_WITH_CPUS
 #define PENALTY_FOR_NODE_WITH_CPUS	(1)
