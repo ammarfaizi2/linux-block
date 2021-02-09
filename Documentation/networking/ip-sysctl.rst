@@ -178,6 +178,26 @@ min_adv_mss - INTEGER
 	The advertised MSS depends on the first hop route MTU, but will
 	never be lower than this setting.
 
+fib_notify_on_flag_change - INTEGER
+        Whether to emit RTM_NEWROUTE notifications whenever RTM_F_OFFLOAD/
+        RTM_F_TRAP flags are changed.
+
+        After installing a route to the kernel, user space receives an
+        acknowledgment, which means the route was installed in the kernel,
+        but not necessarily in hardware.
+        It is also possible for a route already installed in hardware to change
+        its action and therefore its flags. For example, a host route that is
+        trapping packets can be "promoted" to perform decapsulation following
+        the installation of an IPinIP/VXLAN tunnel.
+        The notifications will indicate to user-space the state of the route.
+
+        Default: 0 (Do not emit notifications.)
+
+        Possible values:
+
+        - 0 - Do not emit notifications.
+        - 1 - Emit notifications.
+
 IP Fragmentation:
 
 ipfrag_high_thresh - LONG INTEGER
@@ -1196,7 +1216,7 @@ icmp_errors_use_inbound_ifaddr - BOOLEAN
 
 	If non-zero, the message will be sent with the primary address of
 	the interface that received the packet that caused the icmp error.
-	This is the behaviour network many administrators will expect from
+	This is the behaviour many network administrators will expect from
 	a router. And it can make debugging complicated network layouts
 	much easier.
 
@@ -1775,6 +1795,26 @@ nexthop_compat_mode - BOOLEAN
 	and extraneous notifications.
 	Default: true (backward compat mode)
 
+fib_notify_on_flag_change - INTEGER
+        Whether to emit RTM_NEWROUTE notifications whenever RTM_F_OFFLOAD/
+        RTM_F_TRAP flags are changed.
+
+        After installing a route to the kernel, user space receives an
+        acknowledgment, which means the route was installed in the kernel,
+        but not necessarily in hardware.
+        It is also possible for a route already installed in hardware to change
+        its action and therefore its flags. For example, a host route that is
+        trapping packets can be "promoted" to perform decapsulation following
+        the installation of an IPinIP/VXLAN tunnel.
+        The notifications will indicate to user-space the state of the route.
+
+        Default: 0 (Do not emit notifications.)
+
+        Possible values:
+
+        - 0 - Do not emit notifications.
+        - 1 - Emit notifications.
+
 IPv6 Fragmentation:
 
 ip6frag_high_thresh - INTEGER
@@ -1807,11 +1847,23 @@ seg6_flowlabel - INTEGER
 ``conf/default/*``:
 	Change the interface-specific default settings.
 
+	These settings would be used during creating new interfaces.
+
 
 ``conf/all/*``:
 	Change all the interface-specific settings.
 
 	[XXX:  Other special features than forwarding?]
+
+conf/all/disable_ipv6 - BOOLEAN
+	Changing this value is same as changing ``conf/default/disable_ipv6``
+	setting and also all per-interface ``disable_ipv6`` settings to the same
+	value.
+
+	Reading this value does not have any particular meaning. It does not say
+	whether IPv6 support is enabled or disabled. Returned value can be 1
+	also in the case when some interface has ``disable_ipv6`` set to 0 and
+	has configured IPv6 addresses.
 
 conf/all/forwarding - BOOLEAN
 	Enable global IPv6 forwarding between all interfaces.
@@ -1870,6 +1922,16 @@ accept_ra_defrtr - BOOLEAN
 
 		- enabled if accept_ra is enabled.
 		- disabled if accept_ra is disabled.
+
+ra_defrtr_metric - UNSIGNED INTEGER
+	Route metric for default route learned in Router Advertisement. This value
+	will be assigned as metric for the default route learned via IPv6 Router
+	Advertisement. Takes affect only if accept_ra_defrtr is enabled.
+
+	Possible values:
+		1 to 0xFFFFFFFF
+
+		Default: IP6_RT_PRIO_USER i.e. 1024.
 
 accept_ra_from_local - BOOLEAN
 	Accept RA with source-address that is found on local machine

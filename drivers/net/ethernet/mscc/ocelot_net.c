@@ -1,12 +1,190 @@
 // SPDX-License-Identifier: (GPL-2.0 OR MIT)
 /* Microsemi Ocelot Switch driver
  *
+ * This contains glue logic between the switchdev driver operations and the
+ * mscc_ocelot_switch_lib.
+ *
  * Copyright (c) 2017, 2019 Microsemi Corporation
+ * Copyright 2020-2021 NXP Semiconductors
  */
 
 #include <linux/if_bridge.h>
+#include <net/pkt_cls.h>
 #include "ocelot.h"
 #include "ocelot_vcap.h"
+
+static struct ocelot *devlink_port_to_ocelot(struct devlink_port *dlp)
+{
+	return devlink_priv(dlp->devlink);
+}
+
+static int devlink_port_to_port(struct devlink_port *dlp)
+{
+	struct ocelot *ocelot = devlink_port_to_ocelot(dlp);
+
+	return dlp - ocelot->devlink_ports;
+}
+
+static int ocelot_devlink_sb_pool_get(struct devlink *dl,
+				      unsigned int sb_index, u16 pool_index,
+				      struct devlink_sb_pool_info *pool_info)
+{
+	struct ocelot *ocelot = devlink_priv(dl);
+
+	return ocelot_sb_pool_get(ocelot, sb_index, pool_index, pool_info);
+}
+
+static int ocelot_devlink_sb_pool_set(struct devlink *dl, unsigned int sb_index,
+				      u16 pool_index, u32 size,
+				      enum devlink_sb_threshold_type threshold_type,
+				      struct netlink_ext_ack *extack)
+{
+	struct ocelot *ocelot = devlink_priv(dl);
+
+	return ocelot_sb_pool_set(ocelot, sb_index, pool_index, size,
+				  threshold_type, extack);
+}
+
+static int ocelot_devlink_sb_port_pool_get(struct devlink_port *dlp,
+					   unsigned int sb_index, u16 pool_index,
+					   u32 *p_threshold)
+{
+	struct ocelot *ocelot = devlink_port_to_ocelot(dlp);
+	int port = devlink_port_to_port(dlp);
+
+	return ocelot_sb_port_pool_get(ocelot, port, sb_index, pool_index,
+				       p_threshold);
+}
+
+static int ocelot_devlink_sb_port_pool_set(struct devlink_port *dlp,
+					   unsigned int sb_index, u16 pool_index,
+					   u32 threshold,
+					   struct netlink_ext_ack *extack)
+{
+	struct ocelot *ocelot = devlink_port_to_ocelot(dlp);
+	int port = devlink_port_to_port(dlp);
+
+	return ocelot_sb_port_pool_set(ocelot, port, sb_index, pool_index,
+				       threshold, extack);
+}
+
+static int
+ocelot_devlink_sb_tc_pool_bind_get(struct devlink_port *dlp,
+				   unsigned int sb_index, u16 tc_index,
+				   enum devlink_sb_pool_type pool_type,
+				   u16 *p_pool_index, u32 *p_threshold)
+{
+	struct ocelot *ocelot = devlink_port_to_ocelot(dlp);
+	int port = devlink_port_to_port(dlp);
+
+	return ocelot_sb_tc_pool_bind_get(ocelot, port, sb_index, tc_index,
+					  pool_type, p_pool_index,
+					  p_threshold);
+}
+
+static int
+ocelot_devlink_sb_tc_pool_bind_set(struct devlink_port *dlp,
+				   unsigned int sb_index, u16 tc_index,
+				   enum devlink_sb_pool_type pool_type,
+				   u16 pool_index, u32 threshold,
+				   struct netlink_ext_ack *extack)
+{
+	struct ocelot *ocelot = devlink_port_to_ocelot(dlp);
+	int port = devlink_port_to_port(dlp);
+
+	return ocelot_sb_tc_pool_bind_set(ocelot, port, sb_index, tc_index,
+					  pool_type, pool_index, threshold,
+					  extack);
+}
+
+static int ocelot_devlink_sb_occ_snapshot(struct devlink *dl,
+					  unsigned int sb_index)
+{
+	struct ocelot *ocelot = devlink_priv(dl);
+
+	return ocelot_sb_occ_snapshot(ocelot, sb_index);
+}
+
+static int ocelot_devlink_sb_occ_max_clear(struct devlink *dl,
+					   unsigned int sb_index)
+{
+	struct ocelot *ocelot = devlink_priv(dl);
+
+	return ocelot_sb_occ_max_clear(ocelot, sb_index);
+}
+
+static int ocelot_devlink_sb_occ_port_pool_get(struct devlink_port *dlp,
+					       unsigned int sb_index,
+					       u16 pool_index, u32 *p_cur,
+					       u32 *p_max)
+{
+	struct ocelot *ocelot = devlink_port_to_ocelot(dlp);
+	int port = devlink_port_to_port(dlp);
+
+	return ocelot_sb_occ_port_pool_get(ocelot, port, sb_index, pool_index,
+					   p_cur, p_max);
+}
+
+static int
+ocelot_devlink_sb_occ_tc_port_bind_get(struct devlink_port *dlp,
+				       unsigned int sb_index, u16 tc_index,
+				       enum devlink_sb_pool_type pool_type,
+				       u32 *p_cur, u32 *p_max)
+{
+	struct ocelot *ocelot = devlink_port_to_ocelot(dlp);
+	int port = devlink_port_to_port(dlp);
+
+	return ocelot_sb_occ_tc_port_bind_get(ocelot, port, sb_index,
+					      tc_index, pool_type,
+					      p_cur, p_max);
+}
+
+const struct devlink_ops ocelot_devlink_ops = {
+	.sb_pool_get			= ocelot_devlink_sb_pool_get,
+	.sb_pool_set			= ocelot_devlink_sb_pool_set,
+	.sb_port_pool_get		= ocelot_devlink_sb_port_pool_get,
+	.sb_port_pool_set		= ocelot_devlink_sb_port_pool_set,
+	.sb_tc_pool_bind_get		= ocelot_devlink_sb_tc_pool_bind_get,
+	.sb_tc_pool_bind_set		= ocelot_devlink_sb_tc_pool_bind_set,
+	.sb_occ_snapshot		= ocelot_devlink_sb_occ_snapshot,
+	.sb_occ_max_clear		= ocelot_devlink_sb_occ_max_clear,
+	.sb_occ_port_pool_get		= ocelot_devlink_sb_occ_port_pool_get,
+	.sb_occ_tc_port_bind_get	= ocelot_devlink_sb_occ_tc_port_bind_get,
+};
+
+int ocelot_port_devlink_init(struct ocelot *ocelot, int port,
+			     enum devlink_port_flavour flavour)
+{
+	struct devlink_port *dlp = &ocelot->devlink_ports[port];
+	int id_len = sizeof(ocelot->base_mac);
+	struct devlink *dl = ocelot->devlink;
+	struct devlink_port_attrs attrs = {};
+
+	memcpy(attrs.switch_id.id, &ocelot->base_mac, id_len);
+	attrs.switch_id.id_len = id_len;
+	attrs.phys.port_number = port;
+	attrs.flavour = flavour;
+
+	devlink_port_attrs_set(dlp, &attrs);
+
+	return devlink_port_register(dl, dlp, port);
+}
+
+void ocelot_port_devlink_teardown(struct ocelot *ocelot, int port)
+{
+	struct devlink_port *dlp = &ocelot->devlink_ports[port];
+
+	devlink_port_unregister(dlp);
+}
+
+static struct devlink_port *ocelot_get_devlink_port(struct net_device *dev)
+{
+	struct ocelot_port_private *priv = netdev_priv(dev);
+	struct ocelot *ocelot = priv->port.ocelot;
+	int port = priv->chip_port;
+
+	return &ocelot->devlink_ports[port];
+}
 
 int ocelot_setup_tc_cls_flower(struct ocelot_port_private *priv,
 			       struct flow_cls_offload *f,
@@ -457,7 +635,7 @@ static void ocelot_mact_work(struct work_struct *work)
 		break;
 	default:
 		break;
-	};
+	}
 
 	kfree(w);
 }
@@ -523,20 +701,6 @@ static void ocelot_set_rx_mode(struct net_device *dev)
 		ocelot_write_rix(ocelot, val, ANA_PGID_PGID, i);
 
 	__dev_mc_sync(dev, ocelot_mc_sync, ocelot_mc_unsync);
-}
-
-static int ocelot_port_get_phys_port_name(struct net_device *dev,
-					  char *buf, size_t len)
-{
-	struct ocelot_port_private *priv = netdev_priv(dev);
-	int port = priv->chip_port;
-	int ret;
-
-	ret = snprintf(buf, len, "p%d", port);
-	if (ret >= len)
-		return -EINVAL;
-
-	return 0;
 }
 
 static int ocelot_port_set_mac_address(struct net_device *dev, void *p)
@@ -689,18 +853,6 @@ static int ocelot_set_features(struct net_device *dev,
 	return 0;
 }
 
-static int ocelot_get_port_parent_id(struct net_device *dev,
-				     struct netdev_phys_item_id *ppid)
-{
-	struct ocelot_port_private *priv = netdev_priv(dev);
-	struct ocelot *ocelot = priv->port.ocelot;
-
-	ppid->id_len = sizeof(ocelot->base_mac);
-	memcpy(&ppid->id, &ocelot->base_mac, ppid->id_len);
-
-	return 0;
-}
-
 static int ocelot_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 {
 	struct ocelot_port_private *priv = netdev_priv(dev);
@@ -727,7 +879,6 @@ static const struct net_device_ops ocelot_port_netdev_ops = {
 	.ndo_stop			= ocelot_port_stop,
 	.ndo_start_xmit			= ocelot_port_xmit,
 	.ndo_set_rx_mode		= ocelot_set_rx_mode,
-	.ndo_get_phys_port_name		= ocelot_port_get_phys_port_name,
 	.ndo_set_mac_address		= ocelot_port_set_mac_address,
 	.ndo_get_stats64		= ocelot_get_stats64,
 	.ndo_fdb_add			= ocelot_port_fdb_add,
@@ -736,9 +887,9 @@ static const struct net_device_ops ocelot_port_netdev_ops = {
 	.ndo_vlan_rx_add_vid		= ocelot_vlan_rx_add_vid,
 	.ndo_vlan_rx_kill_vid		= ocelot_vlan_rx_kill_vid,
 	.ndo_set_features		= ocelot_set_features,
-	.ndo_get_port_parent_id		= ocelot_get_port_parent_id,
 	.ndo_setup_tc			= ocelot_setup_tc,
 	.ndo_do_ioctl			= ocelot_ioctl,
+	.ndo_get_devlink_port		= ocelot_get_devlink_port,
 };
 
 struct net_device *ocelot_port_to_netdev(struct ocelot *ocelot, int port)
@@ -825,12 +976,8 @@ static const struct ethtool_ops ocelot_ethtool_ops = {
 };
 
 static void ocelot_port_attr_stp_state_set(struct ocelot *ocelot, int port,
-					   struct switchdev_trans *trans,
 					   u8 state)
 {
-	if (switchdev_trans_ph_prepare(trans))
-		return;
-
 	ocelot_bridge_stp_state_set(ocelot, port, state);
 }
 
@@ -858,8 +1005,7 @@ static void ocelot_port_attr_mc_set(struct ocelot *ocelot, int port, bool mc)
 }
 
 static int ocelot_port_attr_set(struct net_device *dev,
-				const struct switchdev_attr *attr,
-				struct switchdev_trans *trans)
+				const struct switchdev_attr *attr)
 {
 	struct ocelot_port_private *priv = netdev_priv(dev);
 	struct ocelot *ocelot = priv->port.ocelot;
@@ -868,15 +1014,13 @@ static int ocelot_port_attr_set(struct net_device *dev,
 
 	switch (attr->id) {
 	case SWITCHDEV_ATTR_ID_PORT_STP_STATE:
-		ocelot_port_attr_stp_state_set(ocelot, port, trans,
-					       attr->u.stp_state);
+		ocelot_port_attr_stp_state_set(ocelot, port, attr->u.stp_state);
 		break;
 	case SWITCHDEV_ATTR_ID_BRIDGE_AGEING_TIME:
 		ocelot_port_attr_ageing_set(ocelot, port, attr->u.ageing_time);
 		break;
 	case SWITCHDEV_ATTR_ID_BRIDGE_VLAN_FILTERING:
-		ocelot_port_vlan_filtering(ocelot, port,
-					   attr->u.vlan_filtering, trans);
+		ocelot_port_vlan_filtering(ocelot, port, attr->u.vlan_filtering);
 		break;
 	case SWITCHDEV_ATTR_ID_BRIDGE_MC_DISABLED:
 		ocelot_port_attr_mc_set(ocelot, port, !attr->u.mc_disabled);
@@ -890,55 +1034,26 @@ static int ocelot_port_attr_set(struct net_device *dev,
 }
 
 static int ocelot_port_obj_add_vlan(struct net_device *dev,
-				    const struct switchdev_obj_port_vlan *vlan,
-				    struct switchdev_trans *trans)
+				    const struct switchdev_obj_port_vlan *vlan)
 {
+	bool untagged = vlan->flags & BRIDGE_VLAN_INFO_UNTAGGED;
+	bool pvid = vlan->flags & BRIDGE_VLAN_INFO_PVID;
 	int ret;
-	u16 vid;
 
-	for (vid = vlan->vid_begin; vid <= vlan->vid_end; vid++) {
-		bool pvid = vlan->flags & BRIDGE_VLAN_INFO_PVID;
-		bool untagged = vlan->flags & BRIDGE_VLAN_INFO_UNTAGGED;
+	ret = ocelot_vlan_vid_prepare(dev, vlan->vid, pvid, untagged);
+	if (ret)
+		return ret;
 
-		if (switchdev_trans_ph_prepare(trans))
-			ret = ocelot_vlan_vid_prepare(dev, vid, pvid,
-						      untagged);
-		else
-			ret = ocelot_vlan_vid_add(dev, vid, pvid, untagged);
-		if (ret)
-			return ret;
-	}
-
-	return 0;
-}
-
-static int ocelot_port_vlan_del_vlan(struct net_device *dev,
-				     const struct switchdev_obj_port_vlan *vlan)
-{
-	int ret;
-	u16 vid;
-
-	for (vid = vlan->vid_begin; vid <= vlan->vid_end; vid++) {
-		ret = ocelot_vlan_vid_del(dev, vid);
-
-		if (ret)
-			return ret;
-	}
-
-	return 0;
+	return ocelot_vlan_vid_add(dev, vlan->vid, pvid, untagged);
 }
 
 static int ocelot_port_obj_add_mdb(struct net_device *dev,
-				   const struct switchdev_obj_port_mdb *mdb,
-				   struct switchdev_trans *trans)
+				   const struct switchdev_obj_port_mdb *mdb)
 {
 	struct ocelot_port_private *priv = netdev_priv(dev);
 	struct ocelot_port *ocelot_port = &priv->port;
 	struct ocelot *ocelot = ocelot_port->ocelot;
 	int port = priv->chip_port;
-
-	if (switchdev_trans_ph_prepare(trans))
-		return 0;
 
 	return ocelot_port_mdb_add(ocelot, port, mdb);
 }
@@ -956,7 +1071,6 @@ static int ocelot_port_obj_del_mdb(struct net_device *dev,
 
 static int ocelot_port_obj_add(struct net_device *dev,
 			       const struct switchdev_obj *obj,
-			       struct switchdev_trans *trans,
 			       struct netlink_ext_ack *extack)
 {
 	int ret = 0;
@@ -964,12 +1078,10 @@ static int ocelot_port_obj_add(struct net_device *dev,
 	switch (obj->id) {
 	case SWITCHDEV_OBJ_ID_PORT_VLAN:
 		ret = ocelot_port_obj_add_vlan(dev,
-					       SWITCHDEV_OBJ_PORT_VLAN(obj),
-					       trans);
+					       SWITCHDEV_OBJ_PORT_VLAN(obj));
 		break;
 	case SWITCHDEV_OBJ_ID_PORT_MDB:
-		ret = ocelot_port_obj_add_mdb(dev, SWITCHDEV_OBJ_PORT_MDB(obj),
-					      trans);
+		ret = ocelot_port_obj_add_mdb(dev, SWITCHDEV_OBJ_PORT_MDB(obj));
 		break;
 	default:
 		return -EOPNOTSUPP;
@@ -985,8 +1097,8 @@ static int ocelot_port_obj_del(struct net_device *dev,
 
 	switch (obj->id) {
 	case SWITCHDEV_OBJ_ID_PORT_VLAN:
-		ret = ocelot_port_vlan_del_vlan(dev,
-						SWITCHDEV_OBJ_PORT_VLAN(obj));
+		ret = ocelot_vlan_vid_del(dev,
+					  SWITCHDEV_OBJ_PORT_VLAN(obj)->vid);
 		break;
 	case SWITCHDEV_OBJ_ID_PORT_MDB:
 		ret = ocelot_port_obj_del_mdb(dev, SWITCHDEV_OBJ_PORT_MDB(obj));
@@ -998,9 +1110,8 @@ static int ocelot_port_obj_del(struct net_device *dev,
 	return ret;
 }
 
-static int ocelot_netdevice_port_event(struct net_device *dev,
-				       unsigned long event,
-				       struct netdev_notifier_changeupper_info *info)
+static int ocelot_netdevice_changeupper(struct net_device *dev,
+					struct netdev_notifier_changeupper_info *info)
 {
 	struct ocelot_port_private *priv = netdev_priv(dev);
 	struct ocelot_port *ocelot_port = &priv->port;
@@ -1008,73 +1119,103 @@ static int ocelot_netdevice_port_event(struct net_device *dev,
 	int port = priv->chip_port;
 	int err = 0;
 
-	switch (event) {
-	case NETDEV_CHANGEUPPER:
-		if (netif_is_bridge_master(info->upper_dev)) {
-			if (info->linking) {
-				err = ocelot_port_bridge_join(ocelot, port,
-							      info->upper_dev);
-			} else {
-				err = ocelot_port_bridge_leave(ocelot, port,
-							       info->upper_dev);
-			}
-		}
-		if (netif_is_lag_master(info->upper_dev)) {
-			if (info->linking)
-				err = ocelot_port_lag_join(ocelot, port,
-							   info->upper_dev);
-			else
-				ocelot_port_lag_leave(ocelot, port,
+	if (netif_is_bridge_master(info->upper_dev)) {
+		if (info->linking) {
+			err = ocelot_port_bridge_join(ocelot, port,
 						      info->upper_dev);
+		} else {
+			err = ocelot_port_bridge_leave(ocelot, port,
+						       info->upper_dev);
 		}
-		break;
-	default:
-		break;
+	}
+	if (netif_is_lag_master(info->upper_dev)) {
+		if (info->linking) {
+			err = ocelot_port_lag_join(ocelot, port,
+						   info->upper_dev,
+						   info->upper_info);
+			if (err == -EOPNOTSUPP) {
+				NL_SET_ERR_MSG_MOD(info->info.extack,
+						   "Offloading not supported");
+				err = 0;
+			}
+		} else {
+			ocelot_port_lag_leave(ocelot, port,
+					      info->upper_dev);
+		}
 	}
 
-	return err;
+	return notifier_from_errno(err);
+}
+
+static int
+ocelot_netdevice_lag_changeupper(struct net_device *dev,
+				 struct netdev_notifier_changeupper_info *info)
+{
+	struct net_device *lower;
+	struct list_head *iter;
+	int err = NOTIFY_DONE;
+
+	netdev_for_each_lower_dev(dev, lower, iter) {
+		err = ocelot_netdevice_changeupper(lower, info);
+		if (err)
+			return notifier_from_errno(err);
+	}
+
+	return NOTIFY_DONE;
+}
+
+static int
+ocelot_netdevice_changelowerstate(struct net_device *dev,
+				  struct netdev_lag_lower_state_info *info)
+{
+	struct ocelot_port_private *priv = netdev_priv(dev);
+	bool is_active = info->link_up && info->tx_enabled;
+	struct ocelot_port *ocelot_port = &priv->port;
+	struct ocelot *ocelot = ocelot_port->ocelot;
+	int port = priv->chip_port;
+
+	if (!ocelot_port->bond)
+		return NOTIFY_DONE;
+
+	if (ocelot_port->lag_tx_active == is_active)
+		return NOTIFY_DONE;
+
+	ocelot_port_lag_change(ocelot, port, is_active);
+
+	return NOTIFY_OK;
 }
 
 static int ocelot_netdevice_event(struct notifier_block *unused,
 				  unsigned long event, void *ptr)
 {
-	struct netdev_notifier_changeupper_info *info = ptr;
 	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
-	int ret = 0;
 
-	if (!ocelot_netdevice_dev_check(dev))
-		return 0;
+	switch (event) {
+	case NETDEV_CHANGEUPPER: {
+		struct netdev_notifier_changeupper_info *info = ptr;
 
-	if (event == NETDEV_PRECHANGEUPPER &&
-	    netif_is_lag_master(info->upper_dev)) {
-		struct netdev_lag_upper_info *lag_upper_info = info->upper_info;
-		struct netlink_ext_ack *extack;
+		if (ocelot_netdevice_dev_check(dev))
+			return ocelot_netdevice_changeupper(dev, info);
 
-		if (lag_upper_info &&
-		    lag_upper_info->tx_type != NETDEV_LAG_TX_TYPE_HASH) {
-			extack = netdev_notifier_info_to_extack(&info->info);
-			NL_SET_ERR_MSG_MOD(extack, "LAG device using unsupported Tx type");
+		if (netif_is_lag_master(dev))
+			return ocelot_netdevice_lag_changeupper(dev, info);
 
-			ret = -EINVAL;
-			goto notify;
-		}
+		break;
+	}
+	case NETDEV_CHANGELOWERSTATE: {
+		struct netdev_notifier_changelowerstate_info *info = ptr;
+
+		if (!ocelot_netdevice_dev_check(dev))
+			break;
+
+		return ocelot_netdevice_changelowerstate(dev,
+							 info->lower_state_info);
+	}
+	default:
+		break;
 	}
 
-	if (netif_is_lag_master(dev)) {
-		struct net_device *slave;
-		struct list_head *iter;
-
-		netdev_for_each_lower_dev(dev, slave, iter) {
-			ret = ocelot_netdevice_port_event(slave, event, info);
-			if (ret)
-				goto notify;
-		}
-	} else {
-		ret = ocelot_netdevice_port_event(dev, event, info);
-	}
-
-notify:
-	return notifier_from_errno(ret);
+	return NOTIFY_DONE;
 }
 
 struct notifier_block ocelot_netdevice_nb __read_mostly = {
@@ -1173,7 +1314,19 @@ int ocelot_probe_port(struct ocelot *ocelot, int port, struct regmap *target,
 	if (err) {
 		dev_err(ocelot->dev, "register_netdev failed\n");
 		free_netdev(dev);
+		ocelot->ports[port] = NULL;
+		return err;
 	}
 
-	return err;
+	return 0;
+}
+
+void ocelot_release_port(struct ocelot_port *ocelot_port)
+{
+	struct ocelot_port_private *priv = container_of(ocelot_port,
+						struct ocelot_port_private,
+						port);
+
+	unregister_netdev(priv->dev);
+	free_netdev(priv->dev);
 }

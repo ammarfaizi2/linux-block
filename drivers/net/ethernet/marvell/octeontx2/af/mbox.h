@@ -717,6 +717,8 @@ struct nix_rss_flowkey_cfg {
 #define NIX_FLOW_KEY_TYPE_INNR_ETH_DMAC BIT(17)
 #define NIX_FLOW_KEY_TYPE_VLAN		BIT(20)
 #define NIX_FLOW_KEY_TYPE_IPV4_PROTO	BIT(21)
+#define NIX_FLOW_KEY_TYPE_AH		BIT(22)
+#define NIX_FLOW_KEY_TYPE_ESP		BIT(23)
 	u32	flowkey_cfg; /* Flowkey types selected */
 	u8	group;       /* RSS context or group */
 };
@@ -1071,6 +1073,7 @@ struct cpt_rd_wr_reg_msg {
 	u64 *ret_val;
 	u64 val;
 	u8 is_write;
+	int blkaddr;
 };
 
 struct cpt_lf_alloc_req_msg {
@@ -1078,6 +1081,7 @@ struct cpt_lf_alloc_req_msg {
 	u16 nix_pf_func;
 	u16 sso_pf_func;
 	u16 eng_grpmsk;
+	int blkaddr;
 };
 
 #endif /* MBOX_H */

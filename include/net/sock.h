@@ -1350,14 +1350,18 @@ sk_memory_allocated_sub(struct sock *sk, int amt)
 	atomic_long_sub(amt, sk->sk_prot->memory_allocated);
 }
 
+#define SK_ALLOC_PERCPU_COUNTER_BATCH 16
+
 static inline void sk_sockets_allocated_dec(struct sock *sk)
 {
-	percpu_counter_dec(sk->sk_prot->sockets_allocated);
+	percpu_counter_add_batch(sk->sk_prot->sockets_allocated, -1,
+				 SK_ALLOC_PERCPU_COUNTER_BATCH);
 }
 
 static inline void sk_sockets_allocated_inc(struct sock *sk)
 {
-	percpu_counter_inc(sk->sk_prot->sockets_allocated);
+	percpu_counter_add_batch(sk->sk_prot->sockets_allocated, 1,
+				 SK_ALLOC_PERCPU_COUNTER_BATCH);
 }
 
 static inline u64
@@ -1921,10 +1925,13 @@ static inline void sk_set_txhash(struct sock *sk)
 	sk->sk_txhash = net_tx_rndhash();
 }
 
-static inline void sk_rethink_txhash(struct sock *sk)
+static inline bool sk_rethink_txhash(struct sock *sk)
 {
-	if (sk->sk_txhash)
+	if (sk->sk_txhash) {
 		sk_set_txhash(sk);
+		return true;
+	}
+	return false;
 }
 
 static inline struct dst_entry *
@@ -1947,11 +1954,9 @@ sk_dst_get(struct sock *sk)
 	return dst;
 }
 
-static inline void dst_negative_advice(struct sock *sk)
+static inline void __dst_negative_advice(struct sock *sk)
 {
 	struct dst_entry *ndst, *dst = __sk_dst_get(sk);
-
-	sk_rethink_txhash(sk);
 
 	if (dst && dst->ops->negative_advice) {
 		ndst = dst->ops->negative_advice(dst);
@@ -1962,6 +1967,12 @@ static inline void dst_negative_advice(struct sock *sk)
 			sk->sk_dst_pending_confirm = 0;
 		}
 	}
+}
+
+static inline void dst_negative_advice(struct sock *sk)
+{
+	sk_rethink_txhash(sk);
+	__dst_negative_advice(sk);
 }
 
 static inline void

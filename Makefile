@@ -2,7 +2,7 @@
 VERSION = 5
 PATCHLEVEL = 11
 SUBLEVEL = 0
-EXTRAVERSION = -rc2
+EXTRAVERSION = -rc6
 NAME = Kleptomaniac Octopus
 
 # *DOCUMENTATION*
@@ -649,7 +649,8 @@ ifeq ($(KBUILD_EXTMOD),)
 core-y		:= init/ usr/
 drivers-y	:= drivers/ sound/
 drivers-$(CONFIG_SAMPLES) += samples/
-drivers-y	+= net/ virt/
+drivers-$(CONFIG_NET) += net/
+drivers-y	+= virt/
 libs-y		:= lib/
 endif # KBUILD_EXTMOD
 

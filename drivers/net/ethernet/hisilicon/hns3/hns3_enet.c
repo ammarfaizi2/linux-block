@@ -1070,7 +1070,7 @@ static bool hns3_check_hw_tx_csum(struct sk_buff *skb)
 	 * HW checksum of the non-IP packets and GSO packets is handled at
 	 * different place in the following code
 	 */
-	if (skb->csum_not_inet || skb_is_gso(skb) ||
+	if (skb_csum_is_sctp(skb) || skb_is_gso(skb) ||
 	    !test_bit(HNS3_NIC_STATE_HW_TX_CSUM_ENABLE, &priv->state))
 		return false;
 
@@ -2800,12 +2800,6 @@ static void hns3_nic_alloc_rx_buffers(struct hns3_enet_ring *ring,
 	writel(i, ring->tqp->io_base + HNS3_RING_RX_RING_HEAD_REG);
 }
 
-static bool hns3_page_is_reusable(struct page *page)
-{
-	return page_to_nid(page) == numa_mem_id() &&
-		!page_is_pfmemalloc(page);
-}
-
 static bool hns3_can_reuse_page(struct hns3_desc_cb *cb)
 {
 	return (page_count(cb->priv) - cb->pagecnt_bias) == 1;
@@ -2823,10 +2817,11 @@ static void hns3_nic_reuse_page(struct sk_buff *skb, int i,
 	skb_add_rx_frag(skb, i, desc_cb->priv, desc_cb->page_offset + pull_len,
 			size - pull_len, truesize);
 
-	/* Avoid re-using remote pages, or the stack is still using the page
-	 * when page_offset rollback to zero, flag default unreuse
+	/* Avoid re-using remote and pfmemalloc pages, or the stack is still
+	 * using the page when page_offset rollback to zero, flag default
+	 * unreuse
 	 */
-	if (unlikely(!hns3_page_is_reusable(desc_cb->priv)) ||
+	if (!dev_page_is_reusable(desc_cb->priv) ||
 	    (!desc_cb->page_offset && !hns3_can_reuse_page(desc_cb))) {
 		__page_frag_cache_drain(desc_cb->priv, desc_cb->pagecnt_bias);
 		return;
@@ -3083,8 +3078,8 @@ static int hns3_alloc_skb(struct hns3_enet_ring *ring, unsigned int length,
 	if (length <= HNS3_RX_HEAD_SIZE) {
 		memcpy(__skb_put(skb, length), va, ALIGN(length, sizeof(long)));
 
-		/* We can reuse buffer as-is, just make sure it is local */
-		if (likely(hns3_page_is_reusable(desc_cb->priv)))
+		/* We can reuse buffer as-is, just make sure it is reusable */
+		if (dev_page_is_reusable(desc_cb->priv))
 			desc_cb->reuse_flag = 1;
 		else /* This page cannot be reused so discard it */
 			__page_frag_cache_drain(desc_cb->priv,
@@ -4286,8 +4281,7 @@ static int hns3_client_init(struct hnae3_handle *handle)
 
 	hns3_dbg_init(handle);
 
-	/* MTU range: (ETH_MIN_MTU(kernel default) - 9702) */
-	netdev->max_mtu = HNS3_MAX_MTU;
+	netdev->max_mtu = HNS3_MAX_MTU(ae_dev->dev_specs.max_frm_size);
 
 	if (test_bit(HNAE3_DEV_SUPPORT_HW_TX_CSUM_B, ae_dev->caps))
 		set_bit(HNS3_NIC_STATE_HW_TX_CSUM_ENABLE, &priv->state);

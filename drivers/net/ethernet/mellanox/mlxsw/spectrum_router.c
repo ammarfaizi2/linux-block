@@ -4309,11 +4309,18 @@ static int mlxsw_sp_nexthop_obj_validate(struct mlxsw_sp *mlxsw_sp,
 	if (event != NEXTHOP_EVENT_REPLACE)
 		return 0;
 
-	if (!info->is_grp)
+	switch (info->type) {
+	case NH_NOTIFIER_INFO_TYPE_SINGLE:
 		return mlxsw_sp_nexthop_obj_single_validate(mlxsw_sp, info->nh,
 							    info->extack);
-	return mlxsw_sp_nexthop_obj_group_validate(mlxsw_sp, info->nh_grp,
-						   info->extack);
+	case NH_NOTIFIER_INFO_TYPE_GRP:
+		return mlxsw_sp_nexthop_obj_group_validate(mlxsw_sp,
+							   info->nh_grp,
+							   info->extack);
+	default:
+		NL_SET_ERR_MSG_MOD(info->extack, "Unsupported nexthop type");
+		return -EOPNOTSUPP;
+	}
 }
 
 static bool mlxsw_sp_nexthop_obj_is_gateway(struct mlxsw_sp *mlxsw_sp,
@@ -4321,13 +4328,17 @@ static bool mlxsw_sp_nexthop_obj_is_gateway(struct mlxsw_sp *mlxsw_sp,
 {
 	const struct net_device *dev;
 
-	if (info->is_grp)
+	switch (info->type) {
+	case NH_NOTIFIER_INFO_TYPE_SINGLE:
+		dev = info->nh->dev;
+		return info->nh->gw_family || info->nh->is_reject ||
+		       mlxsw_sp_netdev_ipip_type(mlxsw_sp, dev, NULL);
+	case NH_NOTIFIER_INFO_TYPE_GRP:
 		/* Already validated earlier. */
 		return true;
-
-	dev = info->nh->dev;
-	return info->nh->gw_family || info->nh->is_reject ||
-	       mlxsw_sp_netdev_ipip_type(mlxsw_sp, dev, NULL);
+	default:
+		return false;
+	}
 }
 
 static void mlxsw_sp_nexthop_obj_blackhole_init(struct mlxsw_sp *mlxsw_sp,
@@ -4410,10 +4421,21 @@ mlxsw_sp_nexthop_obj_group_info_init(struct mlxsw_sp *mlxsw_sp,
 				     struct mlxsw_sp_nexthop_group *nh_grp,
 				     struct nh_notifier_info *info)
 {
-	unsigned int nhs = info->is_grp ? info->nh_grp->num_nh : 1;
 	struct mlxsw_sp_nexthop_group_info *nhgi;
 	struct mlxsw_sp_nexthop *nh;
+	unsigned int nhs;
 	int err, i;
+
+	switch (info->type) {
+	case NH_NOTIFIER_INFO_TYPE_SINGLE:
+		nhs = 1;
+		break;
+	case NH_NOTIFIER_INFO_TYPE_GRP:
+		nhs = info->nh_grp->num_nh;
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	nhgi = kzalloc(struct_size(nhgi, nexthops, nhs), GFP_KERNEL);
 	if (!nhgi)
@@ -4427,12 +4449,18 @@ mlxsw_sp_nexthop_obj_group_info_init(struct mlxsw_sp *mlxsw_sp,
 		int weight;
 
 		nh = &nhgi->nexthops[i];
-		if (info->is_grp) {
-			nh_obj = &info->nh_grp->nh_entries[i].nh;
-			weight = info->nh_grp->nh_entries[i].weight;
-		} else {
+		switch (info->type) {
+		case NH_NOTIFIER_INFO_TYPE_SINGLE:
 			nh_obj = info->nh;
 			weight = 1;
+			break;
+		case NH_NOTIFIER_INFO_TYPE_GRP:
+			nh_obj = &info->nh_grp->nh_entries[i].nh;
+			weight = info->nh_grp->nh_entries[i].weight;
+			break;
+		default:
+			err = -EINVAL;
+			goto err_nexthop_obj_init;
 		}
 		err = mlxsw_sp_nexthop_obj_init(mlxsw_sp, nh_grp, nh, nh_obj,
 						weight);
@@ -4960,6 +4988,7 @@ mlxsw_sp_fib4_entry_hw_flags_clear(struct mlxsw_sp *mlxsw_sp,
 	fib_alias_hw_flags_set(mlxsw_sp_net(mlxsw_sp), &fri);
 }
 
+#if IS_ENABLED(CONFIG_IPV6)
 static void
 mlxsw_sp_fib6_entry_hw_flags_set(struct mlxsw_sp *mlxsw_sp,
 				 struct mlxsw_sp_fib_entry *fib_entry)
@@ -4976,10 +5005,18 @@ mlxsw_sp_fib6_entry_hw_flags_set(struct mlxsw_sp *mlxsw_sp,
 	fib6_entry = container_of(fib_entry, struct mlxsw_sp_fib6_entry,
 				  common);
 	list_for_each_entry(mlxsw_sp_rt6, &fib6_entry->rt6_list, list)
-		fib6_info_hw_flags_set(mlxsw_sp_rt6->rt, should_offload,
-				       !should_offload);
+		fib6_info_hw_flags_set(mlxsw_sp_net(mlxsw_sp), mlxsw_sp_rt6->rt,
+				       should_offload, !should_offload);
 }
+#else
+static void
+mlxsw_sp_fib6_entry_hw_flags_set(struct mlxsw_sp *mlxsw_sp,
+				 struct mlxsw_sp_fib_entry *fib_entry)
+{
+}
+#endif
 
+#if IS_ENABLED(CONFIG_IPV6)
 static void
 mlxsw_sp_fib6_entry_hw_flags_clear(struct mlxsw_sp *mlxsw_sp,
 				   struct mlxsw_sp_fib_entry *fib_entry)
@@ -4990,8 +5027,16 @@ mlxsw_sp_fib6_entry_hw_flags_clear(struct mlxsw_sp *mlxsw_sp,
 	fib6_entry = container_of(fib_entry, struct mlxsw_sp_fib6_entry,
 				  common);
 	list_for_each_entry(mlxsw_sp_rt6, &fib6_entry->rt6_list, list)
-		fib6_info_hw_flags_set(mlxsw_sp_rt6->rt, false, false);
+		fib6_info_hw_flags_set(mlxsw_sp_net(mlxsw_sp), mlxsw_sp_rt6->rt,
+				       false, false);
 }
+#else
+static void
+mlxsw_sp_fib6_entry_hw_flags_clear(struct mlxsw_sp *mlxsw_sp,
+				   struct mlxsw_sp_fib_entry *fib_entry)
+{
+}
+#endif
 
 static void
 mlxsw_sp_fib_entry_hw_flags_set(struct mlxsw_sp *mlxsw_sp,

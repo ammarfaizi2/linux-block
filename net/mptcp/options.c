@@ -699,10 +699,11 @@ static bool mptcp_established_options_mp_prio(struct sock *sk,
 	if (!subflow->send_mp_prio)
 		return false;
 
-	if (remaining < TCPOLEN_MPTCP_PRIO)
+	/* account for the trailing 'nop' option */
+	if (remaining < TCPOLEN_MPTCP_PRIO_ALIGN)
 		return false;
 
-	*size = TCPOLEN_MPTCP_PRIO;
+	*size = TCPOLEN_MPTCP_PRIO_ALIGN;
 	opts->suboptions |= OPTION_MPTCP_PRIO;
 	opts->backup = subflow->request_bkup;
 
@@ -1024,6 +1025,10 @@ void mptcp_incoming_options(struct sock *sk, struct sk_buff *skb)
 			mptcp_pm_del_add_timer(msk, &addr);
 			MPTCP_INC_STATS(sock_net(sk), MPTCP_MIB_ECHOADD);
 		}
+
+		if (mp_opt.port)
+			MPTCP_INC_STATS(sock_net(sk), MPTCP_MIB_PORTADD);
+
 		mp_opt.add_addr = 0;
 	}
 

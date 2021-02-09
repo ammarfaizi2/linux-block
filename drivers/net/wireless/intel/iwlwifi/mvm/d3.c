@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
 /*
- * Copyright (C) 2012-2014, 2018-2020 Intel Corporation
+ * Copyright (C) 2012-2014, 2018-2021 Intel Corporation
  * Copyright (C) 2013-2015 Intel Mobile Communications GmbH
  * Copyright (C) 2016-2017 Intel Deutschland GmbH
  */
@@ -2032,8 +2032,6 @@ static int __iwl_mvm_resume(struct iwl_mvm *mvm, bool test)
 
 	mutex_lock(&mvm->mutex);
 
-	clear_bit(IWL_MVM_STATUS_IN_D3, &mvm->status);
-
 	/* get the BSS vif pointer again */
 	vif = iwl_mvm_get_bss_vif(mvm);
 	if (IS_ERR_OR_NULL(vif))
@@ -2143,11 +2141,13 @@ err:
 
 out_iterate:
 	if (!test)
-		ieee80211_iterate_active_interfaces_rtnl(mvm->hw,
+		ieee80211_iterate_active_interfaces_mtx(mvm->hw,
 			IEEE80211_IFACE_ITER_NORMAL,
 			iwl_mvm_d3_disconnect_iter, keep ? vif : NULL);
 
 out:
+	clear_bit(IWL_MVM_STATUS_IN_D3, &mvm->status);
+
 	/* no need to reset the device in unified images, if successful */
 	if (unified_image && !ret) {
 		/* nothing else to do if we already sent D0I3_END_CMD */
