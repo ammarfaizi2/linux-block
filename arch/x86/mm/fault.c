@@ -346,15 +346,6 @@ out:
 
 #else /* CONFIG_X86_64: */
 
-#ifdef CONFIG_CPU_SUP_AMD
-static const char errata93_warning[] =
-KERN_ERR 
-"******* Your BIOS seems to not contain a fix for K8 errata #93\n"
-"******* Working around it, but it may cause SEGVs or burn power.\n"
-"******* Please consider a BIOS update.\n"
-"******* Disabling USB legacy in the BIOS may also help.\n";
-#endif
-
 /*
  * No vm86 mode in 64-bit mode:
  */
@@ -458,7 +449,12 @@ static int is_errata93(struct pt_regs *regs, unsigned long address)
 	address |= 0xffffffffUL << 32;
 	if ((address >= (u64)_stext && address <= (u64)_etext) ||
 	    (address >= MODULES_VADDR && address <= MODULES_END)) {
-		printk_once(errata93_warning);
+		printk_once(KERN_ERR
+			    "******* Your BIOS seems to not contain a fix for K8 errata #93\n"
+			    "******* Working around it, but it may cause SEGVs or burn power.\n"
+"******* Please consider a BIOS update.\n"
+			    "******* Disabling USB legacy in the BIOS may also help.\n"
+			);
 		regs->ip = address;
 		return 1;
 	}
