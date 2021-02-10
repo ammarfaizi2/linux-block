@@ -442,9 +442,8 @@ bad:
  */
 static int is_errata93(struct pt_regs *regs, unsigned long address)
 {
-#if defined(CONFIG_X86_64) && defined(CONFIG_CPU_SUP_AMD)
-	if (boot_cpu_data.x86_vendor != X86_VENDOR_AMD
-	    || boot_cpu_data.x86 != 0xf)
+#if defined(CONFIG_X86_64)
+	if (!is_amd_k8_pre_npt())
 		return 0;
 
 	if (user_mode(regs))
