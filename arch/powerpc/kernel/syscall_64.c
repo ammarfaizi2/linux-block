@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <linux/context_tracking.h>
 #include <linux/err.h>
 #include <asm/asm-prototypes.h>
 #include <asm/kup.h>
 #include <asm/cputime.h>
+#include <asm/interrupt.h>
 #include <asm/hw_irq.h>
+#include <asm/interrupt.h>
 #include <asm/kprobes.h>
 #include <asm/paca.h>
 #include <asm/ptrace.h>
@@ -26,6 +29,9 @@ notrace long system_call_exception(long r3, long r4, long r5,
 
 	if (IS_ENABLED(CONFIG_PPC_IRQ_SOFT_MASK_DEBUG))
 		BUG_ON(irq_soft_mask_return() != IRQS_ALL_DISABLED);
+
+	CT_WARN_ON(ct_state() == CONTEXT_KERNEL);
+	user_exit_irqoff();
 
 	trace_hardirqs_off(); /* finish reconciling */
 
@@ -63,15 +69,7 @@ notrace long system_call_exception(long r3, long r4, long r5,
 
 	account_cpu_user_entry();
 
-#ifdef CONFIG_PPC_SPLPAR
-	if (IS_ENABLED(CONFIG_VIRT_CPU_ACCOUNTING_NATIVE) &&
-	    firmware_has_feature(FW_FEATURE_SPLPAR)) {
-		struct lppaca *lp = local_paca->lppaca_ptr;
-
-		if (unlikely(local_paca->dtl_ridx != be64_to_cpu(lp->dtl_idx)))
-			accumulate_stolen_time();
-	}
-#endif
+	account_stolen_time();
 
 	/*
 	 * This is not required for the syscall exit path, but makes the
@@ -138,8 +136,12 @@ notrace long system_call_exception(long r3, long r4, long r5,
 /*
  * local irqs must be disabled. Returns false if the caller must re-enable
  * them, check for new work, and try again.
+ *
+ * This should be called with local irqs disabled, but if they were previously
+ * enabled when the interrupt handler returns (indicating a process-context /
+ * synchronous interrupt) then irqs_enabled should be true.
  */
-static notrace inline bool prep_irq_for_enabled_exit(bool clear_ri)
+static notrace inline bool __prep_irq_for_enabled_exit(bool clear_ri)
 {
 	/* This must be done with RI=1 because tracing may touch vmaps */
 	trace_hardirqs_on();
@@ -164,6 +166,37 @@ static notrace inline bool prep_irq_for_enabled_exit(bool clear_ri)
 	return true;
 }
 
+static notrace inline bool prep_irq_for_enabled_exit(bool clear_ri, bool irqs_enabled)
+{
+	if (__prep_irq_for_enabled_exit(clear_ri))
+		return true;
+
+	/*
+	 * Must replay pending soft-masked interrupts now. Don't just
+	 * local_irq_enabe(); local_irq_disable(); because if we are
+	 * returning from an asynchronous interrupt here, another one
+	 * might hit after irqs are enabled, and it would exit via this
+	 * same path allowing another to fire, and so on unbounded.
+	 *
+	 * If interrupts were enabled when this interrupt exited,
+	 * indicating a process context (synchronous) interrupt,
+	 * local_irq_enable/disable can be used, which will enable
+	 * interrupts rather than keeping them masked (unclear how
+	 * much benefit this is over just replaying for all cases,
+	 * because we immediately disable again, so all we're really
+	 * doing is allowing hard interrupts to execute directly for
+	 * a very small time, rather than being masked and replayed).
+	 */
+	if (irqs_enabled) {
+		local_irq_enable();
+		local_irq_disable();
+	} else {
+		replay_soft_interrupts();
+	}
+
+	return false;
+}
+
 /*
  * This should be called after a syscall returns, with r3 the return value
  * from the syscall. If this function returns non-zero, the system call
@@ -180,6 +213,8 @@ notrace unsigned long syscall_exit_prepare(unsigned long r3,
 	unsigned long *ti_flagsp = &current_thread_info()->flags;
 	unsigned long ti_flags;
 	unsigned long ret = 0;
+
+	CT_WARN_ON(ct_state() == CONTEXT_USER);
 
 	kuap_check_amr();
 
@@ -212,8 +247,9 @@ notrace unsigned long syscall_exit_prepare(unsigned long r3,
 		ret |= _TIF_RESTOREALL;
 	}
 
-again:
 	local_irq_disable();
+
+again:
 	ti_flags = READ_ONCE(*ti_flagsp);
 	while (unlikely(ti_flags & (_TIF_USER_WORK_MASK & ~_TIF_RESTORE_TM))) {
 		local_irq_enable();
@@ -257,9 +293,13 @@ again:
 		}
 	}
 
+	user_enter_irqoff();
+
 	/* scv need not set RI=0 because SRRs are not used */
-	if (unlikely(!prep_irq_for_enabled_exit(!scv))) {
+	if (unlikely(!__prep_irq_for_enabled_exit(!scv))) {
+		user_exit_irqoff();
 		local_irq_enable();
+		local_irq_disable();
 		goto again;
 	}
 
@@ -294,6 +334,7 @@ notrace unsigned long interrupt_exit_user_prepare(struct pt_regs *regs, unsigned
 	BUG_ON(!(regs->msr & MSR_PR));
 	BUG_ON(!FULL_REGS(regs));
 	BUG_ON(regs->softe != IRQS_ENABLED);
+	CT_WARN_ON(ct_state() == CONTEXT_USER);
 
 	/*
 	 * We don't need to restore AMR on the way back to userspace for KUAP.
@@ -336,7 +377,10 @@ again:
 		}
 	}
 
-	if (unlikely(!prep_irq_for_enabled_exit(true))) {
+	user_enter_irqoff();
+
+	if (unlikely(!__prep_irq_for_enabled_exit(true))) {
+		user_exit_irqoff();
 		local_irq_enable();
 		local_irq_disable();
 		goto again;
@@ -381,6 +425,12 @@ notrace unsigned long interrupt_exit_kernel_prepare(struct pt_regs *regs, unsign
 		unrecoverable_exception(regs);
 	BUG_ON(regs->msr & MSR_PR);
 	BUG_ON(!FULL_REGS(regs));
+	/*
+	 * CT_WARN_ON comes here via program_check_exception,
+	 * so avoid recursion.
+	 */
+	if (TRAP(regs) != 0x700)
+		CT_WARN_ON(ct_state() == CONTEXT_USER);
 
 	amr = kuap_get_and_check_amr();
 
@@ -403,20 +453,8 @@ again:
 			}
 		}
 
-		if (unlikely(!prep_irq_for_enabled_exit(true))) {
-			/*
-			 * Can't local_irq_restore to replay if we were in
-			 * interrupt context. Must replay directly.
-			 */
-			if (irqs_disabled_flags(flags)) {
-				replay_soft_interrupts();
-			} else {
-				local_irq_restore(flags);
-				local_irq_save(flags);
-			}
-			/* Took an interrupt, may have more exit work to do. */
+		if (unlikely(!prep_irq_for_enabled_exit(true, !irqs_disabled_flags(flags))))
 			goto again;
-		}
 	} else {
 		/* Returning to a kernel context with local irqs disabled. */
 		__hard_EE_RI_disable();
