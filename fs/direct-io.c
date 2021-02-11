@@ -1139,7 +1139,6 @@ do_blockdev_direct_IO(struct kiocb *iocb, struct inode *inode,
 	struct dio_submit sdio = { 0, };
 	struct buffer_head map_bh = { 0, };
 	struct blk_plug plug;
-	unsigned long align = offset | iov_iter_alignment(iter);
 
 	/*
 	 * Avoid references to bdev if not absolutely needed to give
@@ -1173,11 +1172,19 @@ do_blockdev_direct_IO(struct kiocb *iocb, struct inode *inode,
 		goto fail_dio;
 	}
 
-	if (align & blocksize_mask) {
+	if (offset & blocksize_mask) {
 		if (bdev)
 			blkbits = blksize_bits(bdev_logical_block_size(bdev));
 		blocksize_mask = (1 << blkbits) - 1;
-		if (align & blocksize_mask)
+		if (offset & blocksize_mask)
+			goto fail_dio;
+	}
+	if (iov_iter_alignment(iter) & offset) {
+		struct request_queue *q;
+		if (!bdev)
+			goto fail_dio;
+		q = bdev_get_queue(bdev);
+		if (iov_iter_alignment(iter) & (unsigned long) q->dma_alignment)
 			goto fail_dio;
 	}
 
