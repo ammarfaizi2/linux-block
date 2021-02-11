@@ -6,6 +6,7 @@
 #include <linux/hardirq.h>
 #include <asm/cputime.h>
 #include <asm/ftrace.h>
+#include <asm/kprobes.h>
 #include <asm/runlatch.h>
 
 struct interrupt_state {
@@ -13,6 +14,18 @@ struct interrupt_state {
 	enum ctx_state ctx_state;
 #endif
 };
+
+static inline void booke_restore_dbcr0(void)
+{
+#ifdef CONFIG_PPC_ADV_DEBUG_REGS
+	unsigned long dbcr0 = current->thread.debug.dbcr0;
+
+	if (IS_ENABLED(CONFIG_PPC32) && unlikely(dbcr0 & DBCR0_IDM)) {
+		mtspr(SPRN_DBSR, -1);
+		mtspr(SPRN_DBCR0, global_dbcr0[smp_processor_id()]);
+	}
+#endif
+}
 
 static inline void interrupt_enter_prepare(struct pt_regs *regs, struct interrupt_state *state)
 {
@@ -164,6 +177,15 @@ static inline void interrupt_nmi_exit_prepare(struct pt_regs *regs, struct inter
 #endif
 }
 
+/*
+ * Don't use noinstr here like x86, but rather add NOKPROBE_SYMBOL to each
+ * function definition. The reason for this is the noinstr section is placed
+ * after the main text section, i.e., very far away from the interrupt entry
+ * asm. That creates problems with fitting linker stubs when building large
+ * kernels.
+ */
+#define interrupt_handler __visible noinline notrace __no_kcsan __no_sanitize_address
+
 /**
  * DECLARE_INTERRUPT_HANDLER_RAW - Declare raw interrupt handler function
  * @func:	Function name of the entry point
@@ -198,7 +220,7 @@ static inline void interrupt_nmi_exit_prepare(struct pt_regs *regs, struct inter
 #define DEFINE_INTERRUPT_HANDLER_RAW(func)				\
 static __always_inline long ____##func(struct pt_regs *regs);		\
 									\
-__visible noinstr long func(struct pt_regs *regs)			\
+interrupt_handler long func(struct pt_regs *regs)			\
 {									\
 	long ret;							\
 									\
@@ -206,6 +228,7 @@ __visible noinstr long func(struct pt_regs *regs)			\
 									\
 	return ret;							\
 }									\
+NOKPROBE_SYMBOL(func);							\
 									\
 static __always_inline long ____##func(struct pt_regs *regs)
 
@@ -228,7 +251,7 @@ static __always_inline long ____##func(struct pt_regs *regs)
 #define DEFINE_INTERRUPT_HANDLER(func)					\
 static __always_inline void ____##func(struct pt_regs *regs);		\
 									\
-__visible noinstr void func(struct pt_regs *regs)			\
+interrupt_handler void func(struct pt_regs *regs)			\
 {									\
 	struct interrupt_state state;					\
 									\
@@ -238,6 +261,7 @@ __visible noinstr void func(struct pt_regs *regs)			\
 									\
 	interrupt_exit_prepare(regs, &state);				\
 }									\
+NOKPROBE_SYMBOL(func);							\
 									\
 static __always_inline void ____##func(struct pt_regs *regs)
 
@@ -262,7 +286,7 @@ static __always_inline void ____##func(struct pt_regs *regs)
 #define DEFINE_INTERRUPT_HANDLER_RET(func)				\
 static __always_inline long ____##func(struct pt_regs *regs);		\
 									\
-__visible noinstr long func(struct pt_regs *regs)			\
+interrupt_handler long func(struct pt_regs *regs)			\
 {									\
 	struct interrupt_state state;					\
 	long ret;							\
@@ -275,6 +299,7 @@ __visible noinstr long func(struct pt_regs *regs)			\
 									\
 	return ret;							\
 }									\
+NOKPROBE_SYMBOL(func);							\
 									\
 static __always_inline long ____##func(struct pt_regs *regs)
 
@@ -297,7 +322,7 @@ static __always_inline long ____##func(struct pt_regs *regs)
 #define DEFINE_INTERRUPT_HANDLER_ASYNC(func)				\
 static __always_inline void ____##func(struct pt_regs *regs);		\
 									\
-__visible noinstr void func(struct pt_regs *regs)			\
+interrupt_handler void func(struct pt_regs *regs)			\
 {									\
 	struct interrupt_state state;					\
 									\
@@ -307,6 +332,7 @@ __visible noinstr void func(struct pt_regs *regs)			\
 									\
 	interrupt_async_exit_prepare(regs, &state);			\
 }									\
+NOKPROBE_SYMBOL(func);							\
 									\
 static __always_inline void ____##func(struct pt_regs *regs)
 
@@ -331,7 +357,7 @@ static __always_inline void ____##func(struct pt_regs *regs)
 #define DEFINE_INTERRUPT_HANDLER_NMI(func)				\
 static __always_inline long ____##func(struct pt_regs *regs);		\
 									\
-__visible noinstr long func(struct pt_regs *regs)			\
+interrupt_handler long func(struct pt_regs *regs)			\
 {									\
 	struct interrupt_nmi_state state;				\
 	long ret;							\
@@ -344,6 +370,7 @@ __visible noinstr long func(struct pt_regs *regs)			\
 									\
 	return ret;							\
 }									\
+NOKPROBE_SYMBOL(func);							\
 									\
 static __always_inline long ____##func(struct pt_regs *regs)
 
