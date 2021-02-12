@@ -1280,7 +1280,8 @@ xfs_ioctl_setattr_prepare_dax(
  */
 static struct xfs_trans *
 xfs_ioctl_setattr_get_trans(
-	struct file		*file)
+	struct file		*file,
+	struct xfs_dquot	*pdqp)
 {
 	struct xfs_inode	*ip = XFS_I(file_inode(file));
 	struct xfs_mount	*mp = ip->i_mount;
@@ -1288,17 +1289,15 @@ xfs_ioctl_setattr_get_trans(
 	int			error = -EROFS;
 
 	if (mp->m_flags & XFS_MOUNT_RDONLY)
-		goto out_unlock;
+		goto out_error;
 	error = -EIO;
 	if (XFS_FORCED_SHUTDOWN(mp))
-		goto out_unlock;
+		goto out_error;
 
-	error = xfs_trans_alloc(mp, &M_RES(mp)->tr_ichange, 0, 0, 0, &tp);
+	error = xfs_trans_alloc_ichange(ip, NULL, NULL, pdqp,
+			capable(CAP_FOWNER), &tp);
 	if (error)
-		goto out_unlock;
-
-	xfs_ilock(ip, XFS_ILOCK_EXCL);
-	xfs_trans_ijoin(tp, ip, XFS_ILOCK_EXCL);
+		goto out_error;
 
 	/*
 	 * CAP_FOWNER overrides the following restrictions:
@@ -1318,7 +1317,7 @@ xfs_ioctl_setattr_get_trans(
 
 out_cancel:
 	xfs_trans_cancel(tp);
-out_unlock:
+out_error:
 	return ERR_PTR(error);
 }
 
@@ -1444,13 +1443,13 @@ xfs_ioctl_setattr(
 	struct xfs_trans	*tp;
 	struct xfs_dquot	*pdqp = NULL;
 	struct xfs_dquot	*olddquot = NULL;
-	int			code;
+	int			error;
 
 	trace_xfs_ioctl_setattr(ip);
 
-	code = xfs_ioctl_setattr_check_projid(ip, fa);
-	if (code)
-		return code;
+	error = xfs_ioctl_setattr_check_projid(ip, fa);
+	if (error)
+		return error;
 
 	/*
 	 * If disk quotas is on, we make sure that the dquots do exist on disk,
@@ -1461,44 +1460,36 @@ xfs_ioctl_setattr(
 	 * because the i_*dquot fields will get updated anyway.
 	 */
 	if (XFS_IS_QUOTA_ON(mp)) {
-		code = xfs_qm_vop_dqalloc(ip, VFS_I(ip)->i_uid,
+		error = xfs_qm_vop_dqalloc(ip, VFS_I(ip)->i_uid,
 				VFS_I(ip)->i_gid, fa->fsx_projid,
 				XFS_QMOPT_PQUOTA, NULL, NULL, &pdqp);
-		if (code)
-			return code;
+		if (error)
+			return error;
 	}
 
 	xfs_ioctl_setattr_prepare_dax(ip, fa);
 
-	tp = xfs_ioctl_setattr_get_trans(file);
+	tp = xfs_ioctl_setattr_get_trans(file, pdqp);
 	if (IS_ERR(tp)) {
-		code = PTR_ERR(tp);
+		error = PTR_ERR(tp);
 		goto error_free_dquots;
 	}
 
-	if (XFS_IS_QUOTA_RUNNING(mp) && XFS_IS_PQUOTA_ON(mp) &&
-	    ip->i_d.di_projid != fa->fsx_projid) {
-		code = xfs_qm_vop_chown_reserve(tp, ip, NULL, NULL, pdqp,
-				capable(CAP_FOWNER) ?  XFS_QMOPT_FORCE_RES : 0);
-		if (code)	/* out of quota */
-			goto error_trans_cancel;
-	}
-
 	xfs_fill_fsxattr(ip, false, &old_fa);
-	code = vfs_ioc_fssetxattr_check(VFS_I(ip), &old_fa, fa);
-	if (code)
+	error = vfs_ioc_fssetxattr_check(VFS_I(ip), &old_fa, fa);
+	if (error)
 		goto error_trans_cancel;
 
-	code = xfs_ioctl_setattr_check_extsize(ip, fa);
-	if (code)
+	error = xfs_ioctl_setattr_check_extsize(ip, fa);
+	if (error)
 		goto error_trans_cancel;
 
-	code = xfs_ioctl_setattr_check_cowextsize(ip, fa);
-	if (code)
+	error = xfs_ioctl_setattr_check_cowextsize(ip, fa);
+	if (error)
 		goto error_trans_cancel;
 
-	code = xfs_ioctl_setattr_xflags(tp, ip, fa);
-	if (code)
+	error = xfs_ioctl_setattr_xflags(tp, ip, fa);
+	if (error)
 		goto error_trans_cancel;
 
 	/*
@@ -1538,7 +1529,7 @@ xfs_ioctl_setattr(
 	else
 		ip->i_d.di_cowextsize = 0;
 
-	code = xfs_trans_commit(tp);
+	error = xfs_trans_commit(tp);
 
 	/*
 	 * Release any dquot(s) the inode had kept before chown.
@@ -1546,13 +1537,13 @@ xfs_ioctl_setattr(
 	xfs_qm_dqrele(olddquot);
 	xfs_qm_dqrele(pdqp);
 
-	return code;
+	return error;
 
 error_trans_cancel:
 	xfs_trans_cancel(tp);
 error_free_dquots:
 	xfs_qm_dqrele(pdqp);
-	return code;
+	return error;
 }
 
 STATIC int
@@ -1615,7 +1606,7 @@ xfs_ioc_setxflags(
 
 	xfs_ioctl_setattr_prepare_dax(ip, &fa);
 
-	tp = xfs_ioctl_setattr_get_trans(filp);
+	tp = xfs_ioctl_setattr_get_trans(filp, NULL);
 	if (IS_ERR(tp)) {
 		error = PTR_ERR(tp);
 		goto out_drop_write;
@@ -2267,7 +2258,7 @@ xfs_file_ioctl(
 	}
 
 	case XFS_IOC_FSGROWFSDATA: {
-		xfs_growfs_data_t in;
+		struct xfs_growfs_data in;
 
 		if (copy_from_user(&in, arg, sizeof(in)))
 			return -EFAULT;
@@ -2281,7 +2272,7 @@ xfs_file_ioctl(
 	}
 
 	case XFS_IOC_FSGROWFSLOG: {
-		xfs_growfs_log_t in;
+		struct xfs_growfs_log in;
 
 		if (copy_from_user(&in, arg, sizeof(in)))
 			return -EFAULT;
@@ -2355,8 +2346,10 @@ xfs_file_ioctl(
 		if (error)
 			return error;
 
+		trace_xfs_ioc_free_eofblocks(mp, &keofb, _RET_IP_);
+
 		sb_start_write(mp->m_super);
-		error = xfs_icache_free_eofblocks(mp, &keofb);
+		error = xfs_blockgc_free_space(mp, &keofb);
 		sb_end_write(mp->m_super);
 		return error;
 	}
