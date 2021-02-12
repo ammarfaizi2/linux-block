@@ -1213,8 +1213,6 @@ static int __io_sq_thread_acquire_mm_files(struct io_ring_ctx *ctx,
 static inline int io_sq_thread_acquire_mm_files(struct io_ring_ctx *ctx,
 						struct io_kiocb *req)
 {
-	if (unlikely(current->flags & PF_EXITING))
-		return -EFAULT;
 	if (!(ctx->flags & IORING_SETUP_SQPOLL))
 		return 0;
 	return __io_sq_thread_acquire_mm_files(ctx, req);
@@ -2174,7 +2172,7 @@ static struct io_kiocb *__io_req_find_next(struct io_kiocb *req)
 
 static inline struct io_kiocb *io_req_find_next(struct io_kiocb *req)
 {
-	if (likely(!(req->link) && !(req->flags & REQ_F_LINK_TIMEOUT)))
+	if (likely(!(req->flags & (REQ_F_LINK|REQ_F_HARDLINK))))
 		return NULL;
 	return __io_req_find_next(req);
 }
@@ -2338,7 +2336,8 @@ static void __io_req_task_submit(struct io_kiocb *req)
 
 	/* ctx stays valid until unlock, even if we drop all ours ctx->refs */
 	mutex_lock(&ctx->uring_lock);
-	if (!ctx->sqo_dead && !io_sq_thread_acquire_mm_files(ctx, req))
+	if (!ctx->sqo_dead && !(current->flags & PF_EXITING) &&
+	    !io_sq_thread_acquire_mm_files(ctx, req))
 		__io_queue_sqe(req);
 	else
 		__io_req_task_cancel(req, -EFAULT);
@@ -6810,14 +6809,15 @@ static int io_init_req(struct io_ring_ctx *ctx, struct io_kiocb *req,
 {
 	struct io_submit_state *state;
 	unsigned int sqe_flags;
-	int id, ret;
+	int id, ret = 0;
 
 	req->opcode = READ_ONCE(sqe->opcode);
+	/* same numerical values with corresponding REQ_F_*, safe to copy */
+	req->flags = sqe_flags = READ_ONCE(sqe->flags);
 	req->user_data = READ_ONCE(sqe->user_data);
 	req->async_data = NULL;
 	req->file = NULL;
 	req->ctx = ctx;
-	req->flags = 0;
 	req->link = NULL;
 	req->fixed_rsrc_refs = NULL;
 	/* one is dropped after submission, the other at completion */
@@ -6825,16 +6825,15 @@ static int io_init_req(struct io_ring_ctx *ctx, struct io_kiocb *req,
 	req->task = current;
 	req->result = 0;
 
+	/* enforce forwards compatibility on users */
+	if (unlikely(sqe_flags & ~SQE_VALID_FLAGS))
+		return -EINVAL;
+
 	if (unlikely(req->opcode >= IORING_OP_LAST))
 		return -EINVAL;
 
 	if (unlikely(io_sq_thread_acquire_mm_files(ctx, req)))
 		return -EFAULT;
-
-	sqe_flags = READ_ONCE(sqe->flags);
-	/* enforce forwards compatibility on users */
-	if (unlikely(sqe_flags & ~SQE_VALID_FLAGS))
-		return -EINVAL;
 
 	if (unlikely(!io_check_restriction(ctx, req, sqe_flags)))
 		return -EACCES;
@@ -6858,8 +6857,6 @@ static int io_init_req(struct io_ring_ctx *ctx, struct io_kiocb *req,
 		req->work.flags |= IO_WQ_WORK_CREDS;
 	}
 
-	/* same numerical values with corresponding REQ_F_*, safe to copy */
-	req->flags |= sqe_flags;
 	state = &ctx->submit_state;
 
 	/*
@@ -6872,7 +6869,6 @@ static int io_init_req(struct io_ring_ctx *ctx, struct io_kiocb *req,
 		state->plug_started = true;
 	}
 
-	ret = 0;
 	if (io_op_defs[req->opcode].needs_file) {
 		bool fixed = req->flags & REQ_F_FIXED_FILE;
 
