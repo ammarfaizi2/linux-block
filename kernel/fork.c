@@ -1940,6 +1940,8 @@ static __latent_entropy struct task_struct *copy_process(
 	p = dup_task_struct(current, node);
 	if (!p)
 		goto fork_out;
+	if (args->io_wq)
+		p->flags |= PF_KTHREAD;
 
 	/*
 	 * This _must_ happen before we call free_task(), i.e. before we jump

@@ -30,6 +30,7 @@ struct kernel_clone_args {
 	pid_t *set_tid;
 	/* Number of elements in *set_tid */
 	size_t set_tid_size;
+	int io_wq;
 	int cgroup;
 	struct cgroup *cgrp;
 	struct css_set *cset;

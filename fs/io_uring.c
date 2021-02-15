@@ -9133,8 +9133,13 @@ void __io_uring_files_cancel(struct files_struct *files)
 
 	/* make sure overflow events are dropped */
 	atomic_inc(&tctx->in_idle);
-	xa_for_each(&tctx->xa, index, file)
-		io_uring_cancel_task_requests(file->private_data, files);
+	xa_for_each(&tctx->xa, index, file) {
+		struct io_ring_ctx *ctx = file->private_data;
+
+		if (ctx->io_wq)
+			io_wq_exit(ctx->io_wq);
+		io_uring_cancel_task_requests(ctx, files);
+	}
 	atomic_dec(&tctx->in_idle);
 
 	if (files)
