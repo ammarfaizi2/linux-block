@@ -1076,7 +1076,7 @@ static bool io_match_task(struct io_kiocb *head,
 			continue;
 		if (req->file && req->file->f_op == &io_uring_fops)
 			return true;
-		if (req->work.identity->files == files)
+		if (req->task->files == files)
 			return true;
 	}
 	return false;
@@ -1200,31 +1200,6 @@ static inline void req_set_fail_links(struct io_kiocb *req)
 		req->flags |= REQ_F_FAIL_LINK;
 }
 
-/*
- * None of these are dereferenced, they are simply used to check if any of
- * them have changed. If we're under current and check they are still the
- * same, we're fine to grab references to them for actual out-of-line use.
- */
-static void io_init_identity(struct io_identity *id)
-{
-	id->files = current->files;
-	id->mm = current->mm;
-#ifdef CONFIG_BLK_CGROUP
-	rcu_read_lock();
-	id->blkcg_css = blkcg_css();
-	rcu_read_unlock();
-#endif
-	id->creds = current_cred();
-	id->nsproxy = current->nsproxy;
-	id->fs = current->fs;
-	id->fsize = rlimit(RLIMIT_FSIZE);
-#ifdef CONFIG_AUDIT
-	id->loginuid = current->loginuid;
-	id->sessionid = current->sessionid;
-#endif
-	refcount_set(&id->count, 1);
-}
-
 static inline void __io_req_init_async(struct io_kiocb *req)
 {
 	memset(&req->work, 0, sizeof(req->work));
@@ -1237,17 +1212,10 @@ static inline void __io_req_init_async(struct io_kiocb *req)
  */
 static inline void io_req_init_async(struct io_kiocb *req)
 {
-	struct io_uring_task *tctx = current->io_uring;
-
 	if (req->flags & REQ_F_WORK_INITIALIZED)
 		return;
 
 	__io_req_init_async(req);
-
-	/* Grab a ref if this isn't our static identity */
-	req->work.identity = tctx->identity;
-	if (tctx->identity != &tctx->__identity)
-		refcount_inc(&req->work.identity->count);
 }
 
 static void io_ring_ctx_ref_free(struct percpu_ref *ref)
@@ -1332,14 +1300,6 @@ static bool req_need_defer(struct io_kiocb *req, u32 seq)
 	return false;
 }
 
-static void io_put_identity(struct io_uring_task *tctx, struct io_kiocb *req)
-{
-	if (req->work.identity == &tctx->__identity)
-		return;
-	if (refcount_dec_and_test(&req->work.identity->count))
-		kfree(req->work.identity);
-}
-
 static void io_req_clean_work(struct io_kiocb *req)
 {
 	if (!(req->flags & REQ_F_WORK_INITIALIZED))
@@ -1359,7 +1319,6 @@ static void io_req_clean_work(struct io_kiocb *req)
 	}
 
 	req->flags &= ~REQ_F_WORK_INITIALIZED;
-	io_put_identity(req->task->io_uring, req);
 }
 
 static void io_req_track_inflight(struct io_kiocb *req)
@@ -6365,8 +6324,8 @@ static void __io_queue_sqe(struct io_kiocb *req)
 	int ret;
 
 	if ((req->flags & REQ_F_WORK_INITIALIZED) &&
-	    req->work.identity->creds != current_cred())
-		old_creds = override_creds(req->work.identity->creds);
+	    req->task->cred != current_cred())
+		old_creds = override_creds(req->task->cred);
 
 	ret = io_issue_sqe(req, IO_URING_F_NONBLOCK|IO_URING_F_COMPLETE_DEFER);
 
@@ -6646,16 +6605,15 @@ static int io_init_req(struct io_ring_ctx *ctx, struct io_kiocb *req,
 
 	id = READ_ONCE(sqe->personality);
 	if (id) {
-		struct io_identity *iod;
+		const struct cred *creds;
 
-		iod = idr_find(&ctx->personality_idr, id);
-		if (unlikely(!iod))
+		creds = idr_find(&ctx->personality_idr, id);
+		if (unlikely(!creds))
 			return -EINVAL;
-		refcount_inc(&iod->count);
 
 		__io_req_init_async(req);
-		get_cred(iod->creds);
-		req->work.identity = iod;
+		get_cred(creds);
+		req->work.creds = creds;
 	}
 
 	state = &ctx->submit_state;
@@ -7960,8 +7918,6 @@ static int io_uring_alloc_task_context(struct task_struct *task)
 	tctx->last = NULL;
 	atomic_set(&tctx->in_idle, 0);
 	tctx->sqpoll = false;
-	io_init_identity(&tctx->__identity);
-	tctx->identity = &tctx->__identity;
 	task->io_uring = tctx;
 	spin_lock_init(&tctx->task_lock);
 	INIT_WQ_LIST(&tctx->task_list);
@@ -7975,9 +7931,6 @@ void __io_uring_free(struct task_struct *tsk)
 	struct io_uring_task *tctx = tsk->io_uring;
 
 	WARN_ON_ONCE(!xa_empty(&tctx->xa));
-	WARN_ON_ONCE(refcount_read(&tctx->identity->count) != 1);
-	if (tctx->identity != &tctx->__identity)
-		kfree(tctx->identity);
 	percpu_counter_destroy(&tctx->inflight);
 	kfree(tctx);
 	tsk->io_uring = NULL;
@@ -8606,13 +8559,11 @@ static int io_uring_fasync(int fd, struct file *file, int on)
 
 static int io_unregister_personality(struct io_ring_ctx *ctx, unsigned id)
 {
-	struct io_identity *iod;
+	const struct cred *creds;
 
-	iod = idr_remove(&ctx->personality_idr, id);
-	if (iod) {
-		put_cred(iod->creds);
-		if (refcount_dec_and_test(&iod->count))
-			kfree(iod);
+	creds = idr_remove(&ctx->personality_idr, id);
+	if (creds) {
+		put_cred(creds);
 		return 0;
 	}
 
@@ -9294,8 +9245,7 @@ out_fput:
 #ifdef CONFIG_PROC_FS
 static int io_uring_show_cred(int id, void *p, void *data)
 {
-	struct io_identity *iod = p;
-	const struct cred *cred = iod->creds;
+	const struct cred *cred = p;
 	struct seq_file *m = data;
 	struct user_namespace *uns = seq_user_ns(m);
 	struct group_info *gi;
@@ -9726,21 +9676,15 @@ out:
 
 static int io_register_personality(struct io_ring_ctx *ctx)
 {
-	struct io_identity *id;
+	const struct cred *creds;
 	int ret;
 
-	id = kmalloc(sizeof(*id), GFP_KERNEL);
-	if (unlikely(!id))
-		return -ENOMEM;
+	creds = get_current_cred();
 
-	io_init_identity(id);
-	id->creds = get_current_cred();
-
-	ret = idr_alloc_cyclic(&ctx->personality_idr, id, 1, USHRT_MAX, GFP_KERNEL);
-	if (ret < 0) {
-		put_cred(id->creds);
-		kfree(id);
-	}
+	ret = idr_alloc_cyclic(&ctx->personality_idr, (void *) creds, 1,
+				USHRT_MAX, GFP_KERNEL);
+	if (ret < 0)
+		put_cred(creds);
 	return ret;
 }
 
