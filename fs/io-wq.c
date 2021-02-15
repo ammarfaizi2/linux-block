@@ -218,7 +218,7 @@ static bool io_wqe_activate_free_worker(struct io_wqe *wqe)
  * We need a worker. If we find a free one, we're good. If not, attempt to
  * create a new one.
  */
-static void io_wqe_wake_worker(struct io_wqe *wqe, struct io_wqe_acct *acct)
+static bool io_wqe_wake_worker(struct io_wqe *wqe, struct io_wqe_acct *acct)
 {
 	bool ret;
 
@@ -233,7 +233,9 @@ static void io_wqe_wake_worker(struct io_wqe *wqe, struct io_wqe_acct *acct)
 	rcu_read_unlock();
 
 	if (!ret && acct->nr_workers < acct->max_workers)
-		create_io_worker(wqe, acct);
+		return false;
+
+	return true;
 }
 
 static void io_wqe_inc_running(struct io_wqe *wqe, struct io_worker *worker)
@@ -243,13 +245,15 @@ static void io_wqe_inc_running(struct io_wqe *wqe, struct io_worker *worker)
 	atomic_inc(&acct->nr_running);
 }
 
-static void io_wqe_dec_running(struct io_wqe *wqe, struct io_worker *worker)
+static bool io_wqe_dec_running(struct io_wqe *wqe, struct io_worker *worker)
 	__must_hold(wqe->lock)
 {
 	struct io_wqe_acct *acct = io_wqe_get_acct(wqe, worker);
 
 	if (atomic_dec_and_test(&acct->nr_running) && io_wqe_run_queue(wqe))
-		io_wqe_wake_worker(wqe, acct);
+		return io_wqe_wake_worker(wqe, acct);
+
+	return true;
 }
 
 static void io_worker_start(struct io_wqe *wqe, struct io_worker *worker)
@@ -590,6 +594,7 @@ void io_wq_worker_sleeping(struct task_struct *tsk)
 {
 	struct io_worker *worker = tsk->pf_io_worker;
 	struct io_wqe *wqe = worker->wqe;
+	bool did_wake;
 
 	if (!(worker->flags & IO_WORKER_F_UP))
 		return;
@@ -599,8 +604,25 @@ void io_wq_worker_sleeping(struct task_struct *tsk)
 	worker->flags &= ~IO_WORKER_F_RUNNING;
 
 	raw_spin_lock_irq(&wqe->lock);
-	io_wqe_dec_running(wqe, worker);
+	did_wake = io_wqe_dec_running(wqe, worker);
 	raw_spin_unlock_irq(&wqe->lock);
+
+	if (!did_wake) {
+		struct io_wqe_acct *acct;
+		long state = current->state;
+
+		if (worker->flags & IO_WORKER_F_BOUND)
+			acct = &wqe->acct[IO_WQ_ACCT_BOUND];
+		else
+			acct = &wqe->acct[IO_WQ_ACCT_UNBOUND];
+
+		/*
+		 * EEK
+		 */
+		__set_current_state(TASK_RUNNING);
+		create_io_worker(wqe, acct);
+		current->state = state;
+	}
 }
 
 static inline bool io_wqe_need_worker(struct io_wqe *wqe, int index)
@@ -723,8 +745,12 @@ static void io_wqe_enqueue(struct io_wqe *wqe, struct io_wq_work *work)
 	raw_spin_unlock_irqrestore(&wqe->lock, flags);
 
 	if ((work_flags & IO_WQ_WORK_CONCURRENT) ||
-	    !atomic_read(&acct->nr_running))
-		io_wqe_wake_worker(wqe, acct);
+	    !atomic_read(&acct->nr_running)) {
+		bool did_wake = io_wqe_wake_worker(wqe, acct);
+
+		if (!did_wake)
+			create_io_worker(wqe, acct);
+	}
 }
 
 void io_wq_enqueue(struct io_wq *wq, struct io_wq_work *work)

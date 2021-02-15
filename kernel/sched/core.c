@@ -5118,12 +5118,13 @@ static inline void sched_submit_work(struct task_struct *tsk)
 	 * requires it.
 	 */
 	if (task_flags & (PF_WQ_WORKER | PF_IO_WORKER)) {
-		preempt_disable();
-		if (task_flags & PF_WQ_WORKER)
+		if (task_flags & PF_WQ_WORKER) {
+			preempt_disable();
 			wq_worker_sleeping(tsk);
-		else
+			preempt_enable_no_resched();
+		} else {
 			io_wq_worker_sleeping(tsk);
-		preempt_enable_no_resched();
+		}
 	}
 
 	if (tsk_is_pi_blocked(tsk))
