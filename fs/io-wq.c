@@ -983,12 +983,6 @@ void io_wq_destroy(struct io_wq *wq)
 		__io_wq_destroy(wq);
 }
 
-struct task_struct *io_wq_get_task(struct io_wq *wq)
-{
-	/* FIXME: return first task */
-	return NULL;
-}
-
 static bool io_wq_worker_affinity(struct io_worker *worker, void *data)
 {
 	struct task_struct *task = worker->task;
