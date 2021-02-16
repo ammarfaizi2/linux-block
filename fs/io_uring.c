@@ -455,6 +455,9 @@ struct io_ring_ctx {
 
 	struct io_restriction		restrictions;
 
+	/* exit task_work */
+	struct callback_head		*exit_task_work;
+
 	/* Keep this last, we don't need it for the fast path */
 	struct work_struct		exit_work;
 };
@@ -2313,11 +2316,14 @@ static int io_req_task_work_add(struct io_kiocb *req)
 static void io_req_task_work_add_fallback(struct io_kiocb *req,
 					  task_work_func_t cb)
 {
-	struct task_struct *tsk = io_wq_get_task(req->ctx->io_wq);
+	struct io_ring_ctx *ctx = req->ctx;
+	struct callback_head *head;
 
 	init_task_work(&req->task_work, cb);
-	task_work_add(tsk, &req->task_work, TWA_NONE);
-	wake_up_process(tsk);
+	do {
+		head = ctx->exit_task_work;
+		req->task_work.next = head;
+	} while (cmpxchg(&ctx->exit_task_work, head, &req->task_work) != head);
 }
 
 static void __io_req_task_cancel(struct io_kiocb *req, int error)
@@ -9258,6 +9264,30 @@ void __io_uring_task_cancel(void)
 	io_uring_remove_task_files(tctx);
 }
 
+static void io_run_ctx_fallback(struct io_ring_ctx *ctx)
+{
+	struct callback_head *work, *head, *next;
+
+	do {
+		do {
+			head = NULL;
+			work = READ_ONCE(ctx->exit_task_work);
+			if (!work)
+				break;
+		} while (cmpxchg(&ctx->exit_task_work, work, head) != work);
+
+		if (!work)
+			break;
+
+		do {
+			next = work->next;
+			work->func(work);
+			work = next;
+			cond_resched();
+		} while (work);
+	} while (1);
+}
+
 static int io_uring_flush(struct file *file, void *data)
 {
 	struct io_uring_task *tctx = current->io_uring;
@@ -9267,6 +9297,8 @@ static int io_uring_flush(struct file *file, void *data)
 		io_uring_cancel_task_requests(ctx, NULL);
 		io_req_caches_free(ctx, current);
 	}
+
+	io_run_ctx_fallback(ctx);
 
 	if (!tctx)
 		return 0;
