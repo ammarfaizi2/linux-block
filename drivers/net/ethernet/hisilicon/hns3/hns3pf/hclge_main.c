@@ -13,6 +13,7 @@
 #include <linux/platform_device.h>
 #include <linux/if_vlan.h>
 #include <linux/crash_dump.h>
+#include <net/ipv6.h>
 #include <net/rtnetlink.h>
 #include "hclge_cmd.h"
 #include "hclge_dcb.h"
@@ -24,7 +25,7 @@
 #include "hnae3.h"
 
 #define HCLGE_NAME			"hclge"
-#define HCLGE_STATS_READ(p, offset) (*((u64 *)((u8 *)(p) + (offset))))
+#define HCLGE_STATS_READ(p, offset) (*(u64 *)((u8 *)(p) + (offset)))
 #define HCLGE_MAC_STATS_FIELD_OFF(f) (offsetof(struct hclge_mac_stats, f))
 
 #define HCLGE_BUF_SIZE_UNIT	256U
@@ -626,7 +627,7 @@ static u8 *hclge_tqps_get_strings(struct hnae3_handle *handle, u8 *data)
 	for (i = 0; i < kinfo->num_tqps; i++) {
 		struct hclge_tqp *tqp = container_of(handle->kinfo.tqp[i],
 			struct hclge_tqp, q);
-		snprintf(buff, ETH_GSTRING_LEN, "txq%d_pktnum_rcd",
+		snprintf(buff, ETH_GSTRING_LEN, "txq%u_pktnum_rcd",
 			 tqp->index);
 		buff = buff + ETH_GSTRING_LEN;
 	}
@@ -634,7 +635,7 @@ static u8 *hclge_tqps_get_strings(struct hnae3_handle *handle, u8 *data)
 	for (i = 0; i < kinfo->num_tqps; i++) {
 		struct hclge_tqp *tqp = container_of(kinfo->tqp[i],
 			struct hclge_tqp, q);
-		snprintf(buff, ETH_GSTRING_LEN, "rxq%d_pktnum_rcd",
+		snprintf(buff, ETH_GSTRING_LEN, "rxq%u_pktnum_rcd",
 			 tqp->index);
 		buff = buff + ETH_GSTRING_LEN;
 	}
@@ -928,7 +929,7 @@ static int hclge_query_pf_resource(struct hclge_dev *hdev)
 	return 0;
 }
 
-static int hclge_parse_speed(int speed_cmd, int *speed)
+static int hclge_parse_speed(u8 speed_cmd, u32 *speed)
 {
 	switch (speed_cmd) {
 	case 6:
@@ -4500,22 +4501,12 @@ static u8 hclge_get_rss_hash_bits(struct ethtool_rxnfc *nfc)
 	return hash_sets;
 }
 
-static int hclge_set_rss_tuple(struct hnae3_handle *handle,
-			       struct ethtool_rxnfc *nfc)
+static int hclge_init_rss_tuple_cmd(struct hclge_vport *vport,
+				    struct ethtool_rxnfc *nfc,
+				    struct hclge_rss_input_tuple_cmd *req)
 {
-	struct hclge_vport *vport = hclge_get_vport(handle);
 	struct hclge_dev *hdev = vport->back;
-	struct hclge_rss_input_tuple_cmd *req;
-	struct hclge_desc desc;
 	u8 tuple_sets;
-	int ret;
-
-	if (nfc->data & ~(RXH_IP_SRC | RXH_IP_DST |
-			  RXH_L4_B_0_1 | RXH_L4_B_2_3))
-		return -EINVAL;
-
-	req = (struct hclge_rss_input_tuple_cmd *)desc.data;
-	hclge_cmd_setup_basic_desc(&desc, HCLGE_OPC_RSS_INPUT_TUPLE, false);
 
 	req->ipv4_tcp_en = vport->rss_tuple_sets.ipv4_tcp_en;
 	req->ipv4_udp_en = vport->rss_tuple_sets.ipv4_udp_en;
@@ -4560,6 +4551,32 @@ static int hclge_set_rss_tuple(struct hnae3_handle *handle,
 		return -EINVAL;
 	}
 
+	return 0;
+}
+
+static int hclge_set_rss_tuple(struct hnae3_handle *handle,
+			       struct ethtool_rxnfc *nfc)
+{
+	struct hclge_vport *vport = hclge_get_vport(handle);
+	struct hclge_dev *hdev = vport->back;
+	struct hclge_rss_input_tuple_cmd *req;
+	struct hclge_desc desc;
+	int ret;
+
+	if (nfc->data & ~(RXH_IP_SRC | RXH_IP_DST |
+			  RXH_L4_B_0_1 | RXH_L4_B_2_3))
+		return -EINVAL;
+
+	req = (struct hclge_rss_input_tuple_cmd *)desc.data;
+	hclge_cmd_setup_basic_desc(&desc, HCLGE_OPC_RSS_INPUT_TUPLE, false);
+
+	ret = hclge_init_rss_tuple_cmd(vport, nfc, req);
+	if (ret) {
+		dev_err(&hdev->pdev->dev,
+			"failed to init rss tuple cmd, ret = %d\n", ret);
+		return ret;
+	}
+
 	ret = hclge_cmd_send(&hdev->hw, &desc, 1);
 	if (ret) {
 		dev_err(&hdev->pdev->dev,
@@ -4579,52 +4596,69 @@ static int hclge_set_rss_tuple(struct hnae3_handle *handle,
 	return 0;
 }
 
-static int hclge_get_rss_tuple(struct hnae3_handle *handle,
-			       struct ethtool_rxnfc *nfc)
+static int hclge_get_vport_rss_tuple(struct hclge_vport *vport, int flow_type,
+				     u8 *tuple_sets)
 {
-	struct hclge_vport *vport = hclge_get_vport(handle);
-	u8 tuple_sets;
-
-	nfc->data = 0;
-
-	switch (nfc->flow_type) {
+	switch (flow_type) {
 	case TCP_V4_FLOW:
-		tuple_sets = vport->rss_tuple_sets.ipv4_tcp_en;
+		*tuple_sets = vport->rss_tuple_sets.ipv4_tcp_en;
 		break;
 	case UDP_V4_FLOW:
-		tuple_sets = vport->rss_tuple_sets.ipv4_udp_en;
+		*tuple_sets = vport->rss_tuple_sets.ipv4_udp_en;
 		break;
 	case TCP_V6_FLOW:
-		tuple_sets = vport->rss_tuple_sets.ipv6_tcp_en;
+		*tuple_sets = vport->rss_tuple_sets.ipv6_tcp_en;
 		break;
 	case UDP_V6_FLOW:
-		tuple_sets = vport->rss_tuple_sets.ipv6_udp_en;
+		*tuple_sets = vport->rss_tuple_sets.ipv6_udp_en;
 		break;
 	case SCTP_V4_FLOW:
-		tuple_sets = vport->rss_tuple_sets.ipv4_sctp_en;
+		*tuple_sets = vport->rss_tuple_sets.ipv4_sctp_en;
 		break;
 	case SCTP_V6_FLOW:
-		tuple_sets = vport->rss_tuple_sets.ipv6_sctp_en;
+		*tuple_sets = vport->rss_tuple_sets.ipv6_sctp_en;
 		break;
 	case IPV4_FLOW:
 	case IPV6_FLOW:
-		tuple_sets = HCLGE_S_IP_BIT | HCLGE_D_IP_BIT;
+		*tuple_sets = HCLGE_S_IP_BIT | HCLGE_D_IP_BIT;
 		break;
 	default:
 		return -EINVAL;
 	}
 
-	if (!tuple_sets)
-		return 0;
+	return 0;
+}
+
+static u64 hclge_convert_rss_tuple(u8 tuple_sets)
+{
+	u64 tuple_data = 0;
 
 	if (tuple_sets & HCLGE_D_PORT_BIT)
-		nfc->data |= RXH_L4_B_2_3;
+		tuple_data |= RXH_L4_B_2_3;
 	if (tuple_sets & HCLGE_S_PORT_BIT)
-		nfc->data |= RXH_L4_B_0_1;
+		tuple_data |= RXH_L4_B_0_1;
 	if (tuple_sets & HCLGE_D_IP_BIT)
-		nfc->data |= RXH_IP_DST;
+		tuple_data |= RXH_IP_DST;
 	if (tuple_sets & HCLGE_S_IP_BIT)
-		nfc->data |= RXH_IP_SRC;
+		tuple_data |= RXH_IP_SRC;
+
+	return tuple_data;
+}
+
+static int hclge_get_rss_tuple(struct hnae3_handle *handle,
+			       struct ethtool_rxnfc *nfc)
+{
+	struct hclge_vport *vport = hclge_get_vport(handle);
+	u8 tuple_sets;
+	int ret;
+
+	nfc->data = 0;
+
+	ret = hclge_get_vport_rss_tuple(vport, nfc->flow_type, &tuple_sets);
+	if (ret || !tuple_sets)
+		return ret;
+
+	nfc->data = hclge_convert_rss_tuple(tuple_sets);
 
 	return 0;
 }
@@ -5508,12 +5542,10 @@ static int hclge_fd_check_tcpip6_tuple(struct ethtool_tcpip6_spec *spec,
 		BIT(INNER_IP_TOS);
 
 	/* check whether src/dst ip address used */
-	if (!spec->ip6src[0] && !spec->ip6src[1] &&
-	    !spec->ip6src[2] && !spec->ip6src[3])
+	if (ipv6_addr_any((struct in6_addr *)spec->ip6src))
 		*unused_tuple |= BIT(INNER_SRC_IP);
 
-	if (!spec->ip6dst[0] && !spec->ip6dst[1] &&
-	    !spec->ip6dst[2] && !spec->ip6dst[3])
+	if (ipv6_addr_any((struct in6_addr *)spec->ip6dst))
 		*unused_tuple |= BIT(INNER_DST_IP);
 
 	if (!spec->psrc)
@@ -5538,12 +5570,10 @@ static int hclge_fd_check_ip6_tuple(struct ethtool_usrip6_spec *spec,
 		BIT(INNER_IP_TOS) | BIT(INNER_SRC_PORT) | BIT(INNER_DST_PORT);
 
 	/* check whether src/dst ip address used */
-	if (!spec->ip6src[0] && !spec->ip6src[1] &&
-	    !spec->ip6src[2] && !spec->ip6src[3])
+	if (ipv6_addr_any((struct in6_addr *)spec->ip6src))
 		*unused_tuple |= BIT(INNER_SRC_IP);
 
-	if (!spec->ip6dst[0] && !spec->ip6dst[1] &&
-	    !spec->ip6dst[2] && !spec->ip6dst[3])
+	if (ipv6_addr_any((struct in6_addr *)spec->ip6dst))
 		*unused_tuple |= BIT(INNER_DST_IP);
 
 	if (!spec->l4_proto)
@@ -5595,7 +5625,7 @@ static int hclge_fd_check_ext_tuple(struct hclge_dev *hdev,
 		if (fs->m_ext.vlan_tci &&
 		    be16_to_cpu(fs->h_ext.vlan_tci) >= VLAN_N_VID) {
 			dev_err(&hdev->pdev->dev,
-				"failed to config vlan_tci, invalid vlan_tci: %u, max is %u.\n",
+				"failed to config vlan_tci, invalid vlan_tci: %u, max is %d.\n",
 				ntohs(fs->h_ext.vlan_tci), VLAN_N_VID - 1);
 			return -EINVAL;
 		}
@@ -8323,36 +8353,18 @@ static void hclge_sync_mac_table(struct hclge_dev *hdev)
 	}
 }
 
-void hclge_rm_vport_all_mac_table(struct hclge_vport *vport, bool is_del_list,
-				  enum HCLGE_MAC_ADDR_TYPE mac_type)
+static void hclge_build_del_list(struct list_head *list,
+				 bool is_del_list,
+				 struct list_head *tmp_del_list)
 {
-	int (*unsync)(struct hclge_vport *vport, const unsigned char *addr);
 	struct hclge_mac_node *mac_cfg, *tmp;
-	struct hclge_dev *hdev = vport->back;
-	struct list_head tmp_del_list, *list;
-	int ret;
-
-	if (mac_type == HCLGE_MAC_ADDR_UC) {
-		list = &vport->uc_mac_list;
-		unsync = hclge_rm_uc_addr_common;
-	} else {
-		list = &vport->mc_mac_list;
-		unsync = hclge_rm_mc_addr_common;
-	}
-
-	INIT_LIST_HEAD(&tmp_del_list);
-
-	if (!is_del_list)
-		set_bit(vport->vport_id, hdev->vport_config_block);
-
-	spin_lock_bh(&vport->mac_list_lock);
 
 	list_for_each_entry_safe(mac_cfg, tmp, list, node) {
 		switch (mac_cfg->state) {
 		case HCLGE_MAC_TO_DEL:
 		case HCLGE_MAC_ACTIVE:
 			list_del(&mac_cfg->node);
-			list_add_tail(&mac_cfg->node, &tmp_del_list);
+			list_add_tail(&mac_cfg->node, tmp_del_list);
 			break;
 		case HCLGE_MAC_TO_ADD:
 			if (is_del_list) {
@@ -8362,10 +8374,18 @@ void hclge_rm_vport_all_mac_table(struct hclge_vport *vport, bool is_del_list,
 			break;
 		}
 	}
+}
 
-	spin_unlock_bh(&vport->mac_list_lock);
+static void hclge_unsync_del_list(struct hclge_vport *vport,
+				  int (*unsync)(struct hclge_vport *vport,
+						const unsigned char *addr),
+				  bool is_del_list,
+				  struct list_head *tmp_del_list)
+{
+	struct hclge_mac_node *mac_cfg, *tmp;
+	int ret;
 
-	list_for_each_entry_safe(mac_cfg, tmp, &tmp_del_list, node) {
+	list_for_each_entry_safe(mac_cfg, tmp, tmp_del_list, node) {
 		ret = unsync(vport, mac_cfg->mac_addr);
 		if (!ret || ret == -ENOENT) {
 			/* clear all mac addr from hardware, but remain these
@@ -8383,6 +8403,35 @@ void hclge_rm_vport_all_mac_table(struct hclge_vport *vport, bool is_del_list,
 			mac_cfg->state = HCLGE_MAC_TO_DEL;
 		}
 	}
+}
+
+void hclge_rm_vport_all_mac_table(struct hclge_vport *vport, bool is_del_list,
+				  enum HCLGE_MAC_ADDR_TYPE mac_type)
+{
+	int (*unsync)(struct hclge_vport *vport, const unsigned char *addr);
+	struct hclge_dev *hdev = vport->back;
+	struct list_head tmp_del_list, *list;
+
+	if (mac_type == HCLGE_MAC_ADDR_UC) {
+		list = &vport->uc_mac_list;
+		unsync = hclge_rm_uc_addr_common;
+	} else {
+		list = &vport->mc_mac_list;
+		unsync = hclge_rm_mc_addr_common;
+	}
+
+	INIT_LIST_HEAD(&tmp_del_list);
+
+	if (!is_del_list)
+		set_bit(vport->vport_id, hdev->vport_config_block);
+
+	spin_lock_bh(&vport->mac_list_lock);
+
+	hclge_build_del_list(list, is_del_list, &tmp_del_list);
+
+	spin_unlock_bh(&vport->mac_list_lock);
+
+	hclge_unsync_del_list(vport, unsync, is_del_list, &tmp_del_list);
 
 	spin_lock_bh(&vport->mac_list_lock);
 
@@ -8789,31 +8838,15 @@ static void hclge_enable_vlan_filter(struct hnae3_handle *handle, bool enable)
 		handle->netdev_flags &= ~HNAE3_VLAN_FLTR;
 }
 
-static int hclge_set_vf_vlan_common(struct hclge_dev *hdev, u16 vfid,
-				    bool is_kill, u16 vlan,
-				    __be16 proto)
+static int hclge_set_vf_vlan_filter_cmd(struct hclge_dev *hdev, u16 vfid,
+					bool is_kill, u16 vlan,
+					struct hclge_desc *desc)
 {
-	struct hclge_vport *vport = &hdev->vport[vfid];
 	struct hclge_vlan_filter_vf_cfg_cmd *req0;
 	struct hclge_vlan_filter_vf_cfg_cmd *req1;
-	struct hclge_desc desc[2];
 	u8 vf_byte_val;
 	u8 vf_byte_off;
 	int ret;
-
-	/* if vf vlan table is full, firmware will close vf vlan filter, it
-	 * is unable and unnecessary to add new vlan id to vf vlan filter.
-	 * If spoof check is enable, and vf vlan is full, it shouldn't add
-	 * new vlan, because tx packets with these vlan id will be dropped.
-	 */
-	if (test_bit(vfid, hdev->vf_vlan_full) && !is_kill) {
-		if (vport->vf_info.spoofchk && vlan) {
-			dev_err(&hdev->pdev->dev,
-				"Can't add vlan due to spoof check is on and vf vlan table is full\n");
-			return -EPERM;
-		}
-		return 0;
-	}
 
 	hclge_cmd_setup_basic_desc(&desc[0],
 				   HCLGE_OPC_VLAN_FILTER_VF_CFG, false);
@@ -8844,12 +8877,22 @@ static int hclge_set_vf_vlan_common(struct hclge_dev *hdev, u16 vfid,
 		return ret;
 	}
 
+	return 0;
+}
+
+static int hclge_check_vf_vlan_cmd_status(struct hclge_dev *hdev, u16 vfid,
+					  bool is_kill, struct hclge_desc *desc)
+{
+	struct hclge_vlan_filter_vf_cfg_cmd *req;
+
+	req = (struct hclge_vlan_filter_vf_cfg_cmd *)desc[0].data;
+
 	if (!is_kill) {
 #define HCLGE_VF_VLAN_NO_ENTRY	2
-		if (!req0->resp_code || req0->resp_code == 1)
+		if (!req->resp_code || req->resp_code == 1)
 			return 0;
 
-		if (req0->resp_code == HCLGE_VF_VLAN_NO_ENTRY) {
+		if (req->resp_code == HCLGE_VF_VLAN_NO_ENTRY) {
 			set_bit(vfid, hdev->vf_vlan_full);
 			dev_warn(&hdev->pdev->dev,
 				 "vf vlan table is full, vf vlan filter is disabled\n");
@@ -8858,10 +8901,10 @@ static int hclge_set_vf_vlan_common(struct hclge_dev *hdev, u16 vfid,
 
 		dev_err(&hdev->pdev->dev,
 			"Add vf vlan filter fail, ret =%u.\n",
-			req0->resp_code);
+			req->resp_code);
 	} else {
 #define HCLGE_VF_VLAN_DEL_NO_FOUND	1
-		if (!req0->resp_code)
+		if (!req->resp_code)
 			return 0;
 
 		/* vf vlan filter is disabled when vf vlan table is full,
@@ -8869,15 +8912,44 @@ static int hclge_set_vf_vlan_common(struct hclge_dev *hdev, u16 vfid,
 		 * Just return 0 without warning, avoid massive verbose
 		 * print logs when unload.
 		 */
-		if (req0->resp_code == HCLGE_VF_VLAN_DEL_NO_FOUND)
+		if (req->resp_code == HCLGE_VF_VLAN_DEL_NO_FOUND)
 			return 0;
 
 		dev_err(&hdev->pdev->dev,
 			"Kill vf vlan filter fail, ret =%u.\n",
-			req0->resp_code);
+			req->resp_code);
 	}
 
 	return -EIO;
+}
+
+static int hclge_set_vf_vlan_common(struct hclge_dev *hdev, u16 vfid,
+				    bool is_kill, u16 vlan,
+				    __be16 proto)
+{
+	struct hclge_vport *vport = &hdev->vport[vfid];
+	struct hclge_desc desc[2];
+	int ret;
+
+	/* if vf vlan table is full, firmware will close vf vlan filter, it
+	 * is unable and unnecessary to add new vlan id to vf vlan filter.
+	 * If spoof check is enable, and vf vlan is full, it shouldn't add
+	 * new vlan, because tx packets with these vlan id will be dropped.
+	 */
+	if (test_bit(vfid, hdev->vf_vlan_full) && !is_kill) {
+		if (vport->vf_info.spoofchk && vlan) {
+			dev_err(&hdev->pdev->dev,
+				"Can't add vlan due to spoof check is on and vf vlan table is full\n");
+			return -EPERM;
+		}
+		return 0;
+	}
+
+	ret = hclge_set_vf_vlan_filter_cmd(hdev, vfid, is_kill, vlan, desc);
+	if (ret)
+		return ret;
+
+	return hclge_check_vf_vlan_cmd_status(hdev, vfid, is_kill, desc);
 }
 
 static int hclge_set_port_vlan_filter(struct hclge_dev *hdev, __be16 proto,
@@ -9830,11 +9902,18 @@ int hclge_reset_tqp(struct hnae3_handle *handle, u16 queue_id)
 
 void hclge_reset_vf_queue(struct hclge_vport *vport, u16 queue_id)
 {
+	struct hnae3_handle *handle = &vport->nic;
 	struct hclge_dev *hdev = vport->back;
 	int reset_try_times = 0;
 	int reset_status;
 	u16 queue_gid;
 	int ret;
+
+	if (queue_id >= handle->kinfo.num_tqps) {
+		dev_warn(&hdev->pdev->dev, "Invalid vf queue id(%u)\n",
+			 queue_id);
+		return;
+	}
 
 	queue_gid = hclge_covert_handle_qid_global(&vport->nic, queue_id);
 
@@ -10831,7 +10910,7 @@ static void hclge_reset_vf_rate(struct hclge_dev *hdev)
 	}
 }
 
-static int hclge_vf_rate_param_check(struct hclge_dev *hdev, int vf,
+static int hclge_vf_rate_param_check(struct hclge_dev *hdev,
 				     int min_tx_rate, int max_tx_rate)
 {
 	if (min_tx_rate != 0 ||
@@ -10852,7 +10931,7 @@ static int hclge_set_vf_rate(struct hnae3_handle *handle, int vf,
 	struct hclge_dev *hdev = vport->back;
 	int ret;
 
-	ret = hclge_vf_rate_param_check(hdev, vf, min_tx_rate, max_tx_rate);
+	ret = hclge_vf_rate_param_check(hdev, min_tx_rate, max_tx_rate);
 	if (ret)
 		return ret;
 

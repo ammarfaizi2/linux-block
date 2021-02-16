@@ -180,7 +180,7 @@ min_adv_mss - INTEGER
 
 fib_notify_on_flag_change - INTEGER
         Whether to emit RTM_NEWROUTE notifications whenever RTM_F_OFFLOAD/
-        RTM_F_TRAP flags are changed.
+        RTM_F_TRAP/RTM_F_OFFLOAD_FAILED flags are changed.
 
         After installing a route to the kernel, user space receives an
         acknowledgment, which means the route was installed in the kernel,
@@ -197,6 +197,7 @@ fib_notify_on_flag_change - INTEGER
 
         - 0 - Do not emit notifications.
         - 1 - Emit notifications.
+        - 2 - Emit notifications only for RTM_F_OFFLOAD_FAILED flag change.
 
 IP Fragmentation:
 
@@ -1445,6 +1446,25 @@ rp_filter - INTEGER
 	Default value is 0. Note that some distributions enable it
 	in startup scripts.
 
+src_valid_mark - BOOLEAN
+	- 0 - The fwmark of the packet is not included in reverse path
+	  route lookup.  This allows for asymmetric routing configurations
+	  utilizing the fwmark in only one direction, e.g., transparent
+	  proxying.
+
+	- 1 - The fwmark of the packet is included in reverse path route
+	  lookup.  This permits rp_filter to function when the fwmark is
+	  used for routing traffic in both directions.
+
+	This setting also affects the utilization of fmwark when
+	performing source address selection for ICMP replies, or
+	determining addresses stored for the IPOPT_TS_TSANDADDR and
+	IPOPT_RR IP options.
+
+	The max value from conf/{all,interface}/src_valid_mark is used.
+
+	Default value is 0.
+
 arp_filter - BOOLEAN
 	- 1 - Allows you to have multiple network interfaces on the same
 	  subnet, and have the ARPs for each interface be answered
@@ -1797,7 +1817,7 @@ nexthop_compat_mode - BOOLEAN
 
 fib_notify_on_flag_change - INTEGER
         Whether to emit RTM_NEWROUTE notifications whenever RTM_F_OFFLOAD/
-        RTM_F_TRAP flags are changed.
+        RTM_F_TRAP/RTM_F_OFFLOAD_FAILED flags are changed.
 
         After installing a route to the kernel, user space receives an
         acknowledgment, which means the route was installed in the kernel,
@@ -1814,6 +1834,7 @@ fib_notify_on_flag_change - INTEGER
 
         - 0 - Do not emit notifications.
         - 1 - Emit notifications.
+        - 2 - Emit notifications only for RTM_F_OFFLOAD_FAILED flag change.
 
 IPv6 Fragmentation:
 
