@@ -118,6 +118,10 @@
 #define ANCHOR_NUM_PRIOS 1
 #define ANCHOR_MIN_LEVEL (BY_PASS_MIN_LEVEL + 1)
 
+#define VDPA_PRIO_NUM_LEVELS 1
+#define VDPA_NUM_PRIOS 1
+#define VDPA_MIN_LEVEL 1
+
 #define OFFLOADS_MAX_FT 2
 #define OFFLOADS_NUM_PRIOS 2
 #define OFFLOADS_MIN_LEVEL (ANCHOR_MIN_LEVEL + OFFLOADS_NUM_PRIOS)
@@ -147,7 +151,7 @@ static struct init_tree_node {
 	enum mlx5_flow_table_miss_action def_miss_action;
 } root_fs = {
 	.type = FS_TYPE_NAMESPACE,
-	.ar_size = 7,
+	.ar_size = 8,
 	  .children = (struct init_tree_node[]){
 		  ADD_PRIO(0, BY_PASS_MIN_LEVEL, 0, FS_CHAINING_CAPS,
 			   ADD_NS(MLX5_FLOW_TABLE_MISS_ACTION_DEF,
@@ -165,6 +169,10 @@ static struct init_tree_node {
 			   ADD_NS(MLX5_FLOW_TABLE_MISS_ACTION_DEF,
 				  ADD_MULTIPLE_PRIO(ETHTOOL_NUM_PRIOS,
 						    ETHTOOL_PRIO_NUM_LEVELS))),
+		  ADD_PRIO(0, VDPA_MIN_LEVEL, 0, FS_CHAINING_CAPS,
+			   ADD_NS(MLX5_FLOW_TABLE_MISS_ACTION_DEF,
+				  ADD_MULTIPLE_PRIO(VDPA_NUM_PRIOS,
+						    VDPA_PRIO_NUM_LEVELS))),
 		  ADD_PRIO(0, KERNEL_MIN_LEVEL, 0, {},
 			   ADD_NS(MLX5_FLOW_TABLE_MISS_ACTION_DEF,
 				  ADD_MULTIPLE_PRIO(KERNEL_NIC_TC_NUM_PRIOS,
