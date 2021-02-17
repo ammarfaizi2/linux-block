@@ -105,6 +105,7 @@ enum ath11k_hw_rev {
 	ATH11K_HW_IPQ8074,
 	ATH11K_HW_QCA6390_HW20,
 	ATH11K_HW_IPQ6018_HW10,
+	ATH11K_HW_QCN9074_HW10,
 };
 
 enum ath11k_firmware_mode {
@@ -607,6 +608,7 @@ struct ath11k_bus_params {
 	bool m3_fw_support;
 	bool fixed_bdf_addr;
 	bool fixed_mem_region;
+	bool static_window_map;
 };
 
 /* IPQ8074 HW channel counters frequency value in hertz */
@@ -876,6 +878,8 @@ extern const struct service_to_pipe ath11k_target_service_to_ce_map_wlan_ipq6018
 extern const struct ce_pipe_config ath11k_target_ce_config_wlan_qca6390[];
 extern const struct service_to_pipe ath11k_target_service_to_ce_map_wlan_qca6390[];
 
+extern const struct ce_pipe_config ath11k_target_ce_config_wlan_qcn9074[];
+extern const struct service_to_pipe ath11k_target_service_to_ce_map_wlan_qcn9074[];
 int ath11k_core_qmi_firmware_ready(struct ath11k_base *ab);
 int ath11k_core_pre_init(struct ath11k_base *ab);
 int ath11k_core_init(struct ath11k_base *ath11k);
