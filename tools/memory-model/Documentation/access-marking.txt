@@ -62,7 +62,7 @@ READ_ONCE() and WRITE_ONCE():
 1.	Data-racy loads from shared variables whose values are used only
 	for diagnostic purposes.
 
-2.	Data-racy reads whose values are checked by later code.
+2.	Data-racy reads whose values are checked against marked reload.
 
 3.	Reads whose values feed into error-tolerant heuristics.
 
@@ -91,15 +91,15 @@ In practice, doing so is an excellent way to generate KCSAN false
 positives, because KCSAN does not know that the data race is intentional.
 
 
-Data-Racy Reads That Are Checked
+Data-Racy Reads That Are Checked Against Reload
 
 The values from some reads are not implicitly trusted.  They are instead
-fed into some operation that does full value checking, which means that
-the occasional arbitrarily bogus value is not a problem.  For example,
-if a bogus value is fed into cmpxchg(), all that happens is that this
-cmpxchg() fails, which normally results in a retry.  Unless the race
-condition that resulted in the bogus value recurs, this retry will with
-high probability succeed, so no harm done.
+fed into some operation that checks the full value against a later marked
+load from memory, which means that the occasional arbitrarily bogus value
+is not a problem.  For example, if a bogus value is fed into cmpxchg(),
+all that happens is that this cmpxchg() fails, which normally results
+in a retry.  Unless the race condition that resulted in the bogus value
+recurs, this retry will with high probability succeed, so no harm done.
 
 However, please keep in mind that a data_race() load feeding into
 a cmpxchg_relaxed() might still be subject to load fusing on some
@@ -211,8 +211,8 @@ write is marked with data_race() or WRITE_ONCE().
 
 Note that although KCSAN will call out data races involving either
 ASSERT_EXCLUSIVE_ACCESS() or ASSERT_EXCLUSIVE_WRITER() on the one hand
-and data_race() accesses on the other, KCSAN will not report the location
-of data_race() reads, only the locations of data_race() writes.
+and data_race() writes on the other, KCSAN will not report the location
+of these data_race() writes.
 
 
 EXAMPLES
@@ -408,7 +408,7 @@ fragment:
 	{
 		int old, new, newold;
 
-		newold = foo;
+		newold = foo; /* Checked by cmpxchg(). */
 		do {
 			old = newold;
 			new = (old << shift) ^ mask;
@@ -439,7 +439,7 @@ is modified to read as follows:
 	{
 		int old, new, newold;
 
-		newold = foo;
+		newold = foo; /* Checked by cmpxchg(). */
 		do {
 			old = newold;
 			new = (old << shift) ^ mask;
