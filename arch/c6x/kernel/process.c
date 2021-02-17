@@ -112,7 +112,7 @@ int copy_thread(unsigned long clone_flags, unsigned long usp,
 
 	childregs = task_pt_regs(p);
 
-	if (unlikely(p->flags & PF_KTHREAD)) {
+	if (unlikely(p->flags & (PF_KTHREAD | PF_IO_WORKER))) {
 		/* case of  __kernel_thread: we return to supervisor space */
 		memset(childregs, 0, sizeof(struct pt_regs));
 		childregs->sp = (unsigned long)(childregs + 1);
