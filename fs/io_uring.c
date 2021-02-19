@@ -7316,19 +7316,37 @@ static void io_sqe_rsrc_set_node(struct io_ring_ctx *ctx,
 	percpu_ref_get(&rsrc_data->refs);
 }
 
-static int io_rsrc_ref_quiesce(struct fixed_rsrc_data *data,
-			       struct io_ring_ctx *ctx,
-			       struct fixed_rsrc_ref_node *backup_node)
+static int io_sqe_rsrc_add_node(struct io_ring_ctx *ctx, struct fixed_rsrc_data *data)
 {
-	struct fixed_rsrc_ref_node *ref_node;
-	int ret;
+	struct fixed_rsrc_ref_node *backup_node;
+
+	backup_node = alloc_fixed_rsrc_ref_node(ctx);
+	if (!backup_node)
+		return -ENOMEM;
+	init_fixed_file_ref_node(ctx, backup_node);
+	io_sqe_rsrc_set_node(ctx, data, backup_node);
+
+	return 0;
+}
+
+static void io_sqe_rsrc_kill_node(struct io_ring_ctx *ctx, struct fixed_rsrc_data *data)
+{
+	struct fixed_rsrc_ref_node *ref_node = NULL;
 
 	io_rsrc_ref_lock(ctx);
 	ref_node = data->node;
 	io_rsrc_ref_unlock(ctx);
 	if (ref_node)
 		percpu_ref_kill(&ref_node->refs);
+}
 
+static int io_rsrc_ref_quiesce(struct fixed_rsrc_data *data,
+			       struct io_ring_ctx *ctx,
+			       struct fixed_rsrc_ref_node *backup_node)
+{
+	int ret;
+
+	io_sqe_rsrc_kill_node(ctx, data);
 	percpu_ref_kill(&data->refs);
 
 	/* wait for all refs nodes to complete */
@@ -7337,14 +7355,27 @@ static int io_rsrc_ref_quiesce(struct fixed_rsrc_data *data,
 		ret = wait_for_completion_interruptible(&data->done);
 		if (!ret)
 			break;
+
+		ret = io_sqe_rsrc_add_node(ctx, data);
+		if (ret < 0)
+			break;
+		/*
+		 * There is small possibility that data->done is already completed
+		 * So reinit it here
+		 */
+		reinit_completion(&data->done);
+		mutex_unlock(&ctx->uring_lock);
 		ret = io_run_task_work_sig();
-		if (ret < 0) {
-			percpu_ref_resurrect(&data->refs);
-			reinit_completion(&data->done);
-			io_sqe_rsrc_set_node(ctx, data, backup_node);
-			return ret;
-		}
-	} while (1);
+		mutex_lock(&ctx->uring_lock);
+		io_sqe_rsrc_kill_node(ctx, data);
+	} while (ret >= 0);
+
+	if (ret < 0) {
+		percpu_ref_resurrect(&data->refs);
+		reinit_completion(&data->done);
+		io_sqe_rsrc_set_node(ctx, data, backup_node);
+		return ret;
+	}
 
 	destroy_fixed_rsrc_ref_node(backup_node);
 	return 0;
@@ -7382,7 +7413,12 @@ static int io_sqe_files_unregister(struct io_ring_ctx *ctx)
 	unsigned nr_tables, i;
 	int ret;
 
-	if (!data)
+	/*
+	 * percpu_ref_is_dying() is to stop parallel files unregister
+	 * Since we possibly drop uring lock later in this function to
+	 * run task work.
+	 */
+	if (!data || percpu_ref_is_dying(&data->refs))
 		return -ENXIO;
 	backup_node = alloc_fixed_rsrc_ref_node(ctx);
 	if (!backup_node)
@@ -8731,7 +8767,9 @@ static void io_ring_ctx_free(struct io_ring_ctx *ctx)
 		css_put(ctx->sqo_blkcg_css);
 #endif
 
+	mutex_lock(&ctx->uring_lock);
 	io_sqe_files_unregister(ctx);
+	mutex_unlock(&ctx->uring_lock);
 	io_eventfd_unregister(ctx);
 	io_destroy_buffers(ctx);
 	idr_destroy(&ctx->personality_idr);
