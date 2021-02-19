@@ -455,7 +455,6 @@ static inline unsigned long cpu_kernelmode_gs_base(int cpu)
 }
 
 DECLARE_PER_CPU(unsigned int, irq_count);
-extern asmlinkage void ignore_sysret(void);
 
 /* Save actual FS/GS selectors and bases to current->thread */
 void current_save_fsgs(void);

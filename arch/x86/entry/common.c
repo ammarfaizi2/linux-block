@@ -57,7 +57,6 @@ __visible noinstr void do_syscall_64(unsigned long nr, struct pt_regs *regs)
 }
 #endif
 
-#if defined(CONFIG_X86_32) || defined(CONFIG_IA32_EMULATION)
 static __always_inline unsigned int syscall_32_enter(struct pt_regs *regs)
 {
 	if (IS_ENABLED(CONFIG_IA32_EMULATION))
@@ -72,10 +71,14 @@ static __always_inline unsigned int syscall_32_enter(struct pt_regs *regs)
 static __always_inline void do_syscall_32_irqs_on(struct pt_regs *regs,
 						  unsigned int nr)
 {
+#if defined(CONFIG_X86_32) || defined(CONFIG_IA32_EMULATION)
 	if (likely(nr < IA32_NR_syscalls)) {
 		nr = array_index_nospec(nr, IA32_NR_syscalls);
 		regs->ax = ia32_sys_call_table[nr](regs);
 	}
+#else
+	regs->ax = -ENOSYS;
+#endif
 }
 
 /* Handles int $0x80 */
@@ -206,7 +209,6 @@ __visible noinstr long do_SYSENTER_32(struct pt_regs *regs)
 
 	return do_fast_syscall_32(regs);
 }
-#endif
 
 SYSCALL_DEFINE0(ni_syscall)
 {
