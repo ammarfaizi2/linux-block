@@ -1255,6 +1255,11 @@ static void rcu_prepare_kthreads(int cpu)
  */
 int rcu_needs_cpu(u64 basemono, u64 *nextevt)
 {
+	/* Through early_initcall(), need tick for softirq handlers. */
+	if (!IS_ENABLED(CONFIG_HZ_PERIODIC) && !this_cpu_ksoftirqd()) {
+		*nextevt = 1;
+		return 1;
+	}
 	*nextevt = KTIME_MAX;
 	return !rcu_segcblist_empty(&this_cpu_ptr(&rcu_data)->cblist) &&
 	       !rcu_segcblist_is_offloaded(&this_cpu_ptr(&rcu_data)->cblist);
@@ -1349,6 +1354,12 @@ int rcu_needs_cpu(u64 basemono, u64 *nextevt)
 	unsigned long dj;
 
 	lockdep_assert_irqs_disabled();
+
+	/* Through early_initcall(), need tick for softirq handlers. */
+	if (!IS_ENABLED(CONFIG_HZ_PERIODIC) && !this_cpu_ksoftirqd()) {
+		*nextevt = 1;
+		return 1;
+	}
 
 	/* If no non-offloaded callbacks, RCU doesn't need the CPU. */
 	if (rcu_segcblist_empty(&rdp->cblist) ||
