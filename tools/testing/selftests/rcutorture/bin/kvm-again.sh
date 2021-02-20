@@ -133,7 +133,8 @@ for i in $rundir/*/qemu-cmd
 do
 	cp "$i" $T
 	qemu_cmd_dir="`dirname "$i"`"
-	kvm-transform.sh $qemu_cmd_dir/bzImage $qemu_cmd_dir/console.log < $T/qemu-cmd > $i
+	kernel_dir="`echo $qemu_cmd_dir | sed -e 's/\.[0-9]\+$//'`"
+	kvm-transform.sh $kernel_dir/bzImage $qemu_cmd_dir/console.log < $T/qemu-cmd > $i
 	echo "# TORTURE_KCONFIG_GDB_ARG=''" >> $i
 done
 grep -v '^#' $T/batches.oldrun | awk '

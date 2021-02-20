@@ -56,9 +56,12 @@ do
 	echo > $i/kvm-test-1-run-qemu.sh.out
 	kvm-test-1-run-qemu.sh $i >> $i/kvm-test-1-run-qemu.sh.out 2>&1 &
 done
-while ls $runfiles > /dev/null 2>&1
+for i in $runfiles
 do
-	:
+	while ls $i > /dev/null 2>&1
+	do
+		:
+	done
 done
 echo ---- All kernel runs complete. `date` | tee -a log
 $TORTURE_JITTER_STOP
