@@ -61,6 +61,7 @@
 #include <asm/insn.h>
 #include <asm/insn-eval.h>
 #include <asm/vdso.h>
+#include <asm/syscall.h>
 
 #ifdef CONFIG_X86_64
 #include <asm/x86_init.h>
@@ -258,6 +259,20 @@ DEFINE_IDTENTRY_RAW(exc_invalid_op)
 	 */
 	if (!user_mode(regs) && handle_bug(regs))
 		return;
+
+	if (user_mode(regs)) {
+		/*
+		 * emulate SYSCALL.  I have no idea why ax is a separate
+		 * argument.  it's probably my fault.
+		 *
+		 * Don't think too hard about the entry mess here.
+		 * This needs to be cleaned up so that syscalls can
+		 * be cleanly executed from "irqentry" context.
+		 */
+		regs->ip += 2;  /* world's best emulator */
+		do_syscall_64(regs->ax, regs);
+		return;
+	}
 
 	state = irqentry_enter(regs);
 	instrumentation_begin();

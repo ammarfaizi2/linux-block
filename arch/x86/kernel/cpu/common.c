@@ -1748,6 +1748,8 @@ EXPORT_PER_CPU_SYMBOL(__preempt_count);
 /* May not be marked __init: used by software suspend */
 void syscall_init(void)
 {
+	u64 val;
+
 	wrmsr(MSR_STAR, 0, (__USER32_CS << 16) | __KERNEL_CS);
 	wrmsrl(MSR_LSTAR, (unsigned long)entry_SYSCALL_64);
 	wrmsrl(MSR_CSTAR, (unsigned long)entry_SYSCALL_compat);
@@ -1774,6 +1776,10 @@ void syscall_init(void)
 	wrmsrl(MSR_SYSCALL_MASK,
 	       X86_EFLAGS_TF|X86_EFLAGS_DF|X86_EFLAGS_IF|
 	       X86_EFLAGS_IOPL|X86_EFLAGS_AC|X86_EFLAGS_NT);
+
+	rdmsrl(MSR_EFER, val);
+	val &= ~EFER_SCE;
+	wrmsrl(MSR_EFER, val);
 }
 
 #else	/* CONFIG_X86_64 */
