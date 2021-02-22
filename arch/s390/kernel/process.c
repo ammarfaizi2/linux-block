@@ -58,7 +58,10 @@ void __ret_from_fork(struct task_struct *prev, struct pt_regs *regs)
 		func((void *)regs->gprs[10]);
 	}
 	clear_pt_regs_flag(regs, PIF_SYSCALL);
-	syscall_exit_to_user_mode(regs);
+
+	kentry_syscall_end(regs);
+	local_irq_disable();
+	kentry_exit_to_user_mode(regs);
 }
 
 void flush_thread(void)

@@ -39,9 +39,12 @@
 __visible noinstr void do_syscall_64(unsigned long nr, struct pt_regs *regs)
 {
 	add_random_kstack_offset();
-	nr = syscall_enter_from_user_mode(regs, nr);
-
+	kentry_enter_from_user_mode(regs);
 	instrumentation_begin();
+	local_irq_enable();
+
+	nr = kentry_syscall_begin(regs, nr);
+
 	if (likely(nr < NR_syscalls)) {
 		nr = array_index_nospec(nr, NR_syscalls);
 		regs->ax = sys_call_table[nr](regs);
@@ -53,8 +56,12 @@ __visible noinstr void do_syscall_64(unsigned long nr, struct pt_regs *regs)
 		regs->ax = x32_sys_call_table[nr](regs);
 #endif
 	}
+
+	kentry_syscall_end(regs);
+
+	local_irq_disable();
 	instrumentation_end();
-	syscall_exit_to_user_mode(regs);
+	kentry_exit_to_user_mode(regs);
 }
 #endif
 
@@ -85,34 +92,35 @@ __visible noinstr void do_int80_syscall_32(struct pt_regs *regs)
 	unsigned int nr = syscall_32_enter(regs);
 
 	add_random_kstack_offset();
+	kentry_enter_from_user_mode(regs);
+	instrumentation_begin();
+	local_irq_enable();
+
 	/*
 	 * Subtlety here: if ptrace pokes something larger than 2^32-1 into
 	 * orig_ax, the unsigned int return value truncates it.  This may
 	 * or may not be necessary, but it matches the old asm behavior.
 	 */
-	nr = (unsigned int)syscall_enter_from_user_mode(regs, nr);
-	instrumentation_begin();
-
+	nr = (unsigned int)kentry_syscall_begin(regs, nr);
 	do_syscall_32_irqs_on(regs, nr);
+	kentry_syscall_end(regs);
 
+	local_irq_disable();
 	instrumentation_end();
-	syscall_exit_to_user_mode(regs);
+	kentry_exit_to_user_mode(regs);
 }
 
 static noinstr bool __do_fast_syscall_32(struct pt_regs *regs)
 {
 	unsigned int nr = syscall_32_enter(regs);
+	bool ret;
 	int res;
 
 	add_random_kstack_offset();
-	/*
-	 * This cannot use syscall_enter_from_user_mode() as it has to
-	 * fetch EBP before invoking any of the syscall entry work
-	 * functions.
-	 */
-	syscall_enter_from_user_mode_prepare(regs);
-
+	kentry_enter_from_user_mode(regs);
 	instrumentation_begin();
+	local_irq_enable();
+
 	/* Fetch EBP from where the vDSO stashed it. */
 	if (IS_ENABLED(CONFIG_X86_64)) {
 		/*
@@ -129,22 +137,24 @@ static noinstr bool __do_fast_syscall_32(struct pt_regs *regs)
 	if (res) {
 		/* User code screwed up. */
 		regs->ax = -EFAULT;
-
-		instrumentation_end();
-		local_irq_disable();
-		kentry_exit_to_user_mode(regs);
-		return false;
+		ret = false;
+		goto out;
 	}
 
 	/* The case truncates any ptrace induced syscall nr > 2^32 -1 */
-	nr = (unsigned int)syscall_enter_from_user_mode_work(regs, nr);
+	nr = (unsigned int)kentry_syscall_begin(regs, nr);
 
 	/* Now this is just like a normal syscall. */
 	do_syscall_32_irqs_on(regs, nr);
 
+	kentry_syscall_end(regs);
+	ret = true;
+
+out:
+	local_irq_disable();
 	instrumentation_end();
-	syscall_exit_to_user_mode(regs);
-	return true;
+	kentry_exit_to_user_mode(regs);
+	return ret;
 }
 
 /* Returns 0 to return using IRET or 1 to return using SYSEXIT/SYSRETL. */
@@ -236,8 +246,11 @@ __visible void noinstr ret_from_fork(struct task_struct *prev,
 		user_regs->ax = 0;
 	}
 
+	kentry_syscall_end(user_regs);
+
+	local_irq_disable();
 	instrumentation_end();
-	syscall_exit_to_user_mode(user_regs);
+	kentry_exit_to_user_mode(user_regs);
 }
 
 #ifdef CONFIG_XEN_PV

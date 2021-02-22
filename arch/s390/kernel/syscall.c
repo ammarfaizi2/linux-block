@@ -121,7 +121,7 @@ void do_syscall(struct pt_regs *regs)
 
 	regs->gprs[2] = nr;
 
-	nr = syscall_enter_from_user_mode_work(regs, nr);
+	nr = kentry_syscall_begin(regs, nr);
 
 	/*
 	 * In the s390 ptrace ABI, both the syscall number and the return value
@@ -138,7 +138,7 @@ void do_syscall(struct pt_regs *regs)
 		clear_pt_regs_flag(regs, PIF_SYSCALL_RET_SET);
 	}
 
-	syscall_exit_to_user_mode_prepare(regs);
+	kentry_syscall_end(regs);
 }
 
 void noinstr __do_syscall(struct pt_regs *regs, int per_trap)

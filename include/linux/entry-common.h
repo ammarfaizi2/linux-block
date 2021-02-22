@@ -121,31 +121,12 @@ static inline __must_check int arch_syscall_enter_tracehook(struct pt_regs *regs
 void enter_from_user_mode(struct pt_regs *regs);
 
 /**
- * syscall_enter_from_user_mode_prepare - Establish state and enable interrupts
- * @regs:	Pointer to currents pt_regs
- *
- * Invoked from architecture specific syscall entry code with interrupts
- * disabled. The calling code has to be non-instrumentable. When the
- * function returns all state is correct, interrupts are enabled and the
- * subsequent functions can be instrumented.
- *
- * This handles lockdep, RCU (context tracking) and tracing state, i.e.
- * the functionality provided by enter_from_user_mode().
- *
- * This is invoked when there is extra architecture specific functionality
- * to be done between establishing state and handling user mode entry work.
- */
-void syscall_enter_from_user_mode_prepare(struct pt_regs *regs);
-
-/**
- * syscall_enter_from_user_mode_work - Check and handle work before invoking
- *				       a syscall
+ * kentry_syscall_begin - Prepare to invoke a syscall handler
  * @regs:	Pointer to currents pt_regs
  * @syscall:	The syscall number
  *
  * Invoked from architecture specific syscall entry code with interrupts
- * enabled after invoking syscall_enter_from_user_mode_prepare() and extra
- * architecture specific work.
+ * enabled after kentry_enter_from_usermode or a similar function.
  *
  * Returns: The original or a modified syscall number
  *
@@ -154,32 +135,16 @@ void syscall_enter_from_user_mode_prepare(struct pt_regs *regs);
  * syscall_set_return_value() first.  If neither of those are called and -1
  * is returned, then the syscall will fail with ENOSYS.
  *
+ * After calling kentry_syscall_begin(), regardless of the return value,
+ * the caller must call kentry_syscall_end().
+ *
  * It handles the following work items:
  *
  *  1) syscall_work flag dependent invocations of
  *     arch_syscall_enter_tracehook(), __secure_computing(), trace_sys_enter()
  *  2) Invocation of audit_syscall_entry()
  */
-long syscall_enter_from_user_mode_work(struct pt_regs *regs, long syscall);
-
-/**
- * syscall_enter_from_user_mode - Establish state and check and handle work
- *				  before invoking a syscall
- * @regs:	Pointer to currents pt_regs
- * @syscall:	The syscall number
- *
- * Invoked from architecture specific syscall entry code with interrupts
- * disabled. The calling code has to be non-instrumentable. When the
- * function returns all state is correct, interrupts are enabled and the
- * subsequent functions can be instrumented.
- *
- * This is combination of syscall_enter_from_user_mode_prepare() and
- * syscall_enter_from_user_mode_work().
- *
- * Returns: The original or a modified syscall number. See
- * syscall_enter_from_user_mode_work() for further explanation.
- */
-long syscall_enter_from_user_mode(struct pt_regs *regs, long syscall);
+long kentry_syscall_begin(struct pt_regs *regs, long syscall);
 
 /**
  * local_irq_enable_exit_to_user - Exit to user variant of local_irq_enable()
@@ -319,64 +284,19 @@ static inline void arch_syscall_exit_tracehook(struct pt_regs *regs, bool step)
 void exit_to_user_mode(void);
 
 /**
- * syscall_exit_to_user_mode_work - Handle work before returning to user mode
+ * kentry_syscall_end - Finish syscall processing
  * @regs:	Pointer to currents pt_regs
  *
- * Same as step 1 and 2 of syscall_exit_to_user_mode() but without calling
- * exit_to_user_mode() to perform the final transition to user mode.
  *
- * Calling convention is the same as for syscall_exit_to_user_mode() and it
- * returns with all work handled and interrupts disabled. The caller must
- * invoke exit_to_user_mode() before actually switching to user mode to
- * make the final state transitions. Interrupts must stay disabled between
- * return from this function and the invocation of exit_to_user_mode().
+ * This must be called after arch code calls kentry_syscall_begin() and
+ * invoking a syscall handler, if any.  This must also be called when
+ * returning from fork() to user mode, since return-from-fork is considered
+ * to be a syscall return.
+ *
+ * Called with interrupts enabled, and returns with interrupts still
+ * enabled.
  */
-void syscall_exit_to_user_mode_work(struct pt_regs *regs);
-
-/**
- * syscall_exit_to_user_mode_prepare - Handle syscall work before returning to user mode
- * @regs:	Pointer to currents pt_regs
- *
- * Same as step 1 of syscall_exit_to_user_mode() but without doing any of the
- * work for general exits to user mode.
- *
- * Calling convention is the same as for syscall_exit_to_user_mode() and it
- * returns with syscall work handled and interrupts enabled. The caller
- * must invoke local_irq_disable() and irqentry_exit_to_user_mode() before
- * actually switching to user mode to make the final state transitions.
- */
-void syscall_exit_to_user_mode_prepare(struct pt_regs *regs);
-
-/**
- * syscall_exit_to_user_mode - Handle work before returning to user mode
- * @regs:	Pointer to currents pt_regs
- *
- * Invoked with interrupts enabled and fully valid regs. Returns with all
- * work handled, interrupts disabled such that the caller can immediately
- * switch to user mode. Called from architecture specific syscall and ret
- * from fork code.
- *
- * The call order is:
- *  1) One-time syscall exit work:
- *	- rseq syscall exit
- *      - audit
- *	- syscall tracing
- *	- tracehook (single stepping)
- *
- *  2) Preparatory work
- *	- Exit to user mode loop (common TIF handling). Invokes
- *	  arch_exit_to_user_mode_work() for architecture specific TIF work
- *	- Architecture specific one time work arch_exit_to_user_mode_prepare()
- *	- Address limit and lockdep checks
- *
- *  3) Final transition (lockdep, tracing, context tracking, RCU), i.e. the
- *     functionality in exit_to_user_mode().
- *
- * This is a combination of syscall_exit_to_user_mode_work() (1,2) and
- * exit_to_user_mode(). This function is preferred unless there is a
- * compelling architectural reason to use the separate functions.
- */
-void syscall_exit_to_user_mode(struct pt_regs *regs);
+void kentry_syscall_end(struct pt_regs *regs);
 
 /**
  * kentry_enter_from_user_mode - Establish state before invoking the irq handler
