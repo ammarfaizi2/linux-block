@@ -213,6 +213,14 @@ struct task_struct init_task
 #ifdef CONFIG_SECCOMP_FILTER
 	.seccomp	= { .filter_count = ATOMIC_INIT(0) },
 #endif
+#ifdef CONFIG_DEBUG_ENTRY
+	/*
+	 * The init task, and kernel threads in general, are considered
+	 * to be "in a syscall".  This way they can execve() and then exit
+	 * the supposed syscall that they were in to go to user mode.
+	 */
+	.kentry_in_syscall = true,
+#endif
 };
 EXPORT_SYMBOL(init_task);
 

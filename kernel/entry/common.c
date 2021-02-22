@@ -139,10 +139,20 @@ static long syscall_trace_enter(struct pt_regs *regs, long syscall,
 
 long kentry_syscall_begin(struct pt_regs *regs, long syscall)
 {
-	unsigned long work = READ_ONCE(current_thread_info()->syscall_work);
+	unsigned long work;
+
+#ifdef CONFIG_DEBUG_ENTRY
+	DEBUG_ENTRY_WARN_ONCE(
+		current->kentry_in_syscall,
+		"entering syscall %ld while already in a syscall",
+		syscall);
+	current->kentry_in_syscall = true;
+#endif
 
 	CT_WARN_ON(ct_state() != CONTEXT_KERNEL);
 	lockdep_assert_irqs_enabled();
+
+	work = READ_ONCE(current_thread_info()->syscall_work);
 
 	if (work & SYSCALL_WORK_ENTER)
 		syscall = syscall_trace_enter(regs, syscall, work);
@@ -158,6 +168,9 @@ static __always_inline void __exit_to_user_mode(void)
 	DEBUG_ENTRY_WARN_ONCE(this_cpu_read(kentry_cpu_depth) != 1,
 			      "__exit_to_user_mode called at wrong kentry cpu depth (%u)",
 			      this_cpu_read(kentry_cpu_depth));
+
+	DEBUG_ENTRY_WARN_ONCE(current->kentry_in_syscall,
+			      "exiting to user mode while in syscall context");
 
 	trace_hardirqs_on_prepare();
 	lockdep_hardirqs_on_prepare(CALLER_ADDR0);
@@ -314,6 +327,13 @@ void kentry_syscall_end(struct pt_regs *regs)
 	 */
 	if (unlikely(work & SYSCALL_WORK_EXIT))
 		syscall_exit_work(regs, work);
+
+#ifdef CONFIG_DEBUG_ENTRY
+	DEBUG_ENTRY_WARN_ONCE(!current->kentry_in_syscall,
+			      "exiting syscall %lu without entering first", nr);
+
+	current->kentry_in_syscall = 0;
+#endif
 }
 
 noinstr void kentry_enter_from_user_mode(struct pt_regs *regs)
