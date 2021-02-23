@@ -902,6 +902,57 @@ void mnt_change_mountpoint(struct mount *parent, struct mountpoint *mp, struct m
 }
 
 /*
+ * Reserve slots in the mnt_id-to-mount mapping in a namespace.  This gets the
+ * memory allocation done upfront.
+ */
+static int reserve_mnt_id_one(struct mount *mnt, struct mnt_namespace *ns)
+{
+	struct mount *m;
+	int ret;
+
+	ret = xa_reserve(&ns->mounts_by_id, mnt->mnt_id, GFP_KERNEL);
+	if (ret < 0)
+		return ret;
+
+	list_for_each_entry(m, &mnt->mnt_list, mnt_list) {
+		ret = xa_reserve(&ns->mounts_by_id, m->mnt_id, GFP_KERNEL);
+		if (ret < 0)
+			return ret;
+	}
+
+	return 0;
+}
+
+static int reserve_mnt_id_list(struct hlist_head *tree_list)
+{
+	struct mount *child;
+	int ret;
+
+	hlist_for_each_entry(child, tree_list, mnt_hash) {
+		ret = reserve_mnt_id_one(child, child->mnt_parent->mnt_ns);
+		if (ret < 0)
+			return ret;
+	}
+	return 0;
+}
+
+static void add_mnt_to_ns(struct mount *m, struct mnt_namespace *ns)
+{
+	void *x;
+
+	m->mnt_ns = ns;
+	x = xa_store(&ns->mounts_by_id, m->mnt_id, m, GFP_ATOMIC);
+	WARN(xa_err(x), "Couldn't store mnt_id %x\n", m->mnt_id);
+}
+
+static void remove_mnt_from_ns(struct mount *mnt)
+{
+	if (mnt->mnt_ns && mnt->mnt_ns != MNT_NS_INTERNAL)
+		xa_erase(&mnt->mnt_ns->mounts_by_id, mnt->mnt_id);
+	mnt->mnt_ns = NULL;
+}
+
+/*
  * vfsmount lock must be held for write
  */
 static void commit_tree(struct mount *mnt)
@@ -914,8 +965,9 @@ static void commit_tree(struct mount *mnt)
 	BUG_ON(parent == mnt);
 
 	list_add_tail(&head, &mnt->mnt_list);
-	list_for_each_entry(m, &head, mnt_list)
-		m->mnt_ns = n;
+	list_for_each_entry(m, &head, mnt_list) {
+		add_mnt_to_ns(m, n);
+	}
 
 	list_splice(&head, n->list.prev);
 
@@ -1529,7 +1581,7 @@ static void umount_tree(struct mount *mnt, enum umount_tree_flags how)
 			ns->mounts--;
 			__touch_mnt_namespace(ns);
 		}
-		p->mnt_ns = NULL;
+		remove_mnt_from_ns(p);
 		if (how & UMOUNT_SYNC)
 			p->mnt.mnt_flags |= MNT_SYNC_UMOUNT;
 
@@ -2144,6 +2196,13 @@ static int attach_recursive_mnt(struct mount *source_mnt,
 		err = count_mounts(ns, source_mnt);
 		if (err)
 			goto out;
+
+		/* Reserve id-to-mount mapping slots in the namespace we're
+		 * going to use.
+		 */
+		err = reserve_mnt_id_one(source_mnt, dest_mnt->mnt_ns);
+		if (err)
+			goto out;
 	}
 
 	if (IS_MNT_SHARED(dest_mnt)) {
@@ -2151,6 +2210,8 @@ static int attach_recursive_mnt(struct mount *source_mnt,
 		if (err)
 			goto out;
 		err = propagate_mnt(dest_mnt, dest_mp, source_mnt, &tree_list);
+		if (!err && !moving)
+			err = reserve_mnt_id_list(&tree_list);
 		lock_mount_hash();
 		if (err)
 			goto out_cleanup_ids;
@@ -3260,6 +3321,7 @@ static void dec_mnt_namespaces(struct ucounts *ucounts)
 
 static void free_mnt_ns(struct mnt_namespace *ns)
 {
+	WARN_ON(!xa_empty(&ns->mounts_by_id));
 	if (!is_anon_ns(ns))
 		ns_free_inum(&ns->ns);
 	dec_mnt_namespaces(ns->ucounts);
@@ -3306,6 +3368,7 @@ static struct mnt_namespace *alloc_mnt_ns(struct user_namespace *user_ns, bool a
 	INIT_LIST_HEAD(&new_ns->list);
 	init_waitqueue_head(&new_ns->poll);
 	spin_lock_init(&new_ns->ns_lock);
+	xa_init(&new_ns->mounts_by_id);
 	new_ns->user_ns = get_user_ns(user_ns);
 	new_ns->ucounts = ucounts;
 	return new_ns;
@@ -3362,7 +3425,7 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
 	p = old;
 	q = new;
 	while (p) {
-		q->mnt_ns = new_ns;
+		add_mnt_to_ns(q, new_ns);
 		new_ns->mounts++;
 		if (new_fs) {
 			if (&p->mnt == new_fs->root.mnt) {
@@ -3404,7 +3467,7 @@ struct dentry *mount_subtree(struct vfsmount *m, const char *name)
 		mntput(m);
 		return ERR_CAST(ns);
 	}
-	mnt->mnt_ns = ns;
+	add_mnt_to_ns(mnt, ns);
 	ns->root = mnt;
 	ns->mounts++;
 	list_add(&mnt->mnt_list, &ns->list);
@@ -3583,7 +3646,7 @@ SYSCALL_DEFINE3(fsmount, int, fs_fd, unsigned int, flags,
 		goto err_path;
 	}
 	mnt = real_mount(newmount.mnt);
-	mnt->mnt_ns = ns;
+	add_mnt_to_ns(mnt, ns);
 	ns->root = mnt;
 	ns->mounts = 1;
 	list_add(&mnt->mnt_list, &ns->list);
@@ -4193,7 +4256,7 @@ static void __init init_mount_tree(void)
 	if (IS_ERR(ns))
 		panic("Can't allocate initial namespace");
 	m = real_mount(mnt);
-	m->mnt_ns = ns;
+	add_mnt_to_ns(m, ns);
 	ns->root = m;
 	ns->mounts = 1;
 	list_add(&m->mnt_list, &ns->list);
@@ -4270,7 +4333,7 @@ void kern_unmount(struct vfsmount *mnt)
 {
 	/* release long term mount so mount point can be released */
 	if (!IS_ERR_OR_NULL(mnt)) {
-		real_mount(mnt)->mnt_ns = NULL;
+		remove_mnt_from_ns(real_mount(mnt));
 		synchronize_rcu();	/* yecchhh... */
 		mntput(mnt);
 	}
@@ -4283,7 +4346,7 @@ void kern_unmount_array(struct vfsmount *mnt[], unsigned int num)
 
 	for (i = 0; i < num; i++)
 		if (mnt[i])
-			real_mount(mnt[i])->mnt_ns = NULL;
+			remove_mnt_from_ns(real_mount(mnt[i]));
 	synchronize_rcu_expedited();
 	for (i = 0; i < num; i++)
 		mntput(mnt[i]);

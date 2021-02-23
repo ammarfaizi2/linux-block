@@ -4,6 +4,7 @@
 #include <linux/poll.h>
 #include <linux/ns_common.h>
 #include <linux/fs_pin.h>
+#include <linux/xarray.h>
 
 struct mnt_namespace {
 	struct ns_common	ns;
@@ -14,6 +15,7 @@ struct mnt_namespace {
 	 * - taking namespace_sem for read AND taking .ns_lock.
 	 */
 	struct list_head	list;
+	struct xarray		mounts_by_id; /* List of mounts by mnt_id */
 	spinlock_t		ns_lock;
 	struct user_namespace	*user_ns;
 	struct ucounts		*ucounts;
