@@ -130,7 +130,7 @@ struct proc_mounts {
 	struct mnt_namespace *ns;
 	struct path root;
 	int (*show)(struct seq_file *, struct vfsmount *);
-	struct mount cursor;
+	struct xa_state xas;
 };
 
 extern const struct seq_operations mounts_op;

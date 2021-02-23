@@ -1334,6 +1334,7 @@ struct vfsmount *mnt_clone_internal(const struct path *path)
 }
 
 #ifdef CONFIG_PROC_FS
+#if 0
 static struct mount *mnt_list_next(struct mnt_namespace *ns,
 				   struct list_head *p)
 {
@@ -1351,47 +1352,40 @@ static struct mount *mnt_list_next(struct mnt_namespace *ns,
 
 	return ret;
 }
+#endif
 
 /* iterator; we want it to have access to namespace_sem, thus here... */
 static void *m_start(struct seq_file *m, loff_t *pos)
 {
-	struct proc_mounts *p = m->private;
-	struct list_head *prev;
+	struct proc_mounts *state = m->private;
+	void *entry;
 
 	down_read(&namespace_sem);
-	if (!*pos) {
-		prev = &p->ns->list;
-	} else {
-		prev = &p->cursor.mnt_list;
+	state->xas = (struct xa_state) __XA_STATE(&state->ns->mounts_by_id, *pos, 0, 0);
 
-		/* Read after we'd reached the end? */
-		if (list_empty(prev))
-			return NULL;
-	}
+	entry = xas_find(&state->xas, ULONG_MAX);
+	while (entry && xas_invalid(entry))
+		entry = xas_next_entry(&state->xas, ULONG_MAX);
 
-	return mnt_list_next(p->ns, prev);
+	return entry;
 }
 
 static void *m_next(struct seq_file *m, void *v, loff_t *pos)
 {
-	struct proc_mounts *p = m->private;
+	struct proc_mounts *state = m->private;
 	struct mount *mnt = v;
+	void *entry;
 
-	++*pos;
-	return mnt_list_next(p->ns, &mnt->mnt_list);
+	*pos = mnt->mnt_id + 1;
+	entry = xas_next_entry(&state->xas, ULONG_MAX);
+	while (entry && xas_invalid(entry))
+		entry = xas_next_entry(&state->xas, ULONG_MAX);
+
+	return entry;
 }
 
 static void m_stop(struct seq_file *m, void *v)
 {
-	struct proc_mounts *p = m->private;
-	struct mount *mnt = v;
-
-	lock_ns_list(p->ns);
-	if (mnt)
-		list_move_tail(&p->cursor.mnt_list, &mnt->mnt_list);
-	else
-		list_del_init(&p->cursor.mnt_list);
-	unlock_ns_list(p->ns);
 	up_read(&namespace_sem);
 }
 
