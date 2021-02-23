@@ -673,11 +673,6 @@ static inline void unlock_ns_list(struct mnt_namespace *ns)
 	spin_unlock(&ns->ns_lock);
 }
 
-static inline bool mnt_is_cursor(struct mount *mnt)
-{
-	return mnt->mnt.mnt_flags & MNT_CURSOR;
-}
-
 /*
  * __is_local_mountpoint - Test to see if dentry is a mountpoint in the
  *                         current mount namespace.
@@ -702,8 +697,6 @@ bool __is_local_mountpoint(struct dentry *dentry)
 	down_read(&namespace_sem);
 	lock_ns_list(ns);
 	list_for_each_entry(mnt, &ns->list, mnt_list) {
-		if (mnt_is_cursor(mnt))
-			continue;
 		is_covered = (mnt->mnt_mountpoint == dentry);
 		if (is_covered)
 			break;
@@ -1334,26 +1327,6 @@ struct vfsmount *mnt_clone_internal(const struct path *path)
 }
 
 #ifdef CONFIG_PROC_FS
-#if 0
-static struct mount *mnt_list_next(struct mnt_namespace *ns,
-				   struct list_head *p)
-{
-	struct mount *mnt, *ret = NULL;
-
-	lock_ns_list(ns);
-	list_for_each_continue(p, &ns->list) {
-		mnt = list_entry(p, typeof(*mnt), mnt_list);
-		if (!mnt_is_cursor(mnt)) {
-			ret = mnt;
-			break;
-		}
-	}
-	unlock_ns_list(ns);
-
-	return ret;
-}
-#endif
-
 /* iterator; we want it to have access to namespace_sem, thus here... */
 static void *m_start(struct seq_file *m, loff_t *pos)
 {
@@ -4389,9 +4362,6 @@ static bool mnt_already_visible(struct mnt_namespace *ns,
 	list_for_each_entry(mnt, &ns->list, mnt_list) {
 		struct mount *child;
 		int mnt_flags;
-
-		if (mnt_is_cursor(mnt))
-			continue;
 
 		if (mnt->mnt.mnt_sb->s_type != sb->s_type)
 			continue;
