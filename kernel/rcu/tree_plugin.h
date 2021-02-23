@@ -1321,7 +1321,7 @@ static void rcu_prepare_kthreads(int cpu)
 int rcu_needs_cpu(u64 basemono, u64 *nextevt)
 {
 	/* Through early_initcall(), need tick for softirq handlers. */
-	if (!this_cpu_ksoftirqd()) {
+	if (!IS_ENABLED(CONFIG_HZ_PERIODIC) && !this_cpu_ksoftirqd()) {
 		*nextevt = 1;
 		return 1;
 	}
@@ -1421,7 +1421,7 @@ int rcu_needs_cpu(u64 basemono, u64 *nextevt)
 	lockdep_assert_irqs_disabled();
 
 	/* Through early_initcall(), need tick for softirq handlers. */
-	if (!this_cpu_ksoftirqd()) {
+	if (!IS_ENABLED(CONFIG_HZ_PERIODIC) && !this_cpu_ksoftirqd()) {
 		*nextevt = 1;
 		return 1;
 	}
