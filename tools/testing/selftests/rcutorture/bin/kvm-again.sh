@@ -110,7 +110,6 @@ do
 	--remote)
 		arg_remote=1
 		default_link="cp -as"
-		shift
 		;;
 	--rundir)
 		checkarg --rundir "(absolute pathname)" "$#" "$2" '^/' '^error'
