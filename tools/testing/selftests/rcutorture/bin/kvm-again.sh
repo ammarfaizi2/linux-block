@@ -136,6 +136,7 @@ fi
 echo ---- Re-run results directory: $rundir
 
 # Copy old run directory tree over and adjust.
+mkdir -p "`dirname "$rundir"`"
 if ! $arg_link "$oldrun" "$rundir"
 then
 	echo "Cannot copy from $oldrun to $rundir."
