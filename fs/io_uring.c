@@ -1064,21 +1064,6 @@ static inline void io_set_resource_node(struct io_kiocb *req)
 	}
 }
 
-static bool io_refs_resurrect(struct percpu_ref *ref, struct completion *compl)
-{
-	if (!percpu_ref_tryget(ref)) {
-		/* already at zero, wait for ->release() */
-		if (!try_wait_for_completion(compl))
-			synchronize_rcu();
-		return false;
-	}
-
-	percpu_ref_resurrect(ref);
-	reinit_completion(compl);
-	percpu_ref_put(ref);
-	return true;
-}
-
 static bool io_match_task(struct io_kiocb *head,
 			  struct task_struct *task,
 			  struct files_struct *files)
@@ -2497,6 +2482,13 @@ static bool io_rw_reissue(struct io_kiocb *req)
 	if (!S_ISBLK(mode) && !S_ISREG(mode))
 		return false;
 	if ((req->flags & REQ_F_NOWAIT) || io_wq_current_is_worker())
+		return false;
+	/*
+	 * If ref is dying, we might be running poll reap from the exit work.
+	 * Don't attempt to reissue from that path, just let it fail with
+	 * -EAGAIN.
+	 */
+	if (percpu_ref_is_dying(&req->ctx->refs))
 		return false;
 
 	lockdep_assert_held(&req->ctx->uring_lock);
@@ -7026,11 +7018,13 @@ static int io_rsrc_ref_quiesce(struct fixed_rsrc_data *data,
 		flush_delayed_work(&ctx->rsrc_put_work);
 
 		ret = wait_for_completion_interruptible(&data->done);
-		if (!ret || !io_refs_resurrect(&data->refs, &data->done))
+		if (!ret)
 			break;
 
+		percpu_ref_resurrect(&data->refs);
 		io_sqe_rsrc_set_node(ctx, data, backup_node);
 		backup_node = NULL;
+		reinit_completion(&data->done);
 		mutex_unlock(&ctx->uring_lock);
 		ret = io_run_task_work_sig();
 		mutex_lock(&ctx->uring_lock);
@@ -8393,18 +8387,22 @@ static void io_req_cache_free(struct list_head *list, struct task_struct *tsk)
 static void io_req_caches_free(struct io_ring_ctx *ctx, struct task_struct *tsk)
 {
 	struct io_submit_state *submit_state = &ctx->submit_state;
+	struct io_comp_state *cs = &ctx->submit_state.comp;
 
 	mutex_lock(&ctx->uring_lock);
 
-	if (submit_state->free_reqs)
+	if (submit_state->free_reqs) {
 		kmem_cache_free_bulk(req_cachep, submit_state->free_reqs,
 				     submit_state->reqs);
-
-	io_req_cache_free(&submit_state->comp.free_list, NULL);
+		submit_state->free_reqs = 0;
+	}
 
 	spin_lock_irq(&ctx->completion_lock);
-	io_req_cache_free(&submit_state->comp.locked_free_list, NULL);
+	list_splice_init(&cs->locked_free_list, &cs->free_list);
+	cs->locked_free_nr = 0;
 	spin_unlock_irq(&ctx->completion_lock);
+
+	io_req_cache_free(&cs->free_list, NULL);
 
 	mutex_unlock(&ctx->uring_lock);
 }
@@ -9769,8 +9767,10 @@ static int __io_uring_register(struct io_ring_ctx *ctx, unsigned opcode,
 
 		mutex_lock(&ctx->uring_lock);
 
-		if (ret && io_refs_resurrect(&ctx->refs, &ctx->ref_comp))
-			return ret;
+		if (ret) {
+			percpu_ref_resurrect(&ctx->refs);
+			goto out_quiesce;
+		}
 	}
 
 	if (ctx->restricted) {
@@ -9862,6 +9862,7 @@ out:
 	if (io_register_op_must_quiesce(opcode)) {
 		/* bring the ctx back to life */
 		percpu_ref_reinit(&ctx->refs);
+out_quiesce:
 		reinit_completion(&ctx->ref_comp);
 	}
 	return ret;
