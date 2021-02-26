@@ -3798,11 +3798,14 @@ unsigned long start_poll_synchronize_rcu(void)
 	unsigned long flags;
 	unsigned long gp_seq = get_state_synchronize_rcu();
 	bool needwake;
-	struct rcu_data *rdp = this_cpu_ptr(&rcu_data);
-	struct rcu_node *rnp = rdp->mynode;
+	struct rcu_data *rdp;
+	struct rcu_node *rnp;
 
 	lockdep_assert_irqs_enabled();
-	raw_spin_lock_irqsave_rcu_node(rnp, flags);
+	local_irq_save(flags);
+	rdp = this_cpu_ptr(&rcu_data);
+	rnp = rdp->mynode;
+	raw_spin_lock_rcu_node(rnp); // irqs already disabled.
 	needwake = rcu_start_this_gp(rnp, rdp, gp_seq);
 	raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
 	if (needwake)
