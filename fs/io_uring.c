@@ -1831,7 +1831,7 @@ static bool __tctx_task_work(struct io_uring_task *tctx)
 			mutex_lock(&ctx->uring_lock);
 			io_submit_flush_completions(&ctx->submit_state.comp, ctx);
 			mutex_unlock(&ctx->uring_lock);
-			ctx = this_ctx;
+			ctx = node ? this_ctx : NULL;
 		}
 	}
 
