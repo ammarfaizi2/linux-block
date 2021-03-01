@@ -11,9 +11,65 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/syscalls.h>
 
+/*
+ * kentry_cpu_depth is 0 in user mode, 1 in normal kernel mode, and
+ * 1 + n * KENTRY_DEPTH_NMI in kentry_nmi_enter() mode.  We can't
+ * use a percpu variable to match up kentry_enter() from kernel mode
+ * with the corresponding kentry_exit() because tasks may schedule inside
+ * nested kentry_enter() regions.
+ */
+#define KENTRY_CPU_DEPTH_NMI	1024UL
+
+#ifdef CONFIG_DEBUG_ENTRY
+
+/*
+ * Extra safe WARN_ONCE.  Per-arch optimized WARN_ONCE() implementations
+ * might go through the low-level entry and kentry code even before noticing
+ * that the warning already fired, which could result in recursive warnings.
+ * This carefully avoids any funny business once a given warning has fired.
+ */
+#define DEBUG_ENTRY_WARN_ONCE(condition, format...) ({		\
+	static bool __section(".data.once") __warned;		\
+	int __ret_warn_once = !!(condition);			\
+								\
+	if (unlikely(__ret_warn_once && !READ_ONCE(__warned))) {\
+		WRITE_ONCE(__warned, true);			\
+		WARN(1, format);				\
+	}							\
+	unlikely(__ret_warn_once);				\
+})
+
+
+static DEFINE_PER_CPU(unsigned int, kentry_cpu_depth) = 1UL;
+
+static __always_inline void kentry_cpu_depth_add(unsigned int n)
+{
+	this_cpu_add(kentry_cpu_depth, n);
+}
+
+static void kentry_cpu_depth_check(unsigned int n)
+{
+	DEBUG_ENTRY_WARN_ONCE(this_cpu_read(kentry_cpu_depth) < n, "kentry depth underflow");
+}
+
+static __always_inline void kentry_cpu_depth_sub(unsigned int n)
+{
+	this_cpu_sub(kentry_cpu_depth, n);
+}
+#else
+
+#define DEBUG_ENTRY_WARN_ONCE(condition, format...) do {} while (0)
+
+static __always_inline void kentry_cpu_depth_add(unsigned int n) {}
+static void kentry_cpu_depth_check(unsigned int n) {}
+static __always_inline void kentry_cpu_depth_sub(unsigned int n) {}
+
+#endif
+
 /* See comment for enter_from_user_mode() in entry-common.h */
 static __always_inline void __enter_from_user_mode(struct pt_regs *regs)
 {
+	kentry_cpu_depth_add(1);
 	arch_check_user_regs(regs);
 	lockdep_hardirqs_off(CALLER_ADDR0);
 
@@ -22,6 +78,12 @@ static __always_inline void __enter_from_user_mode(struct pt_regs *regs)
 
 	instrumentation_begin();
 	trace_hardirqs_off_finish();
+
+	DEBUG_ENTRY_WARN_ONCE(
+		this_cpu_read(kentry_cpu_depth) != 1,
+		"kentry: __enter_from_user_mode() called while kentry thought the CPU was in the kernel (%u)",
+		this_cpu_read(kentry_cpu_depth));
+
 	instrumentation_end();
 }
 
@@ -92,6 +154,11 @@ long kentry_syscall_begin(struct pt_regs *regs, long syscall)
 static __always_inline void __exit_to_user_mode(void)
 {
 	instrumentation_begin();
+
+	DEBUG_ENTRY_WARN_ONCE(this_cpu_read(kentry_cpu_depth) != 1,
+			      "__exit_to_user_mode called at wrong kentry cpu depth (%u)",
+			      this_cpu_read(kentry_cpu_depth));
+
 	trace_hardirqs_on_prepare();
 	lockdep_hardirqs_on_prepare(CALLER_ADDR0);
 	instrumentation_end();
@@ -99,6 +166,7 @@ static __always_inline void __exit_to_user_mode(void)
 	user_enter_irqoff();
 	arch_exit_to_user_mode();
 	lockdep_hardirqs_on(CALLER_ADDR0);
+	kentry_cpu_depth_sub(1);
 }
 
 /* Workaround to allow gradual conversion of architecture code */
@@ -348,7 +416,12 @@ noinstr void kentry_exit(struct pt_regs *regs, kentry_state_t state)
 	/* Check whether this returns to user mode */
 	if (user_mode(regs)) {
 		kentry_exit_to_user_mode(regs);
-	} else if (!regs_irqs_disabled(regs)) {
+		return;
+	}
+
+	kentry_cpu_depth_check(1);
+
+	if (!regs_irqs_disabled(regs)) {
 		/*
 		 * If RCU was not watching on entry this needs to be done
 		 * carefully and needs the same ordering of lockdep/tracing
@@ -392,6 +465,8 @@ kentry_state_t noinstr kentry_nmi_enter(struct pt_regs *regs)
 
 	irq_state.lockdep = lockdep_hardirqs_enabled();
 
+	kentry_cpu_depth_add(KENTRY_CPU_DEPTH_NMI);
+
 	__nmi_enter();
 	lockdep_hardirqs_off(CALLER_ADDR0);
 	lockdep_hardirq_enter();
@@ -408,6 +483,7 @@ kentry_state_t noinstr kentry_nmi_enter(struct pt_regs *regs)
 void noinstr kentry_nmi_exit(struct pt_regs *regs, kentry_state_t irq_state)
 {
 	instrumentation_begin();
+	kentry_cpu_depth_check(KENTRY_CPU_DEPTH_NMI);
 	ftrace_nmi_exit();
 	if (irq_state.lockdep) {
 		trace_hardirqs_on_prepare();
@@ -420,4 +496,5 @@ void noinstr kentry_nmi_exit(struct pt_regs *regs, kentry_state_t irq_state)
 	if (irq_state.lockdep)
 		lockdep_hardirqs_on(CALLER_ADDR0);
 	__nmi_exit();
+	kentry_cpu_depth_sub(KENTRY_CPU_DEPTH_NMI);
 }
