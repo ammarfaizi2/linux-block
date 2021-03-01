@@ -132,7 +132,7 @@ static int irq_pending(struct pt_regs *regs)
 
 void noinstr do_io_irq(struct pt_regs *regs)
 {
-	irqentry_state_t state = irqentry_enter(regs);
+	kentry_state_t state = kentry_enter(regs);
 	struct pt_regs *old_regs = set_irq_regs(regs);
 	int from_idle;
 
@@ -155,7 +155,7 @@ void noinstr do_io_irq(struct pt_regs *regs)
 
 	irq_exit();
 	set_irq_regs(old_regs);
-	irqentry_exit(regs, state);
+	kentry_exit(regs, state);
 
 	if (from_idle)
 		regs->psw.mask &= ~(PSW_MASK_EXT | PSW_MASK_IO | PSW_MASK_WAIT);
@@ -163,7 +163,7 @@ void noinstr do_io_irq(struct pt_regs *regs)
 
 void noinstr do_ext_irq(struct pt_regs *regs)
 {
-	irqentry_state_t state = irqentry_enter(regs);
+	kentry_state_t state = kentry_enter(regs);
 	struct pt_regs *old_regs = set_irq_regs(regs);
 	int from_idle;
 
@@ -184,7 +184,7 @@ void noinstr do_ext_irq(struct pt_regs *regs)
 
 	irq_exit();
 	set_irq_regs(old_regs);
-	irqentry_exit(regs, state);
+	kentry_exit(regs, state);
 
 	if (from_idle)
 		regs->psw.mask &= ~(PSW_MASK_EXT | PSW_MASK_IO | PSW_MASK_WAIT);

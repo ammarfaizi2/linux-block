@@ -303,12 +303,12 @@ __visible noinstr void syscall_exit_to_user_mode(struct pt_regs *regs)
 	__exit_to_user_mode();
 }
 
-noinstr void irqentry_enter_from_user_mode(struct pt_regs *regs)
+noinstr void kentry_enter_from_user_mode(struct pt_regs *regs)
 {
 	__enter_from_user_mode(regs);
 }
 
-noinstr void irqentry_exit_to_user_mode(struct pt_regs *regs)
+noinstr void kentry_exit_to_user_mode(struct pt_regs *regs)
 {
 	instrumentation_begin();
 	exit_to_user_mode_prepare(regs);
@@ -316,14 +316,14 @@ noinstr void irqentry_exit_to_user_mode(struct pt_regs *regs)
 	__exit_to_user_mode();
 }
 
-noinstr irqentry_state_t irqentry_enter(struct pt_regs *regs)
+noinstr kentry_state_t kentry_enter(struct pt_regs *regs)
 {
-	irqentry_state_t ret = {
+	kentry_state_t ret = {
 		.exit_rcu = false,
 	};
 
 	if (user_mode(regs)) {
-		irqentry_enter_from_user_mode(regs);
+		kentry_enter_from_user_mode(regs);
 		return ret;
 	}
 
@@ -354,7 +354,7 @@ noinstr irqentry_state_t irqentry_enter(struct pt_regs *regs)
 		/*
 		 * If RCU is not watching then the same careful
 		 * sequence vs. lockdep and tracing is required
-		 * as in irqentry_enter_from_user_mode().
+		 * as in kentry_enter_from_user_mode().
 		 */
 		lockdep_hardirqs_off(CALLER_ADDR0);
 		rcu_irq_enter();
@@ -381,7 +381,7 @@ noinstr irqentry_state_t irqentry_enter(struct pt_regs *regs)
 	return ret;
 }
 
-void irqentry_exit_cond_resched(void)
+void kentry_exit_cond_resched(void)
 {
 	if (!preempt_count()) {
 		/* Sanity check RCU and thread stack */
@@ -393,16 +393,16 @@ void irqentry_exit_cond_resched(void)
 	}
 }
 #ifdef CONFIG_PREEMPT_DYNAMIC
-DEFINE_STATIC_CALL(irqentry_exit_cond_resched, irqentry_exit_cond_resched);
+DEFINE_STATIC_CALL(kentry_exit_cond_resched, kentry_exit_cond_resched);
 #endif
 
-noinstr void irqentry_exit(struct pt_regs *regs, irqentry_state_t state)
+noinstr void kentry_exit(struct pt_regs *regs, kentry_state_t state)
 {
 	lockdep_assert_irqs_disabled();
 
 	/* Check whether this returns to user mode */
 	if (user_mode(regs)) {
-		irqentry_exit_to_user_mode(regs);
+		kentry_exit_to_user_mode(regs);
 	} else if (!regs_irqs_disabled(regs)) {
 		/*
 		 * If RCU was not watching on entry this needs to be done
@@ -423,9 +423,9 @@ noinstr void irqentry_exit(struct pt_regs *regs, irqentry_state_t state)
 		instrumentation_begin();
 		if (IS_ENABLED(CONFIG_PREEMPTION)) {
 #ifdef CONFIG_PREEMPT_DYNAMIC
-			static_call(irqentry_exit_cond_resched)();
+			static_call(kentry_exit_cond_resched)();
 #else
-			irqentry_exit_cond_resched();
+			kentry_exit_cond_resched();
 #endif
 		}
 		/* Covers both tracing and lockdep */
@@ -441,9 +441,9 @@ noinstr void irqentry_exit(struct pt_regs *regs, irqentry_state_t state)
 	}
 }
 
-irqentry_state_t noinstr irqentry_nmi_enter(struct pt_regs *regs)
+kentry_state_t noinstr kentry_nmi_enter(struct pt_regs *regs)
 {
-	irqentry_state_t irq_state;
+	kentry_state_t irq_state;
 
 	irq_state.lockdep = lockdep_hardirqs_enabled();
 
@@ -460,7 +460,7 @@ irqentry_state_t noinstr irqentry_nmi_enter(struct pt_regs *regs)
 	return irq_state;
 }
 
-void noinstr irqentry_nmi_exit(struct pt_regs *regs, irqentry_state_t irq_state)
+void noinstr kentry_nmi_exit(struct pt_regs *regs, kentry_state_t irq_state)
 {
 	instrumentation_begin();
 	ftrace_nmi_exit();

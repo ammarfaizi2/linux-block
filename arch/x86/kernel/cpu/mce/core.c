@@ -1986,7 +1986,7 @@ void (*machine_check_vector)(struct pt_regs *) = unexpected_machine_check;
 
 static __always_inline void exc_machine_check_kernel(struct pt_regs *regs)
 {
-	irqentry_state_t irq_state;
+	kentry_state_t irq_state;
 
 	WARN_ON_ONCE(user_mode(regs));
 
@@ -1998,7 +1998,7 @@ static __always_inline void exc_machine_check_kernel(struct pt_regs *regs)
 	    mce_check_crashing_cpu())
 		return;
 
-	irq_state = irqentry_nmi_enter(regs);
+	irq_state = kentry_nmi_enter(regs);
 	/*
 	 * The call targets are marked noinstr, but objtool can't figure
 	 * that out because it's an indirect call. Annotate it.
@@ -2008,18 +2008,18 @@ static __always_inline void exc_machine_check_kernel(struct pt_regs *regs)
 	machine_check_vector(regs);
 
 	instrumentation_end();
-	irqentry_nmi_exit(regs, irq_state);
+	kentry_nmi_exit(regs, irq_state);
 }
 
 static __always_inline void exc_machine_check_user(struct pt_regs *regs)
 {
-	irqentry_enter_from_user_mode(regs);
+	kentry_enter_from_user_mode(regs);
 	instrumentation_begin();
 
 	machine_check_vector(regs);
 
 	instrumentation_end();
-	irqentry_exit_to_user_mode(regs);
+	kentry_exit_to_user_mode(regs);
 }
 
 #ifdef CONFIG_X86_64

@@ -300,13 +300,13 @@ void noinstr __do_pgm_check(struct pt_regs *regs)
 {
 	unsigned long last_break = S390_lowcore.breaking_event_addr;
 	unsigned int trapnr, syscall_redirect = 0;
-	irqentry_state_t state;
+	kentry_state_t state;
 
 	add_random_kstack_offset();
 	regs->int_code = *(u32 *)&S390_lowcore.pgm_ilc;
 	regs->int_parm_long = S390_lowcore.trans_exc_code;
 
-	state = irqentry_enter(regs);
+	state = kentry_enter(regs);
 
 	if (user_mode(regs)) {
 		update_timer_sys();
@@ -353,7 +353,7 @@ void noinstr __do_pgm_check(struct pt_regs *regs)
 
 out:
 	local_irq_disable();
-	irqentry_exit(regs, state);
+	kentry_exit(regs, state);
 }
 
 /*

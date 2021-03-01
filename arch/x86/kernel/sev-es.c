@@ -1285,7 +1285,7 @@ static __always_inline bool on_vc_fallback_stack(struct pt_regs *regs)
 DEFINE_IDTENTRY_VC_SAFE_STACK(exc_vmm_communication)
 {
 	struct sev_es_runtime_data *data = this_cpu_read(runtime_data);
-	irqentry_state_t irq_state;
+	kentry_state_t kentry_state;
 	struct ghcb_state state;
 	struct es_em_ctxt ctxt;
 	enum es_result result;
@@ -1299,7 +1299,7 @@ DEFINE_IDTENTRY_VC_SAFE_STACK(exc_vmm_communication)
 		return;
 	}
 
-	irq_state = irqentry_nmi_enter(regs);
+	kentry_state = kentry_nmi_enter(regs);
 	lockdep_assert_irqs_disabled();
 	instrumentation_begin();
 
@@ -1363,7 +1363,7 @@ DEFINE_IDTENTRY_VC_SAFE_STACK(exc_vmm_communication)
 
 out:
 	instrumentation_end();
-	irqentry_nmi_exit(regs, irq_state);
+	kentry_nmi_exit(regs, kentry_state);
 
 	return;
 

@@ -249,7 +249,7 @@ static noinstr bool handle_bug(struct pt_regs *regs)
 
 DEFINE_IDTENTRY_RAW(exc_invalid_op)
 {
-	irqentry_state_t state;
+	kentry_state_t state;
 
 	/*
 	 * We use UD2 as a short encoding for 'CALL __WARN', as such
@@ -259,11 +259,11 @@ DEFINE_IDTENTRY_RAW(exc_invalid_op)
 	if (!user_mode(regs) && handle_bug(regs))
 		return;
 
-	state = irqentry_enter(regs);
+	state = kentry_enter(regs);
 	instrumentation_begin();
 	handle_invalid_op(regs);
 	instrumentation_end();
-	irqentry_exit(regs, state);
+	kentry_exit(regs, state);
 }
 
 DEFINE_IDTENTRY(exc_coproc_segment_overrun)
@@ -410,7 +410,7 @@ DEFINE_IDTENTRY_DF(exc_double_fault)
 	}
 #endif
 
-	irqentry_nmi_enter(regs);
+	kentry_nmi_enter(regs);
 	instrumentation_begin();
 	notify_die(DIE_TRAP, str, regs, error_code, X86_TRAP_DF, SIGSEGV);
 
@@ -647,26 +647,26 @@ DEFINE_IDTENTRY_RAW(exc_int3)
 		return;
 
 	/*
-	 * irqentry_enter_from_user_mode() uses static_branch_{,un}likely()
+	 * kentry_enter_from_user_mode() uses static_branch_{,un}likely()
 	 * and therefore can trigger INT3, hence poke_int3_handler() must
 	 * be done before. If the entry came from kernel mode, then use
 	 * nmi_enter() because the INT3 could have been hit in any context
 	 * including NMI.
 	 */
 	if (user_mode(regs)) {
-		irqentry_enter_from_user_mode(regs);
+		kentry_enter_from_user_mode(regs);
 		instrumentation_begin();
 		do_int3_user(regs);
 		instrumentation_end();
-		irqentry_exit_to_user_mode(regs);
+		kentry_exit_to_user_mode(regs);
 	} else {
-		irqentry_state_t irq_state = irqentry_nmi_enter(regs);
+		kentry_state_t irq_state = kentry_nmi_enter(regs);
 
 		instrumentation_begin();
 		if (!do_int3(regs))
 			die("int3", regs, 0);
 		instrumentation_end();
-		irqentry_nmi_exit(regs, irq_state);
+		kentry_nmi_exit(regs, irq_state);
 	}
 }
 
@@ -860,7 +860,7 @@ static __always_inline void exc_debug_kernel(struct pt_regs *regs,
 	 * includes the entry stack is excluded for everything.
 	 */
 	unsigned long dr7 = local_db_save();
-	irqentry_state_t irq_state = irqentry_nmi_enter(regs);
+	kentry_state_t irq_state = kentry_nmi_enter(regs);
 	instrumentation_begin();
 
 	/*
@@ -914,7 +914,7 @@ static __always_inline void exc_debug_kernel(struct pt_regs *regs,
 		regs->flags &= ~X86_EFLAGS_TF;
 out:
 	instrumentation_end();
-	irqentry_nmi_exit(regs, irq_state);
+	kentry_nmi_exit(regs, irq_state);
 
 	local_db_restore(dr7);
 }
@@ -932,14 +932,14 @@ static __always_inline void exc_debug_user(struct pt_regs *regs,
 
 	/*
 	 * NB: We can't easily clear DR7 here because
-	 * irqentry_exit_to_usermode() can invoke ptrace, schedule, access
+	 * kentry_exit_to_usermode() can invoke ptrace, schedule, access
 	 * user memory, etc.  This means that a recursive #DB is possible.  If
 	 * this happens, that #DB will hit exc_debug_kernel() and clear DR7.
 	 * Since we're not on the IST stack right now, everything will be
 	 * fine.
 	 */
 
-	irqentry_enter_from_user_mode(regs);
+	kentry_enter_from_user_mode(regs);
 	instrumentation_begin();
 
 	/*
@@ -989,7 +989,7 @@ out_irq:
 	local_irq_disable();
 out:
 	instrumentation_end();
-	irqentry_exit_to_user_mode(regs);
+	kentry_exit_to_user_mode(regs);
 }
 
 #ifdef CONFIG_X86_64

@@ -144,7 +144,7 @@ void do_syscall(struct pt_regs *regs)
 void noinstr __do_syscall(struct pt_regs *regs, int per_trap)
 {
 	add_random_kstack_offset();
-	irqentry_enter_from_user_mode(regs);
+	kentry_enter_from_user_mode(regs);
 
 	memcpy(&regs->gprs[8], S390_lowcore.save_area_sync, 8 * sizeof(unsigned long));
 	memcpy(&regs->int_code, &S390_lowcore.svc_ilc, sizeof(regs->int_code));
@@ -172,11 +172,11 @@ void noinstr __do_syscall(struct pt_regs *regs, int per_trap)
 		 * mode, just exit all the way and re-enter.
 		 */
 		local_irq_disable();
-		irqentry_exit_to_user_mode(regs);
-		irqentry_enter_from_user_mode(regs);
+		kentry_exit_to_user_mode(regs);
+		kentry_enter_from_user_mode(regs);
 		local_irq_enable();
 	}
 
 	local_irq_disable();
-	irqentry_exit_to_user_mode(regs);
+	kentry_exit_to_user_mode(regs);
 }

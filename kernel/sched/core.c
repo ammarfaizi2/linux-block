@@ -5408,7 +5408,7 @@ EXPORT_STATIC_CALL_TRAMP(preempt_schedule_notrace);
  * SC:might_resched
  * SC:preempt_schedule
  * SC:preempt_schedule_notrace
- * SC:irqentry_exit_cond_resched
+ * SC:kentry_exit_cond_resched
  *
  *
  * NONE:
@@ -5416,21 +5416,21 @@ EXPORT_STATIC_CALL_TRAMP(preempt_schedule_notrace);
  *   might_resched              <- RET0
  *   preempt_schedule           <- NOP
  *   preempt_schedule_notrace   <- NOP
- *   irqentry_exit_cond_resched <- NOP
+ *   kentry_exit_cond_resched   <- NOP
  *
  * VOLUNTARY:
  *   cond_resched               <- __cond_resched
  *   might_resched              <- __cond_resched
  *   preempt_schedule           <- NOP
  *   preempt_schedule_notrace   <- NOP
- *   irqentry_exit_cond_resched <- NOP
+ *   kentry_exit_cond_resched   <- NOP
  *
  * FULL:
  *   cond_resched               <- RET0
  *   might_resched              <- RET0
  *   preempt_schedule           <- preempt_schedule
  *   preempt_schedule_notrace   <- preempt_schedule_notrace
- *   irqentry_exit_cond_resched <- irqentry_exit_cond_resched
+ *   kentry_exit_cond_resched   <- kentry_exit_cond_resched
  */
 
 enum {
@@ -5465,7 +5465,7 @@ void sched_dynamic_update(int mode)
 	static_call_update(might_resched, __cond_resched);
 	static_call_update(preempt_schedule, __preempt_schedule_func);
 	static_call_update(preempt_schedule_notrace, __preempt_schedule_notrace_func);
-	static_call_update(irqentry_exit_cond_resched, irqentry_exit_cond_resched);
+	static_call_update(kentry_exit_cond_resched, kentry_exit_cond_resched);
 
 	switch (mode) {
 	case preempt_dynamic_none:
@@ -5473,7 +5473,7 @@ void sched_dynamic_update(int mode)
 		static_call_update(might_resched, (void *)&__static_call_return0);
 		static_call_update(preempt_schedule, NULL);
 		static_call_update(preempt_schedule_notrace, NULL);
-		static_call_update(irqentry_exit_cond_resched, NULL);
+		static_call_update(kentry_exit_cond_resched, NULL);
 		pr_info("Dynamic Preempt: none\n");
 		break;
 
@@ -5482,7 +5482,7 @@ void sched_dynamic_update(int mode)
 		static_call_update(might_resched, __cond_resched);
 		static_call_update(preempt_schedule, NULL);
 		static_call_update(preempt_schedule_notrace, NULL);
-		static_call_update(irqentry_exit_cond_resched, NULL);
+		static_call_update(kentry_exit_cond_resched, NULL);
 		pr_info("Dynamic Preempt: voluntary\n");
 		break;
 
@@ -5491,7 +5491,7 @@ void sched_dynamic_update(int mode)
 		static_call_update(might_resched, (void *)&__static_call_return0);
 		static_call_update(preempt_schedule, __preempt_schedule_func);
 		static_call_update(preempt_schedule_notrace, __preempt_schedule_notrace_func);
-		static_call_update(irqentry_exit_cond_resched, irqentry_exit_cond_resched);
+		static_call_update(kentry_exit_cond_resched, kentry_exit_cond_resched);
 		pr_info("Dynamic Preempt: full\n");
 		break;
 	}

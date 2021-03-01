@@ -240,12 +240,12 @@ EXPORT_SYMBOL_GPL(kvm_read_and_reset_apf_flags);
 noinstr bool __kvm_handle_async_pf(struct pt_regs *regs, u32 token)
 {
 	u32 flags = kvm_read_and_reset_apf_flags();
-	irqentry_state_t state;
+	kentry_state_t state;
 
 	if (!flags)
 		return false;
 
-	state = irqentry_enter(regs);
+	state = kentry_enter(regs);
 	instrumentation_begin();
 
 	/*
@@ -266,7 +266,7 @@ noinstr bool __kvm_handle_async_pf(struct pt_regs *regs, u32 token)
 	}
 
 	instrumentation_end();
-	irqentry_exit(regs, state);
+	kentry_exit(regs, state);
 	return true;
 }
 

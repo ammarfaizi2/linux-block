@@ -132,7 +132,7 @@ static noinstr bool __do_fast_syscall_32(struct pt_regs *regs)
 
 		instrumentation_end();
 		local_irq_disable();
-		irqentry_exit_to_user_mode(regs);
+		kentry_exit_to_user_mode(regs);
 		return false;
 	}
 
@@ -266,7 +266,7 @@ static void __xen_pv_evtchn_do_upcall(struct pt_regs *regs)
 
 __visible noinstr void xen_pv_evtchn_do_upcall(struct pt_regs *regs)
 {
-	irqentry_state_t state = irqentry_enter(regs);
+	kentry_state_t state = kentry_enter(regs);
 	bool inhcall;
 
 	run_sysvec_on_irqstack_cond(__xen_pv_evtchn_do_upcall, regs);
@@ -274,11 +274,11 @@ __visible noinstr void xen_pv_evtchn_do_upcall(struct pt_regs *regs)
 	inhcall = get_and_clear_inhcall();
 	if (inhcall && !WARN_ON_ONCE(state.exit_rcu)) {
 		instrumentation_begin();
-		irqentry_exit_cond_resched();
+		kentry_exit_cond_resched();
 		instrumentation_end();
 		restore_inhcall(inhcall);
 	} else {
-		irqentry_exit(regs, state);
+		kentry_exit(regs, state);
 	}
 }
 #endif /* CONFIG_XEN_PV */

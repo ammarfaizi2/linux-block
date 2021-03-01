@@ -379,7 +379,7 @@ void syscall_exit_to_user_mode_prepare(struct pt_regs *regs);
 void syscall_exit_to_user_mode(struct pt_regs *regs);
 
 /**
- * irqentry_enter_from_user_mode - Establish state before invoking the irq handler
+ * kentry_enter_from_user_mode - Establish state before invoking the irq handler
  * @regs:	Pointer to currents pt_regs
  *
  * Invoked from architecture specific entry code with interrupts disabled.
@@ -389,10 +389,10 @@ void syscall_exit_to_user_mode(struct pt_regs *regs);
  *
  * The function establishes state (lockdep, RCU (context tracking), tracing)
  */
-void irqentry_enter_from_user_mode(struct pt_regs *regs);
+void kentry_enter_from_user_mode(struct pt_regs *regs);
 
 /**
- * irqentry_exit_to_user_mode - Interrupt exit work
+ * kentry_exit_to_user_mode - Interrupt exit work
  * @regs:	Pointer to current's pt_regs
  *
  * Invoked with interrupts disabled and fully valid regs. Returns with all
@@ -404,34 +404,34 @@ void irqentry_enter_from_user_mode(struct pt_regs *regs);
  * Interrupt exit is not invoking #1 which is the syscall specific one time
  * work.
  */
-void irqentry_exit_to_user_mode(struct pt_regs *regs);
+void kentry_exit_to_user_mode(struct pt_regs *regs);
 
-#ifndef irqentry_state
+#ifndef kentry_state
 /**
- * struct irqentry_state - Opaque object for exception state storage
- * @exit_rcu: Used exclusively in the irqentry_*() calls; signals whether the
+ * struct kentry_state - Opaque object for exception state storage
+ * @exit_rcu: Used exclusively in the kentry_*() calls; signals whether the
  *            exit path has to invoke rcu_irq_exit().
- * @lockdep: Used exclusively in the irqentry_nmi_*() calls; ensures that
+ * @lockdep: Used exclusively in the kentry_nmi_*() calls; ensures that
  *           lockdep state is restored correctly on exit from nmi.
  *
- * This opaque object is filled in by the irqentry_*_enter() functions and
- * must be passed back into the corresponding irqentry_*_exit() functions
+ * This opaque object is filled in by the kentry_*_enter() functions and
+ * must be passed back into the corresponding kentry_*_exit() functions
  * when the exception is complete.
  *
- * Callers of irqentry_*_[enter|exit]() must consider this structure opaque
+ * Callers of kentry_*_[enter|exit]() must consider this structure opaque
  * and all members private.  Descriptions of the members are provided to aid in
- * the maintenance of the irqentry_*() functions.
+ * the maintenance of the kentry_*() functions.
  */
-typedef struct irqentry_state {
+typedef struct kentry_state {
 	union {
 		bool	exit_rcu;
 		bool	lockdep;
 	};
-} irqentry_state_t;
+} kentry_state_t;
 #endif
 
 /**
- * irqentry_enter - Handle state tracking on ordinary interrupt entries
+ * kentry_enter - Handle state tracking on ordinary interrupt entries
  * @regs:	Pointer to pt_regs of interrupted context
  *
  * Invokes:
@@ -455,28 +455,28 @@ typedef struct irqentry_state {
  * solves the problem of kernel mode pagefaults which can schedule, which
  * is not possible after invoking rcu_irq_enter() without undoing it.
  *
- * For user mode entries irqentry_enter_from_user_mode() is invoked to
+ * For user mode entries kentry_enter_from_user_mode() is invoked to
  * establish the proper context for NOHZ_FULL. Otherwise scheduling on exit
  * would not be possible.
  *
  * Returns: An opaque object that must be passed to idtentry_exit()
  */
-irqentry_state_t noinstr irqentry_enter(struct pt_regs *regs);
+kentry_state_t noinstr kentry_enter(struct pt_regs *regs);
 
 /**
- * irqentry_exit_cond_resched - Conditionally reschedule on return from interrupt
+ * kentry_exit_cond_resched - Conditionally reschedule on return from interrupt
  *
  * Conditional reschedule with additional sanity checks.
  */
-void irqentry_exit_cond_resched(void);
+void kentry_exit_cond_resched(void);
 #ifdef CONFIG_PREEMPT_DYNAMIC
-DECLARE_STATIC_CALL(irqentry_exit_cond_resched, irqentry_exit_cond_resched);
+DECLARE_STATIC_CALL(kentry_exit_cond_resched, kentry_exit_cond_resched);
 #endif
 
 /**
- * irqentry_exit - Handle return from exception that used irqentry_enter()
+ * kentry_exit - Handle return from exception that used kentry_enter()
  * @regs:	Pointer to pt_regs (exception entry regs)
- * @state:	Return value from matching call to irqentry_enter()
+ * @state:	Return value from matching call to kentry_enter()
  *
  * Depending on the return target (kernel/user) this runs the necessary
  * preemption and work checks if possible and required and returns to
@@ -485,27 +485,27 @@ DECLARE_STATIC_CALL(irqentry_exit_cond_resched, irqentry_exit_cond_resched);
  * This is the last action before returning to the low level ASM code which
  * just needs to return to the appropriate context.
  *
- * Counterpart to irqentry_enter().
+ * Counterpart to kentry_enter().
  */
-void noinstr irqentry_exit(struct pt_regs *regs, irqentry_state_t state);
+void noinstr kentry_exit(struct pt_regs *regs, kentry_state_t state);
 
 /**
- * irqentry_nmi_enter - Handle NMI entry
+ * kentry_nmi_enter - Handle NMI entry
  * @regs:	Pointer to currents pt_regs
  *
- * Similar to irqentry_enter() but taking care of the NMI constraints.
+ * Similar to kentry_enter() but taking care of the NMI constraints.
  */
-irqentry_state_t noinstr irqentry_nmi_enter(struct pt_regs *regs);
+kentry_state_t noinstr kentry_nmi_enter(struct pt_regs *regs);
 
 /**
- * irqentry_nmi_exit - Handle return from NMI handling
+ * kentry_nmi_exit - Handle return from NMI handling
  * @regs:	Pointer to pt_regs (NMI entry regs)
- * @irq_state:	Return value from matching call to irqentry_nmi_enter()
+ * @irq_state:	Return value from matching call to kentry_nmi_enter()
  *
  * Last action before returning to the low level assembly code.
  *
- * Counterpart to irqentry_nmi_enter().
+ * Counterpart to kentry_nmi_enter().
  */
-void noinstr irqentry_nmi_exit(struct pt_regs *regs, irqentry_state_t irq_state);
+void noinstr kentry_nmi_exit(struct pt_regs *regs, kentry_state_t irq_state);
 
 #endif
