@@ -2815,29 +2815,29 @@ static __poll_t snd_pcm_oss_poll(struct file *file, poll_table * wait)
 
 	mask = 0;
 	if (psubstream != NULL) {
-		struct snd_pcm_runtime *runtime = psubstream->runtime;
-		poll_wait(file, &runtime->sleep, wait);
+		struct snd_pcm_runtime *pruntime = psubstream->runtime;
+		poll_wait(file, &pruntime->sleep, wait);
 		snd_pcm_stream_lock_irq(psubstream);
-		if (runtime->status->state != SNDRV_PCM_STATE_DRAINING &&
-		    (runtime->status->state != SNDRV_PCM_STATE_RUNNING ||
+		if (pruntime->status->state != SNDRV_PCM_STATE_DRAINING &&
+		    (pruntime->status->state != SNDRV_PCM_STATE_RUNNING ||
 		     snd_pcm_oss_playback_ready(psubstream)))
 			mask |= EPOLLOUT | EPOLLWRNORM;
 		snd_pcm_stream_unlock_irq(psubstream);
 	}
 	if (csubstream != NULL) {
-		struct snd_pcm_runtime *runtime = csubstream->runtime;
+		struct snd_pcm_runtime *cruntime = csubstream->runtime;
 		snd_pcm_state_t ostate;
-		poll_wait(file, &runtime->sleep, wait);
+		poll_wait(file, &cruntime->sleep, wait);
 		snd_pcm_stream_lock_irq(csubstream);
-		if ((ostate = runtime->status->state) != SNDRV_PCM_STATE_RUNNING ||
+		if ((ostate = cruntime->status->state) != SNDRV_PCM_STATE_RUNNING ||
 		    snd_pcm_oss_capture_ready(csubstream))
 			mask |= EPOLLIN | EPOLLRDNORM;
 		snd_pcm_stream_unlock_irq(csubstream);
-		if (ostate != SNDRV_PCM_STATE_RUNNING && runtime->oss.trigger) {
+		if (ostate != SNDRV_PCM_STATE_RUNNING && cruntime->oss.trigger) {
 			struct snd_pcm_oss_file ofile;
 			memset(&ofile, 0, sizeof(ofile));
 			ofile.streams[SNDRV_PCM_STREAM_CAPTURE] = pcm_oss_file->streams[SNDRV_PCM_STREAM_CAPTURE];
-			runtime->oss.trigger = 0;
+			cruntime->oss.trigger = 0;
 			snd_pcm_oss_set_trigger(&ofile, PCM_ENABLE_INPUT);
 		}
 	}
