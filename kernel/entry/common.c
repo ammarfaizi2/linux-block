@@ -56,6 +56,13 @@ static __always_inline void kentry_cpu_depth_sub(unsigned int n)
 {
 	this_cpu_sub(kentry_cpu_depth, n);
 }
+
+void kentry_assert_may_instrument(void)
+{
+	DEBUG_ENTRY_WARN_ONCE(this_cpu_read(kentry_cpu_depth) == 0, "instrumentable code is running in the wrong kentry state");
+}
+EXPORT_SYMBOL_GPL(kentry_assert_may_instrument);
+
 #else
 
 #define DEBUG_ENTRY_WARN_ONCE(condition, format...) do {} while (0)

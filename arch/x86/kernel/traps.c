@@ -229,7 +229,7 @@ static noinstr bool handle_bug(struct pt_regs *regs)
 	/*
 	 * All lies, just get the WARN/BUG out.
 	 */
-	instrumentation_begin();
+	instrumentation_begin_nocheck();
 	/*
 	 * Since we're emulating a CALL with exceptions, restore the interrupt
 	 * state to what it was at the exception site.
@@ -242,7 +242,7 @@ static noinstr bool handle_bug(struct pt_regs *regs)
 	}
 	if (regs->flags & X86_EFLAGS_IF)
 		raw_local_irq_disable();
-	instrumentation_end();
+	instrumentation_end_nocheck();
 
 	return handled;
 }
