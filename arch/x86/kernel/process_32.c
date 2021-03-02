@@ -151,7 +151,7 @@ EXPORT_SYMBOL_GPL(start_thread);
  * more flexibility.
  *
  * The return value (in %ax) will be the "prev" task after
- * the task-switch, and shows up in ret_from_fork in entry.S,
+ * the task-switch, and shows up in asm_ret_from_fork in entry_32.S,
  * for example.
  */
 __visible __notrace_funcgraph struct task_struct *

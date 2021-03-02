@@ -12,7 +12,7 @@ struct task_struct *__switch_to_asm(struct task_struct *prev,
 __visible struct task_struct *__switch_to(struct task_struct *prev,
 					  struct task_struct *next);
 
-asmlinkage void ret_from_fork(void);
+asmlinkage void asm_ret_from_fork(void);
 
 /*
  * This is the structure pointed to by thread.sp for an inactive task.  The

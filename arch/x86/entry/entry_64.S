@@ -271,35 +271,18 @@ SYM_FUNC_END(__switch_to_asm)
  * rax: prev task we switched from
  * rbx: kernel thread func (NULL for user thread)
  * r12: kernel thread arg
+ * rbp: encoded frame pointer for the fp unwinder
  */
 .pushsection .text, "ax"
-SYM_CODE_START(ret_from_fork)
-	UNWIND_HINT_EMPTY
-	movq	%rax, %rdi
-	call	schedule_tail			/* rdi: 'prev' task parameter */
-
-	testq	%rbx, %rbx			/* from kernel_thread? */
-	jnz	1f				/* kernel threads are uncommon */
-
-2:
+SYM_CODE_START(asm_ret_from_fork)
 	UNWIND_HINT_REGS
-	movq	%rsp, %rdi
-	call	syscall_exit_to_user_mode	/* returns with IRQs disabled */
+	movq	%rax, %rdi
+	movq	%rbx, %rsi
+	movq	%r12, %rdx
+	movq	%rsp, %rcx
+	call	ret_from_fork
 	jmp	swapgs_restore_regs_and_return_to_usermode
-
-1:
-	/* kernel thread */
-	UNWIND_HINT_EMPTY
-	movq	%r12, %rdi
-	CALL_NOSPEC rbx
-	/*
-	 * A kernel thread is allowed to return here after successfully
-	 * calling kernel_execve().  Exit to userspace to complete the execve()
-	 * syscall.
-	 */
-	movq	$0, RAX(%rsp)
-	jmp	2b
-SYM_CODE_END(ret_from_fork)
+SYM_CODE_END(asm_ret_from_fork)
 .popsection
 
 .macro DEBUG_ENTRY_ASSERT_IRQS_OFF

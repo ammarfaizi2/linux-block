@@ -217,6 +217,29 @@ SYSCALL_DEFINE0(ni_syscall)
 	return -ENOSYS;
 }
 
+void ret_from_fork(struct task_struct *prev,
+		   int (*kernel_thread_fn)(void *),
+		   void *kernel_thread_arg,
+		   struct pt_regs *user_regs);
+
+__visible void noinstr ret_from_fork(struct task_struct *prev,
+				     int (*kernel_thread_fn)(void *),
+				     void *kernel_thread_arg,
+				     struct pt_regs *user_regs)
+{
+	instrumentation_begin();
+
+	schedule_tail(prev);
+
+	if (kernel_thread_fn) {
+		kernel_thread_fn(kernel_thread_arg);
+		user_regs->ax = 0;
+	}
+
+	instrumentation_end();
+	syscall_exit_to_user_mode(user_regs);
+}
+
 #ifdef CONFIG_XEN_PV
 #ifndef CONFIG_PREEMPTION
 /*
