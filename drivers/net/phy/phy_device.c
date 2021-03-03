@@ -270,6 +270,8 @@ out:
 	return !phydev->suspended;
 }
 
+#ifdef CONFIG_PM_SLEEP
+
 static int mdio_bus_phy_suspend(struct device *dev)
 {
 	struct phy_device *phydev = to_phy_device(dev);
@@ -313,6 +315,8 @@ no_resume:
 
 	return 0;
 }
+
+#endif
 
 static SIMPLE_DEV_PM_OPS(mdio_bus_phy_pm_ops, mdio_bus_phy_suspend,
 			 mdio_bus_phy_resume);
