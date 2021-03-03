@@ -15,6 +15,14 @@ struct test arch_tests[] = {
 		.func = test__rd_pinned,
 	},
 	{
+		.desc = "User 64-bit counter access",
+		.func = test__rd_64bit,
+	},
+	{
+		.desc = "User 32-bit counter access",
+		.func = test__rd_32bit,
+	},
+	{
 		.func = NULL,
 	},
 };

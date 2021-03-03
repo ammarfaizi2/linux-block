@@ -175,3 +175,41 @@ int test__rd_pinned(struct test __maybe_unused *test,
 	perf_evsel__delete(evsel);
 	return ret;
 }
+
+static int test__rd_counter_size(struct test __maybe_unused *test,
+				 int config1)
+{
+	int ret;
+	struct perf_evsel *evsel;
+	struct perf_event_attr attr = {
+		.type = PERF_TYPE_HARDWARE,
+		.config = PERF_COUNT_HW_INSTRUCTIONS,
+		.config1 = config1,
+		.exclude_kernel = 1,
+	};
+
+	if (!pmu_is_homogeneous())
+		return TEST_SKIP;
+
+	evsel = perf_init(&attr);
+	if (!evsel)
+		return -1;
+
+	ret = run_test(evsel);
+
+	perf_evsel__close(evsel);
+	perf_evsel__delete(evsel);
+	return ret;
+}
+
+int test__rd_64bit(struct test __maybe_unused *test,
+		   int __maybe_unused subtest)
+{
+	return test__rd_counter_size(test, 0x3);
+}
+
+int test__rd_32bit(struct test __maybe_unused *test,
+		   int __maybe_unused subtest)
+{
+	return test__rd_counter_size(test, 0x2);
+}
