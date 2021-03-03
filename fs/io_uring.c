@@ -4920,7 +4920,13 @@ static int io_poll_double_wake(struct wait_queue_entry *wait, unsigned mode,
 	list_del_init(&wait->entry);
 
 	if (poll && poll->head) {
+		struct io_poll_iocb *dpoll = io_poll_get_double(req);
 		bool done;
+
+		if (dpoll->head == poll->head)
+			printk(KERN_ERR "poll and dpoll head identical\n");
+		else
+			printk(KERN_ERR "poll and dpoll head different\n");
 
 		spin_lock(&poll->head->lock);
 		done = list_empty(&poll->wait.entry);
@@ -4969,8 +4975,12 @@ static void __io_queue_proc(struct io_poll_iocb *poll, struct io_poll_table *pt,
 			return;
 		}
 		/* double add on the same waitqueue head, ignore */
-		if (poll->head == head)
+		if (poll->head == head) {
+			printk(KERN_ERR "Ignore double poll same head\n");
 			return;
+		} else {
+			printk(KERN_ERR "Double poll %lx %lx\n", (long) poll->head, (long) head);
+		}
 		poll = kmalloc(sizeof(*poll), GFP_ATOMIC);
 		if (!poll) {
 			pt->error = -ENOMEM;
