@@ -15,5 +15,10 @@ extern struct test arch_tests[];
 int test__rd_pinned(struct test __maybe_unused *test,
 		       int __maybe_unused subtest);
 
+int test__rd_64bit(struct test __maybe_unused *test,
+		   int __maybe_unused subtest);
+
+int test__rd_32bit(struct test __maybe_unused *test,
+		   int __maybe_unused subtest);
 
 #endif
