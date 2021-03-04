@@ -338,3 +338,19 @@ FTRACE_ENTRY(hwlat, hwlat_entry,
 		 __entry->nmi_total_ts,
 		 __entry->nmi_count)
 );
+
+FTRACE_ENTRY(func_repeats, func_repeats_entry,
+
+	TRACE_FUNC_REPEATS,
+
+	F_STRUCT(
+		__field(	unsigned long,	ip	)
+		__field(	unsigned long,	pip	)
+		__field(	unsigned long,	count	)
+	),
+
+	F_printk(" %ps <-%ps\t(repeats:%lu)",
+		 (void *)__entry->ip,
+		 (void *)__entry->pip,
+		 __entry->count)
+);
