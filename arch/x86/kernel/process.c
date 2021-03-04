@@ -158,6 +158,19 @@ int copy_thread(unsigned long clone_flags, unsigned long sp, unsigned long arg,
 	/* Kernel thread ? */
 	if (unlikely(p->flags & PF_KTHREAD)) {
 		memset(childregs, 0, sizeof(struct pt_regs));
+
+		/*
+		 * Even though there is no real user state here, these
+		 * are where user regs belong, and kernel_execve() will
+		 * overwrite them with user regs.  Put an obviously
+		 * invalid value that nonetheless causes user_mode(regs)
+		 * to return true in CS.
+		 *
+		 * This also prevents the unwinder from thinking that there
+		 * is invalid kernel state at the top of the stack.
+		 */
+		childregs->cs = 3;
+
 		kthread_frame_init(frame, sp, arg);
 		return 0;
 	}

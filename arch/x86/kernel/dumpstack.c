@@ -128,8 +128,8 @@ void show_opcodes(struct pt_regs *regs, const char *loglvl)
 		/* No access to the user space stack of other tasks. Ignore. */
 		break;
 	default:
-		printk("%sCode: Unable to access opcode bytes at RIP 0x%lx.\n",
-		       loglvl, prologue);
+		printk("%sCode: Unable to access %s opcode bytes at RIP 0x%lx.\n",
+		       loglvl, user_mode(regs) ? "user" : "kernel", prologue);
 		break;
 	}
 }
