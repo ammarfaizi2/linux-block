@@ -87,8 +87,9 @@ data_race() for the diagnostic reads because otherwise KCSAN would give
 false-positive warnings about these diagnostic reads.
 
 In theory, plain C-language loads can also be used for this use case.
-In practice, doing so is an excellent way to generate KCSAN false
-positives, because KCSAN does not know that the data race is intentional.
+However, in practice this will have the disadvantage of causing KCSAN
+to generate false positives because KCSAN will have no way of knowing
+that the resulting data race was intentional.
 
 
 Data-Racy Reads That Are Checked Against Marked Reload
@@ -110,8 +111,9 @@ Capturing the return value from cmpxchg() also saves a memory reference
 in many cases.
 
 In theory, plain C-language loads can also be used for this use case.
-In practice, doing so is an excellent way to generate KCSAN false
-positives, because KCSAN does not know that the data race is intentional.
+However, in practice this will have the disadvantage of causing KCSAN
+to generate false positives because KCSAN will have no way of knowing
+that the resulting data race was intentional.
 
 
 Reads Feeding Into Error-Tolerant Heuristics
@@ -125,8 +127,9 @@ Therefore use of data_race() should be limited to cases where some other
 code (such as a barrier() call) will force the occasional reload.
 
 In theory, plain C-language loads can also be used for this use case.
-In practice, doing so is an excellent way to generate KCSAN false
-positives, because KCSAN does not know that the data race is intentional.
+However, in practice this will have the disadvantage of causing KCSAN
+to generate false positives because KCSAN will have no way of knowing
+that the resulting data race was intentional.
 
 
 Writes Setting Values Feeding Into Error-Tolerant Heuristics
@@ -139,9 +142,11 @@ due to compiler-mangled reads, it can also tolerate the occasional
 compiler-mangled write, at least assuming that the proper value is in
 place once the write completes.
 
-In theory, plain C-language loads can also be used for this use case.
-In practice, doing so is an excellent way to generate KCSAN false
-positives, because KCSAN does not know that the data race is intentional.
+Plain C-language stores can also be used for this use case.  However,
+in kernels built with CONFIG_KCSAN_ASSUME_PLAIN_WRITES_ATOMIC=n, this
+will have the disadvantage of causing KCSAN to generate false positives
+because KCSAN will have no way of knowing that the resulting data race
+was intentional.
 
 
 Use of Plain C-Language Accesses
