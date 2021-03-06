@@ -1,7 +1,6 @@
 # x86 branches for integration
 
 x86/urgent
-x86/pti-urgent
 
 x86/alternatives
 x86/apic
@@ -12,34 +11,22 @@ x86/cache
 x86/cleanups
 x86/core
 x86/cpu
-x86/dax
-x86/debug
-x86/dma
-x86/early-printk
 x86/entry
 x86/fpu
 x86/fsgsbase
-x86/grub2
 x86/hyperv
-x86/iopl
 x86/irq
 x86/kaslr
 x86/kdump
 x86/microcode
 x86/misc
 x86/mm
-x86/mpx
-x86/mtrr
-x86/olpc
 x86/paravirt
 x86/pasid
 x86/platform
-x86/pti
 x86/seves
 x86/sgx
 x86/splitlock
 x86/timers
-x86/topology
-x86/uv
 x86/vdso
 x86/vmware
