@@ -327,6 +327,14 @@ static int blkdev_iopoll(struct kiocb *kiocb, bool wait)
 	return blk_poll(q, READ_ONCE(kiocb->ki_cookie), wait);
 }
 
+static void dio_bio_put(struct blkdev_dio *dio)
+{
+	if (dio->iocb->ki_flags & IOCB_ALLOC_CACHE)
+		bio_cache_put(dio->iocb->ki_bio_cache, &dio->bio);
+	else
+		bio_put(&dio->bio);
+}
+
 static void blkdev_bio_end_io(struct bio *bio)
 {
 	struct blkdev_dio *dio = bio->bi_private;
@@ -362,7 +370,7 @@ static void blkdev_bio_end_io(struct bio *bio)
 		bio_check_pages_dirty(bio);
 	} else {
 		bio_release_pages(bio, false);
-		bio_put(bio);
+		dio_bio_put(dio);
 	}
 }
 
@@ -385,7 +393,15 @@ static ssize_t __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter,
 	    (bdev_logical_block_size(bdev) - 1))
 		return -EINVAL;
 
-	bio = bio_alloc_bioset(GFP_KERNEL, nr_pages, &blkdev_dio_pool);
+	bio = NULL;
+	if (iocb->ki_flags & IOCB_ALLOC_CACHE) {
+		bio = bio_cache_get(iocb->ki_bio_cache, GFP_KERNEL, nr_pages,
+					&blkdev_dio_pool);
+		if (!bio)
+			iocb->ki_flags &= ~IOCB_ALLOC_CACHE;
+	}
+	if (!bio)
+		bio = bio_alloc_bioset(GFP_KERNEL, nr_pages, &blkdev_dio_pool);
 
 	dio = container_of(bio, struct blkdev_dio, bio);
 	dio->is_sync = is_sync = is_sync_kiocb(iocb);
@@ -467,7 +483,15 @@ static ssize_t __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter,
 		}
 
 		submit_bio(bio);
-		bio = bio_alloc(GFP_KERNEL, nr_pages);
+		bio = NULL;
+		if (iocb->ki_flags & IOCB_ALLOC_CACHE) {
+			bio = bio_cache_get(iocb->ki_bio_cache, GFP_KERNEL,
+						nr_pages, &fs_bio_set);
+			if (!bio)
+				iocb->ki_flags &= ~IOCB_ALLOC_CACHE;
+		}
+		if (!bio)
+			bio = bio_alloc(GFP_KERNEL, nr_pages);
 	}
 
 	if (!is_poll)
@@ -492,7 +516,7 @@ static ssize_t __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter,
 	if (likely(!ret))
 		ret = dio->size;
 
-	bio_put(&dio->bio);
+	dio_bio_put(dio);
 	return ret;
 }
 
