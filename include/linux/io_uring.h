@@ -5,6 +5,8 @@
 #include <linux/sched.h>
 #include <linux/xarray.h>
 
+struct bio_alloc_cache;
+
 #if defined(CONFIG_IO_URING)
 struct sock *io_uring_get_socket(struct file *file);
 void __io_uring_cancel(struct files_struct *files);
@@ -39,5 +41,10 @@ static inline void io_uring_free(struct task_struct *tsk)
 {
 }
 #endif
+
+static inline struct bio_alloc_cache *io_uring_bio_cache(void)
+{
+	return NULL;
+}
 
 #endif
