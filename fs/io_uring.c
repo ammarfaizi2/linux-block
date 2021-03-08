@@ -474,6 +474,10 @@ struct io_uring_task {
 	atomic_t		inflight_tracked;
 	atomic_t		in_idle;
 
+#ifdef CONFIG_BLOCK
+	struct bio_alloc_cache	bio_cache;
+#endif
+
 	spinlock_t		task_lock;
 	struct io_wq_work_list	task_list;
 	unsigned long		task_state;
@@ -2268,6 +2272,8 @@ static void io_iopoll_complete(struct io_ring_ctx *ctx, unsigned int *nr_events,
 		if (READ_ONCE(req->result) == -EAGAIN && resubmit &&
 		    !(req->flags & REQ_F_DONT_REISSUE)) {
 			req->iopoll_completed = 0;
+			/* Don't use cache for async retry, not locking safe */
+			req->rw.kiocb.ki_flags &= ~IOCB_ALLOC_CACHE;
 			req_ref_get(req);
 			io_req_task_queue_reissue(req);
 			continue;
@@ -2675,6 +2681,29 @@ static bool io_file_supports_nowait(struct io_kiocb *req, int rw)
 	return __io_file_supports_nowait(req->file, rw);
 }
 
+static void io_mark_alloc_cache(struct kiocb *kiocb)
+{
+#ifdef CONFIG_BLOCK
+	struct block_device *bdev = NULL;
+
+	if (S_ISBLK(file_inode(kiocb->ki_filp)->i_mode))
+		bdev = I_BDEV(kiocb->ki_filp->f_mapping->host);
+	else if (S_ISREG(file_inode(kiocb->ki_filp)->i_mode))
+		bdev = kiocb->ki_filp->f_inode->i_sb->s_bdev;
+
+	/*
+	 * If the lower level device doesn't support polled IO, then
+	 * we cannot safely use the alloc cache. This really should
+	 * be a failure case for polled IO...
+	 */
+	if (!bdev ||
+	    !test_bit(QUEUE_FLAG_POLL, &bdev_get_queue(bdev)->queue_flags))
+		return;
+
+	kiocb->ki_flags |= IOCB_ALLOC_CACHE;
+#endif /* CONFIG_BLOCK */
+}
+
 static int io_prep_rw(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 {
 	struct io_ring_ctx *ctx = req->ctx;
@@ -2717,6 +2746,7 @@ static int io_prep_rw(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 			return -EOPNOTSUPP;
 
 		kiocb->ki_flags |= IOCB_HIPRI;
+		io_mark_alloc_cache(kiocb);
 		kiocb->ki_complete = io_complete_rw_iopoll;
 		req->iopoll_completed = 0;
 	} else {
@@ -2783,6 +2813,8 @@ static void kiocb_done(struct kiocb *kiocb, ssize_t ret,
 	if (check_reissue && (req->flags & REQ_F_REISSUE)) {
 		req->flags &= ~REQ_F_REISSUE;
 		if (io_resubmit_prep(req)) {
+			/* Don't use cache for async retry, not locking safe */
+			req->rw.kiocb.ki_flags &= ~IOCB_ALLOC_CACHE;
 			req_ref_get(req);
 			io_req_task_queue_reissue(req);
 		} else {
@@ -7966,10 +7998,17 @@ static int io_uring_alloc_task_context(struct task_struct *task,
 		return ret;
 	}
 
+#ifdef CONFIG_BLOCK
+	bio_alloc_cache_init(&tctx->bio_cache);
+#endif
+
 	tctx->io_wq = io_init_wq_offload(ctx, task);
 	if (IS_ERR(tctx->io_wq)) {
 		ret = PTR_ERR(tctx->io_wq);
 		percpu_counter_destroy(&tctx->inflight);
+#ifdef CONFIG_BLOCK
+		bio_alloc_cache_destroy(&tctx->bio_cache);
+#endif
 		kfree(tctx);
 		return ret;
 	}
@@ -7992,6 +8031,10 @@ void __io_uring_free(struct task_struct *tsk)
 	WARN_ON_ONCE(!xa_empty(&tctx->xa));
 	WARN_ON_ONCE(tctx->io_wq);
 	WARN_ON_ONCE(tctx->cached_refs);
+
+#ifdef CONFIG_BLOCK
+	bio_alloc_cache_destroy(&tctx->bio_cache);
+#endif
 
 	percpu_counter_destroy(&tctx->inflight);
 	kfree(tctx);
@@ -10245,6 +10288,15 @@ SYSCALL_DEFINE4(io_uring_register, unsigned int, fd, unsigned int, opcode,
 out_fput:
 	fdput(f);
 	return ret;
+}
+
+struct bio_alloc_cache *io_uring_bio_cache(void)
+{
+#ifdef CONFIG_BLOCK
+	if (current->io_uring)
+		return &current->io_uring->bio_cache;
+#endif
+	return NULL;
 }
 
 static int __init io_uring_init(void)

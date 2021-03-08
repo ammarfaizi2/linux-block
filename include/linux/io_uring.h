@@ -11,6 +11,7 @@ struct bio_alloc_cache;
 struct sock *io_uring_get_socket(struct file *file);
 void __io_uring_cancel(struct files_struct *files);
 void __io_uring_free(struct task_struct *tsk);
+struct bio_alloc_cache *io_uring_bio_cache(void);
 
 static inline void io_uring_files_cancel(struct files_struct *files)
 {
@@ -40,11 +41,10 @@ static inline void io_uring_files_cancel(struct files_struct *files)
 static inline void io_uring_free(struct task_struct *tsk)
 {
 }
-#endif
-
 static inline struct bio_alloc_cache *io_uring_bio_cache(void)
 {
 	return NULL;
 }
+#endif
 
 #endif
