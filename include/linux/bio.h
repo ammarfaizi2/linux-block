@@ -652,18 +652,22 @@ static inline struct bio *bio_list_peek(struct bio_list *bl)
 	return bl->head;
 }
 
-static inline struct bio *bio_list_pop(struct bio_list *bl)
+static inline void bio_list_del_head(struct bio_list *bl, struct bio *head)
 {
-	struct bio *bio = bl->head;
-
-	if (bio) {
+	if (head) {
 		bl->head = bl->head->bi_next;
 		if (!bl->head)
 			bl->tail = NULL;
 
-		bio->bi_next = NULL;
+		head->bi_next = NULL;
 	}
+}
 
+static inline struct bio *bio_list_pop(struct bio_list *bl)
+{
+	struct bio *bio = bl->head;
+
+	bio_list_del_head(bl, bio);
 	return bio;
 }
 
@@ -675,6 +679,16 @@ static inline struct bio *bio_list_get(struct bio_list *bl)
 
 	return bio;
 }
+
+struct bio_alloc_cache {
+	struct bio_list		free_list;
+	unsigned int		nr;
+};
+
+void bio_alloc_cache_init(struct bio_alloc_cache *);
+void bio_alloc_cache_destroy(struct bio_alloc_cache *);
+struct bio *bio_cache_get(struct bio_alloc_cache *, gfp_t, unsigned short, struct bio_set *bs);
+void bio_cache_put(struct bio_alloc_cache *, struct bio *);
 
 /*
  * Increment chain count for the bio. Make sure the CHAIN flag update

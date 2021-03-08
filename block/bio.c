@@ -238,6 +238,35 @@ static void bio_free(struct bio *bio)
 	}
 }
 
+static inline void __bio_init(struct bio *bio)
+{
+	bio->bi_next = NULL;
+	bio->bi_bdev = NULL;
+	bio->bi_opf = 0;
+	bio->bi_flags = bio->bi_ioprio = bio->bi_write_hint = 0;
+	bio->bi_status = 0;
+	bio->bi_iter.bi_sector = 0;
+	bio->bi_iter.bi_size = 0;
+	bio->bi_iter.bi_idx = 0;
+	bio->bi_iter.bi_bvec_done = 0;
+	bio->bi_end_io = NULL;
+	bio->bi_private = NULL;
+#ifdef CONFIG_BLK_CGROUP
+	bio->bi_blkg = NULL;
+	bio->bi_issue.value = 0;
+#ifdef CONFIG_BLK_CGROUP_IOCOST
+	bio->bi_iocost_cost = 0;
+#endif
+#endif
+#ifdef CONFIG_BLK_INLINE_ENCRYPTION
+	bio->bi_crypt_context = NULL;
+#endif
+#ifdef CONFIG_BLK_DEV_INTEGRITY
+	bio->bi_integrity = NULL;
+#endif
+	bio->bi_vcnt = 0;
+}
+
 /*
  * Users of this function have their own bio allocation. Subsequently,
  * they must remember to pair any call to bio_init() with bio_uninit()
@@ -246,7 +275,7 @@ static void bio_free(struct bio *bio)
 void bio_init(struct bio *bio, struct bio_vec *table,
 	      unsigned short max_vecs)
 {
-	memset(bio, 0, sizeof(*bio));
+	__bio_init(bio);
 	atomic_set(&bio->__bi_remaining, 1);
 	atomic_set(&bio->__bi_cnt, 1);
 
@@ -591,6 +620,19 @@ void guard_bio_eod(struct bio *bio)
 	bio_truncate(bio, maxsector << 9);
 }
 
+static bool __bio_put(struct bio *bio)
+{
+	if (!bio_flagged(bio, BIO_REFFED))
+		return true;
+
+	BIO_BUG_ON(!atomic_read(&bio->__bi_cnt));
+
+	/*
+	 * last put frees it
+	 */
+	return atomic_dec_and_test(&bio->__bi_cnt);
+}
+
 /**
  * bio_put - release a reference to a bio
  * @bio:   bio to release reference to
@@ -601,17 +643,8 @@ void guard_bio_eod(struct bio *bio)
  **/
 void bio_put(struct bio *bio)
 {
-	if (!bio_flagged(bio, BIO_REFFED))
+	if (__bio_put(bio))
 		bio_free(bio);
-	else {
-		BIO_BUG_ON(!atomic_read(&bio->__bi_cnt));
-
-		/*
-		 * last put frees it
-		 */
-		if (atomic_dec_and_test(&bio->__bi_cnt))
-			bio_free(bio);
-	}
 }
 EXPORT_SYMBOL(bio_put);
 
@@ -1594,6 +1627,74 @@ int bioset_init_from_src(struct bio_set *bs, struct bio_set *src)
 	return bioset_init(bs, src->bio_pool.min_nr, src->front_pad, flags);
 }
 EXPORT_SYMBOL(bioset_init_from_src);
+
+void bio_alloc_cache_init(struct bio_alloc_cache *cache)
+{
+	bio_list_init(&cache->free_list);
+	cache->nr = 0;
+}
+
+static void bio_alloc_cache_prune(struct bio_alloc_cache *cache,
+				  unsigned int nr)
+{
+	struct bio *bio;
+	unsigned int i;
+
+	i = 0;
+	while ((bio = bio_list_pop(&cache->free_list)) != NULL) {
+		cache->nr--;
+		bio_free(bio);
+		if (++i == nr)
+			break;
+	}
+}
+
+void bio_alloc_cache_destroy(struct bio_alloc_cache *cache)
+{
+	bio_alloc_cache_prune(cache, -1U);
+}
+
+struct bio *bio_cache_get(struct bio_alloc_cache *cache, gfp_t gfp,
+			  unsigned short nr_vecs, struct bio_set *bs)
+{
+	struct bio *bio;
+
+	if (nr_vecs > BIO_INLINE_VECS)
+		return NULL;
+	if (bio_list_empty(&cache->free_list)) {
+alloc:
+		if (bs)
+			return bio_alloc_bioset(gfp, nr_vecs, bs);
+		else
+			return bio_alloc(gfp, nr_vecs);
+	}
+
+	bio = bio_list_peek(&cache->free_list);
+	if (bs && bio->bi_pool != bs)
+		goto alloc;
+	bio_list_del_head(&cache->free_list, bio);
+	cache->nr--;
+	bio_init(bio, nr_vecs ? bio->bi_inline_vecs : NULL, nr_vecs);
+	return bio;
+}
+
+#define ALLOC_CACHE_MAX		512
+#define ALLOC_CACHE_SLACK	 64
+
+void bio_cache_put(struct bio_alloc_cache *cache, struct bio *bio)
+{
+	if (unlikely(!__bio_put(bio)))
+		return;
+	if (cache) {
+		bio_uninit(bio);
+		bio_list_add_head(&cache->free_list, bio);
+		cache->nr++;
+		if (cache->nr > ALLOC_CACHE_MAX + ALLOC_CACHE_SLACK)
+			bio_alloc_cache_prune(cache, ALLOC_CACHE_SLACK);
+	} else {
+		bio_free(bio);
+	}
+}
 
 static int __init init_bio(void)
 {
