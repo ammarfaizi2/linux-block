@@ -319,6 +319,10 @@ enum rw_hint {
 /* iocb->ki_waitq is valid */
 #define IOCB_WAITQ		(1 << 19)
 #define IOCB_NOIO		(1 << 20)
+/* iocb->ki_bi_cache is valid */
+#define IOCB_ALLOC_CACHE	(1 << 21)
+
+struct bio_alloc_cache;
 
 struct kiocb {
 	struct file		*ki_filp;
@@ -336,6 +340,7 @@ struct kiocb {
 		unsigned int		ki_cookie; /* for ->iopoll */
 		struct wait_page_queue	*ki_waitq; /* for async buffered IO */
 	};
+	struct bio_alloc_cache	*ki_bi_cache;
 
 	randomized_struct_fields_end
 };
