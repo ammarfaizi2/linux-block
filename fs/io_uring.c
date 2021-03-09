@@ -561,7 +561,6 @@ struct io_rw {
 	/* NOTE: kiocb has the file as the first member, so don't do it here */
 	struct kiocb			kiocb;
 	u64				addr;
-	u64				len;
 };
 
 struct io_connect {
@@ -2704,6 +2703,16 @@ static void io_mark_alloc_cache(struct kiocb *kiocb)
 #endif /* CONFIG_BLOCK */
 }
 
+static inline void *u64_to_ptr(__u64 ptr)
+{
+	return (void *)(unsigned long) ptr;
+}
+
+static inline __u64 ptr_to_u64(void *ptr)
+{
+	return (__u64)(unsigned long)ptr;
+}
+
 static int io_prep_rw(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 {
 	struct io_ring_ctx *ctx = req->ctx;
@@ -2762,7 +2771,7 @@ static int io_prep_rw(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 	}
 
 	req->rw.addr = READ_ONCE(sqe->addr);
-	req->rw.len = READ_ONCE(sqe->len);
+	req->rw.kiocb.private = u64_to_ptr(READ_ONCE(sqe->len));
 	req->buf_index = READ_ONCE(sqe->buf_index);
 	return 0;
 }
@@ -2831,7 +2840,7 @@ static void kiocb_done(struct kiocb *kiocb, ssize_t ret,
 static int __io_import_fixed(struct io_kiocb *req, int rw, struct iov_iter *iter,
 			     struct io_mapped_ubuf *imu)
 {
-	size_t len = req->rw.len;
+	size_t len = ptr_to_u64(req->rw.kiocb.private);
 	u64 buf_end, buf_addr = req->rw.addr;
 	size_t offset;
 
@@ -3029,7 +3038,7 @@ static ssize_t io_iov_buffer_select(struct io_kiocb *req, struct iovec *iov,
 		iov[0].iov_len = kbuf->len;
 		return 0;
 	}
-	if (req->rw.len != 1)
+	if (ptr_to_u64(req->rw.kiocb.private) != 1)
 		return -EINVAL;
 
 #ifdef CONFIG_COMPAT
@@ -3044,7 +3053,7 @@ static int io_import_iovec(int rw, struct io_kiocb *req, struct iovec **iovec,
 			   struct iov_iter *iter, bool needs_lock)
 {
 	void __user *buf = u64_to_user_ptr(req->rw.addr);
-	size_t sqe_len = req->rw.len;
+	size_t sqe_len = ptr_to_u64(req->rw.kiocb.private);
 	u8 opcode = req->opcode;
 	ssize_t ret;
 
@@ -3062,7 +3071,7 @@ static int io_import_iovec(int rw, struct io_kiocb *req, struct iovec **iovec,
 			buf = io_rw_buffer_select(req, &sqe_len, needs_lock);
 			if (IS_ERR(buf))
 				return PTR_ERR(buf);
-			req->rw.len = sqe_len;
+			req->rw.kiocb.private = u64_to_ptr(sqe_len);
 		}
 
 		ret = import_single_range(rw, buf, sqe_len, *iovec, iter);
@@ -3095,6 +3104,7 @@ static ssize_t loop_rw_iter(int rw, struct io_kiocb *req, struct iov_iter *iter)
 {
 	struct kiocb *kiocb = &req->rw.kiocb;
 	struct file *file = req->file;
+	unsigned long rw_len;
 	ssize_t ret = 0;
 
 	/*
@@ -3107,6 +3117,7 @@ static ssize_t loop_rw_iter(int rw, struct io_kiocb *req, struct iov_iter *iter)
 	if (kiocb->ki_flags & IOCB_NOWAIT)
 		return -EAGAIN;
 
+	rw_len = ptr_to_u64(req->rw.kiocb.private);
 	while (iov_iter_count(iter)) {
 		struct iovec iovec;
 		ssize_t nr;
@@ -3115,7 +3126,7 @@ static ssize_t loop_rw_iter(int rw, struct io_kiocb *req, struct iov_iter *iter)
 			iovec = iov_iter_iovec(iter);
 		} else {
 			iovec.iov_base = u64_to_user_ptr(req->rw.addr);
-			iovec.iov_len = req->rw.len;
+			iovec.iov_len = rw_len;
 		}
 
 		if (rw == READ) {
@@ -3134,7 +3145,7 @@ static ssize_t loop_rw_iter(int rw, struct io_kiocb *req, struct iov_iter *iter)
 		ret += nr;
 		if (nr != iovec.iov_len)
 			break;
-		req->rw.len -= nr;
+		rw_len -= nr;
 		req->rw.addr += nr;
 		iov_iter_advance(iter, nr);
 	}
