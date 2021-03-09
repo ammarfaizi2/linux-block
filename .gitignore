@@ -60,6 +60,7 @@
 /src/bulkstat_unlink_test_modified
 /src/cloner
 /src/dbtest
+/src/detached_mounts_propagation
 /src/devzero
 /src/dio-interleaved
 /src/dio-invalidate-cache
