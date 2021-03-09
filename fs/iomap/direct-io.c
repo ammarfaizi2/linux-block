@@ -154,6 +154,7 @@ static void iomap_dio_bio_end_io(struct bio *bio)
 {
 	struct iomap_dio *dio = bio->bi_private;
 	bool should_dirty = (dio->flags & IOMAP_DIO_DIRTY);
+	bool cached = (dio->iocb->ki_flags & IOCB_ALLOC_CACHE);
 
 	if (bio->bi_status)
 		iomap_dio_set_error(dio, blk_status_to_errno(bio->bi_status));
@@ -177,7 +178,10 @@ static void iomap_dio_bio_end_io(struct bio *bio)
 		bio_check_pages_dirty(bio);
 	} else {
 		bio_release_pages(bio, false);
-		bio_put(bio);
+		if (cached)
+			bio_cache_put(bio);
+		else
+			bio_put(bio);
 	}
 }
 
@@ -305,7 +309,14 @@ iomap_dio_bio_actor(struct inode *inode, loff_t pos, loff_t length,
 			goto out;
 		}
 
-		bio = bio_alloc(GFP_KERNEL, nr_pages);
+		bio = NULL;
+		if (dio->iocb->ki_flags & IOCB_ALLOC_CACHE) {
+			bio = bio_cache_get(GFP_KERNEL, nr_pages, &fs_bio_set);
+			if (!bio)
+				dio->iocb->ki_flags &= ~IOCB_ALLOC_CACHE;
+		}
+		if (!bio)
+			bio = bio_alloc(GFP_KERNEL, nr_pages);
 		bio_set_dev(bio, iomap->bdev);
 		bio->bi_iter.bi_sector = iomap_sector(iomap, pos);
 		bio->bi_write_hint = dio->iocb->ki_hint;
