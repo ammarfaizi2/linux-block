@@ -96,4 +96,12 @@ static inline void rcu_read_lock_trace(void) { BUG(); }
 static inline void rcu_read_unlock_trace(void) { BUG(); }
 #endif /* #ifdef CONFIG_TASKS_TRACE_RCU */
 
+#ifdef CONFIG_LONGWAIT_RCU
+int rcu_read_lock_longwait(void);
+void rcu_read_unlock_longwait(int idx);
+int rcu_read_lock_longwait_held(void);
+void call_rcu_longwait(struct rcu_head *rhp, rcu_callback_t func);
+void rcu_barrier_longwait(void);
+#endif /* #ifdef CONFIG_LONGWAIT_RCU */
+
 #endif /* __LINUX_RCUPDATE_TRACE_H */
