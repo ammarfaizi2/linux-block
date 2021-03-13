@@ -447,6 +447,7 @@ void rcu_request_urgent_qs_task(struct task_struct *t);
 
 enum rcutorture_type {
 	RCU_FLAVOR,
+	RCU_LONGWAIT_FLAVOR,
 	RCU_TASKS_FLAVOR,
 	RCU_TASKS_RUDE_FLAVOR,
 	RCU_TASKS_TRACING_FLAVOR,
@@ -555,6 +556,11 @@ static inline void show_rcu_tasks_rude_gp_kthread(void) {}
 void show_rcu_tasks_trace_gp_kthread(void);
 #else
 static inline void show_rcu_tasks_trace_gp_kthread(void) {}
+#endif
+#if !defined(CONFIG_TINY_RCU) && defined(CONFIG_LONGWAIT_RCU)
+void show_longwait_gp_kthread(void);
+#else
+static inline void show_longwait_gp_kthread(void) {}
 #endif
 
 #endif /* __LINUX_RCU_H */

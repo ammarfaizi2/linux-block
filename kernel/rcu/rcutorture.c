@@ -878,6 +878,36 @@ static struct rcu_torture_ops tasks_tracing_ops = {
 	.name		= "tasks-tracing"
 };
 
+/*
+ * Definitions for RCU tasks longwait torture testing.
+ */
+
+static void rcu_longwait_torture_deferred_free(struct rcu_torture *p)
+{
+	call_rcu_longwait(&p->rtort_rcu, rcu_torture_cb);
+}
+
+static struct rcu_torture_ops longwait_ops = {
+	.ttype		= RCU_LONGWAIT_FLAVOR,
+	.init		= rcu_sync_torture_init,
+	.readlock	= rcu_read_lock_longwait,
+	.read_delay	= srcu_read_delay,  /* just reuse srcu's version. */
+	.readunlock	= rcu_read_unlock_longwait,
+	.readlock_held	= rcu_read_lock_longwait_held,
+	.get_gp_seq	= rcu_no_completed,
+	.deferred_free	= rcu_longwait_torture_deferred_free,
+	.sync		= NULL,
+	.exp_sync	= NULL,
+	.call		= call_rcu_longwait,
+	.cb_barrier	= rcu_barrier_longwait,
+	.gp_kthread_dbg	= show_longwait_gp_kthread,
+	.fqs		= NULL,
+	.stats		= NULL,
+	.irq_capable	= 1,
+	.slow_gps	= 1,
+	.name		= "longwait"
+};
+
 static unsigned long rcutorture_seq_diff(unsigned long new, unsigned long old)
 {
 	if (!cur_ops->gp_diff)
@@ -2944,7 +2974,7 @@ rcu_torture_init(void)
 	static struct rcu_torture_ops *torture_ops[] = {
 		&rcu_ops, &rcu_busted_ops, &srcu_ops, &srcud_ops,
 		&busted_srcud_ops, &tasks_ops, &tasks_rude_ops,
-		&tasks_tracing_ops, &trivial_ops,
+		&tasks_tracing_ops, &longwait_ops, &trivial_ops,
 	};
 
 	if (!torture_init_begin(torture_type, verbose))
