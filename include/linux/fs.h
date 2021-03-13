@@ -1620,6 +1620,17 @@ static inline kgid_t fsgid_into_mnt(struct user_namespace *mnt_userns)
 	return kgid_from_mnt(mnt_userns, current_fsgid());
 }
 
+static inline bool fsuidgid_has_mapping(struct super_block *sb,
+					struct user_namespace *mnt_userns)
+{
+	struct user_namespace *s_user_ns = sb->s_user_ns;
+
+	return kuid_has_mapping(s_user_ns,
+				kuid_from_mnt(mnt_userns, current_fsuid())) &&
+	       kgid_has_mapping(s_user_ns,
+				kgid_from_mnt(mnt_userns, current_fsgid()));
+}
+
 extern struct timespec64 current_time(struct inode *inode);
 
 /*
