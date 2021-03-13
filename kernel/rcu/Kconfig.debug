@@ -29,6 +29,7 @@ config RCU_SCALE_TEST
 	select TORTURE_TEST
 	select SRCU
 	select TASKS_RCU
+	select LONGWAIT_RCU
 	select TASKS_RUDE_RCU
 	select TASKS_TRACE_RCU
 	default n
@@ -48,6 +49,7 @@ config RCU_TORTURE_TEST
 	select TORTURE_TEST
 	select SRCU
 	select TASKS_RCU
+	select LONGWAIT_RCU
 	select TASKS_RUDE_RCU
 	select TASKS_TRACE_RCU
 	default n
@@ -67,6 +69,7 @@ config RCU_REF_SCALE_TEST
 	select TORTURE_TEST
 	select SRCU
 	select TASKS_RCU
+	select LONGWAIT_RCU
 	select TASKS_RUDE_RCU
 	select TASKS_TRACE_RCU
 	default n
