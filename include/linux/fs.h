@@ -1610,12 +1610,12 @@ static inline kgid_t kgid_from_mnt(struct user_namespace *mnt_userns,
 	return KGIDT_INIT(from_kgid(mnt_userns, kgid));
 }
 
-static inline kuid_t fsuid_into_mnt(struct user_namespace *mnt_userns)
+static inline kuid_t idmapped_fsuid(struct user_namespace *mnt_userns)
 {
 	return kuid_from_mnt(mnt_userns, current_fsuid());
 }
 
-static inline kgid_t fsgid_into_mnt(struct user_namespace *mnt_userns)
+static inline kgid_t idmapped_fsgid(struct user_namespace *mnt_userns)
 {
 	return kgid_from_mnt(mnt_userns, current_fsgid());
 }
