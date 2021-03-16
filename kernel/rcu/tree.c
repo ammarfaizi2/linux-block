@@ -3886,8 +3886,6 @@ void cond_synchronize_rcu(unsigned long oldstate)
 {
 	if (!poll_state_synchronize_rcu(oldstate))
 		synchronize_rcu();
-	else
-		smp_mb(); /* Ensure GP ends before subsequent accesses. */
 }
 EXPORT_SYMBOL_GPL(cond_synchronize_rcu);
 
