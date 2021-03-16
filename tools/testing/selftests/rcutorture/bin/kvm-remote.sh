@@ -31,6 +31,14 @@ then
 fi
 shift
 
+# Pathnames:
+# T:	  /tmp/kvm-again.sh.$$
+# resdir: /tmp/kvm-again.sh.$$/res
+#
+# Pathname segments:
+# TD:	  kvm-again.sh.$$
+# ds:	  yyyy.mm.dd-hh.mm.ss-remote
+
 TD=kvm-again.sh.$$
 T=${TMPDIR-/tmp}/$TD
 trap 'rm -rf $T' 0
@@ -88,13 +96,6 @@ else
 	fi
 fi
 
-# Copy bin directory.
-if ! cp -a tools/testing/selftests/rcutorture/bin "$resdir/$ds"
-then
-	echo $scriptname: cp -a for bin directory failed exit code $?
-	exit 3
-fi
-
 # Create the kvm-remote-N.sh scripts in the bin directory.
 awk < "$rundir"/scenarios -v dest="$T/bin" -v rundir="$rundir" '
 {
@@ -123,10 +124,10 @@ do
 	fi
 done
 
-# Download the tarball to all systems.
+# Download and expand the tarball on all systems.
 for i in $systems
 do
-	cat $T/binres.tgz | ssh $i "cd /tmp; tar -xf -"
+	cat $T/binres.tgz | ssh $i "cd /tmp; tar -xzf -"
 	ret=$?
 	if test "$ret" -ne 0
 	then
