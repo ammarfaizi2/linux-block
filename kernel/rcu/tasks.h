@@ -704,6 +704,7 @@ int rcu_read_lock_longwait(void)
 	barrier();
 	return idx;
 }
+EXPORT_SYMBOL_GPL(rcu_read_lock_longwait);
 
 /**
  * rcu_read_unlock_longwait - mark end of RCU-longwait read-side critical section
@@ -724,6 +725,7 @@ void rcu_read_unlock_longwait(int idx)
 	rcu_lock_release(&rlip->rli_dep_map);
 	percpu_ref_put(&rlip->rli_pcref[idx]);
 }
+EXPORT_SYMBOL_GPL(rcu_read_unlock_longwait);
 
 int rcu_read_lock_longwait_held(void)
 {
@@ -733,6 +735,7 @@ int rcu_read_lock_longwait_held(void)
 	return 1;
 #endif /* #else #ifdef CONFIG_DEBUG_LOCK_ALLOC */
 }
+EXPORT_SYMBOL_GPL(rcu_read_lock_longwait_held);
 
 // Wait for one longwait RCU-tasks grace period.
 static void rcu_longwait_wait_gp(struct rcu_tasks *rtp)
