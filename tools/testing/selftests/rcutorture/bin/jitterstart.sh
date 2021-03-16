@@ -30,8 +30,8 @@ fi
 shift
 shift
 
-touch ${jittering_dir}jittering
+touch ${jittering_dir}/jittering
 for ((jitter_i = 1; jitter_i <= $jitter_n; jitter_i++))
 do
-	jitter.sh $jitter_i "${jittering_dir}jittering" "$@" &
+	jitter.sh $jitter_i "${jittering_dir}/jittering" "$@" &
 done

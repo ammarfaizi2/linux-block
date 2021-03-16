@@ -19,5 +19,5 @@ then
 	exit 34
 fi
 
-rm -f ${jittering_dir}jittering
+rm -f ${jittering_dir}/jittering
 wait
