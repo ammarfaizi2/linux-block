@@ -11,6 +11,7 @@
 #include <linux/namei.h>
 #include <linux/security.h>
 #include <linux/tracefs.h>
+#include <linux/kref.h>
 #include "internal.h"
 
 #define FILE_NOT_CREATED	1
@@ -18,6 +19,9 @@
 
 struct eventfs_file {
 	struct list_head		list;
+	struct dentry			*d_parent;
+	struct dentry			*dentry;
+	struct kref			kref;
 	umode_t				mode;
 	const char			*name;
 	const struct file_operations	*fops;
@@ -57,7 +61,8 @@ struct eventfs_inode {
  */
 struct dentry *eventfs_create_file(const char *name, umode_t mode,
 				   struct dentry *parent, void *data,
-				   const struct file_operations *fops)
+				   const struct file_operations *fops,
+				   bool inode_locked)
 {
 	struct dentry *dentry;
 	struct inode *inode;
@@ -68,21 +73,21 @@ struct dentry *eventfs_create_file(const char *name, umode_t mode,
 	if (!(mode & S_IFMT))
 		mode |= S_IFREG;
 	BUG_ON(!S_ISREG(mode));
-	dentry = eventfs_start_creating(name, parent);
+	dentry = eventfs_start_creating(name, parent, inode_locked);
 
 	if (IS_ERR(dentry))
 		return NULL;
 
 	inode = tracefs_get_inode(dentry->d_sb);
 	if (unlikely(!inode))
-		return eventfs_failed_creating(dentry);
+		return eventfs_failed_creating(dentry, inode_locked);
 
 	inode->i_mode = mode;
 	inode->i_fop = fops; // todo ? fops : &tracefs_file_operations;
 	inode->i_private = data;
 	d_instantiate(dentry, inode);
 	fsnotify_create(dentry->d_parent->d_inode, dentry);
-	return eventfs_end_creating(dentry);
+	return eventfs_end_creating(dentry, inode_locked);
 }
 
 
@@ -148,6 +153,8 @@ end_instantiate:
 static struct dentry *eventfs_lookup(struct inode *dir, struct dentry *dentry,
 			      unsigned int flags)
 {
+
+        printk("%s:%d dir = %s\n", __func__, __LINE__, dentry->d_iname);
 	return NULL;
 #if 0
 	struct proc_fs_info *fs_info = proc_sb_info(dir->i_sb);
@@ -163,7 +170,28 @@ static struct dentry *eventfs_root_lookup(struct inode * dir,
 					  struct dentry * dentry,
 					  unsigned int flags)
 {
-	return simple_lookup(dir, dentry, flags);
+        struct tracefs_inode *ti;
+        struct eventfs_inode *ei;
+        struct eventfs_file *ef, *n;
+
+	int ret = simple_lookup(dir, dentry, flags);
+        printk("%s:%d FileName = %s\n", __func__, __LINE__, dentry->d_iname);
+
+	ti = get_tracefs(dir);
+	if (!(ti->flags & TRACEFS_EVENT_INODE))
+		return -EINVAL;
+
+	ei = ti->private;
+        list_for_each_entry_safe(ef, n, &ei->e_top_files, list) {
+		if (!strncmp (ef->name, dentry->d_iname, strlen(ef->name)) && (ef->status == FILE_NOT_CREATED))
+		{
+                        ef->status = FILE_CREATED;
+		        printk("%s:%d Parent = %s, FileName = %s, ef->name = %s \n", __func__, __LINE__, ef->d_parent->d_iname, dentry->d_iname, ef->name);
+                        ef->dentry = eventfs_create_file(ef->name, ef->mode, ef->d_parent, ef->data, ef->fops, 1);
+			
+                }
+        }
+	return ret; //  simple_lookup(dir, dentry, flags);
 }
 
 static int eventfs_top_readdir(struct file *file, struct dir_context *ctx)
@@ -175,6 +203,9 @@ static int eventfs_top_readdir(struct file *file, struct dir_context *ctx)
 	struct inode *inode = file_inode(file);
 	struct dentry *dentry = file_dentry(file);
 
+	printk("%s:%d dir = %s\n", __func__, __LINE__, dentry->d_iname);
+
+#if 0
 	ti = get_tracefs(inode);
 	if (!(ti->flags & TRACEFS_EVENT_INODE))
 		return -EINVAL;
@@ -183,19 +214,98 @@ static int eventfs_top_readdir(struct file *file, struct dir_context *ctx)
 
 	list_for_each_entry_safe(ef, n, &ei->e_top_files, list) {
 		if (ef->status == FILE_NOT_CREATED) {
-			eventfs_create_file(ef->name, ef->mode, dentry, ef->data, ef->fops);
 			ef->status = FILE_CREATED;
-		}
+			ef->dentry = eventfs_create_file(ef->name, ef->mode, dentry, ef->data, ef->fops);
+			kref_init(&ef->kref);
+			printk("kref_init: %s:%d dir = %s\n", __func__, __LINE__, dentry->d_iname);
+		} else {
+			kref_get(&ef->kref);
+			printk("kref_get: %s:%d dir = %s\n", __func__, __LINE__, dentry->d_iname);
+		}		
 	}
+#endif
 	return dcache_readdir(file, ctx);
 }
 
+static void eventfs_release_ef(struct kref *kref)
+{
+	struct eventfs_file *ef = container_of(kref, struct eventfs_file, kref);
+
+	dput(ef->dentry);
+	ef->status = FILE_NOT_CREATED;
+	printk("eventfs_release_ef: Done: free file %p, name = %s\n", ef, ef->dentry->d_iname);
+}
+
+static int eventfs_release (struct inode *inode, struct file *file)
+{
+        struct dentry *dentry = file_dentry(file);
+	printk("%s:%d dir = %s\n", __func__, __LINE__, dentry->d_iname);
+
+	struct tracefs_inode *ti;
+	struct eventfs_inode *ei;
+	struct eventfs_file *ef, *n;
+
+	ti = get_tracefs(inode);
+	if (!(ti->flags & TRACEFS_EVENT_INODE))
+		return -EINVAL;
+
+	ei = ti->private;
+
+	list_for_each_entry_safe(ef, n, &ei->e_top_files, list) {
+		if (ef->status == FILE_CREATED) {
+			printk("kref_put: free file %p, name = %s\n", ef, ef->dentry->d_iname);
+			kref_put(&ef->kref, eventfs_release_ef);
+
+			// dput(ef->dentry);
+			// d_delete(ef->dentry);
+			// dput(ef->dentry);
+			// ef->status = FILE_NOT_CREATED;
+			// printk("Done: free file %p, name = %s\n", ef, ef->dentry->d_iname);
+		}
+	}
+	return 0;
+
+}
+
+int dcache_dir_open_wrapper(struct inode *inode, struct file *file)
+{
+
+        struct tracefs_inode *ti;
+        struct eventfs_inode *ei;
+        struct eventfs_file *ef, *n;
+        struct inode *f_inode = file_inode(file);
+        struct dentry *dentry = file_dentry(file);
+
+        printk("%s:%d dir = %s\n", __func__, __LINE__, dentry->d_iname);
+
+        ti = get_tracefs(f_inode);
+        if (!(ti->flags & TRACEFS_EVENT_INODE))
+                return -EINVAL;
+
+        ei = ti->private;
+
+        list_for_each_entry_safe(ef, n, &ei->e_top_files, list) {
+                if (ef->status == FILE_NOT_CREATED) {
+                        ef->status = FILE_CREATED;
+                        ef->dentry = eventfs_create_file(ef->name, ef->mode, dentry, ef->data, ef->fops, 0);
+                        kref_init(&ef->kref);
+                        printk("kref_init: %s:%d dir = %s\n", __func__, __LINE__, dentry->d_iname);
+                } else {
+                        kref_get(&ef->kref);
+                        printk("kref_get: %s:%d dir = %s\n", __func__, __LINE__, dentry->d_iname);
+                }
+        }
+
+	return dcache_dir_open(inode, file);
+}
+
 static const struct file_operations eventfs_file_operations = {
-	.open           = dcache_dir_open,
+	.open           = dcache_dir_open_wrapper,
 	.read		= generic_read_dir,
 //	.iterate_shared = dcache_readdir,
 	.iterate_shared	= eventfs_top_readdir,
 	.llseek		= generic_file_llseek,
+	.release        = eventfs_release,
 };
 
 static const struct inode_operations eventfs_root_inode_operations = {
@@ -245,7 +355,8 @@ int eventfs_create_top_file(const char *name, umode_t mode,
 	ef->data = data;
 	ef->fops = fops;
 	ef->status = FILE_NOT_CREATED;
-
+	ef->d_parent = parent;
+	// kref_init(&ef->kref);
 	list_add_tail(&ef->list, &ei->e_top_files);
 	return 1;
 }

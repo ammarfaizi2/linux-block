@@ -20,9 +20,12 @@
 struct file_operations;
 
 #ifdef CONFIG_TRACING
-struct dentry *eventfs_start_creating(const char *name, struct dentry *parent);
-struct dentry *eventfs_failed_creating(struct dentry *dentry);
-struct dentry *eventfs_end_creating(struct dentry *dentry);
+struct dentry *eventfs_start_creating(const char *name, struct dentry *parent,
+				      bool inode_locked);
+struct dentry *eventfs_failed_creating(struct dentry *dentry,
+				       bool inode_locked);
+struct dentry *eventfs_end_creating(struct dentry *dentry,
+				    bool inode_locked);
 
 struct dentry *tracefs_create_file(const char *name, umode_t mode,
 				   struct dentry *parent, void *data,

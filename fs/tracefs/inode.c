@@ -391,7 +391,7 @@ struct dentry *tracefs_end_creating(struct dentry *dentry)
 	return dentry;
 }
 
-struct dentry *eventfs_start_creating(const char *name, struct dentry *parent)
+struct dentry *eventfs_start_creating(const char *name, struct dentry *parent, bool inode_locked)
 {
 	struct dentry *dentry;
 	int error;
@@ -411,7 +411,9 @@ struct dentry *eventfs_start_creating(const char *name, struct dentry *parent)
 	if (!parent)
 		parent = tracefs_mount->mnt_root;
 
-	// inode_lock(parent->d_inode);
+	if (!inode_locked)
+		inode_lock(parent->d_inode);
+
 	if (unlikely(IS_DEADDIR(parent->d_inode)))
 		dentry = ERR_PTR(-ENOENT);
 	else
@@ -422,7 +424,8 @@ struct dentry *eventfs_start_creating(const char *name, struct dentry *parent)
 	}
 
 	if (IS_ERR(dentry)) {
-		// inode_unlock(parent->d_inode);
+		if (!inode_locked)
+			inode_unlock(parent->d_inode);
 		simple_release_fs(&tracefs_mount, &tracefs_mount_count); // todo
 	}
 
@@ -430,17 +433,19 @@ struct dentry *eventfs_start_creating(const char *name, struct dentry *parent)
 	return dentry;
 }
 
-struct dentry *eventfs_failed_creating(struct dentry *dentry)
+struct dentry *eventfs_failed_creating(struct dentry *dentry, bool inode_locked)
 {
-	// inode_unlock(dentry->d_parent->d_inode);
+	if (!inode_locked)
+		inode_unlock(dentry->d_parent->d_inode);
 	dput(dentry);
 	simple_release_fs(&tracefs_mount, &tracefs_mount_count);  // todo
 	return NULL;
 }
 
-struct dentry *eventfs_end_creating(struct dentry *dentry)
+struct dentry *eventfs_end_creating(struct dentry *dentry, bool inode_locked)
 {
-	// inode_unlock(dentry->d_parent->d_inode);
+	if (!inode_locked)
+		inode_unlock(dentry->d_parent->d_inode);
 	return dentry;
 }
 /**
