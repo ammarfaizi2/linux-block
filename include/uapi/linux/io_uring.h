@@ -14,11 +14,22 @@
 /*
  * IO submission data structure (Submission Queue Entry)
  */
-struct io_uring_sqe {
+struct io_uring_sqe_hdr {
 	__u8	opcode;		/* type of operation for this sqe */
 	__u8	flags;		/* IOSQE_ flags */
 	__u16	ioprio;		/* ioprio for the request */
 	__s32	fd;		/* file descriptor to do IO on */
+};
+
+struct io_uring_sqe {
+#ifdef __KERNEL__
+	struct io_uring_sqe_hdr	hdr;
+#else
+	__u8	opcode;		/* type of operation for this sqe */
+	__u8	flags;		/* IOSQE_ flags */
+	__u16	ioprio;		/* ioprio for the request */
+	__s32	fd;		/* file descriptor to do IO on */
+#endif
 	union {
 		__u64	off;	/* offset into file */
 		__u64	addr2;
