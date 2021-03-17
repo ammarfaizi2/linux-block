@@ -2749,7 +2749,7 @@ static int io_prep_rw(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 	if ((kiocb->ki_flags & IOCB_NOWAIT) || (file->f_flags & O_NONBLOCK))
 		req->flags |= REQ_F_NOWAIT;
 
-	ioprio = READ_ONCE(sqe->ioprio);
+	ioprio = READ_ONCE(sqe->hdr.ioprio);
 	if (ioprio) {
 		ret = ioprio_check_cap(ioprio);
 		if (ret)
@@ -3520,12 +3520,12 @@ static int io_renameat_prep(struct io_kiocb *req,
 
 	if (unlikely(req->ctx->flags & IORING_SETUP_IOPOLL))
 		return -EINVAL;
-	if (sqe->ioprio || sqe->buf_index)
+	if (sqe->hdr.ioprio || sqe->buf_index)
 		return -EINVAL;
 	if (unlikely(req->flags & REQ_F_FIXED_FILE))
 		return -EBADF;
 
-	ren->old_dfd = READ_ONCE(sqe->fd);
+	ren->old_dfd = READ_ONCE(sqe->hdr.fd);
 	oldf = u64_to_user_ptr(READ_ONCE(sqe->addr));
 	newf = u64_to_user_ptr(READ_ONCE(sqe->addr2));
 	ren->new_dfd = READ_ONCE(sqe->len);
@@ -3571,12 +3571,12 @@ static int io_unlinkat_prep(struct io_kiocb *req,
 
 	if (unlikely(req->ctx->flags & IORING_SETUP_IOPOLL))
 		return -EINVAL;
-	if (sqe->ioprio || sqe->off || sqe->len || sqe->buf_index)
+	if (sqe->hdr.ioprio || sqe->off || sqe->len || sqe->buf_index)
 		return -EINVAL;
 	if (unlikely(req->flags & REQ_F_FIXED_FILE))
 		return -EBADF;
 
-	un->dfd = READ_ONCE(sqe->fd);
+	un->dfd = READ_ONCE(sqe->hdr.fd);
 
 	un->flags = READ_ONCE(sqe->unlink_flags);
 	if (un->flags & ~AT_REMOVEDIR)
@@ -3619,12 +3619,12 @@ static int io_mkdirat_prep(struct io_kiocb *req,
 
 	if (unlikely(req->ctx->flags & IORING_SETUP_IOPOLL))
 		return -EINVAL;
-	if (sqe->ioprio || sqe->off || sqe->rw_flags || sqe->buf_index)
+	if (sqe->hdr.ioprio || sqe->off || sqe->rw_flags || sqe->buf_index)
 		return -EINVAL;
 	if (unlikely(req->flags & REQ_F_FIXED_FILE))
 		return -EBADF;
 
-	mkd->dfd = READ_ONCE(sqe->fd);
+	mkd->dfd = READ_ONCE(sqe->hdr.fd);
 	mkd->mode = READ_ONCE(sqe->len);
 
 	fname = u64_to_user_ptr(READ_ONCE(sqe->addr));
@@ -3661,12 +3661,12 @@ static int io_symlinkat_prep(struct io_kiocb *req,
 
 	if (unlikely(req->ctx->flags & IORING_SETUP_IOPOLL))
 		return -EINVAL;
-	if (sqe->ioprio || sqe->len || sqe->rw_flags || sqe->buf_index)
+	if (sqe->hdr.ioprio || sqe->len || sqe->rw_flags || sqe->buf_index)
 		return -EINVAL;
 	if (unlikely(req->flags & REQ_F_FIXED_FILE))
 		return -EBADF;
 
-	sl->new_dfd = READ_ONCE(sqe->fd);
+	sl->new_dfd = READ_ONCE(sqe->hdr.fd);
 	oldpath = u64_to_user_ptr(READ_ONCE(sqe->addr));
 	newpath = u64_to_user_ptr(READ_ONCE(sqe->addr2));
 
@@ -3709,12 +3709,12 @@ static int io_linkat_prep(struct io_kiocb *req,
 
 	if (unlikely(req->ctx->flags & IORING_SETUP_IOPOLL))
 		return -EINVAL;
-	if (sqe->ioprio || sqe->rw_flags || sqe->buf_index)
+	if (sqe->hdr.ioprio || sqe->rw_flags || sqe->buf_index)
 		return -EINVAL;
 	if (unlikely(req->flags & REQ_F_FIXED_FILE))
 		return -EBADF;
 
-	lnk->old_dfd = READ_ONCE(sqe->fd);
+	lnk->old_dfd = READ_ONCE(sqe->hdr.fd);
 	lnk->new_dfd = READ_ONCE(sqe->len);
 	oldf = u64_to_user_ptr(READ_ONCE(sqe->addr));
 	newf = u64_to_user_ptr(READ_ONCE(sqe->addr2));
@@ -3758,7 +3758,7 @@ static int io_shutdown_prep(struct io_kiocb *req,
 #if defined(CONFIG_NET)
 	if (unlikely(req->ctx->flags & IORING_SETUP_IOPOLL))
 		return -EINVAL;
-	if (sqe->ioprio || sqe->off || sqe->addr || sqe->rw_flags ||
+	if (sqe->hdr.ioprio || sqe->off || sqe->addr || sqe->rw_flags ||
 	    sqe->buf_index)
 		return -EINVAL;
 
@@ -3907,7 +3907,7 @@ static int io_fsync_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 
 	if (unlikely(ctx->flags & IORING_SETUP_IOPOLL))
 		return -EINVAL;
-	if (unlikely(sqe->addr || sqe->ioprio || sqe->buf_index))
+	if (unlikely(sqe->addr || sqe->hdr.ioprio || sqe->buf_index))
 		return -EINVAL;
 
 	req->sync.flags = READ_ONCE(sqe->fsync_flags);
@@ -3940,7 +3940,7 @@ static int io_fsync(struct io_kiocb *req, unsigned int issue_flags)
 static int io_fallocate_prep(struct io_kiocb *req,
 			     const struct io_uring_sqe *sqe)
 {
-	if (sqe->ioprio || sqe->buf_index || sqe->rw_flags)
+	if (sqe->hdr.ioprio || sqe->buf_index || sqe->rw_flags)
 		return -EINVAL;
 	if (unlikely(req->ctx->flags & IORING_SETUP_IOPOLL))
 		return -EINVAL;
@@ -3973,7 +3973,7 @@ static int __io_openat_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe
 
 	if (unlikely(req->ctx->flags & IORING_SETUP_IOPOLL))
 		return -EINVAL;
-	if (unlikely(sqe->ioprio || sqe->buf_index))
+	if (unlikely(sqe->hdr.ioprio || sqe->buf_index))
 		return -EINVAL;
 	if (unlikely(req->flags & REQ_F_FIXED_FILE))
 		return -EBADF;
@@ -3982,7 +3982,7 @@ static int __io_openat_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe
 	if (!(req->open.how.flags & O_PATH) && force_o_largefile())
 		req->open.how.flags |= O_LARGEFILE;
 
-	req->open.dfd = READ_ONCE(sqe->fd);
+	req->open.dfd = READ_ONCE(sqe->hdr.fd);
 	fname = u64_to_user_ptr(READ_ONCE(sqe->addr));
 	req->open.filename = getname(fname);
 	if (IS_ERR(req->open.filename)) {
@@ -4092,10 +4092,10 @@ static int io_remove_buffers_prep(struct io_kiocb *req,
 	struct io_provide_buf *p = &req->pbuf;
 	u64 tmp;
 
-	if (sqe->ioprio || sqe->rw_flags || sqe->addr || sqe->len || sqe->off)
+	if (sqe->hdr.ioprio || sqe->rw_flags || sqe->addr || sqe->len || sqe->off)
 		return -EINVAL;
 
-	tmp = READ_ONCE(sqe->fd);
+	tmp = READ_ONCE(sqe->hdr.fd);
 	if (!tmp || tmp > USHRT_MAX)
 		return -EINVAL;
 
@@ -4163,10 +4163,10 @@ static int io_provide_buffers_prep(struct io_kiocb *req,
 	struct io_provide_buf *p = &req->pbuf;
 	u64 tmp;
 
-	if (sqe->ioprio || sqe->rw_flags)
+	if (sqe->hdr.ioprio || sqe->rw_flags)
 		return -EINVAL;
 
-	tmp = READ_ONCE(sqe->fd);
+	tmp = READ_ONCE(sqe->hdr.fd);
 	if (!tmp || tmp > USHRT_MAX)
 		return -E2BIG;
 	p->nbufs = tmp;
@@ -4250,12 +4250,12 @@ static int io_epoll_ctl_prep(struct io_kiocb *req,
 			     const struct io_uring_sqe *sqe)
 {
 #if defined(CONFIG_EPOLL)
-	if (sqe->ioprio || sqe->buf_index)
+	if (sqe->hdr.ioprio || sqe->buf_index)
 		return -EINVAL;
 	if (unlikely(req->ctx->flags & IORING_SETUP_IOPOLL))
 		return -EINVAL;
 
-	req->epoll.epfd = READ_ONCE(sqe->fd);
+	req->epoll.epfd = READ_ONCE(sqe->hdr.fd);
 	req->epoll.op = READ_ONCE(sqe->len);
 	req->epoll.fd = READ_ONCE(sqe->off);
 
@@ -4296,7 +4296,7 @@ static int io_epoll_ctl(struct io_kiocb *req, unsigned int issue_flags)
 static int io_madvise_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 {
 #if defined(CONFIG_ADVISE_SYSCALLS) && defined(CONFIG_MMU)
-	if (sqe->ioprio || sqe->buf_index || sqe->off)
+	if (sqe->hdr.ioprio || sqe->buf_index || sqe->off)
 		return -EINVAL;
 	if (unlikely(req->ctx->flags & IORING_SETUP_IOPOLL))
 		return -EINVAL;
@@ -4331,7 +4331,7 @@ static int io_madvise(struct io_kiocb *req, unsigned int issue_flags)
 
 static int io_fadvise_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 {
-	if (sqe->ioprio || sqe->buf_index || sqe->addr)
+	if (sqe->hdr.ioprio || sqe->buf_index || sqe->addr)
 		return -EINVAL;
 	if (unlikely(req->ctx->flags & IORING_SETUP_IOPOLL))
 		return -EINVAL;
@@ -4369,12 +4369,12 @@ static int io_statx_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 {
 	if (unlikely(req->ctx->flags & IORING_SETUP_IOPOLL))
 		return -EINVAL;
-	if (sqe->ioprio || sqe->buf_index)
+	if (sqe->hdr.ioprio || sqe->buf_index)
 		return -EINVAL;
 	if (req->flags & REQ_F_FIXED_FILE)
 		return -EBADF;
 
-	req->statx.dfd = READ_ONCE(sqe->fd);
+	req->statx.dfd = READ_ONCE(sqe->hdr.fd);
 	req->statx.mask = READ_ONCE(sqe->len);
 	req->statx.filename = u64_to_user_ptr(READ_ONCE(sqe->addr));
 	req->statx.buffer = u64_to_user_ptr(READ_ONCE(sqe->addr2));
@@ -4404,13 +4404,13 @@ static int io_close_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 {
 	if (unlikely(req->ctx->flags & IORING_SETUP_IOPOLL))
 		return -EINVAL;
-	if (sqe->ioprio || sqe->off || sqe->addr || sqe->len ||
+	if (sqe->hdr.ioprio || sqe->off || sqe->addr || sqe->len ||
 	    sqe->rw_flags || sqe->buf_index)
 		return -EINVAL;
 	if (req->flags & REQ_F_FIXED_FILE)
 		return -EBADF;
 
-	req->close.fd = READ_ONCE(sqe->fd);
+	req->close.fd = READ_ONCE(sqe->hdr.fd);
 	return 0;
 }
 
@@ -4466,7 +4466,7 @@ static int io_sfr_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 
 	if (unlikely(ctx->flags & IORING_SETUP_IOPOLL))
 		return -EINVAL;
-	if (unlikely(sqe->addr || sqe->ioprio || sqe->buf_index))
+	if (unlikely(sqe->addr || sqe->hdr.ioprio || sqe->buf_index))
 		return -EINVAL;
 
 	req->sync.off = READ_ONCE(sqe->off);
@@ -4893,7 +4893,7 @@ static int io_accept_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 
 	if (unlikely(req->ctx->flags & IORING_SETUP_IOPOLL))
 		return -EINVAL;
-	if (sqe->ioprio || sqe->len || sqe->buf_index)
+	if (sqe->hdr.ioprio || sqe->len || sqe->buf_index)
 		return -EINVAL;
 
 	accept->addr = u64_to_user_ptr(READ_ONCE(sqe->addr));
@@ -4941,7 +4941,7 @@ static int io_connect_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 
 	if (unlikely(req->ctx->flags & IORING_SETUP_IOPOLL))
 		return -EINVAL;
-	if (sqe->ioprio || sqe->len || sqe->buf_index || sqe->rw_flags)
+	if (sqe->hdr.ioprio || sqe->len || sqe->buf_index || sqe->rw_flags)
 		return -EINVAL;
 
 	conn->addr = u64_to_user_ptr(READ_ONCE(sqe->addr));
@@ -5534,7 +5534,7 @@ static int io_poll_update_prep(struct io_kiocb *req,
 
 	if (unlikely(req->ctx->flags & IORING_SETUP_IOPOLL))
 		return -EINVAL;
-	if (sqe->ioprio || sqe->buf_index)
+	if (sqe->hdr.ioprio || sqe->buf_index)
 		return -EINVAL;
 	flags = READ_ONCE(sqe->len);
 	if (flags & ~(IORING_POLL_UPDATE_EVENTS | IORING_POLL_UPDATE_USER_DATA |
@@ -5583,7 +5583,7 @@ static int io_poll_add_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe
 
 	if (unlikely(req->ctx->flags & IORING_SETUP_IOPOLL))
 		return -EINVAL;
-	if (sqe->ioprio || sqe->buf_index || sqe->off || sqe->addr)
+	if (sqe->hdr.ioprio || sqe->buf_index || sqe->off || sqe->addr)
 		return -EINVAL;
 	flags = READ_ONCE(sqe->len);
 	if (flags & ~IORING_POLL_ADD_MULTI)
@@ -5780,7 +5780,7 @@ static int io_timeout_remove_prep(struct io_kiocb *req,
 		return -EINVAL;
 	if (unlikely(req->flags & (REQ_F_FIXED_FILE | REQ_F_BUFFER_SELECT)))
 		return -EINVAL;
-	if (sqe->ioprio || sqe->buf_index || sqe->len)
+	if (sqe->hdr.ioprio || sqe->buf_index || sqe->len)
 		return -EINVAL;
 
 	tr->addr = READ_ONCE(sqe->addr);
@@ -5841,7 +5841,7 @@ static int io_timeout_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe,
 
 	if (unlikely(req->ctx->flags & IORING_SETUP_IOPOLL))
 		return -EINVAL;
-	if (sqe->ioprio || sqe->buf_index || sqe->len != 1)
+	if (sqe->hdr.ioprio || sqe->buf_index || sqe->len != 1)
 		return -EINVAL;
 	if (off && is_timeout_link)
 		return -EINVAL;
@@ -5993,7 +5993,7 @@ static int io_async_cancel_prep(struct io_kiocb *req,
 		return -EINVAL;
 	if (unlikely(req->flags & (REQ_F_FIXED_FILE | REQ_F_BUFFER_SELECT)))
 		return -EINVAL;
-	if (sqe->ioprio || sqe->off || sqe->len || sqe->cancel_flags)
+	if (sqe->hdr.ioprio || sqe->off || sqe->len || sqe->cancel_flags)
 		return -EINVAL;
 
 	req->cancel.addr = READ_ONCE(sqe->addr);
@@ -6052,7 +6052,7 @@ static int io_rsrc_update_prep(struct io_kiocb *req,
 {
 	if (unlikely(req->flags & (REQ_F_FIXED_FILE | REQ_F_BUFFER_SELECT)))
 		return -EINVAL;
-	if (sqe->ioprio || sqe->rw_flags)
+	if (sqe->hdr.ioprio || sqe->rw_flags)
 		return -EINVAL;
 
 	req->rsrc_update.offset = READ_ONCE(sqe->off);
@@ -6762,9 +6762,9 @@ static int io_init_req(struct io_ring_ctx *ctx, struct io_kiocb *req,
 	int personality, ret = 0;
 
 	/* req is partially pre-initialised, see io_preinit_req() */
-	req->opcode = READ_ONCE(sqe->opcode);
+	req->opcode = READ_ONCE(sqe->hdr.opcode);
 	/* same numerical values with corresponding REQ_F_*, safe to copy */
-	req->flags = sqe_flags = READ_ONCE(sqe->flags);
+	req->flags = sqe_flags = READ_ONCE(sqe->hdr.flags);
 	req->user_data = READ_ONCE(sqe->user_data);
 	req->file = NULL;
 	req->fixed_rsrc_refs = NULL;
@@ -6805,7 +6805,7 @@ static int io_init_req(struct io_ring_ctx *ctx, struct io_kiocb *req,
 	}
 
 	if (io_op_defs[req->opcode].needs_file) {
-		req->file = io_file_get(ctx, req, READ_ONCE(sqe->fd),
+		req->file = io_file_get(ctx, req, READ_ONCE(sqe->hdr.fd),
 					(sqe_flags & IOSQE_FIXED_FILE));
 		if (unlikely(!req->file))
 			ret = -EBADF;
@@ -10467,10 +10467,10 @@ static int __init io_uring_init(void)
 #define BUILD_BUG_SQE_ELEM(eoffset, etype, ename) \
 	__BUILD_BUG_VERIFY_ELEMENT(struct io_uring_sqe, eoffset, etype, ename)
 	BUILD_BUG_ON(sizeof(struct io_uring_sqe) != 64);
-	BUILD_BUG_SQE_ELEM(0,  __u8,   opcode);
-	BUILD_BUG_SQE_ELEM(1,  __u8,   flags);
-	BUILD_BUG_SQE_ELEM(2,  __u16,  ioprio);
-	BUILD_BUG_SQE_ELEM(4,  __s32,  fd);
+	BUILD_BUG_SQE_ELEM(0,  __u8,   hdr.opcode);
+	BUILD_BUG_SQE_ELEM(1,  __u8,   hdr.flags);
+	BUILD_BUG_SQE_ELEM(2,  __u16,  hdr.ioprio);
+	BUILD_BUG_SQE_ELEM(4,  __s32,  hdr.fd);
 	BUILD_BUG_SQE_ELEM(8,  __u64,  off);
 	BUILD_BUG_SQE_ELEM(8,  __u64,  addr2);
 	BUILD_BUG_SQE_ELEM(16, __u64,  addr);
