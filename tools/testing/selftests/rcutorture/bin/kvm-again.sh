@@ -3,7 +3,7 @@
 #
 # Rerun a series of tests under KVM.
 #
-# Usage: kvm.sh /path/to/old/run [ options ]
+# Usage: kvm-again.sh /path/to/old/run [ options ]
 #
 # Copyright (C) 2021 Facebook, Inc.
 #
