@@ -842,6 +842,7 @@ struct io_kiocb {
 		struct io_mkdir		mkdir;
 		struct io_symlink	symlink;
 		struct io_hardlink	hardlink;
+		struct io_uring_cmd	uring_cmd;
 		/* use only after cleaning per-op data, see io_clean_op() */
 		struct io_completion	compl;
 	};
@@ -1075,6 +1076,7 @@ static const struct io_op_def io_op_defs[] = {
 	[IORING_OP_SYMLINKAT] = {},
 	[IORING_OP_LINKAT] = {},
 	[IORING_OP_URING_CMD] = {
+		.needs_file		= 1,
 		.offsets		= 1,
 	},
 };
@@ -3768,6 +3770,53 @@ static int io_linkat(struct io_kiocb *req, int issue_flags)
 	return 0;
 }
 
+/*
+ * Called by consumers of io_uring_cmd, if they originally returned
+ * -EIOCBQUEUED upon receiving the command.
+ */
+void io_uring_cmd_done(struct io_uring_cmd *cmd, ssize_t ret)
+{
+	struct io_kiocb *req = container_of(cmd, struct io_kiocb, uring_cmd);
+
+	if (ret < 0)
+		req_set_fail(req);
+	io_req_complete(req, ret);
+}
+EXPORT_SYMBOL_GPL(io_uring_cmd_done);
+
+static int io_uring_cmd_prep(struct io_kiocb *req,
+			     const struct io_uring_sqe *sqe)
+{
+	const struct io_uring_cmd_sqe *csqe = (const void *) sqe;
+	struct io_uring_cmd *cmd = &req->uring_cmd;
+
+	if (!req->file->f_op->uring_cmd)
+		return -EOPNOTSUPP;
+
+	cmd->op = READ_ONCE(csqe->op);
+	cmd->len = READ_ONCE(csqe->len);
+
+	/*
+	 * The payload is the last 40 bytes of an io_uring_cmd_sqe, with the
+	 * type being defined by the recipient.
+	 */
+	memcpy(&cmd->pdu, &csqe->pdu, sizeof(cmd->pdu));
+	return 0;
+}
+
+static int io_uring_cmd(struct io_kiocb *req, unsigned int issue_flags)
+{
+	struct file *file = req->file;
+	int ret;
+
+	ret = file->f_op->uring_cmd(&req->uring_cmd, issue_flags);
+	/* queued async, consumer will call io_uring_cmd_done() when complete */
+	if (ret == -EIOCBQUEUED)
+		return 0;
+	io_uring_cmd_done(&req->uring_cmd, ret);
+	return 0;
+}
+
 static int io_shutdown_prep(struct io_kiocb *req,
 			    const struct io_uring_sqe *sqe)
 {
@@ -6182,6 +6231,8 @@ static int io_req_prep(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 		return io_symlinkat_prep(req, sqe);
 	case IORING_OP_LINKAT:
 		return io_linkat_prep(req, sqe);
+	case IORING_OP_URING_CMD:
+		return io_uring_cmd_prep(req, sqe);
 	}
 
 	printk_once(KERN_WARNING "io_uring: unhandled opcode %d\n",
@@ -6492,6 +6543,9 @@ static int io_issue_sqe(struct io_kiocb *req, unsigned int issue_flags)
 		break;
 	case IORING_OP_LINKAT:
 		ret = io_linkat(req, issue_flags);
+		break;
+	case IORING_OP_URING_CMD:
+		ret = io_uring_cmd(req, issue_flags);
 		break;
 	default:
 		ret = -EINVAL;
