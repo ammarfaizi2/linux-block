@@ -894,6 +894,22 @@ struct io_defer_entry {
 	u32			seq;
 };
 
+struct sqe_offset {
+	unsigned char		user_data;
+	unsigned char		personality;
+};
+
+static struct sqe_offset sqe_offsets[] = {
+	{
+		.user_data	= offsetof(struct io_uring_sqe, user_data),
+		.personality	= offsetof(struct io_uring_sqe, personality)
+	},
+	{
+		.user_data	= offsetof(struct io_uring_cmd_sqe, user_data),
+		.personality	= offsetof(struct io_uring_cmd_sqe, personality)
+	}
+};
+
 struct io_op_def {
 	/* needs req->file assigned */
 	unsigned		needs_file : 1;
@@ -914,6 +930,8 @@ struct io_op_def {
 	unsigned		plug : 1;
 	/* size of async data needed, if any */
 	unsigned short		async_size;
+	/* offset definition for user_data/personality */
+	unsigned short		offsets;
 };
 
 static const struct io_op_def io_op_defs[] = {
@@ -1061,6 +1079,9 @@ static const struct io_op_def io_op_defs[] = {
 	[IORING_OP_MKDIRAT] = {},
 	[IORING_OP_SYMLINKAT] = {},
 	[IORING_OP_LINKAT] = {},
+	[IORING_OP_URING_CMD] = {
+		.offsets		= 1,
+	},
 };
 
 static bool io_disarm_next(struct io_kiocb *req);
@@ -6754,18 +6775,20 @@ static inline bool io_check_restriction(struct io_ring_ctx *ctx,
 }
 
 static int io_init_req(struct io_ring_ctx *ctx, struct io_kiocb *req,
-		       const struct io_uring_sqe *sqe)
+		       const struct io_uring_sqe_hdr *hdr)
 	__must_hold(&ctx->uring_lock)
 {
 	struct io_submit_state *state;
+	const struct io_op_def *def;
 	unsigned int sqe_flags;
+	const __u64 *uptr;
+	const __u16 *pptr;
 	int personality, ret = 0;
 
 	/* req is partially pre-initialised, see io_preinit_req() */
-	req->opcode = READ_ONCE(sqe->hdr.opcode);
+	req->opcode = READ_ONCE(hdr->opcode);
 	/* same numerical values with corresponding REQ_F_*, safe to copy */
-	req->flags = sqe_flags = READ_ONCE(sqe->hdr.flags);
-	req->user_data = READ_ONCE(sqe->user_data);
+	req->flags = sqe_flags = READ_ONCE(hdr->flags);
 	req->file = NULL;
 	req->fixed_rsrc_refs = NULL;
 	req->task = current;
@@ -6778,13 +6801,17 @@ static int io_init_req(struct io_ring_ctx *ctx, struct io_kiocb *req,
 	if (!io_check_restriction(ctx, req, sqe_flags))
 		return -EACCES;
 
-	if ((sqe_flags & IOSQE_BUFFER_SELECT) &&
-	    !io_op_defs[req->opcode].buffer_select)
+	def = &io_op_defs[req->opcode];
+	if ((sqe_flags & IOSQE_BUFFER_SELECT) && !def->buffer_select)
 		return -EOPNOTSUPP;
 	if (unlikely(sqe_flags & IOSQE_IO_DRAIN))
 		ctx->drain_active = true;
 
-	personality = READ_ONCE(sqe->personality);
+	uptr = (const void *) hdr + sqe_offsets[def->offsets].user_data;
+	req->user_data = READ_ONCE(*uptr);
+
+	pptr = (const void *) hdr + sqe_offsets[def->offsets].personality;
+	personality = READ_ONCE(*pptr);
 	if (personality) {
 		req->creds = xa_load(&ctx->personalities, personality);
 		if (!req->creds)
@@ -6798,14 +6825,13 @@ static int io_init_req(struct io_ring_ctx *ctx, struct io_kiocb *req,
 	 * Plug now if we have more than 1 IO left after this, and the target
 	 * is potentially a read/write to block based storage.
 	 */
-	if (!state->plug_started && state->ios_left > 1 &&
-	    io_op_defs[req->opcode].plug) {
+	if (!state->plug_started && state->ios_left > 1 && def->plug) {
 		blk_start_plug(&state->plug);
 		state->plug_started = true;
 	}
 
-	if (io_op_defs[req->opcode].needs_file) {
-		req->file = io_file_get(ctx, req, READ_ONCE(sqe->hdr.fd),
+	if (def->needs_file) {
+		req->file = io_file_get(ctx, req, READ_ONCE(hdr->fd),
 					(sqe_flags & IOSQE_FIXED_FILE));
 		if (unlikely(!req->file))
 			ret = -EBADF;
@@ -6822,7 +6848,7 @@ static int io_submit_sqe(struct io_ring_ctx *ctx, struct io_kiocb *req,
 	struct io_submit_link *link = &ctx->submit_state.link;
 	int ret;
 
-	ret = io_init_req(ctx, req, sqe);
+	ret = io_init_req(ctx, req, &sqe->hdr);
 	if (unlikely(ret)) {
 fail_req:
 		if (link->head) {
@@ -10467,6 +10493,7 @@ static int __init io_uring_init(void)
 #define BUILD_BUG_SQE_ELEM(eoffset, etype, ename) \
 	__BUILD_BUG_VERIFY_ELEMENT(struct io_uring_sqe, eoffset, etype, ename)
 	BUILD_BUG_ON(sizeof(struct io_uring_sqe) != 64);
+	BUILD_BUG_ON(sizeof(struct io_uring_cmd_sqe) != 64);
 	BUILD_BUG_SQE_ELEM(0,  __u8,   hdr.opcode);
 	BUILD_BUG_SQE_ELEM(1,  __u8,   hdr.flags);
 	BUILD_BUG_SQE_ELEM(2,  __u16,  hdr.ioprio);
@@ -10496,6 +10523,13 @@ static int __init io_uring_init(void)
 	BUILD_BUG_SQE_ELEM(40, __u16,  buf_group);
 	BUILD_BUG_SQE_ELEM(42, __u16,  personality);
 	BUILD_BUG_SQE_ELEM(44, __s32,  splice_fd_in);
+
+#define BUILD_BUG_SQEC_ELEM(eoffset, etype, ename) \
+	__BUILD_BUG_VERIFY_ELEMENT(struct io_uring_cmd_sqe, eoffset, etype, ename)
+	BUILD_BUG_SQEC_ELEM(8,				__u64,	user_data);
+	BUILD_BUG_SQEC_ELEM(18,				__u16,	personality);
+	BUILD_BUG_SQEC_ELEM(sqe_offsets[1].user_data,	__u64,	user_data);
+	BUILD_BUG_SQEC_ELEM(sqe_offsets[1].personality,	__u16,	personality);
 
 	BUILD_BUG_ON(sizeof(struct io_uring_files_update) !=
 		     sizeof(struct io_uring_rsrc_update));

@@ -71,6 +71,15 @@ struct io_uring_sqe {
 	__u64	__pad2[2];
 };
 
+struct io_uring_cmd_sqe {
+	struct io_uring_sqe_hdr	hdr;
+	__u64			user_data;
+	__u16			op;
+	__u16			personality;
+	__u32			len;
+	__u64			pdu[5];
+};
+
 enum {
 	IOSQE_FIXED_FILE_BIT,
 	IOSQE_IO_DRAIN_BIT,
@@ -148,6 +157,7 @@ enum {
 	IORING_OP_MKDIRAT,
 	IORING_OP_SYMLINKAT,
 	IORING_OP_LINKAT,
+	IORING_OP_URING_CMD,
 
 	/* this goes last, obviously */
 	IORING_OP_LAST,
