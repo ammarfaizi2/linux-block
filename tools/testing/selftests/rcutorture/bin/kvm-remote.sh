@@ -23,6 +23,8 @@ KVM="`pwd`/tools/testing/selftests/rcutorture"; export KVM
 PATH=${KVM}/bin:$PATH; export PATH
 . functions.sh
 
+starttime="`get_starttime`"
+
 systems="$1"
 if test -z "$systems"
 then
@@ -34,6 +36,8 @@ shift
 # Pathnames:
 # T:	  /tmp/kvm-again.sh.$$
 # resdir: /tmp/kvm-again.sh.$$/res
+# rundir: /tmp/kvm-again.sh.$$/res/$ds ("-remote" suffix)
+# oldrun: `pwd`/tools/testing/.../res/$otherds
 #
 # Pathname segments:
 # TD:	  kvm-again.sh.$$
@@ -44,8 +48,11 @@ T=${TMPDIR-/tmp}/$TD
 trap 'rm -rf $T' 0
 mkdir $T
 
-ds=`date +%Y.%m.%d-%H.%M.%S`-remote
 resdir="$T/res"
+ds=`date +%Y.%m.%d-%H.%M.%S`-remote
+rundir=$resdir/$ds
+touch "$rundir/log"
+echo $scriptname $args | tee -a "$rundir/log"
 if echo $1 | grep -q '^--'
 then
 	# Fresh build.  Create a datestamp unless the caller supplied one.
@@ -68,7 +75,6 @@ then
 		exit 2
 	fi
 	oldrun="`grep -m 1 "^Results directory: " $T/kvm.sh.out | awk '{ print $3 }'`"
-	rundir=$resdir/$ds
 	kvm-again.sh $oldrun --dryrun --remote --rundir "$rundir" > $T/kvm-again.sh.out 2>&1
 	ret=$?
 	if test "$ret" -ne 0
@@ -85,7 +91,6 @@ else
 		oldrun="`pwd`/$oldrun"
 	fi
 	shift
-	rundir=$resdir/$ds
 	kvm-again.sh "$oldrun" "$@" --dryrun --remote --rundir "$rundir" > $T/kvm-again.sh.out 2>&1
 	ret=$?
 	if test "$ret" -ne 0
@@ -132,9 +137,70 @@ do
 	if test "$ret" -ne 0
 	then
 		echo Unable to download $T/binres.tgz to system $i, giving up.
-		exit 5
+		exit 10
 	fi
 done
+
+# Function to start batches on idle remote $systems
+#
+# Usage: startbatches curbatch nbatches
+#
+# Batches are numbered starting at 1.  Returns the next batch to start.
+startbatches () {
+	local curbatch="$1"
+	local nbatches="$2"
+	local ret
+
+	# Each pass through the following loop examines one system.
+	for i in $systems
+	do
+		if test "$curbatch" -gt "$nbatches"
+		then
+			echo $((nbatches + 1))
+			return 0
+		fi
+		if ! ssh "$i" "test -f \"$resdir/$ds/remote.run\""
+		then
+			continue # System still running last test, skip.
+		fi
+		ssh "$i" "cd \"$resdir/$ds\"; touch remote.run; PATH=\"$T/bin:$PATH\" nohup kvm-remote-$curbatch.sh > kvm-remote-$curbatch.sh.out 2>&1 &"
+		ret = $?
+		if test "$ret" -ne 0
+		then
+			echo ssh $i failed: exitcode $ret 1>&2
+			exit 11
+		fi
+		echo " ---- System $i Batch `head -n $curbatch < "$rundir"/scenarios | tail -1` `date`
+		curbatch=$((curbatch + 1))
+	done
+	echo $curbatch
+}
+
+# Launch all the scenarios.
+nbatches="`wc -l "$rundir"/scenarios`"
+curbatch=1
+while test "$curbatch" -le "$nbatches"
+do
+	curbatch="`startbatches $curbatch $nbatches`"
+	sleep 30
+done
+
+# Wait for all remaining scenarios to complete and collect results.
+cp -as "$rundir" "$KVM/res/"
+for i in $systems
+do
+	while ssh "$i" "test -f '"$resdir/$ds/remote.run\""
+	do
+		sleep 30
+	done
+	( cd "$KVM/res/$ds"; ssh $i "cd $rundir; tar -czf - kvm-remote-*.sh.out */console.log */kvm-test-1-run*.sh.out */qemu_pid */qemu-retval; cd /tmp; rf -rf $rundir > /dev/null 2>&1" | tar -xzf - )
+done
+
+kvm-end-run-stats.sh "$rundir" "$starttime"
+ret=$? # @@@
+
+# @@@ Gather up output and do recheck stuff.
+# @@@ Maybe convert end of kvm-again.sh to a .-able bash file?
 
 echo oldrun = $oldrun # @@@
 echo resdir = $resdir # @@@  Contains all scenarios, sibling to "bin".
@@ -143,173 +209,4 @@ echo Tarball in $T/binres.tgz # @@@
 echo Hit enter to terminate: # @@@
 read a # @@@
 echo Terminated. # @@@
-exit 0 # @@@
-
-@@@ Need to push the tarball out and run it, but one step at a time...
-
-@@@ Copy-pasta follows.
-
-if ! cp "$oldrun/batches" $T/batches.oldrun
-then
-	# Later on, can reconstitute this from console.log files.
-	echo Prior run batches file does not exist: $oldrun/batches
-	exit 1
-fi
-
-if test -f "$oldrun/torture_suite"
-then
-	torture_suite="`cat $oldrun/torture_suite`"
-elif test -f "$oldrun/TORTURE_SUITE"
-then
-	torture_suite="`cat $oldrun/TORTURE_SUITE`"
-else
-	echo "Prior run torture_suite file does not exist: $oldrun/{torture_suite,TORTURE_SUITE}"
-	exit 1
-fi
-
-dryrun=
-dur=
-default_link="cp -R"
-rundir="`pwd`/tools/testing/selftests/rcutorture/res/`date +%Y.%m.%d-%H.%M.%S-again`"
-
-startdate="`date`"
-starttime="`get_starttime`"
-
-usage () {
-	echo "Usage: $scriptname $oldrun [ arguments ]:"
-	echo "       --dryrun"
-	echo "       --duration minutes | <seconds>s | <hours>h | <days>d"
-	echo "       --link hard|soft|copy"
-	echo "       --remote"
-	echo "       --rundir /new/res/path"
-	exit 1
-}
-
-while test $# -gt 0
-do
-	case "$1" in
-	--dryrun)
-		dryrun=1
-		;;
-	--duration)
-		checkarg --duration "(minutes)" $# "$2" '^[0-9][0-9]*\(s\|m\|h\|d\|\)$' '^error'
-		mult=60
-		if echo "$2" | grep -q 's$'
-		then
-			mult=1
-		elif echo "$2" | grep -q 'h$'
-		then
-			mult=3600
-		elif echo "$2" | grep -q 'd$'
-		then
-			mult=86400
-		fi
-		ts=`echo $2 | sed -e 's/[smhd]$//'`
-		dur=$(($ts*mult))
-		shift
-		;;
-	--link)
-		checkarg --link "hard|soft|copy" "$#" "$2" 'hard\|soft\|copy' '^--'
-		case "$2" in
-		copy)
-			arg_link="cp -R"
-			;;
-		hard)
-			arg_link="cp -Rl"
-			;;
-		soft)
-			arg_link="cp -Rs"
-			;;
-		esac
-		shift
-		;;
-	--remote)
-		arg_remote=1
-		default_link="cp -as"
-		;;
-	--rundir)
-		checkarg --rundir "(absolute pathname)" "$#" "$2" '^/' '^error'
-		rundir=$2
-		if test -e "$rundir"
-		then
-			echo "--rundir $2: Already exists."
-			usage
-		fi
-		shift
-		;;
-	*)
-		echo Unknown argument $1
-		usage
-		;;
-	esac
-	shift
-done
-if test -z "$arg_link"
-then
-	arg_link="$default_link"
-fi
-
-echo ---- Re-run results directory: $rundir
-
-# Copy old run directory tree over and adjust.
-mkdir -p "`dirname "$rundir"`"
-if ! $arg_link "$oldrun" "$rundir"
-then
-	echo "Cannot copy from $oldrun to $rundir."
-	usage
-fi
-rm -f "$rundir"/*/{console.log,console.log.diags,qemu_pid,qemu-retval,Warnings,kvm-test-1-run.sh.out,kvm-test-1-run-qemu.sh.out,vmlinux} "$rundir"/log
-echo $oldrun > "$rundir/re-run"
-if ! test -d "$rundir/../../bin"
-then
-	$arg_link "$oldrun/../../bin" "$rundir/../.."
-fi
-for i in $rundir/*/qemu-cmd
-do
-	cp "$i" $T
-	qemu_cmd_dir="`dirname "$i"`"
-	kernel_dir="`echo $qemu_cmd_dir | sed -e 's/\.[0-9]\+$//'`"
-	jitter_dir="`dirname "$kernel_dir"`"
-	kvm-transform.sh "$kernel_dir/bzImage" "$qemu_cmd_dir/console.log" "$jitter_dir" $dur < $T/qemu-cmd > $i
-	if test -n "$arg_remote"
-	then
-		echo "# TORTURE_KCONFIG_GDB_ARG=''" >> $i
-	fi
-done
-
-# Extract settings from the last qemu-cmd file transformed above.
-grep '^#' $i | sed -e 's/^# //' > $T/qemu-cmd-settings
-. $T/qemu-cmd-settings
-
-grep -v '^#' $T/batches.oldrun | awk '
-BEGIN {
-	oldbatch = 1;
-}
-
-{
-	if (oldbatch != $1) {
-		print "kvm-test-1-run-batch.sh" curbatch;
-		curbatch = "";
-		oldbatch = $1;
-	}
-	curbatch = curbatch " " $2;
-}
-
-END {
-	print "kvm-test-1-run-batch.sh" curbatch
-}' > $T/runbatches.sh
-
-if test -n "$dryrun"
-then
-	echo ---- Dryrun complete, directory: $rundir | tee -a "$rundir/log"
-else
-	( cd "$rundir"; sh $T/runbatches.sh )
-	kcsan-collapse.sh "$rundir" | tee -a "$rundir/log"
-	echo | tee -a "$rundir/log"
-	echo ---- Results directory: $rundir | tee -a "$rundir/log"
-	kvm-recheck.sh "$rundir" > $T/kvm-recheck.sh.out 2>&1
-	ret=$?
-	cat $T/kvm-recheck.sh.out | tee -a "$rundir/log"
-	echo " --- Done at `date` (`get_starttime_duration $starttime`) exitcode $ret" | tee -a "$rundir/log"
-	exit $ret
-fi
+exit $ret # @@@
