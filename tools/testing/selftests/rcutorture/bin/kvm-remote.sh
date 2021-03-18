@@ -51,6 +51,7 @@ mkdir $T
 resdir="$T/res"
 ds=`date +%Y.%m.%d-%H.%M.%S`-remote
 rundir=$resdir/$ds
+echo Results directory: $rundir
 echo $scriptname $args
 if echo $1 | grep -q '^--'
 then
