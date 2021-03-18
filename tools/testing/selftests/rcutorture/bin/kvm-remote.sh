@@ -74,6 +74,8 @@ then
 		exit 2
 	fi
 	oldrun="`grep -m 1 "^Results directory: " $T/kvm.sh.out | awk '{ print $3 }'`"
+	# We are going to run this, so remove the buildonly files.
+	rm -f "$oldrun"/*/buildonly
 	kvm-again.sh $oldrun --dryrun --remote --rundir "$rundir" > $T/kvm-again.sh.out 2>&1
 	ret=$?
 	if test "$ret" -ne 0
@@ -82,8 +84,6 @@ then
 		cat $T/kvm-again.sh.out
 		exit 2
 	fi
-	# We are going to run this, so remove the buildonly files.
-	rm -f "$oldrun"/*/buildonly
 else
 	# Re-use old run.
 	oldrun="$1"
@@ -164,11 +164,11 @@ startbatches () {
 			echo $((nbatches + 1))
 			return 0
 		fi
-		if ssh "$i" "test -f \"$resdir/$ds/remote.run\""
+		if ssh "$i" "test -f \"$resdir/$ds/remote.run\"" 1>&2
 		then
 			continue # System still running last test, skip.
 		fi
-		ssh "$i" "cd \"$resdir/$ds\"; touch remote.run; PATH=\"$T/bin:$PATH\" nohup kvm-remote-$curbatch.sh > kvm-remote-$curbatch.sh.out 2>&1 &"
+		ssh "$i" "cd \"$resdir/$ds\"; touch remote.run; PATH=\"$T/bin:$PATH\" nohup kvm-remote-$curbatch.sh > kvm-remote-$curbatch.sh.out 2>&1 &" 1>&2
 		ret=$?
 		if test "$ret" -ne 0
 		then
