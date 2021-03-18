@@ -75,14 +75,19 @@ then
 		exit 2
 	fi
 	oldrun="`grep -m 1 "^Results directory: " $T/kvm.sh.out | awk '{ print $3 }'`"
+	touch "$oldrun/remote-log"
+	echo $scriptname $args >> "$oldrun/remote-log"
+	echo | tee -a "$oldrun/remote-log"
+	echo " ----" kvm.sh output: "(`date`)" | tee -a "$oldrun/remote-log"
+	cat $T/kvm.sh.out | tee -a "$oldrun/remote-log"
 	# We are going to run this, so remove the buildonly files.
 	rm -f "$oldrun"/*/buildonly
 	kvm-again.sh $oldrun --dryrun --remote --rundir "$rundir" > $T/kvm-again.sh.out 2>&1
 	ret=$?
 	if test "$ret" -ne 0
 	then
-		echo $scriptname: kvm-again.sh failed exit code $?
-		cat $T/kvm-again.sh.out
+		echo $scriptname: kvm-again.sh failed exit code $? | tee -a "$oldrun/remote-log"
+		cat $T/kvm-again.sh.out | tee -a "$oldrun/remote-log"
 		exit 2
 	fi
 else
@@ -93,19 +98,24 @@ else
 		oldrun="`pwd`/$oldrun"
 	fi
 	shift
+	touch "$oldrun/remote-log"
+	echo $scriptname $args >> "$oldrun/remote-log"
 	kvm-again.sh "$oldrun" "$@" --dryrun --remote --rundir "$rundir" > $T/kvm-again.sh.out 2>&1
 	ret=$?
 	if test "$ret" -ne 0
 	then
-		echo $scriptname: kvm-again.sh failed exit code $?
-		cat $T/kvm-again.sh.out
+		echo $scriptname: kvm-again.sh failed exit code $? | tee -a "$oldrun/remote-log"
+		cat $T/kvm-again.sh.out | tee -a "$oldrun/remote-log"
 		exit 2
 	fi
 	cp -a "$rundir" "$KVM/res/"
 	oldrun="$KVM/res/$ds"
 fi
-touch "$oldrun/log"
-echo $scriptname $args >> "$oldrun/log"
+echo | tee -a "$oldrun/remote-log"
+echo " ----" kvm-again.sh output: "(`date`)" | tee -a "$oldrun/remote-log"
+cat $T/kvm-again.sh.out
+echo | tee -a "$oldrun/remote-log"
+echo Remote run directory: $rundir | tee -a "$oldrun/remote-log"
 
 # Create the kvm-remote-N.sh scripts in the bin directory.
 awk < "$rundir"/scenarios -v dest="$T/bin" -v rundir="$rundir" '
@@ -125,25 +135,26 @@ chmod +x $T/bin/kvm-remote-*.sh
 # Check first to avoid the need for cleanup for system-name typos
 for i in $systems
 do
-	echo -n $i: ""
-	ssh $i lscpu | grep '^CPU(' | awk '{ print $2 }'
+	ncpus="`ssh $i lscpu | grep '^CPU(' | awk '{ print $2 }'`"
+	echo $i: $ncpus `date` | tee -a "$oldrun/remote-log"
 	ret=$?
 	if test "$ret" -ne 0
 	then
-		echo System $i unreachable, giving up.
-		exit 4
+		echo System $i unreachable, giving up. | tee -a "$oldrun/remote-log"
+		exit 4 | tee -a "$oldrun/remote-log"
 	fi
 done
 
 # Download and expand the tarball on all systems.
 for i in $systems
 do
+	echo Downloading tarball to $i `date` | tee -a "$oldrun/remote-log"
 	cat $T/binres.tgz | ssh $i "cd /tmp; tar -xzf -"
 	ret=$?
 	if test "$ret" -ne 0
 	then
-		echo Unable to download $T/binres.tgz to system $i, giving up.
-		exit 10
+		echo Unable to download $T/binres.tgz to system $i, giving up. | tee -a "$oldrun/remote-log"
+		exit 10 | tee -a "$oldrun/remote-log"
 	fi
 done
 
@@ -173,10 +184,10 @@ startbatches () {
 		ret=$?
 		if test "$ret" -ne 0
 		then
-			echo ssh $i failed: exitcode $ret 1>&2
+			echo ssh $i failed: exitcode $ret 1>&2 | tee -a "$oldrun/remote-log"
 			exit 11
 		fi
-		echo " ----" System $i Batch `head -n $curbatch < "$rundir"/scenarios | tail -1` `date` 1>&2
+		echo " ----" System $i Batch `head -n $curbatch < "$rundir"/scenarios | tail -1` `date` 1>&2 | tee -a "$oldrun/remote-log"
 		curbatch=$((curbatch + 1))
 	done
 	echo $curbatch
@@ -187,7 +198,7 @@ nbatches="`wc -l "$rundir"/scenarios | awk '{ print $1 }'`"
 curbatch=1
 while test "$curbatch" -le "$nbatches"
 do
-	curbatch="`startbatches $curbatch $nbatches`"
+	curbatch="`startbatches $curbatch $nbatches`" | tee -a "$oldrun/remote-log"
 	sleep 30
 done
 
@@ -201,17 +212,4 @@ do
 	( cd "$oldrun"; ssh $i "cd $rundir; tar -czf - kvm-remote-*.sh.out */console.log */kvm-test-1-run*.sh.out */qemu_pid */qemu-retval; cd /tmp; rf -rf $rundir > /dev/null 2>&1" | tar -xzf - )
 done
 
-kvm-end-run-stats.sh "$oldrun" "$starttime"
-ret=$? # @@@
-
-# @@@ Gather up output and do recheck stuff.
-# @@@ Maybe convert end of kvm-again.sh to a .-able bash file?
-
-echo oldrun = $oldrun # @@@
-echo resdir = $resdir # @@@  Contains all scenarios, sibling to "bin".
-echo rundir = $rundir # @@@  "build.remoterun" lives here.
-echo Tarball in $T/binres.tgz # @@@
-echo Hit enter to terminate: # @@@
-read a # @@@
-echo Terminated. # @@@
-exit $ret # @@@
+kvm-end-run-stats.sh "$oldrun" "$starttime" | tee -a "$oldrun/remote-log"
