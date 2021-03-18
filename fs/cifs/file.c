@@ -529,7 +529,7 @@ int cifs_open(struct inode *inode, struct file *file)
 	struct cifs_tcon *tcon;
 	struct tcon_link *tlink;
 	struct cifsFileInfo *cfile = NULL;
-	char *full_path = NULL;
+	const char *full_path = NULL;
 	bool posix_open_ok = false;
 	struct cifs_fid fid;
 	struct cifs_pending_open open;
@@ -688,7 +688,7 @@ cifs_reopen_file(struct cifsFileInfo *cfile, bool can_flush)
 	struct TCP_Server_Info *server;
 	struct cifsInodeInfo *cinode;
 	struct inode *inode;
-	char *full_path = NULL;
+	const char *full_path = NULL;
 	int desired_access;
 	int disposition = FILE_OPEN;
 	int create_options = CREATE_NOT_DIR;
@@ -2071,7 +2071,7 @@ cifs_get_writable_path(struct cifs_tcon *tcon, const char *name,
 	struct list_head *tmp;
 	struct cifsFileInfo *cfile;
 	struct cifsInodeInfo *cinode;
-	char *full_path;
+	const char *full_path;
 
 	*ret_file = NULL;
 
@@ -2106,7 +2106,7 @@ cifs_get_readable_path(struct cifs_tcon *tcon, const char *name,
 	struct list_head *tmp;
 	struct cifsFileInfo *cfile;
 	struct cifsInodeInfo *cinode;
-	char *full_path;
+	const char *full_path;
 
 	*ret_file = NULL;
 
