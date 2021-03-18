@@ -125,7 +125,7 @@ chmod +x $T/bin/kvm-remote-*.sh
 for i in $systems
 do
 	echo -n $i: ""
-	ssh $i date
+	ssh $i lscpu | grep '^CPU(' | awk '{ print $2 }'
 	ret=$?
 	if test "$ret" -ne 0
 	then
