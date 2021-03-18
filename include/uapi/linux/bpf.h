@@ -4671,6 +4671,34 @@ union bpf_attr {
  *	Return
  *		The number of traversed map elements for success, **-EINVAL** for
  *		invalid **flags**.
+ *
+ * long bpf_perf_event_enable(struct bpf_map *map, u64 flags)
+ *	Description
+ * 		Enable a perf event counter. This helper relies on a *map* of
+ * 		type **BPF_MAP_TYPE_PERF_EVENT_ARRAY**. The nature of the perf
+ * 		event counter is selected when *map* is updated with perf event
+ * 		file descriptors. The *map* is an array with perf event file
+ * 		descriptors.  The event to enable is indicated by *flags*, that
+ * 		contains the index of the event to enable, masked with
+ * 		**BPF_F_INDEX_MASK**. Alternatively, *flags* can be set to
+ * 		**BPF_F_ALL** to indicate that all entries should be enabled.
+ *
+ *	Return
+ *		0 for success, a negative number otherwise.
+ *
+ * long bpf_perf_event_disable(struct bpf_map *map, u64 flags)
+ *	Description
+ * 		Disable a perf event counter. This helper relies on a *map* of
+ * 		type **BPF_MAP_TYPE_PERF_EVENT_ARRAY**. The nature of the perf
+ * 		event counter is selected when *map* is updated with perf event
+ * 		file descriptors. The *map* is an array with perf event file
+ * 		descriptors.  The event to disable is indicated by *flags*, that
+ * 		contains the index of the event to disable, masked with
+ * 		**BPF_F_INDEX_MASK**. Alternatively, *flags* can be set to
+ * 		**BPF_F_ALL** to indicate that all entries should be enabled.
+ *
+ *	Return
+ *		0 for success, a negative number otherwise.
  */
 #define __BPF_FUNC_MAPPER(FN)		\
 	FN(unspec),			\
@@ -4838,6 +4866,8 @@ union bpf_attr {
 	FN(sock_from_file),		\
 	FN(check_mtu),			\
 	FN(for_each_map_elem),		\
+	FN(perf_event_enable),		\
+	FN(perf_event_disable),		\
 	/* */
 
 /* integer value in 'imm' field of BPF_CALL instruction selects which helper
@@ -4900,12 +4930,14 @@ enum {
 	BPF_F_SEQ_NUMBER		= (1ULL << 3),
 };
 
-/* BPF_FUNC_perf_event_output, BPF_FUNC_perf_event_read and
- * BPF_FUNC_perf_event_read_value flags.
+/* BPF_FUNC_perf_event_output, BPF_FUNC_perf_event_read,
+ * BPF_FUNC_perf_event_read_value, BPF_FUNC_perf_event_enable
+ * and BPF_FUNC_perf_event_disable flags.
  */
 enum {
 	BPF_F_INDEX_MASK		= 0xffffffffULL,
 	BPF_F_CURRENT_CPU		= BPF_F_INDEX_MASK,
+	BPF_F_ALL			= BPF_F_INDEX_MASK,
 /* BPF_FUNC_perf_event_output for sk_buff input context. */
 	BPF_F_CTXLEN_MASK		= (0xfffffULL << 32),
 };

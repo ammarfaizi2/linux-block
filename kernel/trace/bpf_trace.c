@@ -1271,6 +1271,82 @@ const struct bpf_func_proto bpf_snprintf_btf_proto = {
 	.arg5_type	= ARG_ANYTHING,
 };
 
+typedef void (*set_perf_event_state_f)(struct perf_event *event);
+
+static __always_inline
+int bpf_array__perf_set_state_index(struct bpf_array *array, u64 index,
+				    set_perf_event_state_f set_state)
+{
+	struct bpf_event_entry *ee = READ_ONCE(array->ptrs[index]);
+
+	if (ee)
+		return -ENOENT;
+
+	set_state(ee->event);
+	return 0;
+}
+
+static __always_inline
+void bpf_array__perf_event_set_state_all(struct bpf_array *array,
+					 set_perf_event_state_f set_state)
+{
+	u64 index;
+
+	for (index = 0; index < array->map.max_entries; ++index) {
+		struct bpf_event_entry *ee = READ_ONCE(array->ptrs[index]);
+
+		if (ee)
+			set_state(ee->event);
+	}
+}
+
+static __always_inline int bpf_map__perf_event_set_state(struct bpf_map *map, u64 flags,
+							 set_perf_event_state_f set_state)
+{
+	struct bpf_array *array = container_of(map, struct bpf_array, map);
+	u64 index = flags & BPF_F_INDEX_MASK;
+
+	if (unlikely(flags & ~(BPF_F_INDEX_MASK)))
+		return -EINVAL;
+
+	if (flags == BPF_F_ALL) {
+		bpf_array__perf_event_set_state_all(array, set_state);
+		return 0;
+	}
+
+	if (unlikely(index >= array->map.max_entries))
+		return -E2BIG;
+
+	bpf_array__perf_set_state_index(array, index, set_state);
+	return 0;
+}
+
+BPF_CALL_2(bpf_perf_event_enable, struct bpf_map *, map, u64, flags)
+{
+	return bpf_map__perf_event_set_state(map, flags, perf_event_enable);
+}
+
+static const struct bpf_func_proto bpf_perf_event_enable_proto = {
+	.func		= bpf_perf_event_enable,
+	.gpl_only	= true,
+	.ret_type	= RET_INTEGER,
+	.arg1_type	= ARG_CONST_MAP_PTR,
+	.arg2_type	= ARG_ANYTHING,
+};
+
+BPF_CALL_2(bpf_perf_event_disable, struct bpf_map *, map, u64, flags)
+{
+	return bpf_map__perf_event_set_state(map, flags, perf_event_disable);
+}
+
+static const struct bpf_func_proto bpf_perf_event_disable_proto = {
+	.func		= bpf_perf_event_disable,
+	.gpl_only	= true,
+	.ret_type	= RET_INTEGER,
+	.arg1_type	= ARG_CONST_MAP_PTR,
+	.arg2_type	= ARG_ANYTHING,
+};
+
 const struct bpf_func_proto *
 bpf_tracing_func_proto(enum bpf_func_id func_id, const struct bpf_prog *prog)
 {

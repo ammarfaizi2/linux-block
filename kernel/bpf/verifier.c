@@ -5126,7 +5126,9 @@ static int check_map_func_compatibility(struct bpf_verifier_env *env,
 		    func_id != BPF_FUNC_perf_event_output &&
 		    func_id != BPF_FUNC_skb_output &&
 		    func_id != BPF_FUNC_perf_event_read_value &&
-		    func_id != BPF_FUNC_xdp_output)
+		    func_id != BPF_FUNC_xdp_output &&
+		    func_id != BPF_FUNC_perf_event_enable &&
+		    func_id != BPF_FUNC_perf_event_disable)
 			goto error;
 		break;
 	case BPF_MAP_TYPE_RINGBUF:
@@ -5239,6 +5241,8 @@ static int check_map_func_compatibility(struct bpf_verifier_env *env,
 	case BPF_FUNC_perf_event_read_value:
 	case BPF_FUNC_skb_output:
 	case BPF_FUNC_xdp_output:
+	case BPF_FUNC_perf_event_enable:
+	case BPF_FUNC_perf_event_disable:
 		if (map->map_type != BPF_MAP_TYPE_PERF_EVENT_ARRAY)
 			goto error;
 		break;
