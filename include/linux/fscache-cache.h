@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 /* General filesystem caching backing cache interface
  *
- * Copyright (C) 2004-2007 Red Hat, Inc. All Rights Reserved.
+ * Copyright (C) 2004-2007, 2021 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  *
  * NOTE!!! See:
@@ -15,72 +15,38 @@
 #define _LINUX_FSCACHE_CACHE_H
 
 #include <linux/fscache.h>
-#include <linux/sched.h>
 
-#define NR_MAXCACHES BITS_PER_LONG
-
-struct seq_file;
 struct fscache_cache;
 struct fscache_cache_ops;
-struct fscache_object;
+enum fscache_cache_trace;
 enum fscache_cookie_trace;
+enum fscache_access_trace;
 
-enum fscache_obj_ref_trace {
-	fscache_obj_get_attach,
-	fscache_obj_get_exists,
-	fscache_obj_get_inval,
-	fscache_obj_get_ioreq,
-	fscache_obj_get_wait,
-	fscache_obj_get_withdraw,
-	fscache_obj_new,
-	fscache_obj_put,
-	fscache_obj_put_alloc_dup,
-	fscache_obj_put_alloc_fail,
-	fscache_obj_put_attach_fail,
-	fscache_obj_put_drop_child,
-	fscache_obj_put_drop_obj,
-	fscache_obj_put_inval,
-	fscache_obj_put_ioreq,
-	fscache_obj_put_lookup_fail,
-	fscache_obj_put_withdraw,
-	fscache_obj_ref__nr_traces
+enum fscache_cache_state {
+	FSCACHE_CACHE_IS_NOT_PRESENT,	/* No cache is present for this name */
+	FSCACHE_CACHE_IS_PREPARING,	/* A cache is preparing to come live */
+	FSCACHE_CACHE_IS_LIVE,		/* Attached cache is live and can be used */
+	FSCACHE_CACHE_GOT_IOERROR,	/* Attached cache stopped on I/O error */
+	FSCACHE_CACHE_IS_WITHDRAWN,	/* Attached cache is being withdrawn */
+#define NR__FSCACHE_CACHE_STATE (FSCACHE_CACHE_IS_WITHDRAWN + 1)
 };
 
 /*
- * cache tag definition
- */
-struct fscache_cache_tag {
-	struct list_head	link;
-	struct fscache_cache	*cache;		/* cache referred to by this tag */
-	unsigned long		flags;
-#define FSCACHE_TAG_RESERVED	0		/* T if tag is reserved for a cache */
-	atomic_t		usage;		/* Number of using netfs's */
-	refcount_t		ref;		/* Reference count on structure */
-	char			name[];		/* tag name */
-};
-
-/*
- * cache definition
+ * Cache cookie.
  */
 struct fscache_cache {
 	const struct fscache_cache_ops *ops;
-	struct fscache_cache_tag *tag;		/* tag representing this cache */
-	struct kobject		*kobj;		/* system representation of this cache */
-	struct list_head	link;		/* link in list of caches */
-	size_t			max_index_size;	/* maximum size of index data */
-	char			identifier[36];	/* cache label */
-
-	/* node management */
-	struct list_head	object_list;	/* list of data/index objects */
-	spinlock_t		object_list_lock;
+	struct list_head	cache_link;	/* Link in cache list */
+	struct list_head	volumes;	/* List of volumes in this cache */
+	void			*cache_priv;	/* Private cache data (or NULL) */
+	refcount_t		ref;
+	atomic_t		n_volumes;	/* Number of active volumes; */
+	atomic_t		n_accesses;	/* Number of in-progress accesses on the cache */
 	atomic_t		object_count;	/* no. of live objects in this cache */
-	struct fscache_object	*fsdef;		/* object for the fsdef index */
-	unsigned long		flags;
-#define FSCACHE_IOERROR		0	/* cache stopped on I/O error */
-#define FSCACHE_CACHE_WITHDRAWN	1	/* cache has been withdrawn */
+	unsigned int		debug_id;
+	enum fscache_cache_state state;
+	char			name[];
 };
-
-extern wait_queue_head_t fscache_cache_cleared_wq;
 
 /*
  * cache operations
@@ -89,145 +55,86 @@ struct fscache_cache_ops {
 	/* name of cache provider */
 	const char *name;
 
-	/* allocate an object record for a cookie */
-	struct fscache_object *(*alloc_object)(struct fscache_cookie *cookie,
-					       struct fscache_cache *cache,
-					       struct fscache_object *parent);
+	/* Acquire a volume */
+	void (*acquire_volume)(struct fscache_volume *volume);
 
-	/* Prepare data used in lookup */
-	void *(*prepare_lookup_data)(struct fscache_object *object);
+	/* Relinquish a volume when the volume cookie is relinquished */
+	void (*relinquish_volume)(struct fscache_volume *volume);
 
-	/* Look up the object for a cookie */
-	bool (*lookup_object)(struct fscache_object *object, void *lookup_data);
+	/* Destroy stuff attached to a volume cookie */
+	void (*put_volume)(struct fscache_volume *volume);
 
-	/* Create the object for a cookie */
-	bool (*create_object)(struct fscache_object *object, void *lookup_data);
+	/* Look up a cookie in the cache */
+	bool (*lookup_cookie)(struct fscache_cookie *cookie);
 
-	/* Clean up lookup data */
-	void (*free_lookup_data)(struct fscache_object *object, void *lookup_data);
-
-	/* increment the usage count on this object (may fail if unmounting) */
-	struct fscache_object *(*grab_object)(struct fscache_object *object,
-					      enum fscache_obj_ref_trace why);
-
-	/* pin an object in the cache */
-	int (*pin_object)(struct fscache_object *object);
-
-	/* unpin an object in the cache */
-	void (*unpin_object)(struct fscache_object *object);
+	/* The netfs relinquished a cookie */
+	void (*relinquish_cookie)(struct fscache_cookie *cookie);
 
 	/* Change the size of a data object */
-	void (*resize_object)(struct fscache_object *object, loff_t new_size);
+	void (*resize_cookie)(struct netfs_cache_resources *cres, loff_t new_size);
 
 	/* Invalidate an object */
-	bool (*invalidate_object)(struct fscache_object *object,
+	bool (*invalidate_cookie)(struct fscache_cookie *cookie,
 				  unsigned int flags);
-
-	/* discard the resources pinned by an object and effect retirement if
-	 * necessary */
-	void (*drop_object)(struct fscache_object *object, bool invalidate);
-
-	/* dispose of a reference to an object */
-	void (*put_object)(struct fscache_object *object,
-			   enum fscache_obj_ref_trace why);
-
-	/* Get object usage count */
-	unsigned int (*get_object_usage)(const struct fscache_object *object);
-
-	/* sync a cache */
-	void (*sync_cache)(struct fscache_cache *cache);
-
-	/* reserve space for an object's data and associated metadata */
-	int (*reserve_space)(struct fscache_object *object, loff_t i_size);
 
 	/* Begin an operation for the netfs lib */
 	int (*begin_operation)(struct netfs_cache_resources *cres);
 
 	/* Prepare to write to a live cache object */
-	int (*prepare_to_write)(struct fscache_object *object);
-
-	/* Display object info in /proc/fs/fscache/objects */
-	int (*display_object)(struct seq_file *m, struct fscache_object *object);
+	int (*prepare_to_write)(struct fscache_cookie *cookie);
 };
 
-extern struct fscache_cookie fscache_fsdef_index;
-
-enum fscache_object_stage {
-	FSCACHE_OBJECT_STAGE_INITIAL,
-	FSCACHE_OBJECT_STAGE_LOOKING_UP,
-	FSCACHE_OBJECT_STAGE_UNCREATED,		/* Needs creation */
-	FSCACHE_OBJECT_STAGE_LIVE_TEMP,		/* Temporary object created, can be no hits */
-	FSCACHE_OBJECT_STAGE_LIVE_EMPTY,	/* Object was freshly created, can be no hits */
-	FSCACHE_OBJECT_STAGE_LIVE,		/* Object is populated */
-	FSCACHE_OBJECT_STAGE_DESTROYING,
-	FSCACHE_OBJECT_STAGE_DEAD,
-};
-
-/*
- * on-disk cache file or index handle
- */
-struct fscache_object {
-	int			debug_id;	/* debugging ID */
-	int			n_children;	/* number of child objects */
-	unsigned int		inval_counter;	/* Number of invalidations applied */
-	enum fscache_object_stage stage;	/* Stage of object's lifecycle */
-	spinlock_t		lock;		/* state and operations lock */
-
-	unsigned long		flags;
-#define FSCACHE_OBJECT_LOCAL_WRITE	1	/* T if the object is being modified locally */
-#define FSCACHE_OBJECT_NEEDS_INVAL	8	/* T if object needs invalidation */
-
-	struct list_head	cache_link;	/* link in cache->object_list */
-	struct hlist_node	cookie_link;	/* link in cookie->backing_objects */
-	struct fscache_cache	*cache;		/* cache that supplied this object */
-	struct fscache_cookie	*cookie;	/* netfs's file/index object */
-	struct fscache_object	*parent;	/* parent object */
-#ifdef CONFIG_FSCACHE_OBJECT_LIST
-	struct rb_node		objlist_link;	/* link in global object list */
-#endif
-};
-
-extern void fscache_object_init(struct fscache_object *, struct fscache_cookie *,
-				struct fscache_cache *);
-extern void fscache_object_destroy(struct fscache_object *);
-
-static inline bool fscache_cache_is_broken(struct fscache_object *object)
+static inline enum fscache_cache_state fscache_cache_state(const struct fscache_cache *cache)
 {
-	return test_bit(FSCACHE_IOERROR, &object->cache->flags);
+	return smp_load_acquire(&cache->state);
 }
 
-extern void fscache_object_destroyed(struct fscache_cache *cache);
+static inline bool fscache_cache_is_live(const struct fscache_cache *cache)
+{
+	return fscache_cache_state(cache) == FSCACHE_CACHE_IS_LIVE;
+}
+
+static inline void fscache_set_cache_state(struct fscache_cache *cache,
+					   enum fscache_cache_state new_state)
+{
+	smp_store_release(&cache->state, new_state);
+
+}
+
+static inline bool fscache_set_cache_state_maybe(struct fscache_cache *cache,
+						 enum fscache_cache_state old_state,
+						 enum fscache_cache_state new_state)
+{
+	return try_cmpxchg_release(&cache->state, &old_state, new_state);
+}
 
 /*
  * out-of-line cache backend functions
  */
-extern __printf(3, 4)
-void fscache_init_cache(struct fscache_cache *cache,
-			const struct fscache_cache_ops *ops,
-			const char *idfmt, ...);
-
+extern struct rw_semaphore fscache_addremove_sem;
+extern struct fscache_cache *fscache_acquire_cache(const char *name);
 extern int fscache_add_cache(struct fscache_cache *cache,
-			     struct fscache_object *fsdef,
-			     const char *tagname);
+			     const struct fscache_cache_ops *ops,
+			     void *cache_priv);
+extern void fscache_put_cache(struct fscache_cache *cache,
+			      enum fscache_cache_trace where);
 extern void fscache_withdraw_cache(struct fscache_cache *cache);
 
 extern void fscache_io_error(struct fscache_cache *cache);
 
-extern void fscache_object_retrying_stale(struct fscache_object *object);
-
-enum fscache_why_object_killed {
-	FSCACHE_OBJECT_IS_STALE,
-	FSCACHE_OBJECT_NO_SPACE,
-	FSCACHE_OBJECT_WAS_RETIRED,
-	FSCACHE_OBJECT_WAS_CULLED,
-};
-extern void fscache_object_mark_killed(struct fscache_object *object,
-				       enum fscache_why_object_killed why);
+extern void fscache_end_volume_access(struct fscache_volume *volume,
+				      enum fscache_access_trace why);
 
 extern struct fscache_cookie *fscache_get_cookie(struct fscache_cookie *cookie,
 						 enum fscache_cookie_trace where);
 extern void fscache_put_cookie(struct fscache_cookie *cookie,
 			       enum fscache_cookie_trace where);
+extern void fscache_drop_cookie(struct fscache_cookie *cookie,
+				enum fscache_cookie_trace where);
+extern void fscache_end_cookie_access(struct fscache_cookie *cookie,
+				      enum fscache_access_trace why);
+extern void fscache_set_cookie_stage(struct fscache_cookie *cookie,
+				     enum fscache_cookie_stage stage);
 
 /*
  * Find the key on a cookie.
@@ -240,29 +147,40 @@ static inline void *fscache_get_key(struct fscache_cookie *cookie)
 		return cookie->key;
 }
 
-/*
- * Count the start of an I/O operation
- */
-static inline void fscache_count_io_operation(struct fscache_cookie *cookie)
-{
-	atomic_inc(&cookie->n_ops);
-}
-
-/*
- * Count the end of an I/O operation
- */
-static inline void fscache_uncount_io_operation(struct fscache_cookie *cookie)
-{
-	if (atomic_dec_and_test(&cookie->n_ops))
-		wake_up_var(&cookie->n_ops);
-}
-
 extern void __fscache_wait_for_operation(struct netfs_cache_resources *, enum fscache_want_stage);
-extern void __fscache_end_operation(struct netfs_cache_resources *);
 
-static inline struct fscache_object *fscache_cres_object(struct netfs_cache_resources *cres)
+/**
+ * fscache_wait_for_operation - Wait for an object become accessible
+ * @cookie: The cookie representing the cache object
+ * @want_stage: The minimum stage the object must be at
+ *
+ * See if the target cache object is at the specified minimum stage of
+ * accessibility yet, and if not, wait for it.
+ */
+static inline
+void fscache_wait_for_operation(struct netfs_cache_resources *cres,
+				enum fscache_want_stage want_stage)
+{
+	const struct netfs_cache_ops *ops = fscache_operation_valid(cres);
+	if (ops)
+		ops->wait_for_operation(cres, want_stage);
+}
+
+static inline struct fscache_cookie *fscache_cres_cookie(struct netfs_cache_resources *cres)
 {
 	return cres->cache_priv;
+}
+
+/**
+ * fscache_end_operation - End an fscache I/O operation.
+ * @cres: The resources to dispose of.
+ */
+static inline
+void fscache_end_operation(struct netfs_cache_resources *cres)
+{
+	const struct netfs_cache_ops *ops = fscache_operation_valid(cres);
+	if (ops)
+		ops->end_operation(cres);
 }
 
 #ifdef CONFIG_FSCACHE_STATS

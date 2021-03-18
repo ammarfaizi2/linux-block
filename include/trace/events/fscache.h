@@ -19,6 +19,28 @@
 #ifndef __FSCACHE_DECLARE_TRACE_ENUMS_ONCE_ONLY
 #define __FSCACHE_DECLARE_TRACE_ENUMS_ONCE_ONLY
 
+enum fscache_cache_trace {
+	fscache_cache_collision,
+	fscache_cache_get_acquire,
+	fscache_cache_new_acquire,
+	fscache_cache_put_alloc_volume,
+	fscache_cache_put_cache,
+	fscache_cache_put_volume,
+	fscache_cache_put_withdraw,
+};
+
+enum fscache_volume_trace {
+	fscache_volume_collision,
+	fscache_volume_get_cookie,
+	fscache_volume_get_hash_collision,
+	fscache_volume_new_acquire,
+	fscache_volume_put_cookie,
+	fscache_volume_put_hash_collision,
+	fscache_volume_put_hash_wait,
+	fscache_volume_put_intr,
+	fscache_volume_put_relinquish,
+};
+
 enum fscache_cookie_trace {
 	fscache_cookie_collision,
 	fscache_cookie_discard,
@@ -26,18 +48,40 @@ enum fscache_cookie_trace {
 	fscache_cookie_get_attach_object,
 	fscache_cookie_get_hash_collision,
 	fscache_cookie_get_ioreq,
-	fscache_cookie_get_register_netfs,
 	fscache_cookie_get_work,
 	fscache_cookie_new_acquire,
-	fscache_cookie_new_netfs,
-	fscache_cookie_put_dup_netfs,
 	fscache_cookie_put_hash_collision,
 	fscache_cookie_put_ioreq,
 	fscache_cookie_put_object,
-	fscache_cookie_put_parent,
+	fscache_cookie_put_relinquish_cache,
 	fscache_cookie_put_relinquish,
+	fscache_cookie_put_withdrawn,
 	fscache_cookie_put_work,
-	fscache_cookie_see_discard,
+	fscache_cookie_see_relinquish,
+};
+
+enum fscache_access_trace {
+	fscache_access_acquire_volume,
+	fscache_access_acquire_volume_end,
+	fscache_access_cache_pin,
+	fscache_access_cache_unpin,
+	fscache_access_invalidate_cookie,
+	fscache_access_invalidate_cookie_end,
+	fscache_access_io_end,
+	fscache_access_io_no_data_yet,
+	fscache_access_io_not_live,
+	fscache_access_io_read,
+	fscache_access_io_resize,
+	fscache_access_io_wait,
+	fscache_access_io_write,
+	fscache_access_lookup_cookie,
+	fscache_access_lookup_cookie_end,
+	fscache_access_relinquish_cookie,
+	fscache_access_relinquish_cookie_end,
+	fscache_access_relinquish_defer,
+	fscache_access_relinquish_volume,
+	fscache_access_relinquish_volume_end,
+	fscache_access_unlive,
 };
 
 #endif
@@ -45,6 +89,26 @@ enum fscache_cookie_trace {
 /*
  * Declare tracing information enums and their string mappings for display.
  */
+#define fscache_cache_traces						\
+	EM(fscache_cache_collision,		"*COLLIDE*")		\
+	EM(fscache_cache_get_acquire,		"GET acq  ")		\
+	EM(fscache_cache_new_acquire,		"NEW acq  ")		\
+	EM(fscache_cache_put_alloc_volume,	"PUT alvol")		\
+	EM(fscache_cache_put_cache,		"PUT cache")		\
+	EM(fscache_cache_put_volume,		"PUT vol  ")		\
+	E_(fscache_cache_put_withdraw,		"PUT withd")
+
+#define fscache_volume_traces						\
+	EM(fscache_volume_collision,		"*COLLIDE*")		\
+	EM(fscache_volume_get_cookie,		"GET cook ")		\
+	EM(fscache_volume_get_hash_collision,	"GET hcoll")		\
+	EM(fscache_volume_new_acquire,		"NEW acq  ")		\
+	EM(fscache_volume_put_cookie,		"PUT cook ")		\
+	EM(fscache_volume_put_hash_collision,	"PUT hcoll")		\
+	EM(fscache_volume_put_hash_wait,	"PUT hwait")		\
+	EM(fscache_volume_put_intr,		"PUT intr ")		\
+	E_(fscache_volume_put_relinquish,	"PUT relnq")
+
 #define fscache_cookie_traces						\
 	EM(fscache_cookie_collision,		"*COLLIDE*")		\
 	EM(fscache_cookie_discard,		"DISCARD  ")		\
@@ -52,18 +116,39 @@ enum fscache_cookie_trace {
 	EM(fscache_cookie_get_attach_object,	"GET attch")		\
 	EM(fscache_cookie_get_hash_collision,	"GET hcoll")		\
 	EM(fscache_cookie_get_ioreq,		"GET ioreq")		\
-	EM(fscache_cookie_get_register_netfs,	"GET rgstr")		\
 	EM(fscache_cookie_get_work,		"GET work ")		\
 	EM(fscache_cookie_new_acquire,		"NEW acq  ")		\
-	EM(fscache_cookie_new_netfs,		"NEW netfs")		\
-	EM(fscache_cookie_put_dup_netfs,	"PUT dupnf")		\
 	EM(fscache_cookie_put_hash_collision,	"PUT hcoll")		\
 	EM(fscache_cookie_put_ioreq,		"PUT ioreq")		\
 	EM(fscache_cookie_put_object,		"PUT obj  ")		\
-	EM(fscache_cookie_put_parent,		"PUT paren")		\
+	EM(fscache_cookie_put_relinquish_cache,	"PUT rlq_c")		\
 	EM(fscache_cookie_put_relinquish,	"PUT relnq")		\
+	EM(fscache_cookie_put_withdrawn,	"PUT wthdr")		\
 	EM(fscache_cookie_put_work,		"PUT work ")		\
-	E_(fscache_cookie_see_discard,		"SEE discd")
+	E_(fscache_cookie_see_relinquish,	"SEE relnq")
+
+#define fscache_access_traces		\
+	EM(fscache_access_acquire_volume,	"BEGIN acq_vol")	\
+	EM(fscache_access_acquire_volume_end,	"END   acq_vol")	\
+	EM(fscache_access_cache_pin,		"PIN   cache  ")	\
+	EM(fscache_access_cache_unpin,		"UNPIN cache  ")	\
+	EM(fscache_access_invalidate_cookie,	"BEGIN inval  ")	\
+	EM(fscache_access_invalidate_cookie_end,"END   inval  ")	\
+	EM(fscache_access_io_end,		"END   io     ")	\
+	EM(fscache_access_io_no_data_yet,	"END   io_nody")	\
+	EM(fscache_access_io_not_live,		"END   io_notl")	\
+	EM(fscache_access_io_read,		"BEGIN io_read")	\
+	EM(fscache_access_io_resize,		"BEGIN io_resz")	\
+	EM(fscache_access_io_wait,		"WAIT  io    ")		\
+	EM(fscache_access_io_write,		"BEGIN io_writ")	\
+	EM(fscache_access_lookup_cookie,	"BEGIN lookup ")	\
+	EM(fscache_access_lookup_cookie_end,	"END   lookup ")	\
+	EM(fscache_access_relinquish_cookie,	"BEGIN relinq ")	\
+	EM(fscache_access_relinquish_cookie_end,"END   relinq ")	\
+	EM(fscache_access_relinquish_defer,	"DEFER relinq ")	\
+	EM(fscache_access_relinquish_volume,	"BEGIN rlq_vol")	\
+	EM(fscache_access_relinquish_volume_end,"END   rlq_vol")	\
+	E_(fscache_access_unlive,		"END   unlive ")
 
 /*
  * Export enum symbols via userspace.
@@ -73,7 +158,10 @@ enum fscache_cookie_trace {
 #define EM(a, b) TRACE_DEFINE_ENUM(a);
 #define E_(a, b) TRACE_DEFINE_ENUM(a);
 
+fscache_cache_traces;
+fscache_volume_traces;
 fscache_cookie_traces;
+fscache_access_traces;
 
 /*
  * Now redefine the EM() and E_() macros to map the enums to the strings that
@@ -85,6 +173,56 @@ fscache_cookie_traces;
 #define E_(a, b)	{ a, b }
 
 
+TRACE_EVENT(fscache_cache,
+	    TP_PROTO(unsigned int cache_debug_id,
+		     int usage,
+		     enum fscache_cache_trace where),
+
+	    TP_ARGS(cache_debug_id, usage, where),
+
+	    TP_STRUCT__entry(
+		    __field(unsigned int,		cache		)
+		    __field(int,			usage		)
+		    __field(enum fscache_cache_trace,	where		)
+			     ),
+
+	    TP_fast_assign(
+		    __entry->cache	= cache_debug_id;
+		    __entry->usage	= usage;
+		    __entry->where	= where;
+			   ),
+
+	    TP_printk("C=%08x %s r=%d",
+		      __entry->cache,
+		      __print_symbolic(__entry->where, fscache_cache_traces),
+		      __entry->usage)
+	    );
+
+TRACE_EVENT(fscache_volume,
+	    TP_PROTO(unsigned int volume_debug_id,
+		     int usage,
+		     enum fscache_volume_trace where),
+
+	    TP_ARGS(volume_debug_id, usage, where),
+
+	    TP_STRUCT__entry(
+		    __field(unsigned int,		volume		)
+		    __field(int,			usage		)
+		    __field(enum fscache_volume_trace,	where		)
+			     ),
+
+	    TP_fast_assign(
+		    __entry->volume	= volume_debug_id;
+		    __entry->usage	= usage;
+		    __entry->where	= where;
+			   ),
+
+	    TP_printk("V=%08x %s u=%d",
+		      __entry->volume,
+		      __print_symbolic(__entry->where, fscache_volume_traces),
+		      __entry->usage)
+	    );
+
 TRACE_EVENT(fscache_cookie,
 	    TP_PROTO(unsigned int cookie_debug_id,
 		     int ref,
@@ -94,39 +232,107 @@ TRACE_EVENT(fscache_cookie,
 
 	    TP_STRUCT__entry(
 		    __field(unsigned int,		cookie		)
-		    __field(enum fscache_cookie_trace,	where		)
 		    __field(int,			ref		)
+		    __field(enum fscache_cookie_trace,	where		)
 			     ),
 
 	    TP_fast_assign(
 		    __entry->cookie	= cookie_debug_id;
-		    __entry->where	= where;
 		    __entry->ref	= ref;
+		    __entry->where	= where;
 			   ),
 
-	    TP_printk("%s c=%08x r=%d",
+	    TP_printk("c=%08x %s r=%d",
+		      __entry->cookie,
 		      __print_symbolic(__entry->where, fscache_cookie_traces),
-		      __entry->cookie, __entry->ref)
+		      __entry->ref)
 	    );
 
-TRACE_EVENT(fscache_netfs,
-	    TP_PROTO(struct fscache_netfs *netfs),
+TRACE_EVENT(fscache_access_cache,
+	    TP_PROTO(unsigned int cache_debug_id,
+		     int ref,
+		     int n_accesses,
+		     enum fscache_access_trace why),
 
-	    TP_ARGS(netfs),
+	    TP_ARGS(cache_debug_id, ref, n_accesses, why),
 
 	    TP_STRUCT__entry(
-		    __field(unsigned int,		cookie		)
-		    __array(char,			name, 8		)
+		    __field(unsigned int,		cache		)
+		    __field(int,			ref		)
+		    __field(int,			n_accesses	)
+		    __field(enum fscache_access_trace,	why		)
 			     ),
 
 	    TP_fast_assign(
-		    __entry->cookie		= netfs->primary_index->debug_id;
-		    strncpy(__entry->name, netfs->name, 8);
-		    __entry->name[7]		= 0;
+		    __entry->cache	= cache_debug_id;
+		    __entry->ref	= ref;
+		    __entry->n_accesses	= n_accesses;
+		    __entry->why	= why;
 			   ),
 
-	    TP_printk("c=%08x n=%s",
-		      __entry->cookie, __entry->name)
+	    TP_printk("C=%08x %s r=%d a=%d",
+		      __entry->cache,
+		      __print_symbolic(__entry->why, fscache_access_traces),
+		      __entry->ref,
+		      __entry->n_accesses)
+	    );
+
+TRACE_EVENT(fscache_access_volume,
+	    TP_PROTO(unsigned int volume_debug_id,
+		     int ref,
+		     int n_accesses,
+		     enum fscache_access_trace why),
+
+	    TP_ARGS(volume_debug_id, ref, n_accesses, why),
+
+	    TP_STRUCT__entry(
+		    __field(unsigned int,		volume		)
+		    __field(int,			ref		)
+		    __field(int,			n_accesses	)
+		    __field(enum fscache_access_trace,	why		)
+			     ),
+
+	    TP_fast_assign(
+		    __entry->volume	= volume_debug_id;
+		    __entry->ref	= ref;
+		    __entry->n_accesses	= n_accesses;
+		    __entry->why	= why;
+			   ),
+
+	    TP_printk("V=%08x %s r=%d a=%d",
+		      __entry->volume,
+		      __print_symbolic(__entry->why, fscache_access_traces),
+		      __entry->ref,
+		      __entry->n_accesses)
+	    );
+
+TRACE_EVENT(fscache_access,
+	    TP_PROTO(unsigned int cookie_debug_id,
+		     int ref,
+		     int n_accesses,
+		     enum fscache_access_trace why),
+
+	    TP_ARGS(cookie_debug_id, ref, n_accesses, why),
+
+	    TP_STRUCT__entry(
+		    __field(unsigned int,		cookie		)
+		    __field(int,			ref		)
+		    __field(int,			n_accesses	)
+		    __field(enum fscache_access_trace,	why		)
+			     ),
+
+	    TP_fast_assign(
+		    __entry->cookie	= cookie_debug_id;
+		    __entry->ref	= ref;
+		    __entry->n_accesses	= n_accesses;
+		    __entry->why	= why;
+			   ),
+
+	    TP_printk("c=%08x %s r=%d a=%d",
+		      __entry->cookie,
+		      __print_symbolic(__entry->why, fscache_access_traces),
+		      __entry->ref,
+		      __entry->n_accesses)
 	    );
 
 TRACE_EVENT(fscache_acquire,
@@ -136,26 +342,22 @@ TRACE_EVENT(fscache_acquire,
 
 	    TP_STRUCT__entry(
 		    __field(unsigned int,		cookie		)
-		    __field(unsigned int,		parent		)
-		    __array(char,			name, 8		)
-		    __field(int,			p_ref		)
-		    __field(int,			p_n_children	)
-		    __field(u8,				p_flags		)
+		    __field(unsigned int,		volume		)
+		    __field(int,			v_ref		)
+		    __field(int,			v_n_cookies	)
+		    __field(struct fscache_cookie *,	cookie_p	)
 			     ),
 
 	    TP_fast_assign(
 		    __entry->cookie		= cookie->debug_id;
-		    __entry->parent		= cookie->parent->debug_id;
-		    __entry->p_ref		= refcount_read(&cookie->parent->ref);
-		    __entry->p_n_children	= atomic_read(&cookie->parent->n_children);
-		    __entry->p_flags		= cookie->parent->flags;
-		    memcpy(__entry->name, cookie->type_name, 8);
-		    __entry->name[7]		= 0;
+		    __entry->volume		= cookie->volume->debug_id;
+		    __entry->v_ref		= refcount_read(&cookie->volume->ref);
+		    __entry->v_n_cookies	= atomic_read(&cookie->volume->n_cookies);
 			   ),
 
-	    TP_printk("c=%08x p=%08x pr=%d pc=%d pf=%02x n=%s",
-		      __entry->cookie, __entry->parent, __entry->p_ref,
-		      __entry->p_n_children, __entry->p_flags, __entry->name)
+	    TP_printk("c=%08x V=%08x vu=%d vc=%d",
+		      __entry->cookie,
+		      __entry->volume, __entry->v_ref, __entry->v_n_cookies)
 	    );
 
 TRACE_EVENT(fscache_relinquish,
@@ -165,9 +367,8 @@ TRACE_EVENT(fscache_relinquish,
 
 	    TP_STRUCT__entry(
 		    __field(unsigned int,		cookie		)
-		    __field(unsigned int,		parent		)
+		    __field(unsigned int,		volume		)
 		    __field(int,			ref		)
-		    __field(int,			n_children	)
 		    __field(int,			n_active	)
 		    __field(u8,				flags		)
 		    __field(bool,			retire		)
@@ -175,18 +376,16 @@ TRACE_EVENT(fscache_relinquish,
 
 	    TP_fast_assign(
 		    __entry->cookie	= cookie->debug_id;
-		    __entry->parent	= cookie->parent->debug_id;
+		    __entry->volume	= cookie->volume->debug_id;
 		    __entry->ref	= refcount_read(&cookie->ref);
-		    __entry->n_children	= atomic_read(&cookie->n_children);
 		    __entry->n_active	= atomic_read(&cookie->n_active);
 		    __entry->flags	= cookie->flags;
 		    __entry->retire	= retire;
 			   ),
 
-	    TP_printk("c=%08x r=%d p=%08x Nc=%d Na=%d f=%02x r=%u",
-		      __entry->cookie, __entry->ref,
-		      __entry->parent, __entry->n_children, __entry->n_active,
-		      __entry->flags, __entry->retire)
+	    TP_printk("c=%08x V=%08x u=%d Na=%d f=%02x r=%u",
+		      __entry->cookie, __entry->volume, __entry->ref,
+		      __entry->n_active, __entry->flags, __entry->retire)
 	    );
 
 TRACE_EVENT(fscache_invalidate,

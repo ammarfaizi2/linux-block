@@ -442,10 +442,7 @@ static void afs_get_inode_cache(struct afs_vnode *vnode)
 
 	vnode->cache = fscache_acquire_cookie(
 		vnode->volume->cache,
-		FSCACHE_COOKIE_TYPE_DATAFILE,
-		"AFS.vnode",
 		vnode->status.type == AFS_FTYPE_FILE ? 0 : FSCACHE_ADV_SINGLE_CHUNK,
-		NULL,
 		&key, sizeof(key),
 		&aux, sizeof(aux),
 		vnode->status.size);

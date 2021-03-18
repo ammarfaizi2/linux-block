@@ -17,30 +17,26 @@
 void __fscache_wait_for_operation(struct netfs_cache_resources *cres,
 				  enum fscache_want_stage want_stage)
 {
-	struct fscache_object *object = fscache_cres_object(cres);
-	struct fscache_cookie *cookie = object->cookie;
+	struct fscache_cookie *cookie = fscache_cres_cookie(cres);
 	enum fscache_cookie_stage stage;
 
 again:
-	stage = READ_ONCE(cookie->stage);
-	_enter("c=%08x{%u},%x", cookie->debug_id, stage, want_stage);
-
-	if (fscache_cache_is_broken(object)) {
+	if (!fscache_cache_is_live(cookie->volume->cache)) {
 		_leave(" [broken]");
 		return;
 	}
 
+	stage = READ_ONCE(cookie->stage);
+	_enter("c=%08x{%u},%x", cookie->debug_id, stage, want_stage);
+
 	switch (stage) {
-	case FSCACHE_COOKIE_STAGE_INITIALISING:
 	case FSCACHE_COOKIE_STAGE_LOOKING_UP:
 	case FSCACHE_COOKIE_STAGE_INVALIDATING:
 		wait_var_event(&cookie->stage, READ_ONCE(cookie->stage) != stage);
 		goto again;
 
-	case FSCACHE_COOKIE_STAGE_NO_DATA_YET:
 	case FSCACHE_COOKIE_STAGE_ACTIVE:
 		return;
-	case FSCACHE_COOKIE_STAGE_INDEX:
 	case FSCACHE_COOKIE_STAGE_DROPPED:
 	case FSCACHE_COOKIE_STAGE_RELINQUISHING:
 	default:
@@ -51,30 +47,21 @@ again:
 EXPORT_SYMBOL(__fscache_wait_for_operation);
 
 /*
- * Release the resources needed by an operation.
- */
-void __fscache_end_operation(struct netfs_cache_resources *cres)
-{
-	struct fscache_object *object = fscache_cres_object(cres);
-
-	fscache_uncount_io_operation(object->cookie);
-	object->cache->ops->put_object(object, fscache_obj_put_ioreq);
-}
-EXPORT_SYMBOL(__fscache_end_operation);
-
-/*
  * Begin an I/O operation on the cache, waiting till we reach the right state.
  *
  * Attaches the resources required to the operation resources record.
  */
 static int fscache_begin_operation(struct netfs_cache_resources *cres,
 				   struct fscache_cookie *cookie,
-				   enum fscache_want_stage want_stage)
+				   enum fscache_want_stage want_stage,
+				   enum fscache_access_trace why)
 {
-	struct fscache_object *object;
 	enum fscache_cookie_stage stage;
 	long timeo;
 	bool once_only = false;
+
+	if (!fscache_begin_cookie_access(cookie, why))
+		return -ENOBUFS;
 
 again:
 	spin_lock(&cookie->lock);
@@ -83,18 +70,11 @@ again:
 	_enter("c=%08x{%u},%x", cookie->debug_id, stage, want_stage);
 
 	switch (stage) {
-	case FSCACHE_COOKIE_STAGE_INITIALISING:
 	case FSCACHE_COOKIE_STAGE_LOOKING_UP:
 	case FSCACHE_COOKIE_STAGE_INVALIDATING:
 		goto wait_and_validate;
-
-	case FSCACHE_COOKIE_STAGE_NO_DATA_YET:
-		if (want_stage == FSCACHE_WANT_READ)
-			goto no_data_yet;
-		fallthrough;
 	case FSCACHE_COOKIE_STAGE_ACTIVE:
 		goto ready;
-	case FSCACHE_COOKIE_STAGE_INDEX:
 	case FSCACHE_COOKIE_STAGE_DROPPED:
 	case FSCACHE_COOKIE_STAGE_RELINQUISHING:
 		WARN(1, "Can't use cookie in stage %u\n", cookie->stage);
@@ -104,24 +84,18 @@ again:
 	}
 
 ready:
-	object = hlist_entry(cookie->backing_objects.first,
-			     struct fscache_object, cookie_link);
-
-	if (fscache_cache_is_broken(object))
-		goto not_live;
-
-	cres->debug_id = cookie->debug_id;
-	cres->cache_priv = object;
-	cres->inval_counter = object->inval_counter;
-	object->cache->ops->grab_object(object, fscache_obj_get_ioreq);
-	object->cache->ops->begin_operation(cres);
-
-	fscache_count_io_operation(cookie);
+	cres->cache_priv	= cookie;
+	cres->debug_id		= cookie->debug_id;
+	cres->inval_counter	= cookie->inval_counter;
+	cookie->volume->cache->ops->begin_operation(cres);
 	spin_unlock(&cookie->lock);
 	return 0;
 
 wait_and_validate:
 	spin_unlock(&cookie->lock);
+	trace_fscache_access(cookie->debug_id, refcount_read(&cookie->ref),
+			     atomic_read(&cookie->n_accesses),
+			     fscache_access_io_wait);
 	timeo = wait_var_event_timeout(&cookie->stage,
 				       READ_ONCE(cookie->stage) != stage, 20 * HZ);
 	if (timeo <= 1 && !once_only) {
@@ -132,15 +106,10 @@ wait_and_validate:
 	}
 	goto again;
 
-no_data_yet:
-	spin_unlock(&cookie->lock);
-	cres->cache_priv = NULL;
-	_leave(" = -ENODATA");
-	return -ENODATA;
-
 not_live:
 	spin_unlock(&cookie->lock);
 	cres->cache_priv = NULL;
+	fscache_end_cookie_access(cookie, fscache_access_io_not_live);
 	_leave(" = -ENOBUFS");
 	return -ENOBUFS;
 }
@@ -149,7 +118,7 @@ int __fscache_begin_read_operation(struct netfs_read_request *rreq,
 				   struct fscache_cookie *cookie)
 {
 	return fscache_begin_operation(&rreq->cache_resources, cookie,
-				       FSCACHE_WANT_READ);
+				       FSCACHE_WANT_READ, fscache_access_io_read);
 }
 EXPORT_SYMBOL(__fscache_begin_read_operation);
 
@@ -226,14 +195,7 @@ void fscache_put_super(struct super_block *sb,
 		}
 		spin_unlock(&sb->s_inode_list_lock);
 
-		if (inode) {
-			/* n_ops is kept artificially raised to stop wakeups */
-			atomic_dec(&cookie->n_ops);
-			wait_var_event(&cookie->n_ops, atomic_read(&cookie->n_ops) == 0);
-			atomic_inc(&cookie->n_ops);
-			iput(inode);
-		}
-
+		iput(inode);
 		evict_inodes(sb);
 		if (!inode)
 			break;
@@ -248,12 +210,9 @@ void __fscache_resize_cookie(struct fscache_cookie *cookie, loff_t new_size)
 {
 	struct netfs_cache_resources cres;
 
-	ASSERT(cookie->type != FSCACHE_COOKIE_TYPE_INDEX);
-
 	trace_fscache_resize(cookie, new_size);
-	if (fscache_begin_operation(&cres, cookie, FSCACHE_WANT_WRITE) != -ENOBUFS) {
-		struct fscache_object *object = fscache_cres_object(&cres);
-
+	if (fscache_begin_operation(&cres, cookie, FSCACHE_WANT_WRITE,
+				    fscache_access_io_resize) == 0) {
 		fscache_stat(&fscache_n_resizes);
 		set_bit(FSCACHE_COOKIE_OBJ_NEEDS_UPDATE, &cookie->flags);
 
@@ -261,7 +220,7 @@ void __fscache_resize_cookie(struct fscache_cookie *cookie, loff_t new_size)
 		 * netfs's inode lock so that we're serialised with respect to
 		 * writes.
 		 */
-		object->cache->ops->resize_object(object, new_size);
+		cookie->volume->cache->ops->resize_cookie(&cres, new_size);
 		fscache_end_operation(&cres);
 	} else {
 		fscache_stat(&fscache_n_resizes_null);
@@ -371,7 +330,8 @@ void __fscache_write_to_cache(struct fscache_cookie *cookie,
 	wreq->term_func_priv	= term_func_priv;
 
 	cres = &wreq->cache_resources;
-	if (fscache_begin_operation(cres, cookie, FSCACHE_WANT_WRITE) < 0)
+	if (fscache_begin_operation(cres, cookie, FSCACHE_WANT_WRITE,
+				    fscache_access_io_write) < 0)
 		goto abandon_free;
 
 	ret = cres->ops->prepare_write(cres, &start, &len, i_size);

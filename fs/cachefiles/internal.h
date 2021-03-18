@@ -44,6 +44,59 @@ enum cachefiles_content {
 	nr__cachefiles_content
 };
 
+enum fscache_object_stage {
+	FSCACHE_OBJECT_STAGE_INITIAL,
+	FSCACHE_OBJECT_STAGE_LOOKING_UP,
+	FSCACHE_OBJECT_STAGE_UNCREATED,		/* Needs creation */
+	FSCACHE_OBJECT_STAGE_LIVE_TEMP,		/* Temporary object created, can be no hits */
+	FSCACHE_OBJECT_STAGE_LIVE_EMPTY,	/* Object was freshly created, can be no hits */
+	FSCACHE_OBJECT_STAGE_LIVE,		/* Object is populated */
+	FSCACHE_OBJECT_STAGE_DESTROYING,
+	FSCACHE_OBJECT_STAGE_DEAD,
+};
+
+/*
+ * on-disk cache file or index handle
+ */
+struct fscache_object {
+	int			debug_id;	/* debugging ID */
+	int			n_children;	/* number of child objects */
+	unsigned int		inval_counter;	/* Number of invalidations applied */
+	enum fscache_object_stage stage;	/* Stage of object's lifecycle */
+	spinlock_t		lock;		/* state and operations lock */
+
+	unsigned long		flags;
+#define FSCACHE_OBJECT_LOCAL_WRITE	1	/* T if the object is being modified locally */
+#define FSCACHE_OBJECT_NEEDS_INVAL	8	/* T if object needs invalidation */
+
+	struct list_head	cache_link;	/* link in cache->object_list */
+	struct fscache_cache	*cache;		/* cache that supplied this object */
+	struct fscache_cookie	*cookie;	/* netfs's file/index object */
+#ifdef CONFIG_FSCACHE_OBJECT_LIST
+	struct rb_node		objlist_link;	/* link in global object list */
+#endif
+};
+
+extern void fscache_object_init(struct fscache_object *, struct fscache_cookie *,
+				struct fscache_cache *);
+extern void fscache_object_destroy(struct fscache_object *);
+
+static inline bool fscache_cache_is_broken(struct fscache_object *object)
+{
+	return test_bit(FSCACHE_IOERROR, &object->cache->flags);
+}
+
+extern void fscache_object_retrying_stale(struct fscache_object *object);
+
+enum fscache_why_object_killed {
+	FSCACHE_OBJECT_IS_STALE,
+	FSCACHE_OBJECT_NO_SPACE,
+	FSCACHE_OBJECT_WAS_RETIRED,
+	FSCACHE_OBJECT_WAS_CULLED,
+};
+extern void fscache_object_mark_killed(struct fscache_object *object,
+				       enum fscache_why_object_killed why);
+
 /*
  * node records
  */

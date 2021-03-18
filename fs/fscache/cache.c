@@ -1,198 +1,124 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 /* FS-Cache cache handling
  *
- * Copyright (C) 2007, 2020 Red Hat, Inc. All Rights Reserved.
+ * Copyright (C) 2007, 2021 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
 #define FSCACHE_DEBUG_LEVEL CACHE
-#include <linux/module.h>
+#include <linux/export.h>
 #include <linux/slab.h>
 #include "internal.h"
 
-LIST_HEAD(fscache_cache_list);
+static LIST_HEAD(fscache_caches);
 DECLARE_RWSEM(fscache_addremove_sem);
-DECLARE_WAIT_QUEUE_HEAD(fscache_cache_cleared_wq);
-EXPORT_SYMBOL(fscache_cache_cleared_wq);
+EXPORT_SYMBOL(fscache_addremove_sem);
 
-static LIST_HEAD(fscache_cache_tag_list);
+static atomic_t fscache_cache_debug_id;
 
 /*
- * look up a cache tag
+ * Allocate a cache cookie.
  */
-struct fscache_cache_tag *__fscache_lookup_cache_tag(const char *name)
+static struct fscache_cache *fscache_alloc_cache(const char *name)
 {
-	struct fscache_cache_tag *tag, *xtag;
+	struct fscache_cache *cache;
 
-	/* firstly check for the existence of the tag under read lock */
+	cache = kzalloc(sizeof(*cache) + strlen(name) + 1, GFP_KERNEL);
+	if (cache) {
+		refcount_set(&cache->ref, 1);
+		strcpy(cache->name, name);
+		INIT_LIST_HEAD(&cache->cache_link);
+		INIT_LIST_HEAD(&cache->volumes);
+		cache->debug_id = atomic_inc_return(&fscache_cache_debug_id);
+	}
+	return cache;
+}
+
+static bool fscache_get_cache_maybe(struct fscache_cache *cache,
+				    enum fscache_cache_trace where)
+{
+	bool success;
+	int ref;
+
+	success = __refcount_inc_not_zero(&cache->ref, &ref);
+	if (success)
+		trace_fscache_cache(cache->debug_id, ref + 1, where);
+	return success;
+}
+
+/*
+ * Look up a cache cookie.
+ */
+struct fscache_cache *fscache_acquire_cache(const char *name)
+{
+	struct fscache_cache *candidate, *cache;
+
+	/* firstly check for the existence of the cache under read lock */
 	down_read(&fscache_addremove_sem);
 
-	list_for_each_entry(tag, &fscache_cache_tag_list, link) {
-		if (strcmp(tag->name, name) == 0) {
-			atomic_inc(&tag->usage);
-			refcount_inc(&tag->ref);
+	list_for_each_entry(cache, &fscache_caches, cache_link) {
+		if (strcmp(cache->name, name) == 0 &&
+		    fscache_get_cache_maybe(cache, fscache_cache_get_acquire)) {
 			up_read(&fscache_addremove_sem);
-			return tag;
+			return cache;
 		}
 	}
 
 	up_read(&fscache_addremove_sem);
 
-	/* the tag does not exist - create a candidate */
-	xtag = kzalloc(sizeof(*xtag) + strlen(name) + 1, GFP_KERNEL);
-	if (!xtag)
-		/* return a dummy tag if out of memory */
+	/* the cache does not exist - create a candidate */
+	candidate = fscache_alloc_cache(name);
+	if (!candidate)
 		return ERR_PTR(-ENOMEM);
-
-	atomic_set(&xtag->usage, 1);
-	refcount_set(&xtag->ref, 1);
-	strcpy(xtag->name, name);
 
 	/* write lock, search again and add if still not present */
 	down_write(&fscache_addremove_sem);
 
-	list_for_each_entry(tag, &fscache_cache_tag_list, link) {
-		if (strcmp(tag->name, name) == 0) {
-			atomic_inc(&tag->usage);
-			refcount_inc(&tag->ref);
+	list_for_each_entry(cache, &fscache_caches, cache_link) {
+		if (strcmp(cache->name, name) == 0 &&
+		    fscache_get_cache_maybe(cache, fscache_cache_get_acquire)) {
 			up_write(&fscache_addremove_sem);
-			kfree(xtag);
-			return tag;
+			kfree(candidate);
+			return cache;
 		}
 	}
 
-	list_add_tail(&xtag->link, &fscache_cache_tag_list);
+	list_add_tail(&candidate->cache_link, &fscache_caches);
+	trace_fscache_cache(candidate->debug_id,
+			    refcount_read(&candidate->ref),
+			    fscache_cache_new_acquire);
 	up_write(&fscache_addremove_sem);
-	return xtag;
+	return candidate;
 }
+EXPORT_SYMBOL(fscache_acquire_cache);
 
-/*
- * Unuse a cache tag
- */
-void __fscache_release_cache_tag(struct fscache_cache_tag *tag)
+void fscache_put_cache(struct fscache_cache *cache,
+		       enum fscache_cache_trace where)
 {
-	if (tag != ERR_PTR(-ENOMEM)) {
+	unsigned int debug_id = cache->debug_id;
+	bool zero;
+	int ref;
+
+	if (IS_ERR_OR_NULL(cache))
+		return;
+
+	zero = __refcount_dec_and_test(&cache->ref, &ref);
+	trace_fscache_cache(debug_id, ref - 1, where);
+
+	if (zero) {
 		down_write(&fscache_addremove_sem);
-
-		if (atomic_dec_and_test(&tag->usage))
-			list_del_init(&tag->link);
-		else
-			tag = NULL;
-
+		list_del_init(&cache->cache_link);
 		up_write(&fscache_addremove_sem);
-		fscache_put_cache_tag(tag);
+		kfree(cache);
 	}
 }
-
-/*
- * select a cache in which to store an object
- * - the cache addremove semaphore must be at least read-locked by the caller
- * - the object will never be an index
- */
-struct fscache_cache *fscache_select_cache_for_object(
-	struct fscache_cookie *cookie)
-{
-	struct fscache_cache_tag *tag;
-	struct fscache_cookie *parent = cookie->parent;
-	struct fscache_object *object;
-	struct fscache_cache *cache;
-
-	_enter("");
-
-	if (list_empty(&fscache_cache_list)) {
-		_leave(" = NULL [no cache]");
-		return NULL;
-	}
-
-	/* we check the parent to determine the cache to use */
-	spin_lock(&parent->lock);
-
-	/* the first in the parent's backing list should be the preferred
-	 * cache */
-	if (!hlist_empty(&parent->backing_objects)) {
-		object = hlist_entry(parent->backing_objects.first,
-				     struct fscache_object, cookie_link);
-
-		cache = object->cache;
-		if (test_bit(FSCACHE_IOERROR, &cache->flags))
-			cache = NULL;
-
-		spin_unlock(&parent->lock);
-		_leave(" = %s [parent]", cache ? cache->tag->name : "NULL");
-		return cache;
-	}
-
-	/* the parent is unbacked */
-	if (parent->type != FSCACHE_COOKIE_TYPE_INDEX) {
-		/* cookie not an index and is unbacked */
-		spin_unlock(&parent->lock);
-		_leave(" = NULL [parent ub,ni]");
-		return NULL;
-	}
-
-	spin_unlock(&parent->lock);
-
-	tag = cookie->preferred_cache;
-	if (!tag)
-		goto no_preference;
-
-	if (!tag->cache) {
-		_leave(" = NULL [unbacked tag]");
-		return NULL;
-	}
-
-	if (test_bit(FSCACHE_IOERROR, &tag->cache->flags))
-		return NULL;
-
-	_leave(" = %s [specific]", tag->name);
-	return tag->cache;
-
-no_preference:
-	/* netfs has no preference - just select first cache */
-	cache = list_entry(fscache_cache_list.next,
-			   struct fscache_cache, link);
-	_leave(" = %s [first]", cache->tag->name);
-	return cache;
-}
-
-/**
- * fscache_init_cache - Initialise a cache record
- * @cache: The cache record to be initialised
- * @ops: The cache operations to be installed in that record
- * @idfmt: Format string to define identifier
- * @...: sprintf-style arguments
- *
- * Initialise a record of a cache and fill in the name.
- *
- * See Documentation/filesystems/caching/backend-api.rst for a complete
- * description.
- */
-void fscache_init_cache(struct fscache_cache *cache,
-			const struct fscache_cache_ops *ops,
-			const char *idfmt,
-			...)
-{
-	va_list va;
-
-	memset(cache, 0, sizeof(*cache));
-
-	cache->ops = ops;
-
-	va_start(va, idfmt);
-	vsnprintf(cache->identifier, sizeof(cache->identifier), idfmt, va);
-	va_end(va);
-
-	INIT_LIST_HEAD(&cache->link);
-	INIT_LIST_HEAD(&cache->object_list);
-	spin_lock_init(&cache->object_list_lock);
-}
-EXPORT_SYMBOL(fscache_init_cache);
+EXPORT_SYMBOL(fscache_put_cache);
 
 /**
  * fscache_add_cache - Declare a cache as being open for business
  * @cache: The record describing the cache
- * @ifsdef: The record of the cache object describing the top-level index
- * @tagname: The tag describing this cache
+ * @ops: Table of cache operations to use
+ * @cache_priv: Private data for the cache record
  *
  * Add a cache to the system, making it available for netfs's to use.
  *
@@ -200,91 +126,62 @@ EXPORT_SYMBOL(fscache_init_cache);
  * description.
  */
 int fscache_add_cache(struct fscache_cache *cache,
-		      struct fscache_object *ifsdef,
-		      const char *tagname)
+		      const struct fscache_cache_ops *ops,
+		      void *cache_priv)
 {
-	struct fscache_cache_tag *tag;
+	_enter("{%s,%s}", ops->name, cache->name);
 
-	ASSERTCMP(ifsdef->cookie, ==, &fscache_fsdef_index);
-	BUG_ON(!cache->ops);
-	BUG_ON(!ifsdef);
-
-	cache->flags = 0;
-	ifsdef->stage = FSCACHE_OBJECT_STAGE_LIVE;
-
-	if (!tagname)
-		tagname = cache->identifier;
-
-	BUG_ON(!tagname[0]);
-
-	_enter("{%s.%s},,%s", cache->ops->name, cache->identifier, tagname);
-
-	/* we use the cache tag to uniquely identify caches */
-	tag = __fscache_lookup_cache_tag(tagname);
-	if (IS_ERR(tag))
-		goto nomem;
-
-	if (test_and_set_bit(FSCACHE_TAG_RESERVED, &tag->flags))
-		goto tag_in_use;
-
-	cache->kobj = kobject_create_and_add(tagname, fscache_root);
-	if (!cache->kobj)
-		goto error;
-
-	ifsdef->cache = cache;
-	cache->fsdef = ifsdef;
+	BUG_ON(fscache_cache_state(cache) != FSCACHE_CACHE_IS_PREPARING);
 
 	down_write(&fscache_addremove_sem);
 
-	tag->cache = cache;
-	cache->tag = tag;
+	cache->ops = ops;
+	cache->cache_priv = cache_priv;
+	fscache_set_cache_state(cache, FSCACHE_CACHE_IS_LIVE);
 
-	/* add the cache to the list */
-	list_add(&cache->link, &fscache_cache_list);
-
-	/* add the cache's netfs definition index object to the cache's
-	 * list */
-	spin_lock(&cache->object_list_lock);
-	list_add_tail(&ifsdef->cache_link, &cache->object_list);
-	spin_unlock(&cache->object_list_lock);
-	fscache_objlist_add(ifsdef);
-
-	/* add the cache's netfs definition index object to the top level index
-	 * cookie as a known backing object */
-	spin_lock(&fscache_fsdef_index.lock);
-
-	hlist_add_head(&ifsdef->cookie_link,
-		       &fscache_fsdef_index.backing_objects);
-
-	refcount_inc(&fscache_fsdef_index.ref);
-
-	/* done */
-	spin_unlock(&fscache_fsdef_index.lock);
 	up_write(&fscache_addremove_sem);
-
-	pr_notice("Cache \"%s\" added (type %s)\n",
-		  cache->tag->name, cache->ops->name);
-	kobject_uevent(cache->kobj, KOBJ_ADD);
-
-	_leave(" = 0 [%s]", cache->identifier);
+	pr_notice("Cache \"%s\" added (type %s)\n", cache->name, ops->name);
+	_leave(" = 0 [%s]", cache->name);
 	return 0;
-
-tag_in_use:
-	pr_err("Cache tag '%s' already in use\n", tagname);
-	__fscache_release_cache_tag(tag);
-	_leave(" = -EXIST");
-	return -EEXIST;
-
-error:
-	__fscache_release_cache_tag(tag);
-	_leave(" = -EINVAL");
-	return -EINVAL;
-
-nomem:
-	_leave(" = -ENOMEM");
-	return -ENOMEM;
 }
 EXPORT_SYMBOL(fscache_add_cache);
+
+/*
+ * Get an increment on a cache's access counter if the cache is live to prevent
+ * it from going away whilst we're accessing it.
+ */
+bool fscache_begin_cache_access(struct fscache_cache *cache, enum fscache_access_trace why)
+{
+	int n_accesses;
+
+	if (!fscache_cache_is_live(cache))
+		return false;
+
+	n_accesses = atomic_inc_return(&cache->n_accesses);
+	smp_mb__after_atomic(); /* Reread live flag after n_accesses */
+	trace_fscache_access_cache(cache->debug_id, refcount_read(&cache->ref),
+				   n_accesses, why);
+	if (!fscache_cache_is_live(cache)) {
+		fscache_end_cache_access(cache, fscache_access_unlive);
+		return false;
+	}
+	return true;
+}
+
+/*
+ * Drop an increment on a cache's access counter.
+ */
+void fscache_end_cache_access(struct fscache_cache *cache, enum fscache_access_trace why)
+{
+	int n_accesses;
+
+	smp_mb__before_atomic();
+	n_accesses = atomic_dec_return(&cache->n_accesses);
+	trace_fscache_access_cache(cache->debug_id, refcount_read(&cache->ref),
+				   n_accesses, why);
+	if (n_accesses == 0)
+		wake_up_var(&cache->n_accesses);
+}
 
 /**
  * fscache_io_error - Note a cache I/O error
@@ -298,149 +195,82 @@ EXPORT_SYMBOL(fscache_add_cache);
  */
 void fscache_io_error(struct fscache_cache *cache)
 {
-	if (!test_and_set_bit(FSCACHE_IOERROR, &cache->flags))
+	if (fscache_set_cache_state_maybe(cache,
+					  FSCACHE_CACHE_IS_LIVE,
+					  FSCACHE_CACHE_GOT_IOERROR))
 		pr_err("Cache '%s' stopped due to I/O error\n",
-		       cache->ops->name);
+		       cache->name);
 }
 EXPORT_SYMBOL(fscache_io_error);
 
-/*
- * Withdraw an object.
- */
-static void fscache_withdraw_object(struct fscache_cookie *cookie,
-				    struct fscache_object *object,
-				    int param)
-{
-	_enter("c=%08x o=%08x", cookie ? cookie->debug_id : 0, object->debug_id);
-
-	_debug("WITHDRAW %x", object->debug_id);
-
-retry:
-	spin_lock(&cookie->lock);
-	if (cookie->stage == FSCACHE_COOKIE_STAGE_RELINQUISHING) {
-		spin_unlock(&cookie->lock);
-		wait_var_event(&cookie->stage,
-			       READ_ONCE(cookie->stage) != FSCACHE_COOKIE_STAGE_RELINQUISHING);
-		cond_resched();
-		goto retry;
-	}
-
-	if (cookie->stage == FSCACHE_COOKIE_STAGE_DROPPED) {
-		spin_unlock(&cookie->lock);
-		kleave(" [dropped]");
-		return;
-	}
-
-	if (cookie->stage != FSCACHE_COOKIE_STAGE_INDEX)
-		cookie->stage = FSCACHE_COOKIE_STAGE_WITHDRAWING;
-	hlist_del_init(&object->cookie_link);
-	spin_unlock(&cookie->lock);
-	wake_up_cookie_stage(cookie);
-
-	if (cookie->stage == FSCACHE_COOKIE_STAGE_WITHDRAWING) {
-		atomic_dec(&cookie->n_ops);
-		wait_var_event(&cookie->n_ops, atomic_read(&cookie->n_ops) == 0);
-		atomic_inc(&cookie->n_ops);
-	}
-
-	fscache_drop_object(cookie, object, param);
-
-	spin_lock(&cookie->lock);
-	if (cookie->stage == FSCACHE_COOKIE_STAGE_WITHDRAWING)
-		cookie->stage = FSCACHE_COOKIE_STAGE_QUIESCENT;
-	spin_unlock(&cookie->lock);
-	wake_up_cookie_stage(cookie);
-	object->cache->ops->put_object(object, fscache_obj_put_withdraw);
-}
-
-/*
- * Request withdrawal of all the objects in a cache.
- */
-static void fscache_withdraw_all_objects(struct fscache_cache *cache)
-{
-	struct fscache_object *object;
-
-	_enter("");
-
-	spin_lock(&cache->object_list_lock);
-	while (!list_empty(&cache->object_list)) {
-		/* Go through the list backwards so that we do children before
-		 * their parents.
-		 */
-		object = list_entry(cache->object_list.prev,
-				    struct fscache_object, cache_link);
-		list_del_init(&object->cache_link);
-		cache->ops->grab_object(object, fscache_obj_get_withdraw);
-		spin_unlock(&cache->object_list_lock);
-
-		_debug("o=%08x n=%u", object->debug_id, object->n_children);
-		wait_var_event(&object->n_children, READ_ONCE(object->n_children) == 0);
-
-		fscache_dispatch(object->cookie, object, 0,
-				 fscache_withdraw_object);
-
-		cond_resched();
-		spin_lock(&cache->object_list_lock);
-	}
-	spin_unlock(&cache->object_list_lock);
-
-	_leave("");
-}
-
 /**
  * fscache_withdraw_cache - Withdraw a cache from the active service
- * @cache: The record describing the cache
+ * @cache: The cache cookie
  *
- * Withdraw a cache from service, unbinding all its cache objects from the
- * netfs cookies they're currently representing.
- *
- * See Documentation/filesystems/caching/backend-api.rst for a complete
- * description.
+ * Begin the process of withdrawing a cache from service.
  */
 void fscache_withdraw_cache(struct fscache_cache *cache)
 {
-	_enter("");
-
 	pr_notice("Withdrawing cache \"%s\" (%u objs)\n",
-		  cache->tag->name, atomic_read(&cache->object_count));
+		  cache->name, atomic_read(&cache->object_count));
 
-	/* make the cache unavailable for cookie acquisition */
-	if (test_and_set_bit(FSCACHE_CACHE_WITHDRAWN, &cache->flags))
-		BUG();
-
-	down_write(&fscache_addremove_sem);
-	list_del_init(&cache->link);
-	cache->tag->cache = NULL;
-	up_write(&fscache_addremove_sem);
-
-	/* we now have to destroy all the active objects pertaining to this
-	 * cache - which we do by passing them off to thread pool to be
-	 * disposed of */
-	_debug("destroy");
-
-	fscache_withdraw_all_objects(cache);
-
-	/* make sure all outstanding data is written to disk */
-	fscache_stat(&fscache_n_cop_sync_cache);
-	cache->ops->sync_cache(cache);
-	fscache_stat_d(&fscache_n_cop_sync_cache);
-
-	/* wait for all extant objects to finish their outstanding operations
-	 * and go away */
-	_debug("wait for finish %u", atomic_read(&cache->object_count));
-	wait_event(fscache_cache_cleared_wq,
-		   atomic_read(&cache->object_count) == 0);
-	_debug("wait for clearance");
-	wait_event(fscache_cache_cleared_wq,
-		   list_empty(&cache->object_list));
-	_debug("cleared");
-
-	kobject_put(cache->kobj);
-
-	clear_bit(FSCACHE_TAG_RESERVED, &cache->tag->flags);
-	fscache_release_cache_tag(cache->tag);
-	cache->tag = NULL;
-
-	_leave("");
+	fscache_set_cache_state(cache, FSCACHE_CACHE_IS_WITHDRAWN);
 }
 EXPORT_SYMBOL(fscache_withdraw_cache);
+
+#ifdef CONFIG_PROC_FS
+static const char fscache_cache_states[NR__FSCACHE_CACHE_STATE] = "-PLEW";
+
+/*
+ * Generate a list of caches in /proc/fs/fscache/caches
+ */
+static int fscache_caches_seq_show(struct seq_file *m, void *v)
+{
+	struct fscache_cache *cache;
+
+	if (v == &fscache_caches) {
+		seq_puts(m,
+			 "CACHE    REF   VOLS  OBJS  ACCES S NAME\n"
+			 "======== ===== ===== ===== ===== = ===============\n"
+			 );
+		return 0;
+	}
+
+	cache = list_entry(v, struct fscache_cache, cache_link);
+	seq_printf(m,
+		   "%08x %5d %5d %5d %5d %c %s\n",
+		   cache->debug_id,
+		   refcount_read(&cache->ref),
+		   atomic_read(&cache->n_volumes),
+		   atomic_read(&cache->object_count),
+		   atomic_read(&cache->n_accesses),
+		   fscache_cache_states[cache->state],
+		   cache->name);
+	return 0;
+}
+
+static void *fscache_caches_seq_start(struct seq_file *m, loff_t *_pos)
+	__acquires(fscache_addremove_sem)
+{
+	down_read(&fscache_addremove_sem);
+	return seq_list_start_head(&fscache_caches, *_pos);
+}
+
+static void *fscache_caches_seq_next(struct seq_file *m, void *v, loff_t *_pos)
+{
+	return seq_list_next(v, &fscache_caches, _pos);
+}
+
+static void fscache_caches_seq_stop(struct seq_file *m, void *v)
+	__releases(fscache_addremove_sem)
+{
+	up_read(&fscache_addremove_sem);
+}
+
+const struct seq_operations fscache_caches_seq_ops = {
+	.start  = fscache_caches_seq_start,
+	.next   = fscache_caches_seq_next,
+	.stop   = fscache_caches_seq_stop,
+	.show   = fscache_caches_seq_show,
+};
+#endif /* CONFIG_PROC_FS */

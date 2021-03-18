@@ -23,9 +23,8 @@ static bool fscache_dispatcher_stop;
 struct fscache_work {
 	struct list_head	link;
 	struct fscache_cookie	*cookie;
-	struct fscache_object	*object;
 	int			param;
-	void (*func)(struct fscache_cookie *, struct fscache_object *, int);
+	void (*func)(struct fscache_cookie *, int);
 };
 
 /*
@@ -33,27 +32,24 @@ struct fscache_work {
  * already queued, we'll do it here in this thread instead.
  */
 void fscache_dispatch(struct fscache_cookie *cookie,
-		      struct fscache_object *object,
 		      int param,
-		      void (*func)(struct fscache_cookie *,
-				   struct fscache_object *, int))
+		      void (*func)(struct fscache_cookie *, int))
 {
 	struct fscache_work *work;
 	bool queued = false;
 
 	fscache_stat(&fscache_n_dispatch_count);
+	fscache_get_cookie(cookie, fscache_cookie_get_work);
 
 	work = kzalloc(sizeof(struct fscache_work), GFP_KERNEL);
 	if (work) {
 		work->cookie = cookie;
-		work->object = object;
 		work->param = param;
 		work->func = func;
 
 		spin_lock(&fscache_work_lock);
 		if (waitqueue_active(&fscache_dispatcher_pool) ||
 		    list_empty(&fscache_pending_work)) {
-			fscache_get_cookie(cookie, fscache_cookie_get_work);
 			list_add_tail(&work->link, &fscache_pending_work);
 			wake_up(&fscache_dispatcher_pool);
 			queued = true;
@@ -66,7 +62,8 @@ void fscache_dispatch(struct fscache_cookie *cookie,
 	if (!queued) {
 		kfree(work);
 		fscache_stat(&fscache_n_dispatch_inline);
-		func(cookie, object, param);
+		func(cookie, param);
+		fscache_put_cookie(cookie, fscache_cookie_put_work);
 	}
 }
 
@@ -90,7 +87,7 @@ static int fscache_dispatcher(void *data)
 			spin_unlock(&fscache_work_lock);
 
 			if (work) {
-				work->func(work->cookie, work->object, work->param);
+				work->func(work->cookie, work->param);
 				fscache_stat(&fscache_n_dispatch_in_pool);
 				fscache_put_cookie(work->cookie, fscache_cookie_put_work);
 				kfree(work);
