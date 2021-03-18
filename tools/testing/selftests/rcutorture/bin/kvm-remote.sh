@@ -184,10 +184,10 @@ startbatches () {
 		ret=$?
 		if test "$ret" -ne 0
 		then
-			echo ssh $i failed: exitcode $ret 1>&2 | tee -a "$oldrun/remote-log"
+			echo ssh $i failed: exitcode $ret 1>&2
 			exit 11
 		fi
-		echo " ----" System $i Batch `head -n $curbatch < "$rundir"/scenarios | tail -1` `date` 1>&2 | tee -a "$oldrun/remote-log"
+		echo " ----" System $i Batch `head -n $curbatch < "$rundir"/scenarios | tail -1` `date` 1>&2
 		curbatch=$((curbatch + 1))
 	done
 	echo $curbatch
@@ -198,9 +198,15 @@ nbatches="`wc -l "$rundir"/scenarios | awk '{ print $1 }'`"
 curbatch=1
 while test "$curbatch" -le "$nbatches"
 do
-	curbatch="`startbatches $curbatch $nbatches`" | tee -a "$oldrun/remote-log"
+	oldbatch="$curbatch"
+	curbatch="`startbatches $curbatch $nbatches`" 2>&1 | tee -a "$oldrun/remote-log"
+	if test "$oldbatch" -ne "$curbatch"
+	then
+		echo Next batch: $curbatch `date`
+	fi
 	sleep 30
 done
+echo All batches started. `date`
 
 # Wait for all remaining scenarios to complete and collect results.
 for i in $systems
@@ -209,7 +215,7 @@ do
 	do
 		sleep 30
 	done
-	( cd "$oldrun"; ssh $i "cd $rundir; tar -czf - kvm-remote-*.sh.out */console.log */kvm-test-1-run*.sh.out */qemu_pid */qemu-retval; cd /tmp; rf -rf $rundir > /dev/null 2>&1" | tar -xzf - )
+	( cd "$oldrun"; ssh $i "cd $rundir; tar -czf - kvm-remote-*.sh.out */console.log */kvm-test-1-run*.sh.out */qemu_pid */qemu-retval; cd /tmp; rf -rf $T > /dev/null 2>&1" | tar -xzf - )
 done
 
 kvm-end-run-stats.sh "$oldrun" "$starttime" | tee -a "$oldrun/remote-log"
