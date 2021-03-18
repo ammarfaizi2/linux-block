@@ -116,6 +116,7 @@ echo " ----" kvm-again.sh output: "(`date`)" | tee -a "$oldrun/remote-log"
 cat $T/kvm-again.sh.out
 echo | tee -a "$oldrun/remote-log"
 echo Remote run directory: $rundir | tee -a "$oldrun/remote-log"
+echo Local build-side run directory: $oldrun | tee -a "$oldrun/remote-log"
 
 # Create the kvm-remote-N.sh scripts in the bin directory.
 awk < "$rundir"/scenarios -v dest="$T/bin" -v rundir="$rundir" '
@@ -136,7 +137,7 @@ chmod +x $T/bin/kvm-remote-*.sh
 for i in $systems
 do
 	ncpus="`ssh $i lscpu | grep '^CPU(' | awk '{ print $2 }'`"
-	echo $i: $ncpus `date` | tee -a "$oldrun/remote-log"
+	echo $i: $ncpus CPUs " " `date` | tee -a "$oldrun/remote-log"
 	ret=$?
 	if test "$ret" -ne 0
 	then
@@ -163,6 +164,7 @@ done
 # Usage: startbatches curbatch nbatches
 #
 # Batches are numbered starting at 1.  Returns the next batch to start.
+# Be careful to redirect all debug output to FD 2 (stderr).
 startbatches () {
 	local curbatch="$1"
 	local nbatches="$2"
@@ -199,8 +201,13 @@ curbatch=1
 while test "$curbatch" -le "$nbatches"
 do
 	oldbatch="$curbatch"
-	curbatch="`startbatches $curbatch $nbatches`" 2>&1 | tee -a "$oldrun/remote-log"
-	if test "$oldbatch" -ne "$curbatch"
+	startbatches $curbatch $nbatches > $T/curbatch 2> $T/startbatches.stderr
+	curbatch="`cat $T/curbatch`"
+	if test -s "$T/startbatches.stderr"
+	then
+		cat "$T/startbatches.stderr" | tee -a "$oldrun/remote-log"
+	fi
+	if test "$oldbatch" != "$curbatch"
 	then
 		echo Next batch: $curbatch `date`
 	fi
