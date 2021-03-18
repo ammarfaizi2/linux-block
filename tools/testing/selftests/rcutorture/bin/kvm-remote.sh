@@ -51,8 +51,7 @@ mkdir $T
 resdir="$T/res"
 ds=`date +%Y.%m.%d-%H.%M.%S`-remote
 rundir=$resdir/$ds
-touch "$rundir/log"
-echo $scriptname $args | tee -a "$rundir/log"
+echo $scriptname $args
 if echo $1 | grep -q '^--'
 then
 	# Fresh build.  Create a datestamp unless the caller supplied one.
@@ -83,6 +82,8 @@ then
 		cat $T/kvm-again.sh.out
 		exit 2
 	fi
+	# We are going to run this, so remove the buildonly files.
+	rm -f "$oldrun"/*/buildonly
 else
 	# Re-use old run.
 	oldrun="$1"
@@ -99,7 +100,11 @@ else
 		cat $T/kvm-again.sh.out
 		exit 2
 	fi
+	cp -a "$rundir" "$KVM/res/"
+	oldrun="$KVM/res/$ds"
 fi
+touch "$oldrun/log"
+echo $scriptname $args >> "$oldrun/log"
 
 # Create the kvm-remote-N.sh scripts in the bin directory.
 awk < "$rundir"/scenarios -v dest="$T/bin" -v rundir="$rundir" '
@@ -159,25 +164,25 @@ startbatches () {
 			echo $((nbatches + 1))
 			return 0
 		fi
-		if ! ssh "$i" "test -f \"$resdir/$ds/remote.run\""
+		if ssh "$i" "test -f \"$resdir/$ds/remote.run\""
 		then
 			continue # System still running last test, skip.
 		fi
 		ssh "$i" "cd \"$resdir/$ds\"; touch remote.run; PATH=\"$T/bin:$PATH\" nohup kvm-remote-$curbatch.sh > kvm-remote-$curbatch.sh.out 2>&1 &"
-		ret = $?
+		ret=$?
 		if test "$ret" -ne 0
 		then
 			echo ssh $i failed: exitcode $ret 1>&2
 			exit 11
 		fi
-		echo " ---- System $i Batch `head -n $curbatch < "$rundir"/scenarios | tail -1` `date`
+		echo " ----" System $i Batch `head -n $curbatch < "$rundir"/scenarios | tail -1` `date` 1>&2
 		curbatch=$((curbatch + 1))
 	done
 	echo $curbatch
 }
 
 # Launch all the scenarios.
-nbatches="`wc -l "$rundir"/scenarios`"
+nbatches="`wc -l "$rundir"/scenarios | awk '{ print $1 }'`"
 curbatch=1
 while test "$curbatch" -le "$nbatches"
 do
@@ -186,17 +191,16 @@ do
 done
 
 # Wait for all remaining scenarios to complete and collect results.
-cp -as "$rundir" "$KVM/res/"
 for i in $systems
 do
-	while ssh "$i" "test -f '"$resdir/$ds/remote.run\""
+	while ssh "$i" "test -f \"$resdir/$ds/remote.run\""
 	do
 		sleep 30
 	done
-	( cd "$KVM/res/$ds"; ssh $i "cd $rundir; tar -czf - kvm-remote-*.sh.out */console.log */kvm-test-1-run*.sh.out */qemu_pid */qemu-retval; cd /tmp; rf -rf $rundir > /dev/null 2>&1" | tar -xzf - )
+	( cd "$oldrun"; ssh $i "cd $rundir; tar -czf - kvm-remote-*.sh.out */console.log */kvm-test-1-run*.sh.out */qemu_pid */qemu-retval; cd /tmp; rf -rf $rundir > /dev/null 2>&1" | tar -xzf - )
 done
 
-kvm-end-run-stats.sh "$rundir" "$starttime"
+kvm-end-run-stats.sh "$oldrun" "$starttime"
 ret=$? # @@@
 
 # @@@ Gather up output and do recheck stuff.
