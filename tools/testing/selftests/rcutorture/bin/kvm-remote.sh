@@ -222,7 +222,7 @@ do
 	do
 		sleep 30
 	done
-	( cd "$oldrun"; ssh $i "cd $rundir; tar -czf - kvm-remote-*.sh.out */console.log */kvm-test-1-run*.sh.out */qemu_pid */qemu-retval; cd /tmp; rf -rf $T > /dev/null 2>&1" | tar -xzf - )
+	( cd "$oldrun"; ssh $i "cd $rundir; tar -czf - kvm-remote-*.sh.out */console.log */kvm-test-1-run*.sh.out */qemu_pid */qemu-retval; rm -rf $T > /dev/null 2>&1" | tar -xzf - )
 done
 
 kvm-end-run-stats.sh "$oldrun" "$starttime" | tee -a "$oldrun/remote-log"
