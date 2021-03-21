@@ -200,18 +200,16 @@ nbatches="`wc -l "$rundir"/scenarios | awk '{ print $1 }'`"
 curbatch=1
 while test "$curbatch" -le "$nbatches"
 do
-	oldbatch="$curbatch"
 	startbatches $curbatch $nbatches > $T/curbatch 2> $T/startbatches.stderr
 	curbatch="`cat $T/curbatch`"
 	if test -s "$T/startbatches.stderr"
 	then
 		cat "$T/startbatches.stderr" | tee -a "$oldrun/remote-log"
 	fi
-	if test "$oldbatch" != "$curbatch"
+	if test "$curbatch" -le "$nbatches"
 	then
-		echo Next batch: $curbatch `date`
+		sleep 30
 	fi
-	sleep 30
 done
 echo All batches started. `date`
 
