@@ -23,9 +23,7 @@ bool poll_state_synchronize_rcu(unsigned long oldstate);
 
 static inline void cond_synchronize_rcu(unsigned long oldstate)
 {
-	if (poll_state_synchronize_rcu(oldstate))
-		return;
-	synchronize_rcu();
+	might_sleep();
 }
 
 extern void rcu_barrier(void);
