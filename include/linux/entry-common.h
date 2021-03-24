@@ -334,6 +334,20 @@ void exit_to_user_mode(void);
 void syscall_exit_to_user_mode_work(struct pt_regs *regs);
 
 /**
+ * syscall_exit_to_user_mode_prepare - Handle syscall work before returning to user mode
+ * @regs:	Pointer to currents pt_regs
+ *
+ * Same as step 1 of syscall_exit_to_user_mode() but without doing any of the
+ * work for general exits to user mode.
+ *
+ * Calling convention is the same as for syscall_exit_to_user_mode() and it
+ * returns with syscall work handled and interrupts enabled. The caller
+ * must invoke local_irq_disable() and irqentry_exit_to_user_mode() before
+ * actually switching to user mode to make the final state transitions.
+ */
+void syscall_exit_to_user_mode_prepare(struct pt_regs *regs);
+
+/**
  * syscall_exit_to_user_mode - Handle work before returning to user mode
  * @regs:	Pointer to currents pt_regs
  *

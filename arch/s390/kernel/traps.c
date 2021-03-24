@@ -344,18 +344,16 @@ void noinstr __do_pgm_check(struct pt_regs *regs)
 	trapnr = regs->int_code & PGM_INT_CODE_MASK;
 	if (trapnr)
 		pgm_check_table[trapnr](regs);
-	syscall_redirect = user_mode(regs) && test_pt_regs_flag(regs, PIF_SYSCALL);
-out:
-	local_irq_disable();
-	irqentry_exit(regs, state);
 
-	if (syscall_redirect) {
-		enter_from_user_mode(regs);
+	if (user_mode(regs) && test_pt_regs_flag(regs, PIF_SYSCALL)) {
 		local_irq_enable();
 		regs->orig_gpr2 = regs->gprs[2];
 		do_syscall(regs);
-		exit_to_user_mode();
 	}
+
+out:
+	local_irq_disable();
+	irqentry_exit(regs, state);
 }
 
 /*
