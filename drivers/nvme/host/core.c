@@ -575,11 +575,12 @@ EXPORT_SYMBOL_NS_GPL(nvme_put_ns, NVME_TARGET_PASSTHRU);
 
 static inline void nvme_clear_nvme_request(struct request *req)
 {
-	if (!(req->rq_flags & RQF_DONTPREP)) {
-		nvme_req(req)->retries = 0;
-		nvme_req(req)->flags = 0;
-		req->rq_flags |= RQF_DONTPREP;
-	}
+	struct nvme_command *cmd = nvme_req(req)->cmd;
+
+	memset(cmd, 0, sizeof(*cmd));
+	nvme_req(req)->retries = 0;
+	nvme_req(req)->flags = 0;
+	req->rq_flags |= RQF_DONTPREP;
 }
 
 static inline unsigned int nvme_req_op(struct nvme_command *cmd)
@@ -595,9 +596,12 @@ static inline void nvme_init_request(struct request *req,
 	else /* no queuedata implies admin queue */
 		req->timeout = NVME_ADMIN_TIMEOUT;
 
+	/* passthru commands should let the driver set the SGL flags */
+	cmd->common.flags &= ~NVME_CMD_SGL_ALL;
+
 	req->cmd_flags |= REQ_FAILFAST_DRIVER;
 	nvme_clear_nvme_request(req);
-	nvme_req(req)->cmd = cmd;
+	memcpy(nvme_req(req)->cmd, cmd, sizeof(*cmd));
 }
 
 struct request *nvme_alloc_request(struct request_queue *q,
@@ -724,14 +728,6 @@ static void nvme_assign_write_stream(struct nvme_ctrl *ctrl,
 
 	if (streamid < ARRAY_SIZE(req->q->write_hints))
 		req->q->write_hints[streamid] += blk_rq_bytes(req) >> 9;
-}
-
-static void nvme_setup_passthrough(struct request *req,
-		struct nvme_command *cmd)
-{
-	memcpy(cmd, nvme_req(req)->cmd, sizeof(*cmd));
-	/* passthru commands should let the driver set the SGL flags */
-	cmd->common.flags &= ~NVME_CMD_SGL_ALL;
 }
 
 static inline void nvme_setup_flush(struct nvme_ns *ns,
@@ -888,18 +884,18 @@ void nvme_cleanup_cmd(struct request *req)
 }
 EXPORT_SYMBOL_GPL(nvme_cleanup_cmd);
 
-blk_status_t nvme_setup_cmd(struct nvme_ns *ns, struct request *req,
-		struct nvme_command *cmd)
+blk_status_t nvme_setup_cmd(struct nvme_ns *ns, struct request *req)
 {
+	struct nvme_command *cmd = nvme_req(req)->cmd;
 	blk_status_t ret = BLK_STS_OK;
 
-	nvme_clear_nvme_request(req);
+	if (!(req->rq_flags & RQF_DONTPREP))
+		nvme_clear_nvme_request(req);
 
-	memset(cmd, 0, sizeof(*cmd));
 	switch (req_op(req)) {
 	case REQ_OP_DRV_IN:
 	case REQ_OP_DRV_OUT:
-		nvme_setup_passthrough(req, cmd);
+		/* these are setup prior to execution in nvme_init_request() */
 		break;
 	case REQ_OP_FLUSH:
 		nvme_setup_flush(ns, cmd);
@@ -1076,9 +1072,9 @@ u32 nvme_command_effects(struct nvme_ctrl *ctrl, struct nvme_ns *ns, u8 opcode)
 		if (ns->head->effects)
 			effects = le32_to_cpu(ns->head->effects->iocs[opcode]);
 		if (effects & ~(NVME_CMD_EFFECTS_CSUPP | NVME_CMD_EFFECTS_LBCC))
-			dev_warn(ctrl->device,
-				 "IO command:%02x has unhandled effects:%08x\n",
-				 opcode, effects);
+			dev_warn_once(ctrl->device,
+				"IO command:%02x has unhandled effects:%08x\n",
+				opcode, effects);
 		return 0;
 	}
 
@@ -1120,7 +1116,7 @@ static void nvme_passthru_end(struct nvme_ctrl *ctrl, u32 effects)
 		mutex_unlock(&ctrl->scan_lock);
 	}
 	if (effects & NVME_CMD_EFFECTS_CCC)
-		nvme_init_identify(ctrl);
+		nvme_init_ctrl_finish(ctrl);
 	if (effects & (NVME_CMD_EFFECTS_NIC | NVME_CMD_EFFECTS_NCC)) {
 		nvme_queue_scan(ctrl);
 		flush_work(&ctrl->scan_work);
@@ -1137,7 +1133,8 @@ void nvme_execute_passthru_rq(struct request *rq)
 
 	effects = nvme_passthru_start(ctrl, ns, cmd->common.opcode);
 	blk_execute_rq(disk, rq, 0);
-	nvme_passthru_end(ctrl, effects);
+	if (effects) /* nothing to be done for zero cmd effects */
+		nvme_passthru_end(ctrl, effects);
 }
 EXPORT_SYMBOL_NS_GPL(nvme_execute_passthru_rq, NVME_TARGET_PASSTHRU);
 
@@ -2303,18 +2300,21 @@ static int nvme_pr_preempt(struct block_device *bdev, u64 old, u64 new,
 		enum pr_type type, bool abort)
 {
 	u32 cdw10 = nvme_pr_type(type) << 8 | (abort ? 2 : 1);
+
 	return nvme_pr_command(bdev, cdw10, old, new, nvme_cmd_resv_acquire);
 }
 
 static int nvme_pr_clear(struct block_device *bdev, u64 key)
 {
 	u32 cdw10 = 1 | (key ? 1 << 3 : 0);
+
 	return nvme_pr_command(bdev, cdw10, key, 0, nvme_cmd_resv_register);
 }
 
 static int nvme_pr_release(struct block_device *bdev, u64 key, enum pr_type type)
 {
 	u32 cdw10 = nvme_pr_type(type) << 8 | (key ? 1 << 3 : 0);
+
 	return nvme_pr_command(bdev, cdw10, key, 0, nvme_cmd_resv_release);
 }
 
@@ -3038,28 +3038,14 @@ out:
 	return 0;
 }
 
-/*
- * Initialize the cached copies of the Identify data and various controller
- * register in our nvme_ctrl structure.  This should be called as soon as
- * the admin queue is fully up and running.
- */
-int nvme_init_identify(struct nvme_ctrl *ctrl)
+static int nvme_init_identify(struct nvme_ctrl *ctrl)
 {
 	struct nvme_id_ctrl *id;
 	int ret, page_shift;
 	u32 max_hw_sectors;
 	bool prev_apst_enabled;
 
-	ret = ctrl->ops->reg_read32(ctrl, NVME_REG_VS, &ctrl->vs);
-	if (ret) {
-		dev_err(ctrl->device, "Reading VS failed (%d)\n", ret);
-		return ret;
-	}
 	page_shift = NVME_CAP_MPSMIN(ctrl->cap) + 12;
-	ctrl->sqsize = min_t(u16, NVME_CAP_MQES(ctrl->cap), ctrl->sqsize);
-
-	if (ctrl->vs >= NVME_VS(1, 1, 0))
-		ctrl->subsystem = NVME_CAP_NSSRC(ctrl->cap);
 
 	ret = nvme_identify_ctrl(ctrl, &id);
 	if (ret) {
@@ -3077,7 +3063,7 @@ int nvme_init_identify(struct nvme_ctrl *ctrl)
 		ctrl->cntlid = le16_to_cpu(id->cntlid);
 
 	if (!ctrl->identified) {
-		int i;
+		unsigned int i;
 
 		ret = nvme_init_subsystem(ctrl, id);
 		if (ret)
@@ -3190,15 +3176,42 @@ int nvme_init_identify(struct nvme_ctrl *ctrl)
 	}
 
 	ret = nvme_mpath_init(ctrl, id);
-	kfree(id);
-
 	if (ret < 0)
-		return ret;
+		goto out_free;
 
 	if (ctrl->apst_enabled && !prev_apst_enabled)
 		dev_pm_qos_expose_latency_tolerance(ctrl->device);
 	else if (!ctrl->apst_enabled && prev_apst_enabled)
 		dev_pm_qos_hide_latency_tolerance(ctrl->device);
+
+out_free:
+	kfree(id);
+	return ret;
+}
+
+/*
+ * Initialize the cached copies of the Identify data and various controller
+ * register in our nvme_ctrl structure.  This should be called as soon as
+ * the admin queue is fully up and running.
+ */
+int nvme_init_ctrl_finish(struct nvme_ctrl *ctrl)
+{
+	int ret;
+
+	ret = ctrl->ops->reg_read32(ctrl, NVME_REG_VS, &ctrl->vs);
+	if (ret) {
+		dev_err(ctrl->device, "Reading VS failed (%d)\n", ret);
+		return ret;
+	}
+
+	ctrl->sqsize = min_t(u16, NVME_CAP_MQES(ctrl->cap), ctrl->sqsize);
+
+	if (ctrl->vs >= NVME_VS(1, 1, 0))
+		ctrl->subsystem = NVME_CAP_NSSRC(ctrl->cap);
+
+	ret = nvme_init_identify(ctrl);
+	if (ret)
+		return ret;
 
 	ret = nvme_configure_apst(ctrl);
 	if (ret < 0)
@@ -3225,12 +3238,8 @@ int nvme_init_identify(struct nvme_ctrl *ctrl)
 	ctrl->identified = true;
 
 	return 0;
-
-out_free:
-	kfree(id);
-	return ret;
 }
-EXPORT_SYMBOL_GPL(nvme_init_identify);
+EXPORT_SYMBOL_GPL(nvme_init_ctrl_finish);
 
 static int nvme_dev_open(struct inode *inode, struct file *file)
 {
