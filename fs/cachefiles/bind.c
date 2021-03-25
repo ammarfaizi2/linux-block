@@ -17,7 +17,10 @@
 #include <linux/statfs.h>
 #include <linux/ctype.h>
 #include <linux/xattr.h>
+#include <trace/events/fscache.h>
 #include "internal.h"
+
+DECLARE_WAIT_QUEUE_HEAD(cachefiles_clearance_wq);
 
 static int cachefiles_daemon_add_cache(struct cachefiles_cache *caches);
 
@@ -60,16 +63,6 @@ int cachefiles_daemon_bind(struct cachefiles_cache *cache, char *args)
 		return -EBUSY;
 	}
 
-	/* make sure we have copies of the tag and dirname strings */
-	if (!cache->tag) {
-		/* the tag string is released by the fops->release()
-		 * function, so we don't release it on error here */
-		cache->tag = kstrdup("CacheFiles", GFP_KERNEL);
-		if (!cache->tag)
-			return -ENOMEM;
-	}
-
-	/* add the cache */
 	return cachefiles_daemon_add_cache(cache);
 }
 
@@ -78,7 +71,7 @@ int cachefiles_daemon_bind(struct cachefiles_cache *cache, char *args)
  */
 static int cachefiles_daemon_add_cache(struct cachefiles_cache *cache)
 {
-	struct cachefiles_object *fsdef;
+	struct fscache_cache *fscache;
 	struct path path;
 	struct kstatfs stats;
 	struct dentry *graveyard, *cachedir, *root;
@@ -87,30 +80,31 @@ static int cachefiles_daemon_add_cache(struct cachefiles_cache *cache)
 
 	_enter("");
 
+	fscache = fscache_acquire_cache(cache->tag);
+	if (IS_ERR(fscache))
+		return PTR_ERR(fscache);
+
+	if (!fscache_set_cache_state_maybe(fscache,
+					   FSCACHE_CACHE_IS_NOT_PRESENT,
+					   FSCACHE_CACHE_IS_PREPARING)) {
+		pr_warn("Cache tag in use\n");
+		ret = -EBUSY;
+		goto error_preparing;
+	}
+
 	/* we want to work under the module's security ID */
 	ret = cachefiles_get_security_ID(cache);
 	if (ret < 0)
-		return ret;
+		goto error_getsec;
 
 	cachefiles_begin_secure(cache, &saved_cred);
-
-	/* allocate the root index object */
-	ret = -ENOMEM;
-
-	fsdef = kmem_cache_zalloc(cachefiles_object_jar, GFP_KERNEL);
-	if (!fsdef)
-		goto error_root_object;
-
-	atomic_set(&fsdef->usage, 1);
-	rwlock_init(&fsdef->content_map_lock);
-	fsdef->type = FSCACHE_COOKIE_TYPE_INDEX;
 
 	/* look up the directory at the root of the cache */
 	ret = kern_path(cache->rootdirname, LOOKUP_DIRECTORY, &path);
 	if (ret < 0)
 		goto error_open_root;
 
-	cache->mnt = path.mnt;
+	cache->path.mnt = path.mnt;
 	root = path.dentry;
 
 	ret = -EINVAL;
@@ -193,12 +187,7 @@ static int cachefiles_daemon_add_cache(struct cachefiles_cache *cache)
 		goto error_unsupported;
 	}
 
-	fsdef->dentry = cachedir;
-	fsdef->fscache.cookie = NULL;
-
-	ret = cachefiles_check_object_type(fsdef);
-	if (ret < 0)
-		goto error_unsupported;
+	cache->path.dentry = cachedir;
 
 	/* get the graveyard directory */
 	graveyard = cachefiles_get_directory(cache, root, "graveyard");
@@ -208,17 +197,9 @@ static int cachefiles_daemon_add_cache(struct cachefiles_cache *cache)
 	}
 
 	cache->graveyard = graveyard;
+	cache->cache = fscache;
 
-	/* publish the cache */
-	fscache_init_cache(&cache->cache,
-			   &cachefiles_cache_ops,
-			   "%s",
-			   fsdef->dentry->d_sb->s_id);
-
-	fscache_object_init(&fsdef->fscache, &fscache_fsdef_index,
-			    &cache->cache);
-
-	ret = fscache_add_cache(&cache->cache, &fsdef->fscache, cache->tag);
+	ret = fscache_add_cache(fscache, &cachefiles_cache_ops, cache);
 	if (ret < 0)
 		goto error_add_cache;
 
@@ -226,28 +207,192 @@ static int cachefiles_daemon_add_cache(struct cachefiles_cache *cache)
 	set_bit(CACHEFILES_READY, &cache->flags);
 	dput(root);
 
-	pr_info("File cache on %s registered\n", cache->cache.identifier);
+	pr_info("File cache on %s registered\n", fscache->name);
 
 	/* check how much space the cache has */
 	cachefiles_has_space(cache, 0, 0);
 	cachefiles_end_secure(cache, saved_cred);
+	_leave(" = 0 [%px]", cache->cache);
 	return 0;
 
 error_add_cache:
 	dput(cache->graveyard);
 	cache->graveyard = NULL;
 error_unsupported:
-	mntput(cache->mnt);
-	cache->mnt = NULL;
-	dput(fsdef->dentry);
-	fsdef->dentry = NULL;
+	path_put(&cache->path);
+	cache->path.dentry = NULL;
+	cache->path.mnt = NULL;
 	dput(root);
 error_open_root:
-	kmem_cache_free(cachefiles_object_jar, fsdef);
-error_root_object:
 	cachefiles_end_secure(cache, saved_cred);
+error_getsec:
+	fscache_set_cache_state(fscache, FSCACHE_CACHE_IS_NOT_PRESENT);
+error_preparing:
+	fscache_put_cache(fscache, fscache_cache_put_cache);
+	cache->cache = NULL;
 	pr_err("Failed to register: %d\n", ret);
 	return ret;
+}
+
+/*
+ * Withdraw an object.
+ */
+static void cachefiles_withdraw_object(struct cachefiles_object *object)
+{
+	struct cachefiles_cache *cache = object->cache;
+	struct fscache_cookie *cookie = object->cookie;
+	const struct cred *saved_cred;
+	bool invalidate;
+	int n_accesses;
+
+	_enter("o=%x", object->debug_id);
+
+	/* Wait for the object to become inactive.  A wakeup will be generated
+	 * when someone transitions n_accesses to 0.
+	 */
+	n_accesses = atomic_dec_return(&object->cookie->n_accesses);
+	trace_fscache_access(cookie->debug_id, refcount_read(&cookie->ref),
+			     n_accesses, fscache_access_cache_unpin);
+	wait_var_event(&object->cookie->n_accesses,
+		       atomic_read(&object->cookie->n_accesses) == 0);
+
+	/* If the netfs hadn't finished using the object, we don't know what
+	 * state the coherency is in and we should just invalidate the object;
+	 * otherwise we note whether it got retired.
+	 */
+	switch (cookie->stage) {
+	case FSCACHE_COOKIE_STAGE_DROPPED:
+		goto out;
+	case FSCACHE_COOKIE_STAGE_RELINQUISHING:
+		invalidate = test_bit(FSCACHE_COOKIE_RETIRED, &cookie->flags);
+		break;
+	default:
+		invalidate = true;
+		break;
+	}
+
+	cachefiles_begin_secure(cache, &saved_cred);
+	cachefiles_clean_up_object(object, cache, invalidate);
+	cachefiles_end_secure(cache, saved_cred);
+
+	if (cookie->stage == FSCACHE_COOKIE_STAGE_RELINQUISHING) {
+		fscache_drop_cookie(cookie, fscache_cookie_put_withdrawn);
+	} else {
+		cookie->cache_priv = NULL;
+		clear_bit(FSCACHE_COOKIE_OBJ_NEEDS_UPDATE, &cookie->flags);
+		clear_bit(FSCACHE_COOKIE_LOCAL_WRITE, &cookie->flags);
+		set_bit(FSCACHE_COOKIE_NO_DATA_TO_READ, &cookie->flags);
+		fscache_set_cookie_stage(cookie, FSCACHE_COOKIE_STAGE_QUIESCENT);
+	}
+
+out:
+	cachefiles_put_object(object, cachefiles_obj_put_detach);
+}
+
+/*
+ * Work item to withdraw cache objects.
+ */
+void cachefiles_withdrawal_work(struct work_struct *work)
+{
+	struct cachefiles_object *object =
+		container_of(work, struct cachefiles_object, work);
+
+	cachefiles_withdraw_object(object);
+}
+
+/*
+ * Mark all the objects as being out of service and move them all to the
+ * withdrawal queue.
+ */
+static void cachefiles_withdraw_objects(struct cachefiles_cache *cache)
+{
+	struct cachefiles_object *object;
+	unsigned int count = 0;
+
+	_enter("");
+
+	spin_lock(&cache->object_list_lock);
+
+	while (!list_empty(&cache->object_list)) {
+		object = list_first_entry(&cache->object_list,
+					  struct cachefiles_object, cache_link);
+		clear_bit(FSCACHE_COOKIE_IS_CACHING, &object->flags);
+		list_move(&object->cache_link, &cache->withdrawal_list);
+		queue_work(system_unbound_wq, &object->work);
+		count++;
+		if ((count & 63) == 0) {
+			spin_unlock(&cache->object_list_lock);
+			cond_resched();
+			spin_lock(&cache->object_list_lock);
+		}
+	}
+
+	spin_unlock(&cache->object_list_lock);
+	_leave(" [%u objs]", count);
+}
+
+/*
+ * Withdraw volumes.
+ */
+static void cachefiles_withdraw_volumes(struct cachefiles_cache *cache)
+{
+	struct fscache_volume *volume;
+
+	_enter("");
+
+	down_read(&fscache_addremove_sem);
+
+	list_for_each_entry(volume, &cache->cache->volumes, cache_link) {
+		if (volume->cache_priv) {
+			_debug("withdraw V=%x", volume->debug_id);
+			atomic_dec(&volume->n_accesses); /* Allow wakeups on dec-to-0 */
+			wait_var_event(&volume->n_accesses,
+				       atomic_read(&volume->n_accesses) == 0);
+			dput(volume->cache_priv);
+			volume->cache_priv = NULL;
+		}
+	}
+
+	up_read(&fscache_addremove_sem);
+
+	_leave("");
+}
+
+/*
+ * Withdraw cache objects.
+ */
+static void cachefiles_withdraw_cache(struct cachefiles_cache *cache)
+{
+	struct fscache_cache *fscache = cache->cache;
+
+	pr_info("File cache on %s unregistering\n", fscache->name);
+
+	fscache_withdraw_cache(fscache);
+
+	/* we now have to destroy all the active objects pertaining to this
+	 * cache - which we do by passing them off to thread pool to be
+	 * disposed of */
+	cachefiles_withdraw_objects(cache);
+	cachefiles_withdraw_volumes(cache);
+
+	/* make sure all outstanding data is written to disk */
+	cachefiles_sync_cache(cache);
+
+	/* wait for all extant objects to finish their outstanding operations
+	 * and go away */
+	_debug("wait for finish %u", atomic_read(&fscache->object_count));
+	wait_event(cachefiles_clearance_wq,
+		   atomic_read(&fscache->object_count) == 0);
+	_debug("cleared");
+
+	_debug("wait for clearance");
+	wait_event(cachefiles_clearance_wq, list_empty(&cache->object_list));
+
+	cache->cache = NULL;
+	fscache->ops = NULL;
+	fscache->cache_priv = NULL;
+	fscache_set_cache_state(fscache, FSCACHE_CACHE_IS_NOT_PRESENT);
+	fscache_put_cache(fscache, fscache_cache_put_withdraw);
 }
 
 /*
@@ -255,17 +400,13 @@ error_root_object:
  */
 void cachefiles_daemon_unbind(struct cachefiles_cache *cache)
 {
-	_enter("");
+	_enter("%px", cache->cache);
 
-	if (test_bit(CACHEFILES_READY, &cache->flags)) {
-		pr_info("File cache on %s unregistering\n",
-			cache->cache.identifier);
-
-		fscache_withdraw_cache(&cache->cache);
-	}
+	if (test_bit(CACHEFILES_READY, &cache->flags))
+		cachefiles_withdraw_cache(cache);
 
 	dput(cache->graveyard);
-	mntput(cache->mnt);
+	path_put(&cache->path);
 
 	kfree(cache->rootdirname);
 	kfree(cache->secctx);

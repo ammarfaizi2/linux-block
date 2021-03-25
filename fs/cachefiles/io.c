@@ -10,6 +10,7 @@
 #include <linux/file.h>
 #include <linux/uio.h>
 #include <linux/sched/mm.h>
+#include <trace/events/fscache.h>
 #include "internal.h"
 
 struct cachefiles_kiocb {
@@ -30,7 +31,7 @@ struct cachefiles_kiocb {
 static inline void cachefiles_put_kiocb(struct cachefiles_kiocb *ki)
 {
 	if (refcount_dec_and_test(&ki->ki_refcnt)) {
-		cachefiles_put_object(&ki->object->fscache, fscache_obj_put_ioreq);
+		cachefiles_put_object(ki->object, cachefiles_obj_put_ioreq);
 		fput(ki->iocb.ki_filp);
 		kfree(ki);
 	}
@@ -46,7 +47,7 @@ static void cachefiles_read_complete(struct kiocb *iocb, long ret, long ret2)
 	_enter("%ld,%ld", ret, ret2);
 
 	if (ret >= 0) {
-		if (ki->object->fscache.inval_counter == ki->inval_counter)
+		if (ki->object->cookie->inval_counter == ki->inval_counter)
 			ki->skipped += ret;
 		else
 			ret = -ESTALE;
@@ -55,7 +56,6 @@ static void cachefiles_read_complete(struct kiocb *iocb, long ret, long ret2)
 	if (ki->term_func)
 		ki->term_func(ki->term_func_priv, ret, ki->was_async);
 
-	fscache_uncount_io_operation(ki->object->fscache.cookie);
 	cachefiles_put_kiocb(ki);
 }
 
@@ -81,7 +81,6 @@ static int cachefiles_read(struct netfs_cache_resources *cres,
 	       i_size_read(file->f_inode));
 
 	__fscache_wait_for_operation(cres, FSCACHE_WANT_READ);
-	fscache_count_io_operation(object->fscache.cookie);
 	fscache_count_read();
 
 	/* If the caller asked us to seek for data before doing the read, then
@@ -104,7 +103,6 @@ static int cachefiles_read(struct netfs_cache_resources *cres,
 			 */
 			iov_iter_zero(len, iter);
 			skipped = len;
-			fscache_uncount_io_operation(object->fscache.cookie);
 			ret = 0;
 			goto presubmission_error;
 		}
@@ -135,7 +133,7 @@ static int cachefiles_read(struct netfs_cache_resources *cres,
 		ki->iocb.ki_complete = cachefiles_read_complete;
 
 	get_file(ki->iocb.ki_filp);
-	cachefiles_grab_object(&object->fscache, fscache_obj_get_ioreq);
+	cachefiles_grab_object(object, cachefiles_obj_get_ioreq);
 
 	trace_cachefiles_read(object, file_inode(file), ki->iocb.ki_pos, len - skipped);
 	old_nofs = memalloc_nofs_save();
@@ -192,8 +190,6 @@ static void cachefiles_write_complete(struct kiocb *iocb, long ret, long ret2)
 					    ki->inval_counter);
 	if (ki->term_func)
 		ki->term_func(ki->term_func_priv, ret, ki->was_async);
-
-	fscache_uncount_io_operation(ki->object->fscache.cookie);
 	cachefiles_put_kiocb(ki);
 }
 
@@ -219,7 +215,6 @@ static int cachefiles_write(struct netfs_cache_resources *cres,
 	       i_size_read(file->f_inode));
 
 	__fscache_wait_for_operation(cres, FSCACHE_WANT_WRITE);
-	fscache_count_io_operation(object->fscache.cookie);
 	fscache_count_write();
 
 	ki = kzalloc(sizeof(struct cachefiles_kiocb), GFP_KERNEL);
@@ -253,7 +248,7 @@ static int cachefiles_write(struct netfs_cache_resources *cres,
 	__sb_writers_release(inode->i_sb, SB_FREEZE_WRITE);
 
 	get_file(ki->iocb.ki_filp);
-	cachefiles_grab_object(&object->fscache, fscache_obj_get_ioreq);
+	cachefiles_grab_object(object, cachefiles_obj_get_ioreq);
 
 	trace_cachefiles_write(object, inode, ki->iocb.ki_pos, len);
 	old_nofs = memalloc_nofs_save();
@@ -302,12 +297,11 @@ static void cachefiles_end_operation(struct netfs_cache_resources *cres)
 
 	if (file)
 		fput(file);
-	__fscache_end_operation(cres);
+	fscache_end_cookie_access(fscache_cres_cookie(cres), fscache_access_io_end);
 }
 
 static const struct netfs_cache_ops cachefiles_netfs_cache_ops = {
 	//.wait_for_operation	= __fscache_wait_for_operation,
-	//.end_operation		= __fscache_end_operation,
 	.end_operation		= cachefiles_end_operation,
 	.read			= cachefiles_read,
 	.write			= cachefiles_write,
@@ -321,12 +315,11 @@ static const struct netfs_cache_ops cachefiles_netfs_cache_ops = {
  */
 bool cachefiles_open_object(struct cachefiles_object *object)
 {
-	struct cachefiles_cache *cache =
-		container_of(object->fscache.cache, struct cachefiles_cache, cache);
+	struct cachefiles_cache *cache = object->cache;
 	struct file *file;
 	struct path path;
 
-	path.mnt = cache->mnt;
+	path.mnt = cache->path.mnt;
 	path.dentry = object->dentry;
 
 	if (object->content_info == CACHEFILES_CONTENT_MAP &&
@@ -364,19 +357,16 @@ error:
 int cachefiles_begin_operation(struct netfs_cache_resources *cres)
 {
 	struct cachefiles_object *object = cachefiles_cres_object(cres);
-	struct cachefiles_cache *cache;
+	//struct cachefiles_cache *cache = object->cache;
 	//struct path path;
 	struct file *file;
 
 	_enter("");
 
-	cache = container_of(object->fscache.cache,
-			     struct cachefiles_cache, cache);
-
 #if 1 // TODO - Resolve how best to do this
-	spin_lock(&object->fscache.lock);
+	spin_lock(&object->lock);
 	file = get_file(object->backing_file);
-	spin_unlock(&object->fscache.lock);
+	spin_unlock(&object->lock);
 #else
 	path.mnt = cache->mnt;
 	path.dentry = object->dentry;

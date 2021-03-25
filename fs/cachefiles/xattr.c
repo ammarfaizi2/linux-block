@@ -18,7 +18,6 @@
 struct cachefiles_xattr {
 	__be64	object_size;	/* Actual size of the object */
 	__be64	zero_point;	/* Size after which server has no data not written by us */
-	__u8	type;		/* Type of object */
 	__u8	content;	/* Content presence (enum cachefiles_content) */
 	__u8	data[];		/* netfs coherency data */
 } __packed;
@@ -33,18 +32,19 @@ static const char cachefiles_xattr_cache[] =
 int cachefiles_check_object_type(struct cachefiles_object *object)
 {
 	struct dentry *dentry = object->dentry;
-	char type[3], xtype[3];
+	const char *type;
+	char xtype[3];
 	int ret;
 
 	ASSERT(dentry);
 	ASSERT(d_backing_inode(dentry));
 
-	if (!object->fscache.cookie)
-		strcpy(type, "C3");
+	if (!object->cookie)
+		type = "C3";
 	else
-		snprintf(type, 3, "%02x", object->fscache.cookie->type);
+		type = "DB";
 
-	_enter("%x{%s}", object->fscache.debug_id, type);
+	_enter("%x{%s}", object->debug_id, type);
 
 	/* attempt to install a type label directly */
 	ret = vfs_setxattr(&init_user_ns, dentry, cachefiles_xattr_cache, type,
@@ -109,26 +109,25 @@ int cachefiles_set_object_xattr(struct cachefiles_object *object)
 {
 	struct cachefiles_xattr *buf;
 	struct dentry *dentry = object->dentry;
-	unsigned int len = object->fscache.cookie->aux_len;
+	unsigned int len = object->cookie->aux_len;
 	int ret;
 
 	if (!dentry)
 		return -ESTALE;
 
-	_enter("%x,#%d", object->fscache.debug_id, len);
+	_enter("%x,#%d", object->debug_id, len);
 
 	buf = kmalloc(sizeof(struct cachefiles_xattr) + len, GFP_KERNEL);
 	if (!buf)
 		return -ENOMEM;
 
-	buf->object_size	= cpu_to_be64(object->fscache.cookie->object_size);
-	buf->zero_point		= cpu_to_be64(object->fscache.cookie->zero_point);
-	buf->type		= object->fscache.cookie->type;
+	buf->object_size	= cpu_to_be64(object->cookie->object_size);
+	buf->zero_point		= cpu_to_be64(object->cookie->zero_point);
 	buf->content		= object->content_info;
-	if (test_bit(FSCACHE_OBJECT_LOCAL_WRITE, &object->fscache.flags))
+	if (test_bit(FSCACHE_OBJECT_LOCAL_WRITE, &object->flags))
 		buf->content	= CACHEFILES_CONTENT_DIRTY;
 	if (len > 0)
-		memcpy(buf->data, fscache_get_aux(object->fscache.cookie), len);
+		memcpy(buf->data, fscache_get_aux(object->cookie), len);
 
 	ret = vfs_setxattr(&init_user_ns, dentry, cachefiles_xattr_cache,
 			   buf, sizeof(struct cachefiles_xattr) + len, 0);
@@ -158,8 +157,8 @@ int cachefiles_check_auxdata(struct cachefiles_object *object)
 {
 	struct cachefiles_xattr *buf;
 	struct dentry *dentry = object->dentry;
-	unsigned int len = object->fscache.cookie->aux_len, tlen;
-	const void *p = fscache_get_aux(object->fscache.cookie);
+	unsigned int len = object->cookie->aux_len, tlen;
+	const void *p = fscache_get_aux(object->cookie);
 	enum cachefiles_coherency_trace why;
 	ssize_t xlen;
 	int ret = -ESTALE;
@@ -179,20 +178,18 @@ int cachefiles_check_auxdata(struct cachefiles_object *object)
 				object,
 				"Failed to read aux with error %zd", xlen);
 		why = cachefiles_coherency_check_xattr;
-	} else if (buf->type != object->fscache.cookie->type) {
-		why = cachefiles_coherency_check_type;
 	} else if (buf->content >= nr__cachefiles_content) {
 		why = cachefiles_coherency_check_content;
 	} else if (memcmp(buf->data, p, len) != 0) {
 		why = cachefiles_coherency_check_aux;
-	} else if (be64_to_cpu(buf->object_size) != object->fscache.cookie->object_size) {
+	} else if (be64_to_cpu(buf->object_size) != object->cookie->object_size) {
 		why = cachefiles_coherency_check_objsize;
 	} else if (buf->content == CACHEFILES_CONTENT_DIRTY) {
 		// TODO: Begin conflict resolution
 		pr_warn("Dirty object in cache\n");
 		why = cachefiles_coherency_check_dirty;
 	} else {
-		object->fscache.cookie->zero_point = be64_to_cpu(buf->zero_point);
+		object->cookie->zero_point = be64_to_cpu(buf->zero_point);
 		object->content_info = buf->content;
 		why = cachefiles_coherency_check_ok;
 		ret = 0;
@@ -230,20 +227,17 @@ int cachefiles_remove_object_xattr(struct cachefiles_cache *cache,
 /*
  * Stick a marker on the cache object to indicate that it's dirty.
  */
-int cachefiles_prepare_to_write(struct fscache_object *_object)
+int cachefiles_prepare_to_write(struct fscache_cookie *cookie)
 {
-	int ret;
+	struct cachefiles_object *object = cookie->cache_priv;
+	struct cachefiles_cache *cache = object->cache;
 	const struct cred *saved_cred;
-	struct cachefiles_object *object =
-		container_of(_object, struct cachefiles_object, fscache);
-	struct cachefiles_cache *cache =
-		container_of(_object->cache, struct cachefiles_cache, cache);
+	int ret;
 
-	_enter("c=%08x", object->fscache.cookie->debug_id);
+	_enter("c=%08x", cookie->debug_id);
 
 	cachefiles_begin_secure(cache, &saved_cred);
 	ret = cachefiles_set_object_xattr(object);
 	cachefiles_end_secure(cache, saved_cred);
-
 	return ret;
 }

@@ -118,8 +118,7 @@ enum netfs_read_source cachefiles_prepare_read(struct netfs_read_subrequest *sub
 {
 	struct netfs_read_request *rreq = subreq->rreq;
 	struct cachefiles_object *object = cachefiles_cres_object(&rreq->cache_resources);
-	struct cachefiles_cache *cache =
-		container_of(object->fscache.cache, struct cachefiles_cache, cache);
+	struct cachefiles_cache *cache = object->cache;
 	loff_t start = subreq->start, len = subreq->len, boundary;
 	long granule, next, limit;
 
@@ -180,11 +179,11 @@ maybe_on_server:
 	/* If the start of the request is beyond the original EOF of the file
 	 * on the server then it's not going to be found on the server.
 	 */
-	if (start >= object->fscache.cookie->zero_point)
+	if (start >= object->cookie->zero_point)
 		goto zero_pages;
 	goto on_server;
 maybe_on_server_nocache:
-	if (start >= object->fscache.cookie->zero_point)
+	if (start >= object->cookie->zero_point)
 		goto zero_pages_nocache;
 	goto on_server_nocache;
 on_server:
@@ -255,7 +254,7 @@ u8 *cachefiles_new_content_map(struct cachefiles_object *object,
 
 	_enter("");
 
-	if (!(object->fscache.cookie->advice & FSCACHE_ADV_SINGLE_CHUNK)) {
+	if (!(object->cookie->advice & FSCACHE_ADV_SINGLE_CHUNK)) {
 		/* Single-chunk object.  The presence or absence of the content
 		 * map xattr is sufficient indication.
 		 */
@@ -264,7 +263,7 @@ u8 *cachefiles_new_content_map(struct cachefiles_object *object,
 	}
 
 	/* Granular object. */
-	size = cachefiles_map_size(object->fscache.cookie->object_size);
+	size = cachefiles_map_size(object->cookie->object_size);
 	map = kzalloc(size, GFP_KERNEL);
 	if (!map)
 		return ERR_PTR(-ENOMEM);
@@ -283,7 +282,7 @@ void cachefiles_mark_content_map(struct cachefiles_object *object,
 
 	read_lock_bh(&object->content_map_lock);
 
-	if (object->fscache.inval_counter != inval_counter) {
+	if (object->cookie->inval_counter != inval_counter) {
 		_debug("inval mark");
 	} else {
 		pgoff_t granule;
@@ -304,7 +303,7 @@ void cachefiles_mark_content_map(struct cachefiles_object *object,
 		if (object->content_info != CACHEFILES_CONTENT_MAP) {
 			object->content_info = CACHEFILES_CONTENT_MAP;
 			set_bit(FSCACHE_COOKIE_OBJ_NEEDS_UPDATE,
-				&object->fscache.cookie->flags);
+				&object->cookie->flags);
 		}
 	}
 
@@ -352,10 +351,10 @@ void cachefiles_expand_content_map(struct cachefiles_object *object, loff_t i_si
 void cachefiles_shorten_content_map(struct cachefiles_object *object,
 				    loff_t new_size)
 {
-	struct fscache_cookie *cookie = object->fscache.cookie;
+	struct fscache_cookie *cookie = object->cookie;
 	ssize_t granules_needed, bits_needed, bytes_needed;
 
-	if (object->fscache.cookie->advice & FSCACHE_ADV_SINGLE_CHUNK)
+	if (object->cookie->advice & FSCACHE_ADV_SINGLE_CHUNK)
 		return;
 
 	write_lock_bh(&object->content_map_lock);
@@ -391,19 +390,18 @@ void cachefiles_shorten_content_map(struct cachefiles_object *object,
  */
 bool cachefiles_load_content_map(struct cachefiles_object *object)
 {
-	struct cachefiles_cache *cache = container_of(object->fscache.cache,
-						      struct cachefiles_cache, cache);
+	struct cachefiles_cache *cache = object->cache;
 	const struct cred *saved_cred;
 	ssize_t got;
 	size_t size;
 	u8 *map = NULL;
 
 	_enter("c=%08x,%llx",
-	       object->fscache.cookie->debug_id,
-	       object->fscache.cookie->object_size);
+	       object->cookie->debug_id,
+	       object->cookie->object_size);
 
 	object->content_info = CACHEFILES_CONTENT_NO_DATA;
-	if (object->fscache.cookie->advice & FSCACHE_ADV_SINGLE_CHUNK) {
+	if (object->cookie->advice & FSCACHE_ADV_SINGLE_CHUNK) {
 		/* Single-chunk object.  The presence or absence of the content
 		 * map xattr is sufficient indication.
 		 */
@@ -414,7 +412,7 @@ bool cachefiles_load_content_map(struct cachefiles_object *object)
 		 * bytes granules covers 16MiB of file space.  At that, 512B
 		 * will cover 1GiB.
 		 */
-		size = cachefiles_map_size(object->fscache.cookie->object_size);
+		size = cachefiles_map_size(object->cookie->object_size);
 		map = kzalloc(size, GFP_KERNEL);
 		if (!map)
 			return false;
@@ -453,7 +451,7 @@ void cachefiles_save_content_map(struct cachefiles_object *object)
 	size_t size;
 	u8 *map;
 
-	_enter("c=%08x", object->fscache.cookie->debug_id);
+	_enter("c=%08x", object->cookie->debug_id);
 
 	if (object->content_info != CACHEFILES_CONTENT_MAP)
 		return;
@@ -477,6 +475,7 @@ void cachefiles_save_content_map(struct cachefiles_object *object)
 	_leave(" = %zd", ret);
 }
 
+#if 0 // TODO remove
 /*
  * Display object information in proc.
  */
@@ -485,7 +484,7 @@ int cachefiles_display_object(struct seq_file *m, struct fscache_object *_object
 	struct cachefiles_object *object =
 		container_of(_object, struct cachefiles_object, fscache);
 
-	if (object->fscache.cookie->type == FSCACHE_COOKIE_TYPE_INDEX) {
+	if (object->cookie->type == FSCACHE_COOKIE_TYPE_INDEX) {
 		if (object->content_info != CACHEFILES_CONTENT_NO_DATA)
 			seq_printf(m, " ???%u???", object->content_info);
 	} else {
@@ -517,3 +516,4 @@ int cachefiles_display_object(struct seq_file *m, struct fscache_object *_object
 	seq_putc(m, '\n');
 	return 0;
 }
+#endif

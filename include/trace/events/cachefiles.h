@@ -19,9 +19,13 @@
 #define __CACHEFILES_DECLARE_TRACE_ENUMS_ONCE_ONLY
 
 enum cachefiles_obj_ref_trace {
-	cachefiles_obj_put_wait_retry = fscache_obj_ref__nr_traces,
-	cachefiles_obj_put_wait_timeo,
-	cachefiles_obj_ref__nr_traces
+	cachefiles_obj_get_ioreq,
+	cachefiles_obj_new,
+	cachefiles_obj_put_alloc_fail,
+	cachefiles_obj_put_detach,
+	cachefiles_obj_put_ioreq,
+	cachefiles_obj_see_lookup_cookie,
+	cachefiles_obj_see_lookup_scrapped,
 };
 
 enum cachefiles_coherency_trace {
@@ -31,7 +35,6 @@ enum cachefiles_coherency_trace {
 	cachefiles_coherency_check_len,
 	cachefiles_coherency_check_objsize,
 	cachefiles_coherency_check_ok,
-	cachefiles_coherency_check_type,
 	cachefiles_coherency_check_xattr,
 	cachefiles_coherency_set_fail,
 	cachefiles_coherency_set_ok,
@@ -41,6 +44,13 @@ enum cachefiles_trunc_trace {
 	cachefiles_trunc_clear,
 	cachefiles_trunc_expand_tmpfile,
 	cachefiles_trunc_shrink,
+};
+
+enum fscache_why_object_killed {
+	FSCACHE_OBJECT_IS_STALE,
+	FSCACHE_OBJECT_NO_SPACE,
+	FSCACHE_OBJECT_WAS_RETIRED,
+	FSCACHE_OBJECT_WAS_CULLED,
 };
 
 #endif
@@ -55,25 +65,13 @@ enum cachefiles_trunc_trace {
 	E_(FSCACHE_OBJECT_WAS_CULLED,	"was_culled")
 
 #define cachefiles_obj_ref_traces					\
-	EM(fscache_obj_get_attach,		"GET attach")		\
-	EM(fscache_obj_get_exists,		"GET exists")		\
-	EM(fscache_obj_get_inval,		"GET inval")		\
-	EM(fscache_obj_get_ioreq,		"GET ioreq")		\
-	EM(fscache_obj_get_wait,		"GET wait")		\
-	EM(fscache_obj_get_withdraw,		"GET withdraw")		\
-	EM(fscache_obj_new,			"NEW obj")		\
-	EM(fscache_obj_put,			"PUT general")		\
-	EM(fscache_obj_put_alloc_dup,		"PUT alloc_dup")	\
-	EM(fscache_obj_put_alloc_fail,		"PUT alloc_fail")	\
-	EM(fscache_obj_put_attach_fail,		"PUT attach_fail")	\
-	EM(fscache_obj_put_drop_child,		"PUT drop_child")	\
-	EM(fscache_obj_put_drop_obj,		"PUT drop_obj")		\
-	EM(fscache_obj_put_inval,		"PUT inval")		\
-	EM(fscache_obj_put_ioreq,		"PUT ioreq")		\
-	EM(fscache_obj_put_withdraw,		"PUT withdraw")		\
-	EM(fscache_obj_put_lookup_fail,		"PUT lookup_fail")	\
-	EM(cachefiles_obj_put_wait_retry,	"PUT wait_retry")	\
-	E_(cachefiles_obj_put_wait_timeo,	"PUT wait_timeo")
+	EM(cachefiles_obj_get_ioreq,		"GET ioreq")		\
+	EM(cachefiles_obj_new,			"NEW obj")		\
+	EM(cachefiles_obj_put_alloc_fail,	"PUT alloc_fail")	\
+	EM(cachefiles_obj_put_detach,		"PUT detach")		\
+	EM(cachefiles_obj_put_ioreq,		"PUT ioreq")		\
+	EM(cachefiles_obj_see_lookup_cookie,	"SEE lookup_cookie")	\
+	E_(cachefiles_obj_see_lookup_scrapped,	"SEE lookup_scrapped")
 
 #define cachefiles_coherency_traces					\
 	EM(cachefiles_coherency_check_aux,	"BAD aux ")		\
@@ -82,7 +80,6 @@ enum cachefiles_trunc_trace {
 	EM(cachefiles_coherency_check_len,	"BAD len ")		\
 	EM(cachefiles_coherency_check_objsize,	"BAD osiz")		\
 	EM(cachefiles_coherency_check_ok,	"OK      ")		\
-	EM(cachefiles_coherency_check_type,	"BAD type")		\
 	EM(cachefiles_coherency_check_xattr,	"BAD xatt")		\
 	EM(cachefiles_coherency_set_fail,	"SET fail")		\
 	E_(cachefiles_coherency_set_ok,		"SET ok  ")
@@ -116,12 +113,12 @@ cachefiles_trunc_traces;
 
 
 TRACE_EVENT(cachefiles_ref,
-	    TP_PROTO(struct cachefiles_object *obj,
-		     struct fscache_cookie *cookie,
-		     enum cachefiles_obj_ref_trace why,
-		     int usage),
+	    TP_PROTO(unsigned int object_debug_id,
+		     unsigned int cookie_debug_id,
+		     int usage,
+		     enum cachefiles_obj_ref_trace why),
 
-	    TP_ARGS(obj, cookie, why, usage),
+	    TP_ARGS(object_debug_id, cookie_debug_id, usage, why),
 
 	    /* Note that obj may be NULL */
 	    TP_STRUCT__entry(
@@ -132,8 +129,8 @@ TRACE_EVENT(cachefiles_ref,
 			     ),
 
 	    TP_fast_assign(
-		    __entry->obj	= obj->fscache.debug_id;
-		    __entry->cookie	= cookie->debug_id;
+		    __entry->obj	= object_debug_id;
+		    __entry->cookie	= cookie_debug_id;
 		    __entry->usage	= usage;
 		    __entry->why	= why;
 			   ),
@@ -157,7 +154,7 @@ TRACE_EVENT(cachefiles_lookup,
 			     ),
 
 	    TP_fast_assign(
-		    __entry->obj	= obj->fscache.debug_id;
+		    __entry->obj	= obj->debug_id;
 		    __entry->de		= de;
 		    __entry->inode	= inode;
 			   ),
@@ -179,7 +176,7 @@ TRACE_EVENT(cachefiles_mkdir,
 			     ),
 
 	    TP_fast_assign(
-		    __entry->obj	= obj->fscache.debug_id;
+		    __entry->obj	= obj->debug_id;
 		    __entry->de		= de;
 		    __entry->ret	= ret;
 			   ),
@@ -201,7 +198,7 @@ TRACE_EVENT(cachefiles_create,
 			     ),
 
 	    TP_fast_assign(
-		    __entry->obj	= obj->fscache.debug_id;
+		    __entry->obj	= obj->debug_id;
 		    __entry->de		= de;
 		    __entry->ret	= ret;
 			   ),
@@ -225,7 +222,7 @@ TRACE_EVENT(cachefiles_unlink,
 			     ),
 
 	    TP_fast_assign(
-		    __entry->obj	= obj->fscache.debug_id;
+		    __entry->obj	= obj->debug_id;
 		    __entry->de		= de;
 		    __entry->why	= why;
 			   ),
@@ -252,7 +249,7 @@ TRACE_EVENT(cachefiles_rename,
 			     ),
 
 	    TP_fast_assign(
-		    __entry->obj	= obj->fscache.debug_id;
+		    __entry->obj	= obj->debug_id;
 		    __entry->de		= de;
 		    __entry->to		= to;
 		    __entry->why	= why;
@@ -276,7 +273,7 @@ TRACE_EVENT(cachefiles_mark_active,
 			     ),
 
 	    TP_fast_assign(
-		    __entry->obj	= obj->fscache.debug_id;
+		    __entry->obj	= obj->debug_id;
 		    __entry->de		= de;
 			   ),
 
@@ -299,7 +296,7 @@ TRACE_EVENT(cachefiles_mark_inactive,
 			     ),
 
 	    TP_fast_assign(
-		    __entry->obj	= obj->fscache.debug_id;
+		    __entry->obj	= obj->debug_id;
 		    __entry->de		= de;
 		    __entry->inode	= inode;
 			   ),
@@ -323,7 +320,7 @@ TRACE_EVENT(cachefiles_mark_buried,
 			     ),
 
 	    TP_fast_assign(
-		    __entry->obj	= obj->fscache.debug_id;
+		    __entry->obj	= obj->debug_id;
 		    __entry->de		= de;
 		    __entry->why	= why;
 			   ),
@@ -350,7 +347,7 @@ TRACE_EVENT(cachefiles_coherency,
 			     ),
 
 	    TP_fast_assign(
-		    __entry->obj	= obj->fscache.debug_id;
+		    __entry->obj	= obj->debug_id;
 		    __entry->why	= why;
 		    __entry->content	= content;
 		    __entry->ino	= ino;
@@ -379,7 +376,7 @@ TRACE_EVENT(cachefiles_read,
 			     ),
 
 	    TP_fast_assign(
-		    __entry->obj	= obj->fscache.debug_id;
+		    __entry->obj	= obj->debug_id;
 		    __entry->backer	= backer->i_ino;
 		    __entry->start	= start;
 		    __entry->len	= len;
@@ -408,7 +405,7 @@ TRACE_EVENT(cachefiles_write,
 			     ),
 
 	    TP_fast_assign(
-		    __entry->obj	= obj->fscache.debug_id;
+		    __entry->obj	= obj->debug_id;
 		    __entry->backer	= backer->i_ino;
 		    __entry->start	= start;
 		    __entry->len	= len;
@@ -436,7 +433,7 @@ TRACE_EVENT(cachefiles_trunc,
 			     ),
 
 	    TP_fast_assign(
-		    __entry->obj	= obj->fscache.debug_id;
+		    __entry->obj	= obj->debug_id;
 		    __entry->backer	= backer->i_ino;
 		    __entry->from	= from;
 		    __entry->to		= to;
@@ -462,7 +459,7 @@ TRACE_EVENT(cachefiles_tmpfile,
 			     ),
 
 	    TP_fast_assign(
-		    __entry->obj	= obj->fscache.debug_id;
+		    __entry->obj	= obj->debug_id;
 		    __entry->backer	= backer->i_ino;
 			   ),
 
@@ -482,7 +479,7 @@ TRACE_EVENT(cachefiles_link,
 			     ),
 
 	    TP_fast_assign(
-		    __entry->obj	= obj->fscache.debug_id;
+		    __entry->obj	= obj->debug_id;
 		    __entry->backer	= backer->i_ino;
 			   ),
 

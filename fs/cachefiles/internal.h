@@ -44,73 +44,40 @@ enum cachefiles_content {
 	nr__cachefiles_content
 };
 
-enum fscache_object_stage {
-	FSCACHE_OBJECT_STAGE_INITIAL,
-	FSCACHE_OBJECT_STAGE_LOOKING_UP,
-	FSCACHE_OBJECT_STAGE_UNCREATED,		/* Needs creation */
-	FSCACHE_OBJECT_STAGE_LIVE_TEMP,		/* Temporary object created, can be no hits */
-	FSCACHE_OBJECT_STAGE_LIVE_EMPTY,	/* Object was freshly created, can be no hits */
-	FSCACHE_OBJECT_STAGE_LIVE,		/* Object is populated */
-	FSCACHE_OBJECT_STAGE_DESTROYING,
-	FSCACHE_OBJECT_STAGE_DEAD,
+enum cachefiles_object_stage {
+	CACHEFILES_OBJECT_STAGE_INITIAL,
+	CACHEFILES_OBJECT_STAGE_LOOKING_UP,
+	CACHEFILES_OBJECT_STAGE_UNCREATED,	/* Needs creation */
+	CACHEFILES_OBJECT_STAGE_LIVE_TEMP,	/* Temporary object created, can be no hits */
+	CACHEFILES_OBJECT_STAGE_LIVE_EMPTY,	/* Object was freshly created, can be no hits */
+	CACHEFILES_OBJECT_STAGE_LIVE,		/* Object is populated */
+	CACHEFILES_OBJECT_STAGE_DESTROYING,
+	CACHEFILES_OBJECT_STAGE_DEAD,
 };
-
-/*
- * on-disk cache file or index handle
- */
-struct fscache_object {
-	int			debug_id;	/* debugging ID */
-	int			n_children;	/* number of child objects */
-	unsigned int		inval_counter;	/* Number of invalidations applied */
-	enum fscache_object_stage stage;	/* Stage of object's lifecycle */
-	spinlock_t		lock;		/* state and operations lock */
-
-	unsigned long		flags;
-#define FSCACHE_OBJECT_LOCAL_WRITE	1	/* T if the object is being modified locally */
-#define FSCACHE_OBJECT_NEEDS_INVAL	8	/* T if object needs invalidation */
-
-	struct list_head	cache_link;	/* link in cache->object_list */
-	struct fscache_cache	*cache;		/* cache that supplied this object */
-	struct fscache_cookie	*cookie;	/* netfs's file/index object */
-#ifdef CONFIG_FSCACHE_OBJECT_LIST
-	struct rb_node		objlist_link;	/* link in global object list */
-#endif
-};
-
-extern void fscache_object_init(struct fscache_object *, struct fscache_cookie *,
-				struct fscache_cache *);
-extern void fscache_object_destroy(struct fscache_object *);
-
-static inline bool fscache_cache_is_broken(struct fscache_object *object)
-{
-	return test_bit(FSCACHE_IOERROR, &object->cache->flags);
-}
-
-extern void fscache_object_retrying_stale(struct fscache_object *object);
-
-enum fscache_why_object_killed {
-	FSCACHE_OBJECT_IS_STALE,
-	FSCACHE_OBJECT_NO_SPACE,
-	FSCACHE_OBJECT_WAS_RETIRED,
-	FSCACHE_OBJECT_WAS_CULLED,
-};
-extern void fscache_object_mark_killed(struct fscache_object *object,
-				       enum fscache_why_object_killed why);
 
 /*
  * node records
  */
 struct cachefiles_object {
-	struct fscache_object		fscache;	/* fscache handle */
+	int				debug_id;	/* debugging ID */
+	enum cachefiles_object_stage	stage;		/* Stage of object's lifecycle */
+	spinlock_t			lock;		/* state and operations lock */
+
+	struct list_head		cache_link;	/* Link in cache->*_list */
+	struct cachefiles_cache		*cache;		/* cache that supplied this object */
+	struct fscache_cookie		*cookie;	/* netfs's file/index object */
 	struct dentry			*dentry;	/* the file/dir representing this object */
 	struct dentry			*old;		/* backing file */
 	struct file			*backing_file;	/* File open on backing storage */
+	struct work_struct		work;		/* Worker to withdraw/seal object */
 	loff_t				i_size;		/* object size */
 	atomic_t			usage;		/* object usage count */
 	unsigned long			flags;
 #define CACHEFILES_OBJECT_USING_TMPFILE	0		/* Object has a tmpfile that need linking */
-	uint8_t				type;		/* object type */
+#define FSCACHE_OBJECT_LOCAL_WRITE	1	/* T if the object is being modified locally */
+#define FSCACHE_OBJECT_NEEDS_INVAL	8	/* T if object needs invalidation */
 	bool				new;		/* T if object new */
+	u8				key_hash;	/* Hash of object key */
 
 	/* Map of the content blocks in the object */
 	enum cachefiles_content		content_info:8;	/* Info about content presence */
@@ -126,10 +93,13 @@ extern struct kmem_cache *cachefiles_object_jar;
  * Cache files cache definition
  */
 struct cachefiles_cache {
-	struct fscache_cache		cache;		/* FS-Cache record */
-	struct vfsmount			*mnt;		/* mountpoint holding the cache */
+	struct fscache_cache		*cache;		/* Cache cookie */
+	struct path			path;		/* Path to the cache */
 	struct dentry			*graveyard;	/* directory into which dead objects go */
 	struct file			*cachefilesd;	/* manager daemon handle */
+	struct list_head		object_list;	/* List of active objects */
+	struct list_head		withdrawal_list; /* List of objects to be withdrawn */
+	spinlock_t			object_list_lock;
 	const struct cred		*cache_cred;	/* security override for accessing cache */
 	struct mutex			daemon_mutex;	/* command serialisation mutex */
 	wait_queue_head_t		daemon_pollwq;	/* poll waitqueue for daemon */
@@ -165,9 +135,7 @@ struct cachefiles_cache {
 static inline
 struct cachefiles_object *cachefiles_cres_object(struct netfs_cache_resources *cres)
 {
-	return container_of(fscache_cres_object(cres),
-			    struct cachefiles_object, fscache);
-
+	return fscache_cres_cookie(cres)->cache_priv;
 }
 
 /*
@@ -182,8 +150,11 @@ static inline void cachefiles_state_changed(struct cachefiles_cache *cache)
 /*
  * bind.c
  */
+extern wait_queue_head_t cachefiles_clearance_wq;
+
 extern int cachefiles_daemon_bind(struct cachefiles_cache *cache, char *args);
 extern void cachefiles_daemon_unbind(struct cachefiles_cache *cache);
+extern void cachefiles_withdrawal_work(struct work_struct *work);
 
 /*
  * content-map.c
@@ -202,7 +173,6 @@ extern int cachefiles_prepare_write(struct netfs_cache_resources *cres,
 				    loff_t *_start, size_t *_len, loff_t i_size);
 extern bool cachefiles_load_content_map(struct cachefiles_object *object);
 extern void cachefiles_save_content_map(struct cachefiles_object *object);
-extern int cachefiles_display_object(struct seq_file *m, struct fscache_object *object);
 
 /*
  * daemon.c
@@ -216,13 +186,16 @@ extern int cachefiles_has_space(struct cachefiles_cache *cache,
  * interface.c
  */
 extern const struct fscache_cache_ops cachefiles_cache_ops;
-extern struct fscache_object *cachefiles_grab_object(struct fscache_object *_object,
-						     enum fscache_obj_ref_trace why);
-extern void cachefiles_put_object(struct fscache_object *_object,
-				  enum fscache_obj_ref_trace why);
-
-void cachefiles_put_object(struct fscache_object *_object,
-			   enum fscache_obj_ref_trace why);
+extern void cachefiles_see_object(struct cachefiles_object *object,
+				  enum cachefiles_obj_ref_trace why);
+extern struct cachefiles_object *cachefiles_grab_object(struct cachefiles_object *object,
+							enum cachefiles_obj_ref_trace why);
+extern void cachefiles_put_object(struct cachefiles_object *object,
+				  enum cachefiles_obj_ref_trace why);
+extern void cachefiles_sync_cache(struct cachefiles_cache *cache);
+extern void cachefiles_clean_up_object(struct cachefiles_object *object,
+				       struct cachefiles_cache *cache,
+				       bool invalidate);
 
 /*
  * io.c
@@ -232,17 +205,15 @@ extern bool cachefiles_open_object(struct cachefiles_object *obj);
 /*
  * key.c
  */
-extern char *cachefiles_cook_key(const u8 *raw, int keylen, uint8_t type);
+extern char *cachefiles_cook_key(const u8 *raw, int keylen, u8 *_sum);
 
 /*
  * namei.c
  */
-extern void cachefiles_unmark_inode_in_use(struct cachefiles_object *object,
-				    struct dentry *dentry);
+extern void cachefiles_unmark_inode_in_use(struct cachefiles_object *object);
 extern int cachefiles_delete_object(struct cachefiles_cache *cache,
 				    struct cachefiles_object *object);
-extern bool cachefiles_walk_to_object(struct cachefiles_object *parent,
-				      struct cachefiles_object *object,
+extern bool cachefiles_walk_to_object(struct cachefiles_object *object,
 				      const char *key);
 extern struct dentry *cachefiles_get_directory(struct cachefiles_cache *cache,
 					       struct dentry *dir,
@@ -318,7 +289,7 @@ extern int cachefiles_set_object_xattr(struct cachefiles_object *object);
 extern int cachefiles_check_auxdata(struct cachefiles_object *object);
 extern int cachefiles_remove_object_xattr(struct cachefiles_cache *cache,
 					  struct dentry *dentry);
-extern int cachefiles_prepare_to_write(struct fscache_object *object);
+extern int cachefiles_prepare_to_write(struct fscache_cookie *cookie);
 
 /*
  * error handling
@@ -327,7 +298,7 @@ extern int cachefiles_prepare_to_write(struct fscache_object *object);
 #define cachefiles_io_error(___cache, FMT, ...)		\
 do {							\
 	pr_err("I/O Error: " FMT"\n", ##__VA_ARGS__);	\
-	fscache_io_error(&(___cache)->cache);		\
+	fscache_io_error((___cache)->cache);		\
 	set_bit(CACHEFILES_DEAD, &(___cache)->flags);	\
 } while (0)
 
@@ -335,10 +306,9 @@ do {							\
 do {									\
 	struct cachefiles_cache *___cache;				\
 									\
-	___cache = container_of((object)->fscache.cache,		\
-				struct cachefiles_cache, cache);	\
+	___cache = (object)->cache;					\
 	cachefiles_io_error(___cache, FMT " [o=%08x]", ##__VA_ARGS__,	\
-			    object->fscache.debug_id);			\
+			    (object)->debug_id);			\
 } while (0)
 
 
@@ -346,7 +316,7 @@ do {									\
  * debug tracing
  */
 #define dbgprintk(FMT, ...) \
-	printk(KERN_DEBUG "[%-6.6s] "FMT"\n", current->comm, ##__VA_ARGS__)
+	printk("[%-6.6s] "FMT"\n", current->comm, ##__VA_ARGS__)
 
 #define kenter(FMT, ...) dbgprintk("==> %s("FMT")", __func__, ##__VA_ARGS__)
 #define kleave(FMT, ...) dbgprintk("<== %s()"FMT"", __func__, ##__VA_ARGS__)

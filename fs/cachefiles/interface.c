@@ -10,7 +10,10 @@
 #include <linux/xattr.h>
 #include <linux/file.h>
 #include <linux/falloc.h>
+#include <trace/events/fscache.h>
 #include "internal.h"
+
+static atomic_t cachefiles_object_debug_id;
 
 static int cachefiles_attr_changed(struct cachefiles_object *object);
 
@@ -19,40 +22,49 @@ static int cachefiles_attr_changed(struct cachefiles_object *object);
  * Eats the caller's ref on parent.
  */
 static
-struct fscache_object *cachefiles_alloc_object(struct fscache_cookie *cookie,
-					       struct fscache_cache *_cache,
-					       struct fscache_object *parent)
+struct cachefiles_object *cachefiles_alloc_object(struct fscache_cookie *cookie)
 {
+	struct fscache_cache *fscache = cookie->volume->cache;
 	struct cachefiles_object *object;
-	struct cachefiles_cache *cache;
+	struct cachefiles_cache *cache = fscache->cache_priv;
+	int n_accesses;
 
-	cache = container_of(_cache, struct cachefiles_cache, cache);
-
-	_enter("{%s},%x,", cache->cache.identifier, cookie->debug_id);
+	_enter("{%s},%x,", fscache->name, cookie->debug_id);
 
 	object = kmem_cache_zalloc(cachefiles_object_jar, cachefiles_gfp);
-	if (!object) {
-		cachefiles_put_object(parent, fscache_obj_put_alloc_fail);
+	if (!object)
 		return NULL;
-	}
 
 	rwlock_init(&object->content_map_lock);
-	fscache_object_init(&object->fscache, cookie, &cache->cache);
-	object->fscache.parent = parent;
-	object->fscache.stage = FSCACHE_OBJECT_STAGE_LOOKING_UP;
+	object->stage = CACHEFILES_OBJECT_STAGE_LOOKING_UP;
 	atomic_set(&object->usage, 1);
 
-	object->type = cookie->type;
-	trace_cachefiles_ref(object, cookie,
-			     (enum cachefiles_obj_ref_trace)fscache_obj_new, 1);
-	return &object->fscache;
+	spin_lock_init(&object->lock);
+	INIT_LIST_HEAD(&object->cache_link);
+	INIT_WORK(&object->work, cachefiles_withdrawal_work);
+	object->cache = cache;
+	object->debug_id = atomic_inc_return(&cachefiles_object_debug_id);
+	object->cookie = fscache_get_cookie(cookie, fscache_cookie_get_attach_object);
+
+	atomic_inc(&fscache->object_count);
+	trace_cachefiles_ref(object->debug_id, cookie->debug_id, 1,
+			     cachefiles_obj_new);
+
+	/* Get a ref on the cookie and keep its n_accesses counter raised by 1
+	 * to prevent wakeups from transitioning it to 0 until we're
+	 * withdrawing caching services from it.
+	 */
+	n_accesses = atomic_inc_return(&cookie->n_accesses);
+	trace_fscache_access(cookie->debug_id, refcount_read(&cookie->ref),
+			     n_accesses, fscache_access_cache_pin);
+	return object;
 }
 
 /*
  * Prepare data for use in lookup.  This involves cooking the binary key into
  * something that can be used as a filename.
  */
-static void *cachefiles_prepare_lookup_data(struct fscache_object *object)
+static char *cachefiles_prepare_lookup_data(struct cachefiles_object *object)
 {
 	struct fscache_cookie *cookie = object->cookie;
 	unsigned keylen;
@@ -76,8 +88,8 @@ static void *cachefiles_prepare_lookup_data(struct fscache_object *object)
 	((char *)buffer)[keylen + 3] = 0;
 	((char *)buffer)[keylen + 4] = 0;
 
-	/* turn the raw key into something that can work with as a filename */
-	key = cachefiles_cook_key(buffer, keylen + 2, cookie->type);
+	/* turn the raw key into something that we can work with as a filename */
+	key = cachefiles_cook_key(buffer, keylen + 2, &object->key_hash);
 	kfree(buffer);
 	if (!key)
 		goto nomem;
@@ -86,69 +98,88 @@ static void *cachefiles_prepare_lookup_data(struct fscache_object *object)
 	return key;
 
 nomem:
-	return ERR_PTR(-ENOMEM);
+	return NULL;
 }
 
 /*
  * Attempt to look up the nominated node in this cache
  */
-static bool cachefiles_lookup_object(struct fscache_object *_object,
-				     void *lookup_data)
+static bool cachefiles_lookup_cookie(struct fscache_cookie *cookie)
 {
-	struct cachefiles_object *parent, *object;
-	struct cachefiles_cache *cache;
+	struct cachefiles_object *object;
+	struct cachefiles_cache *cache = cookie->volume->cache->cache_priv;
 	const struct cred *saved_cred;
-	char *lookup_key = lookup_data;
-	bool success;
+	char *lookup_key;
+	bool success, bound = false;
 
-	_enter("{OBJ%x}", _object->debug_id);
+	object = cachefiles_alloc_object(cookie);
+	if (!object)
+		goto fail;
 
-	cache = container_of(_object->cache, struct cachefiles_cache, cache);
-	parent = container_of(_object->parent,
-			      struct cachefiles_object, fscache);
-	object = container_of(_object, struct cachefiles_object, fscache);
+	_enter("{OBJ%x}", object->debug_id);
 
-	ASSERTCMP(lookup_key, !=, NULL);
+	lookup_key = cachefiles_prepare_lookup_data(object);
+	if (!lookup_key)
+		goto fail_obj;
 
 	/* look up the key, creating any missing bits */
 	cachefiles_begin_secure(cache, &saved_cred);
-	success = cachefiles_walk_to_object(parent, object, lookup_key);
+	success = cachefiles_walk_to_object(object, lookup_key);
 	cachefiles_end_secure(cache, saved_cred);
+	kfree(lookup_key);
 
-	/* polish off by setting the attributes of non-index files */
-	if (success &&
-	    object->fscache.cookie->type != FSCACHE_COOKIE_TYPE_INDEX)
-		cachefiles_attr_changed(object);
+	if (!success)
+		goto fail_obj;
 
-	_leave(" [%d]", success);
-	return success;
+	spin_lock(&cookie->lock);
+	if (cookie->stage == FSCACHE_COOKIE_STAGE_LOOKING_UP) {
+		cachefiles_see_object(object, cachefiles_obj_see_lookup_cookie);
+		cookie->cache_priv = object;
+		bound = true;
+	}
+	spin_unlock(&cookie->lock);
+
+	if (!bound)
+		goto fail_clean;
+
+	spin_lock(&cache->object_list_lock);
+	list_add(&object->cache_link, &cache->object_list);
+	spin_unlock(&cache->object_list_lock);
+	cachefiles_attr_changed(object);
+	_leave(" = t");
+	return true;
+
+fail_clean:
+	cachefiles_see_object(object, cachefiles_obj_see_lookup_scrapped);
+	kdebug("scrapped c=%08x", cookie->debug_id);
+	cachefiles_clean_up_object(object, cache, false);
+fail_obj:
+	cachefiles_put_object(object, cachefiles_obj_put_alloc_fail);
+fail:
+	return false;
 }
 
-static void cachefiles_free_lookup_data(struct fscache_object *object, void *lookup_data)
+/*
+ * Note that an object has been seen.
+ */
+void cachefiles_see_object(struct cachefiles_object *object,
+			   enum cachefiles_obj_ref_trace why)
 {
-	kfree(lookup_data);
+	trace_cachefiles_ref(object->debug_id, object->cookie->debug_id,
+			     atomic_read(&object->usage), why);
 }
 
 /*
  * increment the usage count on an inode object (may fail if unmounting)
  */
-struct fscache_object *cachefiles_grab_object(struct fscache_object *_object,
-					      enum fscache_obj_ref_trace why)
+struct cachefiles_object *cachefiles_grab_object(struct cachefiles_object *object,
+						 enum cachefiles_obj_ref_trace why)
 {
-	struct cachefiles_object *object =
-		container_of(_object, struct cachefiles_object, fscache);
 	int u;
 
-	_enter("{OBJ%x,%d}", _object->debug_id, atomic_read(&object->usage));
-
-#ifdef CACHEFILES_DEBUG_SLAB
-	ASSERT((atomic_read(&object->usage) & 0xffff0000) != 0x6b6b0000);
-#endif
-
 	u = atomic_inc_return(&object->usage);
-	trace_cachefiles_ref(object, _object->cookie,
-			     (enum cachefiles_obj_ref_trace)why, u);
-	return &object->fscache;
+	trace_cachefiles_ref(object->debug_id, object->cookie->debug_id, u, why);
+	return object;
 }
 
 /*
@@ -157,7 +188,7 @@ struct fscache_object *cachefiles_grab_object(struct fscache_object *_object,
  */
 static bool cachefiles_shorten_object(struct cachefiles_object *object, loff_t new_size)
 {
-	struct cachefiles_cache *cache;
+	struct cachefiles_cache *cache = object->cache;
 	struct inode *inode = d_inode(object->dentry);
 	struct path path;
 	loff_t i_size, dio_size;
@@ -166,9 +197,7 @@ static bool cachefiles_shorten_object(struct cachefiles_object *object, loff_t n
 	dio_size = round_up(new_size, CACHEFILES_DIO_BLOCK_SIZE);
 	i_size = i_size_read(inode);
 
-	cache = container_of(object->fscache.cache,
-			     struct cachefiles_cache, cache);
-	path.mnt = cache->mnt;
+	path.mnt = cache->path.mnt;
 	path.dentry = object->dentry;
 
 	trace_cachefiles_trunc(object, inode, i_size, dio_size, cachefiles_trunc_shrink);
@@ -197,14 +226,14 @@ static bool cachefiles_shorten_object(struct cachefiles_object *object, loff_t n
 /*
  * Resize the backing object.
  */
-static void cachefiles_resize_object(struct fscache_object *_object, loff_t new_size)
+static void cachefiles_resize_cookie(struct netfs_cache_resources *cres,
+				     loff_t new_size)
 {
-	struct cachefiles_object *object =
-		container_of(_object, struct cachefiles_object, fscache);
-	struct cachefiles_cache *cache =
-		container_of(object->fscache.cache, struct cachefiles_cache, cache);
+	struct fscache_cookie *cookie = fscache_cres_cookie(cres);
+	struct cachefiles_object *object = cookie->cache_priv;
+	struct cachefiles_cache *cache = object->cache;
 	const struct cred *saved_cred;
-	loff_t old_size = object->fscache.cookie->object_size;
+	loff_t old_size = cookie->object_size;
 
 	_enter("%llu->%llu", old_size, new_size);
 
@@ -213,7 +242,7 @@ static void cachefiles_resize_object(struct fscache_object *_object, loff_t new_
 		cachefiles_shorten_content_map(object, new_size);
 		cachefiles_shorten_object(object, new_size);
 		cachefiles_end_secure(cache, saved_cred);
-		object->fscache.cookie->object_size = new_size;
+		cookie->object_size = new_size;
 		return;
 	}
 
@@ -221,7 +250,7 @@ static void cachefiles_resize_object(struct fscache_object *_object, loff_t new_
 	 * particularly.  cookie->initial_size doesn't change and so the point
 	 * at which we have to download before doesn't change.
 	 */
-	object->fscache.cookie->object_size = new_size;
+	cookie->object_size = new_size;
 }
 
 /*
@@ -234,9 +263,9 @@ static bool cachefiles_commit_object(struct cachefiles_object *object,
 
 	if (object->content_map_changed)
 		cachefiles_save_content_map(object);
-	if (test_and_clear_bit(FSCACHE_OBJECT_LOCAL_WRITE, &object->fscache.flags))
+	if (test_and_clear_bit(FSCACHE_OBJECT_LOCAL_WRITE, &object->flags))
 		update = true;
-	if (test_and_clear_bit(FSCACHE_COOKIE_OBJ_NEEDS_UPDATE, &object->fscache.cookie->flags))
+	if (test_and_clear_bit(FSCACHE_COOKIE_OBJ_NEEDS_UPDATE, &object->cookie->flags))
 		update = true;
 	if (update)
 		cachefiles_set_object_xattr(object);
@@ -249,12 +278,12 @@ static bool cachefiles_commit_object(struct cachefiles_object *object,
 /*
  * Finalise and object and close the VFS structs that we have.
  */
-static void cachefiles_clean_up_object(struct cachefiles_object *object,
-				       struct cachefiles_cache *cache,
-				       bool invalidate)
+void cachefiles_clean_up_object(struct cachefiles_object *object,
+				struct cachefiles_cache *cache,
+				bool invalidate)
 {
-	if (invalidate && &object->fscache != cache->cache.fsdef) {
-		_debug("- inval object OBJ%x", object->fscache.debug_id);
+	if (invalidate) {
+		_debug("- inval object OBJ%x", object->debug_id);
 		cachefiles_delete_object(cache, object);
 	} else {
 		cachefiles_commit_object(object, cache);
@@ -268,7 +297,7 @@ static void cachefiles_clean_up_object(struct cachefiles_object *object,
 	dput(object->old);
 	object->old = NULL;
 
-	cachefiles_unmark_inode_in_use(object, object->dentry);
+	cachefiles_unmark_inode_in_use(object);
 	dput(object->dentry);
 	object->dentry = NULL;
 }
@@ -277,79 +306,86 @@ static void cachefiles_clean_up_object(struct cachefiles_object *object,
  * discard the resources pinned by an object and effect retirement if
  * requested
  */
-static void cachefiles_drop_object(struct fscache_object *_object,
-				   bool invalidate)
+static void cachefiles_relinquish_cookie(struct fscache_cookie *cookie)
 {
-	struct cachefiles_object *object;
-	struct cachefiles_cache *cache;
+	struct cachefiles_object *object = cookie->cache_priv;
+	struct cachefiles_cache *cache = cookie->volume->cache->cache_priv;
 	const struct cred *saved_cred;
+	bool invalidate = test_bit(FSCACHE_COOKIE_RETIRED, &cookie->flags);
+	int n_accesses;
 
-	ASSERT(_object);
+	clear_bit(FSCACHE_COOKIE_IS_CACHING, &cookie->flags);
+	smp_store_release(&cookie->cache_priv, NULL);
 
-	object = container_of(_object, struct cachefiles_object, fscache);
+	if (object) {
+		/* There should be one count on n_accesses for the cache
+		 * binding and one for the relinquishment op, but the former
+		 * doesn't necessarily hold true if the cache is being
+		 * withdrawn and there may be ops in progress, so if we're
+		 * unsure, punt to the withdrawal list (we can't dec n_accesses
+		 * here).
+		 */
+		spin_lock(&cache->object_list_lock);
+		n_accesses = atomic_read(&cookie->n_accesses);
+		if (n_accesses != 2 ||
+		    !fscache_cache_is_live(cookie->volume->cache)) {
+			trace_fscache_access(
+				cookie->debug_id, refcount_read(&cookie->ref),
+				n_accesses, fscache_access_relinquish_defer);
+			kdebug("punt c=%x", cookie->debug_id);
+			list_move(&object->cache_link, &cache->withdrawal_list);
+			spin_unlock(&cache->object_list_lock);
+			return;
+		}
 
-	_enter("{OBJ%x,%d}",
-	       object->fscache.debug_id, atomic_read(&object->usage));
+		list_del(&object->cache_link);
+		spin_unlock(&cache->object_list_lock);
 
-	cache = container_of(object->fscache.cache,
-			     struct cachefiles_cache, cache);
+		/* We need to tidy the object up if we did in fact manage to
+		 * open it.  It's possible for us to get here before the object
+		 * is fully initialised if the parent goes away or the object
+		 * gets retired before we set it up.
+		 */
+		if (object->dentry) {
+			cachefiles_begin_secure(cache, &saved_cred);
+			cachefiles_clean_up_object(object, cache, invalidate);
+			cachefiles_end_secure(cache, saved_cred);
+		}
 
-#ifdef CACHEFILES_DEBUG_SLAB
-	ASSERT((atomic_read(&object->usage) & 0xffff0000) != 0x6b6b0000);
-#endif
-
-	/* We need to tidy the object up if we did in fact manage to open it.
-	 * It's possible for us to get here before the object is fully
-	 * initialised if the parent goes away or the object gets retired
-	 * before we set it up.
-	 */
-	if (object->dentry) {
-		cachefiles_begin_secure(cache, &saved_cred);
-		cachefiles_clean_up_object(object, cache, invalidate);
-		cachefiles_end_secure(cache, saved_cred);
+		cachefiles_put_object(object, cachefiles_obj_put_detach);
 	}
 
+	fscache_drop_cookie(cookie, fscache_cookie_put_relinquish_cache);
 	_leave("");
 }
 
 /*
  * dispose of a reference to an object
  */
-void cachefiles_put_object(struct fscache_object *_object,
-			   enum fscache_obj_ref_trace why)
+void cachefiles_put_object(struct cachefiles_object *object,
+			   enum cachefiles_obj_ref_trace why)
 {
-	struct cachefiles_object *object;
+	unsigned int object_debug_id = object->debug_id;
+	unsigned int cookie_debug_id = object->cookie->debug_id;
 	struct fscache_cache *cache;
 	int u;
 
-	ASSERT(_object);
-
-	object = container_of(_object, struct cachefiles_object, fscache);
-
-	_enter("{OBJ%x,%d}",
-	       object->fscache.debug_id, atomic_read(&object->usage));
-
-#ifdef CACHEFILES_DEBUG_SLAB
-	ASSERT((atomic_read(&object->usage) & 0xffff0000) != 0x6b6b0000);
-#endif
-
 	u = atomic_dec_return(&object->usage);
-	trace_cachefiles_ref(object, _object->cookie,
-			     (enum cachefiles_obj_ref_trace)why, u);
-	ASSERTCMP(u, !=, -1);
+	trace_cachefiles_ref(object_debug_id, cookie_debug_id, u, why);
 	if (u == 0) {
-		_debug("- kill object OBJ%x", object->fscache.debug_id);
+		_debug("- kill object OBJ%x", object_debug_id);
 
 		ASSERTCMP(object->old, ==, NULL);
 		ASSERTCMP(object->dentry, ==, NULL);
-		ASSERTCMP(object->fscache.n_children, ==, 0);
 
 		kfree(object->content_map);
 
-		cache = object->fscache.cache;
-		fscache_object_destroy(&object->fscache);
+		cache = object->cache->cache;
+		fscache_put_cookie(object->cookie, fscache_cookie_put_object);
+		object->cookie = NULL;
 		kmem_cache_free(cachefiles_object_jar, object);
-		fscache_object_destroyed(cache);
+		if (atomic_dec_and_test(&cache->object_count))
+			wake_up_all(&cachefiles_clearance_wq);
 	}
 
 	_leave("");
@@ -358,29 +394,26 @@ void cachefiles_put_object(struct fscache_object *_object,
 /*
  * sync a cache
  */
-static void cachefiles_sync_cache(struct fscache_cache *_cache)
+void cachefiles_sync_cache(struct cachefiles_cache *cache)
 {
-	struct cachefiles_cache *cache;
 	const struct cred *saved_cred;
 	int ret;
 
-	_enter("%s", _cache->tag->name);
-
-	cache = container_of(_cache, struct cachefiles_cache, cache);
+	_enter("%s", cache->cache->name);
 
 	/* make sure all pages pinned by operations on behalf of the netfs are
 	 * written to disc */
 	cachefiles_begin_secure(cache, &saved_cred);
-	down_read(&cache->mnt->mnt_sb->s_umount);
-	ret = sync_filesystem(cache->mnt->mnt_sb);
-	up_read(&cache->mnt->mnt_sb->s_umount);
+	down_read(&cache->path.mnt->mnt_sb->s_umount);
+	ret = sync_filesystem(cache->path.mnt->mnt_sb);
+	up_read(&cache->path.mnt->mnt_sb->s_umount);
 	cachefiles_end_secure(cache, saved_cred);
 
 	if (ret == -EIO)
-		cachefiles_io_error(cache,
-				    "Attempt to sync backing fs superblock"
-				    " returned error %d",
-				    ret);
+		cachefiles_io_error(
+			cache,
+			"Attempt to sync backing fs superblock returned error %d",
+			ret);
 }
 
 /*
@@ -389,21 +422,18 @@ static void cachefiles_sync_cache(struct fscache_cache *_cache)
  */
 static int cachefiles_attr_changed(struct cachefiles_object *object)
 {
-	struct cachefiles_cache *cache;
+	struct cachefiles_cache *cache = object->cache;
 	const struct cred *saved_cred;
 	struct iattr newattrs;
 	uint64_t ni_size;
 	loff_t oi_size;
 	int ret;
 
-	ni_size = object->fscache.cookie->object_size;
+	ni_size = object->cookie->object_size;
 	ni_size = round_up(ni_size, CACHEFILES_DIO_BLOCK_SIZE);
 
 	_enter("{OBJ%x},[%llu]",
-	       object->fscache.debug_id, (unsigned long long) ni_size);
-
-	cache = container_of(object->fscache.cache,
-			     struct cachefiles_cache, cache);
+	       object->debug_id, (unsigned long long) ni_size);
 
 	if (ni_size == object->i_size)
 		return 0;
@@ -455,22 +485,19 @@ truncate_failed:
  */
 static struct file *cachefiles_create_tmpfile(struct cachefiles_object *object)
 {
-	struct cachefiles_cache *cache;
+	struct cachefiles_cache *cache = object->cache;
 	const struct cred *saved_cred;
 	struct file *file;
 	struct path path;
 	uint64_t ni_size;
 	long ret;
 
-	cache = container_of(object->fscache.cache,
-			     struct cachefiles_cache, cache);
-
-	ni_size = object->fscache.cookie->object_size;
+	ni_size = object->cookie->object_size;
 	ni_size = round_up(ni_size, CACHEFILES_DIO_BLOCK_SIZE);
 
 	cachefiles_begin_secure(cache, &saved_cred);
 
-	path.mnt = cache->mnt;
+	path.mnt = cache->path.mnt;
 	path.dentry = vfs_tmpfile(&init_user_ns, cache->graveyard, S_IFREG, O_RDWR);
 	if (IS_ERR(path.dentry)) {
 		if (PTR_ERR(path.dentry) == -EIO)
@@ -503,21 +530,18 @@ out:
 }
 
 /*
- * Invalidate an object
+ * Invalidate the storage associated with a cookie.
  */
-static bool cachefiles_invalidate_object(struct fscache_object *_object,
+static bool cachefiles_invalidate_cookie(struct fscache_cookie *cookie,
 					 unsigned int flags)
 {
-	struct cachefiles_object *object;
+	struct cachefiles_object *object = cookie->cache_priv;
 	struct file *file, *old_file;
 	struct dentry *old_dentry;
 	u8 *map, *old_map;
 	unsigned int map_size;
 
-	object = container_of(_object, struct cachefiles_object, fscache);
-
-	_enter("{OBJ%x},[%llu]",
-	       object->fscache.debug_id, _object->cookie->object_size);
+	_enter("{OBJ%x},[%llu]", object->debug_id, object->cookie->object_size);
 
 	if ((flags & FSCACHE_INVAL_LIGHT) &&
 	    test_bit(CACHEFILES_OBJECT_USING_TMPFILE, &object->flags)) {
@@ -539,7 +563,7 @@ static bool cachefiles_invalidate_object(struct fscache_object *_object,
 		/* Substitute the VFS target */
 		_debug("sub");
 		dget(file->f_path.dentry); /* Do outside of content_map_lock */
-		spin_lock(&object->fscache.lock);
+		spin_lock(&object->lock);
 		write_lock_bh(&object->content_map_lock);
 
 		if (!object->old) {
@@ -559,10 +583,10 @@ static bool cachefiles_invalidate_object(struct fscache_object *_object,
 		object->content_map_size = map_size;
 		object->content_map_changed = true;
 		set_bit(CACHEFILES_OBJECT_USING_TMPFILE, &object->flags);
-		set_bit(FSCACHE_COOKIE_OBJ_NEEDS_UPDATE, &object->fscache.cookie->flags);
+		set_bit(FSCACHE_COOKIE_OBJ_NEEDS_UPDATE, &object->cookie->flags);
 
 		write_unlock_bh(&object->content_map_lock);
-		spin_unlock(&object->fscache.lock);
+		spin_unlock(&object->lock);
 		_debug("subbed");
 
 		kfree(old_map);
@@ -580,28 +604,21 @@ failed:
 	return false;
 }
 
-static unsigned int cachefiles_get_object_usage(const struct fscache_object *_object)
+static void cachefiles_relinquish_volume(struct fscache_volume *volume)
 {
-	struct cachefiles_object *object;
-
-	object = container_of(_object, struct cachefiles_object, fscache);
-	return atomic_read(&object->usage);
+	if (volume->cache_priv) {
+		dput(volume->cache_priv);
+		volume->cache_priv = NULL;
+	}
 }
 
 const struct fscache_cache_ops cachefiles_cache_ops = {
 	.name			= "cachefiles",
-	.alloc_object		= cachefiles_alloc_object,
-	.prepare_lookup_data	= cachefiles_prepare_lookup_data,
-	.lookup_object		= cachefiles_lookup_object,
-	.free_lookup_data	= cachefiles_free_lookup_data,
-	.grab_object		= cachefiles_grab_object,
-	.resize_object		= cachefiles_resize_object,
-	.invalidate_object	= cachefiles_invalidate_object,
-	.drop_object		= cachefiles_drop_object,
-	.put_object		= cachefiles_put_object,
-	.get_object_usage	= cachefiles_get_object_usage,
-	.sync_cache		= cachefiles_sync_cache,
+	.relinquish_volume	= cachefiles_relinquish_volume,
+	.lookup_cookie		= cachefiles_lookup_cookie,
+	.relinquish_cookie	= cachefiles_relinquish_cookie,
+	.resize_cookie		= cachefiles_resize_cookie,
+	.invalidate_cookie	= cachefiles_invalidate_cookie,
 	.begin_operation	= cachefiles_begin_operation,
 	.prepare_to_write	= cachefiles_prepare_to_write,
-	.display_object		= cachefiles_display_object,
 };
