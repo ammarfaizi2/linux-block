@@ -20,10 +20,10 @@ typedef void (*holdouts_func_t)(struct list_head *hop, bool ndrpt, bool *frptp);
 typedef void (*postgp_func_t)(struct rcu_tasks *rtp);
 
 /**
- * Definition for a Tasks-RCU-like mechanism.
+ * struct rcu_tasks - Definition for a Tasks-RCU-like mechanism.
  * @cbs_head: Head of callback list.
  * @cbs_tail: Tail pointer for callback list.
- * @cbs_wq: Wait queue allowning new callback to get kthread's attention.
+ * @cbs_wq: Wait queue allowing new callback to get kthread's attention.
  * @cbs_lock: Lock protecting callback list.
  * @kthread_ptr: This flavor's grace-period/callback-invocation kthread.
  * @gp_func: This flavor's grace-period-wait function.
@@ -38,7 +38,7 @@ typedef void (*postgp_func_t)(struct rcu_tasks *rtp);
  * @pregp_func: This flavor's pre-grace-period function (optional).
  * @pertask_func: This flavor's per-task scan function (optional).
  * @postscan_func: This flavor's post-task scan function (optional).
- * @holdout_func: This flavor's holdout-list scan function (optional).
+ * @holdouts_func: This flavor's holdout-list scan function (optional).
  * @postgp_func: This flavor's post-grace-period function (optional).
  * @call_func: This flavor's call_rcu()-equivalent function.
  * @name: This flavor's textual name.
@@ -377,6 +377,46 @@ static void rcu_tasks_wait_gp(struct rcu_tasks *rtp)
 // Finally, this implementation does not support high call_rcu_tasks()
 // rates from multiple CPUs.  If this is required, per-CPU callback lists
 // will be needed.
+//
+// The implementation uses rcu_tasks_wait_gp(), which relies on function
+// pointers in the rcu_tasks structure.  The rcu_spawn_tasks_kthread()
+// function sets these function pointers up so that rcu_tasks_wait_gp()
+// invokes these functions in this order:
+//
+// rcu_tasks_pregp_step():
+//	Invokes synchronize_rcu() in order to wait for all in-flight
+//	t->on_rq and t->nvcsw transitions to complete.	This works because
+//	all such transitions are carried out with interrupts disabled.
+// rcu_tasks_pertask(), invoked on every non-idle task:
+//	For every runnable non-idle task other than the current one, use
+//	get_task_struct() to pin down that task, snapshot that task's
+//	number of voluntary context switches, and add that task to the
+//	holdout list.
+// rcu_tasks_postscan():
+//	Invoke synchronize_srcu() to ensure that all tasks that were
+//	in the process of exiting (and which thus might not know to
+//	synchronize with this RCU Tasks grace period) have completed
+//	exiting.
+// check_all_holdout_tasks(), repeatedly until holdout list is empty:
+//	Scans the holdout list, attempting to identify a quiescent state
+//	for each task on the list.  If there is a quiescent state, the
+//	corresponding task is removed from the holdout list.
+// rcu_tasks_postgp():
+//	Invokes synchronize_rcu() in order to ensure that all prior
+//	t->on_rq and t->nvcsw transitions are seen by all CPUs and tasks
+//	to have happened before the end of this RCU Tasks grace period.
+//	Again, this works because all such transitions are carried out
+//	with interrupts disabled.
+//
+// For each exiting task, the exit_tasks_rcu_start() and
+// exit_tasks_rcu_finish() functions begin and end, respectively, the SRCU
+// read-side critical sections waited for by rcu_tasks_postscan().
+//
+// Pre-grace-period update-side code is ordered before the grace via the
+// ->cbs_lock and the smp_mb__after_spinlock().  Pre-grace-period read-side
+// code is ordered before the grace period via synchronize_rcu() call
+// in rcu_tasks_pregp_step() and by the scheduler's locks and interrupt
+// disabling.
 
 /* Pre-grace-period preparation. */
 static void rcu_tasks_pregp_step(void)
@@ -504,7 +544,7 @@ DEFINE_RCU_TASKS(rcu_tasks, rcu_tasks_wait_gp, call_rcu_tasks, "RCU Tasks");
  * or transition to usermode execution.  As such, there are no read-side
  * primitives analogous to rcu_read_lock() and rcu_read_unlock() because
  * this primitive is intended to determine that all tasks have passed
- * through a safe state, not so much for data-strcuture synchronization.
+ * through a safe state, not so much for data-structure synchronization.
  *
  * See the description of call_rcu() for more detailed information on
  * memory ordering guarantees.
@@ -597,6 +637,206 @@ void exit_tasks_rcu_start(void) { }
 void exit_tasks_rcu_finish(void) { exit_tasks_rcu_finish_trace(current); }
 #endif /* #else #ifdef CONFIG_TASKS_RCU */
 
+#ifdef CONFIG_LONGWAIT_RCU
+
+////////////////////////////////////////////////////////////////////////
+//
+// "Long wait" variant of Tasks RCU, which is intended to be used in
+// cases where readers might include functions that block indefinitely,
+// for example, those waiting on network input.  This approach provides
+// an asynchronous call_rcu_tasks_rude() primitive, but no synchronous
+// grace-period wait primitive and also no callback-barrier primitives.
+// The percpu_refcount code mediates grace periods and provides the needed
+// ordering.
+//
+// Callback handling is provided by the rcu_tasks_kthread() function.
+// The grace-period wait is implemented by rcu_longwait_wait_gp().
+
+#ifdef CONFIG_DEBUG_LOCK_ALLOC
+static struct lock_class_key rcu_longwait_key;
+#endif /* #ifdef CONFIG_DEBUG_LOCK_ALLOC */
+
+struct rcu_longwait_impl {
+	unsigned long rli_gp_seq;
+	struct percpu_ref rli_pcref[2];
+	struct completion rli_completion;
+	bool rli_initfailed;
+#ifdef CONFIG_DEBUG_LOCK_ALLOC
+	struct lockdep_map rli_dep_map;
+#endif /* #ifdef CONFIG_DEBUG_LOCK_ALLOC */
+} rcu_longwait_impl = {
+	.rli_gp_seq = 0 - 25UL,
+#ifdef CONFIG_DEBUG_LOCK_ALLOC
+	.rli_dep_map = {
+		.name = "rcu_read_lock_longwait",
+		.key = &rcu_longwait_key,
+		.wait_type_outer = LD_WAIT_FREE,
+		.wait_type_inner = LD_WAIT_CONFIG,
+	},
+#endif /* #ifdef CONFIG_DEBUG_LOCK_ALLOC */
+};
+
+static void rcu_longwait_wait_gp(struct rcu_tasks *rtp);
+void call_rcu_longwait(struct rcu_head *rhp, rcu_callback_t func);
+DEFINE_RCU_TASKS(rcu_longwait, rcu_longwait_wait_gp, call_rcu_longwait,
+		 "RCU Longwait");
+
+/**
+ * rcu_read_lock_longwait - mark beginning of RCU-longwait read-side critical section
+ *
+ * When call_rcu_trace() is invoked on one task while other tasks are
+ * within RCU longwait read-side critical sections, invocation of the
+ * corresponding RCU callback is deferred until after the all the other
+ * tasks exit their critical sections.
+ *
+ * For more details, please see the documentation for rcu_read_lock().
+ */
+int rcu_read_lock_longwait(void)
+{
+	int idx;
+	struct rcu_longwait_impl *rlip = &rcu_longwait_impl;
+
+	rcu_read_lock();
+	idx = smp_load_acquire(&rlip->rli_gp_seq) & 0x1; // After call_rcu()s for prior GPs
+	percpu_ref_get(&rlip->rli_pcref[idx]);
+	rcu_read_unlock();
+	rcu_lock_acquire(&rlip->rli_dep_map);
+	barrier();
+	return idx;
+}
+EXPORT_SYMBOL_GPL(rcu_read_lock_longwait);
+
+/**
+ * rcu_read_unlock_longwait - mark end of RCU-longwait read-side critical section
+ *
+ * Pairs with a preceding call to rcu_read_lock_longwait(), and nesting
+ * is allowed.  Invoking a rcu_read_unlock_longwait() when there is no
+ * matching rcu_read_lock_longwait() is verboten, and will result in
+ * lockdep complaints.
+ *
+ * For more details, please see the documentation for rcu_read_unlock().
+ */
+void rcu_read_unlock_longwait(int idx)
+{
+	struct rcu_longwait_impl *rlip = &rcu_longwait_impl;
+
+	barrier();
+	WARN_ON_ONCE(idx & ~0x1);
+	rcu_lock_release(&rlip->rli_dep_map);
+	percpu_ref_put(&rlip->rli_pcref[idx]);
+}
+EXPORT_SYMBOL_GPL(rcu_read_unlock_longwait);
+
+int rcu_read_lock_longwait_held(void)
+{
+#ifdef CONFIG_DEBUG_LOCK_ALLOC
+	return lock_is_held(&rcu_longwait_impl.rli_dep_map);
+#else /* #ifdef CONFIG_DEBUG_LOCK_ALLOC */
+	return 1;
+#endif /* #else #ifdef CONFIG_DEBUG_LOCK_ALLOC */
+}
+EXPORT_SYMBOL_GPL(rcu_read_lock_longwait_held);
+
+// Wait for one longwait RCU-tasks grace period.
+static void rcu_longwait_wait_gp(struct rcu_tasks *rtp)
+{
+	unsigned long gp_seq;
+	int idx;
+	struct rcu_longwait_impl *rlip = &rcu_longwait_impl;
+
+	// Flip the bottom bit of ->rli_gp_seq.
+	gp_seq = rlip->rli_gp_seq;
+	WRITE_ONCE(rlip->rli_gp_seq, gp_seq + 1);
+
+	// Wait for all new readers to see the above flip, that is, ensure
+	// that all in-flight rcu_read_lock_longwait() calls have completed.
+	synchronize_rcu();
+	// At this point, all new readers will use the gp_seq+1 ->rli_pcref.
+
+	// Wait for all pre-existing readers to complete, that is for them
+	// to invoke their outermost rcu_read_unlock_longwait().
+	init_completion(&rlip->rli_completion);
+	idx = gp_seq & 0x1;
+	percpu_ref_kill(&rlip->rli_pcref[idx]);
+	wait_for_completion(&rlip->rli_completion);
+
+	// Reinitialize percpu_ref for the grace period after the next one.
+	percpu_ref_reinit(&rlip->rli_pcref[idx]);
+}
+
+/**
+ * call_rcu_longwait() - Queue a callback longwait task-based grace period
+ * @rhp: structure to be used for queueing the RCU updates.
+ * @func: actual callback function to be invoked after the grace period
+ *
+ * The callback function will be invoked some time after a full
+ * grace period elapses, in other words after all currently executing
+ * RCU read-side critical sections have completed, which are marked by
+ * rcu_read_lock_longwait() and rcu_read_unlock_longwait().
+ *
+ * See the description of call_rcu() for more detailed information on
+ * memory ordering guarantees.
+ */
+void call_rcu_longwait(struct rcu_head *rhp, rcu_callback_t func)
+{
+	if (WARN_ON_ONCE(rcu_longwait_impl.rli_initfailed))
+		return; // Leak callback because there is nothing that can be done.
+	call_rcu_tasks_generic(rhp, func, &rcu_longwait);
+}
+EXPORT_SYMBOL_GPL(call_rcu_longwait);
+
+/*
+ * rcu_barrier_longwait - Wait for in-flight call_rcu_longwait() callbacks.
+ *
+ * Although the current implementation is guaranteed to wait, it is not
+ * obligated to, for example, if there are no pending callbacks.  In addition,
+ * if initialization failed, this function returns immediately.
+ *
+ * Not intended for use outside of rcutorture, hence docbook disabled.
+ */
+void rcu_barrier_longwait(void)
+{
+	if (WARN_ON_ONCE(rcu_longwait_impl.rli_initfailed))
+		return; // Leak callback because there is nothing that can be done.
+	synchronize_rcu_tasks_generic(&rcu_longwait);
+}
+EXPORT_SYMBOL_GPL(rcu_barrier_longwait);
+
+// Called when a percpu_refcount hits zero, which marks the end of the
+// longwait grace period.
+static void rcu_longwait_release(struct percpu_ref *pcrp)
+{
+	complete(&rcu_longwait_impl.rli_completion);
+}
+
+static int __init rcu_spawn_longwait_kthread(void)
+{
+	int i;
+	int ret;
+	struct rcu_longwait_impl *rlip = &rcu_longwait_impl;
+
+	rcu_longwait.gp_sleep = HZ / 10;
+	for (i = 0; i < ARRAY_SIZE(rlip->rli_pcref); i++) {
+		ret = percpu_ref_init(&rlip->rli_pcref[i], rcu_longwait_release,
+				      PERCPU_REF_ALLOW_REINIT, GFP_KERNEL);
+		if (WARN_ON_ONCE(ret)) {
+			rlip->rli_initfailed = true; // Likely panic in rcu_read_lock_longwait()
+			return ret;
+		}
+	}
+	rcu_spawn_tasks_kthread_generic(&rcu_longwait);
+	return 0;
+}
+
+#if (!defined(CONFIG_TINY_RCU))
+void show_longwait_gp_kthread(void)
+{
+	show_rcu_tasks_generic_gp_kthread(&rcu_longwait, "");
+}
+EXPORT_SYMBOL_GPL(show_longwait_gp_kthread);
+#endif /* #if (!defined(CONFIG_TINY_RCU)) */
+#endif /* #ifdef CONFIG_LONGWAIT_RCU */
+
 #ifdef CONFIG_TASKS_RUDE_RCU
 
 ////////////////////////////////////////////////////////////////////////
@@ -605,8 +845,13 @@ void exit_tasks_rcu_finish(void) { exit_tasks_rcu_finish_trace(current); }
 // passing an empty function to schedule_on_each_cpu().  This approach
 // provides an asynchronous call_rcu_tasks_rude() API and batching
 // of concurrent calls to the synchronous synchronize_rcu_rude() API.
-// This sends IPIs far and wide and induces otherwise unnecessary context
-// switches on all online CPUs, whether idle or not.
+// This invokes schedule_on_each_cpu() in order to send IPIs far and wide
+// and induces otherwise unnecessary context switches on all online CPUs,
+// whether idle or not.
+//
+// Callback handling is provided by the rcu_tasks_kthread() function.
+//
+// Ordering is provided by the scheduler's context-switch code.
 
 // Empty function to allow workqueues to force a context switch.
 static void rcu_tasks_be_rude(struct work_struct *work)
@@ -637,7 +882,7 @@ DEFINE_RCU_TASKS(rcu_tasks_rude, rcu_tasks_rude_wait_gp, call_rcu_tasks_rude,
  * there are no read-side primitives analogous to rcu_read_lock() and
  * rcu_read_unlock() because this primitive is intended to determine
  * that all tasks have passed through a safe state, not so much for
- * data-strcuture synchronization.
+ * data-structure synchronization.
  *
  * See the description of call_rcu() for more detailed information on
  * memory ordering guarantees.
@@ -726,6 +971,42 @@ EXPORT_SYMBOL_GPL(show_rcu_tasks_rude_gp_kthread);
 // flavors, rcu_preempt and rcu_sched.  The fact that RCU Tasks Trace
 // readers can operate from idle, offline, and exception entry/exit in no
 // way allows rcu_preempt and rcu_sched readers to also do so.
+//
+// The implementation uses rcu_tasks_wait_gp(), which relies on function
+// pointers in the rcu_tasks structure.  The rcu_spawn_tasks_trace_kthread()
+// function sets these function pointers up so that rcu_tasks_wait_gp()
+// invokes these functions in this order:
+//
+// rcu_tasks_trace_pregp_step():
+//	Initialize the count of readers and block CPU-hotplug operations.
+// rcu_tasks_trace_pertask(), invoked on every non-idle task:
+//	Initialize per-task state and attempt to identify an immediate
+//	quiescent state for that task, or, failing that, attempt to
+//	set that task's .need_qs flag so that task's next outermost
+//	rcu_read_unlock_trace() will report the quiescent state (in which
+//	case the count of readers is incremented).  If both attempts fail,
+//	the task is added to a "holdout" list.
+// rcu_tasks_trace_postscan():
+//	Initialize state and attempt to identify an immediate quiescent
+//	state as above (but only for idle tasks), unblock CPU-hotplug
+//	operations, and wait for an RCU grace period to avoid races with
+//	tasks that are in the process of exiting.
+// check_all_holdout_tasks_trace(), repeatedly until holdout list is empty:
+//	Scans the holdout list, attempting to identify a quiescent state
+//	for each task on the list.  If there is a quiescent state, the
+//	corresponding task is removed from the holdout list.
+// rcu_tasks_trace_postgp():
+//	Wait for the count of readers do drop to zero, reporting any stalls.
+//	Also execute full memory barriers to maintain ordering with code
+//	executing after the grace period.
+//
+// The exit_tasks_rcu_finish_trace() synchronizes with exiting tasks.
+//
+// Pre-grace-period update-side code is ordered before the grace
+// period via the ->cbs_lock and barriers in rcu_tasks_kthread().
+// Pre-grace-period read-side code is ordered before the grace period by
+// atomic_dec_and_test() of the count of readers (for IPIed readers) and by
+// scheduler context-switch ordering (for locked-down non-running readers).
 
 // The lockdep state must be outside of #ifdef to be useful.
 #ifdef CONFIG_DEBUG_LOCK_ALLOC
@@ -1127,7 +1408,7 @@ static void exit_tasks_rcu_finish_trace(struct task_struct *t)
  * there are no read-side primitives analogous to rcu_read_lock() and
  * rcu_read_unlock() because this primitive is intended to determine
  * that all tasks have passed through a safe state, not so much for
- * data-strcuture synchronization.
+ * data-structure synchronization.
  *
  * See the description of call_rcu() for more detailed information on
  * memory ordering guarantees.
@@ -1219,6 +1500,7 @@ static void exit_tasks_rcu_finish_trace(struct task_struct *t) { }
 void show_rcu_tasks_gp_kthreads(void)
 {
 	show_rcu_tasks_classic_gp_kthread();
+	show_longwait_gp_kthread();
 	show_rcu_tasks_rude_gp_kthread();
 	show_rcu_tasks_trace_gp_kthread();
 }
@@ -1304,6 +1586,10 @@ void __init rcu_init_tasks_generic(void)
 {
 #ifdef CONFIG_TASKS_RCU
 	rcu_spawn_tasks_kthread();
+#endif
+
+#ifdef CONFIG_LONGWAIT_RCU
+	rcu_spawn_longwait_kthread();
 #endif
 
 #ifdef CONFIG_TASKS_RUDE_RCU
