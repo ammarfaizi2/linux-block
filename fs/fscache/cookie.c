@@ -180,7 +180,7 @@ struct fscache_cookie *fscache_alloc_cookie(
 			goto nomem;
 	}
 
-	atomic_set(&cookie->usage, 1);
+	refcount_set(&cookie->ref, 1);
 	atomic_set(&cookie->n_children, 0);
 	cookie->debug_id = atomic_inc_return(&fscache_cookie_debug_id);
 
@@ -227,7 +227,7 @@ struct fscache_cookie *fscache_hash_cookie(struct fscache_cookie *candidate)
 	}
 
 	__set_bit(FSCACHE_COOKIE_ACQUIRED, &candidate->flags);
-	fscache_cookie_get(candidate->parent, fscache_cookie_get_acquire_parent);
+	fscache_get_cookie(candidate->parent, fscache_cookie_get_acquire_parent);
 	atomic_inc(&candidate->parent->n_children);
 	hlist_bl_add_head(&candidate->hash_link, h);
 	hlist_bl_unlock(h);
@@ -235,8 +235,8 @@ struct fscache_cookie *fscache_hash_cookie(struct fscache_cookie *candidate)
 
 collision:
 	if (test_and_set_bit(FSCACHE_COOKIE_ACQUIRED, &cursor->flags)) {
-		trace_fscache_cookie(cursor, fscache_cookie_collision,
-				     atomic_read(&cursor->usage));
+		trace_fscache_cookie(cursor->debug_id, refcount_read(&cursor->ref),
+				     fscache_cookie_collision);
 		pr_err("Duplicate cookie detected\n");
 		fscache_print_cookie(cursor, 'O');
 		fscache_print_cookie(candidate, 'N');
@@ -244,7 +244,7 @@ collision:
 		return NULL;
 	}
 
-	fscache_cookie_get(cursor, fscache_cookie_get_reacquire);
+	fscache_get_cookie(cursor, fscache_cookie_get_reacquire);
 	hlist_bl_unlock(h);
 	return cursor;
 }
@@ -311,7 +311,8 @@ struct fscache_cookie *__fscache_acquire_cookie(
 
 	cookie = fscache_hash_cookie(candidate);
 	if (!cookie) {
-		trace_fscache_cookie(candidate, fscache_cookie_discard, 1);
+		trace_fscache_cookie(candidate->debug_id, 1,
+				     fscache_cookie_discard);
 		goto out;
 	}
 
@@ -341,7 +342,7 @@ struct fscache_cookie *__fscache_acquire_cookie(
 				set_bit(FSCACHE_COOKIE_ENABLED, &cookie->flags);
 			} else {
 				atomic_dec(&parent->n_children);
-				fscache_cookie_put(cookie,
+				fscache_put_cookie(cookie,
 						   fscache_cookie_put_acquire_nobufs);
 				fscache_stat(&fscache_n_acquires_nobufs);
 				_leave(" = NULL");
@@ -819,14 +820,13 @@ void __fscache_relinquish_cookie(struct fscache_cookie *cookie,
 	__fscache_disable_cookie(cookie, aux_data, retire);
 
 	if (cookie->parent) {
-		ASSERTCMP(atomic_read(&cookie->parent->usage), >, 0);
+		ASSERTCMP(refcount_read(&cookie->parent->ref), >, 0);
 		ASSERTCMP(atomic_read(&cookie->parent->n_children), >, 0);
 		atomic_dec(&cookie->parent->n_children);
 	}
 
 	/* Dispose of the netfs's link to the cookie */
-	ASSERTCMP(atomic_read(&cookie->usage), >, 0);
-	fscache_cookie_put(cookie, fscache_cookie_put_relinquish);
+	fscache_put_cookie(cookie, fscache_cookie_put_relinquish);
 
 	_leave("");
 }
@@ -851,21 +851,21 @@ static void fscache_unhash_cookie(struct fscache_cookie *cookie)
 /*
  * Drop a reference to a cookie.
  */
-void fscache_cookie_put(struct fscache_cookie *cookie,
+void fscache_put_cookie(struct fscache_cookie *cookie,
 			enum fscache_cookie_trace where)
 {
 	struct fscache_cookie *parent;
-	int usage;
+	int ref;
 
 	_enter("%x", cookie->debug_id);
 
 	do {
-		usage = atomic_dec_return(&cookie->usage);
-		trace_fscache_cookie(cookie, where, usage);
+		unsigned int cookie_debug_id = cookie->debug_id;
+		bool zero = __refcount_dec_and_test(&cookie->ref, &ref);
 
-		if (usage > 0)
+		trace_fscache_cookie(cookie_debug_id, ref - 1, where);
+		if (!zero)
 			return;
-		BUG_ON(usage < 0);
 
 		parent = cookie->parent;
 		fscache_unhash_cookie(cookie);
@@ -877,6 +877,21 @@ void fscache_cookie_put(struct fscache_cookie *cookie,
 
 	_leave("");
 }
+EXPORT_SYMBOL(fscache_put_cookie);
+
+/*
+ * Get a reference to a cookie.
+ */
+struct fscache_cookie *fscache_get_cookie(struct fscache_cookie *cookie,
+					  enum fscache_cookie_trace where)
+{
+	int ref;
+
+	__refcount_inc(&cookie->ref, &ref);
+	trace_fscache_cookie(cookie->debug_id, ref + 1, where);
+	return cookie;
+}
+EXPORT_SYMBOL(fscache_get_cookie);
 
 /*
  * Generate a list of extant cookies in /proc/fs/fscache/cookies
@@ -916,7 +931,7 @@ static int fscache_cookies_seq_show(struct seq_file *m, void *v)
 		   "%08x %08x %5u %5u %3u %s %03lx %-16s",
 		   cookie->debug_id,
 		   cookie->parent ? cookie->parent->debug_id : 0,
-		   atomic_read(&cookie->usage),
+		   refcount_read(&cookie->ref),
 		   atomic_read(&cookie->n_children),
 		   atomic_read(&cookie->n_active),
 		   type,

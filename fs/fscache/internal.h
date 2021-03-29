@@ -72,7 +72,7 @@ extern struct fscache_cookie *fscache_alloc_cookie(struct fscache_cookie *,
 						   const void *, size_t,
 						   loff_t);
 extern struct fscache_cookie *fscache_hash_cookie(struct fscache_cookie *);
-extern void fscache_cookie_put(struct fscache_cookie *,
+extern void fscache_put_cookie(struct fscache_cookie *,
 			       enum fscache_cookie_trace);
 
 /*
@@ -231,6 +231,13 @@ int fscache_stats_show(struct seq_file *m, void *v);
 #define fscache_stat_d(stat) do {} while (0)
 #endif
 
+static inline void fscache_see_cookie(struct fscache_cookie *cookie,
+				      enum fscache_cookie_trace where)
+{
+	trace_fscache_cookie(cookie->debug_id, refcount_read(&cookie->ref),
+			     where);
+}
+
 /*
  * raise an event on an object
  * - if the event is not masked for that object, then the object is
@@ -247,14 +254,6 @@ static inline void fscache_raise_event(struct fscache_object *object,
 	if (!test_and_set_bit(event, &object->events) &&
 	    test_bit(event, &object->event_mask))
 		fscache_enqueue_object(object);
-}
-
-static inline void fscache_cookie_get(struct fscache_cookie *cookie,
-				      enum fscache_cookie_trace where)
-{
-	int usage = atomic_inc_return(&cookie->usage);
-
-	trace_fscache_cookie(cookie, where, usage);
 }
 
 /*

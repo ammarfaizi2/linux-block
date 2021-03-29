@@ -320,7 +320,7 @@ void fscache_object_init(struct fscache_object *object,
 	object->events = 0;
 	object->cache = cache;
 	object->cookie = cookie;
-	fscache_cookie_get(cookie, fscache_cookie_get_attach_object);
+	fscache_get_cookie(cookie, fscache_cookie_get_attach_object);
 	object->parent = NULL;
 #ifdef CONFIG_FSCACHE_OBJECT_LIST
 	RB_CLEAR_NODE(&object->objlist_link);
@@ -777,7 +777,7 @@ void fscache_object_destroy(struct fscache_object *object)
 	fscache_objlist_remove(object);
 
 	/* We can get rid of the cookie now */
-	fscache_cookie_put(object->cookie, fscache_cookie_put_object);
+	fscache_put_cookie(object->cookie, fscache_cookie_put_object);
 	object->cookie = NULL;
 }
 EXPORT_SYMBOL(fscache_object_destroy);

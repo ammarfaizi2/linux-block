@@ -23,6 +23,7 @@
 struct fscache_cache;
 struct fscache_cache_ops;
 struct fscache_object;
+enum fscache_cookie_trace;
 
 enum fscache_obj_ref_trace {
 	fscache_obj_get_add_to_deps,
@@ -289,7 +290,7 @@ static inline void __fscache_wake_unused_cookie(struct fscache_cookie *cookie)
 /**
  * fscache_unuse_cookie - Cease usage of cookie attached to an object
  * @object: Object description
- * 
+ *
  * Cease usage of the cookie attached to an object.  When the users count
  * reaches zero then the cookie relinquishment will be permitted to proceed.
  */
@@ -327,6 +328,11 @@ enum fscache_why_object_killed {
 };
 extern void fscache_object_mark_killed(struct fscache_object *object,
 				       enum fscache_why_object_killed why);
+
+extern struct fscache_cookie *fscache_get_cookie(struct fscache_cookie *cookie,
+						 enum fscache_cookie_trace where);
+extern void fscache_put_cookie(struct fscache_cookie *cookie,
+			       enum fscache_cookie_trace where);
 
 /*
  * Find the key on a cookie.
