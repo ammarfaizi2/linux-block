@@ -215,7 +215,7 @@ struct fscache_cookie *fscache_hash_cookie(struct fscache_cookie *candidate)
 	}
 
 	__set_bit(FSCACHE_COOKIE_ACQUIRED, &candidate->flags);
-	fscache_cookie_get(candidate->parent, fscache_cookie_get_acquire_parent);
+	fscache_get_cookie(candidate->parent, fscache_cookie_get_acquire_parent);
 	atomic_inc(&candidate->parent->n_children);
 	hlist_bl_add_head(&candidate->hash_link, h);
 	hlist_bl_unlock(h);
@@ -232,7 +232,7 @@ collision:
 		return NULL;
 	}
 
-	fscache_cookie_get(cursor, fscache_cookie_get_reacquire);
+	fscache_get_cookie(cursor, fscache_cookie_get_reacquire);
 	hlist_bl_unlock(h);
 	return cursor;
 }
@@ -330,7 +330,7 @@ struct fscache_cookie *__fscache_acquire_cookie(
 				set_bit(FSCACHE_COOKIE_ENABLED, &cookie->flags);
 			} else {
 				atomic_dec(&parent->n_children);
-				fscache_cookie_put(cookie,
+				fscache_put_cookie(cookie,
 						   fscache_cookie_put_acquire_nobufs);
 				fscache_stat(&fscache_n_acquires_nobufs);
 				_leave(" = NULL");
@@ -793,7 +793,7 @@ void __fscache_relinquish_cookie(struct fscache_cookie *cookie,
 	}
 
 	/* Dispose of the netfs's link to the cookie */
-	fscache_cookie_put(cookie, fscache_cookie_put_relinquish);
+	fscache_put_cookie(cookie, fscache_cookie_put_relinquish);
 
 	_leave("");
 }
@@ -818,7 +818,7 @@ static void fscache_unhash_cookie(struct fscache_cookie *cookie)
 /*
  * Drop a reference to a cookie.
  */
-void fscache_cookie_put(struct fscache_cookie *cookie,
+void fscache_put_cookie(struct fscache_cookie *cookie,
 			enum fscache_cookie_trace where)
 {
 	struct fscache_cookie *parent;
@@ -844,11 +844,12 @@ void fscache_cookie_put(struct fscache_cookie *cookie,
 
 	_leave("");
 }
+EXPORT_SYMBOL(fscache_put_cookie);
 
 /*
  * Get a reference to a cookie.
  */
-struct fscache_cookie *fscache_cookie_get(struct fscache_cookie *cookie,
+struct fscache_cookie *fscache_get_cookie(struct fscache_cookie *cookie,
 					  enum fscache_cookie_trace where)
 {
 	int ref;
@@ -857,6 +858,7 @@ struct fscache_cookie *fscache_cookie_get(struct fscache_cookie *cookie,
 	trace_fscache_cookie(cookie->debug_id, ref + 1, where);
 	return cookie;
 }
+EXPORT_SYMBOL(fscache_get_cookie);
 
 /*
  * Generate a list of extant cookies in /proc/fs/fscache/cookies
