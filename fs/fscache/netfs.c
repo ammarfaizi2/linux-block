@@ -43,7 +43,7 @@ int __fscache_register_netfs(struct fscache_netfs *netfs)
 		fscache_free_cookie(candidate);
 	}
 
-	fscache_cookie_get(cookie->parent, fscache_cookie_get_register_netfs);
+	fscache_get_cookie(cookie->parent, fscache_cookie_get_register_netfs);
 	atomic_inc(&cookie->parent->n_children);
 
 	netfs->primary_index = cookie;
@@ -54,7 +54,7 @@ int __fscache_register_netfs(struct fscache_netfs *netfs)
 	return 0;
 
 already_registered:
-	fscache_cookie_put(candidate, fscache_cookie_put_dup_netfs);
+	fscache_put_cookie(candidate, fscache_cookie_put_dup_netfs);
 	_leave(" = -EEXIST");
 	return -EEXIST;
 }
