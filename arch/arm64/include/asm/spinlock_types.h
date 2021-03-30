@@ -9,7 +9,12 @@
 # error "please don't include this file directly"
 #endif
 
+#if defined(CONFIG_QUEUED_SPINLOCKS)
 #include <asm-generic/qspinlock_types.h>
+#elif defined(CONFIG_TICKET_SPINLOCKS)
+#include <asm-generic/tspinlock_types.h>
+#endif
+
 #include <asm-generic/qrwlock_types.h>
 
 #endif

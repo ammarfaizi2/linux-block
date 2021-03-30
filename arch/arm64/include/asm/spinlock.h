@@ -6,7 +6,12 @@
 #define __ASM_SPINLOCK_H
 
 #include <asm/qrwlock.h>
+
+#if defined(CONFIG_QUEUED_SPINLOCKS)
 #include <asm/qspinlock.h>
+#elif defined(CONFIG_TICKET_SPINLOCKS)
+#include <asm/tspinlock.h>
+#endif
 
 /* See include/linux/spinlock.h */
 #define smp_mb__after_spinlock()	smp_mb()

@@ -4,4 +4,5 @@ generic-y += mcs_spinlock.h
 generic-y += qrwlock.h
 generic-y += qspinlock.h
 generic-y += set_memory.h
+generic-y += tspinlock.h
 generic-y += user.h

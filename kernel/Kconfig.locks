@@ -236,12 +236,79 @@ config LOCK_SPIN_ON_OWNER
        def_bool y
        depends on MUTEX_SPIN_ON_OWNER || RWSEM_SPIN_ON_OWNER
 
-config ARCH_USE_QUEUED_SPINLOCKS
+#
+# Selects between the various flavors of spinlocks.  The arch Kconfigs can
+# select two different config entries for each spinlock flavor:
+# ARCH_HAS_*_SPINLOCKS indicates that the architecture _can_ use the
+# corresponding style of spinlocks, while ARCH_DEFAULT_*_SPINLOCKS allows
+# architectures to indicate which of the spinlock flavors should be enabled by
+# default.  Architectures may select multiple ARCH_HAS_*_SPINLOCKS configs, but
+# should only select one ARCH_DEFAULT_*_SPINLOCKS.
+#
+# Architectures that don't support either of the more generic lock flavors will
+# fall back to a bespoke, architecture-specific spinlock implementation.
+#
+config ARCH_HAS_QUEUED_SPINLOCKS
 	bool
 
+config ARCH_DEFAULT_QUEUED_SPINLOCKS
+	bool
+
+config ARCH_HAS_TICKET_SPINLOCKS
+	bool
+
+config ARCH_DEFAULT_TICKET_SPINLOCKS
+	bool
+
+# Architectures that
+config ARCH_HAS_BESPOKE_SPINLOCKS
+	bool
+	default !ARCH_HAS_QUEUED_SPINLOCKS && !ARCH_HAS_TICKET_SPINLOCKS
+
+config ARCH_DEFAULT_BESPOKE_SPINLOCKS
+	bool
+	default ARCH_HAS_BESPOKE_SPINLOCKS
+
+# A temporary config entry that avoids a bunch of churn in the arch kconfigs.
+config ARCH_USE_QUEUED_SPINLOCKS
+	bool
+	select ARCH_HAS_QUEUED_SPINLOCKS
+	select ARCH_DEFAULT_QUEUED_SPINLOCKS
+
+choice
+	prompt "Spin Lock Style"
+	default QUEUED_SPINLOCKS  if ARCH_DEFAULT_QUEUED_SPINLOCKS
+	default TICKET_SPINLOCKS  if ARCH_DEFAULT_TICKET_SPINLOCKS
+	default BESPOKE_SPINLOCKS if ARCH_DEFAULT_BESPOKE_SPINLOCKS
+	help
+	  This selects the style of spinlocks that this kernel will use.  As a
+	  general rule of thumb: queued spinlocks will perform better on larger
+	  machines, while ticket spinlocks perform better on smaller machines
+	  and use less memory.  The exact transition point will heavily depend
+	  on both the processor implementation and the workload.
+
 config QUEUED_SPINLOCKS
-	def_bool y if ARCH_USE_QUEUED_SPINLOCKS
+	bool "Queued Spinlocks"
 	depends on SMP
+	depends on ARCH_HAS_QUEUED_SPINLOCKS
+	help
+	  Queued spinlocks, where each waiter spins on a distinct address.
+
+config TICKET_SPINLOCKS
+	bool "Ticket Spinlocks"
+	depends on SMP
+	depends on ARCH_HAS_TICKET_SPINLOCKS
+	help
+	  Ticket-based spinlocks, where each waiter spins on the same address.
+
+config BESPOKE_SPINLOCKS
+	bool "Architecture-Specific Spinlocks"
+	depends on SMP
+	depends on ARCH_HAS_BESPOKE_SPINLOCKS
+	help
+	  An architecture-specific flavor of spinlock.
+
+endchoice
 
 config BPF_ARCH_SPINLOCK
 	bool
