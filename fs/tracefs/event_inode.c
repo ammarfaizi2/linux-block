@@ -17,6 +17,11 @@
 #define FILE_NOT_CREATED	1
 #define FILE_CREATED		2
 
+#if 0
+#undef trace_printk
+#define trace_printk printk
+#endif
+
 struct eventfs_file {
 	struct list_head		list;
 	struct dentry			*d_parent;
@@ -97,6 +102,7 @@ void eventfs_free_inode(struct tracefs_inode *ti)
 	struct eventfs_file *n, *f;
 
 	list_for_each_entry_safe(f, n, &ei->e_top_files, list) {
+		trace_printk("free %s\n", f->name);
 		kfree(f->name);
 		kfree(f);
 	}
@@ -155,7 +161,7 @@ static struct dentry *eventfs_lookup(struct inode *dir, struct dentry *dentry,
 			      unsigned int flags)
 {
 
-        printk("%s:%d dir = %s\n", __func__, __LINE__, dentry->d_iname);
+        trace_printk("%s:%d dir = %s\n", __func__, __LINE__, dentry->d_iname);
 	return NULL;
 #if 0
 	struct proc_fs_info *fs_info = proc_sb_info(dir->i_sb);
@@ -177,7 +183,10 @@ static struct dentry *eventfs_root_lookup(struct inode * dir,
 
 	struct dentry *ret = simple_lookup(dir, dentry, flags);
 
-        printk("%s:%d FileName = %s\n", __func__, __LINE__, dentry->d_iname);
+        trace_printk("%s:%d FileName = %s\n", __func__, __LINE__, dentry->d_iname);
+
+	if (!strncmp ("enable", dentry->d_iname, strlen("enable")))
+		trace_dump_stack(0);
 
 	ti = get_tracefs(dir);
 	if (!(ti->flags & TRACEFS_EVENT_INODE))
@@ -188,7 +197,7 @@ static struct dentry *eventfs_root_lookup(struct inode * dir,
 		if (!strncmp (ef->name, dentry->d_iname, strlen(ef->name)) && (ef->status == FILE_NOT_CREATED))
 		{
                         ef->status = FILE_CREATED;
-		        printk("%s:%d Parent = %s, FileName = %s, ef->name = %s \n", __func__, __LINE__, ef->d_parent->d_iname, dentry->d_iname, ef->name);
+		        trace_printk("%s:%d Parent = %s, FileName = %s, ef->name = %s dentry=%px\n", __func__, __LINE__, ef->d_parent->d_iname, dentry->d_iname, ef->name, dentry);
                         ef->dentry = eventfs_create_file(ef->name, ef->mode, ef->d_parent, ef->data, ef->fops, 1);
 			kref_init(&ef->kref);
 			
@@ -206,7 +215,7 @@ static int eventfs_top_readdir(struct file *file, struct dir_context *ctx)
 	struct inode *inode = file_inode(file);
 	struct dentry *dentry = file_dentry(file);
 
-	printk("%s:%d dir = %s\n", __func__, __LINE__, dentry->d_iname);
+	trace_printk("%s:%d dir = %s\n", __func__, __LINE__, dentry->d_iname);
 
 #if 0
 	ti = get_tracefs(inode);
@@ -220,10 +229,10 @@ static int eventfs_top_readdir(struct file *file, struct dir_context *ctx)
 			ef->status = FILE_CREATED;
 			ef->dentry = eventfs_create_file(ef->name, ef->mode, dentry, ef->data, ef->fops);
 			kref_init(&ef->kref);
-			printk("kref_init: %s:%d dir = %s\n", __func__, __LINE__, dentry->d_iname);
+			trace_printk("kref_init: %s:%d dir = %s\n", __func__, __LINE__, dentry->d_iname);
 		} else {
 			kref_get(&ef->kref);
-			printk("kref_get: %s:%d dir = %s\n", __func__, __LINE__, dentry->d_iname);
+			trace_printk("kref_get: %s:%d dir = %s\n", __func__, __LINE__, dentry->d_iname);
 		}		
 	}
 #endif
@@ -234,19 +243,19 @@ static void eventfs_release_ef(struct kref *kref)
 {
 	struct eventfs_file *ef = container_of(kref, struct eventfs_file, kref);
 
+	trace_printk("eventfs_release_ef: Done: free file %p, name = %s ref=%d\n", ef, ef->dentry->d_iname, ef->dentry->d_lockref.count);
 	dput(ef->dentry);
 	ef->status = FILE_NOT_CREATED;
-	printk("eventfs_release_ef: Done: free file %p, name = %s\n", ef, ef->dentry->d_iname);
 }
 
 static int eventfs_release (struct inode *inode, struct file *file)
 {
         struct dentry *dentry = file_dentry(file);
-	printk("%s:%d dir = %s\n", __func__, __LINE__, dentry->d_iname);
-
 	struct tracefs_inode *ti;
 	struct eventfs_inode *ei;
 	struct eventfs_file *ef, *n;
+
+	trace_printk("%s:%d dir = %s\n", __func__, __LINE__, dentry->d_iname);
 
 	ti = get_tracefs(inode);
 	if (!(ti->flags & TRACEFS_EVENT_INODE))
@@ -256,7 +265,7 @@ static int eventfs_release (struct inode *inode, struct file *file)
 
 	list_for_each_entry_safe(ef, n, &ei->e_top_files, list) {
 		if (ef->status == FILE_CREATED) {
-			printk("kref_put: free file %p, name = %s\n", ef, ef->dentry->d_iname);
+			trace_printk("kref_put: free file %p, name = %s\n", ef, ef->dentry->d_iname);
 			kref_put(&ef->kref, eventfs_release_ef);
 
 			// dput(ef->dentry);
@@ -279,7 +288,7 @@ int dcache_dir_open_wrapper(struct inode *inode, struct file *file)
         struct inode *f_inode = file_inode(file);
         struct dentry *dentry = file_dentry(file);
 
-        printk("%s:%d dir = %s\n", __func__, __LINE__, dentry->d_iname);
+        trace_printk("%s:%d dir = %s\n", __func__, __LINE__, dentry->d_iname);
 
         ti = get_tracefs(f_inode);
         if (!(ti->flags & TRACEFS_EVENT_INODE))
@@ -292,10 +301,11 @@ int dcache_dir_open_wrapper(struct inode *inode, struct file *file)
                         ef->status = FILE_CREATED;
                         ef->dentry = eventfs_create_file(ef->name, ef->mode, dentry, ef->data, ef->fops, 0);
                         kref_init(&ef->kref);
-                        printk("kref_init: %s:%d dir = %s\n", __func__, __LINE__, dentry->d_iname);
+                        trace_printk("kref_init: %s:%d dir = %s name = %s\n", __func__, __LINE__, dentry->d_iname, ef->name);
                 } else {
+			WARN_ONCE(ef->status != FILE_CREATED, "file not created %d\n", ef->status);
                         kref_get(&ef->kref);
-                        printk("kref_get: %s:%d dir = %s\n", __func__, __LINE__, dentry->d_iname);
+                        trace_printk("kref_get: %s:%d dir = %s name = %s\n", __func__, __LINE__, dentry->d_iname, ef->name);
                 }
         }
 
