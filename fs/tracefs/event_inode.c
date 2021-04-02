@@ -103,10 +103,11 @@ void eventfs_free_inode(struct tracefs_inode *ti)
 	kfree(ei);
 }
 
-static int eventfs_root_getattr(const struct path *path, struct kstat *stat,
+static int eventfs_root_getattr(struct user_namespace *ns,
+				const struct path *path, struct kstat *stat,
 				u32 request_mask, unsigned int query_flags)
 {
-	generic_fillattr(d_inode(path->dentry), stat);
+	generic_fillattr(&init_user_ns, d_inode(path->dentry), stat);
 	stat->nlink = 1;
 	return 0;
 }
@@ -174,12 +175,13 @@ static struct dentry *eventfs_root_lookup(struct inode * dir,
         struct eventfs_inode *ei;
         struct eventfs_file *ef, *n;
 
-	int ret = simple_lookup(dir, dentry, flags);
+	struct dentry *ret = simple_lookup(dir, dentry, flags);
+
         printk("%s:%d FileName = %s\n", __func__, __LINE__, dentry->d_iname);
 
 	ti = get_tracefs(dir);
 	if (!(ti->flags & TRACEFS_EVENT_INODE))
-		return -EINVAL;
+		return NULL;
 
 	ei = ti->private;
         list_for_each_entry_safe(ef, n, &ei->e_top_files, list) {
