@@ -13,9 +13,6 @@
 scriptname=$0
 args="$*"
 
-T=/tmp/kvm-remote.sh.$$
-trap 'rm -f $T' 0 2
-
 if ! test -d tools/testing/selftests/rcutorture/bin
 then
 	echo $scriptname must be run from top-level directory of kernel source tree.
@@ -226,5 +223,5 @@ do
 	( cd "$oldrun"; ssh $i "cd $rundir; tar -czf - kvm-remote-*.sh.out */console.log */kvm-test-1-run*.sh.out */qemu_pid */qemu-retval; rm -rf $T > /dev/null 2>&1" | tar -xzf - )
 done
 
-( kvm-end-run-stats.sh "$oldrun" "$starttime"; echo $? > $T ) | tee -a "$oldrun/remote-log"
-exit "`cat $T`"
+( kvm-end-run-stats.sh "$oldrun" "$starttime"; echo $? > $T/exitcode ) | tee -a "$oldrun/remote-log"
+exit "`cat $T/exitcode`"
