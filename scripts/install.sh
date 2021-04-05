@@ -54,10 +54,15 @@ install "$2" "$4"/vmlinuz
 install "$3" "$4"/System.map
 sync
 
-if [ -x /sbin/lilo ]; then
-       /sbin/lilo
-elif [ -x /etc/lilo/install ]; then
-       /etc/lilo/install
-else
-       echo "Cannot find LILO."
-fi
+# Some architectures like to call specific bootloader "helper" programs:
+case "${ARCH}" in
+	x86)
+		if [ -x /sbin/lilo ]; then
+			/sbin/lilo
+		elif [ -x /etc/lilo/install ]; then
+			/etc/lilo/install
+		else
+			echo "Cannot find LILO."
+		fi
+		;;
+esac
