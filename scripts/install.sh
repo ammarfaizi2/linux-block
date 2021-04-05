@@ -60,8 +60,19 @@ else
 	base=vmlinux
 fi
 
-install "$2" "$4"/"$base"
-install "$3" "$4"/System.map
+# Some architectures name their files based on version number, and
+# others do not.  Call out the ones that do not to make it obvious.
+case "${ARCH}" in
+	x86)
+		version=""
+		;;
+	*)
+		version="-${1}"
+		;;
+esac
+
+install "$2" "$4"/"$base""$version"
+install "$3" "$4"/System.map"$version"
 sync
 
 # Some architectures like to call specific bootloader "helper" programs:
