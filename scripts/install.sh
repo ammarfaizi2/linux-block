@@ -52,12 +52,12 @@ if [ -x /sbin/"${INSTALLKERNEL}" ]; then exec /sbin/"${INSTALLKERNEL}" "$@"; fi
 # Default install - same as make zlilo
 install "$2" "$4"/vmlinuz
 install "$3" "$4"/System.map
+sync
 
 if [ -x /sbin/lilo ]; then
        /sbin/lilo
 elif [ -x /etc/lilo/install ]; then
        /etc/lilo/install
 else
-       sync
        echo "Cannot find LILO."
 fi
