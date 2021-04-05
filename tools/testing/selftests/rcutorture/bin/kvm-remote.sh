@@ -34,16 +34,16 @@ fi
 shift
 
 # Pathnames:
-# T:	  /tmp/kvm-again.sh.$$
-# resdir: /tmp/kvm-again.sh.$$/res
-# rundir: /tmp/kvm-again.sh.$$/res/$ds ("-remote" suffix)
+# T:	  /tmp/kvm-remote.sh.$$
+# resdir: /tmp/kvm-remote.sh.$$/res
+# rundir: /tmp/kvm-remote.sh.$$/res/$ds ("-remote" suffix)
 # oldrun: `pwd`/tools/testing/.../res/$otherds
 #
 # Pathname segments:
-# TD:	  kvm-again.sh.$$
+# TD:	  kvm-remote.sh.$$
 # ds:	  yyyy.mm.dd-hh.mm.ss-remote
 
-TD=kvm-again.sh.$$
+TD=kvm-remote.sh.$$
 T=${TMPDIR-/tmp}/$TD
 trap 'rm -rf $T' 0
 mkdir $T
