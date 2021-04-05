@@ -49,8 +49,18 @@ verify "$3"
 if [ -x ~/bin/"${INSTALLKERNEL}" ]; then exec ~/bin/"${INSTALLKERNEL}" "$@"; fi
 if [ -x /sbin/"${INSTALLKERNEL}" ]; then exec /sbin/"${INSTALLKERNEL}" "$@"; fi
 
-# Default install - same as make zlilo
-install "$2" "$4"/vmlinuz
+base=$(basename "$2")
+if [ "$base" = "bzImage" ]; then
+	# Compressed install
+	echo "Installing compressed kernel"
+	base=vmlinuz
+else
+	# Normal install
+	echo "Installing normal kernel"
+	base=vmlinux
+fi
+
+install "$2" "$4"/"$base"
 install "$3" "$4"/System.map
 sync
 
