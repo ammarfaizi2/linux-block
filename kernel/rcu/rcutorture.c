@@ -946,15 +946,18 @@ static void rcu_torture_enable_rt_throttle(void)
 	old_rt_runtime = -1;
 }
 
-static bool rcu_torture_boost_failed(unsigned long start, unsigned long end)
+static bool rcu_torture_boost_failed(unsigned long gp_state, unsigned long start, unsigned long end)
 {
 	static int dbg_done;
 
 	if (end - start > test_boost_duration * HZ - HZ / 2) {
 		VERBOSE_TOROUT_STRING("rcu_torture_boost boosting failed");
 		n_rcu_torture_boost_failure++;
-		if (!xchg(&dbg_done, 1) && cur_ops->gp_kthread_dbg)
+		if (!xchg(&dbg_done, 1) && cur_ops->gp_kthread_dbg) {
+			pr_info("Boost inversion thread ->rt_priority %u gp_state %lu jiffies %lu\n",
+				current->rt_priority, gp_state, end - start);
 			cur_ops->gp_kthread_dbg();
+		}
 
 		return true; /* failed */
 	}
@@ -965,7 +968,6 @@ static bool rcu_torture_boost_failed(unsigned long start, unsigned long end)
 static int rcu_torture_boost(void *arg)
 {
 	unsigned long endtime;
-	bool gp_initiated = false;
 	unsigned long gp_state;
 	unsigned long gp_state_time;
 	unsigned long oldstarttime;
@@ -978,7 +980,7 @@ static int rcu_torture_boost(void *arg)
 	/* Each pass through the following loop does one boost-test cycle. */
 	do {
 		bool failed = false; // Test failed already in this test interval
-		bool firsttime = true;
+		bool gp_initiated = false;
 
 		/* Increment n_rcu_torture_boosts once per boost-test */
 		while (!kthread_should_stop()) {
@@ -1002,32 +1004,33 @@ static int rcu_torture_boost(void *arg)
 				goto checkwait;
 		}
 
-		/* Do one boost-test interval. */
+		// Do one boost-test interval.
 		endtime = oldstarttime + test_boost_duration * HZ;
 		while (time_before(jiffies, endtime)) {
-			/* If we don't have a grace period in flight, start one. */
-			if (!gp_initiated) {
+			// Has current GP gone too long?
+			if (gp_initiated && !failed && !cur_ops->poll_gp_state(gp_state))
+				failed = rcu_torture_boost_failed(gp_state, gp_state_time, jiffies);
+			// If we don't have a grace period in flight, start one.
+			if (!gp_initiated || cur_ops->poll_gp_state(gp_state)) {
 				gp_state = cur_ops->start_gp_poll();
 				gp_initiated = true;
-				/* Check if the boost test failed */
-				if (!firsttime && !failed)
-					failed = rcu_torture_boost_failed(gp_state_time, jiffies);
 				gp_state_time = jiffies;
-				firsttime = false;
 			}
-			if (stutter_wait("rcu_torture_boost"))
+			if (stutter_wait("rcu_torture_boost")) {
 				sched_set_fifo_low(current);
+				// If the grace period already ended,
+				// we don't know when that happened, so
+				// start over.
+				if (cur_ops->poll_gp_state(gp_state))
+					gp_initiated = false;
+			}
 			if (torture_must_stop())
 				goto checkwait;
 		}
 
-		/*
-		 * If boost never happened, then inflight will always be 1, in
-		 * this case the boost check would never happen in the above
-		 * loop so do another one here.
-		 */
-		if (!firsttime && !failed && cur_ops->poll_gp_state(gp_state))
-			rcu_torture_boost_failed(gp_state_time, jiffies);
+		// In case the grace period extended beyond the end of the loop.
+		if (gp_initiated && !failed && !cur_ops->poll_gp_state(gp_state))
+			rcu_torture_boost_failed(gp_state, gp_state_time, jiffies);
 
 		/*
 		 * Set the start time of the next test interval.
@@ -3132,6 +3135,21 @@ rcu_torture_init(void)
 		if (firsterr < 0)
 			goto unwind;
 		rcutor_hp = firsterr;
+
+		// Testing RCU priority boosting requires rcutorture do
+		// some serious abuse.  Counter this by running ksoftirqd
+		// at higher priority.
+		if (IS_BUILTIN(CONFIG_RCU_TORTURE_TEST)) {
+			for_each_online_cpu(cpu) {
+				struct sched_param sp;
+				struct task_struct *t;
+
+				t = per_cpu(ksoftirqd, cpu);
+				WARN_ON_ONCE(!t);
+				sp.sched_priority = 2;
+				sched_setscheduler_nocheck(t, SCHED_FIFO, &sp);
+			}
+		}
 	}
 	shutdown_jiffies = jiffies + shutdown_secs * HZ;
 	firsterr = torture_shutdown_init(shutdown_secs, rcu_torture_cleanup);
