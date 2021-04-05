@@ -27,6 +27,19 @@ verify () {
  	fi
 }
 
+install () {
+	install_source=${1}
+	install_target=${2}
+
+	echo "installing '${install_source}' to '${install_target}'"
+
+	# if the target is already present, move it to a .old filename
+	if [ -f "${install_target}" ]; then
+		mv "${install_target}" "${install_target}".old
+	fi
+	cat "${install_source}" > "${install_target}"
+}
+
 # Make sure the files actually exist
 verify "$2"
 verify "$3"
@@ -37,17 +50,8 @@ if [ -x ~/bin/"${INSTALLKERNEL}" ]; then exec ~/bin/"${INSTALLKERNEL}" "$@"; fi
 if [ -x /sbin/"${INSTALLKERNEL}" ]; then exec /sbin/"${INSTALLKERNEL}" "$@"; fi
 
 # Default install - same as make zlilo
-
-if [ -f "$4"/vmlinuz ]; then
-	mv "$4"/vmlinuz "$4"/vmlinuz.old
-fi
-
-if [ -f "$4"/System.map ]; then
-	mv "$4"/System.map "$4"/System.old
-fi
-
-cat "$2" > "$4"/vmlinuz
-cp "$3" "$4"/System.map
+install "$2" "$4"/vmlinuz
+install "$3" "$4"/System.map
 
 if [ -x /sbin/lilo ]; then
        /sbin/lilo
