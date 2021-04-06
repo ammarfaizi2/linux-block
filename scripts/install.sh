@@ -51,7 +51,8 @@ if [ -x /sbin/"${INSTALLKERNEL}" ]; then exec /sbin/"${INSTALLKERNEL}" "$@"; fi
 
 base=$(basename "$2")
 if [ "$base" = "bzImage" ] ||
-   [ "$base" = "Image.gz" ] ; then
+   [ "$base" = "Image.gz" ] ||
+   [ "$base" = "zImage" ] ; then
 	# Compressed install
 	echo "Installing compressed kernel"
 	base=vmlinuz
@@ -78,6 +79,13 @@ sync
 
 # Some architectures like to call specific bootloader "helper" programs:
 case "${ARCH}" in
+	arm)
+		if [ -x /sbin/loadmap ]; then
+			/sbin/loadmap
+		else
+			echo "You have to install it yourself"
+		fi
+		;;
 	x86)
 		if [ -x /sbin/lilo ]; then
 			/sbin/lilo
