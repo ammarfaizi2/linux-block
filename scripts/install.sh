@@ -67,7 +67,7 @@ fi
 # Some architectures name their files based on version number, and
 # others do not.  Call out the ones that do not to make it obvious.
 case "${ARCH}" in
-	ia64 | m68k | nios2 | powerpc | x86)
+	ia64 | m68k | nios2 | powerpc | sparc | x86)
 		version=""
 		;;
 	*)

@@ -72,5 +72,5 @@ $(obj)/tftpboot.img: $(obj)/image $(obj)/piggyback System.map $(ROOT_IMG) FORCE
 	$(call if_changed,piggy)
 
 install:
-	sh $(srctree)/$(src)/install.sh $(KERNELRELEASE) $(obj)/zImage \
+	sh $(srctree)/scripts/install.sh $(KERNELRELEASE) $(obj)/zImage \
 		System.map "$(INSTALL_PATH)"
