@@ -1,14 +1,14 @@
 #!/bin/sh
-#
-# This file is subject to the terms and conditions of the GNU General Public
-# License.  See the file "COPYING" in the main directory of this archive
-# for more details.
+# SPDX-License-Identifier: GPL-2.0
 #
 # Copyright (C) 1995 by Linus Torvalds
+# Copyright (C) 2021 Greg Kroah-Hartman
 #
 # Adapted from code in arch/i386/boot/Makefile by H. Peter Anvin
+# Adapted from code in arch/i386/boot/install.sh by Russell King
+# Adapted from code in arch/arm/boot/install.sh by Stuart Menefy
 #
-# "make install" script for i386 architecture
+# "make install" script for Linux to be used by all architectures.
 #
 # Arguments:
 #   $1 - kernel version
@@ -16,6 +16,26 @@
 #   $3 - kernel map file
 #   $4 - default install path (blank if root directory)
 #
+# Installs the built kernel image and map and symbol file in the specified
+# install location.  If no install path is selected, the files will be placed
+# in the root directory.
+#
+# The name of the kernel image will be "vmlinux-VERSION" for uncompressed
+# kernels or "vmlinuz-VERSION' for compressed kernels.
+#
+# The kernel map file will be named "System.map-VERSION"
+#
+# Note, not all architectures seem to like putting the VERSION number in the
+# file name, see below in the script for a list of those that do not.  For
+# those that do not the "-VERSION" will not be present in the file name.
+#
+# If there is currently a kernel image or kernel map file present with the name
+# of the file to be copied to the location, it will be renamed to contain a
+# ".old" suffix.
+#
+# If ~/bin/${INSTALLKERNEL} or /sbin/${INSTALLKERNEL} is executable, execution
+# will be passed to that program instead of this one to allow for distro or
+# system specific installation scripts to be used.
 
 verify () {
 	if [ ! -f "$1" ]; then
@@ -45,7 +65,6 @@ verify "$2"
 verify "$3"
 
 # User may have a custom install script
-
 if [ -x ~/bin/"${INSTALLKERNEL}" ]; then exec ~/bin/"${INSTALLKERNEL}" "$@"; fi
 if [ -x /sbin/"${INSTALLKERNEL}" ]; then exec /sbin/"${INSTALLKERNEL}" "$@"; fi
 
@@ -111,7 +130,7 @@ case "${ARCH}" in
 		elif [ -x /etc/lilo/install ]; then
 			/etc/lilo/install
 		else
-			echo "Cannot find LILO."
+			echo "Cannot find LILO, ensure your bootloader knows of the new kernel image."
 		fi
 		;;
 esac
