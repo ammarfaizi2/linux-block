@@ -143,4 +143,4 @@ archheaders:
 	$(Q)$(MAKE) $(build)=arch/m68k/kernel/syscalls all
 
 install:
-	sh $(srctree)/arch/m68k/install.sh $(KERNELRELEASE) vmlinux.gz System.map "$(INSTALL_PATH)"
+	sh $(srctree)/scripts/install.sh $(KERNELRELEASE) vmlinux.gz System.map "$(INSTALL_PATH)"
