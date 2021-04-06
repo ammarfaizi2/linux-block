@@ -52,6 +52,7 @@ if [ -x /sbin/"${INSTALLKERNEL}" ]; then exec /sbin/"${INSTALLKERNEL}" "$@"; fi
 base=$(basename "$2")
 if [ "$base" = "bzImage" ] ||
    [ "$base" = "Image.gz" ] ||
+   [ "$base" = "vmlinux.gz" ] ||
    [ "$base" = "zImage" ] ; then
 	# Compressed install
 	echo "Installing compressed kernel"
@@ -65,7 +66,7 @@ fi
 # Some architectures name their files based on version number, and
 # others do not.  Call out the ones that do not to make it obvious.
 case "${ARCH}" in
-	x86)
+	ia64 | x86)
 		version=""
 		;;
 	*)
@@ -84,6 +85,11 @@ case "${ARCH}" in
 			/sbin/loadmap
 		else
 			echo "You have to install it yourself"
+		fi
+		;;
+	ia64)
+		if [ -x /usr/sbin/elilo ]; then
+			/usr/sbin/elilo
 		fi
 		;;
 	x86)
