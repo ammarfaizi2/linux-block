@@ -67,7 +67,7 @@ fi
 # Some architectures name their files based on version number, and
 # others do not.  Call out the ones that do not to make it obvious.
 case "${ARCH}" in
-	ia64 | m68k | nios2 | x86)
+	ia64 | m68k | nios2 | powerpc | x86)
 		version=""
 		;;
 	*)
@@ -92,6 +92,18 @@ case "${ARCH}" in
 		if [ -x /usr/sbin/elilo ]; then
 			/usr/sbin/elilo
 		fi
+		;;
+	powerpc)
+		# powerpc installation can list other boot targets after the
+		# install path that should be copied to the correct location
+		path=$4
+		shift 4
+		while [ $# -ne 0 ]; do
+			image_name=$(basename "$1")
+			install "$1" "$path"/"$image_name"
+			shift
+		done;
+		sync
 		;;
 	x86)
 		if [ -x /sbin/lilo ]; then
