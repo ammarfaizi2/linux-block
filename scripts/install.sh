@@ -53,6 +53,7 @@ base=$(basename "$2")
 if [ "$base" = "bzImage" ] ||
    [ "$base" = "Image.gz" ] ||
    [ "$base" = "vmlinux.gz" ] ||
+   [ "$base" = "vmlinuz" ] ||
    [ "$base" = "zImage" ] ; then
 	# Compressed install
 	echo "Installing compressed kernel"
