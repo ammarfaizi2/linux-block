@@ -1088,6 +1088,7 @@ static int rcu_boost(struct rcu_node *rnp)
 	/* Lock only for side effect: boosts task t's priority. */
 	rt_mutex_lock(&rnp->boost_mtx);
 	rt_mutex_unlock(&rnp->boost_mtx);  /* Then keep lockdep happy. */
+	rnp->n_boosts++;
 
 	return READ_ONCE(rnp->exp_tasks) != NULL ||
 	       READ_ONCE(rnp->boost_tasks) != NULL;
@@ -1187,21 +1188,28 @@ static void rcu_preempt_boost_start_gp(struct rcu_node *rnp)
  */
 static void rcu_spawn_one_boost_kthread(struct rcu_node *rnp)
 {
-	int rnp_index = rnp - rcu_get_root();
+	int cpu;
 	unsigned long flags;
+	bool gotcpus = false;
+	int rnp_index = rnp - rcu_get_root();
 	struct sched_param sp;
 	struct task_struct *t;
 
 	if (!IS_ENABLED(CONFIG_PREEMPT_RCU))
 		return;
 
-	if (!rcu_scheduler_fully_active || rcu_rnp_online_cpus(rnp) == 0)
+	if (rnp->boost_kthread_task)
+		return;
+
+	for (cpu = rnp->grplo; cpu <= rnp->grphi; cpu++)
+		if (cpu_online(cpu)) {
+			gotcpus = true;
+			break;
+		}
+	if (!rcu_scheduler_fully_active || !gotcpus)
 		return;
 
 	rcu_state.boost = 1;
-
-	if (rnp->boost_kthread_task != NULL)
-		return;
 
 	t = kthread_create(rcu_boost_kthread, (void *)rnp,
 			   "rcub/%d", rnp_index);
