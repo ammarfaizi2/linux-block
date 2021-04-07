@@ -188,6 +188,7 @@ static struct dentry *eventfs_root_lookup(struct inode * dir,
                         ef->status = FILE_CREATED;
 		        printk("%s:%d Parent = %s, FileName = %s, ef->name = %s \n", __func__, __LINE__, ef->d_parent->d_iname, dentry->d_iname, ef->name);
                         ef->dentry = eventfs_create_file(ef->name, ef->mode, ef->d_parent, ef->data, ef->fops, 1);
+			kref_init(&ef->kref);
 			
                 }
         }

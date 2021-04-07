@@ -2319,8 +2319,8 @@ event_subsystem_dir(struct trace_array *tr, const char *name,
 			pr_warn("Could not create tracefs '%s/filter' entry\n", name);
 		}
 
-		trace_create_file("enable", 0644, dir->entry, dir,
-				  &ftrace_system_enable_fops);
+		eventfs_create_top_file("enable", 0644, dir->entry, dir,
+					&ftrace_system_enable_fops);
 	}
 
 	list_add(&dir->list, &tr->systems);
