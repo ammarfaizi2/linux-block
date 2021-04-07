@@ -291,6 +291,18 @@ static const struct super_operations tracefs_super_operations = {
 	.show_options	= tracefs_show_options,
 };
 
+#if 0
+static int tracefs_dentry_delete(const struct dentry *dentry)
+{
+	trace_printk("here\n");
+	return 0;
+}
+
+const struct dentry_operations tracefs_dentry_operations = {
+	.d_delete	= tracefs_dentry_delete,
+};
+#endif
+
 static int trace_fill_super(struct super_block *sb, void *data, int silent)
 {
 	static const struct tree_descr trace_files[] = {{""}};
@@ -313,6 +325,7 @@ static int trace_fill_super(struct super_block *sb, void *data, int silent)
 		goto fail;
 
 	sb->s_op = &tracefs_super_operations;
+//	sb->s_d_op = &tracefs_dentry_operations;
 
 	tracefs_apply_options(sb);
 
