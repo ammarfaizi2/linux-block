@@ -134,3 +134,9 @@ case "${ARCH}" in
 		fi
 		;;
 esac
+
+# Some architectures like to call specific bootloader "helper" programs
+# so let them have their own special command here
+if [ -f "arch/$ARCH/boot/bootloader.sh" ] ; then
+	sh arch/"$ARCH"/boot/bootloader.sh
+fi
