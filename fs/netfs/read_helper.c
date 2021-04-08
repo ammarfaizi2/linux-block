@@ -844,12 +844,21 @@ static void netfs_rreq_expand(struct netfs_read_request *rreq,
 	 */
 	if (rreq->start  != readahead_pos(ractl) ||
 	    rreq->len != readahead_length(ractl)) {
+		enum netfs_read_trace what = netfs_read_trace_expanded;
 		readahead_expand(ractl, rreq->start, rreq->len);
+		if (readahead_pos(ractl)    > rreq->start ||
+		    readahead_length(ractl) < rreq->len) {
+			kdebug("start %llx -> %llx; len %zx -> %llx",
+			       rreq->start, readahead_pos(ractl),
+			       rreq->len, readahead_length(ractl));
+			netfs_stat(&netfs_n_rh_expand_failed);
+			what = netfs_read_trace_expand_fail;
+		}
 		rreq->start  = readahead_pos(ractl);
 		rreq->len = readahead_length(ractl);
 
 		trace_netfs_read(rreq, readahead_pos(ractl), readahead_length(ractl),
-				 netfs_read_trace_expanded);
+				 what);
 	}
 }
 

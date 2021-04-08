@@ -18,6 +18,7 @@ atomic_t netfs_n_rh_download;
 atomic_t netfs_n_rh_download_done;
 atomic_t netfs_n_rh_download_failed;
 atomic_t netfs_n_rh_download_instead;
+atomic_t netfs_n_rh_expand_failed;
 atomic_t netfs_n_rh_read;
 atomic_t netfs_n_rh_read_done;
 atomic_t netfs_n_rh_read_failed;
@@ -38,10 +39,10 @@ void netfs_stats_show(struct seq_file *m)
 		   atomic_read(&netfs_n_rh_write_zskip),
 		   atomic_read(&netfs_n_rh_rreq),
 		   atomic_read(&netfs_n_rh_sreq));
-	seq_printf(m, "RdHelp : ZR=%u sh=%u sk=%u\n",
+	seq_printf(m, "RdHelp : ZR=%u sh=%u xf=%u\n",
 		   atomic_read(&netfs_n_rh_zero),
 		   atomic_read(&netfs_n_rh_short_read),
-		   atomic_read(&netfs_n_rh_write_zskip));
+		   atomic_read(&netfs_n_rh_expand_failed));
 	seq_printf(m, "RdHelp : DL=%u ds=%u df=%u di=%u\n",
 		   atomic_read(&netfs_n_rh_download),
 		   atomic_read(&netfs_n_rh_download_done),

@@ -20,6 +20,7 @@
 
 enum netfs_read_trace {
 	netfs_read_trace_expanded,
+	netfs_read_trace_expand_fail,
 	netfs_read_trace_readahead,
 	netfs_read_trace_readpage,
 	netfs_read_trace_write_begin,
@@ -60,6 +61,7 @@ enum netfs_failure {
 
 #define netfs_read_traces					\
 	EM(netfs_read_trace_expanded,		"EXPANDED ")	\
+	EM(netfs_read_trace_expand_fail,	"EXPN_FAIL")	\
 	EM(netfs_read_trace_readahead,		"READAHEAD")	\
 	EM(netfs_read_trace_readpage,		"READPAGE ")	\
 	E_(netfs_read_trace_write_begin,	"WRITEBEGN")
