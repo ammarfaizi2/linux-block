@@ -739,7 +739,7 @@ bool rcu_check_boost_fail(unsigned long gp_state, int *cpup)
 		}
 		// Find the first holdout CPU.
 		for_each_leaf_node_possible_cpu(rnp, cpu) {
-			if (rnp->qsmask & (1UL << (cpu -rnp->grplo))) {
+			if (rnp->qsmask & (1UL << (cpu - rnp->grplo))) {
 				raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
 				*cpup = cpu;
 				return false;
