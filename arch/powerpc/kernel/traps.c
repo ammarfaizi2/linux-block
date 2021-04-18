@@ -221,7 +221,7 @@ static void oops_end(unsigned long flags, struct pt_regs *regs,
 	/*
 	 * system_reset_excption handles debugger, crash dump, panic, for 0x100
 	 */
-	if (TRAP(regs) == 0x100)
+	if (TRAP(regs) == INTERRUPT_SYSTEM_RESET)
 		return;
 
 	crash_fadump(regs, "die oops");
@@ -289,7 +289,7 @@ void die(const char *str, struct pt_regs *regs, long err)
 	/*
 	 * system_reset_excption handles debugger, crash dump, panic, for 0x100
 	 */
-	if (TRAP(regs) != 0x100) {
+	if (TRAP(regs) != INTERRUPT_SYSTEM_RESET) {
 		if (debugger(regs))
 			return;
 	}
@@ -1078,6 +1078,16 @@ DEFINE_INTERRUPT_HANDLER_ASYNC(unknown_async_exception)
 	_exception(SIGTRAP, regs, TRAP_UNK, 0);
 }
 
+DEFINE_INTERRUPT_HANDLER_NMI(unknown_nmi_exception)
+{
+	printk("Bad trap at PC: %lx, SR: %lx, vector=%lx\n",
+	       regs->nip, regs->msr, regs->trap);
+
+	_exception(SIGTRAP, regs, TRAP_UNK, 0);
+
+	return 0;
+}
+
 DEFINE_INTERRUPT_HANDLER(instruction_breakpoint_exception)
 {
 	if (notify_die(DIE_IABR_MATCH, "iabr_match", regs, 5,
@@ -1308,7 +1318,6 @@ static int emulate_instruction(struct pt_regs *regs)
 
 	if (!user_mode(regs))
 		return -EINVAL;
-	CHECK_FULL_REGS(regs);
 
 	if (get_user(instword, (u32 __user *)(regs->nip)))
 		return -EFAULT;
@@ -1682,7 +1691,7 @@ DEFINE_INTERRUPT_HANDLER(facility_unavailable_exception)
 	u8 status;
 	bool hv;
 
-	hv = (TRAP(regs) == 0xf80);
+	hv = (TRAP(regs) == INTERRUPT_H_FAC_UNAVAIL);
 	if (hv)
 		value = mfspr(SPRN_HFSCR);
 	else
@@ -2181,10 +2190,11 @@ void __attribute__ ((weak)) WatchdogHandler(struct pt_regs *regs)
 	return;
 }
 
-DEFINE_INTERRUPT_HANDLER(WatchdogException) /* XXX NMI? async? */
+DEFINE_INTERRUPT_HANDLER_NMI(WatchdogException)
 {
 	printk (KERN_EMERG "PowerPC Book-E Watchdog Exception\n");
 	WatchdogHandler(regs);
+	return 0;
 }
 #endif
 

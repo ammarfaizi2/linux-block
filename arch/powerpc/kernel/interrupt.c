@@ -43,15 +43,14 @@ notrace long system_call_exception(long r3, long r4, long r5,
 	if (IS_ENABLED(CONFIG_PPC_IRQ_SOFT_MASK_DEBUG))
 		BUG_ON(irq_soft_mask_return() != IRQS_ALL_DISABLED);
 
+	trace_hardirqs_off(); /* finish reconciling */
+
 	CT_WARN_ON(ct_state() == CONTEXT_KERNEL);
 	user_exit_irqoff();
-
-	trace_hardirqs_off(); /* finish reconciling */
 
 	if (!IS_ENABLED(CONFIG_BOOKE) && !IS_ENABLED(CONFIG_40x))
 		BUG_ON(!(regs->msr & MSR_RI));
 	BUG_ON(!(regs->msr & MSR_PR));
-	BUG_ON(!FULL_REGS(regs));
 	BUG_ON(arch_irq_disabled_regs(regs));
 
 #ifdef CONFIG_PPC_PKEY
@@ -349,18 +348,13 @@ again:
 
 	account_cpu_user_exit();
 
-#ifndef CONFIG_PPC_BOOK3E_64 /* BOOK3E not using this */
-	/*
-	 * We do this at the end so that we do context switch with KERNEL AMR
-	 */
+	/* Restore user access locks last */
 	kuap_user_restore(regs);
-#endif
 	kuep_unlock();
 
 	return ret;
 }
 
-#ifndef CONFIG_PPC_BOOK3E_64 /* BOOK3E not yet using this */
 notrace unsigned long interrupt_exit_user_prepare(struct pt_regs *regs, unsigned long msr)
 {
 	unsigned long ti_flags;
@@ -370,7 +364,6 @@ notrace unsigned long interrupt_exit_user_prepare(struct pt_regs *regs, unsigned
 	if (!IS_ENABLED(CONFIG_BOOKE) && !IS_ENABLED(CONFIG_40x))
 		BUG_ON(!(regs->msr & MSR_RI));
 	BUG_ON(!(regs->msr & MSR_PR));
-	BUG_ON(!FULL_REGS(regs));
 	BUG_ON(arch_irq_disabled_regs(regs));
 	CT_WARN_ON(ct_state() == CONTEXT_USER);
 
@@ -432,10 +425,9 @@ again:
 
 	account_cpu_user_exit();
 
-	/*
-	 * We do this at the end so that we do context switch with KERNEL AMR
-	 */
+	/* Restore user access locks last */
 	kuap_user_restore(regs);
+
 	return ret;
 }
 
@@ -451,12 +443,11 @@ notrace unsigned long interrupt_exit_kernel_prepare(struct pt_regs *regs, unsign
 	    unlikely(!(regs->msr & MSR_RI)))
 		unrecoverable_exception(regs);
 	BUG_ON(regs->msr & MSR_PR);
-	BUG_ON(!FULL_REGS(regs));
 	/*
 	 * CT_WARN_ON comes here via program_check_exception,
 	 * so avoid recursion.
 	 */
-	if (TRAP(regs) != 0x700)
+	if (TRAP(regs) != INTERRUPT_PROGRAM)
 		CT_WARN_ON(ct_state() == CONTEXT_USER);
 
 	kuap = kuap_get_and_assert_locked();
@@ -497,12 +488,11 @@ again:
 #endif
 
 	/*
-	 * Don't want to mfspr(SPRN_AMR) here, because this comes after mtmsr,
-	 * which would cause Read-After-Write stalls. Hence, we take the AMR
-	 * value from the check above.
+	 * 64s does not want to mfspr(SPRN_AMR) here, because this comes after
+	 * mtmsr, which would cause Read-After-Write stalls. Hence, take the
+	 * AMR value from the check above.
 	 */
 	kuap_kernel_restore(regs, kuap);
 
 	return ret;
 }
-#endif
