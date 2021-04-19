@@ -334,6 +334,60 @@ static const struct attribute_group armv8_pmuv3_caps_attr_group = {
 	.attrs = armv8_pmuv3_caps_attrs,
 };
 
+static void armv8pmu_disable_user_access(void);
+
+static void armv8pmu_disable_user_access_ipi(void *unused)
+{
+	armv8pmu_disable_user_access();
+}
+
+static ssize_t get_attr_rdpmc(struct device *dev,
+			      struct device_attribute *attr,
+			      char *buf)
+{
+	struct pmu *pmu = dev_get_drvdata(dev);
+	struct arm_pmu *cpu_pmu = container_of(pmu, struct arm_pmu, pmu);
+
+	return snprintf(buf, 40, "%d\n", cpu_pmu->attr_rdpmc);
+}
+
+static ssize_t set_attr_rdpmc(struct device *dev,
+			      struct device_attribute *attr,
+			      const char *buf, size_t count)
+{
+	struct pmu *pmu = dev_get_drvdata(dev);
+	struct arm_pmu *cpu_pmu = container_of(pmu, struct arm_pmu, pmu);
+	unsigned long val;
+	ssize_t ret;
+
+	ret = kstrtoul(buf, 0, &val);
+	if (ret)
+		return ret;
+
+	if (val > 1)
+		return -EINVAL;
+
+	if (val != cpu_pmu->attr_rdpmc) {
+		cpu_pmu->attr_rdpmc = val;
+		if (!val)
+			on_each_cpu_mask(&cpu_pmu->supported_cpus,
+				armv8pmu_disable_user_access_ipi, NULL, 1);
+	}
+
+	return count;
+}
+
+static DEVICE_ATTR(rdpmc, S_IRUSR | S_IWUSR, get_attr_rdpmc, set_attr_rdpmc);
+
+static struct attribute *armv8_pmuv3_rdpmc_attrs[] = {
+	&dev_attr_rdpmc.attr,
+	NULL,
+};
+
+static const struct attribute_group armv8_pmuv3_rdpmc_attr_group = {
+	.attrs = armv8_pmuv3_rdpmc_attrs,
+};
+
 /*
  * Perf Events' indices
  */
@@ -892,7 +946,8 @@ static void armv8pmu_clear_event_idx(struct pmu_hw_events *cpuc,
 {
 	int idx = event->hw.idx;
 
-	armv8pmu_write_counter(event, 0);
+	if (to_arm_pmu(event->pmu)->attr_rdpmc)
+		armv8pmu_write_counter(event, 0);
 
 	clear_bit(idx, cpuc->used_mask);
 	if (armv8pmu_event_is_chained(event))
@@ -901,7 +956,7 @@ static void armv8pmu_clear_event_idx(struct pmu_hw_events *cpuc,
 
 static int armv8pmu_access_event_idx(struct perf_event *event)
 {
-	if (armv8pmu_event_can_chain(event))
+	if (!to_arm_pmu(event->pmu)->attr_rdpmc || armv8pmu_event_can_chain(event))
 		return 0;
 
 	/*
@@ -1196,6 +1251,9 @@ static int armv8_pmu_init(struct arm_pmu *cpu_pmu, char *name,
 			format : &armv8_pmuv3_format_attr_group;
 	cpu_pmu->attr_groups[ARMPMU_ATTR_GROUP_CAPS] = caps ?
 			caps : &armv8_pmuv3_caps_attr_group;
+
+	cpu_pmu->attr_groups[ARMPMU_ATTR_GROUP_RDPMC] = &armv8_pmuv3_rdpmc_attr_group;
+	cpu_pmu->attr_rdpmc = true;
 
 	return 0;
 }
