@@ -81,6 +81,7 @@ enum armpmu_attr_groups {
 	ARMPMU_ATTR_GROUP_EVENTS,
 	ARMPMU_ATTR_GROUP_FORMATS,
 	ARMPMU_ATTR_GROUP_CAPS,
+	ARMPMU_ATTR_GROUP_RDPMC,
 	ARMPMU_NR_ATTR_GROUPS
 };
 
@@ -106,7 +107,8 @@ struct arm_pmu {
 	int		(*map_event)(struct perf_event *event);
 	int		(*filter_match)(struct perf_event *event);
 	int		num_events;
-	bool		secure_access; /* 32-bit ARM only */
+	bool		secure_access:1; /* 32-bit ARM only */
+	bool		attr_rdpmc:1;
 #define ARMV8_PMUV3_MAX_COMMON_EVENTS		0x40
 	DECLARE_BITMAP(pmceid_bitmap, ARMV8_PMUV3_MAX_COMMON_EVENTS);
 #define ARMV8_PMUV3_EXT_COMMON_EVENT_BASE	0x4000
