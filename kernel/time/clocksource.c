@@ -213,7 +213,7 @@ static void clocksource_watchdog_inject_delay(void)
 		return;
 	if (!(invocations % inject_delay_period)) {
 		pr_warn("%s(): Injecting delay.\n", __func__);
-		mdelay (2 * WATCHDOG_THRESHOLD / NSEC_PER_MSEC);
+		mdelay(2 * WATCHDOG_THRESHOLD / NSEC_PER_MSEC);
 		if (++injections < inject_delay_repeat)
 			return;
 		injections = 0;
