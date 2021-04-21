@@ -3,7 +3,9 @@
 TOPDIR = ../..
 include $(TOPDIR)/include/builddefs
 
-TARGETS = idmapped-mounts mount-idmapped
+BINS = idmapped-mounts mount-idmapped
+LINKS = fscaps-in-ancestor-userns
+TARGETS = $(BINS) $(LINKS)
 CFILES_IDMAPPED_MOUNTS = idmapped-mounts.c utils.c
 CFILES_MOUNT_IDMAPPED = mount-idmapped.c utils.c
 
@@ -29,12 +31,18 @@ idmapped-mounts: $(CFILES_IDMAPPED_MOUNTS)
 	@echo "    [CC]    $@"
 	$(Q)$(LTLINK) $(CFILES_IDMAPPED_MOUNTS) -o $@ $(CFLAGS) $(LDFLAGS) $(LDLIBS)
 
+fscaps-in-ancestor-userns:
+	ln -sf idmapped-mounts fscaps-in-ancestor-userns
+
 mount-idmapped: $(CFILES_MOUNT_IDMAPPED)
 	@echo "    [CC]    $@"
 	$(Q)$(LTLINK) $(CFILES_MOUNT_IDMAPPED) -o $@ $(CFLAGS) $(LDFLAGS) $(LDLIBS)
 
 install:
 	$(INSTALL) -m 755 -d $(PKG_LIB_DIR)/src/idmapped-mounts
-	$(INSTALL) -m 755 $(TARGETS) $(PKG_LIB_DIR)/src/idmapped-mounts
+	$(INSTALL) -m 755 $(BINS) $(PKG_LIB_DIR)/src/idmapped-mounts
+	cd $(PKG_LIB_DIR)/src/idmapped-mounts && \
+		rm -f $(LINKS) && \
+		$(LN_S) idmapped-mounts fscaps-in-ancestor-userns
 
 -include .dep

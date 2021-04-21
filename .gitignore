@@ -180,6 +180,7 @@
 /src/aio-dio-regress/aiodio_sparse2
 /src/idmapped-mounts/idmapped-mounts
 /src/idmapped-mounts/mount-idmapped
+/src/idmapped-mounts/fscaps-in-ancestor-userns
 /src/log-writes/replay-log
 /src/perf/*.pyc
 
