@@ -284,8 +284,10 @@ void isa207_get_mem_data_src(union perf_mem_data_src *dsrc, u32 flags,
 	}
 }
 
-void isa207_get_mem_weight(u64 *weight)
+void isa207_get_mem_weight(u64 *weight, u64 type)
 {
+	union perf_sample_weight *weight_fields;
+	u64 weight_lat;
 	u64 mmcra = mfspr(SPRN_MMCRA);
 	u64 exp = MMCRA_THR_CTR_EXP(mmcra);
 	u64 mantissa = MMCRA_THR_CTR_MANT(mmcra);
@@ -296,9 +298,30 @@ void isa207_get_mem_weight(u64 *weight)
 		mantissa = P10_MMCRA_THR_CTR_MANT(mmcra);
 
 	if (val == 0 || val == 7)
-		*weight = 0;
+		weight_lat = 0;
 	else
-		*weight = mantissa << (2 * exp);
+		weight_lat = mantissa << (2 * exp);
+
+	/*
+	 * Use 64 bit weight field (full) if sample type is
+	 * WEIGHT.
+	 *
+	 * if sample type is WEIGHT_STRUCT:
+	 * - store memory latency in the lower 32 bits.
+	 * - For ISA v3.1, use remaining two 16 bit fields of
+	 *   perf_sample_weight to store cycle counter values
+	 *   from sier2.
+	 */
+	weight_fields = (union perf_sample_weight *)weight;
+	if (type & PERF_SAMPLE_WEIGHT)
+		weight_fields->full = weight_lat;
+	else {
+		weight_fields->var1_dw = (u32)weight_lat;
+		if (cpu_has_feature(CPU_FTR_ARCH_31)) {
+			weight_fields->var2_w = P10_SIER2_FINISH_CYC(mfspr(SPRN_SIER2));
+			weight_fields->var3_w = P10_SIER2_DISPATCH_CYC(mfspr(SPRN_SIER2));
+		}
+	}
 }
 
 int isa207_get_constraint(u64 event, unsigned long *maskp, unsigned long *valp, u64 event_config1)
@@ -693,4 +716,46 @@ int isa207_get_alternatives(u64 event, u64 alt[], int size, unsigned int flags,
 	}
 
 	return num_alt;
+}
+
+int isa3XX_check_attr_config(struct perf_event *ev)
+{
+	u64 val, sample_mode;
+	u64 event = ev->attr.config;
+
+	val = (event >> EVENT_SAMPLE_SHIFT) & EVENT_SAMPLE_MASK;
+	sample_mode = val & 0x3;
+
+	/*
+	 * MMCRA[61:62] is Random Sampling Mode (SM).
+	 * value of 0b11 is reserved.
+	 */
+	if (sample_mode == 0x3)
+		return -EINVAL;
+
+	/*
+	 * Check for all reserved value
+	 * Source: Performance Monitoring Unit User Guide
+	 */
+	switch (val) {
+	case 0x5:
+	case 0x9:
+	case 0xD:
+	case 0x19:
+	case 0x1D:
+	case 0x1A:
+	case 0x1E:
+		return -EINVAL;
+	}
+
+	/*
+	 * MMCRA[48:51]/[52:55]) Threshold Start/Stop
+	 * Events Selection.
+	 * 0b11110000/0b00001111 is reserved.
+	 */
+	val = (event >> EVENT_THR_CTL_SHIFT) & EVENT_THR_CTL_MASK;
+	if (((val & 0xF0) == 0xF0) || ((val & 0xF) == 0xF))
+		return -EINVAL;
+
+	return 0;
 }

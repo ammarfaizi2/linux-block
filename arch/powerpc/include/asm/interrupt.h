@@ -2,13 +2,6 @@
 #ifndef _ASM_POWERPC_INTERRUPT_H
 #define _ASM_POWERPC_INTERRUPT_H
 
-#include <linux/context_tracking.h>
-#include <linux/hardirq.h>
-#include <asm/cputime.h>
-#include <asm/ftrace.h>
-#include <asm/kprobes.h>
-#include <asm/runlatch.h>
-
 /* BookE/4xx */
 #define INTERRUPT_CRITICAL_INPUT  0x100
 
@@ -30,18 +23,22 @@
 #define INTERRUPT_INST_SEGMENT    0x480
 #define INTERRUPT_TRACE           0xd00
 #define INTERRUPT_H_DATA_STORAGE  0xe00
+#define INTERRUPT_HMI			0xe60
 #define INTERRUPT_H_FAC_UNAVAIL   0xf80
 #ifdef CONFIG_PPC_BOOK3S
 #define INTERRUPT_DOORBELL        0xa00
 #define INTERRUPT_PERFMON         0xf00
+#define INTERRUPT_ALTIVEC_UNAVAIL	0xf20
 #endif
 
 /* BookE/BookS/4xx/8xx */
 #define INTERRUPT_DATA_STORAGE    0x300
 #define INTERRUPT_INST_STORAGE    0x400
+#define INTERRUPT_EXTERNAL		0x500
 #define INTERRUPT_ALIGNMENT       0x600
 #define INTERRUPT_PROGRAM         0x700
 #define INTERRUPT_SYSCALL         0xc00
+#define INTERRUPT_TRACE			0xd00
 
 /* BookE/BookS/44x */
 #define INTERRUPT_FP_UNAVAIL      0x800
@@ -52,6 +49,29 @@
 #ifndef INTERRUPT_PERFMON
 #define INTERRUPT_PERFMON         0x0
 #endif
+
+/* 8xx */
+#define INTERRUPT_SOFT_EMU_8xx		0x1000
+#define INTERRUPT_INST_TLB_MISS_8xx	0x1100
+#define INTERRUPT_DATA_TLB_MISS_8xx	0x1200
+#define INTERRUPT_INST_TLB_ERROR_8xx	0x1300
+#define INTERRUPT_DATA_TLB_ERROR_8xx	0x1400
+#define INTERRUPT_DATA_BREAKPOINT_8xx	0x1c00
+#define INTERRUPT_INST_BREAKPOINT_8xx	0x1d00
+
+/* 603 */
+#define INTERRUPT_INST_TLB_MISS_603		0x1000
+#define INTERRUPT_DATA_LOAD_TLB_MISS_603	0x1100
+#define INTERRUPT_DATA_STORE_TLB_MISS_603	0x1200
+
+#ifndef __ASSEMBLY__
+
+#include <linux/context_tracking.h>
+#include <linux/hardirq.h>
+#include <asm/cputime.h>
+#include <asm/ftrace.h>
+#include <asm/kprobes.h>
+#include <asm/runlatch.h>
 
 static inline void nap_adjust_return(struct pt_regs *regs)
 {
@@ -513,5 +533,7 @@ static inline void interrupt_cond_local_irq_enable(struct pt_regs *regs)
 	if (!arch_irq_disabled_regs(regs))
 		local_irq_enable();
 }
+
+#endif /* __ASSEMBLY__ */
 
 #endif /* _ASM_POWERPC_INTERRUPT_H */

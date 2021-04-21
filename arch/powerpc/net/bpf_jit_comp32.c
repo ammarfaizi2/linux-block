@@ -187,11 +187,17 @@ void bpf_jit_build_epilogue(u32 *image, struct codegen_context *ctx)
 
 void bpf_jit_emit_func_call_rel(u32 *image, struct codegen_context *ctx, u64 func)
 {
-	/* Load function address into r0 */
-	EMIT(PPC_RAW_LIS(__REG_R0, IMM_H(func)));
-	EMIT(PPC_RAW_ORI(__REG_R0, __REG_R0, IMM_L(func)));
-	EMIT(PPC_RAW_MTLR(__REG_R0));
-	EMIT(PPC_RAW_BLRL());
+	s32 rel = (s32)func - (s32)(image + ctx->idx);
+
+	if (image && rel < 0x2000000 && rel >= -0x2000000) {
+		PPC_BL_ABS(func);
+	} else {
+		/* Load function address into r0 */
+		EMIT(PPC_RAW_LIS(__REG_R0, IMM_H(func)));
+		EMIT(PPC_RAW_ORI(__REG_R0, __REG_R0, IMM_L(func)));
+		EMIT(PPC_RAW_MTLR(__REG_R0));
+		EMIT(PPC_RAW_BLRL());
+	}
 }
 
 static void bpf_jit_emit_tail_call(u32 *image, struct codegen_context *ctx, u32 out)
@@ -548,23 +554,22 @@ int bpf_jit_build_body(struct bpf_prog *fp, u32 *image, struct codegen_context *
 			EMIT(PPC_RAW_SLW(dst_reg, dst_reg, src_reg));
 			break;
 		case BPF_ALU64 | BPF_LSH | BPF_X: /* dst <<= src; */
-			EMIT(PPC_RAW_ADDIC_DOT(__REG_R0, src_reg, -32));
-			PPC_BCC_SHORT(COND_LT, (ctx->idx + 4) * 4);
-			EMIT(PPC_RAW_SLW(dst_reg_h, dst_reg, __REG_R0));
-			EMIT(PPC_RAW_LI(dst_reg, 0));
-			PPC_JMP((ctx->idx + 6) * 4);
+			bpf_set_seen_register(ctx, tmp_reg);
 			EMIT(PPC_RAW_SUBFIC(__REG_R0, src_reg, 32));
 			EMIT(PPC_RAW_SLW(dst_reg_h, dst_reg_h, src_reg));
+			EMIT(PPC_RAW_ADDI(tmp_reg, src_reg, 32));
 			EMIT(PPC_RAW_SRW(__REG_R0, dst_reg, __REG_R0));
-			EMIT(PPC_RAW_SLW(dst_reg, dst_reg, src_reg));
+			EMIT(PPC_RAW_SLW(tmp_reg, dst_reg, tmp_reg));
 			EMIT(PPC_RAW_OR(dst_reg_h, dst_reg_h, __REG_R0));
+			EMIT(PPC_RAW_SLW(dst_reg, dst_reg, src_reg));
+			EMIT(PPC_RAW_OR(dst_reg_h, dst_reg_h, tmp_reg));
 			break;
-		case BPF_ALU | BPF_LSH | BPF_K: /* (u32) dst <<== (u32) imm */
+		case BPF_ALU | BPF_LSH | BPF_K: /* (u32) dst <<= (u32) imm */
 			if (!imm)
 				break;
 			EMIT(PPC_RAW_SLWI(dst_reg, dst_reg, imm));
 			break;
-		case BPF_ALU64 | BPF_LSH | BPF_K: /* dst <<== imm */
+		case BPF_ALU64 | BPF_LSH | BPF_K: /* dst <<= imm */
 			if (imm < 0)
 				return -EINVAL;
 			if (!imm)
@@ -585,16 +590,15 @@ int bpf_jit_build_body(struct bpf_prog *fp, u32 *image, struct codegen_context *
 			EMIT(PPC_RAW_SRW(dst_reg, dst_reg, src_reg));
 			break;
 		case BPF_ALU64 | BPF_RSH | BPF_X: /* dst >>= src */
-			EMIT(PPC_RAW_ADDIC_DOT(__REG_R0, src_reg, -32));
-			PPC_BCC_SHORT(COND_LT, (ctx->idx + 4) * 4);
-			EMIT(PPC_RAW_SRW(dst_reg, dst_reg_h, __REG_R0));
-			EMIT(PPC_RAW_LI(dst_reg_h, 0));
-			PPC_JMP((ctx->idx + 6) * 4);
-			EMIT(PPC_RAW_SUBFIC(0, src_reg, 32));
+			bpf_set_seen_register(ctx, tmp_reg);
+			EMIT(PPC_RAW_SUBFIC(__REG_R0, src_reg, 32));
 			EMIT(PPC_RAW_SRW(dst_reg, dst_reg, src_reg));
+			EMIT(PPC_RAW_ADDI(tmp_reg, src_reg, 32));
 			EMIT(PPC_RAW_SLW(__REG_R0, dst_reg_h, __REG_R0));
-			EMIT(PPC_RAW_SRW(dst_reg_h, dst_reg_h, src_reg));
+			EMIT(PPC_RAW_SRW(tmp_reg, dst_reg_h, tmp_reg));
 			EMIT(PPC_RAW_OR(dst_reg, dst_reg, __REG_R0));
+			EMIT(PPC_RAW_SRW(dst_reg_h, dst_reg_h, src_reg));
+			EMIT(PPC_RAW_OR(dst_reg, dst_reg, tmp_reg));
 			break;
 		case BPF_ALU | BPF_RSH | BPF_K: /* (u32) dst >>= (u32) imm */
 			if (!imm)
@@ -622,16 +626,17 @@ int bpf_jit_build_body(struct bpf_prog *fp, u32 *image, struct codegen_context *
 			EMIT(PPC_RAW_SRAW(dst_reg_h, dst_reg, src_reg));
 			break;
 		case BPF_ALU64 | BPF_ARSH | BPF_X: /* (s64) dst >>= src */
-			EMIT(PPC_RAW_ADDIC_DOT(__REG_R0, src_reg, -32));
-			PPC_BCC_SHORT(COND_LT, (ctx->idx + 4) * 4);
-			EMIT(PPC_RAW_SRAW(dst_reg, dst_reg_h, __REG_R0));
-			EMIT(PPC_RAW_SRAWI(dst_reg_h, dst_reg_h, 31));
-			PPC_JMP((ctx->idx + 6) * 4);
-			EMIT(PPC_RAW_SUBFIC(0, src_reg, 32));
+			bpf_set_seen_register(ctx, tmp_reg);
+			EMIT(PPC_RAW_SUBFIC(__REG_R0, src_reg, 32));
 			EMIT(PPC_RAW_SRW(dst_reg, dst_reg, src_reg));
 			EMIT(PPC_RAW_SLW(__REG_R0, dst_reg_h, __REG_R0));
-			EMIT(PPC_RAW_SRAW(dst_reg_h, dst_reg_h, src_reg));
+			EMIT(PPC_RAW_ADDI(tmp_reg, src_reg, 32));
 			EMIT(PPC_RAW_OR(dst_reg, dst_reg, __REG_R0));
+			EMIT(PPC_RAW_RLWINM(__REG_R0, tmp_reg, 0, 26, 26));
+			EMIT(PPC_RAW_SRAW(tmp_reg, dst_reg_h, tmp_reg));
+			EMIT(PPC_RAW_SRAW(dst_reg_h, dst_reg_h, src_reg));
+			EMIT(PPC_RAW_SLW(tmp_reg, tmp_reg, __REG_R0));
+			EMIT(PPC_RAW_OR(dst_reg, dst_reg, tmp_reg));
 			break;
 		case BPF_ALU | BPF_ARSH | BPF_K: /* (s32) dst >>= imm */
 			if (!imm)
