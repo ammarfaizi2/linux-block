@@ -234,7 +234,7 @@ static void i40e_parse_ieee_app_tlv(struct i40e_lldp_org_tlv *tlv,
 }
 
 /**
- * i40e_parse_ieee_etsrec_tlv
+ * i40e_parse_ieee_tlv
  * @tlv: IEEE 802.1Qaz TLV
  * @dcbcfg: Local store to update ETS REC data
  *
@@ -1588,7 +1588,7 @@ void i40e_dcb_hw_rx_ets_bw_config(struct i40e_hw *hw, u8 *bw_share,
 }
 
 /**
- * i40e_dcb_hw_rx_ets_bw_config
+ * i40e_dcb_hw_rx_up2tc_config
  * @hw: pointer to the hw struct
  * @prio_tc: priority to tc assignment indexed by priority
  *
@@ -1636,7 +1636,7 @@ void i40e_dcb_hw_calculate_pool_sizes(struct i40e_hw *hw,
 	u32 total_pool_size = 0;
 	int shared_pool_size; /* Need signed variable */
 	u32 port_pb_size;
-	u32 mfs_max;
+	u32 mfs_max = 0;
 	u32 pcirtt;
 	u8 i;
 

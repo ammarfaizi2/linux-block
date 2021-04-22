@@ -1691,8 +1691,8 @@ static int ath11k_qmi_respond_fw_mem_request(struct ath11k_base *ab)
 			req->mem_seg[i].size = ab->qmi.target_mem[i].size;
 			req->mem_seg[i].type = ab->qmi.target_mem[i].type;
 			ath11k_dbg(ab, ATH11K_DBG_QMI,
-				   "qmi req mem_seg[%d] 0x%llx %u %u\n", i,
-				    ab->qmi.target_mem[i].paddr,
+				   "qmi req mem_seg[%d] %pad %u %u\n", i,
+				    &ab->qmi.target_mem[i].paddr,
 				    ab->qmi.target_mem[i].size,
 				    ab->qmi.target_mem[i].type);
 		}
@@ -2514,7 +2514,7 @@ static int ath11k_qmi_event_load_bdf(struct ath11k_qmi *qmi)
 
 	ret = ath11k_qmi_request_target_cap(ab);
 	if (ret < 0) {
-		ath11k_warn(ab, "failed to requeqst qmi target capabilities: %d\n",
+		ath11k_warn(ab, "failed to request qmi target capabilities: %d\n",
 			    ret);
 		return ret;
 	}

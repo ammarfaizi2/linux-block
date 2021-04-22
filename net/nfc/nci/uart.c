@@ -234,7 +234,7 @@ static void nci_uart_tty_wakeup(struct tty_struct *tty)
  *     Called by tty low level driver when receive data is
  *     available.
  *
- * Arguments:  tty          pointer to tty isntance data
+ * Arguments:  tty          pointer to tty instance data
  *             data         pointer to received data
  *             flags        pointer to flags for data
  *             count        count of received data in bytes
@@ -292,7 +292,8 @@ static int nci_uart_tty_ioctl(struct tty_struct *tty, struct file *file,
 
 /* We don't provide read/write/poll interface for user space. */
 static ssize_t nci_uart_tty_read(struct tty_struct *tty, struct file *file,
-				 unsigned char __user *buf, size_t nr)
+				 unsigned char *buf, size_t nr,
+				 void **cookie, unsigned long offset)
 {
 	return 0;
 }
@@ -373,7 +374,7 @@ static int nci_uart_default_recv_buf(struct nci_uart *nu, const u8 *data,
 		data += chunk_len;
 		count -= chunk_len;
 
-		/* Chcek if packet is fully received */
+		/* Check if packet is fully received */
 		if (nu->rx_packet_len == nu->rx_skb->len) {
 			/* Pass RX packet to driver */
 			if (nu->ops.recv(nu, nu->rx_skb) != 0)

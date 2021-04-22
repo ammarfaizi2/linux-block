@@ -8,17 +8,17 @@
  * out of the OpenFirmware device tree and using it to populate an mii_bus.
  */
 
-#include <linux/kernel.h>
 #include <linux/device.h>
-#include <linux/netdevice.h>
 #include <linux/err.h>
-#include <linux/phy.h>
-#include <linux/phy_fixed.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/netdevice.h>
 #include <linux/of.h>
 #include <linux/of_irq.h>
 #include <linux/of_mdio.h>
 #include <linux/of_net.h>
-#include <linux/module.h>
+#include <linux/phy.h>
+#include <linux/phy_fixed.h>
 
 #define DEFAULT_GPIO_RESET_DELAY	10	/* in microseconds */
 
@@ -461,36 +461,6 @@ struct phy_device *of_phy_get_and_connect(struct net_device *dev,
 	return phy;
 }
 EXPORT_SYMBOL(of_phy_get_and_connect);
-
-/**
- * of_phy_attach - Attach to a PHY without starting the state machine
- * @dev: pointer to net_device claiming the phy
- * @phy_np: Node pointer for the PHY
- * @flags: flags to pass to the PHY
- * @iface: PHY data interface type
- *
- * If successful, returns a pointer to the phy_device with the embedded
- * struct device refcount incremented by one, or NULL on failure. The
- * refcount must be dropped by calling phy_disconnect() or phy_detach().
- */
-struct phy_device *of_phy_attach(struct net_device *dev,
-				 struct device_node *phy_np, u32 flags,
-				 phy_interface_t iface)
-{
-	struct phy_device *phy = of_phy_find_device(phy_np);
-	int ret;
-
-	if (!phy)
-		return NULL;
-
-	ret = phy_attach_direct(dev, phy, flags, iface);
-
-	/* refcount is held by phy_attach_direct() on success */
-	put_device(&phy->mdio.dev);
-
-	return ret ? NULL : phy;
-}
-EXPORT_SYMBOL(of_phy_attach);
 
 /*
  * of_phy_is_fixed_link() and of_phy_register_fixed_link() must

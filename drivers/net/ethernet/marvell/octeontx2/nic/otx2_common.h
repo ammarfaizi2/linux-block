@@ -18,6 +18,7 @@
 #include <linux/ptp_clock_kernel.h>
 #include <linux/timecounter.h>
 #include <linux/soc/marvell/octeontx2/asm.h>
+#include <net/pkt_cls.h>
 
 #include <mbox.h>
 #include <npc.h>
@@ -210,9 +211,9 @@ struct otx2_hw {
 	u64			cgx_fec_uncorr_blks;
 	u8			cgx_links;  /* No. of CGX links present in HW */
 	u8			lbk_links;  /* No. of LBK links present in HW */
-#define HW_TSO			BIT_ULL(0)
-#define CN10K_MBOX		BIT_ULL(1)
-#define CN10K_LMTST		BIT_ULL(2)
+#define HW_TSO			0
+#define CN10K_MBOX		1
+#define CN10K_LMTST		2
 	unsigned long		cap_flag;
 
 #define LMT_LINE_SIZE		128
@@ -264,6 +265,7 @@ struct otx2_flow_config {
 #define OTX2_MAX_NTUPLE_FLOWS	32
 #define OTX2_MAX_UNICAST_FLOWS	8
 #define OTX2_MAX_VLAN_FLOWS	1
+#define OTX2_MAX_TC_FLOWS	OTX2_MAX_NTUPLE_FLOWS
 #define OTX2_MCAM_COUNT		(OTX2_MAX_NTUPLE_FLOWS + \
 				 OTX2_MAX_UNICAST_FLOWS + \
 				 OTX2_MAX_VLAN_FLOWS)
@@ -274,8 +276,18 @@ struct otx2_flow_config {
 #define OTX2_PER_VF_VLAN_FLOWS	2 /* rx+tx per VF */
 #define OTX2_VF_VLAN_RX_INDEX	0
 #define OTX2_VF_VLAN_TX_INDEX	1
+	u32			tc_flower_offset;
 	u32                     ntuple_max_flows;
+	u32			tc_max_flows;
 	struct list_head	flow_list;
+};
+
+struct otx2_tc_info {
+	/* hash table to store TC offloaded flows */
+	struct rhashtable		flow_table;
+	struct rhashtable_params	flow_ht_params;
+	DECLARE_BITMAP(tc_entries_bitmap, OTX2_MAX_TC_FLOWS);
+	unsigned long			num_entries;
 };
 
 struct dev_hw_ops {
@@ -305,6 +317,8 @@ struct otx2_nic {
 #define OTX2_FLAG_PF_SHUTDOWN			BIT_ULL(8)
 #define OTX2_FLAG_RX_PAUSE_ENABLED		BIT_ULL(9)
 #define OTX2_FLAG_TX_PAUSE_ENABLED		BIT_ULL(10)
+#define OTX2_FLAG_TC_FLOWER_SUPPORT		BIT_ULL(11)
+#define OTX2_FLAG_TC_MATCHALL_EGRESS_ENABLED	BIT_ULL(12)
 	u64			flags;
 
 	struct otx2_qset	qset;
@@ -347,6 +361,7 @@ struct otx2_nic {
 	struct hwtstamp_config	tstamp;
 
 	struct otx2_flow_config	*flow_cfg;
+	struct otx2_tc_info	tc_info;
 };
 
 static inline bool is_otx2_lbkvf(struct pci_dev *pdev)
@@ -407,6 +422,9 @@ static inline void otx2_setup_dev_hw_settings(struct otx2_nic *pfvf)
 		pfvf->hw.rq_skid = 600;
 		pfvf->qset.rqe_cnt = Q_COUNT(Q_SIZE_1K);
 	}
+	if (is_96xx_B0(pfvf->pdev))
+		__clear_bit(HW_TSO, &hw->cap_flag);
+
 	if (!is_dev_otx2(pfvf->pdev)) {
 		__set_bit(CN10K_MBOX, &hw->cap_flag);
 		__set_bit(CN10K_LMTST, &hw->cap_flag);
@@ -799,4 +817,9 @@ int otx2_add_macfilter(struct net_device *netdev, const u8 *mac);
 int otx2_enable_rxvlan(struct otx2_nic *pf, bool enable);
 int otx2_install_rxvlan_offload_flow(struct otx2_nic *pfvf);
 u16 otx2_get_max_mtu(struct otx2_nic *pfvf);
+/* tc support */
+int otx2_init_tc(struct otx2_nic *nic);
+void otx2_shutdown_tc(struct otx2_nic *nic);
+int otx2_setup_tc(struct net_device *netdev, enum tc_setup_type type,
+		  void *type_data);
 #endif /* OTX2_COMMON_H */

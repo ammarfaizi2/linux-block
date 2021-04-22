@@ -400,6 +400,9 @@ phy_interface_t sfp_select_interface(struct sfp_bus *bus,
 	    phylink_test(link_modes, 10000baseT_Full))
 		return PHY_INTERFACE_MODE_10GBASER;
 
+	if (phylink_test(link_modes, 5000baseT_Full))
+		return PHY_INTERFACE_MODE_5GBASER;
+
 	if (phylink_test(link_modes, 2500baseX_Full))
 		return PHY_INTERFACE_MODE_2500BASEX;
 
@@ -551,6 +554,26 @@ int sfp_get_module_eeprom(struct sfp_bus *bus, struct ethtool_eeprom *ee,
 	return bus->socket_ops->module_eeprom(bus->sfp, ee, data);
 }
 EXPORT_SYMBOL_GPL(sfp_get_module_eeprom);
+
+/**
+ * sfp_get_module_eeprom_by_page() - Read a page from the SFP module EEPROM
+ * @bus: a pointer to the &struct sfp_bus structure for the sfp module
+ * @page: a &struct ethtool_module_eeprom
+ * @extack: extack for reporting problems
+ *
+ * Read an EEPROM page as specified by the supplied @page. See the
+ * documentation for &struct ethtool_module_eeprom for the page to be read.
+ *
+ * Returns 0 on success or a negative errno number. More error
+ * information might be provided via extack
+ */
+int sfp_get_module_eeprom_by_page(struct sfp_bus *bus,
+				  const struct ethtool_module_eeprom *page,
+				  struct netlink_ext_ack *extack)
+{
+	return bus->socket_ops->module_eeprom_by_page(bus->sfp, page, extack);
+}
+EXPORT_SYMBOL_GPL(sfp_get_module_eeprom_by_page);
 
 /**
  * sfp_upstream_start() - Inform the SFP that the network device is up

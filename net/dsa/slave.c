@@ -15,6 +15,7 @@
 #include <linux/mdio.h>
 #include <net/rtnetlink.h>
 #include <net/pkt_cls.h>
+#include <net/selftests.h>
 #include <net/tc_act/tc_mirred.h>
 #include <linux/if_bridge.h>
 #include <linux/if_hsr.h>
@@ -278,27 +279,43 @@ static int dsa_slave_port_attr_set(struct net_device *dev,
 	struct dsa_port *dp = dsa_slave_to_port(dev);
 	int ret;
 
-	if (!dsa_port_offloads_netdev(dp, attr->orig_dev))
-		return -EOPNOTSUPP;
-
 	switch (attr->id) {
 	case SWITCHDEV_ATTR_ID_PORT_STP_STATE:
+		if (!dsa_port_offloads_bridge_port(dp, attr->orig_dev))
+			return -EOPNOTSUPP;
+
 		ret = dsa_port_set_state(dp, attr->u.stp_state);
 		break;
 	case SWITCHDEV_ATTR_ID_BRIDGE_VLAN_FILTERING:
-		ret = dsa_port_vlan_filtering(dp, attr->u.vlan_filtering);
+		if (!dsa_port_offloads_bridge(dp, attr->orig_dev))
+			return -EOPNOTSUPP;
+
+		ret = dsa_port_vlan_filtering(dp, attr->u.vlan_filtering,
+					      extack);
 		break;
 	case SWITCHDEV_ATTR_ID_BRIDGE_AGEING_TIME:
+		if (!dsa_port_offloads_bridge(dp, attr->orig_dev))
+			return -EOPNOTSUPP;
+
 		ret = dsa_port_ageing_time(dp, attr->u.ageing_time);
 		break;
 	case SWITCHDEV_ATTR_ID_PORT_PRE_BRIDGE_FLAGS:
+		if (!dsa_port_offloads_bridge_port(dp, attr->orig_dev))
+			return -EOPNOTSUPP;
+
 		ret = dsa_port_pre_bridge_flags(dp, attr->u.brport_flags,
 						extack);
 		break;
 	case SWITCHDEV_ATTR_ID_PORT_BRIDGE_FLAGS:
+		if (!dsa_port_offloads_bridge_port(dp, attr->orig_dev))
+			return -EOPNOTSUPP;
+
 		ret = dsa_port_bridge_flags(dp, attr->u.brport_flags, extack);
 		break;
 	case SWITCHDEV_ATTR_ID_BRIDGE_MROUTER:
+		if (!dsa_port_offloads_bridge(dp, attr->orig_dev))
+			return -EOPNOTSUPP;
+
 		ret = dsa_port_mrouter(dp->cpu_dp, attr->u.mrouter, extack);
 		break;
 	default:
@@ -340,9 +357,6 @@ static int dsa_slave_vlan_add(struct net_device *dev,
 	struct switchdev_obj_port_vlan vlan;
 	int err;
 
-	if (!dsa_port_offloads_netdev(dp, obj->orig_dev))
-		return -EOPNOTSUPP;
-
 	if (dsa_port_skip_vlan_configuration(dp)) {
 		NL_SET_ERR_MSG_MOD(extack, "skipping configuration of VLAN");
 		return 0;
@@ -357,11 +371,14 @@ static int dsa_slave_vlan_add(struct net_device *dev,
 		rcu_read_lock();
 		err = dsa_slave_vlan_check_for_8021q_uppers(dev, &vlan);
 		rcu_read_unlock();
-		if (err)
+		if (err) {
+			NL_SET_ERR_MSG_MOD(extack,
+					   "Port already has a VLAN upper with this VID");
 			return err;
+		}
 	}
 
-	err = dsa_port_vlan_add(dp, &vlan);
+	err = dsa_port_vlan_add(dp, &vlan, extack);
 	if (err)
 		return err;
 
@@ -371,7 +388,7 @@ static int dsa_slave_vlan_add(struct net_device *dev,
 	 */
 	vlan.flags &= ~BRIDGE_VLAN_INFO_PVID;
 
-	err = dsa_port_vlan_add(dp->cpu_dp, &vlan);
+	err = dsa_port_vlan_add(dp->cpu_dp, &vlan, extack);
 	if (err)
 		return err;
 
@@ -387,18 +404,38 @@ static int dsa_slave_port_obj_add(struct net_device *dev,
 
 	switch (obj->id) {
 	case SWITCHDEV_OBJ_ID_PORT_MDB:
-		if (!dsa_port_offloads_netdev(dp, obj->orig_dev))
+		if (!dsa_port_offloads_bridge_port(dp, obj->orig_dev))
 			return -EOPNOTSUPP;
+
 		err = dsa_port_mdb_add(dp, SWITCHDEV_OBJ_PORT_MDB(obj));
 		break;
 	case SWITCHDEV_OBJ_ID_HOST_MDB:
+		if (!dsa_port_offloads_bridge(dp, obj->orig_dev))
+			return -EOPNOTSUPP;
+
 		/* DSA can directly translate this to a normal MDB add,
 		 * but on the CPU port.
 		 */
 		err = dsa_port_mdb_add(dp->cpu_dp, SWITCHDEV_OBJ_PORT_MDB(obj));
 		break;
 	case SWITCHDEV_OBJ_ID_PORT_VLAN:
+		if (!dsa_port_offloads_bridge_port(dp, obj->orig_dev))
+			return -EOPNOTSUPP;
+
 		err = dsa_slave_vlan_add(dev, obj, extack);
+		break;
+	case SWITCHDEV_OBJ_ID_MRP:
+		if (!dsa_port_offloads_bridge(dp, obj->orig_dev))
+			return -EOPNOTSUPP;
+
+		err = dsa_port_mrp_add(dp, SWITCHDEV_OBJ_MRP(obj));
+		break;
+	case SWITCHDEV_OBJ_ID_RING_ROLE_MRP:
+		if (!dsa_port_offloads_bridge(dp, obj->orig_dev))
+			return -EOPNOTSUPP;
+
+		err = dsa_port_mrp_add_ring_role(dp,
+						 SWITCHDEV_OBJ_RING_ROLE_MRP(obj));
 		break;
 	default:
 		err = -EOPNOTSUPP;
@@ -415,9 +452,6 @@ static int dsa_slave_vlan_del(struct net_device *dev,
 	struct dsa_port *dp = dsa_slave_to_port(dev);
 	struct switchdev_obj_port_vlan *vlan;
 	int err;
-
-	if (!dsa_port_offloads_netdev(dp, obj->orig_dev))
-		return -EOPNOTSUPP;
 
 	if (dsa_port_skip_vlan_configuration(dp))
 		return 0;
@@ -444,18 +478,38 @@ static int dsa_slave_port_obj_del(struct net_device *dev,
 
 	switch (obj->id) {
 	case SWITCHDEV_OBJ_ID_PORT_MDB:
-		if (!dsa_port_offloads_netdev(dp, obj->orig_dev))
+		if (!dsa_port_offloads_bridge_port(dp, obj->orig_dev))
 			return -EOPNOTSUPP;
+
 		err = dsa_port_mdb_del(dp, SWITCHDEV_OBJ_PORT_MDB(obj));
 		break;
 	case SWITCHDEV_OBJ_ID_HOST_MDB:
+		if (!dsa_port_offloads_bridge(dp, obj->orig_dev))
+			return -EOPNOTSUPP;
+
 		/* DSA can directly translate this to a normal MDB add,
 		 * but on the CPU port.
 		 */
 		err = dsa_port_mdb_del(dp->cpu_dp, SWITCHDEV_OBJ_PORT_MDB(obj));
 		break;
 	case SWITCHDEV_OBJ_ID_PORT_VLAN:
+		if (!dsa_port_offloads_bridge_port(dp, obj->orig_dev))
+			return -EOPNOTSUPP;
+
 		err = dsa_slave_vlan_del(dev, obj);
+		break;
+	case SWITCHDEV_OBJ_ID_MRP:
+		if (!dsa_port_offloads_bridge(dp, obj->orig_dev))
+			return -EOPNOTSUPP;
+
+		err = dsa_port_mrp_del(dp, SWITCHDEV_OBJ_MRP(obj));
+		break;
+	case SWITCHDEV_OBJ_ID_RING_ROLE_MRP:
+		if (!dsa_port_offloads_bridge(dp, obj->orig_dev))
+			return -EOPNOTSUPP;
+
+		err = dsa_port_mrp_del_ring_role(dp,
+						 SWITCHDEV_OBJ_RING_ROLE_MRP(obj));
 		break;
 	default:
 		err = -EOPNOTSUPP;
@@ -695,7 +749,10 @@ static void dsa_slave_get_strings(struct net_device *dev,
 		if (ds->ops->get_strings)
 			ds->ops->get_strings(ds, dp->index, stringset,
 					     data + 4 * len);
+	} else if (stringset ==  ETH_SS_TEST) {
+		net_selftest_get_strings(data);
 	}
+
 }
 
 static void dsa_slave_get_ethtool_stats(struct net_device *dev,
@@ -741,9 +798,25 @@ static int dsa_slave_get_sset_count(struct net_device *dev, int sset)
 			count += ds->ops->get_sset_count(ds, dp->index, sset);
 
 		return count;
+	} else if (sset ==  ETH_SS_TEST) {
+		return net_selftest_get_count();
 	}
 
 	return -EOPNOTSUPP;
+}
+
+static void dsa_slave_net_selftest(struct net_device *ndev,
+				   struct ethtool_test *etest, u64 *buf)
+{
+	struct dsa_port *dp = dsa_slave_to_port(ndev);
+	struct dsa_switch *ds = dp->ds;
+
+	if (ds->ops->self_test) {
+		ds->ops->self_test(ds, dp->index, etest, buf);
+		return;
+	}
+
+	net_selftest(ndev, etest, buf);
 }
 
 static void dsa_slave_get_wol(struct net_device *dev, struct ethtool_wolinfo *w)
@@ -1225,14 +1298,32 @@ static int dsa_slave_setup_tc_block(struct net_device *dev,
 	}
 }
 
+static int dsa_slave_setup_ft_block(struct dsa_switch *ds, int port,
+				    void *type_data)
+{
+	struct dsa_port *cpu_dp = dsa_to_port(ds, port)->cpu_dp;
+	struct net_device *master = cpu_dp->master;
+
+	if (!master->netdev_ops->ndo_setup_tc)
+		return -EOPNOTSUPP;
+
+	return master->netdev_ops->ndo_setup_tc(master, TC_SETUP_FT, type_data);
+}
+
 static int dsa_slave_setup_tc(struct net_device *dev, enum tc_setup_type type,
 			      void *type_data)
 {
 	struct dsa_port *dp = dsa_slave_to_port(dev);
 	struct dsa_switch *ds = dp->ds;
 
-	if (type == TC_SETUP_BLOCK)
+	switch (type) {
+	case TC_SETUP_BLOCK:
 		return dsa_slave_setup_tc_block(dev, type_data);
+	case TC_SETUP_FT:
+		return dsa_slave_setup_ft_block(ds, dp->index, type_data);
+	default:
+		break;
+	}
 
 	if (!ds->ops->port_setup_tc)
 		return -EOPNOTSUPP;
@@ -1287,17 +1378,25 @@ static int dsa_slave_vlan_rx_add_vid(struct net_device *dev, __be16 proto,
 		/* This API only allows programming tagged, non-PVID VIDs */
 		.flags = 0,
 	};
+	struct netlink_ext_ack extack = {0};
 	int ret;
 
 	/* User port... */
-	ret = dsa_port_vlan_add(dp, &vlan);
-	if (ret)
+	ret = dsa_port_vlan_add(dp, &vlan, &extack);
+	if (ret) {
+		if (extack._msg)
+			netdev_err(dev, "%s\n", extack._msg);
 		return ret;
+	}
 
 	/* And CPU port... */
-	ret = dsa_port_vlan_add(dp->cpu_dp, &vlan);
-	if (ret)
+	ret = dsa_port_vlan_add(dp->cpu_dp, &vlan, &extack);
+	if (ret) {
+		if (extack._msg)
+			netdev_err(dev, "CPU port %d: %s\n", dp->cpu_dp->index,
+				   extack._msg);
 		return ret;
+	}
 
 	return vlan_vid_add(master, proto, vid);
 }
@@ -1551,6 +1650,7 @@ static const struct ethtool_ops dsa_slave_ethtool_ops = {
 	.get_rxnfc		= dsa_slave_get_rxnfc,
 	.set_rxnfc		= dsa_slave_set_rxnfc,
 	.get_ts_info		= dsa_slave_get_ts_info,
+	.self_test		= dsa_slave_net_selftest,
 };
 
 /* legacy way, bypassing the bridge *****************************************/
@@ -1593,6 +1693,21 @@ static void dsa_slave_get_stats64(struct net_device *dev,
 		dev_get_tstats64(dev, s);
 }
 
+static int dsa_slave_fill_forward_path(struct net_device_path_ctx *ctx,
+				       struct net_device_path *path)
+{
+	struct dsa_port *dp = dsa_slave_to_port(ctx->dev);
+	struct dsa_port *cpu_dp = dp->cpu_dp;
+
+	path->dev = ctx->dev;
+	path->type = DEV_PATH_DSA;
+	path->dsa.proto = cpu_dp->tag_ops->proto;
+	path->dsa.port = dp->index;
+	ctx->dev = cpu_dp->master;
+
+	return 0;
+}
+
 static const struct net_device_ops dsa_slave_netdev_ops = {
 	.ndo_open	 	= dsa_slave_open,
 	.ndo_stop		= dsa_slave_close,
@@ -1618,6 +1733,7 @@ static const struct net_device_ops dsa_slave_netdev_ops = {
 	.ndo_vlan_rx_kill_vid	= dsa_slave_vlan_rx_kill_vid,
 	.ndo_get_devlink_port	= dsa_slave_get_devlink_port,
 	.ndo_change_mtu		= dsa_slave_change_mtu,
+	.ndo_fill_forward_path	= dsa_slave_fill_forward_path,
 };
 
 static struct device_type dsa_type = {
@@ -1801,7 +1917,7 @@ int dsa_slave_create(struct dsa_port *port)
 	slave_dev->hw_features |= NETIF_F_HW_TC;
 	slave_dev->features |= NETIF_F_LLTX;
 	slave_dev->ethtool_ops = &dsa_slave_ethtool_ops;
-	if (!IS_ERR_OR_NULL(port->mac))
+	if (!is_zero_ether_addr(port->mac))
 		ether_addr_copy(slave_dev->dev_addr, port->mac);
 	else
 		eth_hw_addr_inherit(slave_dev, master);
@@ -1915,11 +2031,14 @@ static int dsa_slave_changeupper(struct net_device *dev,
 				 struct netdev_notifier_changeupper_info *info)
 {
 	struct dsa_port *dp = dsa_slave_to_port(dev);
+	struct netlink_ext_ack *extack;
 	int err = NOTIFY_DONE;
+
+	extack = netdev_notifier_info_to_extack(&info->info);
 
 	if (netif_is_bridge_master(info->upper_dev)) {
 		if (info->linking) {
-			err = dsa_port_bridge_join(dp, info->upper_dev);
+			err = dsa_port_bridge_join(dp, info->upper_dev, extack);
 			if (!err)
 				dsa_bridge_mtu_normalization(dp);
 			err = notifier_from_errno(err);
@@ -1930,7 +2049,7 @@ static int dsa_slave_changeupper(struct net_device *dev,
 	} else if (netif_is_lag_master(info->upper_dev)) {
 		if (info->linking) {
 			err = dsa_port_lag_join(dp, info->upper_dev,
-						info->upper_info);
+						info->upper_info, extack);
 			if (err == -EOPNOTSUPP) {
 				NL_SET_ERR_MSG_MOD(info->info.extack,
 						   "Offloading not supported");
@@ -2231,7 +2350,7 @@ static int dsa_slave_switchdev_event(struct notifier_block *unused,
 		fdb_info = ptr;
 
 		if (dsa_slave_dev_check(dev)) {
-			if (!fdb_info->added_by_user)
+			if (!fdb_info->added_by_user || fdb_info->is_local)
 				return NOTIFY_OK;
 
 			dp = dsa_slave_to_port(dev);
@@ -2264,7 +2383,7 @@ static int dsa_slave_switchdev_event(struct notifier_block *unused,
 			 * other ports bridged with the LAG should be able to
 			 * autonomously forward towards it.
 			 */
-			if (dsa_tree_offloads_netdev(dp->ds->dst, dev))
+			if (dsa_tree_offloads_bridge_port(dp->ds->dst, dev))
 				return NOTIFY_DONE;
 		}
 
@@ -2328,11 +2447,11 @@ static struct notifier_block dsa_slave_nb __read_mostly = {
 	.notifier_call  = dsa_slave_netdevice_event,
 };
 
-static struct notifier_block dsa_slave_switchdev_notifier = {
+struct notifier_block dsa_slave_switchdev_notifier = {
 	.notifier_call = dsa_slave_switchdev_event,
 };
 
-static struct notifier_block dsa_slave_switchdev_blocking_notifier = {
+struct notifier_block dsa_slave_switchdev_blocking_notifier = {
 	.notifier_call = dsa_slave_switchdev_blocking_event,
 };
 

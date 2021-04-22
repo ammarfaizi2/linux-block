@@ -27,9 +27,7 @@ enum switchdev_attr_id {
 	SWITCHDEV_ATTR_ID_BRIDGE_VLAN_PROTOCOL,
 	SWITCHDEV_ATTR_ID_BRIDGE_MC_DISABLED,
 	SWITCHDEV_ATTR_ID_BRIDGE_MROUTER,
-#if IS_ENABLED(CONFIG_BRIDGE_MRP)
 	SWITCHDEV_ATTR_ID_MRP_PORT_ROLE,
-#endif
 };
 
 struct switchdev_brport_flags {
@@ -51,9 +49,7 @@ struct switchdev_attr {
 		bool vlan_filtering;			/* BRIDGE_VLAN_FILTERING */
 		u16 vlan_protocol;			/* BRIDGE_VLAN_PROTOCOL */
 		bool mc_disabled;			/* MC_DISABLED */
-#if IS_ENABLED(CONFIG_BRIDGE_MRP)
 		u8 mrp_port_role;			/* MRP_PORT_ROLE */
-#endif
 	} u;
 };
 
@@ -62,7 +58,6 @@ enum switchdev_obj_id {
 	SWITCHDEV_OBJ_ID_PORT_VLAN,
 	SWITCHDEV_OBJ_ID_PORT_MDB,
 	SWITCHDEV_OBJ_ID_HOST_MDB,
-#if IS_ENABLED(CONFIG_BRIDGE_MRP)
 	SWITCHDEV_OBJ_ID_MRP,
 	SWITCHDEV_OBJ_ID_RING_TEST_MRP,
 	SWITCHDEV_OBJ_ID_RING_ROLE_MRP,
@@ -70,11 +65,10 @@ enum switchdev_obj_id {
 	SWITCHDEV_OBJ_ID_IN_TEST_MRP,
 	SWITCHDEV_OBJ_ID_IN_ROLE_MRP,
 	SWITCHDEV_OBJ_ID_IN_STATE_MRP,
-
-#endif
 };
 
 struct switchdev_obj {
+	struct list_head list;
 	struct net_device *orig_dev;
 	enum switchdev_obj_id id;
 	u32 flags;
@@ -103,7 +97,6 @@ struct switchdev_obj_port_mdb {
 	container_of((OBJ), struct switchdev_obj_port_mdb, obj)
 
 
-#if IS_ENABLED(CONFIG_BRIDGE_MRP)
 /* SWITCHDEV_OBJ_ID_MRP */
 struct switchdev_obj_mrp {
 	struct switchdev_obj obj;
@@ -135,6 +128,7 @@ struct switchdev_obj_ring_role_mrp {
 	struct switchdev_obj obj;
 	u8 ring_role;
 	u32 ring_id;
+	u8 sw_backup;
 };
 
 #define SWITCHDEV_OBJ_RING_ROLE_MRP(OBJ) \
@@ -169,6 +163,7 @@ struct switchdev_obj_in_role_mrp {
 	u32 ring_id;
 	u16 in_id;
 	u8 in_role;
+	u8 sw_backup;
 };
 
 #define SWITCHDEV_OBJ_IN_ROLE_MRP(OBJ) \
@@ -182,8 +177,6 @@ struct switchdev_obj_in_state_mrp {
 
 #define SWITCHDEV_OBJ_IN_STATE_MRP(OBJ) \
 	container_of((OBJ), struct switchdev_obj_in_state_mrp, obj)
-
-#endif
 
 typedef int switchdev_obj_dump_cb_t(struct switchdev_obj *obj);
 
@@ -216,6 +209,7 @@ struct switchdev_notifier_fdb_info {
 	const unsigned char *addr;
 	u16 vid;
 	u8 added_by_user:1,
+	   is_local:1,
 	   offloaded:1;
 };
 
@@ -247,7 +241,8 @@ switchdev_notifier_info_to_extack(const struct switchdev_notifier_info *info)
 
 void switchdev_deferred_process(void);
 int switchdev_port_attr_set(struct net_device *dev,
-			    const struct switchdev_attr *attr);
+			    const struct switchdev_attr *attr,
+			    struct netlink_ext_ack *extack);
 int switchdev_port_obj_add(struct net_device *dev,
 			   const struct switchdev_obj *obj,
 			   struct netlink_ext_ack *extack);
@@ -295,7 +290,8 @@ static inline void switchdev_deferred_process(void)
 }
 
 static inline int switchdev_port_attr_set(struct net_device *dev,
-					  const struct switchdev_attr *attr)
+					  const struct switchdev_attr *attr,
+					  struct netlink_ext_ack *extack)
 {
 	return -EOPNOTSUPP;
 }

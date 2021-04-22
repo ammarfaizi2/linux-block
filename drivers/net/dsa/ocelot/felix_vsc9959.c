@@ -8,7 +8,7 @@
 #include <soc/mscc/ocelot_ptp.h>
 #include <soc/mscc/ocelot_sys.h>
 #include <soc/mscc/ocelot.h>
-#include <linux/packing.h>
+#include <linux/dsa/ocelot.h>
 #include <linux/pcs-lynx.h>
 #include <net/pkt_sched.h>
 #include <linux/iopoll.h>
@@ -1057,10 +1057,8 @@ static int vsc9959_mdio_bus_alloc(struct ocelot *ocelot)
 	res.end += felix->imdio_base;
 
 	imdio_regs = devm_ioremap_resource(dev, &res);
-	if (IS_ERR(imdio_regs)) {
-		dev_err(dev, "failed to map internal MDIO registers\n");
+	if (IS_ERR(imdio_regs))
 		return PTR_ERR(imdio_regs);
-	}
 
 	hw = enetc_hw_alloc(dev, imdio_regs);
 	if (IS_ERR(hw)) {
@@ -1229,8 +1227,12 @@ static int vsc9959_qos_port_tas_set(struct ocelot *ocelot, int port,
 	if (taprio->num_entries > VSC9959_TAS_GCL_ENTRY_MAX)
 		return -ERANGE;
 
-	ocelot_rmw(ocelot, QSYS_TAS_PARAM_CFG_CTRL_PORT_NUM(port) |
-		   QSYS_TAS_PARAM_CFG_CTRL_ALWAYS_GUARD_BAND_SCH_Q,
+	/* Set port num and disable ALWAYS_GUARD_BAND_SCH_Q, which means set
+	 * guard band to be implemented for nonschedule queues to schedule
+	 * queues transition.
+	 */
+	ocelot_rmw(ocelot,
+		   QSYS_TAS_PARAM_CFG_CTRL_PORT_NUM(port),
 		   QSYS_TAS_PARAM_CFG_CTRL_PORT_NUM_M |
 		   QSYS_TAS_PARAM_CFG_CTRL_ALWAYS_GUARD_BAND_SCH_Q,
 		   QSYS_TAS_PARAM_CFG_CTRL);
@@ -1339,31 +1341,6 @@ static int vsc9959_port_setup_tc(struct dsa_switch *ds, int port,
 	}
 }
 
-static void vsc9959_xmit_template_populate(struct ocelot *ocelot, int port)
-{
-	struct ocelot_port *ocelot_port = ocelot->ports[port];
-	u8 *template = ocelot_port->xmit_template;
-	u64 bypass, dest, src;
-	__be32 *prefix;
-	u8 *injection;
-
-	/* Set the source port as the CPU port module and not the
-	 * NPI port
-	 */
-	src = ocelot->num_phys_ports;
-	dest = BIT(port);
-	bypass = true;
-
-	injection = template + OCELOT_SHORT_PREFIX_LEN;
-	prefix = (__be32 *)template;
-
-	packing(injection, &bypass, 127, 127, OCELOT_TAG_LEN, PACK, 0);
-	packing(injection, &dest,    68,  56, OCELOT_TAG_LEN, PACK, 0);
-	packing(injection, &src,     46,  43, OCELOT_TAG_LEN, PACK, 0);
-
-	*prefix = cpu_to_be32(0x8880000a);
-}
-
 static const struct felix_info felix_info_vsc9959 = {
 	.target_io_res		= vsc9959_target_io_res,
 	.port_io_res		= vsc9959_port_io_res,
@@ -1379,6 +1356,7 @@ static const struct felix_info felix_info_vsc9959 = {
 	.num_tx_queues		= OCELOT_NUM_TC,
 	.switch_pci_bar		= 4,
 	.imdio_pci_bar		= 0,
+	.quirk_no_xtr_irq	= true,
 	.ptp_caps		= &vsc9959_ptp_caps,
 	.mdio_bus_alloc		= vsc9959_mdio_bus_alloc,
 	.mdio_bus_free		= vsc9959_mdio_bus_free,
@@ -1386,7 +1364,6 @@ static const struct felix_info felix_info_vsc9959 = {
 	.prevalidate_phy_mode	= vsc9959_prevalidate_phy_mode,
 	.port_setup_tc		= vsc9959_port_setup_tc,
 	.port_sched_speed_set	= vsc9959_sched_speed_set,
-	.xmit_template_populate	= vsc9959_xmit_template_populate,
 };
 
 static irqreturn_t felix_irq_handler(int irq, void *data)

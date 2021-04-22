@@ -43,7 +43,7 @@ void br_set_state(struct net_bridge_port *p, unsigned int state)
 		return;
 
 	p->state = state;
-	err = switchdev_port_attr_set(p->dev, &attr);
+	err = switchdev_port_attr_set(p->dev, &attr, NULL);
 	if (err && err != -EOPNOTSUPP)
 		br_warn(p->br, "error setting offload STP state on port %u(%s)\n",
 				(unsigned int) p->port_no, p->dev->name);
@@ -63,6 +63,20 @@ void br_set_state(struct net_bridge_port *p, unsigned int state)
 		}
 	}
 }
+
+u8 br_port_get_stp_state(const struct net_device *dev)
+{
+	struct net_bridge_port *p;
+
+	ASSERT_RTNL();
+
+	p = br_port_get_rtnl(dev);
+	if (!p)
+		return BR_STATE_DISABLED;
+
+	return p->state;
+}
+EXPORT_SYMBOL_GPL(br_port_get_stp_state);
 
 /* called under bridge lock */
 struct net_bridge_port *br_get_port(struct net_bridge *br, u16 port_no)
@@ -591,7 +605,7 @@ int __set_ageing_time(struct net_device *dev, unsigned long t)
 	};
 	int err;
 
-	err = switchdev_port_attr_set(dev, &attr);
+	err = switchdev_port_attr_set(dev, &attr, NULL);
 	if (err && err != -EOPNOTSUPP)
 		return err;
 
@@ -624,6 +638,19 @@ int br_set_ageing_time(struct net_bridge *br, clock_t ageing_time)
 
 	return 0;
 }
+
+clock_t br_get_ageing_time(struct net_device *br_dev)
+{
+	struct net_bridge *br;
+
+	if (!netif_is_bridge_master(br_dev))
+		return 0;
+
+	br = netdev_priv(br_dev);
+
+	return jiffies_to_clock_t(br->ageing_time);
+}
+EXPORT_SYMBOL_GPL(br_get_ageing_time);
 
 /* called under bridge lock */
 void __br_set_topology_change(struct net_bridge *br, unsigned char val)

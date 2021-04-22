@@ -651,16 +651,15 @@ tcp_rmem - vector of 3 INTEGERs: min, default, max
 
 	default: initial size of receive buffer used by TCP sockets.
 	This value overrides net.core.rmem_default used by other protocols.
-	Default: 87380 bytes. This value results in window of 65535 with
-	default setting of tcp_adv_win_scale and tcp_app_win:0 and a bit
-	less for default tcp_app_win. See below about these variables.
+	Default: 131072 bytes.
+	This value results in initial window of 65535.
 
 	max: maximal size of receive buffer allowed for automatically
 	selected receiver buffers for TCP socket. This value does not override
 	net.core.rmem_max.  Calling setsockopt() with SO_RCVBUF disables
 	automatic tuning of that socket's receive buffer size, in which
 	case this value is ignored.
-	Default: between 87380B and 6MB, depending on RAM size.
+	Default: between 131072 and 6MB, depending on RAM size.
 
 tcp_sack - BOOLEAN
 	Enable select acknowledgments (SACKS).
@@ -1074,7 +1073,9 @@ ip_local_reserved_ports - list of comma separated ranges
 
 	although this is redundant. However such a setting is useful
 	if later the port range is changed to a value that will
-	include the reserved ports.
+	include the reserved ports. Also keep in mind, that overlapping
+	of these ranges may affect probability of selecting ephemeral
+	ports which are right after block of reserved ports.
 
 	Default: Empty
 
@@ -1143,6 +1144,12 @@ icmp_echo_ignore_all - BOOLEAN
 	requests sent to it.
 
 	Default: 0
+
+icmp_echo_enable_probe - BOOLEAN
+        If set to one, then the kernel will respond to RFC 8335 PROBE
+        requests sent to it.
+
+        Default: 0
 
 icmp_echo_ignore_broadcasts - BOOLEAN
 	If set non-zero, then the kernel will ignore all ICMP ECHO and
@@ -1849,21 +1856,6 @@ ip6frag_low_thresh - INTEGER
 
 ip6frag_time - INTEGER
 	Time in seconds to keep an IPv6 fragment in memory.
-
-IPv6 Segment Routing:
-
-seg6_flowlabel - INTEGER
-	Controls the behaviour of computing the flowlabel of outer
-	IPv6 header in case of SR T.encaps
-
-	 == =======================================================
-	 -1  set flowlabel to zero.
-	  0  copy flowlabel from Inner packet in case of Inner IPv6
-	     (Set flowlabel to 0 in case IPv4/L2)
-	  1  Compute the flowlabel using seg6_make_flowlabel()
-	 == =======================================================
-
-	Default is 0.
 
 ``conf/default/*``:
 	Change the interface-specific default settings.

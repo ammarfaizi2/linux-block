@@ -24,6 +24,7 @@
 #include <linux/audit.h>
 #include <linux/user_namespace.h>
 #include <net/net_namespace.h>
+#include <net/netns/generic.h>
 
 #include <linux/netfilter/x_tables.h>
 #include <linux/netfilter_arp.h>
@@ -37,6 +38,10 @@ MODULE_DESCRIPTION("{ip,ip6,arp,eb}_tables backend module");
 
 #define XT_PCPU_BLOCK_SIZE 4096
 #define XT_MAX_TABLE_SIZE	(512 * 1024 * 1024)
+
+struct xt_pernet {
+	struct list_head tables[NFPROTO_NUMPROTO];
+};
 
 struct compat_delta {
 	unsigned int offset; /* offset in kernel */
@@ -55,7 +60,8 @@ struct xt_af {
 #endif
 };
 
-static struct xt_af *xt;
+static unsigned int xt_pernet_id __read_mostly;
+static struct xt_af *xt __read_mostly;
 
 static const char *const xt_prefix[NFPROTO_NUMPROTO] = {
 	[NFPROTO_UNSPEC] = "x",
@@ -330,6 +336,7 @@ static int match_revfn(u8 af, const char *name, u8 revision, int *bestp)
 	const struct xt_match *m;
 	int have_rev = 0;
 
+	mutex_lock(&xt[af].mutex);
 	list_for_each_entry(m, &xt[af].match, list) {
 		if (strcmp(m->name, name) == 0) {
 			if (m->revision > *bestp)
@@ -338,6 +345,7 @@ static int match_revfn(u8 af, const char *name, u8 revision, int *bestp)
 				have_rev = 1;
 		}
 	}
+	mutex_unlock(&xt[af].mutex);
 
 	if (af != NFPROTO_UNSPEC && !have_rev)
 		return match_revfn(NFPROTO_UNSPEC, name, revision, bestp);
@@ -350,6 +358,7 @@ static int target_revfn(u8 af, const char *name, u8 revision, int *bestp)
 	const struct xt_target *t;
 	int have_rev = 0;
 
+	mutex_lock(&xt[af].mutex);
 	list_for_each_entry(t, &xt[af].target, list) {
 		if (strcmp(t->name, name) == 0) {
 			if (t->revision > *bestp)
@@ -358,6 +367,7 @@ static int target_revfn(u8 af, const char *name, u8 revision, int *bestp)
 				have_rev = 1;
 		}
 	}
+	mutex_unlock(&xt[af].mutex);
 
 	if (af != NFPROTO_UNSPEC && !have_rev)
 		return target_revfn(NFPROTO_UNSPEC, name, revision, bestp);
@@ -371,12 +381,10 @@ int xt_find_revision(u8 af, const char *name, u8 revision, int target,
 {
 	int have_rev, best = -1;
 
-	mutex_lock(&xt[af].mutex);
 	if (target == 1)
 		have_rev = target_revfn(af, name, revision, &best);
 	else
 		have_rev = match_revfn(af, name, revision, &best);
-	mutex_unlock(&xt[af].mutex);
 
 	/* Nothing at all?  Return 0 to try loading module. */
 	if (best == -1) {
@@ -731,7 +739,7 @@ void xt_compat_match_from_user(struct xt_entry_match *m, void **dstptr,
 {
 	const struct xt_match *match = m->u.kernel.match;
 	struct compat_xt_entry_match *cm = (struct compat_xt_entry_match *)m;
-	int pad, off = xt_compat_match_offset(match);
+	int off = xt_compat_match_offset(match);
 	u_int16_t msize = cm->u.user.match_size;
 	char name[sizeof(m->u.user.name)];
 
@@ -741,9 +749,6 @@ void xt_compat_match_from_user(struct xt_entry_match *m, void **dstptr,
 		match->compat_from_user(m->data, cm->data);
 	else
 		memcpy(m->data, cm->data, msize - sizeof(*cm));
-	pad = XT_ALIGN(match->matchsize) - match->matchsize;
-	if (pad > 0)
-		memset(m->data + match->matchsize, 0, pad);
 
 	msize += off;
 	m->u.user.match_size = msize;
@@ -1114,7 +1119,7 @@ void xt_compat_target_from_user(struct xt_entry_target *t, void **dstptr,
 {
 	const struct xt_target *target = t->u.kernel.target;
 	struct compat_xt_entry_target *ct = (struct compat_xt_entry_target *)t;
-	int pad, off = xt_compat_target_offset(target);
+	int off = xt_compat_target_offset(target);
 	u_int16_t tsize = ct->u.user.target_size;
 	char name[sizeof(t->u.user.name)];
 
@@ -1124,9 +1129,6 @@ void xt_compat_target_from_user(struct xt_entry_target *t, void **dstptr,
 		target->compat_from_user(t->data, ct->data);
 	else
 		memcpy(t->data, ct->data, tsize - sizeof(*ct));
-	pad = XT_ALIGN(target->targetsize) - target->targetsize;
-	if (pad > 0)
-		memset(t->data + target->targetsize, 0, pad);
 
 	tsize += off;
 	t->u.user.target_size = tsize;
@@ -1201,10 +1203,11 @@ EXPORT_SYMBOL(xt_free_table_info);
 struct xt_table *xt_find_table_lock(struct net *net, u_int8_t af,
 				    const char *name)
 {
+	struct xt_pernet *xt_net = net_generic(net, xt_pernet_id);
 	struct xt_table *t, *found = NULL;
 
 	mutex_lock(&xt[af].mutex);
-	list_for_each_entry(t, &net->xt.tables[af], list)
+	list_for_each_entry(t, &xt_net->tables[af], list)
 		if (strcmp(t->name, name) == 0 && try_module_get(t->me))
 			return t;
 
@@ -1212,7 +1215,8 @@ struct xt_table *xt_find_table_lock(struct net *net, u_int8_t af,
 		goto out;
 
 	/* Table doesn't exist in this netns, re-try init */
-	list_for_each_entry(t, &init_net.xt.tables[af], list) {
+	xt_net = net_generic(&init_net, xt_pernet_id);
+	list_for_each_entry(t, &xt_net->tables[af], list) {
 		int err;
 
 		if (strcmp(t->name, name))
@@ -1235,8 +1239,9 @@ struct xt_table *xt_find_table_lock(struct net *net, u_int8_t af,
 	if (!found)
 		goto out;
 
+	xt_net = net_generic(net, xt_pernet_id);
 	/* and once again: */
-	list_for_each_entry(t, &net->xt.tables[af], list)
+	list_for_each_entry(t, &xt_net->tables[af], list)
 		if (strcmp(t->name, name) == 0)
 			return t;
 
@@ -1349,14 +1354,6 @@ struct xt_counters *xt_counters_alloc(unsigned int counters)
 }
 EXPORT_SYMBOL(xt_counters_alloc);
 
-struct xt_table_info
-*xt_table_get_private_protected(const struct xt_table *table)
-{
-	return rcu_dereference_protected(table->private,
-					 mutex_is_locked(&xt[table->af].mutex));
-}
-EXPORT_SYMBOL(xt_table_get_private_protected);
-
 struct xt_table_info *
 xt_replace_table(struct xt_table *table,
 	      unsigned int num_counters,
@@ -1364,6 +1361,7 @@ xt_replace_table(struct xt_table *table,
 	      int *error)
 {
 	struct xt_table_info *private;
+	unsigned int cpu;
 	int ret;
 
 	ret = xt_jumpstack_alloc(newinfo);
@@ -1373,20 +1371,47 @@ xt_replace_table(struct xt_table *table,
 	}
 
 	/* Do the substitution. */
-	private = xt_table_get_private_protected(table);
+	local_bh_disable();
+	private = table->private;
 
 	/* Check inside lock: is the old number correct? */
 	if (num_counters != private->number) {
 		pr_debug("num_counters != table->private->number (%u/%u)\n",
 			 num_counters, private->number);
+		local_bh_enable();
 		*error = -EAGAIN;
 		return NULL;
 	}
 
 	newinfo->initial_entries = private->initial_entries;
+	/*
+	 * Ensure contents of newinfo are visible before assigning to
+	 * private.
+	 */
+	smp_wmb();
+	table->private = newinfo;
 
-	rcu_assign_pointer(table->private, newinfo);
-	synchronize_rcu();
+	/* make sure all cpus see new ->private value */
+	smp_mb();
+
+	/*
+	 * Even though table entries have now been swapped, other CPU's
+	 * may still be using the old entries...
+	 */
+	local_bh_enable();
+
+	/* ... so wait for even xt_recseq on all cpus */
+	for_each_possible_cpu(cpu) {
+		seqcount_t *s = &per_cpu(xt_recseq, cpu);
+		u32 seq = raw_read_seqcount(s);
+
+		if (seq & 1) {
+			do {
+				cond_resched();
+				cpu_relax();
+			} while (seq == raw_read_seqcount(s));
+		}
+	}
 
 	audit_log_nfcfg(table->name, table->af, private->number,
 			!private->number ? AUDIT_XT_OP_REGISTER :
@@ -1401,9 +1426,10 @@ struct xt_table *xt_register_table(struct net *net,
 				   struct xt_table_info *bootstrap,
 				   struct xt_table_info *newinfo)
 {
-	int ret;
+	struct xt_pernet *xt_net = net_generic(net, xt_pernet_id);
 	struct xt_table_info *private;
 	struct xt_table *t, *table;
+	int ret;
 
 	/* Don't add one object to multiple lists. */
 	table = kmemdup(input_table, sizeof(struct xt_table), GFP_KERNEL);
@@ -1414,7 +1440,7 @@ struct xt_table *xt_register_table(struct net *net,
 
 	mutex_lock(&xt[table->af].mutex);
 	/* Don't autoload: we'd eat our tail... */
-	list_for_each_entry(t, &net->xt.tables[table->af], list) {
+	list_for_each_entry(t, &xt_net->tables[table->af], list) {
 		if (strcmp(t->name, table->name) == 0) {
 			ret = -EEXIST;
 			goto unlock;
@@ -1422,18 +1448,18 @@ struct xt_table *xt_register_table(struct net *net,
 	}
 
 	/* Simplifies replace_table code. */
-	rcu_assign_pointer(table->private, bootstrap);
+	table->private = bootstrap;
 
 	if (!xt_replace_table(table, 0, newinfo, &ret))
 		goto unlock;
 
-	private = xt_table_get_private_protected(table);
+	private = table->private;
 	pr_debug("table->private->number = %u\n", private->number);
 
 	/* save number of initial entries */
 	private->initial_entries = private->number;
 
-	list_add(&table->list, &net->xt.tables[table->af]);
+	list_add(&table->list, &xt_net->tables[table->af]);
 	mutex_unlock(&xt[table->af].mutex);
 	return table;
 
@@ -1450,8 +1476,7 @@ void *xt_unregister_table(struct xt_table *table)
 	struct xt_table_info *private;
 
 	mutex_lock(&xt[table->af].mutex);
-	private = xt_table_get_private_protected(table);
-	RCU_INIT_POINTER(table->private, NULL);
+	private = table->private;
 	list_del(&table->list);
 	mutex_unlock(&xt[table->af].mutex);
 	audit_log_nfcfg(table->name, table->af, private->number,
@@ -1465,19 +1490,25 @@ EXPORT_SYMBOL_GPL(xt_unregister_table);
 #ifdef CONFIG_PROC_FS
 static void *xt_table_seq_start(struct seq_file *seq, loff_t *pos)
 {
+	u8 af = (unsigned long)PDE_DATA(file_inode(seq->file));
 	struct net *net = seq_file_net(seq);
-	u_int8_t af = (unsigned long)PDE_DATA(file_inode(seq->file));
+	struct xt_pernet *xt_net;
+
+	xt_net = net_generic(net, xt_pernet_id);
 
 	mutex_lock(&xt[af].mutex);
-	return seq_list_start(&net->xt.tables[af], *pos);
+	return seq_list_start(&xt_net->tables[af], *pos);
 }
 
 static void *xt_table_seq_next(struct seq_file *seq, void *v, loff_t *pos)
 {
+	u8 af = (unsigned long)PDE_DATA(file_inode(seq->file));
 	struct net *net = seq_file_net(seq);
-	u_int8_t af = (unsigned long)PDE_DATA(file_inode(seq->file));
+	struct xt_pernet *xt_net;
 
-	return seq_list_next(v, &net->xt.tables[af], pos);
+	xt_net = net_generic(net, xt_pernet_id);
+
+	return seq_list_next(v, &xt_net->tables[af], pos);
 }
 
 static void xt_table_seq_stop(struct seq_file *seq, void *v)
@@ -1843,24 +1874,28 @@ EXPORT_SYMBOL_GPL(xt_percpu_counter_free);
 
 static int __net_init xt_net_init(struct net *net)
 {
+	struct xt_pernet *xt_net = net_generic(net, xt_pernet_id);
 	int i;
 
 	for (i = 0; i < NFPROTO_NUMPROTO; i++)
-		INIT_LIST_HEAD(&net->xt.tables[i]);
+		INIT_LIST_HEAD(&xt_net->tables[i]);
 	return 0;
 }
 
 static void __net_exit xt_net_exit(struct net *net)
 {
+	struct xt_pernet *xt_net = net_generic(net, xt_pernet_id);
 	int i;
 
 	for (i = 0; i < NFPROTO_NUMPROTO; i++)
-		WARN_ON_ONCE(!list_empty(&net->xt.tables[i]));
+		WARN_ON_ONCE(!list_empty(&xt_net->tables[i]));
 }
 
 static struct pernet_operations xt_net_ops = {
 	.init = xt_net_init,
 	.exit = xt_net_exit,
+	.id   = &xt_pernet_id,
+	.size = sizeof(struct xt_pernet),
 };
 
 static int __init xt_init(void)

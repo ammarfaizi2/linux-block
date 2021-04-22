@@ -5,8 +5,9 @@
 #include "priv.h"
 #include "sf.h"
 #include "mlx5_ifc_vhca_event.h"
-#include "vhca_event.h"
 #include "ecpf.h"
+#include "vhca_event.h"
+#include "mlx5_core.h"
 
 struct mlx5_sf_hw {
 	u32 usr_sfnum;
@@ -18,7 +19,6 @@ struct mlx5_sf_hw_table {
 	struct mlx5_core_dev *dev;
 	struct mlx5_sf_hw *sfs;
 	int max_local_functions;
-	u8 ecpu: 1;
 	struct mutex table_lock; /* Serializes sf deletion and vhca state change handler. */
 	struct notifier_block vhca_nb;
 };
@@ -64,15 +64,15 @@ int mlx5_sf_hw_table_sf_alloc(struct mlx5_core_dev *dev, u32 usr_sfnum)
 	}
 	if (sw_id == -ENOSPC) {
 		err = -ENOSPC;
-		goto err;
+		goto exist_err;
 	}
 
-	hw_fn_id = mlx5_sf_sw_to_hw_id(table->dev, sw_id);
-	err = mlx5_cmd_alloc_sf(table->dev, hw_fn_id);
+	hw_fn_id = mlx5_sf_sw_to_hw_id(dev, sw_id);
+	err = mlx5_cmd_alloc_sf(dev, hw_fn_id);
 	if (err)
 		goto err;
 
-	err = mlx5_modify_vhca_sw_id(dev, hw_fn_id, table->ecpu, usr_sfnum);
+	err = mlx5_modify_vhca_sw_id(dev, hw_fn_id, usr_sfnum);
 	if (err)
 		goto vhca_err;
 
@@ -80,7 +80,7 @@ int mlx5_sf_hw_table_sf_alloc(struct mlx5_core_dev *dev, u32 usr_sfnum)
 	return sw_id;
 
 vhca_err:
-	mlx5_cmd_dealloc_sf(table->dev, hw_fn_id);
+	mlx5_cmd_dealloc_sf(dev, hw_fn_id);
 err:
 	table->sfs[i].allocated = false;
 exist_err:
@@ -93,8 +93,8 @@ static void _mlx5_sf_hw_id_free(struct mlx5_core_dev *dev, u16 id)
 	struct mlx5_sf_hw_table *table = dev->priv.sf_hw_table;
 	u16 hw_fn_id;
 
-	hw_fn_id = mlx5_sf_sw_to_hw_id(table->dev, id);
-	mlx5_cmd_dealloc_sf(table->dev, hw_fn_id);
+	hw_fn_id = mlx5_sf_sw_to_hw_id(dev, id);
+	mlx5_cmd_dealloc_sf(dev, hw_fn_id);
 	table->sfs[id].allocated = false;
 	table->sfs[id].pending_delete = false;
 }
@@ -118,12 +118,12 @@ void mlx5_sf_hw_table_sf_deferred_free(struct mlx5_core_dev *dev, u16 id)
 
 	hw_fn_id = mlx5_sf_sw_to_hw_id(dev, id);
 	mutex_lock(&table->table_lock);
-	err = mlx5_cmd_query_vhca_state(dev, hw_fn_id, table->ecpu, out, sizeof(out));
+	err = mlx5_cmd_query_vhca_state(dev, hw_fn_id, out, sizeof(out));
 	if (err)
 		goto err;
 	state = MLX5_GET(query_vhca_state_out, out, vhca_state_context.vhca_state);
 	if (state == MLX5_VHCA_STATE_ALLOCATED) {
-		mlx5_cmd_dealloc_sf(table->dev, hw_fn_id);
+		mlx5_cmd_dealloc_sf(dev, hw_fn_id);
 		table->sfs[id].allocated = false;
 	} else {
 		table->sfs[id].pending_delete = true;
@@ -164,7 +164,6 @@ int mlx5_sf_hw_table_init(struct mlx5_core_dev *dev)
 	table->dev = dev;
 	table->sfs = sfs;
 	table->max_local_functions = max_functions;
-	table->ecpu = mlx5_read_embedded_cpu(dev);
 	dev->priv.sf_hw_table = table;
 	mlx5_core_dbg(dev, "SF HW table: max sfs = %d\n", max_functions);
 	return 0;
@@ -217,7 +216,7 @@ int mlx5_sf_hw_table_create(struct mlx5_core_dev *dev)
 		return 0;
 
 	table->vhca_nb.notifier_call = mlx5_sf_hw_vhca_event;
-	return mlx5_vhca_event_notifier_register(table->dev, &table->vhca_nb);
+	return mlx5_vhca_event_notifier_register(dev, &table->vhca_nb);
 }
 
 void mlx5_sf_hw_table_destroy(struct mlx5_core_dev *dev)
@@ -227,7 +226,7 @@ void mlx5_sf_hw_table_destroy(struct mlx5_core_dev *dev)
 	if (!table)
 		return;
 
-	mlx5_vhca_event_notifier_unregister(table->dev, &table->vhca_nb);
+	mlx5_vhca_event_notifier_unregister(dev, &table->vhca_nb);
 	/* Dealloc SFs whose firmware event has been missed. */
 	mlx5_sf_hw_dealloc_all(table);
 }

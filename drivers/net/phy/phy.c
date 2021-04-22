@@ -276,14 +276,16 @@ int phy_ethtool_ksettings_set(struct phy_device *phydev,
 
 	phydev->autoneg = autoneg;
 
-	phydev->speed = speed;
+	if (autoneg == AUTONEG_DISABLE) {
+		phydev->speed = speed;
+		phydev->duplex = duplex;
+	}
 
 	linkmode_copy(phydev->advertising, advertising);
 
 	linkmode_mod_bit(ETHTOOL_LINK_MODE_Autoneg_BIT,
 			 phydev->advertising, autoneg == AUTONEG_ENABLE);
 
-	phydev->duplex = duplex;
 	phydev->master_slave_set = cmd->base.master_slave_cfg;
 	phydev->mdix_ctrl = cmd->base.eth_tp_mdix_ctrl;
 
@@ -699,7 +701,7 @@ out:
 }
 EXPORT_SYMBOL(phy_start_cable_test_tdr);
 
-static int phy_config_aneg(struct phy_device *phydev)
+int phy_config_aneg(struct phy_device *phydev)
 {
 	if (phydev->drv->config_aneg)
 		return phydev->drv->config_aneg(phydev);
@@ -712,6 +714,7 @@ static int phy_config_aneg(struct phy_device *phydev)
 
 	return genphy_config_aneg(phydev);
 }
+EXPORT_SYMBOL(phy_config_aneg);
 
 /**
  * phy_check_link_status - check link status and set state accordingly
@@ -1145,7 +1148,7 @@ void phy_state_machine(struct work_struct *work)
 	}
 
 	/* Only re-schedule a PHY state machine change if we are polling the
-	 * PHY, if PHY_IGNORE_INTERRUPT is set, then we will be moving
+	 * PHY, if PHY_MAC_INTERRUPT is set, then we will be moving
 	 * between states from phy_mac_interrupt().
 	 *
 	 * In state PHY_HALTED the PHY gets suspended, so rescheduling the

@@ -2670,7 +2670,6 @@ static enum qman_cb_dqrr_result rx_default_dqrr(struct qman_portal *portal,
 	u32 hash;
 	u64 ns;
 
-	np = container_of(&portal, struct dpaa_napi_portal, p);
 	dpaa_fq = container_of(fq, struct dpaa_fq, fq_base);
 	fd_status = be32_to_cpu(fd->status);
 	fd_format = qm_fd_get_format(fd);
@@ -2685,6 +2684,7 @@ static enum qman_cb_dqrr_result rx_default_dqrr(struct qman_portal *portal,
 
 	percpu_priv = this_cpu_ptr(priv->percpu_priv);
 	percpu_stats = &percpu_priv->stats;
+	np = &percpu_priv->np;
 
 	if (unlikely(dpaa_eth_napi_schedule(percpu_priv, portal, sched_napi)))
 		return qman_cb_dqrr_stop;
@@ -3081,7 +3081,7 @@ static int dpaa_xdp_xmit(struct net_device *net_dev, int n,
 			 struct xdp_frame **frames, u32 flags)
 {
 	struct xdp_frame *xdpf;
-	int i, err, drops = 0;
+	int i, nxmit = 0;
 
 	if (unlikely(flags & ~XDP_XMIT_FLAGS_MASK))
 		return -EINVAL;
@@ -3091,14 +3091,12 @@ static int dpaa_xdp_xmit(struct net_device *net_dev, int n,
 
 	for (i = 0; i < n; i++) {
 		xdpf = frames[i];
-		err = dpaa_xdp_xmit_frame(net_dev, xdpf);
-		if (err) {
-			xdp_return_frame_rx_napi(xdpf);
-			drops++;
-		}
+		if (dpaa_xdp_xmit_frame(net_dev, xdpf))
+			break;
+		nxmit++;
 	}
 
-	return n - drops;
+	return nxmit;
 }
 
 static int dpaa_ts_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)

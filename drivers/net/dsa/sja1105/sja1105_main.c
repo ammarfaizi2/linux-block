@@ -50,6 +50,12 @@ sja1105_port_allow_traffic(struct sja1105_l2_forwarding_entry *l2_fwd,
 		l2_fwd[from].reach_port &= ~BIT(to);
 }
 
+static bool sja1105_can_forward(struct sja1105_l2_forwarding_entry *l2_fwd,
+				int from, int to)
+{
+	return !!(l2_fwd[from].reach_port & BIT(to));
+}
+
 /* Structure used to temporarily transport device tree
  * settings into sja1105_setup
  */
@@ -407,6 +413,12 @@ static int sja1105_init_l2_forwarding(struct sja1105_private *priv)
 
 		for (j = 0; j < SJA1105_NUM_TC; j++)
 			l2fwd[i].vlan_pmap[j] = j;
+
+		/* All ports start up with egress flooding enabled,
+		 * including the CPU port.
+		 */
+		priv->ucast_egress_floods |= BIT(i);
+		priv->bcast_egress_floods |= BIT(i);
 
 		if (i == upstream)
 			continue;
@@ -1571,6 +1583,50 @@ static int sja1105_mdb_del(struct dsa_switch *ds, int port,
 	return sja1105_fdb_del(ds, port, mdb->addr, mdb->vid);
 }
 
+/* Common function for unicast and broadcast flood configuration.
+ * Flooding is configured between each {ingress, egress} port pair, and since
+ * the bridge's semantics are those of "egress flooding", it means we must
+ * enable flooding towards this port from all ingress ports that are in the
+ * same forwarding domain.
+ */
+static int sja1105_manage_flood_domains(struct sja1105_private *priv)
+{
+	struct sja1105_l2_forwarding_entry *l2_fwd;
+	struct dsa_switch *ds = priv->ds;
+	int from, to, rc;
+
+	l2_fwd = priv->static_config.tables[BLK_IDX_L2_FORWARDING].entries;
+
+	for (from = 0; from < ds->num_ports; from++) {
+		u64 fl_domain = 0, bc_domain = 0;
+
+		for (to = 0; to < priv->ds->num_ports; to++) {
+			if (!sja1105_can_forward(l2_fwd, from, to))
+				continue;
+
+			if (priv->ucast_egress_floods & BIT(to))
+				fl_domain |= BIT(to);
+			if (priv->bcast_egress_floods & BIT(to))
+				bc_domain |= BIT(to);
+		}
+
+		/* Nothing changed, nothing to do */
+		if (l2_fwd[from].fl_domain == fl_domain &&
+		    l2_fwd[from].bc_domain == bc_domain)
+			continue;
+
+		l2_fwd[from].fl_domain = fl_domain;
+		l2_fwd[from].bc_domain = bc_domain;
+
+		rc = sja1105_dynamic_config_write(priv, BLK_IDX_L2_FORWARDING,
+						  from, &l2_fwd[from], true);
+		if (rc < 0)
+			return rc;
+	}
+
+	return 0;
+}
+
 static int sja1105_bridge_member(struct dsa_switch *ds, int port,
 				 struct net_device *br, bool member)
 {
@@ -1608,8 +1664,12 @@ static int sja1105_bridge_member(struct dsa_switch *ds, int port,
 			return rc;
 	}
 
-	return sja1105_dynamic_config_write(priv, BLK_IDX_L2_FORWARDING,
-					    port, &l2_fwd[port], true);
+	rc = sja1105_dynamic_config_write(priv, BLK_IDX_L2_FORWARDING,
+					  port, &l2_fwd[port], true);
+	if (rc)
+		return rc;
+
+	return sja1105_manage_flood_domains(priv);
 }
 
 static void sja1105_bridge_stp_state_set(struct dsa_switch *ds, int port,
@@ -1862,7 +1922,7 @@ out_unlock_ptp:
 				speed = SPEED_1000;
 			else if (bmcr & BMCR_SPEED100)
 				speed = SPEED_100;
-			else if (bmcr & BMCR_SPEED10)
+			else
 				speed = SPEED_10;
 
 			sja1105_sgmii_pcs_force_speed(priv, speed);
@@ -2639,7 +2699,8 @@ out:
  * which can only be partially reconfigured at runtime (and not the TPID).
  * So a switch reset is required.
  */
-int sja1105_vlan_filtering(struct dsa_switch *ds, int port, bool enabled)
+int sja1105_vlan_filtering(struct dsa_switch *ds, int port, bool enabled,
+			   struct netlink_ext_ack *extack)
 {
 	struct sja1105_l2_lookup_params_entry *l2_lookup_params;
 	struct sja1105_general_params_entry *general_params;
@@ -2653,8 +2714,8 @@ int sja1105_vlan_filtering(struct dsa_switch *ds, int port, bool enabled)
 
 	list_for_each_entry(rule, &priv->flow_block.rules, list) {
 		if (rule->type == SJA1105_RULE_VL) {
-			dev_err(ds->dev,
-				"Cannot change VLAN filtering with active VL rules\n");
+			NL_SET_ERR_MSG_MOD(extack,
+					   "Cannot change VLAN filtering with active VL rules");
 			return -EBUSY;
 		}
 	}
@@ -2736,7 +2797,7 @@ int sja1105_vlan_filtering(struct dsa_switch *ds, int port, bool enabled)
 
 	rc = sja1105_static_config_reload(priv, SJA1105_VLAN_FILTERING);
 	if (rc)
-		dev_err(ds->dev, "Failed to change VLAN Ethertype\n");
+		NL_SET_ERR_MSG_MOD(extack, "Failed to change VLAN Ethertype");
 
 	/* Switch port identification based on 802.1Q is only passable
 	 * if we are not under a vlan_filtering bridge. So make sure
@@ -2795,7 +2856,8 @@ static int sja1105_vlan_del_one(struct dsa_switch *ds, int port, u16 vid,
 }
 
 static int sja1105_vlan_add(struct dsa_switch *ds, int port,
-			    const struct switchdev_obj_port_vlan *vlan)
+			    const struct switchdev_obj_port_vlan *vlan,
+			    struct netlink_ext_ack *extack)
 {
 	struct sja1105_private *priv = ds->priv;
 	bool vlan_table_changed = false;
@@ -2807,7 +2869,8 @@ static int sja1105_vlan_add(struct dsa_switch *ds, int port,
 	 */
 	if (priv->vlan_state != SJA1105_VLAN_FILTERING_FULL &&
 	    vid_is_dsa_8021q(vlan->vid)) {
-		dev_err(ds->dev, "Range 1024-3071 reserved for dsa_8021q operation\n");
+		NL_SET_ERR_MSG_MOD(extack,
+				   "Range 1024-3071 reserved for dsa_8021q operation");
 		return -EBUSY;
 	}
 
@@ -2936,6 +2999,8 @@ static int sja1105_setup(struct dsa_switch *ds)
 
 	ds->mtu_enforcement_ingress = true;
 
+	priv->best_effort_vlan_filtering = true;
+
 	rc = sja1105_devlink_setup(ds);
 	if (rc < 0)
 		return rc;
@@ -2982,21 +3047,6 @@ static void sja1105_teardown(struct dsa_switch *ds)
 		list_del(&v->list);
 		kfree(v);
 	}
-}
-
-static int sja1105_port_enable(struct dsa_switch *ds, int port,
-			       struct phy_device *phy)
-{
-	struct net_device *slave;
-
-	if (!dsa_is_user_port(ds, port))
-		return 0;
-
-	slave = dsa_to_port(ds, port)->slave;
-
-	slave->features &= ~NETIF_F_HW_VLAN_CTAG_FILTER;
-
-	return 0;
 }
 
 static void sja1105_port_disable(struct dsa_switch *ds, int port)
@@ -3282,7 +3332,7 @@ static int sja1105_port_set_learning(struct sja1105_private *priv, int port,
 
 	mac = priv->static_config.tables[BLK_IDX_MAC_CONFIG].entries;
 
-	mac[port].dyn_learn = !!(priv->learn_ena & BIT(port));
+	mac[port].dyn_learn = enabled;
 
 	rc = sja1105_dynamic_config_write(priv, BLK_IDX_MAC_CONFIG, port,
 					  &mac[port], true);
@@ -3297,51 +3347,24 @@ static int sja1105_port_set_learning(struct sja1105_private *priv, int port,
 	return 0;
 }
 
-/* Common function for unicast and broadcast flood configuration.
- * Flooding is configured between each {ingress, egress} port pair, and since
- * the bridge's semantics are those of "egress flooding", it means we must
- * enable flooding towards this port from all ingress ports that are in the
- * same bridge. In practice, we just enable flooding from all possible ingress
- * ports regardless of whether they're in the same bridge or not, since the
- * reach_port configuration will not allow flooded frames to leak across
- * bridging domains anyway.
- */
 static int sja1105_port_ucast_bcast_flood(struct sja1105_private *priv, int to,
 					  struct switchdev_brport_flags flags)
 {
-	struct sja1105_l2_forwarding_entry *l2_fwd;
-	int from, rc;
-
-	l2_fwd = priv->static_config.tables[BLK_IDX_L2_FORWARDING].entries;
-
-	for (from = 0; from < priv->ds->num_ports; from++) {
-		if (dsa_is_unused_port(priv->ds, from))
-			continue;
-		if (from == to)
-			continue;
-
-		/* Unicast */
-		if (flags.mask & BR_FLOOD) {
-			if (flags.val & BR_FLOOD)
-				l2_fwd[from].fl_domain |= BIT(to);
-			else
-				l2_fwd[from].fl_domain &= ~BIT(to);
-		}
-		/* Broadcast */
-		if (flags.mask & BR_BCAST_FLOOD) {
-			if (flags.val & BR_BCAST_FLOOD)
-				l2_fwd[from].bc_domain |= BIT(to);
-			else
-				l2_fwd[from].bc_domain &= ~BIT(to);
-		}
-
-		rc = sja1105_dynamic_config_write(priv, BLK_IDX_L2_FORWARDING,
-						  from, &l2_fwd[from], true);
-		if (rc < 0)
-			return rc;
+	if (flags.mask & BR_FLOOD) {
+		if (flags.val & BR_FLOOD)
+			priv->ucast_egress_floods |= BIT(to);
+		else
+			priv->ucast_egress_floods &= ~BIT(to);
 	}
 
-	return 0;
+	if (flags.mask & BR_BCAST_FLOOD) {
+		if (flags.val & BR_BCAST_FLOOD)
+			priv->bcast_egress_floods |= BIT(to);
+		else
+			priv->bcast_egress_floods &= ~BIT(to);
+	}
+
+	return sja1105_manage_flood_domains(priv);
 }
 
 static int sja1105_port_mcast_flood(struct sja1105_private *priv, int to,
@@ -3453,7 +3476,6 @@ static const struct dsa_switch_ops sja1105_switch_ops = {
 	.get_ethtool_stats	= sja1105_get_ethtool_stats,
 	.get_sset_count		= sja1105_get_sset_count,
 	.get_ts_info		= sja1105_get_ts_info,
-	.port_enable		= sja1105_port_enable,
 	.port_disable		= sja1105_port_disable,
 	.port_fdb_dump		= sja1105_fdb_dump,
 	.port_fdb_add		= sja1105_fdb_add,

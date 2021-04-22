@@ -382,8 +382,8 @@ const struct bpf_func_proto bpf_get_current_ancestor_cgroup_id_proto = {
 };
 
 #ifdef CONFIG_CGROUP_BPF
-DECLARE_PER_CPU(struct bpf_cgroup_storage*,
-		bpf_cgroup_storage[MAX_BPF_CGROUP_STORAGE_TYPE]);
+DECLARE_PER_CPU(struct bpf_cgroup_storage_info,
+		bpf_cgroup_storage_info[BPF_CGROUP_STORAGE_NEST_MAX]);
 
 BPF_CALL_2(bpf_get_local_storage, struct bpf_map *, map, u64, flags)
 {
@@ -392,10 +392,17 @@ BPF_CALL_2(bpf_get_local_storage, struct bpf_map *, map, u64, flags)
 	 * verifier checks that its value is correct.
 	 */
 	enum bpf_cgroup_storage_type stype = cgroup_storage_type(map);
-	struct bpf_cgroup_storage *storage;
+	struct bpf_cgroup_storage *storage = NULL;
 	void *ptr;
+	int i;
 
-	storage = this_cpu_read(bpf_cgroup_storage[stype]);
+	for (i = 0; i < BPF_CGROUP_STORAGE_NEST_MAX; i++) {
+		if (unlikely(this_cpu_read(bpf_cgroup_storage_info[i].task) != current))
+			continue;
+
+		storage = this_cpu_read(bpf_cgroup_storage_info[i].storage[stype]);
+		break;
+	}
 
 	if (stype == BPF_CGROUP_STORAGE_SHARED)
 		ptr = &READ_ONCE(storage->buf)->data[0];
@@ -708,6 +715,8 @@ bpf_base_func_proto(enum bpf_func_id func_id)
 		return &bpf_ringbuf_discard_proto;
 	case BPF_FUNC_ringbuf_query:
 		return &bpf_ringbuf_query_proto;
+	case BPF_FUNC_for_each_map_elem:
+		return &bpf_for_each_map_elem_proto;
 	default:
 		break;
 	}
@@ -720,14 +729,6 @@ bpf_base_func_proto(enum bpf_func_id func_id)
 		return &bpf_spin_lock_proto;
 	case BPF_FUNC_spin_unlock:
 		return &bpf_spin_unlock_proto;
-	case BPF_FUNC_trace_printk:
-		if (!perfmon_capable())
-			return NULL;
-		return bpf_get_trace_printk_proto();
-	case BPF_FUNC_snprintf_btf:
-		if (!perfmon_capable())
-			return NULL;
-		return &bpf_snprintf_btf_proto;
 	case BPF_FUNC_jiffies64:
 		return &bpf_jiffies64_proto;
 	case BPF_FUNC_per_cpu_ptr:
@@ -742,6 +743,8 @@ bpf_base_func_proto(enum bpf_func_id func_id)
 		return NULL;
 
 	switch (func_id) {
+	case BPF_FUNC_trace_printk:
+		return bpf_get_trace_printk_proto();
 	case BPF_FUNC_get_current_task:
 		return &bpf_get_current_task_proto;
 	case BPF_FUNC_probe_read_user:
@@ -752,6 +755,8 @@ bpf_base_func_proto(enum bpf_func_id func_id)
 		return &bpf_probe_read_user_str_proto;
 	case BPF_FUNC_probe_read_kernel_str:
 		return &bpf_probe_read_kernel_str_proto;
+	case BPF_FUNC_snprintf_btf:
+		return &bpf_snprintf_btf_proto;
 	default:
 		return NULL;
 	}
