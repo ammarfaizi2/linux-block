@@ -116,22 +116,21 @@
 #define iterate_all_kinds(i, n, v, I, B, K, X) {		\
 	if (likely(n)) {					\
 		size_t skip = i->iov_offset;			\
-		if (unlikely(i->type & ITER_BVEC)) {		\
-			struct bio_vec v;			\
-			struct bvec_iter __bi;			\
-			iterate_bvec(i, n, v, __bi, skip, (B))	\
-		} else if (unlikely(i->type & ITER_KVEC)) {	\
-			const struct kvec *kvec;		\
-			struct kvec v;				\
-			iterate_kvec(i, n, v, kvec, skip, (K))	\
-		} else if (unlikely(i->type & ITER_DISCARD)) {	\
-		} else if (unlikely(i->type & ITER_XARRAY)) {	\
-			struct bio_vec v;			\
-			iterate_xarray(i, n, v, skip, (X));	\
-		} else {					\
+		if (likely(i->iter_type == ITER_IOVEC)) {	\
 			const struct iovec *iov;		\
 			struct iovec v;				\
 			iterate_iovec(i, n, v, iov, skip, (I))	\
+		} else if (i->iter_type == ITER_BVEC) {		\
+			struct bio_vec v;			\
+			struct bvec_iter __bi;			\
+			iterate_bvec(i, n, v, __bi, skip, (B))	\
+		} else if (i->iter_type == ITER_KVEC) {		\
+			const struct kvec *kvec;		\
+			struct kvec v;				\
+			iterate_kvec(i, n, v, kvec, skip, (K))	\
+		} else if (unlikely(i->iter_type == ITER_XARRAY)) {	\
+			struct bio_vec v;			\
+			iterate_xarray(i, n, v, skip, (X));	\
 		}						\
 	}							\
 }
@@ -141,30 +140,7 @@
 		n = i->count;					\
 	if (i->count) {						\
 		size_t skip = i->iov_offset;			\
-		if (unlikely(i->type & ITER_BVEC)) {		\
-			const struct bio_vec *bvec = i->bvec;	\
-			struct bio_vec v;			\
-			struct bvec_iter __bi;			\
-			iterate_bvec(i, n, v, __bi, skip, (B))	\
-			i->bvec = __bvec_iter_bvec(i->bvec, __bi);	\
-			i->nr_segs -= i->bvec - bvec;		\
-			skip = __bi.bi_bvec_done;		\
-		} else if (unlikely(i->type & ITER_KVEC)) {	\
-			const struct kvec *kvec;		\
-			struct kvec v;				\
-			iterate_kvec(i, n, v, kvec, skip, (K))	\
-			if (skip == kvec->iov_len) {		\
-				kvec++;				\
-				skip = 0;			\
-			}					\
-			i->nr_segs -= kvec - i->kvec;		\
-			i->kvec = kvec;				\
-		} else if (unlikely(i->type & ITER_DISCARD)) {	\
-			skip += n;				\
-		} else if (unlikely(i->type & ITER_XARRAY)) {	\
-			struct bio_vec v;			\
-			iterate_xarray(i, n, v, skip, (X))	\
-		} else {					\
+		if (likely(i->iter_type == ITER_IOVEC))  {	\
 			const struct iovec *iov;		\
 			struct iovec v;				\
 			iterate_iovec(i, n, v, iov, skip, (I))	\
@@ -174,6 +150,29 @@
 			}					\
 			i->nr_segs -= iov - i->iov;		\
 			i->iov = iov;				\
+		} else if (i->iter_type == ITER_BVEC) {		\
+			const struct bio_vec *bvec = i->bvec;	\
+			struct bio_vec v;			\
+			struct bvec_iter __bi;			\
+			iterate_bvec(i, n, v, __bi, skip, (B))	\
+			i->bvec = __bvec_iter_bvec(i->bvec, __bi);	\
+			i->nr_segs -= i->bvec - bvec;		\
+			skip = __bi.bi_bvec_done;		\
+		} else if (i->iter_type ==  ITER_KVEC) {	\
+			const struct kvec *kvec;		\
+			struct kvec v;				\
+			iterate_kvec(i, n, v, kvec, skip, (K))	\
+			if (skip == kvec->iov_len) {		\
+				kvec++;				\
+				skip = 0;			\
+			}					\
+			i->nr_segs -= kvec - i->kvec;		\
+			i->kvec = kvec;				\
+		} else if (i->iter_type == ITER_DISCARD) {	\
+			skip += n;				\
+		} else if (unlikely(i->iter_type == ITER_XARRAY)) {	\
+			struct bio_vec v;			\
+			iterate_xarray(i, n, v, skip, (X))	\
 		}						\
 		i->count -= n;					\
 		i->iov_offset = skip;				\
@@ -475,7 +474,7 @@ int iov_iter_fault_in_readable(struct iov_iter *i, size_t bytes)
 	int err;
 	struct iovec v;
 
-	if (!(i->type & (ITER_BVEC|ITER_KVEC))) {
+	if (i->iter_type == ITER_IOVEC) {
 		iterate_iovec(i, bytes, v, iov, skip, ({
 			err = fault_in_pages_readable(v.iov_base, v.iov_len);
 			if (unlikely(err))
@@ -491,19 +490,26 @@ void iov_iter_init(struct iov_iter *i, unsigned int direction,
 			size_t count)
 {
 	WARN_ON(direction & ~(READ | WRITE));
-	direction &= READ | WRITE;
 
 	/* It will get better.  Eventually... */
-	if (uaccess_kernel()) {
-		i->type = ITER_KVEC | direction;
-		i->kvec = (struct kvec *)iov;
-	} else {
-		i->type = ITER_IOVEC | direction;
-		i->iov = iov;
-	}
-	i->nr_segs = nr_segs;
-	i->iov_offset = 0;
-	i->count = count;
+	if (uaccess_kernel())
+		*i = (struct iov_iter) {
+			.iter_type = ITER_KVEC,
+			.data_source = direction,
+			.kvec = (struct kvec *)iov,
+			.nr_segs = nr_segs,
+			.iov_offset = 0,
+			.count = count
+		};
+	else
+		*i = (struct iov_iter) {
+			.iter_type = ITER_IOVEC,
+			.data_source = direction,
+			.iov = iov,
+			.nr_segs = nr_segs,
+			.iov_offset = 0,
+			.count = count
+		};
 }
 EXPORT_SYMBOL(iov_iter_init);
 
@@ -966,20 +972,25 @@ static inline bool page_copy_sane(struct page *page, size_t offset, size_t n)
 static size_t __copy_page_to_iter(struct page *page, size_t offset, size_t bytes,
 			 struct iov_iter *i)
 {
-	if (i->type & (ITER_BVEC | ITER_KVEC | ITER_XARRAY)) {
+	if (likely(i->iter_type == ITER_IOVEC))
+		return copy_page_to_iter_iovec(page, offset, bytes, i);
+	if (i->iter_type == ITER_BVEC || i->iter_type == ITER_KVEC ||
+	    i->iter_type == ITER_XARRAY) {
 		void *kaddr = kmap_atomic(page);
 		size_t wanted = copy_to_iter(kaddr + offset, bytes, i);
 		kunmap_atomic(kaddr);
 		return wanted;
-	} else if (unlikely(iov_iter_is_discard(i))) {
+	}
+	if (i->iter_type == ITER_PIPE)
+		return copy_page_to_iter_pipe(page, offset, bytes, i);
+	if (i->iter_type == ITER_DISCARD) {
 		if (unlikely(i->count < bytes))
 			bytes = i->count;
 		i->count -= bytes;
 		return bytes;
-	} else if (likely(!iov_iter_is_pipe(i)))
-		return copy_page_to_iter_iovec(page, offset, bytes, i);
-	else
-		return copy_page_to_iter_pipe(page, offset, bytes, i);
+	}
+	WARN_ON(1);
+	return 0;
 }
 
 size_t copy_page_to_iter(struct page *page, size_t offset, size_t bytes,
@@ -1012,17 +1023,17 @@ size_t copy_page_from_iter(struct page *page, size_t offset, size_t bytes,
 {
 	if (unlikely(!page_copy_sane(page, offset, bytes)))
 		return 0;
-	if (unlikely(iov_iter_is_pipe(i) || iov_iter_is_discard(i))) {
-		WARN_ON(1);
-		return 0;
-	}
-	if (i->type & (ITER_BVEC | ITER_KVEC | ITER_XARRAY)) {
+	if (likely(i->iter_type == ITER_IOVEC))
+		return copy_page_from_iter_iovec(page, offset, bytes, i);
+	if (i->iter_type == ITER_BVEC || i->iter_type == ITER_KVEC ||
+	    i->iter_type == ITER_XARRAY) {
 		void *kaddr = kmap_atomic(page);
 		size_t wanted = _copy_from_iter(kaddr + offset, bytes, i);
 		kunmap_atomic(kaddr);
 		return wanted;
-	} else
-		return copy_page_from_iter_iovec(page, offset, bytes, i);
+	}
+	WARN_ON(1);
+	return 0;
 }
 EXPORT_SYMBOL(copy_page_from_iter);
 
@@ -1283,11 +1294,14 @@ void iov_iter_kvec(struct iov_iter *i, unsigned int direction,
 			size_t count)
 {
 	WARN_ON(direction & ~(READ | WRITE));
-	i->type = ITER_KVEC | (direction & (READ | WRITE));
-	i->kvec = kvec;
-	i->nr_segs = nr_segs;
-	i->iov_offset = 0;
-	i->count = count;
+	*i = (struct iov_iter){
+		.iter_type = ITER_KVEC,
+		.data_source = direction,
+		.kvec = kvec,
+		.nr_segs = nr_segs,
+		.iov_offset = 0,
+		.count = count
+	};
 }
 EXPORT_SYMBOL(iov_iter_kvec);
 
@@ -1296,11 +1310,14 @@ void iov_iter_bvec(struct iov_iter *i, unsigned int direction,
 			size_t count)
 {
 	WARN_ON(direction & ~(READ | WRITE));
-	i->type = ITER_BVEC | (direction & (READ | WRITE));
-	i->bvec = bvec;
-	i->nr_segs = nr_segs;
-	i->iov_offset = 0;
-	i->count = count;
+	*i = (struct iov_iter){
+		.iter_type = ITER_BVEC,
+		.data_source = direction,
+		.bvec = bvec,
+		.nr_segs = nr_segs,
+		.iov_offset = 0,
+		.count = count
+	};
 }
 EXPORT_SYMBOL(iov_iter_bvec);
 
@@ -1310,12 +1327,15 @@ void iov_iter_pipe(struct iov_iter *i, unsigned int direction,
 {
 	BUG_ON(direction != READ);
 	WARN_ON(pipe_full(pipe->head, pipe->tail, pipe->ring_size));
-	i->type = ITER_PIPE | READ;
-	i->pipe = pipe;
-	i->head = pipe->head;
-	i->iov_offset = 0;
-	i->count = count;
-	i->start_head = i->head;
+	*i = (struct iov_iter){
+		.iter_type = ITER_PIPE,
+		.data_source = false,
+		.pipe = pipe,
+		.head = pipe->head,
+		.start_head = pipe->head,
+		.iov_offset = 0,
+		.count = count
+	};
 }
 EXPORT_SYMBOL(iov_iter_pipe);
 
@@ -1336,11 +1356,14 @@ void iov_iter_xarray(struct iov_iter *i, unsigned int direction,
 		     struct xarray *xarray, loff_t start, size_t count)
 {
 	BUG_ON(direction & ~1);
-	i->type = ITER_XARRAY | (direction & (READ | WRITE));
-	i->xarray = xarray;
-	i->xarray_start = start;
-	i->count = count;
-	i->iov_offset = 0;
+	*i = (struct iov_iter) {
+		.iter_type = ITER_XARRAY,
+		.data_source = direction,
+		.xarray = xarray,
+		.xarray_start = start,
+		.count = count,
+		.iov_offset = 0
+	};
 }
 EXPORT_SYMBOL(iov_iter_xarray);
 
@@ -1356,9 +1379,12 @@ EXPORT_SYMBOL(iov_iter_xarray);
 void iov_iter_discard(struct iov_iter *i, unsigned int direction, size_t count)
 {
 	BUG_ON(direction != READ);
-	i->type = ITER_DISCARD | READ;
-	i->count = count;
-	i->iov_offset = 0;
+	*i = (struct iov_iter){
+		.iter_type = ITER_DISCARD,
+		.data_source = false,
+		.count = count,
+		.iov_offset = 0
+	};
 }
 EXPORT_SYMBOL(iov_iter_discard);
 
