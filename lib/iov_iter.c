@@ -1076,21 +1076,37 @@ static void iov_iter_bvec_advance(struct iov_iter *i, size_t size)
 	i->iov_offset = bi.bi_bvec_done;
 }
 
+static void iov_iter_iovec_advance(struct iov_iter *i, size_t size)
+{
+	const struct iovec *iov;
+
+	if (unlikely(i->count < size))
+		size = i->count;
+	if (!i->count)
+		return;
+	i->count -= size;
+
+	size += i->iov_offset; // from beginning of current segment
+
+	for (iov = i->iov; size && unlikely(size >= iov->iov_len); iov++)
+		size -= iov->iov_len;
+	i->iov_offset = size;
+	i->nr_segs -= iov - i->iov;
+	i->iov = iov;
+}
+
 void iov_iter_advance(struct iov_iter *i, size_t size)
 {
-	if (unlikely(iov_iter_is_pipe(i))) {
-		pipe_advance(i, size);
-		return;
-	}
-	if (unlikely(iov_iter_is_discard(i))) {
-		i->count -= size;
-		return;
-	}
-	if (iov_iter_is_bvec(i)) {
+	if (likely(i->iter_type == ITER_IOVEC || i->iter_type == ITER_KVEC)) {
+		/* iovec and kvec have identical layouts */
+		iov_iter_iovec_advance(i, size);
+	} else if (i->iter_type == ITER_BVEC) {
 		iov_iter_bvec_advance(i, size);
-		return;
+	} else if (i->iter_type == ITER_PIPE) {
+		pipe_advance(i, size);
+	} else if (i->iter_type == ITER_DISCARD) {
+		i->count -= size;
 	}
-	iterate_and_advance(i, size, v, 0, 0, 0)
 }
 EXPORT_SYMBOL(iov_iter_advance);
 
