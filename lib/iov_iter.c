@@ -1140,8 +1140,6 @@ static inline void pipe_truncate(struct iov_iter *i)
 static void pipe_advance(struct iov_iter *i, size_t size)
 {
 	struct pipe_inode_info *pipe = i->pipe;
-	if (unlikely(i->count < size))
-		size = i->count;
 	if (size) {
 		struct pipe_buffer *buf;
 		unsigned int p_mask = pipe->ring_size - 1;
@@ -1184,8 +1182,6 @@ static void iov_iter_iovec_advance(struct iov_iter *i, size_t size)
 {
 	const struct iovec *iov, *end;
 
-	if (unlikely(i->count < size))
-		size = i->count;
 	if (!i->count)
 		return;
 	i->count -= size;
@@ -1203,6 +1199,8 @@ static void iov_iter_iovec_advance(struct iov_iter *i, size_t size)
 
 void iov_iter_advance(struct iov_iter *i, size_t size)
 {
+	if (unlikely(i->count < size))
+		size = i->count;
 	if (likely(i->iter_type == ITER_IOVEC || i->iter_type == ITER_KVEC)) {
 		/* iovec and kvec have identical layouts */
 		iov_iter_iovec_advance(i, size);
@@ -1211,7 +1209,6 @@ void iov_iter_advance(struct iov_iter *i, size_t size)
 	} else if (i->iter_type == ITER_PIPE) {
 		pipe_advance(i, size);
 	} else if (unlikely(iov_iter_is_xarray(i))) {
-		size = min(size, i->count);
 		i->iov_offset += size;
 		i->count -= size;
 	} else if (i->iter_type == ITER_DISCARD) {
