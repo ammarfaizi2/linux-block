@@ -428,7 +428,15 @@ static void clocksource_watchdog(struct timer_list *unused)
 		if (!cs->max_drift) {
 			md = WATCHDOG_THRESHOLD;
 		} else {
-			WARN_ON_ONCE(time_after(jiffies, WATCHDOG_SYNC_FORGIVENESS));
+			static unsigned long first_jiffies;
+			static bool beenhere;
+
+			if (beenhere) {
+				WARN_ON_ONCE(time_after(jiffies, WATCHDOG_SYNC_FORGIVENESS));
+			} else {
+				beenhere = true;
+				first_jiffies = jiffies;
+			}
 			md = cs->max_drift;
 		}
 		if (abs(cs_nsec - wd_nsec) > md) {
