@@ -432,7 +432,8 @@ static void clocksource_watchdog(struct timer_list *unused)
 			static bool beenhere;
 
 			if (beenhere) {
-				WARN_ON_ONCE(time_after(jiffies, WATCHDOG_SYNC_FORGIVENESS));
+				WARN_ON_ONCE(time_after(jiffies,
+							first_jiffies + WATCHDOG_SYNC_FORGIVENESS));
 			} else {
 				beenhere = true;
 				first_jiffies = jiffies;
