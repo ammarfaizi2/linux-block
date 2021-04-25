@@ -283,7 +283,7 @@ static void clocksource_verify_choose_cpus(void)
 
 	/* Force a sane value for the boot parameter. */
 	if (n > nr_cpu_ids)
-		n = nr_cpu_ids - 1;
+		n = nr_cpu_ids;
 
 	/*
 	 * Randomly select the specified number of CPUs.  If the same
@@ -293,7 +293,7 @@ static void clocksource_verify_choose_cpus(void)
 	 * CPUs that are currently online.
 	 */
 	for (i = 1; i < n; i++) {
-		cpu = prandom_u32() % n;
+		cpu = prandom_u32() % nr_cpu_ids;
 		cpu = cpumask_next(cpu - 1, cpu_online_mask);
 		if (cpu >= nr_cpu_ids)
 			cpu = cpumask_next(-1, cpu_online_mask);
