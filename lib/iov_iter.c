@@ -1267,24 +1267,57 @@ void iov_iter_discard(struct iov_iter *i, unsigned int direction, size_t count)
 }
 EXPORT_SYMBOL(iov_iter_discard);
 
-unsigned long iov_iter_alignment(const struct iov_iter *i)
+static unsigned long iov_iter_alignment_iovec(const struct iov_iter *i)
 {
 	unsigned long res = 0;
-	size_t size = i->count;
+	size_t skip = i->iov_offset;
+	int k;
 
-	if (unlikely(iov_iter_is_pipe(i))) {
+	for (k = 0; k < i->nr_segs; k++, skip = 0) {
+		size_t len = i->iov[k].iov_len - skip;
+		if (len) {
+			res |= len;
+			res |= (unsigned long)i->iov[k].iov_base + skip;
+		}
+	}
+	return res;
+}
+
+static unsigned long iov_iter_alignment_bvec(const struct iov_iter *i)
+{
+	unsigned res = 0;
+	unsigned skip = i->iov_offset;
+	int k;
+
+	for (k = 0; k < i->nr_segs; k++, skip = 0) {
+		size_t len = i->bvec[k].bv_len - skip;
+		if (len) {
+			res |= len;
+			res |= (unsigned long)i->bvec[k].bv_offset + skip;
+		}
+	}
+	return res;
+}
+
+unsigned long iov_iter_alignment(const struct iov_iter *i)
+{
+
+	/* iovec and kvec have identical layouts */
+	if (likely(i->iter_type == ITER_IOVEC || i->iter_type == ITER_KVEC))
+		return iov_iter_alignment_iovec(i);
+
+	if (i->iter_type == ITER_BVEC)
+		return iov_iter_alignment_bvec(i);
+
+	if (i->iter_type == ITER_PIPE) {
 		unsigned int p_mask = i->pipe->ring_size - 1;
+		size_t size = i->count;
 
 		if (size && i->iov_offset && allocated(&i->pipe->bufs[i->head & p_mask]))
 			return size | i->iov_offset;
 		return size;
 	}
-	iterate_all_kinds(i, size, v,
-		(res |= (unsigned long)v.iov_base | v.iov_len, 0),
-		res |= v.bv_offset | v.bv_len,
-		res |= (unsigned long)v.iov_base | v.iov_len
-	)
-	return res;
+	return 0;
 }
 EXPORT_SYMBOL(iov_iter_alignment);
 
