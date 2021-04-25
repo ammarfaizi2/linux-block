@@ -1706,19 +1706,60 @@ size_t hash_and_copy_to_iter(const void *addr, size_t bytes, void *hashp,
 }
 EXPORT_SYMBOL(hash_and_copy_to_iter);
 
-int iov_iter_npages(const struct iov_iter *i, int maxpages)
+static int iov_npages(const struct iov_iter *i, int maxpages)
 {
-	size_t size = i->count;
+	size_t skip = i->iov_offset;
+	const struct iovec *p, *end;
 	int npages = 0;
 
-	if (!size)
-		return 0;
-	if (unlikely(iov_iter_is_discard(i)))
-		return 0;
+	for (p = i->iov, end = p + i->nr_segs; p != end; p++) {
+		unsigned long from = (unsigned long)p->iov_base;
+		unsigned long to = from + p->iov_len;
 
-	if (unlikely(iov_iter_is_pipe(i))) {
-		struct pipe_inode_info *pipe = i->pipe;
+		from += skip;
+		skip = 0;
+		if (unlikely(from == to))
+			continue;
+		npages += DIV_ROUND_UP(to, PAGE_SIZE) - from / PAGE_SIZE;
+		if (unlikely(npages > maxpages))
+			return maxpages;
+	}
+	return npages;
+}
+
+static int bvec_npages(const struct iov_iter *i, int maxpages)
+{
+	size_t skip = i->iov_offset;
+	const struct bio_vec *p, *end;
+	int npages = 0;
+
+	for (p = i->bvec, end = p + i->nr_segs; p != end; p++) {
+		unsigned from = p->bv_offset;
+		unsigned to = from + p->bv_len;
+
+		from += skip;
+		skip = 0;
+		if (unlikely(from == to))
+			continue;
+		npages += DIV_ROUND_UP(to, PAGE_SIZE) - from / PAGE_SIZE;
+		if (unlikely(npages > maxpages))
+			return maxpages;
+	}
+	return npages;
+}
+
+int iov_iter_npages(const struct iov_iter *i, int maxpages)
+{
+	if (unlikely(!i->count))
+		return 0;
+	/* iovec and kvec have identical layouts */
+	if (likely(i->iter_type == ITER_IOVEC || i->iter_type == ITER_KVEC))
+		return iov_npages(i, maxpages);
+	if (i->iter_type == ITER_BVEC)
+		return bvec_npages(i, maxpages);
+	if (i->iter_type == ITER_PIPE) {
 		unsigned int iter_head;
+		int npages;
 		size_t off;
 
 		if (!sanity(i))
@@ -1726,28 +1767,10 @@ int iov_iter_npages(const struct iov_iter *i, int maxpages)
 
 		data_start(i, &iter_head, &off);
 		/* some of this one + all after this one */
-		npages = pipe_space_for_user(iter_head, pipe->tail, pipe);
-		if (npages >= maxpages)
-			return maxpages;
-	} else iterate_all_kinds(i, size, v, ({
-		unsigned long p = (unsigned long)v.iov_base;
-		npages += DIV_ROUND_UP(p + v.iov_len, PAGE_SIZE)
-			- p / PAGE_SIZE;
-		if (npages >= maxpages)
-			return maxpages;
-	0;}),({
-		npages++;
-		if (npages >= maxpages)
-			return maxpages;
-	}),({
-		unsigned long p = (unsigned long)v.iov_base;
-		npages += DIV_ROUND_UP(p + v.iov_len, PAGE_SIZE)
-			- p / PAGE_SIZE;
-		if (npages >= maxpages)
-			return maxpages;
-	})
-	)
-	return npages;
+		npages = pipe_space_for_user(iter_head, i->pipe->tail, i->pipe);
+		return min(npages, maxpages);
+	}
+	return 0;
 }
 EXPORT_SYMBOL(iov_iter_npages);
 
