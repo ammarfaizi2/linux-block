@@ -867,8 +867,12 @@ size_t copy_page_to_iter(struct page *page, size_t offset, size_t bytes,
 	}
 	if (i->iter_type == ITER_PIPE)
 		return copy_page_to_iter_pipe(page, offset, bytes, i);
-	if (i->iter_type == ITER_DISCARD)
+	if (i->iter_type == ITER_DISCARD) {
+		if (unlikely(i->count < bytes))
+			bytes = i->count;
+		i->count -= bytes;
 		return bytes;
+	}
 	WARN_ON(1);
 	return 0;
 }
