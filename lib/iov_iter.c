@@ -41,25 +41,27 @@
 	while (n) {						\
 		unsigned offset = p->bv_offset + skip;		\
 		unsigned left;					\
-		__v.bv_offset = offset % PAGE_SIZE;		\
-		__v.bv_page = p->bv_page + offset / PAGE_SIZE;	\
-		__v.bv_len = min(min(n, p->bv_len - skip),	\
+		void *kaddr = kmap_local_page(p->bv_page +	\
+					offset / PAGE_SIZE);	\
+		__v.iov_base = kaddr + offset % PAGE_SIZE;	\
+		__v.iov_len = min(min(n, p->bv_len - skip),	\
 		     (size_t)(PAGE_SIZE - offset % PAGE_SIZE));	\
 		left = (STEP);					\
-		__v.bv_len -= left;				\
-		skip += __v.bv_len;				\
+		kunmap_local(kaddr);				\
+		__v.iov_len -= left;				\
+		skip += __v.iov_len;				\
 		if (skip == p->bv_len) {			\
 			skip = 0;				\
 			p++;					\
 		}						\
-		n -= __v.bv_len;				\
+		n -= __v.iov_len;				\
 		if (left)					\
 			break;					\
 	}							\
 	n = wanted - n;						\
 }
 
-#define __iterate_and_advance(i, n, v, I, B, K) {		\
+#define __iterate_and_advance(i, n, v, I, K) {			\
 	if (unlikely(i->count < n))				\
 		n = i->count;					\
 	if (likely(n)) {					\
@@ -72,8 +74,8 @@
 			i->iov = iov;				\
 		} else if (i->iter_type == ITER_BVEC) {		\
 			const struct bio_vec *bvec = i->bvec;	\
-			struct bio_vec v;			\
-			iterate_bvec(i, n, v, bvec, skip, (B))	\
+			struct kvec v;				\
+			iterate_bvec(i, n, v, bvec, skip, (K))	\
 			i->nr_segs -= bvec - i->bvec;		\
 			i->bvec = bvec;				\
 		} else if (i->iter_type ==  ITER_KVEC) {	\
@@ -87,8 +89,8 @@
 		i->iov_offset = skip;				\
 	}							\
 }
-#define iterate_and_advance(i, n, v, I, B, K) \
-	__iterate_and_advance(i, n, v, I, ((void)(B),0), ((void)(K),0))
+#define iterate_and_advance(i, n, v, I, K) \
+	__iterate_and_advance(i, n, v, I, ((void)(K),0))
 
 static int copyout(void __user *to, const void *from, size_t n)
 {
@@ -586,8 +588,6 @@ size_t _copy_to_iter(const void *addr, size_t bytes, struct iov_iter *i)
 		might_fault();
 	iterate_and_advance(i, bytes, v,
 		copyout(v.iov_base, (from += v.iov_len) - v.iov_len, v.iov_len),
-		memcpy_to_page(v.bv_page, v.bv_offset,
-			       (from += v.bv_len) - v.bv_len, v.bv_len),
 		memcpy(v.iov_base, (from += v.iov_len) - v.iov_len, v.iov_len)
 	)
 
@@ -686,8 +686,6 @@ size_t _copy_mc_to_iter(const void *addr, size_t bytes, struct iov_iter *i)
 	__iterate_and_advance(i, bytes, v,
 		copyout_mc(v.iov_base, (from += v.iov_len) - v.iov_len,
 			   v.iov_len),
-		copy_mc_to_page(v.bv_page, v.bv_offset,
-				      (from += v.bv_len) - v.bv_len, v.bv_len),
 		copy_mc_to_kernel(v.iov_base, (from += v.iov_len)
 					- v.iov_len, v.iov_len)
 	)
@@ -708,8 +706,6 @@ size_t _copy_from_iter(void *addr, size_t bytes, struct iov_iter *i)
 		might_fault();
 	iterate_and_advance(i, bytes, v,
 		copyin((to += v.iov_len) - v.iov_len, v.iov_base, v.iov_len),
-		memcpy_from_page((to += v.bv_len) - v.bv_len, v.bv_page,
-				 v.bv_offset, v.bv_len),
 		memcpy((to += v.iov_len) - v.iov_len, v.iov_base, v.iov_len)
 	)
 
@@ -727,8 +723,6 @@ size_t _copy_from_iter_nocache(void *addr, size_t bytes, struct iov_iter *i)
 	iterate_and_advance(i, bytes, v,
 		__copy_from_user_inatomic_nocache((to += v.iov_len) - v.iov_len,
 					 v.iov_base, v.iov_len),
-		memcpy_from_page((to += v.bv_len) - v.bv_len, v.bv_page,
-				 v.bv_offset, v.bv_len),
 		memcpy((to += v.iov_len) - v.iov_len, v.iov_base, v.iov_len)
 	)
 
@@ -761,8 +755,6 @@ size_t _copy_from_iter_flushcache(void *addr, size_t bytes, struct iov_iter *i)
 	iterate_and_advance(i, bytes, v,
 		__copy_from_user_flushcache((to += v.iov_len) - v.iov_len,
 					 v.iov_base, v.iov_len),
-		memcpy_page_flushcache((to += v.bv_len) - v.bv_len, v.bv_page,
-				 v.bv_offset, v.bv_len),
 		memcpy_flushcache((to += v.iov_len) - v.iov_len, v.iov_base,
 			v.iov_len)
 	)
@@ -895,7 +887,6 @@ size_t iov_iter_zero(size_t bytes, struct iov_iter *i)
 		return pipe_zero(bytes, i);
 	iterate_and_advance(i, bytes, v,
 		clear_user(v.iov_base, v.iov_len),
-		memzero_page(v.bv_page, v.bv_offset, v.bv_len),
 		memset(v.iov_base, 0, v.iov_len)
 	)
 
@@ -918,8 +909,6 @@ size_t copy_page_from_iter_atomic(struct page *page, unsigned offset, size_t byt
 	}
 	iterate_and_advance(i, bytes, v,
 		copyin((p += v.iov_len) - v.iov_len, v.iov_base, v.iov_len),
-		memcpy_from_page((p += v.bv_len) - v.bv_len, v.bv_page,
-				 v.bv_offset, v.bv_len),
 		memcpy((p += v.iov_len) - v.iov_len, v.iov_base, v.iov_len)
 	)
 	kunmap_atomic(kaddr);
@@ -1517,13 +1506,6 @@ size_t csum_and_copy_from_iter(void *addr, size_t bytes, __wsum *csum,
 		}
 		next ? 0 : v.iov_len;
 	}), ({
-		char *p = kmap_atomic(v.bv_page);
-		sum = csum_and_memcpy((to += v.bv_len) - v.bv_len,
-				      p + v.bv_offset, v.bv_len,
-				      sum, off);
-		kunmap_atomic(p);
-		off += v.bv_len;
-	}),({
 		sum = csum_and_memcpy((to += v.iov_len) - v.iov_len,
 				      v.iov_base, v.iov_len,
 				      sum, off);
@@ -1562,13 +1544,6 @@ size_t csum_and_copy_to_iter(const void *addr, size_t bytes, void *_csstate,
 		}
 		next ? 0 : v.iov_len;
 	}), ({
-		char *p = kmap_atomic(v.bv_page);
-		sum = csum_and_memcpy(p + v.bv_offset,
-				      (from += v.bv_len) - v.bv_len,
-				      v.bv_len, sum, off);
-		kunmap_atomic(p);
-		off += v.bv_len;
-	}),({
 		sum = csum_and_memcpy(v.iov_base,
 				     (from += v.iov_len) - v.iov_len,
 				     v.iov_len, sum, off);
