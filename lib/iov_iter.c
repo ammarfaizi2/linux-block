@@ -40,17 +40,21 @@
 	size_t wanted = n;					\
 	while (n) {						\
 		unsigned offset = p->bv_offset + skip;		\
+		unsigned left;					\
 		__v.bv_offset = offset % PAGE_SIZE;		\
 		__v.bv_page = p->bv_page + offset / PAGE_SIZE;	\
 		__v.bv_len = min(min(n, p->bv_len - skip),	\
 		     (size_t)(PAGE_SIZE - offset % PAGE_SIZE));	\
-		(void)(STEP);					\
+		left = (STEP);					\
+		__v.bv_len -= left;				\
 		skip += __v.bv_len;				\
 		if (skip == p->bv_len) {			\
 			skip = 0;				\
 			p++;					\
 		}						\
 		n -= __v.bv_len;				\
+		if (left)					\
+			break;					\
 	}							\
 	n = wanted - n;						\
 }
@@ -65,7 +69,8 @@
 		} else if (i->iter_type == ITER_BVEC) {		\
 			const struct bio_vec *bvec = i->bvec;	\
 			struct bio_vec v;			\
-			iterate_bvec(i, n, v, bvec, skip, (B))	\
+			iterate_bvec(i, n, v, bvec, skip,	\
+						((void)(B),0))	\
 		} else if (i->iter_type == ITER_KVEC) {		\
 			const struct kvec *kvec = i->kvec;	\
 			struct kvec v;				\
@@ -75,7 +80,7 @@
 	}							\
 }
 
-#define iterate_and_advance(i, n, v, I, B, K) {			\
+#define __iterate_and_advance(i, n, v, I, B, K) {		\
 	if (unlikely(i->count < n))				\
 		n = i->count;					\
 	if (likely(n)) {					\
@@ -95,8 +100,7 @@
 		} else if (i->iter_type ==  ITER_KVEC) {	\
 			const struct kvec *kvec = i->kvec;	\
 			struct kvec v;				\
-			iterate_iovec(i, n, v, kvec, skip,	\
-						((void)(K),0))	\
+			iterate_iovec(i, n, v, kvec, skip, (K))	\
 			i->nr_segs -= kvec - i->kvec;		\
 			i->kvec = kvec;				\
 		} else if (i->iter_type == ITER_DISCARD) {	\
@@ -106,6 +110,8 @@
 		i->iov_offset = skip;				\
 	}							\
 }
+#define iterate_and_advance(i, n, v, I, B, K) \
+	__iterate_and_advance(i, n, v, I, ((void)(B),0), ((void)(K),0))
 
 static int copyout(void __user *to, const void *from, size_t n)
 {
@@ -689,33 +695,18 @@ static size_t copy_mc_pipe_to_iter(const void *addr, size_t bytes,
 size_t _copy_mc_to_iter(const void *addr, size_t bytes, struct iov_iter *i)
 {
 	const char *from = addr;
-	unsigned long rem, curr_addr, s_addr = (unsigned long) addr;
 
 	if (unlikely(iov_iter_is_pipe(i)))
 		return copy_mc_pipe_to_iter(addr, bytes, i);
 	if (iter_is_iovec(i))
 		might_fault();
-	iterate_and_advance(i, bytes, v,
+	__iterate_and_advance(i, bytes, v,
 		copyout_mc(v.iov_base, (from += v.iov_len) - v.iov_len,
 			   v.iov_len),
-		({
-		rem = copy_mc_to_page(v.bv_page, v.bv_offset,
-				      (from += v.bv_len) - v.bv_len, v.bv_len);
-		if (rem) {
-			curr_addr = (unsigned long) from;
-			bytes = curr_addr - s_addr - rem;
-			return bytes;
-		}
-		}),
-		({
-		rem = copy_mc_to_kernel(v.iov_base, (from += v.iov_len)
-					- v.iov_len, v.iov_len);
-		if (rem) {
-			curr_addr = (unsigned long) from;
-			bytes = curr_addr - s_addr - rem;
-			return bytes;
-		}
-		})
+		copy_mc_to_page(v.bv_page, v.bv_offset,
+				      (from += v.bv_len) - v.bv_len, v.bv_len),
+		copy_mc_to_kernel(v.iov_base, (from += v.iov_len)
+					- v.iov_len, v.iov_len)
 	)
 
 	return bytes;
