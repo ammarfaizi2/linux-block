@@ -860,9 +860,9 @@ size_t copy_page_to_iter(struct page *page, size_t offset, size_t bytes,
 	if (likely(i->iter_type == ITER_IOVEC))
 		return copy_page_to_iter_iovec(page, offset, bytes, i);
 	if (i->iter_type == ITER_BVEC || i->iter_type == ITER_KVEC) {
-		void *kaddr = kmap_atomic(page);
-		size_t wanted = copy_to_iter(kaddr + offset, bytes, i);
-		kunmap_atomic(kaddr);
+		void *kaddr = kmap_local_page(page);
+		size_t wanted = _copy_to_iter(kaddr + offset, bytes, i);
+		kunmap_local(kaddr);
 		return wanted;
 	}
 	if (i->iter_type == ITER_PIPE)
