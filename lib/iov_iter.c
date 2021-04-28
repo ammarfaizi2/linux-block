@@ -1097,16 +1097,36 @@ static void iov_iter_iovec_advance(struct iov_iter *i, size_t size)
 
 void iov_iter_advance(struct iov_iter *i, size_t size)
 {
-	if (likely(i->iter_type == ITER_IOVEC || i->iter_type == ITER_KVEC)) {
-		/* iovec and kvec have identical layouts */
-		iov_iter_iovec_advance(i, size);
-	} else if (i->iter_type == ITER_BVEC) {
-		iov_iter_bvec_advance(i, size);
-	} else if (i->iter_type == ITER_PIPE) {
+	if (unlikely(iov_iter_is_pipe(i))) {
 		pipe_advance(i, size);
-	} else if (i->iter_type == ITER_DISCARD) {
-		i->count -= size;
+		return;
 	}
+	if (unlikely(iov_iter_is_discard(i))) {
+		i->count -= size;
+		return;
+	}
+	if (iov_iter_is_bvec(i)) {
+		iov_iter_bvec_advance(i, size);
+		return;
+	}
+	if (i->iter_type == ITER_IOVEC || i->iter_type == ITER_KVEC) {
+		struct iov_iter i1 = *i, i2 = i1;
+		size_t arg = size;
+		iov_iter_iovec_advance(&i1, size);
+		iterate_and_advance(i, size, v, 0, 0, 0)
+		if (WARN_ON(i1.count != i->count || i1.iov != i->iov ||
+		       i1.iov_offset != i->iov_offset || i1.nr_segs != i->nr_segs)) {
+			int i;
+			printk(KERN_ERR "advance(%zu) from count: %zu, offset: %zu, nr_segs: %lu ",
+				arg, i2.count, i2.iov_offset, i2.nr_segs);
+			for (i = 0; i < i2.nr_segs; i++)
+				printk(KERN_CONT "%c%zu", i ? ' ' : '[',
+					i2.iov[i].iov_len);
+			printk(KERN_CONT "]\n");
+		}
+		return;
+	}
+	iterate_and_advance(i, size, v, 0, 0, 0)
 }
 EXPORT_SYMBOL(iov_iter_advance);
 
