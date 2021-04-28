@@ -685,7 +685,7 @@ int cachefiles_has_space(struct cachefiles_cache *cache,
 	/* find out how many pages of blockdev are available */
 	memset(&stats, 0, sizeof(stats));
 
-	ret = vfs_statfs(&cache->path, &stats);
+	ret = vfs_statfs(&cache->root_path, &stats);
 	if (ret < 0) {
 		if (ret == -EIO)
 			cachefiles_io_error(cache, "statfs failed");

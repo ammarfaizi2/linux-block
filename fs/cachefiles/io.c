@@ -319,7 +319,7 @@ bool cachefiles_open_object(struct cachefiles_object *object)
 	struct file *file;
 	struct path path;
 
-	path.mnt = cache->path.mnt;
+	path.mnt = cache->cache_path.mnt;
 	path.dentry = object->dentry;
 
 	if (object->content_info == CACHEFILES_CONTENT_MAP &&

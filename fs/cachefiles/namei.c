@@ -85,7 +85,7 @@ static int cachefiles_bury_object(struct cachefiles_cache *cache,
 				  enum fscache_why_object_killed why)
 {
 	struct dentry *grave, *trap;
-	struct path path, path_to_graveyard;
+	struct path path;
 	char nbuffer[8 + 8 + 1];
 	int ret;
 
@@ -101,7 +101,7 @@ static int cachefiles_bury_object(struct cachefiles_cache *cache,
 	if (!d_is_dir(rep)) {
 		_debug("unlink stale object");
 
-		path.mnt = cache->path.mnt;
+		path.mnt = cache->cache_path.mnt;
 		path.dentry = dir;
 		ret = security_path_unlink(&path, rep);
 		if (ret < 0) {
@@ -131,38 +131,38 @@ try_again:
 		(uint32_t) atomic_inc_return(&cache->gravecounter));
 
 	/* do the multiway lock magic */
-	trap = lock_rename(cache->graveyard, dir);
+	trap = lock_rename(cache->graveyard_path.dentry, dir);
 
 	/* do some checks before getting the grave dentry */
 	if (rep->d_parent != dir || IS_DEADDIR(d_inode(rep))) {
 		/* the entry was probably culled when we dropped the parent dir
 		 * lock */
-		unlock_rename(cache->graveyard, dir);
+		unlock_rename(cache->graveyard_path.dentry, dir);
 		_leave(" = 0 [culled?]");
 		return 0;
 	}
 
-	if (!d_can_lookup(cache->graveyard)) {
-		unlock_rename(cache->graveyard, dir);
+	if (!d_can_lookup(cache->graveyard_path.dentry)) {
+		unlock_rename(cache->graveyard_path.dentry, dir);
 		cachefiles_io_error(cache, "Graveyard no longer a directory");
 		return -EIO;
 	}
 
 	if (trap == rep) {
-		unlock_rename(cache->graveyard, dir);
+		unlock_rename(cache->graveyard_path.dentry, dir);
 		cachefiles_io_error(cache, "May not make directory loop");
 		return -EIO;
 	}
 
 	if (d_mountpoint(rep)) {
-		unlock_rename(cache->graveyard, dir);
+		unlock_rename(cache->graveyard_path.dentry, dir);
 		cachefiles_io_error(cache, "Mountpoint in cache");
 		return -EIO;
 	}
 
-	grave = lookup_one_len(nbuffer, cache->graveyard, strlen(nbuffer));
+	grave = lookup_one_len(nbuffer, cache->graveyard_path.dentry, strlen(nbuffer));
 	if (IS_ERR(grave)) {
-		unlock_rename(cache->graveyard, dir);
+		unlock_rename(cache->graveyard_path.dentry, dir);
 
 		if (PTR_ERR(grave) == -ENOMEM) {
 			_leave(" = -ENOMEM");
@@ -174,7 +174,7 @@ try_again:
 	}
 
 	if (d_is_positive(grave)) {
-		unlock_rename(cache->graveyard, dir);
+		unlock_rename(cache->graveyard_path.dentry, dir);
 		dput(grave);
 		grave = NULL;
 		cond_resched();
@@ -182,7 +182,7 @@ try_again:
 	}
 
 	if (d_mountpoint(grave)) {
-		unlock_rename(cache->graveyard, dir);
+		unlock_rename(cache->graveyard_path.dentry, dir);
 		dput(grave);
 		cachefiles_io_error(cache, "Mountpoint in graveyard");
 		return -EIO;
@@ -190,18 +190,16 @@ try_again:
 
 	/* target should not be an ancestor of source */
 	if (trap == grave) {
-		unlock_rename(cache->graveyard, dir);
+		unlock_rename(cache->graveyard_path.dentry, dir);
 		dput(grave);
 		cachefiles_io_error(cache, "May not make directory loop");
 		return -EIO;
 	}
 
 	/* attempt the rename */
-	path.mnt = cache->path.mnt;
+	path.mnt = cache->cache_path.mnt;
 	path.dentry = dir;
-	path_to_graveyard.mnt = cache->path.mnt;
-	path_to_graveyard.dentry = cache->graveyard;
-	ret = security_path_rename(&path, rep, &path_to_graveyard, grave, 0);
+	ret = security_path_rename(&path, rep, &cache->graveyard_path, grave, 0);
 	if (ret < 0) {
 		cachefiles_io_error(cache, "Rename security error %d", ret);
 	} else {
@@ -210,7 +208,7 @@ try_again:
 			.old_dir	= d_inode(dir),
 			.old_dentry	= rep,
 			.new_mnt_userns	= &init_user_ns,
-			.new_dir	= d_inode(cache->graveyard),
+			.new_dir	= d_inode(cache->graveyard_path.dentry),
 			.new_dentry	= grave,
 		};
 		trace_cachefiles_rename(object, rep, grave, why);
@@ -220,7 +218,7 @@ try_again:
 					    "Rename failed with error %d", ret);
 	}
 
-	unlock_rename(cache->graveyard, dir);
+	unlock_rename(cache->graveyard_path.dentry, dir);
 	dput(grave);
 	_leave(" = 0");
 	return 0;
@@ -398,7 +396,7 @@ static struct dentry *cachefiles_walk_to_volume(struct cachefiles_object *object
 	memcpy(name + 1, volume->key + 1, len);
 	name[len + 1] = 0;
 
-	dentry = cachefiles_walk_to_dir(object, &object->cache->path,
+	dentry = cachefiles_walk_to_dir(object, &object->cache->cache_path,
 					name, len + 1);
 	kfree(name);
 	if (dentry) {
@@ -449,7 +447,7 @@ static int cachefiles_check_open_object(struct cachefiles_object *object,
 		 * (this is used to keep track of culling, and atimes are only
 		 * updated by read, write and readdir but not lookup or
 		 * open) */
-		path.mnt = object->cache->path.mnt;
+		path.mnt = object->cache->cache_path.mnt;
 		path.dentry = object->dentry;
 		touch_atime(&path);
 	}
@@ -501,7 +499,7 @@ bool cachefiles_walk_to_object(struct cachefiles_object *object,
 	_enter("OBJ%x,%s,", object->debug_id, key);
 
 lookup_again:
-	path.mnt = object->cache->path.mnt;
+	path.mnt = object->cache->cache_path.mnt;
 
 	/* Walk over path "cache/vol/fanout/file". */
 	vol = cachefiles_walk_to_volume(object);
@@ -548,11 +546,11 @@ check_error:
 /*
  * get a subdirectory
  */
-struct dentry *cachefiles_get_directory(struct cachefiles_cache *cache,
-					struct dentry *dir,
-					const char *dirname)
+int cachefiles_get_directory(struct cachefiles_cache *cache,
+			     const char *dirname,
+			     struct path *_path)
 {
-	struct dentry *subdir;
+	struct dentry *dir = cache->root_path.dentry, *subdir;
 	unsigned long start;
 	struct path path;
 	int ret;
@@ -583,7 +581,7 @@ retry:
 
 		_debug("attempt mkdir");
 
-		path.mnt = cache->path.mnt;
+		path.mnt = cache->cache_path.mnt;
 		path.dentry = dir;
 		ret = security_path_mkdir(&path, subdir, 0700);
 		if (ret < 0)
@@ -624,29 +622,31 @@ retry:
 		goto check_error;
 
 	_leave(" = [%lu]", d_backing_inode(subdir)->i_ino);
-	return subdir;
+	_path->dentry = subdir;
+	_path->mnt = mntget(cache->root_path.mnt);
+	return 0;
 
 check_error:
 	dput(subdir);
 	_leave(" = %d [check]", ret);
-	return ERR_PTR(ret);
+	return ret;
 
 mkdir_error:
 	inode_unlock(d_inode(dir));
 	dput(subdir);
 	pr_err("mkdir %s failed with error %d\n", dirname, ret);
-	return ERR_PTR(ret);
+	return ret;
 
 lookup_error:
 	inode_unlock(d_inode(dir));
 	ret = PTR_ERR(subdir);
 	pr_err("Lookup %s failed with error %d\n", dirname, ret);
-	return ERR_PTR(ret);
+	return ret;
 
 nomem_d_alloc:
 	inode_unlock(d_inode(dir));
 	_leave(" = -ENOMEM");
-	return ERR_PTR(-ENOMEM);
+	return -ENOMEM;
 }
 
 /*

@@ -197,7 +197,7 @@ static bool cachefiles_shorten_object(struct cachefiles_object *object, loff_t n
 	dio_size = round_up(new_size, CACHEFILES_DIO_BLOCK_SIZE);
 	i_size = i_size_read(inode);
 
-	path.mnt = cache->path.mnt;
+	path.mnt = cache->cache_path.mnt;
 	path.dentry = object->dentry;
 
 	trace_cachefiles_trunc(object, inode, i_size, dio_size, cachefiles_trunc_shrink);
@@ -404,9 +404,9 @@ void cachefiles_sync_cache(struct cachefiles_cache *cache)
 	/* make sure all pages pinned by operations on behalf of the netfs are
 	 * written to disc */
 	cachefiles_begin_secure(cache, &saved_cred);
-	down_read(&cache->path.mnt->mnt_sb->s_umount);
-	ret = sync_filesystem(cache->path.mnt->mnt_sb);
-	up_read(&cache->path.mnt->mnt_sb->s_umount);
+	down_read(&cache->cache_path.mnt->mnt_sb->s_umount);
+	ret = sync_filesystem(cache->cache_path.mnt->mnt_sb);
+	up_read(&cache->cache_path.mnt->mnt_sb->s_umount);
 	cachefiles_end_secure(cache, saved_cred);
 
 	if (ret == -EIO)
@@ -497,8 +497,9 @@ static struct file *cachefiles_create_tmpfile(struct cachefiles_object *object)
 
 	cachefiles_begin_secure(cache, &saved_cred);
 
-	path.mnt = cache->path.mnt;
-	path.dentry = vfs_tmpfile(&init_user_ns, cache->graveyard, S_IFREG, O_RDWR);
+	path.mnt = cache->cache_path.mnt;
+	path.dentry = vfs_tmpfile(&init_user_ns, cache->graveyard_path.dentry,
+				  S_IFREG, O_RDWR);
 	if (IS_ERR(path.dentry)) {
 		if (PTR_ERR(path.dentry) == -EIO)
 			cachefiles_io_error_obj(object, "Failed to create tmpfile");

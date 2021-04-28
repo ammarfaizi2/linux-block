@@ -72,9 +72,8 @@ int cachefiles_daemon_bind(struct cachefiles_cache *cache, char *args)
 static int cachefiles_daemon_add_cache(struct cachefiles_cache *cache)
 {
 	struct fscache_cache *fscache;
-	struct path path;
 	struct kstatfs stats;
-	struct dentry *graveyard, *cachedir, *root;
+	struct dentry *root;
 	const struct cred *saved_cred;
 	int ret;
 
@@ -100,20 +99,18 @@ static int cachefiles_daemon_add_cache(struct cachefiles_cache *cache)
 	cachefiles_begin_secure(cache, &saved_cred);
 
 	/* look up the directory at the root of the cache */
-	ret = kern_path(cache->rootdirname, LOOKUP_DIRECTORY, &path);
+	ret = kern_path(cache->rootdirname, LOOKUP_DIRECTORY, &cache->root_path);
 	if (ret < 0)
 		goto error_open_root;
 
-	cache->path.mnt = path.mnt;
-	root = path.dentry;
-
 	ret = -EINVAL;
-	if (mnt_user_ns(path.mnt) != &init_user_ns) {
+	if (mnt_user_ns(cache->root_path.mnt) != &init_user_ns) {
 		pr_warn("File cache on idmapped mounts not supported");
 		goto error_unsupported;
 	}
 
 	/* check parameters */
+	root = cache->root_path.dentry;
 	ret = -EOPNOTSUPP;
 	if (d_is_negative(root) ||
 	    !d_backing_inode(root)->i_op->lookup ||
@@ -134,7 +131,7 @@ static int cachefiles_daemon_add_cache(struct cachefiles_cache *cache)
 		goto error_unsupported;
 
 	/* get the cache size and blocksize */
-	ret = vfs_statfs(&path, &stats);
+	ret = vfs_statfs(&cache->root_path, &stats);
 	if (ret < 0)
 		goto error_unsupported;
 
@@ -180,32 +177,21 @@ static int cachefiles_daemon_add_cache(struct cachefiles_cache *cache)
 	       (unsigned long long) cache->bcull,
 	       (unsigned long long) cache->bstop);
 
-	/* get the cache directory and check its type */
-	cachedir = cachefiles_get_directory(cache, root, "cache");
-	if (IS_ERR(cachedir)) {
-		ret = PTR_ERR(cachedir);
+	ret = cachefiles_get_directory(cache, "cache", &cache->cache_path);
+	if (ret < 0)
 		goto error_unsupported;
-	}
 
-	cache->path.dentry = cachedir;
-
-	/* get the graveyard directory */
-	graveyard = cachefiles_get_directory(cache, root, "graveyard");
-	if (IS_ERR(graveyard)) {
-		ret = PTR_ERR(graveyard);
+	ret = cachefiles_get_directory(cache, "graveyard", &cache->graveyard_path);
+	if (ret < 0)
 		goto error_unsupported;
-	}
 
-	cache->graveyard = graveyard;
 	cache->cache = fscache;
-
 	ret = fscache_add_cache(fscache, &cachefiles_cache_ops, cache);
 	if (ret < 0)
 		goto error_add_cache;
 
 	/* done */
 	set_bit(CACHEFILES_READY, &cache->flags);
-	dput(root);
 
 	pr_info("File cache on %s registered\n", fscache->name);
 
@@ -216,13 +202,13 @@ static int cachefiles_daemon_add_cache(struct cachefiles_cache *cache)
 	return 0;
 
 error_add_cache:
-	dput(cache->graveyard);
-	cache->graveyard = NULL;
+	path_put(&cache->graveyard_path);
+	memset(&cache->graveyard_path, 0, sizeof(cache->graveyard_path));
 error_unsupported:
-	path_put(&cache->path);
-	cache->path.dentry = NULL;
-	cache->path.mnt = NULL;
-	dput(root);
+	path_put(&cache->cache_path);
+	path_put(&cache->root_path);
+	memset(&cache->cache_path, 0, sizeof(cache->cache_path));
+	memset(&cache->root_path, 0, sizeof(cache->root_path));
 error_open_root:
 	cachefiles_end_secure(cache, saved_cred);
 error_getsec:
@@ -405,8 +391,9 @@ void cachefiles_daemon_unbind(struct cachefiles_cache *cache)
 	if (test_bit(CACHEFILES_READY, &cache->flags))
 		cachefiles_withdraw_cache(cache);
 
-	dput(cache->graveyard);
-	path_put(&cache->path);
+	path_put(&cache->graveyard_path);
+	path_put(&cache->cache_path);
+	path_put(&cache->root_path);
 
 	kfree(cache->rootdirname);
 	kfree(cache->secctx);

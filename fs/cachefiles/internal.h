@@ -94,8 +94,9 @@ extern struct kmem_cache *cachefiles_object_jar;
  */
 struct cachefiles_cache {
 	struct fscache_cache		*cache;		/* Cache cookie */
-	struct path			path;		/* Path to the cache */
-	struct dentry			*graveyard;	/* directory into which dead objects go */
+	struct path			root_path;	/* Path to the cache */
+	struct path			cache_path;	/* Path to the cache */
+	struct path			graveyard_path;	/* directory into which dead objects go */
 	struct file			*cachefilesd;	/* manager daemon handle */
 	struct list_head		object_list;	/* List of active objects */
 	struct list_head		withdrawal_list; /* List of objects to be withdrawn */
@@ -215,9 +216,9 @@ extern int cachefiles_delete_object(struct cachefiles_cache *cache,
 				    struct cachefiles_object *object);
 extern bool cachefiles_walk_to_object(struct cachefiles_object *object,
 				      const char *key);
-extern struct dentry *cachefiles_get_directory(struct cachefiles_cache *cache,
-					       struct dentry *dir,
-					       const char *name);
+extern int cachefiles_get_directory(struct cachefiles_cache *cache,
+				    const char *name,
+				    struct path *_path);
 
 extern int cachefiles_cull(struct cachefiles_cache *cache, struct dentry *dir,
 			   char *filename);
