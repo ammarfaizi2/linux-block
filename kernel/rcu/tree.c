@@ -3071,12 +3071,13 @@ __call_rcu(struct rcu_head *head, rcu_callback_t func)
  * period elapses, in other words after all pre-existing RCU read-side
  * critical sections have completed.  However, the callback function
  * might well execute concurrently with RCU read-side critical sections
- * that started after call_rcu() was invoked.  RCU read-side critical
- * sections are delimited by rcu_read_lock() and rcu_read_unlock(), and
- * may be nested.  In addition, regions of code across which interrupts,
- * preemption, or softirqs have been disabled also serve as RCU read-side
- * critical sections.  This includes hardware interrupt handlers, softirq
- * handlers, and NMI handlers.
+ * that started after call_rcu() was invoked.
+ *
+ * RCU read-side critical sections are delimited by rcu_read_lock() and
+ * rcu_read_unlock(), and may be nested.  In addition, regions of code
+ * across which interrupts, preemption, or softirqs have been disabled
+ * also serve as RCU read-side critical sections.  This includes hardware
+ * interrupt handlers, softirq handlers, and NMI handlers.
  *
  * Note that all CPUs must agree that the grace period extended beyond
  * all pre-existing RCU read-side critical section.  On systems with more
@@ -3771,12 +3772,13 @@ static int rcu_blocking_is_gp(void)
  * read-side critical sections have completed.  Note, however, that
  * upon return from synchronize_rcu(), the caller might well be executing
  * concurrently with new RCU read-side critical sections that began while
- * synchronize_rcu() was waiting.  RCU read-side critical sections are
- * delimited by rcu_read_lock() and rcu_read_unlock(), and may be nested.
- * In addition, regions of code across which interrupts, preemption, or
- * softirqs have been disabled also serve as RCU read-side critical
- * sections.  This includes hardware interrupt handlers, softirq handlers,
- * and NMI handlers.
+ * synchronize_rcu() was waiting.
+ *
+ * RCU read-side critical sections are delimited by rcu_read_lock() and
+ * rcu_read_unlock(), and may be nested.  In addition, regions of code
+ * across which interrupts, preemption, or softirqs have been disabled
+ * also serve as RCU read-side critical sections.  This includes hardware
+ * interrupt handlers, softirq handlers, and NMI handlers.
  *
  * Note that this guarantee implies further memory-ordering guarantees.
  * On systems with more than one CPU, when synchronize_rcu() returns,
