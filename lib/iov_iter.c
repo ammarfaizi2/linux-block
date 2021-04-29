@@ -116,7 +116,7 @@
 #define iterate_and_advance(i, n, v, I, B, K, X) {		\
 	if (unlikely(i->count < n))				\
 		n = i->count;					\
-	if (i->count) {						\
+	if (likely(n)) {					\
 		size_t skip = i->iov_offset;			\
 		if (likely(i->iter_type == ITER_IOVEC))  {	\
 			const struct iovec *iov;		\
