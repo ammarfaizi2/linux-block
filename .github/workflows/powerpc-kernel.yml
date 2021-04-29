@@ -26,7 +26,7 @@ jobs:
     strategy:
       matrix:
         defconfig: [ppc64, corenet64_smp, pmac32, ppc40x, ppc44x, mpc885_ads, corenet32_smp]
-        image: [fedora-32, korg-4.9.4]
+        image: [fedora-33, korg-4.9.4]
         subarch: [ppc64]
         include:
           - subarch: ppc64le
@@ -34,7 +34,7 @@ jobs:
             image: korg-5.5.0
           - subarch: ppc64le
             defconfig: ppc64le
-            image: fedora-32
+            image: fedora-33
 
     env:
       ARCH: powerpc
