@@ -65,6 +65,10 @@ if [[ "$TARGET" == "kernel" ]]; then
     cmd+="-e QUIET=1 "
 fi
 
+if [[ -n $KBUILD_EXTRA_WARN ]]; then
+    cmd+="-e KBUILD_EXTRA_WARN=$KBUILD_EXTRA_WARN "
+fi
+
 cmd+="linuxppc/build:$IMAGE-$(uname -m) "
 cmd+="/bin/container-build.sh $TARGET"
 
