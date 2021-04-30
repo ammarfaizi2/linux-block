@@ -757,7 +757,7 @@ iomap_write_actor(struct inode *inode, loff_t pos, loff_t length, void *data,
 		struct page *page;
 		unsigned long offset;	/* Offset into pagecache page */
 		unsigned long bytes;	/* Bytes to write to page */
-		size_t copied;		/* Bytes copied from user */
+		size_t copied, n;	/* Bytes copied from user */
 
 		offset = offset_in_page(pos);
 		bytes = min_t(unsigned long, PAGE_SIZE - offset,
@@ -789,14 +789,17 @@ again:
 		if (mapping_writably_mapped(inode->i_mapping))
 			flush_dcache_page(page);
 
-		copied = iov_iter_copy_from_user_atomic(page, i, offset, bytes);
+		copied = copy_page_from_iter_atomic(page, offset, bytes, i);
 
-		copied = iomap_write_end(inode, pos, bytes, copied, page, iomap,
+		n = iomap_write_end(inode, pos, bytes, copied, page, iomap,
 				srcmap);
 
-		cond_resched();
+		if (unlikely(copied != n)) {
+			iov_iter_revert(i, copied - n);
+			copied = n;
+		}
 
-		iov_iter_advance(i, copied);
+		cond_resched();
 		if (unlikely(copied == 0)) {
 			/*
 			 * If we were unable to copy any data at all, we must
