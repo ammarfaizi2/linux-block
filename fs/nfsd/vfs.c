@@ -205,7 +205,7 @@ nfsd_lookup_dentry(struct svc_rqst *rqstp, struct svc_fh *fhp,
 		 * need to take the child's i_mutex:
 		 */
 		fh_lock_nested(fhp, I_MUTEX_PARENT);
-		dentry = lookup_one_len(name, dparent, len);
+		dentry = lookup_one_len(&init_user_ns, name, dparent, len);
 		host_err = PTR_ERR(dentry);
 		if (IS_ERR(dentry))
 			goto out_nfserr;
@@ -1263,7 +1263,8 @@ nfsd_create_locked(struct svc_rqst *rqstp, struct svc_fh *fhp,
 		host_err = vfs_mkdir(&init_user_ns, dirp, dchild, iap->ia_mode);
 		if (!host_err && unlikely(d_unhashed(dchild))) {
 			struct dentry *d;
-			d = lookup_one_len(dchild->d_name.name,
+			d = lookup_one_len(&init_user_ns,
+					   dchild->d_name.name,
 					   dchild->d_parent,
 					   dchild->d_name.len);
 			if (IS_ERR(d)) {
@@ -1353,7 +1354,7 @@ nfsd_create(struct svc_rqst *rqstp, struct svc_fh *fhp,
 		return nfserrno(host_err);
 
 	fh_lock_nested(fhp, I_MUTEX_PARENT);
-	dchild = lookup_one_len(fname, dentry, flen);
+	dchild = lookup_one_len(&init_user_ns, fname, dentry, flen);
 	host_err = PTR_ERR(dchild);
 	if (IS_ERR(dchild))
 		return nfserrno(host_err);
@@ -1410,7 +1411,7 @@ do_nfsd_create(struct svc_rqst *rqstp, struct svc_fh *fhp,
 	/*
 	 * Compose the response file handle.
 	 */
-	dchild = lookup_one_len(fname, dentry, flen);
+	dchild = lookup_one_len(&init_user_ns, fname, dentry, flen);
 	host_err = PTR_ERR(dchild);
 	if (IS_ERR(dchild))
 		goto out_nfserr;
@@ -1606,7 +1607,7 @@ nfsd_symlink(struct svc_rqst *rqstp, struct svc_fh *fhp,
 
 	fh_lock(fhp);
 	dentry = fhp->fh_dentry;
-	dnew = lookup_one_len(fname, dentry, flen);
+	dnew = lookup_one_len(&init_user_ns, fname, dentry, flen);
 	host_err = PTR_ERR(dnew);
 	if (IS_ERR(dnew))
 		goto out_nfserr;
@@ -1669,7 +1670,7 @@ nfsd_link(struct svc_rqst *rqstp, struct svc_fh *ffhp,
 	ddir = ffhp->fh_dentry;
 	dirp = d_inode(ddir);
 
-	dnew = lookup_one_len(name, ddir, len);
+	dnew = lookup_one_len(&init_user_ns, name, ddir, len);
 	host_err = PTR_ERR(dnew);
 	if (IS_ERR(dnew))
 		goto out_nfserr;
@@ -1768,7 +1769,7 @@ retry:
 	fill_pre_wcc(ffhp);
 	fill_pre_wcc(tfhp);
 
-	odentry = lookup_one_len(fname, fdentry, flen);
+	odentry = lookup_one_len(&init_user_ns, fname, fdentry, flen);
 	host_err = PTR_ERR(odentry);
 	if (IS_ERR(odentry))
 		goto out_nfserr;
@@ -1780,7 +1781,7 @@ retry:
 	if (odentry == trap)
 		goto out_dput_old;
 
-	ndentry = lookup_one_len(tname, tdentry, tlen);
+	ndentry = lookup_one_len(&init_user_ns, tname, tdentry, tlen);
 	host_err = PTR_ERR(ndentry);
 	if (IS_ERR(ndentry))
 		goto out_dput_old;
@@ -1877,7 +1878,7 @@ nfsd_unlink(struct svc_rqst *rqstp, struct svc_fh *fhp, int type,
 	dentry = fhp->fh_dentry;
 	dirp = d_inode(dentry);
 
-	rdentry = lookup_one_len(fname, dentry, flen);
+	rdentry = lookup_one_len(&init_user_ns, fname, dentry, flen);
 	host_err = PTR_ERR(rdentry);
 	if (IS_ERR(rdentry))
 		goto out_drop_write;

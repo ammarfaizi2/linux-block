@@ -759,7 +759,8 @@ static struct dentry *ovl_workdir_create(struct ovl_fs *ofs,
 
 	inode_lock_nested(dir, I_MUTEX_PARENT);
 retry:
-	work = lookup_one_len(name, ofs->workbasedir, strlen(name));
+	work = lookup_one_len(&init_user_ns, name,
+			      ofs->workbasedir, strlen(name));
 
 	if (!IS_ERR(work)) {
 		struct iattr attr = {
@@ -1275,7 +1276,8 @@ static int ovl_check_rename_whiteout(struct dentry *workdir)
 		goto cleanup_temp;
 	}
 
-	whiteout = lookup_one_len(name.name.name, workdir, name.name.len);
+	whiteout = lookup_one_len(&init_user_ns, name.name.name,
+				  workdir, name.name.len);
 	err = PTR_ERR(whiteout);
 	if (IS_ERR(whiteout))
 		goto cleanup_temp;
@@ -1306,7 +1308,7 @@ static struct dentry *ovl_lookup_or_create(struct dentry *parent,
 	struct dentry *child;
 
 	inode_lock_nested(parent->d_inode, I_MUTEX_PARENT);
-	child = lookup_one_len(name, parent, len);
+	child = lookup_one_len(&init_user_ns, name, parent, len);
 	if (!IS_ERR(child) && !child->d_inode)
 		child = ovl_create_real(parent->d_inode, child,
 					OVL_CATTR(mode));

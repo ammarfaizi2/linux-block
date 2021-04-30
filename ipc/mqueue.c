@@ -897,7 +897,8 @@ static int do_mq_open(const char __user *u_name, int oflag, umode_t mode,
 
 	ro = mnt_want_write(mnt);	/* we'll drop it in any case */
 	inode_lock(d_inode(root));
-	path.dentry = lookup_one_len(name->name, root, strlen(name->name));
+	path.dentry = lookup_one_len(&init_user_ns, name->name,
+				     root, strlen(name->name));
 	if (IS_ERR(path.dentry)) {
 		error = PTR_ERR(path.dentry);
 		goto out_putfd;
@@ -953,7 +954,7 @@ SYSCALL_DEFINE1(mq_unlink, const char __user *, u_name)
 	if (err)
 		goto out_name;
 	inode_lock_nested(d_inode(mnt->mnt_root), I_MUTEX_PARENT);
-	dentry = lookup_one_len(name->name, mnt->mnt_root,
+	dentry = lookup_one_len(&init_user_ns, name->name, mnt->mnt_root,
 				strlen(name->name));
 	if (IS_ERR(dentry)) {
 		err = PTR_ERR(dentry);

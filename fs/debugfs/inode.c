@@ -346,7 +346,8 @@ static struct dentry *start_creating(const char *name, struct dentry *parent)
 	if (unlikely(IS_DEADDIR(d_inode(parent))))
 		dentry = ERR_PTR(-ENOENT);
 	else
-		dentry = lookup_one_len(name, parent, strlen(name));
+		dentry = lookup_one_len(&init_user_ns, name,
+					parent, strlen(name));
 	if (!IS_ERR(dentry) && d_really_is_positive(dentry)) {
 		if (d_is_dir(dentry))
 			pr_err("Directory '%s' with parent '%s' already present!\n",
@@ -772,7 +773,8 @@ struct dentry *debugfs_rename(struct dentry *old_dir, struct dentry *old_dentry,
 	if (d_really_is_negative(old_dentry) || old_dentry == trap ||
 	    d_mountpoint(old_dentry))
 		goto exit;
-	dentry = lookup_one_len(new_name, new_dir, strlen(new_name));
+	dentry = lookup_one_len(&init_user_ns, new_name,
+				new_dir, strlen(new_name));
 	/* Lookup failed, cyclic rename or target exists? */
 	if (IS_ERR(dentry) || dentry == trap || d_really_is_positive(dentry))
 		goto exit;

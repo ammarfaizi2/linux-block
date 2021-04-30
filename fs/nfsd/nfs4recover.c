@@ -218,7 +218,7 @@ nfsd4_create_clid_dir(struct nfs4_client *clp)
 	/* lock the parent */
 	inode_lock(d_inode(dir));
 
-	dentry = lookup_one_len(dname, dir, HEXDIR_LEN-1);
+	dentry = lookup_one_len(&init_user_ns, dname, dir, HEXDIR_LEN-1);
 	if (IS_ERR(dentry)) {
 		status = PTR_ERR(dentry);
 		goto out_unlock;
@@ -313,7 +313,8 @@ nfsd4_list_rec_dir(recdir_func *f, struct nfsd_net *nn)
 	list_for_each_entry_safe(entry, tmp, &ctx.names, list) {
 		if (!status) {
 			struct dentry *dentry;
-			dentry = lookup_one_len(entry->name, dir, HEXDIR_LEN-1);
+			dentry = lookup_one_len(&init_user_ns, entry->name,
+						dir, HEXDIR_LEN-1);
 			if (IS_ERR(dentry)) {
 				status = PTR_ERR(dentry);
 				break;
@@ -345,7 +346,7 @@ nfsd4_unlink_clid_dir(char *name, int namlen, struct nfsd_net *nn)
 
 	dir = nn->rec_file->f_path.dentry;
 	inode_lock_nested(d_inode(dir), I_MUTEX_PARENT);
-	dentry = lookup_one_len(name, dir, namlen);
+	dentry = lookup_one_len(&init_user_ns, name, dir, namlen);
 	if (IS_ERR(dentry)) {
 		status = PTR_ERR(dentry);
 		goto out_unlock;

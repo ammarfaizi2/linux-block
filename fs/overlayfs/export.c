@@ -391,7 +391,8 @@ static struct dentry *ovl_lookup_real_one(struct dentry *connected,
 	 * pointer because we hold no lock on the real dentry.
 	 */
 	take_dentry_name_snapshot(&name, real);
-	this = lookup_one_len(name.name.name, connected, name.name.len);
+	this = lookup_one_len(&init_user_ns, name.name.name,
+			      connected, name.name.len);
 	err = PTR_ERR(this);
 	if (IS_ERR(this)) {
 		goto fail;

@@ -120,7 +120,7 @@ int afs_sillyrename(struct afs_vnode *dvnode, struct afs_vnode *vnode,
 		 * understood by the salvager and must not be changed.
 		 */
 		slen = scnprintf(silly, sizeof(silly), ".__afs%04X", sillycounter);
-		sdentry = lookup_one_len(silly, dentry->d_parent, slen);
+		sdentry = lookup_one_len(&init_user_ns, silly, dentry->d_parent, slen);
 
 		/* N.B. Better to return EBUSY here ... it could be dangerous
 		 * to delete the file while it's in use.
