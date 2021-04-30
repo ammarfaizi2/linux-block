@@ -852,11 +852,9 @@ static inline bool page_copy_sane(struct page *page, size_t offset, size_t n)
 	return false;
 }
 
-size_t copy_page_to_iter(struct page *page, size_t offset, size_t bytes,
+static size_t __copy_page_to_iter(struct page *page, size_t offset, size_t bytes,
 			 struct iov_iter *i)
 {
-	if (unlikely(!page_copy_sane(page, offset, bytes)))
-		return 0;
 	if (likely(i->iter_type == ITER_IOVEC))
 		return copy_page_to_iter_iovec(page, offset, bytes, i);
 	if (i->iter_type == ITER_BVEC || i->iter_type == ITER_KVEC) {
@@ -875,6 +873,30 @@ size_t copy_page_to_iter(struct page *page, size_t offset, size_t bytes,
 	}
 	WARN_ON(1);
 	return 0;
+}
+
+size_t copy_page_to_iter(struct page *page, size_t offset, size_t bytes,
+			 struct iov_iter *i)
+{
+	size_t res = 0;
+	if (unlikely(!page_copy_sane(page, offset, bytes)))
+		return 0;
+	page += offset / PAGE_SIZE; // first subpage
+	offset %= PAGE_SIZE;
+	while (1) {
+		size_t n = __copy_page_to_iter(page, offset,
+				min(bytes, PAGE_SIZE - offset), i);
+		res += n;
+		bytes -= n;
+		if (!bytes || !n)
+			break;
+		offset += n;
+		if (offset == PAGE_SIZE) {
+			page++;
+			offset = 0;
+		}
+	}
+	return res;
 }
 EXPORT_SYMBOL(copy_page_to_iter);
 
