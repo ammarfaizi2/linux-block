@@ -304,7 +304,8 @@ struct dentry *debugfs_lookup(const char *name, struct dentry *parent)
 	if (!parent)
 		parent = debugfs_mount->mnt_root;
 
-	dentry = lookup_positive_unlocked(name, parent, strlen(name));
+	dentry = lookup_positive_unlocked(&init_user_ns, name,
+					  parent, strlen(name));
 	if (IS_ERR(dentry))
 		return NULL;
 	return dentry;
