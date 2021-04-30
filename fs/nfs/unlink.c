@@ -463,7 +463,8 @@ nfs_sillyrename(struct inode *dir, struct dentry *dentry)
 		dfprintk(VFS, "NFS: trying to rename %pd to %s\n",
 				dentry, silly);
 
-		sdentry = lookup_one_len(silly, dentry->d_parent, slen);
+		sdentry = lookup_one_len(&init_user_ns, silly,
+					 dentry->d_parent, slen);
 		/*
 		 * N.B. Better to return EBUSY here ... it could be
 		 * dangerous to delete the file while it's in use.

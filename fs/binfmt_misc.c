@@ -668,7 +668,7 @@ static ssize_t bm_register_write(struct file *file, const char __user *buffer,
 	}
 
 	inode_lock(d_inode(root));
-	dentry = lookup_one_len(e->name, root, strlen(e->name));
+	dentry = lookup_one_len(&init_user_ns, e->name, root, strlen(e->name));
 	err = PTR_ERR(dentry);
 	if (IS_ERR(dentry))
 		goto out;

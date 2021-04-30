@@ -280,7 +280,7 @@ static struct dentry *aafs_create(const char *name, umode_t mode,
 	dir = d_inode(parent);
 
 	inode_lock(dir);
-	dentry = lookup_one_len(name, parent, strlen(name));
+	dentry = lookup_one_len(&init_user_ns, name, parent, strlen(name));
 	if (IS_ERR(dentry)) {
 		error = PTR_ERR(dentry);
 		goto fail_lock;
@@ -2504,7 +2504,8 @@ static int aa_mk_null_file(struct dentry *parent)
 		return error;
 
 	inode_lock(d_inode(parent));
-	dentry = lookup_one_len(NULL_FILE_NAME, parent, strlen(NULL_FILE_NAME));
+	dentry = lookup_one_len(&init_user_ns, NULL_FILE_NAME,
+				parent, strlen(NULL_FILE_NAME));
 	if (IS_ERR(dentry)) {
 		error = PTR_ERR(dentry);
 		goto out;

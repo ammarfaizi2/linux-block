@@ -367,7 +367,8 @@ try_again:
 		return -EIO;
 	}
 
-	grave = lookup_one_len(nbuffer, cache->graveyard, strlen(nbuffer));
+	grave = lookup_one_len(&init_user_ns, nbuffer,
+			       cache->graveyard, strlen(nbuffer));
 	if (IS_ERR(grave)) {
 		unlock_rename(cache->graveyard, dir);
 
@@ -536,7 +537,7 @@ lookup_again:
 	inode_lock_nested(d_inode(dir), I_MUTEX_PARENT);
 
 	start = jiffies;
-	next = lookup_one_len(name, dir, nlen);
+	next = lookup_one_len(&init_user_ns, name, dir, nlen);
 	cachefiles_hist(cachefiles_lookup_histogram, start);
 	if (IS_ERR(next)) {
 		trace_cachefiles_lookup(object, next, NULL);
@@ -776,7 +777,7 @@ struct dentry *cachefiles_get_directory(struct cachefiles_cache *cache,
 
 retry:
 	start = jiffies;
-	subdir = lookup_one_len(dirname, dir, strlen(dirname));
+	subdir = lookup_one_len(&init_user_ns, dirname, dir, strlen(dirname));
 	cachefiles_hist(cachefiles_lookup_histogram, start);
 	if (IS_ERR(subdir)) {
 		if (PTR_ERR(subdir) == -ENOMEM)
@@ -886,7 +887,7 @@ static struct dentry *cachefiles_check_active(struct cachefiles_cache *cache,
 	inode_lock_nested(d_inode(dir), I_MUTEX_PARENT);
 
 	start = jiffies;
-	victim = lookup_one_len(filename, dir, strlen(filename));
+	victim = lookup_one_len(&init_user_ns, filename, dir, strlen(filename));
 	cachefiles_hist(cachefiles_lookup_histogram, start);
 	if (IS_ERR(victim))
 		goto lookup_error;

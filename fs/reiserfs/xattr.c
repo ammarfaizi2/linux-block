@@ -159,7 +159,7 @@ static struct dentry *open_xa_dir(const struct inode *inode, int flags)
 
 	inode_lock_nested(d_inode(xaroot), I_MUTEX_XATTR);
 
-	xadir = lookup_one_len(namebuf, xaroot, strlen(namebuf));
+	xadir = lookup_one_len(&init_user_ns, namebuf, xaroot, strlen(namebuf));
 	if (!IS_ERR(xadir) && d_really_is_negative(xadir)) {
 		int err = -ENODATA;
 
@@ -206,7 +206,7 @@ fill_with_dentries(struct dir_context *ctx, const char *name, int namelen,
 			       (namelen == 2 && name[1] == '.')))
 		return 0;
 
-	dentry = lookup_one_len(name, dbuf->xadir, namelen);
+	dentry = lookup_one_len(&init_user_ns, name, dbuf->xadir, namelen);
 	if (IS_ERR(dentry)) {
 		dbuf->err = PTR_ERR(dentry);
 		return PTR_ERR(dentry);
@@ -397,7 +397,7 @@ static struct dentry *xattr_lookup(struct inode *inode, const char *name,
 		return ERR_CAST(xadir);
 
 	inode_lock_nested(d_inode(xadir), I_MUTEX_XATTR);
-	xafile = lookup_one_len(name, xadir, strlen(name));
+	xafile = lookup_one_len(&init_user_ns, name, xadir, strlen(name));
 	if (IS_ERR(xafile)) {
 		err = PTR_ERR(xafile);
 		goto out;
@@ -491,7 +491,7 @@ static int lookup_and_delete_xattr(struct inode *inode, const char *name)
 		return PTR_ERR(xadir);
 
 	inode_lock_nested(d_inode(xadir), I_MUTEX_XATTR);
-	dentry = lookup_one_len(name, xadir, strlen(name));
+	dentry = lookup_one_len(&init_user_ns, name, xadir, strlen(name));
 	if (IS_ERR(dentry)) {
 		err = PTR_ERR(dentry);
 		goto out_dput;
@@ -977,7 +977,7 @@ int reiserfs_lookup_privroot(struct super_block *s)
 
 	/* If we don't have the privroot located yet - go find it */
 	inode_lock(d_inode(s->s_root));
-	dentry = lookup_one_len(PRIVROOT_NAME, s->s_root,
+	dentry = lookup_one_len(&init_user_ns, PRIVROOT_NAME, s->s_root,
 				strlen(PRIVROOT_NAME));
 	if (!IS_ERR(dentry)) {
 		REISERFS_SB(s)->priv_root = dentry;
@@ -1018,8 +1018,8 @@ int reiserfs_xattr_init(struct super_block *s, int mount_flags)
 		if (!REISERFS_SB(s)->xattr_root) {
 			struct dentry *dentry;
 
-			dentry = lookup_one_len(XAROOT_NAME, privroot,
-						strlen(XAROOT_NAME));
+			dentry = lookup_one_len(&init_user_ns, XAROOT_NAME,
+						privroot, strlen(XAROOT_NAME));
 			if (!IS_ERR(dentry))
 				REISERFS_SB(s)->xattr_root = dentry;
 			else
