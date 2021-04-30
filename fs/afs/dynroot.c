@@ -315,7 +315,7 @@ void afs_dynroot_rmdir(struct afs_net *net, struct afs_cell *cell)
 	inode_lock(root->d_inode);
 
 	/* Don't want to trigger a lookup call, which will re-add the cell */
-	subdir = try_lookup_one_len(cell->name, root, cell->name_len);
+	subdir = try_lookup_one_len(&init_user_ns, cell->name, root, cell->name_len);
 	if (IS_ERR_OR_NULL(subdir)) {
 		_debug("lookup %ld", PTR_ERR(subdir));
 		goto no_dentry;

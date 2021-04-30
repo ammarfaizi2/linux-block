@@ -2597,6 +2597,7 @@ static int lookup_one_len_common(struct user_namespace *mnt_userns,
 
 /**
  * try_lookup_one_len - filesystem helper to lookup single pathname component
+ * @mnt_userns:	user namespace of the mount the lookup is performed from
  * @name:	pathname component to lookup
  * @base:	base directory to lookup from
  * @len:	maximum length @len should be interpreted to
@@ -2609,14 +2610,16 @@ static int lookup_one_len_common(struct user_namespace *mnt_userns,
  *
  * The caller must hold base->i_mutex.
  */
-struct dentry *try_lookup_one_len(const char *name, struct dentry *base, int len)
+struct dentry *try_lookup_one_len(struct user_namespace *mnt_userns,
+				  const char *name, struct dentry *base,
+				  int len)
 {
 	struct qstr this;
 	int err;
 
 	WARN_ON_ONCE(!inode_is_locked(base->d_inode));
 
-	err = lookup_one_len_common(&init_user_ns, name, base, len, &this);
+	err = lookup_one_len_common(mnt_userns, name, base, len, &this);
 	if (err)
 		return ERR_PTR(err);
 
