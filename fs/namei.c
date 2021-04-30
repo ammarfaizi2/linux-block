@@ -2693,10 +2693,11 @@ EXPORT_SYMBOL(lookup_one_len_unlocked);
  * need to be very careful; pinned positives have ->d_inode stable, so
  * this one avoids such problems.
  */
-struct dentry *lookup_positive_unlocked(const char *name,
-				       struct dentry *base, int len)
+struct dentry *lookup_positive_unlocked(struct user_namespace *mnt_userns,
+					const char *name, struct dentry *base,
+					int len)
 {
-	struct dentry *ret = lookup_one_len_unlocked(&init_user_ns, name, base, len);
+	struct dentry *ret = lookup_one_len_unlocked(mnt_userns, name, base, len);
 	if (!IS_ERR(ret) && d_flags_negative(smp_load_acquire(&ret->d_flags))) {
 		dput(ret);
 		ret = ERR_PTR(-ENOENT);
