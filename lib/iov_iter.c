@@ -109,8 +109,6 @@
 			}					\
 			i->nr_segs -= kvec - i->kvec;		\
 			i->kvec = kvec;				\
-		} else if (i->iter_type == ITER_DISCARD) {	\
-			skip += n;				\
 		}						\
 		i->count -= n;					\
 		i->iov_offset = skip;				\
