@@ -146,8 +146,6 @@
 			}					\
 			i->nr_segs -= kvec - i->kvec;		\
 			i->kvec = kvec;				\
-		} else if (i->iter_type == ITER_DISCARD) {	\
-			skip += n;				\
 		} else if (unlikely(i->iter_type == ITER_XARRAY)) {	\
 			struct bio_vec v;			\
 			iterate_xarray(i, n, v, skip, (X))	\
