@@ -16,72 +16,78 @@
 #define PIPE_PARANOIA /* for now */
 
 /* covers iovec and kvec alike */
-#define iterate_iovec(i, n, __v, __off, __p, skip, STEP) {	\
-	size_t __off = 0;					\
+#define iterate_iovec(i, n, base, len, off, __p, skip, STEP) {	\
+	size_t off = 0;						\
 	do {							\
-		__v.iov_len = min(n, __p->iov_len - skip);	\
-		if (likely(__v.iov_len)) {			\
-			__v.iov_base = __p->iov_base + skip;	\
-			__v.iov_len -= (STEP);			\
-			__off += __v.iov_len;			\
-			skip += __v.iov_len;			\
-			n -= __v.iov_len;			\
+		len = min(n, __p->iov_len - skip);		\
+		if (likely(len)) {				\
+			base = __p->iov_base + skip;		\
+			len -= (STEP);				\
+			off += len;				\
+			skip += len;				\
+			n -= len;				\
 			if (skip < __p->iov_len)		\
 				break;				\
 		}						\
 		__p++;						\
 		skip = 0;					\
 	} while (n);						\
-	n = __off;						\
+	n = off;						\
 }
 
-#define iterate_bvec(i, n, __v, __off, p, skip, STEP) {		\
-	size_t __off = 0;					\
+#define iterate_bvec(i, n, base, len, off, p, skip, STEP) {	\
+	size_t off = 0;						\
 	while (n) {						\
 		unsigned offset = p->bv_offset + skip;		\
 		unsigned left;					\
 		void *kaddr = kmap_local_page(p->bv_page +	\
 					offset / PAGE_SIZE);	\
-		__v.iov_base = kaddr + offset % PAGE_SIZE;	\
-		__v.iov_len = min(min(n, p->bv_len - skip),	\
+		base = kaddr + offset % PAGE_SIZE;		\
+		len = min(min(n, p->bv_len - skip),		\
 		     (size_t)(PAGE_SIZE - offset % PAGE_SIZE));	\
 		left = (STEP);					\
 		kunmap_local(kaddr);				\
-		__v.iov_len -= left;				\
-		__off += __v.iov_len;				\
-		skip += __v.iov_len;				\
+		len -= left;					\
+		off += len;					\
+		skip += len;					\
 		if (skip == p->bv_len) {			\
 			skip = 0;				\
 			p++;					\
 		}						\
-		n -= __v.iov_len;				\
+		n -= len;					\
 		if (left)					\
 			break;					\
 	}							\
-	n = __off;						\
+	n = off;						\
 }
 
-#define __iterate_and_advance(i, n, v, off, I, K) {		\
+#define __iterate_and_advance(i, n, base, len, off, I, K) {	\
 	if (unlikely(i->count < n))				\
 		n = i->count;					\
 	if (likely(n)) {					\
 		size_t skip = i->iov_offset;			\
 		if (likely(i->iter_type == ITER_IOVEC))  {	\
 			const struct iovec *iov = i->iov;	\
-			struct iovec v;				\
-			iterate_iovec(i, n, v, off, iov, skip, (I))	\
+			void __user *base;			\
+			size_t len;				\
+			iterate_iovec(i, n, base, len, off,	\
+						iov, skip, (I))	\
 			i->nr_segs -= iov - i->iov;		\
 			i->iov = iov;				\
 		} else if (i->iter_type == ITER_BVEC) {		\
 			const struct bio_vec *bvec = i->bvec;	\
-			struct kvec v;				\
-			iterate_bvec(i, n, v, off, bvec, skip, (K))	\
+			void *base;				\
+			size_t len;				\
+			iterate_bvec(i, n, base, len, off,	\
+					bvec, skip, (K))	\
 			i->nr_segs -= bvec - i->bvec;		\
 			i->bvec = bvec;				\
 		} else if (i->iter_type ==  ITER_KVEC) {	\
 			const struct kvec *kvec = i->kvec;	\
-			struct kvec v;				\
-			iterate_iovec(i, n, v, off, kvec, skip, (K))	\
+			void *base;				\
+			size_t len;				\
+			iterate_iovec(i, n, base, len, off,	\
+					kvec, skip, (K))	\
 			i->nr_segs -= kvec - i->kvec;		\
 			i->kvec = kvec;				\
 		}						\
@@ -89,8 +95,8 @@
 		i->iov_offset = skip;				\
 	}							\
 }
-#define iterate_and_advance(i, n, v, off, I, K) \
-	__iterate_and_advance(i, n, v, off, I, ((void)(K),0))
+#define iterate_and_advance(i, n, base, len, off, I, K) \
+	__iterate_and_advance(i, n, base, len, off, I, ((void)(K),0))
 
 static int copyout(void __user *to, const void *from, size_t n)
 {
@@ -578,9 +584,9 @@ size_t _copy_to_iter(const void *addr, size_t bytes, struct iov_iter *i)
 		return copy_pipe_to_iter(addr, bytes, i);
 	if (iter_is_iovec(i))
 		might_fault();
-	iterate_and_advance(i, bytes, v, off,
-		copyout(v.iov_base, addr + off, v.iov_len),
-		memcpy(v.iov_base, addr + off, v.iov_len)
+	iterate_and_advance(i, bytes, base, len, off,
+		copyout(base, addr + off, len),
+		memcpy(base, addr + off, len)
 	)
 
 	return bytes;
@@ -673,9 +679,9 @@ size_t _copy_mc_to_iter(const void *addr, size_t bytes, struct iov_iter *i)
 		return copy_mc_pipe_to_iter(addr, bytes, i);
 	if (iter_is_iovec(i))
 		might_fault();
-	__iterate_and_advance(i, bytes, v, off,
-		copyout_mc(v.iov_base, addr + off, v.iov_len),
-		copy_mc_to_kernel(v.iov_base, addr + off, v.iov_len)
+	__iterate_and_advance(i, bytes, base, len, off,
+		copyout_mc(base, addr + off, len),
+		copy_mc_to_kernel(base, addr + off, len)
 	)
 
 	return bytes;
@@ -691,9 +697,9 @@ size_t _copy_from_iter(void *addr, size_t bytes, struct iov_iter *i)
 	}
 	if (iter_is_iovec(i))
 		might_fault();
-	iterate_and_advance(i, bytes, v, off,
-		copyin(addr + off, v.iov_base, v.iov_len),
-		memcpy(addr + off, v.iov_base, v.iov_len)
+	iterate_and_advance(i, bytes, base, len, off,
+		copyin(addr + off, base, len),
+		memcpy(addr + off, base, len)
 	)
 
 	return bytes;
@@ -706,10 +712,9 @@ size_t _copy_from_iter_nocache(void *addr, size_t bytes, struct iov_iter *i)
 		WARN_ON(1);
 		return 0;
 	}
-	iterate_and_advance(i, bytes, v, off,
-		__copy_from_user_inatomic_nocache(addr + off,
-					 v.iov_base, v.iov_len),
-		memcpy(addr + off, v.iov_base, v.iov_len)
+	iterate_and_advance(i, bytes, base, len, off,
+		__copy_from_user_inatomic_nocache(addr + off, base, len),
+		memcpy(addr + off, base, len)
 	)
 
 	return bytes;
@@ -737,9 +742,9 @@ size_t _copy_from_iter_flushcache(void *addr, size_t bytes, struct iov_iter *i)
 		WARN_ON(1);
 		return 0;
 	}
-	iterate_and_advance(i, bytes, v, off,
-		__copy_from_user_flushcache(addr + off, v.iov_base, v.iov_len),
-		memcpy_flushcache(addr + off, v.iov_base, v.iov_len)
+	iterate_and_advance(i, bytes, base, len, off,
+		__copy_from_user_flushcache(addr + off, base, len),
+		memcpy_flushcache(addr + off, base, len)
 	)
 
 	return bytes;
@@ -870,9 +875,9 @@ size_t iov_iter_zero(size_t bytes, struct iov_iter *i)
 {
 	if (unlikely(iov_iter_is_pipe(i)))
 		return pipe_zero(bytes, i);
-	iterate_and_advance(i, bytes, v, count,
-		clear_user(v.iov_base, v.iov_len),
-		memset(v.iov_base, 0, v.iov_len)
+	iterate_and_advance(i, bytes, base, len, count,
+		clear_user(base, len),
+		memset(base, 0, len)
 	)
 
 	return bytes;
@@ -892,9 +897,9 @@ size_t copy_page_from_iter_atomic(struct page *page, unsigned offset, size_t byt
 		WARN_ON(1);
 		return 0;
 	}
-	iterate_and_advance(i, bytes, v, off,
-		copyin(p + off, v.iov_base, v.iov_len),
-		memcpy(p + off, v.iov_base, v.iov_len)
+	iterate_and_advance(i, bytes, base, len, off,
+		copyin(p + off, base, len),
+		memcpy(p + off, base, len)
 	)
 	kunmap_atomic(kaddr);
 	return bytes;
@@ -1479,15 +1484,12 @@ size_t csum_and_copy_from_iter(void *addr, size_t bytes, __wsum *csum,
 		WARN_ON(1);
 		return 0;
 	}
-	iterate_and_advance(i, bytes, v, off, ({
-		next = csum_and_copy_from_user(v.iov_base,
-					       addr + off,
-					       v.iov_len);
+	iterate_and_advance(i, bytes, base, len, off, ({
+		next = csum_and_copy_from_user(base, addr + off, len);
 		sum = csum_block_add(sum, next, off);
-		next ? 0 : v.iov_len;
+		next ? 0 : len;
 	}), ({
-		sum = csum_and_memcpy(addr + off, v.iov_base, v.iov_len,
-				      sum, off);
+		sum = csum_and_memcpy(addr + off, base, len, sum, off);
 	})
 	)
 	*csum = sum;
@@ -1509,16 +1511,12 @@ size_t csum_and_copy_to_iter(const void *addr, size_t bytes, void *_csstate,
 		WARN_ON(1);	/* for now */
 		return 0;
 	}
-	iterate_and_advance(i, bytes, v, off, ({
-		next = csum_and_copy_to_user(addr + off,
-					     v.iov_base,
-					     v.iov_len);
+	iterate_and_advance(i, bytes, base, len, off, ({
+		next = csum_and_copy_to_user(addr + off, base, len);
 		sum = csum_block_add(sum, next, off);
-		next ? 0 : v.iov_len;
+		next ? 0 : len;
 	}), ({
-		sum = csum_and_memcpy(v.iov_base,
-				     addr + off,
-				     v.iov_len, sum, off);
+		sum = csum_and_memcpy(base, addr + off, len, sum, off);
 	})
 	)
 	csstate->csum = csum_block_add(csstate->csum, sum, csstate->off);
