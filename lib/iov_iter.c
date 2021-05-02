@@ -1206,21 +1206,39 @@ void iov_iter_revert(struct iov_iter *i, size_t unroll)
 }
 EXPORT_SYMBOL(iov_iter_revert);
 
+static long first_nonempty_iovec(const struct iov_iter *i)
+{
+	size_t skip;
+	long k;
+
+	for (k = 0, skip = i->iov_offset; k < i->nr_segs; k++, skip = 0) {
+		if (likely(i->iov[k].iov_len != skip))
+			return k;
+	}
+	return -1;
+}
+
 /*
  * Return the count of just the current iov_iter segment.
  */
 size_t iov_iter_single_seg_count(const struct iov_iter *i)
 {
-	if (unlikely(iov_iter_is_pipe(i)))
-		return i->count;	// it is a silly place, anyway
-	if (i->nr_segs == 1)
-		return i->count;
-	if (unlikely(iov_iter_is_discard(i)))
-		return i->count;
-	else if (iov_iter_is_bvec(i))
-		return min(i->count, i->bvec->bv_len - i->iov_offset);
-	else
-		return min(i->count, i->iov->iov_len - i->iov_offset);
+	if (i->nr_segs > 1) {
+		if (likely(i->iter_type == ITER_IOVEC ||
+			   i->iter_type == ITER_KVEC)) {
+			long k = first_nonempty_iovec(i);
+			if (unlikely(k < 0))
+				return 0;
+			if (likely(!k))
+				return min(i->count,
+					   i->iov->iov_len - i->iov_offset);
+			return min(i->count, i->iov[k].iov_len);
+
+		}
+		if (i->iter_type == ITER_BVEC)
+			return min(i->count, i->bvec->bv_len - i->iov_offset);
+	}
+	return i->count;
 }
 EXPORT_SYMBOL(iov_iter_single_seg_count);
 
