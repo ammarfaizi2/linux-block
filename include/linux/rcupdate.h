@@ -533,9 +533,11 @@ do {									      \
  * @c: The conditions under which the dereference will take place
  *
  * This is the RCU-bh counterpart to rcu_dereference_check().  However,
- * please note that in recent kernels, synchronize_rcu() waits for
- * local_bh_disable() regions of code in addition to regions of code
- * demarked by rcu_read_lock() and rcu_read_unlock().
+ * please note that starting in v5.0 kernels, vanilla RCU grace periods
+ * wait for local_bh_disable() regions of code in addition to regions of
+ * code demarked by rcu_read_lock() and rcu_read_unlock().  This means
+ * that synchronize_rcu(), call_rcu, and friends all take not only
+ * rcu_read_lock() but also rcu_read_lock_bh() into account.
  */
 #define rcu_dereference_bh_check(p, c) \
 	__rcu_dereference_check((p), (c) || rcu_read_lock_bh_held(), __rcu)
@@ -546,9 +548,11 @@ do {									      \
  * @c: The conditions under which the dereference will take place
  *
  * This is the RCU-sched counterpart to rcu_dereference_check().
- * However, please note that in recent kernels, synchronize_rcu() waits
- * for preemption-disabled regions of code in addition to regions of code
- * demarked by rcu_read_lock() and rcu_read_unlock().
+ * However, please note that starting in v5.0 kernels, vanilla RCU grace
+ * periods wait for preempt_disable() regions of code in addition to
+ * regions of code demarked by rcu_read_lock() and rcu_read_unlock().
+ * This means that synchronize_rcu(), call_rcu, and friends all take not
+ * only rcu_read_lock() but also rcu_read_lock_sched() into account.
  */
 #define rcu_dereference_sched_check(p, c) \
 	__rcu_dereference_check((p), (c) || rcu_read_lock_sched_held(), \
@@ -719,9 +723,11 @@ static inline void rcu_read_unlock(void)
 /**
  * rcu_read_lock_bh() - mark the beginning of an RCU-bh critical section
  *
- * This is equivalent of rcu_read_lock(), but also disables softirqs.
- * Note that anything else that disables softirqs can also serve as
- * an RCU read-side critical section.
+ * This is equivalent to rcu_read_lock(), but also disables softirqs.
+ * Note that anything else that disables softirqs can also serve as an RCU
+ * read-side critical section.  However, please note that this equivalence
+ * applies only to v5.0 and later.  Before v5.0, rcu_read_lock() and
+ * rcu_read_lock_bh() were unrelated.
  *
  * Note that rcu_read_lock_bh() and the matching rcu_read_unlock_bh()
  * must occur in the same context, for example, it is illegal to invoke
@@ -754,9 +760,12 @@ static inline void rcu_read_unlock_bh(void)
 /**
  * rcu_read_lock_sched() - mark the beginning of a RCU-sched critical section
  *
- * This is equivalent of rcu_read_lock(), but disables preemption.
- * Read-side critical sections can also be introduced by anything else
- * that disables preemption, including local_irq_disable() and friends.
+ * This is equivalent to rcu_read_lock(), but also disables preemption.
+ * Read-side critical sections can also be introduced by anything else that
+ * disables preemption, including local_irq_disable() and friends.  However,
+ * please note that the equivalence to rcu_read_lock() applies only to
+ * v5.0 and later.  Before v5.0, rcu_read_lock() and rcu_read_lock_sched()
+ * were unrelated.
  *
  * Note that rcu_read_lock_sched() and the matching rcu_read_unlock_sched()
  * must occur in the same context, for example, it is illegal to invoke
