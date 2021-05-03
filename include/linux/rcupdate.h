@@ -644,11 +644,11 @@ do {									      \
  * sections, invocation of the corresponding RCU callback is deferred
  * until after the all the other CPUs exit their critical sections.
  *
- * In recent kernels, synchronize_rcu() and call_rcu() also wait for
- * regions of code with preemption disabled, including regions of code
- * with interrupts or softirqs disabled.  If your kernel is old enough
- * for synchronize_sched() to be defined, only code enclosed within
- * rcu_read_lock() and rcu_read_unlock() are guaranteed to be waited for.
+ * In v5.0 and later kernels, synchronize_rcu() and call_rcu() also
+ * wait for regions of code with preemption disabled, including regions of
+ * code with interrupts or softirqs disabled.  In pre-v5.0 kernels, which
+ * define synchronize_sched(), only code enclosed within rcu_read_lock()
+ * and rcu_read_unlock() are guaranteed to be waited for.
  *
  * Note, however, that RCU callbacks are permitted to run concurrently
  * with new RCU read-side critical sections.  One way that this can happen
