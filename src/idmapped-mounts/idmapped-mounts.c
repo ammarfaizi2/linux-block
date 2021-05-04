@@ -8717,19 +8717,24 @@ static void usage(void)
 	fprintf(stderr, "    Run idmapped mount tests\n\n");
 
 	fprintf(stderr, "Arguments:\n");
-	fprintf(stderr, "-d --device        Device used in the tests\n");
-	fprintf(stderr, "-m --mountpoint    Mountpoint of device\n");
+	fprintf(stderr, "--device        Device used in the tests\n");
+	fprintf(stderr, "--fstype        Filesystem type used in the tests\n");
+	fprintf(stderr, "--help          Print help\n");
+	fprintf(stderr, "--mountpoint    Mountpoint of device\n");
+	fprintf(stderr, "--supported     Test whether idmapped mounts are supported on this filesystem\n");
+	fprintf(stderr, "--test-core     Run core idmapped mount testsuite\n");
 
 	_exit(EXIT_SUCCESS);
 }
 
 static const struct option longopts[] = {
-	{"device",	required_argument,	0,	'd'},
-	{"fstype",	required_argument,	0,	'f'},
-	{"mountpoint",	required_argument,	0,	'm'},
-	{"supported",	no_argument,		0,	's'},
-	{"help",	no_argument,		0,	'h'},
-	{NULL,		0,			0,	0  },
+	{"device",	required_argument,	0,	1},
+	{"fstype",	required_argument,	0,	2},
+	{"mountpoint",	required_argument,	0,	3},
+	{"supported",	no_argument,		0,	4},
+	{"help",	no_argument,		0,	5},
+	{"test-core",	no_argument,		0,	6},
+	{NULL,		0,			0,	0},
 };
 
 struct t_idmapped_mounts {
@@ -8804,10 +8809,8 @@ static bool run_test(struct t_idmapped_mounts suite[], size_t suite_size)
 
 		if (pid == 0) {
 			ret = t->test();
-			if (ret) {
-				fprintf(stderr, "failure: %s\n", t->description);
-				exit(EXIT_FAILURE);
-			}
+			if (ret)
+				die("failure: %s", t->description);
 
 			exit(EXIT_SUCCESS);
 		}
@@ -8826,23 +8829,26 @@ int main(int argc, char *argv[])
 {
 	int fret, ret;
 	int index = 0;
-	bool supported = false;
+	bool supported = false, test_core = false;
 
 	while ((ret = getopt_long(argc, argv, "", longopts, &index)) != -1) {
 		switch (ret) {
-		case 'd':
+		case 1:
 			t_device = optarg;
 			break;
-		case 'f':
+		case 2:
 			t_fstype = optarg;
 			break;
-		case 'm':
+		case 3:
 			t_mountpoint = optarg;
 			break;
-		case 's':
+		case 4:
 			supported = true;
 			break;
-		case 'h':
+		case 6:
+			test_core = true;
+			break;
+		case 5:
 			/* fallthrough */
 		default:
 			usage();
@@ -8911,7 +8917,7 @@ int main(int argc, char *argv[])
 
 	fret = EXIT_FAILURE;
 
-	if (!run_test(basic_suite, ARRAY_SIZE(basic_suite)))
+	if (test_core && !run_test(basic_suite, ARRAY_SIZE(basic_suite)))
 		goto out;
 
 	fret = EXIT_SUCCESS;
