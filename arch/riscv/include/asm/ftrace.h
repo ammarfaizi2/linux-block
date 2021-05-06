@@ -81,8 +81,15 @@ do {									\
 struct dyn_ftrace;
 int ftrace_init_nop(struct module *mod, struct dyn_ftrace *rec);
 #define ftrace_init_nop ftrace_init_nop
+extern int riscv_ftrace_in_stop_machine;
 #endif
 
+#else /* CONFIG_DYNAMIC_FTRACE */
+
+#ifndef __ASSEMBLY__
+#define riscv_ftrace_in_stop_machine 0
 #endif
+
+#endif /* CONFIG_DYNAMIC_FTRACE */
 
 #endif /* _ASM_RISCV_FTRACE_H */
