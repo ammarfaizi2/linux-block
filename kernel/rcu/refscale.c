@@ -467,29 +467,33 @@ static struct ref_scale_ops acqrel_ops = {
 	.name		= "acqrel"
 };
 
+static volatile u64 stopopts;
+
 static void ref_clock_section(const int nloops)
 {
-	volatile u64 x;
+	u64 x;
 	int i;
 
 	preempt_disable();
 	for (i = nloops; i >= 0; i--) {
-		x = ktime_get_real_fast_ns();
+		x += ktime_get_real_fast_ns();
 	}
 	preempt_enable();
+	stopopts = x;
 }
 
 static void ref_clock_delay_section(const int nloops, const int udl, const int ndl)
 {
-	volatile u64 x;
+	u64 x;
 	int i;
 
 	preempt_disable();
 	for (i = nloops; i >= 0; i--) {
-		x = ktime_get_real_fast_ns();
+		x += ktime_get_real_fast_ns();
 		un_delay(udl, ndl);
 	}
 	preempt_enable();
+	stopopts = x;
 }
 
 static struct ref_scale_ops clock_ops = {
