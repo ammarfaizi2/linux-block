@@ -373,7 +373,7 @@ static inline void rcu_preempt_sleep_check(void) { }
 #define unrcu_pointer(p)						\
 ({									\
 	typeof(*p) *_________p1 = (typeof(*p) *__force)(p);		\
-	rcu_check_sparse(p, __rcu); 					\
+	rcu_check_sparse(p, __rcu);					\
 	((typeof(*p) __force __kernel *)(_________p1)); 		\
 })
 
