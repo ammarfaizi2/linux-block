@@ -822,6 +822,7 @@ struct perf_event_context {
 	int				nr_stat;
 	int				nr_freq;
 	int				rotate_disable;
+	atomic_t			nr_user;
 	/*
 	 * Set when nr_events != nr_active, except tolerant to events not
 	 * necessary to be active due to scheduling constraints, such as cgroups.
