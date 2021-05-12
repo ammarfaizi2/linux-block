@@ -471,7 +471,7 @@ static volatile u64 stopopts;
 
 static void ref_clock_section(const int nloops)
 {
-	u64 x;
+	u64 x = 0;
 	int i;
 
 	preempt_disable();
@@ -484,7 +484,7 @@ static void ref_clock_section(const int nloops)
 
 static void ref_clock_delay_section(const int nloops, const int udl, const int ndl)
 {
-	u64 x;
+	u64 x = 0;
 	int i;
 
 	preempt_disable();
