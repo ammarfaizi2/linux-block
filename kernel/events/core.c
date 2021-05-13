@@ -3448,7 +3448,8 @@ static void perf_event_context_sched_out(struct task_struct *task, int ctxn,
 
 			perf_pmu_disable(pmu);
 
-			if (cpuctx->sched_cb_usage && pmu->sched_task)
+			if (pmu->sched_task &&
+			    (cpuctx->sched_cb_usage || atomic_read(&pmu->sched_cb_usage)))
 				pmu->sched_task(ctx, false);
 
 			/*
@@ -3488,7 +3489,8 @@ unlock:
 		raw_spin_lock(&ctx->lock);
 		perf_pmu_disable(pmu);
 
-		if (cpuctx->sched_cb_usage && pmu->sched_task)
+		if (pmu->sched_task &&
+		    (cpuctx->sched_cb_usage || atomic_read(&pmu->sched_cb_usage)))
 			pmu->sched_task(ctx, false);
 		task_ctx_sched_out(cpuctx, ctx, EVENT_ALL);
 
@@ -3851,7 +3853,7 @@ static void perf_event_context_sched_in(struct perf_event_context *ctx,
 		cpu_ctx_sched_out(cpuctx, EVENT_FLEXIBLE);
 	perf_event_sched_in(cpuctx, ctx, task);
 
-	if (cpuctx->sched_cb_usage && pmu->sched_task)
+	if (pmu->sched_task && (cpuctx->sched_cb_usage || atomic_read(&pmu->sched_cb_usage)))
 		pmu->sched_task(cpuctx->task_ctx, true);
 
 	perf_pmu_enable(pmu);
