@@ -328,9 +328,10 @@ Lock-Protected Writes With Heuristic Lockless Reads
 ---------------------------------------------------
 
 For another example, suppose that the code can normally make use of
-a per-data-structure lock, but there are times when a global lock is
-required.  These times are indicated via a global flag.  The code might
-look as follows, and is based loosely on sem_lock() and sem_unlock():
+a per-data-structure lock, but there are times when a global lock
+is required.  These times are indicated via a global flag.  The code
+might look as follows, and is based loosely on nf_conntrack_lock(),
+nf_conntrack_all_lock(), and nf_conntrack_all_unlock():
 
 	bool global_flag;
 	DEFINE_SPINLOCK(global_lock);
@@ -345,6 +346,8 @@ look as follows, and is based loosely on sem_lock() and sem_unlock():
 
 	void do_something_locked(struct foo *fp)
 	{
+		bool gf = true;
+
 		/* IMPORTANT: Heuristic plus spin_lock()! */
 		if (!data_race(global_flag)) {
 			spin_lock(&fp->f_lock);
@@ -355,15 +358,16 @@ look as follows, and is based loosely on sem_lock() and sem_unlock():
 			}
 			spin_unlock(&fp->f_lock);
 		}
-		spin_lock(&global_flag);
+		spin_lock(&global_lock);
 		/* Lock held, thus global flag cannot change. */
 		if (!global_flag) {
 			spin_lock(&fp->f_lock);
-			spin_unlock(&global_flag);
+			spin_unlock(&global_lock);
+			gf = false;
 		}
 		do_something(fp);
-		if (global_flag)
-			spin_unlock(&global_flag);
+		if (fg)
+			spin_unlock(&global_lock);
 		else
 			spin_lock(&fp->f_lock);
 	}
@@ -372,22 +376,20 @@ look as follows, and is based loosely on sem_lock() and sem_unlock():
 	{
 		int i;
 
-		spin_lock(&global_flag);
+		spin_lock(&global_lock);
 		WRITE_ONCE(global_flag, true);
 		for (i = 0; i < nfoo; i++) {
 			/* Wait for pre-existing local locks. */
 			spin_lock(&fp->f_lock);
 			spin_unlock(&fp->f_lock);
 		}
-		spin_unlock(&global_flag);
 	}
 
 	void end_global(void)
 	{
-		spin_lock(&global_flag);
 		smp_store_release(&global_flag, false);
 		/* Pre-existing global lock acquisitions will recheck. */
-		spin_unlock(&global_flag);
+		spin_unlock(&global_lock);
 	}
 
 All code paths leading from the do_something_locked() function's first
