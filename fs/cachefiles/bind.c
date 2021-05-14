@@ -199,10 +199,6 @@ static int cachefiles_daemon_add_cache(struct cachefiles_cache *cache)
 	fsdef->dentry = cachedir;
 	fsdef->fscache.cookie = NULL;
 
-	ret = cachefiles_check_object_type(fsdef);
-	if (ret < 0)
-		goto error_unsupported;
-
 	/* get the graveyard directory */
 	graveyard = cachefiles_get_directory(cache, root, "graveyard");
 	if (IS_ERR(graveyard)) {
