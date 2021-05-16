@@ -195,14 +195,33 @@ struct user_regset_view {
  * implementation is machine-dependent but its interface is universal.
  */
 /**
- * task_user_regset_view - Return the process's native regset view.
+ * task_user_regset_view - Return a guess for the process's regset view.
  * @tsk: a thread of the process in question
  *
- * Return the &struct user_regset_view that is native for the given process.
- * For example, what it would access when it called ptrace().
- * Throughout the life of the process, this only changes at exec.
+ * Return the &struct user_regset_view that is use used by the historically
+ * broken PTRACE_GET/SETREGSET APIs and by core dumps for the given process.
+ *
+ * This function is inherently defective for ptrace(), as there is no way
+ * to ensure that it returns the regset that the caller expects.  For
+ * example, on x86_64, a task's native regset view is always the x86_64
+ * view, but ptrace() has no way to request it.
  */
 const struct user_regset_view *task_user_regset_view(struct task_struct *tsk);
+
+/**
+ * task_machine_regset_view - Return the requested regset view for a process.
+ * @tsk: a thread of the process in question
+ *
+ * Return the requested &struct user_regset_view if valid for the target
+ * task or an error.
+ */
+#ifndef task_get_regset_view
+static inline const struct user_regset_view *
+task_machine_regset_view(task_struct *tsk, u16 e_machine)
+{
+	return ERR_PTR(-EINVAL);
+}
+#endif
 
 
 /*

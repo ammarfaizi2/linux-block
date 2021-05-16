@@ -807,10 +807,10 @@ find_regset(const struct user_regset_view *view, unsigned int type)
 	return NULL;
 }
 
-static int ptrace_regset(struct task_struct *task, int req, unsigned int type,
+static int ptrace_regset(struct task_struct *task, int req,
+			 const struct user_regset_view *view, unsigned int type,
 			 struct iovec *kiov)
 {
-	const struct user_regset_view *view = task_user_regset_view(task);
 	const struct user_regset *regset = find_regset(view, type);
 	int regset_no;
 
@@ -1038,7 +1038,8 @@ int ptrace_request(struct task_struct *child, long request,
 		    __get_user(kiov.iov_len, &uiov->iov_len))
 			return -EFAULT;
 
-		ret = ptrace_regset(child, request, addr, &kiov);
+		ret = ptrace_regset(child, request,
+				    task_user_regset_view(child), addr, &kiov);
 		if (!ret)
 			ret = __put_user(kiov.iov_len, &uiov->iov_len);
 		break;
@@ -1207,7 +1208,8 @@ int compat_ptrace_request(struct task_struct *child, compat_long_t request,
 		kiov.iov_base = compat_ptr(ptr);
 		kiov.iov_len = len;
 
-		ret = ptrace_regset(child, request, addr, &kiov);
+		ret = ptrace_regset(child, request,
+				    task_user_regset_view(child), addr, &kiov);
 		if (!ret)
 			ret = __put_user(kiov.iov_len, &uiov->iov_len);
 		break;

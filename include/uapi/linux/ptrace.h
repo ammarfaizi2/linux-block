@@ -65,6 +65,17 @@ struct ptrace_peeksiginfo_args {
 #define PTRACE_SETSIGMASK	0x420b
 
 #define PTRACE_SECCOMP_GET_FILTER	0x420c
+#define PTRACE_GETREGSET2	0x420f
+#define PTRACE_SETREGSET2	0x4210
+
+struct ptrace_regset2 {
+	__u64 uptr;		/* pointer to user buffer */
+	__u64 ulen;		/* size of user bufer */
+
+	__u32 e_machine;	/* ELF machine of the requested regset view */
+	__u32 regset_type;	/* regset type within the requested view */
+};
+
 
 /* Read signals from a shared (process wide) queue */
 #define PTRACE_PEEKSIGINFO_SHARED	(1 << 0)
