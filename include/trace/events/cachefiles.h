@@ -196,47 +196,44 @@ TRACE_EVENT(cachefiles_rename,
 
 TRACE_EVENT(cachefiles_mark_active,
 	    TP_PROTO(struct cachefiles_object *obj,
-		     struct dentry *de),
+		     struct inode *inode),
 
-	    TP_ARGS(obj, de),
+	    TP_ARGS(obj, inode),
 
 	    /* Note that obj may be NULL */
 	    TP_STRUCT__entry(
 		    __field(unsigned int,		obj		)
-		    __field(struct dentry *,		de		)
+		    __field(ino_t,			inode		)
 			     ),
 
 	    TP_fast_assign(
 		    __entry->obj	= obj->debug_id;
-		    __entry->de		= de;
+		    __entry->inode	= inode->i_ino;
 			   ),
 
-	    TP_printk("o=%08x d=%p",
-		      __entry->obj, __entry->de)
+	    TP_printk("o=%08x i=%lx",
+		      __entry->obj, __entry->inode)
 	    );
 
 TRACE_EVENT(cachefiles_mark_inactive,
 	    TP_PROTO(struct cachefiles_object *obj,
-		     struct dentry *de,
 		     struct inode *inode),
 
-	    TP_ARGS(obj, de, inode),
+	    TP_ARGS(obj, inode),
 
 	    /* Note that obj may be NULL */
 	    TP_STRUCT__entry(
 		    __field(unsigned int,		obj		)
-		    __field(struct dentry *,		de		)
-		    __field(struct inode *,		inode		)
+		    __field(ino_t,			inode		)
 			     ),
 
 	    TP_fast_assign(
 		    __entry->obj	= obj->debug_id;
-		    __entry->de		= de;
-		    __entry->inode	= inode;
+		    __entry->inode	= inode->i_ino;
 			   ),
 
-	    TP_printk("o=%08x d=%p i=%p",
-		      __entry->obj, __entry->de, __entry->inode)
+	    TP_printk("o=%08x i=%lx",
+		      __entry->obj, __entry->inode)
 	    );
 
 #endif /* _TRACE_CACHEFILES_H */

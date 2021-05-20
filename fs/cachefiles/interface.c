@@ -161,7 +161,7 @@ static void cachefiles_drop_object(struct cachefiles_object *object)
 	 * initialised if the parent goes away or the object gets retired
 	 * before we set it up.
 	 */
-	if (object->dentry) {
+	if (object->file) {
 		/* delete retired objects */
 		if (test_bit(FSCACHE_OBJECT_RETIRED, &object->flags) &&
 		    object != cache->cache.fsdef
@@ -174,8 +174,8 @@ static void cachefiles_drop_object(struct cachefiles_object *object)
 
 		/* close the filesystem stuff attached to the object */
 		cachefiles_unmark_inode_in_use(object);
-		dput(object->dentry);
-		object->dentry = NULL;
+		fput(object->file);
+		object->file = NULL;
 	}
 
 	_leave("");
@@ -210,7 +210,7 @@ void cachefiles_put_object(struct cachefiles_object *object,
 		_debug("- kill object OBJ%x", object->debug_id);
 
 		ASSERTCMP(object->parent, ==, NULL);
-		ASSERTCMP(object->dentry, ==, NULL);
+		ASSERTCMP(object->file, ==, NULL);
 		ASSERTCMP(object->n_ops, ==, 0);
 		ASSERTCMP(object->n_children, ==, 0);
 
@@ -262,6 +262,7 @@ static int cachefiles_attr_changed(struct cachefiles_object *object)
 	struct cachefiles_cache *cache;
 	const struct cred *saved_cred;
 	struct iattr newattrs;
+	struct file *file = object->file;
 	uint64_t ni_size;
 	loff_t oi_size;
 	int ret;
@@ -271,20 +272,22 @@ static int cachefiles_attr_changed(struct cachefiles_object *object)
 	_enter("{OBJ%x},[%llu]",
 	       object->debug_id, (unsigned long long) ni_size);
 
-	cache = container_of(object->cache,
-			     struct cachefiles_cache, cache);
+	if (!file)
+		return -ENOBUFS;
+
+	cache = container_of(object->cache, struct cachefiles_cache, cache);
 
 	if (ni_size == object->i_size)
 		return 0;
 
-	ASSERT(d_is_reg(object->dentry));
+	ASSERT(d_is_reg(file->f_path.dentry));
 
-	oi_size = i_size_read(d_backing_inode(object->dentry));
+	oi_size = i_size_read(file_inode(file));
 	if (oi_size == ni_size)
 		return 0;
 
 	cachefiles_begin_secure(cache, &saved_cred);
-	inode_lock(d_inode(object->dentry));
+	inode_lock(file_inode(file));
 
 	/* if there's an extension to a partial page at the end of the backing
 	 * file, we need to discard the partial page so that we pick up new
@@ -293,17 +296,18 @@ static int cachefiles_attr_changed(struct cachefiles_object *object)
 		_debug("discard tail %llx", oi_size);
 		newattrs.ia_valid = ATTR_SIZE;
 		newattrs.ia_size = oi_size & PAGE_MASK;
-		ret = notify_change(&init_user_ns, object->dentry, &newattrs, NULL);
+		ret = notify_change(&init_user_ns, file->f_path.dentry,
+				    &newattrs, NULL);
 		if (ret < 0)
 			goto truncate_failed;
 	}
 
 	newattrs.ia_valid = ATTR_SIZE;
 	newattrs.ia_size = ni_size;
-	ret = notify_change(&init_user_ns, object->dentry, &newattrs, NULL);
+	ret = notify_change(&init_user_ns, file->f_path.dentry, &newattrs, NULL);
 
 truncate_failed:
-	inode_unlock(d_inode(object->dentry));
+	inode_unlock(file_inode(file));
 	cachefiles_end_secure(cache, saved_cred);
 
 	if (ret == -EIO) {
@@ -322,7 +326,7 @@ static void cachefiles_invalidate_object(struct cachefiles_object *object)
 {
 	struct cachefiles_cache *cache;
 	const struct cred *saved_cred;
-	struct path path;
+	struct file *file = object->file;
 	uint64_t ni_size;
 	int ret;
 
@@ -333,16 +337,13 @@ static void cachefiles_invalidate_object(struct cachefiles_object *object)
 	_enter("{OBJ%x},[%llu]",
 	       object->debug_id, (unsigned long long)ni_size);
 
-	if (object->dentry) {
-		ASSERT(d_is_reg(object->dentry));
-
-		path.dentry = object->dentry;
-		path.mnt = cache->mnt;
+	if (file) {
+		ASSERT(d_is_reg(file->f_path.dentry));
 
 		cachefiles_begin_secure(cache, &saved_cred);
-		ret = vfs_truncate(&path, 0);
+		ret = vfs_truncate(&file->f_path, 0);
 		if (ret == 0)
-			ret = vfs_truncate(&path, ni_size);
+			ret = vfs_truncate(&file->f_path, ni_size);
 		cachefiles_end_secure(cache, saved_cred);
 
 		if (ret != 0) {

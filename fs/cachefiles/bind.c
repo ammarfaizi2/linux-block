@@ -82,6 +82,7 @@ static int cachefiles_daemon_add_cache(struct cachefiles_cache *cache)
 	struct path path;
 	struct kstatfs stats;
 	struct dentry *graveyard, *cachedir, *root;
+	struct file *dirf;
 	const struct cred *saved_cred;
 	int ret;
 
@@ -192,7 +193,13 @@ static int cachefiles_daemon_add_cache(struct cachefiles_cache *cache)
 		goto error_unsupported;
 	}
 
-	fsdef->dentry = cachedir;
+	dirf = open_with_fake_path(&path, O_RDONLY | O_DIRECTORY,
+				   d_inode(cachedir), cache->cache_cred);
+	if (IS_ERR(dirf)) {
+		ret = PTR_ERR(dirf);
+		goto error_unsupported;
+	}
+	fsdef->file = dirf;
 	fsdef->cookie = NULL;
 
 	/* get the graveyard directory */
@@ -208,7 +215,7 @@ static int cachefiles_daemon_add_cache(struct cachefiles_cache *cache)
 	fscache_init_cache(&cache->cache,
 			   &cachefiles_cache_ops,
 			   "%s",
-			   fsdef->dentry->d_sb->s_id);
+			   graveyard->d_sb->s_id);
 
 	fscache_object_init(fsdef, &fscache_fsdef_index,
 			    &cache->cache);
@@ -234,8 +241,10 @@ error_add_cache:
 error_unsupported:
 	mntput(cache->mnt);
 	cache->mnt = NULL;
-	dput(fsdef->dentry);
-	fsdef->dentry = NULL;
+	if (fsdef->file) {
+		fput(fsdef->file);
+		fsdef->file = NULL;
+	}
 	dput(root);
 error_open_root:
 	kmem_cache_free(cachefiles_object_jar, fsdef);

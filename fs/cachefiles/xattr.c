@@ -30,12 +30,14 @@ int cachefiles_set_object_xattr(struct cachefiles_object *object,
 				unsigned int xattr_flags)
 {
 	struct cachefiles_xattr *buf;
-	struct dentry *dentry = object->dentry;
+	struct dentry *dentry;
+	struct file *file = object->file;
 	unsigned int len = object->cookie->aux_len;
 	int ret;
 
-	if (!dentry)
+	if (!file)
 		return -ESTALE;
+	dentry = file->f_path.dentry;
 
 	_enter("%x,#%d", object->debug_id, len);
 
@@ -67,13 +69,10 @@ int cachefiles_set_object_xattr(struct cachefiles_object *object,
 int cachefiles_check_auxdata(struct cachefiles_object *object)
 {
 	struct cachefiles_xattr *buf;
-	struct dentry *dentry = object->dentry;
+	struct dentry *dentry = object->file->f_path.dentry;
 	unsigned int len = object->cookie->aux_len, tlen;
 	const void *p = fscache_get_aux(object->cookie);
 	ssize_t ret;
-
-	ASSERT(dentry);
-	ASSERT(d_backing_inode(dentry));
 
 	tlen = sizeof(struct cachefiles_xattr) + len;
 	buf = kmalloc(tlen, GFP_KERNEL);
