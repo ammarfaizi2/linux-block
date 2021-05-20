@@ -24,132 +24,107 @@ static const char cachefiles_filecharmap[256] = {
 
 /*
  * turn the raw key into something cooked
- * - the raw key should include the length in the two bytes at the front
- * - the key may be up to 514 bytes in length (including the length word)
+ * - the key may be up to NAME_MAX in length (including the length word)
  *   - "base64" encode the strange keys, mapping 3 bytes of raw to four of
  *     cooked
  *   - need to cut the cooked key into 252 char lengths (189 raw bytes)
  */
-char *cachefiles_cook_key(const u8 *raw, int keylen, uint8_t type)
+bool cachefiles_cook_key(struct cachefiles_object *object)
 {
-	unsigned char csum, ch;
-	unsigned int acc;
-	char *key;
-	int loop, len, max, seg, mark, print;
+	const u8 *key = fscache_get_key(object->fscache.cookie);
+	unsigned int acc, sum, keylen = object->fscache.cookie->key_len;
+	char *name;
+	u8 *buffer, *p;
+	int i, len, elem3, print;
+	u8 type;
 
 	_enter(",%d", keylen);
 
-	BUG_ON(keylen < 2 || keylen > 514);
+	BUG_ON(keylen > NAME_MAX - 3);
 
-	csum = raw[0] + raw[1];
+	sum = 0;
 	print = 1;
-	for (loop = 2; loop < keylen; loop++) {
-		ch = raw[loop];
-		csum += ch;
+	for (i = 0; i < keylen; i++) {
+		u8 ch = key[i];
+		sum += ch;
 		print &= cachefiles_filecharmap[ch];
 	}
+	object->key_hash = sum;
 
+	/* If the path is usable ASCII, then we render it directly */
 	if (print) {
-		/* if the path is usable ASCII, then we render it directly */
-		max = keylen - 2;
-		max += 2;	/* two base64'd length chars on the front */
-		max += 5;	/* @checksum/M */
-		max += 3 * 2;	/* maximum number of segment dividers (".../M")
-				 * is ((514 + 251) / 252) = 3
-				 */
-		max += 1;	/* NUL on end */
-	} else {
-		/* calculate the maximum length of the cooked key */
-		keylen = (keylen + 2) / 3;
+		name = kmalloc(3 + keylen + 1, cachefiles_gfp);
+		if (!name)
+			return false;
 
-		max = keylen * 4;
-		max += 5;	/* @checksum/M */
-		max += 3 * 2;	/* maximum number of segment dividers (".../M")
-				 * is ((514 + 188) / 189) = 3
-				 */
-		max += 1;	/* NUL on end */
-	}
-
-	max += 1;	/* 2nd NUL on end */
-
-	_debug("max: %d", max);
-
-	key = kmalloc(max, cachefiles_gfp);
-	if (!key)
-		return NULL;
-
-	len = 0;
-
-	/* build the cooked key */
-	sprintf(key, "@%02x%c+", (unsigned) csum, 0);
-	len = 5;
-	mark = len - 1;
-
-	if (print) {
-		acc = *(uint16_t *) raw;
-		raw += 2;
-
-		key[len + 1] = cachefiles_charmap[acc & 63];
-		acc >>= 6;
-		key[len] = cachefiles_charmap[acc & 63];
-		len += 2;
-
-		seg = 250;
-		for (loop = keylen; loop > 0; loop--) {
-			if (seg <= 0) {
-				key[len++] = '\0';
-				mark = len;
-				key[len++] = '+';
-				seg = 252;
-			}
-
-			key[len++] = *raw++;
-			ASSERT(len < max);
-		}
-
-		switch (type) {
+		switch (object->fscache.cookie->type) {
 		case FSCACHE_COOKIE_TYPE_INDEX:		type = 'I';	break;
 		case FSCACHE_COOKIE_TYPE_DATAFILE:	type = 'D';	break;
 		default:				type = 'S';	break;
 		}
-	} else {
-		seg = 252;
-		for (loop = keylen; loop > 0; loop--) {
-			if (seg <= 0) {
-				key[len++] = '\0';
-				mark = len;
-				key[len++] = '+';
-				seg = 252;
-			}
 
-			acc = *raw++;
-			acc |= *raw++ << 8;
-			acc |= *raw++ << 16;
+		name[0] = type;
+		name[1] = cachefiles_charmap[(keylen >> 6) & 63];
+		name[2] = cachefiles_charmap[keylen & 63];
 
-			_debug("acc: %06x", acc);
-
-			key[len++] = cachefiles_charmap[acc & 63];
-			acc >>= 6;
-			key[len++] = cachefiles_charmap[acc & 63];
-			acc >>= 6;
-			key[len++] = cachefiles_charmap[acc & 63];
-			acc >>= 6;
-			key[len++] = cachefiles_charmap[acc & 63];
-
-			ASSERT(len < max);
-		}
-
-		switch (type) {
-		case FSCACHE_COOKIE_TYPE_INDEX:		type = 'J';	break;
-		case FSCACHE_COOKIE_TYPE_DATAFILE:	type = 'E';	break;
-		default:				type = 'T';	break;
-		}
+		memcpy(name + 3, key, keylen);
+		name[3 + keylen] = 0;
+		object->d_name = name;
+		object->d_name_len = 3 + keylen;
+		goto success;
 	}
 
-	key[mark] = type;
-	key[len++] = 0;
-	key[len] = 0;
+	/* Construct the key we actually want to render.  We stick the length
+	 * on the front and leave NULs on the back for the encoder to overread.
+	 */
+	buffer = kmalloc(2 + keylen + 3, cachefiles_gfp);
+	if (!buffer)
+		return false;
 
-	_leave(" = %s %d", key, len);
-	return key;
+	memcpy(buffer + 2, key, keylen);
+
+	*(uint16_t *)buffer = keylen;
+	((char *)buffer)[keylen + 2] = 0;
+	((char *)buffer)[keylen + 3] = 0;
+	((char *)buffer)[keylen + 4] = 0;
+
+	elem3 = DIV_ROUND_UP(2 + keylen, 3); /* Count of 3-byte elements */
+	len = elem3 * 4;
+
+	name = kmalloc(1 + len + 1, cachefiles_gfp);
+	if (!name) {
+		kfree(buffer);
+		return false;
+	}
+
+	switch (object->fscache.cookie->type) {
+	case FSCACHE_COOKIE_TYPE_INDEX:		type = 'J';	break;
+	case FSCACHE_COOKIE_TYPE_DATAFILE:	type = 'E';	break;
+	default:				type = 'T';	break;
+	}
+
+	name[0] = type;
+	len = 1;
+	p = buffer;
+	for (i = 0; i < elem3; i++) {
+		acc = *p++;
+		acc |= *p++ << 8;
+		acc |= *p++ << 16;
+
+		name[len++] = cachefiles_charmap[acc & 63];
+		acc >>= 6;
+		name[len++] = cachefiles_charmap[acc & 63];
+		acc >>= 6;
+		name[len++] = cachefiles_charmap[acc & 63];
+		acc >>= 6;
+		name[len++] = cachefiles_charmap[acc & 63];
+	}
+
+	name[len] = 0;
+	object->d_name = name;
+	object->d_name_len = len;
+	kfree(buffer);
+success:
+	_leave(" = %s", object->d_name);
+	return true;
 }

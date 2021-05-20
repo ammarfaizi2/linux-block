@@ -34,13 +34,15 @@ extern unsigned cachefiles_debug;
  */
 struct cachefiles_object {
 	struct fscache_object		fscache;	/* fscache handle */
-	char				*lookup_key;	/* key to look up */
+	char				*d_name;	/* Filename */
 	struct dentry			*dentry;	/* the file/dir representing this object */
 	struct dentry			*backer;	/* backing file */
 	loff_t				i_size;		/* object size */
 	atomic_t			usage;		/* object usage count */
 	uint8_t				type;		/* object type */
-	uint8_t				new;		/* T if object new */
+	bool				new;		/* T if object new */
+	u8				d_name_len;	/* Length of filename */
+	u8				key_hash;
 };
 
 extern struct kmem_cache *cachefiles_object_jar;
@@ -119,21 +121,20 @@ void cachefiles_put_object(struct fscache_object *_object,
 /*
  * key.c
  */
-extern char *cachefiles_cook_key(const u8 *raw, int keylen, uint8_t type);
+extern bool cachefiles_cook_key(struct cachefiles_object *object);
 
 /*
  * namei.c
  */
-extern void cachefiles_unmark_inode_in_use(struct cachefiles_object *object,
-				    struct dentry *dentry);
+extern void cachefiles_unmark_inode_in_use(struct cachefiles_object *object);
 extern int cachefiles_delete_object(struct cachefiles_cache *cache,
 				    struct cachefiles_object *object);
 extern int cachefiles_walk_to_object(struct cachefiles_object *parent,
-				     struct cachefiles_object *object,
-				     const char *key);
+				     struct cachefiles_object *object);
 extern struct dentry *cachefiles_get_directory(struct cachefiles_cache *cache,
 					       struct dentry *dir,
-					       const char *name);
+					       const char *name,
+					       struct cachefiles_object *object);
 
 extern int cachefiles_cull(struct cachefiles_cache *cache, struct dentry *dir,
 			   char *filename);
