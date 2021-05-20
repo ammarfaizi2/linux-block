@@ -21,9 +21,6 @@ static struct fscache_object *cachefiles_alloc_object(
 {
 	struct cachefiles_object *object;
 	struct cachefiles_cache *cache;
-	unsigned keylen;
-	void *buffer, *p;
-	char *key;
 
 	cache = container_of(_cache, struct cachefiles_cache, cache);
 
@@ -42,37 +39,14 @@ static struct fscache_object *cachefiles_alloc_object(
 
 	object->type = cookie->type;
 
-	/* get hold of the raw key
-	 * - stick the length on the front and leave space on the back for the
-	 *   encoder
-	 */
-	buffer = kmalloc((2 + 512) + 3, cachefiles_gfp);
-	if (!buffer)
-		goto nomem_buffer;
-
-	keylen = cookie->key_len;
-	p = fscache_get_key(cookie);
-	memcpy(buffer + 2, p, keylen);
-
-	*(uint16_t *)buffer = keylen;
-	((char *)buffer)[keylen + 2] = 0;
-	((char *)buffer)[keylen + 3] = 0;
-	((char *)buffer)[keylen + 4] = 0;
-
 	/* turn the raw key into something that can work with as a filename */
-	key = cachefiles_cook_key(buffer, keylen + 2, object->type);
-	kfree(buffer);
-	if (!key)
+	if (!cachefiles_cook_key(object))
 		goto nomem_key;
 
-	object->lookup_key = key;
-
-	_leave(" = %x [%s]", object->fscache.debug_id, key);
+	_leave(" = %x [%s]", object->fscache.debug_id, object->d_name);
 	return &object->fscache;
 
 nomem_key:
-	kfree(buffer);
-nomem_buffer:
 	kmem_cache_free(cachefiles_object_jar, object);
 	fscache_object_destroyed(&cache->cache);
 nomem_object:
@@ -98,11 +72,11 @@ static int cachefiles_lookup_object(struct fscache_object *_object)
 			      struct cachefiles_object, fscache);
 	object = container_of(_object, struct cachefiles_object, fscache);
 
-	ASSERTCMP(object->lookup_key, !=, NULL);
+	ASSERT(object->d_name);
 
 	/* look up the key, creating any missing bits */
 	cachefiles_begin_secure(cache, &saved_cred);
-	ret = cachefiles_walk_to_object(parent, object, object->lookup_key);
+	ret = cachefiles_walk_to_object(parent, object);
 	cachefiles_end_secure(cache, saved_cred);
 
 	/* polish off by setting the attributes of non-index files */
@@ -130,9 +104,6 @@ static void cachefiles_lookup_complete(struct fscache_object *_object)
 	object = container_of(_object, struct cachefiles_object, fscache);
 
 	_enter("{OBJ%x}", object->fscache.debug_id);
-
-	kfree(object->lookup_key);
-	object->lookup_key = NULL;
 }
 
 /*
@@ -224,7 +195,7 @@ static void cachefiles_drop_object(struct fscache_object *_object)
 			dput(object->backer);
 		object->backer = NULL;
 
-		cachefiles_unmark_inode_in_use(object, object->dentry);
+		cachefiles_unmark_inode_in_use(object);
 		dput(object->dentry);
 		object->dentry = NULL;
 	}
@@ -269,7 +240,7 @@ void cachefiles_put_object(struct fscache_object *_object,
 		ASSERTCMP(object->fscache.n_ops, ==, 0);
 		ASSERTCMP(object->fscache.n_children, ==, 0);
 
-		kfree(object->lookup_key);
+		kfree(object->d_name);
 
 		cache = object->fscache.cache;
 		fscache_object_destroy(&object->fscache);
