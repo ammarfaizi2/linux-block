@@ -198,7 +198,7 @@ struct cachefiles_object {
 	struct list_head	dep_link;	/* link in parent's dependents list */
 
 	char				*d_name;	/* Filename */
-	struct dentry			*dentry;	/* the file/dir representing this object */
+	struct file			*file;		/* The file representing this object */
 	loff_t				i_size;		/* object size */
 	atomic_t			usage;		/* object usage count */
 	uint8_t				type;		/* object type */
