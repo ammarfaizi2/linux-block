@@ -63,7 +63,7 @@ static int cachefiles_read(struct netfs_cache_resources *cres,
 			   void *term_func_priv)
 {
 	struct cachefiles_kiocb *ki;
-	struct file *file = cres->cache_priv2;
+	struct file *file = cachefiles_cres_file(cres);
 	unsigned int old_nofs;
 	ssize_t ret = -ENODATA;
 	size_t len = iov_iter_count(iter), skipped = 0;
@@ -190,7 +190,7 @@ static int cachefiles_write(struct netfs_cache_resources *cres,
 {
 	struct cachefiles_kiocb *ki;
 	struct inode *inode;
-	struct file *file = cres->cache_priv2;
+	struct file *file = cachefiles_cres_file(cres);
 	unsigned int old_nofs;
 	ssize_t ret = -ENOBUFS;
 	size_t len = iov_iter_count(iter);
@@ -385,7 +385,7 @@ static void cachefiles_end_operation(struct netfs_cache_resources *cres)
 {
 #if 0
 	struct fscache_operation *op = cres->cache_priv;
-	struct file *file = cres->cache_priv2;
+	struct file *file = cachefiles_cres_file(cres);
 
 	_enter("");
 
@@ -414,41 +414,16 @@ static const struct netfs_cache_ops cachefiles_netfs_cache_ops = {
 int cachefiles_begin_operation(struct netfs_cache_resources *cres)
 {
 #if 0
-	struct cachefiles_object *object;
-	struct cachefiles_cache *cache;
-	struct path path;
-	struct file *file;
+	struct cachefiles_object *object = op->object;
 
 	_enter("");
 
-	object = container_of(op->object, struct cachefiles_object, fscache);
-	cache = container_of(object->fscache.cache,
-			     struct cachefiles_cache, cache);
-
-	path.mnt = cache->mnt;
-	path.dentry = object->dentry;
-	file = open_with_fake_path(&path, O_RDWR | O_LARGEFILE | O_DIRECT,
-				   d_inode(object->dentry), cache->cache_cred);
-	if (IS_ERR(file))
-		return PTR_ERR(file);
-	if (!S_ISREG(file_inode(file)->i_mode))
-		goto error_file;
-	if (unlikely(!file->f_op->read_iter) ||
-	    unlikely(!file->f_op->write_iter)) {
-		pr_notice("Cache does not support read_iter and write_iter\n");
-		goto error_file;
-	}
-
-	atomic_inc(&op->usage);
-	cres->cache_priv = op;
-	cres->cache_priv2 = file;
-	cres->ops = &cachefiles_netfs_cache_ops;
-	cres->debug_id = object->fscache.debug_id;
+	cres->cache_priv	= op;
+	cres->cache_priv2	= get_file(object->file);
+	cres->ops		= &cachefiles_netfs_cache_ops;
+	cres->debug_id		= object->cookie->debug_id;
 	_leave("");
 	return 0;
-
-error_file:
-	fput(file);
 #endif
 	cres->ops = &cachefiles_netfs_cache_ops;
 	return -EIO;
