@@ -6,9 +6,11 @@
  *
  * Copyright Red Hat, 2009
  * Copyright IBM Corporation, 2009
+ * Copyright SUSE, 2021
  *
  * Author: Ingo Molnar <mingo@elte.hu>
  *	   Paul E. McKenney <paulmck@linux.ibm.com>
+ *	   Frederic Weisbecker <frederic@kernel.org>
  */
 
 #ifdef CONFIG_RCU_NOCB_CPU
