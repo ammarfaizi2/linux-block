@@ -36,7 +36,6 @@ struct cachefiles_object {
 	struct fscache_object		fscache;	/* fscache handle */
 	char				*d_name;	/* Filename */
 	struct dentry			*dentry;	/* the file/dir representing this object */
-	struct dentry			*backer;	/* backing file */
 	loff_t				i_size;		/* object size */
 	atomic_t			usage;		/* object usage count */
 	uint8_t				type;		/* object type */

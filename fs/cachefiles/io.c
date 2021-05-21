@@ -396,9 +396,9 @@ int cachefiles_begin_read_operation(struct netfs_read_request *rreq)
 			     struct cachefiles_cache, cache);
 
 	path.mnt = cache->mnt;
-	path.dentry = object->backer;
+	path.dentry = object->dentry;
 	file = open_with_fake_path(&path, O_RDWR | O_LARGEFILE | O_DIRECT,
-				   d_inode(object->backer), cache->cache_cred);
+				   d_inode(object->dentry), cache->cache_cred);
 	if (IS_ERR(file))
 		return PTR_ERR(file);
 	if (!S_ISREG(file_inode(file)->i_mode))
