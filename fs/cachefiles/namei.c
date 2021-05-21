@@ -106,7 +106,9 @@ static int cachefiles_bury_object(struct cachefiles_cache *cache,
 			cachefiles_io_error(cache, "Unlink security error");
 		} else {
 			trace_cachefiles_unlink(object, rep, why);
+			dget(rep);
 			ret = vfs_unlink(&init_user_ns, d_inode(dir), rep, NULL);
+			dput(rep);
 		}
 
 		inode_unlock(d_inode(dir));
