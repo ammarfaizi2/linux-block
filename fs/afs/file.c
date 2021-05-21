@@ -183,7 +183,7 @@ int afs_release(struct inode *inode, struct file *file)
 
 	if ((file->f_mode & FMODE_WRITE)) {
 		i_size = i_size_read(&vnode->vfs_inode);
-		aux.data_version = vnode->status.data_version;
+		afs_set_cache_aux(vnode, &aux);
 		fscache_unuse_cookie(afs_vnode_cache(vnode), &aux, &i_size);
 	} else {
 		fscache_unuse_cookie(afs_vnode_cache(vnode), NULL, NULL);
