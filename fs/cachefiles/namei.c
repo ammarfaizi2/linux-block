@@ -459,7 +459,6 @@ lookup_again:
 	if (ret < 0)
 		goto check_error;
 
-	object->backer = object->dentry;
 	object->new = false;
 	fscache_obtained_object(&object->fscache);
 	_leave(" = 0 [%lu]", d_backing_inode(object->dentry)->i_ino);
