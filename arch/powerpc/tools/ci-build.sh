@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [[ -z "$TARGET" || -z "$IMAGE" || -z "$SUBARCH" ]]; then
+if [[ -z "$TARGET" || -z "$IMAGE" ]]; then
     echo "Error: required environment variables not set!"
     exit 1
 fi
@@ -34,10 +34,10 @@ if [[ -n "$MERGE_CONFIG" ]]; then
     cmd+="-e MERGE_CONFIG=$MERGE_CONFIG "
 fi
 
-if [[ "$SUBARCH" == "ppc64" ]]; then
-    cross="powerpc-linux-gnu-"
-else
+if [[ "$SUBARCH" == "ppc64le" ]]; then
     cross="powerpc64le-linux-gnu-"
+else
+    cross="powerpc-linux-gnu-"
 fi
 cmd+="-e CROSS_COMPILE=$cross "
 
