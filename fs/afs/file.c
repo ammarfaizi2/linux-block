@@ -506,6 +506,7 @@ static int afs_releasepage(struct page *page, gfp_t gfp_flags)
 			return false;
 		wait_on_page_fscache(page);
 	}
+	fscache_note_page_release(afs_vnode_cache(vnode));
 #endif
 
 	if (PagePrivate(page)) {
