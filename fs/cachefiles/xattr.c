@@ -31,23 +31,23 @@ int cachefiles_set_object_xattr(struct cachefiles_object *object,
 {
 	struct cachefiles_xattr *buf;
 	struct dentry *dentry = object->dentry;
-	unsigned int len = object->fscache.cookie->aux_len;
+	unsigned int len = object->cookie->aux_len;
 	int ret;
 
 	if (!dentry)
 		return -ESTALE;
 
-	_enter("%x,#%d", object->fscache.debug_id, len);
+	_enter("%x,#%d", object->debug_id, len);
 
 	buf = kmalloc(sizeof(struct cachefiles_xattr) + len, GFP_KERNEL);
 	if (!buf)
 		return -ENOMEM;
 
-	buf->type = object->fscache.cookie->type;
+	buf->type = object->cookie->type;
 	if (len > 0)
-		memcpy(buf->data, fscache_get_aux(object->fscache.cookie), len);
+		memcpy(buf->data, fscache_get_aux(object->cookie), len);
 
-	clear_bit(FSCACHE_COOKIE_AUX_UPDATED, &object->fscache.cookie->flags);
+	clear_bit(FSCACHE_COOKIE_AUX_UPDATED, &object->cookie->flags);
 	ret = vfs_setxattr(&init_user_ns, dentry, cachefiles_xattr_cache,
 			   buf, sizeof(struct cachefiles_xattr) + len,
 			   xattr_flags);
@@ -68,8 +68,8 @@ int cachefiles_check_auxdata(struct cachefiles_object *object)
 {
 	struct cachefiles_xattr *buf;
 	struct dentry *dentry = object->dentry;
-	unsigned int len = object->fscache.cookie->aux_len, tlen;
-	const void *p = fscache_get_aux(object->fscache.cookie);
+	unsigned int len = object->cookie->aux_len, tlen;
+	const void *p = fscache_get_aux(object->cookie);
 	ssize_t ret;
 
 	ASSERT(dentry);
@@ -82,7 +82,7 @@ int cachefiles_check_auxdata(struct cachefiles_object *object)
 
 	ret = vfs_getxattr(&init_user_ns, dentry, cachefiles_xattr_cache, buf, tlen);
 	if (ret == tlen &&
-	    buf->type == object->fscache.cookie->type &&
+	    buf->type == object->cookie->type &&
 	    memcmp(buf->data, p, len) == 0)
 		ret = 0;
 	else

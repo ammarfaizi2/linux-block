@@ -193,7 +193,7 @@ static int cachefiles_daemon_add_cache(struct cachefiles_cache *cache)
 	}
 
 	fsdef->dentry = cachedir;
-	fsdef->fscache.cookie = NULL;
+	fsdef->cookie = NULL;
 
 	/* get the graveyard directory */
 	graveyard = cachefiles_get_directory(cache, root, "graveyard", NULL);
@@ -210,10 +210,10 @@ static int cachefiles_daemon_add_cache(struct cachefiles_cache *cache)
 			   "%s",
 			   fsdef->dentry->d_sb->s_id);
 
-	fscache_object_init(&fsdef->fscache, &fscache_fsdef_index,
+	fscache_object_init(fsdef, &fscache_fsdef_index,
 			    &cache->cache);
 
-	ret = fscache_add_cache(&cache->cache, &fsdef->fscache, cache->tag);
+	ret = fscache_add_cache(&cache->cache, fsdef, cache->tag);
 	if (ret < 0)
 		goto error_add_cache;
 

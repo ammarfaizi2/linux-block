@@ -14,19 +14,19 @@
 #include <linux/prefetch.h>
 #include "internal.h"
 
-static const struct fscache_state *fscache_abort_initialisation(struct fscache_object *, int);
-static const struct fscache_state *fscache_kill_dependents(struct fscache_object *, int);
-static const struct fscache_state *fscache_drop_object(struct fscache_object *, int);
-static const struct fscache_state *fscache_initialise_object(struct fscache_object *, int);
-static const struct fscache_state *fscache_invalidate_object(struct fscache_object *, int);
-static const struct fscache_state *fscache_jumpstart_dependents(struct fscache_object *, int);
-static const struct fscache_state *fscache_kill_object(struct fscache_object *, int);
-static const struct fscache_state *fscache_lookup_failure(struct fscache_object *, int);
-static const struct fscache_state *fscache_look_up_object(struct fscache_object *, int);
-static const struct fscache_state *fscache_object_available(struct fscache_object *, int);
-static const struct fscache_state *fscache_parent_ready(struct fscache_object *, int);
-static const struct fscache_state *fscache_update_object(struct fscache_object *, int);
-static const struct fscache_state *fscache_object_dead(struct fscache_object *, int);
+static const struct fscache_state *fscache_abort_initialisation(struct cachefiles_object *, int);
+static const struct fscache_state *fscache_kill_dependents(struct cachefiles_object *, int);
+static const struct fscache_state *fscache_drop_object(struct cachefiles_object *, int);
+static const struct fscache_state *fscache_initialise_object(struct cachefiles_object *, int);
+static const struct fscache_state *fscache_invalidate_object(struct cachefiles_object *, int);
+static const struct fscache_state *fscache_jumpstart_dependents(struct cachefiles_object *, int);
+static const struct fscache_state *fscache_kill_object(struct cachefiles_object *, int);
+static const struct fscache_state *fscache_lookup_failure(struct cachefiles_object *, int);
+static const struct fscache_state *fscache_look_up_object(struct cachefiles_object *, int);
+static const struct fscache_state *fscache_object_available(struct cachefiles_object *, int);
+static const struct fscache_state *fscache_parent_ready(struct cachefiles_object *, int);
+static const struct fscache_state *fscache_update_object(struct cachefiles_object *, int);
+static const struct fscache_state *fscache_object_dead(struct cachefiles_object *, int);
 
 #define __STATE_NAME(n) fscache_osm_##n
 #define STATE(n) (&__STATE_NAME(n))
@@ -133,21 +133,21 @@ static const struct fscache_transition fscache_osm_run_oob[] = {
 	   { 0, NULL }
 };
 
-static int  fscache_get_object(struct fscache_object *,
+static int  fscache_get_object(struct cachefiles_object *,
 			       enum fscache_obj_ref_trace);
-static void fscache_put_object(struct fscache_object *,
+static void fscache_put_object(struct cachefiles_object *,
 			       enum fscache_obj_ref_trace);
-static bool fscache_enqueue_dependents(struct fscache_object *, int);
-static void fscache_dequeue_object(struct fscache_object *);
-static void fscache_update_aux_data(struct fscache_object *);
+static bool fscache_enqueue_dependents(struct cachefiles_object *, int);
+static void fscache_dequeue_object(struct cachefiles_object *);
+static void fscache_update_aux_data(struct cachefiles_object *);
 
 /*
  * we need to notify the parent when an op completes that we had outstanding
  * upon it
  */
-static inline void fscache_done_parent_op(struct fscache_object *object)
+static inline void fscache_done_parent_op(struct cachefiles_object *object)
 {
-	struct fscache_object *parent = object->parent;
+	struct cachefiles_object *parent = object->parent;
 
 	_enter("OBJ%x {OBJ%x,%x}",
 	       object->debug_id, parent->debug_id, parent->n_ops);
@@ -163,7 +163,7 @@ static inline void fscache_done_parent_op(struct fscache_object *object)
 /*
  * Object state machine dispatcher.
  */
-static void fscache_object_sm_dispatcher(struct fscache_object *object)
+static void fscache_object_sm_dispatcher(struct cachefiles_object *object)
 {
 	const struct fscache_transition *t;
 	const struct fscache_state *state, *new_state;
@@ -274,8 +274,8 @@ unmask_events:
  */
 static void fscache_object_work_func(struct work_struct *work)
 {
-	struct fscache_object *object =
-		container_of(work, struct fscache_object, work);
+	struct cachefiles_object *object =
+		container_of(work, struct cachefiles_object, work);
 
 	_enter("{OBJ%x}", object->debug_id);
 
@@ -294,7 +294,7 @@ static void fscache_object_work_func(struct work_struct *work)
  * See Documentation/filesystems/caching/backend-api.rst for a complete
  * description.
  */
-void fscache_object_init(struct fscache_object *object,
+void fscache_object_init(struct cachefiles_object *object,
 			 struct fscache_cookie *cookie,
 			 struct fscache_cache *cache)
 {
@@ -335,7 +335,7 @@ EXPORT_SYMBOL(fscache_object_init);
  * Mark the object as no longer being live, making sure that we synchronise
  * against op submission.
  */
-static inline void fscache_mark_object_dead(struct fscache_object *object)
+static inline void fscache_mark_object_dead(struct cachefiles_object *object)
 {
 	spin_lock(&object->lock);
 	clear_bit(FSCACHE_OBJECT_IS_LIVE, &object->flags);
@@ -345,7 +345,7 @@ static inline void fscache_mark_object_dead(struct fscache_object *object)
 /*
  * Abort object initialisation before we start it.
  */
-static const struct fscache_state *fscache_abort_initialisation(struct fscache_object *object,
+static const struct fscache_state *fscache_abort_initialisation(struct cachefiles_object *object,
 								int event)
 {
 	_enter("{OBJ%x},%d", object->debug_id, event);
@@ -362,10 +362,10 @@ static const struct fscache_state *fscache_abort_initialisation(struct fscache_o
  * - we may need to start the process of creating a parent and we need to wait
  *   for the parent's lookup and creation to complete if it's not there yet
  */
-static const struct fscache_state *fscache_initialise_object(struct fscache_object *object,
+static const struct fscache_state *fscache_initialise_object(struct cachefiles_object *object,
 							     int event)
 {
-	struct fscache_object *parent;
+	struct cachefiles_object *parent;
 	bool success;
 
 	_enter("{OBJ%x},%d", object->debug_id, event);
@@ -417,10 +417,10 @@ static const struct fscache_state *fscache_initialise_object(struct fscache_obje
 /*
  * Once the parent object is ready, we should kick off our lookup op.
  */
-static const struct fscache_state *fscache_parent_ready(struct fscache_object *object,
+static const struct fscache_state *fscache_parent_ready(struct cachefiles_object *object,
 							int event)
 {
-	struct fscache_object *parent = object->parent;
+	struct cachefiles_object *parent = object->parent;
 
 	_enter("{OBJ%x},%d", object->debug_id, event);
 
@@ -440,11 +440,11 @@ static const struct fscache_state *fscache_parent_ready(struct fscache_object *o
  * - we hold an "access lock" on the parent object, so the parent object cannot
  *   be withdrawn by either party till we've finished
  */
-static const struct fscache_state *fscache_look_up_object(struct fscache_object *object,
+static const struct fscache_state *fscache_look_up_object(struct cachefiles_object *object,
 							  int event)
 {
 	struct fscache_cookie *cookie = object->cookie;
-	struct fscache_object *parent = object->parent;
+	struct cachefiles_object *parent = object->parent;
 	int ret;
 
 	_enter("{OBJ%x},%d", object->debug_id, event);
@@ -499,7 +499,7 @@ static const struct fscache_state *fscache_look_up_object(struct fscache_object 
  * Note negative lookup, permitting those waiting to read data from an already
  * existing backing object to continue as there's no data for them to read.
  */
-void fscache_object_lookup_negative(struct fscache_object *object)
+void fscache_object_lookup_negative(struct cachefiles_object *object)
 {
 	struct fscache_cookie *cookie = object->cookie;
 
@@ -531,7 +531,7 @@ EXPORT_SYMBOL(fscache_object_lookup_negative);
  * Note that after calling this, an object's cookie may be relinquished by the
  * netfs, and so must be accessed with object lock held.
  */
-void fscache_obtained_object(struct fscache_object *object)
+void fscache_obtained_object(struct cachefiles_object *object)
 {
 	struct fscache_cookie *cookie = object->cookie;
 
@@ -563,7 +563,7 @@ EXPORT_SYMBOL(fscache_obtained_object);
 /*
  * handle an object that has just become available
  */
-static const struct fscache_state *fscache_object_available(struct fscache_object *object,
+static const struct fscache_state *fscache_object_available(struct cachefiles_object *object,
 							    int event)
 {
 	_enter("{OBJ%x},%d", object->debug_id, event);
@@ -588,7 +588,7 @@ static const struct fscache_state *fscache_object_available(struct fscache_objec
 /*
  * Wake up this object's dependent objects now that we've become available.
  */
-static const struct fscache_state *fscache_jumpstart_dependents(struct fscache_object *object,
+static const struct fscache_state *fscache_jumpstart_dependents(struct cachefiles_object *object,
 								int event)
 {
 	_enter("{OBJ%x},%d", object->debug_id, event);
@@ -601,7 +601,7 @@ static const struct fscache_state *fscache_jumpstart_dependents(struct fscache_o
 /*
  * Handle lookup or creation failute.
  */
-static const struct fscache_state *fscache_lookup_failure(struct fscache_object *object,
+static const struct fscache_state *fscache_lookup_failure(struct cachefiles_object *object,
 							  int event)
 {
 	struct fscache_cookie *cookie;
@@ -629,7 +629,7 @@ static const struct fscache_state *fscache_lookup_failure(struct fscache_object 
  * Wait for completion of all active operations on this object and the death of
  * all child objects of this object.
  */
-static const struct fscache_state *fscache_kill_object(struct fscache_object *object,
+static const struct fscache_state *fscache_kill_object(struct cachefiles_object *object,
 						       int event)
 {
 	_enter("{OBJ%x,%d,%d},%d",
@@ -652,7 +652,7 @@ static const struct fscache_state *fscache_kill_object(struct fscache_object *ob
 /*
  * Kill dependent objects.
  */
-static const struct fscache_state *fscache_kill_dependents(struct fscache_object *object,
+static const struct fscache_state *fscache_kill_dependents(struct cachefiles_object *object,
 							   int event)
 {
 	_enter("{OBJ%x},%d", object->debug_id, event);
@@ -665,10 +665,10 @@ static const struct fscache_state *fscache_kill_dependents(struct fscache_object
 /*
  * Drop an object's attachments
  */
-static const struct fscache_state *fscache_drop_object(struct fscache_object *object,
+static const struct fscache_state *fscache_drop_object(struct cachefiles_object *object,
 						       int event)
 {
-	struct fscache_object *parent = object->parent;
+	struct cachefiles_object *parent = object->parent;
 	struct fscache_cookie *cookie = object->cookie;
 	struct fscache_cache *cache = object->cache;
 	bool awaken = false;
@@ -738,7 +738,7 @@ static const struct fscache_state *fscache_drop_object(struct fscache_object *ob
 /*
  * get a ref on an object
  */
-static int fscache_get_object(struct fscache_object *object,
+static int fscache_get_object(struct cachefiles_object *object,
 			      enum fscache_obj_ref_trace why)
 {
 	int ret;
@@ -752,7 +752,7 @@ static int fscache_get_object(struct fscache_object *object,
 /*
  * Discard a ref on an object
  */
-static void fscache_put_object(struct fscache_object *object,
+static void fscache_put_object(struct cachefiles_object *object,
 			       enum fscache_obj_ref_trace why)
 {
 	fscache_stat(&fscache_n_cop_put_object);
@@ -766,7 +766,7 @@ static void fscache_put_object(struct fscache_object *object,
  *
  * Note the imminent destruction and deallocation of a cache object record.
  */
-void fscache_object_destroy(struct fscache_object *object)
+void fscache_object_destroy(struct cachefiles_object *object)
 {
 	/* We can get rid of the cookie now */
 	fscache_put_cookie(object->cookie, fscache_cookie_put_object);
@@ -777,7 +777,7 @@ EXPORT_SYMBOL(fscache_object_destroy);
 /*
  * enqueue an object for metadata-type processing
  */
-void fscache_enqueue_object(struct fscache_object *object)
+void fscache_enqueue_object(struct cachefiles_object *object)
 {
 	_enter("{OBJ%x}", object->debug_id);
 
@@ -831,9 +831,9 @@ EXPORT_SYMBOL_GPL(fscache_object_sleep_till_congested);
  * again then return false immediately.  We return true if the list was
  * cleared.
  */
-static bool fscache_enqueue_dependents(struct fscache_object *object, int event)
+static bool fscache_enqueue_dependents(struct cachefiles_object *object, int event)
 {
-	struct fscache_object *dep;
+	struct cachefiles_object *dep;
 	bool ret = true;
 
 	_enter("{OBJ%x}", object->debug_id);
@@ -845,7 +845,7 @@ static bool fscache_enqueue_dependents(struct fscache_object *object, int event)
 
 	while (!list_empty(&object->dependents)) {
 		dep = list_entry(object->dependents.next,
-				 struct fscache_object, dep_link);
+				 struct cachefiles_object, dep_link);
 		list_del_init(&dep->dep_link);
 
 		fscache_raise_event(dep, event);
@@ -864,7 +864,7 @@ static bool fscache_enqueue_dependents(struct fscache_object *object, int event)
 /*
  * remove an object from whatever queue it's waiting on
  */
-static void fscache_dequeue_object(struct fscache_object *object)
+static void fscache_dequeue_object(struct cachefiles_object *object)
 {
 	_enter("{OBJ%x}", object->debug_id);
 
@@ -877,7 +877,7 @@ static void fscache_dequeue_object(struct fscache_object *object)
 	_leave("");
 }
 
-static const struct fscache_state *fscache_invalidate_object(struct fscache_object *object,
+static const struct fscache_state *fscache_invalidate_object(struct cachefiles_object *object,
 							     int event)
 {
 	return transit_to(UPDATE_OBJECT);
@@ -886,7 +886,7 @@ static const struct fscache_state *fscache_invalidate_object(struct fscache_obje
 /*
  * Update auxiliary data.
  */
-static void fscache_update_aux_data(struct fscache_object *object)
+static void fscache_update_aux_data(struct cachefiles_object *object)
 {
 	fscache_stat(&fscache_n_updates_run);
 	fscache_stat(&fscache_n_cop_update_object);
@@ -897,7 +897,7 @@ static void fscache_update_aux_data(struct fscache_object *object)
 /*
  * Asynchronously update an object.
  */
-static const struct fscache_state *fscache_update_object(struct fscache_object *object,
+static const struct fscache_state *fscache_update_object(struct cachefiles_object *object,
 							 int event)
 {
 	_enter("{OBJ%x},%d", object->debug_id, event);
@@ -915,7 +915,7 @@ static const struct fscache_state *fscache_update_object(struct fscache_object *
  * Note that an object lookup found an on-disk object that was adjudged to be
  * stale and has been deleted.  The lookup will be retried.
  */
-void fscache_object_retrying_stale(struct fscache_object *object)
+void fscache_object_retrying_stale(struct cachefiles_object *object)
 {
 	fscache_stat(&fscache_n_cache_no_space_reject);
 }
@@ -929,7 +929,7 @@ EXPORT_SYMBOL(fscache_object_retrying_stale);
  * Note that an object was killed.  Returns true if the object was
  * already marked killed, false if it wasn't.
  */
-void fscache_object_mark_killed(struct fscache_object *object,
+void fscache_object_mark_killed(struct cachefiles_object *object,
 				enum fscache_why_object_killed why)
 {
 	if (test_and_set_bit(FSCACHE_OBJECT_KILLED_BY_CACHE, &object->flags)) {
@@ -961,7 +961,7 @@ EXPORT_SYMBOL(fscache_object_mark_killed);
  * already running (and so can be requeued) but hasn't yet cleared the event
  * mask.
  */
-static const struct fscache_state *fscache_object_dead(struct fscache_object *object,
+static const struct fscache_state *fscache_object_dead(struct cachefiles_object *object,
 						       int event)
 {
 	if (!test_and_set_bit(FSCACHE_OBJECT_RUN_AFTER_DEAD,

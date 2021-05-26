@@ -22,7 +22,7 @@
 
 struct fscache_cache;
 struct fscache_cache_ops;
-struct fscache_object;
+struct cachefiles_object;
 enum fscache_cookie_trace;
 
 enum fscache_obj_ref_trace {
@@ -65,7 +65,7 @@ struct fscache_cache {
 	struct list_head	object_list;	/* list of data/index objects */
 	spinlock_t		object_list_lock;
 	atomic_t		object_count;	/* no. of live objects in this cache */
-	struct fscache_object	*fsdef;		/* object for the fsdef index */
+	struct cachefiles_object	*fsdef;		/* object for the fsdef index */
 	unsigned long		flags;
 #define FSCACHE_IOERROR		0	/* cache stopped on I/O error */
 #define FSCACHE_CACHE_WITHDRAWN	1	/* cache has been withdrawn */
@@ -81,46 +81,46 @@ struct fscache_cache_ops {
 	const char *name;
 
 	/* allocate an object record for a cookie */
-	struct fscache_object *(*alloc_object)(struct fscache_cache *cache,
+	struct cachefiles_object *(*alloc_object)(struct fscache_cache *cache,
 					       struct fscache_cookie *cookie);
 
 	/* look up the object for a cookie
 	 * - return -ETIMEDOUT to be requeued
 	 */
-	int (*lookup_object)(struct fscache_object *object);
+	int (*lookup_object)(struct cachefiles_object *object);
 
 	/* finished looking up */
-	void (*lookup_complete)(struct fscache_object *object);
+	void (*lookup_complete)(struct cachefiles_object *object);
 
 	/* increment the usage count on this object (may fail if unmounting) */
-	struct fscache_object *(*grab_object)(struct fscache_object *object,
+	struct cachefiles_object *(*grab_object)(struct cachefiles_object *object,
 					      enum fscache_obj_ref_trace why);
 
 	/* pin an object in the cache */
-	int (*pin_object)(struct fscache_object *object);
+	int (*pin_object)(struct cachefiles_object *object);
 
 	/* unpin an object in the cache */
-	void (*unpin_object)(struct fscache_object *object);
+	void (*unpin_object)(struct cachefiles_object *object);
 
 	/* store the updated auxiliary data on an object */
-	void (*update_object)(struct fscache_object *object);
+	void (*update_object)(struct cachefiles_object *object);
 
 	/* Invalidate an object */
-	void (*invalidate_object)(struct fscache_object *object);
+	void (*invalidate_object)(struct cachefiles_object *object);
 
 	/* discard the resources pinned by an object and effect retirement if
 	 * necessary */
-	void (*drop_object)(struct fscache_object *object);
+	void (*drop_object)(struct cachefiles_object *object);
 
 	/* dispose of a reference to an object */
-	void (*put_object)(struct fscache_object *object,
+	void (*put_object)(struct cachefiles_object *object,
 			   enum fscache_obj_ref_trace why);
 
 	/* sync a cache */
 	void (*sync_cache)(struct fscache_cache *cache);
 
 	/* reserve space for an object's data and associated metadata */
-	int (*reserve_space)(struct fscache_object *object, loff_t i_size);
+	int (*reserve_space)(struct cachefiles_object *object, loff_t i_size);
 
 	/* Begin an operation for the netfs lib */
 	int (*begin_operation)(struct netfs_cache_resources *cres);
@@ -155,7 +155,7 @@ struct fscache_transition {
 struct fscache_state {
 	char name[24];
 	char short_name[8];
-	const struct fscache_state *(*work)(struct fscache_object *object,
+	const struct fscache_state *(*work)(struct cachefiles_object *object,
 					    int event);
 	const struct fscache_transition transitions[];
 };
@@ -163,7 +163,7 @@ struct fscache_state {
 /*
  * on-disk cache file or index handle
  */
-struct fscache_object {
+struct cachefiles_object {
 	const struct fscache_state *state;	/* Object state machine state */
 	const struct fscache_transition *oob_table; /* OOB state transition table */
 	int			debug_id;	/* debugging ID */
@@ -192,40 +192,49 @@ struct fscache_object {
 	struct hlist_node	cookie_link;	/* link in cookie->backing_objects */
 	struct fscache_cache	*cache;		/* cache that supplied this object */
 	struct fscache_cookie	*cookie;	/* netfs's file/index object */
-	struct fscache_object	*parent;	/* parent object */
+	struct cachefiles_object	*parent;	/* parent object */
 	struct work_struct	work;		/* attention scheduling record */
 	struct list_head	dependents;	/* FIFO of dependent objects */
 	struct list_head	dep_link;	/* link in parent's dependents list */
+
+	char				*d_name;	/* Filename */
+	struct dentry			*dentry;	/* the file/dir representing this object */
+	loff_t				i_size;		/* object size */
+	atomic_t			usage;		/* object usage count */
+	uint8_t				type;		/* object type */
+	bool				new;		/* T if object new */
+	u8				d_name_len;	/* Length of filename */
+	u8				key_hash;
 };
 
-extern void fscache_object_init(struct fscache_object *, struct fscache_cookie *,
+extern void fscache_object_init(struct cachefiles_object *, struct fscache_cookie *,
 				struct fscache_cache *);
-extern void fscache_object_destroy(struct fscache_object *);
+extern void fscache_object_destroy(struct cachefiles_object *);
 
-extern void fscache_object_lookup_negative(struct fscache_object *object);
-extern void fscache_obtained_object(struct fscache_object *object);
+extern void fscache_object_lookup_negative(struct cachefiles_object *object);
+extern void fscache_obtained_object(struct cachefiles_object *object);
 
-static inline bool fscache_object_is_live(struct fscache_object *object)
+static inline bool fscache_object_is_live(struct cachefiles_object *object)
 {
 	return test_bit(FSCACHE_OBJECT_IS_LIVE, &object->flags);
 }
 
-static inline bool fscache_object_is_dying(struct fscache_object *object)
+static inline bool fscache_object_is_dying(struct cachefiles_object *object)
 {
 	return !fscache_object_is_live(object);
 }
 
-static inline bool fscache_object_is_available(struct fscache_object *object)
+static inline bool fscache_object_is_available(struct cachefiles_object *object)
 {
 	return test_bit(FSCACHE_OBJECT_IS_AVAILABLE, &object->flags);
 }
 
-static inline bool fscache_cache_is_broken(struct fscache_object *object)
+static inline bool fscache_cache_is_broken(struct cachefiles_object *object)
 {
 	return test_bit(FSCACHE_IOERROR, &object->cache->flags);
 }
 
-static inline bool fscache_object_is_active(struct fscache_object *object)
+static inline bool fscache_object_is_active(struct cachefiles_object *object)
 {
 	return fscache_object_is_available(object) &&
 		fscache_object_is_live(object) &&
@@ -251,7 +260,7 @@ static inline void fscache_object_destroyed(struct fscache_cache *cache)
  * Note that an object encountered a fatal error (usually an I/O error) and
  * that it should be withdrawn as soon as possible.
  */
-static inline void fscache_object_lookup_error(struct fscache_object *object)
+static inline void fscache_object_lookup_error(struct cachefiles_object *object)
 {
 	set_bit(FSCACHE_OBJECT_EV_ERROR, &object->events);
 }
@@ -268,7 +277,7 @@ static inline void __fscache_use_cookie(struct fscache_cookie *cookie)
  * Request usage of the cookie attached to an object.  NULL is returned if the
  * relinquishment had reduced the cookie usage count to 0.
  */
-static inline bool fscache_use_cookie(struct fscache_object *object)
+static inline bool fscache_use_cookie(struct cachefiles_object *object)
 {
 	struct fscache_cookie *cookie = object->cookie;
 	return atomic_inc_not_zero(&cookie->n_active) != 0;
@@ -291,7 +300,7 @@ static inline void __fscache_wake_unused_cookie(struct fscache_cookie *cookie)
  * Cease usage of the cookie attached to an object.  When the users count
  * reaches zero then the cookie relinquishment will be permitted to proceed.
  */
-static inline void fscache_unuse_cookie(struct fscache_object *object)
+static inline void fscache_unuse_cookie(struct cachefiles_object *object)
 {
 	struct fscache_cookie *cookie = object->cookie;
 	if (__fscache_unuse_cookie(cookie))
@@ -307,7 +316,7 @@ void fscache_init_cache(struct fscache_cache *cache,
 			const char *idfmt, ...);
 
 extern int fscache_add_cache(struct fscache_cache *cache,
-			     struct fscache_object *fsdef,
+			     struct cachefiles_object *fsdef,
 			     const char *tagname);
 extern void fscache_withdraw_cache(struct fscache_cache *cache);
 
@@ -315,7 +324,7 @@ extern void fscache_io_error(struct fscache_cache *cache);
 
 extern bool fscache_object_sleep_till_congested(signed long *timeoutp);
 
-extern void fscache_object_retrying_stale(struct fscache_object *object);
+extern void fscache_object_retrying_stale(struct cachefiles_object *object);
 
 enum fscache_why_object_killed {
 	FSCACHE_OBJECT_IS_STALE,
@@ -323,7 +332,7 @@ enum fscache_why_object_killed {
 	FSCACHE_OBJECT_WAS_RETIRED,
 	FSCACHE_OBJECT_WAS_CULLED,
 };
-extern void fscache_object_mark_killed(struct fscache_object *object,
+extern void fscache_object_mark_killed(struct cachefiles_object *object,
 				       enum fscache_why_object_killed why);
 
 extern struct fscache_cookie *fscache_get_cookie(struct fscache_cookie *cookie,

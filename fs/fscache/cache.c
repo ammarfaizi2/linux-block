@@ -93,7 +93,7 @@ struct fscache_cache *fscache_select_cache_for_object(
 	struct fscache_cookie *cookie)
 {
 	struct fscache_cache_tag *tag;
-	struct fscache_object *object;
+	struct cachefiles_object *object;
 	struct fscache_cache *cache;
 
 	_enter("");
@@ -110,7 +110,7 @@ struct fscache_cache *fscache_select_cache_for_object(
 	 * cache */
 	if (!hlist_empty(&cookie->backing_objects)) {
 		object = hlist_entry(cookie->backing_objects.first,
-				     struct fscache_object, cookie_link);
+				     struct cachefiles_object, cookie_link);
 
 		cache = object->cache;
 		if (fscache_object_is_dying(object) ||
@@ -200,7 +200,7 @@ EXPORT_SYMBOL(fscache_init_cache);
  * description.
  */
 int fscache_add_cache(struct fscache_cache *cache,
-		      struct fscache_object *ifsdef,
+		      struct cachefiles_object *ifsdef,
 		      const char *tagname)
 {
 	struct fscache_cache_tag *tag;
@@ -313,14 +313,14 @@ EXPORT_SYMBOL(fscache_io_error);
 static void fscache_withdraw_all_objects(struct fscache_cache *cache,
 					 struct list_head *dying_objects)
 {
-	struct fscache_object *object;
+	struct cachefiles_object *object;
 
 	while (!list_empty(&cache->object_list)) {
 		spin_lock(&cache->object_list_lock);
 
 		if (!list_empty(&cache->object_list)) {
 			object = list_entry(cache->object_list.next,
-					    struct fscache_object, cache_link);
+					    struct cachefiles_object, cache_link);
 			list_move_tail(&object->cache_link, dying_objects);
 
 			_debug("withdraw %x", object->cookie->debug_id);
