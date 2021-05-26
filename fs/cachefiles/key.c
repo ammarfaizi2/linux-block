@@ -31,8 +31,8 @@ static const char cachefiles_filecharmap[256] = {
  */
 bool cachefiles_cook_key(struct cachefiles_object *object)
 {
-	const u8 *key = fscache_get_key(object->fscache.cookie);
-	unsigned int acc, sum, keylen = object->fscache.cookie->key_len;
+	const u8 *key = fscache_get_key(object->cookie);
+	unsigned int acc, sum, keylen = object->cookie->key_len;
 	char *name;
 	u8 *buffer, *p;
 	int i, len, elem3, print;
@@ -57,7 +57,7 @@ bool cachefiles_cook_key(struct cachefiles_object *object)
 		if (!name)
 			return false;
 
-		switch (object->fscache.cookie->type) {
+		switch (object->cookie->type) {
 		case FSCACHE_COOKIE_TYPE_INDEX:		type = 'I';	break;
 		case FSCACHE_COOKIE_TYPE_DATAFILE:	type = 'D';	break;
 		default:				type = 'S';	break;
@@ -97,7 +97,7 @@ bool cachefiles_cook_key(struct cachefiles_object *object)
 		return false;
 	}
 
-	switch (object->fscache.cookie->type) {
+	switch (object->cookie->type) {
 	case FSCACHE_COOKIE_TYPE_INDEX:		type = 'J';	break;
 	case FSCACHE_COOKIE_TYPE_DATAFILE:	type = 'E';	break;
 	default:				type = 'T';	break;

@@ -106,7 +106,7 @@ static inline bool fscache_object_congested(void)
 /*
  * object.c
  */
-extern void fscache_enqueue_object(struct fscache_object *);
+extern void fscache_enqueue_object(struct cachefiles_object *);
 
 /*
  * proc.c
@@ -227,7 +227,7 @@ int fscache_stats_show(struct seq_file *m, void *v);
  * - if the event is not masked for that object, then the object is
  *   queued for attention by the thread pool.
  */
-static inline void fscache_raise_event(struct fscache_object *object,
+static inline void fscache_raise_event(struct cachefiles_object *object,
 				       unsigned event)
 {
 	BUG_ON(event >= NR_FSCACHE_OBJECT_EVENTS);

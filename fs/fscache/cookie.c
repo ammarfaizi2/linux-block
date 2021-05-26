@@ -26,11 +26,11 @@ static int fscache_acquire_non_index_cookie(struct fscache_cookie *cookie);
 static int fscache_alloc_object(struct fscache_cache *cache,
 				struct fscache_cookie *cookie);
 static int fscache_attach_object(struct fscache_cookie *cookie,
-				 struct fscache_object *object);
+				 struct cachefiles_object *object);
 
 static void fscache_print_cookie(struct fscache_cookie *cookie, char prefix)
 {
-	struct fscache_object *object;
+	struct cachefiles_object *object;
 	struct hlist_node *o;
 	const u8 *k;
 	unsigned loop;
@@ -48,7 +48,7 @@ static void fscache_print_cookie(struct fscache_cookie *cookie, char prefix)
 
 	o = READ_ONCE(cookie->backing_objects.first);
 	if (o) {
-		object = hlist_entry(o, struct fscache_object, cookie_link);
+		object = hlist_entry(o, struct cachefiles_object, cookie_link);
 		pr_err("%c-cookie o=%u\n", prefix, object->debug_id);
 	}
 
@@ -396,7 +396,7 @@ EXPORT_SYMBOL(__fscache_enable_cookie);
  */
 static int fscache_acquire_non_index_cookie(struct fscache_cookie *cookie)
 {
-	struct fscache_object *object;
+	struct cachefiles_object *object;
 	struct fscache_cache *cache;
 	int ret;
 
@@ -443,7 +443,7 @@ static int fscache_acquire_non_index_cookie(struct fscache_cookie *cookie)
 	}
 
 	object = hlist_entry(cookie->backing_objects.first,
-			     struct fscache_object, cookie_link);
+			     struct cachefiles_object, cookie_link);
 
 	/* initiate the process of looking up all the objects in the chain
 	 * (done by fscache_initialise_object()) */
@@ -476,7 +476,7 @@ unavailable:
 static int fscache_alloc_object(struct fscache_cache *cache,
 				struct fscache_cookie *cookie)
 {
-	struct fscache_object *object;
+	struct cachefiles_object *object;
 	int ret;
 
 	_enter("%s,%x{%s}", cache->tag->name, cookie->debug_id, cookie->type_name);
@@ -548,9 +548,9 @@ error:
  * attach a cache object to a cookie
  */
 static int fscache_attach_object(struct fscache_cookie *cookie,
-				 struct fscache_object *object)
+				 struct cachefiles_object *object)
 {
-	struct fscache_object *p;
+	struct cachefiles_object *p;
 	struct fscache_cache *cache = object->cache;
 	int ret;
 
@@ -648,7 +648,7 @@ EXPORT_SYMBOL(__fscache_wait_on_invalidate);
  */
 void __fscache_update_cookie(struct fscache_cookie *cookie, const void *aux_data)
 {
-	struct fscache_object *object;
+	struct cachefiles_object *object;
 
 	fscache_stat(&fscache_n_updates);
 
@@ -686,7 +686,7 @@ void __fscache_disable_cookie(struct fscache_cookie *cookie,
 			      const void *aux_data,
 			      bool invalidate)
 {
-	struct fscache_object *object;
+	struct cachefiles_object *object;
 	bool awaken = false;
 
 	_enter("%x,%u", cookie->debug_id, invalidate);

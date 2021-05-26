@@ -85,7 +85,7 @@ TRACE_EVENT(cachefiles_ref,
 			     ),
 
 	    TP_fast_assign(
-		    __entry->obj	= obj->fscache.debug_id;
+		    __entry->obj	= obj->debug_id;
 		    __entry->cookie	= cookie->debug_id;
 		    __entry->usage	= usage;
 		    __entry->why	= why;
@@ -109,7 +109,7 @@ TRACE_EVENT(cachefiles_lookup,
 			     ),
 
 	    TP_fast_assign(
-		    __entry->obj	= obj->fscache.debug_id;
+		    __entry->obj	= obj->debug_id;
 		    __entry->ino	= (!IS_ERR(de) && d_backing_inode(de) ?
 					   d_backing_inode(de)->i_ino : 0);
 		    __entry->error	= IS_ERR(de) ? PTR_ERR(de) : 0;
@@ -132,7 +132,7 @@ TRACE_EVENT(cachefiles_create,
 			     ),
 
 	    TP_fast_assign(
-		    __entry->obj	= obj->fscache.debug_id;
+		    __entry->obj	= obj->debug_id;
 		    __entry->de		= de;
 		    __entry->ret	= ret;
 			   ),
@@ -156,7 +156,7 @@ TRACE_EVENT(cachefiles_unlink,
 			     ),
 
 	    TP_fast_assign(
-		    __entry->obj	= obj ? obj->fscache.debug_id : UINT_MAX;
+		    __entry->obj	= obj ? obj->debug_id : UINT_MAX;
 		    __entry->de		= de;
 		    __entry->why	= why;
 			   ),
@@ -183,7 +183,7 @@ TRACE_EVENT(cachefiles_rename,
 			     ),
 
 	    TP_fast_assign(
-		    __entry->obj	= obj ? obj->fscache.debug_id : UINT_MAX;
+		    __entry->obj	= obj ? obj->debug_id : UINT_MAX;
 		    __entry->de		= de;
 		    __entry->to		= to;
 		    __entry->why	= why;
@@ -207,7 +207,7 @@ TRACE_EVENT(cachefiles_mark_active,
 			     ),
 
 	    TP_fast_assign(
-		    __entry->obj	= obj->fscache.debug_id;
+		    __entry->obj	= obj->debug_id;
 		    __entry->de		= de;
 			   ),
 
@@ -230,7 +230,7 @@ TRACE_EVENT(cachefiles_mark_inactive,
 			     ),
 
 	    TP_fast_assign(
-		    __entry->obj	= obj->fscache.debug_id;
+		    __entry->obj	= obj->debug_id;
 		    __entry->de		= de;
 		    __entry->inode	= inode;
 			   ),

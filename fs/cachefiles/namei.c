@@ -29,7 +29,7 @@ static bool cachefiles_mark_inode_in_use(struct cachefiles_object *object)
 	struct inode *inode = d_backing_inode(dentry);
 	bool can_use = false;
 
-	_enter(",%x", object->fscache.debug_id);
+	_enter(",%x", object->debug_id);
 
 	inode_lock(inode);
 
@@ -235,7 +235,7 @@ int cachefiles_delete_object(struct cachefiles_cache *cache,
 	struct dentry *dir;
 	int ret;
 
-	_enter(",OBJ%x{%pd}", object->fscache.debug_id, object->dentry);
+	_enter(",OBJ%x{%pd}", object->debug_id, object->dentry);
 
 	ASSERT(object->dentry);
 	ASSERT(d_backing_inode(object->dentry));
@@ -350,11 +350,11 @@ static int cachefiles_walk_to_file(struct cachefiles_cache *cache,
 		/* This element of the path doesn't exist, so we can release
 		 * any readers in the certain knowledge that there's nothing
 		 * for them to actually read */
-		fscache_object_lookup_negative(&object->fscache);
+		fscache_object_lookup_negative(object);
 
 		ret = cachefiles_has_space(cache, 1, 0);
 		if (ret < 0) {
-			fscache_object_mark_killed(&object->fscache, FSCACHE_OBJECT_NO_SPACE);
+			fscache_object_mark_killed(object, FSCACHE_OBJECT_NO_SPACE);
 			goto error_dput;
 		}
 
@@ -423,11 +423,10 @@ int cachefiles_walk_to_object(struct cachefiles_object *parent,
 	int ret;
 
 	_enter("OBJ%x{%pd},OBJ%x,%s,",
-	       parent->fscache.debug_id, parent->dentry,
-	       object->fscache.debug_id, object->d_name);
+	       parent->debug_id, parent->dentry,
+	       object->debug_id, object->d_name);
 
-	cache = container_of(parent->fscache.cache,
-			     struct cachefiles_cache, cache);
+	cache = container_of(parent->cache, struct cachefiles_cache, cache);
 	ASSERT(parent->dentry);
 	ASSERT(d_backing_inode(parent->dentry));
 
@@ -460,7 +459,7 @@ lookup_again:
 		goto check_error;
 
 	object->new = false;
-	fscache_obtained_object(&object->fscache);
+	fscache_obtained_object(object);
 	_leave(" = 0 [%lu]", d_backing_inode(object->dentry)->i_ino);
 	return 0;
 
@@ -468,7 +467,7 @@ check_error:
 	if (ret == -ESTALE) {
 		dput(object->dentry);
 		object->dentry = NULL;
-		fscache_object_retrying_stale(&object->fscache);
+		fscache_object_retrying_stale(object);
 		goto lookup_again;
 	}
 	if (ret == -EIO)
@@ -514,7 +513,7 @@ retry:
 		 * any readers in the certain knowledge that there's nothing
 		 * for them to actually read */
 		if (object)
-			fscache_object_lookup_negative(&object->fscache);
+			fscache_object_lookup_negative(object);
 
 		ret = cachefiles_has_space(cache, 1, 0);
 		if (ret < 0)

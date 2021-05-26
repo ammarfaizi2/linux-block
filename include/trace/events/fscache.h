@@ -228,7 +228,7 @@ TRACE_EVENT(fscache_disable,
 	    );
 
 TRACE_EVENT(fscache_osm,
-	    TP_PROTO(struct fscache_object *object,
+	    TP_PROTO(struct cachefiles_object *object,
 		     const struct fscache_state *state,
 		     bool wait, bool oob, s8 event_num),
 
