@@ -498,6 +498,7 @@ static int afs_releasepage(struct page *page, gfp_t gfp_flags)
 		if (!(gfp_flags & __GFP_DIRECT_RECLAIM) || !(gfp_flags & __GFP_FS))
 			return false;
 		wait_on_page_fscache(page);
+		fscache_note_page_release(afs_vnode_cache(vnode));
 	}
 #endif
 

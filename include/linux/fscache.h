@@ -127,6 +127,7 @@ struct fscache_cookie {
 #define FSCACHE_COOKIE_NEEDS_UPDATE	4		/* T if attrs have been updated */
 #define FSCACHE_COOKIE_DISABLED		5		/* T if cookie has been disabled */
 #define FSCACHE_COOKIE_LOCAL_WRITE	6		/* T if cookie has been modified locally */
+#define FSCACHE_COOKIE_HAVE_DATA	7		/* T if this cookie has data stored */
 #define FSCACHE_COOKIE_NACC_ELEVATED	8		/* T if n_accesses is incremented */
 #define FSCACHE_COOKIE_DO_RELINQUISH	9		/* T if this cookie needs relinquishment */
 #define FSCACHE_COOKIE_DO_WITHDRAW	10		/* T if this cookie needs withdrawing */
@@ -583,6 +584,22 @@ static inline void fscache_unpin_writeback(struct writeback_control *wbc,
 {
 	if (wbc->unpinned_fscache_wb)
 		fscache_unuse_cookie(cookie, NULL, NULL);
+}
+
+/**
+ * fscache_note_page_release - Note that a netfs page got released
+ * @cookie: The cookie corresponding to the file
+ *
+ * Note that a page that has been copied to the cache has been released.  This
+ * means that future reads will need to look in the cache to see if it's there.
+ */
+static inline
+void fscache_note_page_release(struct fscache_cookie *cookie)
+{
+	if (cookie &&
+	    test_bit(FSCACHE_COOKIE_HAVE_DATA, &cookie->flags) &&
+	    test_bit(FSCACHE_COOKIE_NO_DATA_TO_READ, &cookie->flags))
+		clear_bit(FSCACHE_COOKIE_NO_DATA_TO_READ, &cookie->flags);
 }
 
 #endif /* _LINUX_FSCACHE_H */

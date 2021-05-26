@@ -142,6 +142,9 @@ enum netfs_read_source cachefiles_prepare_read(struct netfs_read_subrequest *sub
 	if (start >= i_size)
 		goto zero_pages;
 
+	if (test_bit(FSCACHE_COOKIE_NO_DATA_TO_READ, &object->cookie->flags))
+		goto maybe_on_server;
+
 	if (cachefiles_granule_is_present(object, granule)) {
 		/* The start of the request is present in the cache - restrict
 		 * the length to what's available.
@@ -293,6 +296,7 @@ void cachefiles_mark_content_map(struct cachefiles_object *object,
 		if (object->content_info != CACHEFILES_CONTENT_MAP) {
 			object->content_info = CACHEFILES_CONTENT_MAP;
 			set_bit(FSCACHE_COOKIE_NEEDS_UPDATE, &object->cookie->flags);
+			set_bit(FSCACHE_COOKIE_HAVE_DATA, &object->cookie->flags);
 		}
 	}
 
