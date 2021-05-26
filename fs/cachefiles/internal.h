@@ -29,21 +29,6 @@ extern unsigned cachefiles_debug;
 
 #define cachefiles_gfp (__GFP_RECLAIM | __GFP_NORETRY | __GFP_NOMEMALLOC)
 
-/*
- * node records
- */
-struct cachefiles_object {
-	struct fscache_object		fscache;	/* fscache handle */
-	char				*d_name;	/* Filename */
-	struct dentry			*dentry;	/* the file/dir representing this object */
-	loff_t				i_size;		/* object size */
-	atomic_t			usage;		/* object usage count */
-	uint8_t				type;		/* object type */
-	bool				new;		/* T if object new */
-	u8				d_name_len;	/* Length of filename */
-	u8				key_hash;
-};
-
 extern struct kmem_cache *cachefiles_object_jar;
 
 /*
@@ -114,7 +99,7 @@ extern int cachefiles_has_space(struct cachefiles_cache *cache,
  */
 extern const struct fscache_cache_ops cachefiles_cache_ops;
 
-void cachefiles_put_object(struct fscache_object *_object,
+void cachefiles_put_object(struct cachefiles_object *_object,
 			   enum fscache_obj_ref_trace why);
 
 /*
@@ -191,7 +176,7 @@ do {							\
 do {									\
 	struct cachefiles_cache *___cache;				\
 									\
-	___cache = container_of((object)->fscache.cache,		\
+	___cache = container_of((object)->cache,			\
 				struct cachefiles_cache, cache);	\
 	cachefiles_io_error(___cache, FMT, ##__VA_ARGS__);		\
 } while (0)
