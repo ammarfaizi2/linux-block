@@ -43,23 +43,10 @@ extern void rb_replace_node(struct rb_node *victim, struct rb_node *new,
 extern void rb_replace_node_rcu(struct rb_node *victim, struct rb_node *new,
 				struct rb_root *root);
 
-static inline void rb_link_node(struct rb_node *node, struct rb_node *parent,
-				struct rb_node **rb_link)
-{
-	node->__rb_parent_color = (unsigned long)parent;
-	node->rb_left = node->rb_right = NULL;
-
-	*rb_link = node;
-}
-
-static inline void rb_link_node_rcu(struct rb_node *node, struct rb_node *parent,
-				    struct rb_node **rb_link)
-{
-	node->__rb_parent_color = (unsigned long)parent;
-	node->rb_left = node->rb_right = NULL;
-
-	rcu_assign_pointer(*rb_link, node);
-}
+extern void rb_link_node(struct rb_node *node, struct rb_node *parent,
+			 struct rb_node **rb_link);
+extern void rb_link_node_rcu(struct rb_node *node, struct rb_node *parent,
+			     struct rb_node **rb_link);
 
 #define rb_entry_safe(ptr, type, member) \
 	({ typeof(ptr) ____ptr = (ptr); \

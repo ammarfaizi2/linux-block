@@ -589,6 +589,24 @@ void rb_replace_node_rcu(struct rb_node *victim, struct rb_node *new,
 }
 EXPORT_SYMBOL(rb_replace_node_rcu);
 
+void rb_link_node(struct rb_node *node, struct rb_node *parent, struct rb_node **rb_link)
+{
+	node->__rb_parent_color = (unsigned long)parent;
+	node->rb_left = node->rb_right = NULL;
+
+	*rb_link = node;
+}
+EXPORT_SYMBOL(rb_link_node);
+
+void rb_link_node_rcu(struct rb_node *node, struct rb_node *parent, struct rb_node **rb_link)
+{
+	node->__rb_parent_color = (unsigned long)parent;
+	node->rb_left = node->rb_right = NULL;
+
+	rcu_assign_pointer(*rb_link, node);
+}
+EXPORT_SYMBOL(rb_link_node_rcu);
+
 static struct rb_node *rb_left_deepest_node(const struct rb_node *node)
 {
 	for (;;) {
