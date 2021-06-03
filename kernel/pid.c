@@ -744,3 +744,21 @@ SYSCALL_DEFINE3(pidfd_getfd, int, pidfd, int, fd,
 	fdput(f);
 	return ret;
 }
+
+static inline pid_t task_ppid_nr_ns(const struct task_struct *tsk, struct pid_namespace *ns)
+{
+	pid_t pid = 0;
+
+	rcu_read_lock();
+	if (pid_alive(tsk))
+		pid = task_tgid_nr_ns(rcu_dereference(tsk->real_parent), ns);
+	rcu_read_unlock();
+
+	return pid;
+}
+
+pid_t task_ppid_nr(const struct task_struct *tsk)
+{
+	return task_ppid_nr_ns(tsk, &init_pid_ns);
+}
+EXPORT_SYMBOL_GPL(task_ppid_nr);
