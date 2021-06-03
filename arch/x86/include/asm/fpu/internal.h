@@ -395,7 +395,8 @@ static inline int xrstor_from_kernel_err(struct xregs_state *xstate, u64 mask)
 	return err;
 }
 
-extern int save_fpregs_to_fpstate(struct fpu *fpu);
+extern void save_fpregs_to_fpstate(struct fpu *fpu);
+extern void copy_fpregs_to_fpstate(struct fpu *fpu);
 
 static inline void __restore_fpregs_from_fpstate(union fpregs_state *fpstate, u64 mask)
 {
@@ -527,10 +528,15 @@ static inline void __fpregs_load_activate(void)
 static inline void switch_fpu_prepare(struct fpu *old_fpu, int cpu)
 {
 	if (static_cpu_has(X86_FEATURE_FPU) && !(current->flags & PF_KTHREAD)) {
-		if (!save_fpregs_to_fpstate(old_fpu))
-			old_fpu->last_cpu = -1;
-		else
+		/*
+		 * Avoid the expense of restoring fpregs with FNSAVE when it
+		 * might be unnecssary. XSAVE and FXSAVE preserve the FPU state.
+		 */
+		save_fpregs_to_fpstate(old_fpu);
+		if (likely(use_xsave() || use_fxsr()))
 			old_fpu->last_cpu = cpu;
+		else
+			old_fpu->last_cpu = -1;
 
 		/* But leave fpu_fpregs_owner_ctx! */
 		trace_x86_fpu_regs_deactivated(old_fpu);

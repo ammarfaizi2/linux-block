@@ -83,16 +83,17 @@ bool irq_fpu_usable(void)
 EXPORT_SYMBOL(irq_fpu_usable);
 
 /*
- * These must be called with preempt disabled. Returns
- * 'true' if the FPU state is still intact and we can
- * keep registers active.
+ * Must be called with fpregs locked.
  *
- * The legacy FNSAVE instruction cleared all FPU state
- * unconditionally, so registers are essentially destroyed.
- * Modern FPU state can be kept in registers, if there are
- * no pending FP exceptions.
+ * Returns 'true' if the FPU state has been clobbered and the register
+ * contents are lost.
+ *
+ * The legacy FNSAVE instruction clobebrs all FPU state unconditionally, so
+ * registers are essentially destroyed.
+ *
+ * XSAVE and FXSAVE preserve register contents.
  */
-int save_fpregs_to_fpstate(struct fpu *fpu)
+static bool __clobber_save_fpregs_to_fpstate(struct fpu *fpu)
 {
 	if (likely(use_xsave())) {
 		xsave_to_kernel(&fpu->state.xsave);
@@ -103,23 +104,46 @@ int save_fpregs_to_fpstate(struct fpu *fpu)
 		 */
 		if (fpu->state.xsave.header.xfeatures & XFEATURE_MASK_AVX512)
 			fpu->avx512_timestamp = jiffies;
-		return 1;
+		return false;
 	}
 
 	if (likely(use_fxsr())) {
 		fxsave_to_kernel(fpu);
-		return 1;
+		return false;
 	}
 
-	/*
-	 * Legacy FPU register saving, FNSAVE always clears FPU registers,
-	 * so we have to mark them inactive:
-	 */
+	/* Legacy FPU register saving, FNSAVE always clears FPU registers */
 	asm volatile("fnsave %[fp]; fwait" : [fp] "=m" (fpu->state.fsave));
 
-	return 0;
+	return true;
 }
-EXPORT_SYMBOL(save_fpregs_to_fpstate);
+
+/**
+ * save_fpregs_to_fpstate - Save fpregs in fpstate
+ * @fpu:	Pointer to FPU context
+ *
+ * Hardware register state might be clobbered when the
+ * function returns.
+ */
+void save_fpregs_to_fpstate(struct fpu *fpu)
+{
+	__clobber_save_fpregs_to_fpstate(fpu);
+}
+EXPORT_SYMBOL_GPL(save_fpregs_to_fpstate);
+
+/**
+ * copy_fpregs_to_fpstate - Copy fpregs to fpstate
+ * @fpu:	Pointer to FPU context
+ *
+ * Guarantees that the hardware register state is preserved.
+ */
+void copy_fpregs_to_fpstate(struct fpu *fpu)
+{
+	bool clobbered = __clobber_save_fpregs_to_fpstate(fpu);
+
+	if (clobbered)
+		restore_fpregs_from_fpstate(&fpu->state);
+}
 
 void kernel_fpu_begin_mask(unsigned int kfpu_mask)
 {
@@ -133,10 +157,6 @@ void kernel_fpu_begin_mask(unsigned int kfpu_mask)
 	if (!(current->flags & PF_KTHREAD) &&
 	    !test_thread_flag(TIF_NEED_FPU_LOAD)) {
 		set_thread_flag(TIF_NEED_FPU_LOAD);
-		/*
-		 * Ignore return value -- we don't care if reg state
-		 * is clobbered.
-		 */
 		save_fpregs_to_fpstate(&current->thread.fpu);
 	}
 	__cpu_invalidate_fpregs_state();
@@ -160,7 +180,8 @@ void kernel_fpu_end(void)
 EXPORT_SYMBOL_GPL(kernel_fpu_end);
 
 /*
- * Save the FPU state (mark it for reload if necessary):
+ * Save the FPU register state. If the registers are active then they are
+ * preserved.
  *
  * This only ever gets called for the current task.
  */
@@ -171,11 +192,8 @@ void fpu__save(struct fpu *fpu)
 	fpregs_lock();
 	trace_x86_fpu_before_save(fpu);
 
-	if (!test_thread_flag(TIF_NEED_FPU_LOAD)) {
-		if (!save_fpregs_to_fpstate(fpu)) {
-			restore_fpregs_from_fpstate(&fpu->state);
-		}
-	}
+	if (!test_thread_flag(TIF_NEED_FPU_LOAD))
+		copy_fpregs_to_fpstate(fpu);
 
 	trace_x86_fpu_after_save(fpu);
 	fpregs_unlock();
@@ -245,18 +263,14 @@ int fpu__copy(struct task_struct *dst, struct task_struct *src)
 
 	/*
 	 * If the FPU registers are not current just memcpy() the state.
-	 * Otherwise save current FPU registers directly into the child's FPU
-	 * context, without any memory-to-memory copying.
-	 *
-	 * ( The function 'fails' in the FNSAVE case, which destroys
-	 *   register contents so we have to load them back. )
+	 * Otherwise copy current FPU registers directly into the child's
+	 * FPU context.
 	 */
 	fpregs_lock();
 	if (test_thread_flag(TIF_NEED_FPU_LOAD))
 		memcpy(&dst_fpu->state, &src_fpu->state, fpu_kernel_xstate_size);
-
-	else if (!save_fpregs_to_fpstate(dst_fpu))
-		restore_fpregs_from_fpstate(&dst_fpu->state);
+	else
+		copy_fpregs_to_fpstate(dst_fpu);
 
 	fpregs_unlock();
 
