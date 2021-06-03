@@ -15,7 +15,6 @@
 
 #include <linux/rbtree.h>
 #include <linux/pid_types.h>
-#include <linux/sem.h>
 #include <linux/shm.h>
 #include <linux/mutex.h>
 #include <linux/plist.h>
