@@ -128,7 +128,7 @@ void *get_xsave_addr(struct xregs_state *xsave, int xfeature_nr);
 int using_compacted_format(void);
 int xfeature_size(int xfeature_nr);
 struct membuf;
-void copy_uabi_xstate_to_membuf(struct membuf to, struct xregs_state *xsave);
+void copy_uabi_xstate_to_membuf(struct membuf to, struct task_struct *target);
 int copy_uabi_from_kernel_to_xstate(struct xregs_state *xsave, const void *kbuf);
 int copy_sigframe_from_user_to_xstate(struct xregs_state *xsave, const void __user *ubuf);
 

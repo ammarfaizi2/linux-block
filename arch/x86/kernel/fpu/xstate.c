@@ -968,12 +968,13 @@ static void copy_part(struct membuf *to, unsigned *last, unsigned offset,
  * It supports partial copy but pos always starts from zero. This is called
  * from xstateregs_get() and there we check the CPU has XSAVE.
  */
-void copy_uabi_xstate_to_membuf(struct membuf to, struct xregs_state *xsave)
+void copy_uabi_xstate_to_membuf(struct membuf to, struct task_struct *target)
 {
-	struct xstate_header header;
 	const unsigned off_mxcsr = offsetof(struct fxregs_state, mxcsr);
-	unsigned size = to.left;
-	unsigned last = 0;
+	struct xregs_state *xsave = &target->thread.fpu.state.xsave;
+	struct xstate_header header;
+	unsigned int size = to.left;
+	unsigned int last = 0;
 	int i;
 
 	/*
@@ -982,6 +983,13 @@ void copy_uabi_xstate_to_membuf(struct membuf to, struct xregs_state *xsave)
 	memset(&header, 0, sizeof(header));
 	header.xfeatures = xsave->header.xfeatures;
 	header.xfeatures &= xfeatures_mask_uabi();
+
+	/*
+	 * PKRU is not XSTATE managed. If enabled set the xfeature bit as
+	 * user space expects it to be part of the XSTATE buffer.
+	 */
+	if (cpu_feature_enabled(X86_FEATURE_OSPKE))
+		header.xfeatures |= XFEATURE_MASK_PKRU;
 
 	if (header.xfeatures & XFEATURE_MASK_FP)
 		copy_part(&to, &last, 0, off_mxcsr, &xsave->i387);
@@ -1006,16 +1014,24 @@ void copy_uabi_xstate_to_membuf(struct membuf to, struct xregs_state *xsave)
 		  sizeof(header), &header);
 
 	for (i = FIRST_EXTENDED_XFEATURE; i < XFEATURE_MAX; i++) {
-		/*
-		 * Copy only in-use xstates:
-		 */
-		if ((header.xfeatures >> i) & 1) {
-			void *src = __raw_xsave_addr(xsave, i);
+		struct pkru_state pkru = {0};
+		void *src;
 
-			copy_part(&to, &last, xstate_offsets[i],
-				  xstate_sizes[i], src);
+		/* Copy only in-use xstates: */
+		if (!((header.xfeatures >> i) & 1))
+			continue;
+
+		if (i == XFEATURE_PKRU) {
+			/*
+			 * PKRU is not kept in the thread's XSAVE buffer.
+			 * Fill this part from the per-thread storage.
+			 */
+			pkru.pkru = target->thread.pkru;
+			src = &pkru;
+		} else {
+			src = __raw_xsave_addr(xsave, i);
 		}
-
+		copy_part(&to, &last, xstate_offsets[i], xstate_sizes[i], src);
 	}
 	fill_gap(&to, &last, size);
 }

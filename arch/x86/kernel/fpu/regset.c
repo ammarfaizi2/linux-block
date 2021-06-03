@@ -109,22 +109,20 @@ int xfpregs_set(struct task_struct *target, const struct user_regset *regset,
 }
 
 int xstateregs_get(struct task_struct *target, const struct user_regset *regset,
-		struct membuf to)
+		   struct membuf to)
 {
-	struct fpu *fpu = &target->thread.fpu;
-
 	if (!boot_cpu_has(X86_FEATURE_XSAVE))
 		return -ENODEV;
 
-	fpu__prepare_read(fpu);
+	fpu__prepare_read(&target->thread.fpu);
 
-	copy_uabi_xstate_to_membuf(to, &fpu->state.xsave);
+	copy_uabi_xstate_to_membuf(to, target);
 	return 0;
 }
 
 int xstateregs_set(struct task_struct *target, const struct user_regset *regset,
-		  unsigned int pos, unsigned int count,
-		  const void *kbuf, const void __user *ubuf)
+		   unsigned int pos, unsigned int count,
+		   const void *kbuf, const void __user *ubuf)
 {
 	struct fpu *fpu = &target->thread.fpu;
 	struct xregs_state *tmpbuf = NULL;
