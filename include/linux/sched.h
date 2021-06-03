@@ -22,7 +22,6 @@
 #include <linux/irqflags.h>
 #include <linux/seccomp_types.h>
 #include <linux/nodemask.h>
-#include <linux/rcupdate.h>
 #include <linux/refcount.h>
 #include <linux/resource.h>
 #include <linux/latencytop.h>
