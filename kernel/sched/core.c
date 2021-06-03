@@ -8145,6 +8145,16 @@ SYSCALL_DEFINE0(sched_yield)
 	return 0;
 }
 
+#if defined(CONFIG_DEBUG_ATOMIC_SLEEP) || !defined(CONFIG_PREEMPT_RCU)
+void __cond_resched_rcu(void)
+{
+	rcu_read_unlock();
+	cond_resched();
+	rcu_read_lock();
+}
+EXPORT_SYMBOL(__cond_resched_rcu);
+#endif
+
 #if !defined(CONFIG_PREEMPTION) || defined(CONFIG_PREEMPT_DYNAMIC)
 int __sched __cond_resched(void)
 {

@@ -2080,12 +2080,12 @@ extern int __cond_resched_rwlock_write(rwlock_t *lock);
 	__cond_resched_rwlock_write(lock);					\
 })
 
+extern void __cond_resched_rcu(void);
+
 static inline void cond_resched_rcu(void)
 {
 #if defined(CONFIG_DEBUG_ATOMIC_SLEEP) || !defined(CONFIG_PREEMPT_RCU)
-	rcu_read_unlock();
-	cond_resched();
-	rcu_read_lock();
+	__cond_resched_rcu();
 #endif
 }
 
