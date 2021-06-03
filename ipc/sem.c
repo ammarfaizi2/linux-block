@@ -92,6 +92,8 @@
 #include <linux/uaccess.h>
 #include "util.h"
 
+DEFINE_PER_TASK(struct sysv_sem, sysvsem);
+
 /* One semaphore structure for each semaphore in the system. */
 struct sem {
 	int	semval;		/* current value */
@@ -1866,7 +1868,7 @@ static inline int get_undo_list(struct sem_undo_list **undo_listp)
 {
 	struct sem_undo_list *undo_list;
 
-	undo_list = current->sysvsem.undo_list;
+	undo_list = per_task(current, sysvsem).undo_list;
 	if (!undo_list) {
 		undo_list = kzalloc(sizeof(*undo_list), GFP_KERNEL_ACCOUNT);
 		if (undo_list == NULL)
@@ -1875,7 +1877,7 @@ static inline int get_undo_list(struct sem_undo_list **undo_listp)
 		refcount_set(&undo_list->refcnt, 1);
 		INIT_LIST_HEAD(&undo_list->list_proc);
 
-		current->sysvsem.undo_list = undo_list;
+		per_task(current, sysvsem).undo_list = undo_list;
 	}
 	*undo_listp = undo_list;
 	return 0;
@@ -2330,9 +2332,9 @@ int copy_semundo(unsigned long clone_flags, struct task_struct *tsk)
 		if (error)
 			return error;
 		refcount_inc(&undo_list->refcnt);
-		tsk->sysvsem.undo_list = undo_list;
+		per_task(tsk, sysvsem).undo_list = undo_list;
 	} else
-		tsk->sysvsem.undo_list = NULL;
+		per_task(tsk, sysvsem).undo_list = NULL;
 
 	return 0;
 }
@@ -2353,10 +2355,10 @@ void exit_sem(struct task_struct *tsk)
 {
 	struct sem_undo_list *ulp;
 
-	ulp = tsk->sysvsem.undo_list;
+	ulp = per_task(tsk, sysvsem).undo_list;
 	if (!ulp)
 		return;
-	tsk->sysvsem.undo_list = NULL;
+	per_task(tsk, sysvsem).undo_list = NULL;
 
 	if (!refcount_dec_and_test(&ulp->refcnt))
 		return;

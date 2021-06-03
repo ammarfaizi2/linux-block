@@ -3,6 +3,7 @@
 #define _LINUX_SEM_H
 
 #include <uapi/linux/sem.h>
+#include <linux/sched/per_task.h>
 
 struct task_struct;
 struct sem_undo_list;
@@ -12,6 +13,8 @@ struct sem_undo_list;
 struct sysv_sem {
 	struct sem_undo_list *undo_list;
 };
+
+DECLARE_PER_TASK(struct sysv_sem, sysvsem);
 
 extern int copy_semundo(unsigned long clone_flags, struct task_struct *tsk);
 extern void exit_sem(struct task_struct *tsk);

@@ -196,8 +196,8 @@ SYSCALL_DEFINE5(kcmp, pid_t, pid1, pid_t, pid2, int, type,
 		break;
 	case KCMP_SYSVSEM:
 #ifdef CONFIG_SYSVIPC
-		ret = kcmp_ptr(task1->sysvsem.undo_list,
-			       task2->sysvsem.undo_list,
+		ret = kcmp_ptr(per_task(task1, sysvsem).undo_list,
+			       per_task(task2, sysvsem).undo_list,
 			       KCMP_SYSVSEM);
 #else
 		ret = -EOPNOTSUPP;
