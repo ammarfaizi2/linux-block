@@ -4,6 +4,8 @@
 
 #include <asm/bitsperlong.h>
 
+#include <uapi/asm-generic/ipcbuf.h>
+
 /*
  * The shmid64_ds structure for x86 architecture.
  * Note extra padding because this structure is passed back and forth
