@@ -178,6 +178,18 @@ static int sysvipc_sem_proc_show(struct seq_file *s, void *it);
 #define SEMMSL_FAST	256 /* 512 bytes on stack */
 #define SEMOPM_FAST	64  /* ~ 372 bytes on stack */
 
+/* Obsolete, used only for backwards compatibility and libc5 compiles */
+struct semid_ds {
+	struct ipc_perm	sem_perm;		/* permissions .. see ipc.h */
+	__kernel_old_time_t sem_otime;		/* last semop time */
+	__kernel_old_time_t sem_ctime;		/* create/last semctl() time */
+	struct sem	*sem_base;		/* ptr to first semaphore in array */
+	struct sem_queue *sem_pending;		/* pending operations to be processed */
+	struct sem_queue **sem_pending_last;	/* last pending operation */
+	struct sem_undo	*undo;			/* undo requests on this array */
+	unsigned short	sem_nsems;		/* no. of semaphores in array */
+};
+
 /*
  * Switching from the mode suitable for simple ops
  * to the mode for complex ops is costly. Therefore:
