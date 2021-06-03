@@ -2,8 +2,6 @@
 #ifndef _UAPI_LINUX_SEM_H
 #define _UAPI_LINUX_SEM_H
 
-#include <linux/ipc.h>
-
 /* semop flags */
 #define SEM_UNDO        0x1000  /* undo the operation on exit */
 
@@ -21,18 +19,6 @@
 #define SEM_INFO 19
 #define SEM_STAT_ANY 20
 
-/* Obsolete, used only for backwards compatibility and libc5 compiles */
-struct semid_ds {
-	struct ipc_perm	sem_perm;		/* permissions .. see ipc.h */
-	__kernel_old_time_t sem_otime;		/* last semop time */
-	__kernel_old_time_t sem_ctime;		/* create/last semctl() time */
-	struct sem	*sem_base;		/* ptr to first semaphore in array */
-	struct sem_queue *sem_pending;		/* pending operations to be processed */
-	struct sem_queue **sem_pending_last;	/* last pending operation */
-	struct sem_undo	*undo;			/* undo requests on this array */
-	unsigned short	sem_nsems;		/* no. of semaphores in array */
-};
-
 /* Include the definition of semid64_ds */
 #include <asm/sembuf.h>
 
@@ -42,6 +28,8 @@ struct sembuf {
 	short		sem_op;		/* semaphore operation */
 	short		sem_flg;	/* operation flags */
 };
+
+struct semid_ds;
 
 /* arg for semctl system calls. */
 union semun {
