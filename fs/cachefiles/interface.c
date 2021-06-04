@@ -341,9 +341,16 @@ static void cachefiles_invalidate_object(struct cachefiles_object *object)
 		ASSERT(d_is_reg(file->f_path.dentry));
 
 		cachefiles_begin_secure(cache, &saved_cred);
+		trace_cachefiles_trunc(object, file_inode(file),
+				       i_size_read(file_inode(file)), 0,
+				       cachefiles_trunc_invalidate);
 		ret = vfs_truncate(&file->f_path, 0);
-		if (ret == 0)
+		if (ret == 0) {
+			trace_cachefiles_trunc(object, file_inode(file),
+					       0, ni_size,
+					       cachefiles_trunc_set_size);
 			ret = vfs_truncate(&file->f_path, ni_size);
+		}
 		cachefiles_end_secure(cache, saved_cred);
 
 		if (ret != 0) {
