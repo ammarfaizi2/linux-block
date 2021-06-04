@@ -1509,6 +1509,8 @@ struct task_struct {
 	 */
 };
 
+#define task_thread(task) (task)->thread
+
 static inline struct pid *task_pid(struct task_struct *task)
 {
 	return task->thread_pid;
