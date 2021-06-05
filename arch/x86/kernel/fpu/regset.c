@@ -118,7 +118,7 @@ int xstateregs_get(struct task_struct *target, const struct user_regset *regset,
 
 	fpu__prepare_read(fpu);
 
-	copy_xstate_to_kernel(to, &fpu->state.xsave);
+	copy_uabi_xstate_to_membuf(to, &fpu->state.xsave);
 	return 0;
 }
 
@@ -150,7 +150,7 @@ int xstateregs_set(struct task_struct *target, const struct user_regset *regset,
 	}
 
 	fpu__prepare_write(fpu);
-	ret = copy_kernel_to_xstate(&fpu->state.xsave, kbuf ?: tmpbuf);
+	ret = copy_uabi_from_kernel_to_xstate(&fpu->state.xsave, kbuf ?: tmpbuf);
 
 out:
 	vfree(tmpbuf);
