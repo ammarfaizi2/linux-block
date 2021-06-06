@@ -150,4 +150,17 @@ static inline bool vcpu_is_preempted(int cpu)
 }
 #endif
 
+/**
+ * cond_resched_tasks_rcu_qs - Report potential quiescent states to RCU
+ *
+ * This macro resembles cond_resched(), except that it is defined to
+ * report potential quiescent states to RCU-tasks even if the cond_resched()
+ * machinery were to be shut off, as some advocate for PREEMPTION kernels.
+ */
+#define cond_resched_tasks_rcu_qs() \
+do { \
+	rcu_tasks_qs(current, false); \
+	cond_resched(); \
+} while (0)
+
 #endif /* _LINUX_SCHED_COND_RESCHED_H */
