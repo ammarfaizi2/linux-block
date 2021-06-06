@@ -71,6 +71,7 @@
 DEFINE_PER_TASK(nodemask_t, mems_allowed);
 /* Sequence number to catch updates: */
 DEFINE_PER_TASK(seqcount_spinlock_t, mems_allowed_seq);
+DEFINE_PER_TASK(int, cpuset_mem_spread_rotor);
 
 DEFINE_STATIC_KEY_FALSE(cpusets_pre_enable_key);
 DEFINE_STATIC_KEY_FALSE(cpusets_enabled_key);
@@ -3639,11 +3640,11 @@ static int cpuset_spread_node(int *rotor)
 
 int cpuset_mem_spread_node(void)
 {
-	if (current->cpuset_mem_spread_rotor == NUMA_NO_NODE)
-		current->cpuset_mem_spread_rotor =
-			node_random(&per_task(current, mems_allowed));
+	if (per_task(current, cpuset_mem_spread_rotor) == NUMA_NO_NODE)
+		per_task(current, cpuset_mem_spread_rotor) =
+				node_random(&per_task(current, mems_allowed));
 
-	return cpuset_spread_node(&current->cpuset_mem_spread_rotor);
+	return cpuset_spread_node(&per_task(current, cpuset_mem_spread_rotor));
 }
 
 int cpuset_slab_spread_node(void)
