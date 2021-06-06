@@ -722,10 +722,6 @@ struct task_struct {
 	struct rcu_node			*rcu_blocked_node;
 #endif /* #ifdef CONFIG_PREEMPT_RCU */
 
-#ifdef CONFIG_TASKS_RCU
-	struct list_head		rcu_tasks_holdout_list;
-#endif /* #ifdef CONFIG_TASKS_RCU */
-
 #ifdef CONFIG_TASKS_TRACE_RCU
 	int				trc_reader_nesting;
 	int				trc_ipi_to_cpu;

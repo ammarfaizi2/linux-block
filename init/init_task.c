@@ -134,9 +134,6 @@ struct task_struct init_task
 	.rcu_node_entry = LIST_HEAD_INIT(init_task.rcu_node_entry),
 	.rcu_blocked_node = NULL,
 #endif
-#ifdef CONFIG_TASKS_RCU
-	.rcu_tasks_holdout_list = LIST_HEAD_INIT(init_task.rcu_tasks_holdout_list),
-#endif
 #ifdef CONFIG_TASKS_TRACE_RCU
 	.trc_reader_nesting = 0,
 	.trc_reader_special.s = 0,

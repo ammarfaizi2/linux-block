@@ -12,6 +12,7 @@ DEFINE_PER_TASK(unsigned long,		rcu_tasks_nvcsw);
 DEFINE_PER_TASK(u8,			rcu_tasks_holdout);
 DEFINE_PER_TASK(u8,			rcu_tasks_idx);
 DEFINE_PER_TASK(int,			rcu_tasks_idle_cpu);
+DEFINE_PER_TASK(struct list_head,	rcu_tasks_holdout_list);
 #endif
 
 #ifdef CONFIG_TASKS_RCU_GENERIC
@@ -742,7 +743,7 @@ static void rcu_tasks_pertask(struct task_struct *t, struct list_head *hop)
 		get_task_struct(t);
 		per_task(t, rcu_tasks_nvcsw) = READ_ONCE(t->nvcsw);
 		WRITE_ONCE(per_task(t, rcu_tasks_holdout), true);
-		list_add(&t->rcu_tasks_holdout_list, hop);
+		list_add(&per_task(t, rcu_tasks_holdout_list), hop);
 	}
 }
 
@@ -771,7 +772,7 @@ static void check_holdout_task(struct task_struct *t,
 	    (IS_ENABLED(CONFIG_NO_HZ_FULL) &&
 	     !is_idle_task(t) && per_task(t, rcu_tasks_idle_cpu) >= 0)) {
 		WRITE_ONCE(per_task(t, rcu_tasks_holdout), false);
-		list_del_init(&t->rcu_tasks_holdout_list);
+		list_del_init(&per_task(t, rcu_tasks_holdout_list));
 		put_task_struct(t);
 		return;
 	}
@@ -796,9 +797,11 @@ static void check_holdout_task(struct task_struct *t,
 static void check_all_holdout_tasks(struct list_head *hop,
 				    bool needreport, bool *firstreport)
 {
-	struct task_struct *t, *t1;
+	struct task_struct *t;
+	struct list_head *pos, *tmp;
 
-	list_for_each_entry_safe(t, t1, hop, rcu_tasks_holdout_list) {
+	list_for_each_safe(pos, tmp, hop) {
+		t = per_task_container_of(pos, rcu_tasks_holdout_list);
 		check_holdout_task(t, needreport, firstreport);
 		cond_resched();
 	}
