@@ -204,19 +204,6 @@ static inline void exit_tasks_rcu_start(void) { }
 static inline void exit_tasks_rcu_finish(void) { }
 #endif /* #else #ifdef CONFIG_TASKS_RCU_GENERIC */
 
-/**
- * cond_resched_tasks_rcu_qs - Report potential quiescent states to RCU
- *
- * This macro resembles cond_resched(), except that it is defined to
- * report potential quiescent states to RCU-tasks even if the cond_resched()
- * machinery were to be shut off, as some advocate for PREEMPTION kernels.
- */
-#define cond_resched_tasks_rcu_qs() \
-do { \
-	rcu_tasks_qs(current, false); \
-	cond_resched(); \
-} while (0)
-
 /*
  * Infrastructure to implement the synchronize_() primitives in
  * TREE_RCU and rcu_barrier_() primitives in TINY_RCU.
