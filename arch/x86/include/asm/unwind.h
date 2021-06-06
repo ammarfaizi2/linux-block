@@ -143,13 +143,4 @@ unsigned long unwind_recover_ret_addr(struct unwind_state *state,
 	val;						\
 })
 
-static inline bool task_on_another_cpu(struct task_struct *task)
-{
-#ifdef CONFIG_SMP
-	return task != current && task->on_cpu;
-#else
-	return false;
-#endif
-}
-
 #endif /* _ASM_X86_UNWIND_H */

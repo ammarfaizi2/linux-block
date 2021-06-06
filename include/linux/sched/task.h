@@ -153,4 +153,13 @@ static inline void task_unlock(struct task_struct *p)
 	spin_unlock(&p->alloc_lock);
 }
 
+static inline bool task_on_another_cpu(struct task_struct *task)
+{
+#ifdef CONFIG_SMP
+	return task != current && task->on_cpu;
+#else
+	return false;
+#endif
+}
+
 #endif /* _LINUX_SCHED_TASK_H */
