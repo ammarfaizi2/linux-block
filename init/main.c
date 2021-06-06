@@ -908,6 +908,7 @@ void __init init_per_task_early(void)
 #endif
 #ifdef CONFIG_TASKS_RCU
 	per_task(&init_task, rcu_tasks_idle_cpu) = -1;
+	INIT_LIST_HEAD(&per_task(&init_task, rcu_tasks_holdout_list));
 #endif
 #ifdef CONFIG_CPUSETS
 	per_task(&init_task, mems_allowed_seq) = (seqcount_spinlock_t) SEQCNT_SPINLOCK_ZERO(init_task.mems_allowed_seq,

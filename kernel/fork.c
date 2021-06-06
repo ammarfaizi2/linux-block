@@ -1757,7 +1757,7 @@ static inline void rcu_copy_process(struct task_struct *p)
 #endif /* #ifdef CONFIG_PREEMPT_RCU */
 #ifdef CONFIG_TASKS_RCU
 	per_task(p, rcu_tasks_holdout) = false;
-	INIT_LIST_HEAD(&p->rcu_tasks_holdout_list);
+	INIT_LIST_HEAD(&per_task(p, rcu_tasks_holdout_list));
 	per_task(p, rcu_tasks_idle_cpu) = -1;
 #endif /* #ifdef CONFIG_TASKS_RCU */
 #ifdef CONFIG_TASKS_TRACE_RCU
