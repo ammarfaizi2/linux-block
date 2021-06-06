@@ -60,7 +60,6 @@ struct io_uring_task;
 struct mempolicy;
 struct nameidata;
 struct nsproxy;
-struct perf_event_context;
 struct pid_namespace;
 struct pipe_inode_info;
 struct rcu_node;
@@ -361,13 +360,6 @@ union rcu_special {
 		u8			need_mb; /* Readers need smp_mb(). */
 	} b; /* Bits. */
 	u32 s; /* Set of bits. */
-};
-
-enum perf_event_task_context {
-	perf_invalid_context = -1,
-	perf_hw_context = 0,
-	perf_sw_context,
-	perf_nr_task_contexts,
 };
 
 struct wake_q_node {

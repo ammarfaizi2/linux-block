@@ -284,6 +284,7 @@ struct perf_event;
 #define PERF_PMU_CAP_EXTENDED_HW_TYPE		0x0200
 
 struct perf_output_handle;
+struct perf_event_context;
 
 /**
  * struct pmu - generic performance monitoring unit
@@ -791,6 +792,13 @@ struct perf_event {
 struct perf_event_groups {
 	struct rb_root	tree;
 	u64		index;
+};
+
+enum perf_event_task_context {
+	perf_invalid_context = -1,
+	perf_hw_context = 0,
+	perf_sw_context,
+	perf_nr_task_contexts,
 };
 
 /**
