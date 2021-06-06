@@ -29,6 +29,11 @@
 #include <linux/lockdep.h>
 #include <asm/processor.h>
 #include <linux/cpumask.h>
+#include <linux/sched/per_task.h>
+
+#ifdef CONFIG_TASKS_RCU
+DECLARE_PER_TASK(u8, rcu_tasks_holdout);
+#endif
 
 #define ULONG_CMP_GE(a, b)	(ULONG_MAX / 2 >= (a) - (b))
 #define ULONG_CMP_LT(a, b)	(ULONG_MAX / 2 < (a) - (b))
@@ -157,8 +162,8 @@ static inline void rcu_nocb_flush_deferred_wakeup(void) { }
 # ifdef CONFIG_TASKS_RCU
 # define rcu_tasks_classic_qs(t, preempt)				\
 	do {								\
-		if (!(preempt) && READ_ONCE((t)->rcu_tasks_holdout))	\
-			WRITE_ONCE((t)->rcu_tasks_holdout, false);	\
+		if (!(preempt) && READ_ONCE(per_task((t), rcu_tasks_holdout)))	\
+			WRITE_ONCE(per_task((t), rcu_tasks_holdout), false);	\
 	} while (0)
 void call_rcu_tasks(struct rcu_head *head, rcu_callback_t func);
 void synchronize_rcu_tasks(void);
