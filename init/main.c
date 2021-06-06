@@ -921,6 +921,7 @@ void __init init_per_task_early(void)
 #endif
 #ifdef CONFIG_PERF_EVENTS
 	mutex_init(&per_task(&init_task, perf_event_mutex));
+	INIT_LIST_HEAD(&per_task(&init_task, perf_event_list));
 #endif
 }
 

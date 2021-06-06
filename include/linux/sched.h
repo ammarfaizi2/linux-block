@@ -1079,9 +1079,6 @@ struct task_struct {
 	struct futex_pi_state		*pi_state_cache;
 	unsigned int			futex_state;
 #endif
-#ifdef CONFIG_PERF_EVENTS
-	struct list_head		perf_event_list;
-#endif
 #ifdef CONFIG_DEBUG_PREEMPT
 	unsigned long			preempt_disable_ip;
 #endif

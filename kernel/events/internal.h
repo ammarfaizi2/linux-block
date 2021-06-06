@@ -8,6 +8,7 @@
 #include <linux/sched/per_task.h>
 
 DECLARE_PER_TASK(struct mutex, perf_event_mutex);
+DECLARE_PER_TASK(struct list_head, perf_event_list);
 
 /* Buffer handling */
 

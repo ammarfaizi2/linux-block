@@ -65,6 +65,7 @@
 
 DEFINE_PER_TASK(struct perf_event_context *, perf_event_ctxp[perf_nr_task_contexts]);
 DEFINE_PER_TASK(struct mutex, perf_event_mutex);
+DEFINE_PER_TASK(struct list_head, perf_event_list);
 
 typedef int (*remote_function_f)(void *);
 
@@ -5858,7 +5859,8 @@ int perf_event_task_enable(void)
 	struct perf_event *event;
 
 	mutex_lock(&per_task(current, perf_event_mutex));
-	list_for_each_entry(event, &current->perf_event_list, owner_entry) {
+	list_for_each_entry(event, &per_task(current, perf_event_list),
+			    owner_entry) {
 		ctx = perf_event_ctx_lock(event);
 		perf_event_for_each_child(event, _perf_event_enable);
 		perf_event_ctx_unlock(event, ctx);
@@ -5874,7 +5876,8 @@ int perf_event_task_disable(void)
 	struct perf_event *event;
 
 	mutex_lock(&per_task(current, perf_event_mutex));
-	list_for_each_entry(event, &current->perf_event_list, owner_entry) {
+	list_for_each_entry(event, &per_task(current, perf_event_list),
+			    owner_entry) {
 		ctx = perf_event_ctx_lock(event);
 		perf_event_for_each_child(event, _perf_event_disable);
 		perf_event_ctx_unlock(event, ctx);
@@ -12531,7 +12534,8 @@ SYSCALL_DEFINE5(perf_event_open,
 	}
 
 	mutex_lock(&per_task(current, perf_event_mutex));
-	list_add_tail(&event->owner_entry, &current->perf_event_list);
+	list_add_tail(&event->owner_entry,
+		      &per_task(current, perf_event_list));
 	mutex_unlock(&per_task(current, perf_event_mutex));
 
 	/*
@@ -12874,7 +12878,8 @@ void perf_event_exit_task(struct task_struct *child)
 	int ctxn;
 
 	mutex_lock(&per_task(child, perf_event_mutex));
-	list_for_each_entry_safe(event, tmp, &child->perf_event_list,
+	list_for_each_entry_safe(event, tmp,
+				 &per_task(child, perf_event_list),
 				 owner_entry) {
 		list_del_init(&event->owner_entry);
 
@@ -13332,7 +13337,7 @@ int perf_event_init_task(struct task_struct *child, u64 clone_flags)
 	memset(per_task(child, perf_event_ctxp), 0,
 	       sizeof(per_task(child, perf_event_ctxp)));
 	mutex_init(&per_task(child, perf_event_mutex));
-	INIT_LIST_HEAD(&child->perf_event_list);
+	INIT_LIST_HEAD(&per_task(child, perf_event_list));
 
 	for_each_task_context_nr(ctxn) {
 		ret = perf_event_init_context(child, ctxn, clone_flags);
