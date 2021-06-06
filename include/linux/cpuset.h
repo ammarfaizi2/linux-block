@@ -24,6 +24,7 @@
 DECLARE_PER_TASK(nodemask_t, mems_allowed);
 DECLARE_PER_TASK(seqcount_spinlock_t, mems_allowed_seq);
 DECLARE_PER_TASK(int, cpuset_mem_spread_rotor);
+DECLARE_PER_TASK(int, cpuset_slab_spread_rotor);
 
 /*
  * Static branch rewrites can happen in an arbitrary order for a given
