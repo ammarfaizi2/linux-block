@@ -67,6 +67,8 @@
 #include <linux/cgroup.h>
 #include <linux/wait.h>
 
+DEFINE_PER_TASK(nodemask_t, mems_allowed);
+
 DEFINE_STATIC_KEY_FALSE(cpusets_pre_enable_key);
 DEFINE_STATIC_KEY_FALSE(cpusets_enabled_key);
 
@@ -1737,9 +1739,10 @@ static void cpuset_change_task_nodemask(struct task_struct *tsk,
 	local_irq_disable();
 	write_seqcount_begin(&tsk->mems_allowed_seq);
 
-	nodes_or(tsk->mems_allowed, tsk->mems_allowed, *newmems);
+	nodes_or(per_task(tsk, mems_allowed), per_task(tsk, mems_allowed),
+		 *newmems);
 	mpol_rebind_task(tsk, newmems);
-	tsk->mems_allowed = *newmems;
+	per_task(tsk, mems_allowed) = *newmems;
 
 	write_seqcount_end(&tsk->mems_allowed_seq);
 	local_irq_enable();
@@ -2986,7 +2989,7 @@ static void cpuset_fork(struct task_struct *task)
 		return;
 
 	set_cpus_allowed_ptr(task, current->cpus_ptr);
-	task->mems_allowed = current->mems_allowed;
+	per_task(task, mems_allowed) = per_task(current, mems_allowed);
 }
 
 struct cgroup_subsys cpuset_cgrp_subsys = {
@@ -3474,7 +3477,7 @@ bool cpuset_cpus_allowed_fallback(struct task_struct *tsk)
 
 void __init cpuset_init_current_mems_allowed(void)
 {
-	nodes_setall(current->mems_allowed);
+	nodes_setall(per_task(current, mems_allowed));
 }
 
 /**
@@ -3509,7 +3512,7 @@ nodemask_t cpuset_mems_allowed(struct task_struct *tsk)
  */
 int cpuset_nodemask_valid_mems_allowed(nodemask_t *nodemask)
 {
-	return nodes_intersects(*nodemask, current->mems_allowed);
+	return nodes_intersects(*nodemask, per_task(current, mems_allowed));
 }
 
 /*
@@ -3573,7 +3576,7 @@ bool __cpuset_node_allowed(int node, gfp_t gfp_mask)
 
 	if (in_interrupt())
 		return true;
-	if (node_isset(node, current->mems_allowed))
+	if (node_isset(node, per_task(current, mems_allowed)))
 		return true;
 	/*
 	 * Allow tasks that have access to memory reserves because they have
@@ -3628,14 +3631,14 @@ bool __cpuset_node_allowed(int node, gfp_t gfp_mask)
 
 static int cpuset_spread_node(int *rotor)
 {
-	return *rotor = next_node_in(*rotor, current->mems_allowed);
+	return *rotor = next_node_in(*rotor, per_task(current, mems_allowed));
 }
 
 int cpuset_mem_spread_node(void)
 {
 	if (current->cpuset_mem_spread_rotor == NUMA_NO_NODE)
 		current->cpuset_mem_spread_rotor =
-			node_random(&current->mems_allowed);
+			node_random(&per_task(current, mems_allowed));
 
 	return cpuset_spread_node(&current->cpuset_mem_spread_rotor);
 }
@@ -3644,7 +3647,7 @@ int cpuset_slab_spread_node(void)
 {
 	if (current->cpuset_slab_spread_rotor == NUMA_NO_NODE)
 		current->cpuset_slab_spread_rotor =
-			node_random(&current->mems_allowed);
+			node_random(&per_task(current, mems_allowed));
 
 	return cpuset_spread_node(&current->cpuset_slab_spread_rotor);
 }
@@ -3665,7 +3668,8 @@ EXPORT_SYMBOL_GPL(cpuset_mem_spread_node);
 int cpuset_mems_allowed_intersects(const struct task_struct *tsk1,
 				   const struct task_struct *tsk2)
 {
-	return nodes_intersects(tsk1->mems_allowed, tsk2->mems_allowed);
+	return nodes_intersects(per_task(tsk1, mems_allowed),
+				per_task(tsk2, mems_allowed));
 }
 
 /**
@@ -3684,7 +3688,7 @@ void cpuset_print_current_mems_allowed(void)
 	pr_cont(",cpuset=");
 	pr_cont_cgroup_name(cgrp);
 	pr_cont(",mems_allowed=%*pbl",
-		nodemask_pr_args(&current->mems_allowed));
+		nodemask_pr_args(&per_task(current, mems_allowed)));
 
 	rcu_read_unlock();
 }
@@ -3766,7 +3770,7 @@ out:
 void cpuset_task_status_allowed(struct seq_file *m, struct task_struct *task)
 {
 	seq_printf(m, "Mems_allowed:\t%*pb\n",
-		   nodemask_pr_args(&task->mems_allowed));
+		   nodemask_pr_args(&per_task(task, mems_allowed)));
 	seq_printf(m, "Mems_allowed_list:\t%*pbl\n",
-		   nodemask_pr_args(&task->mems_allowed));
+		   nodemask_pr_args(&per_task(task, mems_allowed)));
 }

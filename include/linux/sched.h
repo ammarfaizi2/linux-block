@@ -1124,8 +1124,6 @@ struct task_struct {
 	u64				acct_timexpd;
 #endif
 #ifdef CONFIG_CPUSETS
-	/* Protected by ->alloc_lock: */
-	nodemask_t			mems_allowed;
 	/* Sequence number to catch updates: */
 	seqcount_spinlock_t		mems_allowed_seq;
 	int				cpuset_mem_spread_rotor;

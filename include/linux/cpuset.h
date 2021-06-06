@@ -17,8 +17,11 @@
 #include <linux/mm.h>
 #include <linux/mmu_context.h>
 #include <linux/jump_label.h>
+#include <linux/sched/per_task.h>
 
 #ifdef CONFIG_CPUSETS
+
+DECLARE_PER_TASK(nodemask_t, mems_allowed);
 
 /*
  * Static branch rewrites can happen in an arbitrary order for a given
@@ -76,7 +79,7 @@ extern void cpuset_read_unlock(void);
 extern void cpuset_cpus_allowed(struct task_struct *p, struct cpumask *mask);
 extern bool cpuset_cpus_allowed_fallback(struct task_struct *p);
 extern nodemask_t cpuset_mems_allowed(struct task_struct *p);
-#define cpuset_current_mems_allowed (current->mems_allowed)
+#define cpuset_current_mems_allowed (per_task(current, mems_allowed))
 void cpuset_init_current_mems_allowed(void);
 int cpuset_nodemask_valid_mems_allowed(nodemask_t *nodemask);
 
@@ -172,7 +175,7 @@ static inline void set_mems_allowed(nodemask_t nodemask)
 	task_lock(current);
 	local_irq_save(flags);
 	write_seqcount_begin(&current->mems_allowed_seq);
-	current->mems_allowed = nodemask;
+	per_task(current, mems_allowed) = nodemask;
 	write_seqcount_end(&current->mems_allowed_seq);
 	local_irq_restore(flags);
 	task_unlock(current);

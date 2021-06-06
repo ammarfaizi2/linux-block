@@ -12,6 +12,7 @@
  * management can be a bitch. See 'mm/memory.c': 'copy_page_range()'
  */
 
+#include <linux/cpuset.h>
 #include <linux/sched/rseq_api.h>
 #include <linux/shm.h>
 #include <linux/sched/affinity.h>
