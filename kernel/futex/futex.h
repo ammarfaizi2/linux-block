@@ -2,6 +2,7 @@
 #ifndef _FUTEX_H
 #define _FUTEX_H
 
+#include <linux/plist.h>
 #include <linux/futex.h>
 #include <linux/sched/wake_q.h>
 
