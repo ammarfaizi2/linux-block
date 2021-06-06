@@ -1121,7 +1121,6 @@ struct task_struct {
 	u64				acct_timexpd;
 #endif
 #ifdef CONFIG_CPUSETS
-	int				cpuset_mem_spread_rotor;
 	int				cpuset_slab_spread_rotor;
 #endif
 #ifdef CONFIG_CGROUPS
