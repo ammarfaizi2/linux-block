@@ -3,6 +3,7 @@
 #define _LINUX_SCHED_TOPOLOGY_H
 
 #include <linux/topology.h>
+#include <linux/mutex.h>
 
 #include <linux/sched/idle.h>
 
@@ -10,6 +11,9 @@
  * sched-domains (multiprocessor balancing) declarations:
  */
 #ifdef CONFIG_SMP
+
+extern struct root_domain def_root_domain;
+extern struct mutex sched_domains_mutex;
 
 /* Generate SD flag indexes */
 #define SD_FLAG(name, mflags) __##name,
