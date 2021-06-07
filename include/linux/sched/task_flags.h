@@ -149,4 +149,9 @@ static __always_inline bool is_idle_task(const struct task_struct *p)
 	return !!(task_flags(p) & PF_IDLE);
 }
 
+static inline int current_is_kswapd(void)
+{
+	return task_flags(current) & PF_KSWAPD;
+}
+
 #endif /* _LINUX_SCHED_TASK_FLAGS_H */
