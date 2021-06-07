@@ -170,7 +170,7 @@ static void __exit_signal(struct task_struct *tsk)
 
 static void delayed_put_task_struct(struct rcu_head *rhp)
 {
-	struct task_struct *tsk = container_of(rhp, struct task_struct, rcu);
+	struct task_struct *tsk = per_task_container_of(rhp, rcu);
 
 	kprobe_flush_task(tsk);
 	perf_event_delayed_put(tsk);
@@ -181,7 +181,7 @@ static void delayed_put_task_struct(struct rcu_head *rhp)
 void put_task_struct_rcu_user(struct task_struct *task)
 {
 	if (refcount_dec_and_test(&per_task(task, rcu_users)))
-		call_rcu(&task->rcu, delayed_put_task_struct);
+		call_rcu(&per_task(task, rcu), delayed_put_task_struct);
 }
 
 void release_task(struct task_struct *p)

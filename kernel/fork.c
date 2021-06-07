@@ -154,6 +154,7 @@ DEFINE_PER_TASK(struct page_frag, task_frag);
 
 DEFINE_PER_CPU(unsigned long, process_counts) = 0;
 DEFINE_PER_TASK(refcount_t, rcu_users);
+DEFINE_PER_TASK(struct rcu_head, rcu);
 
 __cacheline_aligned DEFINE_RWLOCK(tasklist_lock);  /* outer */
 
@@ -1890,7 +1891,7 @@ const struct file_operations pidfd_fops = {
 
 static void __delayed_free_task(struct rcu_head *rhp)
 {
-	struct task_struct *tsk = container_of(rhp, struct task_struct, rcu);
+	struct task_struct *tsk = per_task_container_of(rhp, rcu);
 
 	free_task(tsk);
 }
@@ -1898,7 +1899,7 @@ static void __delayed_free_task(struct rcu_head *rhp)
 static __always_inline void delayed_free_task(struct task_struct *tsk)
 {
 	if (IS_ENABLED(CONFIG_MEMCG))
-		call_rcu(&tsk->rcu, __delayed_free_task);
+		call_rcu(&per_task(tsk, rcu), __delayed_free_task);
 	else
 		free_task(tsk);
 }

@@ -862,10 +862,6 @@ struct task_struct {
 	unsigned long rseq_event_mask;
 #endif
 
-	union {
-		struct rcu_head		rcu;
-	};
-
 	/* Cache last used pipe for splice(): */
 	struct pipe_inode_info		*splice_pipe;
 
