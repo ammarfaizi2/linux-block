@@ -8,6 +8,7 @@
 #define _LINUX_FTRACE_H
 
 #include <linux/trace_recursion.h>
+#include <linux/sched/per_task.h>
 #include <linux/trace_clock.h>
 #include <linux/kallsyms.h>
 #include <linux/linkage.h>
@@ -1017,14 +1018,16 @@ extern void ftrace_graph_init_task(struct task_struct *t);
 extern void ftrace_graph_exit_task(struct task_struct *t);
 extern void ftrace_graph_init_idle_task(struct task_struct *t, int cpu);
 
+DECLARE_PER_TASK(atomic_t, tracing_graph_pause);
+
 static inline void pause_graph_tracing(void)
 {
-	atomic_inc(&current->tracing_graph_pause);
+	atomic_inc(&per_task(current, tracing_graph_pause));
 }
 
 static inline void unpause_graph_tracing(void)
 {
-	atomic_dec(&current->tracing_graph_pause);
+	atomic_dec(&per_task(current, tracing_graph_pause));
 }
 #else /* !CONFIG_FUNCTION_GRAPH_TRACER */
 

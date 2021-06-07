@@ -313,7 +313,7 @@ void prepare_ftrace_return(unsigned long *parent_ra_addr, unsigned long self_ra,
 	if (unlikely(ftrace_graph_is_dead()))
 		return;
 
-	if (unlikely(atomic_read(&current->tracing_graph_pause)))
+	if (unlikely(atomic_read(&per_task(current, tracing_graph_pause))))
 		return;
 
 	/*

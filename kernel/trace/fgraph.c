@@ -22,6 +22,9 @@
  */
 DEFINE_PER_TASK(atomic_t, trace_overrun);
 
+/* Pause tracing: */
+DEFINE_PER_TASK(atomic_t, tracing_graph_pause);
+
 #ifdef CONFIG_DYNAMIC_FTRACE
 #define ASSIGN_OPS_HASH(opsname, val) \
 	.func_hash		= val, \

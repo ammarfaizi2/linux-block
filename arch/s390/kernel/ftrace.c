@@ -277,7 +277,7 @@ unsigned long prepare_ftrace_return(unsigned long ra, unsigned long sp,
 {
 	if (unlikely(ftrace_graph_is_dead()))
 		goto out;
-	if (unlikely(atomic_read(&current->tracing_graph_pause)))
+	if (unlikely(atomic_read(&per_task(current, tracing_graph_pause))))
 		goto out;
 	ip -= MCOUNT_INSN_SIZE;
 	if (!function_graph_enter(ra, ip, 0, (void *) sp))

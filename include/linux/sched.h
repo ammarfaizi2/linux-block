@@ -927,9 +927,6 @@ struct task_struct {
 
 	/* Timestamp for last schedule: */
 	unsigned long long		ftrace_timestamp;
-
-	/* Pause tracing: */
-	atomic_t			tracing_graph_pause;
 #endif
 
 #ifdef CONFIG_TRACING

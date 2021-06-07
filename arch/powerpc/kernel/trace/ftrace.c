@@ -948,7 +948,7 @@ unsigned long prepare_ftrace_return(unsigned long parent, unsigned long ip,
 	if (unlikely(ftrace_graph_is_dead()))
 		goto out;
 
-	if (unlikely(atomic_read(&current->tracing_graph_pause)))
+	if (unlikely(atomic_read(&per_task(current, tracing_graph_pause))))
 		goto out;
 
 	return_hooker = ppc_function_entry(return_to_handler);
