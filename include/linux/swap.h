@@ -35,11 +35,6 @@ struct pagevec;
 				 SWAP_FLAG_DISCARD_PAGES)
 #define SWAP_BATCH 64
 
-static inline int current_is_kswapd(void)
-{
-	return task_flags(current) & PF_KSWAPD;
-}
-
 /*
  * MAX_SWAPFILES defines the maximum number of swaptypes: things which can
  * be swapped to.  The swap type and the offset into that swap type are
