@@ -672,7 +672,6 @@ struct task_struct {
 	struct sighand_struct __rcu		*sighand;
 
 	/* Restored if set_restore_sigmask() was used: */
-	sigset_t			saved_sigmask;
 	struct sigpending		pending;
 	unsigned long			sas_ss_sp;
 	size_t				sas_ss_size;

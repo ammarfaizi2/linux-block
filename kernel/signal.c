@@ -53,6 +53,8 @@ DEFINE_PER_TASK(sigset_t, blocked);
 
 DEFINE_PER_TASK(sigset_t, real_blocked);
 
+DEFINE_PER_TASK(sigset_t, saved_sigmask);
+
 #define CREATE_TRACE_POINTS
 #include <trace/events/signal.h>
 
@@ -3115,7 +3117,7 @@ int set_user_sigmask(const sigset_t __user *umask, size_t sigsetsize)
 		return -EFAULT;
 
 	set_restore_sigmask();
-	current->saved_sigmask = per_task(current, blocked);
+	per_task(current, saved_sigmask) = per_task(current, blocked);
 	set_current_blocked(&kmask);
 
 	return 0;
@@ -3135,7 +3137,7 @@ int set_compat_user_sigmask(const compat_sigset_t __user *umask,
 		return -EFAULT;
 
 	set_restore_sigmask();
-	current->saved_sigmask = per_task(current, blocked);
+	per_task(current, saved_sigmask) = per_task(current, blocked);
 	set_current_blocked(&kmask);
 
 	return 0;
@@ -4623,7 +4625,7 @@ SYSCALL_DEFINE0(pause)
 
 static int sigsuspend(sigset_t *set)
 {
-	current->saved_sigmask = per_task(current, blocked);
+	per_task(current, saved_sigmask) = per_task(current, blocked);
 	set_current_blocked(set);
 
 	while (!signal_pending(current)) {

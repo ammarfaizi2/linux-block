@@ -17,6 +17,7 @@
 DECLARE_PER_TASK(struct restart_block, restart_block);
 DECLARE_PER_TASK(sigset_t, blocked);
 DECLARE_PER_TASK(sigset_t, real_blocked);
+DECLARE_PER_TASK(sigset_t, saved_sigmask);
 
 /*
  * Types defining task->signal and task->sighand and APIs using them:
@@ -513,7 +514,7 @@ static inline bool test_and_clear_restore_sigmask(void)
 static inline void restore_saved_sigmask(void)
 {
 	if (test_and_clear_restore_sigmask())
-		__set_current_blocked(&current->saved_sigmask);
+		__set_current_blocked(&per_task(current, saved_sigmask));
 }
 
 extern int set_user_sigmask(const sigset_t __user *umask, size_t sigsetsize);
@@ -530,7 +531,7 @@ static inline sigset_t *sigmask_to_save(void)
 {
 	sigset_t *res = &per_task(current, blocked);
 	if (unlikely(test_restore_sigmask()))
-		res = &current->saved_sigmask;
+		res = &per_task(current, saved_sigmask);
 	return res;
 }
 
