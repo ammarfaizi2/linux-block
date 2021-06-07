@@ -3,11 +3,16 @@
 #define __LINUX_VMACACHE_H
 
 #include <linux/sched.h>
+#include <linux/sched/per_task.h>
 #include <linux/mm.h>
+
+/* Per-thread vma caching: */
+DECLARE_PER_TASK(struct vmacache, vmacache);
 
 static inline void vmacache_flush(struct task_struct *tsk)
 {
-	memset(tsk->vmacache.vmas, 0, sizeof(tsk->vmacache.vmas));
+	memset(per_task(tsk, vmacache).vmas, 0,
+	       sizeof(per_task(tsk, vmacache).vmas));
 }
 
 extern void vmacache_update(unsigned long addr, struct vm_area_struct *newvma);
