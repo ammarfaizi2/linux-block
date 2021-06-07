@@ -31,6 +31,8 @@
 
 #include <asm/softirq_stack.h>
 
+#include <linux/vtime.h>
+
 #define CREATE_TRACE_POINTS
 #include <trace/events/irq.h>
 
