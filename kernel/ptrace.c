@@ -690,8 +690,8 @@ static int ptrace_getsiginfo(struct task_struct *child, kernel_siginfo_t *info)
 
 	if (lock_task_sighand(child, &flags)) {
 		error = -EINVAL;
-		if (likely(child->last_siginfo != NULL)) {
-			copy_siginfo(info, child->last_siginfo);
+		if (likely(per_task(child, last_siginfo) != NULL)) {
+			copy_siginfo(info, per_task(child, last_siginfo));
 			error = 0;
 		}
 		unlock_task_sighand(child, &flags);
@@ -706,8 +706,8 @@ static int ptrace_setsiginfo(struct task_struct *child, const kernel_siginfo_t *
 
 	if (lock_task_sighand(child, &flags)) {
 		error = -EINVAL;
-		if (likely(child->last_siginfo != NULL)) {
-			copy_siginfo(child->last_siginfo, info);
+		if (likely(per_task(child, last_siginfo) != NULL)) {
+			copy_siginfo(per_task(child, last_siginfo), info);
 			error = 0;
 		}
 		unlock_task_sighand(child, &flags);
@@ -1005,7 +1005,7 @@ ptrace_get_syscall_info(struct task_struct *child, unsigned long user_size,
 	 * called earlier by ptrace_check_attach() ensures that
 	 * the tracee cannot go away and clear its last_siginfo.
 	 */
-	switch (child->last_siginfo ? child->last_siginfo->si_code : 0) {
+	switch (per_task(child, last_siginfo) ? per_task(child, last_siginfo)->si_code : 0) {
 	case SIGTRAP | 0x80:
 		switch (child->ptrace_message) {
 		case PTRACE_EVENTMSG_SYSCALL_ENTRY:
@@ -1163,7 +1163,7 @@ int ptrace_request(struct task_struct *child, long request,
 		if (unlikely(!seized || !lock_task_sighand(child, &flags)))
 			break;
 
-		si = child->last_siginfo;
+		si = per_task(child, last_siginfo);
 		if (likely(si && (si->si_code >> 8) == PTRACE_EVENT_STOP)) {
 			child->jobctl |= JOBCTL_LISTENING;
 			/*

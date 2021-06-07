@@ -54,6 +54,7 @@ DEFINE_PER_TASK(sigset_t, blocked);
 DEFINE_PER_TASK(sigset_t, real_blocked);
 
 DEFINE_PER_TASK(sigset_t, saved_sigmask);
+DEFINE_PER_TASK(kernel_siginfo_t *, last_siginfo);
 
 /* Restored if set_restore_sigmask() was used: */
 DEFINE_PER_TASK(struct sigpending, pending);
@@ -2253,7 +2254,7 @@ static void ptrace_stop(int exit_code, int why, int clear_code, kernel_siginfo_t
 	 */
 	smp_wmb();
 
-	current->last_siginfo = info;
+	per_task(current, last_siginfo) = info;
 	current->exit_code = exit_code;
 
 	/*
@@ -2330,7 +2331,7 @@ static void ptrace_stop(int exit_code, int why, int clear_code, kernel_siginfo_t
 	 * any signal-sending on another CPU that wants to examine it.
 	 */
 	spin_lock_irq(&current->sighand->siglock);
-	current->last_siginfo = NULL;
+	per_task(current, last_siginfo) = NULL;
 
 	/* LISTENING can be set only during STOP traps, clear it */
 	current->jobctl &= ~JOBCTL_LISTENING;
