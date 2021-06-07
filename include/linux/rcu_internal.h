@@ -11,5 +11,6 @@
 #include <linux/refcount.h>
 
 DECLARE_PER_TASK(refcount_t, rcu_users);
+DECLARE_PER_TASK(struct rcu_head, rcu);
 
 #endif /* __LINUX_RCU_INTERNAL_H */
