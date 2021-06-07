@@ -7,6 +7,9 @@
 #include <linux/mm.h>
 #include <linux/vmacache.h>
 
+/* Per-thread vma caching: */
+DEFINE_PER_TASK(struct vmacache, vmacache);
+
 /*
  * Hash based on the pmd of addr if configured with MMU, which provides a good
  * hit rate for workloads with spatial locality.  Otherwise, use pages.
@@ -35,7 +38,7 @@ static inline bool vmacache_valid_mm(struct mm_struct *mm)
 void vmacache_update(unsigned long addr, struct vm_area_struct *newvma)
 {
 	if (vmacache_valid_mm(newvma->vm_mm))
-		current->vmacache.vmas[VMACACHE_HASH(addr)] = newvma;
+		per_task(current, vmacache).vmas[VMACACHE_HASH(addr)] = newvma;
 }
 
 static bool vmacache_valid(struct mm_struct *mm)
@@ -46,12 +49,12 @@ static bool vmacache_valid(struct mm_struct *mm)
 		return false;
 
 	curr = current;
-	if (mm->vmacache_seqnum != curr->vmacache.seqnum) {
+	if (mm->vmacache_seqnum != per_task(curr, vmacache).seqnum) {
 		/*
 		 * First attempt will always be invalid, initialize
 		 * the new cache for this task here.
 		 */
-		curr->vmacache.seqnum = mm->vmacache_seqnum;
+		per_task(curr, vmacache).seqnum = mm->vmacache_seqnum;
 		vmacache_flush(curr);
 		return false;
 	}
@@ -69,7 +72,7 @@ struct vm_area_struct *vmacache_find(struct mm_struct *mm, unsigned long addr)
 		return NULL;
 
 	for (i = 0; i < VMACACHE_SIZE; i++) {
-		struct vm_area_struct *vma = current->vmacache.vmas[idx];
+		struct vm_area_struct *vma = per_task(current, vmacache).vmas[idx];
 
 		if (vma) {
 #ifdef CONFIG_DEBUG_VM_VMACACHE
@@ -102,7 +105,7 @@ struct vm_area_struct *vmacache_find_exact(struct mm_struct *mm,
 		return NULL;
 
 	for (i = 0; i < VMACACHE_SIZE; i++) {
-		struct vm_area_struct *vma = current->vmacache.vmas[idx];
+		struct vm_area_struct *vma = per_task(current, vmacache).vmas[idx];
 
 		if (vma && vma->vm_start == start && vma->vm_end == end) {
 			count_vm_vmacache_event(VMACACHE_FIND_HITS);
