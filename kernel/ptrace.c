@@ -1099,7 +1099,7 @@ int ptrace_request(struct task_struct *child, long request,
 		}
 
 		if (test_tsk_restore_sigmask(child))
-			mask = &child->saved_sigmask;
+			mask = &per_task(child, saved_sigmask);
 		else
 			mask = &per_task(child, blocked);
 
