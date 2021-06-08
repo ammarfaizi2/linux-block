@@ -59,6 +59,7 @@ enum fscache_cookie_stage {
 	FSCACHE_COOKIE_STAGE_ACTIVE,		/* The cache is active, readable and writable */
 	FSCACHE_COOKIE_STAGE_INVALIDATING,	/* The cache is being invalidated */
 	FSCACHE_COOKIE_STAGE_FAILED,		/* The cache failed, withdraw to clear */
+	FSCACHE_COOKIE_STAGE_COMMITTING,	/* The cookie is being committed */
 	FSCACHE_COOKIE_STAGE_WITHDRAWING,	/* The cookie is being withdrawn */
 	FSCACHE_COOKIE_STAGE_RELINQUISHING,	/* The cookie is being relinquished */
 	FSCACHE_COOKIE_STAGE_DROPPED,		/* The cookie has been dropped */
@@ -108,9 +109,10 @@ struct fscache_cookie {
 	void				*cache_priv;	/* Cache-side representation */
 	struct hlist_bl_node		hash_link;	/* Link in hash table */
 	struct list_head		proc_link;	/* Link in proc list */
+	struct list_head		commit_link;	/* Link in commit queue */
 	struct work_struct		work;		/* Commit/relinq/withdraw work */
 	loff_t				object_size;	/* Size of the netfs object */
-
+	unsigned long			unused_at;	/* Time at which unused (jiffies) */
 	unsigned long			flags;
 #define FSCACHE_COOKIE_RELINQUISHED	0		/* T if cookie has been relinquished */
 #define FSCACHE_COOKIE_RETIRED		1		/* T if this cookie has retired on relinq */
@@ -121,6 +123,7 @@ struct fscache_cookie {
 #define FSCACHE_COOKIE_NACC_ELEVATED	8		/* T if n_accesses is incremented */
 #define FSCACHE_COOKIE_DO_RELINQUISH	9		/* T if this cookie needs relinquishment */
 #define FSCACHE_COOKIE_DO_WITHDRAW	10		/* T if this cookie needs withdrawing */
+#define FSCACHE_COOKIE_DO_COMMIT	11		/* T if this cookie needs committing */
 
 	enum fscache_cookie_stage	stage;
 	u8				advice;		/* FSCACHE_ADV_* */
