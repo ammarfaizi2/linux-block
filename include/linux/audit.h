@@ -16,8 +16,6 @@
 #include <linux/audit_arch.h>
 #include <linux/time64.h>
 
-#include <uapi/linux/netfilter/nf_tables.h>
-
 #ifdef CONFIG_AUDIT
 extern int is_audit_feature_set(int which);
 
