@@ -49,6 +49,16 @@ static unsigned long stack_maxrandom_size(unsigned long task_size)
 	return max;
 }
 
+/*
+ * True on X86_32 or when emulating IA32 on X86_64
+ */
+int mmap_is_ia32(void)
+{
+	return IS_ENABLED(CONFIG_X86_32) ||
+	       (IS_ENABLED(CONFIG_COMPAT) &&
+		test_thread_flag(TIF_ADDR32));
+}
+
 #ifdef CONFIG_COMPAT
 # define mmap32_rnd_bits  mmap_rnd_compat_bits
 # define mmap64_rnd_bits  mmap_rnd_bits
