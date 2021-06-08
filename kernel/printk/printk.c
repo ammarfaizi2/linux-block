@@ -112,6 +112,30 @@ enum devkmsg_log_masks {
 	DEVKMSG_LOG_MASK_LOCK           = BIT(__DEVKMSG_LOG_BIT_LOCK),
 };
 
+void ratelimit_state_init(struct ratelimit_state *rs, int interval, int burst)
+{
+	memset(rs, 0, sizeof(*rs));
+
+	raw_spin_lock_init(&rs->lock);
+	rs->interval	= interval;
+	rs->burst	= burst;
+}
+EXPORT_SYMBOL(ratelimit_state_init);
+
+void ratelimit_state_exit(struct ratelimit_state *rs)
+{
+	if (!(rs->flags & RATELIMIT_MSG_ON_RELEASE))
+		return;
+
+	if (rs->missed) {
+		pr_warn("%s: %d output lines suppressed due to ratelimiting\n",
+			current->comm, rs->missed);
+		rs->missed = 0;
+	}
+}
+EXPORT_SYMBOL(ratelimit_state_exit);
+
+
 /* Keep both the 'on' and 'off' bits clear, i.e. ratelimit by default: */
 #define DEVKMSG_LOG_MASK_DEFAULT	0
 
