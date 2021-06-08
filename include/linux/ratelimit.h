@@ -6,15 +6,7 @@
 #include <linux/sched.h>
 #include <linux/spinlock.h>
 
-static inline void ratelimit_state_init(struct ratelimit_state *rs,
-					int interval, int burst)
-{
-	memset(rs, 0, sizeof(*rs));
-
-	raw_spin_lock_init(&rs->lock);
-	rs->interval	= interval;
-	rs->burst	= burst;
-}
+extern void ratelimit_state_init(struct ratelimit_state *rs, int interval, int burst);
 
 static inline void ratelimit_default_init(struct ratelimit_state *rs)
 {
@@ -22,17 +14,7 @@ static inline void ratelimit_default_init(struct ratelimit_state *rs)
 					DEFAULT_RATELIMIT_BURST);
 }
 
-static inline void ratelimit_state_exit(struct ratelimit_state *rs)
-{
-	if (!(rs->flags & RATELIMIT_MSG_ON_RELEASE))
-		return;
-
-	if (rs->missed) {
-		pr_warn("%s: %d output lines suppressed due to ratelimiting\n",
-			current->comm, rs->missed);
-		rs->missed = 0;
-	}
-}
+extern void ratelimit_state_exit(struct ratelimit_state *rs);
 
 static inline void
 ratelimit_set_flags(struct ratelimit_state *rs, unsigned long flags)
