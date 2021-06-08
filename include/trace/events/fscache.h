@@ -52,16 +52,20 @@ enum fscache_cookie_trace {
 	fscache_cookie_get_end_access,
 	fscache_cookie_get_hash_collision,
 	fscache_cookie_get_inval_work,
+	fscache_cookie_get_lru,
 	fscache_cookie_get_use_work,
 	fscache_cookie_get_withdraw,
 	fscache_cookie_new_acquire,
 	fscache_cookie_put_hash_collision,
+	fscache_cookie_put_lru,
 	fscache_cookie_put_object,
 	fscache_cookie_put_over_queued,
 	fscache_cookie_put_relinquish,
 	fscache_cookie_put_withdrawn,
 	fscache_cookie_put_work,
 	fscache_cookie_see_active,
+	fscache_cookie_see_lru_do_one,
+	fscache_cookie_see_committing,
 	fscache_cookie_see_relinquish,
 	fscache_cookie_see_withdraw,
 	fscache_cookie_see_work,
@@ -127,16 +131,20 @@ enum fscache_access_trace {
 	EM(fscache_cookie_get_hash_collision,	"GET hcoll")		\
 	EM(fscache_cookie_get_end_access,	"GQ  endac")		\
 	EM(fscache_cookie_get_inval_work,	"GQ  inval")		\
+	EM(fscache_cookie_get_lru,		"GET lru  ")		\
 	EM(fscache_cookie_get_use_work,		"GQ  use  ")		\
 	EM(fscache_cookie_get_withdraw,		"GQ  wthdr")		\
 	EM(fscache_cookie_new_acquire,		"NEW acq  ")		\
 	EM(fscache_cookie_put_hash_collision,	"PUT hcoll")		\
+	EM(fscache_cookie_put_lru,		"PUT lru  ")		\
 	EM(fscache_cookie_put_object,		"PUT obj  ")		\
 	EM(fscache_cookie_put_over_queued,	"PQ  overq")		\
 	EM(fscache_cookie_put_relinquish,	"PUT relnq")		\
 	EM(fscache_cookie_put_withdrawn,	"PUT wthdn")		\
 	EM(fscache_cookie_put_work,		"PQ  work ")		\
 	EM(fscache_cookie_see_active,		"-   active")		\
+	EM(fscache_cookie_see_lru_do_one,	"-   lrudo")		\
+	EM(fscache_cookie_see_committing,	"-   x-cmt")		\
 	EM(fscache_cookie_see_relinquish,	"-   x-rlq")		\
 	EM(fscache_cookie_see_withdraw,		"-   x-wth")		\
 	E_(fscache_cookie_see_work,		"-   work ")

@@ -15,6 +15,8 @@
 
 struct kmem_cache *fscache_cookie_jar;
 
+static void fscache_cookie_lru_timed_out(struct timer_list *timer);
+static void fscache_cookie_lru_worker(struct work_struct *work);
 static void fscache_cookie_worker(struct work_struct *work);
 static void fscache_drop_cookie(struct fscache_cookie *cookie);
 static void fscache_lookup_cookie(struct fscache_cookie *cookie);
@@ -24,7 +26,12 @@ static void fscache_invalidate_cookie(struct fscache_cookie *cookie);
 static struct hlist_bl_head fscache_cookie_hash[1 << fscache_cookie_hash_shift];
 static LIST_HEAD(fscache_cookies);
 static DEFINE_RWLOCK(fscache_cookies_lock);
-static const char fscache_cookie_stages[FSCACHE_COOKIE_STAGE__NR] = "-LCAIFWRD";
+static LIST_HEAD(fscache_cookie_lru);
+static DEFINE_SPINLOCK(fscache_cookie_lru_lock);
+static DEFINE_TIMER(fscache_cookie_lru_timer, fscache_cookie_lru_timed_out);
+static DECLARE_WORK(fscache_cookie_lru_work, fscache_cookie_lru_worker);
+static const char fscache_cookie_stages[FSCACHE_COOKIE_STAGE__NR] = "-LCAIFMWRD";
+unsigned int fscache_lru_cookie_timeout = 10 * HZ;
 
 void fscache_print_cookie(struct fscache_cookie *cookie, char prefix)
 {
@@ -49,6 +56,11 @@ void fscache_print_cookie(struct fscache_cookie *cookie, char prefix)
 
 static void fscache_free_cookie(struct fscache_cookie *cookie)
 {
+	if (WARN_ON_ONCE(!list_empty(&cookie->commit_link))) {
+		spin_lock(&fscache_cookie_lru_lock);
+		list_del_init(&cookie->commit_link);
+		spin_unlock(&fscache_cookie_lru_lock);
+	}
 	write_lock(&fscache_cookies_lock);
 	list_del(&cookie->proc_link);
 	write_unlock(&fscache_cookies_lock);
@@ -265,6 +277,7 @@ static struct fscache_cookie *fscache_alloc_cookie(
 	cookie->debug_id = atomic_inc_return(&fscache_cookie_debug_id);
 	cookie->stage = FSCACHE_COOKIE_STAGE_QUIESCENT;
 	spin_lock_init(&cookie->lock);
+	INIT_LIST_HEAD(&cookie->commit_link);
 	INIT_WORK(&cookie->work, fscache_cookie_worker);
 
 	write_lock(&fscache_cookies_lock);
@@ -448,6 +461,7 @@ void __fscache_use_cookie(struct fscache_cookie *cookie, bool will_modify)
 
 	atomic_inc(&cookie->n_active);
 
+again:
 	stage = cookie->stage;
 	switch (stage) {
 	case FSCACHE_COOKIE_STAGE_QUIESCENT:
@@ -474,6 +488,13 @@ void __fscache_use_cookie(struct fscache_cookie *cookie, bool will_modify)
 	case FSCACHE_COOKIE_STAGE_WITHDRAWING:
 		break;
 
+	case FSCACHE_COOKIE_STAGE_COMMITTING:
+		spin_unlock(&cookie->lock);
+		wait_var_event(&cookie->stage,
+			       READ_ONCE(cookie->stage) != FSCACHE_COOKIE_STAGE_COMMITTING);
+		spin_lock(&cookie->lock);
+		goto again;
+
 	case FSCACHE_COOKIE_STAGE_DROPPED:
 	case FSCACHE_COOKIE_STAGE_RELINQUISHING:
 		WARN(1, "Can't use cookie in stage %u\n", cookie->stage);
@@ -497,7 +518,19 @@ void __fscache_unuse_cookie(struct fscache_cookie *cookie,
 {
 	if (aux_data || object_size)
 		__fscache_update_cookie(cookie, aux_data, object_size);
-	atomic_dec(&cookie->n_active);
+	cookie->unused_at = jiffies;
+	if (atomic_dec_return(&cookie->n_active) == 0) {
+		if (test_bit(FSCACHE_COOKIE_IS_CACHING, &cookie->flags)) {
+			spin_lock(&fscache_cookie_lru_lock);
+			if (list_empty(&cookie->commit_link)) {
+				fscache_get_cookie(cookie, fscache_cookie_get_lru);
+				list_move_tail(&cookie->commit_link, &fscache_cookie_lru);
+			}
+			spin_unlock(&fscache_cookie_lru_lock);
+			timer_reduce(&fscache_cookie_lru_timer,
+				     jiffies + fscache_lru_cookie_timeout);
+		}
+	}
 }
 EXPORT_SYMBOL(__fscache_unuse_cookie);
 
@@ -532,6 +565,7 @@ again:
 	case FSCACHE_COOKIE_STAGE_FAILED:
 		break;
 
+	case FSCACHE_COOKIE_STAGE_COMMITTING:
 	case FSCACHE_COOKIE_STAGE_RELINQUISHING:
 	case FSCACHE_COOKIE_STAGE_WITHDRAWING:
 		if (test_and_clear_bit(FSCACHE_COOKIE_IS_CACHING, &cookie->flags) &&
@@ -541,6 +575,8 @@ again:
 			fscache_see_cookie(cookie, fscache_cookie_see_relinquish);
 			fscache_drop_cookie(cookie);
 			break;
+		} else if (cookie->stage == FSCACHE_COOKIE_STAGE_COMMITTING) {
+			fscache_see_cookie(cookie, fscache_cookie_see_committing);
 		} else {
 			fscache_see_cookie(cookie, fscache_cookie_see_withdraw);
 		}
@@ -550,6 +586,7 @@ again:
 	case FSCACHE_COOKIE_STAGE_DROPPED:
 		clear_bit(FSCACHE_COOKIE_NEEDS_UPDATE, &cookie->flags);
 		clear_bit(FSCACHE_COOKIE_DO_WITHDRAW, &cookie->flags);
+		clear_bit(FSCACHE_COOKIE_DO_COMMIT, &cookie->flags);
 		set_bit(FSCACHE_COOKIE_NO_DATA_TO_READ, &cookie->flags);
 		fscache_set_cookie_stage(cookie, FSCACHE_COOKIE_STAGE_QUIESCENT);
 		break;
@@ -576,6 +613,72 @@ static void __fscache_withdraw_cookie(struct fscache_cookie *cookie)
 		fscache_end_cookie_access(cookie, fscache_access_cache_unpin);
 	else
 		__fscache_end_cookie_access(cookie);
+}
+
+static void fscache_cookie_lru_do_one(struct fscache_cookie *cookie)
+{
+	fscache_see_cookie(cookie, fscache_cookie_see_lru_do_one);
+
+	spin_lock(&cookie->lock);
+	if (cookie->stage != FSCACHE_COOKIE_STAGE_ACTIVE ||
+	    time_before(jiffies, cookie->unused_at + fscache_lru_cookie_timeout) ||
+	    atomic_read(&cookie->n_active) > 0) {
+		spin_unlock(&cookie->lock);
+	} else {
+		__fscache_set_cookie_stage(cookie, FSCACHE_COOKIE_STAGE_COMMITTING);
+		set_bit(FSCACHE_COOKIE_DO_COMMIT, &cookie->flags);
+		spin_unlock(&cookie->lock);
+		_debug("lru c=%x", cookie->debug_id);
+		__fscache_withdraw_cookie(cookie);
+	}
+
+	fscache_put_cookie(cookie, fscache_cookie_put_lru);
+}
+
+static void fscache_cookie_lru_worker(struct work_struct *work)
+{
+	struct fscache_cookie *cookie;
+	unsigned long unused_at;
+
+	spin_lock(&fscache_cookie_lru_lock);
+
+	while (!list_empty(&fscache_cookie_lru)) {
+		cookie = list_first_entry(&fscache_cookie_lru,
+					  struct fscache_cookie, commit_link);
+		unused_at = cookie->unused_at + fscache_lru_cookie_timeout;
+		if (time_before(jiffies, unused_at)) {
+			timer_reduce(&fscache_cookie_lru_timer, unused_at);
+			break;
+		}
+
+		list_del_init(&cookie->commit_link);
+		spin_unlock(&fscache_cookie_lru_lock);
+		fscache_cookie_lru_do_one(cookie);
+		spin_lock(&fscache_cookie_lru_lock);
+	}
+
+	spin_unlock(&fscache_cookie_lru_lock);
+}
+
+static void fscache_cookie_lru_timed_out(struct timer_list *timer)
+{
+	queue_work(fscache_wq, &fscache_cookie_lru_work);
+}
+
+static void fscache_cookie_drop_from_lru(struct fscache_cookie *cookie)
+{
+	bool need_put = false;
+
+	if (!list_empty(&cookie->commit_link)) {
+		spin_lock(&fscache_cookie_lru_lock);
+		if (!list_empty(&cookie->commit_link)) {
+			list_del_init(&cookie->commit_link);
+			need_put = true;
+		}
+		spin_unlock(&fscache_cookie_lru_lock);
+		if (need_put)
+			fscache_put_cookie(cookie, fscache_cookie_put_lru);
+	}
 }
 
 /*
@@ -687,6 +790,7 @@ static void fscache_drop_cookie(struct fscache_cookie *cookie)
 
 static void fscache_drop_withdraw_cookie(struct fscache_cookie *cookie)
 {
+	fscache_cookie_drop_from_lru(cookie);
 	__fscache_withdraw_cookie(cookie);
 }
 
