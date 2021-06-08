@@ -2,8 +2,7 @@
 #ifndef IOPRIO_H
 #define IOPRIO_H
 
-#include <linux/sched.h>
-#include <linux/sched/rt.h>
+struct task_struct;
 #include <linux/iocontext.h>
 
 #include <uapi/linux/ioprio.h>
