@@ -5,7 +5,6 @@
 #include <uapi/linux/sched.h>
 #include <linux/atomic_api.h>
 #include <linux/spinlock.h>
-#include <linux/sched.h>
 
 struct mnt_namespace;
 struct uts_namespace;
