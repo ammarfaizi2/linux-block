@@ -3,6 +3,7 @@
 #define _LINUX_PTRACE_TYPES_H
 
 #include <uapi/linux/seccomp.h>
+#include <asm/ptrace.h>
 
 /* Add sp to seccomp_data, as seccomp is user API, we don't want to modify it */
 struct syscall_info {
@@ -54,5 +55,14 @@ struct syscall_info {
 #define PTRACE_MODE_READ_REALCREDS (PTRACE_MODE_READ | PTRACE_MODE_REALCREDS)
 #define PTRACE_MODE_ATTACH_FSCREDS (PTRACE_MODE_ATTACH | PTRACE_MODE_FSCREDS)
 #define PTRACE_MODE_ATTACH_REALCREDS (PTRACE_MODE_ATTACH | PTRACE_MODE_REALCREDS)
+
+#ifndef is_syscall_success
+/*
+ * On most systems we can tell if a syscall is a success based on if the retval
+ * is an error value.  On some systems like ia64 and powerpc they have different
+ * indicators of success/failure and must define their own.
+ */
+#define is_syscall_success(regs) (!IS_ERR_VALUE((unsigned long)(regs_return_value(regs))))
+#endif
 
 #endif /* _LINUX_PTRACE_TYPES_H */
