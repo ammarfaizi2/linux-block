@@ -318,12 +318,7 @@ do {									\
 /*
  * True on X86_32 or when emulating IA32 on X86_64
  */
-static inline int mmap_is_ia32(void)
-{
-	return IS_ENABLED(CONFIG_X86_32) ||
-	       (IS_ENABLED(CONFIG_COMPAT) &&
-		test_thread_flag(TIF_ADDR32));
-}
+extern int mmap_is_ia32(void);
 
 extern unsigned long task_size_32bit(void);
 extern unsigned long task_size_64bit(int full_addr_space);
