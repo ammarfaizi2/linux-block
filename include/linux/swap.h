@@ -6,14 +6,13 @@
 #include <linux/linkage.h>
 #include <linux/mmzone.h>
 #include <linux/list.h>
-#include <linux/memcontrol.h>
-#include <linux/sched.h>
 #include <linux/node.h>
 #include <linux/fs.h>
 #include <linux/pagemap.h>
 #include <linux/atomic.h>
 #include <linux/page-flags.h>
 #include <linux/plist.h>
+#include <linux/signal_types.h>
 #include <uapi/linux/mempolicy.h>
 #include <asm/page.h>
 
