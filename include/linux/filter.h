@@ -1078,16 +1078,7 @@ int bpf_jit_get_func_addr(const struct bpf_prog *prog,
 struct bpf_prog *bpf_jit_blind_constants(struct bpf_prog *fp);
 void bpf_jit_prog_release_other(struct bpf_prog *fp, struct bpf_prog *fp_other);
 
-static inline void bpf_jit_dump(unsigned int flen, unsigned int proglen,
-				u32 pass, void *image)
-{
-	pr_err("flen=%u proglen=%u pass=%u image=%pK from=%s pid=%d\n", flen,
-	       proglen, pass, image, current->comm, task_pid_nr(current));
-
-	if (image)
-		print_hex_dump(KERN_ERR, "JIT code: ", DUMP_PREFIX_OFFSET,
-			       16, 1, image, proglen, false);
-}
+void bpf_jit_dump(unsigned int flen, unsigned int proglen, u32 pass, void *image);
 
 static inline bool bpf_jit_is_ebpf(void)
 {
