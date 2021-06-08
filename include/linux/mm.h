@@ -38,6 +38,7 @@ struct anon_vma;
 struct anon_vma_chain;
 struct user_struct;
 struct pt_regs;
+struct task_struct;
 
 extern int sysctl_page_lock_unfairness;
 
@@ -639,16 +640,7 @@ static inline bool vma_is_temporary_stack(struct vm_area_struct *vma)
 	return false;
 }
 
-static inline bool vma_is_foreign(struct vm_area_struct *vma)
-{
-	if (!current->mm)
-		return true;
-
-	if (current->mm != vma->vm_mm)
-		return true;
-
-	return false;
-}
+extern bool vma_is_foreign(struct vm_area_struct *vma);
 
 static inline bool vma_is_accessible(struct vm_area_struct *vma)
 {
