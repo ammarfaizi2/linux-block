@@ -1566,6 +1566,19 @@ void mem_cgroup_print_oom_meminfo(struct mem_cgroup *memcg)
 	kfree(buf);
 }
 
+int mem_cgroup_swappiness(struct mem_cgroup *memcg)
+{
+	/* Cgroup2 doesn't have per-cgroup swappiness */
+	if (cgroup_subsys_on_dfl(memory_cgrp_subsys))
+		return vm_swappiness;
+
+	/* root ? */
+	if (mem_cgroup_disabled() || mem_cgroup_is_root(memcg))
+		return vm_swappiness;
+
+	return memcg->swappiness;
+}
+
 /*
  * Return the memory (and swap, if configured) limit for a memcg.
  */

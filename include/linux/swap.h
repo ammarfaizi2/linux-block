@@ -707,18 +707,7 @@ static inline int split_swap_cluster(swp_entry_t entry)
 #endif
 
 #ifdef CONFIG_MEMCG
-static inline int mem_cgroup_swappiness(struct mem_cgroup *memcg)
-{
-	/* Cgroup2 doesn't have per-cgroup swappiness */
-	if (cgroup_subsys_on_dfl(memory_cgrp_subsys))
-		return vm_swappiness;
-
-	/* root ? */
-	if (mem_cgroup_disabled() || mem_cgroup_is_root(memcg))
-		return vm_swappiness;
-
-	return memcg->swappiness;
-}
+extern int mem_cgroup_swappiness(struct mem_cgroup *memcg);
 #else
 static inline int mem_cgroup_swappiness(struct mem_cgroup *mem)
 {
