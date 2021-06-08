@@ -340,13 +340,11 @@ static int cachefiles_walk_to_file(struct cachefiles_cache *cache,
 	inode_lock_nested(dinode, I_MUTEX_PARENT);
 
 	dentry = lookup_one_len(object->d_name, fan, object->d_name_len);
+	trace_cachefiles_lookup(object, dentry);
 	if (IS_ERR(dentry)) {
-		trace_cachefiles_lookup(object, dentry, NULL);
 		ret = PTR_ERR(dentry);
 		goto error;
 	}
-
-	trace_cachefiles_lookup(object, dentry, d_backing_inode(dentry));
 
 	if (d_is_negative(dentry)) {
 		/* This element of the path doesn't exist, so we can release
