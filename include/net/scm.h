@@ -75,19 +75,8 @@ static __inline__ void scm_destroy(struct scm_cookie *scm)
 		__scm_destroy(scm);
 }
 
-static __inline__ int scm_send(struct socket *sock, struct msghdr *msg,
-			       struct scm_cookie *scm, bool forcecreds)
-{
-	memset(scm, 0, sizeof(*scm));
-	scm->creds.uid = INVALID_UID;
-	scm->creds.gid = INVALID_GID;
-	if (forcecreds)
-		scm_set_cred(scm, task_tgid(current), current_uid(), current_gid());
-	unix_get_peersec_dgram(sock, scm);
-	if (msg->msg_controllen <= 0)
-		return 0;
-	return __scm_send(sock, msg, scm);
-}
+extern int scm_send(struct socket *sock, struct msghdr *msg,
+		    struct scm_cookie *scm, bool forcecreds);
 
 #ifdef CONFIG_SECURITY_NETWORK
 static inline void scm_passec(struct socket *sock, struct msghdr *msg, struct scm_cookie *scm)
