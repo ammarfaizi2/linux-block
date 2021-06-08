@@ -471,7 +471,7 @@ void fpu__clear_user_states(struct fpu *fpu)
 	}
 
 	/* Reset user states in registers. */
-	load_fpregs_from_init_fpstate(xfeatures_mask_uabi());
+	load_fpregs_from_init_fpstate(xfeatures_mask_restore_user());
 
 	/*
 	 * Now all FPU registers have their desired values.  Inform the FPU
