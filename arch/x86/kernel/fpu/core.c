@@ -145,6 +145,32 @@ void copy_fpregs_to_fpstate(struct fpu *fpu)
 		restore_fpregs_from_fpstate(&fpu->state);
 }
 
+void __restore_fpregs_from_fpstate(union fpregs_state *fpstate, u64 mask)
+{
+	/*
+	 * AMD K7/K8 CPUs don't save/restore FDP/FIP/FOP unless an exception is
+	 * pending. Clear the x87 state here by setting it to fixed values.
+	 * "m" is a random variable that should be in L1.
+	 */
+	if (unlikely(static_cpu_has_bug(X86_BUG_FXSAVE_LEAK))) {
+		asm volatile(
+			"fnclex\n\t"
+			"emms\n\t"
+			"fildl %P[addr]"	/* set F?P to defined value */
+			: : [addr] "m" (fpstate));
+	}
+
+	if (use_xsave()) {
+		xrstor_from_kernel(&fpstate->xsave, mask);
+	} else {
+		if (use_fxsr())
+			fxrstor_from_kernel(&fpstate->fxsave);
+		else
+			frstor_from_kernel(&fpstate->fsave);
+	}
+}
+EXPORT_SYMBOL_GPL(__restore_fpregs_from_fpstate);
+
 void kernel_fpu_begin_mask(unsigned int kfpu_mask)
 {
 	preempt_disable();
