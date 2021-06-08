@@ -11,9 +11,11 @@
 #ifndef _ASM_GENERIC__TLB_H
 #define _ASM_GENERIC__TLB_H
 
+#include <linux/sched/thread_info_api.h>
 #include <linux/mmu_notifier.h>
 #include <linux/swap.h>
 #include <linux/hugetlb_inline.h>
+
 #include <asm/tlbflush.h>
 #include <asm/cacheflush.h>
 
