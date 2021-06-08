@@ -1347,17 +1347,6 @@ static inline bool sk_stream_is_writeable(const struct sock *sk)
 	return __sk_stream_is_writeable(sk, 0);
 }
 
-static inline int sk_under_cgroup_hierarchy(struct sock *sk,
-					    struct cgroup *ancestor)
-{
-#ifdef CONFIG_SOCK_CGROUP_DATA
-	return cgroup_is_descendant(sock_cgroup_ptr(&sk->sk_cgrp_data),
-				    ancestor);
-#else
-	return -ENOTSUPP;
-#endif
-}
-
 static inline bool sk_has_memory_pressure(const struct sock *sk)
 {
 	return sk->sk_prot->memory_pressure != NULL;
