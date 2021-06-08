@@ -7,7 +7,6 @@
 #include <linux/workqueue.h>
 #include <linux/gfp.h>
 #include <linux/types.h>
-#include <linux/cgroup.h>
 #include <linux/eventfd.h>
 
 struct vmpressure {
