@@ -98,25 +98,25 @@ TRACE_EVENT(cachefiles_ref,
 
 TRACE_EVENT(cachefiles_lookup,
 	    TP_PROTO(struct cachefiles_object *obj,
-		     struct dentry *de,
-		     struct inode *inode),
+		     struct dentry *de),
 
-	    TP_ARGS(obj, de, inode),
+	    TP_ARGS(obj, de),
 
 	    TP_STRUCT__entry(
 		    __field(unsigned int,		obj	)
-		    __field(struct dentry *,		de	)
-		    __field(struct inode *,		inode	)
+		    __field(short,			error	)
+		    __field(unsigned long,		ino	)
 			     ),
 
 	    TP_fast_assign(
 		    __entry->obj	= obj->fscache.debug_id;
-		    __entry->de		= de;
-		    __entry->inode	= inode;
+		    __entry->ino	= (!IS_ERR(de) && d_backing_inode(de) ?
+					   d_backing_inode(de)->i_ino : 0);
+		    __entry->error	= IS_ERR(de) ? PTR_ERR(de) : 0;
 			   ),
 
-	    TP_printk("o=%08x d=%p i=%p",
-		      __entry->obj, __entry->de, __entry->inode)
+	    TP_printk("o=%08x i=%lx e=%d",
+		      __entry->obj, __entry->ino, __entry->error)
 	    );
 
 TRACE_EVENT(cachefiles_create,
