@@ -378,8 +378,7 @@ static inline void load_fpregs_from_init_fpstate(u64 features_mask)
 	else
 		frstor_from_kernel(&init_fpstate.fsave);
 
-	if (cpu_feature_enabled(X86_FEATURE_OSPKE))
-		copy_init_pkru_to_fpregs();
+	pkru_write_default();
 }
 
 /*
