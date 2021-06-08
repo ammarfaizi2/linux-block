@@ -36,6 +36,20 @@
 #include <net/scm.h>
 #include <net/cls_cgroup.h>
 
+int scm_send(struct socket *sock, struct msghdr *msg,
+	     struct scm_cookie *scm, bool forcecreds)
+{
+	memset(scm, 0, sizeof(*scm));
+	scm->creds.uid = INVALID_UID;
+	scm->creds.gid = INVALID_GID;
+	if (forcecreds)
+		scm_set_cred(scm, task_tgid(current), current_uid(), current_gid());
+	unix_get_peersec_dgram(sock, scm);
+	if (msg->msg_controllen <= 0)
+		return 0;
+	return __scm_send(sock, msg, scm);
+}
+EXPORT_SYMBOL(scm_send);
 
 /*
  *	Only allow a user to send credentials, that they could set with
