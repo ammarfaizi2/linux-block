@@ -11,6 +11,39 @@
 
 #include <linux/sched/task_stack.h>
 
+/*
+ * When executing XSAVEOPT (or other optimized XSAVE instructions), if
+ * a processor implementation detects that an FPU state component is still
+ * (or is again) in its initialized state, it may clear the corresponding
+ * bit in the header.xfeatures field, and can skip the writeout of registers
+ * to the corresponding memory layout.
+ *
+ * This means that when the bit is zero, the state component might still
+ * contain some previous - non-initialized register state.
+ *
+ * This is required for the legacy regset functions.
+ */
+static void fpstate_sanitize_legacy(struct fpu *fpu)
+{
+	struct fxregs_state *fx = &fpu->state.fxsave;
+	u64 xfeatures;
+
+	if (!use_xsaveopt())
+		return;
+
+	xfeatures = fpu->state.xsave.header.xfeatures;
+
+	/* If FP is in init state, reinitialize it */
+	if (!(xfeatures & XFEATURE_MASK_FP)) {
+		memset(fx, 0, sizeof(*fx));
+		fx->cwd = 0x37f;
+	}
+
+	/* If SSE is in init state, clear the storage */
+	if (!(xfeatures & XFEATURE_MASK_SSE))
+		memset(fx->xmm_space, 0, sizeof(fx->xmm_space));
+}
+
 
 /*
  * The xstateregs_active() routine is the same as the regset_fpregs_active() routine,
@@ -39,7 +72,7 @@ int xfpregs_get(struct task_struct *target, const struct user_regset *regset,
 		return -ENODEV;
 
 	fpu__prepare_read(fpu);
-	fpstate_sanitize_xstate(fpu);
+	fpstate_sanitize_legacy(fpu);
 
 	return membuf_write(&to, &fpu->state.fxsave, sizeof(struct fxregs_state));
 }
@@ -55,7 +88,7 @@ int xfpregs_set(struct task_struct *target, const struct user_regset *regset,
 		return -ENODEV;
 
 	fpu__prepare_write(fpu);
-	fpstate_sanitize_xstate(fpu);
+	fpstate_sanitize_legacy(fpu);
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
 				 &fpu->state.fxsave, 0, -1);
@@ -276,7 +309,7 @@ int fpregs_get(struct task_struct *target, const struct user_regset *regset,
 				    sizeof(struct fregs_state));
 	}
 
-	fpstate_sanitize_xstate(fpu);
+	fpstate_sanitize_legacy(fpu);
 
 	if (to.left == sizeof(env)) {
 		convert_from_fxsr(to.p, target);
@@ -296,7 +329,7 @@ int fpregs_set(struct task_struct *target, const struct user_regset *regset,
 	int ret;
 
 	fpu__prepare_write(fpu);
-	fpstate_sanitize_xstate(fpu);
+	fpstate_sanitize_legacy(fpu);
 
 	if (!boot_cpu_has(X86_FEATURE_FPU))
 		return fpregs_soft_set(target, regset, pos, count, kbuf, ubuf);
