@@ -17,7 +17,7 @@
 #include <linux/kdev_t.h>
 #include <linux/spinlock.h>
 #include <linux/init.h>
-#include <linux/audit.h>
+#include <linux/audit_types.h>
 #include <linux/in6.h>
 #include <linux/path.h>
 #include <linux/key.h>
