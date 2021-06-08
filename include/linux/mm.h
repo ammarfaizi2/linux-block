@@ -27,7 +27,6 @@
 #include <linux/page_ref.h>
 #include <linux/overflow.h>
 #include <linux/sizes.h>
-#include <linux/sched.h>
 #include <linux/pgtable.h>
 #include <linux/kasan.h>
 
