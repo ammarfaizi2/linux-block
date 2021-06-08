@@ -302,22 +302,6 @@ static inline void user_enable_block_step(struct task_struct *task)
 extern void user_enable_block_step(struct task_struct *);
 #endif	/* arch_has_block_step */
 
-#ifdef ARCH_HAS_USER_SINGLE_STEP_REPORT
-extern void user_single_step_report(struct pt_regs *regs);
-#else
-static inline void user_single_step_report(struct pt_regs *regs)
-{
-	kernel_siginfo_t info;
-	clear_siginfo(&info);
-	info.si_signo = SIGTRAP;
-	info.si_errno = 0;
-	info.si_code = SI_USER;
-	info.si_pid = 0;
-	info.si_uid = 0;
-	force_sig_info(&info);
-}
-#endif
-
 #ifndef arch_ptrace_stop_needed
 /**
  * arch_ptrace_stop_needed - Decide whether arch_ptrace_stop() should be called

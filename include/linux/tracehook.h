@@ -106,6 +106,22 @@ static inline __must_check int tracehook_report_syscall_entry(
 	return ptrace_report_syscall(PTRACE_EVENTMSG_SYSCALL_ENTRY);
 }
 
+#ifdef ARCH_HAS_USER_SINGLE_STEP_REPORT
+extern void user_single_step_report(struct pt_regs *regs);
+#else
+static inline void user_single_step_report(struct pt_regs *regs)
+{
+	kernel_siginfo_t info;
+	clear_siginfo(&info);
+	info.si_signo = SIGTRAP;
+	info.si_errno = 0;
+	info.si_code = SI_USER;
+	info.si_pid = 0;
+	info.si_uid = 0;
+	force_sig_info(&info);
+}
+#endif
+
 /**
  * tracehook_report_syscall_exit - task has just finished a system call
  * @regs:		user register state of current task
