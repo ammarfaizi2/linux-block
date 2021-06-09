@@ -74,10 +74,10 @@ int cachefiles_set_object_xattr(struct cachefiles_object *object)
 /*
  * check the consistency between the backing cache and the FS-Cache cookie
  */
-int cachefiles_check_auxdata(struct cachefiles_object *object)
+int cachefiles_check_auxdata(struct cachefiles_object *object, struct file *file)
 {
 	struct cachefiles_xattr *buf;
-	struct dentry *dentry = object->file->f_path.dentry;
+	struct dentry *dentry = file->f_path.dentry;
 	unsigned int len = object->cookie->aux_len, tlen;
 	const void *p = fscache_get_aux(object->cookie);
 	enum cachefiles_coherency_trace why;
@@ -105,7 +105,7 @@ int cachefiles_check_auxdata(struct cachefiles_object *object)
 		ret = 0;
 	}
 
-	trace_cachefiles_coherency(object, file_inode(object->file)->i_ino, 0, why);
+	trace_cachefiles_coherency(object, file_inode(file)->i_ino, 0, why);
 	kfree(buf);
 	return ret;
 }

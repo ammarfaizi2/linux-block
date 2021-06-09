@@ -79,7 +79,7 @@ static bool cachefiles_lookup_cookie(struct fscache_cookie *cookie)
 
 	/* look up the key, creating any missing bits */
 	cachefiles_begin_secure(cache, &saved_cred);
-	success = cachefiles_walk_to_object(object);
+	success = cachefiles_look_up_object(object);
 	cachefiles_end_secure(cache, saved_cred);
 
 	if (!success)
@@ -222,7 +222,7 @@ static void cachefiles_clean_up_object(struct cachefiles_object *object,
 		cachefiles_commit_object(object, cache);
 	}
 
-	cachefiles_unmark_inode_in_use(object);
+	cachefiles_unmark_inode_in_use(object, object->file);
 	if (object->file) {
 		fput(object->file);
 		object->file = NULL;

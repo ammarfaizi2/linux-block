@@ -58,8 +58,7 @@ struct cachefiles_object {
 	u8				d_name_len;	/* Length of filename */
 	u8				key_hash;	/* Hash of object key */
 	unsigned long			flags;
-#define CACHEFILES_OBJECT_IS_NEW	0		/* Set if object is new */
-#define CACHEFILES_OBJECT_USING_TMPFILE	1		/* Have an unlinked tmpfile */
+#define CACHEFILES_OBJECT_USING_TMPFILE	0		/* Have an unlinked tmpfile */
 };
 
 extern struct kmem_cache *cachefiles_object_jar;
@@ -171,7 +170,8 @@ extern bool cachefiles_cook_key(struct cachefiles_object *object);
 /*
  * namei.c
  */
-extern void cachefiles_unmark_inode_in_use(struct cachefiles_object *object);
+extern void cachefiles_unmark_inode_in_use(struct cachefiles_object *object,
+					   struct file *file);
 extern int cachefiles_bury_object(struct cachefiles_cache *cache,
 				  struct cachefiles_object *object,
 				  struct dentry *dir,
@@ -179,7 +179,7 @@ extern int cachefiles_bury_object(struct cachefiles_cache *cache,
 				  enum fscache_why_object_killed why);
 extern int cachefiles_delete_object(struct cachefiles_object *object,
 				    enum fscache_why_object_killed why);
-extern bool cachefiles_walk_to_object(struct cachefiles_object *object);
+extern bool cachefiles_look_up_object(struct cachefiles_object *object);
 extern struct dentry *cachefiles_get_directory(struct cachefiles_cache *cache,
 					       struct dentry *dir,
 					       const char *name);
@@ -224,7 +224,8 @@ void cachefiles_withdraw_volume(struct cachefiles_volume *volume);
  * xattr.c
  */
 extern int cachefiles_set_object_xattr(struct cachefiles_object *object);
-extern int cachefiles_check_auxdata(struct cachefiles_object *object);
+extern int cachefiles_check_auxdata(struct cachefiles_object *object,
+				    struct file *file);
 extern int cachefiles_remove_object_xattr(struct cachefiles_cache *cache,
 					  struct dentry *dentry);
 
