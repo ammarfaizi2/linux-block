@@ -30,7 +30,6 @@
 #include <linux/rbtree_latch.h>
 #include <linux/error-injection.h>
 #include <linux/tracepoint-defs.h>
-#include <linux/srcu.h>
 #include <linux/static_call_types.h>
 #include <linux/cfi.h>
 
@@ -46,6 +45,7 @@ struct modversion_info {
 
 struct module;
 struct exception_table_entry;
+struct srcu_struct;
 
 struct module_kobject {
 	struct kobject kobj;
