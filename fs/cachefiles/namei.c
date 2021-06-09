@@ -21,9 +21,10 @@
 /*
  * Mark the backing file as being a cache file if it's not already in use so.
  */
-static bool cachefiles_mark_inode_in_use(struct cachefiles_object *object)
+static bool cachefiles_mark_inode_in_use(struct cachefiles_object *object,
+					 struct dentry *dentry)
 {
-	struct inode *inode = file_inode(object->file);
+	struct inode *inode = d_backing_inode(dentry);
 	bool can_use = false;
 
 	_enter(",%x", object->debug_id);
@@ -232,145 +233,137 @@ try_again:
 	return 0;
 }
 
+static int cachefiles_unlink(struct cachefiles_object *object,
+			     struct dentry *fan, struct dentry *dentry,
+			     enum fscache_why_object_killed why)
+{
+	struct path path = {
+		.mnt	= object->volume->cache->mnt,
+		.dentry	= fan,
+	};
+	int ret;
+
+	trace_cachefiles_unlink(object, dentry, why);
+	ret = security_path_unlink(&path, dentry);
+	if (ret == 0)
+		ret = vfs_unlink(&init_user_ns, d_backing_inode(fan), dentry, NULL);
+	return ret;
+}
+
 /*
- * delete an object representation from the cache
+ * Delete a cache file.
  */
 int cachefiles_delete_object(struct cachefiles_object *object,
 			     enum fscache_why_object_killed why)
 {
 	struct cachefiles_volume *volume = object->volume;
+	struct dentry *dentry = object->file->f_path.dentry;
 	struct dentry *fan = volume->fanout[(u8)object->key_hash];
+	int ret;
 
 	_enter(",OBJ%x{%pD}", object->debug_id, object->file);
 
+	/* Stop the dentry being negated if it's only pinned by a file struct. */
+	dget(dentry);
+
 	inode_lock_nested(d_backing_inode(fan), I_MUTEX_PARENT);
-	return cachefiles_bury_object(volume->cache, object, fan,
-				      object->file->f_path.dentry, why);
+	ret = cachefiles_unlink(object, fan, dentry, why);
+	inode_unlock(d_backing_inode(fan));
+	dput(dentry);
+
+	if (ret < 0 && ret != -ENOENT)
+		cachefiles_io_error(volume->cache, "Unlink failed");
+	return ret;
 }
 
 /*
- * Check the attributes on a file we've just opened and delete it if it's out
- * of date.
+ * Create a new file.
  */
-static int cachefiles_check_open_object(struct cachefiles_object *object,
-					struct dentry *fan)
+static bool cachefiles_create_file(struct cachefiles_object *object)
 {
+	struct file *file;
 	int ret;
 
-	if (!cachefiles_mark_inode_in_use(object))
-		return -EBUSY;
+	fscache_cookie_lookup_negative(object->cookie);
 
-	_enter("%pD", object->file);
+	ret = cachefiles_has_space(object->volume->cache, 1, 0);
+	if (ret < 0)
+		return false;
+
+	file = cachefiles_create_tmpfile(object);
+	if (IS_ERR(file))
+		return PTR_ERR(file);
+
+	set_bit(CACHEFILES_OBJECT_USING_TMPFILE, &object->flags);
+	_debug("create -> %pD{ino=%lu}", file, file_inode(file)->i_ino);
+	object->file = file;
+	return true;
+}
+
+/*
+ * Open an existing file, checking its attributes and replacing it if it is
+ * stale.
+ */
+static int cachefiles_open_file(struct cachefiles_object *object,
+				struct dentry *dentry)
+{
+	struct cachefiles_cache *cache = object->volume->cache;
+	struct file *file;
+	struct path path;
+	int ret;
+
+	_enter("%pd", dentry);
+
+	ret = -EBUSY;
+	if (!cachefiles_mark_inode_in_use(object, dentry))
+		goto error;
+
+	/* We need to open a file interface onto a data file now as we can't do
+	 * it on demand because writeback called from do_exit() sees
+	 * current->fs == NULL - which breaks d_path() called from ext4 open.
+	 */
+	path.mnt = cache->mnt;
+	path.dentry = dentry;
+	file = open_with_fake_path(&path, O_RDWR | O_LARGEFILE | O_DIRECT,
+				   d_backing_inode(dentry), cache->cache_cred);
+	if (IS_ERR(file)) {
+		ret = PTR_ERR(file);
+		goto error;
+	}
+	object->file = file;
+
+	if (unlikely(!file->f_op->read_iter) ||
+	    unlikely(!file->f_op->write_iter)) {
+		pr_notice("Cache does not support read_iter and write_iter\n");
+		ret = -EIO;
+		goto error_fput;
+	}
+	_debug("file -> %pd positive", dentry);
 
 	ret = cachefiles_check_auxdata(object);
-	if (ret == -ESTALE)
-		goto stale;
 	if (ret < 0)
-		goto error_unmark;
+		goto check_failed;
 
 	/* Always update the atime on an object we've just looked up (this is
 	 * used to keep track of culling, and atimes are only updated by read,
 	 * write and readdir but not lookup or open).
 	 */
 	touch_atime(&object->file->f_path);
+	dput(dentry);
 	return 0;
 
-stale:
-	set_bit(CACHEFILES_OBJECT_IS_NEW, &object->flags);
-	fscache_cookie_lookup_negative(object->cookie);
+check_failed:
 	cachefiles_unmark_inode_in_use(object);
-	inode_lock_nested(d_inode(fan), I_MUTEX_PARENT);
-	ret = cachefiles_bury_object(object->volume->cache, object, fan,
-				     object->file->f_path.dentry,
-				     FSCACHE_OBJECT_IS_STALE);
-	if (ret < 0)
-		return ret;
 	cachefiles_mark_object_inactive(object);
-	_debug("redo lookup");
-	return -ESTALE;
-
-error_unmark:
-	cachefiles_unmark_inode_in_use(object);
-	return ret;
-}
-
-/*
- * Look up a file, creating it if necessary.
- */
-static int cachefiles_open_file(struct cachefiles_object *object,
-				struct dentry *fan)
-{
-	struct cachefiles_cache *cache = object->volume->cache;
-	struct dentry *dentry;
-	struct file *file;
-	struct path path;
-	int ret;
-
-	_enter("%pd %s", fan, object->d_name);
-
-	dentry = lookup_positive_unlocked(object->d_name, fan, object->d_name_len);
-	trace_cachefiles_lookup(object, dentry);
-	if (dentry == ERR_PTR(-ENOENT)) {
-		set_bit(CACHEFILES_OBJECT_IS_NEW, &object->flags);
-		fscache_cookie_lookup_negative(object->cookie);
-
-		ret = cachefiles_has_space(cache, 1, 0);
-		if (ret < 0)
-			goto error;
-
-		file = cachefiles_create_tmpfile(object);
-		if (IS_ERR(file)) {
-			ret = PTR_ERR(file);
-			goto error;
-		}
-
-		set_bit(CACHEFILES_OBJECT_USING_TMPFILE, &object->flags);
-		_debug("create -> %pD{ino=%lu}", file, file_inode(file)->i_ino);
-		goto out;
-	}
-
-	if (IS_ERR(dentry)) {
-		ret = PTR_ERR(dentry);
-		goto error;
-	}
-
-	if (!d_is_reg(dentry)) {
-		pr_err("%pd is not a file\n", dentry);
+	if (ret == -ESTALE) {
 		dput(dentry);
-		ret = -EIO;
-		goto error;
-	} else {
-		clear_bit(CACHEFILES_OBJECT_IS_NEW, &object->flags);
-
-		/* We need to open a file interface onto a data file now as we
-		 * can't do it on demand because writeback called from
-		 * do_exit() sees current->fs == NULL - which breaks d_path()
-		 * called from ext4 open.
-		 */
-		path.mnt = cache->mnt;
-		path.dentry = dentry;
-		file = open_with_fake_path(&path, O_RDWR | O_LARGEFILE | O_DIRECT,
-					   d_backing_inode(dentry), cache->cache_cred);
-		dput(dentry);
-		if (IS_ERR(file)) {
-			ret = PTR_ERR(file);
-			goto error;
-		}
-		if (unlikely(!file->f_op->read_iter) ||
-		    unlikely(!file->f_op->write_iter)) {
-			pr_notice("Cache does not support read_iter and write_iter\n");
-			ret = -EIO;
-			goto error_fput;
-		}
-		_debug("file -> %pd positive", dentry);
+		return cachefiles_create_file(object);
 	}
-
-out:
-	object->file = file;
-	return 0;
 error_fput:
-	fput(file);
+	fput(object->file);
+	object->file = NULL;
 error:
+	dput(dentry);
 	return ret;
 }
 
@@ -378,40 +371,44 @@ error:
  * walk from the parent object to the child object through the backing
  * filesystem, creating directories as we go
  */
-bool cachefiles_walk_to_object(struct cachefiles_object *object)
+bool cachefiles_look_up_object(struct cachefiles_object *object)
 {
-	struct cachefiles_volume *volume = object->cookie->volume->cache_priv;
-	struct dentry *fan;
+	struct cachefiles_volume *volume = object->volume;
+	struct dentry *dentry, *fan = volume->fanout[(u8)object->key_hash];
 	int ret;
 
 	_enter("OBJ%x,%s,", object->debug_id, object->d_name);
 
-lookup_again:
-	/* Open path "cache/vol/fanout/file". */
-	fan = volume->fanout[(u8)object->key_hash];
-	ret = cachefiles_open_file(object, fan);
+	/* Look up path "cache/vol/fanout/file". */
+	dentry = lookup_positive_unlocked(object->d_name, fan, object->d_name_len);
+	trace_cachefiles_lookup(object, dentry);
+	if (IS_ERR(dentry)) {
+		if (dentry == ERR_PTR(-ENOENT))
+			goto new_file;
+		ret = PTR_ERR(dentry);
+		goto lookup_error;
+	}
+
+	if (!d_is_reg(dentry)) {
+		pr_err("%pd is not a file\n", dentry);
+		inode_lock_nested(d_inode(fan), I_MUTEX_PARENT);
+		ret = cachefiles_bury_object(volume->cache, object, fan, dentry,
+					     FSCACHE_OBJECT_IS_WEIRD);
+		dput(dentry);
+		if (ret < 0)
+			return false;
+		goto new_file;
+	}
+
+	ret = cachefiles_open_file(object, dentry);
 	if (ret < 0)
 		goto lookup_error;
 
-	if (!test_bit(CACHEFILES_OBJECT_IS_NEW, &object->flags)) {
-		ret = cachefiles_check_open_object(object, fan);
-		if (ret < 0)
-			goto check_error;
-	} else {
-		ret = -EBUSY;
-		if (!cachefiles_mark_inode_in_use(object))
-			goto check_error;
-	}
-
-	clear_bit(CACHEFILES_OBJECT_IS_NEW, &object->flags);
 	_leave(" = t [%lu]", file_inode(object->file)->i_ino);
 	return true;
 
-check_error:
-	fput(object->file);
-	object->file = NULL;
-	if (ret == -ESTALE)
-		goto lookup_again;
+new_file:
+	return cachefiles_create_file(object);
 lookup_error:
 	if (ret == -EIO)
 		cachefiles_io_error_obj(object, "Lookup failed");
@@ -708,6 +705,11 @@ struct file *cachefiles_create_tmpfile(struct cachefiles_object *object)
 
 	trace_cachefiles_tmpfile(object, d_backing_inode(path.dentry));
 
+	if (!cachefiles_mark_inode_in_use(object, path.dentry)) {
+		file = ERR_PTR(-EBUSY);
+		goto out_dput;
+	}
+
 	if (ni_size > 0) {
 		trace_cachefiles_trunc(object, d_backing_inode(path.dentry), 0, ni_size,
 				       cachefiles_trunc_expand_tmpfile);
@@ -756,6 +758,24 @@ bool cachefiles_commit_tmpfile(struct cachefiles_cache *cache,
 		goto out_unlock;
 	}
 
+	if (!d_is_negative(dentry)) {
+		if (d_backing_inode(dentry) == file_inode(object->file)) {
+			success = true;
+			goto out_dput;
+		}
+
+		ret = cachefiles_unlink(object, fan, dentry, FSCACHE_OBJECT_IS_STALE);
+		if (ret < 0)
+			goto out_dput;
+
+		dput(dentry);
+		dentry = lookup_one_len(object->d_name, fan, object->d_name_len);
+		if (IS_ERR(dentry)) {
+			_debug("lookup fail %ld", PTR_ERR(dentry));
+			goto out_unlock;
+		}
+	}
+
 	ret = vfs_link(object->file->f_path.dentry, &init_user_ns,
 		       d_inode(fan), dentry, NULL);
 	if (ret < 0) {
@@ -769,6 +789,7 @@ bool cachefiles_commit_tmpfile(struct cachefiles_cache *cache,
 		success = true;
 	}
 
+out_dput:
 	dput(dentry);
 out_unlock:
 	inode_unlock(d_inode(fan));

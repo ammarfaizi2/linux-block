@@ -58,8 +58,7 @@ struct cachefiles_object {
 	u8				d_name_len;	/* Length of filename */
 	u8				key_hash;	/* Hash of object key */
 	unsigned long			flags;
-#define CACHEFILES_OBJECT_IS_NEW	0		/* Set if object is new */
-#define CACHEFILES_OBJECT_USING_TMPFILE	1		/* Have an unlinked tmpfile */
+#define CACHEFILES_OBJECT_USING_TMPFILE	0		/* Have an unlinked tmpfile */
 };
 
 extern struct kmem_cache *cachefiles_object_jar;
@@ -178,7 +177,7 @@ extern int cachefiles_bury_object(struct cachefiles_cache *cache,
 				  enum fscache_why_object_killed why);
 extern int cachefiles_delete_object(struct cachefiles_object *object,
 				    enum fscache_why_object_killed why);
-extern bool cachefiles_walk_to_object(struct cachefiles_object *object);
+extern bool cachefiles_look_up_object(struct cachefiles_object *object);
 extern struct dentry *cachefiles_get_directory(struct cachefiles_cache *cache,
 					       struct dentry *dir,
 					       const char *name);
