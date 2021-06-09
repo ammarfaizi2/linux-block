@@ -178,4 +178,9 @@ static inline void __p4d_free_tlb(struct mmu_gather *tlb, p4d_t *p4d,
 #endif	/* CONFIG_PGTABLE_LEVELS > 3 */
 #endif	/* CONFIG_PGTABLE_LEVELS > 2 */
 
+extern spinlock_t pgd_lock;
+extern struct list_head pgd_list;
+
+extern struct mm_struct *pgd_page_get_mm(struct page *page);
+
 #endif /* _ASM_X86_PGALLOC_H */
