@@ -291,7 +291,7 @@ static int cachefiles_check_open_object(struct cachefiles_cache *cache,
 
 	if (object->new) {
 		/* attach data to a newly constructed terminal object */
-		ret = cachefiles_set_object_xattr(object, XATTR_CREATE);
+		ret = cachefiles_set_object_xattr(object);
 		if (ret < 0)
 			goto error_unmark;
 	} else {

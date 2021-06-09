@@ -132,7 +132,7 @@ static void cachefiles_update_object(struct cachefiles_object *object)
 	cache = container_of(object->cache, struct cachefiles_cache, cache);
 
 	cachefiles_begin_secure(cache, &saved_cred);
-	cachefiles_set_object_xattr(object, XATTR_REPLACE);
+	cachefiles_set_object_xattr(object);
 	cachefiles_end_secure(cache, saved_cred);
 	_leave("");
 }
