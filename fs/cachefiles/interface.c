@@ -79,7 +79,7 @@ static bool cachefiles_lookup_cookie(struct fscache_cookie *cookie)
 
 	/* look up the key, creating any missing bits */
 	cachefiles_begin_secure(cache, &saved_cred);
-	success = cachefiles_walk_to_object(object);
+	success = cachefiles_look_up_object(object);
 	cachefiles_end_secure(cache, saved_cred);
 
 	if (!success)
