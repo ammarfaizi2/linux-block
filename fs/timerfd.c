@@ -451,6 +451,15 @@ SYSCALL_DEFINE2(timerfd_create, int, clockid, int, flags)
 	return ufd;
 }
 
+static inline bool itimerspec64_valid(const struct itimerspec64 *its)
+{
+	if (!timespec64_valid(&(its->it_interval)) ||
+		!timespec64_valid(&(its->it_value)))
+		return false;
+
+	return true;
+}
+
 static int do_timerfd_settime(int ufd, int flags, 
 		const struct itimerspec64 *new,
 		struct itimerspec64 *old)
