@@ -3987,3 +3987,24 @@ void sock_poll_wait(struct file *filp, struct socket *sock, poll_table *p)
 	}
 }
 EXPORT_SYMBOL(sock_poll_wait);
+
+
+/* if a socket is bound to a device, check that the given device
+ * index is either the same or that the socket is bound to an L3
+ * master device and the given device index is also enslaved to
+ * that L3 master
+ */
+bool sk_dev_equal_l3scope(struct sock *sk, int dif)
+{
+	int mdif;
+
+	if (!sk->sk_bound_dev_if || sk->sk_bound_dev_if == dif)
+		return true;
+
+	mdif = l3mdev_master_ifindex_by_index(sock_net(sk), dif);
+	if (mdif && mdif == sk->sk_bound_dev_if)
+		return true;
+
+	return false;
+}
+EXPORT_SYMBOL(sk_dev_equal_l3scope);
