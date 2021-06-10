@@ -3964,3 +3964,26 @@ void sock_graft(struct sock *sk, struct socket *parent)
 	write_unlock_bh(&sk->sk_callback_lock);
 }
 EXPORT_SYMBOL(sock_graft);
+
+
+/**
+ * sock_poll_wait - place memory barrier behind the poll_wait call.
+ * @filp:           file
+ * @sock:           socket to wait on
+ * @p:              poll_table
+ *
+ * See the comments in the wq_has_sleeper function.
+ */
+void sock_poll_wait(struct file *filp, struct socket *sock, poll_table *p)
+{
+	if (!poll_does_not_wait(p)) {
+		poll_wait(filp, &sock->wq.wait, p);
+		/* We need to be sure we are in sync with the
+		 * socket flags modification.
+		 *
+		 * This memory barrier is paired in the wq_has_sleeper.
+		 */
+		smp_mb();
+	}
+}
+EXPORT_SYMBOL(sock_poll_wait);

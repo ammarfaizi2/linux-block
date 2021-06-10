@@ -2266,19 +2266,7 @@ static inline bool skwq_has_sleeper(struct socket_wq *wq)
  *
  * See the comments in the wq_has_sleeper function.
  */
-static inline void sock_poll_wait(struct file *filp, struct socket *sock,
-				  poll_table *p)
-{
-	if (!poll_does_not_wait(p)) {
-		poll_wait(filp, &sock->wq.wait, p);
-		/* We need to be sure we are in sync with the
-		 * socket flags modification.
-		 *
-		 * This memory barrier is paired in the wq_has_sleeper.
-		 */
-		smp_mb();
-	}
-}
+void sock_poll_wait(struct file *filp, struct socket *sock, struct poll_table_struct *p);
 
 static inline void skb_set_hash_from_sk(struct sk_buff *skb, struct sock *sk)
 {
