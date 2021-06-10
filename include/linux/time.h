@@ -2,24 +2,23 @@
 #ifndef _LINUX_TIME_H
 #define _LINUX_TIME_H
 
-# include <linux/cache.h>
-# include <linux/math64.h>
-# include <linux/time64.h>
+#include <linux/cache.h>
+#include <linux/math64.h>
+#include <linux/time64.h>
+#include <linux/time32.h>
+
+#include <vdso/time.h>
 
 extern struct timezone sys_tz;
 
-int get_timespec64(struct timespec64 *ts,
-		const struct __kernel_timespec __user *uts);
-int put_timespec64(const struct timespec64 *ts,
-		struct __kernel_timespec __user *uts);
-int get_itimerspec64(struct itimerspec64 *it,
-			const struct __kernel_itimerspec __user *uit);
-int put_itimerspec64(const struct itimerspec64 *it,
-			struct __kernel_itimerspec __user *uit);
+extern int get_timespec64(        struct timespec64   *ts, const struct __kernel_timespec __user   *uts);
+extern int put_timespec64(  const struct timespec64   *ts,       struct __kernel_timespec __user   *uts);
+extern int get_itimerspec64(      struct itimerspec64 *it, const struct __kernel_itimerspec __user *uit);
+extern int put_itimerspec64(const struct itimerspec64 *it,       struct __kernel_itimerspec __user *uit);
 
 extern time64_t mktime64(const unsigned int year, const unsigned int mon,
-			const unsigned int day, const unsigned int hour,
-			const unsigned int min, const unsigned int sec);
+			 const unsigned int day,  const unsigned int hour,
+			 const unsigned int min,  const unsigned int sec);
 
 #ifdef CONFIG_POSIX_TIMERS
 extern void clear_itimer(void);
@@ -35,29 +34,27 @@ extern long do_utimes(int dfd, const char __user *filename, struct timespec64 *t
  */
 struct tm {
 	/*
-	 * the number of seconds after the minute, normally in the range
+	 * The number of seconds after the minute, normally in the range
 	 * 0 to 59, but can be up to 60 to allow for leap seconds
 	 */
 	int tm_sec;
-	/* the number of minutes after the hour, in the range 0 to 59*/
+	/* The number of minutes after the hour, in the range 0 to 59*/
 	int tm_min;
-	/* the number of hours past midnight, in the range 0 to 23 */
+	/* The number of hours past midnight, in the range 0 to 23 */
 	int tm_hour;
-	/* the day of the month, in the range 1 to 31 */
+	/* The day of the month, in the range 1 to 31 */
 	int tm_mday;
-	/* the number of months since January, in the range 0 to 11 */
+	/* The number of months since January, in the range 0 to 11 */
 	int tm_mon;
-	/* the number of years since 1900 */
+	/* The number of years since 1900 */
 	long tm_year;
-	/* the number of days since Sunday, in the range 0 to 6 */
+	/* The number of days since Sunday, in the range 0 to 6 */
 	int tm_wday;
-	/* the number of days since January 1, in the range 0 to 365 */
+	/* The number of days since January 1, in the range 0 to 365 */
 	int tm_yday;
 };
 
-void time64_to_tm(time64_t totalsecs, int offset, struct tm *result);
-
-# include <linux/time32.h>
+extern void time64_to_tm(time64_t totalsecs, int offset, struct tm *result);
 
 static inline bool itimerspec64_valid(const struct itimerspec64 *its)
 {
@@ -96,7 +93,5 @@ static inline bool itimerspec64_valid(const struct itimerspec64 *its)
  * Equivalent to !(time_before32(@t, @l) || time_after32(@t, @h)).
  */
 #define time_between32(t, l, h) ((u32)(h) - (u32)(l) >= (u32)(t) - (u32)(l))
-
-# include <vdso/time.h>
 
 #endif
