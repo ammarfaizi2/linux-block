@@ -5,6 +5,7 @@
 #ifndef _LINUX_BLKDEV_H
 #define _LINUX_BLKDEV_H
 
+#include <linux/fs.h>
 #include <linux/types.h>
 #include <linux/blk_types.h>
 #include <linux/device.h>

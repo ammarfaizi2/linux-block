@@ -399,6 +399,9 @@ enum {
 	BIOSET_NEED_RESCUER = BIT(1),
 	BIOSET_PERCPU_CACHE = BIT(2),
 };
+
+struct kiocb;
+
 extern int bioset_init(struct bio_set *, unsigned int, unsigned int, int flags);
 extern void bioset_exit(struct bio_set *);
 extern int biovec_init_pool(mempool_t *pool, int pool_entries);
