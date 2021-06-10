@@ -56,15 +56,6 @@ struct tm {
 
 extern void time64_to_tm(time64_t totalsecs, int offset, struct tm *result);
 
-static inline bool itimerspec64_valid(const struct itimerspec64 *its)
-{
-	if (!timespec64_valid(&(its->it_interval)) ||
-		!timespec64_valid(&(its->it_value)))
-		return false;
-
-	return true;
-}
-
 /**
  * time_after32 - compare two 32-bit relative times
  * @a:	the time which may be after @b
