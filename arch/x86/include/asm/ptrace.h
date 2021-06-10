@@ -179,7 +179,6 @@ static inline bool any_64bit_mode(struct pt_regs *regs)
 
 #ifdef CONFIG_X86_64
 #define current_user_stack_pointer()	current_pt_regs()->sp
-#define compat_user_stack_pointer()	current_pt_regs()->sp
 
 static __always_inline bool ip_within_syscall_gap(struct pt_regs *regs)
 {

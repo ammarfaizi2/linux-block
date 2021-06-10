@@ -173,4 +173,6 @@ int copy_siginfo_to_user32(struct compat_siginfo __user *to,
 #define copy_siginfo_to_user32 copy_siginfo_to_user32
 #endif /* CONFIG_X86_X32_ABI */
 
+#define compat_user_stack_pointer()	current_pt_regs()->sp
+
 #endif /* _ASM_X86_COMPAT_H */
