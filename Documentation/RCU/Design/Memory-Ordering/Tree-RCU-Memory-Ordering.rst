@@ -112,6 +112,35 @@ on PowerPC.
 The ``smp_mb__after_unlock_lock()`` invocations prevent this
 ``WARN_ON()`` from triggering.
 
++-----------------------------------------------------------------------+
+| **Quick Quiz**:                                                       |
++-----------------------------------------------------------------------+
+| But the whole chain of rcu_node-structure locking guarantees that     |
+| readers see all pre-grace-period accesses from the updater and        |
+| also guarantees that the updater to see all post-grace-period         |
+| accesses from the readers.  So why do we need all of those calls      |
+| to smp_mb__after_unlock_lock()?                                       |
++-----------------------------------------------------------------------+
+| **Answer**:                                                           |
++-----------------------------------------------------------------------+
+| Because we must provide ordering for RCU's polling grace-period       |
+| primitives, for example, get_state_synchronize_rcu() and              |
+| poll_state_synchronize_rcu().  For example:                           |
+|                                                                       |
+| CPU 0                                     CPU 1                       |
+| ----                                      ----                        |
+| WRITE_ONCE(X, 1)                          WRITE_ONCE(Y, 1)            |
+| g = get_state_synchronize_rcu()           smp_mb()                    |
+| while (!poll_state_synchronize_rcu(g))    r1 = READ_ONCE(X)           |
+|         continue;                                                     |
+| r0 = READ_ONCE(Y)                                                     |
+|                                                                       |
+| RCU guarantees that that the outcome r0 == 0 && r1 == 0 will not      |
+| happen, even if CPU 1 is in an RCU extended quiescent state (idle     |
+| or offline) and thus won't interact directly with the RCU core        |
+| processing at all.                                                    |
++-----------------------------------------------------------------------+
+
 This approach must be extended to include idle CPUs, which need
 RCU's grace-period memory ordering guarantee to extend to any
 RCU read-side critical sections preceding and following the current
