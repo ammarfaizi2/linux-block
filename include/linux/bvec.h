@@ -162,27 +162,7 @@ static inline struct bio_vec *bvec_init_iter_all(struct bvec_iter_all *iter_all)
 	return &iter_all->bv;
 }
 
-static inline void bvec_advance(const struct bio_vec *bvec,
-				struct bvec_iter_all *iter_all)
-{
-	struct bio_vec *bv = &iter_all->bv;
-
-	if (iter_all->done) {
-		bv->bv_page++;
-		bv->bv_offset = 0;
-	} else {
-		bv->bv_page = bvec->bv_page + (bvec->bv_offset >> PAGE_SHIFT);
-		bv->bv_offset = bvec->bv_offset & ~PAGE_MASK;
-	}
-	bv->bv_len = min_t(unsigned int, PAGE_SIZE - bv->bv_offset,
-			   bvec->bv_len - iter_all->done);
-	iter_all->done += bv->bv_len;
-
-	if (iter_all->done == bvec->bv_len) {
-		iter_all->idx++;
-		iter_all->done = 0;
-	}
-}
+extern void bvec_advance(const struct bio_vec *bvec, struct bvec_iter_all *iter_all);
 
 /**
  * bvec_kmap_local - map a bvec into the kernel virtual address space
