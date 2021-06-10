@@ -2,7 +2,6 @@
 #ifndef _LINUX_HIGHMEM_H
 #define _LINUX_HIGHMEM_H
 
-#include <linux/fs.h>
 #include <linux/kernel.h>
 #include <linux/bug.h>
 #include <linux/cacheflush.h>
