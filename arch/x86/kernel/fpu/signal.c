@@ -64,7 +64,7 @@ static inline int save_fsave_header(struct task_struct *tsk, void __user *buf)
 
 		fpregs_lock();
 		if (!test_thread_flag(TIF_NEED_FPU_LOAD))
-			copy_fxregs_to_kernel(&tsk->thread.fpu);
+			fxsave_to_kernel(&tsk->thread.fpu);
 		fpregs_unlock();
 
 		convert_from_fxsr(&env, tsk);
@@ -131,7 +131,7 @@ static inline int copy_fpregs_to_sigframe(struct xregs_state __user *buf)
 	if (use_xsave())
 		err = xsave_to_user_sigframe(buf);
 	else if (use_fxsr())
-		err = copy_fxregs_to_user((struct fxregs_state __user *) buf);
+		err = fxsave_to_user_sigframe((struct fxregs_state __user *) buf);
 	else
 		err = copy_fregs_to_user((struct fregs_state __user *) buf);
 
@@ -269,7 +269,7 @@ static int copy_user_to_fpregs_zeroing(void __user *buf, u64 xbv, int fx_only)
 		if (fx_only) {
 			init_bv = xfeatures_mask_user() & ~XFEATURE_MASK_FPSSE;
 
-			r = copy_user_to_fxregs(buf);
+			r = fxrstor_from_user_sigframe(buf);
 			if (!r)
 				xrstor_from_kernel(&init_fpstate.xsave, init_bv);
 			return r;
@@ -282,7 +282,7 @@ static int copy_user_to_fpregs_zeroing(void __user *buf, u64 xbv, int fx_only)
 			return r;
 		}
 	} else if (use_fxsr()) {
-		return copy_user_to_fxregs(buf);
+		return fxrstor_from_user_sigframe(buf);
 	} else
 		return copy_user_to_fregs(buf);
 }
@@ -467,7 +467,7 @@ static int __fpu__restore_sig(void __user *buf, void __user *buf_fx, int size)
 			xrstor_from_kernel(&init_fpstate.xsave, init_bv);
 		}
 
-		ret = copy_kernel_to_fxregs_err(&fpu->state.fxsave);
+		ret = fxrstor_from_kernel_err(&fpu->state.fxsave);
 	} else {
 		ret = __copy_from_user(&fpu->state.fsave, buf_fx, state_size);
 		if (ret)

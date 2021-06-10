@@ -107,7 +107,7 @@ int copy_fpregs_to_fpstate(struct fpu *fpu)
 	}
 
 	if (likely(use_fxsr())) {
-		copy_fxregs_to_kernel(fpu);
+		fxsave_to_kernel(fpu);
 		return 1;
 	}
 
@@ -360,7 +360,7 @@ static inline void copy_init_fpstate_to_fpregs(u64 features_mask)
 	if (use_xsave())
 		xrstor_from_kernel(&init_fpstate.xsave, features_mask);
 	else if (static_cpu_has(X86_FEATURE_FXSR))
-		copy_kernel_to_fxregs(&init_fpstate.fxsave);
+		fxrstor_from_kernel(&init_fpstate.fxsave);
 	else
 		copy_kernel_to_fregs(&init_fpstate.fsave);
 
