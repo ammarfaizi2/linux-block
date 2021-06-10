@@ -388,13 +388,13 @@ static void __init setup_init_fpu_buf(void)
 	/*
 	 * Init all the features state with header.xfeatures being 0x0
 	 */
-	copy_kernel_to_xregs_booting(&init_fpstate.xsave);
+	xrstor_from_kernel_booting(&init_fpstate.xsave);
 
 	/*
 	 * Dump the init state again. This is to identify the init state
 	 * of any feature which is not represented by all zero's.
 	 */
-	copy_xregs_to_kernel_booting(&init_fpstate.xsave);
+	xsave_to_kernel_booting(&init_fpstate.xsave);
 }
 
 static int xfeature_uncompacted_offset(int xfeature_nr)
