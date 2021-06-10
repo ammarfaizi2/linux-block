@@ -26,7 +26,6 @@
 #include <linux/kernel_read_file.h>
 #include <linux/key.h>
 #include <linux/capability.h>
-#include <linux/fs.h>
 #include <linux/slab.h>
 #include <linux/err.h>
 #include <linux/string.h>
@@ -59,6 +58,7 @@ struct fs_parameter;
 enum fs_value_type;
 struct watch;
 struct watch_notification;
+struct inode_operations;
 
 /* Default (no) options for the capable function */
 #define CAP_OPT_NONE 0x0
