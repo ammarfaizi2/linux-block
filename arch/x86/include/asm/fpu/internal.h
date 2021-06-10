@@ -281,7 +281,7 @@ static inline void xsave_to_kernel_booting(struct xregs_state *xstate)
  */
 static inline void xrstor_from_kernel_booting(struct xregs_state *xstate)
 {
-	u64 mask = -1;
+	u64 mask = xfeatures_mask_fpstate();
 	u32 lmask = mask;
 	u32 hmask = mask >> 32;
 	int err;
@@ -408,7 +408,7 @@ extern void __restore_fpregs_from_fpstate(union fpregs_state *fpstate, u64 mask)
 
 static inline void restore_fpregs_from_fpstate(union fpregs_state *fpstate)
 {
-	__restore_fpregs_from_fpstate(fpstate, -1);
+	__restore_fpregs_from_fpstate(fpstate, xfeatures_mask_fpstate());
 }
 
 extern int copy_fpstate_to_sigframe(void __user *buf, void __user *fp, int size);
