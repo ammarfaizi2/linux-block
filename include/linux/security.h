@@ -24,13 +24,11 @@
 #define __LINUX_SECURITY_H
 
 #include <linux/kernel_read_file.h>
-#include <linux/key.h>
-#include <linux/capability.h>
-#include <linux/slab.h>
+#include <linux/key_types.h>
+#include <linux/uidgid.h>
 #include <linux/err.h>
-#include <linux/string.h>
-#include <linux/mm.h>
 
+struct task_struct;
 struct linux_binprm;
 struct cred;
 struct rlimit;
@@ -59,6 +57,12 @@ enum fs_value_type;
 struct watch;
 struct watch_notification;
 struct inode_operations;
+struct timespec64;
+struct notifier_block;
+struct vm_area_struct;
+struct key;
+struct __key_reference_with_attributes;
+struct kernel_cap_struct;
 
 /* Default (no) options for the capable function */
 #define CAP_OPT_NONE 0x0
@@ -140,11 +144,11 @@ extern int cap_capable(const struct cred *cred, struct user_namespace *ns,
 extern int cap_settime(const struct timespec64 *ts, const struct timezone *tz);
 extern int cap_ptrace_access_check(struct task_struct *child, unsigned int mode);
 extern int cap_ptrace_traceme(struct task_struct *parent);
-extern int cap_capget(struct task_struct *target, kernel_cap_t *effective, kernel_cap_t *inheritable, kernel_cap_t *permitted);
+extern int cap_capget(struct task_struct *target, struct kernel_cap_struct *effective, struct kernel_cap_struct *inheritable, struct kernel_cap_struct *permitted);
 extern int cap_capset(struct cred *new, const struct cred *old,
-		      const kernel_cap_t *effective,
-		      const kernel_cap_t *inheritable,
-		      const kernel_cap_t *permitted);
+		      const struct kernel_cap_struct *effective,
+		      const struct kernel_cap_struct *inheritable,
+		      const struct kernel_cap_struct *permitted);
 extern int cap_bprm_creds_from_file(struct linux_binprm *bprm, struct file *file);
 int cap_inode_setxattr(struct dentry *dentry, const char *name,
 		       const void *value, size_t size, int flags);
@@ -268,13 +272,13 @@ int security_binder_transfer_file(const struct cred *from,
 int security_ptrace_access_check(struct task_struct *child, unsigned int mode);
 int security_ptrace_traceme(struct task_struct *parent);
 int security_capget(struct task_struct *target,
-		    kernel_cap_t *effective,
-		    kernel_cap_t *inheritable,
-		    kernel_cap_t *permitted);
+		    struct kernel_cap_struct *effective,
+		    struct kernel_cap_struct *inheritable,
+		    struct kernel_cap_struct *permitted);
 int security_capset(struct cred *new, const struct cred *old,
-		    const kernel_cap_t *effective,
-		    const kernel_cap_t *inheritable,
-		    const kernel_cap_t *permitted);
+		    const struct kernel_cap_struct *effective,
+		    const struct kernel_cap_struct *inheritable,
+		    const struct kernel_cap_struct *permitted);
 int security_capable(const struct cred *cred,
 		       struct user_namespace *ns,
 		       int cap,
@@ -543,18 +547,18 @@ static inline int security_ptrace_traceme(struct task_struct *parent)
 }
 
 static inline int security_capget(struct task_struct *target,
-				   kernel_cap_t *effective,
-				   kernel_cap_t *inheritable,
-				   kernel_cap_t *permitted)
+				   struct kernel_cap_struct *effective,
+				   struct kernel_cap_struct *inheritable,
+				   struct kernel_cap_struct *permitted)
 {
 	return cap_capget(target, effective, inheritable, permitted);
 }
 
 static inline int security_capset(struct cred *new,
 				   const struct cred *old,
-				   const kernel_cap_t *effective,
-				   const kernel_cap_t *inheritable,
-				   const kernel_cap_t *permitted)
+				   const struct kernel_cap_struct *effective,
+				   const struct kernel_cap_struct *inheritable,
+				   const struct kernel_cap_struct *permitted)
 {
 	return cap_capset(new, old, effective, inheritable, permitted);
 }
@@ -588,6 +592,8 @@ static inline int security_settime64(const struct timespec64 *ts,
 {
 	return cap_settime(ts, tz);
 }
+
+extern int __vm_enough_memory(struct mm_struct *mm, long pages, int cap_sys_admin);
 
 static inline int security_vm_enough_memory_mm(struct mm_struct *mm, long pages)
 {
@@ -1852,7 +1858,7 @@ static inline int security_path_chroot(const struct path *path)
 
 int security_key_alloc(struct key *key, const struct cred *cred, unsigned long flags);
 void security_key_free(struct key *key);
-int security_key_permission(key_ref_t key_ref, const struct cred *cred,
+int security_key_permission(struct __key_reference_with_attributes *key_ref, const struct cred *cred,
 			    enum key_need_perm need_perm);
 int security_key_getsecurity(struct key *key, char **_buffer);
 
@@ -1869,7 +1875,7 @@ static inline void security_key_free(struct key *key)
 {
 }
 
-static inline int security_key_permission(key_ref_t key_ref,
+static inline int security_key_permission(struct __key_reference_with_attributes *key_ref,
 					  const struct cred *cred,
 					  enum key_need_perm need_perm)
 {

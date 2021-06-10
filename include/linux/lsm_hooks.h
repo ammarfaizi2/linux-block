@@ -26,6 +26,8 @@
 #define __LINUX_LSM_HOOKS_H
 
 #include <linux/security.h>
+#include <linux/capability.h>
+#include <linux/key.h>
 #include <linux/init.h>
 #include <linux/rculist.h>
 
