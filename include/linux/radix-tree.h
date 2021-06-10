@@ -15,7 +15,6 @@
 #include <linux/lockdep.h>
 #include <linux/math.h>
 #include <linux/percpu.h>
-#include <linux/spinlock.h>
 #include <linux/xarray_types.h>
 #include <linux/local_lock.h>
 
