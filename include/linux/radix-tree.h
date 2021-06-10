@@ -8,16 +8,14 @@
 #ifndef _LINUX_RADIX_TREE_H
 #define _LINUX_RADIX_TREE_H
 
+#include <linux/percpu.h>
 #include <linux/bitops.h>
 #include <linux/gfp.h>
 #include <linux/list.h>
 #include <linux/lockdep.h>
 #include <linux/math.h>
 #include <linux/percpu.h>
-#include <linux/preempt.h>
-#include <linux/rcupdate.h>
 #include <linux/spinlock.h>
-#include <linux/types.h>
 #include <linux/xarray_types.h>
 #include <linux/local_lock.h>
 
@@ -174,10 +172,7 @@ struct radix_tree_iter {
  *
  * Return: entry stored in that slot.
  */
-static inline void *radix_tree_deref_slot(void __rcu **slot)
-{
-	return rcu_dereference(*slot);
-}
+#define radix_tree_deref_slot(slot) rcu_dereference(*(slot))
 
 /**
  * radix_tree_deref_slot_protected - dereference a slot with tree lock held
@@ -188,11 +183,8 @@ static inline void *radix_tree_deref_slot(void __rcu **slot)
  *
  * Return: entry stored in that slot.
  */
-static inline void *radix_tree_deref_slot_protected(void __rcu **slot,
-							spinlock_t *treelock)
-{
-	return rcu_dereference_protected(*slot, lockdep_is_held(treelock));
-}
+#define radix_tree_deref_slot_protected(slot, treelock) \
+		rcu_dereference_protected(*(slot), lockdep_is_held(treelock))
 
 /**
  * radix_tree_deref_retry	- check radix_tree_deref_slot
