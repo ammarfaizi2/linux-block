@@ -405,7 +405,7 @@ static int scftorture_invoker(void *arg)
 
 	VERBOSE_SCFTORTOUT("scftorture_invoker %d: task started", scfp->cpu);
 	cpu = scfp->cpu % nr_cpu_ids;
-	set_cpus_allowed_ptr(current, cpumask_of(cpu));
+	WARN_ON_ONCE(set_cpus_allowed_ptr(current, cpumask_of(cpu)));
 	set_user_nice(current, MAX_NICE);
 	if (holdoff)
 		schedule_timeout_interruptible(holdoff * HZ);
