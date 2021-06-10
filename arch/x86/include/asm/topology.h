@@ -28,11 +28,13 @@
 #include <linux/numa_types.h>
 #include <linux/cache.h>
 
-#ifdef CONFIG_NUMA
 #include <linux/cpumask_types.h>
+#include <linux/irqflags.h>
+#include <linux/percpu.h>
+DECLARE_PER_CPU_READ_MOSTLY(cpumask_var_t, cpu_sibling_map);
 
+#ifdef CONFIG_NUMA
 #include <asm/mpspec.h>
-#include <asm/percpu.h>
 
 /* Mappings between logical cpu number and node number */
 DECLARE_EARLY_PER_CPU(int, x86_cpu_to_node_map);
