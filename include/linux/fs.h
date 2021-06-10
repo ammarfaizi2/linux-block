@@ -2234,27 +2234,8 @@ static inline u16 ki_hint_validate(enum rw_hint hint)
 	return 0;
 }
 
-static inline void init_sync_kiocb(struct kiocb *kiocb, struct file *filp)
-{
-	*kiocb = (struct kiocb) {
-		.ki_filp = filp,
-		.ki_flags = iocb_flags(filp),
-		.ki_hint = ki_hint_validate(file_write_hint(filp)),
-		.ki_ioprio = get_current_ioprio(),
-	};
-}
-
-static inline void kiocb_clone(struct kiocb *kiocb, struct kiocb *kiocb_src,
-			       struct file *filp)
-{
-	*kiocb = (struct kiocb) {
-		.ki_filp = filp,
-		.ki_flags = kiocb_src->ki_flags,
-		.ki_hint = kiocb_src->ki_hint,
-		.ki_ioprio = kiocb_src->ki_ioprio,
-		.ki_pos = kiocb_src->ki_pos,
-	};
-}
+extern void init_sync_kiocb(struct kiocb *kiocb, struct file *filp);
+extern void kiocb_clone(struct kiocb *kiocb, struct kiocb *kiocb_src, struct file *filp);
 
 /*
  * Inode state bits.  Protected by inode->i_lock
