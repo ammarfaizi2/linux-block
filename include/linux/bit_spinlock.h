@@ -5,7 +5,10 @@
 #include <linux/kernel.h>
 #include <linux/preempt.h>
 #include <linux/atomic.h>
+#include <linux/bitops.h>
 #include <linux/bug.h>
+
+#include <vdso/processor.h>
 
 /*
  *  bit-based spin_lock()
