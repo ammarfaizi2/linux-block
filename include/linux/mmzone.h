@@ -348,9 +348,6 @@ struct lruvec {
 /* Isolate unevictable pages */
 #define ISOLATE_UNEVICTABLE	((__force isolate_mode_t)0x8)
 
-/* LRU Isolation modes. */
-typedef unsigned __bitwise isolate_mode_t;
-
 enum zone_watermarks {
 	WMARK_MIN,
 	WMARK_LOW,

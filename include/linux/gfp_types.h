@@ -2,6 +2,8 @@
 #ifndef __LINUX_GFP_TYPES_H
 #define __LINUX_GFP_TYPES_H
 
+#include <uapi/linux/types.h>
+
 /* The typedef is in types.h but we want the documentation here */
 #if 0
 /**
@@ -344,5 +346,8 @@ typedef unsigned int __bitwise gfp_t;
 #define GFP_TRANSHUGE_LIGHT	((GFP_HIGHUSER_MOVABLE | __GFP_COMP | \
 			 __GFP_NOMEMALLOC | __GFP_NOWARN) & ~__GFP_RECLAIM)
 #define GFP_TRANSHUGE	(GFP_TRANSHUGE_LIGHT | __GFP_DIRECT_RECLAIM)
+
+/* LRU Isolation modes. */
+typedef unsigned __bitwise isolate_mode_t;
 
 #endif /* __LINUX_GFP_TYPES_H */
