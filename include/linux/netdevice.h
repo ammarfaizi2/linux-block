@@ -50,6 +50,14 @@
 #include <linux/rbtree.h>
 #include <net/net_trackers.h>
 
+#include <linux/cache.h>
+#include <linux/skbuff.h>
+#ifdef CONFIG_RPS
+# include <linux/static_key.h>
+#endif
+
+#include <linux/notifier.h>
+
 struct netpoll_info;
 struct device;
 struct ethtool_ops;
@@ -203,11 +211,7 @@ struct net_device_core_stats {
 	local_t		rx_nohandler;
 } __aligned(4 * sizeof(local_t));
 
-#include <linux/cache.h>
-#include <linux/skbuff.h>
-
 #ifdef CONFIG_RPS
-#include <linux/static_key.h>
 extern struct static_key_false rps_needed;
 extern struct static_key_false rfs_needed;
 #endif
@@ -2681,8 +2685,6 @@ struct netdev_lag_lower_state_info {
 	u8 link_up : 1,
 	   tx_enabled : 1;
 };
-
-#include <linux/notifier.h>
 
 /* netdevice notifier chain. Please remember to update netdev_cmd_to_name()
  * and the rtnetlink notification exclusion list in rtnetlink_event() when
