@@ -1329,3 +1329,14 @@ void kiocb_clone(struct kiocb *kiocb, struct kiocb *kiocb_src, struct file *filp
 	};
 }
 EXPORT_SYMBOL(kiocb_clone);
+
+struct user_namespace *seq_user_ns(struct seq_file *seq)
+{
+#ifdef CONFIG_USER_NS
+	return seq->file->f_cred->user_ns;
+#else
+	extern struct user_namespace init_user_ns;
+	return &init_user_ns;
+#endif
+}
+EXPORT_SYMBOL(seq_user_ns);

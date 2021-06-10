@@ -215,15 +215,7 @@ static const struct proc_ops __name ## _proc_ops = {			\
 	.proc_release	= single_release,				\
 }
 
-static inline struct user_namespace *seq_user_ns(struct seq_file *seq)
-{
-#ifdef CONFIG_USER_NS
-	return seq->file->f_cred->user_ns;
-#else
-	extern struct user_namespace init_user_ns;
-	return &init_user_ns;
-#endif
-}
+extern struct user_namespace *seq_user_ns(struct seq_file *seq);
 
 /**
  * seq_show_options - display mount options with appropriate escapes.
