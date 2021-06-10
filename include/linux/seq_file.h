@@ -9,10 +9,12 @@
 #include <linux/mutex.h>
 #include <linux/cpumask.h>
 #include <linux/nodemask.h>
-#include <linux/fs.h>
 #include <linux/cred.h>
 
 struct seq_operations;
+struct iov_iter;
+struct kiocb;
+struct path;
 
 struct seq_file {
 	char *buf;
