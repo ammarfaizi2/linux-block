@@ -25,15 +25,11 @@
 #ifndef _ASM_X86_TOPOLOGY_H
 #define _ASM_X86_TOPOLOGY_H
 
-/*
- * to preserve the visibility of NUMA_NO_NODE definition,
- * moved to there from here.  May be used independent of
- * CONFIG_NUMA.
- */
-#include <linux/numa.h>
+#include <linux/numa_types.h>
+#include <linux/cache.h>
 
 #ifdef CONFIG_NUMA
-#include <linux/cpumask.h>
+#include <linux/cpumask_types.h>
 
 #include <asm/mpspec.h>
 #include <asm/percpu.h>
@@ -198,7 +194,6 @@ static inline void sched_clear_itmt_support(void)
 #endif /* CONFIG_SCHED_MC_PRIO */
 
 #if defined(CONFIG_SMP) && defined(CONFIG_X86_64)
-#include <asm/cpufeature.h>
 
 DECLARE_STATIC_KEY_FALSE(arch_scale_freq_key);
 
