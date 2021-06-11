@@ -2,8 +2,7 @@
 #ifndef _UAPI_LINUX_IF_LINK_H
 #define _UAPI_LINUX_IF_LINK_H
 
-#include <linux/types.h>
-#include <linux/netlink.h>
+#include <uapi/linux/netlink.h>
 
 /* This struct should be in sync with struct rtnl_link_stats64 */
 struct rtnl_link_stats {
