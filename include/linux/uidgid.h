@@ -18,12 +18,12 @@
 struct user_namespace;
 extern struct user_namespace init_user_ns;
 
-typedef struct {
+typedef struct kuid_struct {
 	uid_t val;
 } kuid_t;
 
 
-typedef struct {
+typedef struct kgid_struct {
 	gid_t val;
 } kgid_t;
 
