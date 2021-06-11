@@ -107,7 +107,8 @@ struct membuf;
 void copy_uabi_xstate_to_membuf(struct membuf to, struct xregs_state *xsave);
 int copy_uabi_from_kernel_to_xstate(struct xregs_state *xsave, const void *kbuf);
 int copy_sigframe_from_user_to_xstate(struct xregs_state *xsave, const void __user *ubuf);
-void copy_independent_supervisor_to_kernel(struct xregs_state *xstate, u64 mask);
-void copy_kernel_to_independent_supervisor(struct xregs_state *xstate, u64 mask);
+
+void xsaves_to_kernel(struct xregs_state *xsave, u64 mask);
+void xrstors_from_kernel(struct xregs_state *xsave, u64 mask);
 
 #endif
