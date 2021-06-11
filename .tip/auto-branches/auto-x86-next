@@ -24,7 +24,7 @@ x86/mm
 x86/paravirt
 x86/pasid
 x86/platform
-x86/seves
+x86/sev
 x86/sgx
 x86/splitlock
 x86/timers
