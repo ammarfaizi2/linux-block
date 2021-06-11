@@ -2,9 +2,9 @@
 #ifndef _UAPI__LINUX_NETLINK_H
 #define _UAPI__LINUX_NETLINK_H
 
-#include <linux/const.h>
-#include <linux/socket.h> /* for __kernel_sa_family_t */
-#include <linux/types.h>
+#include <uapi/linux/types.h>
+#include <uapi/linux/const.h>
+#include <uapi/linux/socket.h> /* for __kernel_sa_family_t */
 
 #define NETLINK_ROUTE		0	/* Routing/device hook				*/
 #define NETLINK_UNUSED		1	/* Unused number				*/
