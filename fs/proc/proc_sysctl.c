@@ -630,6 +630,11 @@ static ssize_t proc_sys_write(struct kiocb *iocb, struct iov_iter *iter)
 	return proc_sys_call_handler(iocb, iter, 1);
 }
 
+static inline void *proc_sys_poll_event(struct ctl_table_poll *poll)
+{
+	return (void *)(unsigned long)atomic_read(&poll->event);
+}
+
 static int proc_sys_open(struct inode *inode, struct file *filp)
 {
 	struct ctl_table_header *head = grab_header(inode);
