@@ -65,6 +65,8 @@ struct dsa_port;
 struct ip_tunnel_parm;
 struct macsec_context;
 struct macsec_ops;
+struct ndmsg;
+struct netlink_callback;
 
 struct sfp_bus;
 /* 802.11 specific */
@@ -943,6 +945,8 @@ struct netlink_ext_ack;
 struct xdp_umem;
 struct xdp_dev_bulk_queue;
 struct bpf_xdp_link;
+struct ifla_vf_info;
+struct ifla_vf_stats;
 
 enum bpf_xdp_mode {
 	XDP_MODE_SKB = 0,
@@ -982,6 +986,7 @@ struct netdev_bpf {
 #define XDP_WAKEUP_TX (1 << 1)
 
 #ifdef CONFIG_XFRM_OFFLOAD
+struct xfrm_state;
 struct xfrmdev_ops {
 	int	(*xdo_dev_state_add) (struct xfrm_state *x);
 	void	(*xdo_dev_state_delete) (struct xfrm_state *x);

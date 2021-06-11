@@ -26,10 +26,10 @@
 #ifndef _UAPI_LINUX_NETDEVICE_H
 #define _UAPI_LINUX_NETDEVICE_H
 
-#include <linux/if.h>
-#include <linux/if_ether.h>
-#include <linux/if_packet.h>
-#include <linux/if_link.h>
+#include <uapi/linux/if.h>
+#include <uapi/linux/if_ether.h>
+#include <uapi/linux/if_packet.h>
+#include <uapi/linux/if_link.h>
 
 
 #define MAX_ADDR_LEN	32		/* Largest hardware address length */
