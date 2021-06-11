@@ -44,9 +44,9 @@
 #ifndef _LINUX_IF_BONDING_H
 #define _LINUX_IF_BONDING_H
 
-#include <linux/if.h>
-#include <linux/types.h>
-#include <linux/if_ether.h>
+#include <uapi/linux/sockios.h>
+#include <uapi/linux/if.h>
+#include <uapi/linux/if_ether.h>
 
 /* userland - kernel ABI version (2003/05/08) */
 #define BOND_ABI_VERSION 2
