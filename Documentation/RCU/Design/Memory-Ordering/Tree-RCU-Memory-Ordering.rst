@@ -125,15 +125,15 @@ The ``smp_mb__after_unlock_lock()`` invocations prevent this
 +-----------------------------------------------------------------------+
 | Because we must provide ordering for RCU's polling grace-period       |
 | primitives, for example, get_state_synchronize_rcu() and              |
-| poll_state_synchronize_rcu().  For example:                           |
+| poll_state_synchronize_rcu().  For example::                          |
 |                                                                       |
-| CPU 0                                     CPU 1                       |
-| ----                                      ----                        |
-| WRITE_ONCE(X, 1)                          WRITE_ONCE(Y, 1)            |
-| g = get_state_synchronize_rcu()           smp_mb()                    |
-| while (!poll_state_synchronize_rcu(g))    r1 = READ_ONCE(X)           |
-|         continue;                                                     |
-| r0 = READ_ONCE(Y)                                                     |
+|  CPU 0                                     CPU 1                      |
+|  ----                                      ----                       |
+|  WRITE_ONCE(X, 1)                          WRITE_ONCE(Y, 1)           |
+|  g = get_state_synchronize_rcu()           smp_mb()                   |
+|  while (!poll_state_synchronize_rcu(g))    r1 = READ_ONCE(X)          |
+|          continue;                                                    |
+|  r0 = READ_ONCE(Y)                                                    |
 |                                                                       |
 | RCU guarantees that that the outcome r0 == 0 && r1 == 0 will not      |
 | happen, even if CPU 1 is in an RCU extended quiescent state (idle     |
