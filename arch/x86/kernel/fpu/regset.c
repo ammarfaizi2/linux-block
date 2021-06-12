@@ -100,8 +100,9 @@ int xfpregs_set(struct task_struct *target, const struct user_regset *regset,
 	if (ret)
 		return ret;
 
-	/* Mask invalid MXCSR bits (for historical reasons). */
-	newstate.mxcsr &= mxcsr_feature_mask;
+	/* Do not allow an invalid MXCSR value. */
+	if (newstate.mxcsr & ~mxcsr_feature_mask)
+		ret = -EINVAL;
 
 	fpu__prepare_write(fpu);
 
