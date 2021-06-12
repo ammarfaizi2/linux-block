@@ -16,6 +16,11 @@
 #include <linux/audit_arch.h>
 #include <linux/time64.h>
 
+struct dentry;
+struct file;
+struct cred;
+struct open_how;
+
 #ifdef CONFIG_AUDIT
 extern int is_audit_feature_set(int which);
 
