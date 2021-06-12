@@ -82,30 +82,41 @@ int xfpregs_set(struct task_struct *target, const struct user_regset *regset,
 		const void *kbuf, const void __user *ubuf)
 {
 	struct fpu *fpu = &target->thread.fpu;
+	struct user32_fxsr_struct newstate;
 	int ret;
+
+	/* newstate is the beginning of fxstate up through xmm7. */
+	BUILD_BUG_ON(sizeof(newstate) >= sizeof(struct fxregs_state));
 
 	if (!boot_cpu_has(X86_FEATURE_FXSR))
 		return -ENODEV;
 
-	fpu__prepare_write(fpu);
-	fpstate_sanitize_legacy(fpu);
+	/* No funny business with partial or oversized writes is permitted. */
+	if (pos != 0 || count != sizeof(struct user32_fxsr_struct))
+		return -EINVAL;
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-				 &fpu->state.fxsave, 0, -1);
+				 &newstate, 0, -1);
+	if (ret)
+		return ret;
 
-	/*
-	 * mxcsr reserved bits must be masked to zero for security reasons.
-	 */
-	fpu->state.fxsave.mxcsr &= mxcsr_feature_mask;
+	/* Mask invalid MXCSR bits (for historical reasons). */
+	newstate.mxcsr &= mxcsr_feature_mask;
 
-	/*
-	 * update the header bits in the xsave header, indicating the
-	 * presence of FP and SSE state.
-	 */
-	if (boot_cpu_has(X86_FEATURE_XSAVE))
+	fpu__prepare_write(fpu);
+
+	/* Copy the state we're writing. */
+	memcpy(&fpu->state.fxsave, &newstate, sizeof(newstate));
+
+	/* Clear xmm8..15 */
+	BUILD_BUG_ON(sizeof(fpu->state.fxsave.xmm_space) != 16*128);
+	memset((char*)fpu->state.fxsave.xmm_space + 8*128, 0, 8*128);
+
+	/* And mark FP and SSE as in use */
+	if (use_xsave())
 		fpu->state.xsave.header.xfeatures |= XFEATURE_MASK_FPSSE;
 
-	return ret;
+	return 0;
 }
 
 int xstateregs_get(struct task_struct *target, const struct user_regset *regset,
