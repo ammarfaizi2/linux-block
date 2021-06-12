@@ -422,7 +422,8 @@ static __u32 tpacket_get_timestamp(struct sk_buff *skb, struct timespec64 *ts,
 	    ktime_to_timespec64_cond(shhwtstamps->hwtstamp, ts))
 		return TP_STATUS_TS_RAW_HARDWARE;
 
-	if (ktime_to_timespec64_cond(skb->tstamp, ts))
+	if ((flags & SOF_TIMESTAMPING_SOFTWARE) &&
+	    ktime_to_timespec64_cond(skb->tstamp, ts))
 		return TP_STATUS_TS_SOFTWARE;
 
 	return 0;
@@ -2340,7 +2341,12 @@ static int tpacket_rcv(struct sk_buff *skb, struct net_device *dev,
 
 	skb_copy_bits(skb, 0, h.raw + macoff, snaplen);
 
-	if (!(ts_status = tpacket_get_timestamp(skb, &ts, po->tp_tstamp)))
+	/* Always timestamp; prefer an existing software timestamp taken
+	 * closer to the time of capture.
+	 */
+	ts_status = tpacket_get_timestamp(skb, &ts,
+					  po->tp_tstamp | SOF_TIMESTAMPING_SOFTWARE);
+	if (!ts_status)
 		ktime_get_real_ts64(&ts);
 
 	status |= ts_status;
@@ -3923,12 +3929,9 @@ packet_setsockopt(struct socket *sock, int level, int optname, sockptr_t optval,
 			return -EFAULT;
 
 		lock_sock(sk);
-		if (po->rx_ring.pg_vec || po->tx_ring.pg_vec) {
-			ret = -EBUSY;
-		} else {
+		if (!po->rx_ring.pg_vec && !po->tx_ring.pg_vec)
 			po->tp_tx_has_off = !!val;
-			ret = 0;
-		}
+
 		release_sock(sk);
 		return 0;
 	}

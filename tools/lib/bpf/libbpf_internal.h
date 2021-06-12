@@ -41,6 +41,11 @@
 #define ELF_C_READ_MMAP ELF_C_READ
 #endif
 
+/* Older libelf all end up in this expression, for both 32 and 64 bit */
+#ifndef GELF_ST_VISIBILITY
+#define GELF_ST_VISIBILITY(o) ((o) & 0x03)
+#endif
+
 #define BTF_INFO_ENC(kind, kind_flag, vlen) \
 	((!!(kind_flag) << 31) | ((kind) << 24) | ((vlen) & BTF_MAX_VLEN))
 #define BTF_TYPE_ENC(name, info, size_or_type) (name), (info), (size_or_type)
@@ -258,6 +263,8 @@ int bpf_object__section_size(const struct bpf_object *obj, const char *name,
 int bpf_object__variable_offset(const struct bpf_object *obj, const char *name,
 				__u32 *off);
 struct btf *btf_get_from_fd(int btf_fd, struct btf *base_btf);
+void btf_get_kernel_prefix_kind(enum bpf_attach_type attach_type,
+				const char **prefix, int *kind);
 
 struct btf_ext_info {
 	/*

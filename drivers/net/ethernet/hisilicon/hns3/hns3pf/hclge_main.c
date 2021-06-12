@@ -3936,6 +3936,21 @@ static int hclge_reset_prepare_wait(struct hclge_dev *hdev)
 	return ret;
 }
 
+static void hclge_show_rst_info(struct hclge_dev *hdev)
+{
+	char *buf;
+
+	buf = kzalloc(HCLGE_DBG_RESET_INFO_LEN, GFP_KERNEL);
+	if (!buf)
+		return;
+
+	hclge_dbg_dump_rst_info(hdev, buf, HCLGE_DBG_RESET_INFO_LEN);
+
+	dev_info(&hdev->pdev->dev, "dump reset info:\n%s", buf);
+
+	kfree(buf);
+}
+
 static bool hclge_reset_err_handle(struct hclge_dev *hdev)
 {
 #define MAX_RESET_FAIL_CNT 5
@@ -3966,7 +3981,7 @@ static bool hclge_reset_err_handle(struct hclge_dev *hdev)
 
 	dev_err(&hdev->pdev->dev, "Reset fail!\n");
 
-	hclge_dbg_dump_rst_info(hdev);
+	hclge_show_rst_info(hdev);
 
 	set_bit(HCLGE_STATE_RST_FAIL, &hdev->state);
 
@@ -5168,9 +5183,8 @@ static int hclge_set_promisc_mode(struct hnae3_handle *handle, bool en_uc_pmc,
 static void hclge_request_update_promisc_mode(struct hnae3_handle *handle)
 {
 	struct hclge_vport *vport = hclge_get_vport(handle);
-	struct hclge_dev *hdev = vport->back;
 
-	set_bit(HCLGE_STATE_PROMISC_CHANGED, &hdev->state);
+	set_bit(HCLGE_VPORT_STATE_PROMISC_CHANGE, &vport->state);
 }
 
 static void hclge_sync_fd_state(struct hclge_dev *hdev)
@@ -8035,6 +8049,7 @@ int hclge_vport_start(struct hclge_vport *vport)
 	struct hclge_dev *hdev = vport->back;
 
 	set_bit(HCLGE_VPORT_STATE_ALIVE, &vport->state);
+	set_bit(HCLGE_VPORT_STATE_PROMISC_CHANGE, &vport->state);
 	vport->last_active_jiffies = jiffies;
 
 	if (test_bit(vport->vport_id, hdev->vport_config_block)) {
@@ -10033,7 +10048,6 @@ static void hclge_restore_hw_table(struct hclge_dev *hdev)
 
 	hclge_restore_mac_table_common(vport);
 	hclge_restore_vport_vlan_table(vport);
-	set_bit(HCLGE_STATE_PROMISC_CHANGED, &hdev->state);
 	set_bit(HCLGE_STATE_FD_USER_DEF_CHANGED, &hdev->state);
 	hclge_restore_fd_entries(handle);
 }
@@ -11167,6 +11181,18 @@ static void hclge_clear_resetting_state(struct hclge_dev *hdev)
 	}
 }
 
+static void hclge_init_rxd_adv_layout(struct hclge_dev *hdev)
+{
+	if (hnae3_ae_dev_rxd_adv_layout_supported(hdev->ae_dev))
+		hclge_write_dev(&hdev->hw, HCLGE_RXD_ADV_LAYOUT_EN_REG, 1);
+}
+
+static void hclge_uninit_rxd_adv_layout(struct hclge_dev *hdev)
+{
+	if (hnae3_ae_dev_rxd_adv_layout_supported(hdev->ae_dev))
+		hclge_write_dev(&hdev->hw, HCLGE_RXD_ADV_LAYOUT_EN_REG, 0);
+}
+
 static int hclge_init_ae_dev(struct hnae3_ae_dev *ae_dev)
 {
 	struct pci_dev *pdev = ae_dev->pdev;
@@ -11339,6 +11365,8 @@ static int hclge_init_ae_dev(struct hnae3_ae_dev *ae_dev)
 		mod_timer(&hdev->reset_timer, jiffies + HCLGE_RESET_INTERVAL);
 	}
 
+	hclge_init_rxd_adv_layout(hdev);
+
 	/* Enable MISC vector(vector0) */
 	hclge_enable_vector(&hdev->misc_vector, true);
 
@@ -11471,10 +11499,7 @@ static int hclge_set_vf_trust(struct hnae3_handle *handle, int vf, bool enable)
 {
 	struct hclge_vport *vport = hclge_get_vport(handle);
 	struct hclge_dev *hdev = vport->back;
-	struct hnae3_ae_dev *ae_dev = hdev->ae_dev;
 	u32 new_trusted = enable ? 1 : 0;
-	bool en_bc_pmc;
-	int ret;
 
 	vport = hclge_get_vf_vport(hdev, vf);
 	if (!vport)
@@ -11483,18 +11508,9 @@ static int hclge_set_vf_trust(struct hnae3_handle *handle, int vf, bool enable)
 	if (vport->vf_info.trusted == new_trusted)
 		return 0;
 
-	/* Disable promisc mode for VF if it is not trusted any more. */
-	if (!enable && vport->vf_info.promisc_enable) {
-		en_bc_pmc = ae_dev->dev_version >= HNAE3_DEVICE_VERSION_V2;
-		ret = hclge_set_vport_promisc_mode(vport, false, false,
-						   en_bc_pmc);
-		if (ret)
-			return ret;
-		vport->vf_info.promisc_enable = 0;
-		hclge_inform_vf_promisc_info(vport);
-	}
-
 	vport->vf_info.trusted = new_trusted;
+	set_bit(HCLGE_VPORT_STATE_PROMISC_CHANGE, &vport->state);
+	hclge_task_schedule(hdev, 0);
 
 	return 0;
 }
@@ -11720,6 +11736,8 @@ static int hclge_reset_ae_dev(struct hnae3_ae_dev *ae_dev)
 	if (ret)
 		return ret;
 
+	hclge_init_rxd_adv_layout(hdev);
+
 	dev_info(&pdev->dev, "Reset done, %s driver initialization finished.\n",
 		 HCLGE_DRIVER_NAME);
 
@@ -11735,6 +11753,7 @@ static void hclge_uninit_ae_dev(struct hnae3_ae_dev *ae_dev)
 	hclge_clear_vf_vlan(hdev);
 	hclge_misc_affinity_teardown(hdev);
 	hclge_state_uninit(hdev);
+	hclge_uninit_rxd_adv_layout(hdev);
 	hclge_uninit_mac_table(hdev);
 	hclge_del_all_fd_entries(hdev);
 
@@ -12385,20 +12404,48 @@ static void hclge_sync_promisc_mode(struct hclge_dev *hdev)
 	struct hnae3_handle *handle = &vport->nic;
 	u8 tmp_flags;
 	int ret;
+	u16 i;
 
 	if (vport->last_promisc_flags != vport->overflow_promisc_flags) {
-		set_bit(HCLGE_STATE_PROMISC_CHANGED, &hdev->state);
+		set_bit(HCLGE_VPORT_STATE_PROMISC_CHANGE, &vport->state);
 		vport->last_promisc_flags = vport->overflow_promisc_flags;
 	}
 
-	if (test_bit(HCLGE_STATE_PROMISC_CHANGED, &hdev->state)) {
+	if (test_bit(HCLGE_VPORT_STATE_PROMISC_CHANGE, &vport->state)) {
 		tmp_flags = handle->netdev_flags | vport->last_promisc_flags;
 		ret = hclge_set_promisc_mode(handle, tmp_flags & HNAE3_UPE,
 					     tmp_flags & HNAE3_MPE);
 		if (!ret) {
-			clear_bit(HCLGE_STATE_PROMISC_CHANGED, &hdev->state);
+			clear_bit(HCLGE_VPORT_STATE_PROMISC_CHANGE,
+				  &vport->state);
 			hclge_enable_vlan_filter(handle,
 						 tmp_flags & HNAE3_VLAN_FLTR);
+		}
+	}
+
+	for (i = 1; i < hdev->num_alloc_vport; i++) {
+		bool uc_en = false;
+		bool mc_en = false;
+		bool bc_en;
+
+		vport = &hdev->vport[i];
+
+		if (!test_and_clear_bit(HCLGE_VPORT_STATE_PROMISC_CHANGE,
+					&vport->state))
+			continue;
+
+		if (vport->vf_info.trusted) {
+			uc_en = vport->vf_info.request_uc_en > 0;
+			mc_en = vport->vf_info.request_mc_en > 0;
+		}
+		bc_en = vport->vf_info.request_bc_en > 0;
+
+		ret = hclge_cmd_set_promisc_mode(hdev, vport->vport_id, uc_en,
+						 mc_en, bc_en);
+		if (ret) {
+			set_bit(HCLGE_VPORT_STATE_PROMISC_CHANGE,
+				&vport->state);
+			return;
 		}
 	}
 }
@@ -12578,7 +12625,6 @@ static const struct hnae3_ae_ops hclge_ops = {
 	.get_fd_all_rules = hclge_get_all_rules,
 	.enable_fd = hclge_enable_fd,
 	.add_arfs_entry = hclge_add_fd_entry_by_arfs,
-	.dbg_run_cmd = hclge_dbg_run_cmd,
 	.dbg_read_cmd = hclge_dbg_read_cmd,
 	.handle_hw_ras_error = hclge_handle_hw_ras_error,
 	.get_hw_reset_stat = hclge_get_hw_reset_stat,

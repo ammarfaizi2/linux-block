@@ -53,6 +53,7 @@
 /* bar registers for common func */
 #define HCLGE_VECTOR0_OTER_EN_REG	0x20600
 #define HCLGE_GRO_EN_REG		0x28000
+#define HCLGE_RXD_ADV_LAYOUT_EN_REG	0x28008
 
 /* bar registers for rcb */
 #define HCLGE_RING_RX_ADDR_L_REG	0x80000
@@ -147,6 +148,8 @@
 
 #define HCLGE_MAX_QSET_NUM		1024
 
+#define HCLGE_DBG_RESET_INFO_LEN	1024
+
 enum HLCGE_PORT_TYPE {
 	HOST_PORT,
 	NETWORK_PORT
@@ -221,7 +224,6 @@ enum HCLGE_DEV_STATE {
 	HCLGE_STATE_STATISTICS_UPDATING,
 	HCLGE_STATE_CMD_DISABLE,
 	HCLGE_STATE_LINK_UPDATING,
-	HCLGE_STATE_PROMISC_CHANGED,
 	HCLGE_STATE_RST_FAIL,
 	HCLGE_STATE_FD_TBL_CHANGED,
 	HCLGE_STATE_FD_CLEAR_ALL,
@@ -949,6 +951,7 @@ struct hclge_rss_tuple_cfg {
 enum HCLGE_VPORT_STATE {
 	HCLGE_VPORT_STATE_ALIVE,
 	HCLGE_VPORT_STATE_MAC_TBL_CHANGE,
+	HCLGE_VPORT_STATE_PROMISC_CHANGE,
 	HCLGE_VPORT_STATE_MAX
 };
 
@@ -969,7 +972,9 @@ struct hclge_vf_info {
 	u32 spoofchk;
 	u32 max_tx_rate;
 	u32 trusted;
-	u16 promisc_enable;
+	u8 request_uc_en;
+	u8 request_mc_en;
+	u8 request_bc_en;
 };
 
 struct hclge_vport {
@@ -1059,8 +1064,7 @@ int hclge_func_reset_cmd(struct hclge_dev *hdev, int func_id);
 int hclge_vport_start(struct hclge_vport *vport);
 void hclge_vport_stop(struct hclge_vport *vport);
 int hclge_set_vport_mtu(struct hclge_vport *vport, int new_mtu);
-int hclge_dbg_run_cmd(struct hnae3_handle *handle, const char *cmd_buf);
-int hclge_dbg_read_cmd(struct hnae3_handle *handle, const char *cmd_buf,
+int hclge_dbg_read_cmd(struct hnae3_handle *handle, enum hnae3_dbg_cmd cmd,
 		       char *buf, int len);
 u16 hclge_covert_handle_qid_global(struct hnae3_handle *handle, u16 queue_id);
 int hclge_notify_client(struct hclge_dev *hdev,
@@ -1088,6 +1092,6 @@ int hclge_query_bd_num_cmd_send(struct hclge_dev *hdev,
 void hclge_report_hw_error(struct hclge_dev *hdev,
 			   enum hnae3_hw_error_type type);
 void hclge_inform_vf_promisc_info(struct hclge_vport *vport);
-void hclge_dbg_dump_rst_info(struct hclge_dev *hdev);
+int hclge_dbg_dump_rst_info(struct hclge_dev *hdev, char *buf, int len);
 int hclge_push_vf_link_status(struct hclge_vport *vport);
 #endif
