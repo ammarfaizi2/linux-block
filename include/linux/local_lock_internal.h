@@ -6,6 +6,7 @@
 #include <linux/percpu-defs.h>
 #include <linux/lockdep.h>
 #include <linux/debug_locks.h>
+#include <linux/preempt.h>
 
 #ifdef CONFIG_DEBUG_LOCK_ALLOC
 # include <linux/sched.h>
