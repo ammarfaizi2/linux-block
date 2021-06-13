@@ -5,6 +5,9 @@
 #include <linux/hardirq.h>
 #include <linux/uaccess.h>
 #include <linux/refcount.h>
+#include <linux/sched/per_task.h>
+
+DECLARE_PER_TASK(struct mutex, perf_event_mutex);
 
 /* Buffer handling */
 
