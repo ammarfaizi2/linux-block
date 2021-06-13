@@ -81,6 +81,7 @@
 #include <linux/shmem_fs.h>
 #include <linux/slab.h>
 #include <linux/perf_event.h>
+#include "../kernel/events/internal.h"
 #include <linux/ptrace.h>
 #include <linux/pti.h>
 #include <linux/blkdev.h>
@@ -917,6 +918,9 @@ void __init init_per_task_early(void)
 #ifdef CONFIG_VIRT_CPU_ACCOUNTING_GEN
 	seqcount_init(&per_task(&init_task, vtime).seqcount);
 	per_task(&init_task, vtime).state = VTIME_SYS;
+#endif
+#ifdef CONFIG_PERF_EVENTS
+	mutex_init(&per_task(&init_task, perf_event_mutex));
 #endif
 }
 

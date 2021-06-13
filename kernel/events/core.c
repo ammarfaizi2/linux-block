@@ -64,6 +64,7 @@
 #include <asm/irq_regs.h>
 
 DEFINE_PER_TASK(struct perf_event_context *, perf_event_ctxp[perf_nr_task_contexts]);
+DEFINE_PER_TASK(struct mutex, perf_event_mutex);
 
 typedef int (*remote_function_f)(void *);
 
@@ -4781,7 +4782,7 @@ retry:
 		}
 
 		err = 0;
-		mutex_lock(&task->perf_event_mutex);
+		mutex_lock(&per_task(task, perf_event_mutex));
 		/*
 		 * If it has already passed perf_event_exit_task().
 		 * we must see PF_EXITING, it takes this mutex too.
@@ -4796,7 +4797,7 @@ retry:
 			rcu_assign_pointer(per_task(task, perf_event_ctxp)[ctxn],
 					   ctx);
 		}
-		mutex_unlock(&task->perf_event_mutex);
+		mutex_unlock(&per_task(task, perf_event_mutex));
 
 		if (unlikely(err)) {
 			put_ctx(ctx);
@@ -5146,7 +5147,8 @@ static void perf_remove_from_owner(struct perf_event *event)
 		 * However we can safely take this lock because its the child
 		 * ctx->mutex.
 		 */
-		mutex_lock_nested(&owner->perf_event_mutex, SINGLE_DEPTH_NESTING);
+		mutex_lock_nested(&per_task(owner, perf_event_mutex),
+				  SINGLE_DEPTH_NESTING);
 
 		/*
 		 * We have to re-check the event->owner field, if it is cleared
@@ -5158,7 +5160,7 @@ static void perf_remove_from_owner(struct perf_event *event)
 			list_del_init(&event->owner_entry);
 			smp_store_release(&event->owner, NULL);
 		}
-		mutex_unlock(&owner->perf_event_mutex);
+		mutex_unlock(&per_task(owner, perf_event_mutex));
 		put_task_struct(owner);
 	}
 }
@@ -5855,13 +5857,13 @@ int perf_event_task_enable(void)
 	struct perf_event_context *ctx;
 	struct perf_event *event;
 
-	mutex_lock(&current->perf_event_mutex);
+	mutex_lock(&per_task(current, perf_event_mutex));
 	list_for_each_entry(event, &current->perf_event_list, owner_entry) {
 		ctx = perf_event_ctx_lock(event);
 		perf_event_for_each_child(event, _perf_event_enable);
 		perf_event_ctx_unlock(event, ctx);
 	}
-	mutex_unlock(&current->perf_event_mutex);
+	mutex_unlock(&per_task(current, perf_event_mutex));
 
 	return 0;
 }
@@ -5871,13 +5873,13 @@ int perf_event_task_disable(void)
 	struct perf_event_context *ctx;
 	struct perf_event *event;
 
-	mutex_lock(&current->perf_event_mutex);
+	mutex_lock(&per_task(current, perf_event_mutex));
 	list_for_each_entry(event, &current->perf_event_list, owner_entry) {
 		ctx = perf_event_ctx_lock(event);
 		perf_event_for_each_child(event, _perf_event_disable);
 		perf_event_ctx_unlock(event, ctx);
 	}
-	mutex_unlock(&current->perf_event_mutex);
+	mutex_unlock(&per_task(current, perf_event_mutex));
 
 	return 0;
 }
@@ -12528,9 +12530,9 @@ SYSCALL_DEFINE5(perf_event_open,
 		put_task_struct(task);
 	}
 
-	mutex_lock(&current->perf_event_mutex);
+	mutex_lock(&per_task(current, perf_event_mutex));
 	list_add_tail(&event->owner_entry, &current->perf_event_list);
-	mutex_unlock(&current->perf_event_mutex);
+	mutex_unlock(&per_task(current, perf_event_mutex));
 
 	/*
 	 * Drop the reference on the group_event after placing the
@@ -12871,7 +12873,7 @@ void perf_event_exit_task(struct task_struct *child)
 	struct perf_event *event, *tmp;
 	int ctxn;
 
-	mutex_lock(&child->perf_event_mutex);
+	mutex_lock(&per_task(child, perf_event_mutex));
 	list_for_each_entry_safe(event, tmp, &child->perf_event_list,
 				 owner_entry) {
 		list_del_init(&event->owner_entry);
@@ -12883,7 +12885,7 @@ void perf_event_exit_task(struct task_struct *child)
 		 */
 		smp_store_release(&event->owner, NULL);
 	}
-	mutex_unlock(&child->perf_event_mutex);
+	mutex_unlock(&per_task(child, perf_event_mutex));
 
 	for_each_task_context_nr(ctxn)
 		perf_event_exit_task_context(child, ctxn);
@@ -13329,7 +13331,7 @@ int perf_event_init_task(struct task_struct *child, u64 clone_flags)
 
 	memset(per_task(child, perf_event_ctxp), 0,
 	       sizeof(per_task(child, perf_event_ctxp)));
-	mutex_init(&child->perf_event_mutex);
+	mutex_init(&per_task(child, perf_event_mutex));
 	INIT_LIST_HEAD(&child->perf_event_list);
 
 	for_each_task_context_nr(ctxn) {
