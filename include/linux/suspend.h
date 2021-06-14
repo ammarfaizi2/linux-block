@@ -2,8 +2,6 @@
 #ifndef _LINUX_SUSPEND_H
 #define _LINUX_SUSPEND_H
 
-#include <linux/notifier.h>
-#include <linux/init.h>
 #include <linux/pm.h>
 #include <linux/linkage.h>
 
@@ -477,6 +475,8 @@ static inline int is_hibernate_resume_dev(dev_t dev) { return 0; }
 #define PM_POST_RESTORE		0x0006 /* Restore failed */
 
 extern struct mutex system_transition_mutex;
+
+struct notifier_block;
 
 #ifdef CONFIG_PM_SLEEP
 void save_processor_state(void);
