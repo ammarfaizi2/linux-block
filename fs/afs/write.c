@@ -119,6 +119,7 @@ int afs_write_end(struct file *file, struct address_space *mapping,
 	_enter("{%llx:%llu},{%lx}",
 	       vnode->fid.vid, vnode->fid.vnode, page->index);
 
+	len = min_t(size_t, len, thp_size(page) - from);
 	if (!PageUptodate(page)) {
 		if (copied < len) {
 			copied = 0;
