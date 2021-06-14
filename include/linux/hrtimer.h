@@ -18,9 +18,6 @@
 
 #include <linux/hrtimer_defs.h>
 #include <linux/rbtree.h>
-#include <linux/init.h>
-#include <linux/list.h>
-#include <linux/percpu.h>
 #include <linux/timerqueue.h>
 
 struct hrtimer_clock_base;
