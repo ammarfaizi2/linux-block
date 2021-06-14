@@ -9,8 +9,6 @@
 #include <linux/bitops.h>
 #include <asm/byteorder.h>
 
-typedef u64 netdev_features_t;
-
 enum {
 	NETIF_F_SG_BIT,			/* Scatter/gather IO. */
 	NETIF_F_IP_CSUM_BIT,		/* Can checksum TCP/UDP over IPv4. */
