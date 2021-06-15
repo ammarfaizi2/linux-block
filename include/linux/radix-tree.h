@@ -24,6 +24,4 @@
 #define radix_tree_root		xarray
 #define radix_tree_node		xa_node
 
-#include <linux/radix-tree-api.h>
-
 #endif /* _LINUX_RADIX_TREE_H */
