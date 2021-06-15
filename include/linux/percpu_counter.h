@@ -7,13 +7,7 @@
  * WARNING: these things are HUGE.  4 kbytes per counter on 32-way P4.
  */
 
-#include <linux/spinlock.h>
-#include <linux/smp.h>
-#include <linux/list.h>
-#include <linux/threads.h>
-#include <linux/percpu.h>
-#include <linux/types.h>
-#include <linux/gfp.h>
+#include <linux/spinlock_types.h>
 
 #ifndef CONFIG_SMP
 # include <linux/preempt.h>
