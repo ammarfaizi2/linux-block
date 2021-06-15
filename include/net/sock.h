@@ -66,7 +66,7 @@
 #include <net/dst.h>
 #include <net/checksum.h>
 #include <net/tcp_states.h>
-#include <linux/percpu_counter_api.h>
+#include <linux/percpu_counter.h>
 #include <linux/net_tstamp.h>
 #include <net/l3mdev.h>
 #include <uapi/linux/socket.h>
