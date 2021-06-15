@@ -10,7 +10,6 @@
 #include <linux/workqueue.h>
 #include <linux/fs.h>
 #include <linux/flex_proportions.h>
-#include <linux/backing-dev-defs.h>
 
 struct bio;
 
