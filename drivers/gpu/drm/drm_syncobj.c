@@ -211,6 +211,30 @@ struct syncobj_wait_entry {
 static void syncobj_wait_syncobj_func(struct drm_syncobj *syncobj,
 				      struct syncobj_wait_entry *wait);
 
+
+/**
+ * drm_syncobj_fence_get - get a reference to a fence in a sync object
+ * @syncobj: sync object.
+ *
+ * This acquires additional reference to &drm_syncobj.fence contained in @obj,
+ * if not NULL. It is illegal to call this without already holding a reference.
+ * No locks required.
+ *
+ * Returns:
+ * Either the fence of @obj or NULL if there's none.
+ */
+struct dma_fence *drm_syncobj_fence_get(struct drm_syncobj *syncobj)
+{
+	struct dma_fence *fence;
+
+	rcu_read_lock();
+	fence = dma_fence_get_rcu_safe(&syncobj->fence);
+	rcu_read_unlock();
+
+	return fence;
+}
+EXPORT_SYMBOL(drm_syncobj_fence_get);
+
 /**
  * drm_syncobj_find - lookup and reference a sync object.
  * @file_private: drm file private pointer
