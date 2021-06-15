@@ -8,7 +8,6 @@
 #include <linux/timer.h>
 #include <linux/sched.h>
 #include <linux/workqueue.h>
-#include <linux/fs.h>
 #include <linux/flex_proportions.h>
 
 struct bio;
