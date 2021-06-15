@@ -44,6 +44,4 @@ struct dst_ops {
 	struct percpu_counter	pcpuc_entries ____cacheline_aligned_in_smp;
 };
 
-#include <net/dst_ops_api.h>
-
 #endif
