@@ -9,7 +9,9 @@
 int __node_distance(int from, int to);
 #define node_distance(a, b) __node_distance(a, b)
 
-extern nodemask_t numa_nodes_parsed __initdata;
+struct nodemask_struct;
+
+extern struct nodemask_struct numa_nodes_parsed __initdata;
 
 extern bool numa_off;
 

@@ -96,7 +96,7 @@
 #include <linux/minmax.h>
 #include <linux/numa.h>
 
-typedef struct { DECLARE_BITMAP(bits, MAX_NUMNODES); } nodemask_t;
+typedef struct nodemask_struct { DECLARE_BITMAP(bits, MAX_NUMNODES); } nodemask_t;
 extern nodemask_t _unused_nodemask_arg_;
 
 /**
