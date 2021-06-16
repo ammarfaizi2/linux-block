@@ -2,18 +2,16 @@
 #ifndef __INCLUDE_LINUX_OOM_H
 #define __INCLUDE_LINUX_OOM_H
 
-
-#include <linux/sched/signal.h>
-#include <linux/types.h>
-#include <linux/nodemask.h>
-#include <uapi/linux/oom.h>
 #include <linux/sched/coredump.h> /* MMF_* */
-#include <linux/mm.h> /* VM_FAULT* */
+#include <linux/sched/signal.h>
+
+#include <uapi/linux/oom.h>
 
 struct zonelist;
 struct notifier_block;
 struct mem_cgroup;
 struct task_struct;
+struct nodemask_struct;
 
 enum oom_constraint {
 	CONSTRAINT_NONE,
@@ -31,7 +29,7 @@ struct oom_control {
 	struct zonelist *zonelist;
 
 	/* Used to determine mempolicy */
-	nodemask_t *nodemask;
+	struct nodemask_struct *nodemask;
 
 	/* Memory cgroup in which oom is invoked, or NULL for global oom */
 	struct mem_cgroup *memcg;
