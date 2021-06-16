@@ -4,10 +4,10 @@
 
 #include <linux/mm.h>
 #include <linux/seq_file.h>
-#include <linux/poll.h>
 
 struct trace_buffer;
 struct ring_buffer_iter;
+struct poll_table_struct;
 
 /*
  * Don't refer to this struct directly, use functions below.
@@ -100,7 +100,7 @@ __ring_buffer_alloc(unsigned long size, unsigned flags, struct lock_class_key *k
 
 int ring_buffer_wait(struct trace_buffer *buffer, int cpu, int full);
 __poll_t ring_buffer_poll_wait(struct trace_buffer *buffer, int cpu,
-			  struct file *filp, poll_table *poll_table);
+			  struct file *filp, struct poll_table_struct *poll_table);
 
 
 #define RING_BUFFER_ALL_CPUS -1
