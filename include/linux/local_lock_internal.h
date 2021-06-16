@@ -7,6 +7,7 @@
 
 #ifdef CONFIG_DEBUG_LOCK_ALLOC
 # include <linux/lockdep_types.h>
+# include <linux/sched.h>
 #endif
 
 #ifndef CONFIG_PREEMPT_RT

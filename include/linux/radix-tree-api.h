@@ -16,7 +16,8 @@
 #include <linux/percpu.h>
 #include <linux/bitops.h>
 #include <linux/preempt.h>
-#include <linux/sched.h>
+#include <linux/sched/per_task.h>
+#include <linux/lockdep.h>
 
 struct radix_tree_preload {
 	local_lock_t lock;
