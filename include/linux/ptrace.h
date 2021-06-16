@@ -152,17 +152,7 @@ static inline bool ptrace_event_enabled(struct task_struct *task, int event)
  *
  * Called without locks.
  */
-static inline void ptrace_event(int event, unsigned long message)
-{
-	if (unlikely(ptrace_event_enabled(current, event))) {
-		current->ptrace_message = message;
-		ptrace_notify((event << 8) | SIGTRAP);
-	} else if (event == PTRACE_EVENT_EXEC) {
-		/* legacy EXEC report via SIGTRAP */
-		if ((current->ptrace & (PT_PTRACED|PT_SEIZED)) == PT_PTRACED)
-			send_sig(SIGTRAP, current, 0);
-	}
-}
+extern void ptrace_event(int event, unsigned long message);
 
 /**
  * ptrace_init_task - initialize ptrace state for a new child

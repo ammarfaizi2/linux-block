@@ -602,6 +602,29 @@ void exit_ptrace(struct task_struct *tracer, struct list_head *dead)
 	}
 }
 
+/**
+ * ptrace_event - possibly stop for a ptrace event notification
+ * @event:	%PTRACE_EVENT_* value to report
+ * @message:	value for %PTRACE_GETEVENTMSG to return
+ *
+ * Check whether @event is enabled and, if so, report @event and @message
+ * to the ptrace parent.
+ *
+ * Called without locks.
+ */
+void ptrace_event(int event, unsigned long message)
+{
+	if (unlikely(ptrace_event_enabled(current, event))) {
+		current->ptrace_message = message;
+		ptrace_notify((event << 8) | SIGTRAP);
+	} else if (event == PTRACE_EVENT_EXEC) {
+		/* legacy EXEC report via SIGTRAP */
+		if ((current->ptrace & (PT_PTRACED|PT_SEIZED)) == PT_PTRACED)
+			send_sig(SIGTRAP, current, 0);
+	}
+}
+EXPORT_SYMBOL_GPL(ptrace_event);
+
 int ptrace_readdata(struct task_struct *tsk, unsigned long src, char __user *dst, int len)
 {
 	int copied = 0;
