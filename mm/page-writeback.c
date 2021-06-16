@@ -1865,6 +1865,66 @@ static DEFINE_PER_CPU(int, bdp_ratelimits);
  */
 DEFINE_PER_CPU(int, dirty_throttle_leaks) = 0;
 
+#ifdef CONFIG_CGROUP_WRITEBACK
+/**
+ * wb_find_current - find wb for %current on a bdi
+ * @bdi: bdi of interest
+ *
+ * Find the wb of @bdi which matches both the memcg and blkcg of %current.
+ * Must be called under rcu_read_lock() which protects the returend wb.
+ * NULL if not found.
+ */
+static inline struct bdi_writeback *wb_find_current(struct backing_dev_info *bdi)
+{
+	struct cgroup_subsys_state *memcg_css;
+	struct bdi_writeback *wb;
+
+	memcg_css = task_css(current, memory_cgrp_id);
+	if (!memcg_css->parent)
+		return &bdi->wb;
+
+	wb = radix_tree_lookup(&bdi->cgwb_tree, memcg_css->id);
+
+	/*
+	 * %current's blkcg equals the effective blkcg of its memcg.  No
+	 * need to use the relatively expensive cgroup_get_e_css().
+	 */
+	if (likely(wb && wb->blkcg_css == task_css(current, io_cgrp_id)))
+		return wb;
+	return NULL;
+}
+
+/**
+ * wb_get_create_current - get or create wb for %current on a bdi
+ * @bdi: bdi of interest
+ * @gfp: allocation mask
+ *
+ * Equivalent to wb_get_create() on %current's memcg.  This function is
+ * called from a relatively hot path and optimizes the common cases using
+ * wb_find_current().
+ */
+static inline struct bdi_writeback *
+wb_get_create_current(struct backing_dev_info *bdi, gfp_t gfp)
+{
+	struct bdi_writeback *wb;
+
+	rcu_read_lock();
+	wb = wb_find_current(bdi);
+	if (wb && unlikely(!wb_tryget(wb)))
+		wb = NULL;
+	rcu_read_unlock();
+
+	if (unlikely(!wb)) {
+		struct cgroup_subsys_state *memcg_css;
+
+		memcg_css = task_get_css(current, memory_cgrp_id);
+		wb = wb_get_create(bdi, memcg_css, gfp);
+		css_put(memcg_css);
+	}
+	return wb;
+}
+#endif
+
 /**
  * balance_dirty_pages_ratelimited - balance dirty memory state
  * @mapping: address_space which was dirtied
