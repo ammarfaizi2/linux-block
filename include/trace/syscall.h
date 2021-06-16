@@ -34,18 +34,4 @@ struct syscall_metadata {
 	struct trace_event_call *exit_event;
 };
 
-#if defined(CONFIG_TRACEPOINTS) && defined(CONFIG_HAVE_SYSCALL_TRACEPOINTS)
-static inline void syscall_tracepoint_update(struct task_struct *p)
-{
-	if (test_syscall_work(SYSCALL_TRACEPOINT))
-		set_task_syscall_work(p, SYSCALL_TRACEPOINT);
-	else
-		clear_task_syscall_work(p, SYSCALL_TRACEPOINT);
-}
-#else
-static inline void syscall_tracepoint_update(struct task_struct *p)
-{
-}
-#endif
-
 #endif /* _TRACE_SYSCALL_H */
