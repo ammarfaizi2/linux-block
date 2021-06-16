@@ -1,0 +1,131 @@
+#!/usr/bin/python3
+
+import subprocess
+import sys
+import os.path
+import fcntl
+import re
+
+TESTDIR = os.path.dirname(__file__)
+
+class KmsgEntry():
+    pass
+
+class Kmsg():
+    def __init__(self):
+        self.__io = open("/dev/kmsg", "rb", buffering=0)
+        self.__blocking = True
+
+    def close(self):
+        self.__io.close()
+        del self.__io
+
+    def __set_blocking(self, blocking):
+        if blocking == self.__blocking:
+            return
+        fl = fcntl.fcntl(self.__io.fileno(), fcntl.F_GETFL)
+        if blocking:
+            fl &= ~os.O_NONBLOCK
+        else:
+            fl += os.O_NONBLOCK
+        fcntl.fcntl(self.__io.fileno(), fcntl.F_SETFL, fl)
+        self.__blocking = blocking
+
+    def fast_forward(self):
+        os.lseek(self.__io.fileno(), 0, os.SEEK_END)
+
+    _RE_ESCAPE = re.compile(b'\\\\x([A-Za-z0-9]{2})')
+    @staticmethod
+    def __unescape_one(m):
+        return bytes.fromhex(m.group(1).decode())
+    @staticmethod
+    def __unescape(data):
+        # /dev/kmsg escapes using \xAB
+        return Kmsg._RE_ESCAPE.sub(Kmsg.__unescape_one, data)
+
+    def read(self, blocking=False):
+        self.__set_blocking(blocking)
+
+        line = self.__io.read(16384)
+        if line is None:
+            return None
+
+        if line.endswith(b'\n'):
+            line = line[:-1]
+
+        entry = KmsgEntry()
+
+        header_end = line.find(b';')
+        entry.header = line[:header_end].split(b',')
+
+        fac_and_level = int(entry.header[0])
+        entry.level = fac_and_level & 7
+        entry.facility = fac_and_level >> 3
+
+        payload = line[header_end+1:].split(b'\n')
+        entry.text = Kmsg.__unescape(payload[0])
+
+        # The dict entries are all the rest of the lines.  These lines
+        # start with a space and are then KEY=value.  The whole line is
+        # escaped.
+        entry.dict = {}
+        dict_entries = payload[1:]
+        for de in dict_entries:
+            assert len(de) and de[0:1] == b' ', 'malformed kmsg dict entry'
+            de = de[1:]
+            key_end = de.find(b'=')
+            assert key_end != -1
+            entry.dict[Kmsg.__unescape(de[:key_end])] = Kmsg.__unescape(de[key_end+1:])
+
+        return line
+
+class Test():
+    def __init__(self, name):
+        self.name = name
+
+    def passed(self):
+        return self.result.returncode == 0
+
+def find_tests():
+    tests = []
+    output = subprocess.check_output(['make', '--silent', 'emit_tests'], cwd=TESTDIR).decode()
+    for line in output.splitlines():
+        # The lines are all like ":testname"
+        assert line[0] == ':', 'Unexpected make emit_tests output'
+        tests.append(Test(line[1:]))
+
+    return tests
+
+def main():
+    tests = find_tests()
+    tests.sort(key = lambda t: t.name)
+
+    print('Will run %d tests' % len(tests))
+
+    kmsg = Kmsg()
+    kmsg.fast_forward()
+
+    fails = 0
+
+    for test in tests:
+        test.result = subprocess.run(
+            ['./%s' % test.name],
+            executable=os.path.join(TESTDIR, test.name),
+            cwd=TESTDIR,
+            stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+
+        if not test.passed():
+            fails += 1
+
+    print('%d/%d passed' % (len(tests) - fails, len(tests)))
+
+    if fails:
+        for test in tests:
+            if test.passed():
+                continue
+
+            print('\nTEST %s FAILED\n' % test.name)
+            sys.stdout.buffer.write(test.result.stdout)
+
+if __name__ == '__main__':
+    sys.exit(main())
