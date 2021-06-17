@@ -33,6 +33,7 @@ static struct netfs_read_request *netfs_alloc_read_request(
 	struct address_space *mapping,
 	struct file *file,
 	loff_t start, size_t len,
+	struct netfs_dirty_region *for_write,
 	enum netfs_read_origin origin)
 {
 	static atomic_t debug_ids;
@@ -47,6 +48,7 @@ static struct netfs_read_request *netfs_alloc_read_request(
 		rreq->mapping	= mapping;
 		rreq->inode	= inode;
 		rreq->origin	= origin;
+		rreq->for_write	= for_write,
 		rreq->netfs_ops	= ctx->ops;
 		rreq->i_size	= i_size_read(inode);
 		rreq->debug_id	= atomic_inc_return(&debug_ids);
@@ -1035,7 +1037,7 @@ void netfs_readahead(struct readahead_control *ractl)
 	rreq = netfs_alloc_read_request(ractl->mapping, ractl->file,
 					readahead_pos(ractl),
 					readahead_length(ractl),
-					NETFS_READAHEAD);
+					NULL, NETFS_READAHEAD);
 	if (!rreq)
 		return;
 
@@ -1099,7 +1101,7 @@ int netfs_readpage(struct file *file, struct page *subpage)
 	_enter("%lx", folio_index(folio));
 
 	rreq = netfs_alloc_read_request(mapping, file, folio_file_pos(folio),
-					folio_size(folio), NETFS_SYNC_READ);
+					folio_size(folio), NULL, NETFS_SYNC_READ);
 	if (!rreq)
 		goto nomem;
 
@@ -1152,6 +1154,7 @@ EXPORT_SYMBOL(netfs_readpage);
 
 /**
  * netfs_skip_folio_read - prep a folio for writing without reading first
+ * @ctx: File context
  * @folio: The folio being prepared
  * @pos: starting position for the write
  * @len: length of write
@@ -1165,32 +1168,41 @@ EXPORT_SYMBOL(netfs_readpage);
  * If any of these criteria are met, then zero out the unwritten parts
  * of the folio and return true. Otherwise, return false.
  */
-static bool netfs_skip_folio_read(struct folio *folio, loff_t pos, size_t len,
-				 bool always_fill)
+static bool netfs_skip_folio_read(struct netfs_i_context *ctx, struct folio *folio,
+				 loff_t pos, size_t len, bool always_fill)
 {
 	struct inode *inode = folio_inode(folio);
-	loff_t i_size = i_size_read(inode);
+	loff_t i_size = i_size_read(inode), low, high;
 	size_t offset = offset_in_folio(folio, pos);
 	size_t plen = folio_size(folio);
+	size_t min_bsize = 1UL << ctx->min_bshift;
+
+	if (likely(min_bsize == 1)) {
+		low = folio_file_pos(folio);
+		high = low + plen;
+	} else {
+		low = round_down(pos, min_bsize);
+		high = round_up(pos + len, min_bsize);
+	}
 
 	if (unlikely(always_fill)) {
-		if (pos - offset + len <= i_size)
-			return false; /* Page entirely before EOF */
+		if (low < i_size)
+			return false; /* Some part of the block before EOF */
 		zero_user_segment(&folio->page, 0, plen);
 		folio_mark_uptodate(folio);
 		return true;
 	}
 
-	/* Full folio write */
-	if (offset == 0 && len >= plen)
+	/* Full page write */
+	if (pos == low && high == pos + len)
 		return true;
 
-	/* Page entirely beyond the end of the file */
-	if (pos - offset >= i_size)
+	/* pos beyond last page in the file */
+	if (low >= i_size)
 		goto zero_out;
 
 	/* Write that covers from the start of the folio to EOF or beyond */
-	if (offset == 0 && (pos + len) >= i_size)
+	if (pos == low && (pos + len) >= i_size)
 		goto zero_out;
 
 	return false;
@@ -1272,14 +1284,15 @@ retry:
 	 * to preload the granule.
 	 */
 	if (!netfs_is_cache_enabled(ctx) &&
-	    netfs_skip_folio_read(folio, pos, len, false)) {
+	    netfs_skip_folio_read(ctx, folio, pos, len, false)) {
 		netfs_stat(&netfs_n_rh_write_zskip);
 		goto have_folio_no_wait;
 	}
 
 	ret = -ENOMEM;
-	rreq = netfs_alloc_read_request(mapping, file, folio_file_pos(folio),
-					folio_size(folio), NETFS_READ_FOR_WRITE);
+	rreq = netfs_alloc_read_request(mapping, file,
+					folio_file_pos(folio), folio_size(folio),
+					NULL, NETFS_READ_FOR_WRITE);
 	if (!rreq)
 		goto error;
 	rreq->start		= folio_file_pos(folio);
@@ -1358,6 +1371,97 @@ error:
 	return ret;
 }
 EXPORT_SYMBOL(netfs_write_begin);
+
+/*
+ * Preload the data into a page we're proposing to write into.
+ */
+int netfs_prefetch_for_write(struct file *file, struct folio *folio,
+			     struct netfs_dirty_region *region, size_t len)
+{
+	struct netfs_read_request *rreq;
+	struct address_space *mapping = folio_file_mapping(folio);
+	struct netfs_i_context *ctx = netfs_i_context(mapping->host);
+	unsigned long long i_size, end, pos = region->dirty.end;
+	unsigned int debug_index = 0;
+	loff_t rstart;
+	size_t rlen;
+	int ret;
+
+	DEFINE_READAHEAD(ractl, file, NULL, mapping, folio_index(folio));
+
+	ret = -ENOMEM;
+
+	i_size = i_size_read(mapping->host);
+	end = round_up(pos + len, 1U << ctx->min_bshift);
+	if (end > i_size) {
+		unsigned long long limit = round_up(pos + len, PAGE_SIZE);
+		end = max(limit, round_up(i_size, PAGE_SIZE));
+	}
+	rstart = round_down(pos, 1U << ctx->min_bshift);
+	rlen   = end - rstart;
+
+	rreq = netfs_alloc_read_request(mapping, file, rstart, rlen,
+					region, NETFS_READ_FOR_WRITE);
+	if (!rreq)
+		goto error;
+
+	rreq->no_unlock_folio	= folio_index(folio);
+	__set_bit(NETFS_RREQ_NO_UNLOCK_FOLIO, &rreq->flags);
+	ret = netfs_begin_cache_operation(rreq, ctx);
+	if (ret == -ENOMEM || ret == -EINTR || ret == -ERESTARTSYS)
+		goto error_put;
+
+	netfs_stat(&netfs_n_rh_write_begin);
+	trace_netfs_read(rreq, pos, len, netfs_read_trace_prefetch_for_write);
+
+	/* Expand the request to meet caching requirements and download
+	 * preferences.
+	 */
+	ractl._nr_pages = folio_nr_pages(folio);
+	netfs_rreq_expand(rreq, &ractl);
+
+	/* Set up the output buffer */
+	ret = netfs_rreq_set_up_buffer(rreq, &ractl, folio,
+				       readahead_index(&ractl), readahead_count(&ractl));
+	if (ret < 0) {
+		folio_get(folio);
+		while (readahead_folio(&ractl))
+			;
+		goto error_put;
+	}
+
+	netfs_get_read_request(rreq);
+	atomic_set(&rreq->nr_rd_ops, 1);
+	do {
+		if (!netfs_rreq_submit_slice(rreq, &debug_index))
+			break;
+
+	} while (rreq->submitted < rreq->len);
+
+	/* Keep nr_rd_ops incremented so that the ref always belongs to us, and
+	 * the service code isn't punted off to a random thread pool to
+	 * process.
+	 */
+	for (;;) {
+		wait_var_event(&rreq->nr_rd_ops, atomic_read(&rreq->nr_rd_ops) == 1);
+		netfs_rreq_assess(rreq, false);
+		if (!test_bit(NETFS_RREQ_IN_PROGRESS, &rreq->flags))
+			break;
+		cond_resched();
+	}
+
+	ret = rreq->error;
+	if (ret == 0 && rreq->submitted < rreq->len) {
+		trace_netfs_failure(rreq, NULL, ret, netfs_fail_short_write_begin);
+		ret = -EIO;
+	}
+
+error_put:
+	netfs_put_read_request(rreq, false);
+error:
+	_leave(" = %d", ret);
+	return ret;
+}
 
 /*
  * Invalidate part or all of a folio

@@ -122,6 +122,10 @@ typedef void (*netfs_io_terminated_t)(void *priv, ssize_t transferred_or_error,
  */
 struct netfs_i_context {
 	const struct netfs_request_ops *ops;
+	struct list_head	pending_writes;	/* List of writes waiting to be begin */
+	struct list_head	active_writes;	/* List of writes being applied */
+	struct list_head	dirty_regions;	/* List of dirty regions in the pagecache */
+	struct list_head	flush_groups;	/* FIFO of flushable groups */
 #if IS_ENABLED(CONFIG_FSCACHE)
 	struct fscache_cookie	*cache;
 #endif
@@ -130,6 +134,8 @@ struct netfs_i_context {
 	unsigned long		flags;
 #define NETFS_ICTX_NEW_CONTENT	0		/* Set if file has new content (create/trunc-0) */
 #define NETFS_ICTX_GOT_CACHED_ZP 1		/* We read zero_point from the cache */
+#define NETFS_ICTX_DO_RMW	2		/* Set if RMW required (no write streaming) */
+	spinlock_t		lock;
 	unsigned int		rsize;		/* Maximum read size */
 	unsigned int		wsize;		/* Maximum write size */
 	unsigned char		min_bshift;	/* log2 min block size for bounding box or 0 */
@@ -182,6 +188,7 @@ struct netfs_read_request {
 	struct work_struct	work;
 	struct inode		*inode;		/* The file being accessed */
 	struct address_space	*mapping;	/* The mapping being accessed */
+	struct netfs_dirty_region *for_write;	/* Write associated with or NULL */
 	struct netfs_cache_resources cache_resources;
 	struct list_head	subrequests;	/* Requests to fetch I/O from disk or net */
 	struct xarray		buffer;		/* Decryption/decompression buffer */
@@ -208,9 +215,87 @@ struct netfs_read_request {
 };
 
 /*
+ * Descriptor for a set of writes that will need to be flushed together.
+ *
+ * These are maintained as a FIFO.  The frontmost group in the FIFO is the only
+ * one that can be written from; the rearmost group in the FIFO is the only one
+ * that can be modified.
+ *
+ * When a prospective write collides with a dirty region in an earlier group,
+ * that group and all those in front of it have to be written out, in order,
+ * before the modification can take place.
+ */
+struct netfs_flush_group {
+	struct list_head	group_link;	/* Link in i_context->flush_groups */
+	struct list_head	region_list;	/* List of regions in this group */
+	loff_t			i_size;		/* Size of the file for this group */
+	void			*netfs_priv;
+	refcount_t		ref;
+	unsigned long		flags;
+#define NETFS_FGROUP_FLUSHED		0	/* Group has been flushed */
+#define NETFS_FGROUP_PARENT_FLUSHED	1	/* Parent group has been flushed from this one */
+};
+
+struct netfs_range {
+	unsigned long long	start;		/* Start of region */
+	unsigned long long	end;		/* End of region */
+};
+
+/* State of a netfs_dirty_region */
+enum netfs_region_state {
+	NETFS_REGION_IS_PENDING,	/* Proposed write is waiting on an active write */
+	NETFS_REGION_IS_RESERVED,	/* Writable region is reserved, waiting on flushes */
+	NETFS_REGION_IS_ACTIVE,		/* Write is actively modifying the pagecache */
+	NETFS_REGION_IS_DIRTY,		/* Region is dirty */
+	NETFS_REGION_IS_FLUSHING,	/* Region is being flushed */
+	NETFS_REGION_IS_COMPLETE,	/* Region has been completed (stored/invalidated) */
+} __attribute__((mode(byte)));
+
+enum netfs_region_type {
+	NETFS_REGION_ORDINARY,		/* Ordinary write */
+	NETFS_REGION_DIO,		/* Direct I/O write */
+	NETFS_REGION_DSYNC,		/* O_DSYNC/RWF_DSYNC write */
+} __attribute__((mode(byte)));
+
+/*
+ * Descriptor for a dirty region that has a common set of parameters and can
+ * feasibly be written back in one go.  These are held in an ordered list.
+ *
+ * Regions are not allowed to overlap, though they may be merged.
+ */
+struct netfs_dirty_region {
+	struct netfs_flush_group *group;
+	struct list_head	active_link;	/* Link in i_context->pending/active_writes */
+	struct list_head	dirty_link;	/* Link in i_context->dirty_regions */
+	struct list_head	flush_link;	/* Link in group->region_list or
+						 * i_context->flush_queue */
+	spinlock_t		lock;
+	void			*netfs_priv;	/* Private data for the netfs */
+	struct netfs_range	bounds;		/* Bounding box including all affected pages */
+	struct netfs_range	reserved;	/* The region reserved against other writes */
+	struct netfs_range	dirty;		/* The region that has been modified */
+	enum netfs_region_type	type;
+	enum netfs_region_state	state;
+	unsigned long		flags;
+#define NETFS_REGION_SYNC	0		/* Set if metadata sync required (RWF_SYNC) */
+#define NETFS_REGION_FLUSH_Q	1		/* Set if region is on flush queue */
+#define NETFS_REGION_SUPERSEDED	2		/* Set if region is being superseded */
+	unsigned int		debug_id;
+	refcount_t		ref;
+};
+
+enum netfs_write_compatibility {
+	NETFS_WRITES_COMPATIBLE,	/* Dirty regions can be directly merged */
+	NETFS_WRITES_SUPERSEDE,		/* Second write can supersede the first without first
+					 * having to be flushed (eg. authentication, DSYNC) */
+	NETFS_WRITES_INCOMPATIBLE,	/* Second write must wait for first (eg. DIO, ceph snap) */
+};
+
+/*
  * Operations the network filesystem can/must provide to the helpers.
  */
 struct netfs_request_ops {
+	/* Read request handling */
 	void (*init_rreq)(struct netfs_read_request *rreq, struct file *file);
 	int (*begin_cache_operation)(struct netfs_read_request *rreq);
 	void (*expand_readahead)(struct netfs_read_request *rreq);
@@ -221,6 +306,21 @@ struct netfs_request_ops {
 				 struct folio *folio, void **_fsdata);
 	void (*done)(struct netfs_read_request *rreq);
 	void (*cleanup)(struct address_space *mapping, void *netfs_priv);
+
+	/* Flush group handling */
+	void (*free_flush_group)(struct netfs_i_context *ctx,
+				 struct netfs_flush_group *group);
+
+	/* Dirty region handling */
+	void (*init_dirty_region)(struct netfs_dirty_region *region, struct file *file);
+	void (*split_dirty_region)(struct netfs_dirty_region *region);
+	void (*free_dirty_region)(struct netfs_dirty_region *region);
+	enum netfs_write_compatibility (*is_write_compatible)(
+		struct netfs_i_context *ctx,
+		struct netfs_dirty_region *old_region,
+		struct netfs_dirty_region *candidate);
+	bool (*check_compatible_write)(struct netfs_dirty_region *region, struct file *file);
+	void (*update_i_size)(struct file *file, loff_t i_size);
 };
 
 /*
@@ -269,11 +369,13 @@ extern int netfs_readpage(struct file *, struct page *);
 extern int netfs_write_begin(struct file *, struct address_space *,
 			     loff_t, unsigned int, unsigned int, struct folio **,
 			     void **);
+extern ssize_t netfs_file_write_iter(struct kiocb *iocb, struct iov_iter *from);
 extern void netfs_invalidatepage(struct page *page, unsigned int offset, unsigned int length);
 extern int netfs_releasepage(struct page *page, gfp_t gfp_flags);
 
 extern void netfs_subreq_terminated(struct netfs_read_subrequest *, ssize_t, bool);
 extern void netfs_stats_show(struct seq_file *);
+extern struct netfs_flush_group *netfs_new_flush_group(struct inode *, void *);
 
 /**
  * netfs_i_context - Get the netfs inode context from the inode
@@ -294,6 +396,13 @@ static inline void netfs_i_context_init(struct inode *inode,
 
 	ctx->ops = ops;
 	ctx->zero_point = i_size_read(inode);
+	ctx->min_bshift = 0;
+	ctx->obj_bshift = 0;
+	INIT_LIST_HEAD(&ctx->pending_writes);
+	INIT_LIST_HEAD(&ctx->active_writes);
+	INIT_LIST_HEAD(&ctx->dirty_regions);
+	INIT_LIST_HEAD(&ctx->flush_groups);
+	spin_lock_init(&ctx->lock);
 }
 
 /**

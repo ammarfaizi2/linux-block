@@ -25,7 +25,7 @@ const struct file_operations afs_file_operations = {
 	.release	= afs_release,
 	.llseek		= generic_file_llseek,
 	.read_iter	= generic_file_read_iter,
-	.write_iter	= afs_file_write,
+	.write_iter	= netfs_file_write_iter,
 	.mmap		= afs_file_mmap,
 	.splice_read	= generic_file_splice_read,
 	.splice_write	= iter_file_splice_write,
@@ -47,8 +47,6 @@ const struct address_space_operations afs_file_aops = {
 	.launder_page	= afs_launder_page,
 	.releasepage	= netfs_releasepage,
 	.invalidatepage	= netfs_invalidatepage,
-	.write_begin	= afs_write_begin,
-	.write_end	= afs_write_end,
 	.writepage	= afs_writepage,
 	.writepages	= afs_writepages,
 };
@@ -352,12 +350,44 @@ static void afs_priv_cleanup(struct address_space *mapping, void *netfs_priv)
 	key_put(netfs_priv);
 }
 
+static void afs_init_dirty_region(struct netfs_dirty_region *region, struct file *file)
+{
+	region->netfs_priv = key_get(afs_file_key(file));
+}
+
+static void afs_split_dirty_region(struct netfs_dirty_region *region)
+{
+	key_get(region->netfs_priv);
+}
+
+static void afs_free_dirty_region(struct netfs_dirty_region *region)
+{
+	key_put(region->netfs_priv);
+}
+
+static void afs_update_i_size(struct file *file, loff_t new_i_size)
+{
+	struct afs_vnode *vnode = AFS_FS_I(file_inode(file));
+	loff_t i_size;
+
+	write_seqlock(&vnode->cb_lock);
+	i_size = i_size_read(&vnode->vfs_inode);
+	if (new_i_size > i_size)
+		i_size_write(&vnode->vfs_inode, new_i_size);
+	write_sequnlock(&vnode->cb_lock);
+	fscache_update_cookie(afs_vnode_cache(vnode), NULL);
+}
+
 const struct netfs_request_ops afs_req_ops = {
 	.init_rreq		= afs_init_rreq,
 	.begin_cache_operation	= afs_begin_cache_operation,
 	.check_write_begin	= afs_check_write_begin,
 	.issue_op		= afs_req_issue_op,
 	.cleanup		= afs_priv_cleanup,
+	.init_dirty_region	= afs_init_dirty_region,
+	.split_dirty_region	= afs_split_dirty_region,
+	.free_dirty_region	= afs_free_dirty_region,
+	.update_i_size		= afs_update_i_size,
 };
 
 /*
