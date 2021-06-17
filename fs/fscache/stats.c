@@ -28,9 +28,6 @@ atomic_t fscache_n_acquires_oom;
 
 atomic_t fscache_n_invalidates;
 
-atomic_t fscache_n_updates;
-EXPORT_SYMBOL(fscache_n_updates);
-
 atomic_t fscache_n_relinquishes;
 atomic_t fscache_n_relinquishes_retire;
 atomic_t fscache_n_relinquishes_dropped;
@@ -78,8 +75,7 @@ int fscache_stats_show(struct seq_file *m, void *v)
 	seq_printf(m, "Invals : n=%u\n",
 		   atomic_read(&fscache_n_invalidates));
 
-	seq_printf(m, "Updates: n=%u rsz=%u rsn=%u\n",
-		   atomic_read(&fscache_n_updates),
+	seq_printf(m, "Resizes: n=%u x=%u\n",
 		   atomic_read(&fscache_n_resizes),
 		   atomic_read(&fscache_n_resizes_null));
 

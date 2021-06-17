@@ -143,6 +143,7 @@ struct netfs_inode {
 						 * on the server */
 	unsigned long		flags;
 #define NETFS_ICTX_ENCRYPTED	0		/* The file contents are encrypted */
+#define NETFS_ICTX_DO_RMW	1		/* Set if RMW required (no write streaming) */
 	unsigned char		min_bshift;	/* log2 min block size for bounding box or 0 */
 	unsigned char		obj_bshift;	/* log2 storage object shift (ceph/pnfs) or 0 */
 	unsigned char		crypto_bshift;	/* log2 of crypto block size */
@@ -282,7 +283,7 @@ enum netfs_region_type {
  * Regions are not allowed to overlap, though they may be merged.
  */
 struct netfs_dirty_region {
-	struct list_head	dirty_link;	/* Link in netfs_i_context::dirty_regions */
+	struct list_head	dirty_link;	/* Link in netfs_inode::dirty_regions */
 	void			*netfs_priv;	/* Private data for the netfs */
 	size_t			credit;		/* Amount of credit used */
 	pgoff_t			first;		/* First page index in region */
@@ -315,6 +316,7 @@ struct netfs_request_ops {
 
 	/* Modification handling */
 	void (*update_i_size)(struct inode *inode, loff_t i_size);
+	int (*validate_for_write)(struct inode *inode, struct file *file);
 
 	/* Write request handling */
 	void (*create_write_requests)(struct netfs_io_request *wreq);
@@ -330,7 +332,15 @@ struct netfs_request_ops {
 
 	/* Dirty region handling */
 	void (*init_dirty_region)(struct netfs_dirty_region *region, struct file *file);
+	void (*split_dirty_region)(struct netfs_dirty_region *front,
+				   struct netfs_dirty_region *back);
 	void (*free_dirty_region)(struct netfs_dirty_region *region);
+	bool (*are_regions_mergeable)(struct netfs_inode *ctx,
+				      const struct netfs_dirty_region *front,
+				      const struct netfs_dirty_region *back);
+	bool (*is_write_compatible)(struct netfs_inode *ctx,
+				    struct file *file,
+				    const struct netfs_dirty_region *front);
 };
 
 /*
@@ -397,6 +407,7 @@ extern int netfs_write_begin(struct netfs_inode *,
 			     struct file *, struct address_space *,
 			     loff_t, unsigned int, struct folio **,
 			     void **);
+extern ssize_t netfs_file_write_iter(struct kiocb *iocb, struct iov_iter *from);
 extern void netfs_invalidate_folio(struct folio *folio, size_t offset, size_t length);
 extern bool netfs_release_folio(struct folio *folio, gfp_t gfp);
 

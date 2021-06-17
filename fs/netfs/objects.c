@@ -131,19 +131,22 @@ static void netfs_free_request(struct work_struct *work)
 void netfs_put_request(struct netfs_io_request *rreq, bool was_async,
 		       enum netfs_rreq_ref_trace what)
 {
-	unsigned int debug_id = rreq->debug_id;
+	unsigned int debug_id;
 	bool dead;
 	int r;
 
-	dead = __refcount_dec_and_test(&rreq->ref, &r);
-	trace_netfs_rreq_ref(debug_id, r - 1, what);
-	if (dead) {
-		if (was_async) {
-			rreq->work.func = netfs_free_request;
-			if (!queue_work(system_unbound_wq, &rreq->work))
-				BUG();
-		} else {
-			netfs_free_request(&rreq->work);
+	if (rreq) {
+		debug_id = rreq->debug_id;
+		dead = __refcount_dec_and_test(&rreq->ref, &r);
+		trace_netfs_rreq_ref(debug_id, r - 1, what);
+		if (dead) {
+			if (was_async) {
+				rreq->work.func = netfs_free_request;
+				if (!queue_work(system_unbound_wq, &rreq->work))
+					BUG();
+			} else {
+				netfs_free_request(&rreq->work);
+			}
 		}
 	}
 }
@@ -209,11 +212,11 @@ EXPORT_SYMBOL(netfs_put_subrequest);
 /*
  * Allocate a dirty region record.
  */
-struct netfs_dirty_region *netfs_alloc_dirty_region(void)
+struct netfs_dirty_region *netfs_alloc_dirty_region(gfp_t gfp)
 {
 	struct netfs_dirty_region *region;
 
-	region = kzalloc(sizeof(struct netfs_dirty_region), GFP_KERNEL);
+	region = kzalloc(sizeof(struct netfs_dirty_region), gfp);
 	if (region) {
 		refcount_set(&region->ref, 1);
 		INIT_LIST_HEAD(&region->dirty_link);

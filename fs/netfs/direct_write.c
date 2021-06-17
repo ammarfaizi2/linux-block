@@ -113,7 +113,7 @@ ssize_t netfs_direct_write_iter(struct kiocb *iocb, struct iov_iter *iter)
 		return PTR_ERR(wreq);
 
 	ret = -ENOMEM;
-	region = netfs_alloc_dirty_region();
+	region = netfs_alloc_dirty_region(GFP_KERNEL);
 	if (!region)
 		goto out;
 	region->from = start;
@@ -234,6 +234,8 @@ ssize_t netfs_direct_write_iter(struct kiocb *iocb, struct iov_iter *iter)
 	default:
 		break;
 	}
+
+	trace_netfs_dirty(ctx, region, NULL, netfs_dirty_trace_dio_write);
 
 	netfs_get_request(wreq, netfs_rreq_trace_get_hold);
 	__set_bit(NETFS_RREQ_UPLOAD_TO_SERVER, &wreq->flags);

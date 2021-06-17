@@ -19,6 +19,21 @@
  * buffered_read.c
  */
 void netfs_rreq_unlock_folios(struct netfs_io_request *rreq);
+int netfs_prefetch_for_write(struct file *file, struct folio *folio, size_t len);
+
+/*
+ * buffered_write.c
+ */
+int netfs_preallocate_regions(struct list_head *spare_regions);
+void netfs_unpreallocate_regions(struct list_head *spare_regions);
+void netfs_discard_regions(struct netfs_inode *ctx,
+			   struct list_head *discards,
+			   enum netfs_region_trace why);
+bool netfs_are_regions_mergeable(struct netfs_inode *ctx,
+				 const struct netfs_dirty_region *a,
+				 const struct netfs_dirty_region *b);
+struct netfs_dirty_region *netfs_find_region(struct netfs_inode *ctx,
+					     pgoff_t first, pgoff_t last);
 
 /*
  * crypto.c
@@ -104,7 +119,7 @@ void netfs_clear_subrequests(struct netfs_io_request *rreq, bool was_async);
 void netfs_put_request(struct netfs_io_request *rreq, bool was_async,
 		       enum netfs_rreq_ref_trace what);
 struct netfs_io_subrequest *netfs_alloc_subrequest(struct netfs_io_request *rreq);
-struct netfs_dirty_region *netfs_alloc_dirty_region(void);
+struct netfs_dirty_region *netfs_alloc_dirty_region(gfp_t gfp);
 struct netfs_dirty_region *netfs_get_dirty_region(struct netfs_inode *ctx,
 						  struct netfs_dirty_region *region,
 						  enum netfs_region_trace what);

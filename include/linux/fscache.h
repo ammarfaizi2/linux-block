@@ -339,17 +339,10 @@ void fscache_update_aux(struct fscache_cookie *cookie,
 		cookie->object_size = *object_size;
 }
 
-#ifdef CONFIG_FSCACHE_STATS
-extern atomic_t fscache_n_updates;
-#endif
-
 static inline
 void __fscache_update_cookie(struct fscache_cookie *cookie, const void *aux_data,
 			     const loff_t *object_size)
 {
-#ifdef CONFIG_FSCACHE_STATS
-	atomic_inc(&fscache_n_updates);
-#endif
 	fscache_update_aux(cookie, aux_data, object_size);
 	smp_wmb();
 	set_bit(FSCACHE_COOKIE_NEEDS_UPDATE, &cookie->flags);

@@ -20,6 +20,7 @@
 	EM(netfs_read_trace_expanded,		"EXPANDED ")	\
 	EM(netfs_read_trace_readahead,		"READAHEAD")	\
 	EM(netfs_read_trace_readpage,		"READPAGE ")	\
+	EM(netfs_read_trace_prefetch_for_write,	"PREFETCHW")	\
 	E_(netfs_read_trace_write_begin,	"WRITEBEGN")
 
 #define netfs_rreq_origins					\
@@ -109,7 +110,26 @@
 
 #define netfs_region_traces					\
 	EM(netfs_region_trace_free,		"FREE       ")	\
-	E_(netfs_region_trace_put_clear,	"PUT CLEAR  ")
+	EM(netfs_region_trace_new,		"NEW        ")	\
+	EM(netfs_region_trace_put_clear,	"PUT CLEAR  ")	\
+	E_(netfs_region_trace_put_merged,	"PUT MERGED ")
+
+#define netfs_dirty_traces					\
+	EM(netfs_dirty_trace_active,		"ACTIVE    ")	\
+	EM(netfs_dirty_trace_bridged,		"BRIDGED   ")	\
+	EM(netfs_dirty_trace_committed,		"COMMITTED ")	\
+	EM(netfs_dirty_trace_continue,		"CONTINUE  ")	\
+	EM(netfs_dirty_trace_dio_write,		"DIO WRITE ")	\
+	EM(netfs_dirty_trace_flush_conflict,	"FLSH CONFL")	\
+	EM(netfs_dirty_trace_flush_dsync,	"FLSH DSYNC")	\
+	EM(netfs_dirty_trace_insert,		"INSERT    ")	\
+	EM(netfs_dirty_trace_merged_next,	"MERGE NEXT")	\
+	EM(netfs_dirty_trace_merged_prev,	"MERGE PREV")	\
+	EM(netfs_dirty_trace_modified,		"MODIFIED  ")	\
+	EM(netfs_dirty_trace_overlay_flush,	"OVERLAY FL")	\
+	EM(netfs_dirty_trace_superseded,	"SUPERSEDED")	\
+	EM(netfs_dirty_trace_supersede,		"SUPERSEDE ")	\
+	E_(netfs_dirty_trace_wait_active,	"WAIT ACTV ")
 
 #ifndef __NETFS_DECLARE_TRACE_ENUMS_ONCE_ONLY
 #define __NETFS_DECLARE_TRACE_ENUMS_ONCE_ONLY
@@ -126,6 +146,7 @@ enum netfs_failure { netfs_failures } __mode(byte);
 enum netfs_rreq_ref_trace { netfs_rreq_ref_traces } __mode(byte);
 enum netfs_sreq_ref_trace { netfs_sreq_ref_traces } __mode(byte);
 enum netfs_region_trace { netfs_region_traces } __mode(byte);
+enum netfs_dirty_trace { netfs_dirty_traces } __mode(byte);
 
 #endif
 
@@ -146,6 +167,7 @@ netfs_failures;
 netfs_rreq_ref_traces;
 netfs_sreq_ref_traces;
 netfs_region_traces;
+netfs_dirty_traces;
 
 /*
  * Now redefine the EM() and E_() macros to map the enums to the strings that
@@ -406,6 +428,90 @@ TRACE_EVENT(netfs_ref_region,
 		      __entry->region,
 		      __print_symbolic(__entry->what, netfs_region_traces),
 		      __entry->ref)
+	    );
+
+TRACE_EVENT(netfs_dirty,
+	    TP_PROTO(const struct netfs_inode *ctx,
+		     const struct netfs_dirty_region *region,
+		     const struct netfs_dirty_region *region2,
+		     enum netfs_dirty_trace why),
+
+	    TP_ARGS(ctx, region, region2, why),
+
+	    TP_STRUCT__entry(
+		    __field(ino_t,			ino		)
+		    __field(pgoff_t,			first		)
+		    __field(pgoff_t,			last		)
+		    __field(loff_t,			from		)
+		    __field(loff_t,			to		)
+		    __field(unsigned int,		debug_id	)
+		    __field(unsigned int,		debug_id2	)
+		    __field(unsigned int,		ref		)
+		    __field(enum netfs_dirty_trace,	why		)
+			     ),
+
+	    TP_fast_assign(
+		    __entry->ino	= ctx->inode.i_ino;
+		    __entry->why	= why;
+		    __entry->first	= region->first;
+		    __entry->last	= region->last;
+		    __entry->from	= region->from;
+		    __entry->to		= region->to;
+		    __entry->debug_id	= region->debug_id;
+		    __entry->debug_id2	= region2 ? region2->debug_id : 0;
+			   ),
+
+	    TP_printk("i=%lx D=%x %s pg=%04lx-%04lx dt=%llx-%llx XD=%x",
+		      __entry->ino, __entry->debug_id,
+		      __print_symbolic(__entry->why, netfs_dirty_traces),
+		      __entry->first,
+		      __entry->last,
+		      __entry->from,
+		      __entry->to - 1,
+		      __entry->debug_id2
+		      )
+	    );
+
+TRACE_EVENT(netfs_write_iter,
+	    TP_PROTO(const struct kiocb *iocb, const struct iov_iter *from),
+
+	    TP_ARGS(iocb, from),
+
+	    TP_STRUCT__entry(
+		    __field(unsigned long long,		start		)
+		    __field(size_t,			len		)
+		    __field(unsigned int,		flags		)
+			     ),
+
+	    TP_fast_assign(
+		    __entry->start	= iocb->ki_pos;
+		    __entry->len	= iov_iter_count(from);
+		    __entry->flags	= iocb->ki_flags;
+			   ),
+
+	    TP_printk("WRITE-ITER s=%llx l=%zx f=%x",
+		      __entry->start, __entry->len, __entry->flags)
+	    );
+
+TRACE_EVENT(netfs_wb_page,
+	    TP_PROTO(const struct netfs_io_request *wreq,
+		     const struct folio *folio),
+
+	    TP_ARGS(wreq, folio),
+
+	    TP_STRUCT__entry(
+		    __field(unsigned int,		wreq		)
+		    __field(pgoff_t,			index		)
+			     ),
+
+	    TP_fast_assign(
+		    __entry->wreq	= wreq->debug_id;
+		    __entry->index	= folio->index;
+			   ),
+
+	    TP_printk("R=%08x pg=%lx",
+		      __entry->wreq,
+		      __entry->index)
 	    );
 
 #undef EM
