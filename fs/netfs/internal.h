@@ -16,9 +16,39 @@
 #define pr_fmt(fmt) "netfs: " fmt
 
 /*
+ * dio_helper.c
+ */
+ssize_t netfs_file_direct_write(struct netfs_dirty_region *region,
+				struct kiocb *iocb, struct iov_iter *from);
+
+/*
+ * objects.c
+ */
+struct netfs_flush_group *netfs_get_flush_group(struct netfs_flush_group *group);
+void netfs_put_flush_group(struct netfs_flush_group *group);
+struct netfs_dirty_region *netfs_alloc_dirty_region(void);
+struct netfs_dirty_region *netfs_get_dirty_region(struct netfs_i_context *ctx,
+						  struct netfs_dirty_region *region,
+						  enum netfs_region_trace what);
+void netfs_free_dirty_region(struct netfs_i_context *ctx, struct netfs_dirty_region *region);
+void netfs_put_dirty_region(struct netfs_i_context *ctx,
+			    struct netfs_dirty_region *region,
+			    enum netfs_region_trace what);
+
+/*
  * read_helper.c
  */
 extern unsigned int netfs_debug;
+
+int netfs_prefetch_for_write(struct file *file, struct page *page, loff_t pos, size_t len,
+			     bool always_fill);
+
+/*
+ * write_helper.c
+ */
+void netfs_flush_region(struct netfs_i_context *ctx,
+			struct netfs_dirty_region *region,
+			enum netfs_dirty_trace why);
 
 /*
  * stats.c
@@ -42,6 +72,8 @@ extern atomic_t netfs_n_rh_write_begin;
 extern atomic_t netfs_n_rh_write_done;
 extern atomic_t netfs_n_rh_write_failed;
 extern atomic_t netfs_n_rh_write_zskip;
+extern atomic_t netfs_n_wh_region;
+extern atomic_t netfs_n_wh_flush_group;
 
 
 static inline void netfs_stat(atomic_t *stat)

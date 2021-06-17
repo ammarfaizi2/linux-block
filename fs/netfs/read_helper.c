@@ -1339,3 +1339,97 @@ error:
 	return ret;
 }
 EXPORT_SYMBOL(netfs_write_begin);
+
+/*
+ * Preload the data into a page we're proposing to write into.
+ */
+int netfs_prefetch_for_write(struct file *file, struct page *page,
+			     loff_t pos, size_t len, bool always_fill)
+{
+	struct address_space *mapping = page_file_mapping(page);
+	struct netfs_read_request *rreq;
+	struct netfs_i_context *ctx = netfs_i_context(mapping->host);
+	struct page *xpage;
+	unsigned int debug_index = 0;
+	int ret;
+
+	DEFINE_READAHEAD(ractl, file, NULL, mapping, page_index(page));
+
+	/* If the page is beyond the EOF, we want to clear it - unless it's
+	 * within the cache granule containing the EOF, in which case we need
+	 * to preload the granule.
+	 */
+	if (!netfs_is_cache_enabled(mapping->host)) {
+		if (netfs_skip_page_read(page, pos, len, always_fill)) {
+			netfs_stat(&netfs_n_rh_write_zskip);
+			ret = 0;
+			goto error;
+		}
+	}
+
+	ret = -ENOMEM;
+	rreq = netfs_alloc_read_request(mapping, file);
+	if (!rreq)
+		goto error;
+	rreq->start		= page_offset(page);
+	rreq->len		= thp_size(page);
+	rreq->no_unlock_page	= page_file_offset(page);
+	__set_bit(NETFS_RREQ_NO_UNLOCK_PAGE, &rreq->flags);
+
+	if (ctx->ops->begin_cache_operation) {
+		ret = ctx->ops->begin_cache_operation(rreq);
+		if (ret == -ENOMEM || ret == -EINTR || ret == -ERESTARTSYS)
+			goto error_put;
+	}
+
+	netfs_stat(&netfs_n_rh_write_begin);
+	trace_netfs_read(rreq, pos, len, netfs_read_trace_prefetch_for_write);
+
+	/* Expand the request to meet caching requirements and download
+	 * preferences.
+	 */
+	ractl._nr_pages = thp_nr_pages(page);
+	netfs_rreq_expand(rreq, &ractl);
+
+	/* Set up the output buffer */
+	ret = netfs_rreq_set_up_buffer(rreq, &ractl, page,
+				       readahead_index(&ractl), readahead_count(&ractl));
+	if (ret < 0) {
+		while ((xpage = readahead_page(&ractl)))
+			if (xpage != page)
+				put_page(xpage);
+		goto error_put;
+	}
+
+	netfs_get_read_request(rreq);
+	atomic_set(&rreq->nr_rd_ops, 1);
+	do {
+		if (!netfs_rreq_submit_slice(rreq, &debug_index))
+			break;
+
+	} while (rreq->submitted < rreq->len);
+
+	/* Keep nr_rd_ops incremented so that the ref always belongs to us, and
+	 * the service code isn't punted off to a random thread pool to
+	 * process.
+	 */
+	for (;;) {
+		wait_var_event(&rreq->nr_rd_ops, atomic_read(&rreq->nr_rd_ops) == 1);
+		netfs_rreq_assess(rreq, false);
+		if (!test_bit(NETFS_RREQ_IN_PROGRESS, &rreq->flags))
+			break;
+		cond_resched();
+	}
+
+	ret = rreq->error;
+	if (ret == 0 && rreq->submitted < rreq->len) {
+		trace_netfs_failure(rreq, NULL, ret, netfs_fail_short_write_begin);
+		ret = -EIO;
+	}
+
+error_put:
+	netfs_put_read_request(rreq, false);
+error:
+	_leave(" = %d", ret);
+	return ret;
+}
