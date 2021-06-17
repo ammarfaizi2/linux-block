@@ -28,6 +28,7 @@
 #include <linux/user_namespace.h>
 #include <linux/refcount.h>
 #include <linux/kernel_stat.h>
+#include <linux/percpu-refcount-api.h>
 
 struct kernel_clone_args;
 
