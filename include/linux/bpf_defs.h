@@ -6,6 +6,9 @@
 
 #include <uapi/linux/bpf.h>
 
+#include <linux/atomic.h>
+#include <linux/workqueue.h>
+
 #define BPF_PROG_TYPE(_id, _name, prog_ctx_type, kern_ctx_type) \
 	extern const struct bpf_prog_ops _name ## _prog_ops; \
 	extern const struct bpf_verifier_ops _name ## _verifier_ops;
@@ -16,5 +19,17 @@
 #undef BPF_PROG_TYPE
 #undef BPF_MAP_TYPE
 #undef BPF_LINK_TYPE
+
+struct bpf_link_ops;
+struct bpf_prog;
+
+struct bpf_link {
+	atomic64_t refcnt;
+	u32 id;
+	enum bpf_link_type type;
+	const struct bpf_link_ops *ops;
+	struct bpf_prog *prog;
+	struct work_struct work;
+};
 
 #endif /* _LINUX_BPF_DEFS_H */
