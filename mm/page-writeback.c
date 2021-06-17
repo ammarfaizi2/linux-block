@@ -1923,7 +1923,28 @@ wb_get_create_current(struct backing_dev_info *bdi, gfp_t gfp)
 	}
 	return wb;
 }
-#endif
+
+/**
+ * inode_cgwb_enabled - test whether cgroup writeback is enabled on an inode
+ * @inode: inode of interest
+ *
+ * Cgroup writeback requires support from the filesystem.  Also, both memcg and
+ * iocg have to be on the default hierarchy.  Test whether all conditions are
+ * met.
+ *
+ * Note that the test result may change dynamically on the same inode
+ * depending on how memcg and iocg are configured.
+ */
+bool inode_cgwb_enabled(struct inode *inode)
+{
+	struct backing_dev_info *bdi = inode_to_bdi(inode);
+
+	return cgroup_subsys_on_dfl(memory_cgrp_subsys) &&
+		cgroup_subsys_on_dfl(io_cgrp_subsys) &&
+		(bdi->capabilities & BDI_CAP_WRITEBACK) &&
+		(inode->i_sb->s_iflags & SB_I_CGROUPWB);
+}
+#endif /* CONFIG_CGROUP_WRITEBACK */
 
 /**
  * balance_dirty_pages_ratelimited - balance dirty memory state
