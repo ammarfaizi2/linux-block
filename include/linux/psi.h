@@ -2,13 +2,16 @@
 #ifndef _LINUX_PSI_H
 #define _LINUX_PSI_H
 
+#include <linux/cache.h>
 #include <linux/jump_label.h>
 #include <linux/psi_types.h>
 #include <linux/sched.h>
 #include <linux/poll.h>
+#include <linux/cgroup_types.h>
 
 struct seq_file;
 struct css_set;
+struct cgroup;
 
 #ifdef CONFIG_PSI
 

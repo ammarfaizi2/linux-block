@@ -3,9 +3,10 @@
 #define _LINUX_PSI_TYPES_H
 
 #include <linux/seqlock.h>
-#include <linux/types.h>
+#include <linux/timer.h>
+#include <linux/workqueue.h>
 #include <linux/kref.h>
-#include <linux/wait.h>
+#include <linux/wait_types.h>
 #include <linux/mutex.h>
 #include <linux/cache.h>
 
