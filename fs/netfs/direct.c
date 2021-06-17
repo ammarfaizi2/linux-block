@@ -144,7 +144,7 @@ ssize_t netfs_direct_read_iter(struct kiocb *iocb, struct iov_iter *iter)
 	rreq = netfs_alloc_read_request(iocb->ki_filp->f_mapping,
 					iocb->ki_filp,
 					iocb->ki_pos, iov_iter_count(iter),
-					NETFS_DIO_READ);
+					NULL, NETFS_DIO_READ);
 	if (IS_ERR(rreq))
 		return PTR_ERR(rreq);
 

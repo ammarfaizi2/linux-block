@@ -16,9 +16,29 @@
 #define pr_fmt(fmt) "netfs: " fmt
 
 /*
+ * dio_helper.c
+ */
+ssize_t netfs_file_direct_write(struct netfs_dirty_region *region,
+				struct kiocb *iocb, struct iov_iter *from);
+
+/*
  * main.c
  */
 int netfs_sanity_check_ictx(struct address_space *mapping);
+
+/*
+ * objects.c
+ */
+struct netfs_flush_group *netfs_get_flush_group(struct netfs_flush_group *group);
+void netfs_put_flush_group(struct netfs_i_context *ctx, struct netfs_flush_group *group);
+struct netfs_dirty_region *netfs_alloc_dirty_region(void);
+struct netfs_dirty_region *netfs_get_dirty_region(struct netfs_i_context *ctx,
+						  struct netfs_dirty_region *region,
+						  enum netfs_region_trace what);
+void netfs_free_dirty_region(struct netfs_i_context *ctx, struct netfs_dirty_region *region);
+void netfs_put_dirty_region(struct netfs_i_context *ctx,
+			    struct netfs_dirty_region *region,
+			    enum netfs_region_trace what);
 
 /*
  * read_helper.c
@@ -28,6 +48,7 @@ extern unsigned int netfs_debug;
 struct netfs_read_request *netfs_alloc_read_request(struct address_space *mapping,
 						    struct file *file,
 						    loff_t start, size_t len,
+						    struct netfs_dirty_region *for_write,
 						    enum netfs_read_origin origin);
 struct netfs_read_subrequest *netfs_alloc_subrequest(struct netfs_read_request *rreq);
 void __netfs_put_subrequest(struct netfs_read_subrequest *subreq, bool was_async);
@@ -36,7 +57,7 @@ void netfs_put_read_request(struct netfs_read_request *rreq, bool was_async);
 void netfs_rreq_completed(struct netfs_read_request *rreq, bool was_async);
 void netfs_rreq_assess(struct netfs_read_request *rreq, bool was_async);
 int netfs_prefetch_for_write(struct file *file, struct folio *folio,
-			     loff_t pos, size_t len, bool always_fill);
+			     struct netfs_dirty_region *region, size_t len);
 
 static inline void netfs_put_subrequest(struct netfs_read_subrequest *subreq,
 					bool was_async)
@@ -44,6 +65,15 @@ static inline void netfs_put_subrequest(struct netfs_read_subrequest *subreq,
 	if (refcount_dec_and_test(&subreq->usage))
 		__netfs_put_subrequest(subreq, was_async);
 }
+
+/*
+ * write_helper.c
+ */
+extern atomic_t netfs_region_debug_ids;
+
+void netfs_flush_region(struct netfs_i_context *ctx,
+			struct netfs_dirty_region *region,
+			enum netfs_dirty_trace why);
 
 /*
  * stats.c
@@ -68,6 +98,8 @@ extern atomic_t netfs_n_rh_write_begin;
 extern atomic_t netfs_n_rh_write_done;
 extern atomic_t netfs_n_rh_write_failed;
 extern atomic_t netfs_n_rh_write_zskip;
+extern atomic_t netfs_n_wh_region;
+extern atomic_t netfs_n_wh_flush_group;
 
 
 static inline void netfs_stat(atomic_t *stat)

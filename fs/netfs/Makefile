@@ -3,7 +3,10 @@
 netfs-y := \
 	direct.o \
 	main.o \
-	read_helper.o
+	objects.o \
+	read_helper.o \
+	write_helper.o
+# dio_helper.o
 
 netfs-$(CONFIG_NETFS_STATS) += stats.o
 
