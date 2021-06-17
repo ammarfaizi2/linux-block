@@ -11,7 +11,7 @@
 #include <linux/errno.h>
 #include <linux/jump_label.h>
 #include <linux/percpu.h>
-#include <linux/percpu-refcount.h>
+#include <linux/percpu-refcount-types.h>
 #include <linux/rbtree.h>
 
 struct sock;
