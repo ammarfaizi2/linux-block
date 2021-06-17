@@ -20,7 +20,6 @@
 #include <linux/fs.h>
 #include <linux/kref.h>
 #include <linux/refcount.h>
-#include <linux/utsname.h>
 #include <linux/lockd/bind.h>
 #include <linux/lockd/xdr.h>
 #ifdef CONFIG_LOCKD_V4

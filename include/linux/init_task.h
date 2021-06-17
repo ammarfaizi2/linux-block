@@ -4,7 +4,6 @@
 
 #include <linux/rcupdate.h>
 #include <linux/irqflags.h>
-#include <linux/utsname.h>
 #include <linux/lockdep.h>
 #include <linux/ftrace.h>
 #include <linux/ipc.h>
