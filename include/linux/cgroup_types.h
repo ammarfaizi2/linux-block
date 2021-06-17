@@ -8,6 +8,8 @@
 #ifndef _LINUX_CGROUP_TYPES_H
 #define _LINUX_CGROUP_TYPES_H
 
+#include <linux/sched/types.h>
+
 #include <linux/idr.h>
 #include <linux/u64_stats_sync.h>
 #include <linux/bpf-cgroup-types.h>
