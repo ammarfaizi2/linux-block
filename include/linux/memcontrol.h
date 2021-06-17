@@ -28,7 +28,6 @@
 #include <linux/mm.h>
 #include <linux/vmstat.h>
 #include <linux/writeback.h>
-#include <linux/blk-cgroup.h>
 #include <linux/page-flags.h>
 
 struct mem_cgroup;
