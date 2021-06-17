@@ -15,10 +15,38 @@
 
 #define pr_fmt(fmt) "netfs: " fmt
 
+static inline void *netfs_mas_set_flushing(struct netfs_dirty_region *region)
+{
+	return (void *)((unsigned long)region | 0x2UL);
+}
+
+static inline bool netfs_mas_is_flushing(const void *mas_entry)
+{
+	return (unsigned long)mas_entry & 2UL;
+}
+
+/*
+ * Return true if the pointer is a valid region pointer - ie. not
+ * NULL, XA_ZERO_ENTRY, NETFS_*_TO_CACHE or a flushing entry.
+ */
+static inline bool netfs_mas_is_valid(const void *mas_entry)
+{
+	return (unsigned long)mas_entry > 0x8000UL &&
+		!netfs_mas_is_flushing(mas_entry);
+}
+
 /*
  * buffered_read.c
  */
 void netfs_rreq_unlock_folios(struct netfs_io_request *rreq);
+int netfs_prefetch_for_write(struct file *file, struct folio *folio, size_t len);
+
+/*
+ * buffered_write.c
+ */
+bool netfs_are_regions_mergeable(struct netfs_i_context *ctx,
+				 struct netfs_dirty_region *a,
+				 struct netfs_dirty_region *b);
 
 /*
  * crypto.c

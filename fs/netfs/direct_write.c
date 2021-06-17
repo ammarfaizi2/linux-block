@@ -233,6 +233,9 @@ ssize_t netfs_direct_write_iter(struct kiocb *iocb, struct iov_iter *iter)
 		break;
 	}
 
+	trace_netfs_dirty(ctx, region, NULL, wreq->first, wreq->last,
+			  netfs_dirty_trace_dio_write);
+
 	netfs_get_request(wreq, netfs_rreq_trace_get_hold);
 	__set_bit(NETFS_RREQ_UPLOAD_TO_SERVER, &wreq->flags);
 	wreq->cleanup = netfs_cleanup_dio_write;

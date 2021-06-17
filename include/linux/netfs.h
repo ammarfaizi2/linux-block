@@ -18,6 +18,7 @@
 #include <linux/fs.h>
 #include <linux/pagemap.h>
 #include <linux/uio.h>
+#include <linux/maple_tree.h>
 
 struct scatterlist;
 enum netfs_sreq_ref_trace;
@@ -132,6 +133,7 @@ typedef void (*netfs_io_terminated_t)(void *priv, ssize_t transferred_or_error,
  */
 struct netfs_i_context {
 	const struct netfs_request_ops *ops;
+	struct maple_tree	dirty_regions;	/* List of dirty regions in the pagecache */
 #if IS_ENABLED(CONFIG_FSCACHE)
 	struct fscache_cookie	*cache;
 #endif
@@ -140,6 +142,7 @@ struct netfs_i_context {
 						 * on the server */
 	unsigned long		flags;
 #define NETFS_ICTX_ENCRYPTED	0		/* The file contents are encrypted */
+#define NETFS_ICTX_DO_RMW	1		/* Set if RMW required (no write streaming) */
 	unsigned char		min_bshift;	/* log2 min block size for bounding box or 0 */
 	unsigned char		obj_bshift;	/* log2 storage object shift (ceph/pnfs) or 0 */
 	unsigned char		crypto_bshift;	/* log2 of crypto block size */
@@ -302,6 +305,7 @@ struct netfs_request_ops {
 				 struct folio *folio, void **_fsdata);
 	void (*done)(struct netfs_io_request *rreq);
 	void (*update_i_size)(struct inode *inode, loff_t i_size);
+	int (*validate_for_write)(struct inode *inode, struct file *file);
 
 	/* Write request handling */
 	void (*create_write_requests)(struct netfs_io_request *wreq);
@@ -317,7 +321,14 @@ struct netfs_request_ops {
 
 	/* Dirty region handling */
 	void (*init_dirty_region)(struct netfs_dirty_region *region, struct file *file);
+	void (*split_dirty_region)(struct netfs_dirty_region *region);
 	void (*free_dirty_region)(struct netfs_dirty_region *region);
+	bool (*are_regions_mergeable)(struct netfs_i_context *ctx,
+				      struct netfs_dirty_region *front,
+				      struct netfs_dirty_region *back);
+	bool (*is_write_compatible)(struct netfs_i_context *ctx,
+				    struct file *file,
+				    struct netfs_dirty_region *front);
 };
 
 /*
@@ -383,6 +394,7 @@ extern int netfs_readpage(struct file *, struct page *);
 extern int netfs_write_begin(struct file *, struct address_space *,
 			     loff_t, unsigned int, unsigned int, struct folio **,
 			     void **);
+extern ssize_t netfs_file_write_iter(struct kiocb *iocb, struct iov_iter *from);
 extern void netfs_invalidate_folio(struct folio *folio, size_t offset, size_t length);
 extern int netfs_releasepage(struct page *page, gfp_t gfp_flags);
 
@@ -441,6 +453,7 @@ static inline void netfs_i_context_init(struct inode *inode,
 	ctx->ops = ops;
 	ctx->remote_i_size = i_size_read(inode);
 	ctx->zero_point = ctx->remote_i_size;
+	mt_init(&ctx->dirty_regions);
 }
 
 /**
