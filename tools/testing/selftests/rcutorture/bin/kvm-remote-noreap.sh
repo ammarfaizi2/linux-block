@@ -25,6 +25,6 @@ fi
 
 while test -d "$pathname"
 do
-	find "$pathname" -type f -exec head -1 {} \; > /dev/null 2>&1
+	find "$pathname" -type f -exec touch -c {} \; > /dev/null 2>&1
 	sleep 30
 done
