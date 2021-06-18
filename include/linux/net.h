@@ -128,7 +128,7 @@ struct socket {
  * The simplest case just copies the data to user
  * mode.
  */
-typedef struct {
+typedef struct read_descriptor {
 	size_t written;
 	size_t count;
 	union {

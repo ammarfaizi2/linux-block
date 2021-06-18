@@ -47,7 +47,6 @@
 #include <net/mptcp.h>
 
 #include <linux/seq_file.h>
-#include <linux/memcontrol.h>
 #include <linux/bpf-cgroup-types.h>
 #include <linux/siphash.h>
 
@@ -663,8 +662,10 @@ static inline int tcp_bound_to_half_wnd(struct tcp_sock *tp, int pktsize)
 /* tcp.c */
 void tcp_get_info(struct sock *, struct tcp_info *);
 
+struct read_descriptor;
+
 /* Read 'sendfile()'-style from a TCP socket */
-int tcp_read_sock(struct sock *sk, read_descriptor_t *desc,
+int tcp_read_sock(struct sock *sk, struct read_descriptor *desc,
 		  sk_read_actor_t recv_actor);
 
 void tcp_initialize_rcv_mss(struct sock *sk);
