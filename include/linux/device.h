@@ -14,7 +14,6 @@
 
 #include <linux/topology.h>
 #include <linux/dev_printk.h>
-#include <linux/energy_model.h>
 #include <linux/ioport.h>
 #include <linux/kobject.h>
 #include <linux/klist.h>
