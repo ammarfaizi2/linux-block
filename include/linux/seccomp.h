@@ -90,6 +90,8 @@ static inline long seccomp_get_metadata(struct task_struct *task,
 
 #ifdef CONFIG_SECCOMP_CACHE_DEBUG
 struct seq_file;
+struct pid;
+struct pid_namespace;
 
 int proc_pid_seccomp_cache(struct seq_file *m, struct pid_namespace *ns,
 			   struct pid *pid, struct task_struct *task);
