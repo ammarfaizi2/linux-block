@@ -39,6 +39,8 @@
 #ifdef __KERNEL__
 
 #include <asm/bug.h>
+#include <linux/cache.h>
+#include <vdso/limits.h>
 
 struct dql {
 	/* Fields accessed in enqueue path (dql_queued) */
