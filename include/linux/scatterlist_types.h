@@ -4,7 +4,6 @@
 
 #include <linux/string.h>
 #include <linux/types.h>
-#include <linux/bug.h>
 
 struct scatterlist {
 	unsigned long	page_link;
