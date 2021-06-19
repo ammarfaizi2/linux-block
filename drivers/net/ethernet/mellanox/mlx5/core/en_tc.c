@@ -83,17 +83,17 @@ struct mlx5e_tc_attr_to_reg_mapping mlx5e_tc_attr_to_reg_mappings[] = {
 	[CHAIN_TO_REG] = {
 		.mfield = MLX5_ACTION_IN_FIELD_METADATA_REG_C_0,
 		.moffset = 0,
-		.mlen = 2,
+		.mlen = 16,
 	},
 	[VPORT_TO_REG] = {
 		.mfield = MLX5_ACTION_IN_FIELD_METADATA_REG_C_0,
-		.moffset = 2,
-		.mlen = 2,
+		.moffset = 16,
+		.mlen = 16,
 	},
 	[TUNNEL_TO_REG] = {
 		.mfield = MLX5_ACTION_IN_FIELD_METADATA_REG_C_1,
-		.moffset = 1,
-		.mlen = ((ESW_TUN_OPTS_BITS + ESW_TUN_ID_BITS) / 8),
+		.moffset = 8,
+		.mlen = ESW_TUN_OPTS_BITS + ESW_TUN_ID_BITS,
 		.soffset = MLX5_BYTE_OFF(fte_match_param,
 					 misc_parameters_2.metadata_reg_c_1),
 	},
@@ -110,7 +110,7 @@ struct mlx5e_tc_attr_to_reg_mapping mlx5e_tc_attr_to_reg_mappings[] = {
 	[NIC_CHAIN_TO_REG] = {
 		.mfield = MLX5_ACTION_IN_FIELD_METADATA_REG_B,
 		.moffset = 0,
-		.mlen = 2,
+		.mlen = 16,
 	},
 	[NIC_ZONE_RESTORE_TO_REG] = nic_zone_restore_to_reg_ct,
 };
@@ -128,23 +128,46 @@ static void mlx5e_put_flow_tunnel_id(struct mlx5e_tc_flow *flow);
 void
 mlx5e_tc_match_to_reg_match(struct mlx5_flow_spec *spec,
 			    enum mlx5e_tc_attr_to_reg type,
-			    u32 data,
+			    u32 val,
 			    u32 mask)
 {
+	void *headers_c = spec->match_criteria, *headers_v = spec->match_value, *fmask, *fval;
 	int soffset = mlx5e_tc_attr_to_reg_mappings[type].soffset;
+	int moffset = mlx5e_tc_attr_to_reg_mappings[type].moffset;
 	int match_len = mlx5e_tc_attr_to_reg_mappings[type].mlen;
-	void *headers_c = spec->match_criteria;
-	void *headers_v = spec->match_value;
-	void *fmask, *fval;
+	u32 max_mask = GENMASK(match_len - 1, 0);
+	__be32 curr_mask_be, curr_val_be;
+	u32 curr_mask, curr_val;
 
 	fmask = headers_c + soffset;
 	fval = headers_v + soffset;
 
-	mask = (__force u32)(cpu_to_be32(mask)) >> (32 - (match_len * 8));
-	data = (__force u32)(cpu_to_be32(data)) >> (32 - (match_len * 8));
+	memcpy(&curr_mask_be, fmask, 4);
+	memcpy(&curr_val_be, fval, 4);
 
-	memcpy(fmask, &mask, match_len);
-	memcpy(fval, &data, match_len);
+	curr_mask = be32_to_cpu(curr_mask_be);
+	curr_val = be32_to_cpu(curr_val_be);
+
+	//move to correct offset
+	WARN_ON(mask > max_mask);
+	mask <<= moffset;
+	val <<= moffset;
+	max_mask <<= moffset;
+
+	//zero val and mask
+	curr_mask &= ~max_mask;
+	curr_val &= ~max_mask;
+
+	//add current to mask
+	curr_mask |= mask;
+	curr_val |= val;
+
+	//back to be32 and write
+	curr_mask_be = cpu_to_be32(curr_mask);
+	curr_val_be = cpu_to_be32(curr_val);
+
+	memcpy(fmask, &curr_mask_be, 4);
+	memcpy(fval, &curr_val_be, 4);
 
 	spec->match_criteria_enable |= MLX5_MATCH_MISC_PARAMETERS_2;
 }
@@ -152,23 +175,28 @@ mlx5e_tc_match_to_reg_match(struct mlx5_flow_spec *spec,
 void
 mlx5e_tc_match_to_reg_get_match(struct mlx5_flow_spec *spec,
 				enum mlx5e_tc_attr_to_reg type,
-				u32 *data,
+				u32 *val,
 				u32 *mask)
 {
+	void *headers_c = spec->match_criteria, *headers_v = spec->match_value, *fmask, *fval;
 	int soffset = mlx5e_tc_attr_to_reg_mappings[type].soffset;
+	int moffset = mlx5e_tc_attr_to_reg_mappings[type].moffset;
 	int match_len = mlx5e_tc_attr_to_reg_mappings[type].mlen;
-	void *headers_c = spec->match_criteria;
-	void *headers_v = spec->match_value;
-	void *fmask, *fval;
+	u32 max_mask = GENMASK(match_len - 1, 0);
+	__be32 curr_mask_be, curr_val_be;
+	u32 curr_mask, curr_val;
 
 	fmask = headers_c + soffset;
 	fval = headers_v + soffset;
 
-	memcpy(mask, fmask, match_len);
-	memcpy(data, fval, match_len);
+	memcpy(&curr_mask_be, fmask, 4);
+	memcpy(&curr_val_be, fval, 4);
 
-	*mask = be32_to_cpu((__force __be32)(*mask << (32 - (match_len * 8))));
-	*data = be32_to_cpu((__force __be32)(*data << (32 - (match_len * 8))));
+	curr_mask = be32_to_cpu(curr_mask_be);
+	curr_val = be32_to_cpu(curr_val_be);
+
+	*mask = (curr_mask >> moffset) & max_mask;
+	*val = (curr_val >> moffset) & max_mask;
 }
 
 int
@@ -192,13 +220,13 @@ mlx5e_tc_match_to_reg_set_and_get_id(struct mlx5_core_dev *mdev,
 		 (mod_hdr_acts->num_actions * MLX5_MH_ACT_SZ);
 
 	/* Firmware has 5bit length field and 0 means 32bits */
-	if (mlen == 4)
+	if (mlen == 32)
 		mlen = 0;
 
 	MLX5_SET(set_action_in, modact, action_type, MLX5_ACTION_TYPE_SET);
 	MLX5_SET(set_action_in, modact, field, mfield);
-	MLX5_SET(set_action_in, modact, offset, moffset * 8);
-	MLX5_SET(set_action_in, modact, length, mlen * 8);
+	MLX5_SET(set_action_in, modact, offset, moffset);
+	MLX5_SET(set_action_in, modact, length, mlen);
 	MLX5_SET(set_action_in, modact, data, data);
 	err = mod_hdr_acts->num_actions;
 	mod_hdr_acts->num_actions++;
@@ -296,13 +324,13 @@ void mlx5e_tc_match_to_reg_mod_hdr_change(struct mlx5_core_dev *mdev,
 	modact = mod_hdr_acts->actions + (act_id * MLX5_MH_ACT_SZ);
 
 	/* Firmware has 5bit length field and 0 means 32bits */
-	if (mlen == 4)
+	if (mlen == 32)
 		mlen = 0;
 
 	MLX5_SET(set_action_in, modact, action_type, MLX5_ACTION_TYPE_SET);
 	MLX5_SET(set_action_in, modact, field, mfield);
-	MLX5_SET(set_action_in, modact, offset, moffset * 8);
-	MLX5_SET(set_action_in, modact, length, mlen * 8);
+	MLX5_SET(set_action_in, modact, offset, moffset);
+	MLX5_SET(set_action_in, modact, length, mlen);
 	MLX5_SET(set_action_in, modact, data, data);
 }
 
@@ -2015,11 +2043,13 @@ static int __parse_cls_flower(struct mlx5e_priv *priv,
 				    misc_parameters_3);
 	struct flow_rule *rule = flow_cls_offload_flow_rule(f);
 	struct flow_dissector *dissector = rule->match.dissector;
+	enum fs_flow_table_type fs_type;
 	u16 addr_type = 0;
 	u8 ip_proto = 0;
 	u8 *match_level;
 	int err;
 
+	fs_type = mlx5e_is_eswitch_flow(flow) ? FS_FT_FDB : FS_FT_NIC_RX;
 	match_level = outer_match_level;
 
 	if (dissector->used_keys &
@@ -2145,6 +2175,13 @@ static int __parse_cls_flower(struct mlx5e_priv *priv,
 		if (match.mask->vlan_id ||
 		    match.mask->vlan_priority ||
 		    match.mask->vlan_tpid) {
+			if (!MLX5_CAP_FLOWTABLE_TYPE(priv->mdev, ft_field_support.outer_second_vid,
+						     fs_type)) {
+				NL_SET_ERR_MSG_MOD(extack,
+						   "Matching on CVLAN is not supported");
+				return -EOPNOTSUPP;
+			}
+
 			if (match.key->vlan_tpid == htons(ETH_P_8021AD)) {
 				MLX5_SET(fte_match_set_misc, misc_c,
 					 outer_second_svlan_tag, 1);
@@ -5096,7 +5133,7 @@ bool mlx5e_tc_update_skb(struct mlx5_cqe64 *cqe,
 
 		tc_skb_ext->chain = chain;
 
-		zone_restore_id = (reg_b >> REG_MAPPING_SHIFT(NIC_ZONE_RESTORE_TO_REG)) &
+		zone_restore_id = (reg_b >> REG_MAPPING_MOFFSET(NIC_ZONE_RESTORE_TO_REG)) &
 			ESW_ZONE_ID_MASK;
 
 		if (!mlx5e_tc_ct_restore_flow(tc->ct, skb,

@@ -10,6 +10,7 @@
 #include <linux/kfifo.h>
 
 #include "hclge_cmd.h"
+#include "hclge_ptp.h"
 #include "hnae3.h"
 
 #define HCLGE_MOD_VERSION "1.0"
@@ -178,6 +179,7 @@ enum HLCGE_PORT_TYPE {
 #define HCLGE_FUN_RST_ING_B		0
 
 /* Vector0 register bits define */
+#define HCLGE_VECTOR0_REG_PTP_INT_B	0
 #define HCLGE_VECTOR0_GLOBALRESET_INT_B	5
 #define HCLGE_VECTOR0_CORERESET_INT_B	6
 #define HCLGE_VECTOR0_IMPRESET_INT_B	7
@@ -190,6 +192,7 @@ enum HLCGE_PORT_TYPE {
 #define HCLGE_VECTOR0_IMP_RESET_INT_B	1
 #define HCLGE_VECTOR0_IMP_CMDQ_ERR_B	4U
 #define HCLGE_VECTOR0_IMP_RD_POISON_B	5U
+#define HCLGE_VECTOR0_ALL_MSIX_ERR_B	6U
 
 #define HCLGE_MAC_DEFAULT_FRAME \
 	(ETH_HLEN + ETH_FCS_LEN + 2 * VLAN_HLEN + ETH_DATA_LEN)
@@ -221,6 +224,7 @@ enum HCLGE_DEV_STATE {
 	HCLGE_STATE_RST_HANDLING,
 	HCLGE_STATE_MBX_SERVICE_SCHED,
 	HCLGE_STATE_MBX_HANDLING,
+	HCLGE_STATE_ERR_SERVICE_SCHED,
 	HCLGE_STATE_STATISTICS_UPDATING,
 	HCLGE_STATE_CMD_DISABLE,
 	HCLGE_STATE_LINK_UPDATING,
@@ -228,6 +232,8 @@ enum HCLGE_DEV_STATE {
 	HCLGE_STATE_FD_TBL_CHANGED,
 	HCLGE_STATE_FD_CLEAR_ALL,
 	HCLGE_STATE_FD_USER_DEF_CHANGED,
+	HCLGE_STATE_PTP_EN,
+	HCLGE_STATE_PTP_TX_HANDLING,
 	HCLGE_STATE_MAX
 };
 
@@ -235,6 +241,7 @@ enum hclge_evt_cause {
 	HCLGE_VECTOR0_EVENT_RST,
 	HCLGE_VECTOR0_EVENT_MBX,
 	HCLGE_VECTOR0_EVENT_ERR,
+	HCLGE_VECTOR0_EVENT_PTP,
 	HCLGE_VECTOR0_EVENT_OTHER,
 };
 
@@ -321,6 +328,22 @@ enum hclge_fc_mode {
 	HCLGE_FC_DEFAULT
 };
 
+#define HCLGE_FILTER_TYPE_VF		0
+#define HCLGE_FILTER_TYPE_PORT		1
+#define HCLGE_FILTER_FE_EGRESS_V1_B	BIT(0)
+#define HCLGE_FILTER_FE_NIC_INGRESS_B	BIT(0)
+#define HCLGE_FILTER_FE_NIC_EGRESS_B	BIT(1)
+#define HCLGE_FILTER_FE_ROCE_INGRESS_B	BIT(2)
+#define HCLGE_FILTER_FE_ROCE_EGRESS_B	BIT(3)
+#define HCLGE_FILTER_FE_EGRESS		(HCLGE_FILTER_FE_NIC_EGRESS_B \
+					| HCLGE_FILTER_FE_ROCE_EGRESS_B)
+#define HCLGE_FILTER_FE_INGRESS		(HCLGE_FILTER_FE_NIC_INGRESS_B \
+					| HCLGE_FILTER_FE_ROCE_INGRESS_B)
+
+enum hclge_vlan_fltr_cap {
+	HCLGE_VLAN_FLTR_DEF,
+	HCLGE_VLAN_FLTR_CAN_MDF,
+};
 enum hclge_link_fail_code {
 	HCLGE_LF_NORMAL,
 	HCLGE_LF_REF_CLOCK_LOST,
@@ -351,6 +374,7 @@ struct hclge_tc_info {
 
 struct hclge_cfg {
 	u8 tc_num;
+	u8 vlan_fliter_cap;
 	u16 tqp_desc_num;
 	u16 rx_buf_len;
 	u16 vf_rss_size_max;
@@ -360,6 +384,7 @@ struct hclge_cfg {
 	u8 mac_addr[ETH_ALEN];
 	u8 default_speed;
 	u32 numa_node_map;
+	u32 tx_spare_buf_size;
 	u16 speed_ability;
 	u16 umv_space;
 };
@@ -759,9 +784,14 @@ struct hclge_mac_tnl_stats {
 struct hclge_vf_vlan_cfg {
 	u8 mbx_cmd;
 	u8 subcode;
-	u8 is_kill;
-	u16 vlan;
-	u16 proto;
+	union {
+		struct {
+			u8 is_kill;
+			u16 vlan;
+			u16 proto;
+		};
+		u8 enable;
+	};
 };
 
 #pragma pack()
@@ -819,6 +849,7 @@ struct hclge_dev {
 	u16 alloc_rss_size;		/* Allocated RSS task queue */
 	u16 vf_rss_size_max;		/* HW defined VF max RSS task queue */
 	u16 pf_rss_size_max;		/* HW defined PF max RSS task queue */
+	u32 tx_spare_buf_size;		/* HW defined TX spare buffer size */
 
 	u16 fdir_pf_filter_count; /* Num of guaranteed filters for this PF */
 	u16 num_alloc_vport;		/* Num vports this driver supports */
@@ -911,6 +942,7 @@ struct hclge_dev {
 	/* affinity mask and notify for misc interrupt */
 	cpumask_t affinity_mask;
 	struct irq_affinity_notify affinity_notify;
+	struct hclge_ptp *ptp;
 };
 
 /* VPort level vlan tag configuration for TX direction */
@@ -952,6 +984,7 @@ enum HCLGE_VPORT_STATE {
 	HCLGE_VPORT_STATE_ALIVE,
 	HCLGE_VPORT_STATE_MAC_TBL_CHANGE,
 	HCLGE_VPORT_STATE_PROMISC_CHANGE,
+	HCLGE_VPORT_STATE_VLAN_FLTR_CHANGE,
 	HCLGE_VPORT_STATE_MAX
 };
 
@@ -993,6 +1026,8 @@ struct hclge_vport {
 	u32 bw_limit;		/* VSI BW Limit (0 = disabled) */
 	u8  dwrr;
 
+	bool req_vlan_fltr_en;
+	bool cur_vlan_fltr_en;
 	unsigned long vlan_del_fail_bmap[BITS_TO_LONGS(VLAN_N_VID)];
 	struct hclge_port_base_vlan_config port_base_vlan_cfg;
 	struct hclge_tx_vtag_cfg  txvlan_cfg;
@@ -1084,8 +1119,8 @@ void hclge_restore_vport_vlan_table(struct hclge_vport *vport);
 int hclge_update_port_base_vlan_cfg(struct hclge_vport *vport, u16 state,
 				    struct hclge_vlan_info *vlan_info);
 int hclge_push_vf_port_base_vlan_info(struct hclge_vport *vport, u8 vfid,
-				      u16 state, u16 vlan_tag, u16 qos,
-				      u16 vlan_proto);
+				      u16 state,
+				      struct hclge_vlan_info *vlan_info);
 void hclge_task_schedule(struct hclge_dev *hdev, unsigned long delay_time);
 int hclge_query_bd_num_cmd_send(struct hclge_dev *hdev,
 				struct hclge_desc *desc);
@@ -1094,4 +1129,5 @@ void hclge_report_hw_error(struct hclge_dev *hdev,
 void hclge_inform_vf_promisc_info(struct hclge_vport *vport);
 int hclge_dbg_dump_rst_info(struct hclge_dev *hdev, char *buf, int len);
 int hclge_push_vf_link_status(struct hclge_vport *vport);
+int hclge_enable_vport_vlan_filter(struct hclge_vport *vport, bool request_en);
 #endif

@@ -309,6 +309,20 @@ static struct hns3_dbg_cmd_info hns3_dbg_cmd[] = {
 		.buf_len = HNS3_DBG_READ_LEN,
 		.init = hns3_dbg_common_file_init,
 	},
+	{
+		.name = "vlan_config",
+		.cmd = HNAE3_DBG_CMD_VLAN_CONFIG,
+		.dentry = HNS3_DBG_DENTRY_COMMON,
+		.buf_len = HNS3_DBG_READ_LEN,
+		.init = hns3_dbg_common_file_init,
+	},
+	{
+		.name = "ptp_info",
+		.cmd = HNAE3_DBG_CMD_PTP_INFO,
+		.dentry = HNS3_DBG_DENTRY_COMMON,
+		.buf_len = HNS3_DBG_READ_LEN,
+		.init = hns3_dbg_common_file_init,
+	},
 };
 
 static struct hns3_dbg_cap_info hns3_dbg_cap[] = {
@@ -343,9 +357,18 @@ static struct hns3_dbg_cap_info hns3_dbg_cap[] = {
 		.name = "support imp-controlled PHY",
 		.cap_bit = HNAE3_DEV_SUPPORT_PHY_IMP_B,
 	}, {
+		.name = "support imp-controlled RAS",
+		.cap_bit = HNAE3_DEV_SUPPORT_RAS_IMP_B,
+	}, {
 		.name = "support rxd advanced layout",
 		.cap_bit = HNAE3_DEV_SUPPORT_RXD_ADV_LAYOUT_B,
-	},
+	}, {
+		.name = "support port vlan bypass",
+		.cap_bit = HNAE3_DEV_SUPPORT_PORT_VLAN_BYPASS_B,
+	}, {
+		.name = "support modify vlan filter state",
+		.cap_bit = HNAE3_DEV_SUPPORT_VLAN_FLTR_MDF_B,
+	}
 };
 
 static void hns3_dbg_fill_content(char *content, u16 len,
@@ -369,6 +392,56 @@ static void hns3_dbg_fill_content(char *content, u16 len,
 	*pos++ = '\0';
 }
 
+static const struct hns3_dbg_item tx_spare_info_items[] = {
+	{ "QUEUE_ID", 2 },
+	{ "COPYBREAK", 2 },
+	{ "LEN", 7 },
+	{ "NTU", 4 },
+	{ "NTC", 4 },
+	{ "LTC", 4 },
+	{ "DMA", 17 },
+};
+
+static void hns3_dbg_tx_spare_info(struct hns3_enet_ring *ring, char *buf,
+				   int len, u32 ring_num, int *pos)
+{
+	char data_str[ARRAY_SIZE(tx_spare_info_items)][HNS3_DBG_DATA_STR_LEN];
+	struct hns3_tx_spare *tx_spare = ring->tx_spare;
+	char *result[ARRAY_SIZE(tx_spare_info_items)];
+	char content[HNS3_DBG_INFO_LEN];
+	u32 i, j;
+
+	if (!tx_spare) {
+		*pos += scnprintf(buf + *pos, len - *pos,
+				  "tx spare buffer is not enabled\n");
+		return;
+	}
+
+	for (i = 0; i < ARRAY_SIZE(tx_spare_info_items); i++)
+		result[i] = &data_str[i][0];
+
+	*pos += scnprintf(buf + *pos, len - *pos, "tx spare buffer info\n");
+	hns3_dbg_fill_content(content, sizeof(content), tx_spare_info_items,
+			      NULL, ARRAY_SIZE(tx_spare_info_items));
+	*pos += scnprintf(buf + *pos, len - *pos, "%s", content);
+
+	for (i = 0; i < ring_num; i++) {
+		j = 0;
+		sprintf(result[j++], "%8u", i);
+		sprintf(result[j++], "%9u", ring->tx_copybreak);
+		sprintf(result[j++], "%3u", tx_spare->len);
+		sprintf(result[j++], "%3u", tx_spare->next_to_use);
+		sprintf(result[j++], "%3u", tx_spare->next_to_clean);
+		sprintf(result[j++], "%3u", tx_spare->last_to_clean);
+		sprintf(result[j++], "%pad", &tx_spare->dma);
+		hns3_dbg_fill_content(content, sizeof(content),
+				      tx_spare_info_items,
+				      (const char **)result,
+				      ARRAY_SIZE(tx_spare_info_items));
+		*pos += scnprintf(buf + *pos, len - *pos, "%s", content);
+	}
+}
+
 static const struct hns3_dbg_item rx_queue_info_items[] = {
 	{ "QUEUE_ID", 2 },
 	{ "BD_NUM", 2 },
@@ -377,6 +450,7 @@ static const struct hns3_dbg_item rx_queue_info_items[] = {
 	{ "HEAD", 2 },
 	{ "FBDNUM", 2 },
 	{ "PKTNUM", 2 },
+	{ "COPYBREAK", 2 },
 	{ "RING_EN", 2 },
 	{ "RX_RING_EN", 2 },
 	{ "BASE_ADDR", 10 },
@@ -408,6 +482,7 @@ static void hns3_dump_rx_queue_info(struct hns3_enet_ring *ring,
 
 	sprintf(result[j++], "%6u", readl_relaxed(ring->tqp->io_base +
 		HNS3_RING_RX_RING_PKTNUM_RECORD_REG));
+	sprintf(result[j++], "%9u", ring->rx_copybreak);
 
 	sprintf(result[j++], "%7s", readl_relaxed(ring->tqp->io_base +
 		HNS3_RING_EN_REG) ? "on" : "off");
@@ -569,6 +644,8 @@ static int hns3_dbg_tx_queue_info(struct hnae3_handle *h,
 				      ARRAY_SIZE(tx_queue_info_items));
 		pos += scnprintf(buf + pos, len - pos, "%s", content);
 	}
+
+	hns3_dbg_tx_spare_info(ring, buf, len, h->kinfo.num_tqps, &pos);
 
 	return 0;
 }
@@ -1043,8 +1120,10 @@ int hns3_dbg_init(struct hnae3_handle *handle)
 					   handle->hnae3_dbgfs);
 
 	for (i = 0; i < ARRAY_SIZE(hns3_dbg_cmd); i++) {
-		if (hns3_dbg_cmd[i].cmd == HNAE3_DBG_CMD_TM_NODES &&
-		    ae_dev->dev_version <= HNAE3_DEVICE_VERSION_V2)
+		if ((hns3_dbg_cmd[i].cmd == HNAE3_DBG_CMD_TM_NODES &&
+		     ae_dev->dev_version <= HNAE3_DEVICE_VERSION_V2) ||
+		    (hns3_dbg_cmd[i].cmd == HNAE3_DBG_CMD_PTP_INFO &&
+		     !test_bit(HNAE3_DEV_SUPPORT_PTP_B, ae_dev->caps)))
 			continue;
 
 		if (!hns3_dbg_cmd[i].init) {

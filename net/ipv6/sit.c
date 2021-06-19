@@ -271,6 +271,9 @@ static struct ip_tunnel *ipip6_tunnel_locate(struct net *net,
 	if (ipip6_tunnel_create(dev) < 0)
 		goto failed_free;
 
+	if (!parms->name[0])
+		strcpy(parms->name, dev->name);
+
 	return nt;
 
 failed_free:
@@ -970,7 +973,7 @@ static netdev_tx_t ipip6_tunnel_xmit(struct sk_buff *skb,
 	if (df) {
 		mtu = dst_mtu(&rt->dst) - t_hlen;
 
-		if (mtu < 68) {
+		if (mtu < IPV4_MIN_MTU) {
 			dev->stats.collisions++;
 			ip_rt_put(rt);
 			goto tx_error;
