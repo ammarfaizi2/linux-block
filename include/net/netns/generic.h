@@ -36,16 +36,8 @@ struct net_generic {
 	};
 };
 
-static inline void *net_generic(const struct net *net, unsigned int id)
-{
-	struct net_generic *ng;
-	void *ptr;
+struct net;
 
-	rcu_read_lock();
-	ng = rcu_dereference(net->gen);
-	ptr = ng->ptr[id];
-	rcu_read_unlock();
+extern void *net_generic(const struct net *net, unsigned int id);
 
-	return ptr;
-}
 #endif
