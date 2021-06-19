@@ -16,6 +16,38 @@ extern unsigned long page_offset_base;
 extern unsigned long vmalloc_base;
 extern unsigned long vmemmap_base;
 
+#define __VMALLOC_BASE_L4	0xffffc90000000000UL
+#define __VMALLOC_BASE_L5 	0xffa0000000000000UL
+
+#define VMALLOC_SIZE_TB_L4	32UL
+#define VMALLOC_SIZE_TB_L5	12800UL
+
+#define __VMEMMAP_BASE_L4	0xffffea0000000000UL
+#define __VMEMMAP_BASE_L5	0xffd4000000000000UL
+
+#ifdef CONFIG_DYNAMIC_MEMORY_LAYOUT
+# define VMALLOC_START		vmalloc_base
+# define VMALLOC_SIZE_TB	(pgtable_l5_enabled() ? VMALLOC_SIZE_TB_L5 : VMALLOC_SIZE_TB_L4)
+# define VMEMMAP_START		vmemmap_base
+#else
+# define VMALLOC_START		__VMALLOC_BASE_L4
+# define VMALLOC_SIZE_TB	VMALLOC_SIZE_TB_L4
+# define VMEMMAP_START		__VMEMMAP_BASE_L4
+#endif /* CONFIG_DYNAMIC_MEMORY_LAYOUT */
+
+#define VMALLOC_END		(VMALLOC_START + (VMALLOC_SIZE_TB << 40) - 1)
+
+#define MODULES_VADDR		(__START_KERNEL_map + KERNEL_IMAGE_SIZE)
+/* The module sections ends with the start of the fixmap */
+#ifndef CONFIG_DEBUG_KMAP_LOCAL_FORCE_MAP
+# define MODULES_END		_AC(0xffffffffff000000, UL)
+#else
+# define MODULES_END		_AC(0xfffffffffe000000, UL)
+#endif
+#define MODULES_LEN		(MODULES_END - MODULES_VADDR)
+
+#define vmemmap ((struct page *)VMEMMAP_START)
+
 static inline unsigned long __phys_addr_nodebug(unsigned long x)
 {
 	unsigned long y = x - __START_KERNEL_map;
