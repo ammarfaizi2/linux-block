@@ -381,6 +381,20 @@ static __init int net_defaults_init(void)
 
 core_initcall(net_defaults_init);
 
+void *net_generic(const struct net *net, unsigned int id)
+{
+	struct net_generic *ng;
+	void *ptr;
+
+	rcu_read_lock();
+	ng = rcu_dereference(net->gen);
+	ptr = ng->ptr[id];
+	rcu_read_unlock();
+
+	return ptr;
+}
+EXPORT_SYMBOL_GPL(net_generic);
+
 #ifdef CONFIG_NET_NS
 static struct ucounts *inc_net_namespaces(struct user_namespace *ns)
 {
