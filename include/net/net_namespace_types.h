@@ -5,6 +5,8 @@
 #ifndef __NET_NET_NAMESPACE_TYPES_H
 #define __NET_NET_NAMESPACE_TYPES_H
 
+#include <net/net_namespace_types_possible.h>
+
 #include <linux/refcount.h>
 #include <linux/sysctl.h>
 
@@ -179,12 +181,6 @@ struct net {
 
 /* Init's network namespace */
 extern struct net init_net;
-
-typedef struct {
-#ifdef CONFIG_NET_NS
-	struct net *net;
-#endif
-} possible_net_t;
 
 #ifdef CONFIG_NET_NS
 #define __net_init
