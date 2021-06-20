@@ -342,12 +342,7 @@ static inline int cant_mount(const struct dentry *dentry)
 	return (dentry->d_flags & DCACHE_CANT_MOUNT);
 }
 
-static inline void dont_mount(struct dentry *dentry)
-{
-	spin_lock(&dentry->d_lock);
-	dentry->d_flags |= DCACHE_CANT_MOUNT;
-	spin_unlock(&dentry->d_lock);
-}
+extern void dont_mount(struct dentry *dentry);
 
 extern void __d_lookup_done(struct dentry *);
 
@@ -356,14 +351,7 @@ static inline int d_in_lookup(const struct dentry *dentry)
 	return dentry->d_flags & DCACHE_PAR_LOOKUP;
 }
 
-static inline void d_lookup_done(struct dentry *dentry)
-{
-	if (unlikely(d_in_lookup(dentry))) {
-		spin_lock(&dentry->d_lock);
-		__d_lookup_done(dentry);
-		spin_unlock(&dentry->d_lock);
-	}
-}
+extern void d_lookup_done(struct dentry *dentry);
 
 extern void dput(struct dentry *);
 
