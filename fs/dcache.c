@@ -722,6 +722,22 @@ void d_lookup_done(struct dentry *dentry)
 }
 EXPORT_SYMBOL(d_lookup_done);
 
+ino_t parent_ino(struct dentry *dentry)
+{
+	ino_t res;
+
+	/*
+	 * Don't strictly need d_lock here? If the parent ino could change
+	 * then surely we'd have a deeper race in the caller?
+	 */
+	spin_lock(&dentry->d_lock);
+	res = dentry->d_parent->d_inode->i_ino;
+	spin_unlock(&dentry->d_lock);
+
+	return res;
+}
+EXPORT_SYMBOL(parent_ino);
+
 /*
  * Finish off a dentry we've decided to kill.
  * dentry->d_lock must be held, returns with it unlocked.
