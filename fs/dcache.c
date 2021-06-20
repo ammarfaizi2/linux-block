@@ -704,6 +704,24 @@ void d_mark_dontcache(struct inode *inode)
 }
 EXPORT_SYMBOL(d_mark_dontcache);
 
+void dont_mount(struct dentry *dentry)
+{
+	spin_lock(&dentry->d_lock);
+	dentry->d_flags |= DCACHE_CANT_MOUNT;
+	spin_unlock(&dentry->d_lock);
+}
+EXPORT_SYMBOL(dont_mount);
+
+void d_lookup_done(struct dentry *dentry)
+{
+	if (unlikely(d_in_lookup(dentry))) {
+		spin_lock(&dentry->d_lock);
+		__d_lookup_done(dentry);
+		spin_unlock(&dentry->d_lock);
+	}
+}
+EXPORT_SYMBOL(d_lookup_done);
+
 /*
  * Finish off a dentry we've decided to kill.
  * dentry->d_lock must be held, returns with it unlocked.
