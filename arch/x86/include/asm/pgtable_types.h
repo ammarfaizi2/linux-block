@@ -2,9 +2,6 @@
 #ifndef _ASM_X86_PGTABLE_DEFS_H
 #define _ASM_X86_PGTABLE_DEFS_H
 
-#include <linux/const.h>
-#include <linux/mem_encrypt.h>
-
 #include <asm/page_types.h>
 
 #define _PAGE_BIT_PRESENT	0	/* is present */
