@@ -13,14 +13,18 @@
 #ifndef __CLKSOURCE_HYPERV_TIMER_H
 #define __CLKSOURCE_HYPERV_TIMER_H
 
-#include <linux/clocksource.h>
 #include <linux/math64.h>
-#include <asm/mshyperv.h>
+#include <linux/limits.h>
+
+#define hv_get_raw_timer() rdtsc_ordered()
 
 #define HV_MAX_MAX_DELTA_TICKS 0xffffffff
 #define HV_MIN_DELTA_TICKS 1
 
 #ifdef CONFIG_HYPERV_TIMER
+
+#include <asm/hyperv-tlfs.h>
+#include <asm/msr.h>
 
 /* Routines called by the VMbus driver */
 extern int hv_stimer_alloc(bool have_percpu_irqs);
