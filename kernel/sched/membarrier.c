@@ -285,7 +285,6 @@ void membarrier_exec_mmap(struct mm_struct *mm)
 	 * clearing this state.
 	 */
 	smp_mb();
-	atomic_set(&mm->membarrier_state, 0);
 	/*
 	 * Keep the runqueue membarrier_state in sync with this mm
 	 * membarrier_state.
