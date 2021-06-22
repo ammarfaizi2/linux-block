@@ -277,21 +277,6 @@ static void ipi_sync_rq_state(void *info)
 	smp_mb();
 }
 
-void membarrier_exec_mmap(struct mm_struct *mm)
-{
-	/*
-	 * Issue a memory barrier before clearing membarrier_state to
-	 * guarantee that no memory access prior to exec is reordered after
-	 * clearing this state.
-	 */
-	smp_mb();
-	/*
-	 * Keep the runqueue membarrier_state in sync with this mm
-	 * membarrier_state.
-	 */
-	this_cpu_write(runqueues.membarrier_state, 0);
-}
-
 void membarrier_update_current_mm(struct mm_struct *next_mm)
 {
 	struct rq *rq = this_rq();

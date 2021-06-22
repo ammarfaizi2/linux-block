@@ -1001,12 +1001,16 @@ static int exec_mmap(struct mm_struct *mm)
 	}
 
 	task_lock(tsk);
-	membarrier_exec_mmap(mm);
+	/*
+	 * membarrier() requires a full barrier before switching mm.
+	 */
+	smp_mb__after_spinlock();
 
 	local_irq_disable();
 	active_mm = tsk->active_mm;
 	tsk->active_mm = mm;
 	WRITE_ONCE(tsk->mm, mm);  /* membarrier reads this without locks */
+	membarrier_update_current_mm(mm);
 	/*
 	 * This prevents preemption while active_mm is being loaded and
 	 * it and mm are being updated, which could cause problems for

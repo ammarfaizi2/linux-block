@@ -1351,6 +1351,11 @@ void kthread_use_mm(struct mm_struct *mm)
 	WARN_ON_ONCE(tsk->mm);
 
 	task_lock(tsk);
+	/*
+	 * membarrier() requires a full barrier before switching mm.
+	 */
+	smp_mb__after_spinlock();
+
 	/* Hold off tlb flush IPIs while switching mm's */
 	local_irq_disable();
 	active_mm = tsk->active_mm;
