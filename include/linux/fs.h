@@ -336,7 +336,7 @@ static inline bool is_sync_kiocb(struct kiocb *kiocb)
  * The simplest case just copies the data to user
  * mode.
  */
-typedef struct {
+typedef struct read_descriptor {
 	size_t written;
 	size_t count;
 	union {
