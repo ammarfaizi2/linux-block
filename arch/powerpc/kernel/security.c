@@ -300,9 +300,7 @@ static void stf_barrier_enable(bool enable)
 void setup_stf_barrier(void)
 {
 	enum stf_barrier_type type;
-	bool enable, hv;
-
-	hv = cpu_has_feature(CPU_FTR_HVMODE);
+	bool enable;
 
 	/* Default to fallback in case fw-features are not available */
 	if (cpu_has_feature(CPU_FTR_ARCH_300))
@@ -315,8 +313,7 @@ void setup_stf_barrier(void)
 		type = STF_BARRIER_NONE;
 
 	enable = security_ftr_enabled(SEC_FTR_FAVOUR_SECURITY) &&
-		(security_ftr_enabled(SEC_FTR_L1D_FLUSH_PR) ||
-		 (security_ftr_enabled(SEC_FTR_L1D_FLUSH_HV) && hv));
+		 security_ftr_enabled(SEC_FTR_STF_BARRIER);
 
 	if (type == STF_BARRIER_FALLBACK) {
 		pr_info("stf-barrier: fallback barrier available\n");
@@ -432,16 +429,19 @@ device_initcall(stf_barrier_debugfs_init);
 
 static void update_branch_cache_flush(void)
 {
-	u32 *site;
+	u32 *site, __maybe_unused *site2;
 
 #ifdef CONFIG_KVM_BOOK3S_HV_POSSIBLE
 	site = &patch__call_kvm_flush_link_stack;
+	site2 = &patch__call_kvm_flush_link_stack_p9;
 	// This controls the branch from guest_exit_cont to kvm_flush_link_stack
 	if (link_stack_flush_type == BRANCH_CACHE_FLUSH_NONE) {
 		patch_instruction_site(site, ppc_inst(PPC_RAW_NOP()));
+		patch_instruction_site(site2, ppc_inst(PPC_RAW_NOP()));
 	} else {
 		// Could use HW flush, but that could also flush count cache
 		patch_branch_site(site, (u64)&kvm_flush_link_stack, BRANCH_SET_LINK);
+		patch_branch_site(site2, (u64)&kvm_flush_link_stack, BRANCH_SET_LINK);
 	}
 #endif
 
