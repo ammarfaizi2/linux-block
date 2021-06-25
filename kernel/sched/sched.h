@@ -120,6 +120,14 @@ DECLARE_PER_TASK(struct rb_node,			core_node);
 DECLARE_PER_TASK(unsigned long,				core_cookie);
 #endif
 
+#ifdef CONFIG_UCLAMP_TASK
+/*
+ * Clamp values requested for a scheduling entity.
+ * Must be updated with task_rq_lock() held.
+ */
+DECLARE_PER_TASK(struct uclamp_se,			uclamp_req[UCLAMP_CNT]);
+#endif
+
 struct rq;
 struct cpuidle_state;
 

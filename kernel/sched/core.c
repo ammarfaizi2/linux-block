@@ -137,6 +137,14 @@ DEFINE_PER_TASK(unsigned long,				core_cookie);
 DEFINE_PER_TASK(unsigned int,				core_occupation);
 #endif
 
+#ifdef CONFIG_UCLAMP_TASK
+/*
+ * Clamp values requested for a scheduling entity.
+ * Must be updated with task_rq_lock() held.
+ */
+DEFINE_PER_TASK(struct uclamp_se,			uclamp_req[UCLAMP_CNT]);
+#endif
+
 /*
  * Export tracepoints that act as a bare tracehook (ie: have no trace event
  * associated with them) to allow external modules to probe them.
@@ -1491,7 +1499,7 @@ static void __uclamp_update_util_min_rt_default(struct task_struct *p)
 
 	lockdep_assert_held(&p->pi_lock);
 
-	uc_se = &p->uclamp_req[UCLAMP_MIN];
+	uc_se = &per_task(p, uclamp_req)[UCLAMP_MIN];
 
 	/* Only sync if user didn't override the default */
 	if (uc_se->user_defined)
@@ -1546,7 +1554,7 @@ static inline struct uclamp_se
 uclamp_tg_restrict(struct task_struct *p, enum uclamp_id clamp_id)
 {
 	/* Copy by value as we could modify it */
-	struct uclamp_se uc_req = p->uclamp_req[clamp_id];
+	struct uclamp_se uc_req = per_task(p, uclamp_req)[clamp_id];
 #ifdef CONFIG_UCLAMP_TASK_GROUP
 	unsigned int tg_min, tg_max, value;
 
@@ -1906,8 +1914,8 @@ done:
 static int uclamp_validate(struct task_struct *p,
 			   const struct sched_attr *attr)
 {
-	int util_min = p->uclamp_req[UCLAMP_MIN].value;
-	int util_max = p->uclamp_req[UCLAMP_MAX].value;
+	int util_min = per_task(p, uclamp_req)[UCLAMP_MIN].value;
+	int util_max = per_task(p, uclamp_req)[UCLAMP_MAX].value;
 
 	if (attr->sched_flags & SCHED_FLAG_UTIL_CLAMP_MIN) {
 		util_min = attr->sched_util_min;
@@ -1969,7 +1977,7 @@ static void __setscheduler_uclamp(struct task_struct *p,
 	enum uclamp_id clamp_id;
 
 	for_each_clamp_id(clamp_id) {
-		struct uclamp_se *uc_se = &p->uclamp_req[clamp_id];
+		struct uclamp_se *uc_se = &per_task(p, uclamp_req)[clamp_id];
 		unsigned int value;
 
 		if (!uclamp_reset(attr, clamp_id, uc_se))
@@ -1993,13 +2001,13 @@ static void __setscheduler_uclamp(struct task_struct *p,
 
 	if (attr->sched_flags & SCHED_FLAG_UTIL_CLAMP_MIN &&
 	    attr->sched_util_min != -1) {
-		uclamp_se_set(&p->uclamp_req[UCLAMP_MIN],
+		uclamp_se_set(&per_task(p, uclamp_req)[UCLAMP_MIN],
 			      attr->sched_util_min, true);
 	}
 
 	if (attr->sched_flags & SCHED_FLAG_UTIL_CLAMP_MAX &&
 	    attr->sched_util_max != -1) {
-		uclamp_se_set(&p->uclamp_req[UCLAMP_MAX],
+		uclamp_se_set(&per_task(p, uclamp_req)[UCLAMP_MAX],
 			      attr->sched_util_max, true);
 	}
 }
@@ -2019,7 +2027,7 @@ static void uclamp_fork(struct task_struct *p)
 		return;
 
 	for_each_clamp_id(clamp_id) {
-		uclamp_se_set(&p->uclamp_req[clamp_id],
+		uclamp_se_set(&per_task(p, uclamp_req)[clamp_id],
 			      uclamp_none(clamp_id), false);
 	}
 }
@@ -2053,7 +2061,7 @@ static void __init init_uclamp(void)
 		init_uclamp_rq(cpu_rq(cpu));
 
 	for_each_clamp_id(clamp_id) {
-		uclamp_se_set(&init_task.uclamp_req[clamp_id],
+		uclamp_se_set(&per_task(&init_task, uclamp_req)[clamp_id],
 			      uclamp_none(clamp_id), false);
 	}
 
@@ -7940,8 +7948,8 @@ SYSCALL_DEFINE4(sched_getattr, pid_t, pid, struct sched_attr __user *, uattr,
 	 * because it'll correctly read the old or the new value. We don't need
 	 * to guarantee who wins the race as long as it doesn't return garbage.
 	 */
-	kattr.sched_util_min = p->uclamp_req[UCLAMP_MIN].value;
-	kattr.sched_util_max = p->uclamp_req[UCLAMP_MAX].value;
+	kattr.sched_util_min = per_task(p, uclamp_req)[UCLAMP_MIN].value;
+	kattr.sched_util_max = per_task(p, uclamp_req)[UCLAMP_MAX].value;
 #endif
 
 	rcu_read_unlock();
