@@ -694,14 +694,13 @@ static inline bool mem_cgroup_below_min(struct mem_cgroup *memcg)
 		page_counter_read(&memcg->memory);
 }
 
-int __mem_cgroup_charge(struct page *page, struct mm_struct *mm,
-			gfp_t gfp_mask);
-static inline int mem_cgroup_charge(struct page *page, struct mm_struct *mm,
-				    gfp_t gfp_mask)
+int __mem_cgroup_charge(struct folio *folio, struct mm_struct *mm, gfp_t gfp);
+static inline int mem_cgroup_charge(struct folio *folio, struct mm_struct *mm,
+				    gfp_t gfp)
 {
 	if (mem_cgroup_disabled())
 		return 0;
-	return __mem_cgroup_charge(page, mm, gfp_mask);
+	return __mem_cgroup_charge(folio, mm, gfp);
 }
 
 int mem_cgroup_swapin_charge_page(struct page *page, struct mm_struct *mm,
@@ -1199,8 +1198,8 @@ static inline bool mem_cgroup_below_min(struct mem_cgroup *memcg)
 	return false;
 }
 
-static inline int mem_cgroup_charge(struct page *page, struct mm_struct *mm,
-				    gfp_t gfp_mask)
+static inline int mem_cgroup_charge(struct folio *folio,
+		struct mm_struct *mm, gfp_t gfp)
 {
 	return 0;
 }
