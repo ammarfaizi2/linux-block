@@ -129,8 +129,8 @@ int arch_prepare_kprobe(struct kprobe *p)
 	if ((unsigned long)p->addr & 0x03) {
 		printk("Attempt to register kprobe at an unaligned address\n");
 		ret = -EINVAL;
-	} else if (IS_MTMSRD(insn) || IS_RFID(insn) || IS_RFI(insn)) {
-		printk("Cannot register a kprobe on rfi/rfid or mtmsr[d]\n");
+	} else if (IS_MTMSRD(insn) || IS_RFID(insn)) {
+		printk("Cannot register a kprobe on mtmsr[d]/rfi[d]\n");
 		ret = -EINVAL;
 	} else if ((unsigned long)p->addr & ~PAGE_MASK &&
 		   ppc_inst_prefixed(ppc_inst_read(p->addr - 1))) {
@@ -165,13 +165,13 @@ NOKPROBE_SYMBOL(arch_prepare_kprobe);
 
 void arch_arm_kprobe(struct kprobe *p)
 {
-	patch_instruction(p->addr, ppc_inst(BREAKPOINT_INSTRUCTION));
+	WARN_ON_ONCE(patch_instruction(p->addr, ppc_inst(BREAKPOINT_INSTRUCTION)));
 }
 NOKPROBE_SYMBOL(arch_arm_kprobe);
 
 void arch_disarm_kprobe(struct kprobe *p)
 {
-	patch_instruction(p->addr, ppc_inst(p->opcode));
+	WARN_ON_ONCE(patch_instruction(p->addr, ppc_inst(p->opcode)));
 }
 NOKPROBE_SYMBOL(arch_disarm_kprobe);
 
