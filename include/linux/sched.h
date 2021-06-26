@@ -27,7 +27,7 @@
 #include <linux/smp_types.h>
 
 #ifdef CONFIG_LOCKDEP
-# include <linux/lockdep.h>
+# include <linux/lockdep_types.h>
 #endif
 
 #ifdef CONFIG_TRACE_IRQFLAGS
