@@ -5,9 +5,7 @@
 #include <linux/notifier.h>
 #include <linux/init.h>
 #include <linux/pm.h>
-#include <linux/mm.h>
 #include <linux/linkage.h>
-#include <asm/errno.h>
 
 #ifdef CONFIG_VT
 extern void pm_set_vt_switch(int);
@@ -359,6 +357,7 @@ struct pbe {
 	struct pbe *next;
 };
 
+struct zone;
 /* mm/page_alloc.c */
 extern void mark_free_pages(struct zone *zone);
 
