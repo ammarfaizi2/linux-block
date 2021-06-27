@@ -12,23 +12,10 @@
 #ifndef _DEVICE_TYPES_H_
 #define _DEVICE_TYPES_H_
 
+#include <linux/build_bug.h>
+#include <linux/kobject_types.h>
 #include <linux/dev_printk.h>
-#include <linux/ioport.h>
-#include <linux/kobject.h>
-#include <linux/klist.h>
-#include <linux/list.h>
-#include <linux/lockdep.h>
-#include <linux/compiler.h>
-#include <linux/types.h>
-#include <linux/mutex.h>
-#include <linux/atomic.h>
-#include <linux/uidgid.h>
-#include <linux/gfp.h>
-#include <linux/overflow.h>
-#include <linux/device/bus.h>
-#include <linux/device/class.h>
-#include <linux/device/driver.h>
-#include <linux/numa_types.h>
+#include <linux/pm.h>
 
 #include <asm/device.h>
 
