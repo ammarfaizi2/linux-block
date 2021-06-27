@@ -15,30 +15,6 @@
 #include <linux/cpumask.h>
 #include <linux/init.h>
 
-typedef void (*smp_call_func_t)(void *info);
-typedef bool (*smp_cond_func_t)(int cpu, void *info);
-
-/*
- * structure shares (partial) layout with struct irq_work
- */
-struct __call_single_data {
-	struct __call_single_node node;
-	smp_call_func_t func;
-	void *info;
-};
-
-#define CSD_INIT(_func, _info) \
-	(struct __call_single_data){ .func = (_func), .info = (_info), }
-
-/* Use __aligned() to avoid to use 2 cache lines for 1 csd */
-typedef struct __call_single_data call_single_data_t
-	__aligned(sizeof(struct __call_single_data));
-
-#define INIT_CSD(_csd, _func, _info)		\
-do {						\
-	*(_csd) = CSD_INIT((_func), (_info));	\
-} while (0)
-
 /*
  * Enqueue a llist_node on the call_single_queue; be very careful, read
  * flush_smp_call_function_queue() in detail.
