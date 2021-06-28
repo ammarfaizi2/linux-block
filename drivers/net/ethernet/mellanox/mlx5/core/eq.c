@@ -113,7 +113,7 @@ static int mlx5_eq_comp_int(struct notifier_block *nb,
 
 	eqe = next_eqe_sw(eq);
 	if (!eqe)
-		return 0;
+		goto out;
 
 	do {
 		struct mlx5_core_cq *cq;
@@ -138,6 +138,8 @@ static int mlx5_eq_comp_int(struct notifier_block *nb,
 		++eq->cons_index;
 
 	} while ((++num_eqes < MLX5_EQ_POLLING_BUDGET) && (eqe = next_eqe_sw(eq)));
+
+out:
 	eq_update_ci(eq, 1);
 
 	if (cqn != -1)
@@ -225,9 +227,9 @@ static int mlx5_eq_async_int(struct notifier_block *nb,
 		++eq->cons_index;
 
 	} while ((++num_eqes < MLX5_EQ_POLLING_BUDGET) && (eqe = next_eqe_sw(eq)));
-	eq_update_ci(eq, 1);
 
 out:
+	eq_update_ci(eq, 1);
 	mlx5_eq_async_int_unlock(eq_async, recovery, &flags);
 
 	return unlikely(recovery) ? num_eqes : 0;
@@ -710,7 +712,7 @@ mlx5_eq_create_generic(struct mlx5_core_dev *dev,
 	struct mlx5_eq *eq = kvzalloc(sizeof(*eq), GFP_KERNEL);
 	int err;
 
-	if (!param->affinity)
+	if (!cpumask_available(param->affinity))
 		return ERR_PTR(-EINVAL);
 
 	if (!eq)
