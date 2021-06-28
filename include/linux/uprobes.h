@@ -21,6 +21,7 @@ struct mm_struct;
 struct inode;
 struct notifier_block;
 struct page;
+struct pt_regs;
 
 #define UPROBE_HANDLER_REMOVE		1
 #define UPROBE_HANDLER_MASK		1
@@ -102,7 +103,7 @@ struct uprobes_state {
 	struct xol_area		*xol_area;
 };
 
-extern void __init uprobes_init(void);
+extern void uprobes_init(void);
 extern int set_swbp(struct arch_uprobe *aup, struct mm_struct *mm, unsigned long vaddr);
 extern int set_orig_insn(struct arch_uprobe *aup, struct mm_struct *mm, unsigned long vaddr);
 extern bool is_swbp_insn(uprobe_opcode_t *insn);
