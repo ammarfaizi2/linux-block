@@ -17,6 +17,7 @@
 #include <linux/cpumask.h>
 #include <linux/static_call_types.h>
 #include <asm/frame.h>
+#include <asm/fixmap.h>
 
 u64 dummy_steal_clock(int cpu);
 u64 dummy_sched_clock(void);
