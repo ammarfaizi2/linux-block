@@ -8,7 +8,7 @@
  * only nr_cpu_ids (<= NR_CPUS) bits are valid.
  */
 #include <linux/threads.h>
-#include <linux/bitmap.h>
+#include <linux/bitops_types.h>
 
 /* Don't assign or return these: may not be this big! */
 typedef struct cpumask { DECLARE_BITMAP(bits, NR_CPUS); } cpumask_t;
