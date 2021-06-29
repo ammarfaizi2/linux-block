@@ -5,6 +5,7 @@
 #include <linux/types.h>
 #include <asm/alternative.h>
 #include <asm/cmpxchg.h>
+#include <asm/rmwcc.h>
 
 /* The 64-bit atomic type */
 
