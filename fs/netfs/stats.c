@@ -30,6 +30,7 @@ atomic_t netfs_n_rh_write_failed;
 atomic_t netfs_n_rh_write_zskip;
 atomic_t netfs_n_wh_region;
 atomic_t netfs_n_wh_flush_group;
+atomic_t netfs_n_wh_wback;
 
 void netfs_stats_show(struct seq_file *m)
 {
@@ -58,9 +59,10 @@ void netfs_stats_show(struct seq_file *m)
 		   atomic_read(&netfs_n_rh_write),
 		   atomic_read(&netfs_n_rh_write_done),
 		   atomic_read(&netfs_n_rh_write_failed));
-	seq_printf(m, "WrHelp : R=%u F=%u\n",
+	seq_printf(m, "WrHelp : R=%u F=%u wr=%u\n",
 		   atomic_read(&netfs_n_wh_region),
-		   atomic_read(&netfs_n_wh_flush_group));
+		   atomic_read(&netfs_n_wh_flush_group),
+		   atomic_read(&netfs_n_wh_wback));
 	seq_printf(m, "Credit : w=%lx\n",
 		   atomic_long_read(&netfs_write_credit));
 }

@@ -158,3 +158,104 @@ void netfs_put_dirty_region(struct netfs_i_context *ctx,
 		netfs_free_dirty_region(ctx, region);
 	}
 }
+
+struct netfs_writeback *netfs_alloc_writeback(struct address_space *mapping,
+					      bool is_dio)
+{
+	static atomic_t debug_ids;
+	struct inode *inode = mapping->host;
+	struct netfs_i_context *ctx = netfs_i_context(inode);
+	struct netfs_writeback *wback;
+	bool cached = !is_dio && netfs_is_cache_enabled(ctx);
+
+	wback = kzalloc(sizeof(struct netfs_writeback), GFP_KERNEL);
+	if (wback) {
+		wback->mapping	= mapping;
+		wback->inode	= inode;
+		wback->netfs_ops	= ctx->ops;
+		wback->debug_id	= atomic_inc_return(&debug_ids);
+		if (cached)
+			__set_bit(NETFS_WBACK_WRITE_TO_CACHE, &wback->flags);
+		xa_init(&wback->buffer);
+		INIT_WORK(&wback->work, netfs_writeback_worker);
+		INIT_LIST_HEAD(&wback->regions);
+		rwlock_init(&wback->regions_lock);
+		refcount_set(&wback->usage, 1);
+
+		ctx->ops->init_writeback(wback);
+
+		netfs_stat(&netfs_n_wh_wback);
+		trace_netfs_ref_wback(wback->debug_id, 1, netfs_wback_trace_new);
+	}
+
+	return wback;
+}
+
+void netfs_get_writeback(struct netfs_writeback *wback,
+			 enum netfs_wback_trace what)
+{
+	int ref;
+
+	__refcount_inc(&wback->usage, &ref);
+	trace_netfs_ref_wback(wback->debug_id, ref + 1, what);
+}
+
+void netfs_free_writeback(struct work_struct *work)
+{
+	struct netfs_writeback *wback =
+		container_of(work, struct netfs_writeback, work);
+	struct netfs_dirty_region *region;
+	struct netfs_i_context *ctx = netfs_i_context(wback->inode);
+	struct folio *folio;
+	pgoff_t index;
+
+	if (wback->netfs_priv)
+		wback->netfs_ops->cleanup(wback->mapping, wback->netfs_priv);
+	trace_netfs_ref_wback(wback->debug_id, 0, netfs_wback_trace_free);
+	write_lock(&wback->regions_lock);
+	while ((region = list_first_entry_or_null(
+			&wback->regions, struct netfs_dirty_region, flush_link))) {
+		list_del_init(&region->flush_link);
+		netfs_put_dirty_region(ctx, region, netfs_region_trace_put_wback);
+	}
+	write_unlock(&wback->regions_lock);
+	xa_for_each(&wback->buffer, index, folio) {
+		folio_put(folio);
+	}
+	xa_destroy(&wback->buffer);
+	kfree(wback);
+	netfs_stat_d(&netfs_n_wh_wback);
+}
+
+/**
+ * netfs_put_writeback - Drop a reference on a writeback slice.
+ * @wback: The writeback slice to drop
+ * @was_async: True if being called in a non-sleeping context
+ * @what: Reason code, to be displayed in trace line
+ *
+ * Drop a reference on a writeback slice and schedule it for destruction after
+ * the last ref is gone.
+ */
+void netfs_put_writeback(struct netfs_writeback *wback,
+			 bool was_async, enum netfs_wback_trace what)
+{
+	unsigned int debug_id;
+	bool dead;
+	int ref;
+
+	if (wback) {
+		debug_id = wback->debug_id;
+		dead = __refcount_dec_and_test(&wback->usage, &ref);
+		trace_netfs_ref_wback(debug_id, ref - 1, what);
+		if (dead) {
+			if (was_async) {
+				wback->work.func = netfs_free_writeback;
+				if (!queue_work(system_unbound_wq, &wback->work))
+					BUG();
+			} else {
+				netfs_free_writeback(&wback->work);
+			}
+		}
+	}
+}
+EXPORT_SYMBOL(netfs_put_writeback);
