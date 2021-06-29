@@ -39,6 +39,19 @@ void netfs_free_dirty_region(struct netfs_i_context *ctx, struct netfs_dirty_reg
 void netfs_put_dirty_region(struct netfs_i_context *ctx,
 			    struct netfs_dirty_region *region,
 			    enum netfs_region_trace what);
+struct netfs_write_request *netfs_alloc_write_request(struct address_space *mapping,
+						      bool is_dio);
+void netfs_get_write_request(struct netfs_write_request *wreq,
+			     enum netfs_wreq_trace what);
+void netfs_free_write_request(struct work_struct *work);
+void netfs_put_write_request(struct netfs_write_request *wreq,
+			     bool was_async, enum netfs_wreq_trace what);
+
+static inline void netfs_see_write_request(struct netfs_write_request *wreq,
+					   enum netfs_wreq_trace what)
+{
+	trace_netfs_ref_wreq(wreq->debug_id, refcount_read(&wreq->usage), what);
+}
 
 /*
  * read_helper.c
@@ -63,6 +76,7 @@ static inline void netfs_put_subrequest(struct netfs_read_subrequest *subreq,
  */
 extern atomic_t netfs_region_debug_ids;
 
+void netfs_writeback_worker(struct work_struct *work);
 void netfs_flush_region(struct netfs_i_context *ctx,
 			struct netfs_dirty_region *region,
 			enum netfs_dirty_trace why);
@@ -91,6 +105,7 @@ extern atomic_t netfs_n_rh_write_failed;
 extern atomic_t netfs_n_rh_write_zskip;
 extern atomic_t netfs_n_wh_region;
 extern atomic_t netfs_n_wh_flush_group;
+extern atomic_t netfs_n_wh_wreq;
 
 
 static inline void netfs_stat(atomic_t *stat)

@@ -117,3 +117,104 @@ void netfs_put_dirty_region(struct netfs_i_context *ctx,
 		netfs_free_dirty_region(ctx, region);
 	}
 }
+
+struct netfs_write_request *netfs_alloc_write_request(struct address_space *mapping,
+						      bool is_dio)
+{
+	static atomic_t debug_ids;
+	struct inode *inode = mapping->host;
+	struct netfs_i_context *ctx = netfs_i_context(inode);
+	struct netfs_write_request *wreq;
+	bool cached = !is_dio && netfs_is_cache_enabled(ctx);
+
+	wreq = kzalloc(sizeof(struct netfs_write_request), GFP_KERNEL);
+	if (wreq) {
+		wreq->mapping	= mapping;
+		wreq->inode	= inode;
+		wreq->netfs_ops	= ctx->ops;
+		wreq->debug_id	= atomic_inc_return(&debug_ids);
+		if (cached)
+			__set_bit(NETFS_WREQ_WRITE_TO_CACHE, &wreq->flags);
+		xa_init(&wreq->buffer);
+		INIT_WORK(&wreq->work, netfs_writeback_worker);
+		INIT_LIST_HEAD(&wreq->regions);
+		rwlock_init(&wreq->regions_lock);
+		refcount_set(&wreq->usage, 1);
+		ctx->ops->init_wreq(wreq);
+		netfs_stat(&netfs_n_wh_wreq);
+		trace_netfs_ref_wreq(wreq->debug_id, 1, netfs_wreq_trace_new);
+	}
+
+	return wreq;
+}
+
+void netfs_get_write_request(struct netfs_write_request *wreq,
+			     enum netfs_wreq_trace what)
+{
+	int ref;
+
+	__refcount_inc(&wreq->usage, &ref);
+	trace_netfs_ref_wreq(wreq->debug_id, ref + 1, what);
+}
+
+void netfs_free_write_request(struct work_struct *work)
+{
+	struct netfs_write_request *wreq =
+		container_of(work, struct netfs_write_request, work);
+	struct netfs_dirty_region *region;
+	struct netfs_i_context *ctx = netfs_i_context(wreq->inode);
+	struct folio *folio;
+	pgoff_t index;
+
+	if (wreq->netfs_priv)
+		wreq->netfs_ops->cleanup(wreq->mapping, wreq->netfs_priv);
+	trace_netfs_ref_wreq(wreq->debug_id, 0, netfs_wreq_trace_free);
+	if (wreq->cache_resources.ops)
+		wreq->cache_resources.ops->end_operation(&wreq->cache_resources);
+	write_lock(&wreq->regions_lock);
+	while ((region = list_first_entry_or_null(
+			&wreq->regions, struct netfs_dirty_region, flush_link))) {
+		list_del_init(&region->flush_link);
+		netfs_put_dirty_region(ctx, region, netfs_region_trace_put_wreq);
+	}
+	write_unlock(&wreq->regions_lock);
+	xa_for_each(&wreq->buffer, index, folio) {
+		folio_put(folio);
+	}
+	xa_destroy(&wreq->buffer);
+	kfree(wreq);
+	netfs_stat_d(&netfs_n_wh_wreq);
+}
+
+/**
+ * netfs_put_write_request - Drop a reference on a write request descriptor.
+ * @wreq: The write request to drop
+ * @was_async: True if being called in a non-sleeping context
+ * @what: Reason code, to be displayed in trace line
+ *
+ * Drop a reference on a write request and schedule it for destruction after
+ * the last ref is gone.
+ */
+void netfs_put_write_request(struct netfs_write_request *wreq,
+			     bool was_async, enum netfs_wreq_trace what)
+{
+	unsigned int debug_id;
+	bool dead;
+	int ref;
+
+	if (wreq) {
+		debug_id = wreq->debug_id;
+		dead = __refcount_dec_and_test(&wreq->usage, &ref);
+		trace_netfs_ref_wreq(debug_id, ref - 1, what);
+		if (dead) {
+			if (was_async) {
+				wreq->work.func = netfs_free_write_request;
+				if (!queue_work(system_unbound_wq, &wreq->work))
+					BUG();
+			} else {
+				netfs_free_write_request(&wreq->work);
+			}
+		}
+	}
+}
+EXPORT_SYMBOL(netfs_put_write_request);

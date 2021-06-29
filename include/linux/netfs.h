@@ -19,6 +19,8 @@
 #include <linux/pagemap.h>
 #include <linux/uio.h>
 
+enum netfs_wreq_trace;
+
 /*
  * Overload PG_private_2 to give us PG_fscache - this is used to indicate that
  * a page is currently backed by a local disk cache
@@ -284,6 +286,41 @@ struct netfs_dirty_region {
 	refcount_t		ref;
 };
 
+enum netfs_write_dest {
+	NETFS_UPLOAD_TO_SERVER,
+	NETFS_WRITE_TO_CACHE,
+	NETFS_INVALID_WRITE,
+} __mode(byte);
+
+/*
+ * Descriptor for a write request.  This is used to manage the preparation and
+ * storage of a sequence of dirty data - its compression/encryption and its
+ * writing to one or more servers and the cache.
+ *
+ * The prepared data is buffered here.
+ */
+struct netfs_write_request {
+	struct work_struct	work;
+	struct inode		*inode;		/* The file being accessed */
+	struct address_space	*mapping;	/* The mapping being accessed */
+	struct netfs_cache_resources cache_resources;
+	struct xarray		buffer;		/* Buffer for encrypted/compressed data */
+	struct list_head	regions;	/* The contributory regions (by ->flush_link)  */
+	struct netfs_flush_group *group;	/* Flush group this write is from */
+	rwlock_t		regions_lock;	/* Lock for ->regions */
+	void			*netfs_priv;	/* Private data for the netfs */
+	unsigned int		debug_id;
+	short			error;		/* 0 or error that occurred */
+	struct netfs_range	coverage;	/* Range covered by the request */
+	pgoff_t			first;		/* First page included */
+	pgoff_t			last;		/* Last page included */
+	refcount_t		usage;
+	unsigned long		flags;
+#define NETFS_WREQ_WRITE_TO_CACHE	0	/* Need to write to the cache */
+#define NETFS_WREQ_BUFFERED		1	/* Data is held in ->buffer */
+	const struct netfs_request_ops *netfs_ops;
+};
+
 enum netfs_write_compatibility {
 	NETFS_WRITES_COMPATIBLE,	/* Dirty regions can be directly merged */
 	NETFS_WRITES_SUPERSEDE,		/* Second write can supersede the first without first
@@ -321,6 +358,9 @@ struct netfs_request_ops {
 		struct netfs_dirty_region *candidate);
 	bool (*check_compatible_write)(struct netfs_dirty_region *region, struct file *file);
 	void (*update_i_size)(struct file *file, loff_t i_size);
+
+	/* Write request handling */
+	void (*init_wreq)(struct netfs_write_request *wreq);
 };
 
 /*
@@ -370,6 +410,7 @@ extern int netfs_write_begin(struct file *, struct address_space *,
 			     loff_t, unsigned int, unsigned int, struct folio **,
 			     void **);
 extern ssize_t netfs_file_write_iter(struct kiocb *iocb, struct iov_iter *from);
+extern int netfs_writepages(struct address_space *mapping, struct writeback_control *wbc);
 extern void netfs_invalidatepage(struct page *page, unsigned int offset, unsigned int length);
 extern int netfs_releasepage(struct page *page, gfp_t gfp_flags);
 

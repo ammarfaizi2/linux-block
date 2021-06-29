@@ -48,7 +48,7 @@ const struct address_space_operations afs_file_aops = {
 	.releasepage	= netfs_releasepage,
 	.invalidatepage	= netfs_invalidatepage,
 	.writepage	= afs_writepage,
-	.writepages	= afs_writepages,
+	.writepages	= netfs_writepages,
 };
 
 const struct address_space_operations afs_symlink_aops = {
@@ -365,6 +365,11 @@ static void afs_free_dirty_region(struct netfs_dirty_region *region)
 	key_put(region->netfs_priv);
 }
 
+static void afs_init_wreq(struct netfs_write_request *wreq)
+{
+	//wreq->netfs_priv = key_get(afs_file_key(file));
+}
+
 static void afs_update_i_size(struct file *file, loff_t new_i_size)
 {
 	struct afs_vnode *vnode = AFS_FS_I(file_inode(file));
@@ -388,6 +393,7 @@ const struct netfs_request_ops afs_req_ops = {
 	.split_dirty_region	= afs_split_dirty_region,
 	.free_dirty_region	= afs_free_dirty_region,
 	.update_i_size		= afs_update_i_size,
+	.init_wreq		= afs_init_wreq,
 };
 
 /*
