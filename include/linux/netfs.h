@@ -158,14 +158,25 @@ struct netfs_read_request {
 #define NETFS_RREQ_DONT_UNLOCK_PAGES	3	/* Don't unlock the pages on completion */
 #define NETFS_RREQ_FAILED		4	/* The request failed */
 #define NETFS_RREQ_IN_PROGRESS		5	/* Unlocked when the request completes */
-	const struct netfs_read_request_ops *netfs_ops;
+	const struct netfs_request_ops *netfs_ops;
+};
+
+/*
+ * Per-inode description.  This must be directly after the inode struct.
+ */
+struct netfs_i_context {
+	const struct netfs_request_ops *ops;
+#ifdef CONFIG_FSCACHE
+	struct fscache_cookie	*cache;
+#endif
+	unsigned long		flags;
+#define NETFS_ICTX_NEW_CONTENT	0		/* Set if file has new content (create/trunc-0) */
 };
 
 /*
  * Operations the network filesystem can/must provide to the helpers.
  */
-struct netfs_read_request_ops {
-	bool (*is_cache_enabled)(struct inode *inode);
+struct netfs_request_ops {
 	void (*init_rreq)(struct netfs_read_request *rreq, struct file *file);
 	int (*begin_cache_operation)(struct netfs_read_request *rreq);
 	void (*expand_readahead)(struct netfs_read_request *rreq);
@@ -219,20 +230,49 @@ struct netfs_cache_ops {
 };
 
 struct readahead_control;
-extern void netfs_readahead(struct readahead_control *,
-			    const struct netfs_read_request_ops *,
-			    void *);
-extern int netfs_readpage(struct file *,
-			  struct page *,
-			  const struct netfs_read_request_ops *,
-			  void *);
+extern void netfs_readahead(struct readahead_control *);
+extern int netfs_readpage(struct file *, struct page *);
 extern int netfs_write_begin(struct file *, struct address_space *,
 			     loff_t, unsigned int, unsigned int, struct page **,
-			     void **,
-			     const struct netfs_read_request_ops *,
-			     void *);
+			     void **);
 
 extern void netfs_subreq_terminated(struct netfs_read_subrequest *, ssize_t, bool);
 extern void netfs_stats_show(struct seq_file *);
+
+/**
+ * netfs_i_context - Get the netfs inode context from the inode
+ * @inode: The inode to query
+ *
+ * This function gets the netfs lib inode context from the network filesystem's
+ * inode.  It expects it to follow on directly from the VFS inode struct.
+ */
+static inline struct netfs_i_context *netfs_i_context(struct inode *inode)
+{
+	return (struct netfs_i_context *)(inode + 1);
+}
+
+static inline void netfs_i_context_init(struct inode *inode,
+					const struct netfs_request_ops *ops)
+{
+	struct netfs_i_context *ctx = netfs_i_context(inode);
+
+	ctx->ops = ops;
+}
+
+/**
+ * netfs_i_cookie - Get the cache cookie from the inode
+ * @inode: The inode to query
+ *
+ * Get the caching cookie (if enabled) from the network filesystem's inode.
+ */
+static inline struct fscache_cookie *netfs_i_cookie(struct inode *inode)
+{
+#ifdef CONFIG_FSCACHE
+	struct netfs_i_context *ctx = netfs_i_context(inode);
+	return ctx->cache;
+#else
+	return NULL;
+#endif
+}
 
 #endif /* _LINUX_NETFS_H */

@@ -18,13 +18,11 @@
 #include "internal.h"
 
 static int afs_file_mmap(struct file *file, struct vm_area_struct *vma);
-static int afs_readpage(struct file *file, struct page *page);
 static int afs_symlink_readpage(struct file *file, struct page *page);
 static void afs_invalidatepage(struct page *page, unsigned int offset,
 			       unsigned int length);
 static int afs_releasepage(struct page *page, gfp_t gfp_flags);
 
-static void afs_readahead(struct readahead_control *ractl);
 static ssize_t afs_direct_IO(struct kiocb *iocb, struct iov_iter *iter);
 
 const struct file_operations afs_file_operations = {
@@ -48,8 +46,8 @@ const struct inode_operations afs_file_inode_operations = {
 };
 
 const struct address_space_operations afs_file_aops = {
-	.readpage	= afs_readpage,
-	.readahead	= afs_readahead,
+	.readpage	= netfs_readpage,
+	.readahead	= netfs_readahead,
 	.set_page_dirty	= afs_set_page_dirty,
 	.launder_page	= afs_launder_page,
 	.releasepage	= afs_releasepage,
@@ -153,7 +151,8 @@ int afs_open(struct inode *inode, struct file *file)
 	}
 
 	if (file->f_flags & O_TRUNC)
-		set_bit(AFS_VNODE_NEW_CONTENT, &vnode->flags);
+		set_bit(NETFS_ICTX_NEW_CONTENT,
+			&netfs_i_context(&vnode->vfs_inode)->flags);
 
 	fscache_use_cookie(afs_vnode_cache(vnode), file->f_mode & FMODE_WRITE);
 
@@ -351,13 +350,6 @@ static void afs_init_rreq(struct netfs_read_request *rreq, struct file *file)
 	rreq->netfs_priv = key_get(afs_file_key(file));
 }
 
-static bool afs_is_cache_enabled(struct inode *inode)
-{
-	struct fscache_cookie *cookie = afs_vnode_cache(AFS_FS_I(inode));
-
-	return fscache_cookie_enabled(cookie) && cookie->cache_priv;
-}
-
 static int afs_begin_cache_operation(struct netfs_read_request *rreq)
 {
 	struct afs_vnode *vnode = AFS_FS_I(rreq->inode);
@@ -378,24 +370,13 @@ static void afs_priv_cleanup(struct address_space *mapping, void *netfs_priv)
 	key_put(netfs_priv);
 }
 
-const struct netfs_read_request_ops afs_req_ops = {
+const struct netfs_request_ops afs_req_ops = {
 	.init_rreq		= afs_init_rreq,
-	.is_cache_enabled	= afs_is_cache_enabled,
 	.begin_cache_operation	= afs_begin_cache_operation,
 	.check_write_begin	= afs_check_write_begin,
 	.issue_op		= afs_req_issue_op,
 	.cleanup		= afs_priv_cleanup,
 };
-
-static int afs_readpage(struct file *file, struct page *page)
-{
-	return netfs_readpage(file, page, &afs_req_ops, NULL);
-}
-
-static void afs_readahead(struct readahead_control *ractl)
-{
-	netfs_readahead(ractl, &afs_req_ops, NULL);
-}
 
 int afs_write_inode(struct inode *inode, struct writeback_control *wbc)
 {

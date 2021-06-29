@@ -692,7 +692,7 @@ static struct inode *afs_alloc_inode(struct super_block *sb)
 	vnode->lock_key		= NULL;
 	vnode->permit_cache	= NULL;
 #ifdef CONFIG_AFS_FSCACHE
-	vnode->cache		= NULL;
+	vnode->netfs_ctx.cache	= NULL;
 #endif
 
 	vnode->flags		= 1 << AFS_VNODE_UNSET;

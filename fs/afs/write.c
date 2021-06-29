@@ -49,8 +49,7 @@ int afs_write_begin(struct file *file, struct address_space *mapping,
 	 * file.  We need to do this before we get a lock on the page in case
 	 * there's more than one writer competing for the same cache block.
 	 */
-	ret = netfs_write_begin(file, mapping, pos, len, flags, &page, fsdata,
-				&afs_req_ops, NULL);
+	ret = netfs_write_begin(file, mapping, pos, len, flags, &page, fsdata);
 	if (ret < 0)
 		return ret;
 
@@ -76,7 +75,7 @@ try_again:
 		 * spaces to be merged into writes.  If it's not, only write
 		 * back what the user gives us.
 		 */
-		if (!test_bit(AFS_VNODE_NEW_CONTENT, &vnode->flags) &&
+		if (!test_bit(NETFS_ICTX_NEW_CONTENT, &vnode->netfs_ctx.flags) &&
 		    (to < f || from > t))
 			goto flush_conflicting_write;
 	}
@@ -557,7 +556,7 @@ static ssize_t afs_write_back_from_locked_page(struct address_space *mapping,
 	unsigned long priv;
 	unsigned int offset, to, len, max_len;
 	loff_t i_size = i_size_read(&vnode->vfs_inode);
-	bool new_content = test_bit(AFS_VNODE_NEW_CONTENT, &vnode->flags);
+	bool new_content = test_bit(NETFS_ICTX_NEW_CONTENT, &vnode->netfs_ctx.flags);
 	long count = wbc->nr_to_write;
 	int ret;
 

@@ -430,7 +430,7 @@ static void afs_get_inode_cache(struct afs_vnode *vnode)
 	struct afs_vnode_cache_aux aux;
 
 	if (vnode->status.type != AFS_FTYPE_FILE) {
-		vnode->cache = NULL;
+		vnode->netfs_ctx.cache = NULL;
 		return;
 	}
 
@@ -440,7 +440,7 @@ static void afs_get_inode_cache(struct afs_vnode *vnode)
 	key.vnode_id_ext[1]	= htonl(vnode->fid.vnode_hi);
 	afs_set_cache_aux(vnode, &aux);
 
-	vnode->cache = fscache_acquire_cookie(
+	vnode->netfs_ctx.cache = fscache_acquire_cookie(
 		vnode->volume->cache,
 		vnode->status.type == AFS_FTYPE_FILE ? 0 : FSCACHE_ADV_SINGLE_CHUNK,
 		&key, sizeof(key),
@@ -479,6 +479,7 @@ struct inode *afs_iget(struct afs_operation *op, struct afs_vnode_param *vp)
 		return inode;
 	}
 
+	netfs_i_context_init(inode, &afs_req_ops);
 	ret = afs_inode_init_from_status(op, vp, vnode);
 	if (ret < 0)
 		goto bad_inode;
@@ -535,6 +536,7 @@ struct inode *afs_root_iget(struct super_block *sb, struct key *key)
 	_debug("GOT ROOT INODE %p { vl=%llx }", inode, as->volume->vid);
 
 	BUG_ON(!(inode->i_state & I_NEW));
+	netfs_i_context_init(inode, &afs_req_ops);
 
 	vnode = AFS_FS_I(inode);
 	vnode->cb_v_break = as->volume->cb_v_break,
@@ -803,9 +805,9 @@ void afs_evict_inode(struct inode *inode)
 	}
 
 #ifdef CONFIG_AFS_FSCACHE
-	fscache_relinquish_cookie(vnode->cache,
+	fscache_relinquish_cookie(vnode->netfs_ctx.cache,
 				  test_bit(AFS_VNODE_DELETED, &vnode->flags));
-	vnode->cache = NULL;
+	vnode->netfs_ctx.cache = NULL;
 #endif
 
 	afs_prune_wb_keys(vnode);
