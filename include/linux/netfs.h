@@ -129,6 +129,7 @@ struct netfs_i_context {
 	loff_t			remote_i_size;	/* Size of the remote file */
 	loff_t			zero_point;	/* Size after which we assume there's no data
 						 * on the server */
+	unsigned int		rsize;		/* Maximum read size */
 };
 
 /*

@@ -451,6 +451,7 @@ out_unlock:
 struct inode *ceph_alloc_inode(struct super_block *sb)
 {
 	struct ceph_inode_info *ci;
+	struct netfs_i_context *ctx;
 	int i;
 
 	ci = alloc_inode_sb(sb, ceph_inode_cachep, GFP_NOFS);
@@ -460,7 +461,9 @@ struct inode *ceph_alloc_inode(struct super_block *sb)
 	dout("alloc_inode %p\n", &ci->vfs_inode);
 
 	/* Set parameters for the netfs library */
+	ctx = netfs_i_context(&ci->vfs_inode);
 	netfs_i_context_init(&ci->vfs_inode, &ceph_netfs_ops);
+	ctx->rsize = 1024 * 1024;
 
 	spin_lock_init(&ci->i_ceph_lock);
 
