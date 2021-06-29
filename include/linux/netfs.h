@@ -251,6 +251,7 @@ struct netfs_io_request {
 #define NETFS_RREQ_WRITE_TO_CACHE	8	/* Need to write to the cache */
 #define NETFS_RREQ_UPLOAD_TO_SERVER	9	/* Need to write to the server */
 	const struct netfs_request_ops *netfs_ops;
+	void (*cleanup)(struct netfs_io_request *req);
 };
 
 /*
@@ -270,6 +271,10 @@ struct netfs_request_ops {
 	int (*check_write_begin)(struct file *file, loff_t pos, unsigned len,
 				 struct folio *folio, void **_fsdata);
 	void (*done)(struct netfs_io_request *rreq);
+
+	/* Write request handling */
+	void (*create_write_requests)(struct netfs_io_request *wreq);
+	void (*invalidate_cache)(struct netfs_io_request *wreq);
 };
 
 /*
@@ -346,6 +351,12 @@ extern void netfs_put_subrequest(struct netfs_io_subrequest *subreq,
 				 bool was_async, enum netfs_sreq_ref_trace what);
 extern void netfs_stats_show(struct seq_file *);
 extern ssize_t netfs_direct_read_iter(struct kiocb *, struct iov_iter *);
+extern struct netfs_io_subrequest *netfs_create_write_request(
+	struct netfs_io_request *wreq, enum netfs_io_source dest,
+	loff_t start, size_t len, work_func_t worker);
+extern void netfs_write_subrequest_terminated(void *_op, ssize_t transferred_or_error,
+					      bool was_async);
+extern void netfs_queue_write_request(struct netfs_io_subrequest *subreq);
 
 /**
  * netfs_inode - Get the netfs inode context from the inode

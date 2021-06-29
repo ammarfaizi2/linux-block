@@ -35,9 +35,13 @@
 	EM(netfs_rreq_trace_copy,		"COPY   ")	\
 	EM(netfs_rreq_trace_done,		"DONE   ")	\
 	EM(netfs_rreq_trace_free,		"FREE   ")	\
+	EM(netfs_rreq_trace_redirty,		"REDIRTY")	\
 	EM(netfs_rreq_trace_resubmit,		"RESUBMT")	\
 	EM(netfs_rreq_trace_unlock,		"UNLOCK ")	\
-	E_(netfs_rreq_trace_unmark,		"UNMARK ")
+	EM(netfs_rreq_trace_unmark,		"UNMARK ")	\
+	EM(netfs_rreq_trace_wait_ip,		"WAIT-IP")	\
+	EM(netfs_rreq_trace_wake_ip,		"WAKE-IP")	\
+	E_(netfs_rreq_trace_write_done,		"WR-DONE")
 
 #define netfs_sreq_sources					\
 	EM(NETFS_FILL_WITH_ZEROES,		"ZERO")		\
@@ -68,9 +72,11 @@
 	EM(netfs_fail_dio_read_zero,		"dio-read-zero")	\
 	EM(netfs_fail_read,			"read")			\
 	EM(netfs_fail_short_read,		"short-read")		\
-	E_(netfs_fail_prepare_write,		"prep-write")
+	EM(netfs_fail_prepare_write,		"prep-write")		\
+	E_(netfs_fail_write,			"write")
 
 #define netfs_rreq_ref_traces					\
+	EM(netfs_rreq_trace_get_for_outstanding,"GET OUTSTND")	\
 	EM(netfs_rreq_trace_get_hold,		"GET HOLD   ")	\
 	EM(netfs_rreq_trace_get_subreq,		"GET SUBREQ ")	\
 	EM(netfs_rreq_trace_put_complete,	"PUT COMPLT ")	\
@@ -78,7 +84,9 @@
 	EM(netfs_rreq_trace_put_failed,		"PUT FAILED ")	\
 	EM(netfs_rreq_trace_put_hold,		"PUT HOLD   ")	\
 	EM(netfs_rreq_trace_put_subreq,		"PUT SUBREQ ")	\
+	EM(netfs_rreq_trace_put_work,		"PUT WORK   ")	\
 	EM(netfs_rreq_trace_put_zero_len,	"PUT ZEROLEN")	\
+	EM(netfs_rreq_trace_see_work,		"SEE WORK   ")	\
 	E_(netfs_rreq_trace_new,		"NEW        ")
 
 #define netfs_sreq_ref_traces					\
@@ -87,9 +95,12 @@
 	EM(netfs_sreq_trace_get_short_read,	"GET SHORTRD")	\
 	EM(netfs_sreq_trace_new,		"NEW        ")	\
 	EM(netfs_sreq_trace_put_clear,		"PUT CLEAR  ")	\
+	EM(netfs_sreq_trace_put_discard,	"PUT DISCARD")	\
 	EM(netfs_sreq_trace_put_failed,		"PUT FAILED ")	\
 	EM(netfs_sreq_trace_put_merged,		"PUT MERGED ")	\
 	EM(netfs_sreq_trace_put_no_copy,	"PUT NO COPY")	\
+	EM(netfs_sreq_trace_put_wip,		"PUT WIP    ")	\
+	EM(netfs_sreq_trace_put_work,		"PUT WORK   ")	\
 	E_(netfs_sreq_trace_put_terminated,	"PUT TERM   ")
 
 #ifndef __NETFS_DECLARE_TRACE_ENUMS_ONCE_ONLY
@@ -323,6 +334,41 @@ TRACE_EVENT(netfs_sreq_ref,
 		      __entry->subreq,
 		      __print_symbolic(__entry->what, netfs_sreq_ref_traces),
 		      __entry->ref)
+	    );
+
+TRACE_EVENT(netfs_wback,
+	    TP_PROTO(const struct netfs_io_request *wreq),
+
+	    TP_ARGS(wreq),
+
+	    TP_STRUCT__entry(
+		    __field(unsigned int,		wreq		)
+		    __field(unsigned int,		cookie		)
+		    __field(unsigned int,		region		)
+		    __field(unsigned long long,		start		)
+		    __field(size_t,			len		)
+		    __field(pgoff_t,			first		)
+		    __field(pgoff_t,			last		)
+			     ),
+
+	    TP_fast_assign(
+		    struct netfs_inode *__ctx = netfs_inode(wreq->inode);
+		    struct fscache_cookie *__cookie = netfs_i_cookie(__ctx);
+		    __entry->wreq	= wreq->debug_id;
+		    __entry->cookie	= __cookie ? __cookie->debug_id : 0;
+		    __entry->region	= 0;
+		    __entry->start	= wreq->start;
+		    __entry->len	= wreq->len;
+		    __entry->first	= wreq->first;
+		    __entry->last	= wreq->last;
+			   ),
+
+	    TP_printk("R=%08x c=%08x D=%x by=%llx-%llx pg=%lx-%lx",
+		      __entry->wreq,
+		      __entry->cookie,
+		      __entry->region,
+		      __entry->start, __entry->start + __entry->len - 1,
+		      __entry->first, __entry->last)
 	    );
 
 #undef EM
