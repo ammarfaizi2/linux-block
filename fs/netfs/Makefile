@@ -6,7 +6,8 @@ netfs-y := \
 	io.o \
 	main.o \
 	misc.o \
-	objects.o
+	objects.o \
+	output.o
 
 netfs-$(CONFIG_NETFS_STATS) += stats.o
 

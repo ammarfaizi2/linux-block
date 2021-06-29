@@ -93,6 +93,11 @@ static inline void netfs_see_request(struct netfs_io_request *rreq,
 }
 
 /*
+ * output.c
+ */
+int netfs_begin_write(struct netfs_io_request *wreq, bool may_wait);
+
+/*
  * stats.c
  */
 #ifdef CONFIG_NETFS_STATS
