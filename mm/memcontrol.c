@@ -1159,9 +1159,10 @@ void lruvec_memcg_debug(struct lruvec *lruvec, struct page *page)
  */
 struct lruvec *lock_page_lruvec(struct page *page)
 {
+	struct folio *folio = page_folio(page);
 	struct lruvec *lruvec;
 
-	lruvec = mem_cgroup_page_lruvec(page);
+	lruvec = folio_lruvec(folio);
 	spin_lock(&lruvec->lru_lock);
 
 	lruvec_memcg_debug(lruvec, page);
@@ -1171,9 +1172,10 @@ struct lruvec *lock_page_lruvec(struct page *page)
 
 struct lruvec *lock_page_lruvec_irq(struct page *page)
 {
+	struct folio *folio = page_folio(page);
 	struct lruvec *lruvec;
 
-	lruvec = mem_cgroup_page_lruvec(page);
+	lruvec = folio_lruvec(folio);
 	spin_lock_irq(&lruvec->lru_lock);
 
 	lruvec_memcg_debug(lruvec, page);
@@ -1183,9 +1185,10 @@ struct lruvec *lock_page_lruvec_irq(struct page *page)
 
 struct lruvec *lock_page_lruvec_irqsave(struct page *page, unsigned long *flags)
 {
+	struct folio *folio = page_folio(page);
 	struct lruvec *lruvec;
 
-	lruvec = mem_cgroup_page_lruvec(page);
+	lruvec = folio_lruvec(folio);
 	spin_lock_irqsave(&lruvec->lru_lock, *flags);
 
 	lruvec_memcg_debug(lruvec, page);
