@@ -91,6 +91,7 @@ static void netfs_init_dirty_region(struct netfs_dirty_region *region,
 	region->dirty.end	= proposal->start;
 	region->bounds.start	= round_down(proposal->start, bsize);
 	region->bounds.end	= round_up  (proposal->end,   bsize);
+	region->will_modify_to	= proposal->end;
 	region->debug_id	= atomic_inc_return(&netfs_region_debug_ids);
 	INIT_LIST_HEAD(&region->dirty_link);
 	INIT_LIST_HEAD(&region->flush_link);

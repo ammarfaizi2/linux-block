@@ -12,9 +12,302 @@
 #include <linux/writeback.h>
 #include "internal.h"
 
+static void list_excise(struct list_head *first,
+			struct list_head *last)
+{
+	struct list_head *prev = first->prev, *next = last->next;
+
+	prev->next = next;
+	next->prev = prev;
+	first->prev = last;
+	last->next = first;
+}
+
+/*
+ * Fix up the dirty list upon completion of write.
+ */
+static void netfs_fix_up_dirty_list(struct netfs_writeback *wback)
+{
+	struct netfs_dirty_region *first, *last, *r;
+	struct netfs_i_context *ctx = netfs_i_context(wback->inode);
+	unsigned long long available_to;
+	struct list_head *lower, *upper, *p;
+
+	netfs_end_writeback(wback);
+
+	first = list_first_entry(&wback->regions, struct netfs_dirty_region, flush_link);
+	last = list_last_entry(&wback->regions, struct netfs_dirty_region, flush_link);
+
+	spin_lock(&ctx->lock);
+	if (wback->coverage.end > ctx->remote_i_size)
+		ctx->remote_i_size = wback->coverage.end;
+
+	/* Find the bounds of the region we're going to make available. */
+	lower = &ctx->dirty_regions;
+	r = first;
+	list_for_each_entry_continue_reverse(r, &ctx->dirty_regions, dirty_link) {
+		_debug("- back fix %x", r->debug_id);
+		if (r->state >= NETFS_REGION_IS_DIRTY) {
+			lower = &r->dirty_link;
+			break;
+		}
+	}
+
+	available_to = ULLONG_MAX;
+	upper = &ctx->dirty_regions;
+	r = last;
+	list_for_each_entry_continue(r, &ctx->dirty_regions, dirty_link) {
+		_debug("- forw fix %x", r->debug_id);
+		if (r->state >= NETFS_REGION_IS_DIRTY) {
+			available_to = r->dirty.start;
+			upper = &r->dirty_link;
+			break;
+		}
+	}
+
+	/* Remove the sequence of regions we've just written from the dirty
+	 * list then poke any waiting writer if they're now cleared to proceed.
+	 */
+	list_excise(&first->dirty_link, &last->dirty_link);
+
+	for (p = lower->next; p != upper; p = p->next) {
+		r = list_entry(p, struct netfs_dirty_region, dirty_link);
+		if (r->will_modify_to <= available_to) {
+			smp_store_release(&r->state, NETFS_REGION_IS_ACTIVE);
+			trace_netfs_dirty(ctx, r, NULL, netfs_dirty_trace_activate);
+			wake_up_var(&r->state);
+		}
+	}
+
+	spin_unlock(&ctx->lock);
+
+	list_for_each_entry(r, &wback->regions, flush_link) {
+		smp_store_release(&r->state, NETFS_REGION_IS_COMPLETE);
+		trace_netfs_dirty(ctx, r, NULL, netfs_dirty_trace_complete);
+		netfs_put_dirty_region(ctx, r, netfs_region_trace_put_written);
+	}
+}
+
+/*
+ * Process a completed write request once all the component operations have
+ * been completed.
+ */
+static void netfs_write_completed(struct netfs_writeback *wback, bool was_async)
+{
+	struct netfs_write_request *wreq;
+	struct netfs_i_context *ctx = netfs_i_context(wback->inode);
+
+	_enter("%x[]", wback->debug_id);
+
+	list_for_each_entry(wreq, &wback->writes, wback_link) {
+		if (!wreq->error)
+			continue;
+		switch (wreq->dest) {
+		case NETFS_UPLOAD_TO_SERVER:
+			/* Depending on the type of failure, this may prevent
+			 * writeback completion unless we're in disconnected
+			 * mode.
+			 */
+			if (!wback->error)
+				wback->error = wreq->error;
+			break;
+
+		case NETFS_WRITE_TO_CACHE:
+			/* Failure doesn't prevent writeback completion unless
+			 * we're in disconnected mode.
+			 */
+			if (wreq->error != -ENOBUFS)
+				ctx->ops->invalidate_cache(wback);
+			break;
+
+		default:
+			WARN_ON_ONCE(1);
+			if (!wback->error)
+				wback->error = -EIO;
+			return;
+		}
+	}
+
+	if (wback->error)
+		netfs_redirty_folios(wback);
+	else
+		netfs_fix_up_dirty_list(wback);
+
+	while ((wreq = list_first_entry_or_null(&wback->writes,
+						struct netfs_write_request, wback_link))) {
+		list_del_init(&wreq->wback_link);
+		netfs_put_write_request(wreq, false, netfs_wback_trace_put_cleanup);
+	}
+
+	netfs_put_writeback(wback, was_async, netfs_wback_trace_put_for_outstanding);
+}
+
+/*
+ * Deal with the completion of writing the data to the cache.
+ */
+void netfs_write_request_completed(void *_op, ssize_t transferred_or_error,
+				   bool was_async)
+{
+	struct netfs_write_request *wreq = _op;
+	struct netfs_writeback *wback = wreq->wback;
+
+	_enter("%x[%x] %zd", wback->debug_id, wreq->debug_index, transferred_or_error);
+
+	if (IS_ERR_VALUE(transferred_or_error))
+		wreq->error = transferred_or_error;
+	switch (wreq->dest) {
+	case NETFS_UPLOAD_TO_SERVER:
+		if (wreq->error)
+			netfs_stat(&netfs_n_wh_upload_failed);
+		else
+			netfs_stat(&netfs_n_wh_upload_done);
+		break;
+	case NETFS_WRITE_TO_CACHE:
+		if (wreq->error)
+			netfs_stat(&netfs_n_wh_write_failed);
+		else
+			netfs_stat(&netfs_n_wh_write_done);
+		break;
+	case NETFS_INVALID_WRITE:
+		break;
+	}
+
+	trace_netfs_wreq(wreq, netfs_wreq_trace_complete);
+	if (atomic_dec_and_test(&wback->outstanding))
+		netfs_write_completed(wback, was_async);
+}
+EXPORT_SYMBOL(netfs_write_request_completed);
+
+static void netfs_write_to_cache_op(struct netfs_write_request *wreq)
+{
+	struct netfs_cache_resources *cres = &wreq->cache_resources;
+
+	trace_netfs_wreq(wreq, netfs_wreq_trace_submit);
+
+	cres->ops->write(cres, wreq->start, &wreq->source,
+			 netfs_write_request_completed, wreq);
+}
+
+static void netfs_write_to_cache_op_worker(struct work_struct *work)
+{
+	struct netfs_write_request *wreq =
+		container_of(work, struct netfs_write_request, work);
+
+	netfs_write_to_cache_op(wreq);
+	netfs_put_write_request(wreq, false, netfs_wback_trace_put_wreq_work);
+}
+
+/**
+ * netfs_queue_write_request - Queue a write request for attention
+ * @wreq: The write request to be queued
+ *
+ * Queue the specified write request for processing by a worker thread.  We
+ * pass the caller's ref on the request to the worker thread.
+ */
+void netfs_queue_write_request(struct netfs_write_request *wreq)
+{
+	if (!queue_work(system_unbound_wq, &wreq->work))
+		netfs_put_write_request(wreq, false, netfs_wback_trace_put_wip);
+}
+EXPORT_SYMBOL(netfs_queue_write_request);
+
+/*
+ * Set up a op for writing to the cache.
+ */
+static void netfs_set_up_write_to_cache(struct netfs_writeback *wback)
+{
+	struct netfs_cache_resources *cres;
+	struct netfs_write_request *wreq;
+	struct fscache_cookie *cookie = netfs_i_cookie(wback->inode);
+	loff_t start = wback->coverage.start;
+	size_t len = wback->coverage.end - wback->coverage.start;
+	int ret;
+
+	if (!fscache_cookie_enabled(cookie)) {
+		clear_bit(NETFS_WBACK_WRITE_TO_CACHE, &wback->flags);
+		return;
+	}
+
+	wreq = netfs_create_write_request(wback, NETFS_WRITE_TO_CACHE, start, len,
+					  netfs_write_to_cache_op_worker);
+	if (!wreq)
+		return;
+
+	cres = &wreq->cache_resources;
+	ret = fscache_begin_write_operation(cres, cookie);
+	if (ret < 0) {
+		netfs_write_request_completed(wreq, ret, false);
+		netfs_put_write_request(wreq, false, netfs_wback_trace_put_discard);
+		return;
+	}
+
+	ret = cres->ops->prepare_write(cres, &start, &len, i_size_read(wback->inode),
+				       true);
+	if (ret < 0) {
+		netfs_write_request_completed(wreq, ret, false);
+		netfs_put_write_request(wreq, false, netfs_wback_trace_put_discard);
+		return;
+	}
+
+	netfs_queue_write_request(wreq);
+}
+
+/*
+ * Process a write request.
+ *
+ * All the folios in the bounding box have had a ref taken on them and those
+ * covering the dirty region have been marked as being written back and their
+ * dirty bits provisionally cleared.
+ */
+static void netfs_writeback(struct netfs_writeback *wback)
+{
+	struct netfs_i_context *ctx = netfs_i_context(wback->inode);
+
+	_enter("");
+
+	/* TODO: Encrypt or compress the region as appropriate */
+
+	/* ->outstanding > 0 carries a ref */
+	netfs_get_writeback(wback, netfs_wback_trace_get_for_outstanding);
+
+	/* We need to write all of the region to the cache */
+	if (test_bit(NETFS_WBACK_WRITE_TO_CACHE, &wback->flags))
+		netfs_set_up_write_to_cache(wback);
+
+	/* However, we don't necessarily write all of the region to the server.
+	 * Caching of reads is being managed this way also.
+	 */
+	if (test_bit(NETFS_WBACK_UPLOAD_TO_SERVER, &wback->flags))
+		ctx->ops->create_write_requests(wback);
+
+	if (atomic_dec_and_test(&wback->outstanding))
+		netfs_write_completed(wback, false);
+}
+
 void netfs_writeback_worker(struct work_struct *work)
 {
-	BUG(); // TODO
+	struct netfs_writeback *wback =
+		container_of(work, struct netfs_writeback, work);
+
+	netfs_see_writeback(wback, netfs_wback_trace_see_work);
+	netfs_writeback(wback);
+	netfs_put_writeback(wback, false, netfs_wback_trace_put_work);
+}
+
+static void netfs_set_folios_writeback_work(struct work_struct *work)
+{
+	struct netfs_writeback *wback =
+		container_of(work, struct netfs_writeback, work);
+
+	netfs_see_writeback(wback, netfs_wback_trace_see_work);
+	if (netfs_lock_folios(wback, true) == 0) {
+		netfs_mark_folios_for_writeback(wback, wback->first, wback->last);
+		netfs_unlock_folios(wback->mapping, wback->first, wback->last);
+		wback->work.func = netfs_writeback_worker;
+	}
+
+	if (!queue_work(system_unbound_wq, &wback->work))
+		BUG();
 }
 
 /*
@@ -46,9 +339,23 @@ void netfs_writeback_worker(struct work_struct *work)
  */
 static int netfs_begin_write(struct netfs_writeback *wback, bool may_wait)
 {
+	int ret;
+
 	trace_netfs_wback(wback);
 
-	BUG(); // TODO
+	ret = netfs_lock_folios(wback, may_wait);
+	if (ret < 0) {
+		wback->work.func = netfs_set_folios_writeback_work;
+		if (!queue_work(system_unbound_wq, &wback->work))
+			BUG();
+	} else {
+		netfs_mark_folios_for_writeback(wback, wback->first, wback->last);
+		netfs_unlock_folios(wback->mapping, wback->first, wback->last);
+		if (!queue_work(system_unbound_wq, &wback->work))
+			BUG();
+	}
+	_leave(" = %lu", wback->last - wback->first + 1);
+	return wback->last - wback->first + 1;
 }
 
 /*

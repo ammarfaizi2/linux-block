@@ -19,7 +19,7 @@
 #include <linux/pagemap.h>
 #include <linux/uio.h>
 
-enum netfs_wreq_trace;
+enum netfs_wback_trace;
 
 /*
  * Overload PG_private_2 to give us PG_fscache - this is used to indicate that
@@ -280,6 +280,7 @@ struct netfs_dirty_region {
 	void			*netfs_priv;	/* Private data for the netfs */
 	struct netfs_range	bounds;		/* Bounding box including all affected pages */
 	struct netfs_range	dirty;		/* The region that has been modified */
+	unsigned long long	will_modify_to;	/* End of modification op */
 	size_t			credit;		/* Amount of credit used */
 	enum netfs_region_type	type;
 	enum netfs_region_state	state;
@@ -298,19 +299,44 @@ enum netfs_write_dest {
 } __mode(byte);
 
 /*
+ * Descriptor for a write operation.  Each operation represents an individual
+ * write to a server, a cache, a journal, etc..
+ *
+ * The source buffer iterator is persistent for the life of the
+ * netfs_write_request struct and the pages it points to can be relied on to
+ * exist for the duration.
+ */
+struct netfs_write_request {
+	struct netfs_writeback *wback;	/* Supervising write request */
+	struct netfs_cache_resources cache_resources;
+	struct work_struct	work;
+	struct list_head	wback_link;	/* Link in wback->writes */
+	struct iov_iter		source;		/* Persistent buffer to obtain data from */
+	loff_t			start;		/* Where to start the I/O */
+	size_t			len;		/* Size of the I/O */
+	size_t			transferred;	/* Amount of data transferred */
+	refcount_t		ref;
+	short			error;		/* 0 or error that occurred */
+	unsigned short		debug_index;	/* Index in list (for debugging output) */
+	enum netfs_write_dest	dest;		/* Where to write to */
+};
+
+/*
  * Descriptor for a writeback slice.  This is used to manage the preparation
  * and storage of a sequence of dirty data - its compression/encryption and its
  * writing to one or more servers and the cache.
  *
- * The prepared data is buffered here.
+ * The prepared data is buffered here, and write operations are used to
+ * distribute the buffer to various destinations (servers, caches, etc.).
  */
 struct netfs_writeback {
 	struct work_struct	work;
 	struct inode		*inode;		/* The file being accessed */
 	struct address_space	*mapping;	/* The mapping being accessed */
 	struct xarray		buffer;		/* Buffer for encrypted/compressed data */
-	struct list_head	proc_link;	/* Link in netfs_wreqs */
+	struct list_head	proc_link;	/* Link in netfs_wbacks */
 	struct list_head	regions;	/* The contributory regions (by ->flush_link)  */
+	struct list_head	writes;		/* The write requests involved */
 	struct netfs_flush_group *group;	/* Flush group this write is from */
 	rwlock_t		regions_lock;	/* Lock for ->regions */
 	void			*netfs_priv;	/* Private data for the netfs */
@@ -369,6 +395,9 @@ struct netfs_request_ops {
 
 	/* Write request handling */
 	void (*init_writeback)(struct netfs_writeback *wback);
+	void (*create_write_requests)(struct netfs_writeback *wback);
+	void (*free_write_request)(struct netfs_write_request *wreq);
+	void (*invalidate_cache)(struct netfs_writeback *wback);
 };
 
 /*
@@ -436,6 +465,18 @@ extern void netfs_subreq_terminated(struct netfs_read_subrequest *, ssize_t, boo
 extern void netfs_stats_show(struct seq_file *);
 extern ssize_t netfs_direct_read_iter(struct kiocb *, struct iov_iter *);
 extern struct netfs_flush_group *netfs_new_flush_group(struct inode *, void *);
+extern struct netfs_write_request *netfs_create_write_request(
+	struct netfs_writeback *wback, enum netfs_write_dest dest,
+	loff_t start, size_t len, work_func_t worker);
+extern void netfs_put_writeback(struct netfs_writeback *wback,
+				bool was_async, enum netfs_wback_trace what);
+extern void netfs_queue_write_request(struct netfs_write_request *wreq);
+extern void netfs_get_write_request(struct netfs_write_request *wreq,
+				      enum netfs_wback_trace what);
+extern void netfs_put_write_request(struct netfs_write_request *wreq,
+				    bool was_async, enum netfs_wback_trace what);
+extern void netfs_write_request_completed(void *_wreq, ssize_t transferred_or_error,
+					  bool was_async);
 
 /**
  * netfs_i_context - Get the netfs inode context from the inode

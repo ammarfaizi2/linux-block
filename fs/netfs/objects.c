@@ -180,8 +180,10 @@ struct netfs_writeback *netfs_alloc_writeback(struct address_space *mapping,
 		INIT_WORK(&wback->work, netfs_writeback_worker);
 		INIT_LIST_HEAD(&wback->proc_link);
 		INIT_LIST_HEAD(&wback->regions);
+		INIT_LIST_HEAD(&wback->writes);
 		rwlock_init(&wback->regions_lock);
 		refcount_set(&wback->usage, 1);
+		atomic_set(&wback->outstanding, 1);
 
 		ctx->ops->init_writeback(wback);
 
@@ -261,3 +263,114 @@ void netfs_put_writeback(struct netfs_writeback *wback,
 	}
 }
 EXPORT_SYMBOL(netfs_put_writeback);
+
+/**
+ * netfs_put_write_request - Drop a ref to a write operation
+ * @wreq: The request to drop a ref on
+ * @was_async: True if being called in a non-sleeping context
+ * @what: The trace tag to note.
+ *
+ * Drop a reference on a write operation and schedule it for destruction after
+ * the last ref is gone.
+ */
+void netfs_put_write_request(struct netfs_write_request *wreq,
+			     bool was_async, enum netfs_wback_trace what)
+{
+	struct netfs_writeback *wback = wreq->wback;
+	unsigned int debug_id, debug_index;
+	bool dead;
+	int ref;
+
+	debug_id = wback->debug_id;
+	debug_index = wreq->debug_index;
+	dead = __refcount_dec_and_test(&wreq->ref, &ref);
+	trace_netfs_ref_wreq(debug_id, debug_index, ref - 1, what);
+
+	if (dead) {
+		trace_netfs_wreq(wreq, netfs_wreq_trace_free);
+		if (wreq->cache_resources.ops)
+			wreq->cache_resources.ops->end_operation(&wreq->cache_resources);
+		if (wback->netfs_ops->free_write_request)
+			wback->netfs_ops->free_write_request(wreq);
+		netfs_put_writeback(wreq->wback, was_async, what);
+		kfree(wreq);
+	}
+}
+EXPORT_SYMBOL(netfs_put_write_request);
+
+/**
+ * netfs_create_write_request - Create a write operation.
+ * @wback: The write request this is storing from.
+ * @dest: The destination type
+ * @start: Start of the region this write will modify
+ * @len: Length of the modification
+ * @worker: The worker function to handle the write(s)
+ *
+ * Allocate a write operation, set it up and add it to the list on a write
+ * request.
+ */
+struct netfs_write_request *netfs_create_write_request(struct netfs_writeback *wback,
+						       enum netfs_write_dest dest,
+						       loff_t start, size_t len,
+						       work_func_t worker)
+{
+	struct netfs_write_request *wreq;
+	struct xarray *buffer;
+
+	wreq = kzalloc(sizeof(struct netfs_write_request), GFP_KERNEL);
+	if (wreq) {
+		wreq->wback	= wback;
+		wreq->dest	= dest;
+		wreq->start	= start;
+		wreq->len	= len;
+		wreq->debug_index = wback->n_ops++;
+		INIT_WORK(&wreq->work, worker);
+		refcount_set(&wreq->ref, 2);
+
+		switch (wreq->dest) {
+		case NETFS_UPLOAD_TO_SERVER:
+			netfs_stat(&netfs_n_wh_upload);
+			break;
+		case NETFS_WRITE_TO_CACHE:
+			netfs_stat(&netfs_n_wh_write);
+			break;
+		default:
+			BUG();
+		}
+
+		buffer = &wback->mapping->i_pages;
+		if (test_bit(NETFS_WBACK_BUFFERED, &wback->flags))
+			buffer = &wback->buffer;
+		iov_iter_xarray(&wreq->source, WRITE, buffer,
+				wback->coverage.start,
+				wback->coverage.end - wback->coverage.start);
+
+		trace_netfs_ref_wreq(wback->debug_id, wreq->debug_index,
+				     refcount_read(&wreq->ref),
+				     netfs_wback_trace_new);
+		netfs_get_writeback(wback, netfs_wback_trace_get_for_wreq);
+		atomic_inc(&wback->outstanding);
+		list_add_tail(&wreq->wback_link, &wback->writes);
+		trace_netfs_wreq(wreq, netfs_wreq_trace_new);
+	}
+
+	return wreq;
+}
+EXPORT_SYMBOL(netfs_create_write_request);
+
+/**
+ * netfs_get_write_request - Get a ref to a write request
+ * @wreq: The request to get a ref on
+ * @what: The trace tag to note.
+ *
+ * Get a reference on a write request.
+ */
+void netfs_get_write_request(struct netfs_write_request *wreq,
+			     enum netfs_wback_trace what)
+{
+	int ref;
+
+	__refcount_inc(&wreq->ref, &ref);
+	trace_netfs_ref_wreq(wreq->wback->debug_id, wreq->debug_index, ref + 1, what);
+}
+EXPORT_SYMBOL(netfs_get_write_request);

@@ -86,13 +86,21 @@ enum netfs_region_trace {
 	netfs_region_trace_put_wait_active,
 	netfs_region_trace_put_wback,
 	netfs_region_trace_put_write_iter,
+	netfs_region_trace_put_written,
 	netfs_region_trace_free,
 	netfs_region_trace_new,
 };
 
 enum netfs_wback_trace {
 	netfs_wback_trace_free,
+	netfs_wback_trace_get_debug,
+	netfs_wback_trace_get_for_wreq,
+	netfs_wback_trace_get_for_outstanding,
+	netfs_wback_trace_get_wreq_work,
+	netfs_wback_trace_put_cleanup,
 	netfs_wback_trace_put_discard,
+	netfs_wback_trace_put_for_outstanding,
+	netfs_wback_trace_put_wreq_work,
 	netfs_wback_trace_put_wip,
 	netfs_wback_trace_put_work,
 	netfs_wback_trace_see_lock_conflict,
@@ -100,6 +108,13 @@ enum netfs_wback_trace {
 	netfs_wback_trace_see_wb_work,
 	netfs_wback_trace_see_work,
 	netfs_wback_trace_new,
+};
+
+enum netfs_wreq_trace {
+	netfs_wreq_trace_complete,
+	netfs_wreq_trace_free,
+	netfs_wreq_trace_new,
+	netfs_wreq_trace_submit,
 };
 
 #endif
@@ -185,12 +200,20 @@ enum netfs_wback_trace {
 	EM(netfs_region_trace_put_wait_active,	"PUT WT ACTV")	\
 	EM(netfs_region_trace_put_wback,	"PUT WBACK   ")	\
 	EM(netfs_region_trace_put_write_iter,	"PUT WR-ITER")	\
+	EM(netfs_region_trace_put_written,	"PUT WRITTEN")	\
 	EM(netfs_region_trace_free,		"FREE       ")	\
 	E_(netfs_region_trace_new,		"NEW        ")
 
 #define netfs_wback_traces					\
 	EM(netfs_wback_trace_free,		"FREE       ")	\
+	EM(netfs_wback_trace_get_debug,		"GET DEBUG  ")	\
+	EM(netfs_wback_trace_get_for_wreq,	"GET WREQ   ")	\
+	EM(netfs_wback_trace_get_for_outstanding,"GET OUTSTND")	\
+	EM(netfs_wback_trace_get_wreq_work,	"GET WREQ WK")	\
+	EM(netfs_wback_trace_put_cleanup,	"PUT CLEANUP")	\
 	EM(netfs_wback_trace_put_discard,	"PUT DISCARD")	\
+	EM(netfs_wback_trace_put_for_outstanding,"PUT OUTSTND")	\
+	EM(netfs_wback_trace_put_wreq_work,	"PUT WREQ WK")	\
 	EM(netfs_wback_trace_put_wip,		"PUT WIP    ")	\
 	EM(netfs_wback_trace_put_work,		"PUT WORK   ")	\
 	EM(netfs_wback_trace_see_lock_conflict,	"SEE PG BUSY")	\
@@ -199,6 +222,16 @@ enum netfs_wback_trace {
 	EM(netfs_wback_trace_see_work,		"SEE WORK   ")	\
 	E_(netfs_wback_trace_new,		"NEW        ")
 
+#define netfs_write_destinations				\
+	EM(NETFS_UPLOAD_TO_SERVER,		"UPLD")		\
+	EM(NETFS_WRITE_TO_CACHE,		"WRIT")		\
+	E_(NETFS_INVALID_WRITE,			"INVL")
+
+#define netfs_wreq_traces					\
+	EM(netfs_wreq_trace_complete,		"DONE")		\
+	EM(netfs_wreq_trace_free,		"FREE")		\
+	EM(netfs_wreq_trace_new,		"NEW ")		\
+	E_(netfs_wreq_trace_submit,		"SUBM")
 
 /*
  * Export enum symbols via userspace.
@@ -217,6 +250,8 @@ netfs_region_types;
 netfs_region_states;
 netfs_dirty_traces;
 netfs_wback_traces;
+netfs_write_destinations;
+netfs_wreq_traces;
 
 /*
  * Now redefine the EM() and E_() macros to map the enums to the strings that
@@ -478,8 +513,9 @@ TRACE_EVENT(netfs_wback,
 	    TP_fast_assign(
 		    struct netfs_dirty_region *__region =
 		    list_first_entry(&wback->regions, struct netfs_dirty_region, flush_link);
+		    struct fscache_cookie *__cookie = netfs_i_cookie(wback->inode);
 		    __entry->wback	= wback->debug_id;
-		    __entry->cookie	= 0;
+		    __entry->cookie	= __cookie ? __cookie->debug_id : 0;
 		    __entry->region	= __region->debug_id;
 		    __entry->start	= wback->coverage.start;
 		    __entry->end	= wback->coverage.end;
@@ -512,6 +548,63 @@ TRACE_EVENT(netfs_ref_wback,
 
 	    TP_printk("W=%08x %s r=%u",
 		      __entry->wback,
+		      __print_symbolic(__entry->what, netfs_wback_traces),
+		      __entry->ref)
+	    );
+
+TRACE_EVENT(netfs_wreq,
+	    TP_PROTO(struct netfs_write_request *wreq,
+		     enum netfs_wreq_trace what),
+
+	    TP_ARGS(wreq, what),
+
+	    TP_STRUCT__entry(
+		    __field(unsigned int,		wback		)
+		    __field(unsigned short,		index		)
+		    __field(short,			error		)
+		    __field(unsigned short,		flags		)
+		    __field(enum netfs_write_dest,	dest		)
+		    __field(enum netfs_wreq_trace,	what		)
+			     ),
+
+	    TP_fast_assign(
+		    __entry->wback	= wreq->wback->debug_id;
+		    __entry->index	= wreq->debug_index;
+		    __entry->error	= wreq->error;
+		    __entry->dest	= wreq->dest;
+		    __entry->what	= what;
+			   ),
+
+	    TP_printk("W=%08x[%x] %s %s e=%d",
+		      __entry->wback, __entry->index,
+		      __print_symbolic(__entry->what, netfs_wreq_traces),
+		      __print_symbolic(__entry->dest, netfs_write_destinations),
+		      __entry->error)
+	    );
+
+TRACE_EVENT(netfs_ref_wreq,
+	    TP_PROTO(unsigned int wback_debug_id, unsigned int wreq_debug_index,
+		     int ref, enum netfs_wback_trace what),
+
+	    TP_ARGS(wback_debug_id, wreq_debug_index, ref, what),
+
+	    TP_STRUCT__entry(
+		    __field(unsigned int,		wback		)
+		    __field(unsigned int,		wreq		)
+		    __field(int,			ref		)
+		    __field(enum netfs_wback_trace,	what		)
+			     ),
+
+	    TP_fast_assign(
+		    __entry->wback	= wback_debug_id;
+		    __entry->wreq	= wreq_debug_index;
+		    __entry->ref	= ref;
+		    __entry->what	= what;
+			   ),
+
+	    TP_printk("W=%08x[%x] %s r=%u",
+		      __entry->wback,
+		      __entry->wreq,
 		      __print_symbolic(__entry->what, netfs_wback_traces),
 		      __entry->ref)
 	    );

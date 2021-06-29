@@ -424,6 +424,7 @@ const struct netfs_request_ops afs_req_ops = {
 	.update_i_size		= afs_update_i_size,
 	.validate_for_write	= afs_validate_for_write,
 	.init_writeback		= afs_init_writeback,
+	.create_write_requests	= afs_create_write_requests,
 };
 
 int afs_write_inode(struct inode *inode, struct writeback_control *wbc)
