@@ -67,6 +67,7 @@ static inline struct pci_dev *acpi_get_pci_dev(acpi_handle handle)
 
 /* Arch-defined function to add a bus to the system */
 
+struct acpi_pci_root;
 struct pci_bus *pci_acpi_scan_root(struct acpi_pci_root *root);
 
 #ifdef CONFIG_X86
