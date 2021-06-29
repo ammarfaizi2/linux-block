@@ -41,6 +41,7 @@
 	EM(netfs_rreq_trace_redirty,		"REDIRTY")	\
 	EM(netfs_rreq_trace_resubmit,		"RESUBMT")	\
 	EM(netfs_rreq_trace_unlock,		"UNLOCK ")	\
+	EM(netfs_rreq_trace_unmark,		"UNMARK ")	\
 	EM(netfs_rreq_trace_wait_ip,		"WAIT-IP")	\
 	EM(netfs_rreq_trace_wake_ip,		"WAKE-IP")	\
 	E_(netfs_rreq_trace_write_done,		"WR-DONE")
@@ -118,6 +119,8 @@
 	EM(netfs_dirty_trace_committed,		"COMMITTED ")	\
 	EM(netfs_dirty_trace_continue,		"CONTINUE  ")	\
 	EM(netfs_dirty_trace_dio_write,		"DIO WRITE ")	\
+	EM(netfs_dirty_trace_flush,		"FLUSH     ")	\
+	EM(netfs_dirty_trace_flush2,		"FLUSH!    ")	\
 	EM(netfs_dirty_trace_flush_conflict,	"FLSH CONFL")	\
 	EM(netfs_dirty_trace_flush_dsync,	"FLSH DSYNC")	\
 	EM(netfs_dirty_trace_insert,		"INSERT    ")	\
@@ -126,6 +129,8 @@
 	EM(netfs_dirty_trace_merged_prev,	"MERGE PREV")	\
 	EM(netfs_dirty_trace_modified,		"MODIFIED  ")	\
 	EM(netfs_dirty_trace_overlay_flush,	"OVERLAY FL")	\
+	EM(netfs_dirty_trace_split_off_back,	"SPLIT BACK")	\
+	EM(netfs_dirty_trace_split_off_front,	"SPLIT FRNT")	\
 	EM(netfs_dirty_trace_superseded,	"SUPERSEDED")	\
 	EM(netfs_dirty_trace_supersede,		"SUPERSEDE ")	\
 	E_(netfs_dirty_trace_wait_active,	"WAIT ACTV ")
