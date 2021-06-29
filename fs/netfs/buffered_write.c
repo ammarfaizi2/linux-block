@@ -722,6 +722,7 @@ redo_prefetch:
 		proposal.last	= folio->index + folio_nr_pages(folio) - 1;
 		proposal.type	= NETFS_MODIFIED_REGION;
 		netfs_commit_region(ctx, file, &proposal);
+		netfs_check_dirty_list('D', &ctx->dirty_regions, NULL);
 
 		folio_mark_dirty(folio);
 		folio_unlock(folio);

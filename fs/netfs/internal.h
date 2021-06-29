@@ -18,6 +18,8 @@
 /*
  * buffered_flush.c
  */
+void netfs_check_dirty_list(char c, const struct list_head *list,
+			    const struct netfs_dirty_region *star);
 int netfs_flush_conflicting_writes(struct netfs_inode *ctx, struct file *file,
 				   loff_t start, size_t len, struct folio *unlock_this);
 
@@ -118,7 +120,8 @@ extern atomic_long_t netfs_write_credit;
 
 int netfs_xa_store_and_mark(struct xarray *xa, unsigned long index,
 			    struct folio *folio, bool put_mark,
-			    bool pagecache_mark, gfp_t gfp_mask);
+			    bool pagecache_mark, bool dirty_mark,
+			    gfp_t gfp_mask);
 int netfs_add_folios_to_buffer(struct xarray *buffer,
 			       struct address_space *mapping,
 			       pgoff_t index, pgoff_t to, gfp_t gfp_mask);

@@ -17,7 +17,8 @@ atomic_long_t netfs_write_credit = ATOMIC_LONG_INIT(320 * 1024 * 1024);
  */
 int netfs_xa_store_and_mark(struct xarray *xa, unsigned long index,
 			    struct folio *folio, bool put_mark,
-			    bool pagecache_mark, gfp_t gfp_mask)
+			    bool pagecache_mark, bool dirty_mark,
+			    gfp_t gfp_mask)
 {
 	XA_STATE_ORDER(xas, xa, index, folio_order(folio));
 
@@ -37,6 +38,8 @@ retry:
 		xas_set_mark(&xas, NETFS_BUF_PUT_MARK);
 	if (pagecache_mark)
 		xas_set_mark(&xas, NETFS_BUF_PAGECACHE_MARK);
+	if (dirty_mark)
+		xas_set_mark(&xas, NETFS_BUF_DIRTY_MARK);
 	xas_unlock(&xas);
 	return xas_error(&xas);
 }
@@ -63,7 +66,7 @@ int netfs_add_folios_to_buffer(struct xarray *buffer,
 			return -ENOMEM;
 		folio->index = index;
 		ret = netfs_xa_store_and_mark(buffer, index, folio,
-					      true, false, gfp_mask);
+					      true, false, false, gfp_mask);
 		if (ret < 0) {
 			folio_put(folio);
 			return ret;
@@ -114,7 +117,7 @@ int netfs_set_up_buffer(struct xarray *buffer,
 			if (folio == keep)
 				folio_get(folio);
 			ret = netfs_xa_store_and_mark(buffer, folio->index, folio,
-						      true, true, gfp_mask);
+						      true, true, false, gfp_mask);
 			if (ret < 0) {
 				if (folio != keep)
 					folio_unlock(folio);
@@ -125,7 +128,7 @@ int netfs_set_up_buffer(struct xarray *buffer,
 	} else {
 		folio_get(keep);
 		ret = netfs_xa_store_and_mark(buffer, keep->index, keep,
-					      true, true, gfp_mask);
+					      true, true, false, gfp_mask);
 		if (ret < 0) {
 			folio_put(keep);
 			return ret;

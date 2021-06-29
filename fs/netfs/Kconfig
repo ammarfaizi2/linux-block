@@ -2,6 +2,7 @@
 
 config NETFS_SUPPORT
 	tristate
+	select XARRAY_MULTI
 	help
 	  This option enables support for network filesystems, including
 	  helpers for high-level buffered I/O, abstracting out read

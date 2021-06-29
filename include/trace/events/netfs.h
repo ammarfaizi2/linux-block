@@ -41,7 +41,9 @@
 	EM(netfs_rreq_trace_redirty,		"REDIRTY")	\
 	EM(netfs_rreq_trace_resubmit,		"RESUBMT")	\
 	EM(netfs_rreq_trace_unlock,		"UNLOCK ")	\
+	EM(netfs_rreq_trace_unmark,		"UNMARK ")	\
 	EM(netfs_rreq_trace_wait_ip,		"WAIT-IP")	\
+	EM(netfs_rreq_trace_wait_conflict,	"WAIT-CF")	\
 	EM(netfs_rreq_trace_wake_ip,		"WAKE-IP")	\
 	E_(netfs_rreq_trace_write_done,		"WR-DONE")
 
@@ -83,6 +85,7 @@
 	EM(netfs_rreq_trace_get_for_outstanding,"GET OUTSTND")	\
 	EM(netfs_rreq_trace_get_hold,		"GET HOLD   ")	\
 	EM(netfs_rreq_trace_get_subreq,		"GET SUBREQ ")	\
+	EM(netfs_rreq_trace_get_wait,		"GET WAIT   ")	\
 	EM(netfs_rreq_trace_put_complete,	"PUT COMPLT ")	\
 	EM(netfs_rreq_trace_put_discard,	"PUT DISCARD")	\
 	EM(netfs_rreq_trace_put_failed,		"PUT FAILED ")	\
@@ -109,9 +112,11 @@
 
 #define netfs_region_traces					\
 	EM(netfs_region_trace_free,		"FREE       ")	\
+	EM(netfs_region_trace_get_wback,	"GET WBACK  ")	\
 	EM(netfs_region_trace_new,		"NEW        ")	\
 	EM(netfs_region_trace_put_clear,	"PUT CLEAR  ")	\
-	E_(netfs_region_trace_put_merged,	"PUT MERGED ")
+	EM(netfs_region_trace_put_merged,	"PUT MERGED ")	\
+	E_(netfs_region_trace_put_written,	"PUT WRITTEN")
 
 #define netfs_dirty_traces					\
 	EM(netfs_dirty_trace_active,		"ACTIVE    ")	\
@@ -119,6 +124,8 @@
 	EM(netfs_dirty_trace_committed,		"COMMITTED ")	\
 	EM(netfs_dirty_trace_continue,		"CONTINUE  ")	\
 	EM(netfs_dirty_trace_dio_write,		"DIO WRITE ")	\
+	EM(netfs_dirty_trace_flush,		"FLUSH     ")	\
+	EM(netfs_dirty_trace_flush2,		"FLUSH!    ")	\
 	EM(netfs_dirty_trace_flush_conflict,	"FLSH CONFL")	\
 	EM(netfs_dirty_trace_flush_dsync,	"FLSH DSYNC")	\
 	EM(netfs_dirty_trace_insert,		"INSERT    ")	\
@@ -129,10 +136,17 @@
 	EM(netfs_dirty_trace_merged_prev_super,	"MRG PRV SU")	\
 	EM(netfs_dirty_trace_modified,		"MODIFIED  ")	\
 	EM(netfs_dirty_trace_overlay_flush,	"OVERLAY FL")	\
+	EM(netfs_dirty_trace_split,		"SPLIT     ")	\
 	EM(netfs_dirty_trace_split_c2c,		"SPLIT C2C ")	\
+	EM(netfs_dirty_trace_split_off_back,	"SPLIT BACK")	\
+	EM(netfs_dirty_trace_split_off_front,	"SPLIT FRNT")	\
 	EM(netfs_dirty_trace_superseded,	"SUPERSEDED")	\
 	EM(netfs_dirty_trace_supersede,		"SUPERSEDE ")	\
 	E_(netfs_dirty_trace_wait_active,	"WAIT ACTV ")
+
+#define netfs_folio_traces					\
+	EM(netfs_folio_trace_store,		"store ")	\
+	E_(netfs_folio_trace_store_ex,		"store+")	\
 
 #ifndef __NETFS_DECLARE_TRACE_ENUMS_ONCE_ONLY
 #define __NETFS_DECLARE_TRACE_ENUMS_ONCE_ONLY
@@ -150,6 +164,7 @@ enum netfs_rreq_ref_trace { netfs_rreq_ref_traces } __mode(byte);
 enum netfs_sreq_ref_trace { netfs_sreq_ref_traces } __mode(byte);
 enum netfs_region_trace { netfs_region_traces } __mode(byte);
 enum netfs_dirty_trace { netfs_dirty_traces } __mode(byte);
+enum netfs_folio_trace { netfs_folio_traces } __mode(byte);
 
 #endif
 
@@ -171,6 +186,7 @@ netfs_rreq_ref_traces;
 netfs_sreq_ref_traces;
 netfs_region_traces;
 netfs_dirty_traces;
+netfs_folio_traces;
 
 /*
  * Now redefine the EM() and E_() macros to map the enums to the strings that
@@ -515,6 +531,33 @@ TRACE_EVENT(netfs_wb_page,
 	    TP_printk("R=%08x pg=%lx",
 		      __entry->wreq,
 		      __entry->index)
+	    );
+
+TRACE_EVENT(netfs_folio_dirty,
+	    TP_PROTO(const struct address_space *mapping,
+		     const struct folio *folio,
+		     enum netfs_folio_trace what),
+
+	    TP_ARGS(mapping, folio, what),
+
+	    TP_STRUCT__entry(
+		    __field(ino_t,			inode		)
+		    __field(pgoff_t,			first		)
+		    __field(unsigned int,		npages		)
+		    __field(enum netfs_folio_trace,	what		)
+			     ),
+
+	    TP_fast_assign(
+		    __entry->inode = mapping->host->i_ino;
+		    __entry->first = folio->index;
+		    __entry->npages = folio_nr_pages(folio);
+		    __entry->what = what;
+			   ),
+
+	    TP_printk("I=%lx %s %lx-%lx",
+		      __entry->inode,
+		      __print_symbolic(__entry->what, netfs_folio_traces),
+		      __entry->first, __entry->first + __entry->npages - 1)
 	    );
 
 #undef EM

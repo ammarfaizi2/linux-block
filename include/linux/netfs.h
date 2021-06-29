@@ -113,6 +113,7 @@ static inline int wait_on_page_fscache_killable(struct page *page)
 /* Marks used on xarray-based buffers */
 #define NETFS_BUF_PUT_MARK	XA_MARK_0	/* - Page needs putting  */
 #define NETFS_BUF_PAGECACHE_MARK XA_MARK_1	/* - Page needs wb/dirty flag wrangling */
+#define NETFS_BUF_DIRTY_MARK	XA_MARK_2	/* - Page was dirty */
 
 enum netfs_io_source {
 	NETFS_FILL_WITH_ZEROES,
@@ -133,8 +134,10 @@ typedef void (*netfs_io_terminated_t)(void *priv, ssize_t transferred_or_error,
 struct netfs_inode {
 	struct inode		inode;		/* The VFS inode */
 	const struct netfs_request_ops *ops;
+	struct mutex		wb_mutex;	/* Mutex controlling writeback setup */
+	struct list_head	writebacks;	/* List of writebacks in progress */
 	struct list_head	dirty_regions;	/* List of dirty regions in the pagecache */
-	spinlock_t		dirty_lock;	/* Lock for dirty_regions */
+	spinlock_t		dirty_lock;	/* Lock for dirty_regions & writebacks */
 #if IS_ENABLED(CONFIG_FSCACHE)
 	struct fscache_cookie	*cache;
 #endif
@@ -230,6 +233,7 @@ struct netfs_io_request {
 	struct address_space	*mapping;	/* The mapping being accessed */
 	struct kiocb		*iocb;		/* AIO completion vector */
 	struct netfs_cache_resources cache_resources;
+	struct list_head	wb_link;	/* Link in ictx->writebacks */
 	struct list_head	proc_link;	/* Link in netfs_iorequests */
 	struct list_head	regions;	/* List of regions to be uploaded */
 	struct list_head	subrequests;	/* Contributory I/O operations */
@@ -242,6 +246,7 @@ struct netfs_io_request {
 	unsigned int		debug_id;
 	unsigned int		rsize;		/* Maximum read size (0 for none) */
 	unsigned int		wsize;		/* Maximum write size (0 for none) */
+	unsigned int		alignment;	/* Preferred alignment (1 for none) */
 	unsigned int		subreq_counter;	/* Next subreq->debug_index */
 	atomic_t		nr_outstanding;	/* Number of ops in progress */
 	size_t			submitted;	/* Amount submitted for I/O so far */
@@ -268,6 +273,7 @@ struct netfs_io_request {
 #define NETFS_RREQ_WRITE_TO_CACHE	8	/* Need to write to the cache */
 #define NETFS_RREQ_UPLOAD_TO_SERVER	9	/* Need to write to the server */
 #define NETFS_RREQ_CONTENT_ENCRYPTION	10	/* Content encryption is in use */
+#define NETFS_RREQ_SETTING_UP		11	/* Setting up the writeback */
 	const struct netfs_request_ops *netfs_ops;
 	void (*cleanup)(struct netfs_io_request *req);
 };
@@ -411,6 +417,7 @@ extern int netfs_write_begin(struct netfs_inode *,
 			     void **);
 extern ssize_t netfs_file_write_iter(struct kiocb *iocb, struct iov_iter *from);
 extern vm_fault_t netfs_page_mkwrite(struct vm_fault *vmf);
+extern int netfs_writepages(struct address_space *mapping, struct writeback_control *wbc);
 extern void netfs_invalidate_folio(struct folio *folio, size_t offset, size_t length);
 extern bool netfs_release_folio(struct folio *folio, gfp_t gfp);
 
@@ -454,8 +461,10 @@ static inline void netfs_inode_init(struct netfs_inode *ctx,
 	ctx->ops = ops;
 	ctx->remote_i_size = i_size_read(&ctx->inode);
 	ctx->zero_point = ctx->remote_i_size;
+	INIT_LIST_HEAD(&ctx->writebacks);
 	INIT_LIST_HEAD(&ctx->dirty_regions);
 	spin_lock_init(&ctx->dirty_lock);
+	mutex_init(&ctx->wb_mutex);
 #if IS_ENABLED(CONFIG_FSCACHE)
 	ctx->cache = NULL;
 #endif
