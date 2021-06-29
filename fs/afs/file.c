@@ -356,6 +356,7 @@ static int afs_symlink_read_folio(struct file *file, struct folio *folio)
 static int afs_init_request(struct netfs_io_request *rreq, struct file *file)
 {
 	rreq->netfs_priv = key_get(afs_file_key(file));
+	rreq->rsize = 4 * 1024 * 1024;
 	return 0;
 }
 
