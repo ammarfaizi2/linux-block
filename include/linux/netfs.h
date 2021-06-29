@@ -134,6 +134,8 @@ struct netfs_i_context {
 	loff_t			remote_i_size;	/* Size of the remote file */
 	loff_t			zero_point;	/* Size after which we assume there's no data
 						 * on the server */
+	unsigned char		min_bshift;	/* log2 min block size for bounding box or 0 */
+	unsigned char		obj_bshift;	/* log2 storage object shift (ceph/pnfs) or 0 */
 };
 
 /*
@@ -207,6 +209,7 @@ struct netfs_io_request {
 	unsigned int		direct_bv_count; /* Number of elements in bv[] */
 	unsigned int		debug_id;
 	unsigned int		rsize;		/* Maximum read size */
+	unsigned int		wsize;		/* Maximum write size */
 	atomic_t		nr_outstanding;	/* Number of ops in progress */
 	atomic_t		nr_copy_ops;	/* Number of copy-to-cache ops in progress */
 	size_t			submitted;	/* Amount submitted for I/O so far */
