@@ -68,7 +68,7 @@ extern void __cifs_readpage_to_fscache(struct inode *, struct page *);
 
 static inline struct fscache_cookie *cifs_inode_cookie(struct inode *inode)
 {
-	return CIFS_I(inode)->fscache;
+	return netfs_i_cookie(inode);
 }
 
 static inline void cifs_invalidate_cache(struct inode *inode, unsigned int flags)
@@ -83,7 +83,7 @@ static inline void cifs_invalidate_cache(struct inode *inode, unsigned int flags
 static inline int cifs_readpage_from_fscache(struct inode *inode,
 					     struct page *page)
 {
-	if (CIFS_I(inode)->fscache)
+	if (cifs_inode_cookie(inode))
 		return __cifs_readpage_from_fscache(inode, page);
 
 	return -ENOBUFS;
@@ -94,7 +94,7 @@ static inline int cifs_readpages_from_fscache(struct inode *inode,
 					      struct list_head *pages,
 					      unsigned *nr_pages)
 {
-	if (CIFS_I(inode)->fscache)
+	if (cifs_inode_cookie(inode))
 		return __cifs_readpages_from_fscache(inode, mapping, pages,
 						     nr_pages);
 	return -ENOBUFS;

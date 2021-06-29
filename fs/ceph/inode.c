@@ -445,6 +445,7 @@ out_unlock:
 struct inode *ceph_alloc_inode(struct super_block *sb)
 {
 	struct ceph_inode_info *ci;
+	struct netfs_i_context *ctx;
 	int i;
 
 	ci = kmem_cache_alloc(ceph_inode_cachep, GFP_NOFS);
@@ -452,6 +453,13 @@ struct inode *ceph_alloc_inode(struct super_block *sb)
 		return NULL;
 
 	dout("alloc_inode %p\n", &ci->vfs_inode);
+
+	/* Set parameters for the netfs library */
+	ctx = netfs_i_context(&ci->vfs_inode);
+	netfs_i_context_init(&ci->vfs_inode, &ceph_netfs_ops);
+	ctx->wsize = 1024 * 1024;
+	ctx->min_bshift = ilog2(0x10000);
+	ctx->obj_bshift = ilog2(0x40000);
 
 	spin_lock_init(&ci->i_ceph_lock);
 
@@ -538,9 +546,6 @@ struct inode *ceph_alloc_inode(struct super_block *sb)
 	INIT_WORK(&ci->i_work, ceph_inode_work);
 	ci->i_work_mask = 0;
 	memset(&ci->i_btime, '\0', sizeof(ci->i_btime));
-
-	ceph_fscache_inode_init(ci);
-
 	return &ci->vfs_inode;
 }
 
