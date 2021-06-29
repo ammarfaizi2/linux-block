@@ -294,11 +294,34 @@ enum netfs_write_dest {
 } __mode(byte);
 
 /*
+ * Descriptor for a write operation.  Each operation represents an individual
+ * write to a server, a cache, a journal, etc..
+ *
+ * The source buffer iterator is persistent for the life of the
+ * netfs_write_operation struct and the pages it points to can be relied on to
+ * exist for the duration.
+ */
+struct netfs_write_operation {
+	struct netfs_write_request *wreq;	/* Supervising write request */
+	struct work_struct	work;
+	struct list_head	wreq_link;	/* Link in wreq->operations */
+	struct iov_iter		source;		/* Persistent buffer to obtain data from */
+	loff_t			start;		/* Where to start the I/O */
+	size_t			len;		/* Size of the I/O */
+	size_t			transferred;	/* Amount of data transferred */
+	refcount_t		ref;
+	short			error;		/* 0 or error that occurred */
+	unsigned short		debug_index;	/* Index in list (for debugging output) */
+	enum netfs_write_dest	dest;		/* Where to write to */
+};
+
+/*
  * Descriptor for a write request.  This is used to manage the preparation and
  * storage of a sequence of dirty data - its compression/encryption and its
  * writing to one or more servers and the cache.
  *
- * The prepared data is buffered here.
+ * The prepared data is buffered here, and write operations are used to
+ * distribute the buffer to various destinations (servers, caches, etc.).
  */
 struct netfs_write_request {
 	struct work_struct	work;
@@ -307,14 +330,17 @@ struct netfs_write_request {
 	struct netfs_cache_resources cache_resources;
 	struct xarray		buffer;		/* Buffer for encrypted/compressed data */
 	struct list_head	regions;	/* The contributory regions (by ->flush_link)  */
+	struct list_head	operations;	/* The write operations involved */
 	struct netfs_flush_group *group;	/* Flush group this write is from */
 	rwlock_t		regions_lock;	/* Lock for ->regions */
 	void			*netfs_priv;	/* Private data for the netfs */
 	unsigned int		debug_id;
+	unsigned char		n_ops;		/* Number of ops allocated */
 	short			error;		/* 0 or error that occurred */
 	struct netfs_range	coverage;	/* Range covered by the request */
 	pgoff_t			first;		/* First page included */
 	pgoff_t			last;		/* Last page included */
+	atomic_t		outstanding;	/* Number of outstanding writes */
 	refcount_t		usage;
 	unsigned long		flags;
 #define NETFS_WREQ_WRITE_TO_CACHE	0	/* Need to write to the cache */
@@ -362,6 +388,9 @@ struct netfs_request_ops {
 
 	/* Write request handling */
 	void (*init_wreq)(struct netfs_write_request *wreq);
+	void (*create_write_operations)(struct netfs_write_request *wreq);
+	void (*free_write_operation)(struct netfs_write_operation *op);
+	void (*invalidate_cache)(struct netfs_write_request *wreq);
 };
 
 /*
@@ -418,6 +447,18 @@ extern int netfs_releasepage(struct page *page, gfp_t gfp_flags);
 extern void netfs_subreq_terminated(struct netfs_read_subrequest *, ssize_t, bool);
 extern void netfs_stats_show(struct seq_file *);
 extern struct netfs_flush_group *netfs_new_flush_group(struct inode *, void *);
+extern struct netfs_write_operation *netfs_create_write_operation(
+	struct netfs_write_request *wreq, enum netfs_write_dest dest,
+	loff_t start, size_t len, work_func_t worker);
+extern void netfs_put_write_request(struct netfs_write_request *wreq,
+				    bool was_async, enum netfs_wreq_trace what);
+extern void netfs_queue_write_operation(struct netfs_write_operation *op);
+extern void netfs_get_write_operation(struct netfs_write_operation *op,
+				      enum netfs_wreq_trace what);
+extern void netfs_put_write_operation(struct netfs_write_operation *op,
+				      bool was_async, enum netfs_wreq_trace what);
+extern void netfs_write_operation_completed(void *_op, ssize_t transferred_or_error,
+					    bool was_async);
 
 /**
  * netfs_i_context - Get the netfs inode context from the inode

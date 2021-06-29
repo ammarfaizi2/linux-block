@@ -1513,11 +1513,11 @@ extern int afs_check_volume_status(struct afs_volume *, struct afs_operation *);
  */
 extern int afs_set_page_dirty(struct page *);
 extern int afs_writepage(struct page *, struct writeback_control *);
-extern int afs_writepages(struct address_space *, struct writeback_control *);
 extern int afs_fsync(struct file *, loff_t, loff_t, int);
 extern vm_fault_t afs_page_mkwrite(struct vm_fault *vmf);
 extern void afs_prune_wb_keys(struct afs_vnode *);
 extern int afs_launder_page(struct page *);
+extern void afs_create_write_operations(struct netfs_write_request *);
 
 /*
  * xattr.c

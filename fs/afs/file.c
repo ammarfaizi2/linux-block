@@ -394,6 +394,7 @@ const struct netfs_request_ops afs_req_ops = {
 	.free_dirty_region	= afs_free_dirty_region,
 	.update_i_size		= afs_update_i_size,
 	.init_wreq		= afs_init_wreq,
+	.create_write_operations = afs_create_write_operations,
 };
 
 /*
