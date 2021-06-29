@@ -62,6 +62,8 @@ l_yes:
 	return true;
 }
 
+struct jump_entry;
+
 extern int arch_jump_entry_size(struct jump_entry *entry);
 
 #endif	/* __ASSEMBLY__ */
