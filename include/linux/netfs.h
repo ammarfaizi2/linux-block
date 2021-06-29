@@ -243,6 +243,35 @@ struct netfs_dirty_region {
 	refcount_t		ref;
 };
 
+/*
+ * Descriptor for a write request.  This is used to manage the preparation and
+ * storage of a sequence of dirty data - its compression/encryption and its
+ * writing to one or more servers and the cache.
+ *
+ * The prepared data is buffered here.
+ */
+struct netfs_write_request {
+	struct work_struct	work;
+	struct inode		*inode;		/* The file being accessed */
+	struct address_space	*mapping;	/* The mapping being accessed */
+	struct netfs_dirty_region *region;	/* The region we're writing back */
+	struct netfs_cache_resources cache_resources;
+	struct xarray		buffer;		/* Buffer for encrypted/compressed data */
+	struct iov_iter		source;		/* The iterator to be used */
+	struct list_head	write_link;	/* Link in i_context->write_requests */
+	void			*netfs_priv;	/* Private data for the netfs */
+	unsigned int		debug_id;
+	short			error;		/* 0 or error that occurred */
+	loff_t			i_size;		/* Size of the file */
+	loff_t			start;		/* Start position */
+	size_t			len;		/* Length of the request */
+	pgoff_t			first;		/* First page included */
+	pgoff_t			last;		/* Last page included */
+	refcount_t		usage;
+	unsigned long		flags;
+	const struct netfs_request_ops *netfs_ops;
+};
+
 enum netfs_write_compatibility {
 	NETFS_WRITES_COMPATIBLE,	/* Dirty regions can be directly merged */
 	NETFS_WRITES_SUPERSEDE,		/* Second write can supersede the first without first
@@ -276,6 +305,9 @@ struct netfs_request_ops {
 		struct netfs_dirty_region *candidate);
 	bool (*check_compatible_write)(struct netfs_dirty_region *region, struct file *file);
 	void (*update_i_size)(struct file *file, loff_t i_size);
+
+	/* Write request handling */
+	void (*init_wreq)(struct netfs_write_request *wreq);
 };
 
 /*
@@ -325,6 +357,9 @@ extern int netfs_write_begin(struct file *, struct address_space *,
 			     loff_t, unsigned int, unsigned int, struct page **,
 			     void **);
 extern ssize_t netfs_file_write_iter(struct kiocb *iocb, struct iov_iter *from);
+extern int netfs_writepages(struct address_space *mapping, struct writeback_control *wbc);
+extern void netfs_invalidatepage(struct page *page, unsigned int offset, unsigned int length);
+extern int netfs_releasepage(struct page *page, gfp_t gfp_flags);
 
 extern void netfs_subreq_terminated(struct netfs_read_subrequest *, ssize_t, bool);
 extern void netfs_stats_show(struct seq_file *);

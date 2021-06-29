@@ -63,6 +63,8 @@ enum netfs_dirty_trace {
 	netfs_dirty_trace_complete,
 	netfs_dirty_trace_flush_conflict,
 	netfs_dirty_trace_flush_dsync,
+	netfs_dirty_trace_flush_writepages,
+	netfs_dirty_trace_flushing,
 	netfs_dirty_trace_merged_back,
 	netfs_dirty_trace_merged_forw,
 	netfs_dirty_trace_merged_sub,
@@ -82,9 +84,20 @@ enum netfs_region_trace {
 	netfs_region_trace_get_wreq,
 	netfs_region_trace_put_discard,
 	netfs_region_trace_put_merged,
+	netfs_region_trace_put_wreq,
 	netfs_region_trace_put_write_iter,
 	netfs_region_trace_free,
 	netfs_region_trace_new,
+};
+
+enum netfs_wreq_trace {
+	netfs_wreq_trace_free,
+	netfs_wreq_trace_put_discard,
+	netfs_wreq_trace_put_work,
+	netfs_wreq_trace_see_lock_conflict,
+	netfs_wreq_trace_see_pages_missing,
+	netfs_wreq_trace_see_work,
+	netfs_wreq_trace_new,
 };
 
 #endif
@@ -149,6 +162,8 @@ enum netfs_region_trace {
 	EM(netfs_dirty_trace_complete,		"COMPLETE  ")	\
 	EM(netfs_dirty_trace_flush_conflict,	"FLSH CONFL")	\
 	EM(netfs_dirty_trace_flush_dsync,	"FLSH DSYNC")	\
+	EM(netfs_dirty_trace_flush_writepages,	"WRITEPAGES")	\
+	EM(netfs_dirty_trace_flushing,		"FLUSHING  ")	\
 	EM(netfs_dirty_trace_merged_back,	"MERGE BACK")	\
 	EM(netfs_dirty_trace_merged_forw,	"MERGE FORW")	\
 	EM(netfs_dirty_trace_merged_sub,	"SUBSUMED  ")	\
@@ -167,9 +182,20 @@ enum netfs_region_trace {
 	EM(netfs_region_trace_get_wreq,		"GET WREQ   ")	\
 	EM(netfs_region_trace_put_discard,	"PUT DISCARD")	\
 	EM(netfs_region_trace_put_merged,	"PUT MERGED ")	\
+	EM(netfs_region_trace_put_wreq,		"PUT WREQ   ")	\
 	EM(netfs_region_trace_put_write_iter,	"PUT WRITER ")	\
 	EM(netfs_region_trace_free,		"FREE       ")	\
 	E_(netfs_region_trace_new,		"NEW        ")
+
+#define netfs_wreq_traces					\
+	EM(netfs_wreq_trace_free,		"FREE       ")	\
+	EM(netfs_wreq_trace_put_discard,	"PUT DISCARD")	\
+	EM(netfs_wreq_trace_put_work,		"PUT WORK   ")	\
+	EM(netfs_wreq_trace_see_lock_conflict,	"SEE PG BUSY")	\
+	EM(netfs_wreq_trace_see_pages_missing,	"SEE PG MISS")	\
+	EM(netfs_wreq_trace_see_work,		"SEE WORK   ")	\
+	E_(netfs_wreq_trace_new,		"NEW        ")
+
 
 /*
  * Export enum symbols via userspace.
@@ -187,6 +213,7 @@ netfs_failures;
 netfs_region_types;
 netfs_region_states;
 netfs_dirty_traces;
+netfs_wreq_traces;
 
 /*
  * Now redefine the EM() and E_() macros to map the enums to the strings that
@@ -433,6 +460,58 @@ TRACE_EVENT(netfs_dirty,
 		      __entry->flags,
 		      __entry->debug_id2
 		      )
+	    );
+
+TRACE_EVENT(netfs_wreq,
+	    TP_PROTO(struct netfs_write_request *wreq),
+
+	    TP_ARGS(wreq),
+
+	    TP_STRUCT__entry(
+		    __field(unsigned int,		wreq		)
+		    __field(unsigned int,		cookie		)
+		    __field(unsigned int,		region		)
+		    __field(loff_t,			start		)
+		    __field(size_t,			len		)
+			     ),
+
+	    TP_fast_assign(
+		    __entry->wreq	= wreq->debug_id;
+		    __entry->cookie	= wreq->cache_resources.debug_id;
+		    __entry->region	= wreq->region->debug_id;
+		    __entry->start	= wreq->start;
+		    __entry->len	= wreq->len;
+			   ),
+
+	    TP_printk("W=%08x c=%08x D=%x s=%llx %zx",
+		      __entry->wreq,
+		      __entry->cookie,
+		      __entry->region,
+		      __entry->start, __entry->len)
+	    );
+
+TRACE_EVENT(netfs_ref_wreq,
+	    TP_PROTO(unsigned int wreq_debug_id, int ref,
+		     enum netfs_wreq_trace what),
+
+	    TP_ARGS(wreq_debug_id, ref, what),
+
+	    TP_STRUCT__entry(
+		    __field(unsigned int,		wreq		)
+		    __field(int,			ref		)
+		    __field(enum netfs_wreq_trace,	what		)
+			     ),
+
+	    TP_fast_assign(
+		    __entry->wreq	= wreq_debug_id;
+		    __entry->ref	= ref;
+		    __entry->what	= what;
+			   ),
+
+	    TP_printk("W=%08x %s r=%u",
+		      __entry->wreq,
+		      __print_symbolic(__entry->what, netfs_wreq_traces),
+		      __entry->ref)
 	    );
 
 #endif /* _TRACE_NETFS_H */

@@ -3,6 +3,7 @@
 netfs-y := \
 	objects.o \
 	read_helper.o \
+	write_back.o \
 	write_helper.o
 # dio_helper.o
 

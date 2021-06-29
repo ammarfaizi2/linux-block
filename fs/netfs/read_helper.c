@@ -1433,3 +1433,37 @@ error:
 	_leave(" = %d", ret);
 	return ret;
 }
+
+/*
+ * Invalidate part or all of a page
+ * - release a page and clean up its private data if offset is 0 (indicating
+ *   the entire page)
+ */
+void netfs_invalidatepage(struct page *page, unsigned int offset, unsigned int length)
+{
+	_enter("{%lu},%u,%u", page->index, offset, length);
+
+	wait_on_page_fscache(page);
+}
+EXPORT_SYMBOL(netfs_invalidatepage);
+
+/*
+ * Release a page and clean up its private state if it's not busy
+ * - return true if the page can now be released, false if not
+ */
+int netfs_releasepage(struct page *page, gfp_t gfp_flags)
+{
+	struct netfs_i_context *ctx = netfs_i_context(page->mapping->host);
+
+	kenter("");
+
+	if (PageFsCache(page)) {
+		if (!(gfp_flags & __GFP_DIRECT_RECLAIM) || !(gfp_flags & __GFP_FS))
+			return false;
+		wait_on_page_fscache(page);
+		fscache_note_page_release(ctx->cache);
+	}
+
+	return true;
+}
+EXPORT_SYMBOL(netfs_releasepage);
