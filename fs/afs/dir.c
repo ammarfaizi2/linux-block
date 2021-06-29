@@ -1312,7 +1312,7 @@ static void afs_vnode_new_inode(struct afs_operation *op)
 	}
 
 	vnode = AFS_FS_I(inode);
-	set_bit(AFS_VNODE_NEW_CONTENT, &vnode->flags);
+	set_bit(NETFS_ICTX_NEW_CONTENT, &netfs_i_context(&vnode->vfs_inode)->flags);
 	if (!op->error)
 		afs_cache_permit(vnode, op->key, vnode->cb_break, &vp->scb);
 	d_instantiate(op->dentry, inode);

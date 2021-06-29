@@ -5,6 +5,10 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 
+#include <linux/netfs.h>
+#include <linux/fscache.h>
+#include <trace/events/netfs.h>
+
 #ifdef pr_fmt
 #undef pr_fmt
 #endif
@@ -48,6 +52,17 @@ static inline void netfs_stat(atomic_t *stat)
 static inline void netfs_stat_d(atomic_t *stat)
 {
 	atomic_dec(stat);
+}
+
+static inline bool netfs_is_cache_enabled(struct netfs_i_context *ctx)
+{
+#ifdef CONFIG_FSCACHE
+	struct fscache_cookie *cookie = ctx->cache;
+
+	return fscache_cookie_valid(cookie) && fscache_cookie_enabled(cookie);
+#else
+	return false;
+#endif
 }
 
 #else

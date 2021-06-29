@@ -41,7 +41,7 @@ void __afs_break_callback(struct afs_vnode *vnode, enum afs_cb_break_reason reas
 {
 	_enter("");
 
-	clear_bit(AFS_VNODE_NEW_CONTENT, &vnode->flags);
+	clear_bit(NETFS_ICTX_NEW_CONTENT, &netfs_i_context(&vnode->vfs_inode)->flags);
 	if (test_and_clear_bit(AFS_VNODE_CB_PROMISED, &vnode->flags)) {
 		vnode->cb_break++;
 		afs_clear_permits(vnode);
