@@ -75,5 +75,7 @@ extern bool kaslr_requires_kpti(void);
 #define INIT_MM_CONTEXT(name)	\
 	.pgd = init_pg_dir,
 
+#define VM_DATA_DEFAULT_FLAGS	(VM_DATA_FLAGS_TSK_EXEC | VM_MTE_ALLOWED)
+
 #endif	/* !__ASSEMBLY__ */
 #endif

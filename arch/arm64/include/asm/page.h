@@ -47,8 +47,6 @@ int pfn_is_map_memory(unsigned long pfn);
 
 #endif /* !__ASSEMBLY__ */
 
-#define VM_DATA_DEFAULT_FLAGS	(VM_DATA_FLAGS_TSK_EXEC | VM_MTE_ALLOWED)
-
 #include <asm-generic/getorder.h>
 
 #endif
