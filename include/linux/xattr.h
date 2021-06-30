@@ -15,8 +15,11 @@
 #include <linux/slab.h>
 #include <linux/types.h>
 #include <linux/spinlock.h>
-#include <linux/mm.h>
+#include <linux/mm_api_kvmalloc.h>
 #include <linux/user_namespace.h>
+#include <linux/list.h>
+#include <linux/kernel.h>
+
 #include <uapi/linux/xattr.h>
 
 struct inode;
