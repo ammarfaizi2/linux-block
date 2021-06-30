@@ -342,17 +342,7 @@ ret_from_mc_except:
 #define PROLOG_ADDITION_MASKABLE_GEN(n)					    \
 	lbz	r10,PACAIRQSOFTMASK(r13);	/* are irqs soft-masked? */ \
 	andi.	r10,r10,IRQS_DISABLED;	/* yes -> go out of line */ \
-	bne	masked_interrupt_book3e_##n;				    \
-	/* Kernel code below __end_soft_masked is implicitly masked */	    \
-	andi.	r10,r11,MSR_PR;						    \
-	bne	1f;			/* user -> not masked */	    \
-	std	r14,PACA_EXGEN+EX_R14(r13);				    \
-	LOAD_REG_IMMEDIATE_SYM(r14, r10, __end_soft_masked);		    \
-	mfspr	r10,SPRN_SRR0;						    \
-	cmpld	r10,r14;						    \
-	ld	r14,PACA_EXGEN+EX_R14(r13);				    \
-	blt	masked_interrupt_book3e_##n;				    \
-1:
+	bne	masked_interrupt_book3e_##n
 
 /*
  * Additional regs must be re-loaded from paca before EXCEPTION_COMMON* is
@@ -912,8 +902,14 @@ kernel_dbg_exc:
 	b	interrupt_return
 
 .macro SEARCH_RESTART_TABLE
+#ifdef CONFIG_RELOCATABLE
+	ld	r11,PACATOC(r13)
+	ld	r14,__start___restart_table@got(r11)
+	ld	r15,__stop___restart_table@got(r11)
+#else
 	LOAD_REG_IMMEDIATE_SYM(r14, r11, __start___restart_table)
 	LOAD_REG_IMMEDIATE_SYM(r15, r11, __stop___restart_table)
+#endif
 300:
 	cmpd	r14,r15
 	beq	302f
@@ -1329,7 +1325,12 @@ a2_tlbinit_code_start:
 a2_tlbinit_after_linear_map:
 
 	/* Now we branch the new virtual address mapped by this entry */
+#ifdef CONFIG_RELOCATABLE
+	ld	r5,PACATOC(r13)
+	ld	r3,1f@got(r5)
+#else
 	LOAD_REG_IMMEDIATE_SYM(r3, r5, 1f)
+#endif
 	mtctr	r3
 	bctr
 
