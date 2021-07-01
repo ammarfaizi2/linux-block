@@ -22,12 +22,259 @@ static bool within(struct netfs_range *a, struct netfs_range *b)
 	return __within(a->start, a->end, b->start, b->end);
 }
 
+static int netfs_redirty_iterator(struct xa_state *xas, struct page *page)
+{
+	__set_page_dirty_nobuffers(page);
+	account_page_redirty(page);
+	end_page_writeback(page);
+	return 0;
+}
+
+/*
+ * Redirty all the pages in a given range.
+ */
+static void netfs_redirty_pages(struct netfs_write_request *wreq)
+{
+	_enter("%lx-%lx", wreq->first, wreq->last);
+
+	netfs_iterate_pinned_pages(wreq->mapping, wreq->first, wreq->last,
+				   netfs_redirty_iterator);
+	_leave("");
+}
+
+static int netfs_end_writeback_iterator(struct xa_state *xas, struct page *page)
+{
+	end_page_writeback(page);
+	return 0;
+}
+
+/*
+ * Fix up the dirty list upon completion of write.
+ */
+static void netfs_fix_up_dirty_list(struct netfs_write_request *wreq)
+{
+	struct netfs_dirty_region *region = wreq->region, *r;
+	struct netfs_i_context *ctx = netfs_i_context(wreq->inode);
+	unsigned long long available_to;
+	struct list_head *lower, *upper, *p;
+
+	netfs_iterate_pinned_pages(wreq->mapping, wreq->first, wreq->last,
+				   netfs_end_writeback_iterator);
+
+	spin_lock(&ctx->lock);
+
+	/* Find the bounds of the region we're going to make available. */
+	lower = &ctx->dirty_regions;
+	r = region;
+	list_for_each_entry_continue_reverse(r, &ctx->dirty_regions, dirty_link) {
+		_debug("- back %x", r->debug_id);
+		if (r->state >= NETFS_REGION_IS_DIRTY) {
+			lower = &r->dirty_link;
+			break;
+		}
+	}
+
+	available_to = ULLONG_MAX;
+	upper = &ctx->dirty_regions;
+	r = region;
+	list_for_each_entry_continue(r, &ctx->dirty_regions, dirty_link) {
+		_debug("- forw %x", r->debug_id);
+		if (r->state >= NETFS_REGION_IS_DIRTY) {
+			available_to = r->dirty.start;
+			upper = &r->dirty_link;
+			break;
+		}
+	}
+
+	/* Remove this region and we can start any waiters that are wholly
+	 * inside of the now-available region.
+	 */
+	list_del_init(&region->dirty_link);
+
+	for (p = lower->next; p != upper; p = p->next) {
+		r = list_entry(p, struct netfs_dirty_region, dirty_link);
+		if (r->reserved.end <= available_to) {
+			smp_store_release(&r->state, NETFS_REGION_IS_ACTIVE);
+			trace_netfs_dirty(ctx, r, NULL, netfs_dirty_trace_activate);
+			wake_up_var(&r->state);
+		}
+	}
+
+	spin_unlock(&ctx->lock);
+	netfs_put_dirty_region(ctx, region, netfs_region_trace_put_dirty);
+}
+
+/*
+ * Process a completed write request once all the component streams have been
+ * completed.
+ */
+static void netfs_write_completed(struct netfs_write_request *wreq, bool was_async)
+{
+	struct netfs_i_context *ctx = netfs_i_context(wreq->inode);
+	unsigned int s;
+
+	for (s = 0; s < wreq->n_streams; s++) {
+		struct netfs_write_stream *stream = &wreq->streams[s];
+		if (!stream->error)
+			continue;
+		switch (stream->dest) {
+		case NETFS_UPLOAD_TO_SERVER:
+			/* Depending on the type of failure, this may prevent
+			 * writeback completion unless we're in disconnected
+			 * mode.
+			 */
+			if (!wreq->error)
+				wreq->error = stream->error;
+			break;
+
+		case NETFS_WRITE_TO_CACHE:
+			/* Failure doesn't prevent writeback completion unless
+			 * we're in disconnected mode.
+			 */
+			if (stream->error != -ENOBUFS)
+				ctx->ops->invalidate_cache(wreq);
+			break;
+
+		default:
+			WARN_ON_ONCE(1);
+			if (!wreq->error)
+				wreq->error = -EIO;
+			return;
+		}
+	}
+
+	if (wreq->error)
+		netfs_redirty_pages(wreq);
+	else
+		netfs_fix_up_dirty_list(wreq);
+	netfs_put_write_request(wreq, was_async, netfs_wreq_trace_put_for_outstanding);
+}
+
+/*
+ * Deal with the completion of writing the data to the cache.
+ */
+void netfs_write_stream_completed(void *_stream, ssize_t transferred_or_error,
+				  bool was_async)
+{
+	struct netfs_write_stream *stream = _stream;
+	struct netfs_write_request *wreq = netfs_stream_to_wreq(stream);
+
+	if (IS_ERR_VALUE(transferred_or_error))
+		stream->error = transferred_or_error;
+	switch (stream->dest) {
+	case NETFS_UPLOAD_TO_SERVER:
+		if (stream->error)
+			netfs_stat(&netfs_n_wh_upload_failed);
+		else
+			netfs_stat(&netfs_n_wh_upload_done);
+		break;
+	case NETFS_WRITE_TO_CACHE:
+		if (stream->error)
+			netfs_stat(&netfs_n_wh_write_failed);
+		else
+			netfs_stat(&netfs_n_wh_write_done);
+		break;
+	case NETFS_INVALID_WRITE:
+		break;
+	}
+
+	trace_netfs_wstr(stream, netfs_write_stream_complete);
+	if (atomic_dec_and_test(&wreq->outstanding))
+		netfs_write_completed(wreq, was_async);
+}
+EXPORT_SYMBOL(netfs_write_stream_completed);
+
+static void netfs_write_to_cache_stream(struct netfs_write_stream *stream,
+					struct netfs_write_request *wreq)
+{
+	trace_netfs_wstr(stream, netfs_write_stream_submit);
+	fscache_write_to_cache(netfs_i_cookie(wreq->inode), wreq->mapping,
+			       wreq->start, wreq->len, wreq->region->i_size,
+			       netfs_write_stream_completed, stream);
+}
+
+static void netfs_write_to_cache_stream_worker(struct work_struct *work)
+{
+	struct netfs_write_stream *stream = container_of(work, struct netfs_write_stream, work);
+	struct netfs_write_request *wreq = netfs_stream_to_wreq(stream);
+
+	netfs_write_to_cache_stream(stream, wreq);
+	netfs_put_write_request(wreq, false, netfs_wreq_trace_put_stream_work);
+}
+
+/**
+ * netfs_set_up_write_stream - Allocate, set up and launch a write stream.
+ * @wreq: The write request this is storing from.
+ * @dest: The destination type
+ * @worker: The worker function to handle the write(s)
+ *
+ * Allocate the next write stream from a write request and queue the worker to
+ * make it happen.
+ */
+void netfs_set_up_write_stream(struct netfs_write_request *wreq,
+			       enum netfs_write_dest dest, work_func_t worker)
+{
+	struct netfs_write_stream *stream;
+	unsigned int s = wreq->n_streams++;
+
+	kenter("%u,%u", s, dest);
+
+	stream		= &wreq->streams[s];
+	stream->dest	= dest;
+	stream->index	= s;
+	INIT_WORK(&stream->work, worker);
+	atomic_inc(&wreq->outstanding);
+	trace_netfs_wstr(stream, netfs_write_stream_setup);
+
+	switch (stream->dest) {
+	case NETFS_UPLOAD_TO_SERVER:
+		netfs_stat(&netfs_n_wh_upload);
+		break;
+	case NETFS_WRITE_TO_CACHE:
+		netfs_stat(&netfs_n_wh_write);
+		break;
+	case NETFS_INVALID_WRITE:
+		BUG();
+	}
+
+	netfs_get_write_request(wreq, netfs_wreq_trace_get_stream_work);
+	if (!queue_work(system_unbound_wq, &stream->work))
+		netfs_put_write_request(wreq, false, netfs_wreq_trace_put_wip);
+}
+EXPORT_SYMBOL(netfs_set_up_write_stream);
+
+/*
+ * Set up a stream for writing to the cache.
+ */
+static void netfs_set_up_write_to_cache(struct netfs_write_request *wreq)
+{
+	netfs_set_up_write_stream(wreq, NETFS_WRITE_TO_CACHE,
+				  netfs_write_to_cache_stream_worker);
+}
+
 /*
  * Process a write request.
+ *
+ * All the pages in the bounding box have had a ref taken on them and those
+ * covering the dirty region have been marked as being written back and their
+ * dirty bits provisionally cleared.
  */
 static void netfs_writeback(struct netfs_write_request *wreq)
 {
-	kdebug("--- WRITE ---");
+	struct netfs_i_context *ctx = netfs_i_context(wreq->inode);
+
+	kenter("");
+
+	/* TODO: Encrypt or compress the region as appropriate */
+
+	/* ->outstanding > 0 carries a ref */
+	netfs_get_write_request(wreq, netfs_wreq_trace_get_for_outstanding);
+
+	if (test_bit(NETFS_WREQ_WRITE_TO_CACHE, &wreq->flags))
+		netfs_set_up_write_to_cache(wreq);
+	ctx->ops->add_write_streams(wreq);
+	if (atomic_dec_and_test(&wreq->outstanding))
+		netfs_write_completed(wreq, false);
 }
 
 void netfs_writeback_worker(struct work_struct *work)

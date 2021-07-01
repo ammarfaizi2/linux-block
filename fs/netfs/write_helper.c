@@ -140,18 +140,30 @@ static enum netfs_write_compatibility netfs_write_compatibility(
 	struct netfs_dirty_region *old,
 	struct netfs_dirty_region *candidate)
 {
-	if (old->type == NETFS_REGION_DIO ||
-	    old->type == NETFS_REGION_DSYNC ||
-	    old->state >= NETFS_REGION_IS_FLUSHING ||
-	    /* The bounding boxes of DSYNC writes can overlap with those of
-	     * other DSYNC writes and ordinary writes.
-	     */
+	/* Regions being actively flushed can't be merged with */
+	if (old->state >= NETFS_REGION_IS_FLUSHING ||
 	    candidate->group != old->group ||
-	    old->group->flush)
+	    old->group->flush) {
+		_leave(" = INCOM [flush]");
 		return NETFS_WRITES_INCOMPATIBLE;
+	}
+
+	/* The bounding boxes of DSYNC writes can overlap with those of other
+	 * DSYNC writes and ordinary writes.  DIO writes cannot overlap at all.
+	 */
+	if (candidate->type == NETFS_REGION_DIO ||
+	    old->type == NETFS_REGION_DIO ||
+	    old->type == NETFS_REGION_DSYNC) {
+		_leave(" = INCOM [dio/dsy]");
+		return NETFS_WRITES_INCOMPATIBLE;
+	}
+
 	if (!ctx->ops->is_write_compatible) {
-		if (candidate->type == NETFS_REGION_DSYNC)
+		if (candidate->type == NETFS_REGION_DSYNC) {
+			_leave(" = SUPER [dsync]");
 			return NETFS_WRITES_SUPERSEDE;
+		}
+		_leave(" = COMPT");
 		return NETFS_WRITES_COMPATIBLE;
 	}
 	return ctx->ops->is_write_compatible(ctx, old, candidate);

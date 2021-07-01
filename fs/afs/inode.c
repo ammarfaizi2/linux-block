@@ -449,6 +449,15 @@ static void afs_get_inode_cache(struct afs_vnode *vnode)
 #endif
 }
 
+static void afs_set_netfs_context(struct afs_vnode *vnode)
+{
+	struct netfs_i_context *ctx = netfs_i_context(&vnode->vfs_inode);
+
+	netfs_i_context_init(&vnode->vfs_inode, &afs_req_ops);
+	ctx->n_wstreams = 1;
+	ctx->bsize = PAGE_SIZE;
+}
+
 /*
  * inode retrieval
  */
@@ -479,7 +488,7 @@ struct inode *afs_iget(struct afs_operation *op, struct afs_vnode_param *vp)
 		return inode;
 	}
 
-	netfs_i_context_init(inode, &afs_req_ops);
+	afs_set_netfs_context(vnode);
 	ret = afs_inode_init_from_status(op, vp, vnode);
 	if (ret < 0)
 		goto bad_inode;
@@ -536,10 +545,10 @@ struct inode *afs_root_iget(struct super_block *sb, struct key *key)
 	_debug("GOT ROOT INODE %p { vl=%llx }", inode, as->volume->vid);
 
 	BUG_ON(!(inode->i_state & I_NEW));
-	netfs_i_context_init(inode, &afs_req_ops);
 
 	vnode = AFS_FS_I(inode);
 	vnode->cb_v_break = as->volume->cb_v_break,
+	afs_set_netfs_context(vnode);
 
 	op = afs_alloc_operation(key, as->volume);
 	if (IS_ERR(op)) {

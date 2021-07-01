@@ -19,6 +19,8 @@
 #include <linux/pagemap.h>
 #include <linux/uio.h>
 
+enum netfs_wreq_trace;
+
 /*
  * Overload PG_private_2 to give us PG_fscache - this is used to indicate that
  * a page is currently backed by a local disk cache
@@ -181,6 +183,7 @@ struct netfs_i_context {
 	unsigned int		wsize;		/* Maximum write size */
 	unsigned int		bsize;		/* Min block size for bounding box */
 	unsigned int		inval_counter;	/* Number of invalidations made */
+	unsigned char		n_wstreams;	/* Number of write streams to allocate */
 };
 
 /*
@@ -243,12 +246,53 @@ struct netfs_dirty_region {
 	refcount_t		ref;
 };
 
+enum netfs_write_dest {
+	NETFS_UPLOAD_TO_SERVER,
+	NETFS_WRITE_TO_CACHE,
+	NETFS_INVALID_WRITE,
+} __mode(byte);
+
+/*
+ * Descriptor for a write subrequest.  Each subrequest represents an individual
+ * write to a server or a cache.
+ */
+struct netfs_write_subrequest {
+	struct netfs_write_request *wreq;	/* Supervising write request */
+	struct list_head	stream_link;	/* Link in stream->subrequests */
+	loff_t			start;		/* Where to start the I/O */
+	size_t			len;		/* Size of the I/O */
+	size_t			transferred;	/* Amount of data transferred */
+	refcount_t		usage;
+	short			error;		/* 0 or error that occurred */
+	unsigned short		debug_index;	/* Index in list (for debugging output) */
+	unsigned char		stream_index;	/* Which stream we're part of */
+	enum netfs_write_dest	dest;		/* Where to write to */
+};
+
+/*
+ * Descriptor for a write stream.  Each stream represents a sequence of writes
+ * to a destination, where a stream covers the entirety of the write request.
+ * All of a stream goes to the same destination - and that destination might be
+ * a server, a cache, a journal.
+ *
+ * Each stream may be split up into separate subrequests according to different
+ * rules.
+ */
+struct netfs_write_stream {
+	struct work_struct	work;
+	struct list_head	subrequests;	/* The subrequests comprising this stream */
+	enum netfs_write_dest	dest;		/* Where to write to */
+	unsigned char		index;		/* Index in wreq->streams[] */
+	short			error;		/* 0 or error that occurred */
+};
+
 /*
  * Descriptor for a write request.  This is used to manage the preparation and
  * storage of a sequence of dirty data - its compression/encryption and its
  * writing to one or more servers and the cache.
  *
- * The prepared data is buffered here.
+ * The prepared data is buffered here, and then the streams are used to
+ * distribute the buffer to various destinations (servers, caches, etc.).
  */
 struct netfs_write_request {
 	struct work_struct	work;
@@ -261,15 +305,20 @@ struct netfs_write_request {
 	struct list_head	write_link;	/* Link in i_context->write_requests */
 	void			*netfs_priv;	/* Private data for the netfs */
 	unsigned int		debug_id;
+	unsigned char		max_streams;	/* Number of streams allocated */
+	unsigned char		n_streams;	/* Number of streams in use */
 	short			error;		/* 0 or error that occurred */
 	loff_t			i_size;		/* Size of the file */
 	loff_t			start;		/* Start position */
 	size_t			len;		/* Length of the request */
 	pgoff_t			first;		/* First page included */
 	pgoff_t			last;		/* Last page included */
+	atomic_t		outstanding;	/* Number of outstanding writes */
 	refcount_t		usage;
 	unsigned long		flags;
+#define NETFS_WREQ_WRITE_TO_CACHE	0	/* Need to write to the cache */
 	const struct netfs_request_ops *netfs_ops;
+	struct netfs_write_stream streams[];	/* Individual write streams */
 };
 
 enum netfs_write_compatibility {
@@ -308,6 +357,8 @@ struct netfs_request_ops {
 
 	/* Write request handling */
 	void (*init_wreq)(struct netfs_write_request *wreq);
+	void (*add_write_streams)(struct netfs_write_request *wreq);
+	void (*invalidate_cache)(struct netfs_write_request *wreq);
 };
 
 /*
@@ -364,6 +415,12 @@ extern int netfs_releasepage(struct page *page, gfp_t gfp_flags);
 extern void netfs_subreq_terminated(struct netfs_read_subrequest *, ssize_t, bool);
 extern void netfs_stats_show(struct seq_file *);
 extern struct netfs_flush_group *netfs_new_flush_group(struct inode *, void *);
+extern void netfs_set_up_write_stream(struct netfs_write_request *wreq,
+				      enum netfs_write_dest dest, work_func_t worker);
+extern void netfs_put_write_request(struct netfs_write_request *wreq,
+				    bool was_async, enum netfs_wreq_trace what);
+extern void netfs_write_stream_completed(void *_stream, ssize_t transferred_or_error,
+					 bool was_async);
 
 /**
  * netfs_i_context - Get the netfs inode context from the inode
@@ -406,6 +463,12 @@ static inline struct fscache_cookie *netfs_i_cookie(struct inode *inode)
 #else
 	return NULL;
 #endif
+}
+
+static inline
+struct netfs_write_request *netfs_stream_to_wreq(struct netfs_write_stream *stream)
+{
+	return container_of(stream, struct netfs_write_request, streams[stream->index]);
 }
 
 #endif /* _LINUX_NETFS_H */

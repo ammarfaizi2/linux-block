@@ -119,16 +119,29 @@ struct netfs_write_request *netfs_alloc_write_request(struct address_space *mapp
 	struct inode *inode = mapping->host;
 	struct netfs_i_context *ctx = netfs_i_context(inode);
 	struct netfs_write_request *wreq;
+	unsigned int n_streams = ctx->n_wstreams, i;
+	bool cached = false;
 
-	wreq = kzalloc(sizeof(struct netfs_write_request), GFP_KERNEL);
+	if (!is_dio && netfs_is_cache_enabled(inode)) {
+		n_streams++;
+		cached = true;
+	}
+
+	wreq = kzalloc(struct_size(wreq, streams, n_streams), GFP_KERNEL);
 	if (wreq) {
 		wreq->mapping	= mapping;
 		wreq->inode	= inode;
 		wreq->netfs_ops	= ctx->ops;
+		wreq->max_streams = n_streams;
 		wreq->debug_id	= atomic_inc_return(&debug_ids);
+		if (cached)
+			__set_bit(NETFS_WREQ_WRITE_TO_CACHE, &wreq->flags);
 		xa_init(&wreq->buffer);
 		INIT_WORK(&wreq->work, netfs_writeback_worker);
+		for (i = 0; i < n_streams; i++)
+			INIT_LIST_HEAD(&wreq->streams[i].subrequests);
 		refcount_set(&wreq->usage, 1);
+		atomic_set(&wreq->outstanding, 1);
 		ctx->ops->init_wreq(wreq);
 		netfs_stat(&netfs_n_wh_wreq);
 		trace_netfs_ref_wreq(wreq->debug_id, 1, netfs_wreq_trace_new);
@@ -170,6 +183,15 @@ void netfs_free_write_request(struct work_struct *work)
 	netfs_stat_d(&netfs_n_wh_wreq);
 }
 
+/**
+ * netfs_put_write_request - Drop a reference on a write request descriptor.
+ * @wreq: The write request to drop
+ * @was_async: True if being called in a non-sleeping context
+ * @what: Reason code, to be displayed in trace line
+ *
+ * Drop a reference on a write request and schedule it for destruction
+ * after the last ref is gone.
+ */
 void netfs_put_write_request(struct netfs_write_request *wreq,
 			     bool was_async, enum netfs_wreq_trace what)
 {
@@ -189,3 +211,4 @@ void netfs_put_write_request(struct netfs_write_request *wreq,
 		}
 	}
 }
+EXPORT_SYMBOL(netfs_put_write_request);

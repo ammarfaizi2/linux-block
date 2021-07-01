@@ -59,6 +59,7 @@ enum netfs_failure {
 
 enum netfs_dirty_trace {
 	netfs_dirty_trace_active,
+	netfs_dirty_trace_activate,
 	netfs_dirty_trace_commit,
 	netfs_dirty_trace_complete,
 	netfs_dirty_trace_flush_conflict,
@@ -82,6 +83,7 @@ enum netfs_dirty_trace {
 enum netfs_region_trace {
 	netfs_region_trace_get_dirty,
 	netfs_region_trace_get_wreq,
+	netfs_region_trace_put_dirty,
 	netfs_region_trace_put_discard,
 	netfs_region_trace_put_merged,
 	netfs_region_trace_put_wreq,
@@ -92,12 +94,23 @@ enum netfs_region_trace {
 
 enum netfs_wreq_trace {
 	netfs_wreq_trace_free,
+	netfs_wreq_trace_get_for_outstanding,
+	netfs_wreq_trace_get_stream_work,
 	netfs_wreq_trace_put_discard,
+	netfs_wreq_trace_put_for_outstanding,
+	netfs_wreq_trace_put_stream_work,
+	netfs_wreq_trace_put_wip,
 	netfs_wreq_trace_put_work,
 	netfs_wreq_trace_see_lock_conflict,
 	netfs_wreq_trace_see_pages_missing,
 	netfs_wreq_trace_see_work,
 	netfs_wreq_trace_new,
+};
+
+enum netfs_write_stream_trace {
+	netfs_write_stream_complete,
+	netfs_write_stream_setup,
+	netfs_write_stream_submit,
 };
 
 #endif
@@ -158,6 +171,7 @@ enum netfs_wreq_trace {
 
 #define netfs_dirty_traces					\
 	EM(netfs_dirty_trace_active,		"ACTIVE    ")	\
+	EM(netfs_dirty_trace_activate,		"ACTIVATE  ")	\
 	EM(netfs_dirty_trace_commit,		"COMMIT    ")	\
 	EM(netfs_dirty_trace_complete,		"COMPLETE  ")	\
 	EM(netfs_dirty_trace_flush_conflict,	"FLSH CONFL")	\
@@ -180,6 +194,7 @@ enum netfs_wreq_trace {
 #define netfs_region_traces					\
 	EM(netfs_region_trace_get_dirty,	"GET DIRTY  ")	\
 	EM(netfs_region_trace_get_wreq,		"GET WREQ   ")	\
+	EM(netfs_region_trace_put_dirty,	"PUT DIRTY  ")	\
 	EM(netfs_region_trace_put_discard,	"PUT DISCARD")	\
 	EM(netfs_region_trace_put_merged,	"PUT MERGED ")	\
 	EM(netfs_region_trace_put_wreq,		"PUT WREQ   ")	\
@@ -189,13 +204,27 @@ enum netfs_wreq_trace {
 
 #define netfs_wreq_traces					\
 	EM(netfs_wreq_trace_free,		"FREE       ")	\
+	EM(netfs_wreq_trace_get_for_outstanding,"GET OUTSTND")	\
+	EM(netfs_wreq_trace_get_stream_work,	"GET S-WORK ")	\
 	EM(netfs_wreq_trace_put_discard,	"PUT DISCARD")	\
+	EM(netfs_wreq_trace_put_for_outstanding,"PUT OUTSTND")	\
+	EM(netfs_wreq_trace_put_stream_work,	"PUT S-WORK ")	\
+	EM(netfs_wreq_trace_put_wip,		"PUT WIP    ")	\
 	EM(netfs_wreq_trace_put_work,		"PUT WORK   ")	\
 	EM(netfs_wreq_trace_see_lock_conflict,	"SEE PG BUSY")	\
 	EM(netfs_wreq_trace_see_pages_missing,	"SEE PG MISS")	\
 	EM(netfs_wreq_trace_see_work,		"SEE WORK   ")	\
 	E_(netfs_wreq_trace_new,		"NEW        ")
 
+#define netfs_write_destinations				\
+	EM(NETFS_UPLOAD_TO_SERVER,		"UPLD")		\
+	EM(NETFS_WRITE_TO_CACHE,		"WRIT")		\
+	E_(NETFS_INVALID_WRITE,			"INVL")
+
+#define netfs_write_stream_traces		\
+	EM(netfs_write_stream_complete,		"DONE ")	\
+	EM(netfs_write_stream_setup,		"SETUP")	\
+	E_(netfs_write_stream_submit,		"SUBMT")
 
 /*
  * Export enum symbols via userspace.
@@ -214,6 +243,8 @@ netfs_region_types;
 netfs_region_states;
 netfs_dirty_traces;
 netfs_wreq_traces;
+netfs_write_destinations;
+netfs_write_stream_traces;
 
 /*
  * Now redefine the EM() and E_() macros to map the enums to the strings that
@@ -512,6 +543,38 @@ TRACE_EVENT(netfs_ref_wreq,
 		      __entry->wreq,
 		      __print_symbolic(__entry->what, netfs_wreq_traces),
 		      __entry->ref)
+	    );
+
+TRACE_EVENT(netfs_wstr,
+	    TP_PROTO(struct netfs_write_stream *stream,
+		     enum netfs_write_stream_trace what),
+
+	    TP_ARGS(stream, what),
+
+	    TP_STRUCT__entry(
+		    __field(unsigned int,		wreq		)
+		    __field(unsigned char,		stream		)
+		    __field(short,			error		)
+		    __field(unsigned short,		flags		)
+		    __field(enum netfs_write_dest,	dest		)
+		    __field(enum netfs_write_stream_trace, what		)
+			     ),
+
+	    TP_fast_assign(
+		    struct netfs_write_request *wreq =
+		    container_of(stream, struct netfs_write_request, streams[stream->index]);
+		    __entry->wreq	= wreq->debug_id;
+		    __entry->stream	= stream->index;
+		    __entry->error	= stream->error;
+		    __entry->dest	= stream->dest;
+		    __entry->what	= what;
+			   ),
+
+	    TP_printk("W=%08x[%u] %s %s e=%d",
+		      __entry->wreq, __entry->stream,
+		      __print_symbolic(__entry->what, netfs_write_stream_traces),
+		      __print_symbolic(__entry->dest, netfs_write_destinations),
+		      __entry->error)
 	    );
 
 #endif /* _TRACE_NETFS_H */

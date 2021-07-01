@@ -13,6 +13,7 @@
 #include <linux/pagevec.h>
 #include <linux/netfs.h>
 #include <linux/fscache.h>
+#include <trace/events/netfs.h>
 #include "internal.h"
 
 static void afs_write_to_cache(struct afs_vnode *vnode, loff_t start, size_t len,
@@ -120,30 +121,8 @@ static void afs_redirty_pages(struct writeback_control *wbc,
  */
 static void afs_pages_written_back(struct afs_vnode *vnode, loff_t start, unsigned int len)
 {
-	struct address_space *mapping = vnode->vfs_inode.i_mapping;
-	struct page *page;
-	pgoff_t end;
-
-	XA_STATE(xas, &mapping->i_pages, start / PAGE_SIZE);
-
 	_enter("{%llx:%llu},{%x @%llx}",
 	       vnode->fid.vid, vnode->fid.vnode, len, start);
-
-	rcu_read_lock();
-
-	end = (start + len - 1) / PAGE_SIZE;
-	xas_for_each(&xas, page, end) {
-		if (!PageWriteback(page)) {
-			kdebug("bad %x @%llx page %lx %lx", len, start, page->index, end);
-			ASSERT(PageWriteback(page));
-		}
-
-		trace_afs_page_dirty(vnode, tracepoint_string("clear"), page);
-		detach_page_private(page);
-		page_endio(page, true, 0);
-	}
-
-	rcu_read_unlock();
 
 	afs_prune_wb_keys(vnode);
 	_leave("");
@@ -279,6 +258,39 @@ try_next_key:
 	afs_put_wb_key(wbk);
 	_leave(" = %d", op->error);
 	return afs_put_operation(op);
+}
+
+static void afs_upload_to_server(struct netfs_write_stream *stream,
+				 struct netfs_write_request *wreq)
+{
+	struct afs_vnode *vnode = AFS_FS_I(wreq->inode);
+	ssize_t ret;
+
+	kenter("%u", stream->index);
+
+	trace_netfs_wstr(stream, netfs_write_stream_submit);
+	ret = afs_store_data(vnode, &wreq->source, wreq->start, false);
+	netfs_write_stream_completed(stream, ret, false);
+}
+
+static void afs_upload_to_server_worker(struct work_struct *work)
+{
+	struct netfs_write_stream *stream = container_of(work, struct netfs_write_stream, work);
+	struct netfs_write_request *wreq = netfs_stream_to_wreq(stream);
+
+	afs_upload_to_server(stream, wreq);
+	netfs_put_write_request(wreq, false, netfs_wreq_trace_put_stream_work);
+}
+
+/*
+ * Add write streams to a write request.  We need to add a single stream for
+ * the server we're writing to.
+ */
+void afs_add_write_streams(struct netfs_write_request *wreq)
+{
+	kenter("");
+	netfs_set_up_write_stream(wreq, NETFS_UPLOAD_TO_SERVER,
+				  afs_upload_to_server_worker);
 }
 
 /*
@@ -541,129 +553,6 @@ int afs_writepage(struct page *page, struct writeback_control *wbc)
 
 	_leave(" = 0");
 	return 0;
-}
-
-/*
- * write a region of pages back to the server
- */
-static int afs_writepages_region(struct address_space *mapping,
-				 struct writeback_control *wbc,
-				 loff_t start, loff_t end, loff_t *_next)
-{
-	struct page *page;
-	ssize_t ret;
-	int n;
-
-	_enter("%llx,%llx,", start, end);
-
-	do {
-		pgoff_t index = start / PAGE_SIZE;
-
-		n = find_get_pages_range_tag(mapping, &index, end / PAGE_SIZE,
-					     PAGECACHE_TAG_DIRTY, 1, &page);
-		if (!n)
-			break;
-
-		start = (loff_t)page->index * PAGE_SIZE; /* May regress with THPs */
-
-		_debug("wback %lx", page->index);
-
-		/* At this point we hold neither the i_pages lock nor the
-		 * page lock: the page may be truncated or invalidated
-		 * (changing page->mapping to NULL), or even swizzled
-		 * back from swapper_space to tmpfs file mapping
-		 */
-		if (wbc->sync_mode != WB_SYNC_NONE) {
-			ret = lock_page_killable(page);
-			if (ret < 0) {
-				put_page(page);
-				return ret;
-			}
-		} else {
-			if (!trylock_page(page)) {
-				put_page(page);
-				return 0;
-			}
-		}
-
-		if (page->mapping != mapping || !PageDirty(page)) {
-			start += thp_size(page);
-			unlock_page(page);
-			put_page(page);
-			continue;
-		}
-
-		if (PageWriteback(page) || PageFsCache(page)) {
-			unlock_page(page);
-			if (wbc->sync_mode != WB_SYNC_NONE) {
-				wait_on_page_writeback(page);
-#ifdef CONFIG_AFS_FSCACHE
-				wait_on_page_fscache(page);
-#endif
-			}
-			put_page(page);
-			continue;
-		}
-
-		if (!clear_page_dirty_for_io(page))
-			BUG();
-		ret = afs_write_back_from_locked_page(mapping, wbc, page, start, end);
-		put_page(page);
-		if (ret < 0) {
-			_leave(" = %zd", ret);
-			return ret;
-		}
-
-		start += ret;
-
-		cond_resched();
-	} while (wbc->nr_to_write > 0);
-
-	*_next = start;
-	_leave(" = 0 [%llx]", *_next);
-	return 0;
-}
-
-/*
- * write some of the pending data back to the server
- */
-int afs_writepages(struct address_space *mapping,
-		   struct writeback_control *wbc)
-{
-	struct afs_vnode *vnode = AFS_FS_I(mapping->host);
-	loff_t start, next;
-	int ret;
-
-	_enter("");
-
-	/* We have to be careful as we can end up racing with setattr()
-	 * truncating the pagecache since the caller doesn't take a lock here
-	 * to prevent it.
-	 */
-	if (wbc->sync_mode == WB_SYNC_ALL)
-		down_read(&vnode->validate_lock);
-	else if (!down_read_trylock(&vnode->validate_lock))
-		return 0;
-
-	if (wbc->range_cyclic) {
-		start = mapping->writeback_index * PAGE_SIZE;
-		ret = afs_writepages_region(mapping, wbc, start, LLONG_MAX, &next);
-		if (start > 0 && wbc->nr_to_write > 0 && ret == 0)
-			ret = afs_writepages_region(mapping, wbc, 0, start,
-						    &next);
-		mapping->writeback_index = next / PAGE_SIZE;
-	} else if (wbc->range_start == 0 && wbc->range_end == LLONG_MAX) {
-		ret = afs_writepages_region(mapping, wbc, 0, LLONG_MAX, &next);
-		if (wbc->nr_to_write > 0 && ret == 0)
-			mapping->writeback_index = next;
-	} else {
-		ret = afs_writepages_region(mapping, wbc,
-					    wbc->range_start, wbc->range_end, &next);
-	}
-
-	up_read(&vnode->validate_lock);
-	_leave(" = %d", ret);
-	return ret;
 }
 
 /*
