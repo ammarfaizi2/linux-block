@@ -19,6 +19,7 @@
 #include <linux/pagemap.h>
 #include <linux/uio.h>
 
+struct scatterlist;
 enum netfs_wback_trace;
 
 /*
@@ -136,11 +137,13 @@ struct netfs_i_context {
 #define NETFS_ICTX_NEW_CONTENT	0		/* Set if file has new content (create/trunc-0) */
 #define NETFS_ICTX_GOT_CACHED_ZP 1		/* We read zero_point from the cache */
 #define NETFS_ICTX_DO_RMW	2		/* Set if RMW required (no write streaming) */
+#define NETFS_ICTX_ENCRYPTED	3		/* The file contents are encrypted */
 	spinlock_t		lock;
 	unsigned int		rsize;		/* Maximum read size */
 	unsigned int		wsize;		/* Maximum write size */
 	unsigned char		min_bshift;	/* log2 min block size for bounding box or 0 */
 	unsigned char		obj_bshift;	/* log2 storage object shift (ceph/pnfs) or 0 */
+	unsigned char		crypto_bshift;	/* log2 of crypto block size */
 };
 
 /*
@@ -398,6 +401,11 @@ struct netfs_request_ops {
 	void (*create_write_requests)(struct netfs_writeback *wback);
 	void (*free_write_request)(struct netfs_write_request *wreq);
 	void (*invalidate_cache)(struct netfs_writeback *wback);
+
+	/* Content encryption */
+	bool (*encrypt_block)(struct netfs_writeback *wback, loff_t pos, size_t len,
+			      struct scatterlist *source_sg, unsigned int n_source,
+			      struct scatterlist *dest_sg, unsigned int n_dest);
 };
 
 /*

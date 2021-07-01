@@ -265,10 +265,12 @@ static void netfs_writeback(struct netfs_writeback *wback)
 
 	_enter("");
 
-	/* TODO: Encrypt or compress the region as appropriate */
-
 	/* ->outstanding > 0 carries a ref */
 	netfs_get_writeback(wback, netfs_wback_trace_get_for_outstanding);
+
+	if (test_bit(NETFS_ICTX_ENCRYPTED, &ctx->flags) &&
+	    !netfs_wback_encrypt(wback))
+		goto out;
 
 	/* We need to write all of the region to the cache */
 	if (test_bit(NETFS_WBACK_WRITE_TO_CACHE, &wback->flags))
@@ -280,6 +282,7 @@ static void netfs_writeback(struct netfs_writeback *wback)
 	if (test_bit(NETFS_WBACK_UPLOAD_TO_SERVER, &wback->flags))
 		ctx->ops->create_write_requests(wback);
 
+out:
 	if (atomic_dec_and_test(&wback->outstanding))
 		netfs_write_completed(wback, false);
 }
