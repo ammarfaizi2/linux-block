@@ -311,7 +311,9 @@ static void netfs_writeback(struct netfs_write_request *wreq)
 
 	kenter("");
 
-	/* TODO: Encrypt or compress the region as appropriate */
+	if (test_bit(NETFS_ICTX_ENCRYPTED, &ctx->flags) &&
+	    !netfs_prepare_wreq(wreq))
+		goto out;
 
 	/* ->outstanding > 0 carries a ref */
 	netfs_get_write_request(wreq, netfs_wreq_trace_get_for_outstanding);
@@ -319,6 +321,8 @@ static void netfs_writeback(struct netfs_write_request *wreq)
 	if (test_bit(NETFS_WREQ_WRITE_TO_CACHE, &wreq->flags))
 		netfs_set_up_write_to_cache(wreq);
 	ctx->ops->add_write_streams(wreq);
+
+out:
 	if (atomic_dec_and_test(&wreq->outstanding))
 		netfs_write_completed(wreq, false);
 }

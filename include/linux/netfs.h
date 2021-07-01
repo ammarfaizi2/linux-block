@@ -19,6 +19,7 @@
 #include <linux/pagemap.h>
 #include <linux/uio.h>
 
+struct scatterlist;
 enum netfs_wreq_trace;
 
 /*
@@ -178,12 +179,14 @@ struct netfs_i_context {
 #endif
 	unsigned long		flags;
 #define NETFS_ICTX_NEW_CONTENT	0		/* Set if file has new content (create/trunc-0) */
+#define NETFS_ICTX_ENCRYPTED	1		/* The file contents are encrypted */
 	spinlock_t		lock;
 	unsigned int		rsize;		/* Maximum read size */
 	unsigned int		wsize;		/* Maximum write size */
 	unsigned int		bsize;		/* Min block size for bounding box */
 	unsigned int		inval_counter;	/* Number of invalidations made */
 	unsigned char		n_wstreams;	/* Number of write streams to allocate */
+	unsigned char		crypto_bsize;	/* log2 of crypto block size */
 };
 
 /*
@@ -359,6 +362,9 @@ struct netfs_request_ops {
 	void (*init_wreq)(struct netfs_write_request *wreq);
 	void (*add_write_streams)(struct netfs_write_request *wreq);
 	void (*invalidate_cache)(struct netfs_write_request *wreq);
+	bool (*encrypt_block)(struct netfs_write_request *wreq, loff_t pos,  size_t len,
+			      struct scatterlist *source_sg, unsigned int n_source,
+			      struct scatterlist *dest_sg, unsigned int n_dest);
 };
 
 /*

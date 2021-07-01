@@ -66,6 +66,11 @@ void netfs_flush_region(struct netfs_i_context *ctx,
 			enum netfs_dirty_trace why);
 
 /*
+ * write_prep.c
+ */
+bool netfs_prepare_wreq(struct netfs_write_request *wreq);
+
+/*
  * stats.c
  */
 #ifdef CONFIG_NETFS_STATS

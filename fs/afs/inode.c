@@ -452,10 +452,16 @@ static void afs_get_inode_cache(struct afs_vnode *vnode)
 static void afs_set_netfs_context(struct afs_vnode *vnode)
 {
 	struct netfs_i_context *ctx = netfs_i_context(&vnode->vfs_inode);
+	struct afs_super_info *as = AFS_FS_S(vnode->vfs_inode.i_sb);
 
 	netfs_i_context_init(&vnode->vfs_inode, &afs_req_ops);
 	ctx->n_wstreams = 1;
 	ctx->bsize = PAGE_SIZE;
+	if (as->fscrypt) {
+		kdebug("ENCRYPT!");
+		ctx->crypto_bsize = ilog2(4096);
+		__set_bit(NETFS_ICTX_ENCRYPTED, &ctx->flags);
+	}
 }
 
 /*
