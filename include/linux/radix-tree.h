@@ -14,9 +14,7 @@
 #include <linux/gfp.h>
 #include <linux/lockdep.h>
 #include <linux/xarray_types.h>
-#include <linux/percpu.h>
-#include <linux/bitops.h>
-#include <linux/preempt.h>
+
 /* Keep unconverted code working */
 #define radix_tree_root		xarray
 #define radix_tree_node		xa_node

@@ -13,6 +13,7 @@
 #include <linux/lockdep_api.h>
 #include <linux/xarray_types.h>
 #include <linux/local_lock.h>
+#include <linux/percpu.h>
 #include <linux/bitops.h>
 #include <linux/preempt.h>
 #include <linux/sched.h>
