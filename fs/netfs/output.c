@@ -323,10 +323,12 @@ static void netfs_writeback(struct netfs_io_request *wreq)
 
 	_enter("");
 
-	/* TODO: Encrypt or compress the region as appropriate */
-
 	/* ->outstanding > 0 carries a ref */
 	netfs_get_request(wreq, netfs_rreq_trace_get_for_outstanding);
+
+	if (test_bit(NETFS_RREQ_CONTENT_ENCRYPTION, &wreq->flags) &&
+	    !netfs_encrypt(wreq))
+		goto out;
 
 	/* We need to write all of the region to the cache */
 	if (test_bit(NETFS_RREQ_WRITE_TO_CACHE, &wreq->flags))
@@ -338,6 +340,7 @@ static void netfs_writeback(struct netfs_io_request *wreq)
 	if (test_bit(NETFS_RREQ_UPLOAD_TO_SERVER, &wreq->flags))
 		ctx->ops->create_write_requests(wreq);
 
+out:
 	if (atomic_dec_and_test(&wreq->nr_outstanding))
 		netfs_write_terminated(wreq, false);
 }
