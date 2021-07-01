@@ -225,8 +225,6 @@ struct task_group;
 
 extern void scheduler_tick(void);
 
-#define	MAX_SCHEDULE_TIMEOUT		LONG_MAX
-
 extern long schedule_timeout(long timeout);
 extern long schedule_timeout_interruptible(long timeout);
 extern long schedule_timeout_killable(long timeout);
