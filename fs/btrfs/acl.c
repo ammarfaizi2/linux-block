@@ -53,7 +53,8 @@ struct posix_acl *btrfs_get_acl(struct inode *inode, int type)
 }
 
 static int __btrfs_set_acl(struct btrfs_trans_handle *trans,
-			 struct inode *inode, struct posix_acl *acl, int type)
+			   struct user_namespace *mnt_userns,
+			   struct inode *inode, struct posix_acl *acl, int type)
 {
 	int ret, size = 0;
 	const char *name;
@@ -88,7 +89,7 @@ static int __btrfs_set_acl(struct btrfs_trans_handle *trans,
 			goto out;
 		}
 
-		ret = posix_acl_to_xattr(&init_user_ns, acl, value, size);
+		ret = posix_acl_to_xattr(mnt_userns, acl, value, size);
 		if (ret < 0)
 			goto out;
 	}
@@ -114,12 +115,12 @@ int btrfs_set_acl(struct user_namespace *mnt_userns, struct inode *inode,
 	umode_t old_mode = inode->i_mode;
 
 	if (type == ACL_TYPE_ACCESS && acl) {
-		ret = posix_acl_update_mode(&init_user_ns, inode,
+		ret = posix_acl_update_mode(mnt_userns, inode,
 					    &inode->i_mode, &acl);
 		if (ret)
 			return ret;
 	}
-	ret = __btrfs_set_acl(NULL, inode, acl, type);
+	ret = __btrfs_set_acl(NULL, mnt_userns, inode, acl, type);
 	if (ret)
 		inode->i_mode = old_mode;
 	return ret;
@@ -140,14 +141,14 @@ int btrfs_init_acl(struct btrfs_trans_handle *trans,
 		return ret;
 
 	if (default_acl) {
-		ret = __btrfs_set_acl(trans, inode, default_acl,
+		ret = __btrfs_set_acl(trans, &init_user_ns, inode, default_acl,
 				      ACL_TYPE_DEFAULT);
 		posix_acl_release(default_acl);
 	}
 
 	if (acl) {
 		if (!ret)
-			ret = __btrfs_set_acl(trans, inode, acl,
+			ret = __btrfs_set_acl(trans, &init_user_ns, inode, acl,
 					      ACL_TYPE_ACCESS);
 		posix_acl_release(acl);
 	}
