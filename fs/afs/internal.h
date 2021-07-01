@@ -51,6 +51,7 @@ struct afs_fs_context {
 	bool			autocell;	/* T if set auto mount operation */
 	bool			dyn_root;	/* T if dynamic root */
 	bool			no_cell;	/* T if the source is "none" (for dynroot) */
+	bool			fscrypt;	/* T if content encryption is engaged */
 	enum afs_flock_mode	flock_mode;	/* Partial file-locking emulation mode */
 	afs_voltype_t		type;		/* type of volume requested */
 	unsigned int		volnamesz;	/* size of volume name */
@@ -230,6 +231,7 @@ struct afs_super_info {
 	struct afs_volume	*volume;	/* volume record */
 	enum afs_flock_mode	flock_mode:8;	/* File locking emulation mode */
 	bool			dyn_root;	/* True if dynamic root */
+	bool			fscrypt;	/* T if content encryption is engaged */
 };
 
 static inline struct afs_super_info *AFS_FS_S(struct super_block *sb)
@@ -1518,6 +1520,9 @@ extern vm_fault_t afs_page_mkwrite(struct vm_fault *vmf);
 extern void afs_prune_wb_keys(struct afs_vnode *);
 extern int afs_launder_page(struct page *);
 extern void afs_create_write_operations(struct netfs_write_request *);
+extern bool afs_encrypt_block(struct netfs_write_request *, loff_t, size_t,
+			      struct scatterlist *, unsigned int,
+			      struct scatterlist *, unsigned int);
 
 /*
  * xattr.c

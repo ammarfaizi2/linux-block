@@ -13,6 +13,7 @@
 #include <linux/pagevec.h>
 #include <linux/netfs.h>
 #include <linux/fscache.h>
+#include <crypto/skcipher.h>
 #include <trace/events/netfs.h>
 #include "internal.h"
 
@@ -273,6 +274,53 @@ void afs_create_write_operations(struct netfs_write_request *wreq)
 					  afs_upload_to_server_worker);
 	if (op)
 		netfs_queue_write_operation(op);
+}
+
+/*
+ * Encrypt part of a write for fscrypt.
+ */
+bool afs_encrypt_block(struct netfs_write_request *wreq, loff_t pos, size_t len,
+		       struct scatterlist *source_sg, unsigned int n_source,
+		       struct scatterlist *dest_sg, unsigned int n_dest)
+{
+	struct crypto_sync_skcipher *ci;
+	struct crypto_skcipher *tfm;
+	struct skcipher_request *req;
+	u8 session_key[8], iv[8];
+	int ret;
+
+	ci = crypto_alloc_sync_skcipher("pcbc(fcrypt)", 0, 0);
+	if (IS_ERR(ci)) {
+		ret = PTR_ERR(ci);
+		goto error;
+	}
+	tfm = &ci->base;
+
+	memset(session_key, 0, sizeof(session_key));
+	memset(iv, 0, sizeof(iv));
+
+	ret = crypto_sync_skcipher_setkey(ci, session_key, sizeof(session_key));
+	if (ret < 0)
+		goto error_ci;
+
+	ret = -ENOMEM;
+	req = skcipher_request_alloc(tfm, GFP_NOFS);
+	if (!req)
+		goto error_ci;
+
+	memset(iv, 0, sizeof(iv));
+	skcipher_request_set_sync_tfm(req, ci);
+	skcipher_request_set_callback(req, 0, NULL, NULL);
+	skcipher_request_set_crypt(req, source_sg, dest_sg, len, iv);
+	ret = crypto_skcipher_encrypt(req);
+
+	skcipher_request_free(req);
+error_ci:
+	crypto_free_sync_skcipher(ci);
+error:
+	if (ret < 0)
+		wreq->error = ret;
+	return ret == 0;
 }
 
 /*

@@ -16,6 +16,12 @@
 #define pr_fmt(fmt) "netfs: " fmt
 
 /*
+ * crypto.c
+ */
+bool netfs_wreq_encrypt(struct netfs_write_request *wreq);
+void netfs_rreq_decrypt(struct netfs_read_request *rreq);
+
+/*
  * dio_helper.c
  */
 ssize_t netfs_file_direct_write(struct netfs_dirty_region *region,

@@ -764,6 +764,7 @@ static enum netfs_handle_nonuptodate netfs_handle_nonuptodate_folio(struct netfs
 		return NETFS_WHOLE_FOLIO_MODIFY;
 
 	if (file->f_mode & FMODE_READ ||
+	    test_bit(NETFS_ICTX_ENCRYPTED, &ctx->flags) ||
 	    test_bit(NETFS_ICTX_DO_RMW, &ctx->flags))
 		return NETFS_JUST_PREFETCH;
 

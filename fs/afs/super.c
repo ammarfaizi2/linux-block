@@ -70,6 +70,7 @@ enum afs_param {
 	Opt_autocell,
 	Opt_dyn,
 	Opt_flock,
+	Opt_fscrypt,
 	Opt_source,
 };
 
@@ -85,6 +86,7 @@ static const struct fs_parameter_spec afs_fs_parameters[] = {
 	fsparam_flag  ("autocell",	Opt_autocell),
 	fsparam_flag  ("dyn",		Opt_dyn),
 	fsparam_enum  ("flock",		Opt_flock, afs_param_flock),
+	fsparam_flag  ("fscrypt",	Opt_fscrypt),
 	fsparam_string("source",	Opt_source),
 	{}
 };
@@ -341,6 +343,10 @@ static int afs_parse_param(struct fs_context *fc, struct fs_parameter *param)
 		ctx->flock_mode = result.uint_32;
 		break;
 
+	case Opt_fscrypt:
+		ctx->fscrypt = true;
+		break;
+
 	default:
 		return -EINVAL;
 	}
@@ -515,6 +521,7 @@ static struct afs_super_info *afs_alloc_sbi(struct fs_context *fc)
 			as->cell = afs_use_cell(ctx->cell, afs_cell_trace_use_sbi);
 			as->volume = afs_get_volume(ctx->volume,
 						    afs_volume_trace_get_alloc_sbi);
+			as->fscrypt = ctx->fscrypt;
 		}
 	}
 	return as;

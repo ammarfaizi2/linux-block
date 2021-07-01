@@ -239,10 +239,12 @@ static void netfs_writeback(struct netfs_write_request *wreq)
 
 	_enter("");
 
-	/* TODO: Encrypt or compress the region as appropriate */
-
 	/* ->outstanding > 0 carries a ref */
 	netfs_get_write_request(wreq, netfs_wreq_trace_get_for_outstanding);
+
+	if (test_bit(NETFS_ICTX_ENCRYPTED, &ctx->flags) &&
+	    !netfs_wreq_encrypt(wreq))
+		goto out;
 
 	if (wreq->cache_resources.ops &&
 	    test_bit(NETFS_WREQ_WRITE_TO_CACHE, &wreq->flags))
@@ -250,6 +252,7 @@ static void netfs_writeback(struct netfs_write_request *wreq)
 	//if (wreq->region->type != NETFS_REGION_CACHE_COPY)
 		ctx->ops->create_write_operations(wreq);
 
+out:
 	if (atomic_dec_and_test(&wreq->outstanding))
 		netfs_write_completed(wreq, false);
 }
