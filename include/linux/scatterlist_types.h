@@ -2,7 +2,6 @@
 #ifndef _LINUX_SCATTERLIST_TYPES_H
 #define _LINUX_SCATTERLIST_TYPES_H
 
-#include <linux/string.h>
 #include <linux/types.h>
 
 struct scatterlist {
