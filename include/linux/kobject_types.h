@@ -112,4 +112,15 @@ static inline const char *kobject_name(const struct kobject *kobj)
 	return kobj->name;
 }
 
+/* The global /sys/kernel/ kobject for people to chain off of */
+extern struct kobject *kernel_kobj;
+/* The global /sys/kernel/mm/ kobject for people to chain off of */
+extern struct kobject *mm_kobj;
+/* The global /sys/hypervisor/ kobject for people to chain off of */
+extern struct kobject *hypervisor_kobj;
+/* The global /sys/power/ kobject for people to chain off of */
+extern struct kobject *power_kobj;
+/* The global /sys/firmware/ kobject for people to chain off of */
+extern struct kobject *firmware_kobj;
+
 #endif /* _KOBJECT_TYPES_H_ */
