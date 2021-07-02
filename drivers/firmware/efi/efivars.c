@@ -363,6 +363,12 @@ static struct kobj_type efivar_ktype = {
 	.default_groups = def_groups,
 };
 
+static inline void
+efivar_unregister(struct efivar_entry *var)
+{
+	kobject_put(&var->kobj);
+}
+
 static ssize_t efivar_create(struct file *filp, struct kobject *kobj,
 			     struct bin_attribute *bin_attr,
 			     char *buf, loff_t pos, size_t count)
