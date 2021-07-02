@@ -263,15 +263,6 @@ static inline bool device_iommu_mapped(struct device *dev)
 /* Get the wakeup routines, which depend on struct device */
 #include <linux/pm_wakeup.h>
 
-static inline const char *dev_name(const struct device *dev)
-{
-	/* Use the init name until the kobject becomes available */
-	if (dev->init_name)
-		return dev->init_name;
-
-	return kobject_name(&dev->kobj);
-}
-
 /**
  * dev_bus_name - Return a device's bus/class name, if at all possible
  * @dev: struct device to get the bus/class name of
