@@ -3,6 +3,7 @@
  * SCSI functions used by both the initiator and the target code.
  */
 
+#include <scsi/scsi_device.h>
 #include <linux/bug.h>
 #include <linux/kernel.h>
 #include <linux/string.h>
@@ -356,3 +357,9 @@ int scsi_set_sense_field_pointer(u8 *buf, int buf_len, u16 fp, u8 bp, bool cd)
 	return 0;
 }
 EXPORT_SYMBOL(scsi_set_sense_field_pointer);
+
+int __must_check scsi_device_reprobe(struct scsi_device *sdev)
+{
+	return device_reprobe(&sdev->sdev_gendev);
+}
+EXPORT_SYMBOL(scsi_device_reprobe);
