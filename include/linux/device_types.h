@@ -534,4 +534,13 @@ static inline void set_dev_node(struct device *dev, int node)
 }
 #endif
 
+static inline const char *dev_name(const struct device *dev)
+{
+	/* Use the init name until the kobject becomes available */
+	if (dev->init_name)
+		return dev->init_name;
+
+	return kobject_name(&dev->kobj);
+}
+
 #endif /* _DEVICE_TYPES_H_ */
