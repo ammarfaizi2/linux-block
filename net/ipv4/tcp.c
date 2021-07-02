@@ -1144,6 +1144,27 @@ int tcp_sendpage(struct sock *sk, struct page *page, int offset,
 }
 EXPORT_SYMBOL(tcp_sendpage);
 
+inline int skb_copy_to_page_nocache(struct sock *sk, struct iov_iter *from,
+				    struct sk_buff *skb,
+				    struct page *page,
+				    int off, int copy)
+{
+	int err;
+
+	err = skb_do_copy_data_nocache(sk, skb, from, page_address(page) + off,
+				       copy, skb->len);
+	if (err)
+		return err;
+
+	skb->len	     += copy;
+	skb->data_len	     += copy;
+	skb->truesize	     += copy;
+	sk_wmem_queued_add(sk, copy);
+	sk_mem_charge(sk, copy);
+	return 0;
+}
+EXPORT_SYMBOL(skb_copy_to_page_nocache);
+
 void tcp_free_fastopen_req(struct tcp_sock *tp)
 {
 	if (tp->fastopen_req) {
