@@ -2,6 +2,8 @@
 #ifndef __LINUX_GFP_TYPES_H
 #define __LINUX_GFP_TYPES_H
 
+#include <linux/types.h>
+
 #include <uapi/linux/types.h>
 
 /* Free memory management - zoned buddy allocator.  */
@@ -350,5 +352,10 @@ typedef unsigned int __bitwise gfp_t;
 
 /* LRU Isolation modes. */
 typedef unsigned __bitwise isolate_mode_t;
+
+static inline bool gfpflags_allow_blocking(const gfp_t gfp_flags)
+{
+	return !!(gfp_flags & __GFP_DIRECT_RECLAIM);
+}
 
 #endif /* __LINUX_GFP_TYPES_H */
