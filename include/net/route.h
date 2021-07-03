@@ -3,6 +3,5 @@
 #define _ROUTE_H
 
 #include <net/route_types.h>
-#include <net/route_api.h>
 
 #endif	/* _ROUTE_H */
