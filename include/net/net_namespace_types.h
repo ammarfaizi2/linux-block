@@ -179,9 +179,6 @@ struct net {
 #endif
 } __randomize_layout;
 
-/* Init's network namespace */
-extern struct net init_net;
-
 #ifdef CONFIG_NET_NS
 #define __net_init
 #define __net_exit
