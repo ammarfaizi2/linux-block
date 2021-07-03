@@ -185,15 +185,6 @@ static inline void write_pnet(possible_net_t *pnet, struct net *net)
 #endif
 }
 
-static inline struct net *read_pnet(const possible_net_t *pnet)
-{
-#ifdef CONFIG_NET_NS
-	return pnet->net;
-#else
-	return &init_net;
-#endif
-}
-
 /* Protected by net_rwsem */
 #define for_each_net(VAR)				\
 	list_for_each_entry(VAR, &net_namespace_list, list)
