@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
 #[cfg(not(no_global_oom_handling))]
 use super::AsVecIntoIter;
 use crate::alloc::{Allocator, Global};
@@ -9,6 +11,7 @@ use core::iter::{
 };
 use core::marker::PhantomData;
 use core::mem::{self, ManuallyDrop};
+#[cfg(not(no_global_oom_handling))]
 use core::ops::Deref;
 use core::ptr::{self, NonNull};
 use core::slice::{self};

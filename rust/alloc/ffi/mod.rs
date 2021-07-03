@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
 //! Utilities related to FFI bindings.
 //!
 //! This module provides utilities to handle data across non-Rust

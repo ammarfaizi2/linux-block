@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
 /// Creates a [`Vec`] containing the arguments.
 ///
 /// `vec!` allows `Vec`s to be defined with the same syntax as array expressions.
