@@ -2049,12 +2049,6 @@ static inline void sk_eat_skb(struct sock *sk, struct sk_buff *skb)
 }
 
 static inline
-struct net *sock_net(const struct sock *sk)
-{
-	return read_pnet(&sk->sk_net);
-}
-
-static inline
 void sock_net_set(struct sock *sk, struct net *net)
 {
 	write_pnet(&sk->sk_net, net);
