@@ -1638,6 +1638,25 @@ static void tcp_v6_fill_cb(struct sk_buff *skb, const struct ipv6hdr *hdr,
 			skb->tstamp || skb_hwtstamps(skb)->hwtstamp;
 }
 
+inline struct sock *__inet6_lookup_skb(struct inet_hashinfo *hashinfo,
+				       struct sk_buff *skb, int doff,
+				       const __be16 sport,
+				       const __be16 dport,
+				       int iif, int sdif,
+				       bool *refcounted)
+{
+	struct sock *sk = skb_steal_sock(skb, refcounted);
+
+	if (sk)
+		return sk;
+
+	return __inet6_lookup(dev_net(skb_dst(skb)->dev), hashinfo, skb,
+			      doff, &ipv6_hdr(skb)->saddr, sport,
+			      &ipv6_hdr(skb)->daddr, ntohs(dport),
+			      iif, sdif, refcounted);
+}
+EXPORT_SYMBOL(__inet6_lookup_skb);
+
 INDIRECT_CALLABLE_SCOPE int tcp_v6_rcv(struct sk_buff *skb)
 {
 	int sdif = inet6_sdif(skb);
