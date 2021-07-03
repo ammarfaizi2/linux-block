@@ -615,7 +615,7 @@ static int inet_diag_cmd_exact(int cmd, struct sk_buff *in_skb,
 			.data = &dump_data,
 		};
 		err = handler->dump_one(&cb, req);
-	} else if (cmd == SOCK_DESTROY && handler->destroy) {
+	} else if (cmd == SOCK_DIAG_SOCK_DESTROY && handler->destroy) {
 		err = handler->destroy(in_skb, req);
 	} else {
 		err = -EOPNOTSUPP;
