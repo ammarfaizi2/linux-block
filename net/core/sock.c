@@ -4018,3 +4018,20 @@ void __reqsk_free(struct request_sock *req)
 	kmem_cache_free(req->rsk_ops->slab, req);
 }
 EXPORT_SYMBOL(__reqsk_free);
+
+struct request_sock *reqsk_queue_remove(struct request_sock_queue *queue, struct sock *parent)
+{
+	struct request_sock *req;
+
+	spin_lock_bh(&queue->rskq_lock);
+	req = queue->rskq_accept_head;
+	if (req) {
+		sk_acceptq_removed(parent);
+		WRITE_ONCE(queue->rskq_accept_head, req->dl_next);
+		if (queue->rskq_accept_head == NULL)
+			queue->rskq_accept_tail = NULL;
+	}
+	spin_unlock_bh(&queue->rskq_lock);
+	return req;
+}
+EXPORT_SYMBOL(reqsk_queue_remove);

@@ -158,22 +158,7 @@ static inline bool reqsk_queue_empty(const struct request_sock_queue *queue)
 	return READ_ONCE(queue->rskq_accept_head) == NULL;
 }
 
-static inline struct request_sock *reqsk_queue_remove(struct request_sock_queue *queue,
-						      struct sock *parent)
-{
-	struct request_sock *req;
-
-	spin_lock_bh(&queue->rskq_lock);
-	req = queue->rskq_accept_head;
-	if (req) {
-		sk_acceptq_removed(parent);
-		WRITE_ONCE(queue->rskq_accept_head, req->dl_next);
-		if (queue->rskq_accept_head == NULL)
-			queue->rskq_accept_tail = NULL;
-	}
-	spin_unlock_bh(&queue->rskq_lock);
-	return req;
-}
+struct request_sock *reqsk_queue_remove(struct request_sock_queue *queue, struct sock *parent);
 
 static inline void reqsk_queue_removed(struct request_sock_queue *queue,
 				       const struct request_sock *req)
