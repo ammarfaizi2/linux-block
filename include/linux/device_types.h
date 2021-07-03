@@ -549,4 +549,7 @@ static inline struct device *kobj_to_dev(struct kobject *kobj)
 	return container_of(kobj, struct device, kobj);
 }
 
+/* debugging and troubleshooting/diagnostic helpers. */
+const char *dev_driver_string(const struct device *dev);
+
 #endif /* _DEVICE_TYPES_H_ */

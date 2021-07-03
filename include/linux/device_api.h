@@ -558,9 +558,6 @@ static inline int devtmpfs_mount(void) { return 0; }
 /* drivers/base/power/shutdown.c */
 void device_shutdown(void);
 
-/* debugging and troubleshooting/diagnostic helpers. */
-const char *dev_driver_string(const struct device *dev);
-
 /* Device links interface. */
 struct device_link *device_link_add(struct device *consumer,
 				    struct device *supplier, u32 flags);
