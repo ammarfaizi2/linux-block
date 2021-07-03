@@ -726,13 +726,8 @@ struct rds_statistics {
 void rds_sock_addref(struct rds_sock *rs);
 void rds_sock_put(struct rds_sock *rs);
 void rds_wake_sk_sleep(struct rds_sock *rs);
-static inline void __rds_wake_sk_sleep(struct sock *sk)
-{
-	wait_queue_head_t *waitq = sk_sleep(sk);
+void __rds_wake_sk_sleep(struct sock *sk);
 
-	if (!sock_flag(sk, SOCK_DEAD) && waitq)
-		wake_up(waitq);
-}
 extern wait_queue_head_t rds_poll_waitq;
 
 
