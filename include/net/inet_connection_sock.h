@@ -213,31 +213,9 @@ static inline void inet_csk_clear_xmit_timer(struct sock *sk, const int what)
 /*
  *	Reset the retransmission timer
  */
-static inline void inet_csk_reset_xmit_timer(struct sock *sk, const int what,
-					     unsigned long when,
-					     const unsigned long max_when)
-{
-	struct inet_connection_sock *icsk = inet_csk(sk);
-
-	if (when > max_when) {
-		pr_debug("reset_xmit_timer: sk=%p %d when=0x%lx, caller=%p\n",
-			 sk, what, when, (void *)_THIS_IP_);
-		when = max_when;
-	}
-
-	if (what == ICSK_TIME_RETRANS || what == ICSK_TIME_PROBE0 ||
-	    what == ICSK_TIME_LOSS_PROBE || what == ICSK_TIME_REO_TIMEOUT) {
-		icsk->icsk_pending = what;
-		icsk->icsk_timeout = jiffies + when;
-		sk_reset_timer(sk, &icsk->icsk_retransmit_timer, icsk->icsk_timeout);
-	} else if (what == ICSK_TIME_DACK) {
-		icsk->icsk_ack.pending |= ICSK_ACK_TIMER;
-		icsk->icsk_ack.timeout = jiffies + when;
-		sk_reset_timer(sk, &icsk->icsk_delack_timer, icsk->icsk_ack.timeout);
-	} else {
-		pr_debug("inet_csk BUG: unknown timer value\n");
-	}
-}
+void inet_csk_reset_xmit_timer(struct sock *sk, const int what,
+			       unsigned long when,
+			       const unsigned long max_when);
 
 static inline unsigned long
 inet_csk_rto_backoff(const struct inet_connection_sock *icsk,
