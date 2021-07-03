@@ -101,6 +101,14 @@ out:
 	return 0;
 }
 
+inline void __rds_wake_sk_sleep(struct sock *sk)
+{
+	wait_queue_head_t *waitq = sk_sleep(sk);
+
+	if (!sock_flag(sk, SOCK_DEAD) && waitq)
+		wake_up(waitq);
+}
+
 /*
  * Careful not to race with rds_release -> sock_orphan which clears sk_sleep.
  * _bh() isn't OK here, we're called from interrupt handlers.  It's probably OK
