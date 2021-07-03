@@ -222,22 +222,9 @@ static inline const struct rt6_info *skb_rt6_info(const struct sk_buff *skb)
 	return rt6;
 }
 
-/*
- *	Store a destination cache entry in a socket
- */
-static inline void ip6_dst_store(struct sock *sk, struct dst_entry *dst,
-				 const struct in6_addr *daddr,
-				 const struct in6_addr *saddr)
-{
-	struct ipv6_pinfo *np = inet6_sk(sk);
-
-	np->dst_cookie = rt6_get_cookie((struct rt6_info *)dst);
-	sk_setup_caps(sk, dst);
-	np->daddr_cache = daddr;
-#ifdef CONFIG_IPV6_SUBTREES
-	np->saddr_cache = saddr;
-#endif
-}
+void ip6_dst_store(struct sock *sk, struct dst_entry *dst,
+		   const struct in6_addr *daddr,
+		   const struct in6_addr *saddr);
 
 void ip6_sk_dst_store_flow(struct sock *sk, struct dst_entry *dst,
 			   const struct flowi6 *fl6);
