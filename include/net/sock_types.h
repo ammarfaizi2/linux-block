@@ -703,4 +703,12 @@ struct proto {
 	int			(*diag_destroy)(struct sock *sk, int err);
 } __randomize_layout;
 
+/* This helper checks if a socket is a full socket,
+ * ie _not_ a timewait or request socket.
+ */
+static inline bool sk_fullsock(const struct sock *sk)
+{
+	return (1 << sk->sk_state) & ~(TCPF_TIME_WAIT | TCPF_NEW_SYN_RECV);
+}
+
 #endif	/* _SOCK_TYPES_H */
