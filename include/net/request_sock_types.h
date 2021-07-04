@@ -11,12 +11,6 @@
 #ifndef _REQUEST_SOCK_TYPES_H
 #define _REQUEST_SOCK_TYPES_H
 
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/types.h>
-#include <linux/bug.h>
-#include <linux/refcount_api.h>
-
 #include <net/sock_types.h>
 
 struct request_sock;
