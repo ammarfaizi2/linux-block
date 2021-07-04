@@ -1958,6 +1958,27 @@ static void tcp_v4_fill_cb(struct sk_buff *skb, const struct iphdr *iph,
 			skb->tstamp || skb_hwtstamps(skb)->hwtstamp;
 }
 
+inline struct sock *__inet_lookup_skb(struct inet_hashinfo *hashinfo,
+				      struct sk_buff *skb,
+				      int doff,
+				      const __be16 sport,
+				      const __be16 dport,
+				      const int sdif,
+				      bool *refcounted)
+{
+	struct sock *sk = skb_steal_sock(skb, refcounted);
+	const struct iphdr *iph = ip_hdr(skb);
+
+	if (sk)
+		return sk;
+
+	return __inet_lookup(dev_net(skb_dst(skb)->dev), hashinfo, skb,
+			     doff, iph->saddr, sport,
+			     iph->daddr, dport, inet_iif(skb), sdif,
+			     refcounted);
+}
+EXPORT_SYMBOL(__inet_lookup_skb);
+
 /*
  *	From tcp_input.c
  */
