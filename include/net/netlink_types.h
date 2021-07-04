@@ -3,10 +3,9 @@
 #define __NET_NETLINK_TYPES_H
 
 #include <linux/types.h>
-#include <linux/netlink.h>
-#include <linux/jiffies.h>
-#include <linux/in6.h>
-#include <linux/skbuff_api.h>
+
+struct netlink_ext_ack;
+struct nlattr;
 
  /**
   * Standard attribute types to specify validation policy
