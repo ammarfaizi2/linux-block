@@ -2,11 +2,11 @@
 #ifndef __LINUX_RTNETLINK_H
 #define __LINUX_RTNETLINK_H
 
+#include <linux/mutex_types.h>
+#include <linux/netdevice_types.h>
+#include <linux/wait_types.h>
+#include <linux/refcount_types.h>
 
-#include <linux/mutex.h>
-#include <linux/netdevice.h>
-#include <linux/wait.h>
-#include <linux/refcount.h>
 #include <uapi/linux/rtnetlink.h>
 
 struct dst_entry;
