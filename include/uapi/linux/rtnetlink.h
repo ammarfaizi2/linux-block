@@ -2,11 +2,11 @@
 #ifndef _UAPI__LINUX_RTNETLINK_H
 #define _UAPI__LINUX_RTNETLINK_H
 
-#include <linux/types.h>
-#include <linux/netlink.h>
-#include <linux/if_link.h>
-#include <linux/if_addr.h>
-#include <linux/neighbour.h>
+#include <uapi/linux/types.h>
+#include <uapi/linux/netlink.h>
+#include <uapi/linux/if_link.h>
+#include <uapi/linux/if_addr.h>
+#include <uapi/linux/neighbour.h>
 
 /* rtnetlink families. Values up to 127 are reserved for real address
  * families, values above 128 may be used arbitrarily.
