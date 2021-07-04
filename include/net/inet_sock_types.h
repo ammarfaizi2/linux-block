@@ -12,18 +12,8 @@
 #ifndef _INET_SOCK_TYPES_H
 #define _INET_SOCK_TYPES_H
 
-#include <linux/bitops.h>
-#include <linux/string.h>
-#include <linux/types.h>
-#include <linux/jhash.h>
-#include <linux/netdevice.h>
-
-#include <net/flow.h>
-#include <net/sock.h>
 #include <net/request_sock.h>
-#include <net/netns/hash.h>
-#include <net/tcp_states.h>
-#include <net/l3mdev.h>
+#include <net/flow.h>
 
 /** struct ip_options - IP Options
  *
