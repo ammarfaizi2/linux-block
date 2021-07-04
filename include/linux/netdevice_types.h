@@ -21,7 +21,7 @@
 #ifndef _LINUX_NETDEVICE_TYPES_H
 #define _LINUX_NETDEVICE_TYPES_H
 
-#include <linux/dynamic_queue_limits.h>
+#include <linux/dynamic_queue_limits_types.h>
 #include <linux/hashtable_types.h>
 #include <linux/seqlock_types.h>
 #include <linux/device_types.h>
@@ -33,6 +33,7 @@
 #include <uapi/linux/netdevice.h>
 
 #include <vdso/bits.h>
+#include <vdso/limits.h>
 
 struct netpoll_info;
 struct device;
