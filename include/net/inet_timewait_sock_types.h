@@ -11,8 +11,6 @@
 #ifndef _INET_TIMEWAIT_SOCK_TYPES_
 #define _INET_TIMEWAIT_SOCK_TYPES_
 
-#include <net/net_namespace.h>
-
 #include <net/inet_sock_types.h>
 
 struct inet_bind_bucket;
