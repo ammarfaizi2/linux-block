@@ -12,9 +12,9 @@
 #include <linux/build_bug.h>
 #include <linux/socket.h>
 #include <linux/in6.h>
-#include <linux/atomic.h>
-#include <net/flow_dissector.h>
 #include <linux/uidgid.h>
+
+#include <net/flow_dissector.h>
 
 /*
  * ifindex generation is per-net namespace, and loopback is
