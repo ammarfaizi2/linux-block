@@ -11,16 +11,8 @@
 #ifndef _INET_CONNECTION_SOCK_TYPES_H
 #define _INET_CONNECTION_SOCK_TYPES_H
 
-#include <linux/compiler.h>
-#include <linux/string.h>
-#include <linux/timer.h>
-#include <linux/poll.h>
-#include <linux/kernel.h>
-#include <linux/sockptr.h>
-#include <linux/percpu_counter.h>
-
-#include <net/inet_sock.h>
-#include <net/request_sock.h>
+#include <net/inet_sock_types.h>
+#include <net/request_sock_types.h>
 
 /* Cancel timers, when they are not required. */
 #undef INET_CSK_CLEAR_TIMERS
@@ -47,7 +39,7 @@ struct inet_connection_sock_af_ops {
 	u16	    net_frag_header_len;
 	u16	    sockaddr_len;
 	int	    (*setsockopt)(struct sock *sk, int level, int optname,
-				  sockptr_t optval, unsigned int optlen);
+				  struct sockptr_struct optval, unsigned int optlen);
 	int	    (*getsockopt)(struct sock *sk, int level, int optname,
 				  char __user *optval, int __user *optlen);
 	void	    (*addr2sockaddr)(struct sock *sk, struct sockaddr *);
