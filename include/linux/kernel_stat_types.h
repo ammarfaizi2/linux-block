@@ -2,7 +2,9 @@
 #ifndef _LINUX_KERNEL_STAT_TYPES_H
 #define _LINUX_KERNEL_STAT_TYPES_H
 
-#include <linux/spinlock_types.h>
+#ifndef CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
+# include <linux/spinlock_types.h>
+#endif
 
 /**
  * struct prev_cputime - snapshot of system and user cputime
