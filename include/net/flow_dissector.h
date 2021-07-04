@@ -373,14 +373,6 @@ struct bpf_flow_dissector {
 	const void		*data_end;
 };
 
-static inline void
-flow_dissector_init_keys(struct flow_dissector_key_control *key_control,
-			 struct flow_dissector_key_basic *key_basic)
-{
-	memset(key_control, 0, sizeof(*key_control));
-	memset(key_basic, 0, sizeof(*key_basic));
-}
-
 #ifdef CONFIG_BPF_SYSCALL
 int flow_dissector_bpf_prog_attach_check(struct net *net,
 					 struct bpf_prog *prog);
