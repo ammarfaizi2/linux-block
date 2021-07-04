@@ -9,6 +9,8 @@
 #include <linux/refcount.h>
 #include <uapi/linux/rtnetlink.h>
 
+struct dst_entry;
+
 extern int rtnetlink_send(struct sk_buff *skb, struct net *net, u32 pid, u32 group, int echo);
 extern int rtnl_unicast(struct sk_buff *skb, struct net *net, u32 pid);
 extern void rtnl_notify(struct sk_buff *skb, struct net *net, u32 pid,
@@ -80,15 +82,9 @@ static inline bool lockdep_rtnl_is_held(void)
 #define rtnl_dereference(p)					\
 	rcu_dereference_protected(p, lockdep_rtnl_is_held())
 
-static inline struct netdev_queue *dev_ingress_queue(struct net_device *dev)
-{
-	return rtnl_dereference(dev->ingress_queue);
-}
+#define dev_ingress_queue(dev) rtnl_dereference((dev)->ingress_queue)
 
-static inline struct netdev_queue *dev_ingress_queue_rcu(struct net_device *dev)
-{
-	return rcu_dereference(dev->ingress_queue);
-}
+#define dev_ingress_queue_rcu(dev) rcu_dereference((dev)->ingress_queue)
 
 struct netdev_queue *dev_ingress_queue_create(struct net_device *dev);
 
