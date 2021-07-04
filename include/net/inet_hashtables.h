@@ -384,25 +384,13 @@ static inline struct sock *inet_lookup(struct net *net,
 	return sk;
 }
 
-static inline struct sock *__inet_lookup_skb(struct inet_hashinfo *hashinfo,
-					     struct sk_buff *skb,
-					     int doff,
-					     const __be16 sport,
-					     const __be16 dport,
-					     const int sdif,
-					     bool *refcounted)
-{
-	struct sock *sk = skb_steal_sock(skb, refcounted);
-	const struct iphdr *iph = ip_hdr(skb);
-
-	if (sk)
-		return sk;
-
-	return __inet_lookup(dev_net(skb_dst(skb)->dev), hashinfo, skb,
-			     doff, iph->saddr, sport,
-			     iph->daddr, dport, inet_iif(skb), sdif,
-			     refcounted);
-}
+struct sock *__inet_lookup_skb(struct inet_hashinfo *hashinfo,
+			       struct sk_buff *skb,
+			       int doff,
+			       const __be16 sport,
+			       const __be16 dport,
+			       const int sdif,
+			       bool *refcounted);
 
 u32 inet6_ehashfn(const struct net *net,
 		  const struct in6_addr *laddr, const u16 lport,
