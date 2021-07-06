@@ -5,7 +5,7 @@
 #include <linux/types.h>
 
 struct kallsyms_entry {
-	u32 offset;
+	u64 offset;
 };
 
 #endif /* _LINUX_KALLSYMS_OBJTOOL_H */
