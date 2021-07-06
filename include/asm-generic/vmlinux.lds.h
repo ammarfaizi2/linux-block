@@ -514,6 +514,10 @@
 		*(__ksymtab_strings)					\
 	}								\
 									\
+	/*****************************************************/		\
+									\
+	. = ALIGN((align));						\
+									\
 	__begin_kallsyms = .;						\
 									\
 	/* Kallsyms kernel symbol table */				\
@@ -523,6 +527,20 @@
 									\
 	__end_kallsyms = .;						\
 									\
+	/*****************************************************/		\
+									\
+	. = ALIGN((align));						\
+									\
+	__begin_kallsyms_offsets = .;					\
+									\
+	/* kallsyms_offsets kernel symbol table */			\
+        __kallsyms_offsets : AT(ADDR(__kallsyms_offsets) - LOAD_OFFSET) { \
+		*(__kallsyms_offsets)					\
+	}								\
+									\
+	__end_kallsyms_offsets = .;					\
+									\
+	/*****************************************************/		\
 									\
 	/* __*init sections */						\
 	__init_rodata : AT(ADDR(__init_rodata) - LOAD_OFFSET) {		\

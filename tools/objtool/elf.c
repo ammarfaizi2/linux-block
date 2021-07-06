@@ -364,13 +364,14 @@ void *zalloc(const size_t size)
 
 static int read_symbols(struct elf *elf, const char *name)
 {
-	struct section *symtab, *symtab_shndx, *sec, *sec_kallsyms = NULL;
+	struct section *symtab, *symtab_shndx, *sec, *sec_kallsyms = NULL, *sec_kallsyms_off = NULL;
 	struct symbol *sym, *pfunc;
 	int symbols_nr, i, nr_entries = 0;
 	char *coldstr;
 	Elf_Data *shndx_data = NULL;
 	Elf32_Word shndx;
 	unsigned long sec_kallsyms_len = 0;
+	unsigned long sec_kallsyms_off_len = 0;
 
 	symtab = find_section_by_name(elf, ".symtab");
 	if (symtab) {
@@ -396,6 +397,7 @@ static int read_symbols(struct elf *elf, const char *name)
 		return -1;
 
 	if (kallsyms) {
+		/**********************************************************************/
 		sec_kallsyms = find_section_by_name(elf, "__kallsyms");
 		if (sec_kallsyms) {
 			WARN("file already has __kallsyms section, skipping: %s", name);
@@ -417,6 +419,34 @@ static int read_symbols(struct elf *elf, const char *name)
 			WARN("could not create __kallsyms section: %s", name);
 			return -1;
 		}
+
+		sec_kallsyms->changed = 1;
+
+		/**********************************************************************/
+
+		sec_kallsyms_off = find_section_by_name(elf, "__kallsyms_offsets");
+		if (sec_kallsyms_off) {
+			WARN("file already has __kallsyms_offsets section, skipping: %s", name);
+			return 0;
+		}
+
+		nr_entries = symbols_nr;
+
+		if (!nr_entries) {
+			WARN("file has no symbols, skipping");
+			return 0;
+		}
+
+		dprintf("creating __kallsyms_offsets section with %4d symbols, for %s.\n", nr_entries, name);
+
+		/* The offsets section has fixed size u32 entries: */
+		sec_kallsyms_off = elf_create_section(elf, "__kallsyms_offsets", 0, sizeof(u32), 0);
+		if (!sec_kallsyms_off) {
+			WARN("could not create __kallsyms_offsets section: %s", name);
+			return -1;
+		}
+
+		sec_kallsyms_off->changed = 1;
 
 		elf->changed = 1;
 	}
@@ -470,6 +500,7 @@ static int read_symbols(struct elf *elf, const char *name)
 		if (kallsyms) {
 			Elf_Data *data;
 			char *elf_str;
+			u32 *elf_u32;
 
 			if (sym->offset)
 				dprintf("# elf sym %6d: %016lx, %s\n", i, sym->offset, sym->name);
@@ -479,14 +510,18 @@ static int read_symbols(struct elf *elf, const char *name)
 			if (!sym->len)
 				continue;
 
+			/************************************************************************/
+
 			data = elf_newdata(elf_getscn(elf->elf, sec_kallsyms->idx));
-			if (!data)
-				WARN("kallsyms: no data?");
+			if (!data) {
+				WARN("kallsyms: no string data space?");
+				continue;
+			}
 
 			/*
 			 * Data buffer containing the string must persist
 			 * until near the end of objtool execution, when we
-			 * run elf_update().
+			 * run elf_update():
 			 */
 			elf_str = strdup(sym->name);
 
@@ -500,6 +535,32 @@ static int read_symbols(struct elf *elf, const char *name)
 
 			sec_kallsyms_len += data->d_size;
 			sec_kallsyms->sh.sh_size += data->d_size;
+
+			/************************************************************************/
+
+			data = elf_newdata(elf_getscn(elf->elf, sec_kallsyms_off->idx));
+			if (!data) {
+				WARN("kallsyms: no offset data space?");
+				continue;
+			}
+
+			/*
+			 * Data buffer containing the u32 offset must persist
+			 * until near the end of objtool execution, when we
+			 * run elf_update():
+			 */
+			elf_u32 = zalloc(sizeof(u32));
+
+			*elf_u32 = sym->offset;
+
+			data->d_buf = (void *)elf_u32;
+			data->d_size = sizeof(u32);
+			data->d_align = 1;
+
+			sec_kallsyms_off->changed = 1;
+
+			sec_kallsyms_off_len += data->d_size;
+			sec_kallsyms_off->sh.sh_size += data->d_size;
 		}
 	}
 
@@ -508,7 +569,8 @@ static int read_symbols(struct elf *elf, const char *name)
 			WARN("kallsyms section size mismatch, huh?");
 	}
 
-	dprintf("# sec_kallsyms_len: %lu\n", sec_kallsyms_len);
+	dprintf("# sec_kallsyms_len:     %lu\n", sec_kallsyms_len);
+	dprintf("# sec_kallsyms_off_len: %lu\n", sec_kallsyms_off_len);
 
 	if (stats) {
 		dprintf("nr_symbols: %lu\n", (unsigned long)symbols_nr);
