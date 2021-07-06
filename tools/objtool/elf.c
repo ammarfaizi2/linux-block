@@ -338,7 +338,7 @@ static void elf_add_symbol(struct elf *elf, struct symbol *sym)
 		rb_erase(&sym->node, &sym->sec->symbol_tree);
 }
 
-static bool V = 1;
+static bool V = 0;
 #define dprintf(x...) do { if (V) printf(x); } while (0)
 
 static bool kallsyms = 1;
@@ -350,7 +350,9 @@ struct kallsyms_entry {
 	char name[KSYM_NAME_LEN];
 };
 
-static void *zalloc(const size_t size)
+extern void *zalloc(const size_t size);
+
+void *zalloc(const size_t size)
 {
         void *buff = malloc(size);
 
@@ -407,8 +409,9 @@ static int read_symbols(struct elf *elf, const char *name)
 			return 0;
 		}
 
-		if (V) WARN("creating __kallsyms section with %4d symbols, %ld entry size (= %ld bytes) for %s.\n", nr_entries, sizeof(struct kallsyms_entry), sizeof(struct kallsyms_entry)*nr_entries, name);
+		dprintf("creating __kallsyms section with %4d symbols, for %s.\n", nr_entries, name);
 
+		/* The string section is variable size, so we use zero for entry size and dynamically update length: */
 		sec_kallsyms = elf_create_section(elf, "__kallsyms", 0, 0, 0);
 		if (!sec_kallsyms) {
 			WARN("could not create __kallsyms section: %s", name);
@@ -466,12 +469,15 @@ static int read_symbols(struct elf *elf, const char *name)
 
 		if (kallsyms) {
 			Elf_Data *data;
-			struct kallsyms_entry *entry;
+			char *elf_str;
 
 			if (sym->offset)
 				dprintf("# elf sym %6d: %016lx, %s\n", i, sym->offset, sym->name);
 			else
 				dprintf("# elf sym %6d:                 , %s\n", i, sym->name);
+
+			if (!sym->len)
+				continue;
 
 			data = elf_newdata(elf_getscn(elf->elf, sec_kallsyms->idx));
 			if (!data)
@@ -482,13 +488,10 @@ static int read_symbols(struct elf *elf, const char *name)
 			 * until near the end of objtool execution, when we
 			 * run elf_update().
 			 */
-			entry = zalloc(sizeof(*entry));
+			elf_str = strdup(sym->name);
 
-			entry->addr = sym->offset;
-			memcpy(entry->name, sym->name, strlen(sym->name));
-
-			data->d_buf = (void *)entry;
-			data->d_size = sizeof(*entry);
+			data->d_buf = (void *)elf_str;
+			data->d_size = strlen(elf_str) + 1;
 			data->d_align = 1;
 
 			sec_kallsyms->len += data->d_size;
@@ -501,7 +504,7 @@ static int read_symbols(struct elf *elf, const char *name)
 	}
 
 	if (kallsyms) {
-		if (sec_kallsyms->sh.sh_size != sizeof(struct kallsyms_entry)*nr_entries)
+		if (sec_kallsyms->sh.sh_size != sec_kallsyms->len)
 			WARN("kallsyms section size mismatch, huh?");
 	}
 
