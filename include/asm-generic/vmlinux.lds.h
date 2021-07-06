@@ -514,6 +514,16 @@
 		*(__ksymtab_strings)					\
 	}								\
 									\
+	__begin_kallsyms = .;						\
+									\
+	/* Kallsyms kernel symbol table */				\
+        __kallsyms : AT(ADDR(__kallsyms) - LOAD_OFFSET) {		\
+		*(__kallsyms)						\
+	}								\
+									\
+	__end_kallsyms = .;						\
+									\
+									\
 	/* __*init sections */						\
 	__init_rodata : AT(ADDR(__init_rodata) - LOAD_OFFSET) {		\
 		*(.ref.rodata)						\
