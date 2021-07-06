@@ -163,6 +163,7 @@ SYM_FUNC_START(__get_user_nocheck_8)
 SYM_FUNC_END(__get_user_nocheck_8)
 EXPORT_SYMBOL(__get_user_nocheck_8)
 
+.globl bad_get_user
 
 SYM_CODE_START_LOCAL(.Lbad_get_user_clac)
 	ASM_CLAC
