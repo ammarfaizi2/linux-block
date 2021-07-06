@@ -903,7 +903,8 @@ static void __init kallsyms_objtool_init(void)
 	entries = (void *) &__kallsyms_offsets_begin;
 
 	for (i = 0; i < nr_entries; i++) {
-		printk("# kallsyms entry %6ld/%6ld: [%016Lx]: {%s}\n", i, nr_entries, (u64)entries[i].offset, str);
+//		printk("# kallsyms entry %6ld/%6ld: [%016Lx]: {%s}\n", i, nr_entries, (u64)entries[i].offset, str);
+//		printk("%016Lx %s", (u64)entries[i].offset, str);
 
 		str += strlen(str) + 1;
 
