@@ -338,9 +338,21 @@ static void elf_add_symbol(struct elf *elf, struct symbol *sym)
 		rb_erase(&sym->node, &sym->sec->symbol_tree);
 }
 
-static int read_symbols(struct elf *elf)
+static bool V = 0;
+#define dprintf(x...) do { if (V) printf(x); } while (0)
+
+static bool kallsyms = 1;
+
+#define KSYM_NAME_LEN 128
+
+struct kallsyms_entry {
+	unsigned long addr;
+	char name[KSYM_NAME_LEN];
+};
+
+static int read_symbols(struct elf *elf, const char *name)
 {
-	struct section *symtab, *symtab_shndx, *sec;
+	struct section *symtab, *symtab_shndx, *sec, *sec_kallsyms;
 	struct symbol *sym, *pfunc;
 	int symbols_nr, i;
 	char *coldstr;
@@ -354,6 +366,8 @@ static int read_symbols(struct elf *elf)
 			shndx_data = symtab_shndx->data;
 
 		symbols_nr = symtab->sh.sh_size / symtab->sh.sh_entsize;
+		dprintf("# elf: symtab->sh.sh_size:    %8ld\n", symtab->sh.sh_size);
+		dprintf("# elf: symtab->sh.sh_entsize: %8ld\n", symtab->sh.sh_entsize);
 	} else {
 		/*
 		 * A missing symbol table is actually possible if it's an empty
@@ -367,6 +381,33 @@ static int read_symbols(struct elf *elf)
 	if (!elf_alloc_hash(symbol, symbols_nr) ||
 	    !elf_alloc_hash(symbol_name, symbols_nr))
 		return -1;
+
+	if (kallsyms) {
+		int nr_entries;
+
+		sec_kallsyms = find_section_by_name(elf, "__kallsyms");
+		if (sec_kallsyms) {
+			WARN("file already has __kallsyms section, skipping: %s", name);
+			return 0;
+		}
+
+		nr_entries = symbols_nr;
+
+		if (!nr_entries) {
+			WARN("file has no symbols, skipping");
+			return 0;
+		}
+
+		WARN("creating __kallsyms section with %4d symbols for %s.\n", nr_entries, name);
+
+		sec_kallsyms = elf_create_section(elf, "__kallsyms", 0, sizeof(struct kallsyms_entry), nr_entries);
+		if (!sec_kallsyms) {
+			WARN("could not create __kallsyms section: %s", name);
+			return -1;
+		}
+
+		elf->changed = 1;
+	}
 
 	for (i = 0; i < symbols_nr; i++) {
 		sym = malloc(sizeof(*sym));
@@ -413,11 +454,21 @@ static int read_symbols(struct elf *elf)
 			sym->sec = find_section_by_index(elf, 0);
 
 		elf_add_symbol(elf, sym);
+
+		if (kallsyms) {
+//			Elf_Data *data;
+
+			if (sym->offset)
+				dprintf("# elf sym %6d: %016lx, %s\n", i, sym->offset, sym->name);
+			else
+				dprintf("# elf sym %6d:                 , %s\n", i, sym->name);
+
+		}
 	}
 
 	if (stats) {
-		printf("nr_symbols: %lu\n", (unsigned long)symbols_nr);
-		printf("symbol_bits: %d\n", elf->symbol_bits);
+		dprintf("nr_symbols: %lu\n", (unsigned long)symbols_nr);
+		dprintf("symbol_bits: %d\n", elf->symbol_bits);
 	}
 
 	/* Create parent/child links for any cold subfunctions */
@@ -693,7 +744,7 @@ struct elf *elf_open_read(const char *name, int flags)
 	if (read_sections(elf))
 		goto err;
 
-	if (read_symbols(elf))
+	if (read_symbols(elf, name))
 		goto err;
 
 	if (read_relocs(elf))
