@@ -680,7 +680,8 @@ static int process_kallsyms_symbols(struct elf *elf, const char *file_name)
 			 */
 			entry = zalloc(sizeof(*entry));
 
-			entry->offset = sym->offset; /* is this wrong? */
+			/* Linker will set this to the right offset, based on the relocation entry: */
+			entry->offset = 0;
 
 			data->d_buf = (void *)entry;
 			data->d_size = sizeof(*entry);
@@ -698,7 +699,7 @@ static int process_kallsyms_symbols(struct elf *elf, const char *file_name)
 			if (1) {
 				if (elf_add_reloc(elf,
 						  sec_kallsyms_off,
-						  offset_idx * sizeof(struct kallsyms_entry),
+						  offset_idx * sizeof(*entry),
 						  R_X86_64_64,
 						  sym,
 						  0			)) {
