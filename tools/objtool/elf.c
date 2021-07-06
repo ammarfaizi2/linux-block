@@ -507,13 +507,14 @@ err:
 	return -1;
 }
 
-static int process_kallsyms_symbols(struct elf *elf, const char *name)
+static int process_kallsyms_symbols(struct elf *elf, const char *file_name)
 {
 	struct section *sec, *sec_kallsyms_strs = NULL, *sec_kallsyms_off = NULL;
 	struct symbol *sym;
 	unsigned long sec_kallsyms_len = 0;
 	unsigned long sec_kallsyms_off_len = 0;
 	int symbols_nr = 0;
+	int offset_idx = 0;
 
 	if (!kallsyms)
 		return 0;
@@ -521,14 +522,14 @@ static int process_kallsyms_symbols(struct elf *elf, const char *name)
 	/**********************************************************************/
 	sec_kallsyms_strs = find_section_by_name(elf, "__kallsyms_strs");
 	if (sec_kallsyms_strs) {
-		WARN("file already has __kallsyms section, skipping: %s", name);
+		WARN("file already has __kallsyms section, skipping: %s", file_name);
 		return 0;
 	}
 
 	/* The string section is variable size, so we use zero for entry size and dynamically update length: */
 	sec_kallsyms_strs = elf_create_section(elf, "__kallsyms_strs", 0, 0, 0);
 	if (!sec_kallsyms_strs) {
-		WARN("could not create __kallsyms section: %s", name);
+		WARN("could not create __kallsyms section: %s", file_name);
 		return -1;
 	}
 
@@ -538,14 +539,14 @@ static int process_kallsyms_symbols(struct elf *elf, const char *name)
 
 	sec_kallsyms_off = find_section_by_name(elf, "__kallsyms_offsets");
 	if (sec_kallsyms_off) {
-		WARN("file already has __kallsyms_offsets section, skipping: %s", name);
+		WARN("file already has __kallsyms_offsets section, skipping: %s", file_name);
 		return 0;
 	}
 
 	/* The offsets section has fixed size u32 entries: */
 	sec_kallsyms_off = elf_create_section(elf, "__kallsyms_offsets", 0, sizeof(u32), 0);
 	if (!sec_kallsyms_off) {
-		WARN("could not create __kallsyms_offsets section: %s", name);
+		WARN("could not create __kallsyms_offsets section: %s", file_name);
 		return -1;
 	}
 
@@ -626,18 +627,22 @@ static int process_kallsyms_symbols(struct elf *elf, const char *name)
 			 * Use 0 for 'addend', as we want to track the address of the
 			 * first byte of the object of the symbol we are tracking:
 			 */
-			if (0 && elf_add_reloc(elf,
-					       sec_kallsyms_off,
-					       i * sizeof(u32),
-					       R_X86_64_PC32,
-					       sym,
-					       0			)) {
+			if (1) {
+				if (elf_add_reloc(elf,
+						  sec_kallsyms_off,
+						  offset_idx * sizeof(u32),
+						  R_X86_64_PC32,
+						  sym,
+						  0			)) {
 
-				WARN("failed to add kallsyms offset relocation entry!");
-				continue;
+					WARN("failed to add kallsyms offset relocation entry!");
+					continue;
+				}
+				dprintf("# Added reloc offset idx #%d (off: %lx), in file %s, for symbol: %s\n", offset_idx, offset_idx*sizeof(u32), file_name, sym->name);
 			}
 
 			symbols_nr++;
+			offset_idx++;
 		}
 	}
 
