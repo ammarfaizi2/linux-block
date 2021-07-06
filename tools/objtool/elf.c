@@ -21,6 +21,14 @@
 #include <objtool/elf.h>
 #include <objtool/warn.h>
 
+static bool V = 0;
+#define dprintf(x...) do { if (V) printf(x); } while (0)
+
+static bool kallsyms = 1;
+
+#include "../../../include/linux/kallsyms_objtool.h"
+
+
 #define MAX_NAME_LEN 128
 
 static inline u32 str_hash(const char *str)
@@ -295,7 +303,7 @@ static int read_sections(struct elf *elf)
 		elf_hash_add(section_name, &sec->name_hash, str_hash(sec->name));
 	}
 
-	if (stats) {
+	if (stats || V) {
 		printf("nr_sections: %lu\n", (unsigned long)sections_nr);
 		printf("section_bits: %d\n", elf->section_bits);
 	}
@@ -337,15 +345,6 @@ static void elf_add_symbol(struct elf *elf, struct symbol *sym)
 	if (!sym->len)
 		rb_erase(&sym->node, &sym->sec->symbol_tree);
 }
-
-static bool V = 0;
-#define dprintf(x...) do { if (V) printf(x); } while (0)
-
-static bool kallsyms = 1;
-
-#define KSYM_NAME_LEN 128
-
-#include "../../../include/linux/kallsyms_objtool.h"
 
 extern void *zalloc(const size_t size);
 
@@ -438,7 +437,7 @@ static int read_symbols(struct elf *elf, const char *name)
 		elf_add_symbol(elf, sym);
 	}
 
-	if (stats) {
+	if (stats || V) {
 		dprintf("nr_symbols: %lu\n", (unsigned long)symbols_nr);
 		dprintf("symbol_bits: %d\n", elf->symbol_bits);
 	}
@@ -562,7 +561,7 @@ static int process_kallsyms_symbols(struct elf *elf, const char *file_name)
 			if (sym->sec != sec)
 				WARN("This is unexpected ...");
 
-			dprintf("# Symbol-processing ELF section {%s} ...\n", sec->name);
+			dprintf("# Symbol-processing ELF section #%d {%s} ...\n", sec->idx, sec->name);
 			/*
 			 * Don't process symbols in sections that are going to be discarded:
 			 */
@@ -573,13 +572,15 @@ static int process_kallsyms_symbols(struct elf *elf, const char *file_name)
 				dprintf("# ELF section {%s} is marked as discarded - not processing symbols.\n", sec->name);
 				continue;
 			}
-			if (sym->offset)
-				dprintf("# elf sym %6d: %016lx, %s\n", i, sym->offset, sym->name);
-			else
-				dprintf("# elf sym %6d:                 , %s\n", i, sym->name);
+			dprintf("# elf sym %6d: type:%3d, bind:%3d, %016lx, %s\n", i, sym->type, sym->bind, sym->offset, sym->name);
 
-			if (!sym->len)
+//			if (!sym->sym.st_size) {
+//			if (sym->sym.st_info == GELF_ST_INFO(STB_GLOBAL, STT_NOTYPE)) {
+
+			if (sym->type == STT_NOTYPE || sym->type == STT_SECTION || sym->type == STT_FILE) {
+				dprintf("# skipping undefined symbol #%d {%s}, sym_st.size: %ld\n", i, sym->name, sym->sym.st_size);
 				continue;
+			}
 
 			/************************************************************************/
 
@@ -824,7 +825,7 @@ static int read_relocs(struct elf *elf)
 		tot_reloc += nr_reloc;
 	}
 
-	if (stats) {
+	if (stats || V) {
 		printf("max_reloc: %lu\n", max_reloc);
 		printf("tot_reloc: %lu\n", tot_reloc);
 		printf("reloc_bits: %d\n", elf->reloc_bits);
