@@ -882,28 +882,28 @@ static const struct proc_ops kallsyms_proc_ops = {
 extern char __kallsyms_strs_begin;
 extern char __kallsyms_strs_end;
 
-extern u32 __kallsyms_offsets_begin;
-extern u32 __kallsyms_offsets_end;
+extern char __kallsyms_offsets_begin;
+extern char __kallsyms_offsets_end;
 
 static void __init kallsyms_objtool_init(void)
 {
+	struct kallsyms_entry *entries;
 	long nr_entries, i;
-	u32 *offsets;
 	char *str;
 
 	printk("# kallsyms_objtool_init()\n");
 
-	nr_entries = &__kallsyms_offsets_end - &__kallsyms_offsets_begin;
+	nr_entries = ((long)&__kallsyms_offsets_end - (long)&__kallsyms_offsets_begin)/sizeof(struct kallsyms_entry);
 
 	printk("# kallsyms: %ld entries.\n", nr_entries);
 
 	BUG_ON(nr_entries <= 0);
 
 	str = &__kallsyms_strs_begin;
-	offsets = &__kallsyms_offsets_begin;
+	entries = (void *) &__kallsyms_offsets_begin;
 
 	for (i = 0; i < nr_entries; i++) {
-		printk("# kallsyms entry %6ld/%6ld: [%08x]: {%s}\n", i, nr_entries, offsets[i], str);
+		printk("# kallsyms entry %6ld/%6ld: [%016Lx]: {%s}\n", i, nr_entries, (u64)entries[i].offset, str);
 
 		str += strlen(str) + 1;
 
