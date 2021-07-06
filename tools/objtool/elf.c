@@ -364,7 +364,7 @@ void *zalloc(const size_t size)
 
 static int read_symbols(struct elf *elf, const char *name)
 {
-	struct section *symtab, *symtab_shndx, *sec, *sec_kallsyms = NULL, *sec_kallsyms_off = NULL;
+	struct section *symtab, *symtab_shndx, *sec, *sec_kallsyms_strs = NULL, *sec_kallsyms_off = NULL;
 	struct symbol *sym, *pfunc;
 	int symbols_nr, i, nr_entries = 0;
 	char *coldstr;
@@ -398,8 +398,8 @@ static int read_symbols(struct elf *elf, const char *name)
 
 	if (kallsyms) {
 		/**********************************************************************/
-		sec_kallsyms = find_section_by_name(elf, "__kallsyms");
-		if (sec_kallsyms) {
+		sec_kallsyms_strs = find_section_by_name(elf, "__kallsyms_strs");
+		if (sec_kallsyms_strs) {
 			WARN("file already has __kallsyms section, skipping: %s", name);
 			return 0;
 		}
@@ -414,13 +414,13 @@ static int read_symbols(struct elf *elf, const char *name)
 		dprintf("creating __kallsyms section with %4d symbols, for %s.\n", nr_entries, name);
 
 		/* The string section is variable size, so we use zero for entry size and dynamically update length: */
-		sec_kallsyms = elf_create_section(elf, "__kallsyms", 0, 0, 0);
-		if (!sec_kallsyms) {
+		sec_kallsyms_strs = elf_create_section(elf, "__kallsyms_strs", 0, 0, 0);
+		if (!sec_kallsyms_strs) {
 			WARN("could not create __kallsyms section: %s", name);
 			return -1;
 		}
 
-		sec_kallsyms->changed = 1;
+		sec_kallsyms_strs->changed = 1;
 
 		/**********************************************************************/
 
@@ -512,7 +512,7 @@ static int read_symbols(struct elf *elf, const char *name)
 
 			/************************************************************************/
 
-			data = elf_newdata(elf_getscn(elf->elf, sec_kallsyms->idx));
+			data = elf_newdata(elf_getscn(elf->elf, sec_kallsyms_strs->idx));
 			if (!data) {
 				WARN("kallsyms: no string data space?");
 				continue;
@@ -529,12 +529,10 @@ static int read_symbols(struct elf *elf, const char *name)
 			data->d_size = strlen(elf_str) + 1;
 			data->d_align = 1;
 
-			sec_kallsyms->len += data->d_size;
-
-			sec_kallsyms->changed = 1;
+			sec_kallsyms_strs->changed = 1;
 
 			sec_kallsyms_len += data->d_size;
-			sec_kallsyms->sh.sh_size += data->d_size;
+			sec_kallsyms_strs->sh.sh_size += data->d_size;
 
 			/************************************************************************/
 
@@ -562,11 +560,6 @@ static int read_symbols(struct elf *elf, const char *name)
 			sec_kallsyms_off_len += data->d_size;
 			sec_kallsyms_off->sh.sh_size += data->d_size;
 		}
-	}
-
-	if (kallsyms) {
-		if (sec_kallsyms->sh.sh_size != sec_kallsyms->len)
-			WARN("kallsyms section size mismatch, huh?");
 	}
 
 	dprintf("# sec_kallsyms_len:     %lu\n", sec_kallsyms_len);

@@ -518,27 +518,27 @@
 									\
 	. = ALIGN((align));						\
 									\
-	__begin_kallsyms = .;						\
+	__kallsyms_strs_begin = .;					\
 									\
 	/* Kallsyms kernel symbol table */				\
         __kallsyms : AT(ADDR(__kallsyms) - LOAD_OFFSET) {		\
-		*(__kallsyms)						\
+		*(__kallsyms_strs)					\
 	}								\
 									\
-	__end_kallsyms = .;						\
+	__kallsyms_strs_end = .;					\
 									\
 	/*****************************************************/		\
 									\
 	. = ALIGN((align));						\
 									\
-	__begin_kallsyms_offsets = .;					\
+	__kallsyms_offsets_begin = .;					\
 									\
 	/* kallsyms_offsets kernel symbol table */			\
         __kallsyms_offsets : AT(ADDR(__kallsyms_offsets) - LOAD_OFFSET) { \
 		*(__kallsyms_offsets)					\
 	}								\
 									\
-	__end_kallsyms_offsets = .;					\
+	__kallsyms_offsets_end = .;					\
 									\
 	/*****************************************************/		\
 									\
