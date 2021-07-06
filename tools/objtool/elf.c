@@ -565,6 +565,17 @@ static int process_kallsyms_symbols(struct elf *elf, const char *file_name)
 			if (sym->sec != sec)
 				WARN("This is unexpected ...");
 
+			dprintf("# Symbol-processing ELF section {%s} ...\n", sec->name);
+			/*
+			 * Don't process symbols in sections that are going to be discarded:
+			 */
+			if (strstr(sec->name, ".discard")	||
+			    strstr(sec->name, ".modinfo")	||
+			    strstr(sec->name, ".exitcall.exit")		) {
+
+				dprintf("# ELF section {%s} is marked as discarded - not processing symbols.\n", sec->name);
+				continue;
+			}
 			if (sym->offset)
 				dprintf("# elf sym %6d: %016lx, %s\n", i, sym->offset, sym->name);
 			else
