@@ -639,7 +639,7 @@ static int process_kallsyms_symbols(struct elf *elf, const char *file_name)
 				if (elf_add_reloc(elf,
 						  sec_kallsyms_off,
 						  offset_idx * sizeof(struct kallsyms_entry),
-						  R_X86_64_32S,
+						  R_X86_64_64,
 						  sym,
 						  0			)) {
 
