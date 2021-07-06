@@ -409,7 +409,7 @@ static int read_symbols(struct elf *elf, const char *name)
 
 		if (V) WARN("creating __kallsyms section with %4d symbols, %ld entry size (= %ld bytes) for %s.\n", nr_entries, sizeof(struct kallsyms_entry), sizeof(struct kallsyms_entry)*nr_entries, name);
 
-		sec_kallsyms = elf_create_section(elf, "__kallsyms", 0, sizeof(struct kallsyms_entry), 0);
+		sec_kallsyms = elf_create_section(elf, "__kallsyms", 0, 0, 0);
 		if (!sec_kallsyms) {
 			WARN("could not create __kallsyms section: %s", name);
 			return -1;
