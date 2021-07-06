@@ -346,8 +346,7 @@ static bool kallsyms = 1;
 #define KSYM_NAME_LEN 128
 
 struct kallsyms_entry {
-	unsigned long addr;
-	char name[KSYM_NAME_LEN];
+	u32 offset;
 };
 
 extern void *zalloc(const size_t size);
@@ -543,8 +542,8 @@ static int process_kallsyms_symbols(struct elf *elf, const char *file_name)
 		return 0;
 	}
 
-	/* The offsets section has fixed size u32 entries: */
-	sec_kallsyms_off = elf_create_section(elf, "__kallsyms_offsets", 0, sizeof(u32), 0);
+	/* The offsets section has fixed size kallsyms_entry entries: */
+	sec_kallsyms_off = elf_create_section(elf, "__kallsyms_offsets", 0, sizeof(struct kallsyms_entry), 0);
 	if (!sec_kallsyms_off) {
 		WARN("could not create __kallsyms_offsets section: %s", file_name);
 		return -1;
@@ -560,7 +559,7 @@ static int process_kallsyms_symbols(struct elf *elf, const char *file_name)
 			int i = sym->idx;
 			Elf_Data *data;
 			char *elf_str;
-			u32 *elf_u32;
+			struct kallsyms_entry *entry;
 
 			if (sym->sec != sec)
 				WARN("This is unexpected ...");
@@ -617,16 +616,16 @@ static int process_kallsyms_symbols(struct elf *elf, const char *file_name)
 			}
 
 			/*
-			 * Data buffer containing the u32 offset must persist
+			 * Data buffer containing the offset must persist
 			 * until near the end of objtool execution, when we
 			 * run elf_update():
 			 */
-			elf_u32 = zalloc(sizeof(u32));
+			entry = zalloc(sizeof(*entry));
 
-			*elf_u32 = sym->offset; /* this is wrong */
+			entry->offset = sym->offset; /* is this wrong? */
 
-			data->d_buf = (void *)elf_u32;
-			data->d_size = sizeof(u32);
+			data->d_buf = (void *)entry;
+			data->d_size = sizeof(*entry);
 			data->d_align = 1;
 
 			sec_kallsyms_off->changed = 1;
@@ -641,15 +640,15 @@ static int process_kallsyms_symbols(struct elf *elf, const char *file_name)
 			if (1) {
 				if (elf_add_reloc(elf,
 						  sec_kallsyms_off,
-						  offset_idx * sizeof(u32),
-						  R_X86_64_PC32,
+						  offset_idx * sizeof(struct kallsyms_entry),
+						  R_X86_64_32S,
 						  sym,
 						  0			)) {
 
 					WARN("failed to add kallsyms offset relocation entry!");
 					continue;
 				}
-				dprintf("# Added reloc offset idx #%d (off: %lx), in file %s, for symbol: %s\n", offset_idx, offset_idx*sizeof(u32), file_name, sym->name);
+				dprintf("# Added reloc offset idx #%d (off: %lx), in file %s, for symbol: %s\n", offset_idx, offset_idx*sizeof(*entry), file_name, sym->name);
 			}
 
 			symbols_nr++;
