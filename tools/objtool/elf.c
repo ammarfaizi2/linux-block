@@ -338,7 +338,7 @@ static void elf_add_symbol(struct elf *elf, struct symbol *sym)
 		rb_erase(&sym->node, &sym->sec->symbol_tree);
 }
 
-static bool V = 0;
+static bool V = 1;
 #define dprintf(x...) do { if (V) printf(x); } while (0)
 
 static bool kallsyms = 1;
@@ -364,7 +364,7 @@ static int read_symbols(struct elf *elf, const char *name)
 {
 	struct section *symtab, *symtab_shndx, *sec, *sec_kallsyms = NULL;
 	struct symbol *sym, *pfunc;
-	int symbols_nr, i;
+	int symbols_nr, i, nr_entries = 0;
 	char *coldstr;
 	Elf_Data *shndx_data = NULL;
 	Elf32_Word shndx;
@@ -394,8 +394,6 @@ static int read_symbols(struct elf *elf, const char *name)
 		return -1;
 
 	if (kallsyms) {
-		int nr_entries;
-
 		sec_kallsyms = find_section_by_name(elf, "__kallsyms");
 		if (sec_kallsyms) {
 			WARN("file already has __kallsyms section, skipping: %s", name);
@@ -411,7 +409,7 @@ static int read_symbols(struct elf *elf, const char *name)
 
 		if (V) WARN("creating __kallsyms section with %4d symbols, %ld entry size (= %ld bytes) for %s.\n", nr_entries, sizeof(struct kallsyms_entry), sizeof(struct kallsyms_entry)*nr_entries, name);
 
-		sec_kallsyms = elf_create_section(elf, "__kallsyms", 0, sizeof(struct kallsyms_entry), nr_entries);
+		sec_kallsyms = elf_create_section(elf, "__kallsyms", 0, sizeof(struct kallsyms_entry), 0);
 		if (!sec_kallsyms) {
 			WARN("could not create __kallsyms section: %s", name);
 			return -1;
@@ -497,8 +495,14 @@ static int read_symbols(struct elf *elf, const char *name)
 
 			sec_kallsyms->changed = 1;
 
-			sec_kallsyms_len += data->d_size;;
+			sec_kallsyms_len += data->d_size;
+			sec_kallsyms->sh.sh_size += data->d_size;
 		}
+	}
+
+	if (kallsyms) {
+		if (sec_kallsyms->sh.sh_size != sizeof(struct kallsyms_entry)*nr_entries)
+			WARN("kallsyms section size mismatch, huh?");
 	}
 
 	dprintf("# sec_kallsyms_len: %lu\n", sec_kallsyms_len);
