@@ -350,14 +350,25 @@ struct kallsyms_entry {
 	char name[KSYM_NAME_LEN];
 };
 
+static void *zalloc(const size_t size)
+{
+        void *buff = malloc(size);
+
+        if (buff)
+                memset(buff, 0, size);
+
+        return buff;
+}
+
 static int read_symbols(struct elf *elf, const char *name)
 {
-	struct section *symtab, *symtab_shndx, *sec, *sec_kallsyms;
+	struct section *symtab, *symtab_shndx, *sec, *sec_kallsyms = NULL;
 	struct symbol *sym, *pfunc;
 	int symbols_nr, i;
 	char *coldstr;
 	Elf_Data *shndx_data = NULL;
 	Elf32_Word shndx;
+	unsigned long sec_kallsyms_len = 0;
 
 	symtab = find_section_by_name(elf, ".symtab");
 	if (symtab) {
@@ -398,7 +409,7 @@ static int read_symbols(struct elf *elf, const char *name)
 			return 0;
 		}
 
-		if (V) WARN("creating __kallsyms section with %4d symbols for %s.\n", nr_entries, name);
+		if (V) WARN("creating __kallsyms section with %4d symbols, %ld entry size (= %ld bytes) for %s.\n", nr_entries, sizeof(struct kallsyms_entry), sizeof(struct kallsyms_entry)*nr_entries, name);
 
 		sec_kallsyms = elf_create_section(elf, "__kallsyms", 0, sizeof(struct kallsyms_entry), nr_entries);
 		if (!sec_kallsyms) {
@@ -456,15 +467,41 @@ static int read_symbols(struct elf *elf, const char *name)
 		elf_add_symbol(elf, sym);
 
 		if (kallsyms) {
-//			Elf_Data *data;
+			Elf_Data *data;
+			struct kallsyms_entry *entry;
 
 			if (sym->offset)
 				dprintf("# elf sym %6d: %016lx, %s\n", i, sym->offset, sym->name);
 			else
 				dprintf("# elf sym %6d:                 , %s\n", i, sym->name);
 
+			data = elf_newdata(elf_getscn(elf->elf, sec_kallsyms->idx));
+			if (!data)
+				WARN("kallsyms: no data?");
+
+			/*
+			 * Data buffer containing the string must persist
+			 * until near the end of objtool execution, when we
+			 * run elf_update().
+			 */
+			entry = zalloc(sizeof(*entry));
+
+			entry->addr = sym->offset;
+			memcpy(entry->name, sym->name, strlen(sym->name));
+
+			data->d_buf = (void *)entry;
+			data->d_size = sizeof(*entry);
+			data->d_align = 1;
+
+			sec_kallsyms->len += data->d_size;
+
+			sec_kallsyms->changed = 1;
+
+			sec_kallsyms_len += data->d_size;;
 		}
 	}
+
+	dprintf("# sec_kallsyms_len: %lu\n", sec_kallsyms_len);
 
 	if (stats) {
 		dprintf("nr_symbols: %lu\n", (unsigned long)symbols_nr);
