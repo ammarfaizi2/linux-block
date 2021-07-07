@@ -83,6 +83,7 @@ void netfs_writeback_worker(struct work_struct *work);
 void netfs_flush_region(struct netfs_i_context *ctx,
 			struct netfs_dirty_region *region,
 			enum netfs_dirty_trace why);
+void netfs_rreq_do_write_to_cache(struct netfs_read_request *rreq);
 
 /*
  * xa_iterator.c
@@ -111,10 +112,7 @@ extern atomic_t netfs_n_rh_read_done;
 extern atomic_t netfs_n_rh_read_failed;
 extern atomic_t netfs_n_rh_zero;
 extern atomic_t netfs_n_rh_short_read;
-extern atomic_t netfs_n_rh_write;
 extern atomic_t netfs_n_rh_write_begin;
-extern atomic_t netfs_n_rh_write_done;
-extern atomic_t netfs_n_rh_write_failed;
 extern atomic_t netfs_n_rh_write_zskip;
 extern atomic_t netfs_n_wh_region;
 extern atomic_t netfs_n_wh_flush_group;

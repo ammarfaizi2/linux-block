@@ -247,7 +247,8 @@ static void netfs_writeback(struct netfs_write_request *wreq)
 	if (wreq->cache_resources.ops &&
 	    test_bit(NETFS_WREQ_WRITE_TO_CACHE, &wreq->flags))
 		netfs_set_up_write_to_cache(wreq);
-	ctx->ops->create_write_operations(wreq);
+	//if (wreq->region->type != NETFS_REGION_CACHE_COPY)
+		ctx->ops->create_write_operations(wreq);
 
 	if (atomic_dec_and_test(&wreq->outstanding))
 		netfs_write_completed(wreq, false);

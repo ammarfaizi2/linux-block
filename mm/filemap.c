@@ -1533,8 +1533,10 @@ void folio_end_writeback(struct folio *folio)
 	 * reused before the folio_wake().
 	 */
 	folio_get(folio);
-	if (!__folio_end_writeback(folio))
+	if (!__folio_end_writeback(folio)) {
+		pr_err("Folio %lx doesn't have wb set\n", folio_index(folio));
 		BUG();
+	}
 
 	smp_mb__after_atomic();
 	folio_wake(folio, PG_writeback);

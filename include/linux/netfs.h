@@ -197,7 +197,6 @@ struct netfs_read_request {
 	void			*netfs_priv;	/* Private data for the netfs */
 	unsigned int		debug_id;
 	atomic_t		nr_rd_ops;	/* Number of read ops in progress */
-	atomic_t		nr_wr_ops;	/* Number of write ops in progress */
 	size_t			submitted;	/* Amount submitted for I/O so far */
 	size_t			len;		/* Length of the request */
 	short			error;		/* 0 or error that occurred */
@@ -257,6 +256,7 @@ enum netfs_region_type {
 	NETFS_REGION_ORDINARY,		/* Ordinary write */
 	NETFS_REGION_DIO,		/* Direct I/O write */
 	NETFS_REGION_DSYNC,		/* O_DSYNC/RWF_DSYNC write */
+	NETFS_REGION_CACHE_COPY,	/* Data to be written to cache only */
 } __attribute__((mode(byte)));
 
 /*

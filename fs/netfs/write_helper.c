@@ -99,6 +99,11 @@ static void netfs_init_dirty_region(struct netfs_dirty_region *region,
 	INIT_LIST_HEAD(&region->flush_link);
 	refcount_set(&region->ref, 1);
 	spin_lock_init(&region->lock);
+	if (type == NETFS_REGION_CACHE_COPY) {
+		region->state = NETFS_REGION_IS_DIRTY;
+		region->dirty.end = end;
+	}
+
 	if (file && ctx->ops->init_dirty_region)
 		ctx->ops->init_dirty_region(region, file);
 	if (!region->group) {
@@ -172,6 +177,19 @@ static enum netfs_write_compatibility netfs_write_compatibility(
 		return NETFS_WRITES_INCOMPATIBLE;
 	}
 
+	/* Pending writes to the cache alone (ie. copy from a read) can be
+	 * merged or superseded by a modification that will require writing to
+	 * the server too.
+	 */
+	if (old->type == NETFS_REGION_CACHE_COPY) {
+		if (candidate->type == NETFS_REGION_CACHE_COPY) {
+			_leave(" = COMPT [ccopy]");
+			return NETFS_WRITES_COMPATIBLE;
+		}
+		_leave(" = SUPER [ccopy]");
+		return NETFS_WRITES_SUPERSEDE;
+	}
+
 	if (!ctx->ops->is_write_compatible) {
 		if (candidate->type == NETFS_REGION_DSYNC) {
 			_leave(" = SUPER [dsync]");
@@ -231,8 +249,11 @@ static void netfs_queue_write(struct netfs_i_context *ctx,
 		if (overlaps(&candidate->bounds, &r->bounds)) {
 			if (overlaps(&candidate->reserved, &r->reserved) ||
 			    netfs_write_compatibility(ctx, r, candidate) ==
-			    NETFS_WRITES_INCOMPATIBLE)
+			    NETFS_WRITES_INCOMPATIBLE) {
+				kdebug("conflict %x with pend %x",
+				       candidate->debug_id, r->debug_id);
 				goto add_to_pending_queue;
+			}
 		}
 	}
 
@@ -249,8 +270,11 @@ static void netfs_queue_write(struct netfs_i_context *ctx,
 		if (overlaps(&candidate->bounds, &r->bounds)) {
 			if (overlaps(&candidate->reserved, &r->reserved) ||
 			    netfs_write_compatibility(ctx, r, candidate) ==
-			    NETFS_WRITES_INCOMPATIBLE)
+			    NETFS_WRITES_INCOMPATIBLE) {
+				kdebug("conflict %x with actv %x",
+				       candidate->debug_id, r->debug_id);
 				goto add_to_pending_queue;
+			}
 		}
 	}
 
@@ -467,6 +491,9 @@ static void netfs_merge_dirty_region(struct netfs_i_context *ctx,
 			list_move_tail(&region->dirty_link, &graveyard);
 			goto discard;
 		}
+		goto scan_backwards;
+
+	case NETFS_REGION_CACHE_COPY:
 		goto scan_backwards;
 	}
 
@@ -1027,3 +1054,84 @@ error:
 	goto out;
 }
 EXPORT_SYMBOL(netfs_file_write_iter);
+
+/*
+ * Add a region that's just been read as a region on the dirty list to
+ * schedule a write to the cache.
+ */
+static bool netfs_copy_to_cache(struct netfs_read_request *rreq,
+				struct netfs_read_subrequest *subreq)
+{
+	struct netfs_dirty_region *candidate, *r;
+	struct netfs_i_context *ctx = netfs_i_context(rreq->inode);
+	struct list_head *p;
+	loff_t end = subreq->start + subreq->len;
+	int ret;
+
+	ret = netfs_require_flush_group(rreq->inode);
+	if (ret < 0)
+		return false;
+
+	candidate = netfs_alloc_dirty_region();
+	if (!candidate)
+		return false;
+
+	netfs_init_dirty_region(candidate, rreq->inode, NULL,
+				NETFS_REGION_CACHE_COPY, 0, subreq->start, end);
+
+	spin_lock(&ctx->lock);
+
+	/* Find a place to insert.  There can't be any dirty regions
+	 * overlapping with the region we're adding.
+	 */
+	list_for_each(p, &ctx->dirty_regions) {
+		r = list_entry(p, struct netfs_dirty_region, dirty_link);
+		if (r->bounds.end <= candidate->bounds.start)
+			continue;
+		if (r->bounds.start >= candidate->bounds.end)
+			break;
+	}
+
+	list_add_tail(&candidate->dirty_link, p);
+	netfs_merge_dirty_region(ctx, candidate);
+
+	spin_unlock(&ctx->lock);
+	return true;
+}
+
+/*
+ * If we downloaded some data and it now needs writing to the cache, we add it
+ * to the dirty region list and let that flush it.  This way it can get merged
+ * with writes.
+ *
+ * We inherit a ref from the caller.
+ */
+void netfs_rreq_do_write_to_cache(struct netfs_read_request *rreq)
+{
+	struct netfs_read_subrequest *subreq, *next, *p;
+
+	trace_netfs_rreq(rreq, netfs_rreq_trace_write);
+
+	list_for_each_entry_safe(subreq, p, &rreq->subrequests, rreq_link) {
+		if (!test_bit(NETFS_SREQ_WRITE_TO_CACHE, &subreq->flags)) {
+			list_del_init(&subreq->rreq_link);
+			netfs_put_subrequest(subreq, false);
+		}
+	}
+
+	list_for_each_entry(subreq, &rreq->subrequests, rreq_link) {
+		/* Amalgamate adjacent writes */
+		while (!list_is_last(&subreq->rreq_link, &rreq->subrequests)) {
+			next = list_next_entry(subreq, rreq_link);
+			if (next->start != subreq->start + subreq->len)
+				break;
+			subreq->len += next->len;
+			list_del_init(&next->rreq_link);
+			netfs_put_subrequest(next, false);
+		}
+
+		netfs_copy_to_cache(rreq, subreq);
+	}
+
+	netfs_rreq_completed(rreq, false);
+}
