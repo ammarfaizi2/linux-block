@@ -667,6 +667,13 @@ static void print_absolute_relocs(const char *file_name)
 				continue;
 
 			/*
+			 * Ignore the relocations in _kallsyms_offsets - they are
+			 * already final during the kernel build:
+			 */
+			if (strstr(sec_name(i), "__kallsyms_offsets"))
+				continue;
+
+			/*
 			 * Absolute symbols are not relocated if bzImage is
 			 * loaded at a non-compiled address. Display a warning
 			 * to user at compile time about the absolute
@@ -735,6 +742,13 @@ static void walk_relocs(int (*process)(struct section *sec,
 		struct section *sec = &secs[i];
 
 		if (sec->shdr.sh_type != SHT_REL_TYPE)
+			continue;
+
+		/*
+		 * Ignore the relocations in _kallsyms_offsets - they are
+		 * already final during the kernel build:
+		 */
+		if (strstr(sec_name(i), "__kallsyms_offsets"))
 			continue;
 
 		sec_symtab  = sec->link;
