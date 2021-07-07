@@ -45,12 +45,11 @@ int cmd_orc(int argc, const char **argv)
 		if (ret)
 			return ret;
 
-		if (list_empty(&file->insn_list))
-			return 0;
-
-		ret = orc_create(file);
-		if (ret)
-			return ret;
+		if (!list_empty(&file->insn_list)) {
+			ret = orc_create(file);
+			if (ret)
+				return ret;
+		}
 
 		if (!file->elf->changed)
 			return 0;

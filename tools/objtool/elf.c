@@ -1240,6 +1240,8 @@ int elf_write(struct elf *elf)
 		return -1;
 	}
 
+	dprintf("# ELF file written out: %s\n", elf->name);
+
 	elf->changed = false;
 
 	return 0;
