@@ -136,6 +136,7 @@ struct netfs_i_context {
 	struct maple_tree	dirty_regions;	/* List of dirty regions in the pagecache */
 #if IS_ENABLED(CONFIG_FSCACHE)
 	struct fscache_cookie	*cache;
+
 #endif
 	loff_t			remote_i_size;	/* Size of the remote file */
 	loff_t			zero_point;	/* Size after which we assume there's no data
@@ -146,6 +147,7 @@ struct netfs_i_context {
 	unsigned char		min_bshift;	/* log2 min block size for bounding box or 0 */
 	unsigned char		obj_bshift;	/* log2 storage object shift (ceph/pnfs) or 0 */
 	unsigned char		crypto_bshift;	/* log2 of crypto block size */
+	unsigned char		cache_order;	/* Log2 of cache's required page alignment */
 };
 
 /*
@@ -240,7 +242,6 @@ struct netfs_io_request {
 	unsigned int		wsize;		/* Maximum write size */
 	unsigned int		subreq_counter;	/* Next subreq->debug_index */
 	atomic_t		nr_outstanding;	/* Number of ops in progress */
-	atomic_t		nr_copy_ops;	/* Number of copy-to-cache ops in progress */
 	size_t			submitted;	/* Amount submitted for I/O so far */
 	size_t			len;		/* Length of the request */
 	size_t			transferred;	/* Amount to be indicated as transferred */

@@ -15,6 +15,12 @@
 
 #define pr_fmt(fmt) "netfs: " fmt
 
+/*
+ * Marker values used in ctx->dirty_regions.
+ */
+#define NETFS_COPY_TO_CACHE	((void *)0x4320) /* Region to be copied to cache */
+#define NETFS_FLUSH_TO_CACHE	((void *)0x4322) /* Region being copied to cache */
+
 static inline void *netfs_mas_set_flushing(struct netfs_dirty_region *region)
 {
 	return (void *)((unsigned long)region | 0x2UL);
@@ -53,6 +59,7 @@ int netfs_prefetch_for_write(struct file *file, struct folio *folio, size_t len)
 bool netfs_are_regions_mergeable(struct netfs_i_context *ctx,
 				 struct netfs_dirty_region *a,
 				 struct netfs_dirty_region *b);
+void netfs_rreq_do_write_to_cache(struct netfs_io_request *rreq);
 
 /*
  * crypto.c
@@ -74,6 +81,7 @@ ssize_t netfs_direct_write_iter(struct kiocb *iocb, struct iov_iter *from);
 /*
  * io.c
  */
+void netfs_rreq_completed(struct netfs_io_request *rreq, bool was_async);
 ssize_t netfs_begin_read(struct netfs_io_request *rreq, bool sync);
 
 /*
@@ -176,10 +184,7 @@ extern atomic_t netfs_n_rh_read_done;
 extern atomic_t netfs_n_rh_read_failed;
 extern atomic_t netfs_n_rh_zero;
 extern atomic_t netfs_n_rh_short_read;
-extern atomic_t netfs_n_rh_write;
 extern atomic_t netfs_n_rh_write_begin;
-extern atomic_t netfs_n_rh_write_done;
-extern atomic_t netfs_n_rh_write_failed;
 extern atomic_t netfs_n_rh_write_zskip;
 extern atomic_t netfs_n_wh_region;
 extern atomic_t netfs_n_wh_upload;

@@ -159,7 +159,12 @@ static bool netfs_continue_modification(struct netfs_i_context *ctx,
 		return false;
 
 	first = mas->index;
-	if (netfs_mas_is_flushing(prev)) {
+	if (target == NETFS_COPY_TO_CACHE) {
+		_debug("supersede cache-copy");
+		prev->to = to;
+		target = NULL;
+		why = netfs_dirty_trace_supersede;
+	} else if (netfs_mas_is_flushing(prev)) {
 		_debug("overlay");
 		prev->to = to;
 		target = NULL;
@@ -211,6 +216,9 @@ static void netfs_add_new_region(struct netfs_i_context *ctx,
 		 */
 		if (netfs_mas_is_flushing(old)) {
 			target->waiting_on_wb = old;
+		} else if (old == NETFS_COPY_TO_CACHE) {
+			trace_netfs_dirty(ctx, target, old, first, last,
+					  netfs_dirty_trace_supersede);
 		} else {
 			kdebug("*** OLD %px", old);
 			WARN_ON(1);
@@ -792,4 +800,98 @@ out:
 	mas_destroy(&mas);
 	netfs_put_dirty_region(ctx, spare_region, netfs_region_trace_put_discard);
 	return ret;
+}
+
+/*
+ * Try to note in the dirty region list that a range of pages needs writing to
+ * the cache.  We do this by storing marked entries in the dirty_region list.
+ * Future writes can split the entries and then writepages will gather them up.
+ */
+static void netfs_copy_to_cache(struct netfs_io_request *rreq,
+				loff_t start, size_t len)
+{
+	struct netfs_i_context *ctx = netfs_i_context(rreq->inode);
+	pgoff_t first =  start / PAGE_SIZE;
+	pgoff_t last  = (start + len - 1) / PAGE_SIZE;
+	pgoff_t hlast;
+	void *x;
+
+	MA_STATE(mas, &ctx->dirty_regions, first, last);
+
+	mas_expected_entries(&mas, 1);
+
+	mtree_lock(&ctx->dirty_regions);
+
+	/* Find the span of the hole into which we're inserting. */
+	x = mas_walk(&mas);
+	if (WARN_ON(x != NULL || mas.last < last)) {
+		pr_warn("Unexpected span %lx-%lx < %lx [x=%px]\n",
+			mas.index, mas.last, last, x);
+		goto skip;
+	}
+
+	hlast = mas.last;
+	if (mas.index == first && mas.index > 0) {
+		x = mas_prev(&mas, first - 1);
+		if (x == NETFS_COPY_TO_CACHE)
+			first = mas.index;
+	}
+
+	if (hlast == last) {
+		mas_set(&mas, last);
+		x = mas_next(&mas, last + 1);
+		if (x == NETFS_COPY_TO_CACHE)
+			last = mas.last;
+	}
+
+	trace_netfs_dirty(ctx, NULL, NULL, first, last,
+			  netfs_dirty_trace_mark_copy_to_cache);
+	mas_set_range(&mas, first, last);
+	mas_store(&mas, NETFS_COPY_TO_CACHE);
+
+skip:
+	mtree_unlock(&ctx->dirty_regions);
+	mas_destroy(&mas);
+}
+
+/*
+ * If we downloaded some data and it now needs writing to the cache, we add it
+ * to the dirty region list and let that flush it.  This way it can get merged
+ * with writes.
+ *
+ * We inherit a ref from the caller.
+ */
+void netfs_rreq_do_write_to_cache(struct netfs_io_request *rreq)
+{
+	struct netfs_io_subrequest *subreq, *next, *p;
+
+	trace_netfs_rreq(rreq, netfs_rreq_trace_copy_mark);
+
+	list_for_each_entry_safe(subreq, p, &rreq->subrequests, rreq_link) {
+		if (!test_bit(NETFS_SREQ_COPY_TO_CACHE, &subreq->flags)) {
+			list_del_init(&subreq->rreq_link);
+			netfs_put_subrequest(subreq, false,
+					     netfs_sreq_trace_put_no_copy);
+		}
+	}
+
+	list_for_each_entry(subreq, &rreq->subrequests, rreq_link) {
+		loff_t start = subreq->start;
+		size_t len = subreq->len;
+
+		/* Amalgamate adjacent writes */
+		while (!list_is_last(&subreq->rreq_link, &rreq->subrequests)) {
+			next = list_next_entry(subreq, rreq_link);
+			if (next->start != start + len)
+				break;
+			len += next->len;
+			list_del_init(&next->rreq_link);
+			netfs_put_subrequest(next, false,
+					     netfs_sreq_trace_put_merged);
+		}
+
+		netfs_copy_to_cache(rreq, start, len);
+	}
+
+	netfs_rreq_completed(rreq, false);
 }
