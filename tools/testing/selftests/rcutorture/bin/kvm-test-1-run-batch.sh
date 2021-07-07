@@ -56,7 +56,6 @@ do
 	echo > $i/kvm-test-1-run-qemu.sh.out
 	export TORTURE_AFFINITY=
 	kvm-test-1-run-qemu.sh $i >> $i/kvm-test-1-run-qemu.sh.out 2>&1 &
-	parse-console.sh $resdir/console.log $i
 done
 for i in $runfiles
 do
