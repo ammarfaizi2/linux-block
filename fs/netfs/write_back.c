@@ -320,7 +320,8 @@ static void netfs_writeback(struct netfs_write_request *wreq)
 
 	if (test_bit(NETFS_WREQ_WRITE_TO_CACHE, &wreq->flags))
 		netfs_set_up_write_to_cache(wreq);
-	ctx->ops->add_write_streams(wreq);
+	if (wreq->region->type != NETFS_REGION_CACHE_COPY)
+		ctx->ops->add_write_streams(wreq);
 
 out:
 	if (atomic_dec_and_test(&wreq->outstanding))

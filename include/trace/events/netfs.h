@@ -159,7 +159,8 @@ enum netfs_write_stream_trace {
 #define netfs_region_types					\
 	EM(NETFS_REGION_ORDINARY,		"ORD")		\
 	EM(NETFS_REGION_DIO,			"DIO")		\
-	E_(NETFS_REGION_DSYNC,			"DSY")
+	EM(NETFS_REGION_DSYNC,			"DSY")		\
+	E_(NETFS_REGION_CACHE_COPY,		"CCP")
 
 #define netfs_region_states					\
 	EM(NETFS_REGION_IS_PENDING,		"pend")		\

@@ -1545,8 +1545,10 @@ void end_page_writeback(struct page *page)
 	 * reused before the wake_up_page().
 	 */
 	get_page(page);
-	if (!test_clear_page_writeback(page))
+	if (!test_clear_page_writeback(page)) {
+		pr_err("Page %lx doesn't have wb set\n", page->index);
 		BUG();
+	}
 
 	smp_mb__after_atomic();
 	wake_up_page(page, PG_writeback);
