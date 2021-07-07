@@ -596,7 +596,8 @@ determined_tail:
 	/* Flip the state of all the regions and add them to the request */
 	r = head;
 	list_for_each_entry_from(r, &ctx->dirty_regions, dirty_link) {
-		__set_bit(NETFS_WBACK_UPLOAD_TO_SERVER, &wback->flags);
+		if (r->type != NETFS_REGION_CACHE_COPY)
+			__set_bit(NETFS_WBACK_UPLOAD_TO_SERVER, &wback->flags);
 		set_bit(NETFS_REGION_FLUSH_Q, &r->flags);
 		smp_store_release(&r->state, NETFS_REGION_IS_FLUSHING);
 		trace_netfs_dirty(ctx, r, NULL, netfs_dirty_trace_flushing);

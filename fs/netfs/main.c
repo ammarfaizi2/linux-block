@@ -35,6 +35,7 @@ static const char *netfs_proc_region_types[] = {
 	[NETFS_REGION_ORDINARY]		= "ORD ",
 	[NETFS_REGION_DIO]		= "DIOW",
 	[NETFS_REGION_DSYNC]		= "DSYN",
+	[NETFS_REGION_CACHE_COPY]	= "CCPY",
 };
 
 /*

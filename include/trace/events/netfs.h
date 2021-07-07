@@ -81,6 +81,7 @@ enum netfs_dirty_trace {
 enum netfs_region_trace {
 	netfs_region_trace_get_wait_active,
 	netfs_region_trace_get_wback,
+	netfs_region_trace_put_copy,
 	netfs_region_trace_put_discard,
 	netfs_region_trace_put_merged,
 	netfs_region_trace_put_wait_active,
@@ -164,7 +165,8 @@ enum netfs_wreq_trace {
 #define netfs_region_types					\
 	EM(NETFS_REGION_ORDINARY,		"ORD")		\
 	EM(NETFS_REGION_DIO,			"DIO")		\
-	E_(NETFS_REGION_DSYNC,			"DSY")
+	EM(NETFS_REGION_DSYNC,			"DSY")		\
+	E_(NETFS_REGION_CACHE_COPY,		"CCP")
 
 #define netfs_region_states					\
 	EM(NETFS_REGION_IS_PENDING,		"pend")		\
@@ -195,6 +197,7 @@ enum netfs_wreq_trace {
 #define netfs_region_traces					\
 	EM(netfs_region_trace_get_wait_active,	"GET WT ACTV")	\
 	EM(netfs_region_trace_get_wback,	"GET WBACK   ")	\
+	EM(netfs_region_trace_put_copy,		"PUT COPY   ")	\
 	EM(netfs_region_trace_put_discard,	"PUT DISCARD")	\
 	EM(netfs_region_trace_put_merged,	"PUT MERGED ")	\
 	EM(netfs_region_trace_put_wait_active,	"PUT WT ACTV")	\
