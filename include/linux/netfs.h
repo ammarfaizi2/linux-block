@@ -147,6 +147,7 @@ struct netfs_inode {
 	unsigned char		min_bshift;	/* log2 min block size for bounding box or 0 */
 	unsigned char		obj_bshift;	/* log2 storage object shift (ceph/pnfs) or 0 */
 	unsigned char		crypto_bshift;	/* log2 of crypto block size */
+	unsigned char		cache_order;	/* Log2 of cache's required page alignment */
 };
 
 /*
@@ -243,7 +244,6 @@ struct netfs_io_request {
 	unsigned int		wsize;		/* Maximum write size (0 for none) */
 	unsigned int		subreq_counter;	/* Next subreq->debug_index */
 	atomic_t		nr_outstanding;	/* Number of ops in progress */
-	atomic_t		nr_copy_ops;	/* Number of copy-to-cache ops in progress */
 	size_t			submitted;	/* Amount submitted for I/O so far */
 	size_t			len;		/* Length of the request */
 	size_t			transferred;	/* Amount to be indicated as transferred */
@@ -274,6 +274,7 @@ struct netfs_io_request {
 
 enum netfs_region_type {
 	NETFS_MODIFIED_REGION,
+	NETFS_COPY_TO_CACHE,
 } __mode(byte);
 
 /*

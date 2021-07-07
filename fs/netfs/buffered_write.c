@@ -93,12 +93,23 @@ bool netfs_are_regions_mergeable(struct netfs_inode *ctx,
 				 const struct netfs_dirty_region *a,
 				 const struct netfs_dirty_region *b)
 {
+	if (a->type == NETFS_COPY_TO_CACHE ||
+	    b->type == NETFS_COPY_TO_CACHE)
+		return false;
 	if (b->from > a->to &&
 	    b->from < ctx->zero_point)
 		return false;
 	if (ctx->ops->are_regions_mergeable)
 		return ctx->ops->are_regions_mergeable(ctx, a, b);
 	return true;
+}
+
+static bool netfs_can_merge(struct netfs_inode *ctx,
+			    const struct netfs_dirty_region *onto,
+			    const struct netfs_dirty_region *x,
+			    struct file *file)
+{
+	return netfs_are_regions_mergeable(ctx, onto, x);
 }
 
 /*
@@ -110,14 +121,42 @@ static bool netfs_try_bridge_next(struct netfs_inode *ctx,
 {
 	struct netfs_dirty_region *next;
 
+again:
 	next = netfs_next_region(ctx, target);
-	if (!next ||
-	    !netfs_are_regions_mergeable(ctx, target, next))
+	if (!next)
 		goto out;
-	target->to = next->to;
-	target->last = next->last;
-	list_move(&next->dirty_link, discards);
-	trace_netfs_dirty(ctx, target, next, netfs_dirty_trace_bridged);
+
+	if (target->last + 1 != next->first)
+		goto out;
+
+	/* If the regions can simply be merged, do so. */
+	if (netfs_are_regions_mergeable(ctx, target, next)) {
+		target->to = next->to;
+		target->last = next->last;
+		list_move(&next->dirty_link, discards);
+		trace_netfs_dirty(ctx, target, next, netfs_dirty_trace_bridged);
+		goto out;
+	}
+
+	/* If the next region is copy-to-cache only, we may need to slide the
+	 * divider over and supersede part or all of it.
+	 */
+	if (next->type != NETFS_COPY_TO_CACHE ||
+	    target->last < next->first)
+		goto out;
+
+	if (target->last >= next->last) {
+		/* Next entry is superseded in its entirety. */
+		list_move(&next->dirty_link, discards);
+		trace_netfs_dirty(ctx, target, next, netfs_dirty_trace_supersede);
+		if (target->last > next->last)
+			goto again;
+		goto out;
+	}
+
+	next->from  = target->to;
+	next->first = target->last + 1;
+	trace_netfs_dirty(ctx, target, next, netfs_dirty_trace_supersede);
 out:
 	return true; /* Return true for tail-callers */
 }
@@ -134,7 +173,8 @@ static bool netfs_continue_modification(struct netfs_inode *ctx,
 	if (proposal->from != target->to ||
 	    proposal->type != target->type)
 		return false;
-	if (ctx->ops->are_regions_mergeable &&
+	if (proposal->type != NETFS_COPY_TO_CACHE &&
+	    ctx->ops->are_regions_mergeable &&
 	    !ctx->ops->are_regions_mergeable(ctx, proposal, target))
 		return false;
 
@@ -185,6 +225,158 @@ static bool netfs_merge_with_next(struct netfs_inode *ctx,
 }
 
 /*
+ * Supersede some data that's marked copy-to-cache only.  We may need to make
+ * up to two splits in the region and we may need to merge with the adjacent
+ * regions.
+ */
+static void netfs_supersede_cache_copy(struct netfs_inode *ctx,
+				       const struct netfs_dirty_region *proposal,
+				       struct netfs_dirty_region *target,
+				       struct list_head *discards,
+				       struct file *file)
+{
+	struct netfs_dirty_region *prev = netfs_prev_region(ctx, target);
+	struct netfs_dirty_region *next = netfs_next_region(ctx, target);
+	struct netfs_dirty_region *tail, *insertion;
+
+	_enter("D=%u", target->debug_id);
+
+	/* Get the case where they're the same size out of the way first. */
+	if (target->first == proposal->first &&
+	    target->last  == proposal->last)  {
+		bool merge_prev = netfs_can_merge(ctx, prev, proposal, file);
+		bool merge_next = netfs_can_merge(ctx, proposal, next, file);
+
+		if (merge_prev && !merge_next) {
+			prev->to   = proposal->from;
+			prev->last = proposal->last;
+			list_move_tail(&target->dirty_link, discards);
+			trace_netfs_dirty(ctx, prev, target, netfs_dirty_trace_merged_prev_super);
+		} else if (merge_next && !merge_prev) {
+			next->from  = proposal->from;
+			next->first = proposal->first;
+			list_move_tail(&target->dirty_link, discards);
+			trace_netfs_dirty(ctx, prev, target, netfs_dirty_trace_merged_next_super);
+		} else if (merge_next && merge_prev) {
+			prev->to   = next->to;
+			prev->last = next->last;
+			list_move_tail(&target->dirty_link, discards);
+			trace_netfs_dirty(ctx, prev, target, netfs_dirty_trace_merged_next_super);
+			list_move_tail(&next->dirty_link, discards);
+			trace_netfs_dirty(ctx, prev, next, netfs_dirty_trace_merged_next);
+		} else if (!merge_prev && !merge_next) {
+			target->from = proposal->from;
+			target->to   = proposal->to;
+			target->type = NETFS_MODIFIED_REGION;
+			if (ctx->ops->init_dirty_region)
+				ctx->ops->init_dirty_region(target, file);
+			trace_netfs_dirty(ctx, target, NULL, netfs_dirty_trace_superseded);
+		}
+		return;
+	}
+
+	/* If they start in the same place, insert the proposed region before
+	 * and shrink the copy-to-cache region.
+	 */
+	if (target->first == proposal->first) {
+		bool merge_prev = netfs_can_merge(ctx, prev, proposal, file);
+
+		if (merge_prev) {
+			prev->to      = proposal->from;
+			prev->last    = proposal->last;
+			target->first = proposal->last + 1;
+			target->from  = target->first * PAGE_SIZE;
+			trace_netfs_dirty(ctx, prev, target, netfs_dirty_trace_merged_prev_super);
+		} else {
+			insertion = netfs_alloc_dirty_region(GFP_ATOMIC);
+			if (!insertion) {
+				pr_err("OOM");
+				BUG();
+			}
+			insertion->first = proposal->first;
+			insertion->last  = proposal->last;
+			insertion->from  = proposal->from;
+			insertion->to    = proposal->to;
+			insertion->type  = proposal->type;
+			netfs_init_dirty_region(ctx, insertion, file);
+			list_move_tail(&insertion->dirty_link, &target->dirty_link);
+			target->first = insertion->last + 1;
+			target->to    = target->first * PAGE_SIZE;
+			trace_netfs_dirty(ctx, insertion, target, netfs_dirty_trace_supersede);
+		}
+		return;
+	}
+
+	/* If they end in the same place, insert the proposed region after and
+	 * cut the end of the copy-to-cache region.
+	 */
+	if (target->last == proposal->last) {
+		bool merge_next = netfs_can_merge(ctx, proposal, next, file);
+
+		if (merge_next) {
+			next->from   = proposal->from;
+			next->first  = proposal->first;
+			target->last = proposal->first - 1;
+			target->to   = proposal->first * PAGE_SIZE;
+			trace_netfs_dirty(ctx, next, target, netfs_dirty_trace_merged_next_super);
+		} else {
+			insertion = netfs_alloc_dirty_region(GFP_ATOMIC);
+			if (!insertion) {
+				pr_err("OOM");
+				BUG();
+			}
+			insertion->first = proposal->first;
+			insertion->last  = proposal->last;
+			insertion->from  = proposal->from;
+			insertion->to    = proposal->to;
+			insertion->type  = proposal->type;
+			netfs_init_dirty_region(ctx, insertion, file);
+			list_move(&insertion->dirty_link, &target->dirty_link);
+			target->first = proposal->last + 1;
+			target->from  = target->first * PAGE_SIZE;
+			trace_netfs_dirty(ctx, insertion, target, netfs_dirty_trace_supersede);
+		}
+		return;
+	}
+
+	/* Otherwise we have to split the copy-to-cache region and insert the
+	 * proposed region between.
+	 */
+	tail = netfs_alloc_dirty_region(GFP_ATOMIC);
+	if (!tail) {
+		pr_err("OOM");
+		BUG();
+	}
+	tail->first = proposal->last + 1;
+	tail->last  = target->last;
+	tail->from  = tail->first * PAGE_SIZE;
+	tail->to    = target->to;
+	tail->type  = NETFS_COPY_TO_CACHE;
+	netfs_init_dirty_region(ctx, tail, NULL);
+	list_move(&tail->dirty_link, &target->dirty_link);
+	trace_netfs_dirty(ctx, tail, target, netfs_dirty_trace_split_c2c);
+
+	insertion = netfs_alloc_dirty_region(GFP_ATOMIC);
+	if (!insertion) {
+		pr_err("OOM");
+		BUG();
+	}
+	insertion->first = proposal->first;
+	insertion->last  = proposal->last;
+	insertion->from  = proposal->from;
+	insertion->to    = proposal->to;
+	insertion->type  = proposal->type;
+	netfs_init_dirty_region(ctx, insertion, file);
+	list_move(&insertion->dirty_link, &target->dirty_link);
+	trace_netfs_dirty(ctx, insertion, target, netfs_dirty_trace_supersede);
+
+	target->from  = min(target->from,  insertion->from);
+	target->first = min(target->first, insertion->first);
+	trace_netfs_dirty(ctx, target, NULL, netfs_dirty_trace_superseded);
+	return;
+}
+
+/*
  * Commit the changes to a region.
  */
 static void netfs_commit_region(struct netfs_inode *ctx, struct file *file,
@@ -232,6 +424,18 @@ static void netfs_commit_region(struct netfs_inode *ctx, struct file *file,
 	    netfs_continue_modification(ctx, proposal, target, &discards))
 		goto done;
 
+	/* We may need to supersede part of a copy-to-cache region. */
+	if (target->type  == NETFS_COPY_TO_CACHE &&
+	    target->first <= proposal->last &&
+	    target->last  >= proposal->first) {
+		if (WARN_ON(proposal->type == NETFS_COPY_TO_CACHE))
+			goto just_merge; /* Re-read?! */
+		netfs_supersede_cache_copy(ctx, proposal, target, &discards,
+					   file);
+		goto done;
+	}
+
+just_merge:
 	/* Try to merge with the preceding region. */
 	if (target->from <= proposal->from) {
 		if (netfs_merge_with_previous(ctx, proposal, target, &discards))
@@ -675,3 +879,63 @@ out:
 	return ret;
 }
 EXPORT_SYMBOL(netfs_page_mkwrite);
+
+/*
+ * Try to note in the dirty region list that a range of pages needs writing to
+ * the cache.  These are then written back by writepages.
+ */
+static void netfs_copy_to_cache(struct netfs_io_request *rreq,
+				loff_t start, size_t len)
+{
+	struct netfs_dirty_region proposal;
+	struct netfs_inode *ctx = netfs_inode(rreq->inode);
+
+	proposal.from	= start;
+	proposal.to	= start + len;
+	proposal.first	= start / PAGE_SIZE;
+	proposal.last	= (start + len - 1) / PAGE_SIZE;
+	proposal.type	= NETFS_COPY_TO_CACHE;
+	netfs_commit_region(ctx, NULL, &proposal);
+}
+
+/*
+ * If we downloaded some data and it now needs writing to the cache, we add it
+ * to the dirty region list and let that flush it.  This way it can get merged
+ * with writes.
+ *
+ * We inherit a ref from the caller.
+ */
+void netfs_rreq_do_write_to_cache(struct netfs_io_request *rreq)
+{
+	struct netfs_io_subrequest *subreq, *next, *p;
+
+	trace_netfs_rreq(rreq, netfs_rreq_trace_copy_mark);
+
+	list_for_each_entry_safe(subreq, p, &rreq->subrequests, rreq_link) {
+		if (!test_bit(NETFS_SREQ_COPY_TO_CACHE, &subreq->flags)) {
+			list_del_init(&subreq->rreq_link);
+			netfs_put_subrequest(subreq, false,
+					     netfs_sreq_trace_put_no_copy);
+		}
+	}
+
+	list_for_each_entry(subreq, &rreq->subrequests, rreq_link) {
+		loff_t start = subreq->start;
+		size_t len = subreq->len;
+
+		/* Amalgamate adjacent writes */
+		while (!list_is_last(&subreq->rreq_link, &rreq->subrequests)) {
+			next = list_next_entry(subreq, rreq_link);
+			if (next->start != start + len)
+				break;
+			len += next->len;
+			list_del_init(&next->rreq_link);
+			netfs_put_subrequest(next, false,
+					     netfs_sreq_trace_put_merged);
+		}
+
+		netfs_copy_to_cache(rreq, start, len);
+	}
+
+	netfs_rreq_completed(rreq, false);
+}

@@ -48,15 +48,14 @@ void netfs_rreq_unlock_folios(struct netfs_io_request *rreq)
 	xas_for_each(&xas, folio, last_page) {
 		unsigned int pgpos = (folio_index(folio) - start_page) * PAGE_SIZE;
 		unsigned int pgend = pgpos + folio_size(folio);
-		bool pg_failed = false;
+		bool pg_failed = false, caching = false;
 
 		for (;;) {
 			if (!subreq) {
 				pg_failed = true;
 				break;
 			}
-			if (test_bit(NETFS_SREQ_COPY_TO_CACHE, &subreq->flags))
-				folio_start_fscache(folio);
+			caching = test_bit(NETFS_SREQ_COPY_TO_CACHE, &subreq->flags);
 			pg_failed |= subreq_failed;
 			if (pgend < iopos + subreq->len)
 				break;
@@ -77,6 +76,8 @@ void netfs_rreq_unlock_folios(struct netfs_io_request *rreq)
 		if (!pg_failed) {
 			flush_dcache_folio(folio);
 			folio_mark_uptodate(folio);
+			if (caching)
+				folio_mark_dirty(folio);
 		}
 
 		if (!test_bit(NETFS_RREQ_DONT_UNLOCK_FOLIOS, &rreq->flags)) {

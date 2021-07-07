@@ -40,6 +40,7 @@ bool netfs_are_regions_mergeable(struct netfs_inode *ctx,
 				 const struct netfs_dirty_region *b);
 struct netfs_dirty_region *netfs_find_region(struct netfs_inode *ctx,
 					     pgoff_t first, pgoff_t last);
+void netfs_rreq_do_write_to_cache(struct netfs_io_request *rreq);
 
 /*
  * crypto.c
@@ -61,6 +62,7 @@ ssize_t netfs_direct_write_iter(struct kiocb *iocb, struct iov_iter *from);
 /*
  * io.c
  */
+void netfs_rreq_completed(struct netfs_io_request *rreq, bool was_async);
 ssize_t netfs_begin_read(struct netfs_io_request *rreq, bool sync);
 
 /*
@@ -182,10 +184,7 @@ extern atomic_t netfs_n_rh_read_done;
 extern atomic_t netfs_n_rh_read_failed;
 extern atomic_t netfs_n_rh_zero;
 extern atomic_t netfs_n_rh_short_read;
-extern atomic_t netfs_n_rh_write;
 extern atomic_t netfs_n_rh_write_begin;
-extern atomic_t netfs_n_rh_write_done;
-extern atomic_t netfs_n_rh_write_failed;
 extern atomic_t netfs_n_rh_write_zskip;
 extern atomic_t netfs_n_wh_region;
 extern atomic_t netfs_n_wh_upload;
