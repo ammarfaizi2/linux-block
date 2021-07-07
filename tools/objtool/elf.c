@@ -576,8 +576,9 @@ static int process_kallsyms_symbols(struct elf *elf, const char *file_name)
 
 //			if (!sym->sym.st_size) {
 //			if (sym->sym.st_info == GELF_ST_INFO(STB_GLOBAL, STT_NOTYPE)) {
+//			if ((sym->type == STT_NOTYPE || sym->type == STT_SECTION || sym->type == STT_FILE) && !sym->sym.st_size) {
 
-			if (sym->type == STT_NOTYPE || sym->type == STT_SECTION || sym->type == STT_FILE) {
+			if (sym->sym.st_shndx == SHN_UNDEF || sym->type == STT_SECTION || sym->type == STT_FILE) {
 				dprintf("# skipping undefined symbol #%d {%s}, sym_st.size: %ld\n", i, sym->name, sym->sym.st_size);
 				continue;
 			}

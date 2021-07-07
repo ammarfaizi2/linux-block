@@ -35,6 +35,7 @@ KASAN_SANITIZE_vma.o		:= y
 UBSAN_SANITIZE_vma.o		:= y
 KCSAN_SANITIZE_vma.o		:= y
 OBJECT_FILES_NON_STANDARD_vma.o	:= n
+OBJECT_FILES_NON_STANDARD_extable.o := n
 
 # vDSO images to build
 vdso_img-$(VDSO64-y)		+= 64
