@@ -65,6 +65,11 @@ static unsigned int kallsyms_expand_symbol(unsigned int off,
 	const char *tptr;
 	const u8 *data;
 
+#ifndef CONFIG_KALLSYMS_GENERIC
+	/* Shouldn't get here. */
+	WARN_ON_ONCE(1);
+	return 0;
+#endif
 	/* Get the compressed symbol length from the first symbol byte. */
 	data = &kallsyms_names[off];
 	len = *data;
@@ -129,6 +134,12 @@ static unsigned int get_symbol_offset(unsigned long pos)
 	const u8 *name;
 	int i;
 
+#ifndef CONFIG_KALLSYMS_GENERIC
+	WARN_ONCE(1, "# kallsyms: first get_symbol_offset() invocation\n");
+	/* Not yet ... */
+	return 0;
+#endif
+
 	/*
 	 * Use the closest marker we have. We have markers every 256 positions,
 	 * so that should be close enough.
@@ -149,6 +160,12 @@ static unsigned int get_symbol_offset(unsigned long pos)
 
 static unsigned long kallsyms_sym_address(int idx)
 {
+#ifndef CONFIG_KALLSYMS_GENERIC
+	WARN_ONCE(1, "# kallsyms: first kallsyms_sym_address() invocation\n");
+	/* Not yet ... */
+	return 0;
+#endif
+
 	if (!IS_ENABLED(CONFIG_KALLSYMS_BASE_RELATIVE))
 		return kallsyms_addresses[idx];
 
@@ -212,6 +229,13 @@ unsigned long kallsyms_lookup_name(const char *name)
 	unsigned long i;
 	unsigned int off;
 
+#ifndef CONFIG_KALLSYMS_GENERIC
+	WARN_ONCE(1, "# kallsyms: first kallsyms_lookup_name() invocation\n");
+
+	/* Not yet ... */
+	return 0;
+#endif
+
 	for (i = 0, off = 0; i < kallsyms_num_syms; i++) {
 		off = kallsyms_expand_symbol(off, namebuf, ARRAY_SIZE(namebuf));
 
@@ -238,6 +262,11 @@ int kallsyms_on_each_symbol(int (*fn)(void *, const char *, struct module *,
 	unsigned int off;
 	int ret;
 
+#ifndef CONFIG_KALLSYMS_GENERIC
+	/* Not yet ... */
+	return 0;
+#endif
+
 	for (i = 0, off = 0; i < kallsyms_num_syms; i++) {
 		off = kallsyms_expand_symbol(off, namebuf, ARRAY_SIZE(namebuf));
 		ret = fn(data, namebuf, NULL, kallsyms_sym_address(i));
@@ -255,6 +284,13 @@ static unsigned long get_symbol_pos(unsigned long addr,
 {
 	unsigned long symbol_start = 0, symbol_end = 0;
 	unsigned long i, low, high, mid;
+
+#ifndef CONFIG_KALLSYMS_GENERIC
+	WARN_ONCE(1, "# kallsyms: first get_symbol_pos() invocation\n");
+
+	/* Not yet ... */
+	return 0;
+#endif
 
 	/* This kernel should never had been booted. */
 	if (!IS_ENABLED(CONFIG_KALLSYMS_BASE_RELATIVE))
@@ -317,6 +353,11 @@ int kallsyms_lookup_size_offset(unsigned long addr, unsigned long *symbolsize,
 {
 	char namebuf[KSYM_NAME_LEN];
 
+#ifndef CONFIG_KALLSYMS_GENERIC
+	/* Not yet ... */
+	return -EINVAL;
+#endif
+
 	if (is_ksym_addr(addr)) {
 		get_symbol_pos(addr, symbolsize, offset);
 		return 1;
@@ -334,6 +375,11 @@ static const char *kallsyms_lookup_buildid(unsigned long addr,
 
 	namebuf[KSYM_NAME_LEN - 1] = 0;
 	namebuf[0] = 0;
+
+#ifndef CONFIG_KALLSYMS_GENERIC
+	/* Not yet ... */
+	return NULL;
+#endif
 
 	if (is_ksym_addr(addr)) {
 		unsigned long pos;
@@ -390,6 +436,11 @@ int lookup_symbol_name(unsigned long addr, char *symname)
 	symname[0] = '\0';
 	symname[KSYM_NAME_LEN - 1] = '\0';
 
+#ifndef CONFIG_KALLSYMS_GENERIC
+	/* Not yet ... */
+	return -EINVAL;
+#endif
+
 	if (is_ksym_addr(addr)) {
 		unsigned long pos;
 
@@ -416,6 +467,11 @@ int lookup_symbol_attrs(unsigned long addr, unsigned long *size,
 
 	name[0] = '\0';
 	name[KSYM_NAME_LEN - 1] = '\0';
+
+#ifndef CONFIG_KALLSYMS_GENERIC
+	/* Not yet ... */
+	return -EINVAL;
+#endif
 
 	if (is_ksym_addr(addr)) {
 		unsigned long pos;
@@ -592,9 +648,15 @@ int __weak arch_get_kallsym(unsigned int symnum, unsigned long *value,
 
 static int get_ksymbol_arch(struct kallsym_iter *iter)
 {
-	int ret = arch_get_kallsym(iter->pos - kallsyms_num_syms,
-				   &iter->value, &iter->type,
-				   iter->name);
+	int ret;
+
+#ifndef CONFIG_KALLSYMS_GENERIC
+	/* Not yet ... */
+	return 0;
+#endif
+	ret = arch_get_kallsym(iter->pos - kallsyms_num_syms,
+			       &iter->value, &iter->type,
+			       iter->name);
 
 	if (ret < 0) {
 		iter->pos_arch_end = iter->pos;
@@ -727,6 +789,11 @@ static int update_iter_mod(struct kallsym_iter *iter, loff_t pos)
 /* Returns false if pos at or past end of file. */
 static int update_iter(struct kallsym_iter *iter, loff_t pos)
 {
+#ifndef CONFIG_KALLSYMS_GENERIC
+	/* Not yet ... */
+	return 0;
+#endif
+
 	/* Module symbols can be accessed randomly. */
 	if (pos >= kallsyms_num_syms)
 		return update_iter_mod(iter, pos);
@@ -887,6 +954,7 @@ extern char __kallsyms_offsets_end;
 
 static void __init kallsyms_objtool_init(void)
 {
+#ifdef CONFIG_KALLSYMS_FAST
 	struct kallsyms_entry *entries;
 	long nr_entries, i;
 	char *str;
@@ -902,6 +970,9 @@ static void __init kallsyms_objtool_init(void)
 	str = &__kallsyms_strs_begin;
 	entries = (void *) &__kallsyms_offsets_begin;
 
+	printk("#     str: %p\n", str);
+	printk("# entries: %p\n", entries);
+
 	for (i = 0; i < nr_entries; i++) {
 //		printk("# kallsyms entry %6ld/%6ld: [%016Lx]: {%s}\n", i, nr_entries, (u64)entries[i].offset, str);
 //		printk("%016Lx %s", (u64)entries[i].offset, str);
@@ -912,11 +983,13 @@ static void __init kallsyms_objtool_init(void)
 	printk("# kallsyms, last str:             %p\n", str);
 	printk("# kallsyms, &__kallsyms_strs_end: %p\n", &__kallsyms_strs_end);
 
-	BUG_ON(str != &__kallsyms_strs_end);
+	WARN_ON(str != &__kallsyms_strs_end);
+#endif
 }
 
 static int __init kallsyms_init(void)
 {
+	printk("# kallsyms init\n");
 	kallsyms_objtool_init();
 
 	proc_create("kallsyms", 0444, NULL, &kallsyms_proc_ops);
