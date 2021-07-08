@@ -581,7 +581,7 @@ static void read_relocs(FILE *fp)
 }
 
 
-static void print_absolute_symbols(void)
+static void print_absolute_symbols(const char *file_name)
 {
 	int i;
 	const char *format;
@@ -591,7 +591,7 @@ static void print_absolute_symbols(void)
 	else
 		format = "%5d %08"PRIx32"  %5"PRId32" %10s %10s %12s %s\n";
 
-	printf("Absolute symbols\n");
+	printf("Absolute symbols in {%s}\n", file_name);
 	printf(" Num:    Value Size  Type       Bind        Visibility  Name\n");
 
 	for (i = 0; i < shnum; i++) {
@@ -625,15 +625,15 @@ static void print_absolute_symbols(void)
 	printf("\n");
 }
 
-static void print_absolute_relocs(void)
+static void print_absolute_relocs(const char *file_name)
 {
 	int i, printed = 0;
 	const char *format;
 
 	if (ELF_BITS == 64)
-		format = "%016"PRIx64" %016"PRIx64" %10s %016"PRIx64"  %s\n";
+		format = "%016"PRIx64" %016"PRIx64" %10s %016"PRIx64"  # %-30s in %s, %s\n";
 	else
-		format = "%08"PRIx32" %08"PRIx32" %10s %08"PRIx32"  %s\n";
+		format = "%08"PRIx32" %08"PRIx32" %10s %08"PRIx32"  # %-30s in %s, %s\n";
 
 	for (i = 0; i < shnum; i++) {
 		struct section *sec = &secs[i];
@@ -684,7 +684,7 @@ static void print_absolute_relocs(void)
 				continue;
 
 			if (!printed) {
-				printf("WARNING: Absolute relocations present\n");
+				printf("WARNING: Absolute relocations present in {%s}:\n", file_name);
 				printf("Offset     Info     Type     Sym.Value Sym.Name\n");
 				printed = 1;
 			}
@@ -694,7 +694,9 @@ static void print_absolute_relocs(void)
 				rel->r_info,
 				rel_type_name(ELF_R_TYPE(rel->r_info)),
 				sym->st_value,
-				name);
+				name,
+				sec_name(sec->idx),
+				sec_name(sym->st_shndx));
 		}
 	}
 
@@ -1177,11 +1179,11 @@ void process(FILE *fp, const char *file_name, int use_real_mode, int as_text,
 	if (ELF_BITS == 64)
 		percpu_init();
 	if (show_absolute_syms) {
-		print_absolute_symbols();
+		print_absolute_symbols(file_name);
 		return;
 	}
 	if (show_absolute_relocs) {
-		print_absolute_relocs();
+		print_absolute_relocs(file_name);
 		return;
 	}
 	if (show_reloc_info) {
