@@ -30,6 +30,7 @@
 #include <linux/pci.h>
 #include <linux/cc_platform.h>
 
+#include <drm/ttm/ttm_range_manager.h>
 #include <drm/drm_aperture.h>
 #include <drm/drm_drv.h>
 #include <drm/drm_ioctl.h>
