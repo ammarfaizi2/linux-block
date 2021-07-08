@@ -12,7 +12,7 @@
 #ifndef _INET_SOCK_TYPES_H
 #define _INET_SOCK_TYPES_H
 
-#include <net/request_sock.h>
+#include <net/request_sock_types.h>
 #include <net/flow.h>
 
 /** struct ip_options - IP Options
