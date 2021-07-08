@@ -19,6 +19,108 @@
 #include <linux/blkdev.h>
 #include <linux/percpu_counter_api.h>
 
+enum {
+	BLK_RW_ASYNC	= 0,
+	BLK_RW_SYNC	= 1,
+};
+
+void clear_bdi_congested(struct backing_dev_info *bdi, int sync);
+void set_bdi_congested(struct backing_dev_info *bdi, int sync);
+
+struct wb_lock_cookie {
+	bool locked;
+	unsigned long flags;
+};
+
+#ifdef CONFIG_CGROUP_WRITEBACK
+
+/**
+ * wb_tryget - try to increment a wb's refcount
+ * @wb: bdi_writeback to get
+ */
+static inline bool wb_tryget(struct bdi_writeback *wb)
+{
+	if (wb != &wb->bdi->wb)
+		return percpu_ref_tryget(&wb->refcnt);
+	return true;
+}
+
+/**
+ * wb_get - increment a wb's refcount
+ * @wb: bdi_writeback to get
+ */
+static inline void wb_get(struct bdi_writeback *wb)
+{
+	if (wb != &wb->bdi->wb)
+		percpu_ref_get(&wb->refcnt);
+}
+
+/**
+ * wb_put - decrement a wb's refcount
+ * @wb: bdi_writeback to put
+ * @nr: number of references to put
+ */
+static inline void wb_put_many(struct bdi_writeback *wb, unsigned long nr)
+{
+	if (WARN_ON_ONCE(!wb->bdi)) {
+		/*
+		 * A driver bug might cause a file to be removed before bdi was
+		 * initialized.
+		 */
+		return;
+	}
+
+	if (wb != &wb->bdi->wb)
+		percpu_ref_put_many(&wb->refcnt, nr);
+}
+
+/**
+ * wb_put - decrement a wb's refcount
+ * @wb: bdi_writeback to put
+ */
+static inline void wb_put(struct bdi_writeback *wb)
+{
+	wb_put_many(wb, 1);
+}
+
+/**
+ * wb_dying - is a wb dying?
+ * @wb: bdi_writeback of interest
+ *
+ * Returns whether @wb is unlinked and being drained.
+ */
+static inline bool wb_dying(struct bdi_writeback *wb)
+{
+	return percpu_ref_is_dying(&wb->refcnt);
+}
+
+#else	/* CONFIG_CGROUP_WRITEBACK */
+
+static inline bool wb_tryget(struct bdi_writeback *wb)
+{
+	return true;
+}
+
+static inline void wb_get(struct bdi_writeback *wb)
+{
+}
+
+static inline void wb_put(struct bdi_writeback *wb)
+{
+}
+
+static inline void wb_put_many(struct bdi_writeback *wb, unsigned long nr)
+{
+}
+
+static inline bool wb_dying(struct bdi_writeback *wb)
+{
+	return false;
+}
+
+#endif	/* CONFIG_CGROUP_WRITEBACK */
+
+
 struct blkcg;
 
 static inline struct backing_dev_info *bdi_get(struct backing_dev_info *bdi)
