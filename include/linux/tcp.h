@@ -14,11 +14,16 @@
 #define _LINUX_TCP_H
 
 
-#include <linux/skbuff.h>
 #include <linux/win_minmax.h>
-#include <net/sock.h>
-#include <net/inet_connection_sock.h>
-#include <net/inet_timewait_sock.h>
+#include <linux/math.h>
+
+#include <net/sock_types.h>
+#include <net/inet_connection_sock_types.h>
+#include <net/inet_timewait_sock_types.h>
+
+#include <linux/skbuff_types.h>
+#include <linux/hrtimer_types.h>
+
 #include <uapi/linux/tcp.h>
 
 static inline struct tcphdr *tcp_hdr(const struct sk_buff *skb)
@@ -462,19 +467,9 @@ static inline struct tcp_timewait_sock *tcp_twsk(const struct sock *sk)
 	return (struct tcp_timewait_sock *)sk;
 }
 
-static inline bool tcp_passive_fastopen(const struct sock *sk)
-{
-	return sk->sk_state == TCP_SYN_RECV &&
-	       rcu_access_pointer(tcp_sk(sk)->fastopen_rsk) != NULL;
-}
+bool tcp_passive_fastopen(const struct sock *sk);
 
-static inline void fastopen_queue_tune(struct sock *sk, int backlog)
-{
-	struct request_sock_queue *queue = &inet_csk(sk)->icsk_accept_queue;
-	int somaxconn = READ_ONCE(sock_net(sk)->core.sysctl_somaxconn);
-
-	queue->fastopenq.max_qlen = min_t(unsigned int, backlog, somaxconn);
-}
+void fastopen_queue_tune(struct sock *sk, int backlog);
 
 static inline void tcp_move_syn(struct tcp_sock *tp,
 				struct request_sock *req)
@@ -483,11 +478,7 @@ static inline void tcp_move_syn(struct tcp_sock *tp,
 	req->saved_syn = NULL;
 }
 
-static inline void tcp_saved_syn_free(struct tcp_sock *tp)
-{
-	kfree(tp->saved_syn);
-	tp->saved_syn = NULL;
-}
+void tcp_saved_syn_free(struct tcp_sock *tp);
 
 static inline u32 tcp_saved_syn_len(const struct saved_syn *saved_syn)
 {

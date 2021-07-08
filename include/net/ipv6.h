@@ -409,11 +409,13 @@ static inline struct ip6_flowlabel *fl6_sock_lookup(struct sock *sk,
 }
 #endif
 
+struct sockptr_struct;
+
 struct ipv6_txoptions *fl6_merge_options(struct ipv6_txoptions *opt_space,
 					 struct ip6_flowlabel *fl,
 					 struct ipv6_txoptions *fopt);
 void fl6_free_socklist(struct sock *sk);
-int ipv6_flowlabel_opt(struct sock *sk, sockptr_t optval, int optlen);
+int ipv6_flowlabel_opt(struct sock *sk, struct sockptr_struct optval, int optlen);
 int ipv6_flowlabel_opt_get(struct sock *sk, struct in6_flowlabel_req *freq,
 			   int flags);
 int ip6_flowlabel_init(void);
@@ -1100,7 +1102,9 @@ struct in6_addr *fl6_update_dst(struct flowi6 *fl6,
  */
 DECLARE_STATIC_KEY_FALSE(ip6_min_hopcount);
 
-int ipv6_setsockopt(struct sock *sk, int level, int optname, sockptr_t optval,
+struct sockptr_struct;
+
+int ipv6_setsockopt(struct sock *sk, int level, int optname, struct sockptr_struct optval,
 		    unsigned int optlen);
 int ipv6_getsockopt(struct sock *sk, int level, int optname,
 		    char __user *optval, int __user *optlen);

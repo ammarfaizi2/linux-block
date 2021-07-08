@@ -212,6 +212,14 @@ static int inet_autobind(struct sock *sk)
 	return 0;
 }
 
+inline void fastopen_queue_tune(struct sock *sk, int backlog)
+{
+	struct request_sock_queue *queue = &inet_csk(sk)->icsk_accept_queue;
+	int somaxconn = READ_ONCE(sock_net(sk)->core.sysctl_somaxconn);
+
+	queue->fastopenq.max_qlen = min_t(unsigned int, backlog, somaxconn);
+}
+
 /*
  *	Move a socket into listening state.
  */

@@ -1056,6 +1056,12 @@ new_segment:
 	return skb;
 }
 
+inline bool tcp_passive_fastopen(const struct sock *sk)
+{
+	return sk->sk_state == TCP_SYN_RECV &&
+	       rcu_access_pointer(tcp_sk(sk)->fastopen_rsk) != NULL;
+}
+
 ssize_t do_tcp_sendpages(struct sock *sk, struct page *page, int offset,
 			 size_t size, int flags)
 {
@@ -3036,6 +3042,12 @@ void tcp_write_queue_purge(struct sock *sk)
 	tcp_clear_all_retrans_hints(tcp_sk(sk));
 	tcp_sk(sk)->packets_out = 0;
 	inet_csk(sk)->icsk_backoff = 0;
+}
+
+inline void tcp_saved_syn_free(struct tcp_sock *tp)
+{
+	kfree(tp->saved_syn);
+	tp->saved_syn = NULL;
 }
 
 int tcp_disconnect(struct sock *sk, int flags)
