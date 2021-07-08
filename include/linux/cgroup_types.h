@@ -8,15 +8,16 @@
 #ifndef _LINUX_CGROUP_TYPES_H
 #define _LINUX_CGROUP_TYPES_H
 
+#include <linux/limits.h>
 #include <linux/sched/types.h>
+
+#include <linux/cache.h>
 
 #include <linux/idr.h>
 #include <linux/u64_stats_sync.h>
 #include <linux/bpf-cgroup-types.h>
 #include <linux/psi_types.h>
-#include <linux/kernel_stat.h>
-
-#include <asm/signal.h>
+#include <linux/kernel_stat_types.h>
 
 #ifdef CONFIG_CGROUPS
 
