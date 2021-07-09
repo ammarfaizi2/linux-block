@@ -179,6 +179,7 @@ enum netfs_io_origin {
 enum netfs_buffering {
 	NETFS_INVALID,			/* Buffering unset */
 	NETFS_BUFFER,			/* Do I/O to/from ->buffer */
+	NETFS_BOUNCE,			/* Do I/O to/from ->bounce */
 } __mode(byte);
 
 /*
@@ -196,6 +197,7 @@ struct netfs_io_request {
 	struct list_head	proc_link;	/* Link in netfs_iorequests */
 	struct list_head	subrequests;	/* Contributory I/O operations */
 	struct xarray		buffer;		/* Buffer to hold raw data */
+	struct xarray		bounce;		/* Bounce buffer (eg. for crypto/compression) */
 	void			*netfs_priv;	/* Private data for the netfs */
 	unsigned int		debug_id;
 	atomic_t		nr_outstanding;	/* Number of ops in progress */
