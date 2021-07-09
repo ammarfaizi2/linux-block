@@ -12,10 +12,7 @@
 
 #include <linux/types.h>
 #include <linux/threads.h>
-#include <linux/atomic.h>
 #include <linux/sched/per_task.h>
-
-#include <asm/page.h>
 
 #ifdef CONFIG_ARCH_WANT_BATCHED_UNMAP_TLB_FLUSH
 #include <asm/tlbbatch.h>

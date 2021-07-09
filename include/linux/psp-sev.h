@@ -18,6 +18,7 @@ struct file;
 
 #ifdef CONFIG_X86
 #include <linux/mem_encrypt.h>
+#include <asm/page.h>
 
 #define __psp_pa(x)	__sme_pa(x)
 #else
