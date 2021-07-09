@@ -7,6 +7,7 @@
  *	IRQ/IPI changes taken from work by Thomas Radke
  *	<tomsoft@informatik.tu-chemnitz.de>
  */
+#include <linux/types.h>
 
 #include <asm/apicdef.h>
 #include <asm/irq_vectors.h>
@@ -26,6 +27,8 @@ static inline int irq_canonicalize(int irq)
 extern int irq_init_percpu_irqstack(unsigned int cpu);
 
 struct irq_desc;
+struct pt_regs;
+struct cpumask;
 
 extern void fixup_irqs(void);
 
@@ -40,7 +43,7 @@ extern void __handle_irq(struct irq_desc *desc, struct pt_regs *regs);
 
 extern void init_ISA_irqs(void);
 
-extern void __init init_IRQ(void);
+extern void init_IRQ(void);
 
 #ifdef CONFIG_X86_LOCAL_APIC
 void arch_trigger_cpumask_backtrace(const struct cpumask *mask,
