@@ -304,11 +304,7 @@ static void afs_req_issue_op(struct netfs_read_subrequest *subreq)
 	fsreq->len	= subreq->len   - subreq->transferred;
 	fsreq->key	= subreq->rreq->netfs_priv;
 	fsreq->vnode	= vnode;
-	fsreq->iter	= &fsreq->def_iter;
-
-	iov_iter_xarray(&fsreq->def_iter, READ,
-			&fsreq->vnode->vfs_inode.i_mapping->i_pages,
-			fsreq->pos, fsreq->len);
+	fsreq->iter	= &subreq->iter;
 
 	afs_fetch_data(fsreq->vnode, fsreq);
 }
