@@ -71,7 +71,7 @@ function nextcpus(n,  i, s)
 function dumpcpustate(  i, fn)
 {
 ___EOF___
-echo '\tfn = "'"$statefile"'";' >> $scriptfile
+echo '	fn = "'"$statefile"'";' >> $scriptfile
 cat << '___EOF___' >> "$scriptfile"
 	if (fn != "" && gotcpus()) {
 		print "curnode = " curnode ";" > fn;
