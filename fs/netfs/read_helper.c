@@ -28,6 +28,7 @@ module_param_named(debug, netfs_debug, uint, S_IWUSR | S_IRUGO);
 MODULE_PARM_DESC(netfs_debug, "Netfs support debugging mask");
 
 static void netfs_rreq_work(struct work_struct *);
+static void netfs_rreq_clear_buffer(struct netfs_read_request *);
 static void __netfs_put_subrequest(struct netfs_read_subrequest *, bool);
 
 static void netfs_put_subrequest(struct netfs_read_subrequest *subreq,
@@ -51,6 +52,7 @@ static struct netfs_read_request *netfs_alloc_read_request(
 		rreq->inode	= file_inode(file);
 		rreq->i_size	= i_size_read(rreq->inode);
 		rreq->debug_id	= atomic_inc_return(&debug_ids);
+		xa_init(&rreq->buffer);
 		INIT_LIST_HEAD(&rreq->subrequests);
 		INIT_WORK(&rreq->work, netfs_rreq_work);
 		refcount_set(&rreq->usage, 1);
@@ -90,6 +92,7 @@ static void netfs_free_read_request(struct work_struct *work)
 	trace_netfs_rreq(rreq, netfs_rreq_trace_free);
 	if (rreq->cache_resources.ops)
 		rreq->cache_resources.ops->end_operation(&rreq->cache_resources);
+	netfs_rreq_clear_buffer(rreq);
 	kfree(rreq);
 	netfs_stat_d(&netfs_n_rh_rreq);
 }
@@ -150,7 +153,7 @@ static void netfs_clear_unread(struct netfs_read_subrequest *subreq)
 {
 	struct iov_iter iter;
 
-	iov_iter_xarray(&iter, READ, &subreq->rreq->mapping->i_pages,
+	iov_iter_xarray(&iter, READ, &subreq->rreq->buffer,
 			subreq->start + subreq->transferred,
 			subreq->len   - subreq->transferred);
 	iov_iter_zero(iov_iter_count(&iter), &iter);
@@ -175,7 +178,7 @@ static void netfs_read_from_cache(struct netfs_read_request *rreq,
 	struct netfs_cache_resources *cres = &rreq->cache_resources;
 
 	netfs_stat(&netfs_n_rh_read);
-	iov_iter_xarray(&subreq->iter, READ, &rreq->mapping->i_pages,
+	iov_iter_xarray(&subreq->iter, READ, &rreq->buffer,
 			subreq->start + subreq->transferred,
 			subreq->len   - subreq->transferred);
 
@@ -214,7 +217,7 @@ static void netfs_read_from_server(struct netfs_read_request *rreq,
 				   struct netfs_read_subrequest *subreq)
 {
 	netfs_stat(&netfs_n_rh_download);
-	iov_iter_xarray(&subreq->iter, READ, &rreq->mapping->i_pages,
+	iov_iter_xarray(&subreq->iter, READ, &rreq->buffer,
 			subreq->start + subreq->transferred,
 			subreq->len   - subreq->transferred);
 
@@ -333,7 +336,7 @@ static void netfs_rreq_do_write_to_cache(struct netfs_read_request *rreq)
 			continue;
 		}
 
-		iov_iter_xarray(&iter, WRITE, &rreq->mapping->i_pages,
+		iov_iter_xarray(&iter, WRITE, &rreq->buffer,
 				subreq->start, subreq->len);
 
 		atomic_inc(&rreq->nr_wr_ops);
@@ -854,6 +857,136 @@ static void netfs_rreq_expand(struct netfs_read_request *rreq,
 	}
 }
 
+/*
+ * Clear a read buffer, discarding the folios which have XA_MARK_0 set.
+ */
+static void netfs_rreq_clear_buffer(struct netfs_read_request *rreq)
+{
+	struct folio *folio;
+	XA_STATE(xas, &rreq->buffer, 0);
+
+	rcu_read_lock();
+	xas_for_each_marked(&xas, folio, ULONG_MAX, XA_MARK_0) {
+		folio_put(folio);
+	}
+	rcu_read_unlock();
+	xa_destroy(&rreq->buffer);
+}
+
+static int xa_insert_set_mark(struct xarray *xa, unsigned long index,
+			      void *entry, xa_mark_t mark, gfp_t gfp_mask)
+{
+	int ret;
+
+	xa_lock(xa);
+	ret = __xa_insert(xa, index, entry, gfp_mask);
+	if (ret == 0)
+		__xa_set_mark(xa, index, mark);
+	xa_unlock(xa);
+	return ret;
+}
+
+/*
+ * Create the specified range of folios in the buffer attached to the read
+ * request.  The folios are marked with XA_MARK_0 so that we know that these
+ * need freeing later.
+ */
+static int netfs_rreq_add_folios_to_buffer(struct netfs_read_request *rreq,
+					   pgoff_t index, pgoff_t to, gfp_t gfp_mask)
+{
+	struct folio *folio;
+	int ret;
+
+	if (to + 1 == index) /* Page range is inclusive */
+		return 0;
+
+	do {
+		/* TODO: Figure out what order folio can be allocated here */
+		folio = filemap_alloc_folio(readahead_gfp_mask(rreq->mapping), 0);
+		if (!folio)
+			return -ENOMEM;
+		folio->index = index;
+		ret = xa_insert_set_mark(&rreq->buffer, index, folio, XA_MARK_0,
+					 gfp_mask);
+		if (ret < 0) {
+			folio_put(folio);
+			return ret;
+		}
+
+		index += folio_nr_pages(folio);
+	} while (index < to);
+
+	return 0;
+}
+
+/*
+ * Set up a buffer into which to data will be read or decrypted/decompressed.
+ * The folios to be read into are attached to this buffer and the gaps filled
+ * in to form a continuous region.
+ */
+static int netfs_rreq_set_up_buffer(struct netfs_read_request *rreq,
+				    struct readahead_control *ractl,
+				    struct folio *keep,
+				    pgoff_t have_index, unsigned int have_folios)
+{
+	struct folio *folio;
+	gfp_t gfp_mask = readahead_gfp_mask(rreq->mapping);
+	unsigned int want_folios = have_folios;
+	pgoff_t want_index = have_index;
+	int ret;
+
+#if 0
+	want_index = round_down(want_index, 256 * 1024 / PAGE_SIZE);
+	want_pages += have_index - want_index;
+	want_pages = round_up(want_pages, 256 * 1024 / PAGE_SIZE);
+
+	kdebug("setup %lx-%lx -> %lx-%lx",
+	       have_index, have_index + have_pages - 1,
+	       want_index, want_index + want_pages - 1);
+#endif
+
+	ret = netfs_rreq_add_folios_to_buffer(rreq, want_index, have_index - 1,
+					      gfp_mask);
+	if (ret < 0)
+		return ret;
+	have_folios += have_index - want_index;
+
+	ret = netfs_rreq_add_folios_to_buffer(rreq, have_index + have_folios,
+					      want_index + want_folios - 1,
+					      gfp_mask);
+	if (ret < 0)
+		return ret;
+
+	/* Transfer the folios proposed by the VM into the buffer and take refs
+	 * on them.  The locks will be dropped in netfs_rreq_unlock().
+	 */
+	if (ractl) {
+		while ((folio = readahead_folio(ractl))) {
+			folio_get(folio);
+			if (folio == keep)
+				folio_get(folio);
+			ret = xa_insert_set_mark(&rreq->buffer,
+						 folio_index(folio), folio,
+						 XA_MARK_0, gfp_mask);
+			if (ret < 0) {
+				if (folio != keep)
+					folio_unlock(folio);
+				folio_put(folio);
+				return ret;
+			}
+		}
+	} else {
+		folio_get(keep);
+		ret = xa_insert_set_mark(&rreq->buffer, keep->index, keep,
+					 XA_MARK_0, gfp_mask);
+		if (ret < 0) {
+			folio_put(folio);
+			return ret;
+		}
+	}
+	return 0;
+}
+
 /**
  * netfs_readahead - Helper to manage a read request
  * @ractl: The description of the readahead request
@@ -904,18 +1037,18 @@ void netfs_readahead(struct readahead_control *ractl,
 
 	netfs_rreq_expand(rreq, ractl);
 
+	/* Set up the output buffer */
+	ret = netfs_rreq_set_up_buffer(rreq, ractl, NULL,
+				       readahead_index(ractl), readahead_count(ractl));
+	if (ret < 0)
+		goto cleanup_free;
+
 	atomic_set(&rreq->nr_rd_ops, 1);
 	do {
 		if (!netfs_rreq_submit_slice(rreq, &debug_index))
 			break;
 
 	} while (rreq->submitted < rreq->len);
-
-	/* Drop the refs on the folios here rather than in the cache or
-	 * filesystem.  The locks will be dropped in netfs_rreq_unlock().
-	 */
-	while (readahead_folio(ractl))
-		;
 
 	/* If we decrement nr_rd_ops to 0, the ref belongs to us. */
 	if (atomic_dec_and_test(&rreq->nr_rd_ops))
@@ -981,6 +1114,12 @@ int netfs_readpage(struct file *file,
 
 	netfs_stat(&netfs_n_rh_readpage);
 	trace_netfs_read(rreq, rreq->start, rreq->len, netfs_read_trace_readpage);
+
+	/* Set up the output buffer */
+	ret = netfs_rreq_set_up_buffer(rreq, NULL, folio,
+				       folio_index(folio), folio_nr_pages(folio));
+	if (ret < 0)
+		goto out;
 
 	netfs_get_read_request(rreq);
 
@@ -1118,7 +1257,7 @@ retry:
 	if (folio_test_uptodate(folio))
 		goto have_folio;
 
-	/* If the page is beyond the EOF, we want to clear it - unless it's
+	/* If the folio is beyond the EOF, we want to clear it - unless it's
 	 * within the cache granule containing the EOF, in which case we need
 	 * to preload the granule.
 	 */
@@ -1153,13 +1292,19 @@ retry:
 	 */
 	ractl._nr_pages = folio_nr_pages(folio);
 	netfs_rreq_expand(rreq, &ractl);
+
+	/* Set up the output buffer */
+	ret = netfs_rreq_set_up_buffer(rreq, &ractl, folio,
+				       readahead_index(&ractl), readahead_count(&ractl));
+	if (ret < 0) {
+		/* We hold the folio locks, so we can drop the references */
+		folio_get(folio);
+		while (readahead_folio(&ractl))
+			;
+		goto error_put;
+	}
+
 	netfs_get_read_request(rreq);
-
-	/* We hold the folio locks, so we can drop the references */
-	folio_get(folio);
-	while (readahead_folio(&ractl))
-		;
-
 	atomic_set(&rreq->nr_rd_ops, 1);
 	do {
 		if (!netfs_rreq_submit_slice(rreq, &debug_index))
