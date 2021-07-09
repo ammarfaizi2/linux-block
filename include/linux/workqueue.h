@@ -7,12 +7,13 @@
 #define _LINUX_WORKQUEUE_H
 
 #include <linux/timer.h>
-#include <linux/linkage.h>
-#include <linux/bitops.h>
-#include <linux/lockdep.h>
 #include <linux/threads.h>
+
 #include <linux/atomic.h>
-#include <linux/cpumask.h>
+
+#ifdef CONFIG_LOCKDEP
+# include <linux/lockdep.h>
+#endif
 
 struct workqueue_struct;
 
