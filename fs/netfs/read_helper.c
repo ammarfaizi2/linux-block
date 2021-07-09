@@ -28,6 +28,7 @@ module_param_named(debug, netfs_debug, uint, S_IWUSR | S_IRUGO);
 MODULE_PARM_DESC(netfs_debug, "Netfs support debugging mask");
 
 static void netfs_rreq_work(struct work_struct *);
+static void netfs_rreq_clear_buffer(struct netfs_read_request *);
 static void __netfs_put_subrequest(struct netfs_read_subrequest *, bool);
 
 static void netfs_put_subrequest(struct netfs_read_subrequest *subreq,
@@ -51,6 +52,7 @@ static struct netfs_read_request *netfs_alloc_read_request(
 		rreq->inode	= file_inode(file);
 		rreq->i_size	= i_size_read(rreq->inode);
 		rreq->debug_id	= atomic_inc_return(&debug_ids);
+		xa_init(&rreq->buffer);
 		INIT_LIST_HEAD(&rreq->subrequests);
 		INIT_WORK(&rreq->work, netfs_rreq_work);
 		refcount_set(&rreq->usage, 1);
@@ -90,6 +92,7 @@ static void netfs_free_read_request(struct work_struct *work)
 	trace_netfs_rreq(rreq, netfs_rreq_trace_free);
 	if (rreq->cache_resources.ops)
 		rreq->cache_resources.ops->end_operation(&rreq->cache_resources);
+	netfs_rreq_clear_buffer(rreq);
 	kfree(rreq);
 	netfs_stat_d(&netfs_n_rh_rreq);
 }
@@ -150,7 +153,7 @@ static void netfs_clear_unread(struct netfs_read_subrequest *subreq)
 {
 	struct iov_iter iter;
 
-	iov_iter_xarray(&iter, READ, &subreq->rreq->mapping->i_pages,
+	iov_iter_xarray(&iter, READ, &subreq->rreq->buffer,
 			subreq->start + subreq->transferred,
 			subreq->len   - subreq->transferred);
 	iov_iter_zero(iov_iter_count(&iter), &iter);
@@ -175,7 +178,7 @@ static void netfs_read_from_cache(struct netfs_read_request *rreq,
 	struct netfs_cache_resources *cres = &rreq->cache_resources;
 
 	netfs_stat(&netfs_n_rh_read);
-	iov_iter_xarray(&subreq->iter, READ, &rreq->mapping->i_pages,
+	iov_iter_xarray(&subreq->iter, READ, &rreq->buffer,
 			subreq->start + subreq->transferred,
 			subreq->len   - subreq->transferred);
 
@@ -214,7 +217,7 @@ static void netfs_read_from_server(struct netfs_read_request *rreq,
 				   struct netfs_read_subrequest *subreq)
 {
 	netfs_stat(&netfs_n_rh_download);
-	iov_iter_xarray(&subreq->iter, READ, &rreq->mapping->i_pages,
+	iov_iter_xarray(&subreq->iter, READ, &rreq->buffer,
 			subreq->start + subreq->transferred,
 			subreq->len   - subreq->transferred);
 
@@ -333,7 +336,7 @@ static void netfs_rreq_do_write_to_cache(struct netfs_read_request *rreq)
 			continue;
 		}
 
-		iov_iter_xarray(&iter, WRITE, &rreq->mapping->i_pages,
+		iov_iter_xarray(&iter, WRITE, &rreq->buffer,
 				subreq->start, subreq->len);
 
 		atomic_inc(&rreq->nr_wr_ops);
@@ -856,6 +859,133 @@ static void netfs_rreq_expand(struct netfs_read_request *rreq,
 	}
 }
 
+/*
+ * Clear a read buffer, discarding the pages which have XA_MARK_0 set.
+ */
+static void netfs_rreq_clear_buffer(struct netfs_read_request *rreq)
+{
+	struct page *page;
+	XA_STATE(xas, &rreq->buffer, 0);
+
+	rcu_read_lock();
+	xas_for_each_marked(&xas, page, ULONG_MAX, XA_MARK_0) {
+		put_page(page);
+	}
+	rcu_read_unlock();
+	xa_destroy(&rreq->buffer);
+}
+
+static int xa_insert_set_mark(struct xarray *xa, unsigned long index,
+			      void *entry, xa_mark_t mark, gfp_t gfp_mask)
+{
+	int ret;
+
+	xa_lock(xa);
+	ret = __xa_insert(xa, index, entry, gfp_mask);
+	if (ret == 0)
+		__xa_set_mark(xa, index, mark);
+	xa_unlock(xa);
+	return ret;
+}
+
+/*
+ * Create the specified range of pages in the buffer attached to the read
+ * request.  The pages are marked with XA_MARK_0 so that we know that these
+ * need freeing later.
+ */
+static int netfs_rreq_add_pages_to_buffer(struct netfs_read_request *rreq,
+					  pgoff_t index, pgoff_t to, gfp_t gfp_mask)
+{
+	struct page *page;
+	int ret;
+
+	if (to + 1 == index) /* Page range is inclusive */
+		return 0;
+
+	do {
+		page = __page_cache_alloc(gfp_mask);
+		if (!page)
+			return -ENOMEM;
+		page->index = index;
+		ret = xa_insert_set_mark(&rreq->buffer, index, page, XA_MARK_0,
+					 gfp_mask);
+		if (ret < 0) {
+			__free_page(page);
+			return ret;
+		}
+
+		index += thp_nr_pages(page);
+	} while (index < to);
+
+	return 0;
+}
+
+/*
+ * Set up a buffer into which to data will be read or decrypted/decompressed.
+ * The pages to be read into are attached to this buffer and the gaps filled in
+ * to form a continuous region.
+ */
+static int netfs_rreq_set_up_buffer(struct netfs_read_request *rreq,
+				    struct readahead_control *ractl,
+				    struct page *keep,
+				    pgoff_t have_index, unsigned int have_pages)
+{
+	struct page *page;
+	gfp_t gfp_mask = readahead_gfp_mask(rreq->mapping);
+	unsigned int want_pages = have_pages;
+	pgoff_t want_index = have_index;
+	int ret;
+
+#if 0
+	want_index = round_down(want_index, 256 * 1024 / PAGE_SIZE);
+	want_pages += have_index - want_index;
+	want_pages = round_up(want_pages, 256 * 1024 / PAGE_SIZE);
+
+	kdebug("setup %lx-%lx -> %lx-%lx",
+	       have_index, have_index + have_pages - 1,
+	       want_index, want_index + want_pages - 1);
+#endif
+
+	ret = netfs_rreq_add_pages_to_buffer(rreq, want_index, have_index - 1,
+					     gfp_mask);
+	if (ret < 0)
+		return ret;
+	have_pages += have_index - want_index;
+
+	ret = netfs_rreq_add_pages_to_buffer(rreq, have_index + have_pages,
+					     want_index + want_pages - 1,
+					     gfp_mask);
+	if (ret < 0)
+		return ret;
+
+	/* Transfer the pages proposed by the VM into the buffer along with
+	 * their page refs.  The locks will be dropped in netfs_rreq_unlock().
+	 */
+	if (ractl) {
+		while ((page = readahead_page(ractl))) {
+			if (page == keep)
+				get_page(page);
+			ret = xa_insert_set_mark(&rreq->buffer, page->index, page,
+						 XA_MARK_0, gfp_mask);
+			if (ret < 0) {
+				if (page != keep)
+					unlock_page(page);
+				put_page(page);
+				return ret;
+			}
+		}
+	} else {
+		get_page(keep);
+		ret = xa_insert_set_mark(&rreq->buffer, keep->index, keep,
+					 XA_MARK_0, gfp_mask);
+		if (ret < 0) {
+			put_page(keep);
+			return ret;
+		}
+	}
+	return 0;
+}
+
 /**
  * netfs_readahead - Helper to manage a read request
  * @ractl: The description of the readahead request
@@ -879,7 +1009,6 @@ void netfs_readahead(struct readahead_control *ractl,
 		     void *netfs_priv)
 {
 	struct netfs_read_request *rreq;
-	struct page *page;
 	unsigned int debug_index = 0;
 	int ret;
 
@@ -907,18 +1036,18 @@ void netfs_readahead(struct readahead_control *ractl,
 
 	netfs_rreq_expand(rreq, ractl);
 
+	/* Set up the output buffer */
+	ret = netfs_rreq_set_up_buffer(rreq, ractl, NULL,
+				       readahead_index(ractl), readahead_count(ractl));
+	if (ret < 0)
+		goto cleanup_free;
+
 	atomic_set(&rreq->nr_rd_ops, 1);
 	do {
 		if (!netfs_rreq_submit_slice(rreq, &debug_index))
 			break;
 
 	} while (rreq->submitted < rreq->len);
-
-	/* Drop the refs on the pages here rather than in the cache or
-	 * filesystem.  The locks will be dropped in netfs_rreq_unlock().
-	 */
-	while ((page = readahead_page(ractl)))
-		put_page(page);
 
 	/* If we decrement nr_rd_ops to 0, the ref belongs to us. */
 	if (atomic_dec_and_test(&rreq->nr_rd_ops))
@@ -984,6 +1113,12 @@ int netfs_readpage(struct file *file,
 
 	netfs_stat(&netfs_n_rh_readpage);
 	trace_netfs_read(rreq, rreq->start, rreq->len, netfs_read_trace_readpage);
+
+	/* Set up the output buffer */
+	ret = netfs_rreq_set_up_buffer(rreq, NULL, page,
+				       page_index(page), thp_nr_pages(page));
+	if (ret < 0)
+		goto out;
 
 	netfs_get_read_request(rreq);
 
@@ -1152,13 +1287,18 @@ retry:
 	 */
 	ractl._nr_pages = thp_nr_pages(page);
 	netfs_rreq_expand(rreq, &ractl);
+
+	/* Set up the output buffer */
+	ret = netfs_rreq_set_up_buffer(rreq, &ractl, page,
+				       readahead_index(&ractl), readahead_count(&ractl));
+	if (ret < 0) {
+		while ((xpage = readahead_page(&ractl)))
+			if (xpage != page)
+				put_page(xpage);
+		goto error_put;
+	}
+
 	netfs_get_read_request(rreq);
-
-	/* We hold the page locks, so we can drop the references */
-	while ((xpage = readahead_page(&ractl)))
-		if (xpage != page)
-			put_page(xpage);
-
 	atomic_set(&rreq->nr_rd_ops, 1);
 	do {
 		if (!netfs_rreq_submit_slice(rreq, &debug_index))
