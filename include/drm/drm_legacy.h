@@ -34,6 +34,7 @@
  */
 
 #include <linux/agp_backend.h>
+#include <linux/err.h>
 
 #include <drm/drm.h>
 #include <drm/drm_auth.h>
