@@ -669,6 +669,10 @@ enum idle_boot_override {IDLE_NO_OVERRIDE=0, IDLE_HALT, IDLE_FORCE_MWAIT,
 
 void default_idle(void);
 
+#ifndef TASK_SIZE_OF
+# define TASK_SIZE_OF(tsk) TASK_SIZE
+#endif
+
 #endif /* !__ASSEMBLY__ */
 
 #endif /* _ASM_IA64_PROCESSOR_H */

@@ -171,4 +171,8 @@ extern unsigned int instruction_size(unsigned int insn);
 
 #include <asm/processor_32.h>
 
+#ifndef TASK_SIZE_OF
+# define TASK_SIZE_OF(tsk) TASK_SIZE
+#endif
+
 #endif /* __ASM_SH_PROCESSOR_H */

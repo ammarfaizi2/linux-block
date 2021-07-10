@@ -124,4 +124,8 @@ unsigned long __get_wchan(struct task_struct *p);
 	asm("jmp @@0");			\
 })
 
+#ifndef TASK_SIZE_OF
+# define TASK_SIZE_OF(tsk) TASK_SIZE
+#endif
+
 #endif

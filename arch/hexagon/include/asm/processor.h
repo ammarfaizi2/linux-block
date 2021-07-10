@@ -128,6 +128,10 @@ struct hexagon_switch_stack {
 	unsigned long		lr;
 };
 
+#ifndef TASK_SIZE_OF
+# define TASK_SIZE_OF(tsk) TASK_SIZE
+#endif
+
 #endif /* !__ASSEMBLY__ */
 
 #endif

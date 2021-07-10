@@ -77,4 +77,8 @@ extern inline void spin_lock_prefetch(const void *ptr)
 }
 #endif
 
+#ifndef TASK_SIZE_OF
+# define TASK_SIZE_OF(tsk) TASK_SIZE
+#endif
+
 #endif /* __ASM_ALPHA_PROCESSOR_H */

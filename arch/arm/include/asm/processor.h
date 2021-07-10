@@ -134,4 +134,8 @@ static inline void prefetchw(const void *ptr)
 
 #endif
 
+#ifndef TASK_SIZE_OF
+# define TASK_SIZE_OF(tsk) TASK_SIZE
+#endif
+
 #endif /* __ASM_ARM_PROCESSOR_H */

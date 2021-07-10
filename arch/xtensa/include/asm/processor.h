@@ -273,5 +273,9 @@ static inline unsigned long get_er(unsigned long addr)
 
 #endif /* XCHAL_HAVE_EXTERN_REGS */
 
+#ifndef TASK_SIZE_OF
+# define TASK_SIZE_OF(tsk) TASK_SIZE
+#endif
+
 #endif	/* __ASSEMBLY__ */
 #endif	/* _XTENSA_PROCESSOR_H */

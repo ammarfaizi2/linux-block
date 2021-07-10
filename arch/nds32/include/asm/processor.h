@@ -101,4 +101,8 @@ extern int kernel_thread(int (*fn) (void *), void *arg, unsigned long flags);
 
 #endif
 
+#ifndef TASK_SIZE_OF
+# define TASK_SIZE_OF(tsk) TASK_SIZE
+#endif
+
 #endif /* __ASM_NDS32_PROCESSOR_H */
