@@ -43,6 +43,7 @@
 #include <asm/ptrace.h>
 #include <asm/spectre.h>
 #include <asm/types.h>
+#include <asm/current.h>
 
 /*
  * TASK_SIZE - the maximum size of a user space task.
@@ -284,11 +285,8 @@ static inline void compat_start_thread(struct pt_regs *regs, unsigned long pc,
 }
 #endif
 
-static inline bool is_ttbr0_addr(unsigned long addr)
-{
-	/* entry assembly clears tags for TTBR0 addrs */
-	return addr < TASK_SIZE;
-}
+/* entry assembly clears tags for TTBR0 addrs */
+#define is_ttbr0_addr(addr) ({ (addr) < TASK_SIZE; })
 
 static inline bool is_ttbr1_addr(unsigned long addr)
 {
