@@ -6,7 +6,7 @@
 #include <linux/radix-tree.h>
 #include <linux/rcupdate.h>
 #include <linux/workqueue.h>
-#include <linux/atomic.h>
+#include <linux/atomic_api.h>
 
 enum {
 	ICQ_EXITED		= 1 << 2,
