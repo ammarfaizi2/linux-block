@@ -3365,4 +3365,16 @@ extern int sched_dynamic_mode(const char *str);
 extern void sched_dynamic_update(int mode);
 #endif
 
+const struct sched_avg *sched_trace_cfs_rq_avg(struct cfs_rq *cfs_rq);
+char *sched_trace_cfs_rq_path(struct cfs_rq *cfs_rq, char *str, int len);
+int sched_trace_cfs_rq_cpu(struct cfs_rq *cfs_rq);
+
+const struct sched_avg *sched_trace_rq_avg_rt(struct rq *rq);
+const struct sched_avg *sched_trace_rq_avg_dl(struct rq *rq);
+const struct sched_avg *sched_trace_rq_avg_irq(struct rq *rq);
+
+int sched_trace_rq_cpu(struct rq *rq);
+int sched_trace_rq_cpu_capacity(struct rq *rq);
+int sched_trace_rq_nr_running(struct rq *rq);
+
 #endif /* _KERNEL_SCHED_SCHED_H */
