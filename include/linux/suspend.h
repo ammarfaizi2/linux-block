@@ -7,7 +7,6 @@
 #include <linux/init.h>
 #include <linux/pm.h>
 #include <linux/mm.h>
-#include <linux/freezer.h>
 #include <asm/errno.h>
 
 #ifdef CONFIG_VT
