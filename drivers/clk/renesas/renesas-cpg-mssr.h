@@ -17,6 +17,8 @@
      *   - Internal CPG clocks
      */
 
+struct raw_notifier_head;
+
 struct cpg_core_clk {
 	/* Common */
 	const char *name;
