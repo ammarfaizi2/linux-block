@@ -42,6 +42,7 @@ struct drm_display_mode;
 struct drm_mode_create_dumb;
 struct drm_printer;
 struct sg_table;
+struct vm_area_struct;
 
 /**
  * enum drm_driver_feature - feature flags
