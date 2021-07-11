@@ -7,7 +7,6 @@
 #include <linux/preempt.h>
 #include <linux/lockdep.h>
 #include <linux/ftrace_irq.h>
-#include <linux/sched.h>
 
 #include <asm/hardirq.h>
 
