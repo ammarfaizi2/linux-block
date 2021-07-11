@@ -402,15 +402,6 @@ static inline u8 ip_tunnel_get_ttl(const struct iphdr *iph,
 		return 0;
 }
 
-/* Propogate ECN bits out */
-static inline u8 ip_tunnel_ecn_encap(u8 tos, const struct iphdr *iph,
-				     const struct sk_buff *skb)
-{
-	u8 inner = ip_tunnel_get_dsfield(iph, skb);
-
-	return INET_ECN_encapsulate(tos, inner);
-}
-
 int __iptunnel_pull_header(struct sk_buff *skb, int hdr_len,
 			   __be16 inner_proto, bool raw_proto, bool xnet);
 
