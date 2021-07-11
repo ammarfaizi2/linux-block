@@ -12,9 +12,7 @@
 #ifndef __IDR_H__
 #define __IDR_H__
 
-#include <linux/radix-tree-api.h>
-#include <linux/gfp.h>
-#include <linux/percpu.h>
+#include <linux/radix-tree.h>
 
 struct idr {
 	struct radix_tree_root	idr_rt;
