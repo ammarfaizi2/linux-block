@@ -5,6 +5,7 @@
 #include <linux/irq.h>
 #include <linux/rcupdate.h>
 #include <linux/kobject.h>
+#include <linux/wait_types.h>
 #include <linux/mutex.h>
 
 /*

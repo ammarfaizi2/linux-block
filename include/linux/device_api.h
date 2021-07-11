@@ -16,7 +16,7 @@
 
 #include <linux/dev_printk.h>
 #include <linux/ioport.h>
-#include <linux/kobject.h>
+#include <linux/kobject_api.h>
 #include <linux/klist.h>
 #include <linux/list.h>
 #include <linux/lockdep.h>
