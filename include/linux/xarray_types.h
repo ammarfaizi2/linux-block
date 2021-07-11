@@ -11,8 +11,7 @@
 
 #include <linux/gfp_types.h>
 #include <linux/math.h>
-#include <linux/rcupdate.h>
-#include <linux/spinlock.h>
+#include <linux/spinlock_types.h>
 
 /*
  * The bottom two bits of the entry determine how the XArray interprets
