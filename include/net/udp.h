@@ -189,11 +189,6 @@ static inline int udp_lib_hash(struct sock *sk)
 void udp_lib_unhash(struct sock *sk);
 void udp_lib_rehash(struct sock *sk, u16 new_hash);
 
-static inline void udp_lib_close(struct sock *sk, long timeout)
-{
-	sk_common_release(sk);
-}
-
 int udp_lib_get_port(struct sock *sk, unsigned short snum,
 		     unsigned int hash2_nulladdr);
 
@@ -233,11 +228,6 @@ static inline __be16 udp_flow_src_port(struct net *net, struct sk_buff *skb,
 	hash ^= hash << 16;
 
 	return htons((((u64) hash * (max - min)) >> 32) + min);
-}
-
-static inline int udp_rqueue_get(struct sock *sk)
-{
-	return sk_rmem_alloc_get(sk) - READ_ONCE(udp_sk(sk)->forward_deficit);
 }
 
 static inline bool udp_sk_bound_dev_eq(struct net *net, int bound_dev_if,
