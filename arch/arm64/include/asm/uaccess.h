@@ -78,6 +78,9 @@ static inline unsigned long __range_ok(const void __user *addr, unsigned long si
  * User access enabling/disabling.
  */
 #ifdef CONFIG_ARM64_SW_TTBR0_PAN
+
+#include <linux/irqflags.h>
+
 static inline void __uaccess_ttbr0_disable(void)
 {
 	unsigned long flags, ttbr;
