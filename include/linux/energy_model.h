@@ -1,14 +1,9 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 #ifndef _LINUX_ENERGY_MODEL_H
 #define _LINUX_ENERGY_MODEL_H
+#include <linux/errno.h>
 #include <linux/cpumask.h>
 #include <linux/device.h>
-#include <linux/jump_label.h>
-#include <linux/kobject.h>
-#include <linux/rcupdate.h>
-#include <linux/sched/cpufreq.h>
-#include <linux/sched/topology.h>
-#include <linux/types.h>
 
 /**
  * struct em_perf_state - Performance state of a performance domain
