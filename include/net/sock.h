@@ -35,6 +35,7 @@
 #ifndef _SOCK_H
 #define _SOCK_H
 
+#include <linux/prandom.h>
 #include <linux/ratelimit.h>
 #include <linux/debug_locks.h>
 #include <linux/hardirq.h>

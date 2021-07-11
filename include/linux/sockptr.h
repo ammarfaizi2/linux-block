@@ -11,7 +11,7 @@
 #include <linux/slab.h>
 #include <linux/uaccess.h>
 
-typedef struct {
+typedef struct sockptr_struct {
 	union {
 		void		*kernel;
 		void __user	*user;
