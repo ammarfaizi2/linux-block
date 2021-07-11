@@ -2,11 +2,6 @@
 #ifndef _LINUX_PID_NS_H
 #define _LINUX_PID_NS_H
 
-#include <linux/sched.h>
-#include <linux/bug.h>
-#include <linux/mm.h>
-#include <linux/workqueue.h>
-#include <linux/threads.h>
 #include <linux/nsproxy.h>
 #include <linux/ns_common.h>
 #include <linux/idr.h>
