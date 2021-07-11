@@ -46,6 +46,7 @@ struct drm_device;
 struct device;
 struct file;
 struct poll_table_struct;
+struct inode;
 
 /*
  * FIXME: Not sure we want to have drm_minor here in the end, but to avoid
