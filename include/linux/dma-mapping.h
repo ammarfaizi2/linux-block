@@ -4,7 +4,10 @@
 
 #include <linux/sizes.h>
 #include <linux/string.h>
-#include <linux/device.h>
+#include <linux/device_types.h>
+#include <linux/gfp_types.h>
+#include <linux/minmax.h>
+#include <linux/limits.h>
 #include <linux/err.h>
 #include <linux/dma-direction.h>
 #include <linux/cache.h>
