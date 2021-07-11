@@ -26,7 +26,7 @@
 #include <linux/kref_api.h>
 #include <linux/ctype.h>
 #include <linux/list.h>
-#include <linux/sched.h>
+#include <linux/sched/types.h>
 
 #include <drm/drm_fourcc.h>
 #include <drm/drm_mode_object.h>
