@@ -2,7 +2,6 @@
 #ifndef _LINUX_KASAN_H
 #define _LINUX_KASAN_H
 
-#include <linux/pgtable_api.h>
 #include <linux/bug.h>
 #include <linux/kernel.h>
 #include <linux/static_key.h>
@@ -16,6 +15,7 @@ struct task_struct;
 
 #ifdef CONFIG_KASAN
 
+#include <linux/kernel.h>
 #include <linux/linkage.h>
 #include <asm/kasan.h>
 
@@ -28,7 +28,7 @@ struct kunit_kasan_expectation {
 
 #if defined(CONFIG_KASAN_GENERIC) || defined(CONFIG_KASAN_SW_TAGS)
 
-#include <linux/pgtable.h>
+#include <linux/pgtable_api.h>
 
 /* Software KASAN implementations use shadow memory. */
 

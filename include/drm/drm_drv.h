@@ -29,6 +29,7 @@
 
 #include <linux/list.h>
 #include <linux/irqreturn.h>
+#include <linux/bits.h>
 
 #include <drm/drm_device.h>
 

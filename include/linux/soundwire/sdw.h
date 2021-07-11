@@ -6,6 +6,7 @@
 
 #include <linux/mod_devicetable.h>
 #include <linux/bitfield.h>
+#include <linux/bitops_types.h>
 
 struct sdw_bus;
 struct sdw_slave;

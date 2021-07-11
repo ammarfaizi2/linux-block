@@ -3,6 +3,7 @@
 #define _ASM_X86_IO_APIC_H
 
 #include <linux/types.h>
+
 #include <asm/mpspec.h>
 #include <asm/apicdef.h>
 #include <asm/irq_vectors.h>
@@ -159,7 +160,7 @@ extern void mp_save_irq(struct mpc_intsrc *m);
 
 extern void disable_ioapic_support(void);
 
-extern void __init io_apic_init_mappings(void);
+extern void io_apic_init_mappings(void);
 extern unsigned int native_io_apic_read(unsigned int apic, unsigned int reg);
 extern void native_restore_boot_irq_mode(void);
 

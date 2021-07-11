@@ -10,7 +10,7 @@
 #include <linux/cpumask_api.h>
 #include <linux/spinlock.h>
 #include <linux/mm_types.h>
-#include <linux/smp.h>
+#include <linux/smp_api.h>
 #include <linux/sched.h>
 
 #include <asm/spitfire.h>

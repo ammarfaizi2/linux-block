@@ -13,6 +13,8 @@
  */
 
 #include <linux/kgdb.h>
+#include <linux/kdb.h>
+
 #include "../debug_core.h"
 
 /* Kernel Debugger Command codes.  Must not overlap with error codes. */
