@@ -15,6 +15,7 @@
 #include <linux/pgtable.h>
 #include <linux/gfp.h>
 #include <linux/userfaultfd_k.h>
+#include <linux/mm_ptlock.h>
 
 struct ctl_table;
 struct user_struct;
