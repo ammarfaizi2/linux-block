@@ -6,11 +6,7 @@
  * Architecture specific compatibility types
  */
 #include <linux/types.h>
-#include <linux/sched.h>
-#include <linux/sched/task_stack.h>
-#include <linux/sched/thread_info_api.h>
 
-#include <asm/processor.h>
 #include <asm/user32.h>
 #include <asm/unistd.h>
 
