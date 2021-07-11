@@ -2868,6 +2868,17 @@ int __check_sticky(struct user_namespace *mnt_userns, struct inode *dir,
 }
 EXPORT_SYMBOL(__check_sticky);
 
+#ifdef CONFIG_AUDITSYSCALL
+void audit_inode_child(struct inode *parent,
+		       const struct dentry *dentry,
+		       const unsigned char type)
+{
+	if (unlikely(!audit_dummy_context()))
+		__audit_inode_child(parent, dentry, type);
+}
+EXPORT_SYMBOL(audit_inode_child);
+#endif
+
 /*
  *	Check whether we can remove a link victim from directory dir, check
  *  whether the type of victim is right.

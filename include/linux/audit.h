@@ -387,12 +387,11 @@ static inline void audit_inode_parent_hidden(struct filename *name,
 		__audit_inode(name, dentry,
 				AUDIT_INODE_PARENT | AUDIT_INODE_HIDDEN);
 }
-static inline void audit_inode_child(struct inode *parent,
-				     const struct dentry *dentry,
-				     const unsigned char type) {
-	if (unlikely(!audit_dummy_context()))
-		__audit_inode_child(parent, dentry, type);
-}
+
+extern void audit_inode_child(struct inode *parent,
+			      const struct dentry *dentry,
+			      const unsigned char type);
+
 void audit_core_dumps(long signr);
 
 static inline void audit_ptrace(struct task_struct *t)
