@@ -19,6 +19,7 @@
 #include <linux/mutex.h>
 #include <linux/module.h>
 #include <linux/kallsyms.h>
+#include <linux/string.h>
 #include <linux/capability.h>
 #include <linux/slab.h>
 #include <linux/percpu-refcount.h>

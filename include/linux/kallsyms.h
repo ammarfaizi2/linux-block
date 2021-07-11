@@ -10,7 +10,7 @@
 #include <linux/buildid.h>
 #include <linux/kernel.h>
 #include <linux/stddef.h>
-#include <linux/mm.h>
+#include <linux/mm_api_gate_area.h>
 #include <linux/module.h>
 
 #include <asm/sections.h>
