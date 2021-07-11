@@ -33,6 +33,7 @@
 
 #ifdef CONFIG_TASKS_RCU
 DECLARE_PER_TASK(u8, rcu_tasks_holdout);
+DECLARE_PER_TASK(int, rcu_tasks_idle_cpu);
 #endif
 
 #define ULONG_CMP_GE(a, b)	(ULONG_MAX / 2 >= (a) - (b))

@@ -11,6 +11,7 @@
 DEFINE_PER_TASK(unsigned long,		rcu_tasks_nvcsw);
 DEFINE_PER_TASK(u8,			rcu_tasks_holdout);
 DEFINE_PER_TASK(u8,			rcu_tasks_idx);
+DEFINE_PER_TASK(int,			rcu_tasks_idle_cpu);
 #endif
 
 #ifdef CONFIG_TASKS_RCU_GENERIC
@@ -768,7 +769,7 @@ static void check_holdout_task(struct task_struct *t,
 	    per_task(t, rcu_tasks_nvcsw) != READ_ONCE(t->nvcsw) ||
 	    !READ_ONCE(per_task(t, on_rq)) ||
 	    (IS_ENABLED(CONFIG_NO_HZ_FULL) &&
-	     !is_idle_task(t) && t->rcu_tasks_idle_cpu >= 0)) {
+	     !is_idle_task(t) && per_task(t, rcu_tasks_idle_cpu) >= 0)) {
 		WRITE_ONCE(per_task(t, rcu_tasks_holdout), false);
 		list_del_init(&t->rcu_tasks_holdout_list);
 		put_task_struct(t);
@@ -787,7 +788,7 @@ static void check_holdout_task(struct task_struct *t,
 		 "N."[cpu < 0 || !tick_nohz_full_cpu(cpu)],
 		 per_task(t, rcu_tasks_nvcsw), t->nvcsw,
 		 per_task(t, rcu_tasks_holdout),
-		 t->rcu_tasks_idle_cpu, cpu);
+		 per_task(t, rcu_tasks_idle_cpu), cpu);
 	sched_show_task(t);
 }
 
