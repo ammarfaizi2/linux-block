@@ -13,6 +13,7 @@
 #define TI_WILINK_ST_H
 
 #include <linux/skbuff.h>
+#include <linux/pm.h>
 
 /**
  * enum proto-type - The protocol on WiLink chips which share a
