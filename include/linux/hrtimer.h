@@ -126,6 +126,4 @@ struct hrtimer {
 	u8				is_hard;
 };
 
-#include <linux/hrtimer_api.h>
-
 #endif
