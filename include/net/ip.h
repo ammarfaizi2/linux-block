@@ -31,7 +31,7 @@
 #include <linux/static_key.h>
 
 #include <net/inet_sock.h>
-#include <net/route_api.h>
+#include <net/route_types.h>
 #include <net/snmp.h>
 #include <net/flow.h>
 #include <net/flow_dissector.h>
