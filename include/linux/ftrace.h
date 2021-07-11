@@ -1052,17 +1052,6 @@ extern void ftrace_graph_init_task(struct task_struct *t);
 extern void ftrace_graph_exit_task(struct task_struct *t);
 extern void ftrace_graph_init_idle_task(struct task_struct *t, int cpu);
 
-DECLARE_PER_TASK(atomic_t, tracing_graph_pause);
-
-static inline void pause_graph_tracing(void)
-{
-	atomic_inc(&per_task(current, tracing_graph_pause));
-}
-
-static inline void unpause_graph_tracing(void)
-{
-	atomic_dec(&per_task(current, tracing_graph_pause));
-}
 #else /* !CONFIG_FUNCTION_GRAPH_TRACER */
 
 #define __notrace_funcgraph
@@ -1082,8 +1071,6 @@ ftrace_graph_ret_addr(struct task_struct *task, int *idx, unsigned long ret,
 	return ret;
 }
 
-static inline void pause_graph_tracing(void) { }
-static inline void unpause_graph_tracing(void) { }
 #endif /* CONFIG_FUNCTION_GRAPH_TRACER */
 
 #ifdef CONFIG_TRACING
