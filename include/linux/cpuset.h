@@ -22,6 +22,7 @@
 #ifdef CONFIG_CPUSETS
 
 DECLARE_PER_TASK(nodemask_t, mems_allowed);
+DECLARE_PER_TASK(seqcount_spinlock_t, mems_allowed_seq);
 
 /*
  * Static branch rewrites can happen in an arbitrary order for a given
@@ -151,7 +152,7 @@ static inline unsigned int read_mems_allowed_begin(void)
 	if (!static_branch_unlikely(&cpusets_pre_enable_key))
 		return 0;
 
-	return read_seqcount_begin(&current->mems_allowed_seq);
+	return read_seqcount_begin(&per_task(current, mems_allowed_seq));
 }
 
 /*
@@ -165,7 +166,7 @@ static inline bool read_mems_allowed_retry(unsigned int seq)
 	if (!static_branch_unlikely(&cpusets_enabled_key))
 		return false;
 
-	return read_seqcount_retry(&current->mems_allowed_seq, seq);
+	return read_seqcount_retry(&per_task(current, mems_allowed_seq), seq);
 }
 
 static inline void set_mems_allowed(nodemask_t nodemask)
@@ -174,9 +175,9 @@ static inline void set_mems_allowed(nodemask_t nodemask)
 
 	task_lock(current);
 	local_irq_save(flags);
-	write_seqcount_begin(&current->mems_allowed_seq);
+	write_seqcount_begin(&per_task(current, mems_allowed_seq));
 	per_task(current, mems_allowed) = nodemask;
-	write_seqcount_end(&current->mems_allowed_seq);
+	write_seqcount_end(&per_task(current, mems_allowed_seq));
 	local_irq_restore(flags);
 	task_unlock(current);
 }
