@@ -8,6 +8,8 @@
 #ifndef _LINUX_EVENTPOLL_H
 #define _LINUX_EVENTPOLL_H
 
+#include <linux/fs.h>
+
 #include <uapi/linux/eventpoll.h>
 #include <uapi/linux/kcmp.h>
 
