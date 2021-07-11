@@ -1938,54 +1938,6 @@ void napi_consume_skb(struct sk_buff *skb, int budget);
 void napi_skb_free_stolen_head(struct sk_buff *skb);
 void __kfree_skb_defer(struct sk_buff *skb);
 
-/**
- * __dev_alloc_pages - allocate page for network Rx
- * @gfp_mask: allocation priority. Set __GFP_NOMEMALLOC if not for network Rx
- * @order: size of the allocation
- *
- * Allocate a new page.
- *
- * %NULL is returned if there is no free memory.
-*/
-static inline struct page *__dev_alloc_pages(gfp_t gfp_mask,
-					     unsigned int order)
-{
-	/* This piece of code contains several assumptions.
-	 * 1.  This is for device Rx, therefor a cold page is preferred.
-	 * 2.  The expectation is the user wants a compound page.
-	 * 3.  If requesting a order 0 page it will not be compound
-	 *     due to the check to see if order has a value in prep_new_page
-	 * 4.  __GFP_MEMALLOC is ignored if __GFP_NOMEMALLOC is set due to
-	 *     code in gfp_to_alloc_flags that should be enforcing this.
-	 */
-	gfp_mask |= __GFP_COMP | __GFP_MEMALLOC;
-
-	return alloc_pages_node(NUMA_NO_NODE, gfp_mask, order);
-}
-
-static inline struct page *dev_alloc_pages(unsigned int order)
-{
-	return __dev_alloc_pages(GFP_ATOMIC | __GFP_NOWARN, order);
-}
-
-/**
- * __dev_alloc_page - allocate a page for network Rx
- * @gfp_mask: allocation priority. Set __GFP_NOMEMALLOC if not for network Rx
- *
- * Allocate a new page.
- *
- * %NULL is returned if there is no free memory.
- */
-static inline struct page *__dev_alloc_page(gfp_t gfp_mask)
-{
-	return __dev_alloc_pages(gfp_mask, 0);
-}
-
-static inline struct page *dev_alloc_page(void)
-{
-	return dev_alloc_pages(0);
-}
-
 bool dev_page_is_reusable(const struct page *page);
 
 static inline struct sk_buff *pskb_copy(struct sk_buff *skb,
