@@ -9,17 +9,12 @@
 #include <linux/percpu_counter.h>
 #include <linux/percpu-refcount.h>
 #include <linux/flex_proportions.h>
-#include <linux/timer.h>
 #include <linux/workqueue.h>
-#include <linux/kref.h>
-#include <linux/refcount.h>
-#include <linux/wait_types.h>
-#include <linux/rwsem.h>
-#include <linux/mutex.h>
 
 struct page;
 struct device;
 struct dentry;
+struct wait_queue_head;
 
 /*
  * Bits in bdi_writeback.state
@@ -70,7 +65,7 @@ enum wb_reason {
 
 struct wb_completion {
 	atomic_t		cnt;
-	wait_queue_head_t	*waitq;
+	struct wait_queue_head	*waitq;
 };
 
 #define __WB_COMPLETION_INIT(_waitq)	\
