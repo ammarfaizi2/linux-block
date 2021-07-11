@@ -136,7 +136,6 @@ struct task_struct init_task
 #endif
 #ifdef CONFIG_TASKS_RCU
 	.rcu_tasks_holdout_list = LIST_HEAD_INIT(init_task.rcu_tasks_holdout_list),
-	.rcu_tasks_idle_cpu = -1,
 #endif
 #ifdef CONFIG_TASKS_TRACE_RCU
 	.trc_reader_nesting = 0,

@@ -1299,7 +1299,7 @@ static void rcu_bind_gp_kthread(void)
 static __always_inline void rcu_dynticks_task_enter(void)
 {
 #if defined(CONFIG_TASKS_RCU) && defined(CONFIG_NO_HZ_FULL)
-	WRITE_ONCE(current->rcu_tasks_idle_cpu, smp_processor_id());
+	WRITE_ONCE(per_task(current, rcu_tasks_idle_cpu), smp_processor_id());
 #endif /* #if defined(CONFIG_TASKS_RCU) && defined(CONFIG_NO_HZ_FULL) */
 }
 
@@ -1307,7 +1307,7 @@ static __always_inline void rcu_dynticks_task_enter(void)
 static __always_inline void rcu_dynticks_task_exit(void)
 {
 #if defined(CONFIG_TASKS_RCU) && defined(CONFIG_NO_HZ_FULL)
-	WRITE_ONCE(current->rcu_tasks_idle_cpu, -1);
+	WRITE_ONCE(per_task(current, rcu_tasks_idle_cpu), -1);
 #endif /* #if defined(CONFIG_TASKS_RCU) && defined(CONFIG_NO_HZ_FULL) */
 }
 
