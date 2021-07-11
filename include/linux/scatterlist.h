@@ -3,6 +3,5 @@
 #define _LINUX_SCATTERLIST_H
 
 #include <linux/scatterlist_types.h>
-#include <linux/scatterlist_api.h>
 
 #endif /* _LINUX_SCATTERLIST_H */
