@@ -19,7 +19,9 @@
 #include <linux/mutex.h>
 #include <linux/regulator/consumer.h>
 #include <linux/rtmutex.h>
+#include <linux/device_types.h>
 #include <linux/bitops.h>
+#include <linux/err.h>
 
 #include <uapi/linux/i2c.h>
 
