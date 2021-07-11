@@ -217,6 +217,4 @@ static inline int is_syscall_trace_event(struct trace_event_call *tp_event)
 #define SYSCALL32_DEFINE6 SYSCALL_DEFINE6
 #endif
 
-#include <linux/syscalls_api.h>
-
 #endif
