@@ -3,6 +3,5 @@
 #define _LINUX_OF_H
 
 #include <linux/of_types.h>
-#include <linux/of_api.h>
 
 #endif /* _LINUX_OF_H */
