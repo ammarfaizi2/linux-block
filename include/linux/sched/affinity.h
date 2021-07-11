@@ -11,6 +11,8 @@ DECLARE_PER_TASK(cpumask_t, cpus_mask);
 DECLARE_PER_TASK(const cpumask_t *, cpus_ptr);
 DECLARE_PER_TASK(cpumask_t *, user_cpus_ptr);
 
+struct task_struct;
+
 extern int cpuset_cpumask_can_shrink(const struct cpumask *cur, const struct cpumask *trial);
 extern int task_can_attach(struct task_struct *p, const struct cpumask *cs_cpus_allowed);
 #ifdef CONFIG_SMP
