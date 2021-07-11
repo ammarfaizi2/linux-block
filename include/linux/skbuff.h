@@ -249,6 +249,7 @@ struct napi_struct;
 struct bpf_prog;
 union bpf_attr;
 struct skb_ext;
+struct page_frag;
 
 #if IS_ENABLED(CONFIG_BRIDGE_NETFILTER)
 struct nf_bridge_info {
