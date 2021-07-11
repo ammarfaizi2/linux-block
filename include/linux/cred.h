@@ -13,8 +13,6 @@
 #include <linux/key.h>
 #include <linux/atomic.h>
 #include <linux/uidgid.h>
-#include <linux/sched.h>
-#include <linux/sched/user.h>
 
 struct cred;
 struct inode;
@@ -152,6 +150,7 @@ struct cred {
 	};
 } __randomize_layout;
 
+struct task_struct;
 extern void __put_cred(struct cred *);
 extern void exit_creds(struct task_struct *);
 extern int copy_creds(struct task_struct *, unsigned long);
