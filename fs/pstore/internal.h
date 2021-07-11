@@ -35,6 +35,8 @@ static inline void pstore_unregister_pmsg(void) {}
 
 extern struct pstore_info *psinfo;
 
+struct dentry;
+
 extern void	pstore_set_kmsg_bytes(int);
 extern void	pstore_get_records(int);
 extern void	pstore_get_backend_records(struct pstore_info *psi,
