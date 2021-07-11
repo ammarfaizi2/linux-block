@@ -2,7 +2,7 @@
 #ifndef _ASM_X86_MATH_EMU_H
 #define _ASM_X86_MATH_EMU_H
 
-#include <asm/ptrace.h>
+#include <asm/ptrace_types.h>
 
 /* This structure matches the layout of the data saved to the stack
    following a device-not-present interrupt, part of it saved
