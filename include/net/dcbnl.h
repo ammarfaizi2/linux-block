@@ -17,6 +17,8 @@ struct dcb_app_type {
 	u8	dcbx;
 };
 
+struct net_device;
+
 int dcb_setapp(struct net_device *, struct dcb_app *);
 u8 dcb_getapp(struct net_device *, struct dcb_app *);
 int dcb_ieee_setapp(struct net_device *, struct dcb_app *);
