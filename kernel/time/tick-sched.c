@@ -33,6 +33,10 @@
 
 #include <trace/events/timer.h>
 
+#ifdef CONFIG_NO_HZ_FULL
+DEFINE_PER_TASK(atomic_t, tick_dep_mask);
+#endif
+
 /*
  * Per-CPU nohz control structure
  */
@@ -280,7 +284,7 @@ static bool can_stop_full_tick(int cpu, struct tick_sched *ts)
 	if (check_tick_dependency(&ts->tick_dep_mask))
 		return false;
 
-	if (check_tick_dependency(&current->tick_dep_mask))
+	if (check_tick_dependency(&per_task(current, tick_dep_mask)))
 		return false;
 
 	if (check_tick_dependency(&current->signal->tick_dep_mask))
@@ -445,14 +449,14 @@ EXPORT_SYMBOL_GPL(tick_nohz_dep_clear_cpu);
  */
 void tick_nohz_dep_set_task(struct task_struct *tsk, enum tick_dep_bits bit)
 {
-	if (!atomic_fetch_or(BIT(bit), &tsk->tick_dep_mask))
+	if (!atomic_fetch_or(BIT(bit), &per_task(tsk, tick_dep_mask)))
 		tick_nohz_kick_task(tsk);
 }
 EXPORT_SYMBOL_GPL(tick_nohz_dep_set_task);
 
 void tick_nohz_dep_clear_task(struct task_struct *tsk, enum tick_dep_bits bit)
 {
-	atomic_andnot(BIT(bit), &tsk->tick_dep_mask);
+	atomic_andnot(BIT(bit), &per_task(tsk, tick_dep_mask));
 }
 EXPORT_SYMBOL_GPL(tick_nohz_dep_clear_task);
 
@@ -496,7 +500,7 @@ void __tick_nohz_task_switch(void)
 	ts = this_cpu_ptr(&tick_cpu_sched);
 
 	if (ts->tick_stopped) {
-		if (atomic_read(&current->tick_dep_mask) ||
+		if (atomic_read(&per_task(current, tick_dep_mask)) ||
 		    atomic_read(&current->signal->tick_dep_mask))
 			tick_nohz_full_kick();
 	}

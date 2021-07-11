@@ -609,9 +609,6 @@ struct task_struct {
 	u64				gtime;
 	struct prev_cputime		prev_cputime;
 
-#ifdef CONFIG_NO_HZ_FULL
-	atomic_t			tick_dep_mask;
-#endif
 	/* Context switch counts: */
 	unsigned long			nvcsw;
 	unsigned long			nivcsw;
