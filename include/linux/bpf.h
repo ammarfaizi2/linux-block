@@ -43,6 +43,7 @@ struct kobject;
 struct mem_cgroup;
 struct module;
 struct bpf_func_state;
+struct poll_table_struct;
 
 extern struct idr btf_idr;
 extern spinlock_t btf_idr_lock;

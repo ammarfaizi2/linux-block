@@ -1,7 +1,12 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 
+#include <uapi/linux/fs.h>
+
 #ifndef _LINUX_FILEATTR_H
 #define _LINUX_FILEATTR_H
+
+struct dentry;
+struct user_namespace;
 
 /* Flags shared betwen flags/xflags */
 #define FS_COMMON_FL \

@@ -6,6 +6,8 @@
 #ifndef __XFS_QM_H__
 #define __XFS_QM_H__
 
+#include <linux/quota.h>
+
 #include "xfs_dquot_item.h"
 #include "xfs_dquot.h"
 
