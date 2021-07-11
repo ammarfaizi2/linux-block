@@ -209,4 +209,7 @@ static inline void hmem_register_device(int target_nid, struct resource *r)
 }
 #endif
 
+bool vma_is_dax(const struct vm_area_struct *vma);
+bool vma_is_fsdax(struct vm_area_struct *vma);
+
 #endif

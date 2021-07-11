@@ -5526,3 +5526,24 @@ void ptlock_free(struct page *page)
 	kmem_cache_free(page_ptl_cachep, page->ptl);
 }
 #endif
+
+bool vma_is_dax(const struct vm_area_struct *vma)
+{
+	return vma->vm_file && IS_DAX(vma->vm_file->f_mapping->host);
+}
+EXPORT_SYMBOL(vma_is_dax);
+
+bool vma_is_fsdax(struct vm_area_struct *vma)
+{
+	struct inode *inode;
+
+	if (!IS_ENABLED(CONFIG_FS_DAX) || !vma->vm_file)
+		return false;
+	if (!vma_is_dax(vma))
+		return false;
+	inode = file_inode(vma->vm_file);
+	if (S_ISCHR(inode->i_mode))
+		return false; /* device-dax */
+	return true;
+}
+EXPORT_SYMBOL(vma_is_fsdax);
