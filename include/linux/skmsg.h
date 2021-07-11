@@ -12,7 +12,7 @@
 #include <linux/scatterlist.h>
 #include <linux/skbuff.h>
 
-#include <net/sock.h>
+#include <net/sock_api.h>
 #include <net/tcp.h>
 #include <net/strparser.h>
 

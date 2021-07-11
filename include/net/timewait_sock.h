@@ -9,7 +9,7 @@
 
 #include <linux/slab.h>
 #include <linux/bug.h>
-#include <net/sock.h>
+#include <net/sock_api.h>
 
 struct timewait_sock_ops {
 	struct kmem_cache	*twsk_slab;

@@ -5,7 +5,7 @@
 #include <linux/netlink.h>
 #include <linux/user_namespace.h>
 #include <net/net_namespace.h>
-#include <net/sock.h>
+#include <net/sock_api.h>
 #include <uapi/linux/sock_diag.h>
 
 struct sk_buff;
