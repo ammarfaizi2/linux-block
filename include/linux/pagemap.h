@@ -14,6 +14,7 @@
 #include <linux/fs_api.h>
 #include <linux/mm.h>
 #include <linux/fs.h>
+#include <linux/xarray.h>
 #include <linux/list.h>
 #include <linux/highmem.h>
 #include <linux/compiler.h>
