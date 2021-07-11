@@ -1121,8 +1121,6 @@ struct task_struct {
 	u64				acct_timexpd;
 #endif
 #ifdef CONFIG_CPUSETS
-	/* Sequence number to catch updates: */
-	seqcount_spinlock_t		mems_allowed_seq;
 	int				cpuset_mem_spread_rotor;
 	int				cpuset_slab_spread_rotor;
 #endif

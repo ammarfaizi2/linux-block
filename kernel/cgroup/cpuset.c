@@ -67,7 +67,10 @@
 #include <linux/cgroup.h>
 #include <linux/wait.h>
 
+/* Protected by ->alloc_lock: */
 DEFINE_PER_TASK(nodemask_t, mems_allowed);
+/* Sequence number to catch updates: */
+DEFINE_PER_TASK(seqcount_spinlock_t, mems_allowed_seq);
 
 DEFINE_STATIC_KEY_FALSE(cpusets_pre_enable_key);
 DEFINE_STATIC_KEY_FALSE(cpusets_enabled_key);
@@ -1737,14 +1740,14 @@ static void cpuset_change_task_nodemask(struct task_struct *tsk,
 	task_lock(tsk);
 
 	local_irq_disable();
-	write_seqcount_begin(&tsk->mems_allowed_seq);
+	write_seqcount_begin(&per_task(tsk, mems_allowed_seq));
 
 	nodes_or(per_task(tsk, mems_allowed), per_task(tsk, mems_allowed),
 		 *newmems);
 	mpol_rebind_task(tsk, newmems);
 	per_task(tsk, mems_allowed) = *newmems;
 
-	write_seqcount_end(&tsk->mems_allowed_seq);
+	write_seqcount_end(&per_task(tsk, mems_allowed_seq));
 	local_irq_enable();
 
 	task_unlock(tsk);

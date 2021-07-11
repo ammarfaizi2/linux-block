@@ -883,6 +883,22 @@ void __init __weak arch_call_rest_init(void)
 	rest_init();
 }
 
+void __init init_per_task_early(void)
+{
+#ifdef CONFIG_POSIX_TIMERS
+	per_task(&init_task, posix_cputimers) = (struct posix_cputimers) __INIT_CPU_TIMERS(init_task);
+#endif
+
+#ifdef CONFIG_CPUSETS
+	per_task(&init_task, mems_allowed_seq) = (seqcount_spinlock_t) SEQCNT_SPINLOCK_ZERO(init_task.mems_allowed_seq,
+						 &init_task.alloc_lock);
+#endif
+#ifdef CONFIG_VIRT_CPU_ACCOUNTING_GEN
+	seqcount_init(&per_task(&init_task, vtime).seqcount);
+	per_task(&init_task, vtime).state = VTIME_SYS;
+#endif
+}
+
 static void __init print_unknown_bootoptions(void)
 {
 	char *unknown_options;
@@ -933,14 +949,7 @@ asmlinkage __visible void __init __no_sanitize_address start_kernel(void)
 
 	set_task_stack_end_magic(&init_task);
 
-#ifdef CONFIG_POSIX_TIMERS
-	per_task(&init_task, posix_cputimers) = (struct posix_cputimers) __INIT_CPU_TIMERS(init_task);
-#endif
-
-#ifdef CONFIG_VIRT_CPU_ACCOUNTING_GEN
-	seqcount_init(&per_task(&init_task, vtime).seqcount);
-	per_task(&init_task, vtime).state = VTIME_SYS;
-#endif
+	init_per_task_early();
 
 	smp_setup_processor_id();
 	debug_objects_early_init();
