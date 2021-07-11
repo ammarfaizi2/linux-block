@@ -18,7 +18,7 @@
 #include <linux/rcupdate.h>
 #include <linux/spinlock.h>
 #include <linux/types.h>
-#include <linux/xarray.h>
+#include <linux/xarray_types.h>
 #include <linux/local_lock.h>
 
 /* Keep unconverted code working */
