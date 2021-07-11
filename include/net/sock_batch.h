@@ -2,7 +2,7 @@
 #ifndef _SOCK_BATCH_H
 #define _SOCK_BATCH_H
 
-#include <net/sock.h>
+#include <net/sock_api.h>
 #include <linux/percpu_counter_api.h>
 
 #define SK_ALLOC_PERCPU_COUNTER_BATCH 16

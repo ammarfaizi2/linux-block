@@ -26,7 +26,7 @@
 #include <linux/dns_resolver.h>
 #include <net/net_namespace.h>
 #include <net/netns/generic.h>
-#include <net/sock.h>
+#include <net/sock_api.h>
 #include <net/af_rxrpc.h>
 
 #include "afs.h"

@@ -17,7 +17,7 @@
 #include <linux/bug.h>
 #include <linux/refcount.h>
 
-#include <net/sock.h>
+#include <net/sock_api.h>
 
 struct request_sock;
 struct sk_buff;

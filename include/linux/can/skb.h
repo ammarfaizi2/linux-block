@@ -15,7 +15,7 @@
 #include <linux/types.h>
 #include <linux/skbuff.h>
 #include <linux/can.h>
-#include <net/sock.h>
+#include <net/sock_api.h>
 
 void can_flush_echo_skb(struct net_device *dev);
 int can_put_echo_skb(struct sk_buff *skb, struct net_device *dev,

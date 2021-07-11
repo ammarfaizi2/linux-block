@@ -27,7 +27,7 @@
 
 #include <linux/skbuff_api.h>
 #include <linux/poll.h>
-#include <net/sock.h>
+#include <net/sock_api.h>
 #include <linux/seq_file.h>
 
 #define BT_SUBSYS_VERSION	2

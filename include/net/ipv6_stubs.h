@@ -15,6 +15,7 @@ struct fib6_info;
 struct fib6_nh;
 struct fib6_config;
 struct fib6_result;
+struct nl_info;
 
 /* This is ugly, ideally these symbols should be built
  * into the core kernel.
@@ -71,6 +72,8 @@ struct ipv6_stub {
 					    struct net_device *dev);
 };
 extern const struct ipv6_stub *ipv6_stub __read_mostly;
+
+struct udp_table;
 
 /* A stub used by bpf helpers. Similarly ugly as ipv6_stub */
 struct ipv6_bpf_stub {
