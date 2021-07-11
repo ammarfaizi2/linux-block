@@ -12,6 +12,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/compat.h>
 #include <linux/spinlock.h>
 #include <linux/hardirq.h>
 #include <linux/uaccess.h>
@@ -32,6 +33,22 @@
 #include <asm/ftrace.h>
 #include <asm/nops.h>
 #include <asm/text-patching.h>
+
+#if defined(CONFIG_FTRACE_SYSCALLS) && defined(CONFIG_IA32_EMULATION)
+
+/*
+ * Because ia32 syscalls do not map to x86_64 syscall numbers
+ * this screws up the trace output when tracing a ia32 task.
+ * Instead of reporting bogus syscalls, just do not trace them.
+ *
+ * If the user really wants these, then they should use the
+ * raw syscall tracepoints with filtering.
+ */
+bool arch_trace_is_compat_syscall(struct pt_regs *regs)
+{
+	return in_32bit_syscall();
+}
+#endif
 
 #ifdef CONFIG_DYNAMIC_FTRACE
 
