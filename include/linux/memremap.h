@@ -65,6 +65,8 @@ enum memory_type {
 	MEMORY_DEVICE_PCI_P2PDMA,
 };
 
+struct dev_pagemap;
+
 struct dev_pagemap_ops {
 	/*
 	 * Called once the page refcount reaches 1.  (ZONE_DEVICE pages never

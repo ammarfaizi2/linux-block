@@ -30,6 +30,8 @@ struct rcar_gen2_cpg_pll_config {
 	u8 pll0_mult;		/* leave as zero if PLL0CR exists */
 };
 
+struct raw_notifier_head;
+
 struct clk *rcar_gen2_cpg_clk_register(struct device *dev,
 	const struct cpg_core_clk *core, const struct cpg_mssr_info *info,
 	struct clk **clks, void __iomem *base,

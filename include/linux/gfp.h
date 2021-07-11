@@ -3,6 +3,5 @@
 #define __LINUX_GFP_H
 
 #include <linux/gfp_types.h>
-#include <linux/gfp_api.h>
 
 #endif /* __LINUX_GFP_H */
