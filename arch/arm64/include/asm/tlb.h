@@ -8,6 +8,8 @@
 #ifndef __ASM_TLB_H
 #define __ASM_TLB_H
 
+#include <linux/mm_ptlock.h>
+
 #include <linux/pagemap.h>
 #include <linux/swap.h>
 

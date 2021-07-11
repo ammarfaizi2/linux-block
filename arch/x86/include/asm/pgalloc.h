@@ -3,7 +3,7 @@
 #define _ASM_X86_PGALLOC_H
 
 #include <linux/threads.h>
-#include <linux/mm.h>		/* for struct page */
+#include <linux/mm_ptlock.h>		/* for struct page */
 #include <linux/pagemap.h>
 
 #define __HAVE_ARCH_PTE_ALLOC_ONE
