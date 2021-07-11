@@ -8,7 +8,7 @@
 #include <linux/dcache.h>
 #include <linux/path.h>
 #include <linux/list_lru.h>
-#include <linux/xarray.h>
+#include <linux/xarray_types.h>
 #include <linux/pid_types.h>
 #include <linux/fcntl.h>
 #include <linux/atomic.h>
@@ -471,10 +471,7 @@ struct address_space {
 /*
  * Returns true if any of the pages in the mapping are marked with the tag.
  */
-static inline bool mapping_tagged(struct address_space *mapping, xa_mark_t tag)
-{
-	return xa_marked(&mapping->i_pages, tag);
-}
+#define mapping_tagged(mapping, tag) xa_marked(&(mapping)->i_pages, tag)
 
 static inline void i_mmap_lock_write(struct address_space *mapping)
 {
