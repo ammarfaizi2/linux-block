@@ -29,6 +29,7 @@
 #include <linux/sizes.h>
 #include <linux/pgtable.h>
 #include <linux/kasan.h>
+#include <linux/fcntl.h>
 
 struct mempolicy;
 struct anon_vma;

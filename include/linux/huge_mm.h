@@ -3,11 +3,6 @@
 #define _LINUX_HUGE_MM_H
 
 #include <linux/sched/coredump.h>
-#include <linux/mm_types.h>
-#include <linux/dax.h>
-
-#include <linux/fs.h> /* only for vma_is_dax() */
-
 #include <linux/mm.h>
 
 vm_fault_t do_huge_pmd_anonymous_page(struct vm_fault *vmf);
