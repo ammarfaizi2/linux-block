@@ -5,6 +5,7 @@
 #ifndef __ASSEMBLY__
 
 #include <linux/mm_types.h>
+#include <linux/mm_api_gate_area.h>
 
 #include <linux/cpumask_api.h>
 #include <linux/topology.h>
@@ -2515,22 +2516,6 @@ static inline void debug_pagealloc_unmap_pages(struct page *page, int numpages)
 static inline void debug_pagealloc_map_pages(struct page *page, int numpages) {}
 static inline void debug_pagealloc_unmap_pages(struct page *page, int numpages) {}
 #endif	/* CONFIG_DEBUG_PAGEALLOC */
-
-#ifdef __HAVE_ARCH_GATE_AREA
-extern struct vm_area_struct *get_gate_vma(struct mm_struct *mm);
-extern int in_gate_area_no_mm(unsigned long addr);
-extern int in_gate_area(struct mm_struct *mm, unsigned long addr);
-#else
-static inline struct vm_area_struct *get_gate_vma(struct mm_struct *mm)
-{
-	return NULL;
-}
-static inline int in_gate_area_no_mm(unsigned long addr) { return 0; }
-static inline int in_gate_area(struct mm_struct *mm, unsigned long addr)
-{
-	return 0;
-}
-#endif	/* __HAVE_ARCH_GATE_AREA */
 
 extern bool process_shares_mm(struct task_struct *p, struct mm_struct *mm);
 
