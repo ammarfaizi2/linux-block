@@ -107,21 +107,8 @@ static inline bool arch_syscall_match_sym_name(const char *sym, const char *name
 #ifndef COMPILE_OFFSETS
 
 #if defined(CONFIG_FTRACE_SYSCALLS) && defined(CONFIG_IA32_EMULATION)
-#include <linux/compat.h>
-
-/*
- * Because ia32 syscalls do not map to x86_64 syscall numbers
- * this screws up the trace output when tracing a ia32 task.
- * Instead of reporting bogus syscalls, just do not trace them.
- *
- * If the user really wants these, then they should use the
- * raw syscall tracepoints with filtering.
- */
 #define ARCH_TRACE_IGNORE_COMPAT_SYSCALLS 1
-static inline bool arch_trace_is_compat_syscall(struct pt_regs *regs)
-{
-	return in_32bit_syscall();
-}
+extern bool arch_trace_is_compat_syscall(struct pt_regs *regs);
 #endif /* CONFIG_FTRACE_SYSCALLS && CONFIG_IA32_EMULATION */
 #endif /* !COMPILE_OFFSETS */
 #endif /* !__ASSEMBLY__ */
