@@ -10,6 +10,7 @@
 #ifndef _LINUX_SKBUFF_API_H
 #define _LINUX_SKBUFF_API_H
 
+#include <linux/mm_api.h>
 #include <linux/skbuff_types.h>
 
 #include <linux/lockdep_api.h>
@@ -18,8 +19,8 @@
 #include <linux/mm.h>
 #include <linux/ktime_api.h>
 #include <linux/if_packet.h>
-#include <linux/dma-mapping.h>
 #include <linux/netdev_features.h>
+#include <linux/refcount_api.h>
 
 #include <net/checksum.h>
 #include <net/flow_dissector.h>
@@ -2308,14 +2309,8 @@ bool skb_page_frag_refill(unsigned int sz, struct page_frag *pfrag, gfp_t prio);
  *
  * Maps the page associated with @frag to @device.
  */
-static inline dma_addr_t skb_frag_dma_map(struct device *dev,
-					  const skb_frag_t *frag,
-					  size_t offset, size_t size,
-					  enum dma_data_direction dir)
-{
-	return dma_map_page(dev, skb_frag_page(frag),
-			    skb_frag_off(frag) + offset, size, dir);
-}
+#define skb_frag_dma_map(dev, frag, offset, size, dir) \
+	dma_map_page(dev, skb_frag_page(frag), skb_frag_off(frag) + (offset), size, dir)
 
 static inline struct sk_buff *pskb_copy(struct sk_buff *skb,
 					gfp_t gfp_mask)
@@ -2708,6 +2703,7 @@ static inline void skb_frag_list_init(struct sk_buff *skb)
 #define skb_walk_frags(skb, iter)	\
 	for (iter = skb_shinfo(skb)->frag_list; iter; iter = iter->next)
 
+struct poll_table_struct;
 
 int __skb_wait_for_more_packets(struct sock *sk, struct sk_buff_head *queue,
 				int *err, long *timeo_p,
