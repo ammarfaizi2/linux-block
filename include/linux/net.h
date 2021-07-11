@@ -14,14 +14,8 @@
 #ifndef _LINUX_NET_H
 #define _LINUX_NET_H
 
-#include <linux/stringify.h>
-#include <linux/random.h>
-#include <linux/wait.h>
-#include <linux/fcntl.h>	/* For O_CLOEXEC and O_NONBLOCK */
-#include <linux/rcupdate.h>
-#include <linux/once.h>
-#include <linux/mm.h>
-#include <linux/sockptr.h>
+#include <linux/cache.h>
+#include <linux/wait_types.h>
 
 #include <uapi/linux/net.h>
 
@@ -30,6 +24,7 @@ struct pipe_inode_info;
 struct inode;
 struct file;
 struct net;
+struct sockptr_struct;
 
 /* Historically, SOCKWQ_ASYNC_NOSPACE & SOCKWQ_ASYNC_WAITDATA were located
  * in sock->flags, but moved into sk->sk_wq->flags to be RCU protected.
@@ -184,7 +179,7 @@ struct proto_ops {
 	int		(*listen)    (struct socket *sock, int len);
 	int		(*shutdown)  (struct socket *sock, int flags);
 	int		(*setsockopt)(struct socket *sock, int level,
-				      int optname, sockptr_t optval,
+				      int optname, struct sockptr_struct optval,
 				      unsigned int optlen);
 	int		(*getsockopt)(struct socket *sock, int level,
 				      int optname, char __user *optval, int __user *optlen);
@@ -317,10 +312,7 @@ do {									\
  * would actually still be referenced by someone, leading to some
  * obscure delayed Oops somewhere else.
  */
-static inline bool sendpage_ok(struct page *page)
-{
-	return !PageSlab(page) && page_count(page) >= 1;
-}
+#define sendpage_ok(page) ({ !PageSlab(page) && page_count(page) >= 1; })
 
 int kernel_sendmsg(struct socket *sock, struct msghdr *msg, struct kvec *vec,
 		   size_t num, size_t len);
