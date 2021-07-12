@@ -345,9 +345,7 @@ static bool kallsyms = 1;
 
 #define KSYM_NAME_LEN 128
 
-struct kallsyms_entry {
-	u32 offset;
-};
+#include "../../../include/linux/kallsyms_objtool.h"
 
 extern void *zalloc(const size_t size);
 
