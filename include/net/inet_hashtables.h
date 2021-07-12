@@ -26,7 +26,7 @@
 #include <net/inet_connection_sock.h>
 #include <net/inet_sock.h>
 #include <net/sock.h>
-#include <net/route_api.h>
+#include <net/route_types.h>
 #include <net/tcp_states.h>
 #include <net/netns/hash.h>
 
