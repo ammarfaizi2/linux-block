@@ -38,7 +38,7 @@
 #include <net/checksum.h>
 #include <net/request_sock.h>
 #include <net/sock_reuseport.h>
-#include <net/sock.h>
+#include <net/sock_api.h>
 #include <net/snmp.h>
 #include <net/ip.h>
 #include <net/tcp_states.h>
