@@ -2,6 +2,8 @@
 #ifndef _DELAYED_CALL_H
 #define _DELAYED_CALL_H
 
+#include <linux/stddef.h>
+
 /*
  * Poor man's closures; I wish we could've done them sanely polymorphic,
  * but...
