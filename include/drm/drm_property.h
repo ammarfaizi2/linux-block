@@ -25,6 +25,8 @@
 
 #include <linux/list.h>
 #include <linux/ctype.h>
+#include <linux/kernel.h>
+
 #include <drm/drm_mode_object.h>
 
 #include <uapi/drm/drm_mode.h>
