@@ -11,6 +11,7 @@
 #include <asm/shmparam.h>
 
 struct file;
+struct task_struct;
 
 #ifdef CONFIG_SYSVIPC
 struct sysv_shm {
