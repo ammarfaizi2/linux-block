@@ -110,10 +110,13 @@ static void netfs_init_dirty_region(struct netfs_dirty_region *region,
 		group = list_last_entry(&ctx->flush_groups,
 					struct netfs_flush_group, group_link);
 		region->group = netfs_get_flush_group(group);
+		spin_lock(&ctx->lock);
 		list_add_tail(&region->flush_link, &group->region_list);
+		spin_unlock(&ctx->lock);
 	}
 	trace_netfs_ref_region(region->debug_id, 1, netfs_region_trace_new);
 	trace_netfs_dirty(ctx, region, NULL, netfs_dirty_trace_new);
+	netfs_proc_add_region(region);
 }
 
 /*
@@ -231,6 +234,7 @@ static struct netfs_dirty_region *netfs_split_dirty_region(
 	list_add(&tail->dirty_link, &region->dirty_link);
 	list_add(&tail->flush_link, &region->flush_link);
 	trace_netfs_dirty(ctx, tail, region, netfs_dirty_trace_split);
+	netfs_proc_add_region(tail);
 	return tail;
 }
 

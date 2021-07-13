@@ -271,6 +271,7 @@ enum netfs_region_type {
  */
 struct netfs_dirty_region {
 	struct netfs_flush_group *group;
+	struct list_head	proc_link;	/* Link in /proc/fs/netfs/regions */
 	struct list_head	active_link;	/* Link in i_context->pending/active_writes */
 	struct list_head	dirty_link;	/* Link in i_context->dirty_regions */
 	struct list_head	flush_link;	/* Link in group->region_list or

@@ -30,6 +30,27 @@ ssize_t netfs_file_direct_write(struct netfs_dirty_region *region,
 /*
  * main.c
  */
+extern struct list_head netfs_regions;
+extern spinlock_t netfs_regions_lock;
+
+#ifdef CONFIG_PROC_FS
+static inline void netfs_proc_add_region(struct netfs_dirty_region *region)
+{
+	spin_lock(&netfs_regions_lock);
+	list_add_tail_rcu(&region->proc_link, &netfs_regions);
+	spin_unlock(&netfs_regions_lock);
+}
+static inline void netfs_proc_del_region(struct netfs_dirty_region *region)
+{
+	spin_lock(&netfs_regions_lock);
+	list_del_rcu(&region->proc_link);
+	spin_unlock(&netfs_regions_lock);
+}
+#else
+static inline void netfs_proc_add_region(struct netfs_dirty_region *region) {}
+static inline void netfs_proc_del_region(struct netfs_dirty_region *region) {}
+#endif
+
 int netfs_sanity_check_ictx(struct address_space *mapping);
 
 /*
