@@ -102,6 +102,7 @@
 #include "fd.h"
 
 #include "../../lib/kstrtox.h"
+#include "../../kernel/sched/sched.h"
 
 /* NOTE:
  *	Implementing inode permission operations in /proc is almost

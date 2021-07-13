@@ -44,6 +44,8 @@
 #include <linux/irq_work.h>
 #include <linux/rcupdate_trace.h>
 
+#include "../sched/sched.h"
+
 #define CREATE_TRACE_POINTS
 
 #include "rcu.h"

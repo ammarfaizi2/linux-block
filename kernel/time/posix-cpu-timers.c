@@ -18,6 +18,8 @@
 
 #include "posix-timers.h"
 
+#include "../sched/sched.h"
+
 static void posix_cpu_timer_rearm(struct k_itimer *timer);
 
 void posix_cputimers_group_init(struct posix_cputimers *pct, u64 cpu_limit)
