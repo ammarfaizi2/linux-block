@@ -62,6 +62,7 @@ ssize_t netfs_begin_read(struct netfs_io_request *rreq, bool sync);
  */
 extern unsigned int netfs_debug;
 extern struct list_head netfs_io_requests;
+extern struct list_head netfs_regions;
 extern spinlock_t netfs_proc_lock;
 
 #ifdef CONFIG_PROC_FS
@@ -82,6 +83,24 @@ static inline void netfs_proc_del_rreq(struct netfs_io_request *rreq)
 #else
 static inline void netfs_proc_add_rreq(struct netfs_io_request *rreq) {}
 static inline void netfs_proc_del_rreq(struct netfs_io_request *rreq) {}
+#endif
+
+#ifdef CONFIG_PROC_FS
+static inline void netfs_proc_add_region(struct netfs_dirty_region *region)
+{
+	spin_lock(&netfs_proc_lock);
+	list_add_tail_rcu(&region->proc_link, &netfs_regions);
+	spin_unlock(&netfs_proc_lock);
+}
+static inline void netfs_proc_del_region(struct netfs_dirty_region *region)
+{
+	spin_lock(&netfs_proc_lock);
+	list_del_rcu(&region->proc_link);
+	spin_unlock(&netfs_proc_lock);
+}
+#else
+static inline void netfs_proc_add_region(struct netfs_dirty_region *region) {}
+static inline void netfs_proc_del_region(struct netfs_dirty_region *region) {}
 #endif
 
 /*

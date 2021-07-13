@@ -284,6 +284,7 @@ enum netfs_region_type {
  */
 struct netfs_dirty_region {
 	struct list_head	dirty_link;	/* Link in netfs_inode::dirty_regions */
+	struct list_head	proc_link;	/* Link in /proc/fs/netfs/regions */
 	void			*netfs_priv;	/* Private data for the netfs */
 	size_t			credit;		/* Amount of credit used */
 	pgoff_t			first;		/* First page index in region */

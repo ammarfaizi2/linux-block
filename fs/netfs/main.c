@@ -26,6 +26,7 @@ MODULE_PARM_DESC(netfs_debug, "Netfs support debugging mask");
 
 #ifdef CONFIG_PROC_FS
 LIST_HEAD(netfs_io_requests);
+LIST_HEAD(netfs_regions);
 DEFINE_SPINLOCK(netfs_proc_lock);
 
 static const char *netfs_origins[nr__netfs_io_origin] = {
@@ -90,6 +91,58 @@ static const struct seq_operations netfs_requests_seq_ops = {
 	.stop   = netfs_requests_seq_stop,
 	.show   = netfs_requests_seq_show,
 };
+
+/*
+ * Generate a list of regions in /proc/fs/netfs/regions
+ */
+static int netfs_regions_seq_show(struct seq_file *m, void *v)
+{
+	struct netfs_dirty_region *region;
+
+	if (v == &netfs_regions) {
+		seq_puts(m,
+			 "REGION   REF DEV   INODE    RANGE\n"
+			 "======== === ===== ======== =============================\n"
+			 );
+		return 0;
+	}
+
+	region = list_entry(v, struct netfs_dirty_region, proc_link);
+	seq_printf(m,
+		   "%08x %3d %02x:%02x %8x %s %04lx-%04lx %04llx-%04llx\n",
+		   region->debug_id,
+		   refcount_read(&region->ref),
+		   0, 0, 0,
+		   region->type == NETFS_MODIFIED_REGION ? "WR" : "--",
+		   region->first, region->last,
+		   region->from, region->to - 1);
+	return 0;
+}
+
+static void *netfs_regions_seq_start(struct seq_file *m, loff_t *_pos)
+	__acquires(rcu)
+{
+	rcu_read_lock();
+	return seq_list_start_head(&netfs_regions, *_pos);
+}
+
+static void *netfs_regions_seq_next(struct seq_file *m, void *v, loff_t *_pos)
+{
+	return seq_list_next(v, &netfs_regions, _pos);
+}
+
+static void netfs_regions_seq_stop(struct seq_file *m, void *v)
+	__releases(rcu)
+{
+	rcu_read_unlock();
+}
+
+static const struct seq_operations netfs_regions_seq_ops = {
+	.start  = netfs_regions_seq_start,
+	.next   = netfs_regions_seq_next,
+	.stop   = netfs_regions_seq_stop,
+	.show   = netfs_regions_seq_show,
+};
 #endif /* CONFIG_PROC_FS */
 
 static int __init netfs_init(void)
@@ -99,6 +152,9 @@ static int __init netfs_init(void)
 
 	if (!proc_create_seq("fs/netfs/requests", S_IFREG | 0444, NULL,
 			     &netfs_requests_seq_ops))
+		goto error_proc;
+	if (!proc_create_seq("fs/netfs/regions", S_IFREG | 0444, NULL,
+			     &netfs_regions_seq_ops))
 		goto error_proc;
 
 	return 0;

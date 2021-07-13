@@ -220,6 +220,7 @@ struct netfs_dirty_region *netfs_alloc_dirty_region(gfp_t gfp)
 	if (region) {
 		refcount_set(&region->ref, 1);
 		INIT_LIST_HEAD(&region->dirty_link);
+		INIT_LIST_HEAD(&region->proc_link);
 		netfs_stat(&netfs_n_wh_region);
 	}
 	return region;
@@ -241,6 +242,8 @@ void netfs_free_dirty_region(struct netfs_inode *ctx,
 {
 	if (region) {
 		trace_netfs_ref_region(region->debug_id, 0, netfs_region_trace_free);
+		if (!list_empty(&region->proc_link))
+			netfs_proc_del_region(region);
 		if (ctx->ops->free_dirty_region)
 			ctx->ops->free_dirty_region(region);
 		netfs_stat_d(&netfs_n_wh_region);

@@ -63,6 +63,7 @@ static void netfs_init_dirty_region(struct netfs_inode *ctx,
 
 	trace_netfs_ref_region(region->debug_id, refcount_read(&region->ref),
 			       netfs_region_trace_new);
+	netfs_proc_add_region(region);
 }
 
 /*
