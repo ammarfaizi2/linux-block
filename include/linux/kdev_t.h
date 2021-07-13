@@ -2,6 +2,8 @@
 #ifndef _LINUX_KDEV_T_H
 #define _LINUX_KDEV_T_H
 
+#include <linux/types.h>
+
 #include <uapi/linux/kdev_t.h>
 
 #define MINORBITS	20
