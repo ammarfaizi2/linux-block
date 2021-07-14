@@ -3,6 +3,7 @@
 #define _LINUX_TIMERQUEUE_API_H
 
 #include <linux/timerqueue.h>
+#include <linux/rbtree.h>
 #include <linux/bug.h>
 
 extern bool timerqueue_add(struct timerqueue_head *head,

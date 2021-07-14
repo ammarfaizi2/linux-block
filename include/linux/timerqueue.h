@@ -2,7 +2,7 @@
 #ifndef _LINUX_TIMERQUEUE_H
 #define _LINUX_TIMERQUEUE_H
 
-#include <linux/rbtree.h>
+#include <linux/rbtree_types.h>
 #include <linux/ktime.h>
 
 struct timerqueue_node {
