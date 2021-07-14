@@ -2307,7 +2307,7 @@ int ceph_permission(struct user_namespace *mnt_userns, struct inode *inode,
 	err = ceph_do_getattr(inode, CEPH_CAP_AUTH_SHARED, false);
 
 	if (!err)
-		err = generic_permission(&init_user_ns, inode, mask);
+		err = generic_permission(mnt_userns, inode, mask);
 	return err;
 }
 
