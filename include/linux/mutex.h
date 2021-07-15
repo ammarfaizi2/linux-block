@@ -12,6 +12,5 @@
 #define __LINUX_MUTEX_H
 
 #include <linux/mutex_types.h>
-#include <linux/mutex_api.h>
 
 #endif /* __LINUX_MUTEX_H */
