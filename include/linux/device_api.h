@@ -22,7 +22,7 @@
 #include <linux/lockdep.h>
 #include <linux/compiler.h>
 #include <linux/types.h>
-#include <linux/mutex.h>
+#include <linux/mutex_api.h>
 #include <linux/pm.h>
 #include <linux/atomic.h>
 #include <linux/uidgid.h>
