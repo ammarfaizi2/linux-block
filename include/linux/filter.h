@@ -6,6 +6,5 @@
 #define __LINUX_FILTER_H__
 
 #include <linux/filter_types.h>
-#include <linux/filter_api.h>
 
 #endif /* __LINUX_FILTER_H__ */

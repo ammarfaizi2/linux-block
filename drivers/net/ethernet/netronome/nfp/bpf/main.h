@@ -576,6 +576,7 @@ extern const struct bpf_prog_offload_ops nfp_bpf_dev_ops;
 struct netdev_bpf;
 struct nfp_app;
 struct nfp_net;
+struct netlink_ext_ack;
 
 int nfp_ndo_bpf(struct nfp_app *app, struct nfp_net *nn,
 		struct netdev_bpf *bpf);
