@@ -13,8 +13,6 @@
 
 #include <linux/atomic_api.h>
 
-#include <asm/barrier.h>
-#include <asm/processor.h>
 #include <asm/qspinlock.h>
 
 /*
