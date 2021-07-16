@@ -318,7 +318,7 @@ static inline void write_gdt_entry(struct desc_struct *dt, int entry,
 	PVOP_VCALL4(cpu.write_gdt_entry, dt, entry, desc, type);
 }
 
-static inline void write_idt_entry(gate_desc *dt, int entry, const gate_desc *g)
+static inline void write_idt_entry(struct gate_struct *dt, int entry, const struct gate_struct *g)
 {
 	PVOP_VCALL3(cpu.write_idt_entry, dt, entry, g);
 }

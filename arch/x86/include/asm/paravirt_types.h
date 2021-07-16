@@ -2,6 +2,7 @@
 #ifndef _ASM_X86_PARAVIRT_TYPES_H
 #define _ASM_X86_PARAVIRT_TYPES_H
 
+
 /* Bitmask of what can be clobbered: usually at least eax. */
 #define CLBR_EAX  (1 << 0)
 #define CLBR_ECX  (1 << 1)
@@ -35,9 +36,11 @@
 
 #ifndef __ASSEMBLY__
 
-#include <asm/desc_defs.h>
 #include <asm/pgtable_types.h>
-#include <asm/nospec-branch.h>
+
+#ifdef CONFIG_PARAVIRT_DEBUG
+#include <linux/bug.h>
+#endif
 
 struct page;
 struct thread_struct;
@@ -45,6 +48,7 @@ struct desc_ptr;
 struct tss_struct;
 struct mm_struct;
 struct desc_struct;
+struct gate_struct;
 struct task_struct;
 struct cpumask;
 struct flush_tlb_info;
@@ -102,8 +106,8 @@ struct pv_cpu_ops {
 				const void *desc);
 	void (*write_gdt_entry)(struct desc_struct *,
 				int entrynum, const void *desc, int size);
-	void (*write_idt_entry)(gate_desc *,
-				int entrynum, const gate_desc *gate);
+	void (*write_idt_entry)(struct gate_struct *,
+				int entrynum, const struct gate_struct *gate);
 	void (*alloc_ldt)(struct desc_struct *ldt, unsigned entries);
 	void (*free_ldt)(struct desc_struct *ldt, unsigned entries);
 
