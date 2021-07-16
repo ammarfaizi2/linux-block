@@ -74,7 +74,7 @@ static inline bool vcpu_is_preempted(long cpu)
  */
 DECLARE_STATIC_KEY_TRUE(virt_spin_lock_key);
 
-void native_pv_lock_init(void) __init;
+void native_pv_lock_init(void);
 
 /*
  * Shortcut for the queued_spin_lock_slowpath() function that allows
