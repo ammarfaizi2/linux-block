@@ -104,7 +104,7 @@ int ceph_set_acl(struct user_namespace *mnt_userns, struct inode *inode,
 	case ACL_TYPE_ACCESS:
 		name = XATTR_NAME_POSIX_ACL_ACCESS;
 		if (acl) {
-			ret = posix_acl_update_mode(&init_user_ns, inode,
+			ret = posix_acl_update_mode(mnt_userns, inode,
 						    &new_mode, &acl);
 			if (ret)
 				goto out;
