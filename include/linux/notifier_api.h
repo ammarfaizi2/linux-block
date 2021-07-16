@@ -11,6 +11,7 @@
 #ifndef _LINUX_NOTIFIER_API_H
 #define _LINUX_NOTIFIER_API_H
 
+#include <linux/rwsem_api.h>
 #include <linux/notifier_types.h>
 
 #include <linux/errno.h>
