@@ -4,6 +4,10 @@
 
 #include <asm/asm.h>
 
+#ifndef __ASSEMBLY__
+struct pt_regs;
+#endif
+
 /*
  * These are stack frame creation macros.  They should be used by every
  * callable non-leaf asm function to make kernel stack traces more reliable.
