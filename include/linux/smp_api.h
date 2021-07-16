@@ -9,11 +9,14 @@
 
 #include <linux/smp_types.h>
 
-#include <linux/errno.h>
-#include <linux/types.h>
-#include <linux/list.h>
 #include <linux/cpumask.h>
-#include <linux/init.h>
+
+#ifdef CONFIG_SMP
+# include <asm/smp.h>
+#endif
+
+struct task_struct;
+struct pt_regs;
 
 /*
  * Enqueue a llist_node on the call_single_queue; be very careful, read
@@ -31,8 +34,6 @@ void on_each_cpu_cond_mask(smp_cond_func_t cond_func, smp_call_func_t func,
 			   void *info, bool wait, const struct cpumask *mask);
 
 int smp_call_function_single_async(int cpu, struct __call_single_data *csd);
-
-struct pt_regs;
 
 /*
  * Cpus stopping functions in panic. All have default weak definitions.
@@ -86,11 +87,6 @@ static inline void on_each_cpu_cond(smp_cond_func_t cond_func,
 
 #ifdef CONFIG_SMP
 
-#include <linux/preempt.h>
-#include <linux/kernel.h>
-#include <linux/compiler.h>
-#include <asm/smp.h>
-
 /*
  * main cross-CPU interfaces, handles INIT, TLB flush, STOP, etc.
  * (defined in asm header):
@@ -138,7 +134,7 @@ void wake_up_all_idle_cpus(void);
 /*
  * Generic and arch helpers
  */
-void __init call_function_init(void);
+void call_function_init(void);
 void generic_smp_call_function_single_interrupt(void);
 #define generic_smp_call_function_interrupt \
 	generic_smp_call_function_single_interrupt
@@ -150,8 +146,8 @@ void generic_smp_call_function_single_interrupt(void);
 void smp_prepare_boot_cpu(void);
 
 extern unsigned int setup_max_cpus;
-extern void __init setup_nr_cpu_ids(void);
-extern void __init smp_init(void);
+extern void setup_nr_cpu_ids(void);
+extern void smp_init(void);
 
 extern int __boot_cpu_id;
 
@@ -191,7 +187,7 @@ static inline void kick_all_cpus_sync(void) {  }
 static inline void wake_up_all_idle_cpus(void) {  }
 
 #ifdef CONFIG_UP_LATE_INIT
-extern void __init up_late_init(void);
+extern void up_late_init(void);
 static inline void smp_init(void) { up_late_init(); }
 #else
 static inline void smp_init(void) { }
