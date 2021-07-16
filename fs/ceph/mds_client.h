@@ -275,6 +275,7 @@ struct ceph_mds_request {
 	union ceph_mds_request_args r_args;
 	int r_fmode;        /* file mode, if expecting cap */
 	const struct cred *r_cred;
+	struct user_namespace *mnt_userns;
 	int r_request_release_offset;
 	struct timespec64 r_stamp;
 
