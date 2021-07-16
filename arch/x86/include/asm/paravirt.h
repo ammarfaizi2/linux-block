@@ -5,19 +5,16 @@
  * para-virtualization: those hooks are defined here. */
 
 #ifdef CONFIG_PARAVIRT
-#include <asm/pgtable_types.h>
-#include <asm/asm.h>
-#include <asm/nospec-branch.h>
 
 #include <asm/paravirt_types.h>
 
+#include <asm/nospec-branch.h>
+
 #ifndef __ASSEMBLY__
-#include <linux/bug.h>
-#include <linux/types.h>
-#include <linux/cpumask.h>
 #include <linux/static_call_types.h>
+#include <linux/bug.h>
+
 #include <asm/frame.h>
-#include <asm/fixmap.h>
 
 u64 dummy_steal_clock(int cpu);
 u64 dummy_sched_clock(void);
