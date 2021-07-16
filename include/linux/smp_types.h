@@ -3,7 +3,8 @@
 #define __LINUX_SMP_TYPES_H
 
 #include <linux/types.h>
-#include <linux/llist.h>
+#include <linux/compiler_attributes.h>
+#include <linux/llist_types.h>
 
 enum {
 	CSD_FLAG_LOCK		= 0x01,
