@@ -9,13 +9,13 @@
 #ifndef __ASM_GENERIC_QRWLOCK_H
 #define __ASM_GENERIC_QRWLOCK_H
 
-#include <linux/atomic.h>
-#include <asm/barrier.h>
-#include <asm/processor.h>
-
 #include <asm-generic/qrwlock_types.h>
 
-/* Must be included from asm/spinlock.h after defining arch_spin_is_locked.  */
+#include <linux/atomic_api.h>
+
+#include <asm/barrier.h>
+#include <asm/processor.h>
+#include <asm/qspinlock.h>
 
 /*
  * Writer states & reader shift and bias.
