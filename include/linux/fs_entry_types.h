@@ -2,6 +2,8 @@
 #ifndef _LINUX_FS_ENTRY_TYPES_H
 #define _LINUX_FS_ENTRY_TYPES_H
 
+#include <linux/types.h>
+
 /*
  * This is a header for the common implementation of dirent
  * to fs on-disk file type conversion.  Although the fs on-disk
