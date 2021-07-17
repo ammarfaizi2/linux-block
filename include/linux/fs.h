@@ -19,7 +19,6 @@
 #include <linux/percpu_rwsem.h>
 #include <linux/uuid.h>
 #include <linux/errseq.h>
-#include <linux/fs_entry_types.h>
 #include <linux/mount.h>
 #include <linux/mnt_idmapping.h>
 #include <linux/slab.h>
