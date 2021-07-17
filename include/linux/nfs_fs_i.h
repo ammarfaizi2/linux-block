@@ -2,6 +2,8 @@
 #ifndef _NFS_FS_I
 #define _NFS_FS_I
 
+#include <linux/types.h>
+
 struct nlm_lockowner;
 
 /*
