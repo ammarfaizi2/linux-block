@@ -2,27 +2,21 @@
 #ifndef _LINUX_FS_TYPES_H
 #define _LINUX_FS_TYPES_H
 
-#include <linux/rwsem_api.h>
-#include <linux/wait_bit.h>
-#include <linux/kdev_t.h>
 #include <linux/dcache.h>
 #include <linux/path.h>
 #include <linux/list_lru.h>
 #include <linux/xarray_types.h>
 #include <linux/pid_types.h>
 #include <linux/fcntl.h>
-#include <linux/atomic.h>
 #include <linux/migrate_mode.h>
 #include <linux/percpu_rwsem.h>
 #include <linux/uuid.h>
 #include <linux/errseq.h>
-#include <linux/mount.h>
 #include <linux/quota_types.h>
-#include <linux/rbtree.h>
-#include <linux/workqueue.h>
-#include <linux/mutex.h>
-#include <linux/wait_types.h>
-#include <linux/llist.h>
+#include <linux/rbtree_types.h>
+#include <linux/workqueue_types.h>
+#include <linux/mutex_types.h>
+#include <linux/llist_types.h>
 
 #include <uapi/linux/fs.h>
 
