@@ -5,8 +5,8 @@
  *
  * Generic LRU infrastructure
  */
-#ifndef _LRU_LIST_H
-#define _LRU_LIST_H
+#ifndef _LINUX_LIST_LRU_H
+#define _LINUX_LIST_LRU_H
 
 #include <linux/list.h>
 #include <linux/nodemask.h>
@@ -219,4 +219,4 @@ list_lru_walk(struct list_lru *lru, list_lru_walk_cb isolate,
 	}
 	return isolated;
 }
-#endif /* _LRU_LIST_H */
+#endif /* _LINUX_LIST_LRU_H */
