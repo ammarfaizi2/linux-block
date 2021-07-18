@@ -2,11 +2,10 @@
 #ifndef _LINUX_PERCPU_RWSEM_TYPES_H
 #define _LINUX_PERCPU_RWSEM_TYPES_H
 
-#include <linux/atomic.h>
 #include <linux/percpu.h>
-#include <linux/rcuwait.h>
-#include <linux/wait.h>
-#include <linux/rcu_sync.h>
+#include <linux/rcuwait_types.h>
+#include <linux/wait_types.h>
+#include <linux/rcu_sync_types.h>
 #include <linux/lockdep.h>
 
 struct percpu_rw_semaphore {
