@@ -2,7 +2,6 @@
 #ifndef _LINUX_FCNTL_H
 #define _LINUX_FCNTL_H
 
-#include <linux/stat.h>
 #include <uapi/linux/fcntl.h>
 
 /* List of all valid flags for the open/openat flags argument: */
