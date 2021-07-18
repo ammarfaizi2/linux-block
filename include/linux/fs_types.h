@@ -5,7 +5,7 @@
 #include <linux/list_bl_types.h>
 #include <linux/cache.h>
 #include <linux/path.h>
-#include <linux/list_lru.h>
+#include <linux/list_lru_types.h>
 #include <linux/xarray_types.h>
 #include <linux/pid_types.h>
 #include <linux/fcntl.h>
@@ -18,6 +18,7 @@
 #include <linux/workqueue_types.h>
 #include <linux/mutex_types.h>
 #include <linux/llist_types.h>
+#include <linux/shrinker.h>
 
 #include <uapi/linux/fs.h>
 
