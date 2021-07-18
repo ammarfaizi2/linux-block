@@ -8,9 +8,7 @@
 #ifndef _LINUX_LIST_LRU_TYPES_H
 #define _LINUX_LIST_LRU_TYPES_H
 
-#include <linux/list.h>
-#include <linux/nodemask.h>
-#include <linux/shrinker.h>
+#include <linux/types.h>
 #include <linux/spinlock_types.h>
 #include <linux/cache.h>
 
@@ -60,6 +58,8 @@ struct list_lru {
 	bool			memcg_aware;
 #endif
 };
+
+struct shrinker;
 
 void list_lru_destroy(struct list_lru *lru);
 int __list_lru_init(struct list_lru *lru, bool memcg_aware,
