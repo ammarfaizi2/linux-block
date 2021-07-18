@@ -9,7 +9,7 @@
 #include <linux/pid_types.h>
 #include <linux/fcntl.h>
 #include <linux/migrate_mode.h>
-#include <linux/percpu_rwsem.h>
+#include <linux/percpu_rwsem_types.h>
 #include <linux/uuid.h>
 #include <linux/errseq.h>
 #include <linux/quota_types.h>
