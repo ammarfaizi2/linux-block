@@ -36,7 +36,6 @@
 #include <linux/delayed_call.h>
 #include <linux/uuid.h>
 #include <linux/errseq.h>
-#include <linux/ioprio.h>
 #include <linux/fs_entry_types.h>
 #include <linux/build_bug.h>
 #include <linux/stddef.h>
