@@ -181,6 +181,4 @@ struct execute_work {
 	struct work_struct work;
 };
 
-#include <linux/workqueue_api.h>
-
 #endif /* _LINUX_WORKQUEUE_H */
