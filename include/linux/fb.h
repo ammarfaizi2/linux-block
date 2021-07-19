@@ -19,6 +19,8 @@ struct file;
 struct videomode;
 struct device_node;
 struct i2c_adapter;
+struct notifier_block;
+struct pci_dev;
 struct inode;
 
 /* Definitions below are used in the parsed monitor specs */
