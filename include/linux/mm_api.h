@@ -5,7 +5,6 @@
 #ifndef __ASSEMBLY__
 
 #include <linux/mm_types.h>
-#include <linux/mm_api_truncate.h>
 
 #include <linux/cpumask_api.h>
 #include <linux/topology.h>
