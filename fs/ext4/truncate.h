@@ -5,6 +5,7 @@
  * Common inline functions needed for truncate support
  */
 
+#include <linux/mm_api_truncate.h>
 #include <linux/rwsem_api.h>
 #include <linux/types.h>
 
