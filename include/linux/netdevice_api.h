@@ -223,31 +223,6 @@ static inline void netdev_queue_numa_node_write(struct netdev_queue *q, int node
 #endif
 }
 
-#ifdef CONFIG_RPS
-
-extern u32 rps_cpu_mask;
-extern struct rps_sock_flow_table __rcu *rps_sock_flow_table;
-
-static inline void rps_record_sock_flow(struct rps_sock_flow_table *table,
-					u32 hash)
-{
-	if (table && hash) {
-		unsigned int index = hash & table->mask;
-		u32 val = hash & ~rps_cpu_mask;
-
-		/* We only give a hint, preemption can change CPU under us */
-		val |= raw_smp_processor_id();
-
-		if (table->ents[index] != val)
-			table->ents[index] = val;
-	}
-}
-
-#ifdef CONFIG_RFS_ACCEL
-bool rps_may_expire_flow(struct net_device *dev, u16 rxq_index, u32 flow_id,
-			 u16 filter_id);
-#endif
-#endif /* CONFIG_RPS */
 static inline bool netdev_phys_item_id_same(struct netdev_phys_item_id *a,
 					    struct netdev_phys_item_id *b)
 {
