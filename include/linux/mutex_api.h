@@ -13,7 +13,7 @@
 
 #include <linux/mutex_types.h>
 
-#include <linux/osq_lock_api.h>
+#include <linux/atomic_api.h>
 
 #ifdef CONFIG_DEBUG_MUTEXES
 
