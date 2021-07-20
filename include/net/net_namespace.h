@@ -6,6 +6,5 @@
 #define __NET_NET_NAMESPACE_H
 
 #include <net/net_namespace_types.h>
-#include <net/net_namespace_api.h>
 
 #endif /* __NET_NET_NAMESPACE_H */
