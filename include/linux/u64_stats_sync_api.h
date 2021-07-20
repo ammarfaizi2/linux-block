@@ -81,10 +81,6 @@
 #if BITS_PER_LONG == 64
 #include <asm/local64_api.h>
 
-typedef struct {
-	local64_t	v;
-} u64_stats_t ;
-
 static inline u64 u64_stats_read(const u64_stats_t *p)
 {
 	return local64_read(&p->v);
@@ -106,10 +102,6 @@ static inline void u64_stats_inc(u64_stats_t *p)
 }
 
 #else
-
-typedef struct {
-	u64		v;
-} u64_stats_t;
 
 static inline u64 u64_stats_read(const u64_stats_t *p)
 {
