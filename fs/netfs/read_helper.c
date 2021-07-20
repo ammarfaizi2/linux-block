@@ -28,14 +28,6 @@ MODULE_PARM_DESC(netfs_debug, "Netfs support debugging mask");
 
 static void netfs_rreq_work(struct work_struct *);
 static void netfs_rreq_clear_buffer(struct netfs_read_request *);
-static void __netfs_put_subrequest(struct netfs_read_subrequest *, bool);
-
-static void netfs_put_subrequest(struct netfs_read_subrequest *subreq,
-				 bool was_async)
-{
-	if (refcount_dec_and_test(&subreq->usage))
-		__netfs_put_subrequest(subreq, was_async);
-}
 
 static struct netfs_read_request *netfs_alloc_read_request(struct address_space *mapping,
 							   struct file *file)
@@ -97,7 +89,7 @@ static void netfs_free_read_request(struct work_struct *work)
 	netfs_stat_d(&netfs_n_rh_rreq);
 }
 
-static void netfs_put_read_request(struct netfs_read_request *rreq, bool was_async)
+void netfs_put_read_request(struct netfs_read_request *rreq, bool was_async)
 {
 	if (refcount_dec_and_test(&rreq->usage)) {
 		if (was_async) {
@@ -135,8 +127,7 @@ static void netfs_get_read_subrequest(struct netfs_read_subrequest *subreq)
 	refcount_inc(&subreq->usage);
 }
 
-static void __netfs_put_subrequest(struct netfs_read_subrequest *subreq,
-				   bool was_async)
+void __netfs_put_subrequest(struct netfs_read_subrequest *subreq, bool was_async)
 {
 	struct netfs_read_request *rreq = subreq->rreq;
 
@@ -227,7 +218,7 @@ static void netfs_read_from_server(struct netfs_read_request *rreq,
 /*
  * Release those waiting.
  */
-static void netfs_rreq_completed(struct netfs_read_request *rreq, bool was_async)
+void netfs_rreq_completed(struct netfs_read_request *rreq, bool was_async)
 {
 	trace_netfs_rreq(rreq, netfs_rreq_trace_done);
 	netfs_rreq_clear_subreqs(rreq, was_async);
