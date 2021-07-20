@@ -642,7 +642,6 @@ static void fscache_cookie_lru_do_one(struct fscache_cookie *cookie)
 	    time_before(jiffies, cookie->unused_at + fscache_lru_cookie_timeout) ||
 	    atomic_read(&cookie->n_active) > 0) {
 		spin_unlock(&cookie->lock);
-		fscache_put_cookie(cookie, fscache_cookie_put_lru);
 	} else {
 		__fscache_set_cookie_stage(cookie, FSCACHE_COOKIE_STAGE_COMMITTING);
 		set_bit(FSCACHE_COOKIE_DO_COMMIT, &cookie->flags);
@@ -650,6 +649,8 @@ static void fscache_cookie_lru_do_one(struct fscache_cookie *cookie)
 		_debug("lru c=%x", cookie->debug_id);
 		__fscache_withdraw_cookie(cookie);
 	}
+
+	fscache_put_cookie(cookie, fscache_cookie_put_lru);
 }
 
 static void fscache_cookie_lru_worker(struct work_struct *work)
