@@ -11,6 +11,17 @@
 #include <linux/writeback.h>
 #include "internal.h"
 
+static bool __within(unsigned long long start1, unsigned long long end1,
+		     unsigned long long start2, unsigned long long end2)
+{
+	return start1 >= start2 && end1 <= end2;
+}
+
+static bool within(struct netfs_range *a, struct netfs_range *b)
+{
+	return __within(a->start, a->end, b->start, b->end);
+}
+
 /*
  * Iterate over a range of folios.  xarray locks are not held over the iterator
  * function, so it can sleep if necessary.  The start and end positions are
@@ -200,14 +211,75 @@ failed:
 	return ret;
 }
 
-static int netfs_mark_writeback_iterator(struct folio *folio)
+static int netfs_mark_writeback_iterator(struct folio *folio,
+					 struct netfs_write_request *wreq,
+					 struct netfs_i_context *ctx)
 {
+	struct netfs_dirty_region *region, *r;
+	enum netfs_region_state state;
+	struct netfs_range range;
+	bool clear_dirty = true;
+
+	range.start = folio_file_pos(folio);
+	range.end   = range.start + folio_size(folio);
+
 	/* Now we need to clear the dirty flags on any folio that's not shared
 	 * with any other dirty region.
 	 */
-	if (!folio_clear_dirty_for_io(folio))
-		BUG();
+	if (within(&range, &wreq->coverage))
+		goto completely_inside;
 
+	spin_lock(&ctx->lock);
+	if (range.start < wreq->coverage.start) {
+		r = region = list_first_entry(&wreq->regions,
+					      struct netfs_dirty_region, flush_link);
+		list_for_each_entry_continue_reverse(r, &ctx->dirty_regions, dirty_link) {
+			kdebug("maybe-b %lx reg=%x r=%x W=%x",
+			       folio_index(folio), region->debug_id, r->debug_id,
+			       wreq->debug_id);
+			if (r->dirty.end <= range.start)
+				break;
+			state = READ_ONCE(r->state);
+			if (state != NETFS_REGION_IS_ACTIVE &&
+			    state != NETFS_REGION_IS_DIRTY)
+				continue;
+			kdebug("keep-dirty-b %lx reg=%x r=%x W=%x",
+			       folio_index(folio), region->debug_id, r->debug_id,
+			       wreq->debug_id);
+			clear_dirty = false;
+		}
+	}
+
+	if (range.end > wreq->coverage.end) {
+		r = region = list_last_entry(&wreq->regions,
+					     struct netfs_dirty_region, flush_link);
+		list_for_each_entry_continue(r, &ctx->dirty_regions, dirty_link) {
+			kdebug("maybe-f %lx reg=%x r=%x W=%x",
+			       folio_index(folio), region->debug_id, r->debug_id,
+			       wreq->debug_id);
+			if (r->dirty.start >= range.end)
+				break;
+			state = READ_ONCE(r->state);
+			if (state != NETFS_REGION_IS_ACTIVE &&
+			    state != NETFS_REGION_IS_DIRTY)
+				continue;
+			kdebug("keep-dirty-f %lx reg=%x r=%x W=%x",
+			       folio_index(folio), region->debug_id, r->debug_id,
+			       wreq->debug_id);
+			clear_dirty = false;
+		}
+	}
+	spin_unlock(&ctx->lock);
+	if (!clear_dirty) {
+		kdebug("no-clear-dirty %lx", folio_index(folio));
+		goto no_clear;
+	}
+
+completely_inside:
+	if (!folio_clear_dirty_for_io(folio))
+		_debug("folio %lx is not dirty W=%x", folio_index(folio), wreq->debug_id);
+
+no_clear:
 	/* We set writeback unconditionally because a folio may participate in
 	 * more than one simultaneous writeback.
 	 */
@@ -222,8 +294,10 @@ static int netfs_mark_writeback_iterator(struct folio *folio)
 void netfs_mark_folios_for_writeback(struct netfs_write_request *wreq,
 				     pgoff_t first, pgoff_t last)
 {
+	struct netfs_i_context *ctx = netfs_i_context(wreq->inode);
+
 	netfs_iterate_folios(wreq->mapping, first, last,
-			     netfs_mark_writeback_iterator);
+			     netfs_mark_writeback_iterator, wreq, ctx);
 }
 
 static int netfs_end_writeback_iterator(struct xa_state *xas, struct folio *folio)
