@@ -301,11 +301,6 @@ struct device *__root_device_register(const char *name, struct module *owner);
 
 void root_device_unregister(struct device *root);
 
-static inline void *dev_get_platdata(const struct device *dev)
-{
-	return dev->platform_data;
-}
-
 /*
  * Manual binding of a device to driver. See drivers/base/bus.c
  * for information on use.

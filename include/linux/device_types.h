@@ -552,4 +552,9 @@ static inline struct device *kobj_to_dev(struct kobject *kobj)
 /* debugging and troubleshooting/diagnostic helpers. */
 const char *dev_driver_string(const struct device *dev);
 
+static inline void *dev_get_platdata(const struct device *dev)
+{
+	return dev->platform_data;
+}
+
 #endif /* _DEVICE_TYPES_H_ */
