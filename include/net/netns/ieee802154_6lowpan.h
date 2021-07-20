@@ -3,10 +3,11 @@
  * ieee802154 6lowpan in net namespaces
  */
 
-#include <net/inet_frag.h>
-
 #ifndef __NETNS_IEEE802154_6LOWPAN_H__
 #define __NETNS_IEEE802154_6LOWPAN_H__
+
+struct ctl_table_header;
+struct fqdir;
 
 struct netns_sysctl_lowpan {
 #ifdef CONFIG_SYSCTL
