@@ -4555,6 +4555,51 @@ static void rps_trigger_softirq(void *data)
 	sd->received_rps++;
 }
 
+static inline void rps_record_sock_flow(struct rps_sock_flow_table *table,
+					u32 hash)
+{
+	if (table && hash) {
+		unsigned int index = hash & table->mask;
+		u32 val = hash & ~rps_cpu_mask;
+
+		/* We only give a hint, preemption can change CPU under us */
+		val |= raw_smp_processor_id();
+
+		if (table->ents[index] != val)
+			table->ents[index] = val;
+	}
+}
+
+void sock_rps_record_flow_hash(__u32 hash)
+{
+	struct rps_sock_flow_table *sock_flow_table;
+
+	rcu_read_lock();
+	sock_flow_table = rcu_dereference(rps_sock_flow_table);
+	rps_record_sock_flow(sock_flow_table, hash);
+	rcu_read_unlock();
+}
+EXPORT_SYMBOL(sock_rps_record_flow_hash);
+
+void sock_rps_record_flow(const struct sock *sk)
+{
+	if (static_branch_unlikely(&rfs_needed)) {
+		/* Reading sk->sk_rxhash might incur an expensive cache line
+		 * miss.
+		 *
+		 * TCP_ESTABLISHED does cover almost all states where RFS
+		 * might be useful, and is cheaper [1] than testing :
+		 *	IPv4: inet_sk(sk)->inet_daddr
+		 * 	IPv6: ipv6_addr_any(&sk->sk_v6_daddr)
+		 * OR	an additional socket flag
+		 * [1] : sk_state and sk_prot are in the same cache line.
+		 */
+		if (sk->sk_state == TCP_ESTABLISHED)
+			sock_rps_record_flow_hash(sk->sk_rxhash);
+	}
+}
+EXPORT_SYMBOL(sock_rps_record_flow);
+
 #endif /* CONFIG_RPS */
 
 /*

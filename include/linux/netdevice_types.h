@@ -2066,4 +2066,21 @@ struct net_device {
 
 #define	NETDEV_ALIGN		32
 
+#ifdef CONFIG_RPS
+extern u32 rps_cpu_mask;
+extern struct rps_sock_flow_table __rcu *rps_sock_flow_table;
+extern void sock_rps_record_flow_hash(__u32 hash);
+extern void sock_rps_record_flow(const struct sock *sk);
+#else
+static inline void sock_rps_record_flow_hash(__u32 hash) { }
+static inline void sock_rps_record_flow(const struct sock *sk) { }
+#endif
+
+
+#ifdef CONFIG_RPS
+#ifdef CONFIG_RFS_ACCEL
+bool rps_may_expire_flow(struct net_device *dev, u16 rxq_index, u32 flow_id, u16 filter_id);
+#endif
+#endif
+
 #endif	/* _LINUX_NETDEVICE_TYPES_H */
