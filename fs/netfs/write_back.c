@@ -11,6 +11,17 @@
 #include <linux/slab.h>
 #include "internal.h"
 
+static bool __within(unsigned long long start1, unsigned long long end1,
+		     unsigned long long start2, unsigned long long end2)
+{
+	return start1 >= start2 && end1 <= end2;
+}
+
+static bool within(struct netfs_range *a, struct netfs_range *b)
+{
+	return __within(a->start, a->end, b->start, b->end);
+}
+
 /*
  * Process a write request.
  */
@@ -138,14 +149,71 @@ failed:
 	return ret;
 }
 
-static int netfs_set_page_writeback(struct page *page)
+static int netfs_set_page_writeback(struct page *page,
+				    struct netfs_i_context *ctx,
+				    struct netfs_write_request *wreq)
 {
+	struct netfs_dirty_region *region = wreq->region, *r;
+	enum netfs_region_state state;
+	struct netfs_range range;
+	bool clear_dirty = true;
+
+	range.start = page_offset(page);
+	range.end   = range.start + thp_size(page);
+
 	/* Now we need to clear the dirty flags on any page that's not shared
 	 * with any other dirty region.
 	 */
-	if (!clear_page_dirty_for_io(page))
-		BUG();
+	if (within(&range, &region->dirty))
+		goto completely_inside;
 
+	spin_lock(&ctx->lock);
+	if (range.start < region->dirty.start) {
+		r = region;
+		list_for_each_entry_continue_reverse(r, &ctx->dirty_regions, dirty_link) {
+			kdebug("maybe-b %lx reg=%x r=%x W=%x",
+			       page->index, region->debug_id, r->debug_id, wreq->debug_id);
+			if (r->dirty.end <= range.start)
+				break;
+			state = READ_ONCE(r->state);
+			if (state != NETFS_REGION_IS_ACTIVE &&
+			    state != NETFS_REGION_IS_DIRTY)
+				continue;
+			kdebug("keep-dirty-b %lx reg=%x r=%x W=%x",
+			       page->index, region->debug_id, r->debug_id, wreq->debug_id);
+			clear_dirty = false;
+		}
+	}
+
+	if (range.end > region->dirty.end) {
+		r = region;
+		list_for_each_entry_continue(r, &ctx->dirty_regions, dirty_link) {
+			kdebug("maybe-f %lx reg=%x r=%x W=%x",
+			       page->index, region->debug_id, r->debug_id, wreq->debug_id);
+			if (r->dirty.start >= range.end)
+				break;
+			state = READ_ONCE(r->state);
+			if (state != NETFS_REGION_IS_ACTIVE &&
+			    state != NETFS_REGION_IS_DIRTY)
+				continue;
+			kdebug("keep-dirty-f %lx reg=%x r=%x W=%x",
+			       page->index, region->debug_id, r->debug_id, wreq->debug_id);
+			clear_dirty = false;
+		}
+	}
+	spin_unlock(&ctx->lock);
+	if (!clear_dirty) {
+		kdebug("no-clear-dirty %lx", page->index);
+		goto no_clear;
+	}
+
+completely_inside:
+	if (!clear_page_dirty_for_io(page)) {
+		pr_err("page %lx is not dirty W=%x", page->index, wreq->debug_id);
+		BUG();
+	}
+
+no_clear:
 	/* We set writeback unconditionally because a page may participate in
 	 * more than one simultaneous writeback.
 	 */
@@ -228,7 +296,7 @@ static int netfs_begin_write(struct address_space *mapping,
 	trace_netfs_wreq(wreq);
 
 	netfs_iterate_pages(mapping, wreq->first, wreq->last,
-			    netfs_set_page_writeback);
+			    netfs_set_page_writeback, ctx, wreq);
 	netfs_unlock_pages(mapping, wreq->first, wreq->last);
 	iov_iter_xarray(&wreq->source, WRITE, &wreq->mapping->i_pages,
 			wreq->start, wreq->len);
