@@ -2,11 +2,12 @@
 /*
  * ipv6 in net namespaces
  */
-
-#include <net/inet_frag.h>
-
 #ifndef __NETNS_IPV6_H__
 #define __NETNS_IPV6_H__
+
+#include <linux/bitops_types.h>
+#include <linux/timer.h>
+
 #include <net/dst_ops.h>
 #include <uapi/linux/icmpv6.h>
 
