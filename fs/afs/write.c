@@ -530,7 +530,6 @@ static ssize_t afs_write_back_from_locked_page(struct address_space *mapping,
 		_debug("write discard %x @%llx [%llx]", len, start, i_size);
 
 		/* The dirty region was entirely beyond the EOF. */
-		fscache_clear_page_bits(mapping, start, len);
 		afs_pages_written_back(vnode, start, len);
 		ret = 0;
 	}

@@ -221,34 +221,6 @@ struct fscache_write_request {
 	void			*term_func_priv;
 };
 
-/**
- * fscache_clear_page_bits - Clear the PG_fscache bits from a set of pages
- * @mapping: The netfs inode to use as the source
- * @start: The start position in @mapping
- * @len: The amount of data to unlock
- *
- * Clear the PG_fscache flag from a sequence of pages and wake up anyone who's
- * waiting.
- */
-void __fscache_clear_page_bits(struct address_space *mapping,
-			       loff_t start, size_t len)
-{
-	pgoff_t first = start / PAGE_SIZE;
-	pgoff_t last = (start + len - 1) / PAGE_SIZE;
-	struct page *page;
-
-	if (len) {
-		XA_STATE(xas, &mapping->i_pages, first);
-
-		rcu_read_lock();
-		xas_for_each(&xas, page, last) {
-			end_page_fscache(page);
-		}
-		rcu_read_unlock();
-	}
-}
-EXPORT_SYMBOL(__fscache_clear_page_bits);
-
 /*
  * Deal with the completion of writing the data to the cache.
  */
@@ -256,8 +228,6 @@ static void fscache_wreq_done(void *priv, ssize_t transferred_or_error,
 			      bool was_async)
 {
 	struct fscache_write_request *wreq = priv;
-
-	fscache_clear_page_bits(wreq->mapping, wreq->start, wreq->len);
 
 	if (wreq->term_func)
 		wreq->term_func(wreq->term_func_priv, transferred_or_error,
@@ -336,7 +306,6 @@ abandon_end:
 abandon_free:
 	kfree(wreq);
 abandon:
-	fscache_clear_page_bits(mapping, start, len);
 	if (term_func)
 		term_func(term_func_priv, ret, false);
 }
