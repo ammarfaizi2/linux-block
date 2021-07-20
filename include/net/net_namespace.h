@@ -6,7 +6,6 @@
 #define __NET_NET_NAMESPACE_H
 
 #include <net/net_namespace_types.h>
-#include <net/net_namespace_api.h>
 
 #ifdef CONFIG_NET
 void net_ns_init(void);
