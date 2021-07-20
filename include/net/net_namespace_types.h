@@ -223,4 +223,22 @@ struct pernet_operations {
 	size_t size;
 };
 
+#ifdef CONFIG_NET_NS
+
+static inline
+int net_eq(const struct net *net1, const struct net *net2)
+{
+	return net1 == net2;
+}
+
+#else
+
+static inline
+int net_eq(const struct net *net1, const struct net *net2)
+{
+	return 1;
+}
+
+#endif
+
 #endif /* __NET_NET_NAMESPACE_TYPES_H */
