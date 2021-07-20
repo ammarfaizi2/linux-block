@@ -20,6 +20,19 @@
  */
 extern unsigned int netfs_debug;
 
+void __netfs_put_subrequest(struct netfs_read_subrequest *subreq, bool was_async);
+void netfs_put_read_request(struct netfs_read_request *rreq, bool was_async);
+void netfs_rreq_completed(struct netfs_read_request *rreq, bool was_async);
+int netfs_prefetch_for_write(struct file *file, struct folio *folio,
+			     loff_t pos, size_t len, bool always_fill);
+
+static inline void netfs_put_subrequest(struct netfs_read_subrequest *subreq,
+					bool was_async)
+{
+	if (refcount_dec_and_test(&subreq->usage))
+		__netfs_put_subrequest(subreq, was_async);
+}
+
 /*
  * stats.c
  */
