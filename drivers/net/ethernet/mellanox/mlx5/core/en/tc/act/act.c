@@ -15,8 +15,8 @@ static struct mlx5e_tc_act *tc_acts_fdb[NUM_FLOW_ACTIONS] = {
 	NULL, /* FLOW_ACTION_MIRRED, */
 	NULL, /* FLOW_ACTION_REDIRECT_INGRESS, */
 	NULL, /* FLOW_ACTION_MIRRED_INGRESS, */
-	NULL, /* FLOW_ACTION_VLAN_PUSH, */
-	NULL, /* FLOW_ACTION_VLAN_POP, */
+	&mlx5e_tc_act_vlan,
+	&mlx5e_tc_act_vlan,
 	NULL, /* FLOW_ACTION_VLAN_MANGLE, */
 	&mlx5e_tc_act_tun_encap,
 	&mlx5e_tc_act_tun_decap,
