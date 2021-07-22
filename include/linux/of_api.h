@@ -15,7 +15,6 @@
 
 #include <linux/of_types.h>
 
-#include <linux/property.h>
 #include <linux/string.h>
 #include <linux/numa_types.h>
 #include <linux/bitops.h>
