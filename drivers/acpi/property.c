@@ -1420,3 +1420,27 @@ bool is_acpi_data_node(const struct fwnode_handle *fwnode)
 	return !IS_ERR_OR_NULL(fwnode) && fwnode->ops == &acpi_data_fwnode_ops;
 }
 EXPORT_SYMBOL(is_acpi_data_node);
+
+
+struct fwnode_handle *acpi_alloc_fwnode_static(void)
+{
+	struct fwnode_handle *fwnode;
+
+	fwnode = kzalloc(sizeof(struct fwnode_handle), GFP_KERNEL);
+	if (!fwnode)
+		return NULL;
+
+	fwnode_init(fwnode, &acpi_static_fwnode_ops);
+
+	return fwnode;
+}
+EXPORT_SYMBOL(acpi_alloc_fwnode_static);
+
+void acpi_free_fwnode_static(struct fwnode_handle *fwnode)
+{
+	if (WARN_ON(!is_acpi_static_node(fwnode)))
+		return;
+
+	kfree(fwnode);
+}
+EXPORT_SYMBOL(acpi_free_fwnode_static);
