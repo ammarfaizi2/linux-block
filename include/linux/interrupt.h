@@ -541,16 +541,6 @@ DECLARE_STATIC_KEY_FALSE(force_irqthreads_key);
 #define force_irqthreads()	(false)
 #endif
 
-/* Some architectures might implement lazy enabling/disabling of
- * interrupts. In some cases, such as stop_machine, we might want
- * to ensure that after a local_irq_disable(), interrupts have
- * really been disabled in hardware. Such architectures need to
- * implement the following hook.
- */
-#ifndef hard_irq_disable
-#define hard_irq_disable()	do { } while(0)
-#endif
-
 /*
  * Autoprobing for irqs:
  *
