@@ -52,7 +52,7 @@ struct pt_regs;
  * @debugfs_file:	dentry for the debugfs file
  * @name:		flow handler name for /proc/interrupts output
  */
-struct irq_desc {
+struct ____cacheline_internodealigned_in_smp irq_desc {
 	struct irq_common_data	irq_common_data;
 	struct irq_data		irq_data;
 	unsigned int __percpu	*kstat_irqs;
@@ -102,7 +102,7 @@ struct irq_desc {
 	int			parent_irq;
 	struct module		*owner;
 	const char		*name;
-} ____cacheline_internodealigned_in_smp;
+};
 
 #ifdef CONFIG_SPARSE_IRQ
 extern void irq_lock_sparse(void);

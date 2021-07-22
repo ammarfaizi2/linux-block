@@ -115,7 +115,7 @@ typedef irqreturn_t (*irq_handler_t)(int, void *);
  * @thread_mask:	bitmask for keeping track of @thread activity
  * @dir:	pointer to the proc/irq/NN/name entry
  */
-struct irqaction {
+struct ____cacheline_internodealigned_in_smp irqaction {
 	irq_handler_t		handler;
 	void			*dev_id;
 	void __percpu		*percpu_dev_id;
@@ -129,7 +129,7 @@ struct irqaction {
 	unsigned long		thread_mask;
 	const char		*name;
 	struct proc_dir_entry	*dir;
-} ____cacheline_internodealigned_in_smp;
+};
 
 extern irqreturn_t no_action(int cpl, void *dev_id);
 
