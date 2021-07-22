@@ -129,6 +129,39 @@ struct cpuhp_step {
 	bool			multi_instance;
 };
 
+static u64 cpu_hp_start_time;
+static bool cpu_hp_start_time_valid;
+
+void cpu_hp_start_now(void)
+{
+	// if (jiffies < 9 * HZ)
+	// 	return;
+	// WARN_ON_ONCE(cpu_hp_start_time_valid);
+	WRITE_ONCE(cpu_hp_start_time, ktime_get_mono_fast_ns());
+	smp_store_release(&cpu_hp_start_time_valid, true);
+}
+
+void cpu_hp_stop_now(void)
+{
+	// WARN_ON_ONCE(!cpu_hp_start_time_valid && jiffies > 10 * HZ);
+	smp_store_release(&cpu_hp_start_time_valid, false);
+}
+
+void cpu_hp_check_delay(const char *s, void *func)
+{
+	u64 t, t1;
+
+	if (!smp_load_acquire(&cpu_hp_start_time_valid))
+		return;
+	t = READ_ONCE(cpu_hp_start_time);
+	smp_mb();
+	if (!READ_ONCE(cpu_hp_start_time_valid))
+		return;
+	t1 = ktime_get_mono_fast_ns();
+	if (WARN_ONCE(time_after64(t1, t + 100 * NSEC_PER_SEC), "%s %ps took %llu milliseconds\n", s, func, (t1 - t) / NSEC_PER_MSEC))
+		WRITE_ONCE(cpu_hp_start_time, t1);
+}
+
 static DEFINE_MUTEX(cpuhp_state_mutex);
 static struct cpuhp_step cpuhp_hp_states[];
 
@@ -161,7 +194,6 @@ static int cpuhp_invoke_callback(unsigned int cpu, enum cpuhp_state state,
 	int (*cbm)(unsigned int cpu, struct hlist_node *node);
 	int (*cb)(unsigned int cpu);
 	int ret, cnt;
-	u64 t, t1;
 
 	if (st->fail == state) {
 		st->fail = CPUHP_INVALID;
@@ -178,10 +210,8 @@ static int cpuhp_invoke_callback(unsigned int cpu, enum cpuhp_state state,
 		cb = bringup ? step->startup.single : step->teardown.single;
 
 		trace_cpuhp_enter(cpu, st->target, state, cb);
-		t = ktime_get_mono_fast_ns();
 		ret = cb(cpu);
-		t1 = ktime_get_mono_fast_ns();
-		WARN_ONCE(time_after64(t1, t + 100 * NSEC_PER_SEC), "CPU-hotplug notifier %ps took %llu milliseconds\n", cb, (t1 - t) / NSEC_PER_MSEC);
+		cpu_hp_check_delay("CPU-hotplug notifier", cb);
 		trace_cpuhp_exit(cpu, st->state, state, ret);
 		return ret;
 	}
@@ -191,10 +221,8 @@ static int cpuhp_invoke_callback(unsigned int cpu, enum cpuhp_state state,
 	if (node) {
 		WARN_ON_ONCE(lastp && *lastp);
 		trace_cpuhp_multi_enter(cpu, st->target, state, cbm, node);
-		t = ktime_get_mono_fast_ns();
 		ret = cbm(cpu, node);
-		t1 = ktime_get_mono_fast_ns();
-		WARN_ONCE(time_after64(t1, t + 100 * NSEC_PER_SEC), "CPU-hotplug notifier %ps took %llu milliseconds\n", cb, (t1 - t) / NSEC_PER_MSEC);
+		cpu_hp_check_delay("CPU-hotplug notifier", cbm);
 		trace_cpuhp_exit(cpu, st->state, state, ret);
 		return ret;
 	}
@@ -206,10 +234,8 @@ static int cpuhp_invoke_callback(unsigned int cpu, enum cpuhp_state state,
 			break;
 
 		trace_cpuhp_multi_enter(cpu, st->target, state, cbm, node);
-		t = ktime_get_mono_fast_ns();
 		ret = cbm(cpu, node);
-		t1 = ktime_get_mono_fast_ns();
-		WARN_ONCE(time_after64(t1, t + 100 * NSEC_PER_SEC), "CPU-hotplug notifier %ps took %llu milliseconds\n", cb, (t1 - t) / NSEC_PER_MSEC);
+		cpu_hp_check_delay("CPU-hotplug notifier", cbm);
 		trace_cpuhp_exit(cpu, st->state, state, ret);
 		if (ret) {
 			if (!lastp)
@@ -234,10 +260,8 @@ err:
 			break;
 
 		trace_cpuhp_multi_enter(cpu, st->target, state, cbm, node);
-		t = ktime_get_mono_fast_ns();
 		ret = cbm(cpu, node);
-		t1 = ktime_get_mono_fast_ns();
-		WARN_ONCE(time_after64(t1, t + 100 * NSEC_PER_SEC), "CPU-hotplug notifier %ps took %llu milliseconds\n", cb, (t1 - t) / NSEC_PER_MSEC);
+		cpu_hp_check_delay("CPU-hotplug notifier", cbm);
 		trace_cpuhp_exit(cpu, st->state, state, ret);
 		/*
 		 * Rollback must not fail,
@@ -540,6 +564,7 @@ static void __cpuhp_kick_ap(struct cpuhp_cpu_state *st)
 	st->should_run = true;
 	wake_up_process(st->thread);
 	wait_for_ap_thread(st, st->bringup);
+	cpu_hp_check_delay("AP thread running", __cpuhp_kick_ap);
 }
 
 static int cpuhp_kick_ap(struct cpuhp_cpu_state *st, enum cpuhp_state target)
