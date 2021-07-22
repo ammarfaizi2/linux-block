@@ -142,6 +142,8 @@ struct hw_perf_event {
 			int		event_base_rdpmc;
 			int		idx;
 			int		last_cpu;
+
+#define PERF_EVENT_FLAG_USER_READ_CNT	0x80000000
 			int		flags;
 
 			struct hw_perf_event_extra extra_reg;
