@@ -134,20 +134,25 @@ static bool cpu_hp_start_time_valid;
 
 void cpu_hp_start_now(void)
 {
-	// if (jiffies < 9 * HZ)
-	// 	return;
-	// WARN_ON_ONCE(cpu_hp_start_time_valid);
-	WRITE_ONCE(cpu_hp_start_time, ktime_get_mono_fast_ns());
+	if (!rcu_inkernel_boot_has_ended())
+		return;
+	WRITE_ONCE(cpu_hp_start_time, ktime_get());
 	smp_store_release(&cpu_hp_start_time_valid, true);
+	pr_info("%s invoked, cpu_hp_start_time: %llu milliseconds.\n", __func__, cpu_hp_start_time / NSEC_PER_MSEC);
 }
 
 void cpu_hp_stop_now(void)
 {
-	// WARN_ON_ONCE(!cpu_hp_start_time_valid && jiffies > 10 * HZ);
+	u64 t;
+
+	if (!rcu_inkernel_boot_has_ended())
+		return;
+	t = ktime_get();
+	pr_info("%s invoked, %llu - %llu = %llu milliseconds elapsed with flag %s.\n", __func__, t / NSEC_PER_MSEC, cpu_hp_start_time / NSEC_PER_MSEC, (t - cpu_hp_start_time) / NSEC_PER_MSEC, cpu_hp_start_time_valid ? "set" : "clear");
 	smp_store_release(&cpu_hp_start_time_valid, false);
 }
 
-void cpu_hp_check_delay(const char *s, void *func)
+void cpu_hp_check_delay(const char *s, const void *func)
 {
 	u64 t, t1;
 
@@ -157,7 +162,7 @@ void cpu_hp_check_delay(const char *s, void *func)
 	smp_mb();
 	if (!READ_ONCE(cpu_hp_start_time_valid))
 		return;
-	t1 = ktime_get_mono_fast_ns();
+	t1 = ktime_get();
 	if (WARN_ONCE(time_after64(t1, t + 100 * NSEC_PER_SEC), "%s %ps took %llu milliseconds\n", s, func, (t1 - t) / NSEC_PER_MSEC))
 		WRITE_ONCE(cpu_hp_start_time, t1);
 }
@@ -717,9 +722,7 @@ static int cpuhp_up_callbacks(unsigned int cpu, struct cpuhp_cpu_state *st,
 {
 	enum cpuhp_state prev_state = st->state;
 	int ret = 0;
-	u64 t, t1;
 
-	t = ktime_get_mono_fast_ns();
 	ret = cpuhp_invoke_callback_range(true, cpu, st, target);
 	if (ret) {
 		cpuhp_reset_state(st, prev_state);
@@ -727,8 +730,7 @@ static int cpuhp_up_callbacks(unsigned int cpu, struct cpuhp_cpu_state *st,
 			WARN_ON(cpuhp_invoke_callback_range(false, cpu, st,
 							    prev_state));
 	}
-	t1 = ktime_get_mono_fast_ns();
-	WARN_ONCE(time_after64(t1, t + 100 * NSEC_PER_SEC), "CPU-hotplug notifier %s took %llu milliseconds\n", __func__, (t1 - t) / NSEC_PER_MSEC);
+	cpu_hp_check_delay("CPU-hotplug notifier", __func__);
 	return ret;
 }
 
