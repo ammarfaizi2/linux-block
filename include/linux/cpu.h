@@ -130,7 +130,7 @@ int cpu_device_down(struct device *dev);
 extern void smp_shutdown_nonboot_cpus(unsigned int primary_cpu);
 extern void cpu_hp_start_now(void);
 extern void cpu_hp_stop_now(void);
-extern void cpu_hp_check_delay(const char *s, void *func);
+extern void cpu_hp_check_delay(const char *s, const void *func);
 
 #else /* CONFIG_HOTPLUG_CPU */
 
