@@ -144,10 +144,14 @@ tc_act_parse_vlan(struct mlx5e_tc_act_parse_state *parse_state,
 	if (act->id == FLOW_ACTION_VLAN_PUSH &&
 	    (attr->action & MLX5_FLOW_CONTEXT_ACTION_VLAN_POP)) {
 		/* Replace vlan pop+push with vlan modify */
-		return -EOPNOTSUPP;
+		attr->action &= ~MLX5_FLOW_CONTEXT_ACTION_VLAN_POP;
+		err = mlx5e_tc_act_vlan_add_rewrite_action(priv, MLX5_FLOW_NAMESPACE_FDB, act,
+							   attr->parse_attr, parse_state->hdrs,
+							   &attr->action, parse_state->extack);
+	} else {
+		err = parse_tc_vlan_action(priv, act, esw_attr, &attr->action,
+					   parse_state->extack);
 	}
-
-	err = parse_tc_vlan_action(priv, act, esw_attr, &attr->action, parse_state->extack);
 
 	if (err)
 		return err;

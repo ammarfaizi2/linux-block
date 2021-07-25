@@ -61,7 +61,6 @@
 #include "en/tc_tun_encap.h"
 #include "en/tc/sample.h"
 #include "en/tc/act/act.h"
-#include "en/tc/act/pedit.h"
 #include "en/tc/act/vlan.h"
 #include "lib/devcom.h"
 #include "lib/geneve.h"
@@ -2048,16 +2047,14 @@ static void *get_match_outer_headers_value(struct mlx5_flow_spec *spec)
 			    outer_headers);
 }
 
-static void *get_match_headers_value(u32 flags,
-				     struct mlx5_flow_spec *spec)
+void *mlx5e_get_match_headers_value(u32 flags, struct mlx5_flow_spec *spec)
 {
 	return (flags & MLX5_FLOW_CONTEXT_ACTION_DECAP) ?
 		get_match_inner_headers_value(spec) :
 		get_match_outer_headers_value(spec);
 }
 
-static void *get_match_headers_criteria(u32 flags,
-					struct mlx5_flow_spec *spec)
+void *mlx5e_get_match_headers_criteria(u32 flags, struct mlx5_flow_spec *spec)
 {
 	return (flags & MLX5_FLOW_CONTEXT_ACTION_DECAP) ?
 		get_match_inner_headers_criteria(spec) :
@@ -2722,8 +2719,8 @@ static int offload_pedit_fields(struct mlx5e_priv *priv,
 	u8 cmd;
 
 	mod_acts = &parse_attr->mod_hdr_acts;
-	headers_c = get_match_headers_criteria(*action_flags, &parse_attr->spec);
-	headers_v = get_match_headers_value(*action_flags, &parse_attr->spec);
+	headers_c = mlx5e_get_match_headers_criteria(*action_flags, &parse_attr->spec);
+	headers_v = mlx5e_get_match_headers_value(*action_flags, &parse_attr->spec);
 
 	set_masks = &hdrs[0].masks;
 	add_masks = &hdrs[1].masks;
@@ -2995,8 +2992,8 @@ static bool modify_header_match_supported(struct mlx5e_priv *priv,
 	u8 ip_proto;
 	int i;
 
-	headers_c = get_match_headers_criteria(actions, spec);
-	headers_v = get_match_headers_value(actions, spec);
+	headers_c = mlx5e_get_match_headers_criteria(actions, spec);
+	headers_v = mlx5e_get_match_headers_value(actions, spec);
 	ethertype = MLX5_GET(fte_match_set_lyr_2_4, headers_v, ethertype);
 
 	/* for non-IP we only re-write MACs, so we're okay */
@@ -3124,50 +3121,6 @@ static bool same_vf_reps(struct mlx5e_priv *priv,
 	       priv->netdev == out_dev;
 }
 
-static int add_vlan_rewrite_action(struct mlx5e_priv *priv, int namespace,
-				   const struct flow_action_entry *act,
-				   struct mlx5e_tc_flow_parse_attr *parse_attr,
-				   struct pedit_headers_action *hdrs,
-				   u32 *action, struct netlink_ext_ack *extack)
-{
-	u16 mask16 = VLAN_VID_MASK;
-	u16 val16 = act->vlan.vid & VLAN_VID_MASK;
-	const struct flow_action_entry pedit_act = {
-		.id = FLOW_ACTION_MANGLE,
-		.mangle.htype = FLOW_ACT_MANGLE_HDR_TYPE_ETH,
-		.mangle.offset = offsetof(struct vlan_ethhdr, h_vlan_TCI),
-		.mangle.mask = ~(u32)be16_to_cpu(*(__be16 *)&mask16),
-		.mangle.val = (u32)be16_to_cpu(*(__be16 *)&val16),
-	};
-	u8 match_prio_mask, match_prio_val;
-	void *headers_c, *headers_v;
-	int err;
-
-	headers_c = get_match_headers_criteria(*action, &parse_attr->spec);
-	headers_v = get_match_headers_value(*action, &parse_attr->spec);
-
-	if (!(MLX5_GET(fte_match_set_lyr_2_4, headers_c, cvlan_tag) &&
-	      MLX5_GET(fte_match_set_lyr_2_4, headers_v, cvlan_tag))) {
-		NL_SET_ERR_MSG_MOD(extack,
-				   "VLAN rewrite action must have VLAN protocol match");
-		return -EOPNOTSUPP;
-	}
-
-	match_prio_mask = MLX5_GET(fte_match_set_lyr_2_4, headers_c, first_prio);
-	match_prio_val = MLX5_GET(fte_match_set_lyr_2_4, headers_v, first_prio);
-	if (act->vlan.prio != (match_prio_val & match_prio_mask)) {
-		NL_SET_ERR_MSG_MOD(extack,
-				   "Changing VLAN prio is not supported");
-		return -EOPNOTSUPP;
-	}
-
-	err = mlx5e_tc_act_pedit_parse_action(priv, &pedit_act, namespace, parse_attr, hdrs,
-					      NULL, extack);
-	*action |= MLX5_FLOW_CONTEXT_ACTION_MOD_HDR;
-
-	return err;
-}
-
 static int
 add_vlan_prio_tag_rewrite_action(struct mlx5e_priv *priv,
 				 struct mlx5e_tc_flow_parse_attr *parse_attr,
@@ -3178,18 +3131,18 @@ add_vlan_prio_tag_rewrite_action(struct mlx5e_priv *priv,
 		.vlan.vid = 0,
 		.vlan.prio =
 			MLX5_GET(fte_match_set_lyr_2_4,
-				 get_match_headers_value(*action,
-							 &parse_attr->spec),
+				 mlx5e_get_match_headers_value(*action,
+							       &parse_attr->spec),
 				 first_prio) &
 			MLX5_GET(fte_match_set_lyr_2_4,
-				 get_match_headers_criteria(*action,
-							    &parse_attr->spec),
+				 mlx5e_get_match_headers_criteria(*action,
+								  &parse_attr->spec),
 				 first_prio),
 	};
 
-	return add_vlan_rewrite_action(priv, MLX5_FLOW_NAMESPACE_FDB,
-				       &prio_tag_act, parse_attr, hdrs, action,
-				       extack);
+	return mlx5e_tc_act_vlan_add_rewrite_action(priv, MLX5_FLOW_NAMESPACE_FDB,
+						    &prio_tag_act, parse_attr, hdrs, action,
+						    extack);
 }
 
 static int
@@ -3277,15 +3230,6 @@ parse_tc_nic_actions(struct mlx5e_priv *priv,
 
 	flow_action_for_each(i, act, flow_action) {
 		switch (act->id) {
-		case FLOW_ACTION_VLAN_MANGLE:
-			err = add_vlan_rewrite_action(priv,
-						      MLX5_FLOW_NAMESPACE_KERNEL,
-						      act, parse_attr, hdrs,
-						      &attr->action, extack);
-			if (err)
-				return err;
-
-			break;
 		case FLOW_ACTION_REDIRECT: {
 			struct net_device *peer_dev = act->dev;
 
@@ -3769,16 +3713,6 @@ static int parse_tc_fdb_actions(struct mlx5e_priv *priv,
 				return -EOPNOTSUPP;
 			}
 			}
-			break;
-		case FLOW_ACTION_VLAN_MANGLE:
-			err = add_vlan_rewrite_action(priv,
-						      MLX5_FLOW_NAMESPACE_FDB,
-						      act, parse_attr, hdrs,
-						      &attr->action, extack);
-			if (err)
-				return err;
-
-			esw_attr->split_count = esw_attr->out_count;
 			break;
 		case FLOW_ACTION_CT:
 			if (flow_flag_test(flow, SAMPLE)) {
