@@ -8763,9 +8763,13 @@ static void sched_rq_cpu_starting(unsigned int cpu)
 
 int sched_cpu_starting(unsigned int cpu)
 {
+	cpu_hp_check_delay("On entry to", sched_cpu_starting);
 	sched_core_cpu_starting(cpu);
+	cpu_hp_check_delay("After sched_core_cpu_starting()", sched_cpu_starting);
 	sched_rq_cpu_starting(cpu);
+	cpu_hp_check_delay("After sched_rq_cpu_starting()", sched_cpu_starting);
 	sched_tick_start(cpu);
+	cpu_hp_check_delay("After sched_tick_start()", sched_cpu_starting);
 	return 0;
 }
 
