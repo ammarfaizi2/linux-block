@@ -5744,7 +5744,9 @@ static inline void sched_core_cpu_starting(unsigned int cpu)
 	struct rq *rq, *core_rq = NULL;
 	int i;
 
+	cpu_hp_check_delay("On entry to", sched_core_cpu_starting);
 	core_rq = cpu_rq(cpu)->core;
+	cpu_hp_check_delay("After first cpu_rq() in", sched_core_cpu_starting);
 
 	if (!core_rq) {
 		for_each_cpu(i, smt_mask) {
@@ -5752,9 +5754,11 @@ static inline void sched_core_cpu_starting(unsigned int cpu)
 			if (rq->core && rq->core == rq)
 				core_rq = rq;
 		}
+		cpu_hp_check_delay("After first for_each_cpu() in", sched_core_cpu_starting);
 
 		if (!core_rq)
 			core_rq = cpu_rq(cpu);
+		cpu_hp_check_delay("After second cpu_rq() in", sched_core_cpu_starting);
 
 		for_each_cpu(i, smt_mask) {
 			rq = cpu_rq(i);
@@ -5762,6 +5766,7 @@ static inline void sched_core_cpu_starting(unsigned int cpu)
 			WARN_ON_ONCE(rq->core && rq->core != core_rq);
 			rq->core = core_rq;
 		}
+		cpu_hp_check_delay("After second for_each_cpu() in", sched_core_cpu_starting);
 	}
 }
 #else /* !CONFIG_SCHED_CORE */
