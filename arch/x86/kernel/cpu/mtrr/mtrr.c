@@ -257,8 +257,10 @@ static void set_mtrr_from_inactive_cpu(unsigned int reg, unsigned long base,
 				      .smp_type = type
 				    };
 
+	cpu_hp_check_delay("On entry to", set_mtrr_from_inactive_cpu);
 	stop_machine_from_inactive_cpu(mtrr_rendezvous_handler, &data,
 				       cpu_callout_mask);
+	cpu_hp_check_delay("After call to stop_machine_from_inactive_cpu()", set_mtrr_from_inactive_cpu);
 }
 
 /**
@@ -786,11 +788,14 @@ void __init mtrr_bp_init(void)
 
 void mtrr_ap_init(void)
 {
+	cpu_hp_check_delay("On entry to", mtrr_ap_init);
 	if (!mtrr_enabled())
 		return;
+	cpu_hp_check_delay("After call to mtrr_enabled()", mtrr_ap_init);
 
 	if (!use_intel() || mtrr_aps_delayed_init)
 		return;
+	cpu_hp_check_delay("After call to use_intel()", mtrr_ap_init);
 
 	/*
 	 * Ideally we should hold mtrr_mutex here to avoid mtrr entries
@@ -806,6 +811,7 @@ void mtrr_ap_init(void)
 	 *      lock to prevent mtrr entry changes
 	 */
 	set_mtrr_from_inactive_cpu(~0U, 0, 0, 0);
+	cpu_hp_check_delay("After call set_mtrr_from_inactive_cpu use_intel()", mtrr_ap_init);
 }
 
 /**
