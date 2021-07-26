@@ -401,6 +401,7 @@ void smp_store_cpu_info(int id)
 {
 	struct cpuinfo_x86 *c = &cpu_data(id);
 
+	cpu_hp_check_delay("On entry to", smp_store_cpu_info);
 	/* Copy boot_cpu_data only on the first bringup */
 	if (!c->initialized)
 		*c = boot_cpu_data;
@@ -410,6 +411,7 @@ void smp_store_cpu_info(int id)
 	 * bringing up AP or offlined CPU0.
 	 */
 	identify_secondary_cpu(c);
+	cpu_hp_check_delay("After call to identify_secondary_cpu() in", smp_store_cpu_info);
 	c->initialized = true;
 }
 
