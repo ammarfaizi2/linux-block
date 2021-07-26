@@ -1668,15 +1668,22 @@ void __init identify_boot_cpu(void)
 
 void identify_secondary_cpu(struct cpuinfo_x86 *c)
 {
+	cpu_hp_check_delay("On entry to", identify_secondary_cpu);
 	BUG_ON(c == &boot_cpu_data);
 	identify_cpu(c);
+	cpu_hp_check_delay("After call to identify_cpu()", identify_secondary_cpu);
 #ifdef CONFIG_X86_32
 	enable_sep_cpu();
+	cpu_hp_check_delay("After call to enable_sep_cpu()", identify_secondary_cpu);
 #endif
 	mtrr_ap_init();
+	cpu_hp_check_delay("After call to mtrr_ap_init()", identify_secondary_cpu);
 	validate_apic_and_package_id(c);
+	cpu_hp_check_delay("After call to validate_apic_and_package_id()", identify_secondary_cpu);
 	x86_spec_ctrl_setup_ap();
+	cpu_hp_check_delay("After call to x86_spec_ctrl_setup_ap()", identify_secondary_cpu);
 	update_srbds_msr();
+	cpu_hp_check_delay("After call to update_srbds_msr()", identify_secondary_cpu);
 }
 
 static __init int setup_noclflush(char *arg)
