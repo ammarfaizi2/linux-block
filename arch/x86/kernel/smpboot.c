@@ -170,6 +170,7 @@ static void smp_callin(void)
 	 * now safe to touch our local APIC.
 	 */
 	cpuid = smp_processor_id();
+	cpu_hp_check_delay("After call to smp_processor_id() in", smp_callin);
 
 	/*
 	 * the boot CPU has finished the init stage and is spinning
@@ -178,20 +179,24 @@ static void smp_callin(void)
 	 * boards)
 	 */
 	apic_ap_setup();
+	cpu_hp_check_delay("After call to apic_ap_setup() in", smp_callin);
 
 	/*
 	 * Save our processor parameters. Note: this information
 	 * is needed for clock calibration.
 	 */
 	smp_store_cpu_info(cpuid);
+	cpu_hp_check_delay("After call to smp_store_cpu_info() in", smp_callin);
 
 	/*
 	 * The topology information must be up to date before
 	 * calibrate_delay() and notify_cpu_starting().
 	 */
 	set_cpu_sibling_map(raw_smp_processor_id());
+	cpu_hp_check_delay("After call to set_cpu_sibling_map() in", smp_callin);
 
 	init_freq_invariance(true, false);
+	cpu_hp_check_delay("After call to init_freq_invariance() in", smp_callin);
 
 	/*
 	 * Get our bogomips.
@@ -200,8 +205,10 @@ static void smp_callin(void)
 	 * accurate as the value just calculated.
 	 */
 	calibrate_delay();
+	cpu_hp_check_delay("After call to calibrate_delay() in", smp_callin);
 	cpu_data(cpuid).loops_per_jiffy = loops_per_jiffy;
 	pr_debug("Stack at about %p\n", &cpuid);
+	cpu_hp_check_delay("After call to pr_debug() in", smp_callin);
 
 	wmb();
 
