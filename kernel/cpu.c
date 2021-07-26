@@ -165,7 +165,7 @@ void cpu_hp_check_delay(const char *s, const void *func)
 	t1 = ktime_get();
 	if (WARN_ONCE(time_after64(t1, t + 100 * NSEC_PER_SEC), "%s %ps took %llu milliseconds\n", s, func, (t1 - t) / NSEC_PER_MSEC))
 		WRITE_ONCE(cpu_hp_start_time, t1);
-	if (WARN_ONCE(time_before64(t1, t - 100 * NSEC_PER_MSEC), "%s %ps clock went backwards %llu milliseconds\n", s, func, (t - t1) / NSEC_PER_MSEC))
+	if (WARN_ONCE(time_before64(t1, t - 25 * NSEC_PER_MSEC), "%s %ps clock went backwards %llu milliseconds\n", s, func, (t - t1) / NSEC_PER_MSEC))
 		WRITE_ONCE(cpu_hp_start_time, t1);
 }
 
