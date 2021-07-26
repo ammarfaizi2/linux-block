@@ -1306,8 +1306,11 @@ void notify_cpu_starting(unsigned int cpu)
 	enum cpuhp_state target = min((int)st->target, CPUHP_AP_ONLINE);
 	int ret;
 
+	cpu_hp_check_delay("On entry to", notify_cpu_starting);
 	rcu_cpu_starting(cpu);	/* Enables RCU usage on this CPU. */
+	cpu_hp_check_delay("After call to rcu_cpu_starting() in", notify_cpu_starting);
 	cpumask_set_cpu(cpu, &cpus_booted_once_mask);
+	cpu_hp_check_delay("Before call to cpuhp_invoke_callback_range in", notify_cpu_starting);
 	ret = cpuhp_invoke_callback_range(true, cpu, st, target);
 
 	/*
