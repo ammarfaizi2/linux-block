@@ -663,25 +663,34 @@ int stop_machine_from_inactive_cpu(cpu_stop_fn_t fn, void *data,
 	struct cpu_stop_done done;
 	int ret;
 
+	cpu_hp_check_delay("On entry to", stop_machine_from_inactive_cpu);
 	/* Local CPU must be inactive and CPU hotplug in progress. */
 	BUG_ON(cpu_active(raw_smp_processor_id()));
+	cpu_hp_check_delay("After call to cpu_active() in", stop_machine_from_inactive_cpu);
 	msdata.num_threads = num_active_cpus() + 1;	/* +1 for local */
+	cpu_hp_check_delay("After call to num_active_cpus() in", stop_machine_from_inactive_cpu);
 
 	/* No proper task established and can't sleep - busy wait for lock. */
 	while (!mutex_trylock(&stop_cpus_mutex))
 		cpu_relax();
+	cpu_hp_check_delay("After acquiring stop_cpus_mutex in", stop_machine_from_inactive_cpu);
 
 	/* Schedule work on other CPUs and execute directly for local CPU */
 	set_state(&msdata, MULTI_STOP_PREPARE);
 	cpu_stop_init_done(&done, num_active_cpus());
+	cpu_hp_check_delay("After call to cpu_stop_init_done() in", stop_machine_from_inactive_cpu);
 	queue_stop_cpus_work(cpu_active_mask, multi_cpu_stop, &msdata,
 			     &done);
+	cpu_hp_check_delay("After call to queue_stop_cpus_work() in", stop_machine_from_inactive_cpu);
 	ret = multi_cpu_stop(&msdata);
+	cpu_hp_check_delay("After call to multi_cpu_stop() in", stop_machine_from_inactive_cpu);
 
 	/* Busy wait for completion. */
 	while (!completion_done(&done.completion))
 		cpu_relax();
+	cpu_hp_check_delay("After successful call to completion_done() in", stop_machine_from_inactive_cpu);
 
 	mutex_unlock(&stop_cpus_mutex);
+	cpu_hp_check_delay("After releasing stop_cpus_mutex in", stop_machine_from_inactive_cpu);
 	return ret ?: done.ret;
 }
