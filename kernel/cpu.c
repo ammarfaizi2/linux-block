@@ -129,6 +129,8 @@ struct cpuhp_step {
 	bool			multi_instance;
 };
 
+#ifdef CONFIG_SMP
+
 static u64 cpu_hp_start_time;
 static bool cpu_hp_start_time_valid;
 
@@ -168,6 +170,8 @@ void cpu_hp_check_delay(const char *s, const void *func)
 	if (WARN_ONCE(time_before64(t1, t - 25 * NSEC_PER_MSEC), "%s %ps clock went backwards %llu milliseconds\n", s, func, (t - t1) / NSEC_PER_MSEC))
 		WRITE_ONCE(cpu_hp_start_time, t1);
 }
+
+#endif /* #ifdef CONFIG_SMP */
 
 static DEFINE_MUTEX(cpuhp_state_mutex);
 static struct cpuhp_step cpuhp_hp_states[];
