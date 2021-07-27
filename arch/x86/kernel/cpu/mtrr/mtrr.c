@@ -173,11 +173,14 @@ static int mtrr_rendezvous_handler(void *info)
 	 * started the boot/resume sequence, this might be a duplicate
 	 * set_all()).
 	 */
+	cpu_hp_check_delay("On entry to", mtrr_rendezvous_handler);
 	if (data->smp_reg != ~0U) {
 		mtrr_if->set(data->smp_reg, data->smp_base,
 			     data->smp_size, data->smp_type);
+		cpu_hp_check_delay("After call to ->set()", mtrr_rendezvous_handler);
 	} else if (mtrr_aps_delayed_init || !cpu_online(smp_processor_id())) {
 		mtrr_if->set_all();
+		cpu_hp_check_delay("After call to ->set_all()", mtrr_rendezvous_handler);
 	}
 	return 0;
 }
