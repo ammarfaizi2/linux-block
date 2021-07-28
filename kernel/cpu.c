@@ -154,21 +154,28 @@ void cpu_hp_stop_now(void)
 	smp_store_release(&cpu_hp_start_time_valid, false);
 }
 
-void cpu_hp_check_delay(const char *s, const void *func)
+/* Return true if a time-delay anomaly was detected. */
+bool cpu_hp_check_delay(const char *s, const void *func)
 {
+	bool ret = false;
 	u64 t, t1;
 
 	if (!smp_load_acquire(&cpu_hp_start_time_valid))
-		return;
+		return false;
 	t = READ_ONCE(cpu_hp_start_time);
 	smp_mb();
 	if (!READ_ONCE(cpu_hp_start_time_valid))
-		return;
+		return false;
 	t1 = ktime_get();
-	if (WARN_ONCE(time_after64(t1, t + 100 * NSEC_PER_SEC), "%s %ps took %llu milliseconds\n", s, func, (t1 - t) / NSEC_PER_MSEC))
+	if (WARN_ONCE(time_after64(t1, t + 100 * NSEC_PER_SEC), "%s %ps took %llu milliseconds\n", s, func, (t1 - t) / NSEC_PER_MSEC)) {
 		WRITE_ONCE(cpu_hp_start_time, t1);
-	if (WARN_ONCE(time_before64(t1, t - 25 * NSEC_PER_MSEC), "%s %ps clock went backwards %llu milliseconds\n", s, func, (t - t1) / NSEC_PER_MSEC))
+		ret = true;
+	}
+	if (WARN_ONCE(time_before64(t1, t - 25 * NSEC_PER_MSEC), "%s %ps clock went backwards %llu milliseconds\n", s, func, (t - t1) / NSEC_PER_MSEC)){
 		WRITE_ONCE(cpu_hp_start_time, t1);
+		ret = true;
+	}
+	return ret;
 }
 
 #endif /* #ifdef CONFIG_SMP */
