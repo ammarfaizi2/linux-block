@@ -300,9 +300,66 @@ void netfs_mark_folios_for_writeback(struct netfs_write_request *wreq,
 			     netfs_mark_writeback_iterator, wreq, ctx);
 }
 
-static int netfs_end_writeback_iterator(struct xa_state *xas, struct folio *folio)
+static int netfs_end_writeback_iterator(struct xa_state *xas, struct folio *folio,
+					struct netfs_write_request *wreq,
+					struct netfs_i_context *ctx)
 {
-	folio_end_writeback(folio);
+	struct netfs_dirty_region *region, *r;
+	struct netfs_range range;
+	bool clear_wb = true;
+
+	range.start = folio_file_pos(folio);
+	range.end   = range.start + folio_size(folio);
+
+	_debug("endwb %lx", folio->index);
+	if (!folio_test_writeback(folio)) {
+		printk("\n");
+		kdebug("WB NOT SET W=%x %lx", wreq->debug_id, folio->index);
+		return 0;
+	}
+
+	/* Now we need to clear the wb flags on any folio that's not shared with
+	 * any other region undergoing writing.
+	 */
+	if (within(&range, &wreq->coverage)) {
+		folio_end_writeback(folio);
+		return 0;
+	}
+
+	spin_lock(&ctx->lock);
+	if (range.start < wreq->coverage.start) {
+		r = region = list_first_entry(&wreq->regions,
+					      struct netfs_dirty_region, flush_link);
+		list_for_each_entry_continue_reverse(r, &ctx->dirty_regions, dirty_link) {
+			if (r->dirty.end <= range.start)
+				break;
+			if (r->state < NETFS_REGION_IS_FLUSHING)
+				continue;
+			kdebug("keep-wback-b %lx reg=%x r=%x W=%x",
+			       folio_index(folio), region->debug_id, r->debug_id,
+			       wreq->debug_id);
+			clear_wb = false;
+		}
+	}
+
+	if (range.end > wreq->coverage.end) {
+		r = region = list_last_entry(&wreq->regions,
+					     struct netfs_dirty_region, flush_link);
+		list_for_each_entry_continue(r, &ctx->dirty_regions, dirty_link) {
+			if (r->dirty.start >= range.end)
+				break;
+			if (r->state < NETFS_REGION_IS_FLUSHING)
+				continue;
+			kdebug("keep-wback-f %lx reg=%x r=%x W=%x",
+			       folio_index(folio), region->debug_id, r->debug_id,
+			       wreq->debug_id);
+			clear_wb = false;
+		}
+	}
+
+	if (clear_wb)
+		folio_end_writeback(folio);
+	spin_unlock(&ctx->lock);
 	return 0;
 }
 
@@ -311,8 +368,10 @@ static int netfs_end_writeback_iterator(struct xa_state *xas, struct folio *foli
  */
 void netfs_end_writeback(struct netfs_write_request *wreq)
 {
+	struct netfs_i_context *ctx = netfs_i_context(wreq->inode);
+
 	netfs_iterate_pinned_folios(wreq->mapping, wreq->first, wreq->last,
-				    netfs_end_writeback_iterator);
+				    netfs_end_writeback_iterator, wreq, ctx);
 }
 
 static int netfs_redirty_iterator(struct xa_state *xas, struct folio *folio)
