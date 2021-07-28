@@ -80,6 +80,7 @@ static inline void rcu_read_unlock_trace(void)
 		WRITE_ONCE(t->trc_reader_nesting, nesting);
 		return;  // We assume shallow reader nesting.
 	}
+	WARN_ON_ONCE(nesting != 0);
 	rcu_read_unlock_trace_special(t, nesting);
 }
 
