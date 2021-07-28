@@ -159,6 +159,12 @@ struct dsa_switch_tree {
 	 */
 	struct net_device **lags;
 	unsigned int lags_len;
+
+	/* Track the largest switch index within a tree */
+	unsigned int last_switch;
+
+	/* Track the bridges with forwarding offload enabled */
+	unsigned long fwd_offloading_bridges;
 };
 
 #define dsa_lags_foreach_id(_id, _dst)				\
@@ -259,6 +265,7 @@ struct dsa_port {
 	bool			vlan_filtering;
 	u8			stp_state;
 	struct net_device	*bridge_dev;
+	int			bridge_num;
 	struct devlink_port	devlink_port;
 	bool			devlink_port_setup;
 	struct phylink		*pl;
@@ -285,6 +292,12 @@ struct dsa_port {
 	 */
 	const struct dsa_netdevice_ops *netdev_ops;
 
+	/* List of MAC addresses that must be forwarded on this port.
+	 * These are only valid on CPU ports and DSA links.
+	 */
+	struct list_head	fdbs;
+	struct list_head	mdbs;
+
 	bool setup;
 };
 
@@ -296,6 +309,13 @@ struct dsa_port {
 struct dsa_link {
 	struct dsa_port *dp;
 	struct dsa_port *link_dp;
+	struct list_head list;
+};
+
+struct dsa_mac_addr {
+	unsigned char addr[ETH_ALEN];
+	u16 vid;
+	refcount_t refcount;
 	struct list_head list;
 };
 
@@ -338,6 +358,9 @@ struct dsa_switch {
 	/* Ageing Time limits in msecs */
 	unsigned int ageing_time_min;
 	unsigned int ageing_time_max;
+
+	/* Storage for drivers using tag_8021q */
+	struct dsa_8021q_context *tag_8021q_ctx;
 
 	/* devlink used to represent this switch device */
 	struct devlink		*devlink;
@@ -393,6 +416,12 @@ struct dsa_switch {
 	 * dsa_lag_id().
 	 */
 	unsigned int		num_lag_ids;
+
+	/* Drivers that support bridge forwarding offload should set this to
+	 * the maximum number of bridges spanning the same switch tree that can
+	 * be offloaded.
+	 */
+	unsigned int		num_fwd_offloading_bridges;
 
 	size_t num_ports;
 };
@@ -489,6 +518,32 @@ static inline unsigned int dsa_upstream_port(struct dsa_switch *ds, int port)
 		return port;
 
 	return dsa_towards_port(ds, cpu_dp->ds->index, cpu_dp->index);
+}
+
+/* Return true if this is the local port used to reach the CPU port */
+static inline bool dsa_is_upstream_port(struct dsa_switch *ds, int port)
+{
+	if (dsa_is_unused_port(ds, port))
+		return false;
+
+	return port == dsa_upstream_port(ds, port);
+}
+
+/* Return true if @upstream_ds is an upstream switch of @downstream_ds, meaning
+ * that the routing port from @downstream_ds to @upstream_ds is also the port
+ * which @downstream_ds uses to reach its dedicated CPU.
+ */
+static inline bool dsa_switch_is_upstream_of(struct dsa_switch *upstream_ds,
+					     struct dsa_switch *downstream_ds)
+{
+	int routing_port;
+
+	if (upstream_ds == downstream_ds)
+		return true;
+
+	routing_port = dsa_routing_port(downstream_ds, upstream_ds->index);
+
+	return dsa_is_upstream_port(downstream_ds, routing_port);
 }
 
 static inline bool dsa_port_is_vlan_filtering(const struct dsa_port *dp)
@@ -651,6 +706,14 @@ struct dsa_switch_ops {
 				    struct net_device *bridge);
 	void	(*port_bridge_leave)(struct dsa_switch *ds, int port,
 				     struct net_device *bridge);
+	/* Called right after .port_bridge_join() */
+	int	(*port_bridge_tx_fwd_offload)(struct dsa_switch *ds, int port,
+					      struct net_device *bridge,
+					      int bridge_num);
+	/* Called right before .port_bridge_leave() */
+	void	(*port_bridge_tx_fwd_unoffload)(struct dsa_switch *ds, int port,
+						struct net_device *bridge,
+						int bridge_num);
 	void	(*port_stp_state_set)(struct dsa_switch *ds, int port,
 				      u8 state);
 	void	(*port_fast_age)(struct dsa_switch *ds, int port);
@@ -830,6 +893,13 @@ struct dsa_switch_ops {
 					  const struct switchdev_obj_ring_role_mrp *mrp);
 	int	(*port_mrp_del_ring_role)(struct dsa_switch *ds, int port,
 					  const struct switchdev_obj_ring_role_mrp *mrp);
+
+	/*
+	 * tag_8021q operations
+	 */
+	int	(*tag_8021q_vlan_add)(struct dsa_switch *ds, int port, u16 vid,
+				      u16 flags);
+	int	(*tag_8021q_vlan_del)(struct dsa_switch *ds, int port, u16 vid);
 };
 
 #define DSA_DEVLINK_PARAM_DRIVER(_id, _name, _type, _cmodes)		\

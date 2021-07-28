@@ -49,6 +49,9 @@
 #include <net/seg6_hmac.h>
 #endif
 #include <net/rpl.h>
+#include <linux/ioam6.h>
+#include <net/ioam6.h>
+#include <net/dst_metadata.h>
 
 #include <linux/uaccess.h>
 
@@ -135,18 +138,23 @@ static bool ip6_parse_tlv(const struct tlvtype_proc *procs,
 	len -= 2;
 
 	while (len > 0) {
-		int optlen = nh[off + 1] + 2;
-		int i;
+		int optlen, i;
 
-		switch (nh[off]) {
-		case IPV6_TLV_PAD1:
-			optlen = 1;
+		if (nh[off] == IPV6_TLV_PAD1) {
 			padlen++;
 			if (padlen > 7)
 				goto bad;
-			break;
+			off++;
+			len--;
+			continue;
+		}
+		if (len < 2)
+			goto bad;
+		optlen = nh[off + 1] + 2;
+		if (optlen > len)
+			goto bad;
 
-		case IPV6_TLV_PADN:
+		if (nh[off] == IPV6_TLV_PADN) {
 			/* RFC 2460 states that the purpose of PadN is
 			 * to align the containing header to multiples
 			 * of 8. 7 is therefore the highest valid value.
@@ -163,12 +171,7 @@ static bool ip6_parse_tlv(const struct tlvtype_proc *procs,
 				if (nh[off + i] != 0)
 					goto bad;
 			}
-			break;
-
-		default: /* Other TLV code so scan list */
-			if (optlen > len)
-				goto bad;
-
+		} else {
 			tlv_count++;
 			if (tlv_count > max_count)
 				goto bad;
@@ -188,7 +191,6 @@ static bool ip6_parse_tlv(const struct tlvtype_proc *procs,
 				return false;
 
 			padlen = 0;
-			break;
 		}
 		off += optlen;
 		len -= optlen;
@@ -306,7 +308,7 @@ fail_and_free:
 #endif
 
 	if (ip6_parse_tlv(tlvprocdestopt_lst, skb,
-			  init_net.ipv6.sysctl.max_dst_opts_cnt)) {
+			  net->ipv6.sysctl.max_dst_opts_cnt)) {
 		skb->transport_header += extlen;
 		opt = IP6CB(skb);
 #if IS_ENABLED(CONFIG_IPV6_MIP6)
@@ -929,6 +931,60 @@ static bool ipv6_hop_ra(struct sk_buff *skb, int optoff)
 	return false;
 }
 
+/* IOAM */
+
+static bool ipv6_hop_ioam(struct sk_buff *skb, int optoff)
+{
+	struct ioam6_trace_hdr *trace;
+	struct ioam6_namespace *ns;
+	struct ioam6_hdr *hdr;
+
+	/* Bad alignment (must be 4n-aligned) */
+	if (optoff & 3)
+		goto drop;
+
+	/* Ignore if IOAM is not enabled on ingress */
+	if (!__in6_dev_get(skb->dev)->cnf.ioam6_enabled)
+		goto ignore;
+
+	/* Truncated Option header */
+	hdr = (struct ioam6_hdr *)(skb_network_header(skb) + optoff);
+	if (hdr->opt_len < 2)
+		goto drop;
+
+	switch (hdr->type) {
+	case IOAM6_TYPE_PREALLOC:
+		/* Truncated Pre-allocated Trace header */
+		if (hdr->opt_len < 2 + sizeof(*trace))
+			goto drop;
+
+		/* Malformed Pre-allocated Trace header */
+		trace = (struct ioam6_trace_hdr *)((u8 *)hdr + sizeof(*hdr));
+		if (hdr->opt_len < 2 + sizeof(*trace) + trace->remlen * 4)
+			goto drop;
+
+		/* Ignore if the IOAM namespace is unknown */
+		ns = ioam6_namespace(ipv6_skb_net(skb), trace->namespace_id);
+		if (!ns)
+			goto ignore;
+
+		if (!skb_valid_dst(skb))
+			ip6_route_input(skb);
+
+		ioam6_fill_trace_data(skb, ns, trace);
+		break;
+	default:
+		break;
+	}
+
+ignore:
+	return true;
+
+drop:
+	kfree_skb(skb);
+	return false;
+}
+
 /* Jumbo payload */
 
 static bool ipv6_hop_jumbo(struct sk_buff *skb, int optoff)
@@ -1001,6 +1057,10 @@ static const struct tlvtype_proc tlvprochopopt_lst[] = {
 		.func	= ipv6_hop_ra,
 	},
 	{
+		.type	= IPV6_TLV_IOAM,
+		.func	= ipv6_hop_ioam,
+	},
+	{
 		.type	= IPV6_TLV_JUMBO,
 		.func	= ipv6_hop_jumbo,
 	},
@@ -1037,7 +1097,7 @@ fail_and_free:
 
 	opt->flags |= IP6SKB_HOPBYHOP;
 	if (ip6_parse_tlv(tlvprochopopt_lst, skb,
-			  init_net.ipv6.sysctl.max_hbh_opts_cnt)) {
+			  net->ipv6.sysctl.max_hbh_opts_cnt)) {
 		skb->transport_header += extlen;
 		opt = IP6CB(skb);
 		opt->nhoff = sizeof(struct ipv6hdr);

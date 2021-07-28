@@ -17,8 +17,6 @@
 #include <linux/compat.h>
 #include <uapi/linux/ethtool.h>
 
-#ifdef CONFIG_COMPAT
-
 struct compat_ethtool_rx_flow_spec {
 	u32		flow_type;
 	union ethtool_flow_union h_u;
@@ -37,8 +35,6 @@ struct compat_ethtool_rxnfc {
 	u32				rule_cnt;
 	u32				rule_locs[];
 };
-
-#endif /* CONFIG_COMPAT */
 
 #include <linux/rculist.h>
 
@@ -756,6 +752,16 @@ void ethtool_set_ethtool_phy_ops(const struct ethtool_phy_ops *ops);
 void
 ethtool_params_from_link_mode(struct ethtool_link_ksettings *link_ksettings,
 			      enum ethtool_link_mode_bit_indices link_mode);
+
+/**
+ * ethtool_get_phc_vclocks - Derive phc vclocks information, and caller
+ *                           is responsible to free memory of vclock_index
+ * @dev: pointer to net_device structure
+ * @vclock_index: pointer to pointer of vclock index
+ *
+ * Return number of phc vclocks
+ */
+int ethtool_get_phc_vclocks(struct net_device *dev, int **vclock_index);
 
 /**
  * ethtool_sprintf - Write formatted string to ethtool string data

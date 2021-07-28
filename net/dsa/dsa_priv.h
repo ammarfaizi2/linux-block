@@ -14,12 +14,16 @@
 #include <net/dsa.h>
 #include <net/gro_cells.h>
 
+#define DSA_MAX_NUM_OFFLOADING_BRIDGES		BITS_PER_LONG
+
 enum {
 	DSA_NOTIFIER_AGEING_TIME,
 	DSA_NOTIFIER_BRIDGE_JOIN,
 	DSA_NOTIFIER_BRIDGE_LEAVE,
 	DSA_NOTIFIER_FDB_ADD,
 	DSA_NOTIFIER_FDB_DEL,
+	DSA_NOTIFIER_HOST_FDB_ADD,
+	DSA_NOTIFIER_HOST_FDB_DEL,
 	DSA_NOTIFIER_HSR_JOIN,
 	DSA_NOTIFIER_HSR_LEAVE,
 	DSA_NOTIFIER_LAG_CHANGE,
@@ -27,6 +31,8 @@ enum {
 	DSA_NOTIFIER_LAG_LEAVE,
 	DSA_NOTIFIER_MDB_ADD,
 	DSA_NOTIFIER_MDB_DEL,
+	DSA_NOTIFIER_HOST_MDB_ADD,
+	DSA_NOTIFIER_HOST_MDB_DEL,
 	DSA_NOTIFIER_VLAN_ADD,
 	DSA_NOTIFIER_VLAN_DEL,
 	DSA_NOTIFIER_MTU,
@@ -35,6 +41,8 @@ enum {
 	DSA_NOTIFIER_MRP_DEL,
 	DSA_NOTIFIER_MRP_ADD_RING_ROLE,
 	DSA_NOTIFIER_MRP_DEL_RING_ROLE,
+	DSA_NOTIFIER_TAG_8021Q_VLAN_ADD,
+	DSA_NOTIFIER_TAG_8021Q_VLAN_DEL,
 };
 
 /* DSA_NOTIFIER_AGEING_TIME */
@@ -109,9 +117,18 @@ struct dsa_notifier_mrp_ring_role_info {
 	int port;
 };
 
+/* DSA_NOTIFIER_TAG_8021Q_VLAN_* */
+struct dsa_notifier_tag_8021q_vlan_info {
+	int tree_index;
+	int sw_index;
+	int port;
+	u16 vid;
+};
+
 struct dsa_switchdev_event_work {
 	struct dsa_switch *ds;
 	int port;
+	struct net_device *dev;
 	struct work_struct work;
 	unsigned long event;
 	/* Specific for SWITCHDEV_FDB_ADD_TO_DEVICE and
@@ -119,6 +136,7 @@ struct dsa_switchdev_event_work {
 	 */
 	unsigned char addr[ETH_ALEN];
 	u16 vid;
+	bool host_addr;
 };
 
 /* DSA_NOTIFIER_HSR_* */
@@ -188,12 +206,14 @@ void dsa_port_disable_rt(struct dsa_port *dp);
 void dsa_port_disable(struct dsa_port *dp);
 int dsa_port_bridge_join(struct dsa_port *dp, struct net_device *br,
 			 struct netlink_ext_ack *extack);
+void dsa_port_pre_bridge_leave(struct dsa_port *dp, struct net_device *br);
 void dsa_port_bridge_leave(struct dsa_port *dp, struct net_device *br);
 int dsa_port_lag_change(struct dsa_port *dp,
 			struct netdev_lag_lower_state_info *linfo);
 int dsa_port_lag_join(struct dsa_port *dp, struct net_device *lag_dev,
 		      struct netdev_lag_upper_info *uinfo,
 		      struct netlink_ext_ack *extack);
+void dsa_port_pre_lag_leave(struct dsa_port *dp, struct net_device *lag_dev);
 void dsa_port_lag_leave(struct dsa_port *dp, struct net_device *lag_dev);
 int dsa_port_vlan_filtering(struct dsa_port *dp, bool vlan_filtering,
 			    struct netlink_ext_ack *extack);
@@ -205,11 +225,19 @@ int dsa_port_fdb_add(struct dsa_port *dp, const unsigned char *addr,
 		     u16 vid);
 int dsa_port_fdb_del(struct dsa_port *dp, const unsigned char *addr,
 		     u16 vid);
+int dsa_port_host_fdb_add(struct dsa_port *dp, const unsigned char *addr,
+			  u16 vid);
+int dsa_port_host_fdb_del(struct dsa_port *dp, const unsigned char *addr,
+			  u16 vid);
 int dsa_port_fdb_dump(struct dsa_port *dp, dsa_fdb_dump_cb_t *cb, void *data);
 int dsa_port_mdb_add(const struct dsa_port *dp,
 		     const struct switchdev_obj_port_mdb *mdb);
 int dsa_port_mdb_del(const struct dsa_port *dp,
 		     const struct switchdev_obj_port_mdb *mdb);
+int dsa_port_host_mdb_add(const struct dsa_port *dp,
+			  const struct switchdev_obj_port_mdb *mdb);
+int dsa_port_host_mdb_del(const struct dsa_port *dp,
+			  const struct switchdev_obj_port_mdb *mdb);
 int dsa_port_pre_bridge_flags(const struct dsa_port *dp,
 			      struct switchdev_brport_flags flags,
 			      struct netlink_ext_ack *extack);
@@ -235,16 +263,18 @@ int dsa_port_link_register_of(struct dsa_port *dp);
 void dsa_port_link_unregister_of(struct dsa_port *dp);
 int dsa_port_hsr_join(struct dsa_port *dp, struct net_device *hsr);
 void dsa_port_hsr_leave(struct dsa_port *dp, struct net_device *hsr);
+int dsa_port_tag_8021q_vlan_add(struct dsa_port *dp, u16 vid);
+void dsa_port_tag_8021q_vlan_del(struct dsa_port *dp, u16 vid);
 extern const struct phylink_mac_ops dsa_port_phylink_mac_ops;
 
 static inline bool dsa_port_offloads_bridge_port(struct dsa_port *dp,
-						 struct net_device *dev)
+						 const struct net_device *dev)
 {
 	return dsa_port_to_bridge_port(dp) == dev;
 }
 
 static inline bool dsa_port_offloads_bridge(struct dsa_port *dp,
-					    struct net_device *bridge_dev)
+					    const struct net_device *bridge_dev)
 {
 	/* DSA ports connected to a bridge, and event was emitted
 	 * for the bridge.
@@ -254,12 +284,25 @@ static inline bool dsa_port_offloads_bridge(struct dsa_port *dp,
 
 /* Returns true if any port of this tree offloads the given net_device */
 static inline bool dsa_tree_offloads_bridge_port(struct dsa_switch_tree *dst,
-						 struct net_device *dev)
+						 const struct net_device *dev)
 {
 	struct dsa_port *dp;
 
 	list_for_each_entry(dp, &dst->ports, list)
 		if (dsa_port_offloads_bridge_port(dp, dev))
+			return true;
+
+	return false;
+}
+
+/* Returns true if any port of this tree offloads the given bridge */
+static inline bool dsa_tree_offloads_bridge(struct dsa_switch_tree *dst,
+					    const struct net_device *bridge_dev)
+{
+	struct dsa_port *dp;
+
+	list_for_each_entry(dp, &dst->ports, list)
+		if (dsa_port_offloads_bridge(dp, bridge_dev))
 			return true;
 
 	return false;
@@ -367,6 +410,16 @@ int dsa_tree_change_tag_proto(struct dsa_switch_tree *dst,
 			      struct net_device *master,
 			      const struct dsa_device_ops *tag_ops,
 			      const struct dsa_device_ops *old_tag_ops);
+
+/* tag_8021q.c */
+int dsa_tag_8021q_bridge_join(struct dsa_switch *ds,
+			      struct dsa_notifier_bridge_info *info);
+int dsa_tag_8021q_bridge_leave(struct dsa_switch *ds,
+			       struct dsa_notifier_bridge_info *info);
+int dsa_switch_tag_8021q_vlan_add(struct dsa_switch *ds,
+				  struct dsa_notifier_tag_8021q_vlan_info *info);
+int dsa_switch_tag_8021q_vlan_del(struct dsa_switch *ds,
+				  struct dsa_notifier_tag_8021q_vlan_info *info);
 
 extern struct list_head dsa_tree_list;
 

@@ -2299,18 +2299,18 @@ mvneta_swbm_add_rx_fragment(struct mvneta_port *pp,
 		skb_frag_off_set(frag, pp->rx_offset_correction);
 		skb_frag_size_set(frag, data_len);
 		__skb_frag_set_page(frag, page);
-
-		/* last fragment */
-		if (len == *size) {
-			struct skb_shared_info *sinfo;
-
-			sinfo = xdp_get_shared_info_from_buff(xdp);
-			sinfo->nr_frags = xdp_sinfo->nr_frags;
-			memcpy(sinfo->frags, xdp_sinfo->frags,
-			       sinfo->nr_frags * sizeof(skb_frag_t));
-		}
 	} else {
 		page_pool_put_full_page(rxq->page_pool, page, true);
+	}
+
+	/* last fragment */
+	if (len == *size) {
+		struct skb_shared_info *sinfo;
+
+		sinfo = xdp_get_shared_info_from_buff(xdp);
+		sinfo->nr_frags = xdp_sinfo->nr_frags;
+		memcpy(sinfo->frags, xdp_sinfo->frags,
+		       sinfo->nr_frags * sizeof(skb_frag_t));
 	}
 	*size -= len;
 }
@@ -2369,7 +2369,6 @@ static int mvneta_rx_swbm(struct napi_struct *napi,
 	/* Get number of received packets */
 	rx_todo = mvneta_rxq_busy_desc_num_get(pp, rxq);
 
-	rcu_read_lock();
 	xdp_prog = READ_ONCE(pp->xdp_prog);
 
 	/* Fairness NAPI loop */
@@ -2447,7 +2446,6 @@ next:
 		xdp_buf.data_hard_start = NULL;
 		sinfo.nr_frags = 0;
 	}
-	rcu_read_unlock();
 
 	if (xdp_buf.data_hard_start)
 		mvneta_xdp_put_buff(pp, rxq, &xdp_buf, &sinfo, -1);
@@ -2668,7 +2666,7 @@ static int mvneta_tx_tso(struct sk_buff *skb, struct net_device *dev,
 		return 0;
 
 	if (skb_headlen(skb) < (skb_transport_offset(skb) + tcp_hdrlen(skb))) {
-		pr_info("*** Is this even  possible???!?!?\n");
+		pr_info("*** Is this even possible?\n");
 		return 0;
 	}
 
@@ -3834,12 +3832,20 @@ static void mvneta_validate(struct phylink_config *config,
 	struct mvneta_port *pp = netdev_priv(ndev);
 	__ETHTOOL_DECLARE_LINK_MODE_MASK(mask) = { 0, };
 
-	/* We only support QSGMII, SGMII, 802.3z and RGMII modes */
-	if (state->interface != PHY_INTERFACE_MODE_NA &&
-	    state->interface != PHY_INTERFACE_MODE_QSGMII &&
-	    state->interface != PHY_INTERFACE_MODE_SGMII &&
-	    !phy_interface_mode_is_8023z(state->interface) &&
-	    !phy_interface_mode_is_rgmii(state->interface)) {
+	/* We only support QSGMII, SGMII, 802.3z and RGMII modes.
+	 * When in 802.3z mode, we must have AN enabled:
+	 * "Bit 2 Field InBandAnEn In-band Auto-Negotiation enable. ...
+	 * When <PortType> = 1 (1000BASE-X) this field must be set to 1."
+	 */
+	if (phy_interface_mode_is_8023z(state->interface)) {
+		if (!phylink_test(state->advertising, Autoneg)) {
+			bitmap_zero(supported, __ETHTOOL_LINK_MODE_MASK_NBITS);
+			return;
+		}
+	} else if (state->interface != PHY_INTERFACE_MODE_NA &&
+		   state->interface != PHY_INTERFACE_MODE_QSGMII &&
+		   state->interface != PHY_INTERFACE_MODE_SGMII &&
+		   !phy_interface_mode_is_rgmii(state->interface)) {
 		bitmap_zero(supported, __ETHTOOL_LINK_MODE_MASK_NBITS);
 		return;
 	}

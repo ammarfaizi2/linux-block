@@ -22,6 +22,7 @@
 #include <linux/slab.h>
 #include <linux/soc/ixp4xx/npe.h>
 #include <linux/soc/ixp4xx/qmgr.h>
+#include <linux/soc/ixp4xx/cpu.h>
 
 #define DEBUG_DESC		0
 #define DEBUG_RX		0
@@ -974,11 +975,10 @@ static int init_hdlc_queues(struct port *port)
 			return -ENOMEM;
 	}
 
-	port->desc_tab = dma_pool_alloc(dma_pool, GFP_KERNEL,
+	port->desc_tab = dma_pool_zalloc(dma_pool, GFP_KERNEL,
 					&port->desc_tab_phys);
 	if (!port->desc_tab)
 		return -ENOMEM;
-	memset(port->desc_tab, 0, POOL_ALLOC_SIZE);
 	memset(port->rx_buff_tab, 0, sizeof(port->rx_buff_tab)); /* tables */
 	memset(port->tx_buff_tab, 0, sizeof(port->tx_buff_tab));
 

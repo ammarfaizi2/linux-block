@@ -23,6 +23,7 @@
 #include "hclge_tm.h"
 #include "hclge_err.h"
 #include "hnae3.h"
+#include "hclge_devlink.h"
 
 #define HCLGE_NAME			"hclge"
 #define HCLGE_STATS_READ(p, offset) (*(u64 *)((u8 *)(p) + (offset)))
@@ -6000,8 +6001,14 @@ static int hclge_config_action(struct hclge_dev *hdev, u8 stage,
 		ad_data.queue_id = rule->queue_id;
 	}
 
-	ad_data.use_counter = false;
-	ad_data.counter_id = 0;
+	if (hdev->fd_cfg.cnt_num[HCLGE_FD_STAGE_1]) {
+		ad_data.use_counter = true;
+		ad_data.counter_id = rule->vf_id %
+				     hdev->fd_cfg.cnt_num[HCLGE_FD_STAGE_1];
+	} else {
+		ad_data.use_counter = false;
+		ad_data.counter_id = 0;
+	}
 
 	ad_data.use_next_stage = false;
 	ad_data.next_input_key = 0;
@@ -9546,13 +9553,17 @@ static int hclge_set_vport_vlan_filter(struct hclge_vport *vport, bool enable)
 	if (ret)
 		return ret;
 
-	if (test_bit(HNAE3_DEV_SUPPORT_PORT_VLAN_BYPASS_B, ae_dev->caps))
+	if (test_bit(HNAE3_DEV_SUPPORT_PORT_VLAN_BYPASS_B, ae_dev->caps)) {
 		ret = hclge_set_port_vlan_filter_bypass(hdev, vport->vport_id,
 							!enable);
-	else if (!vport->vport_id)
+	} else if (!vport->vport_id) {
+		if (test_bit(HNAE3_DEV_SUPPORT_VLAN_FLTR_MDF_B, ae_dev->caps))
+			enable = false;
+
 		ret = hclge_set_vlan_filter_ctrl(hdev, HCLGE_FILTER_TYPE_PORT,
 						 HCLGE_FILTER_FE_INGRESS,
 						 enable, 0);
+	}
 
 	return ret;
 }
@@ -11472,10 +11483,14 @@ static int hclge_init_ae_dev(struct hnae3_ae_dev *ae_dev)
 	if (ret)
 		goto out;
 
+	ret = hclge_devlink_init(hdev);
+	if (ret)
+		goto err_pci_uninit;
+
 	/* Firmware command queue initialize */
 	ret = hclge_cmd_queue_init(hdev);
 	if (ret)
-		goto err_pci_uninit;
+		goto err_devlink_uninit;
 
 	/* Firmware command initialize */
 	ret = hclge_cmd_init(hdev);
@@ -11648,6 +11663,8 @@ err_msi_uninit:
 	pci_free_irq_vectors(pdev);
 err_cmd_uninit:
 	hclge_cmd_uninit(hdev);
+err_devlink_uninit:
+	hclge_devlink_uninit(hdev);
 err_pci_uninit:
 	pcim_iounmap(pdev, hdev->hw.io_base);
 	pci_clear_master(pdev);
@@ -12038,6 +12055,7 @@ static void hclge_uninit_ae_dev(struct hnae3_ae_dev *ae_dev)
 
 	hclge_cmd_uninit(hdev);
 	hclge_misc_irq_uninit(hdev);
+	hclge_devlink_uninit(hdev);
 	hclge_pci_uninit(hdev);
 	mutex_destroy(&hdev->vport_lock);
 	hclge_uninit_vport_vlan_table(hdev);

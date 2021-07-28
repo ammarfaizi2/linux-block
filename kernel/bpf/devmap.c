@@ -73,7 +73,7 @@ struct bpf_dtab_netdev {
 
 struct bpf_dtab {
 	struct bpf_map map;
-	struct bpf_dtab_netdev **netdev_map; /* DEVMAP type only */
+	struct bpf_dtab_netdev __rcu **netdev_map; /* DEVMAP type only */
 	struct list_head list;
 
 	/* these are only used for DEVMAP_HASH type maps */
@@ -93,7 +93,7 @@ static struct hlist_head *dev_map_create_hash(unsigned int entries,
 	int i;
 	struct hlist_head *hash;
 
-	hash = bpf_map_area_alloc(entries * sizeof(*hash), numa_node);
+	hash = bpf_map_area_alloc((u64) entries * sizeof(*hash), numa_node);
 	if (hash != NULL)
 		for (i = 0; i < entries; i++)
 			INIT_HLIST_HEAD(&hash[i]);
@@ -144,7 +144,7 @@ static int dev_map_init_map(struct bpf_dtab *dtab, union bpf_attr *attr)
 
 		spin_lock_init(&dtab->index_lock);
 	} else {
-		dtab->netdev_map = bpf_map_area_alloc(dtab->map.max_entries *
+		dtab->netdev_map = bpf_map_area_alloc((u64) dtab->map.max_entries *
 						      sizeof(struct bpf_dtab_netdev *),
 						      dtab->map.numa_node);
 		if (!dtab->netdev_map)
@@ -226,7 +226,7 @@ static void dev_map_free(struct bpf_map *map)
 		for (i = 0; i < dtab->map.max_entries; i++) {
 			struct bpf_dtab_netdev *dev;
 
-			dev = dtab->netdev_map[i];
+			dev = rcu_dereference_raw(dtab->netdev_map[i]);
 			if (!dev)
 				continue;
 
@@ -259,6 +259,10 @@ static int dev_map_get_next_key(struct bpf_map *map, void *key, void *next_key)
 	return 0;
 }
 
+/* Elements are kept alive by RCU; either by rcu_read_lock() (from syscall) or
+ * by local_bh_disable() (from XDP calls inside NAPI). The
+ * rcu_read_lock_bh_held() below makes lockdep accept both.
+ */
 static void *__dev_map_hash_lookup_elem(struct bpf_map *map, u32 key)
 {
 	struct bpf_dtab *dtab = container_of(map, struct bpf_dtab, map);
@@ -316,16 +320,6 @@ static int dev_map_hash_get_next_key(struct bpf_map *map, void *key,
 	}
 
 	return -ENOENT;
-}
-
-bool dev_map_can_have_prog(struct bpf_map *map)
-{
-	if ((map->map_type == BPF_MAP_TYPE_DEVMAP ||
-	     map->map_type == BPF_MAP_TYPE_DEVMAP_HASH) &&
-	    map->value_size != offsetofend(struct bpf_devmap_val, ifindex))
-		return true;
-
-	return false;
 }
 
 static int dev_map_bpf_prog_run(struct bpf_prog *xdp_prog,
@@ -410,15 +404,9 @@ out:
 	trace_xdp_devmap_xmit(bq->dev_rx, dev, sent, cnt - sent, err);
 }
 
-/* __dev_flush is called from xdp_do_flush() which _must_ be signaled
- * from the driver before returning from its napi->poll() routine. The poll()
- * routine is called either from busy_poll context or net_rx_action signaled
- * from NET_RX_SOFTIRQ. Either way the poll routine must complete before the
- * net device can be torn down. On devmap tear down we ensure the flush list
- * is empty before completing to ensure all flush operations have completed.
- * When drivers update the bpf program they may need to ensure any flush ops
- * are also complete. Using synchronize_rcu or call_rcu will suffice for this
- * because both wait for napi context to exit.
+/* __dev_flush is called from xdp_do_flush() which _must_ be signalled from the
+ * driver before returning from its napi->poll() routine. See the comment above
+ * xdp_do_flush() in filter.c.
  */
 void __dev_flush(void)
 {
@@ -433,9 +421,9 @@ void __dev_flush(void)
 	}
 }
 
-/* rcu_read_lock (from syscall and BPF contexts) ensures that if a delete and/or
- * update happens in parallel here a dev_put won't happen until after reading
- * the ifindex.
+/* Elements are kept alive by RCU; either by rcu_read_lock() (from syscall) or
+ * by local_bh_disable() (from XDP calls inside NAPI). The
+ * rcu_read_lock_bh_held() below makes lockdep accept both.
  */
 static void *__dev_map_lookup_elem(struct bpf_map *map, u32 key)
 {
@@ -445,12 +433,14 @@ static void *__dev_map_lookup_elem(struct bpf_map *map, u32 key)
 	if (key >= map->max_entries)
 		return NULL;
 
-	obj = READ_ONCE(dtab->netdev_map[key]);
+	obj = rcu_dereference_check(dtab->netdev_map[key],
+				    rcu_read_lock_bh_held());
 	return obj;
 }
 
-/* Runs under RCU-read-side, plus in softirq under NAPI protection.
- * Thus, safe percpu variable access.
+/* Runs in NAPI, i.e., softirq under local_bh_disable(). Thus, safe percpu
+ * variable access, and map elements stick around. See comment above
+ * xdp_do_flush() in filter.c.
  */
 static void bq_enqueue(struct net_device *dev, struct xdp_frame *xdpf,
 		       struct net_device *dev_rx, struct bpf_prog *xdp_prog)
@@ -497,6 +487,37 @@ static inline int __xdp_enqueue(struct net_device *dev, struct xdp_buff *xdp,
 
 	bq_enqueue(dev, xdpf, dev_rx, xdp_prog);
 	return 0;
+}
+
+static u32 dev_map_bpf_prog_run_skb(struct sk_buff *skb, struct bpf_dtab_netdev *dst)
+{
+	struct xdp_txq_info txq = { .dev = dst->dev };
+	struct xdp_buff xdp;
+	u32 act;
+
+	if (!dst->xdp_prog)
+		return XDP_PASS;
+
+	__skb_pull(skb, skb->mac_len);
+	xdp.txq = &txq;
+
+	act = bpf_prog_run_generic_xdp(skb, &xdp, dst->xdp_prog);
+	switch (act) {
+	case XDP_PASS:
+		__skb_push(skb, skb->mac_len);
+		break;
+	default:
+		bpf_warn_invalid_xdp_action(act);
+		fallthrough;
+	case XDP_ABORTED:
+		trace_xdp_exception(dst->dev, dst->xdp_prog, act);
+		fallthrough;
+	case XDP_DROP:
+		kfree_skb(skb);
+		break;
+	}
+
+	return act;
 }
 
 int dev_xdp_enqueue(struct net_device *dev, struct xdp_buff *xdp,
@@ -558,7 +579,8 @@ int dev_map_enqueue_multi(struct xdp_buff *xdp, struct net_device *dev_rx,
 
 	if (map->map_type == BPF_MAP_TYPE_DEVMAP) {
 		for (i = 0; i < map->max_entries; i++) {
-			dst = READ_ONCE(dtab->netdev_map[i]);
+			dst = rcu_dereference_check(dtab->netdev_map[i],
+						    rcu_read_lock_bh_held());
 			if (!is_valid_dst(dst, xdp, exclude_ifindex))
 				continue;
 
@@ -614,6 +636,14 @@ int dev_map_generic_redirect(struct bpf_dtab_netdev *dst, struct sk_buff *skb,
 	err = xdp_ok_fwd_dev(dst->dev, skb->len);
 	if (unlikely(err))
 		return err;
+
+	/* Redirect has already succeeded semantically at this point, so we just
+	 * return 0 even if packet is dropped. Helper below takes care of
+	 * freeing skb.
+	 */
+	if (dev_map_bpf_prog_run_skb(skb, dst) != XDP_PASS)
+		return 0;
+
 	skb->dev = dst->dev;
 	generic_xdp_tx(skb, xdp_prog);
 
@@ -654,7 +684,8 @@ int dev_map_redirect_multi(struct net_device *dev, struct sk_buff *skb,
 
 	if (map->map_type == BPF_MAP_TYPE_DEVMAP) {
 		for (i = 0; i < map->max_entries; i++) {
-			dst = READ_ONCE(dtab->netdev_map[i]);
+			dst = rcu_dereference_check(dtab->netdev_map[i],
+						    rcu_read_lock_bh_held());
 			if (!dst || dst->dev->ifindex == exclude_ifindex)
 				continue;
 
@@ -735,14 +766,7 @@ static int dev_map_delete_elem(struct bpf_map *map, void *key)
 	if (k >= map->max_entries)
 		return -EINVAL;
 
-	/* Use call_rcu() here to ensure any rcu critical sections have
-	 * completed as well as any flush operations because call_rcu
-	 * will wait for preempt-disable region to complete, NAPI in this
-	 * context.  And additionally, the driver tear down ensures all
-	 * soft irqs are complete before removing the net device in the
-	 * case of dev_put equals zero.
-	 */
-	old_dev = xchg(&dtab->netdev_map[k], NULL);
+	old_dev = unrcu_pointer(xchg(&dtab->netdev_map[k], NULL));
 	if (old_dev)
 		call_rcu(&old_dev->rcu, __dev_map_entry_free);
 	return 0;
@@ -851,7 +875,7 @@ static int __dev_map_update_elem(struct net *net, struct bpf_map *map,
 	 * Remembering the driver side flush operation will happen before the
 	 * net device is removed.
 	 */
-	old_dev = xchg(&dtab->netdev_map[i], dev);
+	old_dev = unrcu_pointer(xchg(&dtab->netdev_map[i], RCU_INITIALIZER(dev)));
 	if (old_dev)
 		call_rcu(&old_dev->rcu, __dev_map_entry_free);
 
@@ -1031,10 +1055,10 @@ static int dev_map_notification(struct notifier_block *notifier,
 			for (i = 0; i < dtab->map.max_entries; i++) {
 				struct bpf_dtab_netdev *dev, *odev;
 
-				dev = READ_ONCE(dtab->netdev_map[i]);
+				dev = rcu_dereference(dtab->netdev_map[i]);
 				if (!dev || netdev != dev->dev)
 					continue;
-				odev = cmpxchg(&dtab->netdev_map[i], dev, NULL);
+				odev = unrcu_pointer(cmpxchg(&dtab->netdev_map[i], RCU_INITIALIZER(dev), NULL));
 				if (dev == odev)
 					call_rcu(&dev->rcu,
 						 __dev_map_entry_free);

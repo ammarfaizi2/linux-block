@@ -559,7 +559,8 @@ struct bpf_prog {
 				kprobe_override:1, /* Do we override a kprobe? */
 				has_callchain_buf:1, /* callchain buffer allocated? */
 				enforce_expected_attach_type:1, /* Enforce expected_attach_type checking at attach time */
-				call_get_stack:1; /* Do we call bpf_get_stack() or bpf_get_stackid() */
+				call_get_stack:1, /* Do we call bpf_get_stack() or bpf_get_stackid() */
+				call_get_func_ip:1; /* Do we call get_func_ip() */
 	enum bpf_prog_type	type;		/* Type of BPF program */
 	enum bpf_attach_type	expected_attach_type; /* For some prog types */
 	u32			len;		/* Number of filter blocks */
@@ -763,11 +764,9 @@ DECLARE_BPF_DISPATCHER(xdp)
 static __always_inline u32 bpf_prog_run_xdp(const struct bpf_prog *prog,
 					    struct xdp_buff *xdp)
 {
-	/* Caller needs to hold rcu_read_lock() (!), otherwise program
-	 * can be released while still running, or map elements could be
-	 * freed early while still having concurrent users. XDP fastpath
-	 * already takes rcu_read_lock() when fetching the program, so
-	 * it's not necessary here anymore.
+	/* Driver XDP hooks are invoked within a single NAPI poll cycle and thus
+	 * under local_bh_disable(), which provides the needed RCU protection
+	 * for accessing map entries.
 	 */
 	return __BPF_PROG_RUN(prog, xdp, BPF_DISPATCHER_FUNC(xdp));
 }

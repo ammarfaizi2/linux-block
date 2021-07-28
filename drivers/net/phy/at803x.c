@@ -532,12 +532,6 @@ static int at8031_register_regulators(struct phy_device *phydev)
 	return 0;
 }
 
-static bool at803x_match_phy_id(struct phy_device *phydev, u32 phy_id)
-{
-	return (phydev->phy_id & phydev->drv->phy_id_mask)
-		== (phy_id & phydev->drv->phy_id_mask);
-}
-
 static int at803x_parse_dt(struct phy_device *phydev)
 {
 	struct device_node *node = phydev->mdio.dev.of_node;
@@ -602,8 +596,8 @@ static int at803x_parse_dt(struct phy_device *phydev)
 		 *   to the AR8030 so there might be a good chance it works on
 		 *   the AR8030 too.
 		 */
-		if (at803x_match_phy_id(phydev, ATH8030_PHY_ID) ||
-		    at803x_match_phy_id(phydev, ATH8035_PHY_ID)) {
+		if (phydev->drv->phy_id == ATH8030_PHY_ID ||
+		    phydev->drv->phy_id == ATH8035_PHY_ID) {
 			priv->clk_25m_reg &= AT8035_CLK_OUT_MASK;
 			priv->clk_25m_mask &= AT8035_CLK_OUT_MASK;
 		}
@@ -631,7 +625,7 @@ static int at803x_parse_dt(struct phy_device *phydev)
 	/* Only supported on AR8031/AR8033, the AR8030/AR8035 use strapping
 	 * options.
 	 */
-	if (at803x_match_phy_id(phydev, ATH8031_PHY_ID)) {
+	if (phydev->drv->phy_id == ATH8031_PHY_ID) {
 		if (of_property_read_bool(node, "qca,keep-pll-enabled"))
 			priv->flags |= AT803X_KEEP_PLL_ENABLED;
 
@@ -676,7 +670,7 @@ static int at803x_probe(struct phy_device *phydev)
 	 * Switch to the copper page, as otherwise we read
 	 * the PHY capabilities from the fiber side.
 	 */
-	if (at803x_match_phy_id(phydev, ATH8031_PHY_ID)) {
+	if (phydev->drv->phy_id == ATH8031_PHY_ID) {
 		phy_lock_mdio_bus(phydev);
 		ret = at803x_write_page(phydev, AT803X_PAGE_COPPER);
 		phy_unlock_mdio_bus(phydev);
@@ -699,6 +693,34 @@ static void at803x_remove(struct phy_device *phydev)
 
 	if (priv->vddio)
 		regulator_disable(priv->vddio);
+}
+
+static int at803x_get_features(struct phy_device *phydev)
+{
+	int err;
+
+	err = genphy_read_abilities(phydev);
+	if (err)
+		return err;
+
+	if (phydev->drv->phy_id != ATH8031_PHY_ID)
+		return 0;
+
+	/* AR8031/AR8033 have different status registers
+	 * for copper and fiber operation. However, the
+	 * extended status register is the same for both
+	 * operation modes.
+	 *
+	 * As a result of that, ESTATUS_1000_XFULL is set
+	 * to 1 even when operating in copper TP mode.
+	 *
+	 * Remove this mode from the supported link modes,
+	 * as this driver currently only supports copper
+	 * operation.
+	 */
+	linkmode_clear_bit(ETHTOOL_LINK_MODE_1000baseX_Full_BIT,
+			   phydev->supported);
+	return 0;
 }
 
 static int at803x_smarteee_config(struct phy_device *phydev)
@@ -792,7 +814,7 @@ static int at803x_config_init(struct phy_device *phydev)
 	if (ret < 0)
 		return ret;
 
-	if (at803x_match_phy_id(phydev, ATH8031_PHY_ID)) {
+	if (phydev->drv->phy_id == ATH8031_PHY_ID) {
 		ret = at8031_pll_config(phydev);
 		if (ret < 0)
 			return ret;
@@ -1344,7 +1366,7 @@ static struct phy_driver at803x_driver[] = {
 	.resume			= at803x_resume,
 	.read_page		= at803x_read_page,
 	.write_page		= at803x_write_page,
-	/* PHY_GBIT_FEATURES */
+	.get_features		= at803x_get_features,
 	.read_status		= at803x_read_status,
 	.config_intr		= &at803x_config_intr,
 	.handle_interrupt	= at803x_handle_interrupt,

@@ -8,6 +8,7 @@
 #include "hclgevf_main.h"
 #include "hclge_mbx.h"
 #include "hnae3.h"
+#include "hclgevf_devlink.h"
 
 #define HCLGEVF_NAME	"hclgevf"
 
@@ -2641,6 +2642,16 @@ static int hclgevf_rss_init_hw(struct hclgevf_dev *hdev)
 
 static int hclgevf_init_vlan_config(struct hclgevf_dev *hdev)
 {
+	struct hnae3_handle *nic = &hdev->nic;
+	int ret;
+
+	ret = hclgevf_en_hw_strip_rxvtag(nic, true);
+	if (ret) {
+		dev_err(&hdev->pdev->dev,
+			"failed to enable rx vlan offload, ret = %d\n", ret);
+		return ret;
+	}
+
 	return hclgevf_set_vlan_filter(&hdev->nic, htons(ETH_P_8021Q), 0,
 				       false);
 }
@@ -3327,6 +3338,10 @@ static int hclgevf_init_hdev(struct hclgevf_dev *hdev)
 	if (ret)
 		return ret;
 
+	ret = hclgevf_devlink_init(hdev);
+	if (ret)
+		goto err_devlink_init;
+
 	ret = hclgevf_cmd_queue_init(hdev);
 	if (ret)
 		goto err_cmd_queue_init;
@@ -3431,6 +3446,8 @@ err_misc_irq_init:
 err_cmd_init:
 	hclgevf_cmd_uninit(hdev);
 err_cmd_queue_init:
+	hclgevf_devlink_uninit(hdev);
+err_devlink_init:
 	hclgevf_pci_uninit(hdev);
 	clear_bit(HCLGEVF_STATE_IRQ_INITED, &hdev->state);
 	return ret;
@@ -3452,6 +3469,7 @@ static void hclgevf_uninit_hdev(struct hclgevf_dev *hdev)
 	}
 
 	hclgevf_cmd_uninit(hdev);
+	hclgevf_devlink_uninit(hdev);
 	hclgevf_pci_uninit(hdev);
 	hclgevf_uninit_mac_list(hdev);
 }

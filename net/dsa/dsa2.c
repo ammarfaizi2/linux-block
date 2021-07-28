@@ -348,6 +348,9 @@ static int dsa_port_setup(struct dsa_port *dp)
 	if (dp->setup)
 		return 0;
 
+	INIT_LIST_HEAD(&dp->fdbs);
+	INIT_LIST_HEAD(&dp->mdbs);
+
 	switch (dp->type) {
 	case DSA_PORT_TYPE_UNUSED:
 		dsa_port_disable(dp);
@@ -443,6 +446,7 @@ static int dsa_port_devlink_setup(struct dsa_port *dp)
 static void dsa_port_teardown(struct dsa_port *dp)
 {
 	struct devlink_port *dlp = &dp->devlink_port;
+	struct dsa_mac_addr *a, *tmp;
 
 	if (!dp->setup)
 		return;
@@ -466,6 +470,16 @@ static void dsa_port_teardown(struct dsa_port *dp)
 			dp->slave = NULL;
 		}
 		break;
+	}
+
+	list_for_each_entry_safe(a, tmp, &dp->fdbs, list) {
+		list_del(&a->list);
+		kfree(a);
+	}
+
+	list_for_each_entry_safe(a, tmp, &dp->mdbs, list) {
+		list_del(&a->list);
+		kfree(a);
 	}
 
 	dp->setup = false;
@@ -1030,6 +1044,7 @@ static struct dsa_port *dsa_port_touch(struct dsa_switch *ds, int index)
 
 	dp->ds = ds;
 	dp->index = index;
+	dp->bridge_num = -1;
 
 	INIT_LIST_HEAD(&dp->list);
 	list_add_tail(&dp->list, &dst->ports);
@@ -1250,6 +1265,9 @@ static int dsa_switch_parse_member_of(struct dsa_switch *ds,
 			ds->index, ds->dst->index);
 		return -EEXIST;
 	}
+
+	if (ds->dst->last_switch < ds->index)
+		ds->dst->last_switch = ds->index;
 
 	return 0;
 }

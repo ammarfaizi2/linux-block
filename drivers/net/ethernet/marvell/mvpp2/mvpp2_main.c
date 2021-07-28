@@ -3877,8 +3877,6 @@ static int mvpp2_rx(struct mvpp2_port *port, struct napi_struct *napi,
 	int rx_done = 0;
 	u32 xdp_ret = 0;
 
-	rcu_read_lock();
-
 	xdp_prog = READ_ONCE(port->xdp_prog);
 
 	/* Get number of received packets and clamp the to-do */
@@ -4023,8 +4021,6 @@ err_drop_frame:
 		else
 			mvpp2_bm_pool_put(port, pool, dma_addr, phys_addr);
 	}
-
-	rcu_read_unlock();
 
 	if (xdp_ret & MVPP2_XDP_REDIR)
 		xdp_do_flush_map();
@@ -6271,6 +6267,15 @@ static void mvpp2_phylink_validate(struct phylink_config *config,
 	case PHY_INTERFACE_MODE_RGMII_RXID:
 	case PHY_INTERFACE_MODE_RGMII_TXID:
 		if (!mvpp2_port_supports_rgmii(port))
+			goto empty_set;
+		break;
+	case PHY_INTERFACE_MODE_1000BASEX:
+	case PHY_INTERFACE_MODE_2500BASEX:
+		/* When in 802.3z mode, we must have AN enabled:
+		 * Bit 2 Field InBandAnEn In-band Auto-Negotiation enable. ...
+		 * When <PortType> = 1 (1000BASE-X) this field must be set to 1.
+		 */
+		if (!phylink_test(state->advertising, Autoneg))
 			goto empty_set;
 		break;
 	default:

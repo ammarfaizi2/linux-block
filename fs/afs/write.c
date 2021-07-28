@@ -118,6 +118,15 @@ int afs_write_end(struct file *file, struct address_space *mapping,
 	_enter("{%llx:%llu},{%lx}",
 	       vnode->fid.vid, vnode->fid.vnode, page->index);
 
+	if (!PageUptodate(page)) {
+		if (copied < len) {
+			copied = 0;
+			goto out;
+		}
+
+		SetPageUptodate(page);
+	}
+
 	if (copied == 0)
 		goto out;
 
@@ -131,8 +140,6 @@ int afs_write_end(struct file *file, struct address_space *mapping,
 			i_size_write(&vnode->vfs_inode, maybe_i_size);
 		write_sequnlock(&vnode->cb_lock);
 	}
-
-	ASSERT(PageUptodate(page));
 
 	if (PagePrivate(page)) {
 		priv = page_private(page);
@@ -764,14 +771,20 @@ int afs_writepages(struct address_space *mapping,
 	if (wbc->range_cyclic) {
 		start = mapping->writeback_index * PAGE_SIZE;
 		ret = afs_writepages_region(mapping, wbc, start, LLONG_MAX, &next);
-		if (start > 0 && wbc->nr_to_write > 0 && ret == 0)
-			ret = afs_writepages_region(mapping, wbc, 0, start,
-						    &next);
-		mapping->writeback_index = next / PAGE_SIZE;
+		if (ret == 0) {
+			mapping->writeback_index = next / PAGE_SIZE;
+			if (start > 0 && wbc->nr_to_write > 0) {
+				ret = afs_writepages_region(mapping, wbc, 0,
+							    start, &next);
+				if (ret == 0)
+					mapping->writeback_index =
+						next / PAGE_SIZE;
+			}
+		}
 	} else if (wbc->range_start == 0 && wbc->range_end == LLONG_MAX) {
 		ret = afs_writepages_region(mapping, wbc, 0, LLONG_MAX, &next);
-		if (wbc->nr_to_write > 0)
-			mapping->writeback_index = next;
+		if (wbc->nr_to_write > 0 && ret == 0)
+			mapping->writeback_index = next / PAGE_SIZE;
 	} else {
 		ret = afs_writepages_region(mapping, wbc,
 					    wbc->range_start, wbc->range_end, &next);

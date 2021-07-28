@@ -49,6 +49,8 @@
 #include <linux/log2.h>
 #include <linux/aer.h>
 #include <linux/bitmap.h>
+#include <linux/ptp_clock_kernel.h>
+#include <linux/timecounter.h>
 #include <linux/cpu_rmap.h>
 #include <linux/cpumask.h>
 #include <net/pkt_cls.h>
@@ -63,6 +65,7 @@
 #include "bnxt_ethtool.h"
 #include "bnxt_dcb.h"
 #include "bnxt_xdp.h"
+#include "bnxt_ptp.h"
 #include "bnxt_vfr.h"
 #include "bnxt_tc.h"
 #include "bnxt_devlink.h"
@@ -418,12 +421,25 @@ static netdev_tx_t bnxt_start_xmit(struct sk_buff *skb, struct net_device *dev)
 			vlan_tag_flags |= 1 << TX_BD_CFA_META_TPID_SHIFT;
 	}
 
-	if (unlikely(skb->no_fcs)) {
-		lflags |= cpu_to_le32(TX_BD_FLAGS_NO_CRC);
-		goto normal_tx;
+	if (unlikely(skb_shinfo(skb)->tx_flags & SKBTX_HW_TSTAMP)) {
+		struct bnxt_ptp_cfg *ptp = bp->ptp_cfg;
+
+		if (ptp && ptp->tx_tstamp_en && !skb_is_gso(skb) &&
+		    atomic_dec_if_positive(&ptp->tx_avail) >= 0) {
+			if (!bnxt_ptp_parse(skb, &ptp->tx_seqid)) {
+				lflags |= cpu_to_le32(TX_BD_FLAGS_STAMP);
+				skb_shinfo(skb)->tx_flags |= SKBTX_IN_PROGRESS;
+			} else {
+				atomic_inc(&bp->ptp_cfg->tx_avail);
+			}
+		}
 	}
 
-	if (free_size == bp->tx_ring_size && length <= bp->tx_push_thresh) {
+	if (unlikely(skb->no_fcs))
+		lflags |= cpu_to_le32(TX_BD_FLAGS_NO_CRC);
+
+	if (free_size == bp->tx_ring_size && length <= bp->tx_push_thresh &&
+	    !lflags) {
 		struct tx_push_buffer *tx_push_buf = txr->tx_push;
 		struct tx_push_bd *tx_push = &tx_push_buf->push_bd;
 		struct tx_bd_ext *tx_push1 = &tx_push->txbd2;
@@ -590,6 +606,8 @@ normal_tx:
 
 	netdev_tx_sent_queue(txq, skb->len);
 
+	skb_tx_timestamp(skb);
+
 	/* Sync BD data before updating doorbell */
 	wmb();
 
@@ -619,6 +637,9 @@ tx_done:
 	return NETDEV_TX_OK;
 
 tx_dma_error:
+	if (BNXT_TX_PTP_IS_SET(lflags))
+		atomic_inc(&bp->ptp_cfg->tx_avail);
+
 	last_frag = i;
 
 	/* start back at beginning and unmap skb */
@@ -653,6 +674,7 @@ static void bnxt_tx_int(struct bnxt *bp, struct bnxt_napi *bnapi, int nr_pkts)
 
 	for (i = 0; i < nr_pkts; i++) {
 		struct bnxt_sw_tx_bd *tx_buf;
+		bool compl_deferred = false;
 		struct sk_buff *skb;
 		int j, last;
 
@@ -679,12 +701,21 @@ static void bnxt_tx_int(struct bnxt *bp, struct bnxt_napi *bnapi, int nr_pkts)
 				skb_frag_size(&skb_shinfo(skb)->frags[j]),
 				PCI_DMA_TODEVICE);
 		}
+		if (unlikely(skb_shinfo(skb)->tx_flags & SKBTX_IN_PROGRESS)) {
+			if (bp->flags & BNXT_FLAG_CHIP_P5) {
+				if (!bnxt_get_tx_ts_p5(bp, skb))
+					compl_deferred = true;
+				else
+					atomic_inc(&bp->ptp_cfg->tx_avail);
+			}
+		}
 
 next_tx_int:
 		cons = NEXT_TX(cons);
 
 		tx_bytes += skb->len;
-		dev_kfree_skb_any(skb);
+		if (!compl_deferred)
+			dev_kfree_skb_any(skb);
 	}
 
 	netdev_tx_completed_queue(txq, nr_pkts, tx_bytes);
@@ -1640,11 +1671,16 @@ static inline struct sk_buff *bnxt_tpa_end(struct bnxt *bp,
 
 	if ((tpa_info->flags2 & RX_CMP_FLAGS2_META_FORMAT_VLAN) &&
 	    (skb->dev->features & BNXT_HW_FEATURE_VLAN_ALL_RX)) {
-		u16 vlan_proto = tpa_info->metadata >>
-			RX_CMP_FLAGS2_METADATA_TPID_SFT;
+		__be16 vlan_proto = htons(tpa_info->metadata >>
+					  RX_CMP_FLAGS2_METADATA_TPID_SFT);
 		u16 vtag = tpa_info->metadata & RX_CMP_FLAGS2_METADATA_TCI_MASK;
 
-		__vlan_hwaccel_put_tag(skb, htons(vlan_proto), vtag);
+		if (eth_type_vlan(vlan_proto)) {
+			__vlan_hwaccel_put_tag(skb, vlan_proto, vtag);
+		} else {
+			dev_kfree_skb(skb);
+			return NULL;
+		}
 	}
 
 	skb_checksum_none_assert(skb);
@@ -1706,9 +1742,9 @@ static int bnxt_rx_pkt(struct bnxt *bp, struct bnxt_cp_ring_info *cpr,
 	u8 *data_ptr, agg_bufs, cmp_type;
 	dma_addr_t dma_addr;
 	struct sk_buff *skb;
+	u32 flags, misc;
 	void *data;
 	int rc = 0;
-	u32 misc;
 
 	rxcmp = (struct rx_cmp *)
 			&cpr->cp_desc_ring[CP_RING(cp_cons)][CP_IDX(cp_cons)];
@@ -1806,7 +1842,8 @@ static int bnxt_rx_pkt(struct bnxt *bp, struct bnxt_cp_ring_info *cpr,
 		goto next_rx_no_len;
 	}
 
-	len = le32_to_cpu(rxcmp->rx_cmp_len_flags_type) >> RX_CMP_LEN_SHIFT;
+	flags = le32_to_cpu(rxcmp->rx_cmp_len_flags_type);
+	len = flags >> RX_CMP_LEN_SHIFT;
 	dma_addr = rx_buf->mapping;
 
 	if (bnxt_rx_xdp(bp, rxr, cons, data, &data_ptr, &len, event)) {
@@ -1865,9 +1902,15 @@ static int bnxt_rx_pkt(struct bnxt *bp, struct bnxt_cp_ring_info *cpr,
 	    (skb->dev->features & BNXT_HW_FEATURE_VLAN_ALL_RX)) {
 		u32 meta_data = le32_to_cpu(rxcmp1->rx_cmp_meta_data);
 		u16 vtag = meta_data & RX_CMP_FLAGS2_METADATA_TCI_MASK;
-		u16 vlan_proto = meta_data >> RX_CMP_FLAGS2_METADATA_TPID_SFT;
+		__be16 vlan_proto = htons(meta_data >>
+					  RX_CMP_FLAGS2_METADATA_TPID_SFT);
 
-		__vlan_hwaccel_put_tag(skb, htons(vlan_proto), vtag);
+		if (eth_type_vlan(vlan_proto)) {
+			__vlan_hwaccel_put_tag(skb, vlan_proto, vtag);
+		} else {
+			dev_kfree_skb(skb);
+			goto next_rx;
+		}
 	}
 
 	skb_checksum_none_assert(skb);
@@ -1883,6 +1926,24 @@ static int bnxt_rx_pkt(struct bnxt *bp, struct bnxt_cp_ring_info *cpr,
 		}
 	}
 
+	if (unlikely((flags & RX_CMP_FLAGS_ITYPES_MASK) ==
+		     RX_CMP_FLAGS_ITYPE_PTP_W_TS)) {
+		if (bp->flags & BNXT_FLAG_CHIP_P5) {
+			u32 cmpl_ts = le32_to_cpu(rxcmp1->rx_cmp_timestamp);
+			u64 ns, ts;
+
+			if (!bnxt_get_rx_ts_p5(bp, &ts, cmpl_ts)) {
+				struct bnxt_ptp_cfg *ptp = bp->ptp_cfg;
+
+				spin_lock_bh(&ptp->ptp_lock);
+				ns = timecounter_cyc2time(&ptp->tc, ts);
+				spin_unlock_bh(&ptp->ptp_lock);
+				memset(skb_hwtstamps(skb), 0,
+				       sizeof(*skb_hwtstamps(skb)));
+				skb_hwtstamps(skb)->hwtstamp = ns_to_ktime(ns);
+			}
+		}
+	}
 	bnxt_deliver_skb(bp, bnapi, skb);
 	rc = 1;
 
@@ -2184,6 +2245,7 @@ static int bnxt_hwrm_handler(struct bnxt *bp, struct tx_cmp *txcmp)
 	case CMPL_BASE_TYPE_HWRM_ASYNC_EVENT:
 		bnxt_async_event_process(bp,
 					 (struct hwrm_async_event_cmpl *)txcmp);
+		break;
 
 	default:
 		break;
@@ -7391,6 +7453,56 @@ hwrm_func_resc_qcaps_exit:
 	return rc;
 }
 
+/* bp->hwrm_cmd_lock already held. */
+static int __bnxt_hwrm_ptp_qcfg(struct bnxt *bp)
+{
+	struct hwrm_port_mac_ptp_qcfg_output *resp = bp->hwrm_cmd_resp_addr;
+	struct hwrm_port_mac_ptp_qcfg_input req = {0};
+	struct bnxt_ptp_cfg *ptp = bp->ptp_cfg;
+	u8 flags;
+	int rc;
+
+	if (bp->hwrm_spec_code < 0x10801) {
+		rc = -ENODEV;
+		goto no_ptp;
+	}
+
+	req.port_id = cpu_to_le16(bp->pf.port_id);
+	bnxt_hwrm_cmd_hdr_init(bp, &req, HWRM_PORT_MAC_PTP_QCFG, -1, -1);
+	rc = _hwrm_send_message(bp, &req, sizeof(req), HWRM_CMD_TIMEOUT);
+	if (rc)
+		goto no_ptp;
+
+	flags = resp->flags;
+	if (!(flags & PORT_MAC_PTP_QCFG_RESP_FLAGS_HWRM_ACCESS)) {
+		rc = -ENODEV;
+		goto no_ptp;
+	}
+	if (!ptp) {
+		ptp = kzalloc(sizeof(*ptp), GFP_KERNEL);
+		if (!ptp)
+			return -ENOMEM;
+		ptp->bp = bp;
+		bp->ptp_cfg = ptp;
+	}
+	if (flags & PORT_MAC_PTP_QCFG_RESP_FLAGS_PARTIAL_DIRECT_ACCESS_REF_CLOCK) {
+		ptp->refclk_regs[0] = le32_to_cpu(resp->ts_ref_clock_reg_lower);
+		ptp->refclk_regs[1] = le32_to_cpu(resp->ts_ref_clock_reg_upper);
+	} else if (bp->flags & BNXT_FLAG_CHIP_P5) {
+		ptp->refclk_regs[0] = BNXT_TS_REG_TIMESYNC_TS0_LOWER;
+		ptp->refclk_regs[1] = BNXT_TS_REG_TIMESYNC_TS0_UPPER;
+	} else {
+		rc = -ENODEV;
+		goto no_ptp;
+	}
+	return 0;
+
+no_ptp:
+	kfree(ptp);
+	bp->ptp_cfg = NULL;
+	return rc;
+}
+
 static int __bnxt_hwrm_func_qcaps(struct bnxt *bp)
 {
 	int rc = 0;
@@ -7462,6 +7574,12 @@ static int __bnxt_hwrm_func_qcaps(struct bnxt *bp)
 		bp->flags &= ~BNXT_FLAG_WOL_CAP;
 		if (flags & FUNC_QCAPS_RESP_FLAGS_WOL_MAGICPKT_SUPPORTED)
 			bp->flags |= BNXT_FLAG_WOL_CAP;
+		if (flags & FUNC_QCAPS_RESP_FLAGS_PTP_SUPPORTED) {
+			__bnxt_hwrm_ptp_qcfg(bp);
+		} else {
+			kfree(bp->ptp_cfg);
+			bp->ptp_cfg = NULL;
+		}
 	} else {
 #ifdef CONFIG_BNXT_SRIOV
 		struct bnxt_vf_info *vf = &bp->vf;
@@ -10093,6 +10211,12 @@ int bnxt_half_open_nic(struct bnxt *bp)
 {
 	int rc = 0;
 
+	if (test_bit(BNXT_STATE_ABORT_ERR, &bp->state)) {
+		netdev_err(bp->dev, "A previous firmware reset has not completed, aborting half open\n");
+		rc = -ENODEV;
+		goto half_open_err;
+	}
+
 	rc = bnxt_alloc_mem(bp, false);
 	if (rc) {
 		netdev_err(bp->dev, "bnxt_alloc_mem err: %x\n", rc);
@@ -10152,9 +10276,16 @@ static int bnxt_open(struct net_device *dev)
 	rc = bnxt_hwrm_if_change(bp, true);
 	if (rc)
 		return rc;
+
+	if (bnxt_ptp_init(bp)) {
+		netdev_warn(dev, "PTP initialization failed.\n");
+		kfree(bp->ptp_cfg);
+		bp->ptp_cfg = NULL;
+	}
 	rc = __bnxt_open_nic(bp, true, true);
 	if (rc) {
 		bnxt_hwrm_if_change(bp, false);
+		bnxt_ptp_clear(bp);
 	} else {
 		if (test_and_clear_bit(BNXT_STATE_FW_RESET_DET, &bp->state)) {
 			if (!test_bit(BNXT_STATE_IN_FW_RESET, &bp->state)) {
@@ -10245,6 +10376,7 @@ static int bnxt_close(struct net_device *dev)
 {
 	struct bnxt *bp = netdev_priv(dev);
 
+	bnxt_ptp_clear(bp);
 	bnxt_hwmon_close(bp);
 	bnxt_close_nic(bp, true, true);
 	bnxt_hwrm_shutdown_link(bp);
@@ -10334,6 +10466,12 @@ static int bnxt_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 
 		return bnxt_hwrm_port_phy_write(bp, mdio->phy_id, mdio->reg_num,
 						mdio->val_in);
+
+	case SIOCSHWTSTAMP:
+		return bnxt_hwtstamp_set(dev, ifr);
+
+	case SIOCGHWTSTAMP:
+		return bnxt_hwtstamp_get(dev, ifr);
 
 	default:
 		/* do nothing */
@@ -11225,6 +11363,7 @@ static void bnxt_fw_reset_close(struct bnxt *bp)
 		bnxt_clear_int_mode(bp);
 		pci_disable_device(bp->pdev);
 	}
+	bnxt_ptp_clear(bp);
 	__bnxt_close_nic(bp, true, false);
 	bnxt_vf_reps_free(bp);
 	bnxt_clear_int_mode(bp);
@@ -11849,10 +11988,21 @@ static bool bnxt_fw_reset_timeout(struct bnxt *bp)
 			  (bp->fw_reset_max_dsecs * HZ / 10));
 }
 
+static void bnxt_fw_reset_abort(struct bnxt *bp, int rc)
+{
+	clear_bit(BNXT_STATE_IN_FW_RESET, &bp->state);
+	if (bp->fw_reset_state != BNXT_FW_RESET_STATE_POLL_VF) {
+		bnxt_ulp_start(bp, rc);
+		bnxt_dl_health_status_update(bp, false);
+	}
+	bp->fw_reset_state = 0;
+	dev_close(bp->dev);
+}
+
 static void bnxt_fw_reset_task(struct work_struct *work)
 {
 	struct bnxt *bp = container_of(work, struct bnxt, fw_reset_task.work);
-	int rc;
+	int rc = 0;
 
 	if (!test_bit(BNXT_STATE_IN_FW_RESET, &bp->state)) {
 		netdev_err(bp->dev, "bnxt_fw_reset_task() called when not in fw reset mode!\n");
@@ -11882,6 +12032,11 @@ static void bnxt_fw_reset_task(struct work_struct *work)
 		}
 		bp->fw_reset_timestamp = jiffies;
 		rtnl_lock();
+		if (test_bit(BNXT_STATE_ABORT_ERR, &bp->state)) {
+			bnxt_fw_reset_abort(bp, rc);
+			rtnl_unlock();
+			return;
+		}
 		bnxt_fw_reset_close(bp);
 		if (bp->fw_cap & BNXT_FW_CAP_ERR_RECOVER_RELOAD) {
 			bp->fw_reset_state = BNXT_FW_RESET_STATE_POLL_FW_DOWN;
@@ -11929,6 +12084,7 @@ static void bnxt_fw_reset_task(struct work_struct *work)
 			if (val == 0xffff) {
 				if (bnxt_fw_reset_timeout(bp)) {
 					netdev_err(bp->dev, "Firmware reset aborted, PCI config space invalid\n");
+					rc = -ETIMEDOUT;
 					goto fw_reset_abort;
 				}
 				bnxt_queue_fw_reset_work(bp, HZ / 1000);
@@ -11938,6 +12094,7 @@ static void bnxt_fw_reset_task(struct work_struct *work)
 		clear_bit(BNXT_STATE_FW_FATAL_COND, &bp->state);
 		if (pci_enable_device(bp->pdev)) {
 			netdev_err(bp->dev, "Cannot re-enable PCI device\n");
+			rc = -ENODEV;
 			goto fw_reset_abort;
 		}
 		pci_set_master(bp->pdev);
@@ -11964,9 +12121,10 @@ static void bnxt_fw_reset_task(struct work_struct *work)
 		}
 		rc = bnxt_open(bp->dev);
 		if (rc) {
-			netdev_err(bp->dev, "bnxt_open_nic() failed\n");
-			clear_bit(BNXT_STATE_IN_FW_RESET, &bp->state);
-			dev_close(bp->dev);
+			netdev_err(bp->dev, "bnxt_open() failed during FW reset\n");
+			bnxt_fw_reset_abort(bp, rc);
+			rtnl_unlock();
+			return;
 		}
 
 		bp->fw_reset_state = 0;
@@ -11993,12 +12151,8 @@ fw_reset_abort_status:
 		netdev_err(bp->dev, "fw_health_status 0x%x\n", sts);
 	}
 fw_reset_abort:
-	clear_bit(BNXT_STATE_IN_FW_RESET, &bp->state);
-	if (bp->fw_reset_state != BNXT_FW_RESET_STATE_POLL_VF)
-		bnxt_dl_health_status_update(bp, false);
-	bp->fw_reset_state = 0;
 	rtnl_lock();
-	dev_close(bp->dev);
+	bnxt_fw_reset_abort(bp, rc);
 	rtnl_unlock();
 }
 
@@ -12551,6 +12705,7 @@ static void bnxt_remove_one(struct pci_dev *pdev)
 
 	if (BNXT_PF(bp))
 		devlink_port_type_clear(&bp->dl_port);
+
 	pci_disable_pcie_error_reporting(pdev);
 	unregister_netdev(dev);
 	clear_bit(BNXT_STATE_IN_FW_RESET, &bp->state);
@@ -12571,6 +12726,8 @@ static void bnxt_remove_one(struct pci_dev *pdev)
 	bnxt_dcb_free(bp);
 	kfree(bp->edev);
 	bp->edev = NULL;
+	kfree(bp->ptp_cfg);
+	bp->ptp_cfg = NULL;
 	kfree(bp->fw_health);
 	bp->fw_health = NULL;
 	bnxt_cleanup_pci(bp);
@@ -13161,6 +13318,8 @@ init_err_pci_clean:
 	bnxt_free_hwrm_short_cmd_req(bp);
 	bnxt_free_hwrm_resources(bp);
 	bnxt_ethtool_free(bp);
+	kfree(bp->ptp_cfg);
+	bp->ptp_cfg = NULL;
 	kfree(bp->fw_health);
 	bp->fw_health = NULL;
 	bnxt_cleanup_pci(bp);
@@ -13315,7 +13474,8 @@ static pci_ers_result_t bnxt_io_error_detected(struct pci_dev *pdev,
 	if (netif_running(netdev))
 		bnxt_close(netdev);
 
-	pci_disable_device(pdev);
+	if (pci_is_enabled(pdev))
+		pci_disable_device(pdev);
 	bnxt_free_ctx_mem(bp);
 	kfree(bp->ctx);
 	bp->ctx = NULL;
