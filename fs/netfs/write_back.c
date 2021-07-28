@@ -42,9 +42,55 @@ static void netfs_redirty_pages(struct netfs_write_request *wreq)
 	_leave("");
 }
 
-static int netfs_end_writeback_iterator(struct xa_state *xas, struct page *page)
+static int netfs_end_writeback_iterator(struct xa_state *xas, struct page *page,
+					struct netfs_write_request *wreq,
+					struct netfs_i_context *ctx)
 {
-	end_page_writeback(page);
+	struct netfs_dirty_region *region = wreq->region, *r;
+	struct netfs_range range;
+	bool clear_wb = true;
+
+	range.start = page_offset(page);
+	range.end   = range.start + thp_size(page);
+
+	/* Now we need to clear the wb flags on any page that's not shared with
+	 * any other region undergoing writing.
+	 */
+	if (within(&range, &region->dirty)) {
+		end_page_writeback(page);
+		return 0;
+	}
+
+	spin_lock(&ctx->lock);
+	if (range.start < region->dirty.start) {
+		r = region;
+		list_for_each_entry_continue_reverse(r, &ctx->dirty_regions, dirty_link) {
+			if (r->dirty.end <= range.start)
+				break;
+			if (r->state < NETFS_REGION_IS_FLUSHING)
+				continue;
+			kdebug("keep-wback-b %lx reg=%x r=%x W=%x",
+			       page->index, region->debug_id, r->debug_id, wreq->debug_id);
+			clear_wb = false;
+		}
+	}
+
+	if (range.end > region->dirty.end) {
+		r = region;
+		list_for_each_entry_continue(r, &ctx->dirty_regions, dirty_link) {
+			if (r->dirty.start >= range.end)
+				break;
+			if (r->state < NETFS_REGION_IS_FLUSHING)
+				continue;
+			kdebug("keep-wback-f %lx reg=%x r=%x W=%x",
+			       page->index, region->debug_id, r->debug_id, wreq->debug_id);
+			clear_wb = false;
+		}
+	}
+
+	if (clear_wb)
+		end_page_writeback(page);
+	spin_unlock(&ctx->lock);
 	return 0;
 }
 
@@ -59,7 +105,7 @@ static void netfs_fix_up_dirty_list(struct netfs_write_request *wreq)
 	struct list_head *lower, *upper, *p;
 
 	netfs_iterate_pinned_pages(wreq->mapping, wreq->first, wreq->last,
-				   netfs_end_writeback_iterator);
+				   netfs_end_writeback_iterator, wreq, ctx);
 
 	spin_lock(&ctx->lock);
 
