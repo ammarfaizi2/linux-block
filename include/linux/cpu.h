@@ -130,7 +130,7 @@ int cpu_device_down(struct device *dev);
 extern void smp_shutdown_nonboot_cpus(unsigned int primary_cpu);
 extern void cpu_hp_start_now(void);
 extern void cpu_hp_stop_now(void);
-extern void cpu_hp_check_delay(const char *s, const void *func);
+extern bool cpu_hp_check_delay(const char *s, const void *func);
 
 #else /* CONFIG_HOTPLUG_CPU */
 
@@ -146,7 +146,7 @@ static inline int remove_cpu(unsigned int cpu) { return -EPERM; }
 static inline void smp_shutdown_nonboot_cpus(unsigned int primary_cpu) { }
 static inline void cpu_hp_start_now(void) { }
 static inline void cpu_hp_stop_now(void) { }
-static inline void cpu_hp_check_delay(const char *s, void *func) { }
+static inline bool cpu_hp_check_delay(const char *s, void *func) { return false; }
 #endif	/* !CONFIG_HOTPLUG_CPU */
 
 /* Wrappers which go away once all code is converted */
