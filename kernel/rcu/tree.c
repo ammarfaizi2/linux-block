@@ -255,7 +255,7 @@ void rcu_softirq_qs(void)
  * Increment the current CPU's rcu_data structure's ->dynticks field
  * with ordering.  Return the new value.
  */
-static noinstr unsigned long rcu_dynticks_inc(int incby)
+static noinline noinstr unsigned long rcu_dynticks_inc(int incby)
 {
 	return arch_atomic_add_return(incby, this_cpu_ptr(&rcu_data.dynticks));
 }
