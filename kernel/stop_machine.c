@@ -199,6 +199,24 @@ notrace void __weak stop_machine_yield(const struct cpumask *cpumask)
 	cpu_relax();
 }
 
+static void dump_multi_cpu_stop_state(void)
+{
+	struct cpu_stopper *stopper;
+	unsigned long flags;
+	int cpu;
+
+	pr_info("%s:", __func__);
+	for_each_online_cpu(cpu) {
+		if (cpu_is_offline(cpu))
+			continue;
+		stopper = &per_cpu(cpu_stopper, cpu);
+		raw_spin_lock_irqsave(&stopper->lock, flags);
+		pr_cont("  %s%s ->state=%#x", stopper->thread->comm, stopper->thread == current ? " (me)" : "", stopper->thread->__state);
+		raw_spin_unlock_irqrestore(&stopper->lock, flags);
+	}
+	pr_info("\n");
+}
+
 /* This is the cpu_stop function which stops the CPU. */
 static int multi_cpu_stop(void *data)
 {
@@ -232,14 +250,22 @@ static int multi_cpu_stop(void *data)
 			curstate = newstate;
 			switch (curstate) {
 			case MULTI_STOP_DISABLE_IRQ:
+				if (cpu_hp_check_delay("MULTI_STOP_DISABLE_IRQ in", multi_cpu_stop))
+					dump_multi_cpu_stop_state();
 				local_irq_disable();
 				hard_irq_disable();
 				break;
 			case MULTI_STOP_RUN:
-				if (is_active)
+				if (cpu_hp_check_delay("MULTI_STOP_RUN in", multi_cpu_stop))
+					dump_multi_cpu_stop_state();
+				if (is_active) {
 					err = msdata->fn(msdata->data);
+					cpu_hp_check_delay("multi_cpu_stop() CPU-stopper function", msdata->fn);
+				}
 				break;
 			default:
+				if (cpu_hp_check_delay("MULTI_STOP_RUN in", multi_cpu_stop))
+					dump_multi_cpu_stop_state();
 				break;
 			}
 			ack_state(msdata);
@@ -255,6 +281,7 @@ static int multi_cpu_stop(void *data)
 	} while (curstate != MULTI_STOP_EXIT);
 
 	local_irq_restore(flags);
+	cpu_hp_check_delay("Exit from", multi_cpu_stop);
 	return err;
 }
 
