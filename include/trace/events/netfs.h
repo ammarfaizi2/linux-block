@@ -82,10 +82,12 @@ enum netfs_dirty_trace {
 
 enum netfs_region_trace {
 	netfs_region_trace_get_dirty,
+	netfs_region_trace_get_wait_active,
 	netfs_region_trace_get_wreq,
 	netfs_region_trace_put_dirty,
 	netfs_region_trace_put_discard,
 	netfs_region_trace_put_merged,
+	netfs_region_trace_put_wait_active,
 	netfs_region_trace_put_wreq,
 	netfs_region_trace_put_write_iter,
 	netfs_region_trace_free,
@@ -194,10 +196,12 @@ enum netfs_write_stream_trace {
 
 #define netfs_region_traces					\
 	EM(netfs_region_trace_get_dirty,	"GET DIRTY  ")	\
+	EM(netfs_region_trace_get_wait_active,	"GET WT ACTV")	\
 	EM(netfs_region_trace_get_wreq,		"GET WREQ   ")	\
 	EM(netfs_region_trace_put_dirty,	"PUT DIRTY  ")	\
 	EM(netfs_region_trace_put_discard,	"PUT DISCARD")	\
 	EM(netfs_region_trace_put_merged,	"PUT MERGED ")	\
+	EM(netfs_region_trace_put_wait_active,	"PUT WT ACTV")	\
 	EM(netfs_region_trace_put_wreq,		"PUT WREQ   ")	\
 	EM(netfs_region_trace_put_write_iter,	"PUT WRITER ")	\
 	EM(netfs_region_trace_free,		"FREE       ")	\

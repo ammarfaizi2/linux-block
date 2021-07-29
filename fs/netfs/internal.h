@@ -94,6 +94,8 @@ static inline void netfs_put_subrequest(struct netfs_read_subrequest *subreq,
 /*
  * write_helper.c
  */
+extern atomic_t netfs_region_debug_ids;
+
 void netfs_writeback_worker(struct work_struct *work);
 void netfs_flush_region(struct netfs_i_context *ctx,
 			struct netfs_dirty_region *region,

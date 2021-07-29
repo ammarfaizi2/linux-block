@@ -338,42 +338,6 @@ void netfs_writeback_worker(struct work_struct *work)
 	netfs_put_write_request(wreq, false, netfs_wreq_trace_put_work);
 }
 
-/*
- * Flush some of the dirty queue.
- */
-static int netfs_flush_dirty(struct address_space *mapping,
-			     struct writeback_control *wbc,
-			     struct netfs_range *range,
-			     loff_t *next)
-{
-	struct netfs_dirty_region *p, *q;
-	struct netfs_i_context *ctx = netfs_i_context(mapping->host);
-
-	kenter("%llx-%llx", range->start, range->end);
-
-	spin_lock(&ctx->lock);
-
-	/* Scan forwards to find dirty regions containing the suggested start
-	 * point.
-	 */
-	list_for_each_entry_safe(p, q, &ctx->dirty_regions, dirty_link) {
-		_debug("D=%x %llx-%llx", p->debug_id, p->dirty.start, p->dirty.end);
-		if (p->dirty.end <= range->start)
-			continue;
-		if (p->dirty.start >= range->end)
-			break;
-		if (p->state != NETFS_REGION_IS_DIRTY)
-			continue;
-		if (test_bit(NETFS_REGION_FLUSH_Q, &p->flags))
-			continue;
-
-		netfs_flush_region(ctx, p, netfs_dirty_trace_flush_writepages);
-	}
-
-	spin_unlock(&ctx->lock);
-	return 0;
-}
-
 static int netfs_unlock_pages_iterator(struct page *page)
 {
 	unlock_page(page);
@@ -612,6 +576,323 @@ error:
 	return ret;
 }
 
+/*
+ * Split the front off of a dirty region.  We don't want to over-modify the
+ * tail region if it's currently active.
+ */
+static struct netfs_dirty_region *netfs_split_off_front(
+	struct netfs_i_context *ctx,
+	struct netfs_dirty_region *region,
+	struct netfs_dirty_region **spare,
+	unsigned long long pos)
+{
+	struct netfs_dirty_region *front = *spare;
+
+	*spare = NULL;
+	*front = *region;
+	front->dirty.end = pos;
+	region->dirty.start = pos;
+	front->debug_id = atomic_inc_return(&netfs_region_debug_ids);
+
+	kdebug("split D=%x from D=%x", front->debug_id, region->debug_id);
+
+	refcount_set(&front->ref, 1);
+	INIT_LIST_HEAD(&front->active_link);
+	netfs_get_flush_group(front->group);
+	spin_lock_init(&front->lock);
+	// TODO: grab cache resources
+
+	// TODO: need to split the bounding box?
+	if (ctx->ops->split_dirty_region)
+		ctx->ops->split_dirty_region(front);
+	list_add_tail(&front->dirty_link, &region->dirty_link);
+	list_add(&front->flush_link, &region->flush_link);
+	trace_netfs_dirty(ctx, front, region, netfs_dirty_trace_split);
+	netfs_proc_add_region(front);
+	return front;
+}
+
+/*
+ * Flush some of the dirty queue, transforming a part of a sequence of dirty
+ * regions into a block we can flush.
+ *
+ * A number of things constrain us:
+ *  - The region we write out should not be undergoing modification
+ *  - We may need to expand or split the region for a number of reasons:
+ *    - Filesystem storage block/object size
+ *    - Filesystem RPC size (wsize)
+ *    - Cache block size
+ *    - Cache DIO block size
+ *    - Crypto/compression block size
+ */
+static int netfs_flush_dirty(struct address_space *mapping,
+			     struct writeback_control *wbc,
+			     struct netfs_range *requested,
+			     loff_t *next)
+{
+	struct netfs_i_context *ctx = netfs_i_context(mapping->host);
+	struct netfs_dirty_region *spares[2] = {};
+	struct netfs_dirty_region *head = NULL, *tail = NULL, *r, *q;
+	struct netfs_range block;
+	unsigned long long dirty_start, dirty_to, active_from, limit;
+	unsigned int wsize = ctx->wsize;
+	unsigned int min_bsize = 1U << ctx->min_bshift;
+	int ret;
+
+	kenter("%llx-%llx", requested->start, requested->end);
+
+	BUG_ON(!wsize);
+
+	/* For the moment, place certain restrictions when content crypto is in
+	 * use so that we don't write a partial block and corrupt part of the
+	 * file into unreadability.
+	 */
+	if (ctx->crypto_bshift) {
+		/* If object storage is in use, we don't want a crypto block to
+		 * be split across multiple objects.
+		 */
+		if (ctx->obj_bshift &&
+		    ctx->crypto_bshift > ctx->obj_bshift) {
+			pr_err_ratelimited("Crypto blocksize (2^%u) > objsize (2^%u)\n",
+					   ctx->crypto_bshift, ctx->obj_bshift);
+			return -EIO;
+		}
+
+		/* We must be able to write a crypto block in its entirety in a
+		 * single RPC call if we're going to do the write atomically.
+		 */
+		if ((1U << ctx->crypto_bshift) > wsize) {
+			pr_err_ratelimited("Crypto blocksize (2^%u) > wsize (%u)\n",
+					   ctx->crypto_bshift, wsize);
+			return -EIO;
+		}
+	}
+
+	/* Round the requested region out to the minimum block size (eg. for
+	 * crypto purposes).
+	 */
+	requested->start = round_down(requested->start, min_bsize);
+	requested->end   = round_up  (requested->end,   min_bsize);
+
+retry:
+	ret = 0;
+
+	spin_lock(&ctx->lock);
+
+	/* Find the first dirty region that overlaps the requested flush region */
+	list_for_each_entry(r, &ctx->dirty_regions, dirty_link) {
+		kdebug("query D=%x", r->debug_id);
+		if (r->dirty.end <= requested->start ||
+		    r->dirty.end == r->dirty.start)
+			continue;
+		if (READ_ONCE(r->state) == NETFS_REGION_IS_FLUSHING)
+			continue;
+		if (r->dirty.start >= requested->end)
+			goto out;
+		head = r;
+		break;
+	}
+
+	if (!head || head->dirty.start >= requested->end)
+		goto out;
+
+	/* Determine where we're going to start and the limits on where we
+	 * might end.
+	 */
+	dirty_start = round_down(head->dirty.start, min_bsize);
+	kdebug("dirty D=%x start %llx", head->debug_id, dirty_start);
+
+	if (ctx->obj_bshift) {
+		/* Handle object storage - we limit the write to one object,
+		 * but we round down the start if there's more dirty data that
+		 * way.
+		 */
+		unsigned long long obj_start;
+		unsigned long long obj_size  = 1ULL << ctx->obj_bshift;
+		unsigned long long obj_end;
+
+		obj_start = max(requested->start, dirty_start);
+		obj_start = round_down(obj_start, obj_size);
+		obj_end   = obj_start + obj_size;
+		kdebug("object %llx-%llx", obj_start, obj_end);
+
+		block.start = max(dirty_start, obj_start);
+		limit = min(requested->end, obj_end);
+		kdebug("limit %llx", limit);
+		if (limit - block.start > wsize) {
+			kdebug("size %llx", limit - block.start);
+			block.start = max(block.start, requested->start);
+			limit = min(requested->end,
+				    block.start + round_down(wsize, min_bsize));
+		}
+		kdebug("object %llx-%llx", block.start, limit);
+	} else if (min_bsize > 1) {
+		/* There's a block size (cache DIO, crypto). */
+		block.start = max(dirty_start, requested->start);
+		if (wsize > min_bsize) {
+			/* A single write can encompass several blocks. */
+			limit = block.start + round_down(wsize, min_bsize);
+			limit = min(limit, requested->end);
+		} else {
+			/* The block will need several writes to send it. */
+			limit = block.start + min_bsize;
+		}
+		kdebug("block %llx-%llx", block.start, limit);
+	} else {
+		/* No blocking factors and no object division. */
+		block.start = max(dirty_start, requested->start);
+		limit = min(block.start + wsize, requested->end);
+		kdebug("plain %llx-%llx", block.start, limit);
+	}
+
+	/* Determine the subset of dirty regions that are going to contribute. */
+	r = head;
+	list_for_each_entry_from(r, &ctx->dirty_regions, dirty_link) {
+		kdebug("- maybe D=%x", r->debug_id);
+		if (r->dirty.start >= limit)
+			break;
+		switch (READ_ONCE(r->state)) {
+		case NETFS_REGION_IS_DIRTY:
+			tail = r;
+			continue;
+		case NETFS_REGION_IS_FLUSHING:
+			limit = round_down(r->dirty.start, min_bsize);
+			goto determined_tail;
+		case NETFS_REGION_IS_ACTIVE:
+			/* We can break off part of a region undergoing active
+			 * modification, but assume, for now, that we don't
+			 * want to include anything that will change under us
+			 * or that's only partially uptodate - especially if
+			 * we're going to be encrypting or compressing from it.
+			 */
+			dirty_to = READ_ONCE(r->dirty.end);
+			active_from = round_down(dirty_to, min_bsize);
+			kdebug("active D=%x from %llx", r->debug_id, active_from);
+			if (active_from > limit) {
+				kdebug(" - >limit");
+				tail = r;
+				goto determined_tail;
+			}
+
+			limit = active_from;
+			if (r->dirty.start < limit) {
+				kdebug(" - reduce limit");
+				tail = r;
+				goto determined_tail;
+			}
+
+			if (limit == block.start || r == head)
+				goto wait_for_active_region;
+
+			if (limit == r->dirty.start) {
+				kdebug("- active contig");
+				goto determined_tail;
+			}
+
+			/* We may need to rewind the subset we're collecting. */
+			q = r;
+			list_for_each_entry_continue_reverse(q, &ctx->dirty_regions,
+							     dirty_link) {
+				kdebug(" - rewind D=%x", q->debug_id);
+				tail = q;
+				if (q->dirty.start < limit)
+					goto determined_tail;
+				if (q == head) {
+					kdebug("over rewound");
+					ret = -EAGAIN;
+					goto out;
+				}
+			}
+			goto wait_for_active_region;
+		}
+	}
+
+determined_tail:
+	if (!tail) {
+		kdebug("netfs: no tail\n");
+		ret = -EAGAIN;
+		goto out;
+	}
+	dirty_to = round_up(tail->dirty.end, min_bsize);
+	kdebug("dto %llx", dirty_to);
+	block.end = min(dirty_to, limit);
+	kdebug("block %llx-%llx", block.start, block.end);
+
+	/* If the leading and/or trailing edges of the selected regions overlap
+	 * the ends of the block, we will need to split those blocks.
+	 */
+	if ((dirty_start < block.start && !spares[0]) ||
+	    (tail->dirty.end > block.end && !spares[1])) {
+		spin_unlock(&ctx->lock);
+		kdebug("need spares");
+		goto need_spares;
+	}
+
+	if (dirty_start < block.start) {
+		kdebug("eject front");
+		netfs_split_off_front(ctx, head, &spares[0], block.start);
+	}
+
+	if (tail->dirty.end > block.end) {
+		kdebug("eject back");
+		r = netfs_split_off_front(ctx, tail, &spares[1], block.end);
+		if (head == tail)
+			head = r;
+		tail = r;
+	}
+
+	/* Flip all the regions to flushing */
+	r = head;
+	kdebug("mark from D=%x", r->debug_id);
+	list_for_each_entry_from(r, &ctx->dirty_regions, dirty_link) {
+		kdebug("- flush D=%x", r->debug_id);
+		set_bit(NETFS_REGION_FLUSH_Q, &r->flags);
+		smp_store_release(&r->state, NETFS_REGION_IS_FLUSHING);
+		trace_netfs_dirty(ctx, r, NULL, netfs_dirty_trace_flushing);
+		wake_up_var(&r->state);
+		list_move_tail(&r->flush_link, &ctx->flush_queue);
+		if (r == tail)
+			break;
+	}
+
+	requested->start = block.end;
+out:
+	spin_unlock(&ctx->lock);
+
+out_unlocked:
+	netfs_free_dirty_region(ctx, spares[0]);
+	netfs_free_dirty_region(ctx, spares[1]);
+	kleave(" = %d", ret);
+	return ret;
+
+wait_for_active_region:
+	/* We have to wait for an active region to progress */
+	kdebug("- wait for active %x", r->debug_id);
+	set_bit(NETFS_REGION_FLUSH_Q, &r->flags);
+
+	if (wbc->sync_mode == WB_SYNC_NONE) {
+		ret = -EBUSY;
+		goto out;
+	}
+
+	netfs_get_dirty_region(ctx, r, netfs_region_trace_get_wait_active);
+	spin_unlock(&ctx->lock);
+
+	wait_var_event(&r->state, (READ_ONCE(r->state) != NETFS_REGION_IS_ACTIVE ||
+				   READ_ONCE(r->dirty.end) != dirty_to));
+	netfs_put_dirty_region(ctx, r, netfs_region_trace_put_wait_active);
+
+need_spares:
+	ret = -ENOMEM;
+	spares[0] = netfs_alloc_dirty_region();
+	if (!spares[0])
+		goto out_unlocked;
+	spares[1] = netfs_alloc_dirty_region();
+	if (!spares[1])
+		goto out_unlocked;
+	goto retry;
+}
+
 /**
  * netfs_writepages - Initiate writeback to the server and cache
  * @mapping: The pagecache to write from
@@ -646,7 +927,7 @@ int netfs_writepages(struct address_space *mapping,
 
 	if (wbc->range_cyclic) {
 		range.start = mapping->writeback_index * PAGE_SIZE;
-		range.end   = ULLONG_MAX;
+		range.end   = (unsigned long long)LLONG_MAX + 1;
 		ret = netfs_flush_dirty(mapping, wbc, &range, &next);
 		if (range.start > 0 && wbc->nr_to_write > 0 && ret == 0) {
 			range.start = 0;
@@ -654,12 +935,6 @@ int netfs_writepages(struct address_space *mapping,
 			ret = netfs_flush_dirty(mapping, wbc, &range, &next);
 		}
 		mapping->writeback_index = next / PAGE_SIZE;
-	} else if (wbc->range_start == 0 && wbc->range_end == LLONG_MAX) {
-		range.start = 0;
-		range.end   = ULLONG_MAX;
-		ret = netfs_flush_dirty(mapping, wbc, &range, &next);
-		if (wbc->nr_to_write > 0 && ret == 0)
-			mapping->writeback_index = next;
 	} else {
 		range.start = wbc->range_start;
 		range.end   = wbc->range_end + 1;

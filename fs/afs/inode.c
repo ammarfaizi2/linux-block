@@ -456,10 +456,13 @@ static void afs_set_netfs_context(struct afs_vnode *vnode)
 
 	netfs_i_context_init(&vnode->vfs_inode, &afs_req_ops);
 	ctx->n_wstreams = 1;
-	ctx->bsize = PAGE_SIZE;
+	ctx->wsize = 0x33333;
+	ctx->min_bshift = ilog2(0x10000);
+	ctx->obj_bshift = ilog2(0x40000);
 	if (as->fscrypt) {
 		kdebug("ENCRYPT!");
-		ctx->crypto_bsize = ilog2(4096);
+		ctx->crypto_bshift = ilog2(4096);
+		ctx->min_bshift = min_t(unsigned int, ctx->crypto_bshift, PAGE_SHIFT);
 		__set_bit(NETFS_ICTX_ENCRYPTED, &ctx->flags);
 	}
 }

@@ -182,10 +182,11 @@ struct netfs_i_context {
 	spinlock_t		lock;
 	unsigned int		rsize;		/* Maximum read size */
 	unsigned int		wsize;		/* Maximum write size */
-	unsigned int		bsize;		/* Min block size for bounding box */
 	unsigned int		inval_counter;	/* Number of invalidations made */
+	unsigned char		min_bshift;	/* log2 min block size for bounding box or 0 */
+	unsigned char		obj_bshift;	/* log2 storage object shift (ceph/pnfs) or 0 */
+	unsigned char		crypto_bshift;	/* log2 crypto block size or 0 */
 	unsigned char		n_wstreams;	/* Number of write streams to allocate */
-	unsigned char		crypto_bsize;	/* log2 of crypto block size */
 };
 
 /*
@@ -447,7 +448,9 @@ static inline void netfs_i_context_init(struct inode *inode,
 	struct netfs_i_context *ctx = netfs_i_context(inode);
 
 	ctx->ops = ops;
-	ctx->bsize = PAGE_SIZE;
+	ctx->min_bshift = 0;
+	ctx->obj_bshift = 0;
+	ctx->crypto_bshift = 0;
 	INIT_LIST_HEAD(&ctx->pending_writes);
 	INIT_LIST_HEAD(&ctx->active_writes);
 	INIT_LIST_HEAD(&ctx->dirty_regions);

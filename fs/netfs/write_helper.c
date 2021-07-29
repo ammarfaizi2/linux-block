@@ -13,7 +13,7 @@
 #include <linux/backing-dev.h>
 #include "internal.h"
 
-static atomic_t netfs_region_debug_ids;
+atomic_t netfs_region_debug_ids;
 
 static bool __overlaps(unsigned long long start1, unsigned long long end1,
 		       unsigned long long start2, unsigned long long end2)
@@ -64,6 +64,7 @@ static void netfs_init_dirty_region(struct netfs_dirty_region *region,
 {
 	struct netfs_flush_group *group;
 	struct netfs_i_context *ctx = netfs_i_context(inode);
+	unsigned int bsize = min_t(unsigned int, 1U << ctx->min_bshift, PAGE_SIZE);
 
 	region->state		= NETFS_REGION_IS_PENDING;
 	region->type		= type;
@@ -72,8 +73,8 @@ static void netfs_init_dirty_region(struct netfs_dirty_region *region,
 	region->reserved.end	= end;
 	region->dirty.start	= start;
 	region->dirty.end	= start;
-	region->bounds.start	= round_down(start, ctx->bsize);
-	region->bounds.end	= round_up(end, ctx->bsize);
+	region->bounds.start	= round_down(start, bsize);
+	region->bounds.end	= round_up(end, bsize);
 	region->i_size		= i_size_read(inode);
 	region->debug_id	= atomic_inc_return(&netfs_region_debug_ids);
 	INIT_LIST_HEAD(&region->active_link);

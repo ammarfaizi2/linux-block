@@ -105,7 +105,7 @@ static bool netfs_prepare_encrypt(struct netfs_write_request *wreq)
 {
 	struct netfs_i_context *ctx = netfs_i_context(wreq->inode);
 	struct scatterlist source_sg[16], dest_sg[16];
-	unsigned int bsize = 1 << ctx->crypto_bsize, n_source, n_dest;
+	unsigned int bsize = 1 << ctx->crypto_bshift, n_source, n_dest;
 	loff_t pos;
 	size_t n;
 	int ret;
