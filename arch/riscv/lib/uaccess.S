@@ -34,8 +34,11 @@ ENTRY(__asm_copy_from_user)
 
 	/*
 	 * Use byte copy only if too small.
+	 * SZREG holds 4 for RV32 and 8 for RV64
+	 * a3 - 2*SZREG is minimum size for word_copy
+	 *      1*SZREG for aligning dst + 1*SZREG for word_copy
 	 */
-	li	a3, 8*SZREG /* size must be larger than size in word_copy */
+	li	a3, 2*SZREG
 	bltu	a2, a3, .Lbyte_copy_tail
 
 	/*
@@ -66,9 +69,40 @@ ENTRY(__asm_copy_from_user)
 	andi	a3, a1, SZREG-1
 	bnez	a3, .Lshift_copy
 
+.Lcheck_size_bulk:
+	/*
+	 * Evaluate the size if possible to use unrolled.
+	 * The word_copy_unrolled requires larger than 8*SZREG
+	 */
+	li	a3, 8*SZREG
+	add	a4, a0, a3
+	bltu	a4, t0, .Lword_copy_unrolled
+
 .Lword_copy:
-        /*
-	 * Both src and dst are aligned, unrolled word copy
+	/*
+	 * Both src and dst are aligned
+	 * None unrolled word copy with every 1*SZREG iteration
+	 *
+	 * a0 - start of aligned dst
+	 * a1 - start of aligned src
+	 * t0 - end of aligned dst
+	 */
+	bgeu	a0, t0, .Lbyte_copy_tail /* check if end of copy */
+	addi	t0, t0, -(SZREG) /* not to over run */
+1:
+	REG_L	a5, 0(a1)
+	addi	a1, a1, SZREG
+	REG_S	a5, 0(a0)
+	addi	a0, a0, SZREG
+	bltu	a0, t0, 1b
+
+	addi	t0, t0, SZREG /* revert to original value */
+	j	.Lbyte_copy_tail
+
+.Lword_copy_unrolled:
+	/*
+	 * Both src and dst are aligned
+	 * Unrolled word copy with every 8*SZREG iteration
 	 *
 	 * a0 - start of aligned dst
 	 * a1 - start of aligned src
@@ -98,7 +132,12 @@ ENTRY(__asm_copy_from_user)
 	bltu	a0, t0, 2b
 
 	addi	t0, t0, 8*SZREG-1 /* revert to original value */
-	j	.Lbyte_copy_tail
+
+	/*
+	 * Remaining might large enough for word_copy to reduce slow byte
+	 * copy
+	 */
+	j	.Lcheck_size_bulk
 
 .Lshift_copy:
 
