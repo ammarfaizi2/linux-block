@@ -4,7 +4,6 @@
 
 #include <linux/topology.h>
 #include <linux/mutex.h>
-#include <linux/cpumask_api.h>
 
 #include <linux/sched/idle.h>
 #include <linux/sched/thread_info_api.h>
