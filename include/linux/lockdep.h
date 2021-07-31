@@ -11,6 +11,5 @@
 #define __LINUX_LOCKDEP_H
 
 #include <linux/lockdep_types.h>
-#include <linux/lockdep_api.h>
 
 #endif /* __LINUX_LOCKDEP_H */
