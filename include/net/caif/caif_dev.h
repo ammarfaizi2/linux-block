@@ -14,6 +14,8 @@
 #include <linux/if.h>
 #include <linux/net.h>
 
+struct packet_type;
+
 /**
  * struct caif_param - CAIF parameters.
  * @size:	Length of data

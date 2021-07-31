@@ -2,6 +2,8 @@
 #ifndef _NET_INET_DATALINK_H_
 #define _NET_INET_DATALINK_H_
 
+struct packet_type;
+
 struct datalink_proto {
         unsigned char   type[8];
 

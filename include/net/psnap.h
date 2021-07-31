@@ -2,6 +2,8 @@
 #ifndef _NET_PSNAP_H
 #define _NET_PSNAP_H
 
+struct packet_type;
+
 struct datalink_proto *
 register_snap_client(const unsigned char *desc,
 		     int (*rcvfunc)(struct sk_buff *, struct net_device *,
