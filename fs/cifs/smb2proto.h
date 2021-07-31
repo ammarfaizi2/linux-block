@@ -14,6 +14,8 @@
 
 struct statfs;
 struct smb_rqst;
+struct file_lock;
+struct kstatfs;
 
 /*
  *****************************************************************
