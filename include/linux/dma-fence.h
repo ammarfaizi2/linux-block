@@ -261,6 +261,4 @@ struct dma_fence_ops {
 				   char *str, int size);
 };
 
-#include <linux/dma-fence-api.h>
-
 #endif /* __LINUX_DMA_FENCE_H */

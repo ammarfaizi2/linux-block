@@ -58,6 +58,8 @@ struct ttm_place;
 
 struct ttm_lru_bulk_move;
 
+struct dma_fence;
+
 /**
  * enum ttm_bo_type
  *
