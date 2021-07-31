@@ -86,6 +86,4 @@ struct ida {
 	struct xarray xa;
 };
 
-#include <linux/idr_api.h>
-
 #endif /* __IDR_H__ */
