@@ -16,6 +16,8 @@
 #include "u_ether.h"
 #include "ndis.h"
 
+struct sk_buff_head;
+
 #define RNDIS_MAXIMUM_FRAME_SIZE	1518
 #define RNDIS_MAX_TOTAL_SIZE		1558
 

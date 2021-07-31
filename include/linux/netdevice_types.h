@@ -21,13 +21,9 @@
 #ifndef _LINUX_NETDEVICE_TYPES_H
 #define _LINUX_NETDEVICE_TYPES_H
 
-#include <linux/skbuff_types.h>
 #include <linux/dynamic_queue_limits.h>
 #include <linux/hashtable_types.h>
-#include <linux/hrtimer_types.h>
-#include <linux/kobject_types.h>
 #include <linux/seqlock_types.h>
-#include <linux/timerqueue_types.h>
 #include <linux/device_types.h>
 #include <linux/rbtree_types.h>
 
@@ -36,7 +32,7 @@
 
 #include <uapi/linux/netdevice.h>
 
-#include <linux/atomic/atomic-long.h>
+#include <vdso/bits.h>
 
 struct netpoll_info;
 struct device;
@@ -50,6 +46,9 @@ struct ndmsg;
 struct netlink_callback;
 struct xdp_frame;
 struct netdev_rx_queue;
+struct scatterlist;
+struct sock;
+struct net_device;
 
 struct sfp_bus;
 /* 802.11 specific */
