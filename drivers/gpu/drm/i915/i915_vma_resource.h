@@ -6,6 +6,7 @@
 #ifndef __I915_VMA_RESOURCE_H__
 #define __I915_VMA_RESOURCE_H__
 
+#include <linux/dma-fence-api.h>
 #include <linux/dma-fence.h>
 #include <linux/refcount.h>
 
