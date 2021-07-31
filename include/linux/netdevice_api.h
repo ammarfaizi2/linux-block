@@ -381,17 +381,6 @@ static inline void netdev_set_ml_priv(struct net_device *dev,
 	dev->ml_priv_type = type;
 }
 
-/**
- *	netdev_priv - access network device private data
- *	@dev: network device
- *
- * Get network device private data
- */
-static inline void *netdev_priv(const struct net_device *dev)
-{
-	return (char *)dev + ALIGN(sizeof(struct net_device), NETDEV_ALIGN);
-}
-
 /* Set the sysfs physical device reference for the network logical device
  * if set prior to registration will cause a symlink during initialization.
  */

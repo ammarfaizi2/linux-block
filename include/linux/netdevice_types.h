@@ -27,6 +27,7 @@
 #include <linux/device_types.h>
 #include <linux/rbtree_types.h>
 #include <linux/u64_stats_sync_types.h>
+#include <linux/align.h>
 
 #include <net/net_trackers.h>
 #include <net/net_namespace_types_possible.h>
@@ -2257,5 +2258,16 @@ static inline void sock_rps_record_flow(const struct sock *sk) { }
 bool rps_may_expire_flow(struct net_device *dev, u16 rxq_index, u32 flow_id, u16 filter_id);
 #endif
 #endif
+
+/**
+ *	netdev_priv - access network device private data
+ *	@dev: network device
+ *
+ * Get network device private data
+ */
+static inline void *netdev_priv(const struct net_device *dev)
+{
+	return (char *)dev + ALIGN(sizeof(struct net_device), NETDEV_ALIGN);
+}
 
 #endif	/* _LINUX_NETDEVICE_TYPES_H */
