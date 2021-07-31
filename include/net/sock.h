@@ -54,7 +54,7 @@
 #include <linux/uaccess.h>
 #include <linux/page_counter.h>
 #include <linux/static_key.h>
-#include <linux/wait_api.h>
+#include <linux/wait_types.h>
 #include <linux/cgroup_types.h>
 #include <linux/rbtree.h>
 #include <linux/rculist_nulls.h>
@@ -2209,10 +2209,7 @@ static inline bool sk_has_allocations(const struct sock *sk)
  * data on the socket.
  *
  */
-static inline bool skwq_has_sleeper(struct socket_wq *wq)
-{
-	return wq && wq_has_sleeper(&wq->wait);
-}
+#define skwq_has_sleeper(wq) ({ (wq) && wq_has_sleeper(&(wq)->wait); })
 
 /**
  * sock_poll_wait - place memory barrier behind the poll_wait call.
