@@ -3420,6 +3420,4 @@ static inline bool skb_pp_recycle(struct sk_buff *skb, void *data)
 	return page_pool_return_skb_page(virt_to_page(data));
 }
 
-#include <linux/skbuff_api_frag.h>
-
 #endif	/* _LINUX_SKBUFF_API_H */
