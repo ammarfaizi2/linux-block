@@ -9,6 +9,7 @@
  */
 #include <linux/threads.h>
 #include <linux/bitops_types.h>
+#include <linux/bug.h>
 
 /* Don't assign or return these: may not be this big! */
 typedef struct cpumask { DECLARE_BITMAP(bits, NR_CPUS); } cpumask_t;
@@ -159,5 +160,19 @@ extern unsigned int nr_cpu_ids;
 #else
 #define nr_cpumask_bits	((unsigned int)NR_CPUS)
 #endif
+
+static inline void cpu_max_bits_warn(unsigned int cpu, unsigned int bits)
+{
+#ifdef CONFIG_DEBUG_PER_CPU_MAPS
+	WARN_ON_ONCE(cpu >= bits);
+#endif /* CONFIG_DEBUG_PER_CPU_MAPS */
+}
+
+/* verify cpu argument to cpumask_* operators */
+static inline unsigned int cpumask_check(unsigned int cpu)
+{
+	cpu_max_bits_warn(cpu, nr_cpumask_bits);
+	return cpu;
+}
 
 #endif /* __LINUX_CPUMASK_TYPES_H */
