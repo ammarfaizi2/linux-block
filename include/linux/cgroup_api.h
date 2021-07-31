@@ -36,6 +36,42 @@ struct kernel_clone_args;
 
 extern struct percpu_rw_semaphore cgroup_threadgroup_rwsem;
 
+/*
+ * A cgroup_root represents the root of a cgroup hierarchy, and may be
+ * associated with a kernfs_root to form an active hierarchy.  This is
+ * internal to cgroup core.  Don't access directly from controllers.
+ */
+struct cgroup_root {
+	struct kernfs_root *kf_root;
+
+	/* The bitmask of subsystems attached to this hierarchy */
+	unsigned int subsys_mask;
+
+	/* Unique id for this hierarchy. */
+	int hierarchy_id;
+
+	/* The root cgroup.  Root is destroyed on its release. */
+	struct cgroup cgrp;
+
+	/* for cgrp->ancestor_ids[0] */
+	u64 cgrp_ancestor_id_storage;
+
+	/* Number of cgroups in the hierarchy, used only for /proc/cgroups */
+	atomic_t nr_cgrps;
+
+	/* A list running through the active hierarchies */
+	struct list_head root_list;
+
+	/* Hierarchy-specific flags */
+	unsigned int flags;
+
+	/* The path to use for release notifications. */
+	char release_agent_path[PATH_MAX];
+
+	/* The name for this hierarchy - may be empty */
+	char name[MAX_CGROUP_ROOT_NAMELEN];
+};
+
 /**
  * cgroup_threadgroup_change_begin - threadgroup exclusion for cgroups
  * @tsk: target task
