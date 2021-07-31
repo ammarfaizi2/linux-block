@@ -21,6 +21,7 @@
 #include <linux/mmu_context.h>
 #include <linux/jump_label.h>
 #include <linux/sched/per_task.h>
+#include <linux/seqlock_api.h>
 
 #ifdef CONFIG_CPUSETS
 

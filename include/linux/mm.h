@@ -39,6 +39,7 @@ struct user_struct;
 struct pt_regs;
 struct task_struct;
 struct ucounts;
+struct vmem_altmap;
 
 extern int sysctl_page_lock_unfairness;
 

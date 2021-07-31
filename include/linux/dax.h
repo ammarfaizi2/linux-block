@@ -16,6 +16,7 @@ struct gendisk;
 struct iomap_ops;
 struct iomap_iter;
 struct iomap;
+struct resource;
 
 struct dax_operations {
 	/*
