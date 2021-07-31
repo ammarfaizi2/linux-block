@@ -38,6 +38,4 @@ struct percpu_counter {
 
 #endif	/* CONFIG_SMP */
 
-#include <linux/percpu_counter_api.h>
-
 #endif /* _LINUX_PERCPU_COUNTER_H */
