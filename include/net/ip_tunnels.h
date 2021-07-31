@@ -15,7 +15,6 @@
 
 #include <net/dsfield.h>
 #include <net/gro_cells.h>
-#include <net/inet_ecn.h>
 #include <net/netns/generic.h>
 #include <net/rtnetlink.h>
 #include <net/lwtunnel.h>
