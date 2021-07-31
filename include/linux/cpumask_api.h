@@ -17,15 +17,6 @@
 #include <linux/bug.h>
 
 /**
- * cpumask_bits - get the bits in a cpumask
- * @maskp: the struct cpumask *
- *
- * You should only assume nr_cpu_ids bits of this mask are valid.  This is
- * a macro so it's const-correct.
- */
-#define cpumask_bits(maskp) ((maskp)->bits)
-
-/**
  * cpumask_pr_args - printf args to output a cpumask
  * @maskp: cpumask to be printed
  *
@@ -33,19 +24,6 @@
  */
 #define cpumask_pr_args(maskp)		nr_cpu_ids, cpumask_bits(maskp)
 
-#if NR_CPUS == 1
-#define nr_cpu_ids		1U
-#else
-extern unsigned int nr_cpu_ids;
-#endif
-
-#ifdef CONFIG_CPUMASK_OFFSTACK
-/* Assuming NR_CPUS is huge, a runtime limit is more efficient.  Also,
- * not all bits may be allocated. */
-#define nr_cpumask_bits	nr_cpu_ids
-#else
-#define nr_cpumask_bits	((unsigned int)NR_CPUS)
-#endif
 
 extern atomic_t __num_online_cpus;
 

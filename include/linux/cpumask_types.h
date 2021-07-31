@@ -137,4 +137,27 @@ extern const DECLARE_BITMAP(cpu_all_bits, NR_CPUS);
 /* First bits of cpu_bit_bitmap are in fact unset. */
 #define cpu_none_mask to_cpumask(cpu_bit_bitmap[0])
 
+/**
+ * cpumask_bits - get the bits in a cpumask
+ * @maskp: the struct cpumask *
+ *
+ * You should only assume nr_cpu_ids bits of this mask are valid.  This is
+ * a macro so it's const-correct.
+ */
+#define cpumask_bits(maskp) ((maskp)->bits)
+
+#if NR_CPUS == 1
+#define nr_cpu_ids		1U
+#else
+extern unsigned int nr_cpu_ids;
+#endif
+
+#ifdef CONFIG_CPUMASK_OFFSTACK
+/* Assuming NR_CPUS is huge, a runtime limit is more efficient.  Also,
+ * not all bits may be allocated. */
+#define nr_cpumask_bits	nr_cpu_ids
+#else
+#define nr_cpumask_bits	((unsigned int)NR_CPUS)
+#endif
+
 #endif /* __LINUX_CPUMASK_TYPES_H */
