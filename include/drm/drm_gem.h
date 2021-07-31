@@ -43,6 +43,7 @@
 
 struct dma_buf_map;
 struct drm_gem_object;
+struct xarray;
 
 /**
  * struct drm_gem_object_funcs - GEM object functions
