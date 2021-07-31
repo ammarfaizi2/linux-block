@@ -12,7 +12,7 @@
 #ifndef __IDR_API_H__
 #define __IDR_API_H__
 
-#include <linux/idr.h>
+#include <linux/idr_types.h>
 
 #include <linux/radix-tree-api.h>
 #include <linux/gfp.h>
