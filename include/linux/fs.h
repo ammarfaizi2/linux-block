@@ -23,9 +23,7 @@
 #include <linux/rwsem.h>
 #include <linux/mm_types.h>
 #include <linux/capability.h>
-#include <linux/semaphore.h>
 #include <linux/fcntl.h>
-#include <linux/rculist_bl.h>
 #include <linux/atomic.h>
 #include <linux/shrinker.h>
 #include <linux/migrate_mode.h>
