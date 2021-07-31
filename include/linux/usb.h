@@ -19,7 +19,7 @@
 #include <linux/interrupt.h>	/* for in_interrupt() */
 #include <linux/list.h>		/* for struct list_head */
 #include <linux/kref.h>		/* for struct kref */
-#include <linux/device.h>	/* for struct device */
+#include <linux/device_types.h>	/* for struct device */
 #include <linux/fs.h>		/* for struct file_operations */
 #include <linux/completion.h>	/* for struct completion */
 #include <linux/mutex.h>	/* for struct mutex */
