@@ -44,6 +44,7 @@ struct drm_printer;
 struct drm_privacy_screen;
 struct edid;
 struct i2c_adapter;
+struct dentry;
 
 enum drm_connector_force {
 	DRM_FORCE_UNSPECIFIED,
