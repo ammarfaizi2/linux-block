@@ -13,6 +13,7 @@
 #define _DEVICE_API_H_
 
 #include <linux/device_types.h>
+#include <linux/device_api_lock.h>
 
 #include <linux/dev_printk.h>
 #include <linux/ioport.h>
@@ -350,31 +351,6 @@ static inline void dev_pm_set_driver_flags(struct device *dev, u32 flags)
 static inline bool dev_pm_test_driver_flags(struct device *dev, u32 flags)
 {
 	return !!(dev->power.driver_flags & flags);
-}
-
-static inline void device_lock(struct device *dev)
-{
-	mutex_lock(&dev->mutex);
-}
-
-static inline int device_lock_interruptible(struct device *dev)
-{
-	return mutex_lock_interruptible(&dev->mutex);
-}
-
-static inline int device_trylock(struct device *dev)
-{
-	return mutex_trylock(&dev->mutex);
-}
-
-static inline void device_unlock(struct device *dev)
-{
-	mutex_unlock(&dev->mutex);
-}
-
-static inline void device_lock_assert(struct device *dev)
-{
-	lockdep_assert_held(&dev->mutex);
 }
 
 static inline struct device_node *dev_of_node(struct device *dev)
