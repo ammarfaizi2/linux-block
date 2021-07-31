@@ -23,7 +23,7 @@
 #include <linux/rbtree.h>
 #include <linux/workqueue.h>
 #include <linux/mutex.h>
-#include <linux/wait_api.h>
+#include <linux/wait_types.h>
 #include <linux/llist.h>
 
 #include <uapi/linux/fs.h>
