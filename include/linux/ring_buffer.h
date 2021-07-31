@@ -2,12 +2,14 @@
 #ifndef _LINUX_RING_BUFFER_H
 #define _LINUX_RING_BUFFER_H
 
-#include <linux/mm.h>
-#include <linux/seq_file.h>
+#include <linux/types.h>
+#include <linux/err.h>
 
 struct trace_buffer;
 struct ring_buffer_iter;
 struct poll_table_struct;
+struct lock_class_key;
+struct file;
 
 /*
  * Don't refer to this struct directly, use functions below.
