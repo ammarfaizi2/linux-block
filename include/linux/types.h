@@ -179,6 +179,11 @@ typedef struct {
 typedef struct {
 	s64 counter;
 } atomic64_t;
+typedef atomic64_t atomic_long_t;
+#define ATOMIC_LONG_INIT(i)            ATOMIC64_INIT(i)
+#else
+typedef atomic_t atomic_long_t;
+#define ATOMIC_LONG_INIT(i)            ATOMIC_INIT(i)
 #endif
 
 struct list_head {
