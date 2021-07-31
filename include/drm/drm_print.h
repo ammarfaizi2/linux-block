@@ -27,13 +27,13 @@
 #define DRM_PRINT_H_
 
 #include <linux/dev_printk.h>
-#include <linux/compiler.h>
 #include <linux/printk.h>
-#include <linux/seq_file.h>
-#include <linux/device.h>
-#include <linux/debugfs.h>
 
 #include <drm/drm.h>
+
+struct debugfs_regset32;
+struct seq_file;
+struct device;
 
 /* Do *not* use outside of drm_print.[ch]! */
 extern unsigned int __drm_debug;

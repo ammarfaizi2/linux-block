@@ -43,6 +43,7 @@
 
 struct iosys_map;
 struct drm_gem_object;
+struct xarray;
 
 /**
  * struct drm_gem_object_funcs - GEM object functions
