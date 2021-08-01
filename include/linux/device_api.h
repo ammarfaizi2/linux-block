@@ -286,25 +286,6 @@ static inline const char *dev_bus_name(const struct device *dev)
 
 __printf(2, 3) int dev_set_name(struct device *dev, const char *name, ...);
 
-#ifdef CONFIG_NUMA
-static inline int dev_to_node(struct device *dev)
-{
-	return dev->numa_node;
-}
-static inline void set_dev_node(struct device *dev, int node)
-{
-	dev->numa_node = node;
-}
-#else
-static inline int dev_to_node(struct device *dev)
-{
-	return NUMA_NO_NODE;
-}
-static inline void set_dev_node(struct device *dev, int node)
-{
-}
-#endif
-
 static inline struct irq_domain *dev_get_msi_domain(const struct device *dev)
 {
 #ifdef CONFIG_GENERIC_MSI_IRQ_DOMAIN
@@ -319,16 +300,6 @@ static inline void dev_set_msi_domain(struct device *dev, struct irq_domain *d)
 #ifdef CONFIG_GENERIC_MSI_IRQ_DOMAIN
 	dev->msi.domain = d;
 #endif
-}
-
-static inline void *dev_get_drvdata(const struct device *dev)
-{
-	return dev->driver_data;
-}
-
-static inline void dev_set_drvdata(struct device *dev, void *data)
-{
-	dev->driver_data = data;
 }
 
 static inline struct pm_subsys_data *dev_to_psd(struct device *dev)
