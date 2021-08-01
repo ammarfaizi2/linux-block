@@ -16,12 +16,12 @@ extern int restrict_link_by_builtin_trusted(struct key *keyring,
 					    const struct key_type *type,
 					    const union key_payload *payload,
 					    struct key *restriction_key);
-extern __init int load_module_cert(struct key *keyring);
+extern int load_module_cert(struct key *keyring);
 
 #else
 #define restrict_link_by_builtin_trusted restrict_link_reject
 
-static inline __init int load_module_cert(struct key *keyring)
+static inline int load_module_cert(struct key *keyring)
 {
 	return 0;
 }
@@ -87,7 +87,7 @@ static inline struct key *get_ima_blacklist_keyring(void)
 
 #if defined(CONFIG_INTEGRITY_PLATFORM_KEYRING) && \
 	defined(CONFIG_SYSTEM_TRUSTED_KEYRING)
-extern void __init set_platform_trusted_keys(struct key *keyring);
+extern void set_platform_trusted_keys(struct key *keyring);
 #else
 static inline void set_platform_trusted_keys(struct key *keyring)
 {
