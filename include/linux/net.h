@@ -16,6 +16,7 @@
 
 #include <linux/cache.h>
 #include <linux/wait_types.h>
+#include <linux/random.h>
 
 #include <uapi/linux/net.h>
 
