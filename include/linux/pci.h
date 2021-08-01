@@ -35,7 +35,6 @@
 #include <linux/compiler.h>
 #include <linux/errno.h>
 #include <linux/kobject.h>
-#include <linux/atomic_api.h>
 #include <linux/device_types.h>
 #include <linux/device/driver.h>
 #include <linux/interrupt.h>
