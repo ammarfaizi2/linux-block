@@ -18,7 +18,6 @@
 #define _LINUX_ETHERDEVICE_TYPES_H
 
 #include <linux/if_ether.h>
-#include <linux/random.h>
 #include <linux/crc32.h>
 #include <asm/unaligned.h>
 #include <asm/bitsperlong.h>

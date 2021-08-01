@@ -2,6 +2,7 @@
 #ifndef __NET_SCHED_RED_H
 #define __NET_SCHED_RED_H
 
+#include <linux/prandom.h>
 #include <linux/types.h>
 #include <linux/bug.h>
 #include <net/pkt_sched.h>
