@@ -15,26 +15,28 @@
 
 #include <linux/of_types.h>
 
-#include <linux/types.h>
-#include <linux/bitops.h>
-#include <linux/errno.h>
-#include <linux/kobject_api.h>
-#include <linux/mod_devicetable.h>
-#include <linux/spinlock.h>
-#include <linux/topology.h>
-#include <linux/notifier.h>
 #include <linux/property.h>
-#include <linux/list.h>
+#include <linux/string.h>
+#include <linux/numa_types.h>
+#include <linux/bitops.h>
+#include <linux/mod_devicetable.h>
+#include <linux/limits.h>
+#include <linux/align.h>
 
-#include <asm/byteorder.h>
-#include <asm/errno.h>
+#ifdef CONFIG_OF_KOBJ
+# include <linux/kobject_api.h>
+#endif
+
+struct notifier_block;
+struct of_device_id;
+struct raw_spinlock;
 
 /* initialize a node */
 extern struct kobj_type of_node_ktype;
 extern const struct fwnode_operations of_fwnode_ops;
 static inline void of_node_init(struct device_node *node)
 {
-#if defined(CONFIG_OF_KOBJ)
+#ifdef CONFIG_OF_KOBJ
 	kobject_init(&node->kobj, &of_node_ktype);
 #endif
 	fwnode_init(&node->fwnode, &of_fwnode_ops);
@@ -63,7 +65,7 @@ extern struct device_node *of_root;
 extern struct device_node *of_chosen;
 extern struct device_node *of_aliases;
 extern struct device_node *of_stdout;
-extern raw_spinlock_t devtree_lock;
+extern struct raw_spinlock devtree_lock;
 
 #ifdef CONFIG_OF
 void of_core_init(void);
