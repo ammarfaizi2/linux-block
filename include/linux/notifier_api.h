@@ -11,13 +11,11 @@
 #ifndef _LINUX_NOTIFIER_API_H
 #define _LINUX_NOTIFIER_API_H
 
-#include <linux/rwsem_api.h>
 #include <linux/notifier_types.h>
 
-#include <linux/errno.h>
 #include <linux/mutex_types.h>
-#include <linux/rwsem.h>
-#include <linux/srcu.h>
+#include <linux/rwsem_types.h>
+#include <linux/srcu_types.h>
 
 /*
  * Notifier chains are of four types:
