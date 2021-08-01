@@ -16,7 +16,6 @@
 #include <linux/types.h>
 #include <linux/list.h>
 #include <linux/rbtree.h>
-#include <linux/rcupdate.h>
 #include <linux/atomic.h>
 #include <linux/assoc_array.h>
 #include <linux/refcount_types.h>
