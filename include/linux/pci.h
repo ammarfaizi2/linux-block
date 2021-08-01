@@ -1255,10 +1255,10 @@ static inline bool pci_intx_mask_supported(struct pci_dev *pdev)
 	return !pdev->broken_intx_masking;
 }
 
-static inline int pci_is_enabled(struct pci_dev *pdev)
-{
-	return (atomic_read(&pdev->enable_cnt) > 0);
-}
+#define pci_is_enabled(pdev)			\
+({						\
+	atomic_read(&(pdev)->enable_cnt) > 0;	\
+})
 
 static inline int pci_is_managed(struct pci_dev *pdev)
 {
