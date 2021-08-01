@@ -15,6 +15,7 @@
 #include <linux/build_bug.h>
 #include <linux/kobject_types.h>
 #include <linux/numa_types.h>
+#include <linux/kernel.h>
 #include <linux/dev_printk.h>
 #include <linux/pm.h>
 
@@ -541,6 +542,11 @@ static inline const char *dev_name(const struct device *dev)
 		return dev->init_name;
 
 	return kobject_name(&dev->kobj);
+}
+
+static inline struct device *kobj_to_dev(struct kobject *kobj)
+{
+	return container_of(kobj, struct device, kobj);
 }
 
 #endif /* _DEVICE_TYPES_H_ */
