@@ -7,6 +7,5 @@
 #define _LINUX_RESOURCE_EXT_H
 
 #include <linux/resource_ext_types.h>
-#include <linux/resource_ext_api.h>
 
 #endif /* _LINUX_RESOURCE_EXT_H */
