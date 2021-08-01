@@ -16,7 +16,6 @@
 #include <linux/list.h>
 #include <linux/rbtree.h>
 #include <linux/rcupdate.h>
-#include <linux/sysctl.h>
 #include <linux/rwsem.h>
 #include <linux/atomic.h>
 #include <linux/assoc_array.h>
@@ -462,9 +461,6 @@ do {									\
 	rcu_assign_pointer((KEY)->payload.rcu_data0, (PAYLOAD));	\
 } while (0)
 
-#ifdef CONFIG_SYSCTL
-extern struct ctl_table key_sysctls[];
-#endif
 /*
  * the userspace interface
  */
