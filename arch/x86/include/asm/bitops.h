@@ -9,10 +9,6 @@
  * __always_inline to avoid problems with older gcc's inlining heuristics.
  */
 
-#ifndef _LINUX_BITOPS_H
-#error only <linux/bitops.h> can be included directly
-#endif
-
 #include <linux/compiler.h>
 #include <asm/alternative.h>
 #include <asm/rmwcc.h>
