@@ -17,6 +17,8 @@ extern int x86_fwspec_is_hpet(struct irq_fwspec *fwspec);
 
 extern struct irq_domain *x86_vector_domain;
 
+struct irq_alloc_info;
+
 extern void init_irq_alloc_info(struct irq_alloc_info *info,
 				const struct cpumask *mask);
 extern void copy_irq_alloc_info(struct irq_alloc_info *dst,
