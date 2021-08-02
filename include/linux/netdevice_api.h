@@ -266,22 +266,6 @@ int netdev_get_num_tc(struct net_device *dev)
 	return dev->num_tc;
 }
 
-static inline void net_prefetch(void *p)
-{
-	prefetch(p);
-#if L1_CACHE_BYTES < 128
-	prefetch((u8 *)p + L1_CACHE_BYTES);
-#endif
-}
-
-static inline void net_prefetchw(void *p)
-{
-	prefetchw(p);
-#if L1_CACHE_BYTES < 128
-	prefetchw((u8 *)p + L1_CACHE_BYTES);
-#endif
-}
-
 void netdev_unbind_sb_channel(struct net_device *dev,
 			      struct net_device *sb_dev);
 int netdev_bind_sb_channel_queue(struct net_device *dev,
@@ -1018,34 +1002,6 @@ static inline void netdev_queue_set_dql_min_limit(struct netdev_queue *dev_queue
 {
 #ifdef CONFIG_BQL
 	dev_queue->dql.min_limit = min_limit;
-#endif
-}
-
-/**
- *	netdev_txq_bql_enqueue_prefetchw - prefetch bql data for write
- *	@dev_queue: pointer to transmit queue
- *
- * BQL enabled drivers might use this helper in their ndo_start_xmit(),
- * to give appropriate hint to the CPU.
- */
-static inline void netdev_txq_bql_enqueue_prefetchw(struct netdev_queue *dev_queue)
-{
-#ifdef CONFIG_BQL
-	prefetchw(&dev_queue->dql.num_queued);
-#endif
-}
-
-/**
- *	netdev_txq_bql_complete_prefetchw - prefetch bql data for write
- *	@dev_queue: pointer to transmit queue
- *
- * BQL enabled drivers might use this helper in their TX completion path,
- * to give appropriate hint to the CPU.
- */
-static inline void netdev_txq_bql_complete_prefetchw(struct netdev_queue *dev_queue)
-{
-#ifdef CONFIG_BQL
-	prefetchw(&dev_queue->dql.limit);
 #endif
 }
 
