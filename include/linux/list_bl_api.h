@@ -7,11 +7,6 @@
 #include <linux/list.h>
 #include <linux/bit_spinlock.h>
 
-static inline bool  hlist_bl_unhashed(const struct hlist_bl_node *h)
-{
-	return !h->pprev;
-}
-
 static inline struct hlist_bl_node *hlist_bl_first(struct hlist_bl_head *h)
 {
 	return (struct hlist_bl_node *)

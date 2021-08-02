@@ -15,6 +15,8 @@
 #include <linux/fs.h>
 #include <uapi/linux/fsverity.h>
 
+#include <asm/barrier.h>
+
 /* Verity operations for filesystems */
 struct fsverity_operations {
 
