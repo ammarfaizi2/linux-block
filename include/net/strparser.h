@@ -8,7 +8,7 @@
 #ifndef __NET_STRPARSER_H_
 #define __NET_STRPARSER_H_
 
-#include <net/sch_generic.h>
+#include <net/sch_generic_api.h>
 #include <linux/skbuff.h>
 #include <net/sock.h>
 
