@@ -3672,6 +3672,16 @@ static int dev_qdisc_enqueue(struct sk_buff *skb, struct Qdisc *q,
 	return rc;
 }
 
+void __qdisc_run(struct Qdisc *q);
+
+static inline void qdisc_run(struct Qdisc *q)
+{
+	if (qdisc_run_begin(q)) {
+		__qdisc_run(q);
+		qdisc_run_end(q);
+	}
+}
+
 static inline int __dev_xmit_skb(struct sk_buff *skb, struct Qdisc *q,
 				 struct net_device *dev,
 				 struct netdev_queue *txq)

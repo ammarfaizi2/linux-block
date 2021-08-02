@@ -124,16 +124,6 @@ bool sch_direct_xmit(struct sk_buff *skb, struct Qdisc *q,
 		     struct net_device *dev, struct netdev_queue *txq,
 		     spinlock_t *root_lock, bool validate);
 
-void __qdisc_run(struct Qdisc *q);
-
-static inline void qdisc_run(struct Qdisc *q)
-{
-	if (qdisc_run_begin(q)) {
-		__qdisc_run(q);
-		qdisc_run_end(q);
-	}
-}
-
 /* Calculate maximal size of packet seen by hard_start_xmit
    routine of this device.
  */
