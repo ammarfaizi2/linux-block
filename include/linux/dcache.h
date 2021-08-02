@@ -4,7 +4,6 @@
 
 #include <linux/cache.h>
 #include <linux/list_bl_types.h>
-#include <linux/math.h>
 #include <linux/seqlock.h>
 #include <linux/lockref.h>
 #include <linux/wait_types.h>
