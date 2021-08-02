@@ -3,6 +3,5 @@
 #define __LINUX_NET_XDP_H__
 
 #include <net/xdp_types.h>
-#include <net/xdp_api.h>
 
 #endif /* __LINUX_NET_XDP_H__ */
