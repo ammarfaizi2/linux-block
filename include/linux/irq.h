@@ -10,7 +10,6 @@
  * Thanks. --rmk
  */
 
-#include <linux/spinlock_api.h>
 #include <linux/cpumask_types.h>
 #include <linux/irqhandler.h>
 #include <linux/irqreturn.h>
