@@ -21,15 +21,12 @@
 #include <asm/ptrace.h>
 #include <asm/irq_regs.h>
 
-#ifdef CONFIG_GENERIC_IRQ_EFFECTIVE_AFF_MASK
-# include <linux/cpumask_api.h>
-#endif
-
 struct seq_file;
 struct module;
 struct msi_msg;
 struct irq_affinity_desc;
 enum irqchip_irq_state;
+struct device;
 
 /*
  * IRQ line status.
