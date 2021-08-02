@@ -15,7 +15,6 @@
 #include <linux/irqhandler.h>
 #include <linux/irqreturn.h>
 #include <linux/irqnr.h>
-#include <linux/slab.h>
 
 #include <asm/irq.h>
 #include <asm/ptrace.h>
