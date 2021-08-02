@@ -5500,6 +5500,8 @@ void free_pages(unsigned long addr, unsigned int order)
 
 EXPORT_SYMBOL(free_pages);
 
+#define PAGE_FRAG_CACHE_MAX_ORDER	get_order(PAGE_FRAG_CACHE_MAX_SIZE)
+
 /*
  * Page Fragment:
  *  An arbitrary-length arbitrary-offset area of memory which resides
