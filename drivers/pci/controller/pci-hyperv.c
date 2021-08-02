@@ -67,6 +67,10 @@
 #include <linux/acpi.h>
 #include <asm/mshyperv.h>
 
+#ifdef CONFIG_X86
+# include <asm/x86_irq.h>
+#endif
+
 /*
  * Protocol versions. The low word is the minor version, the high word the
  * major version.
