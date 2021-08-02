@@ -17,7 +17,6 @@
 #include <linux/irqnr.h>
 
 #include <asm/irq.h>
-#include <asm/ptrace.h>
 #include <asm/irq_regs.h>
 
 struct seq_file;
