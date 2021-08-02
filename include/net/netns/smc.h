@@ -2,7 +2,7 @@
 #ifndef __NETNS_SMC_H__
 #define __NETNS_SMC_H__
 #include <linux/mutex.h>
-#include <linux/percpu.h>
+#include <linux/compiler_types.h>
 
 struct smc_stats_rsn;
 struct smc_stats;
