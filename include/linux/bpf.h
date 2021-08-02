@@ -6,12 +6,13 @@
 
 #include <linux/bpf_defs.h>
 
+#include <linux/rcupdate.h>
 #include <linux/sched.h>
 #include <linux/workqueue.h>
 #include <linux/file.h>
 #include <linux/percpu.h>
 #include <linux/err.h>
-#include <linux/rbtree_latch.h>
+#include <linux/rbtree_latch_types.h>
 #include <linux/numa.h>
 #include <linux/mm_types.h>
 #include <linux/wait.h>
@@ -22,7 +23,7 @@
 #include <linux/string.h>
 #include <linux/capability.h>
 #include <linux/slab.h>
-#include <linux/percpu-refcount.h>
+#include <linux/percpu-refcount-types.h>
 #include <linux/bpfptr.h>
 
 struct bpf_verifier_env;
