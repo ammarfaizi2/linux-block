@@ -11,7 +11,7 @@
 #include <linux/file.h>
 #include <linux/percpu.h>
 #include <linux/err.h>
-#include <linux/rbtree_latch.h>
+#include <linux/rbtree_latch_types.h>
 #include <linux/numa.h>
 #include <linux/mm_types.h>
 #include <linux/wait.h>
