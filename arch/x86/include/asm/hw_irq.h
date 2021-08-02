@@ -21,7 +21,6 @@
 #ifndef __ASSEMBLY__
 
 #include <linux/percpu.h>
-#include <linux/profile.h>
 #include <linux/smp.h>
 
 #include <linux/atomic.h>

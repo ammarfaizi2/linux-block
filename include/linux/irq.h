@@ -15,6 +15,7 @@
 #include <linux/irqhandler.h>
 #include <linux/irqreturn.h>
 #include <linux/irqnr.h>
+#include <linux/kernel.h>
 
 #include <asm/irq.h>
 #include <asm/irq_regs.h>
