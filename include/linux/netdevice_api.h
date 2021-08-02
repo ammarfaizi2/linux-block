@@ -30,7 +30,6 @@
 #include <linux/dynamic_queue_limits.h>
 #include <linux/hashtable.h>
 #include <linux/delay.h>
-#include <linux/hrtimer.h>
 #include <linux/kobject_types.h>
 #include <linux/netdev_features.h>
 #include <linux/smp_api.h>
