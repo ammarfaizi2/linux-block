@@ -429,38 +429,6 @@ static inline void netif_napi_del(struct napi_struct *napi)
 
 void dev_lstats_read(struct net_device *dev, u64 *packets, u64 *bytes);
 
-static inline void dev_sw_netstats_rx_add(struct net_device *dev, unsigned int len)
-{
-	struct pcpu_sw_netstats *tstats = this_cpu_ptr(dev->tstats);
-
-	u64_stats_update_begin(&tstats->syncp);
-	tstats->rx_bytes += len;
-	tstats->rx_packets++;
-	u64_stats_update_end(&tstats->syncp);
-}
-
-static inline void dev_sw_netstats_tx_add(struct net_device *dev,
-					  unsigned int packets,
-					  unsigned int len)
-{
-	struct pcpu_sw_netstats *tstats = this_cpu_ptr(dev->tstats);
-
-	u64_stats_update_begin(&tstats->syncp);
-	tstats->tx_bytes += len;
-	tstats->tx_packets += packets;
-	u64_stats_update_end(&tstats->syncp);
-}
-
-static inline void dev_lstats_add(struct net_device *dev, unsigned int len)
-{
-	struct pcpu_lstats *lstats = this_cpu_ptr(dev->lstats);
-
-	u64_stats_update_begin(&lstats->syncp);
-	u64_stats_add(&lstats->bytes, len);
-	u64_stats_inc(&lstats->packets);
-	u64_stats_update_end(&lstats->syncp);
-}
-
 enum netdev_lag_tx_type {
 	NETDEV_LAG_TX_TYPE_UNKNOWN,
 	NETDEV_LAG_TX_TYPE_RANDOM,
