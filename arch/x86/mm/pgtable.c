@@ -120,6 +120,28 @@ struct mm_struct *pgd_page_get_mm(struct page *page)
 	return page->pt_mm;
 }
 
+/*
+ * clone_pgd_range(pgd_t *dst, pgd_t *src, int count);
+ *
+ *  dst - pointer to pgd range anywhere on a pgd page
+ *  src - ""
+ *  count - the number of pgds to copy.
+ *
+ * dst and src can be on the same page, but the range must not overlap,
+ * and must not cross a page boundary.
+ */
+void clone_pgd_range(pgd_t *dst, pgd_t *src, int count)
+{
+	memcpy(dst, src, count * sizeof(pgd_t));
+#ifdef CONFIG_PAGE_TABLE_ISOLATION
+	if (!static_cpu_has(X86_FEATURE_PTI))
+		return;
+	/* Clone the user space pgd as well */
+	memcpy(kernel_to_user_pgdp(dst), kernel_to_user_pgdp(src),
+	       count * sizeof(pgd_t));
+#endif
+}
+
 static void pgd_ctor(struct mm_struct *mm, pgd_t *pgd)
 {
 	/* If the pgd points to a shared pagetable level (either the
