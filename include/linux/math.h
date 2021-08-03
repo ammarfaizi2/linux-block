@@ -174,4 +174,11 @@ static inline u32 int_sqrt64(u64 x)
 }
 #endif
 
+/* Required to safely shift negative values */
+#define shift_right(x, s) ({			\
+	__typeof__(x) __x = (x);		\
+	__typeof__(s) __s = (s);		\
+	__x < 0 ? -(-__x >> __s) : __x >> __s;	\
+})
+
 #endif	/* _LINUX_MATH_H */
