@@ -88,6 +88,7 @@ extern ssize_t arch_cpu_release(const char *, size_t);
 #define CPU_BROKEN		0x000B /* CPU did not die properly */
 
 #ifdef CONFIG_SMP
+extern void cpu_hp_start_now(void);
 extern bool cpuhp_tasks_frozen;
 int add_cpu(unsigned int cpu);
 int cpu_device_up(struct device *dev);
@@ -98,6 +99,7 @@ int bringup_hibernate_cpu(unsigned int sleep_cpu);
 void bringup_nonboot_cpus(unsigned int setup_max_cpus);
 
 #else	/* CONFIG_SMP */
+static inline void cpu_hp_start_now(void) { }
 #define cpuhp_tasks_frozen	0
 
 static inline void cpu_maps_update_begin(void)
@@ -128,7 +130,6 @@ void clear_tasks_mm_cpumask(int cpu);
 int remove_cpu(unsigned int cpu);
 int cpu_device_down(struct device *dev);
 extern void smp_shutdown_nonboot_cpus(unsigned int primary_cpu);
-extern void cpu_hp_start_now(void);
 extern void cpu_hp_stop_now(void);
 extern bool cpu_hp_check_delay(const char *s, const void *func);
 
@@ -144,7 +145,6 @@ static inline void cpu_hotplug_disable(void) { }
 static inline void cpu_hotplug_enable(void) { }
 static inline int remove_cpu(unsigned int cpu) { return -EPERM; }
 static inline void smp_shutdown_nonboot_cpus(unsigned int primary_cpu) { }
-static inline void cpu_hp_start_now(void) { }
 static inline void cpu_hp_stop_now(void) { }
 static inline bool cpu_hp_check_delay(const char *s, void *func) { return false; }
 #endif	/* !CONFIG_HOTPLUG_CPU */
