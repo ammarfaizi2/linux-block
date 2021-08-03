@@ -38,7 +38,7 @@ struct list_lru_memcg {
 	struct list_lru_one	*lru[];
 };
 
-struct ____cacheline_aligned_in_smp list_lru_node {
+struct list_lru_node {
 	/* protects all lists on the node, including per cgroup */
 	spinlock_t		lock;
 	/* global list, used for the root cgroup in cgroup aware lrus */
