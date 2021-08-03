@@ -1238,27 +1238,7 @@ static inline p4d_t *user_to_kernel_p4dp(p4d_t *p4dp)
 }
 #endif /* CONFIG_PAGE_TABLE_ISOLATION */
 
-/*
- * clone_pgd_range(pgd_t *dst, pgd_t *src, int count);
- *
- *  dst - pointer to pgd range anywhere on a pgd page
- *  src - ""
- *  count - the number of pgds to copy.
- *
- * dst and src can be on the same page, but the range must not overlap,
- * and must not cross a page boundary.
- */
-static inline void clone_pgd_range(pgd_t *dst, pgd_t *src, int count)
-{
-	memcpy(dst, src, count * sizeof(pgd_t));
-#ifdef CONFIG_PAGE_TABLE_ISOLATION
-	if (!static_cpu_has(X86_FEATURE_PTI))
-		return;
-	/* Clone the user space pgd as well */
-	memcpy(kernel_to_user_pgdp(dst), kernel_to_user_pgdp(src),
-	       count * sizeof(pgd_t));
-#endif
-}
+extern void clone_pgd_range(pgd_t *dst, pgd_t *src, int count);
 
 #define PTE_SHIFT ilog2(PTRS_PER_PTE)
 static inline int page_level_shift(enum pg_level level)
