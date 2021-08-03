@@ -43,7 +43,7 @@ struct snmp_mib {
 /*
  * We use unsigned longs for most mibs but u64 for ipstats.
  */
-#include <linux/u64_stats_sync.h>
+#include <linux/u64_stats_sync_types.h>
 
 /* IPstats */
 #define IPSTATS_MIB_MAX	__IPSTATS_MIB_MAX
