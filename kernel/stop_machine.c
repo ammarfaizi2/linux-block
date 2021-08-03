@@ -199,18 +199,19 @@ notrace void __weak stop_machine_yield(const struct cpumask *cpumask)
 	cpu_relax();
 }
 
-static void dump_multi_cpu_stop_state(bool *firsttime)
+static void dump_multi_cpu_stop_state(struct multi_stop_data *msdata, bool *firsttime)
 {
 	struct cpu_stopper *stopper;
 	unsigned long flags;
 	int cpu;
 
+	pr_info("%s threads %d state %d\n", __func__, msdata->num_threads, msdata->state);
 	for_each_online_cpu(cpu) {
 		if (cpu_is_offline(cpu))
 			continue;
 		stopper = &per_cpu(cpu_stopper, cpu);
 		raw_spin_lock_irqsave(&stopper->lock, flags);
-		pr_info("%s: %s%s ->state=%#x%s", __func__, stopper->thread->comm, stopper->thread == current ? " (me)" : "", stopper->thread->__state, task_curr(stopper->thread) ? "" : " Not running!");
+		pr_info("%s: %s%s ->state=%#x%s\n", __func__, stopper->thread->comm, stopper->thread == current ? " (me)" : "", stopper->thread->__state, task_curr(stopper->thread) ? "" : " Not running!");
 		raw_spin_unlock_irqrestore(&stopper->lock, flags);
 		if (firsttime && *firsttime && !task_curr(stopper->thread)) {
 			trigger_single_cpu_backtrace(cpu);
@@ -254,13 +255,13 @@ static int multi_cpu_stop(void *data)
 			switch (curstate) {
 			case MULTI_STOP_DISABLE_IRQ:
 				if (cpu_hp_check_delay("MULTI_STOP_DISABLE_IRQ in", multi_cpu_stop))
-					dump_multi_cpu_stop_state(NULL);
+					dump_multi_cpu_stop_state(msdata, NULL);
 				local_irq_disable();
 				hard_irq_disable();
 				break;
 			case MULTI_STOP_RUN:
 				if (cpu_hp_check_delay("MULTI_STOP_RUN in", multi_cpu_stop))
-					dump_multi_cpu_stop_state(NULL);
+					dump_multi_cpu_stop_state(msdata, NULL);
 				if (is_active) {
 					err = msdata->fn(msdata->data);
 					cpu_hp_check_delay("multi_cpu_stop() CPU-stopper function", msdata->fn);
@@ -268,7 +269,7 @@ static int multi_cpu_stop(void *data)
 				break;
 			default:
 				if (cpu_hp_check_delay("MULTI_STOP_RUN in", multi_cpu_stop))
-					dump_multi_cpu_stop_state(NULL);
+					dump_multi_cpu_stop_state(msdata, NULL);
 				break;
 			}
 			ack_state(msdata);
@@ -283,7 +284,7 @@ static int multi_cpu_stop(void *data)
 		rcu_momentary_dyntick_idle();
 		if (cpu_is_offline(smp_processor_id()) &&
 		    cpu_hp_check_delay("MULTI_STOP_RUN in", multi_cpu_stop)) {
-			dump_multi_cpu_stop_state(&firsttime);
+			dump_multi_cpu_stop_state(msdata, &firsttime);
 		}
 	} while (curstate != MULTI_STOP_EXIT);
 
