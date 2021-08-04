@@ -118,4 +118,14 @@ struct request_sock_queue {
 					     */
 };
 
+static inline struct request_sock *inet_reqsk(const struct sock *sk)
+{
+	return (struct request_sock *)sk;
+}
+
+static inline struct sock *req_to_sk(struct request_sock *req)
+{
+	return (struct sock *)req;
+}
+
 #endif /* _REQUEST_SOCK_TYPES_H */
