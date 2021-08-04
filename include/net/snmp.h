@@ -14,7 +14,7 @@
 #ifndef _SNMP_H
 #define _SNMP_H
 
-#include <linux/u64_stats_sync_api.h>
+#include <linux/preempt.h>
 #include <linux/snmp.h>
 
 /*
@@ -155,6 +155,8 @@ struct linux_tls_mib {
 
 
 #if BITS_PER_LONG==32
+
+#include <linux/u64_stats_sync_api.h>
 
 #define __SNMP_ADD_STATS64(mib, field, addend) 				\
 	do {								\
