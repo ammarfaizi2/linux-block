@@ -3,6 +3,5 @@
 #define _NET_IPV6_H
 
 #include <net/ipv6_types.h>
-#include <net/ipv6_api.h>
 
 #endif /* _NET_IPV6_H */
