@@ -3,6 +3,5 @@
 #define __LINUX_UIO_H
 
 #include <linux/uio_types.h>
-#include <linux/uio_api.h>
 
 #endif
