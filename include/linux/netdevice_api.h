@@ -37,6 +37,8 @@
 
 #include <linux/skbuff_api.h>
 
+#include <asm/local_api.h>
+
 /* This structure contains an instance of an RX queue. */
 struct ____cacheline_aligned_in_smp netdev_rx_queue {
 	struct xdp_rxq_info		xdp_rxq;
