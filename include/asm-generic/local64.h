@@ -18,7 +18,7 @@
 
 #if BITS_PER_LONG == 64
 
-#include <asm/local.h>
+#include <asm/local_api.h>
 
 typedef struct {
 	local_t a;
@@ -55,7 +55,7 @@ typedef struct {
 
 #else /* BITS_PER_LONG != 64 */
 
-#include <linux/atomic.h>
+#include <linux/atomic_api.h>
 
 /* Don't use typedef: don't want them to be mixed with atomic_t's. */
 typedef struct {
