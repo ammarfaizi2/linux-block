@@ -3,6 +3,5 @@
 #define _ASM_X86_LOCAL_H
 
 #include <asm/local_types.h>
-#include <asm/local_api.h>
 
 #endif /* _ASM_X86_LOCAL_H */
