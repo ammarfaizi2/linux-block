@@ -20,20 +20,9 @@
 #ifndef _ROUTE_TYPES_H
 #define _ROUTE_TYPES_H
 
-#include <net/dst.h>
-#include <net/inetpeer.h>
-#include <net/flow.h>
-#include <net/inet_sock.h>
-#include <net/ip_fib.h>
-#include <net/arp.h>
-#include <net/ndisc.h>
-#include <linux/in_route.h>
-#include <linux/rtnetlink.h>
-#include <linux/rcupdate.h>
-#include <linux/route.h>
-#include <linux/ip.h>
-#include <linux/cache.h>
-#include <linux/security.h>
+#include <net/dst_types.h>
+
+#include <uapi/linux/in6.h>
 
 /* IPv4 datagram length is stored into 16bit field (tot_len) */
 #define IP_MAX_MTU	0xFFFFU
