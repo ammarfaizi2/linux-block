@@ -2092,6 +2092,8 @@ static inline void br_switchdev_init(struct net_bridge *br)
 
 #endif /* CONFIG_NET_SWITCHDEV */
 
+struct nd_msg;
+
 /* br_arp_nd_proxy.c */
 void br_recalculate_neigh_suppress_enabled(struct net_bridge *br);
 void br_do_proxy_suppress_arp(struct sk_buff *skb, struct net_bridge *br,

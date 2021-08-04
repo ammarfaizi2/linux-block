@@ -3,6 +3,5 @@
 #define _NDISC_H
 
 #include <net/ndisc_types.h>
-#include <net/ndisc_api.h>
 
 #endif
