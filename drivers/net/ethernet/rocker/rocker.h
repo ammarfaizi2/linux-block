@@ -87,6 +87,8 @@ int rocker_cmd_exec(struct rocker_port *rocker_port, bool nowait,
 int rocker_port_set_learning(struct rocker_port *rocker_port,
 			     bool learning);
 
+struct fib_entry_notifier_info;
+
 struct rocker_world_ops {
 	const char *kind;
 	size_t priv_size;

@@ -3,6 +3,5 @@
 #define _NET_IP_FIB_H
 
 #include <net/ip_fib_types.h>
-#include <net/ip_fib_api.h>
 
 #endif /* _NET_IF_FIB_H */
