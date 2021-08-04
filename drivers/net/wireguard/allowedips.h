@@ -11,6 +11,7 @@
 #include <linux/ipv6.h>
 
 struct wg_peer;
+struct in_addr;
 
 struct allowedips_node {
 	struct wg_peer __rcu *peer;

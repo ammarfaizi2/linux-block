@@ -16,7 +16,6 @@
 #include <linux/skbuff_types.h>
 
 #include <net/inet_sock_types.h>
-#include <net/netns/hash.h>
 #include <uapi/linux/udp.h>
 
 static inline struct udphdr *udp_hdr(const struct sk_buff *skb)
