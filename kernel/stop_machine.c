@@ -205,7 +205,7 @@ static void dump_multi_cpu_stop_state(struct multi_stop_data *msdata, bool *firs
 	unsigned long flags;
 	int cpu;
 
-	pr_info("%s threads %d state %d\n", __func__, msdata->num_threads, msdata->state);
+	pr_info("%s threads %d/%d state %d\n", __func__, atomic_read(&msdata->thread_ack), msdata->num_threads, msdata->state);
 	for_each_online_cpu(cpu) {
 		if (cpu_is_offline(cpu))
 			continue;
