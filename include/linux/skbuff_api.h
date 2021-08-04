@@ -1504,11 +1504,6 @@ static inline void skb_set_inner_transport_header(struct sk_buff *skb,
 	skb->inner_transport_header += offset;
 }
 
-static inline unsigned char *skb_inner_network_header(const struct sk_buff *skb)
-{
-	return skb->head + skb->inner_network_header;
-}
-
 static inline void skb_reset_inner_network_header(struct sk_buff *skb)
 {
 	skb->inner_network_header = skb->data - skb->head;
@@ -1553,11 +1548,6 @@ static inline void skb_set_transport_header(struct sk_buff *skb,
 {
 	skb_reset_transport_header(skb);
 	skb->transport_header += offset;
-}
-
-static inline unsigned char *skb_network_header(const struct sk_buff *skb)
-{
-	return skb->head + skb->network_header;
 }
 
 static inline void skb_reset_network_header(struct sk_buff *skb)
@@ -1647,11 +1637,6 @@ static inline unsigned char *skb_checksum_start(const struct sk_buff *skb)
 static inline int skb_transport_offset(const struct sk_buff *skb)
 {
 	return skb_transport_header(skb) - skb->data;
-}
-
-static inline u32 skb_network_header_len(const struct sk_buff *skb)
-{
-	return skb->transport_header - skb->network_header;
 }
 
 static inline u32 skb_inner_network_header_len(const struct sk_buff *skb)

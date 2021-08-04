@@ -946,6 +946,21 @@ static inline unsigned char *skb_inner_transport_header(const struct sk_buff *sk
 	return skb->head + skb->inner_transport_header;
 }
 
+static inline unsigned char *skb_network_header(const struct sk_buff *skb)
+{
+	return skb->head + skb->network_header;
+}
+
+static inline u32 skb_network_header_len(const struct sk_buff *skb)
+{
+	return skb->transport_header - skb->network_header;
+}
+
+static inline unsigned char *skb_inner_network_header(const struct sk_buff *skb)
+{
+	return skb->head + skb->inner_network_header;
+}
+
 #endif	/* __KERNEL__ */
 
 #endif	/* _LINUX_SKBUFF_TYPES_H */
