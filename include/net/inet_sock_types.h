@@ -15,6 +15,8 @@
 #include <net/request_sock_types.h>
 #include <net/flow.h>
 
+#include <linux/skbuff_types.h>
+
 /** struct ip_options - IP Options
  *
  * @faddr - Saved first hop address
@@ -180,5 +182,88 @@ struct inet_sock {
 	struct ip_mc_socklist __rcu	*mc_list;
 	struct inet_cork_full	cork;
 };
+
+#define IPCORK_OPT	1	/* ip-options has been held in ipcork.opt */
+#define IPCORK_ALLFRAG	2	/* always fragment (for ipv6 for now) */
+
+/* cmsg flags for inet */
+#define IP_CMSG_PKTINFO		BIT(0)
+#define IP_CMSG_TTL		BIT(1)
+#define IP_CMSG_TOS		BIT(2)
+#define IP_CMSG_RECVOPTS	BIT(3)
+#define IP_CMSG_RETOPTS		BIT(4)
+#define IP_CMSG_PASSSEC		BIT(5)
+#define IP_CMSG_ORIGDSTADDR	BIT(6)
+#define IP_CMSG_CHECKSUM	BIT(7)
+#define IP_CMSG_RECVFRAGSIZE	BIT(8)
+
+static inline struct inet_sock *inet_sk(const struct sock *sk)
+{
+	return (struct inet_sock *)sk;
+}
+
+/**
+ * sk_to_full_sk - Access to a full socket
+ * @sk: pointer to a socket
+ *
+ * SYNACK messages might be attached to request sockets.
+ * Some places want to reach the listener in this case.
+ */
+static inline struct sock *sk_to_full_sk(struct sock *sk)
+{
+#ifdef CONFIG_INET
+	if (sk && sk->sk_state == TCP_NEW_SYN_RECV)
+		sk = inet_reqsk(sk)->rsk_listener;
+#endif
+	return sk;
+}
+
+/* sk_to_full_sk() variant with a const argument */
+static inline const struct sock *sk_const_to_full_sk(const struct sock *sk)
+{
+#ifdef CONFIG_INET
+	if (sk && sk->sk_state == TCP_NEW_SYN_RECV)
+		sk = ((const struct request_sock *)sk)->rsk_listener;
+#endif
+	return sk;
+}
+
+static inline struct sock *skb_to_full_sk(const struct sk_buff *skb)
+{
+	return sk_to_full_sk(skb->sk);
+}
+
+static inline bool inet_bound_dev_eq(bool l3mdev_accept, int bound_dev_if,
+				     int dif, int sdif)
+{
+	if (!bound_dev_if)
+		return !sdif || l3mdev_accept;
+	return bound_dev_if == dif || bound_dev_if == sdif;
+}
+
+static inline void inet_inc_convert_csum(struct sock *sk)
+{
+	inet_sk(sk)->convert_csum++;
+}
+
+static inline void inet_dec_convert_csum(struct sock *sk)
+{
+	if (inet_sk(sk)->convert_csum > 0)
+		inet_sk(sk)->convert_csum--;
+}
+
+static inline bool inet_get_convert_csum(struct sock *sk)
+{
+	return !!inet_sk(sk)->convert_csum;
+}
+
+static inline __u8 inet_sk_flowi_flags(const struct sock *sk)
+{
+	__u8 flags = 0;
+
+	if (inet_sk(sk)->transparent || inet_sk(sk)->hdrincl)
+		flags |= FLOWI_FLAG_ANYSRC;
+	return flags;
+}
 
 #endif	/* _INET_SOCK_TYPES_H */
