@@ -21,16 +21,6 @@
 
 #include <net/sock_types.h>
 
-static inline struct request_sock *inet_reqsk(const struct sock *sk)
-{
-	return (struct request_sock *)sk;
-}
-
-static inline struct sock *req_to_sk(struct request_sock *req)
-{
-	return (struct sock *)req;
-}
-
 void __reqsk_free(struct request_sock *req);
 
 static inline void reqsk_free(struct request_sock *req)
