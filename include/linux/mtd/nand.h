@@ -10,6 +10,7 @@
 #ifndef __LINUX_MTD_NAND_H
 #define __LINUX_MTD_NAND_H
 
+#include <linux/minmax.h>
 #include <linux/mtd/mtd.h>
 
 struct nand_device;
