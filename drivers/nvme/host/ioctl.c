@@ -18,6 +18,93 @@ static void __user *nvme_to_user_ptr(uintptr_t ptrval)
 		ptrval = (compat_uptr_t)ptrval;
 	return (void __user *)ptrval;
 }
+/*
+ * This is carved within the io_uring_cmd, to avoid dynamic allocation.
+ * Care should be taken not to grow this beyond what is available.
+ * Expect build warning otherwise.
+ */
+struct uring_cmd_data {
+	union {
+		struct bio *bio;
+		u64 result; /* nvme cmd result */
+	};
+	void *meta; /* kernel-resident buffer */
+	int status; /* nvme cmd status */
+};
+
+inline u64 *nvme_ioucmd_data_addr(struct io_uring_cmd *ioucmd)
+{
+	return &(((struct block_uring_cmd *)&ioucmd->pdu)->unused2[1]);
+}
+
+static void nvme_pt_task_cb(struct io_uring_cmd *ioucmd)
+{
+	struct uring_cmd_data *ucd;
+	struct nvme_passthru_cmd64 __user *ptcmd64 = NULL;
+	struct block_uring_cmd *bcmd;
+
+	bcmd = (struct block_uring_cmd *) &ioucmd->pdu;
+	ptcmd64 = (void __user *) bcmd->unused2[0];
+	ucd = (struct uring_cmd_data *) nvme_ioucmd_data_addr(ioucmd);
+
+	if (ucd->meta) {
+		void __user *umeta = nvme_to_user_ptr(ptcmd64->metadata);
+
+		if (!ucd->status)
+			if (copy_to_user(umeta, ucd->meta, ptcmd64->metadata_len))
+				ucd->status = -EFAULT;
+		kfree(ucd->meta);
+	}
+	if (likely(bcmd->ioctl_cmd == NVME_IOCTL_IO64_CMD)) {
+		if (put_user(ucd->result, &ptcmd64->result))
+			ucd->status = -EFAULT;
+	} else {
+		struct nvme_passthru_cmd __user *ptcmd = (void *)bcmd->unused2[0];
+
+		if (put_user(ucd->result, &ptcmd->result))
+			ucd->status = -EFAULT;
+	}
+	io_uring_cmd_done(ioucmd, ucd->status);
+}
+
+static void nvme_end_async_pt(struct request *req, blk_status_t err)
+{
+	struct io_uring_cmd *ioucmd;
+	struct uring_cmd_data *ucd;
+	struct bio *bio;
+
+	ioucmd = req->end_io_data;
+	ucd = (struct uring_cmd_data *) nvme_ioucmd_data_addr(ioucmd);
+	/* extract bio before reusing the same field for status */
+	bio = ucd->bio;
+
+	if (nvme_req(req)->flags & NVME_REQ_CANCELLED)
+		ucd->status = -EINTR;
+	else
+		ucd->status = nvme_req(req)->status;
+	ucd->result = le64_to_cpu(nvme_req(req)->result.u64);
+
+	/* this takes care of setting up task-work */
+	io_uring_cmd_complete_in_task(ioucmd, nvme_pt_task_cb);
+
+	/* we can unmap pages, free bio and request */
+	blk_rq_unmap_user(bio);
+	blk_mq_free_request(req);
+}
+
+static void nvme_setup_uring_cmd_data(struct request *rq,
+		struct io_uring_cmd *ioucmd, void *meta, bool write)
+{
+	struct uring_cmd_data *ucd;
+
+	ucd = (struct uring_cmd_data *) nvme_ioucmd_data_addr(ioucmd);
+	/* to free bio on completion, as req->bio will be null at that time */
+	ucd->bio = rq->bio;
+	/* meta update is required only for read requests */
+	if (meta && !write)
+		ucd->meta = meta;
+	rq->end_io_data = ioucmd;
+}
 
 static void *nvme_add_user_metadata(struct bio *bio, void __user *ubuf,
 		unsigned len, u32 seed, bool write)
@@ -56,7 +143,8 @@ out:
 static int nvme_submit_user_cmd(struct request_queue *q,
 		struct nvme_command *cmd, void __user *ubuffer,
 		unsigned bufflen, void __user *meta_buffer, unsigned meta_len,
-		u32 meta_seed, u64 *result, unsigned timeout)
+		u32 meta_seed, u64 *result, unsigned timeout,
+		struct io_uring_cmd *ioucmd)
 {
 	bool write = nvme_is_write(cmd);
 	struct nvme_ns *ns = q->queuedata;
@@ -91,6 +179,12 @@ static int nvme_submit_user_cmd(struct request_queue *q,
 			}
 			req->cmd_flags |= REQ_INTEGRITY;
 		}
+	}
+	if (ioucmd) { /* async dispatch */
+		nvme_setup_uring_cmd_data(req, ioucmd, meta, write);
+		blk_execute_rq_nowait(ns ? ns->disk : NULL, req, 0,
+					nvme_end_async_pt);
+		return 0;
 	}
 
 	ret = nvme_execute_passthru_rq(req);
@@ -170,7 +264,8 @@ static int nvme_submit_io(struct nvme_ns *ns, struct nvme_user_io __user *uio)
 
 	return nvme_submit_user_cmd(ns->queue, &c,
 			nvme_to_user_ptr(io.addr), length,
-			metadata, meta_len, lower_32_bits(io.slba), NULL, 0);
+			metadata, meta_len, lower_32_bits(io.slba), NULL, 0,
+			NULL);
 }
 
 static bool nvme_validate_passthru_nsid(struct nvme_ctrl *ctrl,
@@ -188,7 +283,8 @@ static bool nvme_validate_passthru_nsid(struct nvme_ctrl *ctrl,
 }
 
 static int nvme_user_cmd(struct nvme_ctrl *ctrl, struct nvme_ns *ns,
-			struct nvme_passthru_cmd __user *ucmd)
+			struct nvme_passthru_cmd __user *ucmd,
+			struct io_uring_cmd *ioucmd)
 {
 	struct nvme_passthru_cmd cmd;
 	struct nvme_command c;
@@ -224,9 +320,9 @@ static int nvme_user_cmd(struct nvme_ctrl *ctrl, struct nvme_ns *ns,
 	status = nvme_submit_user_cmd(ns ? ns->queue : ctrl->admin_q, &c,
 			nvme_to_user_ptr(cmd.addr), cmd.data_len,
 			nvme_to_user_ptr(cmd.metadata), cmd.metadata_len,
-			0, &result, timeout);
+			0, &result, timeout, ioucmd);
 
-	if (status >= 0) {
+	if (!ioucmd && status >= 0) {
 		if (put_user(result, &ucmd->result))
 			return -EFAULT;
 	}
@@ -235,7 +331,8 @@ static int nvme_user_cmd(struct nvme_ctrl *ctrl, struct nvme_ns *ns,
 }
 
 static int nvme_user_cmd64(struct nvme_ctrl *ctrl, struct nvme_ns *ns,
-			struct nvme_passthru_cmd64 __user *ucmd)
+			struct nvme_passthru_cmd64 __user *ucmd,
+			struct io_uring_cmd *ioucmd)
 {
 	struct nvme_passthru_cmd64 cmd;
 	struct nvme_command c;
@@ -270,9 +367,9 @@ static int nvme_user_cmd64(struct nvme_ctrl *ctrl, struct nvme_ns *ns,
 	status = nvme_submit_user_cmd(ns ? ns->queue : ctrl->admin_q, &c,
 			nvme_to_user_ptr(cmd.addr), cmd.data_len,
 			nvme_to_user_ptr(cmd.metadata), cmd.metadata_len,
-			0, &cmd.result, timeout);
+			0, &cmd.result, timeout, ioucmd);
 
-	if (status >= 0) {
+	if (!ioucmd && status >= 0) {
 		if (put_user(cmd.result, &ucmd->result))
 			return -EFAULT;
 	}
@@ -294,9 +391,9 @@ static int nvme_ctrl_ioctl(struct nvme_ctrl *ctrl, unsigned int cmd,
 {
 	switch (cmd) {
 	case NVME_IOCTL_ADMIN_CMD:
-		return nvme_user_cmd(ctrl, NULL, argp);
+		return nvme_user_cmd(ctrl, NULL, argp, NULL);
 	case NVME_IOCTL_ADMIN64_CMD:
-		return nvme_user_cmd64(ctrl, NULL, argp);
+		return nvme_user_cmd64(ctrl, NULL, argp, NULL);
 	default:
 		return sed_ioctl(ctrl->opal_dev, cmd, argp);
 	}
@@ -328,7 +425,7 @@ static int nvme_ns_ioctl(struct nvme_ns *ns, unsigned int cmd,
 		force_successful_syscall_return();
 		return ns->head->ns_id;
 	case NVME_IOCTL_IO_CMD:
-		return nvme_user_cmd(ns->ctrl, ns, argp);
+		return nvme_user_cmd(ns->ctrl, ns, argp, NULL);
 	/*
 	 * struct nvme_user_io can have different padding on some 32-bit ABIs.
 	 * Just accept the compat version as all fields that are used are the
@@ -340,7 +437,7 @@ static int nvme_ns_ioctl(struct nvme_ns *ns, unsigned int cmd,
 	case NVME_IOCTL_SUBMIT_IO:
 		return nvme_submit_io(ns, argp);
 	case NVME_IOCTL_IO64_CMD:
-		return nvme_user_cmd64(ns->ctrl, ns, argp);
+		return nvme_user_cmd64(ns->ctrl, ns, argp, NULL);
 	default:
 		return -ENOTTY;
 	}
@@ -369,6 +466,41 @@ long nvme_ns_chr_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 	return __nvme_ioctl(ns, cmd, (void __user *)arg);
 }
 
+static int nvme_ns_async_ioctl(struct nvme_ns *ns, struct io_uring_cmd *ioucmd)
+{
+	struct block_uring_cmd *bcmd = (struct block_uring_cmd *)&ioucmd->pdu;
+	void __user *argp = (void __user *) bcmd->unused2[0];
+	int ret;
+
+	BUILD_BUG_ON(sizeof(struct uring_cmd_data) >
+			sizeof(struct block_uring_cmd) -
+			offsetof(struct block_uring_cmd, unused2[1]));
+
+	switch (bcmd->ioctl_cmd) {
+	case NVME_IOCTL_IO_CMD:
+		ret = nvme_user_cmd(ns->ctrl, ns, argp, ioucmd);
+		break;
+	case NVME_IOCTL_IO64_CMD:
+		ret = nvme_user_cmd64(ns->ctrl, ns, argp, ioucmd);
+		break;
+	default:
+		ret = -ENOTTY;
+	}
+
+	if (ret >= 0)
+		ret = -EIOCBQUEUED;
+	return ret;
+}
+
+int nvme_ns_chr_async_ioctl(struct io_uring_cmd *ioucmd,
+		enum io_uring_cmd_flags flags)
+{
+	struct nvme_ns *ns = container_of(file_inode(ioucmd->file)->i_cdev,
+			struct nvme_ns, cdev);
+
+	return nvme_ns_async_ioctl(ns, ioucmd);
+}
+
 #ifdef CONFIG_NVME_MULTIPATH
 static int nvme_ns_head_ctrl_ioctl(struct nvme_ns *ns, unsigned int cmd,
 		void __user *argp, struct nvme_ns_head *head, int srcu_idx)
@@ -382,6 +514,21 @@ static int nvme_ns_head_ctrl_ioctl(struct nvme_ns *ns, unsigned int cmd,
 	ret = nvme_ctrl_ioctl(ns->ctrl, cmd, argp);
 
 	nvme_put_ctrl(ctrl);
+	return ret;
+}
+
+int nvme_ns_head_chr_async_ioctl(struct io_uring_cmd *ioucmd,
+		enum io_uring_cmd_flags flags)
+{
+	struct cdev *cdev = file_inode(ioucmd->file)->i_cdev;
+	struct nvme_ns_head *head = container_of(cdev, struct nvme_ns_head, cdev);
+	int srcu_idx = srcu_read_lock(&head->srcu);
+	struct nvme_ns *ns = nvme_find_path(head);
+	int ret = -EWOULDBLOCK;
+
+	if (ns)
+		ret = nvme_ns_async_ioctl(ns, ioucmd);
+	srcu_read_unlock(&head->srcu, srcu_idx);
 	return ret;
 }
 
@@ -461,7 +608,7 @@ static int nvme_dev_user_cmd(struct nvme_ctrl *ctrl, void __user *argp)
 	kref_get(&ns->kref);
 	up_read(&ctrl->namespaces_rwsem);
 
-	ret = nvme_user_cmd(ctrl, ns, argp);
+	ret = nvme_user_cmd(ctrl, ns, argp, NULL);
 	nvme_put_ns(ns);
 	return ret;
 
@@ -478,9 +625,9 @@ long nvme_dev_ioctl(struct file *file, unsigned int cmd,
 
 	switch (cmd) {
 	case NVME_IOCTL_ADMIN_CMD:
-		return nvme_user_cmd(ctrl, NULL, argp);
+		return nvme_user_cmd(ctrl, NULL, argp, NULL);
 	case NVME_IOCTL_ADMIN64_CMD:
-		return nvme_user_cmd64(ctrl, NULL, argp);
+		return nvme_user_cmd64(ctrl, NULL, argp, NULL);
 	case NVME_IOCTL_IO_CMD:
 		return nvme_dev_user_cmd(ctrl, argp);
 	case NVME_IOCTL_RESET:
