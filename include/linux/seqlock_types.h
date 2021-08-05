@@ -13,6 +13,9 @@
  * - Sequence counters with associated locks, (C) 2020 Linutronix GmbH
  */
 
+#include <linux/lockdep_api.h>
+#include <linux/seqcount_types.h>
+
 #include <linux/compiler.h>
 #include <linux/kcsan-checks.h>
 #include <linux/spinlock_types.h>
@@ -37,41 +40,7 @@
  */
 #define KCSAN_SEQLOCK_REGION_MAX 1000
 
-/*
- * Sequence counters (seqcount_t)
- *
- * This is the raw counting mechanism, without any writer protection.
- *
- * Write side critical sections must be serialized and non-preemptible.
- *
- * If readers can be invoked from hardirq or softirq contexts,
- * interrupts or bottom halves must also be respectively disabled before
- * entering the write section.
- *
- * This mechanism can't be used if the protected data contains pointers,
- * as the writer can invalidate a pointer that a reader is following.
- *
- * If the write serialization mechanism is one of the common kernel
- * locking primitives, use a sequence counter with associated lock
- * (seqcount_LOCKNAME_t) instead.
- *
- * If it's desired to automatically handle the sequence counter writer
- * serialization and non-preemptibility requirements, use a sequential
- * lock (seqlock_t) instead.
- *
- * See Documentation/locking/seqlock.rst
- */
-typedef struct seqcount {
-	unsigned sequence;
 #ifdef CONFIG_DEBUG_LOCK_ALLOC
-	struct lockdep_map dep_map;
-#endif
-} seqcount_t;
-
-#ifdef CONFIG_DEBUG_LOCK_ALLOC
-
-# define SEQCOUNT_DEP_MAP_INIT(lockname)				\
-		.dep_map = { .name = #lockname }
 
 /**
  * seqcount_init() - runtime initializer for seqcount_t
@@ -95,16 +64,9 @@ static inline void seqcount_lockdep_reader_access(const seqcount_t *s)
 }
 
 #else
-# define SEQCOUNT_DEP_MAP_INIT(lockname)
 # define seqcount_init(s) __seqcount_init(s, NULL, NULL)
 # define seqcount_lockdep_reader_access(x)
 #endif
-
-/**
- * SEQCNT_ZERO() - static initializer for seqcount_t
- * @name: Name of the seqcount_t instance
- */
-#define SEQCNT_ZERO(name) { .sequence = 0, SEQCOUNT_DEP_MAP_INIT(name) }
 
 /*
  * Sequence counters with associated locks (seqcount_LOCKNAME_t)
@@ -318,27 +280,5 @@ typedef struct {
  */
 #define DEFINE_SEQLOCK(sl) \
 		seqlock_t sl = __SEQLOCK_UNLOCKED(sl)
-
-/*
- * Latch sequence counters (seqcount_latch_t)
- *
- * A sequence counter variant where the counter even/odd value is used to
- * switch between two copies of protected data. This allows the read path,
- * typically NMIs, to safely interrupt the write side critical section.
- *
- * As the write sections are fully preemptible, no special handling for
- * PREEMPT_RT is needed.
- */
-typedef struct {
-	seqcount_t seqcount;
-} seqcount_latch_t;
-
-/**
- * SEQCNT_LATCH_ZERO() - static initializer for seqcount_latch_t
- * @seq_name: Name of the seqcount_latch_t instance
- */
-#define SEQCNT_LATCH_ZERO(seq_name) {					\
-	.seqcount		= SEQCNT_ZERO(seq_name.seqcount),	\
-}
 
 #endif /* __LINUX_SEQLOCK_TYPES_H */

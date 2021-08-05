@@ -11,6 +11,21 @@
 #include <linux/mutex.h>
 #include <linux/ww_mutex.h>
 
+/*
+ * The seqlock seqcount_t interface does not prescribe a precise sequence of
+ * read begin/retry/end. For readers, typically there is a call to
+ * read_seqcount_begin() and read_seqcount_retry(), however, there are more
+ * esoteric cases which do not follow this pattern.
+ *
+ * As a consequence, we take the following best-effort approach for raw usage
+ * via seqcount_t under KCSAN: upon beginning a seq-reader critical section,
+ * pessimistically mark the next KCSAN_SEQLOCK_REGION_MAX memory accesses as
+ * atomics; if there is a matching read_seqcount_retry() call, no following
+ * memory operations are considered atomic. Usage of the seqlock_t interface
+ * is not affected.
+ */
+#define KCSAN_SEQLOCK_REGION_MAX 1000
+
 static inline void __seqcount_init(seqcount_t *s, const char *name,
 					  struct lock_class_key *key)
 {
