@@ -21,7 +21,7 @@
 #ifndef _LINUX_KTIME_API_H
 #define _LINUX_KTIME_API_H
 
-#include <linux/ktime.h>
+#include <linux/ktime_types.h>
 
 #include <linux/time.h>
 #include <linux/jiffies.h>
