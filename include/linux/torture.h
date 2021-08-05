@@ -47,6 +47,14 @@ do {										\
 } while (0)
 void verbose_torout_sleep(void);
 
+#define torture_init_error(firsterr)						\
+({										\
+	int ___firsterr = (firsterr);						\
+										\
+	WARN_ON_ONCE(!IS_MODULE(CONFIG_RCU_TORTURE_TEST) && ___firsterr);	\
+	___firsterr;								\
+})
+
 /* Definitions for online/offline exerciser. */
 #ifdef CONFIG_HOTPLUG_CPU
 int torture_num_online_cpus(void);
