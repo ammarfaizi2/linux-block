@@ -139,6 +139,64 @@ out_free_meta:
 out:
 	return ERR_PTR(ret);
 }
+static inline bool nvme_is_fixedb_passthru(struct io_uring_cmd *ioucmd)
+{
+	struct block_uring_cmd *bcmd;
+
+	if (!ioucmd)
+		return false;
+	bcmd = (struct block_uring_cmd *)&ioucmd->pdu;
+	if (bcmd && ((bcmd->ioctl_cmd == NVME_IOCTL_IO_CMD_FIXED) ||
+				(bcmd->ioctl_cmd == NVME_IOCTL_IO64_CMD_FIXED)))
+		return true;
+	return false;
+}
+/*
+ * Unlike blk_rq_map_user () this is only for fixed-buffer async passthrough.
+ * And hopefully faster as well.
+ */
+int nvme_rq_map_user_fixedb(struct request_queue *q, struct request *rq,
+		     void __user *ubuf, unsigned long len, gfp_t gfp_mask,
+		     struct io_uring_cmd *ioucmd)
+{
+	struct iov_iter iter;
+	size_t iter_count, nr_segs;
+	struct bio *bio;
+	int ret;
+
+	/*
+	 * Talk to io_uring to obtain BVEC iterator for the buffer.
+	 * And use that iterator to form bio/request.
+	 */
+	ret = io_uring_cmd_import_fixed(ubuf, len, rq_data_dir(rq), &iter,
+			ioucmd);
+	if (unlikely(ret < 0))
+		return ret;
+	iter_count = iov_iter_count(&iter);
+	nr_segs = iter.nr_segs;
+
+	if (!iter_count || (iter_count >> 9) > queue_max_hw_sectors(q))
+		return -EINVAL;
+	if (nr_segs > queue_max_segments(q))
+		return -EINVAL;
+	/* no iovecs to alloc, as we already have a BVEC iterator */
+	bio = bio_kmalloc(gfp_mask, 0);
+	if (!bio)
+		return -ENOMEM;
+
+	bio->bi_opf |= req_op(rq);
+	ret = bio_iov_iter_get_pages(bio, &iter);
+	if (ret)
+		goto out_free;
+
+	blk_rq_bio_prep(rq, bio, nr_segs);
+	return 0;
+
+out_free:
+	bio_release_pages(bio, false);
+	bio_put(bio);
+	return ret;
+}
 
 static int nvme_submit_user_cmd(struct request_queue *q,
 		struct nvme_command *cmd, void __user *ubuffer,
@@ -163,8 +221,12 @@ static int nvme_submit_user_cmd(struct request_queue *q,
 	nvme_req(req)->flags |= NVME_REQ_USERCMD;
 
 	if (ubuffer && bufflen) {
-		ret = blk_rq_map_user(q, req, NULL, ubuffer, bufflen,
-				GFP_KERNEL);
+		if (likely(!nvme_is_fixedb_passthru(ioucmd)))
+			ret = blk_rq_map_user(q, req, NULL, ubuffer, bufflen,
+					GFP_KERNEL);
+		else
+			ret = nvme_rq_map_user_fixedb(q, req, ubuffer, bufflen,
+					GFP_KERNEL, ioucmd);
 		if (ret)
 			goto out;
 		bio = req->bio;
@@ -478,9 +540,11 @@ static int nvme_ns_async_ioctl(struct nvme_ns *ns, struct io_uring_cmd *ioucmd)
 
 	switch (bcmd->ioctl_cmd) {
 	case NVME_IOCTL_IO_CMD:
+	case NVME_IOCTL_IO_CMD_FIXED:
 		ret = nvme_user_cmd(ns->ctrl, ns, argp, ioucmd);
 		break;
 	case NVME_IOCTL_IO64_CMD:
+	case NVME_IOCTL_IO64_CMD_FIXED:
 		ret = nvme_user_cmd64(ns->ctrl, ns, argp, ioucmd);
 		break;
 	default:
