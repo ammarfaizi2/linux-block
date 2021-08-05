@@ -2,12 +2,12 @@
 #ifndef _LINUX_SWAIT_API_H
 #define _LINUX_SWAIT_API_H
 
-#include <linux/swait.h>
+#include <linux/swait_types.h>
 
 #include <linux/list.h>
 #include <linux/stddef.h>
-#include <linux/spinlock.h>
 #include <linux/wait.h>
+
 #include <asm/current.h>
 
 /**
