@@ -12,9 +12,9 @@
 #include <net/dst_types.h>
 #include <net/dst_ops.h>
 
+#include <linux/jiffies.h>
 #include <linux/err.h>
 #include <linux/string.h>
-#include <linux/netdevice.h>
 #include <linux/refcount_types.h>
 #include <linux/indirect_call_wrapper.h>
 #include <linux/skbuff_api.h>
