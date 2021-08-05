@@ -2,6 +2,8 @@
 #ifndef _ASM_X86_MSR_H
 #define _ASM_X86_MSR_H
 
+#include <asm/msr_types.h>
+
 #include "msr-index.h"
 
 #ifndef __ASSEMBLY__
@@ -10,38 +12,6 @@
 #include <asm/asm.h>
 #include <asm/errno.h>
 #include <uapi/asm/msr.h>
-
-struct msr {
-	union {
-		struct {
-			u32 l;
-			u32 h;
-		};
-		u64 q;
-	};
-};
-
-struct msr_info {
-	u32 msr_no;
-	struct msr reg;
-	struct msr *msrs;
-	int err;
-};
-
-struct msr_regs_info {
-	u32 *regs;
-	int err;
-};
-
-struct saved_msr {
-	bool valid;
-	struct msr_info info;
-};
-
-struct saved_msrs {
-	unsigned int num;
-	struct saved_msr *array;
-};
 
 /*
  * both i386 and x86_64 returns 64-bit value in edx:eax, but gcc's "A"
