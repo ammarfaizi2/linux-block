@@ -3983,6 +3983,11 @@ static int io_uring_cmd_prep(struct io_kiocb *req,
 	if (!req->file->f_op->async_cmd)
 		return -EOPNOTSUPP;
 
+	if (req->ctx->flags & IORING_SETUP_IOPOLL) {
+		printk_once(KERN_WARNING "io_uring: iopoll not supported!\n");
+		return -EOPNOTSUPP;
+	}
+
 	cmd->op = READ_ONCE(csqe->op);
 	cmd->len = READ_ONCE(csqe->len);
 
