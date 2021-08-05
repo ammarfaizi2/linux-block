@@ -1,1 +1,4 @@
-#include <uapi/linux/socket.h>
+#ifndef _UAPI_LINUX_SOCKET_TYPES_H
+#define _UAPI_LINUX_SOCKET_TYPES_H
+
+#endif

@@ -2,12 +2,15 @@
 #ifndef _UAPI_LINUX_SOCKET_H
 #define _UAPI_LINUX_SOCKET_H
 
+#include <uapi/linux/socket_types.h>
+
+typedef unsigned short __kernel_sa_family_t;
+typedef __kernel_sa_family_t	sa_family_t;
+
 /*
  * Desired design of maximum size and alignment (see RFC2553)
  */
 #define _K_SS_MAXSIZE	128	/* Implementation specific max size */
-
-typedef unsigned short __kernel_sa_family_t;
 
 /*
  * The definition uses anonymous union and struct in order to control the

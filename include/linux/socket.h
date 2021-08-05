@@ -2,6 +2,7 @@
 #ifndef _LINUX_SOCKET_H
 #define _LINUX_SOCKET_H
 
+#include <linux/socket_types.h>
 
 #include <linux/time64.h>
 #include <asm/socket.h>			/* arch-dependent defines	*/
@@ -9,7 +10,6 @@
 #include <linux/uio.h>			/* iovec support		*/
 #include <linux/types.h>		/* pid_t			*/
 #include <linux/compiler.h>		/* __user			*/
-#include <uapi/linux/socket.h>
 
 struct file;
 struct pid;
@@ -23,22 +23,6 @@ struct socket;
 struct seq_file;
 extern void socket_seq_show(struct seq_file *seq);
 #endif
-
-typedef __kernel_sa_family_t	sa_family_t;
-
-/*
- *	1003.1g requires sa_family_t and that sa_data is char.
- */
-
-struct sockaddr {
-	sa_family_t	sa_family;	/* address family, AF_xxx	*/
-	char		sa_data[14];	/* 14 bytes of protocol address	*/
-};
-
-struct linger {
-	int		l_onoff;	/* Linger active		*/
-	int		l_linger;	/* How long to linger for	*/
-};
 
 #define sockaddr_storage __kernel_sockaddr_storage
 
