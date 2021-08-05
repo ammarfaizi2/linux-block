@@ -16,13 +16,12 @@
 #ifndef _LINUX_SRCU_H
 #define _LINUX_SRCU_H
 
+#include <linux/srcu_types.h>
+
 #include <linux/lockdep_api.h>
 #include <linux/mutex.h>
 #include <linux/rcupdate.h>
 #include <linux/workqueue.h>
-#include <linux/rcu_segcblist.h>
-
-struct srcu_struct;
 
 #ifdef CONFIG_DEBUG_LOCK_ALLOC
 
@@ -36,24 +35,11 @@ int __init_srcu_struct(struct srcu_struct *ssp, const char *name,
 	__init_srcu_struct((ssp), #ssp, &__srcu_key); \
 })
 
-#define __SRCU_DEP_MAP_INIT(srcu_name)	.dep_map = { .name = #srcu_name },
 #else /* #ifdef CONFIG_DEBUG_LOCK_ALLOC */
 
 int init_srcu_struct(struct srcu_struct *ssp);
 
-#define __SRCU_DEP_MAP_INIT(srcu_name)
 #endif /* #else #ifdef CONFIG_DEBUG_LOCK_ALLOC */
-
-#ifdef CONFIG_TINY_SRCU
-#include <linux/srcutiny.h>
-#elif defined(CONFIG_TREE_SRCU)
-#include <linux/srcutree.h>
-#elif defined(CONFIG_SRCU)
-#error "Unknown SRCU implementation specified to kernel configuration"
-#else
-/* Dummy definition for things like notifiers.  Actual use gets link error. */
-struct srcu_struct { };
-#endif
 
 void call_srcu(struct srcu_struct *ssp, struct rcu_head *head,
 		void (*func)(struct rcu_head *head));
@@ -213,4 +199,4 @@ static inline void smp_mb__after_srcu_read_unlock(void)
 	/* __srcu_read_unlock has smp_mb() internally so nothing to do here. */
 }
 
-#endif
+#endif /* _LINUX_SRCU_H */
