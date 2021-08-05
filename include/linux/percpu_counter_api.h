@@ -7,15 +7,18 @@
  * WARNING: these things are HUGE.  4 kbytes per counter on 32-way P4.
  */
 
-#include <linux/percpu_counter.h>
+#include <linux/percpu_counter_types.h>
 
-#include <linux/spinlock.h>
 #include <linux/smp.h>
 #include <linux/list.h>
 #include <linux/threads.h>
 #include <linux/percpu.h>
 #include <linux/types.h>
 #include <linux/gfp.h>
+
+#ifndef CONFIG_SMP
+# include <linux/preempt.h>
+#endif
 
 #ifdef CONFIG_SMP
 
