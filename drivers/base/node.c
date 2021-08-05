@@ -999,6 +999,26 @@ int __register_one_node(int nid)
 	return error;
 }
 
+/* Registers an online node */
+int register_one_node(int nid)
+{
+	int error = 0;
+
+	if (node_online(nid)) {
+		struct pglist_data *pgdat = NODE_DATA(nid);
+		unsigned long start_pfn = pgdat->node_start_pfn;
+		unsigned long end_pfn = start_pfn + pgdat->node_spanned_pages;
+
+		error = __register_one_node(nid);
+		if (error)
+			return error;
+		/* link memory sections under this node */
+		link_mem_sections(nid, start_pfn, end_pfn, MEMINIT_EARLY);
+	}
+
+	return error;
+}
+
 void unregister_one_node(int nid)
 {
 	if (!node_devices[nid])
