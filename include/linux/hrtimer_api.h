@@ -18,6 +18,7 @@
 # include <linux/spinlock.h>
 #endif
 
+#include <linux/cache.h>
 #include <linux/rbtree.h>
 #include <linux/init.h>
 #include <linux/list.h>
