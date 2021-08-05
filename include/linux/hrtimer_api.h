@@ -12,20 +12,18 @@
 #ifndef _LINUX_HRTIMER_API_H
 #define _LINUX_HRTIMER_API_H
 
-#include <linux/hrtimer.h>
+#include <linux/hrtimer_types.h>
 
 #ifdef CONFIG_DEBUG_OBJECTS_TIMERS
 # include <linux/spinlock.h>
 #endif
 
-#include <linux/hrtimer_defs.h>
 #include <linux/rbtree.h>
 #include <linux/init.h>
 #include <linux/list.h>
 #include <linux/percpu.h>
 #include <linux/seqlock.h>
 #include <linux/timer.h>
-#include <linux/timerqueue.h>
 #include <linux/ktime_api.h>
 
 #include <vdso/processor.h>
