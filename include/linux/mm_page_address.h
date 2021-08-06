@@ -59,6 +59,11 @@ void page_address_init(void);
 #define page_address_init()  do { } while(0)
 #endif
 
+static inline void *folio_address(const struct folio *folio)
+{
+	return page_address(&folio->page);
+}
+
 /* Support for virtually mapped pages */
 struct page *vmalloc_to_page(const void *addr);
 unsigned long vmalloc_to_pfn(const void *addr);

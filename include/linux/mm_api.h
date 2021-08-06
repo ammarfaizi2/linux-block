@@ -20,7 +20,6 @@
 
 #include <asm/mmu.h>
 
-#include <linux/mm_page_address.h>
 #include <linux/mm_types_task.h>
 
 #include <linux/spinlock_types.h>
@@ -1178,11 +1177,6 @@ static inline int arch_make_folio_accessible(struct folio *folio)
 	return ret;
 }
 #endif
-
-static inline void *folio_address(const struct folio *folio)
-{
-	return page_address(&folio->page);
-}
 
 extern void *page_rmapping(struct page *page);
 extern struct anon_vma *page_anon_vma(struct page *page);
