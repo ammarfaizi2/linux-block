@@ -4,6 +4,7 @@
 
 #include <linux/mm_api.h>
 
+#include <linux/sched/coredump.h>
 #include <linux/memremap.h>
 #include <linux/pgtable_api.h>
 
@@ -177,4 +178,21 @@ static inline bool is_pci_p2pdma_page(const struct page *page)
 		is_zone_device_page(page) &&
 		page->pgmap->type == MEMORY_DEVICE_PCI_P2PDMA;
 }
+
+/*
+ * This should most likely only be called during fork() to see whether we
+ * should break the cow immediately for a page on the src mm.
+ */
+static inline bool page_needs_cow_for_dma(struct vm_area_struct *vma,
+					  struct page *page)
+{
+	if (!is_cow_mapping(vma->vm_flags))
+		return false;
+
+	if (!test_bit(MMF_HAS_PINNED, &vma->vm_mm->flags))
+		return false;
+
+	return page_maybe_dma_pinned(page);
+}
+
 #endif /* _LINUX_MM_API_EXTRA_H */
