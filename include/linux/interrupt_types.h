@@ -3,6 +3,8 @@
 #ifndef _LINUX_INTERRUPT_TYPES_H
 #define _LINUX_INTERRUPT_TYPES_H
 
+#include <linux/irqreturn.h>
+
 /* PLEASE, avoid to allocate new softirqs, if you need not _really_ high
    frequency threaded job scheduling. For almost all the purposes
    tasklets are more than enough. F.e. all serial device BHs et
@@ -26,5 +28,7 @@ enum
 };
 
 #define SOFTIRQ_STOP_IDLE_MASK (~(1 << RCU_SOFTIRQ))
+
+typedef irqreturn_t (*irq_handler_t)(int, void *);
 
 #endif
