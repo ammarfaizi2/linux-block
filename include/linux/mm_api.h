@@ -6,7 +6,6 @@
 
 #include <linux/mm_types.h>
 
-#include <linux/topology.h>
 #include <linux/auxvec.h>
 #include <linux/list.h>
 #include <linux/spinlock.h>
