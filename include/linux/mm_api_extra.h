@@ -4,6 +4,7 @@
 
 #include <linux/mm_api.h>
 
+#include <linux/memremap.h>
 #include <linux/pgtable_api.h>
 
 #ifdef CONFIG_MMU
@@ -128,4 +129,52 @@ static inline int io_remap_pfn_range(struct vm_area_struct *vma,
 }
 #endif
 
+#ifdef CONFIG_DEV_PAGEMAP_OPS
+void free_devmap_managed_page(struct page *page);
+DECLARE_STATIC_KEY_FALSE(devmap_managed_key);
+
+static inline bool page_is_devmap_managed(struct page *page)
+{
+	if (!static_branch_unlikely(&devmap_managed_key))
+		return false;
+	if (!is_zone_device_page(page))
+		return false;
+	switch (page->pgmap->type) {
+	case MEMORY_DEVICE_PRIVATE:
+	case MEMORY_DEVICE_FS_DAX:
+		return true;
+	default:
+		break;
+	}
+	return false;
+}
+
+void put_devmap_managed_page(struct page *page);
+
+#else /* CONFIG_DEV_PAGEMAP_OPS */
+static inline bool page_is_devmap_managed(struct page *page)
+{
+	return false;
+}
+
+static inline void put_devmap_managed_page(struct page *page)
+{
+}
+#endif /* CONFIG_DEV_PAGEMAP_OPS */
+
+static inline bool is_device_private_page(const struct page *page)
+{
+	return IS_ENABLED(CONFIG_DEV_PAGEMAP_OPS) &&
+		IS_ENABLED(CONFIG_DEVICE_PRIVATE) &&
+		is_zone_device_page(page) &&
+		page->pgmap->type == MEMORY_DEVICE_PRIVATE;
+}
+
+static inline bool is_pci_p2pdma_page(const struct page *page)
+{
+	return IS_ENABLED(CONFIG_DEV_PAGEMAP_OPS) &&
+		IS_ENABLED(CONFIG_PCI_P2PDMA) &&
+		is_zone_device_page(page) &&
+		page->pgmap->type == MEMORY_DEVICE_PCI_P2PDMA;
+}
 #endif /* _LINUX_MM_API_EXTRA_H */
