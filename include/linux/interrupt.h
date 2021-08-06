@@ -100,8 +100,6 @@ enum {
 	IRQC_IS_NESTED,
 };
 
-typedef irqreturn_t (*irq_handler_t)(int, void *);
-
 /**
  * struct irqaction - per interrupt action descriptor
  * @handler:	interrupt handler function
