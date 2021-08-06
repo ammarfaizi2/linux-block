@@ -29,7 +29,7 @@
 #include <linux/dev_printk.h>
 #include <linux/mod_devicetable.h>
 
-#include <linux/types.h>
+#include <linux/log2.h>
 #include <linux/init.h>
 #include <linux/ioport.h>
 #include <linux/list.h>
@@ -39,7 +39,6 @@
 #include <linux/device_types.h>
 #include <linux/device/driver.h>
 #include <linux/interrupt_types.h>
-#include <linux/io.h>
 #include <linux/resource_ext.h>
 #include <uapi/linux/pci.h>
 
@@ -306,6 +305,8 @@ enum pci_bus_speed {
 	PCIE_SPEED_64_0GT		= 0x19,
 	PCI_SPEED_UNKNOWN		= 0xff,
 };
+
+struct pci_dev;
 
 enum pci_bus_speed pcie_get_speed_cap(struct pci_dev *dev);
 enum pcie_link_width pcie_get_width_cap(struct pci_dev *dev);
