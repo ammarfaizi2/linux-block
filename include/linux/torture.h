@@ -51,8 +51,8 @@ void verbose_torout_sleep(void);
 ({										\
 	int ___firsterr = (firsterr);						\
 										\
-	WARN_ON_ONCE(!IS_MODULE(CONFIG_RCU_TORTURE_TEST) && ___firsterr);	\
-	___firsterr;								\
+	WARN_ONCE(!IS_MODULE(CONFIG_RCU_TORTURE_TEST) && ___firsterr < 0, "Torture-test initialization failed with error code %d\n", ___firsterr); \
+	___firsterr < 0;								\
 })
 
 /* Definitions for online/offline exerciser. */
