@@ -14,7 +14,6 @@
 #include <linux/static_call_types.h>
 #include <linux/bug.h>
 
-#include <asm/paravirt_api_clock.h>
 #include <asm/frame.h>
 
 struct mm_struct;
