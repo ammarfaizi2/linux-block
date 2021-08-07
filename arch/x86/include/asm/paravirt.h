@@ -11,7 +11,6 @@
 #include <asm/nospec-branch.h>
 
 #ifndef __ASSEMBLY__
-#include <linux/bug.h>
 
 #include <asm/frame.h>
 
