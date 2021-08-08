@@ -516,11 +516,6 @@ extern void exit_swap_address_space(unsigned int type);
 extern struct swap_info_struct *get_swap_device(swp_entry_t entry);
 sector_t swap_page_sector(struct page *page);
 
-static inline void put_swap_device(struct swap_info_struct *si)
-{
-	percpu_ref_put(&si->users);
-}
-
 #else /* CONFIG_SWAP */
 
 static inline int swap_readpage(struct page *page, bool do_poll)
@@ -536,10 +531,6 @@ static inline struct swap_info_struct *swp_swap_info(swp_entry_t entry)
 static inline struct swap_info_struct *get_swap_device(swp_entry_t entry)
 {
 	return NULL;
-}
-
-static inline void put_swap_device(struct swap_info_struct *si)
-{
 }
 
 static inline struct address_space *swap_address_space(swp_entry_t entry)
