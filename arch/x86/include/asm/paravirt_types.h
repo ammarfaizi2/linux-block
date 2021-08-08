@@ -37,6 +37,7 @@
 #ifndef __ASSEMBLY__
 
 #include <asm/pgtable_types.h>
+#include <asm/nospec-branch-simple.h>
 
 #ifdef CONFIG_PARAVIRT_DEBUG
 #include <linux/bug.h>
