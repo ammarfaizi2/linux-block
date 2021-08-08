@@ -8,9 +8,11 @@
 
 #include <asm/paravirt_types.h>
 
-#include <asm/nospec-branch.h>
+#include <linux/build_bug.h>
 
 #ifndef __ASSEMBLY__
+
+#include <asm/alternative.h>
 
 #include <asm/frame.h>
 

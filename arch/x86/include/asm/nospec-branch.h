@@ -113,11 +113,7 @@
 
 #else /* __ASSEMBLY__ */
 
-#define ANNOTATE_RETPOLINE_SAFE					\
-	"999:\n\t"						\
-	".pushsection .discard.retpoline_safe\n\t"		\
-	_ASM_PTR " 999b\n\t"					\
-	".popsection\n\t"
+#include <asm/nospec-branch-simple.h>
 
 #ifdef CONFIG_RETPOLINE
 
