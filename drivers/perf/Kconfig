@@ -6,6 +6,13 @@
 menu "Performance monitor support"
 	depends on PERF_EVENTS
 
+config UNCORE_PMU
+	bool "Uncore PMU framework" if COMPILE_TEST
+	help
+	  Say y if you want to use CPU performance monitors on ARM-based
+	  systems.
+
+
 config ARM_CCI_PMU
 	tristate "ARM CCI PMU driver"
 	depends on (ARM && CPU_V7) || ARM64
