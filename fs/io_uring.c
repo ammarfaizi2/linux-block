@@ -409,6 +409,8 @@ struct io_ring_ctx {
 	struct {
 		spinlock_t		completion_lock;
 
+		spinlock_t		timeout_lock;
+
 		/*
 		 * ->iopoll_list is protected by the ctx->uring_lock for
 		 * io_uring instances that don't use IORING_SETUP_SQPOLL.
@@ -1186,6 +1188,7 @@ static struct io_ring_ctx *io_ring_ctx_alloc(struct io_uring_params *p)
 	mutex_init(&ctx->uring_lock);
 	init_waitqueue_head(&ctx->cq_wait);
 	spin_lock_init(&ctx->completion_lock);
+	spin_lock_init(&ctx->timeout_lock);
 	INIT_LIST_HEAD(&ctx->iopoll_list);
 	INIT_LIST_HEAD(&ctx->defer_list);
 	INIT_LIST_HEAD(&ctx->timeout_list);
@@ -5452,6 +5455,20 @@ err:
 	return 0;
 }
 
+static void io_req_task_timeout(struct io_kiocb *req)
+{
+	struct io_ring_ctx *ctx = req->ctx;
+
+	spin_lock_irq(&ctx->completion_lock);
+	io_cqring_fill_event(ctx, req->user_data, -ETIME, 0);
+	io_commit_cqring(ctx);
+	spin_unlock_irq(&ctx->completion_lock);
+
+	io_cqring_ev_posted(ctx);
+	req_set_fail(req);
+	io_put_req(req);
+}
+
 static enum hrtimer_restart io_timeout_fn(struct hrtimer *timer)
 {
 	struct io_timeout_data *data = container_of(timer,
@@ -5460,24 +5477,20 @@ static enum hrtimer_restart io_timeout_fn(struct hrtimer *timer)
 	struct io_ring_ctx *ctx = req->ctx;
 	unsigned long flags;
 
-	spin_lock_irqsave(&ctx->completion_lock, flags);
+	spin_lock_irqsave(&ctx->timeout_lock, flags);
 	list_del_init(&req->timeout.list);
 	atomic_set(&req->ctx->cq_timeouts,
 		atomic_read(&req->ctx->cq_timeouts) + 1);
+	spin_unlock_irqrestore(&ctx->timeout_lock, flags);
 
-	io_cqring_fill_event(ctx, req->user_data, -ETIME, 0);
-	io_commit_cqring(ctx);
-	spin_unlock_irqrestore(&ctx->completion_lock, flags);
-
-	io_cqring_ev_posted(ctx);
-	req_set_fail(req);
-	io_put_req(req);
+	req->io_task_work.func = io_req_task_timeout;
+	io_req_task_work_add(req);
 	return HRTIMER_NORESTART;
 }
 
 static struct io_kiocb *io_timeout_extract(struct io_ring_ctx *ctx,
 					   __u64 user_data)
-	__must_hold(&ctx->completion_lock)
+	__must_hold(&ctx->timeout_lock)
 {
 	struct io_timeout_data *io;
 	struct io_kiocb *req;
@@ -5499,7 +5512,7 @@ static struct io_kiocb *io_timeout_extract(struct io_ring_ctx *ctx,
 }
 
 static int io_timeout_cancel(struct io_ring_ctx *ctx, __u64 user_data)
-	__must_hold(&ctx->completion_lock)
+	__must_hold(&ctx->timeout_lock)
 {
 	struct io_kiocb *req = io_timeout_extract(ctx, user_data);
 
@@ -5514,7 +5527,7 @@ static int io_timeout_cancel(struct io_ring_ctx *ctx, __u64 user_data)
 
 static int io_timeout_update(struct io_ring_ctx *ctx, __u64 user_data,
 			     struct timespec64 *ts, enum hrtimer_mode mode)
-	__must_hold(&ctx->completion_lock)
+	__must_hold(&ctx->timeout_lock)
 {
 	struct io_kiocb *req = io_timeout_extract(ctx, user_data);
 	struct io_timeout_data *data;
@@ -5573,13 +5586,15 @@ static int io_timeout_remove(struct io_kiocb *req, unsigned int issue_flags)
 	struct io_ring_ctx *ctx = req->ctx;
 	int ret;
 
-	spin_lock_irq(&ctx->completion_lock);
+	spin_lock_irq(&ctx->timeout_lock);
 	if (!(req->timeout_rem.flags & IORING_TIMEOUT_UPDATE))
 		ret = io_timeout_cancel(ctx, tr->addr);
 	else
 		ret = io_timeout_update(ctx, tr->addr, &tr->ts,
 					io_translate_timeout_mode(tr->flags));
+	spin_unlock_irq(&ctx->timeout_lock);
 
+	spin_lock_irq(&ctx->completion_lock);
 	io_cqring_fill_event(ctx, req->user_data, ret, 0);
 	io_commit_cqring(ctx);
 	spin_unlock_irq(&ctx->completion_lock);
@@ -5727,7 +5742,9 @@ static void io_async_find_and_cancel(struct io_ring_ctx *ctx,
 	spin_lock_irqsave(&ctx->completion_lock, flags);
 	if (ret != -ENOENT)
 		goto done;
+	spin_lock(&ctx->timeout_lock);
 	ret = io_timeout_cancel(ctx, sqe_addr);
+	spin_unlock(&ctx->timeout_lock);
 	if (ret != -ENOENT)
 		goto done;
 	ret = io_poll_cancel(ctx, sqe_addr, false);
@@ -5769,7 +5786,9 @@ static int io_async_cancel(struct io_kiocb *req, unsigned int issue_flags)
 	spin_lock_irq(&ctx->completion_lock);
 	if (ret != -ENOENT)
 		goto done;
+	spin_lock(&ctx->timeout_lock);
 	ret = io_timeout_cancel(ctx, sqe_addr);
+	spin_unlock(&ctx->timeout_lock);
 	if (ret != -ENOENT)
 		goto done;
 	ret = io_poll_cancel(ctx, sqe_addr, false);
