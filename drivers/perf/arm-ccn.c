@@ -15,6 +15,8 @@
 #include <linux/platform_device.h>
 #include <linux/slab.h>
 
+#include "uncore_pmu.h"
+
 #define CCN_NUM_XP_PORTS 2
 #define CCN_NUM_VCS 4
 #define CCN_NUM_REGIONS	256
@@ -139,7 +141,7 @@ struct arm_ccn_component {
 	};
 };
 
-#define pmu_to_arm_ccn(_pmu) container_of(container_of(_pmu, \
+#define pmu_to_arm_ccn(_pmu) container_of(container_of(to_uncore_pmu(_pmu), \
 	struct arm_ccn_dt, pmu), struct arm_ccn, dt)
 
 struct arm_ccn_dt {
@@ -160,16 +162,12 @@ struct arm_ccn_dt {
 
 	struct hrtimer hrtimer;
 
-	unsigned int cpu;
-	struct hlist_node node;
-
-	struct pmu pmu;
+	struct uncore_pmu pmu;
 };
 
 struct arm_ccn {
 	struct device *dev;
 	void __iomem *base;
-	unsigned int irq;
 
 	unsigned sbas_present:1;
 	unsigned sbsx_present:1;
@@ -542,26 +540,6 @@ static const struct attribute_group arm_ccn_pmu_cmp_mask_attr_group = {
 	.attrs = arm_ccn_pmu_cmp_mask_attrs,
 };
 
-static ssize_t arm_ccn_pmu_cpumask_show(struct device *dev,
-				     struct device_attribute *attr, char *buf)
-{
-	struct arm_ccn *ccn = pmu_to_arm_ccn(dev_get_drvdata(dev));
-
-	return cpumap_print_to_pagebuf(true, buf, cpumask_of(ccn->dt.cpu));
-}
-
-static struct device_attribute arm_ccn_pmu_cpumask_attr =
-		__ATTR(cpumask, S_IRUGO, arm_ccn_pmu_cpumask_show, NULL);
-
-static struct attribute *arm_ccn_pmu_cpumask_attrs[] = {
-	&arm_ccn_pmu_cpumask_attr.attr,
-	NULL,
-};
-
-static const struct attribute_group arm_ccn_pmu_cpumask_attr_group = {
-	.attrs = arm_ccn_pmu_cpumask_attrs,
-};
-
 /*
  * Default poll period is 10ms, which is way over the top anyway,
  * as in the worst case scenario (an event every cycle), with 1GHz
@@ -582,7 +560,6 @@ static const struct attribute_group *arm_ccn_pmu_attr_groups[] = {
 	&arm_ccn_pmu_events_attr_group,
 	&arm_ccn_pmu_format_attr_group,
 	&arm_ccn_pmu_cmp_mask_attr_group,
-	&arm_ccn_pmu_cpumask_attr_group,
 	NULL
 };
 
@@ -713,41 +690,15 @@ static void arm_ccn_pmu_event_release(struct perf_event *event)
 static int arm_ccn_pmu_event_init(struct perf_event *event)
 {
 	struct arm_ccn *ccn;
-	struct hw_perf_event *hw = &event->hw;
 	u32 node_xp, type, event_id;
 	int valid;
-	int i;
-	struct perf_event *sibling;
+	int i, ret;
 
-	if (event->attr.type != event->pmu->type)
-		return -ENOENT;
+	ret = uncore_pmu_event_init(event);
+	if (ret)
+		return ret;
 
 	ccn = pmu_to_arm_ccn(event->pmu);
-
-	if (hw->sample_period) {
-		dev_dbg(ccn->dev, "Sampling not supported!\n");
-		return -EOPNOTSUPP;
-	}
-
-	if (has_branch_stack(event)) {
-		dev_dbg(ccn->dev, "Can't exclude execution levels!\n");
-		return -EINVAL;
-	}
-
-	if (event->cpu < 0) {
-		dev_dbg(ccn->dev, "Can't provide per-task data!\n");
-		return -EOPNOTSUPP;
-	}
-	/*
-	 * Many perf core operations (eg. events rotation) operate on a
-	 * single CPU context. This is obvious for CPU PMUs, where one
-	 * expects the same sets of events being observed on all CPUs,
-	 * but can lead to issues for off-core PMUs, like CCN, where each
-	 * event could be theoretically assigned to a different CPU. To
-	 * mitigate this, we enforce CPU assignment to one, selected
-	 * processor (the one described in the "cpumask" attribute).
-	 */
-	event->cpu = ccn->dt.cpu;
 
 	node_xp = CCN_CONFIG_NODE(event->attr.config);
 	type = CCN_CONFIG_TYPE(event->attr.config);
@@ -821,21 +772,6 @@ static int arm_ccn_pmu_event_init(struct perf_event *event)
 
 		arm_ccn_pmu_config_set(&event->attr.config,
 				node_xp, type, port);
-	}
-
-	/*
-	 * We must NOT create groups containing mixed PMUs, although software
-	 * events are acceptable (for example to create a CCN group
-	 * periodically read when a hrtimer aka cpu-clock leader triggers).
-	 */
-	if (event->group_leader->pmu != event->pmu &&
-			!is_software_event(event->group_leader))
-		return -EINVAL;
-
-	for_each_sibling_event(sibling, event->group_leader) {
-		if (sibling->pmu != event->pmu &&
-				!is_software_event(sibling))
-			return -EINVAL;
 	}
 
 	return 0;
@@ -1105,7 +1041,7 @@ static int arm_ccn_pmu_event_add(struct perf_event *event, int flags)
 	 * event->cpu (this is the same one as presented in "cpumask"
 	 * attribute).
 	 */
-	if (!ccn->irq && arm_ccn_pmu_active_counters(ccn) == 1)
+	if (!ccn->dt.pmu.irq && arm_ccn_pmu_active_counters(ccn) == 1)
 		hrtimer_start(&ccn->dt.hrtimer, arm_ccn_pmu_timer_period(),
 			      HRTIMER_MODE_REL_PINNED);
 
@@ -1127,7 +1063,7 @@ static void arm_ccn_pmu_event_del(struct perf_event *event, int flags)
 
 	arm_ccn_pmu_event_release(event);
 
-	if (!ccn->irq && arm_ccn_pmu_active_counters(ccn) == 0)
+	if (!ccn->dt.pmu.irq && arm_ccn_pmu_active_counters(ccn) == 0)
 		hrtimer_cancel(&ccn->dt.hrtimer);
 }
 
@@ -1196,25 +1132,6 @@ static enum hrtimer_restart arm_ccn_pmu_timer_handler(struct hrtimer *hrtimer)
 	return HRTIMER_RESTART;
 }
 
-
-static int arm_ccn_pmu_offline_cpu(unsigned int cpu, struct hlist_node *node)
-{
-	struct arm_ccn_dt *dt = hlist_entry_safe(node, struct arm_ccn_dt, node);
-	struct arm_ccn *ccn = container_of(dt, struct arm_ccn, dt);
-	unsigned int target;
-
-	if (cpu != dt->cpu)
-		return 0;
-	target = cpumask_any_but(cpu_online_mask, cpu);
-	if (target >= nr_cpu_ids)
-		return 0;
-	perf_pmu_migrate_context(&dt->pmu, cpu, target);
-	dt->cpu = target;
-	if (ccn->irq)
-		WARN_ON(irq_set_affinity(ccn->irq, cpumask_of(dt->cpu)));
-	return 0;
-}
-
 static DEFINE_IDA(arm_ccn_pmu_ida);
 
 static int arm_ccn_pmu_init(struct arm_ccn *ccn)
@@ -1263,7 +1180,7 @@ static int arm_ccn_pmu_init(struct arm_ccn *ccn)
 	}
 
 	/* Perf driver registration */
-	ccn->dt.pmu = (struct pmu) {
+	ccn->dt.pmu.pmu = (struct pmu) {
 		.module = THIS_MODULE,
 		.attr_groups = arm_ccn_pmu_attr_groups,
 		.task_ctx_nr = perf_invalid_context,
@@ -1277,40 +1194,23 @@ static int arm_ccn_pmu_init(struct arm_ccn *ccn)
 		.pmu_disable = arm_ccn_pmu_disable,
 		.capabilities = PERF_PMU_CAP_NO_EXCLUDE,
 	};
+	ccn->dt.pmu.num_counters = CCN_NUM_PMU_EVENT_COUNTERS + 1;
 
 	/* No overflow interrupt? Have to use a timer instead. */
-	if (!ccn->irq) {
+	if (!ccn->dt.pmu.irq) {
 		dev_info(ccn->dev, "No access to interrupts, using timer.\n");
 		hrtimer_init(&ccn->dt.hrtimer, CLOCK_MONOTONIC,
 				HRTIMER_MODE_REL);
 		ccn->dt.hrtimer.function = arm_ccn_pmu_timer_handler;
 	}
 
-	/* Pick one CPU which we will use to collect data from CCN... */
-	ccn->dt.cpu = raw_smp_processor_id();
-
-	/* Also make sure that the overflow interrupt is handled by this CPU */
-	if (ccn->irq) {
-		err = irq_set_affinity(ccn->irq, cpumask_of(ccn->dt.cpu));
-		if (err) {
-			dev_err(ccn->dev, "Failed to set interrupt affinity!\n");
-			goto error_set_affinity;
-		}
-	}
-
-	cpuhp_state_add_instance_nocalls(CPUHP_AP_PERF_ARM_CCN_ONLINE,
-					 &ccn->dt.node);
-
-	err = perf_pmu_register(&ccn->dt.pmu, name, -1);
+	err = uncore_pmu_register(&ccn->dt.pmu, name);
 	if (err)
 		goto error_pmu_register;
 
 	return 0;
 
 error_pmu_register:
-	cpuhp_state_remove_instance_nocalls(CPUHP_AP_PERF_ARM_CCN_ONLINE,
-					    &ccn->dt.node);
-error_set_affinity:
 error_choose_name:
 	ida_simple_remove(&arm_ccn_pmu_ida, ccn->dt.id);
 	for (i = 0; i < ccn->num_xps; i++)
@@ -1323,12 +1223,10 @@ static void arm_ccn_pmu_cleanup(struct arm_ccn *ccn)
 {
 	int i;
 
-	cpuhp_state_remove_instance_nocalls(CPUHP_AP_PERF_ARM_CCN_ONLINE,
-					    &ccn->dt.node);
 	for (i = 0; i < ccn->num_xps; i++)
 		writel(0, ccn->xp[i].base + CCN_XP_DT_CONTROL);
 	writel(0, ccn->dt.base + CCN_DT_PMCR);
-	perf_pmu_unregister(&ccn->dt.pmu);
+	uncore_pmu_unregister(&ccn->dt.pmu);
 	ida_simple_remove(&arm_ccn_pmu_ida, ccn->dt.id);
 }
 
@@ -1467,7 +1365,7 @@ static int arm_ccn_probe(struct platform_device *pdev)
 	ccn = devm_kzalloc(&pdev->dev, sizeof(*ccn), GFP_KERNEL);
 	if (!ccn)
 		return -ENOMEM;
-	ccn->dev = &pdev->dev;
+	ccn->dev = ccn->dt.pmu.dev = &pdev->dev;
 	platform_set_drvdata(pdev, ccn);
 
 	ccn->base = devm_platform_ioremap_resource(pdev, 0);
@@ -1493,7 +1391,7 @@ static int arm_ccn_probe(struct platform_device *pdev)
 		if (err)
 			return err;
 
-		ccn->irq = irq;
+		ccn->dt.pmu.irq = irq;
 	}
 
 
@@ -1546,27 +1444,17 @@ static struct platform_driver arm_ccn_driver = {
 
 static int __init arm_ccn_init(void)
 {
-	int i, ret;
-
-	ret = cpuhp_setup_state_multi(CPUHP_AP_PERF_ARM_CCN_ONLINE,
-				      "perf/arm/ccn:online", NULL,
-				      arm_ccn_pmu_offline_cpu);
-	if (ret)
-		return ret;
+	int i;
 
 	for (i = 0; i < ARRAY_SIZE(arm_ccn_pmu_events); i++)
 		arm_ccn_pmu_events_attrs[i] = &arm_ccn_pmu_events[i].attr.attr;
 
-	ret = platform_driver_register(&arm_ccn_driver);
-	if (ret)
-		cpuhp_remove_multi_state(CPUHP_AP_PERF_ARM_CCN_ONLINE);
-	return ret;
+	return platform_driver_register(&arm_ccn_driver);
 }
 
 static void __exit arm_ccn_exit(void)
 {
 	platform_driver_unregister(&arm_ccn_driver);
-	cpuhp_remove_multi_state(CPUHP_AP_PERF_ARM_CCN_ONLINE);
 }
 
 module_init(arm_ccn_init);
