@@ -79,6 +79,7 @@ config ARM_SMMU_V3_PMU
 config ARM_DSU_PMU
 	tristate "ARM DynamIQ Shared Unit (DSU) PMU"
 	depends on ARM64
+	select UNCORE_PMU
 	  help
 	  Provides support for performance monitor unit in ARM DynamIQ Shared
 	  Unit (DSU). The DSU integrates one or more cores with an L3 memory

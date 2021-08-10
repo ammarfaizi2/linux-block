@@ -31,6 +31,8 @@
 #include <asm/arm_dsu_pmu.h>
 #include <asm/local64.h>
 
+#include "uncore_pmu.h"
+
 /* PMU event codes */
 #define DSU_PMU_EVT_CYCLES		0x11
 #define DSU_PMU_EVT_CHAIN		0x1e
@@ -101,33 +103,21 @@ struct dsu_hw_events {
  * @pmu_lock		: Protects accesses to DSU PMU register from normal vs
  *			  interrupt handler contexts.
  * @hw_events		: Holds the event counter state.
- * @associated_cpus	: CPUs attached to the DSU.
- * @active_cpu		: CPU to which the PMU is bound for accesses.
- * @cpuhp_node		: Node for CPU hotplug notifier link.
  * @num_counters	: Number of event counters implemented by the PMU,
  *			  excluding the cycle counter.
- * @irq			: Interrupt line for counter overflow.
  * @cpmceid_bitmap	: Bitmap for the availability of architected common
  *			  events (event_code < 0x40).
  */
 struct dsu_pmu {
-	struct pmu			pmu;
-	struct device			*dev;
+	struct uncore_pmu		pmu;
 	raw_spinlock_t			pmu_lock;
 	struct dsu_hw_events		hw_events;
-	cpumask_t			associated_cpus;
-	cpumask_t			active_cpu;
-	struct hlist_node		cpuhp_node;
-	s8				num_counters;
-	int				irq;
 	DECLARE_BITMAP(cpmceid_bitmap, DSU_PMU_MAX_COMMON_EVENTS);
 };
 
-static unsigned long dsu_pmu_cpuhp_state;
-
 static inline struct dsu_pmu *to_dsu_pmu(struct pmu *pmu)
 {
-	return container_of(pmu, struct dsu_pmu, pmu);
+	return container_of(to_uncore_pmu(pmu), struct dsu_pmu, pmu);
 }
 
 static ssize_t dsu_pmu_sysfs_event_show(struct device *dev,
@@ -154,22 +144,8 @@ static ssize_t dsu_pmu_cpumask_show(struct device *dev,
 {
 	struct pmu *pmu = dev_get_drvdata(dev);
 	struct dsu_pmu *dsu_pmu = to_dsu_pmu(pmu);
-	struct dev_ext_attribute *eattr = container_of(attr,
-					struct dev_ext_attribute, attr);
-	unsigned long mask_id = (unsigned long)eattr->var;
-	const cpumask_t *cpumask;
 
-	switch (mask_id) {
-	case DSU_ACTIVE_CPU_MASK:
-		cpumask = &dsu_pmu->active_cpu;
-		break;
-	case DSU_ASSOCIATED_CPU_MASK:
-		cpumask = &dsu_pmu->associated_cpus;
-		break;
-	default:
-		return 0;
-	}
-	return cpumap_print_to_pagebuf(true, buf, cpumask);
+	return cpumap_print_to_pagebuf(true, buf, &dsu_pmu->pmu.associated_cpus);
 }
 
 static struct attribute *dsu_pmu_format_attrs[] = {
@@ -214,7 +190,6 @@ static const struct attribute_group dsu_pmu_events_attr_group = {
 };
 
 static struct attribute *dsu_pmu_cpumask_attrs[] = {
-	DSU_CPUMASK_ATTR(cpumask, DSU_ACTIVE_CPU_MASK),
 	DSU_CPUMASK_ATTR(associated_cpus, DSU_ASSOCIATED_CPU_MASK),
 	NULL,
 };
@@ -230,18 +205,9 @@ static const struct attribute_group *dsu_pmu_attr_groups[] = {
 	NULL,
 };
 
-static int dsu_pmu_get_online_cpu_any_but(struct dsu_pmu *dsu_pmu, int cpu)
-{
-	struct cpumask online_supported;
-
-	cpumask_and(&online_supported,
-			 &dsu_pmu->associated_cpus, cpu_online_mask);
-	return cpumask_any_but(&online_supported, cpu);
-}
-
 static inline bool dsu_pmu_counter_valid(struct dsu_pmu *dsu_pmu, u32 idx)
 {
-	return (idx < dsu_pmu->num_counters) ||
+	return (idx < dsu_pmu->pmu.num_counters) ||
 	       (idx == DSU_PMU_IDX_CYCLE_COUNTER);
 }
 
@@ -253,7 +219,7 @@ static inline u64 dsu_pmu_read_counter(struct perf_event *event)
 	int idx = event->hw.idx;
 
 	if (WARN_ON(!cpumask_test_cpu(smp_processor_id(),
-				 &dsu_pmu->associated_cpus)))
+				 &dsu_pmu->pmu.associated_cpus)))
 		return 0;
 
 	if (!dsu_pmu_counter_valid(dsu_pmu, idx)) {
@@ -279,7 +245,7 @@ static void dsu_pmu_write_counter(struct perf_event *event, u64 val)
 	int idx = event->hw.idx;
 
 	if (WARN_ON(!cpumask_test_cpu(smp_processor_id(),
-			 &dsu_pmu->associated_cpus)))
+			 &dsu_pmu->pmu.associated_cpus)))
 		return;
 
 	if (!dsu_pmu_counter_valid(dsu_pmu, idx)) {
@@ -310,8 +276,8 @@ static int dsu_pmu_get_event_idx(struct dsu_hw_events *hw_events,
 		return DSU_PMU_IDX_CYCLE_COUNTER;
 	}
 
-	idx = find_first_zero_bit(used_mask, dsu_pmu->num_counters);
-	if (idx >= dsu_pmu->num_counters)
+	idx = find_first_zero_bit(used_mask, dsu_pmu->pmu.num_counters);
+	if (idx >= dsu_pmu->pmu.num_counters)
 		return -EAGAIN;
 	set_bit(idx, hw_events->used_mask);
 	return idx;
@@ -445,7 +411,7 @@ static int dsu_pmu_add(struct perf_event *event, int flags)
 	int idx;
 
 	if (WARN_ON_ONCE(!cpumask_test_cpu(smp_processor_id(),
-					   &dsu_pmu->associated_cpus)))
+					   &dsu_pmu->pmu.associated_cpus)))
 		return -ENOENT;
 
 	idx = dsu_pmu_get_event_idx(hw_events, event);
@@ -506,18 +472,6 @@ static void dsu_pmu_disable(struct pmu *pmu)
 	raw_spin_unlock_irqrestore(&dsu_pmu->pmu_lock, flags);
 }
 
-static bool dsu_pmu_validate_event(struct pmu *pmu,
-				  struct dsu_hw_events *hw_events,
-				  struct perf_event *event)
-{
-	if (is_software_event(event))
-		return true;
-	/* Reject groups spanning multiple HW PMUs. */
-	if (event->pmu != pmu)
-		return false;
-	return dsu_pmu_get_event_idx(hw_events, event) >= 0;
-}
-
 /*
  * Make sure the group of events can be scheduled at once
  * on the PMU.
@@ -525,63 +479,34 @@ static bool dsu_pmu_validate_event(struct pmu *pmu,
 static bool dsu_pmu_validate_group(struct perf_event *event)
 {
 	struct perf_event *sibling, *leader = event->group_leader;
-	struct dsu_hw_events fake_hw;
 
 	if (event->group_leader == event)
 		return true;
 
-	memset(fake_hw.used_mask, 0, sizeof(fake_hw.used_mask));
-	if (!dsu_pmu_validate_event(event->pmu, &fake_hw, leader))
+	if (event->attr.config != DSU_PMU_EVT_CYCLES)
+		return true;
+
+	if (leader->attr.config == DSU_PMU_EVT_CYCLES)
 		return false;
-	for_each_sibling_event(sibling, leader) {
-		if (!dsu_pmu_validate_event(event->pmu, &fake_hw, sibling))
+
+	for_each_sibling_event(sibling, leader)
+		if (sibling->attr.config == DSU_PMU_EVT_CYCLES)
 			return false;
-	}
-	return dsu_pmu_validate_event(event->pmu, &fake_hw, event);
+
+	return true;
 }
 
 static int dsu_pmu_event_init(struct perf_event *event)
 {
-	struct dsu_pmu *dsu_pmu = to_dsu_pmu(event->pmu);
+	int ret;
 
-	if (event->attr.type != event->pmu->type)
-		return -ENOENT;
+	ret = uncore_pmu_event_init(event);
+	if (ret)
+		return ret;
 
-	/* We don't support sampling */
-	if (is_sampling_event(event)) {
-		dev_dbg(dsu_pmu->pmu.dev, "Can't support sampling events\n");
-		return -EOPNOTSUPP;
-	}
-
-	/* We cannot support task bound events */
-	if (event->cpu < 0 || event->attach_state & PERF_ATTACH_TASK) {
-		dev_dbg(dsu_pmu->pmu.dev, "Can't support per-task counters\n");
-		return -EINVAL;
-	}
-
-	if (has_branch_stack(event)) {
-		dev_dbg(dsu_pmu->pmu.dev, "Can't support filtering\n");
-		return -EINVAL;
-	}
-
-	if (!cpumask_test_cpu(event->cpu, &dsu_pmu->associated_cpus)) {
-		dev_dbg(dsu_pmu->pmu.dev,
-			 "Requested cpu is not associated with the DSU\n");
-		return -EINVAL;
-	}
-	/*
-	 * Choose the current active CPU to read the events. We don't want
-	 * to migrate the event contexts, irq handling etc to the requested
-	 * CPU. As long as the requested CPU is within the same DSU, we
-	 * are fine.
-	 */
-	event->cpu = cpumask_first(&dsu_pmu->active_cpu);
-	if (event->cpu >= nr_cpu_ids)
-		return -EINVAL;
 	if (!dsu_pmu_validate_group(event))
 		return -EINVAL;
 
-	event->hw.config_base = event->attr.config;
 	return 0;
 }
 
@@ -598,7 +523,7 @@ static struct dsu_pmu *dsu_pmu_alloc(struct platform_device *pdev)
 	 * Initialise the number of counters to -1, until we probe
 	 * the real number on a connected CPU.
 	 */
-	dsu_pmu->num_counters = -1;
+	dsu_pmu->pmu.num_counters = -1;
 	return dsu_pmu;
 }
 
@@ -675,8 +600,8 @@ static void dsu_pmu_probe_pmu(struct dsu_pmu *dsu_pmu)
 	/* We can only support up to 31 independent counters */
 	if (WARN_ON(num_counters > 31))
 		num_counters = 31;
-	dsu_pmu->num_counters = num_counters;
-	if (!dsu_pmu->num_counters)
+	dsu_pmu->pmu.num_counters = num_counters;
+	if (!dsu_pmu->pmu.num_counters)
 		return;
 	cpmceid[0] = __dsu_pmu_read_pmceid(0);
 	cpmceid[1] = __dsu_pmu_read_pmceid(1);
@@ -684,20 +609,15 @@ static void dsu_pmu_probe_pmu(struct dsu_pmu *dsu_pmu)
 			  DSU_PMU_MAX_COMMON_EVENTS);
 }
 
-static void dsu_pmu_set_active_cpu(int cpu, struct dsu_pmu *dsu_pmu)
-{
-	cpumask_set_cpu(cpu, &dsu_pmu->active_cpu);
-	if (irq_set_affinity(dsu_pmu->irq, &dsu_pmu->active_cpu))
-		pr_warn("Failed to set irq affinity to %d\n", cpu);
-}
-
 /*
  * dsu_pmu_init_pmu: Initialise the DSU PMU configurations if
  * we haven't done it already.
  */
-static void dsu_pmu_init_pmu(struct dsu_pmu *dsu_pmu)
+static void dsu_pmu_init_pmu(void *param)
 {
-	if (dsu_pmu->num_counters == -1)
+	struct dsu_pmu *dsu_pmu = param;
+
+	if (dsu_pmu->pmu.num_counters == -1)
 		dsu_pmu_probe_pmu(dsu_pmu);
 	/* Reset the interrupt overflow mask */
 	dsu_pmu_get_reset_overflow();
@@ -716,9 +636,9 @@ static int dsu_pmu_device_probe(struct platform_device *pdev)
 		return PTR_ERR(dsu_pmu);
 
 	if (is_of_node(fwnode))
-		rc = dsu_pmu_dt_get_cpus(&pdev->dev, &dsu_pmu->associated_cpus);
+		rc = dsu_pmu_dt_get_cpus(&pdev->dev, &dsu_pmu->pmu.associated_cpus);
 	else if (is_acpi_device_node(fwnode))
-		rc = dsu_pmu_acpi_get_cpus(&pdev->dev, &dsu_pmu->associated_cpus);
+		rc = dsu_pmu_acpi_get_cpus(&pdev->dev, &dsu_pmu->pmu.associated_cpus);
 	else
 		return -ENOENT;
 
@@ -742,14 +662,13 @@ static int dsu_pmu_device_probe(struct platform_device *pdev)
 		return rc;
 	}
 
-	dsu_pmu->irq = irq;
-	platform_set_drvdata(pdev, dsu_pmu);
-	rc = cpuhp_state_add_instance(dsu_pmu_cpuhp_state,
-						&dsu_pmu->cpuhp_node);
-	if (rc)
-		return rc;
+	smp_call_function_any(&dsu_pmu->pmu.associated_cpus, dsu_pmu_init_pmu, dsu_pmu, 1);
 
-	dsu_pmu->pmu = (struct pmu) {
+	dsu_pmu->pmu.irq = irq;
+	dsu_pmu->pmu.dev = &pdev->dev;
+
+	platform_set_drvdata(pdev, dsu_pmu);
+	dsu_pmu->pmu.pmu = (struct pmu) {
 		.task_ctx_nr	= perf_invalid_context,
 		.module		= THIS_MODULE,
 		.pmu_enable	= dsu_pmu_enable,
@@ -765,21 +684,14 @@ static int dsu_pmu_device_probe(struct platform_device *pdev)
 		.capabilities	= PERF_PMU_CAP_NO_EXCLUDE,
 	};
 
-	rc = perf_pmu_register(&dsu_pmu->pmu, name, -1);
-	if (rc) {
-		cpuhp_state_remove_instance(dsu_pmu_cpuhp_state,
-						 &dsu_pmu->cpuhp_node);
-	}
-
-	return rc;
+	return uncore_pmu_register(&dsu_pmu->pmu, name);
 }
 
 static int dsu_pmu_device_remove(struct platform_device *pdev)
 {
 	struct dsu_pmu *dsu_pmu = platform_get_drvdata(pdev);
 
-	perf_pmu_unregister(&dsu_pmu->pmu);
-	cpuhp_state_remove_instance(dsu_pmu_cpuhp_state, &dsu_pmu->cpuhp_node);
+	uncore_pmu_unregister(&dsu_pmu->pmu);
 
 	return 0;
 }
@@ -808,67 +720,7 @@ static struct platform_driver dsu_pmu_driver = {
 	.probe = dsu_pmu_device_probe,
 	.remove = dsu_pmu_device_remove,
 };
-
-static int dsu_pmu_cpu_online(unsigned int cpu, struct hlist_node *node)
-{
-	struct dsu_pmu *dsu_pmu = hlist_entry_safe(node, struct dsu_pmu,
-						   cpuhp_node);
-
-	if (!cpumask_test_cpu(cpu, &dsu_pmu->associated_cpus))
-		return 0;
-
-	/* If the PMU is already managed, there is nothing to do */
-	if (!cpumask_empty(&dsu_pmu->active_cpu))
-		return 0;
-
-	dsu_pmu_init_pmu(dsu_pmu);
-	dsu_pmu_set_active_cpu(cpu, dsu_pmu);
-
-	return 0;
-}
-
-static int dsu_pmu_cpu_teardown(unsigned int cpu, struct hlist_node *node)
-{
-	int dst;
-	struct dsu_pmu *dsu_pmu = hlist_entry_safe(node, struct dsu_pmu,
-						   cpuhp_node);
-
-	if (!cpumask_test_and_clear_cpu(cpu, &dsu_pmu->active_cpu))
-		return 0;
-
-	dst = dsu_pmu_get_online_cpu_any_but(dsu_pmu, cpu);
-	/* If there are no active CPUs in the DSU, leave IRQ disabled */
-	if (dst >= nr_cpu_ids)
-		return 0;
-
-	perf_pmu_migrate_context(&dsu_pmu->pmu, cpu, dst);
-	dsu_pmu_set_active_cpu(dst, dsu_pmu);
-
-	return 0;
-}
-
-static int __init dsu_pmu_init(void)
-{
-	int ret;
-
-	ret = cpuhp_setup_state_multi(CPUHP_AP_ONLINE_DYN,
-					DRVNAME,
-					dsu_pmu_cpu_online,
-					dsu_pmu_cpu_teardown);
-	if (ret < 0)
-		return ret;
-	dsu_pmu_cpuhp_state = ret;
-	return platform_driver_register(&dsu_pmu_driver);
-}
-
-static void __exit dsu_pmu_exit(void)
-{
-	platform_driver_unregister(&dsu_pmu_driver);
-	cpuhp_remove_multi_state(dsu_pmu_cpuhp_state);
-}
-
-module_init(dsu_pmu_init);
-module_exit(dsu_pmu_exit);
+module_platform_driver(dsu_pmu_driver);
 
 MODULE_DESCRIPTION("Perf driver for ARM DynamIQ Shared Unit");
 MODULE_AUTHOR("Suzuki K Poulose <suzuki.poulose@arm.com>");
