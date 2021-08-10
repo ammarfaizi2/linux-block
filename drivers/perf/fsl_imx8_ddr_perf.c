@@ -16,6 +16,8 @@
 #include <linux/perf_event.h>
 #include <linux/slab.h>
 
+#include "uncore_pmu.h"
+
 #define COUNTER_CNTL		0x0
 #define COUNTER_READ		0x20
 
@@ -37,10 +39,9 @@
 
 #define AXI_MASKING_REVERT	0xffff0000	/* AXI_MASKING(MSB 16bits) + AXI_ID(LSB 16bits) */
 
-#define to_ddr_pmu(p)		container_of(p, struct ddr_pmu, pmu)
+#define to_ddr_pmu(p)		container_of(to_uncore_pmu(p), struct ddr_pmu, pmu)
 
 #define DDR_PERF_DEV_NAME	"imx8_ddr"
-#define DDR_CPUHP_CB_NAME	DDR_PERF_DEV_NAME "_perf_pmu"
 
 static DEFINE_IDA(ddr_ida);
 
@@ -91,16 +92,12 @@ static const struct of_device_id imx_ddr_pmu_dt_ids[] = {
 MODULE_DEVICE_TABLE(of, imx_ddr_pmu_dt_ids);
 
 struct ddr_pmu {
-	struct pmu pmu;
+	struct uncore_pmu pmu;
 	void __iomem *base;
-	unsigned int cpu;
 	struct	hlist_node node;
-	struct	device *dev;
 	struct perf_event *events[NUM_COUNTERS];
 	int active_events;
-	enum cpuhp_state cpuhp_state;
 	const struct fsl_ddr_devtype_data *devtype_data;
-	int irq;
 	int id;
 };
 
@@ -192,26 +189,6 @@ static const struct attribute_group ddr_perf_filter_cap_attr_group = {
 	.attrs = ddr_perf_filter_cap_attr,
 };
 
-static ssize_t ddr_perf_cpumask_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct ddr_pmu *pmu = dev_get_drvdata(dev);
-
-	return cpumap_print_to_pagebuf(true, buf, cpumask_of(pmu->cpu));
-}
-
-static struct device_attribute ddr_perf_cpumask_attr =
-	__ATTR(cpumask, 0444, ddr_perf_cpumask_show, NULL);
-
-static struct attribute *ddr_perf_cpumask_attrs[] = {
-	&ddr_perf_cpumask_attr.attr,
-	NULL,
-};
-
-static const struct attribute_group ddr_perf_cpumask_attr_group = {
-	.attrs = ddr_perf_cpumask_attrs,
-};
-
 static ssize_t
 ddr_pmu_event_show(struct device *dev, struct device_attribute *attr,
 		   char *page)
@@ -285,7 +262,6 @@ static const struct attribute_group ddr_perf_format_attr_group = {
 static const struct attribute_group *attr_groups[] = {
 	&ddr_perf_events_attr_group,
 	&ddr_perf_format_attr_group,
-	&ddr_perf_cpumask_attr_group,
 	&ddr_perf_filter_cap_attr_group,
 	&ddr_perf_identifier_attr_group,
 	NULL,
@@ -367,29 +343,13 @@ static u32 ddr_perf_read_counter(struct ddr_pmu *pmu, int counter)
 
 static int ddr_perf_event_init(struct perf_event *event)
 {
+	int ret;
 	struct ddr_pmu *pmu = to_ddr_pmu(event->pmu);
-	struct hw_perf_event *hwc = &event->hw;
 	struct perf_event *sibling;
 
-	if (event->attr.type != event->pmu->type)
-		return -ENOENT;
-
-	if (is_sampling_event(event) || event->attach_state & PERF_ATTACH_TASK)
-		return -EOPNOTSUPP;
-
-	if (event->cpu < 0) {
-		dev_warn(pmu->dev, "Can't provide per-task data!\n");
-		return -EOPNOTSUPP;
-	}
-
-	/*
-	 * We must NOT create groups containing mixed PMUs, although software
-	 * events are acceptable (for example to create a CCN group
-	 * periodically read when a hrtimer aka cpu-clock leader triggers).
-	 */
-	if (event->group_leader->pmu != event->pmu &&
-			!is_software_event(event->group_leader))
-		return -EINVAL;
+	ret = uncore_pmu_event_init(event);
+	if (ret)
+		return ret;
 
 	if (pmu->devtype_data->quirks & DDR_CAP_AXI_ID_FILTER) {
 		if (!ddr_perf_filters_compatible(event, event->group_leader))
@@ -399,15 +359,6 @@ static int ddr_perf_event_init(struct perf_event *event)
 				return -EINVAL;
 		}
 	}
-
-	for_each_sibling_event(sibling, event->group_leader) {
-		if (sibling->pmu != event->pmu &&
-				!is_software_event(sibling))
-			return -EINVAL;
-	}
-
-	event->cpu = pmu->cpu;
-	hwc->idx = -1;
 
 	return 0;
 }
@@ -478,7 +429,7 @@ static void ddr_perf_event_update(struct perf_event *event)
 	if (counter != EVENT_CYCLES_COUNTER) {
 		ret = ddr_perf_counter_overflow(pmu, counter);
 		if (ret)
-			dev_warn_ratelimited(pmu->dev,  "events lost due to counter overflow (config 0x%llx)\n",
+			dev_warn_ratelimited(pmu->pmu.dev,  "events lost due to counter overflow (config 0x%llx)\n",
 					     event->attr.config);
 	}
 
@@ -525,7 +476,7 @@ static int ddr_perf_event_add(struct perf_event *event, int flags)
 
 	counter = ddr_perf_alloc_counter(pmu, cfg);
 	if (counter < 0) {
-		dev_dbg(pmu->dev, "There are not enough counters\n");
+		dev_dbg(pmu->pmu.dev, "There are not enough counters\n");
 		return -EOPNOTSUPP;
 	}
 
@@ -593,22 +544,24 @@ static int ddr_perf_init(struct ddr_pmu *pmu, void __iomem *base,
 			 struct device *dev)
 {
 	*pmu = (struct ddr_pmu) {
-		.pmu = (struct pmu) {
-			.module	      = THIS_MODULE,
-			.capabilities = PERF_PMU_CAP_NO_EXCLUDE,
-			.task_ctx_nr = perf_invalid_context,
-			.attr_groups = attr_groups,
-			.event_init  = ddr_perf_event_init,
-			.add	     = ddr_perf_event_add,
-			.del	     = ddr_perf_event_del,
-			.start	     = ddr_perf_event_start,
-			.stop	     = ddr_perf_event_stop,
-			.read	     = ddr_perf_event_update,
-			.pmu_enable  = ddr_perf_pmu_enable,
-			.pmu_disable = ddr_perf_pmu_disable,
+		.pmu = (struct uncore_pmu) {
+			.pmu = (struct pmu) {
+				.module	      = THIS_MODULE,
+				.capabilities = PERF_PMU_CAP_NO_EXCLUDE,
+				.task_ctx_nr = perf_invalid_context,
+				.attr_groups = attr_groups,
+				.event_init  = ddr_perf_event_init,
+				.add	     = ddr_perf_event_add,
+				.del	     = ddr_perf_event_del,
+				.start	     = ddr_perf_event_start,
+				.stop	     = ddr_perf_event_stop,
+				.read	     = ddr_perf_event_update,
+				.pmu_enable  = ddr_perf_pmu_enable,
+				.pmu_disable = ddr_perf_pmu_disable,
+			},
+			.dev = dev,
 		},
 		.base = base,
-		.dev = dev,
 	};
 
 	pmu->id = ida_simple_get(&ddr_ida, 0, 0, GFP_KERNEL);
@@ -656,26 +609,6 @@ static irqreturn_t ddr_perf_irq_handler(int irq, void *p)
 	return IRQ_HANDLED;
 }
 
-static int ddr_perf_offline_cpu(unsigned int cpu, struct hlist_node *node)
-{
-	struct ddr_pmu *pmu = hlist_entry_safe(node, struct ddr_pmu, node);
-	int target;
-
-	if (cpu != pmu->cpu)
-		return 0;
-
-	target = cpumask_any_but(cpu_online_mask, cpu);
-	if (target >= nr_cpu_ids)
-		return 0;
-
-	perf_pmu_migrate_context(&pmu->pmu, cpu, target);
-	pmu->cpu = target;
-
-	WARN_ON(irq_set_affinity(pmu->irq, cpumask_of(pmu->cpu)));
-
-	return 0;
-}
-
 static int ddr_perf_probe(struct platform_device *pdev)
 {
 	struct ddr_pmu *pmu;
@@ -704,30 +637,10 @@ static int ddr_perf_probe(struct platform_device *pdev)
 			      num);
 	if (!name) {
 		ret = -ENOMEM;
-		goto cpuhp_state_err;
+		goto ddr_perf_err;
 	}
 
 	pmu->devtype_data = of_device_get_match_data(&pdev->dev);
-
-	pmu->cpu = raw_smp_processor_id();
-	ret = cpuhp_setup_state_multi(CPUHP_AP_ONLINE_DYN,
-				      DDR_CPUHP_CB_NAME,
-				      NULL,
-				      ddr_perf_offline_cpu);
-
-	if (ret < 0) {
-		dev_err(&pdev->dev, "cpuhp_setup_state_multi failed\n");
-		goto cpuhp_state_err;
-	}
-
-	pmu->cpuhp_state = ret;
-
-	/* Register the pmu instance for cpu hotplug */
-	ret = cpuhp_state_add_instance_nocalls(pmu->cpuhp_state, &pmu->node);
-	if (ret) {
-		dev_err(&pdev->dev, "Error %d registering hotplug\n", ret);
-		goto cpuhp_instance_err;
-	}
 
 	/* Request irq */
 	irq = of_irq_get(np, 0);
@@ -740,31 +653,23 @@ static int ddr_perf_probe(struct platform_device *pdev)
 	ret = devm_request_irq(&pdev->dev, irq,
 					ddr_perf_irq_handler,
 					IRQF_NOBALANCING | IRQF_NO_THREAD,
-					DDR_CPUHP_CB_NAME,
+					dev_name(&pdev->dev),
 					pmu);
 	if (ret < 0) {
 		dev_err(&pdev->dev, "Request irq failed: %d", ret);
 		goto ddr_perf_err;
 	}
 
-	pmu->irq = irq;
-	ret = irq_set_affinity(pmu->irq, cpumask_of(pmu->cpu));
-	if (ret) {
-		dev_err(pmu->dev, "Failed to set interrupt affinity!\n");
-		goto ddr_perf_err;
-	}
+	pmu->pmu.irq = irq;
+	pmu->pmu.num_counters = NUM_COUNTERS;
 
-	ret = perf_pmu_register(&pmu->pmu, name, -1);
+	ret = uncore_pmu_register(&pmu->pmu, name);
 	if (ret)
 		goto ddr_perf_err;
 
 	return 0;
 
 ddr_perf_err:
-	cpuhp_state_remove_instance_nocalls(pmu->cpuhp_state, &pmu->node);
-cpuhp_instance_err:
-	cpuhp_remove_multi_state(pmu->cpuhp_state);
-cpuhp_state_err:
 	ida_simple_remove(&ddr_ida, pmu->id);
 	dev_warn(&pdev->dev, "i.MX8 DDR Perf PMU failed (%d), disabled\n", ret);
 	return ret;
@@ -774,10 +679,7 @@ static int ddr_perf_remove(struct platform_device *pdev)
 {
 	struct ddr_pmu *pmu = platform_get_drvdata(pdev);
 
-	cpuhp_state_remove_instance_nocalls(pmu->cpuhp_state, &pmu->node);
-	cpuhp_remove_multi_state(pmu->cpuhp_state);
-
-	perf_pmu_unregister(&pmu->pmu);
+	uncore_pmu_unregister(&pmu->pmu);
 
 	ida_simple_remove(&ddr_ida, pmu->id);
 	return 0;
