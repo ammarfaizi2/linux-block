@@ -987,6 +987,27 @@ static int netfs_rreq_set_up_buffer(struct netfs_read_request *rreq,
 	return 0;
 }
 
+/*
+ * Begin an operation, and fetch the stored zero point value from the cookie if
+ * available.
+ */
+static int netfs_begin_cache_operation(struct netfs_read_request *rreq,
+				       struct netfs_i_context *ctx)
+{
+	int ret = -ENOBUFS;
+
+	if (ctx->ops->begin_cache_operation) {
+		ret = ctx->ops->begin_cache_operation(rreq);
+		/* TODO: Get the zero point value from the cache */
+#if 0
+		if (ret == 0 &&
+		    !test_and_set_bit(NETFS_ICTX_GOT_CACHED_ZP, &ctx->flags))
+			ctx->zero_point = netfs_i_cookie(rreq->inode)->stored_zero_point;
+#endif
+	}
+	return ret;
+}
+
 /**
  * netfs_readahead - Helper to manage a read request
  * @ractl: The description of the readahead request
@@ -1020,11 +1041,9 @@ void netfs_readahead(struct readahead_control *ractl)
 	rreq->start	= readahead_pos(ractl);
 	rreq->len	= readahead_length(ractl);
 
-	if (ctx->ops->begin_cache_operation) {
-		ret = ctx->ops->begin_cache_operation(rreq);
-		if (ret == -ENOMEM || ret == -EINTR || ret == -ERESTARTSYS)
-			goto cleanup_free;
-	}
+	ret = netfs_begin_cache_operation(rreq, ctx);
+	if (ret == -ENOMEM || ret == -EINTR || ret == -ERESTARTSYS)
+		goto cleanup_free;
 
 	netfs_stat(&netfs_n_rh_readahead);
 	trace_netfs_read(rreq, readahead_pos(ractl), readahead_length(ractl),
@@ -1087,12 +1106,10 @@ int netfs_readpage(struct file *file, struct page *subpage)
 	rreq->start	= folio_file_pos(folio);
 	rreq->len	= folio_size(folio);
 
-	if (ctx->ops->begin_cache_operation) {
-		ret = ctx->ops->begin_cache_operation(rreq);
-		if (ret == -ENOMEM || ret == -EINTR || ret == -ERESTARTSYS) {
-			folio_unlock(folio);
-			goto out;
-		}
+	ret = netfs_begin_cache_operation(rreq, ctx);
+	if (ret == -ENOMEM || ret == -EINTR || ret == -ERESTARTSYS) {
+		folio_unlock(folio);
+		goto out;
 	}
 
 	netfs_stat(&netfs_n_rh_readpage);
@@ -1272,11 +1289,9 @@ retry:
 	rreq->no_unlock_folio	= folio_index(folio);
 	__set_bit(NETFS_RREQ_NO_UNLOCK_FOLIO, &rreq->flags);
 
-	if (ctx->ops->begin_cache_operation) {
-		ret = ctx->ops->begin_cache_operation(rreq);
-		if (ret == -ENOMEM || ret == -EINTR || ret == -ERESTARTSYS)
-			goto error_put;
-	}
+	ret = netfs_begin_cache_operation(rreq, ctx);
+	if (ret == -ENOMEM || ret == -EINTR || ret == -ERESTARTSYS)
+		goto error_put;
 
 	netfs_stat(&netfs_n_rh_write_begin);
 	trace_netfs_read(rreq, pos, len, netfs_read_trace_write_begin);

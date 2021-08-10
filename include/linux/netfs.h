@@ -125,8 +125,11 @@ struct netfs_i_context {
 #if IS_ENABLED(CONFIG_FSCACHE)
 	struct fscache_cookie	*cache;
 #endif
+	loff_t			zero_point;	/* Size after which we assume there's no data
+						 * on the server */
 	unsigned long		flags;
 #define NETFS_ICTX_NEW_CONTENT	0		/* Set if file has new content (create/trunc-0) */
+#define NETFS_ICTX_GOT_CACHED_ZP 1		/* We read zero_point from the cache */
 	unsigned int		rsize;		/* Maximum read size */
 	unsigned int		wsize;		/* Maximum write size */
 	unsigned char		min_bshift;	/* log2 min block size for bounding box or 0 */
@@ -281,6 +284,22 @@ static inline void netfs_i_context_init(struct inode *inode,
 	struct netfs_i_context *ctx = netfs_i_context(inode);
 
 	ctx->ops = ops;
+	ctx->zero_point = i_size_read(inode);
+}
+
+/**
+ * netfs_resize_file - Note that a file got resized
+ * @inode: The inode being resized
+ * @new_i_size: The new file size
+ *
+ * Inform the netfs lib that a file got resized so that it can adjust its state.
+ */
+static inline void netfs_resize_file(struct inode *inode, loff_t new_i_size)
+{
+	struct netfs_i_context *ctx = netfs_i_context(inode);
+
+	if (new_i_size < ctx->zero_point)
+		ctx->zero_point = new_i_size;
 }
 
 /**
