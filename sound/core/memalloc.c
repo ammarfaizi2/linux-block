@@ -29,15 +29,6 @@ static inline gfp_t snd_mem_get_gfp_flags(const struct snd_dma_buffer *dmab,
 		return (__force gfp_t)(unsigned long)dmab->dev.dev;
 }
 
-static void *__snd_dma_alloc_pages(struct snd_dma_buffer *dmab, size_t size)
-{
-	const struct snd_malloc_ops *ops = snd_dma_get_ops(dmab);
-
-	if (WARN_ON_ONCE(!ops || !ops->alloc))
-		return NULL;
-	return ops->alloc(dmab, size);
-}
-
 /**
  * snd_dma_alloc_pages - allocate the buffer area according to the given type
  * @type: the DMA buffer type
@@ -54,6 +45,7 @@ static void *__snd_dma_alloc_pages(struct snd_dma_buffer *dmab, size_t size)
 int snd_dma_alloc_pages(int type, struct device *device, size_t size,
 			struct snd_dma_buffer *dmab)
 {
+	const struct snd_malloc_ops *ops;
 	if (WARN_ON(!size))
 		return -ENXIO;
 	if (WARN_ON(!dmab))
@@ -65,9 +57,15 @@ int snd_dma_alloc_pages(int type, struct device *device, size_t size,
 	dmab->bytes = 0;
 	dmab->addr = 0;
 	dmab->private_data = NULL;
-	dmab->area = __snd_dma_alloc_pages(dmab, size);
-	if (!dmab->area)
+	ops = snd_dma_get_ops(dmab);
+	if (WARN_ON(!ops || !ops->alloc))
+		return -ENXIO;
+	dmab->ops = ops;
+	dmab->area = ops->alloc(dmab, size);
+	if (!dmab->area) {
+		dmab->ops = NULL;
 		return -ENOMEM;
+	}
 	dmab->bytes = size;
 	return 0;
 }
@@ -115,10 +113,8 @@ EXPORT_SYMBOL(snd_dma_alloc_pages_fallback);
  */
 void snd_dma_free_pages(struct snd_dma_buffer *dmab)
 {
-	const struct snd_malloc_ops *ops = snd_dma_get_ops(dmab);
-
-	if (ops && ops->free)
-		ops->free(dmab);
+	if (dmab->ops && dmab->ops->free)
+		dmab->ops->free(dmab);
 }
 EXPORT_SYMBOL(snd_dma_free_pages);
 
@@ -176,10 +172,8 @@ EXPORT_SYMBOL_GPL(snd_devm_alloc_pages);
 int snd_dma_buffer_mmap(struct snd_dma_buffer *dmab,
 			struct vm_area_struct *area)
 {
-	const struct snd_malloc_ops *ops = snd_dma_get_ops(dmab);
-
-	if (ops && ops->mmap)
-		return ops->mmap(dmab, area);
+	if (dmab && dmab->ops && dmab->ops->mmap)
+		return dmab->ops->mmap(dmab, area);
 	else
 		return -ENOENT;
 }
@@ -192,10 +186,8 @@ EXPORT_SYMBOL(snd_dma_buffer_mmap);
  */
 dma_addr_t snd_sgbuf_get_addr(struct snd_dma_buffer *dmab, size_t offset)
 {
-	const struct snd_malloc_ops *ops = snd_dma_get_ops(dmab);
-
-	if (ops && ops->get_addr)
-		return ops->get_addr(dmab, offset);
+	if (dmab->ops && dmab->ops->get_addr)
+		return dmab->ops->get_addr(dmab, offset);
 	else
 		return dmab->addr + offset;
 }
@@ -208,10 +200,8 @@ EXPORT_SYMBOL(snd_sgbuf_get_addr);
  */
 struct page *snd_sgbuf_get_page(struct snd_dma_buffer *dmab, size_t offset)
 {
-	const struct snd_malloc_ops *ops = snd_dma_get_ops(dmab);
-
-	if (ops && ops->get_page)
-		return ops->get_page(dmab, offset);
+	if (dmab->ops && dmab->ops->get_page)
+		return dmab->ops->get_page(dmab, offset);
 	else
 		return virt_to_page(dmab->area + offset);
 }
@@ -227,10 +217,8 @@ EXPORT_SYMBOL(snd_sgbuf_get_page);
 unsigned int snd_sgbuf_get_chunk_size(struct snd_dma_buffer *dmab,
 				      unsigned int ofs, unsigned int size)
 {
-	const struct snd_malloc_ops *ops = snd_dma_get_ops(dmab);
-
-	if (ops && ops->get_chunk_size)
-		return ops->get_chunk_size(dmab, ofs, size);
+	if (dmab->ops && dmab->ops->get_chunk_size)
+		return dmab->ops->get_chunk_size(dmab, ofs, size);
 	else
 		return size;
 }
@@ -362,7 +350,8 @@ static void *snd_dma_iram_alloc(struct snd_dma_buffer *dmab, size_t size)
 	 * so if we fail to malloc, try to fetch memory traditionally.
 	 */
 	dmab->dev.type = SNDRV_DMA_TYPE_DEV;
-	return __snd_dma_alloc_pages(dmab, size);
+	dmab->ops = snd_dma_get_ops(dmab);
+	return dmab->ops->alloc(dmab, size);
 }
 
 static void snd_dma_iram_free(struct snd_dma_buffer *dmab)

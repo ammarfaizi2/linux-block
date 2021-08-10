@@ -13,6 +13,7 @@
 
 struct device;
 struct vm_area_struct;
+struct snd_malloc_ops;
 
 /*
  * buffer device info
@@ -55,6 +56,7 @@ struct snd_dma_buffer {
 	dma_addr_t addr;	/* physical address */
 	size_t bytes;		/* buffer size in bytes */
 	void *private_data;	/* private for allocator; don't touch */
+	const struct snd_malloc_ops *ops;	/* assigned ops */
 };
 
 /*
