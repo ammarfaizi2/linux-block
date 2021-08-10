@@ -291,6 +291,7 @@ struct page;
 struct address_space;
 struct writeback_control;
 struct readahead_control;
+struct bio_alloc_cache;
 
 /*
  * Write life time hint values.
@@ -319,6 +320,8 @@ enum rw_hint {
 /* iocb->ki_waitq is valid */
 #define IOCB_WAITQ		(1 << 19)
 #define IOCB_NOIO		(1 << 20)
+/* iocb->ki_bio_cache is valid */
+#define IOCB_ALLOC_CACHE	(1 << 21)
 
 struct kiocb {
 	struct file		*ki_filp;
@@ -336,6 +339,14 @@ struct kiocb {
 		unsigned int		ki_cookie; /* for ->iopoll */
 		struct wait_page_queue	*ki_waitq; /* for async buffered IO */
 	};
+
+	/*
+	 * If set, owner of iov_iter can pass in a fast-cache for bio
+	 * allocations.
+	 */
+#ifdef CONFIG_BLOCK
+	struct bio_alloc_cache	*ki_bio_cache;
+#endif
 
 	randomized_struct_fields_end
 };
