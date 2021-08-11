@@ -22,6 +22,8 @@
 #include <linux/perf_event.h>
 #include <linux/platform_device.h>
 
+#include "uncore_pmu.h"
+
 /*
  * General constants
  */
@@ -152,15 +154,13 @@ static inline int event_num_counters(struct perf_event *event)
  * Main PMU, inherits from the core perf PMU type
  */
 struct l3cache_pmu {
-	struct pmu		pmu;
-	struct hlist_node	node;
+	struct uncore_pmu	pmu;
 	void __iomem		*regs;
 	struct perf_event	*events[L3_NUM_COUNTERS];
 	unsigned long		used_mask[BITS_TO_LONGS(L3_NUM_COUNTERS)];
-	cpumask_t		cpumask;
 };
 
-#define to_l3cache_pmu(p) (container_of(p, struct l3cache_pmu, pmu))
+#define to_l3cache_pmu(p) (container_of(to_uncore_pmu(p), struct l3cache_pmu, pmu))
 
 /*
  * Type used to group hardware counter operations
@@ -444,18 +444,11 @@ static void qcom_l3_cache__pmu_disable(struct pmu *pmu)
 	wmb();
 }
 
-/*
- * We must NOT create groups containing events from multiple hardware PMUs,
- * although mixing different software and hardware PMUs is allowed.
- */
 static bool qcom_l3_cache__validate_event_group(struct perf_event *event)
 {
 	struct perf_event *leader = event->group_leader;
 	struct perf_event *sibling;
-	int counters = 0;
-
-	if (leader->pmu != event->pmu && !is_software_event(leader))
-		return false;
+	int counters;
 
 	counters = event_num_counters(event);
 	counters += event_num_counters(leader);
@@ -463,8 +456,6 @@ static bool qcom_l3_cache__validate_event_group(struct perf_event *event)
 	for_each_sibling_event(sibling, leader) {
 		if (is_software_event(sibling))
 			continue;
-		if (sibling->pmu != event->pmu)
-			return false;
 		counters += event_num_counters(sibling);
 	}
 
@@ -477,46 +468,15 @@ static bool qcom_l3_cache__validate_event_group(struct perf_event *event)
 
 static int qcom_l3_cache__event_init(struct perf_event *event)
 {
-	struct l3cache_pmu *l3pmu = to_l3cache_pmu(event->pmu);
-	struct hw_perf_event *hwc = &event->hw;
+	int ret;
 
-	/*
-	 * Is the event for this PMU?
-	 */
-	if (event->attr.type != event->pmu->type)
-		return -ENOENT;
-
-	/*
-	 * Sampling not supported since these events are not core-attributable.
-	 */
-	if (hwc->sample_period)
-		return -EINVAL;
-
-	/*
-	 * Task mode not available, we run the counters as socket counters,
-	 * not attributable to any CPU and therefore cannot attribute per-task.
-	 */
-	if (event->cpu < 0)
-		return -EINVAL;
+	ret = uncore_pmu_event_init(event);
+	if (ret)
+		return ret;
 
 	/* Validate the group */
 	if (!qcom_l3_cache__validate_event_group(event))
 		return -EINVAL;
-
-	hwc->idx = -1;
-
-	/*
-	 * Many perf core operations (eg. events rotation) operate on a
-	 * single CPU context. This is obvious for CPU PMUs, where one
-	 * expects the same sets of events being observed on all CPUs,
-	 * but can lead to issues for off-core PMUs, like this one, where
-	 * each event could be theoretically assigned to a different CPU.
-	 * To mitigate this, we enforce CPU assignment to one designated
-	 * processor (the one described in the "cpumask" attribute exported
-	 * by the PMU device). perf user space tools honor this and avoid
-	 * opening more than one copy of the events.
-	 */
-	event->cpu = cpumask_first(&l3pmu->cpumask);
 
 	return 0;
 }
@@ -665,66 +625,18 @@ static const struct attribute_group qcom_l3_cache_pmu_events_group = {
 	.attrs = qcom_l3_cache_pmu_events,
 };
 
-/* cpumask */
-
-static ssize_t cpumask_show(struct device *dev,
-			    struct device_attribute *attr, char *buf)
-{
-	struct l3cache_pmu *l3pmu = to_l3cache_pmu(dev_get_drvdata(dev));
-
-	return cpumap_print_to_pagebuf(true, buf, &l3pmu->cpumask);
-}
-
-static DEVICE_ATTR_RO(cpumask);
-
-static struct attribute *qcom_l3_cache_pmu_cpumask_attrs[] = {
-	&dev_attr_cpumask.attr,
-	NULL,
-};
-
-static const struct attribute_group qcom_l3_cache_pmu_cpumask_attr_group = {
-	.attrs = qcom_l3_cache_pmu_cpumask_attrs,
-};
-
 /*
  * Per PMU device attribute groups
  */
 static const struct attribute_group *qcom_l3_cache_pmu_attr_grps[] = {
 	&qcom_l3_cache_pmu_format_group,
 	&qcom_l3_cache_pmu_events_group,
-	&qcom_l3_cache_pmu_cpumask_attr_group,
 	NULL,
 };
 
 /*
  * Probing functions and data.
  */
-
-static int qcom_l3_cache_pmu_online_cpu(unsigned int cpu, struct hlist_node *node)
-{
-	struct l3cache_pmu *l3pmu = hlist_entry_safe(node, struct l3cache_pmu, node);
-
-	/* If there is not a CPU/PMU association pick this CPU */
-	if (cpumask_empty(&l3pmu->cpumask))
-		cpumask_set_cpu(cpu, &l3pmu->cpumask);
-
-	return 0;
-}
-
-static int qcom_l3_cache_pmu_offline_cpu(unsigned int cpu, struct hlist_node *node)
-{
-	struct l3cache_pmu *l3pmu = hlist_entry_safe(node, struct l3cache_pmu, node);
-	unsigned int target;
-
-	if (!cpumask_test_and_clear_cpu(cpu, &l3pmu->cpumask))
-		return 0;
-	target = cpumask_any_but(cpu_online_mask, cpu);
-	if (target >= nr_cpu_ids)
-		return 0;
-	perf_pmu_migrate_context(&l3pmu->pmu, cpu, target);
-	cpumask_set_cpu(target, &l3pmu->cpumask);
-	return 0;
-}
 
 static int qcom_l3_cache_pmu_probe(struct platform_device *pdev)
 {
@@ -746,7 +658,7 @@ static int qcom_l3_cache_pmu_probe(struct platform_device *pdev)
 	if (!l3pmu || !name)
 		return -ENOMEM;
 
-	l3pmu->pmu = (struct pmu) {
+	l3pmu->pmu.pmu = (struct pmu) {
 		.task_ctx_nr	= perf_invalid_context,
 
 		.pmu_enable	= qcom_l3_cache__pmu_enable,
@@ -761,6 +673,8 @@ static int qcom_l3_cache_pmu_probe(struct platform_device *pdev)
 		.attr_groups	= qcom_l3_cache_pmu_attr_grps,
 		.capabilities	= PERF_PMU_CAP_NO_EXCLUDE,
 	};
+	l3pmu->pmu.dev = &pdev->dev;
+	l3pmu->pmu.num_counters = L3_NUM_COUNTERS;
 
 	memrc = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	l3pmu->regs = devm_ioremap_resource(&pdev->dev, memrc);
@@ -772,6 +686,7 @@ static int qcom_l3_cache_pmu_probe(struct platform_device *pdev)
 	ret = platform_get_irq(pdev, 0);
 	if (ret <= 0)
 		return ret;
+	l3pmu->pmu.irq = ret;
 
 	ret = devm_request_irq(&pdev->dev, ret, qcom_l3_cache__handle_irq, 0,
 			       name, l3pmu);
@@ -781,20 +696,13 @@ static int qcom_l3_cache_pmu_probe(struct platform_device *pdev)
 		return ret;
 	}
 
-	/* Add this instance to the list used by the offline callback */
-	ret = cpuhp_state_add_instance(CPUHP_AP_PERF_ARM_QCOM_L3_ONLINE, &l3pmu->node);
-	if (ret) {
-		dev_err(&pdev->dev, "Error %d registering hotplug", ret);
-		return ret;
-	}
-
-	ret = perf_pmu_register(&l3pmu->pmu, name, -1);
+	ret = uncore_pmu_register(&l3pmu->pmu, name);
 	if (ret < 0) {
 		dev_err(&pdev->dev, "Failed to register L3 cache PMU (%d)\n", ret);
 		return ret;
 	}
 
-	dev_info(&pdev->dev, "Registered %s, type: %d\n", name, l3pmu->pmu.type);
+	dev_info(&pdev->dev, "Registered %s, type: %d\n", name, l3pmu->pmu.pmu.type);
 
 	return 0;
 }
@@ -813,19 +721,4 @@ static struct platform_driver qcom_l3_cache_pmu_driver = {
 	},
 	.probe = qcom_l3_cache_pmu_probe,
 };
-
-static int __init register_qcom_l3_cache_pmu_driver(void)
-{
-	int ret;
-
-	/* Install a hook to update the reader CPU in case it goes offline */
-	ret = cpuhp_setup_state_multi(CPUHP_AP_PERF_ARM_QCOM_L3_ONLINE,
-				      "perf/qcom/l3cache:online",
-				      qcom_l3_cache_pmu_online_cpu,
-				      qcom_l3_cache_pmu_offline_cpu);
-	if (ret)
-		return ret;
-
-	return platform_driver_register(&qcom_l3_cache_pmu_driver);
-}
-device_initcall(register_qcom_l3_cache_pmu_driver);
+module_platform_driver(qcom_l3_cache_pmu_driver);
