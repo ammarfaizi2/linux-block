@@ -4,6 +4,17 @@
 
 #include <linux/pgtable_types.h>
 
+/*
+ * CONFIG_SPARSEMEM && !CONFIG_SPARSEMEM_VMEMMAP's definitions in <asm-generic/memory_model.h>
+ * have a couple of layering violations, such as the reliance on __pfn_to_section() or
+ * page_to_section(), * which are defined in a high-level header (linux/mmzone_api.h).
+ *
+ * Include the high level header as a quirk:
+ */
+#if defined(CONFIG_SPARSEMEM) && !defined(CONFIG_SPARSEMEM_VMEMMAP)
+# include <linux/mmzone_api.h>
+#endif
+
 #include <asm/page.h>
 #include <asm/pgtable.h>
 #include <asm/pgtable_api_access.h>
