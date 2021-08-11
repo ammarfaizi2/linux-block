@@ -338,6 +338,7 @@ struct kiocb {
 	union {
 		unsigned int		ki_cookie; /* for ->iopoll */
 		struct wait_page_queue	*ki_waitq; /* for async buffered IO */
+		struct page	*ki_swap_page;	/* For swapfile_read/write */
 	};
 
 	randomized_struct_fields_end
@@ -404,6 +405,7 @@ struct address_space_operations {
 	int (*releasepage) (struct page *, gfp_t);
 	void (*freepage)(struct page *);
 	ssize_t (*direct_IO)(struct kiocb *, struct iov_iter *iter);
+	ssize_t (*swap_rw)(struct kiocb *, struct iov_iter *);
 	/*
 	 * migrate the contents of a page to the specified target. If
 	 * migrate_mode is MIGRATE_ASYNC, it must not block.

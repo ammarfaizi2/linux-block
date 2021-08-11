@@ -4,7 +4,7 @@
  *
  *  Copyright (C) 1991, 1992, 1993, 1994  Linus Torvalds
  *
- *  Swap reorganised 29.12.95, 
+ *  Swap reorganised 29.12.95,
  *  Asynchronous swapping added 30.12.95. Stephen Tweedie
  *  Removed race in async swapping. 14.4.1996. Bruno Haible
  *  Add swap of shared pages through the page cache. 20.2.1998. Stephen Tweedie
@@ -25,6 +25,22 @@
 #include <linux/psi.h>
 #include <linux/uio.h>
 #include <linux/sched/task.h>
+
+/*
+ * Keep track of the kiocb we're using to do async DIO.  We have to
+ * refcount it until various things stop looking at the kiocb *after*
+ * calling ->ki_complete().
+ */
+struct swapfile_kiocb {
+	struct kiocb		iocb;
+	refcount_t		ref;
+};
+
+static void swapfile_put_kiocb(struct swapfile_kiocb *ki)
+{
+	if (refcount_dec_and_test(&ki->ref))
+		kfree(ki);
+}
 
 static void end_swap_bio_write(struct bio *bio)
 {
@@ -302,11 +318,12 @@ int __swap_writepage(struct page *page, struct writeback_control *wbc)
 
 		iov_iter_bvec(&from, WRITE, &bv, 1, PAGE_SIZE);
 		init_sync_kiocb(&kiocb, swap_file);
-		kiocb.ki_pos = page_file_offset(page);
+		kiocb.ki_pos	= page_file_offset(page);
+		kiocb.ki_flags	= IOCB_DIRECT | IOCB_WRITE | IOCB_SWAP;
 
 		set_page_writeback(page);
 		unlock_page(page);
-		ret = mapping->a_ops->direct_IO(&kiocb, &from);
+		ret = mapping->a_ops->swap_rw(&kiocb, &from);
 		if (ret == PAGE_SIZE) {
 			count_vm_event(PSWPOUT);
 			ret = 0;
@@ -323,8 +340,8 @@ int __swap_writepage(struct page *page, struct writeback_control *wbc)
 			 */
 			set_page_dirty(page);
 			ClearPageReclaim(page);
-			pr_err_ratelimited("Write error on dio swapfile (%llu)\n",
-					   page_file_offset(page));
+			pr_err_ratelimited("Write error (%d) on dio swapfile (%llu)\n",
+					   ret, page_file_offset(page));
 		}
 		end_page_writeback(page);
 		return ret;
@@ -350,6 +367,79 @@ int __swap_writepage(struct page *page, struct writeback_control *wbc)
 	submit_bio(bio);
 
 	return 0;
+}
+
+static void swapfile_read_complete(struct page *page, long ret)
+{
+	if (ret == page_size(page)) {
+		count_vm_event(PSWPIN);
+		SetPageUptodate(page);
+	} else {
+		SetPageError(page);
+		pr_err_ratelimited("Read error (%ld) on dio swapfile (%llu)\n",
+				   ret, page_file_offset(page));
+	}
+
+	unlock_page(page);
+}
+
+static void __swapfile_read_complete(struct kiocb *iocb, long ret, long ret2)
+{
+	struct swapfile_kiocb *ki = container_of(iocb, struct swapfile_kiocb, iocb);
+
+	swapfile_read_complete(iocb->ki_swap_page, ret);
+	swapfile_put_kiocb(ki);
+}
+
+static void swapfile_read_sync(struct swap_info_struct *sis, struct page *page,
+			       struct iov_iter *to)
+{
+	struct kiocb kiocb;
+	struct file *swap_file = sis->swap_file;
+	int ret;
+
+	init_sync_kiocb(&kiocb, swap_file);
+	kiocb.ki_swap_page	= page;
+	kiocb.ki_pos		= page_file_offset(page);
+	kiocb.ki_flags		= IOCB_DIRECT | IOCB_SWAP;
+	ret = swap_file->f_mapping->a_ops->swap_rw(&kiocb, to);
+
+	swapfile_read_complete(page, ret);
+}
+
+static void swapfile_read(struct swap_info_struct *sis, struct page *page,
+			  bool synchronous)
+{
+	struct swapfile_kiocb *ki;
+	struct file *swap_file = sis->swap_file;
+	struct bio_vec bv = {
+		.bv_page = page,
+		.bv_len  = thp_size(page),
+		.bv_offset = 0
+	};
+	struct iov_iter to;
+	int ret;
+
+	iov_iter_bvec(&to, READ, &bv, 1, thp_size(page));
+
+	if (synchronous)
+		return swapfile_read_sync(sis, page, &to);
+
+	ki = kzalloc(sizeof(*ki), GFP_KERNEL);
+	if (!ki)
+		return;
+
+	refcount_set(&ki->ref, 2);
+	init_sync_kiocb(&ki->iocb, swap_file);
+	ki->iocb.ki_swap_page	= page;
+	ki->iocb.ki_flags	= IOCB_DIRECT | IOCB_SWAP;
+	ki->iocb.ki_pos		= page_file_offset(page);
+	ki->iocb.ki_complete	= __swapfile_read_complete;
+
+	ret = swap_file->f_mapping->a_ops->swap_rw(&ki->iocb, &to);
+	if (ret != -EIOCBQUEUED)
+		__swapfile_read_complete(&ki->iocb, ret, 0);
+	swapfile_put_kiocb(ki);
 }
 
 void swap_readpage(struct page *page, bool synchronous)
@@ -378,11 +468,7 @@ void swap_readpage(struct page *page, bool synchronous)
 	}
 
 	if (data_race(sis->flags & SWP_FS_OPS)) {
-		struct file *swap_file = sis->swap_file;
-		struct address_space *mapping = swap_file->f_mapping;
-
-		if (!mapping->a_ops->readpage(swap_file, page))
-			count_vm_event(PSWPIN);
+		swapfile_read(sis, page, synchronous);
 		goto out;
 	}
 
