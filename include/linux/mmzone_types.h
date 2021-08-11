@@ -812,6 +812,17 @@ enum meminit_context {
 
 extern int movable_zone;
 
+#ifndef CONFIG_NUMA		/* Don't use mapnrs, do it properly */
+extern unsigned long max_mapnr;
+
+static inline void set_max_mapnr(unsigned long limit)
+{
+	max_mapnr = limit;
+}
+#else
+static inline void set_max_mapnr(unsigned long limit) { }
+#endif
+
 #endif /* !__GENERATING_BOUNDS.H */
 
 #endif /* _LINUX_MMZONE_TYPES_H */
