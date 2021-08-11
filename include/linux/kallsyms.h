@@ -165,9 +165,6 @@ static inline bool kallsyms_show_value(const struct cred *cred)
 
 #endif /*CONFIG_KALLSYMS*/
 
-static inline void print_ip_sym(const char *loglvl, unsigned long ip)
-{
-	printk("%s[<%px>] %pS\n", loglvl, (void *) ip, (void *) ip);
-}
+#define print_ip_sym(loglvl, ip) printk("%s[<%px>] %pS\n", loglvl, (void *)(ip), (void *)(ip));
 
 #endif /*_LINUX_KALLSYMS_H*/

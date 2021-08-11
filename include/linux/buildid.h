@@ -2,7 +2,9 @@
 #ifndef _LINUX_BUILDID_H
 #define _LINUX_BUILDID_H
 
-#include <linux/mm_types.h>
+#include <linux/types.h>
+
+struct vm_area_struct;
 
 #define BUILD_ID_SIZE_MAX 20
 
