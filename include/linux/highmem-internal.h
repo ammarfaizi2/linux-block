@@ -2,6 +2,17 @@
 #ifndef _LINUX_HIGHMEM_INTERNAL_H
 #define _LINUX_HIGHMEM_INTERNAL_H
 
+/*
+ * CONFIG_SPARSEMEM && !CONFIG_SPARSEMEM_VMEMMAP's definitions in <asm-generic/memory_model.h>
+ * have a couple of layering violations, such as the reliance on __pfn_to_section() or
+ * page_to_section(), * which are defined in a high-level header (linux/mmzone_api.h).
+ *
+ * Include the high level header as a quirk:
+ */
+#if defined(CONFIG_SPARSEMEM) && !defined(CONFIG_SPARSEMEM_VMEMMAP)
+# include <linux/mmzone_api.h>
+#endif
+
 #include <linux/mm_page_address.h>
 #include <linux/pgtable_api.h>
 #include <linux/sched/per_task.h>

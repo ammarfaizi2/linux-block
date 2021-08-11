@@ -2,6 +2,15 @@
 #ifndef _LINUX_MM_PAGE_ADDRESS
 #define _LINUX_MM_PAGE_ADDRESS
 
+/*
+ * CONFIG_SPARSEMEM's definitions have a couple of layering violations,
+ * such as the reliance on __pfn_to_section() or page_to_section(),
+ * which are defined in a high-level header (linux/mmzone_api.h):
+ */
+#if defined(CONFIG_SPARSEMEM) && !defined(CONFIG_SPARSEMEM_VMEMMAP)
+# include <linux/mmzone_api.h>
+#endif
+
 #include <linux/mm_types.h>
 
 #include <asm/page.h>

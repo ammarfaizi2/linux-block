@@ -71,9 +71,10 @@ void pte_free(struct mm_struct *mm, pgtable_t ptepage);
 
 void pgtable_free(void *table, bool is_page);
 
+struct mmu_gather;
+
 #ifdef CONFIG_SMP
 
-struct mmu_gather;
 void tlb_remove_table(struct mmu_gather *, void *);
 
 static inline void pgtable_free_tlb(struct mmu_gather *tlb, void *table, bool is_page)
