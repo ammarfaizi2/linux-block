@@ -24,6 +24,7 @@
 #define LINUX_PCI_H
 
 
+#include <linux/cache.h>
 #include <linux/topology.h>
 #include <linux/dev_printk.h>
 #include <linux/mod_devicetable.h>
@@ -37,7 +38,7 @@
 #include <linux/kobject.h>
 #include <linux/device_types.h>
 #include <linux/device/driver.h>
-#include <linux/interrupt.h>
+#include <linux/interrupt_types.h>
 #include <linux/io.h>
 #include <linux/resource_ext.h>
 #include <uapi/linux/pci.h>
