@@ -523,7 +523,7 @@ const struct address_space_operations nfs_file_aops = {
 	.write_end = nfs_write_end,
 	.invalidatepage = nfs_invalidate_page,
 	.releasepage = nfs_release_page,
-	.direct_IO = nfs_direct_IO,
+	.swap_rw = nfs_swap_rw,
 #ifdef CONFIG_MIGRATION
 	.migratepage = nfs_migrate_page,
 #endif
@@ -616,14 +616,16 @@ ssize_t nfs_file_write(struct kiocb *iocb, struct iov_iter *from)
 	if (result)
 		return result;
 
-	if (iocb->ki_flags & IOCB_DIRECT)
+	if (iocb->ki_flags & IOCB_DIRECT) {
+		result = generic_write_checks(iocb, from);
+		if (result <= 0)
+			return result;
 		return nfs_file_direct_write(iocb, from);
+	}
 
 	dprintk("NFS: write(%pD2, %zu@%Ld)\n",
 		file, iov_iter_count(from), (long long) iocb->ki_pos);
 
-	if (IS_SWAPFILE(inode))
-		goto out_swapfile;
 	/*
 	 * O_APPEND implies that we must revalidate the file length.
 	 */
@@ -678,10 +680,6 @@ ssize_t nfs_file_write(struct kiocb *iocb, struct iov_iter *from)
 	nfs_add_stats(inode, NFSIOS_NORMALWRITTENBYTES, written);
 out:
 	return result;
-
-out_swapfile:
-	printk(KERN_INFO "NFS: attempt to write to active swap file!\n");
-	return -ETXTBSY;
 }
 EXPORT_SYMBOL_GPL(nfs_file_write);
 
