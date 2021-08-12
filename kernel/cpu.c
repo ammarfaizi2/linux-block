@@ -140,7 +140,7 @@ void cpu_hp_start_now(void)
 		return;
 	WRITE_ONCE(cpu_hp_start_time, ktime_get());
 	smp_store_release(&cpu_hp_start_time_valid, true);
-	pr_info("%s invoked, cpu_hp_start_time: %llu milliseconds.\n", __func__, cpu_hp_start_time / NSEC_PER_MSEC);
+	pr_info("%s invoked on CPU %d, cpu_hp_start_time: %llu milliseconds.\n", __func__, raw_smp_processor_id(), cpu_hp_start_time / NSEC_PER_MSEC);
 }
 
 void cpu_hp_stop_now(void)

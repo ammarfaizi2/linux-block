@@ -251,6 +251,7 @@ static int multi_cpu_stop(void *data)
 		stop_machine_yield(cpumask);
 		newstate = READ_ONCE(msdata->state);
 		if (newstate != curstate) {
+			pr_info("%s: CPU %d entered state %d\n", __func__, raw_smp_processor_id(), newstate);
 			curstate = newstate;
 			switch (curstate) {
 			case MULTI_STOP_DISABLE_IRQ:
@@ -268,7 +269,7 @@ static int multi_cpu_stop(void *data)
 				}
 				break;
 			default:
-				if (cpu_hp_check_delay("MULTI_STOP_RUN in", multi_cpu_stop))
+				if (cpu_hp_check_delay("default case in", multi_cpu_stop))
 					dump_multi_cpu_stop_state(msdata, NULL);
 				break;
 			}
