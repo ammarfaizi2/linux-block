@@ -557,6 +557,7 @@ static const struct snd_pcm_hardware azx_pcm_hw = {
 				 /* SNDRV_PCM_INFO_RESUME |*/
 				 SNDRV_PCM_INFO_PAUSE |
 				 SNDRV_PCM_INFO_SYNC_START |
+				 SNDRV_PCM_INFO_EXPLICIT_SYNC | // XXX TEST XXX
 				 SNDRV_PCM_INFO_HAS_WALL_CLOCK | /* legacy */
 				 SNDRV_PCM_INFO_HAS_LINK_ATIME |
 				 SNDRV_PCM_INFO_NO_PERIOD_WAKEUP),
@@ -743,6 +744,7 @@ int snd_hda_attach_pcm_stream(struct hda_bus *_bus, struct hda_codec *codec,
 		size = MAX_PREALLOC_SIZE;
 	if (chip->uc_buffer)
 		type = SNDRV_DMA_TYPE_DEV_WC_SG;
+	type = SNDRV_DMA_TYPE_NONCONTIG; // XXX TEST XXX
 	snd_pcm_set_managed_buffer_all(pcm, type, chip->card->dev,
 				       size, MAX_PREALLOC_SIZE);
 	return 0;
