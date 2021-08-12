@@ -26,6 +26,8 @@
 #include <linux/uio.h>
 #include <linux/sched/task.h>
 
+#define ONLY_USE_SYNC_DIO 1
+
 /*
  * Keep track of the kiocb we're using to do async DIO.  We have to
  * refcount it until various things stop looking at the kiocb *after*
@@ -40,30 +42,6 @@ static void swapfile_put_kiocb(struct swapfile_kiocb *ki)
 {
 	if (refcount_dec_and_test(&ki->ref))
 		kfree(ki);
-}
-
-static void end_swap_bio_write(struct bio *bio)
-{
-	struct page *page = bio_first_page_all(bio);
-
-	if (bio->bi_status) {
-		SetPageError(page);
-		/*
-		 * We failed to write the page out to swap-space.
-		 * Re-dirty the page in order to avoid it being reclaimed.
-		 * Also print a dire warning that things will go BAD (tm)
-		 * very quickly.
-		 *
-		 * Also clear PG_reclaim to avoid rotate_reclaimable_page()
-		 */
-		set_page_dirty(page);
-		pr_alert_ratelimited("Write-error on swap-device (%u:%u:%llu)\n",
-				     MAJOR(bio_dev(bio)), MINOR(bio_dev(bio)),
-				     (unsigned long long)bio->bi_iter.bi_sector);
-		ClearPageReclaim(page);
-	}
-	end_page_writeback(page);
-	bio_put(bio);
 }
 
 static void swap_slot_free_notify(struct page *page)
@@ -111,32 +89,6 @@ static void swap_slot_free_notify(struct page *page)
 		SetPageDirty(page);
 		disk->fops->swap_slot_free_notify(sis->bdev,
 				offset);
-	}
-}
-
-static void end_swap_bio_read(struct bio *bio)
-{
-	struct page *page = bio_first_page_all(bio);
-	struct task_struct *waiter = bio->bi_private;
-
-	if (bio->bi_status) {
-		SetPageError(page);
-		ClearPageUptodate(page);
-		pr_alert_ratelimited("Read-error on swap-device (%u:%u:%llu)\n",
-				     MAJOR(bio_dev(bio)), MINOR(bio_dev(bio)),
-				     (unsigned long long)bio->bi_iter.bi_sector);
-		goto out;
-	}
-
-	SetPageUptodate(page);
-	swap_slot_free_notify(page);
-out:
-	unlock_page(page);
-	WRITE_ONCE(bio->bi_private, NULL);
-	bio_put(bio);
-	if (waiter) {
-		blk_wake_io_task(waiter);
-		put_task_struct(waiter);
 	}
 }
 
@@ -279,25 +231,6 @@ static inline void count_swpout_vm_event(struct page *page)
 	count_vm_events(PSWPOUT, thp_nr_pages(page));
 }
 
-#if defined(CONFIG_MEMCG) && defined(CONFIG_BLK_CGROUP)
-static void bio_associate_blkg_from_page(struct bio *bio, struct page *page)
-{
-	struct cgroup_subsys_state *css;
-	struct mem_cgroup *memcg;
-
-	memcg = page_memcg(page);
-	if (!memcg)
-		return;
-
-	rcu_read_lock();
-	css = cgroup_e_css(memcg->css.cgroup, &io_cgrp_subsys);
-	bio_associate_blkg_from_css(bio, css);
-	rcu_read_unlock();
-}
-#else
-#define bio_associate_blkg_from_page(bio, page)		do { } while (0)
-#endif /* CONFIG_MEMCG && CONFIG_BLK_CGROUP */
-
 static void swapfile_write_complete(struct page *page, long ret)
 {
 	if (ret == thp_size(page)) {
@@ -364,7 +297,7 @@ static int swapfile_write(struct swap_info_struct *sis,
 
 	iov_iter_bvec(&from, WRITE, &bv, 1, PAGE_SIZE);
 
-	if (wbc->sync_mode == WB_SYNC_ALL)
+	if (ONLY_USE_SYNC_DIO || wbc->sync_mode == WB_SYNC_ALL)
 		return swapfile_write_sync(sis, page, wbc, &from);
 
 	ki = kzalloc(sizeof(*ki), GFP_KERNEL);
@@ -390,40 +323,17 @@ static int swapfile_write(struct swap_info_struct *sis,
 
 int __swap_writepage(struct page *page, struct writeback_control *wbc)
 {
-	struct bio *bio;
-	int ret;
 	struct swap_info_struct *sis = page_swap_info(page);
 
 	VM_BUG_ON_PAGE(!PageSwapCache(page), page);
-	if (data_race(sis->flags & SWP_FS_OPS))
-		return swapfile_write(sis, page, wbc);
-
-	ret = bdev_write_page(sis->bdev, swap_page_sector(page), page, wbc);
-	if (!ret) {
-		count_swpout_vm_event(page);
-		return 0;
-	}
-
-	bio = bio_alloc(GFP_NOIO, 1);
-	bio_set_dev(bio, sis->bdev);
-	bio->bi_iter.bi_sector = swap_page_sector(page);
-	bio->bi_opf = REQ_OP_WRITE | REQ_SWAP | wbc_to_write_flags(wbc);
-	bio->bi_end_io = end_swap_bio_write;
-	bio_add_page(bio, page, thp_size(page), 0);
-
-	bio_associate_blkg_from_page(bio, page);
-	count_swpout_vm_event(page);
-	set_page_writeback(page);
-	unlock_page(page);
-	submit_bio(bio);
-
-	return 0;
+	return swapfile_write(sis, page, wbc);
 }
 
 static void swapfile_read_complete(struct page *page, long ret)
 {
 	if (ret == page_size(page)) {
 		count_vm_event(PSWPIN);
+		swap_slot_free_notify(page);
 		SetPageUptodate(page);
 	} else {
 		SetPageError(page);
@@ -473,7 +383,7 @@ static void swapfile_read(struct swap_info_struct *sis, struct page *page,
 
 	iov_iter_bvec(&to, READ, &bv, 1, thp_size(page));
 
-	if (synchronous)
+	if (ONLY_USE_SYNC_DIO || synchronous)
 		return swapfile_read_sync(sis, page, &to);
 
 	ki = kzalloc(sizeof(*ki), GFP_KERNEL);
@@ -495,10 +405,7 @@ static void swapfile_read(struct swap_info_struct *sis, struct page *page,
 
 void swap_readpage(struct page *page, bool synchronous)
 {
-	struct bio *bio;
 	struct swap_info_struct *sis = page_swap_info(page);
-	blk_qc_t qc;
-	struct gendisk *disk;
 	unsigned long pflags;
 
 	VM_BUG_ON_PAGE(!PageSwapCache(page) && !synchronous, page);
@@ -515,58 +422,9 @@ void swap_readpage(struct page *page, bool synchronous)
 	if (frontswap_load(page) == 0) {
 		SetPageUptodate(page);
 		unlock_page(page);
-		goto out;
-	}
-
-	if (data_race(sis->flags & SWP_FS_OPS)) {
+	} else {
 		swapfile_read(sis, page, synchronous);
-		goto out;
 	}
-
-	if (sis->flags & SWP_SYNCHRONOUS_IO) {
-		if (!bdev_read_page(sis->bdev, swap_page_sector(page), page)) {
-			if (trylock_page(page)) {
-				swap_slot_free_notify(page);
-				unlock_page(page);
-			}
-
-			count_vm_event(PSWPIN);
-			goto out;
-		}
-	}
-
-	bio = bio_alloc(GFP_KERNEL, 1);
-	bio_set_dev(bio, sis->bdev);
-	bio->bi_opf = REQ_OP_READ;
-	bio->bi_iter.bi_sector = swap_page_sector(page);
-	bio->bi_end_io = end_swap_bio_read;
-	bio_add_page(bio, page, thp_size(page), 0);
-
-	disk = bio->bi_bdev->bd_disk;
-	/*
-	 * Keep this task valid during swap readpage because the oom killer may
-	 * attempt to access it in the page fault retry time check.
-	 */
-	if (synchronous) {
-		bio->bi_opf |= REQ_HIPRI;
-		get_task_struct(current);
-		bio->bi_private = current;
-	}
-	count_vm_event(PSWPIN);
-	bio_get(bio);
-	qc = submit_bio(bio);
-	while (synchronous) {
-		set_current_state(TASK_UNINTERRUPTIBLE);
-		if (!READ_ONCE(bio->bi_private))
-			break;
-
-		if (!blk_poll(disk->queue, qc, true))
-			blk_io_schedule();
-	}
-	__set_current_state(TASK_RUNNING);
-	bio_put(bio);
-
-out:
 	psi_memstall_leave(&pflags);
 }
 

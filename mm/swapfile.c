@@ -2918,6 +2918,8 @@ static int claim_swapfile(struct swap_info_struct *p, struct inode *inode)
 			return -EINVAL;
 		p->flags |= SWP_BLKDEV;
 	} else if (S_ISREG(inode->i_mode)) {
+		if (!inode->i_mapping->a_ops->swap_rw)
+			return -EINVAL;
 		p->bdev = inode->i_sb->s_bdev;
 	}
 
@@ -3165,7 +3167,7 @@ SYSCALL_DEFINE2(swapon, const char __user *, specialfile, int, swap_flags)
 		name = NULL;
 		goto bad_swap;
 	}
-	swap_file = file_open_name(name, O_RDWR|O_LARGEFILE, 0);
+	swap_file = file_open_name(name, O_RDWR | O_LARGEFILE | O_DIRECT, 0);
 	if (IS_ERR(swap_file)) {
 		error = PTR_ERR(swap_file);
 		swap_file = NULL;
