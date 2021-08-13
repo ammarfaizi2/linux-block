@@ -8,11 +8,9 @@
  * This code is based on the uncore PMUs like arm-cci and arm-ccn.
  */
 #include <linux/acpi.h>
-#include <linux/cpuhotplug.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>
 #include <linux/list.h>
-#include <linux/smp.h>
 
 #include "hisi_uncore_pmu.h"
 
@@ -347,17 +345,6 @@ static const struct attribute_group hisi_sllc_pmu_v2_events_group = {
 	.attrs = hisi_sllc_pmu_v2_events_attr,
 };
 
-static DEVICE_ATTR(cpumask, 0444, hisi_cpumask_sysfs_show, NULL);
-
-static struct attribute *hisi_sllc_pmu_cpumask_attrs[] = {
-	&dev_attr_cpumask.attr,
-	NULL
-};
-
-static const struct attribute_group hisi_sllc_pmu_cpumask_attr_group = {
-	.attrs = hisi_sllc_pmu_cpumask_attrs,
-};
-
 static struct device_attribute hisi_sllc_pmu_identifier_attr =
 	__ATTR(identifier, 0444, hisi_uncore_pmu_identifier_attr_show, NULL);
 
@@ -373,7 +360,6 @@ static const struct attribute_group hisi_sllc_pmu_identifier_group = {
 static const struct attribute_group *hisi_sllc_pmu_v2_attr_groups[] = {
 	&hisi_sllc_pmu_v2_format_group,
 	&hisi_sllc_pmu_v2_events_group,
-	&hisi_sllc_pmu_cpumask_attr_group,
 	&hisi_sllc_pmu_identifier_group,
 	NULL
 };
@@ -412,9 +398,8 @@ static int hisi_sllc_pmu_dev_probe(struct platform_device *pdev,
 	sllc_pmu->ops = &hisi_uncore_sllc_ops;
 	sllc_pmu->check_event = SLLC_NR_EVENTS;
 	sllc_pmu->counter_bits = 64;
-	sllc_pmu->num_counters = 8;
-	sllc_pmu->dev = &pdev->dev;
-	sllc_pmu->on_cpu = -1;
+	sllc_pmu->pmu.num_counters = 8;
+	sllc_pmu->pmu.dev = &pdev->dev;
 
 	return 0;
 }
@@ -438,14 +423,7 @@ static int hisi_sllc_pmu_probe(struct platform_device *pdev)
 	if (!name)
 		return -ENOMEM;
 
-	ret = cpuhp_state_add_instance(CPUHP_AP_PERF_ARM_HISI_SLLC_ONLINE,
-				       &sllc_pmu->node);
-	if (ret) {
-		dev_err(&pdev->dev, "Error %d registering hotplug\n", ret);
-		return ret;
-	}
-
-	sllc_pmu->pmu = (struct pmu) {
+	sllc_pmu->pmu.pmu = (struct pmu) {
 		.module		= THIS_MODULE,
 		.task_ctx_nr	= perf_invalid_context,
 		.event_init	= hisi_uncore_pmu_event_init,
@@ -460,26 +438,15 @@ static int hisi_sllc_pmu_probe(struct platform_device *pdev)
 		.capabilities	= PERF_PMU_CAP_NO_EXCLUDE,
 	};
 
-	ret = perf_pmu_register(&sllc_pmu->pmu, name, -1);
-	if (ret) {
-		dev_err(sllc_pmu->dev, "PMU register failed, ret = %d\n", ret);
-		cpuhp_state_remove_instance(CPUHP_AP_PERF_ARM_HISI_SLLC_ONLINE,
-					    &sllc_pmu->node);
-		return ret;
-	}
-
 	platform_set_drvdata(pdev, sllc_pmu);
-
-	return ret;
+	return uncore_pmu_register(&sllc_pmu->pmu, name);
 }
 
 static int hisi_sllc_pmu_remove(struct platform_device *pdev)
 {
 	struct hisi_pmu *sllc_pmu = platform_get_drvdata(pdev);
 
-	perf_pmu_unregister(&sllc_pmu->pmu);
-	cpuhp_state_remove_instance_nocalls(CPUHP_AP_PERF_ARM_HISI_SLLC_ONLINE,
-					    &sllc_pmu->node);
+	uncore_pmu_unregister(&sllc_pmu->pmu);
 	return 0;
 }
 
@@ -492,34 +459,7 @@ static struct platform_driver hisi_sllc_pmu_driver = {
 	.probe = hisi_sllc_pmu_probe,
 	.remove = hisi_sllc_pmu_remove,
 };
-
-static int __init hisi_sllc_pmu_module_init(void)
-{
-	int ret;
-
-	ret = cpuhp_setup_state_multi(CPUHP_AP_PERF_ARM_HISI_SLLC_ONLINE,
-				      "AP_PERF_ARM_HISI_SLLC_ONLINE",
-				      hisi_uncore_pmu_online_cpu,
-				      hisi_uncore_pmu_offline_cpu);
-	if (ret) {
-		pr_err("SLLC PMU: cpuhp state setup failed, ret = %d\n", ret);
-		return ret;
-	}
-
-	ret = platform_driver_register(&hisi_sllc_pmu_driver);
-	if (ret)
-		cpuhp_remove_multi_state(CPUHP_AP_PERF_ARM_HISI_SLLC_ONLINE);
-
-	return ret;
-}
-module_init(hisi_sllc_pmu_module_init);
-
-static void __exit hisi_sllc_pmu_module_exit(void)
-{
-	platform_driver_unregister(&hisi_sllc_pmu_driver);
-	cpuhp_remove_multi_state(CPUHP_AP_PERF_ARM_HISI_SLLC_ONLINE);
-}
-module_exit(hisi_sllc_pmu_module_exit);
+module_platform_driver(hisi_sllc_pmu_driver);
 
 MODULE_DESCRIPTION("HiSilicon SLLC uncore PMU driver");
 MODULE_LICENSE("GPL v2");

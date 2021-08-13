@@ -20,12 +20,14 @@
 #include <linux/platform_device.h>
 #include <linux/types.h>
 
+#include "../uncore_pmu.h"
+
 #undef pr_fmt
 #define pr_fmt(fmt)     "hisi_pmu: " fmt
 
 #define HISI_PMU_V2		0x30
 #define HISI_MAX_COUNTERS 0x10
-#define to_hisi_pmu(p)	(container_of(p, struct hisi_pmu, pmu))
+#define to_hisi_pmu(p)	(container_of(to_uncore_pmu(p), struct hisi_pmu, pmu))
 
 #define HISI_PMU_ATTR(_name, _func, _config)				\
 	(&((struct dev_ext_attribute[]) {				\
@@ -70,16 +72,9 @@ struct hisi_pmu_hwevents {
 
 /* Generic pmu struct for different pmu types */
 struct hisi_pmu {
-	struct pmu pmu;
+	struct uncore_pmu pmu;
 	const struct hisi_uncore_ops *ops;
 	struct hisi_pmu_hwevents pmu_events;
-	/* associated_cpus: All CPUs associated with the PMU */
-	cpumask_t associated_cpus;
-	/* CPU used for counting */
-	int on_cpu;
-	int irq;
-	struct device *dev;
-	struct hlist_node node;
 	int sccl_id;
 	int ccl_id;
 	void __iomem *base;
@@ -87,7 +82,6 @@ struct hisi_pmu {
 	u32 index_id;
 	/* For DDRC PMU v2: each DDRC has more than one DMC */
 	u32 sub_id;
-	int num_counters;
 	int counter_bits;
 	/* check event code range */
 	int check_event;
@@ -109,10 +103,6 @@ ssize_t hisi_event_sysfs_show(struct device *dev,
 			      struct device_attribute *attr, char *buf);
 ssize_t hisi_format_sysfs_show(struct device *dev,
 			       struct device_attribute *attr, char *buf);
-ssize_t hisi_cpumask_sysfs_show(struct device *dev,
-				struct device_attribute *attr, char *buf);
-int hisi_uncore_pmu_online_cpu(unsigned int cpu, struct hlist_node *node);
-int hisi_uncore_pmu_offline_cpu(unsigned int cpu, struct hlist_node *node);
 
 ssize_t hisi_uncore_pmu_identifier_attr_show(struct device *dev,
 					     struct device_attribute *attr,

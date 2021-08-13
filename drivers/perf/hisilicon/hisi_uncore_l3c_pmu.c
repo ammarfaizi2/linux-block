@@ -10,11 +10,9 @@
  */
 #include <linux/acpi.h>
 #include <linux/bug.h>
-#include <linux/cpuhotplug.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>
 #include <linux/list.h>
-#include <linux/smp.h>
 
 #include "hisi_uncore_pmu.h"
 
@@ -441,17 +439,6 @@ static const struct attribute_group hisi_l3c_pmu_v2_events_group = {
 	.attrs = hisi_l3c_pmu_v2_events_attr,
 };
 
-static DEVICE_ATTR(cpumask, 0444, hisi_cpumask_sysfs_show, NULL);
-
-static struct attribute *hisi_l3c_pmu_cpumask_attrs[] = {
-	&dev_attr_cpumask.attr,
-	NULL,
-};
-
-static const struct attribute_group hisi_l3c_pmu_cpumask_attr_group = {
-	.attrs = hisi_l3c_pmu_cpumask_attrs,
-};
-
 static struct device_attribute hisi_l3c_pmu_identifier_attr =
 	__ATTR(identifier, 0444, hisi_uncore_pmu_identifier_attr_show, NULL);
 
@@ -467,7 +454,6 @@ static const struct attribute_group hisi_l3c_pmu_identifier_group = {
 static const struct attribute_group *hisi_l3c_pmu_v1_attr_groups[] = {
 	&hisi_l3c_pmu_v1_format_group,
 	&hisi_l3c_pmu_v1_events_group,
-	&hisi_l3c_pmu_cpumask_attr_group,
 	&hisi_l3c_pmu_identifier_group,
 	NULL,
 };
@@ -475,7 +461,6 @@ static const struct attribute_group *hisi_l3c_pmu_v1_attr_groups[] = {
 static const struct attribute_group *hisi_l3c_pmu_v2_attr_groups[] = {
 	&hisi_l3c_pmu_v2_format_group,
 	&hisi_l3c_pmu_v2_events_group,
-	&hisi_l3c_pmu_cpumask_attr_group,
 	&hisi_l3c_pmu_identifier_group,
 	NULL
 };
@@ -520,10 +505,9 @@ static int hisi_l3c_pmu_dev_probe(struct platform_device *pdev,
 		l3c_pmu->pmu_events.attr_groups = hisi_l3c_pmu_v1_attr_groups;
 	}
 
-	l3c_pmu->num_counters = L3C_NR_COUNTERS;
+	l3c_pmu->pmu.num_counters = L3C_NR_COUNTERS;
 	l3c_pmu->ops = &hisi_uncore_l3c_ops;
-	l3c_pmu->dev = &pdev->dev;
-	l3c_pmu->on_cpu = -1;
+	l3c_pmu->pmu.dev = &pdev->dev;
 
 	return 0;
 }
@@ -544,20 +528,13 @@ static int hisi_l3c_pmu_probe(struct platform_device *pdev)
 	if (ret)
 		return ret;
 
-	ret = cpuhp_state_add_instance(CPUHP_AP_PERF_ARM_HISI_L3_ONLINE,
-				       &l3c_pmu->node);
-	if (ret) {
-		dev_err(&pdev->dev, "Error %d registering hotplug\n", ret);
-		return ret;
-	}
-
 	/*
 	 * CCL_ID is used to identify the L3C in the same SCCL which was
 	 * used _UID by mistake.
 	 */
 	name = devm_kasprintf(&pdev->dev, GFP_KERNEL, "hisi_sccl%u_l3c%u",
 			      l3c_pmu->sccl_id, l3c_pmu->ccl_id);
-	l3c_pmu->pmu = (struct pmu) {
+	l3c_pmu->pmu.pmu = (struct pmu) {
 		.name		= name,
 		.module		= THIS_MODULE,
 		.task_ctx_nr	= perf_invalid_context,
@@ -573,23 +550,14 @@ static int hisi_l3c_pmu_probe(struct platform_device *pdev)
 		.capabilities	= PERF_PMU_CAP_NO_EXCLUDE,
 	};
 
-	ret = perf_pmu_register(&l3c_pmu->pmu, name, -1);
-	if (ret) {
-		dev_err(l3c_pmu->dev, "L3C PMU register failed!\n");
-		cpuhp_state_remove_instance_nocalls(
-			CPUHP_AP_PERF_ARM_HISI_L3_ONLINE, &l3c_pmu->node);
-	}
-
-	return ret;
+	return uncore_pmu_register(&l3c_pmu->pmu, name);
 }
 
 static int hisi_l3c_pmu_remove(struct platform_device *pdev)
 {
 	struct hisi_pmu *l3c_pmu = platform_get_drvdata(pdev);
 
-	perf_pmu_unregister(&l3c_pmu->pmu);
-	cpuhp_state_remove_instance_nocalls(CPUHP_AP_PERF_ARM_HISI_L3_ONLINE,
-					    &l3c_pmu->node);
+	uncore_pmu_unregister(&l3c_pmu->pmu);
 	return 0;
 }
 
@@ -602,34 +570,7 @@ static struct platform_driver hisi_l3c_pmu_driver = {
 	.probe = hisi_l3c_pmu_probe,
 	.remove = hisi_l3c_pmu_remove,
 };
-
-static int __init hisi_l3c_pmu_module_init(void)
-{
-	int ret;
-
-	ret = cpuhp_setup_state_multi(CPUHP_AP_PERF_ARM_HISI_L3_ONLINE,
-				      "AP_PERF_ARM_HISI_L3_ONLINE",
-				      hisi_uncore_pmu_online_cpu,
-				      hisi_uncore_pmu_offline_cpu);
-	if (ret) {
-		pr_err("L3C PMU: Error setup hotplug, ret = %d\n", ret);
-		return ret;
-	}
-
-	ret = platform_driver_register(&hisi_l3c_pmu_driver);
-	if (ret)
-		cpuhp_remove_multi_state(CPUHP_AP_PERF_ARM_HISI_L3_ONLINE);
-
-	return ret;
-}
-module_init(hisi_l3c_pmu_module_init);
-
-static void __exit hisi_l3c_pmu_module_exit(void)
-{
-	platform_driver_unregister(&hisi_l3c_pmu_driver);
-	cpuhp_remove_multi_state(CPUHP_AP_PERF_ARM_HISI_L3_ONLINE);
-}
-module_exit(hisi_l3c_pmu_module_exit);
+module_platform_driver(hisi_l3c_pmu_driver);
 
 MODULE_DESCRIPTION("HiSilicon SoC L3C uncore PMU driver");
 MODULE_LICENSE("GPL v2");

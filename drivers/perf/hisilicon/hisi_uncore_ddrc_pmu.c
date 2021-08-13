@@ -10,11 +10,9 @@
  */
 #include <linux/acpi.h>
 #include <linux/bug.h>
-#include <linux/cpuhotplug.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>
 #include <linux/list.h>
-#include <linux/smp.h>
 
 #include "hisi_uncore_pmu.h"
 
@@ -382,17 +380,6 @@ static const struct attribute_group hisi_ddrc_pmu_v2_events_group = {
 	.attrs = hisi_ddrc_pmu_v2_events_attr,
 };
 
-static DEVICE_ATTR(cpumask, 0444, hisi_cpumask_sysfs_show, NULL);
-
-static struct attribute *hisi_ddrc_pmu_cpumask_attrs[] = {
-	&dev_attr_cpumask.attr,
-	NULL,
-};
-
-static const struct attribute_group hisi_ddrc_pmu_cpumask_attr_group = {
-	.attrs = hisi_ddrc_pmu_cpumask_attrs,
-};
-
 static struct device_attribute hisi_ddrc_pmu_identifier_attr =
 	__ATTR(identifier, 0444, hisi_uncore_pmu_identifier_attr_show, NULL);
 
@@ -408,7 +395,6 @@ static const struct attribute_group hisi_ddrc_pmu_identifier_group = {
 static const struct attribute_group *hisi_ddrc_pmu_v1_attr_groups[] = {
 	&hisi_ddrc_pmu_v1_format_group,
 	&hisi_ddrc_pmu_v1_events_group,
-	&hisi_ddrc_pmu_cpumask_attr_group,
 	&hisi_ddrc_pmu_identifier_group,
 	NULL,
 };
@@ -416,7 +402,6 @@ static const struct attribute_group *hisi_ddrc_pmu_v1_attr_groups[] = {
 static const struct attribute_group *hisi_ddrc_pmu_v2_attr_groups[] = {
 	&hisi_ddrc_pmu_v2_format_group,
 	&hisi_ddrc_pmu_v2_events_group,
-	&hisi_ddrc_pmu_cpumask_attr_group,
 	&hisi_ddrc_pmu_identifier_group,
 	NULL
 };
@@ -476,9 +461,8 @@ static int hisi_ddrc_pmu_dev_probe(struct platform_device *pdev,
 		ddrc_pmu->ops = &hisi_uncore_ddrc_v1_ops;
 	}
 
-	ddrc_pmu->num_counters = DDRC_NR_COUNTERS;
-	ddrc_pmu->dev = &pdev->dev;
-	ddrc_pmu->on_cpu = -1;
+	ddrc_pmu->pmu.num_counters = DDRC_NR_COUNTERS;
+	ddrc_pmu->pmu.dev = &pdev->dev;
 
 	return 0;
 }
@@ -499,13 +483,6 @@ static int hisi_ddrc_pmu_probe(struct platform_device *pdev)
 	if (ret)
 		return ret;
 
-	ret = cpuhp_state_add_instance(CPUHP_AP_PERF_ARM_HISI_DDRC_ONLINE,
-				       &ddrc_pmu->node);
-	if (ret) {
-		dev_err(&pdev->dev, "Error %d registering hotplug;\n", ret);
-		return ret;
-	}
-
 	if (ddrc_pmu->identifier >= HISI_PMU_V2)
 		name = devm_kasprintf(&pdev->dev, GFP_KERNEL,
 				      "hisi_sccl%u_ddrc%u_%u",
@@ -516,7 +493,7 @@ static int hisi_ddrc_pmu_probe(struct platform_device *pdev)
 				      "hisi_sccl%u_ddrc%u", ddrc_pmu->sccl_id,
 				      ddrc_pmu->index_id);
 
-	ddrc_pmu->pmu = (struct pmu) {
+	ddrc_pmu->pmu.pmu = (struct pmu) {
 		.name		= name,
 		.module		= THIS_MODULE,
 		.task_ctx_nr	= perf_invalid_context,
@@ -532,23 +509,14 @@ static int hisi_ddrc_pmu_probe(struct platform_device *pdev)
 		.capabilities	= PERF_PMU_CAP_NO_EXCLUDE,
 	};
 
-	ret = perf_pmu_register(&ddrc_pmu->pmu, name, -1);
-	if (ret) {
-		dev_err(ddrc_pmu->dev, "DDRC PMU register failed!\n");
-		cpuhp_state_remove_instance_nocalls(
-			CPUHP_AP_PERF_ARM_HISI_DDRC_ONLINE, &ddrc_pmu->node);
-	}
-
-	return ret;
+	return uncore_pmu_register(&ddrc_pmu->pmu, name);
 }
 
 static int hisi_ddrc_pmu_remove(struct platform_device *pdev)
 {
 	struct hisi_pmu *ddrc_pmu = platform_get_drvdata(pdev);
 
-	perf_pmu_unregister(&ddrc_pmu->pmu);
-	cpuhp_state_remove_instance_nocalls(CPUHP_AP_PERF_ARM_HISI_DDRC_ONLINE,
-					    &ddrc_pmu->node);
+	uncore_pmu_unregister(&ddrc_pmu->pmu);
 	return 0;
 }
 
@@ -561,35 +529,7 @@ static struct platform_driver hisi_ddrc_pmu_driver = {
 	.probe = hisi_ddrc_pmu_probe,
 	.remove = hisi_ddrc_pmu_remove,
 };
-
-static int __init hisi_ddrc_pmu_module_init(void)
-{
-	int ret;
-
-	ret = cpuhp_setup_state_multi(CPUHP_AP_PERF_ARM_HISI_DDRC_ONLINE,
-				      "AP_PERF_ARM_HISI_DDRC_ONLINE",
-				      hisi_uncore_pmu_online_cpu,
-				      hisi_uncore_pmu_offline_cpu);
-	if (ret) {
-		pr_err("DDRC PMU: setup hotplug, ret = %d\n", ret);
-		return ret;
-	}
-
-	ret = platform_driver_register(&hisi_ddrc_pmu_driver);
-	if (ret)
-		cpuhp_remove_multi_state(CPUHP_AP_PERF_ARM_HISI_DDRC_ONLINE);
-
-	return ret;
-}
-module_init(hisi_ddrc_pmu_module_init);
-
-static void __exit hisi_ddrc_pmu_module_exit(void)
-{
-	platform_driver_unregister(&hisi_ddrc_pmu_driver);
-	cpuhp_remove_multi_state(CPUHP_AP_PERF_ARM_HISI_DDRC_ONLINE);
-
-}
-module_exit(hisi_ddrc_pmu_module_exit);
+module_platform_driver(hisi_ddrc_pmu_driver);
 
 MODULE_DESCRIPTION("HiSilicon SoC DDRC uncore PMU driver");
 MODULE_LICENSE("GPL v2");

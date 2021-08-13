@@ -51,56 +51,12 @@ ssize_t hisi_event_sysfs_show(struct device *dev,
 }
 EXPORT_SYMBOL_GPL(hisi_event_sysfs_show);
 
-/*
- * sysfs cpumask attributes. For uncore PMU, we only have a single CPU to show
- */
-ssize_t hisi_cpumask_sysfs_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct hisi_pmu *hisi_pmu = to_hisi_pmu(dev_get_drvdata(dev));
-
-	return sysfs_emit(buf, "%d\n", hisi_pmu->on_cpu);
-}
-EXPORT_SYMBOL_GPL(hisi_cpumask_sysfs_show);
-
-static bool hisi_validate_event_group(struct perf_event *event)
-{
-	struct perf_event *sibling, *leader = event->group_leader;
-	struct hisi_pmu *hisi_pmu = to_hisi_pmu(event->pmu);
-	/* Include count for the event */
-	int counters = 1;
-
-	if (!is_software_event(leader)) {
-		/*
-		 * We must NOT create groups containing mixed PMUs, although
-		 * software events are acceptable
-		 */
-		if (leader->pmu != event->pmu)
-			return false;
-
-		/* Increment counter for the leader */
-		if (leader != event)
-			counters++;
-	}
-
-	for_each_sibling_event(sibling, event->group_leader) {
-		if (is_software_event(sibling))
-			continue;
-		if (sibling->pmu != event->pmu)
-			return false;
-		/* Increment counter for each sibling */
-		counters++;
-	}
-
-	/* The group can not count events more than the counters in the HW */
-	return counters <= hisi_pmu->num_counters;
-}
 
 int hisi_uncore_pmu_get_event_idx(struct perf_event *event)
 {
 	struct hisi_pmu *hisi_pmu = to_hisi_pmu(event->pmu);
 	unsigned long *used_mask = hisi_pmu->pmu_events.used_mask;
-	u32 num_counters = hisi_pmu->num_counters;
+	u32 num_counters = hisi_pmu->pmu.num_counters;
 	int idx;
 
 	idx = find_first_zero_bit(used_mask, num_counters);
@@ -143,7 +99,7 @@ static irqreturn_t hisi_uncore_pmu_isr(int irq, void *data)
 	 * Find the counter index which overflowed if the bit was set
 	 * and handle it.
 	 */
-	for_each_set_bit(idx, &overflown, hisi_pmu->num_counters) {
+	for_each_set_bit(idx, &overflown, hisi_pmu->pmu.num_counters) {
 		/* Write 1 to clear the IRQ status flag */
 		hisi_pmu->ops->clear_int_status(hisi_pmu, idx);
 		/* Get the corresponding event struct */
@@ -156,6 +112,77 @@ static irqreturn_t hisi_uncore_pmu_isr(int irq, void *data)
 	}
 
 	return IRQ_HANDLED;
+}
+
+/*
+ * The Super CPU Cluster (SCCL) and CPU Cluster (CCL) IDs can be
+ * determined from the MPIDR_EL1, but the encoding varies by CPU:
+ *
+ * - For MT variants of TSV110:
+ *   SCCL is Aff2[7:3], CCL is Aff2[2:0]
+ *
+ * - For other MT parts:
+ *   SCCL is Aff3[7:0], CCL is Aff2[7:0]
+ *
+ * - For non-MT parts:
+ *   SCCL is Aff2[7:0], CCL is Aff1[7:0]
+ */
+static void hisi_read_sccl_and_ccl_id(int cpu, int *scclp, int *cclp)
+{
+	u64 mpidr = cpu_logical_map(cpu);
+	int aff3 = MPIDR_AFFINITY_LEVEL(mpidr, 3);
+	int aff2 = MPIDR_AFFINITY_LEVEL(mpidr, 2);
+	int aff1 = MPIDR_AFFINITY_LEVEL(mpidr, 1);
+	bool mt = mpidr & MPIDR_MT_BITMASK;
+	int sccl, ccl;
+
+	/* This assumes all CPUs are the same part number */
+	if (mt && read_cpuid_part_number() == HISI_CPU_PART_TSV110) {
+		sccl = aff2 >> 3;
+		ccl = aff2 & 0x7;
+	} else if (mt) {
+		sccl = aff3;
+		ccl = aff2;
+	} else {
+		sccl = aff2;
+		ccl = aff1;
+	}
+
+	if (scclp)
+		*scclp = sccl;
+	if (cclp)
+		*cclp = ccl;
+}
+
+/*
+ * Check whether the CPU is associated with this uncore PMU
+ */
+static bool hisi_pmu_check_associated_cpu(int cpu, struct hisi_pmu *hisi_pmu)
+{
+	int sccl_id, ccl_id;
+
+	if (hisi_pmu->ccl_id == -1) {
+		/* If CCL_ID is -1, the PMU only shares the same SCCL */
+		hisi_read_sccl_and_ccl_id(cpu, &sccl_id, NULL);
+
+		return sccl_id == hisi_pmu->sccl_id;
+	}
+
+	hisi_read_sccl_and_ccl_id(cpu, &sccl_id, &ccl_id);
+
+	return sccl_id == hisi_pmu->sccl_id && ccl_id == hisi_pmu->ccl_id;
+}
+
+/*
+ * Check which CPUs are associated with this uncore PMU
+ */
+static void hisi_pmu_set_associated_cpus(struct hisi_pmu *hisi_pmu)
+{
+	int cpu;
+
+	for_each_possible_cpu(cpu)
+		if (hisi_pmu_check_associated_cpu(cpu, hisi_pmu))
+			cpumask_set_cpu(cpu, &hisi_pmu->pmu.associated_cpus);
 }
 
 int hisi_uncore_pmu_init_irq(struct hisi_pmu *hisi_pmu,
@@ -176,58 +203,25 @@ int hisi_uncore_pmu_init_irq(struct hisi_pmu *hisi_pmu,
 		return ret;
 	}
 
-	hisi_pmu->irq = irq;
+	hisi_pmu->pmu.irq = irq;
 
+	hisi_pmu_set_associated_cpus(hisi_pmu);
 	return 0;
 }
 EXPORT_SYMBOL_GPL(hisi_uncore_pmu_init_irq);
 
 int hisi_uncore_pmu_event_init(struct perf_event *event)
 {
-	struct hw_perf_event *hwc = &event->hw;
 	struct hisi_pmu *hisi_pmu;
+	int ret;
 
-	if (event->attr.type != event->pmu->type)
-		return -ENOENT;
-
-	/*
-	 * We do not support sampling as the counters are all
-	 * shared by all CPU cores in a CPU die(SCCL). Also we
-	 * do not support attach to a task(per-process mode)
-	 */
-	if (is_sampling_event(event) || event->attach_state & PERF_ATTACH_TASK)
-		return -EOPNOTSUPP;
-
-	/*
-	 *  The uncore counters not specific to any CPU, so cannot
-	 *  support per-task
-	 */
-	if (event->cpu < 0)
-		return -EINVAL;
-
-	/*
-	 * Validate if the events in group does not exceed the
-	 * available counters in hardware.
-	 */
-	if (!hisi_validate_event_group(event))
-		return -EINVAL;
+	ret = uncore_pmu_event_init(event);
+	if (ret)
+		return ret;
 
 	hisi_pmu = to_hisi_pmu(event->pmu);
 	if (event->attr.config > hisi_pmu->check_event)
 		return -EINVAL;
-
-	if (hisi_pmu->on_cpu == -1)
-		return -EINVAL;
-	/*
-	 * We don't assign an index until we actually place the event onto
-	 * hardware. Use -1 to signify that we haven't decided where to put it
-	 * yet.
-	 */
-	hwc->idx		= -1;
-	hwc->config_base	= event->attr.config;
-
-	/* Enforce to use the same CPU for all events in this PMU */
-	event->cpu = hisi_pmu->on_cpu;
 
 	return 0;
 }
@@ -394,7 +388,7 @@ void hisi_uncore_pmu_enable(struct pmu *pmu)
 {
 	struct hisi_pmu *hisi_pmu = to_hisi_pmu(pmu);
 	int enabled = bitmap_weight(hisi_pmu->pmu_events.used_mask,
-				    hisi_pmu->num_counters);
+				    hisi_pmu->pmu.num_counters);
 
 	if (!enabled)
 		return;
@@ -410,121 +404,5 @@ void hisi_uncore_pmu_disable(struct pmu *pmu)
 	hisi_pmu->ops->stop_counters(hisi_pmu);
 }
 EXPORT_SYMBOL_GPL(hisi_uncore_pmu_disable);
-
-
-/*
- * The Super CPU Cluster (SCCL) and CPU Cluster (CCL) IDs can be
- * determined from the MPIDR_EL1, but the encoding varies by CPU:
- *
- * - For MT variants of TSV110:
- *   SCCL is Aff2[7:3], CCL is Aff2[2:0]
- *
- * - For other MT parts:
- *   SCCL is Aff3[7:0], CCL is Aff2[7:0]
- *
- * - For non-MT parts:
- *   SCCL is Aff2[7:0], CCL is Aff1[7:0]
- */
-static void hisi_read_sccl_and_ccl_id(int *scclp, int *cclp)
-{
-	u64 mpidr = read_cpuid_mpidr();
-	int aff3 = MPIDR_AFFINITY_LEVEL(mpidr, 3);
-	int aff2 = MPIDR_AFFINITY_LEVEL(mpidr, 2);
-	int aff1 = MPIDR_AFFINITY_LEVEL(mpidr, 1);
-	bool mt = mpidr & MPIDR_MT_BITMASK;
-	int sccl, ccl;
-
-	if (mt && read_cpuid_part_number() == HISI_CPU_PART_TSV110) {
-		sccl = aff2 >> 3;
-		ccl = aff2 & 0x7;
-	} else if (mt) {
-		sccl = aff3;
-		ccl = aff2;
-	} else {
-		sccl = aff2;
-		ccl = aff1;
-	}
-
-	if (scclp)
-		*scclp = sccl;
-	if (cclp)
-		*cclp = ccl;
-}
-
-/*
- * Check whether the CPU is associated with this uncore PMU
- */
-static bool hisi_pmu_cpu_is_associated_pmu(struct hisi_pmu *hisi_pmu)
-{
-	int sccl_id, ccl_id;
-
-	if (hisi_pmu->ccl_id == -1) {
-		/* If CCL_ID is -1, the PMU only shares the same SCCL */
-		hisi_read_sccl_and_ccl_id(&sccl_id, NULL);
-
-		return sccl_id == hisi_pmu->sccl_id;
-	}
-
-	hisi_read_sccl_and_ccl_id(&sccl_id, &ccl_id);
-
-	return sccl_id == hisi_pmu->sccl_id && ccl_id == hisi_pmu->ccl_id;
-}
-
-int hisi_uncore_pmu_online_cpu(unsigned int cpu, struct hlist_node *node)
-{
-	struct hisi_pmu *hisi_pmu = hlist_entry_safe(node, struct hisi_pmu,
-						     node);
-
-	if (!hisi_pmu_cpu_is_associated_pmu(hisi_pmu))
-		return 0;
-
-	cpumask_set_cpu(cpu, &hisi_pmu->associated_cpus);
-
-	/* If another CPU is already managing this PMU, simply return. */
-	if (hisi_pmu->on_cpu != -1)
-		return 0;
-
-	/* Use this CPU in cpumask for event counting */
-	hisi_pmu->on_cpu = cpu;
-
-	/* Overflow interrupt also should use the same CPU */
-	WARN_ON(irq_set_affinity(hisi_pmu->irq, cpumask_of(cpu)));
-
-	return 0;
-}
-EXPORT_SYMBOL_GPL(hisi_uncore_pmu_online_cpu);
-
-int hisi_uncore_pmu_offline_cpu(unsigned int cpu, struct hlist_node *node)
-{
-	struct hisi_pmu *hisi_pmu = hlist_entry_safe(node, struct hisi_pmu,
-						     node);
-	cpumask_t pmu_online_cpus;
-	unsigned int target;
-
-	if (!cpumask_test_and_clear_cpu(cpu, &hisi_pmu->associated_cpus))
-		return 0;
-
-	/* Nothing to do if this CPU doesn't own the PMU */
-	if (hisi_pmu->on_cpu != cpu)
-		return 0;
-
-	/* Give up ownership of the PMU */
-	hisi_pmu->on_cpu = -1;
-
-	/* Choose a new CPU to migrate ownership of the PMU to */
-	cpumask_and(&pmu_online_cpus, &hisi_pmu->associated_cpus,
-		    cpu_online_mask);
-	target = cpumask_any_but(&pmu_online_cpus, cpu);
-	if (target >= nr_cpu_ids)
-		return 0;
-
-	perf_pmu_migrate_context(&hisi_pmu->pmu, cpu, target);
-	/* Use this CPU for event counting */
-	hisi_pmu->on_cpu = target;
-	WARN_ON(irq_set_affinity(hisi_pmu->irq, cpumask_of(target)));
-
-	return 0;
-}
-EXPORT_SYMBOL_GPL(hisi_uncore_pmu_offline_cpu);
 
 MODULE_LICENSE("GPL v2");

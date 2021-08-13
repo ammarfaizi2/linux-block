@@ -10,11 +10,9 @@
  */
 #include <linux/acpi.h>
 #include <linux/bug.h>
-#include <linux/cpuhotplug.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>
 #include <linux/list.h>
-#include <linux/smp.h>
 
 #include "hisi_uncore_pmu.h"
 
@@ -407,17 +405,6 @@ static const struct attribute_group hisi_hha_pmu_v2_events_group = {
 	.attrs = hisi_hha_pmu_v2_events_attr,
 };
 
-static DEVICE_ATTR(cpumask, 0444, hisi_cpumask_sysfs_show, NULL);
-
-static struct attribute *hisi_hha_pmu_cpumask_attrs[] = {
-	&dev_attr_cpumask.attr,
-	NULL,
-};
-
-static const struct attribute_group hisi_hha_pmu_cpumask_attr_group = {
-	.attrs = hisi_hha_pmu_cpumask_attrs,
-};
-
 static struct device_attribute hisi_hha_pmu_identifier_attr =
 	__ATTR(identifier, 0444, hisi_uncore_pmu_identifier_attr_show, NULL);
 
@@ -433,7 +420,6 @@ static const struct attribute_group hisi_hha_pmu_identifier_group = {
 static const struct attribute_group *hisi_hha_pmu_v1_attr_groups[] = {
 	&hisi_hha_pmu_v1_format_group,
 	&hisi_hha_pmu_v1_events_group,
-	&hisi_hha_pmu_cpumask_attr_group,
 	&hisi_hha_pmu_identifier_group,
 	NULL,
 };
@@ -441,7 +427,6 @@ static const struct attribute_group *hisi_hha_pmu_v1_attr_groups[] = {
 static const struct attribute_group *hisi_hha_pmu_v2_attr_groups[] = {
 	&hisi_hha_pmu_v2_format_group,
 	&hisi_hha_pmu_v2_events_group,
-	&hisi_hha_pmu_cpumask_attr_group,
 	&hisi_hha_pmu_identifier_group,
 	NULL
 };
@@ -480,16 +465,15 @@ static int hisi_hha_pmu_dev_probe(struct platform_device *pdev,
 		hha_pmu->counter_bits = 64;
 		hha_pmu->check_event = HHA_V2_NR_EVENT;
 		hha_pmu->pmu_events.attr_groups = hisi_hha_pmu_v2_attr_groups;
-		hha_pmu->num_counters = HHA_V2_NR_COUNTERS;
+		hha_pmu->pmu.num_counters = HHA_V2_NR_COUNTERS;
 	} else {
 		hha_pmu->counter_bits = 48;
 		hha_pmu->check_event = HHA_V1_NR_EVENT;
 		hha_pmu->pmu_events.attr_groups = hisi_hha_pmu_v1_attr_groups;
-		hha_pmu->num_counters = HHA_V1_NR_COUNTERS;
+		hha_pmu->pmu.num_counters = HHA_V1_NR_COUNTERS;
 	}
 	hha_pmu->ops = &hisi_uncore_hha_ops;
-	hha_pmu->dev = &pdev->dev;
-	hha_pmu->on_cpu = -1;
+	hha_pmu->pmu.dev = &pdev->dev;
 
 	return 0;
 }
@@ -510,16 +494,9 @@ static int hisi_hha_pmu_probe(struct platform_device *pdev)
 	if (ret)
 		return ret;
 
-	ret = cpuhp_state_add_instance(CPUHP_AP_PERF_ARM_HISI_HHA_ONLINE,
-				       &hha_pmu->node);
-	if (ret) {
-		dev_err(&pdev->dev, "Error %d registering hotplug\n", ret);
-		return ret;
-	}
-
 	name = devm_kasprintf(&pdev->dev, GFP_KERNEL, "hisi_sccl%u_hha%u",
 			      hha_pmu->sccl_id, hha_pmu->index_id);
-	hha_pmu->pmu = (struct pmu) {
+	hha_pmu->pmu.pmu = (struct pmu) {
 		.name		= name,
 		.module		= THIS_MODULE,
 		.task_ctx_nr	= perf_invalid_context,
@@ -535,23 +512,14 @@ static int hisi_hha_pmu_probe(struct platform_device *pdev)
 		.capabilities	= PERF_PMU_CAP_NO_EXCLUDE,
 	};
 
-	ret = perf_pmu_register(&hha_pmu->pmu, name, -1);
-	if (ret) {
-		dev_err(hha_pmu->dev, "HHA PMU register failed!\n");
-		cpuhp_state_remove_instance_nocalls(
-			CPUHP_AP_PERF_ARM_HISI_HHA_ONLINE, &hha_pmu->node);
-	}
-
-	return ret;
+	return uncore_pmu_register(&hha_pmu->pmu, name);
 }
 
 static int hisi_hha_pmu_remove(struct platform_device *pdev)
 {
 	struct hisi_pmu *hha_pmu = platform_get_drvdata(pdev);
 
-	perf_pmu_unregister(&hha_pmu->pmu);
-	cpuhp_state_remove_instance_nocalls(CPUHP_AP_PERF_ARM_HISI_HHA_ONLINE,
-					    &hha_pmu->node);
+	uncore_pmu_unregister(&hha_pmu->pmu);
 	return 0;
 }
 
@@ -564,34 +532,7 @@ static struct platform_driver hisi_hha_pmu_driver = {
 	.probe = hisi_hha_pmu_probe,
 	.remove = hisi_hha_pmu_remove,
 };
-
-static int __init hisi_hha_pmu_module_init(void)
-{
-	int ret;
-
-	ret = cpuhp_setup_state_multi(CPUHP_AP_PERF_ARM_HISI_HHA_ONLINE,
-				      "AP_PERF_ARM_HISI_HHA_ONLINE",
-				      hisi_uncore_pmu_online_cpu,
-				      hisi_uncore_pmu_offline_cpu);
-	if (ret) {
-		pr_err("HHA PMU: Error setup hotplug, ret = %d;\n", ret);
-		return ret;
-	}
-
-	ret = platform_driver_register(&hisi_hha_pmu_driver);
-	if (ret)
-		cpuhp_remove_multi_state(CPUHP_AP_PERF_ARM_HISI_HHA_ONLINE);
-
-	return ret;
-}
-module_init(hisi_hha_pmu_module_init);
-
-static void __exit hisi_hha_pmu_module_exit(void)
-{
-	platform_driver_unregister(&hisi_hha_pmu_driver);
-	cpuhp_remove_multi_state(CPUHP_AP_PERF_ARM_HISI_HHA_ONLINE);
-}
-module_exit(hisi_hha_pmu_module_exit);
+module_platform_driver(hisi_hha_pmu_driver);
 
 MODULE_DESCRIPTION("HiSilicon SoC HHA uncore PMU driver");
 MODULE_LICENSE("GPL v2");

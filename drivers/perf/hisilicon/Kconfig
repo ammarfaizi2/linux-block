@@ -2,6 +2,7 @@
 config HISI_PMU
 	tristate "HiSilicon SoC PMU drivers"
 	depends on ARM64 && ACPI
+	select UNCORE_PMU
 	  help
 	  Support for HiSilicon SoC L3 Cache performance monitor, Hydra Home
 	  Agent performance monitor and DDR Controller performance monitor.
