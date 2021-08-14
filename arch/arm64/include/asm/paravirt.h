@@ -18,7 +18,7 @@ static inline u64 paravirt_steal_clock(int cpu)
 	return static_call(pv_steal_clock)(cpu);
 }
 
-int __init pv_time_init(void);
+int pv_time_init(void);
 
 #else
 
