@@ -207,7 +207,7 @@ static inline unsigned long mfn_to_pfn(unsigned long mfn)
 
 	/*
 	 * Some x86 code are still using mfn_to_pfn instead of
-	 * gfn_to_pfn. This will have to be removed when we figure
+	 * xen_gfn_to_pfn. This will have to be removed when we figure
 	 * out which call.
 	 */
 	if (xen_feature(XENFEAT_auto_translated_physmap))
@@ -248,7 +248,7 @@ static inline unsigned long pfn_to_gfn(unsigned long pfn)
 		return pfn_to_mfn(pfn);
 }
 
-static inline unsigned long gfn_to_pfn(unsigned long gfn)
+static inline unsigned long xen_gfn_to_pfn(unsigned long gfn)
 {
 	if (xen_feature(XENFEAT_auto_translated_physmap))
 		return gfn;
@@ -258,7 +258,7 @@ static inline unsigned long gfn_to_pfn(unsigned long gfn)
 
 /* Pseudo-physical <-> Bus conversion */
 #define pfn_to_bfn(pfn)		pfn_to_gfn(pfn)
-#define bfn_to_pfn(bfn)		gfn_to_pfn(bfn)
+#define bfn_to_pfn(bfn)		xen_gfn_to_pfn(bfn)
 
 /*
  * We detect special mappings in one of two ways:
@@ -301,7 +301,7 @@ static inline unsigned long bfn_to_local_pfn(unsigned long mfn)
 
 /* VIRT <-> GUEST conversion */
 #define virt_to_gfn(v)		(pfn_to_gfn(virt_to_pfn(v)))
-#define gfn_to_virt(g)		(__va(gfn_to_pfn(g) << PAGE_SHIFT))
+#define gfn_to_virt(g)		(__va(xen_gfn_to_pfn(g) << PAGE_SHIFT))
 
 static inline unsigned long pte_mfn(pte_t pte)
 {

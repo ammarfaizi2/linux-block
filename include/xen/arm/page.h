@@ -37,7 +37,7 @@ typedef struct xpaddr {
  * have to keep track with frame based on 4KB page granularity.
  *
  * PV drivers should never make a direct usage of those helpers (particularly
- * pfn_to_gfn and gfn_to_pfn).
+ * pfn_to_gfn and xen_gfn_to_pfn).
  */
 
 unsigned long __pfn_to_mfn(unsigned long pfn);
@@ -49,7 +49,7 @@ static inline unsigned long pfn_to_gfn(unsigned long pfn)
 	return pfn;
 }
 
-static inline unsigned long gfn_to_pfn(unsigned long gfn)
+static inline unsigned long xen_gfn_to_pfn(unsigned long gfn)
 {
 	return gfn;
 }
@@ -81,7 +81,7 @@ static inline unsigned long bfn_to_pfn(unsigned long bfn)
 		WARN_ON_ONCE(!virt_addr_valid(v));                              \
 		pfn_to_gfn(virt_to_phys(v) >> XEN_PAGE_SHIFT);                 \
 	})
-#define gfn_to_virt(m)		(__va(gfn_to_pfn(m) << XEN_PAGE_SHIFT))
+#define gfn_to_virt(m)		(__va(xen_gfn_to_pfn(m) << XEN_PAGE_SHIFT))
 
 #define percpu_to_gfn(v)	\
 	(pfn_to_gfn(per_cpu_ptr_to_phys(v) >> XEN_PAGE_SHIFT))

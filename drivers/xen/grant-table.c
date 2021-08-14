@@ -408,7 +408,7 @@ static void gnttab_add_deferred(grant_ref_t ref, bool readonly,
 	if (!page) {
 		unsigned long gfn = gnttab_interface->read_frame(ref);
 
-		page = pfn_to_page(gfn_to_pfn(gfn));
+		page = pfn_to_page(xen_gfn_to_pfn(gfn));
 		get_page(page);
 	}
 
