@@ -10,6 +10,18 @@
 
 #include <asm/page-def.h>
 
+/*
+ * VMALLOC range.
+ *
+ * VMALLOC_START: beginning of the kernel vmalloc space
+ * VMALLOC_END: extends to the available space below vmemmap, PCI I/O space
+ *	and fixed mappings
+ */
+#define VMALLOC_START		(MODULES_END)
+#define VMALLOC_END		(VMEMMAP_START - SZ_256M)
+
+#define vmemmap			((struct page *)VMEMMAP_START - (memstart_addr >> PAGE_SHIFT))
+
 #ifndef __ASSEMBLY__
 
 #include <linux/personality.h> /* for READ_IMPLIES_EXEC */
