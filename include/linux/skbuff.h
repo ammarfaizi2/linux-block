@@ -1272,6 +1272,7 @@ unsigned int skb_seq_read(unsigned int consumed, const u8 **data,
 			  struct skb_seq_state *st);
 void skb_abort_seq_read(struct skb_seq_state *st);
 
+struct ts_config;
 unsigned int skb_find_text(struct sk_buff *skb, unsigned int from,
 			   unsigned int to, struct ts_config *config);
 
@@ -1430,17 +1431,8 @@ static inline __u32 skb_get_hash(struct sk_buff *skb)
 	return skb->hash;
 }
 
-static inline __u32 skb_get_hash_flowi6(struct sk_buff *skb, const struct flowi6 *fl6)
-{
-	if (!skb->l4_hash && !skb->sw_hash) {
-		struct flow_keys keys;
-		__u32 hash = __get_hash_from_flowi6(fl6, &keys);
-
-		__skb_set_sw_hash(skb, hash, flow_keys_have_l4(&keys));
-	}
-
-	return skb->hash;
-}
+struct flowi6;
+__u32 skb_get_hash_flowi6(struct sk_buff *skb, const struct flowi6 *fl6);
 
 __u32 skb_get_hash_perturb(const struct sk_buff *skb,
 			   const siphash_key_t *perturb);
