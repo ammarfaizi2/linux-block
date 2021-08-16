@@ -4,6 +4,7 @@
 #ifndef __RTL_WIFI_H__
 #define __RTL_WIFI_H__
 
+#undef pr_fmt
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
 #include <linux/sched.h>

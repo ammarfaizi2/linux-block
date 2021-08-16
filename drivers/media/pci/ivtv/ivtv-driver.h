@@ -22,6 +22,7 @@
 #ifndef IVTV_DRIVER_H
 #define IVTV_DRIVER_H
 
+#undef pr_fmt
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
 /* Internal header for ivtv project:
