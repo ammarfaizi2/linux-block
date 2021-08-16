@@ -35,6 +35,7 @@
 #ifndef _SOCK_TYPES_H
 #define _SOCK_TYPES_H
 
+#include <linux/atomic.h>
 #include <linux/refcount_types.h>
 #include <linux/rbtree_types.h>
 #include <linux/uidgid.h>
