@@ -9,6 +9,7 @@
 #ifndef __TDA18271_PRIV_H__
 #define __TDA18271_PRIV_H__
 
+#undef pr_fmt
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
 #include <linux/kernel.h>

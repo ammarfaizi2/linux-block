@@ -5,6 +5,7 @@
  *  Copyright (c) 2008 Steven Toth <stoth@linuxtv.org>
  */
 
+#undef pr_fmt
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
 #include <linux/bitops.h>

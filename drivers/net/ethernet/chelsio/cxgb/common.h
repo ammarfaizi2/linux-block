@@ -35,6 +35,7 @@
  *                                                                           *
  ****************************************************************************/
 
+#undef pr_fmt
 #define pr_fmt(fmt) "cxgb: " fmt
 
 #ifndef _CXGB_COMMON_H_
