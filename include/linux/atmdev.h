@@ -314,6 +314,7 @@ void register_atm_ioctl(struct atm_ioctl *);
  */
 void deregister_atm_ioctl(struct atm_ioctl *);
 
+struct notifier_block;
 
 /* register_atmdevice_notifier - register atm_dev notify events
  *
