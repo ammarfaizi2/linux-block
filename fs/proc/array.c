@@ -335,10 +335,10 @@ static inline void task_seccomp(struct seq_file *m, struct task_struct *p)
 {
 	seq_put_decimal_ull(m, "NoNewPrivs:\t", task_no_new_privs(p));
 #ifdef CONFIG_SECCOMP
-	seq_put_decimal_ull(m, "\nSeccomp:\t", p->seccomp.mode);
+	seq_put_decimal_ull(m, "\nSeccomp:\t", per_task(p, seccomp).mode);
 #ifdef CONFIG_SECCOMP_FILTER
 	seq_put_decimal_ull(m, "\nSeccomp_filters:\t",
-			    atomic_read(&p->seccomp.filter_count));
+			    atomic_read(&per_task(p, seccomp).filter_count));
 #endif
 #endif
 	seq_puts(m, "\nSpeculation_Store_Bypass:\t");

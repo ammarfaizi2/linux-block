@@ -952,7 +952,7 @@ static struct task_struct *dup_task_struct(struct task_struct *orig, int node)
 	 * then. Until then, filter must be NULL to avoid messing up
 	 * the usage counts on the error path calling free_task.
 	 */
-	tsk->seccomp.filter = NULL;
+	per_task(tsk, seccomp).filter = NULL;
 #endif
 
 	setup_thread_stack(tsk, orig);
@@ -1700,7 +1700,7 @@ static void copy_seccomp(struct task_struct *p)
 
 	/* Ref-count the new filter user, and assign it. */
 	get_seccomp_filter(current);
-	p->seccomp = current->seccomp;
+	per_task(p, seccomp) = per_task(current, seccomp);
 
 	/*
 	 * Explicitly enable no_new_privs here in case it got set
@@ -1715,7 +1715,7 @@ static void copy_seccomp(struct task_struct *p)
 	 * flags and between before we held the sighand lock, we have
 	 * to manually enable the seccomp thread flag here.
 	 */
-	if (p->seccomp.mode != SECCOMP_MODE_DISABLED)
+	if (per_task(p, seccomp).mode != SECCOMP_MODE_DISABLED)
 		set_task_syscall_work(p, SECCOMP);
 #endif
 }

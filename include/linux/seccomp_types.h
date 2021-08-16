@@ -2,6 +2,8 @@
 #ifndef _LINUX_SECCOMP_TYPES_H
 #define _LINUX_SECCOMP_TYPES_H
 
+#include <linux/sched/per_task.h>
+
 #include <uapi/linux/seccomp.h>
 
 #define SECCOMP_FILTER_FLAG_MASK	(SECCOMP_FILTER_FLAG_TSYNC | \
@@ -38,6 +40,7 @@ struct seccomp {
 	struct seccomp_filter *filter;
 };
 
+
 #else /* CONFIG_SECCOMP */
 
 struct seccomp { };
@@ -45,5 +48,7 @@ struct seccomp_filter { };
 struct seccomp_data;
 
 #endif /* CONFIG_SECCOMP */
+
+DECLARE_PER_TASK(struct seccomp, seccomp);
 
 #endif /* _LINUX_SECCOMP_TYPES_H */

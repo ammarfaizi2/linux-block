@@ -687,7 +687,6 @@ struct task_struct {
 #endif
 	unsigned int			sessionid;
 #endif
-	struct seccomp			seccomp;
 	struct syscall_user_dispatch	syscall_dispatch;
 
 	/* Thread group tracking: */
