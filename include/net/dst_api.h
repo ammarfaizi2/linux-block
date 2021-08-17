@@ -19,8 +19,6 @@
 #include <linux/indirect_call_wrapper.h>
 #include <linux/skbuff_api.h>
 
-#include <net/net_namespace_types.h>
-
 #include <uapi/linux/rtnetlink.h>
 
 struct dst_metrics {
@@ -279,6 +277,8 @@ static inline u32 dst_tclassid(const struct sk_buff *skb)
 #endif
 	return 0;
 }
+
+extern struct net init_net;
 
 int dst_discard_out(struct net *net, struct sock *sk, struct sk_buff *skb);
 static inline int dst_discard(struct sk_buff *skb)
