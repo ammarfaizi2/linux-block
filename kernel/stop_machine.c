@@ -318,6 +318,7 @@ static int multi_cpu_stop(void *data)
 		}
 		multi_cpu_stop_progress(__FILE__, __LINE__, "before rcu_momentary_dyntick_idle()", oldstate);
 		rcu_momentary_dyntick_idle();
+		multi_cpu_stop_progress(__FILE__, __LINE__, "after rcu_momentary_dyntick_idle()", oldstate);
 		if (cpu_is_offline(smp_processor_id()) &&
 		    cpu_hp_check_delay("MULTI_STOP_RUN in", multi_cpu_stop)) {
 			dump_multi_cpu_stop_state(msdata, &firsttime);
@@ -327,6 +328,7 @@ static int multi_cpu_stop(void *data)
 
 	local_irq_restore(flags);
 	cpu_hp_check_delay("Exit from", multi_cpu_stop);
+	multi_cpu_stop_progress(__FILE__, __LINE__, "exiting multi_cpu_stop()", oldstate);
 	return err;
 }
 
