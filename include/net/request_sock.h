@@ -15,9 +15,9 @@
 #include <linux/spinlock.h>
 #include <linux/types.h>
 #include <linux/bug.h>
-#include <linux/refcount.h>
+#include <linux/refcount_api.h>
 
-#include <net/sock_api.h>
+#include <net/sock_types.h>
 
 struct request_sock;
 struct sk_buff;
