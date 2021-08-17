@@ -231,10 +231,6 @@ static void dump_multi_cpu_stop_state(struct multi_stop_data *msdata, bool *firs
 			continue;
 		stopper = &per_cpu(cpu_stopper, cpu);
 		raw_spin_lock_irqsave(&stopper->lock, flags);
-		if (msdata->state == stopper->laststate) {
-			raw_spin_unlock_irqrestore(&stopper->lock, flags);
-			continue;
-		}
 		pr_info("%s: %s%s ->state=%#x%s  Last seen: %s:%d %s state %d\n", __func__, stopper->thread->comm, stopper->thread == current ? " (me)" : "", stopper->thread->__state, task_curr(stopper->thread) ? "" : " Not running!", stopper->filename, stopper->lineno, stopper->message, stopper->laststate);
 		raw_spin_unlock_irqrestore(&stopper->lock, flags);
 		if (firsttime && *firsttime && !task_curr(stopper->thread)) {
