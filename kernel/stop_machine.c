@@ -244,7 +244,7 @@ static void dump_multi_cpu_stop_state(struct multi_stop_data *msdata, bool *firs
 static int multi_cpu_stop(void *data)
 {
 	struct multi_stop_data *msdata = data;
-	enum multi_stop_state oldstate, newstate, curstate = MULTI_STOP_NONE;
+	enum multi_stop_state newstate, curstate = MULTI_STOP_NONE;
 	int cpu = smp_processor_id(), err = 0;
 	const struct cpumask *cpumask;
 	unsigned long flags;
@@ -274,37 +274,36 @@ static int multi_cpu_stop(void *data)
 		multi_cpu_stop_progress(__FILE__, __LINE__, "after stop_machine_yield()", curstate);
 		newstate = READ_ONCE(msdata->state);
 		if (newstate != curstate) {
-			multi_cpu_stop_progress(__FILE__, __LINE__, "state change", curstate);
-			oldstate = curstate;
+			multi_cpu_stop_progress(__FILE__, __LINE__, "transition to", newstate);
 			curstate = newstate;
 			switch (curstate) {
 			case MULTI_STOP_DISABLE_IRQ:
-				multi_cpu_stop_progress(__FILE__, __LINE__, "before cpu_hp_check_delay()", oldstate);
+				multi_cpu_stop_progress(__FILE__, __LINE__, "before cpu_hp_check_delay() transition to", newstate);
 				if (cpu_hp_check_delay("MULTI_STOP_DISABLE_IRQ in", multi_cpu_stop))
 					dump_multi_cpu_stop_state(msdata, NULL);
-				multi_cpu_stop_progress(__FILE__, __LINE__, "before local_irq_disable()", oldstate);
+				multi_cpu_stop_progress(__FILE__, __LINE__, "before local_irq_disable() transition to", newstate);
 				local_irq_disable();
-				multi_cpu_stop_progress(__FILE__, __LINE__, "before hard_irq_disable()", oldstate);
+				multi_cpu_stop_progress(__FILE__, __LINE__, "before hard_irq_disable() transition to", newstate);
 				hard_irq_disable();
-				multi_cpu_stop_progress(__FILE__, __LINE__, "after hard_irq_disable()", oldstate);
+				multi_cpu_stop_progress(__FILE__, __LINE__, "after hard_irq_disable() transition to", newstate);
 				break;
 			case MULTI_STOP_RUN:
-				multi_cpu_stop_progress(__FILE__, __LINE__, "before cpu_hp_check_delay()", oldstate);
+				multi_cpu_stop_progress(__FILE__, __LINE__, "before cpu_hp_check_delay() transition to", newstate);
 				if (cpu_hp_check_delay("MULTI_STOP_RUN in", multi_cpu_stop))
 					dump_multi_cpu_stop_state(msdata, NULL);
 				if (is_active) {
-					multi_cpu_stop_progress(__FILE__, __LINE__, "before msdata->fn()", oldstate);
+					multi_cpu_stop_progress(__FILE__, __LINE__, "before msdata->fn() transition to", newstate);
 					err = msdata->fn(msdata->data);
-					multi_cpu_stop_progress(__FILE__, __LINE__, "after msdata->fn()", oldstate);
+					multi_cpu_stop_progress(__FILE__, __LINE__, "after msdata->fn() transition to", newstate);
 					cpu_hp_check_delay("multi_cpu_stop() CPU-stopper function", msdata->fn);
-					multi_cpu_stop_progress(__FILE__, __LINE__, "after cpu_hp_check_delay()", oldstate);
+					multi_cpu_stop_progress(__FILE__, __LINE__, "after cpu_hp_check_delay() transition to", newstate);
 				}
 				break;
 			default:
-				multi_cpu_stop_progress(__FILE__, __LINE__, "before cpu_hp_check_delay()", oldstate);
+				multi_cpu_stop_progress(__FILE__, __LINE__, "before cpu_hp_check_delay() transition to", newstate);
 				if (cpu_hp_check_delay("default case in", multi_cpu_stop))
 					dump_multi_cpu_stop_state(msdata, NULL);
-				multi_cpu_stop_progress(__FILE__, __LINE__, "after cpu_hp_check_delay()", oldstate);
+				multi_cpu_stop_progress(__FILE__, __LINE__, "after cpu_hp_check_delay() transition to", newstate);
 				break;
 			}
 			ack_state(msdata);
@@ -314,23 +313,23 @@ static int multi_cpu_stop(void *data)
 			 * in the same loop. Any reason for hard-lockup should
 			 * be detected and reported on their side.
 			 */
-			multi_cpu_stop_progress(__FILE__, __LINE__, "before touch_nmi_watchdog()", oldstate);
+			multi_cpu_stop_progress(__FILE__, __LINE__, "before touch_nmi_watchdog()", newstate);
 			touch_nmi_watchdog();
-			multi_cpu_stop_progress(__FILE__, __LINE__, "after touch_nmi_watchdog()", oldstate);
+			multi_cpu_stop_progress(__FILE__, __LINE__, "after touch_nmi_watchdog()", newstate);
 		}
-		multi_cpu_stop_progress(__FILE__, __LINE__, "before rcu_momentary_dyntick_idle()", oldstate);
+		multi_cpu_stop_progress(__FILE__, __LINE__, "before rcu_momentary_dyntick_idle()", newstate);
 		rcu_momentary_dyntick_idle();
-		multi_cpu_stop_progress(__FILE__, __LINE__, "after rcu_momentary_dyntick_idle()", oldstate);
+		multi_cpu_stop_progress(__FILE__, __LINE__, "after rcu_momentary_dyntick_idle()", newstate);
 		if (cpu_is_offline(smp_processor_id()) &&
 		    cpu_hp_check_delay("MULTI_STOP_RUN in", multi_cpu_stop)) {
 			dump_multi_cpu_stop_state(msdata, &firsttime);
 		}
-		multi_cpu_stop_progress(__FILE__, __LINE__, "end of loop", oldstate);
+		multi_cpu_stop_progress(__FILE__, __LINE__, "end of loop", newstate);
 	} while (curstate != MULTI_STOP_EXIT);
 
 	local_irq_restore(flags);
 	cpu_hp_check_delay("Exit from", multi_cpu_stop);
-	multi_cpu_stop_progress(__FILE__, __LINE__, "exiting multi_cpu_stop()", oldstate);
+	multi_cpu_stop_progress(__FILE__, __LINE__, "exiting multi_cpu_stop()", curstate);
 	return err;
 }
 
