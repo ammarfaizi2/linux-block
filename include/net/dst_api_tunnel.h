@@ -11,6 +11,7 @@
 
 #include <net/dst_api.h>
 
+#include <net/net_namespace_types.h>
 #include <linux/netdevice_types.h>
 
 /**
