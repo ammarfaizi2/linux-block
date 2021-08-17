@@ -33,6 +33,20 @@ struct cpu_stop_done {
 	struct completion	completion;	/* fired if nr_todo reaches 0 */
 };
 
+/* This controls the threads on each CPU. */
+enum multi_stop_state {
+	/* Dummy starting state for thread. */
+	MULTI_STOP_NONE,
+	/* Awaiting everyone to be scheduled. */
+	MULTI_STOP_PREPARE,
+	/* Disable interrupts. */
+	MULTI_STOP_DISABLE_IRQ,
+	/* Run the function */
+	MULTI_STOP_RUN,
+	/* Exit */
+	MULTI_STOP_EXIT,
+};
+
 /* the actual stopper, one per every possible cpu, enabled on online cpus */
 struct cpu_stopper {
 	struct task_struct	*thread;
@@ -44,6 +58,10 @@ struct cpu_stopper {
 	struct cpu_stop_work	stop_work;	/* for stop_cpus */
 	unsigned long		caller;
 	cpu_stop_fn_t		fn;
+	int			lineno;		/* For debugging. */
+	const char		*filename;
+	const char		*message;
+	enum multi_stop_state	laststate;
 };
 
 static DEFINE_PER_CPU(struct cpu_stopper, cpu_stopper);
@@ -153,20 +171,6 @@ int stop_one_cpu(unsigned int cpu, cpu_stop_fn_t fn, void *arg)
 	return done.ret;
 }
 
-/* This controls the threads on each CPU. */
-enum multi_stop_state {
-	/* Dummy starting state for thread. */
-	MULTI_STOP_NONE,
-	/* Awaiting everyone to be scheduled. */
-	MULTI_STOP_PREPARE,
-	/* Disable interrupts. */
-	MULTI_STOP_DISABLE_IRQ,
-	/* Run the function */
-	MULTI_STOP_RUN,
-	/* Exit */
-	MULTI_STOP_EXIT,
-};
-
 struct multi_stop_data {
 	cpu_stop_fn_t		fn;
 	void			*data;
@@ -199,6 +203,22 @@ notrace void __weak stop_machine_yield(const struct cpumask *cpumask)
 	cpu_relax();
 }
 
+static void multi_cpu_stop_progress(const char *f, int l, const char *m, enum multi_stop_state s)
+{
+	int cpu = smp_processor_id();
+	struct cpu_stopper *stopper;
+	unsigned long flags;
+
+	local_irq_save(flags);
+	stopper = &per_cpu(cpu_stopper, cpu);
+	raw_spin_lock(&stopper->lock);
+	stopper->filename = f;
+	stopper->lineno = l;
+	stopper->message = m;
+	stopper->laststate = s;
+	raw_spin_unlock_irqrestore(&stopper->lock, flags);
+}
+
 static void dump_multi_cpu_stop_state(struct multi_stop_data *msdata, bool *firsttime)
 {
 	struct cpu_stopper *stopper;
@@ -211,7 +231,11 @@ static void dump_multi_cpu_stop_state(struct multi_stop_data *msdata, bool *firs
 			continue;
 		stopper = &per_cpu(cpu_stopper, cpu);
 		raw_spin_lock_irqsave(&stopper->lock, flags);
-		pr_info("%s: %s%s ->state=%#x%s\n", __func__, stopper->thread->comm, stopper->thread == current ? " (me)" : "", stopper->thread->__state, task_curr(stopper->thread) ? "" : " Not running!");
+		if (msdata->state == stopper->laststate) {
+			raw_spin_unlock_irqrestore(&stopper->lock, flags);
+			continue;
+		}
+		pr_info("%s: %s%s ->state=%#x%s  Last seen: %s:%d %s state %d\n", __func__, stopper->thread->comm, stopper->thread == current ? " (me)" : "", stopper->thread->__state, task_curr(stopper->thread) ? "" : " Not running!", stopper->filename, stopper->lineno, stopper->message, stopper->laststate);
 		raw_spin_unlock_irqrestore(&stopper->lock, flags);
 		if (firsttime && *firsttime && !task_curr(stopper->thread)) {
 			trigger_single_cpu_backtrace(cpu);
@@ -224,7 +248,7 @@ static void dump_multi_cpu_stop_state(struct multi_stop_data *msdata, bool *firs
 static int multi_cpu_stop(void *data)
 {
 	struct multi_stop_data *msdata = data;
-	enum multi_stop_state newstate, curstate = MULTI_STOP_NONE;
+	enum multi_stop_state oldstate, newstate, curstate = MULTI_STOP_NONE;
 	int cpu = smp_processor_id(), err = 0;
 	const struct cpumask *cpumask;
 	unsigned long flags;
@@ -246,31 +270,43 @@ static int multi_cpu_stop(void *data)
 	}
 
 	/* Simple state machine */
+	multi_cpu_stop_progress(__FILE__, __LINE__, "before loop", curstate);
 	do {
 		/* Chill out and ensure we re-read multi_stop_state. */
 		stop_machine_yield(cpumask);
 		newstate = READ_ONCE(msdata->state);
 		if (newstate != curstate) {
-			pr_info("%s: CPU %d entered state %d\n", __func__, raw_smp_processor_id(), newstate);
+			multi_cpu_stop_progress(__FILE__, __LINE__, "state change", curstate);
+			oldstate = curstate;
 			curstate = newstate;
 			switch (curstate) {
 			case MULTI_STOP_DISABLE_IRQ:
+				multi_cpu_stop_progress(__FILE__, __LINE__, "before cpu_hp_check_delay()", oldstate);
 				if (cpu_hp_check_delay("MULTI_STOP_DISABLE_IRQ in", multi_cpu_stop))
 					dump_multi_cpu_stop_state(msdata, NULL);
+				multi_cpu_stop_progress(__FILE__, __LINE__, "before local_irq_disable()", oldstate);
 				local_irq_disable();
+				multi_cpu_stop_progress(__FILE__, __LINE__, "before hard_irq_disable()", oldstate);
 				hard_irq_disable();
+				multi_cpu_stop_progress(__FILE__, __LINE__, "after hard_irq_disable()", oldstate);
 				break;
 			case MULTI_STOP_RUN:
+				multi_cpu_stop_progress(__FILE__, __LINE__, "before cpu_hp_check_delay()", oldstate);
 				if (cpu_hp_check_delay("MULTI_STOP_RUN in", multi_cpu_stop))
 					dump_multi_cpu_stop_state(msdata, NULL);
 				if (is_active) {
+					multi_cpu_stop_progress(__FILE__, __LINE__, "before msdata->fn()", oldstate);
 					err = msdata->fn(msdata->data);
+					multi_cpu_stop_progress(__FILE__, __LINE__, "after msdata->fn()", oldstate);
 					cpu_hp_check_delay("multi_cpu_stop() CPU-stopper function", msdata->fn);
+					multi_cpu_stop_progress(__FILE__, __LINE__, "after cpu_hp_check_delay()", oldstate);
 				}
 				break;
 			default:
+				multi_cpu_stop_progress(__FILE__, __LINE__, "before cpu_hp_check_delay()", oldstate);
 				if (cpu_hp_check_delay("default case in", multi_cpu_stop))
 					dump_multi_cpu_stop_state(msdata, NULL);
+				multi_cpu_stop_progress(__FILE__, __LINE__, "after cpu_hp_check_delay()", oldstate);
 				break;
 			}
 			ack_state(msdata);
@@ -280,13 +316,17 @@ static int multi_cpu_stop(void *data)
 			 * in the same loop. Any reason for hard-lockup should
 			 * be detected and reported on their side.
 			 */
+			multi_cpu_stop_progress(__FILE__, __LINE__, "before touch_nmi_watchdog()", oldstate);
 			touch_nmi_watchdog();
+			multi_cpu_stop_progress(__FILE__, __LINE__, "after touch_nmi_watchdog()", oldstate);
 		}
+		multi_cpu_stop_progress(__FILE__, __LINE__, "before rcu_momentary_dyntick_idle()", oldstate);
 		rcu_momentary_dyntick_idle();
 		if (cpu_is_offline(smp_processor_id()) &&
 		    cpu_hp_check_delay("MULTI_STOP_RUN in", multi_cpu_stop)) {
 			dump_multi_cpu_stop_state(msdata, &firsttime);
 		}
+		multi_cpu_stop_progress(__FILE__, __LINE__, "end of loop", oldstate);
 	} while (curstate != MULTI_STOP_EXIT);
 
 	local_irq_restore(flags);
