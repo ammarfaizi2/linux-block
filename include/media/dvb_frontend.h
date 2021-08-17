@@ -32,20 +32,11 @@
 #ifndef _DVB_FRONTEND_H_
 #define _DVB_FRONTEND_H_
 
-#include <linux/types.h>
-#include <linux/sched.h>
-#include <linux/ioctl.h>
-#include <linux/i2c.h>
-#include <linux/module.h>
-#include <linux/errno.h>
-#include <linux/delay.h>
-#include <linux/mutex.h>
-#include <linux/slab.h>
-#include <linux/bitops.h>
+#include <uapi/linux/dvb/frontend.h>
 
-#include <linux/dvb/frontend.h>
-
-#include <media/dvbdev.h>
+#include <linux/bits.h>
+#include <linux/kref.h>
+#include <linux/ktime.h>
 
 /*
  * Maximum number of Delivery systems per frontend. It
