@@ -269,7 +269,9 @@ static int multi_cpu_stop(void *data)
 	multi_cpu_stop_progress(__FILE__, __LINE__, "before loop", curstate);
 	do {
 		/* Chill out and ensure we re-read multi_stop_state. */
+		multi_cpu_stop_progress(__FILE__, __LINE__, "before stop_machine_yield()", curstate);
 		stop_machine_yield(cpumask);
+		multi_cpu_stop_progress(__FILE__, __LINE__, "after stop_machine_yield()", curstate);
 		newstate = READ_ONCE(msdata->state);
 		if (newstate != curstate) {
 			multi_cpu_stop_progress(__FILE__, __LINE__, "state change", curstate);
