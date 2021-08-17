@@ -10,11 +10,11 @@
  * Thanks. --rmk
  */
 
+#include <linux/spinlock_types.h>
 #include <linux/cpumask_types.h>
 #include <linux/irqhandler.h>
 #include <linux/irqreturn.h>
 #include <linux/irqnr.h>
-#include <linux/io.h>
 #include <linux/slab.h>
 
 #include <asm/irq.h>
