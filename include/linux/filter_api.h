@@ -5,7 +5,6 @@
 #ifndef __LINUX_FILTER_API_H__
 #define __LINUX_FILTER_API_H__
 
-#include <net/sch_generic_api.h>
 #include <linux/u64_stats_sync_api.h>
 #include <linux/filter_types.h>
 
