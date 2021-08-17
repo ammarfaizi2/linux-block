@@ -641,6 +641,7 @@ static int bringup_cpu(unsigned int cpu)
 	irq_lock_sparse();
 
 	/* Arch-specific enabling code. */
+	pr_info("%s on CPU %d invoking __cpu_up(%d)\n", __func__, raw_smp_processor_id(), cpu);
 	ret = __cpu_up(cpu, idle);
 	irq_unlock_sparse();
 	if (ret)
