@@ -3,6 +3,7 @@
 #define _TRANSP_V6_H
 
 #include <net/checksum.h>
+#include <net/sock_api.h>
 
 /* IPv6 transport protocols */
 extern struct proto rawv6_prot;
@@ -40,6 +41,8 @@ void ip6_datagram_recv_common_ctl(struct sock *sk, struct msghdr *msg,
 				  struct sk_buff *skb);
 void ip6_datagram_recv_specific_ctl(struct sock *sk, struct msghdr *msg,
 				    struct sk_buff *skb);
+
+struct ipcm6_cookie;
 
 int ip6_datagram_send_ctl(struct net *net, struct sock *sk, struct msghdr *msg,
 			  struct flowi6 *fl6, struct ipcm6_cookie *ipc6);

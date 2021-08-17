@@ -3,6 +3,7 @@
 #define _NET_IPV6_API_SOCK_H
 
 #include <net/ipv6.h>
+#include <net/sock_api.h>
 
 int ipv6_sock_mc_join(struct sock *sk, int ifindex,
 		      const struct in6_addr *addr);
