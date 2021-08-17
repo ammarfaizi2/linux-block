@@ -7,8 +7,9 @@
 #define PAGE_FLAGS_THP_H
 
 #include <linux/page-flags.h>
-#include <linux/huge_mm.h>
-#include <linux/mmzone.h>
+
+#include <linux/atomic_api.h>
+#include <linux/mmzone_types.h>
 
 #include "page-flags-helper-macros-define.h"
 
