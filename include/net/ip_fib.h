@@ -12,6 +12,7 @@
 #ifndef _NET_IP_FIB_H
 #define _NET_IP_FIB_H
 
+#include <net/l3mdev.h>
 #include <linux/skbuff_api.h>
 #include <net/flow.h>
 #include <linux/seq_file.h>
@@ -22,6 +23,8 @@
 #include <linux/percpu.h>
 #include <linux/notifier.h>
 #include <linux/refcount.h>
+
+extern int l3mdev_master_ifindex_rcu(const struct net_device *dev);
 
 struct fib_config {
 	u8			fc_dst_len;

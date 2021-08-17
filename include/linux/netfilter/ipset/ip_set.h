@@ -15,7 +15,7 @@
 #include <linux/netfilter/x_tables.h>
 #include <linux/stringify.h>
 #include <linux/vmalloc.h>
-#include <net/netlink.h>
+#include <net/netlink_api.h>
 #include <uapi/linux/netfilter/ipset/ip_set.h>
 
 #define _IP_SET_MODULE_DESC(a, b, c)		\

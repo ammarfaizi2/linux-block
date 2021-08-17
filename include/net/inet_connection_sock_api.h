@@ -21,8 +21,8 @@
 #include <linux/sockptr.h>
 #include <linux/percpu_counter.h>
 
-#include <net/inet_sock.h>
-#include <net/request_sock.h>
+#include <net/inet_sock_api.h>
+#include <net/request_sock_api.h>
 
 /* Cancel timers, when they are not required. */
 #undef INET_CSK_CLEAR_TIMERS
