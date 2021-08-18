@@ -206,3 +206,83 @@ error:
 	wreq->error = ret;
 	return false;
 }
+
+/*
+ * Decrypt the result of a read request.
+ */
+void netfs_decrypt(struct netfs_io_request *rreq)
+{
+	struct netfs_inode *ctx = netfs_inode(rreq->inode);
+	struct scatterlist source_sg[16], dest_sg[16];
+	unsigned int n_source, n_dest;
+	size_t n, chunk, bsize = 1UL << ctx->crypto_bshift;
+	loff_t pos;
+	int ret;
+
+	trace_netfs_rreq(rreq, netfs_rreq_trace_decrypt);
+	if (rreq->start >= rreq->i_size)
+		return;
+
+	n = min_t(unsigned long long, rreq->len, rreq->i_size - rreq->start);
+
+	_debug("DECRYPT %llx-%llx f=%lx %x",
+	       rreq->start, rreq->start + n, rreq->flags, rreq->buffering);
+
+	pos = rreq->start;
+	for (; n > 0; n -= chunk, pos += chunk) {
+		chunk = min(n, bsize);
+
+		switch (rreq->buffering) {
+		case NETFS_BUFFER_DEC:
+			ret = netfs_xarray_to_sglist(&rreq->buffer, pos, chunk,
+						     source_sg, ARRAY_SIZE(source_sg));
+			break;
+		case NETFS_BOUNCE_DEC_TO_BUFFER:
+		case NETFS_BOUNCE_DEC_TO_DIRECT:
+		case NETFS_BOUNCE_DEC_COPY:
+			ret = netfs_xarray_to_sglist(&rreq->bounce, pos, chunk,
+						     source_sg, ARRAY_SIZE(source_sg));
+			break;
+		default:
+			BUG();
+		}
+		if (ret < 0)
+			goto error;
+		n_source = ret;
+
+		switch (rreq->buffering) {
+		case NETFS_BOUNCE_DEC_TO_DIRECT:
+			ret = netfs_iter_to_sglist(&rreq->direct_iter, chunk,
+						   dest_sg, ARRAY_SIZE(dest_sg));
+			break;
+		case NETFS_BOUNCE_DEC_TO_BUFFER:
+			ret = netfs_xarray_to_sglist(&rreq->buffer, pos, chunk,
+						     dest_sg, ARRAY_SIZE(dest_sg));
+			break;
+		case NETFS_BUFFER_DEC:
+		case NETFS_BOUNCE_DEC_COPY:
+			memcpy(dest_sg, source_sg, sizeof(dest_sg));
+			ret = n_source;
+			break;
+		default:
+			BUG();
+		}
+		if (ret < 0)
+			goto error;
+		n_dest = ret;
+
+		ret = ctx->ops->decrypt_block(rreq, pos, chunk,
+					      source_sg, n_source, dest_sg, n_dest);
+		if (ret < 0)
+			goto error_failed;
+	}
+
+	return;
+
+error_failed:
+	trace_netfs_failure(rreq, NULL, ret, netfs_fail_decryption);
+error:
+	rreq->error = ret;
+	set_bit(NETFS_RREQ_FAILED, &rreq->flags);
+	return;
+}

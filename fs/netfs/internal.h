@@ -25,6 +25,7 @@ void netfs_rreq_unlock_folios(struct netfs_io_request *rreq);
  */
 int netfs_alloc_buffer(struct xarray *xa, pgoff_t index, unsigned int nr_pages);
 bool netfs_encrypt(struct netfs_io_request *wreq);
+void netfs_decrypt(struct netfs_io_request *rreq);
 
 /*
  * direct_read.c
