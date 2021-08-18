@@ -3,7 +3,8 @@
 #
 locking/atomics
 locking/core
+locking/debug
 locking/header
 locking/kcsan
-locking/urgent
 locking/nmi
+locking/urgent
