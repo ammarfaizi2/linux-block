@@ -7,6 +7,10 @@
     
 *******************************************************************************/
 
+#include <linux/netdevice_api.h>
+#include <net/dst.h>
+#include <net/flow.h>
+
 struct sk_buff *dn_alloc_skb(struct sock *sk, int size, gfp_t pri);
 int dn_route_output_sock(struct dst_entry __rcu **pprt, struct flowidn *,
 			 struct sock *sk, int flags);
