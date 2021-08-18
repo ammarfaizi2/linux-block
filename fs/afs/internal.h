@@ -1544,6 +1544,9 @@ extern void afs_create_write_requests(struct netfs_writeback *);
 extern bool afs_encrypt_block(struct netfs_writeback *, loff_t, size_t,
 			      struct scatterlist *, unsigned int,
 			      struct scatterlist *, unsigned int);
+extern int afs_decrypt_block(struct netfs_read_request *, loff_t, size_t,
+			      struct scatterlist *, unsigned int,
+			      struct scatterlist *, unsigned int);
 
 /*
  * xattr.c

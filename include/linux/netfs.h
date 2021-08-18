@@ -222,6 +222,7 @@ struct netfs_read_request {
 #define NETFS_RREQ_IN_PROGRESS		5	/* Unlocked when the request completes */
 #define NETFS_RREQ_NONBLOCK		6	/* Don't block if possible (O_NONBLOCK) */
 #define NETFS_RREQ_BLOCKED		7	/* We blocked */
+#define NETFS_RREQ_DECRYPT		8	/* Decrypted when the request completes */
 	const struct netfs_request_ops *netfs_ops;
 };
 
@@ -406,6 +407,9 @@ struct netfs_request_ops {
 	bool (*encrypt_block)(struct netfs_writeback *wback, loff_t pos, size_t len,
 			      struct scatterlist *source_sg, unsigned int n_source,
 			      struct scatterlist *dest_sg, unsigned int n_dest);
+	int (*decrypt_block)(struct netfs_read_request *rreq, loff_t pos, size_t len,
+			     struct scatterlist *source_sg, unsigned int n_source,
+			     struct scatterlist *dest_sg, unsigned int n_dest);
 };
 
 /*
