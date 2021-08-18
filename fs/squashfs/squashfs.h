@@ -71,6 +71,8 @@ extern struct inode *squashfs_iget(struct super_block *, long long,
 				unsigned int);
 extern int squashfs_read_inode(struct inode *, long long);
 
+struct dentry;
+
 /* xattr.c */
 extern ssize_t squashfs_listxattr(struct dentry *, char *, size_t);
 
