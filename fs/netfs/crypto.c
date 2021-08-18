@@ -146,3 +146,40 @@ error:
 	wreq->error = ret;
 	return false;
 }
+
+/*
+ * Decrypt the result of a read request.
+ */
+void netfs_rreq_decrypt(struct netfs_read_request *rreq)
+{
+	struct netfs_i_context *ctx = netfs_i_context(rreq->inode);
+	struct scatterlist sg[16];
+	unsigned int n_sg;
+	size_t n, chunk, bsize = 1UL << ctx->crypto_bshift;
+	loff_t pos;
+	int ret;
+
+	_debug("DECRYPT %llx-%llx", rreq->start, rreq->start + rreq->len);
+
+	pos = rreq->start;
+	n = rreq->len;
+	for (; n > 0; n -= chunk, pos += chunk) {
+		chunk = min(n, bsize);
+		ret = netfs_xarray_to_sglist(&rreq->mapping->i_pages, pos, chunk,
+					     sg, ARRAY_SIZE(sg));
+		if (ret < 0)
+			goto error;
+		n_sg = ret;
+
+		ret = ctx->ops->decrypt_block(rreq, pos, chunk, sg, n_sg, sg, n_sg);
+		if (ret < 0)
+			goto error;
+	}
+
+	return;
+
+error:
+	rreq->error = ret;
+	set_bit(NETFS_RREQ_FAILED, &rreq->flags);
+	return;
+}

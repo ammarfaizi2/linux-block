@@ -396,6 +396,7 @@ const struct netfs_request_ops afs_req_ops = {
 	.init_wreq		= afs_init_wreq,
 	.create_write_operations = afs_create_write_operations,
 	.encrypt_block		= afs_encrypt_block,
+	.decrypt_block		= afs_decrypt_block,
 };
 
 /*
