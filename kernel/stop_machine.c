@@ -62,6 +62,7 @@ struct cpu_stopper {
 	const char		*filename;
 	const char		*message;
 	enum multi_stop_state	laststate;
+	u64			lasttime;
 };
 
 static DEFINE_PER_CPU(struct cpu_stopper, cpu_stopper);
@@ -216,6 +217,7 @@ static void multi_cpu_stop_progress(const char *f, int l, const char *m, enum mu
 	stopper->lineno = l;
 	stopper->message = m;
 	stopper->laststate = s;
+	stopper->lasttime = ktime_get();
 	raw_spin_unlock_irqrestore(&stopper->lock, flags);
 }
 
@@ -224,6 +226,7 @@ static void dump_multi_cpu_stop_state(struct multi_stop_data *msdata, bool *firs
 	struct cpu_stopper *stopper;
 	unsigned long flags;
 	int cpu;
+	u64 t;
 
 	pr_info("%s threads %d/%d state %d\n", __func__, atomic_read(&msdata->thread_ack), msdata->num_threads, msdata->state);
 	for_each_online_cpu(cpu) {
@@ -231,7 +234,8 @@ static void dump_multi_cpu_stop_state(struct multi_stop_data *msdata, bool *firs
 			continue;
 		stopper = &per_cpu(cpu_stopper, cpu);
 		raw_spin_lock_irqsave(&stopper->lock, flags);
-		pr_info("%s: %s%s ->state=%#x%s  Last seen: %s:%d %s state %d\n", __func__, stopper->thread->comm, stopper->thread == current ? " (me)" : "", stopper->thread->__state, task_curr(stopper->thread) ? "" : " Not running!", stopper->filename, stopper->lineno, stopper->message, stopper->laststate);
+		t = ktime_get();
+		pr_info("%s: %s%s ->state=%#x%s  Last seen: %s:%d %s state %d%c\n", __func__, stopper->thread->comm, stopper->thread == current ? " (me)" : "", stopper->thread->__state, task_curr(stopper->thread) ? "" : " Not running!", stopper->filename, stopper->lineno, stopper->message, stopper->laststate, ".!"[time_after64(t, stopper->lasttime + NSEC_PER_SEC)]);
 		raw_spin_unlock_irqrestore(&stopper->lock, flags);
 		if (firsttime && *firsttime && !task_curr(stopper->thread)) {
 			trigger_single_cpu_backtrace(cpu);
