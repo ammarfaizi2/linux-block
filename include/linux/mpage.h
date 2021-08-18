@@ -12,6 +12,8 @@
  */
 #ifdef CONFIG_BLOCK
 
+#include <linux/fs.h>
+
 struct writeback_control;
 struct readahead_control;
 
