@@ -10,6 +10,7 @@
 #ifndef __LINUX_DMA_FENCE_CHAIN_H
 #define __LINUX_DMA_FENCE_CHAIN_H
 
+#include <linux/dma-fence-api.h>
 #include <linux/dma-fence.h>
 #include <linux/irq_work.h>
 #include <linux/slab.h>
