@@ -22,6 +22,7 @@
 #include <linux/atomic.h>
 #include <linux/nmi.h>
 #include <linux/sched/wake_q.h>
+#include <linux/tick.h>
 
 /*
  * Structure to determine completion condition and record errors.  May
@@ -261,6 +262,9 @@ static int multi_cpu_stop(void *data)
 	 */
 	local_save_flags(flags);
 
+	if (!irqs_disabled_flags(flags))
+		tick_dep_set_task(current, TICK_DEP_BIT_STOPPER);
+
 	if (!msdata->active_cpus) {
 		cpumask = cpu_online_mask;
 		is_active = cpu == cpumask_first(cpumask);
@@ -332,6 +336,8 @@ static int multi_cpu_stop(void *data)
 	} while (curstate != MULTI_STOP_EXIT);
 
 	local_irq_restore(flags);
+	if (!irqs_disabled_flags(flags))
+		tick_dep_clear_task(current, TICK_DEP_BIT_STOPPER);
 	cpu_hp_check_delay("Exit from", multi_cpu_stop);
 	multi_cpu_stop_progress(__FILE__, __LINE__, "exiting multi_cpu_stop()", curstate);
 	return err;
