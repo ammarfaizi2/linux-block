@@ -8,6 +8,8 @@
 
 #include <linux/skbuff.h>
 
+struct net;
+
 int wg_ratelimiter_init(void);
 void wg_ratelimiter_uninit(void);
 bool wg_ratelimiter_allow(struct sk_buff *skb, struct net *net);
