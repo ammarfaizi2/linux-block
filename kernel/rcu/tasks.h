@@ -954,10 +954,7 @@ static bool trc_inspect_reader(struct task_struct *t, void *arg)
 	// remove it from the holdout list.
 	t->trc_reader_checked = true;
 
-	// The task is not running, so being on the way out of the
-	// read-side critical section is as good as is being all the way out.
-	// This relies on the barrier() in rcu_read_unlock_trace().
-	if (nesting <= 0)
+	if (nesting == 0)
 		return true;  // Already in quiescent state, done!!!
 
 	// The task is in a read-side critical section, so set up its
