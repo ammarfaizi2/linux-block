@@ -39,7 +39,7 @@
 #include <linux/hashtable.h>
 #include <linux/instrumentation.h>
 #include <linux/interval_tree.h>
-#include <linux/rbtree.h>
+#include <linux/rbtree_api.h>
 #include <linux/xarray.h>
 #include <asm/signal.h>
 
