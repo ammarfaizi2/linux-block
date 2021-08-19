@@ -181,6 +181,7 @@ struct netfs_write_request *netfs_alloc_write_request(struct address_space *mapp
 			__set_bit(NETFS_WREQ_WRITE_TO_CACHE, &wreq->flags);
 		xa_init(&wreq->buffer);
 		INIT_WORK(&wreq->work, netfs_writeback_worker);
+		INIT_LIST_HEAD(&wreq->proc_link);
 		INIT_LIST_HEAD(&wreq->regions);
 		INIT_LIST_HEAD(&wreq->operations);
 		rwlock_init(&wreq->regions_lock);
@@ -253,6 +254,7 @@ void netfs_put_write_request(struct netfs_write_request *wreq,
 		dead = __refcount_dec_and_test(&wreq->usage, &ref);
 		trace_netfs_ref_wreq(debug_id, ref - 1, what);
 		if (dead) {
+			netfs_proc_del_wreq(wreq);
 			if (was_async) {
 				wreq->work.func = netfs_free_write_request;
 				if (!queue_work(system_unbound_wq, &wreq->work))

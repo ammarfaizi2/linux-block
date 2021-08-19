@@ -363,6 +363,7 @@ static struct netfs_dirty_region *netfs_split_off_front(
 	list_add_tail(&front->dirty_link, &region->dirty_link);
 	list_add(&front->flush_link, &region->flush_link);
 	trace_netfs_dirty(ctx, front, region, netfs_dirty_trace_split);
+	netfs_proc_add_region(front);
 	return front;
 }
 
@@ -579,6 +580,8 @@ determined_tail:
 		if (r == tail)
 			break;
 	}
+
+	netfs_proc_add_wreq(wreq);
 
 	requested->start = block.end;
 	ret = wreq->last - wreq->first + 1;

@@ -334,6 +334,7 @@ struct netfs_write_request {
 	struct address_space	*mapping;	/* The mapping being accessed */
 	struct netfs_cache_resources cache_resources;
 	struct xarray		buffer;		/* Buffer for encrypted/compressed data */
+	struct list_head	proc_link;	/* Link in netfs_wreqs */
 	struct list_head	regions;	/* The contributory regions (by ->flush_link)  */
 	struct list_head	operations;	/* The write operations involved */
 	struct netfs_flush_group *group;	/* Flush group this write is from */
