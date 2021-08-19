@@ -205,6 +205,15 @@ notrace void __weak stop_machine_yield(const struct cpumask *cpumask)
 	cpu_relax();
 }
 
+bool multi_stop_cpu_ipi_handled = true;
+
+static void multi_stop_cpu_ipi(void *unused)
+{
+	pr_info("%s: IPI received on CPU %d\n", __func__, smp_processor_id());
+	smp_store_release(&multi_stop_cpu_ipi_handled, true);
+
+}
+
 static void multi_cpu_stop_progress(const char *f, int l, const char *m, enum multi_stop_state s)
 {
 	int cpu = smp_processor_id();
@@ -226,8 +235,8 @@ static void dump_multi_cpu_stop_state(struct multi_stop_data *msdata, bool *firs
 {
 	struct cpu_stopper *stopper;
 	unsigned long flags;
+	u64 t, tlast;
 	int cpu;
-	u64 t;
 
 	pr_info("%s threads %d/%d state %d\n", __func__, atomic_read(&msdata->thread_ack), msdata->num_threads, msdata->state);
 	for_each_online_cpu(cpu) {
@@ -236,11 +245,19 @@ static void dump_multi_cpu_stop_state(struct multi_stop_data *msdata, bool *firs
 		stopper = &per_cpu(cpu_stopper, cpu);
 		raw_spin_lock_irqsave(&stopper->lock, flags);
 		t = ktime_get();
-		pr_info("%s: %s%s ->state=%#x%s  Last seen: %s:%d %s state %d%c\n", __func__, stopper->thread->comm, stopper->thread == current ? " (me)" : "", stopper->thread->__state, task_curr(stopper->thread) ? "" : " Not running!", stopper->filename, stopper->lineno, stopper->message, stopper->laststate, ".!"[time_after64(t, stopper->lasttime + NSEC_PER_SEC)]);
+		tlast = stopper->lasttime;
+		pr_info("%s: %s%s ->state=%#x%s  Last seen: %s:%d %s state %d%c\n", __func__, stopper->thread->comm, stopper->thread == current ? " (me)" : "", stopper->thread->__state, task_curr(stopper->thread) ? "" : " Not running!", stopper->filename, stopper->lineno, stopper->message, stopper->laststate, ".!"[time_after64(t, tlast + NSEC_PER_SEC)]);
 		raw_spin_unlock_irqrestore(&stopper->lock, flags);
 		if (firsttime && *firsttime && !task_curr(stopper->thread)) {
 			trigger_single_cpu_backtrace(cpu);
 			*firsttime = false;
+		}
+		if (time_after64(t, tlast + NSEC_PER_SEC) &&
+		    smp_load_acquire(&multi_stop_cpu_ipi_handled)) {
+			pr_info("%s: sending IPI from CPU %d to CPU %d\n", __func__, raw_smp_processor_id(), cpu);
+			WRITE_ONCE(multi_stop_cpu_ipi_handled, false);
+			smp_mb();
+			smp_call_function_single(cpu, multi_stop_cpu_ipi, NULL, 0);
 		}
 	}
 }
@@ -286,9 +303,6 @@ static int multi_cpu_stop(void *data)
 			curstate = newstate;
 			switch (curstate) {
 			case MULTI_STOP_DISABLE_IRQ:
-				multi_cpu_stop_progress(__FILE__, __LINE__, "before cpu_hp_check_delay() transition to", newstate);
-				if (cpu_hp_check_delay("MULTI_STOP_DISABLE_IRQ in", multi_cpu_stop))
-					dump_multi_cpu_stop_state(msdata, NULL);
 				multi_cpu_stop_progress(__FILE__, __LINE__, "before local_irq_disable() transition to", newstate);
 				local_irq_disable();
 				multi_cpu_stop_progress(__FILE__, __LINE__, "before hard_irq_disable() transition to", newstate);
@@ -297,8 +311,6 @@ static int multi_cpu_stop(void *data)
 				break;
 			case MULTI_STOP_RUN:
 				multi_cpu_stop_progress(__FILE__, __LINE__, "before cpu_hp_check_delay() transition to", newstate);
-				if (cpu_hp_check_delay("MULTI_STOP_RUN in", multi_cpu_stop))
-					dump_multi_cpu_stop_state(msdata, NULL);
 				if (is_active) {
 					multi_cpu_stop_progress(__FILE__, __LINE__, "before msdata->fn() transition to", newstate);
 					err = msdata->fn(msdata->data);
@@ -308,10 +320,7 @@ static int multi_cpu_stop(void *data)
 				}
 				break;
 			default:
-				multi_cpu_stop_progress(__FILE__, __LINE__, "before cpu_hp_check_delay() transition to", newstate);
-				if (cpu_hp_check_delay("default case in", multi_cpu_stop))
-					dump_multi_cpu_stop_state(msdata, NULL);
-				multi_cpu_stop_progress(__FILE__, __LINE__, "after cpu_hp_check_delay() transition to", newstate);
+				multi_cpu_stop_progress(__FILE__, __LINE__, "default case, transition to", newstate);
 				break;
 			}
 			ack_state(msdata);
