@@ -2533,7 +2533,12 @@ static bool __io_complete_rw_common(struct io_kiocb *req, long res)
 static void io_req_task_complete(struct io_kiocb *req)
 {
 	int cflags = 0;
+#ifdef CONFIG_BLOCK
+	struct kiocb *kiocb = &req->rw.kiocb;
 
+	if (kiocb->ki_flags & IOCB_PUT_CACHE)
+		bio_put(kiocb->private);
+#endif
 	if (req->flags & REQ_F_BUFFER_SELECTED)
 		cflags = io_put_rw_kbuf(req);
 	__io_req_complete(req, 0, req->result, cflags);
@@ -2741,6 +2746,13 @@ static int io_prep_rw(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 	} else {
 		if (kiocb->ki_flags & IOCB_HIPRI)
 			return -EINVAL;
+		/*
+		 * IRQ driven IO can participate in the bio alloc cache, since
+		 * we don't complete from IRQ anymore. This requires the caller
+		 * to pass back ownership of the bio before calling ki_complete,
+		 * and then ki_complete will put it from a safe context.
+		 */
+		kiocb->ki_flags |= IOCB_ALLOC_CACHE;
 		kiocb->ki_complete = io_complete_rw;
 	}
 
