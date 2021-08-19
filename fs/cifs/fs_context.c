@@ -1269,7 +1269,8 @@ static int smb3_fs_context_parse_param(struct fs_context *fc,
 		if (result.negated)
 			ctx->linux_ext = 0;
 		else
-			ctx->no_linux_ext = 1;
+			ctx->linux_ext = 1;
+		ctx->no_linux_ext = !ctx->linux_ext;
 		break;
 	case Opt_nocase:
 		ctx->nocase = 1;
