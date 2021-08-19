@@ -2,6 +2,7 @@
 #ifndef _LINUX_TIMERQUEUE_API_H
 #define _LINUX_TIMERQUEUE_API_H
 
+#include <linux/rbtree_api.h>
 #include <linux/timerqueue_types.h>
 #include <linux/rbtree.h>
 #include <linux/bug.h>
