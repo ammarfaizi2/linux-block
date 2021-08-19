@@ -309,15 +309,18 @@ struct netfs_writeback {
 	struct inode		*inode;		/* The file being accessed */
 	struct address_space	*mapping;	/* The mapping being accessed */
 	struct xarray		buffer;		/* Buffer for encrypted/compressed data */
+	struct list_head	proc_link;	/* Link in netfs_wreqs */
 	struct list_head	regions;	/* The contributory regions (by ->flush_link)  */
 	struct netfs_flush_group *group;	/* Flush group this write is from */
 	rwlock_t		regions_lock;	/* Lock for ->regions */
 	void			*netfs_priv;	/* Private data for the netfs */
 	unsigned int		debug_id;
+	unsigned char		n_ops;		/* Number of ops allocated */
 	short			error;		/* 0 or error that occurred */
 	struct netfs_range	coverage;	/* Range covered by the request */
 	pgoff_t			first;		/* First page included */
 	pgoff_t			last;		/* Last page included */
+	atomic_t		outstanding;	/* Number of outstanding writes */
 	refcount_t		usage;
 	unsigned long		flags;
 #define NETFS_WBACK_WRITE_TO_CACHE	0	/* Need to write to the cache */

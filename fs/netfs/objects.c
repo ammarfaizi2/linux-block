@@ -178,6 +178,7 @@ struct netfs_writeback *netfs_alloc_writeback(struct address_space *mapping,
 			__set_bit(NETFS_WBACK_WRITE_TO_CACHE, &wback->flags);
 		xa_init(&wback->buffer);
 		INIT_WORK(&wback->work, netfs_writeback_worker);
+		INIT_LIST_HEAD(&wback->proc_link);
 		INIT_LIST_HEAD(&wback->regions);
 		rwlock_init(&wback->regions_lock);
 		refcount_set(&wback->usage, 1);
@@ -248,6 +249,7 @@ void netfs_put_writeback(struct netfs_writeback *wback,
 		dead = __refcount_dec_and_test(&wback->usage, &ref);
 		trace_netfs_ref_wback(debug_id, ref - 1, what);
 		if (dead) {
+			netfs_proc_del_writeback(wback);
 			if (was_async) {
 				wback->work.func = netfs_free_writeback;
 				if (!queue_work(system_unbound_wq, &wback->work))
