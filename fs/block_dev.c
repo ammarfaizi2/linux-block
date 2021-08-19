@@ -331,6 +331,7 @@ static void blkdev_bio_end_io(struct bio *bio)
 {
 	struct blkdev_dio *dio = bio->bi_private;
 	bool should_dirty = dio->should_dirty;
+	bool free_bio = true;
 
 	if (bio->bi_status && !dio->bio.bi_status)
 		dio->bio.bi_status = bio->bi_status;
@@ -346,8 +347,20 @@ static void blkdev_bio_end_io(struct bio *bio)
 			} else {
 				ret = blk_status_to_errno(dio->bio.bi_status);
 			}
-
-			dio->iocb->ki_complete(iocb, ret, 0);
+			/*
+			 * If IRQ driven and not using multi-bio, pass
+			 * ownership of bio to issuer for task-based free. Then
+			 * we can participate in the cached bio allocations, if
+			 * the caller marked the kiocb IOCB_ALLOC_CACHE.
+			 */
+			if (!should_dirty && !dio->multi_bio &&
+			    (iocb->ki_flags & (IOCB_ALLOC_CACHE|IOCB_HIPRI)) ==
+						IOCB_ALLOC_CACHE) {
+				iocb->ki_flags |= IOCB_PUT_CACHE;
+				iocb->private = bio;
+				free_bio = false;
+			}
+			iocb->ki_complete(iocb, ret, 0);
 			if (dio->multi_bio)
 				bio_put(&dio->bio);
 		} else {
@@ -362,7 +375,8 @@ static void blkdev_bio_end_io(struct bio *bio)
 		bio_check_pages_dirty(bio);
 	} else {
 		bio_release_pages(bio, false);
-		bio_put(bio);
+		if (free_bio)
+			bio_put(bio);
 	}
 }
 
