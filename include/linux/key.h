@@ -10,7 +10,8 @@
 #ifndef _LINUX_KEY_H
 #define _LINUX_KEY_H
 
-#include <linux/refcount_api.h>
+#include <linux/key_types.h>
+
 #include <linux/rwsem_types.h>
 #include <linux/types.h>
 #include <linux/list.h>
@@ -18,9 +19,8 @@
 #include <linux/rcupdate.h>
 #include <linux/atomic.h>
 #include <linux/assoc_array.h>
-#include <linux/refcount.h>
+#include <linux/refcount_types.h>
 #include <linux/time64.h>
-#include <linux/key_types.h>
 
 #ifdef __KERNEL__
 #include <linux/uidgid.h>
@@ -281,16 +281,9 @@ extern void key_put(struct key *key);
 extern bool key_put_tag(struct key_tag *tag);
 extern void key_remove_domain(struct key_tag *domain_tag);
 
-static inline struct key *__key_get(struct key *key)
-{
-	refcount_inc(&key->usage);
-	return key;
-}
+#define __key_get(key_ptr1) ({ struct key *__key_ptr1 = (key_ptr1); refcount_inc(&__key_ptr1->usage); __key_ptr1; })
 
-static inline struct key *key_get(struct key *key)
-{
-	return key ? __key_get(key) : key;
-}
+#define key_get(key_ptr2) ({ struct key *__key_ptr2 = (key_ptr2); __key_ptr2 ? __key_get(__key_ptr2) : __key_ptr2; })
 
 static inline void key_ref_put(key_ref_t key_ref)
 {
