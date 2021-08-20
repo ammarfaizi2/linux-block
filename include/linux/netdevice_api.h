@@ -21,17 +21,12 @@
 #ifndef _LINUX_NETDEVICE_API_H
 #define _LINUX_NETDEVICE_API_H
 
+#include <linux/rculist.h>
+#include <linux/smp_types.h>
 #include <linux/netdevice_types.h>
 
-#include <linux/dev_printk.h>
-#include <linux/pm_wakeup.h>
-#include <linux/cpumask_types.h>
-#include <linux/lockdep_api.h>
 #include <linux/dynamic_queue_limits.h>
-#include <linux/hashtable.h>
-#include <linux/kobject_types.h>
 #include <linux/netdev_features.h>
-#include <linux/smp_api.h>
 
 #include <net/net_namespace.h>
 #include <net/xdp.h>
