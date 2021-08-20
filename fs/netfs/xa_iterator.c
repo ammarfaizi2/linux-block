@@ -165,3 +165,29 @@ failed:
 	wreq->error = ret;
 	return ret;
 }
+
+static int netfs_mark_writeback_iterator(struct folio *folio)
+{
+	/* Now we need to clear the dirty flags on any folio that's not shared
+	 * with any other dirty region.
+	 */
+	if (!folio_clear_dirty_for_io(folio))
+		BUG();
+
+	/* We set writeback unconditionally because a folio may participate in
+	 * more than one simultaneous writeback.
+	 */
+	folio_start_writeback(folio);
+	return 0;
+}
+
+/*
+ * Mark all the folios in a range for writeback.  The called must have the
+ * locked the folios before calling this function.
+ */
+void netfs_mark_folios_for_writeback(struct netfs_write_request *wreq,
+				     pgoff_t first, pgoff_t last)
+{
+	netfs_iterate_folios(wreq->mapping, first, last,
+			     netfs_mark_writeback_iterator);
+}
