@@ -294,6 +294,7 @@ determined_tail:
 		trace_netfs_dirty(ctx, r, NULL, netfs_dirty_trace_flushing);
 		wake_up_var(&r->state);
 		netfs_get_dirty_region(ctx, r, netfs_region_trace_get_wreq);
+		netfs_deduct_write_credit(r, r->dirty.end - r->dirty.start);
 		list_move_tail(&r->flush_link, &wreq->regions);
 		if (r == tail)
 			break;
@@ -340,6 +341,10 @@ static int netfs_flush_range(struct address_space *mapping,
 	requested->end   = round_up  (requested->end,   min_bsize);
 
 retry:
+	ret = netfs_wait_for_credit(wbc);
+	if (ret < 0)
+		goto out_unlocked;
+
 	if (!wreq) {
 		ret = -ENOMEM;
 		wreq = netfs_alloc_write_request(mapping, false);
@@ -491,6 +496,8 @@ int netfs_writepages(struct address_space *mapping,
 	}
 
 	_leave(" = %d [%lx/%lx]", ret, wbc->nr_to_write, nr_to_write);
+	if (ret == -EBUSY)
+		ret = 0;
 	return ret;
 }
 EXPORT_SYMBOL(netfs_writepages);

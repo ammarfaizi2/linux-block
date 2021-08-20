@@ -29,6 +29,8 @@ int netfs_sanity_check_ictx(struct address_space *mapping);
 /*
  * objects.c
  */
+void netfs_deduct_write_credit(struct netfs_dirty_region *region, size_t credits);
+int netfs_wait_for_credit(struct writeback_control *wbc);
 struct netfs_flush_group *netfs_get_flush_group(struct netfs_flush_group *group);
 void netfs_put_flush_group(struct netfs_i_context *ctx, struct netfs_flush_group *group);
 struct netfs_dirty_region *netfs_alloc_dirty_region(void);
@@ -75,6 +77,7 @@ static inline void netfs_put_subrequest(struct netfs_read_subrequest *subreq,
  * write_helper.c
  */
 extern atomic_t netfs_region_debug_ids;
+extern atomic_long_t netfs_write_credit;
 
 void netfs_writeback_worker(struct work_struct *work);
 void netfs_flush_region(struct netfs_i_context *ctx,

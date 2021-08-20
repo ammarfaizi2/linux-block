@@ -13,6 +13,9 @@
 #include <linux/backing-dev.h>
 #include "internal.h"
 
+/* Amount of write credit available */
+atomic_long_t netfs_write_credit = ATOMIC_LONG_INIT(32 * 1024 * 1024);
+
 static size_t copy_folio_from_iter_atomic(struct folio *folio,
 					  unsigned int offset, size_t size,
 					  struct iov_iter *i)

@@ -61,5 +61,7 @@ void netfs_stats_show(struct seq_file *m)
 		   atomic_read(&netfs_n_wh_region),
 		   atomic_read(&netfs_n_wh_flush_group),
 		   atomic_read(&netfs_n_wh_wreq));
+	seq_printf(m, "Credit : w=%lx\n",
+		   atomic_long_read(&netfs_write_credit));
 }
 EXPORT_SYMBOL(netfs_stats_show);

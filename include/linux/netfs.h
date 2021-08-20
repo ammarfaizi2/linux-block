@@ -276,6 +276,7 @@ struct netfs_dirty_region {
 	struct netfs_range	bounds;		/* Bounding box including all affected pages */
 	struct netfs_range	reserved;	/* The region reserved against other writes */
 	struct netfs_range	dirty;		/* The region that has been modified */
+	size_t			credit;		/* Amount of credit used */
 	enum netfs_region_type	type;
 	enum netfs_region_state	state;
 	unsigned long		flags;

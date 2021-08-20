@@ -13,6 +13,45 @@
 #include <linux/backing-dev.h>
 #include "internal.h"
 
+/*
+ * Deduct the write credits to be used by this operation from the credits
+ * available.  This is used to throttle the generation of write requests.
+ */
+void netfs_deduct_write_credit(struct netfs_dirty_region *region, size_t credits)
+{
+	region->credit = credits;
+	atomic_long_sub(credits, &netfs_write_credit);
+}
+
+/*
+ * Return the write credits that were used by this operation to the available
+ * credits counter.  This is used to throttle the generation of write requests.
+ */
+static void netfs_return_write_credit(struct netfs_dirty_region *region)
+{
+	long c;
+
+	c = atomic_long_add_return(region->credit, &netfs_write_credit);
+	if (c > 0 && (long)(c - region->credit) <= 0)
+		wake_up_var(&netfs_write_credit);
+}
+
+/*
+ * Wait for sufficient credit to become available, thereby throttling the
+ * creation of write requests.
+ */
+int netfs_wait_for_credit(struct writeback_control *wbc)
+{
+	if (atomic_long_read(&netfs_write_credit) <= 0) {
+		if (wbc->sync_mode == WB_SYNC_NONE)
+			return -EBUSY;
+		return wait_var_event_killable(&netfs_write_credit,
+					       atomic_long_read(&netfs_write_credit) > 0);
+	}
+
+	return 0;
+}
+
 /**
  * netfs_new_flush_group - Create a new write flush group
  * @inode: The inode for which this is a flush group.
@@ -114,6 +153,7 @@ void netfs_put_dirty_region(struct netfs_i_context *ctx,
 			list_del_init(&region->dirty_link);
 			spin_unlock(&ctx->lock);
 		}
+		netfs_return_write_credit(region);
 		netfs_free_dirty_region(ctx, region);
 	}
 }
