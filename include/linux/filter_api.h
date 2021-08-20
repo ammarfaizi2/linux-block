@@ -17,6 +17,7 @@
 
 #include <crypto/sha1.h>
 
+#include <net/net_namespace_types.h>
 #include <net/sch_generic.h>
 
 DECLARE_STATIC_KEY_FALSE(bpf_stats_enabled_key);

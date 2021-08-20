@@ -2,23 +2,9 @@
 #ifndef __NET_SCHED_GENERIC_TYPES_H
 #define __NET_SCHED_GENERIC_TYPES_H
 
-#include <linux/seqlock_api.h>
-#include <linux/netdevice_api.h>
-#include <linux/types.h>
-#include <linux/rcupdate.h>
-#include <linux/pkt_sched.h>
-#include <linux/pkt_cls.h>
-#include <linux/percpu.h>
-#include <linux/dynamic_queue_limits.h>
-#include <linux/list.h>
-#include <linux/refcount.h>
-#include <linux/workqueue.h>
-#include <linux/mutex.h>
-#include <linux/rwsem.h>
-#include <linux/atomic.h>
-#include <linux/hashtable.h>
+#include <linux/rwsem_types.h>
+
 #include <net/gen_stats.h>
-#include <net/rtnetlink.h>
 #include <net/flow_offload.h>
 
 struct Qdisc_ops;
