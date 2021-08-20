@@ -88,6 +88,7 @@ void netfs_flush_region(struct netfs_i_context *ctx,
  * xa_iterator.c
  */
 void netfs_unlock_folios(struct address_space *mapping, pgoff_t start, pgoff_t end);
+int netfs_lock_folios(struct netfs_write_request *wreq, bool may_wait);
 
 /*
  * stats.c

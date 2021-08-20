@@ -8,6 +8,7 @@
 #include <linux/fs.h>
 #include <linux/mm.h>
 #include <linux/pagemap.h>
+#include <linux/writeback.h>
 #include "internal.h"
 
 /*
@@ -105,4 +106,62 @@ static int netfs_unlock_folios_iterator(struct folio *folio)
 void netfs_unlock_folios(struct address_space *mapping, pgoff_t start, pgoff_t end)
 {
 	netfs_iterate_folios(mapping, start, end, netfs_unlock_folios_iterator);
+}
+
+static int netfs_lock_folios_iterator(struct xa_state *xas,
+				      struct folio *folio,
+				      struct netfs_write_request *wreq,
+				      bool may_wait)
+{
+	int ret = 0;
+
+	/* At this point we hold neither the i_pages lock nor the
+	 * folio lock: the folio may be truncated or invalidated
+	 * (changing folio->mapping to NULL), or even swizzled
+	 * back from swapper_space to tmpfs file mapping
+	 */
+	if (may_wait) {
+		xas_pause(xas);
+		rcu_read_unlock();
+		ret = folio_lock_killable(folio);
+		rcu_read_lock();
+	} else {
+		if (!folio_trylock(folio))
+			ret = -EBUSY;
+	}
+
+	return ret;
+}
+
+/*
+ * Lock all the folios in a range and add them to the write request.
+ */
+int netfs_lock_folios(struct netfs_write_request *wreq, bool may_wait)
+{
+	pgoff_t last = wreq->last;
+	int ret;
+
+	_enter("%lx-%lx", wreq->first, wreq->last);
+	ret = netfs_iterate_get_folios(wreq->mapping, wreq->first, wreq->last,
+				       netfs_lock_folios_iterator,
+				       wreq, may_wait);
+	if (ret < 0) {
+		netfs_see_write_request(wreq, netfs_wreq_trace_see_lock_conflict);
+		goto failed;
+	}
+
+	if (wreq->last < last) {
+		kdebug("Some folios missing %lx < %lx", wreq->last, last);
+		netfs_see_write_request(wreq, netfs_wreq_trace_see_pages_missing);
+		ret = -EIO;
+		goto failed;
+	}
+
+	wreq->error = 0;
+	return 0;
+
+failed:
+	netfs_unlock_folios(wreq->mapping, wreq->first, wreq->last);
+	wreq->error = ret;
+	return ret;
 }
