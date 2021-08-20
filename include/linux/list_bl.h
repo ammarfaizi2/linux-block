@@ -3,6 +3,5 @@
 #define _LINUX_LIST_BL_H
 
 #include <linux/list_bl_types.h>
-#include <linux/list_bl_api.h>
 
 #endif
