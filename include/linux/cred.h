@@ -11,7 +11,7 @@
 #include <linux/capability.h>
 #include <linux/init.h>
 #include <linux/key.h>
-#include <linux/atomic.h>
+#include <linux/atomic_api.h>
 #include <linux/uidgid.h>
 
 struct cred;
