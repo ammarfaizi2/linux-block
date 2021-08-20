@@ -2,7 +2,8 @@
 #ifndef __LINUX_DCACHE_H
 #define __LINUX_DCACHE_H
 
-#include <linux/spinlock_api.h>
+#include <linux/cache.h>
+#include <linux/spinlock_types.h>
 #include <linux/list_bl.h>
 #include <linux/math.h>
 #include <linux/seqlock.h>
