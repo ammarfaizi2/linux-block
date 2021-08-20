@@ -276,6 +276,7 @@ struct netfs_dirty_region {
 	struct list_head	flush_link;	/* Link in netfs_io_request::regions */
 	struct netfs_dirty_region *waiting_on_wb; /* Overlayed writeback to wait for */
 	void			*netfs_priv;	/* Private data for the netfs */
+	size_t			credit;		/* Amount of credit used */
 	unsigned long long	from;		/* File position of start of modified part */
 	unsigned long long	to;		/* File position of end of modified part */
 	unsigned int		debug_id;
