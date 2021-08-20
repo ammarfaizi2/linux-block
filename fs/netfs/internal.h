@@ -135,6 +135,8 @@ void netfs_flush_region(struct netfs_i_context *ctx,
  */
 void netfs_unlock_folios(struct address_space *mapping, pgoff_t start, pgoff_t end);
 int netfs_lock_folios(struct netfs_writeback *wback, bool may_wait);
+void netfs_mark_folios_for_writeback(struct netfs_writeback *wback,
+				     pgoff_t first, pgoff_t last);
 
 /*
  * stats.c
