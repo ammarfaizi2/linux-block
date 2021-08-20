@@ -85,6 +85,11 @@ void netfs_flush_region(struct netfs_i_context *ctx,
 			enum netfs_dirty_trace why);
 
 /*
+ * xa_iterator.c
+ */
+void netfs_unlock_folios(struct address_space *mapping, pgoff_t start, pgoff_t end);
+
+/*
  * stats.c
  */
 #ifdef CONFIG_NETFS_STATS

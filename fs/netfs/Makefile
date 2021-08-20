@@ -5,7 +5,8 @@ netfs-y := \
 	objects.o \
 	read_helper.o \
 	write_back.o \
-	write_helper.o
+	write_helper.o \
+	xa_iterator.o
 # dio_helper.o
 
 netfs-$(CONFIG_NETFS_STATS) += stats.o
