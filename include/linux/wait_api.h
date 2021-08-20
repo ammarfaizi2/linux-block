@@ -8,10 +8,10 @@
 
 #include <linux/wait_types.h>
 
-#include <linux/spinlock_api.h>
 #include <linux/list.h>
 #include <linux/stddef.h>
-#include <linux/spinlock.h>
+#include <linux/build_bug.h>
+#include <linux/kernel.h>
 #include <linux/sched/types.h>
 
 #include <asm/current.h>
