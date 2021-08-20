@@ -9,20 +9,14 @@
 #ifndef _NET_DST_TYPES_H
 #define _NET_DST_TYPES_H
 
-#include <net/dst_ops.h>
-#include <linux/netdevice.h>
-#include <linux/rtnetlink.h>
-#include <linux/rcupdate.h>
-#include <linux/bug.h>
-#include <linux/jiffies.h>
-#include <linux/refcount.h>
-#include <net/neighbour.h>
-#include <net/net_namespace.h>
-#include <asm/processor.h>
-#include <linux/indirect_call_wrapper.h>
-#include <linux/skbuff_api.h>
+#include <linux/types.h>
+
+#include <net/net_trackers.h>
 
 struct sk_buff;
+struct dst_ops;
+struct sock;
+struct net;
 
 struct dst_entry {
 	struct net_device       *dev;
