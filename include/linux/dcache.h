@@ -4,7 +4,6 @@
 
 #include <linux/list_bl_api.h>
 #include <linux/cache.h>
-#include <linux/spinlock_types.h>
 #include <linux/list_bl.h>
 #include <linux/math.h>
 #include <linux/seqlock.h>
