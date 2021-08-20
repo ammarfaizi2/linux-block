@@ -292,6 +292,8 @@ extern int netfs_write_begin(struct netfs_inode *,
 			     struct file *, struct address_space *,
 			     loff_t, unsigned int, struct folio **,
 			     void **);
+extern void netfs_invalidate_folio(struct folio *folio, size_t offset, size_t length);
+extern bool netfs_release_folio(struct folio *folio, gfp_t gfp);
 
 extern void netfs_subreq_terminated(struct netfs_io_subrequest *, ssize_t, bool);
 extern void netfs_get_subrequest(struct netfs_io_subrequest *subreq,
