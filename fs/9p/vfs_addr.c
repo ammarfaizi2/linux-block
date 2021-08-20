@@ -98,47 +98,6 @@ const struct netfs_request_ops v9fs_req_ops = {
 	.cleanup		= v9fs_req_cleanup,
 };
 
-/**
- * v9fs_release_page - release the private state associated with a page
- * @page: The page to be released
- * @gfp: The caller's allocation restrictions
- *
- * Returns 1 if the page can be released, false otherwise.
- */
-
-static int v9fs_release_page(struct page *page, gfp_t gfp)
-{
-	struct folio *folio = page_folio(page);
-	struct inode *inode = folio_inode(folio);
-
-	if (folio_test_private(folio))
-		return 0;
-#ifdef CONFIG_9P_FSCACHE
-	if (folio_test_fscache(folio)) {
-		if (current_is_kswapd() || !(gfp & __GFP_FS))
-			return 0;
-		folio_wait_fscache(folio);
-	}
-#endif
-	fscache_note_page_release(v9fs_inode_cookie(V9FS_I(inode)));
-	return 1;
-}
-
-/**
- * v9fs_invalidate_page - Invalidate a page completely or partially
- * @page: The page to be invalidated
- * @offset: offset of the invalidated region
- * @length: length of the invalidated region
- */
-
-static void v9fs_invalidate_page(struct page *page, unsigned int offset,
-				 unsigned int length)
-{
-	struct folio *folio = page_folio(page);
-
-	folio_wait_fscache(folio);
-}
-
 static void v9fs_write_to_cache_done(void *priv, ssize_t transferred_or_error,
 				     bool was_async)
 {
@@ -358,8 +317,8 @@ const struct address_space_operations v9fs_addr_operations = {
 	.writepage = v9fs_vfs_writepage,
 	.write_begin = v9fs_write_begin,
 	.write_end = v9fs_write_end,
-	.releasepage = v9fs_release_page,
-	.invalidatepage = v9fs_invalidate_page,
+	.releasepage = netfs_releasepage,
+	.invalidatepage = netfs_invalidatepage,
 	.launder_page = v9fs_launder_page,
 	.direct_IO = v9fs_direct_IO,
 };

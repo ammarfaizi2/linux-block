@@ -160,27 +160,7 @@ static void ceph_invalidatepage(struct page *page, unsigned int offset,
 		ceph_put_snap_context(snapc);
 	}
 
-	wait_on_page_fscache(page);
-}
-
-static int ceph_releasepage(struct page *page, gfp_t gfp)
-{
-	struct inode *inode = page->mapping->host;
-
-	dout("%llx:%llx releasepage %p idx %lu (%sdirty)\n",
-	     ceph_vinop(inode), page,
-	     page->index, PageDirty(page) ? "" : "not ");
-
-	if (PagePrivate(page))
-		return 0;
-
-	if (PageFsCache(page)) {
-		if (current_is_kswapd() || !(gfp & __GFP_FS))
-			return 0;
-		wait_on_page_fscache(page);
-	}
-	ceph_fscache_note_page_release(inode);
-	return 1;
+	netfs_invalidatepage(page, offset, length);
 }
 
 static void ceph_netfs_expand_readahead(struct netfs_read_request *rreq)
@@ -1365,7 +1345,7 @@ const struct address_space_operations ceph_aops = {
 	.write_end = ceph_write_end,
 	.set_page_dirty = ceph_set_page_dirty,
 	.invalidatepage = ceph_invalidatepage,
-	.releasepage = ceph_releasepage,
+	.releasepage = netfs_releasepage,
 	.direct_IO = noop_direct_IO,
 };
 

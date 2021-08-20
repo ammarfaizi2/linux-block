@@ -4798,25 +4798,6 @@ out:
 	return rc;
 }
 
-static int cifs_release_page(struct page *page, gfp_t gfp)
-{
-	if (PagePrivate(page))
-		return 0;
-	if (PageFsCache(page)) {
-		if (current_is_kswapd() || !(gfp & __GFP_FS))
-			return false;
-		wait_on_page_fscache(page);
-	}
-	fscache_note_page_release(cifs_inode_cookie(page->mapping->host));
-	return true;
-}
-
-static void cifs_invalidate_page(struct page *page, unsigned int offset,
-				 unsigned int length)
-{
-	wait_on_page_fscache(page);
-}
-
 static int cifs_launder_page(struct page *page)
 {
 	int rc = 0;
@@ -5012,9 +4993,9 @@ const struct address_space_operations cifs_addr_ops = {
 	.write_begin = cifs_write_begin,
 	.write_end = cifs_write_end,
 	.set_page_dirty = cifs_set_page_dirty,
-	.releasepage = cifs_release_page,
+	.releasepage = netfs_releasepage,
 	.direct_IO = cifs_direct_io,
-	.invalidatepage = cifs_invalidate_page,
+	.invalidatepage = netfs_invalidatepage,
 	.launder_page = cifs_launder_page,
 	/*
 	 * TODO: investigate and if useful we could add an cifs_migratePage
@@ -5037,7 +5018,7 @@ const struct address_space_operations cifs_addr_ops_smallbuf = {
 	.write_begin = cifs_write_begin,
 	.write_end = cifs_write_end,
 	.set_page_dirty = cifs_set_page_dirty,
-	.releasepage = cifs_release_page,
-	.invalidatepage = cifs_invalidate_page,
+	.releasepage = netfs_releasepage,
+	.invalidatepage = netfs_invalidatepage,
 	.launder_page = cifs_launder_page,
 };

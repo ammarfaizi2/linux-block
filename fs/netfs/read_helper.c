@@ -9,6 +9,7 @@
 #include <linux/export.h>
 #include <linux/fs.h>
 #include <linux/mm.h>
+#include <linux/swap.h>
 #include <linux/pagemap.h>
 #include <linux/slab.h>
 #include <linux/uio.h>
@@ -1347,3 +1348,41 @@ error:
 	return ret;
 }
 EXPORT_SYMBOL(netfs_write_begin);
+
+/*
+ * Invalidate part or all of a folio
+ * - release a folio and clean up its private data if offset is 0 (indicating
+ *   the entire folio)
+ */
+void netfs_invalidatepage(struct page *page, unsigned int offset, unsigned int length)
+{
+	struct folio *folio = page_folio(page);
+
+	_enter("{%lu},%u,%u", folio_index(folio), offset, length);
+
+	folio_wait_fscache(folio);
+}
+EXPORT_SYMBOL(netfs_invalidatepage);
+
+/*
+ * Release a folio and clean up its private state if it's not busy
+ * - return true if the folio can now be released, false if not
+ */
+int netfs_releasepage(struct page *page, gfp_t gfp)
+{
+	struct folio *folio = page_folio(page);
+
+	_enter("");
+
+	if (PagePrivate(page))
+		return 0;
+	if (folio_test_fscache(folio)) {
+		if (current_is_kswapd() || !(gfp & __GFP_FS))
+			return false;
+		folio_wait_fscache(folio);
+	}
+
+	fscache_note_page_release(netfs_i_cookie(folio_inode(folio)));
+	return true;
+}
+EXPORT_SYMBOL(netfs_releasepage);
