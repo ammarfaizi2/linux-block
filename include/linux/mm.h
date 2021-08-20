@@ -11,6 +11,7 @@
 #include <linux/mm_types.h>
 #include <linux/mm_types_task.h>
 
+#include <linux/pgtable_api.h>
 #include <linux/spinlock_types.h>
 #include <linux/mmdebug.h>
 #include <linux/gfp.h>
