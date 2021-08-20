@@ -5,6 +5,7 @@
 /*
  * RCU-protected bl list version. See include/linux/list_bl.h.
  */
+#include <linux/list_bl_api.h>
 #include <linux/list_bl.h>
 #include <linux/rcupdate.h>
 
