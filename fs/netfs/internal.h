@@ -67,6 +67,8 @@ static inline void netfs_proc_del_rreq(struct netfs_io_request *rreq) {}
 /*
  * misc.c
  */
+extern atomic_long_t netfs_write_credit;
+
 int netfs_xa_store_and_mark(struct xarray *xa, unsigned long index,
 			    struct folio *folio, bool put_mark,
 			    bool pagecache_mark, gfp_t gfp_mask);
@@ -79,6 +81,9 @@ int netfs_set_up_buffer(struct xarray *buffer,
 			struct folio *keep,
 			pgoff_t have_index, unsigned int have_folios);
 void netfs_clear_buffer(struct xarray *buffer);
+void netfs_deduct_write_credit(struct netfs_dirty_region *region, size_t credits);
+void netfs_return_write_credit(struct netfs_dirty_region *region);
+int netfs_wait_for_credit(struct writeback_control *wbc);
 
 /*
  * objects.c

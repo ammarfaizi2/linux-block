@@ -8,6 +8,9 @@
 #include <linux/swap.h>
 #include "internal.h"
 
+/* Amount of write credit available */
+atomic_long_t netfs_write_credit = ATOMIC_LONG_INIT(320 * 1024 * 1024);
+
 /*
  * Attach a folio to the buffer and maybe set marks on it to say that we need
  * to put the folio later and twiddle the pagecache flags.
@@ -189,3 +192,42 @@ bool netfs_release_folio(struct folio *folio, gfp_t gfp)
 	return true;
 }
 EXPORT_SYMBOL(netfs_release_folio);
+
+/*
+ * Deduct the write credits to be used by this operation from the credits
+ * available.  This is used to throttle the generation of write requests.
+ */
+void netfs_deduct_write_credit(struct netfs_dirty_region *region, size_t credits)
+{
+	region->credit = credits;
+	atomic_long_sub(credits, &netfs_write_credit);
+}
+
+/*
+ * Return the write credits that were used by this operation to the available
+ * credits counter.  This is used to throttle the generation of write requests.
+ */
+void netfs_return_write_credit(struct netfs_dirty_region *region)
+{
+	long c;
+
+	c = atomic_long_add_return(region->credit, &netfs_write_credit);
+	if (c > 0 && (long)(c - region->credit) <= 0)
+		wake_up_var(&netfs_write_credit);
+}
+
+/*
+ * Wait for sufficient credit to become available, thereby throttling the
+ * creation of write requests.
+ */
+int netfs_wait_for_credit(struct writeback_control *wbc)
+{
+	if (atomic_long_read(&netfs_write_credit) <= 0) {
+		if (wbc && wbc->sync_mode == WB_SYNC_NONE)
+			return -EBUSY;
+		return wait_var_event_killable(&netfs_write_credit,
+					       atomic_long_read(&netfs_write_credit) > 0);
+	}
+
+	return 0;
+}

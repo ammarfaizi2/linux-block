@@ -256,6 +256,8 @@ void netfs_put_dirty_region(struct netfs_inode *ctx,
 		return;
 	dead = __refcount_dec_and_test(&region->ref, &ref);
 	trace_netfs_ref_region(region->debug_id, ref - 1, what);
-	if (dead)
+	if (dead) {
+		netfs_return_write_credit(region);
 		netfs_free_dirty_region(ctx, region);
+	}
 }
