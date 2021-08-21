@@ -16,6 +16,7 @@
 
 #include <linux/elfcore-compat.h>
 #include <linux/time.h>
+#include <linux/skbuff.h>
 
 #define ELF_COMPAT	1
 
