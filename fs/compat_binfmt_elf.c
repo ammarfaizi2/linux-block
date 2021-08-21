@@ -14,6 +14,9 @@
  * functions used in binfmt_elf.c to compat versions.
  */
 
+#include <asm/elf_api.h>
+
+#include <linux/skbuff_api.h>
 #include <linux/elfcore-compat.h>
 #include <linux/time.h>
 
