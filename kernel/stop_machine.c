@@ -207,13 +207,6 @@ notrace void __weak stop_machine_yield(const struct cpumask *cpumask)
 
 bool multi_stop_cpu_ipi_handled = true;
 
-static void multi_stop_cpu_ipi(void *unused)
-{
-	pr_info("%s: IPI received on CPU %d\n", __func__, smp_processor_id());
-	smp_store_release(&multi_stop_cpu_ipi_handled, true);
-
-}
-
 static void multi_cpu_stop_progress(const char *f, int l, const char *m, enum multi_stop_state s)
 {
 	int cpu = smp_processor_id();
@@ -233,11 +226,14 @@ static void multi_cpu_stop_progress(const char *f, int l, const char *m, enum mu
 
 static void dump_multi_cpu_stop_state(struct multi_stop_data *msdata, bool *firsttime)
 {
+	static int nmi_firsttime = true;
 	struct cpu_stopper *stopper;
 	unsigned long flags;
 	u64 t, tlast;
 	int cpu;
 
+	if (firsttime && *firsttime)
+		nmi_firsttime = true;
 	pr_info("%s threads %d/%d state %d\n", __func__, atomic_read(&msdata->thread_ack), msdata->num_threads, msdata->state);
 	for_each_online_cpu(cpu) {
 		if (cpu_is_offline(cpu))
@@ -252,12 +248,10 @@ static void dump_multi_cpu_stop_state(struct multi_stop_data *msdata, bool *firs
 			trigger_single_cpu_backtrace(cpu);
 			*firsttime = false;
 		}
-		if (time_after64(t, tlast + NSEC_PER_SEC) &&
-		    smp_load_acquire(&multi_stop_cpu_ipi_handled)) {
+		if (time_after64(t, tlast + NSEC_PER_SEC) && nmi_firsttime) {
 			pr_info("%s: sending IPI from CPU %d to CPU %d\n", __func__, raw_smp_processor_id(), cpu);
-			WRITE_ONCE(multi_stop_cpu_ipi_handled, false);
-			smp_mb();
-			smp_call_function_single(cpu, multi_stop_cpu_ipi, NULL, 0);
+			nmi_firsttime = false;
+			trigger_single_cpu_backtrace(cpu);
 		}
 	}
 }
