@@ -7,7 +7,16 @@
 
 # Watchdog function for clocksources to detect instabilities
 config CLOCKSOURCE_WATCHDOG
-	bool
+	bool "Detect clocksource instabilities, fall back to more accurate (but slower) clocksource drivers"
+	default y
+	help
+	  This watchdog keeps checking whether clocksource time is stable enough,
+	  if not then it will eventually switch to a more stable clocksource.
+
+	  On systems where the cure is worse than the disease you can turn
+	  off this feature.
+
+	  Say "Y" if unsure.
 
 # Architecture has extra clocksource data
 config ARCH_CLOCKSOURCE_DATA
