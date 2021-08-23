@@ -92,6 +92,7 @@ int netfs_lock_folios(struct netfs_write_request *wreq, bool may_wait);
 void netfs_mark_folios_for_writeback(struct netfs_write_request *wreq,
 				     pgoff_t first, pgoff_t last);
 void netfs_end_writeback(struct netfs_write_request *wreq);
+void netfs_redirty_folios(struct netfs_write_request *wreq);
 
 /*
  * stats.c
