@@ -22,6 +22,11 @@ ssize_t netfs_file_direct_write(struct netfs_dirty_region *region,
 				struct kiocb *iocb, struct iov_iter *from);
 
 /*
+ * main.c
+ */
+int netfs_sanity_check_ictx(struct address_space *mapping);
+
+/*
  * objects.c
  */
 struct netfs_flush_group *netfs_get_flush_group(struct netfs_flush_group *group);

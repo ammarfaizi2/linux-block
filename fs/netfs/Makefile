@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0
 
 netfs-y := \
+	main.o \
 	objects.o \
 	read_helper.o \
 	write_helper.o
