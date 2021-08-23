@@ -93,6 +93,40 @@
 		ret;							\
 	})
 
+/*
+ * Iterate over a set of folios that we hold pinned with the writeback flag.
+ * The iteration function may drop the RCU read lock, but should call
+ * xas_pause() before it does so.
+ */
+#define netfs_iterate_pinned_folios(MAPPING, START, END, ITERATOR, ...)	\
+	({								\
+		struct folio *folio;					\
+		pgoff_t __it_start = (START);				\
+		pgoff_t __it_end = (END);				\
+		int ret = 0;						\
+									\
+		XA_STATE(xas, &(MAPPING)->i_pages, __it_start);		\
+		rcu_read_lock();					\
+		for (folio = xas_load(&xas);				\
+		     folio;						\
+		     folio = xas_next_entry(&xas, __it_end)		\
+		     ) {						\
+			if (xas_retry(&xas, folio))			\
+				continue;				\
+			if (xa_is_value(folio))				\
+				break;					\
+			if (unlikely(folio != xas_reload(&xas))) {	\
+				xas_reset(&xas);			\
+				continue;				\
+			}						\
+			ret = ITERATOR(&xas, folio, ##__VA_ARGS__);	\
+			if (ret < 0)					\
+				break;					\
+		}							\
+		rcu_read_unlock();					\
+		ret;							\
+	})
+
 static int netfs_unlock_folios_iterator(struct folio *folio)
 {
 	folio_unlock(folio);
@@ -190,4 +224,19 @@ void netfs_mark_folios_for_writeback(struct netfs_write_request *wreq,
 {
 	netfs_iterate_folios(wreq->mapping, first, last,
 			     netfs_mark_writeback_iterator);
+}
+
+static int netfs_end_writeback_iterator(struct xa_state *xas, struct folio *folio)
+{
+	folio_end_writeback(folio);
+	return 0;
+}
+
+/*
+ * End the writeback on all the folios in the range set on a write request.
+ */
+void netfs_end_writeback(struct netfs_write_request *wreq)
+{
+	netfs_iterate_pinned_folios(wreq->mapping, wreq->first, wreq->last,
+				    netfs_end_writeback_iterator);
 }

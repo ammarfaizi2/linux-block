@@ -91,6 +91,7 @@ void netfs_unlock_folios(struct address_space *mapping, pgoff_t start, pgoff_t e
 int netfs_lock_folios(struct netfs_write_request *wreq, bool may_wait);
 void netfs_mark_folios_for_writeback(struct netfs_write_request *wreq,
 				     pgoff_t first, pgoff_t last);
+void netfs_end_writeback(struct netfs_write_request *wreq);
 
 /*
  * stats.c
