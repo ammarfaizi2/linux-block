@@ -16,6 +16,11 @@
 #define pr_fmt(fmt) "netfs: " fmt
 
 /*
+ * main.c
+ */
+int netfs_sanity_check_ictx(struct address_space *mapping);
+
+/*
  * read_helper.c
  */
 extern unsigned int netfs_debug;
