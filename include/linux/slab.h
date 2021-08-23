@@ -20,8 +20,6 @@
 #include <linux/cache.h>
 
 #include <asm/page_types.h>
-#include <asm-generic/getorder.h>
-
 
 /*
  * Flags to pass to kmem_cache_create().
@@ -138,6 +136,10 @@
 				(unsigned long)ZERO_SIZE_PTR)
 
 #include <linux/kasan.h>
+
+#if defined(ARCH_DMA_MINALIGN) && ARCH_DMA_MINALIGN > 8
+# include <linux/log2.h>
+#endif
 
 struct mem_cgroup;
 /*
