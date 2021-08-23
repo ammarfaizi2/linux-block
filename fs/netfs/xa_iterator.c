@@ -240,3 +240,23 @@ void netfs_end_writeback(struct netfs_writeback *wback)
 	netfs_iterate_pinned_folios(wback->mapping, wback->first, wback->last,
 				    netfs_end_writeback_iterator);
 }
+
+static int netfs_redirty_iterator(struct xa_state *xas, struct folio *folio)
+{
+	filemap_dirty_folio(folio_file_mapping(folio), folio);
+	folio_account_redirty(folio);
+	folio_end_writeback(folio);
+	return 0;
+}
+
+/*
+ * Redirty all the folios in a given range.
+ */
+void netfs_redirty_folios(struct netfs_writeback *wback)
+{
+	_enter("%lx-%lx", wback->first, wback->last);
+
+	netfs_iterate_pinned_folios(wback->mapping, wback->first, wback->last,
+				    netfs_redirty_iterator);
+	_leave("");
+}
