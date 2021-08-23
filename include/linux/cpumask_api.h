@@ -7,6 +7,7 @@
  * set of CPU's in a system, one bit position per CPU number.  In general,
  * only nr_cpu_ids (<= NR_CPUS) bits are valid.
  */
+#include <linux/atomic_api.h>
 #include <linux/math.h>
 #include <linux/cpumask_types.h>
 #include <linux/kernel.h>

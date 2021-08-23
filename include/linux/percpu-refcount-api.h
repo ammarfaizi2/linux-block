@@ -52,6 +52,7 @@
 
 #include <linux/percpu-refcount-types.h>
 
+#include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/kernel.h>
 #include <linux/percpu.h>

@@ -2,7 +2,7 @@
 #ifndef _ASM_GENERIC_BITOPS_LOCK_H_
 #define _ASM_GENERIC_BITOPS_LOCK_H_
 
-#include <linux/atomic.h>
+#include <linux/atomic_api.h>
 #include <linux/compiler.h>
 #include <asm/barrier.h>
 
