@@ -93,6 +93,7 @@
  */
 #include <linux/refcount_types.h>
 
+#include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/bug.h>
 #include <linux/compiler.h>
