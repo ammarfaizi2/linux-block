@@ -1089,6 +1089,13 @@ static void local_apic_timer_interrupt(void)
 	evt->event_handler(evt);
 }
 
+static DEFINE_PER_CPU(s64, sysvec_apic_timer_interrupt_ns);
+
+s64 get_sysvec_apic_timer_interrupt_ns(int cpu)
+{
+	return per_cpu(sysvec_apic_timer_interrupt_ns, cpu);
+}
+
 /*
  * Local APIC timer interrupt. This is the most natural way for doing
  * local interrupts, but local timer interrupts can be emulated by
@@ -1100,11 +1107,14 @@ static void local_apic_timer_interrupt(void)
 DEFINE_IDTENTRY_SYSVEC(sysvec_apic_timer_interrupt)
 {
 	struct pt_regs *old_regs = set_irq_regs(regs);
+	s64 t;
 
 	ack_APIC_irq();
+	t = ktime_get();
 	trace_local_timer_entry(LOCAL_TIMER_VECTOR);
 	local_apic_timer_interrupt();
 	trace_local_timer_exit(LOCAL_TIMER_VECTOR);
+	per_cpu(sysvec_apic_timer_interrupt_ns, smp_processor_id()) += ktime_get() - t;
 
 	set_irq_regs(old_regs);
 }

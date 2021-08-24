@@ -207,9 +207,13 @@ notrace void __weak stop_machine_yield(const struct cpumask *cpumask)
 
 bool multi_stop_cpu_ipi_handled = true;
 
+s64 get_sysvec_apic_timer_interrupt_ns(int cpu);
+
 static void multi_stop_cpu_ipi(void *unused)
 {
-	pr_info("%s: IPI received on CPU %d\n", __func__, smp_processor_id());
+	int cpu = smp_processor_id();
+
+	pr_info("%s: IPI received on CPU %d  apic irq time: %lld\n", __func__, cpu, get_sysvec_apic_timer_interrupt_ns(cpu));
 	smp_store_release(&multi_stop_cpu_ipi_handled, true);
 
 }
