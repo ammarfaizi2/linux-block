@@ -206,6 +206,8 @@ extern atomic_t fscache_n_stores_ok;
 extern atomic_t fscache_n_stores_again;
 extern atomic_t fscache_n_stores_nobufs;
 extern atomic_t fscache_n_stores_oom;
+extern atomic_t fscache_n_stores_object_dead;
+extern atomic_t fscache_n_stores_op_waits;
 extern atomic_t fscache_n_store_ops;
 extern atomic_t fscache_n_store_calls;
 extern atomic_t fscache_n_store_pages;

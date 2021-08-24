@@ -352,6 +352,7 @@ struct netfs_write_request {
 	unsigned long		flags;
 #define NETFS_WREQ_WRITE_TO_CACHE	0	/* Need to write to the cache */
 #define NETFS_WREQ_BUFFERED		1	/* Data is held in ->buffer */
+#define NETFS_WREQ_WRITE_TO_SERVER	2	/* Need to write to the server */
 	const struct netfs_request_ops *netfs_ops;
 };
 

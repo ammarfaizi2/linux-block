@@ -177,8 +177,10 @@ struct netfs_write_request *netfs_alloc_write_request(struct address_space *mapp
 		wreq->inode	= inode;
 		wreq->netfs_ops	= ctx->ops;
 		wreq->debug_id	= atomic_inc_return(&debug_ids);
-		if (cached)
+		if (cached) {
+			kdebug("cached W=%08x", wreq->debug_id);
 			__set_bit(NETFS_WREQ_WRITE_TO_CACHE, &wreq->flags);
+		}
 		xa_init(&wreq->buffer);
 		INIT_WORK(&wreq->work, netfs_writeback_worker);
 		INIT_LIST_HEAD(&wreq->proc_link);

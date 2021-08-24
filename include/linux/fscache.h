@@ -196,6 +196,8 @@ extern void __fscache_wait_on_invalidate(struct fscache_cookie *);
 
 #ifdef FSCACHE_USE_NEW_IO_API
 extern int __fscache_begin_read_operation(struct netfs_read_request *, struct fscache_cookie *);
+extern int __fscache_prepare_write_operation(struct netfs_write_request *,
+					     struct fscache_cookie *);
 #else
 extern int __fscache_read_or_alloc_page(struct fscache_cookie *,
 					struct page *,
@@ -531,6 +533,32 @@ int fscache_begin_read_operation(struct netfs_read_request *rreq,
 {
 	if (fscache_cookie_valid(cookie) && fscache_cookie_enabled(cookie))
 		return __fscache_begin_read_operation(rreq, cookie);
+	return -ENOBUFS;
+}
+
+/**
+ * fscache_prepare_write_operation - Prepare a write operation for the netfs lib
+ * @wreq: The write request being undertaken
+ * @cookie: The cookie representing the cache object
+ *
+ * Prepare a write operation on behalf of the netfs helper library.  @wreq
+ * indicates the write request to which the operation state should be attached;
+ * @cookie indicates the cache object that will be accessed.
+ *
+ * This is intended to be called from the ->init_wreq() netfs lib operation as
+ * implemented by the network filesystem.
+ *
+ * Returns:
+ * * 0		- Success
+ * * -ENOBUFS	- No caching available
+ * * Other error code from the cache, such as -ENOMEM.
+ */
+static inline
+int fscache_prepare_write_operation(struct netfs_write_request *wreq,
+				    struct fscache_cookie *cookie)
+{
+	if (fscache_cookie_valid(cookie) && fscache_cookie_enabled(cookie))
+		return __fscache_prepare_write_operation(wreq, cookie);
 	return -ENOBUFS;
 }
 

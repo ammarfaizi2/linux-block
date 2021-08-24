@@ -114,3 +114,102 @@ nobufs:
 	return -ENOBUFS;
 }
 EXPORT_SYMBOL(__fscache_begin_read_operation);
+
+/*
+ * Prepare for a cache write operation.
+ * - we return:
+ *   -ENOMEM	- Out of memory
+ *   -ERESTARTSYS - Interrupted
+ *   -ENOBUFS	- No backing object or space available in which to cache any
+ *                pages not being written
+ *   -ENODATA	- No data available in the backing object for some or all of
+ *                the pages
+ *   0		- Prepared a write on all pages
+ */
+int __fscache_prepare_write_operation(struct netfs_write_request *rreq,
+				      struct fscache_cookie *cookie)
+{
+	struct fscache_operation *op;
+	struct fscache_object *object;
+	bool wake_cookie = false;
+	int ret;
+
+	_enter("rr=%08x", rreq->debug_id);
+
+	fscache_stat(&fscache_n_stores);
+
+	if (hlist_empty(&cookie->backing_objects))
+		goto nobufs;
+
+	if (test_bit(FSCACHE_COOKIE_INVALIDATING, &cookie->flags)) {
+		_leave(" = -ENOBUFS [invalidating]");
+		return -ENOBUFS;
+	}
+
+	ASSERTCMP(cookie->def->type, !=, FSCACHE_COOKIE_TYPE_INDEX);
+
+	if (fscache_wait_for_deferred_lookup(cookie) < 0)
+		return -ERESTARTSYS;
+
+	op = kzalloc(sizeof(*op), GFP_NOIO | __GFP_NOMEMALLOC | __GFP_NORETRY);
+	if (!op)
+		return -ENOMEM;
+
+	fscache_operation_init(cookie, op, NULL, NULL, NULL);
+	op->flags = FSCACHE_OP_ASYNC |
+		(1 << FSCACHE_OP_WAITING) |
+		(1 << FSCACHE_OP_UNUSE_COOKIE);
+
+	spin_lock(&cookie->lock);
+
+	if (!fscache_cookie_enabled(cookie) ||
+	    hlist_empty(&cookie->backing_objects))
+		goto nobufs_unlock;
+	object = hlist_entry(cookie->backing_objects.first,
+			     struct fscache_object, cookie_link);
+
+	__fscache_use_cookie(cookie);
+
+	if (fscache_submit_op(object, op) < 0)
+		goto nobufs_unlock_dec;
+	spin_unlock(&cookie->lock);
+
+	fscache_stat(&fscache_n_retrieval_ops);
+
+	/* we wait for the operation to become active, and then process it
+	 * *here*, in this thwrite, and not in the thwrite pool */
+	ret = fscache_wait_for_operation_activation(
+		object, op,
+		__fscache_stat(&fscache_n_stores_op_waits),
+		__fscache_stat(&fscache_n_stores_object_dead));
+	if (ret < 0)
+		goto error;
+
+	/* ask the cache to honour the operation */
+	ret = object->cache->ops->prepare_write_operation(rreq, op);
+
+error:
+	if (ret == -ENOMEM)
+		fscache_stat(&fscache_n_stores_oom);
+	else if (ret < 0)
+		fscache_stat(&fscache_n_stores_nobufs);
+	else
+		fscache_stat(&fscache_n_stores_ok);
+
+	fscache_put_operation(op);
+	_leave(" = %d", ret);
+	return ret;
+
+nobufs_unlock_dec:
+	wake_cookie = __fscache_unuse_cookie(cookie);
+nobufs_unlock:
+	spin_unlock(&cookie->lock);
+	fscache_put_operation(op);
+	if (wake_cookie)
+		__fscache_wake_unused_cookie(cookie);
+nobufs:
+	fscache_stat(&fscache_n_stores_nobufs);
+	_leave(" = -ENOBUFS");
+	return -ENOBUFS;
+}
+EXPORT_SYMBOL(__fscache_prepare_write_operation);

@@ -154,6 +154,14 @@ void cachefiles_put_object(struct fscache_object *_object,
 			   enum fscache_obj_ref_trace why);
 
 /*
+ * io.c
+ */
+extern int cachefiles_begin_read_operation(struct netfs_read_request *,
+					   struct fscache_retrieval *);
+extern int cachefiles_prepare_write_operation(struct netfs_write_request *wreq,
+					      struct fscache_operation *op);
+
+/*
  * key.c
  */
 extern char *cachefiles_cook_key(const u8 *raw, int keylen, uint8_t type);
@@ -219,12 +227,6 @@ extern int cachefiles_allocate_pages(struct fscache_retrieval *,
 				     struct list_head *, unsigned *, gfp_t);
 extern int cachefiles_write_page(struct fscache_storage *, struct page *);
 extern void cachefiles_uncache_page(struct fscache_object *, struct page *);
-
-/*
- * rdwr2.c
- */
-extern int cachefiles_begin_read_operation(struct netfs_read_request *,
-					   struct fscache_retrieval *);
 
 /*
  * security.c

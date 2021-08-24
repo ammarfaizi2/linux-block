@@ -367,7 +367,13 @@ static void afs_free_dirty_region(struct netfs_dirty_region *region)
 
 static void afs_init_wreq(struct netfs_write_request *wreq)
 {
+	struct afs_vnode *vnode = AFS_FS_I(wreq->inode);
+
 	//wreq->netfs_priv = key_get(afs_file_key(file));
+	if (test_bit(NETFS_WREQ_WRITE_TO_CACHE, &wreq->flags) &&
+	    fscache_prepare_write_operation(wreq, afs_vnode_cache(vnode)) < 0)
+		__clear_bit(NETFS_WREQ_WRITE_TO_CACHE, &wreq->flags);
+
 }
 
 static void afs_update_i_size(struct file *file, loff_t new_i_size)

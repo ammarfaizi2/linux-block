@@ -218,6 +218,11 @@ static void netfs_set_up_write_to_cache(struct netfs_write_request *wreq)
 {
 	struct netfs_write_operation *op;
 
+	if (!wreq->cache_resources.ops) {
+		clear_bit(NETFS_WREQ_WRITE_TO_CACHE, &wreq->flags);
+		return;
+	}
+
 	op = netfs_create_write_operation(wreq, NETFS_WRITE_TO_CACHE,
 					  wreq->coverage.start,
 					  wreq->coverage.end - wreq->coverage.start,
@@ -246,10 +251,9 @@ static void netfs_writeback(struct netfs_write_request *wreq)
 	    !netfs_wreq_encrypt(wreq))
 		goto out;
 
-	if (wreq->cache_resources.ops &&
-	    test_bit(NETFS_WREQ_WRITE_TO_CACHE, &wreq->flags))
+	if (test_bit(NETFS_WREQ_WRITE_TO_CACHE, &wreq->flags))
 		netfs_set_up_write_to_cache(wreq);
-	//if (wreq->region->type != NETFS_REGION_CACHE_COPY)
+	if (test_bit(NETFS_WREQ_WRITE_TO_SERVER, &wreq->flags))
 		ctx->ops->create_write_operations(wreq);
 
 out:
@@ -577,6 +581,8 @@ determined_tail:
 		netfs_get_dirty_region(ctx, r, netfs_region_trace_get_wreq);
 		netfs_deduct_write_credit(r, r->dirty.end - r->dirty.start);
 		list_move_tail(&r->flush_link, &wreq->regions);
+		if (r->type != NETFS_REGION_CACHE_COPY)
+			__set_bit(NETFS_WREQ_WRITE_TO_SERVER, &wreq->flags);
 		if (r == tail)
 			break;
 	}

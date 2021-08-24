@@ -351,7 +351,7 @@ static int cachefiles_prepare_write(struct netfs_cache_resources *cres,
  */
 static void cachefiles_end_operation(struct netfs_cache_resources *cres)
 {
-	struct fscache_retrieval *op = cres->cache_priv;
+	struct fscache_operation *op = cres->cache_priv;
 	struct file *file = cres->cache_priv2;
 
 	_enter("");
@@ -359,8 +359,8 @@ static void cachefiles_end_operation(struct netfs_cache_resources *cres)
 	if (file)
 		fput(file);
 	if (op) {
-		fscache_op_complete(&op->op, false);
-		fscache_put_retrieval(op);
+		fscache_op_complete(op, false);
+		fscache_put_operation(op);
 	}
 
 	_leave("");
@@ -407,10 +407,54 @@ int cachefiles_begin_read_operation(struct netfs_read_request *rreq,
 	}
 
 	fscache_get_retrieval(op);
-	rreq->cache_resources.cache_priv = op;
+	rreq->cache_resources.cache_priv = &op->op;
 	rreq->cache_resources.cache_priv2 = file;
 	rreq->cache_resources.ops = &cachefiles_netfs_cache_ops;
 	rreq->cache_resources.debug_id = object->fscache.debug_id;
+	_leave("");
+	return 0;
+
+error_file:
+	fput(file);
+	return -EIO;
+}
+
+/*
+ * Open the cache file when preparing a cache write operation.
+ */
+int cachefiles_prepare_write_operation(struct netfs_write_request *wreq,
+				       struct fscache_operation *op)
+{
+	struct cachefiles_object *object;
+	struct cachefiles_cache *cache;
+	struct path path;
+	struct file *file;
+
+	_enter("");
+
+	object = container_of(op->object, struct cachefiles_object, fscache);
+	cache = container_of(object->fscache.cache,
+			     struct cachefiles_cache, cache);
+
+	path.mnt = cache->mnt;
+	path.dentry = object->backer;
+	file = open_with_fake_path(&path, O_RDWR | O_LARGEFILE | O_DIRECT,
+				   d_inode(object->backer), cache->cache_cred);
+	if (IS_ERR(file))
+		return PTR_ERR(file);
+	if (!S_ISREG(file_inode(file)->i_mode))
+		goto error_file;
+	if (unlikely(!file->f_op->read_iter) ||
+	    unlikely(!file->f_op->write_iter)) {
+		pr_notice("Cache does not support read_iter and write_iter\n");
+		goto error_file;
+	}
+
+	atomic_inc(&op->usage);
+	wreq->cache_resources.cache_priv = op;
+	wreq->cache_resources.cache_priv2 = file;
+	wreq->cache_resources.ops = &cachefiles_netfs_cache_ops;
+	wreq->cache_resources.debug_id = object->fscache.debug_id;
 	_leave("");
 	return 0;
 

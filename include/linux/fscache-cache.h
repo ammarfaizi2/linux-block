@@ -308,6 +308,10 @@ struct fscache_cache_ops {
 	/* Begin a read operation for the netfs lib */
 	int (*begin_read_operation)(struct netfs_read_request *rreq,
 				    struct fscache_retrieval *op);
+
+	/* Prepare a write operation for the netfs lib */
+	int (*prepare_write_operation)(struct netfs_write_request *wreq,
+				       struct fscache_operation *op);
 };
 
 extern struct fscache_cookie fscache_fsdef_index;
