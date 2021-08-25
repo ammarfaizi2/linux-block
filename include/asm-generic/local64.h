@@ -3,6 +3,5 @@
 #define _ASM_GENERIC_LOCAL64_H
 
 #include <asm/local64_types.h>
-#include <asm/local64_api.h>
 
 #endif /* _ASM_GENERIC_LOCAL64_H */
