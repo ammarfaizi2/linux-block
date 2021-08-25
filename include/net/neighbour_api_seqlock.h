@@ -2,7 +2,7 @@
 #ifndef _NET_NEIGHBOUR_API_SEQLOCK_H
 #define _NET_NEIGHBOUR_API_SEQLOCK_H
 
-#include <net/neighbour.h>
+#include <net/neighbour_api.h>
 
 #include <linux/seqlock_api.h>
 
