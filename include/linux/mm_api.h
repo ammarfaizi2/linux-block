@@ -2572,6 +2572,4 @@ madvise_set_anon_name(struct mm_struct *mm, unsigned long start,
 
 #endif /* !__ASSEMBLY__ */
 
-#include <linux/mm_api_extra.h>
-
 #endif /* _LINUX_MM_API_H */
