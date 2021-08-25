@@ -11,7 +11,6 @@
 
 #include <linux/skbuff_api.h>
 #include <linux/ipv6.h>
-#include <linux/hardirq.h>
 #include <linux/jhash.h>
 #include <linux/refcount.h>
 #include <linux/jump_label_ratelimit.h>

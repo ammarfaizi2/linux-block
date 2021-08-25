@@ -10,6 +10,7 @@
 
 #include <linux/pgtable.h>
 
+#include <asm/kvm_arm.h>
 /*
  * PGDIR_SHIFT determines the size a top-level page table entry can map
  * and depends on the number of levels in the page table. Compute the

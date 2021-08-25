@@ -11,7 +11,6 @@
 #include <linux/lockdep_api.h>
 #include <linux/ktime_api.h>
 #include <linux/types.h>
-#include <linux/hardirq.h>
 #include <linux/list.h>
 #include <linux/mutex.h>
 #include <linux/spinlock.h>

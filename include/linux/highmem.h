@@ -7,7 +7,6 @@
 #include <linux/cacheflush.h>
 #include <linux/mm.h>
 #include <linux/uaccess.h>
-#include <linux/hardirq.h>
 
 #include "highmem-internal.h"
 
