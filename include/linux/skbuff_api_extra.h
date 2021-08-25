@@ -5,6 +5,7 @@
 #include <linux/skbuff_api.h>
 
 #include <net/checksum.h>
+#include <net/flow_dissector.h>
 
 static inline bool skb_flow_dissect_flow_keys(const struct sk_buff *skb,
 					      struct flow_keys *flow,
