@@ -10,6 +10,7 @@
 #ifndef _LINUX_SKBUFF_API_H
 #define _LINUX_SKBUFF_API_H
 
+#include <linux/uio_api.h>
 #include <linux/rcupdate.h>
 #include <linux/numa_types.h>
 #include <linux/gfp_types.h>
