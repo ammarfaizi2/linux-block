@@ -34,7 +34,6 @@
 #include <linux/hrtimer.h>
 #include <linux/kobject_types.h>
 #include <linux/netdev_features.h>
-#include <linux/device.h>
 #include <linux/smp_api.h>
 
 #include <net/net_namespace.h>
@@ -2653,6 +2652,8 @@ static inline netdev_tx_t netdev_start_xmit(struct sk_buff *skb, struct net_devi
 
 	return rc;
 }
+
+struct class_attribute;
 
 int netdev_class_create_file_ns(const struct class_attribute *class_attr,
 				const void *ns);
