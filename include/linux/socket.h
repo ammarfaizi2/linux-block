@@ -3,14 +3,13 @@
 #define _LINUX_SOCKET_H
 
 #include <linux/socket_types.h>
-#include <linux/time64.h>
 
 #include <linux/time64.h>
 #include <asm/socket.h>			/* arch-dependent defines	*/
-#include <linux/sockios.h>		/* the SIOCxxx I/O controls	*/
-#include <linux/uio.h>			/* iovec support		*/
-#include <linux/types.h>		/* pid_t			*/
-#include <linux/compiler.h>		/* __user			*/
+
+#include <linux/uio_types.h>
+#include <linux/time64_types.h>
+#include <linux/compiler_types.h>
 
 struct file;
 struct pid;
@@ -141,10 +140,7 @@ static inline struct cmsghdr * cmsg_nxthdr (struct msghdr *__msg, struct cmsghdr
 	return __cmsg_nxthdr(__msg->msg_control, __msg->msg_controllen, __cmsg);
 }
 
-static inline size_t msg_data_left(struct msghdr *msg)
-{
-	return iov_iter_count(&msg->msg_iter);
-}
+#define msg_data_left(msg) iov_iter_count(&(msg)->msg_iter)
 
 /* "Socket"-level control message types: */
 
