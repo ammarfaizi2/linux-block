@@ -185,6 +185,11 @@ int arch_show_interrupts(struct seq_file *p, int prec)
 	return 0;
 }
 
+unsigned int get_api_timer_irqs(int cpu)
+{
+	return irq_stats(cpu)->apic_timer_irqs;
+}
+
 /*
  * /proc/stat helpers
  */
