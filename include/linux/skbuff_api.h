@@ -10,13 +10,15 @@
 #ifndef _LINUX_SKBUFF_API_H
 #define _LINUX_SKBUFF_API_H
 
-#include <linux/mm_api.h>
+#include <linux/rcupdate.h>
+#include <linux/numa_types.h>
+#include <linux/gfp_types.h>
+#include <linux/rbtree_api.h>
 #include <linux/skbuff_types.h>
 
 #include <linux/lockdep_api.h>
 #include <linux/bvec.h>
 #include <linux/socket.h>
-#include <linux/mm.h>
 #include <linux/ktime_api.h>
 #include <linux/if_packet.h>
 #include <linux/netdev_features.h>
