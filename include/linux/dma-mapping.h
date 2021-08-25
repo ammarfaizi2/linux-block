@@ -2,7 +2,6 @@
 #ifndef _LINUX_DMA_MAPPING_H
 #define _LINUX_DMA_MAPPING_H
 
-#include <linux/mm.h>
 #include <linux/sizes.h>
 #include <linux/string.h>
 #include <linux/device.h>
@@ -11,6 +10,11 @@
 #include <linux/scatterlist.h>
 #include <linux/bug.h>
 #include <linux/mem_encrypt.h>
+#include <linux/mm_page_address.h>
+
+#ifdef CONFIG_SPARSEMEM
+# include <linux/mm.h> /* page_to_section() for asm-generic/memory_model.h */
+#endif
 
 /**
  * List of possible attributes associated with a DMA mapping. The semantics
