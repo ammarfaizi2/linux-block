@@ -417,6 +417,8 @@ void hisi_qm_reset_prepare(struct pci_dev *pdev);
 void hisi_qm_reset_done(struct pci_dev *pdev);
 
 struct hisi_acc_sgl_pool;
+struct scatterlist;
+
 struct hisi_acc_hw_sgl *hisi_acc_sg_buf_map_to_hw_sgl(struct device *dev,
 	struct scatterlist *sgl, struct hisi_acc_sgl_pool *pool,
 	u32 index, dma_addr_t *hw_sgl_dma);

@@ -137,6 +137,9 @@ void viafb_irq_disable(u32 mask);
 #define   VDE_I_ENABLE	  0x80000000  /* Global interrupt enable */
 
 #if defined(CONFIG_VIDEO_VIA_CAMERA) || defined(CONFIG_VIDEO_VIA_CAMERA_MODULE)
+
+struct scatterlist;
+
 /*
  * DMA management.
  */
