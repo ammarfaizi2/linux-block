@@ -10,7 +10,6 @@
 
 #include <linux/cgroup_api.h>
 #include <linux/cgroup.h>
-#include <linux/hardirq.h>
 #include <linux/rcupdate.h>
 
 #if IS_ENABLED(CONFIG_CGROUP_NET_PRIO)

@@ -9,7 +9,6 @@
 #include <linux/errno.h>
 #include <linux/module.h>
 #include <linux/irqflags.h>
-#include <linux/hardirq.h>
 #include <linux/mutex.h>
 #include <linux/cpumask_types.h>
 

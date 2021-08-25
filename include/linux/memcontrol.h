@@ -20,7 +20,6 @@
 #include <linux/backing-dev-types.h>
 #include <linux/cgroup.h>
 #include <linux/vm_event_item.h>
-#include <linux/hardirq.h>
 #include <linux/jump_label.h>
 #include <linux/page_counter.h>
 #include <linux/vmpressure.h>
