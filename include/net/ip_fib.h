@@ -200,6 +200,7 @@ struct fib_result_nl {
 #define FIB_TABLE_HASHSZ 256
 #else
 #define FIB_TABLE_HASHSZ 2
+#include <linux/rculist.h>
 #endif
 
 __be32 fib_info_update_nhc_saddr(struct net *net, struct fib_nh_common *nhc,

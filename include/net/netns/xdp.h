@@ -2,8 +2,7 @@
 #ifndef __NETNS_XDP_H__
 #define __NETNS_XDP_H__
 
-#include <linux/rculist.h>
-#include <linux/mutex.h>
+#include <linux/mutex_types.h>
 
 struct netns_xdp {
 	struct mutex		lock;
