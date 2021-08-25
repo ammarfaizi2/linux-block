@@ -2,19 +2,23 @@
 #ifndef _LINUX_SWAP_H
 #define _LINUX_SWAP_H
 
+#include <linux/percpu-refcount-api.h>
 #include <linux/spinlock.h>
 #include <linux/linkage.h>
 #include <linux/mmzone.h>
 #include <linux/list.h>
 #include <linux/node.h>
 #include <linux/fs.h>
-#include <linux/pagemap.h>
 #include <linux/atomic.h>
 #include <linux/page-flags.h>
 #include <linux/plist.h>
 #include <linux/signal_types.h>
 #include <uapi/linux/mempolicy.h>
 #include <asm/page.h>
+
+#ifndef CONFIG_SWAP
+# include <linux/pagemap.h>
+#endif
 
 struct notifier_block;
 
