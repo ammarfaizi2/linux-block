@@ -6,11 +6,12 @@
 
 #include <linux/mm_types_task.h>
 
+#include <linux/build_bug.h>
 #include <linux/align.h>
 #include <linux/auxvec.h>
 #include <linux/spinlock_types.h>
 #include <linux/rbtree_types.h>
-#include <linux/rwsem.h>
+#include <linux/rwsem_types.h>
 #include <linux/completion.h>
 #include <linux/uprobes.h>
 #include <linux/workqueue_types.h>
