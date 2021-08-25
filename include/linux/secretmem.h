@@ -4,6 +4,8 @@
 
 #ifdef CONFIG_SECRETMEM
 
+#include <linux/page-flags.h>
+
 extern const struct address_space_operations secretmem_aops;
 
 static inline bool page_is_secretmem(struct page *page)
