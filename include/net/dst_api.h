@@ -9,21 +9,19 @@
 #ifndef _NET_DST_API_H
 #define _NET_DST_API_H
 
-#include <linux/string.h>
 #include <net/dst_types.h>
-
 #include <net/dst_ops.h>
+
+#include <linux/err.h>
+#include <linux/string.h>
 #include <linux/netdevice.h>
-#include <linux/rtnetlink.h>
-#include <linux/rcupdate.h>
-#include <linux/bug.h>
-#include <linux/jiffies.h>
-#include <linux/refcount.h>
-#include <net/neighbour.h>
-#include <net/net_namespace.h>
-#include <asm/processor.h>
+#include <linux/refcount_types.h>
 #include <linux/indirect_call_wrapper.h>
 #include <linux/skbuff_api.h>
+
+#include <net/net_namespace_types.h>
+
+#include <uapi/linux/rtnetlink.h>
 
 struct dst_metrics {
 	u32		metrics[RTAX_MAX];
