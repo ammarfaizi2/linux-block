@@ -6,6 +6,7 @@
 #include <linux/debug_locks.h>
 
 #ifdef CONFIG_DEBUG_LOCK_ALLOC
+# include <linux/kernel.h>
 # include <linux/lockdep_types.h>
 # include <linux/sched.h>
 #endif

@@ -27,6 +27,7 @@
 # include <linux/bug.h>
 # include <linux/lockdep_api.h>
 # include <linux/debug_locks.h>
+# include <linux/kernel.h>
 #endif
 
 #if defined(CONFIG_DEBUG_MUTEXES) || \
