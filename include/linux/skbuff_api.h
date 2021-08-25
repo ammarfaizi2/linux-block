@@ -26,13 +26,18 @@
 #include <linux/netdev_features.h>
 #include <linux/refcount_api.h>
 
-#include <net/flow_dissector.h>
+#include <linux/siphash_types.h>
 
 #include <asm/processor_types.h>
 
 #if IS_ENABLED(CONFIG_NF_CONNTRACK)
 # include <linux/netfilter/nf_conntrack_common.h>
 #endif
+
+struct flow_keys_basic;
+struct flow_dissector_key;
+struct flow_dissector;
+struct net;
 
 #define skb_uarg(SKB)	((struct ubuf_info *)(skb_shinfo(SKB)->destructor_arg))
 
