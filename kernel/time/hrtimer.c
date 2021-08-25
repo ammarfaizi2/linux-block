@@ -1626,6 +1626,14 @@ static __latent_entropy void hrtimer_run_softirq(struct softirq_action *h)
 
 #ifdef CONFIG_HIGH_RES_TIMERS
 
+static DEFINE_PER_CPU(ktime_t, hrtimer_interrupt_delta);
+
+void hrtimer_interrupt_get_debug(int cpu, unsigned short *nr_hangs, ktime_t *delta)
+{
+	*nr_hangs = READ_ONCE(per_cpu(hrtimer_bases, cpu).nr_hangs);
+	*delta = READ_ONCE(per_cpu(hrtimer_interrupt_delta, cpu));
+}
+
 /*
  * High resolution timer interrupt
  * Called with interrupts disabled
@@ -1707,6 +1715,7 @@ retry:
 	raw_spin_unlock_irqrestore(&cpu_base->lock, flags);
 
 	delta = ktime_sub(now, entry_time);
+	WRITE_ONCE(per_cpu(hrtimer_interrupt_delta, smp_processor_id()), delta); 
 	if ((unsigned int)delta > cpu_base->max_hang_time)
 		cpu_base->max_hang_time = (unsigned int) delta;
 	/*
