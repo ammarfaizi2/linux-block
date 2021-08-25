@@ -35,16 +35,19 @@
 #ifndef _SOCK_TYPES_H
 #define _SOCK_TYPES_H
 
+#include <linux/refcount_types.h>
+#include <linux/rbtree_types.h>
+#include <linux/uidgid.h>
 #include <linux/atomic_types.h>
 #include <linux/skbuff_types_head.h>
 #include <linux/list.h>
 #include <linux/list_nulls.h>
 #include <linux/timer.h>
-#include <linux/netdevice_types.h>
 #include <linux/wait_types.h>
 #include <linux/cgroup_types_sock.h>
 #include <linux/llist.h>
 
+#include <net/net_trackers.h>
 #include <net/tcp_states.h>
 #include <net/net_namespace_types_possible.h>
 
