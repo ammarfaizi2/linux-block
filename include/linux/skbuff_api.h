@@ -10,8 +10,9 @@
 #ifndef _LINUX_SKBUFF_API_H
 #define _LINUX_SKBUFF_API_H
 
+#include <linux/cache.h>
 #include <linux/uio_api.h>
-#include <linux/rcupdate.h>
+#include <linux/rcupdate_api_debug.h>
 #include <linux/numa_types.h>
 #include <linux/gfp_types.h>
 #include <linux/rbtree_api.h>
@@ -27,6 +28,8 @@
 
 #include <net/checksum.h>
 #include <net/flow_dissector.h>
+
+#include <asm/processor_types.h>
 
 #if IS_ENABLED(CONFIG_NF_CONNTRACK)
 # include <linux/netfilter/nf_conntrack_common.h>
