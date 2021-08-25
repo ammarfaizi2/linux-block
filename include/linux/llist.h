@@ -3,6 +3,5 @@
 #define LLIST_H
 
 #include <linux/llist_types.h>
-#include <linux/llist_api.h>
 
 #endif /* LLIST_H */
