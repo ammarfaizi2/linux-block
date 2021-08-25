@@ -19,7 +19,7 @@
 #include <linux/cpumask.h>
 #include <linux/list.h>
 #include <linux/workqueue.h>
-#include <linux/mmzone.h>
+#include <linux/mmzone_types.h>
 
 /**
  * struct node_hmem_attrs - heterogeneous memory performance attributes
