@@ -459,6 +459,8 @@ int hisi_qm_mb(struct hisi_qm *qm, u8 cmd, dma_addr_t dma_addr, u16 queue,
 	       bool op);
 
 struct hisi_acc_sgl_pool;
+struct scatterlist;
+
 struct hisi_acc_hw_sgl *hisi_acc_sg_buf_map_to_hw_sgl(struct device *dev,
 	struct scatterlist *sgl, struct hisi_acc_sgl_pool *pool,
 	u32 index, dma_addr_t *hw_sgl_dma);
