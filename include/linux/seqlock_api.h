@@ -2,6 +2,8 @@
 #ifndef __LINUX_SEQLOCK_API_H
 #define __LINUX_SEQLOCK_API_H
 
+#include <linux/smp_api.h>
+#include <linux/spinlock_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/seqlock.h>
 #include <linux/lockdep.h>

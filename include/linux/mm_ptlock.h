@@ -2,6 +2,7 @@
 #ifndef _LINUX_MM_PTLOCK_H
 #define _LINUX_MM_PTLOCK_H
 
+#include <linux/spinlock_api.h>
 #include <linux/mm.h>
 #include <linux/vmstat.h>
 #include <linux/pgtable.h>

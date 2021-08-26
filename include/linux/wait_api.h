@@ -8,6 +8,7 @@
 
 #include <linux/wait_types.h>
 
+#include <linux/spinlock_api.h>
 #include <linux/list.h>
 #include <linux/stddef.h>
 #include <linux/spinlock.h>

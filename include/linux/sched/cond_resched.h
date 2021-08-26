@@ -6,6 +6,7 @@
  * This header contains the various conditional rescheduling APIs.
  */
 
+#include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/spinlock.h>
 #include <linux/seqlock.h>
