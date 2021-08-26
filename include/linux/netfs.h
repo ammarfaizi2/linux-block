@@ -223,6 +223,7 @@ struct netfs_read_request {
 #define NETFS_RREQ_NONBLOCK		6	/* Don't block if possible (O_NONBLOCK) */
 #define NETFS_RREQ_BLOCKED		7	/* We blocked */
 #define NETFS_RREQ_DECRYPT		8	/* Decrypted when the request completes */
+#define NETFS_RREQ_DENY_READAHEAD	9	/* Abort the readahead */
 	const struct netfs_request_ops *netfs_ops;
 };
 
