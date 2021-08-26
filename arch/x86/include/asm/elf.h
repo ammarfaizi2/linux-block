@@ -10,6 +10,8 @@
 #include <asm/auxvec.h>
 #include <asm/fsgsbase.h>
 
+#include <linux/cache.h>
+
 typedef unsigned long elf_greg_t;
 
 #define ELF_NGREG (sizeof(struct user_regs_struct) / sizeof(elf_greg_t))

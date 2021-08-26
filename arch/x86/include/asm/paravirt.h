@@ -31,6 +31,8 @@ static inline u64 paravirt_sched_clock(void)
 	return static_call(pv_sched_clock)();
 }
 
+struct mm_struct;
+
 struct static_key;
 extern struct static_key paravirt_steal_enabled;
 extern struct static_key paravirt_steal_rq_enabled;
@@ -771,6 +773,8 @@ extern void default_banner(void);
 #endif /* !CONFIG_PARAVIRT */
 
 #ifndef __ASSEMBLY__
+struct mm_struct;
+
 #ifndef CONFIG_PARAVIRT_XXL
 static inline void paravirt_arch_dup_mmap(struct mm_struct *oldmm,
 					  struct mm_struct *mm)

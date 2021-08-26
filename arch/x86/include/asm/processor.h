@@ -10,33 +10,15 @@ struct mm_struct;
 struct io_bitmap;
 struct vm86;
 
-#include <linux/sched/thread.h>
-
-#include <asm/math_emu.h>
-#include <asm/segment.h>
-#include <asm/types.h>
-#include <uapi/asm/sigcontext.h>
-#include <asm/current.h>
-#include <asm/cpufeatures.h>
+#include <asm/ptrace_types.h>
 #include <asm/page.h>
-#include <asm/pgtable_types.h>
-#include <asm/percpu.h>
-#include <asm/msr.h>
-#include <asm/desc_defs.h>
-#include <asm/nops.h>
+#include <asm/msr_types.h>
 #include <asm/special_insns.h>
 #include <asm/fpu/types.h>
-#include <asm/unwind_hints.h>
-#include <asm/vmxfeatures.h>
 #include <asm/vdso/processor.h>
+#include <asm/desc_defs.h>
 
-#include <linux/personality.h>
-#include <linux/cache.h>
-#include <linux/threads.h>
-#include <linux/math64.h>
-#include <linux/err.h>
-#include <linux/irqflags.h>
-#include <linux/mem_encrypt.h>
+#include <asm/cache.h>
 
 /*
  * We handle most unaligned accesses in hardware.  On the other hand
@@ -151,10 +133,7 @@ static inline unsigned long native_read_cr3_pa(void)
 	return __native_read_cr3() & CR3_ADDR_MASK;
 }
 
-static inline void load_cr3(pgd_t *pgdir)
-{
-	write_cr3(__sme_pa(pgdir));
-}
+#define load_cr3(pgdir) write_cr3(__sme_pa(pgdir))
 
 /*
  * Note that while the legacy 'TSS' name comes from 'Task State Segment',
