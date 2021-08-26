@@ -4,12 +4,23 @@
 
 #include <linux/scatterlist_types.h>
 
-#include <linux/mm_api.h>
+#include <linux/io.h>
+#include <linux/mm_page_address.h>
 #include <linux/string.h>
 #include <linux/types.h>
 #include <linux/bug.h>
 #include <linux/mm.h>
 #include <asm/io.h>
+
+#include <vdso/limits.h>
+
+#ifdef CONFIG_SPARSEMEM
+#include <linux/mm_api.h>
+#endif
+
+#ifdef CONFIG_DEBUG_SG
+#include <linux/mmzone_api.h>
+#endif
 
 /*
  * These macros should be used after a dma_map_sg call has been done
@@ -373,10 +384,10 @@ void __sg_page_iter_start(struct sg_page_iter *piter,
  * sg_page_iter_page - get the current page held by the page iterator
  * @piter:	page iterator holding the page
  */
-static inline struct page *sg_page_iter_page(struct sg_page_iter *piter)
-{
-	return nth_page(sg_page(piter->sg), piter->sg_pgoffset);
-}
+#define sg_page_iter_page(piter)				\
+({								\
+	nth_page(sg_page((piter)->sg), (piter)->sg_pgoffset);	\
+})
 
 /**
  * sg_page_iter_dma_address - get the dma address of the current page held by
