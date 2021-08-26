@@ -1523,6 +1523,7 @@ static void __run_hrtimer(struct hrtimer_cpu_base *cpu_base,
 
 	__remove_hrtimer(timer, base, HRTIMER_STATE_INACTIVE, 0);
 	fn = timer->function;
+	WRITE_ONCE(per_cpu(__run_hrtimer_fn, smp_processor_id()), fn);
 
 	/*
 	 * Clear the 'is relative' flag for the TIME_LOW_RES case. If the
