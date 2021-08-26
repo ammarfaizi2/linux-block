@@ -8,6 +8,8 @@
 
 #ifdef CONFIG_PROC_CPU_RESCTRL
 
+struct seq_file;
+
 int proc_resctrl_show(struct seq_file *m,
 		      struct pid_namespace *ns,
 		      struct pid *pid,
