@@ -11,6 +11,7 @@
 
 #include <linux/xarray_types.h>
 
+#include <linux/err.h>
 #include <linux/spinlock_api.h>
 #include <linux/gfp_types.h>
 #include <linux/bitops.h>
