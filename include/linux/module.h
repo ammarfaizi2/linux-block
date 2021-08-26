@@ -9,34 +9,27 @@
 #ifndef _LINUX_MODULE_H
 #define _LINUX_MODULE_H
 
-#include <linux/sysfs_types.h>
-#include <linux/rbtree_latch_types.h>
-#include <linux/mutex.h>
-#include <linux/kobject_types.h>
 #include <linux/err.h>
-#include <linux/list.h>
-#include <linux/stat.h>
 #include <linux/buildid.h>
-#include <linux/compiler.h>
-#include <linux/cache.h>
-#include <linux/kmod.h>
-#include <linux/init.h>
 #include <linux/elf.h>
-#include <linux/stringify.h>
-#include <linux/kobject.h>
-#include <linux/moduleparam.h>
-#include <linux/jump_label.h>
-#include <linux/export.h>
-#include <linux/rbtree_latch.h>
-#include <linux/error-injection.h>
-#include <linux/tracepoint-defs.h>
-#include <linux/static_call_types.h>
 #include <linux/cfi.h>
+#include <linux/rbtree_latch_types.h>
+#include <linux/static_call_types.h>
+#include <linux/sysfs_types.h>
+#include <linux/kobject_types.h>
+#include <linux/mutex.h>
+#include <linux/moduleparam.h>
+#include <linux/stat.h>
+#include <linux/tracepoint-defs.h>
+#include <linux/init.h>
+#include <linux/cache.h>
 
-#include <linux/percpu.h>
 #include <asm/module.h>
 
 #define MODULE_NAME_LEN MAX_PARAM_PREFIX_LEN
+
+/* Chosen so that structs with an unsigned long line up. */
+#define MAX_PARAM_PREFIX_LEN (64 - sizeof(unsigned long))
 
 struct modversion_info {
 	unsigned long crc;
