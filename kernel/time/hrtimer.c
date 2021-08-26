@@ -1473,6 +1473,13 @@ bool hrtimer_active(const struct hrtimer *timer)
 }
 EXPORT_SYMBOL_GPL(hrtimer_active);
 
+static DEFINE_PER_CPU(void *, __run_hrtimer_fn);
+
+void *__run_hrtimer_get_debug(int cpu)
+{
+	return READ_ONCE(per_cpu(__run_hrtimer_fn, cpu));
+}
+
 /*
  * The write_seqcount_barrier()s in __run_hrtimer() split the thing into 3
  * distinct sections:

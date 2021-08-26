@@ -210,6 +210,7 @@ bool multi_stop_cpu_ipi_handled = true;
 s64 get_sysvec_apic_timer_interrupt_ns(int cpu);
 unsigned int get_api_timer_irqs(int cpu);
 void hrtimer_interrupt_get_debug(int cpu, unsigned short *nr_hangs, ktime_t *delta);
+void *__run_hrtimer_get_debug(int cpu);
 
 static void multi_stop_cpu_ipi(void *unused)
 {
@@ -218,7 +219,7 @@ static void multi_stop_cpu_ipi(void *unused)
 	ktime_t delta;
 
 	hrtimer_interrupt_get_debug(cpu, &nr_hangs, &delta);
-	pr_info("%s: IPI received on CPU %d  apic irq time: %lld / %d hrtimer nr_hangs: %d delta %lld\n", __func__, cpu, get_sysvec_apic_timer_interrupt_ns(cpu), get_api_timer_irqs(cpu), nr_hangs, delta);
+	pr_info("%s: IPI received on CPU %d  apic irq time: %lld / %d hrtimer nr_hangs: %d delta %lld __run_hrtimer_fn: %pS()\n", __func__, cpu, get_sysvec_apic_timer_interrupt_ns(cpu), get_api_timer_irqs(cpu), nr_hangs, delta, __run_hrtimer_get_debug(cpu));
 	smp_store_release(&multi_stop_cpu_ipi_handled, true);
 
 }
