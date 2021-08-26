@@ -17,7 +17,6 @@
  */
 
 #include <linux/device.h>
-#include <linux/fs.h>
 #include <linux/timer.h>
 #include <linux/mod_devicetable.h>
 
