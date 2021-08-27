@@ -22,24 +22,18 @@
 
 #define NFSDBG_FACILITY		NFSDBG_FSCACHE
 
-static struct rb_root nfs_fscache_keys = RB_ROOT;
-static DEFINE_SPINLOCK(nfs_fscache_keys_lock);
+#define NFS_MAX_KEY_LEN 1000
 
-/*
- * Layout of the key for an NFS server cache object.
- */
-struct nfs_server_key {
-	struct {
-		uint16_t	nfsversion;		/* NFS protocol version */
-		uint32_t	minorversion;		/* NFSv4 minor version */
-		uint16_t	family;			/* address family */
-		__be16		port;			/* IP port */
-	} hdr;
-	union {
-		struct in_addr	ipv4_addr;	/* IPv4 address */
-		struct in6_addr ipv6_addr;	/* IPv6 address */
-	};
-} __packed;
+static bool nfs_append_int(char *key, int *_len, unsigned long long x)
+{
+	if (*_len > NFS_MAX_KEY_LEN)
+		return false;
+	if (x == 0)
+		key[(*_len)++] = ',';
+	else
+		*_len += sprintf(key + *_len, ",%llx", x);
+	return true;
+}
 
 /*
  * Get the per-client index cookie for an NFS client if the appropriate mount
@@ -47,68 +41,43 @@ struct nfs_server_key {
  * - We always try and get an index cookie for the client, but get filehandle
  *   cookies on a per-superblock basis, depending on the mount flags
  */
-void nfs_fscache_get_client_cookie(struct nfs_client *clp)
+static bool nfs_fscache_get_client_key(struct nfs_client *clp,
+				       char *key, int *_len)
 {
 	const struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *) &clp->cl_addr;
 	const struct sockaddr_in *sin = (struct sockaddr_in *) &clp->cl_addr;
-	struct nfs_server_key key;
-	uint16_t len = sizeof(key.hdr);
 
-	memset(&key, 0, sizeof(key));
-	key.hdr.nfsversion = clp->rpc_ops->version;
-	key.hdr.minorversion = clp->cl_minorversion;
-	key.hdr.family = clp->cl_addr.ss_family;
+	*_len += snprintf(key + *_len, NFS_MAX_KEY_LEN - *_len,
+			  ",%u.%u,%x",
+			  clp->rpc_ops->version,
+			  clp->cl_minorversion,
+			  clp->cl_addr.ss_family);
 
 	switch (clp->cl_addr.ss_family) {
 	case AF_INET:
-		key.hdr.port = sin->sin_port;
-		key.ipv4_addr = sin->sin_addr;
-		len += sizeof(key.ipv4_addr);
-		break;
+		if (!nfs_append_int(key, _len, sin->sin_port) ||
+		    !nfs_append_int(key, _len, sin->sin_addr.s_addr))
+			return false;
+		return true;
 
 	case AF_INET6:
-		key.hdr.port = sin6->sin6_port;
-		key.ipv6_addr = sin6->sin6_addr;
-		len += sizeof(key.ipv6_addr);
-		break;
+		if (!nfs_append_int(key, _len, sin6->sin6_port) ||
+		    !nfs_append_int(key, _len, sin6->sin6_addr.s6_addr32[0]) ||
+		    !nfs_append_int(key, _len, sin6->sin6_addr.s6_addr32[1]) ||
+		    !nfs_append_int(key, _len, sin6->sin6_addr.s6_addr32[2]) ||
+		    !nfs_append_int(key, _len, sin6->sin6_addr.s6_addr32[3]))
+			return false;
+		return true;
 
 	default:
 		printk(KERN_WARNING "NFS: Unknown network family '%d'\n",
 		       clp->cl_addr.ss_family);
-		clp->fscache = NULL;
-		return;
+		return false;
 	}
-
-	/* create a cache index for looking up filehandles */
-	clp->fscache = fscache_acquire_cookie(nfs_fscache_netfs.primary_index,
-					      FSCACHE_COOKIE_TYPE_INDEX,
-					      "NFS.server",
-					      0,    /* advice */
-					      NULL, /* preferred_cache */
-					      &key, /* index_key */
-					      len,
-					      NULL, /* aux_data */
-					      0,
-					      0);
-	dfprintk(FSCACHE, "NFS: get client cookie (0x%p/0x%p)\n",
-		 clp, clp->fscache);
 }
 
 /*
- * Dispose of a per-client cookie
- */
-void nfs_fscache_release_client_cookie(struct nfs_client *clp)
-{
-	dfprintk(FSCACHE, "NFS: releasing client cookie (0x%p/0x%p)\n",
-		 clp, clp->fscache);
-
-	fscache_relinquish_cookie(clp->fscache, false);
-	clp->fscache = NULL;
-}
-
-/*
- * Get the cache cookie for an NFS superblock.  We have to handle
- * uniquification here because the cache doesn't do it for us.
+ * Get the cache cookie for an NFS superblock.
  *
  * The default uniquifier is just an empty string, but it may be overridden
  * either by the 'fsc=xxx' option to mount, or by inheriting it from the parent
@@ -116,100 +85,53 @@ void nfs_fscache_release_client_cookie(struct nfs_client *clp)
  */
 void nfs_fscache_get_super_cookie(struct super_block *sb, const char *uniq, int ulen)
 {
-	struct nfs_fscache_key *key, *xkey;
 	struct nfs_server *nfss = NFS_SB(sb);
-	struct rb_node **p, *parent;
-	int diff;
+	unsigned int len = 3;
+	char *key;
 
-	nfss->fscache_key = NULL;
-	nfss->fscache = NULL;
-	if (!uniq) {
-		uniq = "";
-		ulen = 1;
+	if (uniq) {
+		nfss->fscache_uniq = kmemdup_nul(uniq, ulen, GFP_KERNEL);
+		if (!nfss->fscache_uniq)
+			return;
 	}
 
-	key = kzalloc(sizeof(*key) + ulen, GFP_KERNEL);
+	key = kmalloc(NFS_MAX_KEY_LEN + 24, GFP_KERNEL);
 	if (!key)
 		return;
 
-	key->nfs_client = nfss->nfs_client;
-	key->key.super.s_flags = sb->s_flags & NFS_SB_MASK;
-	key->key.nfs_server.flags = nfss->flags;
-	key->key.nfs_server.rsize = nfss->rsize;
-	key->key.nfs_server.wsize = nfss->wsize;
-	key->key.nfs_server.acregmin = nfss->acregmin;
-	key->key.nfs_server.acregmax = nfss->acregmax;
-	key->key.nfs_server.acdirmin = nfss->acdirmin;
-	key->key.nfs_server.acdirmax = nfss->acdirmax;
-	key->key.nfs_server.fsid = nfss->fsid;
-	key->key.rpc_auth.au_flavor = nfss->client->cl_auth->au_flavor;
+	memcpy(key, "nfs", 3);
+	if (!nfs_fscache_get_client_key(nfss->nfs_client, key, &len) ||
+	    !nfs_append_int(key, &len, nfss->fsid.major) ||
+	    !nfs_append_int(key, &len, nfss->fsid.minor) ||
+	    !nfs_append_int(key, &len, sb->s_flags & NFS_SB_MASK) ||
+	    !nfs_append_int(key, &len, nfss->flags) ||
+	    !nfs_append_int(key, &len, nfss->rsize) ||
+	    !nfs_append_int(key, &len, nfss->wsize) ||
+	    !nfs_append_int(key, &len, nfss->acregmin) ||
+	    !nfs_append_int(key, &len, nfss->acregmax) ||
+	    !nfs_append_int(key, &len, nfss->acdirmin) ||
+	    !nfs_append_int(key, &len, nfss->acdirmax) ||
+	    !nfs_append_int(key, &len, nfss->client->cl_auth->au_flavor))
+		goto out;
 
-	key->key.uniq_len = ulen;
-	memcpy(key->key.uniquifier, uniq, ulen);
-
-	spin_lock(&nfs_fscache_keys_lock);
-	p = &nfs_fscache_keys.rb_node;
-	parent = NULL;
-	while (*p) {
-		parent = *p;
-		xkey = rb_entry(parent, struct nfs_fscache_key, node);
-
-		if (key->nfs_client < xkey->nfs_client)
-			goto go_left;
-		if (key->nfs_client > xkey->nfs_client)
-			goto go_right;
-
-		diff = memcmp(&key->key, &xkey->key, sizeof(key->key));
-		if (diff < 0)
-			goto go_left;
-		if (diff > 0)
-			goto go_right;
-
-		if (key->key.uniq_len == 0)
-			goto non_unique;
-		diff = memcmp(key->key.uniquifier,
-			      xkey->key.uniquifier,
-			      key->key.uniq_len);
-		if (diff < 0)
-			goto go_left;
-		if (diff > 0)
-			goto go_right;
-		goto non_unique;
-
-	go_left:
-		p = &(*p)->rb_left;
-		continue;
-	go_right:
-		p = &(*p)->rb_right;
+	if (ulen > 0) {
+		if (ulen > NFS_MAX_KEY_LEN - len)
+			goto out;
+		key[len++] = ',';
+		memcpy(key + len, uniq, ulen);
+		len += ulen;
 	}
-
-	rb_link_node(&key->node, parent, p);
-	rb_insert_color(&key->node, &nfs_fscache_keys);
-	spin_unlock(&nfs_fscache_keys_lock);
-	nfss->fscache_key = key;
+	key[len] = 0;
 
 	/* create a cache index for looking up filehandles */
-	nfss->fscache = fscache_acquire_cookie(nfss->nfs_client->fscache,
-					       FSCACHE_COOKIE_TYPE_INDEX,
-					       "NFS.super",
-					       0,    /* advice */
+	nfss->fscache = fscache_acquire_volume(key,
 					       NULL, /* preferred_cache */
-					       &key->key,  /* index_key */
-					       sizeof(key->key) + ulen,
-					       NULL, /* aux_data */
-					       0,
-					       0);
+					       0 /* coherency_data */);
 	dfprintk(FSCACHE, "NFS: get superblock cookie (0x%p/0x%p)\n",
 		 nfss, nfss->fscache);
-	return;
 
-non_unique:
-	spin_unlock(&nfs_fscache_keys_lock);
+out:
 	kfree(key);
-	nfss->fscache_key = NULL;
-	nfss->fscache = NULL;
-	printk(KERN_WARNING "NFS:"
-	       " Cache request denied due to non-unique superblock keys\n");
 }
 
 /*
@@ -222,16 +144,9 @@ void nfs_fscache_release_super_cookie(struct super_block *sb)
 	dfprintk(FSCACHE, "NFS: releasing superblock cookie (0x%p/0x%p)\n",
 		 nfss, nfss->fscache);
 
-	fscache_relinquish_cookie(nfss->fscache, false);
+	fscache_relinquish_volume(nfss->fscache, 0, false);
 	nfss->fscache = NULL;
-
-	if (nfss->fscache_key) {
-		spin_lock(&nfs_fscache_keys_lock);
-		rb_erase(&nfss->fscache_key->node, &nfs_fscache_keys);
-		spin_unlock(&nfs_fscache_keys_lock);
-		kfree(nfss->fscache_key);
-		nfss->fscache_key = NULL;
-	}
+	kfree(nfss->fscache_uniq);
 }
 
 /*
@@ -250,10 +165,7 @@ void nfs_fscache_init_inode(struct inode *inode)
 	nfs_fscache_update_auxdata(&auxdata, nfsi);
 
 	nfsi->fscache = fscache_acquire_cookie(NFS_SB(inode->i_sb)->fscache,
-					       FSCACHE_COOKIE_TYPE_DATAFILE,
-					       "NFS.fh",
-					       0,             /* advice */
-					       NULL, /* preferred_cache */
+					       FSCACHE_ADV_FALLBACK_IO,
 					       nfsi->fh.data, /* index_key */
 					       nfsi->fh.size,
 					       &auxdata,      /* aux_data */
