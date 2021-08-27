@@ -9,6 +9,7 @@
 
 #include <linux/if_vlan_types.h>
 
+#include <linux/etherdevice_api.h>
 #include <linux/notifier_api.h>
 #include <linux/netdevice_api.h>
 #include <linux/skbuff_api.h>

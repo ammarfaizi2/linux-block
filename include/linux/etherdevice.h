@@ -3,6 +3,5 @@
 #define _LINUX_ETHERDEVICE_H
 
 #include <linux/etherdevice_types.h>
-#include <linux/etherdevice_api.h>
 
 #endif	/* _LINUX_ETHERDEVICE_H */
