@@ -2,6 +2,6 @@
 CFLAGS += -O2
 LDLIBS = -lrt -lpthread -lpopt
 
-TEST_GEN_PROGS := mq_open_tests mq_perf_tests
+TEST_GEN_PROGS := mq_open_tests mq_perf_tests mq_sysctl_tests
 
 include ../lib.mk
