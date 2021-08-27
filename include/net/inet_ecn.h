@@ -5,7 +5,7 @@
 #include <linux/skbuff_api.h>
 #include <linux/ip.h>
 #include <linux/skbuff.h>
-#include <linux/if_vlan.h>
+#include <linux/if_vlan_api.h>
 
 #include <net/inet_sock.h>
 #include <net/dsfield.h>
