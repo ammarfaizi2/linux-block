@@ -21,7 +21,6 @@
 #include <linux/fcntl.h>
 #include <linux/atomic.h>
 #include <linux/migrate_mode.h>
-#include <linux/percpu_rwsem.h>
 #include <linux/uuid.h>
 #include <linux/errseq.h>
 #include <linux/mount.h>

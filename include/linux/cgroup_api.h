@@ -11,6 +11,7 @@
 
 #include <linux/cgroup_types.h>
 
+#include <linux/percpu_rwsem_api.h>
 #include <linux/lockdep_api.h>
 #include <linux/sched.h>
 #include <linux/sched/task_flags.h>
