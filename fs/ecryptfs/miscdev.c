@@ -190,6 +190,8 @@ int ecryptfs_send_miscdev(char *data, size_t data_size,
 				 + ECRYPTFS_MAX_PKT_LEN_SIZE \
 				 + sizeof(struct ecryptfs_message) \
 				 + 4 + ECRYPTFS_MAX_ENCRYPTED_KEY_BYTES)
+
+#undef PKT_TYPE_OFFSET
 #define PKT_TYPE_OFFSET		0
 #define PKT_CTR_OFFSET		PKT_TYPE_SIZE
 #define PKT_LEN_OFFSET		(PKT_TYPE_SIZE + PKT_CTR_SIZE)
