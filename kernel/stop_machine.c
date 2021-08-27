@@ -219,7 +219,7 @@ static void multi_stop_cpu_ipi(void *unused)
 	unsigned short nr_hangs;
 
 	hrtimer_interrupt_get_debug(cpu, &nr_hangs, &delta, &expires_next);
-	pr_info("%s: IPI received on CPU %d  apic irq time: %lld / %d jiffies: %lu hrtimer nr_hangs: %d delta %lld __run_hrtimer_fn: %pS() expires_next(rel) %lld\n", __func__, cpu, get_sysvec_apic_timer_interrupt_ns(cpu), get_api_timer_irqs(cpu), jiffies, nr_hangs, delta, __run_hrtimer_get_debug(cpu), expires_next - ktime_get());
+	pr_info("%s: IPI received on CPU %d  apic irq time: %lld / %d jiffies: %lu ktime_get(): %lld hrtimer nr_hangs: %d delta %lld __run_hrtimer_fn: %pS() expires_next(rel) %lld\n", __func__, cpu, get_sysvec_apic_timer_interrupt_ns(cpu), get_api_timer_irqs(cpu), jiffies, ktime_get(), nr_hangs, delta, __run_hrtimer_get_debug(cpu), expires_next - ktime_get());
 	smp_store_release(&multi_stop_cpu_ipi_handled, true);
 
 }
