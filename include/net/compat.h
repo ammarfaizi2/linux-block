@@ -4,6 +4,8 @@
 
 
 struct sock;
+struct msghdr;
+struct iovec;
 
 #include <linux/compat.h>
 
