@@ -10,7 +10,6 @@
  */
 
 #include <linux/time64.h>
-#include <linux/timex.h>
 
 #include <vdso/time32.h>
 
