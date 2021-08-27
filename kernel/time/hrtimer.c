@@ -1635,11 +1635,13 @@ static __latent_entropy void hrtimer_run_softirq(struct softirq_action *h)
 #ifdef CONFIG_HIGH_RES_TIMERS
 
 static DEFINE_PER_CPU(ktime_t, hrtimer_interrupt_delta);
+static DEFINE_PER_CPU(ktime_t, hrtimer_interrupt_expires_next);
 
-void hrtimer_interrupt_get_debug(int cpu, unsigned short *nr_hangs, ktime_t *delta)
+void hrtimer_interrupt_get_debug(int cpu, unsigned short *nr_hangs, ktime_t *delta, ktime_t *expires_next)
 {
 	*nr_hangs = READ_ONCE(per_cpu(hrtimer_bases, cpu).nr_hangs);
 	*delta = READ_ONCE(per_cpu(hrtimer_interrupt_delta, cpu));
+	*expires_next = READ_ONCE(per_cpu(hrtimer_interrupt_expires_next, cpu));
 }
 
 /*
@@ -1691,6 +1693,7 @@ retry:
 	/* Reprogramming necessary ? */
 	if (!tick_program_event(expires_next, 0)) {
 		cpu_base->hang_detected = 0;
+		WRITE_ONCE(per_cpu(hrtimer_interrupt_expires_next, smp_processor_id()), expires_next);
 		return;
 	}
 

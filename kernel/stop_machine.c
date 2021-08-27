@@ -209,17 +209,17 @@ bool multi_stop_cpu_ipi_handled = true;
 
 s64 get_sysvec_apic_timer_interrupt_ns(int cpu);
 unsigned int get_api_timer_irqs(int cpu);
-void hrtimer_interrupt_get_debug(int cpu, unsigned short *nr_hangs, ktime_t *delta);
+void hrtimer_interrupt_get_debug(int cpu, unsigned short *nr_hangs, ktime_t *delta, ktime_t *expires_next);
 void *__run_hrtimer_get_debug(int cpu);
 
 static void multi_stop_cpu_ipi(void *unused)
 {
 	int cpu = smp_processor_id();
+	ktime_t delta, expires_next;
 	unsigned short nr_hangs;
-	ktime_t delta;
 
-	hrtimer_interrupt_get_debug(cpu, &nr_hangs, &delta);
-	pr_info("%s: IPI received on CPU %d  apic irq time: %lld / %d hrtimer nr_hangs: %d delta %lld __run_hrtimer_fn: %pS()\n", __func__, cpu, get_sysvec_apic_timer_interrupt_ns(cpu), get_api_timer_irqs(cpu), nr_hangs, delta, __run_hrtimer_get_debug(cpu));
+	hrtimer_interrupt_get_debug(cpu, &nr_hangs, &delta, &expires_next);
+	pr_info("%s: IPI received on CPU %d  apic irq time: %lld / %d jiffies: %lu hrtimer nr_hangs: %d delta %lld __run_hrtimer_fn: %pS() expires_next(rel) %lld\n", __func__, cpu, get_sysvec_apic_timer_interrupt_ns(cpu), get_api_timer_irqs(cpu), jiffies, nr_hangs, delta, __run_hrtimer_get_debug(cpu), expires_next - ktime_get());
 	smp_store_release(&multi_stop_cpu_ipi_handled, true);
 
 }
