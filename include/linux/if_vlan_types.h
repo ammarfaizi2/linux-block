@@ -7,6 +7,7 @@
 #ifndef _LINUX_IF_VLAN_TYPES_H
 #define _LINUX_IF_VLAN_TYPES_H
 
+#include <linux/u64_stats_sync.h>
 #include <linux/netdevice_types.h>
 #include <linux/etherdevice_types.h>
 #include <linux/rtnetlink.h>
