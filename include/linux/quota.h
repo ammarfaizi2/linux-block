@@ -262,22 +262,8 @@ enum {
 	_DQST_DQSTAT_LAST
 };
 
-struct dqstats {
-	unsigned long stat[_DQST_DQSTAT_LAST];
-	struct percpu_counter counter[_DQST_DQSTAT_LAST];
-};
-
-extern struct dqstats dqstats;
-
-static inline void dqstats_inc(unsigned int type)
-{
-	percpu_counter_inc(&dqstats.counter[type]);
-}
-
-static inline void dqstats_dec(unsigned int type)
-{
-	percpu_counter_dec(&dqstats.counter[type]);
-}
+extern void dqstats_inc(unsigned int type);
+extern void dqstats_dec(unsigned int type);
 
 #define DQ_MOD_B	0	/* dquot modified since read */
 #define DQ_BLKS_B	1	/* uid/gid has been warned about blk limit */
