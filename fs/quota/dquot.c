@@ -253,8 +253,24 @@ static LIST_HEAD(free_dquots);
 static unsigned int dq_hash_bits, dq_hash_mask;
 static struct hlist_head *dquot_hash;
 
-struct dqstats dqstats;
-EXPORT_SYMBOL(dqstats);
+struct dqstats {
+	unsigned long stat[_DQST_DQSTAT_LAST];
+	struct percpu_counter counter[_DQST_DQSTAT_LAST];
+};
+
+static struct dqstats dqstats;
+
+void dqstats_inc(unsigned int type)
+{
+	percpu_counter_inc(&dqstats.counter[type]);
+}
+EXPORT_SYMBOL(dqstats_inc);
+
+void dqstats_dec(unsigned int type)
+{
+	percpu_counter_dec(&dqstats.counter[type]);
+}
+EXPORT_SYMBOL(dqstats_dec);
 
 static qsize_t inode_get_rsv_space(struct inode *inode);
 static qsize_t __inode_get_rsv_space(struct inode *inode);
