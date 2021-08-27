@@ -196,15 +196,8 @@ extern int audit_list_rules_send(struct sk_buff *request_skb, int seq);
 
 extern int audit_set_loginuid(kuid_t loginuid);
 
-static inline kuid_t audit_get_loginuid(struct task_struct *tsk)
-{
-	return tsk->loginuid;
-}
-
-static inline unsigned int audit_get_sessionid(struct task_struct *tsk)
-{
-	return tsk->sessionid;
-}
+extern kuid_t audit_get_loginuid(struct task_struct *tsk);
+extern unsigned int audit_get_sessionid(struct task_struct *tsk);
 
 extern u32 audit_enabled;
 

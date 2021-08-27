@@ -208,6 +208,16 @@ struct audit_reply {
 	struct sk_buff *skb;
 };
 
+kuid_t audit_get_loginuid(struct task_struct *tsk)
+{
+	return tsk->loginuid;
+}
+
+unsigned int audit_get_sessionid(struct task_struct *tsk)
+{
+	return tsk->sessionid;
+}
+
 /**
  * auditd_test_task - Check to see if a given task is an audit daemon
  * @task: the task to check
