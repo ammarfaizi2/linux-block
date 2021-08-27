@@ -8,7 +8,7 @@
 #include <linux/skbuff_api.h>
 #include <linux/skbuff.h>
 #include <linux/netdevice.h>
-#include <linux/if_vlan.h>
+#include <linux/if_vlan_api.h>
 #include <linux/ip.h>
 #include <linux/tracepoint.h>
 

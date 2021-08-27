@@ -20,7 +20,7 @@
 #include <linux/skbuff_api.h>
 #include <linux/ptr_ring.h>
 #include <linux/skbuff.h>
-#include <linux/if_vlan.h>
+#include <linux/if_vlan_api.h>
 #endif
 
 struct skb_array {
