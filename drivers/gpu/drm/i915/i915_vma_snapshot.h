@@ -5,7 +5,7 @@
 #ifndef _I915_VMA_SNAPSHOT_H_
 #define _I915_VMA_SNAPSHOT_H_
 
-#include <linux/kref.h>
+#include <linux/kref_api.h>
 #include <linux/slab.h>
 #include <linux/types.h>
 
