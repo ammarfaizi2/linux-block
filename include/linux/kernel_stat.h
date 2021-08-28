@@ -42,6 +42,23 @@ struct kernel_stat {
 DECLARE_PER_CPU(struct kernel_stat, kstat);
 DECLARE_PER_CPU(struct kernel_cpustat, kernel_cpustat);
 
+/**
+ * struct prev_cputime - snapshot of system and user cputime
+ * @utime: time spent in user mode
+ * @stime: time spent in system mode
+ * @lock: protects the above two fields
+ *
+ * Stores previous user/system time values such that we can guarantee
+ * monotonicity.
+ */
+struct prev_cputime {
+#ifndef CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
+	u64				utime;
+	u64				stime;
+	raw_spinlock_t			lock;
+#endif
+};
+
 /* Must have preemption disabled for this to be meaningful. */
 #define kstat_this_cpu this_cpu_ptr(&kstat)
 #define kcpustat_this_cpu this_cpu_ptr(&kernel_cpustat)
