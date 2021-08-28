@@ -11,6 +11,7 @@
 #include <asm/fpu/types.h>
 
 #ifdef CONFIG_X86_64
+# include <asm/signal.h>
 # include <uapi/asm/sigcontext.h>
 # include <asm/user32.h>
 struct ksignal;
