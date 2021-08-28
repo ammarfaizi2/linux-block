@@ -7,11 +7,8 @@
 #ifndef _LINUX_HASHTABLE_TYPES_H
 #define _LINUX_HASHTABLE_TYPES_H
 
-#include <linux/list.h>
+#include <linux/log2.h>
 #include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/hash.h>
-#include <linux/rculist.h>
 
 #define DEFINE_HASHTABLE(name, bits)						\
 	struct hlist_head name[1 << (bits)] =					\
