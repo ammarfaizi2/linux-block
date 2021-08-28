@@ -65,11 +65,7 @@ struct rw_semaphore {
 #endif
 };
 
-/* In all implementations count != 0 means locked */
-static inline int rwsem_is_locked(struct rw_semaphore *sem)
-{
-	return atomic_long_read(&sem->count) != 0;
-}
+extern int rwsem_is_locked(struct rw_semaphore *sem);
 
 #define RWSEM_UNLOCKED_VALUE		0L
 #define __RWSEM_COUNT_INIT(name)	.count = ATOMIC_LONG_INIT(RWSEM_UNLOCKED_VALUE)
