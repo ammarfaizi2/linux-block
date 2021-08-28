@@ -134,6 +134,8 @@ static inline void mm_update_next_owner(struct mm_struct *mm)
 }
 #endif /* CONFIG_MEMCG */
 
+struct rlimit;
+
 #ifdef CONFIG_MMU
 extern void arch_pick_mmap_layout(struct mm_struct *mm,
 				  struct rlimit *rlim_stack);
