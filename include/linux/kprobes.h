@@ -31,6 +31,7 @@
 #include <linux/freelist.h>
 #include <linux/sched/per_task.h>
 #include <asm/kprobes.h>
+#include <asm/sections.h>
 
 #ifdef CONFIG_KPROBES
 

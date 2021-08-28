@@ -14,7 +14,9 @@
  * Released under the General Public License (GPL).
  */
 
-#define in_lock_functions(ADDR)		0
+#ifndef in_lock_functions
+# define in_lock_functions(ADDR) 0
+#endif
 
 #define assert_raw_spin_locked(lock)	do { (void)(lock); } while (0)
 
