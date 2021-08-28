@@ -1587,6 +1587,18 @@ int rwsem_is_locked(struct rw_semaphore *sem)
 }
 EXPORT_SYMBOL(rwsem_is_locked);
 
+/*
+ * This is the same regardless of which rwsem implementation that is being used.
+ * It is just a heuristic meant to be called by somebody already holding the
+ * rwsem to see if somebody from an incompatible type is wanting access to the
+ * lock.
+ */
+int rwsem_is_contended(struct rw_semaphore *sem)
+{
+	return !list_empty(&sem->wait_list);
+}
+EXPORT_SYMBOL(rwsem_is_contended);
+
 #ifdef CONFIG_DEBUG_LOCK_ALLOC
 
 void down_read_nested(struct rw_semaphore *sem, int subclass)
