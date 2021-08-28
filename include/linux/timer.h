@@ -3,11 +3,11 @@
 #define _LINUX_TIMER_H
 
 #include <linux/lockdep_api.h>
-#include <linux/list.h>
 #include <linux/ktime.h>
-#include <linux/stddef.h>
-#include <linux/debugobjects.h>
-#include <linux/stringify.h>
+
+#ifdef CONFIG_LOCKDEP
+# include <linux/lockdep.h>
+#endif
 
 struct timer_list {
 	/*
@@ -86,6 +86,7 @@ struct timer_list {
 	struct timer_list _name =				\
 		__TIMER_INITIALIZER(_function, 0)
 
+struct lock_class_key;
 /*
  * LOCKDEP and DEBUG timer interfaces.
  */
@@ -164,10 +165,7 @@ static inline void destroy_timer_on_stack(struct timer_list *timer) { }
  *
  * return value: 1 if the timer is pending, 0 if not.
  */
-static inline int timer_pending(const struct timer_list * timer)
-{
-	return !hlist_unhashed_lockless(&timer->entry);
-}
+#define timer_pending(timer) ({ !hlist_unhashed_lockless(&(timer)->entry); })
 
 extern void add_timer_on(struct timer_list *timer, int cpu);
 extern int del_timer(struct timer_list * timer);
