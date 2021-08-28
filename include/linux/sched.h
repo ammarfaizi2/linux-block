@@ -22,7 +22,6 @@
 #include <linux/latencytop.h>
 #include <linux/sched/prio.h>
 #include <linux/sched/types.h>
-#include <linux/signal_types.h>
 #include <linux/syscall_user_dispatch.h>
 #include <linux/task_io_accounting.h>
 #include <linux/rseq.h>
