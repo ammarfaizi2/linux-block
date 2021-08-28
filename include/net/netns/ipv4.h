@@ -6,11 +6,11 @@
 #ifndef __NETNS_IPV4_H__
 #define __NETNS_IPV4_H__
 
-#include <linux/seqlock.h>
+#include <linux/seqlock_types.h>
+#include <linux/mutex_types.h>
+#include <linux/cache.h>
 #include <linux/uidgid.h>
-#include <net/inet_frag.h>
-#include <linux/rcupdate.h>
-#include <linux/siphash.h>
+#include <linux/siphash_types.h>
 
 struct ctl_table_header;
 struct ipv4_devconf;
