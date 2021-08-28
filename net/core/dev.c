@@ -6374,6 +6374,16 @@ void napi_enable(struct napi_struct *n)
 }
 EXPORT_SYMBOL(napi_enable);
 
+void napi_synchronize(const struct napi_struct *n)
+{
+	if (IS_ENABLED(CONFIG_SMP))
+		while (test_bit(NAPI_STATE_SCHED, &n->state))
+			msleep(1);
+	else
+		barrier();
+}
+EXPORT_SYMBOL(napi_synchronize);
+
 static void flush_gro_hash(struct napi_struct *napi)
 {
 	int i;

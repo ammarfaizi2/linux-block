@@ -513,14 +513,7 @@ void napi_enable(struct napi_struct *n);
  * Waits till any outstanding processing completes but
  * does not disable future activations.
  */
-static inline void napi_synchronize(const struct napi_struct *n)
-{
-	if (IS_ENABLED(CONFIG_SMP))
-		while (test_bit(NAPI_STATE_SCHED, &n->state))
-			msleep(1);
-	else
-		barrier();
-}
+void napi_synchronize(const struct napi_struct *n);
 
 /**
  *	napi_if_scheduled_mark_missed - if napi is running, set the
