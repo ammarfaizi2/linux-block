@@ -18,7 +18,6 @@
 #include <linux/shm.h>
 #include <linux/mutex.h>
 #include <linux/plist.h>
-#include <linux/hrtimer.h>
 #include <linux/irqflags.h>
 #include <linux/seccomp_types.h>
 #include <linux/nodemask.h>
@@ -36,7 +35,17 @@
 #include <linux/rseq.h>
 #include <linux/seqlock.h>
 #include <linux/kcsan.h>
+#include <linux/smp_types.h>
+
 #include <asm/kmap_size.h>
+
+#ifdef CONFIG_LOCKDEP
+# include <linux/lockdep.h>
+#endif
+
+#ifdef CONFIG_TRACE_IRQFLAGS
+# include <linux/irqflags.h>
+#endif
 
 /* task_struct member predeclarations (sorted alphabetically): */
 struct audit_context;
