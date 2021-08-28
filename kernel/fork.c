@@ -1071,6 +1071,15 @@ static void mm_init_uprobes_state(struct mm_struct *mm)
 #endif
 }
 
+/* Pointer magic because the dynamic array size confuses some compilers. */
+inline void mm_init_cpumask(struct mm_struct *mm)
+{
+	unsigned long cpu_bitmap = (unsigned long)mm;
+
+	cpu_bitmap += offsetof(struct mm_struct, cpu_bitmap);
+	cpumask_clear((struct cpumask *)cpu_bitmap);
+}
+
 static struct mm_struct *mm_init(struct mm_struct *mm, struct task_struct *p,
 	struct user_namespace *user_ns)
 {

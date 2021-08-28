@@ -648,14 +648,7 @@ struct mm_struct {
 
 extern struct mm_struct init_mm;
 
-/* Pointer magic because the dynamic array size confuses some compilers. */
-static inline void mm_init_cpumask(struct mm_struct *mm)
-{
-	unsigned long cpu_bitmap = (unsigned long)mm;
-
-	cpu_bitmap += offsetof(struct mm_struct, cpu_bitmap);
-	cpumask_clear((struct cpumask *)cpu_bitmap);
-}
+extern void mm_init_cpumask(struct mm_struct *mm);
 
 /* Future-safe accessor for struct mm_struct's cpu_vm_mask. */
 static inline cpumask_t *mm_cpumask(struct mm_struct *mm)
