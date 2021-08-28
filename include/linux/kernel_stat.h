@@ -4,13 +4,8 @@
 
 #include <linux/kernel_stat_types.h>
 
-#include <linux/spinlock_types.h>
-#include <linux/smp.h>
-#include <linux/threads.h>
+#include <linux/interrupt_types.h>
 #include <linux/percpu.h>
-#include <linux/cpumask.h>
-#include <linux/interrupt.h>
-#include <asm/irq.h>
 
 /*
  * 'kernel_stat.h' contains the definitions needed for doing
