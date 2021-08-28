@@ -8224,6 +8224,14 @@ unsigned long free_reserved_area(void *start, void *end, int poison, const char 
 	return pages;
 }
 
+void free_reserved_page(struct page *page)
+{
+	ClearPageReserved(page);
+	init_page_count(page);
+	__free_page(page);
+	adjust_managed_page_count(page, 1);
+}
+
 void __init mem_init_print_info(void)
 {
 	unsigned long physpages, codesize, datasize, rosize, bss_size;
