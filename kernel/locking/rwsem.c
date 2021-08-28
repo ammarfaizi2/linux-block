@@ -1580,6 +1580,13 @@ void downgrade_write(struct rw_semaphore *sem)
 }
 EXPORT_SYMBOL(downgrade_write);
 
+/* In all implementations count != 0 means locked */
+int rwsem_is_locked(struct rw_semaphore *sem)
+{
+	return atomic_long_read(&sem->count) != 0;
+}
+EXPORT_SYMBOL(rwsem_is_locked);
+
 #ifdef CONFIG_DEBUG_LOCK_ALLOC
 
 void down_read_nested(struct rw_semaphore *sem, int subclass)
