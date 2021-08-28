@@ -17,10 +17,11 @@
 
 #include <linux/kobject_types.h>
 
+#include <linux/kernfs.h>
 #include <linux/kref_api.h>
 #include <linux/types.h>
 #include <linux/list.h>
-#include <linux/sysfs.h>
+#include <linux/sysfs_types.h>
 #include <linux/compiler.h>
 #include <linux/container_of.h>
 #include <linux/spinlock.h>
