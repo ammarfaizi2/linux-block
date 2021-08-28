@@ -53,6 +53,13 @@
 
 #include <asm/page_types.h>
 
+#if BITS_PER_LONG==32
+#include <linux/seqlock_types.h>
+#endif
+
+struct net_device;
+struct sockaddr;
+
 struct page_frag {
 	struct page *page;
 #if (BITS_PER_LONG > 32) || (PAGE_SIZE >= 65536)
