@@ -3,9 +3,9 @@
 #define _ASM_X86_SMP_H
 #ifndef __ASSEMBLY__
 #include <linux/cpumask.h>
-#include <asm/percpu.h>
+#include <linux/linkage.h>
 
-#include <asm/cpumask.h>
+#include <asm/percpu.h>
 
 extern int smp_num_siblings;
 extern unsigned int num_processors;
