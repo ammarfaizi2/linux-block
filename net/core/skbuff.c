@@ -3305,6 +3305,23 @@ void __skb_fill_page_desc(struct sk_buff *skb, int i,
 EXPORT_SYMBOL(__skb_fill_page_desc);
 
 /**
+ * dev_page_is_reusable - check whether a page can be reused for network Rx
+ * @page: the page to test
+ *
+ * A page shouldn't be considered for reusing/recycling if it was allocated
+ * under memory pressure or at a distant memory node.
+ *
+ * Returns false if this page should be returned to page allocator, true
+ * otherwise.
+ */
+bool dev_page_is_reusable(const struct page *page)
+{
+	return likely(page_to_nid(page) == numa_mem_id() &&
+		      !page_is_pfmemalloc(page));
+}
+EXPORT_SYMBOL(dev_page_is_reusable);
+
+/**
  *	skb_queue_purge - empty a list
  *	@list: list to empty
  *

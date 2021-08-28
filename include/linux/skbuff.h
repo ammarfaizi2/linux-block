@@ -3020,21 +3020,7 @@ static inline struct page *dev_alloc_page(void)
 	return dev_alloc_pages(0);
 }
 
-/**
- * dev_page_is_reusable - check whether a page can be reused for network Rx
- * @page: the page to test
- *
- * A page shouldn't be considered for reusing/recycling if it was allocated
- * under memory pressure or at a distant memory node.
- *
- * Returns false if this page should be returned to page allocator, true
- * otherwise.
- */
-static inline bool dev_page_is_reusable(const struct page *page)
-{
-	return likely(page_to_nid(page) == numa_mem_id() &&
-		      !page_is_pfmemalloc(page));
-}
+bool dev_page_is_reusable(const struct page *page);
 
 /**
  * skb_frag_off() - Returns the offset of a skb fragment
