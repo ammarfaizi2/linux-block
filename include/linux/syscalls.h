@@ -9,20 +9,8 @@
 #ifndef _LINUX_SYSCALLS_H
 #define _LINUX_SYSCALLS_H
 
-#include <linux/sched/signal.h>
 #include <linux/error-injection.h>
-#include <linux/types.h>
-#include <linux/aio_abi.h>
-#include <linux/capability.h>
-#include <linux/signal.h>
-#include <linux/list.h>
-#include <linux/bug.h>
-#include <linux/sem.h>
-#include <asm/siginfo.h>
-#include <linux/unistd.h>
-#include <linux/quota.h>
-#include <linux/key.h>
-#include <linux/personality.h>
+#include <linux/trace_events_types.h>
 #include <trace/syscall.h>
 
 #ifdef CONFIG_ARCH_HAS_SYSCALL_WRAPPER

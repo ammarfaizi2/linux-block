@@ -4,7 +4,6 @@
 #define _LINUX_TRACE_EVENT_TYPES_H
 
 #include <linux/trace_seq.h>
-#include <linux/mutex.h>
 
 struct trace_array;
 struct trace_event;
