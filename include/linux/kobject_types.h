@@ -15,7 +15,7 @@
 #ifndef _KOBJECT_TYPES_H_
 #define _KOBJECT_TYPES_H_
 
-#include <linux/sysfs.h>
+#include <linux/sysfs_types.h>
 #include <linux/list.h>
 #include <linux/kref.h>
 #include <linux/uidgid.h>
