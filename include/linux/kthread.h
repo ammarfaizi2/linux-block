@@ -9,6 +9,7 @@
 #include <linux/sched.h>
 
 struct mm_struct;
+struct cpumask;
 
 __printf(4, 5)
 struct task_struct *kthread_create_on_node(int (*threadfn)(void *data),
