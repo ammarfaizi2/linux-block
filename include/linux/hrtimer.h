@@ -12,12 +12,15 @@
 #ifndef _LINUX_HRTIMER_H
 #define _LINUX_HRTIMER_H
 
+#ifdef CONFIG_DEBUG_OBJECTS_TIMERS
+# include <linux/spinlock.h>
+#endif
+
 #include <linux/hrtimer_defs.h>
 #include <linux/rbtree.h>
 #include <linux/init.h>
 #include <linux/list.h>
 #include <linux/percpu.h>
-#include <linux/seqlock.h>
 #include <linux/timerqueue.h>
 
 struct hrtimer_clock_base;
