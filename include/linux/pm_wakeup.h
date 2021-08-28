@@ -9,11 +9,7 @@
 #ifndef _LINUX_PM_WAKEUP_H
 #define _LINUX_PM_WAKEUP_H
 
-#ifndef _DEVICE_H_
-# error "please don't include this file directly"
-#endif
-
-#include <linux/types.h>
+#include <linux/device_types.h>
 
 struct wake_irq;
 
