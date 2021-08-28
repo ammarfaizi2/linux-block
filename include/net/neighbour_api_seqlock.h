@@ -4,6 +4,8 @@
 
 #include <net/neighbour.h>
 
+#include <linux/seqlock_api.h>
+
 #if IS_ENABLED(CONFIG_BRIDGE_NETFILTER)
 static inline int neigh_hh_bridge(struct hh_cache *hh, struct sk_buff *skb)
 {

@@ -22,7 +22,7 @@
 
 #include <linux/refcount_api.h>
 #include <linux/jiffies.h>
-#include <linux/seqlock_api.h>
+#include <linux/seqlock_types.h>
 #include <linux/atomic.h>
 #include <linux/refcount.h>
 #include <linux/skbuff.h>
