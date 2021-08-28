@@ -15,14 +15,7 @@
 
 #include <linux/spinlock_types.h>
 #include <linux/ktime.h>
-#include <linux/err.h>
-#include <linux/wait.h>
-#include <linux/list.h>
-#include <linux/bitops.h>
 #include <linux/kref.h>
-#include <linux/sched.h>
-#include <linux/printk.h>
-#include <linux/rcupdate.h>
 
 struct dma_fence;
 struct dma_fence_ops;
