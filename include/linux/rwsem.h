@@ -106,16 +106,7 @@ do {								\
 	__init_rwsem((sem), #sem, &__key);			\
 } while (0)
 
-/*
- * This is the same regardless of which rwsem implementation that is being used.
- * It is just a heuristic meant to be called by somebody already holding the
- * rwsem to see if somebody from an incompatible type is wanting access to the
- * lock.
- */
-static inline int rwsem_is_contended(struct rw_semaphore *sem)
-{
-	return !list_empty(&sem->wait_list);
-}
+extern int rwsem_is_contended(struct rw_semaphore *sem);
 
 #else /* !CONFIG_PREEMPT_RT */
 
