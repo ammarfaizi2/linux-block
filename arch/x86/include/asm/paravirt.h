@@ -46,7 +46,7 @@ static inline u64 paravirt_steal_clock(int cpu)
 }
 
 #ifdef CONFIG_PARAVIRT_SPINLOCKS
-void __init paravirt_set_cap(void);
+void paravirt_set_cap(void);
 #endif
 
 /* The paravirtualized I/O functions */

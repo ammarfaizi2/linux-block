@@ -32,15 +32,15 @@
 #define FIXMAP_PMD_TOP	507
 
 #ifndef __ASSEMBLY__
+#include <linux/threads.h>
 #include <linux/math.h>
 #include <linux/kernel.h>
 #include <asm/apicdef.h>
 #include <asm/page.h>
 #include <asm/pgtable_types.h>
-#ifdef CONFIG_X86_32
-#include <linux/threads.h>
-#else
-#include <uapi/asm/vsyscall.h>
+
+#ifdef CONFIG_X86_64
+# include <uapi/asm/vsyscall.h>
 #endif
 
 /*
@@ -180,14 +180,10 @@ static inline void __set_fixmap(enum fixed_addresses idx,
  * Early memremap routines used for in-place encryption. The mappings created
  * by these routines are intended to be used as temporary mappings.
  */
-void __init *early_memremap_encrypted(resource_size_t phys_addr,
-				      unsigned long size);
-void __init *early_memremap_encrypted_wp(resource_size_t phys_addr,
-					 unsigned long size);
-void __init *early_memremap_decrypted(resource_size_t phys_addr,
-				      unsigned long size);
-void __init *early_memremap_decrypted_wp(resource_size_t phys_addr,
-					 unsigned long size);
+void *early_memremap_encrypted   (resource_size_t phys_addr, unsigned long size);
+void *early_memremap_encrypted_wp(resource_size_t phys_addr, unsigned long size);
+void *early_memremap_decrypted   (resource_size_t phys_addr, unsigned long size);
+void *early_memremap_decrypted_wp(resource_size_t phys_addr, unsigned long size);
 
 #include <asm-generic/fixmap.h>
 
