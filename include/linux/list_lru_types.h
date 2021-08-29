@@ -10,7 +10,6 @@
 
 #include <linux/types.h>
 #include <linux/spinlock_types.h>
-#include <linux/cache.h>
 
 struct mem_cgroup;
 struct lock_class_key;
