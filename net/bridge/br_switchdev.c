@@ -127,7 +127,6 @@ br_switchdev_fdb_notify(struct net_bridge *br,
 			const struct net_bridge_fdb_entry *fdb, int type)
 {
 	const struct net_bridge_port *dst = READ_ONCE(fdb->dst);
-	struct net_device *dev = dst ? dst->dev : br->dev;
 	struct switchdev_notifier_fdb_info info = {
 		.addr = fdb->key.addr.addr,
 		.vid = fdb->key.vlan_id,
@@ -135,6 +134,7 @@ br_switchdev_fdb_notify(struct net_bridge *br,
 		.is_local = test_bit(BR_FDB_LOCAL, &fdb->flags),
 		.offloaded = test_bit(BR_FDB_OFFLOADED, &fdb->flags),
 	};
+	struct net_device *dev = (!dst || info.is_local) ? br->dev : dst->dev;
 
 	switch (type) {
 	case RTM_DELNEIGH:
@@ -287,13 +287,7 @@ static int nbp_switchdev_sync_objs(struct net_bridge_port *p, const void *ctx,
 	if (err && err != -EOPNOTSUPP)
 		return err;
 
-	/* Forwarding and termination FDB entries on the port */
-	err = br_fdb_replay(br_dev, dev, ctx, true, atomic_nb);
-	if (err && err != -EOPNOTSUPP)
-		return err;
-
-	/* Termination FDB entries on the bridge itself */
-	err = br_fdb_replay(br_dev, br_dev, ctx, true, atomic_nb);
+	err = br_fdb_replay(br_dev, ctx, true, atomic_nb);
 	if (err && err != -EOPNOTSUPP)
 		return err;
 
@@ -312,32 +306,21 @@ static void nbp_switchdev_unsync_objs(struct net_bridge_port *p,
 
 	br_mdb_replay(br_dev, dev, ctx, false, blocking_nb, NULL);
 
-	/* Forwarding and termination FDB entries on the port */
-	br_fdb_replay(br_dev, dev, ctx, false, atomic_nb);
-
-	/* Termination FDB entries on the bridge itself */
-	br_fdb_replay(br_dev, br_dev, ctx, false, atomic_nb);
+	br_fdb_replay(br_dev, ctx, false, atomic_nb);
 }
 
 /* Let the bridge know that this port is offloaded, so that it can assign a
  * switchdev hardware domain to it.
  */
-int switchdev_bridge_port_offload(struct net_device *brport_dev,
-				  struct net_device *dev, const void *ctx,
-				  struct notifier_block *atomic_nb,
-				  struct notifier_block *blocking_nb,
-				  bool tx_fwd_offload,
-				  struct netlink_ext_ack *extack)
+int br_switchdev_port_offload(struct net_bridge_port *p,
+			      struct net_device *dev, const void *ctx,
+			      struct notifier_block *atomic_nb,
+			      struct notifier_block *blocking_nb,
+			      bool tx_fwd_offload,
+			      struct netlink_ext_ack *extack)
 {
 	struct netdev_phys_item_id ppid;
-	struct net_bridge_port *p;
 	int err;
-
-	ASSERT_RTNL();
-
-	p = br_port_get_rtnl(brport_dev);
-	if (!p)
-		return -ENODEV;
 
 	err = dev_get_port_parent_id(dev, &ppid, false);
 	if (err)
@@ -358,23 +341,12 @@ out_switchdev_del:
 
 	return err;
 }
-EXPORT_SYMBOL_GPL(switchdev_bridge_port_offload);
 
-void switchdev_bridge_port_unoffload(struct net_device *brport_dev,
-				     const void *ctx,
-				     struct notifier_block *atomic_nb,
-				     struct notifier_block *blocking_nb)
+void br_switchdev_port_unoffload(struct net_bridge_port *p, const void *ctx,
+				 struct notifier_block *atomic_nb,
+				 struct notifier_block *blocking_nb)
 {
-	struct net_bridge_port *p;
-
-	ASSERT_RTNL();
-
-	p = br_port_get_rtnl(brport_dev);
-	if (!p)
-		return;
-
 	nbp_switchdev_unsync_objs(p, ctx, atomic_nb, blocking_nb);
 
 	nbp_switchdev_del(p);
 }
-EXPORT_SYMBOL_GPL(switchdev_bridge_port_unoffload);

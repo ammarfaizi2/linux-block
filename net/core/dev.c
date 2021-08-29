@@ -676,131 +676,6 @@ void dev_remove_offload(struct packet_offload *po)
 }
 EXPORT_SYMBOL(dev_remove_offload);
 
-/******************************************************************************
- *
- *		      Device Boot-time Settings Routines
- *
- ******************************************************************************/
-
-/* Boot time configuration table */
-static struct netdev_boot_setup dev_boot_setup[NETDEV_BOOT_SETUP_MAX];
-
-/**
- *	netdev_boot_setup_add	- add new setup entry
- *	@name: name of the device
- *	@map: configured settings for the device
- *
- *	Adds new setup entry to the dev_boot_setup list.  The function
- *	returns 0 on error and 1 on success.  This is a generic routine to
- *	all netdevices.
- */
-static int netdev_boot_setup_add(char *name, struct ifmap *map)
-{
-	struct netdev_boot_setup *s;
-	int i;
-
-	s = dev_boot_setup;
-	for (i = 0; i < NETDEV_BOOT_SETUP_MAX; i++) {
-		if (s[i].name[0] == '\0' || s[i].name[0] == ' ') {
-			memset(s[i].name, 0, sizeof(s[i].name));
-			strlcpy(s[i].name, name, IFNAMSIZ);
-			memcpy(&s[i].map, map, sizeof(s[i].map));
-			break;
-		}
-	}
-
-	return i >= NETDEV_BOOT_SETUP_MAX ? 0 : 1;
-}
-
-/**
- * netdev_boot_setup_check	- check boot time settings
- * @dev: the netdevice
- *
- * Check boot time settings for the device.
- * The found settings are set for the device to be used
- * later in the device probing.
- * Returns 0 if no settings found, 1 if they are.
- */
-int netdev_boot_setup_check(struct net_device *dev)
-{
-	struct netdev_boot_setup *s = dev_boot_setup;
-	int i;
-
-	for (i = 0; i < NETDEV_BOOT_SETUP_MAX; i++) {
-		if (s[i].name[0] != '\0' && s[i].name[0] != ' ' &&
-		    !strcmp(dev->name, s[i].name)) {
-			dev->irq = s[i].map.irq;
-			dev->base_addr = s[i].map.base_addr;
-			dev->mem_start = s[i].map.mem_start;
-			dev->mem_end = s[i].map.mem_end;
-			return 1;
-		}
-	}
-	return 0;
-}
-EXPORT_SYMBOL(netdev_boot_setup_check);
-
-
-/**
- * netdev_boot_base	- get address from boot time settings
- * @prefix: prefix for network device
- * @unit: id for network device
- *
- * Check boot time settings for the base address of device.
- * The found settings are set for the device to be used
- * later in the device probing.
- * Returns 0 if no settings found.
- */
-unsigned long netdev_boot_base(const char *prefix, int unit)
-{
-	const struct netdev_boot_setup *s = dev_boot_setup;
-	char name[IFNAMSIZ];
-	int i;
-
-	sprintf(name, "%s%d", prefix, unit);
-
-	/*
-	 * If device already registered then return base of 1
-	 * to indicate not to probe for this interface
-	 */
-	if (__dev_get_by_name(&init_net, name))
-		return 1;
-
-	for (i = 0; i < NETDEV_BOOT_SETUP_MAX; i++)
-		if (!strcmp(name, s[i].name))
-			return s[i].map.base_addr;
-	return 0;
-}
-
-/*
- * Saves at boot time configured settings for any netdevice.
- */
-int __init netdev_boot_setup(char *str)
-{
-	int ints[5];
-	struct ifmap map;
-
-	str = get_options(str, ARRAY_SIZE(ints), ints);
-	if (!str || !*str)
-		return 0;
-
-	/* Save settings */
-	memset(&map, 0, sizeof(map));
-	if (ints[0] > 0)
-		map.irq = ints[1];
-	if (ints[0] > 1)
-		map.base_addr = ints[2];
-	if (ints[0] > 2)
-		map.mem_start = ints[3];
-	if (ints[0] > 3)
-		map.mem_end = ints[4];
-
-	/* Add new entry to the list */
-	return netdev_boot_setup_add(str, &map);
-}
-
-__setup("netdev=", netdev_boot_setup);
-
 /*******************************************************************************
  *
  *			    Device Interface Subroutines
@@ -956,8 +831,7 @@ struct net_device *dev_get_by_name(struct net *net, const char *name)
 
 	rcu_read_lock();
 	dev = dev_get_by_name_rcu(net, name);
-	if (dev)
-		dev_hold(dev);
+	dev_hold(dev);
 	rcu_read_unlock();
 	return dev;
 }
@@ -1030,8 +904,7 @@ struct net_device *dev_get_by_index(struct net *net, int ifindex)
 
 	rcu_read_lock();
 	dev = dev_get_by_index_rcu(net, ifindex);
-	if (dev)
-		dev_hold(dev);
+	dev_hold(dev);
 	rcu_read_unlock();
 	return dev;
 }
@@ -3099,6 +2972,50 @@ EXPORT_SYMBOL(netif_set_real_num_rx_queues);
 #endif
 
 /**
+ *	netif_set_real_num_queues - set actual number of RX and TX queues used
+ *	@dev: Network device
+ *	@txq: Actual number of TX queues
+ *	@rxq: Actual number of RX queues
+ *
+ *	Set the real number of both TX and RX queues.
+ *	Does nothing if the number of queues is already correct.
+ */
+int netif_set_real_num_queues(struct net_device *dev,
+			      unsigned int txq, unsigned int rxq)
+{
+	unsigned int old_rxq = dev->real_num_rx_queues;
+	int err;
+
+	if (txq < 1 || txq > dev->num_tx_queues ||
+	    rxq < 1 || rxq > dev->num_rx_queues)
+		return -EINVAL;
+
+	/* Start from increases, so the error path only does decreases -
+	 * decreases can't fail.
+	 */
+	if (rxq > dev->real_num_rx_queues) {
+		err = netif_set_real_num_rx_queues(dev, rxq);
+		if (err)
+			return err;
+	}
+	if (txq > dev->real_num_tx_queues) {
+		err = netif_set_real_num_tx_queues(dev, txq);
+		if (err)
+			goto undo_rx;
+	}
+	if (rxq < dev->real_num_rx_queues)
+		WARN_ON(netif_set_real_num_rx_queues(dev, rxq));
+	if (txq < dev->real_num_tx_queues)
+		WARN_ON(netif_set_real_num_tx_queues(dev, txq));
+
+	return 0;
+undo_rx:
+	WARN_ON(netif_set_real_num_rx_queues(dev, old_rxq));
+	return err;
+}
+EXPORT_SYMBOL(netif_set_real_num_queues);
+
+/**
  * netif_get_num_default_rss_queues - default number of RSS queues
  *
  * This routine should set an upper limit on the number of RSS queues
@@ -3190,7 +3107,7 @@ EXPORT_SYMBOL(__dev_kfree_skb_irq);
 
 void __dev_kfree_skb_any(struct sk_buff *skb, enum skb_free_reason reason)
 {
-	if (in_irq() || irqs_disabled())
+	if (in_hardirq() || irqs_disabled())
 		__dev_kfree_skb_irq(skb, reason);
 	else
 		dev_kfree_skb(skb);
@@ -4012,7 +3929,7 @@ sch_handle_egress(struct sk_buff *skb, int *ret, struct net_device *dev)
 	qdisc_skb_cb(skb)->post_ct = false;
 	mini_qdisc_bstats_cpu_update(miniq, skb);
 
-	switch (tcf_classify(skb, miniq->filter_list, &cl_res, false)) {
+	switch (tcf_classify(skb, miniq->block, miniq->filter_list, &cl_res, false)) {
 	case TC_ACT_OK:
 	case TC_ACT_RECLASSIFY:
 		skb->tc_index = TC_H_MIN(cl_res.classid);
@@ -5164,8 +5081,7 @@ sch_handle_ingress(struct sk_buff *skb, struct packet_type **pt_prev, int *ret,
 	skb->tc_at_ingress = 1;
 	mini_qdisc_bstats_cpu_update(miniq, skb);
 
-	switch (tcf_classify_ingress(skb, miniq->block, miniq->filter_list,
-				     &cl_res, false)) {
+	switch (tcf_classify(skb, miniq->block, miniq->filter_list, &cl_res, false)) {
 	case TC_ACT_OK:
 	case TC_ACT_RECLASSIFY:
 		skb->tc_index = TC_H_MIN(cl_res.classid);
@@ -5879,7 +5795,7 @@ static void flush_all_backlogs(void)
 	 */
 	ASSERT_RTNL();
 
-	get_online_cpus();
+	cpus_read_lock();
 
 	cpumask_clear(&flush_cpus);
 	for_each_online_cpu(cpu) {
@@ -5897,7 +5813,7 @@ static void flush_all_backlogs(void)
 	for_each_cpu(cpu, &flush_cpus)
 		flush_work(per_cpu_ptr(&flush_works, cpu));
 
-	put_online_cpus();
+	cpus_read_unlock();
 }
 
 /* Pass the currently batched GRO_NORMAL SKBs up to the stack. */
@@ -6014,7 +5930,6 @@ static void gro_list_prepare(const struct list_head *head,
 		diffs |= skb_vlan_tag_present(p) ^ skb_vlan_tag_present(skb);
 		if (skb_vlan_tag_present(p))
 			diffs |= skb_vlan_tag_get(p) ^ skb_vlan_tag_get(skb);
-		diffs |= skb_metadata_dst_cmp(p, skb);
 		diffs |= skb_metadata_differs(p, skb);
 		if (maclen == ETH_HLEN)
 			diffs |= compare_ether_header(skb_mac_header(p),
@@ -6024,17 +5939,30 @@ static void gro_list_prepare(const struct list_head *head,
 				       skb_mac_header(skb),
 				       maclen);
 
-		diffs |= skb_get_nfct(p) ^ skb_get_nfct(skb);
+		/* in most common scenarions 'slow_gro' is 0
+		 * otherwise we are already on some slower paths
+		 * either skip all the infrequent tests altogether or
+		 * avoid trying too hard to skip each of them individually
+		 */
+		if (!diffs && unlikely(skb->slow_gro | p->slow_gro)) {
 #if IS_ENABLED(CONFIG_SKB_EXTENSIONS) && IS_ENABLED(CONFIG_NET_TC_SKB_EXT)
-		if (!diffs) {
-			struct tc_skb_ext *skb_ext = skb_ext_find(skb, TC_SKB_EXT);
-			struct tc_skb_ext *p_ext = skb_ext_find(p, TC_SKB_EXT);
+			struct tc_skb_ext *skb_ext;
+			struct tc_skb_ext *p_ext;
+#endif
+
+			diffs |= p->sk != skb->sk;
+			diffs |= skb_metadata_dst_cmp(p, skb);
+			diffs |= skb_get_nfct(p) ^ skb_get_nfct(skb);
+
+#if IS_ENABLED(CONFIG_SKB_EXTENSIONS) && IS_ENABLED(CONFIG_NET_TC_SKB_EXT)
+			skb_ext = skb_ext_find(skb, TC_SKB_EXT);
+			p_ext = skb_ext_find(p, TC_SKB_EXT);
 
 			diffs |= (!!p_ext) ^ (!!skb_ext);
 			if (!diffs && unlikely(skb_ext))
 				diffs |= p_ext->chain ^ skb_ext->chain;
-		}
 #endif
+		}
 
 		NAPI_GRO_CB(p)->same_flow = !diffs;
 	}
@@ -6299,8 +6227,12 @@ static void napi_reuse_skb(struct napi_struct *napi, struct sk_buff *skb)
 	skb->encapsulation = 0;
 	skb_shinfo(skb)->gso_type = 0;
 	skb->truesize = SKB_TRUESIZE(skb_end_offset(skb));
-	skb_ext_reset(skb);
-	nf_reset_ct(skb);
+	if (unlikely(skb->slow_gro)) {
+		skb_orphan(skb);
+		skb_ext_reset(skb);
+		nf_reset_ct(skb);
+		skb->slow_gro = 0;
+	}
 
 	napi->skb = skb;
 }
@@ -7600,7 +7532,7 @@ void *netdev_lower_get_next_private_rcu(struct net_device *dev,
 {
 	struct netdev_adjacent *lower;
 
-	WARN_ON_ONCE(!rcu_read_lock_held());
+	WARN_ON_ONCE(!rcu_read_lock_held() && !rcu_read_lock_bh_held());
 
 	lower = list_entry_rcu((*iter)->next, struct netdev_adjacent, list);
 
@@ -9365,7 +9297,7 @@ static struct bpf_prog *dev_xdp_prog(struct net_device *dev,
 	return dev->xdp_state[mode].prog;
 }
 
-static u8 dev_xdp_prog_count(struct net_device *dev)
+u8 dev_xdp_prog_count(struct net_device *dev)
 {
 	u8 count = 0;
 	int i;
@@ -9375,6 +9307,7 @@ static u8 dev_xdp_prog_count(struct net_device *dev)
 			count++;
 	return count;
 }
+EXPORT_SYMBOL_GPL(dev_xdp_prog_count);
 
 u32 dev_xdp_prog_id(struct net_device *dev, enum bpf_xdp_mode mode)
 {
@@ -9468,6 +9401,8 @@ static int dev_xdp_attach(struct net_device *dev, struct netlink_ext_ack *extack
 {
 	unsigned int num_modes = hweight32(flags & XDP_FLAGS_MODES);
 	struct bpf_prog *cur_prog;
+	struct net_device *upper;
+	struct list_head *iter;
 	enum bpf_xdp_mode mode;
 	bpf_op_t bpf_op;
 	int err;
@@ -9504,6 +9439,14 @@ static int dev_xdp_attach(struct net_device *dev, struct netlink_ext_ack *extack
 	if (dev_xdp_link(dev, mode)) {
 		NL_SET_ERR_MSG(extack, "Can't replace active BPF XDP link");
 		return -EBUSY;
+	}
+
+	/* don't allow if an upper device already has a program */
+	netdev_for_each_upper_dev_rcu(dev, upper, iter) {
+		if (dev_xdp_prog_count(upper) > 0) {
+			NL_SET_ERR_MSG(extack, "Cannot attach when an upper device already has a program");
+			return -EEXIST;
+		}
 	}
 
 	cur_prog = dev_xdp_prog(dev, mode);

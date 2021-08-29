@@ -701,8 +701,7 @@ static int inet6_netconf_get_devconf(struct sk_buff *in_skb,
 errout:
 	if (in6_dev)
 		in6_dev_put(in6_dev);
-	if (dev)
-		dev_put(dev);
+	dev_put(dev);
 	return err;
 }
 
@@ -5417,8 +5416,7 @@ static int inet6_rtm_getaddr(struct sk_buff *in_skb, struct nlmsghdr *nlh,
 errout_ifa:
 	in6_ifa_put(ifa);
 errout:
-	if (dev)
-		dev_put(dev);
+	dev_put(dev);
 	if (fillargs.netnsid >= 0)
 		put_net(tgt_net);
 
@@ -5792,7 +5790,8 @@ static int check_stable_privacy(struct inet6_dev *idev, struct net *net,
 }
 
 static int inet6_validate_link_af(const struct net_device *dev,
-				  const struct nlattr *nla)
+				  const struct nlattr *nla,
+				  struct netlink_ext_ack *extack)
 {
 	struct nlattr *tb[IFLA_INET6_MAX + 1];
 	struct inet6_dev *idev = NULL;
@@ -5805,7 +5804,7 @@ static int inet6_validate_link_af(const struct net_device *dev,
 	}
 
 	err = nla_parse_nested_deprecated(tb, IFLA_INET6_MAX, nla,
-					  inet6_af_policy, NULL);
+					  inet6_af_policy, extack);
 	if (err)
 		return err;
 

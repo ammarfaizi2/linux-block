@@ -192,8 +192,7 @@ static void nfcsim_recv_wq(struct work_struct *work)
 
 		if (!IS_ERR(skb))
 			dev_kfree_skb(skb);
-
-		skb = ERR_PTR(-ENODEV);
+		return;
 	}
 
 	dev->cb(dev->nfc_digital_dev, dev->arg, skb);
@@ -240,7 +239,7 @@ static int nfcsim_send(struct nfc_digital_dev *ddev, struct sk_buff *skb,
 
 static void nfcsim_abort_cmd(struct nfc_digital_dev *ddev)
 {
-	struct nfcsim *dev = nfc_digital_get_drvdata(ddev);
+	const struct nfcsim *dev = nfc_digital_get_drvdata(ddev);
 
 	nfcsim_link_recv_cancel(dev->link_in);
 }

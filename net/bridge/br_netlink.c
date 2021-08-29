@@ -932,7 +932,8 @@ static int br_setport(struct net_bridge_port *p, struct nlattr *tb[],
 	if (tb[IFLA_BRPORT_MULTICAST_ROUTER]) {
 		u8 mcast_router = nla_get_u8(tb[IFLA_BRPORT_MULTICAST_ROUTER]);
 
-		err = br_multicast_set_port_router(p, mcast_router);
+		err = br_multicast_set_port_router(&p->multicast_ctx,
+						   mcast_router);
 		if (err)
 			return err;
 	}
@@ -1286,7 +1287,8 @@ static int br_changelink(struct net_device *brdev, struct nlattr *tb[],
 	if (data[IFLA_BR_MCAST_ROUTER]) {
 		u8 multicast_router = nla_get_u8(data[IFLA_BR_MCAST_ROUTER]);
 
-		err = br_multicast_set_router(br, multicast_router);
+		err = br_multicast_set_router(&br->multicast_ctx,
+					      multicast_router);
 		if (err)
 			return err;
 	}
@@ -1309,7 +1311,8 @@ static int br_changelink(struct net_device *brdev, struct nlattr *tb[],
 	if (data[IFLA_BR_MCAST_QUERIER]) {
 		u8 mcast_querier = nla_get_u8(data[IFLA_BR_MCAST_QUERIER]);
 
-		err = br_multicast_set_querier(br, mcast_querier);
+		err = br_multicast_set_querier(&br->multicast_ctx,
+					       mcast_querier);
 		if (err)
 			return err;
 	}
@@ -1380,7 +1383,8 @@ static int br_changelink(struct net_device *brdev, struct nlattr *tb[],
 		__u8 igmp_version;
 
 		igmp_version = nla_get_u8(data[IFLA_BR_MCAST_IGMP_VERSION]);
-		err = br_multicast_set_igmp_version(br, igmp_version);
+		err = br_multicast_set_igmp_version(&br->multicast_ctx,
+						    igmp_version);
 		if (err)
 			return err;
 	}
@@ -1390,7 +1394,8 @@ static int br_changelink(struct net_device *brdev, struct nlattr *tb[],
 		__u8 mld_version;
 
 		mld_version = nla_get_u8(data[IFLA_BR_MCAST_MLD_VERSION]);
-		err = br_multicast_set_mld_version(br, mld_version);
+		err = br_multicast_set_mld_version(&br->multicast_ctx,
+						   mld_version);
 		if (err)
 			return err;
 	}
@@ -1497,6 +1502,7 @@ static size_t br_get_size(const struct net_device *brdev)
 	       nla_total_size_64bit(sizeof(u64)) + /* IFLA_BR_MCAST_STARTUP_QUERY_INTVL */
 	       nla_total_size(sizeof(u8)) +	/* IFLA_BR_MCAST_IGMP_VERSION */
 	       nla_total_size(sizeof(u8)) +	/* IFLA_BR_MCAST_MLD_VERSION */
+	       br_multicast_querier_state_size() + /* IFLA_BR_MCAST_QUERIER_STATE */
 #endif
 #if IS_ENABLED(CONFIG_BRIDGE_NETFILTER)
 	       nla_total_size(sizeof(u8)) +     /* IFLA_BR_NF_CALL_IPTABLES */
@@ -1573,7 +1579,7 @@ static int br_fill_info(struct sk_buff *skb, const struct net_device *brdev)
 	    nla_put_u8(skb, IFLA_BR_MCAST_QUERY_USE_IFADDR,
 		       br_opt_get(br, BROPT_MULTICAST_QUERY_USE_IFADDR)) ||
 	    nla_put_u8(skb, IFLA_BR_MCAST_QUERIER,
-		       br_opt_get(br, BROPT_MULTICAST_QUERIER)) ||
+		       br->multicast_ctx.multicast_querier) ||
 	    nla_put_u8(skb, IFLA_BR_MCAST_STATS_ENABLED,
 		       br_opt_get(br, BROPT_MULTICAST_STATS_ENABLED)) ||
 	    nla_put_u32(skb, IFLA_BR_MCAST_HASH_ELASTICITY, RHT_ELASTICITY) ||
@@ -1583,7 +1589,9 @@ static int br_fill_info(struct sk_buff *skb, const struct net_device *brdev)
 	    nla_put_u32(skb, IFLA_BR_MCAST_STARTUP_QUERY_CNT,
 			br->multicast_ctx.multicast_startup_query_count) ||
 	    nla_put_u8(skb, IFLA_BR_MCAST_IGMP_VERSION,
-		       br->multicast_ctx.multicast_igmp_version))
+		       br->multicast_ctx.multicast_igmp_version) ||
+	    br_multicast_dump_querier_state(skb, &br->multicast_ctx,
+					    IFLA_BR_MCAST_QUERIER_STATE))
 		return -EMSGSIZE;
 #if IS_ENABLED(CONFIG_IPV6)
 	if (nla_put_u8(skb, IFLA_BR_MCAST_MLD_VERSION,

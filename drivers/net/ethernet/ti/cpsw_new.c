@@ -11,7 +11,6 @@
 #include <linux/module.h>
 #include <linux/irqreturn.h>
 #include <linux/interrupt.h>
-#include <linux/if_bridge.h>
 #include <linux/if_ether.h>
 #include <linux/etherdevice.h>
 #include <linux/net_tstamp.h>
@@ -29,6 +28,7 @@
 #include <linux/kmemleak.h>
 #include <linux/sys_soc.h>
 
+#include <net/switchdev.h>
 #include <net/page_pool.h>
 #include <net/pkt_cls.h>
 #include <net/devlink.h>
@@ -375,7 +375,7 @@ static void cpsw_rx_handler(void *token, int len, int status)
 	skb->protocol = eth_type_trans(skb, ndev);
 
 	/* mark skb for recycling */
-	skb_mark_for_recycle(skb, page, pool);
+	skb_mark_for_recycle(skb);
 	netif_receive_skb(skb);
 
 	ndev->stats.rx_bytes += len;
@@ -502,7 +502,7 @@ static void cpsw_restore(struct cpsw_priv *priv)
 
 static void cpsw_init_stp_ale_entry(struct cpsw_common *cpsw)
 {
-	char stpa[] = {0x01, 0x80, 0xc2, 0x0, 0x0, 0x0};
+	static const char stpa[] = {0x01, 0x80, 0xc2, 0x0, 0x0, 0x0};
 
 	cpsw_ale_add_mcast(cpsw->ale, stpa,
 			   ALE_PORT_HOST, ALE_SUPER, 0,
@@ -894,7 +894,7 @@ static int cpsw_ndo_open(struct net_device *ndev)
 		struct ethtool_coalesce coal;
 
 		coal.rx_coalesce_usecs = cpsw->coal_intvl;
-		cpsw_set_coalesce(ndev, &coal);
+		cpsw_set_coalesce(ndev, &coal, NULL, NULL);
 	}
 
 	cpdma_ctlr_start(cpsw->dma);
@@ -921,7 +921,7 @@ static netdev_tx_t cpsw_ndo_start_xmit(struct sk_buff *skb,
 	struct cpdma_chan *txch;
 	int ret, q_idx;
 
-	if (skb_padto(skb, CPSW_MIN_PACKET_SIZE)) {
+	if (skb_put_padto(skb, READ_ONCE(priv->tx_packet_min))) {
 		cpsw_err(priv, tx_err, "packet pad failed\n");
 		ndev->stats.tx_dropped++;
 		return NET_XMIT_DROP;
@@ -1101,7 +1101,7 @@ static int cpsw_ndo_xdp_xmit(struct net_device *ndev, int n,
 
 	for (i = 0; i < n; i++) {
 		xdpf = frames[i];
-		if (xdpf->len < CPSW_MIN_PACKET_SIZE)
+		if (xdpf->len < READ_ONCE(priv->tx_packet_min))
 			break;
 
 		if (cpsw_xdp_tx_frame(priv, xdpf, NULL, priv->emac_port))
@@ -1128,7 +1128,7 @@ static const struct net_device_ops cpsw_netdev_ops = {
 	.ndo_stop		= cpsw_ndo_stop,
 	.ndo_start_xmit		= cpsw_ndo_start_xmit,
 	.ndo_set_mac_address	= cpsw_ndo_set_mac_address,
-	.ndo_do_ioctl		= cpsw_ndo_ioctl,
+	.ndo_eth_ioctl		= cpsw_ndo_ioctl,
 	.ndo_validate_addr	= eth_validate_addr,
 	.ndo_tx_timeout		= cpsw_ndo_tx_timeout,
 	.ndo_set_rx_mode	= cpsw_ndo_set_rx_mode,
@@ -1390,6 +1390,7 @@ static int cpsw_create_ports(struct cpsw_common *cpsw)
 		priv->dev  = dev;
 		priv->msg_enable = netif_msg_init(debug_level, CPSW_DEBUG);
 		priv->emac_port = i + 1;
+		priv->tx_packet_min = CPSW_MIN_PACKET_SIZE;
 
 		if (is_valid_ether_addr(slave_data->mac_addr)) {
 			ether_addr_copy(priv->mac_addr, slave_data->mac_addr);
@@ -1698,6 +1699,7 @@ static int cpsw_dl_switch_mode_set(struct devlink *dl, u32 id,
 
 			priv = netdev_priv(sl_ndev);
 			slave->port_vlan = vlan;
+			WRITE_ONCE(priv->tx_packet_min, CPSW_MIN_PACKET_SIZE_VLAN);
 			if (netif_running(sl_ndev))
 				cpsw_port_add_switch_def_ale_entries(priv,
 								     slave);
@@ -1726,6 +1728,7 @@ static int cpsw_dl_switch_mode_set(struct devlink *dl, u32 id,
 
 			priv = netdev_priv(slave->ndev);
 			slave->port_vlan = slave->data->dual_emac_res_vlan;
+			WRITE_ONCE(priv->tx_packet_min, CPSW_MIN_PACKET_SIZE);
 			cpsw_port_add_dual_emac_def_ale_entries(priv, slave);
 		}
 
@@ -1800,14 +1803,14 @@ static int cpsw_register_devlink(struct cpsw_common *cpsw)
 	struct cpsw_devlink *dl_priv;
 	int ret = 0;
 
-	cpsw->devlink = devlink_alloc(&cpsw_devlink_ops, sizeof(*dl_priv));
+	cpsw->devlink = devlink_alloc(&cpsw_devlink_ops, sizeof(*dl_priv), dev);
 	if (!cpsw->devlink)
 		return -ENOMEM;
 
 	dl_priv = devlink_priv(cpsw->devlink);
 	dl_priv->cpsw = cpsw;
 
-	ret = devlink_register(cpsw->devlink, dev);
+	ret = devlink_register(cpsw->devlink);
 	if (ret) {
 		dev_err(dev, "DL reg fail ret:%d\n", ret);
 		goto dl_free;

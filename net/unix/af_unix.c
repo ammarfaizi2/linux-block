@@ -503,6 +503,12 @@ static void unix_sock_destructor(struct sock *sk)
 
 	skb_queue_purge(&sk->sk_receive_queue);
 
+#if IS_ENABLED(CONFIG_AF_UNIX_OOB)
+	if (u->oob_skb) {
+		kfree_skb(u->oob_skb);
+		u->oob_skb = NULL;
+	}
+#endif
 	WARN_ON(refcount_read(&sk->sk_wmem_alloc));
 	WARN_ON(!sk_unhashed(sk));
 	WARN_ON(sk->sk_socket);
@@ -1543,6 +1549,53 @@ out:
 	return err;
 }
 
+static void unix_peek_fds(struct scm_cookie *scm, struct sk_buff *skb)
+{
+	scm->fp = scm_fp_dup(UNIXCB(skb).fp);
+
+	/*
+	 * Garbage collection of unix sockets starts by selecting a set of
+	 * candidate sockets which have reference only from being in flight
+	 * (total_refs == inflight_refs).  This condition is checked once during
+	 * the candidate collection phase, and candidates are marked as such, so
+	 * that non-candidates can later be ignored.  While inflight_refs is
+	 * protected by unix_gc_lock, total_refs (file count) is not, hence this
+	 * is an instantaneous decision.
+	 *
+	 * Once a candidate, however, the socket must not be reinstalled into a
+	 * file descriptor while the garbage collection is in progress.
+	 *
+	 * If the above conditions are met, then the directed graph of
+	 * candidates (*) does not change while unix_gc_lock is held.
+	 *
+	 * Any operations that changes the file count through file descriptors
+	 * (dup, close, sendmsg) does not change the graph since candidates are
+	 * not installed in fds.
+	 *
+	 * Dequeing a candidate via recvmsg would install it into an fd, but
+	 * that takes unix_gc_lock to decrement the inflight count, so it's
+	 * serialized with garbage collection.
+	 *
+	 * MSG_PEEK is special in that it does not change the inflight count,
+	 * yet does install the socket into an fd.  The following lock/unlock
+	 * pair is to ensure serialization with garbage collection.  It must be
+	 * done between incrementing the file count and installing the file into
+	 * an fd.
+	 *
+	 * If garbage collection starts after the barrier provided by the
+	 * lock/unlock, then it will see the elevated refcount and not mark this
+	 * as a candidate.  If a garbage collection is already in progress
+	 * before the file count was incremented, then the lock/unlock pair will
+	 * ensure that garbage collection is finished before progressing to
+	 * installing the fd.
+	 *
+	 * (*) A -> B where B is on the queue of A or B is on the queue of C
+	 * which is on the queue of listening socket A.
+	 */
+	spin_lock(&unix_gc_lock);
+	spin_unlock(&unix_gc_lock);
+}
+
 static int unix_scm_to_skb(struct scm_cookie *scm, struct sk_buff *skb, bool send_fds)
 {
 	int err = 0;
@@ -1842,6 +1895,53 @@ out:
  */
 #define UNIX_SKB_FRAGS_SZ (PAGE_SIZE << get_order(32768))
 
+#if (IS_ENABLED(CONFIG_AF_UNIX_OOB))
+static int queue_oob(struct socket *sock, struct msghdr *msg, struct sock *other)
+{
+	struct unix_sock *ousk = unix_sk(other);
+	struct sk_buff *skb;
+	int err = 0;
+
+	skb = sock_alloc_send_skb(sock->sk, 1, msg->msg_flags & MSG_DONTWAIT, &err);
+
+	if (!skb)
+		return err;
+
+	skb_put(skb, 1);
+	err = skb_copy_datagram_from_iter(skb, 0, &msg->msg_iter, 1);
+
+	if (err) {
+		kfree_skb(skb);
+		return err;
+	}
+
+	unix_state_lock(other);
+
+	if (sock_flag(other, SOCK_DEAD) ||
+	    (other->sk_shutdown & RCV_SHUTDOWN)) {
+		unix_state_unlock(other);
+		kfree_skb(skb);
+		return -EPIPE;
+	}
+
+	maybe_add_creds(skb, sock, other);
+	skb_get(skb);
+
+	if (ousk->oob_skb)
+		consume_skb(ousk->oob_skb);
+
+	ousk->oob_skb = skb;
+
+	scm_stat_add(other, skb);
+	skb_queue_tail(&other->sk_receive_queue, skb);
+	sk_send_sigurg(other);
+	unix_state_unlock(other);
+	other->sk_data_ready(other);
+
+	return err;
+}
+#endif
+
 static int unix_stream_sendmsg(struct socket *sock, struct msghdr *msg,
 			       size_t len)
 {
@@ -1860,8 +1960,14 @@ static int unix_stream_sendmsg(struct socket *sock, struct msghdr *msg,
 		return err;
 
 	err = -EOPNOTSUPP;
-	if (msg->msg_flags&MSG_OOB)
-		goto out_err;
+	if (msg->msg_flags & MSG_OOB) {
+#if (IS_ENABLED(CONFIG_AF_UNIX_OOB))
+		if (len)
+			len--;
+		else
+#endif
+			goto out_err;
+	}
 
 	if (msg->msg_namelen) {
 		err = sk->sk_state == TCP_ESTABLISHED ? -EISCONN : -EOPNOTSUPP;
@@ -1925,6 +2031,15 @@ static int unix_stream_sendmsg(struct socket *sock, struct msghdr *msg,
 		other->sk_data_ready(other);
 		sent += size;
 	}
+
+#if (IS_ENABLED(CONFIG_AF_UNIX_OOB))
+	if (msg->msg_flags & MSG_OOB) {
+		err = queue_oob(sock, msg, other);
+		if (err)
+			goto out_err;
+		sent++;
+	}
+#endif
 
 	scm_destroy(&scm);
 
@@ -2192,7 +2307,7 @@ int __unix_dgram_recvmsg(struct sock *sk, struct msghdr *msg, size_t size,
 		sk_peek_offset_fwd(sk, size);
 
 		if (UNIXCB(skb).fp)
-			scm.fp = scm_fp_dup(UNIXCB(skb).fp);
+			unix_peek_fds(&scm, skb);
 	}
 	err = (flags & MSG_TRUNC) ? skb->len - skip : size;
 
@@ -2311,6 +2426,77 @@ struct unix_stream_read_state {
 	unsigned int splice_flags;
 };
 
+#if IS_ENABLED(CONFIG_AF_UNIX_OOB)
+static int unix_stream_recv_urg(struct unix_stream_read_state *state)
+{
+	struct socket *sock = state->socket;
+	struct sock *sk = sock->sk;
+	struct unix_sock *u = unix_sk(sk);
+	int chunk = 1;
+	struct sk_buff *oob_skb;
+
+	mutex_lock(&u->iolock);
+	unix_state_lock(sk);
+
+	if (sock_flag(sk, SOCK_URGINLINE) || !u->oob_skb) {
+		unix_state_unlock(sk);
+		mutex_unlock(&u->iolock);
+		return -EINVAL;
+	}
+
+	oob_skb = u->oob_skb;
+
+	if (!(state->flags & MSG_PEEK)) {
+		u->oob_skb = NULL;
+	}
+
+	unix_state_unlock(sk);
+
+	chunk = state->recv_actor(oob_skb, 0, chunk, state);
+
+	if (!(state->flags & MSG_PEEK)) {
+		UNIXCB(oob_skb).consumed += 1;
+		kfree_skb(oob_skb);
+	}
+
+	mutex_unlock(&u->iolock);
+
+	if (chunk < 0)
+		return -EFAULT;
+
+	state->msg->msg_flags |= MSG_OOB;
+	return 1;
+}
+
+static struct sk_buff *manage_oob(struct sk_buff *skb, struct sock *sk,
+				  int flags, int copied)
+{
+	struct unix_sock *u = unix_sk(sk);
+
+	if (!unix_skb_len(skb) && !(flags & MSG_PEEK)) {
+		skb_unlink(skb, &sk->sk_receive_queue);
+		consume_skb(skb);
+		skb = NULL;
+	} else {
+		if (skb == u->oob_skb) {
+			if (copied) {
+				skb = NULL;
+			} else if (sock_flag(sk, SOCK_URGINLINE)) {
+				if (!(flags & MSG_PEEK)) {
+					u->oob_skb = NULL;
+					consume_skb(skb);
+				}
+			} else if (!(flags & MSG_PEEK)) {
+				skb_unlink(skb, &sk->sk_receive_queue);
+				consume_skb(skb);
+				skb = skb_peek(&sk->sk_receive_queue);
+			}
+		}
+	}
+	return skb;
+}
+#endif
+
 static int unix_stream_read_generic(struct unix_stream_read_state *state,
 				    bool freezable)
 {
@@ -2336,6 +2522,9 @@ static int unix_stream_read_generic(struct unix_stream_read_state *state,
 
 	if (unlikely(flags & MSG_OOB)) {
 		err = -EOPNOTSUPP;
+#if IS_ENABLED(CONFIG_AF_UNIX_OOB)
+		err = unix_stream_recv_urg(state);
+#endif
 		goto out;
 	}
 
@@ -2364,6 +2553,18 @@ redo:
 		}
 		last = skb = skb_peek(&sk->sk_receive_queue);
 		last_len = last ? last->len : 0;
+
+#if IS_ENABLED(CONFIG_AF_UNIX_OOB)
+		if (skb) {
+			skb = manage_oob(skb, sk, flags, copied);
+			if (!skb) {
+				unix_state_unlock(sk);
+				if (copied)
+					break;
+				goto redo;
+			}
+		}
+#endif
 again:
 		if (skb == NULL) {
 			if (copied >= target)
@@ -2482,7 +2683,7 @@ unlock:
 			/* It is questionable, see note in unix_dgram_recvmsg.
 			 */
 			if (UNIXCB(skb).fp)
-				scm.fp = scm_fp_dup(UNIXCB(skb).fp);
+				unix_peek_fds(&scm, skb);
 
 			sk_peek_offset_fwd(sk, chunk);
 
@@ -2699,6 +2900,20 @@ static int unix_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
 	case SIOCUNIXFILE:
 		err = unix_open_file(sk);
 		break;
+#if IS_ENABLED(CONFIG_AF_UNIX_OOB)
+	case SIOCATMARK:
+		{
+			struct sk_buff *skb;
+			struct unix_sock *u = unix_sk(sk);
+			int answ = 0;
+
+			skb = skb_peek(&sk->sk_receive_queue);
+			if (skb && skb == u->oob_skb)
+				answ = 1;
+			err = put_user(answ, (int __user *)arg);
+		}
+		break;
+#endif
 	default:
 		err = -ENOIOCTLCMD;
 		break;

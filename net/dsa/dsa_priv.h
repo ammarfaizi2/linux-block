@@ -199,7 +199,7 @@ static inline struct net_device *dsa_master_find_slave(struct net_device *dev,
 /* port.c */
 void dsa_port_set_tag_protocol(struct dsa_port *cpu_dp,
 			       const struct dsa_device_ops *tag_ops);
-int dsa_port_set_state(struct dsa_port *dp, u8 state);
+int dsa_port_set_state(struct dsa_port *dp, u8 state, bool do_fast_age);
 int dsa_port_enable_rt(struct dsa_port *dp, struct phy_device *phy);
 int dsa_port_enable(struct dsa_port *dp, struct phy_device *phy);
 void dsa_port_disable_rt(struct dsa_port *dp);
@@ -241,11 +241,9 @@ int dsa_port_host_mdb_del(const struct dsa_port *dp,
 int dsa_port_pre_bridge_flags(const struct dsa_port *dp,
 			      struct switchdev_brport_flags flags,
 			      struct netlink_ext_ack *extack);
-int dsa_port_bridge_flags(const struct dsa_port *dp,
+int dsa_port_bridge_flags(struct dsa_port *dp,
 			  struct switchdev_brport_flags flags,
 			  struct netlink_ext_ack *extack);
-int dsa_port_mrouter(struct dsa_port *dp, bool mrouter,
-		     struct netlink_ext_ack *extack);
 int dsa_port_vlan_add(struct dsa_port *dp,
 		      const struct switchdev_obj_port_vlan *vlan,
 		      struct netlink_ext_ack *extack);
@@ -263,8 +261,8 @@ int dsa_port_link_register_of(struct dsa_port *dp);
 void dsa_port_link_unregister_of(struct dsa_port *dp);
 int dsa_port_hsr_join(struct dsa_port *dp, struct net_device *hsr);
 void dsa_port_hsr_leave(struct dsa_port *dp, struct net_device *hsr);
-int dsa_port_tag_8021q_vlan_add(struct dsa_port *dp, u16 vid);
-void dsa_port_tag_8021q_vlan_del(struct dsa_port *dp, u16 vid);
+int dsa_port_tag_8021q_vlan_add(struct dsa_port *dp, u16 vid, bool broadcast);
+void dsa_port_tag_8021q_vlan_del(struct dsa_port *dp, u16 vid, bool broadcast);
 extern const struct phylink_mac_ops dsa_port_phylink_mac_ops;
 
 static inline bool dsa_port_offloads_bridge_port(struct dsa_port *dp,
@@ -322,6 +320,8 @@ int dsa_slave_register_notifier(void);
 void dsa_slave_unregister_notifier(void);
 void dsa_slave_setup_tagger(struct net_device *slave);
 int dsa_slave_change_mtu(struct net_device *dev, int new_mtu);
+int dsa_slave_manage_vlan_filtering(struct net_device *dev,
+				    bool vlan_filtering);
 
 static inline struct dsa_port *dsa_slave_to_port(const struct net_device *dev)
 {
@@ -397,6 +397,141 @@ static inline struct sk_buff *dsa_untag_bridge_pvid(struct sk_buff *skb)
 	return skb;
 }
 
+/* For switches without hardware support for DSA tagging to be able
+ * to support termination through the bridge.
+ */
+static inline struct net_device *
+dsa_find_designated_bridge_port_by_vid(struct net_device *master, u16 vid)
+{
+	struct dsa_port *cpu_dp = master->dsa_ptr;
+	struct dsa_switch_tree *dst = cpu_dp->dst;
+	struct bridge_vlan_info vinfo;
+	struct net_device *slave;
+	struct dsa_port *dp;
+	int err;
+
+	list_for_each_entry(dp, &dst->ports, list) {
+		if (dp->type != DSA_PORT_TYPE_USER)
+			continue;
+
+		if (!dp->bridge_dev)
+			continue;
+
+		if (dp->stp_state != BR_STATE_LEARNING &&
+		    dp->stp_state != BR_STATE_FORWARDING)
+			continue;
+
+		/* Since the bridge might learn this packet, keep the CPU port
+		 * affinity with the port that will be used for the reply on
+		 * xmit.
+		 */
+		if (dp->cpu_dp != cpu_dp)
+			continue;
+
+		slave = dp->slave;
+
+		err = br_vlan_get_info_rcu(slave, vid, &vinfo);
+		if (err)
+			continue;
+
+		return slave;
+	}
+
+	return NULL;
+}
+
+/* If the ingress port offloads the bridge, we mark the frame as autonomously
+ * forwarded by hardware, so the software bridge doesn't forward in twice, back
+ * to us, because we already did. However, if we're in fallback mode and we do
+ * software bridging, we are not offloading it, therefore the dp->bridge_dev
+ * pointer is not populated, and flooding needs to be done by software (we are
+ * effectively operating in standalone ports mode).
+ */
+static inline void dsa_default_offload_fwd_mark(struct sk_buff *skb)
+{
+	struct dsa_port *dp = dsa_slave_to_port(skb->dev);
+
+	skb->offload_fwd_mark = !!(dp->bridge_dev);
+}
+
+/* Helper for removing DSA header tags from packets in the RX path.
+ * Must not be called before skb_pull(len).
+ *                                                                 skb->data
+ *                                                                         |
+ *                                                                         v
+ * |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |
+ * +-----------------------+-----------------------+---------------+-------+
+ * |    Destination MAC    |      Source MAC       |  DSA header   | EType |
+ * +-----------------------+-----------------------+---------------+-------+
+ *                                                 |               |
+ * <----- len ----->                               <----- len ----->
+ *                 |
+ *       >>>>>>>   v
+ *       >>>>>>>   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |
+ *       >>>>>>>   +-----------------------+-----------------------+-------+
+ *       >>>>>>>   |    Destination MAC    |      Source MAC       | EType |
+ *                 +-----------------------+-----------------------+-------+
+ *                                                                         ^
+ *                                                                         |
+ *                                                                 skb->data
+ */
+static inline void dsa_strip_etype_header(struct sk_buff *skb, int len)
+{
+	memmove(skb->data - ETH_HLEN, skb->data - ETH_HLEN - len, 2 * ETH_ALEN);
+}
+
+/* Helper for creating space for DSA header tags in TX path packets.
+ * Must not be called before skb_push(len).
+ *
+ * Before:
+ *
+ *       <<<<<<<   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |
+ * ^     <<<<<<<   +-----------------------+-----------------------+-------+
+ * |     <<<<<<<   |    Destination MAC    |      Source MAC       | EType |
+ * |               +-----------------------+-----------------------+-------+
+ * <----- len ----->
+ * |
+ * |
+ * skb->data
+ *
+ * After:
+ *
+ * |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |
+ * +-----------------------+-----------------------+---------------+-------+
+ * |    Destination MAC    |      Source MAC       |  DSA header   | EType |
+ * +-----------------------+-----------------------+---------------+-------+
+ * ^                                               |               |
+ * |                                               <----- len ----->
+ * skb->data
+ */
+static inline void dsa_alloc_etype_header(struct sk_buff *skb, int len)
+{
+	memmove(skb->data, skb->data + len, 2 * ETH_ALEN);
+}
+
+/* On RX, eth_type_trans() on the DSA master pulls ETH_HLEN bytes starting from
+ * skb_mac_header(skb), which leaves skb->data pointing at the first byte after
+ * what the DSA master perceives as the EtherType (the beginning of the L3
+ * protocol). Since DSA EtherType header taggers treat the EtherType as part of
+ * the DSA tag itself, and the EtherType is 2 bytes in length, the DSA header
+ * is located 2 bytes behind skb->data. Note that EtherType in this context
+ * means the first 2 bytes of the DSA header, not the encapsulated EtherType
+ * that will become visible after the DSA header is stripped.
+ */
+static inline void *dsa_etype_header_pos_rx(struct sk_buff *skb)
+{
+	return skb->data - 2;
+}
+
+/* On TX, skb->data points to skb_mac_header(skb), which means that EtherType
+ * header taggers start exactly where the EtherType is (the EtherType is
+ * treated as part of the DSA header).
+ */
+static inline void *dsa_etype_header_pos_tx(struct sk_buff *skb)
+{
+	return skb->data + 2 * ETH_ALEN;
+}
+
 /* switch.c */
 int dsa_switch_register_notifier(struct dsa_switch *ds);
 void dsa_switch_unregister_notifier(struct dsa_switch *ds);
@@ -410,6 +545,8 @@ int dsa_tree_change_tag_proto(struct dsa_switch_tree *dst,
 			      struct net_device *master,
 			      const struct dsa_device_ops *tag_ops,
 			      const struct dsa_device_ops *old_tag_ops);
+int dsa_bridge_num_get(const struct net_device *bridge_dev, int max);
+void dsa_bridge_num_put(const struct net_device *bridge_dev, int bridge_num);
 
 /* tag_8021q.c */
 int dsa_tag_8021q_bridge_join(struct dsa_switch *ds,

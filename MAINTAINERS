@@ -445,7 +445,7 @@ F:	drivers/platform/x86/wmi.c
 F:	include/uapi/linux/wmi.h
 
 ACRN HYPERVISOR SERVICE MODULE
-M:	Shuo Liu <shuo.a.liu@intel.com>
+M:	Fei Li <fei1.li@intel.com>
 L:	acrn-dev@lists.projectacrn.org (subscribers-only)
 S:	Supported
 W:	https://projectacrn.org
@@ -3197,7 +3197,7 @@ S:	Maintained
 W:	https://www.open-mesh.org/
 Q:	https://patchwork.open-mesh.org/project/batman/list/
 B:	https://www.open-mesh.org/projects/batman-adv/issues
-C:	irc://chat.freenode.net/batman
+C:	ircs://irc.hackint.org/batadv
 T:	git https://git.open-mesh.org/linux-merge.git
 F:	Documentation/networking/batman-adv.rst
 F:	include/uapi/linux/batadv_packet.h
@@ -5684,6 +5684,7 @@ DPAA2 ETHERNET SWITCH DRIVER
 M:	Ioana Ciornei <ioana.ciornei@nxp.com>
 L:	netdev@vger.kernel.org
 S:	Maintained
+F:	Documentation/networking/device_drivers/ethernet/freescale/dpaa2/switch-driver.rst
 F:	drivers/net/ethernet/freescale/dpaa2/dpaa2-switch*
 F:	drivers/net/ethernet/freescale/dpaa2/dpsw*
 
@@ -6904,6 +6905,12 @@ M:	Mark Einon <mark.einon@gmail.com>
 S:	Odd Fixes
 F:	drivers/net/ethernet/agere/
 
+ETAS ES58X CAN/USB DRIVER
+M:	Vincent Mailhol <mailhol.vincent@wanadoo.fr>
+L:	linux-can@vger.kernel.org
+S:	Maintained
+F:	drivers/net/can/usb/etas_es58x/
+
 ETHERNET BRIDGE
 M:	Roopa Prabhu <roopa@nvidia.com>
 M:	Nikolay Aleksandrov <nikolay@nvidia.com>
@@ -7858,9 +7865,9 @@ S:	Maintained
 F:	drivers/input/touchscreen/goodix.c
 
 GOOGLE ETHERNET DRIVERS
-M:	Catherine Sullivan <csully@google.com>
-R:	Sagi Shahar <sagis@google.com>
-R:	Jon Olson <jonolson@google.com>
+M:	Jeroen de Borst <jeroendb@google.com>
+R:	Catherine Sullivan <csully@google.com>
+R:	David Awogbemila <awogbemila@google.com>
 L:	netdev@vger.kernel.org
 S:	Supported
 F:	Documentation/networking/device_drivers/ethernet/google/gve.rst
@@ -9749,11 +9756,6 @@ M:	David Sterba <dsterba@suse.com>
 S:	Odd Fixes
 F:	drivers/tty/ipwireless/
 
-IPX NETWORK LAYER
-L:	netdev@vger.kernel.org
-S:	Obsolete
-F:	include/uapi/linux/ipx.h
-
 IRQ DOMAINS (IRQ NUMBER MAPPING LIBRARY)
 M:	Marc Zyngier <maz@kernel.org>
 S:	Maintained
@@ -11031,6 +11033,18 @@ F:	drivers/mailbox/arm_mhuv2.c
 F:	include/linux/mailbox/arm_mhuv2_message.h
 F:	Documentation/devicetree/bindings/mailbox/arm,mhuv2.yaml
 
+MANAGEMENT COMPONENT TRANSPORT PROTOCOL (MCTP)
+M:	Jeremy Kerr <jk@codeconstruct.com.au>
+M:	Matt Johnston <matt@codeconstruct.com.au>
+L:	netdev@vger.kernel.org
+S:	Maintained
+F:	Documentation/networking/mctp.rst
+F:	drivers/net/mctp/
+F:	include/net/mctp.h
+F:	include/net/mctpdevice.h
+F:	include/net/netns/mctp.h
+F:	net/mctp/
+
 MAN-PAGES: MANUAL PAGES FOR LINUX -- Sections 2, 3, 4, 5, and 7
 M:	Michael Kerrisk <mtk.manpages@gmail.com>
 L:	linux-man@vger.kernel.org
@@ -11333,6 +11347,12 @@ M:	Xu Liang <lxu@maxlinear.com>
 L:	netdev@vger.kernel.org
 S:	Supported
 F:	drivers/net/phy/mxl-gpy.c
+
+MCBA MICROCHIP CAN BUS ANALYZER TOOL DRIVER
+R:	Yasushi SHOJI <yashi@spacecubics.com>
+L:	linux-can@vger.kernel.org
+S:	Maintained
+F:	drivers/net/can/usb/mcba_usb.c
 
 MCAN MMIO DEVICE DRIVER
 M:	Chandrasekar Ramakrishnan <rcsekar@samsung.com>
@@ -13871,6 +13891,12 @@ F:	Documentation/devicetree/
 F:	arch/*/boot/dts/
 F:	include/dt-bindings/
 
+OPENCOMPUTE PTP CLOCK DRIVER
+M:	Jonathan Lemon <jonathan.lemon@gmail.com>
+L:	netdev@vger.kernel.org
+S:	Maintained
+F:	drivers/ptp/ptp_ocp.c
+
 OPENCORES I2C BUS DRIVER
 M:	Peter Korsgaard <peter@korsgaard.com>
 M:	Andrew Lunn <andrew@lunn.ch>
@@ -14927,13 +14953,6 @@ S:	Maintained
 F:	include/linux/printk.h
 F:	kernel/printk/
 
-PRISM54 WIRELESS DRIVER
-M:	Luis Chamberlain <mcgrof@kernel.org>
-L:	linux-wireless@vger.kernel.org
-S:	Obsolete
-W:	https://wireless.wiki.kernel.org/en/users/Drivers/p54
-F:	drivers/net/wireless/intersil/prism54/
-
 PROC FILESYSTEM
 L:	linux-kernel@vger.kernel.org
 L:	linux-fsdevel@vger.kernel.org
@@ -15475,6 +15494,8 @@ M:	Pan, Xinhui <Xinhui.Pan@amd.com>
 L:	amd-gfx@lists.freedesktop.org
 S:	Supported
 T:	git https://gitlab.freedesktop.org/agd5f/linux.git
+B:	https://gitlab.freedesktop.org/drm/amd/-/issues
+C:	irc://irc.oftc.net/radeon
 F:	drivers/gpu/drm/amd/
 F:	drivers/gpu/drm/radeon/
 F:	include/uapi/drm/amdgpu_drm.h
@@ -15802,7 +15823,7 @@ F:	Documentation/devicetree/bindings/i2c/renesas,iic-emev2.yaml
 F:	drivers/i2c/busses/i2c-emev2.c
 
 RENESAS ETHERNET DRIVERS
-R:	Sergei Shtylyov <sergei.shtylyov@gmail.com>
+R:	Sergey Shtylyov <s.shtylyov@omp.ru>
 L:	netdev@vger.kernel.org
 L:	linux-renesas-soc@vger.kernel.org
 F:	Documentation/devicetree/bindings/net/renesas,*.yaml
@@ -17814,7 +17835,7 @@ F:	include/linux/sync_file.h
 F:	include/uapi/linux/sync_file.h
 
 SYNOPSYS ARC ARCHITECTURE
-M:	Vineet Gupta <vgupta@synopsys.com>
+M:	Vineet Gupta <vgupta@kernel.org>
 L:	linux-snps-arc@lists.infradead.org
 S:	Supported
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/vgupta/arc.git
@@ -19130,7 +19151,7 @@ M:	Mauro Carvalho Chehab <mchehab@kernel.org>
 L:	linux-usb@vger.kernel.org
 S:	Maintained
 F:	Documentation/devicetree/bindings/phy/hisilicon,hi3670-usb3.yaml
-F:	drivers/phy/hisilicon/phy-kirin970-usb3.c
+F:	drivers/phy/hisilicon/phy-hi3670-usb3.c
 
 USB ISP116X DRIVER
 M:	Olav Kongas <ok@artecdesign.ee>
@@ -19808,6 +19829,14 @@ L:	netdev@vger.kernel.org
 S:	Supported
 F:	drivers/ptp/ptp_vmw.c
 
+VMWARE VMCI DRIVER
+M:	Jorgen Hansen <jhansen@vmware.com>
+M:	Vishnu Dasa <vdasa@vmware.com>
+L:	linux-kernel@vger.kernel.org
+L:	pv-drivers@vmware.com (private)
+S:	Maintained
+F:	drivers/misc/vmw_vmci/
+
 VMWARE VMMOUSE SUBDRIVER
 M:	"VMware Graphics" <linux-graphics-maintainer@vmware.com>
 M:	"VMware, Inc." <pv-drivers@vmware.com>
@@ -20008,7 +20037,8 @@ F:	Documentation/devicetree/bindings/extcon/wlf,arizona.yaml
 F:	Documentation/devicetree/bindings/mfd/wlf,arizona.yaml
 F:	Documentation/devicetree/bindings/mfd/wm831x.txt
 F:	Documentation/devicetree/bindings/regulator/wlf,arizona.yaml
-F:	Documentation/devicetree/bindings/sound/wlf,arizona.yaml
+F:	Documentation/devicetree/bindings/sound/wlf,*.yaml
+F:	Documentation/devicetree/bindings/sound/wm*
 F:	Documentation/hwmon/wm83??.rst
 F:	arch/arm/mach-s3c/mach-crag6410*
 F:	drivers/clk/clk-wm83*.c

@@ -166,11 +166,11 @@ static struct sk_buff *dsa_xmit_ll(struct sk_buff *skb, struct net_device *dev,
 	if (skb->protocol == htons(ETH_P_8021Q)) {
 		if (extra) {
 			skb_push(skb, extra);
-			memmove(skb->data, skb->data + extra, 2 * ETH_ALEN);
+			dsa_alloc_etype_header(skb, extra);
 		}
 
 		/* Construct tagged DSA tag from 802.1Q tag. */
-		dsa_header = skb->data + 2 * ETH_ALEN + extra;
+		dsa_header = dsa_etype_header_pos_tx(skb) + extra;
 		dsa_header[0] = (cmd << 6) | 0x20 | tag_dev;
 		dsa_header[1] = tag_port << 3;
 
@@ -181,10 +181,10 @@ static struct sk_buff *dsa_xmit_ll(struct sk_buff *skb, struct net_device *dev,
 		}
 	} else {
 		skb_push(skb, DSA_HLEN + extra);
-		memmove(skb->data, skb->data + DSA_HLEN + extra, 2 * ETH_ALEN);
+		dsa_alloc_etype_header(skb, DSA_HLEN + extra);
 
 		/* Construct untagged DSA tag. */
-		dsa_header = skb->data + 2 * ETH_ALEN + extra;
+		dsa_header = dsa_etype_header_pos_tx(skb) + extra;
 
 		dsa_header[0] = (cmd << 6) | tag_dev;
 		dsa_header[1] = tag_port << 3;
@@ -198,20 +198,18 @@ static struct sk_buff *dsa_xmit_ll(struct sk_buff *skb, struct net_device *dev,
 static struct sk_buff *dsa_rcv_ll(struct sk_buff *skb, struct net_device *dev,
 				  u8 extra)
 {
+	bool trap = false, trunk = false;
 	int source_device, source_port;
-	bool trunk = false;
 	enum dsa_code code;
 	enum dsa_cmd cmd;
 	u8 *dsa_header;
 
 	/* The ethertype field is part of the DSA header. */
-	dsa_header = skb->data - 2;
+	dsa_header = dsa_etype_header_pos_rx(skb);
 
 	cmd = dsa_header[0] >> 6;
 	switch (cmd) {
 	case DSA_CMD_FORWARD:
-		skb->offload_fwd_mark = 1;
-
 		trunk = !!(dsa_header[1] & 7);
 		break;
 
@@ -230,7 +228,6 @@ static struct sk_buff *dsa_rcv_ll(struct sk_buff *skb, struct net_device *dev,
 			 * device (like a bridge) that forwarding has
 			 * already been done by hardware.
 			 */
-			skb->offload_fwd_mark = 1;
 			break;
 		case DSA_CODE_MGMT_TRAP:
 		case DSA_CODE_IGMP_MLD_TRAP:
@@ -238,6 +235,7 @@ static struct sk_buff *dsa_rcv_ll(struct sk_buff *skb, struct net_device *dev,
 			/* Traps have, by definition, not been
 			 * forwarded by hardware, so don't mark them.
 			 */
+			trap = true;
 			break;
 		default:
 			/* Reserved code, this could be anything. Drop
@@ -270,6 +268,15 @@ static struct sk_buff *dsa_rcv_ll(struct sk_buff *skb, struct net_device *dev,
 
 	if (!skb->dev)
 		return NULL;
+
+	/* When using LAG offload, skb->dev is not a DSA slave interface,
+	 * so we cannot call dsa_default_offload_fwd_mark and we need to
+	 * special-case it.
+	 */
+	if (trunk)
+		skb->offload_fwd_mark = true;
+	else if (!trap)
+		dsa_default_offload_fwd_mark(skb);
 
 	/* If the 'tagged' bit is set; convert the DSA tag to a 802.1Q
 	 * tag, and delete the ethertype (extra) if applicable. If the
@@ -305,14 +312,10 @@ static struct sk_buff *dsa_rcv_ll(struct sk_buff *skb, struct net_device *dev,
 		memcpy(dsa_header, new_header, DSA_HLEN);
 
 		if (extra)
-			memmove(skb->data - ETH_HLEN,
-				skb->data - ETH_HLEN - extra,
-				2 * ETH_ALEN);
+			dsa_strip_etype_header(skb, extra);
 	} else {
 		skb_pull_rcsum(skb, DSA_HLEN);
-		memmove(skb->data - ETH_HLEN,
-			skb->data - ETH_HLEN - DSA_HLEN - extra,
-			2 * ETH_ALEN);
+		dsa_strip_etype_header(skb, DSA_HLEN + extra);
 	}
 
 	return skb;
@@ -325,8 +328,7 @@ static struct sk_buff *dsa_xmit(struct sk_buff *skb, struct net_device *dev)
 	return dsa_xmit_ll(skb, dev, 0);
 }
 
-static struct sk_buff *dsa_rcv(struct sk_buff *skb, struct net_device *dev,
-			       struct packet_type *pt)
+static struct sk_buff *dsa_rcv(struct sk_buff *skb, struct net_device *dev)
 {
 	if (unlikely(!pskb_may_pull(skb, DSA_HLEN)))
 		return NULL;
@@ -358,7 +360,7 @@ static struct sk_buff *edsa_xmit(struct sk_buff *skb, struct net_device *dev)
 	if (!skb)
 		return NULL;
 
-	edsa_header = skb->data + 2 * ETH_ALEN;
+	edsa_header = dsa_etype_header_pos_tx(skb);
 	edsa_header[0] = (ETH_P_EDSA >> 8) & 0xff;
 	edsa_header[1] = ETH_P_EDSA & 0xff;
 	edsa_header[2] = 0x00;
@@ -366,8 +368,7 @@ static struct sk_buff *edsa_xmit(struct sk_buff *skb, struct net_device *dev)
 	return skb;
 }
 
-static struct sk_buff *edsa_rcv(struct sk_buff *skb, struct net_device *dev,
-				struct packet_type *pt)
+static struct sk_buff *edsa_rcv(struct sk_buff *skb, struct net_device *dev)
 {
 	if (unlikely(!pskb_may_pull(skb, EDSA_HLEN)))
 		return NULL;

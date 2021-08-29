@@ -2176,7 +2176,7 @@ static int mv88e6xxx_port_vlan_leave(struct mv88e6xxx_chip *chip,
 	int i, err;
 
 	if (!vid)
-		return -EOPNOTSUPP;
+		return 0;
 
 	err = mv88e6xxx_vtu_get(chip, vid, &vlan);
 	if (err)
@@ -5797,7 +5797,6 @@ static int mv88e6xxx_port_bridge_flags(struct dsa_switch *ds, int port,
 				       struct netlink_ext_ack *extack)
 {
 	struct mv88e6xxx_chip *chip = ds->priv;
-	bool do_fast_age = false;
 	int err = -EOPNOTSUPP;
 
 	mv88e6xxx_reg_lock(chip);
@@ -5809,9 +5808,6 @@ static int mv88e6xxx_port_bridge_flags(struct dsa_switch *ds, int port,
 		err = mv88e6xxx_port_set_assoc_vector(chip, port, pav);
 		if (err)
 			goto out;
-
-		if (!learning)
-			do_fast_age = true;
 	}
 
 	if (flags.mask & BR_FLOOD) {
@@ -5841,26 +5837,6 @@ static int mv88e6xxx_port_bridge_flags(struct dsa_switch *ds, int port,
 	}
 
 out:
-	mv88e6xxx_reg_unlock(chip);
-
-	if (do_fast_age)
-		mv88e6xxx_port_fast_age(ds, port);
-
-	return err;
-}
-
-static int mv88e6xxx_port_set_mrouter(struct dsa_switch *ds, int port,
-				      bool mrouter,
-				      struct netlink_ext_ack *extack)
-{
-	struct mv88e6xxx_chip *chip = ds->priv;
-	int err;
-
-	if (!chip->info->ops->port_set_mcast_flood)
-		return -EOPNOTSUPP;
-
-	mv88e6xxx_reg_lock(chip);
-	err = chip->info->ops->port_set_mcast_flood(chip, port, mrouter);
 	mv88e6xxx_reg_unlock(chip);
 
 	return err;
@@ -6167,7 +6143,6 @@ static const struct dsa_switch_ops mv88e6xxx_switch_ops = {
 	.port_bridge_leave	= mv88e6xxx_port_bridge_leave,
 	.port_pre_bridge_flags	= mv88e6xxx_port_pre_bridge_flags,
 	.port_bridge_flags	= mv88e6xxx_port_bridge_flags,
-	.port_set_mrouter	= mv88e6xxx_port_set_mrouter,
 	.port_stp_state_set	= mv88e6xxx_port_stp_state_set,
 	.port_fast_age		= mv88e6xxx_port_fast_age,
 	.port_vlan_filtering	= mv88e6xxx_port_vlan_filtering,

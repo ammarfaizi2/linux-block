@@ -79,20 +79,13 @@ enum dsa_tag_protocol {
 	DSA_TAG_PROTO_SJA1110		= DSA_TAG_PROTO_SJA1110_VALUE,
 };
 
-struct packet_type;
 struct dsa_switch;
 
 struct dsa_device_ops {
 	struct sk_buff *(*xmit)(struct sk_buff *skb, struct net_device *dev);
-	struct sk_buff *(*rcv)(struct sk_buff *skb, struct net_device *dev,
-			       struct packet_type *pt);
+	struct sk_buff *(*rcv)(struct sk_buff *skb, struct net_device *dev);
 	void (*flow_dissect)(const struct sk_buff *skb, __be16 *proto,
 			     int *offset);
-	/* Used to determine which traffic should match the DSA filter in
-	 * eth_type_trans, and which, if any, should bypass it and be processed
-	 * as regular on the master net device.
-	 */
-	bool (*filter)(const struct sk_buff *skb, struct net_device *dev);
 	unsigned int needed_headroom;
 	unsigned int needed_tailroom;
 	const char *name;
@@ -111,8 +104,8 @@ struct dsa_device_ops {
  * function pointers.
  */
 struct dsa_netdevice_ops {
-	int (*ndo_do_ioctl)(struct net_device *dev, struct ifreq *ifr,
-			    int cmd);
+	int (*ndo_eth_ioctl)(struct net_device *dev, struct ifreq *ifr,
+			     int cmd);
 };
 
 #define DSA_TAG_DRIVER_ALIAS "dsa_tag-"
@@ -162,9 +155,6 @@ struct dsa_switch_tree {
 
 	/* Track the largest switch index within a tree */
 	unsigned int last_switch;
-
-	/* Track the bridges with forwarding offload enabled */
-	unsigned long fwd_offloading_bridges;
 };
 
 #define dsa_lags_foreach_id(_id, _dst)				\
@@ -244,9 +234,7 @@ struct dsa_port {
 
 	/* Copies for faster access in master receive hot path */
 	struct dsa_switch_tree *dst;
-	struct sk_buff *(*rcv)(struct sk_buff *skb, struct net_device *dev,
-			       struct packet_type *pt);
-	bool (*filter)(const struct sk_buff *skb, struct net_device *dev);
+	struct sk_buff *(*rcv)(struct sk_buff *skb, struct net_device *dev);
 
 	enum {
 		DSA_PORT_TYPE_UNUSED = 0,
@@ -263,6 +251,8 @@ struct dsa_port {
 	struct device_node	*dn;
 	unsigned int		ageing_time;
 	bool			vlan_filtering;
+	/* Managed by DSA on user ports and by drivers on CPU and DSA ports */
+	bool			learning;
 	u8			stp_state;
 	struct net_device	*bridge_dev;
 	int			bridge_num;
@@ -373,6 +363,9 @@ struct dsa_switch {
 	 */
 	bool			vlan_filtering_is_global;
 
+	/* Keep VLAN filtering enabled on ports not offloading any upper. */
+	bool			needs_standalone_vlan_filtering;
+
 	/* Pass .port_vlan_add and .port_vlan_del to drivers even for bridges
 	 * that have vlan_filtering=0. All drivers should ideally set this (and
 	 * then the option would get removed), but it is unknown whether this
@@ -418,8 +411,9 @@ struct dsa_switch {
 	unsigned int		num_lag_ids;
 
 	/* Drivers that support bridge forwarding offload should set this to
-	 * the maximum number of bridges spanning the same switch tree that can
-	 * be offloaded.
+	 * the maximum number of bridges spanning the same switch tree (or all
+	 * trees, in the case of cross-tree bridging support) that can be
+	 * offloaded.
 	 */
 	unsigned int		num_fwd_offloading_bridges;
 
@@ -723,8 +717,6 @@ struct dsa_switch_ops {
 	int	(*port_bridge_flags)(struct dsa_switch *ds, int port,
 				     struct switchdev_brport_flags flags,
 				     struct netlink_ext_ack *extack);
-	int	(*port_set_mrouter)(struct dsa_switch *ds, int port, bool mrouter,
-				    struct netlink_ext_ack *extack);
 
 	/*
 	 * VLAN support
@@ -985,15 +977,6 @@ static inline bool netdev_uses_dsa(const struct net_device *dev)
 	return false;
 }
 
-static inline bool dsa_can_decode(const struct sk_buff *skb,
-				  struct net_device *dev)
-{
-#if IS_ENABLED(CONFIG_NET_DSA)
-	return !dev->dsa_ptr->filter || dev->dsa_ptr->filter(skb, dev);
-#endif
-	return false;
-}
-
 /* All DSA tags that push the EtherType to the right (basically all except tail
  * tags, which don't break dissection) can be treated the same from the
  * perspective of the flow dissector.
@@ -1034,8 +1017,8 @@ static inline int __dsa_netdevice_ops_check(struct net_device *dev)
 	return 0;
 }
 
-static inline int dsa_ndo_do_ioctl(struct net_device *dev, struct ifreq *ifr,
-				   int cmd)
+static inline int dsa_ndo_eth_ioctl(struct net_device *dev, struct ifreq *ifr,
+				    int cmd)
 {
 	const struct dsa_netdevice_ops *ops;
 	int err;
@@ -1046,11 +1029,11 @@ static inline int dsa_ndo_do_ioctl(struct net_device *dev, struct ifreq *ifr,
 
 	ops = dev->dsa_ptr->netdev_ops;
 
-	return ops->ndo_do_ioctl(dev, ifr, cmd);
+	return ops->ndo_eth_ioctl(dev, ifr, cmd);
 }
 #else
-static inline int dsa_ndo_do_ioctl(struct net_device *dev, struct ifreq *ifr,
-				   int cmd)
+static inline int dsa_ndo_eth_ioctl(struct net_device *dev, struct ifreq *ifr,
+				    int cmd)
 {
 	return -EOPNOTSUPP;
 }

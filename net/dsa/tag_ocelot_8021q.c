@@ -38,8 +38,7 @@ static struct sk_buff *ocelot_xmit(struct sk_buff *skb,
 }
 
 static struct sk_buff *ocelot_rcv(struct sk_buff *skb,
-				  struct net_device *netdev,
-				  struct packet_type *pt)
+				  struct net_device *netdev)
 {
 	int src_port, switch_id;
 
@@ -49,7 +48,7 @@ static struct sk_buff *ocelot_rcv(struct sk_buff *skb,
 	if (!skb->dev)
 		return NULL;
 
-	skb->offload_fwd_mark = 1;
+	dsa_default_offload_fwd_mark(skb);
 
 	return skb;
 }

@@ -44,7 +44,7 @@ static int unix_dgram_bpf_recvmsg(struct sock *sk, struct msghdr *msg,
 {
 	struct unix_sock *u = unix_sk(sk);
 	struct sk_psock *psock;
-	int copied, ret;
+	int copied;
 
 	psock = sk_psock_get(sk);
 	if (unlikely(!psock))
@@ -53,8 +53,9 @@ static int unix_dgram_bpf_recvmsg(struct sock *sk, struct msghdr *msg,
 	mutex_lock(&u->iolock);
 	if (!skb_queue_empty(&sk->sk_receive_queue) &&
 	    sk_psock_queue_empty(psock)) {
-		ret = __unix_dgram_recvmsg(sk, msg, len, flags);
-		goto out;
+		mutex_unlock(&u->iolock);
+		sk_psock_put(sk, psock);
+		return __unix_dgram_recvmsg(sk, msg, len, flags);
 	}
 
 msg_bytes_ready:
@@ -68,16 +69,15 @@ msg_bytes_ready:
 		if (data) {
 			if (!sk_psock_queue_empty(psock))
 				goto msg_bytes_ready;
-			ret = __unix_dgram_recvmsg(sk, msg, len, flags);
-			goto out;
+			mutex_unlock(&u->iolock);
+			sk_psock_put(sk, psock);
+			return __unix_dgram_recvmsg(sk, msg, len, flags);
 		}
 		copied = -EAGAIN;
 	}
-	ret = copied;
-out:
 	mutex_unlock(&u->iolock);
 	sk_psock_put(sk, psock);
-	return ret;
+	return copied;
 }
 
 static struct proto *unix_prot_saved __read_mostly;
@@ -105,6 +105,9 @@ static void unix_bpf_check_needs_rebuild(struct proto *ops)
 
 int unix_bpf_update_proto(struct sock *sk, struct sk_psock *psock, bool restore)
 {
+	if (sk->sk_type != SOCK_DGRAM)
+		return -EOPNOTSUPP;
+
 	if (restore) {
 		sk->sk_write_space = psock->saved_write_space;
 		WRITE_ONCE(sk->sk_prot, psock->sk_proto);

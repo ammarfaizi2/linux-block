@@ -286,6 +286,8 @@ nfp_net_get_link_ksettings(struct net_device *netdev,
 
 	/* Init to unknowns */
 	ethtool_link_ksettings_add_link_mode(cmd, supported, FIBRE);
+	ethtool_link_ksettings_add_link_mode(cmd, supported, Pause);
+	ethtool_link_ksettings_add_link_mode(cmd, advertising, Pause);
 	cmd->base.port = PORT_OTHER;
 	cmd->base.speed = SPEED_UNKNOWN;
 	cmd->base.duplex = DUPLEX_UNKNOWN;
@@ -1076,7 +1078,9 @@ static void nfp_net_get_regs(struct net_device *netdev,
 }
 
 static int nfp_net_get_coalesce(struct net_device *netdev,
-				struct ethtool_coalesce *ec)
+				struct ethtool_coalesce *ec,
+				struct kernel_ethtool_coalesce *kernel_coal,
+				struct netlink_ext_ack *extack)
 {
 	struct nfp_net *nn = netdev_priv(netdev);
 
@@ -1328,7 +1332,9 @@ exit_close_nsp:
 }
 
 static int nfp_net_set_coalesce(struct net_device *netdev,
-				struct ethtool_coalesce *ec)
+				struct ethtool_coalesce *ec,
+				struct kernel_ethtool_coalesce *kernel_coal,
+				struct netlink_ext_ack *extack)
 {
 	struct nfp_net *nn = netdev_priv(netdev);
 	unsigned int factor;

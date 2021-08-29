@@ -3106,13 +3106,15 @@ void mod_objcg_state(struct obj_cgroup *objcg, struct pglist_data *pgdat,
 		stock->cached_pgdat = pgdat;
 	} else if (stock->cached_pgdat != pgdat) {
 		/* Flush the existing cached vmstat data */
+		struct pglist_data *oldpg = stock->cached_pgdat;
+
 		if (stock->nr_slab_reclaimable_b) {
-			mod_objcg_mlstate(objcg, pgdat, NR_SLAB_RECLAIMABLE_B,
+			mod_objcg_mlstate(objcg, oldpg, NR_SLAB_RECLAIMABLE_B,
 					  stock->nr_slab_reclaimable_b);
 			stock->nr_slab_reclaimable_b = 0;
 		}
 		if (stock->nr_slab_unreclaimable_b) {
-			mod_objcg_mlstate(objcg, pgdat, NR_SLAB_UNRECLAIMABLE_B,
+			mod_objcg_mlstate(objcg, oldpg, NR_SLAB_UNRECLAIMABLE_B,
 					  stock->nr_slab_unreclaimable_b);
 			stock->nr_slab_unreclaimable_b = 0;
 		}
@@ -3574,7 +3576,8 @@ static unsigned long mem_cgroup_usage(struct mem_cgroup *memcg, bool swap)
 	unsigned long val;
 
 	if (mem_cgroup_is_root(memcg)) {
-		cgroup_rstat_flush(memcg->css.cgroup);
+		/* mem_cgroup_threshold() calls here from irqsafe context */
+		cgroup_rstat_flush_irqsafe(memcg->css.cgroup);
 		val = memcg_page_state(memcg, NR_FILE_PAGES) +
 			memcg_page_state(memcg, NR_ANON_MAPPED);
 		if (swap)
@@ -7047,14 +7050,14 @@ void mem_cgroup_sk_free(struct sock *sk)
  * mem_cgroup_charge_skmem - charge socket memory
  * @memcg: memcg to charge
  * @nr_pages: number of pages to charge
+ * @gfp_mask: reclaim mode
  *
  * Charges @nr_pages to @memcg. Returns %true if the charge fit within
- * @memcg's configured limit, %false if the charge had to be forced.
+ * @memcg's configured limit, %false if it doesn't.
  */
-bool mem_cgroup_charge_skmem(struct mem_cgroup *memcg, unsigned int nr_pages)
+bool mem_cgroup_charge_skmem(struct mem_cgroup *memcg, unsigned int nr_pages,
+			     gfp_t gfp_mask)
 {
-	gfp_t gfp_mask = GFP_KERNEL;
-
 	if (!cgroup_subsys_on_dfl(memory_cgrp_subsys)) {
 		struct page_counter *fail;
 
@@ -7062,21 +7065,19 @@ bool mem_cgroup_charge_skmem(struct mem_cgroup *memcg, unsigned int nr_pages)
 			memcg->tcpmem_pressure = 0;
 			return true;
 		}
-		page_counter_charge(&memcg->tcpmem, nr_pages);
 		memcg->tcpmem_pressure = 1;
+		if (gfp_mask & __GFP_NOFAIL) {
+			page_counter_charge(&memcg->tcpmem, nr_pages);
+			return true;
+		}
 		return false;
 	}
 
-	/* Don't block in the packet receive path */
-	if (in_softirq())
-		gfp_mask = GFP_NOWAIT;
-
-	mod_memcg_state(memcg, MEMCG_SOCK, nr_pages);
-
-	if (try_charge(memcg, gfp_mask, nr_pages) == 0)
+	if (try_charge(memcg, gfp_mask, nr_pages) == 0) {
+		mod_memcg_state(memcg, MEMCG_SOCK, nr_pages);
 		return true;
+	}
 
-	try_charge(memcg, gfp_mask|__GFP_NOFAIL, nr_pages);
 	return false;
 }
 

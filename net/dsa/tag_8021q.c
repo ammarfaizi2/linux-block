@@ -17,7 +17,7 @@
  *
  * | 11  | 10  |  9  |  8  |  7  |  6  |  5  |  4  |  3  |  2  |  1  |  0  |
  * +-----------+-----+-----------------+-----------+-----------------------+
- * |    DIR    | RSV |    SWITCH_ID    |    RSV    |          PORT         |
+ * |    DIR    | VBID|    SWITCH_ID    |   VBID    |          PORT         |
  * +-----------+-----+-----------------+-----------+-----------------------+
  *
  * DIR - VID[11:10]:
@@ -30,9 +30,10 @@
  * SWITCH_ID - VID[8:6]:
  *	Index of switch within DSA tree. Must be between 0 and 7.
  *
- * RSV - VID[5:4]:
- *	To be used for further expansion of PORT or for other purposes.
- *	Must be transmitted as zero and ignored on receive.
+ * VBID - { VID[9], VID[5:4] }:
+ *	Virtual bridge ID. If between 1 and 7, packet targets the broadcast
+ *	domain of a bridge. If transmitted as zero, packet targets a single
+ *	port. Field only valid on transmit, must be ignored on receive.
  *
  * PORT - VID[3:0]:
  *	Index of switch port. Must be between 0 and 15.
@@ -50,10 +51,29 @@
 #define DSA_8021Q_SWITCH_ID(x)		(((x) << DSA_8021Q_SWITCH_ID_SHIFT) & \
 						 DSA_8021Q_SWITCH_ID_MASK)
 
+#define DSA_8021Q_VBID_HI_SHIFT		9
+#define DSA_8021Q_VBID_HI_MASK		GENMASK(9, 9)
+#define DSA_8021Q_VBID_LO_SHIFT		4
+#define DSA_8021Q_VBID_LO_MASK		GENMASK(5, 4)
+#define DSA_8021Q_VBID_HI(x)		(((x) & GENMASK(2, 2)) >> 2)
+#define DSA_8021Q_VBID_LO(x)		((x) & GENMASK(1, 0))
+#define DSA_8021Q_VBID(x)		\
+		(((DSA_8021Q_VBID_LO(x) << DSA_8021Q_VBID_LO_SHIFT) & \
+		  DSA_8021Q_VBID_LO_MASK) | \
+		 ((DSA_8021Q_VBID_HI(x) << DSA_8021Q_VBID_HI_SHIFT) & \
+		  DSA_8021Q_VBID_HI_MASK))
+
 #define DSA_8021Q_PORT_SHIFT		0
 #define DSA_8021Q_PORT_MASK		GENMASK(3, 0)
 #define DSA_8021Q_PORT(x)		(((x) << DSA_8021Q_PORT_SHIFT) & \
 						 DSA_8021Q_PORT_MASK)
+
+u16 dsa_8021q_bridge_tx_fwd_offload_vid(int bridge_num)
+{
+	/* The VBID value of 0 is reserved for precise TX */
+	return DSA_8021Q_DIR_TX | DSA_8021Q_VBID(bridge_num + 1);
+}
+EXPORT_SYMBOL_GPL(dsa_8021q_bridge_tx_fwd_offload_vid);
 
 /* Returns the VID to be inserted into the frame from xmit for switch steering
  * instructions on egress. Encodes switch ID and port ID.
@@ -342,12 +362,12 @@ int dsa_tag_8021q_bridge_join(struct dsa_switch *ds,
 			continue;
 
 		/* Install the RX VID of the targeted port in our VLAN table */
-		err = dsa_port_tag_8021q_vlan_add(dp, targeted_rx_vid);
+		err = dsa_port_tag_8021q_vlan_add(dp, targeted_rx_vid, true);
 		if (err)
 			return err;
 
 		/* Install our RX VID into the targeted port's VLAN table */
-		err = dsa_port_tag_8021q_vlan_add(targeted_dp, rx_vid);
+		err = dsa_port_tag_8021q_vlan_add(targeted_dp, rx_vid, true);
 		if (err)
 			return err;
 	}
@@ -378,14 +398,35 @@ int dsa_tag_8021q_bridge_leave(struct dsa_switch *ds,
 			continue;
 
 		/* Remove the RX VID of the targeted port from our VLAN table */
-		dsa_port_tag_8021q_vlan_del(dp, targeted_rx_vid);
+		dsa_port_tag_8021q_vlan_del(dp, targeted_rx_vid, true);
 
 		/* Remove our RX VID from the targeted port's VLAN table */
-		dsa_port_tag_8021q_vlan_del(targeted_dp, rx_vid);
+		dsa_port_tag_8021q_vlan_del(targeted_dp, rx_vid, true);
 	}
 
 	return 0;
 }
+
+int dsa_tag_8021q_bridge_tx_fwd_offload(struct dsa_switch *ds, int port,
+					struct net_device *br,
+					int bridge_num)
+{
+	u16 tx_vid = dsa_8021q_bridge_tx_fwd_offload_vid(bridge_num);
+
+	return dsa_port_tag_8021q_vlan_add(dsa_to_port(ds, port), tx_vid,
+					   true);
+}
+EXPORT_SYMBOL_GPL(dsa_tag_8021q_bridge_tx_fwd_offload);
+
+void dsa_tag_8021q_bridge_tx_fwd_unoffload(struct dsa_switch *ds, int port,
+					   struct net_device *br,
+					   int bridge_num)
+{
+	u16 tx_vid = dsa_8021q_bridge_tx_fwd_offload_vid(bridge_num);
+
+	dsa_port_tag_8021q_vlan_del(dsa_to_port(ds, port), tx_vid, true);
+}
+EXPORT_SYMBOL_GPL(dsa_tag_8021q_bridge_tx_fwd_unoffload);
 
 /* Set up a port's tag_8021q RX and TX VLAN for standalone mode operation */
 static int dsa_tag_8021q_port_setup(struct dsa_switch *ds, int port)
@@ -410,7 +451,7 @@ static int dsa_tag_8021q_port_setup(struct dsa_switch *ds, int port)
 	 * L2 forwarding rules still take precedence when there are no VLAN
 	 * restrictions, so there are no concerns about leaking traffic.
 	 */
-	err = dsa_port_tag_8021q_vlan_add(dp, rx_vid);
+	err = dsa_port_tag_8021q_vlan_add(dp, rx_vid, false);
 	if (err) {
 		dev_err(ds->dev,
 			"Failed to apply RX VID %d to port %d: %pe\n",
@@ -422,7 +463,7 @@ static int dsa_tag_8021q_port_setup(struct dsa_switch *ds, int port)
 	vlan_vid_add(master, ctx->proto, rx_vid);
 
 	/* Finally apply the TX VID on this port and on the CPU port */
-	err = dsa_port_tag_8021q_vlan_add(dp, tx_vid);
+	err = dsa_port_tag_8021q_vlan_add(dp, tx_vid, false);
 	if (err) {
 		dev_err(ds->dev,
 			"Failed to apply TX VID %d on port %d: %pe\n",
@@ -449,11 +490,11 @@ static void dsa_tag_8021q_port_teardown(struct dsa_switch *ds, int port)
 
 	master = dp->cpu_dp->master;
 
-	dsa_port_tag_8021q_vlan_del(dp, rx_vid);
+	dsa_port_tag_8021q_vlan_del(dp, rx_vid, false);
 
 	vlan_vid_del(master, ctx->proto, rx_vid);
 
-	dsa_port_tag_8021q_vlan_del(dp, tx_vid);
+	dsa_port_tag_8021q_vlan_del(dp, tx_vid, false);
 }
 
 static int dsa_tag_8021q_setup(struct dsa_switch *ds)

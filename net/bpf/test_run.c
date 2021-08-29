@@ -7,6 +7,7 @@
 #include <linux/vmalloc.h>
 #include <linux/etherdevice.h>
 #include <linux/filter.h>
+#include <linux/rcupdate_trace.h>
 #include <linux/sched/signal.h>
 #include <net/bpf_sk_storage.h>
 #include <net/sock.h>
@@ -88,17 +89,19 @@ reset:
 static int bpf_test_run(struct bpf_prog *prog, void *ctx, u32 repeat,
 			u32 *retval, u32 *time, bool xdp)
 {
-	struct bpf_cgroup_storage *storage[MAX_BPF_CGROUP_STORAGE_TYPE] = { NULL };
+	struct bpf_prog_array_item item = {.prog = prog};
+	struct bpf_run_ctx *old_ctx;
+	struct bpf_cg_run_ctx run_ctx;
 	struct bpf_test_timer t = { NO_MIGRATE };
 	enum bpf_cgroup_storage_type stype;
 	int ret;
 
 	for_each_cgroup_storage_type(stype) {
-		storage[stype] = bpf_cgroup_storage_alloc(prog, stype);
-		if (IS_ERR(storage[stype])) {
-			storage[stype] = NULL;
+		item.cgroup_storage[stype] = bpf_cgroup_storage_alloc(prog, stype);
+		if (IS_ERR(item.cgroup_storage[stype])) {
+			item.cgroup_storage[stype] = NULL;
 			for_each_cgroup_storage_type(stype)
-				bpf_cgroup_storage_free(storage[stype]);
+				bpf_cgroup_storage_free(item.cgroup_storage[stype]);
 			return -ENOMEM;
 		}
 	}
@@ -107,22 +110,19 @@ static int bpf_test_run(struct bpf_prog *prog, void *ctx, u32 repeat,
 		repeat = 1;
 
 	bpf_test_timer_enter(&t);
+	old_ctx = bpf_set_run_ctx(&run_ctx.run_ctx);
 	do {
-		ret = bpf_cgroup_storage_set(storage);
-		if (ret)
-			break;
-
+		run_ctx.prog_item = &item;
 		if (xdp)
 			*retval = bpf_prog_run_xdp(prog, ctx);
 		else
 			*retval = BPF_PROG_RUN(prog, ctx);
-
-		bpf_cgroup_storage_unset();
 	} while (bpf_test_timer_continue(&t, repeat, &ret, time));
+	bpf_reset_run_ctx(old_ctx);
 	bpf_test_timer_leave(&t);
 
 	for_each_cgroup_storage_type(stype)
-		bpf_cgroup_storage_free(storage[stype]);
+		bpf_cgroup_storage_free(item.cgroup_storage[stype]);
 
 	return ret;
 }
@@ -764,8 +764,7 @@ int bpf_prog_test_run_xdp(struct bpf_prog *prog, const union bpf_attr *kattr,
 	if (prog->expected_attach_type == BPF_XDP_DEVMAP ||
 	    prog->expected_attach_type == BPF_XDP_CPUMAP)
 		return -EINVAL;
-	if (kattr->test.ctx_in || kattr->test.ctx_out)
-		return -EINVAL;
+
 	ctx = bpf_ctx_init(kattr, sizeof(struct xdp_md));
 	if (IS_ERR(ctx))
 		return PTR_ERR(ctx);
@@ -1046,7 +1045,10 @@ int bpf_prog_test_run_syscall(struct bpf_prog *prog,
 			goto out;
 		}
 	}
+
+	rcu_read_lock_trace();
 	retval = bpf_prog_run_pin_on_cpu(prog, ctx);
+	rcu_read_unlock_trace();
 
 	if (copy_to_user(&uattr->test.retval, &retval, sizeof(u32))) {
 		err = -EFAULT;

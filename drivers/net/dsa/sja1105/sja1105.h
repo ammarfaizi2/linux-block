@@ -115,12 +115,6 @@ struct sja1105_info {
 	const struct sja1105_dynamic_table_ops *dyn_ops;
 	const struct sja1105_table_ops *static_ops;
 	const struct sja1105_regs *regs;
-	/* Both E/T and P/Q/R/S have quirks when it comes to popping the S-Tag
-	 * from double-tagged frames. E/T will pop it only when it's equal to
-	 * TPID from the General Parameters Table, while P/Q/R/S will only
-	 * pop it when it's equal to TPID2.
-	 */
-	u16 qinq_tpid;
 	bool can_limit_mcast_flood;
 	int (*reset_cmd)(struct dsa_switch *ds);
 	int (*setup_rgmii_delay)(const void *ctx, int port);
@@ -226,14 +220,6 @@ struct sja1105_flow_block {
 	int num_virtual_links;
 };
 
-struct sja1105_bridge_vlan {
-	struct list_head list;
-	int port;
-	u16 vid;
-	bool pvid;
-	bool untagged;
-};
-
 struct sja1105_private {
 	struct sja1105_static_config static_config;
 	bool rgmii_rx_delay[SJA1105_MAX_NUM_PORTS];
@@ -241,7 +227,6 @@ struct sja1105_private {
 	phy_interface_t phy_mode[SJA1105_MAX_NUM_PORTS];
 	bool fixed_link[SJA1105_MAX_NUM_PORTS];
 	bool vlan_aware;
-	unsigned long learn_ena;
 	unsigned long ucast_egress_floods;
 	unsigned long bcast_egress_floods;
 	const struct sja1105_info *info;
@@ -249,8 +234,8 @@ struct sja1105_private {
 	struct gpio_desc *reset_gpio;
 	struct spi_device *spidev;
 	struct dsa_switch *ds;
-	struct list_head dsa_8021q_vlans;
-	struct list_head bridge_vlans;
+	u16 bridge_pvid[SJA1105_MAX_NUM_PORTS];
+	u16 tag_8021q_pvid[SJA1105_MAX_NUM_PORTS];
 	struct sja1105_flow_block flow_block;
 	struct sja1105_port ports[SJA1105_MAX_NUM_PORTS];
 	/* Serializes transmission of management frames so that

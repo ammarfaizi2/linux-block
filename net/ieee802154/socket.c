@@ -41,8 +41,7 @@ ieee802154_get_dev(struct net *net, const struct ieee802154_addr *addr)
 		ieee802154_devaddr_to_raw(hwaddr, addr->extended_addr);
 		rcu_read_lock();
 		dev = dev_getbyhwaddr_rcu(net, ARPHRD_IEEE802154, hwaddr);
-		if (dev)
-			dev_hold(dev);
+		dev_hold(dev);
 		rcu_read_unlock();
 		break;
 	case IEEE802154_ADDR_SHORT:
@@ -984,6 +983,11 @@ static const struct proto_ops ieee802154_dgram_ops = {
 	.sendpage	   = sock_no_sendpage,
 };
 
+static void ieee802154_sock_destruct(struct sock *sk)
+{
+	skb_queue_purge(&sk->sk_receive_queue);
+}
+
 /* Create a socket. Initialise the socket, blank the addresses
  * set the state.
  */
@@ -1024,7 +1028,7 @@ static int ieee802154_create(struct net *net, struct socket *sock,
 	sock->ops = ops;
 
 	sock_init_data(sock, sk);
-	/* FIXME: sk->sk_destruct */
+	sk->sk_destruct = ieee802154_sock_destruct;
 	sk->sk_family = PF_IEEE802154;
 
 	/* Checksums on by default */

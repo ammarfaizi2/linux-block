@@ -61,7 +61,12 @@ struct br_ip_list {
 
 #define BR_DEFAULT_AGEING_TIME	(300 * HZ)
 
-extern void brioctl_set(int (*ioctl_hook)(struct net *, unsigned int, void __user *));
+struct net_bridge;
+void brioctl_set(int (*hook)(struct net *net, struct net_bridge *br,
+			     unsigned int cmd, struct ifreq *ifr,
+			     void __user *uarg));
+int br_ioctl_call(struct net *net, struct net_bridge *br, unsigned int cmd,
+		  struct ifreq *ifr, void __user *uarg);
 
 #if IS_ENABLED(CONFIG_BRIDGE) && IS_ENABLED(CONFIG_BRIDGE_IGMP_SNOOPING)
 int br_multicast_list_adjacent(struct net_device *dev,
@@ -111,6 +116,8 @@ int br_vlan_get_pvid_rcu(const struct net_device *dev, u16 *p_pvid);
 int br_vlan_get_proto(const struct net_device *dev, u16 *p_proto);
 int br_vlan_get_info(const struct net_device *dev, u16 vid,
 		     struct bridge_vlan_info *p_vinfo);
+int br_vlan_get_info_rcu(const struct net_device *dev, u16 vid,
+			 struct bridge_vlan_info *p_vinfo);
 #else
 static inline bool br_vlan_enabled(const struct net_device *dev)
 {
@@ -134,6 +141,12 @@ static inline int br_vlan_get_pvid_rcu(const struct net_device *dev, u16 *p_pvid
 
 static inline int br_vlan_get_info(const struct net_device *dev, u16 vid,
 				   struct bridge_vlan_info *p_vinfo)
+{
+	return -EINVAL;
+}
+
+static inline int br_vlan_get_info_rcu(const struct net_device *dev, u16 vid,
+				       struct bridge_vlan_info *p_vinfo)
 {
 	return -EINVAL;
 }
@@ -174,41 +187,6 @@ static inline u8 br_port_get_stp_state(const struct net_device *dev)
 static inline clock_t br_get_ageing_time(const struct net_device *br_dev)
 {
 	return 0;
-}
-#endif
-
-#if IS_ENABLED(CONFIG_BRIDGE) && IS_ENABLED(CONFIG_NET_SWITCHDEV)
-
-int switchdev_bridge_port_offload(struct net_device *brport_dev,
-				  struct net_device *dev, const void *ctx,
-				  struct notifier_block *atomic_nb,
-				  struct notifier_block *blocking_nb,
-				  bool tx_fwd_offload,
-				  struct netlink_ext_ack *extack);
-void switchdev_bridge_port_unoffload(struct net_device *brport_dev,
-				     const void *ctx,
-				     struct notifier_block *atomic_nb,
-				     struct notifier_block *blocking_nb);
-
-#else
-
-static inline int
-switchdev_bridge_port_offload(struct net_device *brport_dev,
-			      struct net_device *dev, const void *ctx,
-			      struct notifier_block *atomic_nb,
-			      struct notifier_block *blocking_nb,
-			      bool tx_fwd_offload,
-			      struct netlink_ext_ack *extack)
-{
-	return -EINVAL;
-}
-
-static inline void
-switchdev_bridge_port_unoffload(struct net_device *brport_dev,
-				const void *ctx,
-				struct notifier_block *atomic_nb,
-				struct notifier_block *blocking_nb)
-{
 }
 #endif
 

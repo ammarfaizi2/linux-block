@@ -694,6 +694,7 @@ static int br_vlan_add_existing(struct net_bridge *br,
 		vlan->flags |= BRIDGE_VLAN_INFO_BRENTRY;
 		vg->num_vlans++;
 		*changed = true;
+		br_multicast_toggle_one_vlan(vlan, true);
 	}
 
 	if (__vlan_add_flags(vlan, flags))
@@ -840,11 +841,14 @@ int br_vlan_filter_toggle(struct net_bridge *br, unsigned long val,
 	if (br_opt_get(br, BROPT_VLAN_ENABLED) == !!val)
 		return 0;
 
-	err = switchdev_port_attr_set(br->dev, &attr, extack);
-	if (err && err != -EOPNOTSUPP)
-		return err;
-
 	br_opt_toggle(br, BROPT_VLAN_ENABLED, !!val);
+
+	err = switchdev_port_attr_set(br->dev, &attr, extack);
+	if (err && err != -EOPNOTSUPP) {
+		br_opt_toggle(br, BROPT_VLAN_ENABLED, !val);
+		return err;
+	}
+
 	br_manage_promisc(br);
 	recalculate_group_addr(br);
 	br_recalculate_fwd_mask(br);
@@ -1446,6 +1450,33 @@ int br_vlan_get_info(const struct net_device *dev, u16 vid,
 }
 EXPORT_SYMBOL_GPL(br_vlan_get_info);
 
+int br_vlan_get_info_rcu(const struct net_device *dev, u16 vid,
+			 struct bridge_vlan_info *p_vinfo)
+{
+	struct net_bridge_vlan_group *vg;
+	struct net_bridge_vlan *v;
+	struct net_bridge_port *p;
+
+	p = br_port_get_check_rcu(dev);
+	if (p)
+		vg = nbp_vlan_group_rcu(p);
+	else if (netif_is_bridge_master(dev))
+		vg = br_vlan_group_rcu(netdev_priv(dev));
+	else
+		return -EINVAL;
+
+	v = br_vlan_find(vg, vid);
+	if (!v)
+		return -ENOENT;
+
+	p_vinfo->vid = vid;
+	p_vinfo->flags = v->flags;
+	if (vid == br_get_pvid(vg))
+		p_vinfo->flags |= BRIDGE_VLAN_INFO_PVID;
+	return 0;
+}
+EXPORT_SYMBOL_GPL(br_vlan_get_info_rcu);
+
 static int br_vlan_is_bind_vlan_dev(const struct net_device *dev)
 {
 	return is_vlan_dev(dev) &&
@@ -1989,7 +2020,7 @@ static int br_vlan_dump_dev(const struct net_device *dev,
 
 		if (dump_global) {
 			if (br_vlan_global_opts_can_enter_range(v, range_end))
-				continue;
+				goto update_end;
 			if (!br_vlan_global_opts_fill(skb, range_start->vid,
 						      range_end->vid,
 						      range_start)) {
@@ -2015,6 +2046,7 @@ static int br_vlan_dump_dev(const struct net_device *dev,
 
 			range_start = v;
 		}
+update_end:
 		range_end = v;
 	}
 
@@ -2104,6 +2136,7 @@ static const struct nla_policy br_vlan_db_policy[BRIDGE_VLANDB_ENTRY_MAX + 1] = 
 	[BRIDGE_VLANDB_ENTRY_RANGE]	= { .type = NLA_U16 },
 	[BRIDGE_VLANDB_ENTRY_STATE]	= { .type = NLA_U8 },
 	[BRIDGE_VLANDB_ENTRY_TUNNEL_INFO] = { .type = NLA_NESTED },
+	[BRIDGE_VLANDB_ENTRY_MCAST_ROUTER]	= { .type = NLA_U8 },
 };
 
 static int br_vlan_rtm_process_one(struct net_device *dev,
