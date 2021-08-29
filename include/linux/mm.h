@@ -1390,11 +1390,6 @@ static inline int cpupid_to_cpu(int cpupid)
 	return (cpupid >> LAST__PID_SHIFT) & LAST__CPU_MASK;
 }
 
-static inline int cpupid_to_nid(int cpupid)
-{
-	return cpu_to_node(cpupid_to_cpu(cpupid));
-}
-
 static inline bool cpupid_pid_unset(int cpupid)
 {
 	return cpupid_to_pid(cpupid) == (-1 & LAST__PID_MASK);
