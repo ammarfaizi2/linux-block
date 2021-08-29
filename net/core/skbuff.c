@@ -246,6 +246,17 @@ struct sk_buff *__build_skb(void *data, unsigned int frag_size)
 	return skb;
 }
 
+/**
+ *	skb_propagate_pfmemalloc - Propagate pfmemalloc if skb is allocated after RX page
+ *	@page: The page that was allocated from skb_alloc_page
+ *	@skb: The skb that may need pfmemalloc set
+ */
+static inline void skb_propagate_pfmemalloc(const struct page *page, struct sk_buff *skb)
+{
+	if (page_is_pfmemalloc(page))
+		skb->pfmemalloc = true;
+}
+
 /* build_skb() is wrapper over __build_skb(), that specifically
  * takes care of skb->head and skb->pfmemalloc
  * This means that if @frag_size is not zero, then @data must be backed

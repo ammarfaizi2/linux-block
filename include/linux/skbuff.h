@@ -3074,18 +3074,6 @@ static inline bool dev_page_is_reusable(const struct page *page)
 }
 
 /**
- *	skb_propagate_pfmemalloc - Propagate pfmemalloc if skb is allocated after RX page
- *	@page: The page that was allocated from skb_alloc_page
- *	@skb: The skb that may need pfmemalloc set
- */
-static inline void skb_propagate_pfmemalloc(const struct page *page,
-					    struct sk_buff *skb)
-{
-	if (page_is_pfmemalloc(page))
-		skb->pfmemalloc = true;
-}
-
-/**
  * skb_frag_off() - Returns the offset of a skb fragment
  * @frag: the paged fragment
  */
