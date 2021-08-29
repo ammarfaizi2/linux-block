@@ -1933,6 +1933,26 @@ static void packet_parse_headers(struct sk_buff *skb, struct socket *sock)
 	skb_probe_transport_header(skb);
 }
 
+/* ll_header must have at least hard_header_len allocated */
+static inline bool dev_validate_header(const struct net_device *dev,
+				       char *ll_header, int len)
+{
+	if (likely(len >= dev->hard_header_len))
+		return true;
+	if (len < dev->min_header_len)
+		return false;
+
+	if (capable(CAP_SYS_RAWIO)) {
+		memset(ll_header + len, 0, dev->hard_header_len - len);
+		return true;
+	}
+
+	if (dev->header_ops && dev->header_ops->validate)
+		return dev->header_ops->validate(ll_header, len);
+
+	return false;
+}
+
 /*
  *	Output a raw packet to a device layer. This bypasses all the other
  *	protocol layers and you must therefore supply it with a complete frame
