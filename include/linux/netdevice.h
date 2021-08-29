@@ -2950,26 +2950,6 @@ static inline __be16 dev_parse_header_protocol(const struct sk_buff *skb)
 	return dev->header_ops->parse_protocol(skb);
 }
 
-/* ll_header must have at least hard_header_len allocated */
-static inline bool dev_validate_header(const struct net_device *dev,
-				       char *ll_header, int len)
-{
-	if (likely(len >= dev->hard_header_len))
-		return true;
-	if (len < dev->min_header_len)
-		return false;
-
-	if (capable(CAP_SYS_RAWIO)) {
-		memset(ll_header + len, 0, dev->hard_header_len - len);
-		return true;
-	}
-
-	if (dev->header_ops && dev->header_ops->validate)
-		return dev->header_ops->validate(ll_header, len);
-
-	return false;
-}
-
 static inline bool dev_has_header(const struct net_device *dev)
 {
 	return dev->header_ops && dev->header_ops->create;
