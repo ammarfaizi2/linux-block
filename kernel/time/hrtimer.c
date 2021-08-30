@@ -796,6 +796,7 @@ static void hrtimer_reprogram(struct hrtimer *timer, bool reprogram)
 	ktime_t expires = ktime_sub(hrtimer_get_expires(timer), base->offset);
 
 	WARN_ON_ONCE(hrtimer_get_expires_tv64(timer) < 0);
+	WARN_ON_ONCE(base->offset < 0);
 
 	/*
 	 * CLOCK_REALTIME timer might be requested with an absolute

@@ -24,6 +24,7 @@ int tick_program_event(ktime_t expires, int force)
 {
 	struct clock_event_device *dev = __this_cpu_read(tick_cpu_device.evtdev);
 
+	WARN_ON_ONCE(expires < -KTIME_MAX + 24 * 3600 * NSEC_PER_SEC);
 	if (unlikely(expires == KTIME_MAX)) {
 		/*
 		 * We don't need the clock event device any more, stop it.
