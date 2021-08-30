@@ -5781,16 +5781,6 @@ pick_next_task(struct rq *rq, struct task_struct *prev, struct rq_flags *rf)
 
 #endif /* CONFIG_SCHED_CORE */
 
-static DEFINE_PER_CPU(struct task_struct *, __schedule_prev);
-
-void dump__schedule_prev(int cpu)
-{
-	struct task_struct *t = READ_ONCE(per_cpu(__schedule_prev, cpu));
-
-	if (t)
-		sched_show_task(t);
-}
-
 /*
  * __schedule() is the main scheduler function.
  *
@@ -5950,7 +5940,6 @@ static void __sched notrace __schedule(bool preempt)
 		psi_sched_switch(prev, next, !task_on_rq_queued(prev));
 
 		trace_sched_switch(preempt, prev, next);
-		WRITE_ONCE(per_cpu(__schedule_prev, smp_processor_id()), prev);
 
 		/* Also unlocks the rq: */
 		rq = context_switch(rq, prev, next, &rf);

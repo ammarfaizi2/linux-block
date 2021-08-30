@@ -211,7 +211,6 @@ s64 get_sysvec_apic_timer_interrupt_ns(int cpu);
 unsigned int get_api_timer_irqs(int cpu);
 void hrtimer_interrupt_get_debug(int cpu, unsigned short *nr_hangs, ktime_t *delta, ktime_t *expires_next);
 void *__run_hrtimer_get_debug(int cpu);
-void dump__schedule_prev(int cpu);
 
 static void multi_stop_cpu_ipi(void *unused)
 {
@@ -259,13 +258,9 @@ static void dump_multi_cpu_stop_state(struct multi_stop_data *msdata, bool *firs
 		tlast = stopper->lasttime;
 		pr_info("%s: %s%s ->state=%#x%s  Last seen: %s:%d %s state %d%c\n", __func__, stopper->thread->comm, stopper->thread == current ? " (me)" : "", stopper->thread->__state, task_curr(stopper->thread) ? "" : " Not running!", stopper->filename, stopper->lineno, stopper->message, stopper->laststate, ".!"[time_after64(t, tlast + NSEC_PER_SEC)]);
 		raw_spin_unlock_irqrestore(&stopper->lock, flags);
-		if (firsttime && *firsttime) {
-			if (!task_curr(stopper->thread)) {
-				trigger_single_cpu_backtrace(cpu);
-				*firsttime = false;
-			} else {
-				dump__schedule_prev(cpu);
-			}
+		if (firsttime && *firsttime && !task_curr(stopper->thread)) {
+			trigger_single_cpu_backtrace(cpu);
+			*firsttime = false;
 		}
 		if (time_after64(t, tlast + NSEC_PER_SEC) &&
 		    smp_load_acquire(&multi_stop_cpu_ipi_handled)) {
