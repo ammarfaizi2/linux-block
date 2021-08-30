@@ -950,12 +950,11 @@ static bool trc_inspect_reader(struct task_struct *t, void *arg)
 		nesting = t->trc_reader_nesting;
 	}
 
-	// Mark as checked so that the grace-period kthread will
-	// remove it from the holdout list.
-	t->trc_reader_checked = true;
-
-	if (nesting == 0)
-		return true;  // Already in quiescent state, done!!!
+	// If in quiescent state, mark as checked so that the grace-period
+	// kthread will remove it from the holdout list.
+	t->trc_reader_checked = !nesting;
+	if (nesting <= 0)
+		return nesting == 0;  // If in QS, done, otherwise try again later.
 
 	// The task is in a read-side critical section, so set up its
 	// state so that it will awaken the grace-period kthread upon exit
