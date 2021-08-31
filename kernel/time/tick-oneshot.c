@@ -33,6 +33,7 @@ int tick_program_event(ktime_t expires, int force)
 		dev->next_event = KTIME_MAX;
 		return 0;
 	}
+	WARN_ONCE(expires > KTIME_MAX - 24 * 3600 * NSEC_PER_SEC, "%s: expires = %lld\n", __func__, expires);
 
 	if (unlikely(clockevent_state_oneshot_stopped(dev))) {
 		/*
