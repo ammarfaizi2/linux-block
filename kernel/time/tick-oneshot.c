@@ -17,6 +17,13 @@
 
 #include "tick-internal.h"
 
+static DEFINE_PER_CPU(char *, tick_program_event_codepath);
+
+char *tick_program_event_get_debug(int cpu)
+{
+	return READ_ONCE(per_cpu(tick_program_event_codepath, cpu));
+}
+
 /**
  * tick_program_event
  */
@@ -29,17 +36,20 @@ int tick_program_event(ktime_t expires, int force)
 		/*
 		 * We don't need the clock event device any more, stop it.
 		 */
+		WRITE_ONCE(per_cpu(tick_program_event_codepath, smp_processor_id()), "KTIME_MAX");
 		clockevents_switch_state(dev, CLOCK_EVT_STATE_ONESHOT_STOPPED);
 		dev->next_event = KTIME_MAX;
 		return 0;
 	}
 	WARN_ONCE(expires > KTIME_MAX - 24 * 3600 * NSEC_PER_SEC, "%s: expires = %lld\n", __func__, expires);
 
+	WRITE_ONCE(per_cpu(tick_program_event_codepath, smp_processor_id()), "notstopped");
 	if (unlikely(clockevent_state_oneshot_stopped(dev))) {
 		/*
 		 * We need the clock event again, configure it in ONESHOT mode
 		 * before using it.
 		 */
+		WRITE_ONCE(per_cpu(tick_program_event_codepath, smp_processor_id()), "stopped");
 		clockevents_switch_state(dev, CLOCK_EVT_STATE_ONESHOT);
 	}
 
