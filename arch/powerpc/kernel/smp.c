@@ -1109,7 +1109,7 @@ void __init smp_prepare_cpus(unsigned int max_cpus)
 	}
 
 	if (cpu_to_chip_id(boot_cpuid) != -1) {
-		int idx = num_possible_cpus() / threads_per_core;
+		int idx = DIV_ROUND_UP(num_possible_cpus(), threads_per_core);
 
 		/*
 		 * All threads of a core will all belong to the same core,
@@ -1400,7 +1400,7 @@ static bool update_mask_by_l2(int cpu, cpumask_var_t *mask)
 	l2_cache = cpu_to_l2cache(cpu);
 	if (!l2_cache || !*mask) {
 		/* Assume only core siblings share cache with this CPU */
-		for_each_cpu(i, submask_fn(cpu))
+		for_each_cpu(i, cpu_sibling_mask(cpu))
 			set_cpus_related(cpu, i, cpu_l2_cache_mask);
 
 		return false;
@@ -1441,6 +1441,8 @@ static void remove_cpu_from_masks(int cpu)
 {
 	struct cpumask *(*mask_fn)(int) = cpu_sibling_mask;
 	int i;
+
+	unmap_cpu_from_node(cpu);
 
 	if (shared_caches)
 		mask_fn = cpu_l2_cache_mask;
@@ -1526,7 +1528,9 @@ static void add_cpu_to_masks(int cpu)
 	 * This CPU will not be in the online mask yet so we need to manually
 	 * add it to it's own thread sibling mask.
 	 */
+	map_cpu_to_node(cpu, cpu_to_node(cpu));
 	cpumask_set_cpu(cpu, cpu_sibling_mask(cpu));
+	cpumask_set_cpu(cpu, cpu_core_mask(cpu));
 
 	for (i = first_thread; i < first_thread + threads_per_core; i++)
 		if (cpu_online(i))
@@ -1544,11 +1548,6 @@ static void add_cpu_to_masks(int cpu)
 	if (chip_id_lookup_table && ret)
 		chip_id = cpu_to_chip_id(cpu);
 
-	if (chip_id == -1) {
-		cpumask_copy(per_cpu(cpu_core_map, cpu), cpu_cpu_mask(cpu));
-		goto out;
-	}
-
 	if (shared_caches)
 		submask_fn = cpu_l2_cache_mask;
 
@@ -1557,6 +1556,10 @@ static void add_cpu_to_masks(int cpu)
 
 	/* Skip all CPUs already part of current CPU core mask */
 	cpumask_andnot(mask, cpu_online_mask, cpu_core_mask(cpu));
+
+	/* If chip_id is -1; limit the cpu_core_mask to within DIE*/
+	if (chip_id == -1)
+		cpumask_and(mask, mask, cpu_cpu_mask(cpu));
 
 	for_each_cpu(i, mask) {
 		if (chip_id == cpu_to_chip_id(i)) {
@@ -1567,7 +1570,6 @@ static void add_cpu_to_masks(int cpu)
 		}
 	}
 
-out:
 	free_cpumask_var(mask);
 }
 
