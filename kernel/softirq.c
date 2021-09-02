@@ -595,7 +595,7 @@ void irq_enter_rcu(void)
 {
 	__irq_enter_raw();
 
-	if ((irq_count() == HARDIRQ_OFFSET))
+	if (is_idle_task(current) && (irq_count() == HARDIRQ_OFFSET))
 		tick_irq_enter();
 
 	account_hardirq_enter(current);
