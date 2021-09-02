@@ -286,10 +286,11 @@ static int error_context(struct mce *m, struct pt_regs *regs)
 	return IN_KERNEL;
 }
 
-static int mce_severity_amd_smca(struct mce *m, enum context err_ctx)
+static noinstr int mce_severity_amd_smca(struct mce *m, enum context err_ctx)
 {
 	u32 addr = MSR_AMD64_SMCA_MCx_CONFIG(m->bank);
 	u32 low, high;
+	int err;
 
 	/*
 	 * We need to look at the following bits:
@@ -300,7 +301,11 @@ static int mce_severity_amd_smca(struct mce *m, enum context err_ctx)
 	if (!mce_flags.succor)
 		return MCE_PANIC_SEVERITY;
 
-	if (rdmsr_safe(addr, &low, &high))
+	instrumentation_begin();
+	err = rdmsr_safe(addr, &low, &high);
+	instrumentation_end();
+
+	if (err)
 		return MCE_PANIC_SEVERITY;
 
 	/* TCC (Task context corrupt). If set and if IN_KERNEL, panic. */
@@ -317,10 +322,14 @@ static int mce_severity_amd_smca(struct mce *m, enum context err_ctx)
  * See AMD Error Scope Hierarchy table in a newer BKDG. For example
  * 49125_15h_Models_30h-3Fh_BKDG.pdf, section "RAS Features"
  */
-static int mce_severity_amd(struct mce *m, struct pt_regs *regs, int tolerant,
-			    char **msg, bool is_excp)
+static noinstr int mce_severity_amd(struct mce *m, struct pt_regs *regs, int tolerant,
+				    char **msg, bool is_excp)
 {
-	enum context ctx = error_context(m, regs);
+	enum context ctx;
+
+	instrumentation_begin();
+	ctx = error_context(m, regs);
+	instrumentation_end();
 
 	/* Processor Context Corrupt, no need to fumble too much, die! */
 	if (m->status & MCI_STATUS_PCC)
@@ -370,12 +379,16 @@ static int mce_severity_amd(struct mce *m, struct pt_regs *regs, int tolerant,
 	return MCE_KEEP_SEVERITY;
 }
 
-static int mce_severity_intel(struct mce *m, struct pt_regs *regs,
-			      int tolerant, char **msg, bool is_excp)
+static noinstr int mce_severity_intel(struct mce *m, struct pt_regs *regs,
+				      int tolerant, char **msg, bool is_excp)
 {
 	enum exception excp = (is_excp ? EXCP_CONTEXT : NO_EXCP);
-	enum context ctx = error_context(m, regs);
 	struct severity *s;
+	enum context ctx;
+
+	instrumentation_begin();
+	ctx = error_context(m, regs);
+	instrumentation_end();
 
 	for (s = severities;; s++) {
 		if ((m->status & s->mask) != s->result)
@@ -407,7 +420,7 @@ static int mce_severity_intel(struct mce *m, struct pt_regs *regs,
 	}
 }
 
-int mce_severity(struct mce *m, struct pt_regs *regs, int tolerant, char **msg,
+noinstr int mce_severity(struct mce *m, struct pt_regs *regs, int tolerant, char **msg,
 		 bool is_excp)
 {
 	if (boot_cpu_data.x86_vendor == X86_VENDOR_AMD ||
