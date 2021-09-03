@@ -14,6 +14,7 @@
 
 #include <linux/nospec.h>
 
+#include <linux/vmacache.h>
 #include <linux/kcov.h>
 #include <linux/scs.h>
 
@@ -4932,6 +4933,124 @@ context_switch(struct rq *rq, struct task_struct *prev,
 	barrier();
 
 	return finish_task_switch(prev);
+}
+
+void __change_current_mm(struct mm_struct *mm, bool mm_is_brand_new)
+{
+	struct task_struct *tsk = current;
+	struct mm_struct *old_active_mm, *mm_to_drop = NULL;
+
+	BUG_ON(!mm);	/* likely to cause corruption if we continue */
+
+	/*
+	 * We do not want to schedule, nor should procfs peek at current->mm
+	 * while we're modifying it.  task_lock() disables preemption and
+	 * locks against procfs.
+	 */
+	task_lock(tsk);
+	/*
+	 * membarrier() requires a full barrier before switching mm.
+	 */
+	smp_mb__after_spinlock();
+
+	local_irq_disable();
+
+	if (tsk->mm) {
+		/* We're detaching from an old mm.  Sync stats. */
+		sync_mm_rss(tsk->mm);
+	} else {
+		/*
+		 * Switching from kernel mm to user.  Drop the old lazy
+		 * mm reference.
+		 */
+		mm_to_drop = tsk->active_mm;
+	}
+
+	old_active_mm = tsk->active_mm;
+	tsk->active_mm = mm;
+	WRITE_ONCE(tsk->mm, mm);  /* membarrier reads this without locks */
+	membarrier_update_current_mm(mm);
+
+	if (mm_is_brand_new) {
+		/*
+		 * For historical reasons, some architectures want IRQs on
+		 * when activate_mm() is called.  If we're going to call
+		 * activate_mm(), turn on IRQs but leave preemption
+		 * disabled.
+		 */
+		if (!IS_ENABLED(CONFIG_ARCH_WANT_IRQS_OFF_ACTIVATE_MM))
+			local_irq_enable();
+		activate_mm(old_active_mm, mm);
+		if (IS_ENABLED(CONFIG_ARCH_WANT_IRQS_OFF_ACTIVATE_MM))
+			local_irq_enable();
+	} else {
+		switch_mm_irqs_off(old_active_mm, mm, tsk);
+		local_irq_enable();
+	}
+
+	/* IRQs are on now.  Preemption is still disabled by task_lock(). */
+
+	membarrier_finish_switch_mm(mm);
+	vmacache_flush(tsk);
+	task_unlock(tsk);
+
+#ifdef finish_arch_post_lock_switch
+	if (!mm_is_brand_new) {
+		/*
+		 * Some architectures want a callback after
+		 * switch_mm_irqs_off() once locks are dropped.  Callers of
+		 * activate_mm() historically did not do this, so skip it if
+		 * we did activate_mm().  On arm, this is because
+		 * activate_mm() switches mm with IRQs on, which uses a
+		 * different code path.
+		 *
+		 * Yes, this is extremely fragile and be cleaned up.
+		 */
+		finish_arch_post_lock_switch();
+	}
+#endif
+
+	if (mm_to_drop)
+		mmdrop(mm_to_drop);
+}
+
+void __change_current_mm_to_kernel(void)
+{
+	struct task_struct *tsk = current;
+	struct mm_struct *old_mm = tsk->mm;
+
+	if (!old_mm)
+		return;	/* nothing to do */
+
+	/*
+	 * We do not want to schedule, nor should procfs peek at current->mm
+	 * while we're modifying it.  task_lock() disables preemption and
+	 * locks against procfs.
+	 */
+	task_lock(tsk);
+	/*
+	 * membarrier() requires a full barrier before switching mm.
+	 */
+	smp_mb__after_spinlock();
+
+	/* current has a real mm, so it must be active */
+	WARN_ON_ONCE(tsk->active_mm != tsk->mm);
+
+	local_irq_disable();
+
+	sync_mm_rss(old_mm);
+
+	WRITE_ONCE(tsk->mm, NULL);  /* membarrier reads this without locks */
+	membarrier_update_current_mm(NULL);
+	vmacache_flush(tsk);
+
+	/* active_mm is still 'old_mm' */
+	mmgrab(old_mm);
+	enter_lazy_tlb(old_mm, tsk);
+
+	local_irq_enable();
+
+	task_unlock(tsk);
 }
 
 /*

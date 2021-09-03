@@ -83,6 +83,26 @@ extern void mmput(struct mm_struct *);
 void mmput_async(struct mm_struct *);
 #endif
 
+/*
+ * Switch the mm for current.  This does not mmget() mm, nor does it mmput()
+ * the previous mm, if any.  The caller is responsible for reference counting,
+ * although __change_current_mm() handles all details related to lazy mm
+ * refcounting.
+ *
+ * If the caller is a user task, the caller must call mm_update_next_owner().
+ */
+void __change_current_mm(struct mm_struct *mm, bool mm_is_brand_new);
+
+/*
+ * Switch the mm for current to the kernel mm.  This does not mmdrop()
+ * -- the caller is responsible for reference counting, although
+ * __change_current_mm_to_kernel() handles all details related to lazy
+ * mm refcounting.
+ *
+ * If the caller is a user task, the caller must call mm_update_next_owner().
+ */
+void __change_current_mm_to_kernel(void);
+
 /* Grab a reference to a task's mm, if it is not already going away */
 extern struct mm_struct *get_task_mm(struct task_struct *task);
 /*

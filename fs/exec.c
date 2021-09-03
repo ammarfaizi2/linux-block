@@ -971,15 +971,13 @@ EXPORT_SYMBOL(read_code);
 static int exec_mmap(struct mm_struct *mm)
 {
 	struct task_struct *tsk;
-	struct mm_struct *old_mm, *active_mm;
+	struct mm_struct *old_mm;
 	int ret;
 
 	/* Notify parent that we're no longer interested in the old VM */
 	tsk = current;
 	old_mm = current->mm;
 	exec_mm_release(tsk, old_mm);
-	if (old_mm)
-		sync_mm_rss(old_mm);
 
 	ret = down_write_killable(&tsk->signal->exec_update_lock);
 	if (ret)
@@ -1000,41 +998,15 @@ static int exec_mmap(struct mm_struct *mm)
 		}
 	}
 
-	task_lock(tsk);
-	/*
-	 * membarrier() requires a full barrier before switching mm.
-	 */
-	smp_mb__after_spinlock();
+	__change_current_mm(mm, true);
 
-	local_irq_disable();
-	active_mm = tsk->active_mm;
-	tsk->active_mm = mm;
-	WRITE_ONCE(tsk->mm, mm);  /* membarrier reads this without locks */
-	membarrier_update_current_mm(mm);
-	/*
-	 * This prevents preemption while active_mm is being loaded and
-	 * it and mm are being updated, which could cause problems for
-	 * lazy tlb mm refcounting when these are updated by context
-	 * switches. Not all architectures can handle irqs off over
-	 * activate_mm yet.
-	 */
-	if (!IS_ENABLED(CONFIG_ARCH_WANT_IRQS_OFF_ACTIVATE_MM))
-		local_irq_enable();
-	activate_mm(active_mm, mm);
-	if (IS_ENABLED(CONFIG_ARCH_WANT_IRQS_OFF_ACTIVATE_MM))
-		local_irq_enable();
-	membarrier_finish_switch_mm(mm);
-	vmacache_flush(tsk);
-	task_unlock(tsk);
 	if (old_mm) {
 		mmap_read_unlock(old_mm);
-		BUG_ON(active_mm != old_mm);
 		setmax_mm_hiwater_rss(&tsk->signal->maxrss, old_mm);
 		mm_update_next_owner(old_mm);
 		mmput(old_mm);
 		return 0;
 	}
-	mmdrop(active_mm);
 	return 0;
 }
 
