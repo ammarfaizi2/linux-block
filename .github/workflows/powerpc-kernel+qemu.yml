@@ -25,7 +25,7 @@ jobs:
 
     strategy:
       matrix:
-        defconfig: [ppc64_defconfig, ppc40x_defconfig, mpc885_ads_defconfig, corenet32_smp_defconfig]
+        defconfig: [ppc64_defconfig, ppc40x_defconfig, mpc885_ads_defconfig]
         image: [fedora-34, korg-4.9.4]
         include:
           # ppc64le
@@ -75,6 +75,9 @@ jobs:
           - defconfig: pmac32_defconfig
             merge_config: /linux/arch/powerpc/configs/pmac32-qemu.config
             image: korg-4.9.4
+
+          - defconfig: corenet32_smp_defconfig
+            image: fedora-34
 
     env:
       ARCH: powerpc
