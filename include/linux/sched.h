@@ -863,7 +863,6 @@ struct task_struct {
 #endif
 
 	union {
-		refcount_t		rcu_users;
 		struct rcu_head		rcu;
 	};
 

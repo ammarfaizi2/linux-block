@@ -153,6 +153,7 @@ DEFINE_PER_TASK(struct thread_struct, thread);
 DEFINE_PER_TASK(struct page_frag, task_frag);
 
 DEFINE_PER_CPU(unsigned long, process_counts) = 0;
+DEFINE_PER_TASK(refcount_t, rcu_users);
 
 __cacheline_aligned DEFINE_RWLOCK(tasklist_lock);  /* outer */
 
@@ -972,7 +973,7 @@ static struct task_struct *dup_task_struct(struct task_struct *orig, int node)
 	 * One for the user space visible state that goes away when reaped.
 	 * One for the scheduler.
 	 */
-	refcount_set(&tsk->rcu_users, 2);
+	refcount_set(&per_task(tsk, rcu_users), 2);
 	/* One for the rcu users */
 	refcount_set(&per_task(tsk, usage), 1);
 #ifdef CONFIG_BLK_DEV_IO_TRACE

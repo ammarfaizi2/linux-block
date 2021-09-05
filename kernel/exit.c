@@ -5,6 +5,7 @@
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
+#include <linux/rcu_internal.h>
 #include <net/sock.h>
 #include <linux/mm.h>
 #include <linux/slab.h>
@@ -179,7 +180,7 @@ static void delayed_put_task_struct(struct rcu_head *rhp)
 
 void put_task_struct_rcu_user(struct task_struct *task)
 {
-	if (refcount_dec_and_test(&task->rcu_users))
+	if (refcount_dec_and_test(&per_task(task, rcu_users)))
 		call_rcu(&task->rcu, delayed_put_task_struct);
 }
 
@@ -893,7 +894,7 @@ void __noreturn make_task_dead(int signr)
 		pr_alert("Fixing recursive fault but reboot is needed!\n");
 		futex_exit_recursive(tsk);
 		tsk->exit_state = EXIT_DEAD;
-		refcount_inc(&tsk->rcu_users);
+		refcount_inc(&per_task(tsk, rcu_users));
 		do_task_dead();
 	}
 
