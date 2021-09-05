@@ -6,6 +6,7 @@
 #define __ASM_PGTABLE_HWDEF_H
 
 #include <asm/memory.h>
+#include <asm/pgtable_types.h>
 
 /*
  * Number of page-table levels required to address 'va_bits' wide

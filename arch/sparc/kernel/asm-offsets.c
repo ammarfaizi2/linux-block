@@ -11,18 +11,25 @@
  * On sparc, thread_info data is static and TI_XXX offsets are computed by hand.
  */
 
+#include "../../../kernel/sched/per_task_area_struct.h"
+
 #include <linux/sched.h>
 #include <linux/mm_types.h>
-// #include <linux/mm.h>
+#include <linux/mm.h>
 #include <linux/kbuild.h>
 
 #include <asm/hibernate.h>
 
+#include "../../../kernel/sched/per_task_area_struct_defs.h"
+
+#define TSK_PER_TASK_BASE	offsetof(struct task_struct, per_task_area)
+#define TI_BASE			TSK_PER_TASK_BASE + offsetof(struct task_struct_per_task, ti)
+#define THREAD_BASE		TSK_PER_TASK_BASE + offsetof(struct task_struct_per_task, thread)
+
 #ifdef CONFIG_SPARC32
 int sparc32_foo(void)
 {
-	DEFINE(AOFF_thread_fork_kpsr,
-			offsetof(struct thread_struct, fork_kpsr));
+	DEFINE(AOFF_thread_fork_kpsr, THREAD_BASE + offsetof(struct thread_struct, fork_kpsr));
 	return 0;
 }
 #else
@@ -48,7 +55,7 @@ int sparc64_foo(void)
 int foo(void)
 {
 	BLANK();
-	DEFINE(AOFF_task_thread, offsetof(struct task_struct, thread));
+	DEFINE(AOFF_task_thread, THREAD_BASE);
 	BLANK();
 	DEFINE(AOFF_mm_context, offsetof(struct mm_struct, context));
 	BLANK();

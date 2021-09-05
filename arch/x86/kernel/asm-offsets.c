@@ -6,6 +6,8 @@
  */
 #define COMPILE_OFFSETS
 
+#include "../../../kernel/sched/per_task_area_struct.h"
+
 #include <linux/crypto.h>
 #include <linux/sched.h>
 #include <linux/stddef.h>
@@ -28,6 +30,8 @@
 #else
 # include "asm-offsets_64.c"
 #endif
+
+#include "../../../kernel/sched/per_task_area_struct_defs.h"
 
 static void __used common(void)
 {

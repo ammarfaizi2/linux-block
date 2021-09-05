@@ -157,6 +157,9 @@ static inline void put_user_ns(struct user_namespace *ns)
 }
 
 struct seq_operations;
+struct seq_file;
+struct file;
+
 extern const struct seq_operations proc_uid_seq_operations;
 extern const struct seq_operations proc_gid_seq_operations;
 extern const struct seq_operations proc_projid_seq_operations;

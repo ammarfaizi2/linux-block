@@ -13,6 +13,8 @@
 #include <asm/cacheflush.h>
 #include <asm/tlbflush.h>
 
+#include <linux/mm.h>		/* for struct page */
+
 #define __HAVE_ARCH_PGD_FREE
 #include <asm-generic/pgalloc.h>
 

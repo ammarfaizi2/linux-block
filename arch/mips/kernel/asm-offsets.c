@@ -9,6 +9,9 @@
  * Kevin Kissell, kevink@mips.com and Carsten Langgaard, carstenl@mips.com
  * Copyright (C) 2000 MIPS Technologies, Inc.
  */
+
+#include "../../../kernel/sched/per_task_area_struct.h"
+
 #include <linux/compat.h>
 #include <linux/types.h>
 #include <linux/sched.h>
@@ -22,6 +25,12 @@
 #include <asm/smp-cps.h>
 
 #include <linux/kvm_host.h>
+
+#include "../../../kernel/sched/per_task_area_struct_defs.h"
+
+#define TSK_PER_TASK_BASE	offsetof(struct task_struct, per_task_area)
+#define TI_BASE			TSK_PER_TASK_BASE + offsetof(struct task_struct_per_task, ti)
+#define THREAD_BASE		TSK_PER_TASK_BASE + offsetof(struct task_struct_per_task, thread)
 
 void output_ptreg_defines(void)
 {
@@ -78,8 +87,8 @@ void output_ptreg_defines(void)
 void output_task_defines(void)
 {
 	COMMENT("MIPS task_struct offsets.");
-	OFFSET(TASK_THREAD_INFO, task_struct, stack);
-	OFFSET(TASK_FLAGS, task_struct, flags);
+	DEFINE(TASK_THREAD_INFO,	TSK_PER_TASK_BASE + offsetof(struct task_struct_per_task, stack));
+	DEFINE(TASK_FLAGS,		TSK_PER_TASK_BASE + offsetof(struct task_struct_per_task, flags));
 	OFFSET(TASK_MM, task_struct, mm);
 	OFFSET(TASK_PID, task_struct, pid);
 #if defined(CONFIG_STACKPROTECTOR)
@@ -108,70 +117,66 @@ void output_thread_info_defines(void)
 void output_thread_defines(void)
 {
 	COMMENT("MIPS specific thread_struct offsets.");
-	OFFSET(THREAD_REG16, task_struct, thread.reg16);
-	OFFSET(THREAD_REG17, task_struct, thread.reg17);
-	OFFSET(THREAD_REG18, task_struct, thread.reg18);
-	OFFSET(THREAD_REG19, task_struct, thread.reg19);
-	OFFSET(THREAD_REG20, task_struct, thread.reg20);
-	OFFSET(THREAD_REG21, task_struct, thread.reg21);
-	OFFSET(THREAD_REG22, task_struct, thread.reg22);
-	OFFSET(THREAD_REG23, task_struct, thread.reg23);
-	OFFSET(THREAD_REG29, task_struct, thread.reg29);
-	OFFSET(THREAD_REG30, task_struct, thread.reg30);
-	OFFSET(THREAD_REG31, task_struct, thread.reg31);
-	OFFSET(THREAD_STATUS, task_struct,
-	       thread.cp0_status);
+	DEFINE(THREAD_REG16,  THREAD_BASE + offsetof(struct thread_struct, reg16));
+	DEFINE(THREAD_REG17,  THREAD_BASE + offsetof(struct thread_struct, reg17));
+	DEFINE(THREAD_REG18,  THREAD_BASE + offsetof(struct thread_struct, reg18));
+	DEFINE(THREAD_REG19,  THREAD_BASE + offsetof(struct thread_struct, reg19));
+	DEFINE(THREAD_REG20,  THREAD_BASE + offsetof(struct thread_struct, reg20));
+	DEFINE(THREAD_REG21,  THREAD_BASE + offsetof(struct thread_struct, reg21));
+	DEFINE(THREAD_REG22,  THREAD_BASE + offsetof(struct thread_struct, reg22));
+	DEFINE(THREAD_REG23,  THREAD_BASE + offsetof(struct thread_struct, reg23));
+	DEFINE(THREAD_REG29,  THREAD_BASE + offsetof(struct thread_struct, reg29));
+	DEFINE(THREAD_REG30,  THREAD_BASE + offsetof(struct thread_struct, reg30));
+	DEFINE(THREAD_REG31,  THREAD_BASE + offsetof(struct thread_struct, reg31));
+	DEFINE(THREAD_STATUS, THREAD_BASE + offsetof(struct thread_struct, cp0_status));
+	DEFINE(THREAD_BVADDR, THREAD_BASE + offsetof(struct thread_struct, cp0_badvaddr));
+	DEFINE(THREAD_BUADDR, THREAD_BASE + offsetof(struct thread_struct, cp0_baduaddr));
+	DEFINE(THREAD_ECODE,  THREAD_BASE + offsetof(struct thread_struct, error_code));
+	DEFINE(THREAD_TRAPNO, THREAD_BASE + offsetof(struct thread_struct, trap_nr));
 
-	OFFSET(THREAD_BVADDR, task_struct, \
-	       thread.cp0_badvaddr);
-	OFFSET(THREAD_BUADDR, task_struct, \
-	       thread.cp0_baduaddr);
-	OFFSET(THREAD_ECODE, task_struct, \
-	       thread.error_code);
-	OFFSET(THREAD_TRAPNO, task_struct, thread.trap_nr);
 	BLANK();
 }
 
 #ifdef CONFIG_MIPS_FP_SUPPORT
 void output_thread_fpu_defines(void)
 {
-	OFFSET(THREAD_FPU, task_struct, thread.fpu);
+	DEFINE(THREAD_FPU, THREAD_BASE + offsetof(struct thread_struct, fpu));
 
-	OFFSET(THREAD_FPR0, task_struct, thread.fpu.fpr[0]);
-	OFFSET(THREAD_FPR1, task_struct, thread.fpu.fpr[1]);
-	OFFSET(THREAD_FPR2, task_struct, thread.fpu.fpr[2]);
-	OFFSET(THREAD_FPR3, task_struct, thread.fpu.fpr[3]);
-	OFFSET(THREAD_FPR4, task_struct, thread.fpu.fpr[4]);
-	OFFSET(THREAD_FPR5, task_struct, thread.fpu.fpr[5]);
-	OFFSET(THREAD_FPR6, task_struct, thread.fpu.fpr[6]);
-	OFFSET(THREAD_FPR7, task_struct, thread.fpu.fpr[7]);
-	OFFSET(THREAD_FPR8, task_struct, thread.fpu.fpr[8]);
-	OFFSET(THREAD_FPR9, task_struct, thread.fpu.fpr[9]);
-	OFFSET(THREAD_FPR10, task_struct, thread.fpu.fpr[10]);
-	OFFSET(THREAD_FPR11, task_struct, thread.fpu.fpr[11]);
-	OFFSET(THREAD_FPR12, task_struct, thread.fpu.fpr[12]);
-	OFFSET(THREAD_FPR13, task_struct, thread.fpu.fpr[13]);
-	OFFSET(THREAD_FPR14, task_struct, thread.fpu.fpr[14]);
-	OFFSET(THREAD_FPR15, task_struct, thread.fpu.fpr[15]);
-	OFFSET(THREAD_FPR16, task_struct, thread.fpu.fpr[16]);
-	OFFSET(THREAD_FPR17, task_struct, thread.fpu.fpr[17]);
-	OFFSET(THREAD_FPR18, task_struct, thread.fpu.fpr[18]);
-	OFFSET(THREAD_FPR19, task_struct, thread.fpu.fpr[19]);
-	OFFSET(THREAD_FPR20, task_struct, thread.fpu.fpr[20]);
-	OFFSET(THREAD_FPR21, task_struct, thread.fpu.fpr[21]);
-	OFFSET(THREAD_FPR22, task_struct, thread.fpu.fpr[22]);
-	OFFSET(THREAD_FPR23, task_struct, thread.fpu.fpr[23]);
-	OFFSET(THREAD_FPR24, task_struct, thread.fpu.fpr[24]);
-	OFFSET(THREAD_FPR25, task_struct, thread.fpu.fpr[25]);
-	OFFSET(THREAD_FPR26, task_struct, thread.fpu.fpr[26]);
-	OFFSET(THREAD_FPR27, task_struct, thread.fpu.fpr[27]);
-	OFFSET(THREAD_FPR28, task_struct, thread.fpu.fpr[28]);
-	OFFSET(THREAD_FPR29, task_struct, thread.fpu.fpr[29]);
-	OFFSET(THREAD_FPR30, task_struct, thread.fpu.fpr[30]);
-	OFFSET(THREAD_FPR31, task_struct, thread.fpu.fpr[31]);
+	DEFINE(THREAD_FPR0, THREAD_BASE + offsetof(struct thread_struct, fpu.fpr[0]));
+	DEFINE(THREAD_FPR1, THREAD_BASE + offsetof(struct thread_struct, fpu.fpr[1]));
+	DEFINE(THREAD_FPR2, THREAD_BASE + offsetof(struct thread_struct, fpu.fpr[2]));
+	DEFINE(THREAD_FPR3, THREAD_BASE + offsetof(struct thread_struct, fpu.fpr[3]));
+	DEFINE(THREAD_FPR4, THREAD_BASE + offsetof(struct thread_struct, fpu.fpr[4]));
+	DEFINE(THREAD_FPR5, THREAD_BASE + offsetof(struct thread_struct, fpu.fpr[5]));
+	DEFINE(THREAD_FPR6, THREAD_BASE + offsetof(struct thread_struct, fpu.fpr[6]));
+	DEFINE(THREAD_FPR7, THREAD_BASE + offsetof(struct thread_struct, fpu.fpr[7]));
+	DEFINE(THREAD_FPR8, THREAD_BASE + offsetof(struct thread_struct, fpu.fpr[8]));
+	DEFINE(THREAD_FPR9, THREAD_BASE + offsetof(struct thread_struct, fpu.fpr[9]));
+	DEFINE(THREAD_FPR10, THREAD_BASE + offsetof(struct thread_struct, fpu.fpr[10]));
+	DEFINE(THREAD_FPR11, THREAD_BASE + offsetof(struct thread_struct, fpu.fpr[11]));
+	DEFINE(THREAD_FPR12, THREAD_BASE + offsetof(struct thread_struct, fpu.fpr[12]));
+	DEFINE(THREAD_FPR13, THREAD_BASE + offsetof(struct thread_struct, fpu.fpr[13]));
+	DEFINE(THREAD_FPR14, THREAD_BASE + offsetof(struct thread_struct, fpu.fpr[14]));
+	DEFINE(THREAD_FPR15, THREAD_BASE + offsetof(struct thread_struct, fpu.fpr[15]));
+	DEFINE(THREAD_FPR16, THREAD_BASE + offsetof(struct thread_struct, fpu.fpr[16]));
+	DEFINE(THREAD_FPR17, THREAD_BASE + offsetof(struct thread_struct, fpu.fpr[17]));
+	DEFINE(THREAD_FPR18, THREAD_BASE + offsetof(struct thread_struct, fpu.fpr[18]));
+	DEFINE(THREAD_FPR19, THREAD_BASE + offsetof(struct thread_struct, fpu.fpr[19]));
+	DEFINE(THREAD_FPR20, THREAD_BASE + offsetof(struct thread_struct, fpu.fpr[20]));
+	DEFINE(THREAD_FPR21, THREAD_BASE + offsetof(struct thread_struct, fpu.fpr[21]));
+	DEFINE(THREAD_FPR22, THREAD_BASE + offsetof(struct thread_struct, fpu.fpr[22]));
+	DEFINE(THREAD_FPR23, THREAD_BASE + offsetof(struct thread_struct, fpu.fpr[23]));
+	DEFINE(THREAD_FPR24, THREAD_BASE + offsetof(struct thread_struct, fpu.fpr[24]));
+	DEFINE(THREAD_FPR25, THREAD_BASE + offsetof(struct thread_struct, fpu.fpr[25]));
+	DEFINE(THREAD_FPR26, THREAD_BASE + offsetof(struct thread_struct, fpu.fpr[26]));
+	DEFINE(THREAD_FPR27, THREAD_BASE + offsetof(struct thread_struct, fpu.fpr[27]));
+	DEFINE(THREAD_FPR28, THREAD_BASE + offsetof(struct thread_struct, fpu.fpr[28]));
+	DEFINE(THREAD_FPR29, THREAD_BASE + offsetof(struct thread_struct, fpu.fpr[29]));
+	DEFINE(THREAD_FPR30, THREAD_BASE + offsetof(struct thread_struct, fpu.fpr[30]));
+	DEFINE(THREAD_FPR31, THREAD_BASE + offsetof(struct thread_struct, fpu.fpr[31]));
 
-	OFFSET(THREAD_FCR31, task_struct, thread.fpu.fcr31);
-	OFFSET(THREAD_MSA_CSR, task_struct, thread.fpu.msacsr);
+	DEFINE(THREAD_FCR31, THREAD_BASE + offsetof(struct thread_struct, fpu.fcr31));
+	DEFINE(THREAD_MSA_CSR, THREAD_BASE + offsetof(struct thread_struct, fpu.msacsr));
 	BLANK();
 }
 #endif

@@ -177,6 +177,8 @@ static inline int is_compat_thread(struct thread_info *thread)
 
 #else /* !CONFIG_COMPAT */
 
+struct thread_info;
+
 static inline int is_compat_thread(struct thread_info *thread)
 {
 	return 0;
