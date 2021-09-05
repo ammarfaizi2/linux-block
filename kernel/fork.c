@@ -160,6 +160,8 @@ DEFINE_PER_CPU(unsigned long, process_counts) = 0;
 DEFINE_PER_TASK(refcount_t, rcu_users);
 DEFINE_PER_TASK(struct rcu_head, rcu);
 
+DEFINE_PER_TASK(int, pagefault_disabled);
+
 __cacheline_aligned DEFINE_RWLOCK(tasklist_lock);  /* outer */
 
 #ifdef CONFIG_PROVE_RCU
@@ -2150,7 +2152,7 @@ static __latent_entropy struct task_struct *copy_process(
 	p->softirq_context		= 0;
 #endif
 
-	p->pagefault_disabled = 0;
+	per_task(p, pagefault_disabled) = 0;
 
 #ifdef CONFIG_LOCKDEP
 	lockdep_init_task(p);

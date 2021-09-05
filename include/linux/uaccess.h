@@ -2,6 +2,7 @@
 #ifndef __LINUX_UACCESS_H__
 #define __LINUX_UACCESS_H__
 
+#include <linux/sched/per_task.h>
 #include <linux/fault-inject-usercopy.h>
 #include <linux/instrumented.h>
 #include <linux/minmax.h>
@@ -214,14 +215,16 @@ copy_mc_to_kernel(void *dst, const void *src, size_t cnt)
 }
 #endif
 
+DECLARE_PER_TASK(int, pagefault_disabled);
+
 static __always_inline void pagefault_disabled_inc(void)
 {
-	current->pagefault_disabled++;
+	per_task(current, pagefault_disabled)++;
 }
 
 static __always_inline void pagefault_disabled_dec(void)
 {
-	current->pagefault_disabled--;
+	per_task(current, pagefault_disabled)--;
 }
 
 /*
@@ -256,7 +259,7 @@ static inline void pagefault_enable(void)
  */
 static inline bool pagefault_disabled(void)
 {
-	return current->pagefault_disabled != 0;
+	return per_task(current, pagefault_disabled) != 0;
 }
 
 /*

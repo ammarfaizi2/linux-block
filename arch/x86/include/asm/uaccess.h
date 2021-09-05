@@ -42,10 +42,12 @@ static inline bool __chk_range_not_ok(unsigned long addr, unsigned long size, un
 })
 
 #ifdef CONFIG_DEBUG_ATOMIC_SLEEP
-static inline bool pagefault_disabled(void);
+#include <linux/sched/per_task.h>
+#include <linux/sched.h>
 #include <linux/preempt.h>
+DECLARE_PER_TASK(int, pagefault_disabled);
 # define WARN_ON_IN_IRQ()	\
-	WARN_ON_ONCE(!in_task() && !pagefault_disabled())
+	WARN_ON_ONCE(!in_task() && (per_task(current, pagefault_disabled) == 0))
 #else
 # define WARN_ON_IN_IRQ()
 #endif
