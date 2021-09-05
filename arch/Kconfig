@@ -753,6 +753,23 @@ config CFI_PERMISSIVE
 
 	  If unsure, say N.
 
+config ARCH_SUPPORTS_PER_TASK
+	bool
+	help
+	  An architecture should select this if it supports the PER_TASK
+	  and per_task facilities. Support for these involves adding
+	  a PER_TASK_VADDR() line to the linker script, and fixing up
+	  any assembly code offsets into task_struct or thread_struct.
+
+config ARCH_SUPPORTS_PER_TASK_0_OFFSET
+	bool
+	help
+	  An architecture should select this if it supports the PER_TASK
+	  and per_task facilities, and is able to link the per_task__
+	  symbols starting at offset 0. This results in more optimal
+	  code generation in the generic kernel on every per_task()
+	  access.
+
 config HAVE_ARCH_WITHIN_STACK_FRAMES
 	bool
 	help

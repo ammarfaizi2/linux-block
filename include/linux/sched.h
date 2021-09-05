@@ -9,6 +9,8 @@
 
 #include <uapi/linux/sched.h>
 
+#include <linux/sched/per_task.h>
+
 #include <asm/current.h>
 
 #include <linux/pid.h>
@@ -741,8 +743,14 @@ struct task_struct {
 #endif
 
 	/*
-	 * This begins the randomizable portion of task_struct. Only
-	 * scheduling-critical items should be added above here.
+	 * This is the per-task area, allocated via the DEFINE_PER_TASK()
+	 * mechanism. See <linux/sched/per_task.h>.
+	 */
+	u8				per_task_area[PER_TASK_BYTES] ____cacheline_aligned;
+
+	/*
+	 * This begins the randomizable portion of task_struct.
+	 * No new field should be added above.
 	 */
 	randomized_struct_fields_start
 

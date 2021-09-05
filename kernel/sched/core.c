@@ -9464,10 +9464,23 @@ static struct kmem_cache *task_group_cache __read_mostly;
 DECLARE_PER_CPU(cpumask_var_t, load_balance_mask);
 DECLARE_PER_CPU(cpumask_var_t, select_idle_mask);
 
+DECLARE_PER_TASK(char, _end);
+
+void __init per_task_init(void)
+{
+	unsigned long per_task_bytes = per_task_offset(_end);
+
+	printk("per_task: Using %ld per_task bytes, %ld bytes available\n", per_task_bytes, (long)PER_TASK_BYTES);
+
+	BUG_ON(per_task_offset(_end) > PER_TASK_BYTES);
+}
+
 void __init sched_init(void)
 {
 	unsigned long ptr = 0;
 	int i;
+
+	per_task_init();
 
 	/* Make sure the linker didn't screw up */
 	BUG_ON(&idle_sched_class + 1 != &fair_sched_class ||

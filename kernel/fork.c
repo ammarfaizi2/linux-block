@@ -108,6 +108,8 @@
 
 #include <trace/events/sched.h>
 
+#include "sched/per_task_area_struct.h"
+
 #define CREATE_TRACE_POINTS
 #include <trace/events/task.h>
 
@@ -792,6 +794,20 @@ static void set_max_threads(unsigned int max_threads_suggested)
 #ifdef CONFIG_ARCH_WANTS_DYNAMIC_TASK_STRUCT
 /* Initialized by the architecture: */
 int arch_task_struct_size __read_mostly;
+#endif
+
+#ifndef CONFIG_HAVE_ARCH_THREAD_STRUCT_WHITELIST
+/*
+ * If an architecture has not declared a thread_struct whitelist we
+ * must assume something there may need to be copied to userspace.
+ */
+static inline void arch_thread_struct_whitelist(unsigned long *offset,
+						unsigned long *size)
+{
+	*offset = 0;
+	/* Handle dynamically sized thread_struct. */
+	*size = arch_task_struct_size - (offsetof(struct task_struct, per_task_area) + offsetof(struct task_struct_per_task, thread));
+}
 #endif
 
 #ifndef CONFIG_ARCH_TASK_STRUCT_ALLOCATOR

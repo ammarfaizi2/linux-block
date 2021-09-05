@@ -6,6 +6,7 @@
  *               2001-2002 Keith Owens
  * Copyright (C) 2012 ARM Ltd.
  */
+#include "../../../kernel/sched/per_task_area_struct.h"
 
 #include <linux/arm_sdei.h>
 #include <linux/sched.h>
@@ -27,6 +28,8 @@
 
 int main(void)
 {
+#include "../../../kernel/sched/per_task_area_struct_defs.h"
+
   DEFINE(TSK_ACTIVE_MM,		offsetof(struct task_struct, active_mm));
   BLANK();
   DEFINE(TSK_TI_CPU,		offsetof(struct task_struct, thread_info.cpu));

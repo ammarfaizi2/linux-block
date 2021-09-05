@@ -13,6 +13,7 @@
 #ifndef __ASSEMBLY__
 
 #include <linux/cpumask.h>
+#include <linux/thread_info.h>
 
 #endif /* __ASSEMBLY__ */
 

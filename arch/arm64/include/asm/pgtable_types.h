@@ -9,6 +9,8 @@
 #ifndef __ASM_PGTABLE_TYPES_H
 #define __ASM_PGTABLE_TYPES_H
 
+#ifndef __ASSEMBLY__
+
 #include <asm/types.h>
 
 typedef u64 pteval_t;
@@ -52,4 +54,5 @@ typedef struct { pteval_t pgprot; } pgprot_t;
 #include <asm-generic/pgtable-nop4d.h>
 #endif
 
+#endif /* _ASSEMBLY__ */
 #endif	/* __ASM_PGTABLE_TYPES_H */

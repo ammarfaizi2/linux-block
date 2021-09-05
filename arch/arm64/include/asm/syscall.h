@@ -5,6 +5,7 @@
 #ifndef __ASM_SYSCALL_H
 #define __ASM_SYSCALL_H
 
+#include <linux/sched/thread_info_api.h>
 #include <uapi/linux/audit.h>
 #include <linux/compat.h>
 #include <linux/err.h>
