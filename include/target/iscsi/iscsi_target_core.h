@@ -2,6 +2,7 @@
 #ifndef ISCSI_TARGET_CORE_H
 #define ISCSI_TARGET_CORE_H
 
+#include <linux/sched/affinity.h>
 #include <linux/dma-direction.h>     /* enum dma_data_direction */
 #include <linux/list.h>              /* struct list_head */
 #include <linux/sched.h>
