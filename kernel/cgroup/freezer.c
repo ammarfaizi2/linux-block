@@ -1,4 +1,5 @@
 //SPDX-License-Identifier: GPL-2.0
+#include <linux/sched/task_flags.h>
 #include <linux/cgroup.h>
 #include <linux/sched.h>
 #include <linux/sched/task.h>

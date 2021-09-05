@@ -2,6 +2,7 @@
  * Copyright 2000 by Hans Reiser, licensing governed by reiserfs/README
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/time.h>
 #include <linux/fs.h>
 #include "reiserfs.h"

@@ -7,6 +7,7 @@
  * Author: Len Brown <len.brown@intel.com>
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/delay.h>
 #include <linux/ktime.h>
 #include <linux/math64.h>

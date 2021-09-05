@@ -21,6 +21,7 @@
  *
  */
 
+#include <linux/sched/task_flags.h>
 #include <linux/kthread.h>
 #include <linux/slab.h>
 #include <linux/completion.h>

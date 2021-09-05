@@ -21,6 +21,7 @@
  * included with this package.                                     *
  *******************************************************************/
 
+#include <linux/sched/task_flags.h>
 #include <linux/blkdev.h>
 #include <linux/delay.h>
 #include <linux/slab.h>

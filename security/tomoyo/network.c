@@ -6,6 +6,7 @@
  */
 
 #include "common.h"
+#include <linux/sched/task_flags.h>
 #include <linux/slab.h>
 
 /* Structure for holding inet domain socket's address. */

@@ -2,6 +2,7 @@
 /*
  * Functions related to io context handling
  */
+#include <linux/sched/task_flags.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>
