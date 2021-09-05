@@ -7,6 +7,7 @@
  *
  * Highly modified by Steven Rostedt (VMware).
  */
+#include <linux/sched/per_task.h>
 #include <linux/suspend.h>
 #include <linux/ftrace.h>
 #include <linux/slab.h>
@@ -14,6 +15,12 @@
 #include <trace/events/sched.h>
 
 #include "ftrace_internal.h"
+
+/*
+ * Number of functions that haven't been traced
+ * because of depth overrun:
+ */
+DEFINE_PER_TASK(atomic_t, trace_overrun);
 
 #ifdef CONFIG_DYNAMIC_FTRACE
 #define ASSIGN_OPS_HASH(opsname, val) \
@@ -76,7 +83,7 @@ ftrace_push_return_trace(unsigned long ret, unsigned long func,
 
 	/* The return trace stack is full */
 	if (current->curr_ret_stack == FTRACE_RETFUNC_DEPTH - 1) {
-		atomic_inc(&current->trace_overrun);
+		atomic_inc(&per_task(current, trace_overrun));
 		return -EBUSY;
 	}
 
@@ -192,7 +199,7 @@ ftrace_pop_return_trace(struct ftrace_graph_ret *trace, unsigned long *ret,
 	*ret = current->ret_stack[index].ret;
 	trace->func = current->ret_stack[index].func;
 	trace->calltime = current->ret_stack[index].calltime;
-	trace->overrun = atomic_read(&current->trace_overrun);
+	trace->overrun = atomic_read(&per_task(current, trace_overrun));
 	trace->depth = current->curr_ret_depth--;
 	/*
 	 * We still want to trace interrupts coming in if
@@ -396,7 +403,7 @@ static int alloc_retstack_tasklist(struct ftrace_ret_stack **ret_stack_list)
 		}
 
 		if (t->ret_stack == NULL) {
-			atomic_set(&t->trace_overrun, 0);
+			atomic_set(&per_task(t, trace_overrun), 0);
 			t->curr_ret_stack = -1;
 			t->curr_ret_depth = -1;
 			/* Make sure the tasks see the -1 first: */
@@ -492,7 +499,7 @@ static DEFINE_PER_CPU(struct ftrace_ret_stack *, idle_ret_stack);
 static void
 graph_init_task(struct task_struct *t, struct ftrace_ret_stack *ret_stack)
 {
-	atomic_set(&t->trace_overrun, 0);
+	atomic_set(&per_task(t, trace_overrun), 0);
 	t->ftrace_timestamp = 0;
 	/* make curr_ret_stack visible before we add the ret_stack */
 	smp_wmb();

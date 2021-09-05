@@ -928,12 +928,6 @@ struct task_struct {
 	/* Timestamp for last schedule: */
 	unsigned long long		ftrace_timestamp;
 
-	/*
-	 * Number of functions that haven't been traced
-	 * because of depth overrun:
-	 */
-	atomic_t			trace_overrun;
-
 	/* Pause tracing: */
 	atomic_t			tracing_graph_pause;
 #endif
