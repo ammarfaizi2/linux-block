@@ -10,6 +10,7 @@
  * Author: Ingo Molnar <mingo@elte.hu>
  *	   Paul E. McKenney <paulmck@linux.ibm.com>
  */
+#include <linux/sched/affinity.h>
 
 #include "../locking/rtmutex_common.h"
 
