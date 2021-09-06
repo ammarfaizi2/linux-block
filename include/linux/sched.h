@@ -13,6 +13,7 @@
 
 #include <asm/current.h>
 
+#include <linux/rbtree.h>
 #include <linux/pid_types.h>
 #include <linux/sem.h>
 #include <linux/shm.h>
@@ -31,7 +32,6 @@
 #include <linux/syscall_user_dispatch.h>
 #include <linux/mm_types_task.h>
 #include <linux/task_io_accounting.h>
-#include <linux/posix-timers.h>
 #include <linux/rseq.h>
 #include <linux/seqlock.h>
 #include <linux/kcsan.h>
