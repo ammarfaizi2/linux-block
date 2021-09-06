@@ -13,6 +13,7 @@
 #ifndef __LINUX_DMA_FENCE_H
 #define __LINUX_DMA_FENCE_H
 
+#include <linux/ktime.h>
 #include <linux/err.h>
 #include <linux/wait.h>
 #include <linux/list.h>
