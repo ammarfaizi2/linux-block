@@ -12,6 +12,7 @@
 #ifndef __LINUX_TINY_H
 #define __LINUX_TINY_H
 
+#include <linux/ktime.h>
 #include <asm/param.h> /* for HZ */
 
 unsigned long get_state_synchronize_rcu(void);

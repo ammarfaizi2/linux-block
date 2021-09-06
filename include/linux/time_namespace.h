@@ -3,6 +3,7 @@
 #define _LINUX_TIMENS_H
 
 
+#include <linux/ktime.h>
 #include <linux/sched.h>
 #include <linux/nsproxy.h>
 #include <linux/ns_common.h>
