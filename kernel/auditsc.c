@@ -31,6 +31,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <linux/ipc.h>
 #include <linux/init.h>
 #include <asm/types.h>
 #include <linux/atomic.h>
