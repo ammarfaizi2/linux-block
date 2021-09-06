@@ -2098,7 +2098,7 @@ static __latent_entropy struct task_struct *copy_process(
 #endif
 
 #if defined(SPLIT_RSS_COUNTING)
-	memset(&p->rss_stat, 0, sizeof(p->rss_stat));
+	memset(&per_task(p, rss_stat), 0, sizeof(per_task(p, rss_stat)));
 #endif
 
 	p->default_timer_slack_ns = current->timer_slack_ns;

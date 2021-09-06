@@ -12,6 +12,7 @@
 #include <linux/threads.h>
 #include <linux/atomic.h>
 #include <linux/cpumask.h>
+#include <linux/sched/per_task.h>
 
 #include <asm/page.h>
 
@@ -55,6 +56,8 @@ struct task_rss_stat {
 	int events;	/* for synchronization threshold */
 	int count[NR_MM_COUNTERS];
 };
+DECLARE_PER_TASK(struct task_rss_stat, rss_stat);
+
 #endif /* USE_SPLIT_PTE_PTLOCKS */
 
 struct mm_rss_stat {
