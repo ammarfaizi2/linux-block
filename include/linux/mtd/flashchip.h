@@ -11,6 +11,7 @@
  * happens to be in - so we don't have to care whether we're on 2.2, which
  * has asm/spinlock.h, or 2.4, which has linux/spinlock.h
  */
+#include <linux/wait.h>
 #include <linux/sched.h>
 #include <linux/mutex.h>
 
