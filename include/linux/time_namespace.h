@@ -59,6 +59,8 @@ struct proc_timens_offset {
 	struct timespec64	val;
 };
 
+struct file;
+
 int proc_timens_set_offset(struct file *file, struct task_struct *p,
 			   struct proc_timens_offset *offsets, int n);
 
