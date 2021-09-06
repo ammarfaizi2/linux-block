@@ -35,4 +35,9 @@ static inline unsigned long map_util_perf(unsigned long util)
 }
 #endif /* CONFIG_CPU_FREQ */
 
+#ifdef CONFIG_SMP
+/* Returns effective CPU energy utilization, as seen by the scheduler */
+extern unsigned long sched_cpu_util(int cpu, unsigned long max);
+#endif
+
 #endif /* _LINUX_SCHED_CPUFREQ_H */
