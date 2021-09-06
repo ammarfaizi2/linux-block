@@ -88,6 +88,10 @@
 #include "pgalloc-track.h"
 #include "internal.h"
 
+#ifdef SPLIT_RSS_COUNTING
+DEFINE_PER_TASK(struct task_rss_stat, rss_stat);
+#endif
+
 #if defined(LAST_CPUPID_NOT_IN_PAGE_FLAGS) && !defined(CONFIG_COMPILE_TEST)
 #warning Unfortunate NUMA and NUMA Balancing config, growing page-frame for last_cpupid.
 #endif
@@ -181,12 +185,13 @@ void sync_mm_rss(struct mm_struct *mm)
 	int i;
 
 	for (i = 0; i < NR_MM_COUNTERS; i++) {
-		if (current->rss_stat.count[i]) {
-			add_mm_counter(mm, i, current->rss_stat.count[i]);
-			current->rss_stat.count[i] = 0;
+		if (per_task(current, rss_stat).count[i]) {
+			add_mm_counter(mm, i,
+				       per_task(current, rss_stat).count[i]);
+			per_task(current, rss_stat).count[i] = 0;
 		}
 	}
-	current->rss_stat.events = 0;
+	per_task(current, rss_stat).events = 0;
 }
 
 static void add_mm_counter_fast(struct mm_struct *mm, int member, int val)
@@ -194,9 +199,9 @@ static void add_mm_counter_fast(struct mm_struct *mm, int member, int val)
 	struct task_struct *task = current;
 
 	if (likely(task->mm == mm))
-		task->rss_stat.count[member] += val;
-	else
-		add_mm_counter(mm, member, val);
+		per_task(task, rss_stat).count[member] += val;
+		else
+			add_mm_counter(mm, member, val);
 }
 #define inc_mm_counter_fast(mm, member) add_mm_counter_fast(mm, member, 1)
 #define dec_mm_counter_fast(mm, member) add_mm_counter_fast(mm, member, -1)
@@ -207,7 +212,7 @@ static void check_sync_rss_stat(struct task_struct *task)
 {
 	if (unlikely(task != current))
 		return;
-	if (unlikely(task->rss_stat.events++ > TASK_RSS_EVENTS_THRESH))
+	if (unlikely(per_task(task, rss_stat).events++ > TASK_RSS_EVENTS_THRESH))
 		sync_mm_rss(task->mm);
 }
 #else /* SPLIT_RSS_COUNTING */
