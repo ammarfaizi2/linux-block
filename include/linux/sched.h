@@ -29,8 +29,6 @@
 #include <linux/smp_types.h>
 #include <linux/restart_block_types.h>
 
-#include <asm/kmap_size.h>
-
 #ifdef CONFIG_LOCKDEP
 # include <linux/lockdep.h>
 #endif
