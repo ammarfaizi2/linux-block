@@ -1262,9 +1262,4 @@ extern unsigned long get_wchan(struct task_struct *p);
 
 #include <linux/sched/cond_resched.h>
 
-#ifdef CONFIG_SMP
-/* Returns effective CPU energy utilization, as seen by the scheduler */
-unsigned long sched_cpu_util(int cpu, unsigned long max);
-#endif /* CONFIG_SMP */
-
 #endif
