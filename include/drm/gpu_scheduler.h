@@ -24,6 +24,7 @@
 #ifndef _DRM_GPU_SCHEDULER_H_
 #define _DRM_GPU_SCHEDULER_H_
 
+#include <linux/workqueue.h>
 #include <drm/spsc_queue.h>
 #include <linux/dma-fence.h>
 #include <linux/completion.h>
