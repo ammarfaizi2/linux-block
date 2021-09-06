@@ -13,9 +13,9 @@
 
 #include <asm/current.h>
 
+#include <linux/uidgid.h>
 #include <linux/rbtree.h>
 #include <linux/pid_types.h>
-#include <linux/shm.h>
 #include <linux/mutex.h>
 #include <linux/plist.h>
 #include <linux/irqflags.h>
