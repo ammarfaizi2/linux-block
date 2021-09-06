@@ -11,7 +11,6 @@
 #include <linux/types.h>
 #include <linux/threads.h>
 #include <linux/atomic.h>
-#include <linux/cpumask.h>
 #include <linux/sched/per_task.h>
 
 #include <asm/page.h>
