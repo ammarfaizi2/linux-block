@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_FS_TYPES_H
-#define _LINUX_FS_TYPES_H
+#ifndef _LINUX_FS_ENTRY_TYPES_H
+#define _LINUX_FS_ENTRY_TYPES_H
 
 /*
  * This is a header for the common implementation of dirent
