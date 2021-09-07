@@ -10,7 +10,7 @@
 
 #include <linux/bits.h>
 #include <linux/types.h>
-#include <asm/pgtable-types.h>
+#include <asm/pgtable_types.h>
 
 /*
  * trans_alloc_page
