@@ -4008,3 +4008,13 @@ bool sk_dev_equal_l3scope(struct sock *sk, int dif)
 	return false;
 }
 EXPORT_SYMBOL(sk_dev_equal_l3scope);
+
+void __reqsk_free(struct request_sock *req)
+{
+	req->rsk_ops->destructor(req);
+	if (req->rsk_listener)
+		sock_put(req->rsk_listener);
+	kfree(req->saved_syn);
+	kmem_cache_free(req->rsk_ops->slab, req);
+}
+EXPORT_SYMBOL(__reqsk_free);
