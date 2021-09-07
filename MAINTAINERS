@@ -7434,7 +7434,7 @@ L:	linux-fsdevel@vger.kernel.org
 S:	Maintained
 F:	fs/*
 F:	include/linux/fs.h
-F:	include/linux/fs_types.h
+F:	include/linux/fs_*.h
 F:	include/uapi/linux/fs.h
 F:	include/uapi/linux/openat2.h
 X:	fs/io-wq.c
