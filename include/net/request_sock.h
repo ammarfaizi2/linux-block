@@ -82,36 +82,6 @@ static inline struct sock *req_to_sk(struct request_sock *req)
 	return (struct sock *)req;
 }
 
-static inline struct request_sock *
-reqsk_alloc(const struct request_sock_ops *ops, struct sock *sk_listener,
-	    bool attach_listener)
-{
-	struct request_sock *req;
-
-	req = kmem_cache_alloc(ops->slab, GFP_ATOMIC | __GFP_NOWARN);
-	if (!req)
-		return NULL;
-	req->rsk_listener = NULL;
-	if (attach_listener) {
-		if (unlikely(!refcount_inc_not_zero(&sk_listener->sk_refcnt))) {
-			kmem_cache_free(ops->slab, req);
-			return NULL;
-		}
-		req->rsk_listener = sk_listener;
-	}
-	req->rsk_ops = ops;
-	req_to_sk(req)->sk_prot = sk_listener->sk_prot;
-	sk_node_init(&req_to_sk(req)->sk_node);
-	sk_tx_queue_clear(req_to_sk(req));
-	req->saved_syn = NULL;
-	req->num_timeout = 0;
-	req->num_retrans = 0;
-	req->sk = NULL;
-	refcount_set(&req->rsk_refcnt, 0);
-
-	return req;
-}
-
 static inline void __reqsk_free(struct request_sock *req)
 {
 	req->rsk_ops->destructor(req);
