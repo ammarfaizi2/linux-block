@@ -29,7 +29,7 @@
 #ifndef __ASSEMBLY__
 
 #include <asm/cpufeature.h>
-#include <asm/pgtable-types.h>
+#include <asm/pgtable_types.h>
 
 extern bool arm64_use_ng_mappings;
 

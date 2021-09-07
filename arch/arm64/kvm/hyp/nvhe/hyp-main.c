@@ -6,7 +6,7 @@
 
 #include <hyp/adjust_pc.h>
 
-#include <asm/pgtable-types.h>
+#include <asm/pgtable_types.h>
 #include <asm/kvm_asm.h>
 #include <asm/kvm_emulate.h>
 #include <asm/kvm_host.h>

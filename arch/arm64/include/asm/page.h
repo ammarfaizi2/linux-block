@@ -14,7 +14,7 @@
 
 #include <linux/personality.h> /* for READ_IMPLIES_EXEC */
 #include <linux/types.h> /* for gfp_t */
-#include <asm/pgtable-types.h>
+#include <asm/pgtable_types.h>
 
 struct page;
 struct vm_area_struct;

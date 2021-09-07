@@ -16,7 +16,7 @@
 #include <linux/sched.h>
 #include <linux/types.h>
 
-#include <asm/pgtable-types.h>
+#include <asm/pgtable_types.h>
 
 void mte_clear_page_tags(void *addr);
 unsigned long mte_copy_tags_from_user(void *to, const void __user *from,
