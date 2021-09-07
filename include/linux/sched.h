@@ -30,7 +30,6 @@
 #include <linux/mm_types_task.h>
 #include <linux/task_io_accounting.h>
 #include <linux/rseq.h>
-#include <linux/seqlock.h>
 #include <linux/kcsan.h>
 #include <linux/smp_types.h>
 #include <linux/restart_block_types.h>
