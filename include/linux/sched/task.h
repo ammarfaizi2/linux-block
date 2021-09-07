@@ -11,6 +11,7 @@
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/uaccess.h>
+#include <linux/refcount.h>
 
 DECLARE_PER_TASK(refcount_t, usage);
 
