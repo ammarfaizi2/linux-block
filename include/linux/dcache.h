@@ -3,18 +3,11 @@
 #define __LINUX_DCACHE_H
 
 #include <linux/spinlock_api.h>
-#include <linux/atomic.h>
-#include <linux/list.h>
+#include <linux/list_bl.h>
 #include <linux/math.h>
-#include <linux/rculist.h>
-#include <linux/rculist_bl.h>
-#include <linux/spinlock.h>
 #include <linux/seqlock.h>
-#include <linux/cache.h>
-#include <linux/rcupdate.h>
 #include <linux/lockref.h>
-#include <linux/stringhash.h>
-#include <linux/wait.h>
+#include <linux/wait_types.h>
 
 struct path;
 struct vfsmount;
