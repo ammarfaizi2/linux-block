@@ -5,6 +5,7 @@
  * This is really horribly ugly, and new architectures should just wire up
  * the individual syscalls instead.
  */
+#include <linux/shm.h>
 #include <linux/unistd.h>
 #include <linux/syscalls.h>
 #include <linux/security.h>
