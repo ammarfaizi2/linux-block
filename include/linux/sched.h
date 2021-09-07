@@ -19,7 +19,6 @@
 #include <linux/pid_types.h>
 #include <linux/seccomp_types.h>
 #include <linux/nodemask.h>
-#include <linux/refcount.h>
 #include <linux/latencytop.h>
 #include <linux/sched/prio.h>
 #include <linux/sched/types.h>
