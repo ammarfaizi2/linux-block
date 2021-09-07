@@ -36,6 +36,7 @@ jobs:
 
     env:
       CLANG: 1
+      LLVM_IAS: 0
       ARCH: powerpc
       TARGET: kernel
       SUBARCH: ${{ matrix.subarch }}

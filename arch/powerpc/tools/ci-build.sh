@@ -16,6 +16,7 @@ cmd+="-e ARCH "
 cmd+="-e JFACTOR=$(nproc) "
 cmd+="-e KBUILD_BUILD_TIMESTAMP=$(date +%Y-%m-%d) "
 cmd+="-e CLANG "
+cmd+="-e LLVM_IAS "
 cmd+="-e SPARSE "
 
 if [[ -n "$MODULES" ]]; then
