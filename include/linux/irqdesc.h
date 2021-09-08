@@ -2,11 +2,13 @@
 #ifndef _LINUX_IRQDESC_H
 #define _LINUX_IRQDESC_H
 
+#include <linux/percpu.h>
 #include <linux/irq.h>
 #include <linux/rcupdate.h>
 #include <linux/kobject.h>
 #include <linux/wait_types.h>
 #include <linux/mutex.h>
+#include <linux/cache.h>
 
 /*
  * Core internal functions to deal with irq descriptors
