@@ -2,13 +2,14 @@
 #ifndef _ASM_X86_MMU_H
 #define _ASM_X86_MMU_H
 
-#include <linux/mutex_api.h>
-#include <asm/pgtable_types.h>
-#include <linux/spinlock.h>
-#include <linux/rwsem.h>
-#include <linux/mutex.h>
-#include <linux/atomic.h>
-#include <linux/bits.h>
+#include <linux/spinlock_types.h>
+#include <linux/rwsem_types.h>
+#include <linux/mutex_types.h>
+#include <linux/pgtable_types.h>
+
+#ifdef __i386__
+# include <linux/atomic_api.h>
+#endif
 
 /* Uprobes on this MM assume 32-bit code */
 #define MM_CONTEXT_UPROBE_IA32	BIT(0)
