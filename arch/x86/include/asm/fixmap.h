@@ -32,6 +32,7 @@
 #define FIXMAP_PMD_TOP	507
 
 #ifndef __ASSEMBLY__
+#include <linux/math.h>
 #include <linux/kernel.h>
 #include <asm/apicdef.h>
 #include <asm/page.h>
