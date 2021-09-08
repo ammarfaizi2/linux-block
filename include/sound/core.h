@@ -8,7 +8,7 @@
  */
 
 #include <linux/atomic_api.h>
-#include <linux/device.h>
+#include <linux/device_types.h>
 #include <linux/mutex.h>		/* struct mutex */
 #include <linux/rwsem.h>		/* struct rw_semaphore */
 #include <linux/pm.h>			/* pm_message_t */
@@ -302,10 +302,7 @@ struct snd_card *snd_card_ref(int card);
  * Call this function for the card object that was obtained via snd_card_ref()
  * or snd_lookup_minor_data().
  */
-static inline void snd_card_unref(struct snd_card *card)
-{
-	put_device(&card->card_dev);
-}
+#define snd_card_unref(card) put_device(&(card)->card_dev)
 
 #define snd_card_set_dev(card, devptr) ((card)->dev = (devptr))
 
