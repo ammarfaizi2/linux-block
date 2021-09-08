@@ -35,9 +35,7 @@
 #ifndef _SOCK_H
 #define _SOCK_H
 
-#include <linux/sched/per_task.h>
 #include <linux/ratelimit.h>
-#include <linux/percpu_counter_api.h>
 #include <linux/debug_locks.h>
 #include <linux/hardirq.h>
 #include <linux/kernel.h>
@@ -54,9 +52,7 @@
 #include <linux/slab.h>
 #include <linux/uaccess.h>
 #include <linux/page_counter.h>
-#include <linux/memcontrol.h>
 #include <linux/static_key.h>
-#include <linux/sched.h>
 #include <linux/wait.h>
 #include <linux/cgroup-defs.h>
 #include <linux/rbtree.h>
@@ -70,6 +66,7 @@
 #include <net/dst.h>
 #include <net/checksum.h>
 #include <net/tcp_states.h>
+#include <linux/percpu_counter_api.h>
 #include <linux/net_tstamp.h>
 #include <net/l3mdev.h>
 #include <uapi/linux/socket.h>

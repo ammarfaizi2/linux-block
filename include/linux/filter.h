@@ -9,12 +9,10 @@
 #include <linux/atomic.h>
 #include <linux/bpf.h>
 #include <linux/refcount.h>
-#include <linux/compat.h>
 #include <linux/skbuff.h>
 #include <linux/linkage.h>
 #include <linux/printk.h>
 #include <linux/workqueue.h>
-#include <linux/sched.h>
 #include <linux/sched/clock.h>
 #include <linux/capability.h>
 #include <linux/set_memory.h>
@@ -538,7 +536,7 @@ static inline bool insn_is_zext(const struct bpf_insn *insn)
 /* A struct sock_filter is architecture independent. */
 struct compat_sock_fprog {
 	u16		len;
-	compat_uptr_t	filter;	/* struct sock_filter * */
+	u32		filter;	/* struct sock_filter * */
 };
 
 struct sock_fprog_kern {
