@@ -27,6 +27,7 @@
 #include <linux/skbuff_api.h>
 
 #include <net/net_namespace.h>
+#include <net/checksum.h>
 
 /**
  *	napi_if_scheduled_mark_missed - if napi is running, set the
