@@ -13,7 +13,6 @@
 
 #include <linux/writeback_types.h>
 #include <linux/percpu_counter_api.h>
-#include <linux/sched.h>
 #include <linux/blkdev.h>
 
 struct blkcg;
@@ -144,12 +143,6 @@ long congestion_wait(int sync, long timeout);
 static inline bool mapping_can_writeback(struct address_space *mapping)
 {
 	return inode_to_bdi(mapping->host)->capabilities & BDI_CAP_WRITEBACK;
-}
-
-static inline int bdi_sched_wait(void *word)
-{
-	schedule();
-	return 0;
 }
 
 #ifdef CONFIG_CGROUP_WRITEBACK
