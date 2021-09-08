@@ -12,7 +12,7 @@
 #ifndef _DEVICE_H_
 #define _DEVICE_H_
 
-#include <linux/topology.h>
+#include <linux/numa_types.h>
 #include <linux/dev_printk.h>
 #include <linux/ioport.h>
 #include <linux/kobject.h>
