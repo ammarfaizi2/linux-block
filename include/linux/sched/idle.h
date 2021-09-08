@@ -3,6 +3,7 @@
 #define _LINUX_SCHED_IDLE_H
 
 #include <linux/sched/thread_info_api.h>
+#include <linux/preempt.h>
 
 enum cpu_idle_type {
 	CPU_IDLE,

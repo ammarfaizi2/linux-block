@@ -11,6 +11,7 @@
 #include <linux/ns_common.h>
 #include <linux/refcount.h>
 #include <linux/rhashtable-types.h>
+#include <linux/llist.h>
 
 struct user_namespace;
 

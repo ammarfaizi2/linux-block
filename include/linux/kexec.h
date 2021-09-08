@@ -369,17 +369,11 @@ void arch_kexec_protect_crashkres(void);
 void arch_kexec_unprotect_crashkres(void);
 
 #ifndef page_to_boot_pfn
-static inline unsigned long page_to_boot_pfn(struct page *page)
-{
-	return page_to_pfn(page);
-}
+# define page_to_boot_pfn(page) page_to_pfn(page)
 #endif
 
 #ifndef boot_pfn_to_page
-static inline struct page *boot_pfn_to_page(unsigned long boot_pfn)
-{
-	return pfn_to_page(boot_pfn);
-}
+# define boot_pfn_to_page(boot_pfn) pfn_to_page(boot_pfn)
 #endif
 
 #ifndef phys_to_boot_phys
