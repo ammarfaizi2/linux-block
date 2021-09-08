@@ -10,13 +10,12 @@
 #ifndef _LINUX_KEY_H
 #define _LINUX_KEY_H
 
-#include <linux/rwsem_api.h>
 #include <linux/refcount_api.h>
+#include <linux/rwsem_types.h>
 #include <linux/types.h>
 #include <linux/list.h>
 #include <linux/rbtree.h>
 #include <linux/rcupdate.h>
-#include <linux/rwsem.h>
 #include <linux/atomic.h>
 #include <linux/assoc_array.h>
 #include <linux/refcount.h>
