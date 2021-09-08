@@ -2,15 +2,13 @@
 #ifndef _ASM_X86_QSPINLOCK_H
 #define _ASM_X86_QSPINLOCK_H
 
-#include <linux/atomic.h>
 #include <linux/atomic_api.h>
-#include <linux/jump_label.h>
-#include <asm/cpufeature.h>
-#include <asm-generic/qspinlock_types.h>
-#include <asm/paravirt.h>
-#include <asm/rmwcc.h>
 
-#include <asm/vdso/processor.h>
+#include <asm/paravirt.h>
+
+#ifdef CONFIG_PARAVIRT
+# include <linux/jump_label.h>
+#endif
 
 #define _Q_PENDING_LOOPS	(1 << 9)
 
