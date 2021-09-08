@@ -15,13 +15,7 @@
 
 #include <linux/compiler.h>
 #include <linux/kcsan-checks.h>
-#include <linux/lockdep.h>
-#include <linux/mutex.h>
-#include <linux/ww_mutex.h>
-#include <linux/preempt.h>
-#include <linux/spinlock.h>
-
-#include <asm/processor.h>
+#include <linux/spinlock_types.h>
 
 #if defined(CONFIG_LOCKDEP) || defined(CONFIG_PREEMPT_RT)
 # include <linux/spinlock_api.h>
@@ -325,6 +319,26 @@ typedef struct {
 #define DEFINE_SEQLOCK(sl) \
 		seqlock_t sl = __SEQLOCK_UNLOCKED(sl)
 
-#include <linux/seqlock_api.h>
+/*
+ * Latch sequence counters (seqcount_latch_t)
+ *
+ * A sequence counter variant where the counter even/odd value is used to
+ * switch between two copies of protected data. This allows the read path,
+ * typically NMIs, to safely interrupt the write side critical section.
+ *
+ * As the write sections are fully preemptible, no special handling for
+ * PREEMPT_RT is needed.
+ */
+typedef struct {
+	seqcount_t seqcount;
+} seqcount_latch_t;
+
+/**
+ * SEQCNT_LATCH_ZERO() - static initializer for seqcount_latch_t
+ * @seq_name: Name of the seqcount_latch_t instance
+ */
+#define SEQCNT_LATCH_ZERO(seq_name) {					\
+	.seqcount		= SEQCNT_ZERO(seq_name.seqcount),	\
+}
 
 #endif /* __LINUX_SEQLOCK_H */

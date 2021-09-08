@@ -370,28 +370,6 @@ static inline void do_write_seqcount_invalidate(seqcount_t *s)
 	kcsan_nestable_atomic_end();
 }
 
-/*
- * Latch sequence counters (seqcount_latch_t)
- *
- * A sequence counter variant where the counter even/odd value is used to
- * switch between two copies of protected data. This allows the read path,
- * typically NMIs, to safely interrupt the write side critical section.
- *
- * As the write sections are fully preemptible, no special handling for
- * PREEMPT_RT is needed.
- */
-typedef struct {
-	seqcount_t seqcount;
-} seqcount_latch_t;
-
-/**
- * SEQCNT_LATCH_ZERO() - static initializer for seqcount_latch_t
- * @seq_name: Name of the seqcount_latch_t instance
- */
-#define SEQCNT_LATCH_ZERO(seq_name) {					\
-	.seqcount		= SEQCNT_ZERO(seq_name.seqcount),	\
-}
-
 /**
  * seqcount_latch_init() - runtime initializer for seqcount_latch_t
  * @s: Pointer to the seqcount_latch_t instance

@@ -35,7 +35,7 @@
 
 #include <linux/rbtree_api.h>
 #include <linux/rbtree_latch_types.h>
-#include <linux/seqlock.h>
+#include <linux/seqlock_api.h>
 #include <linux/rcupdate.h>
 
 struct latch_tree_root {
