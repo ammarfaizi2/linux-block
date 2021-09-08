@@ -12,6 +12,7 @@
 
 #include <linux/fs_api.h>
 #include <linux/kernel.h>
+#include <linux/sched.h>
 #include <linux/buffer_head.h>
 #include <linux/spinlock.h>
 #include <linux/blkdev.h>
