@@ -30,11 +30,12 @@
 #include <linux/smp_api.h>
 #include <linux/preempt.h>
 #include <linux/arch_topology.h>
-#include <linux/cpumask.h>
-#include <linux/bitops.h>
-#include <linux/mmzone.h>
-#include <linux/smp.h>
-#include <linux/percpu.h>
+#include <linux/nodemask.h>
+
+#ifdef CONFIG_NUMA
+# include <asm/mmzone.h>
+#endif
+
 #include <asm/topology.h>
 
 #ifndef nr_cpus_node
@@ -75,7 +76,7 @@ int arch_update_cpu_topology(void);
  * *improves* if allowed to reclaim memory and load balance tasks
  * between NUMA nodes 2-hops apart.
  */
-extern int __read_mostly node_reclaim_distance;
+extern int node_reclaim_distance;
 
 #ifndef PENALTY_FOR_NODE_WITH_CPUS
 #define PENALTY_FOR_NODE_WITH_CPUS	(1)
