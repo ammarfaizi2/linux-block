@@ -1412,10 +1412,7 @@ static inline void sock_confirm_neigh(struct sk_buff *skb, struct neighbour *n)
 
 bool sk_mc_loop(struct sock *sk);
 
-static inline bool sk_can_gso(const struct sock *sk)
-{
-	return net_gso_ok(sk->sk_route_caps, sk->sk_gso_type);
-}
+#define sk_can_gso(sk) net_gso_ok((sk)->sk_route_caps, (sk)->sk_gso_type)
 
 void sk_setup_caps(struct sock *sk, struct dst_entry *dst);
 

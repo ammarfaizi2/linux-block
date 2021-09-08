@@ -35,6 +35,8 @@
 #include <net/snmp.h>
 #endif
 
+struct softnet_data;
+
 #define XFRM_PROTO_ESP		50
 #define XFRM_PROTO_AH		51
 #define XFRM_PROTO_COMP		108
@@ -1872,6 +1874,7 @@ static inline struct xfrm_offload *xfrm_offload(struct sk_buff *skb)
 void __init xfrm_dev_init(void);
 
 #ifdef CONFIG_XFRM_OFFLOAD
+
 void xfrm_dev_resume(struct sk_buff *skb);
 void xfrm_dev_backlog(struct softnet_data *sd);
 struct sk_buff *validate_xmit_xfrm(struct sk_buff *skb, netdev_features_t features, bool *again);

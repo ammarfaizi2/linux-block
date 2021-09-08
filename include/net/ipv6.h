@@ -991,6 +991,8 @@ static inline __be32 flowi6_get_flowlabel(const struct flowi6 *fl6)
  *	rcv function (called from netdevice level)
  */
 
+struct packet_type;
+
 int ipv6_rcv(struct sk_buff *skb, struct net_device *dev,
 	     struct packet_type *pt, struct net_device *orig_dev);
 void ipv6_list_rcv(struct list_head *head, struct packet_type *pt,

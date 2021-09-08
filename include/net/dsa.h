@@ -27,6 +27,8 @@ struct tc_action;
 struct phy_device;
 struct fixed_phy_status;
 struct phylink_link_state;
+struct netdev_notifier_changeupper_info;
+struct netdev_lag_upper_info;
 
 #define DSA_TAG_PROTO_NONE_VALUE		0
 #define DSA_TAG_PROTO_BRCM_VALUE		1
