@@ -5,7 +5,6 @@
 
 #include <linux/interrupt_types.h>
 
-#include <linux/softirq.h>
 #include <linux/cache.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>
