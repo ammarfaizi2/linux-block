@@ -16,7 +16,6 @@
 #include <linux/list.h>
 #include <linux/lockdep.h>
 #include <linux/rculist.h>
-#include <linux/spinlock.h>
 #include <linux/stddef.h>
 #include <linux/types.h>
 

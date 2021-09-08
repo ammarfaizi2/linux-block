@@ -13,8 +13,8 @@
 #ifndef _LINUX_ICMP_H
 #define	_LINUX_ICMP_H
 
-#include <linux/skbuff_api.h>
-#include <linux/skbuff.h>
+#include <linux/skbuff_types.h>
+
 #include <uapi/linux/icmp.h>
 #include <uapi/linux/errqueue.h>
 
