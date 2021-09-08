@@ -34,6 +34,7 @@
 #include <linux/seq_file.h>
 #include <linux/poll.h>
 #include <linux/indirect_call_wrapper.h>
+#include <linux/netdevice_api_extra.h>
 
 /**
  *	struct udp_skb_cb  -  UDP(-Lite) private variables

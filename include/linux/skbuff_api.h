@@ -26,7 +26,6 @@
 #include <linux/netdev_features.h>
 #include <linux/refcount_api.h>
 
-#include <net/checksum.h>
 #include <net/flow_dissector.h>
 
 #include <asm/processor_types.h>
@@ -2921,7 +2920,5 @@ static inline u64 skb_get_kcov_handle(struct sk_buff *skb)
 	return 0;
 #endif
 }
-
-#include <linux/skbuff_api_extra.h>
 
 #endif	/* _LINUX_SKBUFF_API_H */
