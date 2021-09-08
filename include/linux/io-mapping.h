@@ -6,13 +6,8 @@
 #ifndef _LINUX_IO_MAPPING_H
 #define _LINUX_IO_MAPPING_H
 
-#include <linux/pagefault_ctrl.h>
-#include <linux/types.h>
 #include <linux/slab.h>
-#include <linux/bug.h>
 #include <linux/io.h>
-#include <linux/pgtable.h>
-#include <asm/page.h>
 
 /*
  * The io_mapping mechanism provides an abstraction for mapping
