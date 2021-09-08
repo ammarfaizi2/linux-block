@@ -8,15 +8,17 @@
 #ifndef _LINUX_PM_RUNTIME_H
 #define _LINUX_PM_RUNTIME_H
 
-#include <linux/workqueue_api.h>
-#include <linux/ktime_api.h>
-#include <linux/atomic.h>
 #include <linux/atomic_api.h>
-#include <linux/device.h>
+#include <linux/device_types.h>
+#include <linux/atomic.h>
 #include <linux/notifier.h>
 #include <linux/pm.h>
+#include <linux/ktime_api.h>
+#include <linux/workqueue_api.h>
 
 #include <linux/jiffies.h>
+
+struct device_link;
 
 /* Runtime PM flag argument bits */
 #define RPM_ASYNC		0x01	/* Request is asynchronous */
