@@ -2,6 +2,7 @@
 #ifndef _LINUX_HUGE_MM_H
 #define _LINUX_HUGE_MM_H
 
+#include <linux/pgtable_api.h>
 #include <linux/sched/coredump.h>
 #include <linux/mm_api.h>
 

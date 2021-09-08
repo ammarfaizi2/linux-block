@@ -2,6 +2,7 @@
 #ifndef _LINUX_MM_PTLOCK_H
 #define _LINUX_MM_PTLOCK_H
 
+#include <linux/pgtable_api.h>
 #include <linux/mm_api.h>
 #include <linux/pgtable.h>
 #include <linux/spinlock_api.h>
