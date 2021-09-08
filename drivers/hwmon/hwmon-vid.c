@@ -170,6 +170,8 @@ struct vrm_model {
 
 #ifdef CONFIG_X86
 
+#include <asm/msr.h>
+
 /*
  * The stepping_to parameter is highest acceptable stepping for current line.
  * The model match must be exact for 4-bit values. For model values 0x10
