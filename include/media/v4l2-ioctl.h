@@ -11,14 +11,10 @@
 #define _V4L2_IOCTL_H
 
 #include <linux/time32.h>
-#include <linux/poll.h>
-#include <linux/fs.h>
-#include <linux/mutex.h>
-#include <linux/sched/signal.h>
-#include <linux/compiler.h> /* need __user */
 #include <linux/videodev2.h>
 
 struct v4l2_fh;
+struct file;
 
 /**
  * struct v4l2_ioctl_ops - describe operations for each V4L2 ioctl
