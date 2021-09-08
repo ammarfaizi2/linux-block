@@ -10,11 +10,9 @@
 #include <linux/workqueue_types.h>
 
 #include <linux/lockdep_api.h>
-#include <linux/linkage.h>
-#include <linux/bitops.h>
-#include <linux/lockdep.h>
-#include <linux/cpumask.h>
-#include <linux/rcupdate.h>
+#include <linux/cpumask_types.h>
+#include <linux/kernel.h>
+#include <linux/list.h>
 
 /**
  * struct workqueue_attrs - A struct for workqueue attributes.
@@ -495,7 +493,7 @@ int workqueue_online_cpu(unsigned int cpu);
 int workqueue_offline_cpu(unsigned int cpu);
 #endif
 
-void __init workqueue_init_early(void);
-void __init workqueue_init(void);
+void workqueue_init_early(void);
+void workqueue_init(void);
 
 #endif /* _LINUX_WORKQUEUE_API_H */

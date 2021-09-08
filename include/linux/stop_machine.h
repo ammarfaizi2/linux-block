@@ -11,6 +11,10 @@
 #include <linux/smp.h>
 #include <linux/list.h>
 
+#if !defined(CONFIG_SMP) && !defined(CONFIG_HOTPLUG_CPU)
+# include <linux/irqflags.h>
+#endif
+
 /*
  * stop_cpu[s]() is simplistic per-cpu maximum priority cpu
  * monopolization mechanism.  The caller can specify a non-sleeping
