@@ -34,13 +34,9 @@
 #define RB_TREE_LATCH_H
 
 #include <linux/rbtree_api.h>
-#include <linux/rbtree.h>
+#include <linux/rbtree_latch_types.h>
 #include <linux/seqlock.h>
 #include <linux/rcupdate.h>
-
-struct latch_tree_node {
-	struct rb_node node[2];
-};
 
 struct latch_tree_root {
 	seqcount_latch_t	seq;
