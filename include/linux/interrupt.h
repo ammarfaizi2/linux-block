@@ -5,6 +5,7 @@
 
 #include <linux/interrupt_types.h>
 
+#include <linux/softirq.h>
 #include <linux/cache.h>
 #include <linux/atomic_api.h>
 #include <linux/kernel.h>
@@ -541,18 +542,6 @@ DECLARE_STATIC_KEY_FALSE(force_irqthreads_key);
 #define force_irqthreads()	(false)
 #endif
 
-#ifndef local_softirq_pending
-
-#ifndef local_softirq_pending_ref
-#define local_softirq_pending_ref irq_stat.__softirq_pending
-#endif
-
-#define local_softirq_pending()	(__this_cpu_read(local_softirq_pending_ref))
-#define set_softirq_pending(x)	(__this_cpu_write(local_softirq_pending_ref, (x)))
-#define or_softirq_pending(x)	(__this_cpu_or(local_softirq_pending_ref, (x)))
-
-#endif /* local_softirq_pending */
-
 /* Some architectures might implement lazy enabling/disabling of
  * interrupts. In some cases, such as stop_machine, we might want
  * to ensure that after a local_irq_disable(), interrupts have
@@ -562,37 +551,6 @@ DECLARE_STATIC_KEY_FALSE(force_irqthreads_key);
 #ifndef hard_irq_disable
 #define hard_irq_disable()	do { } while(0)
 #endif
-
-/* map softirq index to softirq name. update 'softirq_to_name' in
- * kernel/softirq.c when adding a new softirq.
- */
-extern const char * const softirq_to_name[NR_SOFTIRQS];
-
-/* softirq mask and active fields moved to irq_cpustat_t in
- * asm/hardirq.h to get better cache usage.  KAO
- */
-
-struct softirq_action
-{
-	void	(*action)(struct softirq_action *);
-};
-
-asmlinkage void do_softirq(void);
-asmlinkage void __do_softirq(void);
-
-extern void open_softirq(int nr, void (*action)(struct softirq_action *));
-extern void softirq_init(void);
-extern void __raise_softirq_irqoff(unsigned int nr);
-
-extern void raise_softirq_irqoff(unsigned int nr);
-extern void raise_softirq(unsigned int nr);
-
-DECLARE_PER_CPU(struct task_struct *, ksoftirqd);
-
-static inline struct task_struct *this_cpu_ksoftirqd(void)
-{
-	return this_cpu_read(ksoftirqd);
-}
 
 /*
  * Autoprobing for irqs:
@@ -670,7 +628,5 @@ extern int arch_early_irq_init(void);
 #ifndef __irq_entry
 # define __irq_entry	 __section(".irqentry.text")
 #endif
-
-#define __softirq_entry  __section(".softirqentry.text")
 
 #endif
