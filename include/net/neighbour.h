@@ -2,9 +2,7 @@
 #ifndef _NET_NEIGHBOUR_H
 #define _NET_NEIGHBOUR_H
 
-#include <linux/seqlock_api.h>
 #include <linux/seq_file_net.h>
-#include <linux/netdevice_api.h>
 #include <linux/neighbour.h>
 
 /*
@@ -20,9 +18,13 @@
  *		- Add neighbour cache statistics like rtstat
  */
 
+#include <linux/netdevice_types.h>
+
+#include <linux/refcount_api.h>
+#include <linux/jiffies.h>
+#include <linux/seqlock_api.h>
 #include <linux/atomic.h>
 #include <linux/refcount.h>
-#include <linux/netdevice.h>
 #include <linux/skbuff.h>
 #include <linux/rcupdate.h>
 #include <linux/seq_file.h>
@@ -31,6 +33,7 @@
 #include <linux/err.h>
 #include <linux/sysctl.h>
 #include <linux/workqueue.h>
+
 #include <net/rtnetlink.h>
 
 /*
