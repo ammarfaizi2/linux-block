@@ -18,6 +18,7 @@
 # include <linux/crush/crush.h>
 # include <linux/crush/hash.h>
 # include <linux/crush/mapper.h>
+# include <linux/math64.h>
 #else
 # include "crush_compat.h"
 # include "crush.h"
