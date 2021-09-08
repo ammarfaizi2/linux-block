@@ -13,6 +13,7 @@
 
 #include <linux/device_api_lock.h>
 #include <linux/tracepoint.h>
+#include <linux/device_api.h>
 
 struct device;
 

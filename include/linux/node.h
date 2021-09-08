@@ -15,11 +15,11 @@
 #ifndef _LINUX_NODE_H_
 #define _LINUX_NODE_H_
 
-#include <linux/mmzone.h>
-#include <linux/device.h>
+#include <linux/device_types.h>
 #include <linux/cpumask.h>
 #include <linux/list.h>
 #include <linux/workqueue.h>
+#include <linux/mmzone.h>
 
 /**
  * struct node_hmem_attrs - heterogeneous memory performance attributes
