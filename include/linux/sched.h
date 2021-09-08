@@ -11,7 +11,6 @@
 
 #include <linux/sched/per_task.h>
 #include <linux/cache.h>
-#include <linux/bitops.h>
 #include <linux/linkage.h>
 
 #include <asm/current.h>

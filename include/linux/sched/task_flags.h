@@ -3,6 +3,7 @@
 #define _LINUX_SCHED_TASK_FLAGS_H
 
 #include <linux/sched.h>
+#include <linux/bitops.h>
 #include <linux/sched/per_task.h>
 
 /*
