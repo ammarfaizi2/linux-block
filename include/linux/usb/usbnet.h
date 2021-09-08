@@ -25,7 +25,6 @@
 
 #include <linux/tasklet_types.h>
 #include <linux/netdevice_api.h>
-#include <linux/etherdevice_api.h>
 #include <linux/types.h>
 
 /* interface from usbnet core to each USB networking link we handle */
