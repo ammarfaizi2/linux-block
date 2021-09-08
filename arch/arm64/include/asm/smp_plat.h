@@ -9,8 +9,7 @@
 #define __ASM_SMP_PLAT_H
 
 #include <linux/smp_api.h>
-#include <linux/cpumask_api.h>
-#include <linux/cpumask.h>
+#include <linux/cpumask_types.h>
 
 #include <asm/smp.h>
 #include <asm/types.h>

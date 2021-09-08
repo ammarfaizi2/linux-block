@@ -6,7 +6,6 @@
 
 #include <linux/mm_types.h>
 
-#include <linux/cpumask_api.h>
 #include <linux/topology.h>
 #include <linux/auxvec.h>
 #include <linux/list.h>
@@ -15,7 +14,7 @@
 #include <linux/rbtree.h>
 #include <linux/rwsem.h>
 #include <linux/completion.h>
-#include <linux/cpumask.h>
+#include <linux/cpumask_types.h>
 #include <linux/uprobes.h>
 #include <linux/page-flags-layout.h>
 #include <linux/workqueue.h>
