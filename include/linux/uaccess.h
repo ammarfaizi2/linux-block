@@ -2,13 +2,12 @@
 #ifndef __LINUX_UACCESS_H__
 #define __LINUX_UACCESS_H__
 
+#include <linux/kernel.h>
 #include <linux/sched/per_task.h>
 #include <linux/fault-inject-usercopy.h>
 #include <linux/instrumented.h>
 #include <linux/minmax.h>
-#include <linux/sched.h>
 #include <linux/thread_info.h>
-#include <linux/kernel.h>
 
 #include <asm/uaccess.h>
 

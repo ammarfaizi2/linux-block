@@ -4,7 +4,6 @@
 /*
  * User space memory access functions
  */
-#include <linux/pagefault_ctrl.h>
 #include <linux/cache.h>
 #include <linux/compiler.h>
 #include <linux/kasan-checks.h>
