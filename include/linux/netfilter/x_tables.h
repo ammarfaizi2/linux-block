@@ -3,11 +3,12 @@
 #define _X_TABLES_H
 
 
-#include <linux/cpumask_api.h>
+#include <linux/cpumask_types.h>
 #include <linux/smp_api.h>
 #include <linux/netdevice.h>
 #include <linux/static_key.h>
 #include <linux/netfilter.h>
+
 #include <uapi/linux/netfilter/x_tables.h>
 
 /* Test a struct->invflags and a boolean for inequality */
