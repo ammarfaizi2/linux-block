@@ -10,7 +10,7 @@
 #define __ACPI_BUS_H__
 
 #include <linux/device/driver.h>
-#include <linux/device.h>
+#include <linux/device_types.h>
 #include <linux/property.h>
 
 /* TBD: Make dynamic */
@@ -741,23 +741,13 @@ acpi_dev_get_first_match_dev(const char *hid, const char *uid, s64 hrv);
 	     adev;							\
 	     adev = acpi_dev_get_next_match_dev(adev, hid, uid, hrv))
 
-static inline struct acpi_device *acpi_dev_get(struct acpi_device *adev)
-{
-	return adev ? to_acpi_device(get_device(&adev->dev)) : NULL;
-}
-
-static inline void acpi_dev_put(struct acpi_device *adev)
-{
-	if (adev)
-		put_device(&adev->dev);
-}
+#define acpi_dev_get(adev) ({ struct acpi_device *__adev = (adev); __adev ? to_acpi_device(get_device(&__adev->dev)) : NULL; })
+#define acpi_dev_put(adev) ({ struct acpi_device *__adev = (adev); if (__adev) put_device(&__adev->dev); })
 
 struct acpi_device *acpi_bus_get_acpi_device(acpi_handle handle);
 
-static inline void acpi_bus_put_acpi_device(struct acpi_device *adev)
-{
-	acpi_dev_put(adev);
-}
+#define acpi_bus_put_acpi_device(adev) acpi_dev_put(adev)
+
 #else	/* CONFIG_ACPI */
 
 static inline int register_acpi_bus_type(void *bus) { return 0; }

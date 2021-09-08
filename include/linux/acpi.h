@@ -11,7 +11,7 @@
 #include <linux/errno.h>
 #include <linux/ioport.h>	/* for struct resource */
 #include <linux/resource_ext.h>
-#include <linux/device.h>
+#include <linux/device_types.h>
 #include <linux/property.h>
 #include <linux/uuid.h>
 
@@ -19,6 +19,8 @@
 #define _LINUX
 #endif
 #include <acpi/acpi.h>
+
+struct notifier_block;
 
 #ifdef	CONFIG_ACPI
 
@@ -67,11 +69,7 @@ static inline bool has_acpi_companion(struct device *dev)
 	return is_acpi_device_node(dev->fwnode);
 }
 
-static inline void acpi_preset_companion(struct device *dev,
-					 struct acpi_device *parent, u64 addr)
-{
-	ACPI_COMPANION_SET(dev, acpi_find_child_device(parent, addr, false));
-}
+#define acpi_preset_companion(dev, parent, addr) ACPI_COMPANION_SET(dev, acpi_find_child_device(parent, addr, false))
 
 static inline const char *acpi_dev_name(struct acpi_device *adev)
 {
