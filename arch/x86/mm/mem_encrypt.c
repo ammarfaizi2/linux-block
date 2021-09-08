@@ -20,6 +20,7 @@
 #include <linux/bitops.h>
 #include <linux/dma-mapping.h>
 #include <linux/virtio_config.h>
+#include <linux/cc_platform.h>
 
 #include <asm/tlbflush.h>
 #include <asm/fixmap.h>
@@ -387,6 +388,26 @@ EXPORT_SYMBOL_GPL(sev_active);
 bool noinstr sev_es_active(void)
 {
 	return sev_status & MSR_AMD64_SEV_ES_ENABLED;
+}
+
+bool amd_cc_platform_has(enum cc_attr attr)
+{
+	switch (attr) {
+	case CC_ATTR_MEM_ENCRYPT:
+		return sme_me_mask;
+
+	case CC_ATTR_HOST_MEM_ENCRYPT:
+		return sme_active();
+
+	case CC_ATTR_GUEST_MEM_ENCRYPT:
+		return sev_active();
+
+	case CC_ATTR_GUEST_STATE_ENCRYPT:
+		return sev_es_active();
+
+	default:
+		return false;
+	}
 }
 
 /* Override for DMA direct allocation check - ARCH_HAS_FORCE_DMA_UNENCRYPTED */
