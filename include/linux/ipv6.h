@@ -2,8 +2,13 @@
 #ifndef _IPV6_H
 #define _IPV6_H
 
+#include <linux/skbuff_types.h>
+#include <linux/tcp.h>
+#include <linux/udp.h>
+
+#include <net/inet_sock.h>
+
 #include <uapi/linux/icmpv6.h>
-#include <linux/skbuff_api.h>
 #include <uapi/linux/ipv6.h>
 
 #define ipv6_optlen(p)  (((p)->hdrlen+1) << 3)
@@ -91,10 +96,6 @@ struct ipv6_params {
 	__s32 autoconf;
 };
 extern struct ipv6_params ipv6_defaults;
-#include <linux/tcp.h>
-#include <linux/udp.h>
-
-#include <net/inet_sock.h>
 
 static inline struct ipv6hdr *ipv6_hdr(const struct sk_buff *skb)
 {

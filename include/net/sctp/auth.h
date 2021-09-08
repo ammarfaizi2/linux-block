@@ -16,7 +16,7 @@
 #define __sctp_auth_h__
 
 #include <linux/list.h>
-#include <linux/refcount.h>
+#include <linux/refcount_api.h>
 
 struct sctp_endpoint;
 struct sctp_association;
