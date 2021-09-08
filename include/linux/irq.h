@@ -11,13 +11,10 @@
  */
 
 #include <linux/spinlock_api.h>
-#include <linux/cache.h>
-#include <linux/spinlock.h>
-#include <linux/cpumask.h>
+#include <linux/cpumask_types.h>
 #include <linux/irqhandler.h>
 #include <linux/irqreturn.h>
 #include <linux/irqnr.h>
-#include <linux/topology.h>
 #include <linux/io.h>
 #include <linux/slab.h>
 
