@@ -67,7 +67,7 @@
 #include <linux/bits.h>
 
 #if BITS_PER_LONG==32 && defined(CONFIG_SMP)
-#include <linux/seqlock.h>
+#include <linux/seqlock_api.h>
 #include <linux/interrupt.h>
 #endif
 
