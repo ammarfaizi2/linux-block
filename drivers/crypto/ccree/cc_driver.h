@@ -8,11 +8,6 @@
 #ifndef __CC_DRIVER_H__
 #define __CC_DRIVER_H__
 
-#ifdef COMP_IN_WQ
-#include <linux/workqueue.h>
-#else
-#include <linux/interrupt.h>
-#endif
 #include <linux/dma-mapping.h>
 #include <crypto/algapi.h>
 #include <crypto/internal/skcipher.h>
@@ -25,6 +20,12 @@
 #include <crypto/skcipher.h>
 #include <linux/clk.h>
 #include <linux/platform_device.h>
+
+#ifdef COMP_IN_WQ
+#include <linux/workqueue.h>
+#else
+#include <linux/interrupt.h>
+#endif
 
 #include "cc_host_regs.h"
 #include "cc_crypto_ctx.h"
