@@ -18,6 +18,7 @@
 #ifndef _UDP_H
 #define _UDP_H
 
+#include <linux/net.h>
 #include <linux/uio_api.h>
 #include <linux/skbuff_api.h>
 #include <linux/seq_file_net.h>

@@ -910,7 +910,7 @@ received:
 static __poll_t pvcalls_front_poll_passive(struct file *file,
 					       struct pvcalls_bedata *bedata,
 					       struct sock_mapping *map,
-					       poll_table *wait)
+					       struct poll_table_struct *wait)
 {
 	int notify, req_id, ret;
 	struct xen_pvcalls_request *req;
@@ -967,7 +967,7 @@ static __poll_t pvcalls_front_poll_passive(struct file *file,
 static __poll_t pvcalls_front_poll_active(struct file *file,
 					      struct pvcalls_bedata *bedata,
 					      struct sock_mapping *map,
-					      poll_table *wait)
+					      struct poll_table_struct *wait)
 {
 	__poll_t mask = 0;
 	int32_t in_error, out_error;
@@ -988,7 +988,7 @@ static __poll_t pvcalls_front_poll_active(struct file *file,
 }
 
 __poll_t pvcalls_front_poll(struct file *file, struct socket *sock,
-			       poll_table *wait)
+			       struct poll_table_struct *wait)
 {
 	struct pvcalls_bedata *bedata;
 	struct sock_mapping *map;

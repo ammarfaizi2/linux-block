@@ -6,14 +6,16 @@
 #include <net/sock.h>
 #include <linux/skb_array.h>
 
+struct file;
+struct socket;
+struct cdev;
+
 #if IS_ENABLED(CONFIG_TAP)
 struct socket *tap_get_socket(struct file *);
 struct ptr_ring *tap_get_ptr_ring(struct file *file);
 #else
 #include <linux/err.h>
 #include <linux/errno.h>
-struct file;
-struct socket;
 static inline struct socket *tap_get_socket(struct file *f)
 {
 	return ERR_PTR(-EINVAL);
