@@ -1,4 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
+#include <linux/mm.h>
+
 #ifndef _LINUX_VMSTAT_H
 #define _LINUX_VMSTAT_H
 
