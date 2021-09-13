@@ -25,10 +25,6 @@
 #define pr_fmt(fmt) "ipmi_ssif: " fmt
 #define dev_fmt(fmt) "ipmi_ssif: " fmt
 
-#if defined(MODVERSIONS)
-#include <linux/modversions.h>
-#endif
-
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/sched.h>
@@ -48,6 +44,10 @@
 #include <linux/ctype.h>
 #include <linux/time64.h>
 #include "ipmi_dmi.h"
+
+#if defined(MODVERSIONS)
+#include <linux/modversions.h>
+#endif
 
 #define DEVICE_NAME "ipmi_ssif"
 
