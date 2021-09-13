@@ -2535,13 +2535,17 @@ static struct hso_device *hso_create_net_device(struct usb_interface *interface,
 	if (!hso_net->mux_bulk_tx_buf)
 		goto err_free_tx_urb;
 
-	add_net_device(hso_dev);
+	result = add_net_device(hso_dev);
+	if (result) {
+		dev_err(&interface->dev, "Failed to add net device\n");
+		goto err_free_tx_buf;
+	}
 
 	/* registering our net device */
 	result = register_netdev(net);
 	if (result) {
 		dev_err(&interface->dev, "Failed to register device\n");
-		goto err_free_tx_buf;
+		goto err_rmv_ndev;
 	}
 
 	hso_log_port(hso_dev);
@@ -2550,8 +2554,9 @@ static struct hso_device *hso_create_net_device(struct usb_interface *interface,
 
 	return hso_dev;
 
-err_free_tx_buf:
+err_rmv_ndev:
 	remove_net_device(hso_dev);
+err_free_tx_buf:
 	kfree(hso_net->mux_bulk_tx_buf);
 err_free_tx_urb:
 	usb_free_urb(hso_net->mux_bulk_tx_urb);
@@ -3241,9 +3246,10 @@ static int __init hso_init(void)
 		serial_table[i] = NULL;
 
 	/* allocate our driver using the proper amount of supported minors */
-	tty_drv = alloc_tty_driver(HSO_SERIAL_TTY_MINORS);
-	if (!tty_drv)
-		return -ENOMEM;
+	tty_drv = tty_alloc_driver(HSO_SERIAL_TTY_MINORS, TTY_DRIVER_REAL_RAW |
+			TTY_DRIVER_DYNAMIC_DEV);
+	if (IS_ERR(tty_drv))
+		return PTR_ERR(tty_drv);
 
 	/* fill in all needed values */
 	tty_drv->driver_name = driver_name;
@@ -3256,7 +3262,6 @@ static int __init hso_init(void)
 	tty_drv->minor_start = 0;
 	tty_drv->type = TTY_DRIVER_TYPE_SERIAL;
 	tty_drv->subtype = SERIAL_TYPE_NORMAL;
-	tty_drv->flags = TTY_DRIVER_REAL_RAW | TTY_DRIVER_DYNAMIC_DEV;
 	tty_drv->init_termios = tty_std_termios;
 	hso_init_termios(&tty_drv->init_termios);
 	tty_set_operations(tty_drv, &hso_serial_ops);
@@ -3281,7 +3286,7 @@ static int __init hso_init(void)
 err_unreg_tty:
 	tty_unregister_driver(tty_drv);
 err_free_tty:
-	put_tty_driver(tty_drv);
+	tty_driver_kref_put(tty_drv);
 	return result;
 }
 
@@ -3292,7 +3297,7 @@ static void __exit hso_exit(void)
 	tty_unregister_driver(tty_drv);
 	/* deregister the usb driver */
 	usb_deregister(&hso_driver);
-	put_tty_driver(tty_drv);
+	tty_driver_kref_put(tty_drv);
 }
 
 /* Module definitions */

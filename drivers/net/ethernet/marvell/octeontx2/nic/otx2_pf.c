@@ -1,11 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0
-/* Marvell OcteonTx2 RVU Physical Function ethernet driver
+/* Marvell RVU Physical Function ethernet driver
  *
- * Copyright (C) 2020 Marvell International Ltd.
+ * Copyright (C) 2020 Marvell.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
  */
 
 #include <linux/module.h>
@@ -1536,14 +1533,6 @@ int otx2_open(struct net_device *netdev)
 	if (!qset->rq)
 		goto err_free_mem;
 
-	if (test_bit(CN10K_LMTST, &pf->hw.cap_flag)) {
-		/* Reserve LMT lines for NPA AURA batch free */
-		pf->hw.npa_lmt_base = pf->hw.lmt_base;
-		/* Reserve LMT lines for NIX TX */
-		pf->hw.nix_lmt_base = (u64 *)((u64)pf->hw.npa_lmt_base +
-				      (pf->npa_lmt_lines * LMT_LINE_SIZE));
-	}
-
 	err = otx2_init_hw_resources(pf);
 	if (err)
 		goto err_free_mem;
@@ -2671,6 +2660,8 @@ err_del_mcam_entries:
 err_ptp_destroy:
 	otx2_ptp_destroy(pf);
 err_detach_rsrc:
+	if (pf->hw.lmt_info)
+		free_percpu(pf->hw.lmt_info);
 	if (test_bit(CN10K_LMTST, &pf->hw.cap_flag))
 		qmem_free(pf->dev, pf->dync_lmt);
 	otx2_detach_resources(&pf->mbox);
@@ -2814,6 +2805,8 @@ static void otx2_remove(struct pci_dev *pdev)
 	otx2_mcam_flow_del(pf);
 	otx2_shutdown_tc(pf);
 	otx2_detach_resources(&pf->mbox);
+	if (pf->hw.lmt_info)
+		free_percpu(pf->hw.lmt_info);
 	if (test_bit(CN10K_LMTST, &pf->hw.cap_flag))
 		qmem_free(pf->dev, pf->dync_lmt);
 	otx2_disable_mbox_intr(pf);

@@ -1,11 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*  Marvell OcteonTx2 RVU Admin Function driver
+/* Marvell RVU Admin Function driver
  *
- * Copyright (C) 2018 Marvell International Ltd.
+ * Copyright (C) 2018 Marvell.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
  */
 
 #ifndef RVU_REG_H
@@ -266,6 +263,7 @@
 #define NIX_AF_SDP_TX_FIFO_STATUS	(0x0640)
 #define NIX_AF_TX_NPC_CAPTURE_CONFIG	(0x0660)
 #define NIX_AF_TX_NPC_CAPTURE_INFO	(0x0670)
+#define NIX_AF_SEB_CFG			(0x05F0)
 
 #define NIX_AF_DEBUG_NPC_RESP_DATAX(a)          (0x680 | (a) << 3)
 #define NIX_AF_SMQX_CFG(a)                      (0x700 | (a) << 16)
@@ -704,5 +702,8 @@
 #define	APR_AF_LMT_CFG			(0x000ull)
 #define	APR_AF_LMT_MAP_BASE		(0x008ull)
 #define	APR_AF_LMT_CTL			(0x010ull)
+#define APR_LMT_MAP_ENT_DIS_SCH_CMP_SHIFT	23
+#define APR_LMT_MAP_ENT_SCH_ENA_SHIFT		22
+#define APR_LMT_MAP_ENT_DIS_LINE_PREF_SHIFT	21
 
 #endif /* RVU_REG_H */

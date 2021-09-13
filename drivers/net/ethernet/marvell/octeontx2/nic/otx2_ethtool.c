@@ -1,11 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0
-/* Marvell OcteonTx2 RVU Ethernet driver
+/* Marvell RVU Ethernet driver
  *
- * Copyright (C) 2020 Marvell International Ltd.
+ * Copyright (C) 2020 Marvell.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
  */
 
 #include <linux/pci.h>
@@ -19,8 +16,8 @@
 #include "otx2_common.h"
 #include "otx2_ptp.h"
 
-#define DRV_NAME	"octeontx2-nicpf"
-#define DRV_VF_NAME	"octeontx2-nicvf"
+#define DRV_NAME	"rvu-nicpf"
+#define DRV_VF_NAME	"rvu-nicvf"
 
 struct otx2_stat {
 	char name[ETH_GSTRING_LEN];

@@ -1,11 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0 */
-/*  Marvell OcteonTx2 RVU Admin Function driver
+/* Marvell RVU Admin Function driver
  *
- * Copyright (C) 2018 Marvell International Ltd.
+ * Copyright (C) 2018 Marvell.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
  */
 
 #ifndef RVU_H
@@ -245,6 +242,7 @@ struct rvu_pfvf {
 	u8	nix_tx_intf; /* NIX0_TX/NIX1_TX interface to NPC */
 	u8	lbkid;	     /* NIX0/1 lbk link ID */
 	u64     lmt_base_addr; /* Preseving the pcifunc's lmtst base addr*/
+	u64     lmt_map_ent_w1; /* Preseving the word1 of lmtst map table entry*/
 	unsigned long flags;
 	struct  sdp_node_info *sdp_info;
 };
@@ -556,9 +554,10 @@ static inline bool is_rvu_95xx_A0(struct rvu *rvu)
  */
 #define PCI_REVISION_ID_96XX		0x00
 #define PCI_REVISION_ID_95XX		0x10
-#define PCI_REVISION_ID_LOKI		0x20
+#define PCI_REVISION_ID_95XXN		0x20
 #define PCI_REVISION_ID_98XX		0x30
 #define PCI_REVISION_ID_95XXMM		0x40
+#define PCI_REVISION_ID_95XXO		0xE0
 
 static inline bool is_rvu_otx2(struct rvu *rvu)
 {
@@ -567,8 +566,8 @@ static inline bool is_rvu_otx2(struct rvu *rvu)
 	u8 midr = pdev->revision & 0xF0;
 
 	return (midr == PCI_REVISION_ID_96XX || midr == PCI_REVISION_ID_95XX ||
-		midr == PCI_REVISION_ID_LOKI || midr == PCI_REVISION_ID_98XX ||
-		midr == PCI_REVISION_ID_95XXMM);
+		midr == PCI_REVISION_ID_95XXN || midr == PCI_REVISION_ID_98XX ||
+		midr == PCI_REVISION_ID_95XXMM || midr == PCI_REVISION_ID_95XXO);
 }
 
 static inline u16 rvu_nix_chan_cgx(struct rvu *rvu, u8 cgxid,
@@ -639,6 +638,7 @@ static inline bool is_rvu_fwdata_valid(struct rvu *rvu)
 }
 
 int rvu_alloc_bitmap(struct rsrc_bmap *rsrc);
+void rvu_free_bitmap(struct rsrc_bmap *rsrc);
 int rvu_alloc_rsrc(struct rsrc_bmap *rsrc);
 void rvu_free_rsrc(struct rsrc_bmap *rsrc, int id);
 bool is_rsrc_free(struct rsrc_bmap *rsrc, int id);
