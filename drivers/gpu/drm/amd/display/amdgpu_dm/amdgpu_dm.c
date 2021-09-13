@@ -26,6 +26,24 @@
 /* The caprices of the preprocessor require that this be declared right here */
 #define CREATE_TRACE_POINTS
 
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/types.h>
+#include <linux/pm_runtime.h>
+#include <linux/pci.h>
+#include <linux/firmware.h>
+#include <linux/component.h>
+
+#include <drm/drm_atomic.h>
+#include <drm/drm_atomic_uapi.h>
+#include <drm/drm_atomic_helper.h>
+#include <drm/drm_dp_mst_helper.h>
+#include <drm/drm_fb_helper.h>
+#include <drm/drm_fourcc.h>
+#include <drm/drm_edid.h>
+#include <drm/drm_vblank.h>
+#include <drm/drm_audio_component.h>
+
 #include "dm_services_types.h"
 #include "dc.h"
 #include "dc_link_dp.h"
@@ -65,23 +83,6 @@
 #include "ivsrcid/ivsrcid_vislands30.h"
 
 #include "i2caux_interface.h"
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/types.h>
-#include <linux/pm_runtime.h>
-#include <linux/pci.h>
-#include <linux/firmware.h>
-#include <linux/component.h>
-
-#include <drm/drm_atomic.h>
-#include <drm/drm_atomic_uapi.h>
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_dp_mst_helper.h>
-#include <drm/drm_fb_helper.h>
-#include <drm/drm_fourcc.h>
-#include <drm/drm_edid.h>
-#include <drm/drm_vblank.h>
-#include <drm/drm_audio_component.h>
 
 #if defined(CONFIG_DRM_AMD_DC_DCN)
 #include "ivsrcid/dcn/irqsrcs_dcn_1_0.h"
