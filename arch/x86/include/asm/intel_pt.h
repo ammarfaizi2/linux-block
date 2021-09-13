@@ -24,6 +24,8 @@ enum pt_capabilities {
 	PT_CAP_psb_periods,
 };
 
+struct perf_event;
+
 #if defined(CONFIG_PERF_EVENTS) && defined(CONFIG_CPU_SUP_INTEL)
 void cpu_emergency_stop_pt(void);
 extern u32 intel_pt_validate_hw_cap(enum pt_capabilities cap);

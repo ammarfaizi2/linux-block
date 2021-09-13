@@ -12,6 +12,7 @@
 #include <uapi/linux/virtio_config.h>
 
 struct irq_affinity;
+struct cpumask;
 
 struct virtio_shm_region {
 	u64 addr;

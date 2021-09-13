@@ -10,6 +10,7 @@
 
 #include <linux/slab.h>
 #include <linux/uaccess.h>
+#include <linux/err.h>
 
 typedef struct sockptr_struct {
 	union {

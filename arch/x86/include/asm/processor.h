@@ -74,78 +74,6 @@ extern u16 __read_mostly tlb_lld_2m[NR_INFO];
 extern u16 __read_mostly tlb_lld_4m[NR_INFO];
 extern u16 __read_mostly tlb_lld_1g[NR_INFO];
 
-/*
- *  CPU type and hardware bug flags. Kept separately for each CPU.
- *  Members of this structure are referenced in head_32.S, so think twice
- *  before touching them. [mj]
- */
-
-struct cpuinfo_x86 {
-	__u8			x86;		/* CPU family */
-	__u8			x86_vendor;	/* CPU vendor */
-	__u8			x86_model;
-	__u8			x86_stepping;
-#ifdef CONFIG_X86_64
-	/* Number of 4K pages in DTLB/ITLB combined(in pages): */
-	int			x86_tlbsize;
-#endif
-#ifdef CONFIG_X86_VMX_FEATURE_NAMES
-	__u32			vmx_capability[NVMXINTS];
-#endif
-	__u8			x86_virt_bits;
-	__u8			x86_phys_bits;
-	/* CPUID returned core id bits: */
-	__u8			x86_coreid_bits;
-	__u8			cu_id;
-	/* Max extended CPUID function supported: */
-	__u32			extended_cpuid_level;
-	/* Maximum supported CPUID level, -1=no CPUID: */
-	int			cpuid_level;
-	/*
-	 * Align to size of unsigned long because the x86_capability array
-	 * is passed to bitops which require the alignment. Use unnamed
-	 * union to enforce the array is aligned to size of unsigned long.
-	 */
-	union {
-		__u32		x86_capability[NCAPINTS + NBUGINTS];
-		unsigned long	x86_capability_alignment;
-	};
-	char			x86_vendor_id[16];
-	char			x86_model_id[64];
-	/* in KB - valid for CPUS which support this call: */
-	unsigned int		x86_cache_size;
-	int			x86_cache_alignment;	/* In bytes */
-	/* Cache QoS architectural values, valid only on the BSP: */
-	int			x86_cache_max_rmid;	/* max index */
-	int			x86_cache_occ_scale;	/* scale to bytes */
-	int			x86_cache_mbm_width_offset;
-	int			x86_power;
-	unsigned long		loops_per_jiffy;
-	/* cpuid returned max cores value: */
-	u16			x86_max_cores;
-	u16			apicid;
-	u16			initial_apicid;
-	u16			x86_clflush_size;
-	/* number of cores as seen by the OS: */
-	u16			booted_cores;
-	/* Physical processor id: */
-	u16			phys_proc_id;
-	/* Logical processor id: */
-	u16			logical_proc_id;
-	/* Core id: */
-	u16			cpu_core_id;
-	u16			cpu_die_id;
-	u16			logical_die_id;
-	/* Index into per_cpu list: */
-	u16			cpu_index;
-	/*  Is SMT active on this core? */
-	bool			smt_active;
-	u32			microcode;
-	/* Address space bits used by the cache internally */
-	u8			x86_cache_bits;
-	unsigned		initialized : 1;
-} __randomize_layout;
-
 struct cpuid_regs {
 	u32 eax, ebx, ecx, edx;
 };
@@ -170,40 +98,6 @@ enum cpuid_regs_idx {
 #define X86_VENDOR_NUM		12
 
 #define X86_VENDOR_UNKNOWN	0xff
-
-/*
- * capabilities of CPUs
- */
-extern struct cpuinfo_x86	boot_cpu_data;
-extern struct cpuinfo_x86	new_cpu_data;
-
-extern __u32			cpu_caps_cleared[NCAPINTS + NBUGINTS];
-extern __u32			cpu_caps_set[NCAPINTS + NBUGINTS];
-
-#ifdef CONFIG_SMP
-DECLARE_PER_CPU_READ_MOSTLY(struct cpuinfo_x86, cpu_info);
-#define cpu_data(cpu)		per_cpu(cpu_info, cpu)
-#else
-#define cpu_info		boot_cpu_data
-#define cpu_data(cpu)		boot_cpu_data
-#endif
-
-extern const struct seq_operations cpuinfo_op;
-
-#define cache_line_size()	(boot_cpu_data.x86_cache_alignment)
-
-extern void cpu_detect(struct cpuinfo_x86 *c);
-
-static inline unsigned long long l1tf_pfn_limit(void)
-{
-	return BIT_ULL(boot_cpu_data.x86_cache_bits - 1 - PAGE_SHIFT);
-}
-
-extern void early_cpu_init(void);
-extern void identify_boot_cpu(void);
-extern void identify_secondary_cpu(struct cpuinfo_x86 *);
-extern void print_cpu_info(struct cpuinfo_x86 *);
-void print_cpu_msr(struct cpuinfo_x86 *);
 
 #ifdef CONFIG_X86_32
 extern int have_cpuid_p(void);
@@ -657,6 +551,7 @@ static inline unsigned int cpuid_edx(unsigned int op)
 	return edx;
 }
 
+struct cpuinfo_x86;
 extern void select_idle_routine(const struct cpuinfo_x86 *c);
 extern void amd_e400_c1e_apic_setup(void);
 

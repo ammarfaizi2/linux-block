@@ -173,12 +173,8 @@ extern int safe_smp_processor_id(void);
 #endif
 
 #else /* !CONFIG_SMP */
-#define wbinvd_on_cpu(cpu)     wbinvd()
-static inline int wbinvd_on_all_cpus(void)
-{
-	wbinvd();
-	return 0;
-}
+#define wbinvd_on_cpu(cpu)	wbinvd()
+#define wbinvd_on_all_cpus()	({ wbinvd(); 0; })
 #endif /* CONFIG_SMP */
 
 extern unsigned disabled_cpus;
