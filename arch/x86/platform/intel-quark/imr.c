@@ -25,7 +25,6 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <asm-generic/sections.h>
 #include <asm/cpu_device_id.h>
 #include <asm/imr.h>
 #include <asm/iosf_mbi.h>
@@ -35,6 +34,8 @@
 #include <linux/init.h>
 #include <linux/mm.h>
 #include <linux/types.h>
+
+#include <asm-generic/sections.h>
 
 struct imr_device {
 	bool		init;
