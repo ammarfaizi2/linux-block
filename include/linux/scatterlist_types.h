@@ -6,8 +6,6 @@
 #include <linux/types.h>
 #include <linux/bug.h>
 
-#include <asm/io.h>
-
 struct scatterlist {
 	unsigned long	page_link;
 	unsigned int	offset;
