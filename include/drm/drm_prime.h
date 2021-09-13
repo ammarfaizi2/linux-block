@@ -50,6 +50,7 @@ struct drm_prime_file_private {
 };
 
 struct device;
+struct vm_area_struct;
 
 struct dma_buf_export_info;
 struct dma_buf;

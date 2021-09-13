@@ -9,6 +9,7 @@
 #include <linux/scatterlist.h>
 #include <linux/blk-mq.h>
 
+struct device;
 
 /*
  * **********************  FC-NVME LS API ********************
