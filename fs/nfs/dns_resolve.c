@@ -7,6 +7,7 @@
  * Resolves DNS hostnames into valid ip addresses
  */
 
+#include <linux/slab.h>
 #include <linux/types.h>
 
 #ifdef CONFIG_NFS_USE_KERNEL_DNS
@@ -40,7 +41,6 @@ ssize_t nfs_dns_resolve_name(struct net *net, char *name, size_t namelen,
 #include <linux/hash.h>
 #include <linux/string.h>
 #include <linux/kmod.h>
-#include <linux/slab.h>
 #include <linux/socket.h>
 #include <linux/seq_file.h>
 #include <linux/inet.h>
