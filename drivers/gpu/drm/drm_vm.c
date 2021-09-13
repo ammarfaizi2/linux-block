@@ -38,11 +38,12 @@
 #include <linux/seq_file.h>
 #include <linux/vmalloc.h>
 #include <linux/pgtable.h>
+#include <linux/slab.h>
 
 #if defined(__ia64__)
 #include <linux/efi.h>
-#include <linux/slab.h>
 #endif
+
 #include <linux/mem_encrypt.h>
 
 #include <drm/drm_device.h>
