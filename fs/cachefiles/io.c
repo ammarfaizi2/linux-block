@@ -271,6 +271,7 @@ presubmission_error:
 static enum netfs_read_source cachefiles_prepare_read(struct netfs_read_subrequest *subreq,
 						      loff_t i_size)
 {
+#if 0
 	struct fscache_operation *op = subreq->rreq->cache_resources.cache_priv;
 	struct cachefiles_object *object;
 	struct cachefiles_cache *cache;
@@ -335,6 +336,9 @@ download_and_store:
 out:
 	cachefiles_end_secure(cache, saved_cred);
 	return ret;
+#endif
+	return subreq->start >= i_size ?
+		NETFS_FILL_WITH_ZEROES : NETFS_DOWNLOAD_FROM_SERVER;
 }
 
 /*
@@ -359,6 +363,7 @@ static int cachefiles_prepare_write(struct netfs_cache_resources *cres,
 static int cachefiles_prepare_fallback_write(struct netfs_cache_resources *cres,
 					     pgoff_t index)
 {
+#if 0
 	struct fscache_operation *op = cres->cache_priv;
 	struct cachefiles_object *object;
 	struct cachefiles_cache *cache;
@@ -369,6 +374,8 @@ static int cachefiles_prepare_fallback_write(struct netfs_cache_resources *cres,
 	cache = container_of(object->fscache.cache,
 			     struct cachefiles_cache, cache);
 	return cachefiles_has_space(cache, 0, 1);
+#endif
+	return -ENOBUFS;
 }
 
 /*
@@ -376,6 +383,7 @@ static int cachefiles_prepare_fallback_write(struct netfs_cache_resources *cres,
  */
 static void cachefiles_end_operation(struct netfs_cache_resources *cres)
 {
+#if 0
 	struct fscache_operation *op = cres->cache_priv;
 	struct file *file = cres->cache_priv2;
 
@@ -387,8 +395,8 @@ static void cachefiles_end_operation(struct netfs_cache_resources *cres)
 		fscache_op_complete(op, false);
 		fscache_put_operation(op);
 	}
-
 	_leave("");
+#endif
 }
 
 static const struct netfs_cache_ops cachefiles_netfs_cache_ops = {
@@ -406,6 +414,7 @@ static const struct netfs_cache_ops cachefiles_netfs_cache_ops = {
 int cachefiles_begin_operation(struct netfs_cache_resources *cres,
 			       struct fscache_operation *op)
 {
+#if 0
 	struct cachefiles_object *object;
 	struct cachefiles_cache *cache;
 	struct path path;
@@ -441,5 +450,7 @@ int cachefiles_begin_operation(struct netfs_cache_resources *cres,
 
 error_file:
 	fput(file);
+#endif
+	cres->ops = &cachefiles_netfs_cache_ops;
 	return -EIO;
 }
