@@ -13,6 +13,8 @@
 #include <asm/ptrace.h>
 #include <asm/page.h>
 
+#include <asm/vdso/processor_64.h>
+
 /*
  * User lives in his very own context, and cannot reference us. Note
  * that TASK_SIZE is a misnomer, it really gives maximum user virtual
