@@ -9,6 +9,8 @@
 #ifndef _LINUX_OF_PDT_H
 #define _LINUX_OF_PDT_H
 
+#include <linux/of_types.h>
+
 /* overridable operations for calling into the PROM */
 struct of_pdt_ops {
 	/*
