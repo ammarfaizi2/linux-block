@@ -30,6 +30,7 @@
 #include <linux/bitops.h>
 #include <linux/atomic.h>
 #include <asm/percpu.h>
+#include <asm/current.h>
 
 DECLARE_PER_CPU(cpumask_t, cpu_sibling_map);
 extern cpumask_t cpu_core_map[NR_CPUS];
