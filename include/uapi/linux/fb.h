@@ -2,6 +2,7 @@
 #ifndef _UAPI_LINUX_FB_H
 #define _UAPI_LINUX_FB_H
 
+#include <linux/ioctl.h>
 #include <linux/types.h>
 #include <linux/i2c.h>
 
