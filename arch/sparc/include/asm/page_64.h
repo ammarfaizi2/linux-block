@@ -2,6 +2,7 @@
 #ifndef _SPARC64_PAGE_H
 #define _SPARC64_PAGE_H
 
+#include <asm/adi.h>
 #include <linux/const.h>
 
 #define PAGE_SHIFT   13
@@ -156,6 +157,28 @@ extern unsigned long PAGE_OFFSET;
 #define virt_to_phys __pa
 #define phys_to_virt __va
 
+static inline unsigned long __untagged_addr(unsigned long start)
+{
+	if (adi_capable()) {
+		long addr = start;
+
+		/* If userspace has passed a versioned address, kernel
+		 * will not find it in the VMAs since it does not store
+		 * the version tags in the list of VMAs. Storing version
+		 * tags in list of VMAs is impractical since they can be
+		 * changed any time from userspace without dropping into
+		 * kernel. Any address search in VMAs will be done with
+		 * non-versioned addresses. Ensure the ADI version bits
+		 * are dropped here by sign extending the last bit before
+		 * ADI bits. IOMMU does not implement version tags.
+		 */
+		return (addr << (long)adi_nbits()) >> (long)adi_nbits();
+	}
+
+	return start;
+}
+#define untagged_addr(addr) \
+	((__typeof__(addr))(__untagged_addr((unsigned long)(addr))))
 #endif /* !(__ASSEMBLY__) */
 
 #include <asm-generic/getorder.h>
