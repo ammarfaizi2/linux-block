@@ -374,7 +374,7 @@ static inline pgprot_t pgprot_noncached(pgprot_t prot)
 #define pgprot_noncached pgprot_noncached
 
 #if defined(CONFIG_HUGETLB_PAGE) || defined(CONFIG_TRANSPARENT_HUGEPAGE)
-pte_t arch_make_huge_pte(pte_t entry, unsigned int shift, vm_flags_t flags);
+pte_t arch_make_huge_pte(pte_t entry, unsigned int shift, unsigned long flags);
 #define arch_make_huge_pte arch_make_huge_pte
 static inline unsigned long __pte_default_huge_mask(void)
 {
@@ -1051,29 +1051,6 @@ static inline int io_remap_pfn_range(struct vm_area_struct *vma,
 }
 #define io_remap_pfn_range io_remap_pfn_range
 
-static inline unsigned long __untagged_addr(unsigned long start)
-{
-	if (adi_capable()) {
-		long addr = start;
-
-		/* If userspace has passed a versioned address, kernel
-		 * will not find it in the VMAs since it does not store
-		 * the version tags in the list of VMAs. Storing version
-		 * tags in list of VMAs is impractical since they can be
-		 * changed any time from userspace without dropping into
-		 * kernel. Any address search in VMAs will be done with
-		 * non-versioned addresses. Ensure the ADI version bits
-		 * are dropped here by sign extending the last bit before
-		 * ADI bits. IOMMU does not implement version tags.
-		 */
-		return (addr << (long)adi_nbits()) >> (long)adi_nbits();
-	}
-
-	return start;
-}
-#define untagged_addr(addr) \
-	((__typeof__(addr))(__untagged_addr((unsigned long)(addr))))
-
 static inline bool pte_access_permitted(pte_t pte, bool write)
 {
 	u64 prot;
@@ -1110,7 +1087,7 @@ unsigned long get_fb_unmapped_area(struct file *filp, unsigned long,
 
 void sun4v_register_fault_status(void);
 void sun4v_ktsb_register(void);
-void __init cheetah_ecache_flush_init(void);
+void cheetah_ecache_flush_init(void);
 void sun4v_patch_tlb_handlers(void);
 
 extern unsigned long cmdline_memory_size;
