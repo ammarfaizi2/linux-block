@@ -47,6 +47,8 @@
 
 #ifndef __ASSEMBLY__
 
+#include <linux/bitops.h>
+
 typedef struct {
 	unsigned char seg;
 } mm_segment_t;
