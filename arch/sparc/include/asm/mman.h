@@ -2,6 +2,8 @@
 #ifndef __SPARC_MMAN_H__
 #define __SPARC_MMAN_H__
 
+#include <asm/pgtable.h>
+
 #include <uapi/asm/mman.h>
 
 #ifndef __ASSEMBLY__
