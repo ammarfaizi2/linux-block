@@ -5,6 +5,11 @@
  * Architecture specific compatibility types
  */
 #include <linux/types.h>
+#include <linux/sched/thread_info_api.h>
+
+#include <vdso/time.h>
+#include <vdso/time32.h>
+#include <vdso/time64.h>
 
 #define compat_mode_t	compat_mode_t
 typedef u16		compat_mode_t;
