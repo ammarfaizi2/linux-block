@@ -9,6 +9,10 @@
 #ifndef LEON_H_INCLUDE
 #define LEON_H_INCLUDE
 
+#include <linux/types.h>
+
+#include <uapi/asm/asi.h>
+
 /* mmu register access, ASI_LEON_MMUREGS */
 #define LEON_CNR_CTRL		0x000
 #define LEON_CNR_CTXP		0x100
@@ -215,6 +219,8 @@ struct leon3_cacheregs {
 
 #include <linux/irq.h>
 #include <linux/interrupt.h>
+
+#include <asm/pgtsrmmu.h>
 
 struct device_node;
 struct task_struct;
