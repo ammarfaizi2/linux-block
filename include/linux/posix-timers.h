@@ -174,6 +174,8 @@ static inline void posix_cputimers_rt_watchdog(struct posix_cputimers *pct,
 	.posix_cputimers = {						\
 		.bases = INIT_CPU_TIMERBASES(s.posix_cputimers.bases),	\
 	},
+
+void itimer_restart(void);
 #else
 struct posix_cputimers { };
 struct cpu_timer { };
@@ -181,6 +183,7 @@ struct cpu_timer { };
 static inline void posix_cputimers_init(struct posix_cputimers *pct) { }
 static inline void posix_cputimers_group_init(struct posix_cputimers *pct,
 					      u64 cpu_limit) { }
+static inline void itimer_restart(void) { }
 #endif
 
 #ifdef CONFIG_POSIX_CPU_TIMERS_TASK_WORK

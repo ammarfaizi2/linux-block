@@ -150,6 +150,19 @@ COMPAT_SYSCALL_DEFINE2(getitimer, int, which,
 }
 #endif
 
+void itimer_restart(void)
+{
+	struct task_struct *tsk = current;
+	struct hrtimer *tmr = &tsk->signal->real_timer;
+
+	lockdep_assert_task_sighand_held(current);
+
+	if (!hrtimer_is_queued(tmr) && tsk->signal->it_real_incr != 0) {
+		hrtimer_forward_now(tmr, tsk->signal->it_real_incr);
+		hrtimer_restart(tmr);
+	}
+}
+
 /*
  * The timer is automagically restarted, when interval != 0
  */
