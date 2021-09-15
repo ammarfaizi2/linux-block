@@ -133,6 +133,7 @@ extern unsigned long pfn_base;
 #define pfn_valid(pfn)		(((pfn) >= (pfn_base)) && (((pfn)-(pfn_base)) < max_mapnr))
 #define virt_addr_valid(kaddr)	((((unsigned long)(kaddr)-PAGE_OFFSET)>>PAGE_SHIFT) < max_mapnr)
 
+#include <asm-generic/pgtable-nopud.h>
 #include <asm-generic/memory_model.h>
 #include <asm-generic/getorder.h>
 
