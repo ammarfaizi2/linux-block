@@ -9,6 +9,7 @@
  *  Copyright (C) 1998 Jakub Jelinek (jj@sunsite.mff.cuni.cz)
  */
 
+#include <asm/page.h>
 #include <linux/const.h>
 
 #define PMD_SHIFT		18
@@ -24,6 +25,7 @@
 #ifndef __ASSEMBLY__
 #include <asm-generic/pgtable-nopud.h>
 
+#include <linux/bug.h>
 #include <linux/spinlock.h>
 #include <linux/mm_types.h>
 #include <asm/types.h>
