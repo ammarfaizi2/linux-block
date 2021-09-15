@@ -439,7 +439,7 @@ static enum hrtimer_restart i915_sample(struct hrtimer *hrtimer)
 	engines_sample(gt, period_ns);
 	frequency_sample(gt, period_ns);
 
-	hrtimer_forward(hrtimer, now, ns_to_ktime(PERIOD));
+	hrtimer_forward_now(hrtimer, ns_to_ktime(PERIOD));
 
 	return HRTIMER_RESTART;
 }
