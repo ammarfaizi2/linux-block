@@ -387,35 +387,27 @@ static enum hrtimer_restart posix_timer_fn(struct hrtimer *timer)
 			ktime_t now = hrtimer_cb_get_time(timer);
 
 			/*
-			 * FIXME: What we really want, is to stop this
-			 * timer completely and restart it in case the
-			 * SIG_IGN is removed. This is a non trivial
-			 * change which involves sighand locking
-			 * (sigh !), which we don't want to do late in
-			 * the release cycle.
-			 *
-			 * For now we just let timers with an interval
-			 * less than a jiffie expire every jiffie to
-			 * avoid softirq starvation in case of SIG_IGN
-			 * and a very small interval, which would put
-			 * the timer right back on the softirq pending
-			 * list. By moving now ahead of time we trick
-			 * hrtimer_forward() to expire the timer
-			 * later, while we still maintain the overrun
-			 * accuracy, but have some inconsistency in
-			 * the timer_gettime() case. This is at least
-			 * better than a starved softirq. A more
-			 * complex fix which solves also another related
-			 * inconsistency is already in the pipeline.
+			 * What we really want, is to stop this timer
+			 * completely and restart it in case the SIG_IGN is
+			 * removed. That's not trivial. For now we just let
+			 * timers with an interval less than a jiffie
+			 * expire every jiffie to avoid softirq starvation
+			 * in case of SIG_IGN and a very small interval,
+			 * which would put the timer right back on the
+			 * softirq pending list. By moving now ahead of
+			 * time we trick hrtimer_forward() to expire the
+			 * timer later, while we still maintain the overrun
+			 * accuracy, but have some inconsistency in the
+			 * timer_gettime() case. This is at least better
+			 * than a starved softirq.
 			 */
-#ifdef CONFIG_HIGH_RES_TIMERS
-			{
+			if (IS_ENABLED(CONFIG_HIGH_RES_TIMERS)) {
 				ktime_t kj = NSEC_PER_SEC / HZ;
 
 				if (timr->it_interval < kj)
 					now = ktime_add(now, kj);
 			}
-#endif
+
 			timr->it_overrun += hrtimer_forward(timer, now,
 							    timr->it_interval);
 			ret = HRTIMER_RESTART;
