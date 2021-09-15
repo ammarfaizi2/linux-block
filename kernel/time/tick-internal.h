@@ -177,6 +177,7 @@ void clock_was_set(unsigned int bases);
 void clock_was_set_delayed(void);
 
 void hrtimers_resume_local(void);
+u64 hrtimer_forward(struct hrtimer *timer, ktime_t now, ktime_t interval);
 
 /* Since jiffies uses a simple TICK_NSEC multiplier
  * conversion, the .shift value could be zero. However

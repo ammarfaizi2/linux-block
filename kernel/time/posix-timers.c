@@ -33,6 +33,7 @@
 #include <linux/time_namespace.h>
 
 #include "timekeeping.h"
+#include "tick-internal.h"
 #include "posix-timers.h"
 
 /*
