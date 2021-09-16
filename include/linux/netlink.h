@@ -2,12 +2,11 @@
 #ifndef __LINUX_NETLINK_H
 #define __LINUX_NETLINK_H
 
+#include <linux/skbuff_types.h>
+#include <linux/string.h>
 
-#include <linux/skbuff_api.h>
-#include <linux/capability.h>
-#include <linux/skbuff.h>
-#include <linux/export.h>
-#include <net/scm.h>
+#include <net/scm_types.h>
+
 #include <uapi/linux/netlink.h>
 
 struct net;
