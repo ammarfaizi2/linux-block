@@ -1714,6 +1714,13 @@ static void __run_hrtimer(struct hrtimer_cpu_base *cpu_base,
 	base->running = NULL;
 }
 
+static void hrtimer_del_runaway(struct hrtimer_clock_base *base,
+				struct hrtimer *timer)
+{
+	__remove_hrtimer(timer, base, HRTIMER_STATE_INACTIVE, 0);
+	pr_warn("Runaway hrtimer %p %ps stopped\n", timer, timer->function);
+}
+
 static void __hrtimer_run_queues(struct hrtimer_cpu_base *cpu_base, ktime_t now,
 				 unsigned long flags, unsigned int active_mask)
 {
@@ -1722,6 +1729,8 @@ static void __hrtimer_run_queues(struct hrtimer_cpu_base *cpu_base, ktime_t now,
 
 	for_each_active_base(base, cpu_base, active) {
 		struct timerqueue_node *node;
+		struct hrtimer *last = NULL;
+		unsigned int cnt = 0;
 		ktime_t basenow;
 
 		basenow = ktime_add(now, base->offset);
@@ -1730,6 +1739,22 @@ static void __hrtimer_run_queues(struct hrtimer_cpu_base *cpu_base, ktime_t now,
 			struct hrtimer *timer;
 
 			timer = container_of(node, struct hrtimer, node);
+
+			/*
+			 * Catch timers which rearm themself with a expiry
+			 * time in the past over and over which makes this
+			 * loop run forever.
+			 */
+			if (IS_ENABLED(CONFIG_DEBUG_OBJECTS_TIMERS)) {
+				if (unlikely(last == timer)) {
+					if (++cnt == 10) {
+						hrtimer_del_runaway(base, timer);
+						continue;
+					}
+				}
+				last = timer;
+				cnt = 0;
+			}
 
 			/*
 			 * The immediate goal for using the softexpires is
