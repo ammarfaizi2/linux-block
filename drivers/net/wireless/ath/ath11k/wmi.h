@@ -2244,6 +2244,8 @@ struct wmi_init_cmd {
 	u32 num_host_mem_chunks;
 } __packed;
 
+#define WMI_RSRC_CFG_FLAG1_BSS_CHANNEL_INFO_64 BIT(5)
+
 struct wmi_resource_config {
 	u32 tlv_header;
 	u32 num_vdevs;
@@ -2960,6 +2962,7 @@ struct wmi_pdev_bss_chan_info_req_cmd {
 	u32 tlv_header;
 	/* ref wmi_bss_chan_info_req_type */
 	u32 req_type;
+	u32 pdev_id;
 } __packed;
 
 struct wmi_ap_ps_peer_cmd {
@@ -4056,7 +4059,6 @@ struct wmi_vdev_stopped_event {
 } __packed;
 
 struct wmi_pdev_bss_chan_info_event {
-	u32 pdev_id;
 	u32 freq;	/* Units in MHz */
 	u32 noise_floor;	/* units are dBm */
 	/* rx clear - how often the channel was unused */
@@ -4074,6 +4076,7 @@ struct wmi_pdev_bss_chan_info_event {
 	/*rx_cycle cnt for my bss in 64bits format */
 	u32 rx_bss_cycle_count_low;
 	u32 rx_bss_cycle_count_high;
+	u32 pdev_id;
 } __packed;
 
 #define WMI_VDEV_INSTALL_KEY_COMPL_STATUS_SUCCESS 0
@@ -5014,7 +5017,7 @@ struct target_resource_config {
 	u32 vo_minfree;
 	u32 rx_batchmode;
 	u32 tt_support;
-	u32 atf_config;
+	u32 flag1;
 	u32 iphdr_pad_config;
 	u32 qwrap_config:16,
 	    alloc_frag_desc_for_data_pkt:16;
