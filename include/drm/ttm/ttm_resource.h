@@ -26,7 +26,6 @@
 #define _TTM_RESOURCE_H_
 
 #include <linux/list.h>
-#include <linux/dma-fence-api.h>
 #include <linux/types.h>
 #include <linux/mutex.h>
 #include <linux/iosys-map.h>
@@ -37,6 +36,7 @@
 
 #define TTM_MAX_BO_PRIORITY	4U
 
+struct dma_fence;
 struct ttm_device;
 struct ttm_resource_manager;
 struct ttm_resource;
