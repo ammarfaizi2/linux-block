@@ -553,6 +553,29 @@ static inline unsigned int decode_config3(struct cpuinfo_mips *c)
 	return config3 & MIPS_CONF_M;
 }
 
+/*
+ * This is used for calculating the real page sizes
+ * for FTLB or VTLB + FTLB configurations.
+ */
+static inline unsigned int page_size_ftlb(unsigned int mmuextdef)
+{
+	switch (mmuextdef) {
+	case MIPS_CONF4_MMUEXTDEF_FTLBSIZEEXT:
+		if (PAGE_SIZE == (1 << 30))
+			return 5;
+		if (PAGE_SIZE == (1llu << 32))
+			return 6;
+		if (PAGE_SIZE > (256 << 10))
+			return 7; /* reserved */
+		fallthrough;
+	case MIPS_CONF4_MMUEXTDEF_VTLBSIZEEXT:
+		return (PAGE_SHIFT - 10) / 2;
+	default:
+		panic("Invalid FTLB configuration with Conf4_mmuextdef=%d value\n",
+		      mmuextdef >> 14);
+	}
+}
+
 static inline unsigned int decode_config4(struct cpuinfo_mips *c)
 {
 	unsigned int config4;
