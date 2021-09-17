@@ -11,7 +11,10 @@
 #include <linux/ptrace.h>
 #include <linux/thread_info.h>
 #include <linux/bitops.h>
+#include <linux/preempt.h>
+#include <linux/sched/task_flags.h>
 
+#include <asm/signal.h>
 #include <asm/mipsregs.h>
 #include <asm/cpu.h>
 #include <asm/cpu-features.h>
