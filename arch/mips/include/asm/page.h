@@ -167,8 +167,6 @@ extern bool __virt_addr_valid(const volatile void *kaddr);
 #define virt_addr_valid(kaddr)						\
 	__virt_addr_valid((const volatile void *) (kaddr))
 
-#define VM_DATA_DEFAULT_FLAGS	VM_DATA_FLAGS_TSK_EXEC
-
 extern unsigned long __kaslr_offset;
 static inline unsigned long kaslr_offset(void)
 {
