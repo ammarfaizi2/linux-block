@@ -12,6 +12,8 @@
 
 #include <asm/mipsregs.h>
 
+struct task_struct;
+
 void mips_install_watch_registers(struct task_struct *t);
 void mips_read_watch_registers(void);
 void mips_clear_watch_registers(void);
