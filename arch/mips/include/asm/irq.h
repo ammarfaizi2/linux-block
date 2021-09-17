@@ -13,6 +13,7 @@
 #include <linux/smp.h>
 
 #include <asm/mipsmtregs.h>
+#include <asm/thread_info.h>
 
 #include <irq.h>
 
