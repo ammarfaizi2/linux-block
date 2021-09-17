@@ -6,6 +6,9 @@
 #include <linux/spinlock.h>
 #include <linux/wait.h>
 
+#include <asm/pgtable_types.h>
+#include <asm/page_types.h>
+
 typedef struct {
 	union {
 		u64 asid[NR_CPUS];
