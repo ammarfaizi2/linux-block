@@ -2,6 +2,9 @@
 #define _ASM_PAGE_TYPES_H
 
 #include <linux/const.h>
+#include <linux/pfn.h>
+
+#include <asm/addrspace.h>
 
 /*
  * PAGE_SHIFT determines the page size
@@ -35,6 +38,18 @@
 #define HPAGE_MASK	({BUILD_BUG(); 0; })
 #define HUGETLB_PAGE_ORDER	({BUILD_BUG(); 0; })
 #endif /* CONFIG_MIPS_HUGE_TLB_SUPPORT */
+
+/*
+ * It's normally defined only for FLATMEM config but it's
+ * used in our early mem init code for all memory models.
+ * So always define it.
+ */
+#ifdef CONFIG_MIPS_AUTO_PFN_OFFSET
+extern unsigned long ARCH_PFN_OFFSET;
+# define ARCH_PFN_OFFSET	ARCH_PFN_OFFSET
+#else
+# define ARCH_PFN_OFFSET	PFN_UP(PHYS_OFFSET)
+#endif
 
 /*
  * These are used to make use of C type-checking..
@@ -78,4 +93,61 @@ typedef struct { unsigned long pgprot; } pgprot_t;
 
 #define VM_DATA_DEFAULT_FLAGS	VM_DATA_FLAGS_TSK_EXEC
 
+/*
+ * __pa()/__va() should be used only during mem init.
+ */
+static inline unsigned long ___pa(unsigned long x)
+{
+	if (IS_ENABLED(CONFIG_64BIT)) {
+		/*
+		 * For MIPS64 the virtual address may either be in one of
+		 * the compatibility segements ckseg0 or ckseg1, or it may
+		 * be in xkphys.
+		 */
+		return x < CKSEG0 ? XPHYSADDR(x) : CPHYSADDR(x);
+	}
+
+	if (!IS_ENABLED(CONFIG_EVA)) {
+		/*
+		 * We're using the standard MIPS32 legacy memory map, ie.
+		 * the address x is going to be in kseg0 or kseg1. We can
+		 * handle either case by masking out the desired bits using
+		 * CPHYSADDR.
+		 */
+		return CPHYSADDR(x);
+	}
+
+	/*
+	 * EVA is in use so the memory map could be anything, making it not
+	 * safe to just mask out bits.
+	 */
+	return x - PAGE_OFFSET + PHYS_OFFSET;
+}
+#define __pa(x)		___pa((unsigned long)(x))
+#define __va(x)		((void *)((unsigned long)(x) + PAGE_OFFSET - PHYS_OFFSET))
+
+/*
+ * RELOC_HIDE was originally added by 6007b903dfe5f1d13e0c711ac2894bdd4a61b1ad
+ * (lmo) rsp. 8431fd094d625b94d364fe393076ccef88e6ce18 (kernel.org).  The
+ * discussion can be found in
+ * https://lore.kernel.org/lkml/a2ebde260608230500o3407b108hc03debb9da6e62c@mail.gmail.com
+ *
+ * It is unclear if the misscompilations mentioned in
+ * https://lore.kernel.org/lkml/1281303490-390-1-git-send-email-namhyung@gmail.com
+ * also affect MIPS so we keep this one until GCC 3.x has been retired
+ * before we can apply https://patchwork.linux-mips.org/patch/1541/
+ */
+#define __pa_symbol_nodebug(x)	__pa(RELOC_HIDE((unsigned long)(x), 0))
+
+#ifdef CONFIG_DEBUG_VIRTUAL
+extern phys_addr_t __phys_addr_symbol(unsigned long x);
+#else
+#define __phys_addr_symbol(x)	__pa_symbol_nodebug(x)
+#endif
+
+#ifndef __pa_symbol
+#define __pa_symbol(x)		__phys_addr_symbol((unsigned long)(x))
+#endif
+
+#define pfn_to_kaddr(pfn)	__va((pfn) << PAGE_SHIFT)
 #endif /* _ASM_PAGE_TYPES_H */
