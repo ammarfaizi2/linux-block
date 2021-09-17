@@ -14,6 +14,7 @@
 #ifndef __ASSEMBLY__
 
 #include <asm/processor.h>
+#include <asm/page_types.h>
 
 /*
  * low level task data that entry.S needs immediate access to
