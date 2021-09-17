@@ -12,6 +12,8 @@
 
 #ifndef __ASSEMBLY__
 
+#include <asm/cpu-features.h>
+
 /*
  * C macros
  */
