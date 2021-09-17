@@ -23,6 +23,7 @@
 #include <asm/mipsregs.h>
 #include <asm/prefetch.h>
 #include <asm/vdso/processor.h>
+#include <asm/ptrace_types.h>
 
 /*
  * System setup and hardware flags..
