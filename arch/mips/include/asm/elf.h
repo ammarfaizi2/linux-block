@@ -9,12 +9,12 @@
 #define _ASM_ELF_H
 
 #include <linux/auxvec.h>
-#include <linux/fs.h>
-#include <linux/mm_types.h>
 
 #include <uapi/linux/elf.h>
 
 #include <asm/current.h>
+
+struct file;
 
 /* ELF header e_flags defines. */
 /* MIPS architecture level. */
