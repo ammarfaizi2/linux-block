@@ -76,4 +76,6 @@ typedef struct { unsigned long pgprot; } pgprot_t;
 #define __pgprot(x)	((pgprot_t) { (x) } )
 #define pte_pgprot(x)	__pgprot(pte_val(x) & ~_PFN_MASK)
 
+#define VM_DATA_DEFAULT_FLAGS	VM_DATA_FLAGS_TSK_EXEC
+
 #endif /* _ASM_PAGE_TYPES_H */
