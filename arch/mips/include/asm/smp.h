@@ -19,6 +19,7 @@
 
 #include <linux/atomic.h>
 #include <asm/smp-ops.h>
+#include <asm/thread_info.h>
 
 extern int smp_num_siblings;
 extern cpumask_t cpu_sibling_map[];
