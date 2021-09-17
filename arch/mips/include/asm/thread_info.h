@@ -70,6 +70,8 @@ static inline struct thread_info *current_thread_info(void)
 	return __current_thread_info;
 }
 
+#define current_thread_info current_thread_info
+
 #endif /* !__ASSEMBLY__ */
 
 /* thread information allocation */
