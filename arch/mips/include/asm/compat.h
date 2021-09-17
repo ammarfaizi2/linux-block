@@ -4,6 +4,7 @@
 /*
  * Architecture specific compatibility types
  */
+#include <linux/sched/thread_info_api.h>
 #include <linux/thread_info.h>
 #include <linux/types.h>
 #include <asm/page.h>
@@ -21,6 +22,10 @@ typedef __compat_gid_t	__compat_gid32_t;
 typedef u32		compat_sigset_word;
 
 #include <asm-generic/compat.h>
+
+#include <vdso/time.h>
+#include <vdso/time32.h>
+#include <vdso/time64.h>
 
 #define COMPAT_USER_HZ		100
 #define COMPAT_UTS_MACHINE	"mips\0\0\0"
