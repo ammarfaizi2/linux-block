@@ -35,6 +35,8 @@ extern raw_spinlock_t i8259A_lock;
 
 extern void make_8259A_irq(unsigned int irq);
 
+struct device_node;
+
 extern void init_i8259_irqs(void);
 extern struct irq_domain *__init_i8259_irqs(struct device_node *node);
 
