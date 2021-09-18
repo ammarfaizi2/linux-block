@@ -5,12 +5,11 @@
 #include <linux/atomic_api.h>
 #include <linux/rcupdate.h>
 #include <linux/percpu.h>
-#include <linux/gfp_api.h>
+#include <linux/gfp_types.h>
 #include <linux/kernel.h>
 #include <linux/atomic.h>
 #include <linux/sched/task_flags.h>
 #include <linux/mm_types.h>
-#include <linux/gfp.h>
 #include <linux/sync_core.h>
 
 /*
