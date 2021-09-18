@@ -697,8 +697,10 @@ static inline bool bio_check_ro(struct bio *bio)
 
 static noinline int should_fail_bio(struct bio *bio)
 {
+#ifdef CONFIG_FAIL_MAKE_REQUEST
 	if (should_fail_request(bdev_whole(bio->bi_bdev), bio->bi_iter.bi_size))
 		return -EIO;
+#endif
 	return 0;
 }
 ALLOW_ERROR_INJECTION(should_fail_bio, ERRNO);
