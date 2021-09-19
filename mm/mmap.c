@@ -9,6 +9,7 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+#include <asm/pgalloc.h>
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/backing-dev.h>
