@@ -133,18 +133,6 @@ extern int arch_task_struct_size __read_mostly;
 # define arch_task_struct_size (sizeof(struct task_struct))
 #endif
 
-#ifdef CONFIG_VMAP_STACK
-static inline struct vm_struct *task_stack_vm_area(const struct task_struct *t)
-{
-	return t->stack_vm_area;
-}
-#else
-static inline struct vm_struct *task_stack_vm_area(const struct task_struct *t)
-{
-	return NULL;
-}
-#endif
-
 /*
  * Protects ->fs, ->files, ->mm, ->group_info, ->comm, keyring
  * subscriptions and synchronises with wait4().  Also used in procfs.  Also

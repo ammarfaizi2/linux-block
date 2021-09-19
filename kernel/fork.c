@@ -240,7 +240,7 @@ static unsigned long *alloc_thread_stack_node(struct task_struct *tsk, int node)
 		/* Clear stale pointers from reused stack. */
 		memset(s->addr, 0, THREAD_SIZE);
 
-		tsk->stack_vm_area = s;
+		per_task(tsk, stack_vm_area) = s;
 		per_task(tsk, stack) = s->addr;
 		return s->addr;
 	}
@@ -262,7 +262,7 @@ static unsigned long *alloc_thread_stack_node(struct task_struct *tsk, int node)
 	 * so cache the vm_struct.
 	 */
 	if (stack) {
-		tsk->stack_vm_area = find_vm_area(stack);
+		per_task(tsk, stack_vm_area) = find_vm_area(stack);
 		per_task(tsk, stack) = stack;
 	}
 	return stack;
@@ -291,7 +291,7 @@ static inline void free_thread_stack(struct task_struct *tsk)
 
 		for (i = 0; i < NR_CACHED_STACKS; i++) {
 			if (this_cpu_cmpxchg(cached_stacks[i],
-					NULL, tsk->stack_vm_area) != NULL)
+					NULL, per_task(tsk, stack_vm_area)) != NULL)
 				continue;
 
 			return;
@@ -442,7 +442,7 @@ static void release_task_stack(struct task_struct *tsk)
 	free_thread_stack(tsk);
 	per_task(tsk, stack) = NULL;
 #ifdef CONFIG_VMAP_STACK
-	tsk->stack_vm_area = NULL;
+	per_task(tsk, stack_vm_area) = NULL;
 #endif
 }
 
@@ -924,7 +924,7 @@ static struct task_struct *dup_task_struct(struct task_struct *orig, int node)
 	 */
 	per_task(tsk, stack) = stack;
 #ifdef CONFIG_VMAP_STACK
-	tsk->stack_vm_area = stack_vm_area;
+	per_task(tsk, stack_vm_area) = stack_vm_area;
 #endif
 #ifdef CONFIG_THREAD_INFO_IN_TASK
 	refcount_set(&per_task(tsk, stack_refcount), 1);

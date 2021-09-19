@@ -10,6 +10,22 @@
 #include <linux/magic.h>
 #include <linux/sched/thread.h>
 
+#ifdef CONFIG_VMAP_STACK
+
+DECLARE_PER_TASK(struct vm_struct *, stack_vm_area);
+
+static inline struct vm_struct *task_stack_vm_area(const struct task_struct *t)
+{
+	return per_task(t, stack_vm_area);
+}
+#else
+static inline struct vm_struct *task_stack_vm_area(const struct task_struct *t)
+{
+	return NULL;
+}
+#endif
+
+
 #ifdef CONFIG_THREAD_INFO_IN_TASK
 
 DECLARE_PER_TASK(refcount_t, stack_refcount);
