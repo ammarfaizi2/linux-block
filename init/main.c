@@ -106,6 +106,8 @@
 #include <asm/sections.h>
 #include <asm/cacheflush.h>
 
+#include <../kernel/sched/sched.h>
+
 #define CREATE_TRACE_POINTS
 #include <trace/events/initcall.h>
 
@@ -933,6 +935,11 @@ asmlinkage __visible void __init __no_sanitize_address start_kernel(void)
 
 #ifdef CONFIG_POSIX_TIMERS
 	per_task(&init_task, posix_cputimers) = (struct posix_cputimers) __INIT_CPU_TIMERS(init_task);
+#endif
+
+#ifdef CONFIG_VIRT_CPU_ACCOUNTING_GEN
+	seqcount_init(&per_task(&init_task, vtime).seqcount);
+	per_task(&init_task, vtime).state = VTIME_SYS;
 #endif
 
 	smp_setup_processor_id();

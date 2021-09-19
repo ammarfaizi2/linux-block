@@ -3,6 +3,10 @@
  * Simple CPU accounting cgroup controller
  */
 
+#ifdef CONFIG_VIRT_CPU_ACCOUNTING_GEN
+DEFINE_PER_TASK(struct vtime, vtime);
+#endif
+
 #ifdef CONFIG_IRQ_TIME_ACCOUNTING
 
 /*
@@ -692,7 +696,7 @@ static void __vtime_account_kernel(struct task_struct *tsk,
 
 void vtime_account_kernel(struct task_struct *tsk)
 {
-	struct vtime *vtime = &tsk->vtime;
+	struct vtime *vtime = &per_task(tsk, vtime);
 
 	if (!vtime_delta(vtime))
 		return;
@@ -704,7 +708,7 @@ void vtime_account_kernel(struct task_struct *tsk)
 
 void vtime_user_enter(struct task_struct *tsk)
 {
-	struct vtime *vtime = &tsk->vtime;
+	struct vtime *vtime = &per_task(tsk, vtime);
 
 	write_seqcount_begin(&vtime->seqcount);
 	vtime_account_system(tsk, vtime);
@@ -714,7 +718,7 @@ void vtime_user_enter(struct task_struct *tsk)
 
 void vtime_user_exit(struct task_struct *tsk)
 {
-	struct vtime *vtime = &tsk->vtime;
+	struct vtime *vtime = &per_task(tsk, vtime);
 
 	write_seqcount_begin(&vtime->seqcount);
 	vtime->utime += get_vtime_delta(vtime);
@@ -728,7 +732,7 @@ void vtime_user_exit(struct task_struct *tsk)
 
 void vtime_guest_enter(struct task_struct *tsk)
 {
-	struct vtime *vtime = &tsk->vtime;
+	struct vtime *vtime = &per_task(tsk, vtime);
 	/*
 	 * The flags must be updated under the lock with
 	 * the vtime_starttime flush and update.
@@ -746,7 +750,7 @@ EXPORT_SYMBOL_GPL(vtime_guest_enter);
 
 void vtime_guest_exit(struct task_struct *tsk)
 {
-	struct vtime *vtime = &tsk->vtime;
+	struct vtime *vtime = &per_task(tsk, vtime);
 
 	write_seqcount_begin(&vtime->seqcount);
 	vtime_account_guest(tsk, vtime);
@@ -758,12 +762,12 @@ EXPORT_SYMBOL_GPL(vtime_guest_exit);
 
 void vtime_account_idle(struct task_struct *tsk)
 {
-	account_idle_time(get_vtime_delta(&tsk->vtime));
+	account_idle_time(get_vtime_delta(&per_task(tsk, vtime)));
 }
 
 void vtime_task_switch_generic(struct task_struct *prev)
 {
-	struct vtime *vtime = &prev->vtime;
+	struct vtime *vtime = &per_task(prev, vtime);
 
 	write_seqcount_begin(&vtime->seqcount);
 	if (vtime->state == VTIME_IDLE)
@@ -774,7 +778,7 @@ void vtime_task_switch_generic(struct task_struct *prev)
 	vtime->cpu = -1;
 	write_seqcount_end(&vtime->seqcount);
 
-	vtime = &current->vtime;
+	vtime = &per_task(current, vtime);
 
 	write_seqcount_begin(&vtime->seqcount);
 	if (is_idle_task(current))
@@ -790,7 +794,7 @@ void vtime_task_switch_generic(struct task_struct *prev)
 
 void vtime_init_idle(struct task_struct *t, int cpu)
 {
-	struct vtime *vtime = &t->vtime;
+	struct vtime *vtime = &per_task(t, vtime);
 	unsigned long flags;
 
 	local_irq_save(flags);
@@ -804,7 +808,7 @@ void vtime_init_idle(struct task_struct *t, int cpu)
 
 u64 task_gtime(struct task_struct *t)
 {
-	struct vtime *vtime = &t->vtime;
+	struct vtime *vtime = &per_task(t, vtime);
 	unsigned int seq;
 	u64 gtime;
 
@@ -830,7 +834,7 @@ u64 task_gtime(struct task_struct *t)
  */
 bool task_cputime(struct task_struct *t, u64 *utime, u64 *stime)
 {
-	struct vtime *vtime = &t->vtime;
+	struct vtime *vtime = &per_task(t, vtime);
 	unsigned int seq;
 	u64 delta;
 	int ret;
@@ -908,7 +912,7 @@ static int kcpustat_field_vtime(u64 *cpustat,
 				enum cpu_usage_stat usage,
 				int cpu, u64 *val)
 {
-	struct vtime *vtime = &tsk->vtime;
+	struct vtime *vtime = &per_task(tsk, vtime);
 	unsigned int seq;
 
 	do {
@@ -996,7 +1000,7 @@ static int kcpustat_cpu_fetch_vtime(struct kernel_cpustat *dst,
 				    const struct kernel_cpustat *src,
 				    struct task_struct *tsk, int cpu)
 {
-	struct vtime *vtime = &tsk->vtime;
+	struct vtime *vtime = &per_task(tsk, vtime);
 	unsigned int seq;
 
 	do {

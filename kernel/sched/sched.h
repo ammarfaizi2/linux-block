@@ -96,6 +96,10 @@
 # define SCHED_WARN_ON(x)      ({ (void)(x), 0; })
 #endif
 
+#ifdef CONFIG_VIRT_CPU_ACCOUNTING_GEN
+DECLARE_PER_TASK(struct vtime,				vtime);
+#endif
+
 struct rq;
 struct cpuidle_state;
 

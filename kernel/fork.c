@@ -2080,9 +2080,9 @@ static __latent_entropy struct task_struct *copy_process(
 	prev_cputime_init(&p->prev_cputime);
 
 #ifdef CONFIG_VIRT_CPU_ACCOUNTING_GEN
-	seqcount_init(&p->vtime.seqcount);
-	p->vtime.starttime = 0;
-	p->vtime.state = VTIME_INACTIVE;
+	seqcount_init(&per_task(p, vtime).seqcount);
+	per_task(p, vtime).starttime = 0;
+	per_task(p, vtime).state = VTIME_INACTIVE;
 #endif
 
 #ifdef CONFIG_IO_URING

@@ -944,9 +944,6 @@ struct task_struct {
 #endif
 	u64				gtime;
 	struct prev_cputime		prev_cputime;
-#ifdef CONFIG_VIRT_CPU_ACCOUNTING_GEN
-	struct vtime			vtime;
-#endif
 
 #ifdef CONFIG_NO_HZ_FULL
 	atomic_t			tick_dep_mask;
