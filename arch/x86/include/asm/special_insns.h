@@ -9,6 +9,7 @@
 #include <asm/processor-flags.h>
 #include <linux/irqflags.h>
 #include <linux/jump_label.h>
+#include <linux/err.h>
 
 /*
  * The compiler should not reorder volatile asm statements with respect to each
