@@ -11,6 +11,7 @@
 #ifndef _ASM_GENERIC_BITOPS_INSTRUMENTED_ATOMIC_H
 #define _ASM_GENERIC_BITOPS_INSTRUMENTED_ATOMIC_H
 
+#include <linux/bits.h>
 #include <linux/instrumented.h>
 
 /**
