@@ -2260,7 +2260,7 @@ static void io_req_task_submit(struct io_kiocb *req, bool *locked)
 		io_req_complete_failed(req, -EFAULT);
 }
 
-static void io_uring_cmd_work(struct io_kiocb *req)
+static void io_uring_cmd_work(struct io_kiocb *req, bool *locked)
 {
 	req->uring_cmd.driver_cb(&req->uring_cmd);
 }
@@ -2914,8 +2914,10 @@ static int io_prep_rw(struct io_kiocb *req, const struct io_uring_sqe *sqe,
 
 	if (ctx->flags & IORING_SETUP_IOPOLL) {
 		if (!(kiocb->ki_flags & IOCB_DIRECT) ||
-		    !kiocb->ki_filp->f_op->iopoll)
+		    !kiocb->ki_filp->f_op->iopoll) {
+			printk("%s: eop\n", __FUNCTION__);
 			return -EOPNOTSUPP;
+		}
 
 		kiocb->ki_flags |= IOCB_HIPRI | IOCB_ALLOC_CACHE;
 		kiocb->ki_complete = io_complete_rw_iopoll;
@@ -3993,8 +3995,10 @@ static int io_uring_cmd_prep(struct io_kiocb *req,
 	const struct io_uring_cmd_sqe *csqe = (const void *) sqe;
 	struct io_uring_cmd *cmd = &req->uring_cmd;
 
-	if (!req->file->f_op->async_cmd)
+	if (!req->file->f_op->async_cmd) {
+		printk("no async cmd %lx\n", (long) req->file->f_op);
 		return -EOPNOTSUPP;
+	}
 
 	if (req->ctx->flags & IORING_SETUP_IOPOLL) {
 		printk_once(KERN_WARNING "io_uring: iopoll not supported!\n");
@@ -7193,8 +7197,10 @@ static int io_init_req(struct io_ring_ctx *ctx, struct io_kiocb *req,
 		return -EACCES;
 
 	def = &io_op_defs[req->opcode];
-	if ((sqe_flags & IOSQE_BUFFER_SELECT) && !def->buffer_select)
+	if ((sqe_flags & IOSQE_BUFFER_SELECT) && !def->buffer_select) {
+		printk("%s: eop\n", __FUNCTION__);
 		return -EOPNOTSUPP;
+	}
 	if (unlikely(sqe_flags & IOSQE_IO_DRAIN))
 		ctx->drain_active = true;
 
