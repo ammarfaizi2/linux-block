@@ -1466,6 +1466,7 @@ static void rcutorture_one_extend(int *readstate, int newstate,
 		if (lockit)
 			raw_spin_lock_irqsave(&current->pi_lock, flags);
 		cur_ops->readunlock(idxold >> RCUTORTURE_RDR_SHIFT);
+		idxold = 0;
 		if (lockit)
 			raw_spin_unlock_irqrestore(&current->pi_lock, flags);
 	}
@@ -1476,7 +1477,7 @@ static void rcutorture_one_extend(int *readstate, int newstate,
 
 	/* Update the reader state. */
 	if (idxnew == -1)
-		idxnew = idxold & ~RCUTORTURE_RDR_MASK;
+		idxnew = idxold & RCUTORTURE_RDR_MASK;
 	WARN_ON_ONCE(idxnew < 0);
 	WARN_ON_ONCE((idxnew >> RCUTORTURE_RDR_SHIFT) > 1);
 	*readstate = idxnew | newstate;
