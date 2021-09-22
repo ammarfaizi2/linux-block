@@ -1470,7 +1470,7 @@ static void rcutorture_one_extend(int *readstate, int newstate,
 	if (statesold & RCUTORTURE_RDR_RCU_2) {
 		cur_ops->readunlock((idxold2 >> RCUTORTURE_RDR_SHIFT_2) & 0x1);
 		WARN_ON_ONCE(idxnew2 != -1);
-		idxnew2 = 0;
+		idxold2 = 0;
 	}
 	if (statesold & RCUTORTURE_RDR_RCU_1) {
 		bool lockit = !statesnew && !(torture_random(trsp) & 0xffff);
@@ -1479,7 +1479,7 @@ static void rcutorture_one_extend(int *readstate, int newstate,
 			raw_spin_lock_irqsave(&current->pi_lock, flags);
 		cur_ops->readunlock((idxold1 >> RCUTORTURE_RDR_SHIFT_1) & 0x1);
 		WARN_ON_ONCE(idxnew1 != -1);
-		idxnew1 = 0;
+		idxold1 = 0;
 		if (lockit)
 			raw_spin_unlock_irqrestore(&current->pi_lock, flags);
 	}
@@ -1490,12 +1490,12 @@ static void rcutorture_one_extend(int *readstate, int newstate,
 
 	/* Update the reader state. */
 	if (idxnew1 == -1)
-		idxnew1 = idxold1 & ~RCUTORTURE_RDR_MASK_1;
+		idxnew1 = idxold1 & RCUTORTURE_RDR_MASK_1;
 	WARN_ON_ONCE(idxnew1 < 0);
 	if (WARN_ON_ONCE((idxnew1 >> RCUTORTURE_RDR_SHIFT_1) > 1))
 		pr_info("Unexpected idxnew1 value of %#x\n", idxnew1);
 	if (idxnew2 == -1)
-		idxnew2 = idxold2 & ~RCUTORTURE_RDR_MASK_2;
+		idxnew2 = idxold2 & RCUTORTURE_RDR_MASK_2;
 	WARN_ON_ONCE(idxnew2 < 0);
 	WARN_ON_ONCE((idxnew2 >> RCUTORTURE_RDR_SHIFT_2) > 1);
 	*readstate = idxnew1 | idxnew2 | newstate;
