@@ -26,6 +26,7 @@ struct thread_info {
 	int bpt_nsaved;
 	unsigned long bpt_addr[2];		/* breakpoint handling  */
 	unsigned int bpt_insn[2];
+	unsigned long fp[32];
 };
 
 /*
@@ -81,6 +82,9 @@ register struct thread_info *__current_thread_info __asm__("$8");
 #define TS_UAC_NOFIX		0x0002	/* ! flags as they match          */
 #define TS_UAC_SIGBUS		0x0004	/* ! userspace part of 'osf_sysinfo' */
 
+#define TS_SAVED_FP		0x0008
+#define TS_RESTORE_FP		0x0010
+
 #define SET_UNALIGN_CTL(task,value)	({				\
 	__u32 status = task_thread_info(task)->status & ~UAC_BITMASK;	\
 	if (value & PR_UNALIGN_NOPRINT)					\
@@ -103,6 +107,18 @@ register struct thread_info *__current_thread_info __asm__("$8");
 		res |= 4;						\
 	put_user(res, (int __user *)(value));				\
 	})
+
+#ifndef __ASSEMBLY__
+extern void __save_fpu(void);
+
+static inline void save_fpu(void)
+{
+	if (!(current_thread_info()->status & TS_SAVED_FP)) {
+		current_thread_info()->status |= TS_SAVED_FP;
+		__save_fpu();
+	}
+}
+#endif
 
 #endif /* __KERNEL__ */
 #endif /* _ALPHA_THREAD_INFO_H */
