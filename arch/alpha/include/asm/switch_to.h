@@ -8,6 +8,7 @@ extern struct task_struct *alpha_switch_to(unsigned long, struct task_struct *);
 
 #define switch_to(P,N,L)						 \
   do {									 \
+    save_fpu();								 \
     (L) = alpha_switch_to(virt_to_phys(&task_thread_info(N)->pcb), (P)); \
     check_mmu_context();						 \
   } while (0)

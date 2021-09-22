@@ -248,6 +248,7 @@ int copy_thread(unsigned long clone_flags, unsigned long usp,
 	childstack = ((struct switch_stack *) childregs) - 1;
 	childti->pcb.ksp = (unsigned long) childstack;
 	childti->pcb.flags = 1;	/* set FEN, clear everything else */
+	childti->status |= TS_SAVED_FP;
 
 	if (unlikely(p->flags & (PF_KTHREAD | PF_IO_WORKER))) {
 		/* kernel thread */
@@ -257,6 +258,7 @@ int copy_thread(unsigned long clone_flags, unsigned long usp,
 		childstack->r9 = usp;	/* function */
 		childstack->r10 = kthread_arg;
 		childregs->hae = alpha_mv.hae_cache;
+		memset(childti->fp, '\0', sizeof(childti->fp));
 		childti->pcb.usp = 0;
 		return 0;
 	}
@@ -340,8 +342,7 @@ EXPORT_SYMBOL(dump_elf_task);
 int
 dump_elf_task_fp(elf_fpreg_t *dest, struct task_struct *task)
 {
-	struct switch_stack *sw = (struct switch_stack *)task_pt_regs(task) - 1;
-	memcpy(dest, sw->fp, 32 * 8);
+	memcpy(dest, current_thread_info()->fp, 32 * 8);
 	return 1;
 }
 EXPORT_SYMBOL(dump_elf_task_fp);
