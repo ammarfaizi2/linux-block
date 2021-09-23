@@ -413,6 +413,13 @@ static int afs_validate_for_write(struct inode *inode,
 	return afs_validate(vnode, key);
 }
 
+static void afs_netfs_invalidate_cache(struct netfs_writeback *wback)
+{
+	struct afs_vnode *vnode = AFS_FS_I(wback->inode);
+
+	afs_invalidate_cache(vnode, 0);
+}
+
 const struct netfs_request_ops afs_req_ops = {
 	.init_rreq		= afs_init_rreq,
 	.check_write_begin	= afs_check_write_begin,
@@ -423,6 +430,7 @@ const struct netfs_request_ops afs_req_ops = {
 	.free_dirty_region	= afs_free_dirty_region,
 	.update_i_size		= afs_update_i_size,
 	.validate_for_write	= afs_validate_for_write,
+	.invalidate_cache	= afs_netfs_invalidate_cache,
 	.init_writeback		= afs_init_writeback,
 	.create_write_requests	= afs_create_write_requests,
 	.encrypt_block		= afs_encrypt_block,
