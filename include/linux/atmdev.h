@@ -4,7 +4,8 @@
 #define LINUX_ATMDEV_H
 
 
-#include <linux/device_api.h>
+#include <linux/refcount_api.h>
+#include <linux/device_api_lock.h>
 #include <linux/wait.h> /* wait_queue_head_t */
 #include <linux/time.h> /* struct timeval */
 #include <linux/net.h>

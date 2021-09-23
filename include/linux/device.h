@@ -3,6 +3,5 @@
 #define _DEVICE_H_
 
 #include <linux/device_types.h>
-#include <linux/device_api.h>
 
 #endif /* _DEVICE_H_ */

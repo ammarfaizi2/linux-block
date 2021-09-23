@@ -18,6 +18,7 @@
  * In-kernel definitions.
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/device.h>
 #include <linux/timer.h>
 #include <linux/mod_devicetable.h>

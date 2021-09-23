@@ -23,6 +23,7 @@
 
 #include <linux/netdevice_types.h>
 
+#include <linux/device_api.h>
 #include <linux/prefetch.h>
 #include <linux/cpumask_api.h>
 #include <linux/spinlock_api.h>

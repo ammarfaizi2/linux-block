@@ -244,13 +244,6 @@ static inline bool dev_pm_test_driver_flags(struct device *dev, u32 flags)
 	return !!(dev->power.driver_flags & flags);
 }
 
-static inline struct device_node *dev_of_node(struct device *dev)
-{
-	if (!IS_ENABLED(CONFIG_OF) || !dev)
-		return NULL;
-	return dev->of_node;
-}
-
 static inline bool dev_has_sync_state(struct device *dev)
 {
 	if (!dev)
@@ -327,12 +320,6 @@ extern int (*platform_notify)(struct device *dev);
 extern int (*platform_notify_remove)(struct device *dev);
 
 
-/*
- * get_device - atomically increment the reference count for the device.
- *
- */
-struct device *get_device(struct device *dev);
-void put_device(struct device *dev);
 bool kill_device(struct device *dev);
 
 #ifdef CONFIG_DEVTMPFS
