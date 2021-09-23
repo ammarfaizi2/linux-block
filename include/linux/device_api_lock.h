@@ -2,9 +2,10 @@
 #ifndef _DEVICE_API_LOCK_H_
 #define _DEVICE_API_LOCK_H_
 
+#include <linux/device_types.h>
+#include <linux/lockdep.h>
 #include <linux/gfp_types.h>
 #include <linux/overflow.h>
-#include <linux/device_api.h>
 
 #include <linux/lockdep_api.h>
 #include <linux/mutex_api.h>
@@ -32,6 +33,23 @@ static inline void device_unlock(struct device *dev)
 static inline void device_lock_assert(struct device *dev)
 {
 	lockdep_assert_held(&dev->mutex);
+}
+
+/*
+ * get_device - atomically increment the reference count for the device.
+ *
+ */
+struct device *get_device(struct device *dev);
+
+void put_device(struct device *dev);
+
+void device_del(struct device *dev);
+
+static inline struct device_node *dev_of_node(struct device *dev)
+{
+	if (!IS_ENABLED(CONFIG_OF) || !dev)
+		return NULL;
+	return dev->of_node;
 }
 
 /* managed devm_k.alloc/kfree for device drivers */
@@ -105,7 +123,6 @@ int __must_check device_register(struct device *dev);
 void device_unregister(struct device *dev);
 void device_initialize(struct device *dev);
 int __must_check device_add(struct device *dev);
-void device_del(struct device *dev);
 int device_for_each_child(struct device *dev, void *data,
 			  int (*fn)(struct device *dev, void *data));
 int device_for_each_child_reverse(struct device *dev, void *data,

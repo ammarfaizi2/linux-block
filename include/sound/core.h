@@ -7,6 +7,7 @@
  *  Copyright (c) 1994-2001 by Jaroslav Kysela <perex@perex.cz>
  */
 
+#include <linux/device_api_lock.h>
 #include <linux/atomic_api.h>
 #include <linux/device_types.h>
 #include <linux/mutex.h>		/* struct mutex */
