@@ -321,6 +321,7 @@ enum rw_hint {
 #define IOCB_NOIO		(1 << 20)
 /* can use bio alloc cache */
 #define IOCB_ALLOC_CACHE	(1 << 21)
+#define IOCB_SWAP		(1 << 22)	/* Operation on a swapfile */
 
 struct kiocb {
 	struct file		*ki_filp;

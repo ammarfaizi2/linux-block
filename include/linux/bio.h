@@ -787,6 +787,8 @@ static inline void bio_set_polled(struct bio *bio, struct kiocb *kiocb)
 	bio->bi_opf |= REQ_HIPRI;
 	if (!is_sync_kiocb(kiocb))
 		bio->bi_opf |= REQ_NOWAIT;
+	if (kiocb->ki_flags & IOCB_SWAP)
+		bio->bi_opf |= REQ_SWAP;
 }
 
 struct bio *blk_next_bio(struct bio *bio, unsigned int nr_pages, gfp_t gfp);
