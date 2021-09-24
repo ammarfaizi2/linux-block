@@ -660,8 +660,7 @@ static const struct inode_operations ovl_special_inode_operations = {
 };
 
 static const struct address_space_operations ovl_aops = {
-	/* For O_DIRECT dentry_open() checks f_mapping->a_ops->direct_IO */
-	.direct_IO		= noop_direct_IO,
+	.supports	= AS_SUPPORTS_DIRECT_IO,
 };
 
 /*

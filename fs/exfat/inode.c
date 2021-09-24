@@ -499,7 +499,8 @@ static const struct address_space_operations exfat_aops = {
 	.write_begin	= exfat_write_begin,
 	.write_end	= exfat_write_end,
 	.direct_IO	= exfat_direct_IO,
-	.bmap		= exfat_aop_bmap
+	.bmap		= exfat_aop_bmap,
+	.supports	= AS_SUPPORTS_DIRECT_IO,
 };
 
 static inline unsigned long exfat_hash(loff_t i_pos)

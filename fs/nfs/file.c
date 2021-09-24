@@ -532,6 +532,7 @@ const struct address_space_operations nfs_file_aops = {
 	.error_remove_page = generic_error_remove_page,
 	.swap_activate = nfs_swap_activate,
 	.swap_deactivate = nfs_swap_deactivate,
+	.supports	= AS_SUPPORTS_DIRECT_IO,
 };
 
 /*

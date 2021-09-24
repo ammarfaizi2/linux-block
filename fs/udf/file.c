@@ -131,6 +131,7 @@ const struct address_space_operations udf_adinicb_aops = {
 	.write_begin	= udf_adinicb_write_begin,
 	.write_end	= udf_adinicb_write_end,
 	.direct_IO	= udf_adinicb_direct_IO,
+	.supports	= AS_SUPPORTS_DIRECT_IO,
 };
 
 static ssize_t udf_file_write_iter(struct kiocb *iocb, struct iov_iter *from)

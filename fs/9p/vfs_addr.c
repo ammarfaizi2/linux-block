@@ -333,4 +333,5 @@ const struct address_space_operations v9fs_addr_operations = {
 	.invalidatepage = v9fs_invalidate_page,
 	.launder_page = v9fs_launder_page,
 	.direct_IO = v9fs_direct_IO,
+	.supports	= AS_SUPPORTS_DIRECT_IO,
 };

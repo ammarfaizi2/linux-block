@@ -840,7 +840,8 @@ static int do_dentry_open(struct file *f,
 
 	/* NB: we're sure to have correct a_ops only after f_op->open */
 	if (f->f_flags & O_DIRECT) {
-		if (!f->f_mapping->a_ops || !f->f_mapping->a_ops->direct_IO)
+		if (!f->f_mapping->a_ops ||
+		    !(f->f_mapping->a_ops->supports & AS_SUPPORTS_DIRECT_IO))
 			return -EINVAL;
 	}
 

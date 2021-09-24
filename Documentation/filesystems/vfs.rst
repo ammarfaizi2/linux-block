@@ -721,6 +721,7 @@ cache in your filesystem.  The following members are defined:
 .. code-block:: c
 
 	struct address_space_operations {
+		unsigned int supports;
 		int (*writepage)(struct page *page, struct writeback_control *wbc);
 		int (*readpage)(struct file *, struct page *);
 		int (*writepages)(struct address_space *, struct writeback_control *);
@@ -754,6 +755,13 @@ cache in your filesystem.  The following members are defined:
 		int (*swap_activate)(struct file *);
 		int (*swap_deactivate)(struct file *);
 	};
+
+``supports``
+	provides a list of features supported by address_spaces using this
+	operations set.  The following feature support flags are provided:
+
+	``AS_SUPPORTS_DIRECT_IO``
+		Direct I/O is supported.
 
 ``writepage``
 	called by the VM to write a dirty page to backing store.  This

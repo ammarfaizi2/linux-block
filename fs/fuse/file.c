@@ -3161,6 +3161,7 @@ static const struct address_space_operations fuse_file_aops  = {
 	.direct_IO	= fuse_direct_IO,
 	.write_begin	= fuse_write_begin,
 	.write_end	= fuse_write_end,
+	.supports	= AS_SUPPORTS_DIRECT_IO,
 };
 
 void fuse_init_file_inode(struct inode *inode)

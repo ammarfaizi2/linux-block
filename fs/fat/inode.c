@@ -350,7 +350,8 @@ static const struct address_space_operations fat_aops = {
 	.write_begin	= fat_write_begin,
 	.write_end	= fat_write_end,
 	.direct_IO	= fat_direct_IO,
-	.bmap		= _fat_bmap
+	.bmap		= _fat_bmap,
+	.supports	= AS_SUPPORTS_DIRECT_IO,
 };
 
 /*

@@ -58,7 +58,7 @@ static int setfl(int fd, struct file * filp, unsigned long arg)
 	/* Pipe packetized mode is controlled by O_DIRECT flag */
 	if (!S_ISFIFO(inode->i_mode) && (arg & O_DIRECT)) {
 		if (!filp->f_mapping || !filp->f_mapping->a_ops ||
-			!filp->f_mapping->a_ops->direct_IO)
+		    !(filp->f_mapping->a_ops->supports & AS_SUPPORTS_DIRECT_IO))
 				return -EINVAL;
 	}
 

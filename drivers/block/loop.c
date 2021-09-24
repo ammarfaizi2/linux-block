@@ -237,9 +237,9 @@ static void __loop_update_dio(struct loop_device *lo, bool dio)
 	 */
 	if (dio) {
 		if (queue_logical_block_size(lo->lo_queue) >= sb_bsize &&
-				!(lo->lo_offset & dio_align) &&
-				mapping->a_ops->direct_IO &&
-				!lo->transfer)
+		    !(lo->lo_offset & dio_align) &&
+		    (mapping->a_ops->supports & AS_SUPPORTS_DIRECT_IO) &&
+		    !lo->transfer)
 			use_dio = true;
 		else
 			use_dio = false;

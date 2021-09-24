@@ -174,6 +174,7 @@ const struct address_space_operations hfsplus_aops = {
 	.bmap		= hfsplus_bmap,
 	.direct_IO	= hfsplus_direct_IO,
 	.writepages	= hfsplus_writepages,
+	.supports	= AS_SUPPORTS_DIRECT_IO,
 };
 
 const struct dentry_operations hfsplus_dentry_operations = {

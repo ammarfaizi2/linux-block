@@ -83,7 +83,7 @@ static int ovl_change_flags(struct file *file, unsigned int flags)
 
 	if (flags & O_DIRECT) {
 		if (!file->f_mapping->a_ops ||
-		    !file->f_mapping->a_ops->direct_IO)
+		    !(file->f_mapping->a_ops->supports & AS_SUPPORTS_DIRECT_IO))
 			return -EINVAL;
 	}
 

@@ -366,6 +366,7 @@ const struct address_space_operations jfs_aops = {
 	.write_end	= nobh_write_end,
 	.bmap		= jfs_bmap,
 	.direct_IO	= jfs_direct_IO,
+	.supports	= AS_SUPPORTS_DIRECT_IO,
 };
 
 /*

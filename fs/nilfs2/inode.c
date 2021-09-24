@@ -307,6 +307,7 @@ const struct address_space_operations nilfs_aops = {
 	.invalidatepage		= block_invalidatepage,
 	.direct_IO		= nilfs_direct_IO,
 	.is_partially_uptodate  = block_is_partially_uptodate,
+	.supports		= AS_SUPPORTS_DIRECT_IO,
 };
 
 static int nilfs_insert_inode_locked(struct inode *inode,

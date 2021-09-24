@@ -641,6 +641,7 @@ static const struct address_space_operations orangefs_address_operations = {
 	.freepage = orangefs_freepage,
 	.launder_page = orangefs_launder_page,
 	.direct_IO = orangefs_direct_IO,
+	.supports	= AS_SUPPORTS_DIRECT_IO,
 };
 
 vm_fault_t orangefs_page_mkwrite(struct vm_fault *vmf)

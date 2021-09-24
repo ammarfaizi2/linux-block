@@ -1948,6 +1948,7 @@ const struct address_space_operations ntfs_aops = {
 	.direct_IO	= ntfs_direct_IO,
 	.bmap		= ntfs_bmap,
 	.set_page_dirty = __set_page_dirty_buffers,
+	.supports	= AS_SUPPORTS_DIRECT_IO,
 };
 
 const struct address_space_operations ntfs_aops_cmpr = {

@@ -4156,6 +4156,7 @@ const struct address_space_operations f2fs_dblock_aops = {
 #ifdef CONFIG_MIGRATION
 	.migratepage    = f2fs_migrate_page,
 #endif
+	.supports	= AS_SUPPORTS_DIRECT_IO,
 };
 
 void f2fs_clear_page_cache_dirty_tag(struct page *page)

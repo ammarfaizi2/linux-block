@@ -299,7 +299,7 @@ const struct address_space_operations erofs_raw_access_aops = {
 	.readpage = erofs_readpage,
 	.readahead = erofs_readahead,
 	.bmap = erofs_bmap,
-	.direct_IO = noop_direct_IO,
+	.supports	= AS_SUPPORTS_DIRECT_IO,
 };
 
 #ifdef CONFIG_FS_DAX

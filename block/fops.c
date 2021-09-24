@@ -384,6 +384,7 @@ const struct address_space_operations def_blk_aops = {
 	.direct_IO	= blkdev_direct_IO,
 	.migratepage	= buffer_migrate_page_norefs,
 	.is_dirty_writeback = buffer_check_dirty_writeback,
+	.supports	= AS_SUPPORTS_DIRECT_IO,
 };
 
 /*

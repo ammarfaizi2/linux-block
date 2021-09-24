@@ -974,6 +974,7 @@ const struct address_space_operations ext2_aops = {
 	.migratepage		= buffer_migrate_page,
 	.is_partially_uptodate	= block_is_partially_uptodate,
 	.error_remove_page	= generic_error_remove_page,
+	.supports		= AS_SUPPORTS_DIRECT_IO,
 };
 
 const struct address_space_operations ext2_nobh_aops = {
@@ -988,13 +989,14 @@ const struct address_space_operations ext2_nobh_aops = {
 	.writepages		= ext2_writepages,
 	.migratepage		= buffer_migrate_page,
 	.error_remove_page	= generic_error_remove_page,
+	.supports		= AS_SUPPORTS_DIRECT_IO,
 };
 
 static const struct address_space_operations ext2_dax_aops = {
 	.writepages		= ext2_dax_writepages,
-	.direct_IO		= noop_direct_IO,
 	.set_page_dirty		= __set_page_dirty_no_writeback,
 	.invalidatepage		= noop_invalidatepage,
+	.supports		= AS_SUPPORTS_DIRECT_IO,
 };
 
 /*

@@ -1182,18 +1182,6 @@ void noop_invalidatepage(struct page *page, unsigned int offset,
 }
 EXPORT_SYMBOL_GPL(noop_invalidatepage);
 
-ssize_t noop_direct_IO(struct kiocb *iocb, struct iov_iter *iter)
-{
-	/*
-	 * iomap based filesystems support direct I/O without need for
-	 * this callback. However, it still needs to be set in
-	 * inode->a_ops so that open/fcntl know that direct I/O is
-	 * generally supported.
-	 */
-	return -EINVAL;
-}
-EXPORT_SYMBOL_GPL(noop_direct_IO);
-
 /* Because kfree isn't assignment-compatible with void(void*) ;-/ */
 void kfree_link(void *p)
 {

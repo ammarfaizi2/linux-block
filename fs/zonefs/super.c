@@ -191,8 +191,8 @@ static const struct address_space_operations zonefs_file_aops = {
 	.migratepage		= iomap_migrate_page,
 	.is_partially_uptodate	= iomap_is_partially_uptodate,
 	.error_remove_page	= generic_error_remove_page,
-	.direct_IO		= noop_direct_IO,
 	.swap_activate		= zonefs_swap_activate,
+	.supports		= AS_SUPPORTS_DIRECT_IO,
 };
 
 static void zonefs_update_stats(struct inode *inode, loff_t new_isize)

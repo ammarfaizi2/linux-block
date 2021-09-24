@@ -460,6 +460,7 @@ const struct address_space_operations affs_aops = {
 	.write_end = affs_write_end,
 	.direct_IO = affs_direct_IO,
 	.bmap = _affs_bmap
+	.supports	= AS_SUPPORTS_DIRECT_IO,
 };
 
 static inline struct buffer_head *

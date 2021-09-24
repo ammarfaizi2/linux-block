@@ -244,6 +244,7 @@ const struct address_space_operations udf_aops = {
 	.write_end	= generic_write_end,
 	.direct_IO	= udf_direct_IO,
 	.bmap		= udf_bmap,
+	.supports	= AS_SUPPORTS_DIRECT_IO,
 };
 
 /*

@@ -177,6 +177,7 @@ const struct address_space_operations hfs_aops = {
 	.bmap		= hfs_bmap,
 	.direct_IO	= hfs_direct_IO,
 	.writepages	= hfs_writepages,
+	.supports	= AS_SUPPORTS_DIRECT_IO,
 };
 
 /*
