@@ -352,10 +352,9 @@ int __swap_writepage(struct page *page, struct writeback_control *wbc)
 	return 0;
 }
 
-int swap_readpage(struct page *page, bool synchronous)
+void swap_readpage(struct page *page, bool synchronous)
 {
 	struct bio *bio;
-	int ret = 0;
 	struct swap_info_struct *sis = page_swap_info(page);
 	blk_qc_t qc;
 	struct gendisk *disk;
@@ -382,15 +381,13 @@ int swap_readpage(struct page *page, bool synchronous)
 		struct file *swap_file = sis->swap_file;
 		struct address_space *mapping = swap_file->f_mapping;
 
-		ret = mapping->a_ops->readpage(swap_file, page);
-		if (!ret)
+		if (!mapping->a_ops->readpage(swap_file, page))
 			count_vm_event(PSWPIN);
 		goto out;
 	}
 
 	if (sis->flags & SWP_SYNCHRONOUS_IO) {
-		ret = bdev_read_page(sis->bdev, swap_page_sector(page), page);
-		if (!ret) {
+		if (!bdev_read_page(sis->bdev, swap_page_sector(page), page)) {
 			if (trylock_page(page)) {
 				swap_slot_free_notify(page);
 				unlock_page(page);
@@ -401,7 +398,6 @@ int swap_readpage(struct page *page, bool synchronous)
 		}
 	}
 
-	ret = 0;
 	bio = bio_alloc(GFP_KERNEL, 1);
 	bio_set_dev(bio, sis->bdev);
 	bio->bi_opf = REQ_OP_READ;
@@ -435,7 +431,6 @@ int swap_readpage(struct page *page, bool synchronous)
 
 out:
 	psi_memstall_leave(&pflags);
-	return ret;
 }
 
 int swap_set_page_dirty(struct page *page)

@@ -416,7 +416,7 @@ extern void kswapd_stop(int nid);
 #include <linux/blk_types.h> /* for bio_end_io_t */
 
 /* linux/mm/page_io.c */
-extern int swap_readpage(struct page *page, bool do_poll);
+void swap_readpage(struct page *page, bool synchronous);
 extern int swap_writepage(struct page *page, struct writeback_control *wbc);
 int __swap_writepage(struct page *page, struct writeback_control *wbc);
 extern int swap_set_page_dirty(struct page *page);
