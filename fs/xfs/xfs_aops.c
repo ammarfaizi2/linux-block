@@ -540,6 +540,13 @@ xfs_iomap_swapfile_activate(
 			&xfs_read_iomap_ops);
 }
 
+static ssize_t xfs_swap_rw(struct kiocb *iocb, struct iov_iter *iter)
+{
+	if (iocb->ki_flags & IOCB_WRITE)
+		return iomap_dio_rw(iocb, iter, &xfs_direct_write_iomap_ops, NULL, 0);
+	return iomap_dio_rw(iocb, iter, &xfs_read_iomap_ops, NULL, 0);
+}
+
 const struct address_space_operations xfs_address_space_operations = {
 	.readpage		= xfs_vm_readpage,
 	.readahead		= xfs_vm_readahead,
@@ -552,6 +559,7 @@ const struct address_space_operations xfs_address_space_operations = {
 	.is_partially_uptodate  = iomap_is_partially_uptodate,
 	.error_remove_page	= generic_error_remove_page,
 	.swap_activate		= xfs_iomap_swapfile_activate,
+	.swap_rw		= xfs_swap_rw,
 	.supports		= AS_SUPPORTS_DIRECT_IO,
 };
 
@@ -560,5 +568,6 @@ const struct address_space_operations xfs_dax_aops = {
 	.set_page_dirty		= __set_page_dirty_no_writeback,
 	.invalidatepage		= noop_invalidatepage,
 	.swap_activate		= xfs_iomap_swapfile_activate,
+	.swap_rw		= xfs_swap_rw,
 	.supports		= AS_SUPPORTS_DIRECT_IO,
 };

@@ -10852,15 +10852,10 @@ out:
 	sis->highest_bit = bsi.nr_pages - 1;
 	return bsi.nr_extents;
 }
-#else
-static void btrfs_swap_deactivate(struct file *file)
-{
-}
 
-static int btrfs_swap_activate(struct swap_info_struct *sis, struct file *file,
-			       sector_t *span)
+static ssize_t btrfs_swap_rw(struct kiocb *iocb, struct iov_iter *iter)
 {
-	return -EOPNOTSUPP;
+	return iomap_dio_rw(iocb, iter, &btrfs_dio_iomap_ops, NULL, 0);
 }
 #endif
 
@@ -10944,8 +10939,11 @@ static const struct address_space_operations btrfs_aops = {
 #endif
 	.set_page_dirty	= btrfs_set_page_dirty,
 	.error_remove_page = generic_error_remove_page,
+#ifdef CONFIG_SWAP
 	.swap_activate	= btrfs_swap_activate,
 	.swap_deactivate = btrfs_swap_deactivate,
+	.swap_rw	= btrfs_swap_rw,
+#endif
 	.supports	= AS_SUPPORTS_DIRECT_IO,
 };
 

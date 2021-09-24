@@ -3651,6 +3651,11 @@ static int ext4_iomap_swap_activate(struct swap_info_struct *sis,
 				       &ext4_iomap_report_ops);
 }
 
+static ssize_t ext4_swap_rw(struct kiocb *iocb, struct iov_iter *iter)
+{
+	return iomap_dio_rw(iocb, iter, &ext4_iomap_ops, NULL, 0);
+}
+
 static const struct address_space_operations ext4_aops = {
 	.readpage		= ext4_readpage,
 	.readahead		= ext4_readahead,
@@ -3666,6 +3671,7 @@ static const struct address_space_operations ext4_aops = {
 	.is_partially_uptodate  = block_is_partially_uptodate,
 	.error_remove_page	= generic_error_remove_page,
 	.swap_activate		= ext4_iomap_swap_activate,
+	.swap_rw		= ext4_swap_rw,
 	.supports		= AS_SUPPORTS_DIRECT_IO,
 };
 
@@ -3683,6 +3689,7 @@ static const struct address_space_operations ext4_journalled_aops = {
 	.is_partially_uptodate  = block_is_partially_uptodate,
 	.error_remove_page	= generic_error_remove_page,
 	.swap_activate		= ext4_iomap_swap_activate,
+	.swap_rw		= ext4_swap_rw,
 	.supports		= AS_SUPPORTS_DIRECT_IO,
 };
 
@@ -3701,6 +3708,7 @@ static const struct address_space_operations ext4_da_aops = {
 	.is_partially_uptodate  = block_is_partially_uptodate,
 	.error_remove_page	= generic_error_remove_page,
 	.swap_activate		= ext4_iomap_swap_activate,
+	.swap_rw		= ext4_swap_rw,
 	.supports		= AS_SUPPORTS_DIRECT_IO,
 };
 
@@ -3710,6 +3718,7 @@ static const struct address_space_operations ext4_dax_aops = {
 	.bmap			= ext4_bmap,
 	.invalidatepage		= noop_invalidatepage,
 	.swap_activate		= ext4_iomap_swap_activate,
+	.swap_rw		= ext4_swap_rw,
 	.supports		= AS_SUPPORTS_DIRECT_IO,
 };
 
