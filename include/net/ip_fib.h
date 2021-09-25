@@ -13,6 +13,7 @@
 #define _NET_IP_FIB_H
 
 #include <net/l3mdev.h>
+#include <net/net_namespace_types.h>
 #include <linux/skbuff_api.h>
 #include <net/flow.h>
 #include <linux/seq_file.h>

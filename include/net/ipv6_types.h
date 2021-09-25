@@ -9,19 +9,10 @@
 #ifndef _NET_IPV6_TYPES_H
 #define _NET_IPV6_TYPES_H
 
-#include <linux/skbuff_api.h>
-#include <linux/ipv6.h>
-#include <linux/jhash.h>
-#include <linux/refcount.h>
-#include <linux/jump_label_ratelimit.h>
-#include <net/if_inet6.h>
-#include <net/ndisc.h>
-#include <net/flow.h>
-#include <net/flow_dissector.h>
-#include <net/snmp.h>
-#include <net/netns/hash.h>
+#include <linux/refcount_types.h>
+#include <linux/uidgid.h>
 
-#include <net/sock.h>
+#include <uapi/linux/in6.h>
 
 struct ip_tunnel_info;
 

@@ -2,6 +2,8 @@
 #ifndef _NET_IPV6_API_SOCK_H
 #define _NET_IPV6_API_SOCK_H
 
+#include <linux/ipv6.h>
+
 #include <net/ipv6.h>
 #include <net/sock_api.h>
 
