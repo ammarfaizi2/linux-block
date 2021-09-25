@@ -25,10 +25,10 @@
 
 
 #include <linux/cache.h>
-#include <linux/topology.h>
 #include <linux/dev_printk.h>
 #include <linux/mod_devicetable.h>
 
+#include <linux/bug.h>
 #include <linux/log2.h>
 #include <linux/init.h>
 #include <linux/ioport.h>
@@ -1593,11 +1593,7 @@ static inline int pci_irq_vector(struct pci_dev *dev, unsigned int nr)
 		return -EINVAL;
 	return dev->irq;
 }
-static inline const struct cpumask *pci_irq_get_affinity(struct pci_dev *pdev,
-		int vec)
-{
-	return cpu_possible_mask;
-}
+#define pci_irq_get_affinity(pdev, vec) cpu_possible_mask
 #endif
 
 /**

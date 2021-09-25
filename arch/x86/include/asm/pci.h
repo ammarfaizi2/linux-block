@@ -2,6 +2,7 @@
 #ifndef _ASM_X86_PCI_H
 #define _ASM_X86_PCI_H
 
+#include <asm/bootparam.h>
 #include <asm/memtype.h>
 
 struct pci_sysdata {
@@ -101,21 +102,18 @@ extern void pci_iommu_alloc(void);
 #include <asm-generic/pci.h>
 
 #ifdef CONFIG_NUMA
+
 /* Returns the node based on pci bus */
-static inline int __pcibus_to_node(const struct pci_bus *bus)
-{
-	return to_pci_sysdata(bus)->node;
-}
+#define __pcibus_to_node(bus) (to_pci_sysdata(bus)->node)
 
-static inline const struct cpumask *
-cpumask_of_pcibus(const struct pci_bus *bus)
-{
-	int node;
+#define cpumask_of_pcibus(bus)							\
+({										\
+	int __node;								\
+										\
+	__node = __pcibus_to_node(bus);						\
+	(__node == NUMA_NO_NODE) ? cpu_online_mask : cpumask_of_node(__node);	\
+})
 
-	node = __pcibus_to_node(bus);
-	return (node == NUMA_NO_NODE) ? cpu_online_mask :
-			      cpumask_of_node(node);
-}
 #endif
 
 struct pci_setup_rom {
