@@ -11,7 +11,6 @@
 #ifndef _SUNRPC_XDR_H_
 #define _SUNRPC_XDR_H_
 
-#include <linux/mm.h>
 #include <linux/string.h>
 #include <linux/mm_page_address.h>
 #include <linux/uio.h>
