@@ -1082,10 +1082,12 @@ static const struct io_op_def io_op_defs[] = {
 	[IORING_OP_URING_CMD] = {
 		.needs_file		= 1,
 		.offsets		= 1,
+		.plug			= 1,
 	},
 	[IORING_OP_URING_CMD_FIXED] = {
 		.needs_file		= 1,
 		.offsets		= 1,
+		.plug			= 1,
 	},
 };
 
