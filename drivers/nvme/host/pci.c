@@ -857,6 +857,8 @@ static blk_status_t nvme_map_data(struct nvme_dev *dev, struct request *req,
 		}
 	}
 
+	if (!strncmp(current->comm, "fio", 3))
+		printk("segs %d\n", blk_rq_nr_phys_segments(req));
 	iod->dma_len = 0;
 	iod->sg = mempool_alloc(dev->iod_mempool, GFP_ATOMIC);
 	if (!iod->sg)

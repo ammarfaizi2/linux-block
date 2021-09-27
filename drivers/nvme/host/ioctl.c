@@ -171,13 +171,14 @@ int nvme_rq_map_user_fixedb(struct request_queue *q, struct request *rq,
 		return ret;
 	iter_count = iov_iter_count(&iter);
 	nr_segs = iter.nr_segs;
+	printk("segs here %d\n", (int)nr_segs);
 
 	if (!iter_count || (iter_count >> 9) > queue_max_hw_sectors(q))
 		return -EINVAL;
 	if (nr_segs > queue_max_segments(q))
 		return -EINVAL;
 	/* no iovecs to alloc, as we already have a BVEC iterator */
-	bio = bio_kmalloc(gfp_mask, 0);
+	bio = bio_alloc(gfp_mask, 0);
 	if (!bio)
 		return -ENOMEM;
 

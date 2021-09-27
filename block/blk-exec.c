@@ -66,7 +66,7 @@ EXPORT_SYMBOL_GPL(__blk_execute_rq_nowait);
 void blk_execute_rq_nowait(struct gendisk *bd_disk, struct request *rq,
 			   int at_head, rq_end_io_fn *done)
 {
-	__blk_execute_rq_nowait(bd_disk, rq, false, true, done);
+	__blk_execute_rq_nowait(bd_disk, rq, at_head, true, done);
 }
 EXPORT_SYMBOL_GPL(blk_execute_rq_nowait);
 
