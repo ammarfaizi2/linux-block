@@ -893,6 +893,8 @@ extern int blk_rq_map_user_iov(struct request_queue *, struct request *,
 			       gfp_t);
 extern void blk_execute_rq_nowait(struct gendisk *,
 				  struct request *, int, rq_end_io_fn *);
+void __blk_execute_rq_nowait(struct gendisk *,
+				  struct request *, bool, bool, rq_end_io_fn *);
 
 blk_status_t blk_execute_rq(struct gendisk *bd_disk, struct request *rq,
 			    int at_head);

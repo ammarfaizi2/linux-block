@@ -30,6 +30,25 @@ static void blk_end_sync_rq(struct request *rq, blk_status_t error)
 	complete(waiting);
 }
 
+void __blk_execute_rq_nowait(struct gendisk *bd_disk, struct request *rq,
+			     bool at_head, bool run_queue, rq_end_io_fn *done)
+{
+	WARN_ON(irqs_disabled());
+	WARN_ON(!blk_rq_is_passthrough(rq));
+
+	rq->rq_disk = bd_disk;
+	rq->end_io = done;
+
+	blk_account_io_start(rq);
+
+	/*
+	 * don't check dying flag for MQ because the request won't
+	 * be reused after dying flag is set
+	 */
+	blk_mq_sched_insert_request(rq, at_head, run_queue, false);
+}
+EXPORT_SYMBOL_GPL(__blk_execute_rq_nowait);
+
 /**
  * blk_execute_rq_nowait - insert a request to I/O scheduler for execution
  * @bd_disk:	matching gendisk
@@ -47,19 +66,7 @@ static void blk_end_sync_rq(struct request *rq, blk_status_t error)
 void blk_execute_rq_nowait(struct gendisk *bd_disk, struct request *rq,
 			   int at_head, rq_end_io_fn *done)
 {
-	WARN_ON(irqs_disabled());
-	WARN_ON(!blk_rq_is_passthrough(rq));
-
-	rq->rq_disk = bd_disk;
-	rq->end_io = done;
-
-	blk_account_io_start(rq);
-
-	/*
-	 * don't check dying flag for MQ because the request won't
-	 * be reused after dying flag is set
-	 */
-	blk_mq_sched_insert_request(rq, at_head, true, false);
+	__blk_execute_rq_nowait(bd_disk, rq, false, true, done);
 }
 EXPORT_SYMBOL_GPL(blk_execute_rq_nowait);
 
