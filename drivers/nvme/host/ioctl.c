@@ -24,12 +24,9 @@ static void __user *nvme_to_user_ptr(uintptr_t ptrval)
  * Expect build warning otherwise.
  */
 struct uring_cmd_data {
-	union {
-		struct bio *bio;
-		u64 result; /* nvme cmd result */
-	};
+	struct request *req;
+	struct bio *bio;
 	void *meta; /* kernel-resident buffer */
-	int status; /* nvme cmd status */
 };
 
 inline u64 *nvme_ioucmd_data_addr(struct io_uring_cmd *ioucmd)
@@ -42,54 +39,53 @@ static void nvme_pt_task_cb(struct io_uring_cmd *ioucmd)
 	struct uring_cmd_data *ucd;
 	struct nvme_passthru_cmd64 __user *ptcmd64 = NULL;
 	struct block_uring_cmd *bcmd;
+	int status, result;
 
 	bcmd = (struct block_uring_cmd *) &ioucmd->pdu;
 	ptcmd64 = (void __user *) bcmd->unused2[0];
 	ucd = (struct uring_cmd_data *) nvme_ioucmd_data_addr(ioucmd);
 
+	if (nvme_req(ucd->req)->flags & NVME_REQ_CANCELLED)
+		status = -EINTR;
+	else
+		status = nvme_req(ucd->req)->status;
+	result = le64_to_cpu(nvme_req(ucd->req)->result.u64);
+
+	/* we can unmap pages, free bio and request */
+	blk_rq_unmap_user(ucd->bio);
+	blk_mq_free_request(ucd->req);
+
+
 	if (ucd->meta) {
 		void __user *umeta = nvme_to_user_ptr(ptcmd64->metadata);
 
-		if (!ucd->status)
+		if (status)
 			if (copy_to_user(umeta, ucd->meta, ptcmd64->metadata_len))
-				ucd->status = -EFAULT;
+				status = -EFAULT;
 		kfree(ucd->meta);
 	}
 	if (likely(bcmd->ioctl_cmd == NVME_IOCTL_IO64_CMD)) {
-		if (put_user(ucd->result, &ptcmd64->result))
-			ucd->status = -EFAULT;
+		if (put_user(result, &ptcmd64->result))
+			status = -EFAULT;
 	} else {
 		struct nvme_passthru_cmd __user *ptcmd = (void *)bcmd->unused2[0];
 
-		if (put_user(ucd->result, &ptcmd->result))
-			ucd->status = -EFAULT;
+		if (put_user(result, &ptcmd->result))
+			status = -EFAULT;
 	}
-	io_uring_cmd_done(ioucmd, ucd->status);
+	io_uring_cmd_done(ioucmd, status);
 }
 
 static void nvme_end_async_pt(struct request *req, blk_status_t err)
 {
 	struct io_uring_cmd *ioucmd;
 	struct uring_cmd_data *ucd;
-	struct bio *bio;
 
 	ioucmd = req->end_io_data;
 	ucd = (struct uring_cmd_data *) nvme_ioucmd_data_addr(ioucmd);
-	/* extract bio before reusing the same field for status */
-	bio = ucd->bio;
-
-	if (nvme_req(req)->flags & NVME_REQ_CANCELLED)
-		ucd->status = -EINTR;
-	else
-		ucd->status = nvme_req(req)->status;
-	ucd->result = le64_to_cpu(nvme_req(req)->result.u64);
 
 	/* this takes care of setting up task-work */
 	io_uring_cmd_complete_in_task(ioucmd, nvme_pt_task_cb);
-
-	/* we can unmap pages, free bio and request */
-	blk_rq_unmap_user(bio);
-	blk_mq_free_request(req);
 }
 
 static void nvme_setup_uring_cmd_data(struct request *rq,
@@ -99,6 +95,7 @@ static void nvme_setup_uring_cmd_data(struct request *rq,
 
 	ucd = (struct uring_cmd_data *) nvme_ioucmd_data_addr(ioucmd);
 	/* to free bio on completion, as req->bio will be null at that time */
+	ucd->req = rq;
 	ucd->bio = rq->bio;
 	/* meta update is required only for read requests */
 	if (meta && !write)
@@ -244,7 +241,7 @@ static int nvme_submit_user_cmd(struct request_queue *q,
 	}
 	if (ioucmd) { /* async dispatch */
 		nvme_setup_uring_cmd_data(req, ioucmd, meta, write);
-		blk_execute_rq_nowait(ns ? ns->disk : NULL, req, 0,
+		__blk_execute_rq_nowait(ns ? ns->disk : NULL, req, false, false,
 					nvme_end_async_pt);
 		return 0;
 	}
