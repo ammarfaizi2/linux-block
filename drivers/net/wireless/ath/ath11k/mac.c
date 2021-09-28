@@ -500,7 +500,8 @@ struct ath11k_vif *ath11k_mac_get_arvif_by_vdev_id(struct ath11k_base *ab,
 
 	for (i = 0; i < ab->num_radios; i++) {
 		pdev = rcu_dereference(ab->pdevs_active[i]);
-		if (pdev && pdev->ar) {
+		if (pdev && pdev->ar &&
+		    (pdev->ar->allocated_vdev_map & (1LL << vdev_id))) {
 			arvif = ath11k_mac_get_arvif(pdev->ar, vdev_id);
 			if (arvif)
 				return arvif;
@@ -5370,7 +5371,8 @@ static void ath11k_mac_op_update_vif_offload(struct ieee80211_hw *hw,
 	if (ath11k_frame_mode != ATH11K_HW_TXRX_ETHERNET ||
 	    (vif->type != NL80211_IFTYPE_STATION &&
 	     vif->type != NL80211_IFTYPE_AP))
-		vif->offload_flags &= ~IEEE80211_OFFLOAD_ENCAP_ENABLED;
+		vif->offload_flags &= ~(IEEE80211_OFFLOAD_ENCAP_ENABLED |
+					IEEE80211_OFFLOAD_DECAP_ENABLED);
 
 	if (vif->offload_flags & IEEE80211_OFFLOAD_ENCAP_ENABLED)
 		param_value = ATH11K_HW_TXRX_ETHERNET;
@@ -5385,6 +5387,22 @@ static void ath11k_mac_op_update_vif_offload(struct ieee80211_hw *hw,
 		ath11k_warn(ab, "failed to set vdev %d tx encap mode: %d\n",
 			    arvif->vdev_id, ret);
 		vif->offload_flags &= ~IEEE80211_OFFLOAD_ENCAP_ENABLED;
+	}
+
+	param_id = WMI_VDEV_PARAM_RX_DECAP_TYPE;
+	if (vif->offload_flags & IEEE80211_OFFLOAD_DECAP_ENABLED)
+		param_value = ATH11K_HW_TXRX_ETHERNET;
+	else if (test_bit(ATH11K_FLAG_RAW_MODE, &ab->dev_flags))
+		param_value = ATH11K_HW_TXRX_RAW;
+	else
+		param_value = ATH11K_HW_TXRX_NATIVE_WIFI;
+
+	ret = ath11k_wmi_vdev_set_param_cmd(ar, arvif->vdev_id,
+					    param_id, param_value);
+	if (ret) {
+		ath11k_warn(ab, "failed to set vdev %d rx decap mode: %d\n",
+			    arvif->vdev_id, ret);
+		vif->offload_flags &= ~IEEE80211_OFFLOAD_DECAP_ENABLED;
 	}
 }
 
@@ -7550,7 +7568,11 @@ static int __ath11k_mac_register(struct ath11k *ar)
 	ieee80211_hw_set(ar->hw, QUEUE_CONTROL);
 	ieee80211_hw_set(ar->hw, SUPPORTS_TX_FRAG);
 	ieee80211_hw_set(ar->hw, REPORTS_LOW_ACK);
-	ieee80211_hw_set(ar->hw, SUPPORTS_TX_ENCAP_OFFLOAD);
+
+	if (ath11k_frame_mode == ATH11K_HW_TXRX_ETHERNET) {
+		ieee80211_hw_set(ar->hw, SUPPORTS_TX_ENCAP_OFFLOAD);
+		ieee80211_hw_set(ar->hw, SUPPORTS_RX_DECAP_OFFLOAD);
+	}
 
 	if (cap->nss_ratio_enabled)
 		ieee80211_hw_set(ar->hw, SUPPORTS_VHT_EXT_NSS_BW);
@@ -7639,7 +7661,7 @@ static int __ath11k_mac_register(struct ath11k *ar)
 		ar->hw->wiphy->interface_modes &= ~BIT(NL80211_IFTYPE_MONITOR);
 
 	/* Apply the regd received during initialization */
-	ret = ath11k_regd_update(ar, true);
+	ret = ath11k_regd_update(ar);
 	if (ret) {
 		ath11k_err(ar->ab, "ath11k regd update failed: %d\n", ret);
 		goto err_unregister_hw;
@@ -7680,6 +7702,10 @@ int ath11k_mac_register(struct ath11k_base *ab)
 	if (test_bit(ATH11K_FLAG_REGISTERED, &ab->dev_flags))
 		return 0;
 
+	/* Initialize channel counters frequency value in hertz */
+	ab->cc_freq_hz = IPQ8074_CC_FREQ_HERTZ;
+	ab->free_vdev_map = (1LL << (ab->num_radios * TARGET_NUM_VDEVS)) - 1;
+
 	for (i = 0; i < ab->num_radios; i++) {
 		pdev = &ab->pdevs[i];
 		ar = pdev->ar;
@@ -7690,17 +7716,13 @@ int ath11k_mac_register(struct ath11k_base *ab)
 			ar->mac_addr[4] += i;
 		}
 
+		idr_init(&ar->txmgmt_idr);
+		spin_lock_init(&ar->txmgmt_idr_lock);
+
 		ret = __ath11k_mac_register(ar);
 		if (ret)
 			goto err_cleanup;
-
-		idr_init(&ar->txmgmt_idr);
-		spin_lock_init(&ar->txmgmt_idr_lock);
 	}
-
-	/* Initialize channel counters frequency value in hertz */
-	ab->cc_freq_hz = IPQ8074_CC_FREQ_HERTZ;
-	ab->free_vdev_map = (1LL << (ab->num_radios * TARGET_NUM_VDEVS)) - 1;
 
 	return 0;
 

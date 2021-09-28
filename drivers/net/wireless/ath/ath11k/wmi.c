@@ -884,6 +884,8 @@ int ath11k_wmi_vdev_start(struct ath11k *ar, struct wmi_vdev_start_req_arg *arg,
 	}
 
 	cmd->flags |= WMI_VDEV_START_LDPC_RX_ENABLED;
+	if (test_bit(ATH11K_FLAG_HW_CRYPTO_DISABLED, &ar->ab->dev_flags))
+		cmd->flags |= WMI_VDEV_START_HW_ENCRYPTION_DISABLED;
 
 	ptr = skb->data + sizeof(*cmd);
 	chan = ptr;
@@ -2302,7 +2304,7 @@ int ath11k_wmi_send_scan_chan_list_cmd(struct ath11k *ar,
 	u16 num_send_chans, num_sends = 0, max_chan_limit = 0;
 	u32 *reg1, *reg2;
 
-	tchan_info = &chan_list->ch_param[0];
+	tchan_info = chan_list->ch_param;
 	while (chan_list->nallchans) {
 		len = sizeof(*cmd) + TLV_HDR_SIZE;
 		max_chan_limit = (wmi->wmi_ab->max_msg_len[ar->pdev_idx] - len) /
@@ -5251,9 +5253,11 @@ ath11k_wmi_pull_pdev_stats_tx(const struct wmi_pdev_stats_tx *src,
 	dst->hw_queued = src->hw_queued;
 	dst->hw_reaped = src->hw_reaped;
 	dst->underrun = src->underrun;
+	dst->hw_paused = src->hw_paused;
 	dst->tx_abort = src->tx_abort;
 	dst->mpdus_requeued = src->mpdus_requeued;
 	dst->tx_ko = src->tx_ko;
+	dst->tx_xretry = src->tx_xretry;
 	dst->data_rc = src->data_rc;
 	dst->self_triggers = src->self_triggers;
 	dst->sw_retry_failure = src->sw_retry_failure;
@@ -5264,6 +5268,16 @@ ath11k_wmi_pull_pdev_stats_tx(const struct wmi_pdev_stats_tx *src,
 	dst->stateless_tid_alloc_failure = src->stateless_tid_alloc_failure;
 	dst->phy_underrun = src->phy_underrun;
 	dst->txop_ovf = src->txop_ovf;
+	dst->seq_posted = src->seq_posted;
+	dst->seq_failed_queueing = src->seq_failed_queueing;
+	dst->seq_completed = src->seq_completed;
+	dst->seq_restarted = src->seq_restarted;
+	dst->mu_seq_posted = src->mu_seq_posted;
+	dst->mpdus_sw_flush = src->mpdus_sw_flush;
+	dst->mpdus_hw_filter = src->mpdus_hw_filter;
+	dst->mpdus_truncated = src->mpdus_truncated;
+	dst->mpdus_ack_failed = src->mpdus_ack_failed;
+	dst->mpdus_expired = src->mpdus_expired;
 }
 
 static void ath11k_wmi_pull_pdev_stats_rx(const struct wmi_pdev_stats_rx *src,
@@ -5283,6 +5297,7 @@ static void ath11k_wmi_pull_pdev_stats_rx(const struct wmi_pdev_stats_rx *src,
 	dst->phy_errs = src->phy_errs;
 	dst->phy_err_drop = src->phy_err_drop;
 	dst->mpdu_errs = src->mpdu_errs;
+	dst->rx_ovfl_errs = src->rx_ovfl_errs;
 }
 
 static void
@@ -5520,11 +5535,15 @@ ath11k_wmi_fw_pdev_tx_stats_fill(const struct ath11k_fw_stats_pdev *pdev,
 	len += scnprintf(buf + len, buf_len - len, "%30s %10d\n",
 			 "Num underruns", pdev->underrun);
 	len += scnprintf(buf + len, buf_len - len, "%30s %10d\n",
+			 "Num HW Paused", pdev->hw_paused);
+	len += scnprintf(buf + len, buf_len - len, "%30s %10d\n",
 			 "PPDUs cleaned", pdev->tx_abort);
 	len += scnprintf(buf + len, buf_len - len, "%30s %10d\n",
 			 "MPDUs requeued", pdev->mpdus_requeued);
 	len += scnprintf(buf + len, buf_len - len, "%30s %10u\n",
-			 "Excessive retries", pdev->tx_ko);
+			 "PPDU OK", pdev->tx_ko);
+	len += scnprintf(buf + len, buf_len - len, "%30s %10u\n",
+			 "Excessive retries", pdev->tx_xretry);
 	len += scnprintf(buf + len, buf_len - len, "%30s %10u\n",
 			 "HW rate", pdev->data_rc);
 	len += scnprintf(buf + len, buf_len - len, "%30s %10u\n",
@@ -5548,6 +5567,26 @@ ath11k_wmi_fw_pdev_tx_stats_fill(const struct ath11k_fw_stats_pdev *pdev,
 			 "PHY underrun", pdev->phy_underrun);
 	len += scnprintf(buf + len, buf_len - len, "%30s %10u\n",
 			 "MPDU is more than txop limit", pdev->txop_ovf);
+	len += scnprintf(buf + len, buf_len - len, "%30s %10u\n",
+			 "Num sequences posted", pdev->seq_posted);
+	len += scnprintf(buf + len, buf_len - len, "%30s %10u\n",
+			 "Num seq failed queueing ", pdev->seq_failed_queueing);
+	len += scnprintf(buf + len, buf_len - len, "%30s %10u\n",
+			 "Num sequences completed ", pdev->seq_completed);
+	len += scnprintf(buf + len, buf_len - len, "%30s %10u\n",
+			 "Num sequences restarted ", pdev->seq_restarted);
+	len += scnprintf(buf + len, buf_len - len, "%30s %10u\n",
+			 "Num of MU sequences posted ", pdev->mu_seq_posted);
+	len += scnprintf(buf + len, buf_len - len, "%30s %10u\n",
+			 "Num of MPDUS SW flushed ", pdev->mpdus_sw_flush);
+	len += scnprintf(buf + len, buf_len - len, "%30s %10u\n",
+			 "Num of MPDUS HW filtered ", pdev->mpdus_hw_filter);
+	len += scnprintf(buf + len, buf_len - len, "%30s %10u\n",
+			 "Num of MPDUS truncated ", pdev->mpdus_truncated);
+	len += scnprintf(buf + len, buf_len - len, "%30s %10u\n",
+			 "Num of MPDUS ACK failed ", pdev->mpdus_ack_failed);
+	len += scnprintf(buf + len, buf_len - len, "%30s %10u\n",
+			 "Num of MPDUS expired ", pdev->mpdus_expired);
 	*length = len;
 }
 
@@ -5592,6 +5631,8 @@ ath11k_wmi_fw_pdev_rx_stats_fill(const struct ath11k_fw_stats_pdev *pdev,
 			 "PHY errors drops", pdev->phy_err_drop);
 	len += scnprintf(buf + len, buf_len - len, "%30s %10d\n",
 			 "MPDU errors (FCS, MIC, ENC)", pdev->mpdu_errs);
+	len += scnprintf(buf + len, buf_len - len, "%30s %10d\n",
+			 "Overflow errors", pdev->rx_ovfl_errs);
 	*length = len;
 }
 
@@ -5809,6 +5850,17 @@ static int ath11k_reg_chan_list_event(struct ath11k_base *ab, struct sk_buff *sk
 
 	pdev_idx = reg_info->phy_id;
 
+	/* Avoid default reg rule updates sent during FW recovery if
+	 * it is already available
+	 */
+	spin_lock(&ab->base_lock);
+	if (test_bit(ATH11K_FLAG_RECOVERY, &ab->dev_flags) &&
+	    ab->default_regd[pdev_idx]) {
+		spin_unlock(&ab->base_lock);
+		goto mem_free;
+	}
+	spin_unlock(&ab->base_lock);
+
 	if (pdev_idx >= ab->num_radios) {
 		/* Process the event for phy0 only if single_pdev_only
 		 * is true. If pdev_idx is valid but not 0, discard the
@@ -5846,10 +5898,10 @@ static int ath11k_reg_chan_list_event(struct ath11k_base *ab, struct sk_buff *sk
 	}
 
 	spin_lock(&ab->base_lock);
-	if (test_bit(ATH11K_FLAG_REGISTERED, &ab->dev_flags)) {
-		/* Once mac is registered, ar is valid and all CC events from
-		 * fw is considered to be received due to user requests
-		 * currently.
+	if (ab->default_regd[pdev_idx]) {
+		/* The initial rules from FW after WMI Init is to build
+		 * the default regd. From then on, any rules updated for
+		 * the pdev could be due to user reg changes.
 		 * Free previously built regd before assigning the newly
 		 * generated regd to ar. NULL pointer handling will be
 		 * taken care by kfree itself.
@@ -5859,13 +5911,9 @@ static int ath11k_reg_chan_list_event(struct ath11k_base *ab, struct sk_buff *sk
 		ab->new_regd[pdev_idx] = regd;
 		ieee80211_queue_work(ar->hw, &ar->regd_update_work);
 	} else {
-		/* Multiple events for the same *ar is not expected. But we
-		 * can still clear any previously stored default_regd if we
-		 * are receiving this event for the same radio by mistake.
-		 * NULL pointer handling will be taken care by kfree itself.
+		/* This regd would be applied during mac registration and is
+		 * held constant throughout for regd intersection purpose
 		 */
-		kfree(ab->default_regd[pdev_idx]);
-		/* This regd would be applied during mac registration */
 		ab->default_regd[pdev_idx] = regd;
 	}
 	ab->dfs_region = reg_info->dfs_region;
@@ -7082,6 +7130,7 @@ static void ath11k_wmi_tlv_op_rx(struct ath11k_base *ab, struct sk_buff *skb)
 	case WMI_TWT_ENABLE_EVENTID:
 	case WMI_TWT_DISABLE_EVENTID:
 	case WMI_PDEV_DMA_RING_CFG_RSP_EVENTID:
+	case WMI_PEER_CREATE_CONF_EVENTID:
 		ath11k_dbg(ab, ATH11K_DBG_WMI,
 			   "ignoring unsupported event 0x%x\n", id);
 		break;
