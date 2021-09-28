@@ -45,6 +45,11 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
 
+    - name: Register problem matchers
+      run: |
+        echo "::add-matcher::.github/problem-matchers/compiler-source.json"
+        echo "::add-matcher::.github/problem-matchers/compiler-non-source.json"
+
     - name: Build
       run: ./arch/powerpc/tools/ci-build.sh
 

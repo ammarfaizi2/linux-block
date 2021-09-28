@@ -35,8 +35,10 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Register gcc problem matcher
-      run: echo "::add-matcher::.github/problem-matchers/gcc.json"
+    - name: Register problem matchers
+      run: |
+        echo "::add-matcher::.github/problem-matchers/compiler-source.json"
+        echo "::add-matcher::.github/problem-matchers/compiler-non-source.json"
 
     - name: build
       run: ./arch/powerpc/tools/ci-build.sh
