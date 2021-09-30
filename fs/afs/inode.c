@@ -24,6 +24,7 @@
 #include <linux/iversion.h>
 #include "internal.h"
 #include "afs_fs.h"
+#include <trace/events/netfs.h>
 
 static const struct inode_operations afs_symlink_inode_operations = {
 	.get_link	= page_get_link,
@@ -839,15 +840,15 @@ void afs_evict_inode(struct inode *inode)
 
 static void afs_setattr_success(struct afs_operation *op)
 {
+	struct netfs_io_request *treq = op->setattr.treq;
 	struct afs_vnode_param *vp = &op->file[0];
 	struct inode *inode = &vp->vnode->netfs.inode;
-	loff_t old_i_size = i_size_read(inode);
 
-	op->setattr.old_i_size = old_i_size;
 	afs_vnode_commit_status(op, vp);
 	/* inode->i_size has now been changed. */
 
 	if (op->setattr.attr->ia_valid & ATTR_SIZE) {
+		loff_t old_i_size = treq->i_size;
 		loff_t size = op->setattr.attr->ia_size;
 		if (size > old_i_size)
 			pagecache_isize_extended(inode, old_i_size, size);
@@ -856,19 +857,15 @@ static void afs_setattr_success(struct afs_operation *op)
 
 static void afs_setattr_edit_file(struct afs_operation *op)
 {
-	struct afs_vnode_param *vp = &op->file[0];
-	struct afs_vnode *vnode = vp->vnode;
+	struct netfs_io_request *treq = op->setattr.treq;
 
-	if (op->setattr.attr->ia_valid & ATTR_SIZE) {
-		loff_t size = op->setattr.attr->ia_size;
-		loff_t i_size = op->setattr.old_i_size;
+	if (op->setattr.attr->ia_valid & ATTR_SIZE)
+		netfs_truncate(treq);
+}
 
-		if (size != i_size) {
-			truncate_pagecache(&vnode->netfs.inode, size);
-			netfs_resize_file(&vnode->netfs, size);
-			fscache_resize_cookie(afs_vnode_cache(vnode), size);
-		}
-	}
+static void afs_setattr_put(struct afs_operation *op)
+{
+	netfs_put_request(op->setattr.treq, false, netfs_rreq_trace_put_discard);
 }
 
 static const struct afs_operation_ops afs_setattr_operation = {
@@ -876,6 +873,7 @@ static const struct afs_operation_ops afs_setattr_operation = {
 	.issue_yfs_rpc	= yfs_fs_setattr,
 	.success	= afs_setattr_success,
 	.edit_dir	= afs_setattr_edit_file,
+	.put		= afs_setattr_put,
 };
 
 /*
@@ -887,6 +885,7 @@ int afs_setattr(struct user_namespace *mnt_userns, struct dentry *dentry,
 	const unsigned int supported =
 		ATTR_SIZE | ATTR_MODE | ATTR_UID | ATTR_GID |
 		ATTR_MTIME | ATTR_MTIME_SET | ATTR_TIMES_SET | ATTR_TOUCH;
+	struct netfs_io_request *treq = NULL;
 	struct afs_operation *op;
 	struct afs_vnode *vnode = AFS_FS_I(d_inode(dentry));
 	struct inode *inode = &vnode->netfs.inode;
@@ -902,20 +901,11 @@ int afs_setattr(struct user_namespace *mnt_userns, struct dentry *dentry,
 		return 0;
 	}
 
-	i_size = i_size_read(inode);
-	if (attr->ia_valid & ATTR_SIZE) {
-		if (!S_ISREG(inode->i_mode))
-			return -EISDIR;
-
-		ret = inode_newsize_ok(inode, attr->ia_size);
-		if (ret)
-			return ret;
-
-		if (attr->ia_size == i_size)
-			attr->ia_valid &= ~ATTR_SIZE;
-	}
-
 	fscache_use_cookie(afs_vnode_cache(vnode), true);
+
+	treq = netfs_prepare_to_truncate(dentry, attr);
+	if (IS_ERR(treq))
+		return PTR_ERR(treq);
 
 	/* Prevent any new writebacks from starting whilst we do this. */
 	down_write(&vnode->validate_lock);
@@ -955,6 +945,7 @@ int afs_setattr(struct user_namespace *mnt_userns, struct dentry *dentry,
 
 	afs_op_set_vnode(op, 0, vnode);
 	op->setattr.attr = attr;
+	op->setattr.treq = treq;
 
 	if (attr->ia_valid & ATTR_SIZE) {
 		op->file[0].dv_delta = 1;
@@ -965,10 +956,12 @@ int afs_setattr(struct user_namespace *mnt_userns, struct dentry *dentry,
 	op->file[0].modification = true;
 
 	op->ops = &afs_setattr_operation;
+	treq = NULL;
 	ret = afs_do_sync_operation(op);
 
 out_unlock:
 	up_write(&vnode->validate_lock);
+	netfs_put_request(treq, false, netfs_rreq_trace_put_discard);
 	fscache_unuse_cookie(afs_vnode_cache(vnode), NULL, NULL);
 	_leave(" = %d", ret);
 	return ret;

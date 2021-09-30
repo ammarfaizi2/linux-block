@@ -20,6 +20,7 @@
 #include <linux/uio.h>
 
 struct scatterlist;
+enum netfs_rreq_ref_trace;
 enum netfs_sreq_ref_trace;
 
 /*
@@ -216,6 +217,7 @@ enum netfs_io_origin {
 	NETFS_WRITEBACK,		/* This write was triggered by writepages */
 	NETFS_DIO_READ,			/* This read is a direct I/O read */
 	NETFS_DIO_WRITE,		/* This read is a direct I/O write */
+	NETFS_TRUNCATE,			/* Truncation */
 	nr__netfs_io_origin
 } __mode(byte);
 
@@ -234,6 +236,19 @@ enum netfs_buffering {
 	NETFS_BOUNCE_DEC_TO_DIRECT_BV,	/* Decrypt from ->bounce to ->direct_iter/bv[] */
 	NETFS_BOUNCE_DEC_COPY,		/* Decrypt ->bounce in place, then copy to ->direct */
 	NETFS_BOUNCE_DEC_COPY_BV,	/* Decrypt ->bounce in place, then copy to ->direct_bv */
+} __mode(byte);
+
+enum netfs_truncation_type {
+	NETFS_TRUNC_NO_CHANGE,
+	NETFS_TRUNC_GROW_LOCALLY,		/* Grow file, just expand local changes */
+	NETFS_TRUNC_GROW_NOENC,			/* Grow file, no encryption */
+	NETFS_TRUNC_GROW_TO_ENC_BLOCK,		/* Grow file to enc block boundary */
+	NETFS_TRUNC_GROW_MID_ENC_BLOCK,		/* Grow file to mid-enc block  */
+	NETFS_TRUNC_SHRINK_TO_ZERO,		/* Discard everything */
+	NETFS_TRUNC_SHRINK_LOCALLY,		/* Shrink local changes only */
+	NETFS_TRUNC_SHRINK_NOENC,		/* Shrink, no encryption */
+	NETFS_TRUNC_SHRINK_TO_ENC_BLOCK,	/* Shrink enc/comp block boundary a*/
+	NETFS_TRUNC_SHRINK_MID_ENC_BLOCK,	/* Shrink to mid-enc/comp block */
 } __mode(byte);
 
 /*
@@ -271,8 +286,10 @@ struct netfs_io_request {
 	short			error;		/* 0 or error that occurred */
 	enum netfs_io_origin	origin;		/* Origin of the request */
 	enum netfs_buffering	buffering;	/* Method of buffering */
+	enum netfs_truncation_type trunc_type;	/* Type of truncation (if truncate op) */
 	u8			nr_chains;
 	loff_t			i_size;		/* Size of the file */
+	loff_t			trunc_i_size;	/* Size of the file after a truncation op */
 	loff_t			start;		/* Start position */
 	pgoff_t			first;		/* First page included */
 	pgoff_t			last;		/* Last page included */
@@ -444,6 +461,8 @@ extern void netfs_get_subrequest(struct netfs_io_subrequest *subreq,
 				 enum netfs_sreq_ref_trace what);
 extern void netfs_put_subrequest(struct netfs_io_subrequest *subreq,
 				 bool was_async, enum netfs_sreq_ref_trace what);
+extern void netfs_put_request(struct netfs_io_request *rreq, bool was_async,
+			      enum netfs_rreq_ref_trace what);
 extern void netfs_stats_show(struct seq_file *);
 extern ssize_t netfs_direct_read_iter(struct kiocb *, struct iov_iter *);
 extern struct netfs_io_subrequest *netfs_create_write_request(
@@ -452,6 +471,9 @@ extern struct netfs_io_subrequest *netfs_create_write_request(
 extern void netfs_write_subrequest_terminated(void *_op, ssize_t transferred_or_error,
 					      bool was_async);
 extern void netfs_queue_write_request(struct netfs_io_subrequest *subreq);
+extern struct netfs_io_request *netfs_prepare_to_truncate(struct dentry *dentry,
+							  struct iattr *attr);
+extern void netfs_truncate(struct netfs_io_request *treq);
 extern void netfs_clear_inode(struct netfs_inode *ctx);
 
 /**

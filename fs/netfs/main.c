@@ -36,6 +36,7 @@ static const char *netfs_origins[nr__netfs_io_origin] = {
 	[NETFS_WRITEBACK]	= "WB",
 	[NETFS_DIO_READ]	= "DR",
 	[NETFS_DIO_WRITE]	= "DW",
+	[NETFS_TRUNCATE]	= "TR",
 };
 
 /*

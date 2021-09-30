@@ -91,6 +91,7 @@
 	EM(netfs_rreq_trace_put_failed,		"PUT FAILED ")	\
 	EM(netfs_rreq_trace_put_hold,		"PUT HOLD   ")	\
 	EM(netfs_rreq_trace_put_subreq,		"PUT SUBREQ ")	\
+	EM(netfs_rreq_trace_put_truncated,	"PUT TRUNC ")	\
 	EM(netfs_rreq_trace_put_work,		"PUT WORK   ")	\
 	EM(netfs_rreq_trace_put_zero_len,	"PUT ZEROLEN")	\
 	EM(netfs_rreq_trace_see_work,		"SEE WORK   ")	\
@@ -116,11 +117,13 @@
 	EM(netfs_region_trace_new,		"NEW        ")	\
 	EM(netfs_region_trace_put_clear,	"PUT CLEAR  ")	\
 	EM(netfs_region_trace_put_merged,	"PUT MERGED ")	\
+	EM(netfs_region_trace_put_truncated,	"PUT TRUNC  ")	\
 	E_(netfs_region_trace_put_written,	"PUT WRITTEN")
 
 #define netfs_dirty_traces					\
 	EM(netfs_dirty_trace_active,		"ACTIVE    ")	\
 	EM(netfs_dirty_trace_bridged,		"BRIDGED   ")	\
+	EM(netfs_dirty_trace_cancel,		"CANCEL    ")	\
 	EM(netfs_dirty_trace_committed,		"COMMITTED ")	\
 	EM(netfs_dirty_trace_continue,		"CONTINUE  ")	\
 	EM(netfs_dirty_trace_dio_write,		"DIO WRITE ")	\
@@ -148,11 +151,24 @@
 	EM(netfs_dirty_trace_supersede_all,	"SUPRSD ALL")	\
 	EM(netfs_dirty_trace_supersede_back,	"SUPRSD BAK")	\
 	EM(netfs_dirty_trace_supersede_front,	"SUPRSD FRN")	\
+	EM(netfs_dirty_trace_truncated,		"TRUNCATED ")	\
 	E_(netfs_dirty_trace_wait_active,	"WAIT ACTV ")
 
 #define netfs_folio_traces					\
 	EM(netfs_folio_trace_store,		"store ")	\
 	E_(netfs_folio_trace_store_ex,		"store+")	\
+
+#define netfs_truncation_types					\
+	EM(NETFS_TRUNC_NO_CHANGE,		"no-change")	\
+	EM(NETFS_TRUNC_GROW_LOCALLY,		"grow-local")	\
+	EM(NETFS_TRUNC_GROW_NOENC,		"grow-noenc")	\
+	EM(NETFS_TRUNC_GROW_TO_ENC_BLOCK,	"grow-to-enc")	\
+	EM(NETFS_TRUNC_GROW_MID_ENC_BLOCK,	"grow-mid-enc")	\
+	EM(NETFS_TRUNC_SHRINK_TO_ZERO,		"shrink-to-0")	\
+	EM(NETFS_TRUNC_SHRINK_LOCALLY,		"shrink-local")	\
+	EM(NETFS_TRUNC_SHRINK_NOENC,		"shrink-noenc")	\
+	EM(NETFS_TRUNC_SHRINK_TO_ENC_BLOCK,	"shrink-to-enc") \
+	E_(NETFS_TRUNC_SHRINK_MID_ENC_BLOCK,	"shrink-mid-enc")
 
 #ifndef __NETFS_DECLARE_TRACE_ENUMS_ONCE_ONLY
 #define __NETFS_DECLARE_TRACE_ENUMS_ONCE_ONLY
@@ -193,6 +209,7 @@ netfs_sreq_ref_traces;
 netfs_region_traces;
 netfs_dirty_traces;
 netfs_folio_traces;
+netfs_truncation_types;
 
 /*
  * Now redefine the EM() and E_() macros to map the enums to the strings that
@@ -436,6 +453,31 @@ TRACE_EVENT(netfs_wback,
 		      __entry->region,
 		      __entry->start, __entry->start + __entry->len - 1,
 		      __entry->first, __entry->last)
+	    );
+
+TRACE_EVENT(netfs_truncate,
+	    TP_PROTO(struct netfs_io_request *treq, loff_t from, loff_t to),
+
+	    TP_ARGS(treq, from, to),
+
+	    TP_STRUCT__entry(
+		    __field(unsigned int,		treq		)
+		    __field(enum netfs_truncation_type,	type		)
+		    __field(loff_t,			from		)
+		    __field(loff_t,			to		)
+			     ),
+
+	    TP_fast_assign(
+		    __entry->treq	= treq->debug_id;
+		    __entry->type	= treq->trunc_type;
+		    __entry->from	= from;
+		    __entry->to		= to;
+			   ),
+
+	    TP_printk("TRUNCATE R=%08x f=%llx t=%llx %s",
+		      __entry->treq,
+		      __entry->from, __entry->to,
+		      __print_symbolic(__entry->type, netfs_truncation_types))
 	    );
 
 TRACE_EVENT(netfs_ref_region,

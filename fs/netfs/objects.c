@@ -162,6 +162,7 @@ void netfs_put_request(struct netfs_io_request *rreq, bool was_async,
 		}
 	}
 }
+EXPORT_SYMBOL(netfs_put_request);
 
 /*
  * Allocate and partially initialise an I/O request structure.
