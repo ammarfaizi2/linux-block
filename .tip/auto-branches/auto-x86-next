@@ -8,6 +8,7 @@ x86/asm
 x86/boot
 x86/build
 x86/cache
+x86/cc
 x86/cleanups
 x86/core
 x86/cpu
