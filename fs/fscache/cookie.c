@@ -704,7 +704,7 @@ static void fscache_invalidate_cookie(struct fscache_cookie *cookie)
 /*
  * Invalidate an object.  Callable with spinlocks held.
  */
-void __fscache_invalidate(struct fscache_cookie *cookie)
+void __fscache_invalidate(struct fscache_cookie *cookie, loff_t new_size)
 {
 	bool is_caching;
 
@@ -718,6 +718,7 @@ void __fscache_invalidate(struct fscache_cookie *cookie)
 
 	spin_lock(&cookie->lock);
 	set_bit(FSCACHE_COOKIE_NO_DATA_TO_READ, &cookie->flags);
+	cookie->object_size = new_size;
 	cookie->inval_counter++;
 
 	switch (cookie->stage) {
