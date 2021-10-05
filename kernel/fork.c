@@ -111,6 +111,10 @@
 
 #include <trace/events/sched.h>
 
+#ifdef CONFIG_DEBUG_MUTEXES
+# include "locking/mutex.h"
+#endif
+
 #include "sched/per_task_area_struct.h"
 
 #define CREATE_TRACE_POINTS
@@ -2142,7 +2146,7 @@ static __latent_entropy struct task_struct *copy_process(
 #endif
 
 #ifdef CONFIG_DEBUG_MUTEXES
-	p->blocked_on = NULL; /* not blocked yet */
+	per_task(p, blocked_on) = NULL; /* not blocked yet */
 #endif
 #ifdef CONFIG_BCACHE
 	p->sequential_io	= 0;

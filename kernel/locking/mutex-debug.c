@@ -22,6 +22,9 @@
 
 #include "mutex.h"
 
+/* Mutex deadlock detection: */
+DEFINE_PER_TASK(struct mutex_waiter *, blocked_on);
+
 /*
  * Must be called with lock->wait_lock held.
  */
@@ -53,7 +56,7 @@ void debug_mutex_add_waiter(struct mutex *lock, struct mutex_waiter *waiter,
 	lockdep_assert_held(&lock->wait_lock);
 
 	/* Mark the current thread as blocked on the lock: */
-	task->blocked_on = waiter;
+	per_task(task, blocked_on) = waiter;
 }
 
 void debug_mutex_remove_waiter(struct mutex *lock, struct mutex_waiter *waiter,
@@ -61,8 +64,8 @@ void debug_mutex_remove_waiter(struct mutex *lock, struct mutex_waiter *waiter,
 {
 	DEBUG_LOCKS_WARN_ON(list_empty(&waiter->list));
 	DEBUG_LOCKS_WARN_ON(waiter->task != task);
-	DEBUG_LOCKS_WARN_ON(task->blocked_on != waiter);
-	task->blocked_on = NULL;
+	DEBUG_LOCKS_WARN_ON(per_task(task, blocked_on) != waiter);
+	per_task(task, blocked_on) = NULL;
 
 	INIT_LIST_HEAD(&waiter->list);
 	waiter->task = NULL;

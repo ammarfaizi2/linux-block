@@ -6,6 +6,9 @@
  *
  *  Copyright (C) 2004, 2005, 2006 Red Hat, Inc., Ingo Molnar <mingo@redhat.com>
  */
+#include <linux/sched/per_task.h>
+
+DECLARE_PER_TASK(struct mutex_waiter *, blocked_on);
 
 /*
  * This is the control structure for tasks blocked on mutex, which resides
