@@ -1789,7 +1789,7 @@ format_mca_init_stack(void *mca_data, unsigned long offset,
 	ti->cpu = cpu;
 	per_task(p, stack) = ti;
 	p->__state = TASK_UNINTERRUPTIBLE;
-	cpumask_set_cpu(cpu, &p->cpus_mask);
+	cpumask_set_cpu(cpu, &per_task(p, cpus_mask));
 	INIT_LIST_HEAD(&p->tasks);
 	p->parent = p->real_parent = p->group_leader = p;
 	INIT_LIST_HEAD(&p->children);

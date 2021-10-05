@@ -130,6 +130,7 @@ DEFINE_PER_TASK(int,					recent_used_cpu);
 DEFINE_PER_TASK(int,					wake_cpu);
 #endif
 
+DEFINE_PER_TASK(cpumask_t,				cpus_mask);
 DEFINE_PER_TASK(const cpumask_t *,			cpus_ptr);
 DEFINE_PER_TASK(cpumask_t *,				user_cpus_ptr);
 
@@ -2287,7 +2288,7 @@ static void migrate_disable_switch(struct rq *rq, struct task_struct *p)
 	if (likely(!p->migration_disabled))
 		return;
 
-	if (per_task(p, cpus_ptr) != &p->cpus_mask)
+	if (per_task(p, cpus_ptr) != &per_task(p, cpus_mask))
 		return;
 
 	/*
@@ -2329,8 +2330,9 @@ void migrate_enable(void)
 	 * __set_cpus_allowed_ptr(SCA_MIGRATE_ENABLE) doesn't schedule().
 	 */
 	preempt_disable();
-	if (per_task(p, cpus_ptr) != &p->cpus_mask)
-		__set_cpus_allowed_ptr(p, &p->cpus_mask, SCA_MIGRATE_ENABLE);
+	if (per_task(p, cpus_ptr) != &per_task(p, cpus_mask))
+		__set_cpus_allowed_ptr(p, &per_task(p, cpus_mask),
+				       SCA_MIGRATE_ENABLE);
 	/*
 	 * Mustn't clear migration_disabled() until cpus_ptr points back at the
 	 * regular cpus_mask, otherwise things that race (eg.
@@ -2504,7 +2506,7 @@ static int migration_cpu_stop(void *data)
 			p->migration_pending = NULL;
 			complete = true;
 
-			if (cpumask_test_cpu(task_cpu(p), &p->cpus_mask))
+			if (cpumask_test_cpu(task_cpu(p), &per_task(p, cpus_mask)))
 				goto out;
 		}
 
@@ -2617,7 +2619,7 @@ void set_cpus_allowed_common(struct task_struct *p, const struct cpumask *new_ma
 		return;
 	}
 
-	cpumask_copy(&p->cpus_mask, new_mask);
+	cpumask_copy(&per_task(p, cpus_mask), new_mask);
 	p->nr_cpus_allowed = cpumask_weight(new_mask);
 }
 
@@ -2782,7 +2784,7 @@ static int affine_move_task(struct rq *rq, struct task_struct *p, struct rq_flag
 	bool stop_pending, complete = false;
 
 	/* Can the task run on the task's current CPU? If so, we're done */
-	if (cpumask_test_cpu(task_cpu(p), &p->cpus_mask)) {
+	if (cpumask_test_cpu(task_cpu(p), &per_task(p, cpus_mask))) {
 		struct task_struct *push_task = NULL;
 
 		if ((flags & SCA_MIGRATE_ENABLE) &&
@@ -2964,7 +2966,7 @@ static int __set_cpus_allowed_ptr_locked(struct task_struct *p,
 	}
 
 	if (!(flags & SCA_MIGRATE_ENABLE)) {
-		if (cpumask_equal(&p->cpus_mask, new_mask))
+		if (cpumask_equal(&per_task(p, cpus_mask), new_mask))
 			goto out;
 
 		if (WARN_ON_ONCE(p == current &&
@@ -3062,7 +3064,7 @@ static int restrict_cpus_allowed_ptr(struct task_struct *p,
 		goto err_unlock;
 	}
 
-	if (!cpumask_and(new_mask, &p->cpus_mask, subset_mask)) {
+	if (!cpumask_and(new_mask, &per_task(p, cpus_mask), subset_mask)) {
 		err = -EINVAL;
 		goto err_unlock;
 	}
@@ -6074,7 +6076,7 @@ static bool try_steal_cookie(int this, int that)
 		if (p == src->core_pick || p == src->curr)
 			goto next;
 
-		if (!cpumask_test_cpu(this, &p->cpus_mask))
+		if (!cpumask_test_cpu(this, &per_task(p, cpus_mask)))
 			goto next;
 
 		if (per_task(p, core_occupation) > per_task(dst->idle, core_occupation))
@@ -8145,7 +8147,7 @@ long sched_getaffinity(pid_t pid, struct cpumask *mask)
 		goto out_unlock;
 
 	raw_spin_lock_irqsave(&p->pi_lock, flags);
-	cpumask_and(mask, &p->cpus_mask, cpu_active_mask);
+	cpumask_and(mask, &per_task(p, cpus_mask), cpu_active_mask);
 	raw_spin_unlock_irqrestore(&p->pi_lock, flags);
 
 out_unlock:

@@ -931,7 +931,8 @@ void __init init_per_task_early(void)
 #ifdef CONFIG_AUDIT
 	per_task(&init_task, loginuid) = INVALID_UID;
 #endif
-	per_task(&init_task, cpus_ptr) = &init_task.cpus_mask;
+	per_task(&init_task, cpus_mask) = CPU_MASK_ALL;
+	per_task(&init_task, cpus_ptr) = &per_task(&init_task, cpus_mask);
 }
 
 static void __init print_unknown_bootoptions(void)

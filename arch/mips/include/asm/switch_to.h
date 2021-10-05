@@ -57,9 +57,9 @@ do {									\
 	    test_ti_thread_flag(__prev_ti, TIF_FPUBOUND) &&		\
 	    (!(KSTK_STATUS(prev) & ST0_CU1))) {				\
 		clear_ti_thread_flag(__prev_ti, TIF_FPUBOUND);		\
-		prev->cpus_mask = task_thread(prev).user_cpus_allowed;	\
+		per_task(prev, cpus_mask) = task_thread(prev).user_cpus_allowed; \
 	}								\
-	task_thread(next).emulated_fp = 0;					\
+	task_thread(next).emulated_fp = 0;				\
 } while(0)
 
 #else

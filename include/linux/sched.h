@@ -444,7 +444,6 @@ struct task_struct {
 
 	unsigned int			policy;
 	int				nr_cpus_allowed;
-	cpumask_t			cpus_mask;
 	void				*migration_pending;
 #ifdef CONFIG_SMP
 	unsigned short			migration_disabled;
