@@ -63,6 +63,9 @@ static inline int __ww_mutex_check_kill(struct rt_mutex *lock,
 # include "ww_mutex.h"
 #endif
 
+/* PI waiters blocked on a rt_mutex held by this task: */
+DEFINE_PER_TASK(struct rb_root_cached, pi_waiters);
+
 /*
  * lock->owner state tracking:
  *
@@ -423,7 +426,8 @@ __pi_waiter_less(struct rb_node *a, const struct rb_node *b)
 static __always_inline void
 rt_mutex_enqueue_pi(struct task_struct *task, struct rt_mutex_waiter *waiter)
 {
-	rb_add_cached(&waiter->pi_tree_entry, &task->pi_waiters, __pi_waiter_less);
+	rb_add_cached(&waiter->pi_tree_entry, &per_task(task, pi_waiters),
+		      __pi_waiter_less);
 }
 
 static __always_inline void
@@ -432,7 +436,7 @@ rt_mutex_dequeue_pi(struct task_struct *task, struct rt_mutex_waiter *waiter)
 	if (RB_EMPTY_NODE(&waiter->pi_tree_entry))
 		return;
 
-	rb_erase_cached(&waiter->pi_tree_entry, &task->pi_waiters);
+	rb_erase_cached(&waiter->pi_tree_entry, &per_task(task, pi_waiters));
 	RB_CLEAR_NODE(&waiter->pi_tree_entry);
 }
 

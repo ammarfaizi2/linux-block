@@ -17,6 +17,9 @@
 #include <linux/rtmutex.h>
 #include <linux/sched/wake_q.h>
 
+/* PI waiters blocked on a rt_mutex held by this task: */
+DECLARE_PER_TASK(struct rb_root_cached, pi_waiters);
+
 /*
  * This is the control structure for tasks blocked on a rt_mutex,
  * which is allocated on the kernel stack on of the blocked task.
@@ -122,12 +125,13 @@ static inline struct rt_mutex_waiter *rt_mutex_top_waiter(struct rt_mutex_base *
 
 static inline int task_has_pi_waiters(struct task_struct *p)
 {
-	return !RB_EMPTY_ROOT(&p->pi_waiters.rb_root);
+	return !RB_EMPTY_ROOT(&per_task(p, pi_waiters).rb_root);
 }
 
 static inline struct rt_mutex_waiter *task_top_pi_waiter(struct task_struct *p)
 {
-	return rb_entry(p->pi_waiters.rb_leftmost, struct rt_mutex_waiter,
+	return rb_entry(per_task(p, pi_waiters).rb_leftmost,
+			struct rt_mutex_waiter,
 			pi_tree_entry);
 }
 

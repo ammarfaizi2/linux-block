@@ -484,7 +484,7 @@ void __sched rt_mutex_postunlock(struct rt_wake_q_head *wqh)
 #ifdef CONFIG_DEBUG_RT_MUTEXES
 void rt_mutex_debug_task_free(struct task_struct *task)
 {
-	DEBUG_LOCKS_WARN_ON(!RB_EMPTY_ROOT(&task->pi_waiters.rb_root));
+	DEBUG_LOCKS_WARN_ON(!RB_EMPTY_ROOT(&per_task(task, pi_waiters).rb_root));
 	DEBUG_LOCKS_WARN_ON(task->pi_blocked_on);
 }
 #endif
