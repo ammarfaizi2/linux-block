@@ -130,6 +130,9 @@ DEFINE_PER_TASK(int,					recent_used_cpu);
 DEFINE_PER_TASK(int,					wake_cpu);
 #endif
 
+DEFINE_PER_TASK(const cpumask_t *,			cpus_ptr);
+DEFINE_PER_TASK(cpumask_t *,				user_cpus_ptr);
+
 #ifdef CONFIG_CGROUP_SCHED
 DEFINE_PER_TASK(struct task_group *,			sched_task_group);
 #endif
@@ -2284,7 +2287,7 @@ static void migrate_disable_switch(struct rq *rq, struct task_struct *p)
 	if (likely(!p->migration_disabled))
 		return;
 
-	if (p->cpus_ptr != &p->cpus_mask)
+	if (per_task(p, cpus_ptr) != &p->cpus_mask)
 		return;
 
 	/*
@@ -2326,7 +2329,7 @@ void migrate_enable(void)
 	 * __set_cpus_allowed_ptr(SCA_MIGRATE_ENABLE) doesn't schedule().
 	 */
 	preempt_disable();
-	if (p->cpus_ptr != &p->cpus_mask)
+	if (per_task(p, cpus_ptr) != &p->cpus_mask)
 		__set_cpus_allowed_ptr(p, &p->cpus_mask, SCA_MIGRATE_ENABLE);
 	/*
 	 * Mustn't clear migration_disabled() until cpus_ptr points back at the
@@ -2352,7 +2355,7 @@ static inline bool rq_has_pinned_tasks(struct rq *rq)
 static inline bool is_cpu_allowed(struct task_struct *p, int cpu)
 {
 	/* When not in the task's cpumask, no point in looking further. */
-	if (!cpumask_test_cpu(cpu, p->cpus_ptr))
+	if (!cpumask_test_cpu(cpu, per_task(p, cpus_ptr)))
 		return false;
 
 	/* migrate_disabled() must be allowed to finish. */
@@ -2532,7 +2535,7 @@ static int migration_cpu_stop(void *data)
 		 * ->pi_lock, so the allowed mask is stable - if it got
 		 * somewhere allowed, we're done.
 		 */
-		if (cpumask_test_cpu(task_cpu(p), p->cpus_ptr)) {
+		if (cpumask_test_cpu(task_cpu(p), per_task(p, cpus_ptr))) {
 			p->migration_pending = NULL;
 			complete = true;
 			goto out;
@@ -2610,7 +2613,7 @@ out_unlock:
 void set_cpus_allowed_common(struct task_struct *p, const struct cpumask *new_mask, u32 flags)
 {
 	if (flags & (SCA_MIGRATE_ENABLE | SCA_MIGRATE_DISABLE)) {
-		p->cpus_ptr = new_mask;
+		per_task(p, cpus_ptr) = new_mask;
 		return;
 	}
 
@@ -2671,14 +2674,14 @@ void do_set_cpus_allowed(struct task_struct *p, const struct cpumask *new_mask)
 int dup_user_cpus_ptr(struct task_struct *dst, struct task_struct *src,
 		      int node)
 {
-	if (!src->user_cpus_ptr)
+	if (!per_task(src, user_cpus_ptr))
 		return 0;
 
-	dst->user_cpus_ptr = kmalloc_node(cpumask_size(), GFP_KERNEL, node);
-	if (!dst->user_cpus_ptr)
+	per_task(dst, user_cpus_ptr) = kmalloc_node(cpumask_size(), GFP_KERNEL, node);
+	if (!per_task(dst, user_cpus_ptr))
 		return -ENOMEM;
 
-	cpumask_copy(dst->user_cpus_ptr, src->user_cpus_ptr);
+	cpumask_copy(per_task(dst, user_cpus_ptr), per_task(src, user_cpus_ptr));
 	return 0;
 }
 
@@ -2686,7 +2689,7 @@ static inline struct cpumask *clear_user_cpus_ptr(struct task_struct *p)
 {
 	struct cpumask *user_mask = NULL;
 
-	swap(p->user_cpus_ptr, user_mask);
+	swap(per_task(p, user_cpus_ptr), user_mask);
 
 	return user_mask;
 }
@@ -3041,7 +3044,7 @@ static int restrict_cpus_allowed_ptr(struct task_struct *p,
 	struct rq *rq;
 	int err;
 
-	if (!p->user_cpus_ptr) {
+	if (!per_task(p, user_cpus_ptr)) {
 		user_mask = kmalloc(cpumask_size(), GFP_KERNEL);
 		if (!user_mask)
 			return -ENOMEM;
@@ -3069,8 +3072,8 @@ static int restrict_cpus_allowed_ptr(struct task_struct *p,
 	 * the user asked for in case we're able to restore it later on.
 	 */
 	if (user_mask) {
-		cpumask_copy(user_mask, p->cpus_ptr);
-		p->user_cpus_ptr = user_mask;
+		cpumask_copy(user_mask, per_task(p, cpus_ptr));
+		per_task(p, user_cpus_ptr) = user_mask;
 	}
 
 	return __set_cpus_allowed_ptr_locked(p, new_mask, 0, rq, &rf);
@@ -3139,7 +3142,7 @@ __sched_setaffinity(struct task_struct *p, const struct cpumask *mask);
  */
 void relax_compatible_cpus_allowed_ptr(struct task_struct *p)
 {
-	struct cpumask *user_mask = p->user_cpus_ptr;
+	struct cpumask *user_mask = per_task(p, user_cpus_ptr);
 	unsigned long flags;
 
 	/*
@@ -3270,10 +3273,10 @@ static int migrate_swap_stop(void *data)
 	if (task_cpu(arg->src_task) != arg->src_cpu)
 		goto unlock;
 
-	if (!cpumask_test_cpu(arg->dst_cpu, arg->src_task->cpus_ptr))
+	if (!cpumask_test_cpu(arg->dst_cpu, per_task(arg->src_task, cpus_ptr)))
 		goto unlock;
 
-	if (!cpumask_test_cpu(arg->src_cpu, arg->dst_task->cpus_ptr))
+	if (!cpumask_test_cpu(arg->src_cpu, per_task(arg->dst_task, cpus_ptr)))
 		goto unlock;
 
 	__migrate_swap_task(arg->src_task, arg->dst_cpu);
@@ -3315,10 +3318,10 @@ int migrate_swap(struct task_struct *cur, struct task_struct *p,
 	if (!cpu_active(arg.src_cpu) || !cpu_active(arg.dst_cpu))
 		goto out;
 
-	if (!cpumask_test_cpu(arg.dst_cpu, arg.src_task->cpus_ptr))
+	if (!cpumask_test_cpu(arg.dst_cpu, per_task(arg.src_task, cpus_ptr)))
 		goto out;
 
-	if (!cpumask_test_cpu(arg.src_cpu, arg.dst_task->cpus_ptr))
+	if (!cpumask_test_cpu(arg.src_cpu, per_task(arg.dst_task, cpus_ptr)))
 		goto out;
 
 	trace_sched_swap_numa(cur, arg.src_cpu, p, arg.dst_cpu);
@@ -3518,7 +3521,7 @@ static int select_fallback_rq(int cpu, struct task_struct *p)
 
 	for (;;) {
 		/* Any allowed, online CPU? */
-		for_each_cpu(dest_cpu, p->cpus_ptr) {
+		for_each_cpu(dest_cpu, per_task(p, cpus_ptr)) {
 			if (!is_cpu_allowed(p, dest_cpu))
 				continue;
 
@@ -3576,7 +3579,7 @@ int select_task_rq(struct task_struct *p, int cpu, int wake_flags)
 	if (p->nr_cpus_allowed > 1 && !is_migration_disabled(p))
 		cpu = per_task(p, sched_class)->select_task_rq(p, cpu, wake_flags);
 	else
-		cpu = cpumask_any(p->cpus_ptr);
+		cpu = cpumask_any(per_task(p, cpus_ptr));
 
 	/*
 	 * In order not to call set_task_cpu() on a blocking task we need
@@ -7455,7 +7458,7 @@ change:
 			 * the entire root_domain to become SCHED_DEADLINE. We
 			 * will also fail if there's no bandwidth available.
 			 */
-			if (!cpumask_subset(span, p->cpus_ptr) ||
+			if (!cpumask_subset(span, per_task(p, cpus_ptr)) ||
 			    rq->rd->dl_bw.bw == 0) {
 				retval = -EPERM;
 				goto unlock;
@@ -8993,7 +8996,7 @@ int migrate_task_to(struct task_struct *p, int target_cpu)
 	if (curr_cpu == target_cpu)
 		return 0;
 
-	if (!cpumask_test_cpu(target_cpu, p->cpus_ptr))
+	if (!cpumask_test_cpu(target_cpu, per_task(p, cpus_ptr)))
 		return -EINVAL;
 
 	/* TODO: This is not properly updating schedstats */

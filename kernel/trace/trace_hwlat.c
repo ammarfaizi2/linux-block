@@ -323,7 +323,7 @@ static void move_to_next_cpu(void)
 	 * of this thread, then stop migrating for the duration
 	 * of the current test.
 	 */
-	if (!cpumask_equal(current_mask, current->cpus_ptr))
+	if (!cpumask_equal(current_mask, per_task(current, cpus_ptr)))
 		goto change_mode;
 
 	cpus_read_lock();
