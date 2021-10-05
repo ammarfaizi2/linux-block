@@ -1342,43 +1342,6 @@ current_restore_flags(unsigned long orig_flags, unsigned long flags)
 	current->flags |= orig_flags & flags;
 }
 
-extern int cpuset_cpumask_can_shrink(const struct cpumask *cur, const struct cpumask *trial);
-extern int task_can_attach(struct task_struct *p, const struct cpumask *cs_cpus_allowed);
-#ifdef CONFIG_SMP
-extern void do_set_cpus_allowed(struct task_struct *p, const struct cpumask *new_mask);
-extern int set_cpus_allowed_ptr(struct task_struct *p, const struct cpumask *new_mask);
-extern int dup_user_cpus_ptr(struct task_struct *dst, struct task_struct *src, int node);
-extern void release_user_cpus_ptr(struct task_struct *p);
-extern int dl_task_check_affinity(struct task_struct *p, const struct cpumask *mask);
-extern void force_compatible_cpus_allowed_ptr(struct task_struct *p);
-extern void relax_compatible_cpus_allowed_ptr(struct task_struct *p);
-#else
-static inline void do_set_cpus_allowed(struct task_struct *p, const struct cpumask *new_mask)
-{
-}
-static inline int set_cpus_allowed_ptr(struct task_struct *p, const struct cpumask *new_mask)
-{
-	if (!cpumask_test_cpu(0, new_mask))
-		return -EINVAL;
-	return 0;
-}
-static inline int dup_user_cpus_ptr(struct task_struct *dst, struct task_struct *src, int node)
-{
-	if (src->user_cpus_ptr)
-		return -EINVAL;
-	return 0;
-}
-static inline void release_user_cpus_ptr(struct task_struct *p)
-{
-	WARN_ON(p->user_cpus_ptr);
-}
-
-static inline int dl_task_check_affinity(struct task_struct *p, const struct cpumask *mask)
-{
-	return 0;
-}
-#endif
-
 extern int yield_to(struct task_struct *p, bool preempt);
 extern void set_user_nice(struct task_struct *p, long nice);
 extern int task_prio(const struct task_struct *p);

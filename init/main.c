@@ -71,7 +71,7 @@
 #include <linux/pid_namespace.h>
 #include <linux/device/driver.h>
 #include <linux/kthread.h>
-#include <linux/sched.h>
+#include <linux/sched/affinity.h>
 #include <linux/sched/init.h>
 #include <linux/signal.h>
 #include <linux/idr.h>
