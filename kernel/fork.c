@@ -116,6 +116,10 @@
 # include "locking/mutex.h"
 #endif
 
+#ifdef CONFIG_RT_MUTEXES
+# include "locking/rtmutex_common.h"
+#endif
+
 #include "sched/per_task_area_struct.h"
 
 #define CREATE_TRACE_POINTS
@@ -1733,7 +1737,7 @@ static void rt_mutex_init_task(struct task_struct *p)
 {
 	raw_spin_lock_init(&p->pi_lock);
 #ifdef CONFIG_RT_MUTEXES
-	p->pi_waiters = RB_ROOT_CACHED;
+	per_task(p, pi_waiters) = RB_ROOT_CACHED;
 	p->pi_top_task = NULL;
 	p->pi_blocked_on = NULL;
 #endif

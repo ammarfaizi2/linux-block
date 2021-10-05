@@ -112,6 +112,10 @@
 
 #include <../kernel/sched/sched.h>
 
+#ifdef CONFIG_RT_MUTEXES
+# include "../kernel/locking/rtmutex_common.h"
+#endif
+
 #define CREATE_TRACE_POINTS
 #include <trace/events/initcall.h>
 
@@ -934,6 +938,9 @@ void __init init_per_task_early(void)
 	per_task(&init_task, cpus_mask) = CPU_MASK_ALL;
 	per_task(&init_task, cpus_ptr) = &per_task(&init_task, cpus_mask);
 	INIT_LIST_HEAD(&per_task(&init_task, pending).list);
+#ifdef CONFIG_RT_MUTEXES
+	per_task(&init_task, pi_waiters) = RB_ROOT_CACHED;
+#endif
 }
 
 static void __init print_unknown_bootoptions(void)

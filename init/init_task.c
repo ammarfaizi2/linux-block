@@ -121,7 +121,6 @@ struct task_struct init_task
 	.trc_holdout_list = LIST_HEAD_INIT(init_task.trc_holdout_list),
 #endif
 #ifdef CONFIG_RT_MUTEXES
-	.pi_waiters	= RB_ROOT_CACHED,
 	.pi_top_task	= NULL,
 #endif
 	INIT_PREV_CPUTIME(init_task)
