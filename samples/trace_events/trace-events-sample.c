@@ -36,7 +36,7 @@ static void simple_thread_func(int cnt)
 
 	/* Silly tracepoints */
 	trace_foo_bar("hello", cnt, array, random_strings[len],
-		      current->cpus_ptr);
+		      per_task(current, cpus_ptr));
 
 	trace_foo_with_template_simple("HELLO", cnt);
 

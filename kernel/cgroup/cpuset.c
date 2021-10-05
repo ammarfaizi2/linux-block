@@ -2993,7 +2993,7 @@ static void cpuset_fork(struct task_struct *task)
 	if (task_css_is_root(task, cpuset_cgrp_id))
 		return;
 
-	set_cpus_allowed_ptr(task, current->cpus_ptr);
+	set_cpus_allowed_ptr(task, per_task(current, cpus_ptr));
 	per_task(task, mems_allowed) = per_task(current, mems_allowed);
 }
 

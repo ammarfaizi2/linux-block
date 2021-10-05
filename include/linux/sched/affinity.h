@@ -7,6 +7,9 @@
 
 struct task_struct;
 
+DECLARE_PER_TASK(const cpumask_t *, cpus_ptr);
+DECLARE_PER_TASK(cpumask_t *, user_cpus_ptr);
+
 extern int cpuset_cpumask_can_shrink(const struct cpumask *cur, const struct cpumask *trial);
 extern int task_can_attach(struct task_struct *p, const struct cpumask *cs_cpus_allowed);
 #ifdef CONFIG_SMP
@@ -18,6 +21,7 @@ extern int dl_task_check_affinity(struct task_struct *p, const struct cpumask *m
 extern void force_compatible_cpus_allowed_ptr(struct task_struct *p);
 extern void relax_compatible_cpus_allowed_ptr(struct task_struct *p);
 #else
+#include <linux/sched.h>
 static inline void do_set_cpus_allowed(struct task_struct *p, const struct cpumask *new_mask)
 {
 }
@@ -29,13 +33,13 @@ static inline int set_cpus_allowed_ptr(struct task_struct *p, const struct cpuma
 }
 static inline int dup_user_cpus_ptr(struct task_struct *dst, struct task_struct *src, int node)
 {
-	if (src->user_cpus_ptr)
+	if (per_task(src, user_cpus_ptr))
 		return -EINVAL;
 	return 0;
 }
 static inline void release_user_cpus_ptr(struct task_struct *p)
 {
-	WARN_ON(p->user_cpus_ptr);
+	WARN_ON(per_task(p, user_cpus_ptr));
 }
 
 static inline int dl_task_check_affinity(struct task_struct *p, const struct cpumask *mask)
