@@ -38,6 +38,7 @@ static struct relocs relocs64;
 #endif
 
 struct section {
+	int		idx;
 	Elf_Shdr	shdr;
 	struct section	*link;
 	Elf_Sym		*symtab;
@@ -458,6 +459,7 @@ static void read_shdrs(FILE *fp, const char *file_name)
 		if (fread(&shdr, sizeof(shdr), 1, fp) != 1)
 			die("Cannot read {%s} ELF section headers %d/%ld: %s\n", file_name, i, shnum, strerror(errno));
 
+		sec->idx		= i;
 		sec->shdr.sh_name      = elf_word_to_cpu(shdr.sh_name);
 		sec->shdr.sh_type      = elf_word_to_cpu(shdr.sh_type);
 		sec->shdr.sh_flags     = elf_xword_to_cpu(shdr.sh_flags);
