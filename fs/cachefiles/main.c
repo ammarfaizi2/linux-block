@@ -18,6 +18,8 @@
 #include <linux/statfs.h>
 #include <linux/sysctl.h>
 #include <linux/miscdevice.h>
+#include <linux/netfs.h>
+#include <trace/events/netfs.h>
 #define CREATE_TRACE_POINTS
 #include "internal.h"
 
