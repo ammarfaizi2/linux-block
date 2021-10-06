@@ -414,7 +414,8 @@ T:	git git://git.kernel.org/pub/scm/linux/kernel/git/rafael/linux-pm
 F:	drivers/acpi/pmic/
 
 ACPI THERMAL DRIVER
-M:	Zhang Rui <rui.zhang@intel.com>
+M:	Rafael J. Wysocki <rafael@kernel.org>
+R:	Zhang Rui <rui.zhang@intel.com>
 L:	linux-acpi@vger.kernel.org
 S:	Supported
 W:	https://01.org/linux-acpi
@@ -4656,7 +4657,7 @@ W:	http://linux-cifs.samba.org/
 T:	git git://git.samba.org/sfrench/cifs-2.6.git
 F:	Documentation/admin-guide/cifs/
 F:	fs/cifs/
-F:	fs/cifs_common/
+F:	fs/smbfs_common/
 
 COMPACTPCI HOTPLUG CORE
 M:	Scott Murray <scott@spiteful.org>
@@ -10194,8 +10195,8 @@ M:	Hyunchul Lee <hyc.lee@gmail.com>
 L:	linux-cifs@vger.kernel.org
 S:	Maintained
 T:	git git://git.samba.org/ksmbd.git
-F:	fs/cifs_common/
 F:	fs/ksmbd/
+F:	fs/smbfs_common/
 
 KERNEL UNIT TESTING FRAMEWORK (KUnit)
 M:	Brendan Higgins <brendanhiggins@google.com>
@@ -18549,13 +18550,14 @@ T:	git git://linuxtv.org/media_tree.git
 F:	drivers/media/radio/radio-raremono.c
 
 THERMAL
-M:	Zhang Rui <rui.zhang@intel.com>
+M:	Rafael J. Wysocki <rafael@kernel.org>
 M:	Daniel Lezcano <daniel.lezcano@linaro.org>
 R:	Amit Kucheria <amitk@kernel.org>
+R:	Zhang Rui <rui.zhang@intel.com>
 L:	linux-pm@vger.kernel.org
 S:	Supported
 Q:	https://patchwork.kernel.org/project/linux-pm/list/
-T:	git git://git.kernel.org/pub/scm/linux/kernel/git/thermal/linux.git
+T:	git git://git.kernel.org/pub/scm/linux/kernel/git/rafael/linux-pm.git thermal
 F:	Documentation/devicetree/bindings/thermal/
 F:	drivers/thermal/
 F:	include/linux/cpu_cooling.h
