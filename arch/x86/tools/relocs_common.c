@@ -20,7 +20,7 @@ int main(int argc, char **argv)
 {
 	int show_absolute_syms, show_absolute_relocs, show_reloc_info;
 	int as_text, use_real_mode;
-	const char *fname;
+	const char *file_name;
 	FILE *fp;
 	int i;
 	unsigned char e_ident[EI_NIDENT];
@@ -30,7 +30,7 @@ int main(int argc, char **argv)
 	show_reloc_info = 0;
 	as_text = 0;
 	use_real_mode = 0;
-	fname = NULL;
+	file_name = NULL;
 
 	for (i = 1; i < argc; i++) {
 		char *arg = argv[i];
@@ -56,30 +56,30 @@ int main(int argc, char **argv)
 				continue;
 			}
 		}
-		else if (!fname) {
-			fname = arg;
+		else if (!file_name) {
+			file_name = arg;
 			continue;
 		}
 		usage();
 	}
-	if (!fname)
+	if (!file_name)
 		usage();
 
-	fp = fopen(fname, "r");
+	fp = fopen(file_name, "r");
 	if (!fp)
-		die("Cannot open %s: %s\n", fname, strerror(errno));
+		die("Cannot open %s: %s\n", file_name, strerror(errno));
 
 	if (fread(&e_ident, 1, EI_NIDENT, fp) != EI_NIDENT)
-		die("Cannot read %s: %s", fname, strerror(errno));
+		die("Cannot read %s: %s", file_name, strerror(errno));
 
 	rewind(fp);
 
 	if (e_ident[EI_CLASS] == ELFCLASS64) {
-		process_64(fp, use_real_mode, as_text,
+		process_64(fp, file_name, use_real_mode, as_text,
 			   show_absolute_syms, show_absolute_relocs,
 			   show_reloc_info);
 	} else {
-		process_32(fp, use_real_mode, as_text,
+		process_32(fp, file_name, use_real_mode, as_text,
 			   show_absolute_syms, show_absolute_relocs,
 			   show_reloc_info);
 	}
