@@ -440,7 +440,7 @@ static void read_ehdr(FILE *fp)
 		die("String table index out of bounds\n");
 }
 
-static void read_shdrs(FILE *fp)
+static void read_shdrs(FILE *fp, const char *file_name)
 {
 	int i;
 	Elf_Shdr shdr;
@@ -456,7 +456,7 @@ static void read_shdrs(FILE *fp)
 		struct section *sec = &secs[i];
 
 		if (fread(&shdr, sizeof(shdr), 1, fp) != 1)
-			die("Cannot read ELF section headers %d/%ld: %s\n", i, shnum, strerror(errno));
+			die("Cannot read {%s} ELF section headers %d/%ld: %s\n", file_name, i, shnum, strerror(errno));
 
 		sec->shdr.sh_name      = elf_word_to_cpu(shdr.sh_name);
 		sec->shdr.sh_type      = elf_word_to_cpu(shdr.sh_type);
@@ -1162,13 +1162,13 @@ static void print_reloc_info(void)
 # define process process_32
 #endif
 
-void process(FILE *fp, int use_real_mode, int as_text,
+void process(FILE *fp, const char *file_name, int use_real_mode, int as_text,
 	     int show_absolute_syms, int show_absolute_relocs,
 	     int show_reloc_info)
 {
 	regex_init(use_real_mode);
 	read_ehdr(fp);
-	read_shdrs(fp);
+	read_shdrs(fp, file_name);
 	read_strtabs(fp);
 	read_symtabs(fp);
 	read_relocs(fp);
