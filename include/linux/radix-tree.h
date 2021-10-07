@@ -15,6 +15,10 @@
 #include <linux/lockdep.h>
 #include <linux/xarray_types.h>
 #include <linux/local_lock.h>
+#include <linux/percpu.h>
+#include <linux/bitops.h>
+#include <linux/preempt.h>
+#include <linux/sched.h>
 
 /* Keep unconverted code working */
 #define radix_tree_root		xarray

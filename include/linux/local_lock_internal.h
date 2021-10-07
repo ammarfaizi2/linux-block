@@ -3,13 +3,10 @@
 # error "Do not include directly, include linux/local_lock.h"
 #endif
 
-#include <linux/percpu-defs.h>
-#include <linux/lockdep.h>
 #include <linux/debug_locks.h>
-#include <linux/preempt.h>
 
 #ifdef CONFIG_DEBUG_LOCK_ALLOC
-# include <linux/sched.h>
+# include <linux/lockdep_types.h>
 #endif
 
 #ifndef CONFIG_PREEMPT_RT
@@ -30,19 +27,19 @@ typedef struct {
 	},						\
 	.owner = NULL,
 
-static inline void local_lock_acquire(local_lock_t *l)
-{
-	lock_map_acquire(&l->dep_map);
-	DEBUG_LOCKS_WARN_ON(l->owner);
-	l->owner = current;
-}
+#define local_lock_acquire(l)					\
+do {								\
+	lock_map_acquire(&(l)->dep_map);			\
+	DEBUG_LOCKS_WARN_ON((l)->owner);			\
+	(l)->owner = current;					\
+} while (0)
 
-static inline void local_lock_release(local_lock_t *l)
-{
-	DEBUG_LOCKS_WARN_ON(l->owner != current);
-	l->owner = NULL;
-	lock_map_release(&l->dep_map);
-}
+#define local_lock_release(l)					\
+{								\
+	DEBUG_LOCKS_WARN_ON((l)->owner != current);		\
+	(l)->owner = NULL;					\
+	lock_map_release(&(l)->dep_map);			\
+} while (0)
 
 static inline void local_lock_debug_init(local_lock_t *l)
 {

@@ -23,6 +23,11 @@
 #include <linux/rtmutex.h>
 #include <asm/current.h>
 
+#ifdef CONFIG_DEBUG_MUTEXES
+# include <linux/lockdep_api.h>
+# include <linux/debug_locks.h>
+#endif
+
 #if defined(CONFIG_DEBUG_MUTEXES) || \
    (defined(CONFIG_PREEMPT_RT) && defined(CONFIG_DEBUG_RT_MUTEXES))
 #define DEBUG_WW_MUTEXES
