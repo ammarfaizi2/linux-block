@@ -71,6 +71,48 @@ typedef struct spinlock {
 
 #endif /* CONFIG_PREEMPT_RT */
 
+
+#ifdef CONFIG_DEBUG_SPINLOCK
+  extern void __raw_spin_lock_init(raw_spinlock_t *lock, const char *name,
+				   struct lock_class_key *key, short inner);
+
+# define raw_spin_lock_init(lock)					\
+do {									\
+	static struct lock_class_key __key;				\
+									\
+	__raw_spin_lock_init((lock), #lock, &__key, LD_WAIT_SPIN);	\
+} while (0)
+
+#else
+# define raw_spin_lock_init(lock)				\
+	do { *(lock) = __RAW_SPIN_LOCK_UNLOCKED(lock); } while (0)
+#endif
+
+static __always_inline raw_spinlock_t *spinlock_check(spinlock_t *lock)
+{
+	return &lock->rlock;
+}
+
+#ifdef CONFIG_DEBUG_SPINLOCK
+
+# define spin_lock_init(lock)					\
+do {								\
+	static struct lock_class_key __key;			\
+								\
+	__raw_spin_lock_init(spinlock_check(lock),		\
+			     #lock, &__key, LD_WAIT_CONFIG);	\
+} while (0)
+
+#else
+
+# define spin_lock_init(_lock)			\
+do {						\
+	spinlock_check(_lock);			\
+	*(_lock) = __SPIN_LOCK_UNLOCKED(_lock);	\
+} while (0)
+
+#endif
+
 #include <linux/rwlock_types.h>
 
 #endif /* __LINUX_SPINLOCK_TYPES_H */
