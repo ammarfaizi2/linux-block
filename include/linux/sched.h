@@ -26,7 +26,6 @@
 #include <linux/syscall_user_dispatch.h>
 #include <linux/task_io_accounting.h>
 #include <linux/smp_types.h>
-#include <linux/restart_block_types.h>
 
 #ifdef CONFIG_LOCKDEP
 # include <linux/lockdep.h>
