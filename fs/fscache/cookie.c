@@ -28,7 +28,7 @@ static LIST_HEAD(fscache_cookies);
 static DEFINE_RWLOCK(fscache_cookies_lock);
 static LIST_HEAD(fscache_cookie_lru);
 static DEFINE_SPINLOCK(fscache_cookie_lru_lock);
-static DEFINE_TIMER(fscache_cookie_lru_timer, fscache_cookie_lru_timed_out);
+DEFINE_TIMER(fscache_cookie_lru_timer, fscache_cookie_lru_timed_out);
 static DECLARE_WORK(fscache_cookie_lru_work, fscache_cookie_lru_worker);
 static const char fscache_cookie_stages[FSCACHE_COOKIE_STAGE__NR] = "-LCAIFMWRD";
 unsigned int fscache_lru_cookie_timeout = 10 * HZ;
@@ -60,6 +60,8 @@ static void fscache_free_cookie(struct fscache_cookie *cookie)
 		spin_lock(&fscache_cookie_lru_lock);
 		list_del_init(&cookie->commit_link);
 		spin_unlock(&fscache_cookie_lru_lock);
+		fscache_stat_d(&fscache_n_cookies_lru);
+		fscache_stat(&fscache_n_cookies_lru_removed);
 	}
 	write_lock(&fscache_cookies_lock);
 	list_del(&cookie->proc_link);
@@ -525,6 +527,7 @@ void __fscache_unuse_cookie(struct fscache_cookie *cookie,
 			if (list_empty(&cookie->commit_link)) {
 				fscache_get_cookie(cookie, fscache_cookie_get_lru);
 				list_move_tail(&cookie->commit_link, &fscache_cookie_lru);
+				fscache_stat(&fscache_n_cookies_lru);
 			}
 			spin_unlock(&fscache_cookie_lru_lock);
 			timer_reduce(&fscache_cookie_lru_timer,
@@ -624,10 +627,12 @@ static void fscache_cookie_lru_do_one(struct fscache_cookie *cookie)
 	    time_before(jiffies, cookie->unused_at + fscache_lru_cookie_timeout) ||
 	    atomic_read(&cookie->n_active) > 0) {
 		spin_unlock(&cookie->lock);
+		fscache_stat(&fscache_n_cookies_lru_removed);
 	} else {
 		__fscache_set_cookie_stage(cookie, FSCACHE_COOKIE_STAGE_COMMITTING);
 		set_bit(FSCACHE_COOKIE_DO_COMMIT, &cookie->flags);
 		spin_unlock(&cookie->lock);
+		fscache_stat(&fscache_n_cookies_lru_expired);
 		_debug("lru c=%x", cookie->debug_id);
 		__fscache_withdraw_cookie(cookie);
 	}
@@ -652,6 +657,7 @@ static void fscache_cookie_lru_worker(struct work_struct *work)
 		}
 
 		list_del_init(&cookie->commit_link);
+		fscache_stat_d(&fscache_n_cookies_lru);
 		spin_unlock(&fscache_cookie_lru_lock);
 		fscache_cookie_lru_do_one(cookie);
 		spin_lock(&fscache_cookie_lru_lock);
@@ -673,6 +679,8 @@ static void fscache_cookie_drop_from_lru(struct fscache_cookie *cookie)
 		spin_lock(&fscache_cookie_lru_lock);
 		if (!list_empty(&cookie->commit_link)) {
 			list_del_init(&cookie->commit_link);
+			fscache_stat_d(&fscache_n_cookies_lru);
+			fscache_stat(&fscache_n_cookies_lru_dropped);
 			need_put = true;
 		}
 		spin_unlock(&fscache_cookie_lru_lock);
