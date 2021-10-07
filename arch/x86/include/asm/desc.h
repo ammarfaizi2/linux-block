@@ -14,6 +14,7 @@
 #include <asm/fixmap.h>
 #include <asm/irq_vectors.h>
 #include <asm/cpu_entry_area.h>
+#include <asm/processor.h>
 
 #include <linux/debug_locks.h>
 #include <linux/smp.h>

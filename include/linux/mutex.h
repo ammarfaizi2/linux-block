@@ -11,14 +11,9 @@
 #ifndef __LINUX_MUTEX_H
 #define __LINUX_MUTEX_H
 
-#include <asm/current.h>
-#include <linux/list.h>
 #include <linux/spinlock_types.h>
-#include <linux/lockdep.h>
 #include <linux/atomic.h>
-#include <asm/processor.h>
 #include <linux/osq_lock.h>
-#include <linux/debug_locks.h>
 
 #ifdef CONFIG_DEBUG_LOCK_ALLOC
 # define __DEP_MAP_MUTEX_INITIALIZER(lockname)			\

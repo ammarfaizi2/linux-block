@@ -29,6 +29,9 @@
 #include <linux/types.h> /* stackdepot.h is not self-contained */
 #include <linux/stackdepot.h>
 #include <linux/ww_mutex.h>
+#include <linux/bug.h>
+#include <linux/list.h>
+#include <linux/lockdep.h>
 
 struct drm_modeset_lock;
 

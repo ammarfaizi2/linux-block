@@ -2,6 +2,8 @@
 #ifndef _CODA_INT_
 #define _CODA_INT_
 
+#include <linux/init.h>
+
 struct dentry;
 struct file;
 
