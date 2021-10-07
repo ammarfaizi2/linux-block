@@ -21,7 +21,6 @@
 
 #include <linux/kernel.h>
 #include <linux/stddef.h>
-#include <linux/rcupdate.h>
 
 extern void rb_insert_color(struct rb_node *, struct rb_root *);
 extern void rb_erase(struct rb_node *, struct rb_root *);
