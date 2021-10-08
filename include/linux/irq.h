@@ -582,8 +582,6 @@ enum {
 	IRQCHIP_AFFINITY_PRE_STARTUP		= (1 << 10),
 };
 
-#include <linux/irqdesc.h>
-
 /*
  * Pick up the arch-dependent methods:
  */
