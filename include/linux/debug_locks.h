@@ -2,13 +2,10 @@
 #ifndef __LINUX_DEBUG_LOCKING_H
 #define __LINUX_DEBUG_LOCKING_H
 
-#include <linux/atomic.h>
-#include <linux/cache.h>
-
 struct task_struct;
 
-extern int debug_locks __read_mostly;
-extern int debug_locks_silent __read_mostly;
+extern int debug_locks;
+extern int debug_locks_silent;
 
 #define __debug_locks_off() xchg(&debug_locks, 0)
 
