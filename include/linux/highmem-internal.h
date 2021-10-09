@@ -101,44 +101,18 @@ static inline void __kunmap_local(void *vaddr)
 	kunmap_local_indexed(vaddr);
 }
 
-static inline void *kmap_atomic_prot(struct page *page, pgprot_t prot)
-{
-	if (IS_ENABLED(CONFIG_PREEMPT_RT))
-		migrate_disable();
-	else
-		preempt_disable();
-
-	pagefault_disable();
-	return __kmap_local_page_prot(page, prot);
-}
+extern void *kmap_atomic_prot(struct page *page, pgprot_t prot);
 
 static inline void *kmap_atomic(struct page *page)
 {
 	return kmap_atomic_prot(page, kmap_prot);
 }
 
-static inline void *kmap_atomic_pfn(unsigned long pfn)
-{
-	if (IS_ENABLED(CONFIG_PREEMPT_RT))
-		migrate_disable();
-	else
-		preempt_disable();
+extern void *kmap_atomic_pfn(unsigned long pfn);
 
-	pagefault_disable();
-	return __kmap_local_pfn_prot(pfn, kmap_prot);
-}
+extern void __kunmap_atomic(void *addr);
 
-static inline void __kunmap_atomic(void *addr)
-{
-	kunmap_local_indexed(addr);
-	pagefault_enable();
-	if (IS_ENABLED(CONFIG_PREEMPT_RT))
-		migrate_enable();
-	else
-		preempt_enable();
-}
-
-unsigned int __nr_free_highpages(void);
+extern unsigned int __nr_free_highpages(void);
 extern atomic_long_t _totalhigh_pages;
 
 static inline unsigned int nr_free_highpages(void)
@@ -206,15 +180,7 @@ static inline void __kunmap_local(void *addr)
 #endif
 }
 
-static inline void *kmap_atomic(struct page *page)
-{
-	if (IS_ENABLED(CONFIG_PREEMPT_RT))
-		migrate_disable();
-	else
-		preempt_disable();
-	pagefault_disable();
-	return page_address(page);
-}
+extern void *kmap_atomic(struct page *page);
 
 static inline void *kmap_atomic_prot(struct page *page, pgprot_t prot)
 {
@@ -226,17 +192,7 @@ static inline void *kmap_atomic_pfn(unsigned long pfn)
 	return kmap_atomic(pfn_to_page(pfn));
 }
 
-static inline void __kunmap_atomic(void *addr)
-{
-#ifdef ARCH_HAS_FLUSH_ON_KUNMAP
-	kunmap_flush_on_unmap(addr);
-#endif
-	pagefault_enable();
-	if (IS_ENABLED(CONFIG_PREEMPT_RT))
-		migrate_enable();
-	else
-		preempt_enable();
-}
+extern void __kunmap_atomic(void *addr);
 
 static inline unsigned int nr_free_highpages(void) { return 0; }
 static inline unsigned long totalhigh_pages(void) { return 0UL; }

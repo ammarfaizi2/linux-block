@@ -29,6 +29,68 @@
 
 #include "internal.h"
 
+#ifdef CONFIG_HIGHMEM
+void *kmap_atomic_prot(struct page *page, pgprot_t prot)
+{
+	if (IS_ENABLED(CONFIG_PREEMPT_RT))
+		migrate_disable();
+	else
+		preempt_disable();
+	pagefault_disable();
+	return __kmap_local_page_prot(page, prot);
+}
+EXPORT_SYMBOL(kmap_atomic_prot);
+
+void *kmap_atomic_pfn(unsigned long pfn)
+{
+	if (IS_ENABLED(CONFIG_PREEMPT_RT))
+		migrate_disable();
+	else
+		preempt_disable();
+	pagefault_disable();
+	return __kmap_local_pfn_prot(pfn, kmap_prot);
+}
+EXPORT_SYMBOL(kmap_atomic_pfn);
+
+void __kunmap_atomic(void *addr)
+{
+	kunmap_local_indexed(addr);
+	pagefault_enable();
+	if (IS_ENABLED(CONFIG_PREEMPT_RT))
+		migrate_enable();
+	else
+		preempt_enable();
+}
+EXPORT_SYMBOL(__kunmap_atomic);
+
+#else
+
+void *kmap_atomic(struct page *page)
+{
+	if (IS_ENABLED(CONFIG_PREEMPT_RT))
+		migrate_disable();
+	else
+		preempt_disable();
+	pagefault_disable();
+	return page_address(page);
+}
+EXPORT_SYMBOL(kmap_atomic);
+
+void __kunmap_atomic(void *addr)
+{
+#ifdef ARCH_HAS_FLUSH_ON_KUNMAP
+	kunmap_flush_on_unmap(addr);
+#endif
+	pagefault_enable();
+	if (IS_ENABLED(CONFIG_PREEMPT_RT))
+		migrate_enable();
+	else
+		preempt_enable();
+}
+EXPORT_SYMBOL(__kunmap_atomic);
+
+#endif
+
 /**
  * kfree_const - conditionally free memory
  * @x: pointer to the memory

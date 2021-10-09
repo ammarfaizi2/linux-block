@@ -143,7 +143,7 @@ static inline void *kmap_local_folio(struct folio *folio, size_t offset);
  *
  * Do not use in new code. Use kmap_local_page() instead.
  */
-static inline void *kmap_atomic(struct page *page);
+void *kmap_atomic(struct page *page);
 
 /**
  * kunmap_atomic - Unmap the virtual address mapped by kmap_atomic()
