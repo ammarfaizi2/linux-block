@@ -2,6 +2,7 @@
 #ifndef __ASM_POINTER_AUTH_H
 #define __ASM_POINTER_AUTH_H
 
+#ifdef CONFIG_ARM64_PTR_AUTH
 #include <linux/bitops.h>
 #include <linux/prctl.h>
 #include <linux/random.h>
@@ -13,7 +14,6 @@
 #define PR_PAC_ENABLED_KEYS_MASK                                               \
 	(PR_PAC_APIAKEY | PR_PAC_APIBKEY | PR_PAC_APDAKEY | PR_PAC_APDBKEY)
 
-#ifdef CONFIG_ARM64_PTR_AUTH
 /*
  * Each key is a 128-bit quantity which is split across a pair of 64-bit
  * registers (Lo and Hi).
