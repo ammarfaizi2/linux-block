@@ -2,20 +2,27 @@
 #ifndef _LINUX_HIGHMEM_INTERNAL_H
 #define _LINUX_HIGHMEM_INTERNAL_H
 
+#include <linux/sched/per_task.h>
+
 /*
  * Outside of CONFIG_HIGHMEM to support X86 32bit iomap_atomic() cruft.
  */
 #ifdef CONFIG_KMAP_LOCAL
+
+struct kmap_ctrl {
+	int				idx;
+	pte_t				pteval[KM_MAX_IDX];
+};
+
+DECLARE_PER_TASK(struct kmap_ctrl, kmap_ctrl);
+
 void *__kmap_local_pfn_prot(unsigned long pfn, pgprot_t prot);
 void *__kmap_local_page_prot(struct page *page, pgprot_t prot);
 void kunmap_local_indexed(void *vaddr);
 void kmap_local_fork(struct task_struct *tsk);
 void __kmap_local_sched_out(void);
 void __kmap_local_sched_in(void);
-static inline void kmap_assert_nomap(void)
-{
-	DEBUG_LOCKS_WARN_ON(current->kmap_ctrl.idx);
-}
+#define kmap_assert_nomap() DEBUG_LOCKS_WARN_ON(per_task(current, kmap_ctrl).idx)
 #else
 static inline void kmap_local_fork(struct task_struct *tsk) { }
 static inline void kmap_assert_nomap(void) { }
