@@ -1,8 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0
 
-#ifdef CONFIG_XEN_BALLOON_MEMORY_HOTPLUG
-#include <linux/memblock.h>
-#endif
 #include <linux/console.h>
 #include <linux/cpu.h>
 #include <linux/kexec.h>
@@ -24,6 +21,10 @@
 #include "xen-ops.h"
 #include "smp.h"
 #include "pmu.h"
+
+#ifdef CONFIG_XEN_BALLOON_MEMORY_HOTPLUG
+#include <linux/memblock.h>
+#endif
 
 EXPORT_SYMBOL_GPL(hypercall_page);
 
