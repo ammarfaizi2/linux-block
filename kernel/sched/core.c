@@ -173,6 +173,10 @@ DEFINE_PER_TASK(struct prev_cputime,			prev_cputime);
 /* Protection of the PI data structures: */
 DEFINE_PER_TASK(raw_spinlock_t,				pi_lock);
 
+#ifdef CONFIG_KMAP_LOCAL
+DEFINE_PER_TASK(struct kmap_ctrl,			kmap_ctrl);
+#endif
+
 /*
  * Export tracepoints that act as a bare tracehook (ie: have no trace event
  * associated with them) to allow external modules to probe them.
@@ -4933,7 +4937,7 @@ static inline void finish_lock_switch(struct rq *rq)
 static inline void kmap_local_sched_out(void)
 {
 #ifdef CONFIG_KMAP_LOCAL
-	if (unlikely(current->kmap_ctrl.idx))
+	if (unlikely(per_task(current, kmap_ctrl).idx))
 		__kmap_local_sched_out();
 #endif
 }
@@ -4941,7 +4945,7 @@ static inline void kmap_local_sched_out(void)
 static inline void kmap_local_sched_in(void)
 {
 #ifdef CONFIG_KMAP_LOCAL
-	if (unlikely(current->kmap_ctrl.idx))
+	if (unlikely(per_task(current, kmap_ctrl).idx))
 		__kmap_local_sched_in();
 #endif
 }

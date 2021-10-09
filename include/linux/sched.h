@@ -376,13 +376,6 @@ struct wake_q_node {
 	struct wake_q_node *next;
 };
 
-struct kmap_ctrl {
-#ifdef CONFIG_KMAP_LOCAL
-	int				idx;
-	pte_t				pteval[KM_MAX_IDX];
-#endif
-};
-
 struct task_struct {
 #ifdef CONFIG_THREAD_INFO_IN_TASK
 	/*
@@ -940,7 +933,6 @@ struct task_struct {
 	unsigned int			sequential_io;
 	unsigned int			sequential_io_avg;
 #endif
-	struct kmap_ctrl		kmap_ctrl;
 #ifdef CONFIG_DEBUG_ATOMIC_SLEEP
 	unsigned long			task_state_change;
 # ifdef CONFIG_PREEMPT_RT

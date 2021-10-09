@@ -434,20 +434,20 @@ EXPORT_SYMBOL(zero_user_segments);
 static inline int kmap_local_idx_push(void)
 {
 	WARN_ON_ONCE(in_hardirq() && !irqs_disabled());
-	current->kmap_ctrl.idx += KM_INCR;
-	BUG_ON(current->kmap_ctrl.idx >= KM_MAX_IDX);
-	return current->kmap_ctrl.idx - 1;
+	per_task(current, kmap_ctrl).idx += KM_INCR;
+	BUG_ON(per_task(current, kmap_ctrl).idx >= KM_MAX_IDX);
+	return per_task(current, kmap_ctrl).idx - 1;
 }
 
 static inline int kmap_local_idx(void)
 {
-	return current->kmap_ctrl.idx - 1;
+	return per_task(current, kmap_ctrl).idx - 1;
 }
 
 static inline void kmap_local_idx_pop(void)
 {
-	current->kmap_ctrl.idx -= KM_INCR;
-	BUG_ON(current->kmap_ctrl.idx < 0);
+	per_task(current, kmap_ctrl).idx -= KM_INCR;
+	BUG_ON(per_task(current, kmap_ctrl).idx < 0);
 }
 
 #ifndef arch_kmap_local_post_map
@@ -533,7 +533,7 @@ void *__kmap_local_pfn_prot(unsigned long pfn, pgprot_t prot)
 	pteval = pfn_pte(pfn, prot);
 	arch_kmap_local_set_pte(&init_mm, vaddr, kmap_pte, pteval);
 	arch_kmap_local_post_map(vaddr, pteval);
-	current->kmap_ctrl.pteval[kmap_local_idx()] = pteval;
+	per_task(current, kmap_ctrl).pteval[kmap_local_idx()] = pteval;
 	preempt_enable();
 
 	return (void *)vaddr;
@@ -593,7 +593,7 @@ void kunmap_local_indexed(void *vaddr)
 	arch_kmap_local_pre_unmap(addr);
 	pte_clear(&init_mm, addr, kmap_pte);
 	arch_kmap_local_post_unmap(addr);
-	current->kmap_ctrl.pteval[kmap_local_idx()] = __pte(0);
+	per_task(current, kmap_ctrl).pteval[kmap_local_idx()] = __pte(0);
 	kmap_local_idx_pop();
 	preempt_enable();
 	migrate_enable();
@@ -617,8 +617,8 @@ void __kmap_local_sched_out(void)
 	int i;
 
 	/* Clear kmaps */
-	for (i = 0; i < tsk->kmap_ctrl.idx; i++) {
-		pte_t pteval = tsk->kmap_ctrl.pteval[i];
+	for (i = 0; i < per_task(tsk, kmap_ctrl).idx; i++) {
+		pte_t pteval = per_task(tsk, kmap_ctrl).pteval[i];
 		unsigned long addr;
 		int idx;
 
@@ -654,8 +654,8 @@ void __kmap_local_sched_in(void)
 	int i;
 
 	/* Restore kmaps */
-	for (i = 0; i < tsk->kmap_ctrl.idx; i++) {
-		pte_t pteval = tsk->kmap_ctrl.pteval[i];
+	for (i = 0; i < per_task(tsk, kmap_ctrl).idx; i++) {
+		pte_t pteval = per_task(tsk, kmap_ctrl).pteval[i];
 		unsigned long addr;
 		int idx;
 
@@ -678,8 +678,9 @@ void __kmap_local_sched_in(void)
 
 void kmap_local_fork(struct task_struct *tsk)
 {
-	if (WARN_ON_ONCE(tsk->kmap_ctrl.idx))
-		memset(&tsk->kmap_ctrl, 0, sizeof(tsk->kmap_ctrl));
+	if (WARN_ON_ONCE(per_task(tsk, kmap_ctrl).idx))
+		memset(&per_task(tsk, kmap_ctrl), 0,
+		       sizeof(per_task(tsk, kmap_ctrl)));
 }
 
 #endif
