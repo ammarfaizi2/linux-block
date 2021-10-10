@@ -81,6 +81,22 @@ EXPORT_PER_CPU_SYMBOL(cpu_tss_rw);
 DEFINE_PER_CPU(bool, __tss_limit_invalid);
 EXPORT_PER_CPU_SYMBOL_GPL(__tss_limit_invalid);
 
+bool in_x32_syscall(void)
+{
+#ifdef CONFIG_X86_X32_ABI
+	if (task_pt_regs(current)->orig_ax & __X32_SYSCALL_BIT)
+		return true;
+#endif
+	return false;
+}
+EXPORT_SYMBOL(in_x32_syscall);
+
+bool in_32bit_syscall(void)
+{
+	return in_ia32_syscall() || in_x32_syscall();
+}
+EXPORT_SYMBOL(in_32bit_syscall);
+
 /*
  * this gets called so that we can store lazy state into memory and copy the
  * current task into the new thread.
