@@ -27,37 +27,19 @@ static inline bool ioprio_valid(unsigned short ioprio)
  * if process has set io priority explicitly, use that. if not, convert
  * the cpu scheduler nice value to an io priority
  */
-static inline int task_nice_ioprio(struct task_struct *task)
-{
-	return (task_nice(task) + 20) / 5;
-}
+extern int task_nice_ioprio(struct task_struct *task);
 
 /*
  * This is for the case where the task hasn't asked for a specific IO class.
  * Check for idle and rt task process, and return appropriate IO class.
  */
-static inline int task_nice_ioclass(struct task_struct *task)
-{
-	if (task->policy == SCHED_IDLE)
-		return IOPRIO_CLASS_IDLE;
-	else if (task_is_realtime(task))
-		return IOPRIO_CLASS_RT;
-	else
-		return IOPRIO_CLASS_BE;
-}
+extern int task_nice_ioclass(struct task_struct *task);
 
 /*
  * If the calling process has set an I/O priority, use that. Otherwise, return
  * the default I/O priority.
  */
-static inline int get_current_ioprio(void)
-{
-	struct io_context *ioc = current->io_context;
-
-	if (ioc)
-		return ioc->ioprio;
-	return IOPRIO_DEFAULT;
-}
+extern int get_current_ioprio(void);
 
 /*
  * For inheritance, return the highest of the two given priorities

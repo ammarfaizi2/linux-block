@@ -241,6 +241,33 @@ unsigned int sysctl_sched_rt_period = 1000000;
 
 __read_mostly int scheduler_running;
 
+int get_current_ioprio(void)
+{
+	struct io_context *ioc = current->io_context;
+
+	if (ioc)
+		return ioc->ioprio;
+	return IOPRIO_DEFAULT;
+}
+EXPORT_SYMBOL_GPL(get_current_ioprio);
+
+int task_nice_ioclass(struct task_struct *task)
+{
+	if (task->policy == SCHED_IDLE)
+		return IOPRIO_CLASS_IDLE;
+	else if (task_is_realtime(task))
+		return IOPRIO_CLASS_RT;
+	else
+		return IOPRIO_CLASS_BE;
+}
+EXPORT_SYMBOL_GPL(task_nice_ioclass);
+
+int task_nice_ioprio(struct task_struct *task)
+{
+	return (task_nice(task) + 20) / 5;
+}
+EXPORT_SYMBOL_GPL(task_nice_ioprio);
+
 #ifdef CONFIG_SCHED_CORE
 
 DEFINE_STATIC_KEY_FALSE(__sched_core_enabled);
