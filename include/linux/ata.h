@@ -16,6 +16,9 @@
 #include <linux/bits.h>
 #include <linux/string.h>
 #include <linux/types.h>
+
+#include <vdso/bits.h>
+
 #include <asm/byteorder.h>
 
 /* defines only for the constants which don't work well as enums */

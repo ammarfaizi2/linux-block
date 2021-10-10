@@ -10,6 +10,8 @@
 #include <linux/types.h>
 #include <linux/usb/typec.h>
 
+#include <asm/byteorder.h>
+
 /* USB PD Messages */
 enum pd_ctrl_msg_type {
 	/* 0 Reserved */

@@ -11,8 +11,11 @@
 #include <linux/list.h>
 #include <linux/nodemask.h>
 #include <linux/shrinker.h>
+#include <linux/spinlock_types.h>
+#include <linux/cache.h>
 
 struct mem_cgroup;
+struct lock_class_key;
 
 /* list_lru_walk_cb has to always return one of those */
 enum lru_status {

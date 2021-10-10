@@ -3,12 +3,10 @@
 #define __KERNEL_PRINTK__
 
 #include <linux/stdarg.h>
-#include <linux/init.h>
 #include <linux/kern_levels.h>
 #include <linux/linkage.h>
-#include <linux/cache.h>
-#include <linux/ratelimit_types.h>
 #include <linux/once_lite.h>
+#include <linux/bitops.h>
 
 extern const char linux_banner[];
 extern const char linux_proc_banner[];
@@ -188,7 +186,7 @@ extern void wake_up_klogd(void);
 char *log_buf_addr_get(void);
 u32 log_buf_len_get(void);
 void log_buf_vmcoreinfo_setup(void);
-void __init setup_log_buf(int early);
+void setup_log_buf(int early);
 __printf(1, 2) void dump_stack_set_arch_desc(const char *fmt, ...);
 void dump_stack_print_info(const char *log_lvl);
 void show_regs_print_info(const char *log_lvl);
