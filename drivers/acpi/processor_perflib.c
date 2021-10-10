@@ -19,6 +19,7 @@
 #include <linux/acpi.h>
 #include <acpi/processor.h>
 #ifdef CONFIG_X86
+#include <asm/msr.h>
 #include <asm/cpufeature.h>
 #endif
 
