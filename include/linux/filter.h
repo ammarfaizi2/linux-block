@@ -5,6 +5,7 @@
 #ifndef __LINUX_FILTER_H__
 #define __LINUX_FILTER_H__
 
+#include <linux/bpf.h>
 #include <linux/atomic.h>
 #include <linux/bpf.h>
 #include <linux/refcount.h>
