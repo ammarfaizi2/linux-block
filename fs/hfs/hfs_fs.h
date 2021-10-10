@@ -178,6 +178,7 @@ extern int hfs_clear_vbm_bits(struct super_block *, u16, u16);
 extern int hfs_cat_keycmp(const btree_key *, const btree_key *);
 struct hfs_find_data;
 extern int hfs_cat_find_brec(struct super_block *, u32, struct hfs_find_data *);
+struct qstr;
 extern int hfs_cat_create(u32, struct inode *, const struct qstr *, struct inode *);
 extern int hfs_cat_delete(u32, struct inode *, const struct qstr *);
 extern int hfs_cat_move(u32, struct inode *, const struct qstr *,

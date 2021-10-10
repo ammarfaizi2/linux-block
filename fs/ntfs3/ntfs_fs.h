@@ -38,6 +38,7 @@ struct fiemap_extent_info;
 struct user_namespace;
 struct page;
 struct writeback_control;
+struct qstr;
 enum utf16_endian;
 
 

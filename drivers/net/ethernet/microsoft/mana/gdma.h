@@ -646,6 +646,8 @@ struct gdma_destroy_dma_region_req {
 	u64 gdma_region;
 }; /* HW DATA */
 
+struct pci_dev;
+
 int mana_gd_verify_vf_version(struct pci_dev *pdev);
 
 int mana_gd_register_device(struct gdma_dev *gd);

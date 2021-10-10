@@ -19,6 +19,7 @@
 #include <linux/pm.h>
 
 struct device_driver;
+struct device_node;
 struct fwnode_handle;
 
 /**

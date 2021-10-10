@@ -10,6 +10,8 @@
 #ifndef _SC_SCI_H
 #define _SC_SCI_H
 
+struct notifier_block;
+
 #include <linux/firmware/imx/ipc.h>
 
 #include <linux/firmware/imx/svc/misc.h>

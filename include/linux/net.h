@@ -131,6 +131,8 @@ struct sockaddr;
 struct msghdr;
 struct module;
 struct sk_buff;
+struct seq_file;
+
 typedef int (*sk_read_actor_t)(read_descriptor_t *, struct sk_buff *,
 			       unsigned int, size_t);
 

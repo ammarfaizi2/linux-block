@@ -113,6 +113,8 @@ struct videobuf_queue_ops {
 
 #define MAGIC_QTYPE_OPS	0x12261003
 
+struct vm_area_struct;
+
 /* Helper operations - device type dependent */
 struct videobuf_qtype_ops {
 	u32                     magic;

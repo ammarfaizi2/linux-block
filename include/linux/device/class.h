@@ -20,6 +20,7 @@
 #include <linux/device/bus.h>
 
 struct device;
+struct device_node;
 struct fwnode_handle;
 
 /**

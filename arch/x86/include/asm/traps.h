@@ -40,6 +40,7 @@ void math_emulate(struct math_emu_info *);
 bool fault_in_kernel_space(unsigned long address);
 
 #ifdef CONFIG_VMAP_STACK
+struct stack_info;
 void __noreturn handle_stack_overflow(struct pt_regs *regs,
 				      unsigned long fault_address,
 				      struct stack_info *info);

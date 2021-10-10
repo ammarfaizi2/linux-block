@@ -10,6 +10,9 @@
 #include <uapi/linux/netlink.h>
 
 struct net;
+struct notifier_block;
+struct file;
+struct module;
 
 void do_trace_netlink_extack(const char *msg);
 

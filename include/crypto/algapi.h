@@ -249,6 +249,7 @@ static inline int crypto_memneq(const void *a, const void *b, size_t size)
 	return __crypto_memneq(a, b, size) != 0UL ? 1 : 0;
 }
 
+struct notifier_block;
 int crypto_register_notifier(struct notifier_block *nb);
 int crypto_unregister_notifier(struct notifier_block *nb);
 

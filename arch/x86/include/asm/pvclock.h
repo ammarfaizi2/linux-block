@@ -5,6 +5,8 @@
 #include <asm/clocksource.h>
 #include <asm/pvclock-abi.h>
 
+struct timespec64;
+
 /* some helper functions for xen and kvm pv clock sources */
 u64 pvclock_clocksource_read(struct pvclock_vcpu_time_info *src);
 u8 pvclock_read_flags(struct pvclock_vcpu_time_info *src);

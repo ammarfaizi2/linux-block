@@ -17,6 +17,7 @@ struct btf_member;
 struct btf_type;
 union bpf_attr;
 struct btf_show;
+struct seq_file;
 
 extern const struct file_operations btf_fops;
 

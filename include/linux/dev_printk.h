@@ -20,6 +20,7 @@
 #endif
 
 struct device;
+struct va_format;
 
 #define PRINTK_INFO_SUBSYSTEM_LEN	16
 #define PRINTK_INFO_DEVICE_LEN		48

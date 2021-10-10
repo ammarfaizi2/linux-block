@@ -420,6 +420,7 @@ enum {
 	MSI_FLAG_FREE_MSI_DESCS		= (1 << 10),
 };
 
+struct cpumask;
 int msi_domain_set_affinity(struct irq_data *data, const struct cpumask *mask,
 			    bool force);
 

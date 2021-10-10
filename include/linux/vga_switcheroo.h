@@ -34,6 +34,7 @@
 #include <linux/fb.h>
 
 struct pci_dev;
+struct dev_pm_domain;
 
 /**
  * enum vga_switcheroo_handler_flags_t - handler flags bitmask

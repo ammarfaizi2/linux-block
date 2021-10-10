@@ -36,6 +36,8 @@ typedef struct capicardparams {
 	unsigned int membase;
 } capicardparams;
 
+struct seq_file;
+
 struct capi_ctr {
 	/* filled in before calling attach_capi_ctr */
 	struct module *owner;

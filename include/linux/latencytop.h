@@ -12,6 +12,7 @@
 
 #include <linux/compiler.h>
 struct task_struct;
+struct ctl_table;
 
 #ifdef CONFIG_LATENCYTOP
 

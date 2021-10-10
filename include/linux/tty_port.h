@@ -11,6 +11,7 @@ struct attribute_group;
 struct tty_driver;
 struct tty_port;
 struct tty_struct;
+struct file;
 
 /**
  * struct tty_port_operations -- operations on tty_port
