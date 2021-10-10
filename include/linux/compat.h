@@ -395,13 +395,14 @@ struct compat_sysctl_args;
 struct compat_kexec_segment;
 struct compat_mq_attr;
 struct compat_msgbuf;
+struct kernel_siginfo;
 
 void copy_siginfo_to_external32(struct compat_siginfo *to,
 		const struct kernel_siginfo *from);
-int copy_siginfo_from_user32(kernel_siginfo_t *to,
+int copy_siginfo_from_user32(struct kernel_siginfo *to,
 		const struct compat_siginfo __user *from);
 int __copy_siginfo_to_user32(struct compat_siginfo __user *to,
-		const kernel_siginfo_t *from);
+		const struct kernel_siginfo *from);
 #ifndef copy_siginfo_to_user32
 #define copy_siginfo_to_user32 __copy_siginfo_to_user32
 #endif

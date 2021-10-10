@@ -2,6 +2,7 @@
 #ifndef _LINUX_COREDUMP_H
 #define _LINUX_COREDUMP_H
 
+#include <linux/signal_types.h>
 #include <linux/types.h>
 #include <linux/mm.h>
 #include <linux/fs.h>

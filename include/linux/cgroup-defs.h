@@ -21,6 +21,7 @@
 #include <linux/workqueue.h>
 #include <linux/bpf-cgroup-defs.h>
 #include <linux/psi_types.h>
+#include <linux/sched/signal.h>
 
 #ifdef CONFIG_CGROUPS
 
