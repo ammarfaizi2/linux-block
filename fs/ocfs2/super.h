@@ -10,6 +10,8 @@
 #ifndef OCFS2_SUPER_H
 #define OCFS2_SUPER_H
 
+#include <linux/sched/signal.h>
+
 __printf(3, 4)
 int __ocfs2_error(struct super_block *sb, const char *function,
 		   const char *fmt, ...);

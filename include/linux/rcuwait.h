@@ -3,7 +3,7 @@
 #define _LINUX_RCUWAIT_H_
 
 #include <linux/rcupdate.h>
-#include <linux/sched/signal.h>
+#include <linux/sched/task_flags.h>
 
 /*
  * rcuwait provides a way of blocking and waking up a single
