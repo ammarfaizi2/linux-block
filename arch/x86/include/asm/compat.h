@@ -156,19 +156,8 @@ struct compat_shmid64_ds {
 	(!!(task_pt_regs(current)->orig_ax & __X32_SYSCALL_BIT))
 #endif
 
-static inline bool in_x32_syscall(void)
-{
-#ifdef CONFIG_X86_X32_ABI
-	if (task_pt_regs(current)->orig_ax & __X32_SYSCALL_BIT)
-		return true;
-#endif
-	return false;
-}
-
-static inline bool in_32bit_syscall(void)
-{
-	return in_ia32_syscall() || in_x32_syscall();
-}
+extern bool in_x32_syscall(void);
+extern bool in_32bit_syscall(void);
 
 #ifdef CONFIG_COMPAT
 static inline bool in_compat_syscall(void)
