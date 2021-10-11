@@ -180,10 +180,11 @@ static inline bool in_compat_syscall(void)
 #endif
 
 struct compat_siginfo;
+struct kernel_siginfo;
 
 #ifdef CONFIG_X86_X32_ABI
 int copy_siginfo_to_user32(struct compat_siginfo __user *to,
-		const kernel_siginfo_t *from);
+		const struct kernel_siginfo *from);
 #define copy_siginfo_to_user32 copy_siginfo_to_user32
 #endif /* CONFIG_X86_X32_ABI */
 
