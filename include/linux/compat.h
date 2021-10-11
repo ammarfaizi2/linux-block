@@ -5,11 +5,22 @@
  * These are the type definitions for the architecture specific
  * syscall compatibility layer.
  */
-
 #include <asm/compat.h>
+
+#include <linux/socket_types.h>
+#include <linux/fs_types.h>
+
 #include <asm/siginfo.h>
 #include <asm/signal.h>
-#include <uapi/linux/if.h>
+
+/*
+ * Avoid having to include the large <linux/if.h> header:
+ */
+#ifndef IFNAMSIZ
+# undef __UAPI_DEF_IF_IFNAMSIZ
+# define __UAPI_DEF_IF_IFNAMSIZ 0
+# define IFNAMSIZ 16
+#endif
 
 #ifdef CONFIG_ARCH_HAS_SYSCALL_WRAPPER
 /*
@@ -469,6 +480,7 @@ put_compat_sigset(compat_sigset_t __user *compat, const sigset_t *set,
 } while (0)
 #endif
 
+struct task_struct;
 extern int compat_ptrace_request(struct task_struct *child,
 				 compat_long_t request,
 				 compat_ulong_t addr, compat_ulong_t data);
