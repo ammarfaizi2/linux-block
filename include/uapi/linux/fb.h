@@ -4,7 +4,6 @@
 
 #include <linux/ioctl.h>
 #include <linux/types.h>
-#include <linux/i2c.h>
 
 /* Definitions of frame buffers						*/
 

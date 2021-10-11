@@ -2,23 +2,15 @@
 #ifndef _LINUX_FB_H
 #define _LINUX_FB_H
 
-#include <linux/mutex.h>
+#include <linux/workqueue_types.h>
 #include <linux/mutex_api.h>
 #include <linux/io.h>
 #include <linux/refcount.h>
-#include <linux/kgdb.h>
+#include <linux/slab.h>
+
 #include <uapi/linux/fb.h>
 
 #define FBIO_CURSOR            _IOWR('F', 0x08, struct fb_cursor_user)
-
-#include <linux/fs.h>
-#include <linux/init.h>
-#include <linux/workqueue.h>
-#include <linux/notifier.h>
-#include <linux/list.h>
-#include <linux/backlight.h>
-#include <linux/slab.h>
-#include <asm/io.h>
 
 struct vm_area_struct;
 struct fb_info;
@@ -26,6 +18,8 @@ struct device;
 struct file;
 struct videomode;
 struct device_node;
+struct i2c_adapter;
+struct inode;
 
 /* Definitions below are used in the parsed monitor specs */
 #define FB_DPMS_ACTIVE_OFF	1
