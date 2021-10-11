@@ -8,6 +8,7 @@
 #ifndef _LINUX_EVENTPOLL_H
 #define _LINUX_EVENTPOLL_H
 
+#include <linux/poll.h>
 #include <linux/uaccess.h>
 #include <linux/fs.h>
 
@@ -61,5 +62,17 @@ epoll_put_uevent(__poll_t revents, __u64 data,
 	return uevent+1;
 }
 #endif
+
+static inline bool file_can_poll(struct file *file)
+{
+	return file->f_op->poll;
+}
+
+static inline __poll_t vfs_poll(struct file *file, struct poll_table_struct *pt)
+{
+	if (unlikely(!file->f_op->poll))
+		return DEFAULT_POLLMASK;
+	return file->f_op->poll(file, pt);
+}
 
 #endif /* #ifndef _LINUX_EVENTPOLL_H */
