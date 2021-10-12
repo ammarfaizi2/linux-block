@@ -158,9 +158,8 @@ static int virtblk_setup_discard_write_zeroes(struct request *req, bool unmap)
 
 	WARN_ON_ONCE(n != segments);
 
-	req->special_vec.bv_page = virt_to_page(range);
-	req->special_vec.bv_offset = offset_in_page(range);
-	req->special_vec.bv_len = sizeof(*range) * segments;
+	bvec_set_page(&req->special_vec, virt_to_page(range),
+			sizeof(*range) * segments, offset_in_page(range));
 	req->rq_flags |= RQF_SPECIAL_PAYLOAD;
 
 	return 0;

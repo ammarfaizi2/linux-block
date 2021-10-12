@@ -241,4 +241,12 @@ static inline void *bvec_virt(struct bio_vec *bvec)
 	return page_address(bvec->bv_page) + bvec->bv_offset;
 }
 
+static inline void bvec_set_page(struct bio_vec *bv, struct page *page,
+				 unsigned int len, unsigned int offset)
+{
+	bv->bv_page = page;
+	bv->bv_len = len;
+	bv->bv_offset = offset;
+}
+
 #endif /* __LINUX_BVEC_H */

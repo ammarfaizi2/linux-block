@@ -49,9 +49,7 @@ static int orangefs_writepage_locked(struct page *page,
 	/* Should've been handled in orangefs_invalidate_folio. */
 	WARN_ON(off == len || off + wlen > len);
 
-	bv.bv_page = page;
-	bv.bv_len = wlen;
-	bv.bv_offset = off % PAGE_SIZE;
+	bvec_set_page(&bv, page, wlen, off % PAGE_SIZE);
 	WARN_ON(wlen == 0);
 	iov_iter_bvec(&iter, WRITE, &bv, 1, wlen);
 
@@ -101,16 +99,17 @@ static int orangefs_writepages_work(struct orangefs_writepages *ow,
 	len = i_size_read(inode);
 
 	for (i = 0; i < ow->npages; i++) {
+		unsigned int off, len;
 		set_page_writeback(ow->pages[i]);
 		ow->bv[i].bv_page = ow->pages[i];
-		ow->bv[i].bv_len = min(page_offset(ow->pages[i]) + PAGE_SIZE,
+		len = min(page_offset(ow->pages[i]) + PAGE_SIZE,
 		    ow->off + ow->len) -
 		    max(ow->off, page_offset(ow->pages[i]));
 		if (i == 0)
-			ow->bv[i].bv_offset = ow->off -
-			    page_offset(ow->pages[i]);
+			off = ow->off - page_offset(ow->pages[i]);
 		else
-			ow->bv[i].bv_offset = 0;
+			off = 0;
+		bvec_set_page(&ow->bv[i], ow->pages[i], len, off);
 	}
 	iov_iter_bvec(&iter, WRITE, ow->bv, ow->npages, ow->len);
 
@@ -301,9 +300,7 @@ static int orangefs_readpage(struct file *file, struct page *page)
 		orangefs_launder_folio(folio);
 
 	off = page_offset(page);
-	bv.bv_page = page;
-	bv.bv_len = PAGE_SIZE;
-	bv.bv_offset = 0;
+	bvec_set_page(&bv, page, PAGE_SIZE, 0);
 	iov_iter_bvec(&iter, READ, &bv, 1, PAGE_SIZE);
 
 	ret = wait_for_direct_io(ORANGEFS_IO_READ, inode, &off, &iter,

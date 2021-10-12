@@ -1000,9 +1000,7 @@ int afs_launder_folio(struct folio *folio)
 			t = afs_folio_dirty_to(folio, priv);
 		}
 
-		bv[0].bv_page = &folio->page;
-		bv[0].bv_offset = f;
-		bv[0].bv_len = t - f;
+		bvec_set_page(&bv[0], &folio->page, t - f, f);
 		iov_iter_bvec(&iter, WRITE, bv, 1, bv[0].bv_len);
 
 		trace_afs_folio_dirty(vnode, tracepoint_string("launder"), folio);
