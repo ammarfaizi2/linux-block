@@ -22,6 +22,7 @@ struct page;
  * @bv_page:   First page associated with the address range.
  * @bv_len:    Number of bytes in the address range.
  * @bv_offset: Start of the address range relative to the start of @bv_page.
+ * @bv_dma_start: If page is already DMA mapped, holds start DMA address.
  *
  * The following holds for a bvec if n * PAGE_SIZE < bv_offset + bv_len:
  *
@@ -33,6 +34,9 @@ struct bio_vec {
 	struct page	*bv_page;
 	unsigned int	bv_len;
 	unsigned int	bv_offset;
+#ifdef CONFIG_HAS_DMA
+	dma_addr_t	bv_dma_start;
+#endif
 };
 
 struct bvec_iter {
@@ -69,15 +73,28 @@ struct bvec_iter_all {
 #define mp_bvec_iter_offset(bvec, iter)				\
 	(__bvec_iter_bvec((bvec), (iter))->bv_offset + (iter).bi_bvec_done)
 
+#define mp_bvec_iter_dma_start(bvec, iter)			\
+	(__bvec_iter_bvec((bvec), (iter))->bv_dma_start)
+
 #define mp_bvec_iter_page_idx(bvec, iter)			\
 	(mp_bvec_iter_offset((bvec), (iter)) / PAGE_SIZE)
 
-#define mp_bvec_iter_bvec(bvec, iter)				\
-((struct bio_vec) {						\
-	.bv_page	= mp_bvec_iter_page((bvec), (iter)),	\
-	.bv_len		= mp_bvec_iter_len((bvec), (iter)),	\
-	.bv_offset	= mp_bvec_iter_offset((bvec), (iter)),	\
+#ifdef CONFIG_HAS_DMA
+#define mp_bvec_iter_bvec(bvec, iter)					\
+((struct bio_vec) {							\
+	.bv_page	= mp_bvec_iter_page((bvec), (iter)),		\
+	.bv_len		= mp_bvec_iter_len((bvec), (iter)),		\
+	.bv_offset	= mp_bvec_iter_offset((bvec), (iter)),		\
+	.bv_dma_start	= mp_bvec_iter_dma_start((bvec), (iter)),	\
 })
+#else
+#define mp_bvec_iter_bvec(bvec, iter)					\
+((struct bio_vec) {							\
+	.bv_page	= mp_bvec_iter_page((bvec), (iter)),		\
+	.bv_len		= mp_bvec_iter_len((bvec), (iter)),		\
+	.bv_offset	= mp_bvec_iter_offset((bvec), (iter)),		\
+})
+#endif
 
 /* For building single-page bvec in flight */
  #define bvec_iter_offset(bvec, iter)				\
@@ -91,12 +108,26 @@ struct bvec_iter_all {
 	(mp_bvec_iter_page((bvec), (iter)) +			\
 	 mp_bvec_iter_page_idx((bvec), (iter)))
 
+#define bvec_iter_dma_start(bvec, iter)				\
+	min_t(unsigned, mp_bvec_iter_dma_start((bvec), (iter)),	\
+	      PAGE_SIZE - bvec_iter_offset((bvec), (iter)))
+
+#ifdef CONFIG_HAS_DMA
+#define bvec_iter_bvec(bvec, iter)				\
+((struct bio_vec) {						\
+	.bv_page	= bvec_iter_page((bvec), (iter)),	\
+	.bv_len		= bvec_iter_len((bvec), (iter)),	\
+	.bv_offset	= bvec_iter_offset((bvec), (iter)),	\
+	.bv_dma_start	= bvec_iter_dma_start((bvec), (iter)),	\
+})
+#else
 #define bvec_iter_bvec(bvec, iter)				\
 ((struct bio_vec) {						\
 	.bv_page	= bvec_iter_page((bvec), (iter)),	\
 	.bv_len		= bvec_iter_len((bvec), (iter)),	\
 	.bv_offset	= bvec_iter_offset((bvec), (iter)),	\
 })
+#endif
 
 static inline bool bvec_iter_advance(const struct bio_vec *bv,
 		struct bvec_iter *iter, unsigned bytes)
@@ -247,6 +278,9 @@ static inline void bvec_set_page(struct bio_vec *bv, struct page *page,
 	bv->bv_page = page;
 	bv->bv_len = len;
 	bv->bv_offset = offset;
+#ifdef CONFIG_HAS_DMA
+	bv->bv_dma_start = 0;
+#endif
 }
 
 #endif /* __LINUX_BVEC_H */
