@@ -508,6 +508,10 @@ enum {
 	/* register a range of fixed file slots for automatic slot allocation */
 	IORING_REGISTER_FILE_ALLOC_RANGE	= 25,
 
+	/* dma map registered buffers */
+	IORING_REGISTER_MAP_BUFFERS		= 26,
+	IORING_REGISTER_UNMAP_BUFFERS		= 27,
+
 	/* this goes last */
 	IORING_REGISTER_LAST
 };
@@ -682,6 +686,14 @@ struct io_uring_recvmsg_out {
 	__u32 controllen;
 	__u32 payloadlen;
 	__u32 flags;
+};
+
+struct io_uring_map_buffers {
+	__s32	fd;
+	__u32	buf_start;
+	__u32	buf_end;
+	__u32	flags;
+	__u64	rsvd[2];
 };
 
 #ifdef __cplusplus

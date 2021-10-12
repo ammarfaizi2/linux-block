@@ -50,6 +50,9 @@ struct io_mapped_ubuf {
 	u64		ubuf_end;
 	unsigned int	nr_bvecs;
 	unsigned long	acct_pages;
+#ifdef CONFIG_BLOCK
+	struct device	*dev;
+#endif
 	struct bio_vec	bvec[];
 };
 
@@ -77,6 +80,8 @@ void __io_sqe_files_unregister(struct io_ring_ctx *ctx);
 int io_sqe_files_unregister(struct io_ring_ctx *ctx);
 int io_sqe_files_register(struct io_ring_ctx *ctx, void __user *arg,
 			  unsigned nr_args, u64 __user *tags);
+int io_register_map_buffers(struct io_ring_ctx *ctx, void __user *arg);
+int io_register_unmap_buffers(struct io_ring_ctx *ctx, void __user *arg);
 
 int __io_scm_file_account(struct io_ring_ctx *ctx, struct file *file);
 
