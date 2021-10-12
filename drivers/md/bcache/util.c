@@ -232,26 +232,29 @@ void bch_bio_map(struct bio *bio, void *base)
 {
 	size_t size = bio->bi_iter.bi_size;
 	struct bio_vec *bv = bio->bi_io_vec;
+	unsigned int len, offset;
+	struct page *page;
 
 	BUG_ON(!bio->bi_iter.bi_size);
 	BUG_ON(bio->bi_vcnt);
 
-	bv->bv_offset = base ? offset_in_page(base) : 0;
+	offset = base ? offset_in_page(base) : 0;
 	goto start;
 
 	for (; size; bio->bi_vcnt++, bv++) {
-		bv->bv_offset	= 0;
-start:		bv->bv_len	= min_t(size_t, PAGE_SIZE - bv->bv_offset,
-					size);
+		offset		= 0;
+start:
+		len		= min_t(size_t, PAGE_SIZE - offset, size);
 		if (base) {
-			bv->bv_page = is_vmalloc_addr(base)
+			page = is_vmalloc_addr(base)
 				? vmalloc_to_page(base)
 				: virt_to_page(base);
 
-			base += bv->bv_len;
+			base += len;
 		}
 
-		size -= bv->bv_len;
+		bvec_set_page(bv, page, len, offset);
+		size -= len;
 	}
 }
 
@@ -275,12 +278,13 @@ int bch_bio_alloc_pages(struct bio *bio, gfp_t gfp_mask)
 	 * bvec table directly.
 	 */
 	for (i = 0, bv = bio->bi_io_vec; i < bio->bi_vcnt; bv++, i++) {
-		bv->bv_page = alloc_page(gfp_mask);
-		if (!bv->bv_page) {
+		struct page *page = alloc_page(gfp_mask);
+		if (page) {
 			while (--bv >= bio->bi_io_vec)
 				__free_page(bv->bv_page);
 			return -ENOMEM;
 		}
+		bvec_set_page(bv, page, 0, 0);
 	}
 
 	return 0;

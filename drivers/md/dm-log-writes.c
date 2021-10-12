@@ -745,8 +745,7 @@ static int log_writes_map(struct dm_target *ti, struct bio *bio)
 		dst = kmap_atomic(page);
 		memcpy_from_bvec(dst, &bv);
 		kunmap_atomic(dst);
-		block->vecs[i].bv_page = page;
-		block->vecs[i].bv_len = bv.bv_len;
+		bvec_set_page(&block->vecs[i], page, bv.bv_len, 0);
 		block->vec_cnt++;
 		i++;
 	}
