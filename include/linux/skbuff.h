@@ -466,7 +466,19 @@ extern int sysctl_max_skb_frags;
  */
 #define GSO_BY_FRAGS	0xFFFF
 
-typedef struct bio_vec skb_frag_t;
+struct skb_frag_struct {
+	struct page	*bv_page;
+	unsigned int	bv_len;
+	unsigned int	bv_offset;
+};
+
+/*
+ * This used to be typedef'ed to bio_vec, but changing bio_vec seemingly
+ * breaks some networking drivers (igb at least). Use our own struct for
+ * now, as it doesn't seem like anything ever came of the unification
+ * between skb frags and bio_vecs.
+ */
+typedef struct skb_frag_struct skb_frag_t;
 
 /**
  * skb_frag_size() - Returns the size of a skb fragment
