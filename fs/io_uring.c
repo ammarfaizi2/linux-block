@@ -213,6 +213,9 @@ struct io_mapped_ubuf {
 	u64		ubuf_end;
 	unsigned int	nr_bvecs;
 	unsigned long	acct_pages;
+#ifdef CONFIG_BLOCK
+	struct device	*dev;
+#endif
 	struct bio_vec	bvec[];
 };
 
@@ -9534,6 +9537,117 @@ static unsigned long rings_size(unsigned sq_entries, unsigned cq_entries,
 	return off;
 }
 
+#ifdef CONFIG_BLOCK
+static int get_map_range(struct io_ring_ctx *ctx,
+			 struct io_uring_map_buffers *map, void __user *arg)
+{
+	int ret;
+
+	if (copy_from_user(map, arg, sizeof(*map)))
+		return -EFAULT;
+	if (map->flags || map->rsvd[0] || map->rsvd[1])
+		return -EINVAL;
+	if (map->buf_start >= ctx->nr_user_bufs)
+		return -EINVAL;
+	if (map->buf_end > ctx->nr_user_bufs)
+		map->buf_end = ctx->nr_user_bufs;
+	ret = map->buf_end - map->buf_start;
+	if (ret <= 0)
+		return -EINVAL;
+	return ret;
+}
+
+static void io_dma_unmap_bvec(struct io_mapped_ubuf *imu)
+{
+	if (!imu->dev)
+		return;
+
+	block_dma_unmap_bvec(imu->dev, imu->bvec, imu->nr_bvecs);
+	imu->dev = NULL;
+}
+
+static int io_register_unmap_buffers(struct io_ring_ctx *ctx, void __user *arg)
+{
+	struct io_uring_map_buffers map;
+	int i, ret;
+
+	if (!capable(CAP_SYS_ADMIN))
+		return -EPERM;
+	ret = get_map_range(ctx, &map, arg);
+	if (ret < 0)
+		return ret;
+
+	for (i = map.buf_start; i < map.buf_end; i++) {
+		struct io_mapped_ubuf *imu = ctx->user_bufs[i];
+
+		io_dma_unmap_bvec(imu);
+	}
+
+	return 0;
+}
+
+static int io_register_map_buffers(struct io_ring_ctx *ctx, void __user *arg)
+{
+	struct io_uring_map_buffers map;
+	struct device *dev;
+	struct block_device *bdev;
+	struct file *file;
+	int ret, i;
+
+	if (!capable(CAP_SYS_ADMIN))
+		return -EPERM;
+	ret = get_map_range(ctx, &map, arg);
+	if (ret < 0)
+		return ret;
+
+	file = fget(map.fd);
+	if (!file)
+		return -EBADF;
+
+	if (S_ISBLK(file_inode(file)->i_mode))
+		bdev = I_BDEV(file->f_mapping->host);
+	else if (S_ISREG(file_inode(file)->i_mode))
+		bdev = file->f_inode->i_sb->s_bdev;
+	else
+		return -EOPNOTSUPP;
+
+	for (i = map.buf_start; i < map.buf_end; i++) {
+		struct io_mapped_ubuf *imu = ctx->user_bufs[i];
+
+		dev = block_dma_map_bvec(bdev, imu->bvec, imu->nr_bvecs);
+		if (IS_ERR(dev)) {
+			ret = PTR_ERR(dev);
+			goto err;
+		}
+		imu->dev = dev;
+	}
+
+	fput(file);
+	return 0;
+err:
+	while (--i >= map.buf_start) {
+		struct io_mapped_ubuf *imu = ctx->user_bufs[i];
+
+		io_dma_unmap_bvec(imu);
+	}
+	fput(file);
+	return ret;
+	return -EOPNOTSUPP;
+}
+#else /* CONFIG_BLOCK */
+static int io_register_map_buffers(struct io_ring_ctx *ctx, void __user *arg)
+{
+	return -EOPNOTSUPP;
+}
+static int io_register_unmap_buffers(struct io_ring_ctx *ctx, void __user *arg)
+{
+	return -EOPNOTSUPP;
+}
+static void io_dma_unmap_bvec(struct io_mapped_ubuf *imu)
+{
+}
+#endif /* CONFIG_BLOCK */
+
 static void io_buffer_unmap(struct io_ring_ctx *ctx, struct io_mapped_ubuf **slot)
 {
 	struct io_mapped_ubuf *imu = *slot;
@@ -9544,6 +9658,7 @@ static void io_buffer_unmap(struct io_ring_ctx *ctx, struct io_mapped_ubuf **slo
 			unpin_user_page(imu->bvec[i].bv_page);
 		if (imu->acct_pages)
 			io_unaccount_mem(ctx, imu->acct_pages);
+		io_dma_unmap_bvec(imu);
 		kvfree(imu);
 	}
 	*slot = NULL;
@@ -9763,6 +9878,9 @@ static int io_sqe_buffer_register(struct io_ring_ctx *ctx, struct iovec *iov,
 	imu->ubuf = ubuf;
 	imu->ubuf_end = ubuf + iov->iov_len;
 	imu->nr_bvecs = nr_pages;
+#ifdef CONFIG_BLOCK
+	imu->dev = NULL;
+#endif
 	*pimu = imu;
 	ret = 0;
 done:
@@ -11847,6 +11965,18 @@ static int __io_uring_register(struct io_ring_ctx *ctx, unsigned opcode,
 		break;
 	case IORING_UNREGISTER_RING_FDS:
 		ret = io_ringfd_unregister(ctx, arg, nr_args);
+		break;
+	case IORING_REGISTER_MAP_BUFFERS:
+		ret = -EINVAL;
+		if (!arg || nr_args != 1)
+			break;
+		ret = io_register_map_buffers(ctx, arg);
+		break;
+	case IORING_REGISTER_UNMAP_BUFFERS:
+		ret = -EINVAL;
+		if (!arg || nr_args != 1)
+			break;
+		ret = io_register_unmap_buffers(ctx, arg);
 		break;
 	default:
 		ret = -EINVAL;
