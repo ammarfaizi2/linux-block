@@ -325,6 +325,10 @@ enum {
 	/* set/get max number of io-wq workers */
 	IORING_REGISTER_IOWQ_MAX_WORKERS	= 19,
 
+	/* dma map registered buffers */
+	IORING_REGISTER_MAP_BUFFERS		= 20,
+	IORING_REGISTER_UNMAP_BUFFERS		= 21,
+
 	/* this goes last */
 	IORING_REGISTER_LAST
 };
@@ -420,6 +424,14 @@ struct io_uring_getevents_arg {
 	__u32	sigmask_sz;
 	__u32	pad;
 	__u64	ts;
+};
+
+struct io_uring_map_buffers {
+	__s32	fd;
+	__u32	buf_start;
+	__u32	buf_end;
+	__u32	flags;
+	__u64	rsvd[2];
 };
 
 #endif
