@@ -637,6 +637,10 @@ struct blk_mq_ops {
 	 */
 	void (*show_rq)(struct seq_file *m, struct request *rq);
 #endif
+#ifdef CONFIG_HAS_DMA
+	struct device *(*dma_map)(struct request_queue *, struct bio_vec *,
+					int nr_vecs, int);
+#endif
 };
 
 enum {

@@ -26,6 +26,7 @@
 #include <linux/namei.h>
 #include <linux/part_stat.h>
 #include <linux/uaccess.h>
+#include <linux/dma-mapping.h>
 #include "../fs/internal.h"
 #include "blk.h"
 
@@ -1063,4 +1064,37 @@ void sync_bdevs(bool wait)
 	}
 	spin_unlock(&blockdev_superblock->s_inode_list_lock);
 	iput(old_inode);
+}
+
+/*
+ * Returns device on success, which is used for unmapping the range as well.
+ * The ->dma_map() helper must grab a reference to the device, the block
+ * unmap helper will drop that reference again.
+ */
+struct device *block_dma_map_bvec(struct block_device *bdev,
+				  struct bio_vec *bvec, int nr_vecs)
+{
+#ifdef CONFIG_HAS_DMA
+	struct request_queue *q = bdev_get_queue(bdev);
+
+	if (q->mq_ops && q->mq_ops->dma_map)
+		return q->mq_ops->dma_map(q, bvec, nr_vecs, 0);
+	return ERR_PTR(-EINVAL);
+#else
+	return ERR_PTR(-EOPNOTSUPP);
+#endif
+}
+
+void block_dma_unmap_bvec(struct device *dev, struct bio_vec *bvec, int nr_vecs)
+{
+#ifdef CONFIG_HAS_DMA
+	int i;
+
+	for (i = 0; i < nr_vecs; i++) {
+		dma_unmap_page(dev, bvec->bv_dma_start, bvec->bv_len, 0);
+		bvec++;
+	}
+
+	put_device(dev);
+#endif
 }

@@ -1575,6 +1575,11 @@ int fsync_bdev(struct block_device *bdev);
 int freeze_bdev(struct block_device *bdev);
 int thaw_bdev(struct block_device *bdev);
 
+struct device *block_dma_map_bvec(struct block_device *bdev,
+					struct bio_vec *bvec, int nr_vecs);
+void block_dma_unmap_bvec(struct device *dev, struct bio_vec *bvec,
+				int nr_vecs);
+
 struct io_comp_batch {
 	struct request *req_list;
 	bool need_ts;
