@@ -193,9 +193,8 @@ static int __blkdev_issue_write_same(struct block_device *bdev, sector_t sector,
 		bio->bi_iter.bi_sector = sector;
 		bio_set_dev(bio, bdev);
 		bio->bi_vcnt = 1;
-		bio->bi_io_vec->bv_page = page;
-		bio->bi_io_vec->bv_offset = 0;
-		bio->bi_io_vec->bv_len = bdev_logical_block_size(bdev);
+		bvec_set_page(bio->bi_io_vec, page,
+				bdev_logical_block_size(bdev), 0);
 		bio_set_op_attrs(bio, REQ_OP_WRITE_SAME, 0);
 
 		if (nr_sects > max_write_same_sectors) {

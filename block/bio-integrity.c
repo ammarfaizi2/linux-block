@@ -138,9 +138,7 @@ int bio_integrity_add_page(struct bio *bio, struct page *page,
 			     &bip->bip_vec[bip->bip_vcnt - 1], offset))
 		return 0;
 
-	iv->bv_page = page;
-	iv->bv_len = len;
-	iv->bv_offset = offset;
+	bvec_set_page(iv, page, len, offset);
 	bip->bip_vcnt++;
 
 	return len;

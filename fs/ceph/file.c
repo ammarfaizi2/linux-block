@@ -104,12 +104,11 @@ static ssize_t __iter_get_bvecs(struct iov_iter *iter, size_t maxsize,
 		size += bytes;
 
 		for ( ; bytes; idx++, bvec_idx++) {
-			struct bio_vec bv = {
-				.bv_page = pages[idx],
-				.bv_len = min_t(int, bytes, PAGE_SIZE - start),
-				.bv_offset = start,
-			};
+			struct bio_vec bv;
 
+			bvec_set_page(&bv, pages[idx],
+					min_t(int, bytes, PAGE_SIZE - start),
+					start);
 			bvecs[bvec_idx] = bv;
 			bytes -= bv.bv_len;
 			start = 0;

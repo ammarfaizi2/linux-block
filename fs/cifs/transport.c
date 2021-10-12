@@ -384,11 +384,11 @@ __smb_send_rqst(struct TCP_Server_Info *server, int num_rqst,
 
 		/* now walk the page array and send each page in it */
 		for (i = 0; i < rqst[j].rq_npages; i++) {
+			unsigned int len, offset;
 			struct bio_vec bvec;
 
-			bvec.bv_page = rqst[j].rq_pages[i];
-			rqst_page_get_length(&rqst[j], i, &bvec.bv_len,
-					     &bvec.bv_offset);
+			rqst_page_get_length(&rqst[j], i, &len, &offset);
+			bvec_set_page(&bvec, rqst[j].rq_pages[i], len, offset);
 
 			iov_iter_bvec(&smb_msg.msg_iter, WRITE,
 				      &bvec, 1, bvec.bv_len);
