@@ -3,6 +3,5 @@
 #define _LINUX_SKBUFF_H
 
 #include <linux/skbuff_types.h>
-#include <linux/skbuff_api.h>
 
 #endif	/* _LINUX_SKBUFF_H */

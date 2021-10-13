@@ -6,6 +6,7 @@
 #ifndef __LINUX_NET_XDP_API_H
 #define __LINUX_NET_XDP_API_H
 
+#include <linux/skbuff_api.h>
 #include <linux/err.h>
 #include <linux/align.h>
 #include <linux/skbuff.h>
