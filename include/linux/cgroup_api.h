@@ -932,4 +932,42 @@ static inline void cgroup_bpf_put(struct cgroup *cgrp) {}
 
 #endif /* CONFIG_CGROUP_BPF */
 
+#ifdef CONFIG_SOCK_CGROUP_DATA
+
+static inline u16 sock_cgroup_prioidx(const struct sock_cgroup_data *skcd)
+{
+#ifdef CONFIG_CGROUP_NET_PRIO
+	return READ_ONCE(skcd->prioidx);
+#else
+	return 1;
+#endif
+}
+
+static inline u32 sock_cgroup_classid(const struct sock_cgroup_data *skcd)
+{
+#ifdef CONFIG_CGROUP_NET_CLASSID
+	return READ_ONCE(skcd->classid);
+#else
+	return 0;
+#endif
+}
+
+static inline void sock_cgroup_set_prioidx(struct sock_cgroup_data *skcd,
+					   u16 prioidx)
+{
+#ifdef CONFIG_CGROUP_NET_PRIO
+	WRITE_ONCE(skcd->prioidx, prioidx);
+#endif
+}
+
+static inline void sock_cgroup_set_classid(struct sock_cgroup_data *skcd,
+					   u32 classid)
+{
+#ifdef CONFIG_CGROUP_NET_CLASSID
+	WRITE_ONCE(skcd->classid, classid);
+#endif
+}
+
+#endif	/* CONFIG_SOCK_CGROUP_DATA */
+
 #endif /* _LINUX_CGROUP_API_H */
