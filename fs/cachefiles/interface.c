@@ -153,8 +153,10 @@ static bool cachefiles_shorten_object(struct cachefiles_object *object,
 			       cachefiles_trunc_shrink);
 	ret = vfs_truncate(&file->f_path, dio_size);
 	if (ret < 0) {
+		trace_cachefiles_io_error(object, file_inode(file), ret,
+					  cachefiles_trace_trunc_error);
 		cachefiles_io_error_obj(object, "Trunc-to-size failed %d", ret);
-		cachefiles_remove_object_xattr(cache, file->f_path.dentry);
+		cachefiles_remove_object_xattr(cache, object, file->f_path.dentry);
 		return false;
 	}
 
@@ -164,8 +166,10 @@ static bool cachefiles_shorten_object(struct cachefiles_object *object,
 		ret = vfs_fallocate(file, FALLOC_FL_ZERO_RANGE,
 				    new_size, dio_size);
 		if (ret < 0) {
+			trace_cachefiles_io_error(object, file_inode(file), ret,
+						  cachefiles_trace_fallocate_error);
 			cachefiles_io_error_obj(object, "Trunc-to-dio-size failed %d", ret);
-			cachefiles_remove_object_xattr(cache, file->f_path.dentry);
+			cachefiles_remove_object_xattr(cache, object, file->f_path.dentry);
 			return false;
 		}
 	}
@@ -384,6 +388,9 @@ truncate_failed:
 	inode_unlock(file_inode(file));
 	cachefiles_end_secure(cache, saved_cred);
 
+	if (ret < 0)
+		trace_cachefiles_io_error(NULL, file_inode(file), ret,
+					  cachefiles_trace_notify_change_error);
 	if (ret == -EIO) {
 		cachefiles_io_error_obj(object, "Size set failed");
 		ret = -ENOBUFS;

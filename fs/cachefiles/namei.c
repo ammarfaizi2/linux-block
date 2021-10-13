@@ -122,8 +122,12 @@ int cachefiles_bury_object(struct cachefiles_cache *cache,
 
 		inode_unlock(d_inode(dir));
 
-		if (ret == -EIO)
-			cachefiles_io_error(cache, "Unlink failed");
+		if (ret < 0) {
+			trace_cachefiles_vfs_error(object, d_inode(dir), ret,
+						   cachefiles_trace_unlink_error);
+			if (ret == -EIO)
+				cachefiles_io_error(cache, "Unlink failed");
+		}
 
 		_leave(" = %d", ret);
 		return ret;
@@ -172,6 +176,9 @@ try_again:
 	grave = lookup_one_len(nbuffer, cache->graveyard, strlen(nbuffer));
 	if (IS_ERR(grave)) {
 		unlock_rename(cache->graveyard, dir);
+		trace_cachefiles_vfs_error(object, d_inode(cache->graveyard),
+					   PTR_ERR(grave),
+					   cachefiles_trace_lookup_error);
 
 		if (PTR_ERR(grave) == -ENOMEM) {
 			_leave(" = -ENOMEM");
@@ -224,6 +231,10 @@ try_again:
 		};
 		trace_cachefiles_rename(object, rep, grave, why);
 		ret = vfs_rename(&rd);
+		if (ret != 0)
+			trace_cachefiles_vfs_error(object, d_inode(dir),
+						   PTR_ERR(grave),
+						   cachefiles_trace_rename_error);
 		if (ret != 0 && ret != -ENOMEM)
 			cachefiles_io_error(cache,
 					    "Rename failed with error %d", ret);
@@ -249,6 +260,9 @@ static int cachefiles_unlink(struct cachefiles_object *object,
 	ret = security_path_unlink(&path, dentry);
 	if (ret == 0)
 		ret = vfs_unlink(&init_user_ns, d_backing_inode(fan), dentry, NULL);
+	if (ret != 0)
+		trace_cachefiles_vfs_error(object, d_backing_inode(fan), ret,
+					   cachefiles_trace_unlink_error);
 	return ret;
 }
 
@@ -273,6 +287,9 @@ int cachefiles_delete_object(struct cachefiles_object *object,
 	inode_unlock(d_backing_inode(fan));
 	dput(dentry);
 
+	if (ret < 0)
+		trace_cachefiles_vfs_error(object, d_backing_inode(fan), ret,
+					   cachefiles_trace_unlink_error);
 	if (ret < 0 && ret != -ENOENT)
 		cachefiles_io_error(volume->cache, "Unlink failed");
 	return ret;
@@ -326,8 +343,12 @@ static bool cachefiles_open_file(struct cachefiles_object *object,
 	path.dentry = dentry;
 	file = open_with_fake_path(&path, O_RDWR | O_LARGEFILE | O_DIRECT,
 				   d_backing_inode(dentry), cache->cache_cred);
-	if (IS_ERR(file))
+	if (IS_ERR(file)) {
+		trace_cachefiles_vfs_error(object, d_backing_inode(dentry),
+					   PTR_ERR(file),
+					   cachefiles_trace_open_error);
 		goto error;
+	}
 
 	if (unlikely(!file->f_op->read_iter) ||
 	    unlikely(!file->f_op->write_iter)) {
@@ -430,6 +451,9 @@ struct dentry *cachefiles_get_directory(struct cachefiles_cache *cache,
 retry:
 	subdir = lookup_one_len(dirname, dir, strlen(dirname));
 	if (IS_ERR(subdir)) {
+		trace_cachefiles_vfs_error(NULL, d_backing_inode(dir),
+					   PTR_ERR(subdir),
+					   cachefiles_trace_lookup_error);
 		if (PTR_ERR(subdir) == -ENOMEM)
 			goto nomem_d_alloc;
 		goto lookup_error;
@@ -454,8 +478,11 @@ retry:
 		if (ret < 0)
 			goto mkdir_error;
 		ret = vfs_mkdir(&init_user_ns, d_inode(dir), subdir, 0700);
-		if (ret < 0)
+		if (ret < 0) {
+			trace_cachefiles_vfs_error(NULL, d_inode(dir), ret,
+						   cachefiles_trace_mkdir_error);
 			goto mkdir_error;
+		}
 
 		if (unlikely(d_unhashed(subdir))) {
 			dput(subdir);
@@ -610,7 +637,7 @@ int cachefiles_cull(struct cachefiles_cache *cache, struct dentry *dir,
 	 */
 	_debug("victim is cullable");
 
-	ret = cachefiles_remove_object_xattr(cache, victim);
+	ret = cachefiles_remove_object_xattr(cache, NULL, victim);
 	if (ret < 0)
 		goto error_unlock;
 
@@ -693,6 +720,8 @@ struct file *cachefiles_create_tmpfile(struct cachefiles_object *object)
 	path.mnt = cache->mnt,
 	path.dentry = vfs_tmpfile(&init_user_ns, fan, S_IFREG, O_RDWR);
 	if (IS_ERR(path.dentry)) {
+		trace_cachefiles_vfs_error(object, d_inode(fan), PTR_ERR(path.dentry),
+					   cachefiles_trace_tmpfile_error);
 		if (PTR_ERR(path.dentry) == -EIO)
 			cachefiles_io_error_obj(object, "Failed to create tmpfile");
 		file = ERR_CAST(path.dentry);
@@ -711,6 +740,9 @@ struct file *cachefiles_create_tmpfile(struct cachefiles_object *object)
 				       cachefiles_trunc_expand_tmpfile);
 		ret = vfs_truncate(&path, ni_size);
 		if (ret < 0) {
+			trace_cachefiles_vfs_error(
+				object, d_backing_inode(path.dentry), ret,
+				cachefiles_trace_trunc_error);
 			file = ERR_PTR(ret);
 			goto out_dput;
 		}
@@ -718,8 +750,12 @@ struct file *cachefiles_create_tmpfile(struct cachefiles_object *object)
 
 	file = open_with_fake_path(&path, O_RDWR | O_LARGEFILE | O_DIRECT,
 				   d_backing_inode(path.dentry), cache->cache_cred);
-	if (IS_ERR(file))
+	if (IS_ERR(file)) {
+		trace_cachefiles_vfs_error(object, d_backing_inode(path.dentry),
+					   PTR_ERR(file),
+					   cachefiles_trace_open_error);
 		goto out_dput;
+	}
 	if (unlikely(!file->f_op->read_iter) ||
 	    unlikely(!file->f_op->write_iter)) {
 		fput(file);
@@ -750,6 +786,8 @@ bool cachefiles_commit_tmpfile(struct cachefiles_cache *cache,
 	inode_lock_nested(d_inode(fan), I_MUTEX_PARENT);
 	dentry = lookup_one_len(object->d_name, fan, object->d_name_len);
 	if (IS_ERR(dentry)) {
+		trace_cachefiles_vfs_error(object, d_inode(fan), PTR_ERR(dentry),
+					   cachefiles_trace_lookup_error);
 		_debug("lookup fail %ld", PTR_ERR(dentry));
 		goto out_unlock;
 	}
@@ -761,12 +799,17 @@ bool cachefiles_commit_tmpfile(struct cachefiles_cache *cache,
 		}
 
 		ret = cachefiles_unlink(object, fan, dentry, FSCACHE_OBJECT_IS_STALE);
-		if (ret < 0)
+		if (ret < 0) {
+			trace_cachefiles_vfs_error(object, d_inode(fan), ret,
+						   cachefiles_trace_unlink_error);
 			goto out_dput;
+		}
 
 		dput(dentry);
 		dentry = lookup_one_len(object->d_name, fan, object->d_name_len);
 		if (IS_ERR(dentry)) {
+			trace_cachefiles_vfs_error(object, d_inode(fan), PTR_ERR(dentry),
+						   cachefiles_trace_lookup_error);
 			_debug("lookup fail %ld", PTR_ERR(dentry));
 			goto out_unlock;
 		}
@@ -775,6 +818,8 @@ bool cachefiles_commit_tmpfile(struct cachefiles_cache *cache,
 	ret = vfs_link(object->file->f_path.dentry, &init_user_ns,
 		       d_inode(fan), dentry, NULL);
 	if (ret < 0) {
+		trace_cachefiles_vfs_error(object, d_inode(fan), PTR_ERR(dentry),
+					   cachefiles_trace_link_error);
 		_debug("link fail %d", ret);
 	} else {
 		trace_cachefiles_link(object, file_inode(object->file));

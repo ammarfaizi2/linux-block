@@ -692,6 +692,8 @@ int cachefiles_has_space(struct cachefiles_cache *cache,
 
 	ret = vfs_statfs(&path, &stats);
 	if (ret < 0) {
+		trace_cachefiles_vfs_error(NULL, d_inode(cache->store), ret,
+					   cachefiles_trace_statfs_error);
 		if (ret == -EIO)
 			cachefiles_io_error(cache, "statfs failed");
 		_leave(" = %d", ret);

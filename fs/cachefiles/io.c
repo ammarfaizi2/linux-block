@@ -44,8 +44,13 @@ static inline void cachefiles_put_kiocb(struct cachefiles_kiocb *ki)
 static void cachefiles_read_complete(struct kiocb *iocb, long ret, long ret2)
 {
 	struct cachefiles_kiocb *ki = container_of(iocb, struct cachefiles_kiocb, iocb);
+	struct inode *inode = file_inode(ki->iocb.ki_filp);
 
 	_enter("%ld,%ld", ret, ret2);
+
+	if (ret < 0)
+		trace_cachefiles_io_error(ki->object, inode, ret,
+					  cachefiles_trace_read_error);
 
 	if (ki->term_func) {
 		if (ret >= 0) {
@@ -194,6 +199,10 @@ static void cachefiles_write_complete(struct kiocb *iocb, long ret, long ret2)
 	/* Tell lockdep we inherited freeze protection from submission thread */
 	__sb_writers_acquired(inode->i_sb, SB_FREEZE_WRITE);
 	__sb_end_write(inode->i_sb, SB_FREEZE_WRITE);
+
+	if (ret < 0)
+		trace_cachefiles_io_error(ki->object, inode, ret,
+					  cachefiles_trace_write_error);
 
 	set_bit(FSCACHE_COOKIE_HAVE_DATA, &ki->object->cookie->flags);
 	if (ki->term_func)
@@ -352,6 +361,8 @@ static enum netfs_read_source cachefiles_prepare_read(struct netfs_read_subreque
 			why = cachefiles_trace_read_seek_nxio;
 			goto download_and_store;
 		}
+		trace_cachefiles_io_error(object, file_inode(file), off,
+					  cachefiles_trace_seek_error);
 		why = cachefiles_trace_read_seek_error;
 		goto out;
 	}
@@ -370,6 +381,8 @@ static enum netfs_read_source cachefiles_prepare_read(struct netfs_read_subreque
 
 	to = vfs_llseek(file, subreq->start, SEEK_HOLE);
 	if (to < 0 && to >= (loff_t)-MAX_ERRNO) {
+		trace_cachefiles_io_error(object, file_inode(file), to,
+					  cachefiles_trace_seek_error);
 		why = cachefiles_trace_read_seek_error;
 		goto out;
 	}
@@ -425,6 +438,8 @@ static int __cachefiles_prepare_write(struct netfs_cache_resources *cres,
 	if (pos < 0 && pos >= (loff_t)-MAX_ERRNO) {
 		if (pos == -ENXIO)
 			goto check_space; /* Unallocated tail */
+		trace_cachefiles_io_error(object, file_inode(file), pos,
+					  cachefiles_trace_seek_error);
 		return pos;
 	}
 	if ((u64)pos >= (u64)*_start + *_len)
@@ -438,8 +453,11 @@ static int __cachefiles_prepare_write(struct netfs_cache_resources *cres,
 		return 0; /* Enough space to simply overwrite the whole block */
 
 	pos = vfs_llseek(file, *_start, SEEK_HOLE);
-	if (pos < 0 && pos >= (loff_t)-MAX_ERRNO)
+	if (pos < 0 && pos >= (loff_t)-MAX_ERRNO) {
+		trace_cachefiles_io_error(object, file_inode(file), pos,
+					  cachefiles_trace_seek_error);
 		return pos;
+	}
 	if ((u64)pos >= (u64)*_start + *_len)
 		return 0; /* Fully allocated */
 
@@ -447,6 +465,8 @@ static int __cachefiles_prepare_write(struct netfs_cache_resources *cres,
 	ret = vfs_fallocate(file, FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE,
 			    *_start, *_len);
 	if (ret < 0) {
+		trace_cachefiles_io_error(object, file_inode(file), ret,
+					  cachefiles_trace_fallocate_error);
 		cachefiles_io_error_obj(object,
 					"CacheFiles: fallocate failed (%d)\n", ret);
 		ret = -EIO;
