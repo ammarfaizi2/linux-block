@@ -6,9 +6,18 @@
 #define __LINUX_FILTER_API_H__
 
 #include <net/sch_generic_api.h>
+#include <linux/u64_stats_sync_api.h>
 #include <linux/filter_types.h>
 
 #include <linux/skbuff_api.h>
+#include <linux/bpf.h>
+#include <linux/sched/clock.h>
+#include <linux/set_memory.h>
+#include <linux/if_vlan_types.h>
+#include <linux/vmalloc.h>
+
+#include <crypto/sha1.h>
+
 #include <net/sch_generic.h>
 
 DECLARE_STATIC_KEY_FALSE(bpf_stats_enabled_key);
