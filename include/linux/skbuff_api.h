@@ -2980,49 +2980,11 @@ static inline void skb_ext_copy(struct sk_buff *dst, const struct sk_buff *s) {}
 static inline bool skb_has_extensions(struct sk_buff *skb) { return false; }
 #endif /* CONFIG_SKB_EXTENSIONS */
 
-static inline void nf_reset_ct(struct sk_buff *skb)
-{
-#if defined(CONFIG_NF_CONNTRACK) || defined(CONFIG_NF_CONNTRACK_MODULE)
-	nf_conntrack_put(skb_nfct(skb));
-	skb->_nfct = 0;
-#endif
-}
-
-static inline void nf_reset_trace(struct sk_buff *skb)
-{
-#if IS_ENABLED(CONFIG_NETFILTER_XT_TARGET_TRACE) || defined(CONFIG_NF_TABLES)
-	skb->nf_trace = 0;
-#endif
-}
-
 static inline void ipvs_reset(struct sk_buff *skb)
 {
 #if IS_ENABLED(CONFIG_IP_VS)
 	skb->ipvs_property = 0;
 #endif
-}
-
-/* Note: This doesn't put any conntrack info in dst. */
-static inline void __nf_copy(struct sk_buff *dst, const struct sk_buff *src,
-			     bool copy)
-{
-#if defined(CONFIG_NF_CONNTRACK) || defined(CONFIG_NF_CONNTRACK_MODULE)
-	dst->_nfct = src->_nfct;
-	nf_conntrack_get(skb_nfct(src));
-#endif
-#if IS_ENABLED(CONFIG_NETFILTER_XT_TARGET_TRACE) || defined(CONFIG_NF_TABLES)
-	if (copy)
-		dst->nf_trace = src->nf_trace;
-#endif
-}
-
-static inline void nf_copy(struct sk_buff *dst, const struct sk_buff *src)
-{
-#if defined(CONFIG_NF_CONNTRACK) || defined(CONFIG_NF_CONNTRACK_MODULE)
-	nf_conntrack_put(skb_nfct(dst));
-#endif
-	dst->slow_gro = src->slow_gro;
-	__nf_copy(dst, src, true);
 }
 
 #ifdef CONFIG_NETWORK_SECMARK
