@@ -26,7 +26,6 @@
 
 #include <linux/topology.h>
 #include <linux/dev_printk.h>
-#include <linux/device/driver.h>
 #include <linux/mod_devicetable.h>
 
 #include <linux/types.h>
@@ -37,13 +36,16 @@
 #include <linux/errno.h>
 #include <linux/kobject.h>
 #include <linux/atomic.h>
-#include <linux/device.h>
+#include <linux/device_types.h>
+#include <linux/device/driver.h>
 #include <linux/interrupt.h>
 #include <linux/io.h>
 #include <linux/resource_ext.h>
 #include <uapi/linux/pci.h>
 
 #include <linux/pci_ids.h>
+
+struct irq_domain;
 
 #define PCI_STATUS_ERROR_BITS (PCI_STATUS_DETECTED_PARITY  | \
 			       PCI_STATUS_SIG_SYSTEM_ERROR | \
