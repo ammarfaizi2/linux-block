@@ -28,7 +28,7 @@
 #include <linux/kobject_types.h>
 #include <linux/seqlock_types.h>
 #include <linux/timerqueue_types.h>
-#include <linux/device.h>
+#include <linux/device_types.h>
 #include <linux/rbtree_types.h>
 
 #include <net/net_trackers.h>
