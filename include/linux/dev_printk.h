@@ -11,7 +11,9 @@
 #ifndef _DEVICE_PRINTK_H_
 #define _DEVICE_PRINTK_H_
 
+#include <linux/printk.h>
 #include <linux/stdarg.h>
+#include <linux/dynamic_debug.h>
 #include <linux/compiler.h>
 #include <linux/types.h>
 #include <linux/ratelimit.h>
