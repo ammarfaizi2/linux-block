@@ -10,10 +10,6 @@
 
 #include <linux/rwsem_types.h>
 
-#include <linux/linkage.h>
-
-#include <linux/list.h>
-
 #ifndef CONFIG_PREEMPT_RT
 
 extern int rwsem_is_locked(struct rw_semaphore *sem);
