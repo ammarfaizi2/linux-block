@@ -12,19 +12,9 @@
  * Updates for SPARC64 by David S. Miller
  * Derived from PowerPC and Sparc prom.h files by Stephen Rothwell, IBM Corp.
  */
-#include <linux/types.h>
-#include <linux/bitops.h>
-#include <linux/errno.h>
-#include <linux/kobject_api.h>
-#include <linux/mod_devicetable.h>
-#include <linux/spinlock.h>
-#include <linux/topology.h>
-#include <linux/notifier.h>
-#include <linux/property.h>
-#include <linux/list.h>
-
-#include <asm/byteorder.h>
-#include <asm/errno.h>
+#include <linux/fwnode.h>
+#include <linux/sysfs_types.h>
+#include <linux/kobject_types.h>
 
 typedef u32 phandle;
 typedef u32 ihandle;
