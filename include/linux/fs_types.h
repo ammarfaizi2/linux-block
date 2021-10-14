@@ -2,6 +2,7 @@
 #ifndef _LINUX_FS_TYPES_H
 #define _LINUX_FS_TYPES_H
 
+#include <linux/list.h>
 #include <linux/list_bl_types.h>
 #include <linux/cache.h>
 #include <linux/path.h>
@@ -614,6 +615,11 @@ static inline loff_t i_size_read(const struct inode *inode)
 #else
 	return inode->i_size;
 #endif
+}
+
+static inline int inode_unhashed(struct inode *inode)
+{
+	return hlist_unhashed(&inode->i_hash);
 }
 
 /*
