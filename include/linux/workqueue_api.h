@@ -6,15 +6,13 @@
 #ifndef _LINUX_WORKQUEUE_API_H
 #define _LINUX_WORKQUEUE_API_H
 
-#include <linux/workqueue.h>
+#include <linux/atomic_api.h>
+#include <linux/workqueue_types.h>
 
 #include <linux/lockdep_api.h>
-#include <linux/timer.h>
 #include <linux/linkage.h>
 #include <linux/bitops.h>
 #include <linux/lockdep.h>
-#include <linux/threads.h>
-#include <linux/atomic.h>
 #include <linux/cpumask.h>
 #include <linux/rcupdate.h>
 
