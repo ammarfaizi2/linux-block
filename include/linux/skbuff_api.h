@@ -1487,12 +1487,6 @@ static inline void skb_reset_mac_len(struct sk_buff *skb)
 	skb->mac_len = skb->network_header - skb->mac_header;
 }
 
-static inline unsigned char *skb_inner_transport_header(const struct sk_buff
-							*skb)
-{
-	return skb->head + skb->inner_transport_header;
-}
-
 static inline int skb_inner_transport_offset(const struct sk_buff *skb)
 {
 	return skb_inner_transport_header(skb) - skb->data;
@@ -1543,14 +1537,10 @@ static inline void skb_set_inner_mac_header(struct sk_buff *skb,
 	skb_reset_inner_mac_header(skb);
 	skb->inner_mac_header += offset;
 }
+
 static inline bool skb_transport_header_was_set(const struct sk_buff *skb)
 {
 	return skb->transport_header != (typeof(skb->transport_header))~0U;
-}
-
-static inline unsigned char *skb_transport_header(const struct sk_buff *skb)
-{
-	return skb->head + skb->transport_header;
 }
 
 static inline void skb_reset_transport_header(struct sk_buff *skb)

@@ -936,6 +936,16 @@ struct skb_ext {
 };
 #endif /* CONFIG_SKB_EXTENSIONS */
 
+static inline unsigned char *skb_transport_header(const struct sk_buff *skb)
+{
+	return skb->head + skb->transport_header;
+}
+
+static inline unsigned char *skb_inner_transport_header(const struct sk_buff *skb)
+{
+	return skb->head + skb->inner_transport_header;
+}
 
 #endif	/* __KERNEL__ */
+
 #endif	/* _LINUX_SKBUFF_TYPES_H */
