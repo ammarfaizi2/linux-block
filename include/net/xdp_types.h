@@ -55,13 +55,14 @@ struct xdp_mem_info {
 
 struct page_pool;
 
-struct xdp_rxq_info {
+/* perf critical, avoid false-sharing */
+struct ____cacheline_aligned xdp_rxq_info {
 	struct net_device *dev;
 	u32 queue_index;
 	u32 reg_state;
 	struct xdp_mem_info mem;
 	unsigned int napi_id;
-} ____cacheline_aligned; /* perf critical, avoid false-sharing */
+};
 
 struct xdp_txq_info {
 	struct net_device *dev;

@@ -38,7 +38,7 @@
 #include <linux/skbuff_api.h>
 
 /* This structure contains an instance of an RX queue. */
-struct netdev_rx_queue {
+struct ____cacheline_aligned_in_smp netdev_rx_queue {
 	struct xdp_rxq_info		xdp_rxq;
 #ifdef CONFIG_RPS
 	struct rps_map __rcu		*rps_map;
@@ -51,7 +51,7 @@ struct netdev_rx_queue {
 #ifdef CONFIG_XDP_SOCKETS
 	struct xsk_buff_pool            *pool;
 #endif
-} ____cacheline_aligned_in_smp;
+};
 
 /*
  * Current order: NETDEV_TX_MASK > NET_XMIT_MASK >= 0 is significant;
