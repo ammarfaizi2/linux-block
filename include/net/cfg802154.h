@@ -12,6 +12,7 @@
 #include <net/net_namespace.h>
 #include <linux/ieee802154.h>
 #include <linux/netdevice.h>
+#include <linux/device_api.h>
 #include <linux/mutex.h>
 #include <linux/bug.h>
 
