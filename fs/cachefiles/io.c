@@ -100,7 +100,9 @@ static int cachefiles_read(struct netfs_cache_resources *cres,
 	if (read_hole != NETFS_READ_HOLE_IGNORE) {
 		loff_t off = start_pos, off2;
 
-		off2 = vfs_llseek(file, off, SEEK_DATA);
+		off2 = cachefiles_inject_read_error();
+		if (off2 == 0)
+			off2 = vfs_llseek(file, off, SEEK_DATA);
 		if (off2 < 0 && off2 >= (loff_t)-MAX_ERRNO && off2 != -ENXIO) {
 			skipped = 0;
 			ret = off2;
@@ -152,7 +154,9 @@ static int cachefiles_read(struct netfs_cache_resources *cres,
 
 	trace_cachefiles_read(object, file_inode(file), ki->iocb.ki_pos, len - skipped);
 	old_nofs = memalloc_nofs_save();
-	ret = vfs_iocb_iter_read(file, &ki->iocb, iter);
+	ret = cachefiles_inject_read_error();
+	if (ret == 0)
+		ret = vfs_iocb_iter_read(file, &ki->iocb, iter);
 	memalloc_nofs_restore(old_nofs);
 	switch (ret) {
 	case -EIOCBQUEUED:
@@ -273,7 +277,9 @@ static int cachefiles_write(struct netfs_cache_resources *cres,
 
 	trace_cachefiles_write(object, inode, ki->iocb.ki_pos, len);
 	old_nofs = memalloc_nofs_save();
-	ret = vfs_iocb_iter_write(file, &ki->iocb, iter);
+	ret = cachefiles_inject_write_error();
+	if (ret == 0)
+		ret = vfs_iocb_iter_write(file, &ki->iocb, iter);
 	memalloc_nofs_restore(old_nofs);
 	switch (ret) {
 	case -EIOCBQUEUED:
@@ -355,7 +361,9 @@ static enum netfs_read_source cachefiles_prepare_read(struct netfs_read_subreque
 	cache = object->volume->cache;
 	cachefiles_begin_secure(cache, &saved_cred);
 
-	off = vfs_llseek(file, subreq->start, SEEK_DATA);
+	off = cachefiles_inject_read_error();
+	if (off == 0)
+		off = vfs_llseek(file, subreq->start, SEEK_DATA);
 	if (off < 0 && off >= (loff_t)-MAX_ERRNO) {
 		if (off == (loff_t)-ENXIO) {
 			why = cachefiles_trace_read_seek_nxio;
@@ -379,7 +387,9 @@ static enum netfs_read_source cachefiles_prepare_read(struct netfs_read_subreque
 		goto download_and_store;
 	}
 
-	to = vfs_llseek(file, subreq->start, SEEK_HOLE);
+	to = cachefiles_inject_read_error();
+	if (to == 0)
+		to = vfs_llseek(file, subreq->start, SEEK_HOLE);
 	if (to < 0 && to >= (loff_t)-MAX_ERRNO) {
 		trace_cachefiles_io_error(object, file_inode(file), to,
 					  cachefiles_trace_seek_error);
@@ -434,7 +444,9 @@ static int __cachefiles_prepare_write(struct netfs_cache_resources *cres,
 	if (no_space_allocated_yet)
 		goto check_space;
 
-	pos = vfs_llseek(file, *_start, SEEK_DATA);
+	pos = cachefiles_inject_read_error();
+	if (pos == 0)
+		pos = vfs_llseek(file, *_start, SEEK_DATA);
 	if (pos < 0 && pos >= (loff_t)-MAX_ERRNO) {
 		if (pos == -ENXIO)
 			goto check_space; /* Unallocated tail */
@@ -452,7 +464,9 @@ static int __cachefiles_prepare_write(struct netfs_cache_resources *cres,
 	if (cachefiles_has_space(cache, 0, *_len / PAGE_SIZE) == 0)
 		return 0; /* Enough space to simply overwrite the whole block */
 
-	pos = vfs_llseek(file, *_start, SEEK_HOLE);
+	pos = cachefiles_inject_read_error();
+	if (pos == 0)
+		pos = vfs_llseek(file, *_start, SEEK_HOLE);
 	if (pos < 0 && pos >= (loff_t)-MAX_ERRNO) {
 		trace_cachefiles_io_error(object, file_inode(file), pos,
 					  cachefiles_trace_seek_error);
@@ -462,8 +476,10 @@ static int __cachefiles_prepare_write(struct netfs_cache_resources *cres,
 		return 0; /* Fully allocated */
 
 	/* Partially allocated, but insufficient space: cull. */
-	ret = vfs_fallocate(file, FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE,
-			    *_start, *_len);
+	pos = cachefiles_inject_remove_error();
+	if (pos == 0)
+		ret = vfs_fallocate(file, FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE,
+				    *_start, *_len);
 	if (ret < 0) {
 		trace_cachefiles_io_error(object, file_inode(file), ret,
 					  cachefiles_trace_fallocate_error);

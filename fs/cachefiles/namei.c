@@ -116,7 +116,9 @@ int cachefiles_bury_object(struct cachefiles_cache *cache,
 			dget(rep); /* Stop the dentry being negated if it's
 				    * only pinned by a file struct.
 				    */
-			ret = vfs_unlink(&init_user_ns, d_inode(dir), rep, NULL);
+			ret = cachefiles_inject_remove_error();
+			if (ret == 0)
+				ret = vfs_unlink(&init_user_ns, d_inode(dir), rep, NULL);
 			dput(rep);
 		}
 
@@ -230,7 +232,9 @@ try_again:
 			.new_dentry	= grave,
 		};
 		trace_cachefiles_rename(object, rep, grave, why);
-		ret = vfs_rename(&rd);
+		ret = cachefiles_inject_read_error();
+		if (ret == 0)
+			ret = vfs_rename(&rd);
 		if (ret != 0)
 			trace_cachefiles_vfs_error(object, d_inode(dir),
 						   PTR_ERR(grave),
@@ -258,6 +262,8 @@ static int cachefiles_unlink(struct cachefiles_object *object,
 
 	trace_cachefiles_unlink(object, dentry, why);
 	ret = security_path_unlink(&path, dentry);
+	if (ret == 0)
+		ret = cachefiles_inject_remove_error();
 	if (ret == 0)
 		ret = vfs_unlink(&init_user_ns, d_backing_inode(fan), dentry, NULL);
 	if (ret != 0)
@@ -400,7 +406,12 @@ bool cachefiles_look_up_object(struct cachefiles_object *object)
 	_enter("OBJ%x,%s,", object->debug_id, object->d_name);
 
 	/* Look up path "cache/vol/fanout/file". */
-	dentry = lookup_positive_unlocked(object->d_name, fan, object->d_name_len);
+	ret = cachefiles_inject_read_error();
+	if (ret == 0)
+		dentry = lookup_positive_unlocked(object->d_name, fan,
+						  object->d_name_len);
+	else
+		dentry = ERR_PTR(ret);
 	trace_cachefiles_lookup(object, dentry);
 	if (IS_ERR(dentry)) {
 		if (dentry == ERR_PTR(-ENOENT))
@@ -449,7 +460,11 @@ struct dentry *cachefiles_get_directory(struct cachefiles_cache *cache,
 	inode_lock(d_inode(dir));
 
 retry:
-	subdir = lookup_one_len(dirname, dir, strlen(dirname));
+	ret = cachefiles_inject_read_error();
+	if (ret == 0)
+		subdir = lookup_one_len(dirname, dir, strlen(dirname));
+	else
+		subdir = ERR_PTR(ret);
 	if (IS_ERR(subdir)) {
 		trace_cachefiles_vfs_error(NULL, d_backing_inode(dir),
 					   PTR_ERR(subdir),
@@ -477,7 +492,9 @@ retry:
 		ret = security_path_mkdir(&path, subdir, 0700);
 		if (ret < 0)
 			goto mkdir_error;
-		ret = vfs_mkdir(&init_user_ns, d_inode(dir), subdir, 0700);
+		ret = cachefiles_inject_write_error();
+		if (ret == 0)
+			ret = vfs_mkdir(&init_user_ns, d_inode(dir), subdir, 0700);
 		if (ret < 0) {
 			trace_cachefiles_vfs_error(NULL, d_inode(dir), ret,
 						   cachefiles_trace_mkdir_error);
@@ -717,8 +734,12 @@ struct file *cachefiles_create_tmpfile(struct cachefiles_object *object)
 
 	cachefiles_begin_secure(cache, &saved_cred);
 
-	path.mnt = cache->mnt,
-	path.dentry = vfs_tmpfile(&init_user_ns, fan, S_IFREG, O_RDWR);
+	path.mnt = cache->mnt;
+	ret = cachefiles_inject_write_error();
+	if (ret == 0)
+		path.dentry = vfs_tmpfile(&init_user_ns, fan, S_IFREG, O_RDWR);
+	else
+		path.dentry = ERR_PTR(ret);
 	if (IS_ERR(path.dentry)) {
 		trace_cachefiles_vfs_error(object, d_inode(fan), PTR_ERR(path.dentry),
 					   cachefiles_trace_tmpfile_error);
@@ -738,7 +759,9 @@ struct file *cachefiles_create_tmpfile(struct cachefiles_object *object)
 	if (ni_size > 0) {
 		trace_cachefiles_trunc(object, d_backing_inode(path.dentry), 0, ni_size,
 				       cachefiles_trunc_expand_tmpfile);
-		ret = vfs_truncate(&path, ni_size);
+		ret = cachefiles_inject_write_error();
+		if (ret == 0)
+			ret = vfs_truncate(&path, ni_size);
 		if (ret < 0) {
 			trace_cachefiles_vfs_error(
 				object, d_backing_inode(path.dentry), ret,
@@ -784,7 +807,11 @@ bool cachefiles_commit_tmpfile(struct cachefiles_cache *cache,
 	_enter(",%pD", object->file);
 
 	inode_lock_nested(d_inode(fan), I_MUTEX_PARENT);
-	dentry = lookup_one_len(object->d_name, fan, object->d_name_len);
+	ret = cachefiles_inject_read_error();
+	if (ret == 0)
+		dentry = lookup_one_len(object->d_name, fan, object->d_name_len);
+	else
+		dentry = ERR_PTR(ret);
 	if (IS_ERR(dentry)) {
 		trace_cachefiles_vfs_error(object, d_inode(fan), PTR_ERR(dentry),
 					   cachefiles_trace_lookup_error);
@@ -806,7 +833,11 @@ bool cachefiles_commit_tmpfile(struct cachefiles_cache *cache,
 		}
 
 		dput(dentry);
-		dentry = lookup_one_len(object->d_name, fan, object->d_name_len);
+		ret = cachefiles_inject_read_error();
+		if (ret == 0)
+			dentry = lookup_one_len(object->d_name, fan, object->d_name_len);
+		else
+			dentry = ERR_PTR(ret);
 		if (IS_ERR(dentry)) {
 			trace_cachefiles_vfs_error(object, d_inode(fan), PTR_ERR(dentry),
 						   cachefiles_trace_lookup_error);
@@ -815,8 +846,10 @@ bool cachefiles_commit_tmpfile(struct cachefiles_cache *cache,
 		}
 	}
 
-	ret = vfs_link(object->file->f_path.dentry, &init_user_ns,
-		       d_inode(fan), dentry, NULL);
+	ret = cachefiles_inject_read_error();
+	if (ret == 0)
+		ret = vfs_link(object->file->f_path.dentry, &init_user_ns,
+			       d_inode(fan), dentry, NULL);
 	if (ret < 0) {
 		trace_cachefiles_vfs_error(object, d_inode(fan), PTR_ERR(dentry),
 					   cachefiles_trace_link_error);

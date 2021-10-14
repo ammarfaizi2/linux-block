@@ -46,6 +46,10 @@ static int __init cachefiles_init(void)
 {
 	int ret;
 
+	ret = cachefiles_register_error_injection();
+	if (ret < 0)
+		goto error_einj;
+
 	ret = misc_register(&cachefiles_dev);
 	if (ret < 0)
 		goto error_dev;
@@ -67,6 +71,8 @@ static int __init cachefiles_init(void)
 error_object_jar:
 	misc_deregister(&cachefiles_dev);
 error_dev:
+	cachefiles_unregister_error_injection();
+error_einj:
 	pr_err("failed to register: %d\n", ret);
 	return ret;
 }
@@ -82,6 +88,7 @@ static void __exit cachefiles_exit(void)
 
 	kmem_cache_destroy(cachefiles_object_jar);
 	misc_deregister(&cachefiles_dev);
+	cachefiles_unregister_error_injection();
 }
 
 module_exit(cachefiles_exit);

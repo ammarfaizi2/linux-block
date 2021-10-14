@@ -151,7 +151,9 @@ static bool cachefiles_shorten_object(struct cachefiles_object *object,
 
 	trace_cachefiles_trunc(object, inode, i_size, dio_size,
 			       cachefiles_trunc_shrink);
-	ret = vfs_truncate(&file->f_path, dio_size);
+	ret = cachefiles_inject_remove_error();
+	if (ret == 0)
+		ret = vfs_truncate(&file->f_path, dio_size);
 	if (ret < 0) {
 		trace_cachefiles_io_error(object, file_inode(file), ret,
 					  cachefiles_trace_trunc_error);
@@ -163,8 +165,10 @@ static bool cachefiles_shorten_object(struct cachefiles_object *object,
 	if (new_size < dio_size) {
 		trace_cachefiles_trunc(object, inode, dio_size, new_size,
 				       cachefiles_trunc_dio_adjust);
-		ret = vfs_fallocate(file, FALLOC_FL_ZERO_RANGE,
-				    new_size, dio_size);
+		ret = cachefiles_inject_write_error();
+		if (ret == 0)
+			ret = vfs_fallocate(file, FALLOC_FL_ZERO_RANGE,
+					    new_size, dio_size);
 		if (ret < 0) {
 			trace_cachefiles_io_error(object, file_inode(file), ret,
 						  cachefiles_trace_fallocate_error);
@@ -374,15 +378,20 @@ static int cachefiles_attr_changed(struct cachefiles_object *object)
 		_debug("discard tail %llx", oi_size);
 		newattrs.ia_valid = ATTR_SIZE;
 		newattrs.ia_size = oi_size & PAGE_MASK;
-		ret = notify_change(&init_user_ns, file->f_path.dentry,
-				    &newattrs, NULL);
+		ret = cachefiles_inject_remove_error();
+		if (ret == 0)
+			ret = notify_change(&init_user_ns, file->f_path.dentry,
+					    &newattrs, NULL);
 		if (ret < 0)
 			goto truncate_failed;
 	}
 
 	newattrs.ia_valid = ATTR_SIZE;
 	newattrs.ia_size = ni_size;
-	ret = notify_change(&init_user_ns, file->f_path.dentry, &newattrs, NULL);
+	ret = cachefiles_inject_write_error();
+	if (ret == 0)
+		ret = notify_change(&init_user_ns, file->f_path.dentry,
+				    &newattrs, NULL);
 
 truncate_failed:
 	inode_unlock(file_inode(file));
