@@ -4,6 +4,7 @@
 
 #include <linux/bpf-cgroup-types.h>
 
+#include <linux/cgroup_api.h>
 #include <linux/bpf.h>
 #include <linux/errno.h>
 #include <linux/jump_label.h>
@@ -26,6 +27,9 @@ struct ctl_table_header;
 struct task_struct;
 
 #ifdef CONFIG_CGROUP_BPF
+
+extern struct static_key_false cgroup_bpf_enabled_key[MAX_CGROUP_BPF_ATTACH_TYPE];
+#define cgroup_bpf_enabled(type) static_branch_unlikely(&cgroup_bpf_enabled_key[type])
 
 int cgroup_bpf_inherit(struct cgroup *cgrp);
 void cgroup_bpf_offline(struct cgroup *cgrp);
