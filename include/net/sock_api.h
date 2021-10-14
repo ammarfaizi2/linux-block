@@ -755,16 +755,6 @@ static inline int __sk_prot_rehash(struct sock *sk)
 /* About 10 seconds */
 #define SOCK_DESTROY_TIME (10*HZ)
 
-/* Sockets 0-1023 can't be bound to unless you are superuser */
-#define PROT_SOCK	1024
-
-#define SHUTDOWN_MASK	3
-#define RCV_SHUTDOWN	1
-#define SEND_SHUTDOWN	2
-
-#define SOCK_BINDADDR_LOCK	4
-#define SOCK_BINDPORT_LOCK	8
-
 /*
  * Functions for memory accounting
  */
