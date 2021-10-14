@@ -43,6 +43,7 @@ struct notifier_block;
 struct iommu_sva;
 struct iommu_fault_event;
 struct iommu_dma_cookie;
+struct mm_struct;
 
 /* iommu fault flags */
 #define IOMMU_FAULT_READ	0x0
