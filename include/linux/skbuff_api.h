@@ -24,7 +24,6 @@
 
 #include <net/checksum.h>
 #include <net/flow_dissector.h>
-#include <net/page_pool.h>
 
 #if IS_ENABLED(CONFIG_NF_CONNTRACK)
 # include <linux/netfilter/nf_conntrack_common.h>
@@ -3356,20 +3355,6 @@ static inline u64 skb_get_kcov_handle(struct sk_buff *skb)
 #else
 	return 0;
 #endif
-}
-
-#ifdef CONFIG_PAGE_POOL
-static inline void skb_mark_for_recycle(struct sk_buff *skb)
-{
-	skb->pp_recycle = 1;
-}
-#endif
-
-static inline bool skb_pp_recycle(struct sk_buff *skb, void *data)
-{
-	if (!IS_ENABLED(CONFIG_PAGE_POOL) || !skb->pp_recycle)
-		return false;
-	return page_pool_return_skb_page(virt_to_page(data));
 }
 
 #endif	/* _LINUX_SKBUFF_API_H */
