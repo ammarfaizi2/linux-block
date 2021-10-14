@@ -8,7 +8,6 @@
 
 #include <linux/percpu-refcount-types.h>
 #include <linux/rbtree.h>
-#include <linux/jump_label.h>
 
 struct sock;
 struct sockaddr;
@@ -60,9 +59,6 @@ to_cgroup_bpf_attach_type(enum bpf_attach_type attach_type)
 }
 
 #undef CGROUP_ATYPE
-
-extern struct static_key_false cgroup_bpf_enabled_key[MAX_CGROUP_BPF_ATTACH_TYPE];
-#define cgroup_bpf_enabled(atype) static_branch_unlikely(&cgroup_bpf_enabled_key[atype])
 
 #define for_each_cgroup_storage_type(stype) \
 	for (stype = 0; stype < MAX_BPF_CGROUP_STORAGE_TYPE; stype++)
