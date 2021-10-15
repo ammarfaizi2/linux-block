@@ -549,6 +549,7 @@ int fscache_write(struct netfs_cache_resources *cres,
 
 /**
  * fscache_clear_page_bits - Clear the PG_fscache bits from a set of pages
+ * @cookie: The cookie representing the cache object
  * @mapping: The netfs inode to use as the source
  * @start: The start position in @mapping
  * @len: The amount of data to unlock
@@ -556,10 +557,11 @@ int fscache_write(struct netfs_cache_resources *cres,
  * Clear the PG_fscache flag from a sequence of pages and wake up anyone who's
  * waiting.
  */
-static inline void fscache_clear_page_bits(struct address_space *mapping,
+static inline void fscache_clear_page_bits(struct fscache_cookie *cookie,
+					   struct address_space *mapping,
 					   loff_t start, size_t len)
 {
-	if (fscache_available())
+	if (fscache_cookie_valid(cookie))
 		__fscache_clear_page_bits(mapping, start, len);
 }
 
@@ -595,7 +597,7 @@ static inline void fscache_write_to_cache(struct fscache_cookie *cookie,
 		__fscache_write_to_cache(cookie, mapping, start, len, i_size,
 					 term_func, term_func_priv);
 	} else {
-		fscache_clear_page_bits(mapping, start, len);
+		fscache_clear_page_bits(cookie, mapping, start, len);
 		if (term_func)
 			term_func(term_func_priv, -ENOBUFS, false);
 	}
