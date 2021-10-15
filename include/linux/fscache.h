@@ -593,7 +593,7 @@ static inline void fscache_write_to_cache(struct fscache_cookie *cookie,
 					  netfs_io_terminated_t term_func,
 					  void *term_func_priv)
 {
-	if (fscache_available()) {
+	if (fscache_cookie_valid(cookie)) {
 		__fscache_write_to_cache(cookie, mapping, start, len, i_size,
 					 term_func, term_func_priv);
 	} else {
