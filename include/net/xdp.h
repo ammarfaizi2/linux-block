@@ -9,6 +9,8 @@
 #include <linux/types.h>
 #include <linux/cache.h>
 
+#include <vdso/bits.h>
+
 /**
  * DOC: XDP RX-queue information
  *
