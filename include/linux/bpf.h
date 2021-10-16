@@ -4,9 +4,9 @@
 #ifndef _LINUX_BPF_H
 #define _LINUX_BPF_H 1
 
-#include <linux/sched.h>
-#include <uapi/linux/bpf.h>
+#include <linux/bpf_defs.h>
 
+#include <linux/sched.h>
 #include <linux/workqueue.h>
 #include <linux/file.h>
 #include <linux/percpu.h>
@@ -1432,17 +1432,6 @@ static inline void bpf_enable_instrumentation(void)
 extern const struct file_operations bpf_map_fops;
 extern const struct file_operations bpf_prog_fops;
 extern const struct file_operations bpf_iter_fops;
-
-#define BPF_PROG_TYPE(_id, _name, prog_ctx_type, kern_ctx_type) \
-	extern const struct bpf_prog_ops _name ## _prog_ops; \
-	extern const struct bpf_verifier_ops _name ## _verifier_ops;
-#define BPF_MAP_TYPE(_id, _ops) \
-	extern const struct bpf_map_ops _ops;
-#define BPF_LINK_TYPE(_id, _name)
-#include <linux/bpf_types.h>
-#undef BPF_PROG_TYPE
-#undef BPF_MAP_TYPE
-#undef BPF_LINK_TYPE
 
 extern const struct bpf_prog_ops bpf_offload_prog_ops;
 extern const struct bpf_verifier_ops tc_cls_act_analyzer_ops;
