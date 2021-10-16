@@ -5,6 +5,8 @@
 #ifndef __ASM_COMPAT_H
 #define __ASM_COMPAT_H
 
+#include <linux/types.h>
+
 #define compat_mode_t compat_mode_t
 typedef u16		compat_mode_t;
 
@@ -15,7 +17,6 @@ typedef u16		compat_mode_t;
 /*
  * Architecture specific compatibility types
  */
-#include <linux/types.h>
 #include <linux/sched.h>
 #include <linux/sched/task_stack.h>
 
