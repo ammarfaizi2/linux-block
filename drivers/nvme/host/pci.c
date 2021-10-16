@@ -856,17 +856,24 @@ static blk_status_t nvme_map_data(struct nvme_dev *dev, struct request *req,
 	int nr_mapped;
 
 	if (blk_rq_nr_phys_segments(req) == 1) {
-		struct bio_vec bv = req_bvec(req);
+		struct bio_vec __bv, *bv = &__bv;
 
-		if (!is_pci_p2pdma_page(bv.bv_page)) {
-			if (bv.bv_offset + bv.bv_len <= NVME_CTRL_PAGE_SIZE * 2)
+		if (req->rq_flags & RQF_SPECIAL_PAYLOAD)
+			bv = &req->special_vec;
+		else if (!req->bio->bi_iter.bi_bvec_done)
+			bv = &req->bio->bi_io_vec[req->bio->bi_iter.bi_idx];
+		else
+			__bv = req_bvec(req);
+
+		if (!is_pci_p2pdma_page(bv->bv_page)) {
+			if (bv->bv_offset + bv->bv_len <= NVME_CTRL_PAGE_SIZE * 2)
 				return nvme_setup_prp_simple(dev, req,
-							     &cmnd->rw, &bv);
+							     &cmnd->rw, bv);
 
 			if (iod->nvmeq->qid && sgl_threshold &&
 			    nvme_ctrl_sgl_supported(&dev->ctrl))
 				return nvme_setup_sgl_simple(dev, req,
-							     &cmnd->rw, &bv);
+							     &cmnd->rw, bv);
 		}
 	}
 
