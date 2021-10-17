@@ -6,13 +6,12 @@
 #include <linux/trace_events_types.h>
 #include <linux/tracepoint-defs.h>
 
+#include <linux/errno.h>
 #include <linux/module.h>
 #include <linux/irqflags.h>
-#include <linux/mutex.h>
-#include <linux/cpumask.h>
 #include <linux/hardirq.h>
-#include <linux/perf_event.h>
-#include <linux/tracepoint.h>
+#include <linux/mutex.h>
+#include <linux/cpumask_types.h>
 
 struct ring_buffer_iter;
 struct trace_array;
