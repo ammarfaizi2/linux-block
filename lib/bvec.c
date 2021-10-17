@@ -29,3 +29,16 @@ void bvec_advance(const struct bio_vec *bvec, struct bvec_iter_all *iter_all)
 	}
 }
 EXPORT_SYMBOL_GPL(bvec_advance);
+
+/**
+ * bvec_virt - return the virtual address for a bvec
+ * @bvec: bvec to return the virtual address for
+ *
+ * Note: the caller must ensure that @bvec->bv_page is not a highmem page.
+ */
+void *bvec_virt(struct bio_vec *bvec)
+{
+	WARN_ON_ONCE(PageHighMem(bvec->bv_page));
+	return page_address(bvec->bv_page) + bvec->bv_offset;
+}
+EXPORT_SYMBOL_GPL(bvec_virt);
