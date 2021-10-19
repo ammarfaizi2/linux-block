@@ -8,9 +8,12 @@
 #ifndef _ASM_UACCESS_H
 #define _ASM_UACCESS_H
 
+#include <linux/sched.h>
+#include <linux/sched/thread.h>
 #include <linux/compiler.h>
 #include <linux/string.h>
 
+#include <asm/current.h>
 #include <asm/processor.h>
 #include <asm-generic/access_ok.h>
 
