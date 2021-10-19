@@ -11,6 +11,7 @@
 #include <asm/asi.h>
 #include <asm/spitfire.h>
 
+#include <asm/current.h>
 #include <asm/processor.h>
 
 /*

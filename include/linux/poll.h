@@ -13,6 +13,7 @@
 #include <uapi/linux/eventpoll.h>
 
 struct file;
+struct timespec64;
 
 /* ~832 bytes of stack space used max in sys_select/sys_poll before allocating
    additional memory. */
