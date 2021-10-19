@@ -15,7 +15,6 @@
 #include <linux/tasklet_types.h>
 #include <linux/spinlock_api.h>
 #include <linux/mm_page_address.h>
-#include <linux/mm_api.h>
 #include <linux/io.h>
 #include <linux/io_extra.h>
 #include <linux/align.h>
@@ -33,6 +32,8 @@
 #include <linux/interrupt.h>
 #include <linux/reciprocal_div.h>
 #include <asm/hyperv-tlfs.h>
+
+struct resource;
 
 #define MAX_PAGE_BUFFER_COUNT				32
 #define MAX_MULTIPAGE_BUFFER_COUNT			32 /* 128K */

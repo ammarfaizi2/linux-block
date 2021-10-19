@@ -3,7 +3,6 @@
 #define _LINUX_MMU_CONTEXT_H
 
 #include <linux/pgtable_api.h>
-#include <linux/mm_api.h>
 #include <asm/mmu_context.h>
 #include <asm/mmu.h>
 

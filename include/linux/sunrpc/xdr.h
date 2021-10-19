@@ -11,10 +11,10 @@
 #ifndef _SUNRPC_XDR_H_
 #define _SUNRPC_XDR_H_
 
+#include <linux/limits.h>
 #include <linux/mm.h>
 #include <linux/string.h>
 #include <linux/mm_page_address.h>
-#include <linux/mm_api.h>
 #include <linux/uio.h>
 #include <asm/byteorder.h>
 #include <asm/unaligned.h>

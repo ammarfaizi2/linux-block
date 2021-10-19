@@ -2,7 +2,6 @@
 #ifndef _XEN_PAGE_H
 #define _XEN_PAGE_H
 
-#include <linux/mm_api.h>
 #include <asm/page.h>
 
 /* The hypercall interface supports only 4KB page */

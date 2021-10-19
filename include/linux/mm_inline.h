@@ -2,6 +2,7 @@
 #ifndef LINUX_MM_INLINE_H
 #define LINUX_MM_INLINE_H
 
+#include <linux/mm_api.h>
 #include <linux/memcontrol.h>
 #include <linux/atomic.h>
 #include <linux/huge_mm.h>

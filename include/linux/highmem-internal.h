@@ -2,7 +2,6 @@
 #ifndef _LINUX_HIGHMEM_INTERNAL_H
 #define _LINUX_HIGHMEM_INTERNAL_H
 
-#include <linux/mm_api.h>
 #include <linux/sched/per_task.h>
 
 /*
