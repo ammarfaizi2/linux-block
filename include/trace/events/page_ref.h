@@ -7,8 +7,7 @@
 
 #include <linux/mmzone_api.h>
 #include <linux/mm_api.h>
-#include <linux/mm.h>
-
+#include <linux/page_ref.h>
 #include <trace/events/mmflags.h>
 
 DECLARE_EVENT_CLASS(page_ref_mod_template,

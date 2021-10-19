@@ -4,6 +4,7 @@
 
 #include <linux/mm_types.h>
 
+#include <asm/page.h>
 #include <asm/page_types.h>
 
 /*
