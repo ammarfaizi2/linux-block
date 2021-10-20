@@ -6,6 +6,7 @@
 #ifndef PAGE_FLAGS_H
 #define PAGE_FLAGS_H
 
+#include <linux/jump_label.h>
 #include <linux/types.h>
 #include <linux/bug.h>
 #include <linux/mmdebug.h>

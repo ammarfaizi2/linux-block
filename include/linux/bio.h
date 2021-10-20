@@ -5,6 +5,8 @@
 #ifndef __LINUX_BIO_H
 #define __LINUX_BIO_H
 
+#include <linux/mm_api.h>
+#include <linux/atomic_api.h>
 #include <linux/uio_api.h>
 #include <linux/mm_page_address.h>
 #include <linux/mempool.h>

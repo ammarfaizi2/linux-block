@@ -15,6 +15,7 @@
 
 #include <linux/skbuff_types.h>
 
+#include <linux/cache.h>
 #include <net/inet_sock_types.h>
 #include <uapi/linux/udp.h>
 

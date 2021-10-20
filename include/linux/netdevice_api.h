@@ -23,6 +23,8 @@
 
 #include <linux/netdevice_types.h>
 
+#include <linux/bitmap.h>
+#include <linux/string.h>
 #include <linux/preempt.h>
 #include <linux/percpu.h>
 #include <linux/irqflags.h>

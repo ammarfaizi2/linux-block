@@ -4,6 +4,8 @@
 
 #include <linux/lwtunnel.h>
 
+#include <linux/jump_label.h>
+#include <linux/atomic_api.h>
 #include <linux/netlink.h>
 #include <linux/netdevice.h>
 #include <linux/skbuff.h>

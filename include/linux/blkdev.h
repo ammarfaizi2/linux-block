@@ -27,6 +27,8 @@
 #include <linux/uuid.h>
 #include <linux/xarray.h>
 
+#include <asm/cacheflush.h>
+
 struct module;
 struct request_queue;
 struct elevator_queue;
