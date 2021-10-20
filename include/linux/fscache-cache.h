@@ -18,6 +18,7 @@
 
 struct fscache_cache;
 enum fscache_cache_trace;
+enum fscache_cookie_trace;
 enum fscache_access_trace;
 
 enum fscache_cache_state {
@@ -75,6 +76,24 @@ extern struct rw_semaphore fscache_addremove_sem;
 extern struct fscache_cache *fscache_acquire_cache(const char *name);
 extern void fscache_put_cache(struct fscache_cache *cache,
 			      enum fscache_cache_trace where);
+
+extern struct fscache_cookie *fscache_get_cookie(struct fscache_cookie *cookie,
+						 enum fscache_cookie_trace where);
+extern void fscache_put_cookie(struct fscache_cookie *cookie,
+			       enum fscache_cookie_trace where);
+extern void fscache_set_cookie_stage(struct fscache_cookie *cookie,
+				     enum fscache_cookie_stage stage);
+
+/*
+ * Find the key on a cookie.
+ */
+static inline void *fscache_get_key(struct fscache_cookie *cookie)
+{
+	if (cookie->key_len <= sizeof(cookie->inline_key))
+		return cookie->inline_key;
+	else
+		return cookie->key;
+}
 
 extern struct workqueue_struct *fscache_wq;
 
