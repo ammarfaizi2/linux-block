@@ -77,6 +77,9 @@ extern struct fscache_cache *fscache_acquire_cache(const char *name);
 extern void fscache_put_cache(struct fscache_cache *cache,
 			      enum fscache_cache_trace where);
 
+extern void fscache_end_volume_access(struct fscache_volume *volume,
+				      enum fscache_access_trace why);
+
 extern struct fscache_cookie *fscache_get_cookie(struct fscache_cookie *cookie,
 						 enum fscache_cookie_trace where);
 extern void fscache_put_cookie(struct fscache_cookie *cookie,
