@@ -10,7 +10,7 @@
 #define _CIFS_FSCACHE_H
 
 #define FSCACHE_USE_FALLBACK_IO_API
-#include <linux/fscache.h>
+#include <linux/fscache_old.h>
 
 #include "cifsglob.h"
 

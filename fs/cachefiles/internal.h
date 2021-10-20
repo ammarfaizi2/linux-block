@@ -12,7 +12,7 @@
 #define pr_fmt(fmt) "CacheFiles: " fmt
 
 
-#include <linux/fscache-cache.h>
+#include <linux/fscache_old-cache.h>
 #include <linux/timer.h>
 #include <linux/wait_bit.h>
 #include <linux/cred.h>

@@ -14,7 +14,7 @@
 #ifndef _LINUX_FSCACHE_CACHE_H
 #define _LINUX_FSCACHE_CACHE_H
 
-#include <linux/fscache.h>
+#include <linux/fscache_old.h>
 #include <linux/sched.h>
 #include <linux/workqueue.h>
 

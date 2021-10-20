@@ -22,7 +22,7 @@
 
 #ifdef CONFIG_CEPH_FSCACHE
 #define FSCACHE_USE_NEW_IO_API
-#include <linux/fscache.h>
+#include <linux/fscache_old.h>
 #endif
 
 /* f_type in struct statfs */

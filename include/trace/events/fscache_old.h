@@ -5,12 +5,12 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 #undef TRACE_SYSTEM
-#define TRACE_SYSTEM fscache
+#define TRACE_SYSTEM fscache_old
 
-#if !defined(_TRACE_FSCACHE_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _TRACE_FSCACHE_H
+#if !defined(_TRACE_FSCACHE_OLD_H) || defined(TRACE_HEADER_MULTI_READ)
+#define _TRACE_FSCACHE_OLD_H
 
-#include <linux/fscache.h>
+#include <linux/fscache_old.h>
 #include <linux/tracepoint.h>
 
 /*
@@ -517,7 +517,7 @@ TRACE_EVENT(fscache_gang_lookup,
 		      __entry->store_limit)
 	    );
 
-#endif /* _TRACE_FSCACHE_H */
+#endif /* _TRACE_FSCACHE_OLD_H */
 
 /* This part must be outside protection */
 #include <trace/define_trace.h>

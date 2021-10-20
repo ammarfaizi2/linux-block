@@ -9,7 +9,7 @@
 #define _9P_CACHE_H
 
 #define FSCACHE_USE_NEW_IO_API
-#include <linux/fscache.h>
+#include <linux/fscache_old.h>
 
 #ifdef CONFIG_9P_FSCACHE
 

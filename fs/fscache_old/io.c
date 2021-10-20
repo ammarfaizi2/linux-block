@@ -9,7 +9,7 @@
 #include <linux/module.h>
 #define FSCACHE_USE_NEW_IO_API
 #define FSCACHE_USE_FALLBACK_IO_API
-#include <linux/fscache-cache.h>
+#include <linux/fscache_old-cache.h>
 #include <linux/uio.h>
 #include <linux/bvec.h>
 #include <linux/slab.h>

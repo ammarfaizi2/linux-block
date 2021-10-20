@@ -15,7 +15,7 @@
 #include <linux/workqueue.h>
 #include <linux/sched.h>
 #define FSCACHE_USE_NEW_IO_API
-#include <linux/fscache.h>
+#include <linux/fscache_old.h>
 #include <linux/backing-dev.h>
 #include <linux/uuid.h>
 #include <linux/mm_types.h>

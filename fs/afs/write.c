@@ -12,7 +12,7 @@
 #include <linux/writeback.h>
 #include <linux/pagevec.h>
 #include <linux/netfs.h>
-#include <linux/fscache.h>
+#include <linux/fscache_old.h>
 #include "internal.h"
 
 /*

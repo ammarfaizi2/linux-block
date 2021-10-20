@@ -12,7 +12,7 @@
 #include <linux/nfs_mount.h>
 #include <linux/nfs4_mount.h>
 #define FSCACHE_USE_FALLBACK_IO_API
-#include <linux/fscache.h>
+#include <linux/fscache_old.h>
 
 #ifdef CONFIG_NFS_FSCACHE
 

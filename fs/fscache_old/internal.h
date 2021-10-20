@@ -24,8 +24,8 @@
 
 #define pr_fmt(fmt) "FS-Cache: " fmt
 
-#include <linux/fscache-cache.h>
-#include <trace/events/fscache.h>
+#include <linux/fscache_old-cache.h>
+#include <trace/events/fscache_old.h>
 #include <linux/sched.h>
 #include <linux/seq_file.h>
 
