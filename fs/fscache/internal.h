@@ -18,6 +18,14 @@
 #include <linux/seq_file.h>
 
 /*
+ * cache.c
+ */
+#ifdef CONFIG_PROC_FS
+extern const struct seq_operations fscache_caches_seq_ops;
+#endif
+struct fscache_cache *fscache_lookup_cache(const char *name, bool is_cache);
+
+/*
  * main.c
  */
 extern unsigned fscache_debug;
