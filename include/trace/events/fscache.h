@@ -24,7 +24,9 @@ enum fscache_cache_trace {
 	fscache_cache_get_acquire,
 	fscache_cache_new_acquire,
 	fscache_cache_put_alloc_volume,
+	fscache_cache_put_cache,
 	fscache_cache_put_volume,
+	fscache_cache_put_withdraw,
 };
 
 enum fscache_volume_trace {
@@ -76,7 +78,9 @@ enum fscache_access_trace {
 	EM(fscache_cache_get_acquire,		"GET acq  ")		\
 	EM(fscache_cache_new_acquire,		"NEW acq  ")		\
 	EM(fscache_cache_put_alloc_volume,	"PUT alvol")		\
-	E_(fscache_cache_put_volume,		"PUT vol  ")
+	EM(fscache_cache_put_cache,		"PUT cache")		\
+	EM(fscache_cache_put_volume,		"PUT vol  ")		\
+	E_(fscache_cache_put_withdraw,		"PUT withd")
 
 #define fscache_volume_traces						\
 	EM(fscache_volume_collision,		"*COLLIDE*")		\

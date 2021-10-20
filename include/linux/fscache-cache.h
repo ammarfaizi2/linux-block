@@ -17,6 +17,7 @@
 #include <linux/fscache.h>
 
 struct fscache_cache;
+struct fscache_cache_ops;
 enum fscache_cache_trace;
 enum fscache_cookie_trace;
 enum fscache_access_trace;
@@ -34,6 +35,7 @@ enum fscache_cache_state {
  * Cache cookie.
  */
 struct fscache_cache {
+	const struct fscache_cache_ops *ops;
 	struct list_head	cache_link;	/* Link in cache list */
 	void			*cache_priv;	/* Private cache data (or NULL) */
 	refcount_t		ref;
@@ -43,6 +45,14 @@ struct fscache_cache {
 	unsigned int		debug_id;
 	enum fscache_cache_state state;
 	char			*name;
+};
+
+/*
+ * cache operations
+ */
+struct fscache_cache_ops {
+	/* name of cache provider */
+	const char *name;
 };
 
 static inline enum fscache_cache_state fscache_cache_state(const struct fscache_cache *cache)
@@ -74,8 +84,12 @@ static inline bool fscache_set_cache_state_maybe(struct fscache_cache *cache,
  */
 extern struct rw_semaphore fscache_addremove_sem;
 extern struct fscache_cache *fscache_acquire_cache(const char *name);
+extern int fscache_add_cache(struct fscache_cache *cache,
+			     const struct fscache_cache_ops *ops,
+			     void *cache_priv);
 extern void fscache_put_cache(struct fscache_cache *cache,
 			      enum fscache_cache_trace where);
+extern void fscache_withdraw_cache(struct fscache_cache *cache);
 
 extern void fscache_end_volume_access(struct fscache_volume *volume,
 				      enum fscache_access_trace why);
