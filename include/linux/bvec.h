@@ -8,6 +8,5 @@
 #define __LINUX_BVEC_H
 
 #include <linux/bvec_types.h>
-#include <linux/bvec_api.h>
 
 #endif /* __LINUX_BVEC_H */

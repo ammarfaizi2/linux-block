@@ -7,6 +7,7 @@
 
 #include <linux/writeback_types.h>
 
+#include <linux/page-flags.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/workqueue.h>
