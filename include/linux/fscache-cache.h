@@ -97,6 +97,8 @@ extern void fscache_put_cache(struct fscache_cache *cache,
 			      enum fscache_cache_trace where);
 extern void fscache_withdraw_cache(struct fscache_cache *cache);
 
+extern void fscache_io_error(struct fscache_cache *cache);
+
 extern void fscache_end_volume_access(struct fscache_volume *volume,
 				      enum fscache_access_trace why);
 
