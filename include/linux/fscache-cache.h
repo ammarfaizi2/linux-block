@@ -69,6 +69,10 @@ struct fscache_cache_ops {
 	/* Invalidate an object */
 	bool (*invalidate_cookie)(struct fscache_cookie *cookie);
 
+	/* Begin an operation for the netfs lib */
+	bool (*begin_operation)(struct netfs_cache_resources *cres,
+				enum fscache_want_stage want_stage);
+
 	/* Prepare to write to a live cache object */
 	void (*prepare_to_write)(struct fscache_cookie *cookie);
 };
@@ -123,6 +127,8 @@ extern void fscache_end_cookie_access(struct fscache_cookie *cookie,
 				      enum fscache_access_trace why);
 extern void fscache_set_cookie_stage(struct fscache_cookie *cookie,
 				     enum fscache_cookie_stage stage);
+extern bool fscache_wait_for_operation(struct netfs_cache_resources *cred,
+				       enum fscache_want_stage stage);
 
 /*
  * Find the key on a cookie.
@@ -147,6 +153,23 @@ static inline void fscache_cookie_lookup_negative(struct fscache_cookie *cookie)
 {
 	set_bit(FSCACHE_COOKIE_NO_DATA_TO_READ, &cookie->flags);
 	fscache_set_cookie_stage(cookie, FSCACHE_COOKIE_STAGE_CREATING);
+}
+
+static inline struct fscache_cookie *fscache_cres_cookie(struct netfs_cache_resources *cres)
+{
+	return cres->cache_priv;
+}
+
+/**
+ * fscache_end_operation - End an fscache I/O operation.
+ * @cres: The resources to dispose of.
+ */
+static inline
+void fscache_end_operation(struct netfs_cache_resources *cres)
+{
+	const struct netfs_cache_ops *ops = fscache_operation_valid(cres);
+	if (ops)
+		ops->end_operation(cres);
 }
 
 extern struct workqueue_struct *fscache_wq;
