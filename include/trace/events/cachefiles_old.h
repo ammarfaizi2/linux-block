@@ -5,7 +5,7 @@
  * Written by David Howells (dhowells@redhat.com)
  */
 #undef TRACE_SYSTEM
-#define TRACE_SYSTEM cachefiles
+#define TRACE_SYSTEM cachefiles_old
 
 #if !defined(_TRACE_CACHEFILES_H) || defined(TRACE_HEADER_MULTI_READ)
 #define _TRACE_CACHEFILES_H
