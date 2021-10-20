@@ -19,6 +19,8 @@
 #include <linux/workqueue.h>
 #include <linux/security.h>
 
+#define CACHEFILES_DIO_BLOCK_SIZE 4096
+
 struct cachefiles_cache;
 struct cachefiles_object;
 
@@ -26,6 +28,8 @@ extern unsigned cachefiles_debug;
 #define CACHEFILES_DEBUG_KENTER	1
 #define CACHEFILES_DEBUG_KLEAVE	2
 #define CACHEFILES_DEBUG_KDEBUG	4
+
+#define cachefiles_gfp (__GFP_RECLAIM | __GFP_NORETRY | __GFP_NOMEMALLOC)
 
 enum cachefiles_content {
 	/* These values are saved on disk */
@@ -114,6 +118,18 @@ struct cachefiles_cache {
 
 #include <trace/events/cachefiles.h>
 
+static inline
+struct file *cachefiles_cres_file(struct netfs_cache_resources *cres)
+{
+	return cres->cache_priv2;
+}
+
+static inline
+struct cachefiles_object *cachefiles_cres_object(struct netfs_cache_resources *cres)
+{
+	return fscache_cres_cookie(cres)->cache_priv;
+}
+
 /*
  * note change of state for daemon
  */
@@ -182,14 +198,44 @@ static inline int cachefiles_inject_remove_error(void)
  * interface.c
  */
 extern const struct fscache_cache_ops cachefiles_cache_ops;
+extern void cachefiles_see_object(struct cachefiles_object *object,
+				  enum cachefiles_obj_ref_trace why);
+extern struct cachefiles_object *cachefiles_grab_object(struct cachefiles_object *object,
+							enum cachefiles_obj_ref_trace why);
+extern void cachefiles_put_object(struct cachefiles_object *object,
+				  enum cachefiles_obj_ref_trace why);
 extern void cachefiles_sync_cache(struct cachefiles_cache *cache);
+
+/*
+ * key.c
+ */
+extern bool cachefiles_cook_key(struct cachefiles_object *object);
 
 /*
  * namei.c
  */
+extern void cachefiles_unmark_inode_in_use(struct cachefiles_object *object,
+					   struct file *file);
+extern int cachefiles_bury_object(struct cachefiles_cache *cache,
+				  struct cachefiles_object *object,
+				  struct dentry *dir,
+				  struct dentry *rep,
+				  enum fscache_why_object_killed why);
+extern int cachefiles_delete_object(struct cachefiles_object *object,
+				    enum fscache_why_object_killed why);
+extern bool cachefiles_look_up_object(struct cachefiles_object *object);
 extern struct dentry *cachefiles_get_directory(struct cachefiles_cache *cache,
 					       struct dentry *dir,
 					       const char *name);
+
+extern int cachefiles_cull(struct cachefiles_cache *cache, struct dentry *dir,
+			   char *filename);
+
+extern int cachefiles_check_in_use(struct cachefiles_cache *cache,
+				   struct dentry *dir, char *filename);
+extern struct file *cachefiles_create_tmpfile(struct cachefiles_object *object);
+extern bool cachefiles_commit_tmpfile(struct cachefiles_cache *cache,
+				      struct cachefiles_object *object);
 
 /*
  * security.c
@@ -217,6 +263,17 @@ static inline void cachefiles_end_secure(struct cachefiles_cache *cache,
 void cachefiles_acquire_volume(struct fscache_volume *volume);
 void cachefiles_free_volume(struct fscache_volume *volume);
 void cachefiles_withdraw_volume(struct cachefiles_volume *volume);
+
+/*
+ * xattr.c
+ */
+extern int cachefiles_set_object_xattr(struct cachefiles_object *object);
+extern int cachefiles_check_auxdata(struct cachefiles_object *object,
+				    struct file *file);
+extern int cachefiles_remove_object_xattr(struct cachefiles_cache *cache,
+					  struct cachefiles_object *object,
+					  struct dentry *dentry);
+extern void cachefiles_prepare_to_write(struct fscache_cookie *cookie);
 
 /*
  * error handling

@@ -548,6 +548,10 @@ static int cachefiles_daemon_tag(struct cachefiles_cache *cache, char *args)
  */
 static int cachefiles_daemon_cull(struct cachefiles_cache *cache, char *args)
 {
+	struct path path;
+	const struct cred *saved_cred;
+	int ret;
+
 	_enter(",%s", args);
 
 	if (strchr(args, '/'))
@@ -563,7 +567,24 @@ static int cachefiles_daemon_cull(struct cachefiles_cache *cache, char *args)
 		return -EIO;
 	}
 
-	return -EOPNOTSUPP; // PLACEHOLDER: Implement culling
+	/* extract the directory dentry from the cwd */
+	get_fs_pwd(current->fs, &path);
+
+	if (!d_can_lookup(path.dentry))
+		goto notdir;
+
+	cachefiles_begin_secure(cache, &saved_cred);
+	ret = cachefiles_cull(cache, path.dentry, args);
+	cachefiles_end_secure(cache, saved_cred);
+
+	path_put(&path);
+	_leave(" = %d", ret);
+	return ret;
+
+notdir:
+	path_put(&path);
+	pr_err("cull command requires dirfd to be a directory\n");
+	return -ENOTDIR;
 
 inval:
 	pr_err("cull command requires dirfd and filename\n");
@@ -599,6 +620,10 @@ inval:
  */
 static int cachefiles_daemon_inuse(struct cachefiles_cache *cache, char *args)
 {
+	struct path path;
+	const struct cred *saved_cred;
+	int ret;
+
 	//_enter(",%s", args);
 
 	if (strchr(args, '/'))
@@ -614,7 +639,24 @@ static int cachefiles_daemon_inuse(struct cachefiles_cache *cache, char *args)
 		return -EIO;
 	}
 
-	return -EOPNOTSUPP; // PLACEHOLDER: Implement check in use
+	/* extract the directory dentry from the cwd */
+	get_fs_pwd(current->fs, &path);
+
+	if (!d_can_lookup(path.dentry))
+		goto notdir;
+
+	cachefiles_begin_secure(cache, &saved_cred);
+	ret = cachefiles_check_in_use(cache, path.dentry, args);
+	cachefiles_end_secure(cache, saved_cred);
+
+	path_put(&path);
+	//_leave(" = %d", ret);
+	return ret;
+
+notdir:
+	path_put(&path);
+	pr_err("inuse command requires dirfd to be a directory\n");
+	return -ENOTDIR;
 
 inval:
 	pr_err("inuse command requires dirfd and filename\n");
