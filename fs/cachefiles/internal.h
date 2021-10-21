@@ -212,6 +212,13 @@ static inline void cachefiles_end_secure(struct cachefiles_cache *cache,
 }
 
 /*
+ * volume.c
+ */
+void cachefiles_acquire_volume(struct fscache_volume *volume);
+void cachefiles_free_volume(struct fscache_volume *volume);
+void cachefiles_withdraw_volume(struct cachefiles_volume *volume);
+
+/*
  * error handling
  */
 
