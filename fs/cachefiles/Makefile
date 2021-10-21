@@ -5,7 +5,8 @@
 
 cachefiles-y := \
 	daemon.o \
-	main.o
+	main.o \
+	namei.o
 
 cachefiles-$(CONFIG_CACHEFILES_ERROR_INJECTION) += error_inject.o
 
