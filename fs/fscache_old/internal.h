@@ -131,7 +131,7 @@ extern void fscache_proc_cleanup(void);
 /*
  * stats.c
  */
-#ifdef CONFIG_FSCACHE_STATS
+#ifdef CONFIG_FSCACHE_OLD_STATS
 extern atomic_t fscache_n_ops_processed[FSCACHE_MAX_THREADS];
 extern atomic_t fscache_n_objs_processed[FSCACHE_MAX_THREADS];
 
@@ -303,7 +303,7 @@ void fscache_update_aux(struct fscache_cookie *cookie, const void *aux_data)
 #define _leave(FMT, ...) kleave(FMT, ##__VA_ARGS__)
 #define _debug(FMT, ...) kdebug(FMT, ##__VA_ARGS__)
 
-#elif defined(CONFIG_FSCACHE_DEBUG)
+#elif defined(CONFIG_FSCACHE_OLD_DEBUG)
 #define _enter(FMT, ...)			\
 do {						\
 	if (__do_kdebug(ENTER))			\

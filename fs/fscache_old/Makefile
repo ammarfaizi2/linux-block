@@ -15,6 +15,6 @@ fscache-y := \
 	page.o
 
 fscache-$(CONFIG_PROC_FS) += proc.o
-fscache-$(CONFIG_FSCACHE_STATS) += stats.o
+fscache-$(CONFIG_FSCACHE_OLD_STATS) += stats.o
 
-obj-$(CONFIG_FSCACHE) := fscache.o
+obj-$(CONFIG_FSCACHE_OLD) := fscache.o

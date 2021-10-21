@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
-config FSCACHE
-	tristate "General filesystem local caching manager"
+config FSCACHE_OLD
+	tristate "General filesystem local caching manager (old driver)"
 	select NETFS_SUPPORT
 	help
 	  This option enables a generic filesystem caching manager that can be
@@ -11,9 +11,9 @@ config FSCACHE
 
 	  See Documentation/filesystems/caching/fscache.rst for more information.
 
-config FSCACHE_STATS
+config FSCACHE_OLD_STATS
 	bool "Gather statistical information on local caching"
-	depends on FSCACHE && PROC_FS
+	depends on FSCACHE_OLD && PROC_FS
 	select NETFS_STATS
 	help
 	  This option causes statistical information to be gathered on local
@@ -29,9 +29,9 @@ config FSCACHE_STATS
 
 	  See Documentation/filesystems/caching/fscache.rst for more information.
 
-config FSCACHE_DEBUG
+config FSCACHE_OLD_DEBUG
 	bool "Debug FS-Cache"
-	depends on FSCACHE
+	depends on FSCACHE_OLD
 	help
 	  This permits debugging to be dynamically enabled in the local caching
 	  management module.  If this is set, the debugging output may be
