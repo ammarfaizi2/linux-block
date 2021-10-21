@@ -31,6 +31,12 @@ MODULE_DESCRIPTION("Mounted-filesystem based cache");
 MODULE_AUTHOR("Red Hat, Inc.");
 MODULE_LICENSE("GPL");
 
+static struct miscdevice cachefiles_dev = {
+	.minor	= MISC_DYNAMIC_MINOR,
+	.name	= "cachefiles",
+	.fops	= &cachefiles_daemon_fops,
+};
+
 /*
  * initialise the fs caching module
  */
@@ -42,9 +48,15 @@ static int __init cachefiles_init(void)
 	if (ret < 0)
 		goto error_einj;
 
+	ret = misc_register(&cachefiles_dev);
+	if (ret < 0)
+		goto error_dev;
+
 	pr_info("Loaded\n");
 	return 0;
 
+error_dev:
+	cachefiles_unregister_error_injection();
 error_einj:
 	pr_err("failed to register: %d\n", ret);
 	return ret;
@@ -59,6 +71,7 @@ static void __exit cachefiles_exit(void)
 {
 	pr_info("Unloading\n");
 
+	misc_deregister(&cachefiles_dev);
 	cachefiles_unregister_error_injection();
 }
 

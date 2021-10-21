@@ -124,8 +124,18 @@ static inline void cachefiles_state_changed(struct cachefiles_cache *cache)
 }
 
 /*
+ * bind.c
+ */
+extern wait_queue_head_t cachefiles_clearance_wq;
+
+extern int cachefiles_daemon_bind(struct cachefiles_cache *cache, char *args);
+extern void cachefiles_daemon_unbind(struct cachefiles_cache *cache);
+
+/*
  * daemon.c
  */
+extern const struct file_operations cachefiles_daemon_fops;
+
 extern int cachefiles_has_space(struct cachefiles_cache *cache,
 				unsigned fnr, unsigned bnr);
 
@@ -169,11 +179,37 @@ static inline int cachefiles_inject_remove_error(void)
 }
 
 /*
+ * interface.c
+ */
+extern const struct fscache_cache_ops cachefiles_cache_ops;
+extern void cachefiles_sync_cache(struct cachefiles_cache *cache);
+
+/*
  * namei.c
  */
 extern struct dentry *cachefiles_get_directory(struct cachefiles_cache *cache,
 					       struct dentry *dir,
 					       const char *name);
+
+/*
+ * security.c
+ */
+extern int cachefiles_get_security_ID(struct cachefiles_cache *cache);
+extern int cachefiles_determine_cache_security(struct cachefiles_cache *cache,
+					       struct dentry *root,
+					       const struct cred **_saved_cred);
+
+static inline void cachefiles_begin_secure(struct cachefiles_cache *cache,
+					   const struct cred **_saved_cred)
+{
+	*_saved_cred = override_creds(cache->cache_cred);
+}
+
+static inline void cachefiles_end_secure(struct cachefiles_cache *cache,
+					 const struct cred *saved_cred)
+{
+	revert_creds(saved_cred);
+}
 
 /*
  * error handling

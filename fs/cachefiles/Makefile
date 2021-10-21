@@ -4,9 +4,12 @@
 #
 
 cachefiles-y := \
+	bind.o \
 	daemon.o \
+	interface.o \
 	main.o \
-	namei.o
+	namei.o \
+	security.o
 
 cachefiles-$(CONFIG_CACHEFILES_ERROR_INJECTION) += error_inject.o
 
