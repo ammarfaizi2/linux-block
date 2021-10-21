@@ -309,7 +309,8 @@ static bool cachefiles_create_file(struct cachefiles_object *object)
 	struct file *file;
 	int ret;
 
-	ret = cachefiles_has_space(object->volume->cache, 1, 0);
+	ret = cachefiles_has_space(object->volume->cache, 1, 0,
+				   cachefiles_has_space_for_create);
 	if (ret < 0)
 		return false;
 
@@ -480,7 +481,8 @@ retry:
 	/* we need to create the subdir if it doesn't exist yet */
 	if (d_is_negative(subdir)) {
 		if (cache->store) {
-			ret = cachefiles_has_space(cache, 1, 0);
+			ret = cachefiles_has_space(cache, 1, 0,
+						   cachefiles_has_space_for_create);
 			if (ret < 0)
 				goto mkdir_error;
 		}

@@ -152,8 +152,14 @@ extern void cachefiles_daemon_unbind(struct cachefiles_cache *cache);
  */
 extern const struct file_operations cachefiles_daemon_fops;
 
+enum cachefiles_has_space_for {
+	cachefiles_has_space_check,
+	cachefiles_has_space_for_write,
+	cachefiles_has_space_for_create,
+};
 extern int cachefiles_has_space(struct cachefiles_cache *cache,
-				unsigned fnr, unsigned bnr);
+				unsigned fnr, unsigned bnr,
+				enum cachefiles_has_space_for reason);
 
 /*
  * error_inject.c
