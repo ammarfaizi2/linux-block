@@ -2,6 +2,10 @@
 #ifndef _ASM_X86_THERMAL_H
 #define _ASM_X86_THERMAL_H
 
+#include <linux/types.h>
+
+struct cpuinfo_x86;
+
 #ifdef CONFIG_X86_THERMAL_VECTOR
 void therm_lvt_init(void);
 void intel_init_thermal(struct cpuinfo_x86 *c);
