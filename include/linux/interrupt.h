@@ -5,23 +5,14 @@
 
 #include <linux/interrupt_types.h>
 
-#include <linux/cache.h>
-#include <linux/atomic_api.h>
-#include <linux/kernel.h>
-#include <linux/bitops.h>
-#include <linux/cpumask.h>
-#include <linux/irqreturn.h>
-#include <linux/irqnr.h>
 #include <linux/irqflags.h>
-#include <linux/hrtimer.h>
-#include <linux/kref.h>
-#include <linux/workqueue.h>
+#include <linux/cache.h>
+#include <linux/cpumask_types.h>
+#include <linux/kref_types.h>
+#include <linux/workqueue_types.h>
 #include <linux/jump_label.h>
 
-#include <linux/atomic.h>
-#include <asm/ptrace.h>
 #include <asm/irq.h>
-#include <asm/sections.h>
 
 /*
  * These correspond to the IORESOURCE_IRQ_* defines in
