@@ -207,6 +207,12 @@ extern void cachefiles_put_object(struct cachefiles_object *object,
 extern void cachefiles_sync_cache(struct cachefiles_cache *cache);
 
 /*
+ * io.c
+ */
+extern bool cachefiles_begin_operation(struct netfs_cache_resources *cres,
+				       enum fscache_want_stage want_stage);
+
+/*
  * key.c
  */
 extern bool cachefiles_cook_key(struct cachefiles_object *object);
