@@ -68,6 +68,8 @@ struct cachefiles_object {
 	enum cachefiles_content		content_info:8;	/* Info about content presence */
 };
 
+extern struct kmem_cache *cachefiles_object_jar;
+
 /*
  * Cache files cache definition
  */
@@ -109,6 +111,8 @@ struct cachefiles_cache {
 	char				*secctx;	/* LSM security context */
 	char				*tag;		/* cache binding tag */
 };
+
+#include <trace/events/cachefiles.h>
 
 /*
  * error_inject.c
