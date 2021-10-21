@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
-config CACHEFILES
-	tristate "Filesystem caching on files"
+config CACHEFILES_OLD
+	tristate "Filesystem caching on files (old driver)"
 	depends on FSCACHE_OLD && BLOCK
 	help
 	  This permits use of a mounted filesystem as a cache for other
@@ -11,9 +11,9 @@ config CACHEFILES
 	  See Documentation/filesystems/caching/cachefiles.rst for more
 	  information.
 
-config CACHEFILES_DEBUG
+config CACHEFILES_OLD_DEBUG
 	bool "Debug CacheFiles"
-	depends on CACHEFILES
+	depends on CACHEFILES_OLD
 	help
 	  This permits debugging to be dynamically enabled in the filesystem
 	  caching on files module.  If this is set, the debugging output may be

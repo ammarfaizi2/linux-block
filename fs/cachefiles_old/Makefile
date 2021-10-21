@@ -14,4 +14,4 @@ cachefiles-y := \
 	security.o \
 	xattr.o
 
-obj-$(CONFIG_CACHEFILES) := cachefiles.o
+obj-$(CONFIG_CACHEFILES_OLD) := cachefiles.o

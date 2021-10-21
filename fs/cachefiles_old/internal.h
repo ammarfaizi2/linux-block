@@ -235,7 +235,7 @@ do {									\
 #define _leave(FMT, ...) kleave(FMT, ##__VA_ARGS__)
 #define _debug(FMT, ...) kdebug(FMT, ##__VA_ARGS__)
 
-#elif defined(CONFIG_CACHEFILES_DEBUG)
+#elif defined(CONFIG_CACHEFILES_OLD_DEBUG)
 #define _enter(FMT, ...)				\
 do {							\
 	if (cachefiles_debug & CACHEFILES_DEBUG_KENTER)	\
