@@ -23,28 +23,6 @@
 #include <asm/adi.h>
 #include <asm/processor.h>
 
-/* The kernel image occupies 0x4000000 to 0x6000000 (4MB --> 96MB).
- * The page copy blockops can use 0x6000000 to 0x8000000.
- * The 8K TSB is mapped in the 0x8000000 to 0x8400000 range.
- * The 4M TSB is mapped in the 0x8400000 to 0x8800000 range.
- * The PROM resides in an area spanning 0xf0000000 to 0x100000000.
- * The vmalloc area spans 0x100000000 to 0x200000000.
- * Since modules need to be in the lowest 32-bits of the address space,
- * we place them right before the OBP area from 0x10000000 to 0xf0000000.
- * There is a single static kernel PMD which maps from 0x0 to address
- * 0x400000000.
- */
-#define	TLBTEMP_BASE		_AC(0x0000000006000000,UL)
-#define	TSBMAP_8K_BASE		_AC(0x0000000008000000,UL)
-#define	TSBMAP_4M_BASE		_AC(0x0000000008400000,UL)
-#define MODULES_VADDR		_AC(0x0000000010000000,UL)
-#define MODULES_LEN		_AC(0x00000000e0000000,UL)
-#define MODULES_END		_AC(0x00000000f0000000,UL)
-#define LOW_OBP_ADDRESS		_AC(0x00000000f0000000,UL)
-#define HI_OBP_ADDRESS		_AC(0x0000000100000000,UL)
-#define VMALLOC_START		_AC(0x0000000100000000,UL)
-#define VMEMMAP_BASE		VMALLOC_END
-
 /* PMD_SHIFT determines the size of the area a second-level page
  * table can map
  */
@@ -80,10 +58,6 @@
 #endif
 
 #ifndef __ASSEMBLY__
-
-extern unsigned long VMALLOC_END;
-
-#define vmemmap			((struct page *)VMEMMAP_BASE)
 
 #include <linux/sched.h>
 
