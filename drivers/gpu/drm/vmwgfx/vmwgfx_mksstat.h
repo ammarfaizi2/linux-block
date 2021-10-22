@@ -39,6 +39,9 @@
 #define MKSSTAT_PID_RESERVED -1
 
 #if IS_ENABLED(CONFIG_DRM_VMWGFX_MKSSTATS)
+
+#include <asm/msr.h>
+
 /*
  * Kernel-internal mksGuestStat counters. The order of this enum dictates the
  * order of instantiation of these counters in the mksGuestStat pages.
