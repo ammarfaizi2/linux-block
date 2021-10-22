@@ -199,6 +199,9 @@ void clocksource_mark_unstable(struct clocksource *cs)
 	spin_unlock_irqrestore(&watchdog_lock, flags);
 }
 
+int max_cswd_coarse_reads = 100;
+module_param(max_cswd_coarse_reads, int, 0644);
+EXPORT_SYMBOL_GPL(max_cswd_coarse_reads);
 ulong max_cswd_read_retries = 3;
 module_param(max_cswd_read_retries, ulong, 0644);
 EXPORT_SYMBOL_GPL(max_cswd_read_retries);
@@ -226,8 +229,12 @@ static bool cs_watchdog_read(struct clocksource *cs, u64 *csnow, u64 *wdnow)
 				pr_warn("timekeeping watchdog on CPU%d: %s retried %d times before success\n",
 					smp_processor_id(), watchdog->name, nretries);
 			}
+			cs->n_coarse_reads = 0;
 			return false;
 		}
+		WARN_ONCE(max_cswd_coarse_reads > 0 &&
+			  !(++cs->n_coarse_reads % max_cswd_coarse_reads),
+			  "timekeeping watchdog on CPU%d: %s %u consecutive coarse-grained reads\n", smp_processor_id(), watchdog->name, cs->n_coarse_reads);
 	}
 
 	if ((cs->flags & CLOCK_SOURCE_WATCHDOG) && !atomic_read(&watchdog_reset_pending)) {
