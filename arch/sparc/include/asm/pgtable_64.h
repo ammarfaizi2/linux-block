@@ -59,7 +59,7 @@
 
 #ifndef __ASSEMBLY__
 
-#include <linux/sched.h>
+struct mm_struct;
 
 bool kern_addr_valid(unsigned long addr);
 
