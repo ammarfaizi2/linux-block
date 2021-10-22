@@ -661,6 +661,7 @@ int cachefiles_cull(struct cachefiles_cache *cache, struct dentry *dir,
 		goto error_unlock;
 
 	/*  actually remove the victim (drops the dir mutex) */
+	fscache_count_culled();
 	_debug("bury");
 
 	ret = cachefiles_bury_object(cache, NULL, dir, victim,
