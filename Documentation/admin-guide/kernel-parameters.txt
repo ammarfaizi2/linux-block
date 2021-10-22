@@ -600,7 +600,7 @@
 			loops can be debugged more effectively on production
 			systems.
 
-	clocksource.max_coarse_reads= [KNL]
+	clocksource.max_cswd_coarse_reads= [KNL]
 			Number of consecutive clocksource_watchdog()
 			coarse reads (that is, clocksource reads that
 			were unduly delayed) that are permitted before
