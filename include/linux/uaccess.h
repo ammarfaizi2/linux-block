@@ -271,6 +271,29 @@ static inline bool pagefault_disabled(void)
  */
 #define faulthandler_disabled() (pagefault_disabled() || in_atomic())
 
+#ifndef CONFIG_ARCH_HAS_SUBPAGE_FAULTS
+/**
+ * probe_subpage_writeable: probe the beginning of the user buffer for
+ *			    sub-page faults to cover the uaccess routines
+ *			    inexactness (due to address misalignment)
+ * @uaddr: start of address range
+ * @size: size of address range
+ *
+ * Returns true if successful, false otherwise.
+ *
+ * Architectures that can generate sub-page faults (e.g. arm64 MTE) should
+ * implement this function. It is expected that the caller checked for the
+ * write permission of each page in the range either by put_user() or GUP.
+ * The architecture port can implement a more efficient get_user() probing of
+ * the beginning of the range if sub-page faults are triggered by either a
+ * load or store.
+ */
+static inline bool probe_subpage_writeable(void __user *uaddr, size_t size)
+{
+	return true;
+}
+#endif
+
 #ifndef ARCH_HAS_NOCACHE_UACCESS
 
 static inline __must_check unsigned long

@@ -1672,6 +1672,12 @@ size_t fault_in_writeable(char __user *uaddr, size_t size)
 
 	if (unlikely(size == 0))
 		return 0;
+	/*
+	 * Probe the beginning of the buffer for sub-page faults within the
+	 * error margin of the corresponding uaccess.
+	 */
+	if (!probe_subpage_writeable(uaddr, size))
+		return size;
 	if (!PAGE_ALIGNED(uaddr)) {
 		if (unlikely(__put_user(0, uaddr) != 0))
 			return size;
