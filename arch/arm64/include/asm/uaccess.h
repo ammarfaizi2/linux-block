@@ -445,4 +445,43 @@ static inline int __copy_from_user_flushcache(void *dst, const void __user *src,
 }
 #endif
 
+#ifdef CONFIG_ARCH_HAS_SUBPAGE_FAULTS
+static inline size_t __mte_probe_user_range(const char __user *uaddr,
+					    size_t size)
+{
+	const char __user *end = uaddr + size;
+	int err = 0;
+	char val;
+
+	uaddr = PTR_ALIGN_DOWN(uaddr, MTE_GRANULE_SIZE);
+	/* the first granule was probed by the caller */
+	uaddr += MTE_GRANULE_SIZE;
+	while (uaddr < end) {
+		/*
+		 * A read is sufficient for MTE, the caller should have probed
+		 * for the pte write permission.
+		 */
+		__raw_get_user(val, uaddr, err);
+		if (err)
+			return end - uaddr;
+		uaddr += MTE_GRANULE_SIZE;
+	}
+	(void)val;
+
+	return 0;
+}
+
+/* The maximum increment for 'dst' in copy_to_user() is 16 bytes */
+#define UACCESS_MAX_WRITE_INCREMENT		16
+
+static inline bool probe_subpage_writeable(const void __user *uaddr,
+					   size_t size)
+{
+	if (!system_supports_mte())
+		return true;
+	return !__mte_probe_user_range(uaddr, min_t(size_t, size,
+						    UACCESS_MAX_WRITE_INCREMENT));
+}
+#endif /* CONFIG_ARCH_HAS_SUBPAGE_FAULTS */
+
 #endif /* __ASM_UACCESS_H */
