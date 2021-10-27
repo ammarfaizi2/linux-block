@@ -24,6 +24,7 @@ struct mlx5e_tc_act_parse_state {
 	int ifindexes[MLX5_MAX_FLOW_FWD_VPORTS];
 	int if_count;
 	struct mlx5_tc_ct_priv *ct_priv;
+	struct mlx5e_sample_attr sample_attr;
 };
 
 struct mlx5e_tc_act {
@@ -53,6 +54,7 @@ extern struct mlx5e_tc_act mlx5e_tc_act_mpls_pop;
 extern struct mlx5e_tc_act mlx5e_tc_act_mirred;
 extern struct mlx5e_tc_act mlx5e_tc_act_mirred_nic;
 extern struct mlx5e_tc_act mlx5e_tc_act_ct;
+extern struct mlx5e_tc_act mlx5e_tc_act_sample;
 
 struct mlx5e_tc_act *
 mlx5e_tc_act_get(enum flow_action_id act_id,
