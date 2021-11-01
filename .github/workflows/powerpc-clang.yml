@@ -27,12 +27,12 @@ jobs:
       fail-fast: false
       matrix:
         defconfig: [ppc64, corenet64_smp, pmac32, ppc40x, ppc44x, mpc885_ads]
-        image: [ubuntu-21.04]
+        image: [ubuntu-21.10]
         subarch: [ppc64]
         include:
           - subarch: ppc64le
             defconfig: ppc64le
-            image: ubuntu-21.04
+            image: ubuntu-21.10
 
     env:
       CLANG: 1
