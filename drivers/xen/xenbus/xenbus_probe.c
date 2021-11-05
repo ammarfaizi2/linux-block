@@ -731,10 +731,12 @@ int register_xenstore_notifier(struct notifier_block *nb)
 {
 	int ret = 0;
 
-	if (xenstored_ready > 0)
+	if (xenstored_ready > 0) {
 		ret = nb->notifier_call(nb, 0, NULL);
-	else
-		blocking_notifier_chain_register(&xenstore_chain, nb);
+	} else {
+		if (blocking_notifier_chain_register(&xenstore_chain, nb))
+			pr_warn("Xenstore notifier already registered\n");
+	}
 
 	return ret;
 }

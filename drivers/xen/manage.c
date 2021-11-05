@@ -48,7 +48,8 @@ static RAW_NOTIFIER_HEAD(xen_resume_notifier);
 
 void xen_resume_notifier_register(struct notifier_block *nb)
 {
-	raw_notifier_chain_register(&xen_resume_notifier, nb);
+	if (raw_notifier_chain_register(&xen_resume_notifier, nb))
+		pr_warn("Xen resume notifier already registered\n");
 }
 EXPORT_SYMBOL_GPL(xen_resume_notifier_register);
 
