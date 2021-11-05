@@ -653,7 +653,9 @@ static int dcon_probe(struct i2c_client *client, const struct i2c_device_id *id)
 	}
 
 	register_reboot_notifier(&dcon->reboot_nb);
-	atomic_notifier_chain_register(&panic_notifier_list, &dcon_panic_nb);
+
+	if (atomic_notifier_chain_register(&panic_notifier_list, &dcon_panic_nb))
+		pr_warn("Panic notifier already registered\n");
 
 	return 0;
 
