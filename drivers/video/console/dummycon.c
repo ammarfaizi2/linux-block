@@ -36,7 +36,8 @@ void dummycon_register_output_notifier(struct notifier_block *nb)
 {
 	WARN_CONSOLE_UNLOCKED();
 
-	raw_notifier_chain_register(&dummycon_output_nh, nb);
+	if (raw_notifier_chain_register(&dummycon_output_nh, nb))
+		pr_warn("dummycon output notifier already registered\n");
 
 	if (dummycon_putc_called)
 		nb->notifier_call(nb, 0, NULL);

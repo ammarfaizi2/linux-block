@@ -1255,8 +1255,9 @@ static int hvfb_probe(struct hv_device *hdev,
 
 	par->synchronous_fb = false;
 	par->hvfb_panic_nb.notifier_call = hvfb_on_panic;
-	atomic_notifier_chain_register(&panic_notifier_list,
-				       &par->hvfb_panic_nb);
+
+	if (atomic_notifier_chain_register(&panic_notifier_list, &par->hvfb_panic_nb))
+		pr_warn("Hyper-V FB panic notifier already registered\n");
 
 	return 0;
 
