@@ -354,7 +354,9 @@ static struct notifier_block xen_panic_block = {
 
 int xen_panic_handler_init(void)
 {
-	atomic_notifier_chain_register(&panic_notifier_list, &xen_panic_block);
+	if (atomic_notifier_chain_register(&panic_notifier_list, &xen_panic_block))
+		pr_warn("Xen panic notifier already registered\n");
+
 	return 0;
 }
 
