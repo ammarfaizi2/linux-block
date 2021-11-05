@@ -39,7 +39,10 @@ static uint send_page_order = (14 - PAGE_SHIFT < 0) ? 0 : 14 - PAGE_SHIFT;
 static void register_listen_notifier(struct notifier_block *nb)
 {
 	mutex_lock(&notify_mutex);
-	raw_notifier_chain_register(&listen_notify_list, nb);
+
+	if (raw_notifier_chain_register(&listen_notify_list, nb))
+		pr_warn("chtls listen notifier already registered\n");
+
 	mutex_unlock(&notify_mutex);
 }
 
