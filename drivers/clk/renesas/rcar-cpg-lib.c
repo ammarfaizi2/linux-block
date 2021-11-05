@@ -59,7 +59,9 @@ void cpg_simple_notifier_register(struct raw_notifier_head *notifiers,
 				  struct cpg_simple_notifier *csn)
 {
 	csn->nb.notifier_call = cpg_simple_notifier_call;
-	raw_notifier_chain_register(notifiers, &csn->nb);
+
+	if (raw_notifier_chain_register(notifiers, &csn->nb))
+		pr_warn("CPG notifier already registered\n");
 }
 
 /*

@@ -306,7 +306,9 @@ struct clk * __init cpg_div6_register(const char *name,
 
 	if (notifiers) {
 		clock->nb.notifier_call = cpg_div6_clock_notifier_call;
-		raw_notifier_chain_register(notifiers, &clock->nb);
+
+		if (raw_notifier_chain_register(notifiers, &clock->nb))
+			pr_warn("CPG DIV6 clock notifier already registered\n");
 	}
 
 	return clk;
