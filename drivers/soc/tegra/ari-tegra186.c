@@ -72,8 +72,11 @@ static struct notifier_block tegra186_ari_panic_nb = {
 
 static int __init tegra186_ari_init(void)
 {
-	if (of_machine_is_compatible("nvidia,tegra186"))
-		atomic_notifier_chain_register(&panic_notifier_list, &tegra186_ari_panic_nb);
+	if (of_machine_is_compatible("nvidia,tegra186")) {
+		if (atomic_notifier_chain_register(&panic_notifier_list,
+						   &tegra186_ari_panic_nb))
+			pr_warn("Panic notifier already registered\n");
+	}
 
 	return 0;
 }
