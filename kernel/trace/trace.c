@@ -10064,8 +10064,8 @@ __init static int tracer_alloc_buffers(void)
 	/* All seems OK, enable tracing */
 	tracing_disabled = 0;
 
-	atomic_notifier_chain_register(&panic_notifier_list,
-				       &trace_panic_notifier);
+	if (atomic_notifier_chain_register(&panic_notifier_list, &trace_panic_notifier))
+		pr_warn("Trace panic notifier already registered\n");
 
 	register_die_notifier(&trace_die_notifier);
 
