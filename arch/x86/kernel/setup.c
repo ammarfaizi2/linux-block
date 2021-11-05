@@ -1245,8 +1245,11 @@ static struct notifier_block kernel_offset_notifier = {
 
 static int __init register_kernel_offset_dumper(void)
 {
-	atomic_notifier_chain_register(&panic_notifier_list,
-					&kernel_offset_notifier);
+	int ret = atomic_notifier_chain_register(&panic_notifier_list,
+						 &kernel_offset_notifier);
+	if (ret)
+		pr_warn("Kernel offset dumper notifier already registered\n");
+
 	return 0;
 }
 __initcall(register_kernel_offset_dumper);

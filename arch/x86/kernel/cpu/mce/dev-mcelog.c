@@ -281,7 +281,8 @@ static long mce_chrdev_ioctl(struct file *f, unsigned int cmd,
 
 void mce_register_injector_chain(struct notifier_block *nb)
 {
-	blocking_notifier_chain_register(&mce_injector_chain, nb);
+	if (blocking_notifier_chain_register(&mce_injector_chain, nb))
+		pr_warn("MCE injector notifier already registered\n");
 }
 EXPORT_SYMBOL_GPL(mce_register_injector_chain);
 

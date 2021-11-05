@@ -164,7 +164,8 @@ void mce_register_decode_chain(struct notifier_block *nb)
 		    nb->priority > MCE_PRIO_HIGHEST))
 		return;
 
-	blocking_notifier_chain_register(&x86_mce_decoder_chain, nb);
+	if (blocking_notifier_chain_register(&x86_mce_decoder_chain, nb))
+		pr_warn("MCE decoder chain notifier already registered\n");
 }
 EXPORT_SYMBOL_GPL(mce_register_decode_chain);
 
