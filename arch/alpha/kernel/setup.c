@@ -465,8 +465,9 @@ setup_arch(char **cmdline_p)
 	}
 
 	/* Register a call for panic conditions. */
-	atomic_notifier_chain_register(&panic_notifier_list,
-			&alpha_panic_block);
+	if (atomic_notifier_chain_register(&panic_notifier_list,
+					   &alpha_panic_block))
+		pr_warn("Panic notifier already registered\n");
 
 #ifndef alpha_using_srm
 	/* Assume that we've booted from SRM if we haven't booted from MILO.
