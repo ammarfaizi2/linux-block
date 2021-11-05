@@ -101,7 +101,9 @@ static struct notifier_block rcu_panic_block = {
 
 static int __init check_cpu_stall_init(void)
 {
-	atomic_notifier_chain_register(&panic_notifier_list, &rcu_panic_block);
+	if (atomic_notifier_chain_register(&panic_notifier_list, &rcu_panic_block))
+		pr_warn("RCU warning suppress notifier already registered\n");
+
 	return 0;
 }
 early_initcall(check_cpu_stall_init);
