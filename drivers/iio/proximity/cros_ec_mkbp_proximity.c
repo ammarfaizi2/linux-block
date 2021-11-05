@@ -234,7 +234,8 @@ static int cros_ec_mkbp_proximity_probe(struct platform_device *pdev)
 		return ret;
 
 	data->notifier.notifier_call = cros_ec_mkbp_proximity_notify;
-	blocking_notifier_chain_register(&ec->event_notifier, &data->notifier);
+	if (blocking_notifier_chain_register(&ec->event_notifier, &data->notifier))
+		pr_warn("cros-ec proximity notifier already registered\n");
 
 	return 0;
 }
