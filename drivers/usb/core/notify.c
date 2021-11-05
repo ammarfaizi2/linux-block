@@ -28,7 +28,8 @@ static BLOCKING_NOTIFIER_HEAD(usb_notifier_list);
  */
 void usb_register_notify(struct notifier_block *nb)
 {
-	blocking_notifier_chain_register(&usb_notifier_list, nb);
+	if (blocking_notifier_chain_register(&usb_notifier_list, nb))
+		pr_warn("USB change notifier already registered\n");
 }
 EXPORT_SYMBOL_GPL(usb_register_notify);
 
