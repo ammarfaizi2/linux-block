@@ -802,8 +802,9 @@ static int brcmstb_pm_probe(struct platform_device *pdev)
 		goto out;
 	}
 
-	atomic_notifier_chain_register(&panic_notifier_list,
-				       &brcmstb_pm_panic_nb);
+	if (atomic_notifier_chain_register(&panic_notifier_list,
+					   &brcmstb_pm_panic_nb))
+		pr_warn("Panic notifier already registered\n");
 
 	pm_power_off = brcmstb_pm_poweroff;
 	suspend_set_ops(&brcmstb_pm_ops);
