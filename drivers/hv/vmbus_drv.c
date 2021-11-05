@@ -1574,8 +1574,8 @@ static int vmbus_bus_init(void)
 	 * the VMbus channel connection to prevent any VMbus
 	 * activity after the VM panics.
 	 */
-	atomic_notifier_chain_register(&panic_notifier_list,
-			       &hyperv_panic_block);
+	if (atomic_notifier_chain_register(&panic_notifier_list, &hyperv_panic_block))
+		pr_warn("VMBus panic notifier already registered\n");
 
 	vmbus_request_offers();
 
