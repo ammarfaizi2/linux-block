@@ -304,7 +304,8 @@ static int watchdog(void *dummy)
 
 static int __init hung_task_init(void)
 {
-	atomic_notifier_chain_register(&panic_notifier_list, &panic_block);
+	if (atomic_notifier_chain_register(&panic_notifier_list, &panic_block))
+		pr_warn("Hung task notifier already registered\n");
 
 	/* Disable hung task detector on suspend */
 	pm_notifier(hungtask_pm_notify, 0);
