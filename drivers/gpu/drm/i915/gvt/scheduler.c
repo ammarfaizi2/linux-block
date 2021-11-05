@@ -1277,8 +1277,10 @@ int intel_gvt_init_workload_scheduler(struct intel_gvt *gvt)
 
 		gvt->shadow_ctx_notifier_block[i].notifier_call =
 					shadow_context_status_change;
-		atomic_notifier_chain_register(&engine->context_status_notifier,
-					&gvt->shadow_ctx_notifier_block[i]);
+
+		if (atomic_notifier_chain_register(&engine->context_status_notifier,
+						   &gvt->shadow_ctx_notifier_block[i]))
+			pr_warn("Context status notifier %d already registered\n", i);
 	}
 
 	return 0;
