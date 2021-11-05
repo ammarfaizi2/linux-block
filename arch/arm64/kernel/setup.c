@@ -440,8 +440,10 @@ static struct notifier_block arm64_panic_block = {
 
 static int __init register_arm64_panic_block(void)
 {
-	atomic_notifier_chain_register(&panic_notifier_list,
-				       &arm64_panic_block);
+	if (atomic_notifier_chain_register(&panic_notifier_list,
+					   &arm64_panic_block))
+		pr_warn("Panic notifier already registered\n");
+
 	return 0;
 }
 device_initcall(register_arm64_panic_block);
