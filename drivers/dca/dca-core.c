@@ -428,7 +428,8 @@ EXPORT_SYMBOL_GPL(unregister_dca_provider);
  */
 void dca_register_notify(struct notifier_block *nb)
 {
-	blocking_notifier_chain_register(&dca_provider_chain, nb);
+	if (blocking_notifier_chain_register(&dca_provider_chain, nb))
+		pr_warn("dca provider notifier already registered\n");
 }
 EXPORT_SYMBOL_GPL(dca_register_notify);
 
