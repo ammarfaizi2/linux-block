@@ -247,8 +247,10 @@ static int __init activity_init(void)
 	int rc = led_trigger_register(&activity_led_trigger);
 
 	if (!rc) {
-		atomic_notifier_chain_register(&panic_notifier_list,
-					       &activity_panic_nb);
+		if (atomic_notifier_chain_register(&panic_notifier_list,
+						   &activity_panic_nb))
+			pr_warn("Activity LED trigger notifier already registered\n");
+
 		register_reboot_notifier(&activity_reboot_nb);
 	}
 	return rc;

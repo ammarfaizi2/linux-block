@@ -190,8 +190,10 @@ static int __init heartbeat_trig_init(void)
 	int rc = led_trigger_register(&heartbeat_led_trigger);
 
 	if (!rc) {
-		atomic_notifier_chain_register(&panic_notifier_list,
-					       &heartbeat_panic_nb);
+		if (atomic_notifier_chain_register(&panic_notifier_list,
+						   &heartbeat_panic_nb))
+			pr_warn("Heartbeat LED Trigger notifier already registered\n");
+
 		register_reboot_notifier(&heartbeat_reboot_nb);
 	}
 	return rc;

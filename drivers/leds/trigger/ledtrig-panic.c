@@ -64,8 +64,8 @@ static long led_panic_blink(int state)
 
 static int __init ledtrig_panic_init(void)
 {
-	atomic_notifier_chain_register(&panic_notifier_list,
-				       &led_trigger_panic_nb);
+	if (atomic_notifier_chain_register(&panic_notifier_list, &led_trigger_panic_nb))
+		pr_warn("LED trigger panic notifier already registered\n");
 
 	led_trigger_register_simple("panic", &trigger);
 	panic_blink = led_panic_blink;
