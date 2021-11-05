@@ -1030,8 +1030,10 @@ static __init int gsmi_init(void)
 
 	register_reboot_notifier(&gsmi_reboot_notifier);
 	register_die_notifier(&gsmi_die_notifier);
-	atomic_notifier_chain_register(&panic_notifier_list,
-				       &gsmi_panic_notifier);
+
+	if (atomic_notifier_chain_register(&panic_notifier_list,
+					   &gsmi_panic_notifier))
+		pr_warn("gsmi panic notifier already registered\n");
 
 	printk(KERN_INFO "gsmi version " DRIVER_VERSION " loaded\n");
 

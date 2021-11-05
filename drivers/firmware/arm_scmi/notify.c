@@ -1358,7 +1358,8 @@ static int scmi_notifier_register(const struct scmi_handle *handle,
 	if (!hndl)
 		return -EINVAL;
 
-	blocking_notifier_chain_register(&hndl->chain, nb);
+	if (blocking_notifier_chain_register(&hndl->chain, nb))
+		pr_warn("SCMI notifier already registered\n");
 
 	/* Enable events for not pending handlers */
 	if (!IS_HNDL_PENDING(hndl)) {
