@@ -86,7 +86,9 @@ static bool fib_dump_is_consistent(struct net *net, struct notifier_block *nb,
 {
 	struct fib_notifier_net *fn_net = net_generic(net, fib_notifier_net_id);
 
-	atomic_notifier_chain_register(&fn_net->fib_chain, nb);
+	if (atomic_notifier_chain_register(&fn_net->fib_chain, nb))
+		pr_warn("FIB notifier already registered\n");
+
 	if (fib_seq == fib_seq_sum(net))
 		return true;
 	atomic_notifier_chain_unregister(&fn_net->fib_chain, nb);
