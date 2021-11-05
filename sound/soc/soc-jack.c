@@ -181,7 +181,8 @@ EXPORT_SYMBOL_GPL(snd_soc_jack_add_pins);
 void snd_soc_jack_notifier_register(struct snd_soc_jack *jack,
 				    struct notifier_block *nb)
 {
-	blocking_notifier_chain_register(&jack->notifier, nb);
+	if (blocking_notifier_chain_register(&jack->notifier, nb))
+		pr_warn("Jack status notifier already registered\n");
 }
 EXPORT_SYMBOL_GPL(snd_soc_jack_notifier_register);
 
