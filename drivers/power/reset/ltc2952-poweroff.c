@@ -279,8 +279,10 @@ static int ltc2952_poweroff_probe(struct platform_device *pdev)
 	pm_power_off = ltc2952_poweroff_kill;
 
 	data->panic_notifier.notifier_call = ltc2952_poweroff_notify_panic;
-	atomic_notifier_chain_register(&panic_notifier_list,
-				       &data->panic_notifier);
+
+	if (atomic_notifier_chain_register(&panic_notifier_list, &data->panic_notifier))
+		pr_warn("LTC2952 panic notifier already registered\n");
+
 	dev_info(&pdev->dev, "probe successful\n");
 
 	return 0;
