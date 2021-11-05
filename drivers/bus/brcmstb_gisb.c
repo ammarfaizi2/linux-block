@@ -490,8 +490,10 @@ static int __init brcmstb_gisb_arb_probe(struct platform_device *pdev)
 
 	if (list_is_singular(&brcmstb_gisb_arb_device_list)) {
 		register_die_notifier(&gisb_die_notifier);
-		atomic_notifier_chain_register(&panic_notifier_list,
-					       &gisb_panic_notifier);
+
+		if (atomic_notifier_chain_register(&panic_notifier_list,
+						   &gisb_panic_notifier))
+			pr_warn("GISB Panic notifier already registered\n");
 	}
 
 	dev_info(&pdev->dev, "registered irqs: %d, %d\n",
