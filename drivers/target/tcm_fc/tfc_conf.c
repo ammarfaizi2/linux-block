@@ -465,7 +465,9 @@ static int __init ft_init(void)
 	if (ret)
 		goto out_unregister_template;
 
-	blocking_notifier_chain_register(&fc_lport_notifier_head, &ft_notifier);
+	if (blocking_notifier_chain_register(&fc_lport_notifier_head, &ft_notifier))
+		pr_warn("FC lport notifier already registered\n");
+
 	fc_lport_iterate(ft_lport_add, NULL);
 	return 0;
 
