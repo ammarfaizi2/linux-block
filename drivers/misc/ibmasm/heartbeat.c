@@ -39,7 +39,8 @@ static struct notifier_block panic_notifier = { panic_happened, NULL, 1 };
 
 void ibmasm_register_panic_notifier(void)
 {
-	atomic_notifier_chain_register(&panic_notifier_list, &panic_notifier);
+	if (atomic_notifier_chain_register(&panic_notifier_list, &panic_notifier))
+		pr_warn("IBM ASM panic notifier already registered\n");
 }
 
 void ibmasm_unregister_panic_notifier(void)

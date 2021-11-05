@@ -95,7 +95,8 @@ static int pvpanic_init(void)
 	INIT_LIST_HEAD(&pvpanic_list);
 	spin_lock_init(&pvpanic_lock);
 
-	atomic_notifier_chain_register(&panic_notifier_list, &pvpanic_panic_nb);
+	if (atomic_notifier_chain_register(&panic_notifier_list, &pvpanic_panic_nb))
+		pr_warn("PV panic notifier already registered\n");
 
 	return 0;
 }
