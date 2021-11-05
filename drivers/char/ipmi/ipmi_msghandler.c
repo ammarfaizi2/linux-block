@@ -5381,7 +5381,8 @@ static int ipmi_init_msghandler(void)
 	timer_setup(&ipmi_timer, ipmi_timeout, 0);
 	mod_timer(&ipmi_timer, jiffies + IPMI_TIMEOUT_JIFFIES);
 
-	atomic_notifier_chain_register(&panic_notifier_list, &panic_block);
+	if (atomic_notifier_chain_register(&panic_notifier_list, &panic_block))
+		pr_warn("IPMI panic notifier already registered\n");
 
 	initialized = true;
 
