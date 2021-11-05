@@ -198,6 +198,16 @@ struct io_ring_ctx {
 		struct percpu_ref	refs;
 
 		struct io_rings		*rings;
+
+		/*
+		 * If IORING_SETUP_NO_MMAP is used, then the below holds
+		 * the gup'ed pages for the two rings, and the sqes.
+		 */
+		struct page		**ring_pages;
+		struct page		**sqe_pages;
+		int			n_ring_pages;
+		int			n_sqe_pages;
+
 		unsigned int		flags;
 		enum task_work_notify_mode	notify_method;
 		unsigned int		compat: 1;
