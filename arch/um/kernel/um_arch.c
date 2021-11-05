@@ -255,8 +255,9 @@ static struct notifier_block panic_exit_notifier = {
 
 void uml_finishsetup(void)
 {
-	atomic_notifier_chain_register(&panic_notifier_list,
-				       &panic_exit_notifier);
+	if (atomic_notifier_chain_register(&panic_notifier_list,
+					   &panic_exit_notifier))
+		pr_warn("UM panic notifier already registered\n");
 
 	uml_postsetup();
 

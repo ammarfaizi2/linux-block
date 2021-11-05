@@ -856,8 +856,10 @@ static struct notifier_block panic_exit_notifier = {
 
 static int add_notifier(void)
 {
-	atomic_notifier_chain_register(&panic_notifier_list,
-			&panic_exit_notifier);
+	if (atomic_notifier_chain_register(&panic_notifier_list,
+					   &panic_exit_notifier))
+		pr_warn("UM console panic notifier already registered\n");
+
 	return 0;
 }
 
