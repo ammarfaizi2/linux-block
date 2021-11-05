@@ -673,7 +673,9 @@ struct qcom_sysmon *qcom_add_sysmon_subdev(struct rproc *rproc,
 	rproc_add_subdev(rproc, &sysmon->subdev);
 
 	sysmon->nb.notifier_call = sysmon_notify;
-	blocking_notifier_chain_register(&sysmon_notifiers, &sysmon->nb);
+
+	if (blocking_notifier_chain_register(&sysmon_notifiers, &sysmon->nb))
+		pr_warn("sysmon notifier already registered\n");
 
 	mutex_lock(&sysmon_lock);
 	list_add(&sysmon->node, &sysmon_list);

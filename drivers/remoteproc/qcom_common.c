@@ -390,7 +390,8 @@ void *qcom_register_ssr_notifier(const char *name, struct notifier_block *nb)
 	if (IS_ERR(info))
 		return info;
 
-	srcu_notifier_chain_register(&info->notifier_list, nb);
+	if (srcu_notifier_chain_register(&info->notifier_list, nb))
+		pr_warn("SSR notifier already registered\n");
 
 	return &info->notifier_list;
 }

@@ -2790,7 +2790,9 @@ static int rproc_panic_handler(struct notifier_block *nb, unsigned long event,
 static void __init rproc_init_panic(void)
 {
 	rproc_panic_nb.notifier_call = rproc_panic_handler;
-	atomic_notifier_chain_register(&panic_notifier_list, &rproc_panic_nb);
+
+	if (atomic_notifier_chain_register(&panic_notifier_list, &rproc_panic_nb))
+		pr_warn("Remote Proc notifier already registered\n");
 }
 
 static void __exit rproc_exit_panic(void)
