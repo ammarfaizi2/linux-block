@@ -135,8 +135,9 @@ void __init parisc_pdc_chassis_init(void)
 				PDC_CHASSIS_VER);
 
 		/* initialize panic notifier chain */
-		atomic_notifier_chain_register(&panic_notifier_list,
-				&pdc_chassis_panic_block);
+		if (atomic_notifier_chain_register(&panic_notifier_list,
+						   &pdc_chassis_panic_block))
+			printk(KERN_WARNING "Panic notifier already registered\n");
 
 		/* initialize reboot notifier chain */
 		register_reboot_notifier(&pdc_chassis_reboot_block);

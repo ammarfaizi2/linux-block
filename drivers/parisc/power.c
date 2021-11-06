@@ -230,8 +230,9 @@ static int __init power_init(void)
 	}
 
 	/* Register a call for panic conditions. */
-	atomic_notifier_chain_register(&panic_notifier_list,
-			&parisc_panic_block);
+
+	if (atomic_notifier_chain_register(&panic_notifier_list, &parisc_panic_block))
+		pr_warn("Panic notifier already registered\n");
 
 	return 0;
 }
