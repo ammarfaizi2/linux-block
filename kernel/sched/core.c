@@ -4903,6 +4903,13 @@ context_switch(struct rq *rq, struct task_struct *prev,
 	arch_start_context_switch(prev);
 
 	/*
+	 * Sanity check: if something went wrong and the previous mm was
+	 * freed while we were still using it, KASAN might not notice
+	 * without help.
+	 */
+	kasan_check_byte(prev->active_mm);
+
+	/*
 	 * kernel -> kernel   lazy + transfer active
 	 *   user -> kernel   lazy + mmgrab_lazy_tlb() active
 	 *

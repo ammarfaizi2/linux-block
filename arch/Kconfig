@@ -442,6 +442,7 @@ config ARCH_WANT_IRQS_OFF_ACTIVATE_MM
 config MMU_LAZY_TLB_REFCOUNT
 	def_bool y
 	depends on !MMU_LAZY_TLB_SHOOTDOWN
+	depends on !X86
 
 # This option allows MMU_LAZY_TLB_REFCOUNT=n. It ensures no CPUs are using an
 # mm as a lazy tlb beyond its last reference count, by shooting down these
