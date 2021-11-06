@@ -106,8 +106,10 @@ static int __init sstate_init(void)
 
 	do_set_sstate(HV_SOFT_STATE_TRANSITION, booting_msg);
 
-	atomic_notifier_chain_register(&panic_notifier_list,
-				       &sstate_panic_block);
+	if (atomic_notifier_chain_register(&panic_notifier_list,
+					   &sstate_panic_block))
+		pr_warn("Soft state panic notifier already registered\n");
+
 	register_reboot_notifier(&sstate_reboot_notifier);
 
 	return 0;
