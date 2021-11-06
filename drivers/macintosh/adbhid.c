@@ -1262,8 +1262,8 @@ static int __init adbhid_init(void)
 
 	adbhid_probe();
 
-	blocking_notifier_chain_register(&adb_client_list,
-			&adbhid_adb_notifier);
+	if (blocking_notifier_chain_register(&adb_client_list, &adbhid_adb_notifier))
+		pr_warn("ADB message notifier already registered\n");
 
 	return 0;
 }
