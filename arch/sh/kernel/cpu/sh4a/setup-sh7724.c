@@ -1277,11 +1277,14 @@ static struct notifier_block sh7724_post_sleep_notifier = {
 
 static int __init sh7724_sleep_setup(void)
 {
-	atomic_notifier_chain_register(&sh_mobile_pre_sleep_notifier_list,
-				       &sh7724_pre_sleep_notifier);
+	if (atomic_notifier_chain_register(&sh_mobile_pre_sleep_notifier_list,
+					   &sh7724_pre_sleep_notifier))
+		pr_warn("SH7724 pre-sleep notifier already registered\n");
 
-	atomic_notifier_chain_register(&sh_mobile_post_sleep_notifier_list,
-				       &sh7724_post_sleep_notifier);
+	if (atomic_notifier_chain_register(&sh_mobile_post_sleep_notifier_list,
+					   &sh7724_post_sleep_notifier))
+		pr_warn("SH7724 pre-sleep notifier already registered\n");
+
 	return 0;
 }
 arch_initcall(sh7724_sleep_setup);
