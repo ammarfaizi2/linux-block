@@ -145,7 +145,9 @@ static __init int ip32_reboot_setup(void)
 	pm_power_off = ip32_machine_halt;
 
 	timer_setup(&blink_timer, blink_timeout, 0);
-	atomic_notifier_chain_register(&panic_notifier_list, &panic_block);
+
+	if (atomic_notifier_chain_register(&panic_notifier_list, &panic_block))
+		pr_warn("Panic notifier already registered\n");
 
 	return 0;
 }

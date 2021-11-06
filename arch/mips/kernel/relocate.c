@@ -459,8 +459,10 @@ static struct notifier_block kernel_location_notifier = {
 
 static int __init register_kernel_offset_dumper(void)
 {
-	atomic_notifier_chain_register(&panic_notifier_list,
-				       &kernel_location_notifier);
+	if (atomic_notifier_chain_register(&panic_notifier_list,
+					   &kernel_location_notifier))
+		pr_warn("Kernel location notifier already registered\n");
+
 	return 0;
 }
 __initcall(register_kernel_offset_dumper);

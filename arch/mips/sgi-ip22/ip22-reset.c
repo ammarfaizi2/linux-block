@@ -196,7 +196,9 @@ static int __init reboot_setup(void)
 	}
 
 	timer_setup(&blink_timer, blink_timeout, 0);
-	atomic_notifier_chain_register(&panic_notifier_list, &panic_block);
+
+	if (atomic_notifier_chain_register(&panic_notifier_list, &panic_block))
+		pr_warn("Panic notifier already registered\n");
 
 	return 0;
 }
