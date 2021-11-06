@@ -81,5 +81,6 @@ void __init platform_setup(char **p_cmdline)
 		}
 	}
 
-	atomic_notifier_chain_register(&panic_notifier_list, &iss_panic_block);
+	if (atomic_notifier_chain_register(&panic_notifier_list, &iss_panic_block))
+		pr_warn("Panic notifier already registered\n");
 }
