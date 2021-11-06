@@ -725,14 +725,18 @@ static struct notifier_block kernel_offset_notifier = {
 
 void __init setup_panic(void)
 {
-	if (IS_ENABLED(CONFIG_RANDOMIZE_BASE) && kaslr_offset() > 0)
-		atomic_notifier_chain_register(&panic_notifier_list,
-					       &kernel_offset_notifier);
+	if (IS_ENABLED(CONFIG_RANDOMIZE_BASE) && kaslr_offset() > 0) {
+		if (atomic_notifier_chain_register(&panic_notifier_list,
+						   &kernel_offset_notifier))
+			pr_warn("Kernel offset notifier already registered\n");
+	}
 
 	/* PPC64 always does a hard irq disable in its panic handler */
 	if (!IS_ENABLED(CONFIG_PPC64) && !ppc_md.panic)
 		return;
-	atomic_notifier_chain_register(&panic_notifier_list, &ppc_panic_block);
+
+	if (atomic_notifier_chain_register(&panic_notifier_list, &ppc_panic_block))
+		pr_warn("Panic notifier already registered\n");
 }
 
 #ifdef CONFIG_CHECK_CACHE_COHERENCY
