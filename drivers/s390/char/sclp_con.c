@@ -285,7 +285,9 @@ sclp_console_init(void)
 	timer_setup(&sclp_con_timer, sclp_console_timeout, 0);
 
 	/* enable printk-access to this driver */
-	atomic_notifier_chain_register(&panic_notifier_list, &on_panic_nb);
+	if (atomic_notifier_chain_register(&panic_notifier_list, &on_panic_nb))
+		pr_warn("Panic notifier already registered\n");
+
 	register_reboot_notifier(&on_reboot_nb);
 	register_console(&sclp_console);
 	return 0;

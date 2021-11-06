@@ -865,7 +865,10 @@ static int __init con3215_init(void)
 		raw3215[0] = NULL;
 		return -ENODEV;
 	}
-	atomic_notifier_chain_register(&panic_notifier_list, &on_panic_nb);
+
+	if (atomic_notifier_chain_register(&panic_notifier_list, &on_panic_nb))
+		pr_warn("Panic notifier already registered\n");
+
 	register_reboot_notifier(&on_reboot_nb);
 	register_console(&con3215);
 	return 0;

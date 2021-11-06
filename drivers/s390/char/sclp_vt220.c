@@ -836,7 +836,9 @@ sclp_vt220_con_init(void)
 	if (rc)
 		return rc;
 	/* Attach linux console */
-	atomic_notifier_chain_register(&panic_notifier_list, &on_panic_nb);
+	if (atomic_notifier_chain_register(&panic_notifier_list, &on_panic_nb))
+		pr_warn("Panic notifier already registered\n");
+
 	register_reboot_notifier(&on_reboot_nb);
 	register_console(&sclp_vt220_console);
 	return 0;

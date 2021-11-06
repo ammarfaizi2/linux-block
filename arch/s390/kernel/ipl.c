@@ -2069,7 +2069,9 @@ void __init setup_ipl(void)
 		/* We have no info to copy */
 		break;
 	}
-	atomic_notifier_chain_register(&panic_notifier_list, &on_panic_nb);
+
+	if (atomic_notifier_chain_register(&panic_notifier_list, &on_panic_nb))
+		pr_warn("Panic notifier already registered\n");
 }
 
 void s390_reset_system(void)

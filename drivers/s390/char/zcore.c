@@ -323,7 +323,9 @@ static int __init zcore_init(void)
 					     NULL, &zcore_hsa_fops);
 
 	register_reboot_notifier(&zcore_reboot_notifier);
-	atomic_notifier_chain_register(&panic_notifier_list, &zcore_on_panic_notifier);
+
+	if (atomic_notifier_chain_register(&panic_notifier_list, &zcore_on_panic_notifier))
+		pr_warn("Panic notifier already registered\n");
 
 	return 0;
 fail:
