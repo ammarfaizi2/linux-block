@@ -3644,10 +3644,10 @@ static int ab8500_charger_probe(struct platform_device *pdev)
 	}
 
 	/* Notifier for external charger enabling */
-	if (!di->ac_chg.enabled)
-		blocking_notifier_chain_register(
-			&charger_notifier_list, &charger_nb);
-
+	if (!di->ac_chg.enabled) {
+		if (blocking_notifier_chain_register(&charger_notifier_list, &charger_nb))
+			pr_warn("Charger notifier already registered\n");
+	}
 
 	di->usb_phy = usb_get_phy(USB_PHY_TYPE_USB2);
 	if (IS_ERR_OR_NULL(di->usb_phy)) {
