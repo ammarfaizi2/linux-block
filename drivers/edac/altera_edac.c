@@ -2125,8 +2125,10 @@ static int altr_edac_a10_probe(struct platform_device *pdev)
 		int dberror, err_addr;
 
 		edac->panic_notifier.notifier_call = s10_edac_dberr_handler;
-		atomic_notifier_chain_register(&panic_notifier_list,
-					       &edac->panic_notifier);
+
+		if (atomic_notifier_chain_register(&panic_notifier_list,
+						   &edac->panic_notifier))
+			pr_warn("Panic notifier already registered\n");
 
 		/* Printout a message if uncorrectable error previously. */
 		regmap_read(edac->ecc_mgr_map, S10_SYSMGR_UE_VAL_OFST,
