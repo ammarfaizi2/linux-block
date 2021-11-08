@@ -199,7 +199,7 @@ void clocksource_mark_unstable(struct clocksource *cs)
 	spin_unlock_irqrestore(&watchdog_lock, flags);
 }
 
-int max_cswd_coarse_reads = 100;
+int max_cswd_coarse_reads = 1000;
 module_param(max_cswd_coarse_reads, int, 0644);
 EXPORT_SYMBOL_GPL(max_cswd_coarse_reads);
 ulong max_cswd_read_retries = 3;
