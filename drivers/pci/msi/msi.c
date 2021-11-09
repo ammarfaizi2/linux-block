@@ -244,6 +244,8 @@ static void free_msi_irqs(struct pci_dev *dev)
 		iounmap(dev->msix_base);
 		dev->msix_base = NULL;
 	}
+
+	dev->dev.msi.data->properties = 0;
 }
 
 static void pci_intx_for_msi(struct pci_dev *dev, int enable)
@@ -372,6 +374,9 @@ msi_setup_entry(struct pci_dev *dev, int nvec, struct irq_affinity *affd)
 	if (entry->pci.msi_attrib.can_mask)
 		pci_read_config_dword(dev, entry->pci.mask_pos, &entry->pci.msi_mask);
 
+	dev->dev.msi.data->properties = MSI_PROP_PCI_MSI;
+	if (entry->pci.msi_attrib.is_64)
+		dev->dev.msi.data->properties |= MSI_PROP_64BIT;
 out:
 	kfree(masks);
 	return entry;
@@ -514,6 +519,7 @@ static int msix_setup_entries(struct pci_dev *dev, void __iomem *base,
 		if (masks)
 			curmsk++;
 	}
+	dev->dev.msi.data->properties = MSI_PROP_PCI_MSIX | MSI_PROP_64BIT;
 	ret = 0;
 out:
 	kfree(masks);
