@@ -95,7 +95,7 @@ static struct rcu_tasks rt_name =							\
 	.rtpcpu = &rt_name ## __percpu,							\
 	.name = n,									\
 	.percpu_enqueue_shift = ilog2(CONFIG_NR_CPUS),					\
-	.percpu_enqueue_lim = CONFIG_NR_CPUS,						\
+	.percpu_enqueue_lim = 1,							\
 	.kname = #rt_name,								\
 }
 
@@ -175,7 +175,7 @@ static void cblist_init_generic(struct rcu_tasks *rtp)
 
 	raw_spin_lock_irqsave(&rtp->cbs_gbl_lock, flags);
 	rtp->percpu_enqueue_shift = ilog2(nr_cpu_ids);
-	rtp->percpu_enqueue_lim = nr_cpu_ids;
+	rtp->percpu_enqueue_lim = 1;
 	for_each_possible_cpu(cpu) {
 		struct rcu_tasks_percpu *rtpcp = per_cpu_ptr(rtp->rtpcpu, cpu);
 
