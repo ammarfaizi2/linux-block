@@ -170,6 +170,8 @@ static inline bool msi_device_has_property(struct device *dev, unsigned long pro
 static inline void msi_device_set_properties(struct device *dev, unsigned long prop) { }
 #endif
 
+unsigned int msi_get_virq(struct device *dev, unsigned int index);
+
 /* Helpers to hide struct msi_desc implementation details */
 #define msi_desc_to_dev(desc)		((desc)->dev)
 #define dev_to_msi_list(dev)		(&(dev)->msi_list)
