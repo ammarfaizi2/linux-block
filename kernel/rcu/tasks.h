@@ -92,7 +92,7 @@ static struct rcu_tasks rt_name =							\
 	.call_func = call,								\
 	.rtpcpu = &rt_name ## __percpu,							\
 	.name = n,									\
-	.percpu_enqueue_shift = CONFIG_NR_CPUS,						\
+	.percpu_enqueue_shift = ilog2(CONFIG_NR_CPUS),					\
 	.kname = #rt_name,								\
 }
 
@@ -171,7 +171,7 @@ static void cblist_init_generic(struct rcu_tasks *rtp)
 	unsigned long flags;
 
 	raw_spin_lock_irqsave(&rtp->cbs_gbl_lock, flags);
-	rtp->percpu_enqueue_shift = nr_cpu_ids;
+	rtp->percpu_enqueue_shift = ilog2(nr_cpu_ids);
 	for_each_possible_cpu(cpu) {
 		struct rcu_tasks_percpu *rtpcp = per_cpu_ptr(rtp->rtpcpu, cpu);
 
