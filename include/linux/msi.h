@@ -169,6 +169,22 @@ static inline bool msi_device_has_property(struct device *dev, unsigned long pro
 }
 #endif
 
+int __msi_get_virq(struct device *dev, unsigned int index);
+
+/**
+ * msi_get_virq - Return Linux interrupt number of a MSI interrupt
+ * @dev:	Device to operate on
+ * @index:	MSI interrupt index to look for (0-based)
+ *
+ * Return: The Linux interrupt number on success (> 0), 0 if not found
+ */
+static inline unsigned int msi_get_virq(struct device *dev, unsigned int index)
+{
+	int ret = __msi_get_virq(dev, index);
+
+	return ret < 0 ? 0 : ret;
+}
+
 /* Helpers to hide struct msi_desc implementation details */
 #define msi_desc_to_dev(desc)		((desc)->dev)
 #define dev_to_msi_list(dev)		(&(dev)->msi_list)
