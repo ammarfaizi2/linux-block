@@ -183,10 +183,10 @@ static void cblist_init_generic(struct rcu_tasks *rtp)
 		WARN_ON_ONCE(!rtpcp);
 		if (cpu)
 			raw_spin_lock_init(&rtpcp->lock);
-		raw_spin_lock_irqsave_rcu_node(rtpcp, flags);
+		raw_spin_lock_rcu_node(rtpcp); // irqs already disabled.
 		if (rcu_segcblist_empty(&rtpcp->cblist))
 			rcu_segcblist_init(&rtpcp->cblist);
-		raw_spin_unlock_irqrestore_rcu_node(rtpcp, flags);
+		raw_spin_unlock_rcu_node(rtpcp); // irqs remain disabled.
 	}
 	raw_spin_unlock_irqrestore(&rtp->cbs_gbl_lock, flags);
 
