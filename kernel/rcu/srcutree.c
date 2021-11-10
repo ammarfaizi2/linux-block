@@ -456,14 +456,14 @@ static void srcu_delay_timer(struct timer_list *t)
 {
 	struct srcu_data *sdp = container_of(t, struct srcu_data, delay_work);
 
-	queue_work_on(sdp->cpu, rcu_gp_wq, &sdp->work);
+	try_queue_work_on(sdp->cpu, rcu_gp_wq, &sdp->work);
 }
 
 static void srcu_queue_delayed_work_on(struct srcu_data *sdp,
 				       unsigned long delay)
 {
 	if (!delay) {
-		queue_work_on(sdp->cpu, rcu_gp_wq, &sdp->work);
+		try_queue_work_on(sdp->cpu, rcu_gp_wq, &sdp->work);
 		return;
 	}
 
