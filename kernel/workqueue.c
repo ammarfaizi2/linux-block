@@ -1554,6 +1554,35 @@ bool queue_work_on(int cpu, struct workqueue_struct *wq,
 EXPORT_SYMBOL(queue_work_on);
 
 /**
+ * try_queue_work_on - try to queue work on specific cpu
+ * @cpu: CPU number to execute work on
+ * @wq: workqueue to use
+ * @work: work to queue
+ *
+ * If the specific CPU is offline, queue it wherever.
+ *
+ * Return: %false if @work was already on a queue, %true otherwise.
+ */
+bool try_queue_work_on(int cpu, struct workqueue_struct *wq,
+		       struct work_struct *work)
+{
+	bool ret = false;
+	unsigned long flags;
+
+	local_irq_save(flags);
+
+	if (!test_and_set_bit(WORK_STRUCT_PENDING_BIT, work_data_bits(work))) {
+		if (cpu < NR_CPUS && cpu_is_offline(cpu))
+			cpu = WORK_CPU_UNBOUND;
+		__queue_work(cpu, wq, work);
+		ret = true;
+	}
+
+	local_irq_restore(flags);
+	return ret;
+}
+
+/**
  * workqueue_select_cpu_near - Select a CPU based on NUMA node
  * @node: NUMA node ID that we want to select a CPU from
  *
