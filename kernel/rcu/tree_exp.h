@@ -448,7 +448,7 @@ static void sync_rcu_exp_select_cpus(void)
 			cpu = WORK_CPU_UNBOUND;
 		else
 			cpu += rnp->grplo;
-		queue_work_on(cpu, rcu_par_gp_wq, &rnp->rew.rew_work);
+		try_queue_work_on(cpu, rcu_par_gp_wq, &rnp->rew.rew_work);
 		rnp->exp_need_flush = true;
 	}
 
