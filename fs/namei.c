@@ -335,11 +335,11 @@ static int acl_permission_check(struct user_namespace *mnt_userns,
 				struct inode *inode, int mask)
 {
 	unsigned int mode = inode->i_mode;
-	kuid_t i_uid;
+	kfsuid_t i_uid;
 
 	/* Are we the owner? If so, ACL's don't matter */
 	i_uid = i_uid_into_mnt(mnt_userns, inode);
-	if (likely(uid_eq(current_fsuid(), i_uid))) {
+	if (likely(fsuid_eq(i_uid, current_fsuid()))) {
 		mask &= 7;
 		mode >>= 6;
 		return (mask & ~mode) ? -EACCES : 0;
@@ -361,8 +361,8 @@ static int acl_permission_check(struct user_namespace *mnt_userns,
 	 * about? Need to check group ownership if so.
 	 */
 	if (mask & (mode ^ (mode >> 3))) {
-		kgid_t kgid = i_gid_into_mnt(mnt_userns, inode);
-		if (in_group_p(kgid))
+		kfsgid_t kfsgid = i_gid_into_mnt(mnt_userns, inode);
+		if (kfsgid_in_group_p(kfsgid))
 			mode >>= 3;
 	}
 
@@ -580,7 +580,7 @@ struct nameidata {
 	struct nameidata *saved;
 	unsigned	root_seq;
 	int		dfd;
-	kuid_t		dir_uid;
+	kfsuid_t	dir_uid;
 	umode_t		dir_mode;
 } __randomize_layout;
 
@@ -1043,7 +1043,7 @@ int sysctl_protected_regular __read_mostly;
 static inline int may_follow_link(struct nameidata *nd, const struct inode *inode)
 {
 	struct user_namespace *mnt_userns;
-	kuid_t i_uid;
+	kfsuid_t i_uid;
 
 	if (!sysctl_protected_symlinks)
 		return 0;
@@ -1051,7 +1051,7 @@ static inline int may_follow_link(struct nameidata *nd, const struct inode *inod
 	mnt_userns = mnt_user_ns(nd->path.mnt);
 	i_uid = i_uid_into_mnt(mnt_userns, inode);
 	/* Allowed if owner and follower match. */
-	if (uid_eq(current_cred()->fsuid, i_uid))
+	if (fsuid_eq(i_uid, current_cred()->fsuid))
 		return 0;
 
 	/* Allowed if parent directory not sticky and world-writable. */
@@ -1059,7 +1059,7 @@ static inline int may_follow_link(struct nameidata *nd, const struct inode *inod
 		return 0;
 
 	/* Allowed if parent directory and link owner match. */
-	if (uid_valid(nd->dir_uid) && uid_eq(nd->dir_uid, i_uid))
+	if (kfsuid_valid(nd->dir_uid) && kfsuid_eq(nd->dir_uid, i_uid))
 		return 0;
 
 	if (nd->flags & LOOKUP_RCU)
@@ -1131,8 +1131,8 @@ int may_linkat(struct user_namespace *mnt_userns, struct path *link)
 	struct inode *inode = link->dentry->d_inode;
 
 	/* Inode writeback is not safe when the uid or gid are invalid. */
-	if (!uid_valid(i_uid_into_mnt(mnt_userns, inode)) ||
-	    !gid_valid(i_gid_into_mnt(mnt_userns, inode)))
+	if (!kfsuid_valid(i_uid_into_mnt(mnt_userns, inode)) ||
+	    !kfsgid_valid(i_gid_into_mnt(mnt_userns, inode)))
 		return -EOVERFLOW;
 
 	if (!sysctl_protected_hardlinks)
@@ -1180,13 +1180,13 @@ static int may_create_in_sticky(struct user_namespace *mnt_userns,
 				struct nameidata *nd, struct inode *const inode)
 {
 	umode_t dir_mode = nd->dir_mode;
-	kuid_t dir_uid = nd->dir_uid;
+	kfsuid_t dir_uid = nd->dir_uid;
 
 	if ((!sysctl_protected_fifos && S_ISFIFO(inode->i_mode)) ||
 	    (!sysctl_protected_regular && S_ISREG(inode->i_mode)) ||
 	    likely(!(dir_mode & S_ISVTX)) ||
-	    uid_eq(i_uid_into_mnt(mnt_userns, inode), dir_uid) ||
-	    uid_eq(current_fsuid(), i_uid_into_mnt(mnt_userns, inode)))
+	    kfsuid_eq(i_uid_into_mnt(mnt_userns, inode), dir_uid) ||
+	    fsuid_eq(i_uid_into_mnt(mnt_userns, inode), current_fsuid()))
 		return 0;
 
 	if (likely(dir_mode & 0002) ||
@@ -2810,9 +2810,9 @@ int __check_sticky(struct user_namespace *mnt_userns, struct inode *dir,
 {
 	kuid_t fsuid = current_fsuid();
 
-	if (uid_eq(i_uid_into_mnt(mnt_userns, inode), fsuid))
+	if (fsuid_eq(i_uid_into_mnt(mnt_userns, inode), fsuid))
 		return 0;
-	if (uid_eq(i_uid_into_mnt(mnt_userns, dir), fsuid))
+	if (fsuid_eq(i_uid_into_mnt(mnt_userns, dir), fsuid))
 		return 0;
 	return !capable_wrt_inode_uidgid(mnt_userns, inode, CAP_FOWNER);
 }
@@ -2851,8 +2851,8 @@ static int may_delete(struct user_namespace *mnt_userns, struct inode *dir,
 	BUG_ON(victim->d_parent->d_inode != dir);
 
 	/* Inode writeback is not safe when the uid or gid are invalid. */
-	if (!uid_valid(i_uid_into_mnt(mnt_userns, inode)) ||
-	    !gid_valid(i_gid_into_mnt(mnt_userns, inode)))
+	if (!kfsuid_valid(i_uid_into_mnt(mnt_userns, inode)) ||
+	    !kfsgid_valid(i_gid_into_mnt(mnt_userns, inode)))
 		return -EOVERFLOW;
 
 	audit_inode_child(dir, victim, AUDIT_TYPE_CHILD_DELETE);

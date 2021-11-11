@@ -361,8 +361,8 @@ posix_acl_permission(struct user_namespace *mnt_userns, struct inode *inode,
 {
 	const struct posix_acl_entry *pa, *pe, *mask_obj;
 	int found = 0;
-	kuid_t uid;
-	kgid_t gid;
+	kfsuid_t uid;
+	kfsgid_t gid;
 
 	want &= MAY_READ | MAY_WRITE | MAY_EXEC;
 
@@ -371,25 +371,25 @@ posix_acl_permission(struct user_namespace *mnt_userns, struct inode *inode,
                         case ACL_USER_OBJ:
 				/* (May have been checked already) */
 				uid = i_uid_into_mnt(mnt_userns, inode);
-				if (uid_eq(uid, current_fsuid()))
+				if (fsuid_eq(uid, current_fsuid()))
                                         goto check_perm;
                                 break;
                         case ACL_USER:
-				uid = kuid_into_mnt(mnt_userns, pa->e_uid);
-				if (uid_eq(uid, current_fsuid()))
+				uid = make_fs_kfsuid(mnt_userns, &init_user_ns, pa->e_uid);
+				if (fsuid_eq(uid, current_fsuid()))
                                         goto mask;
 				break;
                         case ACL_GROUP_OBJ:
 				gid = i_gid_into_mnt(mnt_userns, inode);
-				if (in_group_p(gid)) {
+				if (kfsgid_in_group_p(gid)) {
 					found = 1;
 					if ((pa->e_perm & want) == want)
 						goto mask;
                                 }
 				break;
                         case ACL_GROUP:
-				gid = kgid_into_mnt(mnt_userns, pa->e_gid);
-				if (in_group_p(gid)) {
+				gid = make_fs_kfsgid(mnt_userns, &init_user_ns, pa->e_gid);
+				if (kfsgid_in_group_p(gid)) {
 					found = 1;
 					if ((pa->e_perm & want) == want)
 						goto mask;
@@ -695,7 +695,7 @@ int posix_acl_update_mode(struct user_namespace *mnt_userns,
 		return error;
 	if (error == 0)
 		*acl = NULL;
-	if (!in_group_p(i_gid_into_mnt(mnt_userns, inode)) &&
+	if (!kfsgid_in_group_p(i_gid_into_mnt(mnt_userns, inode)) &&
 	    !capable_wrt_inode_uidgid(mnt_userns, inode, CAP_FSETID))
 		mode &= ~S_ISGID;
 	*mode_p = mode;

@@ -86,8 +86,8 @@ xfs_bulkstat_one_int(
 	 */
 	buf->bs_projectid = ip->i_projid;
 	buf->bs_ino = ino;
-	buf->bs_uid = from_kuid(sb_userns, i_uid_into_mnt(mnt_userns, inode));
-	buf->bs_gid = from_kgid(sb_userns, i_gid_into_mnt(mnt_userns, inode));
+	buf->bs_uid = from_kfsuid(sb_userns, i_uid_into_mnt(mnt_userns, inode));
+	buf->bs_gid = from_kfsgid(sb_userns, i_gid_into_mnt(mnt_userns, inode));
 	buf->bs_size = ip->i_disk_size;
 
 	buf->bs_nlink = inode->i_nlink;

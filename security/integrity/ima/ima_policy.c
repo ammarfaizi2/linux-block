@@ -584,7 +584,7 @@ static bool ima_match_rules(struct ima_rule_entry *rule,
 	}
 
 	if ((rule->flags & IMA_FOWNER) &&
-	    !rule->fowner_op(i_uid_into_mnt(mnt_userns, inode), rule->fowner))
+	    !rule->fowner_op(to_idtype(i_uid_into_mnt(mnt_userns, inode)), rule->fowner))
 		return false;
 	for (i = 0; i < MAX_LSM_RULES; i++) {
 		int rc = 0;

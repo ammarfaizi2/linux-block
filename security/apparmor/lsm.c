@@ -226,7 +226,7 @@ static int common_perm_cond(const char *op, const struct path *path, u32 mask)
 {
 	struct user_namespace *mnt_userns = mnt_user_ns(path->mnt);
 	struct path_cond cond = {
-		i_uid_into_mnt(mnt_userns, d_backing_inode(path->dentry)),
+		to_idtype(i_uid_into_mnt(mnt_userns, d_backing_inode(path->dentry))),
 		d_backing_inode(path->dentry)->i_mode
 	};
 
@@ -274,7 +274,7 @@ static int common_perm_rm(const char *op, const struct path *dir,
 	if (!inode || !path_mediated_fs(dentry))
 		return 0;
 
-	cond.uid = i_uid_into_mnt(mnt_userns, inode);
+	cond.uid = to_idtype(i_uid_into_mnt(mnt_userns, inode));
 	cond.mode = inode->i_mode;
 
 	return common_perm_dir_dentry(op, dir, dentry, mask, &cond);
@@ -370,7 +370,7 @@ static int apparmor_path_rename(const struct path *old_dir, struct dentry *old_d
 		struct path new_path = { .mnt = new_dir->mnt,
 					 .dentry = new_dentry };
 		struct path_cond cond = {
-			i_uid_into_mnt(mnt_userns, d_backing_inode(old_dentry)),
+			to_idtype(i_uid_into_mnt(mnt_userns, d_backing_inode(old_dentry))),
 			d_backing_inode(old_dentry)->i_mode
 		};
 
@@ -428,7 +428,7 @@ static int apparmor_file_open(struct file *file)
 		struct user_namespace *mnt_userns = file_mnt_user_ns(file);
 		struct inode *inode = file_inode(file);
 		struct path_cond cond = {
-			i_uid_into_mnt(mnt_userns, inode),
+			to_idtype(i_uid_into_mnt(mnt_userns, inode)),
 			inode->i_mode
 		};
 

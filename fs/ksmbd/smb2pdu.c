@@ -2438,8 +2438,8 @@ static void ksmbd_acls_fattr(struct smb_fattr *fattr,
 			     struct user_namespace *mnt_userns,
 			     struct inode *inode)
 {
-	fattr->cf_uid = i_uid_into_mnt(mnt_userns, inode);
-	fattr->cf_gid = i_gid_into_mnt(mnt_userns, inode);
+	fattr->cf_uid = to_idtype(i_uid_into_mnt(mnt_userns, inode));
+	fattr->cf_gid = to_idtype(i_gid_into_mnt(mnt_userns, inode));
 	fattr->cf_mode = inode->i_mode;
 	fattr->cf_acls = NULL;
 	fattr->cf_dacls = NULL;

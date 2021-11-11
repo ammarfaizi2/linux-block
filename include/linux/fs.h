@@ -1635,10 +1635,10 @@ static inline void i_gid_write(struct inode *inode, gid_t gid)
  * Return: the inode's i_uid mapped down according to @mnt_userns.
  * If the inode's i_uid has no mapping INVALID_UID is returned.
  */
-static inline kuid_t i_uid_into_mnt(struct user_namespace *mnt_userns,
-				    const struct inode *inode)
+static inline kfsuid_t i_uid_into_mnt(struct user_namespace *mnt_userns,
+				      const struct inode *inode)
 {
-	return kuid_into_mnt(mnt_userns, inode->i_uid);
+	return make_fs_kfsuid(mnt_userns, inode->i_sb->s_user_ns, inode->i_uid);
 }
 
 /**
@@ -1649,10 +1649,10 @@ static inline kuid_t i_uid_into_mnt(struct user_namespace *mnt_userns,
  * Return: the inode's i_gid mapped down according to @mnt_userns.
  * If the inode's i_gid has no mapping INVALID_GID is returned.
  */
-static inline kgid_t i_gid_into_mnt(struct user_namespace *mnt_userns,
-				    const struct inode *inode)
+static inline kfsgid_t i_gid_into_mnt(struct user_namespace *mnt_userns,
+				      const struct inode *inode)
 {
-	return kgid_into_mnt(mnt_userns, inode->i_gid);
+	return make_fs_kfsgid(mnt_userns, inode->i_sb->s_user_ns, inode->i_gid);
 }
 
 /**
@@ -2210,8 +2210,8 @@ static inline bool sb_rdonly(const struct super_block *sb) { return sb->s_flags 
 static inline bool HAS_UNMAPPED_ID(struct user_namespace *mnt_userns,
 				   struct inode *inode)
 {
-	return !uid_valid(i_uid_into_mnt(mnt_userns, inode)) ||
-	       !gid_valid(i_gid_into_mnt(mnt_userns, inode));
+	return !kfsuid_valid(i_uid_into_mnt(mnt_userns, inode)) ||
+	       !kfsgid_valid(i_gid_into_mnt(mnt_userns, inode));
 }
 
 static inline enum rw_hint file_write_hint(struct file *file)

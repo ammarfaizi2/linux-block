@@ -47,8 +47,8 @@ void generic_fillattr(struct user_namespace *mnt_userns, struct inode *inode,
 	stat->ino = inode->i_ino;
 	stat->mode = inode->i_mode;
 	stat->nlink = inode->i_nlink;
-	stat->uid = i_uid_into_mnt(mnt_userns, inode);
-	stat->gid = i_gid_into_mnt(mnt_userns, inode);
+	stat->uid = to_idtype(i_uid_into_mnt(mnt_userns, inode));
+	stat->gid = to_idtype(i_gid_into_mnt(mnt_userns, inode));
 	stat->rdev = inode->i_rdev;
 	stat->size = i_size_read(inode);
 	stat->atime = inode->i_atime;

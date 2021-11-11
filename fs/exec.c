@@ -1588,8 +1588,8 @@ static void bprm_fill_uid(struct linux_binprm *bprm, struct file *file)
 	struct user_namespace *mnt_userns;
 	struct inode *inode;
 	unsigned int mode;
-	kuid_t uid;
-	kgid_t gid;
+	kfsuid_t uid;
+	kfsgid_t gid;
 
 	if (!mnt_may_suid(file->f_path.mnt))
 		return;
@@ -1614,18 +1614,18 @@ static void bprm_fill_uid(struct linux_binprm *bprm, struct file *file)
 	inode_unlock(inode);
 
 	/* We ignore suid/sgid if there are no mappings for them in the ns */
-	if (!kuid_has_mapping(bprm->cred->user_ns, uid) ||
-		 !kgid_has_mapping(bprm->cred->user_ns, gid))
+	if (!kfsuid_has_mapping(bprm->cred->user_ns, uid) ||
+		 !kfsgid_has_mapping(bprm->cred->user_ns, gid))
 		return;
 
 	if (mode & S_ISUID) {
 		bprm->per_clear |= PER_CLEAR_ON_SETID;
-		bprm->cred->euid = uid;
+		bprm->cred->euid = to_idtype(uid);
 	}
 
 	if ((mode & (S_ISGID | S_IXGRP)) == (S_ISGID | S_IXGRP)) {
 		bprm->per_clear |= PER_CLEAR_ON_SETID;
-		bprm->cred->egid = gid;
+		bprm->cred->egid = to_idtype(gid);
 	}
 }
 

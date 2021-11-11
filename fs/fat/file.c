@@ -452,8 +452,8 @@ static int fat_allow_set_time(struct user_namespace *mnt_userns,
 {
 	umode_t allow_utime = sbi->options.allow_utime;
 
-	if (!uid_eq(current_fsuid(), i_uid_into_mnt(mnt_userns, inode))) {
-		if (in_group_p(i_gid_into_mnt(mnt_userns, inode)))
+	if (!fsuid_eq(i_uid_into_mnt(mnt_userns, inode), current_fsuid())) {
+		if (kfsgid_in_group_p(i_gid_into_mnt(mnt_userns, inode)))
 			allow_utime >>= 3;
 		if (allow_utime & MAY_WRITE)
 			return 1;

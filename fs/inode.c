@@ -2166,7 +2166,7 @@ void inode_init_owner(struct user_namespace *mnt_userns, struct inode *inode,
 		if (S_ISDIR(mode))
 			mode |= S_ISGID;
 		else if ((mode & (S_ISGID | S_IXGRP)) == (S_ISGID | S_IXGRP) &&
-			 !in_group_p(i_gid_into_mnt(mnt_userns, dir)) &&
+			 !kfsgid_in_group_p(i_gid_into_mnt(mnt_userns, dir)) &&
 			 !capable_wrt_inode_uidgid(mnt_userns, dir, CAP_FSETID))
 			mode &= ~S_ISGID;
 	} else
@@ -2192,15 +2192,15 @@ EXPORT_SYMBOL(inode_init_owner);
 bool inode_owner_or_capable(struct user_namespace *mnt_userns,
 			    const struct inode *inode)
 {
-	kuid_t i_uid;
+	kfsuid_t i_uid;
 	struct user_namespace *ns;
 
 	i_uid = i_uid_into_mnt(mnt_userns, inode);
-	if (uid_eq(current_fsuid(), i_uid))
+	if (fsuid_eq(i_uid, current_fsuid()))
 		return true;
 
 	ns = current_user_ns();
-	if (kuid_has_mapping(ns, i_uid) && ns_capable(ns, CAP_FOWNER))
+	if (kfsuid_has_mapping(ns, i_uid) && ns_capable(ns, CAP_FOWNER))
 		return true;
 	return false;
 }

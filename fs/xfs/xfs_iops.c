@@ -589,8 +589,8 @@ xfs_vn_getattr(
 	stat->dev = inode->i_sb->s_dev;
 	stat->mode = inode->i_mode;
 	stat->nlink = inode->i_nlink;
-	stat->uid = i_uid_into_mnt(mnt_userns, inode);
-	stat->gid = i_gid_into_mnt(mnt_userns, inode);
+	stat->uid = to_idtype(i_uid_into_mnt(mnt_userns, inode));
+	stat->gid = to_idtype(i_gid_into_mnt(mnt_userns, inode));
 	stat->ino = ip->i_ino;
 	stat->atime = inode->i_atime;
 	stat->mtime = inode->i_mtime;

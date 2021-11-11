@@ -34,12 +34,12 @@ static bool chown_ok(struct user_namespace *mnt_userns,
 		     const struct inode *inode,
 		     kuid_t uid)
 {
-	kuid_t kuid = i_uid_into_mnt(mnt_userns, inode);
-	if (uid_eq(current_fsuid(), kuid) && uid_eq(uid, inode->i_uid))
+	kfsuid_t kfsuid = i_uid_into_mnt(mnt_userns, inode);
+	if (fsuid_eq(current_fsuid(), kfsuid) && uid_eq(uid, inode->i_uid))
 		return true;
 	if (capable_wrt_inode_uidgid(mnt_userns, inode, CAP_CHOWN))
 		return true;
-	if (uid_eq(kuid, INVALID_UID) &&
+	if (fsuid_eq(kfsuid, INVALID_UID) &&
 	    ns_capable(inode->i_sb->s_user_ns, CAP_CHOWN))
 		return true;
 	return false;
@@ -60,13 +60,13 @@ static bool chown_ok(struct user_namespace *mnt_userns,
 static bool chgrp_ok(struct user_namespace *mnt_userns,
 		     const struct inode *inode, kgid_t gid)
 {
-	kgid_t kgid = i_gid_into_mnt(mnt_userns, inode);
-	if (uid_eq(current_fsuid(), i_uid_into_mnt(mnt_userns, inode)) &&
+	kfsgid_t kfsgid = i_gid_into_mnt(mnt_userns, inode);
+	if (fsgid_eq(current_fsuid(), i_uid_into_mnt(mnt_userns, inode)) &&
 	    (in_group_p(gid) || gid_eq(gid, inode->i_gid)))
 		return true;
 	if (capable_wrt_inode_uidgid(mnt_userns, inode, CAP_CHOWN))
 		return true;
-	if (gid_eq(kgid, INVALID_GID) &&
+	if (fsgid_eq(kfsgid, INVALID_GID) &&
 	    ns_capable(inode->i_sb->s_user_ns, CAP_CHOWN))
 		return true;
 	return false;
@@ -123,13 +123,19 @@ int setattr_prepare(struct user_namespace *mnt_userns, struct dentry *dentry,
 
 	/* Make sure a caller can chmod. */
 	if (ia_valid & ATTR_MODE) {
+		bool in_group;
+
 		if (!inode_owner_or_capable(mnt_userns, inode))
 			return -EPERM;
 		/* Also check the setgid bit! */
-               if (!in_group_p((ia_valid & ATTR_GID) ? attr->ia_gid :
-                                i_gid_into_mnt(mnt_userns, inode)) &&
-                    !capable_wrt_inode_uidgid(mnt_userns, inode, CAP_FSETID))
-			attr->ia_mode &= ~S_ISGID;
+               if (ia_valid & ATTR_GID)
+		       in_group = in_group_p(attr->ia_gid);
+	       else
+		       in_group = kfsgid_in_group_p(i_gid_into_mnt(mnt_userns, inode));
+
+	       if (!in_group &&
+		   !capable_wrt_inode_uidgid(mnt_userns, inode, CAP_FSETID))
+		       attr->ia_mode &= ~S_ISGID;
 	}
 
 	/* Check for setting the inode time. */
@@ -240,8 +246,8 @@ void setattr_copy(struct user_namespace *mnt_userns, struct inode *inode,
 		inode->i_ctime = attr->ia_ctime;
 	if (ia_valid & ATTR_MODE) {
 		umode_t mode = attr->ia_mode;
-		kgid_t kgid = i_gid_into_mnt(mnt_userns, inode);
-		if (!in_group_p(kgid) &&
+		kfsgid_t kfsgid = i_gid_into_mnt(mnt_userns, inode);
+		if (!kfsgid_in_group_p(kfsgid) &&
 		    !capable_wrt_inode_uidgid(mnt_userns, inode, CAP_FSETID))
 			mode &= ~S_ISGID;
 		inode->i_mode = mode;
@@ -393,10 +399,10 @@ int notify_change(struct user_namespace *mnt_userns, struct dentry *dentry,
 	 * gids unless those uids & gids are being made valid.
 	 */
 	if (!(ia_valid & ATTR_UID) &&
-	    !uid_valid(i_uid_into_mnt(mnt_userns, inode)))
+	    !kfsuid_valid(i_uid_into_mnt(mnt_userns, inode)))
 		return -EOVERFLOW;
 	if (!(ia_valid & ATTR_GID) &&
-	    !gid_valid(i_gid_into_mnt(mnt_userns, inode)))
+	    !kfsgid_valid(i_gid_into_mnt(mnt_userns, inode)))
 		return -EOVERFLOW;
 
 	error = security_inode_setattr(dentry, attr);

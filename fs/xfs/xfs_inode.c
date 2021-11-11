@@ -852,7 +852,7 @@ xfs_init_new_inode(
 	 */
 	if (irix_sgid_inherit &&
 	    (inode->i_mode & S_ISGID) &&
-	    !in_group_p(i_gid_into_mnt(mnt_userns, inode)))
+	    !kfsgid_in_group_p(i_gid_into_mnt(mnt_userns, inode)))
 		inode->i_mode &= ~S_ISGID;
 
 	ip->i_disk_size = 0;
