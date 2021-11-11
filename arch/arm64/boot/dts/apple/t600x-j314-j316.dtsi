@@ -142,6 +142,26 @@
 	};
 };
 
+&spi3 {
+	status = "ok";
+
+	hid-transport@0 {
+		compatible = "apple,spi-hid-transport";
+		reg = <0>;
+		spi-max-frequency = <8000000>;
+                /*
+                 * cs-setup and cs-hold delays are derived from Apple's ADT
+                 * Mac OS driver meta data secify 45 us for 'cs to clock' and
+                 * 'clock to cs' delays.
+                 */
+		spi-cs-setup-delay-ns = <20000>;
+		spi-cs-hold-delay-ns = <20000>;
+		spi-cs-inactive-delay-ns = <250000>;
+		spien-gpios = <&pinctrl_ap 194 0>;
+		interrupts-extended = <&pinctrl_nub 6 IRQ_TYPE_LEVEL_LOW>;
+	};
+};
+
 /* PCIe devices */
 &port00 {
 	/* WLAN */
