@@ -140,6 +140,18 @@ struct msi_desc {
 	struct pci_msi_desc		pci;
 };
 
+/*
+ * Filter values for the MSI descriptor iterators and accessor functions.
+ */
+enum msi_desc_filter {
+	/* All descriptors */
+	MSI_DESC_ALL,
+	/* Descriptors which have no interrupt associated */
+	MSI_DESC_NOTASSOCIATED,
+	/* Descriptors which have an interrupt associated */
+	MSI_DESC_ASSOCIATED,
+};
+
 /**
  * msi_device_data - MSI per device data
  * @lock:		Spinlock to protect register access
@@ -148,6 +160,8 @@ struct msi_desc {
  * @platform_data:	Platform-MSI specific data
  * @list:		List of MSI descriptors associated to the device
  * @mutex:		Mutex protecting the MSI list
+ * @__next:		Cached pointer to the next entry for iterators
+ * @__filter:		Cached descriptor filter
  */
 struct msi_device_data {
 	raw_spinlock_t			lock;
@@ -156,6 +170,8 @@ struct msi_device_data {
 	struct platform_msi_priv_data	*platform_data;
 	struct list_head		list;
 	struct mutex			mutex;
+	struct msi_desc			*__next;
+	enum msi_desc_filter		__filter;
 };
 
 int msi_setup_device_data(struct device *dev);
@@ -192,6 +208,48 @@ static inline unsigned int msi_get_virq(struct device *dev, unsigned int index)
 
 void msi_lock_descs(struct device *dev);
 void msi_unlock_descs(struct device *dev);
+
+struct msi_desc *__msi_first_desc(struct device *dev, enum msi_desc_filter filter, unsigned int base_index);
+struct msi_desc *msi_next_desc(struct device *dev);
+
+/**
+ * msi_first_desc - Get the first MSI descriptor associated to the device
+ * @dev:	Device to search
+ */
+static inline struct msi_desc *msi_first_desc(struct device *dev)
+{
+	return __msi_first_desc(dev, MSI_DESC_ALL, 0);
+}
+
+
+/**
+ * msi_for_each_desc_from - Iterate the MSI descriptors from a given index
+ *
+ * @desc:	struct msi_desc pointer used as iterator
+ * @dev:	struct device pointer - device to iterate
+ * @filter:	Filter for descriptor selection
+ * @base_index:	MSI index to iterate from
+ *
+ * Notes:
+ *  - The loop must be protected with a msi_lock_descs()/msi_unlock_descs()
+ *    pair.
+ *  - It is safe to remove a retrieved MSI descriptor in the loop.
+ */
+#define msi_for_each_desc_from(desc, dev, filter, base_index)			\
+	for ((desc) = __msi_first_desc((dev), (filter), (base_index)); (desc);	\
+	     (desc) = msi_next_desc((dev)))
+
+/**
+ * msi_for_each_desc - Iterate the MSI descriptors
+ *
+ * @desc:	struct msi_desc pointer used as iterator
+ * @dev:	struct device pointer - device to iterate
+ * @filter:	Filter for descriptor selection
+ *
+ * See msi_for_each_desc_from()for further information.
+ */
+#define msi_for_each_desc(desc, dev, filter)				\
+	msi_for_each_desc_from(desc, dev, filter, 0)
 
 /* Helpers to hide struct msi_desc implementation details */
 #define msi_desc_to_dev(desc)		((desc)->dev)
