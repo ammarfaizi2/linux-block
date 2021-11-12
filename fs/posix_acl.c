@@ -715,7 +715,9 @@ static void posix_acl_fix_xattr_userns(
 	struct posix_acl_xattr_entry *entry = (void *)(header + 1), *end;
 	int count;
 	kuid_t uid;
+	kfsuid_t kfsuid;
 	kgid_t gid;
+	kfsgid_t kfsgid;
 
 	if (!value)
 		return;
@@ -735,17 +737,21 @@ static void posix_acl_fix_xattr_userns(
 		case ACL_USER:
 			uid = make_kuid(from, le32_to_cpu(entry->e_id));
 			if (from_user)
-				uid = kuid_from_mnt(mnt_userns, uid);
+				kfsuid = make_user_kfsuid(mnt_userns,
+							  &init_user_ns, uid);
 			else
-				uid = kuid_into_mnt(mnt_userns, uid);
-			entry->e_id = cpu_to_le32(from_kuid(to, uid));
+				kfsuid = make_fs_kfsuid(mnt_userns,
+							&init_user_ns, uid);
+			entry->e_id = cpu_to_le32(from_kfsuid(to, kfsuid));
 			break;
 		case ACL_GROUP:
 			gid = make_kgid(from, le32_to_cpu(entry->e_id));
 			if (from_user)
-				gid = kgid_from_mnt(mnt_userns, gid);
+				kfsgid = make_user_kfsgid(mnt_userns,
+							  &init_user_ns, gid);
 			else
-				gid = kgid_into_mnt(mnt_userns, gid);
+				kfsgid = make_fs_kfsgid(mnt_userns,
+							&init_user_ns, gid);
 			entry->e_id = cpu_to_le32(from_kgid(to, gid));
 			break;
 		default:

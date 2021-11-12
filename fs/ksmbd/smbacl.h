@@ -213,25 +213,25 @@ void ksmbd_init_domain(u32 *sub_auth);
 static inline uid_t posix_acl_uid_translate(struct user_namespace *mnt_userns,
 					    struct posix_acl_entry *pace)
 {
-	kuid_t kuid;
+	kfsuid_t kfsuid;
 
 	/* If this is an idmapped mount, apply the idmapping. */
-	kuid = kuid_into_mnt(mnt_userns, pace->e_uid);
+	kfsuid = make_fs_kfsuid(mnt_userns, &init_user_ns, pace->e_uid);
 
 	/* Translate the kuid into a userspace id ksmbd would see. */
-	return from_kuid(&init_user_ns, kuid);
+	return from_kfsuid(&init_user_ns, kfsuid);
 }
 
 static inline gid_t posix_acl_gid_translate(struct user_namespace *mnt_userns,
 					    struct posix_acl_entry *pace)
 {
-	kgid_t kgid;
+	kfsgid kfsgid;
 
 	/* If this is an idmapped mount, apply the idmapping. */
-	kgid = kgid_into_mnt(mnt_userns, pace->e_gid);
+	kfsgid = make_fs_kfsgid(mnt_userns, &init_user_ns, pace->e_gid);
 
 	/* Translate the kgid into a userspace id ksmbd would see. */
-	return from_kgid(&init_user_ns, kgid);
+	return from_kfsgid(&init_user_ns, kfsgid);
 }
 
 #endif /* _SMBACL_H */

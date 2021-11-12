@@ -270,20 +270,13 @@ static int sid_to_id(struct user_namespace *user_ns,
 	}
 
 	if (sidtype == SIDOWNER) {
-		kuid_t uid;
+		kfsuid_t uid;
 		uid_t id;
 
 		id = le32_to_cpu(psid->sub_auth[psid->num_subauth - 1]);
-		/*
-		 * Translate raw sid into kuid in the server's user
-		 * namespace.
-		 */
-		uid = make_kuid(&init_user_ns, id);
-
-		/* If this is an idmapped mount, apply the idmapping. */
-		uid = kuid_from_mnt(user_ns, uid);
-		if (uid_valid(uid)) {
-			fattr->cf_uid = uid;
+		uid = make_user_kfsuid(user_ns, &init_user_ns, KFSUIDT_INIT(id));
+		if (kfsuid_valid(uid)) {
+			fattr->cf_uid = to_idtype(uid);
 			rc = 0;
 		}
 	} else {
@@ -291,15 +284,8 @@ static int sid_to_id(struct user_namespace *user_ns,
 		gid_t id;
 
 		id = le32_to_cpu(psid->sub_auth[psid->num_subauth - 1]);
-		/*
-		 * Translate raw sid into kgid in the server's user
-		 * namespace.
-		 */
-		gid = make_kgid(&init_user_ns, id);
-
-		/* If this is an idmapped mount, apply the idmapping. */
-		gid = kgid_from_mnt(user_ns, gid);
-		if (gid_valid(gid)) {
+		gid = make_user_kfsgid(user_ns, &init_user_ns, KFSGIDT_INIT(id));
+		if (kfsgid_valid(gid)) {
 			fattr->cf_gid = gid;
 			rc = 0;
 		}
