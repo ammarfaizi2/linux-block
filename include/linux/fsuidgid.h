@@ -281,4 +281,16 @@ static inline kgid_t mapped_fsgid(struct user_namespace *mnt_userns)
 	return kgid_from_mnt(mnt_userns, current_fsgid());
 }
 
+#ifdef CONFIG_MULTIUSER
+static inline int kfsgid_in_group_p(kfsgid_t grp)
+{
+	return in_group_p(to_idtype(grp));
+}
+#else
+static inline int kfsgid_in_group_p(kfsgid_t grp)
+{
+	return 1;
+}
+#endif
+
 #endif /* _LINUX_FSUIDGID_H */
