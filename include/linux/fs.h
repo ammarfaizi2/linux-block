@@ -1666,7 +1666,10 @@ static inline kfsgid_t i_gid_into_mnt(struct user_namespace *mnt_userns,
 static inline void inode_fsuid_set(struct inode *inode,
 				   struct user_namespace *mnt_userns)
 {
-	inode->i_uid = mapped_fsuid(mnt_userns);
+	kfsuid_t kfsuid;
+
+	kfsuid = mapped_fsuid(mnt_userns, inode->i_sb->s_user_ns);
+	inode->i_uid = to_idtype(kfsuid);
 }
 
 /**
@@ -1680,7 +1683,10 @@ static inline void inode_fsuid_set(struct inode *inode,
 static inline void inode_fsgid_set(struct inode *inode,
 				   struct user_namespace *mnt_userns)
 {
-	inode->i_gid = mapped_fsgid(mnt_userns);
+	kfsgid_t kfsgid;
+
+	kfsgid = mapped_fsgid(mnt_userns, inode->i_sb->s_user_ns);
+	inode->i_gid = to_idtype(kfsgid);
 }
 
 /**
@@ -1699,8 +1705,8 @@ static inline bool fsuidgid_has_mapping(struct super_block *sb,
 {
 	struct user_namespace *s_user_ns = sb->s_user_ns;
 
-	return kuid_has_mapping(s_user_ns, mapped_fsuid(mnt_userns)) &&
-	       kgid_has_mapping(s_user_ns, mapped_fsgid(mnt_userns));
+	return kfsuid_has_mapping(s_user_ns, mapped_fsuid(mnt_userns, s_user_ns)) &&
+	       kfsgid_has_mapping(s_user_ns, mapped_fsgid(mnt_userns, s_user_ns));
 }
 
 extern struct timespec64 current_time(struct inode *inode);

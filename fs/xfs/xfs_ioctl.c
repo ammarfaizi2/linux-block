@@ -1406,8 +1406,8 @@ xfs_fileattr_set(
 	 * because the i_*dquot fields will get updated anyway.
 	 */
 	if (fa->fsx_valid && XFS_IS_QUOTA_ON(mp)) {
-		error = xfs_qm_vop_dqalloc(ip, VFS_I(ip)->i_uid,
-				VFS_I(ip)->i_gid, fa->fsx_projid,
+		error = xfs_qm_vop_dqalloc(ip, to_idtype(VFS_I(ip)->i_uid),
+				to_idtype(VFS_I(ip)->i_gid), fa->fsx_projid,
 				XFS_QMOPT_PQUOTA, NULL, NULL, &pdqp);
 		if (error)
 			return error;

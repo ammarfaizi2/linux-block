@@ -90,7 +90,7 @@ int xfs_trans_reserve_quota_icreate(struct xfs_trans *tp,
 		struct xfs_dquot *udqp, struct xfs_dquot *gdqp,
 		struct xfs_dquot *pdqp, int64_t dblocks);
 
-extern int xfs_qm_vop_dqalloc(struct xfs_inode *, kuid_t, kgid_t,
+extern int xfs_qm_vop_dqalloc(struct xfs_inode *, kfsuid_t, kfsgid_t,
 		prid_t, uint, struct xfs_dquot **, struct xfs_dquot **,
 		struct xfs_dquot **);
 extern void xfs_qm_vop_create_dqattach(struct xfs_trans *, struct xfs_inode *,
@@ -116,7 +116,7 @@ xfs_quota_reserve_blkres(struct xfs_inode *ip, int64_t blocks)
 bool xfs_inode_near_dquot_enforcement(struct xfs_inode *ip, xfs_dqtype_t type);
 #else
 static inline int
-xfs_qm_vop_dqalloc(struct xfs_inode *ip, kuid_t kuid, kgid_t kgid,
+xfs_qm_vop_dqalloc(struct xfs_inode *ip, kfsuid_t kuid, kfsgid_t kgid,
 		prid_t prid, uint flags, struct xfs_dquot **udqp,
 		struct xfs_dquot **gdqp, struct xfs_dquot **pdqp)
 {

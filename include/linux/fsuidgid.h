@@ -231,9 +231,10 @@ static inline gid_t from_kfsgid_munged(struct user_namespace *to, kfsgid_t kfsgi
  *
  * Return: the caller's current fsuid mapped up according to @mnt_userns.
  */
-static inline kuid_t mapped_fsuid(struct user_namespace *mnt_userns)
+static inline kfsuid_t mapped_fsuid(struct user_namespace *mnt_userns,
+				    struct user_namespace *fs_userns)
 {
-	return to_idtype(make_user_kfsuid(mnt_userns, &init_user_ns, current_fsuid()));
+	return make_user_kfsuid(mnt_userns, fs_userns, current_fsuid());
 }
 
 /**
@@ -248,9 +249,10 @@ static inline kuid_t mapped_fsuid(struct user_namespace *mnt_userns)
  *
  * Return: the caller's current fsgid mapped up according to @mnt_userns.
  */
-static inline kgid_t mapped_fsgid(struct user_namespace *mnt_userns)
+static inline kfsgid_t mapped_fsgid(struct user_namespace *mnt_userns,
+				    struct user_namespace *fs_userns)
 {
-	return to_idtype(make_user_kfsgid(mnt_userns, &init_user_ns, current_fsgid()));
+	return make_user_kfsgid(mnt_userns, fs_userns, current_fsgid());
 }
 
 #ifdef CONFIG_MULTIUSER

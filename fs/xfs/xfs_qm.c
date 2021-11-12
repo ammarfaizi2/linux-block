@@ -1622,8 +1622,8 @@ xfs_qm_dqfree_one(
 int
 xfs_qm_vop_dqalloc(
 	struct xfs_inode	*ip,
-	kuid_t			uid,
-	kgid_t			gid,
+	kfsuid_t		uid,
+	kfsgid_t		gid,
 	prid_t			prid,
 	uint			flags,
 	struct xfs_dquot	**O_udqpp,
@@ -1646,7 +1646,7 @@ xfs_qm_vop_dqalloc(
 	xfs_ilock(ip, lockflags);
 
 	if ((flags & XFS_QMOPT_INHERIT) && XFS_INHERIT_GID(ip))
-		gid = inode->i_gid;
+		gid = to_idtype(inode->i_gid);
 
 	/*
 	 * Attach the dquot(s) to this inode, doing a dquot allocation
@@ -1662,7 +1662,7 @@ xfs_qm_vop_dqalloc(
 
 	if ((flags & XFS_QMOPT_UQUOTA) && XFS_IS_UQUOTA_ON(mp)) {
 		ASSERT(O_udqpp);
-		if (!uid_eq(inode->i_uid, uid)) {
+		if (!fsuid_eq(inode->i_uid, uid)) {
 			/*
 			 * What we need is the dquot that has this uid, and
 			 * if we send the inode to dqget, the uid of the inode
@@ -1673,7 +1673,7 @@ xfs_qm_vop_dqalloc(
 			 * holding ilock.
 			 */
 			xfs_iunlock(ip, lockflags);
-			error = xfs_qm_dqget(mp, from_kuid(user_ns, uid),
+			error = xfs_qm_dqget(mp, from_kfsuid(user_ns, uid),
 					XFS_DQTYPE_USER, true, &uq);
 			if (error) {
 				ASSERT(error != -ENOENT);
@@ -1696,9 +1696,9 @@ xfs_qm_vop_dqalloc(
 	}
 	if ((flags & XFS_QMOPT_GQUOTA) && XFS_IS_GQUOTA_ON(mp)) {
 		ASSERT(O_gdqpp);
-		if (!gid_eq(inode->i_gid, gid)) {
+		if (!fsgid_eq(inode->i_gid, gid)) {
 			xfs_iunlock(ip, lockflags);
-			error = xfs_qm_dqget(mp, from_kgid(user_ns, gid),
+			error = xfs_qm_dqget(mp, from_kfsgid(user_ns, gid),
 					XFS_DQTYPE_GROUP, true, &gq);
 			if (error) {
 				ASSERT(error != -ENOENT);
