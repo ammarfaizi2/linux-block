@@ -209,7 +209,6 @@ static void cblist_init_generic(struct rcu_tasks *rtp)
 	for_each_possible_cpu(cpu) {
 		struct rcu_tasks_percpu *rtpcp = per_cpu_ptr(rtp->rtpcpu, cpu);
 
-		pr_info("%s initializing CPU %d rcu_tasks_percpu structure for %s\n", __func__, cpu, rtp->name);
 		WARN_ON_ONCE(!rtpcp);
 		if (cpu)
 			raw_spin_lock_init(&rtpcp->lock);
