@@ -110,20 +110,6 @@ static inline bool kfsgid_has_mapping(struct user_namespace *user_ns,
 }
 
 /**
- * kuid_into_mnt - map a kuid down into a mnt_userns
- * @mnt_userns: user namespace of the relevant mount
- * @kuid: kuid to be mapped
- *
- * Return: @kuid mapped according to @mnt_userns.
- * If @kuid has no mapping INVALID_UID is returned.
- */
-static inline kuid_t kuid_into_mnt(struct user_namespace *mnt_userns,
-				   kuid_t kuid)
-{
-	return make_kuid(mnt_userns, __kuid_val(kuid));
-}
-
-/**
  * kgid_into_mnt - map a kgid down into a mnt_userns
  * @mnt_userns: user namespace of the relevant mount
  * @kgid: kgid to be mapped
@@ -135,20 +121,6 @@ static inline kgid_t kgid_into_mnt(struct user_namespace *mnt_userns,
 				   kgid_t kgid)
 {
 	return make_kgid(mnt_userns, __kgid_val(kgid));
-}
-
-/**
- * kuid_from_mnt - map a kuid up into a mnt_userns
- * @mnt_userns: user namespace of the relevant mount
- * @kuid: kuid to be mapped
- *
- * Return: @kuid mapped up according to @mnt_userns.
- * If @kuid has no mapping INVALID_UID is returned.
- */
-static inline kuid_t kuid_from_mnt(struct user_namespace *mnt_userns,
-				   kuid_t kuid)
-{
-	return KUIDT_INIT(from_kuid(mnt_userns, kuid));
 }
 
 /**
@@ -261,7 +233,7 @@ static inline gid_t from_kfsgid_munged(struct user_namespace *to, kfsgid_t kfsgi
  */
 static inline kuid_t mapped_fsuid(struct user_namespace *mnt_userns)
 {
-	return kuid_from_mnt(mnt_userns, current_fsuid());
+	return to_idtype(make_user_kfsuid(mnt_userns, &init_user_ns, current_fsuid()));
 }
 
 /**
@@ -278,7 +250,7 @@ static inline kuid_t mapped_fsuid(struct user_namespace *mnt_userns)
  */
 static inline kgid_t mapped_fsgid(struct user_namespace *mnt_userns)
 {
-	return kgid_from_mnt(mnt_userns, current_fsgid());
+	return to_idtype(make_user_kfsgid(mnt_userns, &init_user_ns, current_fsgid()));
 }
 
 #ifdef CONFIG_MULTIUSER
