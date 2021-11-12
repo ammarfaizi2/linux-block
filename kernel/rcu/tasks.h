@@ -130,6 +130,9 @@ module_param(rcu_task_ipi_delay, int, 0644);
 static int rcu_task_stall_timeout __read_mostly = RCU_TASK_STALL_TIMEOUT;
 module_param(rcu_task_stall_timeout, int, 0644);
 
+static int rcu_task_enqueue_lim __read_mostly = -1;
+module_param(rcu_task_enqueue_lim, int, 0444);
+
 /* RCU tasks grace-period state for debugging. */
 #define RTGS_INIT		 0
 #define RTGS_WAIT_WAIT_CBS	 1
@@ -194,8 +197,15 @@ static void cblist_init_generic(struct rcu_tasks *rtp)
 	unsigned long flags;
 
 	raw_spin_lock_irqsave(&rtp->cbs_gbl_lock, flags);
-	rtp->percpu_enqueue_shift = ilog2(nr_cpu_ids);
-	rtp->percpu_enqueue_lim = 1;
+	if (rcu_task_enqueue_lim >= 0) {
+		int lim = rcu_task_enqueue_lim;
+
+		if (lim > nr_cpu_ids)
+			lim = nr_cpu_ids;
+		WRITE_ONCE(rtp->percpu_enqueue_shift, ilog2(nr_cpu_ids / rcu_task_enqueue_lim));
+		smp_store_release(&rtp->percpu_enqueue_lim, lim);
+		pr_info("%s: Setting shift to %d and lim to %d.\n", __func__, rtp->percpu_enqueue_shift, rtp->percpu_enqueue_lim);
+	}
 	for_each_possible_cpu(cpu) {
 		struct rcu_tasks_percpu *rtpcp = per_cpu_ptr(rtp->rtpcpu, cpu);
 
@@ -308,7 +318,7 @@ static int rcu_tasks_need_gpcb(struct rcu_tasks *rtp)
 	unsigned long flags;
 	int needgpcb = 0;
 
-	for (cpu = 0; cpu < rtp->percpu_enqueue_lim; cpu++) {
+	for (cpu = 0; cpu < smp_load_acquire(&rtp->percpu_enqueue_lim); cpu++) {
 		struct rcu_tasks_percpu *rtpcp = per_cpu_ptr(rtp->rtpcpu, cpu);
 
 		/* Advance and accelerate any new callbacks. */
@@ -340,11 +350,11 @@ static void rcu_tasks_invoke_cbs(struct rcu_tasks *rtp, struct rcu_tasks_percpu 
 
 	cpu = rtpcp->cpu;
 	cpunext = cpu * 2 + 1;
-	if (cpunext < rtp->percpu_enqueue_lim) {
+	if (cpunext < smp_load_acquire(&rtp->percpu_enqueue_lim)) {
 		rtpcp_next = per_cpu_ptr(rtp->rtpcpu, cpunext);
 		queue_work_on(cpunext, system_wq, &rtpcp_next->rtp_work);
 		cpunext++;
-		if (cpunext < rtp->percpu_enqueue_lim) {
+		if (cpunext < smp_load_acquire(&rtp->percpu_enqueue_lim)) {
 			rtpcp_next = per_cpu_ptr(rtp->rtpcpu, cpunext);
 			queue_work_on(cpunext, system_wq, &rtpcp_next->rtp_work);
 		}
