@@ -1938,11 +1938,14 @@ int pid_getattr(struct user_namespace *mnt_userns, const struct path *path,
 
 	generic_fillattr(&init_user_ns, inode, stat);
 
-	stat->uid = GLOBAL_ROOT_UID;
-	stat->gid = GLOBAL_ROOT_GID;
+	stat->uid = to_idtype(GLOBAL_ROOT_UID);
+	stat->gid = to_idtype(GLOBAL_ROOT_GID);
 	rcu_read_lock();
 	task = pid_task(proc_pid(inode), PIDTYPE_PID);
 	if (task) {
+		kuid_t kuid;
+		kgid_t kgid;
+
 		if (!has_pid_permissions(fs_info, task, HIDEPID_INVISIBLE)) {
 			rcu_read_unlock();
 			/*
@@ -1951,7 +1954,9 @@ int pid_getattr(struct user_namespace *mnt_userns, const struct path *path,
 			 */
 			return -ENOENT;
 		}
-		task_dump_owner(task, inode->i_mode, &stat->uid, &stat->gid);
+		task_dump_owner(task, inode->i_mode, &kuid, &kgid);
+		stat->uid = to_idtype(kuid);
+		stat->gid = to_idtype(kgid);
 	}
 	rcu_read_unlock();
 	return 0;

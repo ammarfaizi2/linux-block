@@ -228,8 +228,8 @@ svcxdr_encode_fattr(struct svc_rqst *rqstp, struct xdr_stream *xdr,
 	*p++ = cpu_to_be32(nfs_ftypes[type >> 12]);
 	*p++ = cpu_to_be32((u32)stat->mode);
 	*p++ = cpu_to_be32((u32)stat->nlink);
-	*p++ = cpu_to_be32((u32)from_kuid_munged(userns, stat->uid));
-	*p++ = cpu_to_be32((u32)from_kgid_munged(userns, stat->gid));
+	*p++ = cpu_to_be32((u32)from_kfsuid_munged(userns, stat->uid));
+	*p++ = cpu_to_be32((u32)from_kfsgid_munged(userns, stat->gid));
 
 	if (S_ISLNK(type) && stat->size > NFS_MAXPATHLEN)
 		*p++ = cpu_to_be32(NFS_MAXPATHLEN);

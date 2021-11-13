@@ -3197,12 +3197,12 @@ out_acl:
 		*p++ = cpu_to_be32(stat.nlink);
 	}
 	if (bmval1 & FATTR4_WORD1_OWNER) {
-		status = nfsd4_encode_user(xdr, rqstp, stat.uid);
+		status = nfsd4_encode_user(xdr, rqstp, to_idtype(stat.uid));
 		if (status)
 			goto out;
 	}
 	if (bmval1 & FATTR4_WORD1_OWNER_GROUP) {
-		status = nfsd4_encode_group(xdr, rqstp, stat.gid);
+		status = nfsd4_encode_group(xdr, rqstp, to_idtype(stat.gid));
 		if (status)
 			goto out;
 	}

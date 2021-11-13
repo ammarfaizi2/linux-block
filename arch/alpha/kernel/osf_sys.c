@@ -281,8 +281,8 @@ linux_to_osf_stat(struct kstat *lstat, struct osf_stat __user *osf_stat)
 	tmp.st_dev	= lstat->dev;
 	tmp.st_mode	= lstat->mode;
 	tmp.st_nlink	= lstat->nlink;
-	tmp.st_uid	= from_kuid_munged(current_user_ns(), lstat->uid);
-	tmp.st_gid	= from_kgid_munged(current_user_ns(), lstat->gid);
+	tmp.st_uid	= from_kfsuid_munged(current_user_ns(), lstat->uid);
+	tmp.st_gid	= from_kfsgid_munged(current_user_ns(), lstat->gid);
 	tmp.st_rdev	= lstat->rdev;
 	tmp.st_ldev	= lstat->rdev;
 	tmp.st_size	= lstat->size;

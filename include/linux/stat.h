@@ -17,7 +17,7 @@
 
 #include <linux/types.h>
 #include <linux/time.h>
-#include <linux/uidgid.h>
+#include <linux/fsuidgid.h>
 
 struct kstat {
 	u32		result_mask;	/* What fields the user got */
@@ -41,8 +41,8 @@ struct kstat {
 	u64		ino;
 	dev_t		dev;
 	dev_t		rdev;
-	kuid_t		uid;
-	kgid_t		gid;
+	kfsuid_t	uid;
+	kfsgid_t	gid;
 	loff_t		size;
 	struct timespec64 atime;
 	struct timespec64 mtime;

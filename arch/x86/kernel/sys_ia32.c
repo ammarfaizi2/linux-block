@@ -133,8 +133,8 @@ static int cp_stat64(struct stat64 __user *ubuf, struct kstat *stat)
 {
 	typeof(ubuf->st_uid) uid = 0;
 	typeof(ubuf->st_gid) gid = 0;
-	SET_UID(uid, from_kuid_munged(current_user_ns(), stat->uid));
-	SET_GID(gid, from_kgid_munged(current_user_ns(), stat->gid));
+	SET_UID(uid, from_kfsuid_munged(current_user_ns(), stat->uid));
+	SET_GID(gid, from_kfsgid_munged(current_user_ns(), stat->gid));
 	if (!user_write_access_begin(ubuf, sizeof(struct stat64)))
 		return -EFAULT;
 	unsafe_put_user(huge_encode_dev(stat->dev), &ubuf->st_dev, Efault);

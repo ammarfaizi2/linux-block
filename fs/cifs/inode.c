@@ -2487,9 +2487,9 @@ int cifs_getattr(struct user_namespace *mnt_userns, const struct path *path,
 	    !(cifs_sb->mnt_cifs_flags & CIFS_MOUNT_CIFS_ACL) &&
 	    !tcon->unix_ext) {
 		if (!(cifs_sb->mnt_cifs_flags & CIFS_MOUNT_OVERR_UID))
-			stat->uid = current_fsuid();
+			stat->uid = to_idtype(current_fsuid());
 		if (!(cifs_sb->mnt_cifs_flags & CIFS_MOUNT_OVERR_GID))
-			stat->gid = current_fsgid();
+			stat->gid = to_idtype(current_fsgid());
 	}
 	return 0;
 }
