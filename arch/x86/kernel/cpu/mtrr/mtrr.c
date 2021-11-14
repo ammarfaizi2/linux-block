@@ -35,7 +35,7 @@
 #include <linux/mutex_api.h>
 #include <linux/cpumask_api.h>
 #include <asm/processor_api.h>
-#include <asm/cpumask.h>
+#include <asm/cpumask_arch.h>
 #include <linux/types.h> /* FIXME: kvm_para.h needs this */
 
 #include <linux/stop_machine.h>

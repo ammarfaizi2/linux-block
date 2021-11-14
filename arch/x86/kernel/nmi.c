@@ -17,7 +17,7 @@
 #include <linux/preempt.h>
 #include <linux/io.h>
 #include <asm/ptrace.h>
-#include <asm/cpumask.h>
+#include <asm/cpumask_arch.h>
 #include <linux/spinlock.h>
 #include <linux/kprobes.h>
 #include <linux/kdebug.h>
