@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _LINUX_TASK_IO_ACCOUNTING_H
+#define _LINUX_TASK_IO_ACCOUNTING_H
+
 /*
  * task_io_accounting: a structure which is used for recording a single task's
  * IO statistics.
@@ -44,3 +47,5 @@ struct task_io_accounting {
 	u64 cancelled_write_bytes;
 #endif /* CONFIG_TASK_IO_ACCOUNTING */
 };
+
+#endif /* _LINUX_TASK_IO_ACCOUNTING_H */
