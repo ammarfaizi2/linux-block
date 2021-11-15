@@ -6,6 +6,8 @@
 #ifndef __XFS_SCRUB_COMMON_H__
 #define __XFS_SCRUB_COMMON_H__
 
+#include <linux/sched/cond_resched.h>
+
 /*
  * We /could/ terminate a scrub/repair operation early.  If we're not
  * in a good place to continue (fatal signal, etc.) then bail out.

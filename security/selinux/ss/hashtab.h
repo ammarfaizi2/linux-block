@@ -11,6 +11,7 @@
 #ifndef _SS_HASHTAB_H_
 #define _SS_HASHTAB_H_
 
+#include <linux/sched/cond_resched.h>
 #include <linux/types.h>
 #include <linux/errno.h>
 #include <linux/sched.h>

@@ -5,6 +5,8 @@
  * Copyright (C) 2020 Paul E. McKenney
  */
 
+#include <linux/sched/cond_resched.h>
+
 #ifdef CONFIG_TASKS_RCU_GENERIC
 #include "rcu_segcblist.h"
 
