@@ -2,6 +2,7 @@
 #ifndef _LINUX_BINFMTS_H
 #define _LINUX_BINFMTS_H
 
+#include <linux/resource.h>
 #include <linux/sched.h>
 #include <linux/unistd.h>
 #include <asm/exec.h>
