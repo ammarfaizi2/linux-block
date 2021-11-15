@@ -7,6 +7,7 @@
  * functionality:
  */
 
+#include <linux/refcount_api.h>
 #include <linux/sched/per_task.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
