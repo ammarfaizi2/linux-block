@@ -1270,7 +1270,7 @@ struct trc_stall_chk_rdr {
 	u8 needqs;
 };
 
-static bool trc_check_slow_task(struct task_struct *t, void *arg)
+static int trc_check_slow_task(struct task_struct *t, void *arg)
 {
 	struct trc_stall_chk_rdr *trc_rdrp = arg;
 
@@ -1294,7 +1294,7 @@ static void show_stalled_task_trace(struct task_struct *t, bool *firstreport)
 		*firstreport = false;
 	}
 	cpu = task_cpu(t);
-	if (!try_invoke_on_locked_down_task(t, trc_check_slow_task, &trc_rdr))
+	if (!task_call_func(t, trc_check_slow_task, &trc_rdr))
 		pr_alert("P%d: %c\n",
 			 t->pid,
 			 ".i"[is_idle_tsk]);
