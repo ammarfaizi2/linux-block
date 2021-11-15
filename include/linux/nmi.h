@@ -5,6 +5,7 @@
 #ifndef LINUX_NMI_H
 #define LINUX_NMI_H
 
+#include <linux/cpumask_api.h>
 #include <linux/sched.h>
 #include <asm/irq.h>
 #if defined(CONFIG_HAVE_NMI_WATCHDOG)
