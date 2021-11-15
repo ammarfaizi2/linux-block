@@ -753,7 +753,7 @@ static inline void put_signal_struct(struct signal_struct *sig)
 void __put_task_struct(struct task_struct *tsk)
 {
 	WARN_ON(!tsk->exit_state);
-	WARN_ON(refcount_read(&tsk->usage));
+	WARN_ON(refcount_read(&per_task(tsk, usage)));
 	WARN_ON(tsk == current);
 
 	io_uring_free(tsk);
@@ -966,7 +966,7 @@ static struct task_struct *dup_task_struct(struct task_struct *orig, int node)
 	 */
 	refcount_set(&tsk->rcu_users, 2);
 	/* One for the rcu users */
-	refcount_set(&tsk->usage, 1);
+	refcount_set(&per_task(tsk, usage), 1);
 #ifdef CONFIG_BLK_DEV_IO_TRACE
 	tsk->btrace_seq = 0;
 #endif
