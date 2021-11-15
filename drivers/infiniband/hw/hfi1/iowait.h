@@ -6,6 +6,7 @@
 #ifndef _HFI1_IOWAIT_H
 #define _HFI1_IOWAIT_H
 
+#include <linux/seqlock.h>
 #include <linux/list.h>
 #include <linux/workqueue.h>
 #include <linux/wait.h>
