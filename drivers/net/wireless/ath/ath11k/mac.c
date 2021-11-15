@@ -775,9 +775,9 @@ static int ath11k_mac_monitor_vdev_start(struct ath11k *ar, int vdev_id,
 	arg.channel.chan_radar = !!(channel->flags & IEEE80211_CHAN_RADAR);
 
 	arg.channel.min_power = 0;
-	arg.channel.max_power = channel->max_power * 2;
-	arg.channel.max_reg_power = channel->max_reg_power * 2;
-	arg.channel.max_antenna_gain = channel->max_antenna_gain * 2;
+	arg.channel.max_power = channel->max_power;
+	arg.channel.max_reg_power = channel->max_reg_power;
+	arg.channel.max_antenna_gain = channel->max_antenna_gain;
 
 	arg.pref_tx_streams = ar->num_tx_chains;
 	arg.pref_rx_streams = ar->num_rx_chains;
@@ -2474,6 +2474,8 @@ static void ath11k_bss_assoc(struct ieee80211_hw *hw,
 	struct ath11k_vif *arvif = (void *)vif->drv_priv;
 	struct peer_assoc_params peer_arg;
 	struct ieee80211_sta *ap_sta;
+	struct ath11k_peer *peer;
+	bool is_auth = false;
 	int ret;
 
 	lockdep_assert_held(&ar->conf_mutex);
@@ -2536,13 +2538,22 @@ static void ath11k_bss_assoc(struct ieee80211_hw *hw,
 		   "mac vdev %d up (associated) bssid %pM aid %d\n",
 		   arvif->vdev_id, bss_conf->bssid, bss_conf->aid);
 
-	/* Authorize BSS Peer */
-	ret = ath11k_wmi_set_peer_param(ar, arvif->bssid,
-					arvif->vdev_id,
-					WMI_PEER_AUTHORIZE,
-					1);
-	if (ret)
-		ath11k_warn(ar->ab, "Unable to authorize BSS peer: %d\n", ret);
+	spin_lock_bh(&ar->ab->base_lock);
+
+	peer = ath11k_peer_find(ar->ab, arvif->vdev_id, arvif->bssid);
+	if (peer && peer->is_authorized)
+		is_auth = true;
+
+	spin_unlock_bh(&ar->ab->base_lock);
+
+	if (is_auth) {
+		ret = ath11k_wmi_set_peer_param(ar, arvif->bssid,
+						arvif->vdev_id,
+						WMI_PEER_AUTHORIZE,
+						1);
+		if (ret)
+			ath11k_warn(ar->ab, "Unable to authorize BSS peer: %d\n", ret);
+	}
 
 	ret = ath11k_wmi_send_obss_spr_cmd(ar, arvif->vdev_id,
 					   &bss_conf->he_obss_pd);
@@ -3913,11 +3924,27 @@ static void ath11k_sta_rc_update_wk(struct work_struct *wk)
 			   ath11k_mac_max_he_nss(he_mcs_mask)));
 
 	if (changed & IEEE80211_RC_BW_CHANGED) {
-		err = ath11k_wmi_set_peer_param(ar, sta->addr, arvif->vdev_id,
-						WMI_PEER_CHWIDTH, bw);
-		if (err)
-			ath11k_warn(ar->ab, "failed to update STA %pM peer bw %d: %d\n",
-				    sta->addr, bw, err);
+		/* Send peer assoc command before set peer bandwidth param to
+		 * avoid the mismatch between the peer phymode and the peer
+		 * bandwidth.
+		 */
+		ath11k_peer_assoc_prepare(ar, arvif->vif, sta, &peer_arg, true);
+
+		peer_arg.is_assoc = false;
+		err = ath11k_wmi_send_peer_assoc_cmd(ar, &peer_arg);
+		if (err) {
+			ath11k_warn(ar->ab, "failed to send peer assoc for STA %pM vdev %i: %d\n",
+				    sta->addr, arvif->vdev_id, err);
+		} else if (wait_for_completion_timeout(&ar->peer_assoc_done, 1 * HZ)) {
+			err = ath11k_wmi_set_peer_param(ar, sta->addr, arvif->vdev_id,
+							WMI_PEER_CHWIDTH, bw);
+			if (err)
+				ath11k_warn(ar->ab, "failed to update STA %pM peer bw %d: %d\n",
+					    sta->addr, bw, err);
+		} else {
+			ath11k_warn(ar->ab, "failed to get peer assoc conf event for %pM vdev %i\n",
+				    sta->addr, arvif->vdev_id);
+		}
 	}
 
 	if (changed & IEEE80211_RC_NSS_CHANGED) {
@@ -4185,6 +4212,10 @@ static int ath11k_mac_op_sta_state(struct ieee80211_hw *hw,
 		    new_state == IEEE80211_STA_NOTEXIST)) {
 		ath11k_dp_peer_cleanup(ar, arvif->vdev_id, sta->addr);
 
+		if (ar->ab->hw_params.vdev_start_delay &&
+		    vif->type == NL80211_IFTYPE_STATION)
+			goto free;
+
 		ret = ath11k_peer_delete(ar, arvif->vdev_id, sta->addr);
 		if (ret)
 			ath11k_warn(ar->ab, "Failed to delete peer: %pM for VDEV: %d\n",
@@ -4206,6 +4237,7 @@ static int ath11k_mac_op_sta_state(struct ieee80211_hw *hw,
 		}
 		spin_unlock_bh(&ar->ab->base_lock);
 
+free:
 		kfree(arsta->tx_stats);
 		arsta->tx_stats = NULL;
 
@@ -4220,6 +4252,34 @@ static int ath11k_mac_op_sta_state(struct ieee80211_hw *hw,
 		if (ret)
 			ath11k_warn(ar->ab, "Failed to associate station: %pM\n",
 				    sta->addr);
+	} else if (old_state == IEEE80211_STA_ASSOC &&
+		   new_state == IEEE80211_STA_AUTHORIZED) {
+		spin_lock_bh(&ar->ab->base_lock);
+
+		peer = ath11k_peer_find(ar->ab, arvif->vdev_id, sta->addr);
+		if (peer)
+			peer->is_authorized = true;
+
+		spin_unlock_bh(&ar->ab->base_lock);
+
+		if (vif->type == NL80211_IFTYPE_STATION && arvif->is_up) {
+			ret = ath11k_wmi_set_peer_param(ar, sta->addr,
+							arvif->vdev_id,
+							WMI_PEER_AUTHORIZE,
+							1);
+			if (ret)
+				ath11k_warn(ar->ab, "Unable to authorize peer %pM vdev %d: %d\n",
+					    sta->addr, arvif->vdev_id, ret);
+		}
+	} else if (old_state == IEEE80211_STA_AUTHORIZED &&
+		   new_state == IEEE80211_STA_ASSOC) {
+		spin_lock_bh(&ar->ab->base_lock);
+
+		peer = ath11k_peer_find(ar->ab, arvif->vdev_id, sta->addr);
+		if (peer)
+			peer->is_authorized = false;
+
+		spin_unlock_bh(&ar->ab->base_lock);
 	} else if (old_state == IEEE80211_STA_ASSOC &&
 		   new_state == IEEE80211_STA_AUTH &&
 		   (vif->type == NL80211_IFTYPE_AP ||
@@ -4650,6 +4710,10 @@ ath11k_create_vht_cap(struct ath11k *ar, u32 rate_cap_tx_chainmask,
 
 	vht_cap.vht_supported = 1;
 	vht_cap.cap = ar->pdev->cap.vht_cap;
+
+	if (ar->pdev->cap.nss_ratio_enabled)
+		vht_cap.vht_mcs.tx_highest |=
+			cpu_to_le16(IEEE80211_VHT_EXT_NSS_BW_CAPABLE);
 
 	ath11k_set_vht_txbf_cap(ar, &vht_cap.cap);
 
@@ -5138,13 +5202,15 @@ static void ath11k_mgmt_over_wmi_tx_work(struct work_struct *work)
 		arvif = ath11k_vif_to_arvif(skb_cb->vif);
 		if (ar->allocated_vdev_map & (1LL << arvif->vdev_id) &&
 		    arvif->is_started) {
+			atomic_inc(&ar->num_pending_mgmt_tx);
 			ret = ath11k_mac_mgmt_tx_wmi(ar, arvif, skb);
 			if (ret) {
+				if (atomic_dec_if_positive(&ar->num_pending_mgmt_tx) < 0)
+					WARN_ON_ONCE(1);
+
 				ath11k_warn(ar->ab, "failed to tx mgmt frame, vdev_id %d :%d\n",
 					    arvif->vdev_id, ret);
 				ieee80211_free_txskb(ar->hw, skb);
-			} else {
-				atomic_inc(&ar->num_pending_mgmt_tx);
 			}
 		} else {
 			ath11k_warn(ar->ab,
@@ -5228,7 +5294,7 @@ static void ath11k_mac_op_tx(struct ieee80211_hw *hw,
 		arsta = (struct ath11k_sta *)control->sta->drv_priv;
 
 	ret = ath11k_dp_tx(ar, arvif, arsta, skb);
-	if (ret) {
+	if (unlikely(ret)) {
 		ath11k_warn(ar->ab, "failed to transmit frame %d\n", ret);
 		ieee80211_free_txskb(ar->hw, skb);
 	}
@@ -5574,7 +5640,7 @@ static int ath11k_mac_op_add_interface(struct ieee80211_hw *hw,
 	u32 param_id, param_value;
 	u16 nss;
 	int i;
-	int ret;
+	int ret, fbret;
 	int bit;
 
 	vif->driver_flags |= IEEE80211_VIF_SUPPORTS_UAPSD;
@@ -5777,17 +5843,17 @@ err_peer_del:
 	if (arvif->vdev_type == WMI_VDEV_TYPE_AP) {
 		reinit_completion(&ar->peer_delete_done);
 
-		ret = ath11k_wmi_send_peer_delete_cmd(ar, vif->addr,
-						      arvif->vdev_id);
-		if (ret) {
+		fbret = ath11k_wmi_send_peer_delete_cmd(ar, vif->addr,
+							arvif->vdev_id);
+		if (fbret) {
 			ath11k_warn(ar->ab, "failed to delete peer vdev_id %d addr %pM\n",
 				    arvif->vdev_id, vif->addr);
 			goto err;
 		}
 
-		ret = ath11k_wait_for_peer_delete_done(ar, arvif->vdev_id,
-						       vif->addr);
-		if (ret)
+		fbret = ath11k_wait_for_peer_delete_done(ar, arvif->vdev_id,
+							 vif->addr);
+		if (fbret)
 			goto err;
 
 		ar->num_peers--;
@@ -5922,7 +5988,6 @@ static void ath11k_mac_op_configure_filter(struct ieee80211_hw *hw,
 
 	mutex_lock(&ar->conf_mutex);
 
-	changed_flags &= SUPPORTED_FILTERS;
 	*total_flags &= SUPPORTED_FILTERS;
 	ar->filter_flags = *total_flags;
 
@@ -6060,9 +6125,9 @@ ath11k_mac_vdev_start_restart(struct ath11k_vif *arvif,
 		ath11k_phymodes[chandef->chan->band][chandef->width];
 
 	arg.channel.min_power = 0;
-	arg.channel.max_power = chandef->chan->max_power * 2;
-	arg.channel.max_reg_power = chandef->chan->max_reg_power * 2;
-	arg.channel.max_antenna_gain = chandef->chan->max_antenna_gain * 2;
+	arg.channel.max_power = chandef->chan->max_power;
+	arg.channel.max_reg_power = chandef->chan->max_reg_power;
+	arg.channel.max_antenna_gain = chandef->chan->max_antenna_gain;
 
 	arg.pref_tx_streams = ar->num_tx_chains;
 	arg.pref_rx_streams = ar->num_rx_chains;
@@ -6557,6 +6622,19 @@ ath11k_mac_op_unassign_vif_chanctx(struct ieee80211_hw *hw,
 			    arvif->vdev_id, ret);
 
 	arvif->is_started = false;
+
+	if (ab->hw_params.vdev_start_delay &&
+	    arvif->vdev_type == WMI_VDEV_TYPE_STA) {
+		ret = ath11k_peer_delete(ar, arvif->vdev_id, arvif->bssid);
+		if (ret)
+			ath11k_warn(ar->ab,
+				    "failed to delete peer %pM for vdev %d: %d\n",
+				    arvif->bssid, arvif->vdev_id, ret);
+		else
+			ath11k_dbg(ar->ab, ATH11K_DBG_MAC,
+				   "mac removed peer %pM  vdev %d after vdev stop\n",
+				   arvif->bssid, arvif->vdev_id);
+	}
 
 	if (ab->hw_params.vdev_start_delay &&
 	    arvif->vdev_type == WMI_VDEV_TYPE_MONITOR)
@@ -7368,21 +7446,20 @@ static void ath11k_mac_op_sta_statistics(struct ieee80211_hw *hw,
 	sinfo->tx_duration = arsta->tx_duration;
 	sinfo->filled |= BIT_ULL(NL80211_STA_INFO_TX_DURATION);
 
-	if (!arsta->txrate.legacy && !arsta->txrate.nss)
-		return;
-
-	if (arsta->txrate.legacy) {
-		sinfo->txrate.legacy = arsta->txrate.legacy;
-	} else {
-		sinfo->txrate.mcs = arsta->txrate.mcs;
-		sinfo->txrate.nss = arsta->txrate.nss;
-		sinfo->txrate.bw = arsta->txrate.bw;
-		sinfo->txrate.he_gi = arsta->txrate.he_gi;
-		sinfo->txrate.he_dcm = arsta->txrate.he_dcm;
-		sinfo->txrate.he_ru_alloc = arsta->txrate.he_ru_alloc;
+	if (arsta->txrate.legacy || arsta->txrate.nss) {
+		if (arsta->txrate.legacy) {
+			sinfo->txrate.legacy = arsta->txrate.legacy;
+		} else {
+			sinfo->txrate.mcs = arsta->txrate.mcs;
+			sinfo->txrate.nss = arsta->txrate.nss;
+			sinfo->txrate.bw = arsta->txrate.bw;
+			sinfo->txrate.he_gi = arsta->txrate.he_gi;
+			sinfo->txrate.he_dcm = arsta->txrate.he_dcm;
+			sinfo->txrate.he_ru_alloc = arsta->txrate.he_ru_alloc;
+		}
+		sinfo->txrate.flags = arsta->txrate.flags;
+		sinfo->filled |= BIT_ULL(NL80211_STA_INFO_TX_BITRATE);
 	}
-	sinfo->txrate.flags = arsta->txrate.flags;
-	sinfo->filled |= BIT_ULL(NL80211_STA_INFO_TX_BITRATE);
 
 	/* TODO: Use real NF instead of default one. */
 	sinfo->signal = arsta->rssi_comb + ATH11K_DEFAULT_NOISE_FLOOR;
