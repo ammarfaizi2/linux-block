@@ -7,6 +7,10 @@
 
 #include <linux/sched/cond_resched.h>
 
+#ifdef CONFIG_TASKS_RCU
+DEFINE_PER_TASK(unsigned long,		rcu_tasks_nvcsw);
+#endif
+
 #ifdef CONFIG_TASKS_RCU_GENERIC
 #include "rcu_segcblist.h"
 
@@ -733,7 +737,7 @@ static void rcu_tasks_pertask(struct task_struct *t, struct list_head *hop)
 {
 	if (t != current && READ_ONCE(per_task(t, on_rq)) && !is_idle_task(t)) {
 		get_task_struct(t);
-		t->rcu_tasks_nvcsw = READ_ONCE(t->nvcsw);
+		per_task(t, rcu_tasks_nvcsw) = READ_ONCE(t->nvcsw);
 		WRITE_ONCE(t->rcu_tasks_holdout, true);
 		list_add(&t->rcu_tasks_holdout_list, hop);
 	}
@@ -759,7 +763,7 @@ static void check_holdout_task(struct task_struct *t,
 	int cpu;
 
 	if (!READ_ONCE(t->rcu_tasks_holdout) ||
-	    t->rcu_tasks_nvcsw != READ_ONCE(t->nvcsw) ||
+	    per_task(t, rcu_tasks_nvcsw) != READ_ONCE(t->nvcsw) ||
 	    !READ_ONCE(per_task(t, on_rq)) ||
 	    (IS_ENABLED(CONFIG_NO_HZ_FULL) &&
 	     !is_idle_task(t) && t->rcu_tasks_idle_cpu >= 0)) {
@@ -779,7 +783,7 @@ static void check_holdout_task(struct task_struct *t,
 	pr_alert("%p: %c%c nvcsw: %lu/%lu holdout: %d idle_cpu: %d/%d\n",
 		 t, ".I"[is_idle_task(t)],
 		 "N."[cpu < 0 || !tick_nohz_full_cpu(cpu)],
-		 t->rcu_tasks_nvcsw, t->nvcsw, t->rcu_tasks_holdout,
+		 per_task(t, rcu_tasks_nvcsw), t->nvcsw, t->rcu_tasks_holdout,
 		 t->rcu_tasks_idle_cpu, cpu);
 	sched_show_task(t);
 }
