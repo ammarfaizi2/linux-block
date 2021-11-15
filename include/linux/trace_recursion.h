@@ -2,7 +2,7 @@
 #ifndef _LINUX_TRACE_RECURSION_H
 #define _LINUX_TRACE_RECURSION_H
 
-#include <linux/interrupt.h>
+#include <linux/preempt.h>
 #include <linux/sched.h>
 
 #ifdef CONFIG_TRACING
