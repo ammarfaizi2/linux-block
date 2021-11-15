@@ -4,6 +4,7 @@
 #ifndef _IP_SET_HASH_GEN_H
 #define _IP_SET_HASH_GEN_H
 
+#include <linux/sched/cond_resched.h>
 #include <linux/rcupdate.h>
 #include <linux/jhash.h>
 #include <linux/types.h>
