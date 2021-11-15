@@ -31,6 +31,7 @@
  *  "The futexes are also cursed."
  *  "But they come in a choice of three flavours!"
  */
+#include <linux/plist.h>
 #include <linux/compat.h>
 #include <linux/jhash.h>
 #include <linux/pagemap.h>
