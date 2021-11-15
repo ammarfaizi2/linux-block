@@ -1260,6 +1260,4 @@ static inline void set_task_cpu(struct task_struct *p, unsigned int cpu)
 extern bool sched_task_on_rq(struct task_struct *p);
 extern unsigned long get_wchan(struct task_struct *p);
 
-#include <linux/sched/cond_resched.h>
-
 #endif
