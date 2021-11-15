@@ -640,11 +640,13 @@ SYSCALL_DEFINE2(chmod, const char __user *, filename, umode_t, mode)
 
 int chown_common(const struct path *path, uid_t user, gid_t group)
 {
-	struct user_namespace *mnt_userns;
+	struct user_namespace *mnt_userns, *fs_userns;
 	struct inode *inode = path->dentry->d_inode;
 	struct inode *delegated_inode = NULL;
 	int error;
 	struct iattr newattrs;
+	kfsuid_t kfsuid;
+	kfsgid_t kfsgid;
 	kuid_t uid;
 	kgid_t gid;
 
@@ -652,28 +654,29 @@ int chown_common(const struct path *path, uid_t user, gid_t group)
 	gid = make_kgid(current_user_ns(), group);
 
 	mnt_userns = mnt_user_ns(path->mnt);
-	uid = kuid_from_mnt(mnt_userns, uid);
-	gid = kgid_from_mnt(mnt_userns, gid);
+	fs_userns = inode->i_sb->s_user_ns;
+	kfsuid = make_user_kfsuid(mnt_userns, fs_userns, uid);
+	kfsgid = make_user_kfsgid(mnt_userns, fs_userns, gid);
 
 retry_deleg:
 	newattrs.ia_valid =  ATTR_CTIME;
 	if (user != (uid_t) -1) {
-		if (!uid_valid(uid))
+		if (!kfsuid_valid(kfsuid))
 			return -EINVAL;
 		newattrs.ia_valid |= ATTR_UID;
-		newattrs.ia_uid = uid;
+		newattrs.ia_uid = to_idtype(kfsuid);
 	}
 	if (group != (gid_t) -1) {
-		if (!gid_valid(gid))
+		if (!kfsgid_valid(kfsgid))
 			return -EINVAL;
 		newattrs.ia_valid |= ATTR_GID;
-		newattrs.ia_gid = gid;
+		newattrs.ia_gid = to_idtype(kfsgid);
 	}
 	if (!S_ISDIR(inode->i_mode))
 		newattrs.ia_valid |=
 			ATTR_KILL_SUID | ATTR_KILL_SGID | ATTR_KILL_PRIV;
 	inode_lock(inode);
-	error = security_path_chown(path, uid, gid);
+	error = security_path_chown(path, newattrs.ia_uid, newattrs.ia_gid);
 	if (!error)
 		error = notify_change(mnt_userns, path->dentry, &newattrs,
 				      &delegated_inode);
