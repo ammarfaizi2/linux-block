@@ -2,6 +2,7 @@
 #ifndef _LINUX_SCHED_SIGNAL_H
 #define _LINUX_SCHED_SIGNAL_H
 
+#include <linux/resource.h>
 #include <linux/rculist.h>
 #include <linux/signal.h>
 #include <linux/sched.h>
