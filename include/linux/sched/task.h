@@ -7,9 +7,12 @@
  * functionality:
  */
 
+#include <linux/sched/per_task.h>
 #include <linux/spinlock_api.h>
 #include <linux/sched.h>
 #include <linux/uaccess.h>
+
+DECLARE_PER_TASK(refcount_t, usage);
 
 struct task_struct;
 struct rusage;
@@ -104,7 +107,7 @@ extern void sched_exec(void);
 
 static inline struct task_struct *get_task_struct(struct task_struct *t)
 {
-	refcount_inc(&t->usage);
+	refcount_inc(&per_task(t, usage));
 	return t;
 }
 
@@ -112,13 +115,13 @@ extern void __put_task_struct(struct task_struct *t);
 
 static inline void put_task_struct(struct task_struct *t)
 {
-	if (refcount_dec_and_test(&t->usage))
+	if (refcount_dec_and_test(&per_task(t, usage)))
 		__put_task_struct(t);
 }
 
 static inline void put_task_struct_many(struct task_struct *t, int nr)
 {
-	if (refcount_sub_and_test(nr, &t->usage))
+	if (refcount_sub_and_test(nr, &per_task(t, usage)))
 		__put_task_struct(t);
 }
 

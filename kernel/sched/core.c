@@ -101,6 +101,8 @@ DEFINE_PER_TASK(struct sched_entity,			se);
 
 DEFINE_PER_TASK(void *,					stack);
 
+DEFINE_PER_TASK(refcount_t,				usage);
+
 
 /*
  * Export tracepoints that act as a bare tracehook (ie: have no trace event
