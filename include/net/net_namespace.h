@@ -8,6 +8,7 @@
 #include <net/net_namespace_types.h>
 
 #ifndef CONFIG_NET_NS
+#include <linux/refcount_api.h>
 #include <linux/sched.h>
 #include <linux/nsproxy.h>
 #endif

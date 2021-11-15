@@ -6,6 +6,7 @@
  * task->stack (kernel stack) handling interfaces:
  */
 
+#include <linux/refcount_api.h>
 #include <linux/sched/thread_info_api.h>
 #include <asm/page.h>
 #include <linux/sched.h>
