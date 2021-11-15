@@ -8,6 +8,7 @@
  *  Copyright  ©  2009 Paul Mackerras, IBM Corp. <paulus@au1.ibm.com>
  */
 
+#include <linux/sched/per_task.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/fs.h>
 #include <linux/mm.h>
@@ -61,6 +62,8 @@
 #include "../sched/sched.h"
 
 #include <asm/irq_regs.h>
+
+DEFINE_PER_TASK(struct perf_event_context *, perf_event_ctxp[perf_nr_task_contexts]);
 
 typedef int (*remote_function_f)(void *);
 
@@ -1493,7 +1496,7 @@ retry:
 	 */
 	local_irq_save(*flags);
 	rcu_read_lock();
-	ctx = rcu_dereference(task->perf_event_ctxp[ctxn]);
+	ctx = rcu_dereference(per_task(task, perf_event_ctxp)[ctxn]);
 	if (ctx) {
 		/*
 		 * If this context is a clone of another, it might
@@ -1506,7 +1509,7 @@ retry:
 		 * can't get swapped on us any more.
 		 */
 		raw_spin_lock(&ctx->lock);
-		if (ctx != rcu_dereference(task->perf_event_ctxp[ctxn])) {
+		if (ctx != rcu_dereference(per_task(task, perf_event_ctxp)[ctxn])) {
 			raw_spin_unlock(&ctx->lock);
 			rcu_read_unlock();
 			local_irq_restore(*flags);
@@ -3472,7 +3475,7 @@ static void perf_event_sync_stat(struct perf_event_context *ctx,
 static void perf_event_context_sched_out(struct task_struct *task, int ctxn,
 					 struct task_struct *next)
 {
-	struct perf_event_context *ctx = task->perf_event_ctxp[ctxn];
+	struct perf_event_context *ctx = per_task(task, perf_event_ctxp)[ctxn];
 	struct perf_event_context *next_ctx;
 	struct perf_event_context *parent, *next_parent;
 	struct perf_cpu_context *cpuctx;
@@ -3488,7 +3491,7 @@ static void perf_event_context_sched_out(struct task_struct *task, int ctxn,
 		return;
 
 	rcu_read_lock();
-	next_ctx = next->perf_event_ctxp[ctxn];
+	next_ctx = per_task(next, perf_event_ctxp)[ctxn];
 	if (!next_ctx)
 		goto unlock;
 
@@ -3541,8 +3544,10 @@ static void perf_event_context_sched_out(struct task_struct *task, int ctxn,
 			 * since those values are always verified under
 			 * ctx->lock which we're now holding.
 			 */
-			RCU_INIT_POINTER(task->perf_event_ctxp[ctxn], next_ctx);
-			RCU_INIT_POINTER(next->perf_event_ctxp[ctxn], ctx);
+			RCU_INIT_POINTER(per_task(task, perf_event_ctxp)[ctxn],
+					 next_ctx);
+			RCU_INIT_POINTER(per_task(next, perf_event_ctxp)[ctxn],
+					 ctx);
 
 			do_switch = 0;
 
@@ -3998,7 +4003,7 @@ void __perf_event_task_sched_in(struct task_struct *prev,
 		perf_cgroup_sched_in(prev, task);
 
 	for_each_task_context_nr(ctxn) {
-		ctx = task->perf_event_ctxp[ctxn];
+		ctx = per_task(task, perf_event_ctxp)[ctxn];
 		if (likely(!ctx))
 			continue;
 
@@ -4323,7 +4328,7 @@ static void perf_event_enable_on_exec(int ctxn)
 	int enabled = 0;
 
 	local_irq_save(flags);
-	ctx = current->perf_event_ctxp[ctxn];
+	ctx = per_task(current, perf_event_ctxp)[ctxn];
 	if (!ctx || !ctx->nr_events)
 		goto out;
 
@@ -4783,12 +4788,13 @@ retry:
 		 */
 		if (task->flags & PF_EXITING)
 			err = -ESRCH;
-		else if (task->perf_event_ctxp[ctxn])
+		else if (per_task(task, perf_event_ctxp)[ctxn])
 			err = -EAGAIN;
 		else {
 			get_ctx(ctx);
 			++ctx->pin_count;
-			rcu_assign_pointer(task->perf_event_ctxp[ctxn], ctx);
+			rcu_assign_pointer(per_task(task, perf_event_ctxp)[ctxn],
+					   ctx);
 		}
 		mutex_unlock(&task->perf_event_mutex);
 
@@ -7736,7 +7742,7 @@ perf_iterate_sb(perf_iterate_f output, void *data,
 	perf_iterate_sb_cpu(output, data);
 
 	for_each_task_context_nr(ctxn) {
-		ctx = rcu_dereference(current->perf_event_ctxp[ctxn]);
+		ctx = rcu_dereference(per_task(current, perf_event_ctxp)[ctxn]);
 		if (ctx)
 			perf_iterate_ctx(ctx, output, data, false);
 	}
@@ -7788,7 +7794,7 @@ void perf_event_exec(void)
 		perf_event_remove_on_exec(ctxn);
 
 		rcu_read_lock();
-		ctx = rcu_dereference(current->perf_event_ctxp[ctxn]);
+		ctx = rcu_dereference(per_task(current, perf_event_ctxp)[ctxn]);
 		if (ctx) {
 			perf_iterate_ctx(ctx, perf_event_addr_filters_exec,
 					 NULL, true);
@@ -8635,7 +8641,7 @@ static void perf_addr_filters_adjust(struct vm_area_struct *vma)
 
 	rcu_read_lock();
 	for_each_task_context_nr(ctxn) {
-		ctx = rcu_dereference(current->perf_event_ctxp[ctxn]);
+		ctx = rcu_dereference(per_task(current, perf_event_ctxp)[ctxn]);
 		if (!ctx)
 			continue;
 
@@ -9849,7 +9855,7 @@ void perf_tp_event(u16 event_type, u64 count, void *record, int entry_size,
 		struct trace_entry *entry = record;
 
 		rcu_read_lock();
-		ctx = rcu_dereference(task->perf_event_ctxp[perf_sw_context]);
+		ctx = rcu_dereference(per_task(task, perf_event_ctxp)[perf_sw_context]);
 		if (!ctx)
 			goto unlock;
 
@@ -12828,7 +12834,7 @@ static void perf_event_exit_task_context(struct task_struct *child, int ctxn)
 	 * Now that the context is inactive, destroy the task <-> ctx relation
 	 * and mark the context dead.
 	 */
-	RCU_INIT_POINTER(child->perf_event_ctxp[ctxn], NULL);
+	RCU_INIT_POINTER(per_task(child, perf_event_ctxp)[ctxn], NULL);
 	put_ctx(child_ctx); /* cannot be last */
 	WRITE_ONCE(child_ctx->task, TASK_TOMBSTONE);
 	put_task_struct(current); /* cannot be last */
@@ -12926,7 +12932,7 @@ void perf_event_free_task(struct task_struct *task)
 	int ctxn;
 
 	for_each_task_context_nr(ctxn) {
-		ctx = task->perf_event_ctxp[ctxn];
+		ctx = per_task(task, perf_event_ctxp)[ctxn];
 		if (!ctx)
 			continue;
 
@@ -12938,7 +12944,7 @@ void perf_event_free_task(struct task_struct *task)
 		 * This is important because even though the task hasn't been
 		 * exposed yet the context has been (through child_list).
 		 */
-		RCU_INIT_POINTER(task->perf_event_ctxp[ctxn], NULL);
+		RCU_INIT_POINTER(per_task(task, perf_event_ctxp)[ctxn], NULL);
 		WRITE_ONCE(ctx->task, TASK_TOMBSTONE);
 		put_task_struct(task); /* cannot be last */
 		raw_spin_unlock_irq(&ctx->lock);
@@ -12972,7 +12978,7 @@ void perf_event_delayed_put(struct task_struct *task)
 	int ctxn;
 
 	for_each_task_context_nr(ctxn)
-		WARN_ON_ONCE(task->perf_event_ctxp[ctxn]);
+		WARN_ON_ONCE(per_task(task, perf_event_ctxp)[ctxn]);
 }
 
 struct file *perf_event_get(unsigned int fd)
@@ -13189,7 +13195,7 @@ inherit_task_group(struct perf_event *event, struct task_struct *parent,
 		return 0;
 	}
 
-	child_ctx = child->perf_event_ctxp[ctxn];
+	child_ctx = per_task(child, perf_event_ctxp)[ctxn];
 	if (!child_ctx) {
 		/*
 		 * This is executed from the parent task context, so
@@ -13201,7 +13207,7 @@ inherit_task_group(struct perf_event *event, struct task_struct *parent,
 		if (!child_ctx)
 			return -ENOMEM;
 
-		child->perf_event_ctxp[ctxn] = child_ctx;
+		per_task(child, perf_event_ctxp)[ctxn] = child_ctx;
 	}
 
 	ret = inherit_group(event, parent, parent_ctx,
@@ -13227,7 +13233,7 @@ static int perf_event_init_context(struct task_struct *child, int ctxn,
 	unsigned long flags;
 	int ret = 0;
 
-	if (likely(!parent->perf_event_ctxp[ctxn]))
+	if (likely(!per_task(parent, perf_event_ctxp)[ctxn]))
 		return 0;
 
 	/*
@@ -13283,7 +13289,7 @@ static int perf_event_init_context(struct task_struct *child, int ctxn,
 	raw_spin_lock_irqsave(&parent_ctx->lock, flags);
 	parent_ctx->rotate_disable = 0;
 
-	child_ctx = child->perf_event_ctxp[ctxn];
+	child_ctx = per_task(child, perf_event_ctxp)[ctxn];
 
 	if (child_ctx && inherited_all) {
 		/*
@@ -13321,7 +13327,8 @@ int perf_event_init_task(struct task_struct *child, u64 clone_flags)
 {
 	int ctxn, ret;
 
-	memset(child->perf_event_ctxp, 0, sizeof(child->perf_event_ctxp));
+	memset(per_task(child, perf_event_ctxp), 0,
+	       sizeof(per_task(child, perf_event_ctxp)));
 	mutex_init(&child->perf_event_mutex);
 	INIT_LIST_HEAD(&child->perf_event_list);
 
