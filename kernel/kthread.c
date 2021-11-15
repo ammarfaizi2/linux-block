@@ -1344,37 +1344,12 @@ EXPORT_SYMBOL(kthread_destroy_worker);
  */
 void kthread_use_mm(struct mm_struct *mm)
 {
-	struct mm_struct *active_mm;
 	struct task_struct *tsk = current;
 
 	WARN_ON_ONCE(!(tsk->flags & PF_KTHREAD));
 	WARN_ON_ONCE(tsk->mm);
 
-	task_lock(tsk);
-	/*
-	 * membarrier() requires a full barrier before switching mm.
-	 */
-	smp_mb__after_spinlock();
-
-	/* Hold off tlb flush IPIs while switching mm's */
-	local_irq_disable();
-	active_mm = tsk->active_mm;
-	if (active_mm != mm) {
-		mmgrab(mm);
-		tsk->active_mm = mm;
-	}
-	WRITE_ONCE(tsk->mm, mm);  /* membarrier reads this without locks */
-	membarrier_update_current_mm(mm);
-	switch_mm_irqs_off(active_mm, mm, tsk);
-	membarrier_finish_switch_mm(mm);
-	local_irq_enable();
-	task_unlock(tsk);
-#ifdef finish_arch_post_lock_switch
-	finish_arch_post_lock_switch();
-#endif
-
-	if (active_mm != mm)
-		mmdrop(active_mm);
+	__change_current_mm(mm, false);
 
 	to_kthread(tsk)->oldfs = force_uaccess_begin();
 }
@@ -1393,23 +1368,7 @@ void kthread_unuse_mm(struct mm_struct *mm)
 
 	force_uaccess_end(to_kthread(tsk)->oldfs);
 
-	task_lock(tsk);
-	/*
-	 * When a kthread stops operating on an address space, the loop
-	 * in membarrier_{private,global}_expedited() may not observe
-	 * that tsk->mm, and not issue an IPI. Membarrier requires a
-	 * memory barrier after accessing user-space memory, before
-	 * clearing tsk->mm.
-	 */
-	smp_mb__after_spinlock();
-	sync_mm_rss(mm);
-	local_irq_disable();
-	WRITE_ONCE(tsk->mm, NULL);  /* membarrier reads this without locks */
-	membarrier_update_current_mm(NULL);
-	/* active_mm is still 'mm' */
-	enter_lazy_tlb(mm, tsk);
-	local_irq_enable();
-	task_unlock(tsk);
+	__change_current_mm_to_kernel();
 }
 EXPORT_SYMBOL_GPL(kthread_unuse_mm);
 
