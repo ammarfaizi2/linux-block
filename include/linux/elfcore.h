@@ -74,46 +74,6 @@ struct elf_prpsinfo
 	char	pr_psargs[ELF_PRARGSZ];	/* initial part of arg list */
 };
 
-static inline void elf_core_copy_regs(elf_gregset_t *elfregs, struct pt_regs *regs)
-{
-#ifdef ELF_CORE_COPY_REGS
-	ELF_CORE_COPY_REGS((*elfregs), regs)
-#else
-	BUG_ON(sizeof(*elfregs) != sizeof(*regs));
-	*(struct pt_regs *)elfregs = *regs;
-#endif
-}
-
-static inline void elf_core_copy_kernel_regs(elf_gregset_t *elfregs, struct pt_regs *regs)
-{
-#ifdef ELF_CORE_COPY_KERNEL_REGS
-	ELF_CORE_COPY_KERNEL_REGS((*elfregs), regs);
-#else
-	elf_core_copy_regs(elfregs, regs);
-#endif
-}
-
-static inline int elf_core_copy_task_regs(struct task_struct *t, elf_gregset_t* elfregs)
-{
-#if defined (ELF_CORE_COPY_TASK_REGS)
-	return ELF_CORE_COPY_TASK_REGS(t, elfregs);
-#elif defined (task_pt_regs)
-	elf_core_copy_regs(elfregs, task_pt_regs(t));
-#endif
-	return 0;
-}
-
-extern int dump_fpu (struct pt_regs *, elf_fpregset_t *);
-
-static inline int elf_core_copy_task_fpregs(struct task_struct *t, struct pt_regs *regs, elf_fpregset_t *fpu)
-{
-#ifdef ELF_CORE_COPY_FPREGS
-	return ELF_CORE_COPY_FPREGS(t, fpu);
-#else
-	return dump_fpu(regs, fpu);
-#endif
-}
-
 #if (defined(CONFIG_UML) && defined(CONFIG_X86_32)) || defined(CONFIG_IA64)
 /*
  * These functions parameterize elf_core_dump in fs/binfmt_elf.c to write out
@@ -150,5 +110,11 @@ static inline size_t elf_core_extra_data_size(void)
 	return 0;
 }
 #endif
+
+extern void elf_core_copy_kernel_regs(elf_gregset_t *elfregs, struct pt_regs *regs);
+void elf_core_copy_regs(elf_gregset_t *elfregs, struct pt_regs *regs);
+int elf_core_copy_task_regs(struct task_struct *t, elf_gregset_t* elfregs);
+int elf_core_copy_task_fpregs(struct task_struct *t, struct pt_regs *regs, elf_fpregset_t *fpu);
+
 
 #endif /* _LINUX_ELFCORE_H */
