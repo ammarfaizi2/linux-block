@@ -39,6 +39,7 @@
  * Aug/Sep 2004 Changed to four level page tables (Andi Kleen)
  */
 
+#include <linux/io-mapping.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/kernel_stat.h>
 #include <linux/mm.h>
@@ -5455,6 +5456,49 @@ long copy_huge_page_from_user(struct page *dst_page,
 	return ret_val;
 }
 #endif /* CONFIG_TRANSPARENT_HUGEPAGE || CONFIG_HUGETLBFS */
+
+#ifdef CONFIG_HAVE_ATOMIC_IOMAP
+
+void __iomem *io_mapping_map_atomic_wc(struct io_mapping *mapping, unsigned long offset)
+{
+	resource_size_t phys_addr;
+
+	BUG_ON(offset >= mapping->size);
+	phys_addr = mapping->base + offset;
+	preempt_disable();
+	pagefault_disable();
+	return __iomap_local_pfn_prot(PHYS_PFN(phys_addr), mapping->prot);
+}
+EXPORT_SYMBOL_GPL(io_mapping_map_atomic_wc);
+
+void io_mapping_unmap_atomic(void __iomem *vaddr)
+{
+	kunmap_local_indexed((void __force *)vaddr);
+	pagefault_enable();
+	preempt_enable();
+}
+EXPORT_SYMBOL_GPL(io_mapping_unmap_atomic);
+
+#else /* !CONFIG_HAVE_ATOMIC_IOMAP: */
+
+/* Atomic map/unmap */
+void __iomem *io_mapping_map_atomic_wc(struct io_mapping *mapping, unsigned long offset)
+{
+	preempt_disable();
+	pagefault_disable();
+	return io_mapping_map_wc(mapping, offset, PAGE_SIZE);
+}
+EXPORT_SYMBOL_GPL(io_mapping_map_atomic_wc);
+
+void io_mapping_unmap_atomic(void __iomem *vaddr)
+{
+	io_mapping_unmap(vaddr);
+	pagefault_enable();
+	preempt_enable();
+}
+EXPORT_SYMBOL_GPL(io_mapping_unmap_atomic);
+
+#endif /* !CONFIG_HAVE_ATOMIC_IOMAP */
 
 #if USE_SPLIT_PTE_PTLOCKS && ALLOC_SPLIT_PTLOCKS
 
