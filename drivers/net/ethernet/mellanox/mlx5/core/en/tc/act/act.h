@@ -19,6 +19,7 @@ struct mlx5e_tc_act_parse_state {
 	bool encap;
 	bool decap;
 	bool mpls_push;
+	bool ptype_host;
 	const struct ip_tunnel_info *tun_info;
 	struct pedit_headers_action hdrs[__PEDIT_CMD_MAX];
 	int ifindexes[MLX5_MAX_FLOW_FWD_VPORTS];
@@ -55,6 +56,7 @@ extern struct mlx5e_tc_act mlx5e_tc_act_mirred;
 extern struct mlx5e_tc_act mlx5e_tc_act_mirred_nic;
 extern struct mlx5e_tc_act mlx5e_tc_act_ct;
 extern struct mlx5e_tc_act mlx5e_tc_act_sample;
+extern struct mlx5e_tc_act mlx5e_tc_act_ptype;
 
 struct mlx5e_tc_act *
 mlx5e_tc_act_get(enum flow_action_id act_id,

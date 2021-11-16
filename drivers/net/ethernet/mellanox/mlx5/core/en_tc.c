@@ -3347,7 +3347,6 @@ static int parse_tc_fdb_actions(struct mlx5e_priv *priv,
 	struct mlx5_esw_flow_attr *esw_attr;
 	struct pedit_headers_action *hdrs;
 	struct mlx5e_tc_act *tc_act;
-	bool ptype_host = false;
 	int err, i;
 
 	err = flow_action_supported(flow_action, extack);
@@ -3364,15 +3363,6 @@ static int parse_tc_fdb_actions(struct mlx5e_priv *priv,
 
 	flow_action_for_each(i, act, flow_action) {
 		switch (act->id) {
-		case FLOW_ACTION_PTYPE:
-			if (act->ptype != PACKET_HOST) {
-				NL_SET_ERR_MSG_MOD(extack,
-						   "skbedit ptype is only supported with type host");
-				return -EOPNOTSUPP;
-			}
-
-			ptype_host = true;
-			break;
 		case FLOW_ACTION_REDIRECT_INGRESS: {
 			struct net_device *out_dev;
 
@@ -3392,7 +3382,7 @@ static int parse_tc_fdb_actions(struct mlx5e_priv *priv,
 				return -EOPNOTSUPP;
 			}
 
-			if (!ptype_host) {
+			if (!parse_state->ptype_host) {
 				NL_SET_ERR_MSG_MOD(extack,
 						   "redirect to int port ingress requires ptype=host action");
 				return -EOPNOTSUPP;
