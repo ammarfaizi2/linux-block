@@ -82,6 +82,7 @@ int msi_add_msi_desc(struct device *dev, struct msi_desc *init_desc)
 	desc->pci = init_desc->pci;
 
 	list_add_tail(&desc->list, &dev->msi.data->list);
+	dev->msi.data->num_descs++;
 	return 0;
 }
 
@@ -109,6 +110,7 @@ static int msi_add_simple_msi_descs(struct device *dev, unsigned int index, unsi
 		list_add_tail(&desc->list, &list);
 	}
 	list_splice_tail(&list, &dev->msi.data->list);
+	dev->msi.data->num_descs += ndesc;
 	return 0;
 
 fail:
@@ -142,6 +144,7 @@ void msi_free_msi_descs_range(struct device *dev, enum msi_desc_filter filter,
 			continue;
 		list_del(&desc->list);
 		free_msi_entry(desc);
+		dev->msi.data->num_descs--;
 	}
 }
 
@@ -155,6 +158,21 @@ bool msi_device_has_property(struct device *dev, unsigned long prop)
 	if (!dev->msi.data)
 		return false;
 	return !!(dev->msi.data->properties & prop);
+}
+
+/**
+ * msi_device_num_descs - Query the number of allocated MSI descriptors of a device
+ * @dev:	The device to read from
+ *
+ * Note: This is a lockless snapshot of msi_device_data::num_descs
+ *
+ * Returns the number of MSI descriptors which are allocated for @dev
+ */
+unsigned int msi_device_num_descs(struct device *dev)
+{
+	if (dev->msi.data)
+		return dev->msi.data->num_descs;
+	return 0;
 }
 
 void __get_cached_msi_msg(struct msi_desc *entry, struct msi_msg *msg)
