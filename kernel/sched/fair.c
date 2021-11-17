@@ -839,7 +839,7 @@ void post_init_entity_util_avg(struct task_struct *p)
 
 	sa->runnable_avg = sa->util_avg;
 
-	if (p->sched_class != &fair_sched_class) {
+	if (per_task(p, sched_class) != &fair_sched_class) {
 		/*
 		 * For !fair tasks do:
 		 *
@@ -5577,7 +5577,7 @@ static void hrtick_update(struct rq *rq)
 {
 	struct task_struct *curr = rq->curr;
 
-	if (!hrtick_enabled_fair(rq) || curr->sched_class != &fair_sched_class)
+	if (!hrtick_enabled_fair(rq) || per_task(curr, sched_class) != &fair_sched_class)
 		return;
 
 	if (cfs_rq_of(&curr->se)->nr_running < sched_nr_latency)
@@ -7274,7 +7274,7 @@ again:
 		goto idle;
 
 #ifdef CONFIG_FAIR_GROUP_SCHED
-	if (!prev || prev->sched_class != &fair_sched_class)
+	if (!prev || per_task(prev, sched_class) != &fair_sched_class)
 		goto simple;
 
 	/*
@@ -7686,7 +7686,7 @@ static int task_hot(struct task_struct *p, struct lb_env *env)
 
 	lockdep_assert_rq_held(env->src_rq);
 
-	if (p->sched_class != &fair_sched_class)
+	if (per_task(p, sched_class) != &fair_sched_class)
 		return 0;
 
 	if (unlikely(task_has_idle_policy(p)))
@@ -8164,7 +8164,7 @@ static bool __update_blocked_others(struct rq *rq, bool *done)
 	 * update_load_avg() can call cpufreq_update_util(). Make sure that RT,
 	 * DL and IRQ signals have been updated before updating CFS.
 	 */
-	curr_class = rq->curr->sched_class;
+	curr_class = per_task(rq->curr, sched_class);
 
 	thermal_pressure = arch_scale_thermal_pressure(cpu_of(rq));
 
@@ -11137,7 +11137,7 @@ void task_vruntime_update(struct rq *rq, struct task_struct *p, bool in_fi)
 {
 	struct sched_entity *se = &p->se;
 
-	if (p->sched_class != &fair_sched_class)
+	if (per_task(p, sched_class) != &fair_sched_class)
 		return;
 
 	se_fi_update(se, rq->core->core_forceidle_seq, in_fi);

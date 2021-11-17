@@ -102,6 +102,7 @@ DECLARE_PER_TASK(struct vtime,				vtime);
 
 DECLARE_PER_TASK(int, on_rq);
 DECLARE_PER_TASK(struct sched_rt_entity, rt);
+DECLARE_PER_TASK(const struct sched_class *, sched_class);
 
 struct rq;
 struct cpuidle_state;
@@ -2180,12 +2181,12 @@ struct sched_class {
 static inline void put_prev_task(struct rq *rq, struct task_struct *prev)
 {
 	WARN_ON_ONCE(rq->curr != prev);
-	prev->sched_class->put_prev_task(rq, prev);
+	per_task(prev, sched_class)->put_prev_task(rq, prev);
 }
 
 static inline void set_next_task(struct rq *rq, struct task_struct *next)
 {
-	next->sched_class->set_next_task(rq, next, false);
+	per_task(next, sched_class)->set_next_task(rq, next, false);
 }
 
 
