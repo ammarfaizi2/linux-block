@@ -704,11 +704,6 @@ struct task_struct {
 
 	struct sched_statistics         stats;
 
-#ifdef CONFIG_PREEMPT_NOTIFIERS
-	/* List of struct preempt_notifier: */
-	struct hlist_head		preempt_notifiers;
-#endif
-
 #ifdef CONFIG_BLK_DEV_IO_TRACE
 	unsigned int			btrace_seq;
 #endif

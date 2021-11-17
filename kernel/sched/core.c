@@ -150,6 +150,11 @@ DEFINE_PER_TASK(struct uclamp_se,			uclamp_req[UCLAMP_CNT]);
 DEFINE_PER_TASK(struct uclamp_se,			uclamp[UCLAMP_CNT]);
 #endif
 
+#ifdef CONFIG_PREEMPT_NOTIFIERS
+/* List of struct preempt_notifier: */
+DEFINE_PER_TASK(struct hlist_head,			preempt_notifiers);
+#endif
+
 /*
  * Export tracepoints that act as a bare tracehook (ie: have no trace event
  * associated with them) to allow external modules to probe them.
@@ -4398,7 +4403,7 @@ static void __sched_fork(unsigned long clone_flags, struct task_struct *p)
 	per_task(p, rt).on_list		= 0;
 
 #ifdef CONFIG_PREEMPT_NOTIFIERS
-	INIT_HLIST_HEAD(&p->preempt_notifiers);
+	INIT_HLIST_HEAD(&per_task(p, preempt_notifiers));
 #endif
 
 #ifdef CONFIG_COMPACTION
@@ -4699,7 +4704,7 @@ void preempt_notifier_register(struct preempt_notifier *notifier)
 	if (!static_branch_unlikely(&preempt_notifier_key))
 		WARN(1, "registering preempt_notifier while notifiers disabled\n");
 
-	hlist_add_head(&notifier->link, &current->preempt_notifiers);
+	hlist_add_head(&notifier->link, &per_task(current, preempt_notifiers));
 }
 EXPORT_SYMBOL_GPL(preempt_notifier_register);
 
@@ -4719,7 +4724,8 @@ static void __fire_sched_in_preempt_notifiers(struct task_struct *curr)
 {
 	struct preempt_notifier *notifier;
 
-	hlist_for_each_entry(notifier, &curr->preempt_notifiers, link)
+	hlist_for_each_entry(notifier, &per_task(curr, preempt_notifiers),
+		             link)
 		notifier->ops->sched_in(notifier, raw_smp_processor_id());
 }
 
@@ -4735,7 +4741,8 @@ __fire_sched_out_preempt_notifiers(struct task_struct *curr,
 {
 	struct preempt_notifier *notifier;
 
-	hlist_for_each_entry(notifier, &curr->preempt_notifiers, link)
+	hlist_for_each_entry(notifier, &per_task(curr, preempt_notifiers),
+		             link)
 		notifier->ops->sched_out(notifier, next);
 }
 
