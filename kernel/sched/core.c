@@ -133,6 +133,7 @@ DEFINE_PER_TASK(struct task_group *,			sched_task_group);
 
 #ifdef CONFIG_SCHED_CORE
 DEFINE_PER_TASK(struct rb_node,				core_node);
+DEFINE_PER_TASK(unsigned long,				core_cookie);
 #endif
 
 /*
@@ -246,10 +247,10 @@ static inline bool prio_less(struct task_struct *a, struct task_struct *b, bool 
 
 static inline bool __sched_core_less(struct task_struct *a, struct task_struct *b)
 {
-	if (a->core_cookie < b->core_cookie)
+	if (per_task(a, core_cookie) < per_task(b, core_cookie))
 		return true;
 
-	if (a->core_cookie > b->core_cookie)
+	if (per_task(a, core_cookie) > per_task(b, core_cookie))
 		return false;
 
 	/* flip prio, so high prio is leftmost */
@@ -271,10 +272,10 @@ static inline int rb_sched_core_cmp(const void *key, const struct rb_node *node)
 	const struct task_struct *p = __node_2_sc(node);
 	unsigned long cookie = (unsigned long)key;
 
-	if (cookie < p->core_cookie)
+	if (cookie < per_task(p, core_cookie))
 		return -1;
 
-	if (cookie > p->core_cookie)
+	if (cookie > per_task(p, core_cookie))
 		return 1;
 
 	return 0;
@@ -284,7 +285,7 @@ void sched_core_enqueue(struct rq *rq, struct task_struct *p)
 {
 	rq->core->core_task_seq++;
 
-	if (!p->core_cookie)
+	if (!per_task(p, core_cookie))
 		return;
 
 	rb_add(&per_task(p, core_node), &rq->core_tree, rb_sched_core_less);
@@ -335,7 +336,7 @@ static struct task_struct *sched_core_next(struct task_struct *p, unsigned long 
 		return NULL;
 
 	p = per_task_container_of(node, core_node);
-	if (p->core_cookie != cookie)
+	if (per_task(p, core_cookie) != cookie)
 		return NULL;
 
 	return p;
@@ -5768,7 +5769,7 @@ static inline bool is_task_rq_idle(struct task_struct *t)
 
 static inline bool cookie_equals(struct task_struct *a, unsigned long cookie)
 {
-	return is_task_rq_idle(a) || (a->core_cookie == cookie);
+	return is_task_rq_idle(a) || (per_task(a, core_cookie) == cookie);
 }
 
 static inline bool cookie_match(struct task_struct *a, struct task_struct *b)
@@ -5776,7 +5777,7 @@ static inline bool cookie_match(struct task_struct *a, struct task_struct *b)
 	if (is_task_rq_idle(a) || is_task_rq_idle(b))
 		return true;
 
-	return a->core_cookie == b->core_cookie;
+	return per_task(a, core_cookie) == per_task(b, core_cookie);
 }
 
 static inline struct task_struct *pick_task(struct rq *rq)
@@ -5886,7 +5887,7 @@ pick_next_task(struct rq *rq, struct task_struct *prev, struct rq_flags *rf)
 	 */
 	if (!need_sync) {
 		next = pick_task(rq);
-		if (!next->core_cookie) {
+		if (!per_task(next, core_cookie)) {
 			rq->core_pick = NULL;
 			/*
 			 * For robustness, update the min_vruntime_fi for
@@ -5920,7 +5921,7 @@ pick_next_task(struct rq *rq, struct task_struct *prev, struct rq_flags *rf)
 			max = p;
 	}
 
-	cookie = rq->core->core_cookie = max->core_cookie;
+	cookie = rq->core->core_cookie = per_task(max, core_cookie);
 
 	/*
 	 * For each thread: try and find a runnable task that matches @max or
