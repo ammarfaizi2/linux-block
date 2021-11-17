@@ -56,6 +56,7 @@
 #ifdef CONFIG_SMP
 DEFINE_PER_TASK(unsigned int, wakee_flips);
 DEFINE_PER_TASK(unsigned long, wakee_flip_decay_ts);
+DEFINE_PER_TASK(struct task_struct *, last_wakee);
 #endif
 
 /*
@@ -5926,8 +5927,8 @@ static void record_wakee(struct task_struct *p)
 		per_task(current, wakee_flip_decay_ts) = jiffies;
 	}
 
-	if (current->last_wakee != p) {
-		current->last_wakee = p;
+	if (per_task(current, last_wakee) != p) {
+		per_task(current, last_wakee) = p;
 		per_task(current, wakee_flips)++;
 	}
 }

@@ -695,7 +695,6 @@ struct task_struct {
 
 #ifdef CONFIG_SMP
 	struct __call_single_node	wake_entry;
-	struct task_struct		*last_wakee;
 
 	/*
 	 * recent_used_cpu is initially set as the last CPU used by a task
