@@ -55,6 +55,7 @@
 
 #ifdef CONFIG_SMP
 DEFINE_PER_TASK(unsigned int, wakee_flips);
+DEFINE_PER_TASK(unsigned long, wakee_flip_decay_ts);
 #endif
 
 /*
@@ -5920,9 +5921,9 @@ static void record_wakee(struct task_struct *p)
 	 * Only decay a single time; tasks that have less then 1 wakeup per
 	 * jiffy will not have built up many flips.
 	 */
-	if (time_after(jiffies, current->wakee_flip_decay_ts + HZ)) {
+	if (time_after(jiffies, per_task(current, wakee_flip_decay_ts) + HZ)) {
 		per_task(current, wakee_flips) >>= 1;
-		current->wakee_flip_decay_ts = jiffies;
+		per_task(current, wakee_flip_decay_ts) = jiffies;
 	}
 
 	if (current->last_wakee != p) {
