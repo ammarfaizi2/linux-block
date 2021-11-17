@@ -106,6 +106,10 @@ DECLARE_PER_TASK(struct sched_rt_entity,		rt);
 DECLARE_PER_TASK(const struct sched_class *,		sched_class);
 DECLARE_PER_TASK(struct sched_entity,			se);
 
+#ifdef CONFIG_SMP
+DECLARE_PER_TASK(int,					recent_used_cpu);
+#endif
+
 struct rq;
 struct cpuidle_state;
 

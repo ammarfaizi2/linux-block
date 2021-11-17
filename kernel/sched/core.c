@@ -116,6 +116,14 @@ DEFINE_PER_TASK(struct vm_struct *,			stack_vm_area);
 #ifdef CONFIG_SMP
 DEFINE_PER_TASK(int,					on_cpu);
 DEFINE_PER_TASK(struct __call_single_node,		wake_entry);
+/*
+ * recent_used_cpu is initially set as the last CPU used by a task
+ * that wakes affine another task. Waker/wakee relationships can
+ * push tasks around a CPU where each wakeup moves to the next one.
+ * Tracking a recently used CPU allows a quick search for a recently
+ * used CPU that may be idle.
+ */
+DEFINE_PER_TASK(int,					recent_used_cpu);
 #endif
 
 /*
@@ -4617,7 +4625,7 @@ void wake_up_new_task(struct task_struct *p)
 	 * Use __set_task_cpu() to avoid calling sched_class::migrate_task_rq,
 	 * as we're not fully set-up yet.
 	 */
-	p->recent_used_cpu = task_cpu(p);
+	per_task(p, recent_used_cpu) = task_cpu(p);
 	rseq_migrate(p);
 	__set_task_cpu(p, select_task_rq(p, task_cpu(p), WF_FORK));
 #endif
