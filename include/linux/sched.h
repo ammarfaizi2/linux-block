@@ -702,14 +702,6 @@ struct task_struct {
 	int				normal_prio;
 	unsigned int			rt_priority;
 
-#ifdef CONFIG_UCLAMP_TASK
-	/*
-	 * Effective clamp values used for a scheduling entity.
-	 * Must be updated with task_rq_lock() held.
-	 */
-	struct uclamp_se		uclamp[UCLAMP_CNT];
-#endif
-
 	struct sched_statistics         stats;
 
 #ifdef CONFIG_PREEMPT_NOTIFIERS
