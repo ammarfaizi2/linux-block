@@ -719,7 +719,6 @@ struct task_struct {
 	unsigned int			rt_priority;
 
 	struct sched_entity		se;
-	struct sched_rt_entity		rt;
 	const struct sched_class	*sched_class;
 
 #ifdef CONFIG_SCHED_CORE

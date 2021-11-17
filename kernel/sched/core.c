@@ -95,6 +95,8 @@ DEFINE_PER_TASK(struct sched_dl_entity, dl);
 
 DEFINE_PER_TASK(int, on_rq);
 
+DEFINE_PER_TASK(struct sched_rt_entity, rt);
+
 /*
  * Export tracepoints that act as a bare tracehook (ie: have no trace event
  * associated with them) to allow external modules to probe them.
@@ -4334,11 +4336,11 @@ static void __sched_fork(unsigned long clone_flags, struct task_struct *p)
 	init_dl_inactive_task_timer(&per_task(p, dl));
 	__dl_clear_params(p);
 
-	INIT_LIST_HEAD(&p->rt.run_list);
-	p->rt.timeout		= 0;
-	p->rt.time_slice	= sched_rr_timeslice;
-	p->rt.on_rq		= 0;
-	p->rt.on_list		= 0;
+	INIT_LIST_HEAD(&per_task(p, rt).run_list);
+	per_task(p, rt).timeout		= 0;
+	per_task(p, rt).time_slice	= sched_rr_timeslice;
+	per_task(p, rt).on_rq		= 0;
+	per_task(p, rt).on_list		= 0;
 
 #ifdef CONFIG_PREEMPT_NOTIFIERS
 	INIT_HLIST_HEAD(&p->preempt_notifiers);
@@ -6841,7 +6843,7 @@ void rt_mutex_setprio(struct task_struct *p, struct task_struct *pi_task)
 		if (dl_prio(oldprio))
 			per_task(p, dl).pi_se = &per_task(p, dl);
 		if (rt_prio(oldprio))
-			p->rt.timeout = 0;
+			per_task(p, rt).timeout = 0;
 	}
 
 	__setscheduler_prio(p, prio);

@@ -234,7 +234,7 @@ err:
 
 static inline struct task_struct *rt_task_of(struct sched_rt_entity *rt_se)
 {
-	return container_of(rt_se, struct task_struct, rt);
+	return per_task_container_of(rt_se, rt);
 }
 
 static inline struct rq *rq_of_rt_rq(struct rt_rq *rt_rq)
@@ -994,7 +994,7 @@ static int sched_rt_runtime_exceeded(struct rt_rq *rt_rq)
 static void update_curr_rt(struct rq *rq)
 {
 	struct task_struct *curr = rq->curr;
-	struct sched_rt_entity *rt_se = &curr->rt;
+	struct sched_rt_entity *rt_se = &per_task(curr, rt);
 	u64 delta_exec;
 	u64 now;
 
@@ -1484,7 +1484,7 @@ static void dequeue_rt_entity(struct sched_rt_entity *rt_se, unsigned int flags)
 static void
 enqueue_task_rt(struct rq *rq, struct task_struct *p, int flags)
 {
-	struct sched_rt_entity *rt_se = &p->rt;
+	struct sched_rt_entity *rt_se = &per_task(p, rt);
 
 	if (flags & ENQUEUE_WAKEUP)
 		rt_se->timeout = 0;
@@ -1500,7 +1500,7 @@ enqueue_task_rt(struct rq *rq, struct task_struct *p, int flags)
 
 static void dequeue_task_rt(struct rq *rq, struct task_struct *p, int flags)
 {
-	struct sched_rt_entity *rt_se = &p->rt;
+	struct sched_rt_entity *rt_se = &per_task(p, rt);
 
 	update_curr_rt(rq);
 	dequeue_rt_entity(rt_se, flags);
@@ -1528,7 +1528,7 @@ requeue_rt_entity(struct rt_rq *rt_rq, struct sched_rt_entity *rt_se, int head)
 
 static void requeue_task_rt(struct rq *rq, struct task_struct *p, int head)
 {
-	struct sched_rt_entity *rt_se = &p->rt;
+	struct sched_rt_entity *rt_se = &per_task(p, rt);
 	struct rt_rq *rt_rq;
 
 	for_each_sched_rt_entity(rt_se) {
@@ -1646,7 +1646,7 @@ static void check_preempt_equal_prio(struct rq *rq, struct task_struct *p)
 
 static int balance_rt(struct rq *rq, struct task_struct *p, struct rq_flags *rf)
 {
-	if (!on_rt_rq(&p->rt) && need_pull_rt_task(rq, p)) {
+	if (!on_rt_rq(&per_task(p, rt)) && need_pull_rt_task(rq, p)) {
 		/*
 		 * This is OK, because current is on_cpu, which avoids it being
 		 * picked for load-balance and preemption/IRQs are still
@@ -1692,11 +1692,11 @@ static void check_preempt_curr_rt(struct rq *rq, struct task_struct *p, int flag
 
 static inline void set_next_task_rt(struct rq *rq, struct task_struct *p, bool first)
 {
-	struct sched_rt_entity *rt_se = &p->rt;
+	struct sched_rt_entity *rt_se = &per_task(p, rt);
 	struct rt_rq *rt_rq = &rq->rt;
 
 	p->se.exec_start = rq_clock_task(rq);
-	if (on_rt_rq(&p->rt))
+	if (on_rt_rq(&per_task(p, rt)))
 		update_stats_wait_end_rt(rt_rq, rt_se);
 
 	/* The running task is never eligible for pushing */
@@ -1770,10 +1770,10 @@ static struct task_struct *pick_next_task_rt(struct rq *rq)
 
 static void put_prev_task_rt(struct rq *rq, struct task_struct *p)
 {
-	struct sched_rt_entity *rt_se = &p->rt;
+	struct sched_rt_entity *rt_se = &per_task(p, rt);
 	struct rt_rq *rt_rq = &rq->rt;
 
-	if (on_rt_rq(&p->rt))
+	if (on_rt_rq(&per_task(p, rt)))
 		update_stats_wait_start_rt(rt_rq, rt_se);
 
 	update_curr_rt(rq);
@@ -1784,7 +1784,7 @@ static void put_prev_task_rt(struct rq *rq, struct task_struct *p)
 	 * The previous task needs to be made eligible for pushing
 	 * if it is still active
 	 */
-	if (on_rt_rq(&p->rt) && p->nr_cpus_allowed > 1)
+	if (on_rt_rq(&per_task(p, rt)) && p->nr_cpus_allowed > 1)
 		enqueue_pushable_task(rq, p);
 }
 
@@ -2555,13 +2555,13 @@ static void watchdog(struct rq *rq, struct task_struct *p)
 	if (soft != RLIM_INFINITY) {
 		unsigned long next;
 
-		if (p->rt.watchdog_stamp != jiffies) {
-			p->rt.timeout++;
-			p->rt.watchdog_stamp = jiffies;
+		if (per_task(p, rt).watchdog_stamp != jiffies) {
+			per_task(p, rt).timeout++;
+			per_task(p, rt).watchdog_stamp = jiffies;
 		}
 
 		next = DIV_ROUND_UP(min(soft, hard), USEC_PER_SEC/HZ);
-		if (p->rt.timeout > next) {
+		if (per_task(p, rt).timeout > next) {
 			posix_cputimers_rt_watchdog(&per_task(p, posix_cputimers),
 						    p->se.sum_exec_runtime);
 		}
@@ -2581,7 +2581,7 @@ static inline void watchdog(struct rq *rq, struct task_struct *p) { }
  */
 static void task_tick_rt(struct rq *rq, struct task_struct *p, int queued)
 {
-	struct sched_rt_entity *rt_se = &p->rt;
+	struct sched_rt_entity *rt_se = &per_task(p, rt);
 
 	update_curr_rt(rq);
 	update_rt_rq_load_avg(rq_clock_pelt(rq), rq, 1);
@@ -2595,10 +2595,10 @@ static void task_tick_rt(struct rq *rq, struct task_struct *p, int queued)
 	if (p->policy != SCHED_RR)
 		return;
 
-	if (--p->rt.time_slice)
+	if (--per_task(p, rt).time_slice)
 		return;
 
-	p->rt.time_slice = sched_rr_timeslice;
+	per_task(p, rt).time_slice = sched_rr_timeslice;
 
 	/*
 	 * Requeue to the end of queue if we (and all of our ancestors) are not

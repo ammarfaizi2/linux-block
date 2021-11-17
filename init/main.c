@@ -892,6 +892,9 @@ void __init init_per_task_early(void)
 #endif
 	task_thread(&init_task) = (struct thread_struct) INIT_THREAD;
 
+	INIT_LIST_HEAD(&per_task(&init_task, rt).run_list);
+	per_task(&init_task, rt).time_slice = RR_TIMESLICE;
+
 #ifdef CONFIG_CPUSETS
 	per_task(&init_task, mems_allowed_seq) = (seqcount_spinlock_t) SEQCNT_SPINLOCK_ZERO(init_task.mems_allowed_seq,
 						 &init_task.alloc_lock);
