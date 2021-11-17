@@ -115,6 +115,7 @@ DEFINE_PER_TASK(struct vm_struct *,			stack_vm_area);
 
 #ifdef CONFIG_SMP
 DEFINE_PER_TASK(int,					on_cpu);
+DEFINE_PER_TASK(struct __call_single_node,		wake_entry);
 #endif
 
 /*
@@ -3762,9 +3763,9 @@ static int ttwu_runnable(struct task_struct *p, int wake_flags)
 #ifdef CONFIG_SMP
 void sched_ttwu_pending(void *arg)
 {
-	struct llist_node *llist = arg;
+	struct llist_node *llist = arg, *pos, *tmp;
 	struct rq *rq = this_rq();
-	struct task_struct *p, *t;
+	struct task_struct *p;
 	struct rq_flags rf;
 
 	if (!llist)
@@ -3780,7 +3781,9 @@ void sched_ttwu_pending(void *arg)
 	rq_lock_irqsave(rq, &rf);
 	update_rq_clock(rq);
 
-	llist_for_each_entry_safe(p, t, llist, wake_entry.llist) {
+	llist_for_each_safe(pos, tmp, llist) {
+		p = per_task_container_of(pos, wake_entry);
+
 		if (WARN_ON_ONCE(per_task(p, on_cpu)))
 			smp_cond_load_acquire(&per_task(p, on_cpu), !VAL);
 
@@ -3816,7 +3819,7 @@ static void __ttwu_queue_wakelist(struct task_struct *p, int cpu, int wake_flags
 	p->sched_remote_wakeup = !!(wake_flags & WF_MIGRATED);
 
 	WRITE_ONCE(rq->ttwu_pending, 1);
-	__smp_call_single_queue(cpu, &p->wake_entry.llist);
+	__smp_call_single_queue(cpu, &per_task(p, wake_entry).llist);
 }
 
 void wake_up_if_idle(int cpu)
@@ -4371,7 +4374,7 @@ static void __sched_fork(unsigned long clone_flags, struct task_struct *p)
 #endif
 	init_numa_balancing(clone_flags, p);
 #ifdef CONFIG_SMP
-	p->wake_entry.u_flags = CSD_TYPE_TTWU;
+	per_task(p, wake_entry).u_flags = CSD_TYPE_TTWU;
 	p->migration_pending = NULL;
 #endif
 }
