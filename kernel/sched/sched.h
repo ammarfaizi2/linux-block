@@ -117,6 +117,7 @@ DECLARE_PER_TASK(struct task_group *,			sched_task_group);
 
 #ifdef CONFIG_SCHED_CORE
 DECLARE_PER_TASK(struct rb_node,			core_node);
+DECLARE_PER_TASK(unsigned long,				core_cookie);
 #endif
 
 struct rq;
@@ -1212,7 +1213,7 @@ static inline bool sched_cpu_cookie_match(struct rq *rq, struct task_struct *p)
 	if (!sched_core_enabled(rq))
 		return true;
 
-	return rq->core->core_cookie == p->core_cookie;
+	return rq->core->core_cookie == per_task(p, core_cookie);
 }
 
 static inline bool sched_core_cookie_match(struct rq *rq, struct task_struct *p)
@@ -1235,7 +1236,7 @@ static inline bool sched_core_cookie_match(struct rq *rq, struct task_struct *p)
 	 * A CPU in an idle core is always the best choice for tasks with
 	 * cookies.
 	 */
-	return idle_core || rq->core->core_cookie == p->core_cookie;
+	return idle_core || rq->core->core_cookie == per_task(p, core_cookie);
 }
 
 static inline bool sched_group_cookie_match(struct rq *rq,

@@ -703,7 +703,6 @@ struct task_struct {
 	unsigned int			rt_priority;
 
 #ifdef CONFIG_SCHED_CORE
-	unsigned long			core_cookie;
 	unsigned int			core_occupation;
 #endif
 
