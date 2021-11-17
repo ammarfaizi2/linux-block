@@ -124,6 +124,7 @@ DEFINE_PER_TASK(struct __call_single_node,		wake_entry);
  * used CPU that may be idle.
  */
 DEFINE_PER_TASK(int,					recent_used_cpu);
+DEFINE_PER_TASK(int,					wake_cpu);
 #endif
 
 /*
@@ -2474,7 +2475,7 @@ static int migration_cpu_stop(void *data)
 		if (task_on_rq_queued(p))
 			rq = __migrate_task(rq, &rf, p, arg->dest_cpu);
 		else
-			p->wake_cpu = arg->dest_cpu;
+			per_task(p, wake_cpu) = arg->dest_cpu;
 
 		/*
 		 * XXX __migrate_task() can fail, at which point we might end
@@ -3205,7 +3206,7 @@ static void __migrate_swap_task(struct task_struct *p, int cpu)
 		 * it before it went to sleep. This means on wakeup we make the
 		 * previous CPU our target instead of where it really is.
 		 */
-		p->wake_cpu = cpu;
+		per_task(p, wake_cpu) = cpu;
 	}
 }
 
@@ -4227,7 +4228,7 @@ try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags)
 	 */
 	smp_cond_load_acquire(&per_task(p, on_cpu), !VAL);
 
-	cpu = select_task_rq(p, p->wake_cpu, wake_flags | WF_TTWU);
+	cpu = select_task_rq(p, per_task(p, wake_cpu), wake_flags | WF_TTWU);
 	if (task_cpu(p) != cpu) {
 		if (p->in_iowait) {
 			delayacct_blkio_end(p);

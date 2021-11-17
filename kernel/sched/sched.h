@@ -108,6 +108,7 @@ DECLARE_PER_TASK(struct sched_entity,			se);
 
 #ifdef CONFIG_SMP
 DECLARE_PER_TASK(int,					recent_used_cpu);
+DECLARE_PER_TASK(int,					wake_cpu);
 #endif
 
 struct rq;
@@ -1943,7 +1944,7 @@ static inline void __set_task_cpu(struct task_struct *p, unsigned int cpu)
 	 */
 	smp_wmb();
 	WRITE_ONCE(task_thread_info(p)->cpu, cpu);
-	p->wake_cpu = cpu;
+	per_task(p, wake_cpu) = cpu;
 #endif
 }
 
