@@ -211,7 +211,7 @@ static void cblist_init_generic(struct rcu_tasks *rtp)
 
 		WARN_ON_ONCE(!rtpcp);
 		if (cpu)
-			raw_spin_lock_init(&rtpcp->lock);
+			raw_spin_lock_init(&ACCESS_PRIVATE(rtpcp, lock));
 		raw_spin_lock_rcu_node(rtpcp); // irqs already disabled.
 		if (rcu_segcblist_empty(&rtpcp->cblist))
 			rcu_segcblist_init(&rtpcp->cblist);
