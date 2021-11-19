@@ -41,7 +41,7 @@ static int restore_sigcontext(struct pt_regs *regs,
 	int err = 0;
 
 	/* Always make any pending restarted system calls return -EINTR */
-	current->restart_block.fn = do_no_restart_syscall;
+	per_task(current, restart_block).fn = do_no_restart_syscall;
 
 	/*
 	 * Restore the regs from &sc->regs.

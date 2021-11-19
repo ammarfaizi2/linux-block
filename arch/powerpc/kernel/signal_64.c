@@ -742,7 +742,7 @@ SYSCALL_DEFINE0(rt_sigreturn)
 	unsigned long msr;
 
 	/* Always make any pending restarted system calls return -EINTR */
-	current->restart_block.fn = do_no_restart_syscall;
+	per_task(current, restart_block).fn = do_no_restart_syscall;
 
 	if (!access_ok(uc, sizeof(*uc)))
 		goto badframe;

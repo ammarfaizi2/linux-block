@@ -2054,7 +2054,7 @@ static int __sched do_nanosleep(struct hrtimer_sleeper *t, enum hrtimer_mode mod
 	if (!t->task)
 		return 0;
 
-	restart = &current->restart_block;
+	restart = &per_task(current, restart_block);
 	if (restart->nanosleep.type != TT_NONE) {
 		ktime_t rem = hrtimer_expires_remaining(&t->timer);
 		struct timespec64 rmt;
@@ -2105,7 +2105,7 @@ long hrtimer_nanosleep(ktime_t rqtp, const enum hrtimer_mode mode,
 		goto out;
 	}
 
-	restart = &current->restart_block;
+	restart = &per_task(current, restart_block);
 	restart->nanosleep.clockid = t.timer.base->clockid;
 	restart->nanosleep.expires = hrtimer_get_expires_tv64(&t.timer);
 	set_restart_fn(restart, hrtimer_nanosleep_restart);
@@ -2127,8 +2127,8 @@ SYSCALL_DEFINE2(nanosleep, struct __kernel_timespec __user *, rqtp,
 	if (!timespec64_valid(&tu))
 		return -EINVAL;
 
-	current->restart_block.nanosleep.type = rmtp ? TT_NATIVE : TT_NONE;
-	current->restart_block.nanosleep.rmtp = rmtp;
+	per_task(current, restart_block).nanosleep.type = rmtp ? TT_NATIVE : TT_NONE;
+	per_task(current, restart_block).nanosleep.rmtp = rmtp;
 	return hrtimer_nanosleep(timespec64_to_ktime(tu), HRTIMER_MODE_REL,
 				 CLOCK_MONOTONIC);
 }
@@ -2148,8 +2148,8 @@ SYSCALL_DEFINE2(nanosleep_time32, struct old_timespec32 __user *, rqtp,
 	if (!timespec64_valid(&tu))
 		return -EINVAL;
 
-	current->restart_block.nanosleep.type = rmtp ? TT_COMPAT : TT_NONE;
-	current->restart_block.nanosleep.compat_rmtp = rmtp;
+	per_task(current, restart_block).nanosleep.type = rmtp ? TT_COMPAT : TT_NONE;
+	per_task(current, restart_block).nanosleep.compat_rmtp = rmtp;
 	return hrtimer_nanosleep(timespec64_to_ktime(tu), HRTIMER_MODE_REL,
 				 CLOCK_MONOTONIC);
 }

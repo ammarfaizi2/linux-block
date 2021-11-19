@@ -767,7 +767,7 @@ static int alarmtimer_do_nsleep(struct alarm *alarm, ktime_t absexp,
 
 	if (freezing(current))
 		alarmtimer_freezerset(absexp, type);
-	restart = &current->restart_block;
+	restart = &per_task(current, restart_block);
 	if (restart->nanosleep.type != TT_NONE) {
 		struct timespec64 rmt;
 		ktime_t rem;
@@ -821,7 +821,7 @@ static int alarm_timer_nsleep(const clockid_t which_clock, int flags,
 			      const struct timespec64 *tsreq)
 {
 	enum  alarmtimer_type type = clock2alarm(which_clock);
-	struct restart_block *restart = &current->restart_block;
+	struct restart_block *restart = &per_task(current, restart_block);
 	struct alarm alarm;
 	ktime_t exp;
 	int ret = 0;

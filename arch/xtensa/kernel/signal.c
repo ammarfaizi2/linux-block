@@ -253,7 +253,7 @@ asmlinkage long xtensa_rt_sigreturn(void)
 	int ret;
 
 	/* Always make any pending restarted system calls return -EINTR */
-	current->restart_block.fn = do_no_restart_syscall;
+	per_task(current, restart_block).fn = do_no_restart_syscall;
 
 	if (regs->depc > 64)
 		panic("rt_sigreturn in double exception!\n");

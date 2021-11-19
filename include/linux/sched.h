@@ -816,8 +816,6 @@ struct task_struct {
 
 	unsigned long			atomic_flags; /* Flags requiring atomic access. */
 
-	struct restart_block		restart_block;
-
 	pid_t				pid;
 	pid_t				tgid;
 

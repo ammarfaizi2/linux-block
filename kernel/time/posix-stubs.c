@@ -146,8 +146,8 @@ SYSCALL_DEFINE4(clock_nanosleep, const clockid_t, which_clock, int, flags,
 		return -EINVAL;
 	if (flags & TIMER_ABSTIME)
 		rmtp = NULL;
-	current->restart_block.nanosleep.type = rmtp ? TT_NATIVE : TT_NONE;
-	current->restart_block.nanosleep.rmtp = rmtp;
+	per_task(current, restart_block).nanosleep.type = rmtp ? TT_NATIVE : TT_NONE;
+	per_task(current, restart_block).nanosleep.rmtp = rmtp;
 	texp = timespec64_to_ktime(t);
 	if (flags & TIMER_ABSTIME)
 		texp = timens_ktime_to_host(which_clock, texp);
@@ -239,8 +239,8 @@ SYSCALL_DEFINE4(clock_nanosleep_time32, clockid_t, which_clock, int, flags,
 		return -EINVAL;
 	if (flags & TIMER_ABSTIME)
 		rmtp = NULL;
-	current->restart_block.nanosleep.type = rmtp ? TT_COMPAT : TT_NONE;
-	current->restart_block.nanosleep.compat_rmtp = rmtp;
+	per_task(current, restart_block).nanosleep.type = rmtp ? TT_COMPAT : TT_NONE;
+	per_task(current, restart_block).nanosleep.compat_rmtp = rmtp;
 	texp = timespec64_to_ktime(t);
 	if (flags & TIMER_ABSTIME)
 		texp = timens_ktime_to_host(which_clock, texp);

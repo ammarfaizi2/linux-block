@@ -47,6 +47,8 @@
 #include <linux/cgroup.h>
 #include <linux/audit.h>
 
+DEFINE_PER_TASK(struct restart_block, restart_block);
+
 #define CREATE_TRACE_POINTS
 #include <trace/events/signal.h>
 
@@ -3002,7 +3004,7 @@ out:
  */
 SYSCALL_DEFINE0(restart_syscall)
 {
-	struct restart_block *restart = &current->restart_block;
+	struct restart_block *restart = &per_task(current, restart_block);
 	return restart->fn(restart);
 }
 

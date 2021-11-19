@@ -14,6 +14,8 @@
 #include <linux/mm_types.h>
 #include <asm/ptrace.h>
 
+DECLARE_PER_TASK(struct restart_block, restart_block);
+
 /*
  * Types defining task->signal and task->sighand and APIs using them:
  */

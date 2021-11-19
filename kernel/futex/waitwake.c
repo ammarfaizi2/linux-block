@@ -676,7 +676,7 @@ retry:
 	if (!abs_time)
 		goto out;
 
-	restart = &current->restart_block;
+	restart = &per_task(current, restart_block);
 	restart->futex.uaddr = uaddr;
 	restart->futex.val = val;
 	restart->futex.time = *abs_time;

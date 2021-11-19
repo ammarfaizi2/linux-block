@@ -229,7 +229,7 @@ asmlinkage int sys_rt_sigreturn(void)
 	sigset_t blocked;
 
 	/* Always make any pending restarted system calls return -EINTR */
-	current->restart_block.fn = do_no_restart_syscall;
+	per_task(current, restart_block).fn = do_no_restart_syscall;
 
 	frame = (struct rt_sigframe __user *)pt_psp(regs);
 	if (!access_ok(frame, sizeof(*frame)))

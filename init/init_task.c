@@ -83,9 +83,6 @@ struct task_struct init_task
 	.nr_cpus_allowed= NR_CPUS,
 	.mm		= NULL,
 	.active_mm	= &init_mm,
-	.restart_block	= {
-		.fn = do_no_restart_syscall,
-	},
 	.tasks		= LIST_HEAD_INIT(init_task.tasks),
 	.ptraced	= LIST_HEAD_INIT(init_task.ptraced),
 	.ptrace_entry	= LIST_HEAD_INIT(init_task.ptrace_entry),

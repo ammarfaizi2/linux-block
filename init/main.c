@@ -915,6 +915,7 @@ void __init init_per_task_early(void)
 	per_task(&init_task, mems_allowed_seq) = (seqcount_spinlock_t) SEQCNT_SPINLOCK_ZERO(init_task.mems_allowed_seq,
 						 &init_task.alloc_lock);
 #endif
+	per_task(&init_task, restart_block).fn = do_no_restart_syscall;
 #ifdef CONFIG_VIRT_CPU_ACCOUNTING_GEN
 	seqcount_init(&per_task(&init_task, vtime).seqcount);
 	per_task(&init_task, vtime).state = VTIME_SYS;
