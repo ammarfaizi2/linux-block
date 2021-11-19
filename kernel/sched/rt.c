@@ -381,9 +381,9 @@ static inline void rt_queue_pull_task(struct rq *rq)
 
 static void enqueue_pushable_task(struct rq *rq, struct task_struct *p)
 {
-	plist_del(&p->pushable_tasks, &rq->rt.pushable_tasks);
-	plist_node_init(&p->pushable_tasks, p->prio);
-	plist_add(&p->pushable_tasks, &rq->rt.pushable_tasks);
+	plist_del(&per_task(p, pushable_tasks), &rq->rt.pushable_tasks);
+	plist_node_init(&per_task(p, pushable_tasks), p->prio);
+	plist_add(&per_task(p, pushable_tasks), &rq->rt.pushable_tasks);
 
 	/* Update the highest prio pushable task */
 	if (p->prio < rq->rt.highest_prio.next)
@@ -392,12 +392,13 @@ static void enqueue_pushable_task(struct rq *rq, struct task_struct *p)
 
 static void dequeue_pushable_task(struct rq *rq, struct task_struct *p)
 {
-	plist_del(&p->pushable_tasks, &rq->rt.pushable_tasks);
+	plist_del(&per_task(p, pushable_tasks), &rq->rt.pushable_tasks);
 
 	/* Update the new highest prio pushable task */
 	if (has_pushable_tasks(rq)) {
-		p = plist_first_entry(&rq->rt.pushable_tasks,
-				      struct task_struct, pushable_tasks);
+		struct plist_node *first = list_entry(rq->rt.pushable_tasks.node_list.next, struct plist_node, node_list);
+
+		p = per_task_container_of(first, pushable_tasks);
 		rq->rt.highest_prio.next = p->prio;
 	} else {
 		rq->rt.highest_prio.next = MAX_RT_PRIO-1;
@@ -1809,12 +1810,14 @@ static int pick_rt_task(struct rq *rq, struct task_struct *p, int cpu)
 static struct task_struct *pick_highest_pushable_task(struct rq *rq, int cpu)
 {
 	struct plist_head *head = &rq->rt.pushable_tasks;
+	struct plist_node *pos;
 	struct task_struct *p;
 
 	if (!has_pushable_tasks(rq))
 		return NULL;
 
-	plist_for_each_entry(p, head, pushable_tasks) {
+	plist_for_each(pos, head) {
+		p = per_task_container_of(pos, pushable_tasks);
 		if (pick_rt_task(rq, p, cpu))
 			return p;
 	}
@@ -1975,12 +1978,13 @@ static struct rq *find_lock_lowest_rq(struct task_struct *task, struct rq *rq)
 static struct task_struct *pick_next_pushable_task(struct rq *rq)
 {
 	struct task_struct *p;
+	struct plist_node *first;
 
 	if (!has_pushable_tasks(rq))
 		return NULL;
 
-	p = plist_first_entry(&rq->rt.pushable_tasks,
-			      struct task_struct, pushable_tasks);
+	first = list_entry(rq->rt.pushable_tasks.node_list.next, struct plist_node, node_list);
+	p = per_task_container_of(first, pushable_tasks);
 
 	BUG_ON(rq->cpu != task_cpu(p));
 	BUG_ON(task_current(rq, p));

@@ -923,6 +923,9 @@ void __init init_per_task_early(void)
 	mutex_init(&per_task(&init_task, perf_event_mutex));
 	INIT_LIST_HEAD(&per_task(&init_task, perf_event_list));
 #endif
+#ifdef CONFIG_SMP
+	plist_node_init(&per_task(&init_task, pushable_tasks), MAX_PRIO);
+#endif
 }
 
 static void __init print_unknown_bootoptions(void)

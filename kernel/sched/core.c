@@ -116,6 +116,9 @@ DEFINE_PER_TASK(struct vm_struct *,			stack_vm_area);
 #ifdef CONFIG_SMP
 DEFINE_PER_TASK(int,					on_cpu);
 DEFINE_PER_TASK(struct __call_single_node,		wake_entry);
+
+DEFINE_PER_TASK(struct plist_node,			pushable_tasks);
+
 /*
  * recent_used_cpu is initially set as the last CPU used by a task
  * that wakes affine another task. Waker/wakee relationships can
@@ -4575,7 +4578,7 @@ int sched_fork(unsigned long clone_flags, struct task_struct *p)
 #endif
 	init_task_preempt_count(p);
 #ifdef CONFIG_SMP
-	plist_node_init(&p->pushable_tasks, MAX_PRIO);
+	plist_node_init(&per_task(p, pushable_tasks), MAX_PRIO);
 	RB_CLEAR_NODE(&p->pushable_dl_tasks);
 #endif
 	return 0;
