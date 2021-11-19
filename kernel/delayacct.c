@@ -130,8 +130,8 @@ int delayacct_add_tsk(struct taskstats *d, struct task_struct *tsk)
 	 * No locking available for sched_info (and too expensive to add one)
 	 * Mitigate by taking snapshot of values
 	 */
-	t1 = tsk->sched_info.pcount;
-	t2 = tsk->sched_info.run_delay;
+	t1 = per_task(tsk, sched_info).pcount;
+	t2 = per_task(tsk, sched_info).run_delay;
 	t3 = per_task(tsk, se).sum_exec_runtime;
 
 	d->cpu_count += t1;

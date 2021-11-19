@@ -214,12 +214,12 @@ static inline void sched_info_dequeue(struct rq *rq, struct task_struct *t)
 {
 	unsigned long long delta = 0;
 
-	if (!t->sched_info.last_queued)
+	if (!per_task(t, sched_info).last_queued)
 		return;
 
-	delta = rq_clock(rq) - t->sched_info.last_queued;
-	t->sched_info.last_queued = 0;
-	t->sched_info.run_delay += delta;
+	delta = rq_clock(rq) - per_task(t, sched_info).last_queued;
+	per_task(t, sched_info).last_queued = 0;
+	per_task(t, sched_info).run_delay += delta;
 
 	rq_sched_info_dequeue(rq, delta);
 }
@@ -233,15 +233,15 @@ static void sched_info_arrive(struct rq *rq, struct task_struct *t)
 {
 	unsigned long long now, delta = 0;
 
-	if (!t->sched_info.last_queued)
+	if (!per_task(t, sched_info).last_queued)
 		return;
 
 	now = rq_clock(rq);
-	delta = now - t->sched_info.last_queued;
-	t->sched_info.last_queued = 0;
-	t->sched_info.run_delay += delta;
-	t->sched_info.last_arrival = now;
-	t->sched_info.pcount++;
+	delta = now - per_task(t, sched_info).last_queued;
+	per_task(t, sched_info).last_queued = 0;
+	per_task(t, sched_info).run_delay += delta;
+	per_task(t, sched_info).last_arrival = now;
+	per_task(t, sched_info).pcount++;
 
 	rq_sched_info_arrive(rq, delta);
 }
@@ -253,8 +253,8 @@ static void sched_info_arrive(struct rq *rq, struct task_struct *t)
  */
 static inline void sched_info_enqueue(struct rq *rq, struct task_struct *t)
 {
-	if (!t->sched_info.last_queued)
-		t->sched_info.last_queued = rq_clock(rq);
+	if (!per_task(t, sched_info).last_queued)
+		per_task(t, sched_info).last_queued = rq_clock(rq);
 }
 
 /*
@@ -267,7 +267,7 @@ static inline void sched_info_enqueue(struct rq *rq, struct task_struct *t)
  */
 static inline void sched_info_depart(struct rq *rq, struct task_struct *t)
 {
-	unsigned long long delta = rq_clock(rq) - t->sched_info.last_arrival;
+	unsigned long long delta = rq_clock(rq) - per_task(t, sched_info).last_arrival;
 
 	rq_sched_info_depart(rq, delta);
 
