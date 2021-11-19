@@ -109,6 +109,7 @@ DECLARE_PER_TASK(struct sched_entity,			se);
 #ifdef CONFIG_SMP
 DECLARE_PER_TASK(int,					recent_used_cpu);
 DECLARE_PER_TASK(int,					wake_cpu);
+DECLARE_PER_TASK(struct plist_node,			pushable_tasks);
 #endif
 
 #ifdef CONFIG_CGROUP_SCHED
