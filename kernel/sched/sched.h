@@ -96,6 +96,27 @@
 # define SCHED_WARN_ON(x)      ({ (void)(x), 0; })
 #endif
 
+DECLARE_PER_TASK(struct sched_dl_entity,		dl);
+DECLARE_PER_TASK(int,					on_rq);
+DECLARE_PER_TASK(struct sched_rt_entity,		rt);
+DECLARE_PER_TASK(const struct sched_class *,		sched_class);
+DECLARE_PER_TASK(struct sched_entity,			se);
+
+#ifdef CONFIG_SMP
+DECLARE_PER_TASK(int,					recent_used_cpu);
+DECLARE_PER_TASK(int,					wake_cpu);
+DECLARE_PER_TASK(struct plist_node,			pushable_tasks);
+#endif
+
+#ifdef CONFIG_CGROUP_SCHED
+DECLARE_PER_TASK(struct task_group *,			sched_task_group);
+#endif
+
+#ifdef CONFIG_SCHED_CORE
+DECLARE_PER_TASK(struct rb_node,			core_node);
+DECLARE_PER_TASK(unsigned long,				core_cookie);
+#endif
+
 enum vtime_state {
 	/* Task is sleeping or running in a CPU with VTIME inactive: */
 	VTIME_INACTIVE = 0,
@@ -123,34 +144,225 @@ struct vtime {
 DECLARE_PER_TASK(struct vtime,				vtime);
 #endif
 
-DECLARE_PER_TASK(struct sched_dl_entity,		dl);
-DECLARE_PER_TASK(int,					on_rq);
-DECLARE_PER_TASK(struct sched_rt_entity,		rt);
-DECLARE_PER_TASK(const struct sched_class *,		sched_class);
-DECLARE_PER_TASK(struct sched_entity,			se);
+/*
+ * Utilization clamp constraints.
+ * @UCLAMP_MIN:	Minimum utilization
+ * @UCLAMP_MAX:	Maximum utilization
+ * @UCLAMP_CNT:	Utilization clamp constraints count
+ */
+enum uclamp_id {
+	UCLAMP_MIN = 0,
+	UCLAMP_MAX,
+	UCLAMP_CNT
+};
+
+/*
+ * Integer metrics need fixed point arithmetic, e.g., sched/fair
+ * has a few: load, load_avg, util_avg, freq, and capacity.
+ *
+ * We define a basic fixed point arithmetic range, and then formalize
+ * all these metrics based on that basic range.
+ */
+# define SCHED_FIXEDPOINT_SHIFT		10
+# define SCHED_FIXEDPOINT_SCALE		(1L << SCHED_FIXEDPOINT_SHIFT)
+
+/* Increase resolution of cpu_capacity calculations */
+# define SCHED_CAPACITY_SHIFT		SCHED_FIXEDPOINT_SHIFT
+# define SCHED_CAPACITY_SCALE		(1L << SCHED_CAPACITY_SHIFT)
+
+struct load_weight {
+	unsigned long			weight;
+	u32				inv_weight;
+};
+
+/**
+ * struct util_est - Estimation utilization of FAIR tasks
+ * @enqueued: instantaneous estimated utilization of a task/cpu
+ * @ewma:     the Exponential Weighted Moving Average (EWMA)
+ *            utilization of a task
+ *
+ * Support data structure to track an Exponential Weighted Moving Average
+ * (EWMA) of a FAIR task's utilization. New samples are added to the moving
+ * average each time a task completes an activation. Sample's weight is chosen
+ * so that the EWMA will be relatively insensitive to transient changes to the
+ * task's workload.
+ *
+ * The enqueued attribute has a slightly different meaning for tasks and cpus:
+ * - task:   the task's util_avg at last task dequeue time
+ * - cfs_rq: the sum of util_est.enqueued for each RUNNABLE task on that CPU
+ * Thus, the util_est.enqueued of a task represents the contribution on the
+ * estimated utilization of the CPU where that task is currently enqueued.
+ *
+ * Only for tasks we track a moving average of the past instantaneous
+ * estimated utilization. This allows to absorb sporadic drops in utilization
+ * of an otherwise almost periodic task.
+ *
+ * The UTIL_AVG_UNCHANGED flag is used to synchronize util_est with util_avg
+ * updates. When a task is dequeued, its util_est should not be updated if its
+ * util_avg has not been updated in the meantime.
+ * This information is mapped into the MSB bit of util_est.enqueued at dequeue
+ * time. Since max value of util_est.enqueued for a task is 1024 (PELT util_avg
+ * for a task) it is safe to use MSB.
+ */
+struct util_est {
+	unsigned int			enqueued;
+	unsigned int			ewma;
+#define UTIL_EST_WEIGHT_SHIFT		2
+#define UTIL_AVG_UNCHANGED		0x80000000
+} __attribute__((__aligned__(sizeof(u64))));
+
+/*
+ * The load/runnable/util_avg accumulates an infinite geometric series
+ * (see __update_load_avg_cfs_rq() in kernel/sched/pelt.c).
+ *
+ * [load_avg definition]
+ *
+ *   load_avg = runnable% * scale_load_down(load)
+ *
+ * [runnable_avg definition]
+ *
+ *   runnable_avg = runnable% * SCHED_CAPACITY_SCALE
+ *
+ * [util_avg definition]
+ *
+ *   util_avg = running% * SCHED_CAPACITY_SCALE
+ *
+ * where runnable% is the time ratio that a sched_entity is runnable and
+ * running% the time ratio that a sched_entity is running.
+ *
+ * For cfs_rq, they are the aggregated values of all runnable and blocked
+ * sched_entities.
+ *
+ * The load/runnable/util_avg doesn't directly factor frequency scaling and CPU
+ * capacity scaling. The scaling is done through the rq_clock_pelt that is used
+ * for computing those signals (see update_rq_clock_pelt())
+ *
+ * N.B., the above ratios (runnable% and running%) themselves are in the
+ * range of [0, 1]. To do fixed point arithmetics, we therefore scale them
+ * to as large a range as necessary. This is for example reflected by
+ * util_avg's SCHED_CAPACITY_SCALE.
+ *
+ * [Overflow issue]
+ *
+ * The 64-bit load_sum can have 4353082796 (=2^64/47742/88761) entities
+ * with the highest load (=88761), always runnable on a single cfs_rq,
+ * and should not overflow as the number already hits PID_MAX_LIMIT.
+ *
+ * For all other cases (including 32-bit kernels), struct load_weight's
+ * weight will overflow first before we do, because:
+ *
+ *    Max(load_avg) <= Max(load.weight)
+ *
+ * Then it is the load_weight's responsibility to consider overflow
+ * issues.
+ */
+struct sched_avg {
+	u64				last_update_time;
+	u64				load_sum;
+	u64				runnable_sum;
+	u32				util_sum;
+	u32				period_contrib;
+	unsigned long			load_avg;
+	unsigned long			runnable_avg;
+	unsigned long			util_avg;
+	struct util_est			util_est;
+} ____cacheline_aligned;
+
+struct sched_entity {
+	/* For load-balancing: */
+	struct load_weight		load;
+	struct rb_node			run_node;
+	struct list_head		group_node;
+	unsigned int			on_rq;
+
+	u64				exec_start;
+	u64				sum_exec_runtime;
+	u64				vruntime;
+	u64				prev_sum_exec_runtime;
+
+	u64				nr_migrations;
+
+#ifdef CONFIG_FAIR_GROUP_SCHED
+	int				depth;
+	struct sched_entity		*parent;
+	/* rq on which this entity is (to be) queued: */
+	struct cfs_rq			*cfs_rq;
+	/* rq "owned" by this entity/group: */
+	struct cfs_rq			*my_q;
+	/* cached value of my_q->h_nr_running */
+	unsigned long			runnable_weight;
+#endif
 
 #ifdef CONFIG_SMP
-DECLARE_PER_TASK(int,					recent_used_cpu);
-DECLARE_PER_TASK(int,					wake_cpu);
-DECLARE_PER_TASK(struct plist_node,			pushable_tasks);
+	/*
+	 * Per entity load average tracking.
+	 *
+	 * Put into separate cache line so it does not
+	 * collide with read-mostly values above.
+	 */
+	struct sched_avg		avg;
 #endif
+};
 
-#ifdef CONFIG_CGROUP_SCHED
-DECLARE_PER_TASK(struct task_group *,			sched_task_group);
-#endif
+struct sched_rt_entity {
+	struct list_head		run_list;
+	unsigned long			timeout;
+	unsigned long			watchdog_stamp;
+	unsigned int			time_slice;
+	unsigned short			on_rq;
+	unsigned short			on_list;
 
-#ifdef CONFIG_SCHED_CORE
-DECLARE_PER_TASK(struct rb_node,			core_node);
-DECLARE_PER_TASK(unsigned long,				core_cookie);
+	struct sched_rt_entity		*back;
+#ifdef CONFIG_RT_GROUP_SCHED
+	struct sched_rt_entity		*parent;
+	/* rq on which this entity is (to be) queued: */
+	struct rt_rq			*rt_rq;
+	/* rq "owned" by this entity/group: */
+	struct rt_rq			*my_q;
 #endif
+} __randomize_layout;
 
 #ifdef CONFIG_UCLAMP_TASK
+/* Number of utilization clamp buckets (shorter alias) */
+#define UCLAMP_BUCKETS CONFIG_UCLAMP_BUCKETS_COUNT
+
+/*
+ * Utilization clamp for a scheduling entity
+ * @value:		clamp value "assigned" to a se
+ * @bucket_id:		bucket index corresponding to the "assigned" value
+ * @active:		the se is currently refcounted in a rq's bucket
+ * @user_defined:	the requested clamp value comes from user-space
+ *
+ * The bucket_id is the index of the clamp bucket matching the clamp value
+ * which is pre-computed and stored to avoid expensive integer divisions from
+ * the fast path.
+ *
+ * The active bit is set whenever a task has got an "effective" value assigned,
+ * which can be different from the clamp value "requested" from user-space.
+ * This allows to know a task is refcounted in the rq's bucket corresponding
+ * to the "effective" bucket_id.
+ *
+ * The user_defined bit is set whenever a task has got a task-specific clamp
+ * value requested from userspace, i.e. the system defaults apply to this task
+ * just as a restriction. This allows to relax default clamps when a less
+ * restrictive task-specific value has been requested, thus allowing to
+ * implement a "nice" semantic. For example, a task running with a 20%
+ * default boost can still drop its own boosting to 0%.
+ */
+struct uclamp_se {
+	unsigned int value		: bits_per(SCHED_CAPACITY_SCALE);
+	unsigned int bucket_id		: bits_per(UCLAMP_BUCKETS);
+	unsigned int active		: 1;
+	unsigned int user_defined	: 1;
+};
+
 /*
  * Clamp values requested for a scheduling entity.
  * Must be updated with task_rq_lock() held.
  */
 DECLARE_PER_TASK(struct uclamp_se,			uclamp_req[UCLAMP_CNT]);
-#endif
+
+#endif /* CONFIG_UCLAMP_TASK */
 
 struct rq;
 struct cpuidle_state;
