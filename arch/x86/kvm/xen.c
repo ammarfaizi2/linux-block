@@ -107,7 +107,7 @@ static void kvm_xen_update_runstate(struct kvm_vcpu *v, int state)
 	struct kvm_vcpu_xen *vx = &v->arch.xen;
 	u64 now = get_kvmclock_ns(v->kvm);
 	u64 delta_ns = now - vx->runstate_entry_time;
-	u64 run_delay = current->sched_info.run_delay;
+	u64 run_delay = per_task(current, sched_info).run_delay;
 
 	if (unlikely(!vx->runstate_entry_time))
 		vx->current_runstate = RUNSTATE_offline;
@@ -575,7 +575,7 @@ int kvm_xen_vcpu_set_attr(struct kvm_vcpu *vcpu, struct kvm_xen_vcpu_attr *data)
 			data->u.runstate.time_blocked;
 		vcpu->arch.xen.runstate_times[RUNSTATE_offline] =
 			data->u.runstate.time_offline;
-		vcpu->arch.xen.last_steal = current->sched_info.run_delay;
+		vcpu->arch.xen.last_steal = per_task(current, sched_info).run_delay;
 		r = 0;
 		break;
 

@@ -365,27 +365,6 @@ enum uclamp_id {
 	UCLAMP_CNT
 };
 
-struct sched_info {
-#ifdef CONFIG_SCHED_INFO
-	/* Cumulative counters: */
-
-	/* # of times we have run on this CPU: */
-	unsigned long			pcount;
-
-	/* Time spent waiting on a runqueue: */
-	unsigned long long		run_delay;
-
-	/* Timestamps: */
-
-	/* When did we last run on a CPU? */
-	unsigned long long		last_arrival;
-
-	/* When were we last queued to run? */
-	unsigned long long		last_queued;
-
-#endif /* CONFIG_SCHED_INFO */
-};
-
 /*
  * Integer metrics need fixed point arithmetic, e.g., sched/fair
  * has a few: load, load_avg, util_avg, freq, and capacity.
@@ -724,8 +703,6 @@ struct task_struct {
 	bool				trc_reader_checked;
 	struct list_head		trc_holdout_list;
 #endif /* #ifdef CONFIG_TASKS_TRACE_RCU */
-
-	struct sched_info		sched_info;
 
 	struct list_head		tasks;
 #ifdef CONFIG_SMP

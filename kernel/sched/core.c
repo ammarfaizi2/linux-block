@@ -158,6 +158,8 @@ DEFINE_PER_TASK(struct uclamp_se,			uclamp[UCLAMP_CNT]);
 DEFINE_PER_TASK(struct hlist_head,			preempt_notifiers);
 #endif
 
+DEFINE_PER_TASK(struct sched_info,			sched_info);
+
 /*
  * Export tracepoints that act as a bare tracehook (ie: have no trace event
  * associated with them) to allow external modules to probe them.
@@ -4571,7 +4573,8 @@ int sched_fork(unsigned long clone_flags, struct task_struct *p)
 
 #ifdef CONFIG_SCHED_INFO
 	if (likely(sched_info_on()))
-		memset(&p->sched_info, 0, sizeof(p->sched_info));
+		memset(&per_task(p, sched_info), 0,
+		       sizeof(per_task(p, sched_info)));
 #endif
 #if defined(CONFIG_SMP)
 	per_task(p, on_cpu) = 0;
