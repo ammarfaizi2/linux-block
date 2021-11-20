@@ -11,14 +11,14 @@
 #else
 #include <string.h>
 #endif
-#include "../include/asm/inat.h" /* __ignore_sync_check__ */
-#include "../include/asm/insn.h" /* __ignore_sync_check__ */
-#include "../include/asm-generic/unaligned.h" /* __ignore_sync_check__ */
+#include <asm/inat.h> /*__ignore_sync_check__ */
+#include <asm/insn.h> /* __ignore_sync_check__ */
+#include <asm/unaligned.h> /* __ignore_sync_check__ */
 
 #include <linux/errno.h>
 #include <linux/kconfig.h>
 
-#include "../include/asm/emulate_prefix.h" /* __ignore_sync_check__ */
+#include <asm/emulate_prefix.h> /* __ignore_sync_check__ */
 
 #define leXX_to_cpu(t, r)						\
 ({									\
@@ -737,7 +737,7 @@ int insn_decode(struct insn *insn, const void *kaddr, int buf_len, enum insn_mod
 {
 	int ret;
 
-#define INSN_MODE_KERN (enum insn_mode)-1 /* __ignore_sync_check__ mode is only valid in the kernel */
+/* #define INSN_MODE_KERN	-1 __ignore_sync_check__ mode is only valid in the kernel */
 
 	if (m == INSN_MODE_KERN)
 		insn_init(insn, kaddr, buf_len, IS_ENABLED(CONFIG_X86_64));
