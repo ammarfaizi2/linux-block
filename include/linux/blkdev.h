@@ -794,13 +794,7 @@ extern void blk_finish_plug(struct blk_plug *);
 
 void blk_flush_plug(struct blk_plug *plug, bool from_schedule);
 
-static inline bool blk_needs_flush_plug(struct task_struct *tsk)
-{
-	struct blk_plug *plug = tsk->plug;
-
-	return plug &&
-		 (plug->mq_list || !list_empty(&plug->cb_list));
-}
+extern bool blk_needs_flush_plug(struct task_struct *tsk);
 
 int blkdev_issue_flush(struct block_device *bdev);
 long nr_blockdev_pages(void);
@@ -1241,18 +1235,7 @@ extern int bdev_read_page(struct block_device *, sector_t, struct page *);
 extern int bdev_write_page(struct block_device *, sector_t, struct page *,
 						struct writeback_control *);
 
-static inline void blk_wake_io_task(struct task_struct *waiter)
-{
-	/*
-	 * If we're polling, the task itself is doing the completions. For
-	 * that case, we don't need to signal a wakeup, it's enough to just
-	 * mark us as RUNNING.
-	 */
-	if (waiter == current)
-		__set_current_state(TASK_RUNNING);
-	else
-		wake_up_process(waiter);
-}
+extern void blk_wake_io_task(struct task_struct *waiter);
 
 unsigned long disk_start_io_acct(struct gendisk *disk, unsigned int sectors,
 		unsigned int op);
