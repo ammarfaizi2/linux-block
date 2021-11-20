@@ -991,6 +991,14 @@ struct sock *inet_csk_clone_lock(const struct sock *sk,
 }
 EXPORT_SYMBOL_GPL(inet_csk_clone_lock);
 
+void inet_csk_prepare_for_destroy_sock(struct sock *sk)
+{
+	/* The below has to be done to allow calling inet_csk_destroy_sock */
+	sock_set_flag(sk, SOCK_DEAD);
+	this_cpu_inc(*sk->sk_prot->orphan_count);
+}
+EXPORT_SYMBOL(inet_csk_prepare_for_destroy_sock);
+
 /*
  * At this point, there should be no process reference to this
  * socket, and thus no user references at all.  Therefore we
