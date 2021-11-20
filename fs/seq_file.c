@@ -383,6 +383,12 @@ void seq_escape_mem(struct seq_file *m, const char *src, size_t len,
 }
 EXPORT_SYMBOL(seq_escape_mem);
 
+void seq_escape_str(struct seq_file *m, const char *src, unsigned int flags, const char *esc)
+{
+	seq_escape_mem(m, src, strlen(src), flags, esc);
+}
+EXPORT_SYMBOL(seq_escape_str);
+
 void seq_vprintf(struct seq_file *m, const char *f, va_list args)
 {
 	int len;
