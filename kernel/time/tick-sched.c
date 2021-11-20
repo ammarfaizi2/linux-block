@@ -33,6 +33,8 @@
 
 #include <trace/events/timer.h>
 
+#include <linux/sched/cputime.h>
+
 #ifdef CONFIG_NO_HZ_FULL
 DEFINE_PER_TASK(atomic_t, tick_dep_mask);
 #endif
