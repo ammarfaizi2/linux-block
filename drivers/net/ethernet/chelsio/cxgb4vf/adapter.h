@@ -40,6 +40,7 @@
 #ifndef __CXGB4VF_ADAPTER_H__
 #define __CXGB4VF_ADAPTER_H__
 
+#include <net/sock.h>
 #include <linux/etherdevice.h>
 #include <linux/interrupt.h>
 #include <linux/pci.h>
