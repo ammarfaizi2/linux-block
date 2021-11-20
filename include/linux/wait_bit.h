@@ -6,6 +6,7 @@
  * Linux wait-bit related types and methods:
  */
 #include <linux/wait.h>
+#include <linux/kernel.h>
 
 struct wait_bit_key {
 	void			*flags;
