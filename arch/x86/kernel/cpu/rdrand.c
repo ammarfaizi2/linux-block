@@ -7,6 +7,7 @@
  *          H. Peter Anvin <hpa@linux.intel.com>
  */
 
+#include <linux/bug.h>
 #include <asm/processor.h>
 #include <asm/archrandom.h>
 #include <asm/sections.h>
