@@ -395,7 +395,7 @@ struct paravirt_patch_template pv_ops = {
 		.flush		= paravirt_nop,
 	},
 
-	.mmu.set_fixmap		= native_set_fixmap,
+	.mmu.__set_fixmap	= native_set_fixmap,
 #endif /* CONFIG_PARAVIRT_XXL */
 
 #if defined(CONFIG_PARAVIRT_SPINLOCKS)

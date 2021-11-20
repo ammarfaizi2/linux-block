@@ -2163,7 +2163,7 @@ static const typeof(pv_ops) xen_mmu_ops __initconst = {
 			.flush = paravirt_flush_lazy_mmu,
 		},
 
-		.set_fixmap = xen_set_fixmap,
+		.__set_fixmap = xen_set_fixmap,
 	},
 };
 

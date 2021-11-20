@@ -238,7 +238,7 @@ struct pv_mmu_ops {
 
 	/* Sometimes the physical address is a pfn, and sometimes its
 	   an mfn.  We can tell which is which from the index. */
-	void (*set_fixmap)(unsigned /* enum fixed_addresses */ idx,
+	void (*__set_fixmap)(unsigned /* enum fixed_addresses */ idx,
 			   phys_addr_t phys, pgprot_t flags);
 #endif
 } __no_randomize_layout;
