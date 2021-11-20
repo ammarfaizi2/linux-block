@@ -1,0 +1,6 @@
+config SND_SOC_APPLE_MCA
+	tristate "Apple Silicon MCA driver"
+	select SND_DMAENGINE_PCM
+	select CONFIG_COMMON_CLK
+	help
+	  This option enables an ASoC platform driver for Apple Silicon SoCs.
