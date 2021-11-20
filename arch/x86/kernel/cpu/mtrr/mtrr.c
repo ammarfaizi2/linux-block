@@ -31,6 +31,7 @@
     System Programming Guide; Section 9.11. (1997 edition - PPro).
 */
 
+#include <asm/cpumask.h>
 #include <linux/types.h> /* FIXME: kvm_para.h needs this */
 
 #include <linux/stop_machine.h>

@@ -11,6 +11,7 @@
 /*
  * Handle hardware traps and faults.
  */
+#include <asm/cpumask.h>
 #include <linux/spinlock.h>
 #include <linux/kprobes.h>
 #include <linux/kdebug.h>
