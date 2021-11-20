@@ -8,6 +8,7 @@
  *	Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
  */
 
+#include <linux/bug.h>
 #include <asm/cpufeature.h>
 #include <asm/intel_pconfig.h>
 
