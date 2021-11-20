@@ -1222,6 +1222,13 @@ void *krealloc(const void *p, size_t new_size, gfp_t flags)
 }
 EXPORT_SYMBOL(krealloc);
 
+void *kmalloc_large(size_t size, gfp_t flags)
+{
+	unsigned int order = get_order(size);
+	return kmalloc_order_trace(size, flags, order);
+}
+EXPORT_SYMBOL(kmalloc_large);
+
 /**
  * kfree_sensitive - Clear sensitive information in memory before freeing
  * @p: object to free memory of
