@@ -8,6 +8,7 @@
  *	Pawan Gupta <pawan.kumar.gupta@linux.intel.com>
  */
 
+#include <linux/kernel.h>
 #include <linux/cpufeature.h>
 
 #include <asm/cmdline.h>
