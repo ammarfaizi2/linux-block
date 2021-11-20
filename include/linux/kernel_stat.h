@@ -95,24 +95,4 @@ static inline void kcpustat_cpu_fetch(struct kernel_cpustat *dst, int cpu)
 
 #endif
 
-extern void account_user_time(struct task_struct *, u64);
-extern void account_guest_time(struct task_struct *, u64);
-extern void account_system_time(struct task_struct *, int, u64);
-extern void account_system_index_time(struct task_struct *, u64,
-				      enum cpu_usage_stat);
-extern void account_steal_time(u64);
-extern void account_idle_time(u64);
-extern u64 get_idle_time(struct kernel_cpustat *kcs, int cpu);
-
-#ifdef CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
-static inline void account_process_tick(struct task_struct *tsk, int user)
-{
-	vtime_flush(tsk);
-}
-#else
-extern void account_process_tick(struct task_struct *, int user);
-#endif
-
-extern void account_idle_ticks(unsigned long ticks);
-
 #endif /* _LINUX_KERNEL_STAT_H */

@@ -53,6 +53,8 @@
 
 #include "tick-internal.h"
 
+#include <linux/sched/cputime.h>
+
 #define CREATE_TRACE_POINTS
 #include <trace/events/timer.h>
 

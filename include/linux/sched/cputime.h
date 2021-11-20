@@ -3,6 +3,7 @@
 #define _LINUX_SCHED_CPUTIME_H
 
 #include <linux/sched/signal.h>
+#include <linux/kernel_stat.h>
 
 /*
  * cputime accounting APIs:
@@ -188,5 +189,25 @@ static inline void prev_cputime_init(struct prev_cputime *prev)
 
 extern unsigned long long
 task_sched_runtime(struct task_struct *task);
+
+extern void account_user_time(struct task_struct *, u64);
+extern void account_guest_time(struct task_struct *, u64);
+extern void account_system_time(struct task_struct *, int, u64);
+extern void account_system_index_time(struct task_struct *, u64,
+				      enum cpu_usage_stat);
+extern void account_steal_time(u64);
+extern void account_idle_time(u64);
+extern u64 get_idle_time(struct kernel_cpustat *kcs, int cpu);
+
+#ifdef CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
+static inline void account_process_tick(struct task_struct *tsk, int user)
+{
+	vtime_flush(tsk);
+}
+#else
+extern void account_process_tick(struct task_struct *, int user);
+#endif
+
+extern void account_idle_ticks(unsigned long ticks);
 
 #endif /* _LINUX_SCHED_CPUTIME_H */
