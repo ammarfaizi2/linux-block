@@ -5,7 +5,7 @@
 #ifndef _SYSCALL_USER_DISPATCH_H
 #define _SYSCALL_USER_DISPATCH_H
 
-#include <linux/thread_info.h>
+#include <linux/err.h>
 
 #ifdef CONFIG_GENERIC_ENTRY
 

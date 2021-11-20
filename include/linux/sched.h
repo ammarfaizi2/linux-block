@@ -10,6 +10,7 @@
 #include <uapi/linux/sched.h>
 
 #include <linux/sched/per_task.h>
+#include <linux/thread_info.h>
 
 #include <asm/current.h>
 
