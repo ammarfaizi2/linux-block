@@ -36,6 +36,17 @@
 #include <linux/platform_data/x86/apple.h>
 #include <linux/ptp_clock_kernel.h>
 
+#define SPI_STATISTICS_ADD_TO_FIELD(stats, field, count)	\
+	do {							\
+		unsigned long flags;				\
+		spin_lock_irqsave(&(stats)->lock, flags);	\
+		(stats)->field += count;			\
+		spin_unlock_irqrestore(&(stats)->lock, flags);	\
+	} while (0)
+
+#define SPI_STATISTICS_INCREMENT_FIELD(stats, field)	\
+	SPI_STATISTICS_ADD_TO_FIELD(stats, field, 1)
+
 #define CREATE_TRACE_POINTS
 #include <trace/events/spi.h>
 EXPORT_TRACEPOINT_SYMBOL(spi_transfer_start);

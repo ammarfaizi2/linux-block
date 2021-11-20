@@ -78,17 +78,6 @@ struct spi_statistics {
 	unsigned long transfers_split_maxsize;
 };
 
-#define SPI_STATISTICS_ADD_TO_FIELD(stats, field, count)	\
-	do {							\
-		unsigned long flags;				\
-		spin_lock_irqsave(&(stats)->lock, flags);	\
-		(stats)->field += count;			\
-		spin_unlock_irqrestore(&(stats)->lock, flags);	\
-	} while (0)
-
-#define SPI_STATISTICS_INCREMENT_FIELD(stats, field)	\
-	SPI_STATISTICS_ADD_TO_FIELD(stats, field, 1)
-
 /**
  * struct spi_delay - SPI delay information
  * @value: Value for the delay
