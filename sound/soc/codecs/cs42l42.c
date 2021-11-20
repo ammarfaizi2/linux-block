@@ -2120,13 +2120,10 @@ static int cs42l42_i2c_probe(struct i2c_client *i2c_client,
 		goto err_disable;
 	}
 
-	if (devid != CS42L42_CHIP_ID) {
-		ret = -ENODEV;
-		dev_err(&i2c_client->dev,
+	if (devid != CS42L42_CHIP_ID)
+		dev_warn(&i2c_client->dev,
 			"CS42L42 Device ID (%X). Expected %X\n",
 			devid, CS42L42_CHIP_ID);
-		goto err_disable;
-	}
 
 	ret = regmap_read(cs42l42->regmap, CS42L42_REVID, &reg);
 	if (ret < 0) {
