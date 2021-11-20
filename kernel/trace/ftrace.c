@@ -7227,6 +7227,52 @@ void ftrace_reset_array_ops(struct trace_array *tr)
 	tr->ops->func = ftrace_stub;
 }
 
+/*
+ * Preemption is promised to be disabled when return bit >= 0.
+ */
+int trace_test_and_set_recursion(unsigned long ip, unsigned long pip, int start)
+{
+	unsigned int val = READ_ONCE(current->trace_recursion);
+	int bit;
+
+	bit = trace_get_context_bit() + start;
+	if (unlikely(val & (1 << bit))) {
+		/*
+		 * If an interrupt occurs during a trace, and another trace
+		 * happens in that interrupt but before the preempt_count is
+		 * updated to reflect the new interrupt context, then this
+		 * will think a recursion occurred, and the event will be dropped.
+		 * Let a single instance happen via the TRANSITION_BIT to
+		 * not drop those events.
+		 */
+		bit = TRACE_CTX_TRANSITION + start;
+		if (val & (1 << bit)) {
+			do_ftrace_record_recursion(ip, pip);
+			return -1;
+		}
+	}
+
+	val |= 1 << bit;
+	current->trace_recursion = val;
+	barrier();
+
+	preempt_disable_notrace();
+
+	return bit;
+}
+EXPORT_SYMBOL_GPL(trace_test_and_set_recursion);
+
+/*
+ * Preemption will be enabled (if it was previously enabled).
+ */
+void trace_clear_recursion(int bit)
+{
+	preempt_enable_notrace();
+	barrier();
+	trace_recursion_clear(bit);
+}
+EXPORT_SYMBOL_GPL(trace_clear_recursion);
+
 static nokprobe_inline void
 __ftrace_ops_list_func(unsigned long ip, unsigned long parent_ip,
 		       struct ftrace_ops *ignored, struct ftrace_regs *fregs)
