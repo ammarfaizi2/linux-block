@@ -11,6 +11,7 @@
  *
  *  Copyright (C) 2006 Red Hat, Inc., Ingo Molnar <mingo@redhat.com>
  */
+#include <linux/vtime.h>
 #include <linux/sched/cond_resched.h>
 #include <linux/sched/cputime.h>
 #include <linux/rwsem.h>
