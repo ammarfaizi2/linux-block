@@ -11,10 +11,11 @@
 
 #include <linux/audit_types.h>
 
-#include <linux/sched.h>
-#include <linux/ptrace.h>
 #include <linux/audit_arch.h>
 #include <linux/time64.h>
+#include <linux/init.h>
+#include <linux/signal.h>
+#include <linux/ptrace_types.h>
 
 struct dentry;
 struct file;
