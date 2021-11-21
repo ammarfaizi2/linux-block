@@ -11,28 +11,12 @@
 #ifndef _LINUX_KERNEL_H
 #define _LINUX_KERNEL_H
 
-#include <linux/stdarg.h>
-#include <linux/align.h>
-#include <linux/limits.h>
-#include <linux/linkage.h>
-#include <linux/stddef.h>
-#include <linux/types.h>
-#include <linux/compiler.h>
-#include <linux/container_of.h>
-#include <linux/bitops.h>
 #include <linux/kstrtox.h>
-#include <linux/log2.h>
-#include <linux/math.h>
-#include <linux/minmax.h>
-#include <linux/typecheck.h>
-#include <linux/panic.h>
-#include <linux/printk.h>
-#include <linux/build_bug.h>
 #include <linux/static_call_types.h>
 #include <linux/instruction_pointer.h>
-#include <asm/byteorder.h>
+#include <linux/container_of.h>
 
-#include <uapi/linux/kernel.h>
+#include <linux/stdarg.h>
 
 #define STACK_MAGIC	0xdeadbeef
 

@@ -8,6 +8,8 @@
 #ifndef _LINUX_THREAD_INFO_H
 #define _LINUX_THREAD_INFO_H
 
+#include <vdso/limits.h>
+
 #include <linux/types.h>
 #include <linux/limits.h>
 #include <linux/bug.h>

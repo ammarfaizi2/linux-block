@@ -5,6 +5,7 @@
 #ifndef __LINUX_UIO_H
 #define __LINUX_UIO_H
 
+#include <linux/minmax.h>
 #include <linux/kernel.h>
 #include <linux/thread_info.h>
 #include <linux/mm_types.h>

@@ -71,6 +71,7 @@ static inline void x86_ce4100_early_setup(void) { }
 
 #include <asm/espfix.h>
 #include <linux/kernel.h>
+#include <linux/align.h>
 
 /*
  * This is set up by the setup-routine at boot-time
