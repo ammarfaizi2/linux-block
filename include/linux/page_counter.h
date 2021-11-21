@@ -5,6 +5,9 @@
 #include <linux/atomic_api.h>
 #include <linux/atomic.h>
 #include <linux/kernel.h>
+
+#include <vdso/limits.h>
+
 #include <asm/page.h>
 
 struct page_counter {

@@ -34,9 +34,9 @@ struct vmcoredd_node {
 };
 
 #ifdef CONFIG_PROC_KCORE
-void __init kclist_add(struct kcore_list *, void *, size_t, int type);
+void kclist_add(struct kcore_list *, void *, size_t, int type);
 
-extern int __init register_mem_pfn_is_ram(int (*fn)(unsigned long pfn));
+extern int register_mem_pfn_is_ram(int (*fn)(unsigned long pfn));
 #else
 static inline
 void kclist_add(struct kcore_list *new, void *addr, size_t size, int type)
