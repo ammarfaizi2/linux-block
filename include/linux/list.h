@@ -2,12 +2,10 @@
 #ifndef _LINUX_LIST_H
 #define _LINUX_LIST_H
 
-#include <linux/compiler.h>
 #include <linux/container_of.h>
-#include <linux/types.h>
-#include <linux/stddef.h>
 #include <linux/poison.h>
 #include <linux/const.h>
+#include <linux/compiler.h>
 
 #include <asm/barrier.h>
 
