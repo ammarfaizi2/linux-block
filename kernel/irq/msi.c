@@ -881,6 +881,7 @@ int __msi_domain_alloc_irqs(struct irq_domain *domain, struct device *dev, struc
 	msi_alloc_info_t arg = { };
 	unsigned int vflags = 0;
 	struct msi_desc *desc;
+	unsigned long idx;
 	int allocated = 0;
 	int i, ret, virq;
 
@@ -910,7 +911,10 @@ int __msi_domain_alloc_irqs(struct irq_domain *domain, struct device *dev, struc
 			vflags |= VIRQ_NOMASK_QUIRK;
 	}
 
-	msi_for_each_desc(desc, dev, MSI_DESC_NOTASSOCIATED) {
+	xa_for_each_range(&dev->msi.data->store, idx, desc, range->first, range->last) {
+		if (!msi_desc_match(desc, MSI_DESC_NOTASSOCIATED))
+			continue;
+
 		ops->set_desc(&arg, desc);
 
 		virq = __irq_domain_alloc_irqs(domain, -1, desc->nvec_used,
@@ -1003,10 +1007,14 @@ void __msi_domain_free_irqs(struct irq_domain *domain, struct device *dev, struc
 	struct msi_domain_info *info = domain->host_data;
 	struct irq_data *irqd;
 	struct msi_desc *desc;
+	unsigned long idx;
 	int i;
 
 	/* Only handle MSI entries which have an interrupt associated */
-	msi_for_each_desc(desc, dev, MSI_DESC_ASSOCIATED) {
+	xa_for_each_range(&dev->msi.data->store, idx, desc, range->first, range->last) {
+		if (!msi_desc_match(desc, MSI_DESC_ASSOCIATED))
+			continue;
+
 		/* Make sure all interrupts are deactivated */
 		for (i = 0; i < desc->nvec_used; i++) {
 			irqd = irq_domain_get_irq_data(domain, desc->irq + i);
