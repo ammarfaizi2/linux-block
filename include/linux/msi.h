@@ -322,8 +322,7 @@ static inline void pci_write_msi_msg(unsigned int irq, struct msi_msg *msg)
 #endif /* CONFIG_PCI_MSI */
 
 int msi_add_msi_desc(struct device *dev, struct msi_desc *init_desc);
-void msi_free_msi_descs_range(struct device *dev, enum msi_desc_filter filter,
-			      unsigned int base_index, unsigned int ndesc);
+void msi_free_msi_descs_range(struct device *dev, enum msi_desc_filter filter, struct msi_range *range);
 
 /**
  * msi_free_msi_descs - Free MSI descriptors of a device
@@ -331,7 +330,9 @@ void msi_free_msi_descs_range(struct device *dev, enum msi_desc_filter filter,
  */
 static inline void msi_free_msi_descs(struct device *dev)
 {
-	msi_free_msi_descs_range(dev, MSI_DESC_ALL, 0, UINT_MAX);
+	struct msi_range range = { .first = 0, .last = UINT_MAX, };
+
+	msi_free_msi_descs_range(dev, MSI_DESC_ALL, &range);
 }
 
 void __pci_read_msi_msg(struct msi_desc *entry, struct msi_msg *msg);

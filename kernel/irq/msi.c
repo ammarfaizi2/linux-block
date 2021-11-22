@@ -101,19 +101,19 @@ int msi_add_msi_desc(struct device *dev, struct msi_desc *init_desc)
  *
  * Return: 0 on success or an appropriate failure code.
  */
-static int msi_add_simple_msi_descs(struct device *dev, unsigned int index, unsigned int ndesc)
+static int msi_add_simple_msi_descs(struct device *dev, struct msi_range *range)
 {
 	struct msi_desc *desc;
-	unsigned long i;
+	unsigned long idx;
 	int ret;
 
 	lockdep_assert_held(&dev->msi.data->mutex);
 
-	for (i = 0; i < ndesc; i++) {
+	for (idx = range->first; idx <= range->last; idx++) {
 		desc = msi_alloc_desc(dev, 1, NULL);
 		if (!desc)
 			goto fail_mem;
-		ret = msi_insert_desc(dev->msi.data, desc, index + i);
+		ret = msi_insert_desc(dev->msi.data, desc, idx);
 		if (ret)
 			goto fail;
 	}
@@ -122,7 +122,7 @@ static int msi_add_simple_msi_descs(struct device *dev, unsigned int index, unsi
 fail_mem:
 	ret = -ENOMEM;
 fail:
-	msi_free_msi_descs_range(dev, MSI_DESC_NOTASSOCIATED, index, ndesc);
+	msi_free_msi_descs_range(dev, MSI_DESC_NOTASSOCIATED, range);
 	return ret;
 }
 
@@ -148,14 +148,14 @@ static bool msi_desc_match(struct msi_desc *desc, enum msi_desc_filter filter)
  * @ndesc:	Number of descriptors to free
  */
 void msi_free_msi_descs_range(struct device *dev, enum msi_desc_filter filter,
-			      unsigned int base_index, unsigned int ndesc)
+			      struct msi_range *range)
 {
 	struct msi_desc *desc;
 	unsigned long idx;
 
 	lockdep_assert_held(&dev->msi.data->mutex);
 
-	xa_for_each_range(&dev->msi.data->store, idx, desc, base_index, base_index + ndesc - 1) {
+	xa_for_each_range(&dev->msi.data->store, idx, desc, range->first, range->last) {
 		if (msi_desc_match(desc, filter)) {
 			xa_erase(&dev->msi.data->store, idx);
 			msi_free_desc(desc);
@@ -750,17 +750,18 @@ int msi_domain_prepare_irqs(struct irq_domain *domain, struct device *dev,
 int msi_domain_populate_irqs(struct irq_domain *domain, struct device *dev,
 			     int virq_base, int nvec, msi_alloc_info_t *arg)
 {
+	struct msi_range range = { .first = virq_base, .last = virq_base + nvec - 1 };
 	struct msi_domain_info *info = domain->host_data;
 	struct msi_domain_ops *ops = info->ops;
 	struct msi_desc *desc;
 	int ret, virq;
 
 	msi_lock_descs(dev);
-	ret = msi_add_simple_msi_descs(dev, virq_base, nvec);
+	ret = msi_add_simple_msi_descs(dev, &range);
 	if (ret)
 		goto unlock;
 
-	for (virq = virq_base; virq < virq_base + nvec; virq++) {
+	for (virq = range.first; virq <= range.last; virq++) {
 		desc = xa_load(&dev->msi.data->store, virq);
 		desc->irq = virq;
 
@@ -777,7 +778,7 @@ int msi_domain_populate_irqs(struct irq_domain *domain, struct device *dev,
 fail:
 	for (--virq; virq >= virq_base; virq--)
 		irq_domain_free_irqs_common(domain, virq, 1);
-	msi_free_msi_descs_range(dev, MSI_DESC_ALL, virq_base, nvec);
+	msi_free_msi_descs_range(dev, MSI_DESC_ALL, &range);
 unlock:
 	msi_unlock_descs(dev);
 	return ret;
@@ -936,14 +937,13 @@ int __msi_domain_alloc_irqs(struct irq_domain *domain, struct device *dev, struc
 	return 0;
 }
 
-static int msi_domain_add_simple_msi_descs(struct msi_domain_info *info,
-					   struct device *dev,
-					   unsigned int num_descs)
+static int msi_domain_add_simple_msi_descs(struct msi_domain_info *info, struct device *dev,
+					   struct msi_range *range)
 {
 	if (!(info->flags & MSI_FLAG_ALLOC_SIMPLE_MSI_DESCS))
 		return 0;
 
-	return msi_add_simple_msi_descs(dev, 0, num_descs);
+	return msi_add_simple_msi_descs(dev, range);
 }
 
 /**
@@ -968,7 +968,7 @@ int msi_domain_alloc_irqs_descs_locked(struct irq_domain *domain, struct device 
 
 	lockdep_assert_held(&dev->msi.data->mutex);
 
-	ret = msi_domain_add_simple_msi_descs(info, dev, range->ndesc);
+	ret = msi_domain_add_simple_msi_descs(info, dev, range);
 	if (ret)
 		return ret;
 
@@ -1021,11 +1021,11 @@ void __msi_domain_free_irqs(struct irq_domain *domain, struct device *dev, struc
 	}
 }
 
-static void msi_domain_free_msi_descs(struct msi_domain_info *info,
-				      struct device *dev)
+static void msi_domain_free_msi_descs(struct msi_domain_info *info, struct device *dev,
+				      struct msi_range *range)
 {
 	if (info->flags & MSI_FLAG_FREE_MSI_DESCS)
-		msi_free_msi_descs(dev);
+		msi_free_msi_descs_range(dev, MSI_DESC_ALL, range);
 }
 
 /**
@@ -1047,7 +1047,7 @@ void msi_domain_free_irqs_descs_locked(struct irq_domain *domain, struct device 
 	lockdep_assert_held(&dev->msi.data->mutex);
 
 	ops->domain_free_irqs(domain, dev, range);
-	msi_domain_free_msi_descs(info, dev);
+	msi_domain_free_msi_descs(info, dev, range);
 }
 
 /**
