@@ -8,13 +8,11 @@
 #ifndef _LINUX_RADIX_TREE_H
 #define _LINUX_RADIX_TREE_H
 
+#include <linux/preempt.h>
 #include <linux/percpu.h>
 #include <linux/bitops.h>
 #include <linux/gfp.h>
-#include <linux/list.h>
 #include <linux/lockdep.h>
-#include <linux/math.h>
-#include <linux/percpu.h>
 #include <linux/xarray_types.h>
 #include <linux/local_lock.h>
 
