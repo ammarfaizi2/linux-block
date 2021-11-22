@@ -3,7 +3,6 @@
 #define _ASM_X86_UNWIND_H
 
 #include <linux/sched.h>
-#include <linux/ftrace.h>
 #include <linux/kprobes.h>
 #include <asm/ptrace.h>
 #include <asm/stacktrace.h>
