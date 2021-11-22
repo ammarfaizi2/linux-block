@@ -222,9 +222,12 @@ void pci_write_msi_msg(unsigned int irq, struct msi_msg *msg)
 }
 EXPORT_SYMBOL_GPL(pci_write_msi_msg);
 
-static void free_msi_irqs(struct pci_dev *dev)
+static void free_msi_irqs(struct pci_dev *dev, struct msi_range *range, bool shutdown)
 {
-	pci_msi_teardown_msi_irqs(dev);
+	pci_msi_teardown_msi_irqs(dev, range);
+
+	if (!shutdown)
+		return;
 
 	if (dev->msix_base) {
 		iounmap(dev->msix_base);
@@ -443,7 +446,7 @@ static int msi_capability_init(struct pci_dev *dev, int nvec,
 
 err:
 	pci_msi_unmask(entry, msi_multi_mask(entry));
-	free_msi_irqs(dev);
+	free_msi_irqs(dev, &range, true);
 unlock:
 	msi_unlock_descs(&dev->dev);
 	kfree(masks);
@@ -538,7 +541,7 @@ static void msix_mask_all(void __iomem *base, int tsize)
 
 static int msix_setup_interrupts(struct pci_dev *dev, void __iomem *base,
 				 struct msi_range *range, struct msix_entry *entries,
-				 struct irq_affinity *affd)
+				 struct irq_affinity *affd, bool expand)
 {
 	struct irq_affinity_desc *masks = NULL;
 	int ret;
@@ -566,7 +569,8 @@ static int msix_setup_interrupts(struct pci_dev *dev, void __iomem *base,
 	goto out_unlock;
 
 out_free:
-	free_msi_irqs(dev);
+	free_msi_irqs(dev, range, !expand);
+
 out_unlock:
 	msi_unlock_descs(&dev->dev);
 	kfree(masks);
@@ -614,7 +618,7 @@ static int msix_capability_init(struct pci_dev *dev, struct msix_entry *entries,
 	/* Ensure that all table entries are masked. */
 	msix_mask_all(base, tsize);
 
-	ret = msix_setup_interrupts(dev, base, &range, entries, affd);
+	ret = msix_setup_interrupts(dev, base, &range, entries, affd, false);
 	if (ret)
 		goto out_disable;
 
@@ -728,12 +732,14 @@ static void pci_msi_shutdown(struct pci_dev *dev)
 
 void pci_disable_msi(struct pci_dev *dev)
 {
+	struct msi_range range = { .first = 0, .last = 0, };
+
 	if (!pci_msi_enable || !dev || !dev->msi_enabled)
 		return;
 
 	msi_lock_descs(&dev->dev);
 	pci_msi_shutdown(dev);
-	free_msi_irqs(dev);
+	free_msi_irqs(dev, &range, true);
 	msi_unlock_descs(&dev->dev);
 }
 EXPORT_SYMBOL(pci_disable_msi);
@@ -817,12 +823,14 @@ static void pci_msix_shutdown(struct pci_dev *dev)
 
 void pci_disable_msix(struct pci_dev *dev)
 {
+	struct msi_range range = { .first = 0, .last = UINT_MAX, };
+
 	if (!pci_msi_enable || !dev || !dev->msix_enabled)
 		return;
 
 	msi_lock_descs(&dev->dev);
 	pci_msix_shutdown(dev);
-	free_msi_irqs(dev);
+	free_msi_irqs(dev, &range, true);
 	msi_unlock_descs(&dev->dev);
 }
 EXPORT_SYMBOL(pci_disable_msix);

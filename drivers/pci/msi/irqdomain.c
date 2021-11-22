@@ -19,14 +19,13 @@ int pci_msi_setup_msi_irqs(struct pci_dev *dev, struct msi_range *range, int typ
 	return pci_msi_legacy_setup_msi_irqs(dev, range->ndesc, type);
 }
 
-void pci_msi_teardown_msi_irqs(struct pci_dev *dev)
+void pci_msi_teardown_msi_irqs(struct pci_dev *dev, struct msi_range *range)
 {
-	struct msi_range range = { .first = 0, .last = UINT_MAX, };
 	struct irq_domain *domain;
 
 	domain = dev_get_msi_domain(&dev->dev);
 	if (domain && irq_domain_is_hierarchy(domain))
-		msi_domain_free_irqs_descs_locked(domain, &dev->dev, &range);
+		msi_domain_free_irqs_descs_locked(domain, &dev->dev, range);
 	else
 		pci_msi_legacy_teardown_msi_irqs(dev);
 }
