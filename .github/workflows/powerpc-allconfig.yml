@@ -1,0 +1,76 @@
+name: powerpc/allconfig
+
+# Controls when the action will run.
+on:
+  # This allows the build to be triggered manually via the github UI.
+  workflow_dispatch:
+
+  push:
+    # This triggers the build on a push to merge-test only
+    branches:
+    - 'merge-test'
+
+jobs:
+  kernel:
+    runs-on: ubuntu-latest
+
+    continue-on-error: true
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # ppc64le allmod and allyes
+          - subarch: ppc64le
+            defconfig: ppc64le_allmodconfig
+            image: ubuntu-21.10
+          - subarch: ppc64le
+            defconfig: allmodconfig
+            image: ubuntu-21.10
+            merge_config: /linux/arch/powerpc/configs/le.config
+          # ppc64 allmod and allyes
+          - subarch: ppc64
+            defconfig: allmodconfig
+            image: ubuntu-21.10
+          - subarch: ppc64
+            defconfig: allyesconfig
+            image: ubuntu-21.10
+          # ppc32 allmod
+          - subarch: ppc
+            defconfig: ppc32_allmodconfig
+            image: ubuntu-21.10
+          # ppc64 book3e allmod
+          - subarch: ppc64
+            defconfig: ppc64_book3e_allmodconfig
+            image: ubuntu-21.10
+
+    env:
+      ARCH: powerpc
+      TARGET: kernel
+      SUBARCH: ${{ matrix.subarch }}
+      IMAGE: ${{ matrix.image }}
+      DEFCONFIG: ${{ matrix.defconfig }}
+      MERGE_CONFIG: /linux/arch/powerpc/configs/disable-werror.config,${{ matrix.merge_config }}
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Register problem matchers
+      run: |
+        echo "::add-matcher::.github/problem-matchers/compiler-source.json"
+        echo "::add-matcher::.github/problem-matchers/compiler-non-source.json"
+
+    - name: build
+      run: ./arch/powerpc/tools/ci-build.sh
+
+    - name: Archive artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{ matrix.defconfig }}-${{ matrix.image }}
+        path: |
+          ~/output/vmlinux
+          ~/output/.config
+          ~/output/System.map
+          ~/output/modules.tar.bz2
+          ~/output/arch/powerpc/boot/zImage
+          ~/output/arch/powerpc/boot/uImage
