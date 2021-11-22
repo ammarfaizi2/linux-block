@@ -873,8 +873,7 @@ static int msi_init_virq(struct irq_domain *domain, int virq, unsigned int vflag
 	return 0;
 }
 
-int __msi_domain_alloc_irqs(struct irq_domain *domain, struct device *dev,
-			    int nvec)
+int __msi_domain_alloc_irqs(struct irq_domain *domain, struct device *dev, struct msi_range *range)
 {
 	struct msi_domain_info *info = domain->host_data;
 	struct msi_domain_ops *ops = info->ops;
@@ -884,7 +883,7 @@ int __msi_domain_alloc_irqs(struct irq_domain *domain, struct device *dev,
 	int allocated = 0;
 	int i, ret, virq;
 
-	ret = msi_domain_prepare_irqs(domain, dev, nvec, &arg);
+	ret = msi_domain_prepare_irqs(domain, dev, range->ndesc, &arg);
 	if (ret)
 		return ret;
 
@@ -964,6 +963,7 @@ int msi_domain_alloc_irqs_descs_locked(struct irq_domain *domain, struct device 
 				       int nvec)
 {
 	struct msi_domain_info *info = domain->host_data;
+	struct msi_range range = { .ndesc = nvec };
 	struct msi_domain_ops *ops = info->ops;
 	int ret;
 
@@ -973,7 +973,7 @@ int msi_domain_alloc_irqs_descs_locked(struct irq_domain *domain, struct device 
 	if (ret)
 		return ret;
 
-	ret = ops->domain_alloc_irqs(domain, dev, nvec);
+	ret = ops->domain_alloc_irqs(domain, dev, &range);
 	if (ret)
 		msi_domain_free_irqs_descs_locked(domain, dev);
 	return ret;
@@ -998,7 +998,7 @@ int msi_domain_alloc_irqs(struct irq_domain *domain, struct device *dev, int nve
 	return ret;
 }
 
-void __msi_domain_free_irqs(struct irq_domain *domain, struct device *dev)
+void __msi_domain_free_irqs(struct irq_domain *domain, struct device *dev, struct msi_range *range)
 {
 	struct msi_domain_info *info = domain->host_data;
 	struct irq_data *irqd;
@@ -1045,7 +1045,7 @@ void msi_domain_free_irqs_descs_locked(struct irq_domain *domain, struct device 
 
 	lockdep_assert_held(&dev->msi.data->mutex);
 
-	ops->domain_free_irqs(domain, dev);
+	ops->domain_free_irqs(domain, dev, NULL);
 	msi_domain_free_msi_descs(info, dev);
 }
 

@@ -405,8 +405,8 @@ static void xen_pv_teardown_msi_irqs(struct pci_dev *dev)
 	xen_teardown_msi_irqs(dev);
 }
 
-static int xen_msi_domain_alloc_irqs(struct irq_domain *domain,
-				     struct device *dev,  int nvec)
+static int xen_msi_domain_alloc_irqs(struct irq_domain *domain, struct device *dev,
+				     struct msi_range *range)
 {
 	int type;
 
@@ -418,11 +418,11 @@ static int xen_msi_domain_alloc_irqs(struct irq_domain *domain,
 	else
 		type = PCI_CAP_ID_MSI;
 
-	return xen_msi_ops.setup_msi_irqs(to_pci_dev(dev), nvec, type);
+	return xen_msi_ops.setup_msi_irqs(to_pci_dev(dev), range->ndesc, type);
 }
 
-static void xen_msi_domain_free_irqs(struct irq_domain *domain,
-				     struct device *dev)
+static void xen_msi_domain_free_irqs(struct irq_domain *domain, struct device *dev,
+				     struct msi_range *range)
 {
 	if (WARN_ON_ONCE(!dev_is_pci(dev)))
 		return;

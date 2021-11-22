@@ -450,13 +450,13 @@ static void pseries_msi_ops_msi_free(struct irq_domain *domain,
  * RTAS can not disable one MSI at a time. It's all or nothing. Do it
  * at the end after all IRQs have been freed.
  */
-static void pseries_msi_domain_free_irqs(struct irq_domain *domain,
-					 struct device *dev)
+static void pseries_msi_domain_free_irqs(struct irq_domain *domain, struct device *dev,
+					 struct msi_range *range)
 {
 	if (WARN_ON_ONCE(!dev_is_pci(dev)))
 		return;
 
-	__msi_domain_free_irqs(domain, dev);
+	__msi_domain_free_irqs(domain, dev, range);
 
 	rtas_disable_msi(to_pci_dev(dev));
 }

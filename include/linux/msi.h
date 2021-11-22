@@ -192,6 +192,23 @@ struct msi_device_data {
 	enum msi_desc_filter		__iter_filter;
 };
 
+/**
+ * msi_range - Descriptor for a MSI index range
+ * @first:	First index
+ * @last:	Last index (inclusive)
+ * @ndesc:	Number of descriptors for allocations
+ *
+ * @first = 0 and @last = UINT_MAX is the full range for an operation.
+ *
+ * Note: @ndesc can be less than the range defined by @first and @last to
+ * support sparse allocations from PCI/MSI-X.
+ */
+struct msi_range {
+	unsigned int	first;
+	unsigned int	last;
+	unsigned int	ndesc;
+};
+
 int msi_setup_device_data(struct device *dev);
 
 /* MSI device properties */
@@ -416,10 +433,10 @@ struct msi_domain_ops {
 				       msi_alloc_info_t *arg);
 	void		(*set_desc)(msi_alloc_info_t *arg,
 				    struct msi_desc *desc);
-	int		(*domain_alloc_irqs)(struct irq_domain *domain,
-					     struct device *dev, int nvec);
-	void		(*domain_free_irqs)(struct irq_domain *domain,
-					    struct device *dev);
+	int		(*domain_alloc_irqs)(struct irq_domain *domain, struct device *dev,
+					     struct msi_range *range);
+	void		(*domain_free_irqs)(struct irq_domain *domain, struct device *dev,
+					    struct msi_range *range);
 };
 
 /**
@@ -485,13 +502,12 @@ int msi_domain_set_affinity(struct irq_data *data, const struct cpumask *mask,
 struct irq_domain *msi_create_irq_domain(struct fwnode_handle *fwnode,
 					 struct msi_domain_info *info,
 					 struct irq_domain *parent);
-int __msi_domain_alloc_irqs(struct irq_domain *domain, struct device *dev,
-			    int nvec);
+int __msi_domain_alloc_irqs(struct irq_domain *domain, struct device *dev, struct msi_range *range);
 int msi_domain_alloc_irqs_descs_locked(struct irq_domain *domain, struct device *dev,
 				       int nvec);
 int msi_domain_alloc_irqs(struct irq_domain *domain, struct device *dev,
 			  int nvec);
-void __msi_domain_free_irqs(struct irq_domain *domain, struct device *dev);
+void __msi_domain_free_irqs(struct irq_domain *domain, struct device *dev, struct msi_range *range);
 void msi_domain_free_irqs_descs_locked(struct irq_domain *domain, struct device *dev);
 void msi_domain_free_irqs(struct irq_domain *domain, struct device *dev);
 struct msi_domain_info *msi_get_domain_info(struct irq_domain *domain);
