@@ -960,22 +960,21 @@ static int msi_domain_add_simple_msi_descs(struct msi_domain_info *info,
  * Return: %0 on success or an error code.
  */
 int msi_domain_alloc_irqs_descs_locked(struct irq_domain *domain, struct device *dev,
-				       int nvec)
+				       struct msi_range *range)
 {
 	struct msi_domain_info *info = domain->host_data;
-	struct msi_range range = { .ndesc = nvec };
 	struct msi_domain_ops *ops = info->ops;
 	int ret;
 
 	lockdep_assert_held(&dev->msi.data->mutex);
 
-	ret = msi_domain_add_simple_msi_descs(info, dev, nvec);
+	ret = msi_domain_add_simple_msi_descs(info, dev, range->ndesc);
 	if (ret)
 		return ret;
 
-	ret = ops->domain_alloc_irqs(domain, dev, &range);
+	ret = ops->domain_alloc_irqs(domain, dev, range);
 	if (ret)
-		msi_domain_free_irqs_descs_locked(domain, dev);
+		msi_domain_free_irqs_descs_locked(domain, dev, range);
 	return ret;
 }
 
@@ -990,10 +989,11 @@ int msi_domain_alloc_irqs_descs_locked(struct irq_domain *domain, struct device 
  */
 int msi_domain_alloc_irqs(struct irq_domain *domain, struct device *dev, int nvec)
 {
+	struct msi_range range = { .first = 0, .last = UINT_MAX, .ndesc = nvec, };
 	int ret;
 
 	msi_lock_descs(dev);
-	ret = msi_domain_alloc_irqs_descs_locked(domain, dev, nvec);
+	ret = msi_domain_alloc_irqs_descs_locked(domain, dev, &range);
 	msi_unlock_descs(dev);
 	return ret;
 }
@@ -1038,14 +1038,15 @@ static void msi_domain_free_msi_descs(struct msi_domain_info *info,
  * pair. Use this for MSI irqdomains which implement their own vector
  * allocation.
  */
-void msi_domain_free_irqs_descs_locked(struct irq_domain *domain, struct device *dev)
+void msi_domain_free_irqs_descs_locked(struct irq_domain *domain, struct device *dev,
+				       struct msi_range *range)
 {
 	struct msi_domain_info *info = domain->host_data;
 	struct msi_domain_ops *ops = info->ops;
 
 	lockdep_assert_held(&dev->msi.data->mutex);
 
-	ops->domain_free_irqs(domain, dev, NULL);
+	ops->domain_free_irqs(domain, dev, range);
 	msi_domain_free_msi_descs(info, dev);
 }
 
@@ -1057,8 +1058,10 @@ void msi_domain_free_irqs_descs_locked(struct irq_domain *domain, struct device 
  */
 void msi_domain_free_irqs(struct irq_domain *domain, struct device *dev)
 {
+	struct msi_range range = { .first = 0, .last = UINT_MAX, };
+
 	msi_lock_descs(dev);
-	msi_domain_free_irqs_descs_locked(domain, dev);
+	msi_domain_free_irqs_descs_locked(domain, dev, &range);
 	msi_unlock_descs(dev);
 }
 
