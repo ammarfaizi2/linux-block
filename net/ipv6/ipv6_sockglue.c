@@ -55,6 +55,8 @@
 struct ip6_ra_chain *ip6_ra_chain;
 DEFINE_RWLOCK(ip6_ra_lock);
 
+DEFINE_STATIC_KEY_FALSE(ip6_min_hopcount);
+
 int ip6_ra_control(struct sock *sk, int sel)
 {
 	struct ip6_ra_chain *ra, *new_ra, **rap;
@@ -469,10 +471,10 @@ static int do_ipv6_setsockopt(struct sock *sk, int level, int optname,
 
 			if (sk->sk_protocol == IPPROTO_TCP) {
 				struct inet_connection_sock *icsk = inet_csk(sk);
-				local_bh_disable();
+
 				sock_prot_inuse_add(net, sk->sk_prot, -1);
 				sock_prot_inuse_add(net, &tcp_prot, 1);
-				local_bh_enable();
+
 				sk->sk_prot = &tcp_prot;
 				icsk->icsk_af_ops = &ipv4_specific;
 				sk->sk_socket->ops = &inet_stream_ops;
@@ -483,10 +485,10 @@ static int do_ipv6_setsockopt(struct sock *sk, int level, int optname,
 
 				if (sk->sk_protocol == IPPROTO_UDPLITE)
 					prot = &udplite_prot;
-				local_bh_disable();
+
 				sock_prot_inuse_add(net, sk->sk_prot, -1);
 				sock_prot_inuse_add(net, prot, 1);
-				local_bh_enable();
+
 				sk->sk_prot = prot;
 				sk->sk_socket->ops = &inet_dgram_ops;
 				sk->sk_family = PF_INET;
@@ -950,7 +952,14 @@ done:
 			goto e_inval;
 		if (val < 0 || val > 255)
 			goto e_inval;
-		np->min_hopcount = val;
+
+		if (val)
+			static_branch_enable(&ip6_min_hopcount);
+
+		/* tcp_v6_err() and tcp_v6_rcv() might read min_hopcount
+		 * while we are changing it.
+		 */
+		WRITE_ONCE(np->min_hopcount, val);
 		retv = 0;
 		break;
 	case IPV6_DONTFRAG:

@@ -266,12 +266,12 @@ static void felix_8021q_cpu_port_deinit(struct ocelot *ocelot, int port)
  */
 static int felix_setup_mmio_filtering(struct felix *felix)
 {
-	unsigned long user_ports = 0, cpu_ports = 0;
+	unsigned long user_ports = dsa_user_ports(felix->ds);
 	struct ocelot_vcap_filter *redirect_rule;
 	struct ocelot_vcap_filter *tagging_rule;
 	struct ocelot *ocelot = &felix->ocelot;
 	struct dsa_switch *ds = felix->ds;
-	int port, ret;
+	int cpu = -1, port, ret;
 
 	tagging_rule = kzalloc(sizeof(struct ocelot_vcap_filter), GFP_KERNEL);
 	if (!tagging_rule)
@@ -284,11 +284,14 @@ static int felix_setup_mmio_filtering(struct felix *felix)
 	}
 
 	for (port = 0; port < ocelot->num_phys_ports; port++) {
-		if (dsa_is_user_port(ds, port))
-			user_ports |= BIT(port);
-		if (dsa_is_cpu_port(ds, port))
-			cpu_ports |= BIT(port);
+		if (dsa_is_cpu_port(ds, port)) {
+			cpu = port;
+			break;
+		}
 	}
+
+	if (cpu < 0)
+		return -EINVAL;
 
 	tagging_rule->key_type = OCELOT_VCAP_KEY_ETYPE;
 	*(__be16 *)tagging_rule->key.etype.etype.value = htons(ETH_P_1588);
@@ -325,7 +328,7 @@ static int felix_setup_mmio_filtering(struct felix *felix)
 		 * the CPU port module
 		 */
 		redirect_rule->action.mask_mode = OCELOT_MASK_MODE_REDIRECT;
-		redirect_rule->action.port_mask = cpu_ports;
+		redirect_rule->action.port_mask = BIT(cpu);
 	} else {
 		/* Trap PTP packets only to the CPU port module (which is
 		 * redirected to the NPI port)
@@ -986,6 +989,10 @@ static int felix_init_structs(struct felix *felix, int num_phys_ports)
 	ocelot->num_stats	= felix->info->num_stats;
 	ocelot->num_mact_rows	= felix->info->num_mact_rows;
 	ocelot->vcap		= felix->info->vcap;
+	ocelot->vcap_pol.base	= felix->info->vcap_pol_base;
+	ocelot->vcap_pol.max	= felix->info->vcap_pol_max;
+	ocelot->vcap_pol.base2	= felix->info->vcap_pol_base2;
+	ocelot->vcap_pol.max2	= felix->info->vcap_pol_max2;
 	ocelot->ops		= felix->info->ops;
 	ocelot->npi_inj_prefix	= OCELOT_TAG_PREFIX_SHORT;
 	ocelot->npi_xtr_prefix	= OCELOT_TAG_PREFIX_SHORT;
@@ -1076,6 +1083,101 @@ static int felix_init_structs(struct felix *felix, int num_phys_ports)
 	return 0;
 }
 
+static void ocelot_port_purge_txtstamp_skb(struct ocelot *ocelot, int port,
+					   struct sk_buff *skb)
+{
+	struct ocelot_port *ocelot_port = ocelot->ports[port];
+	struct sk_buff *clone = OCELOT_SKB_CB(skb)->clone;
+	struct sk_buff *skb_match = NULL, *skb_tmp;
+	unsigned long flags;
+
+	if (!clone)
+		return;
+
+	spin_lock_irqsave(&ocelot_port->tx_skbs.lock, flags);
+
+	skb_queue_walk_safe(&ocelot_port->tx_skbs, skb, skb_tmp) {
+		if (skb != clone)
+			continue;
+		__skb_unlink(skb, &ocelot_port->tx_skbs);
+		skb_match = skb;
+		break;
+	}
+
+	spin_unlock_irqrestore(&ocelot_port->tx_skbs.lock, flags);
+
+	WARN_ONCE(!skb_match,
+		  "Could not find skb clone in TX timestamping list\n");
+}
+
+#define work_to_xmit_work(w) \
+		container_of((w), struct felix_deferred_xmit_work, work)
+
+static void felix_port_deferred_xmit(struct kthread_work *work)
+{
+	struct felix_deferred_xmit_work *xmit_work = work_to_xmit_work(work);
+	struct dsa_switch *ds = xmit_work->dp->ds;
+	struct sk_buff *skb = xmit_work->skb;
+	u32 rew_op = ocelot_ptp_rew_op(skb);
+	struct ocelot *ocelot = ds->priv;
+	int port = xmit_work->dp->index;
+	int retries = 10;
+
+	do {
+		if (ocelot_can_inject(ocelot, 0))
+			break;
+
+		cpu_relax();
+	} while (--retries);
+
+	if (!retries) {
+		dev_err(ocelot->dev, "port %d failed to inject skb\n",
+			port);
+		ocelot_port_purge_txtstamp_skb(ocelot, port, skb);
+		kfree_skb(skb);
+		return;
+	}
+
+	ocelot_port_inject_frame(ocelot, port, 0, rew_op, skb);
+
+	consume_skb(skb);
+	kfree(xmit_work);
+}
+
+static int felix_port_setup_tagger_data(struct dsa_switch *ds, int port)
+{
+	struct dsa_port *dp = dsa_to_port(ds, port);
+	struct ocelot *ocelot = ds->priv;
+	struct felix *felix = ocelot_to_felix(ocelot);
+	struct felix_port *felix_port;
+
+	if (!dsa_port_is_user(dp))
+		return 0;
+
+	felix_port = kzalloc(sizeof(*felix_port), GFP_KERNEL);
+	if (!felix_port)
+		return -ENOMEM;
+
+	felix_port->xmit_worker = felix->xmit_worker;
+	felix_port->xmit_work_fn = felix_port_deferred_xmit;
+
+	dp->priv = felix_port;
+
+	return 0;
+}
+
+static void felix_port_teardown_tagger_data(struct dsa_switch *ds, int port)
+{
+	struct dsa_port *dp = dsa_to_port(ds, port);
+	struct felix_port *felix_port = dp->priv;
+
+	if (!felix_port)
+		return;
+
+	dp->priv = NULL;
+	kfree(felix_port);
+}
+
 /* Hardware initialization done here so that we can allocate structures with
  * devm without fear of dsa_register_switch returning -EPROBE_DEFER and causing
  * us to allocate structures twice (leak memory) and map PCI memory twice
@@ -1104,6 +1206,12 @@ static int felix_setup(struct dsa_switch *ds)
 		}
 	}
 
+	felix->xmit_worker = kthread_create_worker(0, "felix_xmit");
+	if (IS_ERR(felix->xmit_worker)) {
+		err = PTR_ERR(felix->xmit_worker);
+		goto out_deinit_timestamp;
+	}
+
 	for (port = 0; port < ds->num_ports; port++) {
 		if (dsa_is_unused_port(ds, port))
 			continue;
@@ -1114,6 +1222,14 @@ static int felix_setup(struct dsa_switch *ds)
 		 * bits of vlan tag.
 		 */
 		felix_port_qos_map_init(ocelot, port);
+
+		err = felix_port_setup_tagger_data(ds, port);
+		if (err) {
+			dev_err(ds->dev,
+				"port %d failed to set up tagger data: %pe\n",
+				port, ERR_PTR(err));
+			goto out_deinit_ports;
+		}
 	}
 
 	err = ocelot_devlink_sb_register(ocelot);
@@ -1128,6 +1244,7 @@ static int felix_setup(struct dsa_switch *ds)
 		 * there's no real point in checking for errors.
 		 */
 		felix_set_tag_protocol(ds, port, felix->tag_proto);
+		break;
 	}
 
 	ds->mtu_enforcement_ingress = true;
@@ -1140,9 +1257,13 @@ out_deinit_ports:
 		if (dsa_is_unused_port(ds, port))
 			continue;
 
+		felix_port_teardown_tagger_data(ds, port);
 		ocelot_deinit_port(ocelot, port);
 	}
 
+	kthread_destroy_worker(felix->xmit_worker);
+
+out_deinit_timestamp:
 	ocelot_deinit_timestamp(ocelot);
 	ocelot_deinit(ocelot);
 
@@ -1164,18 +1285,22 @@ static void felix_teardown(struct dsa_switch *ds)
 			continue;
 
 		felix_del_tag_protocol(ds, port, felix->tag_proto);
+		break;
 	}
-
-	ocelot_devlink_sb_unregister(ocelot);
-	ocelot_deinit_timestamp(ocelot);
-	ocelot_deinit(ocelot);
 
 	for (port = 0; port < ocelot->num_phys_ports; port++) {
 		if (dsa_is_unused_port(ds, port))
 			continue;
 
+		felix_port_teardown_tagger_data(ds, port);
 		ocelot_deinit_port(ocelot, port);
 	}
+
+	kthread_destroy_worker(felix->xmit_worker);
+
+	ocelot_devlink_sb_unregister(ocelot);
+	ocelot_deinit_timestamp(ocelot);
+	ocelot_deinit(ocelot);
 
 	if (felix->info->mdio_bus_free)
 		felix->info->mdio_bus_free(ocelot);
@@ -1249,12 +1374,12 @@ out:
 static bool felix_rxtstamp(struct dsa_switch *ds, int port,
 			   struct sk_buff *skb, unsigned int type)
 {
-	u8 *extraction = skb->data - ETH_HLEN - OCELOT_TAG_LEN;
+	u32 tstamp_lo = OCELOT_SKB_CB(skb)->tstamp_lo;
 	struct skb_shared_hwtstamps *shhwtstamps;
 	struct ocelot *ocelot = ds->priv;
-	u32 tstamp_lo, tstamp_hi;
 	struct timespec64 ts;
-	u64 tstamp, val;
+	u32 tstamp_hi;
+	u64 tstamp;
 
 	/* If the "no XTR IRQ" workaround is in use, tell DSA to defer this skb
 	 * for RX timestamping. Then free it, and poll for its copy through
@@ -1268,9 +1393,6 @@ static bool felix_rxtstamp(struct dsa_switch *ds, int port,
 
 	ocelot_ptp_gettime64(&ocelot->ptp_info, &ts);
 	tstamp = ktime_set(ts.tv_sec, ts.tv_nsec);
-
-	ocelot_xfh_get_rew_val(extraction, &val);
-	tstamp_lo = (u32)val;
 
 	tstamp_hi = tstamp >> 32;
 	if ((tstamp & 0xffffffff) < tstamp_lo)
@@ -1293,8 +1415,12 @@ static void felix_txtstamp(struct dsa_switch *ds, int port,
 	if (!ocelot->ptp)
 		return;
 
-	if (ocelot_port_txtstamp_request(ocelot, port, skb, &clone))
+	if (ocelot_port_txtstamp_request(ocelot, port, skb, &clone)) {
+		dev_err_ratelimited(ds->dev,
+				    "port %d delivering skb without TX timestamp\n",
+				    port);
 		return;
+	}
 
 	if (clone)
 		OCELOT_SKB_CB(skb)->clone = clone;

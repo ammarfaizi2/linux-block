@@ -408,12 +408,13 @@ static struct sk_buff *page_to_skb(struct virtnet_info *vi,
 	 * add_recvbuf_mergeable() + get_mergeable_buf_len()
 	 */
 	truesize = headroom ? PAGE_SIZE : truesize;
-	tailroom = truesize - len - headroom;
+	tailroom = truesize - headroom;
 	buf = p - headroom;
 
 	len -= hdr_len;
 	offset += hdr_padded_len;
 	p += hdr_padded_len;
+	tailroom -= hdr_padded_len + len;
 
 	shinfo_size = SKB_DATA_ALIGN(sizeof(struct skb_shared_info));
 
@@ -2693,7 +2694,7 @@ static void virtnet_tx_timeout(struct net_device *dev, unsigned int txqueue)
 
 	netdev_err(dev, "TX timeout on queue: %u, sq: %s, vq: 0x%x, name: %s, %u usecs ago\n",
 		   txqueue, sq->name, sq->vq->index, sq->vq->name,
-		   jiffies_to_usecs(jiffies - txq->trans_start));
+		   jiffies_to_usecs(jiffies - READ_ONCE(txq->trans_start)));
 }
 
 static const struct net_device_ops virtnet_netdev = {
@@ -3177,12 +3178,16 @@ static int virtnet_probe(struct virtio_device *vdev)
 	dev->max_mtu = MAX_MTU;
 
 	/* Configuration may specify what MAC to use.  Otherwise random. */
-	if (virtio_has_feature(vdev, VIRTIO_NET_F_MAC))
+	if (virtio_has_feature(vdev, VIRTIO_NET_F_MAC)) {
+		u8 addr[ETH_ALEN];
+
 		virtio_cread_bytes(vdev,
 				   offsetof(struct virtio_net_config, mac),
-				   dev->dev_addr, dev->addr_len);
-	else
+				   addr, ETH_ALEN);
+		eth_hw_addr_set(dev, addr);
+	} else {
 		eth_hw_addr_random(dev);
+	}
 
 	/* Set up our device-specific information */
 	vi = netdev_priv(dev);
@@ -3418,6 +3423,7 @@ static struct virtio_driver virtio_net_driver = {
 	.feature_table_size = ARRAY_SIZE(features),
 	.feature_table_legacy = features_legacy,
 	.feature_table_size_legacy = ARRAY_SIZE(features_legacy),
+	.suppress_used_validation = true,
 	.driver.name =	KBUILD_MODNAME,
 	.driver.owner =	THIS_MODULE,
 	.id_table =	id_table,

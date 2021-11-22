@@ -65,7 +65,7 @@ static void test_fexit_bpf2bpf_common(const char *obj_file,
 	int err, tgt_fd, i;
 	struct btf *btf;
 
-	err = bpf_prog_load(target_obj_file, BPF_PROG_TYPE_UNSPEC,
+	err = bpf_prog_test_load(target_obj_file, BPF_PROG_TYPE_UNSPEC,
 			    &tgt_obj, &tgt_fd);
 	if (!ASSERT_OK(err, "tgt_prog_load"))
 		return;
@@ -224,7 +224,7 @@ static int test_second_attach(struct bpf_object *obj)
 	if (CHECK(!prog, "find_prog", "prog %s not found\n", prog_name))
 		return -ENOENT;
 
-	err = bpf_prog_load(tgt_obj_file, BPF_PROG_TYPE_UNSPEC,
+	err = bpf_prog_test_load(tgt_obj_file, BPF_PROG_TYPE_UNSPEC,
 			    &tgt_obj, &tgt_fd);
 	if (CHECK(err, "second_prog_load", "file %s err %d errno %d\n",
 		  tgt_obj_file, err, errno))
@@ -274,7 +274,7 @@ static void test_fmod_ret_freplace(void)
 	__u32 duration = 0;
 	int err, pkt_fd, attach_prog_fd;
 
-	err = bpf_prog_load(tgt_name, BPF_PROG_TYPE_UNSPEC,
+	err = bpf_prog_test_load(tgt_name, BPF_PROG_TYPE_UNSPEC,
 			    &pkt_obj, &pkt_fd);
 	/* the target prog should load fine */
 	if (CHECK(err, "tgt_prog_load", "file %s err %d errno %d\n",
@@ -285,7 +285,7 @@ static void test_fmod_ret_freplace(void)
 	if (!ASSERT_OK_PTR(freplace_obj, "freplace_obj_open"))
 		goto out;
 
-	prog = bpf_program__next(NULL, freplace_obj);
+	prog = bpf_object__next_program(freplace_obj, NULL);
 	err = bpf_program__set_attach_target(prog, pkt_fd, NULL);
 	ASSERT_OK(err, "freplace__set_attach_target");
 
@@ -302,7 +302,7 @@ static void test_fmod_ret_freplace(void)
 		goto out;
 
 	attach_prog_fd = bpf_program__fd(prog);
-	prog = bpf_program__next(NULL, fmod_obj);
+	prog = bpf_object__next_program(fmod_obj, NULL);
 	err = bpf_program__set_attach_target(prog, attach_prog_fd, NULL);
 	ASSERT_OK(err, "fmod_ret_set_attach_target");
 
@@ -341,7 +341,7 @@ static void test_obj_load_failure_common(const char *obj_file,
 	int err, pkt_fd;
 	__u32 duration = 0;
 
-	err = bpf_prog_load(target_obj_file, BPF_PROG_TYPE_UNSPEC,
+	err = bpf_prog_test_load(target_obj_file, BPF_PROG_TYPE_UNSPEC,
 			    &pkt_obj, &pkt_fd);
 	/* the target prog should load fine */
 	if (CHECK(err, "tgt_prog_load", "file %s err %d errno %d\n",
@@ -352,7 +352,7 @@ static void test_obj_load_failure_common(const char *obj_file,
 	if (!ASSERT_OK_PTR(obj, "obj_open"))
 		goto close_prog;
 
-	prog = bpf_program__next(NULL, obj);
+	prog = bpf_object__next_program(obj, NULL);
 	err = bpf_program__set_attach_target(prog, pkt_fd, NULL);
 	ASSERT_OK(err, "set_attach_target");
 
@@ -380,7 +380,8 @@ static void test_func_map_prog_compatibility(void)
 				     "./test_attach_probe.o");
 }
 
-void test_fexit_bpf2bpf(void)
+/* NOTE: affect other tests, must run in serial mode */
+void serial_test_fexit_bpf2bpf(void)
 {
 	if (test__start_subtest("target_no_callees"))
 		test_target_no_callees();

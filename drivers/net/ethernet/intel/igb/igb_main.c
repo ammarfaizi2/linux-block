@@ -577,16 +577,15 @@ static void igb_set_i2c_data(void *data, int state)
 	struct e1000_hw *hw = &adapter->hw;
 	s32 i2cctl = rd32(E1000_I2CPARAMS);
 
-	if (state)
-		i2cctl |= E1000_I2C_DATA_OUT;
-	else
+	if (state) {
+		i2cctl |= E1000_I2C_DATA_OUT | E1000_I2C_DATA_OE_N;
+	} else {
+		i2cctl &= ~E1000_I2C_DATA_OE_N;
 		i2cctl &= ~E1000_I2C_DATA_OUT;
+	}
 
-	i2cctl &= ~E1000_I2C_DATA_OE_N;
-	i2cctl |= E1000_I2C_CLK_OE_N;
 	wr32(E1000_I2CPARAMS, i2cctl);
 	wrfl();
-
 }
 
 /**
@@ -603,8 +602,7 @@ static void igb_set_i2c_clk(void *data, int state)
 	s32 i2cctl = rd32(E1000_I2CPARAMS);
 
 	if (state) {
-		i2cctl |= E1000_I2C_CLK_OUT;
-		i2cctl &= ~E1000_I2C_CLK_OE_N;
+		i2cctl |= E1000_I2C_CLK_OUT | E1000_I2C_CLK_OE_N;
 	} else {
 		i2cctl &= ~E1000_I2C_CLK_OUT;
 		i2cctl &= ~E1000_I2C_CLK_OE_N;
@@ -2929,7 +2927,7 @@ static int igb_xdp_xmit_back(struct igb_adapter *adapter, struct xdp_buff *xdp)
 	nq = txring_txq(tx_ring);
 	__netif_tx_lock(nq, cpu);
 	/* Avoid transmit queue timeout since we share it with the slow path */
-	nq->trans_start = jiffies;
+	txq_trans_cond_update(nq);
 	ret = igb_xmit_xdp_ring(adapter, tx_ring, xdpf);
 	__netif_tx_unlock(nq);
 
@@ -2963,7 +2961,7 @@ static int igb_xdp_xmit(struct net_device *dev, int n,
 	__netif_tx_lock(nq, cpu);
 
 	/* Avoid transmit queue timeout since we share it with the slow path */
-	nq->trans_start = jiffies;
+	txq_trans_cond_update(nq);
 
 	for (i = 0; i < n; i++) {
 		struct xdp_frame *xdpf = frames[i];
@@ -3116,11 +3114,20 @@ static void igb_init_mas(struct igb_adapter *adapter)
  **/
 static s32 igb_init_i2c(struct igb_adapter *adapter)
 {
+	struct e1000_hw *hw = &adapter->hw;
 	s32 status = 0;
+	s32 i2cctl;
 
 	/* I2C interface supported on i350 devices */
 	if (adapter->hw.mac.type != e1000_i350)
 		return 0;
+
+	i2cctl = rd32(E1000_I2CPARAMS);
+	i2cctl |= E1000_I2CBB_EN
+		| E1000_I2C_CLK_OUT | E1000_I2C_CLK_OE_N
+		| E1000_I2C_DATA_OUT | E1000_I2C_DATA_OE_N;
+	wr32(E1000_I2CPARAMS, i2cctl);
+	wrfl();
 
 	/* Initialize the i2c bus which is controlled by the registers.
 	 * This bus will use the i2c_algo_bit structure that implements

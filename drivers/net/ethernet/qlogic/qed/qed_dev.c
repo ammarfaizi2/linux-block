@@ -952,7 +952,7 @@ qed_llh_remove_filter(struct qed_hwfn *p_hwfn,
 }
 
 int qed_llh_add_mac_filter(struct qed_dev *cdev,
-			   u8 ppfid, u8 mac_addr[ETH_ALEN])
+			   u8 ppfid, const u8 mac_addr[ETH_ALEN])
 {
 	struct qed_hwfn *p_hwfn = QED_LEADING_HWFN(cdev);
 	struct qed_ptt *p_ptt = qed_ptt_acquire(p_hwfn);
@@ -3992,7 +3992,7 @@ static int qed_hw_get_resc(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt)
 	} else if (rc == -EINVAL) {
 		DP_INFO(p_hwfn,
 			"Skip the max values setting of the soft resources since the resource lock is not supported by the MFW\n");
-	} else if (!rc && !resc_lock_params.b_granted) {
+	} else if (!resc_lock_params.b_granted) {
 		DP_NOTICE(p_hwfn,
 			  "Failed to acquire the resource lock for the resource allocation commands\n");
 		return -EBUSY;

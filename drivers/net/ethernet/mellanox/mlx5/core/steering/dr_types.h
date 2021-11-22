@@ -764,6 +764,7 @@ struct mlx5dr_roce_cap {
 
 struct mlx5dr_vports {
 	struct mlx5dr_cmd_vport_cap esw_manager_caps;
+	struct mlx5dr_cmd_vport_cap uplink_caps;
 	struct xarray vports_caps_xa;
 };
 
@@ -1230,7 +1231,8 @@ void mlx5dr_ste_set_formatted_ste(struct mlx5dr_ste_ctx *ste_ctx,
 				  struct mlx5dr_htbl_connect_info *connect_info);
 void mlx5dr_ste_copy_param(u8 match_criteria,
 			   struct mlx5dr_match_param *set_param,
-			   struct mlx5dr_match_parameters *mask);
+			   struct mlx5dr_match_parameters *mask,
+			   bool clear);
 
 struct mlx5dr_qp {
 	struct mlx5_core_dev *mdev;
@@ -1264,7 +1266,7 @@ struct mlx5dr_cq {
 
 struct mlx5dr_mr {
 	struct mlx5_core_dev *mdev;
-	struct mlx5_core_mkey mkey;
+	u32 mkey;
 	dma_addr_t dma_addr;
 	void *addr;
 	size_t size;

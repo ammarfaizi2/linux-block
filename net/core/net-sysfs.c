@@ -1201,11 +1201,7 @@ static const struct sysfs_ops netdev_queue_sysfs_ops = {
 
 static ssize_t tx_timeout_show(struct netdev_queue *queue, char *buf)
 {
-	unsigned long trans_timeout;
-
-	spin_lock_irq(&queue->_xmit_lock);
-	trans_timeout = queue->trans_timeout;
-	spin_unlock_irq(&queue->_xmit_lock);
+	unsigned long trans_timeout = atomic_long_read(&queue->trans_timeout);
 
 	return sprintf(buf, fmt_ulong, trans_timeout);
 }
@@ -2028,9 +2024,9 @@ int netdev_register_kobject(struct net_device *ndev)
 int netdev_change_owner(struct net_device *ndev, const struct net *net_old,
 			const struct net *net_new)
 {
+	kuid_t old_uid = GLOBAL_ROOT_UID, new_uid = GLOBAL_ROOT_UID;
+	kgid_t old_gid = GLOBAL_ROOT_GID, new_gid = GLOBAL_ROOT_GID;
 	struct device *dev = &ndev->dev;
-	kuid_t old_uid, new_uid;
-	kgid_t old_gid, new_gid;
 	int error;
 
 	net_ns_get_ownership(net_old, &old_uid, &old_gid);

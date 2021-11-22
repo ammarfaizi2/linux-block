@@ -4721,9 +4721,12 @@ static struct net_device *sky2_init_netdev(struct sky2_hw *hw, unsigned port,
 	 * 2) from internal registers set by bootloader
 	 */
 	ret = of_get_ethdev_address(hw->pdev->dev.of_node, dev);
-	if (ret)
-		memcpy_fromio(dev->dev_addr, hw->regs + B2_MAC_1 + port * 8,
-			      ETH_ALEN);
+	if (ret) {
+		u8 addr[ETH_ALEN];
+
+		memcpy_fromio(addr, hw->regs + B2_MAC_1 + port * 8, ETH_ALEN);
+		eth_hw_addr_set(dev, addr);
+	}
 
 	/* if the address is invalid, use a random value */
 	if (!is_valid_ether_addr(dev->dev_addr)) {
@@ -4907,7 +4910,7 @@ static int sky2_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	pci_set_master(pdev);
 
 	if (sizeof(dma_addr_t) > sizeof(u32) &&
-	    !(err = dma_set_mask(&pdev->dev, DMA_BIT_MASK(64)))) {
+	    !dma_set_mask(&pdev->dev, DMA_BIT_MASK(64))) {
 		using_dac = 1;
 		err = dma_set_coherent_mask(&pdev->dev, DMA_BIT_MASK(64));
 		if (err < 0) {

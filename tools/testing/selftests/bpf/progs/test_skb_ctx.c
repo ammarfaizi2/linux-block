@@ -3,10 +3,9 @@
 #include <linux/bpf.h>
 #include <bpf/bpf_helpers.h>
 
-int _version SEC("version") = 1;
 char _license[] SEC("license") = "GPL";
 
-SEC("skb_ctx")
+SEC("tc")
 int process(struct __sk_buff *skb)
 {
 	#pragma clang loop unroll(full)

@@ -46,7 +46,7 @@ MODULE_DEVICE_TABLE(pci, vmxnet3_pciid_table);
 static int enable_mq = 1;
 
 static void
-vmxnet3_write_mac_addr(struct vmxnet3_adapter *adapter, u8 *mac);
+vmxnet3_write_mac_addr(struct vmxnet3_adapter *adapter, const u8 *mac);
 
 /*
  *    Enable/Disable the given intr
@@ -2806,7 +2806,7 @@ vmxnet3_quiesce_dev(struct vmxnet3_adapter *adapter)
 
 
 static void
-vmxnet3_write_mac_addr(struct vmxnet3_adapter *adapter, u8 *mac)
+vmxnet3_write_mac_addr(struct vmxnet3_adapter *adapter, const u8 *mac)
 {
 	u32 tmp;
 
@@ -3833,7 +3833,6 @@ vmxnet3_suspend(struct device *device)
 	vmxnet3_free_intr_resources(adapter);
 
 	netif_device_detach(netdev);
-	netif_tx_stop_all_queues(netdev);
 
 	/* Create wake-up filters. */
 	pmConf = adapter->pm_conf;

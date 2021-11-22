@@ -89,15 +89,6 @@
 /* Source PGIDs, one per physical port */
 #define PGID_SRC			80
 
-#define IFH_TAG_TYPE_C			0
-#define IFH_TAG_TYPE_S			1
-
-#define IFH_REW_OP_NOOP			0x0
-#define IFH_REW_OP_DSCP			0x1
-#define IFH_REW_OP_ONE_STEP_PTP		0x2
-#define IFH_REW_OP_TWO_STEP_PTP		0x3
-#define IFH_REW_OP_ORIGIN_PTP		0x5
-
 #define OCELOT_NUM_TC			8
 
 #define OCELOT_SPEED_2500		0
@@ -564,17 +555,49 @@ struct ocelot_ops {
 	u16 (*wm_enc)(u16 value);
 	u16 (*wm_dec)(u16 value);
 	void (*wm_stat)(u32 val, u32 *inuse, u32 *maxuse);
+	void (*psfp_init)(struct ocelot *ocelot);
+	int (*psfp_filter_add)(struct ocelot *ocelot, int port,
+			       struct flow_cls_offload *f);
+	int (*psfp_filter_del)(struct ocelot *ocelot, struct flow_cls_offload *f);
+	int (*psfp_stats_get)(struct ocelot *ocelot, struct flow_cls_offload *f,
+			      struct flow_stats *stats);
+};
+
+struct ocelot_vcap_policer {
+	struct list_head pol_list;
+	u16 base;
+	u16 max;
+	u16 base2;
+	u16 max2;
 };
 
 struct ocelot_vcap_block {
 	struct list_head rules;
 	int count;
-	int pol_lpr;
 };
 
-struct ocelot_vlan {
-	bool valid;
+struct ocelot_bridge_vlan {
 	u16 vid;
+	unsigned long portmask;
+	unsigned long untagged;
+	struct list_head list;
+};
+
+enum ocelot_port_tag_config {
+	/* all VLANs are egress-untagged */
+	OCELOT_PORT_TAG_DISABLED = 0,
+	/* all VLANs except the native VLAN and VID 0 are egress-tagged */
+	OCELOT_PORT_TAG_NATIVE = 1,
+	/* all VLANs except VID 0 are egress-tagged */
+	OCELOT_PORT_TAG_TRUNK_NO_VID0 = 2,
+	/* all VLANs are egress-tagged */
+	OCELOT_PORT_TAG_TRUNK = 3,
+};
+
+struct ocelot_psfp_list {
+	struct list_head stream_list;
+	struct list_head sfi_list;
+	struct list_head sgi_list;
 };
 
 enum ocelot_sb {
@@ -589,6 +612,19 @@ enum ocelot_sb_pool {
 	OCELOT_SB_POOL_NUM,
 };
 
+/* MAC table entry types.
+ * ENTRYTYPE_NORMAL is subject to aging.
+ * ENTRYTYPE_LOCKED is not subject to aging.
+ * ENTRYTYPE_MACv4 is not subject to aging. For IPv4 multicast.
+ * ENTRYTYPE_MACv6 is not subject to aging. For IPv6 multicast.
+ */
+enum macaccess_entry_type {
+	ENTRYTYPE_NORMAL = 0,
+	ENTRYTYPE_LOCKED,
+	ENTRYTYPE_MACv4,
+	ENTRYTYPE_MACv6,
+};
+
 #define OCELOT_QUIRK_PCS_PERFORMS_RATE_ADAPTATION	BIT(0)
 #define OCELOT_QUIRK_QSGMII_PORTS_MUST_BE_UP		BIT(1)
 
@@ -599,14 +635,12 @@ struct ocelot_port {
 
 	bool				vlan_aware;
 	/* VLAN that untagged frames are classified to, on ingress */
-	struct ocelot_vlan		pvid_vlan;
-	/* The VLAN ID that will be transmitted as untagged, on egress */
-	struct ocelot_vlan		native_vlan;
+	const struct ocelot_bridge_vlan	*pvid_vlan;
 
+	unsigned int			ptp_skbs_in_flight;
 	u8				ptp_cmd;
 	struct sk_buff_head		tx_skbs;
 	u8				ts_id;
-	spinlock_t			ts_id_lock;
 
 	phy_interface_t			phy_mode;
 
@@ -644,8 +678,7 @@ struct ocelot {
 
 	u8				base_mac[ETH_ALEN];
 
-	/* Keep track of the vlan port masks */
-	u32				vlan_mask[VLAN_N_VID];
+	struct list_head		vlans;
 
 	/* Switches like VSC9959 have flooding per traffic class */
 	int				num_flooding_pgids;
@@ -666,7 +699,10 @@ struct ocelot {
 
 	struct list_head		dummy_rules;
 	struct ocelot_vcap_block	block[3];
+	struct ocelot_vcap_policer	vcap_pol;
 	struct vcap_props		*vcap;
+
+	struct ocelot_psfp_list		psfp;
 
 	/* Workqueue to check statistics for overflow with its lock */
 	struct mutex			stats_lock;
@@ -674,12 +710,18 @@ struct ocelot {
 	struct delayed_work		stats_work;
 	struct workqueue_struct		*stats_queue;
 
+	/* Lock for serializing access to the MAC table */
+	struct mutex			mact_lock;
+
 	struct workqueue_struct		*owq;
 
 	u8				ptp:1;
 	struct ptp_clock		*ptp_clock;
 	struct ptp_clock_info		ptp_info;
 	struct hwtstamp_config		hwtstamp_config;
+	unsigned int			ptp_skbs_in_flight;
+	/* Protects the 2-step TX timestamp ID logic */
+	spinlock_t			ts_id_lock;
 	/* Protects the PTP interface state */
 	struct mutex			ptp_lock;
 	/* Protects the PTP clock */
@@ -691,15 +733,6 @@ struct ocelot_policer {
 	u32 rate; /* kilobit per second */
 	u32 burst; /* bytes */
 };
-
-struct ocelot_skb_cb {
-	struct sk_buff *clone;
-	u8 ptp_cmd;
-	u8 ts_id;
-};
-
-#define OCELOT_SKB_CB(skb) \
-	((struct ocelot_skb_cb *)((skb)->cb))
 
 #define ocelot_read_ix(ocelot, reg, gi, ri) __ocelot_read_ix(ocelot, reg, reg##_GSZ * (gi) + reg##_RSZ * (ri))
 #define ocelot_read_gix(ocelot, reg, gi) __ocelot_read_ix(ocelot, reg, reg##_GSZ * (gi))
@@ -752,44 +785,12 @@ u32 __ocelot_target_read_ix(struct ocelot *ocelot, enum ocelot_target target,
 void __ocelot_target_write_ix(struct ocelot *ocelot, enum ocelot_target target,
 			      u32 val, u32 reg, u32 offset);
 
-#if IS_ENABLED(CONFIG_MSCC_OCELOT_SWITCH_LIB)
-
 /* Packet I/O */
 bool ocelot_can_inject(struct ocelot *ocelot, int grp);
 void ocelot_port_inject_frame(struct ocelot *ocelot, int port, int grp,
 			      u32 rew_op, struct sk_buff *skb);
 int ocelot_xtr_poll_frame(struct ocelot *ocelot, int grp, struct sk_buff **skb);
 void ocelot_drain_cpu_queue(struct ocelot *ocelot, int grp);
-
-u32 ocelot_ptp_rew_op(struct sk_buff *skb);
-#else
-
-static inline bool ocelot_can_inject(struct ocelot *ocelot, int grp)
-{
-	return false;
-}
-
-static inline void ocelot_port_inject_frame(struct ocelot *ocelot, int port,
-					    int grp, u32 rew_op,
-					    struct sk_buff *skb)
-{
-}
-
-static inline int ocelot_xtr_poll_frame(struct ocelot *ocelot, int grp,
-					struct sk_buff **skb)
-{
-	return -EIO;
-}
-
-static inline void ocelot_drain_cpu_queue(struct ocelot *ocelot, int grp)
-{
-}
-
-static inline u32 ocelot_ptp_rew_op(struct sk_buff *skb)
-{
-	return 0;
-}
-#endif
 
 /* Hardware initialization */
 int ocelot_regfields_init(struct ocelot *ocelot,
@@ -903,6 +904,19 @@ void ocelot_phylink_mac_link_up(struct ocelot *ocelot, int port,
 				int speed, int duplex,
 				bool tx_pause, bool rx_pause,
 				unsigned long quirks);
+
+int ocelot_mact_lookup(struct ocelot *ocelot, int *dst_idx,
+		       const unsigned char mac[ETH_ALEN],
+		       unsigned int vid, enum macaccess_entry_type *type);
+int ocelot_mact_learn_streamdata(struct ocelot *ocelot, int dst_idx,
+				 const unsigned char mac[ETH_ALEN],
+				 unsigned int vid,
+				 enum macaccess_entry_type type,
+				 int sfid, int ssid);
+
+int ocelot_vcap_policer_add(struct ocelot *ocelot, u32 pol_ix,
+			    struct ocelot_policer *pol);
+int ocelot_vcap_policer_del(struct ocelot *ocelot, u32 pol_ix);
 
 #if IS_ENABLED(CONFIG_BRIDGE_MRP)
 int ocelot_mrp_add(struct ocelot *ocelot, int port,

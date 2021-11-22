@@ -298,6 +298,8 @@ enum hnae3_dbg_cmd {
 	HNAE3_DBG_CMD_MAC_TNL_STATUS,
 	HNAE3_DBG_CMD_SERV_INFO,
 	HNAE3_DBG_CMD_UMV_INFO,
+	HNAE3_DBG_CMD_PAGE_POOL_INFO,
+	HNAE3_DBG_CMD_COAL_INFO,
 	HNAE3_DBG_CMD_UNKNOWN,
 };
 
@@ -347,6 +349,7 @@ struct hnae3_dev_specs {
 	u16 max_qset_num;
 	u16 umv_size;
 	u16 mc_mac_size;
+	u32 mac_stats_num;
 };
 
 struct hnae3_client_ops {
@@ -594,7 +597,7 @@ struct hnae3_ae_ops {
 				   u32 *tx_usecs_high, u32 *rx_usecs_high);
 
 	void (*get_mac_addr)(struct hnae3_handle *handle, u8 *p);
-	int (*set_mac_addr)(struct hnae3_handle *handle, void *p,
+	int (*set_mac_addr)(struct hnae3_handle *handle, const void *p,
 			    bool is_first);
 	int (*do_ioctl)(struct hnae3_handle *handle,
 			struct ifreq *ifr, int cmd);
@@ -859,6 +862,7 @@ struct hnae3_handle {
 int hnae3_register_ae_dev(struct hnae3_ae_dev *ae_dev);
 void hnae3_unregister_ae_dev(struct hnae3_ae_dev *ae_dev);
 
+void hnae3_unregister_ae_algo_prepare(struct hnae3_ae_algo *ae_algo);
 void hnae3_unregister_ae_algo(struct hnae3_ae_algo *ae_algo);
 void hnae3_register_ae_algo(struct hnae3_ae_algo *ae_algo);
 

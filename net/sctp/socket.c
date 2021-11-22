@@ -5068,11 +5068,8 @@ static int sctp_init_sock(struct sock *sk)
 
 	SCTP_DBG_OBJCNT_INC(sock);
 
-	local_bh_disable();
 	sk_sockets_allocated_inc(sk);
 	sock_prot_inuse_add(net, sk->sk_prot, 1);
-
-	local_bh_enable();
 
 	return 0;
 }
@@ -5099,10 +5096,8 @@ static void sctp_destroy_sock(struct sock *sk)
 		list_del(&sp->auto_asconf_list);
 	}
 	sctp_endpoint_free(sp->ep);
-	local_bh_disable();
 	sk_sockets_allocated_dec(sk);
 	sock_prot_inuse_add(sock_net(sk), sk->sk_prot, -1);
-	local_bh_enable();
 }
 
 /* Triggered when there are no references on the socket anymore */
@@ -9412,7 +9407,6 @@ void sctp_copy_sock(struct sock *newsk, struct sock *sk,
 	struct inet_sock *inet = inet_sk(sk);
 	struct inet_sock *newinet;
 	struct sctp_sock *sp = sctp_sk(sk);
-	struct sctp_endpoint *ep = sp->ep;
 
 	newsk->sk_type = sk->sk_type;
 	newsk->sk_bound_dev_if = sk->sk_bound_dev_if;
@@ -9457,9 +9451,9 @@ void sctp_copy_sock(struct sock *newsk, struct sock *sk,
 		net_enable_timestamp();
 
 	/* Set newsk security attributes from original sk and connection
-	 * security attribute from ep.
+	 * security attribute from asoc.
 	 */
-	security_sctp_sk_clone(ep, sk, newsk);
+	security_sctp_sk_clone(asoc, sk, newsk);
 }
 
 static inline void sctp_copy_descendant(struct sock *sk_to,

@@ -316,11 +316,11 @@ static int mlxsw_sp_port_dev_addr_set(struct mlxsw_sp_port *mlxsw_sp_port,
 static int mlxsw_sp_port_dev_addr_init(struct mlxsw_sp_port *mlxsw_sp_port)
 {
 	struct mlxsw_sp *mlxsw_sp = mlxsw_sp_port->mlxsw_sp;
-	unsigned char *addr = mlxsw_sp_port->dev->dev_addr;
 
-	ether_addr_copy(addr, mlxsw_sp->base_mac);
-	addr[ETH_ALEN - 1] += mlxsw_sp_port->local_port;
-	return mlxsw_sp_port_dev_addr_set(mlxsw_sp_port, addr);
+	eth_hw_addr_gen(mlxsw_sp_port->dev, mlxsw_sp->base_mac,
+			mlxsw_sp_port->local_port);
+	return mlxsw_sp_port_dev_addr_set(mlxsw_sp_port,
+					  mlxsw_sp_port->dev->dev_addr);
 }
 
 static int mlxsw_sp_port_max_mtu_get(struct mlxsw_sp_port *mlxsw_sp_port, int *p_max_mtu)
@@ -824,12 +824,16 @@ mlxsw_sp_port_get_hw_xstats(struct net_device *dev,
 
 	for (i = 0; i < TC_MAX_QUEUE; i++) {
 		err = mlxsw_sp_port_get_stats_raw(dev,
-						  MLXSW_REG_PPCNT_TC_CONG_TC,
+						  MLXSW_REG_PPCNT_TC_CONG_CNT,
 						  i, ppcnt_pl);
-		if (!err)
-			xstats->wred_drop[i] =
-				mlxsw_reg_ppcnt_wred_discard_get(ppcnt_pl);
+		if (err)
+			goto tc_cnt;
 
+		xstats->wred_drop[i] =
+			mlxsw_reg_ppcnt_wred_discard_get(ppcnt_pl);
+		xstats->tc_ecn[i] = mlxsw_reg_ppcnt_ecn_marked_tc_get(ppcnt_pl);
+
+tc_cnt:
 		err = mlxsw_sp_port_get_stats_raw(dev, MLXSW_REG_PPCNT_TC_CNT,
 						  i, ppcnt_pl);
 		if (err)
@@ -1035,6 +1039,8 @@ static int mlxsw_sp_setup_tc_block(struct mlxsw_sp_port *mlxsw_sp_port,
 		return mlxsw_sp_setup_tc_block_clsact(mlxsw_sp_port, f, false);
 	case FLOW_BLOCK_BINDER_TYPE_RED_EARLY_DROP:
 		return mlxsw_sp_setup_tc_block_qevent_early_drop(mlxsw_sp_port, f);
+	case FLOW_BLOCK_BINDER_TYPE_RED_MARK:
+		return mlxsw_sp_setup_tc_block_qevent_mark(mlxsw_sp_port, f);
 	default:
 		return -EOPNOTSUPP;
 	}
@@ -3276,6 +3282,30 @@ static int mlxsw_sp_resources_span_register(struct mlxsw_core *mlxsw_core)
 					 &span_size_params);
 }
 
+static int
+mlxsw_sp_resources_rif_mac_profile_register(struct mlxsw_core *mlxsw_core)
+{
+	struct devlink *devlink = priv_to_devlink(mlxsw_core);
+	struct devlink_resource_size_params size_params;
+	u8 max_rif_mac_profiles;
+
+	if (!MLXSW_CORE_RES_VALID(mlxsw_core, MAX_RIF_MAC_PROFILES))
+		return -EIO;
+
+	max_rif_mac_profiles = MLXSW_CORE_RES_GET(mlxsw_core,
+						  MAX_RIF_MAC_PROFILES);
+	devlink_resource_size_params_init(&size_params, max_rif_mac_profiles,
+					  max_rif_mac_profiles, 1,
+					  DEVLINK_RESOURCE_UNIT_ENTRY);
+
+	return devlink_resource_register(devlink,
+					 "rif_mac_profiles",
+					 max_rif_mac_profiles,
+					 MLXSW_SP_RESOURCE_RIF_MAC_PROFILES,
+					 DEVLINK_RESOURCE_ID_PARENT_TOP,
+					 &size_params);
+}
+
 static int mlxsw_sp1_resources_register(struct mlxsw_core *mlxsw_core)
 {
 	int err;
@@ -3294,10 +3324,16 @@ static int mlxsw_sp1_resources_register(struct mlxsw_core *mlxsw_core)
 
 	err = mlxsw_sp_policer_resources_register(mlxsw_core);
 	if (err)
-		goto err_resources_counter_register;
+		goto err_policer_resources_register;
+
+	err = mlxsw_sp_resources_rif_mac_profile_register(mlxsw_core);
+	if (err)
+		goto err_resources_rif_mac_profile_register;
 
 	return 0;
 
+err_resources_rif_mac_profile_register:
+err_policer_resources_register:
 err_resources_counter_register:
 err_resources_span_register:
 	devlink_resources_unregister(priv_to_devlink(mlxsw_core), NULL);
@@ -3322,10 +3358,16 @@ static int mlxsw_sp2_resources_register(struct mlxsw_core *mlxsw_core)
 
 	err = mlxsw_sp_policer_resources_register(mlxsw_core);
 	if (err)
-		goto err_resources_counter_register;
+		goto err_policer_resources_register;
+
+	err = mlxsw_sp_resources_rif_mac_profile_register(mlxsw_core);
+	if (err)
+		goto err_resources_rif_mac_profile_register;
 
 	return 0;
 
+err_resources_rif_mac_profile_register:
+err_policer_resources_register:
 err_resources_counter_register:
 err_resources_span_register:
 	devlink_resources_unregister(priv_to_devlink(mlxsw_core), NULL);

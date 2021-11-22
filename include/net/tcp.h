@@ -48,7 +48,9 @@
 
 extern struct inet_hashinfo tcp_hashinfo;
 
-extern struct percpu_counter tcp_orphan_count;
+DECLARE_PER_CPU(unsigned int, tcp_orphan_count);
+int tcp_orphan_count_sum(void);
+
 void tcp_time_wait(struct sock *sk, int state, int timeo);
 
 #define MAX_TCP_HEADER	L1_CACHE_ALIGN(128 + MAX_HEADER)
@@ -288,20 +290,17 @@ static inline bool tcp_out_of_memory(struct sock *sk)
 	return false;
 }
 
-void sk_forced_mem_schedule(struct sock *sk, int size);
-
-static inline bool tcp_too_many_orphans(struct sock *sk, int shift)
+static inline void tcp_wmem_free_skb(struct sock *sk, struct sk_buff *skb)
 {
-	struct percpu_counter *ocp = sk->sk_prot->orphan_count;
-	int orphans = percpu_counter_read_positive(ocp);
-
-	if (orphans << shift > sysctl_tcp_max_orphans) {
-		orphans = percpu_counter_sum_positive(ocp);
-		if (orphans << shift > sysctl_tcp_max_orphans)
-			return true;
-	}
-	return false;
+	sk_wmem_queued_add(sk, -skb->truesize);
+	if (!skb_zcopy_pure(skb))
+		sk_mem_uncharge(sk, skb->truesize);
+	else
+		sk_mem_uncharge(sk, SKB_TRUESIZE(skb_end_offset(skb)));
+	__kfree_skb(skb);
 }
+
+void sk_forced_mem_schedule(struct sock *sk, int size);
 
 bool tcp_check_oom(struct sock *sk, int shift);
 
@@ -322,7 +321,7 @@ void tcp_shutdown(struct sock *sk, int how);
 int tcp_v4_early_demux(struct sk_buff *skb);
 int tcp_v4_rcv(struct sk_buff *skb);
 
-void tcp_remove_empty_skb(struct sock *sk, struct sk_buff *skb);
+void tcp_remove_empty_skb(struct sock *sk);
 int tcp_v4_tw_remember_stamp(struct inet_timewait_sock *tw);
 int tcp_sendmsg(struct sock *sk, struct msghdr *msg, size_t size);
 int tcp_sendmsg_locked(struct sock *sk, struct msghdr *msg, size_t size);
@@ -348,6 +347,8 @@ void tcp_twsk_destructor(struct sock *sk);
 ssize_t tcp_splice_read(struct socket *sk, loff_t *ppos,
 			struct pipe_inode_info *pipe, size_t len,
 			unsigned int flags);
+struct sk_buff *tcp_stream_alloc_skb(struct sock *sk, int size, gfp_t gfp,
+				     bool force_schedule);
 
 void tcp_enter_quickack_mode(struct sock *sk, unsigned int max_quickacks);
 static inline void tcp_dec_quickack_mode(struct sock *sk,
@@ -976,7 +977,8 @@ static inline bool tcp_skb_can_collapse(const struct sk_buff *to,
 					const struct sk_buff *from)
 {
 	return likely(tcp_skb_can_collapse_to(to) &&
-		      mptcp_skb_can_collapse(to, from));
+		      mptcp_skb_can_collapse(to, from) &&
+		      skb_pure_zcopy_same(to, from));
 }
 
 /* Events passed to congestion control interface */
@@ -1366,6 +1368,16 @@ static inline bool tcp_checksum_complete(struct sk_buff *skb)
 }
 
 bool tcp_add_backlog(struct sock *sk, struct sk_buff *skb);
+
+void __sk_defer_free_flush(struct sock *sk);
+
+static inline void sk_defer_free_flush(struct sock *sk)
+{
+	if (llist_empty(&sk->defer_list))
+		return;
+	__sk_defer_free_flush(sk);
+}
+
 int tcp_filter(struct sock *sk, struct sk_buff *skb);
 void tcp_set_state(struct sock *sk, int state);
 void tcp_done(struct sock *sk);
@@ -1590,6 +1602,7 @@ struct tcp_md5sig_key {
 	u8			keylen;
 	u8			family; /* AF_INET or AF_INET6 */
 	u8			prefixlen;
+	u8			flags;
 	union tcp_md5_addr	addr;
 	int			l3index; /* set if key added with L3 scope */
 	u8			key[TCP_MD5SIG_MAXKEYLEN];
@@ -1635,10 +1648,10 @@ struct tcp_md5sig_pool {
 int tcp_v4_md5_hash_skb(char *md5_hash, const struct tcp_md5sig_key *key,
 			const struct sock *sk, const struct sk_buff *skb);
 int tcp_md5_do_add(struct sock *sk, const union tcp_md5_addr *addr,
-		   int family, u8 prefixlen, int l3index,
+		   int family, u8 prefixlen, int l3index, u8 flags,
 		   const u8 *newkey, u8 newkeylen, gfp_t gfp);
 int tcp_md5_do_del(struct sock *sk, const union tcp_md5_addr *addr,
-		   int family, u8 prefixlen, int l3index);
+		   int family, u8 prefixlen, int l3index, u8 flags);
 struct tcp_md5sig_key *tcp_v4_md5_lookup(const struct sock *sk,
 					 const struct sock *addr_sk);
 
@@ -1883,7 +1896,7 @@ static inline void tcp_rtx_queue_unlink_and_free(struct sk_buff *skb, struct soc
 {
 	list_del(&skb->tcp_tsorted_anchor);
 	tcp_rtx_queue_unlink(skb, sk);
-	sk_wmem_free_skb(sk, skb);
+	tcp_wmem_free_skb(sk, skb);
 }
 
 static inline void tcp_push_pending_frames(struct sock *sk)
@@ -2169,9 +2182,13 @@ static inline void tcp_segs_in(struct tcp_sock *tp, const struct sk_buff *skb)
 	u16 segs_in;
 
 	segs_in = max_t(u16, 1, skb_shinfo(skb)->gso_segs);
-	tp->segs_in += segs_in;
+
+	/* We update these fields while other threads might
+	 * read them from tcp_get_info()
+	 */
+	WRITE_ONCE(tp->segs_in, tp->segs_in + segs_in);
 	if (skb->len > tcp_hdrlen(skb))
-		tp->data_segs_in += segs_in;
+		WRITE_ONCE(tp->data_segs_in, tp->data_segs_in + segs_in);
 }
 
 /*

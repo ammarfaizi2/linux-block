@@ -1004,13 +1004,11 @@ udp_l3mdev_accept - BOOLEAN
 udp_mem - vector of 3 INTEGERs: min, pressure, max
 	Number of pages allowed for queueing by all UDP sockets.
 
-	min: Below this number of pages UDP is not bothered about its
-	memory appetite. When amount of memory allocated by UDP exceeds
-	this number, UDP starts to moderate memory usage.
+	min: Number of pages allowed for queueing by all UDP sockets.
 
 	pressure: This value was introduced to follow format of tcp_mem.
 
-	max: Number of pages allowed for queueing by all UDP sockets.
+	max: This value was introduced to follow format of tcp_mem.
 
 	Default is calculated at boot time from amount of available memory.
 
@@ -1610,6 +1608,15 @@ arp_accept - BOOLEAN
 	If the ARP table already contains the IP address of the
 	gratuitous arp frame, the arp table will be updated regardless
 	if this setting is on or off.
+
+arp_evict_nocarrier - BOOLEAN
+	Clears the ARP cache on NOCARRIER events. This option is important for
+	wireless devices where the ARP cache should not be cleared when roaming
+	between access points on the same network. In most cases this should
+	remain as the default (1).
+
+	- 1 - (default): Clear the ARP cache on NOCARRIER events
+	- 0 - Do not clear ARP cache on NOCARRIER events
 
 mcast_solicit - INTEGER
 	The maximum number of multicast probes in INCOMPLETE state,
@@ -2340,6 +2347,15 @@ ndisc_tclass - INTEGER
 	to leave cleared).
 
 	* 0 - (default)
+
+ndisc_evict_nocarrier - BOOLEAN
+	Clears the neighbor discovery table on NOCARRIER events. This option is
+	important for wireless devices where the neighbor discovery cache should
+	not be cleared when roaming between access points on the same network.
+	In most cases this should remain as the default (1).
+
+	- 1 - (default): Clear neighbor discover cache on NOCARRIER events.
+	- 0 - Do not clear neighbor discovery cache on NOCARRIER events.
 
 mldv1_unsolicited_report_interval - INTEGER
 	The interval in milliseconds in which the next unsolicited

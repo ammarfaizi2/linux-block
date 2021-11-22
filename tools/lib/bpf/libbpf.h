@@ -150,6 +150,7 @@ struct bpf_object_load_attr {
 /* Load/unload object into/from kernel */
 LIBBPF_API int bpf_object__load(struct bpf_object *obj);
 LIBBPF_API int bpf_object__load_xattr(struct bpf_object_load_attr *attr);
+LIBBPF_DEPRECATED_SINCE(0, 6, "bpf_object__unload() is deprecated, use bpf_object__close() instead")
 LIBBPF_API int bpf_object__unload(struct bpf_object *obj);
 
 LIBBPF_API const char *bpf_object__name(const struct bpf_object *obj);
@@ -167,7 +168,8 @@ LIBBPF_API struct bpf_program *
 bpf_object__find_program_by_name(const struct bpf_object *obj,
 				 const char *name);
 
-LIBBPF_API struct bpf_object *bpf_object__next(struct bpf_object *prev);
+LIBBPF_API LIBBPF_DEPRECATED_SINCE(0, 7, "track bpf_objects in application code instead")
+struct bpf_object *bpf_object__next(struct bpf_object *prev);
 #define bpf_object__for_each_safe(pos, tmp)			\
 	for ((pos) = bpf_object__next(NULL),		\
 		(tmp) = bpf_object__next(pos);		\
@@ -189,16 +191,22 @@ LIBBPF_API int libbpf_find_vmlinux_btf_id(const char *name,
 
 /* Accessors of bpf_program */
 struct bpf_program;
-LIBBPF_API struct bpf_program *bpf_program__next(struct bpf_program *prog,
-						 const struct bpf_object *obj);
+LIBBPF_API LIBBPF_DEPRECATED_SINCE(0, 7, "use bpf_object__next_program() instead")
+struct bpf_program *bpf_program__next(struct bpf_program *prog,
+				      const struct bpf_object *obj);
+LIBBPF_API struct bpf_program *
+bpf_object__next_program(const struct bpf_object *obj, struct bpf_program *prog);
 
-#define bpf_object__for_each_program(pos, obj)		\
-	for ((pos) = bpf_program__next(NULL, (obj));	\
-	     (pos) != NULL;				\
-	     (pos) = bpf_program__next((pos), (obj)))
+#define bpf_object__for_each_program(pos, obj)			\
+	for ((pos) = bpf_object__next_program((obj), NULL);	\
+	     (pos) != NULL;					\
+	     (pos) = bpf_object__next_program((obj), (pos)))
 
-LIBBPF_API struct bpf_program *bpf_program__prev(struct bpf_program *prog,
-						 const struct bpf_object *obj);
+LIBBPF_API LIBBPF_DEPRECATED_SINCE(0, 7, "use bpf_object__prev_program() instead")
+struct bpf_program *bpf_program__prev(struct bpf_program *prog,
+				      const struct bpf_object *obj);
+LIBBPF_API struct bpf_program *
+bpf_object__prev_program(const struct bpf_object *obj, struct bpf_program *prog);
 
 typedef void (*bpf_program_clear_priv_t)(struct bpf_program *, void *);
 
@@ -217,14 +225,51 @@ LIBBPF_API bool bpf_program__autoload(const struct bpf_program *prog);
 LIBBPF_API int bpf_program__set_autoload(struct bpf_program *prog, bool autoload);
 
 /* returns program size in bytes */
+LIBBPF_DEPRECATED_SINCE(0, 7, "use bpf_program__insn_cnt() instead")
 LIBBPF_API size_t bpf_program__size(const struct bpf_program *prog);
 
-LIBBPF_API int bpf_program__load(struct bpf_program *prog, char *license,
-				 __u32 kern_version);
+struct bpf_insn;
+
+/**
+ * @brief **bpf_program__insns()** gives read-only access to BPF program's
+ * underlying BPF instructions.
+ * @param prog BPF program for which to return instructions
+ * @return a pointer to an array of BPF instructions that belong to the
+ * specified BPF program
+ *
+ * Returned pointer is always valid and not NULL. Number of `struct bpf_insn`
+ * pointed to can be fetched using **bpf_program__insn_cnt()** API.
+ *
+ * Keep in mind, libbpf can modify and append/delete BPF program's
+ * instructions as it processes BPF object file and prepares everything for
+ * uploading into the kernel. So depending on the point in BPF object
+ * lifetime, **bpf_program__insns()** can return different sets of
+ * instructions. As an example, during BPF object load phase BPF program
+ * instructions will be CO-RE-relocated, BPF subprograms instructions will be
+ * appended, ldimm64 instructions will have FDs embedded, etc. So instructions
+ * returned before **bpf_object__load()** and after it might be quite
+ * different.
+ */
+LIBBPF_API const struct bpf_insn *bpf_program__insns(const struct bpf_program *prog);
+/**
+ * @brief **bpf_program__insn_cnt()** returns number of `struct bpf_insn`'s
+ * that form specified BPF program.
+ * @param prog BPF program for which to return number of BPF instructions
+ *
+ * See **bpf_program__insns()** documentation for notes on how libbpf can
+ * change instructions and their count during different phases of
+ * **bpf_object** lifetime.
+ */
+LIBBPF_API size_t bpf_program__insn_cnt(const struct bpf_program *prog);
+
+LIBBPF_DEPRECATED_SINCE(0, 6, "use bpf_object__load() instead")
+LIBBPF_API int bpf_program__load(struct bpf_program *prog, const char *license, __u32 kern_version);
 LIBBPF_API int bpf_program__fd(const struct bpf_program *prog);
+LIBBPF_DEPRECATED_SINCE(0, 7, "multi-instance bpf_program support is deprecated")
 LIBBPF_API int bpf_program__pin_instance(struct bpf_program *prog,
 					 const char *path,
 					 int instance);
+LIBBPF_DEPRECATED_SINCE(0, 7, "multi-instance bpf_program support is deprecated")
 LIBBPF_API int bpf_program__unpin_instance(struct bpf_program *prog,
 					   const char *path,
 					   int instance);
@@ -358,8 +403,6 @@ LIBBPF_API struct bpf_link *
 bpf_program__attach_iter(const struct bpf_program *prog,
 			 const struct bpf_iter_attach_opts *opts);
 
-struct bpf_insn;
-
 /*
  * Libbpf allows callers to adjust BPF programs before being loaded
  * into kernel. One program in an object file can be transformed into
@@ -388,7 +431,6 @@ struct bpf_insn;
  * one instance. In this case bpf_program__fd(prog) is equal to
  * bpf_program__nth_fd(prog, 0).
  */
-
 struct bpf_prog_prep_result {
 	/*
 	 * If not NULL, load new instruction array.
@@ -417,9 +459,11 @@ typedef int (*bpf_program_prep_t)(struct bpf_program *prog, int n,
 				  struct bpf_insn *insns, int insns_cnt,
 				  struct bpf_prog_prep_result *res);
 
+LIBBPF_DEPRECATED_SINCE(0, 7, "use bpf_program__insns() for getting bpf_program instructions")
 LIBBPF_API int bpf_program__set_prep(struct bpf_program *prog, int nr_instance,
 				     bpf_program_prep_t prep);
 
+LIBBPF_DEPRECATED_SINCE(0, 7, "multi-instance bpf_program support is deprecated")
 LIBBPF_API int bpf_program__nth_fd(const struct bpf_program *prog, int n);
 
 /*
@@ -448,6 +492,9 @@ bpf_program__get_expected_attach_type(const struct bpf_program *prog);
 LIBBPF_API void
 bpf_program__set_expected_attach_type(struct bpf_program *prog,
 				      enum bpf_attach_type type);
+
+LIBBPF_API __u32 bpf_program__flags(const struct bpf_program *prog);
+LIBBPF_API int bpf_program__set_extra_flags(struct bpf_program *prog, __u32 extra_flags);
 
 LIBBPF_API int
 bpf_program__set_attach_target(struct bpf_program *prog, int attach_prog_fd,
@@ -502,16 +549,21 @@ bpf_object__find_map_fd_by_name(const struct bpf_object *obj, const char *name);
 LIBBPF_API struct bpf_map *
 bpf_object__find_map_by_offset(struct bpf_object *obj, size_t offset);
 
+LIBBPF_API LIBBPF_DEPRECATED_SINCE(0, 7, "use bpf_object__next_map() instead")
+struct bpf_map *bpf_map__next(const struct bpf_map *map, const struct bpf_object *obj);
 LIBBPF_API struct bpf_map *
-bpf_map__next(const struct bpf_map *map, const struct bpf_object *obj);
+bpf_object__next_map(const struct bpf_object *obj, const struct bpf_map *map);
+
 #define bpf_object__for_each_map(pos, obj)		\
-	for ((pos) = bpf_map__next(NULL, (obj));	\
+	for ((pos) = bpf_object__next_map((obj), NULL);	\
 	     (pos) != NULL;				\
-	     (pos) = bpf_map__next((pos), (obj)))
+	     (pos) = bpf_object__next_map((obj), (pos)))
 #define bpf_map__for_each bpf_object__for_each_map
 
+LIBBPF_API LIBBPF_DEPRECATED_SINCE(0, 7, "use bpf_object__prev_map() instead")
+struct bpf_map *bpf_map__prev(const struct bpf_map *map, const struct bpf_object *obj);
 LIBBPF_API struct bpf_map *
-bpf_map__prev(const struct bpf_map *map, const struct bpf_object *obj);
+bpf_object__prev_map(const struct bpf_object *obj, const struct bpf_map *map);
 
 /**
  * @brief **bpf_map__fd()** gets the file descriptor of the passed
@@ -550,6 +602,9 @@ LIBBPF_API __u32 bpf_map__btf_value_type_id(const struct bpf_map *map);
 /* get/set map if_index */
 LIBBPF_API __u32 bpf_map__ifindex(const struct bpf_map *map);
 LIBBPF_API int bpf_map__set_ifindex(struct bpf_map *map, __u32 ifindex);
+/* get/set map map_extra flags */
+LIBBPF_API __u64 bpf_map__map_extra(const struct bpf_map *map);
+LIBBPF_API int bpf_map__set_map_extra(struct bpf_map *map, __u64 map_extra);
 
 typedef void (*bpf_map_clear_priv_t)(struct bpf_map *, void *);
 LIBBPF_API int bpf_map__set_priv(struct bpf_map *map, void *priv,
@@ -623,8 +678,9 @@ struct bpf_prog_load_attr {
 
 LIBBPF_API int bpf_prog_load_xattr(const struct bpf_prog_load_attr *attr,
 				   struct bpf_object **pobj, int *prog_fd);
-LIBBPF_API int bpf_prog_load(const char *file, enum bpf_prog_type type,
-			     struct bpf_object **pobj, int *prog_fd);
+LIBBPF_DEPRECATED_SINCE(0, 7, "use bpf_object__open() and bpf_object__load() instead")
+LIBBPF_API int bpf_prog_load_deprecated(const char *file, enum bpf_prog_type type,
+					struct bpf_object **pobj, int *prog_fd);
 
 /* XDP related API */
 struct xdp_link_info {
@@ -722,17 +778,51 @@ typedef void (*perf_buffer_lost_fn)(void *ctx, int cpu, __u64 cnt);
 
 /* common use perf buffer options */
 struct perf_buffer_opts {
-	/* if specified, sample_cb is called for each sample */
-	perf_buffer_sample_fn sample_cb;
-	/* if specified, lost_cb is called for each batch of lost samples */
-	perf_buffer_lost_fn lost_cb;
-	/* ctx is provided to sample_cb and lost_cb */
-	void *ctx;
+	union {
+		size_t sz;
+		struct { /* DEPRECATED: will be removed in v1.0 */
+			/* if specified, sample_cb is called for each sample */
+			perf_buffer_sample_fn sample_cb;
+			/* if specified, lost_cb is called for each batch of lost samples */
+			perf_buffer_lost_fn lost_cb;
+			/* ctx is provided to sample_cb and lost_cb */
+			void *ctx;
+		};
+	};
 };
+#define perf_buffer_opts__last_field sz
 
+/**
+ * @brief **perf_buffer__new()** creates BPF perfbuf manager for a specified
+ * BPF_PERF_EVENT_ARRAY map
+ * @param map_fd FD of BPF_PERF_EVENT_ARRAY BPF map that will be used by BPF
+ * code to send data over to user-space
+ * @param page_cnt number of memory pages allocated for each per-CPU buffer
+ * @param sample_cb function called on each received data record
+ * @param lost_cb function called when record loss has occurred
+ * @param ctx user-provided extra context passed into *sample_cb* and *lost_cb*
+ * @return a new instance of struct perf_buffer on success, NULL on error with
+ * *errno* containing an error code
+ */
 LIBBPF_API struct perf_buffer *
 perf_buffer__new(int map_fd, size_t page_cnt,
+		 perf_buffer_sample_fn sample_cb, perf_buffer_lost_fn lost_cb, void *ctx,
 		 const struct perf_buffer_opts *opts);
+
+LIBBPF_API struct perf_buffer *
+perf_buffer__new_v0_6_0(int map_fd, size_t page_cnt,
+			perf_buffer_sample_fn sample_cb, perf_buffer_lost_fn lost_cb, void *ctx,
+			const struct perf_buffer_opts *opts);
+
+LIBBPF_API LIBBPF_DEPRECATED_SINCE(0, 7, "use new variant of perf_buffer__new() instead")
+struct perf_buffer *perf_buffer__new_deprecated(int map_fd, size_t page_cnt,
+						const struct perf_buffer_opts *opts);
+
+#define perf_buffer__new(...) ___libbpf_overload(___perf_buffer_new, __VA_ARGS__)
+#define ___perf_buffer_new6(map_fd, page_cnt, sample_cb, lost_cb, ctx, opts) \
+	perf_buffer__new(map_fd, page_cnt, sample_cb, lost_cb, ctx, opts)
+#define ___perf_buffer_new3(map_fd, page_cnt, opts) \
+	perf_buffer__new_deprecated(map_fd, page_cnt, opts)
 
 enum bpf_perf_event_ret {
 	LIBBPF_PERF_EVENT_DONE	= 0,
@@ -747,12 +837,21 @@ typedef enum bpf_perf_event_ret
 
 /* raw perf buffer options, giving most power and control */
 struct perf_buffer_raw_opts {
-	/* perf event attrs passed directly into perf_event_open() */
-	struct perf_event_attr *attr;
-	/* raw event callback */
-	perf_buffer_event_fn event_cb;
-	/* ctx is provided to event_cb */
-	void *ctx;
+	union {
+		struct {
+			size_t sz;
+			long :0;
+			long :0;
+		};
+		struct { /* DEPRECATED: will be removed in v1.0 */
+			/* perf event attrs passed directly into perf_event_open() */
+			struct perf_event_attr *attr;
+			/* raw event callback */
+			perf_buffer_event_fn event_cb;
+			/* ctx is provided to event_cb */
+			void *ctx;
+		};
+	};
 	/* if cpu_cnt == 0, open all on all possible CPUs (up to the number of
 	 * max_entries of given PERF_EVENT_ARRAY map)
 	 */
@@ -762,10 +861,27 @@ struct perf_buffer_raw_opts {
 	/* if cpu_cnt > 0, map_keys specify map keys to set per-CPU FDs for */
 	int *map_keys;
 };
+#define perf_buffer_raw_opts__last_field map_keys
 
 LIBBPF_API struct perf_buffer *
-perf_buffer__new_raw(int map_fd, size_t page_cnt,
+perf_buffer__new_raw(int map_fd, size_t page_cnt, struct perf_event_attr *attr,
+		     perf_buffer_event_fn event_cb, void *ctx,
 		     const struct perf_buffer_raw_opts *opts);
+
+LIBBPF_API struct perf_buffer *
+perf_buffer__new_raw_v0_6_0(int map_fd, size_t page_cnt, struct perf_event_attr *attr,
+			    perf_buffer_event_fn event_cb, void *ctx,
+			    const struct perf_buffer_raw_opts *opts);
+
+LIBBPF_API LIBBPF_DEPRECATED_SINCE(0, 7, "use new variant of perf_buffer__new_raw() instead")
+struct perf_buffer *perf_buffer__new_raw_deprecated(int map_fd, size_t page_cnt,
+						    const struct perf_buffer_raw_opts *opts);
+
+#define perf_buffer__new_raw(...) ___libbpf_overload(___perf_buffer_new_raw, __VA_ARGS__)
+#define ___perf_buffer_new_raw6(map_fd, page_cnt, attr, event_cb, ctx, opts) \
+	perf_buffer__new_raw(map_fd, page_cnt, attr, event_cb, ctx, opts)
+#define ___perf_buffer_new_raw3(map_fd, page_cnt, opts) \
+	perf_buffer__new_raw_deprecated(map_fd, page_cnt, opts)
 
 LIBBPF_API void perf_buffer__free(struct perf_buffer *pb);
 LIBBPF_API int perf_buffer__epoll_fd(const struct perf_buffer *pb);
@@ -865,12 +981,15 @@ struct bpf_prog_info_linear {
 	__u8			data[];
 };
 
+LIBBPF_DEPRECATED_SINCE(0, 6, "use a custom linear prog_info wrapper")
 LIBBPF_API struct bpf_prog_info_linear *
 bpf_program__get_prog_info_linear(int fd, __u64 arrays);
 
+LIBBPF_DEPRECATED_SINCE(0, 6, "use a custom linear prog_info wrapper")
 LIBBPF_API void
 bpf_program__bpil_addr_to_offs(struct bpf_prog_info_linear *info_linear);
 
+LIBBPF_DEPRECATED_SINCE(0, 6, "use a custom linear prog_info wrapper")
 LIBBPF_API void
 bpf_program__bpil_offs_to_addr(struct bpf_prog_info_linear *info_linear);
 

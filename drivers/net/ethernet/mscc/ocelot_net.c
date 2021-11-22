@@ -8,6 +8,7 @@
  * Copyright 2020-2021 NXP
  */
 
+#include <linux/dsa/ocelot.h>
 #include <linux/if_bridge.h>
 #include <linux/of_net.h>
 #include <linux/phy/phy.h>
@@ -417,7 +418,7 @@ static int ocelot_vlan_vid_del(struct net_device *dev, u16 vid)
 	 * with VLAN filtering feature. We need to keep it to receive
 	 * untagged traffic.
 	 */
-	if (vid == 0)
+	if (vid == OCELOT_VLAN_UNAWARE_PVID)
 		return 0;
 
 	ret = ocelot_vlan_del(ocelot, port, vid);
@@ -552,7 +553,7 @@ static int ocelot_mc_unsync(struct net_device *dev, const unsigned char *addr)
 	struct ocelot_mact_work_ctx w;
 
 	ether_addr_copy(w.forget.addr, addr);
-	w.forget.vid = ocelot_port->pvid_vlan.vid;
+	w.forget.vid = OCELOT_VLAN_UNAWARE_PVID;
 	w.type = OCELOT_MACT_FORGET;
 
 	return ocelot_enqueue_mact_action(ocelot, &w);
@@ -566,7 +567,7 @@ static int ocelot_mc_sync(struct net_device *dev, const unsigned char *addr)
 	struct ocelot_mact_work_ctx w;
 
 	ether_addr_copy(w.learn.addr, addr);
-	w.learn.vid = ocelot_port->pvid_vlan.vid;
+	w.learn.vid = OCELOT_VLAN_UNAWARE_PVID;
 	w.learn.pgid = PGID_CPU;
 	w.learn.entry_type = ENTRYTYPE_LOCKED;
 	w.type = OCELOT_MACT_LEARN;
@@ -601,9 +602,9 @@ static int ocelot_port_set_mac_address(struct net_device *dev, void *p)
 
 	/* Learn the new net device MAC address in the mac table. */
 	ocelot_mact_learn(ocelot, PGID_CPU, addr->sa_data,
-			  ocelot_port->pvid_vlan.vid, ENTRYTYPE_LOCKED);
+			  OCELOT_VLAN_UNAWARE_PVID, ENTRYTYPE_LOCKED);
 	/* Then forget the previous one. */
-	ocelot_mact_forget(ocelot, dev->dev_addr, ocelot_port->pvid_vlan.vid);
+	ocelot_mact_forget(ocelot, dev->dev_addr, OCELOT_VLAN_UNAWARE_PVID);
 
 	eth_hw_addr_set(dev, addr->sa_data);
 	return 0;
@@ -1497,41 +1498,6 @@ struct notifier_block ocelot_switchdev_blocking_nb __read_mostly = {
 	.notifier_call = ocelot_switchdev_blocking_event,
 };
 
-static void vsc7514_phylink_validate(struct phylink_config *config,
-				     unsigned long *supported,
-				     struct phylink_link_state *state)
-{
-	struct net_device *ndev = to_net_dev(config->dev);
-	struct ocelot_port_private *priv = netdev_priv(ndev);
-	struct ocelot_port *ocelot_port = &priv->port;
-	__ETHTOOL_DECLARE_LINK_MODE_MASK(mask) = {};
-
-	if (state->interface != PHY_INTERFACE_MODE_NA &&
-	    state->interface != ocelot_port->phy_mode) {
-		bitmap_zero(supported, __ETHTOOL_LINK_MODE_MASK_NBITS);
-		return;
-	}
-
-	phylink_set_port_modes(mask);
-
-	phylink_set(mask, Pause);
-	phylink_set(mask, Autoneg);
-	phylink_set(mask, Asym_Pause);
-	phylink_set(mask, 10baseT_Half);
-	phylink_set(mask, 10baseT_Full);
-	phylink_set(mask, 100baseT_Half);
-	phylink_set(mask, 100baseT_Full);
-	phylink_set(mask, 1000baseT_Half);
-	phylink_set(mask, 1000baseT_Full);
-	phylink_set(mask, 1000baseX_Full);
-	phylink_set(mask, 2500baseT_Full);
-	phylink_set(mask, 2500baseX_Full);
-
-	bitmap_and(supported, supported, mask, __ETHTOOL_LINK_MODE_MASK_NBITS);
-	bitmap_and(state->advertising, state->advertising, mask,
-		   __ETHTOOL_LINK_MODE_MASK_NBITS);
-}
-
 static void vsc7514_phylink_mac_config(struct phylink_config *config,
 				       unsigned int link_an_mode,
 				       const struct phylink_link_state *state)
@@ -1590,7 +1556,7 @@ static void vsc7514_phylink_mac_link_up(struct phylink_config *config,
 }
 
 static const struct phylink_mac_ops ocelot_phylink_ops = {
-	.validate		= vsc7514_phylink_validate,
+	.validate		= phylink_generic_validate,
 	.mac_config		= vsc7514_phylink_mac_config,
 	.mac_link_down		= vsc7514_phylink_mac_link_down,
 	.mac_link_up		= vsc7514_phylink_mac_link_up,
@@ -1625,7 +1591,7 @@ static int ocelot_port_phylink_create(struct ocelot *ocelot, int port,
 	if (phy_mode == PHY_INTERFACE_MODE_QSGMII)
 		ocelot_port_rmwl(ocelot_port, 0,
 				 DEV_CLOCK_CFG_MAC_TX_RST |
-				 DEV_CLOCK_CFG_MAC_TX_RST,
+				 DEV_CLOCK_CFG_MAC_RX_RST,
 				 DEV_CLOCK_CFG);
 
 	ocelot_port->phy_mode = phy_mode;
@@ -1654,6 +1620,11 @@ static int ocelot_port_phylink_create(struct ocelot *ocelot, int port,
 
 	priv->phylink_config.dev = &priv->dev->dev;
 	priv->phylink_config.type = PHYLINK_NETDEV;
+	priv->phylink_config.mac_capabilities = MAC_ASYM_PAUSE | MAC_SYM_PAUSE |
+		MAC_10 | MAC_100 | MAC_1000FD | MAC_2500FD;
+
+	__set_bit(ocelot_port->phy_mode,
+		  priv->phylink_config.supported_interfaces);
 
 	phylink = phylink_create(&priv->phylink_config,
 				 of_fwnode_handle(portnp),
@@ -1704,10 +1675,9 @@ int ocelot_probe_port(struct ocelot *ocelot, int port, struct regmap *target,
 		NETIF_F_HW_TC;
 	dev->features |= NETIF_F_HW_VLAN_CTAG_FILTER | NETIF_F_HW_TC;
 
-	eth_hw_addr_set(dev, ocelot->base_mac);
-	dev->dev_addr[ETH_ALEN - 1] += port;
+	eth_hw_addr_gen(dev, ocelot->base_mac, port);
 	ocelot_mact_learn(ocelot, PGID_CPU, dev->dev_addr,
-			  ocelot_port->pvid_vlan.vid, ENTRYTYPE_LOCKED);
+			  OCELOT_VLAN_UNAWARE_PVID, ENTRYTYPE_LOCKED);
 
 	ocelot_init_port(ocelot, port);
 

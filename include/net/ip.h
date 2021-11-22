@@ -24,6 +24,7 @@
 #include <linux/skbuff.h>
 #include <linux/jhash.h>
 #include <linux/sockptr.h>
+#include <linux/static_key.h>
 
 #include <net/inet_sock.h>
 #include <net/route.h>
@@ -567,14 +568,6 @@ static inline void iph_to_flow_copy_v4addrs(struct flow_keys *flow,
 	flow->control.addr_type = FLOW_DISSECTOR_KEY_IPV4_ADDRS;
 }
 
-static inline __wsum inet_gro_compute_pseudo(struct sk_buff *skb, int proto)
-{
-	const struct iphdr *iph = skb_gro_network_header(skb);
-
-	return csum_tcpudp_nofold(iph->saddr, iph->daddr,
-				  skb_gro_len(skb), proto, 0);
-}
-
 /*
  *	Map a multicast IP onto multicast MAC for type ethernet.
  */
@@ -750,6 +743,7 @@ void ip_cmsg_recv_offset(struct msghdr *msg, struct sock *sk,
 			 struct sk_buff *skb, int tlen, int offset);
 int ip_cmsg_send(struct sock *sk, struct msghdr *msg,
 		 struct ipcm_cookie *ipc, bool allow_ipv6);
+DECLARE_STATIC_KEY_FALSE(ip4_min_ttl);
 int ip_setsockopt(struct sock *sk, int level, int optname, sockptr_t optval,
 		  unsigned int optlen);
 int ip_getsockopt(struct sock *sk, int level, int optname, char __user *optval,

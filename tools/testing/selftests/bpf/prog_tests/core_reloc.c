@@ -381,7 +381,7 @@ static int setup_type_id_case_local(struct core_reloc_test_case *test)
 	exp->local_anon_void_ptr = -1;
 	exp->local_anon_arr = -1;
 
-	for (i = 1; i <= btf__get_nr_types(local_btf); i++)
+	for (i = 1; i < btf__type_cnt(local_btf); i++)
 	{
 		t = btf__type_by_id(local_btf, i);
 		/* we are interested only in anonymous types */
@@ -433,7 +433,7 @@ static int setup_type_id_case_local(struct core_reloc_test_case *test)
 
 static int setup_type_id_case_success(struct core_reloc_test_case *test) {
 	struct core_reloc_type_id_output *exp = (void *)test->output;
-	struct btf *targ_btf = btf__parse(test->btf_src_file, NULL);
+	struct btf *targ_btf;
 	int err;
 
 	err = setup_type_id_case_local(test);
@@ -867,7 +867,7 @@ void test_core_reloc(void)
 			goto cleanup;
 		}
 
-		data_map = bpf_object__find_map_by_name(obj, "test_cor.bss");
+		data_map = bpf_object__find_map_by_name(obj, ".bss");
 		if (CHECK(!data_map, "find_data_map", "data map not found\n"))
 			goto cleanup;
 

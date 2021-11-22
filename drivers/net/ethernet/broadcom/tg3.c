@@ -5503,7 +5503,6 @@ static bool tg3_setup_fiber_hw_autoneg(struct tg3 *tp, u32 mac_status)
 	int workaround, port_a;
 
 	serdes_cfg = 0;
-	expected_sg_dig_ctrl = 0;
 	workaround = 0;
 	port_a = 1;
 	current_link_up = false;
@@ -5747,7 +5746,6 @@ static int tg3_setup_fiber_phy(struct tg3 *tp, bool force_reset)
 	tw32_f(MAC_EVENT, MAC_EVENT_LNKSTATE_CHANGED);
 	udelay(40);
 
-	current_link_up = false;
 	tp->link_config.rmt_adv = 0;
 	mac_status = tr32(MAC_STATUS);
 

@@ -420,8 +420,20 @@ static int emac_set_coalesce(struct net_device *ndev,
 	u32 int_ctrl, num_interrupts = 0;
 	u32 prescale = 0, addnl_dvdr = 1, coal_intvl = 0;
 
-	if (!coal->rx_coalesce_usecs)
-		return -EINVAL;
+	if (!coal->rx_coalesce_usecs) {
+		priv->coal_intvl = 0;
+
+		switch (priv->version) {
+		case EMAC_VERSION_2:
+			emac_ctrl_write(EMAC_DM646X_CMINTCTRL, 0);
+			break;
+		default:
+			emac_ctrl_write(EMAC_CTRL_EWINTTCNT, 0);
+			break;
+		}
+
+		return 0;
+	}
 
 	coal_intvl = coal->rx_coalesce_usecs;
 
@@ -1402,7 +1414,6 @@ static int match_first_device(struct device *dev, const void *data)
 static int emac_dev_open(struct net_device *ndev)
 {
 	struct device *emac_dev = &ndev->dev;
-	u32 cnt;
 	struct resource *res;
 	int q, m, ret;
 	int res_num = 0, irq_num = 0;
@@ -1420,8 +1431,7 @@ static int emac_dev_open(struct net_device *ndev)
 	}
 
 	netif_carrier_off(ndev);
-	for (cnt = 0; cnt < ETH_ALEN; cnt++)
-		ndev->dev_addr[cnt] = priv->mac_addr[cnt];
+	eth_hw_addr_set(ndev, priv->mac_addr);
 
 	/* Configuration items */
 	priv->rx_buf_size = EMAC_DEF_MAX_FRAME_SIZE + NET_IP_ALIGN;

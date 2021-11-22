@@ -36,6 +36,7 @@
 #include <linux/splice.h>
 #include <linux/in6.h>
 #include <linux/if_packet.h>
+#include <linux/llist.h>
 #include <net/flow.h>
 #include <net/page_pool.h>
 #if IS_ENABLED(CONFIG_NF_CONNTRACK)
@@ -454,9 +455,15 @@ enum {
 	 * all frags to avoid possible bad checksum
 	 */
 	SKBFL_SHARED_FRAG = BIT(1),
+
+	/* segment contains only zerocopy data and should not be
+	 * charged to the kernel memory.
+	 */
+	SKBFL_PURE_ZEROCOPY = BIT(2),
 };
 
 #define SKBFL_ZEROCOPY_FRAG	(SKBFL_ZEROCOPY_ENABLE | SKBFL_SHARED_FRAG)
+#define SKBFL_ALL_ZEROCOPY	(SKBFL_ZEROCOPY_FRAG | SKBFL_PURE_ZEROCOPY)
 
 /*
  * The callback notifies userspace to release buffers when skb DMA is done in
@@ -620,6 +627,7 @@ typedef unsigned char *sk_buff_data_t;
  *		for retransmit timer
  *	@rbnode: RB tree node, alternative to next/prev for netem/tcp
  *	@list: queue head
+ *	@ll_node: anchor in an llist (eg socket defer_list)
  *	@sk: Socket we are owned by
  *	@ip_defrag_offset: (aka @sk) alternate use of @sk, used in
  *		fragmentation management
@@ -652,6 +660,7 @@ typedef unsigned char *sk_buff_data_t;
  *	@tc_at_ingress: used within tc_classify to distinguish in/egress
  *	@redirected: packet was redirected by packet classifier
  *	@from_ingress: packet was redirected from the ingress path
+ *	@nf_skip_egress: packet shall skip nf egress - see netfilter_netdev.h
  *	@peeked: this packet has been seen already, so stats have been
  *		done for it, don't do them again
  *	@nf_trace: netfilter packet trace flag
@@ -736,6 +745,7 @@ struct sk_buff {
 		};
 		struct rb_node		rbnode; /* used in netem, ip4 defrag, and tcp stack */
 		struct list_head	list;
+		struct llist_node	ll_node;
 	};
 
 	union {
@@ -867,6 +877,9 @@ struct sk_buff {
 	__u8			redirected:1;
 #ifdef CONFIG_NET_REDIRECT
 	__u8			from_ingress:1;
+#endif
+#ifdef CONFIG_NETFILTER_SKIP_EGRESS
+	__u8			nf_skip_egress:1;
 #endif
 #ifdef CONFIG_TLS_DEVICE
 	__u8			decrypted:1;
@@ -1460,6 +1473,17 @@ static inline struct ubuf_info *skb_zcopy(struct sk_buff *skb)
 	return is_zcopy ? skb_uarg(skb) : NULL;
 }
 
+static inline bool skb_zcopy_pure(const struct sk_buff *skb)
+{
+	return skb_shinfo(skb)->flags & SKBFL_PURE_ZEROCOPY;
+}
+
+static inline bool skb_pure_zcopy_same(const struct sk_buff *skb1,
+				       const struct sk_buff *skb2)
+{
+	return skb_zcopy_pure(skb1) == skb_zcopy_pure(skb2);
+}
+
 static inline void net_zcopy_get(struct ubuf_info *uarg)
 {
 	refcount_inc(&uarg->refcnt);
@@ -1524,7 +1548,7 @@ static inline void skb_zcopy_clear(struct sk_buff *skb, bool zerocopy_success)
 		if (!skb_zcopy_is_nouarg(skb))
 			uarg->callback(skb, uarg, zerocopy_success);
 
-		skb_shinfo(skb)->flags &= ~SKBFL_ZEROCOPY_FRAG;
+		skb_shinfo(skb)->flags &= ~SKBFL_ALL_ZEROCOPY;
 	}
 }
 
@@ -1668,6 +1692,22 @@ static inline int skb_unclone(struct sk_buff *skb, gfp_t pri)
 	if (skb_cloned(skb))
 		return pskb_expand_head(skb, 0, 0, pri);
 
+	return 0;
+}
+
+/* This variant of skb_unclone() makes sure skb->truesize is not changed */
+static inline int skb_unclone_keeptruesize(struct sk_buff *skb, gfp_t pri)
+{
+	might_sleep_if(gfpflags_allow_blocking(pri));
+
+	if (skb_cloned(skb)) {
+		unsigned int save = skb->truesize;
+		int res;
+
+		res = pskb_expand_head(skb, 0, 0, pri);
+		skb->truesize = save;
+		return res;
+	}
 	return 0;
 }
 
@@ -4189,7 +4229,7 @@ static inline void skb_remcsum_process(struct sk_buff *skb, void *ptr,
 		return;
 	}
 
-	 if (unlikely(skb->ip_summed != CHECKSUM_COMPLETE)) {
+	if (unlikely(skb->ip_summed != CHECKSUM_COMPLETE)) {
 		__skb_checksum_complete(skb);
 		skb_postpull_rcsum(skb, skb->data, ptr - (void *)skb->data);
 	}
@@ -4239,6 +4279,9 @@ enum skb_ext_id {
 #endif
 #if IS_ENABLED(CONFIG_MPTCP)
 	SKB_EXT_MPTCP,
+#endif
+#if IS_ENABLED(CONFIG_MCTP_FLOWS)
+	SKB_EXT_MCTP,
 #endif
 	SKB_EXT_NUM, /* must be last */
 };

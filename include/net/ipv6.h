@@ -345,9 +345,9 @@ struct ipcm6_cookie {
 	struct sockcm_cookie sockc;
 	__s16 hlimit;
 	__s16 tclass;
+	__u16 gso_size;
 	__s8  dontfrag;
 	struct ipv6_txoptions *opt;
-	__u16 gso_size;
 };
 
 static inline void ipcm6_init(struct ipcm6_cookie *ipc6)
@@ -1092,6 +1092,7 @@ struct in6_addr *fl6_update_dst(struct flowi6 *fl6,
 /*
  *	socket options (ipv6_sockglue.c)
  */
+DECLARE_STATIC_KEY_FALSE(ip6_min_hopcount);
 
 int ipv6_setsockopt(struct sock *sk, int level, int optname, sockptr_t optval,
 		    unsigned int optlen);

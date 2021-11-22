@@ -48,7 +48,8 @@ static void on_sample(void *ctx, int cpu, void *data, __u32 size)
 	*(bool *)ctx = true;
 }
 
-void test_kfree_skb(void)
+/* TODO: fix kernel panic caused by this test in parallel mode */
+void serial_test_kfree_skb(void)
 {
 	struct __sk_buff skb = {};
 	struct bpf_prog_test_run_attr tattr = {
@@ -65,7 +66,6 @@ void test_kfree_skb(void)
 	struct bpf_map *perf_buf_map, *global_data;
 	struct bpf_program *prog, *fentry, *fexit;
 	struct bpf_object *obj, *obj2 = NULL;
-	struct perf_buffer_opts pb_opts = {};
 	struct perf_buffer *pb = NULL;
 	int err, kfree_skb_fd;
 	bool passed = false;
@@ -73,7 +73,7 @@ void test_kfree_skb(void)
 	const int zero = 0;
 	bool test_ok[2];
 
-	err = bpf_prog_load("./test_pkt_access.o", BPF_PROG_TYPE_SCHED_CLS,
+	err = bpf_prog_test_load("./test_pkt_access.o", BPF_PROG_TYPE_SCHED_CLS,
 			    &obj, &tattr.prog_fd);
 	if (CHECK(err, "prog_load sched cls", "err %d errno %d\n", err, errno))
 		return;
@@ -92,7 +92,7 @@ void test_kfree_skb(void)
 	if (CHECK(!fexit, "find_prog", "prog eth_type_trans not found\n"))
 		goto close_prog;
 
-	global_data = bpf_object__find_map_by_name(obj2, "kfree_sk.bss");
+	global_data = bpf_object__find_map_by_name(obj2, ".bss");
 	if (CHECK(!global_data, "find global data", "not found\n"))
 		goto close_prog;
 
@@ -111,9 +111,8 @@ void test_kfree_skb(void)
 		goto close_prog;
 
 	/* set up perf buffer */
-	pb_opts.sample_cb = on_sample;
-	pb_opts.ctx = &passed;
-	pb = perf_buffer__new(bpf_map__fd(perf_buf_map), 1, &pb_opts);
+	pb = perf_buffer__new(bpf_map__fd(perf_buf_map), 1,
+			      on_sample, NULL, &passed, NULL);
 	if (!ASSERT_OK_PTR(pb, "perf_buf__new"))
 		goto close_prog;
 
