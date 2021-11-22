@@ -1025,6 +1025,47 @@ int pci_alloc_irq_vectors_affinity(struct pci_dev *dev, unsigned int min_vecs,
 EXPORT_SYMBOL(pci_alloc_irq_vectors_affinity);
 
 /**
+ * pci_msix_expand_vectors_at - Expand MSI-X interrupts for a device
+ *
+ * @dev:	PCI device to operate on
+ * @at:		Allocate at MSI-X index. If @at == PCI_MSI_EXPAND_AUTO
+ *		the function expands automatically after the last
+ *		active index.
+ * @nvec:	Number of vectors to allocate
+ *
+ * Expand the MSI-X vectors of a device after an initial enablement and
+ * allocation.
+ *
+ * Return: 0 if the allocation was successful, an error code otherwise.
+ */
+int pci_msix_expand_vectors_at(struct pci_dev *dev, unsigned int at, unsigned int nvec)
+{
+	struct msi_device_data *md = dev->dev.msi.data;
+	struct msi_range range = { .ndesc = nvec, };
+	unsigned int max_vecs;
+	int ret;
+
+	if (!pci_msi_enable || !dev || !dev->msix_enabled || !md)
+		return -ENOTSUPP;
+
+	if (!pci_msi_domain_supports_expand(dev))
+		return -ENOTSUPP;
+
+	max_vecs = pci_msix_vec_count(dev);
+	if (!nvec || nvec > max_vecs)
+		return -EINVAL;
+
+	range.first = at == PCI_MSIX_EXPAND_AUTO ? md->num_descs : at;
+
+	if (range.first >= max_vecs || nvec > max_vecs - range.first)
+		return -ENOSPC;
+
+	ret = msix_setup_interrupts(dev, dev->msix_base, &range, NULL, NULL, true);
+	return ret <= 0 ? ret : -ENOSPC;;
+}
+EXPORT_SYMBOL_GPL(pci_msix_expand_vectors_at);
+
+/**
  * pci_free_irq_vectors - free previously allocated IRQs for a device
  * @dev:		PCI device to operate on
  *

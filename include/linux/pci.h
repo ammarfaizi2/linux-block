@@ -1534,6 +1534,7 @@ static inline int pci_enable_msix_exact(struct pci_dev *dev,
 int pci_alloc_irq_vectors_affinity(struct pci_dev *dev, unsigned int min_vecs,
 				   unsigned int max_vecs, unsigned int flags,
 				   struct irq_affinity *affd);
+int pci_msix_expand_vectors_at(struct pci_dev *dev, unsigned int at, unsigned int nvec);
 
 void pci_free_irq_vectors(struct pci_dev *dev);
 int pci_irq_vector(struct pci_dev *dev, unsigned int nr);
@@ -1565,6 +1566,11 @@ pci_alloc_irq_vectors_affinity(struct pci_dev *dev, unsigned int min_vecs,
 	return -ENOSPC;
 }
 
+static inline int pci_msix_expand_vectors_at(struct pci_dev *dev, unsigned int at, unsigned int nvec)
+{
+	return -ENOTSUPP;
+}
+
 static inline void pci_free_irq_vectors(struct pci_dev *dev)
 {
 }
@@ -1581,6 +1587,13 @@ static inline const struct cpumask *pci_irq_get_affinity(struct pci_dev *pdev,
 	return cpu_possible_mask;
 }
 #endif
+
+#define PCI_MSIX_EXPAND_AUTO	(UINT_MAX)
+
+static inline int pci_msix_expand_vectors(struct pci_dev *dev, unsigned int nvec)
+{
+	return pci_msix_expand_vectors_at(dev, PCI_MSIX_EXPAND_AUTO, nvec);
+}
 
 /**
  * pci_irqd_intx_xlate() - Translate PCI INTx value to an IRQ domain hwirq
