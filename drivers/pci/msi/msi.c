@@ -370,14 +370,16 @@ static int msi_setup_msi_desc(struct pci_dev *dev, int nvec,
 	return ret;
 }
 
-static int msi_verify_entries(struct pci_dev *dev)
+static int msi_verify_entries(struct pci_dev *dev, struct msi_range *range)
 {
 	struct msi_desc *entry;
 
 	if (!dev->no_64bit_msi)
 		return 0;
 
-	msi_for_each_desc(entry, &dev->dev, MSI_DESC_ALL) {
+	msi_for_each_desc_from(entry, &dev->dev, MSI_DESC_ALL, range->first) {
+		if (entry->msi_index > range->last)
+			return 0;
 		if (entry->msg.address_hi) {
 			pci_err(dev, "arch assigned 64-bit MSI address %#x%08x but device only supports 32 bits\n",
 				entry->msg.address_hi, entry->msg.address_lo);
@@ -402,6 +404,7 @@ static int msi_verify_entries(struct pci_dev *dev)
 static int msi_capability_init(struct pci_dev *dev, int nvec,
 			       struct irq_affinity *affd)
 {
+	struct msi_range range = { .first = 0, .last = 0, .ndesc = nvec, };
 	struct irq_affinity_desc *masks = NULL;
 	struct msi_desc *entry;
 	int ret;
@@ -421,11 +424,11 @@ static int msi_capability_init(struct pci_dev *dev, int nvec,
 	pci_msi_mask(entry, msi_multi_mask(entry));
 
 	/* Configure MSI capability structure */
-	ret = pci_msi_setup_msi_irqs(dev, nvec, PCI_CAP_ID_MSI);
+	ret = pci_msi_setup_msi_irqs(dev, &range, PCI_CAP_ID_MSI);
 	if (ret)
 		goto err;
 
-	ret = msi_verify_entries(dev);
+	ret = msi_verify_entries(dev, &range);
 	if (ret)
 		goto err;
 
@@ -469,7 +472,8 @@ static void __iomem *msix_map_region(struct pci_dev *dev,
 }
 
 static int msix_setup_msi_descs(struct pci_dev *dev, void __iomem *base,
-				struct msix_entry *entries, int nvec,
+				struct msi_range *range,
+				struct msix_entry *entries,
 				struct irq_affinity_desc *masks)
 {
 	int ret, i, vec_count = pci_msix_vec_count(dev);
@@ -485,8 +489,8 @@ static int msix_setup_msi_descs(struct pci_dev *dev, void __iomem *base,
 	desc.pci.msi_attrib.default_irq	= dev->irq;
 	desc.pci.mask_base		= base;
 
-	for (i = 0, curmsk = masks; i < nvec; i++, curmsk++) {
-		desc.msi_index = entries ? entries[i].entry : i;
+	for (i = 0, curmsk = masks; i < range->ndesc; i++, curmsk++) {
+		desc.msi_index = entries ? entries[i].entry : range->first + i;
 		desc.affinity = masks ? curmsk : NULL;
 		desc.pci.msi_attrib.is_virtual = desc.msi_index >= vec_count;
 		desc.pci.msi_attrib.can_mask = !pci_msi_ignore_mask &&
@@ -500,6 +504,9 @@ static int msix_setup_msi_descs(struct pci_dev *dev, void __iomem *base,
 		ret = msi_add_msi_desc(&dev->dev, &desc);
 		if (ret)
 			break;
+
+		if (desc.msi_index > range->last)
+			range->last = desc.msi_index;
 	}
 
 	return ret;
@@ -530,28 +537,28 @@ static void msix_mask_all(void __iomem *base, int tsize)
 }
 
 static int msix_setup_interrupts(struct pci_dev *dev, void __iomem *base,
-				 struct msix_entry *entries, int nvec,
+				 struct msi_range *range, struct msix_entry *entries,
 				 struct irq_affinity *affd)
 {
 	struct irq_affinity_desc *masks = NULL;
 	int ret;
 
 	if (affd)
-		masks = irq_create_affinity_masks(nvec, affd);
+		masks = irq_create_affinity_masks(range->ndesc, affd);
 
 	msi_lock_descs(&dev->dev);
-	ret = msix_setup_msi_descs(dev, base, entries, nvec, masks);
+	ret = msix_setup_msi_descs(dev, base, range, entries, masks);
 	if (ret)
 		goto out_free;
 
 	dev->dev.msi.data->properties = MSI_PROP_PCI_MSIX | MSI_PROP_64BIT;
 
-	ret = pci_msi_setup_msi_irqs(dev, nvec, PCI_CAP_ID_MSIX);
+	ret = pci_msi_setup_msi_irqs(dev, range, PCI_CAP_ID_MSIX);
 	if (ret)
 		goto out_free;
 
 	/* Check if all MSI entries honor device restrictions */
-	ret = msi_verify_entries(dev);
+	ret = msi_verify_entries(dev, range);
 	if (ret)
 		goto out_free;
 
@@ -580,6 +587,7 @@ out_unlock:
 static int msix_capability_init(struct pci_dev *dev, struct msix_entry *entries,
 				int nvec, struct irq_affinity *affd)
 {
+	struct msi_range range = { .first = 0, .last = 0, .ndesc = nvec, };
 	void __iomem *base;
 	int ret, tsize;
 	u16 control;
@@ -606,7 +614,7 @@ static int msix_capability_init(struct pci_dev *dev, struct msix_entry *entries,
 	/* Ensure that all table entries are masked. */
 	msix_mask_all(base, tsize);
 
-	ret = msix_setup_interrupts(dev, base, entries, nvec, affd);
+	ret = msix_setup_interrupts(dev, base, &range, entries, affd);
 	if (ret)
 		goto out_disable;
 
