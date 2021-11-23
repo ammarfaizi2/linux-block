@@ -2541,10 +2541,12 @@ static int __init rcu_torture_fwd_prog_init(void)
 	if ((!cur_ops->sync && !cur_ops->call) ||
 	    !cur_ops->stall_dur || cur_ops->stall_dur() <= 0 || cur_ops == &rcu_busted_ops) {
 		VERBOSE_TOROUT_STRING("rcu_torture_fwd_prog_init: Disabled, unsupported by RCU flavor under test");
+		fwd_progress = 0;
 		return 0;
 	}
 	if (stall_cpu > 0) {
 		VERBOSE_TOROUT_STRING("rcu_torture_fwd_prog_init: Disabled, conflicts with CPU-stall testing");
+		fwd_progress = 0;
 		if (IS_MODULE(CONFIG_RCU_TORTURE_TEST))
 			return -EINVAL; /* In module, can fail back to user. */
 		WARN_ON(1); /* Make sure rcutorture notices conflict. */
@@ -2556,8 +2558,13 @@ static int __init rcu_torture_fwd_prog_init(void)
 		fwd_progress_div = 4;
 	rfp = kcalloc(fwd_progress, sizeof(*rfp), GFP_KERNEL);
 	fwd_prog_tasks = kcalloc(fwd_progress, sizeof(*fwd_prog_tasks), GFP_KERNEL);
-	if (!rfp || !fwd_prog_tasks)
+	if (!rfp || !fwd_prog_tasks) {
+		kfree(rfp);
+		kfree(fwd_prog_tasks);
+		fwd_prog_tasks = NULL;
+		fwd_progress = 0;
 		return -ENOMEM;
+	}
 	for (i = 0; i < fwd_progress; i++) {
 		spin_lock_init(&rfp[i].rcu_fwd_lock);
 		rfp[i].rcu_fwd_cb_tail = &rfp[i].rcu_fwd_cb_head;
@@ -2569,8 +2576,10 @@ static int __init rcu_torture_fwd_prog_init(void)
 	register_oom_notifier(&rcutorture_oom_nb);
 	for (i = 0; i < fwd_progress; i++) {
 		ret = torture_create_kthread(rcu_torture_fwd_prog, &rcu_fwds[i], fwd_prog_tasks[i]);
-		if (ret)
+		if (ret) {
+			fwd_progress = i;
 			return ret;
+		}
 	}
 	return 0;
 }
@@ -2580,6 +2589,8 @@ static void rcu_torture_fwd_prog_cleanup(void)
 	int i;
 	struct rcu_fwd *rfp;
 
+	if (!rcu_fwds || !fwd_prog_tasks)
+		return;
 	for (i = 0; i < fwd_progress; i++)
 		torture_stop_kthread(rcu_torture_fwd_prog, fwd_prog_tasks[i]);
 	unregister_oom_notifier(&rcutorture_oom_nb);
@@ -2588,6 +2599,8 @@ static void rcu_torture_fwd_prog_cleanup(void)
 	rcu_fwds = NULL;
 	mutex_unlock(&rcu_fwd_mutex);
 	kfree(rfp);
+	kfree(fwd_prog_tasks);
+	fwd_prog_tasks = NULL;
 }
 
 /* Callback function for RCU barrier testing. */
