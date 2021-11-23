@@ -2391,7 +2391,7 @@ static void rcu_torture_fwd_prog_cr(struct rcu_fwd *rfp)
 			rfp->rcu_fwd_cb_head = rfcpn;
 			n_launders++;
 			n_launders_sa++;
-		} else if (cur_ops->cbflood_max > n_max_cbs) {
+		} else if (!cur_ops->cbflood_max || cur_ops->cbflood_max > n_max_cbs) {
 			rfcp = kmalloc(sizeof(*rfcp), GFP_KERNEL);
 			if (WARN_ON_ONCE(!rfcp)) {
 				schedule_timeout_interruptible(1);
