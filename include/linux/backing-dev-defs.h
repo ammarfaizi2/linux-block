@@ -13,6 +13,9 @@
 #include <linux/workqueue.h>
 #include <linux/kref.h>
 #include <linux/refcount.h>
+#include <linux/wait_types.h>
+#include <linux/rwsem.h>
+#include <linux/mutex.h>
 
 struct page;
 struct device;
