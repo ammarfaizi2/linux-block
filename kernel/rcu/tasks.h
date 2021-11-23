@@ -199,17 +199,20 @@ static void cblist_init_generic(struct rcu_tasks *rtp)
 {
 	int cpu;
 	unsigned long flags;
+	int lim;
 
 	raw_spin_lock_irqsave(&rtp->cbs_gbl_lock, flags);
-	if (rcu_task_enqueue_lim >= 0) {
-		int lim = rcu_task_enqueue_lim;
+	if (rcu_task_enqueue_lim < 0)
+		rcu_task_enqueue_lim = nr_cpu_ids;
+	else if (rcu_task_enqueue_lim == 0)
+		rcu_task_enqueue_lim = 1;
+	lim = rcu_task_enqueue_lim;
 
-		if (lim > nr_cpu_ids)
-			lim = nr_cpu_ids;
-		WRITE_ONCE(rtp->percpu_enqueue_shift, ilog2(nr_cpu_ids / rcu_task_enqueue_lim));
-		smp_store_release(&rtp->percpu_enqueue_lim, lim);
-		pr_info("%s: Setting shift to %d and lim to %d.\n", __func__, rtp->percpu_enqueue_shift, rtp->percpu_enqueue_lim);
-	}
+	if (lim > nr_cpu_ids)
+		lim = nr_cpu_ids;
+	WRITE_ONCE(rtp->percpu_enqueue_shift, ilog2(nr_cpu_ids / rcu_task_enqueue_lim));
+	smp_store_release(&rtp->percpu_enqueue_lim, lim);
+	pr_info("%s: Setting shift to %d and lim to %d.\n", __func__, rtp->percpu_enqueue_shift, rtp->percpu_enqueue_lim);
 	for_each_possible_cpu(cpu) {
 		struct rcu_tasks_percpu *rtpcp = per_cpu_ptr(rtp->rtpcpu, cpu);
 
