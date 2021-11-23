@@ -9,15 +9,12 @@
 #ifndef _LINUX_BACKING_DEV_H
 #define _LINUX_BACKING_DEV_H
 
-#include <linux/radix-tree.h>
-#include <linux/percpu_counter_api.h>
-#include <linux/kernel.h>
-#include <linux/fs.h>
-#include <linux/sched.h>
-#include <linux/device.h>
-#include <linux/writeback.h>
 #include <linux/backing-dev-defs.h>
-#include <linux/slab.h>
+
+#include <linux/writeback_types.h>
+#include <linux/percpu_counter_api.h>
+#include <linux/sched.h>
+#include <linux/blkdev.h>
 
 struct blkcg;
 
