@@ -11,7 +11,7 @@
 #include <linux/bio.h>
 #include <linux/blkdev.h>
 #include <linux/pagemap.h>
-#include <linux/backing-dev-defs.h>
+#include <linux/backing-dev-types.h>
 #include <linux/gcd.h>
 #include <linux/lcm.h>
 #include <linux/jiffies.h>

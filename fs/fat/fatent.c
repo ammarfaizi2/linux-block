@@ -11,7 +11,7 @@
 #include <linux/sched/cond_resched.h>
 #include <linux/blkdev.h>
 #include <linux/sched/signal.h>
-#include <linux/backing-dev-defs.h>
+#include <linux/backing-dev-types.h>
 #include "fat.h"
 
 struct fatent_operations {
